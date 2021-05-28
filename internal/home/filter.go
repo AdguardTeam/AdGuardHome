@@ -559,6 +559,15 @@ func (f *Filtering) updateIntl(filter *filter) (updated bool, err error) {
 		}
 	}()
 
+	// Change the default 0o600 permission to something more acceptable by
+	// end users.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/3198.
+	err = tmpFile.Chmod(0o644)
+	if err != nil {
+		return updated, fmt.Errorf("changing file mode: %w", err)
+	}
+
 	var reader io.Reader
 	if filepath.IsAbs(filter.URL) {
 		var f io.ReadCloser

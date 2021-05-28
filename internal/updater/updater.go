@@ -332,7 +332,7 @@ func tarGzFileUnpackOne(outDir string, tr *tar.Reader, hdr *tar.Header) (name st
 			return "", nil
 		}
 
-		err = os.Mkdir(outputName, os.FileMode(hdr.Mode&0o777))
+		err = os.Mkdir(outputName, os.FileMode(hdr.Mode&0o755))
 		if err != nil && !errors.Is(err, os.ErrExist) {
 			return "", fmt.Errorf("os.Mkdir(%q): %w", outputName, err)
 		}
@@ -352,7 +352,7 @@ func tarGzFileUnpackOne(outDir string, tr *tar.Reader, hdr *tar.Header) (name st
 	wc, err = os.OpenFile(
 		outputName,
 		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
-		os.FileMode(hdr.Mode&0o777),
+		os.FileMode(hdr.Mode&0o755),
 	)
 	if err != nil {
 		return "", fmt.Errorf("os.OpenFile(%s): %w", outputName, err)

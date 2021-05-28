@@ -21,6 +21,10 @@ and this project adheres to
 - New flag `--local-frontend` to serve dinamically changeable frontend files
   from disk as opposed to the ones that were compiled into the binary.
 
+### Changed
+
+- Permissions on filter files are now `0o644` instead of `0o600` ([#3198]).
+
 ### Deprecated
 
 <!--
@@ -43,6 +47,7 @@ released by then.
 [#3184]: https://github.com/AdguardTeam/AdGuardHome/issues/3184
 [#3185]: https://github.com/AdguardTeam/AdGuardHome/issues/3185
 [#3186]: https://github.com/AdguardTeam/AdGuardHome/issues/3186
+[#3198]: https://github.com/AdguardTeam/AdGuardHome/issues/3198
 
 
 
