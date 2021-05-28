@@ -36,6 +36,14 @@ func TestCloneSlice_family(t *testing.T) {
 	})
 }
 
+func TestCoalesce(t *testing.T) {
+	assert.Equal(t, "", Coalesce())
+	assert.Equal(t, "a", Coalesce("a"))
+	assert.Equal(t, "a", Coalesce("", "a"))
+	assert.Equal(t, "a", Coalesce("a", ""))
+	assert.Equal(t, "a", Coalesce("a", "b"))
+}
+
 func TestFilterOut(t *testing.T) {
 	strs := []string{
 		"1.2.3.4",

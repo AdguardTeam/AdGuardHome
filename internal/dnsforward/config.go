@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -27,11 +29,10 @@ type FilteringConfig struct {
 	// FilterHandler is an optional additional filtering callback.
 	FilterHandler func(clientAddr net.IP, clientID string, settings *filtering.Settings) `yaml:"-"`
 
-	// GetCustomUpstreamByClient - a callback function that returns upstreams configuration
-	// based on the client IP address. Returns nil if there are no custom upstreams for the client
-	//
-	// TODO(e.burkov): Replace argument type with net.IP.
-	GetCustomUpstreamByClient func(clientAddr string) *proxy.UpstreamConfig `yaml:"-"`
+	// GetCustomUpstreamByClient is a callback that returns upstreams
+	// configuration based on the client IP address or ClientID.  It returns
+	// nil if there are no custom upstreams for the client.
+	GetCustomUpstreamByClient func(id string) (conf *proxy.UpstreamConfig, err error) `yaml:"-"`
 
 	// Protection configuration
 	// --
@@ -384,10 +385,51 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 	return nil
 }
 
+// isInSorted returns true if s is in the sorted slice strs.
+func isInSorted(strs []string, s string) (ok bool) {
+	i := sort.SearchStrings(strs, s)
+	if i == len(strs) || strs[i] != s {
+		return false
+	}
+
+	return true
+}
+
+// isWildcard returns true if host is a wildcard hostname.
+func isWildcard(host string) (ok bool) {
+	return len(host) >= 2 && host[0] == '*' && host[1] == '.'
+}
+
+// matchesDomainWildcard returns true if host matches the domain wildcard
+// pattern pat.
+func matchesDomainWildcard(host, pat string) (ok bool) {
+	return isWildcard(pat) && strings.HasSuffix(host, pat[1:])
+}
+
+// anyNameMatches returns true if sni, the client's SNI value, matches any of
+// the DNS names and patterns from certificate.  dnsNames must be sorted.
+func anyNameMatches(dnsNames []string, sni string) (ok bool) {
+	if aghnet.ValidateDomainName(sni) != nil {
+		return false
+	}
+
+	if isInSorted(dnsNames, sni) {
+		return true
+	}
+
+	for _, dn := range dnsNames {
+		if matchesDomainWildcard(sni, dn) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Called by 'tls' package when Client Hello is received
 // If the server name (from SNI) supplied by client is incorrect - we terminate the ongoing TLS handshake.
 func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	if s.conf.StrictSNICheck && !matchDNSName(s.conf.dnsNames, ch.ServerName) {
+	if s.conf.StrictSNICheck && !anyNameMatches(s.conf.dnsNames, ch.ServerName) {
 		log.Info("dns: tls: unknown SNI in Client Hello: %s", ch.ServerName)
 		return nil, fmt.Errorf("invalid SNI")
 	}

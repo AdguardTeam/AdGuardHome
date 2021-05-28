@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -229,7 +230,7 @@ func (s *Server) processDetermineLocal(dctx *dnsContext) (rc resultCode) {
 	rc = resultCodeSuccess
 
 	var ip net.IP
-	if ip = IPFromAddr(dctx.proxyCtx.Addr); ip == nil {
+	if ip = aghnet.IPFromAddr(dctx.proxyCtx.Addr); ip == nil {
 		return rc
 	}
 
@@ -489,6 +490,15 @@ func processFilteringBeforeRequest(ctx *dnsContext) (rc resultCode) {
 	return resultCodeSuccess
 }
 
+// ipStringFromAddr extracts an IP address string from net.Addr.
+func ipStringFromAddr(addr net.Addr) (ipStr string) {
+	if ip := aghnet.IPFromAddr(addr); ip != nil {
+		return ip.String()
+	}
+
+	return ""
+}
+
 // processUpstream passes request to upstream servers and handles the response.
 func (s *Server) processUpstream(ctx *dnsContext) (rc resultCode) {
 	d := ctx.proxyCtx
@@ -497,9 +507,13 @@ func (s *Server) processUpstream(ctx *dnsContext) (rc resultCode) {
 	}
 
 	if d.Addr != nil && s.conf.GetCustomUpstreamByClient != nil {
-		clientIP := IPStringFromAddr(d.Addr)
-		if upsConf := s.conf.GetCustomUpstreamByClient(clientIP); upsConf != nil {
-			log.Debug("dns: using custom upstreams for client %s", clientIP)
+		// Use the clientID first, since it has a higher priority.
+		id := aghstrings.Coalesce(ctx.clientID, ipStringFromAddr(d.Addr))
+		upsConf, err := s.conf.GetCustomUpstreamByClient(id)
+		if err != nil {
+			log.Error("dns: getting custom upstreams for client %s: %s", id, err)
+		} else if upsConf != nil {
+			log.Debug("dns: using custom upstreams for client %s", id)
 			d.CustomUpstreamConfig = upsConf
 		}
 	}

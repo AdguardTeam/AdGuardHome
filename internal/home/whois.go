@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -66,19 +67,6 @@ func trimValue(s string) string {
 	return s[:maxValueLength-3] + "..."
 }
 
-// coalesceStr returns the first non-empty string.
-//
-// TODO(a.garipov): Move to aghstrings?
-func coalesceStr(strs ...string) (res string) {
-	for _, s := range strs {
-		if s != "" {
-			return s
-		}
-	}
-
-	return ""
-}
-
 // isWhoisComment returns true if the string is empty or is a WHOIS comment.
 func isWhoisComment(s string) (ok bool) {
 	return len(s) == 0 || s[0] == '#' || s[0] == '%'
@@ -119,7 +107,7 @@ func whoisParse(data string) (m strmap) {
 			v = trimValue(v)
 		case "descr", "netname":
 			k = "orgname"
-			v = coalesceStr(orgname, v)
+			v = aghstrings.Coalesce(orgname, v)
 			orgname = v
 		case "whois":
 			k = "whois"

@@ -25,7 +25,7 @@ func TestClients(t *testing.T) {
 		}
 
 		ok, err := clients.Add(c)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		assert.True(t, ok)
 
 		c = &Client{
@@ -34,7 +34,7 @@ func TestClients(t *testing.T) {
 		}
 
 		ok, err = clients.Add(c)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		assert.True(t, ok)
 
 		c, ok = clients.Find("1.1.1.1")
@@ -59,7 +59,7 @@ func TestClients(t *testing.T) {
 			IDs:  []string{"1.2.3.5"},
 			Name: "client1",
 		})
-		require.Nil(t, err)
+		require.NoError(t, err)
 		assert.False(t, ok)
 	})
 
@@ -68,7 +68,7 @@ func TestClients(t *testing.T) {
 			IDs:  []string{"2.2.2.2"},
 			Name: "client3",
 		})
-		require.NotNil(t, err)
+		require.Error(t, err)
 		assert.False(t, ok)
 	})
 
@@ -77,13 +77,13 @@ func TestClients(t *testing.T) {
 			IDs:  []string{"1.2.3.0"},
 			Name: "client3",
 		})
-		require.NotNil(t, err)
+		require.Error(t, err)
 
 		err = clients.Update("client3", &Client{
 			IDs:  []string{"1.2.3.0"},
 			Name: "client2",
 		})
-		assert.NotNil(t, err)
+		assert.Error(t, err)
 	})
 
 	t.Run("update_fail_ip", func(t *testing.T) {
@@ -91,7 +91,7 @@ func TestClients(t *testing.T) {
 			IDs:  []string{"2.2.2.2"},
 			Name: "client1",
 		})
-		assert.NotNil(t, err)
+		assert.Error(t, err)
 	})
 
 	t.Run("update_success", func(t *testing.T) {
@@ -99,7 +99,7 @@ func TestClients(t *testing.T) {
 			IDs:  []string{"1.1.1.2"},
 			Name: "client1",
 		})
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		assert.False(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
 		assert.True(t, clients.Exists("1.1.1.2", ClientSourceHostsFile))
@@ -109,7 +109,7 @@ func TestClients(t *testing.T) {
 			Name:           "client1-renamed",
 			UseOwnSettings: true,
 		})
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		c, ok := clients.Find("1.1.1.2")
 		require.True(t, ok)
@@ -137,15 +137,15 @@ func TestClients(t *testing.T) {
 
 	t.Run("addhost_success", func(t *testing.T) {
 		ok, err := clients.AddHost("1.1.1.1", "host", ClientSourceARP)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		assert.True(t, ok)
 
 		ok, err = clients.AddHost("1.1.1.1", "host2", ClientSourceARP)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		assert.True(t, ok)
 
 		ok, err = clients.AddHost("1.1.1.1", "host3", ClientSourceHostsFile)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		assert.True(t, ok)
 
 		assert.True(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
@@ -153,7 +153,7 @@ func TestClients(t *testing.T) {
 
 	t.Run("addhost_fail", func(t *testing.T) {
 		ok, err := clients.AddHost("1.1.1.1", "host1", ClientSourceRDNS)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		assert.False(t, ok)
 	})
 }
@@ -181,7 +181,7 @@ func TestClientsWhois(t *testing.T) {
 
 	t.Run("existing_auto-client", func(t *testing.T) {
 		ok, err := clients.AddHost("1.1.1.1", "host", ClientSourceRDNS)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		assert.True(t, ok)
 
 		clients.SetWhoisInfo("1.1.1.1", whois)
@@ -198,7 +198,7 @@ func TestClientsWhois(t *testing.T) {
 			IDs:  []string{"1.1.1.2"},
 			Name: "client1",
 		})
-		require.Nil(t, err)
+		require.NoError(t, err)
 		assert.True(t, ok)
 
 		clients.SetWhoisInfo("1.1.1.2", whois)
@@ -219,12 +219,12 @@ func TestClientsAddExisting(t *testing.T) {
 			IDs:  []string{"1.1.1.1", "1:2:3::4", "aa:aa:aa:aa:aa:aa", "2.2.2.0/24"},
 			Name: "client1",
 		})
-		require.Nil(t, err)
+		require.NoError(t, err)
 		assert.True(t, ok)
 
 		// Now add an auto-client with the same IP.
 		ok, err = clients.AddHost("1.1.1.1", "test", ClientSourceRDNS)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		assert.True(t, ok)
 	})
 
@@ -253,14 +253,14 @@ func TestClientsAddExisting(t *testing.T) {
 			Hostname: "testhost",
 			Expiry:   time.Now().Add(time.Hour),
 		})
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		// Add a new client with the same IP as for a client with MAC.
 		ok, err := clients.Add(&Client{
 			IDs:  []string{testIP.String()},
 			Name: "client2",
 		})
-		require.Nil(t, err)
+		require.NoError(t, err)
 		assert.True(t, ok)
 
 		// Add a new client with the IP from the first client's IP
@@ -269,7 +269,7 @@ func TestClientsAddExisting(t *testing.T) {
 			IDs:  []string{"2.2.2.2"},
 			Name: "client3",
 		})
-		require.Nil(t, err)
+		require.NoError(t, err)
 		assert.True(t, ok)
 	})
 }
@@ -289,14 +289,16 @@ func TestClientsCustomUpstream(t *testing.T) {
 			"[/example.org/]8.8.8.8",
 		},
 	})
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.True(t, ok)
 
-	config := clients.FindUpstreams("1.2.3.4")
+	config, err := clients.findUpstreams("1.2.3.4")
 	assert.Nil(t, config)
+	assert.NoError(t, err)
 
-	config = clients.FindUpstreams("1.1.1.1")
+	config, err = clients.findUpstreams("1.1.1.1")
 	require.NotNil(t, config)
+	assert.NoError(t, err)
 	assert.Len(t, config.Upstreams, 1)
 	assert.Len(t, config.DomainReservedUpstreams, 1)
 }

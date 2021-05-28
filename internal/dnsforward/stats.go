@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
@@ -37,7 +38,7 @@ func processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
 			OrigAnswer: ctx.origResp,
 			Result:     ctx.result,
 			Elapsed:    elapsed,
-			ClientIP:   IPFromAddr(pctx.Addr),
+			ClientIP:   aghnet.IPFromAddr(pctx.Addr),
 			ClientID:   ctx.clientID,
 		}
 
@@ -79,7 +80,7 @@ func (s *Server) updateStats(ctx *dnsContext, elapsed time.Duration, res filteri
 
 	if clientID := ctx.clientID; clientID != "" {
 		e.Client = clientID
-	} else if ip := IPFromAddr(pctx.Addr); ip != nil {
+	} else if ip := aghnet.IPFromAddr(pctx.Addr); ip != nil {
 		e.Client = ip.String()
 	}
 

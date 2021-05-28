@@ -32,6 +32,8 @@ released by then.
 
 ### Fixed
 
+- Custom upstreams selection for clients with client IDs in DNS-over-TLS and
+  DNS-over-HTTP ([#3186]).
 - Incorrect client-based filtering applying logic ([#2875]).
 
 ### Removed
@@ -40,6 +42,7 @@ released by then.
 
 [#3184]: https://github.com/AdguardTeam/AdGuardHome/issues/3184
 [#3185]: https://github.com/AdguardTeam/AdGuardHome/issues/3185
+[#3186]: https://github.com/AdguardTeam/AdGuardHome/issues/3186
 
 
 

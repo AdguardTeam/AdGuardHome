@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -106,7 +107,7 @@ func isRunning() bool {
 }
 
 func onDNSRequest(d *proxy.DNSContext) {
-	ip := dnsforward.IPFromAddr(d.Addr)
+	ip := aghnet.IPFromAddr(d.Addr)
 	if ip == nil {
 		// This would be quite weird if we get here.
 		return
@@ -197,7 +198,7 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	newConf.TLSAllowUnencryptedDOH = tlsConf.AllowUnencryptedDOH
 
 	newConf.FilterHandler = applyAdditionalFiltering
-	newConf.GetCustomUpstreamByClient = Context.clients.FindUpstreams
+	newConf.GetCustomUpstreamByClient = Context.clients.findUpstreams
 
 	newConf.ResolveClients = dnsConf.ResolveClients
 	newConf.UsePrivateRDNS = dnsConf.UsePrivateRDNS

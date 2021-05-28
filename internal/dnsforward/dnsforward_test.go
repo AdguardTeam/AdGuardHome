@@ -12,7 +12,6 @@ import (
 	"math/big"
 	"net"
 	"os"
-	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -521,16 +520,16 @@ func TestServerCustomClientUpstream(t *testing.T) {
 		},
 	}
 	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
-	s.conf.GetCustomUpstreamByClient = func(_ string) *proxy.UpstreamConfig {
-		return &proxy.UpstreamConfig{
-			Upstreams: []upstream.Upstream{
-				&aghtest.TestUpstream{
-					IPv4: map[string][]net.IP{
-						"host.": {{192, 168, 0, 1}},
-					},
-				},
+	s.conf.GetCustomUpstreamByClient = func(_ string) (conf *proxy.UpstreamConfig, err error) {
+		ups := &aghtest.TestUpstream{
+			IPv4: map[string][]net.IP{
+				"host.": {{192, 168, 0, 1}},
 			},
 		}
+
+		return &proxy.UpstreamConfig{
+			Upstreams: []upstream.Upstream{ups},
+		}, nil
 	}
 	startDeferStop(t, s)
 
@@ -959,65 +958,6 @@ func publicKey(priv interface{}) interface{} {
 
 	default:
 		return nil
-	}
-}
-
-func TestIPStringFromAddr(t *testing.T) {
-	t.Run("not_nil", func(t *testing.T) {
-		addr := net.UDPAddr{
-			IP:   net.ParseIP("1:2:3::4"),
-			Port: 12345,
-			Zone: "eth0",
-		}
-		assert.Equal(t, IPStringFromAddr(&addr), addr.IP.String())
-	})
-
-	t.Run("nil", func(t *testing.T) {
-		assert.Empty(t, IPStringFromAddr(nil))
-	})
-}
-
-func TestMatchDNSName(t *testing.T) {
-	dnsNames := []string{"host1", "*.host2", "1.2.3.4"}
-	sort.Strings(dnsNames)
-
-	testCases := []struct {
-		name    string
-		dnsName string
-		want    bool
-	}{{
-		name:    "match",
-		dnsName: "host1",
-		want:    true,
-	}, {
-		name:    "match",
-		dnsName: "a.host2",
-		want:    true,
-	}, {
-		name:    "match",
-		dnsName: "b.a.host2",
-		want:    true,
-	}, {
-		name:    "match",
-		dnsName: "1.2.3.4",
-		want:    true,
-	}, {
-		name:    "mismatch",
-		dnsName: "host2",
-		want:    false,
-	}, {
-		name:    "mismatch",
-		dnsName: "",
-		want:    false,
-	}, {
-		name:    "mismatch",
-		dnsName: "*.host2",
-		want:    false,
-	}}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.want, matchDNSName(dnsNames, tc.dnsName))
-		})
 	}
 }
 

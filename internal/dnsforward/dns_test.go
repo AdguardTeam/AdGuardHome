@@ -379,3 +379,18 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 		require.Empty(t, proxyCtx.Res.Answer)
 	})
 }
+
+func TestIPStringFromAddr(t *testing.T) {
+	t.Run("not_nil", func(t *testing.T) {
+		addr := net.UDPAddr{
+			IP:   net.ParseIP("1:2:3::4"),
+			Port: 12345,
+			Zone: "eth0",
+		}
+		assert.Equal(t, ipStringFromAddr(&addr), addr.IP.String())
+	})
+
+	t.Run("nil", func(t *testing.T) {
+		assert.Empty(t, ipStringFromAddr(nil))
+	})
+}

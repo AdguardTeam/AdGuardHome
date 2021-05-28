@@ -10,6 +10,19 @@ import (
 	"golang.org/x/net/idna"
 )
 
+// IPFromAddr returns an IP address from addr.  If addr is neither
+// a *net.TCPAddr nor a *net.UDPAddr, it returns nil.
+func IPFromAddr(addr net.Addr) (ip net.IP) {
+	switch addr := addr.(type) {
+	case *net.TCPAddr:
+		return addr.IP
+	case *net.UDPAddr:
+		return addr.IP
+	}
+
+	return nil
+}
+
 // IsValidHostOuterRune returns true if r is a valid initial or final rune for
 // a hostname label.
 func IsValidHostOuterRune(r rune) (ok bool) {

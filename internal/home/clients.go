@@ -335,37 +335,44 @@ func (clients *clientsContainer) Find(id string) (c *Client, ok bool) {
 	return c, true
 }
 
-// FindUpstreams looks for upstreams configured for the client
-// If no client found for this IP, or if no custom upstreams are configured,
-// this method returns nil
-func (clients *clientsContainer) FindUpstreams(ip string) *proxy.UpstreamConfig {
+// findUpstreams returns upstreams configured for the client, identified either
+// by its IP address or its ClientID.  upsConf is nil if the client isn't found
+// or if the client has no custom upstreams.
+func (clients *clientsContainer) findUpstreams(
+	id string,
+) (upsConf *proxy.UpstreamConfig, err error) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	c, ok := clients.findLocked(ip)
+	c, ok := clients.findLocked(id)
 	if !ok {
-		return nil
+		return nil, nil
 	}
 
 	upstreams := aghstrings.FilterOut(c.Upstreams, aghstrings.IsCommentOrEmpty)
 	if len(upstreams) == 0 {
-		return nil
+		return nil, nil
 	}
 
-	if c.upstreamConfig == nil {
-		conf, err := proxy.ParseUpstreamsConfig(
-			upstreams,
-			upstream.Options{
-				Bootstrap: config.DNS.BootstrapDNS,
-				Timeout:   dnsforward.DefaultTimeout,
-			},
-		)
-		if err == nil {
-			c.upstreamConfig = &conf
-		}
+	if c.upstreamConfig != nil {
+		return c.upstreamConfig, nil
 	}
 
-	return c.upstreamConfig
+	var conf proxy.UpstreamConfig
+	conf, err = proxy.ParseUpstreamsConfig(
+		upstreams,
+		upstream.Options{
+			Bootstrap: config.DNS.BootstrapDNS,
+			Timeout:   dnsforward.DefaultTimeout,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	c.upstreamConfig = &conf
+
+	return &conf, nil
 }
 
 // findLocked searches for a client by its ID.  For internal use only.

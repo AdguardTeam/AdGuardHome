@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
-
 	"github.com/miekg/dns"
 )
 
 func (s *Server) beforeRequestHandler(_ *proxy.Proxy, d *proxy.DNSContext) (bool, error) {
-	ip := IPFromAddr(d.Addr)
+	ip := aghnet.IPFromAddr(d.Addr)
 	disallowed, _ := s.access.IsBlockedIP(ip)
 	if disallowed {
 		log.Tracef("Client IP %s is blocked by settings", ip)
@@ -39,7 +39,7 @@ func (s *Server) beforeRequestHandler(_ *proxy.Proxy, d *proxy.DNSContext) (bool
 func (s *Server) getClientRequestFilteringSettings(ctx *dnsContext) *filtering.Settings {
 	setts := s.dnsFilter.GetConfig()
 	if s.conf.FilterHandler != nil {
-		s.conf.FilterHandler(IPFromAddr(ctx.proxyCtx.Addr), ctx.clientID, &setts)
+		s.conf.FilterHandler(aghnet.IPFromAddr(ctx.proxyCtx.Addr), ctx.clientID, &setts)
 	}
 
 	return &setts

@@ -9,6 +9,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestIPFromAddr(t *testing.T) {
+	ip := net.IP{1, 2, 3, 4}
+	assert.Equal(t, net.IP(nil), IPFromAddr(nil))
+	assert.Equal(t, net.IP(nil), IPFromAddr(struct{ net.Addr }{}))
+	assert.Equal(t, ip, IPFromAddr(&net.TCPAddr{IP: ip}))
+	assert.Equal(t, ip, IPFromAddr(&net.UDPAddr{IP: ip}))
+}
+
 func TestValidateHardwareAddress(t *testing.T) {
 	testCases := []struct {
 		name       string
