@@ -13,8 +13,6 @@ import (
 
 // TestUpstream is a mock of real upstream.
 type TestUpstream struct {
-	// Addr is the address for Address method.
-	Addr string
 	// CName is a map of hostname to canonical name.
 	CName map[string]string
 	// IPv4 is a map of hostname to IPv4.
@@ -23,9 +21,13 @@ type TestUpstream struct {
 	IPv6 map[string][]net.IP
 	// Reverse is a map of address to domain name.
 	Reverse map[string][]string
+	// Addr is the address for Address method.
+	Addr string
 }
 
 // Exchange implements upstream.Upstream interface for *TestUpstream.
+//
+// TODO(a.garipov): Split further into handlers.
 func (u *TestUpstream) Exchange(m *dns.Msg) (resp *dns.Msg, err error) {
 	resp = &dns.Msg{}
 	resp.SetReply(m)
@@ -33,70 +35,69 @@ func (u *TestUpstream) Exchange(m *dns.Msg) (resp *dns.Msg, err error) {
 	if len(m.Question) == 0 {
 		return nil, fmt.Errorf("question should not be empty")
 	}
+
 	name := m.Question[0].Name
 
 	if cname, ok := u.CName[name]; ok {
-		resp.Answer = append(resp.Answer, &dns.CNAME{
+		ans := &dns.CNAME{
 			Hdr: dns.RR_Header{
 				Name:   name,
 				Rrtype: dns.TypeCNAME,
 			},
 			Target: cname,
-		})
+		}
+
+		resp.Answer = append(resp.Answer, ans)
 	}
 
-	var hasRec bool
-	var rrType uint16
+	rrType := m.Question[0].Qtype
+	hdr := dns.RR_Header{
+		Name:   name,
+		Rrtype: rrType,
+	}
+
+	var names []string
 	var ips []net.IP
 	switch m.Question[0].Qtype {
 	case dns.TypeA:
-		rrType = dns.TypeA
-		if ipv4addr, ok := u.IPv4[name]; ok {
-			hasRec = true
-			ips = ipv4addr
-		}
+		ips = u.IPv4[name]
 	case dns.TypeAAAA:
-		rrType = dns.TypeAAAA
-		if ipv6addr, ok := u.IPv6[name]; ok {
-			hasRec = true
-			ips = ipv6addr
-		}
+		ips = u.IPv6[name]
 	case dns.TypePTR:
-		names, ok := u.Reverse[name]
-		if !ok {
-			break
-		}
-
-		for _, n := range names {
-			resp.Answer = append(resp.Answer, &dns.PTR{
-				Hdr: dns.RR_Header{
-					Name:   n,
-					Rrtype: rrType,
-				},
-				Ptr: n,
-			})
-		}
+		names = u.Reverse[name]
 	}
 
 	for _, ip := range ips {
-		resp.Answer = append(resp.Answer, &dns.A{
-			Hdr: dns.RR_Header{
-				Name:   name,
-				Rrtype: rrType,
-			},
-			A: ip,
-		})
+		var ans dns.RR
+		if rrType == dns.TypeA {
+			ans = &dns.A{
+				Hdr: hdr,
+				A:   ip,
+			}
+
+			resp.Answer = append(resp.Answer, ans)
+
+			continue
+		}
+
+		ans = &dns.AAAA{
+			Hdr:  hdr,
+			AAAA: ip,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
+	}
+
+	for _, n := range names {
+		ans := &dns.PTR{
+			Hdr: hdr,
+			Ptr: n,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
 	}
 
 	if len(resp.Answer) == 0 {
-		if hasRec {
-			// Set no error RCode if there are some records for
-			// given Qname but we didn't apply them.
-			resp.SetRcode(m, dns.RcodeSuccess)
-
-			return resp, nil
-		}
-		// Set NXDomain RCode otherwise.
 		resp.SetRcode(m, dns.RcodeNameError)
 	}
 
@@ -111,10 +112,13 @@ func (u *TestUpstream) Address() string {
 // TestBlockUpstream implements upstream.Upstream interface for replacing real
 // upstream in tests.
 type TestBlockUpstream struct {
-	Hostname      string
-	Block         bool
-	requestsCount int
-	lock          sync.RWMutex
+	Hostname string
+
+	// lock protects reqNum.
+	lock   sync.RWMutex
+	reqNum int
+
+	Block bool
 }
 
 // Exchange returns a message unique for TestBlockUpstream's Hostname-Block
@@ -122,7 +126,7 @@ type TestBlockUpstream struct {
 func (u *TestBlockUpstream) Exchange(r *dns.Msg) (*dns.Msg, error) {
 	u.lock.Lock()
 	defer u.lock.Unlock()
-	u.requestsCount++
+	u.reqNum++
 
 	hash := sha256.Sum256([]byte(u.Hostname))
 	hashToReturn := hex.EncodeToString(hash[:])
@@ -156,7 +160,7 @@ func (u *TestBlockUpstream) RequestsCount() int {
 	u.lock.Lock()
 	defer u.lock.Unlock()
 
-	return u.requestsCount
+	return u.reqNum
 }
 
 // TestErrUpstream implements upstream.Upstream interface for replacing real

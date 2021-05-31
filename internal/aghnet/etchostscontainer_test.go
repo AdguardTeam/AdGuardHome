@@ -23,10 +23,11 @@ func prepareTestFile(t *testing.T) (f *os.File) {
 	dir := t.TempDir()
 
 	f, err := os.CreateTemp(dir, "")
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, f)
+
 	t.Cleanup(func() {
-		assert.Nil(t, f.Close())
+		assert.NoError(t, f.Close())
 	})
 
 	return f
@@ -37,7 +38,7 @@ func assertWriting(t *testing.T, f *os.File, strs ...string) {
 
 	for _, str := range strs {
 		n, err := f.WriteString(str)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, n, len(str))
 	}
 }
@@ -77,16 +78,16 @@ func TestEtcHostsContainerResolution(t *testing.T) {
 	t.Run("ptr", func(t *testing.T) {
 		testCases := []struct {
 			wantIP   string
-			wantLen  int
 			wantHost string
+			wantLen  int
 		}{
-			{wantIP: "127.0.0.1", wantLen: 2, wantHost: "host"},
-			{wantIP: "::1", wantLen: 1, wantHost: "localhost"},
+			{wantIP: "127.0.0.1", wantHost: "host", wantLen: 2},
+			{wantIP: "::1", wantHost: "localhost", wantLen: 1},
 		}
 
 		for _, tc := range testCases {
 			a, err := dns.ReverseAddr(tc.wantIP)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			a = strings.TrimSuffix(a, ".")
 			hosts := ehc.ProcessReverse(a, dns.TypePTR)
@@ -114,7 +115,7 @@ func TestEtcHostsContainerFSNotify(t *testing.T) {
 	t.Cleanup(ehc.Close)
 
 	assertWriting(t, f, "127.0.0.2   newhost\n")
-	require.Nil(t, f.Sync())
+	require.NoError(t, f.Sync())
 
 	// Wait until fsnotify has triggerred and processed the
 	// file-modification event.

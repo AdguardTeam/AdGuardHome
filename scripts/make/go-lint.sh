@@ -175,8 +175,15 @@ golint --set_exit_status ./...
 
 "$GO" vet ./...
 
-# Here and below, don't use quotes to get word splitting.
-gocyclo --over 17 $go_files
+# Apply more lax standards to the code we haven't properly refactored yet.
+gocyclo --over 17 ./internal/dhcpd/ ./internal/dnsforward/\
+	./internal/filtering/ ./internal/home/ ./internal/querylog/\
+	./internal/stats/ ./internal/updater/
+
+# Apply stricter standards to new or vetted code
+gocyclo --over 10 ./internal/aghio/ ./internal/aghnet/ ./internal/aghos/\
+	./internal/aghstrings/ ./internal/aghtest/ ./internal/tools/\
+	./internal/version/ ./main.go
 
 gosec --quiet $go_files
 

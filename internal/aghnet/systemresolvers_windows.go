@@ -45,6 +45,57 @@ func (sr *systemResolvers) Get() (rs []string) {
 	return rs
 }
 
+// writeExit writes "exit" to w and closes it.  It is supposed to be run in
+// a goroutine.
+func writeExit(w io.WriteCloser) {
+	defer log.OnPanic("systemResolvers: writeExit")
+
+	defer func() {
+		derr := w.Close()
+		if derr != nil {
+			log.Error("systemResolvers: writeExit: closing: %s", derr)
+		}
+	}()
+
+	_, err := io.WriteString(w, "exit")
+	if err != nil {
+		log.Error("systemResolvers: writeExit: writing: %s", err)
+	}
+}
+
+// scanAddrs scans the DNS addresses from nslookup's output.  The expected
+// output of nslookup looks like this:
+//
+//   Default Server:  192-168-1-1.qualified.domain.ru
+//   Address:  192.168.1.1
+//
+func scanAddrs(s *bufio.Scanner) (addrs []string) {
+	for s.Scan() {
+		line := strings.TrimSpace(s.Text())
+		fields := strings.Fields(line)
+		if len(fields) != 2 || fields[0] != "Address:" {
+			continue
+		}
+
+		// If the address contains port then it is separated with '#'.
+		ipPort := strings.Split(fields[1], "#")
+		if len(ipPort) == 0 {
+			continue
+		}
+
+		addr := ipPort[0]
+		if net.ParseIP(addr) == nil {
+			log.Debug("systemResolvers: %q is not a valid ip", addr)
+
+			continue
+		}
+
+		addrs = append(addrs, addr)
+	}
+
+	return addrs
+}
+
 // getAddrs gets local resolvers' addresses from OS in a special Windows way.
 //
 // TODO(e.burkov): This whole function needs more detailed research on getting
@@ -71,72 +122,29 @@ func (sr *systemResolvers) getAddrs() (addrs []string, err error) {
 		return nil, fmt.Errorf("limiting stdout reader: %w", err)
 	}
 
-	go func() {
-		defer log.OnPanic("systemResolvers")
-
-		defer func() {
-			derr := stdin.Close()
-			if derr != nil {
-				log.Error("systemResolvers: closing stdin pipe: %s", derr)
-			}
-		}()
-
-		_, werr := io.WriteString(stdin, "exit")
-		if werr != nil {
-			log.Error("systemResolvers: writing to command pipe: %s", werr)
-		}
-	}()
+	go writeExit(stdin)
 
 	err = cmd.Start()
 	if err != nil {
 		return nil, fmt.Errorf("start command executing: %w", err)
 	}
 
-	// The output of nslookup looks like this:
-	//
-	// Default Server:  192-168-1-1.qualified.domain.ru
-	// Address:  192.168.1.1
-
-	var possibleIPs []string
 	s := bufio.NewScanner(stdoutLimited)
-	for s.Scan() {
-		line := s.Text()
-		if len(line) == 0 {
-			continue
-		}
-
-		fields := strings.Fields(line)
-		if len(fields) != 2 || fields[0] != "Address:" {
-			continue
-		}
-
-		// If the address contains port then it is separated with '#'.
-		ipStrs := strings.Split(fields[1], "#")
-		if len(ipStrs) == 0 {
-			continue
-		}
-
-		possibleIPs = append(possibleIPs, ipStrs[0])
-	}
+	addrs = scanAddrs(s)
 
 	err = cmd.Wait()
 	if err != nil {
 		return nil, fmt.Errorf("executing the command: %w", err)
 	}
 
+	err = s.Err()
+	if err != nil {
+		return nil, fmt.Errorf("scanning output: %w", err)
+	}
+
 	// Don't close StdoutPipe since Wait do it for us in ¿most? cases.
 	//
 	// See go doc os/exec.Cmd.StdoutPipe.
-
-	for _, addr := range possibleIPs {
-		if net.ParseIP(addr) == nil {
-			log.Debug("systemResolvers: %q is not a valid ip", addr)
-
-			continue
-		}
-
-		addrs = append(addrs, addr)
-	}
 
 	return addrs, nil
 }

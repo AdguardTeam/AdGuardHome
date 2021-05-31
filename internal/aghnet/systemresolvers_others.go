@@ -32,6 +32,18 @@ type systemResolvers struct {
 	addrsLock sync.RWMutex
 }
 
+const (
+	// errBadAddrPassed is returned when dialFunc can't parse an IP address.
+	errBadAddrPassed errors.Error = "the passed string is not a valid IP address"
+
+	// errFakeDial is an error which dialFunc is expected to return.
+	errFakeDial errors.Error = "this error signals the successful dialFunc work"
+
+	// errUnexpectedHostFormat is returned by validateDialedHost when the host has
+	// more than one percent sign.
+	errUnexpectedHostFormat errors.Error = "unexpected host format"
+)
+
 func (sr *systemResolvers) refresh() (err error) {
 	defer func() { err = errors.Annotate(err, "systemResolvers: %w") }()
 

@@ -2,7 +2,6 @@ package aghnet
 
 import (
 	"bufio"
-	"io"
 	"net"
 	"os"
 	"path/filepath"
@@ -231,14 +230,41 @@ func (ehc *EtcHostsContainer) updateTableRev(tableRev map[string][]string, newHo
 	log.Debug("etchostscontainer: added reverse-address %s -> %s", ipStr, newHost)
 }
 
-// Read IP-hostname pairs from file
-// Multiple hostnames per line (per one IP) is supported.
-func (ehc *EtcHostsContainer) load(table map[string][]net.IP, tableRev map[string][]string, fn string) {
+// parseHostsLine parses hosts from the fields.
+func parseHostsLine(fields []string) (hosts []string) {
+	for _, f := range fields {
+		hashIdx := strings.IndexByte(f, '#')
+		if hashIdx == 0 {
+			// The rest of the fields are a part of the comment.
+			// Skip immediately.
+			return
+		} else if hashIdx > 0 {
+			// Only a part of the field is a comment.
+			hosts = append(hosts, f[:hashIdx])
+
+			return hosts
+		}
+
+		hosts = append(hosts, f)
+	}
+
+	return hosts
+}
+
+// load reads IP-hostname pairs from the hosts file.  Multiple hostnames per
+// line for one IP are supported.
+func (ehc *EtcHostsContainer) load(
+	table map[string][]net.IP,
+	tableRev map[string][]string,
+	fn string,
+) {
 	f, err := os.Open(fn)
 	if err != nil {
 		log.Error("etchostscontainer: %s", err)
+
 		return
 	}
+
 	defer func() {
 		derr := f.Close()
 		if derr != nil {
@@ -246,25 +272,11 @@ func (ehc *EtcHostsContainer) load(table map[string][]net.IP, tableRev map[strin
 		}
 	}()
 
-	r := bufio.NewReader(f)
 	log.Debug("etchostscontainer: loading hosts from file %s", fn)
 
-	for done := false; !done; {
-		var line string
-		line, err = r.ReadString('\n')
-		if err == io.EOF {
-			done = true
-		} else if err != nil {
-			log.Error("etchostscontainer: %s", err)
-
-			return
-		}
-
-		line = strings.TrimSpace(line)
-		if len(line) == 0 || line[0] == '#' {
-			continue
-		}
-
+	s := bufio.NewScanner(f)
+	for s.Scan() {
+		line := strings.TrimSpace(s.Text())
 		fields := strings.Fields(line)
 		if len(fields) < 2 {
 			continue
@@ -275,27 +287,16 @@ func (ehc *EtcHostsContainer) load(table map[string][]net.IP, tableRev map[strin
 			continue
 		}
 
-		for i := 1; i != len(fields); i++ {
-			host := fields[i]
-			if len(host) == 0 {
-				break
-			}
-
-			sharp := strings.IndexByte(host, '#')
-			if sharp == 0 {
-				// Skip the comments.
-				break
-			} else if sharp > 0 {
-				host = host[:sharp]
-			}
-
+		hosts := parseHostsLine(fields[1:])
+		for _, host := range hosts {
 			ehc.updateTable(table, host, ip)
 			ehc.updateTableRev(tableRev, host, ip)
-			if sharp >= 0 {
-				// Skip the comments again.
-				break
-			}
 		}
+	}
+
+	err = s.Err()
+	if err != nil {
+		log.Error("etchostscontainer: %s", err)
 	}
 }
 

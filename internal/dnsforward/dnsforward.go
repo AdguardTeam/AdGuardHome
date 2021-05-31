@@ -284,7 +284,7 @@ func (s *Server) Exchange(ip net.IP) (host string, err error) {
 		StartTime: time.Now(),
 	}
 
-	var resolver *proxy.Proxy = s.internalProxy
+	resolver := s.internalProxy
 	if s.subnetDetector.IsLocallyServedNetwork(ip) {
 		if !s.conf.UsePrivateRDNS {
 			return "", nil

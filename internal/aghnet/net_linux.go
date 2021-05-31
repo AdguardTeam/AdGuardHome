@@ -68,40 +68,41 @@ func ifaceHasStaticIP(ifaceName string) (has bool, err error) {
 	return false, ErrNoStaticIPInfo
 }
 
+// findIfaceLine scans s until it finds the line that declares an interface with
+// the given name.  If findIfaceLine can't find the line, it returns false.
+func findIfaceLine(s *bufio.Scanner, name string) (ok bool) {
+	for s.Scan() {
+		line := strings.TrimSpace(s.Text())
+		fields := strings.Fields(line)
+		if len(fields) == 2 && fields[0] == "interface" && fields[1] == name {
+			return true
+		}
+	}
+
+	return false
+}
+
 // dhcpcdStaticConfig checks if interface is configured by /etc/dhcpcd.conf to
 // have a static IP.
 func dhcpcdStaticConfig(r io.Reader, ifaceName string) (has bool, err error) {
 	s := bufio.NewScanner(r)
-	var withinInterfaceCtx bool
+	ifaceFound := findIfaceLine(s, ifaceName)
+	if !ifaceFound {
+		return false, s.Err()
+	}
 
 	for s.Scan() {
 		line := strings.TrimSpace(s.Text())
-
-		if withinInterfaceCtx && len(line) == 0 {
-			// An empty line resets our state.
-			withinInterfaceCtx = false
-		}
-
-		if len(line) == 0 || line[0] == '#' {
-			continue
-		}
-
 		fields := strings.Fields(line)
-
-		if withinInterfaceCtx {
-			if len(fields) >= 2 && fields[0] == "static" && strings.HasPrefix(fields[1], "ip_address=") {
-				return true, nil
-			}
-			if len(fields) > 0 && fields[0] == "interface" {
-				// Another interface found.
-				withinInterfaceCtx = false
-			}
-			continue
+		if len(fields) >= 2 &&
+			fields[0] == "static" &&
+			strings.HasPrefix(fields[1], "ip_address=") {
+			return true, s.Err()
 		}
 
-		if len(fields) == 2 && fields[0] == "interface" && fields[1] == ifaceName {
-			// The interface found.
-			withinInterfaceCtx = true
+		if len(fields) > 0 && fields[0] == "interface" {
+			// Another interface found.
+			break
 		}
 	}
 

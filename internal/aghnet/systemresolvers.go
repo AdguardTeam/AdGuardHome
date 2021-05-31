@@ -3,7 +3,6 @@ package aghnet
 import (
 	"time"
 
-	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -24,18 +23,6 @@ type SystemResolvers interface {
 	// safe for concurrent use.
 	refresh() (err error)
 }
-
-const (
-	// errBadAddrPassed is returned when dialFunc can't parse an IP address.
-	errBadAddrPassed errors.Error = "the passed string is not a valid IP address"
-
-	// errFakeDial is an error which dialFunc is expected to return.
-	errFakeDial errors.Error = "this error signals the successful dialFunc work"
-
-	// errUnexpectedHostFormat is returned by validateDialedHost when the host has
-	// more than one percent sign.
-	errUnexpectedHostFormat errors.Error = "unexpected host format"
-)
 
 // refreshWithTicker refreshes the cache of sr after each tick form tickCh.
 func refreshWithTicker(sr SystemResolvers, tickCh <-chan time.Time) {

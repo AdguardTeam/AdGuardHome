@@ -326,7 +326,7 @@ func TestServer_ProcessRestrictLocal(t *testing.T) {
 			require.Len(t, pctx.Res.Answer, tc.wantLen)
 
 			if tc.wantLen > 0 {
-				assert.Equal(t, tc.want, pctx.Res.Answer[0].Header().Name)
+				assert.Equal(t, tc.want, pctx.Res.Answer[0].(*dns.PTR).Ptr)
 			}
 		})
 	}
@@ -368,7 +368,7 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 		require.Equal(t, resultCodeSuccess, rc)
 		require.NotEmpty(t, proxyCtx.Res.Answer)
 
-		assert.Equal(t, locDomain, proxyCtx.Res.Answer[0].Header().Name)
+		assert.Equal(t, locDomain, proxyCtx.Res.Answer[0].(*dns.PTR).Ptr)
 	})
 
 	t.Run("disabled", func(t *testing.T) {
