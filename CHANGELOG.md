@@ -37,6 +37,7 @@ released by then.
 
 ### Fixed
 
+- Domain name case in responses ([#3194]).
 - Custom upstreams selection for clients with client IDs in DNS-over-TLS and
   DNS-over-HTTP ([#3186]).
 - Incorrect client-based filtering applying logic ([#2875]).
@@ -48,6 +49,7 @@ released by then.
 [#3184]: https://github.com/AdguardTeam/AdGuardHome/issues/3184
 [#3185]: https://github.com/AdguardTeam/AdGuardHome/issues/3185
 [#3186]: https://github.com/AdguardTeam/AdGuardHome/issues/3186
+[#3194]: https://github.com/AdguardTeam/AdGuardHome/issues/3194
 [#3198]: https://github.com/AdguardTeam/AdGuardHome/issues/3198
 
 

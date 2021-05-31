@@ -129,10 +129,12 @@ func (a *accessCtx) IsBlockedIP(ip net.IP) (bool, string) {
 }
 
 // IsBlockedDomain - return TRUE if this domain should be blocked
-func (a *accessCtx) IsBlockedDomain(host string) bool {
+func (a *accessCtx) IsBlockedDomain(host string) (ok bool) {
 	a.lock.Lock()
-	_, ok := a.blockedHostsEngine.Match(host)
-	a.lock.Unlock()
+	defer a.lock.Unlock()
+
+	_, ok = a.blockedHostsEngine.Match(strings.ToLower(host))
+
 	return ok
 }
 
