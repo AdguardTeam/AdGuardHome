@@ -15,7 +15,8 @@ and this project adheres to
 
 ### Added
 
-- Detection and handling of recurrent requests ([#3185]).
+- Detection and handling of recurrent PTR requests for locally-served addresses
+  ([#3185]).
 - The ability to completely disable reverse DNS resolving of IPs from
   locally-served networks ([#3184]).
 - New flag `--local-frontend` to serve dinamically changeable frontend files

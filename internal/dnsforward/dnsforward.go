@@ -124,7 +124,7 @@ func domainNameToSuffix(tld string) (suffix string) {
 
 const (
 	// recursionTTL is the time recursive request is cached for.
-	recursionTTL = 5 * time.Second
+	recursionTTL = 1 * time.Second
 	// cachedRecurrentReqNum is the maximum number of cached recurrent
 	// requests.
 	cachedRecurrentReqNum = 1000
@@ -265,13 +265,6 @@ func (s *Server) Exchange(ip net.IP) (host string, err error) {
 		return "", nil
 	}
 
-	var resolver *proxy.Proxy = s.localResolvers
-	if !s.subnetDetector.IsLocallyServedNetwork(ip) {
-		resolver = s.internalProxy
-	} else if !s.conf.UsePrivateRDNS {
-		return "", nil
-	}
-
 	arpa := dns.Fqdn(aghnet.ReverseAddr(ip))
 	req := &dns.Msg{
 		MsgHdr: dns.MsgHdr{
@@ -291,7 +284,16 @@ func (s *Server) Exchange(ip net.IP) (host string, err error) {
 		StartTime: time.Now(),
 	}
 
-	s.recDetector.add(*req)
+	var resolver *proxy.Proxy = s.internalProxy
+	if s.subnetDetector.IsLocallyServedNetwork(ip) {
+		if !s.conf.UsePrivateRDNS {
+			return "", nil
+		}
+
+		resolver = s.localResolvers
+		s.recDetector.add(*req)
+	}
+
 	if err = resolver.Resolve(ctx); err != nil {
 		return "", err
 	}

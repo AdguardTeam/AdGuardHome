@@ -26,7 +26,7 @@ type recursionDetector struct {
 	ttl            time.Duration
 }
 
-// check checks if the passed req was already sent by s.
+// check checks if the passed req was already sent by the server.
 func (rd *recursionDetector) check(msg dns.Msg) (ok bool) {
 	if len(msg.Question) == 0 {
 		return false
