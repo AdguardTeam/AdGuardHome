@@ -52,6 +52,7 @@ released by then.
 
 [#2441]: https://github.com/AdguardTeam/AdGuardHome/issues/2441
 [#2443]: https://github.com/AdguardTeam/AdGuardHome/issues/2443
+[#3136]: https://github.com/AdguardTeam/AdGuardHome/issues/3136
 [#3184]: https://github.com/AdguardTeam/AdGuardHome/issues/3184
 [#3185]: https://github.com/AdguardTeam/AdGuardHome/issues/3185
 [#3186]: https://github.com/AdguardTeam/AdGuardHome/issues/3186
