@@ -4,6 +4,12 @@
 
 ## v0.107: API changes
 
+### The parameter `"host"` in `GET /apple/*.mobileconfig` is now required.
+
+* The parameter `"host"` in `GET` requests for `/apple/doh.mobileconfig` and
+  `/apple/doh.mobileconfig` is now required to prevent unexpected server name's
+  value.
+
 ### The new field `"default_local_ptr_upstreams"` in `GET /control/dns_info`
 
 * The new optional field `"default_local_ptr_upstreams"` is the list of IP

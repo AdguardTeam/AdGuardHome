@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -254,7 +253,7 @@ func getDNSEncryption() (de dnsEncryption) {
 		if tlsConf.PortHTTPS != 0 {
 			addr := hostname
 			if tlsConf.PortHTTPS != 443 {
-				addr = net.JoinHostPort(addr, strconv.Itoa(tlsConf.PortHTTPS))
+				addr = aghnet.JoinHostPort(addr, tlsConf.PortHTTPS)
 			}
 
 			de.https = (&url.URL{
@@ -267,14 +266,14 @@ func getDNSEncryption() (de dnsEncryption) {
 		if tlsConf.PortDNSOverTLS != 0 {
 			de.tls = (&url.URL{
 				Scheme: "tls",
-				Host:   net.JoinHostPort(hostname, strconv.Itoa(tlsConf.PortDNSOverTLS)),
+				Host:   aghnet.JoinHostPort(hostname, tlsConf.PortDNSOverTLS),
 			}).String()
 		}
 
 		if tlsConf.PortDNSOverQUIC != 0 {
 			de.quic = (&url.URL{
 				Scheme: "quic",
-				Host:   net.JoinHostPort(hostname, strconv.Itoa(int(tlsConf.PortDNSOverQUIC))),
+				Host:   aghnet.JoinHostPort(hostname, tlsConf.PortDNSOverQUIC),
 			}).String()
 		}
 	}

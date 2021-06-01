@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 
@@ -162,6 +161,8 @@ func (web *Web) TLSConfigChanged(ctx context.Context, tlsConf tlsConfigSettings)
 
 // Start - start serving HTTP requests
 func (web *Web) Start() {
+	log.Println("AdGuard Home is available at the following addresses:")
+
 	// for https, we have a separate goroutine loop
 	go web.tlsServerLoop()
 
@@ -174,7 +175,7 @@ func (web *Web) Start() {
 		// we need to have new instance, because after Shutdown() the Server is not usable
 		web.httpServer = &http.Server{
 			ErrorLog:          log.StdLog("web: plain", log.DEBUG),
-			Addr:              net.JoinHostPort(hostStr, strconv.Itoa(web.conf.BindPort)),
+			Addr:              aghnet.JoinHostPort(hostStr, web.conf.BindPort),
 			Handler:           withMiddlewares(Context.mux, limitRequestBody),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
@@ -187,7 +188,7 @@ func (web *Web) Start() {
 		if web.conf.BetaBindPort != 0 {
 			web.httpServerBeta = &http.Server{
 				ErrorLog:          log.StdLog("web: plain", log.DEBUG),
-				Addr:              net.JoinHostPort(hostStr, strconv.Itoa(web.conf.BetaBindPort)),
+				Addr:              aghnet.JoinHostPort(hostStr, web.conf.BetaBindPort),
 				Handler:           withMiddlewares(Context.mux, limitRequestBody, web.wrapIndexBeta),
 				ReadTimeout:       web.conf.ReadTimeout,
 				ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
@@ -248,7 +249,7 @@ func (web *Web) tlsServerLoop() {
 		web.httpsServer.cond.L.Unlock()
 
 		// prepare HTTPS server
-		address := net.JoinHostPort(web.conf.BindHost.String(), strconv.Itoa(web.conf.PortHTTPS))
+		address := aghnet.JoinHostPort(web.conf.BindHost.String(), web.conf.PortHTTPS)
 		web.httpsServer.server = &http.Server{
 			ErrorLog: log.StdLog("web: https", log.DEBUG),
 			Addr:     address,

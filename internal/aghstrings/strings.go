@@ -21,7 +21,8 @@ func CloneSlice(a []string) (b []string) {
 
 // Coalesce returns the first non-empty string.  It is named after the function
 // COALESCE in SQL except that since strings in Go are non-nullable, it uses an
-// empty string as a NULL value.  If strs is empty, it returns an empty string.
+// empty string as a NULL value.  If strs or all it's elements are empty, it
+// returns an empty string.
 func Coalesce(strs ...string) (res string) {
 	for _, s := range strs {
 		if s != "" {

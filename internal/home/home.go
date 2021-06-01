@@ -15,7 +15,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -630,7 +629,28 @@ func loadOptions() options {
 	return o
 }
 
-// printHTTPAddresses prints the IP addresses which user can use to open the
+// printWebAddrs prints addresses built from proto, addr, and an appropriate
+// port.  At least one address is printed with the value of port.  If the value
+// of betaPort is 0, the second address is not printed.  The output example:
+//
+//   Go to http://127.0.0.1:80
+//   Go to http://127.0.0.1:3000 (BETA)
+//
+func printWebAddrs(proto, addr string, port, betaPort int) {
+	const (
+		hostMsg     = "Go to %s://%s"
+		hostBetaMsg = hostMsg + " (BETA)"
+	)
+
+	log.Printf(hostMsg, proto, aghnet.JoinHostPort(addr, port))
+	if betaPort == 0 {
+		return
+	}
+
+	log.Printf(hostBetaMsg, proto, aghnet.JoinHostPort(addr, config.BetaBindPort))
+}
+
+// printHTTPAddresses prints the IP addresses which user can use to access the
 // admin interface.  proto is either schemeHTTP or schemeHTTPS.
 func printHTTPAddresses(proto string) {
 	tlsConf := tlsConfigSettings{}
@@ -638,45 +658,40 @@ func printHTTPAddresses(proto string) {
 		Context.tls.WriteDiskConfig(&tlsConf)
 	}
 
-	port := strconv.Itoa(config.BindPort)
+	port := config.BindPort
 	if proto == schemeHTTPS {
-		port = strconv.Itoa(tlsConf.PortHTTPS)
+		port = tlsConf.PortHTTPS
 	}
 
-	var hostStr string
+	// TODO(e.burkov): Inspect and perhaps merge with the previous
+	// condition.
 	if proto == schemeHTTPS && tlsConf.ServerName != "" {
-		if tlsConf.PortHTTPS == 443 {
-			log.Printf("Go to https://%s", tlsConf.ServerName)
-		} else {
-			log.Printf("Go to https://%s:%s", tlsConf.ServerName, port)
-		}
-	} else if config.BindHost.IsUnspecified() {
-		log.Println("AdGuard Home is available on the following addresses:")
-		ifaces, err := aghnet.GetValidNetInterfacesForWeb()
-		if err != nil {
-			// That's weird, but we'll ignore it
-			hostStr = config.BindHost.String()
-			log.Printf("Go to %s://%s", proto, net.JoinHostPort(hostStr, port))
-			if config.BetaBindPort != 0 {
-				log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(hostStr, strconv.Itoa(config.BetaBindPort)))
-			}
-			return
-		}
+		printWebAddrs(proto, tlsConf.ServerName, tlsConf.PortHTTPS, 0)
 
-		for _, iface := range ifaces {
-			for _, addr := range iface.Addresses {
-				hostStr = addr.String()
-				log.Printf("Go to %s://%s", proto, net.JoinHostPort(hostStr, strconv.Itoa(config.BindPort)))
-				if config.BetaBindPort != 0 {
-					log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(hostStr, strconv.Itoa(config.BetaBindPort)))
-				}
-			}
-		}
-	} else {
-		hostStr = config.BindHost.String()
-		log.Printf("Go to %s://%s", proto, net.JoinHostPort(hostStr, port))
-		if config.BetaBindPort != 0 {
-			log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(hostStr, strconv.Itoa(config.BetaBindPort)))
+		return
+	}
+
+	bindhost := config.BindHost
+	if !bindhost.IsUnspecified() {
+		printWebAddrs(proto, bindhost.String(), port, config.BetaBindPort)
+
+		return
+	}
+
+	ifaces, err := aghnet.GetValidNetInterfacesForWeb()
+	if err != nil {
+		log.Error("web: getting iface ips: %s", err)
+		// That's weird, but we'll ignore it.
+		//
+		// TODO(e.burkov): Find out when it happens.
+		printWebAddrs(proto, bindhost.String(), port, config.BetaBindPort)
+
+		return
+	}
+
+	for _, iface := range ifaces {
+		for _, addr := range iface.Addresses {
+			printWebAddrs(proto, addr.String(), config.BindPort, config.BetaBindPort)
 		}
 	}
 }

@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"runtime"
-	"strconv"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -38,9 +37,11 @@ func httpError(w http.ResponseWriter, code int, format string, args ...interface
 // addresses to a slice of strings.
 func appendDNSAddrs(dst []string, addrs ...net.IP) (res []string) {
 	for _, addr := range addrs {
-		hostport := addr.String()
+		var hostport string
 		if config.DNS.Port != 53 {
-			hostport = net.JoinHostPort(hostport, strconv.Itoa(config.DNS.Port))
+			hostport = aghnet.JoinHostPort(addr.String(), config.DNS.Port)
+		} else {
+			hostport = addr.String()
 		}
 
 		dst = append(dst, hostport)
@@ -303,8 +304,7 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 	if r.TLS == nil && web.forceHTTPS {
 		hostPort := host
 		if port := web.conf.PortHTTPS; port != defaultHTTPSPort {
-			portStr := strconv.Itoa(port)
-			hostPort = net.JoinHostPort(host, portStr)
+			hostPort = aghnet.JoinHostPort(host, port)
 		}
 
 		httpsURL := &url.URL{

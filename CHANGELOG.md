@@ -15,6 +15,8 @@ and this project adheres to
 
 ### Added
 
+- Support for custom port in DNS-over-HTTPS profiles for Apple's devices
+  ([#3172]).
 - `darwin/arm64` support ([#2443]).
 - `freebsd/arm64` support ([#2441]).
 - Output of the default addresses of the upstreams used for resolving PTRs for
@@ -53,6 +55,7 @@ released by then.
 [#2441]: https://github.com/AdguardTeam/AdGuardHome/issues/2441
 [#2443]: https://github.com/AdguardTeam/AdGuardHome/issues/2443
 [#3136]: https://github.com/AdguardTeam/AdGuardHome/issues/3136
+[#3172]: https://github.com/AdguardTeam/AdGuardHome/issues/3172
 [#3184]: https://github.com/AdguardTeam/AdGuardHome/issues/3184
 [#3185]: https://github.com/AdguardTeam/AdGuardHome/issues/3185
 [#3186]: https://github.com/AdguardTeam/AdGuardHome/issues/3186

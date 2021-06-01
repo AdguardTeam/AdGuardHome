@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/insomniacslk/dhcp/dhcpv4"
@@ -44,7 +45,7 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (ok bool, err error) {
 	}
 
 	srcIP := ifaceIPNet[0]
-	src := net.JoinHostPort(srcIP.String(), "68")
+	src := aghnet.JoinHostPort(srcIP.String(), 68)
 	dst := "255.255.255.255:67"
 
 	hostname, _ := os.Hostname()
@@ -175,7 +176,7 @@ func CheckIfOtherDHCPServersPresentV6(ifaceName string) (ok bool, err error) {
 	}
 
 	srcIP := ifaceIPNet[0]
-	src := net.JoinHostPort(srcIP.String(), "546")
+	src := aghnet.JoinHostPort(srcIP.String(), 546)
 	dst := "[ff02::1:2]:547"
 
 	req, err := dhcpv6.NewSolicit(iface.HardwareAddr)

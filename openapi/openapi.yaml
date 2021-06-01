@@ -1129,6 +1129,7 @@
         'example': 'example.org'
         'in': 'query'
         'name': 'host'
+        'required': true
         'schema':
           'type': 'string'
       - 'description': >
@@ -1163,6 +1164,7 @@
         'example': 'example.org'
         'in': 'query'
         'name': 'host'
+        'required': true
         'schema':
           'type': 'string'
       - 'description': >

@@ -7,14 +7,17 @@ import i18next from 'i18next';
 import cn from 'classnames';
 
 import { getPathWithQueryString } from '../../../helpers/helpers';
-import { FORM_NAME, MOBILE_CONFIG_LINKS } from '../../../helpers/constants';
+import { FORM_NAME, MOBILE_CONFIG_LINKS, STANDARD_HTTPS_PORT } from '../../../helpers/constants';
 import {
     renderInputField,
     renderSelectField,
+    toNumber,
 } from '../../../helpers/form';
 import {
     validateClientId,
     validateServerName,
+    validatePort,
+    validateIsSafePort,
 } from '../../../helpers/validators';
 
 const getDownloadLink = (host, clientId, protocol, invalid) => {
@@ -53,7 +56,9 @@ const MobileConfigForm = ({ invalid }) => {
         return null;
     }
 
-    const { host, clientId, protocol } = formValues;
+    const {
+        host, clientId, protocol, port,
+    } = formValues;
 
     const githubLink = (
         <a
@@ -65,21 +70,52 @@ const MobileConfigForm = ({ invalid }) => {
         </a>
     );
 
+    const getHostName = () => {
+        if (port
+            && port !== STANDARD_HTTPS_PORT
+            && protocol === MOBILE_CONFIG_LINKS.DOH
+        ) {
+            return `${host}:${port}`;
+        }
+
+        return host;
+    };
+
     return (
         <form onSubmit={(e) => e.preventDefault()}>
             <div>
                 <div className="form__group form__group--settings">
-                    <label htmlFor="host" className="form__label">
-                        {i18next.t('dhcp_table_hostname')}
-                    </label>
-                     <Field
-                        name="host"
-                        type="text"
-                        component={renderInputField}
-                        className="form-control"
-                        placeholder={i18next.t('form_enter_hostname')}
-                        validate={validateServerName}
-                    />
+                    <div className="row">
+                        <div className="col">
+                            <label htmlFor="host" className="form__label">
+                                {i18next.t('dhcp_table_hostname')}
+                            </label>
+                            <Field
+                                name="host"
+                                type="text"
+                                component={renderInputField}
+                                className="form-control"
+                                placeholder={i18next.t('form_enter_hostname')}
+                                validate={validateServerName}
+                            />
+                        </div>
+                        {protocol === MOBILE_CONFIG_LINKS.DOH && (
+                            <div className="col">
+                                <label htmlFor="port" className="form__label">
+                                    {i18next.t('encryption_https')}
+                                </label>
+                                <Field
+                                    name="port"
+                                    type="number"
+                                    component={renderInputField}
+                                    className="form-control"
+                                    placeholder={i18next.t('encryption_https')}
+                                    validate={[validatePort, validateIsSafePort]}
+                                    normalize={toNumber}
+                                />
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <div className="form__group form__group--settings">
                     <label htmlFor="clientId" className="form__label form__label--with-desc">
@@ -119,7 +155,7 @@ const MobileConfigForm = ({ invalid }) => {
                 </div>
             </div>
 
-            {getDownloadLink(host, clientId, protocol, invalid)}
+            {getDownloadLink(getHostName(), clientId, protocol, invalid)}
         </form>
     );
 };

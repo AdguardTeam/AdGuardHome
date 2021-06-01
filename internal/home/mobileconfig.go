@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	uuid "github.com/satori/go.uuid"
 	"howett.net/plist"
@@ -53,27 +54,27 @@ const (
 
 func getMobileConfig(d dnsSettings) ([]byte, error) {
 	var dspName string
-	switch d.DNSProtocol {
+	switch proto := d.DNSProtocol; proto {
 	case dnsProtoHTTPS:
 		dspName = fmt.Sprintf("%s DoH", d.ServerName)
-
 		u := &url.URL{
 			Scheme: schemeHTTPS,
 			Host:   d.ServerName,
-			Path:   "/dns-query",
+			Path:   path.Join("/dns-query", d.clientID),
 		}
-		if d.clientID != "" {
-			u.Path = path.Join(u.Path, d.clientID)
-		}
-
 		d.ServerURL = u.String()
+		// Empty the ServerName field since it is only must be presented
+		// in DNS-over-TLS configuration.
+		//
+		// See https://developer.apple.com/documentation/devicemanagement/dnssettings/dnssettings.
+		d.ServerName = ""
 	case dnsProtoTLS:
 		dspName = fmt.Sprintf("%s DoT", d.ServerName)
 		if d.clientID != "" {
 			d.ServerName = d.clientID + "." + d.ServerName
 		}
 	default:
-		return nil, fmt.Errorf("bad dns protocol %q", d.DNSProtocol)
+		return nil, fmt.Errorf("bad dns protocol %q", proto)
 	}
 
 	data := mobileConfig{
@@ -99,25 +100,25 @@ func getMobileConfig(d dnsSettings) ([]byte, error) {
 	return plist.MarshalIndent(data, plist.XMLFormat, "\t")
 }
 
+func respondJSONError(w http.ResponseWriter, status int, msg string) {
+	w.WriteHeader(http.StatusInternalServerError)
+	err := json.NewEncoder(w).Encode(&jsonError{
+		Message: msg,
+	})
+	if err != nil {
+		log.Debug("writing %d json response: %s", status, err)
+	}
+}
+
+const errEmptyHost errors.Error = "no host in query parameters and no server_name"
+
 func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 	var err error
 
 	q := r.URL.Query()
 	host := q.Get("host")
 	if host == "" {
-		host = Context.tls.conf.ServerName
-	}
-
-	if host == "" {
-		w.WriteHeader(http.StatusInternalServerError)
-
-		const msg = "no host in query parameters and no server_name"
-		err = json.NewEncoder(w).Encode(&jsonError{
-			Message: msg,
-		})
-		if err != nil {
-			log.Debug("writing 500 json response: %s", err)
-		}
+		respondJSONError(w, http.StatusInternalServerError, string(errEmptyHost))
 
 		return
 	}
@@ -126,14 +127,7 @@ func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 	if clientID != "" {
 		err = dnsforward.ValidateClientID(clientID)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-
-			err = json.NewEncoder(w).Encode(&jsonError{
-				Message: err.Error(),
-			})
-			if err != nil {
-				log.Debug("writing 400 json response: %s", err)
-			}
+			respondJSONError(w, http.StatusBadRequest, err.Error())
 
 			return
 		}
@@ -147,7 +141,7 @@ func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 
 	mobileconfig, err := getMobileConfig(d)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "plist.MarshalIndent: %s", err)
+		respondJSONError(w, http.StatusInternalServerError, err.Error())
 
 		return
 	}

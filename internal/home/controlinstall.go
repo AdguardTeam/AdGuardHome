@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 
@@ -286,42 +285,48 @@ func shutdownSrv(ctx context.Context, cancel context.CancelFunc, srv *http.Serve
 
 // Apply new configuration, start DNS server, restart Web server
 func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
-	newSettings := applyConfigReq{}
-	err := json.NewDecoder(r.Body).Decode(&newSettings)
+	req := applyConfigReq{}
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "Failed to parse 'configure' JSON: %s", err)
 		return
 	}
 
-	if newSettings.Web.Port == 0 || newSettings.DNS.Port == 0 {
+	if req.Web.Port == 0 || req.DNS.Port == 0 {
 		httpError(w, http.StatusBadRequest, "port value can't be 0")
 		return
 	}
 
 	restartHTTP := true
-	if config.BindHost.Equal(newSettings.Web.IP) && config.BindPort == newSettings.Web.Port {
+	if config.BindHost.Equal(req.Web.IP) && config.BindPort == req.Web.Port {
 		// no need to rebind
 		restartHTTP = false
 	}
 
 	// validate that hosts and ports are bindable
 	if restartHTTP {
-		err = aghnet.CheckPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
+		err = aghnet.CheckPortAvailable(req.Web.IP, req.Web.Port)
 		if err != nil {
-			httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s",
-				net.JoinHostPort(newSettings.Web.IP.String(), strconv.Itoa(newSettings.Web.Port)), err)
+			httpError(
+				w,
+				http.StatusBadRequest,
+				"can not listen on IP:port %s: %s",
+				aghnet.JoinHostPort(req.Web.IP.String(), req.Web.Port),
+				err,
+			)
+
 			return
 		}
 
 	}
 
-	err = aghnet.CheckPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
+	err = aghnet.CheckPacketPortAvailable(req.DNS.IP, req.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
 	}
 
-	err = aghnet.CheckPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
+	err = aghnet.CheckPortAvailable(req.DNS.IP, req.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
@@ -331,10 +336,10 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	copyInstallSettings(&curConfig, &config)
 
 	Context.firstRun = false
-	config.BindHost = newSettings.Web.IP
-	config.BindPort = newSettings.Web.Port
-	config.DNS.BindHosts = []net.IP{newSettings.DNS.IP}
-	config.DNS.Port = newSettings.DNS.Port
+	config.BindHost = req.Web.IP
+	config.BindPort = req.Web.Port
+	config.DNS.BindHosts = []net.IP{req.DNS.IP}
+	config.DNS.Port = req.DNS.Port
 
 	// TODO(e.burkov): StartMods() should be put in a separate goroutine at
 	// the moment we'll allow setting up TLS in the initial configuration or
@@ -349,8 +354,8 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u := User{}
-	u.Name = newSettings.Username
-	Context.auth.UserAdd(&u, newSettings.Password)
+	u.Name = req.Username
+	Context.auth.UserAdd(&u, req.Password)
 
 	err = config.write()
 	if err != nil {
@@ -361,8 +366,8 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	web.conf.firstRun = false
-	web.conf.BindHost = newSettings.Web.IP
-	web.conf.BindPort = newSettings.Web.Port
+	web.conf.BindHost = req.Web.IP
+	web.conf.BindPort = req.Web.Port
 
 	registerControlHandlers()
 

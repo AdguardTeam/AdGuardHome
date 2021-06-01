@@ -9,6 +9,7 @@
 *.db
 *.log
 *.snap
+/agh-backup/
 /bin/
 /build/*
 /build2/*
