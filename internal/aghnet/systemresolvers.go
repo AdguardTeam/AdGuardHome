@@ -16,8 +16,8 @@ type HostGenFunc func() (host string)
 
 // SystemResolvers helps to work with local resolvers' addresses provided by OS.
 type SystemResolvers interface {
-	// Get returns the slice of local resolvers' addresses.
-	// It should be safe for concurrent use.
+	// Get returns the slice of local resolvers' addresses.  It should be
+	// safe for concurrent use.
 	Get() (rs []string)
 	// refresh refreshes the local resolvers' addresses cache.  It should be
 	// safe for concurrent use.

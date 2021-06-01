@@ -12,10 +12,24 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// fakeSystemResolvers is a mock aghnet.SystemResolvers implementation for tests.
+type fakeSystemResolvers struct {
+	// SystemResolvers is embedded here simply to make *fakeSystemResolvers
+	// an aghnet.SystemResolvers without actually implementing all methods.
+	aghnet.SystemResolvers
+}
+
+// Get implements the aghnet.SystemResolvers interface for *fakeSystemResolvers.
+// It always returns nil.
+func (fsr *fakeSystemResolvers) Get() (rs []string) {
+	return nil
+}
 
 func loadTestData(t *testing.T, casesFileName string, cases interface{}) {
 	t.Helper()
@@ -52,6 +66,8 @@ func TestDNSForwardHTTTP_handleGetConfig(t *testing.T) {
 		ConfigModified: func() {},
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
+	s.sysResolvers = &fakeSystemResolvers{}
+
 	require.Nil(t, s.Start())
 	t.Cleanup(func() {
 		require.Nil(t, s.Stop())
@@ -125,6 +141,7 @@ func TestDNSForwardHTTTP_handleSetConfig(t *testing.T) {
 		ConfigModified: func() {},
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
+	s.sysResolvers = &fakeSystemResolvers{}
 
 	defaultConf := s.conf
 

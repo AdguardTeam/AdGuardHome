@@ -96,12 +96,25 @@ func (s *Server) getDNSConfig() dnsConfig {
 }
 
 func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
-	resp := s.getDNSConfig()
+	defLocalPTRUps, err := s.filterOurDNSAddrs(s.sysResolvers.Get())
+	if err != nil {
+		log.Debug("getting dns configuration: %s", err)
+	}
+
+	resp := struct {
+		dnsConfig
+		// DefautLocalPTRUpstreams is used to pass the addresses from
+		// systemResolvers to the front-end.  It's not a pointer to the slice
+		// since there is no need to omit it while decoding from JSON.
+		DefautLocalPTRUpstreams []string `json:"default_local_ptr_upstreams,omitempty"`
+	}{
+		dnsConfig:               s.getDNSConfig(),
+		DefautLocalPTRUpstreams: defLocalPTRUps,
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 
-	enc := json.NewEncoder(w)
-	if err := enc.Encode(resp); err != nil {
+	if err = json.NewEncoder(w).Encode(resp); err != nil {
 		httpError(r, w, http.StatusInternalServerError, "json.Encoder: %s", err)
 		return
 	}

@@ -143,6 +143,9 @@ const Form = ({
     const upstream_dns = useSelector((store) => store.form[FORM_NAME.UPSTREAM].values.upstream_dns);
     const processingTestUpstream = useSelector((state) => state.settings.processingTestUpstream);
     const processingSetConfig = useSelector((state) => state.dnsConfig.processingSetConfig);
+    const defaultLocalPtrUpstreams = useSelector(
+        (state) => state.dnsConfig.default_local_ptr_upstreams,
+    );
 
     const handleUpstreamTest = () => dispatch(testUpstreamWithFormValues());
 
@@ -211,6 +214,14 @@ const Form = ({
                 </label>
                 <div className="form__desc form__desc--top">
                     <Trans>local_ptr_desc</Trans>
+                </div>
+                <div className="form__desc form__desc--top">
+                    {/** TODO: Add internazionalization for "" */}
+                    {defaultLocalPtrUpstreams?.length > 0 ? (
+                        <Trans values={{ ip: defaultLocalPtrUpstreams.map((s) => `"${s}"`).join(', ') }}>local_ptr_default_resolver</Trans>
+                    ) : (
+                        <Trans>local_ptr_no_default_resolver</Trans>
+                    )}
                 </div>
                 <Field
                     id="local_ptr_upstreams"

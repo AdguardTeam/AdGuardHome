@@ -76,6 +76,7 @@ type Server struct {
 	ipset          ipsetCtx
 	subnetDetector *aghnet.SubnetDetector
 	localResolvers *proxy.Proxy
+	sysResolvers   aghnet.SystemResolvers
 	recDetector    *recursionDetector
 
 	tableHostToIP     hostToIPTable
@@ -152,6 +153,13 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		subnetDetector:    p.SubnetDetector,
 		localDomainSuffix: localDomainSuffix,
 		recDetector:       newRecursionDetector(recursionTTL, cachedRecurrentReqNum),
+	}
+
+	// TODO(e.burkov): Enable the refresher after the actual implementation
+	// passes the public testing.
+	s.sysResolvers, err = aghnet.NewSystemResolvers(0, nil)
+	if err != nil {
+		return nil, fmt.Errorf("initializing system resolvers: %w", err)
 	}
 
 	if p.DHCPServer != nil {
@@ -375,28 +383,11 @@ func (s *Server) collectDNSIPAddrs() (addrs []string, err error) {
 	return addrs[:i], nil
 }
 
-// setupResolvers initializes the resolvers for local addresses.  For internal
-// use only.
-func (s *Server) setupResolvers(localAddrs []string) (err error) {
-	bootstraps := s.conf.BootstrapDNS
-	if len(localAddrs) == 0 {
-		var sysRes aghnet.SystemResolvers
-		// TODO(e.burkov): Enable the refresher after the actual
-		// implementation passes the public testing.
-		sysRes, err = aghnet.NewSystemResolvers(0, nil)
-		if err != nil {
-			return err
-		}
-
-		localAddrs = sysRes.Get()
-		bootstraps = nil
-	}
-	log.Debug("upstreams to resolve PTR for local addresses: %v", localAddrs)
-
+func (s *Server) filterOurDNSAddrs(addrs []string) (filtered []string, err error) {
 	var ourAddrs []string
 	ourAddrs, err = s.collectDNSIPAddrs()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	ourAddrsSet := aghstrings.NewSet(ourAddrs...)
@@ -405,7 +396,24 @@ func (s *Server) setupResolvers(localAddrs []string) (err error) {
 	// really applicable here since in case of listening on all network
 	// interfaces we should check the whole interface's network to cut off
 	// all the loopback addresses as well.
-	localAddrs = aghstrings.FilterOut(localAddrs, ourAddrsSet.Has)
+	return aghstrings.FilterOut(addrs, ourAddrsSet.Has), nil
+}
+
+// setupResolvers initializes the resolvers for local addresses.  For internal
+// use only.
+func (s *Server) setupResolvers(localAddrs []string) (err error) {
+	bootstraps := s.conf.BootstrapDNS
+	if len(localAddrs) == 0 {
+		localAddrs = s.sysResolvers.Get()
+		bootstraps = nil
+	}
+
+	localAddrs, err = s.filterOurDNSAddrs(localAddrs)
+	if err != nil {
+		return err
+	}
+
+	log.Debug("upstreams to resolve PTR for local addresses: %v", localAddrs)
 
 	var upsConfig proxy.UpstreamConfig
 	upsConfig, err = proxy.ParseUpstreamsConfig(localAddrs, upstream.Options{

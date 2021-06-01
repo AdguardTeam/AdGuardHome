@@ -15,6 +15,8 @@ and this project adheres to
 
 ### Added
 
+- Output of the default addresses of the upstreams used for resolving PTRs for
+  private addresses ([#3136]).
 - Detection and handling of recurrent PTR requests for locally-served addresses
   ([#3185]).
 - The ability to completely disable reverse DNS resolving of IPs from

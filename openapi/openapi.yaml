@@ -69,7 +69,17 @@
           'content':
             'application/json':
               'schema':
-                '$ref': '#/components/schemas/DNSConfig'
+                'allOf':
+                - '$ref': '#/components/schemas/DNSConfig'
+                - 'type': 'object'
+                  'properties':
+                    'default_local_ptr_upstreams':
+                      'type': 'array'
+                      'items':
+                        'type': 'string'
+                      'example':
+                      - '192.168.168.192'
+                      - '10.0.0.10'
   '/dns_config':
     'post':
       'tags':

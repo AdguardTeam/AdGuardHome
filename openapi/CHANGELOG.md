@@ -4,6 +4,12 @@
 
 ## v0.107: API changes
 
+### The new field `"default_local_ptr_upstreams"` in `GET /control/dns_info`
+
+* The new optional field `"default_local_ptr_upstreams"` is the list of IP
+  addresses AdGuard Home would use by default to resolve PTR request for
+  addresses from locally-served networks.
+
 ### The field `"use_private_ptr_resolvers"` in DNS configuration
 
 * The new optional field  `"use_private_ptr_resolvers"` of `"DNSConfig"`
