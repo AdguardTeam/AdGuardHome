@@ -15,6 +15,8 @@ and this project adheres to
 
 ### Added
 
+- `darwin/arm64` support ([#2443]).
+- `freebsd/arm64` support ([#2441]).
 - Output of the default addresses of the upstreams used for resolving PTRs for
   private addresses ([#3136]).
 - Detection and handling of recurrent PTR requests for locally-served addresses
@@ -48,6 +50,8 @@ released by then.
 
 - Go 1.15 support.
 
+[#2441]: https://github.com/AdguardTeam/AdGuardHome/issues/2441
+[#2443]: https://github.com/AdguardTeam/AdGuardHome/issues/2443
 [#3184]: https://github.com/AdguardTeam/AdGuardHome/issues/3184
 [#3185]: https://github.com/AdguardTeam/AdGuardHome/issues/3185
 [#3186]: https://github.com/AdguardTeam/AdGuardHome/issues/3186

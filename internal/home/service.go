@@ -282,7 +282,8 @@ func handleServiceUninstallCommand(s service.Service) {
 func configureService(c *service.Config) {
 	c.Option = service.KeyValue{}
 
-	// OS X
+	// macOS
+
 	// Redefines the launchd config file template
 	// The purpose is to enable stdout/stderr redirect by default
 	c.Option["LaunchdConfig"] = launchdConfig
@@ -290,6 +291,7 @@ func configureService(c *service.Config) {
 	c.Option["RunAtLoad"] = true
 
 	// POSIX
+
 	// Redirect StdErr & StdOut to files.
 	c.Option["LogOutput"] = true
 

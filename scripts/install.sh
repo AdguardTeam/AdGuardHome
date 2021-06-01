@@ -52,13 +52,20 @@ check_required() {
 
 	# Split with space.
 	required="curl"
-	if [ "$os" = 'linux' ] || [ "$os" = 'freebsd' ]
-	then
+	case "$os"
+	in
+	('freebsd'|'linux')
 		required="$required $required_unix"
-	elif [ "$os" = 'darwin' ]
-	then
+		;;
+	('darwin')
 		required="$required $required_darwin"
-	fi
+		;;
+	(*)
+		# Generally shouldn't happen, since the OS has already been
+		# validated.
+		error_exit "unsupported operating system: $os"
+		;;
+	esac
 
 	# Don't use quotes to get word splitting.
 	for cmd in ${required}
@@ -88,7 +95,7 @@ check_out_dir() {
 
 # Function parse_opts parses the options list and validates it's combinations.
 parse_opts() {
-	while getopts "C:c:hO:o:rRuUvV" opt $*
+	while getopts "C:c:hO:o:rRuUvV" opt "$@"
 	do
 		case "$opt"
 		in
@@ -181,11 +188,11 @@ set_os() {
 	# Validate.
 	case "$os"
 	in
-	('linux'|'freebsd'|'darwin')
+	('darwin'|'freebsd'|'linux')
 		# All right, go on.
 		;;
 	(*)
-		error_exit "unsupported operating system: $os"
+		error_exit "unsupported operating system: '$os'"
 		;;
 	esac
 
@@ -247,29 +254,42 @@ set_cpu() {
 	log "cpu type: $cpu"
 }
 
-# Function fix_darwin performs some configuration changes for macOS if
-# needed.
+# Function fix_darwin performs some configuration changes for macOS if needed.
+#
+# TODO(a.garipov): Remove after the final v0.107.0 release.
+#
+# See https://github.com/AdguardTeam/AdGuardHome/issues/2443.
 fix_darwin() {
-	if ! [ "$os" = 'darwin' ]
+	if [ "$os" != 'darwin' ]
 	then
 		return 0
 	fi
 
-	# TODO(e.burkov): Remove after we release at least one stable release
-	# with Apple Silicon support.
-	#
-	# See https://github.com/AdguardTeam/AdGuardHome/issues/2443.
 	if [ "$cpu" = 'arm64' ]
 	then
-		cpu='amd64'
-		log "use $cpu build on Mac M1 until the native ARM support is added."
+		case "$channel"
+		in
+		('beta'|'development'|'edge')
+			# Everything is fine, we have Apple Silicon support on
+			# these channels.
+			;;
+		('release')
+			cpu='amd64'
+			log "use $cpu build on Mac M1 until the native ARM support is added."
+			;;
+		(*)
+			# Generally shouldn't happen, since the release channel
+			# has already been validated.
+			error_exit "invalid channel '$channel'"
+			;;
+		esac
 	fi
 
 	# Set the package extension.
 	pkg_ext='zip'
 
 	# It is important to install AdGuard Home into the /Applications
-	# directory on MacOS.  Otherwise, it may not grant enough privileges to
+	# directory on macOS.  Otherwise, it may not grant enough privileges to
 	# the AdGuard Home.
 	out_dir='/Applications'
 }
@@ -355,8 +375,7 @@ rerun_with_root() {
 
 	log 'restarting with root privileges'
 	
-	curl  -L -S -s "$script_url" | sudo sh -s -- $opts
-	exit $?
+	curl -L -S -s "$script_url" | sudo sh -s -- $opts
 }
 
 # Function download downloads the file from the URL and saves it to the
@@ -391,11 +410,6 @@ unpack() {
 		;;
 	esac
 
-	if [ "$?" != '0' ]
-	then
-		error_exit "cannot unpack the package into $out_dir"
-	fi
-
 	rm "$pkg_name"
 }
 
@@ -418,7 +432,7 @@ handle_existing() {
 	then
 		log 'the existing AdGuard Home installation is detected'
 
-		if [ "$reinstall" != '1' ] && [ "$uninstall" != '1' ]
+		if [ "$reinstall" -ne '1' ] && [ "$uninstall" -ne '1' ]
 		then
 			error_exit \
 "to reinstall/uninstall the AdGuard Home using\this script specify one of the '-r' or '-u' flags"
@@ -489,7 +503,7 @@ cpu=''
 os=''
 out_dir='/opt'
 pkg_ext='tar.gz'
-parse_opts $*
+parse_opts "$@"
 
 echo 'starting AdGuard Home installation script'
 
