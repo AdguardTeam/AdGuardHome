@@ -70,7 +70,7 @@ check_required() {
 	# Don't use quotes to get word splitting.
 	for cmd in ${required}
 	do
-		echo "checking $cmd"
+		log "checking $cmd"
 		if ! is_command "$cmd"
 		then
 			log "the full list of required software: [$required]"
@@ -335,6 +335,7 @@ is_root() {
 		return 0
 	fi
 
+	# TODO(a.garipov): On OpenBSD, use doas.
 	if is_command sudo
 	then
 		log 'note that AdGuard Home requires root privileges to install using this script'
@@ -347,8 +348,9 @@ is_root() {
 please, restart it with root privileges'
 }
 
-# Function rerun_with_root downloads the script and tries to run it with root
-# privileges.  It also uses the configuration that already set.
+# Function rerun_with_root downloads the script, runs it with root privileges,
+# and exits the current script.  It passes the necessary configuration of the
+# current script to the child script.
 #
 # TODO(e.burkov): Try to avoid restarting.
 rerun_with_root() {
@@ -361,10 +363,12 @@ rerun_with_root() {
 	then
 		flags="${flags} -r"
 	fi
+
 	if [ "$uninstall" -eq '1' ]
 	then
 		flags="${flags} -u"
 	fi
+
 	if [ "$verbose" -eq '1' ]
 	then
 		flags="${flags} -v"
@@ -375,7 +379,17 @@ rerun_with_root() {
 
 	log 'restarting with root privileges'
 	
-	curl -L -S -s "$script_url" | sudo sh -s -- $opts
+	# Group curl together with an echo, so that if curl fails before
+	# producing any output, the echo prints an exit command for the
+	# following shell to execute to prevent it from getting an empty input
+	# and exiting with a zero code in that case.
+	{ curl -L -S -s "$script_url" || echo 'exit 1'; }\
+		| sudo sh -s -- $opts
+
+	# Exit the script.  Since if the code of the previous pipeline is
+	# non-zero, the execution won't reach this point thanks to set -e, exit
+	# with zero.
+	exit 0
 }
 
 # Function download downloads the file from the URL and saves it to the
