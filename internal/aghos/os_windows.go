@@ -15,7 +15,8 @@ func canBindPrivilegedPorts() (can bool, err error) {
 	return HaveAdminRights()
 }
 
-func setRlimit(val uint) {
+func setRlimit(val uint64) (err error) {
+	return ErrUnsupported
 }
 
 func haveAdminRights() (bool, error) {

@@ -2,6 +2,10 @@
 
 # AdGuard Home Installation Script
 
+# Exit the script if a pipeline fails (-e), prevent accidental filename
+# expansion (-f), and consider undefined variables as errors (-u).
+set -e -f -u
+
 # Function log is an echo wrapper that writes to stderr if the caller
 # requested verbosity level greater than 0.  Otherwise, it does nothing.
 log() {
@@ -54,7 +58,7 @@ check_required() {
 	required="curl"
 	case "$os"
 	in
-	('freebsd'|'linux')
+	('freebsd'|'linux'|'openbsd')
 		required="$required $required_unix"
 		;;
 	('darwin')
@@ -63,7 +67,7 @@ check_required() {
 	(*)
 		# Generally shouldn't happen, since the OS has already been
 		# validated.
-		error_exit "unsupported operating system: $os"
+		error_exit "unsupported operating system: '$os'"
 		;;
 	esac
 
@@ -173,14 +177,17 @@ set_os() {
 		os="$( uname -s )"
 		case "$os"
 		in
-		('Linux')
-			os='linux'
+		('Darwin')
+			os='darwin'
 			;;
 		('FreeBSD')
 			os='freebsd'
 			;;
-		('Darwin')
-			os='darwin'
+		('Linux')
+			os='linux'
+			;;
+		('OpenBSD')
+			os='openbsd'
 			;;
 		esac
 	fi
@@ -188,7 +195,7 @@ set_os() {
 	# Validate.
 	case "$os"
 	in
-	('darwin'|'freebsd'|'linux')
+	('darwin'|'freebsd'|'linux'|'openbsd')
 		# All right, go on.
 		;;
 	(*)
@@ -310,12 +317,30 @@ fix_freebsd() {
 	fi
 }
 
+# Function set_sudo_cmd sets the appropriate command to run a command under
+# superuser privileges.
+set_sudo_cmd() {
+	case "$os"
+	in
+	('openbsd')
+		sudo_cmd='doas'
+		;;
+	('darwin'|'freebsd'|'linux')
+		# Go on and use the default, sudo.
+		;;
+	(*)
+		error_exit "unsupported operating system: '$os'"
+		;;
+	esac
+}
+
 # Function configure sets the script's configuration.
 configure() {
 	set_channel
 	set_os
 	set_cpu
 	fix_darwin
+	set_sudo_cmd
 	check_out_dir
 
 	pkg_name="AdGuardHome_${os}_${cpu}.${pkg_ext}"
@@ -335,8 +360,7 @@ is_root() {
 		return 0
 	fi
 
-	# TODO(a.garipov): On OpenBSD, use doas.
-	if is_command sudo
+	if is_command "$sudo_cmd"
 	then
 		log 'note that AdGuard Home requires root privileges to install using this script'
 
@@ -358,24 +382,25 @@ rerun_with_root() {
 'https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh'
 	readonly script_url
 
-	flags=''
+	r='-R'
 	if [ "$reinstall" -eq '1' ]
 	then
-		flags="${flags} -r"
+		r='-r'
 	fi
 
+	u='-U'
 	if [ "$uninstall" -eq '1' ]
 	then
-		flags="${flags} -u"
+		u='-u'
 	fi
 
+	v='-V'
 	if [ "$verbose" -eq '1' ]
 	then
-		flags="${flags} -v"
+		v='-v'
 	fi
 
-	opts="-c $channel -C $cpu -O $os -o $out_dir $flags"
-	readonly opts
+	readonly r u v
 
 	log 'restarting with root privileges'
 	
@@ -384,7 +409,7 @@ rerun_with_root() {
 	# following shell to execute to prevent it from getting an empty input
 	# and exiting with a zero code in that case.
 	{ curl -L -S -s "$script_url" || echo 'exit 1'; }\
-		| sudo sh -s -- $opts
+		| $sudo_cmd sh -s -- -c "$channel" -C "$cpu" -O "$os" -o "$out_dir" "$r" "$u" "$v"
 
 	# Exit the script.  Since if the code of the previous pipeline is
 	# non-zero, the execution won't reach this point thanks to set -e, exit
@@ -504,10 +529,6 @@ install_service() {
 
 # Entrypoint
 
-# Exit the script if a pipeline fails (-e), prevent accidental filename
-# expansion (-f), and consider undefined variables as errors (-u).
-set -e -f -u
-
 # Set default values of configuration variables.
 channel='release'
 reinstall='0'
@@ -517,6 +538,8 @@ cpu=''
 os=''
 out_dir='/opt'
 pkg_ext='tar.gz'
+sudo_cmd='sudo'
+
 parse_opts "$@"
 
 echo 'starting AdGuard Home installation script'
@@ -541,4 +564,4 @@ install_service
 echo "\
 AdGuard Home is now installed and running
 you can control the service status with the following commands:
-sudo ${agh_dir}/AdGuardHome -s start|stop|restart|status|install|uninstall"
+$sudo_cmd ${agh_dir}/AdGuardHome -s start|stop|restart|status|install|uninstall"

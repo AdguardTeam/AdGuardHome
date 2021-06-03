@@ -289,6 +289,8 @@ curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/s
     * macOS ARM: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_darwin_arm64.zip)
     * FreeBSD: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_386.tar.gz)
     * FreeBSD ARM: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv5.tar.gz), [32-bit ARMv6](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv6.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv7.tar.gz)
+    * OpenBSD: (coming soon)
+    * OpenBSD ARM: (coming soon)
 
 * Edge channel builds
     * Linux: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_386.tar.gz)
@@ -299,6 +301,8 @@ curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/s
     * macOS ARM: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_darwin_arm64.zip)
     * FreeBSD: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_386.tar.gz)
     * FreeBSD ARM: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv5.tar.gz), [32-bit ARMv6](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv6.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv7.tar.gz)
+    * OpenBSD: [64-bit (experimental)](https://static.adguard.com/adguardhome/edge/AdGuardHome_openbsd_amd64.tar.gz)
+    * OpenBSD ARM: [64-bit (experimental)](https://static.adguard.com/adguardhome/edge/AdGuardHome_openbsd_arm64.tar.gz)
 
 
 <a id="reporting-issues"></a>

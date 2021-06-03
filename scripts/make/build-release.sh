@@ -156,6 +156,8 @@ linux    mips64    0   softfloat  0
 linux    mips64le  0   softfloat  0
 linux    mipsle    0   softfloat  0
 linux    ppc64le   0   0          0
+openbsd  amd64     0   0          0
+openbsd  arm64     0   0          0
 windows  386       0   0          0
 windows  amd64     0   0          0"
 readonly platforms

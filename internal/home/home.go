@@ -115,7 +115,15 @@ func Main(clientBuildFS fs.FS) {
 	}()
 
 	if args.serviceControlAction != "" {
+		// TODO(a.garipov): github.com/kardianos/service doesn't seem to
+		// support OpenBSD currently.  Either patch it to do so or make
+		// our own implementation of the service.System interface.
+		if runtime.GOOS == "openbsd" {
+			log.Fatal("service actions are not supported on openbsd")
+		}
+
 		handleServiceControlAction(args, clientBuildFS)
+
 		return
 	}
 
@@ -175,7 +183,7 @@ func setupContext(args options) {
 	Context.mux = http.NewServeMux()
 }
 
-func setupConfig(args options) {
+func setupConfig(args options) (err error) {
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified
@@ -186,7 +194,7 @@ func setupConfig(args options) {
 		// now which assume that the DHCP server can be nil despite this
 		// condition.  Inspect them and perhaps rewrite them to use
 		// Enabled() instead.
-		log.Fatalf("can't initialize dhcp module")
+		return fmt.Errorf("initing dhcp: %w", err)
 	}
 
 	Context.updater = updater.NewUpdater(&updater.Config{
@@ -208,9 +216,11 @@ func setupConfig(args options) {
 	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
 	config.Clients = nil
 
-	if (runtime.GOOS == "linux" || runtime.GOOS == "darwin") &&
-		config.RlimitNoFile != 0 {
-		aghos.SetRlimit(config.RlimitNoFile)
+	if config.RlimitNoFile != 0 {
+		err = aghos.SetRlimit(config.RlimitNoFile)
+		if err != nil && !errors.Is(err, aghos.ErrUnsupported) {
+			return fmt.Errorf("setting rlimit: %w", err)
+		}
 	}
 
 	// override bind host/port from the console
@@ -223,6 +233,8 @@ func setupConfig(args options) {
 	if len(args.pidFile) != 0 && writePIDFile(args.pidFile) {
 		Context.pidFileName = args.pidFile
 	}
+
+	return nil
 }
 
 func initWeb(args options, clientBuildFS fs.FS) (web *Web, err error) {
@@ -266,8 +278,16 @@ func initWeb(args options, clientBuildFS fs.FS) (web *Web, err error) {
 	return web, nil
 }
 
+func fatalOnError(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 // run performs configurating and starts AdGuard Home.
 func run(args options, clientBuildFS fs.FS) {
+	var err error
+
 	// configure config filename
 	initConfigFilename(args)
 
@@ -294,14 +314,13 @@ func run(args options, clientBuildFS fs.FS) {
 	//  but also avoid relying on automatic Go init() function
 	filtering.InitModule()
 
-	setupConfig(args)
+	err = setupConfig(args)
+	fatalOnError(err)
 
 	if !Context.firstRun {
 		// Save the updated config
-		err := config.write()
-		if err != nil {
-			log.Fatal(err)
-		}
+		err = config.write()
+		fatalOnError(err)
 
 		if config.DebugPProf {
 			mux := http.NewServeMux()
@@ -318,7 +337,7 @@ func run(args options, clientBuildFS fs.FS) {
 		}
 	}
 
-	err := os.MkdirAll(Context.getDataDir(), 0o755)
+	err = os.MkdirAll(Context.getDataDir(), 0o755)
 	if err != nil {
 		log.Fatalf("Cannot create DNS data dir at %s: %s", Context.getDataDir(), err)
 	}
@@ -352,20 +371,14 @@ func run(args options, clientBuildFS fs.FS) {
 	}
 
 	Context.web, err = initWeb(args, clientBuildFS)
-	if err != nil {
-		log.Fatal(err)
-	}
+	fatalOnError(err)
 
 	Context.subnetDetector, err = aghnet.NewSubnetDetector()
-	if err != nil {
-		log.Fatal(err)
-	}
+	fatalOnError(err)
 
 	if !Context.firstRun {
 		err = initDNSServer()
-		if err != nil {
-			log.Fatalf("%s", err)
-		}
+		fatalOnError(err)
 
 		Context.tls.Start()
 		Context.etcHosts.Start()
@@ -374,7 +387,7 @@ func run(args options, clientBuildFS fs.FS) {
 			serr := startDNSServer()
 			if serr != nil {
 				closeDNSServer()
-				log.Fatal(serr)
+				fatalOnError(serr)
 			}
 		}()
 

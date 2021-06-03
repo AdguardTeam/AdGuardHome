@@ -349,6 +349,13 @@ on GitHub and most other Markdown renderers. -->
 
  *  `snake_case`, not `camelCase` for variables.  `kebab-case` for filenames.
 
+ *  Start scripts with the following sections in the following order:
+
+    1.  Shebang.
+    1.  Some initial documentation (optional).
+    1.  Verbosity level parsing (optional).
+    1.  `set` options.
+
  *  UPPERCASE names for external exported variables, lowercase for local,
     unexported ones.
 

@@ -7,22 +7,18 @@ package aghos
 import (
 	"os"
 	"syscall"
-
-	"github.com/AdguardTeam/golibs/log"
 )
 
 func canBindPrivilegedPorts() (can bool, err error) {
 	return HaveAdminRights()
 }
 
-func setRlimit(val uint) {
+func setRlimit(val uint64) (err error) {
 	var rlim syscall.Rlimit
-	rlim.Max = uint64(val)
-	rlim.Cur = uint64(val)
-	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rlim)
-	if err != nil {
-		log.Error("Setrlimit() failed: %v", err)
-	}
+	rlim.Max = val
+	rlim.Cur = val
+
+	return syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rlim)
 }
 
 func haveAdminRights() (bool, error) {
