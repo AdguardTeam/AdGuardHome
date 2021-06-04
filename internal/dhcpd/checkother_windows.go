@@ -1,11 +1,15 @@
+// +build windows
+
+//go:build windows
+
 package dhcpd
 
-import "fmt"
+import "github.com/AdguardTeam/AdGuardHome/internal/aghos"
 
 func CheckIfOtherDHCPServersPresentV4(ifaceName string) (bool, error) {
-	return false, fmt.Errorf("not supported")
+	return false, aghos.Unsupported("CheckIfOtherDHCPServersPresentV4")
 }
 
 func CheckIfOtherDHCPServersPresentV6(ifaceName string) (bool, error) {
-	return false, fmt.Errorf("not supported")
+	return false, aghos.Unsupported("CheckIfOtherDHCPServersPresentV6")
 }

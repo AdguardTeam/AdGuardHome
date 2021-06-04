@@ -126,6 +126,9 @@ on GitHub and most other Markdown renderers. -->
     )
     ```
 
+ *  Don't rely only on file names for build tags to work.  Always add build tags
+    as well.
+
  *  Don't use `fmt.Sprintf` where a more structured approach to string
     conversion could be used.  For example, `net.JoinHostPort` or
     `url.(*URL).String`.

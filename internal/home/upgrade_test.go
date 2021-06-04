@@ -368,3 +368,50 @@ func TestUpgradeSchema9to10(t *testing.T) {
 		assert.Equal(t, "unexpected type of dns: int", err.Error())
 	})
 }
+
+func TestUpgradeSchema10to11(t *testing.T) {
+	check := func(t *testing.T, conf yobj) {
+		rlimit, _ := conf["rlimit_nofile"].(int)
+
+		err := upgradeSchema10to11(conf)
+		require.NoError(t, err)
+
+		require.Equal(t, conf["schema_version"], 11)
+
+		_, ok := conf["rlimit_nofile"]
+		assert.False(t, ok)
+
+		osVal, ok := conf["os"]
+		require.True(t, ok)
+
+		newOSConf, ok := osVal.(yobj)
+		require.True(t, ok)
+
+		_, ok = newOSConf["group"]
+		assert.True(t, ok)
+
+		_, ok = newOSConf["user"]
+		assert.True(t, ok)
+
+		rlimitVal, ok := newOSConf["rlimit_nofile"].(int)
+		require.True(t, ok)
+
+		assert.Equal(t, rlimit, rlimitVal)
+	}
+
+	const rlimit = 42
+	t.Run("with_rlimit", func(t *testing.T) {
+		conf := yobj{
+			"rlimit_nofile":  rlimit,
+			"schema_version": 10,
+		}
+		check(t, conf)
+	})
+
+	t.Run("without_rlimit", func(t *testing.T) {
+		conf := yobj{
+			"schema_version": 10,
+		}
+		check(t, conf)
+	})
+}

@@ -35,6 +35,19 @@ type logSettings struct {
 	Verbose       bool   `yaml:"verbose"`         // If true, verbose logging is enabled
 }
 
+// osConfig contains OS-related configuration.
+type osConfig struct {
+	// Group is the name of the group which AdGuard Home must switch to on
+	// startup.  Empty string means no switching.
+	Group string `yaml:"group"`
+	// User is the name of the user which AdGuard Home must switch to on
+	// startup.  Empty string means no switching.
+	User string `yaml:"user"`
+	// RlimitNoFile is the maximum number of opened fd's per process.  Zero
+	// means use the default value.
+	RlimitNoFile uint64 `yaml:"rlimit_nofile"`
+}
+
 // configuration is loaded from YAML
 // field ordering is important -- yaml fields will mirror ordering from here
 type configuration struct {
@@ -52,10 +65,9 @@ type configuration struct {
 	// AuthBlockMin is the duration, in minutes, of the block of new login
 	// attempts after AuthAttempts unsuccessful login attempts.
 	AuthBlockMin uint   `yaml:"block_auth_min"`
-	ProxyURL     string `yaml:"http_proxy"`    // Proxy address for our HTTP client
-	Language     string `yaml:"language"`      // two-letter ISO 639-1 language code
-	RlimitNoFile uint64 `yaml:"rlimit_nofile"` // Maximum number of opened fd's per process (0: default)
-	DebugPProf   bool   `yaml:"debug_pprof"`   // Enable pprof HTTP server on port 6060
+	ProxyURL     string `yaml:"http_proxy"`  // Proxy address for our HTTP client
+	Language     string `yaml:"language"`    // two-letter ISO 639-1 language code
+	DebugPProf   bool   `yaml:"debug_pprof"` // Enable pprof HTTP server on port 6060
 
 	// TTL for a web session (in hours)
 	// An active session is automatically refreshed once a day.
@@ -74,6 +86,8 @@ type configuration struct {
 	Clients []clientObject `yaml:"clients"`
 
 	logSettings `yaml:",inline"`
+
+	OSConfig *osConfig `yaml:"os"`
 
 	sync.RWMutex `yaml:"-"`
 
@@ -184,6 +198,7 @@ var config = configuration{
 		LogMaxSize:    100,
 		LogMaxAge:     3,
 	},
+	OSConfig:      &osConfig{},
 	SchemaVersion: currentSchemaVersion,
 }
 

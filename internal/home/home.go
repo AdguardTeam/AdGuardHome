@@ -119,7 +119,7 @@ func Main(clientBuildFS fs.FS) {
 		// support OpenBSD currently.  Either patch it to do so or make
 		// our own implementation of the service.System interface.
 		if runtime.GOOS == "openbsd" {
-			log.Fatal("service actions are not supported on openbsd")
+			log.Fatal("service actions are not supported on openbsd, see issue 3226")
 		}
 
 		handleServiceControlAction(args, clientBuildFS)
@@ -183,6 +183,59 @@ func setupContext(args options) {
 	Context.mux = http.NewServeMux()
 }
 
+// logIfUnsupported logs a formatted warning if the error is one of the
+// unsupported errors and returns nil.  If err is nil, logIfUnsupported returns
+// nil.  Otherise, it returns err.
+func logIfUnsupported(msg string, err error) (outErr error) {
+	if unsupErr := (&aghos.UnsupportedError{}); errors.As(err, &unsupErr) {
+		log.Debug(msg, err)
+	} else if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// configureOS sets the OS-related configuration.
+func configureOS(conf *configuration) (err error) {
+	osConf := conf.OSConfig
+	if osConf == nil {
+		return nil
+	}
+
+	if osConf.Group != "" {
+		err = aghos.SetGroup(osConf.Group)
+		err = logIfUnsupported("warning: setting group", err)
+		if err != nil {
+			return fmt.Errorf("setting group: %w", err)
+		}
+
+		log.Info("group set to %s", osConf.Group)
+	}
+
+	if osConf.User != "" {
+		err = aghos.SetUser(osConf.User)
+		err = logIfUnsupported("warning: setting user", err)
+		if err != nil {
+			return fmt.Errorf("setting user: %w", err)
+		}
+
+		log.Info("user set to %s", osConf.User)
+	}
+
+	if osConf.RlimitNoFile != 0 {
+		err = aghos.SetRlimit(osConf.RlimitNoFile)
+		err = logIfUnsupported("warning: setting rlimit", err)
+		if err != nil {
+			return fmt.Errorf("setting rlimit: %w", err)
+		}
+
+		log.Info("rlimit_nofile set to %d", osConf.RlimitNoFile)
+	}
+
+	return nil
+}
+
 func setupConfig(args options) (err error) {
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
@@ -215,13 +268,6 @@ func setupConfig(args options) (err error) {
 	}
 	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
 	config.Clients = nil
-
-	if config.RlimitNoFile != 0 {
-		err = aghos.SetRlimit(config.RlimitNoFile)
-		if err != nil && !errors.Is(err, aghos.ErrUnsupported) {
-			return fmt.Errorf("setting rlimit: %w", err)
-		}
-	}
 
 	// override bind host/port from the console
 	if args.bindHost != nil {
@@ -308,6 +354,9 @@ func run(args options, clientBuildFS fs.FS) {
 	}
 
 	setupContext(args)
+
+	err = configureOS(&config)
+	fatalOnError(err)
 
 	// clients package uses filtering package's static data (filtering.BlockedSvcKnown()),
 	//  so we have to initialize filtering's static data first,

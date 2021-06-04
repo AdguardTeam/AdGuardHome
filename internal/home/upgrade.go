@@ -19,7 +19,7 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 10
+const currentSchemaVersion = 11
 
 // These aliases are provided for convenience.
 type (
@@ -81,6 +81,7 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema7to8,
 		upgradeSchema8to9,
 		upgradeSchema9to10,
+		upgradeSchema10to11,
 	}
 
 	n := 0
@@ -606,6 +607,41 @@ func upgradeSchema9to10(diskConf yobj) (err error) {
 			ups[i] = addQUICPort(u, quicPort)
 		}
 		dns[upsField] = ups
+	}
+
+	return nil
+}
+
+// upgradeSchema10to11 performs the following changes:
+//
+//   # BEFORE:
+//   'rlimit_nofile': 42
+//
+//   # AFTER:
+//   'os':
+//     'group': ''
+//     'rlimit_nofile': 42
+//     'user': ''
+//
+func upgradeSchema10to11(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 10 to 11")
+
+	diskConf["schema_version"] = 11
+
+	rlimit := 0
+	rlimitVal, ok := diskConf["rlimit_nofile"]
+	if ok {
+		rlimit, ok = rlimitVal.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type of rlimit_nofile: %T", rlimitVal)
+		}
+	}
+
+	delete(diskConf, "rlimit_nofile")
+	diskConf["os"] = yobj{
+		"group":         "",
+		"rlimit_nofile": rlimit,
+		"user":          "",
 	}
 
 	return nil

@@ -4,17 +4,30 @@ package aghos
 import (
 	"fmt"
 	"os/exec"
+	"runtime"
 	"syscall"
-
-	"github.com/AdguardTeam/golibs/errors"
 )
 
-// ErrUnsupported is returned when the functionality is unsupported on the
-// current operating system.
-//
-// TODO(a.garipov): Make a structured error and use it everywhere instead of
-// a bunch of fmt.Errorf and all that.
-const ErrUnsupported errors.Error = "unsupported"
+// UnsupportedError is returned by functions and methods when a particular
+// operation Op cannot be performed on the current OS.
+type UnsupportedError struct {
+	Op string
+	OS string
+}
+
+// Error implements the error interface for *UnsupportedError.
+func (err *UnsupportedError) Error() (msg string) {
+	return fmt.Sprintf("%s is unsupported on %s", err.Op, err.OS)
+}
+
+// Unsupported is a helper that returns an *UnsupportedError with the Op field
+// set to op and the OS field set to the current OS.
+func Unsupported(op string) (err error) {
+	return &UnsupportedError{
+		Op: op,
+		OS: runtime.GOOS,
+	}
+}
 
 // CanBindPrivilegedPorts checks if current process can bind to privileged
 // ports.

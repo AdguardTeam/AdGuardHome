@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/insomniacslk/dhcp/dhcpv4"
@@ -41,7 +42,7 @@ func CheckIfOtherDHCPServersPresentV4(ifaceName string) (ok bool, err error) {
 	// TODO(a.garipov): Find out what this is about.  Perhaps this
 	// information is outdated or at least incomplete.
 	if runtime.GOOS == "darwin" {
-		return false, fmt.Errorf("can't find DHCP server: not supported on macOS")
+		return false, aghos.Unsupported("CheckIfOtherDHCPServersPresentV4")
 	}
 
 	srcIP := ifaceIPNet[0]
