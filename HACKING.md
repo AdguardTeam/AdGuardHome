@@ -21,16 +21,17 @@ The rules are mostly sorted in the alphabetical order.
      *  [Recommended Reading](#recommended-reading)
  *  [Markdown](#markdown)
  *  [Shell Scripting](#shell-scripting)
-     *  [Shell Conditionals](#shell-cond)
+     *  [Shell Conditionals](#shell-conditionals)
  *  [Text, Including Comments](#text-including-comments)
  *  [YAML](#yaml)
 
 <!-- NOTE: Use the IDs that GitHub would generate in order for this to work both
-on GitHub and most other Markdown renderers. -->
+on GitHub and most other Markdown renderers.  Use both "id" and "name"
+attributes to make it work in Markdown renderers that strip "id". -->
 
 
 
-##  <a id="git" href="#git">Git</a>
+##  <a href="#git" id="git" name="git">Git</a>
 
  *  Call your branches either `NNNN-fix-foo` (where `NNNN` is the ID of the
     GitHub issue you worked on in this branch) or just `fix-foo` if there was no
@@ -56,14 +57,14 @@ on GitHub and most other Markdown renderers. -->
 
 
 
-##  <a id="go" href="#go">Go</a>
+##  <a href="#go" id="go" name="go">Go</a>
 
 > Not Golang, not GO, not GOLANG, not GoLang. It is Go in natural language,
 > golang for others.
 
 — [@rakyll](https://twitter.com/rakyll/status/1229850223184269312)
 
- ###  <a id="code" href="#code">Code</a>
+ ###  <a href="#code" id="code" name="code">Code</a>
 
  *  Always `recover` from panics in new goroutines.  Preferably in the very
     first statement.  If all you want there is a log message, use `log.OnPanic`.
@@ -163,7 +164,7 @@ on GitHub and most other Markdown renderers. -->
  *  Write logs and error messages in lowercase only to make it easier to `grep`
     logs and error messages without using the `-i` flag.
 
- ###  <a id="commenting" href="#commenting">Commenting</a>
+ ###  <a href="#commenting" id="commenting" name="commenting">Commenting</a>
 
  *  See also the “[Text, Including Comments]” section below.
 
@@ -194,7 +195,7 @@ on GitHub and most other Markdown renderers. -->
     }
     ```
 
- ###  <a id="formatting" href="#formatting">Formatting</a>
+ ###  <a href="#formatting" id="formatting" name="formatting">Formatting</a>
 
  *  Decorate `break`, `continue`, `fallthrough`, `return`, and other function
     exit points with empty lines unless it's the only statement in that block.
@@ -216,7 +217,7 @@ on GitHub and most other Markdown renderers. -->
     }}
     ```
 
- ###  <a id="naming" href="#naming">Naming</a>
+ ###  <a href="#naming" id="naming" name="naming">Naming</a>
 
  *  Don't use underscores in file and package names, unless they're build tags
     or for tests.  This is to prevent accidental build errors with weird tags.
@@ -278,7 +279,7 @@ on GitHub and most other Markdown renderers. -->
     }
     ```
 
- ###  <a id="testing" href="#testing">Testing</a>
+ ###  <a href="#testing" id="testing" name="testing">Testing</a>
 
  *  Use `assert.NoError` and `require.NoError` instead of `assert.Nil` and
     `require.Nil` on errors.
@@ -286,7 +287,7 @@ on GitHub and most other Markdown renderers. -->
  *  Use functions like `require.Foo` instead of `assert.Foo` when the test
     cannot continue if the condition is false.
 
- ###  <a id="recommended-reading" href="#recommended-reading">Recommended Reading</a>
+ ###  <a href="#recommended-reading" id="recommended-reading" name="recommended-reading">Recommended Reading</a>
 
  *  <https://github.com/golang/go/wiki/CodeReviewComments>.
 
@@ -301,7 +302,7 @@ on GitHub and most other Markdown renderers. -->
 
 
 
-##  <a id="markdown" href="#markdown">Markdown</a>
+##  <a href="#markdown" id="markdown" name="markdown">Markdown</a>
 
  *  **TODO(a.garipov):** Define more Markdown conventions.
 
@@ -314,7 +315,7 @@ on GitHub and most other Markdown renderers. -->
 
 
 
-##  <a id="shell-scripting" href="#shell-scripting">Shell Scripting</a>
+##  <a href="#shell-scripting" id="shell-scripting" name="shell-scripting">Shell Scripting</a>
 
  *  Avoid bashisms and GNUisms, prefer POSIX features only.
 
@@ -385,7 +386,7 @@ on GitHub and most other Markdown renderers. -->
     dir="${TOP_DIR}"/sub
     ```
 
- ###  <a id="shell-cond" href="#shell-cond">Shell Conditionals</a>
+ ###  <a href="#shell-conditionals" id="shell-conditionals" name="shell-conditionals">Shell Conditionals</a>
 
 Guidelines and agreements for using command `test`, also known as `[`:
 
@@ -403,7 +404,7 @@ Guidelines and agreements for using command `test`, also known as `[`:
 
 
 
-##  <a id="text-including-comments" href="#text-including-comments">Text, Including Comments</a>
+##  <a href="#text-including-comments" id="text-including-comments" name="text-including-comments">Text, Including Comments</a>
 
  *  End sentences with appropriate punctuation.
 
@@ -441,7 +442,7 @@ Guidelines and agreements for using command `test`, also known as `[`:
 
 
 
-##  <a id="yaml" href="#yaml">YAML</a>
+##  <a href="#yaml" id="yaml" name="yaml">YAML</a>
 
  *  **TODO(a.garipov):** Define naming conventions for schema names in our
     OpenAPI YAML file.  And just generally OpenAPI conventions.
