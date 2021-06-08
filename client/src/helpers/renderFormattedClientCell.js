@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { normalizeWhois } from './helpers';
 import { WHOIS_ICONS } from './constants';
 
@@ -63,7 +64,7 @@ export const renderFormattedClientCell = (value, info, isDetailed = false, isLog
     }
 
     return <div className="logs__text mw-100" title={value}>
-        {nameContainer}
+        <Link to={`logs?search=${encodeURIComponent(value)}`}>{nameContainer}</Link>
         {whoisContainer}
     </div>;
 };

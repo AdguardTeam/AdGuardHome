@@ -1,5 +1,6 @@
 import React from 'react';
 import propTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
 import round from 'lodash/round';
 import { shallowEqual, useSelector } from 'react-redux';
@@ -10,7 +11,7 @@ import { RESPONSE_FILTER } from '../../helpers/constants';
 import Tooltip from '../ui/Tooltip';
 
 const Row = ({
-    label, count, response_status, tooltipTitle, translationComponents,
+    label, count, response_status, tooltipTitle, translationComponents, href,
 }) => {
     const content = response_status
         ? <LogsSearchLink response_status={response_status}>{formatNumber(count)}</LogsSearchLink>
@@ -18,7 +19,11 @@ const Row = ({
 
     return <tr key={label}>
         <td>
-            <Trans components={translationComponents}>{label}</Trans>
+            {href ? (
+                <Link to={href}><Trans components={translationComponents}>{label}</Trans></Link>
+            ) : (
+                <Trans components={translationComponents}>{label}</Trans>
+            )}
             <Tooltip content={tooltipTitle} placement="top"
                      className="tooltip-container tooltip-custom--narrow text-center">
                 <svg className="icons icon--20 icon--lightgray ml-2">
@@ -48,31 +53,35 @@ const Counters = ({ refreshButton, subtitle }) => {
             count: numDnsQueries,
             tooltipTitle: interval === 1 ? 'number_of_dns_query_24_hours' : t('number_of_dns_query_days', { count: interval }),
             response_status: RESPONSE_FILTER.ALL.QUERY,
+            href: 'logs',
         },
         {
             label: 'blocked_by',
             count: numBlockedFiltering,
             tooltipTitle: 'number_of_dns_query_blocked_24_hours',
             response_status: RESPONSE_FILTER.BLOCKED.QUERY,
-            translationComponents: [<a href="#filters" key="0">link</a>],
+            translationComponents: [<Link to="logs?response_status=filtered" key="0">link</Link>],
         },
         {
             label: 'stats_malware_phishing',
             count: numReplacedSafebrowsing,
             tooltipTitle: 'number_of_dns_query_blocked_24_hours_by_sec',
             response_status: RESPONSE_FILTER.BLOCKED_THREATS.QUERY,
+            href: 'logs?response_status=blocked_safebrowsing',
         },
         {
             label: 'stats_adult',
             count: numReplacedParental,
             tooltipTitle: 'number_of_dns_query_blocked_24_hours_adult',
             response_status: RESPONSE_FILTER.BLOCKED_ADULT_WEBSITES.QUERY,
+            href: 'logs?response_status=blocked_parental',
         },
         {
             label: 'enforced_save_search',
             count: numReplacedSafesearch,
             tooltipTitle: 'number_of_dns_query_to_safe_search',
             response_status: RESPONSE_FILTER.SAFE_SEARCH.QUERY,
+            href: 'logs?response_status=safe_search',
         },
         {
             label: 'average_processing_time',
@@ -101,6 +110,7 @@ Row.propTypes = {
     response_status: propTypes.string,
     tooltipTitle: propTypes.string.isRequired,
     translationComponents: propTypes.arrayOf(propTypes.element),
+    href: propTypes.string,
 };
 
 Counters.propTypes = {

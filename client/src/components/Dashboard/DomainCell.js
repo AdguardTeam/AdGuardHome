@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 
 import { Trans } from 'react-i18next';
 import { getSourceData, getTrackerData } from '../../helpers/trackers/trackers';
@@ -53,7 +54,7 @@ const DomainCell = ({ value }) => {
     return (
         <div className="logs__row">
             <div className="logs__text" title={value}>
-                {value}
+                <Link to={`logs?search=${encodeURIComponent(value)}`}>{value}</Link>
             </div>
             {trackerData
             && <Tooltip content={content} placement="top"
