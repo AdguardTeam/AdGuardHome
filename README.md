@@ -124,7 +124,7 @@ Alternatively, you can use this [python client](https://pypi.org/project/adguard
 
 Running your own AdGuard Home server allows you to do much more than using a public DNS server. It's a completely different level. See for yourself:
 
-* Choose what exactly will the server block or not block.
+* Choose what exactly the server blocks and permits.
 * Monitor your network activity.
 * Add your own custom filtering rules.
 * **Most importantly, this is your own server, and you are the only one who's in control.**
@@ -161,9 +161,9 @@ AdGuard Home provides a lot of features out-of-the-box with no need to install a
 
 It depends.
 
-"DNS sinkholing" is capable of blocking a big percentage of ads, but it lacks flexibility and power of traditional ad blockers. You can get a good impression about the difference between these methods by reading [this article](https://adguard.com/en/blog/adguard-vs-adaway-dns66/). It compares AdGuard for Android (a traditional ad blocker) to hosts-level ad blockers (which are almost identical to DNS-based blockers in their capabilities).
+"DNS sinkholing" is capable of blocking a big percentage of ads, but it lacks flexibility and power of traditional ad blockers. You can get a good impression about the difference between these methods by reading [this article](https://adguard.com/en/blog/adguard-vs-adaway-dns66/). It compares AdGuard for Android (a traditional ad blocker) to hosts-level ad blockers (which are almost identical to DNS-based blockers in their capabilities). This level of protection is enough for some users. 
 
-However, this level of protection is enough for some users. Additionally, using a DNS-based blocker can help to block ads, tracking and analytics requests on other types of devices, such as SmartTVs, smart speakers or other kinds of IoT devices (on which you can't install traditional ad blockers).
+Additionally, using a DNS-based blocker can help to block ads, tracking and analytics requests on other types of devices, such as SmartTVs, smart speakers or other kinds of IoT devices (on which you can't install traditional ad blockers).
 
 **Known limitations**
 
@@ -174,7 +174,7 @@ Here are some examples of what cannot be blocked by a DNS-level blocker:
 
 Essentially, any advertising that shares a domain with content cannot be blocked by a DNS-level blocker.
 
-Is there a chance to handle this in the future? DNS will never be enough to do this. Our only option is to use a content blocking proxy like what we do in the standalone AdGuard applications. We're [going to bring](https://github.com/AdguardTeam/AdGuardHome/issues/1228) this feature support to AdGuard Home in the future. Unfortunately, even in this case, there still will be cases when this won't be enough or would require quite complicated configuration.
+Is there a chance to handle this in the future? DNS will never be enough to do this. Our only option is to use a content blocking proxy like what we do in the standalone AdGuard applications. We're [going to bring](https://github.com/AdguardTeam/AdGuardHome/issues/1228) this feature support to AdGuard Home in the future. Unfortunately, even in this case, there still will be cases when this won't be enough or would require quite a complicated configuration.
 
 <a id="how-to-build"></a>
 ## How to build from source
@@ -343,20 +343,20 @@ Here's what you can also do to contribute:
 
 This software wouldn't have been possible without:
 
- * [Go](https://golang.org/dl/) and it's libraries:
+ * [Go](https://golang.org/dl/) and its libraries:
    * [gcache](https://github.com/bluele/gcache)
    * [miekg's dns](https://github.com/miekg/dns)
    * [go-yaml](https://github.com/go-yaml/yaml)
    * [service](https://godoc.org/github.com/kardianos/service)
    * [dnsproxy](https://github.com/AdguardTeam/dnsproxy)
    * [urlfilter](https://github.com/AdguardTeam/urlfilter)
- * [Node.js](https://nodejs.org/) and it's libraries:
+ * [Node.js](https://nodejs.org/) and its libraries:
    * [React.js](https://reactjs.org)
    * [Tabler](https://github.com/tabler/tabler)
    * And many more node.js packages.
  * [whotracks.me data](https://github.com/cliqz-oss/whotracks.me)
 
-You might have seen that [CoreDNS](https://coredns.io) was mentioned here before — we've stopped using it in AdGuard Home. While we still use it on our servers for [AdGuard DNS](https://adguard.com/adguard-dns/overview.html) service, it seemed like an overkill for Home as it impeded with Home features that we plan to implement.
+You might have seen that [CoreDNS](https://coredns.io) was mentioned here before — we've stopped using it in AdGuard Home. While we still use it on our servers for [AdGuard DNS](https://adguard.com/adguard-dns/overview.html) service, it seemed like an overkill for Home as it impeded Home features that we plan to implement.
 
 For a full list of all node.js packages in use, please take a look at [client/package.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/package.json) file.
 
