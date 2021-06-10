@@ -151,6 +151,20 @@ func TestClients(t *testing.T) {
 		assert.True(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
 	})
 
+	t.Run("dhcp_replaces_arp", func(t *testing.T) {
+		ok, err := clients.AddHost("1.2.3.4", "from_arp", ClientSourceARP)
+		require.NoError(t, err)
+		assert.True(t, ok)
+
+		assert.True(t, clients.Exists("1.2.3.4", ClientSourceARP))
+
+		ok, err = clients.AddHost("1.2.3.4", "from_dhcp", ClientSourceDHCP)
+		require.NoError(t, err)
+		assert.True(t, ok)
+
+		assert.True(t, clients.Exists("1.2.3.4", ClientSourceDHCP))
+	})
+
 	t.Run("addhost_fail", func(t *testing.T) {
 		ok, err := clients.AddHost("1.1.1.1", "host1", ClientSourceRDNS)
 		require.NoError(t, err)

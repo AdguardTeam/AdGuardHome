@@ -127,7 +127,7 @@ func ValidateDomainName(name string) (err error) {
 
 // The maximum lengths of generated hostnames for different IP versions.
 const (
-	ipv4HostnameMaxLen = len("192-168-100-10-")
+	ipv4HostnameMaxLen = len("192-168-100-100")
 	ipv6HostnameMaxLen = len("ff80-f076-0000-0000-0000-0000-0000-0010")
 )
 

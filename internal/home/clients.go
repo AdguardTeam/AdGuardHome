@@ -53,13 +53,11 @@ type Client struct {
 type clientSource uint
 
 // Client sources.  The order determines the priority.
-//
-// TODO(e.burkov): Is ARP a higher priority source than DHCP?
 const (
 	ClientSourceWHOIS clientSource = iota
 	ClientSourceRDNS
-	ClientSourceDHCP
 	ClientSourceARP
+	ClientSourceDHCP
 	ClientSourceHostsFile
 )
 

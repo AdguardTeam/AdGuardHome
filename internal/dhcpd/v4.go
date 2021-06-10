@@ -110,7 +110,9 @@ func (s *v4Server) ResetLeases(leases []*Lease) {
 	s.leases = nil
 
 	for _, l := range leases {
-		l.Hostname = s.validHostnameForClient(l.Hostname, l.IP)
+		if !l.IsStatic() {
+			l.Hostname = s.validHostnameForClient(l.Hostname, l.IP)
+		}
 		err = s.addLease(l)
 		if err != nil {
 			// TODO(a.garipov): Wrap and bubble up the error.
@@ -339,9 +341,8 @@ func (s *v4Server) AddStaticLease(l Lease) (err error) {
 		return err
 	}
 
-	if l.Hostname != "" {
-		var hostname string
-		hostname, err = normalizeHostname(l.Hostname)
+	if hostname := l.Hostname; hostname != "" {
+		hostname, err = normalizeHostname(hostname)
 		if err != nil {
 			return err
 		}
@@ -635,6 +636,33 @@ func (o *optFQDN) ToBytes() []byte {
 	return b
 }
 
+// checkLease checks if the pair of mac and ip is already leased.  The mismatch
+// is true when the existing lease has the same hardware address but differs in
+// its IP address.
+func (s *v4Server) checkLease(mac net.HardwareAddr, ip net.IP) (lease *Lease, mismatch bool) {
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	for _, l := range s.leases {
+		if !bytes.Equal(l.HWAddr, mac) {
+			continue
+		}
+
+		if l.IP.Equal(ip) {
+			return l, false
+		}
+
+		log.Debug(
+			`dhcpv4: mismatched OptionRequestedIPAddress in req msg for %s`,
+			mac,
+		)
+
+		return nil, true
+	}
+
+	return nil, false
+}
+
 // processRequest is the handler for the DHCP Request request.
 func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needsReply bool) {
 	mac := req.ClientHWAddr
@@ -656,33 +684,8 @@ func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needs
 		return nil, false
 	}
 
-	mismatch := false
-	func() {
-		s.leasesLock.Lock()
-		defer s.leasesLock.Unlock()
-
-		for _, l := range s.leases {
-			if !bytes.Equal(l.HWAddr, mac) {
-				continue
-			}
-
-			if l.IP.Equal(reqIP) {
-				lease = l
-
-				return
-			}
-
-			log.Debug(
-				`dhcpv4: mismatched OptionRequestedIPAddress in req msg for %s`,
-				mac,
-			)
-
-			mismatch = true
-
-			return
-		}
-	}()
-	if mismatch {
+	var mismatch bool
+	if lease, mismatch = s.checkLease(mac, reqIP); mismatch {
 		return nil, true
 	}
 

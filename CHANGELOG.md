@@ -47,6 +47,8 @@ released by then.
 
 ### Fixed
 
+- Redundant hostname generating while loading static leases with empty hostname
+  ([#3166]).
 - Domain name case in responses ([#3194]).
 - Custom upstreams selection for clients with client IDs in DNS-over-TLS and
   DNS-over-HTTP ([#3186]).
@@ -61,6 +63,7 @@ released by then.
 [#2443]: https://github.com/AdguardTeam/AdGuardHome/issues/2443
 [#2763]: https://github.com/AdguardTeam/AdGuardHome/issues/2763
 [#3136]: https://github.com/AdguardTeam/AdGuardHome/issues/3136
+[#3166]: https://github.com/AdguardTeam/AdGuardHome/issues/3166
 [#3172]: https://github.com/AdguardTeam/AdGuardHome/issues/3172
 [#3184]: https://github.com/AdguardTeam/AdGuardHome/issues/3184
 [#3185]: https://github.com/AdguardTeam/AdGuardHome/issues/3185

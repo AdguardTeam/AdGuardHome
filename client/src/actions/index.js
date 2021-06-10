@@ -561,6 +561,7 @@ export const addStaticLease = (config) => async (dispatch) => {
         dispatch(addStaticLeaseSuccess(config));
         dispatch(addSuccessToast(i18next.t('dhcp_lease_added', { key: name })));
         dispatch(toggleLeaseModal());
+        dispatch(getDhcpStatus());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(addStaticLeaseFailure());
