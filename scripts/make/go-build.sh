@@ -88,11 +88,17 @@ then
 fi
 
 # Allow users to limit the build's parallelism.
-parallelism="${PARALLELISM:-0}"
+parallelism="${PARALLELISM:-}"
 readonly parallelism
 
-p_flags="-p=${parallelism}"
-readonly p_flags
+# Use GOFLAGS for -p, because -p=0 simply disables the build instead of leaving
+# the default value.
+if [ "${parallelism}" != '' ]
+then
+        GOFLAGS="${GOFLAGS:-} -p=${parallelism}"
+fi
+readonly GOFLAGS
+export GOFLAGS
 
 # Allow users to specify a different output name.
 out="${OUT:-AdGuardHome}"
@@ -117,6 +123,4 @@ CGO_ENABLED="$cgo_enabled"
 GO111MODULE='on'
 export CGO_ENABLED GO111MODULE
 
-# Don't use quotes with flag variables to get word splitting.
-"$go" build --ldflags "$ldflags" "$race_flags" --trimpath "$o_flags" "$p_flags" "$v_flags"\
-	"$x_flags"
+"$go" build --ldflags "$ldflags" "$race_flags" --trimpath "$o_flags" "$v_flags" "$x_flags"
