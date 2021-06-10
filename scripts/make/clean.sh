@@ -10,7 +10,7 @@ fi
 
 set -e -f -u
 
-dist_dir="$DIST_DIR"
+dist_dir="${DIST_DIR:?please set DIST_DIR}"
 sudo_cmd="${SUDO:-}"
 readonly dist_dir sudo_cmd
 

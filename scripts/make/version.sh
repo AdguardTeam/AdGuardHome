@@ -34,6 +34,8 @@ set -e -f -u
 
 # bump_minor is an awk program that reads a minor release version, increments
 # the minor part of it, and prints the next version.
+#
+# shellcheck disable=SC2016
 bump_minor='/^v[0-9]+\.[0-9]+\.0$/ {
 	print($1 "." $2 + 1 ".0");
 
@@ -66,7 +68,7 @@ get_last_minor_zero() {
 		| head -n 1
 }
 
-channel="$CHANNEL"
+channel="${CHANNEL:?please set CHANNEL}"
 readonly channel
 
 case "$channel"
@@ -86,7 +88,7 @@ in
 	num_commits_since_minor="$( git rev-list "${last_minor_zero}..HEAD" | wc -l )"
 	# The output of darwin's implementation of wc needs to be trimmed from
 	# redundant spaces.
-	num_commits_since_minor="$( echo ${num_commits_since_minor} | tr -d '[:space:]' )"
+	num_commits_since_minor="$( echo "$num_commits_since_minor" | tr -d '[:space:]' )"
 	readonly num_commits_since_minor
 
 	# next_minor is the next minor release version.

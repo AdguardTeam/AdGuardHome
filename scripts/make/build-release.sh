@@ -47,7 +47,7 @@ log 'starting to build AdGuard Home release'
 
 # Require the channel to be set.  Additional validation is performed later by
 # go-build.sh.
-channel="$CHANNEL"
+channel="${CHANNEL:?please set CHANNEL}"
 readonly channel
 
 # Check VERSION against the default value from the Makefile.  If it is that, use
@@ -93,8 +93,8 @@ fi
 # Require the gpg key and passphrase to be set if the signing is required.
 if [ "$sign" -eq '1' ]
 then
-	gpg_key_passphrase="$GPG_KEY_PASSPHRASE"
-	gpg_key="$GPG_KEY"
+	gpg_key_passphrase="${GPG_KEY_PASSPHRASE:?please set GPG_KEY_PASSPHRASE or unset SIGN}"
+	gpg_key="${GPG_KEY:?please set GPG_KEY or unset SIGN}"
 else
 	gpg_key_passphrase=''
 	gpg_key=''
@@ -360,10 +360,9 @@ log "calculating checksums"
 (
 	cd "./${dist}"
 
-	files="$( find . ! -name . -prune \( -name '*.tar.gz' -o -name '*.zip' \) )"
-
-	# Don't use quotes to get word splitting.
-	$sha256sum_cmd $files > ./checksums.txt
+	find . ! -name . -prune \( -name '*.tar.gz' -o -name '*.zip' \)\
+		-exec "$sha256sum_cmd" {} +\
+		> ./checksums.txt
 )
 
 log "writing versions"

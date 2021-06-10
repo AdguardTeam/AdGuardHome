@@ -17,17 +17,17 @@ if [ "$verbose" -gt '1' ]
 then
 	env
 	set -x
-	v_flags='-v'
-	x_flags='-x'
+	v_flags='-v=1'
+	x_flags='-x=1'
 elif [ "$verbose" -gt '0' ]
 then
 	set -x
-	v_flags='-v'
-	x_flags=''
+	v_flags='-v=1'
+	x_flags='-x=0'
 else
 	set +x
-	v_flags=''
-	x_flags=''
+	v_flags='-v=0'
+	x_flags='-x=0'
 fi
 readonly x_flags v_flags
 
@@ -41,7 +41,7 @@ go="${GO:-go}"
 readonly go
 
 # Require the channel to be set and validate the value.
-channel="$CHANNEL"
+channel="${CHANNEL:?please set CHANNEL}"
 readonly channel
 
 case "$channel"
@@ -88,38 +88,28 @@ then
 fi
 
 # Allow users to limit the build's parallelism.
-parallelism="${PARALLELISM:-}"
+parallelism="${PARALLELISM:-0}"
 readonly parallelism
 
-if [ "${parallelism}" != '' ]
-then
-	par_flags="-p ${parallelism}"
-else
-	par_flags=''
-fi
-readonly par_flags
+p_flags="-p=${parallelism}"
+readonly p_flags
 
 # Allow users to specify a different output name.
-out="${OUT:-}"
+out="${OUT:-AdGuardHome}"
 readonly out
 
-if [ "$out" != '' ]
-then
-	out_flags="-o ${out}"
-else
-	out_flags=''
-fi
-readonly out_flags
+o_flags="-o=${out}"
+readonly o_flags
 
 # Allow users to enable the race detector.  Unfortunately, that means that cgo
 # must be enabled.
 if [ "${RACE:-0}" -eq '0' ]
 then
 	cgo_enabled='0'
-	race_flags=''
+	race_flags='--race=0'
 else
 	cgo_enabled='1'
-	race_flags='--race'
+	race_flags='--race=1'
 fi
 readonly cgo_enabled race_flags
 
@@ -127,11 +117,6 @@ CGO_ENABLED="$cgo_enabled"
 GO111MODULE='on'
 export CGO_ENABLED GO111MODULE
 
-build_flags="${BUILD_FLAGS:-$race_flags --trimpath $out_flags $par_flags $v_flags $x_flags}"
-readonly build_flags
-
 # Don't use quotes with flag variables to get word splitting.
-"$go" generate $v_flags $x_flags ./main.go
-
-# Don't use quotes with flag variables to get word splitting.
-"$go" build --ldflags "$ldflags" $build_flags
+"$go" build --ldflags "$ldflags" "$race_flags" --trimpath "$o_flags" "$p_flags" "$v_flags"\
+	"$x_flags"
