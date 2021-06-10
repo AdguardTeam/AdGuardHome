@@ -20,7 +20,11 @@ func (s *Server) beforeRequestHandler(_ *proxy.Proxy, d *proxy.DNSContext) (bool
 	}
 
 	if len(d.Req.Question) == 1 {
-		host := strings.TrimSuffix(d.Req.Question[0].Name, ".")
+		// It's lowercased here since this handler is called before any
+		// other one.
+		name := strings.ToLower(d.Req.Question[0].Name)
+		d.Req.Question[0].Name = name
+		host := strings.TrimSuffix(name, ".")
 		if s.access.IsBlockedDomain(host) {
 			log.Tracef("domain %s is blocked by access settings", host)
 

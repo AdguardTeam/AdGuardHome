@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"path"
 	"strings"
