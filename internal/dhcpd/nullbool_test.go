@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNullBool_UnmarshalText(t *testing.T) {
+func TestNullBool_UnmarshalJSON(t *testing.T) {
 	testCases := []struct {
 		name       string
 		data       []byte

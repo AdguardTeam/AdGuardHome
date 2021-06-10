@@ -135,6 +135,7 @@ func (u *TestBlockUpstream) Exchange(r *dns.Msg) (*dns.Msg, error) {
 	}
 
 	m := &dns.Msg{}
+	m.SetReply(r)
 	m.Answer = []dns.RR{
 		&dns.TXT{
 			Hdr: dns.RR_Header{

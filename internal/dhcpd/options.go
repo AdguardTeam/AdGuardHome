@@ -130,5 +130,5 @@ func (p *dhcpOptionParser) parse(s string) (code uint8, data []byte, err error) 
 		return 0, nil, err
 	}
 
-	return uint8(code), data, nil
+	return code, data, nil
 }
