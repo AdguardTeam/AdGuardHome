@@ -143,15 +143,15 @@ attributes to make it work in Markdown renderers that strip "id". -->
     The exception proving the rule is the table-driven test code, where an
     additional level of indentation is allowed.
 
- *  Eschew external dependencies, including transitive, unless
-    absolutely necessary.
+ *  Eschew external dependencies, including transitive, unless absolutely
+    necessary.
 
  *  Minimize scope of variables as much as possible.
 
  *  No shadowing, since it can often lead to subtle bugs, especially with
     errors.
 
- *  Prefer constants to variables where possible.  Reduce global variables.  Use
+ *  Prefer constants to variables where possible.  Avoid global variables.  Use
     [constant errors] instead of `errors.New`.
 
  *  Prefer to use named functions for goroutines.
@@ -199,6 +199,10 @@ attributes to make it work in Markdown renderers that strip "id". -->
 
  *  Decorate `break`, `continue`, `fallthrough`, `return`, and other function
     exit points with empty lines unless it's the only statement in that block.
+
+ *  Don't group type declarations together.  Unlike with blocks of `const`s,
+    where a `iota` may be used or where all constants belong to a certain type,
+    there is no reason to group `type`s.
 
  *  Use `gofumpt --extra -s`.
 
@@ -252,7 +256,7 @@ attributes to make it work in Markdown renderers that strip "id". -->
 
  *  Use named returns to improve readability of function signatures.
 
- *  When naming a file which defines an enitity, use singular nouns, unless the
+ *  When naming a file which defines an entity, use singular nouns, unless the
     entity is some form of a container for other entities:
 
     ```go
@@ -283,6 +287,9 @@ attributes to make it work in Markdown renderers that strip "id". -->
 
  *  Use `assert.NoError` and `require.NoError` instead of `assert.Nil` and
     `require.Nil` on errors.
+
+ *  Use formatted helpers, like `assert.Nilf` or `require.Nilf`, instead of
+    simple helpers when a formatted message is required.
 
  *  Use functions like `require.Foo` instead of `assert.Foo` when the test
     cannot continue if the condition is false.
@@ -390,6 +397,9 @@ attributes to make it work in Markdown renderers that strip "id". -->
 
 Guidelines and agreements for using command `test`, also known as `[`:
 
+ *  For conditionals that check for equality against multiple values, prefer
+    `case` instead of `test`.
+
  *  Prefer the `!= ''` form instead of using `-n` to check if string is empty.
 
  *  Spell compound conditions with `&&`, `||`, and `!` **outside** of `test`
@@ -410,6 +420,16 @@ Guidelines and agreements for using command `test`, also known as `[`:
 
  *  Headers should be written with all initial letters capitalized, except for
     references to variable names that start with a lowercase letter.
+
+ *  Mark temporary todos—that is, todos that must be resolved or removed before
+    publishing a change—with two exclamation signs:
+
+    ```go
+    // TODO(usr1): !! Remove this debug before pushing!
+    ```
+
+    This makes it easier to find them both during development and during code
+    review.
 
  *  Start sentences with a capital letter, unless the first word is a reference
     to a variable name that starts with a lowercase letter.
