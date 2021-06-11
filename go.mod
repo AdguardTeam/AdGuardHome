@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/AdguardTeam/dnsproxy v0.37.6
 	github.com/AdguardTeam/golibs v0.8.0
-	github.com/AdguardTeam/urlfilter v0.14.5
+	github.com/AdguardTeam/urlfilter v0.14.6
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.1.3
 	github.com/digineo/go-ipset/v2 v2.2.1

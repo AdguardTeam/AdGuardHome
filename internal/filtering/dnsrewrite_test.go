@@ -44,6 +44,9 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 |disable-all^$dnsrewrite=127.0.0.1
 |disable-all^$dnsrewrite=127.0.0.2
 @@||disable-all^$dnsrewrite
+
+|1.2.3.4.in-addr.arpa^$dnsrewrite=NOERROR;PTR;new-ptr
+|1.2.3.5.in-addr.arpa^$dnsrewrite=NOERROR;PTR;new-ptr-with-dot.
 `
 
 	f := newForTest(nil, []Filter{{ID: 0, Data: []byte(text)}})
@@ -58,47 +61,49 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 
 	testCasesA := []struct {
 		name  string
-		dtyp  uint16
-		rcode int
 		want  []interface{}
+		rcode int
+		dtyp  uint16
 	}{{
 		name:  "a-record",
-		dtyp:  dns.TypeA,
 		rcode: dns.RcodeSuccess,
 		want:  []interface{}{ipv4p1},
+		dtyp:  dns.TypeA,
 	}, {
 		name:  "aaaa-record",
-		dtyp:  dns.TypeAAAA,
-		rcode: dns.RcodeSuccess,
 		want:  []interface{}{ipv6p1},
+		rcode: dns.RcodeSuccess,
+		dtyp:  dns.TypeAAAA,
 	}, {
 		name:  "txt-record",
-		dtyp:  dns.TypeTXT,
-		rcode: dns.RcodeSuccess,
 		want:  []interface{}{"hello-world"},
+		rcode: dns.RcodeSuccess,
+		dtyp:  dns.TypeTXT,
 	}, {
 		name:  "refused",
+		want:  nil,
 		rcode: dns.RcodeRefused,
+		dtyp:  0,
 	}, {
 		name:  "a-records",
-		dtyp:  dns.TypeA,
-		rcode: dns.RcodeSuccess,
 		want:  []interface{}{ipv4p1, ipv4p2},
+		rcode: dns.RcodeSuccess,
+		dtyp:  dns.TypeA,
 	}, {
 		name:  "aaaa-records",
-		dtyp:  dns.TypeAAAA,
-		rcode: dns.RcodeSuccess,
 		want:  []interface{}{ipv6p1, ipv6p2},
+		rcode: dns.RcodeSuccess,
+		dtyp:  dns.TypeAAAA,
 	}, {
 		name:  "disable-one",
-		dtyp:  dns.TypeA,
-		rcode: dns.RcodeSuccess,
 		want:  []interface{}{ipv4p2},
+		rcode: dns.RcodeSuccess,
+		dtyp:  dns.TypeA,
 	}, {
 		name:  "disable-cname",
-		dtyp:  dns.TypeA,
-		rcode: dns.RcodeSuccess,
 		want:  []interface{}{ipv4p1},
+		rcode: dns.RcodeSuccess,
+		dtyp:  dns.TypeA,
 	}}
 
 	for _, tc := range testCasesA {
@@ -106,18 +111,19 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 			host := path.Base(tc.name)
 
 			res, err := f.CheckHostRules(host, tc.dtyp, setts)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			dnsrr := res.DNSRewriteResult
 			require.NotNil(t, dnsrr)
-			assert.Equal(t, tc.rcode, dnsrr.RCode)
 
+			assert.Equal(t, tc.rcode, dnsrr.RCode)
 			if tc.rcode == dns.RcodeRefused {
 				return
 			}
 
 			ipVals := dnsrr.Response[tc.dtyp]
 			require.Len(t, ipVals, len(tc.want))
+
 			for i, val := range tc.want {
 				require.Equal(t, val, ipVals[i])
 			}
@@ -129,7 +135,8 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		host := path.Base(t.Name())
 
 		res, err := f.CheckHostRules(host, dtyp, setts)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Equal(t, "new-cname", res.CanonName)
 	})
 
@@ -138,7 +145,8 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		host := path.Base(t.Name())
 
 		res, err := f.CheckHostRules(host, dtyp, setts)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Equal(t, "new-cname-2", res.CanonName)
 		assert.Nil(t, res.DNSRewriteResult)
 	})
@@ -148,8 +156,49 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		host := path.Base(t.Name())
 
 		res, err := f.CheckHostRules(host, dtyp, setts)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Empty(t, res.CanonName)
 		assert.Empty(t, res.Rules)
+	})
+
+	t.Run("1.2.3.4.in-addr.arpa", func(t *testing.T) {
+		dtyp := dns.TypePTR
+		host := path.Base(t.Name())
+
+		res, err := f.CheckHostRules(host, dtyp, setts)
+		require.NoError(t, err)
+		require.NotNil(t, res.DNSRewriteResult)
+
+		rr := res.DNSRewriteResult
+		require.NotEmpty(t, rr.Response)
+
+		resps := rr.Response[dtyp]
+		require.Len(t, resps, 1)
+
+		ptr, ok := resps[0].(string)
+		require.True(t, ok)
+
+		assert.Equal(t, "new-ptr.", ptr)
+	})
+
+	t.Run("1.2.3.5.in-addr.arpa", func(t *testing.T) {
+		dtyp := dns.TypePTR
+		host := path.Base(t.Name())
+
+		res, err := f.CheckHostRules(host, dtyp, setts)
+		require.NoError(t, err)
+		require.NotNil(t, res.DNSRewriteResult)
+
+		rr := res.DNSRewriteResult
+		require.NotEmpty(t, rr.Response)
+
+		resps := rr.Response[dtyp]
+		require.Len(t, resps, 1)
+
+		ptr, ok := resps[0].(string)
+		require.True(t, ok)
+
+		assert.Equal(t, "new-ptr-with-dot.", ptr)
 	})
 }
