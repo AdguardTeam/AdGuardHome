@@ -231,20 +231,32 @@ func handleServiceInstallCommand(s service.Service) {
 			log.Fatal(err)
 		}
 	}
-
-	// Start automatically after install
-	err = svcAction(s, "start")
-	if err != nil {
-		log.Fatalf("Failed to start the service: %s", err)
-	}
-	log.Printf("Service has been started")
-
+	
+	if runtime.GOOS != "freebsd" {
+	    // Start automatically after install
+	    err = svcAction(s, "start")
+	    if err != nil {
+	    	log.Fatalf("Failed to start the service: %s", err)
+    	}
+    	log.Printf("Service has been started")
+    }
 	if detectFirstRun() {
+		if runtime.GOOS == "freebsd" {
+			log.Printf(`Almost ready!
+AdGuard Home is successfully installed. Please enable the service by running:
+    sysrc AdGuardHome_enable=YES"
+Start the service by running:
+    service AdGuardHome start
+There are a few more things that must be configured before you can use it.
+Click on the link below and follow the Installation Wizard steps to finish setup.
+AdGuard Home is now available at the following addresses:`)
+		} else {
 		log.Printf(`Almost ready!
 AdGuard Home is successfully installed and will automatically start on boot.
 There are a few more things that must be configured before you can use it.
 Click on the link below and follow the Installation Wizard steps to finish setup.
 AdGuard Home is now available at the following addresses:`)
+        }
 		printHTTPAddresses(schemeHTTP)
 	}
 }
@@ -531,14 +543,22 @@ status() {
 // guarantees that it will actually be the required directory.
 //
 // See https://github.com/AdguardTeam/AdGuardHome/issues/2614.
+//
+// Improvement to FreeBSD rc script to allow it be controlled from rc.conf
 const freeBSDScript = `#!/bin/sh
 # PROVIDE: {{.Name}}
 # REQUIRE: networking
 # KEYWORD: shutdown
+
 . /etc/rc.subr
+
 name="{{.Name}}"
-{{.Name}}_env="IS_DAEMON=1"
-{{.Name}}_user="root"
+rcvar={{.Name}}_enable
+
+load_rc_config "$name"
+: {{.Name}}_env="IS_DAEMON=1"
+: {{.Name}}_user="root"
+
 pidfile="/var/run/${name}.pid"
 command="/usr/sbin/daemon"
 command_args="-P ${pidfile} -f -r {{.WorkingDirectory}}/{{.Name}}"
