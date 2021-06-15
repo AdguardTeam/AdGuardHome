@@ -1,6 +1,5 @@
-// +build freebsd
-
 //go:build freebsd
+// +build freebsd
 
 package aghos
 
