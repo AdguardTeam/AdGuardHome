@@ -202,6 +202,7 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	newConf.ResolveClients = dnsConf.ResolveClients
 	newConf.UsePrivateRDNS = dnsConf.UsePrivateRDNS
 	newConf.LocalPTRResolvers = dnsConf.LocalPTRResolvers
+	newConf.UpstreamTimeout = dnsConf.UpstreamTimeout.Duration
 
 	return newConf, nil
 }

@@ -18,7 +18,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// fakeSystemResolvers is a mock aghnet.SystemResolvers implementation for tests.
+// fakeSystemResolvers is a mock aghnet.SystemResolvers implementation for
+// tests.
 type fakeSystemResolvers struct {
 	// SystemResolvers is embedded here simply to make *fakeSystemResolvers
 	// an aghnet.SystemResolvers without actually implementing all methods.

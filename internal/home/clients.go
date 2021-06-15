@@ -361,7 +361,7 @@ func (clients *clientsContainer) findUpstreams(
 		upstreams,
 		upstream.Options{
 			Bootstrap: config.DNS.BootstrapDNS,
-			Timeout:   dnsforward.DefaultTimeout,
+			Timeout:   config.DNS.UpstreamTimeout.Duration,
 		},
 	)
 	if err != nil {

@@ -114,6 +114,9 @@ type dnsConfig struct {
 	FiltersUpdateIntervalHours uint32           `yaml:"filters_update_interval"` // time period to update filters (in hours)
 	DnsfilterConf              filtering.Config `yaml:",inline"`
 
+	// UpstreamTimeout is the timeout for querying upstream servers.
+	UpstreamTimeout Duration `yaml:"upstream_timeout"`
+
 	// LocalDomainName is the domain name used for known internal hosts.
 	// For example, a machine called "myhost" can be addressed as
 	// "myhost.lan" when LocalDomainName is "lan".
@@ -182,6 +185,7 @@ var config = configuration{
 		},
 		FilteringEnabled:           true, // whether or not use filter lists
 		FiltersUpdateIntervalHours: 24,
+		UpstreamTimeout:            Duration{dnsforward.DefaultTimeout},
 		LocalDomainName:            "lan",
 		ResolveClients:             true,
 		UsePrivateRDNS:             true,
@@ -274,6 +278,10 @@ func parseConfig() error {
 
 	if !checkFiltersUpdateIntervalHours(config.DNS.FiltersUpdateIntervalHours) {
 		config.DNS.FiltersUpdateIntervalHours = 24
+	}
+
+	if config.DNS.UpstreamTimeout.Duration == 0 {
+		config.DNS.UpstreamTimeout = Duration{dnsforward.DefaultTimeout}
 	}
 
 	return nil

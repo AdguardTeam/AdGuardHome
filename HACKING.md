@@ -197,12 +197,23 @@ attributes to make it work in Markdown renderers that strip "id". -->
 
  ###  <a href="#formatting" id="formatting" name="formatting">Formatting</a>
 
- *  Decorate `break`, `continue`, `fallthrough`, `return`, and other function
-    exit points with empty lines unless it's the only statement in that block.
+ *  Decorate `break`, `continue`, `fallthrough`, `return`, and other terminating
+    statements with empty lines unless it's the only statement in that block.
 
  *  Don't group type declarations together.  Unlike with blocks of `const`s,
     where a `iota` may be used or where all constants belong to a certain type,
     there is no reason to group `type`s.
+
+ *  Group `require.*` blocks together with the presceding related statements,
+    but separate from the following `assert.*` and unrelated requirements.
+
+    ```go
+    val, ok := valMap[key]
+    require.True(t, ok)
+    require.NotNil(t, val)
+
+    assert.Equal(t, expected, val)
+    ```
 
  *  Use `gofumpt --extra -s`.
 

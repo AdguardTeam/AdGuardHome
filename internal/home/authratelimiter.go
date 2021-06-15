@@ -72,7 +72,7 @@ func (ab *authRateLimiter) check(usrID string) (left time.Duration) {
 // incLocked increments the number of unsuccessful attempts for attempter with
 // ip and updates it's blocking moment if needed.  For internal use only.
 func (ab *authRateLimiter) incLocked(usrID string, now time.Time) {
-	var until time.Time = now.Add(failedAuthTTL)
+	until := now.Add(failedAuthTTL)
 	var attNum uint = 1
 
 	a, ok := ab.failedAuths[usrID]

@@ -279,6 +279,34 @@ func TestServer(t *testing.T) {
 	}
 }
 
+func TestServer_timeout(t *testing.T) {
+	const timeout time.Duration = time.Second
+
+	t.Run("custom", func(t *testing.T) {
+		srvConf := &ServerConfig{
+			UpstreamTimeout: timeout,
+		}
+
+		s, err := NewServer(DNSCreateParams{})
+		require.NoError(t, err)
+
+		err = s.Prepare(srvConf)
+		require.NoError(t, err)
+
+		assert.Equal(t, timeout, s.conf.UpstreamTimeout)
+	})
+
+	t.Run("default", func(t *testing.T) {
+		s, err := NewServer(DNSCreateParams{})
+		require.NoError(t, err)
+
+		err = s.Prepare(nil)
+		require.NoError(t, err)
+
+		assert.Equal(t, DefaultTimeout, s.conf.UpstreamTimeout)
+	})
+}
+
 func TestServerWithProtectionDisabled(t *testing.T) {
 	s := createTestServer(t, &filtering.Config{}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},

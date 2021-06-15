@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
@@ -529,7 +530,7 @@ func checkPrivateUpstreamExc(u upstream.Upstream) (err error) {
 	return nil
 }
 
-func checkDNS(input string, bootstrap []string, ef excFunc) (err error) {
+func checkDNS(input string, bootstrap []string, timeout time.Duration, ef excFunc) (err error) {
 	if aghstrings.IsCommentOrEmpty(input) {
 		return nil
 	}
@@ -557,7 +558,7 @@ func checkDNS(input string, bootstrap []string, ef excFunc) (err error) {
 	var u upstream.Upstream
 	u, err = upstream.AddressToUpstream(input, upstream.Options{
 		Bootstrap: bootstrap,
-		Timeout:   DefaultTimeout,
+		Timeout:   timeout,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to choose upstream for %q: %w", input, err)
@@ -584,8 +585,9 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	result := map[string]string{}
 	bootstraps := req.BootstrapDNS
 
+	timeout := s.conf.UpstreamTimeout
 	for _, host := range req.Upstreams {
-		err = checkDNS(host, bootstraps, checkDNSUpstreamExc)
+		err = checkDNS(host, bootstraps, timeout, checkDNSUpstreamExc)
 		if err != nil {
 			log.Info("%v", err)
 			result[host] = err.Error()
@@ -597,7 +599,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, host := range req.PrivateUpstreams {
-		err = checkDNS(host, bootstraps, checkPrivateUpstreamExc)
+		err = checkDNS(host, bootstraps, timeout, checkPrivateUpstreamExc)
 		if err != nil {
 			log.Info("%v", err)
 			// TODO(e.burkov): If passed upstream have already

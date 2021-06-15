@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- The ability to set the timeout for querying the upstream servers ([#2280]).
 - The ability to change group and user ID on startup on Unix ([#2763]).
 - Experimental OpenBSD support for AMD64 and 64-bit ARM CPUs ([#2439]).
 - Support for custom port in DNS-over-HTTPS profiles for Apple's devices
@@ -60,6 +61,7 @@ released by then.
 
 - Go 1.15 support.
 
+[#2280]: https://github.com/AdguardTeam/AdGuardHome/issues/2280
 [#2439]: https://github.com/AdguardTeam/AdGuardHome/issues/2439
 [#2441]: https://github.com/AdguardTeam/AdGuardHome/issues/2441
 [#2443]: https://github.com/AdguardTeam/AdGuardHome/issues/2443

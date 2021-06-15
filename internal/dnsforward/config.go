@@ -9,6 +9,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
@@ -142,6 +143,9 @@ type ServerConfig struct {
 	DNSCryptConfig
 	TLSAllowUnencryptedDOH bool
 
+	// UpstreamTimeout is the timeout for querying upstream servers.
+	UpstreamTimeout time.Duration
+
 	TLSv12Roots *x509.CertPool // list of root CAs for TLSv1.2
 	TLSCiphers  []uint16       // list of TLS ciphers to use
 
@@ -261,6 +265,10 @@ func (s *Server) initDefaultSettings() {
 	if len(s.conf.BlockedHosts) == 0 {
 		s.conf.BlockedHosts = defaultBlockedHosts
 	}
+
+	if s.conf.UpstreamTimeout == 0 {
+		s.conf.UpstreamTimeout = DefaultTimeout
+	}
 }
 
 // prepareUpstreamSettings - prepares upstream DNS server settings
@@ -299,7 +307,7 @@ func (s *Server) prepareUpstreamSettings() error {
 		upstreams,
 		upstream.Options{
 			Bootstrap: s.conf.BootstrapDNS,
-			Timeout:   DefaultTimeout,
+			Timeout:   s.conf.UpstreamTimeout,
 		},
 	)
 	if err != nil {
@@ -313,7 +321,7 @@ func (s *Server) prepareUpstreamSettings() error {
 			defaultDNS,
 			upstream.Options{
 				Bootstrap: s.conf.BootstrapDNS,
-				Timeout:   DefaultTimeout,
+				Timeout:   s.conf.UpstreamTimeout,
 			},
 		)
 		if err != nil {
