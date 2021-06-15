@@ -48,6 +48,7 @@ released by then.
 
 ### Fixed
 
+- Errors when setting static IP on Linux ([#3257]).
 - Treatment of domain names and FQDNs in custom rules with `$dnsrewrite` that
   use the `PTR` type ([#3256]).
 - Redundant hostname generating while loading static leases with empty hostname
@@ -75,6 +76,7 @@ released by then.
 [#3194]: https://github.com/AdguardTeam/AdGuardHome/issues/3194
 [#3198]: https://github.com/AdguardTeam/AdGuardHome/issues/3198
 [#3256]: https://github.com/AdguardTeam/AdGuardHome/issues/3256
+[#3257]: https://github.com/AdguardTeam/AdGuardHome/issues/3257
 
 
 

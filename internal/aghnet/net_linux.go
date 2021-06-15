@@ -16,7 +16,8 @@ import (
 	"github.com/google/renameio/maybe"
 )
 
-// maxConfigFileSize is the maximum length of interfaces configuration file.
+// maxConfigFileSize is the maximum assumed length of the interface
+// configuration file.
 const maxConfigFileSize = 1024 * 1024
 
 func ifaceHasStaticIP(ifaceName string) (has bool, err error) {
@@ -130,6 +131,8 @@ func ifacesStaticConfig(r io.Reader, ifaceName string) (has bool, err error) {
 	return false, s.Err()
 }
 
+// ifaceSetStaticIP configures the system to retain its current IP on the
+// interface through dhcpdc.conf.
 func ifaceSetStaticIP(ifaceName string) (err error) {
 	ipNet := GetSubnet(ifaceName)
 	if ipNet.IP == nil {
@@ -137,10 +140,10 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 	}
 
 	gatewayIP := GatewayIP(ifaceName)
-	add := updateStaticIPdhcpcdConf(ifaceName, ipNet.String(), gatewayIP, ipNet.IP)
+	add := dhcpcdConfIface(ifaceName, ipNet, gatewayIP, ipNet.IP)
 
 	body, err := os.ReadFile("/etc/dhcpcd.conf")
-	if err != nil {
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
 
@@ -153,23 +156,23 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 	return nil
 }
 
-// updateStaticIPdhcpcdConf sets static IP address for the interface by writing
-// into dhcpd.conf.
-func updateStaticIPdhcpcdConf(ifaceName, ip string, gatewayIP, dnsIP net.IP) string {
+// dhcpcdConfIface returns configuration lines for the dhcpdc.conf files that
+// configure the interface to have a static IP.
+func dhcpcdConfIface(ifaceName string, ipNet *net.IPNet, gatewayIP, dnsIP net.IP) (conf string) {
 	var body []byte
 
-	add := fmt.Sprintf("\ninterface %s\nstatic ip_address=%s\n",
-		ifaceName, ip)
+	add := fmt.Sprintf(
+		"\n# %[1]s added by AdGuard Home.\ninterface %[1]s\nstatic ip_address=%s\n",
+		ifaceName,
+		ipNet)
 	body = append(body, []byte(add)...)
 
 	if gatewayIP != nil {
-		add = fmt.Sprintf("static routers=%s\n",
-			gatewayIP)
+		add = fmt.Sprintf("static routers=%s\n", gatewayIP)
 		body = append(body, []byte(add)...)
 	}
 
-	add = fmt.Sprintf("static domain_name_servers=%s\n\n",
-		dnsIP)
+	add = fmt.Sprintf("static domain_name_servers=%s\n\n", dnsIP)
 	body = append(body, []byte(add)...)
 
 	return string(body)
