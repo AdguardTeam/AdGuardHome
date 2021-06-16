@@ -93,8 +93,10 @@
         ],
         "production": [
             ">1%",
-            "last 4 versions",
-            "Firefox ESR",
+            "last 4 chrome version",
+            "last 4 firefox version",
+            "last 4 safari version",
+            "firefox esr",
             "not ie < 9"
         ]
     }
