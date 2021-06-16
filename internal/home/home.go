@@ -241,8 +241,8 @@ func setupConfig(args options) (err error) {
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified
 
-	Context.dhcpServer = dhcpd.Create(config.DHCP)
-	if Context.dhcpServer == nil {
+	Context.dhcpServer, err = dhcpd.Create(config.DHCP)
+	if Context.dhcpServer == nil || err != nil {
 		// TODO(a.garipov): There are a lot of places in the code right
 		// now which assume that the DHCP server can be nil despite this
 		// condition.  Inspect them and perhaps rewrite them to use
@@ -630,7 +630,7 @@ func configureLogger(args options) {
 
 // cleanup stops and resets all the modules.
 func cleanup(ctx context.Context) {
-	log.Info("Stopping AdGuard Home")
+	log.Info("stopping AdGuard Home")
 
 	if Context.web != nil {
 		Context.web.Close(ctx)
@@ -643,11 +643,14 @@ func cleanup(ctx context.Context) {
 
 	err := stopDNSServer()
 	if err != nil {
-		log.Error("Couldn't stop DNS server: %s", err)
+		log.Error("stopping dns server: %s", err)
 	}
 
 	if Context.dhcpServer != nil {
-		Context.dhcpServer.Stop()
+		err = Context.dhcpServer.Stop()
+		if err != nil {
+			log.Error("stopping dhcp server: %s", err)
+		}
 	}
 
 	Context.etcHosts.Close()

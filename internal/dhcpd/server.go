@@ -7,14 +7,14 @@ import (
 
 // DHCPServer - DHCP server interface
 type DHCPServer interface {
-	// ResetLeases - reset leases
-	ResetLeases(leases []*Lease)
-	// GetLeases - get leases
-	GetLeases(flags int) []Lease
+	// ResetLeases resets leases.
+	ResetLeases(leases []*Lease) (err error)
+	// GetLeases returns deep clones of the current leases.
+	GetLeases(flags GetLeasesFlags) (leases []*Lease)
 	// AddStaticLease - add a static lease
-	AddStaticLease(lease Lease) error
+	AddStaticLease(l *Lease) (err error)
 	// RemoveStaticLease - remove a static lease
-	RemoveStaticLease(l Lease) error
+	RemoveStaticLease(l *Lease) (err error)
 	// FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
 	FindMACbyIP(ip net.IP) net.HardwareAddr
 
@@ -24,9 +24,9 @@ type DHCPServer interface {
 	WriteDiskConfig6(c *V6ServerConf)
 
 	// Start - start server
-	Start() error
+	Start() (err error)
 	// Stop - stop server
-	Stop()
+	Stop() (err error)
 
 	getLeasesRef() []*Lease
 }

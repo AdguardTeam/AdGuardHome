@@ -22,34 +22,39 @@ func TestV6_AddRemove_static(t *testing.T) {
 		RangeStart: net.ParseIP("2001::1"),
 		notify:     notify6,
 	})
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Empty(t, s.GetLeases(LeasesStatic))
 
 	// Add static lease.
-	l := Lease{
+	l := &Lease{
 		IP:     net.ParseIP("2001::1"),
 		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}
-	require.Nil(t, s.AddStaticLease(l))
+	err = s.AddStaticLease(l)
+	require.NoError(t, err)
 
 	// Try to add the same static lease.
-	require.NotNil(t, s.AddStaticLease(l))
+	err = s.AddStaticLease(l)
+	require.Error(t, err)
 
 	ls := s.GetLeases(LeasesStatic)
 	require.Len(t, ls, 1)
+
 	assert.Equal(t, l.IP, ls[0].IP)
 	assert.Equal(t, l.HWAddr, ls[0].HWAddr)
 	assert.EqualValues(t, leaseExpireStatic, ls[0].Expiry.Unix())
 
 	// Try to remove non-existent static lease.
-	require.NotNil(t, s.RemoveStaticLease(Lease{
+	err = s.RemoveStaticLease(&Lease{
 		IP:     net.ParseIP("2001::2"),
 		HWAddr: l.HWAddr,
-	}))
+	})
+	require.Error(t, err)
 
 	// Remove static lease.
-	require.Nil(t, s.RemoveStaticLease(l))
+	err = s.RemoveStaticLease(l)
+	require.NoError(t, err)
 
 	assert.Empty(t, s.GetLeases(LeasesStatic))
 }
@@ -60,7 +65,8 @@ func TestV6_AddReplace(t *testing.T) {
 		RangeStart: net.ParseIP("2001::1"),
 		notify:     notify6,
 	})
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	s, ok := sIface.(*v6Server)
 	require.True(t, ok)
 
@@ -77,7 +83,7 @@ func TestV6_AddReplace(t *testing.T) {
 		s.addLease(l)
 	}
 
-	stLeases := []Lease{{
+	stLeases := []*Lease{{
 		IP:     net.ParseIP("2001::1"),
 		HWAddr: net.HardwareAddr{0x33, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}, {
@@ -86,7 +92,8 @@ func TestV6_AddReplace(t *testing.T) {
 	}}
 
 	for _, l := range stLeases {
-		require.Nil(t, s.AddStaticLease(l))
+		err = s.AddStaticLease(l)
+		require.NoError(t, err)
 	}
 
 	ls := s.GetLeases(LeasesStatic)
@@ -106,8 +113,9 @@ func TestV6GetLease(t *testing.T) {
 		RangeStart: net.ParseIP("2001::1"),
 		notify:     notify6,
 	})
-	require.Nil(t, err)
+	require.NoError(t, err)
 	s, ok := sIface.(*v6Server)
+
 	require.True(t, ok)
 
 	dnsAddr := net.ParseIP("2000::1")
@@ -118,33 +126,36 @@ func TestV6GetLease(t *testing.T) {
 		LinkLayerAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}
 
-	l := Lease{
+	l := &Lease{
 		IP:     net.ParseIP("2001::1"),
 		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}
-	require.Nil(t, s.AddStaticLease(l))
+	err = s.AddStaticLease(l)
+	require.NoError(t, err)
 
 	var req, resp, msg *dhcpv6.Message
 	mac := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
 	t.Run("solicit", func(t *testing.T) {
 		req, err = dhcpv6.NewSolicit(mac)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		msg, err = req.GetInnerMessage()
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		resp, err = dhcpv6.NewAdvertiseFromSolicit(msg)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		assert.True(t, s.process(msg, req, resp))
 	})
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	resp.AddOption(dhcpv6.OptServerID(s.sid))
 
 	var oia *dhcpv6.OptIANA
 	var oiaAddr *dhcpv6.OptIAAddress
 	t.Run("advertise", func(t *testing.T) {
 		require.Equal(t, dhcpv6.MessageTypeAdvertise, resp.Type())
+
 		oia = resp.Options.OneIANA()
 		oiaAddr = oia.Options.OneAddress()
 
@@ -154,20 +165,21 @@ func TestV6GetLease(t *testing.T) {
 
 	t.Run("request", func(t *testing.T) {
 		req, err = dhcpv6.NewRequestFromAdvertise(resp)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		msg, err = req.GetInnerMessage()
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		resp, err = dhcpv6.NewReplyFromMessage(msg)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		assert.True(t, s.process(msg, req, resp))
 	})
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	t.Run("reply", func(t *testing.T) {
 		require.Equal(t, dhcpv6.MessageTypeReply, resp.Type())
+
 		oia = resp.Options.OneIANA()
 		oiaAddr = oia.Options.OneAddress()
 
@@ -182,6 +194,7 @@ func TestV6GetLease(t *testing.T) {
 	t.Run("lease", func(t *testing.T) {
 		ls := s.GetLeases(LeasesStatic)
 		require.Len(t, ls, 1)
+
 		assert.Equal(t, l.IP, ls[0].IP)
 		assert.Equal(t, l.HWAddr, ls[0].HWAddr)
 	})
@@ -193,7 +206,8 @@ func TestV6GetDynamicLease(t *testing.T) {
 		RangeStart: net.ParseIP("2001::2"),
 		notify:     notify6,
 	})
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	s, ok := sIface.(*v6Server)
 	require.True(t, ok)
 
@@ -209,23 +223,25 @@ func TestV6GetDynamicLease(t *testing.T) {
 	mac := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
 	t.Run("solicit", func(t *testing.T) {
 		req, err = dhcpv6.NewSolicit(mac)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		msg, err = req.GetInnerMessage()
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		resp, err = dhcpv6.NewAdvertiseFromSolicit(msg)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		assert.True(t, s.process(msg, req, resp))
 	})
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	resp.AddOption(dhcpv6.OptServerID(s.sid))
 
 	var oia *dhcpv6.OptIANA
 	var oiaAddr *dhcpv6.OptIAAddress
 	t.Run("advertise", func(t *testing.T) {
 		require.Equal(t, dhcpv6.MessageTypeAdvertise, resp.Type())
+
 		oia = resp.Options.OneIANA()
 		oiaAddr = oia.Options.OneAddress()
 		assert.Equal(t, "2001::2", oiaAddr.IPv6Addr.String())
@@ -233,20 +249,21 @@ func TestV6GetDynamicLease(t *testing.T) {
 
 	t.Run("request", func(t *testing.T) {
 		req, err = dhcpv6.NewRequestFromAdvertise(resp)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		msg, err = req.GetInnerMessage()
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		resp, err = dhcpv6.NewReplyFromMessage(msg)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		assert.True(t, s.process(msg, req, resp))
 	})
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	t.Run("reply", func(t *testing.T) {
 		require.Equal(t, dhcpv6.MessageTypeReply, resp.Type())
+
 		oia = resp.Options.OneIANA()
 		oiaAddr = oia.Options.OneAddress()
 		assert.Equal(t, "2001::2", oiaAddr.IPv6Addr.String())
@@ -254,11 +271,13 @@ func TestV6GetDynamicLease(t *testing.T) {
 
 	dnsAddrs := resp.Options.DNS()
 	require.Len(t, dnsAddrs, 1)
+
 	assert.Equal(t, dnsAddr, dnsAddrs[0])
 
 	t.Run("lease", func(t *testing.T) {
 		ls := s.GetLeases(LeasesDynamic)
 		require.Len(t, ls, 1)
+
 		assert.Equal(t, "2001::2", ls[0].IP.String())
 		assert.Equal(t, mac, ls[0].HWAddr)
 	})

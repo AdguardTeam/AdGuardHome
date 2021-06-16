@@ -243,6 +243,8 @@ func TestClientsAddExisting(t *testing.T) {
 	})
 
 	t.Run("complicated", func(t *testing.T) {
+		var err error
+
 		testIP := net.IP{1, 2, 3, 4}
 
 		// First, init a DHCP server with a single static lease.
@@ -258,10 +260,12 @@ func TestClientsAddExisting(t *testing.T) {
 			},
 		}
 
-		clients.dhcpServer = dhcpd.Create(config)
+		clients.dhcpServer, err = dhcpd.Create(config)
+		require.NoError(t, err)
+
 		t.Cleanup(func() { _ = os.Remove("leases.db") })
 
-		err := clients.dhcpServer.AddStaticLease(dhcpd.Lease{
+		err = clients.dhcpServer.AddStaticLease(&dhcpd.Lease{
 			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 			IP:       testIP,
 			Hostname: "testhost",

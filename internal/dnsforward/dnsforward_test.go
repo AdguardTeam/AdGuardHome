@@ -993,15 +993,14 @@ type testDHCP struct{}
 
 func (d *testDHCP) Enabled() (ok bool) { return true }
 
-func (d *testDHCP) Leases(flags int) []dhcpd.Lease {
-	l := dhcpd.Lease{
+func (d *testDHCP) Leases(flags dhcpd.GetLeasesFlags) (leases []*dhcpd.Lease) {
+	return []*dhcpd.Lease{{
 		IP:       net.IP{192, 168, 12, 34},
 		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 		Hostname: "myhost",
-	}
-
-	return []dhcpd.Lease{l}
+	}}
 }
+
 func (d *testDHCP) SetOnLeaseChanged(onLeaseChanged dhcpd.OnLeaseChangedT) {}
 
 func TestPTRResponseFromDHCPLeases(t *testing.T) {

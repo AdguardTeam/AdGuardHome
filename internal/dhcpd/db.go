@@ -4,6 +4,7 @@ package dhcpd
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"os"
 	"time"
@@ -31,7 +32,7 @@ func normalizeIP(ip net.IP) net.IP {
 }
 
 // Load lease table from DB
-func (s *Server) dbLoad() {
+func (s *Server) dbLoad() (err error) {
 	dynLeases := []*Lease{}
 	staticLeases := []*Lease{}
 	v6StaticLeases := []*Lease{}
@@ -40,17 +41,16 @@ func (s *Server) dbLoad() {
 	data, err := os.ReadFile(s.conf.DBFilePath)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
-			log.Error("dhcp: can't read file %q: %v", s.conf.DBFilePath, err)
+			return fmt.Errorf("reading db: %w", err)
 		}
 
-		return
+		return nil
 	}
 
 	obj := []leaseJSON{}
 	err = json.Unmarshal(data, &obj)
 	if err != nil {
-		log.Error("dhcp: invalid DB: %v", err)
-		return
+		return fmt.Errorf("decoding db: %w", err)
 	}
 
 	numLeases := len(obj)
@@ -85,15 +85,23 @@ func (s *Server) dbLoad() {
 	}
 
 	leases4 := normalizeLeases(staticLeases, dynLeases)
-	s.srv4.ResetLeases(leases4)
+	err = s.srv4.ResetLeases(leases4)
+	if err != nil {
+		return fmt.Errorf("resetting dhcpv4 leases: %w", err)
+	}
 
 	leases6 := normalizeLeases(v6StaticLeases, v6DynLeases)
 	if s.srv6 != nil {
-		s.srv6.ResetLeases(leases6)
+		err = s.srv6.ResetLeases(leases6)
+		if err != nil {
+			return fmt.Errorf("resetting dhcpv6 leases: %w", err)
+		}
 	}
 
 	log.Info("dhcp: loaded leases v4:%d  v6:%d  total-read:%d from DB",
 		len(leases4), len(leases6), numLeases)
+
+	return nil
 }
 
 // Skip duplicate leases
@@ -124,20 +132,24 @@ func normalizeLeases(staticLeases, dynLeases []*Lease) []*Lease {
 }
 
 // Store lease table in DB
-func (s *Server) dbStore() {
-	var leases []leaseJSON
+func (s *Server) dbStore() (err error) {
+	// Use an empty slice here as opposed to nil so that it doesn't write
+	// "null" into the database file if leases are empty.
+	leases := []leaseJSON{}
 
 	leases4 := s.srv4.getLeasesRef()
 	for _, l := range leases4 {
 		if l.Expiry.Unix() == 0 {
 			continue
 		}
+
 		lease := leaseJSON{
 			HWAddr:   l.HWAddr,
 			IP:       l.IP,
 			Hostname: l.Hostname,
 			Expiry:   l.Expiry.Unix(),
 		}
+
 		leases = append(leases, lease)
 	}
 
@@ -147,29 +159,30 @@ func (s *Server) dbStore() {
 			if l.Expiry.Unix() == 0 {
 				continue
 			}
+
 			lease := leaseJSON{
 				HWAddr:   l.HWAddr,
 				IP:       l.IP,
 				Hostname: l.Hostname,
 				Expiry:   l.Expiry.Unix(),
 			}
+
 			leases = append(leases, lease)
 		}
 	}
 
-	data, err := json.Marshal(leases)
+	var data []byte
+	data, err = json.Marshal(leases)
 	if err != nil {
-		log.Error("json.Marshal: %v", err)
-		return
+		return fmt.Errorf("encoding db: %w", err)
 	}
 
 	err = maybe.WriteFile(s.conf.DBFilePath, data, 0o644)
 	if err != nil {
-		log.Error("dhcp: can't store lease table on disk: %v  filename: %s",
-			err, s.conf.DBFilePath)
-
-		return
+		return fmt.Errorf("writing db: %w", err)
 	}
 
-	log.Info("dhcp: stored %d leases in DB", len(leases))
+	log.Info("dhcp: stored %d leases in db", len(leases))
+
+	return nil
 }

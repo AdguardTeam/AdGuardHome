@@ -60,12 +60,12 @@ func v6JSONToServerConf(j *v6ServerConfJSON) V6ServerConf {
 
 // dhcpStatusResponse is the response for /control/dhcp/status endpoint.
 type dhcpStatusResponse struct {
-	Enabled      bool         `json:"enabled"`
 	IfaceName    string       `json:"interface_name"`
 	V4           V4ServerConf `json:"v4"`
 	V6           V6ServerConf `json:"v6"`
-	Leases       []Lease      `json:"leases"`
-	StaticLeases []Lease      `json:"static_leases"`
+	Leases       []*Lease     `json:"leases"`
+	StaticLeases []*Lease     `json:"static_leases"`
+	Enabled      bool         `json:"enabled"`
 }
 
 func (s *Server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
@@ -146,12 +146,68 @@ type dhcpServerConfigJSON struct {
 	Enabled       nullBool          `json:"enabled"`
 }
 
+func (s *Server) handleDHCPSetConfigV4(
+	conf *dhcpServerConfigJSON,
+) (srv4 DHCPServer, enabled bool, err error) {
+	if conf.V4 == nil {
+		return nil, false, nil
+	}
+
+	v4Conf := v4JSONToServerConf(conf.V4)
+	v4Conf.Enabled = conf.Enabled == nbTrue
+	if len(v4Conf.RangeStart) == 0 {
+		v4Conf.Enabled = false
+	}
+
+	enabled = v4Conf.Enabled
+	v4Conf.InterfaceName = conf.InterfaceName
+
+	c4 := V4ServerConf{}
+	s.srv4.WriteDiskConfig4(&c4)
+	v4Conf.notify = c4.notify
+	v4Conf.ICMPTimeout = c4.ICMPTimeout
+	v4Conf.Options = c4.Options
+
+	srv4, err = v4Create(v4Conf)
+
+	return srv4, enabled, err
+}
+
+func (s *Server) handleDHCPSetConfigV6(
+	conf *dhcpServerConfigJSON,
+) (srv6 DHCPServer, enabled bool, err error) {
+	if conf.V6 == nil {
+		return nil, false, nil
+	}
+
+	v6Conf := v6JSONToServerConf(conf.V6)
+	v6Conf.Enabled = conf.Enabled == nbTrue
+	if len(v6Conf.RangeStart) == 0 {
+		v6Conf.Enabled = false
+	}
+
+	// Don't overwrite the RA/SLAAC settings from the config file.
+	//
+	// TODO(a.garipov): Perhaps include them into the request to allow
+	// changing them from the HTTP API?
+	v6Conf.RASLAACOnly = s.conf.Conf6.RASLAACOnly
+	v6Conf.RAAllowSLAAC = s.conf.Conf6.RAAllowSLAAC
+
+	enabled = v6Conf.Enabled
+	v6Conf.InterfaceName = conf.InterfaceName
+	v6Conf.notify = s.onNotify
+
+	srv6, err = v6Create(v6Conf)
+
+	return srv6, enabled, err
+}
+
 func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
-	conf := dhcpServerConfigJSON{}
+	conf := &dhcpServerConfigJSON{}
 	conf.Enabled = boolToNullBool(s.conf.Enabled)
 	conf.InterfaceName = s.conf.InterfaceName
 
-	err := json.NewDecoder(r.Body).Decode(&conf)
+	err := json.NewDecoder(r.Body).Decode(conf)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest,
 			"failed to parse new dhcp config json: %s", err)
@@ -159,61 +215,18 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var s4 DHCPServer
-	var s6 DHCPServer
-	v4Enabled := false
-	v6Enabled := false
+	srv4, v4Enabled, err := s.handleDHCPSetConfigV4(conf)
+	if err != nil {
+		httpError(r, w, http.StatusBadRequest, "bad dhcpv4 configuration: %s", err)
 
-	if conf.V4 != nil {
-		v4Conf := v4JSONToServerConf(conf.V4)
-		v4Conf.Enabled = conf.Enabled == nbTrue
-		if len(v4Conf.RangeStart) == 0 {
-			v4Conf.Enabled = false
-		}
-
-		v4Enabled = v4Conf.Enabled
-		v4Conf.InterfaceName = conf.InterfaceName
-
-		c4 := V4ServerConf{}
-		s.srv4.WriteDiskConfig4(&c4)
-		v4Conf.notify = c4.notify
-		v4Conf.ICMPTimeout = c4.ICMPTimeout
-		v4Conf.Options = c4.Options
-
-		s4, err = v4Create(v4Conf)
-		if err != nil {
-			httpError(r, w, http.StatusBadRequest,
-				"invalid dhcpv4 configuration: %s", err)
-
-			return
-		}
+		return
 	}
 
-	if conf.V6 != nil {
-		v6Conf := v6JSONToServerConf(conf.V6)
-		v6Conf.Enabled = conf.Enabled == nbTrue
-		if len(v6Conf.RangeStart) == 0 {
-			v6Conf.Enabled = false
-		}
+	srv6, v6Enabled, err := s.handleDHCPSetConfigV6(conf)
+	if err != nil {
+		httpError(r, w, http.StatusBadRequest, "bad dhcpv6 configuration: %s", err)
 
-		// Don't overwrite the RA/SLAAC settings from the config file.
-		//
-		// TODO(a.garipov): Perhaps include them into the request to
-		// allow changing them from the HTTP API?
-		v6Conf.RASLAACOnly = s.conf.Conf6.RASLAACOnly
-		v6Conf.RAAllowSLAAC = s.conf.Conf6.RAAllowSLAAC
-
-		v6Enabled = v6Conf.Enabled
-		v6Conf.InterfaceName = conf.InterfaceName
-		v6Conf.notify = s.onNotify
-
-		s6, err = v6Create(v6Conf)
-		if err != nil {
-			httpError(r, w, http.StatusBadRequest,
-				"invalid dhcpv6 configuration: %s", err)
-
-			return
-		}
+		return
 	}
 
 	if conf.Enabled == nbTrue && !v4Enabled && !v6Enabled {
@@ -223,7 +236,12 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.Stop()
+	err = s.Stop()
+	if err != nil {
+		httpError(r, w, http.StatusInternalServerError, "stopping dhcp: %s", err)
+
+		return
+	}
 
 	if conf.Enabled != nbNull {
 		s.conf.Enabled = conf.Enabled == nbTrue
@@ -233,16 +251,22 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		s.conf.InterfaceName = conf.InterfaceName
 	}
 
-	if s4 != nil {
-		s.srv4 = s4
+	if srv4 != nil {
+		s.srv4 = srv4
 	}
 
-	if s6 != nil {
-		s.srv6 = s6
+	if srv6 != nil {
+		s.srv6 = srv6
 	}
 
 	s.conf.ConfigModified()
-	s.dbLoad()
+
+	err = s.dbLoad()
+	if err != nil {
+		httpError(r, w, http.StatusInternalServerError, "loading leases db: %s", err)
+
+		return
+	}
 
 	if s.conf.Enabled {
 		var code int
@@ -431,26 +455,26 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
-	lj := Lease{}
-	err := json.NewDecoder(r.Body).Decode(&lj)
+	l := &Lease{}
+	err := json.NewDecoder(r.Body).Decode(l)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
 
 		return
 	}
 
-	if lj.IP == nil {
+	if l.IP == nil {
 		httpError(r, w, http.StatusBadRequest, "invalid IP")
 
 		return
 	}
 
-	ip4 := lj.IP.To4()
+	ip4 := l.IP.To4()
 
 	if ip4 == nil {
-		lj.IP = lj.IP.To16()
+		l.IP = l.IP.To16()
 
-		err = s.srv6.AddStaticLease(lj)
+		err = s.srv6.AddStaticLease(l)
 		if err != nil {
 			httpError(r, w, http.StatusBadRequest, "%s", err)
 		}
@@ -458,8 +482,8 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	lj.IP = ip4
-	err = s.srv4.AddStaticLease(lj)
+	l.IP = ip4
+	err = s.srv4.AddStaticLease(l)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "%s", err)
 
@@ -468,26 +492,26 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 }
 
 func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Request) {
-	lj := Lease{}
-	err := json.NewDecoder(r.Body).Decode(&lj)
+	l := &Lease{}
+	err := json.NewDecoder(r.Body).Decode(l)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
 
 		return
 	}
 
-	if lj.IP == nil {
+	if l.IP == nil {
 		httpError(r, w, http.StatusBadRequest, "invalid IP")
 
 		return
 	}
 
-	ip4 := lj.IP.To4()
+	ip4 := l.IP.To4()
 
 	if ip4 == nil {
-		lj.IP = lj.IP.To16()
+		l.IP = l.IP.To16()
 
-		err = s.srv6.RemoveStaticLease(lj)
+		err = s.srv6.RemoveStaticLease(l)
 		if err != nil {
 			httpError(r, w, http.StatusBadRequest, "%s", err)
 		}
@@ -495,8 +519,8 @@ func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	lj.IP = ip4
-	err = s.srv4.RemoveStaticLease(lj)
+	l.IP = ip4
+	err = s.srv4.RemoveStaticLease(l)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "%s", err)
 
@@ -505,11 +529,16 @@ func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Requ
 }
 
 func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
-	s.Stop()
+	err := s.Stop()
+	if err != nil {
+		httpError(r, w, http.StatusInternalServerError, "stopping dhcp: %s", err)
 
-	err := os.Remove(s.conf.DBFilePath)
+		return
+	}
+
+	err = os.Remove(s.conf.DBFilePath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		log.Error("dhcp: removing %q: %s", s.conf.DBFilePath, err)
+		log.Error("dhcp: removing db: %s", err)
 	}
 
 	oldconf := s.conf
@@ -531,6 +560,16 @@ func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
 	s.conf.ConfigModified()
 }
 
+func (s *Server) handleResetLeases(w http.ResponseWriter, r *http.Request) {
+	err := s.resetLeases()
+	if err != nil {
+		msg := "resetting leases: %s"
+		httpError(r, w, http.StatusInternalServerError, msg, err)
+
+		return
+	}
+}
+
 func (s *Server) registerHandlers() {
 	s.conf.HTTPRegister(http.MethodGet, "/control/dhcp/status", s.handleDHCPStatus)
 	s.conf.HTTPRegister(http.MethodGet, "/control/dhcp/interfaces", s.handleDHCPInterfaces)
@@ -539,6 +578,7 @@ func (s *Server) registerHandlers() {
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/add_static_lease", s.handleDHCPAddStaticLease)
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/remove_static_lease", s.handleDHCPRemoveStaticLease)
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset", s.handleReset)
+	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset_leases", s.handleResetLeases)
 }
 
 // jsonError is a generic JSON error response.
@@ -579,4 +619,5 @@ func (s *Server) registerNotImplementedHandlers() {
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/add_static_lease", h)
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/remove_static_lease", h)
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset", h)
+	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset_leases", h)
 }

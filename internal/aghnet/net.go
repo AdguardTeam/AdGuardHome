@@ -424,9 +424,3 @@ func CollectAllIfacesAddrs() (addrs []string, err error) {
 
 	return addrs, nil
 }
-
-// JoinHostPort is a convinient wrapper for net.JoinHostPort with port of type
-// int.
-func JoinHostPort(host string, port int) (hostport string) {
-	return net.JoinHostPort(host, strconv.Itoa(port))
-}

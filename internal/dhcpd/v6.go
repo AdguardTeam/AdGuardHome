@@ -57,10 +57,12 @@ func ip6InRange(start, ip net.IP) bool {
 	return start[15] <= ip[15]
 }
 
-// ResetLeases - reset leases
-func (s *v6Server) ResetLeases(ll []*Lease) {
+// ResetLeases resets leases.
+func (s *v6Server) ResetLeases(leases []*Lease) (err error) {
+	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
+
 	s.leases = nil
-	for _, l := range ll {
+	for _, l := range leases {
 
 		if l.Expiry.Unix() != leaseExpireStatic &&
 			!ip6InRange(s.conf.ipStart, l.IP) {
@@ -72,28 +74,31 @@ func (s *v6Server) ResetLeases(ll []*Lease) {
 
 		s.addLease(l)
 	}
+
+	return nil
 }
 
-// GetLeases - get current leases
-func (s *v6Server) GetLeases(flags int) []Lease {
+// GetLeases returns the list of current DHCP leases.  It is safe for concurrent
+// use.
+func (s *v6Server) GetLeases(flags GetLeasesFlags) (leases []*Lease) {
 	// The function shouldn't return nil value because zero-length slice
 	// behaves differently in cases like marshalling.  Our front-end also
 	// requires non-nil value in the response.
-	result := []Lease{}
+	leases = []*Lease{}
 	s.leasesLock.Lock()
-	for _, lease := range s.leases {
-		if lease.Expiry.Unix() == leaseExpireStatic {
+	for _, l := range s.leases {
+		if l.Expiry.Unix() == leaseExpireStatic {
 			if (flags & LeasesStatic) != 0 {
-				result = append(result, *lease)
+				leases = append(leases, l.Clone())
 			}
 		} else {
 			if (flags & LeasesDynamic) != 0 {
-				result = append(result, *lease)
+				leases = append(leases, l.Clone())
 			}
 		}
 	}
 	s.leasesLock.Unlock()
-	return result
+	return leases
 }
 
 // getLeasesRef returns the actual leases slice.  For internal use only.
@@ -133,12 +138,11 @@ func (s *v6Server) leaseRemoveSwapByIndex(i int) {
 
 // Remove a dynamic lease with the same properties
 // Return error if a static lease is found
-func (s *v6Server) rmDynamicLease(lease Lease) error {
+func (s *v6Server) rmDynamicLease(lease *Lease) (err error) {
 	for i := 0; i < len(s.leases); i++ {
 		l := s.leases[i]
 
 		if bytes.Equal(l.HWAddr, lease.HWAddr) {
-
 			if l.Expiry.Unix() == leaseExpireStatic {
 				return fmt.Errorf("static lease already exists")
 			}
@@ -147,11 +151,11 @@ func (s *v6Server) rmDynamicLease(lease Lease) error {
 			if i == len(s.leases) {
 				break
 			}
+
 			l = s.leases[i]
 		}
 
 		if net.IP.Equal(l.IP, lease.IP) {
-
 			if l.Expiry.Unix() == leaseExpireStatic {
 				return fmt.Errorf("static lease already exists")
 			}
@@ -159,11 +163,12 @@ func (s *v6Server) rmDynamicLease(lease Lease) error {
 			s.leaseRemoveSwapByIndex(i)
 		}
 	}
+
 	return nil
 }
 
 // AddStaticLease adds a static lease.  It is safe for concurrent use.
-func (s *v6Server) AddStaticLease(l Lease) (err error) {
+func (s *v6Server) AddStaticLease(l *Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv6: %w") }()
 
 	if len(l.IP) != 16 {
@@ -181,18 +186,21 @@ func (s *v6Server) AddStaticLease(l Lease) (err error) {
 	err = s.rmDynamicLease(l)
 	if err != nil {
 		s.leasesLock.Unlock()
+
 		return err
 	}
-	s.addLease(&l)
+
+	s.addLease(l)
 	s.conf.notify(LeaseChangedDBStore)
 	s.leasesLock.Unlock()
 
 	s.conf.notify(LeaseChangedAddedStatic)
+
 	return nil
 }
 
 // RemoveStaticLease removes a static lease.  It is safe for concurrent use.
-func (s *v6Server) RemoveStaticLease(l Lease) (err error) {
+func (s *v6Server) RemoveStaticLease(l *Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv6: %w") }()
 
 	if len(l.IP) != 16 {
@@ -224,19 +232,20 @@ func (s *v6Server) addLease(l *Lease) {
 }
 
 // Remove a lease with the same properties
-func (s *v6Server) rmLease(lease Lease) error {
+func (s *v6Server) rmLease(lease *Lease) (err error) {
 	for i, l := range s.leases {
 		if net.IP.Equal(l.IP, lease.IP) {
-
 			if !bytes.Equal(l.HWAddr, lease.HWAddr) ||
 				l.Hostname != lease.Hostname {
 				return fmt.Errorf("lease not found")
 			}
 
 			s.leaseRemoveSwapByIndex(i)
+
 			return nil
 		}
 	}
+
 	return fmt.Errorf("lease not found")
 }
 
@@ -654,10 +663,10 @@ func (s *v6Server) Start() (err error) {
 }
 
 // Stop - stop server
-func (s *v6Server) Stop() {
-	err := s.ra.Close()
+func (s *v6Server) Stop() (err error) {
+	err = s.ra.Close()
 	if err != nil {
-		log.Error("dhcpv6: s.ra.Close: %s", err)
+		return fmt.Errorf("closing ra ctx: %w", err)
 	}
 
 	// DHCPv6 server may not be initialized if ra_slaac_only=true
@@ -668,11 +677,13 @@ func (s *v6Server) Stop() {
 	log.Debug("dhcpv6: stopping")
 	err = s.srv.Close()
 	if err != nil {
-		log.Error("dhcpv6: srv.Close: %s", err)
+		return fmt.Errorf("closing dhcpv6 srv: %w", err)
 	}
 
 	// now server.Serve() will return
 	s.srv = nil
+
+	return nil
 }
 
 // Create DHCPv6 server

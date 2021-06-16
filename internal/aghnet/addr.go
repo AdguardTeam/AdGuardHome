@@ -10,6 +10,24 @@ import (
 	"golang.org/x/net/idna"
 )
 
+// CloneIP returns a clone of an IP address.
+func CloneIP(ip net.IP) (clone net.IP) {
+	if ip != nil && len(ip) == 0 {
+		return net.IP{}
+	}
+
+	return append(clone, ip...)
+}
+
+// CloneMAC returns a clone of a MAC address.
+func CloneMAC(mac net.HardwareAddr) (clone net.HardwareAddr) {
+	if mac != nil && len(mac) == 0 {
+		return net.HardwareAddr{}
+	}
+
+	return append(clone, mac...)
+}
+
 // IPFromAddr returns an IP address from addr.  If addr is neither
 // a *net.TCPAddr nor a *net.UDPAddr, it returns nil.
 func IPFromAddr(addr net.Addr) (ip net.IP) {
@@ -29,6 +47,12 @@ func IsValidHostOuterRune(r rune) (ok bool) {
 	return (r >= 'a' && r <= 'z') ||
 		(r >= 'A' && r <= 'Z') ||
 		(r >= '0' && r <= '9')
+}
+
+// JoinHostPort is a convinient wrapper for net.JoinHostPort with port of type
+// int.
+func JoinHostPort(host string, port int) (hostport string) {
+	return net.JoinHostPort(host, strconv.Itoa(port))
 }
 
 // isValidHostRune returns true if r is a valid rune for a hostname label.

@@ -96,9 +96,9 @@ func (s *v4Server) validHostnameForClient(cliHostname string, ip net.IP) (hostna
 	return hostname
 }
 
-// ResetLeases - reset leases
-func (s *v4Server) ResetLeases(leases []*Lease) {
-	var err error
+// ResetLeases resets leases.
+func (s *v4Server) ResetLeases(leases []*Lease) (err error) {
+	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
 
 	if !s.conf.Enabled {
 		return
@@ -125,6 +125,8 @@ func (s *v4Server) ResetLeases(leases []*Lease) {
 			continue
 		}
 	}
+
+	return nil
 }
 
 // getLeasesRef returns the actual leases slice.  For internal use only.
@@ -154,14 +156,12 @@ func (s *v4Server) isBlocklisted(l *Lease) (ok bool) {
 
 // GetLeases returns the list of current DHCP leases.  It is safe for concurrent
 // use.
-func (s *v4Server) GetLeases(flags int) (res []Lease) {
+func (s *v4Server) GetLeases(flags GetLeasesFlags) (leases []*Lease) {
 	// The function shouldn't return nil, because zero-length slice behaves
 	// differently in cases like marshalling.  Our front-end also requires
 	// a non-nil value in the response.
-	res = []Lease{}
+	leases = []*Lease{}
 
-	// TODO(a.garipov): Remove the silly bit twiddling and make GetLeases
-	// accept booleans.  Seriously, this doesn't even save stack space.
 	getDynamic := flags&LeasesDynamic != 0
 	getStatic := flags&LeasesStatic != 0
 
@@ -171,17 +171,17 @@ func (s *v4Server) GetLeases(flags int) (res []Lease) {
 	now := time.Now()
 	for _, l := range s.leases {
 		if getDynamic && l.Expiry.After(now) && !s.isBlocklisted(l) {
-			res = append(res, *l)
+			leases = append(leases, l.Clone())
 
 			continue
 		}
 
 		if getStatic && l.IsStatic() {
-			res = append(res, *l)
+			leases = append(leases, l.Clone())
 		}
 	}
 
-	return res
+	return leases
 }
 
 // FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
@@ -305,7 +305,7 @@ func (s *v4Server) addLease(l *Lease) (err error) {
 }
 
 // rmLease removes a lease with the same properties.
-func (s *v4Server) rmLease(lease Lease) (err error) {
+func (s *v4Server) rmLease(lease *Lease) (err error) {
 	if len(s.leases) == 0 {
 		return nil
 	}
@@ -326,7 +326,7 @@ func (s *v4Server) rmLease(lease Lease) (err error) {
 }
 
 // AddStaticLease adds a static lease.  It is safe for concurrent use.
-func (s *v4Server) AddStaticLease(l Lease) (err error) {
+func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv4: adding static lease: %w") }()
 
 	if ip4 := l.IP.To4(); ip4 == nil {
@@ -365,7 +365,7 @@ func (s *v4Server) AddStaticLease(l Lease) (err error) {
 		s.leasesLock.Lock()
 		defer s.leasesLock.Unlock()
 
-		err = s.rmDynamicLease(&l)
+		err = s.rmDynamicLease(l)
 		if err != nil {
 			err = fmt.Errorf(
 				"removing dynamic leases for %s (%s): %w",
@@ -377,7 +377,7 @@ func (s *v4Server) AddStaticLease(l Lease) (err error) {
 			return
 		}
 
-		err = s.addLease(&l)
+		err = s.addLease(l)
 		if err != nil {
 			err = fmt.Errorf("adding static lease for %s (%s): %w", l.IP, l.HWAddr, err)
 
@@ -395,7 +395,7 @@ func (s *v4Server) AddStaticLease(l Lease) (err error) {
 }
 
 // RemoveStaticLease removes a static lease.  It is safe for concurrent use.
-func (s *v4Server) RemoveStaticLease(l Lease) (err error) {
+func (s *v4Server) RemoveStaticLease(l *Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
 
 	if len(l.IP) != 4 {
@@ -993,15 +993,15 @@ func (s *v4Server) Start() (err error) {
 }
 
 // Stop - stop server
-func (s *v4Server) Stop() {
+func (s *v4Server) Stop() (err error) {
 	if s.srv == nil {
 		return
 	}
 
 	log.Debug("dhcpv4: stopping")
-	err := s.srv.Close()
+	err = s.srv.Close()
 	if err != nil {
-		log.Error("dhcpv4: srv.Close: %s", err)
+		return fmt.Errorf("closing dhcpv4 srv: %w", err)
 	}
 
 	// Signal to the clients containers in packages home and dnsforward that
@@ -1009,6 +1009,8 @@ func (s *v4Server) Stop() {
 	s.conf.notify(LeaseChangedRemovedAll)
 
 	s.srv = nil
+
+	return nil
 }
 
 // Create DHCPv4 server

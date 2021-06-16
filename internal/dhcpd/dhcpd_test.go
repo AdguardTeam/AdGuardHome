@@ -43,7 +43,7 @@ func TestDB(t *testing.T) {
 	s.srv6, err = v6Create(V6ServerConf{})
 	require.NoError(t, err)
 
-	leases := []Lease{{
+	leases := []*Lease{{
 		Expiry:   time.Now().Add(time.Hour),
 		Hostname: "static-1.local",
 		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
@@ -57,18 +57,24 @@ func TestDB(t *testing.T) {
 	srv4, ok := s.srv4.(*v4Server)
 	require.True(t, ok)
 
-	err = srv4.addLease(&leases[0])
+	err = srv4.addLease(leases[0])
 	require.NoError(t, err)
 
 	err = s.srv4.AddStaticLease(leases[1])
 	require.NoError(t, err)
 
-	s.dbStore()
+	err = s.dbStore()
+	require.NoError(t, err)
+
 	t.Cleanup(func() {
 		assert.NoError(t, os.Remove(dbFilename))
 	})
-	s.srv4.ResetLeases(nil)
-	s.dbLoad()
+
+	err = s.srv4.ResetLeases(nil)
+	require.NoError(t, err)
+
+	err = s.dbLoad()
+	require.NoError(t, err)
 
 	ll := s.srv4.GetLeases(LeasesAll)
 	require.Len(t, ll, len(leases))

@@ -30,7 +30,7 @@ func TestV4_AddRemove_static(t *testing.T) {
 	assert.Empty(t, ls)
 
 	// Add static lease.
-	l := Lease{
+	l := &Lease{
 		Hostname: "static-1.local",
 		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 		IP:       net.IP{192, 168, 10, 150},
@@ -50,7 +50,7 @@ func TestV4_AddRemove_static(t *testing.T) {
 	assert.True(t, ls[0].IsStatic())
 
 	// Try to remove static lease.
-	err = s.RemoveStaticLease(Lease{
+	err = s.RemoveStaticLease(&Lease{
 		IP:     net.IP{192, 168, 10, 110},
 		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	})
@@ -92,7 +92,7 @@ func TestV4_AddReplace(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	stLeases := []Lease{{
+	stLeases := []*Lease{{
 		Hostname: "static-1.local",
 		HWAddr:   net.HardwareAddr{0x33, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 		IP:       net.IP{192, 168, 10, 150},
@@ -134,7 +134,7 @@ func TestV4StaticLease_Get(t *testing.T) {
 
 	s.conf.dnsIPAddrs = []net.IP{{192, 168, 10, 1}}
 
-	l := Lease{
+	l := &Lease{
 		Hostname: "static-1.local",
 		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 		IP:       net.IP{192, 168, 10, 150},

@@ -9,6 +9,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestCloneIP(t *testing.T) {
+	assert.Equal(t, net.IP(nil), CloneIP(nil))
+	assert.Equal(t, net.IP{}, CloneIP(net.IP{}))
+
+	ip := net.IP{1, 2, 3, 4}
+	clone := CloneIP(ip)
+	assert.Equal(t, ip, clone)
+	assert.NotSame(t, &ip[0], &clone[0])
+}
+
+func TestCloneMAC(t *testing.T) {
+	assert.Equal(t, net.HardwareAddr(nil), CloneMAC(nil))
+	assert.Equal(t, net.HardwareAddr{}, CloneMAC(net.HardwareAddr{}))
+
+	mac := net.HardwareAddr{0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC}
+	clone := CloneMAC(mac)
+	assert.Equal(t, mac, clone)
+	assert.NotSame(t, &mac[0], &clone[0])
+}
+
 func TestIPFromAddr(t *testing.T) {
 	ip := net.IP{1, 2, 3, 4}
 	assert.Equal(t, net.IP(nil), IPFromAddr(nil))
@@ -64,6 +84,14 @@ func TestValidateHardwareAddress(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestJoinHostPort(t *testing.T) {
+	assert.Equal(t, ":0", JoinHostPort("", 0))
+	assert.Equal(t, "host:12345", JoinHostPort("host", 12345))
+	assert.Equal(t, "1.2.3.4:12345", JoinHostPort("1.2.3.4", 12345))
+	assert.Equal(t, "[1234::5678]:12345", JoinHostPort("1234::5678", 12345))
+	assert.Equal(t, "[1234::5678%lo]:12345", JoinHostPort("1234::5678%lo", 12345))
 }
 
 func repeatStr(b *strings.Builder, s string, n int) {

@@ -473,6 +473,21 @@
               'schema':
                 '$ref': '#/components/schemas/Error'
           'description': 'Not implemented (for example, on Windows).'
+  '/dhcp/reset_leases':
+    'post':
+      'tags':
+      - 'dhcp'
+      'operationId': 'dhcpResetLeases'
+      'summary': 'Reset DHCP leases'
+      'responses':
+        '200':
+          'description': 'OK.'
+        '501':
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/Error'
+          'description': 'Not implemented (for example, on Windows).'
   '/filtering/status':
     'get':
       'tags':
