@@ -4,6 +4,11 @@
 
 ## v0.107: API changes
 
+###  Disabling Statistics
+
+* The API `POST /control/stats_config` HTTP API allows disabling statistics by
+  setting `"interval"` to `0`.
+
 ### `POST /control/dhcp/reset_leases`
 
 * The new `POST /control/dhcp/reset_leases` HTTP API allows removing all leases

@@ -147,7 +147,7 @@ func (s *statsCtx) Start() {
 }
 
 func checkInterval(days uint32) bool {
-	return days == 1 || days == 7 || days == 30 || days == 90
+	return days == 0 || days == 1 || days == 7 || days == 30 || days == 90
 }
 
 func (s *statsCtx) dbOpen() bool {
@@ -251,7 +251,7 @@ func (s *statsCtx) periodicFlush() {
 		}
 
 		id := s.conf.UnitID()
-		if ptr.id == id {
+		if ptr.id == id || s.conf.limit == 0 {
 			time.Sleep(time.Second)
 
 			continue
@@ -412,9 +412,11 @@ func convertTopSlice(a []countPair) []map[string]uint64 {
 }
 
 func (s *statsCtx) setLimit(limitDays int) {
-	conf := *s.conf
-	conf.limit = uint32(limitDays) * 24
-	s.conf = &conf
+	s.conf.limit = uint32(limitDays) * 24
+	if limitDays == 0 {
+		s.clear()
+	}
+
 	log.Debug("stats: set limit: %d", limitDays)
 }
 
@@ -488,6 +490,10 @@ func (s *statsCtx) getClientIP(ip net.IP) (clientIP net.IP) {
 }
 
 func (s *statsCtx) Update(e Entry) {
+	if s.conf.limit == 0 {
+		return
+	}
+
 	if e.Result == 0 ||
 		e.Result >= rLast ||
 		e.Domain == "" ||
@@ -695,6 +701,10 @@ func (s *statsCtx) getData() (statsResponse, bool) {
 }
 
 func (s *statsCtx) GetTopClientsIP(maxCount uint) []net.IP {
+	if s.conf.limit == 0 {
+		return nil
+	}
+
 	units, _ := s.loadUnits(s.conf.limit)
 	if units == nil {
 		return nil

@@ -19,6 +19,10 @@ func httpError(r *http.Request, w http.ResponseWriter, code int, format string, 
 	http.Error(w, text, code)
 }
 
+// topAddrs is an alias for the types of the TopFoo fields of statsResponse.
+// The key is either a client's address or a requested address.
+type topAddrs = map[string]uint64
+
 // statsResponse is a response for getting statistics.
 type statsResponse struct {
 	TimeUnits string `json:"time_units"`
@@ -31,9 +35,9 @@ type statsResponse struct {
 
 	AvgProcessingTime float64 `json:"avg_processing_time"`
 
-	TopQueried []map[string]uint64 `json:"top_queried_domains"`
-	TopClients []map[string]uint64 `json:"top_clients"`
-	TopBlocked []map[string]uint64 `json:"top_blocked_domains"`
+	TopQueried []topAddrs `json:"top_queried_domains"`
+	TopClients []topAddrs `json:"top_clients"`
+	TopBlocked []topAddrs `json:"top_blocked_domains"`
 
 	DNSQueries []uint64 `json:"dns_queries"`
 
@@ -45,17 +49,37 @@ type statsResponse struct {
 // handleStats is a handler for getting statistics.
 func (s *statsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	response, ok := s.getData()
-	log.Debug("Stats: prepared data in %v", time.Since(start))
 
-	if !ok {
-		httpError(r, w, http.StatusInternalServerError, "Couldn't get statistics data")
+	var resp statsResponse
+	if s.conf.limit == 0 {
+		resp = statsResponse{
+			TimeUnits: "days",
 
-		return
+			TopBlocked: []topAddrs{},
+			TopClients: []topAddrs{},
+			TopQueried: []topAddrs{},
+
+			BlockedFiltering:     []uint64{},
+			DNSQueries:           []uint64{},
+			ReplacedParental:     []uint64{},
+			ReplacedSafebrowsing: []uint64{},
+		}
+	} else {
+		var ok bool
+		resp, ok = s.getData()
+
+		log.Debug("stats: prepared data in %v", time.Since(start))
+
+		if !ok {
+			httpError(r, w, http.StatusInternalServerError, "Couldn't get statistics data")
+
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(response)
+
+	err := json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "json encode: %s", err)
 

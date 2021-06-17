@@ -1630,8 +1630,16 @@
       'description': 'Statistics configuration'
       'properties':
         'interval':
+          'description': >
+            Time period to keep the data.  `0` means that the statistics is
+            disabled.
+          'enum':
+          - 0
+          - 1
+          - 7
+          - 30
+          - 90
           'type': 'integer'
-          'description': 'Time period to keep data (1 | 7 | 30 | 90)'
     'DhcpConfig':
       'type': 'object'
       'properties':

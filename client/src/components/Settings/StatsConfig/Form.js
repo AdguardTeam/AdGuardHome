@@ -8,22 +8,27 @@ import { renderRadioField, toNumber } from '../../../helpers/form';
 import { FORM_NAME, STATS_INTERVALS_DAYS } from '../../../helpers/constants';
 import '../FormButton.css';
 
-const getIntervalFields = (processing, t, toNumber) => STATS_INTERVALS_DAYS.map((interval) => {
-    const title = interval === 1 ? t('interval_24_hour') : t('interval_days', { count: interval });
+const getIntervalTitle = (interval, t) => {
+    switch (interval) {
+        case 0:
+            return t('disabled');
+        case 1:
+            return t('interval_24_hour');
+        default:
+            return t('interval_days', { count: interval });
+    }
+};
 
-    return (
-        <Field
-            key={interval}
-            name="interval"
-            type="radio"
-            component={renderRadioField}
-            value={interval}
-            placeholder={title}
-            normalize={toNumber}
-            disabled={processing}
-        />
-    );
-});
+const getIntervalFields = (processing, t, toNumber) => STATS_INTERVALS_DAYS.map((interval) => <Field
+    key={interval}
+    name="interval"
+    type="radio"
+    component={renderRadioField}
+    value={interval}
+    placeholder={getIntervalTitle(interval, t)}
+    normalize={toNumber}
+    disabled={processing}
+/>);
 
 const Form = (props) => {
     const {
