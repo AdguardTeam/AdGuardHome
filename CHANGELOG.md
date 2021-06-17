@@ -34,6 +34,8 @@ and this project adheres to
 
 ### Changed
 
+- When /etc/hosts-type rules have several IPs for one host, all IPs are now
+  returned instead of only the first one ([#1381]).
 - The setting `rlimit_nofile` is now in the `os` block of the configuration
   file, together with the new `group` and `user` settings ([#2763]).
 - Permissions on filter files are now `0o644` instead of `0o600` ([#3198]).
@@ -63,6 +65,7 @@ released by then.
 
 - Go 1.15 support.
 
+[#1381]: https://github.com/AdguardTeam/AdGuardHome/issues/1381
 [#1691]: https://github.com/AdguardTeam/AdGuardHome/issues/1691
 [#2280]: https://github.com/AdguardTeam/AdGuardHome/issues/2280
 [#2439]: https://github.com/AdguardTeam/AdGuardHome/issues/2439

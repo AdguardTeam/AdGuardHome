@@ -29,21 +29,21 @@ type dnsConfig struct {
 	UpstreamsFile *string   `json:"upstream_dns_file"`
 	Bootstraps    *[]string `json:"bootstrap_dns"`
 
-	ProtectionEnabled *bool     `json:"protection_enabled"`
-	RateLimit         *uint32   `json:"ratelimit"`
-	BlockingMode      *string   `json:"blocking_mode"`
-	BlockingIPv4      net.IP    `json:"blocking_ipv4"`
-	BlockingIPv6      net.IP    `json:"blocking_ipv6"`
-	EDNSCSEnabled     *bool     `json:"edns_cs_enabled"`
-	DNSSECEnabled     *bool     `json:"dnssec_enabled"`
-	DisableIPv6       *bool     `json:"disable_ipv6"`
-	UpstreamMode      *string   `json:"upstream_mode"`
-	CacheSize         *uint32   `json:"cache_size"`
-	CacheMinTTL       *uint32   `json:"cache_ttl_min"`
-	CacheMaxTTL       *uint32   `json:"cache_ttl_max"`
-	ResolveClients    *bool     `json:"resolve_clients"`
-	UsePrivateRDNS    *bool     `json:"use_private_ptr_resolvers"`
-	LocalPTRUpstreams *[]string `json:"local_ptr_upstreams"`
+	ProtectionEnabled *bool         `json:"protection_enabled"`
+	RateLimit         *uint32       `json:"ratelimit"`
+	BlockingMode      *BlockingMode `json:"blocking_mode"`
+	BlockingIPv4      net.IP        `json:"blocking_ipv4"`
+	BlockingIPv6      net.IP        `json:"blocking_ipv6"`
+	EDNSCSEnabled     *bool         `json:"edns_cs_enabled"`
+	DNSSECEnabled     *bool         `json:"dnssec_enabled"`
+	DisableIPv6       *bool         `json:"disable_ipv6"`
+	UpstreamMode      *string       `json:"upstream_mode"`
+	CacheSize         *uint32       `json:"cache_size"`
+	CacheMinTTL       *uint32       `json:"cache_ttl_min"`
+	CacheMaxTTL       *uint32       `json:"cache_ttl_max"`
+	ResolveClients    *bool         `json:"resolve_clients"`
+	UsePrivateRDNS    *bool         `json:"use_private_ptr_resolvers"`
+	LocalPTRUpstreams *[]string     `json:"local_ptr_upstreams"`
 }
 
 func (s *Server) getDNSConfig() dnsConfig {
@@ -126,27 +126,17 @@ func (req *dnsConfig) checkBlockingMode() bool {
 		return true
 	}
 
-	bm := *req.BlockingMode
-	if bm == "custom_ip" {
-		if req.BlockingIPv4.To4() == nil {
-			return false
-		}
-
-		return req.BlockingIPv6 != nil
+	switch bm := *req.BlockingMode; bm {
+	case BlockingModeDefault,
+		BlockingModeREFUSED,
+		BlockingModeNXDOMAIN,
+		BlockingModeNullIP:
+		return true
+	case BlockingModeCustomIP:
+		return req.BlockingIPv4.To4() != nil && req.BlockingIPv6 != nil
+	default:
+		return false
 	}
-
-	for _, valid := range []string{
-		"default",
-		"refused",
-		"nxdomain",
-		"null_ip",
-	} {
-		if bm == valid {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (req *dnsConfig) checkUpstreamsMode() bool {

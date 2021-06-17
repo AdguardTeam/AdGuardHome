@@ -344,13 +344,13 @@ var gctx dnsFilterContext
 
 // ResultRule contains information about applied rules.
 type ResultRule struct {
-	// FilterListID is the ID of the rule's filter list.
-	FilterListID int64 `json:",omitempty"`
 	// Text is the text of the rule.
 	Text string `json:",omitempty"`
 	// IP is the host IP.  It is nil unless the rule uses the
 	// /etc/hosts syntax or the reason is FilteredSafeSearch.
 	IP net.IP `json:",omitempty"`
+	// FilterListID is the ID of the rule's filter list.
+	FilterListID int64 `json:",omitempty"`
 }
 
 // Result contains the result of a request check.
@@ -657,26 +657,43 @@ func (d *DNSFilter) initFiltering(allowFilters, blockFilters []Filter) error {
 	return nil
 }
 
-// matchHostProcessAllowList processes the allowlist logic of host
-// matching.
-func (d *DNSFilter) matchHostProcessAllowList(host string, dnsres urlfilter.DNSResult) (res Result, err error) {
-	var rule rules.Rule
-	if dnsres.NetworkRule != nil {
-		rule = dnsres.NetworkRule
-	} else if len(dnsres.HostRulesV4) > 0 {
-		rule = dnsres.HostRulesV4[0]
-	} else if len(dnsres.HostRulesV6) > 0 {
-		rule = dnsres.HostRulesV6[0]
+// hostRules is a helper that converts a slice of host rules into a slice of the
+// rules.Rule interface values.
+func hostRulesToRules(netRules []*rules.HostRule) (res []rules.Rule) {
+	if netRules == nil {
+		return nil
 	}
 
-	if rule == nil {
+	res = make([]rules.Rule, len(netRules))
+	for i, nr := range netRules {
+		res[i] = nr
+	}
+
+	return res
+}
+
+// matchHostProcessAllowList processes the allowlist logic of host
+// matching.
+func (d *DNSFilter) matchHostProcessAllowList(
+	host string,
+	dnsres urlfilter.DNSResult,
+) (res Result, err error) {
+	var matchedRules []rules.Rule
+	if dnsres.NetworkRule != nil {
+		matchedRules = []rules.Rule{dnsres.NetworkRule}
+	} else if len(dnsres.HostRulesV4) > 0 {
+		matchedRules = hostRulesToRules(dnsres.HostRulesV4)
+	} else if len(dnsres.HostRulesV6) > 0 {
+		matchedRules = hostRulesToRules(dnsres.HostRulesV6)
+	}
+
+	if len(matchedRules) == 0 {
 		return Result{}, fmt.Errorf("invalid dns result: rules are empty")
 	}
 
-	log.Debug("Filtering: found allowlist rule for host %q: %q  list_id: %d",
-		host, rule.Text(), rule.GetFilterListID())
+	log.Debug("filtering: allowlist rules for host %q: %+v", host, matchedRules)
 
-	return makeResult(rule, NotFilteredAllowList), nil
+	return makeResult(matchedRules, NotFilteredAllowList), nil
 }
 
 // matchHostProcessDNSResult processes the matched DNS filtering result.
@@ -690,21 +707,23 @@ func (d *DNSFilter) matchHostProcessDNSResult(
 			reason = NotFilteredAllowList
 		}
 
-		return makeResult(dnsres.NetworkRule, reason)
+		return makeResult([]rules.Rule{dnsres.NetworkRule}, reason)
 	}
 
 	if qtype == dns.TypeA && dnsres.HostRulesV4 != nil {
-		rule := dnsres.HostRulesV4[0]
-		res = makeResult(rule, FilteredBlockList)
-		res.Rules[0].IP = rule.IP.To4()
+		res = makeResult(hostRulesToRules(dnsres.HostRulesV4), FilteredBlockList)
+		for i, hr := range dnsres.HostRulesV4 {
+			res.Rules[i].IP = hr.IP.To4()
+		}
 
 		return res
 	}
 
 	if qtype == dns.TypeAAAA && dnsres.HostRulesV6 != nil {
-		rule := dnsres.HostRulesV6[0]
-		res = makeResult(rule, FilteredBlockList)
-		res.Rules[0].IP = rule.IP.To16()
+		res = makeResult(hostRulesToRules(dnsres.HostRulesV6), FilteredBlockList)
+		for i, hr := range dnsres.HostRulesV6 {
+			res.Rules[i].IP = hr.IP.To16()
+		}
 
 		return res
 	}
@@ -712,17 +731,14 @@ func (d *DNSFilter) matchHostProcessDNSResult(
 	if dnsres.HostRulesV4 != nil || dnsres.HostRulesV6 != nil {
 		// Question type doesn't match the host rules.  Return the first
 		// matched host rule, but without an IP address.
-		var rule rules.Rule
+		var matchedRules []rules.Rule
 		if dnsres.HostRulesV4 != nil {
-			rule = dnsres.HostRulesV4[0]
+			matchedRules = []rules.Rule{dnsres.HostRulesV4[0]}
 		} else if dnsres.HostRulesV6 != nil {
-			rule = dnsres.HostRulesV6[0]
+			matchedRules = []rules.Rule{dnsres.HostRulesV6[0]}
 		}
 
-		res = makeResult(rule, FilteredBlockList)
-		res.Rules[0].IP = net.IP{}
-
-		return res
+		return makeResult(matchedRules, FilteredBlockList)
 	}
 
 	return Result{}
@@ -780,8 +796,7 @@ func (d *DNSFilter) matchHost(
 	}
 
 	res = d.matchHostProcessDNSResult(qtype, dnsres)
-	if len(res.Rules) > 0 {
-		r := res.Rules[0]
+	for _, r := range res.Rules {
 		log.Debug(
 			"filtering: found rule %q for host %q, filter list id: %d",
 			r.Text,
@@ -794,20 +809,20 @@ func (d *DNSFilter) matchHost(
 }
 
 // makeResult returns a properly constructed Result.
-func makeResult(rule rules.Rule, reason Reason) Result {
-	res := Result{
-		Reason: reason,
-		Rules: []*ResultRule{{
-			FilterListID: int64(rule.GetFilterListID()),
-			Text:         rule.Text(),
-		}},
+func makeResult(matchedRules []rules.Rule, reason Reason) (res Result) {
+	resRules := make([]*ResultRule, len(matchedRules))
+	for i, mr := range matchedRules {
+		resRules[i] = &ResultRule{
+			FilterListID: int64(mr.GetFilterListID()),
+			Text:         mr.Text(),
+		}
 	}
 
-	if reason == FilteredBlockList {
-		res.IsFiltered = true
+	return Result{
+		IsFiltered: reason == FilteredBlockList,
+		Reason:     reason,
+		Rules:      resRules,
 	}
-
-	return res
 }
 
 // InitModule manually initializes blocked services map.

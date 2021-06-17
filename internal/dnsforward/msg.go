@@ -26,17 +26,29 @@ func (s *Server) makeResponse(req *dns.Msg) (resp *dns.Msg) {
 	return resp
 }
 
+// ipsFromRules extracts non-IP addresses from the filtering result rules.
+func ipsFromRules(resRules []*filtering.ResultRule) (ips []net.IP) {
+	for _, r := range resRules {
+		if r.IP != nil {
+			ips = append(ips, r.IP)
+		}
+	}
+
+	return ips
+}
+
 // genDNSFilterMessage generates a DNS message corresponding to the filtering result
 func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *filtering.Result) *dns.Msg {
 	m := d.Req
 
 	if m.Question[0].Qtype != dns.TypeA && m.Question[0].Qtype != dns.TypeAAAA {
-		if s.conf.BlockingMode == "null_ip" {
+		if s.conf.BlockingMode == BlockingModeNullIP {
 			return s.makeResponse(m)
 		}
 		return s.genNXDomain(m)
 	}
 
+	ips := ipsFromRules(result.Rules)
 	switch result.Reason {
 	case filtering.FilteredSafeBrowsing:
 		return s.genBlockedHost(m, s.conf.SafeBrowsingBlockHost, d)
@@ -46,42 +58,45 @@ func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *filtering.Resu
 		// If the query was filtered by "Safe search", filtering also must return
 		// the IP address that must be used in response.
 		// In this case regardless of the filtering method, we should return it
-		if result.Reason == filtering.FilteredSafeSearch &&
-			len(result.Rules) > 0 &&
-			result.Rules[0].IP != nil {
-			return s.genResponseWithIP(m, result.Rules[0].IP)
+		if result.Reason == filtering.FilteredSafeSearch && len(ips) > 0 {
+			return s.genResponseWithIPs(m, ips)
 		}
 
-		if s.conf.BlockingMode == "null_ip" {
-			// it means that we should return 0.0.0.0 or :: for any blocked request
-			return s.makeResponseNullIP(m)
-		} else if s.conf.BlockingMode == "custom_ip" {
-			// means that we should return custom IP for any blocked request
-
+		switch s.conf.BlockingMode {
+		case BlockingModeCustomIP:
 			switch m.Question[0].Qtype {
 			case dns.TypeA:
 				return s.genARecord(m, s.conf.BlockingIPv4)
 			case dns.TypeAAAA:
 				return s.genAAAARecord(m, s.conf.BlockingIPv6)
+			default:
+				// Generally shouldn't happen, since the types
+				// are checked above.
+				log.Error(
+					"dns: invalid msg type %d for blocking mode %s",
+					m.Question[0].Qtype,
+					s.conf.BlockingMode,
+				)
+
+				return s.makeResponse(m)
 			}
-		} else if s.conf.BlockingMode == "nxdomain" {
-			// means that we should return NXDOMAIN for any blocked request
+		case BlockingModeDefault:
+			if len(ips) > 0 {
+				return s.genResponseWithIPs(m, ips)
+			}
 
+			return s.makeResponseNullIP(m)
+		case BlockingModeNullIP:
+			return s.makeResponseNullIP(m)
+		case BlockingModeNXDOMAIN:
 			return s.genNXDomain(m)
-		} else if s.conf.BlockingMode == "refused" {
-			// means that we should return NXDOMAIN for any blocked request
-
+		case BlockingModeREFUSED:
 			return s.makeResponseREFUSED(m)
-		}
+		default:
+			log.Error("dns: invalid blocking mode %q", s.conf.BlockingMode)
 
-		// Default blocking mode
-		// If there's an IP specified in the rule, return it
-		// For host-type rules, return null IP
-		if len(result.Rules) > 0 && result.Rules[0].IP != nil {
-			return s.genResponseWithIP(m, result.Rules[0].IP)
+			return s.makeResponse(m)
 		}
-
-		return s.makeResponseNullIP(m)
 	}
 }
 
@@ -166,35 +181,60 @@ func (s *Server) genAnswerTXT(req *dns.Msg, strs []string) (ans *dns.TXT) {
 	}
 }
 
-// generate DNS response message with an IP address
-func (s *Server) genResponseWithIP(req *dns.Msg, ip net.IP) *dns.Msg {
-	if req.Question[0].Qtype == dns.TypeA && ip.To4() != nil {
-		return s.genARecord(req, ip.To4())
-	} else if req.Question[0].Qtype == dns.TypeAAAA &&
-		len(ip) == net.IPv6len && ip.To4() == nil {
-		return s.genAAAARecord(req, ip)
+// genResponseWithIPs generates a DNS response message with the provided IP
+// addresses and an appropriate resource record type.  If any of the IPs cannot
+// be converted to the correct protocol, genResponseWithIPs returns an empty
+// response.
+func (s *Server) genResponseWithIPs(req *dns.Msg, ips []net.IP) (resp *dns.Msg) {
+	var ans []dns.RR
+	switch req.Question[0].Qtype {
+	case dns.TypeA:
+		for _, ip := range ips {
+			if ip4 := ip.To4(); ip4 == nil {
+				ans = nil
+
+				break
+			}
+
+			ans = append(ans, s.genAnswerA(req, ip))
+		}
+	case dns.TypeAAAA:
+		for _, ip := range ips {
+			ans = append(ans, s.genAnswerAAAA(req, ip.To16()))
+		}
+	default:
+		// Go on and return an empty response.
 	}
 
-	// empty response
-	resp := s.makeResponse(req)
+	resp = s.makeResponse(req)
+	resp.Answer = ans
+
 	return resp
 }
 
-// Respond with 0.0.0.0 for A, :: for AAAA, empty response for other types
-func (s *Server) makeResponseNullIP(req *dns.Msg) *dns.Msg {
-	if req.Question[0].Qtype == dns.TypeA {
-		return s.genARecord(req, []byte{0, 0, 0, 0})
-	} else if req.Question[0].Qtype == dns.TypeAAAA {
-		return s.genAAAARecord(req, net.IPv6zero)
+// makeResponseNullIP creates a response with 0.0.0.0 for A requests, :: for
+// AAAA requests, and an empty response for other types.
+func (s *Server) makeResponseNullIP(req *dns.Msg) (resp *dns.Msg) {
+	// Respond with the corresponding zero IP type as opposed to simply
+	// using one or the other in both cases, because the IPv4 zero IP is
+	// converted to a IPV6-mapped IPv4 address, while the IPv6 zero IP is
+	// converted into an empty slice instead of the zero IPv4.
+	switch req.Question[0].Qtype {
+	case dns.TypeA:
+		resp = s.genResponseWithIPs(req, []net.IP{{0, 0, 0, 0}})
+	case dns.TypeAAAA:
+		resp = s.genResponseWithIPs(req, []net.IP{net.IPv6zero})
+	default:
+		resp = s.makeResponse(req)
 	}
 
-	return s.makeResponse(req)
+	return resp
 }
 
 func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSContext) *dns.Msg {
 	ip := net.ParseIP(newAddr)
 	if ip != nil {
-		return s.genResponseWithIP(request, ip)
+		return s.genResponseWithIPs(request, []net.IP{ip})
 	}
 
 	// look up the hostname, TODO: cache

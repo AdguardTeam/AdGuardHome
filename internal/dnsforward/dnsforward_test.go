@@ -520,6 +520,7 @@ func TestBlockedRequest(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
+			BlockingMode:      BlockingModeDefault,
 		},
 	}
 	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
@@ -622,6 +623,7 @@ func TestBlockCNAME(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
+			BlockingMode:      BlockingModeDefault,
 		},
 	}
 	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
@@ -724,7 +726,7 @@ func TestNullBlockedRequest(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
-			BlockingMode:      "null_ip",
+			BlockingMode:      BlockingModeNullIP,
 		},
 	}
 	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
@@ -777,7 +779,7 @@ func TestBlockedCustomIP(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
-			BlockingMode:      "custom_ip",
+			BlockingMode:      BlockingModeCustomIP,
 			BlockingIPv4:      nil,
 			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
 		},
@@ -827,6 +829,7 @@ func TestBlockedByHosts(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
+			BlockingMode:      BlockingModeDefault,
 		},
 	}
 
