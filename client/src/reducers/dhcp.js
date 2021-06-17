@@ -118,6 +118,11 @@ const dhcp = handleActions(
             v6: {},
             interface_name: '',
         }),
+        [actions.resetDhcpLeasesSuccess]: (state) => ({
+            ...state,
+            leases: [],
+            staticLeases: [],
+        }),
 
         [actions.toggleLeaseModal]: (state) => {
             const newState = {

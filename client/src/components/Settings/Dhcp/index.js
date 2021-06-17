@@ -21,6 +21,7 @@ import {
     getDhcpStatus,
     resetDhcp,
     setDhcpConfig,
+    resetDhcpLeases,
     toggleDhcp,
     toggleLeaseModal,
 } from '../../../actions';
@@ -111,6 +112,12 @@ const Dhcp = () => {
         }));
     };
 
+    const handleReset = () => {
+        if (window.confirm(t('dhcp_reset_leases_confirm'))) {
+            dispatch(resetDhcpLeases());
+        }
+    };
+
     const enteredSomeV4Value = Object.values(v4)
         .some(Boolean);
     const enteredSomeV6Value = Object.values(v6)
@@ -188,18 +195,18 @@ const Dhcp = () => {
         <PageTitle title={t('dhcp_settings')} subtitle={t('dhcp_description')} containerClass="page-title--dhcp">
             {toggleDhcpButton}
             <button
-                    type="button"
-                    className={statusButtonClass}
-                    onClick={onClick}
-                    disabled={enabled || !interface_name || processingConfig}
+                type="button"
+                className={statusButtonClass}
+                onClick={onClick}
+                disabled={enabled || !interface_name || processingConfig}
             >
                 <Trans>check_dhcp_servers</Trans>
             </button>
             <button
-                    type="button"
-                    className='btn btn-sm btn-outline-secondary'
-                    disabled={!enteredSomeValue || processingConfig}
-                    onClick={clear}
+                type="button"
+                className='btn btn-sm btn-outline-secondary'
+                disabled={!enteredSomeValue || processingConfig}
+                onClick={clear}
             >
                 <Trans>reset_settings</Trans>
             </button>
@@ -269,16 +276,23 @@ const Dhcp = () => {
                             processingDeleting={processingDeleting}
                             cidr={cidr}
                         />
-                    </div>
-                    <div className="col-12">
-                        <button
-                            type="button"
-                            className="btn btn-success btn-standard mt-3"
-                            onClick={toggleModal}
-                            disabled={disabledLeasesButton}
-                        >
-                            <Trans>dhcp_add_static_lease</Trans>
-                        </button>
+                        <div className="btn-list mt-2">
+                            <button
+                                type="button"
+                                className="btn btn-success btn-standard mt-3"
+                                onClick={toggleModal}
+                                disabled={disabledLeasesButton}
+                            >
+                                <Trans>dhcp_add_static_lease</Trans>
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-secondary btn-standard mt-3"
+                                onClick={handleReset}
+                            >
+                                <Trans>dhcp_reset_leases</Trans>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </Card>

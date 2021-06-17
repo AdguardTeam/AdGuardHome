@@ -264,6 +264,8 @@ class Api {
 
     DHCP_RESET = { path: 'dhcp/reset', method: 'POST' };
 
+    DHCP_LEASES_RESET = { path: 'dhcp/reset_leases', method: 'POST' };
+
     getDhcpStatus() {
         const { path, method } = this.DHCP_STATUS;
         return this.makeRequest(path, method);
@@ -312,6 +314,11 @@ class Api {
 
     resetDhcp() {
         const { path, method } = this.DHCP_RESET;
+        return this.makeRequest(path, method);
+    }
+
+    resetDhcpLeases() {
+        const { path, method } = this.DHCP_LEASES_RESET;
         return this.makeRequest(path, method);
     }
 

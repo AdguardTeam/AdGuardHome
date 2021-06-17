@@ -547,6 +547,22 @@ export const resetDhcp = () => async (dispatch) => {
     }
 };
 
+export const resetDhcpLeasesRequest = createAction('RESET_DHCP_LEASES_REQUEST');
+export const resetDhcpLeasesSuccess = createAction('RESET_DHCP_LEASES_SUCCESS');
+export const resetDhcpLeasesFailure = createAction('RESET_DHCP_LEASES_FAILURE');
+
+export const resetDhcpLeases = () => async (dispatch) => {
+    dispatch(resetDhcpLeasesRequest());
+    try {
+        const status = await apiClient.resetDhcpLeases();
+        dispatch(resetDhcpLeasesSuccess(status));
+        dispatch(addSuccessToast('dhcp_reset_leases_success'));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(resetDhcpLeasesFailure());
+    }
+};
+
 export const toggleLeaseModal = createAction('TOGGLE_LEASE_MODAL');
 
 export const addStaticLeaseRequest = createAction('ADD_STATIC_LEASE_REQUEST');
