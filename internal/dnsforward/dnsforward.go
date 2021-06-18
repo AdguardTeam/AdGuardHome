@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -203,7 +202,7 @@ func (s *Server) Close() {
 	s.queryLog = nil
 	s.dnsProxy = nil
 
-	if err := s.ipset.Close(); err != nil {
+	if err := s.ipset.close(); err != nil {
 		log.Error("closing ipset: %s", err)
 	}
 }
@@ -451,25 +450,14 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	// --
 	s.initDefaultSettings()
 
-	// Initialize IPSET configuration
+	// Initialize ipset configuration
 	// --
-	err := s.ipset.init(s.conf.IPSETList)
+	err := s.ipset.init(s.conf.IpsetList)
 	if err != nil {
-		if !errors.Is(err, os.ErrInvalid) && !errors.Is(err, os.ErrPermission) {
-			return fmt.Errorf("cannot initialize ipset: %w", err)
-		}
-
-		// ipset cannot currently be initialized if the server was
-		// installed from Snap or when the user or the binary doesn't
-		// have the required permissions, or when the kernel doesn't
-		// support netfilter.
-		//
-		// Log and go on.
-		//
-		// TODO(a.garipov): The Snap problem can probably be solved if
-		// we add the netlink-connector interface plug.
-		log.Info("warning: cannot initialize ipset: %s", err)
+		return err
 	}
+
+	log.Debug("inited ipset")
 
 	// Prepare DNS servers settings
 	// --

@@ -111,10 +111,12 @@ type FilteringConfig struct {
 	EnableEDNSClientSubnet bool     `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
 	MaxGoroutines          uint32   `yaml:"max_goroutines"`     // Max. number of parallel goroutines for processing incoming requests
 
-	// IPSET configuration - add IP addresses of the specified domain names to an ipset list
-	// Syntax:
-	// "DOMAIN[,DOMAIN].../IPSET_NAME"
-	IPSETList []string `yaml:"ipset"`
+	// IpsetList is the ipset configuration that allows AdGuard Home to add
+	// IP addresses of the specified domain names to an ipset list.  Syntax:
+	//
+	//   DOMAIN[,DOMAIN].../IPSET_NAME
+	//
+	IpsetList []string `yaml:"ipset"`
 }
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS

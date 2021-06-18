@@ -1,4 +1,6 @@
-// Package aghos contains utilities for functions requiring system calls.
+// Package aghos contains utilities for functions requiring system calls and
+// other OS-specific APIs.  OS-specific network handling should go to aghnet
+// instead.
 package aghos
 
 import (
