@@ -109,7 +109,7 @@ type quicSession interface {
 }
 
 // processClientID extracts the client's ID from the server name of the client's
-// DOT or DOQ request or the path of the client's DOH.
+// DoT or DoQ request or the path of the client's DoH.
 func processClientID(dctx *dnsContext) (rc resultCode) {
 	pctx := dctx.proxyCtx
 	proto := pctx.Proto

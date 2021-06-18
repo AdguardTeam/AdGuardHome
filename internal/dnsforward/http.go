@@ -621,11 +621,11 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 
 // Control flow:
 // web
-//  -> dnsforward.handleDOH -> dnsforward.ServeHTTP
+//  -> dnsforward.handleDoH -> dnsforward.ServeHTTP
 //  -> proxy.ServeHTTP -> proxy.handleDNSRequest
 //  -> dnsforward.handleDNSRequest
-func (s *Server) handleDOH(w http.ResponseWriter, r *http.Request) {
-	if !s.conf.TLSAllowUnencryptedDOH && r.TLS == nil {
+func (s *Server) handleDoH(w http.ResponseWriter, r *http.Request) {
+	if !s.conf.TLSAllowUnencryptedDoH && r.TLS == nil {
 		httpError(r, w, http.StatusNotFound, "Not Found")
 		return
 	}
@@ -653,6 +653,6 @@ func (s *Server) registerHandlers() {
 	// See go doc net/http.ServeMux.
 	//
 	// See also https://github.com/AdguardTeam/AdGuardHome/issues/2628.
-	s.conf.HTTPRegister("", "/dns-query", s.handleDOH)
-	s.conf.HTTPRegister("", "/dns-query/", s.handleDOH)
+	s.conf.HTTPRegister("", "/dns-query", s.handleDoH)
+	s.conf.HTTPRegister("", "/dns-query/", s.handleDoH)
 }

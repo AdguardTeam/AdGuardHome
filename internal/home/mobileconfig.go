@@ -163,10 +163,10 @@ func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 	_, _ = w.Write(mobileconfig)
 }
 
-func handleMobileConfigDOH(w http.ResponseWriter, r *http.Request) {
+func handleMobileConfigDoH(w http.ResponseWriter, r *http.Request) {
 	handleMobileConfig(w, r, dnsProtoHTTPS)
 }
 
-func handleMobileConfigDOT(w http.ResponseWriter, r *http.Request) {
+func handleMobileConfigDoT(w http.ResponseWriter, r *http.Request) {
 	handleMobileConfig(w, r, dnsProtoTLS)
 }

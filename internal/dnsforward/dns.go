@@ -32,7 +32,7 @@ type dnsContext struct {
 	unreversedReqIP net.IP
 	// err is the error returned from a processing function.
 	err error
-	// clientID is the clientID from DOH, DOQ, or DOT, if provided.
+	// clientID is the clientID from DoH, DoQ, or DoT, if provided.
 	clientID string
 	// origQuestion is the question received from the client.  It is set
 	// when the request is modified by rewrites.

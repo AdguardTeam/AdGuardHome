@@ -44,11 +44,11 @@ func processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
 
 		switch pctx.Proto {
 		case proxy.ProtoHTTPS:
-			p.ClientProto = querylog.ClientProtoDOH
+			p.ClientProto = querylog.ClientProtoDoH
 		case proxy.ProtoQUIC:
-			p.ClientProto = querylog.ClientProtoDOQ
+			p.ClientProto = querylog.ClientProtoDoQ
 		case proxy.ProtoTLS:
-			p.ClientProto = querylog.ClientProtoDOT
+			p.ClientProto = querylog.ClientProtoDoT
 		case proxy.ProtoDNSCrypt:
 			p.ClientProto = querylog.ClientProtoDNSCrypt
 		default:

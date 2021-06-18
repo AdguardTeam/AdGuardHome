@@ -12,14 +12,14 @@ import (
 	"howett.net/plist"
 )
 
-func TestHandleMobileConfigDOH(t *testing.T) {
+func TestHandleMobileConfigDoH(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		r, err := http.NewRequest(http.MethodGet, "https://example.com:12345/apple/doh.mobileconfig?host=example.org", nil)
 		require.NoError(t, err)
 
 		w := httptest.NewRecorder()
 
-		handleMobileConfigDOH(w, r)
+		handleMobileConfigDoH(w, r)
 		require.Equal(t, http.StatusOK, w.Code)
 
 		var mc mobileConfig
@@ -49,7 +49,7 @@ func TestHandleMobileConfigDOH(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		handleMobileConfigDOH(w, r)
+		handleMobileConfigDoH(w, r)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 		assert.JSONEq(t, w.Body.String(), b.String())
 	})
@@ -60,7 +60,7 @@ func TestHandleMobileConfigDOH(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		handleMobileConfigDOH(w, r)
+		handleMobileConfigDoH(w, r)
 		require.Equal(t, http.StatusOK, w.Code)
 
 		var mc mobileConfig
@@ -74,14 +74,14 @@ func TestHandleMobileConfigDOH(t *testing.T) {
 	})
 }
 
-func TestHandleMobileConfigDOT(t *testing.T) {
+func TestHandleMobileConfigDoT(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		r, err := http.NewRequest(http.MethodGet, "https://example.com:12345/apple/dot.mobileconfig?host=example.org", nil)
 		require.NoError(t, err)
 
 		w := httptest.NewRecorder()
 
-		handleMobileConfigDOT(w, r)
+		handleMobileConfigDoT(w, r)
 		require.Equal(t, http.StatusOK, w.Code)
 
 		var mc mobileConfig
@@ -111,7 +111,7 @@ func TestHandleMobileConfigDOT(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		handleMobileConfigDOT(w, r)
+		handleMobileConfigDoT(w, r)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
 		assert.JSONEq(t, w.Body.String(), b.String())
@@ -123,7 +123,7 @@ func TestHandleMobileConfigDOT(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		handleMobileConfigDOT(w, r)
+		handleMobileConfigDoT(w, r)
 		require.Equal(t, http.StatusOK, w.Code)
 
 		var mc mobileConfig

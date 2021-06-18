@@ -20,7 +20,7 @@ Please answer the following questions for yourself before submitting an issue. *
 * **Version of AdGuard Home server:**
   * <!-- (e.g. v0.123.4) -->
 * **How did you install AdGuard Home:**
-  * <!-- (e.g. Built from source, Snapcraft, Docker, Github releases, etc.) -->
+  * <!-- (e.g. Built from source, Snapcraft, Docker, GitHub releases, etc.) -->
 * **How did you setup DNS configuration:**
   * <!-- (System/Router/IoT) -->
 * **If it's a router or IoT, please write device model:**

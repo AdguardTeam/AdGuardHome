@@ -13,8 +13,8 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 )
 
-// hardwarePortInfo - information obtained using MacOS networksetup
-// about the current state of the internet connection
+// hardwarePortInfo contains information about the current state of the internet
+// connection obtained from macOS networksetup.
 type hardwarePortInfo struct {
 	name      string
 	ip        string

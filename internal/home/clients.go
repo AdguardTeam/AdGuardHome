@@ -63,13 +63,13 @@ const (
 
 // RuntimeClient information
 type RuntimeClient struct {
-	WhoisInfo *RuntimeClientWhoisInfo
+	WHOISInfo *RuntimeClientWHOISInfo
 	Host      string
 	Source    clientSource
 }
 
-// RuntimeClientWhoisInfo is the filtered WHOIS data for a runtime client.
-type RuntimeClientWhoisInfo struct {
+// RuntimeClientWHOISInfo is the filtered WHOIS data for a runtime client.
+type RuntimeClientWHOISInfo struct {
 	City    string `json:"city,omitempty"`
 	Country string `json:"country,omitempty"`
 	Orgname string `json:"orgname,omitempty"`
@@ -270,12 +270,12 @@ func (clients *clientsContainer) Exists(id string, source clientSource) (ok bool
 	return source <= rc.Source
 }
 
-func toQueryLogWhois(wi *RuntimeClientWhoisInfo) (cw *querylog.ClientWhois) {
+func toQueryLogWHOIS(wi *RuntimeClientWHOISInfo) (cw *querylog.ClientWHOIS) {
 	if wi == nil {
-		return &querylog.ClientWhois{}
+		return &querylog.ClientWHOIS{}
 	}
 
-	return &querylog.ClientWhois{
+	return &querylog.ClientWHOIS{
 		City:    wi.City,
 		Country: wi.Country,
 		Orgname: wi.Orgname,
@@ -287,7 +287,7 @@ func toQueryLogWhois(wi *RuntimeClientWhoisInfo) (cw *querylog.ClientWhois) {
 func (clients *clientsContainer) findMultiple(ids []string) (c *querylog.Client, err error) {
 	for _, id := range ids {
 		var name string
-		whois := &querylog.ClientWhois{}
+		whois := &querylog.ClientWHOIS{}
 
 		c, ok := clients.Find(id)
 		if ok {
@@ -300,7 +300,7 @@ func (clients *clientsContainer) findMultiple(ids []string) (c *querylog.Client,
 			}
 
 			name = rc.Host
-			whois = toQueryLogWhois(rc.WhoisInfo)
+			whois = toQueryLogWHOIS(rc.WHOISInfo)
 		}
 
 		ip := net.ParseIP(id)
@@ -309,7 +309,7 @@ func (clients *clientsContainer) findMultiple(ids []string) (c *querylog.Client,
 		return &querylog.Client{
 			Name:           name,
 			DisallowedRule: disallowedRule,
-			Whois:          whois,
+			WHOIS:          whois,
 			Disallowed:     disallowed,
 		}, nil
 	}
@@ -620,8 +620,8 @@ func (clients *clientsContainer) Update(name string, c *Client) (err error) {
 	return nil
 }
 
-// SetWhoisInfo sets the WHOIS information for a client.
-func (clients *clientsContainer) SetWhoisInfo(ip string, wi *RuntimeClientWhoisInfo) {
+// SetWHOISInfo sets the WHOIS information for a client.
+func (clients *clientsContainer) SetWHOISInfo(ip string, wi *RuntimeClientWHOISInfo) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -633,7 +633,7 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, wi *RuntimeClientWhoisI
 
 	rc, ok := clients.ipToRC[ip]
 	if ok {
-		rc.WhoisInfo = wi
+		rc.WHOISInfo = wi
 		log.Debug("clients: set whois info for runtime client %s: %+v", rc.Host, wi)
 
 		return
@@ -645,7 +645,7 @@ func (clients *clientsContainer) SetWhoisInfo(ip string, wi *RuntimeClientWhoisI
 		Source: ClientSourceWHOIS,
 	}
 
-	rc.WhoisInfo = wi
+	rc.WHOISInfo = wi
 	clients.ipToRC[ip] = rc
 
 	log.Debug("clients: set whois info for runtime client with ip %s: %+v", ip, wi)
@@ -676,7 +676,7 @@ func (clients *clientsContainer) addHostLocked(ip, host string, src clientSource
 		rc = &RuntimeClient{
 			Host:      host,
 			Source:    src,
-			WhoisInfo: &RuntimeClientWhoisInfo{},
+			WHOISInfo: &RuntimeClientWHOISInfo{},
 		}
 
 		clients.ipToRC[ip] = rc

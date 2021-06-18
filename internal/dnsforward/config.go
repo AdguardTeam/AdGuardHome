@@ -167,7 +167,7 @@ type ServerConfig struct {
 	FilteringConfig
 	TLSConfig
 	DNSCryptConfig
-	TLSAllowUnencryptedDOH bool
+	TLSAllowUnencryptedDoH bool
 
 	// UpstreamTimeout is the timeout for querying upstream servers.
 	UpstreamTimeout time.Duration

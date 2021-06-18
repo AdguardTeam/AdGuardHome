@@ -198,9 +198,9 @@ func registerControlHandlers() {
 	httpRegister(http.MethodPost, "/control/update", handleUpdate)
 	httpRegister(http.MethodGet, "/control/profile", handleGetProfile)
 
-	// No auth is necessary for DOH/DOT configurations
-	Context.mux.HandleFunc("/apple/doh.mobileconfig", postInstall(handleMobileConfigDOH))
-	Context.mux.HandleFunc("/apple/dot.mobileconfig", postInstall(handleMobileConfigDOT))
+	// No auth is necessary for DoH/DoT configurations
+	Context.mux.HandleFunc("/apple/doh.mobileconfig", postInstall(handleMobileConfigDoH))
+	Context.mux.HandleFunc("/apple/dot.mobileconfig", postInstall(handleMobileConfigDoT))
 	RegisterAuthHandlers()
 }
 

@@ -48,7 +48,7 @@ func tlsCreate(conf tlsConfigSettings) *TLSMod {
 				PortHTTPS:           conf.PortHTTPS,
 				PortDNSOverTLS:      conf.PortDNSOverTLS,
 				PortDNSOverQUIC:     conf.PortDNSOverQUIC,
-				AllowUnencryptedDOH: conf.AllowUnencryptedDOH,
+				AllowUnencryptedDoH: conf.AllowUnencryptedDoH,
 			}}
 		}
 		t.setCertFileTime()

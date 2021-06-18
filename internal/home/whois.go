@@ -23,8 +23,8 @@ const (
 	whoisTTL       = 1 * 60 * 60 // 1 hour
 )
 
-// Whois - module context
-type Whois struct {
+// WHOIS - module context
+type WHOIS struct {
 	clients *clientsContainer
 	ipChan  chan net.IP
 
@@ -41,9 +41,9 @@ type Whois struct {
 	timeoutMsec uint
 }
 
-// initWhois creates the Whois module context.
-func initWhois(clients *clientsContainer) *Whois {
-	w := Whois{
+// initWHOIS creates the WHOIS module context.
+func initWHOIS(clients *clientsContainer) *WHOIS {
+	w := WHOIS{
 		timeoutMsec: 5000,
 		clients:     clients,
 		ipAddrs: cache.New(cache.Config{
@@ -67,8 +67,8 @@ func trimValue(s string) string {
 	return s[:maxValueLength-3] + "..."
 }
 
-// isWhoisComment returns true if the string is empty or is a WHOIS comment.
-func isWhoisComment(s string) (ok bool) {
+// isWHOISComment returns true if the string is empty or is a WHOIS comment.
+func isWHOISComment(s string) (ok bool) {
 	return len(s) == 0 || s[0] == '#' || s[0] == '%'
 }
 
@@ -83,7 +83,7 @@ func whoisParse(data string) (m strmap) {
 	var orgname string
 	lines := strings.Split(data, "\n")
 	for _, l := range lines {
-		if isWhoisComment(l) {
+		if isWHOISComment(l) {
 			continue
 		}
 
@@ -128,7 +128,7 @@ func whoisParse(data string) (m strmap) {
 const MaxConnReadSize = 64 * 1024
 
 // Send request to a server and receive the response
-func (w *Whois) query(ctx context.Context, target, serverAddr string) (data string, err error) {
+func (w *WHOIS) query(ctx context.Context, target, serverAddr string) (data string, err error) {
 	addr, _, _ := net.SplitHostPort(serverAddr)
 	if addr == "whois.arin.net" {
 		target = "n + " + target
@@ -162,7 +162,7 @@ func (w *Whois) query(ctx context.Context, target, serverAddr string) (data stri
 }
 
 // Query WHOIS servers (handle redirects)
-func (w *Whois) queryAll(ctx context.Context, target string) (string, error) {
+func (w *WHOIS) queryAll(ctx context.Context, target string) (string, error) {
 	server := net.JoinHostPort(defaultServer, defaultPort)
 	const maxRedirects = 5
 	for i := 0; i != maxRedirects; i++ {
@@ -170,7 +170,7 @@ func (w *Whois) queryAll(ctx context.Context, target string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		log.Debug("Whois: received response (%d bytes) from %s  IP:%s", len(resp), server, target)
+		log.Debug("whois: received response (%d bytes) from %s  IP:%s", len(resp), server, target)
 
 		m := whoisParse(resp)
 		redir, ok := m["whois"]
@@ -186,25 +186,25 @@ func (w *Whois) queryAll(ctx context.Context, target string) (string, error) {
 			server = redir
 		}
 
-		log.Debug("Whois: redirected to %s  IP:%s", redir, target)
+		log.Debug("whois: redirected to %s  IP:%s", redir, target)
 	}
 	return "", fmt.Errorf("whois: redirect loop")
 }
 
 // Request WHOIS information
-func (w *Whois) process(ctx context.Context, ip net.IP) (wi *RuntimeClientWhoisInfo) {
+func (w *WHOIS) process(ctx context.Context, ip net.IP) (wi *RuntimeClientWHOISInfo) {
 	resp, err := w.queryAll(ctx, ip.String())
 	if err != nil {
-		log.Debug("Whois: error: %s  IP:%s", err, ip)
+		log.Debug("whois: error: %s  IP:%s", err, ip)
 
 		return nil
 	}
 
-	log.Debug("Whois: IP:%s  response: %d bytes", ip, len(resp))
+	log.Debug("whois: IP:%s  response: %d bytes", ip, len(resp))
 
 	m := whoisParse(resp)
 
-	wi = &RuntimeClientWhoisInfo{
+	wi = &RuntimeClientWHOISInfo{
 		City:    m["city"],
 		Country: m["country"],
 		Orgname: m["orgname"],
@@ -212,7 +212,7 @@ func (w *Whois) process(ctx context.Context, ip net.IP) (wi *RuntimeClientWhoisI
 
 	// Don't return an empty struct so that the frontend doesn't get
 	// confused.
-	if *wi == (RuntimeClientWhoisInfo{}) {
+	if *wi == (RuntimeClientWHOISInfo{}) {
 		return nil
 	}
 
@@ -220,7 +220,7 @@ func (w *Whois) process(ctx context.Context, ip net.IP) (wi *RuntimeClientWhoisI
 }
 
 // Begin - begin requesting WHOIS info
-func (w *Whois) Begin(ip net.IP) {
+func (w *WHOIS) Begin(ip net.IP) {
 	now := uint64(time.Now().Unix())
 	expire := w.ipAddrs.Get([]byte(ip))
 	if len(expire) != 0 {
@@ -234,18 +234,18 @@ func (w *Whois) Begin(ip net.IP) {
 	binary.BigEndian.PutUint64(expire, now+whoisTTL)
 	_ = w.ipAddrs.Set([]byte(ip), expire)
 
-	log.Debug("Whois: adding %s", ip)
+	log.Debug("whois: adding %s", ip)
 	select {
 	case w.ipChan <- ip:
 		//
 	default:
-		log.Debug("Whois: queue is full")
+		log.Debug("whois: queue is full")
 	}
 }
 
 // workerLoop processes the IP addresses it got from the channel and associates
 // the retrieving WHOIS info with a client.
-func (w *Whois) workerLoop() {
+func (w *WHOIS) workerLoop() {
 	for ip := range w.ipChan {
 		info := w.process(context.Background(), ip)
 		if info == nil {
@@ -253,6 +253,6 @@ func (w *Whois) workerLoop() {
 		}
 
 		id := ip.String()
-		w.clients.SetWhoisInfo(id, info)
+		w.clients.SetWHOISInfo(id, info)
 	}
 }

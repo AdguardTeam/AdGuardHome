@@ -48,7 +48,7 @@ type homeContext struct {
 	queryLog   querylog.QueryLog         // query log module
 	dnsServer  *dnsforward.Server        // DNS module
 	rdns       *RDNS                     // rDNS module
-	whois      *Whois                    // WHOIS module
+	whois      *WHOIS                    // WHOIS module
 	dnsFilter  *filtering.DNSFilter      // DNS filtering module
 	dhcpServer *dhcpd.Server             // DHCP module
 	auth       *Auth                     // HTTP authentication module

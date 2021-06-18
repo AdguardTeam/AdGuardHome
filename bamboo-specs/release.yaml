@@ -34,11 +34,11 @@
     'jobs':
     - 'Publish to Snapstore'
 
-- 'Publish to Github Releases':
+- 'Publish to GitHub Releases':
     'manual': false
     'final': false
     'jobs':
-    - 'Publish to Github Releases'
+    - 'Publish to GitHub Releases'
 
 'Make release':
   'docker':
@@ -194,7 +194,7 @@
   'requirements':
   - 'adg-docker': 'true'
 
-'Publish to Github Releases':
+'Publish to GitHub Releases':
   'key': 'PTGR'
   'other':
     'clean-working-dir': true
@@ -215,7 +215,7 @@
         export CHANNEL="${bamboo.channel}"
         if [ "$CHANNEL" != 'release' ] && [ "${CHANNEL}" != 'beta' ]
         then
-              echo "don't publish to Github Releases for this channel"
+              echo "don't publish to GitHub Releases for this channel"
 
               exit 0
         fi

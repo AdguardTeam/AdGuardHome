@@ -42,9 +42,9 @@ type ClientProto string
 
 // Client protocol names.
 const (
-	ClientProtoDOH      ClientProto = "doh"
-	ClientProtoDOQ      ClientProto = "doq"
-	ClientProtoDOT      ClientProto = "dot"
+	ClientProtoDoH      ClientProto = "doh"
+	ClientProtoDoQ      ClientProto = "doq"
+	ClientProtoDoT      ClientProto = "dot"
 	ClientProtoDNSCrypt ClientProto = "dnscrypt"
 	ClientProtoPlain    ClientProto = ""
 )
@@ -54,9 +54,9 @@ const (
 func NewClientProto(s string) (cp ClientProto, err error) {
 	switch cp = ClientProto(s); cp {
 	case
-		ClientProtoDOH,
-		ClientProtoDOQ,
-		ClientProtoDOT,
+		ClientProtoDoH,
+		ClientProtoDoQ,
+		ClientProtoDoT,
 		ClientProtoDNSCrypt,
 		ClientProtoPlain:
 

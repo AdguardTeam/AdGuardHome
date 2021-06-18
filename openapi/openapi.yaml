@@ -41,7 +41,7 @@
 - 'name': 'stats'
   'description': 'AdGuard Home statistics'
 - 'name': 'tls'
-  'description': 'AdGuard Home HTTPS/DOH/DOT settings'
+  'description': 'AdGuard Home HTTPS/DoH/DoQ/DoT settings'
 
 'paths':
   '/status':
@@ -1877,7 +1877,7 @@
           'type': 'string'
         'client_id':
           'description': >
-            The client ID, if provided in DOH, DOQ, or DOT.
+            The client ID, if provided in DoH, DoQ, or DoT.
           'example': 'cli123'
           'type': 'string'
         'client_info':
@@ -2036,7 +2036,7 @@
         'enabled':
           'type': 'boolean'
           'example': true
-          'description': 'enabled is the encryption (DOT/DOH/HTTPS) status'
+          'description': 'enabled is the encryption (DoT/DoH/HTTPS) status'
         'server_name':
           'type': 'string'
           'example': 'example.org'
@@ -2054,12 +2054,12 @@
           'type': 'integer'
           'format': 'uint16'
           'example': 853
-          'description': 'DNS-over-TLS port. If 0, DOT will be disabled.'
+          'description': 'DNS-over-TLS port. If 0, DoT will be disabled.'
         'port_dns_over_quic':
           'type': 'integer'
           'format': 'uint16'
           'example': 784
-          'description': 'DNS-over-QUIC port. If 0, DOQ will be disabled.'
+          'description': 'DNS-over-QUIC port. If 0, DoQ will be disabled.'
         'certificate_chain':
           'type': 'string'
           'description': 'Base64 string with PEM-encoded certificates chain'

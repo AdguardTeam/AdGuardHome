@@ -24,7 +24,7 @@ type clientJSON struct {
 	// the allowlist.
 	DisallowedRule *string `json:"disallowed_rule,omitempty"`
 
-	WhoisInfo *RuntimeClientWhoisInfo `json:"whois_info,omitempty"`
+	WHOISInfo *RuntimeClientWHOISInfo `json:"whois_info,omitempty"`
 
 	Name string `json:"name"`
 
@@ -42,7 +42,7 @@ type clientJSON struct {
 }
 
 type runtimeClientJSON struct {
-	WhoisInfo *RuntimeClientWhoisInfo `json:"whois_info"`
+	WHOISInfo *RuntimeClientWHOISInfo `json:"whois_info"`
 
 	IP     string `json:"ip"`
 	Name   string `json:"name"`
@@ -70,7 +70,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, _ *http
 		cj := runtimeClientJSON{
 			IP:        ip,
 			Name:      rc.Host,
-			WhoisInfo: rc.WhoisInfo,
+			WHOISInfo: rc.WHOISInfo,
 		}
 
 		cj.Source = "etc/hosts"
@@ -143,7 +143,7 @@ func runtimeClientToJSON(ip string, rc RuntimeClient) (cj clientJSON) {
 	cj = clientJSON{
 		Name:      rc.Host,
 		IDs:       []string{ip},
-		WhoisInfo: rc.WhoisInfo,
+		WHOISInfo: rc.WHOISInfo,
 	}
 
 	return cj
@@ -287,7 +287,7 @@ func (clients *clientsContainer) findRuntime(ip net.IP, idStr string) (cj client
 			IDs:            []string{idStr},
 			Disallowed:     &disallowed,
 			DisallowedRule: &rule,
-			WhoisInfo:      &RuntimeClientWhoisInfo{},
+			WHOISInfo:      &RuntimeClientWHOISInfo{},
 		}
 
 		return cj, true

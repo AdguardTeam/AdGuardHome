@@ -3,17 +3,17 @@ package querylog
 // Client is the information required by the query log to match against clients
 // during searches.
 type Client struct {
-	Whois          *ClientWhois `json:"whois,omitempty"`
+	WHOIS          *ClientWHOIS `json:"whois,omitempty"`
 	Name           string       `json:"name"`
 	DisallowedRule string       `json:"disallowed_rule"`
 	Disallowed     bool         `json:"disallowed"`
 }
 
-// ClientWhois is the filtered WHOIS data for the client.
+// ClientWHOIS is the filtered WHOIS data for the client.
 //
-// TODO(a.garipov): Merge with home.RuntimeClientWhoisInfo after the
+// TODO(a.garipov): Merge with home.RuntimeClientWHOISInfo after the
 // refactoring is done.
-type ClientWhois struct {
+type ClientWHOIS struct {
 	City    string `json:"city,omitempty"`
 	Country string `json:"country,omitempty"`
 	Orgname string `json:"orgname,omitempty"`

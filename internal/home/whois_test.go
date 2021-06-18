@@ -50,7 +50,7 @@ func (c *fakeConn) fakeDial(ctx context.Context, network, addr string) (conn net
 	return c, nil
 }
 
-func TestWhois(t *testing.T) {
+func TestWHOIS(t *testing.T) {
 	const (
 		nl   = "\n"
 		data = `OrgName:        FakeOrg LLC` + nl +
@@ -62,7 +62,7 @@ func TestWhois(t *testing.T) {
 		data: []byte(data),
 	}
 
-	w := Whois{
+	w := WHOIS{
 		timeoutMsec: 5000,
 		dialContext: fc.fakeDial,
 	}
@@ -77,7 +77,7 @@ func TestWhois(t *testing.T) {
 	assert.Equal(t, "Nonreal", m["city"])
 }
 
-func TestWhoisParse(t *testing.T) {
+func TestWHOISParse(t *testing.T) {
 	const (
 		city    = "Nonreal"
 		country = "Imagiland"
