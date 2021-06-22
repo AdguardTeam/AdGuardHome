@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- RFC 9000 support in DNS-over-QUIC.
 - Completely disabling statistics by setting the statistics interval to zero
   ([#2141]).
 - The ability to completely purge DHCP leases ([#1691]).
@@ -54,6 +55,7 @@ released by then.
 
 ### Fixed
 
+- Occasional breakages on network errors with DNS-over-HTTP upstreams ([#3217]).
 - Errors when setting static IP on Linux ([#3257]).
 - Treatment of domain names and FQDNs in custom rules with `$dnsrewrite` that
   use the `PTR` type ([#3256]).
@@ -84,6 +86,7 @@ released by then.
 [#3186]: https://github.com/AdguardTeam/AdGuardHome/issues/3186
 [#3194]: https://github.com/AdguardTeam/AdGuardHome/issues/3194
 [#3198]: https://github.com/AdguardTeam/AdGuardHome/issues/3198
+[#3217]: https://github.com/AdguardTeam/AdGuardHome/issues/3217
 [#3256]: https://github.com/AdguardTeam/AdGuardHome/issues/3256
 [#3257]: https://github.com/AdguardTeam/AdGuardHome/issues/3257
 
