@@ -8,10 +8,6 @@ import (
 	"syscall"
 )
 
-func canBindPrivilegedPorts() (can bool, err error) {
-	return HaveAdminRights()
-}
-
 func setRlimit(val uint64) (err error) {
 	var rlim syscall.Rlimit
 	rlim.Max = val

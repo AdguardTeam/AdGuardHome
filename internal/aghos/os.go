@@ -31,12 +31,6 @@ func Unsupported(op string) (err error) {
 	}
 }
 
-// CanBindPrivilegedPorts checks if current process can bind to privileged
-// ports.
-func CanBindPrivilegedPorts() (can bool, err error) {
-	return canBindPrivilegedPorts()
-}
-
 // SetRlimit sets user-specified limit of how many fd's we can use.
 //
 // See https://github.com/AdguardTeam/AdGuardHome/internal/issues/659.

@@ -9,17 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
-
-	"golang.org/x/sys/unix"
 )
-
-func canBindPrivilegedPorts() (can bool, err error) {
-	cnbs, err := unix.PrctlRetInt(unix.PR_CAP_AMBIENT, unix.PR_CAP_AMBIENT_IS_SET, unix.CAP_NET_BIND_SERVICE, 0, 0)
-	// Don't check the error because it's always nil on Linux.
-	adm, _ := haveAdminRights()
-
-	return cnbs == 1 || adm, err
-}
 
 func setRlimit(val uint64) (err error) {
 	var rlim syscall.Rlimit

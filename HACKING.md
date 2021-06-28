@@ -98,8 +98,9 @@ attributes to make it work in Markdown renderers that strip "id". -->
  *  Constructors should validate their arguments and return meaningful errors.
     As a corollary, avoid lazy initialization.
 
- *  Define `MarshalFoo` methods on non-pointer receivers, as pointer receivers
-    [can have surprising results][staticcheck-911].
+ *  Prefer to define methods on pointer receievers, unless the type is small or
+    a non-pointer receiever is required, for example `MarshalFoo` methods (see
+    [staticcheck-911]).
 
  *  Don't mix horizontal and vertical placement of arguments in function and
     method calls.  That is, either this:

@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- `source` directives support in `/etc/network/interfaces` on Linux ([#3257]).
 - RFC 9000 support in DNS-over-QUIC.
 - Completely disabling statistics by setting the statistics interval to zero
   ([#2141]).

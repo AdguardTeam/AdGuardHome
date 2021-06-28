@@ -6,7 +6,13 @@ package aghnet
 import (
 	"fmt"
 	"runtime"
+
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 )
+
+func canBindPrivilegedPorts() (can bool, err error) {
+	return aghos.HaveAdminRights()
+}
 
 func ifaceHasStaticIP(string) (bool, error) {
 	return false, fmt.Errorf("cannot check if IP is static: not supported on %s", runtime.GOOS)

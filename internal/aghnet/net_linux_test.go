@@ -12,6 +12,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestRecurrentChecker(t *testing.T) {
+	c := &recurrentChecker{
+		checker:  ifacesStaticConfig,
+		initPath: "./testdata/include-subsources",
+	}
+
+	has, err := c.check("sample_name")
+	require.NoError(t, err)
+	assert.True(t, has)
+
+	has, err = c.check("another_name")
+	require.NoError(t, err)
+	assert.False(t, has)
+}
+
 const nl = "\n"
 
 func TestDHCPCDStaticConfig(t *testing.T) {
@@ -49,7 +64,7 @@ func TestDHCPCDStaticConfig(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			r := bytes.NewReader(tc.data)
-			has, err := dhcpcdStaticConfig(r, "wlan0")
+			_, has, err := dhcpcdStaticConfig(r, "wlan0")
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, has)
@@ -59,9 +74,10 @@ func TestDHCPCDStaticConfig(t *testing.T) {
 
 func TestIfacesStaticConfig(t *testing.T) {
 	testCases := []struct {
-		name string
-		data []byte
-		want bool
+		name         string
+		data         []byte
+		want         bool
+		wantPatterns []string
 	}{{
 		name: "has_not",
 		data: []byte(`allow-hotplug enp0s3` + nl +
@@ -71,7 +87,8 @@ func TestIfacesStaticConfig(t *testing.T) {
 			`#  gateway 192.168.0.1` + nl +
 			`iface enp0s3 inet dhcp` + nl,
 		),
-		want: false,
+		want:         false,
+		wantPatterns: []string{},
 	}, {
 		name: "has",
 		data: []byte(`allow-hotplug enp0s3` + nl +
@@ -81,16 +98,36 @@ func TestIfacesStaticConfig(t *testing.T) {
 			`  gateway 192.168.0.1` + nl +
 			`#iface enp0s3 inet dhcp` + nl,
 		),
-		want: true,
+		want:         true,
+		wantPatterns: []string{},
+	}, {
+		name: "return_patterns",
+		data: []byte(`source hello` + nl +
+			`source world` + nl +
+			`#iface enp0s3 inet static` + nl,
+		),
+		want:         false,
+		wantPatterns: []string{"hello", "world"},
+	}, {
+		// This one tests if the first found valid interface prevents
+		// checking files under the `source` directive.
+		name: "ignore_patterns",
+		data: []byte(`source hello` + nl +
+			`source world` + nl +
+			`iface enp0s3 inet static` + nl,
+		),
+		want:         true,
+		wantPatterns: []string{},
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			r := bytes.NewReader(tc.data)
-			has, err := ifacesStaticConfig(r, "enp0s3")
+			patterns, has, err := ifacesStaticConfig(r, "enp0s3")
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, has)
+			assert.ElementsMatch(t, tc.wantPatterns, patterns)
 		})
 	}
 }

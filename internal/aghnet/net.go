@@ -71,6 +71,12 @@ func CanBindPort(port int) (can bool, err error) {
 	return true, nil
 }
 
+// CanBindPrivilegedPorts checks if current process can bind to privileged
+// ports.
+func CanBindPrivilegedPorts() (can bool, err error) {
+	return canBindPrivilegedPorts()
+}
+
 // NetInterface represents an entry of network interfaces map.
 type NetInterface struct {
 	MTU          int              `json:"mtu"`
