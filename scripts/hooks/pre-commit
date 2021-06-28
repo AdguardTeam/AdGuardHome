@@ -2,6 +2,10 @@
 
 set -e -f -u
 
+# Show all temporary todos to the programmer but don't fail the commit
+# if there are any, because the commit could be in a temporary branch.
+git grep -e 'TODO.*!!' -- ':!HACKING.md' ':!scripts/hooks/pre-commit' | more || :
+
 if [ "$( git diff --cached --name-only -- 'client/*.js' )" ]
 then
 	make js-lint js-test

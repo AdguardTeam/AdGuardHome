@@ -77,7 +77,8 @@ attributes to make it work in Markdown renderers that strip "id". -->
 
  *  Avoid `init` and use explicit initialization functions instead.
 
- *  Avoid `new`, especially with structs.
+ *  Avoid `new`, especially with structs, unless a temporary value is needed,
+    for example when checking the type of an error using `errors.As`.
 
  *  Check against empty strings like this:
 
@@ -119,6 +120,15 @@ attributes to make it work in Markdown renderers that strip "id". -->
     )
     ```
 
+    Or, with a struct literal:
+
+    ```go
+    err := functionWithALongName(arg, structType{
+            field1: val1,
+            field2: val2,
+    })
+    ```
+
     But **never** this:
 
     ```go
@@ -132,8 +142,8 @@ attributes to make it work in Markdown renderers that strip "id". -->
     as well.
 
  *  Don't use `fmt.Sprintf` where a more structured approach to string
-    conversion could be used.  For example, `net.JoinHostPort` or
-    `url.(*URL).String`.
+    conversion could be used.  For example, `aghnet.JoinHostPort`,
+    `net.JoinHostPort` or `url.(*URL).String`.
 
  *  Don't use naked `return`s.
 
@@ -154,6 +164,9 @@ attributes to make it work in Markdown renderers that strip "id". -->
 
  *  Prefer constants to variables where possible.  Avoid global variables.  Use
     [constant errors] instead of `errors.New`.
+
+ *  Prefer defining `Foo.String` and `ParseFoo` in terms of `Foo.MarshalText`
+    and `Foo.UnmarshalText` correspondingly and not the other way around.
 
  *  Prefer to use named functions for goroutines.
 
@@ -198,8 +211,8 @@ attributes to make it work in Markdown renderers that strip "id". -->
 
  ###  <a href="#formatting" id="formatting" name="formatting">Formatting</a>
 
- *  Decorate `break`, `continue`, `fallthrough`, `return`, and other terminating
-    statements with empty lines unless it's the only statement in that block.
+ *  Decorate `break`, `continue`, `return`, and other terminating statements
+    with empty lines unless it's the only statement in that block.
 
  *  Don't group type declarations together.  Unlike with blocks of `const`s,
     where a `iota` may be used or where all constants belong to a certain type,
