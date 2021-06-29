@@ -10,6 +10,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
+	"golang.org/x/net/idna"
 )
 
 // TODO(a.garipov): Use a proper structured approach here.
@@ -66,6 +67,20 @@ func (l *queryLog) logEntryToJSONEntry(entry *logEntry) (jsonEntry jobject) {
 		}
 	}
 
+	hostname := entry.QHost
+	question := jobject{
+		"type":  entry.QType,
+		"class": entry.QClass,
+		"name":  hostname,
+	}
+	if qhost, err := idna.ToUnicode(hostname); err == nil {
+		if qhost != hostname && qhost != "" {
+			question["unicode_name"] = qhost
+		}
+	} else {
+		log.Debug("translating %q into unicode: %s", hostname, err)
+	}
+
 	jsonEntry = jobject{
 		"reason":       entry.Result.Reason.String(),
 		"elapsedMs":    strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
@@ -74,11 +89,7 @@ func (l *queryLog) logEntryToJSONEntry(entry *logEntry) (jsonEntry jobject) {
 		"client_info":  entry.client,
 		"client_proto": entry.ClientProto,
 		"upstream":     entry.Upstream,
-		"question": jobject{
-			"host":  entry.QHost,
-			"type":  entry.QType,
-			"class": entry.QClass,
-		},
+		"question":     question,
 	}
 
 	if entry.ClientID != "" {

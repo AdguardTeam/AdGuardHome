@@ -77,7 +77,7 @@ export const normalizeLogs = (logs) => logs.map((log) => {
         upstream,
     } = log;
 
-    const { host: domain, type } = question;
+    const { name: domain, unicode_name: unicodeName, type } = question;
 
     const processResponse = (data) => (data ? data.map((response) => {
         const { value, type, ttl } = response;
@@ -96,6 +96,7 @@ export const normalizeLogs = (logs) => logs.map((log) => {
     return {
         time,
         domain,
+        unicodeName,
         type,
         response: processResponse(answer),
         reason,

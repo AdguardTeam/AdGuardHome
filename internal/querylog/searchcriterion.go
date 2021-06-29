@@ -11,9 +11,11 @@ import (
 type criterionType int
 
 const (
-	// ctDomainOrClient is for searching by the domain name, the client's IP
-	// address, or the clinet's ID.
-	ctDomainOrClient criterionType = iota
+	// ctTerm is for searching by the domain name, the client's IP
+	// address, the client's ID or the client's name.
+	//
+	// TODO(e.burkov):  Make it support IDNA while #3012.
+	ctTerm criterionType = iota
 	// ctFilteringStatus is for searching by the filtering status.
 	//
 	// See (*searchCriterion).ctFilteringStatusCase for details.
@@ -114,7 +116,7 @@ func (c *searchCriterion) ctDomainOrClientCaseNonStrict(
 // optimisation purposes.
 func (c *searchCriterion) quickMatch(line string, findClient quickMatchClientFunc) (ok bool) {
 	switch c.criterionType {
-	case ctDomainOrClient:
+	case ctTerm:
 		host := readJSONValue(line, `"QH":"`)
 		ip := readJSONValue(line, `"IP":"`)
 		clientID := readJSONValue(line, `"CID":"`)
@@ -141,7 +143,7 @@ func (c *searchCriterion) quickMatch(line string, findClient quickMatchClientFun
 // match checks if the log entry matches this search criterion.
 func (c *searchCriterion) match(entry *logEntry) bool {
 	switch c.criterionType {
-	case ctDomainOrClient:
+	case ctTerm:
 		return c.ctDomainOrClientCase(entry)
 	case ctFilteringStatus:
 		return c.ctFilteringStatusCase(entry.Result)

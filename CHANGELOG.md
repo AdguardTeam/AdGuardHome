@@ -39,6 +39,8 @@ and this project adheres to
 
 ### Changed
 
+- Internationalized domains are now shown decoded in the query log with the
+  original encoded version shown in request details. ([#3013]).
 - When /etc/hosts-type rules have several IPs for one host, all IPs are now
   returned instead of only the first one ([#1381]).
 - The setting `rlimit_nofile` is now in the `os` block of the configuration
@@ -79,6 +81,7 @@ released by then.
 [#2441]: https://github.com/AdguardTeam/AdGuardHome/issues/2441
 [#2443]: https://github.com/AdguardTeam/AdGuardHome/issues/2443
 [#2763]: https://github.com/AdguardTeam/AdGuardHome/issues/2763
+[#3013]: https://github.com/AdguardTeam/AdGuardHome/issues/3013
 [#3136]: https://github.com/AdguardTeam/AdGuardHome/issues/3136
 [#3166]: https://github.com/AdguardTeam/AdGuardHome/issues/3166
 [#3172]: https://github.com/AdguardTeam/AdGuardHome/issues/3172

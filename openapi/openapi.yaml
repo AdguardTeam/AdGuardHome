@@ -1823,9 +1823,12 @@
         'class':
           'type': 'string'
           'example': 'IN'
-        'host':
+        'name':
           'type': 'string'
-          'example': 'example.org'
+          'example': 'xn--d1abbgf6aiiy.xn--p1ai'
+        'unicode_name':
+          'type': 'string'
+          'example': 'президент.рф'
         'type':
           'type': 'string'
           'example': 'A'

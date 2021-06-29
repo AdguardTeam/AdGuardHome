@@ -4,6 +4,17 @@
 
 ## v0.107: API changes
 
+### The new field `"unicode_name"` in `DNSQuestion`
+
+* The new optional field `"unicode_name"` is the Unicode representation of
+  question's domain name.  It is only presented if the original question's
+  domain name is an IDN.
+
+### Documentation fix of `DNSQuestion`
+
+* Previously incorrectly named field `"host"` in `DNSQuestion` is now named
+  `"name"`.
+
 ###  Disabling Statistics
 
 * The API `POST /control/stats_config` HTTP API allows disabling statistics by

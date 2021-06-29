@@ -127,7 +127,7 @@ func getDoubleQuotesEnclosedValue(s *string) bool {
 }
 
 // parseSearchCriterion parses a search criterion from the query parameter.
-func (l *queryLog) parseSearchCriterion(q url.Values, name string, ct criterionType) (bool, searchCriterion, error) {
+func (l *queryLog) parseSearchCriterion(q url.Values, name string, ct criterionType) (ok bool, sc searchCriterion, err error) {
 	val := q.Get(name)
 	if len(val) == 0 {
 		return false, searchCriterion{}, nil
@@ -176,7 +176,7 @@ func (l *queryLog) parseSearchParams(r *http.Request) (p *searchParams, err erro
 	}
 
 	paramNames := map[string]criterionType{
-		"search":          ctDomainOrClient,
+		"search":          ctTerm,
 		"response_status": ctFilteringStatus,
 	}
 

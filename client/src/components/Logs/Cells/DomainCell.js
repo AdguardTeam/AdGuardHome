@@ -16,6 +16,7 @@ const DomainCell = ({
     answer_dnssec,
     client_proto,
     domain,
+    unicodeName,
     time,
     tracker,
     type,
@@ -41,10 +42,22 @@ const DomainCell = ({
     const protocol = t(SCHEME_TO_PROTOCOL_MAP[client_proto]) || '';
     const ip = type ? `${t('type_table_header')}: ${type}` : '';
 
-    const requestDetailsObj = {
+    let requestDetailsObj = {
         time_table_header: formatTime(time, LONG_TIME_FORMAT),
         date: formatDateTime(time, DEFAULT_SHORT_DATE_FORMAT_OPTIONS),
         domain,
+    };
+
+    if (domain && unicodeName) {
+        requestDetailsObj = {
+            ...requestDetailsObj,
+            domain: unicodeName,
+            punycode: domain,
+        };
+    }
+
+    requestDetailsObj = {
+        ...requestDetailsObj,
         type_table_header: type,
         protocol,
     };
@@ -54,23 +67,40 @@ const DomainCell = ({
     const knownTrackerDataObj = {
         name_table_header: tracker?.name,
         category_label: hasTracker && captitalizeWords(tracker.category),
-        source_label: sourceData
-                && <a href={sourceData.url} target="_blank" rel="noopener noreferrer"
-                      className="link--green">{sourceData.name}</a>,
+        source_label: sourceData && (
+            <a
+                href={sourceData.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="link--green"
+            >
+                {sourceData.name}
+            </a>
+        ),
     };
 
     const renderGrid = (content, idx) => {
         const preparedContent = typeof content === 'string' ? t(content) : content;
-        const className = classNames('text-truncate o-hidden', {
-            'overflow-break': preparedContent.length > 100,
-        });
-        return <div key={idx} className={className}>{preparedContent}</div>;
+
+        const className = classNames(
+            'text-truncate o-hidden',
+            { 'overflow-break': preparedContent?.length > 100 },
+        );
+
+        return (
+            <div key={idx} className={className}>
+                {preparedContent}
+            </div>
+        );
     };
 
     const getGrid = (contentObj, title, className) => [
-        <div key={title} className={classNames('pb-2 grid--title', className)}>{t(title)}</div>,
-        <div key={`${title}-1`}
-             className="grid grid--limited">{React.Children.map(Object.entries(contentObj), renderGrid)}</div>,
+        <div key={title} className={classNames('pb-2 grid--title', className)}>
+            {t(title)}
+        </div>,
+        <div key={`${title}-1`} className="grid grid--limited">
+            {React.Children.map(Object.entries(contentObj), renderGrid)}
+        </div>,
     ];
 
     const requestDetails = getGrid(requestDetailsObj, 'request_details');
@@ -81,35 +111,60 @@ const DomainCell = ({
         'px-2 d-flex justify-content-center flex-column': isDetailed,
     });
 
-    const details = [ip, protocol].filter(Boolean)
-        .join(', ');
+    const details = [ip, protocol].filter(Boolean).join(', ');
 
-    return <div className="d-flex o-hidden logs__cell logs__cell logs__cell--domain" role="gridcell">
-        {dnssec_enabled && <IconTooltip
-                className={lockIconClass}
-                tooltipClass='py-4 px-5 pb-45'
-                canShowTooltip={!!answer_dnssec}
-                xlinkHref='lock'
-                columnClass='w-100'
-                content='validated_with_dnssec'
-                placement='bottom'
-        />}
-        <IconTooltip className={privacyIconClass} tooltipClass='pt-4 pb-5 px-5 mw-75'
-                     xlinkHref='privacy' contentItemClass='key-colon' renderContent={renderContent}
-                     place='bottom' />
-        <div className={valueClass}>
-            <div className="text-truncate" title={domain}>{domain}</div>
-            {details && isDetailed
-            && <div className="detailed-info d-none d-sm-block text-truncate"
-                    title={details}>{details}</div>}
+    return (
+        <div
+            className="d-flex o-hidden logs__cell logs__cell logs__cell--domain"
+            role="gridcell"
+        >
+            {dnssec_enabled && (
+                <IconTooltip
+                    className={lockIconClass}
+                    tooltipClass="py-4 px-5 pb-45"
+                    canShowTooltip={!!answer_dnssec}
+                    xlinkHref="lock"
+                    columnClass="w-100"
+                    content="validated_with_dnssec"
+                    placement="bottom"
+                />
+            )}
+            <IconTooltip
+                className={privacyIconClass}
+                tooltipClass="pt-4 pb-5 px-5 mw-75"
+                xlinkHref="privacy"
+                contentItemClass="key-colon"
+                renderContent={renderContent}
+                place="bottom"
+            />
+            <div className={valueClass}>
+                {unicodeName ? (
+                    <div className="text-truncate" title={unicodeName}>
+                        {unicodeName}
+                    </div>
+                ) : (
+                    <div className="text-truncate" title={domain}>
+                        {domain}
+                    </div>
+                )}
+                {details && isDetailed && (
+                    <div
+                        className="detailed-info d-none d-sm-block text-truncate"
+                        title={details}
+                    >
+                        {details}
+                    </div>
+                )}
+            </div>
         </div>
-    </div>;
+    );
 };
 
 DomainCell.propTypes = {
     answer_dnssec: propTypes.bool.isRequired,
     client_proto: propTypes.string.isRequired,
     domain: propTypes.string.isRequired,
+    unicodeName: propTypes.string,
     time: propTypes.string.isRequired,
     type: propTypes.string.isRequired,
     tracker: propTypes.object,

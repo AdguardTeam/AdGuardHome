@@ -488,6 +488,7 @@
     "interval_days": "{{count}} day",
     "interval_days_plural": "{{count}} days",
     "domain": "Domain",
+    "punycode": "Punycode",
     "answer": "Answer",
     "filter_added_successfully": "The list has been successfully added",
     "filter_removed_successfully": "The list has been successfully removed",

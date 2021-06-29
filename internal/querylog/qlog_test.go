@@ -67,7 +67,7 @@ func TestQueryLog(t *testing.T) {
 	}, {
 		name: "by_domain_strict",
 		sCr: []searchCriterion{{
-			criterionType: ctDomainOrClient,
+			criterionType: ctTerm,
 			strict:        true,
 			value:         "TEST.example.org",
 		}},
@@ -77,7 +77,7 @@ func TestQueryLog(t *testing.T) {
 	}, {
 		name: "by_domain_non-strict",
 		sCr: []searchCriterion{{
-			criterionType: ctDomainOrClient,
+			criterionType: ctTerm,
 			strict:        false,
 			value:         "example.ORG",
 		}},
@@ -89,7 +89,7 @@ func TestQueryLog(t *testing.T) {
 	}, {
 		name: "by_client_ip_strict",
 		sCr: []searchCriterion{{
-			criterionType: ctDomainOrClient,
+			criterionType: ctTerm,
 			strict:        true,
 			value:         "2.2.2.2",
 		}},
@@ -99,7 +99,7 @@ func TestQueryLog(t *testing.T) {
 	}, {
 		name: "by_client_ip_non-strict",
 		sCr: []searchCriterion{{
-			criterionType: ctDomainOrClient,
+			criterionType: ctTerm,
 			strict:        false,
 			value:         "2.2.2",
 		}},
