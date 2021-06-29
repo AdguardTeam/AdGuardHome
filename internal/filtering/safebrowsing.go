@@ -49,7 +49,7 @@ func (d *DNSFilter) initSecurityServices() error {
 	var err error
 	d.safeBrowsingServer = defaultSafebrowsingServer
 	d.parentalServer = defaultParentalServer
-	opts := upstream.Options{
+	opts := &upstream.Options{
 		Timeout: dnsTimeout,
 		ServerIPAddrs: []net.IP{
 			{94, 140, 14, 15},

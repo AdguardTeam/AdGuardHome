@@ -105,8 +105,8 @@ func isRunning() bool {
 	return Context.dnsServer != nil && Context.dnsServer.IsRunning()
 }
 
-func onDNSRequest(d *proxy.DNSContext) {
-	ip := aghnet.IPFromAddr(d.Addr)
+func onDNSRequest(pctx *proxy.DNSContext) {
+	ip := aghnet.IPFromAddr(pctx.Addr)
 	if ip == nil {
 		// This would be quite weird if we get here.
 		return

@@ -45,15 +45,14 @@ func (c testQUICSession) ConnectionState() (cs quic.ConnectionState) {
 	return cs
 }
 
-func TestProcessClientID(t *testing.T) {
+func TestServer_clientIDFromDNSContext(t *testing.T) {
 	testCases := []struct {
 		name         string
-		proto        string
+		proto        proxy.Proto
 		hostSrvName  string
 		cliSrvName   string
 		wantClientID string
 		wantErrMsg   string
-		wantRes      resultCode
 		strictSNI    bool
 	}{{
 		name:         "udp",
@@ -62,7 +61,6 @@ func TestProcessClientID(t *testing.T) {
 		cliSrvName:   "",
 		wantClientID: "",
 		wantErrMsg:   "",
-		wantRes:      resultCodeSuccess,
 		strictSNI:    false,
 	}, {
 		name:         "tls_no_client_id",
@@ -71,7 +69,6 @@ func TestProcessClientID(t *testing.T) {
 		cliSrvName:   "example.com",
 		wantClientID: "",
 		wantErrMsg:   "",
-		wantRes:      resultCodeSuccess,
 		strictSNI:    true,
 	}, {
 		name:         "tls_no_client_server_name",
@@ -81,7 +78,6 @@ func TestProcessClientID(t *testing.T) {
 		wantClientID: "",
 		wantErrMsg: `client id check: client server name "" ` +
 			`doesn't match host server name "example.com"`,
-		wantRes:   resultCodeError,
 		strictSNI: true,
 	}, {
 		name:         "tls_no_client_server_name_no_strict",
@@ -90,7 +86,6 @@ func TestProcessClientID(t *testing.T) {
 		cliSrvName:   "",
 		wantClientID: "",
 		wantErrMsg:   "",
-		wantRes:      resultCodeSuccess,
 		strictSNI:    false,
 	}, {
 		name:         "tls_client_id",
@@ -99,7 +94,6 @@ func TestProcessClientID(t *testing.T) {
 		cliSrvName:   "cli.example.com",
 		wantClientID: "cli",
 		wantErrMsg:   "",
-		wantRes:      resultCodeSuccess,
 		strictSNI:    true,
 	}, {
 		name:         "tls_client_id_hostname_error",
@@ -109,7 +103,6 @@ func TestProcessClientID(t *testing.T) {
 		wantClientID: "",
 		wantErrMsg: `client id check: client server name "cli.example.net" ` +
 			`doesn't match host server name "example.com"`,
-		wantRes:   resultCodeError,
 		strictSNI: true,
 	}, {
 		name:         "tls_invalid_client_id",
@@ -119,7 +112,6 @@ func TestProcessClientID(t *testing.T) {
 		wantClientID: "",
 		wantErrMsg: `client id check: invalid client id "!!!": ` +
 			`invalid char '!' at index 0`,
-		wantRes:   resultCodeError,
 		strictSNI: true,
 	}, {
 		name:        "tls_client_id_too_long",
@@ -131,7 +123,6 @@ func TestProcessClientID(t *testing.T) {
 		wantErrMsg: `client id check: invalid client id "abcdefghijklmno` +
 			`pqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789": ` +
 			`label is too long, max: 63`,
-		wantRes:   resultCodeError,
 		strictSNI: true,
 	}, {
 		name:         "quic_client_id",
@@ -140,7 +131,6 @@ func TestProcessClientID(t *testing.T) {
 		cliSrvName:   "cli.example.com",
 		wantClientID: "cli",
 		wantErrMsg:   "",
-		wantRes:      resultCodeSuccess,
 		strictSNI:    true,
 	}}
 
@@ -150,6 +140,7 @@ func TestProcessClientID(t *testing.T) {
 				ServerName:     tc.hostSrvName,
 				StrictSNICheck: tc.strictSNI,
 			}
+
 			srv := &Server{
 				conf: ServerConfig{TLSConfig: tlsConf},
 			}
@@ -168,79 +159,68 @@ func TestProcessClientID(t *testing.T) {
 				}
 			}
 
-			dctx := &dnsContext{
-				srv: srv,
-				proxyCtx: &proxy.DNSContext{
-					Proto:       tc.proto,
-					Conn:        conn,
-					QUICSession: qs,
-				},
+			pctx := &proxy.DNSContext{
+				Proto:       tc.proto,
+				Conn:        conn,
+				QUICSession: qs,
 			}
 
-			res := processClientID(dctx)
-			assert.Equal(t, tc.wantRes, res)
-			assert.Equal(t, tc.wantClientID, dctx.clientID)
+			clientID, err := srv.clientIDFromDNSContext(pctx)
+			assert.Equal(t, tc.wantClientID, clientID)
 
 			if tc.wantErrMsg == "" {
-				assert.NoError(t, dctx.err)
+				assert.NoError(t, err)
 			} else {
-				require.Error(t, dctx.err)
-				assert.Equal(t, tc.wantErrMsg, dctx.err.Error())
+				require.Error(t, err)
+
+				assert.Equal(t, tc.wantErrMsg, err.Error())
 			}
 		})
 	}
 }
 
-func TestProcessClientID_https(t *testing.T) {
+func TestClientIDFromDNSContextHTTPS(t *testing.T) {
 	testCases := []struct {
 		name         string
 		path         string
 		wantClientID string
 		wantErrMsg   string
-		wantRes      resultCode
 	}{{
 		name:         "no_client_id",
 		path:         "/dns-query",
 		wantClientID: "",
 		wantErrMsg:   "",
-		wantRes:      resultCodeSuccess,
 	}, {
 		name:         "no_client_id_slash",
 		path:         "/dns-query/",
 		wantClientID: "",
 		wantErrMsg:   "",
-		wantRes:      resultCodeSuccess,
 	}, {
 		name:         "client_id",
 		path:         "/dns-query/cli",
 		wantClientID: "cli",
 		wantErrMsg:   "",
-		wantRes:      resultCodeSuccess,
 	}, {
 		name:         "client_id_slash",
 		path:         "/dns-query/cli/",
 		wantClientID: "cli",
 		wantErrMsg:   "",
-		wantRes:      resultCodeSuccess,
 	}, {
 		name:         "bad_url",
 		path:         "/foo",
 		wantClientID: "",
 		wantErrMsg:   `client id check: invalid path "/foo"`,
-		wantRes:      resultCodeError,
 	}, {
 		name:         "extra",
 		path:         "/dns-query/cli/foo",
 		wantClientID: "",
 		wantErrMsg:   `client id check: invalid path "/dns-query/cli/foo": extra parts`,
-		wantRes:      resultCodeError,
 	}, {
 		name:         "invalid_client_id",
 		path:         "/dns-query/!!!",
 		wantClientID: "",
 		wantErrMsg: `client id check: invalid client id "!!!": ` +
 			`invalid char '!' at index 0`,
-		wantRes: resultCodeError,
 	}}
 
 	for _, tc := range testCases {
@@ -251,23 +231,20 @@ func TestProcessClientID_https(t *testing.T) {
 				},
 			}
 
-			dctx := &dnsContext{
-				proxyCtx: &proxy.DNSContext{
-					Proto:       proxy.ProtoHTTPS,
-					HTTPRequest: r,
-				},
+			pctx := &proxy.DNSContext{
+				Proto:       proxy.ProtoHTTPS,
+				HTTPRequest: r,
 			}
 
-			res := processClientID(dctx)
-			assert.Equal(t, tc.wantRes, res)
-			assert.Equal(t, tc.wantClientID, dctx.clientID)
+			clientID, err := clientIDFromDNSContextHTTPS(pctx)
+			assert.Equal(t, tc.wantClientID, clientID)
 
 			if tc.wantErrMsg == "" {
-				assert.NoError(t, dctx.err)
+				assert.NoError(t, err)
 			} else {
-				require.Error(t, dctx.err)
+				require.Error(t, err)
 
-				assert.Equal(t, tc.wantErrMsg, dctx.err.Error())
+				assert.Equal(t, tc.wantErrMsg, err.Error())
 			}
 		})
 	}

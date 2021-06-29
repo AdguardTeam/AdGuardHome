@@ -18,6 +18,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
@@ -25,6 +26,11 @@ import (
 
 // DefaultTimeout is the default upstream timeout
 const DefaultTimeout = 10 * time.Second
+
+// defaultClientIDCacheCount is the default count of items in the LRU client ID
+// cache.  The assumption here is that there won't be more than this many
+// requests between the BeforeRequestHandler stage and the actual processing.
+const defaultClientIDCacheCount = 1024
 
 const (
 	safeBrowsingBlockHost = "standard-block.dns.adguard.com"
@@ -43,12 +49,6 @@ var webRegistered bool
 
 // hostToIPTable is an alias for the type of Server.tableHostToIP.
 type hostToIPTable = map[string]net.IP
-
-// ipToHostTable is an alias for the type of Server.tableIPToHost.
-//
-// TODO(a.garipov): Define an IPMap type in aghnet and use here and in other
-// places?
-type ipToHostTable = map[string]string
 
 // Server is the main way to start a DNS server.
 //
@@ -81,8 +81,12 @@ type Server struct {
 	tableHostToIP     hostToIPTable
 	tableHostToIPLock sync.Mutex
 
-	tableIPToHost     ipToHostTable
+	tableIPToHost     *aghnet.IPMap
 	tableIPToHostLock sync.Mutex
+
+	// clientIDCache is a temporary storage for clientIDs that were
+	// extracted during the BeforeRequestHandler stage.
+	clientIDCache cache.Cache
 
 	// DNS proxy instance for internal usage
 	// We don't Start() it and so no listen port is required.
@@ -152,6 +156,10 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		subnetDetector:    p.SubnetDetector,
 		localDomainSuffix: localDomainSuffix,
 		recDetector:       newRecursionDetector(recursionTTL, cachedRecurrentReqNum),
+		clientIDCache: cache.New(cache.Config{
+			EnableLRU: true,
+			MaxCount:  defaultClientIDCacheCount,
+		}),
 	}
 
 	// TODO(e.burkov): Enable the refresher after the actual implementation
@@ -414,19 +422,22 @@ func (s *Server) setupResolvers(localAddrs []string) (err error) {
 
 	log.Debug("upstreams to resolve PTR for local addresses: %v", localAddrs)
 
-	var upsConfig proxy.UpstreamConfig
-	upsConfig, err = proxy.ParseUpstreamsConfig(localAddrs, upstream.Options{
-		Bootstrap: bootstraps,
-		Timeout:   defaultLocalTimeout,
-		// TODO(e.burkov): Should we verify server's ceritificates?
-	})
+	var upsConfig *proxy.UpstreamConfig
+	upsConfig, err = proxy.ParseUpstreamsConfig(
+		localAddrs,
+		&upstream.Options{
+			Bootstrap: bootstraps,
+			Timeout:   defaultLocalTimeout,
+			// TODO(e.burkov): Should we verify server's ceritificates?
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("parsing upstreams: %w", err)
 	}
 
 	s.localResolvers = &proxy.Proxy{
 		Config: proxy.Config{
-			UpstreamConfig: &upsConfig,
+			UpstreamConfig: upsConfig,
 		},
 	}
 
@@ -577,11 +588,33 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// IsBlockedIP - return TRUE if this client should be blocked
-func (s *Server) IsBlockedIP(ip net.IP) (bool, string) {
-	if ip == nil {
-		return false, ""
+// IsBlockedClient returns true if the client is blocked by the current access
+// settings.
+func (s *Server) IsBlockedClient(ip net.IP, clientID string) (blocked bool, rule string) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	allowlistMode := s.access.allowlistMode()
+	blockedByIP, rule := s.access.isBlockedIP(ip)
+	blockedByClientID := s.access.isBlockedClientID(clientID)
+
+	// Allow if at least one of the checks allows in allowlist mode, but
+	// block if at least one of the checks blocks in blocklist mode.
+	if allowlistMode && blockedByIP && blockedByClientID {
+		log.Debug("client %s (id %q) is not in access allowlist", ip, clientID)
+
+		// Return now without substituting the empty rule for the
+		// clientID because the rule can't be empty here.
+		return true, rule
+	} else if !allowlistMode && (blockedByIP || blockedByClientID) {
+		log.Debug("client %s (id %q) is in access blocklist", ip, clientID)
+
+		blocked = true
 	}
 
-	return s.access.IsBlockedIP(ip)
+	if rule == "" {
+		rule = clientID
+	}
+
+	return blocked, rule
 }

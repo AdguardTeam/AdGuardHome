@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -84,7 +85,7 @@ func TestRDNS_Begin(t *testing.T) {
 			clients: &clientsContainer{
 				list:    map[string]*Client{},
 				idIndex: tc.cliIDIndex,
-				ipToRC:  map[string]*RuntimeClient{},
+				ipToRC:  aghnet.NewIPMap(0),
 				allTags: aghstrings.NewSet(),
 			},
 		}
@@ -204,7 +205,7 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 		cc := &clientsContainer{
 			list:    map[string]*Client{},
 			idIndex: map[string]*Client{},
-			ipToRC:  map[string]*RuntimeClient{},
+			ipToRC:  aghnet.NewIPMap(0),
 			allTags: aghstrings.NewSet(),
 		}
 		ch := make(chan net.IP)
@@ -236,7 +237,7 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 				return
 			}
 
-			assert.True(t, cc.Exists(tc.cliIP.String(), ClientSourceRDNS))
+			assert.True(t, cc.Exists(tc.cliIP, ClientSourceRDNS))
 		})
 	}
 }

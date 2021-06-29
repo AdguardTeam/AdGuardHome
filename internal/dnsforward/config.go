@@ -331,7 +331,7 @@ func (s *Server) prepareUpstreamSettings() error {
 	upstreams = aghstrings.FilterOut(upstreams, aghstrings.IsCommentOrEmpty)
 	upstreamConfig, err := proxy.ParseUpstreamsConfig(
 		upstreams,
-		upstream.Options{
+		&upstream.Options{
 			Bootstrap: s.conf.BootstrapDNS,
 			Timeout:   s.conf.UpstreamTimeout,
 		},
@@ -342,10 +342,10 @@ func (s *Server) prepareUpstreamSettings() error {
 
 	if len(upstreamConfig.Upstreams) == 0 {
 		log.Info("warning: no default upstream servers specified, using %v", defaultDNS)
-		var uc proxy.UpstreamConfig
+		var uc *proxy.UpstreamConfig
 		uc, err = proxy.ParseUpstreamsConfig(
 			defaultDNS,
-			upstream.Options{
+			&upstream.Options{
 				Bootstrap: s.conf.BootstrapDNS,
 				Timeout:   s.conf.UpstreamTimeout,
 			},
@@ -356,7 +356,8 @@ func (s *Server) prepareUpstreamSettings() error {
 		upstreamConfig.Upstreams = uc.Upstreams
 	}
 
-	s.conf.UpstreamConfig = &upstreamConfig
+	s.conf.UpstreamConfig = upstreamConfig
+
 	return nil
 }
 

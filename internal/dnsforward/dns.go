@@ -89,7 +89,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 		s.processInternalHosts,
 		s.processRestrictLocal,
 		s.processInternalIPAddrs,
-		processClientID,
+		s.processClientID,
 		processFilteringBeforeRequest,
 		s.processLocalPTR,
 		s.processUpstream,
@@ -165,7 +165,7 @@ func (s *Server) setTableHostToIP(t hostToIPTable) {
 	s.tableHostToIP = t
 }
 
-func (s *Server) setTableIPToHost(t ipToHostTable) {
+func (s *Server) setTableIPToHost(t *aghnet.IPMap) {
 	s.tableIPToHostLock.Lock()
 	defer s.tableIPToHostLock.Unlock()
 
@@ -188,12 +188,12 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 	}
 
 	var hostToIP hostToIPTable
-	var ipToHost ipToHostTable
+	var ipToHost *aghnet.IPMap
 	if add {
-		hostToIP = make(hostToIPTable)
-		ipToHost = make(ipToHostTable)
-
 		ll := s.dhcpServer.Leases(dhcpd.LeasesAll)
+
+		hostToIP = make(hostToIPTable, len(ll))
+		ipToHost = aghnet.NewIPMap(len(ll))
 
 		for _, l := range ll {
 			// TODO(a.garipov): Remove this after we're finished
@@ -210,14 +210,14 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 
 			lowhost := strings.ToLower(l.Hostname)
 
-			ipToHost[l.IP.String()] = lowhost
+			ipToHost.Set(l.IP, lowhost)
 
 			ip := make(net.IP, 4)
 			copy(ip, l.IP.To4())
 			hostToIP[lowhost] = ip
 		}
 
-		log.Debug("dns: added %d A/PTR entries from DHCP", len(ipToHost))
+		log.Debug("dns: added %d A/PTR entries from DHCP", ipToHost.Len())
 	}
 
 	s.setTableHostToIP(hostToIP)
@@ -377,7 +377,15 @@ func (s *Server) ipToHost(ip net.IP) (host string, ok bool) {
 		return "", false
 	}
 
-	host, ok = s.tableIPToHost[ip.String()]
+	var v interface{}
+	v, ok = s.tableIPToHost.Get(ip)
+
+	var typOK bool
+	if host, typOK = v.(string); !typOK {
+		log.Error("dns: bad type %T in tableIPToHost for %s", v, ip)
+
+		return "", false
+	}
 
 	return host, ok
 }

@@ -1,6 +1,7 @@
 package dnsforward
 
 import (
+	"encoding/binary"
 	"fmt"
 	"strings"
 
@@ -11,21 +12,37 @@ import (
 	"github.com/miekg/dns"
 )
 
-func (s *Server) beforeRequestHandler(_ *proxy.Proxy, d *proxy.DNSContext) (bool, error) {
-	ip := aghnet.IPFromAddr(d.Addr)
-	disallowed, _ := s.access.IsBlockedIP(ip)
-	if disallowed {
-		log.Tracef("Client IP %s is blocked by settings", ip)
+// beforeRequestHandler is the handler that is called before any other
+// processing, including logs.  It performs access checks and puts the client
+// ID, if there is one, into the server's cache.
+func (s *Server) beforeRequestHandler(
+	_ *proxy.Proxy,
+	pctx *proxy.DNSContext,
+) (reply bool, err error) {
+	ip := aghnet.IPFromAddr(pctx.Addr)
+	clientID, err := s.clientIDFromDNSContext(pctx)
+	if err != nil {
+		return false, fmt.Errorf("getting clientid: %w", err)
+	}
+
+	blocked, _ := s.IsBlockedClient(ip, clientID)
+	if blocked {
 		return false, nil
 	}
 
-	if len(d.Req.Question) == 1 {
-		host := strings.TrimSuffix(d.Req.Question[0].Name, ".")
-		if s.access.IsBlockedDomain(host) {
-			log.Tracef("domain %s is blocked by access settings", host)
+	if len(pctx.Req.Question) == 1 {
+		host := strings.TrimSuffix(pctx.Req.Question[0].Name, ".")
+		if s.access.isBlockedHost(host) {
+			log.Debug("host %s is in access blocklist", host)
 
 			return false, nil
 		}
+	}
+
+	if clientID != "" {
+		key := [8]byte{}
+		binary.BigEndian.PutUint64(key[:], pctx.RequestID)
+		s.clientIDCache.Set(key[:], []byte(clientID))
 	}
 
 	return true, nil

@@ -9,7 +9,7 @@ import Card from '../ui/Card';
 import Cell from '../ui/Cell';
 
 import { getPercent, sortIp } from '../../helpers/helpers';
-import { BLOCK_ACTIONS, R_CLIENT_ID, STATUS_COLORS } from '../../helpers/constants';
+import { BLOCK_ACTIONS, STATUS_COLORS } from '../../helpers/constants';
 import { toggleClientBlock } from '../../actions/access';
 import { renderFormattedClientCell } from '../../helpers/renderFormattedClientCell';
 import { getStats } from '../../actions/stats';
@@ -35,10 +35,6 @@ const CountCell = (row) => {
 };
 
 const renderBlockingButton = (ip, disallowed, disallowed_rule) => {
-    if (R_CLIENT_ID.test(ip)) {
-        return null;
-    }
-
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const processingSet = useSelector((state) => state.access.processingSet);

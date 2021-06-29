@@ -257,19 +257,22 @@ func TestServer(t *testing.T) {
 
 	testCases := []struct {
 		name  string
-		proto string
+		net   string
+		proto proxy.Proto
 	}{{
 		name:  "message_over_udp",
+		net:   "",
 		proto: proxy.ProtoUDP,
 	}, {
 		name:  "message_over_tcp",
+		net:   "tcp",
 		proto: proxy.ProtoTCP,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			addr := s.dnsProxy.Addr(tc.proto)
-			client := dns.Client{Net: tc.proto}
+			client := dns.Client{Net: tc.net}
 
 			reply, _, err := client.Exchange(createGoogleATestMessage(), addr.String())
 			require.NoErrorf(t, err, "сouldn't talk to server %s: %s", addr, err)
@@ -324,7 +327,7 @@ func TestServerWithProtectionDisabled(t *testing.T) {
 	// Message over UDP.
 	req := createGoogleATestMessage()
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
-	client := dns.Client{Net: proxy.ProtoUDP}
+	client := &dns.Client{}
 
 	reply, _, err := client.Exchange(req, addr.String())
 	require.NoErrorf(t, err, "сouldn't talk to server %s: %s", addr, err)
@@ -376,7 +379,7 @@ func TestDoQServer(t *testing.T) {
 
 	// Create a DNS-over-QUIC upstream.
 	addr := s.dnsProxy.Addr(proxy.ProtoQUIC)
-	opts := upstream.Options{InsecureSkipVerify: true}
+	opts := &upstream.Options{InsecureSkipVerify: true}
 	u, err := upstream.AddressToUpstream(fmt.Sprintf("%s://%s", proxy.ProtoQUIC, addr), opts)
 	require.NoError(t, err)
 
@@ -420,7 +423,7 @@ func TestServerRace(t *testing.T) {
 
 	// Message over UDP.
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
-	conn, err := dns.Dial(proxy.ProtoUDP, addr.String())
+	conn, err := dns.Dial("udp", addr.String())
 	require.NoErrorf(t, err, "cannot connect to the proxy: %s", err)
 
 	sendTestMessagesAsync(t, conn)
@@ -445,7 +448,7 @@ func TestSafeSearch(t *testing.T) {
 	startDeferStop(t, s)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
-	client := dns.Client{Net: proxy.ProtoUDP}
+	client := &dns.Client{}
 
 	yandexIP := net.IP{213, 180, 193, 56}
 	googleIP, _ := resolver.HostToIPs("forcesafesearch.google.com")
@@ -507,7 +510,6 @@ func TestInvalidRequest(t *testing.T) {
 
 	// Send a DNS request without question.
 	_, _, err := (&dns.Client{
-		Net:     proxy.ProtoUDP,
 		Timeout: 500 * time.Millisecond,
 	}).Exchange(&req, addr)
 

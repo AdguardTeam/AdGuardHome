@@ -26,6 +26,7 @@ func TestClients(t *testing.T) {
 
 		ok, err := clients.Add(c)
 		require.NoError(t, err)
+
 		assert.True(t, ok)
 
 		c = &Client{
@@ -35,23 +36,27 @@ func TestClients(t *testing.T) {
 
 		ok, err = clients.Add(c)
 		require.NoError(t, err)
+
 		assert.True(t, ok)
 
 		c, ok = clients.Find("1.1.1.1")
 		require.True(t, ok)
+
 		assert.Equal(t, "client1", c.Name)
 
 		c, ok = clients.Find("1:2:3::4")
 		require.True(t, ok)
+
 		assert.Equal(t, "client1", c.Name)
 
 		c, ok = clients.Find("2.2.2.2")
 		require.True(t, ok)
+
 		assert.Equal(t, "client2", c.Name)
 
-		assert.False(t, clients.Exists("1.2.3.4", ClientSourceHostsFile))
-		assert.True(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
-		assert.True(t, clients.Exists("2.2.2.2", ClientSourceHostsFile))
+		assert.False(t, clients.Exists(net.IP{1, 2, 3, 4}, ClientSourceHostsFile))
+		assert.True(t, clients.Exists(net.IP{1, 1, 1, 1}, ClientSourceHostsFile))
+		assert.True(t, clients.Exists(net.IP{2, 2, 2, 2}, ClientSourceHostsFile))
 	})
 
 	t.Run("add_fail_name", func(t *testing.T) {
@@ -101,8 +106,8 @@ func TestClients(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		assert.False(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
-		assert.True(t, clients.Exists("1.1.1.2", ClientSourceHostsFile))
+		assert.False(t, clients.Exists(net.IP{1, 1, 1, 1}, ClientSourceHostsFile))
+		assert.True(t, clients.Exists(net.IP{1, 1, 1, 2}, ClientSourceHostsFile))
 
 		err = clients.Update("client1", &Client{
 			IDs:            []string{"1.1.1.2"},
@@ -113,21 +118,25 @@ func TestClients(t *testing.T) {
 
 		c, ok := clients.Find("1.1.1.2")
 		require.True(t, ok)
+
 		assert.Equal(t, "client1-renamed", c.Name)
 		assert.True(t, c.UseOwnSettings)
 
 		nilCli, ok := clients.list["client1"]
 		require.False(t, ok)
+
 		assert.Nil(t, nilCli)
 
 		require.Len(t, c.IDs, 1)
+
 		assert.Equal(t, "1.1.1.2", c.IDs[0])
 	})
 
 	t.Run("del_success", func(t *testing.T) {
 		ok := clients.Del("client1-renamed")
 		require.True(t, ok)
-		assert.False(t, clients.Exists("1.1.1.2", ClientSourceHostsFile))
+
+		assert.False(t, clients.Exists(net.IP{1, 1, 1, 2}, ClientSourceHostsFile))
 	})
 
 	t.Run("del_fail", func(t *testing.T) {
@@ -136,37 +145,44 @@ func TestClients(t *testing.T) {
 	})
 
 	t.Run("addhost_success", func(t *testing.T) {
-		ok, err := clients.AddHost("1.1.1.1", "host", ClientSourceARP)
+		ip := net.IP{1, 1, 1, 1}
+
+		ok, err := clients.AddHost(ip, "host", ClientSourceARP)
 		require.NoError(t, err)
+
 		assert.True(t, ok)
 
-		ok, err = clients.AddHost("1.1.1.1", "host2", ClientSourceARP)
+		ok, err = clients.AddHost(ip, "host2", ClientSourceARP)
 		require.NoError(t, err)
+
 		assert.True(t, ok)
 
-		ok, err = clients.AddHost("1.1.1.1", "host3", ClientSourceHostsFile)
+		ok, err = clients.AddHost(ip, "host3", ClientSourceHostsFile)
 		require.NoError(t, err)
+
 		assert.True(t, ok)
 
-		assert.True(t, clients.Exists("1.1.1.1", ClientSourceHostsFile))
+		assert.True(t, clients.Exists(ip, ClientSourceHostsFile))
 	})
 
 	t.Run("dhcp_replaces_arp", func(t *testing.T) {
-		ok, err := clients.AddHost("1.2.3.4", "from_arp", ClientSourceARP)
+		ip := net.IP{1, 2, 3, 4}
+
+		ok, err := clients.AddHost(ip, "from_arp", ClientSourceARP)
 		require.NoError(t, err)
+
 		assert.True(t, ok)
+		assert.True(t, clients.Exists(ip, ClientSourceARP))
 
-		assert.True(t, clients.Exists("1.2.3.4", ClientSourceARP))
-
-		ok, err = clients.AddHost("1.2.3.4", "from_dhcp", ClientSourceDHCP)
+		ok, err = clients.AddHost(ip, "from_dhcp", ClientSourceDHCP)
 		require.NoError(t, err)
-		assert.True(t, ok)
 
-		assert.True(t, clients.Exists("1.2.3.4", ClientSourceDHCP))
+		assert.True(t, ok)
+		assert.True(t, clients.Exists(ip, ClientSourceDHCP))
 	})
 
 	t.Run("addhost_fail", func(t *testing.T) {
-		ok, err := clients.AddHost("1.1.1.1", "host1", ClientSourceRDNS)
+		ok, err := clients.AddHost(net.IP{1, 1, 1, 1}, "host1", ClientSourceRDNS)
 		require.NoError(t, err)
 		assert.False(t, ok)
 	})
@@ -183,31 +199,39 @@ func TestClientsWHOIS(t *testing.T) {
 	}
 
 	t.Run("new_client", func(t *testing.T) {
-		clients.SetWHOISInfo("1.1.1.255", whois)
+		ip := net.IP{1, 1, 1, 255}
+		clients.SetWHOISInfo(ip, whois)
+		v, _ := clients.ipToRC.Get(ip)
+		require.NotNil(t, v)
 
-		require.NotNil(t, clients.ipToRC["1.1.1.255"])
+		rc, ok := v.(*RuntimeClient)
+		require.True(t, ok)
+		require.NotNil(t, rc)
 
-		h := clients.ipToRC["1.1.1.255"]
-		require.NotNil(t, h)
-
-		assert.Equal(t, h.WHOISInfo, whois)
+		assert.Equal(t, rc.WHOISInfo, whois)
 	})
 
 	t.Run("existing_auto-client", func(t *testing.T) {
-		ok, err := clients.AddHost("1.1.1.1", "host", ClientSourceRDNS)
+		ip := net.IP{1, 1, 1, 1}
+		ok, err := clients.AddHost(ip, "host", ClientSourceRDNS)
 		require.NoError(t, err)
+
 		assert.True(t, ok)
 
-		clients.SetWHOISInfo("1.1.1.1", whois)
+		clients.SetWHOISInfo(ip, whois)
+		v, _ := clients.ipToRC.Get(ip)
+		require.NotNil(t, v)
 
-		require.NotNil(t, clients.ipToRC["1.1.1.1"])
-		h := clients.ipToRC["1.1.1.1"]
-		require.NotNil(t, h)
+		rc, ok := v.(*RuntimeClient)
+		require.True(t, ok)
+		require.NotNil(t, rc)
 
-		assert.Equal(t, h.WHOISInfo, whois)
+		assert.Equal(t, rc.WHOISInfo, whois)
 	})
 
 	t.Run("can't_set_manually-added", func(t *testing.T) {
+		ip := net.IP{1, 1, 1, 2}
+
 		ok, err := clients.Add(&Client{
 			IDs:  []string{"1.1.1.2"},
 			Name: "client1",
@@ -215,8 +239,10 @@ func TestClientsWHOIS(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, ok)
 
-		clients.SetWHOISInfo("1.1.1.2", whois)
-		require.Nil(t, clients.ipToRC["1.1.1.2"])
+		clients.SetWHOISInfo(ip, whois)
+		v, _ := clients.ipToRC.Get(ip)
+		require.Nil(t, v)
+
 		assert.True(t, clients.Del("client1"))
 	})
 }
@@ -228,16 +254,18 @@ func TestClientsAddExisting(t *testing.T) {
 	clients.Init(nil, nil, nil)
 
 	t.Run("simple", func(t *testing.T) {
+		ip := net.IP{1, 1, 1, 1}
+
 		// Add a client.
 		ok, err := clients.Add(&Client{
-			IDs:  []string{"1.1.1.1", "1:2:3::4", "aa:aa:aa:aa:aa:aa", "2.2.2.0/24"},
+			IDs:  []string{ip.String(), "1:2:3::4", "aa:aa:aa:aa:aa:aa", "2.2.2.0/24"},
 			Name: "client1",
 		})
 		require.NoError(t, err)
 		assert.True(t, ok)
 
 		// Now add an auto-client with the same IP.
-		ok, err = clients.AddHost("1.1.1.1", "test", ClientSourceRDNS)
+		ok, err = clients.AddHost(ip, "test", ClientSourceRDNS)
 		require.NoError(t, err)
 		assert.True(t, ok)
 	})
@@ -245,7 +273,7 @@ func TestClientsAddExisting(t *testing.T) {
 	t.Run("complicated", func(t *testing.T) {
 		var err error
 
-		testIP := net.IP{1, 2, 3, 4}
+		ip := net.IP{1, 2, 3, 4}
 
 		// First, init a DHCP server with a single static lease.
 		config := dhcpd.ServerConfig{
@@ -267,7 +295,7 @@ func TestClientsAddExisting(t *testing.T) {
 
 		err = clients.dhcpServer.AddStaticLease(&dhcpd.Lease{
 			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-			IP:       testIP,
+			IP:       ip,
 			Hostname: "testhost",
 			Expiry:   time.Now().Add(time.Hour),
 		})
@@ -275,7 +303,7 @@ func TestClientsAddExisting(t *testing.T) {
 
 		// Add a new client with the same IP as for a client with MAC.
 		ok, err := clients.Add(&Client{
-			IDs:  []string{testIP.String()},
+			IDs:  []string{ip.String()},
 			Name: "client2",
 		})
 		require.NoError(t, err)

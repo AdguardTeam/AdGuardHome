@@ -70,7 +70,7 @@ func TestEtcHostsContainerResolution(t *testing.T) {
 	})
 
 	t.Run("hosts_file", func(t *testing.T) {
-		names, ok := ehc.List()["127.0.0.1"]
+		names, ok := ehc.List().Get(net.IP{127, 0, 0, 1})
 		require.True(t, ok)
 		assert.Equal(t, []string{"host", "localhost"}, names)
 	})

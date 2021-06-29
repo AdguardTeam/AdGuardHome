@@ -503,7 +503,7 @@ Please note, that this is crucial for a server to be able to use privileged port
 You have two options:
 1. Run AdGuard Home with root privileges
 2. On Linux you can grant the CAP_NET_BIND_SERVICE capability:
-https://github.com/AdguardTeam/AdGuardHome/internal/wiki/Getting-Started#running-without-superuser`
+https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser`
 
 		log.Fatal(msg)
 	}

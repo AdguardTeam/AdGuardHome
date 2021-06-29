@@ -1957,10 +1957,7 @@
         'disallowed_rule':
           'type': 'string'
           'description': >
-            The rule due to which the client is disallowed.  If disallowed is
-            set to true, and this string is empty, then the client IP is
-            disallowed by the "allowed IP list", that is it is not included in
-            the allowed list.
+            The rule due to which the client is allowed or blocked.
         'name':
           'description': >
             Persistent client's name or an empty string if this is a runtime
@@ -2352,17 +2349,19 @@
       'description': 'Client and host access list'
       'properties':
         'allowed_clients':
-          'description': 'Allowlist of clients.'
+          'description': >
+            The allowlist of clients: IP addresses, CIDRs, or client IDs.
           'items':
             'type': 'string'
           'type': 'array'
         'disallowed_clients':
-          'description': 'Blocklist of clients.'
+          'description': >
+            The blocklist of clients: IP addresses, CIDRs, or client IDs.
           'items':
             'type': 'string'
           'type': 'array'
         'blocked_hosts':
-          'description': 'Blocklist of hosts.'
+          'description': 'The blocklist of hosts.'
           'items':
             'type': 'string'
           'type': 'array'

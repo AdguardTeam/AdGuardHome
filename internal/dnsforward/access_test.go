@@ -8,99 +8,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIsBlockedIP(t *testing.T) {
-	const (
-		ip int = iota
-		cidr
-	)
+func TestIsBlockedClientID(t *testing.T) {
+	clientID := "client-1"
+	clients := []string{clientID}
 
-	rules := []string{
-		ip:   "1.1.1.1",
-		cidr: "2.2.0.0/16",
-	}
+	a, err := newAccessCtx(clients, nil, nil)
+	require.NoError(t, err)
 
-	testCases := []struct {
-		name     string
-		allowed  bool
-		ip       net.IP
-		wantDis  bool
-		wantRule string
-	}{{
-		name:     "allow_ip",
-		allowed:  true,
-		ip:       net.IPv4(1, 1, 1, 1),
-		wantDis:  false,
-		wantRule: "",
-	}, {
-		name:     "disallow_ip",
-		allowed:  true,
-		ip:       net.IPv4(1, 1, 1, 2),
-		wantDis:  true,
-		wantRule: "",
-	}, {
-		name:     "allow_cidr",
-		allowed:  true,
-		ip:       net.IPv4(2, 2, 1, 1),
-		wantDis:  false,
-		wantRule: "",
-	}, {
-		name:     "disallow_cidr",
-		allowed:  true,
-		ip:       net.IPv4(2, 3, 1, 1),
-		wantDis:  true,
-		wantRule: "",
-	}, {
-		name:     "allow_ip",
-		allowed:  false,
-		ip:       net.IPv4(1, 1, 1, 1),
-		wantDis:  true,
-		wantRule: rules[ip],
-	}, {
-		name:     "disallow_ip",
-		allowed:  false,
-		ip:       net.IPv4(1, 1, 1, 2),
-		wantDis:  false,
-		wantRule: "",
-	}, {
-		name:     "allow_cidr",
-		allowed:  false,
-		ip:       net.IPv4(2, 2, 1, 1),
-		wantDis:  true,
-		wantRule: rules[cidr],
-	}, {
-		name:     "disallow_cidr",
-		allowed:  false,
-		ip:       net.IPv4(2, 3, 1, 1),
-		wantDis:  false,
-		wantRule: "",
-	}}
+	assert.False(t, a.isBlockedClientID(clientID))
 
-	for _, tc := range testCases {
-		prefix := "allowed_"
-		if !tc.allowed {
-			prefix = "disallowed_"
-		}
+	a, err = newAccessCtx(nil, clients, nil)
+	require.NoError(t, err)
 
-		t.Run(prefix+tc.name, func(t *testing.T) {
-			allowedRules := rules
-			var disallowedRules []string
-
-			if !tc.allowed {
-				allowedRules, disallowedRules = disallowedRules, allowedRules
-			}
-
-			aCtx, err := newAccessCtx(allowedRules, disallowedRules, nil)
-			require.NoError(t, err)
-
-			disallowed, rule := aCtx.IsBlockedIP(tc.ip)
-			assert.Equal(t, tc.wantDis, disallowed)
-			assert.Equal(t, tc.wantRule, rule)
-		})
-	}
+	assert.True(t, a.isBlockedClientID(clientID))
 }
 
-func TestIsBlockedDomain(t *testing.T) {
-	aCtx, err := newAccessCtx(nil, nil, []string{
+func TestIsBlockedHost(t *testing.T) {
+	a, err := newAccessCtx(nil, nil, []string{
 		"host1",
 		"*.host.com",
 		"||host3.com^",
@@ -108,50 +32,106 @@ func TestIsBlockedDomain(t *testing.T) {
 	require.NoError(t, err)
 
 	testCases := []struct {
-		name   string
-		domain string
-		want   bool
+		name string
+		host string
+		want bool
 	}{{
-		name:   "plain_match",
-		domain: "host1",
-		want:   true,
+		name: "plain_match",
+		host: "host1",
+		want: true,
 	}, {
-		name:   "plain_mismatch",
-		domain: "host2",
-		want:   false,
+		name: "plain_mismatch",
+		host: "host2",
+		want: false,
 	}, {
-		name:   "wildcard_type-1_match_short",
-		domain: "asdf.host.com",
-		want:   true,
+		name: "subdomain_match_short",
+		host: "asdf.host.com",
+		want: true,
 	}, {
-		name:   "wildcard_type-1_match_long",
-		domain: "qwer.asdf.host.com",
-		want:   true,
+		name: "subdomain_match_long",
+		host: "qwer.asdf.host.com",
+		want: true,
 	}, {
-		name:   "wildcard_type-1_mismatch_no-lead",
-		domain: "host.com",
-		want:   false,
+		name: "subdomain_mismatch_no_lead",
+		host: "host.com",
+		want: false,
 	}, {
-		name:   "wildcard_type-1_mismatch_bad-asterisk",
-		domain: "asdf.zhost.com",
-		want:   false,
+		name: "subdomain_mismatch_bad_asterisk",
+		host: "asdf.zhost.com",
+		want: false,
 	}, {
-		name:   "wildcard_type-2_match_simple",
-		domain: "host3.com",
-		want:   true,
+		name: "rule_match_simple",
+		host: "host3.com",
+		want: true,
 	}, {
-		name:   "wildcard_type-2_match_complex",
-		domain: "asdf.host3.com",
-		want:   true,
+		name: "rule_match_complex",
+		host: "asdf.host3.com",
+		want: true,
 	}, {
-		name:   "wildcard_type-2_mismatch",
-		domain: ".host3.com",
-		want:   false,
+		name: "rule_mismatch",
+		host: ".host3.com",
+		want: false,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.want, aCtx.IsBlockedDomain(tc.domain))
+			assert.Equal(t, tc.want, a.isBlockedHost(tc.host))
 		})
 	}
+}
+
+func TestIsBlockedIP(t *testing.T) {
+	clients := []string{
+		"1.2.3.4",
+		"5.6.7.8/24",
+	}
+
+	allowCtx, err := newAccessCtx(clients, nil, nil)
+	require.NoError(t, err)
+
+	blockCtx, err := newAccessCtx(nil, clients, nil)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name        string
+		wantRule    string
+		ip          net.IP
+		wantBlocked bool
+	}{{
+		name:        "match_ip",
+		wantRule:    "1.2.3.4",
+		ip:          net.IP{1, 2, 3, 4},
+		wantBlocked: true,
+	}, {
+		name:        "match_cidr",
+		wantRule:    "5.6.7.8/24",
+		ip:          net.IP{5, 6, 7, 100},
+		wantBlocked: true,
+	}, {
+		name:        "no_match_ip",
+		wantRule:    "",
+		ip:          net.IP{9, 2, 3, 4},
+		wantBlocked: false,
+	}, {
+		name:        "no_match_cidr",
+		wantRule:    "",
+		ip:          net.IP{9, 6, 7, 100},
+		wantBlocked: false,
+	}}
+
+	t.Run("allow", func(t *testing.T) {
+		for _, tc := range testCases {
+			blocked, rule := allowCtx.isBlockedIP(tc.ip)
+			assert.Equal(t, !tc.wantBlocked, blocked)
+			assert.Equal(t, tc.wantRule, rule)
+		}
+	})
+
+	t.Run("block", func(t *testing.T) {
+		for _, tc := range testCases {
+			blocked, rule := blockCtx.isBlockedIP(tc.ip)
+			assert.Equal(t, tc.wantBlocked, blocked)
+			assert.Equal(t, tc.wantRule, rule)
+		}
+	})
 }

@@ -46,7 +46,7 @@ func (l *testStats) Update(e stats.Entry) {
 func TestProcessQueryLogsAndStats(t *testing.T) {
 	testCases := []struct {
 		name           string
-		proto          string
+		proto          proxy.Proto
 		addr           net.Addr
 		clientID       string
 		wantLogProto   querylog.ClientProto
@@ -156,7 +156,7 @@ func TestProcessQueryLogsAndStats(t *testing.T) {
 		wantStatResult: stats.RParental,
 	}}
 
-	ups, err := upstream.AddressToUpstream("1.1.1.1", upstream.Options{})
+	ups, err := upstream.AddressToUpstream("1.1.1.1", nil)
 	require.Nil(t, err)
 
 	for _, tc := range testCases {

@@ -159,8 +159,10 @@ attributes to make it work in Markdown renderers that strip "id". -->
 
  *  Minimize scope of variables as much as possible.
 
- *  No shadowing, since it can often lead to subtle bugs, especially with
-    errors.
+ *  No name shadowing, including of predeclared identifiers, since it can often
+    lead to subtle bugs, especially with errors.  This rule does not apply to
+    struct fields, since they are always used together with the name of the
+    struct value, so there isn't any confusion.
 
  *  Prefer constants to variables where possible.  Avoid global variables.  Use
     [constant errors] instead of `errors.New`.

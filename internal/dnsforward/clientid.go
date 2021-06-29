@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"crypto/tls"
+	"encoding/binary"
 	"fmt"
 	"path"
 	"strings"
@@ -50,15 +51,15 @@ func clientIDFromClientServerName(hostSrvName, cliSrvName string, strict bool) (
 	return clientID, nil
 }
 
-// processClientIDHTTPS extracts the client's ID from the path of the
+// clientIDFromDNSContextHTTPS extracts the client's ID from the path of the
 // client's DNS-over-HTTPS request.
-func processClientIDHTTPS(ctx *dnsContext) (rc resultCode) {
-	pctx := ctx.proxyCtx
+func clientIDFromDNSContextHTTPS(pctx *proxy.DNSContext) (clientID string, err error) {
 	r := pctx.HTTPRequest
 	if r == nil {
-		ctx.err = fmt.Errorf("proxy ctx http request of proto %s is nil", pctx.Proto)
-
-		return resultCodeError
+		return "", fmt.Errorf(
+			"proxy ctx http request of proto %s is nil",
+			pctx.Proto,
+		)
 	}
 
 	origPath := r.URL.Path
@@ -68,34 +69,25 @@ func processClientIDHTTPS(ctx *dnsContext) (rc resultCode) {
 	}
 
 	if len(parts) == 0 || parts[0] != "dns-query" {
-		ctx.err = fmt.Errorf("client id check: invalid path %q", origPath)
-
-		return resultCodeError
+		return "", fmt.Errorf("client id check: invalid path %q", origPath)
 	}
 
-	clientID := ""
 	switch len(parts) {
 	case 1:
 		// Just /dns-query, no client ID.
-		return resultCodeSuccess
+		return "", nil
 	case 2:
 		clientID = parts[1]
 	default:
-		ctx.err = fmt.Errorf("client id check: invalid path %q: extra parts", origPath)
-
-		return resultCodeError
+		return "", fmt.Errorf("client id check: invalid path %q: extra parts", origPath)
 	}
 
-	err := ValidateClientID(clientID)
+	err = ValidateClientID(clientID)
 	if err != nil {
-		ctx.err = fmt.Errorf("client id check: %w", err)
-
-		return resultCodeError
+		return "", fmt.Errorf("client id check: %w", err)
 	}
 
-	ctx.clientID = clientID
-
-	return resultCodeSuccess
+	return clientID, nil
 }
 
 // tlsConn is a narrow interface for *tls.Conn to simplify testing.
@@ -108,53 +100,73 @@ type quicSession interface {
 	ConnectionState() (cs quic.ConnectionState)
 }
 
-// processClientID extracts the client's ID from the server name of the client's
-// DoT or DoQ request or the path of the client's DoH.
-func processClientID(dctx *dnsContext) (rc resultCode) {
-	pctx := dctx.proxyCtx
+// clientIDFromDNSContext extracts the client's ID from the server name of the
+// client's DoT or DoQ request or the path of the client's DoH.  If the protocol
+// is not one of these, clientID is an empty string and err is nil.
+func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string, err error) {
 	proto := pctx.Proto
 	if proto == proxy.ProtoHTTPS {
-		return processClientIDHTTPS(dctx)
+		return clientIDFromDNSContextHTTPS(pctx)
 	} else if proto != proxy.ProtoTLS && proto != proxy.ProtoQUIC {
-		return resultCodeSuccess
+		return "", nil
 	}
 
-	srvConf := dctx.srv.conf
-	hostSrvName := srvConf.TLSConfig.ServerName
+	hostSrvName := s.conf.ServerName
 	if hostSrvName == "" {
-		return resultCodeSuccess
+		return "", nil
 	}
 
 	cliSrvName := ""
-	if proto == proxy.ProtoTLS {
+	switch proto {
+	case proxy.ProtoTLS:
 		conn := pctx.Conn
 		tc, ok := conn.(tlsConn)
 		if !ok {
-			dctx.err = fmt.Errorf("proxy ctx conn of proto %s is %T, want *tls.Conn", proto, conn)
-
-			return resultCodeError
+			return "", fmt.Errorf(
+				"proxy ctx conn of proto %s is %T, want *tls.Conn",
+				proto,
+				conn,
+			)
 		}
 
 		cliSrvName = tc.ConnectionState().ServerName
-	} else if proto == proxy.ProtoQUIC {
+	case proxy.ProtoQUIC:
 		qs, ok := pctx.QUICSession.(quicSession)
 		if !ok {
-			dctx.err = fmt.Errorf("proxy ctx quic session of proto %s is %T, want quic.Session", proto, pctx.QUICSession)
-
-			return resultCodeError
+			return "", fmt.Errorf(
+				"proxy ctx quic session of proto %s is %T, want quic.Session",
+				proto,
+				pctx.QUICSession,
+			)
 		}
 
 		cliSrvName = qs.ConnectionState().TLS.ServerName
 	}
 
-	clientID, err := clientIDFromClientServerName(hostSrvName, cliSrvName, srvConf.StrictSNICheck)
+	clientID, err = clientIDFromClientServerName(
+		hostSrvName,
+		cliSrvName,
+		s.conf.StrictSNICheck,
+	)
 	if err != nil {
-		dctx.err = fmt.Errorf("client id check: %w", err)
-
-		return resultCodeError
+		return "", fmt.Errorf("client id check: %w", err)
 	}
 
-	dctx.clientID = clientID
+	return clientID, nil
+}
+
+// processClientID puts the clientID into the DNS context, if there is one.
+func (s *Server) processClientID(dctx *dnsContext) (rc resultCode) {
+	pctx := dctx.proxyCtx
+
+	var key [8]byte
+	binary.BigEndian.PutUint64(key[:], pctx.RequestID)
+	clientIDData := s.clientIDCache.Get(key[:])
+	if clientIDData == nil {
+		return resultCodeSuccess
+	}
+
+	dctx.clientID = string(clientIDData)
 
 	return resultCodeSuccess
 }

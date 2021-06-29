@@ -252,7 +252,6 @@ func (w *WHOIS) workerLoop() {
 			continue
 		}
 
-		id := ip.String()
-		w.clients.SetWHOISInfo(id, info)
+		w.clients.SetWHOISInfo(ip, info)
 	}
 }

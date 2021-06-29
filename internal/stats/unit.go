@@ -720,7 +720,10 @@ func (s *statsCtx) GetTopClientsIP(maxCount uint) []net.IP {
 	a := convertMapToSlice(m, int(maxCount))
 	d := []net.IP{}
 	for _, it := range a {
-		d = append(d, net.ParseIP(it.Name))
+		ip := net.ParseIP(it.Name)
+		if ip != nil {
+			d = append(d, ip)
+		}
 	}
 	return d
 }

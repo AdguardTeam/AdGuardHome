@@ -102,12 +102,7 @@ func (r *RDNS) isCached(ip net.IP) (ok bool) {
 func (r *RDNS) Begin(ip net.IP) {
 	r.ensurePrivateCache()
 
-	if r.isCached(ip) {
-		return
-	}
-
-	id := ip.String()
-	if r.clients.Exists(id, ClientSourceRDNS) {
+	if r.isCached(ip) || r.clients.Exists(ip, ClientSourceRDNS) {
 		return
 	}
 
@@ -138,6 +133,6 @@ func (r *RDNS) workerLoop() {
 
 		// Don't handle any errors since AddHost doesn't return non-nil
 		// errors for now.
-		_, _ = r.clients.AddHost(ip.String(), host, ClientSourceRDNS)
+		_, _ = r.clients.AddHost(ip, host, ClientSourceRDNS)
 	}
 }

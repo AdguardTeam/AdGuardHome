@@ -6,136 +6,161 @@ import (
 	"net"
 	"net/http"
 	"strings"
-	"sync"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 )
 
+// accessCtx controls IP and client blocking that takes place before all other
+// processing.  An accessCtx is safe for concurrent use.
 type accessCtx struct {
-	lock sync.Mutex
+	allowedIPs *aghnet.IPMap
+	blockedIPs *aghnet.IPMap
 
-	// allowedClients are the IP addresses of clients in the allowlist.
-	allowedClients *aghstrings.Set
+	allowedClientIDs *aghstrings.Set
+	blockedClientIDs *aghstrings.Set
 
-	// disallowedClients are the IP addresses of clients in the blocklist.
-	disallowedClients *aghstrings.Set
+	blockedHostsEng *urlfilter.DNSEngine
 
-	allowedClientsIPNet    []net.IPNet // CIDRs of whitelist clients
-	disallowedClientsIPNet []net.IPNet // CIDRs of clients that should be blocked
-
-	blockedHostsEngine *urlfilter.DNSEngine // finds hosts that should be blocked
+	// TODO(a.garipov): Create a type for a set of IP networks.
+	// aghnet.IPNetSet?
+	allowedNets []*net.IPNet
+	blockedNets []*net.IPNet
 }
 
-func newAccessCtx(allowedClients, disallowedClients, blockedHosts []string) (a *accessCtx, err error) {
-	a = &accessCtx{
-		allowedClients:    aghstrings.NewSet(),
-		disallowedClients: aghstrings.NewSet(),
-	}
+// unit is a convenient alias for struct{}
+type unit = struct{}
 
-	err = processIPCIDRArray(a.allowedClients, &a.allowedClientsIPNet, allowedClients)
-	if err != nil {
-		return nil, fmt.Errorf("processing allowed clients: %w", err)
-	}
+// processAccessClients is a helper for processing a list of client strings,
+// which may be an IP address, a CIDR, or a ClientID.
+func processAccessClients(
+	clientStrs []string,
+	ips *aghnet.IPMap,
+	nets *[]*net.IPNet,
+	clientIDs *aghstrings.Set,
+) (err error) {
+	for i, s := range clientStrs {
+		if ip := net.ParseIP(s); ip != nil {
+			ips.Set(ip, unit{})
+		} else if cidrIP, ipnet, cidrErr := net.ParseCIDR(s); cidrErr == nil {
+			ipnet.IP = cidrIP
+			*nets = append(*nets, ipnet)
+		} else {
+			idErr := ValidateClientID(s)
+			if idErr != nil {
+				return fmt.Errorf(
+					"value %q at index %d: bad ip, cidr, or clientid",
+					s,
+					i,
+				)
+			}
 
-	err = processIPCIDRArray(a.disallowedClients, &a.disallowedClientsIPNet, disallowedClients)
-	if err != nil {
-		return nil, fmt.Errorf("processing disallowed clients: %w", err)
-	}
-
-	b := &strings.Builder{}
-	for _, s := range blockedHosts {
-		aghstrings.WriteToBuilder(b, strings.ToLower(s), "\n")
-	}
-
-	listArray := []filterlist.RuleList{}
-	list := &filterlist.StringRuleList{
-		ID:             int(0),
-		RulesText:      b.String(),
-		IgnoreCosmetic: true,
-	}
-	listArray = append(listArray, list)
-	rulesStorage, err := filterlist.NewRuleStorage(listArray)
-	if err != nil {
-		return nil, fmt.Errorf("filterlist.NewRuleStorage(): %w", err)
-	}
-	a.blockedHostsEngine = urlfilter.NewDNSEngine(rulesStorage)
-
-	return a, nil
-}
-
-// Split array of IP or CIDR into 2 containers for fast search
-func processIPCIDRArray(dst *aghstrings.Set, dstIPNet *[]net.IPNet, src []string) error {
-	for _, s := range src {
-		ip := net.ParseIP(s)
-		if ip != nil {
-			dst.Add(s)
-
-			continue
+			clientIDs.Add(s)
 		}
-
-		_, ipnet, err := net.ParseCIDR(s)
-		if err != nil {
-			return err
-		}
-
-		*dstIPNet = append(*dstIPNet, *ipnet)
 	}
 
 	return nil
 }
 
-// IsBlockedIP - return TRUE if this client should be blocked
-// Returns the item from the "disallowedClients" list that lead to blocking IP.
-// If it returns TRUE and an empty string, it means that the "allowedClients" is not empty,
-// but the ip does not belong to it.
-func (a *accessCtx) IsBlockedIP(ip net.IP) (bool, string) {
-	ipStr := ip.String()
+// newAccessCtx creates a new accessCtx.
+func newAccessCtx(allowed, blocked, blockedHosts []string) (a *accessCtx, err error) {
+	a = &accessCtx{
+		allowedIPs: aghnet.NewIPMap(0),
+		blockedIPs: aghnet.NewIPMap(0),
 
-	a.lock.Lock()
-	defer a.lock.Unlock()
-
-	if a.allowedClients.Len() != 0 || len(a.allowedClientsIPNet) != 0 {
-		if a.allowedClients.Has(ipStr) {
-			return false, ""
-		}
-
-		if len(a.allowedClientsIPNet) != 0 {
-			for _, ipnet := range a.allowedClientsIPNet {
-				if ipnet.Contains(ip) {
-					return false, ""
-				}
-			}
-		}
-
-		return true, ""
+		allowedClientIDs: aghstrings.NewSet(),
+		blockedClientIDs: aghstrings.NewSet(),
 	}
 
-	if a.disallowedClients.Has(ipStr) {
-		return true, ipStr
+	err = processAccessClients(allowed, a.allowedIPs, &a.allowedNets, a.allowedClientIDs)
+	if err != nil {
+		return nil, fmt.Errorf("adding allowed: %w", err)
 	}
 
-	if len(a.disallowedClientsIPNet) != 0 {
-		for _, ipnet := range a.disallowedClientsIPNet {
-			if ipnet.Contains(ip) {
-				return true, ipnet.String()
-			}
-		}
+	err = processAccessClients(blocked, a.blockedIPs, &a.blockedNets, a.blockedClientIDs)
+	if err != nil {
+		return nil, fmt.Errorf("adding blocked: %w", err)
 	}
 
-	return false, ""
+	b := &strings.Builder{}
+	for _, h := range blockedHosts {
+		aghstrings.WriteToBuilder(b, strings.ToLower(h), "\n")
+	}
+
+	lists := []filterlist.RuleList{
+		&filterlist.StringRuleList{
+			ID:             int(0),
+			RulesText:      b.String(),
+			IgnoreCosmetic: true,
+		},
+	}
+
+	rulesStrg, err := filterlist.NewRuleStorage(lists)
+	if err != nil {
+		return nil, fmt.Errorf("adding blocked hosts: %w", err)
+	}
+
+	a.blockedHostsEng = urlfilter.NewDNSEngine(rulesStrg)
+
+	return a, nil
 }
 
-// IsBlockedDomain - return TRUE if this domain should be blocked
-func (a *accessCtx) IsBlockedDomain(host string) (ok bool) {
-	a.lock.Lock()
-	defer a.lock.Unlock()
+// allowlistMode returns true if this *accessCtx is in the allowlist mode.
+func (a *accessCtx) allowlistMode() (ok bool) {
+	return a.allowedIPs.Len() != 0 || a.allowedClientIDs.Len() != 0 || len(a.allowedNets) != 0
+}
 
-	_, ok = a.blockedHostsEngine.Match(strings.ToLower(host))
+// isBlockedClientID returns true if the ClientID should be blocked.
+func (a *accessCtx) isBlockedClientID(id string) (ok bool) {
+	allowlistMode := a.allowlistMode()
+	if id == "" {
+		// In allowlist mode, consider requests without client IDs
+		// blocked by default.
+		return allowlistMode
+	}
+
+	if allowlistMode {
+		return !a.allowedClientIDs.Has(id)
+	}
+
+	return a.blockedClientIDs.Has(id)
+}
+
+// isBlockedHost returns true if host should be blocked.
+func (a *accessCtx) isBlockedHost(host string) (ok bool) {
+	_, ok = a.blockedHostsEng.Match(strings.ToLower(host))
 
 	return ok
+}
+
+// isBlockedIP returns the status of the IP address blocking as well as the rule
+// that blocked it.
+func (a *accessCtx) isBlockedIP(ip net.IP) (blocked bool, rule string) {
+	blocked = true
+	ips := a.blockedIPs
+	ipnets := a.blockedNets
+
+	if a.allowlistMode() {
+		// Enable allowlist mode and use the allowlist sets.
+		blocked = false
+		ips = a.allowedIPs
+		ipnets = a.allowedNets
+	}
+
+	if _, ok := ips.Get(ip); ok {
+		return blocked, ip.String()
+	}
+
+	for _, ipnet := range ipnets {
+		if ipnet.Contains(ip) {
+			return blocked, ipnet.String()
+		}
+	}
+
+	return !blocked, ""
 }
 
 type accessListJSON struct {
@@ -161,62 +186,43 @@ func (s *Server) handleAccessList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(j)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "json.Encode: %s", err)
+		httpError(r, w, http.StatusInternalServerError, "encoding response: %s", err)
+
 		return
 	}
-}
-
-func checkIPCIDRArray(src []string) error {
-	for _, s := range src {
-		ip := net.ParseIP(s)
-		if ip != nil {
-			continue
-		}
-
-		_, _, err := net.ParseCIDR(s)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
-	j := accessListJSON{}
-	err := json.NewDecoder(r.Body).Decode(&j)
+	list := accessListJSON{}
+	err := json.NewDecoder(r.Body).Decode(&list)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
-		return
-	}
+		httpError(r, w, http.StatusBadRequest, "decoding request: %s", err)
 
-	err = checkIPCIDRArray(j.AllowedClients)
-	if err == nil {
-		err = checkIPCIDRArray(j.DisallowedClients)
-	}
-	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "%s", err)
 		return
 	}
 
 	var a *accessCtx
-	a, err = newAccessCtx(j.AllowedClients, j.DisallowedClients, j.BlockedHosts)
+	a, err = newAccessCtx(list.AllowedClients, list.DisallowedClients, list.BlockedHosts)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "creating access ctx: %s", err)
 
 		return
 	}
 
-	defer log.Debug("Access: updated lists: %d, %d, %d",
-		len(j.AllowedClients), len(j.DisallowedClients), len(j.BlockedHosts))
+	defer log.Debug(
+		"access: updated lists: %d, %d, %d",
+		len(list.AllowedClients),
+		len(list.DisallowedClients),
+		len(list.BlockedHosts),
+	)
 
 	defer s.conf.ConfigModified()
 
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
-	s.conf.AllowedClients = j.AllowedClients
-	s.conf.DisallowedClients = j.DisallowedClients
-	s.conf.BlockedHosts = j.BlockedHosts
+	s.conf.AllowedClients = list.AllowedClients
+	s.conf.DisallowedClients = list.DisallowedClients
+	s.conf.BlockedHosts = list.BlockedHosts
 	s.access = a
 }

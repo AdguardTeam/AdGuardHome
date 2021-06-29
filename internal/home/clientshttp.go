@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+
+	"github.com/AdguardTeam/golibs/log"
 )
 
 // clientJSON is a common structure used by several handlers to deal with
@@ -44,13 +46,13 @@ type clientJSON struct {
 type runtimeClientJSON struct {
 	WHOISInfo *RuntimeClientWHOISInfo `json:"whois_info"`
 
-	IP     string `json:"ip"`
 	Name   string `json:"name"`
 	Source string `json:"source"`
+	IP     net.IP `json:"ip"`
 }
 
 type clientListJSON struct {
-	Clients        []clientJSON        `json:"clients"`
+	Clients        []*clientJSON       `json:"clients"`
 	RuntimeClients []runtimeClientJSON `json:"auto_clients"`
 	Tags           []string            `json:"supported_tags"`
 }
@@ -66,11 +68,20 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, _ *http
 		cj := clientToJSON(c)
 		data.Clients = append(data.Clients, cj)
 	}
-	for ip, rc := range clients.ipToRC {
+
+	clients.ipToRC.Range(func(ip net.IP, v interface{}) (cont bool) {
+		rc, ok := v.(*RuntimeClient)
+		if !ok {
+			log.Error("dns: bad type %T in ipToRC for %s", v, ip)
+
+			return true
+		}
+
 		cj := runtimeClientJSON{
-			IP:        ip,
-			Name:      rc.Host,
 			WHOISInfo: rc.WHOISInfo,
+
+			Name: rc.Host,
+			IP:   ip,
 		}
 
 		cj.Source = "etc/hosts"
@@ -86,7 +97,9 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, _ *http
 		}
 
 		data.RuntimeClients = append(data.RuntimeClients, cj)
-	}
+
+		return true
+	})
 
 	data.Tags = clientTags
 
@@ -118,8 +131,8 @@ func jsonToClient(cj clientJSON) (c *Client) {
 }
 
 // Convert Client object to JSON
-func clientToJSON(c *Client) clientJSON {
-	cj := clientJSON{
+func clientToJSON(c *Client) (cj *clientJSON) {
+	return &clientJSON{
 		Name:                c.Name,
 		IDs:                 c.IDs,
 		Tags:                c.Tags,
@@ -134,19 +147,6 @@ func clientToJSON(c *Client) clientJSON {
 
 		Upstreams: c.Upstreams,
 	}
-
-	return cj
-}
-
-// runtimeClientToJSON converts a RuntimeClient into a JSON struct.
-func runtimeClientToJSON(ip string, rc RuntimeClient) (cj clientJSON) {
-	cj = clientJSON{
-		Name:      rc.Host,
-		IDs:       []string{ip},
-		WHOISInfo: rc.WHOISInfo,
-	}
-
-	return cj
 }
 
 // Add a new client
@@ -230,7 +230,7 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 // Get the list of clients by IP address list
 func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	data := []map[string]clientJSON{}
+	data := []map[string]*clientJSON{}
 	for i := 0; i < len(q); i++ {
 		idStr := q.Get(fmt.Sprintf("ip%d", i))
 		if idStr == "" {
@@ -239,20 +239,16 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 
 		ip := net.ParseIP(idStr)
 		c, ok := clients.Find(idStr)
-		var cj clientJSON
+		var cj *clientJSON
 		if !ok {
-			var found bool
-			cj, found = clients.findRuntime(ip, idStr)
-			if !found {
-				continue
-			}
+			cj = clients.findRuntime(ip, idStr)
 		} else {
 			cj = clientToJSON(c)
-			disallowed, rule := clients.dnsServer.IsBlockedIP(ip)
+			disallowed, rule := clients.dnsServer.IsBlockedClient(ip, idStr)
 			cj.Disallowed, cj.DisallowedRule = &disallowed, &rule
 		}
 
-		data = append(data, map[string]clientJSON{
+		data = append(data, map[string]*clientJSON{
 			idStr: cj,
 		})
 	}
@@ -265,39 +261,37 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 }
 
 // findRuntime looks up the IP in runtime and temporary storages, like
-// /etc/hosts tables, DHCP leases, or blocklists.
-func (clients *clientsContainer) findRuntime(ip net.IP, idStr string) (cj clientJSON, found bool) {
-	if ip == nil {
-		return cj, false
-	}
-
-	rc, ok := clients.FindRuntimeClient(idStr)
+// /etc/hosts tables, DHCP leases, or blocklists.  cj is guaranteed to be
+// non-nil.
+func (clients *clientsContainer) findRuntime(ip net.IP, idStr string) (cj *clientJSON) {
+	rc, ok := clients.FindRuntimeClient(ip)
 	if !ok {
 		// It is still possible that the IP used to be in the runtime
 		// clients list, but then the server was reloaded.  So, check
 		// the DNS server's blocked IP list.
 		//
 		// See https://github.com/AdguardTeam/AdGuardHome/issues/2428.
-		disallowed, rule := clients.dnsServer.IsBlockedIP(ip)
-		if rule == "" {
-			return clientJSON{}, false
-		}
-
-		cj = clientJSON{
+		disallowed, rule := clients.dnsServer.IsBlockedClient(ip, idStr)
+		cj = &clientJSON{
 			IDs:            []string{idStr},
 			Disallowed:     &disallowed,
 			DisallowedRule: &rule,
 			WHOISInfo:      &RuntimeClientWHOISInfo{},
 		}
 
-		return cj, true
+		return cj
 	}
 
-	cj = runtimeClientToJSON(idStr, rc)
-	disallowed, rule := clients.dnsServer.IsBlockedIP(ip)
+	cj = &clientJSON{
+		Name:      rc.Host,
+		IDs:       []string{idStr},
+		WHOISInfo: rc.WHOISInfo,
+	}
+
+	disallowed, rule := clients.dnsServer.IsBlockedClient(ip, idStr)
 	cj.Disallowed, cj.DisallowedRule = &disallowed, &rule
 
-	return cj, true
+	return cj
 }
 
 // RegisterClientsHandlers registers HTTP handlers
