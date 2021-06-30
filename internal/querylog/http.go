@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
+	"golang.org/x/net/idna"
 )
 
 type qlogConfig struct {
@@ -127,25 +129,53 @@ func getDoubleQuotesEnclosedValue(s *string) bool {
 }
 
 // parseSearchCriterion parses a search criterion from the query parameter.
-func (l *queryLog) parseSearchCriterion(q url.Values, name string, ct criterionType) (ok bool, sc searchCriterion, err error) {
+func (l *queryLog) parseSearchCriterion(q url.Values, name string, ct criterionType) (
+	ok bool,
+	sc searchCriterion,
+	err error,
+) {
 	val := q.Get(name)
-	if len(val) == 0 {
-		return false, searchCriterion{}, nil
+	if val == "" {
+		return false, sc, nil
 	}
 
-	c := searchCriterion{
+	strict := getDoubleQuotesEnclosedValue(&val)
+
+	var asciiVal string
+	switch ct {
+	case ctTerm:
+		// Decode lowercased value from punycode to make EqualFold and
+		// friends work properly with IDNAs.
+		//
+		// TODO(e.burkov):  Make it work with parts of IDNAs somehow.
+		loweredVal := strings.ToLower(val)
+		if asciiVal, err = idna.ToASCII(loweredVal); err != nil {
+			log.Debug("can't convert %q to ascii: %s", val, err)
+		} else if asciiVal == loweredVal {
+			// Purge asciiVal to prevent checking the same value
+			// twice.
+			asciiVal = ""
+		}
+	case ctFilteringStatus:
+		if !aghstrings.InSlice(filteringStatusValues, val) {
+			return false, sc, fmt.Errorf("invalid value %s", val)
+		}
+	default:
+		return false, sc, fmt.Errorf(
+			"invalid criterion type %v: should be one of %v",
+			ct,
+			[]criterionType{ctTerm, ctFilteringStatus},
+		)
+	}
+
+	sc = searchCriterion{
 		criterionType: ct,
 		value:         val,
-	}
-	if getDoubleQuotesEnclosedValue(&c.value) {
-		c.strict = true
-	}
-
-	if ct == ctFilteringStatus && !aghstrings.InSlice(filteringStatusValues, c.value) {
-		return false, c, fmt.Errorf("invalid value %s", c.value)
+		asciiVal:      asciiVal,
+		strict:        strict,
 	}
 
-	return true, c, nil
+	return true, sc, nil
 }
 
 // parseSearchParams - parses "searchParams" from the HTTP request's query string
@@ -175,15 +205,19 @@ func (l *queryLog) parseSearchParams(r *http.Request) (p *searchParams, err erro
 		p.maxFileScanEntries = 0
 	}
 
-	paramNames := map[string]criterionType{
-		"search":          ctTerm,
-		"response_status": ctFilteringStatus,
-	}
-
-	for k, v := range paramNames {
+	for _, v := range []struct {
+		urlField string
+		ct       criterionType
+	}{{
+		urlField: "search",
+		ct:       ctTerm,
+	}, {
+		urlField: "response_status",
+		ct:       ctFilteringStatus,
+	}} {
 		var ok bool
 		var c searchCriterion
-		ok, c, err = l.parseSearchCriterion(q, k, v)
+		ok, c, err = l.parseSearchCriterion(q, v.urlField, v.ct)
 		if err != nil {
 			return nil, err
 		}

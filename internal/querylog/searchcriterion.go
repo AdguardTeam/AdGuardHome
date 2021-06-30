@@ -11,10 +11,9 @@ import (
 type criterionType int
 
 const (
-	// ctTerm is for searching by the domain name, the client's IP
-	// address, the client's ID or the client's name.
-	//
-	// TODO(e.burkov):  Make it support IDNA while #3012.
+	// ctTerm is for searching by the domain name, the client's IP address,
+	// the client's ID or the client's name.  The domain name search
+	// supports IDNAs.
 	ctTerm criterionType = iota
 	// ctFilteringStatus is for searching by the filtering status.
 	//
@@ -47,6 +46,7 @@ var filteringStatusValues = []string{
 // searchCriterion is a search criterion that is used to match a record.
 type searchCriterion struct {
 	value         string
+	asciiVal      string
 	criterionType criterionType
 	// strict, if true, means that the criterion must be applied to the
 	// whole value rather than the part of it.  That is, equality and not
@@ -54,14 +54,16 @@ type searchCriterion struct {
 	strict bool
 }
 
-func (c *searchCriterion) ctDomainOrClientCaseStrict(
+func ctDomainOrClientCaseStrict(
 	term string,
+	asciiTerm string,
 	clientID string,
 	name string,
 	host string,
 	ip string,
 ) (ok bool) {
 	return strings.EqualFold(host, term) ||
+		(asciiTerm != "" && strings.EqualFold(host, asciiTerm)) ||
 		strings.EqualFold(clientID, term) ||
 		strings.EqualFold(ip, term) ||
 		strings.EqualFold(name, term)
@@ -98,8 +100,9 @@ func containsFold(s, substr string) (ok bool) {
 	return false
 }
 
-func (c *searchCriterion) ctDomainOrClientCaseNonStrict(
+func ctDomainOrClientCaseNonStrict(
 	term string,
+	asciiTerm string,
 	clientID string,
 	name string,
 	host string,
@@ -107,6 +110,7 @@ func (c *searchCriterion) ctDomainOrClientCaseNonStrict(
 ) (ok bool) {
 	return containsFold(clientID, term) ||
 		containsFold(host, term) ||
+		(asciiTerm != "" && containsFold(host, asciiTerm)) ||
 		containsFold(ip, term) ||
 		containsFold(name, term)
 }
@@ -127,10 +131,24 @@ func (c *searchCriterion) quickMatch(line string, findClient quickMatchClientFun
 		}
 
 		if c.strict {
-			return c.ctDomainOrClientCaseStrict(c.value, clientID, name, host, ip)
+			return ctDomainOrClientCaseStrict(
+				c.value,
+				c.asciiVal,
+				clientID,
+				name,
+				host,
+				ip,
+			)
 		}
 
-		return c.ctDomainOrClientCaseNonStrict(c.value, clientID, name, host, ip)
+		return ctDomainOrClientCaseNonStrict(
+			c.value,
+			c.asciiVal,
+			clientID,
+			name,
+			host,
+			ip,
+		)
 	case ctFilteringStatus:
 		// Go on, as we currently don't do quick matches against
 		// filtering statuses.
@@ -162,12 +180,11 @@ func (c *searchCriterion) ctDomainOrClientCase(e *logEntry) bool {
 	}
 
 	ip := e.IP.String()
-	term := strings.ToLower(c.value)
 	if c.strict {
-		return c.ctDomainOrClientCaseStrict(term, clientID, name, host, ip)
+		return ctDomainOrClientCaseStrict(c.value, c.asciiVal, clientID, name, host, ip)
 	}
 
-	return c.ctDomainOrClientCaseNonStrict(term, clientID, name, host, ip)
+	return ctDomainOrClientCaseNonStrict(c.value, c.asciiVal, clientID, name, host, ip)
 }
 
 func (c *searchCriterion) ctFilteringStatusCase(res filtering.Result) bool {

@@ -40,6 +40,7 @@ and this project adheres to
 
 ### Changed
 
+- Query log search now supports internationalized domains ([#3012]).
 - Internationalized domains are now shown decoded in the query log with the
   original encoded version shown in request details. ([#3013]).
 - When /etc/hosts-type rules have several IPs for one host, all IPs are now
@@ -83,6 +84,7 @@ released by then.
 [#2443]: https://github.com/AdguardTeam/AdGuardHome/issues/2443
 [#2624]: https://github.com/AdguardTeam/AdGuardHome/issues/2624
 [#2763]: https://github.com/AdguardTeam/AdGuardHome/issues/2763
+[#3012]: https://github.com/AdguardTeam/AdGuardHome/issues/3012
 [#3013]: https://github.com/AdguardTeam/AdGuardHome/issues/3013
 [#3136]: https://github.com/AdguardTeam/AdGuardHome/issues/3136
 [#3162]: https://github.com/AdguardTeam/AdGuardHome/issues/3162
