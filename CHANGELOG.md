@@ -35,14 +35,14 @@ and this project adheres to
   ([#3185]).
 - The ability to completely disable reverse DNS resolving of IPs from
   locally-served networks ([#3184]).
-- New flag `--local-frontend` to serve dinamically changeable frontend files
+- New flag `--local-frontend` to serve dynamically changeable frontend files
   from disk as opposed to the ones that were compiled into the binary.
 
 ### Changed
 
 - Query log search now supports internationalized domains ([#3012]).
 - Internationalized domains are now shown decoded in the query log with the
-  original encoded version shown in request details. ([#3013]).
+  original encoded version shown in request details ([#3013]).
 - When /etc/hosts-type rules have several IPs for one host, all IPs are now
   returned instead of only the first one ([#1381]).
 - The setting `rlimit_nofile` is now in the `os` block of the configuration
@@ -149,7 +149,7 @@ released by then.
 ### Fixed
 
 - Local domain name handling when the DHCP server is disabled ([#3028]).
-- Normalization of perviously-saved invalid static DHCP leases ([#3027]).
+- Normalization of previously-saved invalid static DHCP leases ([#3027]).
 - Validation of IPv6 addresses with zones in system resolvers ([#3022]).
 
 [#3022]: https://github.com/AdguardTeam/AdGuardHome/issues/3022
