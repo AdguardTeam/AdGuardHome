@@ -41,10 +41,17 @@ type Config struct {
 	// BaseDir is the base directory for log files.
 	BaseDir string
 
-	// RotationIvl is the interval for log rotation, in days.  After that
-	// period, the old log file will be renamed, NOT deleted, so the actual
-	// log retention time is twice the interval.
-	RotationIvl uint32
+	// RotationIvl is the interval for log rotation.  After that period, the
+	// old log file will be renamed, NOT deleted, so the actual log
+	// retention time is twice the interval.  The value must be one of:
+	//
+	//         6 * time.Hour
+	//        24 * time.Hour
+	//    7 * 24 * time.Hour
+	//   30 * 24 * time.Hour
+	//   90 * 24 * time.Hour
+	//
+	RotationIvl time.Duration
 
 	// MemSize is the number of entries kept in a memory buffer before they
 	// are flushed to disk.
@@ -118,7 +125,7 @@ func newQueryLog(conf Config) (l *queryLog) {
 			"querylog: warning: unsupported rotation interval %d, setting to 1 day",
 			conf.RotationIvl,
 		)
-		l.conf.RotationIvl = 1
+		l.conf.RotationIvl = 24 * time.Hour
 	}
 
 	return l

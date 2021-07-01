@@ -37,7 +37,7 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 	l := newQueryLog(Config{
 		FindClient:        findClient,
 		BaseDir:           t.TempDir(),
-		RotationIvl:       1,
+		RotationIvl:       24 * time.Hour,
 		MemSize:           100,
 		Enabled:           true,
 		FileEnabled:       true,

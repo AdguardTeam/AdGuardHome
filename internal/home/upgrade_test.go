@@ -2,6 +2,7 @@ package home
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -413,5 +414,100 @@ func TestUpgradeSchema10to11(t *testing.T) {
 			"schema_version": 10,
 		}
 		check(t, conf)
+	})
+}
+
+func TestUpgradeSchema11to12(t *testing.T) {
+	testCases := []struct {
+		ivl     any
+		want    any
+		wantErr string
+		name    string
+	}{{
+		ivl:     1,
+		want:    Duration{Duration: 24 * time.Hour},
+		wantErr: "",
+		name:    "success",
+	}, {
+		ivl:     0.25,
+		want:    0,
+		wantErr: "unexpected type of querylog_interval: float64",
+		name:    "fail",
+	}}
+
+	for _, tc := range testCases {
+		conf := yobj{
+			"dns": yobj{
+				"querylog_interval": tc.ivl,
+			},
+			"schema_version": 11,
+		}
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema11to12(conf)
+
+			if tc.wantErr != "" {
+				require.Error(t, err)
+				assert.Equal(t, tc.wantErr, err.Error())
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, conf["schema_version"], 12)
+
+			dnsVal, ok := conf["dns"]
+			require.True(t, ok)
+
+			var newDNSConf yobj
+			newDNSConf, ok = dnsVal.(yobj)
+			require.True(t, ok)
+
+			var newIvl Duration
+			newIvl, ok = newDNSConf["querylog_interval"].(Duration)
+			require.True(t, ok)
+
+			assert.Equal(t, tc.want, newIvl)
+		})
+	}
+
+	t.Run("no_dns", func(t *testing.T) {
+		err := upgradeSchema11to12(yobj{})
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("bad_dns", func(t *testing.T) {
+		err := upgradeSchema11to12(yobj{
+			"dns": 0,
+		})
+
+		require.Error(t, err)
+		assert.Equal(t, "unexpected type of dns: int", err.Error())
+	})
+
+	t.Run("no_field", func(t *testing.T) {
+		conf := yobj{
+			"dns": yobj{},
+		}
+
+		err := upgradeSchema11to12(conf)
+		require.NoError(t, err)
+
+		dns, ok := conf["dns"]
+		require.True(t, ok)
+
+		var dnsVal yobj
+		dnsVal, ok = dns.(yobj)
+		require.True(t, ok)
+
+		var ivl interface{}
+		ivl, ok = dnsVal["querylog_interval"]
+		require.True(t, ok)
+
+		var ivlVal Duration
+		ivlVal, ok = ivl.(Duration)
+		require.True(t, ok)
+
+		assert.Equal(t, 90*24*time.Hour, ivlVal.Duration)
 	})
 }

@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
@@ -19,7 +20,7 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 11
+const currentSchemaVersion = 12
 
 // These aliases are provided for convenience.
 type (
@@ -82,6 +83,7 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema8to9,
 		upgradeSchema9to10,
 		upgradeSchema10to11,
+		upgradeSchema11to12,
 	}
 
 	n := 0
@@ -643,6 +645,46 @@ func upgradeSchema10to11(diskConf yobj) (err error) {
 		"rlimit_nofile": rlimit,
 		"user":          "",
 	}
+
+	return nil
+}
+
+// upgradeSchema11to12 performs the following changes:
+//
+//   # BEFORE:
+//   'querylog_interval': 90
+//
+//   # AFTER:
+//   'querylog_interval': '2160h'
+//
+func upgradeSchema11to12(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 11 to 12")
+	diskConf["schema_version"] = 12
+
+	dnsVal, ok := diskConf["dns"]
+	if !ok {
+		return nil
+	}
+
+	var dns yobj
+	dns, ok = dnsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of dns: %T", dnsVal)
+	}
+
+	const field = "querylog_interval"
+
+	// Set the initial value from home.initConfig function.
+	qlogIvl := 90
+	qlogIvlVal, ok := dns[field]
+	if ok {
+		qlogIvl, ok = qlogIvlVal.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type of %s: %T", field, qlogIvlVal)
+		}
+	}
+
+	dns[field] = Duration{Duration: time.Duration(qlogIvl) * 24 * time.Hour}
 
 	return nil
 }

@@ -26,7 +26,7 @@ func TestQueryLog(t *testing.T) {
 	l := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: true,
-		RotationIvl: 1,
+		RotationIvl: 24 * time.Hour,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 	})
@@ -128,7 +128,7 @@ func TestQueryLog(t *testing.T) {
 func TestQueryLogOffsetLimit(t *testing.T) {
 	l := newQueryLog(Config{
 		Enabled:     true,
-		RotationIvl: 1,
+		RotationIvl: 24 * time.Hour,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 	})
@@ -153,33 +153,34 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 
 	testCases := []struct {
 		name    string
+		want    string
+		wantLen int
 		offset  int
 		limit   int
-		wantLen int
-		want    string
 	}{{
 		name:    "page_1",
+		want:    firstPageDomain,
+		wantLen: 10,
 		offset:  0,
 		limit:   10,
-		wantLen: 10,
-		want:    firstPageDomain,
 	}, {
 		name:    "page_2",
+		want:    secondPageDomain,
+		wantLen: 10,
 		offset:  10,
 		limit:   10,
-		wantLen: 10,
-		want:    secondPageDomain,
 	}, {
 		name:    "page_2.5",
+		want:    secondPageDomain,
+		wantLen: 5,
 		offset:  15,
 		limit:   10,
-		wantLen: 5,
-		want:    secondPageDomain,
 	}, {
 		name:    "page_3",
+		want:    "",
+		wantLen: 0,
 		offset:  20,
 		limit:   10,
-		wantLen: 0,
 	}}
 
 	for _, tc := range testCases {
@@ -202,7 +203,7 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 	l := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: true,
-		RotationIvl: 1,
+		RotationIvl: 24 * time.Hour,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 	})
@@ -230,7 +231,7 @@ func TestQueryLogFileDisabled(t *testing.T) {
 	l := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: false,
-		RotationIvl: 1,
+		RotationIvl: 24 * time.Hour,
 		MemSize:     2,
 		BaseDir:     t.TempDir(),
 	})

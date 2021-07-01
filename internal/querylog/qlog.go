@@ -100,8 +100,17 @@ func (l *queryLog) Close() {
 	_ = l.flushLogBuffer(true)
 }
 
-func checkInterval(days uint32) bool {
-	return days == 1 || days == 7 || days == 30 || days == 90
+func checkInterval(ivl time.Duration) (ok bool) {
+	// The constants for possible values of query log's rotation interval.
+	const (
+		quarterDay  = 6 * time.Hour
+		day         = 24 * time.Hour
+		week        = day * 7
+		month       = day * 30
+		threeMonths = day * 90
+	)
+
+	return ivl == quarterDay || ivl == day || ivl == week || ivl == month || ivl == threeMonths
 }
 
 func (l *queryLog) WriteDiskConfig(c *Config) {

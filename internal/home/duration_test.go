@@ -12,6 +12,50 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+func TestDuration_String(t *testing.T) {
+	testCases := []struct {
+		name string
+		val  time.Duration
+	}{{
+		name: "1s",
+		val:  time.Second,
+	}, {
+		name: "1m",
+		val:  time.Minute,
+	}, {
+		name: "1h",
+		val:  time.Hour,
+	}, {
+		name: "1m1s",
+		val:  time.Minute + time.Second,
+	}, {
+		name: "1h1m",
+		val:  time.Hour + time.Minute,
+	}, {
+		name: "1h0m1s",
+		val:  time.Hour + time.Second,
+	}, {
+		name: "1ms",
+		val:  time.Millisecond,
+	}, {
+		name: "1h0m0.001s",
+		val:  time.Hour + time.Millisecond,
+	}, {
+		name: "1.001s",
+		val:  time.Second + time.Millisecond,
+	}, {
+		name: "1m1.001s",
+		val:  time.Minute + time.Second + time.Millisecond,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			d := Duration{Duration: tc.val}
+			assert.Equal(t, tc.name, d.String())
+		})
+	}
+}
+
 // durationEncodingTester is a helper struct to simplify testing different
 // Duration marshalling and unmarshalling cases.
 type durationEncodingTester struct {

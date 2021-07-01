@@ -2008,8 +2008,15 @@
           'type': 'boolean'
           'description': 'Is query log enabled'
         'interval':
-          'type': 'integer'
-          'description': 'Time period to keep data (1 | 7 | 30 | 90)'
+          'description': >
+            Time period for query log rotation.
+          'type': 'number'
+          'enum':
+          - 0.25
+          - 1
+          - 7
+          - 30
+          - 90
         'anonymize_client_ip':
           'type': 'boolean'
           'description': "Anonymize clients' IP addresses"

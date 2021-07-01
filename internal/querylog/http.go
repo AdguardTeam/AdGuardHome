@@ -16,9 +16,11 @@ import (
 )
 
 type qlogConfig struct {
-	Enabled           bool   `json:"enabled"`
-	Interval          uint32 `json:"interval"`
-	AnonymizeClientIP bool   `json:"anonymize_client_ip"`
+	Enabled bool `json:"enabled"`
+	// Use float64 here to support fractional numbers and not mess the API
+	// users by changing the units.
+	Interval          float64 `json:"interval"`
+	AnonymizeClientIP bool    `json:"anonymize_client_ip"`
 }
 
 // Register web handlers
@@ -71,7 +73,7 @@ func (l *queryLog) handleQueryLogClear(_ http.ResponseWriter, _ *http.Request) {
 func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 	resp := qlogConfig{}
 	resp.Enabled = l.conf.Enabled
-	resp.Interval = l.conf.RotationIvl
+	resp.Interval = l.conf.RotationIvl.Hours() / 24
 	resp.AnonymizeClientIP = l.conf.AnonymizeClientIP
 
 	jsonVal, err := json.Marshal(resp)
@@ -95,7 +97,8 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if req.Exists("interval") && !checkInterval(d.Interval) {
+	ivl := time.Duration(24*d.Interval) * time.Hour
+	if req.Exists("interval") && !checkInterval(ivl) {
 		httpError(r, w, http.StatusBadRequest, "Unsupported interval")
 		return
 	}
@@ -107,7 +110,7 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 		conf.Enabled = d.Enabled
 	}
 	if req.Exists("interval") {
-		conf.RotationIvl = d.Interval
+		conf.RotationIvl = ivl
 	}
 	if req.Exists("anonymize_client_ip") {
 		conf.AnonymizeClientIP = d.AnonymizeClientIP

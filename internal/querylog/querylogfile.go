@@ -104,43 +104,52 @@ func (l *queryLog) rotate() error {
 	return nil
 }
 
-func (l *queryLog) readFileFirstTimeValue() int64 {
-	f, err := os.Open(l.logFile)
+func (l *queryLog) readFileFirstTimeValue() (first time.Time, err error) {
+	var f *os.File
+	f, err = os.Open(l.logFile)
 	if err != nil {
-		return -1
+		return time.Time{}, err
 	}
-	defer func() {
-		derr := f.Close()
-		if derr != nil {
-			log.Error("querylog: closing file: %s", derr)
-		}
-	}()
 
-	buf := make([]byte, 500)
-	r, err := f.Read(buf)
+	defer func() { err = errors.WithDeferred(err, f.Close()) }()
+
+	buf := make([]byte, 512)
+	var r int
+	r, err = f.Read(buf)
 	if err != nil {
-		return -1
+		return time.Time{}, err
 	}
-	buf = buf[:r]
 
-	val := readJSONValue(string(buf), `"T":"`)
+	val := readJSONValue(string(buf[:r]), `"T":"`)
 	t, err := time.Parse(time.RFC3339Nano, val)
 	if err != nil {
-		return -1
+		return time.Time{}, err
 	}
 
 	log.Debug("querylog: the oldest log entry: %s", val)
-	return t.Unix()
+
+	return t, nil
 }
 
 func (l *queryLog) periodicRotate() {
-	intervalSeconds := uint64(l.conf.RotationIvl) * 24 * 60 * 60
+	defer log.OnPanic("querylog: rotating")
+
+	var err error
 	for {
-		oldest := l.readFileFirstTimeValue()
-		if uint64(oldest)+intervalSeconds <= uint64(time.Now().Unix()) {
-			_ = l.rotate()
+		var oldest time.Time
+		oldest, err = l.readFileFirstTimeValue()
+		if err != nil {
+			log.Debug("%s", err)
 		}
 
+		if oldest.Add(l.conf.RotationIvl).After(time.Now()) {
+			err = l.rotate()
+			if err != nil {
+				log.Debug("%s", err)
+			}
+		}
+
+		// What?
 		time.Sleep(24 * time.Hour)
 	}
 }

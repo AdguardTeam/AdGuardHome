@@ -4,26 +4,33 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { CheckboxField, renderRadioField, toNumber } from '../../../helpers/form';
+import { CheckboxField, renderRadioField, toFloatNumber } from '../../../helpers/form';
 import { FORM_NAME, QUERY_LOG_INTERVALS_DAYS } from '../../../helpers/constants';
 import '../FormButton.css';
 
-const getIntervalFields = (processing, t, toNumber) => QUERY_LOG_INTERVALS_DAYS.map((interval) => {
-    const title = interval === 1 ? t('interval_24_hour') : t('interval_days', { count: interval });
+const getIntervalTitle = (interval, t) => {
+    switch (interval) {
+        case 0.25:
+            return t('interval_6_hour');
+        case 1:
+            return t('interval_24_hour');
+        default:
+            return t('interval_days', { count: interval });
+    }
+};
 
-    return (
-        <Field
-            key={interval}
-            name="interval"
-            type="radio"
-            component={renderRadioField}
-            value={interval}
-            placeholder={title}
-            normalize={toNumber}
-            disabled={processing}
-        />
-    );
-});
+const getIntervalFields = (processing, t, toNumber) => QUERY_LOG_INTERVALS_DAYS.map((interval) => (
+    <Field
+        key={interval}
+        name="interval"
+        type="radio"
+        component={renderRadioField}
+        value={interval}
+        placeholder={getIntervalTitle(interval, t)}
+        normalize={toNumber}
+        disabled={processing}
+    />
+));
 
 const Form = (props) => {
     const {
@@ -56,7 +63,7 @@ const Form = (props) => {
             </label>
             <div className="form__group form__group--settings">
                 <div className="custom-controls-stacked">
-                    {getIntervalFields(processing, t, toNumber)}
+                    {getIntervalFields(processing, t, toFloatNumber)}
                 </div>
             </div>
             <div className="mt-5">

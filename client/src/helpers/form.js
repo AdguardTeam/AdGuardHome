@@ -278,6 +278,12 @@ export const toNumber = (value) => value && parseInt(value, 10);
 
 /**
  * @param value {string}
+ * @returns {*|number}
+ */
+export const toFloatNumber = (value) => value && parseFloat(value, 10);
+
+/**
+ * @param value {string}
  * @returns {boolean}
  */
 export const isValidAbsolutePath = (value) => R_WIN_ABSOLUTE_PATH.test(value)

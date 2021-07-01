@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- New possible value of `6h` for `querylog_interval` setting ([#2504]).
 - Blocking access using client IDs ([#2624], [#3162]).
 - `source` directives support in `/etc/network/interfaces` on Linux ([#3257]).
 - RFC 9000 support in DNS-over-QUIC.
@@ -40,6 +41,7 @@ and this project adheres to
 
 ### Changed
 
+- `querylog_interval` setting is now formatted in hours.
 - Query log search now supports internationalized domains ([#3012]).
 - Internationalized domains are now shown decoded in the query log with the
   original encoded version shown in request details ([#3013]).
@@ -82,6 +84,7 @@ released by then.
 [#2439]: https://github.com/AdguardTeam/AdGuardHome/issues/2439
 [#2441]: https://github.com/AdguardTeam/AdGuardHome/issues/2441
 [#2443]: https://github.com/AdguardTeam/AdGuardHome/issues/2443
+[#2504]: https://github.com/AdguardTeam/AdGuardHome/issues/2504
 [#2624]: https://github.com/AdguardTeam/AdGuardHome/issues/2624
 [#2763]: https://github.com/AdguardTeam/AdGuardHome/issues/2763
 [#3012]: https://github.com/AdguardTeam/AdGuardHome/issues/3012

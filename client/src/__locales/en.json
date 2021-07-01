@@ -484,6 +484,7 @@
     "encryption_key_source_content": "Paste the private key contents",
     "stats_params": "Statistics configuration",
     "config_successfully_saved": "Configuration successfully saved",
+    "interval_6_hour": "6 hours",
     "interval_24_hour": "24 hours",
     "interval_days": "{{count}} day",
     "interval_days_plural": "{{count}} days",
