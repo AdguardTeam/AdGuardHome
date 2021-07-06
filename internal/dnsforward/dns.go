@@ -379,15 +379,17 @@ func (s *Server) ipToHost(ip net.IP) (host string, ok bool) {
 
 	var v interface{}
 	v, ok = s.tableIPToHost.Get(ip)
+	if !ok {
+		return "", false
+	}
 
-	var typOK bool
-	if host, typOK = v.(string); !typOK {
+	if host, ok = v.(string); !ok {
 		log.Error("dns: bad type %T in tableIPToHost for %s", v, ip)
 
 		return "", false
 	}
 
-	return host, ok
+	return host, true
 }
 
 // Respond to PTR requests if the target IP is leased by our DHCP server and the
