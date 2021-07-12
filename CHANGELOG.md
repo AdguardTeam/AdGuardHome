@@ -62,6 +62,7 @@ released by then.
 
 ### Fixed
 
+- Conflicts between IPv4 and IPv6 DNS rewrites ([#3343]).
 - Letter case mismatches in `CNAME` filtering ([#3335]).
 - Occasional breakages on network errors with DNS-over-HTTP upstreams ([#3217]).
 - Errors when setting static IP on Linux ([#3257]).
@@ -103,6 +104,7 @@ released by then.
 [#3256]: https://github.com/AdguardTeam/AdGuardHome/issues/3256
 [#3257]: https://github.com/AdguardTeam/AdGuardHome/issues/3257
 [#3335]: https://github.com/AdguardTeam/AdGuardHome/issues/3335
+[#3343]: https://github.com/AdguardTeam/AdGuardHome/issues/3343
 
 
 

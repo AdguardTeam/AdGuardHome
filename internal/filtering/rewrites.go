@@ -15,10 +15,16 @@ import (
 
 // RewriteEntry is a rewrite array element
 type RewriteEntry struct {
+	// Domain is the domain for which this rewrite should work.
 	Domain string `yaml:"domain"`
-	Answer string `yaml:"answer"` // IP address or canonical name
-	Type   uint16 `yaml:"-"`      // DNS record type: CNAME, A or AAAA
-	IP     net.IP `yaml:"-"`      // Parsed IP address (if Type is A or AAAA)
+	// Answer is the IP address, canonical name, or one of the special
+	// values: "A" or "AAAA".
+	Answer string `yaml:"answer"`
+	// IP is the IP address that should be used in the response if Type is
+	// A or AAAA.
+	IP net.IP `yaml:"-"`
+	// Type is the DNS record type: A, AAAA, or CNAME.
+	Type uint16 `yaml:"-"`
 }
 
 func (r *RewriteEntry) equals(b RewriteEntry) bool {
@@ -26,27 +32,32 @@ func (r *RewriteEntry) equals(b RewriteEntry) bool {
 }
 
 func isWildcard(host string) bool {
-	return len(host) >= 2 &&
-		host[0] == '*' && host[1] == '.'
+	return len(host) > 1 && host[0] == '*' && host[1] == '.'
 }
 
-// Return TRUE of host name matches a wildcard pattern
-func matchDomainWildcard(host, wildcard string) bool {
-	return isWildcard(wildcard) &&
-		strings.HasSuffix(host, wildcard[1:])
+// matchDomainWildcard returns true if host matches the wildcard pattern.
+func matchDomainWildcard(host, wildcard string) (ok bool) {
+	return isWildcard(wildcard) && strings.HasSuffix(host, wildcard[1:])
 }
 
-type rewritesArray []RewriteEntry
+// rewritesSorted is a slice of legacy rewrites for sorting.
+//
+// The sorting priority:
+//
+//   A and AAAA > CNAME
+//   wildcard > exact
+//   lower level wildcard > higher level wildcard
+//
+type rewritesSorted []RewriteEntry
 
-func (a rewritesArray) Len() int { return len(a) }
+// Len implements the sort.Interface interface for legacyRewritesSorted.
+func (a rewritesSorted) Len() int { return len(a) }
 
-func (a rewritesArray) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+// Swap implements the sort.Interface interface for legacyRewritesSorted.
+func (a rewritesSorted) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
-// Priority:
-//  . CNAME < A/AAAA;
-//  . exact < wildcard;
-//  . higher level wildcard < lower level wildcard
-func (a rewritesArray) Less(i, j int) bool {
+// Less implements the sort.Interface interface for legacyRewritesSorted.
+func (a rewritesSorted) Less(i, j int) bool {
 	if a[i].Type == dns.TypeCNAME && a[j].Type != dns.TypeCNAME {
 		return true
 	} else if a[i].Type != dns.TypeCNAME && a[j].Type == dns.TypeCNAME {
@@ -67,31 +78,37 @@ func (a rewritesArray) Less(i, j int) bool {
 	return len(a[i].Domain) > len(a[j].Domain)
 }
 
-// Prepare entry for use
+// prepare prepares the a new or decoded entry.
 func (r *RewriteEntry) prepare() {
-	if r.Answer == "AAAA" {
+	switch r.Answer {
+	case "AAAA":
 		r.IP = nil
 		r.Type = dns.TypeAAAA
+
 		return
-	} else if r.Answer == "A" {
+	case "A":
 		r.IP = nil
 		r.Type = dns.TypeA
+
 		return
+	default:
+		// Go on.
 	}
 
 	ip := net.ParseIP(r.Answer)
 	if ip == nil {
 		r.Type = dns.TypeCNAME
+
 		return
 	}
-
-	r.IP = ip
-	r.Type = dns.TypeAAAA
 
 	ip4 := ip.To4()
 	if ip4 != nil {
 		r.IP = ip4
 		r.Type = dns.TypeA
+	} else {
+		r.IP = ip
+		r.Type = dns.TypeAAAA
 	}
 }
 
@@ -101,19 +118,23 @@ func (d *DNSFilter) prepareRewrites() {
 	}
 }
 
-// Get the list of matched rewrite entries.
-// Priority: CNAME, A/AAAA;  exact, wildcard.
-// If matched exactly, don't return wildcard entries.
-// If matched by several wildcards, select the more specific one
-func findRewrites(a []RewriteEntry, host string) []RewriteEntry {
-	rr := rewritesArray{}
+// findRewrites returns the list of matched rewrite entries.  The priority is:
+// CNAME, then A and AAAA; exact, then wildcard.  If the host is matched
+// exactly, wildcard entries aren't returned.  If the host matched by wildcards,
+// return the most specific for the question type.
+func findRewrites(a []RewriteEntry, host string, qtype uint16) []RewriteEntry {
+	rr := rewritesSorted{}
 	for _, r := range a {
-		if r.Domain != host {
-			if !matchDomainWildcard(host, r.Domain) {
-				continue
-			}
+		if r.Domain != host && !matchDomainWildcard(host, r.Domain) {
+			continue
 		}
-		rr = append(rr, r)
+
+		// Return CNAMEs for all types requests, but only the
+		// appropriate ones for A and AAAA.
+		if r.Type == dns.TypeCNAME ||
+			(r.Type == qtype && (qtype == dns.TypeA || qtype == dns.TypeAAAA)) {
+			rr = append(rr, r)
+		}
 	}
 
 	if len(rr) == 0 {

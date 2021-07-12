@@ -492,7 +492,7 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 	d.confLock.RLock()
 	defer d.confLock.RUnlock()
 
-	rr := findRewrites(d.Rewrites, host)
+	rr := findRewrites(d.Rewrites, host, qtype)
 	if len(rr) != 0 {
 		res.Reason = Rewritten
 	}
@@ -517,15 +517,14 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 
 		cnames.Add(host)
 		res.CanonName = rr[0].Answer
-		rr = findRewrites(d.Rewrites, host)
+		rr = findRewrites(d.Rewrites, host, qtype)
 	}
 
 	for _, r := range rr {
-		if (r.Type == dns.TypeA && qtype == dns.TypeA) ||
-			(r.Type == dns.TypeAAAA && qtype == dns.TypeAAAA) {
-
+		if r.Type == qtype && (qtype == dns.TypeA || qtype == dns.TypeAAAA) {
 			if r.IP == nil { // IP exception
-				res.Reason = 0
+				res.Reason = NotFilteredNotFound
+
 				return res
 			}
 
