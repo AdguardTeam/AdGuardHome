@@ -403,6 +403,8 @@ func (d *DNSFilter) CheckHostRules(host string, qtype uint16, setts *Settings) (
 		return Result{}, nil
 	}
 
+	host = strings.ToLower(host)
+
 	return d.matchHost(host, qtype, setts)
 }
 

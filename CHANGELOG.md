@@ -62,6 +62,7 @@ released by then.
 
 ### Fixed
 
+- Letter case mismatches in `CNAME` filtering ([#3335]).
 - Occasional breakages on network errors with DNS-over-HTTP upstreams ([#3217]).
 - Errors when setting static IP on Linux ([#3257]).
 - Treatment of domain names and FQDNs in custom rules with `$dnsrewrite` that
@@ -101,6 +102,7 @@ released by then.
 [#3217]: https://github.com/AdguardTeam/AdGuardHome/issues/3217
 [#3256]: https://github.com/AdguardTeam/AdGuardHome/issues/3256
 [#3257]: https://github.com/AdguardTeam/AdGuardHome/issues/3257
+[#3335]: https://github.com/AdguardTeam/AdGuardHome/issues/3335
 
 
 

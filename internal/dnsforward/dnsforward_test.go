@@ -58,7 +58,7 @@ func createTestServer(
 	t.Helper()
 
 	rules := `||nxdomain.example.org
-||null.example.org^
+||NULL.example.org^
 127.0.0.1	host.example.org
 @@||whitelist.example.org^
 ||127.0.0.255`
@@ -581,13 +581,13 @@ func TestServerCustomClientUpstream(t *testing.T) {
 
 // testCNAMEs is a map of names and CNAMEs necessary for the TestUpstream work.
 var testCNAMEs = map[string]string{
-	"badhost.":               "null.example.org.",
-	"whitelist.example.org.": "null.example.org.",
+	"badhost.":               "NULL.example.org.",
+	"whitelist.example.org.": "NULL.example.org.",
 }
 
 // testIPv4 is a map of names and IPv4s necessary for the TestUpstream work.
 var testIPv4 = map[string][]net.IP{
-	"null.example.org.": {{1, 2, 3, 4}},
+	"NULL.example.org.": {{1, 2, 3, 4}},
 	"example.org.":      {{127, 0, 0, 255}},
 }
 
@@ -609,7 +609,7 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
-	// 'badhost' has a canonical name 'null.example.org' which should be
+	// 'badhost' has a canonical name 'NULL.example.org' which should be
 	// blocked by filters, but protection is disabled so it is not.
 	req := createTestMessage("badhost.")
 
@@ -644,13 +644,13 @@ func TestBlockCNAME(t *testing.T) {
 		want bool
 	}{{
 		host: "badhost.",
-		// 'badhost' has a canonical name 'null.example.org' which is
+		// 'badhost' has a canonical name 'NULL.example.org' which is
 		// blocked by filters: response is blocked.
 		want: true,
 	}, {
 		host: "whitelist.example.org.",
 		// 'whitelist.example.org' has a canonical name
-		// 'null.example.org' which is blocked by filters
+		// 'NULL.example.org' which is blocked by filters
 		// but 'whitelist.example.org' is in a whitelist:
 		// response isn't blocked.
 		want: false,
@@ -671,8 +671,11 @@ func TestBlockCNAME(t *testing.T) {
 			assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
 			if tc.want {
 				require.Len(t, reply.Answer, 1)
-				a, ok := reply.Answer[0].(*dns.A)
-				require.True(t, ok)
+
+				ans := reply.Answer[0]
+				a, ok := ans.(*dns.A)
+				require.Truef(t, ok, "got %T", ans)
+
 				assert.True(t, a.A.IsUnspecified())
 			}
 		})
@@ -701,7 +704,7 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
-	// 'badhost' has a canonical name 'null.example.org' which is blocked by
+	// 'badhost' has a canonical name 'NULL.example.org' which is blocked by
 	// filters: response is blocked.
 	req := dns.Msg{
 		MsgHdr: dns.MsgHdr{
@@ -742,7 +745,7 @@ func TestNullBlockedRequest(t *testing.T) {
 			RecursionDesired: true,
 		},
 		Question: []dns.Question{{
-			Name:   "null.example.org.",
+			Name:   "NULL.example.org.",
 			Qtype:  dns.TypeA,
 			Qclass: dns.ClassINET,
 		}},
@@ -757,7 +760,7 @@ func TestNullBlockedRequest(t *testing.T) {
 }
 
 func TestBlockedCustomIP(t *testing.T) {
-	rules := "||nxdomain.example.org^\n||null.example.org^\n127.0.0.1	host.example.org\n@@||whitelist.example.org^\n||127.0.0.255\n"
+	rules := "||nxdomain.example.org^\n||NULL.example.org^\n127.0.0.1	host.example.org\n@@||whitelist.example.org^\n||127.0.0.255\n"
 	filters := []filtering.Filter{{
 		ID:   0,
 		Data: []byte(rules),
@@ -802,7 +805,7 @@ func TestBlockedCustomIP(t *testing.T) {
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
-	req := createTestMessageWithType("null.example.org.", dns.TypeA)
+	req := createTestMessageWithType("NULL.example.org.", dns.TypeA)
 	reply, err := dns.Exchange(req, addr.String())
 	require.NoError(t, err)
 
@@ -813,7 +816,7 @@ func TestBlockedCustomIP(t *testing.T) {
 
 	assert.True(t, net.IP{0, 0, 0, 1}.Equal(a.A))
 
-	req = createTestMessageWithType("null.example.org.", dns.TypeAAAA)
+	req = createTestMessageWithType("NULL.example.org.", dns.TypeAAAA)
 	reply, err = dns.Exchange(req, addr.String())
 	require.NoError(t, err)
 
