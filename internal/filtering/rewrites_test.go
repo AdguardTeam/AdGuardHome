@@ -63,6 +63,9 @@ func TestRewrites(t *testing.T) {
 	}, {
 		Domain: "*.hostboth.com",
 		Answer: "1234::5678",
+	}, {
+		Domain: "BIGHOST.COM",
+		Answer: "1.2.3.7",
 	}}
 	d.prepareRewrites()
 
@@ -126,6 +129,12 @@ func TestRewrites(t *testing.T) {
 		wantCName: "",
 		wantVals:  []net.IP{net.ParseIP("1234::5678")},
 		dtyp:      dns.TypeAAAA,
+	}, {
+		name:      "issue3351",
+		host:      "bighost.com",
+		wantCName: "",
+		wantVals:  []net.IP{{1, 2, 3, 7}},
+		dtyp:      dns.TypeA,
 	}}
 
 	for _, tc := range testCases {
@@ -139,7 +148,8 @@ func TestRewrites(t *testing.T) {
 				return
 			}
 
-			require.Equal(t, Rewritten, r.Reason)
+			require.Equalf(t, Rewritten, r.Reason, "got %s", r.Reason)
+
 			if tc.wantCName != "" {
 				assert.Equal(t, tc.wantCName, r.CanonName)
 			}
@@ -319,7 +329,7 @@ func TestRewritesExceptionIP(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, Rewritten, r.Reason)
+			assert.Equalf(t, Rewritten, r.Reason, "got %s", r.Reason)
 
 			require.Len(t, r.IPList, len(tc.want))
 

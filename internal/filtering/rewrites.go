@@ -80,6 +80,11 @@ func (a rewritesSorted) Less(i, j int) bool {
 
 // prepare prepares the a new or decoded entry.
 func (r *RewriteEntry) prepare() {
+	// TODO(a.garipov): Write a case-agnostic version of strings.HasSuffix
+	// and use it in matchDomainWildcard instead of using strings.ToLower
+	// everywhere.
+	r.Domain = strings.ToLower(r.Domain)
+
 	switch r.Answer {
 	case "AAAA":
 		r.IP = nil
