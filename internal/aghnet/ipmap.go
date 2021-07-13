@@ -74,6 +74,11 @@ func (m *IPMap) Range(f func(ip net.IP, v interface{}) (cont bool)) {
 	}
 
 	for k, v := range m.m {
+		// Array slicing produces a pointer, so copy the array here.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/3346
+		// as well as https://github.com/kyoh86/looppointer/issues/9.
+		k := k
 		if !f(net.IP(k[:]), v) {
 			break
 		}
