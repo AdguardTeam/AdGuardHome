@@ -51,6 +51,15 @@
     color: #888888;
 }
 
+.logs__text--link {
+    color: #467fcf;
+}
+
+.logs__text--link:hover,
+.logs__text--link:focus {
+    color: #295a9f;
+}
+
 .icon--selected {
     background-color: var(--gray-f3);
     border: solid 1px var(--gray-d8);

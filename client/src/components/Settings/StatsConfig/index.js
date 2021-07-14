@@ -7,9 +7,13 @@ import Form from './Form';
 
 class StatsConfig extends Component {
     handleFormSubmit = (values) => {
-        const { t } = this.props;
-        // eslint-disable-next-line no-alert
-        if (window.confirm(t('statistics_retention_confirm'))) {
+        const { t, interval: prevInterval } = this.props;
+
+        if (values.interval < prevInterval) {
+            if (window.confirm(t('statistics_retention_confirm'))) {
+                this.props.setStatsConfig(values);
+            }
+        } else {
             this.props.setStatsConfig(values);
         }
     };
@@ -28,7 +32,11 @@ class StatsConfig extends Component {
         } = this.props;
 
         return (
-            <Card title={t('statistics_configuration')} bodyType="card-body box-body--settings">
+            <Card
+                title={t('statistics_configuration')}
+                bodyType="card-body box-body--settings"
+                id="stats-config"
+            >
                 <div className="form">
                     <Form
                         initialValues={{ interval }}

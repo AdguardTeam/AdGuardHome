@@ -3,7 +3,9 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { nanoid } from 'nanoid';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import propTypes from 'prop-types';
+
 import { checkFiltered, getBlockingClientName } from '../../../helpers/helpers';
 import { BLOCK_ACTIONS } from '../../../helpers/constants';
 import { toggleBlocking, toggleBlockingForClient } from '../../../actions';
@@ -192,12 +194,13 @@ const ClientCell = ({
                     {renderFormattedClientCell(client, clientInfo, isDetailed, true)}
                 </div>
                 {isDetailed && clientName && !whoisAvailable && (
-                    <div
-                        className="detailed-info d-none d-sm-block logs__text"
+                    <Link
+                        className="detailed-info d-none d-sm-block logs__text logs__text--link"
+                        to={`logs?search=${encodeURIComponent(clientName)}`}
                         title={clientName}
                     >
                         {clientName}
-                    </div>
+                    </Link>
                 )}
             </div>
             {renderBlockingButton(isFiltered, domain)}

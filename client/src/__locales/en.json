@@ -112,6 +112,8 @@
     "for_last_24_hours": "for the last 24 hours",
     "for_last_days": "for the last {{count}} day",
     "for_last_days_plural": "for the last {{count}} days",
+    "stats_disabled": "The statistics have been disabled. You can turn it on from the <0>settings page</0>.",
+    "stats_disabled_short": "The statistics have been disabled",
     "no_domains_found": "No domains found",
     "requests_count": "Requests count",
     "top_blocked_domains": "Top blocked domains",

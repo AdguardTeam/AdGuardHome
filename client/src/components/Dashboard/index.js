@@ -1,12 +1,15 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { HashLink as Link } from 'react-router-hash-link';
 import { Trans, useTranslation } from 'react-i18next';
 import classNames from 'classnames';
+
 import Statistics from './Statistics';
 import Counters from './Counters';
 import Clients from './Clients';
 import QueriedDomains from './QueriedDomains';
 import BlockedDomains from './BlockedDomains';
+import { SETTINGS_URLS } from '../../helpers/constants';
 
 import PageTitle from '../ui/PageTitle';
 import Loading from '../ui/Loading';
@@ -34,6 +37,16 @@ const Dashboard = ({
         getAllStats();
     }, []);
 
+    const getSubtitle = () => {
+        if (stats.interval === 0) {
+            return t('stats_disabled_short');
+        }
+
+        return stats.interval === 1
+            ? t('for_last_24_hours')
+            : t('for_last_days', { count: stats.interval });
+    };
+
     const buttonText = protectionEnabled ? 'disable_protection' : 'enable_protection';
 
     const buttonClass = classNames('btn btn-sm dashboard-title__button', {
@@ -52,13 +65,11 @@ const Dashboard = ({
         </svg>
     </button>;
 
-    const subtitle = stats.interval === 1
-        ? t('for_last_24_hours')
-        : t('for_last_days', { count: stats.interval });
-
     const statsProcessing = stats.processingStats
             || stats.processingGetConfig
             || access.processing;
+
+    const subtitle = getSubtitle();
 
     return <>
         <PageTitle title={t('dashboard')} containerClass="page-title--dashboard">
@@ -81,6 +92,20 @@ const Dashboard = ({
         {statsProcessing && <Loading />}
         {!statsProcessing && <div className="row row-cards dashboard">
             <div className="col-lg-12">
+                {stats.interval === 0 && (
+                    <div className="alert alert-warning" role="alert">
+                        <Trans components={[
+                            <Link
+                                to={`${SETTINGS_URLS.settings}#stats-config`}
+                                key="0"
+                            >
+                                link
+                            </Link>,
+                        ]}>
+                            stats_disabled
+                        </Trans>
+                    </div>
+                )}
                 <Statistics
                         interval={stats.interval}
                         dnsQueries={stats.dnsQueries}
