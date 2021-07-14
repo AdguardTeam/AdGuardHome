@@ -101,6 +101,8 @@ type FilteringConfig struct {
 	CacheSize   uint32 `yaml:"cache_size"`    // DNS cache size (in bytes)
 	CacheMinTTL uint32 `yaml:"cache_ttl_min"` // override TTL value (minimum) received from upstream server
 	CacheMaxTTL uint32 `yaml:"cache_ttl_max"` // override TTL value (maximum) received from upstream server
+	// CacheOptimistic defines if optimistic cache mechanism should be used.
+	CacheOptimistic bool `yaml:"cache_optimistic"`
 
 	// Other settings
 	// --
@@ -210,6 +212,7 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 		RefuseAny:              s.conf.RefuseAny,
 		CacheMinTTL:            s.conf.CacheMinTTL,
 		CacheMaxTTL:            s.conf.CacheMaxTTL,
+		CacheOptimistic:        s.conf.CacheOptimistic,
 		UpstreamConfig:         s.conf.UpstreamConfig,
 		BeforeRequestHandler:   s.beforeRequestHandler,
 		RequestHandler:         s.handleDNSRequest,

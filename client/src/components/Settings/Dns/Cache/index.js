@@ -10,7 +10,7 @@ const CacheConfig = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const {
-        cache_size, cache_ttl_max, cache_ttl_min,
+        cache_size, cache_ttl_max, cache_ttl_min, cache_optimistic,
     } = useSelector((state) => state.dnsConfig, shallowEqual);
 
     const handleFormSubmit = (values) => {
@@ -31,6 +31,7 @@ const CacheConfig = () => {
                         cache_size: replaceZeroWithEmptyString(cache_size),
                         cache_ttl_max: replaceZeroWithEmptyString(cache_ttl_max),
                         cache_ttl_min: replaceZeroWithEmptyString(cache_ttl_min),
+                        cache_optimistic,
                     }}
                     onSubmit={handleFormSubmit}
                 />

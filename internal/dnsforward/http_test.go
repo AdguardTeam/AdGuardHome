@@ -48,7 +48,7 @@ func loadTestData(t *testing.T, casesFileName string, cases interface{}) {
 
 const jsonExt = ".json"
 
-func TestDNSForwardHTTTP_handleGetConfig(t *testing.T) {
+func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
@@ -123,7 +123,7 @@ func TestDNSForwardHTTTP_handleGetConfig(t *testing.T) {
 	}
 }
 
-func TestDNSForwardHTTTP_handleSetConfig(t *testing.T) {
+func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,

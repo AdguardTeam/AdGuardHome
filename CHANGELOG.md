@@ -10,11 +10,12 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.107.0] - 2021-06-28 (APPROX.)
+## [v0.107.0] - 2021-08-03 (APPROX.)
 -->
 
 ### Added
 
+- Optimistic cache ([#2145]).
 - New possible value of `6h` for `querylog_interval` setting ([#2504]).
 - Blocking access using client IDs ([#2624], [#3162]).
 - `source` directives support in `/etc/network/interfaces` on Linux ([#3257]).
@@ -53,11 +54,6 @@ and this project adheres to
 
 ### Deprecated
 
-<!--
-TODO(a.garipov): Remove the Go 1.16 deprecation message if Go 1.17 is not
-released by then.
--->
-
 - Go 1.16 support.  v0.108.0 will require at least Go 1.17 to build.
 
 ### Fixed
@@ -83,6 +79,7 @@ released by then.
 [#1381]: https://github.com/AdguardTeam/AdGuardHome/issues/1381
 [#1691]: https://github.com/AdguardTeam/AdGuardHome/issues/1691
 [#2141]: https://github.com/AdguardTeam/AdGuardHome/issues/2141
+[#2145]: https://github.com/AdguardTeam/AdGuardHome/issues/2145
 [#2280]: https://github.com/AdguardTeam/AdGuardHome/issues/2280
 [#2439]: https://github.com/AdguardTeam/AdGuardHome/issues/2439
 [#2441]: https://github.com/AdguardTeam/AdGuardHome/issues/2441

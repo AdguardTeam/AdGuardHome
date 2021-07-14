@@ -41,6 +41,7 @@ type dnsConfig struct {
 	CacheSize         *uint32       `json:"cache_size"`
 	CacheMinTTL       *uint32       `json:"cache_ttl_min"`
 	CacheMaxTTL       *uint32       `json:"cache_ttl_max"`
+	CacheOptimistic   *bool         `json:"cache_optimistic"`
 	ResolveClients    *bool         `json:"resolve_clients"`
 	UsePrivateRDNS    *bool         `json:"use_private_ptr_resolvers"`
 	LocalPTRUpstreams *[]string     `json:"local_ptr_upstreams"`
@@ -64,6 +65,7 @@ func (s *Server) getDNSConfig() dnsConfig {
 	cacheSize := s.conf.CacheSize
 	cacheMinTTL := s.conf.CacheMinTTL
 	cacheMaxTTL := s.conf.CacheMaxTTL
+	cacheOptimistic := s.conf.CacheOptimistic
 	resolveClients := s.conf.ResolveClients
 	usePrivateRDNS := s.conf.UsePrivateRDNS
 	localPTRUpstreams := aghstrings.CloneSliceOrEmpty(s.conf.LocalPTRResolvers)
@@ -89,6 +91,7 @@ func (s *Server) getDNSConfig() dnsConfig {
 		CacheSize:         &cacheSize,
 		CacheMinTTL:       &cacheMinTTL,
 		CacheMaxTTL:       &cacheMaxTTL,
+		CacheOptimistic:   &cacheOptimistic,
 		UpstreamMode:      &upstreamMode,
 		ResolveClients:    &resolveClients,
 		UsePrivateRDNS:    &usePrivateRDNS,
@@ -280,6 +283,11 @@ func (s *Server) setConfigRestartable(dc dnsConfig) (restart bool) {
 
 	if dc.CacheMaxTTL != nil {
 		s.conf.CacheMaxTTL = *dc.CacheMaxTTL
+		restart = true
+	}
+
+	if dc.CacheOptimistic != nil {
+		s.conf.CacheOptimistic = *dc.CacheOptimistic
 		restart = true
 	}
 

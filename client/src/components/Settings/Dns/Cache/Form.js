@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
 import { Trans, useTranslation } from 'react-i18next';
 import { shallowEqual, useSelector } from 'react-redux';
-import { renderInputField, toNumber } from '../../../../helpers/form';
+import { renderInputField, toNumber, CheckboxField } from '../../../../helpers/form';
 import { CACHE_CONFIG_FIELDS, FORM_NAME, UINT32_RANGE } from '../../../../helpers/constants';
 import { replaceZeroWithEmptyString } from '../../../../helpers/helpers';
 
@@ -47,27 +47,48 @@ const Form = ({
             }) => <div className="col-12" key={name}>
                     <div className="col-12 col-md-7 p-0">
                         <div className="form__group form__group--settings">
-                            <label htmlFor={name}
-                                   className="form__label form__label--with-desc">{t(title)}</label>
+                            <label
+                                htmlFor={name}
+                                className="form__label form__label--with-desc"
+                            >
+                                {t(title)}
+                            </label>
                             <div className="form__desc form__desc--top">{t(description)}</div>
                             <Field
-                                    name={name}
-                                    type="number"
-                                    component={renderInputField}
-                                    placeholder={t(placeholder)}
-                                    disabled={processingSetConfig}
-                                    className="form-control"
-                                    validate={validate}
-                                    normalizeOnBlur={replaceZeroWithEmptyString}
-                                    normalize={toNumber}
-                                    min={min}
-                                    max={max}
+                                name={name}
+                                type="number"
+                                component={renderInputField}
+                                placeholder={t(placeholder)}
+                                disabled={processingSetConfig}
+                                className="form-control"
+                                validate={validate}
+                                normalizeOnBlur={replaceZeroWithEmptyString}
+                                normalize={toNumber}
+                                min={min}
+                                max={max}
                             />
                         </div>
                     </div>
                 </div>)}
-            {minExceedsMax
-            && <span className="text-danger pl-3 pb-3">{t('ttl_cache_validation')}</span>}
+            {minExceedsMax && (
+                <span className="text-danger pl-3 pb-3">
+                    {t('ttl_cache_validation')}
+                </span>
+            )}
+        </div>
+        <div className="row">
+            <div className="col-12 col-md-7">
+                <div className="form__group form__group--settings">
+                    <Field
+                        name="cache_optimistic"
+                        type="checkbox"
+                        component={CheckboxField}
+                        placeholder={t('cache_optimistic')}
+                        disabled={processingSetConfig}
+                        subtitle={t('cache_optimistic_desc')}
+                    />
+                </div>
+            </div>
         </div>
         <button
             type="submit"

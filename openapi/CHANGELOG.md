@@ -4,6 +4,14 @@
 
 ## v0.107: API changes
 
+### The new field `"cache_optimistic"` in DNS configuration
+
+* The new optional field `"cache_optimistic"` in `POST /control/dns_config`
+  method makes AdGuard Home use or not use the optimistic cache mechanism.
+
+* The new field `"cache_optimistic"` in `GET /control/dns_info` method is true
+  if AdGuard Home uses the optimistic cache mechanism.
+
 ### New possible value of `"interval"` field in `QueryLogConfig`
 
 * The value of `"interval"` field in `POST /control/querylog_config` and `GET
