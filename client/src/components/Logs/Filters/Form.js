@@ -197,4 +197,5 @@ Form.propTypes = {
 
 export default reduxForm({
     form: FORM_NAME.LOGS_FILTER,
+    enableReinitialize: true,
 })(Form);
