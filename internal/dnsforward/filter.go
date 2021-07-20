@@ -27,7 +27,7 @@ func (s *Server) beforeRequestHandler(
 
 	blocked, _ := s.IsBlockedClient(ip, clientID)
 	if blocked {
-		return false, nil
+		return s.preBlockedResponse(pctx)
 	}
 
 	if len(pctx.Req.Question) == 1 {
@@ -35,7 +35,7 @@ func (s *Server) beforeRequestHandler(
 		if s.access.isBlockedHost(host) {
 			log.Debug("host %s is in access blocklist", host)
 
-			return false, nil
+			return s.preBlockedResponse(pctx)
 		}
 	}
 

@@ -42,6 +42,8 @@ and this project adheres to
 
 ### Changed
 
+- Clients who are blocked by access settings now receive a `REFUSED` response
+  when a protocol other than DNS-over-UDP and DNSCrypt is used.
 - `querylog_interval` setting is now formatted in hours.
 - Query log search now supports internationalized domains ([#3012]).
 - Internationalized domains are now shown decoded in the query log with the

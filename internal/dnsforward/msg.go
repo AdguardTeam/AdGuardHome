@@ -266,6 +266,20 @@ func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSCo
 	return resp
 }
 
+// preBlockedResponse returns a protocol-appropriate response for a request that
+// was blocked by access settings.
+func (s *Server) preBlockedResponse(pctx *proxy.DNSContext) (reply bool, err error) {
+	if pctx.Proto == proxy.ProtoUDP || pctx.Proto == proxy.ProtoDNSCrypt {
+		// Return nil so that dnsproxy drops the connection and thus
+		// prevent DNS amplification attacks.
+		return false, nil
+	}
+
+	pctx.Res = s.makeResponseREFUSED(pctx.Req)
+
+	return true, nil
+}
+
 // Create REFUSED DNS response
 func (s *Server) makeResponseREFUSED(request *dns.Msg) *dns.Msg {
 	resp := dns.Msg{}
