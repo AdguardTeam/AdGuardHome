@@ -377,7 +377,8 @@ attributes to make it work in Markdown renderers that strip "id". -->
 
  *  Prefer `'raw strings'` to `"double quoted strings"` whenever possible.
 
- *  Put spaces within `$( cmd )`, `$(( expr ))`, and `{ cmd; }`.
+ *  Put spaces within `$( cmd )`, `$(( expr ))`, and `{ cmd; }`.  Avoid spaces
+    within `${var}`.
 
  *  Put utility flags in the ASCII order and **don't** group them together.  For
     example, `ls -1 -A -q`.

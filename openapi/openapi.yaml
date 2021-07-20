@@ -4,7 +4,7 @@
   'description': >
     AdGuard Home REST-ish API.  Our admin web interface is built on top of this
     REST-ish API.
-  'version': '0.105'
+  'version': '0.107'
   'contact':
     'name': 'AdGuard Home'
     'url': 'https://github.com/AdguardTeam/AdGuardHome'
