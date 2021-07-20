@@ -467,7 +467,7 @@ handle_existing() {
 		return 0
 	fi
 
-	if [ "$( ls -1 -A -q $agh_dir )" != '' ]
+	if [ "$( ls -1 -A $agh_dir )" != '' ]
 	then
 		log 'the existing AdGuard Home installation is detected'
 

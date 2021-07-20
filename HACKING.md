@@ -355,6 +355,9 @@ attributes to make it work in Markdown renderers that strip "id". -->
 
  *  Avoid spaces between patterns of the same `case` condition.
 
+ *  Don't use the option `-q` of the command `ls`.  Some systems that use the
+    Busybox version of `ash` don't support it.
+
  *  `export` and `readonly` should be used separately from variable assignment,
     because otherwise failures in command substitutions won't stop the script.
     That is, do this:
@@ -381,7 +384,7 @@ attributes to make it work in Markdown renderers that strip "id". -->
     within `${var}`.
 
  *  Put utility flags in the ASCII order and **don't** group them together.  For
-    example, `ls -1 -A -q`.
+    example, `ls -1 -A -l`.
 
  *  Script code lines should not be longer than one hundred (**100**) columns.
     For comments, see the text section below.
