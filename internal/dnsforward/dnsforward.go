@@ -227,6 +227,7 @@ func (s *Server) WriteDiskConfig(c *FilteringConfig) {
 	c.AllowedClients = aghstrings.CloneSlice(sc.AllowedClients)
 	c.DisallowedClients = aghstrings.CloneSlice(sc.DisallowedClients)
 	c.BlockedHosts = aghstrings.CloneSlice(sc.BlockedHosts)
+	c.TrustedProxies = aghstrings.CloneSlice(sc.TrustedProxies)
 	c.UpstreamDNS = aghstrings.CloneSlice(sc.UpstreamDNS)
 }
 

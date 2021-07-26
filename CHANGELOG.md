@@ -42,6 +42,8 @@ and this project adheres to
 
 ### Changed
 
+- Proxied DNS-over-HTTPS queries are now only accepted from proxy servers on the
+  `trusted_proxies` list ([#2799]).
 - Clients who are blocked by access settings now receive a `REFUSED` response
   when a protocol other than DNS-over-UDP and DNSCrypt is used.
 - `querylog_interval` setting is now formatted in hours.
@@ -60,6 +62,7 @@ and this project adheres to
 
 ### Fixed
 
+- Wrong IP address for proxied DNS-over-HTTPS queries ([#2799]).
 - Domain name letter case mismatches in DNS rewrites ([#3351]).
 - Conflicts between IPv4 and IPv6 DNS rewrites ([#3343]).
 - Letter case mismatches in `CNAME` filtering ([#3335]).
@@ -89,6 +92,7 @@ and this project adheres to
 [#2504]: https://github.com/AdguardTeam/AdGuardHome/issues/2504
 [#2624]: https://github.com/AdguardTeam/AdGuardHome/issues/2624
 [#2763]: https://github.com/AdguardTeam/AdGuardHome/issues/2763
+[#2799]: https://github.com/AdguardTeam/AdGuardHome/issues/2799
 [#3012]: https://github.com/AdguardTeam/AdGuardHome/issues/3012
 [#3013]: https://github.com/AdguardTeam/AdGuardHome/issues/3013
 [#3136]: https://github.com/AdguardTeam/AdGuardHome/issues/3136
