@@ -62,6 +62,7 @@ and this project adheres to
 
 ### Fixed
 
+- DNSCrypt queries weren't appearing in query log ([#3372]).
 - Wrong IP address for proxied DNS-over-HTTPS queries ([#2799]).
 - Domain name letter case mismatches in DNS rewrites ([#3351]).
 - Conflicts between IPv4 and IPv6 DNS rewrites ([#3343]).
@@ -110,6 +111,7 @@ and this project adheres to
 [#3335]: https://github.com/AdguardTeam/AdGuardHome/issues/3335
 [#3343]: https://github.com/AdguardTeam/AdGuardHome/issues/3343
 [#3351]: https://github.com/AdguardTeam/AdGuardHome/issues/3351
+[#3372]: https://github.com/AdguardTeam/AdGuardHome/issues/3372
 
 
 
