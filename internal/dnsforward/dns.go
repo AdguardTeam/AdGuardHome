@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
 )
 
@@ -518,7 +518,7 @@ func (s *Server) processUpstream(ctx *dnsContext) (rc resultCode) {
 
 	if d.Addr != nil && s.conf.GetCustomUpstreamByClient != nil {
 		// Use the clientID first, since it has a higher priority.
-		id := aghstrings.Coalesce(ctx.clientID, ipStringFromAddr(d.Addr))
+		id := stringutil.Coalesce(ctx.clientID, ipStringFromAddr(d.Addr))
 		upsConf, err := s.conf.GetCustomUpstreamByClient(id)
 		if err != nil {
 			log.Error("dns: getting custom upstreams for client %s: %s", id, err)

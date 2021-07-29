@@ -12,12 +12,12 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/ameshkov/dnscrypt/v2"
 )
 
@@ -327,17 +327,15 @@ func (s *Server) prepareUpstreamSettings() error {
 		if err != nil {
 			return err
 		}
-		d := string(data)
-		for len(d) != 0 {
-			s := aghstrings.SplitNext(&d, '\n')
-			upstreams = append(upstreams, s)
-		}
+
+		upstreams = stringutil.SplitTrimmed(string(data), "\n")
+
 		log.Debug("dns: using %d upstream servers from file %s", len(upstreams), s.conf.UpstreamDNSFileName)
 	} else {
 		upstreams = s.conf.UpstreamDNS
 	}
 
-	upstreams = aghstrings.FilterOut(upstreams, aghstrings.IsCommentOrEmpty)
+	upstreams = stringutil.FilterOut(upstreams, IsCommentOrEmpty)
 	upstreamConfig, err := proxy.ParseUpstreamsConfig(
 		upstreams,
 		&upstream.Options{

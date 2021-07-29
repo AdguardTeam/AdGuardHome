@@ -73,11 +73,31 @@ esac
 
 # Simple Analyzers
 
-# blocklist_imports is a simple check against unwanted packages.  Package
-# io/ioutil is soft-deprecated.  Packages errors and log are replaced by our own
-# packages in the github.com/AdguardTeam/golibs module.
+# blocklist_imports is a simple check against unwanted packages.  The following
+# packages are banned:
+#
+#   *  Package io/ioutil is soft-deprecated.
+#
+#   *  Packages errors and log are replaced by our own packages in the
+#      github.com/AdguardTeam/golibs module.
+#
+#   *  Package reflect is often an overkill, and for deep comparisons there are
+#      much better functions in module github.com/google/go-cmp.  Which is
+#      already our indirect dependency and which may or may not enter the stdlib
+#      at some point.
+#
+#      See https://github.com/golang/go/issues/45200.
+#
+#   *  Package unsafe is… unsafe.
+#
 blocklist_imports() {
-	git grep -F -e '"errors"' -e '"io/ioutil"' -e '"log"' -- '*.go' || exit 0;
+	git grep\
+		-e '[[:space:]]"errors"$'\
+		-e '[[:space:]]"io/ioutil"$'\
+		-e '[[:space:]]"log"$'\
+		-e '[[:space:]]"reflect"$'\
+		-e '[[:space:]]"unsafe"$'\
+		-- '*.go' || exit 0;
 }
 
 # method_const is a simple check against the usage of some raw strings and
@@ -181,8 +201,7 @@ gocyclo --over 17 ./internal/dhcpd/ ./internal/dnsforward/\
 
 # Apply stricter standards to new or vetted code
 gocyclo --over 10 ./internal/aghio/ ./internal/aghnet/ ./internal/aghos/\
-	./internal/aghstrings/ ./internal/aghtest/ ./internal/tools/\
-	./internal/version/ ./main.go
+	./internal/aghtest/ ./internal/tools/ ./internal/version/ ./main.go
 
 gosec --quiet $go_files
 

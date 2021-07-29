@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -21,6 +20,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 )
 
 const clientsUpdatePeriod = 10 * time.Minute
@@ -86,7 +86,7 @@ type clientsContainer struct {
 
 	lock sync.Mutex
 
-	allTags *aghstrings.Set
+	allTags *stringutil.Set
 
 	// dhcpServer is used for looking up clients IP addresses by MAC addresses
 	dhcpServer *dhcpd.Server
@@ -114,7 +114,7 @@ func (clients *clientsContainer) Init(
 	clients.idIndex = make(map[string]*Client)
 	clients.ipToRC = aghnet.NewIPMap(0)
 
-	clients.allTags = aghstrings.NewSet(clientTags...)
+	clients.allTags = stringutil.NewSet(clientTags...)
 
 	clients.dhcpServer = dhcpServer
 	clients.etcHosts = etcHosts
@@ -221,10 +221,10 @@ func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
 		}
 
-		cy.Tags = aghstrings.CloneSlice(cli.Tags)
-		cy.IDs = aghstrings.CloneSlice(cli.IDs)
-		cy.BlockedServices = aghstrings.CloneSlice(cli.BlockedServices)
-		cy.Upstreams = aghstrings.CloneSlice(cli.Upstreams)
+		cy.Tags = stringutil.CloneSlice(cli.Tags)
+		cy.IDs = stringutil.CloneSlice(cli.IDs)
+		cy.BlockedServices = stringutil.CloneSlice(cli.BlockedServices)
+		cy.Upstreams = stringutil.CloneSlice(cli.Upstreams)
 
 		*objects = append(*objects, cy)
 	}
@@ -328,10 +328,10 @@ func (clients *clientsContainer) Find(id string) (c *Client, ok bool) {
 		return nil, false
 	}
 
-	c.IDs = aghstrings.CloneSlice(c.IDs)
-	c.Tags = aghstrings.CloneSlice(c.Tags)
-	c.BlockedServices = aghstrings.CloneSlice(c.BlockedServices)
-	c.Upstreams = aghstrings.CloneSlice(c.Upstreams)
+	c.IDs = stringutil.CloneSlice(c.IDs)
+	c.Tags = stringutil.CloneSlice(c.Tags)
+	c.BlockedServices = stringutil.CloneSlice(c.BlockedServices)
+	c.Upstreams = stringutil.CloneSlice(c.Upstreams)
 	return c, true
 }
 
@@ -349,7 +349,7 @@ func (clients *clientsContainer) findUpstreams(
 		return nil, nil
 	}
 
-	upstreams := aghstrings.FilterOut(c.Upstreams, aghstrings.IsCommentOrEmpty)
+	upstreams := stringutil.FilterOut(c.Upstreams, dnsforward.IsCommentOrEmpty)
 	if len(upstreams) == 0 {
 		return nil, nil
 	}

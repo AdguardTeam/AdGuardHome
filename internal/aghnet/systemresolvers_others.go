@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/stringutil"
 )
 
 // defaultHostGen is the default method of generating host for Refresh.
@@ -27,7 +27,7 @@ type systemResolvers struct {
 	hostGenFunc HostGenFunc
 
 	// addrs is the set that contains cached local resolvers' addresses.
-	addrs     *aghstrings.Set
+	addrs     *stringutil.Set
 	addrsLock sync.RWMutex
 }
 
@@ -64,7 +64,7 @@ func newSystemResolvers(refreshIvl time.Duration, hostGenFunc HostGenFunc) (sr S
 			PreferGo: true,
 		},
 		hostGenFunc: hostGenFunc,
-		addrs:       aghstrings.NewSet(),
+		addrs:       stringutil.NewSet(),
 	}
 	s.resolver.Dial = s.dialFunc
 

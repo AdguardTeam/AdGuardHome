@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -21,6 +20,7 @@ import (
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
 )
 
@@ -222,13 +222,13 @@ func (s *Server) WriteDiskConfig(c *FilteringConfig) {
 
 	sc := s.conf.FilteringConfig
 	*c = sc
-	c.RatelimitWhitelist = aghstrings.CloneSlice(sc.RatelimitWhitelist)
-	c.BootstrapDNS = aghstrings.CloneSlice(sc.BootstrapDNS)
-	c.AllowedClients = aghstrings.CloneSlice(sc.AllowedClients)
-	c.DisallowedClients = aghstrings.CloneSlice(sc.DisallowedClients)
-	c.BlockedHosts = aghstrings.CloneSlice(sc.BlockedHosts)
-	c.TrustedProxies = aghstrings.CloneSlice(sc.TrustedProxies)
-	c.UpstreamDNS = aghstrings.CloneSlice(sc.UpstreamDNS)
+	c.RatelimitWhitelist = stringutil.CloneSlice(sc.RatelimitWhitelist)
+	c.BootstrapDNS = stringutil.CloneSlice(sc.BootstrapDNS)
+	c.AllowedClients = stringutil.CloneSlice(sc.AllowedClients)
+	c.DisallowedClients = stringutil.CloneSlice(sc.DisallowedClients)
+	c.BlockedHosts = stringutil.CloneSlice(sc.BlockedHosts)
+	c.TrustedProxies = stringutil.CloneSlice(sc.TrustedProxies)
+	c.UpstreamDNS = stringutil.CloneSlice(sc.UpstreamDNS)
 }
 
 // RDNSSettings returns the copy of actual RDNS configuration.
@@ -236,7 +236,7 @@ func (s *Server) RDNSSettings() (localPTRResolvers []string, resolveClients, res
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	return aghstrings.CloneSlice(s.conf.LocalPTRResolvers),
+	return stringutil.CloneSlice(s.conf.LocalPTRResolvers),
 		s.conf.ResolveClients,
 		s.conf.UsePrivateRDNS
 }
@@ -398,13 +398,13 @@ func (s *Server) filterOurDNSAddrs(addrs []string) (filtered []string, err error
 		return nil, err
 	}
 
-	ourAddrsSet := aghstrings.NewSet(ourAddrs...)
+	ourAddrsSet := stringutil.NewSet(ourAddrs...)
 
 	// TODO(e.burkov): The approach of subtracting sets of strings is not
 	// really applicable here since in case of listening on all network
 	// interfaces we should check the whole interface's network to cut off
 	// all the loopback addresses as well.
-	return aghstrings.FilterOut(addrs, ourAddrsSet.Has), nil
+	return stringutil.FilterOut(addrs, ourAddrsSet.Has), nil
 }
 
 // setupResolvers initializes the resolvers for local addresses.  For internal

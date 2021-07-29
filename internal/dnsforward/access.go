@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 )
@@ -20,8 +20,8 @@ type accessCtx struct {
 	allowedIPs *aghnet.IPMap
 	blockedIPs *aghnet.IPMap
 
-	allowedClientIDs *aghstrings.Set
-	blockedClientIDs *aghstrings.Set
+	allowedClientIDs *stringutil.Set
+	blockedClientIDs *stringutil.Set
 
 	blockedHostsEng *urlfilter.DNSEngine
 
@@ -40,7 +40,7 @@ func processAccessClients(
 	clientStrs []string,
 	ips *aghnet.IPMap,
 	nets *[]*net.IPNet,
-	clientIDs *aghstrings.Set,
+	clientIDs *stringutil.Set,
 ) (err error) {
 	for i, s := range clientStrs {
 		if ip := net.ParseIP(s); ip != nil {
@@ -71,8 +71,8 @@ func newAccessCtx(allowed, blocked, blockedHosts []string) (a *accessCtx, err er
 		allowedIPs: aghnet.NewIPMap(0),
 		blockedIPs: aghnet.NewIPMap(0),
 
-		allowedClientIDs: aghstrings.NewSet(),
-		blockedClientIDs: aghstrings.NewSet(),
+		allowedClientIDs: stringutil.NewSet(),
+		blockedClientIDs: stringutil.NewSet(),
 	}
 
 	err = processAccessClients(allowed, a.allowedIPs, &a.allowedNets, a.allowedClientIDs)
@@ -87,7 +87,7 @@ func newAccessCtx(allowed, blocked, blockedHosts []string) (a *accessCtx, err er
 
 	b := &strings.Builder{}
 	for _, h := range blockedHosts {
-		aghstrings.WriteToBuilder(b, strings.ToLower(h), "\n")
+		stringutil.WriteToBuilder(b, strings.ToLower(h), "\n")
 	}
 
 	lists := []filterlist.RuleList{
@@ -174,9 +174,9 @@ func (s *Server) accessListJSON() (j accessListJSON) {
 	defer s.serverLock.RUnlock()
 
 	return accessListJSON{
-		AllowedClients:    aghstrings.CloneSlice(s.conf.AllowedClients),
-		DisallowedClients: aghstrings.CloneSlice(s.conf.DisallowedClients),
-		BlockedHosts:      aghstrings.CloneSlice(s.conf.BlockedHosts),
+		AllowedClients:    stringutil.CloneSlice(s.conf.AllowedClients),
+		DisallowedClients: stringutil.CloneSlice(s.conf.DisallowedClients),
+		BlockedHosts:      stringutil.CloneSlice(s.conf.BlockedHosts),
 	}
 }
 

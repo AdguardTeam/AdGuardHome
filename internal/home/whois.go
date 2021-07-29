@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 )
 
 const (
@@ -107,7 +107,7 @@ func whoisParse(data string) (m strmap) {
 			v = trimValue(v)
 		case "descr", "netname":
 			k = "orgname"
-			v = aghstrings.Coalesce(orgname, v)
+			v = stringutil.Coalesce(orgname, v)
 			orgname = v
 		case "whois":
 			k = "whois"

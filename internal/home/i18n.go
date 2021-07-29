@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 )
 
 // TODO(a.garipov): Get rid of a global variable?
-var allowedLanguages = aghstrings.NewSet(
+var allowedLanguages = stringutil.NewSet(
 	"be",
 	"bg",
 	"cs",

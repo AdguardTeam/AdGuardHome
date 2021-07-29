@@ -14,10 +14,10 @@ import (
 	"sync/atomic"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -497,7 +497,7 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 		res.Reason = Rewritten
 	}
 
-	cnames := aghstrings.NewSet()
+	cnames := stringutil.NewSet()
 	origHost := host
 	for len(rr) != 0 && rr[0].Type == dns.TypeCNAME {
 		log.Debug("rewrite: CNAME for %s is %s", host, rr[0].Answer)

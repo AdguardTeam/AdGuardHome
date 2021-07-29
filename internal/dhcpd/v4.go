@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
@@ -32,7 +32,7 @@ type v4Server struct {
 	leasedOffsets *bitSet
 
 	// leaseHosts is the set of all hostnames of all known DHCP clients.
-	leaseHosts *aghstrings.Set
+	leaseHosts *stringutil.Set
 
 	// leases contains all dynamic and static leases.
 	leases []*Lease
@@ -105,7 +105,7 @@ func (s *v4Server) ResetLeases(leases []*Lease) (err error) {
 	}
 
 	s.leasedOffsets = newBitSet()
-	s.leaseHosts = aghstrings.NewSet()
+	s.leaseHosts = stringutil.NewSet()
 	s.leases = nil
 
 	for _, l := range leases {
@@ -1017,7 +1017,7 @@ func (s *v4Server) Stop() (err error) {
 func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
 	s := &v4Server{}
 	s.conf = conf
-	s.leaseHosts = aghstrings.NewSet()
+	s.leaseHosts = stringutil.NewSet()
 
 	// TODO(a.garipov): Don't use a disabled server in other places or just
 	// use an interface.

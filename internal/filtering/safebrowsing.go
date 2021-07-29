@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
 	"golang.org/x/net/publicsuffix"
 )
@@ -186,16 +186,16 @@ func (c *sbCtx) getQuestion() string {
 	for hash := range c.hashToHost {
 		// TODO(e.burkov, a.garipov): Find out and document why exactly
 		// this slice.
-		aghstrings.WriteToBuilder(b, hex.EncodeToString(hash[0:2]), ".")
+		stringutil.WriteToBuilder(b, hex.EncodeToString(hash[0:2]), ".")
 	}
 
 	if c.svc == "SafeBrowsing" {
-		aghstrings.WriteToBuilder(b, sbTXTSuffix)
+		stringutil.WriteToBuilder(b, sbTXTSuffix)
 
 		return b.String()
 	}
 
-	aghstrings.WriteToBuilder(b, pcTXTSuffix)
+	stringutil.WriteToBuilder(b, pcTXTSuffix)
 
 	return b.String()
 }

@@ -13,9 +13,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 )
 
 // ErrNoStaticIPInfo is returned by IfaceHasStaticIP when no information about
@@ -371,14 +371,14 @@ func ReverseAddr(ip net.IP) (arpa string) {
 		strLen, suffix = arpaV4MaxLen, arpaV4Suffix[1:]
 		ip = ip4
 		writeByte = func(val byte) {
-			aghstrings.WriteToBuilder(b, strconv.Itoa(int(val)), dot)
+			stringutil.WriteToBuilder(b, strconv.Itoa(int(val)), dot)
 		}
 
 	} else if ip6 := ip.To16(); ip6 != nil {
 		strLen, suffix = arpaV6MaxLen, arpaV6Suffix[1:]
 		ip = ip6
 		writeByte = func(val byte) {
-			aghstrings.WriteToBuilder(
+			stringutil.WriteToBuilder(
 				b,
 				strconv.FormatUint(uint64(val&0xF), 16),
 				dot,
@@ -395,7 +395,7 @@ func ReverseAddr(ip net.IP) (arpa string) {
 	for i := len(ip) - 1; i >= 0; i-- {
 		writeByte(ip[i])
 	}
-	aghstrings.WriteToBuilder(b, suffix)
+	stringutil.WriteToBuilder(b, suffix)
 
 	return b.String()
 }

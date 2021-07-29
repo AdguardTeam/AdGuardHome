@@ -14,8 +14,8 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/google/renameio/maybe"
 	"golang.org/x/sys/unix"
 )
@@ -70,7 +70,7 @@ func (rc *recurrentChecker) checkFile(sourcePath, desired string) (
 }
 
 // handlePatterns parses the patterns and takes care of duplicates.
-func (rc *recurrentChecker) handlePatterns(sourcesSet *aghstrings.Set, patterns []string) (
+func (rc *recurrentChecker) handlePatterns(sourcesSet *stringutil.Set, patterns []string) (
 	subsources []string,
 	err error,
 ) {
@@ -111,7 +111,7 @@ func (rc *recurrentChecker) check(desired string) (has bool, err error) {
 	var patterns, subsources []string
 	// The slice of sources is separate from the set of sources to keep the
 	// order in which the files are walked.
-	for sourcesSet := aghstrings.NewSet(rc.initPath); i < len(sources); i++ {
+	for sourcesSet := stringutil.NewSet(rc.initPath); i < len(sources); i++ {
 		patterns, has, err = rc.checkFile(sources[i], desired)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
@@ -217,7 +217,7 @@ func ifacesStaticConfig(r io.Reader, ifaceName string) (subsources []string, has
 	s := bufio.NewScanner(r)
 	for s.Scan() {
 		line := strings.TrimSpace(s.Text())
-		if aghstrings.IsCommentOrEmpty(line) {
+		if len(line) == 0 || line[0] == '#' {
 			continue
 		}
 

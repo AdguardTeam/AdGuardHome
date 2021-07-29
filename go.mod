@@ -4,14 +4,14 @@ go 1.16
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.39.0
-	github.com/AdguardTeam/golibs v0.8.0
+	github.com/AdguardTeam/golibs v0.8.4
 	github.com/AdguardTeam/urlfilter v0.14.6
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.2.1
 	github.com/digineo/go-ipset/v2 v2.2.1
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-ping/ping v0.0.0-20210506233800-ff8be3320020
-	github.com/google/go-cmp v0.5.5 // indirect
+	github.com/google/go-cmp v0.5.5
 	github.com/google/renameio v1.0.1
 	github.com/insomniacslk/dhcp v0.0.0-20210310193751-cfd4d47082c2
 	github.com/kardianos/service v1.2.0

@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"strings"
 	"sync"
@@ -22,6 +21,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/google/go-cmp/cmp"
 	"golang.org/x/sys/cpu"
 )
 
@@ -270,8 +270,9 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 	status = validateCertificates(string(data.CertificateChainData), string(data.PrivateKeyData), data.ServerName)
 	restartHTTPS := false
+
 	t.confLock.Lock()
-	if !reflect.DeepEqual(t.conf, data) {
+	if !cmp.Equal(t.conf, data) {
 		log.Printf("tls config settings have changed, will restart HTTPS server")
 		restartHTTPS = true
 	}

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
+	"github.com/AdguardTeam/golibs/stringutil"
 )
 
 // Channel constants.
@@ -93,16 +93,16 @@ func fmtModule(m *debug.Module) (formatted string) {
 
 	b := &strings.Builder{}
 
-	aghstrings.WriteToBuilder(b, m.Path)
+	stringutil.WriteToBuilder(b, m.Path)
 	if ver := m.Version; ver != "" {
 		sep := modInfoAtSep
 		if ver == "(devel)" {
 			sep = modInfoDevSep
 		}
-		aghstrings.WriteToBuilder(b, sep, ver)
+		stringutil.WriteToBuilder(b, sep, ver)
 	}
 	if sum := m.Sum; sum != "" {
-		aghstrings.WriteToBuilder(b, modInfoSumLeft, sum, modInfoSumRight)
+		stringutil.WriteToBuilder(b, modInfoSumLeft, sum, modInfoSumRight)
 	}
 
 	return b.String()
@@ -142,7 +142,7 @@ const (
 func Verbose() (v string) {
 	b := &strings.Builder{}
 
-	aghstrings.WriteToBuilder(
+	stringutil.WriteToBuilder(
 		b,
 		vFmtAGHHdr,
 		nl,
@@ -156,15 +156,15 @@ func Verbose() (v string) {
 		runtime.Version(),
 	)
 	if buildtime != "" {
-		aghstrings.WriteToBuilder(b, nl, vFmtTimeHdr, buildtime)
+		stringutil.WriteToBuilder(b, nl, vFmtTimeHdr, buildtime)
 	}
-	aghstrings.WriteToBuilder(b, nl, vFmtGOOSHdr, nl, vFmtGOARCHHdr)
+	stringutil.WriteToBuilder(b, nl, vFmtGOOSHdr, nl, vFmtGOARCHHdr)
 	if goarm != "" {
-		aghstrings.WriteToBuilder(b, nl, vFmtGOARMHdr, "v", goarm)
+		stringutil.WriteToBuilder(b, nl, vFmtGOARMHdr, "v", goarm)
 	} else if gomips != "" {
-		aghstrings.WriteToBuilder(b, nl, vFmtGOMIPSHdr, gomips)
+		stringutil.WriteToBuilder(b, nl, vFmtGOMIPSHdr, gomips)
 	}
-	aghstrings.WriteToBuilder(b, nl, vFmtRaceHdr, strconv.FormatBool(isRace))
+	stringutil.WriteToBuilder(b, nl, vFmtRaceHdr, strconv.FormatBool(isRace))
 
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
@@ -175,10 +175,10 @@ func Verbose() (v string) {
 		return b.String()
 	}
 
-	aghstrings.WriteToBuilder(b, nl, vFmtDepsHdr)
+	stringutil.WriteToBuilder(b, nl, vFmtDepsHdr)
 	for _, dep := range info.Deps {
 		if depStr := fmtModule(dep); depStr != "" {
-			aghstrings.WriteToBuilder(b, nltb, depStr)
+			stringutil.WriteToBuilder(b, nltb, depStr)
 		}
 	}
 

@@ -241,6 +241,12 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	}
 }
 
+func TestIsCommentOrEmpty(t *testing.T) {
+	assert.True(t, IsCommentOrEmpty(""))
+	assert.True(t, IsCommentOrEmpty("# comment"))
+	assert.False(t, IsCommentOrEmpty("1.2.3.4"))
+}
+
 // TODO(a.garipov): Rewrite to check the actual error messages.
 func TestValidateUpstream(t *testing.T) {
 	testCases := []struct {

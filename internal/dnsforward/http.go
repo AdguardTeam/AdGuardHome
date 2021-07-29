@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
 )
 
@@ -51,9 +51,9 @@ func (s *Server) getDNSConfig() dnsConfig {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	upstreams := aghstrings.CloneSliceOrEmpty(s.conf.UpstreamDNS)
+	upstreams := stringutil.CloneSliceOrEmpty(s.conf.UpstreamDNS)
 	upstreamFile := s.conf.UpstreamDNSFileName
-	bootstraps := aghstrings.CloneSliceOrEmpty(s.conf.BootstrapDNS)
+	bootstraps := stringutil.CloneSliceOrEmpty(s.conf.BootstrapDNS)
 	protectionEnabled := s.conf.ProtectionEnabled
 	blockingMode := s.conf.BlockingMode
 	blockingIPv4 := s.conf.BlockingIPv4
@@ -68,7 +68,7 @@ func (s *Server) getDNSConfig() dnsConfig {
 	cacheOptimistic := s.conf.CacheOptimistic
 	resolveClients := s.conf.ResolveClients
 	usePrivateRDNS := s.conf.UsePrivateRDNS
-	localPTRUpstreams := aghstrings.CloneSliceOrEmpty(s.conf.LocalPTRResolvers)
+	localPTRUpstreams := stringutil.CloneSliceOrEmpty(s.conf.LocalPTRResolvers)
 	var upstreamMode string
 	if s.conf.FastestAddr {
 		upstreamMode = "fastest_addr"
@@ -341,13 +341,20 @@ type upstreamJSON struct {
 	PrivateUpstreams []string `json:"private_upstream"`
 }
 
+// IsCommentOrEmpty returns true of the string starts with a "#" character or is
+// an empty string.  This function is useful for filtering out non-upstream
+// lines from upstream configs.
+func IsCommentOrEmpty(s string) (ok bool) {
+	return len(s) == 0 || s[0] == '#'
+}
+
 // ValidateUpstreams validates each upstream and returns an error if any
 // upstream is invalid or if there are no default upstreams specified.
 //
 // TODO(e.burkov): Move into aghnet or even into dnsproxy.
 func ValidateUpstreams(upstreams []string) (err error) {
 	// No need to validate comments
-	upstreams = aghstrings.FilterOut(upstreams, aghstrings.IsCommentOrEmpty)
+	upstreams = stringutil.FilterOut(upstreams, IsCommentOrEmpty)
 
 	// Consider this case valid because defaultDNS will be used
 	if len(upstreams) == 0 {
@@ -529,7 +536,7 @@ func checkPrivateUpstreamExc(u upstream.Upstream) (err error) {
 }
 
 func checkDNS(input string, bootstrap []string, timeout time.Duration, ef excFunc) (err error) {
-	if aghstrings.IsCommentOrEmpty(input) {
+	if IsCommentOrEmpty(input) {
 		return nil
 	}
 

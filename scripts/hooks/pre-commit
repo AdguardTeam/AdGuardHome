@@ -4,29 +4,32 @@ set -e -f -u
 
 # Show all temporary todos to the programmer but don't fail the commit
 # if there are any, because the commit could be in a temporary branch.
-git grep -e 'TODO.*!!' -- ':!HACKING.md' ':!scripts/hooks/pre-commit' | cat || :
+git grep -e 'TODO.*!!' -- ':!scripts/hooks/pre-commit' | cat || :
+
+verbose="${VERBOSE:-0}"
+readonly verbose
 
 if [ "$( git diff --cached --name-only -- 'client/*.js' )" ]
 then
-	make js-lint js-test
+	make VERBOSE="$verbose" js-lint js-test
 fi
 
 if [ "$( git diff --cached --name-only -- 'client2/*.js' 'client2/*.ts' 'client2/*.tsx' )" ]
 then
-	make js-beta-lint js-beta-test
+	make VERBOSE="$verbose" js-beta-lint js-beta-test
 fi
 
 if [ "$( git diff --cached --name-only -- '*.go' '*.mod' '*.sh' 'Makefile' )" ]
 then
-	make go-os-check go-lint go-test
+	make VERBOSE="$verbose" go-os-check go-lint go-test
 fi
 
 if [ "$( git diff --cached --name-only -- '*.md' '*.yaml' '*.yml' )" ]
 then
-	make txt-lint
+	make VERBOSE="$verbose" txt-lint
 fi
 
 if [ "$( git diff --cached --name-only -- './openapi/openapi.yaml' )" ]
 then
-	make openapi-lint
+	make VERBOSE="$verbose" openapi-lint
 fi

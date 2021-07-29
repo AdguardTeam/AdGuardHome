@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghstrings"
 	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"golang.org/x/net/idna"
 )
 
@@ -160,7 +160,7 @@ func (l *queryLog) parseSearchCriterion(q url.Values, name string, ct criterionT
 			asciiVal = ""
 		}
 	case ctFilteringStatus:
-		if !aghstrings.InSlice(filteringStatusValues, val) {
+		if !stringutil.InSlice(filteringStatusValues, val) {
 			return false, sc, fmt.Errorf("invalid value %s", val)
 		}
 	default:
