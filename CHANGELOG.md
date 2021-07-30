@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- Static IP address detection on FreeBSD ([#3289]).
 - Optimistic cache ([#2145]).
 - New possible value of `6h` for `querylog_interval` setting ([#2504]).
 - Blocking access using client IDs ([#2624], [#3162]).
@@ -62,6 +63,7 @@ and this project adheres to
 
 ### Fixed
 
+- Incomplete HTTP response for static IP address.
 - DNSCrypt queries weren't appearing in query log ([#3372]).
 - Wrong IP address for proxied DNS-over-HTTPS queries ([#2799]).
 - Domain name letter case mismatches in DNS rewrites ([#3351]).
@@ -108,6 +110,7 @@ and this project adheres to
 [#3217]: https://github.com/AdguardTeam/AdGuardHome/issues/3217
 [#3256]: https://github.com/AdguardTeam/AdGuardHome/issues/3256
 [#3257]: https://github.com/AdguardTeam/AdGuardHome/issues/3257
+[#3289]: https://github.com/AdguardTeam/AdGuardHome/issues/3289
 [#3335]: https://github.com/AdguardTeam/AdGuardHome/issues/3335
 [#3343]: https://github.com/AdguardTeam/AdGuardHome/issues/3343
 [#3351]: https://github.com/AdguardTeam/AdGuardHome/issues/3351

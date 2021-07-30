@@ -927,12 +927,30 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 		resp.Options.Update(dhcpv4.OptMessageType(dhcpv4.MessageTypeNak))
 	}
 
+	// peer is expected to be of type *net.UDPConn as the server4.NewServer
+	// initializes it.
+	udpPeer, ok := peer.(*net.UDPAddr)
+	if !ok {
+		log.Error("dhcpv4: peer is of unexpected type %T", peer)
+
+		return
+	}
+
+	// Despite the fact that server4.NewIPv4UDPConn explicitly sets socket
+	// options to allow broadcasting, it also binds the connection to a
+	// specific interface.  On FreeBSD conn.WriteTo causes errors while
+	// writing to the addresses that belong to another interface.  So, use
+	// the broadcast address specific for the binded interface in case
+	// server4.Server.Serve sets it to net.IPv4Bcast.
+	if udpPeer.IP.Equal(net.IPv4bcast) {
+		udpPeer.IP = s.conf.broadcastIP
+	}
+
 	log.Debug("dhcpv4: sending: %s", resp.Summary())
 
 	_, err = conn.WriteTo(resp.ToBytes(), peer)
 	if err != nil {
 		log.Error("dhcpv4: conn.Write to %s failed: %s", peer, err)
-		return
 	}
 }
 
@@ -1042,6 +1060,12 @@ func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
 		IP:   routerIP,
 		Mask: subnetMask,
 	}
+
+	bcastIP := aghnet.CloneIP(routerIP)
+	for i, b := range subnetMask {
+		bcastIP[i] |= ^b
+	}
+	s.conf.broadcastIP = bcastIP
 
 	s.conf.ipRange, err = newIPRange(conf.RangeStart, conf.RangeEnd)
 	if err != nil {

@@ -412,7 +412,9 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 	result := dhcpSearchResult{
 		V4: dhcpSearchV4Result{
 			OtherServer: dhcpSearchOtherResult{},
-			StaticIP:    dhcpStaticIPStatus{},
+			StaticIP: dhcpStaticIPStatus{
+				Static: "yes",
+			},
 		},
 		V6: dhcpSearchV6Result{
 			OtherServer: dhcpSearchOtherResult{},

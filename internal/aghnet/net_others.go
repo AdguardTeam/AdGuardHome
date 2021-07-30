@@ -1,12 +1,9 @@
-//go:build !(linux || darwin)
-// +build !linux,!darwin
+//go:build !(linux || darwin || freebsd)
+// +build !linux,!darwin,!freebsd
 
 package aghnet
 
 import (
-	"fmt"
-	"runtime"
-
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 )
 
@@ -14,10 +11,10 @@ func canBindPrivilegedPorts() (can bool, err error) {
 	return aghos.HaveAdminRights()
 }
 
-func ifaceHasStaticIP(string) (bool, error) {
-	return false, fmt.Errorf("cannot check if IP is static: not supported on %s", runtime.GOOS)
+func ifaceHasStaticIP(string) (ok bool, err error) {
+	return false, aghos.Unsupported("checking static ip")
 }
 
-func ifaceSetStaticIP(string) error {
-	return fmt.Errorf("cannot set static IP on %s", runtime.GOOS)
+func ifaceSetStaticIP(string) (err error) {
+	return aghos.Unsupported("setting static ip")
 }

@@ -38,6 +38,9 @@ type V4ServerConf struct {
 
 	GatewayIP  net.IP `yaml:"gateway_ip" json:"gateway_ip"`
 	SubnetMask net.IP `yaml:"subnet_mask" json:"subnet_mask"`
+	// broadcastIP is the broadcasting address pre-calculated from the
+	// configured gateway IP and subnet mask.
+	broadcastIP net.IP
 
 	// The first & the last IP address for dynamic leases
 	// Bytes [0..2] of the last allowed IP address must match the first IP
