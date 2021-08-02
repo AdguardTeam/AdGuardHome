@@ -43,8 +43,9 @@ and this project adheres to
 
 ### Changed
 
-- Proxied DNS-over-HTTPS queries are now only accepted from proxy servers on the
-  `trusted_proxies` list ([#2799]).
+- DNS-over-HTTPS queries that come from HTTP proxies in the `trusted_proxies`
+  list now use the real IP address of the client instead of the address of the
+  proxy ([#2799]).
 - Clients who are blocked by access settings now receive a `REFUSED` response
   when a protocol other than DNS-over-UDP and DNSCrypt is used.
 - `querylog_interval` setting is now formatted in hours.
