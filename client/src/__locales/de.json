@@ -328,7 +328,7 @@
     "install_devices_windows_list_2": "Öffnen Sie die Kategorie „Netzwerk und Internet” und dann „Netzwerk- und Freigabecenter”.",
     "install_devices_windows_list_3": "Suchen Sie auf der linken Seite des Bildschirms nach „Adaptereinstellungen ändern” und klicken Sie darauf.",
     "install_devices_windows_list_4": "Wählen Sie Ihre aktive Verbindung aus, klicken Sie mit der rechten Maustaste darauf und wählen Sie „Eigenschaften”.",
-    "install_devices_windows_list_5": "Suchen Sie in der Liste nach „Internet Protokoll Version 4 (TCP/IP)”, markieren Sie diese und klicken Sie dann erneut auf „Eigenschaften”.",
+    "install_devices_windows_list_5": "Suchen Sie in der Liste nach „Internet Protokoll Version 4 (TCP/IP)” (oder, für IPv6, „Internet Protocol Version 6 (TCP/IPv6)“), markieren Sie diese und klicken Sie dann erneut auf „Eigenschaften”.",
     "install_devices_windows_list_6": "Wählen Sie „Folgende DNS-Serveradressen verwenden” und geben Sie Ihre AdGuard Home-Serveradressen ein.",
     "install_devices_macos_list_1": "Klicken Sie auf das Apple-Symbol (oben links in der Menüzeile) und wählen den Eintrag „Systemeinstellungen”.",
     "install_devices_macos_list_2": "Klicken Sie dort auf „Netzwerk”",

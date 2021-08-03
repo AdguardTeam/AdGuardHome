@@ -328,7 +328,7 @@
     "install_devices_windows_list_2": "Pojdite v 'Omrežje' in 'Kategorija interneta' in nato v 'Omrežje' in 'Središče za skupno rabo'.",
     "install_devices_windows_list_3": "Na levi strani zaslona poiščite 'Spremeni nastavitve kartice' in kliknite nanjo.",
     "install_devices_windows_list_4": "Izberite aktivno povezavo, kliknite na njo z desno miškino tipko in izberite 'Lastnosti'.",
-    "install_devices_windows_list_5": "Na seznamu poiščite različico 4 (TCP/IP) internetnega protokola, jo izberite in znova kliknite na 'Lastnosti'.",
+    "install_devices_windows_list_5": "Na seznamu poiščite 'Internet protokol različica 4 (TCP/IPv4)' (ali, za IPv6, 'Internet protokol različica 6 (TCP/IPv6)'), jo izberite in nato še enkrat kliknite 'Lastnosti'.",
     "install_devices_windows_list_6": "Izberite 'Uporabi naslednje naslove DNS strežnikov' in vnesite vaše naslove strežnika AdGuard Home.",
     "install_devices_macos_list_1": "Kliknite ikono Apple in pojdite na 'Nastavitve sistema'.",
     "install_devices_macos_list_2": "Kliknite na 'Omrežje'",

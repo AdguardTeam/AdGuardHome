@@ -329,7 +329,7 @@
     "install_devices_windows_list_3": "在窗口的左侧找到 ”更改适配器设置“ 并点击进入。",
     "install_devices_windows_list_4": "选择您正在连接的网络设备，右击它并选择 ”属性“ 。",
     "install_devices_windows_list_5": "在列表中找到 ”Internet 协议版本 4 (TCP/IPv4)“ ，选择并再次点击 ”属性“ 。",
-    "install_devices_windows_list_6": "选择 ”使用下面的 DNS 服务器地址“ ，并输入您的 AdGuard Home 服务器地址。",
+    "install_devices_windows_list_6": "选择“使用下面的 DNS 服务器地址”，并输入您的 AdGuard Home 服务器地址。",
     "install_devices_macos_list_1": "点击苹果图标，进入 ”系统首选项“。",
     "install_devices_macos_list_2": "点击 ”网络“ 。",
     "install_devices_macos_list_3": "选择在列表中的第一个连接，并点击 ”高级“ 。",

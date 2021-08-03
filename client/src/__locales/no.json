@@ -233,6 +233,7 @@
     "dns_over_tls": "DNS-over-TLS",
     "dns_over_quic": "DNS-over-QUIC",
     "client_id": "Klient-ID",
+    "client_id_placeholder": "Skriv inn klient-ID",
     "download_mobileconfig_doh": "Last ned .mobileconfig for DNS-over-HTTPS",
     "download_mobileconfig_dot": "Last ned .mobileconfig for DNS-over-TLS",
     "plain_dns": "Ordinær DNS",
