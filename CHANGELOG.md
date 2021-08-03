@@ -64,6 +64,8 @@ and this project adheres to
 
 ### Fixed
 
+- Switching listening address to unspecified one when bound to a single
+  specified IPv4 address on Darwin (macOS) ([#2807]).
 - Incomplete HTTP response for static IP address.
 - DNSCrypt queries weren't appearing in query log ([#3372]).
 - Wrong IP address for proxied DNS-over-HTTPS queries ([#2799]).
@@ -97,6 +99,7 @@ and this project adheres to
 [#2624]: https://github.com/AdguardTeam/AdGuardHome/issues/2624
 [#2763]: https://github.com/AdguardTeam/AdGuardHome/issues/2763
 [#2799]: https://github.com/AdguardTeam/AdGuardHome/issues/2799
+[#2807]: https://github.com/AdguardTeam/AdGuardHome/issues/2807
 [#3012]: https://github.com/AdguardTeam/AdGuardHome/issues/3012
 [#3013]: https://github.com/AdguardTeam/AdGuardHome/issues/3013
 [#3136]: https://github.com/AdguardTeam/AdGuardHome/issues/3136

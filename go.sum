@@ -9,8 +9,8 @@ dmitri.shuralyov.com/state v0.0.0-20180228185332-28bcc343414c/go.mod h1:0PRwlb0D
 git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
 github.com/AdguardTeam/dhcp v0.0.0-20210519141215-51808c73c0bf h1:gc042VRSIRSUzZ+Px6xQCRWNJZTaPkomisDfUZmoFNk=
 github.com/AdguardTeam/dhcp v0.0.0-20210519141215-51808c73c0bf/go.mod h1:TKl4jN3Voofo4UJIicyNhWGp/nlQqQkFxmwIFTvBkKI=
-github.com/AdguardTeam/dnsproxy v0.39.1 h1:qU5LgMsw6Q4qwVuZ4cpWVQqD+7k1kK2Z2NoNar60yto=
-github.com/AdguardTeam/dnsproxy v0.39.1/go.mod h1:aNXKNdTyKfgAG2OS712SYSaGIM9AasZsZxfiY4YiR/0=
+github.com/AdguardTeam/dnsproxy v0.39.2 h1:GqsR1S4fFfVsVCSrdrfa0RfsQ2u+MeNUMqDkxdTD3gU=
+github.com/AdguardTeam/dnsproxy v0.39.2/go.mod h1:aNXKNdTyKfgAG2OS712SYSaGIM9AasZsZxfiY4YiR/0=
 github.com/AdguardTeam/golibs v0.4.0/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
 github.com/AdguardTeam/golibs v0.4.2/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
 github.com/AdguardTeam/golibs v0.8.0/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
