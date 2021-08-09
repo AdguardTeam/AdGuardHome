@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
 
@@ -82,7 +83,7 @@ type clientsContainer struct {
 	idIndex map[string]*Client // ID -> client
 
 	// ipToRC is the IP address to *RuntimeClient map.
-	ipToRC *aghnet.IPMap
+	ipToRC *netutil.IPMap
 
 	lock sync.Mutex
 
@@ -112,7 +113,7 @@ func (clients *clientsContainer) Init(
 	}
 	clients.list = make(map[string]*Client)
 	clients.idIndex = make(map[string]*Client)
-	clients.ipToRC = aghnet.NewIPMap(0)
+	clients.ipToRC = netutil.NewIPMap(0)
 
 	clients.allTags = stringutil.NewSet(clientTags...)
 
@@ -793,7 +794,7 @@ func (clients *clientsContainer) addFromSystemARP() {
 		host := ln[:lparen]
 		ipStr := ln[lparen+2 : rparen]
 		ip := net.ParseIP(ipStr)
-		if aghnet.ValidateDomainName(host) != nil || ip == nil {
+		if netutil.ValidateDomainName(host) != nil || ip == nil {
 			continue
 		}
 

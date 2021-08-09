@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -15,6 +14,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/ameshkov/dnscrypt/v2"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -106,7 +106,7 @@ func isRunning() bool {
 }
 
 func onDNSRequest(pctx *proxy.DNSContext) {
-	ip := aghnet.IPFromAddr(pctx.Addr)
+	ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
 	if ip == nil {
 		// This would be quite weird if we get here.
 		return
@@ -254,7 +254,7 @@ func getDNSEncryption() (de dnsEncryption) {
 		if tlsConf.PortHTTPS != 0 {
 			addr := hostname
 			if tlsConf.PortHTTPS != 443 {
-				addr = aghnet.JoinHostPort(addr, tlsConf.PortHTTPS)
+				addr = netutil.JoinHostPort(addr, tlsConf.PortHTTPS)
 			}
 
 			de.https = (&url.URL{
@@ -267,14 +267,14 @@ func getDNSEncryption() (de dnsEncryption) {
 		if tlsConf.PortDNSOverTLS != 0 {
 			de.tls = (&url.URL{
 				Scheme: "tls",
-				Host:   aghnet.JoinHostPort(hostname, tlsConf.PortDNSOverTLS),
+				Host:   netutil.JoinHostPort(hostname, tlsConf.PortDNSOverTLS),
 			}).String()
 		}
 
 		if tlsConf.PortDNSOverQUIC != 0 {
 			de.quic = (&url.URL{
 				Scheme: "quic",
-				Host:   aghnet.JoinHostPort(hostname, tlsConf.PortDNSOverQUIC),
+				Host:   netutil.JoinHostPort(hostname, tlsConf.PortDNSOverQUIC),
 			}).String()
 		}
 	}

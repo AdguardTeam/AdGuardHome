@@ -1119,6 +1119,8 @@ func TestPTRResponseFromHosts(t *testing.T) {
 }
 
 func TestNewServer(t *testing.T) {
+	// TODO(a.garipov): Consider moving away from the text-based error
+	// checks and onto a more structured approach.
 	testCases := []struct {
 		name       string
 		in         DNSCreateParams
@@ -1144,9 +1146,8 @@ func TestNewServer(t *testing.T) {
 		in: DNSCreateParams{
 			LocalDomain: "!!!",
 		},
-		wantErrMsg: `local domain: validating domain name "!!!": ` +
-			`invalid domain name label at index 0: ` +
-			`validating label "!!!": invalid char '!' at index 0`,
+		wantErrMsg: `local domain: bad domain name "!!!": ` +
+			`bad domain name label "!!!": bad domain name label rune '!'`,
 	}}
 
 	for _, tc := range testCases {

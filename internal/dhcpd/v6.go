@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/dhcpv6/server6"
 	"github.com/insomniacslk/dhcp/iana"
@@ -175,7 +175,7 @@ func (s *v6Server) AddStaticLease(l *Lease) (err error) {
 		return fmt.Errorf("invalid IP")
 	}
 
-	err = aghnet.ValidateHardwareAddress(l.HWAddr)
+	err = netutil.ValidateMAC(l.HWAddr)
 	if err != nil {
 		return fmt.Errorf("validating lease: %w", err)
 	}
@@ -207,7 +207,7 @@ func (s *v6Server) RemoveStaticLease(l *Lease) (err error) {
 		return fmt.Errorf("invalid IP")
 	}
 
-	err = aghnet.ValidateHardwareAddress(l.HWAddr)
+	err = netutil.ValidateMAC(l.HWAddr)
 	if err != nil {
 		return fmt.Errorf("validating lease: %w", err)
 	}
@@ -633,7 +633,7 @@ func (s *v6Server) Start() (err error) {
 
 	log.Debug("dhcpv6: listening...")
 
-	err = aghnet.ValidateHardwareAddress(iface.HardwareAddr)
+	err = netutil.ValidateMAC(iface.HardwareAddr)
 	if err != nil {
 		return fmt.Errorf("validating interface %s: %w", iface.Name, err)
 	}

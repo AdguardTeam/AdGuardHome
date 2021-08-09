@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
 
@@ -104,7 +105,7 @@ const dockerEmbeddedDNS = "127.0.0.11"
 func (sr *systemResolvers) dialFunc(_ context.Context, _, address string) (_ net.Conn, err error) {
 	// Just validate the passed address is a valid IP.
 	var host string
-	host, err = SplitHost(address)
+	host, err = netutil.SplitHost(address)
 	if err != nil {
 		// TODO(e.burkov): Maybe use a structured errBadAddrPassed to
 		// allow unwrapping of the real error.

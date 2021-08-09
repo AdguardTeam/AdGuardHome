@@ -4,11 +4,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
 )
 
@@ -32,13 +32,14 @@ func processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
 	// Synchronize access to s.queryLog and s.stats so they won't be suddenly uninitialized while in use.
 	// This can happen after proxy server has been stopped, but its workers haven't yet exited.
 	if shouldLog && s.queryLog != nil {
+		ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
 		p := querylog.AddParams{
 			Question:   msg,
 			Answer:     pctx.Res,
 			OrigAnswer: ctx.origResp,
 			Result:     ctx.result,
 			Elapsed:    elapsed,
-			ClientIP:   aghnet.IPFromAddr(pctx.Addr),
+			ClientIP:   ip,
 			ClientID:   ctx.clientID,
 		}
 
@@ -80,7 +81,7 @@ func (s *Server) updateStats(ctx *dnsContext, elapsed time.Duration, res filteri
 
 	if clientID := ctx.clientID; clientID != "" {
 		e.Client = clientID
-	} else if ip := aghnet.IPFromAddr(pctx.Addr); ip != nil {
+	} else if ip, _ := netutil.IPAndPortFromAddr(pctx.Addr); ip != nil {
 		e.Client = ip.String()
 	}
 

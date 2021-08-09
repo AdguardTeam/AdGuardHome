@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
 )
@@ -81,7 +82,7 @@ type Server struct {
 	tableHostToIP     hostToIPTable
 	tableHostToIPLock sync.Mutex
 
-	tableIPToHost     *aghnet.IPMap
+	tableIPToHost     *netutil.IPMap
 	tableIPToHostLock sync.Mutex
 
 	// clientIDCache is a temporary storage for clientIDs that were
@@ -141,7 +142,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 	if p.LocalDomain == "" {
 		localDomainSuffix = defaultLocalDomainSuffix
 	} else {
-		err = aghnet.ValidateDomainName(p.LocalDomain)
+		err = netutil.ValidateDomainName(p.LocalDomain)
 		if err != nil {
 			return nil, fmt.Errorf("local domain: %w", err)
 		}
@@ -281,7 +282,12 @@ func (s *Server) Exchange(ip net.IP) (host string, err error) {
 		return "", nil
 	}
 
-	arpa := dns.Fqdn(aghnet.ReverseAddr(ip))
+	arpa, err := netutil.IPToReversedAddr(ip)
+	if err != nil {
+		return "", fmt.Errorf("reversing ip: %w", err)
+	}
+
+	arpa = dns.Fqdn(arpa)
 	req := &dns.Msg{
 		MsgHdr: dns.MsgHdr{
 			Id:               dns.Id(),

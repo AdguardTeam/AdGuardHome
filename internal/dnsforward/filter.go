@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
 )
 
@@ -19,7 +19,7 @@ func (s *Server) beforeRequestHandler(
 	_ *proxy.Proxy,
 	pctx *proxy.DNSContext,
 ) (reply bool, err error) {
-	ip := aghnet.IPFromAddr(pctx.Addr)
+	ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
 	clientID, err := s.clientIDFromDNSContext(pctx)
 	if err != nil {
 		return false, fmt.Errorf("getting clientid: %w", err)
@@ -53,7 +53,8 @@ func (s *Server) beforeRequestHandler(
 func (s *Server) getClientRequestFilteringSettings(ctx *dnsContext) *filtering.Settings {
 	setts := s.dnsFilter.GetConfig()
 	if s.conf.FilterHandler != nil {
-		s.conf.FilterHandler(aghnet.IPFromAddr(ctx.proxyCtx.Addr), ctx.clientID, &setts)
+		ip, _ := netutil.IPAndPortFromAddr(ctx.proxyCtx.Addr)
+		s.conf.FilterHandler(ip, ctx.clientID, &setts)
 	}
 
 	return &setts

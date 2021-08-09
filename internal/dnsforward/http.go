@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
 )
@@ -443,7 +443,7 @@ func separateUpstream(upstreamStr string) (upstream string, useDefault bool, err
 			continue
 		}
 
-		err = aghnet.ValidateDomainName(host)
+		err = netutil.ValidateDomainName(host)
 		if err != nil {
 			return "", false, fmt.Errorf("domain at index %d: %w", i, err)
 		}

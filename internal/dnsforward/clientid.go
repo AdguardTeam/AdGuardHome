@@ -7,15 +7,15 @@ import (
 	"path"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/lucas-clemente/quic-go"
 )
 
 // ValidateClientID returns an error if clientID is not a valid client ID.
 func ValidateClientID(clientID string) (err error) {
-	err = aghnet.ValidateDomainNameLabel(clientID)
+	err = netutil.ValidateDomainNameLabel(clientID)
 	if err != nil {
 		// Replace the domain name label wrapper with our own.
 		return fmt.Errorf("invalid client id %q: %w", clientID, errors.Unwrap(err))

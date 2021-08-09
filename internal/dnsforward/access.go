@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
@@ -17,8 +17,8 @@ import (
 // accessCtx controls IP and client blocking that takes place before all other
 // processing.  An accessCtx is safe for concurrent use.
 type accessCtx struct {
-	allowedIPs *aghnet.IPMap
-	blockedIPs *aghnet.IPMap
+	allowedIPs *netutil.IPMap
+	blockedIPs *netutil.IPMap
 
 	allowedClientIDs *stringutil.Set
 	blockedClientIDs *stringutil.Set
@@ -26,7 +26,7 @@ type accessCtx struct {
 	blockedHostsEng *urlfilter.DNSEngine
 
 	// TODO(a.garipov): Create a type for a set of IP networks.
-	// aghnet.IPNetSet?
+	// netutil.IPNetSet?
 	allowedNets []*net.IPNet
 	blockedNets []*net.IPNet
 }
@@ -38,7 +38,7 @@ type unit = struct{}
 // which may be an IP address, a CIDR, or a ClientID.
 func processAccessClients(
 	clientStrs []string,
-	ips *aghnet.IPMap,
+	ips *netutil.IPMap,
 	nets *[]*net.IPNet,
 	clientIDs *stringutil.Set,
 ) (err error) {
@@ -68,8 +68,8 @@ func processAccessClients(
 // newAccessCtx creates a new accessCtx.
 func newAccessCtx(allowed, blocked, blockedHosts []string) (a *accessCtx, err error) {
 	a = &accessCtx{
-		allowedIPs: aghnet.NewIPMap(0),
-		blockedIPs: aghnet.NewIPMap(0),
+		allowedIPs: netutil.NewIPMap(0),
+		blockedIPs: netutil.NewIPMap(0),
 
 		allowedClientIDs: stringutil.NewSet(),
 		blockedClientIDs: stringutil.NewSet(),

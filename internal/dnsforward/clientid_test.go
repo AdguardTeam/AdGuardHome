@@ -46,6 +46,8 @@ func (c testQUICSession) ConnectionState() (cs quic.ConnectionState) {
 }
 
 func TestServer_clientIDFromDNSContext(t *testing.T) {
+	// TODO(a.garipov): Consider moving away from the text-based error
+	// checks and onto a more structured approach.
 	testCases := []struct {
 		name         string
 		proto        proxy.Proto
@@ -111,7 +113,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		cliSrvName:   "!!!.example.com",
 		wantClientID: "",
 		wantErrMsg: `client id check: invalid client id "!!!": ` +
-			`invalid char '!' at index 0`,
+			`bad domain name label rune '!'`,
 		strictSNI: true,
 	}, {
 		name:        "tls_client_id_too_long",
@@ -122,7 +124,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantClientID: "",
 		wantErrMsg: `client id check: invalid client id "abcdefghijklmno` +
 			`pqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789": ` +
-			`label is too long, max: 63`,
+			`domain name label is too long: got 72, max 63`,
 		strictSNI: true,
 	}, {
 		name:         "quic_client_id",
@@ -220,7 +222,7 @@ func TestClientIDFromDNSContextHTTPS(t *testing.T) {
 		path:         "/dns-query/!!!",
 		wantClientID: "",
 		wantErrMsg: `client id check: invalid client id "!!!": ` +
-			`invalid char '!' at index 0`,
+			`bad domain name label rune '!'`,
 	}}
 
 	for _, tc := range testCases {

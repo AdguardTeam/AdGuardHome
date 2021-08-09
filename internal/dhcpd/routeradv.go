@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv6"
 )
@@ -42,7 +42,7 @@ type icmpv6RA struct {
 //
 // See https://tools.ietf.org/html/rfc4861#section-4.6.1.
 func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
-	err = aghnet.ValidateHardwareAddress(hwa)
+	err = netutil.ValidateMAC(hwa)
 	if err != nil {
 		// Don't wrap the error, because it already contains enough
 		// context.
@@ -56,8 +56,8 @@ func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
 		return lla, nil
 	}
 
-	// Assume that aghnet.ValidateHardwareAddress prevents lengths other
-	// than 20 by now.
+	// Assume that netutil.ValidateMAC prevents lengths other than 20 by
+	// now.
 	lla = make([]byte, 24)
 	copy(lla, hwa)
 

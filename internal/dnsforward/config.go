@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/ameshkov/dnscrypt/v2"
 )
@@ -451,7 +451,7 @@ func matchesDomainWildcard(host, pat string) (ok bool) {
 // anyNameMatches returns true if sni, the client's SNI value, matches any of
 // the DNS names and patterns from certificate.  dnsNames must be sorted.
 func anyNameMatches(dnsNames []string, sni string) (ok bool) {
-	if aghnet.ValidateDomainName(sni) != nil {
+	if netutil.ValidateDomainName(sni) != nil {
 		return false
 	}
 

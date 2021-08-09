@@ -13,6 +13,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/NYTimes/gziphandler"
 )
 
@@ -39,7 +40,7 @@ func appendDNSAddrs(dst []string, addrs ...net.IP) (res []string) {
 	for _, addr := range addrs {
 		var hostport string
 		if config.DNS.Port != 53 {
-			hostport = aghnet.JoinHostPort(addr.String(), config.DNS.Port)
+			hostport = netutil.JoinHostPort(addr.String(), config.DNS.Port)
 		} else {
 			hostport = addr.String()
 		}
@@ -294,7 +295,7 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		return true
 	}
 
-	host, err := aghnet.SplitHost(r.Host)
+	host, err := netutil.SplitHost(r.Host)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "bad host: %s", err)
 
@@ -304,7 +305,7 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 	if r.TLS == nil && web.forceHTTPS {
 		hostPort := host
 		if port := web.conf.PortHTTPS; port != defaultHTTPSPort {
-			hostPort = aghnet.JoinHostPort(host, port)
+			hostPort = netutil.JoinHostPort(host, port)
 		}
 
 		httpsURL := &url.URL{

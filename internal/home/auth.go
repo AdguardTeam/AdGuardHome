@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"go.etcd.io/bbolt"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -404,8 +404,7 @@ func realIP(r *http.Request) (ip net.IP, err error) {
 
 	// When everything else fails, just return the remote address as
 	// understood by the stdlib.
-	var ipStr string
-	ipStr, err = aghnet.SplitHost(r.RemoteAddr)
+	ipStr, err := netutil.SplitHost(r.RemoteAddr)
 	if err != nil {
 		return nil, fmt.Errorf("getting ip from client addr: %w", err)
 	}
@@ -428,7 +427,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
 	//
 	// TODO(e.burkov): Use realIP when the issue will be fixed.
-	if remoteAddr, err = aghnet.SplitHost(r.RemoteAddr); err != nil {
+	if remoteAddr, err = netutil.SplitHost(r.RemoteAddr); err != nil {
 		httpError(w, http.StatusBadRequest, "auth: getting remote address: %s", err)
 
 		return

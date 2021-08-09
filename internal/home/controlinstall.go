@@ -16,6 +16,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 )
 
 // getAddrsResponse is the response for /install/get_addresses endpoint.
@@ -311,7 +312,7 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 				w,
 				http.StatusBadRequest,
 				"can not listen on IP:port %s: %s",
-				aghnet.JoinHostPort(req.Web.IP.String(), req.Web.Port),
+				netutil.JoinHostPort(req.Web.IP.String(), req.Web.Port),
 				err,
 			)
 

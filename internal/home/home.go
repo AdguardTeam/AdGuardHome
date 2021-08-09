@@ -30,6 +30,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -707,12 +708,12 @@ func printWebAddrs(proto, addr string, port, betaPort int) {
 		hostBetaMsg = hostMsg + " (BETA)"
 	)
 
-	log.Printf(hostMsg, proto, aghnet.JoinHostPort(addr, port))
+	log.Printf(hostMsg, proto, netutil.JoinHostPort(addr, port))
 	if betaPort == 0 {
 		return
 	}
 
-	log.Printf(hostBetaMsg, proto, aghnet.JoinHostPort(addr, config.BetaBindPort))
+	log.Printf(hostBetaMsg, proto, netutil.JoinHostPort(addr, config.BetaBindPort))
 }
 
 // printHTTPAddresses prints the IP addresses which user can use to access the

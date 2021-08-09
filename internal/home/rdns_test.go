@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -85,7 +85,7 @@ func TestRDNS_Begin(t *testing.T) {
 			clients: &clientsContainer{
 				list:    map[string]*Client{},
 				idIndex: tc.cliIDIndex,
-				ipToRC:  aghnet.NewIPMap(0),
+				ipToRC:  netutil.NewIPMap(0),
 				allTags: stringutil.NewSet(),
 			},
 		}
@@ -205,7 +205,7 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 		cc := &clientsContainer{
 			list:    map[string]*Client{},
 			idIndex: map[string]*Client{},
-			ipToRC:  aghnet.NewIPMap(0),
+			ipToRC:  netutil.NewIPMap(0),
 			allTags: stringutil.NewSet(),
 		}
 		ch := make(chan net.IP)

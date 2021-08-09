@@ -12,6 +12,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/fsnotify/fsnotify"
 	"github.com/miekg/dns"
 )
@@ -29,7 +30,7 @@ type EtcHostsContainer struct {
 	table map[string][]net.IP
 	// tableReverse is the IP-to-hosts map.  The type of the values in the
 	// map is []string.
-	tableReverse *IPMap
+	tableReverse *netutil.IPMap
 
 	hostsFn   string            // path to the main hosts-file
 	hostsDirs []string          // paths to OS-specific directories with hosts-files
@@ -150,8 +151,10 @@ func (ehc *EtcHostsContainer) ProcessReverse(addr string, qtype uint16) (hosts [
 		return nil
 	}
 
-	ip := UnreverseAddr(addr)
-	if ip == nil {
+	ip, err := netutil.IPFromReversedAddr(addr)
+	if err != nil {
+		log.Error("etchosts: reversed addr: %s", err)
+
 		return nil
 	}
 
@@ -179,7 +182,7 @@ func (ehc *EtcHostsContainer) ProcessReverse(addr string, qtype uint16) (hosts [
 
 // List returns an IP-to-hostnames table.  The type of the values in the map is
 // []string.  It is safe for concurrent use.
-func (ehc *EtcHostsContainer) List() (ipToHosts *IPMap) {
+func (ehc *EtcHostsContainer) List() (ipToHosts *netutil.IPMap) {
 	ehc.lock.RLock()
 	defer ehc.lock.RUnlock()
 
@@ -211,7 +214,7 @@ func (ehc *EtcHostsContainer) updateTable(table map[string][]net.IP, host string
 }
 
 // updateTableRev updates the reverse address table.
-func (ehc *EtcHostsContainer) updateTableRev(tableRev *IPMap, newHost string, ip net.IP) {
+func (ehc *EtcHostsContainer) updateTableRev(tableRev *netutil.IPMap, newHost string, ip net.IP) {
 	v, ok := tableRev.Get(ip)
 	if !ok {
 		tableRev.Set(ip, []string{newHost})
@@ -258,7 +261,7 @@ func parseHostsLine(fields []string) (hosts []string) {
 // line for one IP are supported.
 func (ehc *EtcHostsContainer) load(
 	table map[string][]net.IP,
-	tableRev *IPMap,
+	tableRev *netutil.IPMap,
 	fn string,
 ) {
 	f, err := os.Open(fn)
@@ -353,7 +356,7 @@ func (ehc *EtcHostsContainer) watcherLoop() {
 // updateHosts - loads system hosts
 func (ehc *EtcHostsContainer) updateHosts() {
 	table := make(map[string][]net.IP)
-	tableRev := NewIPMap(0)
+	tableRev := netutil.NewIPMap(0)
 
 	ehc.load(table, tableRev, ehc.hostsFn)
 

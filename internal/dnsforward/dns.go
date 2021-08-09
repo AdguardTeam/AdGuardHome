@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
 )
@@ -165,7 +165,7 @@ func (s *Server) setTableHostToIP(t hostToIPTable) {
 	s.tableHostToIP = t
 }
 
-func (s *Server) setTableIPToHost(t *aghnet.IPMap) {
+func (s *Server) setTableIPToHost(t *netutil.IPMap) {
 	s.tableIPToHostLock.Lock()
 	defer s.tableIPToHostLock.Unlock()
 
@@ -188,18 +188,18 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 	}
 
 	var hostToIP hostToIPTable
-	var ipToHost *aghnet.IPMap
+	var ipToHost *netutil.IPMap
 	if add {
 		ll := s.dhcpServer.Leases(dhcpd.LeasesAll)
 
 		hostToIP = make(hostToIPTable, len(ll))
-		ipToHost = aghnet.NewIPMap(len(ll))
+		ipToHost = netutil.NewIPMap(len(ll))
 
 		for _, l := range ll {
 			// TODO(a.garipov): Remove this after we're finished
 			// with the client hostname validations in the DHCP
 			// server code.
-			err = aghnet.ValidateDomainName(l.Hostname)
+			err = netutil.ValidateDomainName(l.Hostname)
 			if err != nil {
 				log.Debug(
 					"dns: skipping invalid hostname %q from dhcp: %s",
@@ -230,7 +230,7 @@ func (s *Server) processDetermineLocal(dctx *dnsContext) (rc resultCode) {
 	rc = resultCodeSuccess
 
 	var ip net.IP
-	if ip = aghnet.IPFromAddr(dctx.proxyCtx.Addr); ip == nil {
+	if ip, _ = netutil.IPAndPortFromAddr(dctx.proxyCtx.Addr); ip == nil {
 		return rc
 	}
 
@@ -331,12 +331,11 @@ func (s *Server) processRestrictLocal(ctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	ip := aghnet.UnreverseAddr(q.Name)
-	if ip == nil {
-		// That's weird.
-		//
-		// TODO(e.burkov): Research the cases when it could happen.
-		return resultCodeSuccess
+	ip, err := netutil.IPFromReversedAddr(q.Name)
+	if err != nil {
+		log.Debug("dns: reversed addr: %s", err)
+
+		return resultCodeError
 	}
 
 	// Restrict an access to local addresses for external clients.  We also
@@ -502,7 +501,7 @@ func processFilteringBeforeRequest(ctx *dnsContext) (rc resultCode) {
 
 // ipStringFromAddr extracts an IP address string from net.Addr.
 func ipStringFromAddr(addr net.Addr) (ipStr string) {
-	if ip := aghnet.IPFromAddr(addr); ip != nil {
+	if ip, _ := netutil.IPAndPortFromAddr(addr); ip != nil {
 		return ip.String()
 	}
 

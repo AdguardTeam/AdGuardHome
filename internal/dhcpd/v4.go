@@ -14,6 +14,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
@@ -61,7 +62,7 @@ func normalizeHostname(hostname string) (norm string, err error) {
 
 	norm = strings.ToLower(hostname)
 	parts := strings.FieldsFunc(norm, func(c rune) (ok bool) {
-		return c != '.' && !aghnet.IsValidHostOuterRune(c)
+		return c != '.' && !netutil.IsValidHostOuterRune(c)
 	})
 
 	if len(parts) == 0 {
@@ -87,7 +88,7 @@ func (s *v4Server) validHostnameForClient(cliHostname string, ip net.IP) (hostna
 		hostname = aghnet.GenerateHostname(ip)
 	}
 
-	err = aghnet.ValidateDomainName(hostname)
+	err = netutil.ValidateDomainName(hostname)
 	if err != nil {
 		log.Info("dhcpv4: %s", err)
 		hostname = ""
@@ -335,7 +336,7 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 
 	l.Expiry = time.Unix(leaseExpireStatic, 0)
 
-	err = aghnet.ValidateHardwareAddress(l.HWAddr)
+	err = netutil.ValidateMAC(l.HWAddr)
 	if err != nil {
 		return err
 	}
@@ -346,7 +347,7 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 			return err
 		}
 
-		err = aghnet.ValidateDomainName(hostname)
+		err = netutil.ValidateDomainName(hostname)
 		if err != nil {
 			return fmt.Errorf("validating hostname: %w", err)
 		}
@@ -402,7 +403,7 @@ func (s *v4Server) RemoveStaticLease(l *Lease) (err error) {
 		return fmt.Errorf("invalid IP")
 	}
 
-	err = aghnet.ValidateHardwareAddress(l.HWAddr)
+	err = netutil.ValidateMAC(l.HWAddr)
 	if err != nil {
 		return fmt.Errorf("validating lease: %w", err)
 	}
@@ -913,7 +914,7 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 		return
 	}
 
-	err = aghnet.ValidateHardwareAddress(req.ClientHWAddr)
+	err = netutil.ValidateMAC(req.ClientHWAddr)
 	if err != nil {
 		log.Error("dhcpv4: invalid ClientHWAddr: %s", err)
 
@@ -1061,7 +1062,7 @@ func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
 		Mask: subnetMask,
 	}
 
-	bcastIP := aghnet.CloneIP(routerIP)
+	bcastIP := netutil.CloneIP(routerIP)
 	for i, b := range subnetMask {
 		bcastIP[i] |= ^b
 	}

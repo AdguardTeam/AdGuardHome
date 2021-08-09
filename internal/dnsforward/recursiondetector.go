@@ -5,9 +5,9 @@ import (
 	"encoding/binary"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
 )
 
@@ -77,7 +77,7 @@ func newRecursionDetector(ttl time.Duration, suspectsNum uint) (rd *recursionDet
 
 // msgToSignature converts msg into it's signature represented in bytes.
 func msgToSignature(msg dns.Msg) (sig []byte) {
-	sig = make([]byte, uint16sz*2+aghnet.MaxDomainNameLen)
+	sig = make([]byte, uint16sz*2+netutil.MaxDomainNameLen)
 	// The binary.BigEndian byte order is used everywhere except when the
 	// real machine's endianess is needed.
 	byteOrder := binary.BigEndian
@@ -95,7 +95,7 @@ func msgToSignature(msg dns.Msg) (sig []byte) {
 // See BenchmarkMsgToSignature.
 func msgToSignatureSlow(msg dns.Msg) (sig []byte) {
 	type msgSignature struct {
-		name  [aghnet.MaxDomainNameLen]byte
+		name  [netutil.MaxDomainNameLen]byte
 		id    uint16
 		qtype uint16
 	}

@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/google/renameio/maybe"
 	"golang.org/x/crypto/bcrypt"
 	yaml "gopkg.in/yaml.v2"
@@ -545,7 +545,7 @@ func addQUICPort(ups string, port int) (withPort string) {
 	}
 
 	var host string
-	host, err = aghnet.SplitHost(upsURL.Host)
+	host, err = netutil.SplitHost(upsURL.Host)
 	if err != nil || host != upsURL.Host {
 		return ups
 	}

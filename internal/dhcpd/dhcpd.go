@@ -10,8 +10,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 )
 
 const (
@@ -46,8 +46,8 @@ func (l *Lease) Clone() (clone *Lease) {
 	return &Lease{
 		Expiry:   l.Expiry,
 		Hostname: l.Hostname,
-		HWAddr:   aghnet.CloneMAC(l.HWAddr),
-		IP:       aghnet.CloneIP(l.IP),
+		HWAddr:   netutil.CloneMAC(l.HWAddr),
+		IP:       netutil.CloneIP(l.IP),
 	}
 }
 

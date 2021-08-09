@@ -11,6 +11,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/NYTimes/gziphandler"
 )
 
@@ -175,7 +176,7 @@ func (web *Web) Start() {
 		// we need to have new instance, because after Shutdown() the Server is not usable
 		web.httpServer = &http.Server{
 			ErrorLog:          log.StdLog("web: plain", log.DEBUG),
-			Addr:              aghnet.JoinHostPort(hostStr, web.conf.BindPort),
+			Addr:              netutil.JoinHostPort(hostStr, web.conf.BindPort),
 			Handler:           withMiddlewares(Context.mux, limitRequestBody),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
@@ -188,7 +189,7 @@ func (web *Web) Start() {
 		if web.conf.BetaBindPort != 0 {
 			web.httpServerBeta = &http.Server{
 				ErrorLog:          log.StdLog("web: plain", log.DEBUG),
-				Addr:              aghnet.JoinHostPort(hostStr, web.conf.BetaBindPort),
+				Addr:              netutil.JoinHostPort(hostStr, web.conf.BetaBindPort),
 				Handler:           withMiddlewares(Context.mux, limitRequestBody, web.wrapIndexBeta),
 				ReadTimeout:       web.conf.ReadTimeout,
 				ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
@@ -249,7 +250,7 @@ func (web *Web) tlsServerLoop() {
 		web.httpsServer.cond.L.Unlock()
 
 		// prepare HTTPS server
-		address := aghnet.JoinHostPort(web.conf.BindHost.String(), web.conf.PortHTTPS)
+		address := netutil.JoinHostPort(web.conf.BindHost.String(), web.conf.PortHTTPS)
 		web.httpsServer.server = &http.Server{
 			ErrorLog: log.StdLog("web: https", log.DEBUG),
 			Addr:     address,
