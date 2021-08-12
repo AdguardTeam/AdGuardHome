@@ -134,6 +134,15 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantClientID: "cli",
 		wantErrMsg:   "",
 		strictSNI:    true,
+	}, {
+		name:         "tls_client_id_issue3437",
+		proto:        proxy.ProtoTLS,
+		hostSrvName:  "example.com",
+		cliSrvName:   "cli.myexample.com",
+		wantClientID: "",
+		wantErrMsg: `client id check: client server name "cli.myexample.com" ` +
+			`doesn't match host server name "example.com"`,
+		strictSNI: true,
 	}}
 
 	for _, tc := range testCases {

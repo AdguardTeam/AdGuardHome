@@ -64,6 +64,7 @@ and this project adheres to
 
 ### Fixed
 
+- Client ID checking ([#3437]).
 - Discovering other DHCP servers on `darwin` and `freebsd` ([#3417]).
 - Switching listening address to unspecified one when bound to a single
   specified IPv4 address on Darwin (macOS) ([#2807]).
@@ -122,6 +123,7 @@ and this project adheres to
 [#3351]: https://github.com/AdguardTeam/AdGuardHome/issues/3351
 [#3372]: https://github.com/AdguardTeam/AdGuardHome/issues/3372
 [#3417]: https://github.com/AdguardTeam/AdGuardHome/issues/3417
+[#3437]: https://github.com/AdguardTeam/AdGuardHome/issues/3437
 
 
 
