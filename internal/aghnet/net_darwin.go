@@ -48,9 +48,14 @@ func getCurrentHardwarePortInfo(ifaceName string) (hardwarePortInfo, error) {
 	return getHardwarePortInfo(hardwarePort)
 }
 
-// getNetworkSetupHardwareReports parses the output of the `networksetup -listallhardwareports` command
-// it returns a map where the key is the interface name, and the value is the "hardware port"
-// returns nil if it fails to parse the output
+// getNetworkSetupHardwareReports parses the output of the `networksetup
+// -listallhardwareports` command it returns a map where the key is the
+// interface name, and the value is the "hardware port" returns nil if it fails
+// to parse the output
+//
+// TODO(e.burkov):  There should be more proper approach than parsing the
+// command output.  For example, see
+// https://developer.apple.com/documentation/systemconfiguration.
 func getNetworkSetupHardwareReports() map[string]string {
 	_, out, err := aghos.RunCommand("networksetup", "-listallhardwareports")
 	if err != nil {

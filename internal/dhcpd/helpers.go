@@ -6,14 +6,6 @@ import (
 	"net"
 )
 
-func isTimeout(err error) bool {
-	operr, ok := err.(*net.OpError)
-	if !ok {
-		return false
-	}
-	return operr.Timeout()
-}
-
 func tryTo4(ip net.IP) (ip4 net.IP, err error) {
 	if ip == nil {
 		return nil, fmt.Errorf("%v is not an IP address", ip)

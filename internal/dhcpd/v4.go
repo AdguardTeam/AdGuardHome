@@ -971,7 +971,12 @@ func (s *v4Server) Start() (err error) {
 
 	log.Debug("dhcpv4: starting...")
 
-	dnsIPAddrs, err := ifaceDNSIPAddrs(iface, ipVersion4, defaultMaxAttempts, defaultBackoff)
+	dnsIPAddrs, err := aghnet.IfaceDNSIPAddrs(
+		iface,
+		aghnet.IPVersion4,
+		defaultMaxAttempts,
+		defaultBackoff,
+	)
 	if err != nil {
 		return fmt.Errorf("interface %s: %w", ifaceName, err)
 	}
@@ -1061,12 +1066,7 @@ func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
 		IP:   routerIP,
 		Mask: subnetMask,
 	}
-
-	bcastIP := netutil.CloneIP(routerIP)
-	for i, b := range subnetMask {
-		bcastIP[i] |= ^b
-	}
-	s.conf.broadcastIP = bcastIP
+	s.conf.broadcastIP = aghnet.BroadcastFromIPNet(s.conf.subnet)
 
 	s.conf.ipRange, err = newIPRange(conf.RangeStart, conf.RangeEnd)
 	if err != nil {

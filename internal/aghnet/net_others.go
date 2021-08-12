@@ -1,5 +1,5 @@
-//go:build !(linux || darwin || freebsd)
-// +build !linux,!darwin,!freebsd
+//go:build !(linux || darwin || freebsd || openbsd)
+// +build !linux,!darwin,!freebsd,!openbsd
 
 package aghnet
 

@@ -27,7 +27,7 @@ and this project adheres to
 - Settable timeouts for querying the upstream servers ([#2280]).
 - Configuration file parameters to change group and user ID on startup on Unix
   ([#2763]).
-- Experimental OpenBSD support for AMD64 and 64-bit ARM CPUs ([#2439]).
+- Experimental OpenBSD support for AMD64 and 64-bit ARM CPUs ([#2439], [#3225]).
 - Support for custom port in DNS-over-HTTPS profiles for Apple's devices
   ([#3172]).
 - `darwin/arm64` support ([#2443]).
@@ -64,6 +64,7 @@ and this project adheres to
 
 ### Fixed
 
+- Discovering other DHCP servers on `darwin` and `freebsd` ([#3417]).
 - Switching listening address to unspecified one when bound to a single
   specified IPv4 address on Darwin (macOS) ([#2807]).
 - Incomplete HTTP response for static IP address.
@@ -112,6 +113,7 @@ and this project adheres to
 [#3194]: https://github.com/AdguardTeam/AdGuardHome/issues/3194
 [#3198]: https://github.com/AdguardTeam/AdGuardHome/issues/3198
 [#3217]: https://github.com/AdguardTeam/AdGuardHome/issues/3217
+[#3225]: https://github.com/AdguardTeam/AdGuardHome/issues/3225
 [#3256]: https://github.com/AdguardTeam/AdGuardHome/issues/3256
 [#3257]: https://github.com/AdguardTeam/AdGuardHome/issues/3257
 [#3289]: https://github.com/AdguardTeam/AdGuardHome/issues/3289
@@ -119,6 +121,7 @@ and this project adheres to
 [#3343]: https://github.com/AdguardTeam/AdGuardHome/issues/3343
 [#3351]: https://github.com/AdguardTeam/AdGuardHome/issues/3351
 [#3372]: https://github.com/AdguardTeam/AdGuardHome/issues/3372
+[#3417]: https://github.com/AdguardTeam/AdGuardHome/issues/3417
 
 
 

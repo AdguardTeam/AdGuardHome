@@ -48,7 +48,6 @@ func (rc *recurrentChecker) checkFile(sourcePath, desired string) (
 	if err != nil {
 		return nil, false, err
 	}
-
 	defer func() { err = errors.WithDeferred(err, f.Close()) }()
 
 	var r io.Reader

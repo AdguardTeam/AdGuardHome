@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -607,7 +608,12 @@ func (s *v6Server) Start() (err error) {
 
 	log.Debug("dhcpv6: starting...")
 
-	dnsIPAddrs, err := ifaceDNSIPAddrs(iface, ipVersion6, defaultMaxAttempts, defaultBackoff)
+	dnsIPAddrs, err := aghnet.IfaceDNSIPAddrs(
+		iface,
+		aghnet.IPVersion6,
+		defaultMaxAttempts,
+		defaultBackoff,
+	)
 	if err != nil {
 		return fmt.Errorf("interface %s: %w", ifaceName, err)
 	}

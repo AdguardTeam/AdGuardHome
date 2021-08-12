@@ -15,7 +15,6 @@ import (
 )
 
 const (
-	defaultDiscoverTime = time.Second * 3
 	// leaseExpireStatic is used to define the Expiry field for static
 	// leases.
 	//

@@ -398,60 +398,63 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 		msg := fmt.Sprintf("failed to read request body: %s", err)
 		log.Error(msg)
 		http.Error(w, msg, http.StatusBadRequest)
+
 		return
 	}
 
-	interfaceName := strings.TrimSpace(string(body))
-	if interfaceName == "" {
+	ifaceName := strings.TrimSpace(string(body))
+	if ifaceName == "" {
 		msg := "empty interface name specified"
 		log.Error(msg)
 		http.Error(w, msg, http.StatusBadRequest)
+
 		return
 	}
 
 	result := dhcpSearchResult{
 		V4: dhcpSearchV4Result{
-			OtherServer: dhcpSearchOtherResult{},
+			OtherServer: dhcpSearchOtherResult{
+				Found: "no",
+			},
 			StaticIP: dhcpStaticIPStatus{
 				Static: "yes",
 			},
 		},
 		V6: dhcpSearchV6Result{
-			OtherServer: dhcpSearchOtherResult{},
+			OtherServer: dhcpSearchOtherResult{
+				Found: "no",
+			},
 		},
 	}
 
-	found4, err4 := CheckIfOtherDHCPServersPresentV4(interfaceName)
-
-	isStaticIP, err := aghnet.IfaceHasStaticIP(interfaceName)
-	if err != nil {
+	if isStaticIP, serr := aghnet.IfaceHasStaticIP(ifaceName); serr != nil {
 		result.V4.StaticIP.Static = "error"
-		result.V4.StaticIP.Error = err.Error()
+		result.V4.StaticIP.Error = serr.Error()
 	} else if !isStaticIP {
 		result.V4.StaticIP.Static = "no"
-		result.V4.StaticIP.IP = aghnet.GetSubnet(interfaceName).String()
+		// TODO(e.burkov):  The returned IP should only be of version 4.
+		result.V4.StaticIP.IP = aghnet.GetSubnet(ifaceName).String()
 	}
 
-	if found4 {
-		result.V4.OtherServer.Found = "yes"
-	} else if err4 != nil {
+	found4, found6, err4, err6 := aghnet.CheckOtherDHCP(ifaceName)
+	if err4 != nil {
 		result.V4.OtherServer.Found = "error"
 		result.V4.OtherServer.Error = err4.Error()
+	} else if found4 {
+		result.V4.OtherServer.Found = "yes"
 	}
-
-	found6, err6 := CheckIfOtherDHCPServersPresentV6(interfaceName)
-
-	if found6 {
-		result.V6.OtherServer.Found = "yes"
-	} else if err6 != nil {
+	if err6 != nil {
 		result.V6.OtherServer.Found = "error"
 		result.V6.OtherServer.Error = err6.Error()
+	} else if found6 {
+		result.V6.OtherServer.Found = "yes"
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(result)
 	if err != nil {
 		httpError(r, w, http.StatusInternalServerError, "Failed to marshal DHCP found json: %s", err)
+
 		return
 	}
 }

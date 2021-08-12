@@ -294,3 +294,19 @@ func CollectAllIfacesAddrs() (addrs []string, err error) {
 
 	return addrs, nil
 }
+
+// BroadcastFromIPNet calculates the broadcast IP address for n.
+func BroadcastFromIPNet(n *net.IPNet) (dc net.IP) {
+	dc = netutil.CloneIP(n.IP)
+
+	mask := n.Mask
+	if mask == nil {
+		mask = dc.DefaultMask()
+	}
+
+	for i, b := range mask {
+		dc[i] |= ^b
+	}
+
+	return dc
+}

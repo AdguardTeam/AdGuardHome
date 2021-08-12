@@ -1,4 +1,4 @@
-package dhcpd
+package aghnet
 
 import (
 	"net"
@@ -14,7 +14,7 @@ type fakeIface struct {
 	err   error
 }
 
-// Addrs implements the netIface interface for *fakeIface.
+// Addrs implements the NetIface interface for *fakeIface.
 func (iface *fakeIface) Addrs() (addrs []net.Addr, err error) {
 	if iface.err != nil {
 		return nil, iface.err
@@ -34,51 +34,51 @@ func TestIfaceIPAddrs(t *testing.T) {
 
 	testCases := []struct {
 		name    string
-		iface   netIface
-		ipv     ipVersion
+		iface   NetIface
+		ipv     IPVersion
 		want    []net.IP
 		wantErr error
 	}{{
 		name:    "ipv4_success",
 		iface:   &fakeIface{addrs: []net.Addr{addr4}, err: nil},
-		ipv:     ipVersion4,
+		ipv:     IPVersion4,
 		want:    []net.IP{ip4},
 		wantErr: nil,
 	}, {
 		name:    "ipv4_success_with_ipv6",
 		iface:   &fakeIface{addrs: []net.Addr{addr6, addr4}, err: nil},
-		ipv:     ipVersion4,
+		ipv:     IPVersion4,
 		want:    []net.IP{ip4},
 		wantErr: nil,
 	}, {
 		name:    "ipv4_error",
 		iface:   &fakeIface{addrs: []net.Addr{addr4}, err: errTest},
-		ipv:     ipVersion4,
+		ipv:     IPVersion4,
 		want:    nil,
 		wantErr: errTest,
 	}, {
 		name:    "ipv6_success",
 		iface:   &fakeIface{addrs: []net.Addr{addr6}, err: nil},
-		ipv:     ipVersion6,
+		ipv:     IPVersion6,
 		want:    []net.IP{ip6},
 		wantErr: nil,
 	}, {
 		name:    "ipv6_success_with_ipv4",
 		iface:   &fakeIface{addrs: []net.Addr{addr6, addr4}, err: nil},
-		ipv:     ipVersion6,
+		ipv:     IPVersion6,
 		want:    []net.IP{ip6},
 		wantErr: nil,
 	}, {
 		name:    "ipv6_error",
 		iface:   &fakeIface{addrs: []net.Addr{addr6}, err: errTest},
-		ipv:     ipVersion6,
+		ipv:     IPVersion6,
 		want:    nil,
 		wantErr: errTest,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, gotErr := ifaceIPAddrs(tc.iface, tc.ipv)
+			got, gotErr := IfaceIPAddrs(tc.iface, tc.ipv)
 			require.True(t, errors.Is(gotErr, tc.wantErr))
 			assert.Equal(t, tc.want, got)
 		})
@@ -91,7 +91,7 @@ type waitingFakeIface struct {
 	n     int
 }
 
-// Addrs implements the netIface interface for *waitingFakeIface.
+// Addrs implements the NetIface interface for *waitingFakeIface.
 func (iface *waitingFakeIface) Addrs() (addrs []net.Addr, err error) {
 	if iface.err != nil {
 		return nil, iface.err
@@ -117,63 +117,63 @@ func TestIfaceDNSIPAddrs(t *testing.T) {
 
 	testCases := []struct {
 		name    string
-		iface   netIface
-		ipv     ipVersion
+		iface   NetIface
+		ipv     IPVersion
 		want    []net.IP
 		wantErr error
 	}{{
 		name:    "ipv4_success",
 		iface:   &fakeIface{addrs: []net.Addr{addr4}, err: nil},
-		ipv:     ipVersion4,
+		ipv:     IPVersion4,
 		want:    []net.IP{ip4, ip4},
 		wantErr: nil,
 	}, {
 		name:    "ipv4_success_with_ipv6",
 		iface:   &fakeIface{addrs: []net.Addr{addr6, addr4}, err: nil},
-		ipv:     ipVersion4,
+		ipv:     IPVersion4,
 		want:    []net.IP{ip4, ip4},
 		wantErr: nil,
 	}, {
 		name:    "ipv4_error",
 		iface:   &fakeIface{addrs: []net.Addr{addr4}, err: errTest},
-		ipv:     ipVersion4,
+		ipv:     IPVersion4,
 		want:    nil,
 		wantErr: errTest,
 	}, {
 		name:    "ipv4_wait",
 		iface:   &waitingFakeIface{addrs: []net.Addr{addr4}, err: nil, n: 1},
-		ipv:     ipVersion4,
+		ipv:     IPVersion4,
 		want:    []net.IP{ip4, ip4},
 		wantErr: nil,
 	}, {
 		name:    "ipv6_success",
 		iface:   &fakeIface{addrs: []net.Addr{addr6}, err: nil},
-		ipv:     ipVersion6,
+		ipv:     IPVersion6,
 		want:    []net.IP{ip6, ip6},
 		wantErr: nil,
 	}, {
 		name:    "ipv6_success_with_ipv4",
 		iface:   &fakeIface{addrs: []net.Addr{addr6, addr4}, err: nil},
-		ipv:     ipVersion6,
+		ipv:     IPVersion6,
 		want:    []net.IP{ip6, ip6},
 		wantErr: nil,
 	}, {
 		name:    "ipv6_error",
 		iface:   &fakeIface{addrs: []net.Addr{addr6}, err: errTest},
-		ipv:     ipVersion6,
+		ipv:     IPVersion6,
 		want:    nil,
 		wantErr: errTest,
 	}, {
 		name:    "ipv6_wait",
 		iface:   &waitingFakeIface{addrs: []net.Addr{addr6}, err: nil, n: 1},
-		ipv:     ipVersion6,
+		ipv:     IPVersion6,
 		want:    []net.IP{ip6, ip6},
 		wantErr: nil,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, gotErr := ifaceDNSIPAddrs(tc.iface, tc.ipv, 2, 0)
+			got, gotErr := IfaceDNSIPAddrs(tc.iface, tc.ipv, 2, 0)
 			require.True(t, errors.Is(gotErr, tc.wantErr))
 			assert.Equal(t, tc.want, got)
 		})
