@@ -43,6 +43,7 @@ and this project adheres to
 
 ### Changed
 
+- Better OpenWrt detection ([#3435]).
 - DNS-over-HTTPS queries that come from HTTP proxies in the `trusted_proxies`
   list now use the real IP address of the client instead of the address of the
   proxy ([#2799]).
@@ -123,6 +124,7 @@ and this project adheres to
 [#3351]: https://github.com/AdguardTeam/AdGuardHome/issues/3351
 [#3372]: https://github.com/AdguardTeam/AdGuardHome/issues/3372
 [#3417]: https://github.com/AdguardTeam/AdGuardHome/issues/3417
+[#3435]: https://github.com/AdguardTeam/AdGuardHome/issues/3435
 [#3437]: https://github.com/AdguardTeam/AdGuardHome/issues/3437
 
 

@@ -43,7 +43,7 @@ func TestHostnameIfStaticConfig(t *testing.T) {
 	for _, tc := range testCases {
 		r := strings.NewReader(tc.rcconfData)
 		t.Run(tc.name, func(t *testing.T) {
-			has, err := hostnameIfStaticConfig(r)
+			_, has, err := hostnameIfStaticConfig(r)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.wantHas, has)

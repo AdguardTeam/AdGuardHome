@@ -4,11 +4,11 @@
 package aghos
 
 import (
-	"bytes"
+	"io"
 	"os"
-	"path/filepath"
-	"strings"
 	"syscall"
+
+	"github.com/AdguardTeam/golibs/stringutil"
 )
 
 func setRlimit(val uint64) (err error) {
@@ -30,37 +30,20 @@ func sendProcessSignal(pid int, sig syscall.Signal) error {
 }
 
 func isOpenWrt() (ok bool) {
-	const etcDir = "/etc"
+	var err error
+	ok, err = FileWalker(func(r io.Reader) (_ []string, cont bool, err error) {
+		const osNameData = "openwrt"
 
-	dirEnts, err := os.ReadDir(etcDir)
-	if err != nil {
-		return false
-	}
-
-	// fNameSubstr is a part of a name of the desired file.
-	const fNameSubstr = "release"
-	osNameData := []byte("OpenWrt")
-
-	for _, dirEnt := range dirEnts {
-		if dirEnt.IsDir() {
-			continue
-		}
-
-		fn := dirEnt.Name()
-		if !strings.Contains(fn, fNameSubstr) {
-			continue
-		}
-
-		var body []byte
-		body, err = os.ReadFile(filepath.Join(etcDir, fn))
+		// This use of ReadAll is now safe, because FileWalker's Walk()
+		// have limited r.
+		var data []byte
+		data, err = io.ReadAll(r)
 		if err != nil {
-			continue
+			return nil, false, err
 		}
 
-		if bytes.Contains(body, osNameData) {
-			return true
-		}
-	}
+		return nil, !stringutil.ContainsFold(string(data), osNameData), nil
+	}).Walk("/etc/*release*")
 
-	return false
+	return err == nil && ok
 }

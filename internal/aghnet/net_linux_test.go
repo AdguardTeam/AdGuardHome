@@ -12,101 +12,90 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRecurrentChecker(t *testing.T) {
-	c := &recurrentChecker{
-		checker:  ifacesStaticConfig,
-		initPath: "./testdata/include-subsources",
-	}
-
-	has, err := c.check("sample_name")
-	require.NoError(t, err)
-	assert.True(t, has)
-
-	has, err = c.check("another_name")
-	require.NoError(t, err)
-	assert.False(t, has)
-}
-
 const nl = "\n"
 
 func TestDHCPCDStaticConfig(t *testing.T) {
+	const iface interfaceName = `wlan0`
+
 	testCases := []struct {
-		name string
-		data []byte
-		want bool
+		name     string
+		data     []byte
+		wantCont bool
 	}{{
 		name: "has_not",
 		data: []byte(`#comment` + nl +
 			`# comment` + nl +
 			`interface eth0` + nl +
 			`static ip_address=192.168.0.1/24` + nl +
-			`# interface wlan0` + nl +
+			`# interface ` + iface + nl +
 			`static ip_address=192.168.1.1/24` + nl +
 			`# comment` + nl,
 		),
-		want: false,
+		wantCont: true,
 	}, {
 		name: "has",
 		data: []byte(`#comment` + nl +
 			`# comment` + nl +
 			`interface eth0` + nl +
 			`static ip_address=192.168.0.1/24` + nl +
-			`# interface wlan0` + nl +
+			`# interface ` + iface + nl +
 			`static ip_address=192.168.1.1/24` + nl +
 			`# comment` + nl +
-			`interface wlan0` + nl +
+			`interface ` + iface + nl +
 			`# comment` + nl +
 			`static ip_address=192.168.2.1/24` + nl,
 		),
-		want: true,
+		wantCont: false,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			r := bytes.NewReader(tc.data)
-			_, has, err := dhcpcdStaticConfig(r, "wlan0")
+			_, cont, err := iface.dhcpcdStaticConfig(r)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.want, has)
+			assert.Equal(t, tc.wantCont, cont)
 		})
 	}
 }
 
 func TestIfacesStaticConfig(t *testing.T) {
+	const iface interfaceName = `enp0s3`
+
 	testCases := []struct {
 		name         string
 		data         []byte
-		want         bool
+		wantCont     bool
 		wantPatterns []string
 	}{{
 		name: "has_not",
-		data: []byte(`allow-hotplug enp0s3` + nl +
+		data: []byte(`allow-hotplug ` + iface + nl +
 			`#iface enp0s3 inet static` + nl +
 			`#  address 192.168.0.200` + nl +
 			`#  netmask 255.255.255.0` + nl +
 			`#  gateway 192.168.0.1` + nl +
-			`iface enp0s3 inet dhcp` + nl,
+			`iface ` + iface + ` inet dhcp` + nl,
 		),
-		want:         false,
+		wantCont:     true,
 		wantPatterns: []string{},
 	}, {
 		name: "has",
-		data: []byte(`allow-hotplug enp0s3` + nl +
-			`iface enp0s3 inet static` + nl +
+		data: []byte(`allow-hotplug ` + iface + nl +
+			`iface ` + iface + ` inet static` + nl +
 			`  address 192.168.0.200` + nl +
 			`  netmask 255.255.255.0` + nl +
 			`  gateway 192.168.0.1` + nl +
-			`#iface enp0s3 inet dhcp` + nl,
+			`#iface ` + iface + ` inet dhcp` + nl,
 		),
-		want:         true,
+		wantCont:     false,
 		wantPatterns: []string{},
 	}, {
 		name: "return_patterns",
 		data: []byte(`source hello` + nl +
 			`source world` + nl +
-			`#iface enp0s3 inet static` + nl,
+			`#iface ` + iface + ` inet static` + nl,
 		),
-		want:         false,
+		wantCont:     true,
 		wantPatterns: []string{"hello", "world"},
 	}, {
 		// This one tests if the first found valid interface prevents
@@ -114,19 +103,19 @@ func TestIfacesStaticConfig(t *testing.T) {
 		name: "ignore_patterns",
 		data: []byte(`source hello` + nl +
 			`source world` + nl +
-			`iface enp0s3 inet static` + nl,
+			`iface ` + iface + ` inet static` + nl,
 		),
-		want:         true,
+		wantCont:     false,
 		wantPatterns: []string{},
 	}}
 
 	for _, tc := range testCases {
+		r := bytes.NewReader(tc.data)
 		t.Run(tc.name, func(t *testing.T) {
-			r := bytes.NewReader(tc.data)
-			patterns, has, err := ifacesStaticConfig(r, "enp0s3")
+			patterns, has, err := iface.ifacesStaticConfig(r)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.want, has)
+			assert.Equal(t, tc.wantCont, has)
 			assert.ElementsMatch(t, tc.wantPatterns, patterns)
 		})
 	}
