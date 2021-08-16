@@ -890,9 +890,9 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 }
 
 // client(0.0.0.0:68) -> (Request:ClientMAC,Type=Discover,ClientID,ReqIP,HostName) -> server(255.255.255.255:67)
-// client(255.255.255.255:68) <- (Reply:YourIP,ClientMAC,Type=Offer,ServerID,SubnetMask,LeaseTime) <- server(<IP>:67)
+// client(<YourIP (unicast) or 255.255.255.255 (broadcast)>:68) <- (Reply:YourIP,ClientMAC,Type=Offer,ServerID,SubnetMask,LeaseTime) <- server(<IP>:67)
 // client(0.0.0.0:68) -> (Request:ClientMAC,Type=Request,ClientID,ReqIP||ClientIP,HostName,ServerID,ParamReqList) -> server(255.255.255.255:67)
-// client(255.255.255.255:68) <- (Reply:YourIP,ClientMAC,Type=ACK,ServerID,SubnetMask,LeaseTime) <- server(<IP>:67)
+// client(<YourIP (unicast) or 255.255.255.255 (broadcast)>:68) <- (Reply:YourIP,ClientMAC,Type=ACK,ServerID,SubnetMask,LeaseTime) <- server(<IP>:67)
 func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4.DHCPv4) {
 	log.Debug("dhcpv4: received message: %s", req.Summary())
 
@@ -928,31 +928,19 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 		resp.Options.Update(dhcpv4.OptMessageType(dhcpv4.MessageTypeNak))
 	}
 
-	// peer is expected to be of type *net.UDPConn as the server4.NewServer
-	// initializes it.
-	udpPeer, ok := peer.(*net.UDPAddr)
-	if !ok {
-		log.Error("dhcpv4: peer is of unexpected type %T", peer)
+	log.Debug("dhcpv4: sending: %s", resp.Summary())
+
+	// check if client requested broadcast response
+	if req.IsBroadcast() {
+		peer = &net.UDPAddr{IP: s.conf.broadcastIP, Port: dhcpv4.ClientPort}
+
+		_, err = conn.WriteTo(resp.ToBytes(), peer)
+		if err != nil {
+			log.Error("dhcpv4: conn.Write to %s failed: %s", peer, err)
+		}
 
 		return
 	}
-
-	// Despite the fact that server4.NewIPv4UDPConn explicitly sets socket
-	// options to allow broadcasting, it also binds the connection to a
-	// specific interface.  On FreeBSD conn.WriteTo causes errors while
-	// writing to the addresses that belong to another interface.  So, use
-	// the broadcast address specific for the binded interface in case
-	// server4.Server.Serve sets it to net.IPv4Bcast.
-	if udpPeer.IP.Equal(net.IPv4bcast) {
-		udpPeer.IP = s.conf.broadcastIP
-	}
-
-	// TODO: check if client requested broadcast response
-	// if req.IsBroadcast() {
-	// 	peer = &net.UDPAddr{IP: net.IPv4bcast, Port: dhcpv4.ClientPort}
-	// }
-
-	log.Debug("dhcpv4: sending: %s", resp.Summary())
 
 	ifaceName := s.conf.InterfaceName
 	iface, err := net.InterfaceByName(ifaceName)
@@ -965,11 +953,6 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 	if err != nil {
 		log.Error("MainHandler4: Cannot send Ethernet packet: %v", err)
 	}
-
-	// _, err = conn.WriteTo(resp.ToBytes(), peer)
-	// if err != nil {
-	// 	log.Error("dhcpv4: conn.Write to %s failed: %s", peer, err)
-	// }
 }
 
 // Start starts the IPv4 DHCP server.
