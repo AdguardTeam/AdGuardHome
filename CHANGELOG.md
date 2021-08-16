@@ -65,6 +65,7 @@ and this project adheres to
 
 ### Fixed
 
+- Inaccurate using of service actions in the installation script ([#3450]).
 - Client ID checking ([#3437]).
 - Discovering other DHCP servers on `darwin` and `freebsd` ([#3417]).
 - Switching listening address to unspecified one when bound to a single
@@ -126,6 +127,7 @@ and this project adheres to
 [#3417]: https://github.com/AdguardTeam/AdGuardHome/issues/3417
 [#3435]: https://github.com/AdguardTeam/AdGuardHome/issues/3435
 [#3437]: https://github.com/AdguardTeam/AdGuardHome/issues/3437
+[#3450]: https://github.com/AdguardTeam/AdGuardHome/issues/3450
 
 
 

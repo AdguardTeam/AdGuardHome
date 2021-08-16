@@ -474,10 +474,10 @@ handle_existing() {
 		if [ "$reinstall" -ne '1' ] && [ "$uninstall" -ne '1' ]
 		then
 			error_exit \
-"to reinstall/uninstall the AdGuard Home using\this script specify one of the '-r' or '-u' flags"
+"to reinstall/uninstall the AdGuard Home using this script specify one of the '-r' or '-u' flags"
 		fi
 
-		if ( cd "$agh_dir" && ! ./AdGuardHome -s uninstall )
+		if ( cd "$agh_dir" && ! ./AdGuardHome -s stop || ! ./AdGuardHome -s uninstall )
 		then
 			# It doesn't terminate the script since it is possible
 			# that AGH just not installed as service but appearing
@@ -498,9 +498,11 @@ handle_existing() {
 
 # Function install_service tries to install AGH as service.
 install_service() {
+	# Installing as root is required at least on FreeBSD.
+	#
 	# TODO(e.burkov): Think about AGH's output suppressing with no verbose
 	# flag.
-	if ( cd "$agh_dir" && ./AdGuardHome -s install )
+	if ( cd "$agh_dir" && $sudo_cmd ./AdGuardHome -s install )
 	then
 		return 0
 	fi
