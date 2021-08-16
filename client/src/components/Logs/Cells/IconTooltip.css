@@ -6,7 +6,7 @@
     pointer-events: auto !important;
     background-color: var(--white);
     z-index: 102;
-    overflow-y: scroll;
+    overflow-y: auto;
     max-height: 100%;
 }
 

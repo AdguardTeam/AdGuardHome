@@ -52,7 +52,7 @@ body {
 
 .modal-body--medium {
     max-height: 20rem;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .modal-body__item:not(:first-child) {

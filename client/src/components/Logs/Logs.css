@@ -388,7 +388,7 @@
     border-collapse: collapse;
     contain: layout;
     overflow-x: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
     will-change: scroll-position;
 }
 
