@@ -947,12 +947,29 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 		udpPeer.IP = s.conf.broadcastIP
 	}
 
+	// TODO: check if client requested broadcast response
+	// if req.IsBroadcast() {
+	// 	peer = &net.UDPAddr{IP: net.IPv4bcast, Port: dhcpv4.ClientPort}
+	// }
+
 	log.Debug("dhcpv4: sending: %s", resp.Summary())
 
-	_, err = conn.WriteTo(resp.ToBytes(), peer)
+	ifaceName := s.conf.InterfaceName
+	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
-		log.Error("dhcpv4: conn.Write to %s failed: %s", peer, err)
+		log.Error("finding interface %s by name: %w", ifaceName, err)
+		return
 	}
+
+	err = sendEthernet(*iface, resp)
+	if err != nil {
+		log.Error("MainHandler4: Cannot send Ethernet packet: %v", err)
+	}
+
+	// _, err = conn.WriteTo(resp.ToBytes(), peer)
+	// if err != nil {
+	// 	log.Error("dhcpv4: conn.Write to %s failed: %s", peer, err)
+	// }
 }
 
 // Start starts the IPv4 DHCP server.

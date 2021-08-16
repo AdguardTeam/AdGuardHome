@@ -12,6 +12,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-ping/ping v0.0.0-20210506233800-ff8be3320020
 	github.com/google/go-cmp v0.5.5
+	github.com/google/gopacket v1.1.19
 	github.com/google/renameio v1.0.1
 	github.com/insomniacslk/dhcp v0.0.0-20210310193751-cfd4d47082c2
 	github.com/kardianos/service v1.2.0
