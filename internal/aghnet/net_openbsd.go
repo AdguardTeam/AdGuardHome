@@ -31,11 +31,11 @@ func hostnameIfStaticConfig(r io.Reader) (_ []string, ok bool, err error) {
 		line := strings.TrimSpace(s.Text())
 		fields := strings.Fields(line)
 		if len(fields) >= 2 && fields[0] == "inet" && net.ParseIP(fields[1]) != nil {
-			return nil, true, s.Err()
+			return nil, false, s.Err()
 		}
 	}
 
-	return nil, false, s.Err()
+	return nil, true, s.Err()
 }
 
 func ifaceSetStaticIP(string) (err error) {

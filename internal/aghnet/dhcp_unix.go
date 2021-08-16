@@ -112,12 +112,12 @@ func discover4(iface *net.Interface, dstAddr *net.UDPAddr, hostname string) (ok 
 	// It's also known that listening on the specified interface's address
 	// ignores broadcasted packets when reading.
 	var c net.PacketConn
-	if c, err = net.ListenPacket("udp4", ":68"); err != nil {
+	if c, err = listenPacketReusable(iface.Name, "udp4", ":68"); err != nil {
 		return false, fmt.Errorf("couldn't listen on :68: %w", err)
 	}
 	defer func() { err = errors.WithDeferred(err, c.Close()) }()
 
-	// Send to resolved broadcast.
+	// Send to broadcast.
 	if _, err = c.WriteTo(req.ToBytes(), dstAddr); err != nil {
 		return false, fmt.Errorf("couldn't send a packet to %s: %w", dstAddr, err)
 	}
@@ -154,9 +154,6 @@ func tryConn4(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface) (ok, n
 
 	b := make([]byte, 1500)
 	n, _, err := c.ReadFrom(b)
-	if n > 0 {
-		log.Debug("received %d bytes: %v", n, b)
-	}
 	if err != nil {
 		if isTimeout(err) {
 			log.Debug("dhcpv4: didn't receive dhcp response")

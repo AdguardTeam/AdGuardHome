@@ -32,4 +32,5 @@ require (
 	howett.net/plist v0.0.0-20201203080718-1454fab16a06
 )
 
+// TODO(e.burkov):  Get rid of the fork in v0.108.0.
 replace github.com/insomniacslk/dhcp => github.com/AdguardTeam/dhcp v0.0.0-20210519141215-51808c73c0bf
