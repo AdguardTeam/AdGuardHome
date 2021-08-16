@@ -9,7 +9,6 @@ import { renderRadioField, renderTextareaField, CheckboxField } from '../../../.
 import {
     DNS_REQUEST_OPTIONS,
     FORM_NAME,
-    isFirefox,
     UPSTREAM_CONFIGURATION_WIKI_LINK,
 } from '../../../../helpers/constants';
 import { testUpstreamWithFormValues } from '../../../../actions';
@@ -90,25 +89,10 @@ renderTextareaWithHighlightField.propTypes = {
     normalizeOnBlur: PropTypes.func,
     onScroll: PropTypes.func,
     placeholder: PropTypes.string.isRequired,
-    subtitle: PropTypes.string.isRequired,
     type: PropTypes.string.isRequired,
 };
 
 const INPUT_FIELDS = [
-    {
-        name: UPSTREAM_DNS_NAME,
-        type: 'text',
-        component: renderTextareaWithHighlightField,
-        className: classnames('form-control form-control--textarea font-monospace text-input', {
-            'text-input--larger': isFirefox,
-        }),
-        containerClass: classnames('text-edit-container', {
-            'mb-4': !isFirefox,
-            'mb-6': isFirefox,
-        }),
-        placeholder: 'upstream_dns',
-        normalizeOnBlur: removeEmptyLines,
-    },
     {
         name: UPSTREAM_MODE_NAME,
         type: 'radio',
@@ -176,6 +160,20 @@ const Form = ({
                     dns_providers
                 </Trans>
             </label>
+            <div className="col-12 mb-4">
+                <div className="text-edit-container">
+                    <Field
+                        id={UPSTREAM_DNS_NAME}
+                        name={UPSTREAM_DNS_NAME}
+                        component={renderTextareaWithHighlightField}
+                        type="text"
+                        className="form-control form-control--textarea font-monospace text-input"
+                        placeholder={t('upstream_dns')}
+                        disabled={processingSetConfig || processingTestUpstream}
+                        normalizeOnBlur={removeEmptyLines}
+                    />
+                </div>
+            </div>
             {INPUT_FIELDS.map(renderField)}
             <div className="col-12">
                 <Examples />
