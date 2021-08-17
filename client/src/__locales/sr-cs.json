@@ -247,6 +247,7 @@
     "source_label": "Izvor",
     "found_in_known_domain_db": "Pronađeno u poznatim bazama podataka domena.",
     "category_label": "Kategorija",
+    "rule_label": "Pravilo(-a)",
     "list_label": "Lista",
     "unknown_filter": "Nepoznat filter {{filterId}}",
     "known_tracker": "Poznato praćenje",

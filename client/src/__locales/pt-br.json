@@ -597,7 +597,7 @@
     "cache_ttl_min_override_desc": "Prolongue os valores de curta duração (segundos) recebidos do servidor primário ao armazenar em cache as respostas DNS",
     "cache_ttl_max_override_desc": "Defina um valor máximo de tempo de vida (segundos) para entradas no cache DNS",
     "ttl_cache_validation": "O valor TTL mínimo do cache deve ser menor ou igual ao valor máximo",
-    "cache_optimistic": "Otimista",
+    "cache_optimistic": "Cache otimista",
     "cache_optimistic_desc": "Faz o AdGuard Home responder a partir do cache mesmo quando as entradas expirarem e também tenta atualizá-las.",
     "filter_category_general": "Geral",
     "filter_category_security": "Segurança",

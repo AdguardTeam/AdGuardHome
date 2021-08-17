@@ -597,7 +597,7 @@
     "cache_ttl_min_override_desc": "DNS応答をキャッシュするとき、上流サーバから受信した短いTTL（秒単位）を延長します",
     "cache_ttl_max_override_desc": "DNSキャッシュ内のエントリの最大TTL（秒単位）を設定します",
     "ttl_cache_validation": "最小キャッシュTTL値は最大値以下にする必要があります",
-    "cache_optimistic": "Optimistic (オプティミスティック)",
+    "cache_optimistic": "Optimistic cashing (オプティミスティック・キャッシュ)",
     "cache_optimistic_desc": "エントリの有効期限が切れた場合でも、AdGuard Homeがキャッシュから応答するようにし、エントリの更新も試みます。",
     "filter_category_general": "一般",
     "filter_category_security": "セキュリティ",

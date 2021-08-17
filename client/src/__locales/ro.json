@@ -326,7 +326,7 @@
     "install_devices_windows_list_2": "Accesați categoria \"Rețea și Internet\", apoi la \"Centrul de Rețea și Partajare\".",
     "install_devices_windows_list_3": "În partea stângă a ecranului găsiți \"Schimbare setări adaptor\" și clicați pe el.",
     "install_devices_windows_list_4": "Selectați conexiunea activă, faceți clic dreapta pe ea și alegeți \"Proprietăți\".",
-    "install_devices_windows_list_5": "Găsiți Internet Protocol Versiunea 4 (TCP/IP) din listă, selectați-l și apoi clicați din nou pe Proprietăți.",
+    "install_devices_windows_list_5": "Găsiți Internet Protocol Versiunea 4 (TCP/IPv4) din listă, selectați-l și apoi clicați din nou pe Proprietăți.",
     "install_devices_windows_list_6": "Alegeți Utilizați următoarele adrese de server DNS și introduceți adresele de server AdGuard Home.",
     "install_devices_macos_list_1": "Clicați pe icoana Apple și accesați Preferințele Sistemului.",
     "install_devices_macos_list_2": "Clicați pe Network.",

@@ -597,7 +597,7 @@
     "cache_ttl_min_override_desc": "當快取 DNS 回應時，延長從上游的伺服器收到的短存活時間數值（秒）",
     "cache_ttl_max_override_desc": "設定最大的存活時間數值（秒）供在 DNS 快取中的項目",
     "ttl_cache_validation": "最小的快取存活時間（TTL）數值必須小於或等於最大的數值",
-    "cache_optimistic": "樂觀快取模式",
+    "cache_optimistic": "樂觀快取",
     "cache_optimistic_desc": "即使當項目為已到期的，從快取使 AdGuard Home 回覆，並還嘗試重新整理它們。",
     "filter_category_general": "一般的",
     "filter_category_security": "安全性",

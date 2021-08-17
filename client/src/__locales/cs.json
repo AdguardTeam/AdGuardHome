@@ -597,7 +597,7 @@
     "cache_ttl_min_override_desc": "Prodlužte nejkratší hodnotu TTL (v sekundách) obdrženou z odchozího serveru při ukládání DNS odpovědí do mezipaměti",
     "cache_ttl_max_override_desc": "Nastavte maximální hodnotu TTL (v sekundách) pro položky v mezipaměti DNS",
     "ttl_cache_validation": "Minimální hodnota TTL mezipaměti musí být menší nebo rovna maximální hodnotě",
-    "cache_optimistic": "Optimistický režim",
+    "cache_optimistic": "Optimistické ukládání do mezipaměti",
     "cache_optimistic_desc": "Nechte AdGuard Home odpovědět z mezipaměti, i když už platnost položek skončila. Také se je pokuste obnovit.",
     "filter_category_general": "Obecné",
     "filter_category_security": "Bezpečnost",

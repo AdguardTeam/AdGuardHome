@@ -597,7 +597,7 @@
     "cache_ttl_min_override_desc": "Razširite kratke vrednosti časa v živo (v sekundah), ki jih prejme strežnik za predpomnjenje, ko predpomni odzive DNS",
     "cache_ttl_max_override_desc": "Nastavi največjo vrednost časa v živo (v sekundah) za vnose v predpomnilnik DNS",
     "ttl_cache_validation": "Najmanjša vrednost predpomnilnika TTL mora biti manjša ali enaka največji vrednosti",
-    "cache_optimistic": "Optimistično",
+    "cache_optimistic": "Optimistično predpomnjenje",
     "cache_optimistic_desc": "Poskrbi, da se AdGuard Home odzove iz predpomnilnika, tudi ko vnosi potečejo, in jih tudi poskusi osvežiti.",
     "filter_category_general": "Splošno",
     "filter_category_security": "Varnost",
