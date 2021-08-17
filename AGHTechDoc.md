@@ -232,7 +232,7 @@ Deactivate DNSStubListener and update DNS server address.  Create a new file: `/
 	DNS=127.0.0.1
 	DNSStubListener=no
 
-Specifying "127.0.0.1" as DNS server address is necessry because otherwise the nameserver will be "127.0.0.53" which doesn't work without DNSStubListener.
+Specifying "127.0.0.1" as DNS server address is necessary because otherwise the nameserver will be "127.0.0.53" which doesn't work without DNSStubListener.
 
 Activate another resolv.conf file:
 
@@ -421,7 +421,8 @@ Enable DHCP server algorithm:
 
 DHCP leases are used in several ways by DNS module.
 
-* For "A" DNS reqeust we reply with an IP address leased by our DHCP server.
+* For "A" DNS request we reply with an IP address leased by our DHCP server.
+
 
 		< A bills-notebook.lan.
 		> A bills-notebook.lan. = 192.168.1.100
@@ -564,7 +565,7 @@ Request:
 		"gateway_ip":"192.169.56.1",
 		"subnet_mask":"255.255.255.0",
 		"range_start":"192.169.56.100",
-		"range_end":"192.169.56.200", // Note: first 3 octects must match "range_start"
+		"range_end":"192.169.56.200", // Note: first 3 octets must match "range_start"
 		"lease_duration":60,
 	},
 	"v6":{

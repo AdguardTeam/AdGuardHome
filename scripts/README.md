@@ -57,7 +57,7 @@ Optional environment:
     default value is `1`.
  *  `DIST_DIR`: the directory to build a release into.  The default value is
     `dist`.
- *  `GO`: set an alternarive name for the Go compiler.
+ *  `GO`: set an alternative name for the Go compiler.
  *  `SIGN`: `0` to not sign the resulting packages, `1` to sign.  The default
     value is `1`.
  *  `VERBOSE`: `1` to be verbose, `2` to also print environment.  This script
@@ -70,7 +70,7 @@ Optional environment:
  ###  `clean.sh`: Cleanup
 
 Optional environment:
- *  `GO`: set an alternarive name for the Go compiler.
+ *  `GO`: set an alternative name for the Go compiler.
 
 Required environment:
  *  `DIST_DIR`: the directory where a release has previously been built.
@@ -82,7 +82,7 @@ Optional environment:
     reproducible builds.
  *  `GOARM`: ARM processor options for the Go compiler.
  *  `GOMIPS`: ARM processor options for the Go compiler.
- *  `GO`: set an alternarive name for the Go compiler.
+ *  `GO`: set an alternative name for the Go compiler.
  *  `OUT`: output binary name.
  *  `PARALLELISM`: set the maximum number of concurrently run build commands
     (that is, compiler, linker, etc.).
@@ -98,7 +98,7 @@ Required environment:
  ###  `go-deps.sh`: Install Backend Dependencies
 
 Optional environment:
- *  `GO`: set an alternarive name for the Go compiler.
+ *  `GO`: set an alternative name for the Go compiler.
  *  `VERBOSE`: verbosity level.  `1` shows every command that is run and every
     Go package that is processed.  `2` also shows subcommands and environment.
     The default value is `0`, don't be verbose.
@@ -110,14 +110,14 @@ Don't forget to run `make go-tools` once first!
 Optional environment:
  *  `EXIT_ON_ERROR`: if set to `0`, don't exit the script after the first
     encountered error.  The default value is `1`.
- *  `GO`: set an alternarive name for the Go compiler.
+ *  `GO`: set an alternative name for the Go compiler.
  *  `VERBOSE`: verbosity level.  `1` shows every command that is run.  `2` also
     shows subcommands.  The default value is `0`, don't be verbose.
 
  ###  `go-test.sh`: Run Backend Tests
 
 Optional environment:
- *  `GO`: set an alternarive name for the Go compiler.
+ *  `GO`: set an alternative name for the Go compiler.
  *  `RACE`: set to `0` to not use the Go race detector.  The default value is
     `1`, use the race detector.
  *  `TIMEOUT_FLAGS`: set timeout flags for tests.  The default value is
@@ -133,7 +133,7 @@ Installs the Go static analysis and other tools into `${PWD}/bin`.  Either add
 directly, or use the commands through `make` (for example, `make go-lint`).
 
 Optional environment:
- *  `GO`: set an alternarive name for the Go compiler.
+ *  `GO`: set an alternative name for the Go compiler.
 
  ###  `version.sh`: Generate And Print The Current Version
 
