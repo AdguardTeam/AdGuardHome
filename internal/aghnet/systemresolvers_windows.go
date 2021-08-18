@@ -13,8 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -115,12 +113,6 @@ func (sr *systemResolvers) getAddrs() (addrs []string, err error) {
 		return nil, fmt.Errorf("getting the command's stdout pipe: %w", err)
 	}
 
-	var stdoutLimited io.Reader
-	stdoutLimited, err = aghio.LimitReader(stdout, aghos.MaxCmdOutputSize)
-	if err != nil {
-		return nil, fmt.Errorf("limiting stdout reader: %w", err)
-	}
-
 	go writeExit(stdin)
 
 	err = cmd.Start()
@@ -128,7 +120,7 @@ func (sr *systemResolvers) getAddrs() (addrs []string, err error) {
 		return nil, fmt.Errorf("start command executing: %w", err)
 	}
 
-	s := bufio.NewScanner(stdoutLimited)
+	s := bufio.NewScanner(stdout)
 	addrs = scanAddrs(s)
 
 	err = cmd.Wait()

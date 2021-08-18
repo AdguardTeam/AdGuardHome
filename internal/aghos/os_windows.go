@@ -4,8 +4,6 @@
 package aghos
 
 import (
-	"syscall"
-
 	"golang.org/x/sys/windows"
 )
 
@@ -32,10 +30,6 @@ func haveAdminRights() (bool, error) {
 		return false, nil
 	}
 	return true, nil
-}
-
-func sendProcessSignal(pid int, sig syscall.Signal) error {
-	return Unsupported("kill")
 }
 
 func isOpenWrt() (ok bool) {

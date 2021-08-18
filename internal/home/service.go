@@ -97,41 +97,48 @@ func sendSigReload() {
 	}
 
 	pidfile := fmt.Sprintf("/var/run/%s.pid", serviceName)
+	var pid int
 	data, err := os.ReadFile(pidfile)
 	if errors.Is(err, os.ErrNotExist) {
-		var code int
-		var psdata string
-		code, psdata, err = aghos.RunCommand("ps", "-C", serviceName, "-o", "pid=")
-		if err != nil || code != 0 {
-			log.Error("finding AdGuardHome process: code: %d, error: %s", code, err)
+		if pid, err = aghos.PIDByCommand(serviceName, os.Getpid()); err != nil {
+			log.Error("finding AdGuardHome process: %s", err)
 
 			return
 		}
-
-		data = []byte(psdata)
 	} else if err != nil {
 		log.Error("reading pid file %s: %s", pidfile, err)
 
 		return
+
+	} else {
+		parts := strings.SplitN(string(data), "\n", 2)
+		if len(parts) == 0 {
+			log.Error("can't read pid file %s: bad value", pidfile)
+
+			return
+		}
+
+		if pid, err = strconv.Atoi(strings.TrimSpace(parts[0])); err != nil {
+			log.Error("can't read pid file %s: %s", pidfile, err)
+
+			return
+		}
 	}
 
-	parts := strings.SplitN(string(data), "\n", 2)
-	if len(parts) == 0 {
-		log.Error("Can't read PID file %s: bad value", pidfile)
+	var proc *os.Process
+	if proc, err = os.FindProcess(pid); err != nil {
+		log.Error("can't send signal to pid %d: %s", pid, err)
+
 		return
 	}
 
-	pid, err := strconv.Atoi(strings.TrimSpace(parts[0]))
-	if err != nil {
-		log.Error("Can't read PID file %s: %s", pidfile, err)
+	if err = proc.Signal(syscall.SIGHUP); err != nil {
+		log.Error("Can't send signal to pid %d: %s", pid, err)
+
 		return
 	}
-	err = aghos.SendProcessSignal(pid, syscall.SIGHUP)
-	if err != nil {
-		log.Error("Can't send signal to PID %d: %s", pid, err)
-		return
-	}
-	log.Debug("Sent signal to PID %d", pid)
+
+	log.Debug("sent signal to PID %d", pid)
 }
 
 // handleServiceControlAction one of the possible control actions:
@@ -541,6 +548,6 @@ name="{{.Name}}"
 {{.Name}}_user="root"
 pidfile="/var/run/${name}.pid"
 command="/usr/sbin/daemon"
-command_args="-P ${pidfile} -f -r {{.WorkingDirectory}}/{{.Name}}"
+command_args="-p ${pidfile} -f -r {{.WorkingDirectory}}/{{.Name}}"
 run_rc_command "$1"
 `

@@ -25,10 +25,6 @@ func haveAdminRights() (bool, error) {
 	return os.Getuid() == 0, nil
 }
 
-func sendProcessSignal(pid int, sig syscall.Signal) error {
-	return syscall.Kill(pid, sig)
-}
-
 func isOpenWrt() (ok bool) {
 	var err error
 	ok, err = FileWalker(func(r io.Reader) (_ []string, cont bool, err error) {
