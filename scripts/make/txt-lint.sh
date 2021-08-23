@@ -46,4 +46,5 @@ not_found() {
 }
 trap not_found EXIT
 
-git ls-files -- '*.md' '*.yaml' '*.yml' | xargs misspell --error
+git ls-files -- '*.md' '*.yaml' '*.yml' 'client/src/__locales/en.json'\
+	| xargs misspell --error

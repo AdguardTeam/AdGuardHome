@@ -49,9 +49,12 @@ trap not_found EXIT
 
 # Warnings
 
+go_version="$( "$GO" version )"
+readonly go_version
+
 go_min_version='go1.16'
 go_version_msg="
-warning: your go version is different from the recommended minimal one (${go_min_version}).
+warning: your go version (${go_version}) is different from the recommended minimal one (${go_min_version}).
 if you have the version installed, please set the GO environment variable.
 for example:
 
@@ -59,7 +62,8 @@ for example:
 "
 readonly go_min_version go_version_msg
 
-case "$( "$GO" version )"
+
+case "$go_version"
 in
 ('go version'*"$go_min_version"*)
 	# Go on.
