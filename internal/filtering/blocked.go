@@ -31,6 +31,7 @@ var serviceRulesArray = []svc{
 		"||messenger.com^",
 		"||facebookcorewwwi.onion^",
 		"||fbcdn.com^",
+		"||fb.watch^",
 	}},
 	{"twitter", []string{"||twitter.com^", "||twttr.com^", "||t.co^", "||twimg.com^"}},
 	{"youtube", []string{
@@ -206,6 +207,8 @@ var serviceRulesArray = []svc{
 	{"disneyplus", []string{
 		"||disney-plus.net^",
 		"||disneyplus.com^",
+		"||disney.playback.edge.bamgrid.com^",
+		"||media.dssott.com^",
 	}},
 	{"hulu", []string{
 		"||hulu.com^",
