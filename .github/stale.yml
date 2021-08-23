@@ -5,6 +5,7 @@
 # Issues with these labels will never be considered stale.
 'exemptLabels':
 - 'bug'
+- 'documentation'
 - 'enhancement'
 - 'feature request'
 - 'localization'
