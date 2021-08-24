@@ -27,7 +27,8 @@ and this project adheres to
 - Settable timeouts for querying the upstream servers ([#2280]).
 - Configuration file parameters to change group and user ID on startup on Unix
   ([#2763]).
-- Experimental OpenBSD support for AMD64 and 64-bit ARM CPUs ([#2439], [#3225]).
+- Experimental OpenBSD support for AMD64 and 64-bit ARM CPUs ([#2439], [#3225],
+  [#3226]).
 - Support for custom port in DNS-over-HTTPS profiles for Apple's devices
   ([#3172]).
 - `darwin/arm64` support ([#2443]).
@@ -118,6 +119,7 @@ and this project adheres to
 [#3198]: https://github.com/AdguardTeam/AdGuardHome/issues/3198
 [#3217]: https://github.com/AdguardTeam/AdGuardHome/issues/3217
 [#3225]: https://github.com/AdguardTeam/AdGuardHome/issues/3225
+[#3226]: https://github.com/AdguardTeam/AdGuardHome/issues/3226
 [#3256]: https://github.com/AdguardTeam/AdGuardHome/issues/3256
 [#3257]: https://github.com/AdguardTeam/AdGuardHome/issues/3257
 [#3289]: https://github.com/AdguardTeam/AdGuardHome/issues/3289

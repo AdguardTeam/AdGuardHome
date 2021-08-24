@@ -8,8 +8,10 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/kardianos/service"
@@ -26,33 +28,37 @@ const (
 	serviceDescription = "AdGuard Home: Network-level blocker"
 )
 
-// Represents the program that will be launched by a service or daemon
+// program represents the program that will be launched by as a service or a
+// daemon.
 type program struct {
 	clientBuildFS fs.FS
 	opts          options
 }
 
-// Start should quickly start the program
-func (p *program) Start(s service.Service) error {
-	// Start should not block. Do the actual work async.
+// Start implements service.Interface interface for *program.
+func (p *program) Start(_ service.Service) (err error) {
+	// Start should not block.  Do the actual work async.
 	args := p.opts
 	args.runningAsService = true
+
 	go run(args, p.clientBuildFS)
 
 	return nil
 }
 
-// Stop stops the program
-func (p *program) Stop(s service.Service) error {
-	// Stop should not block. Return with a few seconds.
+// Stop implements service.Interface interface for *program.
+func (p *program) Stop(_ service.Service) error {
+	// Stop should not block.  Return with a few seconds.
 	if Context.appSignalChannel == nil {
 		os.Exit(0)
 	}
+
 	Context.appSignalChannel <- syscall.SIGINT
+
 	return nil
 }
 
-// svcStatus check the service's status.
+// svcStatus returns the service's status.
 //
 // On OpenWrt, the service utility may not exist.  We use our service script
 // directly in this case.
@@ -87,8 +93,8 @@ func svcAction(s service.Service, action string) (err error) {
 	return err
 }
 
-// Send SIGHUP to a process with ID taken from our pid-file
-// If pid-file doesn't exist, find our PID using 'ps' command
+// Send SIGHUP to a process with PID taken from our .pid file.  If it doesn't
+// exist, find our PID using 'ps' command.
 func sendSigReload() {
 	if runtime.GOOS == "windows" {
 		log.Error("not implemented on windows")
@@ -152,11 +158,16 @@ func sendSigReload() {
 // it is specified when we register a service, and it indicates to the app
 // that it is being run as a service/daemon.
 func handleServiceControlAction(opts options, clientBuildFS fs.FS) {
+	// Call chooseSystem expicitly to introduce OpenBSD support for service
+	// package.  It's a noop for other GOOS values.
+	chooseSystem()
+
 	action := opts.serviceControlAction
 	log.Printf("Service control action: %s", action)
 
 	if action == "reload" {
 		sendSigReload()
+
 		return
 	}
 
@@ -164,6 +175,7 @@ func handleServiceControlAction(opts options, clientBuildFS fs.FS) {
 	if err != nil {
 		log.Fatal("Unable to find the path to the current directory")
 	}
+
 	runOpts := opts
 	runOpts.serviceControlAction = "run"
 	svcConfig := &service.Config{
@@ -174,39 +186,39 @@ func handleServiceControlAction(opts options, clientBuildFS fs.FS) {
 		Arguments:        serialize(runOpts),
 	}
 	configureService(svcConfig)
+
 	prg := &program{
 		clientBuildFS: clientBuildFS,
 		opts:          runOpts,
 	}
-	s, err := service.New(prg, svcConfig)
-	if err != nil {
+	var s service.Service
+	if s, err = service.New(prg, svcConfig); err != nil {
 		log.Fatal(err)
 	}
 
-	if action == "status" {
+	switch action {
+	case "status":
 		handleServiceStatusCommand(s)
-	} else if action == "run" {
-		err = s.Run()
-		if err != nil {
+	case "run":
+		if err = s.Run(); err != nil {
 			log.Fatalf("Failed to run service: %s", err)
 		}
-	} else if action == "install" {
+	case "install":
 		initConfigFilename(opts)
 		initWorkingDir(opts)
 		handleServiceInstallCommand(s)
-	} else if action == "uninstall" {
+	case "uninstall":
 		handleServiceUninstallCommand(s)
-	} else {
-		err = svcAction(s, action)
-		if err != nil {
+	default:
+		if err = svcAction(s, action); err != nil {
 			log.Fatal(err)
 		}
 	}
 
-	log.Printf("Action %s has been done successfully on %s", action, service.ChosenSystem().String())
+	log.Printf("action %s has been done successfully on %s", action, service.ChosenSystem())
 }
 
-// handleServiceStatusCommand handles service "status" command
+// handleServiceStatusCommand handles service "status" command.
 func handleServiceStatusCommand(s service.Service) {
 	status, errSt := svcStatus(s)
 	if errSt != nil {
@@ -231,15 +243,16 @@ func handleServiceInstallCommand(s service.Service) {
 	}
 
 	if aghos.IsOpenWrt() {
-		// On OpenWrt it is important to run enable after the service installation
-		// Otherwise, the service won't start on the system startup
+		// On OpenWrt it is important to run enable after the service
+		// installation Otherwise, the service won't start on the system
+		// startup.
 		_, err = runInitdCommand("enable")
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
-	// Start automatically after install
+	// Start automatically after install.
 	err = svcAction(s, "start")
 	if err != nil {
 		log.Fatalf("Failed to start the service: %s", err)
@@ -267,14 +280,13 @@ func handleServiceUninstallCommand(s service.Service) {
 		}
 	}
 
-	err := svcAction(s, "uninstall")
-	if err != nil {
+	if err := svcAction(s, "uninstall"); err != nil {
 		log.Fatal(err)
 	}
 
 	if runtime.GOOS == "darwin" {
 		// Remove log files on cleanup and log errors.
-		err = os.Remove(launchdStdoutPath)
+		err := os.Remove(launchdStdoutPath)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			log.Printf("removing stdout file: %s", err)
 		}
@@ -313,6 +325,9 @@ func configureService(c *service.Config) {
 	} else if runtime.GOOS == "freebsd" {
 		c.Option["SysvScript"] = freeBSDScript
 	}
+
+	c.Option["RunComScript"] = openBSDScript
+	c.Option["SvcInfo"] = fmt.Sprintf("%s %s", version.Full(), time.Now())
 }
 
 // runInitdCommand runs init.d service command
@@ -550,4 +565,18 @@ pidfile="/var/run/${name}.pid"
 command="/usr/sbin/daemon"
 command_args="-p ${pidfile} -f -r {{.WorkingDirectory}}/{{.Name}}"
 run_rc_command "$1"
+`
+
+const openBSDScript = `#!/bin/sh
+#
+# $OpenBSD: {{ .SvcInfo }}
+
+daemon="{{.Path}}"
+daemon_flags={{ .Arguments | args }}
+
+. /etc/rc.d/rc.subr
+
+rc_bg=YES
+
+rc_cmd $1
 `

@@ -116,13 +116,6 @@ func Main(clientBuildFS fs.FS) {
 	}()
 
 	if args.serviceControlAction != "" {
-		// TODO(a.garipov): github.com/kardianos/service doesn't seem to
-		// support OpenBSD currently.  Either patch it to do so or make
-		// our own implementation of the service.System interface.
-		if runtime.GOOS == "openbsd" {
-			log.Fatal("service actions are not supported on openbsd, see issue 3226")
-		}
-
 		handleServiceControlAction(args, clientBuildFS)
 
 		return
