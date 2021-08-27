@@ -15,6 +15,8 @@ and this project adheres to
 
 ### Added
 
+- New `FastestTimeout` field that replaces the default timeout for dialing the
+  IP addresses when AdGuard Home works in "Fastest IP address" mode ([#1992]).
 - Static IP address detection on FreeBSD ([#3289]).
 - Optimistic cache ([#2145]).
 - New possible value of `6h` for `querylog_interval` setting ([#2504]).
@@ -139,6 +141,7 @@ In this release, the schema version has changed from 10 to 12.
 [#1381]: https://github.com/AdguardTeam/AdGuardHome/issues/1381
 [#1691]: https://github.com/AdguardTeam/AdGuardHome/issues/1691
 [#1898]: https://github.com/AdguardTeam/AdGuardHome/issues/1898
+[#1992]: https://github.com/AdguardTeam/AdGuardHome/issues/1992
 [#2141]: https://github.com/AdguardTeam/AdGuardHome/issues/2141
 [#2145]: https://github.com/AdguardTeam/AdGuardHome/issues/2145
 [#2280]: https://github.com/AdguardTeam/AdGuardHome/issues/2280

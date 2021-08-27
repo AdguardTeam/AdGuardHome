@@ -1,4 +1,5 @@
-package home
+// Package aghtime defines some types for convenient work with time values.
+package aghtime
 
 import (
 	"time"

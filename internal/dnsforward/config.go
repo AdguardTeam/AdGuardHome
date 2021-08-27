@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtime"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -87,6 +88,9 @@ type FilteringConfig struct {
 	BootstrapDNS        []string `yaml:"bootstrap_dns"` // a list of bootstrap DNS for DoH and DoT (plain DNS only)
 	AllServers          bool     `yaml:"all_servers"`   // if true, parallel queries to all configured upstream servers are enabled
 	FastestAddr         bool     `yaml:"fastest_addr"`  // use Fastest Address algorithm
+	// FastestTimeout replaces the default timeout for dialing IP addresses
+	// when FastestAddr is true.
+	FastestTimeout aghtime.Duration `yaml:"fastest_timeout"`
 
 	// Access settings
 	// --
@@ -236,6 +240,7 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 		proxyConfig.UpstreamMode = proxy.UModeParallel
 	} else if s.conf.FastestAddr {
 		proxyConfig.UpstreamMode = proxy.UModeFastestAddr
+		proxyConfig.FastestPingTimeout = s.conf.FastestTimeout.Duration
 	}
 
 	if len(s.conf.BogusNXDomain) > 0 {

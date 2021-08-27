@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtime"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -684,7 +685,7 @@ func upgradeSchema11to12(diskConf yobj) (err error) {
 		}
 	}
 
-	dns[field] = Duration{Duration: time.Duration(qlogIvl) * 24 * time.Hour}
+	dns[field] = aghtime.Duration{Duration: time.Duration(qlogIvl) * 24 * time.Hour}
 
 	return nil
 }

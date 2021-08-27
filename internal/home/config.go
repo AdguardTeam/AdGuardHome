@@ -8,12 +8,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtime"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/google/renameio/maybe"
@@ -106,9 +108,9 @@ type dnsConfig struct {
 	QueryLogEnabled     bool `yaml:"querylog_enabled"`      // if true, query log is enabled
 	QueryLogFileEnabled bool `yaml:"querylog_file_enabled"` // if true, query log will be written to a file
 	// QueryLogInterval is the interval for query log's files rotation.
-	QueryLogInterval  Duration `yaml:"querylog_interval"`
-	QueryLogMemSize   uint32   `yaml:"querylog_size_memory"` // number of entries kept in memory before they are flushed to disk
-	AnonymizeClientIP bool     `yaml:"anonymize_client_ip"`  // anonymize clients' IP addresses in logs and stats
+	QueryLogInterval  aghtime.Duration `yaml:"querylog_interval"`
+	QueryLogMemSize   uint32           `yaml:"querylog_size_memory"` // number of entries kept in memory before they are flushed to disk
+	AnonymizeClientIP bool             `yaml:"anonymize_client_ip"`  // anonymize clients' IP addresses in logs and stats
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 
@@ -117,7 +119,7 @@ type dnsConfig struct {
 	DnsfilterConf              filtering.Config `yaml:",inline"`
 
 	// UpstreamTimeout is the timeout for querying upstream servers.
-	UpstreamTimeout Duration `yaml:"upstream_timeout"`
+	UpstreamTimeout aghtime.Duration `yaml:"upstream_timeout"`
 
 	// LocalDomainName is the domain name used for known internal hosts.
 	// For example, a machine called "myhost" can be addressed as
@@ -178,6 +180,9 @@ var config = configuration{
 			Ratelimit:          20,
 			RefuseAny:          true,
 			AllServers:         false,
+			FastestTimeout: aghtime.Duration{
+				Duration: fastip.DefaultPingWaitTimeout,
+			},
 
 			TrustedProxies: []string{"127.0.0.0/8", "::1/128"},
 
@@ -189,7 +194,7 @@ var config = configuration{
 		},
 		FilteringEnabled:           true, // whether or not use filter lists
 		FiltersUpdateIntervalHours: 24,
-		UpstreamTimeout:            Duration{Duration: dnsforward.DefaultTimeout},
+		UpstreamTimeout:            aghtime.Duration{Duration: dnsforward.DefaultTimeout},
 		LocalDomainName:            "lan",
 		ResolveClients:             true,
 		UsePrivateRDNS:             true,
@@ -216,7 +221,7 @@ func initConfig() {
 
 	config.DNS.QueryLogEnabled = true
 	config.DNS.QueryLogFileEnabled = true
-	config.DNS.QueryLogInterval = Duration{Duration: 90 * 24 * time.Hour}
+	config.DNS.QueryLogInterval = aghtime.Duration{Duration: 90 * 24 * time.Hour}
 	config.DNS.QueryLogMemSize = 1000
 
 	config.DNS.CacheSize = 4 * 1024 * 1024
@@ -285,7 +290,7 @@ func parseConfig() error {
 	}
 
 	if config.DNS.UpstreamTimeout.Duration == 0 {
-		config.DNS.UpstreamTimeout = Duration{Duration: dnsforward.DefaultTimeout}
+		config.DNS.UpstreamTimeout = aghtime.Duration{Duration: dnsforward.DefaultTimeout}
 	}
 
 	return nil
@@ -332,7 +337,7 @@ func (c *configuration) write() error {
 		Context.queryLog.WriteDiskConfig(&dc)
 		config.DNS.QueryLogEnabled = dc.Enabled
 		config.DNS.QueryLogFileEnabled = dc.FileEnabled
-		config.DNS.QueryLogInterval = Duration{Duration: dc.RotationIvl}
+		config.DNS.QueryLogInterval = aghtime.Duration{Duration: dc.RotationIvl}
 		config.DNS.QueryLogMemSize = dc.MemSize
 		config.DNS.AnonymizeClientIP = dc.AnonymizeClientIP
 	}
