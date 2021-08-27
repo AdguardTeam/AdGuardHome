@@ -76,8 +76,8 @@ const Logs = () => {
     const filter = useSelector((state) => state.queryLogs.filter, shallowEqual);
     const logs = useSelector((state) => state.queryLogs.logs, shallowEqual);
 
-    const search = filter?.search || search_url_param || '';
-    const response_status = filter?.response_status || response_status_url_param || '';
+    const search = search_url_param || filter?.search || '';
+    const response_status = response_status_url_param || filter?.response_status || '';
 
     const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < SMALL_SCREEN_SIZE);
     const [detailedDataCurrent, setDetailedDataCurrent] = useState({});
