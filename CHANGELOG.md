@@ -62,6 +62,46 @@ and this project adheres to
   file, together with the new `group` and `user` settings ([#2763]).
 - Permissions on filter files are now `0o644` instead of `0o600` ([#3198]).
 
+#### Configuration Changes
+
+In this release, the schema version has changed from 10 to 12.
+
+- Parameter `dns.querylog_interval`, which in schema versions 11 and earlier
+  used to be an integer number of days, is now a string with a human-readable
+  duration:
+
+  ```yaml
+  # BEFORE:
+  'dns':
+    # …
+    'querylog_interval': 90
+
+  # AFTER:
+  'dns':
+    # …
+    'querylog_interval': '2160h'
+  ```
+
+  To rollback this change, convert the parameter back into days and change the
+  `schema_version` back to `11`.
+
+- Parameter `rlimit_nofile`, which in schema versions 10 and earlier used to be
+  on the top level, is now moved to the new `os` object:
+
+  ```yaml
+  # BEFORE:
+  'rlimit_nofile': 42
+
+  # AFTER:
+  'os':
+    'group': ''
+    'rlimit_nofile': 42
+    'user': ''
+  ```
+
+  To rollback this change, move the parameter on the top level and change the
+  `schema_version` back to `10`.
+
 ### Deprecated
 
 - Go 1.16 support.  v0.108.0 will require at least Go 1.17 to build.
