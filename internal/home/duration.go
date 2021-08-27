@@ -23,22 +23,30 @@ type Duration struct {
 //
 func (d Duration) String() (str string) {
 	str = d.Duration.String()
-	secs := d.Seconds()
-	var secsInt int
-	if secsInt = int(secs); float64(secsInt) != secs || secsInt%60 != 0 {
-		return str
-	}
 
 	const (
 		tailMin    = len(`0s`)
 		tailMinSec = len(`0m0s`)
+
+		secsInHour = time.Hour / time.Second
+		minsInHour = time.Hour / time.Minute
 	)
 
-	if (secsInt%3600)/60 != 0 {
-		return str[:len(str)-tailMin]
-	}
+	switch rounded := d.Duration / time.Second; {
+	case
+		rounded == 0,
+		rounded*time.Second != d.Duration,
+		rounded%60 != 0:
+		// Return the uncutted value if it's either equal to zero or has
+		// fractions of a second or even whole seconds in it.
+		return str
 
-	return str[:len(str)-tailMinSec]
+	case (rounded%secsInHour)/minsInHour != 0:
+		return str[:len(str)-tailMin]
+
+	default:
+		return str[:len(str)-tailMinSec]
+	}
 }
 
 // MarshalText implements the encoding.TextMarshaler interface for Duration.

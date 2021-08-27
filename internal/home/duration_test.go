@@ -46,6 +46,9 @@ func TestDuration_String(t *testing.T) {
 	}, {
 		name: "1m1.001s",
 		val:  time.Minute + time.Second + time.Millisecond,
+	}, {
+		name: "0s",
+		val:  0,
 	}}
 
 	for _, tc := range testCases {
