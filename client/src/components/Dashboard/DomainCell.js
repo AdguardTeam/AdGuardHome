@@ -17,7 +17,6 @@ const renderLink = ({ url, name }) => <a
     <strong>{name}</strong>
 </a>;
 
-
 const getTrackerInfo = (trackerData) => [{
     key: 'name_table_header',
     value: trackerData,

@@ -47,7 +47,6 @@ Submit = connect((state) => {
     };
 })(Submit);
 
-
 export default flow([
     withTranslation(),
     reduxForm({

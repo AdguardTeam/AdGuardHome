@@ -451,7 +451,6 @@ export const findActiveDhcp = (name) => async (dispatch, getState) => {
             dispatch(addErrorToast({ error: 'dhcp_static_ip_error' }));
         }
 
-
         if (isError) {
             dispatch(addErrorToast({ error: 'dhcp_error' }));
         }

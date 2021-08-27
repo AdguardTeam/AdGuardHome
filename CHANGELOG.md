@@ -44,6 +44,7 @@ and this project adheres to
 
 ### Changed
 
+- Don't show the private key in API responses if it was saved as a string ([#1898]).
 - Better OpenWrt detection ([#3435]).
 - DNS-over-HTTPS queries that come from HTTP proxies in the `trusted_proxies`
   list now use the real IP address of the client instead of the address of the
@@ -95,6 +96,7 @@ and this project adheres to
 
 [#1381]: https://github.com/AdguardTeam/AdGuardHome/issues/1381
 [#1691]: https://github.com/AdguardTeam/AdGuardHome/issues/1691
+[#1898]: https://github.com/AdguardTeam/AdGuardHome/issues/1898
 [#2141]: https://github.com/AdguardTeam/AdGuardHome/issues/2141
 [#2145]: https://github.com/AdguardTeam/AdGuardHome/issues/2145
 [#2280]: https://github.com/AdguardTeam/AdGuardHome/issues/2280

@@ -18,7 +18,7 @@ import i18n from '../../../i18n';
 import KeyStatus from './KeyStatus';
 import CertificateStatus from './CertificateStatus';
 import {
-    DNS_OVER_QUIC_PORT, DNS_OVER_TLS_PORT, FORM_NAME, STANDARD_HTTPS_PORT,
+    DNS_OVER_QUIC_PORT, DNS_OVER_TLS_PORT, FORM_NAME, STANDARD_HTTPS_PORT, ENCRYPTION_SOURCE,
 } from '../../../helpers/constants';
 
 const validate = (values) => {
@@ -46,6 +46,7 @@ const clearFields = (change, setTlsConfig, t) => {
         server_name: '',
         force_https: false,
         enabled: false,
+        private_key_saved: false,
     };
     // eslint-disable-next-line no-alert
     if (window.confirm(t('encryption_reset'))) {
@@ -83,6 +84,7 @@ let Form = (props) => {
         setTlsConfig,
         certificateSource,
         privateKeySource,
+        privateKeySaved,
     } = props;
 
     const isSavingDisabled = invalid
@@ -265,7 +267,7 @@ let Form = (props) => {
                             </div>
                         </div>
 
-                        {certificateSource === 'content' && (
+                        {certificateSource === ENCRYPTION_SOURCE.CONTENT && (
                             <Field
                                 id="certificate_chain"
                                 name="certificate_chain"
@@ -277,7 +279,7 @@ let Form = (props) => {
                                 disabled={!isEnabled}
                             />
                         )}
-                        {certificateSource === 'path' && (
+                        {certificateSource === ENCRYPTION_SOURCE.PATH && (
                             <Field
                                 id="certificate_path"
                                 name="certificate_path"
@@ -318,7 +320,7 @@ let Form = (props) => {
                                     component={renderRadioField}
                                     type="radio"
                                     className="form-control mr-2"
-                                    value="path"
+                                    value={ENCRYPTION_SOURCE.PATH}
                                     placeholder={t('encryption_key_source_path')}
                                     disabled={!isEnabled}
                                 />
@@ -327,28 +329,15 @@ let Form = (props) => {
                                     component={renderRadioField}
                                     type="radio"
                                     className="form-control mr-2"
-                                    value="content"
+                                    value={ENCRYPTION_SOURCE.CONTENT}
                                     placeholder={t('encryption_key_source_content')}
                                     disabled={!isEnabled}
                                 />
                             </div>
                         </div>
 
-                        {privateKeySource === 'content' && (
+                        {privateKeySource === ENCRYPTION_SOURCE.PATH && (
                             <Field
-                                id="private_key"
-                                name="private_key"
-                                component="textarea"
-                                type="text"
-                                className="form-control form-control--textarea"
-                                placeholder={t('encryption_key_input')}
-                                onChange={handleChange}
-                                disabled={!isEnabled}
-                            />
-                        )}
-                        {privateKeySource === 'path' && (
-                            <Field
-                                id="private_key_path"
                                 name="private_key_path"
                                 component={renderInputField}
                                 type="text"
@@ -358,6 +347,36 @@ let Form = (props) => {
                                 disabled={!isEnabled}
                             />
                         )}
+                        {privateKeySource === ENCRYPTION_SOURCE.CONTENT && [
+                            <Field
+                                key="private_key_saved"
+                                name="private_key_saved"
+                                type="checkbox"
+                                className="form__group form__group--settings mb-2"
+                                component={CheckboxField}
+                                disabled={!isEnabled}
+                                placeholder={t('use_saved_key')}
+                                onChange={(event) => {
+                                    if (event.target.checked) {
+                                        change('private_key', '');
+                                    }
+                                    if (handleChange) {
+                                        handleChange(event);
+                                    }
+                                }}
+                            />,
+                            <Field
+                                id="private_key"
+                                key="private_key"
+                                name="private_key"
+                                component="textarea"
+                                type="text"
+                                className="form-control form-control--textarea"
+                                placeholder={t('encryption_key_input')}
+                                onChange={handleChange}
+                                disabled={!isEnabled || privateKeySaved}
+                            />,
+                        ]}
                     </div>
                     <div className="form__status">
                         {(privateKey || privateKeyPath) && (
@@ -422,6 +441,7 @@ Form.propTypes = {
     setTlsConfig: PropTypes.func.isRequired,
     certificateSource: PropTypes.string,
     privateKeySource: PropTypes.string,
+    privateKeySaved: PropTypes.bool,
 };
 
 const selector = formValueSelector(FORM_NAME.ENCRYPTION);
@@ -434,6 +454,7 @@ Form = connect((state) => {
     const privateKeyPath = selector(state, 'private_key_path');
     const certificateSource = selector(state, 'certificate_source');
     const privateKeySource = selector(state, 'key_source');
+    const privateKeySaved = selector(state, 'private_key_saved');
     return {
         isEnabled,
         certificateChain,
@@ -442,6 +463,7 @@ Form = connect((state) => {
         privateKeyPath,
         certificateSource,
         privateKeySource,
+        privateKeySaved,
     };
 })(Form);
 

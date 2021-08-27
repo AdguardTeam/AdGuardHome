@@ -29,9 +29,13 @@ class Encryption extends Component {
     }, DEBOUNCE_TIMEOUT);
 
     getInitialValues = (data) => {
-        const { certificate_chain, private_key } = data;
-        const certificate_source = certificate_chain ? 'content' : 'path';
-        const key_source = private_key ? 'content' : 'path';
+        const { certificate_chain, private_key, private_key_saved } = data;
+        const certificate_source = certificate_chain
+            ? ENCRYPTION_SOURCE.CONTENT
+            : ENCRYPTION_SOURCE.PATH;
+        const key_source = private_key || private_key_saved
+            ? ENCRYPTION_SOURCE.CONTENT
+            : ENCRYPTION_SOURCE.PATH;
 
         return {
             ...data,
@@ -41,7 +45,9 @@ class Encryption extends Component {
     };
 
     getSubmitValues = (values) => {
-        const { certificate_source, key_source, ...config } = values;
+        const {
+            certificate_source, key_source, private_key_saved, ...config
+        } = values;
 
         if (certificate_source === ENCRYPTION_SOURCE.PATH) {
             config.certificate_chain = '';
@@ -49,10 +55,15 @@ class Encryption extends Component {
             config.certificate_path = '';
         }
 
-        if (values.key_source === ENCRYPTION_SOURCE.PATH) {
+        if (key_source === ENCRYPTION_SOURCE.PATH) {
             config.private_key = '';
         } else {
             config.private_key_path = '';
+
+            if (private_key_saved) {
+                config.private_key = '';
+                config.private_key_saved = private_key_saved;
+            }
         }
 
         return config;
@@ -71,6 +82,7 @@ class Encryption extends Component {
             private_key,
             certificate_path,
             private_key_path,
+            private_key_saved,
         } = encryption;
 
         const initialValues = this.getInitialValues({
@@ -84,6 +96,7 @@ class Encryption extends Component {
             private_key,
             certificate_path,
             private_key_path,
+            private_key_saved,
         });
 
         return (

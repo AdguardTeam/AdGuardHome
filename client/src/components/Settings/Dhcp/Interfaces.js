@@ -20,7 +20,6 @@ const renderInterfaces = (interfaces) => Object.keys(interfaces)
         return <option value={name} key={name}>{optionContent}</option>;
     });
 
-
 const getInterfaceValues = ({
     gateway_ip,
     hardware_address,

@@ -2075,6 +2075,14 @@
         'private_key':
           'type': 'string'
           'description': 'Base64 string with PEM-encoded private key'
+        'private_key_saved':
+          'type': 'boolean'
+          'example': true
+          'description': >
+            Set to true if the user has previously saved a private key as
+            a string.  This is used so that the server and the client don't
+            have to send the private key between each other every time,
+            which might lead to security issues.
         'certificate_path':
           'type': 'string'
           'description': 'Path to certificate file'

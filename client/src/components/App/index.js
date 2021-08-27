@@ -39,7 +39,6 @@ import CustomRules from '../../containers/CustomRules';
 import Services from '../Filters/Services';
 import Logs from '../Logs';
 
-
 const ROUTES = [
     {
         path: MENU_URLS.root,
