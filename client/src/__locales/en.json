@@ -503,6 +503,7 @@
     "statistics_clear_confirm": "Are you sure you want to clear statistics?",
     "statistics_retention_confirm": "Are you sure you want to change statistics retention? If you decrease the interval value, some data will be lost",
     "statistics_cleared": "Statistics successfully cleared",
+    "statistics_enable": "Enable statistics",
     "interval_hours": "{{count}} hour",
     "interval_hours_plural": "{{count}} hours",
     "filters_configuration": "Filters configuration",

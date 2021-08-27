@@ -8,13 +8,14 @@ import Form from './Form';
 class StatsConfig extends Component {
     handleFormSubmit = (values) => {
         const { t, interval: prevInterval } = this.props;
+        const config = { interval: values.interval };
 
-        if (values.interval < prevInterval) {
+        if (config.interval < prevInterval) {
             if (window.confirm(t('statistics_retention_confirm'))) {
-                this.props.setStatsConfig(values);
+                this.props.setStatsConfig(config);
             }
         } else {
-            this.props.setStatsConfig(values);
+            this.props.setStatsConfig(config);
         }
     };
 
@@ -39,7 +40,10 @@ class StatsConfig extends Component {
             >
                 <div className="form">
                     <Form
-                        initialValues={{ interval }}
+                        initialValues={{
+                            interval,
+                            enabled: !!interval,
+                        }}
                         onSubmit={this.handleFormSubmit}
                         processing={processing}
                         processingReset={processingReset}
