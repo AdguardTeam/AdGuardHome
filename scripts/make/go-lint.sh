@@ -201,12 +201,12 @@ golint --set_exit_status ./...
 
 # Apply more lax standards to the code we haven't properly refactored yet.
 gocyclo --over 17 ./internal/dhcpd/ ./internal/dnsforward/\
-	./internal/filtering/ ./internal/home/ ./internal/querylog/\
-	./internal/stats/ ./internal/updater/
+	./internal/filtering/ ./internal/home/ ./internal/querylog/
 
-# Apply stricter standards to new or vetted code
+# Apply stricter standards to new or somewhat refactored code.
 gocyclo --over 10 ./internal/aghio/ ./internal/aghnet/ ./internal/aghos/\
-	./internal/aghtest/ ./internal/tools/ ./internal/version/ ./main.go
+	./internal/aghtest/ ./internal/stats/ ./internal/tools/\
+	./internal/updater/ ./internal/version/ ./main.go
 
 gosec --quiet $go_files
 

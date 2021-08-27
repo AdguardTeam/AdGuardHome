@@ -90,29 +90,7 @@ func createObject(conf Config) (s *statsCtx, err error) {
 		firstID := id - s.conf.limit - 1
 		unitDel := 0
 
-		// TODO(a.garipov): See if this is actually necessary.  Looks
-		// like a rather bizarre solution.
-		errStop := errors.Error("stop iteration")
-		forEachBkt := func(name []byte, _ *bolt.Bucket) (cberr error) {
-			nameID := uint32(btoi(name))
-			if nameID < firstID {
-				cberr = tx.DeleteBucket(name)
-				if cberr != nil {
-					log.Debug("stats: tx.DeleteBucket: %s", cberr)
-
-					return nil
-				}
-
-				log.Debug("stats: deleted unit %d", nameID)
-				unitDel++
-
-				return nil
-			}
-
-			return errStop
-		}
-
-		err = tx.ForEach(forEachBkt)
+		err = tx.ForEach(newBucketWalker(tx, &unitDel, firstID))
 		if err != nil && !errors.Is(err, errStop) {
 			log.Debug("stats: deleting units: %s", err)
 		}
@@ -139,6 +117,39 @@ func createObject(conf Config) (s *statsCtx, err error) {
 	log.Debug("stats: initialized")
 
 	return s, nil
+}
+
+// TODO(a.garipov): See if this is actually necessary.  Looks like a rather
+// bizarre solution.
+const errStop errors.Error = "stop iteration"
+
+// newBucketWalker returns a new bucket walker that deletes old units.  The
+// integer that unitDelPtr points to is incremented for every successful
+// deletion.  If the bucket isn't deleted, f returns errStop.
+func newBucketWalker(
+	tx *bolt.Tx,
+	unitDelPtr *int,
+	firstID uint32,
+) (f func(name []byte, b *bolt.Bucket) (err error)) {
+	return func(name []byte, _ *bolt.Bucket) (err error) {
+		nameID, ok := unitNameToID(name)
+		if !ok || nameID < firstID {
+			err = tx.DeleteBucket(name)
+			if err != nil {
+				log.Debug("stats: tx.DeleteBucket: %s", err)
+
+				return nil
+			}
+
+			log.Debug("stats: deleted unit %d (name %x)", nameID, name)
+
+			*unitDelPtr++
+
+			return nil
+		}
+
+		return errStop
+	}
 }
 
 func (s *statsCtx) Start() {
@@ -215,21 +226,28 @@ func (s *statsCtx) commitTxn(tx *bolt.Tx) {
 	log.Tracef("tx.Commit")
 }
 
-// Get unit name
-func unitName(id uint32) []byte {
-	return itob(uint64(id))
+// bucketNameLen is the length of a bucket, a 64-bit unsigned integer.
+//
+// TODO(a.garipov): Find out why a 64-bit integer is used when IDs seem to
+// always be 32 bits.
+const bucketNameLen = 8
+
+// idToUnitName converts a numerical ID into a database unit name.
+func idToUnitName(id uint32) (name []byte) {
+	name = make([]byte, bucketNameLen)
+	binary.BigEndian.PutUint64(name, uint64(id))
+
+	return name
 }
 
-// Convert integer to 8-byte array (big endian)
-func itob(v uint64) []byte {
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, v)
-	return b
-}
+// unitNameToID converts a database unit name into a numerical ID.  ok is false
+// if name is not a valid database unit name.
+func unitNameToID(name []byte) (id uint32, ok bool) {
+	if len(name) < bucketNameLen {
+		return 0, false
+	}
 
-// Convert 8-byte array (big endian) to integer
-func btoi(b []byte) uint64 {
-	return binary.BigEndian.Uint64(b)
+	return uint32(binary.BigEndian.Uint64(name)), true
 }
 
 // Flush the current unit to DB and delete an old unit when a new hour is started
@@ -282,7 +300,7 @@ func (s *statsCtx) periodicFlush() {
 
 // Delete unit's data from file
 func (s *statsCtx) deleteUnit(tx *bolt.Tx, id uint32) bool {
-	err := tx.DeleteBucket(unitName(id))
+	err := tx.DeleteBucket(idToUnitName(id))
 	if err != nil {
 		log.Tracef("stats: bolt DeleteBucket: %s", err)
 
@@ -357,7 +375,7 @@ func deserialize(u *unit, udb *unitDB) {
 func (s *statsCtx) flushUnitToDB(tx *bolt.Tx, id uint32, udb *unitDB) bool {
 	log.Tracef("Flushing unit %d", id)
 
-	bkt, err := tx.CreateBucketIfNotExists(unitName(id))
+	bkt, err := tx.CreateBucketIfNotExists(idToUnitName(id))
 	if err != nil {
 		log.Error("tx.CreateBucketIfNotExists: %s", err)
 		return false
@@ -381,7 +399,7 @@ func (s *statsCtx) flushUnitToDB(tx *bolt.Tx, id uint32, udb *unitDB) bool {
 }
 
 func (s *statsCtx) loadUnitFromDB(tx *bolt.Tx, id uint32) *unitDB {
-	bkt := tx.Bucket(unitName(id))
+	bkt := tx.Bucket(idToUnitName(id))
 	if bkt == nil {
 		return nil
 	}

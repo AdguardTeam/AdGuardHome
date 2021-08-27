@@ -10,7 +10,7 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.107.0] - 2021-08-03 (APPROX.)
+## [v0.107.0] - 2021-09-14 (APPROX.)
 -->
 
 ### Added
@@ -44,7 +44,8 @@ and this project adheres to
 
 ### Changed
 
-- Don't show the private key in API responses if it was saved as a string ([#1898]).
+- Don't show the private key in API responses if it was saved as a string
+  ([#1898]).
 - Better OpenWrt detection ([#3435]).
 - DNS-over-HTTPS queries that come from HTTP proxies in the `trusted_proxies`
   list now use the real IP address of the client instead of the address of the
@@ -67,6 +68,7 @@ and this project adheres to
 
 ### Fixed
 
+- Occasional panics when reading old statistics databases ([#3506]).
 - `reload` service action on macOS and FreeBSD ([#3457]).
 - Inaccurate using of service actions in the installation script ([#3450]).
 - Client ID checking ([#3437]).
@@ -134,6 +136,7 @@ and this project adheres to
 [#3437]: https://github.com/AdguardTeam/AdGuardHome/issues/3437
 [#3450]: https://github.com/AdguardTeam/AdGuardHome/issues/3450
 [#3457]: https://github.com/AdguardTeam/AdGuardHome/issues/3457
+[#3506]: https://github.com/AdguardTeam/AdGuardHome/issues/3506
 
 
 
