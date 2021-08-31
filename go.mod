@@ -7,7 +7,7 @@ require (
 	github.com/AdguardTeam/golibs v0.9.2
 	github.com/AdguardTeam/urlfilter v0.14.6
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/ameshkov/dnscrypt/v2 v2.2.1
+	github.com/ameshkov/dnscrypt/v2 v2.2.2
 	github.com/digineo/go-ipset/v2 v2.2.1
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-ping/ping v0.0.0-20210506233800-ff8be3320020
@@ -18,15 +18,15 @@ require (
 	github.com/lucas-clemente/quic-go v0.21.1
 	github.com/mdlayher/netlink v1.4.0
 	github.com/mdlayher/raw v0.0.0-20210412142147-51b895745faf // indirect
-	github.com/miekg/dns v1.1.42
+	github.com/miekg/dns v1.1.43
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/ti-mo/netfilter v0.4.0
 	go.etcd.io/bbolt v1.3.6
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
-	golang.org/x/net v0.0.0-20210726213435-c6fcb2dbf985
-	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+	golang.org/x/net v0.0.0-20210825183410-e898025ed96a
+	golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v2 v2.4.0
 	howett.net/plist v0.0.0-20201203080718-1454fab16a06
