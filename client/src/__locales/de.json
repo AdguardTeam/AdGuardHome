@@ -208,7 +208,7 @@
     "example_upstream_sdns": "Sie können <0>DNS-Stempel</0> für <1>DNSCrypt</1> oder <2>DNS-over-HTTPS</2> Resolver benutzen",
     "example_upstream_tcp": "regulärer DNS (über TCP)",
     "all_lists_up_to_date_toast": "Alle Listen sind bereits auf dem neuesten Stand",
-    "updated_upstream_dns_toast": "Upstream-DNS-Server wurden aktualisiert",
+    "updated_upstream_dns_toast": "Upstream-Server erfolgreich gespeichert",
     "dns_test_ok_toast": "Angegebene DNS-Server arbeiten ordnungsgemäß",
     "dns_test_not_ok_toast": "Server „{{key}}“: konnte nicht verwendet werden, bitte überprüfen Sie die korrekte Schreibweise",
     "unblock": "Entsperren",
@@ -235,7 +235,7 @@
     "loading_table_status": "Wird geladen …",
     "page_table_footer_text": "Seite",
     "rows_table_footer_text": "Reihen",
-    "updated_custom_filtering_toast": "Die benutzerdefinierten Filterregeln wurden aktualisiert",
+    "updated_custom_filtering_toast": "Benutzerdefinierten Filterregeln erfolgreich gespeichert",
     "rule_removed_from_custom_filtering_toast": "Regel wurde aus den benutzerdefinierten Filterregeln entfernt: {{rule}}",
     "rule_added_to_custom_filtering_toast": "Regel wurde zu den benutzerdefinierten Filterregeln hinzugefügt: {{rule}}",
     "query_log_response_status": "Status: {{value}}",
@@ -613,5 +613,6 @@
     "port_53_faq_link": "Port 53 wird oft von Diensten wie „DNSStubListener” oder „systemresolved” belegt. Bitte lesen Sie <0>diese Anweisung</0>, wie dies behoben werden kann.",
     "adg_will_drop_dns_queries": "AdGuard Home wird alle DNS-Abfragen von diesem Client verwerfen.",
     "client_not_in_allowed_clients": "Dieser Client ist nicht zugelassen, da dieser nicht in der Liste „Erlaubte Clients” aufgeführt ist.",
-    "experimental": "Experimentell"
+    "experimental": "Experimentell",
+    "use_saved_key": "Zuvor gespeicherten Schlüssel verwenden"
 }

@@ -208,7 +208,7 @@
     "example_upstream_sdns": "możesz użyć adresu <0>DNS Stamps</0> dla protokołu <1>DNSCrypt</1> lub <2>DNS-over-HTTPS</2>",
     "example_upstream_tcp": "zwykły DNS (przez TCP)",
     "all_lists_up_to_date_toast": "Wszystkie listy są już aktualne",
-    "updated_upstream_dns_toast": "Główne serwery DNS zostały zaktualizowane",
+    "updated_upstream_dns_toast": "Serwery nadrzędne zostały pomyślnie zapisane",
     "dns_test_ok_toast": "Określone serwery DNS działają poprawnie",
     "dns_test_not_ok_toast": "Serwer \"{{key}}\": nie można go użyć, sprawdź, czy napisałeś go poprawnie",
     "unblock": "Odblokuj",
@@ -235,7 +235,7 @@
     "loading_table_status": "Wczytuję...",
     "page_table_footer_text": "Strona",
     "rows_table_footer_text": "wierszy",
-    "updated_custom_filtering_toast": "Zaktualizowano niestandardowe reguły filtrowania",
+    "updated_custom_filtering_toast": "Reguły niestandardowe zapisane pomyślnie",
     "rule_removed_from_custom_filtering_toast": "Reguła usunięta z niestandardowych reguł filtrowania: {{rule}}",
     "rule_added_to_custom_filtering_toast": "Reguła dodana do niestandardowych reguł filtrowania: {{rule}}",
     "query_log_response_status": "Status: {{value}}",
@@ -613,5 +613,6 @@
     "port_53_faq_link": "Port 53 jest często zajęty przez usługi \"DNSStubListener\" lub \"systemd-resolved\". Przeczytaj <0>tę instrukcję</0> jak to rozwiązać.",
     "adg_will_drop_dns_queries": "AdGuard Home odrzuci zapytanie DNS od tego klienta.",
     "client_not_in_allowed_clients": "Klient nie jest dozwolony, ponieważ nie ma go na liście „Dozwoleni klienci”.",
-    "experimental": "Funkcja eksperymentalna"
+    "experimental": "Funkcja eksperymentalna",
+    "use_saved_key": "Użyj wcześniej zapisanego klucza"
 }

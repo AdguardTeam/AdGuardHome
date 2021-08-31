@@ -208,7 +208,7 @@
     "example_upstream_sdns": "你可以使用 <1>DNSCrypt</1> 的 <0>DNS Stamps</0> 或者 <2>DNS-over-HTTPS</2> 解析器",
     "example_upstream_tcp": "常规 DNS（基于 TCP ）",
     "all_lists_up_to_date_toast": "所有列表都是最新的",
-    "updated_upstream_dns_toast": "上游 DNS 已更新",
+    "updated_upstream_dns_toast": "上游服务器保存成功",
     "dns_test_ok_toast": "指定的 DNS 服务器现已正常运行",
     "dns_test_not_ok_toast": "服务器 \"{{key}}\"：无法使用，请检查你输入的是否正确",
     "unblock": "放行",
@@ -235,7 +235,7 @@
     "loading_table_status": "加载中……",
     "page_table_footer_text": "页",
     "rows_table_footer_text": "行",
-    "updated_custom_filtering_toast": "自定义过滤规则已更新",
+    "updated_custom_filtering_toast": "自定义规则保存成功",
     "rule_removed_from_custom_filtering_toast": "规则已从自定义过滤规则列表中移除 {{rule}}",
     "rule_added_to_custom_filtering_toast": "规则已添加到自定义过滤规则列表中 {{rule}}",
     "query_log_response_status": "状态： {{value}}",
@@ -613,5 +613,6 @@
     "port_53_faq_link": "53端口常被DNSStubListener或systemdn解析的服务占用。请阅读<0>这份关于如何解决这一问题的说明</0>",
     "adg_will_drop_dns_queries": "AdGuard Home 会终止所有来自此客户端的DNS查询。",
     "client_not_in_allowed_clients": "此客户端不被允许，因为它不在“允许的客户端”列表中。",
-    "experimental": "实验性的"
+    "experimental": "实验性的",
+    "use_saved_key": "使用之前保存的密钥"
 }

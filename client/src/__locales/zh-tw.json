@@ -208,7 +208,7 @@
     "example_upstream_sdns": "您可使用關於 <1>DNSCrypt</1> 或 <2>DNS-over-HTTPS</2> 解析器之 <0>DNS 戳記</0>",
     "example_upstream_tcp": "一般的 DNS（透過 TCP）",
     "all_lists_up_to_date_toast": "所有的清單已是最新的",
-    "updated_upstream_dns_toast": "已更新上游的 DNS 伺服器",
+    "updated_upstream_dns_toast": "上游的伺服器被成功地儲存",
     "dns_test_ok_toast": "已明確指定的 DNS 伺服器正在正確地運作",
     "dns_test_not_ok_toast": "伺服器 \"{{key}}\"：無法被使用，請檢查您已正確地填寫它",
     "unblock": "解除封鎖",
@@ -235,7 +235,7 @@
     "loading_table_status": "正在載入…",
     "page_table_footer_text": "頁面",
     "rows_table_footer_text": "列",
-    "updated_custom_filtering_toast": "已更新自訂的過濾規則",
+    "updated_custom_filtering_toast": "自訂的規則被成功地儲存",
     "rule_removed_from_custom_filtering_toast": "從自訂的過濾規則中被移除的規則：{{rule}}",
     "rule_added_to_custom_filtering_toast": "被加至自訂的過濾規則中的規則：{{rule}}",
     "query_log_response_status": "狀態：{{value}}",
@@ -613,5 +613,6 @@
     "port_53_faq_link": "連接埠 53 常被 \"DNSStubListener\" 或 \"systemd-resolved\" 服務佔用。請閱讀有關如何解決這個的<0>用法說明</0>。",
     "adg_will_drop_dns_queries": "AdGuard Home 將持續排除來自此用戶端之所有的 DNS 查詢。",
     "client_not_in_allowed_clients": "該用戶端未被允許，因為它不在\"已允許的用戶端\"清單中。",
-    "experimental": "實驗性的"
+    "experimental": "實驗性的",
+    "use_saved_key": "使用該先前已儲存的金鑰"
 }

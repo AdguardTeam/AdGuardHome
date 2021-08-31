@@ -613,5 +613,6 @@
     "port_53_faq_link": "Vrata 53 pogosto zasedajo storitve 'DNSStubListener' ali 'Sistemsko razrešene storitve'. Preberite <0>to navodilo</0> o tem, kako to rešiti.",
     "adg_will_drop_dns_queries": "AdGuard Home bo izpustil vse poizvedbe DNS iz tega odjemalca.",
     "client_not_in_allowed_clients": "Odjemalec ni dovoljen, ker ga ni na seznamu \"Dovoljeni odjemalci\".",
-    "experimental": "Eksperimentalno"
+    "experimental": "Eksperimentalno",
+    "use_saved_key": "Uporabi prej shranjeni ključ"
 }

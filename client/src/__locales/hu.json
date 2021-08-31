@@ -208,7 +208,7 @@
     "example_upstream_sdns": "használhatja a <0> DNS Stamps</0>-ot a <1>DNSCrypt</1> vagy a <2>DNS-over-HTTPS</2> feloldások érdekében",
     "example_upstream_tcp": "hagyományos DNS (TCP felett)",
     "all_lists_up_to_date_toast": "Már minden lista naprakész",
-    "updated_upstream_dns_toast": "Frissítette az upstream DNS-kiszolgálókat",
+    "updated_upstream_dns_toast": "Upstream szerverek sikeresen mentve",
     "dns_test_ok_toast": "A megadott DNS-kiszolgálók megfelelően működnek",
     "dns_test_not_ok_toast": "Szerver \"{{key}}\": nem használható, ellenőrizze, hogy helyesen írta-e be",
     "unblock": "Feloldás",
@@ -235,7 +235,7 @@
     "loading_table_status": "Betöltés...",
     "page_table_footer_text": "Oldal",
     "rows_table_footer_text": "sor",
-    "updated_custom_filtering_toast": "Egyéni szűrőszabályok frissítve",
+    "updated_custom_filtering_toast": "Egyéni szűrőszabályok sikeresen mentve",
     "rule_removed_from_custom_filtering_toast": "Szabály eltávolítva az egyéni szűrőszabályok közül: {{rule}}",
     "rule_added_to_custom_filtering_toast": "Szabály hozzáadva az egyéni szűrőszabályokhoz: {{rule}}",
     "query_log_response_status": "Állapot: {{value}}",
@@ -613,5 +613,6 @@
     "port_53_faq_link": "Az 53-as portot gyakran a \"DNSStubListener\" vagy a \"systemd-resolved\" (rendszer által feloldott) szolgáltatások használják. Kérjük, olvassa el <0>ezt az útmutatót</0> a probléma megoldásához.",
     "adg_will_drop_dns_queries": "Az AdGuard Home eldobja az összes DNS kérést erről a kliensről.",
     "client_not_in_allowed_clients": "Ez a kliens nincs engedélyezve, mivel nincs rajta az \"Engedélyezett kliensek\" listáján.",
-    "experimental": "Kísérleti"
+    "experimental": "Kísérleti",
+    "use_saved_key": "Előzőleg mentett kulcs használata"
 }

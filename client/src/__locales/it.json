@@ -48,9 +48,9 @@
     "range_end_error": "Deve essere maggiore dell'intervallo di inizio",
     "dhcp_form_gateway_input": "IP Gateway",
     "dhcp_form_subnet_input": "Maschera di sottorete",
-    "dhcp_form_range_title": "Range indirizzi IP",
-    "dhcp_form_range_start": "Inizio range",
-    "dhcp_form_range_end": "Fine range",
+    "dhcp_form_range_title": "Intervallo di indirizzi IP",
+    "dhcp_form_range_start": "Intervallo iniziale",
+    "dhcp_form_range_end": "Intervallo finale",
     "dhcp_form_lease_title": "Tempo di lease DHCP (in secondi)",
     "dhcp_form_lease_input": "Durata lease",
     "dhcp_interface_select": "Seleziona l'interfaccia DHCP",
@@ -208,7 +208,7 @@
     "example_upstream_sdns": "puoi utilizzare <0>DNS Stamps</0> per <1>DNSCrypt</1> oppure dei risolutori <2>DNS-over-HTTPS</2>",
     "example_upstream_tcp": "DNS regolari (via TCP)",
     "all_lists_up_to_date_toast": "Tutte le liste sono aggiornate",
-    "updated_upstream_dns_toast": "Server DNS upstream aggiornati",
+    "updated_upstream_dns_toast": "I server upstream sono stati salvati correttamente",
     "dns_test_ok_toast": "I server DNS specificati funzionano correttamente",
     "dns_test_not_ok_toast": "Server \"{{key}}\": non può essere utilizzato, assicurati di averlo digitato correttamente",
     "unblock": "Sblocca",
@@ -235,7 +235,7 @@
     "loading_table_status": "Caricamento...",
     "page_table_footer_text": "Pagina",
     "rows_table_footer_text": "righe",
-    "updated_custom_filtering_toast": "Le regole dei filtri personalizzate sono state aggiornate",
+    "updated_custom_filtering_toast": "Le regole personalizzate sono state correttamente salvate",
     "rule_removed_from_custom_filtering_toast": "Regola rimossa dalle regole dei filtri personalizzate: {{rule}}",
     "rule_added_to_custom_filtering_toast": "Regola aggiunta alle regole dei filtri personalizzate: {{rule}}",
     "query_log_response_status": "Stato: {{value}}",
@@ -613,5 +613,6 @@
     "port_53_faq_link": "La Porta 53 è spesso occupata dai servizi \"DNSStubListener\" o \"systemd-resolved\". Si prega di leggere <0>queste istruzioni</0> per risolvere il problema.",
     "adg_will_drop_dns_queries": "AdGuard Home eliminerà tutte le richieste DNS da questo client.",
     "client_not_in_allowed_clients": "Il client non è consentito perché non è nell'elenco \"Client consentiti\".",
-    "experimental": "Sperimentale"
+    "experimental": "Sperimentale",
+    "use_saved_key": "Utilizza la chiave salvata in precedenza"
 }

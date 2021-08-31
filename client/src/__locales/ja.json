@@ -208,7 +208,7 @@
     "example_upstream_sdns": "<1>DNSCrypt</1> または <2>DNS-over-HTTPS</2> リゾルバのために <0>DNS Stamps</0> を使えます",
     "example_upstream_tcp": "通常のDNS（TCPでの問い合わせ）",
     "all_lists_up_to_date_toast": "すべてのリストは既に最新です",
-    "updated_upstream_dns_toast": "上流DNSサーバを更新しました",
+    "updated_upstream_dns_toast": "上流DNSサーバを保存しました。",
     "dns_test_ok_toast": "指定されたDNSサーバは正しく動作しています",
     "dns_test_not_ok_toast": "サーバ \"{{key}}\": 使用できませんでした。正しく入力されているかどうかを確認してください",
     "unblock": "ブロック解除",
@@ -235,7 +235,7 @@
     "loading_table_status": "読み込み中…",
     "page_table_footer_text": "ページ",
     "rows_table_footer_text": "行",
-    "updated_custom_filtering_toast": "カスタム・フィルタリングルールを更新しました",
+    "updated_custom_filtering_toast": "カスタムルールを保存しました。",
     "rule_removed_from_custom_filtering_toast": "ルールをカスタム・フィルタリングルールから除去しました {{rule}}",
     "rule_added_to_custom_filtering_toast": "ルールをカスタム・フィルタリングルールに追加しました {{rule}}",
     "query_log_response_status": "ステータス: {{value}}",
@@ -613,5 +613,6 @@
     "port_53_faq_link": "多くの場合、ポート53は \"DNSStubListener\" または \"systemd-resolved\" サービスによって利用されています。これを解決する方法については、<0>この手順</0>をお読みください。",
     "adg_will_drop_dns_queries": "AdGuard Homeは、このクライアントからすべてのDNSクエリを落とします。",
     "client_not_in_allowed_clients": "「許可されたクライアント」リストにないため、このクライアントは許可されていません。",
-    "experimental": "実験用"
+    "experimental": "実験用",
+    "use_saved_key": "以前に保存したキーを使用する"
 }

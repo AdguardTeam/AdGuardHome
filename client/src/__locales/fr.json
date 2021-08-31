@@ -208,7 +208,7 @@
     "example_upstream_sdns": "vous pouvez utiliser <0>DNS Stamps</0> pour <1>DNSCrypt</1> ou les resolveurs <2>DNS_over_HTTPS</2>",
     "example_upstream_tcp": "DNS classique (au-dessus de TCP)",
     "all_lists_up_to_date_toast": "Toutes les listes sont déjà à jour",
-    "updated_upstream_dns_toast": "Les serveurs DNS upstream sont mis à jour",
+    "updated_upstream_dns_toast": "Serveurs en amont enregistrés",
     "dns_test_ok_toast": "Les serveurs DNS spécifiés fonctionnent correctement",
     "dns_test_not_ok_toast": "Impossible d'utiliser le serveur « {{key}} »: veuillez vérifier si le nom saisi est bien correct",
     "unblock": "Débloquer",
@@ -235,7 +235,7 @@
     "loading_table_status": "Chargement en cours ...",
     "page_table_footer_text": "Page",
     "rows_table_footer_text": "lignes",
-    "updated_custom_filtering_toast": "Règles de filtrage d'utilisateur mises à jour",
+    "updated_custom_filtering_toast": "Règles d'utilisateur enregistrées",
     "rule_removed_from_custom_filtering_toast": "Règle retirée des règles d'utilisateur : {{rule}}",
     "rule_added_to_custom_filtering_toast": "Règle ajoutée aux règles d'utilisateur : {{rule}}",
     "query_log_response_status": "Statut : {{value}}",
@@ -613,5 +613,6 @@
     "port_53_faq_link": "Le port 53 est souvent occupé par les services « DNSStubListener » ou « systemd-resolved ». Veuillez lire <0>cette instruction</0> pour savoir comment résoudre ce problème.",
     "adg_will_drop_dns_queries": "AdGuard Home ignorera toutes les requêtes DNS de ce client.",
     "client_not_in_allowed_clients": "Le client n’est pas autorisé car il ne figure pas dans la liste « Clients autorisés ».",
-    "experimental": "Expérimental"
+    "experimental": "Expérimental",
+    "use_saved_key": "Utiliser la clef précédemment enregistrée"
 }

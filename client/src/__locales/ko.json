@@ -208,7 +208,7 @@
     "example_upstream_sdns": "<1>DNSCrypt</1>나 <2>DNS-over-HTTPS</2> 리졸버를 위해 <0>DNS 스탬프</0>를 사용할 수 있습니다",
     "example_upstream_tcp": "사용자 지정 DNS (TCP를 통한 접속)",
     "all_lists_up_to_date_toast": "모든 리스트가 이미 최신입니다",
-    "updated_upstream_dns_toast": "업스트림 DNS 서버를 업데이트하였습니다",
+    "updated_upstream_dns_toast": "업스트림 서버가 성공적으로 저장되었습니다",
     "dns_test_ok_toast": "특정 DNS 서버들은 정상적으로 동작 중입니다",
     "dns_test_not_ok_toast": "서버 \"{{key}}\": 사용할 수 없습니다, 제대로 작성했는지 확인하세요.",
     "unblock": "차단 해제",
@@ -235,7 +235,7 @@
     "loading_table_status": "로딩중...",
     "page_table_footer_text": "페이지",
     "rows_table_footer_text": "행",
-    "updated_custom_filtering_toast": "사용자 정의 필터링 규칙 업데이트",
+    "updated_custom_filtering_toast": "사용자 정의 규칙이 성공적으로 저장되었습니다",
     "rule_removed_from_custom_filtering_toast": "사용자 정의 필터링 규칙에서 규칙 제거 {{rule}}",
     "rule_added_to_custom_filtering_toast": "사용자 정의 필터링 규칙에 추가된 규칙 {{rule}}",
     "query_log_response_status": "상태: {{value}}",
@@ -613,5 +613,6 @@
     "port_53_faq_link": "53번 포트는 보통 \"DNSStubListener\"나 \"systemd-resolved\" 서비스가 이미 사용하고 있습니다. 이 문제에 대한 해결 방법을 <0>설명</0>에서 찾아보세요.",
     "adg_will_drop_dns_queries": "AdGuard Home은 이 클라이언트에서 모든 DNS 쿼리를 삭제합니다.",
     "client_not_in_allowed_clients": "이 클라이언트는 허용된 클라이언트 목록에 없으므로 허용되지 않습니다.",
-    "experimental": "실험"
+    "experimental": "실험",
+    "use_saved_key": "이전에 저장했던 키 사용하기"
 }

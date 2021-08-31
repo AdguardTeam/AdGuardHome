@@ -208,7 +208,7 @@
     "example_upstream_sdns": "du kan bruge <0>DNS Stamps</0> til <1>DNSCrypt</1> eller <2>DNS-over-HTTPS</2>-resolvers",
     "example_upstream_tcp": "almindelig DNS (over TCP)",
     "all_lists_up_to_date_toast": "Alle lister er allerede opdaterede",
-    "updated_upstream_dns_toast": "Opdaterede upstream DNS-serverene",
+    "updated_upstream_dns_toast": "Upstream-servere er gemt",
     "dns_test_ok_toast": "Angivne DNS-servere fungerer korrekt",
     "dns_test_not_ok_toast": "Server \"{{key}}\": Kunne ikke bruges. Tjek, at du har angivet den korrekt",
     "unblock": "Afblokering",
@@ -235,7 +235,7 @@
     "loading_table_status": "Indlæser...",
     "page_table_footer_text": "Side",
     "rows_table_footer_text": "rækker",
-    "updated_custom_filtering_toast": "Tilpassede filtreringsregler er nu opdateret",
+    "updated_custom_filtering_toast": "Tilpassede regler er gemt",
     "rule_removed_from_custom_filtering_toast": "Regel fjernet fra de tilpassede filtreringsregler: {{rule}}",
     "rule_added_to_custom_filtering_toast": "Regel føjet til de tilpassede filtreringsregler: {{rule}}",
     "query_log_response_status": "Status: {{value}}",
@@ -613,5 +613,6 @@
     "port_53_faq_link": "Port 53 optages ofte af \"DNSStubListener\" eller \"systemd-resolved\" tjenester. Læs <0>denne instruktion</0> om, hvordan du løser dette.",
     "adg_will_drop_dns_queries": "AdGuard Home vil afbryde alle DNS-forespørgsler fra denne klient.",
     "client_not_in_allowed_clients": "Klienten er ikke tilladt, fordi den ikke er på listen \"Tilladte klienter\".",
-    "experimental": "Eksperimentel"
+    "experimental": "Eksperimentel",
+    "use_saved_key": "Brug den tidligere gemte nøgle"
 }

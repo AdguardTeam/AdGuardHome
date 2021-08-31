@@ -613,5 +613,6 @@
     "port_53_faq_link": "Port 53 je často obsadený službami \"DNSStubListener\" alebo \"systemd-resolved\". Prečítajte si <0>tento návod</0> o tom, ako to vyriešiť.",
     "adg_will_drop_dns_queries": "AdGuard Home zruší všetky DNS dopyty od tohto klienta.",
     "client_not_in_allowed_clients": "Klient nemá povolenie, pretože sa nenachádza v zozname „Povolení klienti“.",
-    "experimental": "Experimentálne"
+    "experimental": "Experimentálne",
+    "use_saved_key": "Použiť predtým uložený kľúč"
 }

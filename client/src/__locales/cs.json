@@ -208,7 +208,7 @@
     "example_upstream_sdns": "můžete použít <0>DNS razítka</0> pro <1>DNSCrypt</1> nebo <2>DNS skrze HTTPS</2> řešitele",
     "example_upstream_tcp": "obyčejný DNS (přes TCP)",
     "all_lists_up_to_date_toast": "Všechny seznamy jsou již aktuální",
-    "updated_upstream_dns_toast": "Aktualizované upstream DNS servery",
+    "updated_upstream_dns_toast": "Odchozí servery byly úspěšně uloženy",
     "dns_test_ok_toast": "Specifikované DNS servery pracují správně",
     "dns_test_not_ok_toast": "Server \"{{key}}\": nemohl být použit, zkontrolujte, zda jste ho správně napsali",
     "unblock": "Odblokovat",
@@ -235,7 +235,7 @@
     "loading_table_status": "Načítání...",
     "page_table_footer_text": "Stránka",
     "rows_table_footer_text": "řádky",
-    "updated_custom_filtering_toast": "Aktualizovaná vlastní pravidla filtrování",
+    "updated_custom_filtering_toast": "Vlastní pravidla byla úspěšně uložena",
     "rule_removed_from_custom_filtering_toast": "Pravidlo odstraněno z vlastních pravidel filtrování: {{rule}}",
     "rule_added_to_custom_filtering_toast": "Pravidlo přidáno do vlastních pravidel filtrování: {{rule}}",
     "query_log_response_status": "Status: {{value}}",
@@ -613,5 +613,6 @@
     "port_53_faq_link": "Port 53 je často obsazen službami \"DNSStubListener\" nebo \"systemd-resolved\". Přečtěte si <0>tento návod</0> o tom, jak to vyřešit.",
     "adg_will_drop_dns_queries": "AdGuard Home zruší všechny DNS dotazy tohoto klienta.",
     "client_not_in_allowed_clients": "Tento klient není povolen, protože není na seznamu \"Povolení klienti\".",
-    "experimental": "Experimentální"
+    "experimental": "Experimentální",
+    "use_saved_key": "Použít dříve uložený klíče"
 }

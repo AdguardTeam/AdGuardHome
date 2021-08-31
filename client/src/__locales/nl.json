@@ -208,7 +208,7 @@
     "example_upstream_sdns": "je kunt <0>DNS Stamps</0> voor <1>DNSCrypt</1> of <2>DNS-via-HTTPS</2> oplossingen gebruiken",
     "example_upstream_tcp": "standaard DNS (over TCP)",
     "all_lists_up_to_date_toast": "Alle lijsten zijn reeds up-to-date",
-    "updated_upstream_dns_toast": "De upstream DNS-servers zijn bijgewerkt",
+    "updated_upstream_dns_toast": "Upstream-servers succesvol opgeslagen",
     "dns_test_ok_toast": "Opgegeven DNS-servers werken correct",
     "dns_test_not_ok_toast": "Server \"{{key}}\": kon niet worden gebruikt, controleer of je het correct hebt geschreven",
     "unblock": "Deblokkeren",
@@ -235,7 +235,7 @@
     "loading_table_status": "Laden...",
     "page_table_footer_text": "Pagina",
     "rows_table_footer_text": "rijen",
-    "updated_custom_filtering_toast": "Aangepaste filter regels zijn bijgewerkt",
+    "updated_custom_filtering_toast": "Aangepaste regels succesvol opgeslagen",
     "rule_removed_from_custom_filtering_toast": "Regel verwijderd uit de aangepaste filterregels: {{rule}}",
     "rule_added_to_custom_filtering_toast": "Regel toegevoegd aan de aangepaste filterregels: {{rule}}",
     "query_log_response_status": "Status: {{value}}",
@@ -613,5 +613,6 @@
     "port_53_faq_link": "Poort 53 wordt vaak gebruikt door services als DNSStubListener- of de systeem DNS-resolver. Lees a.u.b. <0>deze instructie</0> hoe dit is op te lossen.",
     "adg_will_drop_dns_queries": "AdGuard Home zal alle DNS verzoeken van deze toepassing/dit systeem negeren.",
     "client_not_in_allowed_clients": "De toepassing is niet toegestaan omdat deze niet in de lijst \"Toegestane toepassingen\" voorkomt.",
-    "experimental": "Experimenteel"
+    "experimental": "Experimenteel",
+    "use_saved_key": "De eerder opgeslagen sleutel gebruiken"
 }
