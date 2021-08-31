@@ -23,9 +23,9 @@
   'adguard-home':
     'command': 'AdGuardHome --no-check-update -w $SNAP_DATA'
     'plugs':
-    # Add the "netrwork-bind" plug to bind to interfaces.
+    # Add the "network-bind" plug to bind to interfaces.
     - 'network-bind'
-    # Add the "netrwork-observe" plug to be able to bind to ports below 1024
+    # Add the "network-observe" plug to be able to bind to ports below 1024
     # (cap_net_bind_service) and also to bind to a particular interface using
     # SO_BINDTODEVICE (cap_net_raw).
     - 'network-observe'

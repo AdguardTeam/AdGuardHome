@@ -15,8 +15,8 @@ and this project adheres to
 
 ### Added
 
-- New `FastestTimeout` field that replaces the default timeout for dialing the
-  IP addresses when AdGuard Home works in "Fastest IP address" mode ([#1992]).
+- Setting the timeout for IP address pinging in the "Fastest IP address" mode
+  through the new `fastest_timeout` field in the configuration file ([#1992]).
 - Static IP address detection on FreeBSD ([#3289]).
 - Optimistic cache ([#2145]).
 - New possible value of `6h` for `querylog_interval` setting ([#2504]).
@@ -46,8 +46,8 @@ and this project adheres to
 
 ### Changed
 
-- Don't show the private key in API responses if it was saved as a string
-  ([#1898]).
+- The TLS private key previously saved as a string isn't shown in API responses
+  any more ([#1898]).
 - Better OpenWrt detection ([#3435]).
 - DNS-over-HTTPS queries that come from HTTP proxies in the `trusted_proxies`
   list now use the real IP address of the client instead of the address of the

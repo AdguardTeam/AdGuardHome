@@ -567,7 +567,7 @@
       'operationId': 'filteringRefresh'
       'summary': >
         Reload filtering rules from URLs.  This might be needed if new URL was
-        just added and you dont want to wait for automatic refresh to kick in.
+        just added and you don't want to wait for automatic refresh to kick in.
         This API request is ratelimited, so you can call it freely as often as
         you like, it wont create unnecessary burden on servers that host the
         URL.  This should work as intended, a `force` parameter is offered as
