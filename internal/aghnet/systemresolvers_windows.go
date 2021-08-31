@@ -99,7 +99,13 @@ func scanAddrs(s *bufio.Scanner) (addrs []string) {
 // local resolvers addresses on Windows.  We execute the external command for
 // now that is not the most accurate way.
 func (sr *systemResolvers) getAddrs() (addrs []string, err error) {
-	cmd := exec.Command("nslookup")
+	var cmdPath string
+	cmdPath, err = exec.LookPath("nslookup.exe")
+	if err != nil {
+		return nil, fmt.Errorf("looking up cmd path: %w", err)
+	}
+
+	cmd := exec.Command(cmdPath)
 
 	var stdin io.WriteCloser
 	stdin, err = cmd.StdinPipe()
