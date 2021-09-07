@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -135,4 +136,13 @@ func TestNormalizeLeases(t *testing.T) {
 	assert.Equal(t, leases[0].IP, staticLeases[0].IP)
 	assert.Equal(t, leases[1].HWAddr, staticLeases[1].HWAddr)
 	assert.Equal(t, leases[2].HWAddr, dynLeases[1].HWAddr)
+}
+
+// cloneUDPAddr returns a deep copy of a.
+func cloneUDPAddr(a *net.UDPAddr) (copy *net.UDPAddr) {
+	return &net.UDPAddr{
+		IP:   netutil.CloneIP(a.IP),
+		Port: a.Port,
+		Zone: a.Zone,
+	}
 }

@@ -110,6 +110,7 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- DHCP now follows RFCs more closely ([#3443]).
 - Occasional panics when reading old statistics databases ([#3506]).
 - `reload` service action on macOS and FreeBSD ([#3457]).
 - Inaccurate using of service actions in the installation script ([#3450]).
@@ -177,6 +178,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3417]: https://github.com/AdguardTeam/AdGuardHome/issues/3417
 [#3435]: https://github.com/AdguardTeam/AdGuardHome/issues/3435
 [#3437]: https://github.com/AdguardTeam/AdGuardHome/issues/3437
+[#3443]: https://github.com/AdguardTeam/AdGuardHome/issues/3443
 [#3450]: https://github.com/AdguardTeam/AdGuardHome/issues/3450
 [#3457]: https://github.com/AdguardTeam/AdGuardHome/issues/3457
 [#3506]: https://github.com/AdguardTeam/AdGuardHome/issues/3506

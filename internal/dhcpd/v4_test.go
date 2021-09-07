@@ -4,9 +4,11 @@
 package dhcpd
 
 import (
+	"bytes"
 	"net"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -363,5 +365,85 @@ func TestNormalizeHostname(t *testing.T) {
 
 			assert.Equal(t, tc.want, got)
 		})
+	}
+}
+
+// fakePacketConn is a mock implementation of net.PacketConn to simplify
+// testing.
+type fakePacketConn struct {
+	// writeTo is used to substitute net.PacketConn's WriteTo method.
+	writeTo func(p []byte, addr net.Addr) (n int, err error)
+	// net.PacketConn is embedded here simply to make *fakePacketConn a
+	// net.PacketConn without actually implementing all methods.
+	net.PacketConn
+}
+
+// WriteTo implements net.PacketConn interface for *fakePacketConn.
+func (fc *fakePacketConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
+	return fc.writeTo(p, addr)
+}
+
+func TestV4Server_Send_unicast(t *testing.T) {
+	b := &bytes.Buffer{}
+	var peer *net.UDPAddr
+
+	conn := &fakePacketConn{
+		writeTo: func(p []byte, addr net.Addr) (n int, err error) {
+			udpPeer, ok := addr.(*net.UDPAddr)
+			require.True(t, ok)
+
+			peer = cloneUDPAddr(udpPeer)
+
+			n, err = b.Write(p)
+			require.NoError(t, err)
+
+			return n, nil
+		},
+	}
+
+	defaultPeer := &net.UDPAddr{
+		IP: net.IP{1, 2, 3, 4},
+		// Use neither client nor server port.
+		Port: 1234,
+	}
+	defaultResp := &dhcpv4.DHCPv4{
+		OpCode: dhcpv4.OpcodeBootReply,
+	}
+	s := &v4Server{}
+
+	testCases := []struct {
+		name     string
+		req      *dhcpv4.DHCPv4
+		wantPeer net.Addr
+	}{{
+		name: "relay_agent",
+		req: &dhcpv4.DHCPv4{
+			GatewayIPAddr: defaultPeer.IP,
+		},
+		wantPeer: &net.UDPAddr{
+			IP:   defaultPeer.IP,
+			Port: dhcpv4.ServerPort,
+		},
+	}, {
+		name: "known_client",
+		req: &dhcpv4.DHCPv4{
+			GatewayIPAddr: netutil.IPv4Zero(),
+			ClientIPAddr:  net.IP{2, 3, 4, 5},
+		},
+		wantPeer: &net.UDPAddr{
+			IP:   net.IP{2, 3, 4, 5},
+			Port: dhcpv4.ClientPort,
+		},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s.send(defaultPeer, conn, tc.req, defaultResp)
+			assert.EqualValues(t, defaultResp.ToBytes(), b.Bytes())
+			assert.Equal(t, tc.wantPeer, peer)
+		})
+
+		b.Reset()
+		peer = nil
 	}
 }
