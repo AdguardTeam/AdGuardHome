@@ -202,7 +202,7 @@ export const FILTERS_URLS = {
 export const SERVICES = [
     {
         id: '9gag',
-        name: '9Gag',
+        name: '9GAG',
     },
     {
         id: 'amazon',

@@ -197,7 +197,7 @@ var serviceRulesArray = []svc{
 	}},
 	{"9gag", []string{
 		"||9cache.com^",
-		"||gag.com^",
+		"||9gag.com^",
 	}},
 	{"telegram", []string{
 		"||t.me^",
