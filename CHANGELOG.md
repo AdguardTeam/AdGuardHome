@@ -110,6 +110,7 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- Panic when upstream server responds with empty question section ([#3551]).
 - 9GAG blocking ([#3564]).
 - DHCP now follows RFCs more closely ([#3443]).
 - Occasional panics when reading old statistics databases ([#3506]).
@@ -183,6 +184,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3450]: https://github.com/AdguardTeam/AdGuardHome/issues/3450
 [#3457]: https://github.com/AdguardTeam/AdGuardHome/issues/3457
 [#3506]: https://github.com/AdguardTeam/AdGuardHome/issues/3506
+[#3551]: https://github.com/AdguardTeam/AdGuardHome/issues/3551
 [#3564]: https://github.com/AdguardTeam/AdGuardHome/issues/3564
 
 

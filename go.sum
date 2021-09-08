@@ -9,8 +9,8 @@ dmitri.shuralyov.com/state v0.0.0-20180228185332-28bcc343414c/go.mod h1:0PRwlb0D
 git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
 github.com/AdguardTeam/dhcp v0.0.0-20210519141215-51808c73c0bf h1:gc042VRSIRSUzZ+Px6xQCRWNJZTaPkomisDfUZmoFNk=
 github.com/AdguardTeam/dhcp v0.0.0-20210519141215-51808c73c0bf/go.mod h1:TKl4jN3Voofo4UJIicyNhWGp/nlQqQkFxmwIFTvBkKI=
-github.com/AdguardTeam/dnsproxy v0.39.4 h1:vjcogr0qpSTvRYzbXabBXblfzYpx+LOn91kjtnYgcrU=
-github.com/AdguardTeam/dnsproxy v0.39.4/go.mod h1:JZUxXM70BUlAmMaJEPa6Wh+Tz7eBAQx6DM1GMt+Ff5E=
+github.com/AdguardTeam/dnsproxy v0.39.5 h1:SQorhRLR1241t6hy9CiAGZUjRULhsDJlPJTl0UGX8uw=
+github.com/AdguardTeam/dnsproxy v0.39.5/go.mod h1:eDpJKAdkHORRwAedjuERv+7SWlcz4cn+5uwrbUAWHRY=
 github.com/AdguardTeam/golibs v0.4.0/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
 github.com/AdguardTeam/golibs v0.4.2/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
 github.com/AdguardTeam/golibs v0.9.2 h1:H3BDFkaosxvb+UgFlNVyN66GZ+JglcZULnJ7z7PukyQ=
@@ -28,7 +28,6 @@ github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da h1:KjTM2ks9d14ZYCvmH
 github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da/go.mod h1:eHEWzANqSiWQsof+nXEI9bUVUyV6F53Fp89EuCh2EAA=
 github.com/aead/poly1305 v0.0.0-20180717145839-3fee0db0b635 h1:52m0LGchQBBVqJRyYYufQuIbVqRawmubW3OFGqK1ekw=
 github.com/aead/poly1305 v0.0.0-20180717145839-3fee0db0b635/go.mod h1:lmLxL+FV291OopO93Bwf9fQLQeLyt33VJRUg5VJ30us=
-github.com/ameshkov/dnscrypt/v2 v2.1.3/go.mod h1:+8SbPbVXpxxcUsgGi8eodkqWPo1MyNHxKYC8hDpqLSo=
 github.com/ameshkov/dnscrypt/v2 v2.2.2 h1:lxtS1iSA2EjTOMToSi+2+rwspNA+b/wG5/JpccvE9CU=
 github.com/ameshkov/dnscrypt/v2 v2.2.2/go.mod h1:+8SbPbVXpxxcUsgGi8eodkqWPo1MyNHxKYC8hDpqLSo=
 github.com/ameshkov/dnsstamps v1.0.1/go.mod h1:Ii3eUu73dx4Vw5O4wjzmT5+lkCwovjzaEZZ4gKyIH5A=
