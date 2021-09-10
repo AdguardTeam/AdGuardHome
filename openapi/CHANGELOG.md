@@ -4,12 +4,25 @@
 
 ## v0.107: API changes
 
+### New possible value of `"name"` field in `QueryLogItemClient`
+
+* The value of `"name"` field in `GET /control/querylog` method is never empty:
+  either persistent client's name or runtime client's hostname.
+
+### Lists in `AccessList`
+
+* Fields `"allowed_clients"`, `"disallowed_clients"` and `"blocked_hosts"` in
+  `POST /access/set` now should contain only unique elements.
+
+* Fields `"allowed_clients"` and `"disallowed_clients"` cannot contain the same
+  elements.
+
 ### The new field `"private_key_saved"` in `TlsConfig`
 
 * The new field `"private_key_saved"` in `POST /control/tls/configure`,
-`POST /control/tls/validate` and `GET /control/tls/status` is true if the
-private key was previously saved as a string and now the private key omitted
-from communication between server and client due to security issues.
+  `POST /control/tls/validate` and `GET /control/tls/status` is true if the
+  private key was previously saved as a string and now the private key omitted
+  from communication between server and client due to security issues.
 
 ### The new field `"cache_optimistic"` in DNS configuration
 

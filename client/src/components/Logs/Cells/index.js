@@ -50,6 +50,8 @@ const Row = memo(({
     const filters = useSelector((state) => state.filtering.filters, shallowEqual);
     const whitelistFilters = useSelector((state) => state.filtering.whitelistFilters, shallowEqual);
     const autoClients = useSelector((state) => state.dashboard.autoClients, shallowEqual);
+    const processingSet = useSelector((state) => state.access.processingSet);
+    const allowedСlients = useSelector((state) => state.access.allowed_clients, shallowEqual);
 
     const clients = useSelector((state) => state.dashboard.clients);
 
@@ -104,11 +106,12 @@ const Row = memo(({
         const {
             confirmMessage,
             buttonKey: blockingClientKey,
-            isNotInAllowedList,
+            lastRuleInAllowlist,
         } = getBlockClientInfo(
             client,
             client_info?.disallowed || false,
             client_info?.disallowed_rule || '',
+            allowedСlients,
         );
 
         const blockingForClientKey = isFiltered ? 'unblock_for_this_client_only' : 'block_for_this_client_only';
@@ -147,7 +150,7 @@ const Row = memo(({
         const blockClientButton = <button
                 className='text-center font-weight-bold py-2 button-action--arrow-option'
                 onClick={onBlockingClientClick}
-                disabled={isNotInAllowedList}>
+                disabled={processingSet || lastRuleInAllowlist}>
             {t(blockingClientKey)}
         </button>;
 

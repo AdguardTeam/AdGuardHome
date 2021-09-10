@@ -285,39 +285,70 @@ func toQueryLogWHOIS(wi *RuntimeClientWHOISInfo) (cw *querylog.ClientWHOIS) {
 	}
 }
 
-// findMultiple is a wrapper around Find to make it a valid client finder for
-// the query log.  err is always nil.
+// findMultiple returns info about client.  If no information about the client
+// is found, it sends the client by default only with the "Disallowed" field
+// filled in.  err is always nil.
 func (clients *clientsContainer) findMultiple(ids []string) (c *querylog.Client, err error) {
+	var emptyClient *querylog.Client
+
 	for _, id := range ids {
-		var name string
-		whois := &querylog.ClientWHOIS{}
 		ip := net.ParseIP(id)
-
-		c, ok := clients.Find(id)
-		if ok {
-			name = c.Name
-		} else if ip != nil {
-			var rc *RuntimeClient
-			rc, ok = clients.FindRuntimeClient(ip)
-			if !ok {
-				continue
-			}
-
-			name = rc.Host
-			whois = toQueryLogWHOIS(rc.WHOISInfo)
-		}
-
 		disallowed, disallowedRule := clients.dnsServer.IsBlockedClient(ip, id)
 
-		return &querylog.Client{
-			Name:           name,
-			DisallowedRule: disallowedRule,
-			WHOIS:          whois,
-			Disallowed:     disallowed,
-		}, nil
+		client := clients.clientInfo(ip, id, disallowed, disallowedRule)
+
+		if client.Name == "" && client.DisallowedRule == "" {
+			emptyClient = client
+
+			continue
+		}
+
+		return client, nil
 	}
 
-	return nil, nil
+	return emptyClient, nil
+}
+
+// clientInfo is a wrapper around Find to make it a valid client finder for
+// the query log.
+func (clients *clientsContainer) clientInfo(
+	ip net.IP,
+	id string,
+	disallowed bool,
+	rule string,
+) (c *querylog.Client) {
+	whois := &querylog.ClientWHOIS{}
+	client, ok := clients.Find(id)
+	if ok {
+		return &querylog.Client{
+			Name:           client.Name,
+			DisallowedRule: rule,
+			WHOIS:          whois,
+			Disallowed:     disallowed,
+		}
+	}
+
+	if ip == nil {
+		return nil
+	}
+
+	var rc *RuntimeClient
+	rc, ok = clients.FindRuntimeClient(ip)
+	if ok {
+		return &querylog.Client{
+			Name:           rc.Host,
+			DisallowedRule: rule,
+			WHOIS:          toQueryLogWHOIS(rc.WHOISInfo),
+			Disallowed:     disallowed,
+		}
+	}
+
+	return &querylog.Client{
+		Name:           "",
+		DisallowedRule: rule,
+		WHOIS:          &querylog.ClientWHOIS{},
+		Disallowed:     disallowed,
+	}
 }
 
 func (clients *clientsContainer) Find(id string) (c *Client, ok bool) {

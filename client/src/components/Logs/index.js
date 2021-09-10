@@ -15,6 +15,7 @@ import Disabled from './Disabled';
 import { getFilteringStatus } from '../../actions/filtering';
 import { getClients } from '../../actions';
 import { getDnsConfig } from '../../actions/dnsConfig';
+import { getAccessList } from '../../actions/access';
 import {
     getLogsConfig,
     resetFilteredLogs,
@@ -126,6 +127,7 @@ const Logs = () => {
                 await Promise.all([
                     dispatch(getLogsConfig()),
                     dispatch(getDnsConfig()),
+                    dispatch(getAccessList()),
                 ]);
             } catch (err) {
                 console.error(err);

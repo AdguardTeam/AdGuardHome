@@ -28,6 +28,8 @@ const ClientCell = ({
     const autoClients = useSelector((state) => state.dashboard.autoClients, shallowEqual);
     const processingRules = useSelector((state) => state.filtering.processingRules);
     const isDetailed = useSelector((state) => state.queryLogs.isDetailed);
+    const processingSet = useSelector((state) => state.access.processingSet);
+    const allowedСlients = useSelector((state) => state.access.allowed_clients, shallowEqual);
     const [isOptionsOpened, setOptionsOpened] = useState(false);
 
     const autoClient = autoClients.find((autoClient) => autoClient.name === client);
@@ -71,11 +73,12 @@ const ClientCell = ({
         const {
             confirmMessage,
             buttonKey: blockingClientKey,
-            isNotInAllowedList,
+            lastRuleInAllowlist,
         } = getBlockClientInfo(
             client,
             client_info?.disallowed || false,
             client_info?.disallowed_rule || '',
+            allowedСlients,
         );
 
         const blockingForClientKey = isFiltered ? 'unblock_for_this_client_only' : 'block_for_this_client_only';
@@ -100,7 +103,7 @@ const ClientCell = ({
                         await dispatch(updateLogs());
                     }
                 },
-                disabled: isNotInAllowedList,
+                disabled: processingSet || lastRuleInAllowlist,
             },
         ];
 

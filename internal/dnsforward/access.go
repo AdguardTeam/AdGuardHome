@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
@@ -192,11 +193,72 @@ func (s *Server) handleAccessList(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func isUniq(slice []string) (ok bool, uniqueMap map[string]unit) {
+	exists := make(map[string]unit)
+	for _, key := range slice {
+		if _, has := exists[key]; has {
+			return false, nil
+		}
+		exists[key] = unit{}
+	}
+	return true, exists
+}
+
+func intersect(mapA, mapB map[string]unit) bool {
+	for key := range mapA {
+		if _, has := mapB[key]; has {
+			return true
+		}
+	}
+	return false
+}
+
+// validateAccessSet checks the internal accessListJSON lists.  To search for
+// duplicates, we cannot compare the new stringutil.Set and []string, because
+// creating a set for a large array can be an unnecessary algorithmic complexity
+func validateAccessSet(list accessListJSON) (err error) {
+	const (
+		errAllowedDup    errors.Error = "duplicates in allowed clients"
+		errDisallowedDup errors.Error = "duplicates in disallowed clients"
+		errBlockedDup    errors.Error = "duplicates in blocked hosts"
+		errIntersect     errors.Error = "some items in allowed and " +
+			"disallowed lists at the same time"
+	)
+
+	ok, allowedClients := isUniq(list.AllowedClients)
+	if !ok {
+		return errAllowedDup
+	}
+
+	ok, disallowedClients := isUniq(list.DisallowedClients)
+	if !ok {
+		return errDisallowedDup
+	}
+
+	ok, _ = isUniq(list.BlockedHosts)
+	if !ok {
+		return errBlockedDup
+	}
+
+	if intersect(allowedClients, disallowedClients) {
+		return errIntersect
+	}
+
+	return nil
+}
+
 func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 	list := accessListJSON{}
 	err := json.NewDecoder(r.Body).Decode(&list)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "decoding request: %s", err)
+
+		return
+	}
+
+	err = validateAccessSet(list)
+	if err != nil {
+		httpError(r, w, http.StatusBadRequest, err.Error())
 
 		return
 	}

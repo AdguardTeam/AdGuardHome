@@ -38,15 +38,23 @@ const renderBlockingButton = (ip, disallowed, disallowed_rule) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const processingSet = useSelector((state) => state.access.processingSet);
+    const allowedСlients = useSelector((state) => state.access.allowed_clients, shallowEqual);
 
     const buttonClass = classNames('button-action button-action--main', {
         'button-action--unblock': disallowed,
     });
 
     const toggleClientStatus = async (ip, disallowed, disallowed_rule) => {
-        const confirmMessage = disallowed
-            ? t('client_confirm_unblock', { ip: disallowed_rule })
-            : `${t('adg_will_drop_dns_queries')} ${t('client_confirm_block', { ip })}`;
+        let confirmMessage;
+
+        if (disallowed) {
+            confirmMessage = t('client_confirm_unblock', { ip: disallowed_rule || ip });
+        } else {
+            confirmMessage = `${t('adg_will_drop_dns_queries')} ${t('client_confirm_block', { ip })}`;
+            if (allowedСlients.length > 0) {
+                confirmMessage = confirmMessage.concat(`\n\n${t('filter_allowlist', { disallowed_rule })}`);
+            }
+        }
 
         if (window.confirm(confirmMessage)) {
             await dispatch(toggleClientBlock(ip, disallowed, disallowed_rule));
@@ -58,15 +66,16 @@ const renderBlockingButton = (ip, disallowed, disallowed_rule) => {
 
     const text = disallowed ? BLOCK_ACTIONS.UNBLOCK : BLOCK_ACTIONS.BLOCK;
 
-    const isNotInAllowedList = disallowed && disallowed_rule === '';
+    const lastRuleInAllowlist = !disallowed && allowedСlients === disallowed_rule;
+    const disabled = processingSet || lastRuleInAllowlist;
     return (
         <div className="table__action pl-4">
             <button
                 type="button"
                 className={buttonClass}
-                onClick={isNotInAllowedList ? undefined : onClick}
-                disabled={isNotInAllowedList || processingSet}
-                title={t(isNotInAllowedList ? 'client_not_in_allowed_clients' : text)}
+                onClick={onClick}
+                disabled={disabled}
+                title={lastRuleInAllowlist ? t('last_rule_in_allowlist', { disallowed_rule }) : ''}
             >
                 <Trans>{text}</Trans>
             </button>

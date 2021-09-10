@@ -46,6 +46,8 @@ and this project adheres to
 
 ### Changed
 
+- Items in allowed clients, disallowed clients, and blocked hosts lists must
+  be unique ([#3419]).
 - The TLS private key previously saved as a string isn't shown in API responses
   any more ([#1898]).
 - Better OpenWrt detection ([#3435]).
@@ -178,6 +180,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3351]: https://github.com/AdguardTeam/AdGuardHome/issues/3351
 [#3372]: https://github.com/AdguardTeam/AdGuardHome/issues/3372
 [#3417]: https://github.com/AdguardTeam/AdGuardHome/issues/3417
+[#3419]: https://github.com/AdguardTeam/AdGuardHome/issues/3419
 [#3435]: https://github.com/AdguardTeam/AdGuardHome/issues/3435
 [#3437]: https://github.com/AdguardTeam/AdGuardHome/issues/3437
 [#3443]: https://github.com/AdguardTeam/AdGuardHome/issues/3443

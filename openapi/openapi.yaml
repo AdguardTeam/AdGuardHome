@@ -1962,8 +1962,7 @@
             The rule due to which the client is allowed or blocked.
         'name':
           'description': >
-            Persistent client's name or an empty string if this is a runtime
-            client.
+            Persistent client's name or runtime client's hostname.
           'type': 'string'
         'whois':
           '$ref': '#/components/schemas/QueryLogItemClientWhois'
@@ -2363,7 +2362,10 @@
     'AccessSetRequest':
       '$ref': '#/components/schemas/AccessList'
     'AccessList':
-      'description': 'Client and host access list'
+      'description': >
+        Client and host access list.  Each of the lists should contain only
+        unique elements.  In addition, allowed and disallowed lists cannot
+        contain the same elements.
       'properties':
         'allowed_clients':
           'description': >
