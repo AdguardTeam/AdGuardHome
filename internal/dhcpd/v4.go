@@ -40,6 +40,9 @@ type v4Server struct {
 
 	// leasesLock protects leases, leaseHosts, and leasedOffsets.
 	leasesLock sync.Mutex
+
+	// options holds predefined DHCP options to return to clients.
+	options dhcpv4.Options
 }
 
 // WriteDiskConfig4 - write configuration
@@ -831,6 +834,9 @@ func (s *v4Server) processRelease(req, resp *dhcpv4.DHCPv4) (err error) {
 func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 	var err error
 
+	// Include server's identifier option since any reply should contain it.
+	//
+	// See https://datatracker.ietf.org/doc/html/rfc2131#page-29.
 	resp.UpdateOption(dhcpv4.OptServerIdentifier(s.conf.dnsIPAddrs[0]))
 
 	// TODO(a.garipov): Refactor this into handlers.
@@ -873,17 +879,29 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 	}
 
 	if l != nil {
-		resp.YourIPAddr = make([]byte, 4)
-		copy(resp.YourIPAddr, l.IP)
+		resp.YourIPAddr = netutil.CloneIP(l.IP)
 	}
 
+	// Set IP address lease time for all DHCPOFFER messages and DHCPACK
+	// messages replied for DHCPREQUEST.
+	//
+	// TODO(e.burkov):  Inspect why this is always set to configured value.
 	resp.UpdateOption(dhcpv4.OptIPAddressLeaseTime(s.conf.leaseTime))
-	resp.UpdateOption(dhcpv4.OptRouter(s.conf.subnet.IP))
-	resp.UpdateOption(dhcpv4.OptSubnetMask(s.conf.subnet.Mask))
-	resp.UpdateOption(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
 
-	for _, opt := range s.conf.options {
-		resp.Options[opt.code] = opt.data
+	// Update values for each explicitly configured parameter requested by
+	// client.
+	//
+	// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.1.
+	requested := req.ParameterRequestList()
+	for _, code := range requested {
+		if configured := s.options; configured.Has(code) {
+			resp.UpdateOption(dhcpv4.OptGeneric(code, configured.Get(code)))
+		}
+	}
+	// Update the value of Domain Name Server option separately from others
+	// since its value is set after server's creating.
+	if requested.Has(dhcpv4.OptionDomainNameServer) {
+		resp.UpdateOption(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
 	}
 
 	return 1
@@ -897,7 +915,8 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 	log.Debug("dhcpv4: received message: %s", req.Summary())
 
 	switch req.MessageType() {
-	case dhcpv4.MessageTypeDiscover,
+	case
+		dhcpv4.MessageTypeDiscover,
 		dhcpv4.MessageTypeRequest,
 		dhcpv4.MessageTypeDecline,
 		dhcpv4.MessageTypeRelease:
@@ -931,13 +950,13 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 	s.send(peer, conn, req, resp)
 }
 
-// send writes resp for peer to conn considering the req's fields and options
-// according to RFC-2131.
+// send writes resp for peer to conn considering the req's parameters according
+// to RFC-2131.
 //
 // See https://datatracker.ietf.org/doc/html/rfc2131#section-4.1.
 func (s *v4Server) send(peer net.Addr, conn net.PacketConn, req, resp *dhcpv4.DHCPv4) {
 	var unicast bool
-	if giaddr, unspec := req.GatewayIPAddr, netutil.IPv4Zero(); !giaddr.Equal(unspec) {
+	if giaddr := req.GatewayIPAddr; giaddr != nil && !giaddr.IsUnspecified() {
 		// Send any return messages to the server port on the BOOTP
 		// relay agent whose address appears in giaddr.
 		peer = &net.UDPAddr{
@@ -947,7 +966,7 @@ func (s *v4Server) send(peer net.Addr, conn net.PacketConn, req, resp *dhcpv4.DH
 		unicast = true
 	} else if mtype := resp.MessageType(); mtype == dhcpv4.MessageTypeNak {
 		// Broadcast any DHCPNAK messages to 0xffffffff.
-	} else if ciaddr := req.ClientIPAddr; !ciaddr.Equal(unspec) {
+	} else if ciaddr := req.ClientIPAddr; ciaddr != nil && !ciaddr.IsUnspecified() {
 		// Unicast DHCPOFFER and DHCPACK messages to the address in
 		// ciaddr.
 		peer = &net.UDPAddr{
@@ -1104,25 +1123,7 @@ func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
 		s.conf.leaseTime = time.Second * time.Duration(conf.LeaseDuration)
 	}
 
-	p := newDHCPOptionParser()
-
-	for i, o := range conf.Options {
-		var code uint8
-		var data []byte
-		code, data, err = p.parse(o)
-		if err != nil {
-			log.Error("dhcpv4: bad option string at index %d: %s", i, err)
-
-			continue
-		}
-
-		opt := dhcpOption{
-			code: code,
-			data: data,
-		}
-
-		s.conf.options = append(s.conf.options, opt)
-	}
+	s.options = prepareOptions(s.conf)
 
 	return s, nil
 }

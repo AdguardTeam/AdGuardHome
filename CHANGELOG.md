@@ -117,7 +117,8 @@ In this release, the schema version has changed from 10 to 12.
 
 - Panic when upstream server responds with empty question section ([#3551]).
 - 9GAG blocking ([#3564]).
-- DHCP now follows RFCs more closely ([#3443]).
+- DHCP now follows RFCs more closely when it comes to response sending and
+  option selection ([#3443], [#3538]).
 - Occasional panics when reading old statistics databases ([#3506]).
 - `reload` service action on macOS and FreeBSD ([#3457]).
 - Inaccurate using of service actions in the installation script ([#3450]).
@@ -190,6 +191,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3450]: https://github.com/AdguardTeam/AdGuardHome/issues/3450
 [#3457]: https://github.com/AdguardTeam/AdGuardHome/issues/3457
 [#3506]: https://github.com/AdguardTeam/AdGuardHome/issues/3506
+[#3538]: https://github.com/AdguardTeam/AdGuardHome/issues/3538
 [#3551]: https://github.com/AdguardTeam/AdGuardHome/issues/3551
 [#3564]: https://github.com/AdguardTeam/AdGuardHome/issues/3564
 [#3568]: https://github.com/AdguardTeam/AdGuardHome/issues/3568

@@ -148,7 +148,9 @@ func TestV4StaticLease_Get(t *testing.T) {
 	mac := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
 
 	t.Run("discover", func(t *testing.T) {
-		req, err = dhcpv4.NewDiscovery(mac)
+		req, err = dhcpv4.NewDiscovery(mac, dhcpv4.WithRequestedOptions(
+			dhcpv4.OptionDomainNameServer,
+		))
 		require.NoError(t, err)
 
 		resp, err = dhcpv4.NewReplyFromRequest(req)
@@ -231,7 +233,10 @@ func TestV4DynamicLease_Get(t *testing.T) {
 	mac := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
 
 	t.Run("discover", func(t *testing.T) {
-		req, err = dhcpv4.NewDiscovery(mac)
+		req, err = dhcpv4.NewDiscovery(mac, dhcpv4.WithRequestedOptions(
+			dhcpv4.OptionFQDN,
+			dhcpv4.OptionRelayAgentInformation,
+		))
 		require.NoError(t, err)
 
 		resp, err = dhcpv4.NewReplyFromRequest(req)
@@ -257,9 +262,11 @@ func TestV4DynamicLease_Get(t *testing.T) {
 
 		assert.Equal(t, s.conf.subnet.Mask, resp.SubnetMask())
 		assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
-		assert.Equal(t, []byte("012"), resp.Options[uint8(dhcpv4.OptionFQDN)])
+		assert.Equal(t, []byte("012"), resp.Options.Get(dhcpv4.OptionFQDN))
 
-		assert.Equal(t, net.IP{1, 2, 3, 4}, net.IP(resp.RelayAgentInfo().ToBytes()))
+		rai := resp.RelayAgentInfo()
+		require.NotNil(t, rai)
+		assert.Equal(t, net.IP{1, 2, 3, 4}, net.IP(rai.ToBytes()))
 	})
 
 	t.Run("request", func(t *testing.T) {

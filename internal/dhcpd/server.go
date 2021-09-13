@@ -72,8 +72,6 @@ type V4ServerConf struct {
 	// gateway.
 	subnet *net.IPNet
 
-	options []dhcpOption
-
 	// notify is a way to signal to other components that leases have
 	// change.  notify must be called outside of locked sections, since the
 	// clients might want to get the new data.
@@ -103,9 +101,4 @@ type V6ServerConf struct {
 
 	// Server calls this function when leases data changes
 	notify func(uint32)
-}
-
-type dhcpOption struct {
-	code uint8
-	data []byte
 }
