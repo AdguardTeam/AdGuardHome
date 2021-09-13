@@ -1962,14 +1962,14 @@
             The rule due to which the client is allowed or blocked.
         'name':
           'description': >
-            Persistent client's name or runtime client's hostname.
+            Persistent client's name or runtime client's hostname.  May be
+            empty.
           'type': 'string'
         'whois':
           '$ref': '#/components/schemas/QueryLogItemClientWhois'
       'required':
       - 'disallowed'
       - 'disallowed_rule'
-      - 'ids'
       - 'name'
       - 'whois'
       'type': 'object'

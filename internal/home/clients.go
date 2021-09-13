@@ -149,19 +149,19 @@ func (clients *clientsContainer) Reload() {
 }
 
 type clientObject struct {
-	Name                string   `yaml:"name"`
-	Tags                []string `yaml:"tags"`
-	IDs                 []string `yaml:"ids"`
-	UseGlobalSettings   bool     `yaml:"use_global_settings"`
-	FilteringEnabled    bool     `yaml:"filtering_enabled"`
-	ParentalEnabled     bool     `yaml:"parental_enabled"`
-	SafeSearchEnabled   bool     `yaml:"safesearch_enabled"`
-	SafeBrowsingEnabled bool     `yaml:"safebrowsing_enabled"`
+	Name string `yaml:"name"`
 
-	UseGlobalBlockedServices bool     `yaml:"use_global_blocked_services"`
-	BlockedServices          []string `yaml:"blocked_services"`
+	Tags            []string `yaml:"tags"`
+	IDs             []string `yaml:"ids"`
+	BlockedServices []string `yaml:"blocked_services"`
+	Upstreams       []string `yaml:"upstreams"`
 
-	Upstreams []string `yaml:"upstreams"`
+	UseGlobalSettings        bool `yaml:"use_global_settings"`
+	FilteringEnabled         bool `yaml:"filtering_enabled"`
+	ParentalEnabled          bool `yaml:"parental_enabled"`
+	SafeSearchEnabled        bool `yaml:"safesearch_enabled"`
+	SafeBrowsingEnabled      bool `yaml:"safebrowsing_enabled"`
+	UseGlobalBlockedServices bool `yaml:"use_global_blocked_services"`
 }
 
 func (clients *clientsContainer) tagKnown(tag string) (ok bool) {
@@ -285,70 +285,68 @@ func toQueryLogWHOIS(wi *RuntimeClientWHOISInfo) (cw *querylog.ClientWHOIS) {
 	}
 }
 
-// findMultiple returns info about client.  If no information about the client
-// is found, it sends the client by default only with the "Disallowed" field
-// filled in.  err is always nil.
+// findMultiple is a wrapper around Find to make it a valid client finder for
+// the query log.  c is never nil; if no information about the client is found,
+// it returns an artificial client record by only setting the blocking-related
+// fields.  err is always nil.
 func (clients *clientsContainer) findMultiple(ids []string) (c *querylog.Client, err error) {
-	var emptyClient *querylog.Client
-
+	var artClient *querylog.Client
+	var art bool
 	for _, id := range ids {
-		ip := net.ParseIP(id)
-		disallowed, disallowedRule := clients.dnsServer.IsBlockedClient(ip, id)
-
-		client := clients.clientInfo(ip, id, disallowed, disallowedRule)
-
-		if client.Name == "" && client.DisallowedRule == "" {
-			emptyClient = client
+		c, art = clients.clientOrArtificial(net.ParseIP(id), id)
+		if art {
+			artClient = c
 
 			continue
 		}
 
-		return client, nil
+		return c, nil
 	}
 
-	return emptyClient, nil
+	return artClient, nil
 }
 
-// clientInfo is a wrapper around Find to make it a valid client finder for
-// the query log.
-func (clients *clientsContainer) clientInfo(
+// clientOrArtificial returns information about one client.  If art is true,
+// this is an artificial client record, meaning that we currently don't have any
+// records about this client besides maybe whether or not it is blocked.  c is
+// never nil.
+func (clients *clientsContainer) clientOrArtificial(
 	ip net.IP,
 	id string,
-	disallowed bool,
-	rule string,
-) (c *querylog.Client) {
-	whois := &querylog.ClientWHOIS{}
+) (c *querylog.Client, art bool) {
+	defer func() {
+		c.Disallowed, c.DisallowedRule = clients.dnsServer.IsBlockedClient(ip, id)
+		if c.WHOIS == nil {
+			c.WHOIS = &querylog.ClientWHOIS{}
+		}
+	}()
+
 	client, ok := clients.Find(id)
 	if ok {
 		return &querylog.Client{
-			Name:           client.Name,
-			DisallowedRule: rule,
-			WHOIS:          whois,
-			Disallowed:     disallowed,
-		}
+			Name: client.Name,
+		}, false
 	}
 
 	if ip == nil {
-		return nil
+		// Technically should never happen, but still.
+		return &querylog.Client{
+			Name: "",
+		}, true
 	}
 
 	var rc *RuntimeClient
 	rc, ok = clients.FindRuntimeClient(ip)
 	if ok {
 		return &querylog.Client{
-			Name:           rc.Host,
-			DisallowedRule: rule,
-			WHOIS:          toQueryLogWHOIS(rc.WHOISInfo),
-			Disallowed:     disallowed,
-		}
+			Name:  rc.Host,
+			WHOIS: toQueryLogWHOIS(rc.WHOISInfo),
+		}, false
 	}
 
 	return &querylog.Client{
-		Name:           "",
-		DisallowedRule: rule,
-		WHOIS:          &querylog.ClientWHOIS{},
-		Disallowed:     disallowed,
-	}
+		Name: "",
+	}, true
 }
 
 func (clients *clientsContainer) Find(id string) (c *Client, ok bool) {
