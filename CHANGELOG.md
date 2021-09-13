@@ -47,6 +47,8 @@ and this project adheres to
 
 ### Changed
 
+- The `systemd` service script will now create the `/var/log` directory when it
+  doesn't exist ([#3579]).
 - Items in allowed clients, disallowed clients, and blocked hosts lists must
   be unique ([#3419]).
 - The TLS private key previously saved as a string isn't shown in API responses
@@ -191,6 +193,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3551]: https://github.com/AdguardTeam/AdGuardHome/issues/3551
 [#3564]: https://github.com/AdguardTeam/AdGuardHome/issues/3564
 [#3568]: https://github.com/AdguardTeam/AdGuardHome/issues/3568
+[#3579]: https://github.com/AdguardTeam/AdGuardHome/issues/3579
 
 
 

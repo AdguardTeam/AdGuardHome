@@ -310,10 +310,15 @@ func configureService(c *service.Config) {
 	// This key is used to start the job as soon as it has been loaded. For daemons this means execution at boot time, for agents execution at login.
 	c.Option["RunAtLoad"] = true
 
-	// POSIX
+	// POSIX / systemd
 
-	// Redirect StdErr & StdOut to files.
+	// Redirect stderr and stdout to files.  Make sure we always restart.
+	// Start only once network is up on Linux/systemd.
 	c.Option["LogOutput"] = true
+	c.Option["Restart"] = "always"
+	c.Dependencies = []string{
+		"After=syslog.target network-online.target",
+	}
 
 	// Use modified service file templates.
 	c.Option["SystemdScript"] = systemdScript
@@ -368,17 +373,26 @@ var launchdConfig = `<?xml version='1.0' encoding='UTF-8'?>
 </plist>
 `
 
-// Note: we should keep it in sync with the template from service_systemd_linux.go file
-// Add "After=" setting for systemd service file, because we must be started only after network is online
-// Set "RestartSec" to 10
+// systemdScript is an improved version of the systemd script originally from
+// the systemdScript constant in file service_systemd_linux.go in module
+// github.com/kardianos/service.  The following changes have been made:
+//
+// 1.  The RestartSec setting is set to a lower value of 10 to make sure we
+//     always restart quickly.
+//
+// 2.  The ExecStartPre setting is added to make sure that the log directory is
+//     always created to prevent the 209/STDOUT errors.
+//
 const systemdScript = `[Unit]
 Description={{.Description}}
 ConditionFileIsExecutable={{.Path|cmdEscape}}
-After=syslog.target network-online.target
+{{range $i, $dep := .Dependencies}}
+{{$dep}} {{end}}
 
 [Service]
 StartLimitInterval=5
 StartLimitBurst=10
+ExecStartPre=mkdir -p /var/log/
 ExecStart={{.Path|cmdEscape}}{{range .Arguments}} {{.|cmd}}{{end}}
 {{if .ChRoot}}RootDirectory={{.ChRoot|cmd}}{{end}}
 {{if .WorkingDirectory}}WorkingDirectory={{.WorkingDirectory|cmdEscape}}{{end}}
@@ -389,7 +403,9 @@ ExecStart={{.Path|cmdEscape}}{{range .Arguments}} {{.|cmd}}{{end}}
 StandardOutput=file:/var/log/{{.Name}}.out
 StandardError=file:/var/log/{{.Name}}.err
 {{- end}}
-Restart=always
+{{if gt .LimitNOFILE -1 }}LimitNOFILE={{.LimitNOFILE}}{{end}}
+{{if .Restart}}Restart={{.Restart}}{{end}}
+{{if .SuccessExitStatus}}SuccessExitStatus={{.SuccessExitStatus}}{{end}}
 RestartSec=10
 EnvironmentFile=-/etc/sysconfig/{{.Name}}
 
