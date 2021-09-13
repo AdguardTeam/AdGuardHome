@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/netutil"
 )
 
 // getAddrsResponse is the response for /install/get_addresses endpoint.
@@ -286,55 +286,29 @@ func shutdownSrv(ctx context.Context, cancel context.CancelFunc, srv *http.Serve
 
 // Apply new configuration, start DNS server, restart Web server
 func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
-	req := applyConfigReq{}
-	err := json.NewDecoder(r.Body).Decode(&req)
+	req, restartHTTP, err := decodeApplyConfigReq(r.Body)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse 'configure' JSON: %s", err)
+		httpError(w, http.StatusBadRequest, "%s", err)
+
 		return
-	}
-
-	if req.Web.Port == 0 || req.DNS.Port == 0 {
-		httpError(w, http.StatusBadRequest, "port value can't be 0")
-		return
-	}
-
-	restartHTTP := true
-	if config.BindHost.Equal(req.Web.IP) && config.BindPort == req.Web.Port {
-		// no need to rebind
-		restartHTTP = false
-	}
-
-	// validate that hosts and ports are bindable
-	if restartHTTP {
-		err = aghnet.CheckPortAvailable(req.Web.IP, req.Web.Port)
-		if err != nil {
-			httpError(
-				w,
-				http.StatusBadRequest,
-				"can not listen on IP:port %s: %s",
-				netutil.JoinHostPort(req.Web.IP.String(), req.Web.Port),
-				err,
-			)
-
-			return
-		}
-
 	}
 
 	err = aghnet.CheckPacketPortAvailable(req.DNS.IP, req.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
+
 		return
 	}
 
 	err = aghnet.CheckPortAvailable(req.DNS.IP, req.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
+
 		return
 	}
 
-	var curConfig configuration
-	copyInstallSettings(&curConfig, &config)
+	var curConfig *configuration
+	copyInstallSettings(curConfig, config)
 
 	Context.firstRun = false
 	config.BindHost = req.Web.IP
@@ -349,8 +323,9 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	err = StartMods()
 	if err != nil {
 		Context.firstRun = true
-		copyInstallSettings(&config, &curConfig)
+		copyInstallSettings(config, curConfig)
 		httpError(w, http.StatusInternalServerError, "%s", err)
+
 		return
 	}
 
@@ -361,8 +336,9 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	err = config.write()
 	if err != nil {
 		Context.firstRun = true
-		copyInstallSettings(&config, &curConfig)
+		copyInstallSettings(config, curConfig)
 		httpError(w, http.StatusInternalServerError, "Couldn't write config: %s", err)
+
 		return
 	}
 
@@ -385,6 +361,36 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		go shutdownSrv(ctx, cancel, web.httpServer)
 		go shutdownSrv(ctx, cancel, web.httpServerBeta)
 	}
+}
+
+// decodeApplyConfigReq decodes the configuration, validates some parameters,
+// and returns it along with the boolean indicating whether or not the HTTP
+// server must be restarted.
+func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, err error) {
+	req = &applyConfigReq{}
+	err = json.NewDecoder(r).Decode(&req)
+	if err != nil {
+		return nil, false, fmt.Errorf("parsing request: %w", err)
+	}
+
+	if req.Web.Port == 0 || req.DNS.Port == 0 {
+		return nil, false, errors.Error("ports cannot be 0")
+	}
+
+	restartHTTP = !config.BindHost.Equal(req.Web.IP) || config.BindPort != req.Web.Port
+	if restartHTTP {
+		err = aghnet.CheckPortAvailable(req.Web.IP, req.Web.Port)
+		if err != nil {
+			return nil, false, fmt.Errorf(
+				"checking address %s:%d: %w",
+				req.Web.IP.String(),
+				req.Web.Port,
+				err,
+			)
+		}
+	}
+
+	return req, restartHTTP, err
 }
 
 func (web *Web) registerInstallHandlers() {

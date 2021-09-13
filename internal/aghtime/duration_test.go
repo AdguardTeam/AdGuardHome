@@ -60,7 +60,7 @@ func TestDuration_String(t *testing.T) {
 }
 
 // durationEncodingTester is a helper struct to simplify testing different
-// Duration marshalling and unmarshalling cases.
+// Duration marshalling and unmarshaling cases.
 type durationEncodingTester struct {
 	PtrMap   map[string]*Duration `json:"ptr_map"   yaml:"ptr_map"`
 	PtrSlice []*Duration          `json:"ptr_slice" yaml:"ptr_slice"`
@@ -104,7 +104,7 @@ const (
 // Duration.
 const defaultTestDur = time.Millisecond
 
-// checkFields verifies m's fields.  It expects the m to be unmarshalled from
+// checkFields verifies m's fields.  It expects the m to be unmarshaled from
 // one of the constant strings above.
 func (m *durationEncodingTester) checkFields(t *testing.T, d Duration) {
 	t.Run("pointers_map", func(t *testing.T) {

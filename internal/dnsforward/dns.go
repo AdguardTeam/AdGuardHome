@@ -340,7 +340,7 @@ func (s *Server) processRestrictLocal(ctx *dnsContext) (rc resultCode) {
 
 	// Restrict an access to local addresses for external clients.  We also
 	// assume that all the DHCP leases we give are locally-served or at
-	// least don't need to be unaccessable externally.
+	// least don't need to be inaccessible externally.
 	if s.subnetDetector.IsLocallyServedNetwork(ip) {
 		if !ctx.isLocalClient {
 			log.Debug("dns: %q requests for internal ip", d.Addr)

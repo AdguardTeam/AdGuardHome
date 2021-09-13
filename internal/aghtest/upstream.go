@@ -167,7 +167,7 @@ func (u *TestBlockUpstream) RequestsCount() int {
 // TestErrUpstream implements upstream.Upstream interface for replacing real
 // upstream in tests.
 type TestErrUpstream struct {
-	// The error returned by Exchange may be unwraped to the Err.
+	// The error returned by Exchange may be unwrapped to the Err.
 	Err error
 }
 

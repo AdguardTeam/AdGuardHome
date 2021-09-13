@@ -38,7 +38,7 @@ func (d Duration) String() (str string) {
 		rounded == 0,
 		rounded*time.Second != d.Duration,
 		rounded%60 != 0:
-		// Return the uncutted value if it's either equal to zero or has
+		// Return the uncut value if it's either equal to zero or has
 		// fractions of a second or even whole seconds in it.
 		return str
 
@@ -60,7 +60,7 @@ func (d Duration) MarshalText() (text []byte, err error) {
 //
 // TODO(e.burkov): Make it able to parse larger units like days.
 func (d *Duration) UnmarshalText(b []byte) (err error) {
-	defer func() { err = errors.Annotate(err, "unmarshalling duration: %w") }()
+	defer func() { err = errors.Annotate(err, "unmarshaling duration: %w") }()
 
 	d.Duration, err = time.ParseDuration(string(b))
 

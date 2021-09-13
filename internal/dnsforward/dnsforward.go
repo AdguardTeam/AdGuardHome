@@ -364,7 +364,7 @@ func (s *Server) startLocked() error {
 const defaultLocalTimeout = 1 * time.Second
 
 // collectDNSIPAddrs returns IP addresses the server is listening on without
-// port numbersю  For internal use only.
+// port numbers.  For internal use only.
 func (s *Server) collectDNSIPAddrs() (addrs []string, err error) {
 	addrs = make([]string, len(s.conf.TCPListenAddrs)+len(s.conf.UDPListenAddrs))
 	var i int

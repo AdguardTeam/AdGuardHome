@@ -275,7 +275,7 @@ func TestServer(t *testing.T) {
 			client := dns.Client{Net: tc.net}
 
 			reply, _, err := client.Exchange(createGoogleATestMessage(), addr.String())
-			require.NoErrorf(t, err, "сouldn't talk to server %s: %s", addr, err)
+			require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
 
 			assertGoogleAResponse(t, reply)
 		})
@@ -330,7 +330,7 @@ func TestServerWithProtectionDisabled(t *testing.T) {
 	client := &dns.Client{}
 
 	reply, _, err := client.Exchange(req, addr.String())
-	require.NoErrorf(t, err, "сouldn't talk to server %s: %s", addr, err)
+	require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
 	assertGoogleAResponse(t, reply)
 }
 

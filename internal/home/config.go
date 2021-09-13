@@ -162,8 +162,10 @@ type tlsConfigSettings struct {
 	dnsforward.TLSConfig `yaml:",inline" json:",inline"`
 }
 
-// initialize to default values, will be changed later when reading config or parsing command line
-var config = configuration{
+// config is the global configuration structure.
+//
+// TODO(a.garipov, e.burkov): This global is afwul and must be removed.
+var config = &configuration{
 	BindPort:     3000,
 	BetaBindPort: 0,
 	BindHost:     net.IP{0, 0, 0, 0},

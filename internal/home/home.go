@@ -349,7 +349,7 @@ func run(args options, clientBuildFS fs.FS) {
 
 	setupContext(args)
 
-	err = configureOS(&config)
+	err = configureOS(config)
 	fatalOnError(err)
 
 	// clients package uses filtering package's static data (filtering.BlockedSvcKnown()),

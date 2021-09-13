@@ -117,8 +117,8 @@ func TestEtcHostsContainerFSNotify(t *testing.T) {
 	assertWriting(t, f, "127.0.0.2   newhost\n")
 	require.NoError(t, f.Sync())
 
-	// Wait until fsnotify has triggerred and processed the
-	// file-modification event.
+	// Wait until fsnotify has triggered and processed the file-modification
+	// event.
 	time.Sleep(50 * time.Millisecond)
 
 	t.Run("notified", func(t *testing.T) {
