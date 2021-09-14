@@ -49,8 +49,8 @@ and this project adheres to
 
 - The `systemd` service script will now create the `/var/log` directory when it
   doesn't exist ([#3579]).
-- Items in allowed clients, disallowed clients, and blocked hosts lists must
-  be unique ([#3419]).
+- Items in allowed clients, disallowed clients, and blocked hosts lists are now
+  required to be unique ([#3419]).
 - The TLS private key previously saved as a string isn't shown in API responses
   anymore ([#1898]).
 - Better OpenWrt detection ([#3435]).
@@ -115,7 +115,8 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
-- Panic when upstream server responds with empty question section ([#3551]).
+- Panic when an upstream server responds with an empty question section
+  ([#3551]).
 - 9GAG blocking ([#3564]).
 - DHCP now follows RFCs more closely when it comes to response sending and
   option selection ([#3443], [#3538]).

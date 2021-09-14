@@ -257,7 +257,8 @@ type applyConfigReq struct {
 	Password string            `json:"password"`
 }
 
-// Copy installation parameters between two configuration objects
+// copyInstallSettings copies the installation parameters between two
+// configuration structures.
 func copyInstallSettings(dst, src *configuration) {
 	dst.BindHost = src.BindHost
 	dst.BindPort = src.BindPort
@@ -307,7 +308,7 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var curConfig *configuration
+	curConfig := &configuration{}
 	copyInstallSettings(curConfig, config)
 
 	Context.firstRun = false
