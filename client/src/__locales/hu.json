@@ -503,6 +503,7 @@
     "statistics_clear_confirm": "Biztosan vissza akarja állítani a statisztikákat?",
     "statistics_retention_confirm": "Biztos benne, hogy megváltoztatja a statisztika megőrzési idejét? Ha csökkentette az értéket, a megadottnál korábbi adatok elvesznek",
     "statistics_cleared": "A statisztikák sikeresen vissza lettek állítva",
+    "statistics_enable": "Statisztikák engedélyezése",
     "interval_hours": "{{count}} óra",
     "interval_hours_plural": "{{count}} óra",
     "filters_configuration": "Szűrők beállításai",

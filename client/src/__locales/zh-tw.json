@@ -503,6 +503,7 @@
     "statistics_clear_confirm": "您確定您想要清除統計資料嗎？",
     "statistics_retention_confirm": "您確定您想要更改統計資料保留嗎？如果您減少該間隔值，某些資料將被丟失",
     "statistics_cleared": "統計資料被成功地清除",
+    "statistics_enable": "啟用統計資料",
     "interval_hours": "{{count}} 小時",
     "interval_hours_plural": "{{count}} 小時",
     "filters_configuration": "過濾器配置",
@@ -612,7 +613,8 @@
     "click_to_view_queries": "點擊以檢視查詢",
     "port_53_faq_link": "連接埠 53 常被 \"DNSStubListener\" 或 \"systemd-resolved\" 服務佔用。請閱讀有關如何解決這個的<0>用法說明</0>。",
     "adg_will_drop_dns_queries": "AdGuard Home 將持續排除來自此用戶端之所有的 DNS 查詢。",
-    "client_not_in_allowed_clients": "該用戶端未被允許，因為它不在\"已允許的用戶端\"清單中。",
+    "filter_allowlist": "警告：此操作將把 \"{{disallowed_rule}}\" 規則排除在已允許用戶端的清單之外。",
+    "last_rule_in_allowlist": "無法禁止此用戶端，因為排除 “{{disallowed_rule}}” 規則將禁用“已允許用戶端”的清單。",
     "experimental": "實驗性的",
     "use_saved_key": "使用該先前已儲存的金鑰"
 }

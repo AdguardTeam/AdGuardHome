@@ -503,6 +503,7 @@
     "statistics_clear_confirm": "Opravdu chcete vyčistit statistiky?",
     "statistics_retention_confirm": "Opravdu chcete změnit uchovávání statistik? Pokud snížíte hodnotu intervalu, některá data budou ztracena",
     "statistics_cleared": "Statistiky úspěšně vyčištěny",
+    "statistics_enable": "Povolit statistiky",
     "interval_hours": "Hodiny: {{count}}",
     "interval_hours_plural": "Hodiny: {{count}}",
     "filters_configuration": "Konfigurace filtrů",
@@ -612,7 +613,8 @@
     "click_to_view_queries": "Klikněte pro zobrazení dotazů",
     "port_53_faq_link": "Port 53 je často obsazen službami \"DNSStubListener\" nebo \"systemd-resolved\". Přečtěte si <0>tento návod</0> o tom, jak to vyřešit.",
     "adg_will_drop_dns_queries": "AdGuard Home zruší všechny DNS dotazy tohoto klienta.",
-    "client_not_in_allowed_clients": "Tento klient není povolen, protože není na seznamu \"Povolení klienti\".",
+    "filter_allowlist": "VAROVÁNÍ: Tato akce také vyloučí pravidlo \"{{disallowed_rule}}\" ze seznamu povolených klientů.",
+    "last_rule_in_allowlist": "Nelze zakázat tohoto klienta, protože vyloučení pravidla \"{{disallowed_rule}}\" ZRUŠÍ seznam \"Povolených klientů\".",
     "experimental": "Experimentální",
     "use_saved_key": "Použít dříve uložený klíče"
 }

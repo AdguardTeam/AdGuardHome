@@ -503,6 +503,7 @@
     "statistics_clear_confirm": "Voulez-vous vraiment effacer les statistiques ?",
     "statistics_retention_confirm": "Êtes-vous sûr de vouloir modifier le maintien des statistiques ? Si vous diminuez la valeur de l'intervalle, certaines données seront perdues",
     "statistics_cleared": "Statistiques effacées",
+    "statistics_enable": "Activer les statistiques",
     "interval_hours": "{{count}} heure",
     "interval_hours_plural": "{{count}} heures",
     "filters_configuration": "Configuration des filtres",
@@ -612,7 +613,8 @@
     "click_to_view_queries": "Cliquez pour voir les requêtes",
     "port_53_faq_link": "Le port 53 est souvent occupé par les services « DNSStubListener » ou « systemd-resolved ». Veuillez lire <0>cette instruction</0> pour savoir comment résoudre ce problème.",
     "adg_will_drop_dns_queries": "AdGuard Home ignorera toutes les requêtes DNS de ce client.",
-    "client_not_in_allowed_clients": "Le client n’est pas autorisé car il ne figure pas dans la liste « Clients autorisés ».",
+    "filter_allowlist": "AVERTISSEMENT : Cette action exclura également la règle « {{disallowed_rule}} » de la liste des clients autorisés.",
+    "last_rule_in_allowlist": "Impossible d’interdire ce client, car l’exclusion de la règle « {{disallowed_rule}} » DÉSACTIVERA la liste des « clients autorisés ».",
     "experimental": "Expérimental",
     "use_saved_key": "Utiliser la clef précédemment enregistrée"
 }

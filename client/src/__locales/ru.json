@@ -277,7 +277,7 @@
     "form_enter_rate_limit": "Введите rate limit",
     "rate_limit": "Rate limit",
     "edns_enable": "Включить отправку EDNS Client Subnet",
-    "edns_cs_desc": "Отправлять подсети клиентов на DNS-сервера.",
+    "edns_cs_desc": "Отправлять подсети клиентов на DNS-серверы.",
     "rate_limit_desc": "Ограничение на количество запросов в секунду для каждого клиента (0 — неограниченно).",
     "blocking_ipv4_desc": "IP-адрес, возвращаемый при блокировке A-запроса",
     "blocking_ipv6_desc": "IP-адрес, возвращаемый при блокировке AAAA-запроса",
@@ -503,6 +503,7 @@
     "statistics_clear_confirm": "Вы уверены, что хотите очистить статистику?",
     "statistics_retention_confirm": "Вы уверены, что хотите изменить срок хранения статистики? При сокращении интервала данные могут быть утеряны",
     "statistics_cleared": "Статистика успешно очищена",
+    "statistics_enable": "Включить статистику",
     "interval_hours": "{{count}} час",
     "interval_hours_plural": "{{count}} часов",
     "filters_configuration": "Настройка фильтров",
@@ -612,7 +613,8 @@
     "click_to_view_queries": "Нажмите, чтобы просмотреть запросы",
     "port_53_faq_link": "Порт 53 часто занят службами «DNSStubListener» или «systemd-resolved». Ознакомьтесь с <0>инструкцией</0> о том, как это разрешить.",
     "adg_will_drop_dns_queries": "AdGuard Home AdGuard Home сбросит все DNS-запросы от этого клиента.",
-    "client_not_in_allowed_clients": "Клиент не разрешён, так как его нет в списке «Разрешённых клиентов».",
+    "filter_allowlist": "ВНИМАНИЕ: Это действие также исключит правило «{{disallowed_rule}}» из списка разрешённых клиентов.",
+    "last_rule_in_allowlist": "Нельзя заблокировать этого клиента, так как исключение правила «{{disallowed_rule}}» ОТКЛЮЧИТ режим белого списка.",
     "experimental": "Экспериментальный",
     "use_saved_key": "Использовать сохранённый ранее ключ"
 }

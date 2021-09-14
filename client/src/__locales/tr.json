@@ -503,6 +503,7 @@
     "statistics_clear_confirm": "İstatistikleri temizlemek istediğinizden emin misiniz?",
     "statistics_retention_confirm": "İstatistik saklama süresini değiştirmek istediğinizden emin misiniz? Zaman değerini azaltırsanız, bazı veriler kaybolacaktır",
     "statistics_cleared": "İstatistikler başarıyla temizlendi",
+    "statistics_enable": "İstatistikleri etkinleştir",
     "interval_hours": "{{count}} saat",
     "interval_hours_plural": "{{count}} saat",
     "filters_configuration": "Filtre yapılandırması",
@@ -612,7 +613,8 @@
     "click_to_view_queries": "Sorguları görmek için tıklayın",
     "port_53_faq_link": "53 numaralı bağlantı noktası genellikle \"DNSStubListener\" veya \"systemd-resolved\" hizmetleri tarafından kullanılır. Lütfen bu sorunun nasıl çözüleceğine ilişkin <0>bu talimatı</0> okuyun.",
     "adg_will_drop_dns_queries": "AdGuard Home, bu istemciden gelen tüm DNS sorgularını yok sayar.",
-    "client_not_in_allowed_clients": "\"İzin verilen istemciler\" listesinde olmadığı için istemciye izin verilmiyor.",
+    "filter_allowlist": "UYARI: Bu işlem ayrıca \"{{disallowed_rule}}\" kuralını izin verilen istemciler listesinden hariç tutacaktır.",
+    "last_rule_in_allowlist": "\"{{disallowed_rule}}\" kuralı hariç tutulduğunda \"İzin verilen istemciler\" listesi DEVRE DIŞI bırakılacağı için bu istemciye izin verilemez.",
     "experimental": "Deneysel",
     "use_saved_key": "Önceden kaydedilmiş anahtarı kullan"
 }

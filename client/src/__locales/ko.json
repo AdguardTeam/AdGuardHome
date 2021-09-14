@@ -503,6 +503,7 @@
     "statistics_clear_confirm": "통계를 정말로 초기화하시겠습니까?",
     "statistics_retention_confirm": "정말로 통계 저장 기간을 변경하시겠습니까? 저장 주기를 낮출 경우, 일부 데이터가 손실됩니다",
     "statistics_cleared": "통계를 성공적으로 초기화했습니다.",
+    "statistics_enable": "통계 활성화",
     "interval_hours": "{{count}} 시간",
     "interval_hours_plural": "{{count}} 시간",
     "filters_configuration": "필터 구성",
@@ -612,7 +613,8 @@
     "click_to_view_queries": "쿼리를 보려면 클릭합니다",
     "port_53_faq_link": "53번 포트는 보통 \"DNSStubListener\"나 \"systemd-resolved\" 서비스가 이미 사용하고 있습니다. 이 문제에 대한 해결 방법을 <0>설명</0>에서 찾아보세요.",
     "adg_will_drop_dns_queries": "AdGuard Home은 이 클라이언트에서 모든 DNS 쿼리를 삭제합니다.",
-    "client_not_in_allowed_clients": "이 클라이언트는 허용된 클라이언트 목록에 없으므로 허용되지 않습니다.",
+    "filter_allowlist": "경고: 이 경우 허용된 클라이언트 목록에서 '{{disallowed_rule}}' 규칙 또한 제외됩니다.",
+    "last_rule_in_allowlist": "'{{disallowed_rule}}' 규칙을 제외하면 '허용된 클라이언트' 목록이 꺼지므로 해당 클라이언트를 제외할 수 없습니다.",
     "experimental": "실험",
     "use_saved_key": "이전에 저장했던 키 사용하기"
 }

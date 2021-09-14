@@ -503,6 +503,7 @@
     "statistics_clear_confirm": "Alle statistieken werkelijk wissen?",
     "statistics_retention_confirm": "Weet u zeker dat u de bewaartermijn van de statistieken wilt wijzigen? Als u de intervalwaarde verlaagt, gaan sommige gegevens verloren",
     "statistics_cleared": "Statistieken succesvol gewist",
+    "statistics_enable": "Statistieken inschakelen",
     "interval_hours": "{{count}} uur",
     "interval_hours_plural": "{{count}} uren",
     "filters_configuration": "Filters instellingen",
@@ -612,7 +613,8 @@
     "click_to_view_queries": "Klik om queries te bekijken",
     "port_53_faq_link": "Poort 53 wordt vaak gebruikt door services als DNSStubListener- of de systeem DNS-resolver. Lees a.u.b. <0>deze instructie</0> hoe dit is op te lossen.",
     "adg_will_drop_dns_queries": "AdGuard Home zal alle DNS verzoeken van deze toepassing/dit systeem negeren.",
-    "client_not_in_allowed_clients": "De toepassing is niet toegestaan omdat deze niet in de lijst \"Toegestane toepassingen\" voorkomt.",
+    "filter_allowlist": "WAARSCHUWING: Deze actie zal ook de regel \"{{disallowed_rule}}\" uitsluiten van de lijst met toegestane clients.",
+    "last_rule_in_allowlist": "Kan deze client niet weigeren omdat het uitsluiten van de regel \"{{disallowed_rule}}\" de lijst \"Toegestane clients\" zal UITSCHAKELEN.",
     "experimental": "Experimenteel",
     "use_saved_key": "De eerder opgeslagen sleutel gebruiken"
 }

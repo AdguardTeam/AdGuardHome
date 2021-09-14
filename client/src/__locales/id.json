@@ -235,7 +235,7 @@
     "loading_table_status": "Memuat...",
     "page_table_footer_text": "Halaman",
     "rows_table_footer_text": "baris",
-    "updated_custom_filtering_toast": "Perbarui aturan penyaringan khusus",
+    "updated_custom_filtering_toast": "Aturan kustom berhasil disimpan",
     "rule_removed_from_custom_filtering_toast": "Aturan dihapus dari aturan penyaringan khusus: {{rule}}",
     "rule_added_to_custom_filtering_toast": "Aturan ditambah ke aturan penyaringan khusus: {{rule}}",
     "query_log_response_status": "Status: {{value}}",
@@ -613,5 +613,6 @@
     "port_53_faq_link": "Port 53 sering ditempati oleh layanan \"DNSStubListener\" atau \"systemd-resolved\". Silakan baca <0>instruksi ini</0> tentang cara menyelesaikan ini.",
     "adg_will_drop_dns_queries": "AdGuard Home akan menghapus semua permintaan DNS dari klien ini.",
     "client_not_in_allowed_clients": "Klien tidak diizinkan karena tidak ada dalam daftar \"Klien yang diizinkan\".",
-    "experimental": "Eksperimental"
+    "experimental": "Eksperimental",
+    "use_saved_key": "Gunakan kunci yang disimpan sebelumnya"
 }

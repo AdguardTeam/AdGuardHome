@@ -503,6 +503,7 @@
     "statistics_clear_confirm": "Naozaj chcete vynulovať štatistiku?",
     "statistics_retention_confirm": "Naozaj chcete zmeniť uchovávanie štatistík? Ak znížite hodnotu intervalu, niektoré údaje sa stratia",
     "statistics_cleared": "Štatistika bola úspešne vynulovaná",
+    "statistics_enable": "Zapnúť štatistiku",
     "interval_hours": "{{count}} hodina",
     "interval_hours_plural": "{{count}} hodín",
     "filters_configuration": "Konfigurácia filtrov",
@@ -612,7 +613,8 @@
     "click_to_view_queries": "Kliknite pre zobrazenie dopytov",
     "port_53_faq_link": "Port 53 je často obsadený službami \"DNSStubListener\" alebo \"systemd-resolved\". Prečítajte si <0>tento návod</0> o tom, ako to vyriešiť.",
     "adg_will_drop_dns_queries": "AdGuard Home zruší všetky DNS dopyty od tohto klienta.",
-    "client_not_in_allowed_clients": "Klient nemá povolenie, pretože sa nenachádza v zozname „Povolení klienti“.",
+    "filter_allowlist": "UPOZORNENIE: Táto akcia tiež vylúči pravidlo \"\"{{disallowed_rule}}\"\" zo zoznamu povolených klientov.",
+    "last_rule_in_allowlist": "Nemôžete zakázať tohto klienta, pretože vylúčenie pravidla \"{{disallowed_rule}}\" zakáže zoznam \"povolených klientov\".",
     "experimental": "Experimentálne",
     "use_saved_key": "Použiť predtým uložený kľúč"
 }

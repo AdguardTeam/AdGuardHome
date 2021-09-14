@@ -503,6 +503,7 @@
     "statistics_clear_confirm": "您确定要清除统计数据？",
     "statistics_retention_confirm": "您确定要更改统计记录保留时间吗？ 如果您减少间隔时间的值， 某些数据可能会丢失。",
     "statistics_cleared": "统计数据已成功清除",
+    "statistics_enable": "启用统计数据",
     "interval_hours": "{{count}} 小时",
     "interval_hours_plural": "{{count}} 小时",
     "filters_configuration": "过滤器配置",
@@ -612,7 +613,8 @@
     "click_to_view_queries": "点击查看查询",
     "port_53_faq_link": "53端口常被DNSStubListener或systemdn解析的服务占用。请阅读<0>这份关于如何解决这一问题的说明</0>",
     "adg_will_drop_dns_queries": "AdGuard Home 会终止所有来自此客户端的DNS查询。",
-    "client_not_in_allowed_clients": "此客户端不被允许，因为它不在“允许的客户端”列表中。",
+    "filter_allowlist": "警告：此操作将把规则 \"{{disallowed_rule}}\" 排除在允许客户端的列表之外。",
+    "last_rule_in_allowlist": "无法禁止此客户端，因为排除 “{{disallowed_rule}}” 规则将禁用“允许客户端”的列表。",
     "experimental": "实验性的",
     "use_saved_key": "使用之前保存的密钥"
 }

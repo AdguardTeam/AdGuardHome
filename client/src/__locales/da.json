@@ -503,6 +503,7 @@
     "statistics_clear_confirm": "Sikker på, at du vil slette statistikkerne?",
     "statistics_retention_confirm": "Sikker på, at du vil ændre på statistikbevaring? Mindskes intervalværdien, vil nogle data gå tabt",
     "statistics_cleared": "Statistikkerne er ryddet",
+    "statistics_enable": "Aktivér statistikker",
     "interval_hours": "{{count}} time",
     "interval_hours_plural": "{{count}} timer",
     "filters_configuration": "Filteropsætninger",
@@ -612,7 +613,8 @@
     "click_to_view_queries": "Klik for at se forespørgsler",
     "port_53_faq_link": "Port 53 optages ofte af \"DNSStubListener\" eller \"systemd-resolved\" tjenester. Læs <0>denne instruktion</0> om, hvordan du løser dette.",
     "adg_will_drop_dns_queries": "AdGuard Home vil afbryde alle DNS-forespørgsler fra denne klient.",
-    "client_not_in_allowed_clients": "Klienten er ikke tilladt, fordi den ikke er på listen \"Tilladte klienter\".",
+    "filter_allowlist": "ADVARSEL: Denne handling udelukker også reglen \"{{disallowed_rule}}\" fra listen over tilladte klienter.",
+    "last_rule_in_allowlist": "Kan ikke afvise denne klient, da udelukkelse af reglen \"{{disallowed_rule}}\" DEAKTIVERER listen \"Tilladte klienter\".",
     "experimental": "Eksperimentel",
     "use_saved_key": "Brug den tidligere gemte nøgle"
 }
