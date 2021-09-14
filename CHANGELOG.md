@@ -52,7 +52,7 @@ and this project adheres to
 - Items in allowed clients, disallowed clients, and blocked hosts lists must
   be unique ([#3419]).
 - The TLS private key previously saved as a string isn't shown in API responses
-  any more ([#1898]).
+  anymore ([#1898]).
 - Better OpenWrt detection ([#3435]).
 - DNS-over-HTTPS queries that come from HTTP proxies in the `trusted_proxies`
   list now use the real IP address of the client instead of the address of the
@@ -399,7 +399,7 @@ In this release, the schema version has changed from 10 to 12.
 - The field `"range_start"` in the `GET /control/dhcp/status` HTTP API response
   is now correctly named again ([#2678]).
 - DHCPv6 server's `ra_slaac_only` and `ra_allow_slaac` settings aren't reset to
-  `false` on update any more ([#2653]).
+  `false` on update anymore ([#2653]).
 - The `Vary` header is now added along with `Access-Control-Allow-Origin` to
   prevent cache-related and other issues in browsers ([#2658]).
 - The request body size limit is now set for HTTPS requests as well.
