@@ -18,6 +18,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 )
 
 var nextFilterID = time.Now().Unix() // semi-stable way to generate an unique ID
@@ -535,26 +536,85 @@ func (f *Filtering) read(reader io.Reader, tmpFile *os.File, filter *filter) (in
 	}
 }
 
-// updateIntl returns true if filter update performed successfully.
-func (f *Filtering) updateIntl(filter *filter) (updated bool, err error) {
-	updated = false
-	log.Tracef("Downloading update for filter %d from %s", filter.ID, filter.URL)
+// finalizeUpdate closes and gets rid of temporary file f with filter's content
+// according to updated.  It also saves new values of flt's name, rules number
+// and checksum if sucсeeded.
+func finalizeUpdate(
+	f *os.File,
+	flt *filter,
+	updated bool,
+	name string,
+	rnum int,
+	cs uint32,
+) (err error) {
+	tmpFileName := f.Name()
 
-	tmpFile, err := os.CreateTemp(filepath.Join(Context.getDataDir(), filterDir), "")
+	// Close the file before renaming it because it's required on Windows.
+	//
+	// See https://github.com/adguardTeam/adGuardHome/issues/1553.
+	if err = f.Close(); err != nil {
+		return fmt.Errorf("closing temporary file: %w", err)
+	}
+
+	if !updated {
+		log.Tracef("filter #%d from %s has no changes, skip", flt.ID, flt.URL)
+
+		return os.Remove(tmpFileName)
+	}
+
+	log.Printf("saving filter %d contents to: %s", flt.ID, flt.Path())
+
+	if err = os.Rename(tmpFileName, flt.Path()); err != nil {
+		return errors.WithDeferred(err, os.Remove(tmpFileName))
+	}
+
+	flt.Name = stringutil.Coalesce(flt.Name, name)
+	flt.checksum = cs
+	flt.RulesCount = rnum
+
+	return nil
+}
+
+// processUpdate copies filter's content from src to dst and returns the name,
+// rules number, and checksum for it.  It also returns the number of bytes read
+// from src.
+func (f *Filtering) processUpdate(
+	src io.Reader,
+	dst *os.File,
+	flt *filter,
+) (name string, rnum int, cs uint32, n int, err error) {
+	if n, err = f.read(src, dst, flt); err != nil {
+		return "", 0, 0, 0, err
+	}
+
+	if _, err = dst.Seek(0, io.SeekStart); err != nil {
+		return "", 0, 0, 0, err
+	}
+
+	rnum, cs, name = f.parseFilterContents(dst)
+
+	return name, rnum, cs, n, nil
+}
+
+// updateIntl updates the flt rewriting it's actual file.  It returns true if
+// the actual update has been performed.
+func (f *Filtering) updateIntl(flt *filter) (ok bool, err error) {
+	log.Tracef("downloading update for filter %d from %s", flt.ID, flt.URL)
+
+	var name string
+	var rnum, n int
+	var cs uint32
+
+	var tmpFile *os.File
+	tmpFile, err = os.CreateTemp(filepath.Join(Context.getDataDir(), filterDir), "")
 	if err != nil {
-		return updated, err
+		return false, err
 	}
 	defer func() {
-		var derr error
-		if tmpFile != nil {
-			if derr = tmpFile.Close(); derr != nil {
-				log.Printf("Couldn't close temporary file: %s", derr)
-			}
-
-			tmpFileName := tmpFile.Name()
-			if derr = os.Remove(tmpFileName); derr != nil {
-				log.Printf("Couldn't delete temporary file %s: %s", tmpFileName, derr)
-			}
+		err = errors.WithDeferred(err, finalizeUpdate(tmpFile, flt, ok, name, rnum, cs))
+		ok = ok && err == nil
+		if ok {
+			log.Printf("updated filter %d: %d bytes, %d rules", flt.ID, n, rnum)
 		}
 	}()
 
@@ -562,72 +622,42 @@ func (f *Filtering) updateIntl(filter *filter) (updated bool, err error) {
 	// end users.
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/3198.
-	err = tmpFile.Chmod(0o644)
-	if err != nil {
-		return updated, fmt.Errorf("changing file mode: %w", err)
+	if err = tmpFile.Chmod(0o644); err != nil {
+		return false, fmt.Errorf("changing file mode: %w", err)
 	}
 
-	var reader io.Reader
-	if filepath.IsAbs(filter.URL) {
-		var f io.ReadCloser
-		f, err = os.Open(filter.URL)
+	var r io.Reader
+	if filepath.IsAbs(flt.URL) {
+		var file io.ReadCloser
+		file, err = os.Open(flt.URL)
 		if err != nil {
-			return updated, fmt.Errorf("open file: %w", err)
+			return false, fmt.Errorf("open file: %w", err)
 		}
-		defer func() { err = errors.WithDeferred(err, f.Close()) }()
+		defer func() { err = errors.WithDeferred(err, file.Close()) }()
 
-		reader = f
+		r = file
 	} else {
 		var resp *http.Response
-		resp, err = Context.client.Get(filter.URL)
+		resp, err = Context.client.Get(flt.URL)
 		if err != nil {
-			log.Printf("Couldn't request filter from URL %s, skipping: %s", filter.URL, err)
+			log.Printf("requesting filter from %s, skip: %s", flt.URL, err)
 
-			return updated, err
+			return false, err
 		}
 		defer func() { err = errors.WithDeferred(err, resp.Body.Close()) }()
 
 		if resp.StatusCode != http.StatusOK {
-			log.Printf("Got status code %d from URL %s, skipping", resp.StatusCode, filter.URL)
-			return updated, fmt.Errorf("got status code != 200: %d", resp.StatusCode)
+			log.Printf("got status code %d from %s, skip", resp.StatusCode, flt.URL)
+
+			return false, fmt.Errorf("got status code != 200: %d", resp.StatusCode)
 		}
-		reader = resp.Body
+
+		r = resp.Body
 	}
 
-	total, err := f.read(reader, tmpFile, filter)
-	if err != nil {
-		return updated, err
-	}
+	name, rnum, cs, n, err = f.processUpdate(r, tmpFile, flt)
 
-	// Extract filter name and count number of rules
-	_, _ = tmpFile.Seek(0, io.SeekStart)
-	rulesCount, checksum, filterName := f.parseFilterContents(tmpFile)
-	// Check if the filter has been really changed
-	if filter.checksum == checksum {
-		log.Tracef("Filter #%d at URL %s hasn't changed, not updating it", filter.ID, filter.URL)
-		return updated, nil
-	}
-
-	log.Printf("Filter %d has been updated: %d bytes, %d rules",
-		filter.ID, total, rulesCount)
-	if len(filter.Name) == 0 {
-		filter.Name = filterName
-	}
-	filter.RulesCount = rulesCount
-	filter.checksum = checksum
-	filterFilePath := filter.Path()
-	log.Printf("Saving filter %d contents to: %s", filter.ID, filterFilePath)
-
-	// Closing the file before renaming it is necessary on Windows
-	_ = tmpFile.Close()
-	err = os.Rename(tmpFile.Name(), filterFilePath)
-	if err != nil {
-		return updated, err
-	}
-	tmpFile = nil
-	updated = true
-
-	return updated, nil
+	return cs != flt.checksum, err
 }
 
 // loads filter contents from the file in dataDir

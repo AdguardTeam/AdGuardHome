@@ -1,76 +1,118 @@
 package home
 
 import (
-	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func testStartFilterListener(t *testing.T) net.Listener {
+const testFltsFileName = "1.txt"
+
+func testStartFilterListener(t *testing.T, fltContent *[]byte) (l net.Listener) {
 	t.Helper()
 
+	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		n, werr := w.Write(*fltContent)
+		require.NoError(t, werr)
+		require.Equal(t, len(*fltContent), n)
+	})
+
+	var err error
+	l, err = net.Listen("tcp", ":0")
+	require.NoError(t, err)
+
+	go func() {
+		_ = http.Serve(l, h)
+	}()
+	t.Cleanup(func() {
+		require.NoError(t, l.Close())
+	})
+
+	return l
+}
+
+func TestFilters(t *testing.T) {
 	const content = `||example.org^$third-party
 	# Inline comment example
 	||example.com^$third-party
 	0.0.0.0 example.com
 	`
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/filters/1.txt", func(w http.ResponseWriter, r *http.Request) {
-		_, werr := w.Write([]byte(content))
-		assert.Nil(t, werr)
-	})
+	fltContent := []byte(content)
 
-	listener, err := net.Listen("tcp", ":0")
-	require.Nil(t, err)
-
-	go func() {
-		_ = http.Serve(listener, mux)
-	}()
-
-	t.Cleanup(func() {
-		assert.Nil(t, listener.Close())
-	})
-
-	return listener
-}
-
-func TestFilters(t *testing.T) {
-	l := testStartFilterListener(t)
-	dir := t.TempDir()
+	l := testStartFilterListener(t, &fltContent)
 
 	Context = homeContext{
-		workDir: dir,
+		workDir: t.TempDir(),
 		client: &http.Client{
 			Timeout: 5 * time.Second,
 		},
 	}
 	Context.filters.Init()
 
-	f := filter{
-		URL: fmt.Sprintf("http://127.0.0.1:%d/filters/1.txt", l.Addr().(*net.TCPAddr).Port),
+	f := &filter{
+		URL: (&url.URL{
+			Scheme: "http",
+			Host: (&netutil.IPPort{
+				IP:   net.IP{127, 0, 0, 1},
+				Port: l.Addr().(*net.TCPAddr).Port,
+			}).String(),
+			Path: path.Join(filterDir, testFltsFileName),
+		}).String(),
 	}
 
-	// Download.
-	ok, err := Context.filters.update(&f)
-	require.Nil(t, err)
-	require.True(t, ok)
-	assert.Equal(t, 3, f.RulesCount)
+	updateAndAssert := func(t *testing.T, want require.BoolAssertionFunc, wantRulesCount int) {
+		ok, err := Context.filters.update(f)
+		require.NoError(t, err)
+		want(t, ok)
 
-	// Refresh.
-	ok, err = Context.filters.update(&f)
-	require.Nil(t, err)
-	require.False(t, ok)
+		assert.Equal(t, wantRulesCount, f.RulesCount)
 
-	err = Context.filters.load(&f)
-	require.Nil(t, err)
+		var dir []fs.DirEntry
+		dir, err = os.ReadDir(filepath.Join(Context.getDataDir(), filterDir))
+		require.NoError(t, err)
 
-	f.unload()
-	require.Nil(t, os.Remove(f.Path()))
+		assert.Len(t, dir, 1)
+
+		require.FileExists(t, f.Path())
+
+		err = Context.filters.load(f)
+		require.NoError(t, err)
+	}
+
+	t.Run("download", func(t *testing.T) {
+		updateAndAssert(t, require.True, 3)
+	})
+
+	t.Run("refresh_idle", func(t *testing.T) {
+		updateAndAssert(t, require.False, 3)
+	})
+
+	t.Run("refresh_actually", func(t *testing.T) {
+		fltContent = []byte(`||example.com^`)
+		t.Cleanup(func() {
+			fltContent = []byte(content)
+		})
+
+		updateAndAssert(t, require.True, 1)
+	})
+
+	t.Run("load_unload", func(t *testing.T) {
+		err := Context.filters.load(f)
+		require.NoError(t, err)
+
+		f.unload()
+	})
+
+	require.NoError(t, os.Remove(f.Path()))
 }

@@ -254,13 +254,21 @@ func (f *Filtering) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	Context.controlLock.Unlock()
 	flags := filterRefreshBlocklists
 	if req.White {
 		flags = filterRefreshAllowlists
 	}
-	resp.Updated, err = f.refreshFilters(flags|filterRefreshForce, false)
-	Context.controlLock.Lock()
+	func() {
+		// Temporarily unlock the Context.controlLock because the
+		// f.refreshFilters waits for it to be unlocked but it's
+		// actually locked in ensure wrapper.
+		//
+		// TODO(e.burkov):  Reconsider this messy syncing process.
+		Context.controlLock.Unlock()
+		defer Context.controlLock.Lock()
+
+		resp.Updated, err = f.refreshFilters(flags|filterRefreshForce, false)
+	}()
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "%s", err)
 		return

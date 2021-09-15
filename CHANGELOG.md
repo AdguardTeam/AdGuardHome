@@ -10,7 +10,7 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.107.0] - 2021-09-14 (APPROX.)
+## [v0.107.0] - 2021-09-28 (APPROX.)
 -->
 
 ### Added
@@ -115,6 +115,7 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- Removal of temporary filter files ([#3567]).
 - Panic when an upstream server responds with an empty question section
   ([#3551]).
 - 9GAG blocking ([#3564]).
@@ -195,6 +196,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3538]: https://github.com/AdguardTeam/AdGuardHome/issues/3538
 [#3551]: https://github.com/AdguardTeam/AdGuardHome/issues/3551
 [#3564]: https://github.com/AdguardTeam/AdGuardHome/issues/3564
+[#3567]: https://github.com/AdguardTeam/AdGuardHome/issues/3567
 [#3568]: https://github.com/AdguardTeam/AdGuardHome/issues/3568
 [#3579]: https://github.com/AdguardTeam/AdGuardHome/issues/3579
 
