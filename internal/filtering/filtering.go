@@ -255,10 +255,14 @@ func (d *DNSFilter) GetConfig() (s Settings) {
 // WriteDiskConfig - write configuration
 func (d *DNSFilter) WriteDiskConfig(c *Config) {
 	d.confLock.Lock()
+	defer d.confLock.Unlock()
+
 	*c = d.Config
-	c.Rewrites = rewriteArrayDup(d.Config.Rewrites)
-	// BlockedServices
-	d.confLock.Unlock()
+	c.Rewrites = cloneRewrites(c.Rewrites)
+}
+
+func cloneRewrites(entries []RewriteEntry) (clone []RewriteEntry) {
+	return append([]RewriteEntry(nil), entries...)
 }
 
 // SetFilters - set new filters (synchronously or asynchronously)

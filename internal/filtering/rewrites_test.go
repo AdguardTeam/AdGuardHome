@@ -316,7 +316,7 @@ func TestRewritesExceptionIP(t *testing.T) {
 	}, {
 		name: "match_AAAA_host3.com",
 		host: "host3.com",
-		want: nil,
+		want: []net.IP{},
 		dtyp: dns.TypeAAAA,
 	}}
 
