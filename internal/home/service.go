@@ -17,8 +17,8 @@ import (
 	"github.com/kardianos/service"
 )
 
-// TODO(a.garipov): Move shell templates into actual files.  Either during the
-// v0.106.0 cycle using packr or during the following cycle using go:embed.
+// TODO(a.garipov): Consider moving the shell templates into actual files and
+// using go:embed instead of using large string constants.
 
 const (
 	launchdStdoutPath  = "/var/log/AdGuardHome.stdout.log"
@@ -313,18 +313,21 @@ func configureService(c *service.Config) {
 	// POSIX / systemd
 
 	// Redirect stderr and stdout to files.  Make sure we always restart.
-	// Start only once network is up on Linux/systemd.
 	c.Option["LogOutput"] = true
 	c.Option["Restart"] = "always"
-	c.Dependencies = []string{
-		"After=syslog.target network-online.target",
+
+	// Start only once network is up on Linux/systemd.
+	if runtime.GOOS == "linux" {
+		c.Dependencies = []string{
+			"After=syslog.target network-online.target",
+		}
 	}
 
-	// Use modified service file templates.
+	// Use the modified service file templates.
 	c.Option["SystemdScript"] = systemdScript
 	c.Option["SysvScript"] = sysvScript
 
-	// On OpenWrt we're using a different type of sysvScript.
+	// Use different scripts on OpenWrt and FreeBSD.
 	if aghos.IsOpenWrt() {
 		c.Option["SysvScript"] = openWrtScript
 	} else if runtime.GOOS == "freebsd" {
