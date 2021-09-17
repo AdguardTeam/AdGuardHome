@@ -39,7 +39,7 @@ func httpError(w http.ResponseWriter, code int, format string, args ...interface
 func appendDNSAddrs(dst []string, addrs ...net.IP) (res []string) {
 	for _, addr := range addrs {
 		var hostport string
-		if config.DNS.Port != 53 {
+		if config.DNS.Port != defaultPortDNS {
 			hostport = netutil.JoinHostPort(addr.String(), config.DNS.Port)
 		} else {
 			hostport = addr.String()
@@ -285,8 +285,6 @@ func preInstallHandler(handler http.Handler) http.Handler {
 	return &preInstallHandlerStruct{handler}
 }
 
-const defaultHTTPSPort = 443
-
 // handleHTTPSRedirect redirects the request to HTTPS, if needed.  If ok is
 // true, the middleware must continue handling the request.
 func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
@@ -304,7 +302,7 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 
 	if r.TLS == nil && web.forceHTTPS {
 		hostPort := host
-		if port := web.conf.PortHTTPS; port != defaultHTTPSPort {
+		if port := web.conf.PortHTTPS; port != defaultPortHTTPS {
 			hostPort = netutil.JoinHostPort(host, port)
 		}
 

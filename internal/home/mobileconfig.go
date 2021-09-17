@@ -3,6 +3,7 @@ package home
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"path"
@@ -10,7 +11,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/stringutil"
 	uuid "github.com/satori/go.uuid"
 	"howett.net/plist"
 )
@@ -31,9 +31,8 @@ type dnsSettings struct {
 	// DNSProtocol is not "TLS".
 	ServerName string `plist:",omitempty"`
 
-	// ServerAddresses is a list of plain DNS server IP addresses used to
-	// resolve the hostname in ServerURL or ServerName.
-	ServerAddresses []string `plist:",omitempty"`
+	// ServerAddresses is a list IP addresses of the server.
+	ServerAddresses []net.IP `plist:",omitempty"`
 }
 
 // payloadContent is a Device Management Profile payload.
@@ -158,10 +157,19 @@ func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 		}
 	}
 
+	dnsIPs, err := collectDNSIPs()
+	if err != nil {
+		// Don't add a lot of formatting, since the error is already
+		// wrapped by collectDNSIPs.
+		respondJSONError(w, http.StatusInternalServerError, err.Error())
+
+		return
+	}
+
 	d := &dnsSettings{
 		DNSProtocol:     dnsp,
 		ServerName:      host,
-		ServerAddresses: cloneBootstrap(),
+		ServerAddresses: dnsIPs,
 	}
 
 	mobileconfig, err := encodeMobileConfig(d, clientID)
@@ -188,18 +196,32 @@ func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 	_, _ = w.Write(mobileconfig)
 }
 
-// cloneBootstrap returns a clone of the current bootstrap DNS servers.
-func cloneBootstrap() (bootstrap []string) {
-	config.RLock()
-	defer config.RUnlock()
-
-	return stringutil.CloneSlice(config.DNS.BootstrapDNS)
-}
-
 func handleMobileConfigDoH(w http.ResponseWriter, r *http.Request) {
 	handleMobileConfig(w, r, dnsProtoHTTPS)
 }
 
 func handleMobileConfigDoT(w http.ResponseWriter, r *http.Request) {
 	handleMobileConfig(w, r, dnsProtoTLS)
+}
+
+// collectDNSIPs returns a slice of IP addresses the server is listening
+// on, including the addresses on all interfaces in cases of unspecified IPs but
+// excluding loopback addresses.
+func collectDNSIPs() (ips []net.IP, err error) {
+	// TODO(a.garipov): This really shouldn't be a function that parses
+	// a list of strings.  Instead, we need a function that returns this
+	// data as []net.IP or []*netutil.IPPort.  Maybe someday.
+	addrs, err := collectDNSAddresses()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, addr := range addrs {
+		ip := net.ParseIP(addr)
+		if ip != nil && !ip.IsLoopback() {
+			ips = append(ips, ip)
+		}
+	}
+
+	return ips, nil
 }

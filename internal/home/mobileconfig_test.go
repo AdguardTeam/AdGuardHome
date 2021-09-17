@@ -3,42 +3,41 @@ package home
 import (
 	"bytes"
 	"encoding/json"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"howett.net/plist"
 )
 
-// testBootstrapDNS are the bootstrap plain DNS server addresses for tests.
-var testBootstrapDNS = []string{
-	"94.140.14.14",
-	"94.140.15.15",
-}
-
-// setupBootstraps is a helper that sets up the bootstrap plain DNS server
-// configuration for tests and also tears it down in a cleanup function.
-func setupBootstraps(t testing.TB) {
+// setupDNSIPs is a helper that sets up the server IP address configuration for
+// tests and also tears it down in a cleanup function.
+func setupDNSIPs(t testing.TB) {
 	t.Helper()
 
 	prevConfig := config
+	prevTLS := Context.tls
 	t.Cleanup(func() {
 		config = prevConfig
+		Context.tls = prevTLS
 	})
+
 	config = &configuration{
 		DNS: dnsConfig{
-			FilteringConfig: dnsforward.FilteringConfig{
-				BootstrapDNS: testBootstrapDNS,
-			},
+			BindHosts: []net.IP{netutil.IPv4Zero()},
+			Port:      defaultPortDNS,
 		},
 	}
+
+	Context.tls = &TLSMod{}
 }
 
 func TestHandleMobileConfigDoH(t *testing.T) {
-	setupBootstraps(t)
+	setupDNSIPs(t)
 
 	t.Run("success", func(t *testing.T) {
 		r, err := http.NewRequest(http.MethodGet, "https://example.com:12345/apple/doh.mobileconfig?host=example.org", nil)
@@ -59,7 +58,7 @@ func TestHandleMobileConfigDoH(t *testing.T) {
 		s := mc.PayloadContent[0].DNSSettings
 		require.NotNil(t, s)
 
-		assert.Equal(t, testBootstrapDNS, s.ServerAddresses)
+		assert.NotEmpty(t, s.ServerAddresses)
 		assert.Empty(t, s.ServerName)
 		assert.Equal(t, "https://example.org/dns-query", s.ServerURL)
 	})
@@ -105,14 +104,14 @@ func TestHandleMobileConfigDoH(t *testing.T) {
 		s := mc.PayloadContent[0].DNSSettings
 		require.NotNil(t, s)
 
-		assert.Equal(t, testBootstrapDNS, s.ServerAddresses)
+		assert.NotEmpty(t, s.ServerAddresses)
 		assert.Empty(t, s.ServerName)
 		assert.Equal(t, "https://example.org/dns-query/cli42", s.ServerURL)
 	})
 }
 
 func TestHandleMobileConfigDoT(t *testing.T) {
-	setupBootstraps(t)
+	setupDNSIPs(t)
 
 	t.Run("success", func(t *testing.T) {
 		r, err := http.NewRequest(http.MethodGet, "https://example.com:12345/apple/dot.mobileconfig?host=example.org", nil)
@@ -133,7 +132,7 @@ func TestHandleMobileConfigDoT(t *testing.T) {
 		s := mc.PayloadContent[0].DNSSettings
 		require.NotNil(t, s)
 
-		assert.Equal(t, testBootstrapDNS, s.ServerAddresses)
+		assert.NotEmpty(t, s.ServerAddresses)
 		assert.Equal(t, "example.org", s.ServerName)
 		assert.Empty(t, s.ServerURL)
 	})
@@ -180,7 +179,7 @@ func TestHandleMobileConfigDoT(t *testing.T) {
 		s := mc.PayloadContent[0].DNSSettings
 		require.NotNil(t, s)
 
-		assert.Equal(t, testBootstrapDNS, s.ServerAddresses)
+		assert.NotEmpty(t, s.ServerAddresses)
 		assert.Equal(t, "cli42.example.org", s.ServerName)
 		assert.Empty(t, s.ServerURL)
 	})

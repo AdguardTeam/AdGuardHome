@@ -15,7 +15,8 @@ and this project adheres to
 
 ### Added
 
-- Bootstrap DNS server IPs to the `mobileconfig` API responses ([#3568]).
+- DNS server IP addresses to the `mobileconfig` API responses ([#3568],
+  [#3607]).
 - Setting the timeout for IP address pinging in the "Fastest IP address" mode
   through the new `fastest_timeout` field in the configuration file ([#1992]).
 - Static IP address detection on FreeBSD ([#3289]).
@@ -199,6 +200,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3567]: https://github.com/AdguardTeam/AdGuardHome/issues/3567
 [#3568]: https://github.com/AdguardTeam/AdGuardHome/issues/3568
 [#3579]: https://github.com/AdguardTeam/AdGuardHome/issues/3579
+[#3607]: https://github.com/AdguardTeam/AdGuardHome/issues/3607
 
 
 

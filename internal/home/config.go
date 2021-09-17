@@ -173,7 +173,7 @@ var config = &configuration{
 	AuthBlockMin: 15,
 	DNS: dnsConfig{
 		BindHosts:     []net.IP{{0, 0, 0, 0}},
-		Port:          53,
+		Port:          defaultPortDNS,
 		StatsInterval: 1,
 		FilteringConfig: dnsforward.FilteringConfig{
 			ProtectionEnabled:  true,      // whether or not use any of filtering features
@@ -202,9 +202,9 @@ var config = &configuration{
 		UsePrivateRDNS:             true,
 	},
 	TLS: tlsConfigSettings{
-		PortHTTPS:       443,
-		PortDNSOverTLS:  853, // needs to be passed through to dnsproxy
-		PortDNSOverQUIC: 784,
+		PortHTTPS:       defaultPortHTTPS,
+		PortDNSOverTLS:  defaultPortTLS, // needs to be passed through to dnsproxy
+		PortDNSOverQUIC: defaultPortQUIC,
 	},
 	logSettings: logSettings{
 		LogCompress:   false,

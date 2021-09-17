@@ -29,8 +29,8 @@ type getAddrsResponse struct {
 // handleInstallGetAddresses is the handler for /install/get_addresses endpoint.
 func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	data := getAddrsResponse{}
-	data.WebPort = 80
-	data.DNSPort = 53
+	data.WebPort = defaultPortHTTP
+	data.DNSPort = defaultPortDNS
 
 	ifaces, err := aghnet.GetValidNetInterfacesForWeb()
 	if err != nil {
@@ -553,8 +553,8 @@ type getAddrsResponseBeta struct {
 // functionality will appear in default handleInstallGetAddresses.
 func (web *Web) handleInstallGetAddressesBeta(w http.ResponseWriter, r *http.Request) {
 	data := getAddrsResponseBeta{}
-	data.WebPort = 80
-	data.DNSPort = 53
+	data.WebPort = defaultPortHTTP
+	data.DNSPort = defaultPortDNS
 
 	ifaces, err := aghnet.GetValidNetInterfacesForWeb()
 	if err != nil {

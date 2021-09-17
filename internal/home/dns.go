@@ -19,6 +19,15 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// Default ports.
+const (
+	defaultPortDNS   = 53
+	defaultPortHTTP  = 80
+	defaultPortHTTPS = 443
+	defaultPortQUIC  = 784
+	defaultPortTLS   = 853
+)
+
 // Called by other modules when configuration is changed
 func onConfigModified() {
 	_ = config.write()
@@ -253,7 +262,7 @@ func getDNSEncryption() (de dnsEncryption) {
 		hostname := tlsConf.ServerName
 		if tlsConf.PortHTTPS != 0 {
 			addr := hostname
-			if tlsConf.PortHTTPS != 443 {
+			if tlsConf.PortHTTPS != defaultPortHTTPS {
 				addr = netutil.JoinHostPort(addr, tlsConf.PortHTTPS)
 			}
 
