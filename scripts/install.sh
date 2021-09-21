@@ -47,7 +47,7 @@ is_little_endian() {
 # machine.  The required software:
 #
 #   curl
-#   unzip (macOS) / tar (other unices)
+#   unzip (macOS) / tar (other unixes)
 #
 check_required() {
 	required_darwin="unzip"
@@ -426,6 +426,8 @@ download() {
 	then
 		error_exit "cannot download the package from $url into $pkg_name"
 	fi
+
+	log "successfully downloaded $pkg_name"
 }
 
 # Function unpack unpacks the passed archive depending on it's extension.
@@ -433,7 +435,7 @@ unpack() {
 	log "unpacking package from $pkg_name into $out_dir"
 	if ! mkdir -p "$out_dir"
 	then
-		error_exit "cannot create directory at the $out_dir"
+		error_exit "cannot create directory $out_dir"
 	fi
 
 	case "$pkg_ext"
@@ -448,6 +450,8 @@ unpack() {
 		error_exit "unexpected package extension: '$pkg_ext'"
 		;;
 	esac
+
+	log "successfully unpacked, contents: $( echo; ls -l -A "$out_dir" )"
 
 	rm "$pkg_name"
 }
@@ -506,6 +510,8 @@ install_service() {
 	then
 		return 0
 	fi
+
+	log "installation failed, removing $agh_dir"
 
 	rm -r "$agh_dir"
 
