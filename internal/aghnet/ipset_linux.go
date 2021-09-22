@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/digineo/go-ipset/v2"
 	"github.com/mdlayher/netlink"
 	"github.com/ti-mo/netfilter"
@@ -67,6 +68,15 @@ type ipsetProps struct {
 // unit is a convenient alias for struct{}.
 type unit = struct{}
 
+// ipsInIpset is the type of a set of IP-address-to-ipset mappings.
+type ipsInIpset map[ipInIpsetEntry]unit
+
+// ipInIpsetEntry is the type for entries in an ipsInIpset set.
+type ipInIpsetEntry struct {
+	ipsetName string
+	ipArr     [net.IPv6len]byte
+}
+
 // ipsetMgr is the Linux Netfilter ipset manager.
 type ipsetMgr struct {
 	nameToIpset    map[string]ipsetProps
@@ -82,7 +92,7 @@ type ipsetMgr struct {
 	// are either added to all corresponding ipsets or not.  When that stops
 	// being the case, for example if we add dynamic reconfiguration of
 	// ipsets, this map will need to become a per-ipset-name one.
-	addedIPs map[[16]byte]unit
+	addedIPs ipsInIpset
 
 	ipv4Conn ipsetConn
 	ipv6Conn ipsetConn
@@ -199,7 +209,7 @@ func newIpsetMgrWithDialer(ipsetConf []string, dial ipsetDialer) (mgr IpsetManag
 
 		dial: dial,
 
-		addedIPs: make(map[[16]byte]unit),
+		addedIPs: make(ipsInIpset),
 	}
 
 	err = m.dialNetfilter(&netlink.Config{})
@@ -265,16 +275,19 @@ func (m *ipsetMgr) addIPs(host string, set ipsetProps, ips []net.IP) (n int, err
 	}
 
 	var entries []*ipset.Entry
-	var newAddedIPs [][16]byte
+	var newAddedEntries []ipInIpsetEntry
 	for _, ip := range ips {
-		var iparr [16]byte
-		copy(iparr[:], ip.To16())
-		if _, added := m.addedIPs[iparr]; added {
+		e := ipInIpsetEntry{
+			ipsetName: set.name,
+		}
+		copy(e.ipArr[:], ip.To16())
+
+		if _, added := m.addedIPs[e]; added {
 			continue
 		}
 
 		entries = append(entries, ipset.NewEntry(ipset.EntryIP(ip)))
-		newAddedIPs = append(newAddedIPs, iparr)
+		newAddedEntries = append(newAddedEntries, e)
 	}
 
 	n = len(entries)
@@ -299,8 +312,8 @@ func (m *ipsetMgr) addIPs(host string, set ipsetProps, ips []net.IP) (n int, err
 
 	// Only add these to the cache once we're sure that all of them were
 	// actually sent to the ipset.
-	for _, iparr := range newAddedIPs {
-		m.addedIPs[iparr] = unit{}
+	for _, e := range newAddedEntries {
+		m.addedIPs[e] = unit{}
 	}
 
 	return n, nil
@@ -330,6 +343,8 @@ func (m *ipsetMgr) addToSets(
 			return n, fmt.Errorf("unexpected family %s for ipset %q", set.family, set.name)
 		}
 
+		log.Debug("ipset: added %d ips to set %s", nn, set.name)
+
 		n += nn
 	}
 
@@ -345,6 +360,8 @@ func (m *ipsetMgr) Add(host string, ip4s, ip6s []net.IP) (n int, err error) {
 	if len(sets) == 0 {
 		return 0, nil
 	}
+
+	log.Debug("ipset: found %d sets", len(sets))
 
 	return m.addToSets(host, ip4s, ip6s, sets)
 }

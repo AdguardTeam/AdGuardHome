@@ -116,6 +116,7 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- Adding an IP into only one of the matching ipsets on Linux ([#3638]).
 - Removal of temporary filter files ([#3567]).
 - Panic when an upstream server responds with an empty question section
   ([#3551]).
@@ -201,6 +202,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3568]: https://github.com/AdguardTeam/AdGuardHome/issues/3568
 [#3579]: https://github.com/AdguardTeam/AdGuardHome/issues/3579
 [#3607]: https://github.com/AdguardTeam/AdGuardHome/issues/3607
+[#3638]: https://github.com/AdguardTeam/AdGuardHome/issues/3638
 
 
 

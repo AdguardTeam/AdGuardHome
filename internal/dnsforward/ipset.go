@@ -131,7 +131,7 @@ func (c *ipsetCtx) process(dctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	log.Debug("ipset: added %d new ips", n)
+	log.Debug("ipset: added %d new ipset entries", n)
 
 	return resultCodeSuccess
 }

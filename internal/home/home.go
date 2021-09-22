@@ -69,7 +69,7 @@ type homeContext struct {
 
 	configFilename   string // Config filename (can be overridden via the command line arguments)
 	workDir          string // Location of our directory, used to protect against CWD being somewhere else
-	firstRun         bool   // if set to true, don't run any services except HTTP web inteface, and serve only first-run html
+	firstRun         bool   // if set to true, don't run any services except HTTP web interface, and serve only first-run html
 	pidFileName      string // PID file name.  Empty if no PID file was created.
 	disableUpdate    bool   // If set, don't check for updates
 	controlLock      sync.Mutex

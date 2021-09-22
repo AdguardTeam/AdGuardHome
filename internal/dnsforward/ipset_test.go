@@ -15,7 +15,7 @@ type fakeIpsetMgr struct {
 	ip6s []net.IP
 }
 
-// Add implements the aghnet.IpsetManager inteface for *fakeIpsetMgr.
+// Add implements the aghnet.IpsetManager interface for *fakeIpsetMgr.
 func (m *fakeIpsetMgr) Add(host string, ip4s, ip6s []net.IP) (n int, err error) {
 	m.ip4s = append(m.ip4s, ip4s...)
 	m.ip6s = append(m.ip6s, ip6s...)
