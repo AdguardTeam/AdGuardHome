@@ -451,7 +451,7 @@ unpack() {
 		;;
 	esac
 
-	log "successfully unpacked, contents: $( echo; ls -l -A "$out_dir" )"
+	log "successfully unpacked, contents: $( echo; ls -l -A "$agh_dir" )"
 
 	rm "$pkg_name"
 }
