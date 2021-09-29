@@ -49,3 +49,39 @@
         display: block;
     }
 }
+
+.counters__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #dee2e6;
+    padding: 0.75rem 1.5rem;
+}
+
+.counters__column--value {
+    flex-shrink: 0;
+    margin-left: 1.5rem;
+    text-align: right;
+    white-space: nowrap;
+}
+
+@media screen and (min-width: 768px) {
+    .counters__column {
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .counters__title {
+        display: block;
+        max-width: 100%;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+
+    .counters__tooltip {
+        display: block;
+        flex-shrink: 0;
+    }
+}
