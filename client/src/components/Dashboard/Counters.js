@@ -16,18 +16,31 @@ const Row = ({
         ? <LogsSearchLink response_status={response_status}>{formatNumber(count)}</LogsSearchLink>
         : count;
 
-    return <tr key={label}>
-        <td>
-            <Trans components={translationComponents}>{label}</Trans>
-            <Tooltip content={tooltipTitle} placement="top"
-                     className="tooltip-container tooltip-custom--narrow text-center">
-                <svg className="icons icon--20 icon--lightgray ml-2">
-                    <use xlinkHref="#question" />
-                </svg>
-            </Tooltip>
-        </td>
-        <td className="text-right"><strong>{content}</strong></td>
-    </tr>;
+    return (
+        <div className="counters__row" key={label}>
+            <div className="counters__column">
+                <span className="counters__title">
+                    <Trans components={translationComponents}>
+                        {label}
+                    </Trans>
+                </span>
+                <span className="counters__tooltip">
+                    <Tooltip
+                        content={tooltipTitle}
+                        placement="top"
+                        className="tooltip-container tooltip-custom--narrow text-center"
+                    >
+                        <svg className="icons icon--20 icon--lightgray ml-2">
+                            <use xlinkHref="#question" />
+                        </svg>
+                    </Tooltip>
+                </span>
+            </div>
+            <div className="counters__column counters__column--value">
+                <strong>{content}</strong>
+            </div>
+        </div>
+    );
 };
 
 const Counters = ({ refreshButton, subtitle }) => {
@@ -88,9 +101,9 @@ const Counters = ({ refreshButton, subtitle }) => {
             bodyType="card-table"
             refresh={refreshButton}
         >
-            <table className="table card-table">
-                <tbody>{rows.map(Row)}</tbody>
-            </table>
+            <div className="counters">
+                {rows.map(Row)}
+            </div>
         </Card>
     );
 };
