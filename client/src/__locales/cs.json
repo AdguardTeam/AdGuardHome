@@ -306,7 +306,7 @@
     "install_settings_dns_desc": "Budete muset nakonfigurovat Vaše zařízení nebo router, aby používali DNS server na následujících adresách:",
     "install_settings_all_interfaces": "Všechna rozhraní",
     "install_auth_title": "Ověřování",
-    "install_auth_desc": "Doporučujeme Vám nakonfigurovat v administrátorském webovém rozhraní AdGuard Home ověření Vaší identity heslem. I když je přístupné pouze ve Vaší lokální síti, je stále důležité chránit jej před neomezeným přístupem.",
+    "install_auth_desc": "V administrátorském webovém rozhraní AdGuard Home musí být nastaveno ověřovací heslo. I když je AdGuard Home přístupný pouze v místní síti, je důležité jej chránit před neomezeným přístupem.",
     "install_auth_username": "Uživatelské jméno",
     "install_auth_password": "Heslo",
     "install_auth_confirm": "Potvrďte heslo",

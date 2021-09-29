@@ -306,7 +306,7 @@
     "install_settings_dns_desc": "Sie müssen Ihre Geräte oder Ihren Router so konfigurieren, dass er den DNS-Server unter den folgenden Adressen verwendet:",
     "install_settings_all_interfaces": "Alle Schnittstellen",
     "install_auth_title": "Authentifizierung",
-    "install_auth_desc": "Es wird dringend empfohlen, die Passwortauthentifizierung für Ihre AdGuard Home Administrator-Weboberfläche zu konfigurieren. Auch wenn es nur in Ihrem lokalen Netzwerk zugänglich ist, ist es dennoch wichtig, es vor unbefugtem Zugriff zu schützen.",
+    "install_auth_desc": "Die Passwortauthentifizierung für Ihre AdGuard Home Administrator-Weboberfläche muss konfiguriert sein. Auch wenn AdGuard Home nur in Ihrem lokalen Netzwerk zugänglich ist, ist es dennoch wichtig, es vor unbefugtem Zugriff zu schützen.",
     "install_auth_username": "Benutzername",
     "install_auth_password": "Passwort",
     "install_auth_confirm": "Passwort bestätigen",

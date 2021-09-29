@@ -306,7 +306,7 @@
     "install_settings_dns_desc": "Cihazlarınızı veya yönlendiricinizi şu adresteki DNS sunucusunu kullanması için ayarlamanız gerekecek:",
     "install_settings_all_interfaces": "Tüm arayüzler",
     "install_auth_title": "Kimlik Doğrulama",
-    "install_auth_desc": "AdGuard Home yönetici web arayüzüne erişim için kullanıcı adı ve şifre yapılandırmanız önemle tavsiye edilir. Yalnızca yerel ağınızdan erişilebilir olsa bile izinsiz erişimden korumak yine de önemlidir.",
+    "install_auth_desc": "AdGuard Home yönetim web arayüzü için şifre doğrulaması yapılandırılmalıdır. AdGuard Home'a yalnızca yerel ağınızdan erişilebilir olsa bile, onu sınırsız erişimden korumak yine de önemlidir.",
     "install_auth_username": "Kullanıcı adı",
     "install_auth_password": "Parola",
     "install_auth_confirm": "Parolayı onayla",

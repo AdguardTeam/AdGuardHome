@@ -306,7 +306,7 @@
     "install_settings_dns_desc": "Deberás configurar tus dispositivos o router para usar el servidor DNS en las siguientes direcciones:",
     "install_settings_all_interfaces": "Todas las interfaces",
     "install_auth_title": "Autenticación",
-    "install_auth_desc": "Se recomienda encarecidamente configurar la autenticación por contraseña para la interfaz web de administración de AdGuard Home. Incluso si solo es accesible en tu red local, es importante que estés protegido contra el acceso no autorizado.",
+    "install_auth_desc": "Debe configurarse la autenticación por contraseña para la interfaz web de administración de AdGuard Home. Incluso si AdGuard Home es accesible solo en tu red local, es importante protegerlo del acceso no autorizado.",
     "install_auth_username": "Usuario",
     "install_auth_password": "Contraseña",
     "install_auth_confirm": "Confirmar contraseña",

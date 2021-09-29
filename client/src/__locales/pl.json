@@ -306,7 +306,7 @@
     "install_settings_dns_desc": "Konieczne będzie skonfigurowanie urządzenia lub routera do korzystania z serwera DNS pod następującymi adresami:",
     "install_settings_all_interfaces": "Wszystkie interfejsy",
     "install_auth_title": "Uwierzytelnianie",
-    "install_auth_desc": "Zalecamy skonfigurowanie strony AdGuard Home Admin, aby zweryfikować swoją tożsamość za pomocą hasła. Chociaż jest dostępny tylko w sieci lokalnej, nadal ważne jest, aby chronić go przed nieograniczonym dostępem.",
+    "install_auth_desc": "Należy skonfigurować uwierzytelnianie hasłem do interfejsu internetowego administratora AdGuard Home. Nawet jeśli AdGuard Home jest dostępny tylko w sieci lokalnej, nadal ważne jest, aby chronić go przed nieograniczonym dostępem.",
     "install_auth_username": "Nazwa użytkownika",
     "install_auth_password": "Hasło",
     "install_auth_confirm": "Potwierdź hasło",

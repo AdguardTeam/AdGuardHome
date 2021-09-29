@@ -306,7 +306,7 @@
     "install_settings_dns_desc": "您将需要使用以下地址来设置您的设备或路由器的 DNS 服务器：",
     "install_settings_all_interfaces": "所有接口",
     "install_auth_title": "身份认证",
-    "install_auth_desc": "我们强烈建议您为 AdGuard Home 的网页管理界面配置密码。即使该页面只能通过您的本地网络访问，但避免它被不加限制地访问仍十分重要。",
+    "install_auth_desc": "您需要对 AdGuard Home 的网页管理界面配置密码认证。即使该 AdGuard Home 只能通过您的本地网络访问，避免 AdGuard Home 被不受限制地访问依旧十分重要。",
     "install_auth_username": "用户名",
     "install_auth_password": "密码",
     "install_auth_confirm": "确认密码",

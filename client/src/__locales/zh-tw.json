@@ -306,7 +306,7 @@
     "install_settings_dns_desc": "您將需要配置您的裝置或路由器以使用於下列的位址上之 DNS 伺服器：",
     "install_settings_all_interfaces": "所有的介面",
     "install_auth_title": "驗證",
-    "install_auth_desc": "配置屬於您的 AdGuard Home 管理員網路介面之密碼驗證是被非常建議的。即使它僅在您的區域網路中為可存取的，保護它免於不受限制的存取為仍然重要的。",
+    "install_auth_desc": "往您的 AdGuard Home 管理員網路介面之密碼驗證必須被配置。即使 AdGuard Home 僅在您的區域網路中為可存取的，保護它免於不受限制的存取為仍然重要的。",
     "install_auth_username": "使用者名稱",
     "install_auth_password": "密碼",
     "install_auth_confirm": "確認密碼",

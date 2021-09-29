@@ -306,7 +306,7 @@
     "install_settings_dns_desc": "Vous devrez configurer vos appareils et votre routeur pour utiliser le serveur DNS sur les adresses suivantes :",
     "install_settings_all_interfaces": "Toutes les interfaces",
     "install_auth_title": "Authentification",
-    "install_auth_desc": "Il est fortement recommandé de configurer un mot de passe pour accéder à l'interface web administrateur AdGuard Home. Même si elle est disponible que dans votre réseau local, cela reste important de se protéger contre des accès non désirés.",
+    "install_auth_desc": "C'est nécessaire de configurer l'authentification par aide de mot de passe pour accéder à l'interface web administrateur de votre AdGuard Home. Même si AdGuard Home n'est accessible que dans votre réseau local, c'est important d'y restreindre accès aux tiers.",
     "install_auth_username": "Nom d'utilisateur",
     "install_auth_password": "Mot de passe",
     "install_auth_confirm": "Confirmer le mot de passe",
@@ -613,7 +613,7 @@
     "click_to_view_queries": "Cliquez pour voir les requêtes",
     "port_53_faq_link": "Le port 53 est souvent occupé par les services « DNSStubListener » ou « systemd-resolved ». Veuillez lire <0>cette instruction</0> pour savoir comment résoudre ce problème.",
     "adg_will_drop_dns_queries": "AdGuard Home ignorera toutes les requêtes DNS de ce client.",
-    "filter_allowlist": "AVERTISSEMENT : Cette action exclura également la règle « {{disallowed_rule}} » de la liste des clients autorisés.",
+    "filter_allowlist": "ATTENTION : Cette action exclura également la règle « {{disallowed_rule}} » de la liste des clients autorisés.",
     "last_rule_in_allowlist": "Impossible d’interdire ce client, car l’exclusion de la règle « {{disallowed_rule}} » DÉSACTIVERA la liste des « clients autorisés ».",
     "experimental": "Expérimental",
     "use_saved_key": "Utiliser la clef précédemment enregistrée"

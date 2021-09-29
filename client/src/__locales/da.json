@@ -306,7 +306,7 @@
     "install_settings_dns_desc": "Du skal opsætte dine enheder eller router til at bruge DNS-serveren på flg. adresser:",
     "install_settings_all_interfaces": "Alle grænseflader",
     "install_auth_title": "Godkendelse",
-    "install_auth_desc": "Det anbefales stærkt at opsætte adgangskodegodkendelse på din AdGuard Home admin webgrænseflade. Selvom den kun er tilgængelig på dit lokalnetværk, er det stadig vigtigt at få den beskyttet mod ubegrænset adgang.",
+    "install_auth_desc": "Adgangskodegodkendelse på din AdGuard Home admin-webflade skal opsættes. Selv hvis AdGuard Home kun er tilgængelig på lokalnetværket, er beskyttelse mod uautoriseret og ubegrænset adgang stadig vigtig.",
     "install_auth_username": "Brugernavn",
     "install_auth_password": "Adgangskode",
     "install_auth_confirm": "Bekræft adgangskode",

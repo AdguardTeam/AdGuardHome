@@ -306,7 +306,7 @@
     "install_settings_dns_desc": "次のアドレスでDNSサーバを使用するようにあなたのデバイスまたはルータを設定する必要があります:",
     "install_settings_all_interfaces": "すべてのインターフェイス",
     "install_auth_title": "認証",
-    "install_auth_desc": "AdGuard Homeの管理ウェブインターフェースにパスワード認証を設定することを強くお勧めします。ローカルネットワークでのみアクセス可能であっても、制限のないアクセスから保護することは重要です。",
+    "install_auth_desc": "AdGuard Homeの管理ウェブインターフェースにパスワード認証を設定する必要があります。AdGuard Homeがローカルネットワークでのみアクセス可能であっても、制限のないアクセスから保護することは重要です。",
     "install_auth_username": "ユーザ名",
     "install_auth_password": "パスワード",
     "install_auth_confirm": "パスワード（確認用）",
@@ -503,6 +503,7 @@
     "statistics_clear_confirm": "統計を消去してもよろしいですか？",
     "statistics_retention_confirm": "統計の保持を変更してもよろしいですか？ 期間を短くすると、一部のデータが失われます",
     "statistics_cleared": "統計の消去に成功しました",
+    "statistics_enable": "統計を有効にする",
     "interval_hours": "{{count}}時間",
     "interval_hours_plural": "{{count}}時間",
     "filters_configuration": "フィルタ設定",
@@ -612,7 +613,8 @@
     "click_to_view_queries": "クエリを表示するにはクリックしてください",
     "port_53_faq_link": "多くの場合、ポート53は \"DNSStubListener\" または \"systemd-resolved\" サービスによって利用されています。これを解決する方法については、<0>この手順</0>をお読みください。",
     "adg_will_drop_dns_queries": "AdGuard Homeは、このクライアントからすべてのDNSクエリを落とします。",
-    "client_not_in_allowed_clients": "「許可されたクライアント」リストにないため、このクライアントは許可されていません。",
+    "filter_allowlist": "【注意】このアクションは、許可されたクライアントのリストから「{{disallowed_rule}}」というルールも除外します。",
+    "last_rule_in_allowlist": "ルール「{{disallowed_rule}}」を除外すると「許可されたクライアント」リストが無効になるため、このクライアントを拒否することはできません。",
     "experimental": "実験用",
     "use_saved_key": "以前に保存したキーを使用する"
 }

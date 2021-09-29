@@ -306,7 +306,7 @@
     "install_settings_dns_desc": "Je moet jouw apparaten of router configureren om de DNS-server te gebruiken op de volgende adressen:",
     "install_settings_all_interfaces": "Alle interfaces",
     "install_auth_title": "Authenticatie",
-    "install_auth_desc": "Het wordt ten zeerste aanbevolen om wachtwoordverificatie te configureren voor de AdGuard Home admin webinterface. Zelfs als het alleen toegankelijk is in uw lokale netwerk, is het nog steeds belangrijk om het te beschermen tegen onbeperkte toegang.",
+    "install_auth_desc": "Wachtwoordverificatie voor je AdGuard Home-beheerderswebinterface moet worden geconfigureerd. Zelfs als AdGuard Home alleen toegankelijk is in je lokale netwerk, is het nog steeds belangrijk om het te beschermen tegen onbeperkte toegang.",
     "install_auth_username": "Gebruikersnaam",
     "install_auth_password": "Wachtwoord",
     "install_auth_confirm": "Bevestig wachtwoord",

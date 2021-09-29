@@ -218,6 +218,7 @@
     "reset_settings": "Изтрий всички настройки",
     "update_announcement": "Има нова AdGuard Home {{version}}! <0>Цъкни тук</0> за повече информация.",
     "disable_ipv6": "Изключете IPv6 протокола",
+    "check_updates_now": "Провери за актуализации",
     "show_blocked_responses": "Блокирано",
     "port_53_faq_link": "Порт 53 често е зает от \"DNSStubListener\" или \"systemd-resolved\" услуги. Моля, прочетете <0>тази инструкция</0> как да решите това."
 }
