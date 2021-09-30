@@ -58,7 +58,6 @@ func TestHandleMobileConfigDoH(t *testing.T) {
 		s := mc.PayloadContent[0].DNSSettings
 		require.NotNil(t, s)
 
-		assert.NotEmpty(t, s.ServerAddresses)
 		assert.Empty(t, s.ServerName)
 		assert.Equal(t, "https://example.org/dns-query", s.ServerURL)
 	})
@@ -104,7 +103,6 @@ func TestHandleMobileConfigDoH(t *testing.T) {
 		s := mc.PayloadContent[0].DNSSettings
 		require.NotNil(t, s)
 
-		assert.NotEmpty(t, s.ServerAddresses)
 		assert.Empty(t, s.ServerName)
 		assert.Equal(t, "https://example.org/dns-query/cli42", s.ServerURL)
 	})
@@ -132,7 +130,6 @@ func TestHandleMobileConfigDoT(t *testing.T) {
 		s := mc.PayloadContent[0].DNSSettings
 		require.NotNil(t, s)
 
-		assert.NotEmpty(t, s.ServerAddresses)
 		assert.Equal(t, "example.org", s.ServerName)
 		assert.Empty(t, s.ServerURL)
 	})
@@ -179,7 +176,6 @@ func TestHandleMobileConfigDoT(t *testing.T) {
 		s := mc.PayloadContent[0].DNSSettings
 		require.NotNil(t, s)
 
-		assert.NotEmpty(t, s.ServerAddresses)
 		assert.Equal(t, "cli42.example.org", s.ServerName)
 		assert.Empty(t, s.ServerURL)
 	})

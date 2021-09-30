@@ -15,8 +15,6 @@ and this project adheres to
 
 ### Added
 
-- DNS server IP addresses to the `mobileconfig` API responses ([#3568],
-  [#3607]).
 - Setting the timeout for IP address pinging in the "Fastest IP address" mode
   through the new `fastest_timeout` field in the configuration file ([#1992]).
 - Static IP address detection on FreeBSD ([#3289]).
@@ -116,7 +114,8 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
-- Adding an IP into only one of the matching ipsets on Linux ([#3638]).
+- Addition of IPs into only one as opposed to all matching ipsets on Linux
+  ([#3638]).
 - Removal of temporary filter files ([#3567]).
 - Panic when an upstream server responds with an empty question section
   ([#3551]).

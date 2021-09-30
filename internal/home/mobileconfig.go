@@ -32,6 +32,10 @@ type dnsSettings struct {
 	ServerName string `plist:",omitempty"`
 
 	// ServerAddresses is a list IP addresses of the server.
+	//
+	// TODO(a.garipov): Allow users to set this.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/3607.
 	ServerAddresses []net.IP `plist:",omitempty"`
 }
 
@@ -157,19 +161,9 @@ func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 		}
 	}
 
-	dnsIPs, err := collectDNSIPs()
-	if err != nil {
-		// Don't add a lot of formatting, since the error is already
-		// wrapped by collectDNSIPs.
-		respondJSONError(w, http.StatusInternalServerError, err.Error())
-
-		return
-	}
-
 	d := &dnsSettings{
-		DNSProtocol:     dnsp,
-		ServerName:      host,
-		ServerAddresses: dnsIPs,
+		DNSProtocol: dnsp,
+		ServerName:  host,
 	}
 
 	mobileconfig, err := encodeMobileConfig(d, clientID)
@@ -202,26 +196,4 @@ func handleMobileConfigDoH(w http.ResponseWriter, r *http.Request) {
 
 func handleMobileConfigDoT(w http.ResponseWriter, r *http.Request) {
 	handleMobileConfig(w, r, dnsProtoTLS)
-}
-
-// collectDNSIPs returns a slice of IP addresses the server is listening
-// on, including the addresses on all interfaces in cases of unspecified IPs but
-// excluding loopback addresses.
-func collectDNSIPs() (ips []net.IP, err error) {
-	// TODO(a.garipov): This really shouldn't be a function that parses
-	// a list of strings.  Instead, we need a function that returns this
-	// data as []net.IP or []*netutil.IPPort.  Maybe someday.
-	addrs, err := collectDNSAddresses()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, addr := range addrs {
-		ip := net.ParseIP(addr)
-		if ip != nil && !ip.IsLoopback() {
-			ips = append(ips, ip)
-		}
-	}
-
-	return ips, nil
 }
