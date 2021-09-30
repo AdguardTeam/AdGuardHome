@@ -16,6 +16,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
@@ -1126,7 +1127,7 @@ func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
 	s.leasedOffsets = newBitSet()
 
 	if conf.LeaseDuration == 0 {
-		s.conf.leaseTime = time.Hour * 24
+		s.conf.leaseTime = timeutil.Day
 		s.conf.LeaseDuration = uint32(s.conf.leaseTime.Seconds())
 	} else {
 		s.conf.leaseTime = time.Second * time.Duration(conf.LeaseDuration)

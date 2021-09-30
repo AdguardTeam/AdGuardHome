@@ -9,6 +9,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
 )
 
@@ -125,7 +126,7 @@ func newQueryLog(conf Config) (l *queryLog) {
 			"querylog: warning: unsupported rotation interval %d, setting to 1 day",
 			conf.RotationIvl,
 		)
-		l.conf.RotationIvl = 24 * time.Hour
+		l.conf.RotationIvl = timeutil.Day
 	}
 
 	return l

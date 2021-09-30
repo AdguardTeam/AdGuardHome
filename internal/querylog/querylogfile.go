@@ -8,6 +8,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // flushLogBuffer flushes the current buffer to file and resets the current buffer
@@ -150,6 +151,6 @@ func (l *queryLog) periodicRotate() {
 		}
 
 		// What?
-		time.Sleep(24 * time.Hour)
+		time.Sleep(timeutil.Day)
 	}
 }

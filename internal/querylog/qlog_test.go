@@ -11,6 +11,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxyutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +27,7 @@ func TestQueryLog(t *testing.T) {
 	l := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: true,
-		RotationIvl: 24 * time.Hour,
+		RotationIvl: timeutil.Day,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 	})
@@ -128,7 +129,7 @@ func TestQueryLog(t *testing.T) {
 func TestQueryLogOffsetLimit(t *testing.T) {
 	l := newQueryLog(Config{
 		Enabled:     true,
-		RotationIvl: 24 * time.Hour,
+		RotationIvl: timeutil.Day,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 	})
@@ -203,7 +204,7 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 	l := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: true,
-		RotationIvl: 24 * time.Hour,
+		RotationIvl: timeutil.Day,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 	})
@@ -231,7 +232,7 @@ func TestQueryLogFileDisabled(t *testing.T) {
 	l := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: false,
-		RotationIvl: 24 * time.Hour,
+		RotationIvl: timeutil.Day,
 		MemSize:     2,
 		BaseDir:     t.TempDir(),
 	})

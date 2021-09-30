@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtime"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -426,7 +426,7 @@ func TestUpgradeSchema11to12(t *testing.T) {
 		name    string
 	}{{
 		ivl:     1,
-		want:    aghtime.Duration{Duration: 24 * time.Hour},
+		want:    timeutil.Duration{Duration: timeutil.Day},
 		wantErr: "",
 		name:    "success",
 	}, {
@@ -463,8 +463,8 @@ func TestUpgradeSchema11to12(t *testing.T) {
 			newDNSConf, ok = dnsVal.(yobj)
 			require.True(t, ok)
 
-			var newIvl aghtime.Duration
-			newIvl, ok = newDNSConf["querylog_interval"].(aghtime.Duration)
+			var newIvl timeutil.Duration
+			newIvl, ok = newDNSConf["querylog_interval"].(timeutil.Duration)
 			require.True(t, ok)
 
 			assert.Equal(t, tc.want, newIvl)
@@ -505,8 +505,8 @@ func TestUpgradeSchema11to12(t *testing.T) {
 		ivl, ok = dnsVal["querylog_interval"]
 		require.True(t, ok)
 
-		var ivlVal aghtime.Duration
-		ivlVal, ok = ivl.(aghtime.Duration)
+		var ivlVal timeutil.Duration
+		ivlVal, ok = ivl.(timeutil.Duration)
 		require.True(t, ok)
 
 		assert.Equal(t, 90*24*time.Hour, ivlVal.Duration)

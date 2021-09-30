@@ -23,6 +23,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -107,7 +108,7 @@ func createServerTLSConfig(t *testing.T) (*tls.Config, []byte, []byte) {
 	require.NoErrorf(t, err, "failed to generate serial number: %s", err)
 
 	notBefore := time.Now()
-	notAfter := notBefore.Add(5 * 365 * time.Hour * 24)
+	notAfter := notBefore.Add(5 * 365 * timeutil.Day)
 
 	template := x509.Certificate{
 		SerialNumber: serialNumber,

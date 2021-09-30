@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,7 +38,7 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 	l := newQueryLog(Config{
 		FindClient:        findClient,
 		BaseDir:           t.TempDir(),
-		RotationIvl:       24 * time.Hour,
+		RotationIvl:       timeutil.Day,
 		MemSize:           100,
 		Enabled:           true,
 		FileEnabled:       true,

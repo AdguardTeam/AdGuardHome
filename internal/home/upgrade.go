@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtime"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/renameio/maybe"
 	"golang.org/x/crypto/bcrypt"
 	yaml "gopkg.in/yaml.v2"
@@ -685,7 +685,7 @@ func upgradeSchema11to12(diskConf yobj) (err error) {
 		}
 	}
 
-	dns[field] = aghtime.Duration{Duration: time.Duration(qlogIvl) * 24 * time.Hour}
+	dns[field] = timeutil.Duration{Duration: time.Duration(qlogIvl) * timeutil.Day}
 
 	return nil
 }

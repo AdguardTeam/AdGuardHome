@@ -15,12 +15,13 @@ import (
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"go.etcd.io/bbolt"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // cookieTTL is the time-to-live of the session cookie.
-const cookieTTL = 365 * 24 * time.Hour
+const cookieTTL = 365 * timeutil.Day
 
 // sessionCookieName is the name of the session cookie.
 const sessionCookieName = "agh_session"

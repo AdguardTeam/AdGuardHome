@@ -14,6 +14,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/dhcpv6/server6"
 	"github.com/insomniacslk/dhcp/iana"
@@ -707,7 +708,7 @@ func v6Create(conf V6ServerConf) (DHCPServer, error) {
 	}
 
 	if conf.LeaseDuration == 0 {
-		s.conf.leaseTime = time.Hour * 24
+		s.conf.leaseTime = timeutil.Day
 		s.conf.LeaseDuration = uint32(s.conf.leaseTime.Seconds())
 	} else {
 		s.conf.leaseTime = time.Second * time.Duration(conf.LeaseDuration)

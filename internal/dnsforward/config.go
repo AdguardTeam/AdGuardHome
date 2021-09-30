@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtime"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -19,6 +18,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/ameshkov/dnscrypt/v2"
 )
 
@@ -90,7 +90,7 @@ type FilteringConfig struct {
 	FastestAddr         bool     `yaml:"fastest_addr"`  // use Fastest Address algorithm
 	// FastestTimeout replaces the default timeout for dialing IP addresses
 	// when FastestAddr is true.
-	FastestTimeout aghtime.Duration `yaml:"fastest_timeout"`
+	FastestTimeout timeutil.Duration `yaml:"fastest_timeout"`
 
 	// Access settings
 	// --

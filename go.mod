@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.39.8
-	github.com/AdguardTeam/golibs v0.9.3
+	github.com/AdguardTeam/golibs v0.10.0
 	github.com/AdguardTeam/urlfilter v0.14.6
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.2.2
@@ -27,7 +27,7 @@ require (
 	github.com/ti-mo/netfilter v0.4.0
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
-	golang.org/x/net v0.0.0-20210825183410-e898025ed96a
+	golang.org/x/net v0.0.0-20210929193557-e81a3d93ecf6
 	golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v2 v2.4.0

@@ -12,6 +12,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
 )
 
@@ -103,11 +104,11 @@ func (l *queryLog) Close() {
 func checkInterval(ivl time.Duration) (ok bool) {
 	// The constants for possible values of query log's rotation interval.
 	const (
-		quarterDay  = 6 * time.Hour
-		day         = 24 * time.Hour
-		week        = day * 7
-		month       = day * 30
-		threeMonths = day * 90
+		quarterDay  = timeutil.Day / 4
+		day         = timeutil.Day
+		week        = timeutil.Day * 7
+		month       = timeutil.Day * 30
+		threeMonths = timeutil.Day * 90
 	)
 
 	return ivl == quarterDay || ivl == day || ivl == week || ivl == month || ivl == threeMonths
