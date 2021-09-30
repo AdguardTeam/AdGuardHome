@@ -157,8 +157,8 @@ func prepareOptions(conf V4ServerConf) (opts dhcpv4.Options) {
 		dhcpv4.OptionPerformRouterDiscovery.Code(): []byte{1},
 		// The all-routers address is preferred wherever possible, see
 		// https://datatracker.ietf.org/doc/html/rfc1256#section-5.1.
-		dhcpv4.OptionRouterSolicitationAddress.Code(): net.IPv4allrouter.To4(),
-		dhcpv4.OptionBroadcastAddress.Code():          net.IPv4bcast.To4(),
+		dhcpv4.OptionRouterSolicitationAddress.Code(): netutil.IPv4allrouter(),
+		dhcpv4.OptionBroadcastAddress.Code():          netutil.IPv4bcast(),
 
 		// Link-Layer Per Interface
 

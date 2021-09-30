@@ -19,6 +19,7 @@ import (
 	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
+	"github.com/mdlayher/raw"
 )
 
 // v4Server is a DHCPv4 server.
@@ -955,43 +956,44 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 //
 // See https://datatracker.ietf.org/doc/html/rfc2131#section-4.1.
 func (s *v4Server) send(peer net.Addr, conn net.PacketConn, req, resp *dhcpv4.DHCPv4) {
-	var unicast bool
-	if giaddr := req.GatewayIPAddr; giaddr != nil && !giaddr.IsUnspecified() {
+	switch giaddr, ciaddr, mtype := req.GatewayIPAddr, req.ClientIPAddr, resp.MessageType(); {
+	case giaddr != nil && !giaddr.IsUnspecified():
 		// Send any return messages to the server port on the BOOTP
 		// relay agent whose address appears in giaddr.
 		peer = &net.UDPAddr{
 			IP:   giaddr,
 			Port: dhcpv4.ServerPort,
 		}
-		unicast = true
-	} else if mtype := resp.MessageType(); mtype == dhcpv4.MessageTypeNak {
+		if mtype == dhcpv4.MessageTypeNak {
+			// Set the broadcast bit in the DHCPNAK, so that the
+			// relay agent broadcasted it to the client, because the
+			// client may not have a correct network address or
+			// subnet mask, and the client may not be answering ARP
+			// requests.
+			resp.SetBroadcast()
+		}
+	case mtype == dhcpv4.MessageTypeNak:
 		// Broadcast any DHCPNAK messages to 0xffffffff.
-	} else if ciaddr := req.ClientIPAddr; ciaddr != nil && !ciaddr.IsUnspecified() {
+	case ciaddr != nil && !ciaddr.IsUnspecified():
 		// Unicast DHCPOFFER and DHCPACK messages to the address in
 		// ciaddr.
 		peer = &net.UDPAddr{
 			IP:   ciaddr,
 			Port: dhcpv4.ClientPort,
 		}
-		unicast = true
-	}
-
-	// TODO(e.burkov):  Unicast the message to the actual link-layer address
-	// of the client if broadcast bit is not set.  Perhaps, use custom
-	// connection when creating the server.
-	//
-	// See https://github.com/AdguardTeam/AdGuardHome/issues/3443.
-
-	if !unicast {
-		s.broadcast(peer, conn, resp)
-
-		return
+	case !req.IsBroadcast() && req.ClientHWAddr != nil:
+		// Unicast DHCPOFFER and DHCPACK messages to the client's
+		// hardware address and yiaddr.
+		peer = &dhcpUnicastAddr{
+			Addr:   raw.Addr{HardwareAddr: req.ClientHWAddr},
+			yiaddr: resp.YourIPAddr,
+		}
+	default:
+		// Go on since peer is already set to broadcast.
 	}
 
 	log.Debug("dhcpv4: sending to %s: %s", peer, resp.Summary())
-
-	_, err := conn.WriteTo(resp.ToBytes(), peer)
-	if err != nil {
+	if _, err := conn.WriteTo(resp.ToBytes(), peer); err != nil {
 		log.Error("dhcpv4: conn.Write to %s failed: %s", peer, err)
 	}
 }
@@ -1029,11 +1031,18 @@ func (s *v4Server) Start() (err error) {
 
 	s.conf.dnsIPAddrs = dnsIPAddrs
 
-	laddr := &net.UDPAddr{
-		IP:   net.IP{0, 0, 0, 0},
-		Port: dhcpv4.ServerPort,
+	var c net.PacketConn
+	if c, err = s.newDHCPConn(iface); err != nil {
+		return err
 	}
-	s.srv, err = server4.NewServer(iface.Name, laddr, s.packetHandler, server4.WithDebugLogger())
+
+	s.srv, err = server4.NewServer(
+		iface.Name,
+		nil,
+		s.packetHandler,
+		server4.WithConn(c),
+		server4.WithDebugLogger(),
+	)
 	if err != nil {
 		return err
 	}

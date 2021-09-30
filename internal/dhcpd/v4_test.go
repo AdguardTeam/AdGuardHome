@@ -4,12 +4,11 @@
 package dhcpd
 
 import (
-	"bytes"
 	"net"
 	"testing"
 
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/insomniacslk/dhcp/dhcpv4"
+	"github.com/mdlayher/raw"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -390,67 +389,107 @@ func (fc *fakePacketConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 	return fc.writeTo(p, addr)
 }
 
-func TestV4Server_Send_unicast(t *testing.T) {
-	b := &bytes.Buffer{}
-	var peer *net.UDPAddr
-
-	conn := &fakePacketConn{
-		writeTo: func(p []byte, addr net.Addr) (n int, err error) {
-			udpPeer, ok := addr.(*net.UDPAddr)
-			require.True(t, ok)
-
-			peer = cloneUDPAddr(udpPeer)
-
-			n, err = b.Write(p)
-			require.NoError(t, err)
-
-			return n, nil
-		},
-	}
-
-	defaultPeer := &net.UDPAddr{
-		IP: net.IP{1, 2, 3, 4},
-		// Use neither client nor server port.
-		Port: 1234,
-	}
-	defaultResp := &dhcpv4.DHCPv4{
-		OpCode: dhcpv4.OpcodeBootReply,
-	}
+func TestV4Server_Send(t *testing.T) {
 	s := &v4Server{}
 
+	var (
+		defaultIP = net.IP{99, 99, 99, 99}
+		knownIP   = net.IP{4, 2, 4, 2}
+		knownMAC  = net.HardwareAddr{6, 5, 4, 3, 2, 1}
+	)
+
+	defaultPeer := &net.UDPAddr{
+		IP: defaultIP,
+		// Use neither client nor server port to check it actually
+		// changed.
+		Port: dhcpv4.ClientPort + dhcpv4.ServerPort,
+	}
+	defaultResp := &dhcpv4.DHCPv4{}
+
 	testCases := []struct {
-		name     string
-		req      *dhcpv4.DHCPv4
-		wantPeer net.Addr
+		want net.Addr
+		req  *dhcpv4.DHCPv4
+		resp *dhcpv4.DHCPv4
+		name string
 	}{{
-		name: "relay_agent",
-		req: &dhcpv4.DHCPv4{
-			GatewayIPAddr: defaultPeer.IP,
-		},
-		wantPeer: &net.UDPAddr{
-			IP:   defaultPeer.IP,
+		name: "giaddr",
+		req:  &dhcpv4.DHCPv4{GatewayIPAddr: knownIP},
+		resp: defaultResp,
+		want: &net.UDPAddr{
+			IP:   knownIP,
 			Port: dhcpv4.ServerPort,
 		},
 	}, {
-		name: "known_client",
-		req: &dhcpv4.DHCPv4{
-			GatewayIPAddr: netutil.IPv4Zero(),
-			ClientIPAddr:  net.IP{2, 3, 4, 5},
+		name: "nak",
+		req:  &dhcpv4.DHCPv4{},
+		resp: &dhcpv4.DHCPv4{
+			Options: dhcpv4.OptionsFromList(
+				dhcpv4.OptMessageType(dhcpv4.MessageTypeNak),
+			),
 		},
-		wantPeer: &net.UDPAddr{
-			IP:   net.IP{2, 3, 4, 5},
+		want: defaultPeer,
+	}, {
+		name: "ciaddr",
+		req:  &dhcpv4.DHCPv4{ClientIPAddr: knownIP},
+		resp: &dhcpv4.DHCPv4{},
+		want: &net.UDPAddr{
+			IP:   knownIP,
 			Port: dhcpv4.ClientPort,
 		},
+	}, {
+		name: "chaddr",
+		req:  &dhcpv4.DHCPv4{ClientHWAddr: knownMAC},
+		resp: &dhcpv4.DHCPv4{YourIPAddr: knownIP},
+		want: &dhcpUnicastAddr{
+			Addr:   raw.Addr{HardwareAddr: knownMAC},
+			yiaddr: knownIP,
+		},
+	}, {
+		name: "who_are_you",
+		req:  &dhcpv4.DHCPv4{},
+		resp: &dhcpv4.DHCPv4{},
+		want: defaultPeer,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s.send(defaultPeer, conn, tc.req, defaultResp)
-			assert.EqualValues(t, defaultResp.ToBytes(), b.Bytes())
-			assert.Equal(t, tc.wantPeer, peer)
-		})
+			conn := &fakePacketConn{
+				writeTo: func(_ []byte, addr net.Addr) (_ int, _ error) {
+					assert.Equal(t, tc.want, addr)
 
-		b.Reset()
-		peer = nil
+					return 0, nil
+				},
+			}
+
+			s.send(cloneUDPAddr(defaultPeer), conn, tc.req, tc.resp)
+		})
 	}
+
+	t.Run("giaddr_nak", func(t *testing.T) {
+		req := &dhcpv4.DHCPv4{
+			GatewayIPAddr: knownIP,
+		}
+		// Ensure the request is for unicast.
+		req.SetUnicast()
+		resp := &dhcpv4.DHCPv4{
+			Options: dhcpv4.OptionsFromList(
+				dhcpv4.OptMessageType(dhcpv4.MessageTypeNak),
+			),
+		}
+		want := &net.UDPAddr{
+			IP:   req.GatewayIPAddr,
+			Port: dhcpv4.ServerPort,
+		}
+
+		conn := &fakePacketConn{
+			writeTo: func(_ []byte, addr net.Addr) (n int, err error) {
+				assert.Equal(t, want, addr)
+
+				return 0, nil
+			},
+		}
+
+		s.send(cloneUDPAddr(defaultPeer), conn, req, resp)
+		assert.True(t, resp.IsBroadcast())
+	})
 }

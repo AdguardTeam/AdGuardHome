@@ -139,7 +139,7 @@ func TestNormalizeLeases(t *testing.T) {
 }
 
 // cloneUDPAddr returns a deep copy of a.
-func cloneUDPAddr(a *net.UDPAddr) (copy *net.UDPAddr) {
+func cloneUDPAddr(a *net.UDPAddr) (clone *net.UDPAddr) {
 	return &net.UDPAddr{
 		IP:   netutil.CloneIP(a.IP),
 		Port: a.Port,
