@@ -551,6 +551,21 @@ func (s *Server) IsRunning() bool {
 	return s.isRunning
 }
 
+// srvClosedErr is returned when the method can't complete without unacessible
+// data from the closing server.
+const srvClosedErr errors.Error = "server is closed"
+
+// proxy returns a pointer to the current DNS proxy instance.  If p is nil, the
+// server is closing.
+//
+// See https://github.com/AdguardTeam/AdGuardHome/issues/3655.
+func (s *Server) proxy() (p *proxy.Proxy) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	return s.dnsProxy
+}
+
 // Reconfigure applies the new configuration to the DNS server.
 func (s *Server) Reconfigure(config *ServerConfig) error {
 	s.serverLock.Lock()
@@ -581,17 +596,8 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 
 // ServeHTTP is a HTTP handler method we use to provide DNS-over-HTTPS.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var p *proxy.Proxy
-
-	func() {
-		s.serverLock.RLock()
-		defer s.serverLock.RUnlock()
-
-		p = s.dnsProxy
-	}()
-
-	if p != nil {
-		p.ServeHTTP(w, r)
+	if prx := s.proxy(); prx != nil {
+		prx.ServeHTTP(w, r)
 	}
 }
 

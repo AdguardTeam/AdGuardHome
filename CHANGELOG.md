@@ -114,6 +114,7 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- Occasional panic during shutdown ([#3655]).
 - Addition of IPs into only one as opposed to all matching ipsets on Linux
   ([#3638]).
 - Removal of temporary filter files ([#3567]).
@@ -202,6 +203,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3579]: https://github.com/AdguardTeam/AdGuardHome/issues/3579
 [#3607]: https://github.com/AdguardTeam/AdGuardHome/issues/3607
 [#3638]: https://github.com/AdguardTeam/AdGuardHome/issues/3638
+[#3655]: https://github.com/AdguardTeam/AdGuardHome/issues/3655
 
 
 

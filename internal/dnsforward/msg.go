@@ -249,9 +249,17 @@ func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSCo
 		Req:       &replReq,
 	}
 
-	err := s.dnsProxy.Resolve(newContext)
+	prx := s.proxy()
+	if prx == nil {
+		log.Debug("dns: %s", srvClosedErr)
+
+		return s.genServerFailure(request)
+	}
+
+	err := prx.Resolve(newContext)
 	if err != nil {
-		log.Printf("Couldn't look up replacement host %q: %s", newAddr, err)
+		log.Printf("couldn't look up replacement host %q: %s", newAddr, err)
+
 		return s.genServerFailure(request)
 	}
 

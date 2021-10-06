@@ -540,8 +540,16 @@ func (s *Server) processUpstream(ctx *dnsContext) (rc resultCode) {
 		}
 	}
 
-	// request was not filtered so let it be processed further
-	if ctx.err = s.dnsProxy.Resolve(d); ctx.err != nil {
+	// Process the request further since it wasn't filtered.
+
+	prx := s.proxy()
+	if prx == nil {
+		ctx.err = srvClosedErr
+
+		return resultCodeError
+	}
+
+	if ctx.err = prx.Resolve(d); ctx.err != nil {
 		return resultCodeError
 	}
 
