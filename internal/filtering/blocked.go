@@ -160,6 +160,7 @@ var serviceRulesArray = []svc{
 		"||muscdn.com^",
 		"||bytedance.map.fastly.net^",
 		"||douyin.com^",
+		"||douyincdn.com^",
 		"||tiktokv.com^",
 	}},
 	{"vimeo", []string{
