@@ -7,6 +7,8 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/fs"
+	"os"
 	"os/exec"
 	"path"
 	"runtime"
@@ -158,4 +160,11 @@ ScanLoop:
 // IsOpenWrt returns true if host OS is OpenWrt.
 func IsOpenWrt() (ok bool) {
 	return isOpenWrt()
+}
+
+// RootDirFS returns the fs.FS rooted at the operating system's root.
+func RootDirFS() (fsys fs.FS) {
+	// Use empty string since os.DirFS implicitly prepends a slash to it.  This
+	// behavior is undocumented but it currently works.
+	return os.DirFS("")
 }

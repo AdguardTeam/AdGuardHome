@@ -12,8 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const nl = "\n"
-
 func TestDHCPCDStaticConfig(t *testing.T) {
 	const iface interfaceName = `wlan0`
 

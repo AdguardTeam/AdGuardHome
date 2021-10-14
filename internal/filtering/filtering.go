@@ -73,7 +73,7 @@ type Config struct {
 
 	// EtcHosts is a container of IP-hostname pairs taken from the operating
 	// system configuration files (e.g. /etc/hosts).
-	EtcHosts *aghnet.EtcHostsContainer `yaml:"-"`
+	EtcHosts *aghnet.HostsContainer `yaml:"-"`
 
 	// Called when the configuration is changed by HTTP request
 	ConfigModified func() `yaml:"-"`
@@ -176,8 +176,8 @@ const (
 	// FilteredBlockedService - the host is blocked by "blocked services" settings
 	FilteredBlockedService
 
-	// Rewritten is returned when there was a rewrite by a legacy DNS
-	// rewrite rule.
+	// Rewritten is returned when there was a rewrite by a legacy DNS rewrite
+	// rule.
 	Rewritten
 
 	// RewrittenAutoHosts is returned when there was a rewrite by autohosts
@@ -186,8 +186,8 @@ const (
 
 	// RewrittenRule is returned when a $dnsrewrite filter rule was applied.
 	//
-	// TODO(a.garipov): Remove Rewritten and RewrittenAutoHosts by merging
-	// their functionality into RewrittenRule.
+	// TODO(a.garipov): Remove Rewritten and RewrittenAutoHosts by merging their
+	// functionality into RewrittenRule.
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2499.
 	RewrittenRule
@@ -371,24 +371,23 @@ type Result struct {
 	// Reason is the reason for blocking or unblocking the request.
 	Reason Reason `json:",omitempty"`
 
-	// Rules are applied rules.  If Rules are not empty, each rule
-	// is not nil.
+	// Rules are applied rules.  If Rules are not empty, each rule is not nil.
 	Rules []*ResultRule `json:",omitempty"`
 
-	// ReverseHosts is the reverse lookup rewrite result.  It is
-	// empty unless Reason is set to RewrittenAutoHosts.
+	// ReverseHosts is the reverse lookup rewrite result.  It is empty unless
+	// Reason is set to RewrittenAutoHosts.
 	ReverseHosts []string `json:",omitempty"`
 
-	// IPList is the lookup rewrite result.  It is empty unless
-	// Reason is set to RewrittenAutoHosts or Rewritten.
+	// IPList is the lookup rewrite result.  It is empty unless Reason is set to
+	// RewrittenAutoHosts or Rewritten.
 	IPList []net.IP `json:",omitempty"`
 
-	// CanonName is the CNAME value from the lookup rewrite result.
-	// It is empty unless Reason is set to Rewritten or RewrittenRule.
+	// CanonName is the CNAME value from the lookup rewrite result.  It is empty
+	// unless Reason is set to Rewritten or RewrittenRule.
 	CanonName string `json:",omitempty"`
 
-	// ServiceName is the name of the blocked service.  It is empty
-	// unless Reason is set to FilteredBlockedService.
+	// ServiceName is the name of the blocked service.  It is empty unless
+	// Reason is set to FilteredBlockedService.
 	ServiceName string `json:",omitempty"`
 
 	// DNSRewriteResult is the $dnsrewrite filter rule result.
@@ -446,43 +445,49 @@ func (d *DNSFilter) CheckHost(
 	return Result{}, nil
 }
 
-// checkEtcHosts compares the host against our /etc/hosts table.  The err is
-// always nil, it is only there to make this a valid hostChecker function.
-func (d *DNSFilter) checkEtcHosts(
-	host string,
-	qtype uint16,
-	_ *Settings,
-) (res Result, err error) {
-	if d.Config.EtcHosts == nil {
+// matchSysHosts tries to match the host against the operating system's hosts
+// database.
+func (d *DNSFilter) matchSysHosts(host string, qtype uint16, setts *Settings) (res Result, err error) {
+	if d.EtcHosts == nil {
 		return Result{}, nil
 	}
 
-	ips := d.Config.EtcHosts.Process(host, qtype)
-	if ips != nil {
-		res = Result{
-			Reason: RewrittenAutoHosts,
-			IPList: ips,
-		}
+	dnsres, _ := d.EtcHosts.MatchRequest(urlfilter.DNSRequest{
+		Hostname:         host,
+		SortedClientTags: setts.ClientTags,
+		// TODO(e.burkov): Wait for urlfilter update to pass net.IP.
+		ClientIP:   setts.ClientIP.String(),
+		ClientName: setts.ClientName,
+		DNSType:    qtype,
+	})
 
-		return res, nil
+	dnsr := dnsres.DNSRewrites()
+	if len(dnsr) == 0 {
+		return Result{}, nil
 	}
 
-	revHosts := d.Config.EtcHosts.ProcessReverse(host, qtype)
-	if len(revHosts) != 0 {
-		res = Result{
-			Reason: RewrittenAutoHosts,
+	var ips []net.IP
+	var revHosts []string
+
+	for _, nr := range dnsr {
+		dr := nr.DNSRewrite
+		if dr == nil {
+			continue
 		}
 
-		// TODO(a.garipov): Optimize this with a buffer.
-		res.ReverseHosts = make([]string, len(revHosts))
-		for i := range revHosts {
-			res.ReverseHosts[i] = revHosts[i] + "."
+		switch val := nr.DNSRewrite.Value.(type) {
+		case net.IP:
+			ips = append(ips, val)
+		case string:
+			revHosts = append(revHosts, val)
 		}
-
-		return res, nil
 	}
 
-	return Result{}, nil
+	return Result{
+		Reason:       RewrittenAutoHosts,
+		IPList:       ips,
+		ReverseHosts: revHosts,
+	}, nil
 }
 
 // Process rewrites table
@@ -647,15 +652,18 @@ func (d *DNSFilter) initFiltering(allowFilters, blockFilters []Filter) error {
 		return err
 	}
 
-	d.engineLock.Lock()
-	d.reset()
-	d.rulesStorage = rulesStorage
-	d.filteringEngine = filteringEngine
-	d.rulesStorageAllow = rulesStorageAllow
-	d.filteringEngineAllow = filteringEngineAllow
-	d.engineLock.Unlock()
+	func() {
+		d.engineLock.Lock()
+		defer d.engineLock.Unlock()
 
-	// Make sure that the OS reclaims memory as soon as possible
+		d.reset()
+		d.rulesStorage = rulesStorage
+		d.filteringEngine = filteringEngine
+		d.rulesStorageAllow = rulesStorageAllow
+		d.filteringEngineAllow = filteringEngineAllow
+	}()
+
+	// Make sure that the OS reclaims memory as soon as possible.
 	debug.FreeOSMemory()
 	log.Debug("initialized filtering engine")
 
@@ -734,8 +742,8 @@ func (d *DNSFilter) matchHostProcessDNSResult(
 	}
 
 	if dnsres.HostRulesV4 != nil || dnsres.HostRulesV6 != nil {
-		// Question type doesn't match the host rules.  Return the first
-		// matched host rule, but without an IP address.
+		// Question type doesn't match the host rules.  Return the first matched
+		// host rule, but without an IP address.
 		var matchedRules []rules.Rule
 		if dnsres.HostRulesV4 != nil {
 			matchedRules = []rules.Rule{dnsres.HostRulesV4[0]}
@@ -760,11 +768,6 @@ func (d *DNSFilter) matchHost(
 		return Result{}, nil
 	}
 
-	d.engineLock.RLock()
-	// Keep in mind that this lock must be held no just when calling Match()
-	//  but also while using the rules returned by it.
-	defer d.engineLock.RUnlock()
-
 	ureq := urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
@@ -773,6 +776,13 @@ func (d *DNSFilter) matchHost(
 		ClientName: setts.ClientName,
 		DNSType:    qtype,
 	}
+
+	d.engineLock.RLock()
+	// Keep in mind that this lock must be held no just when calling Match() but
+	// also while using the rules returned by it.
+	//
+	// TODO(e.burkov):  Inspect if the above is true.
+	defer d.engineLock.RUnlock()
 
 	if d.filteringEngineAllow != nil {
 		dnsres, ok := d.filteringEngineAllow.MatchRequest(ureq)
@@ -791,8 +801,8 @@ func (d *DNSFilter) matchHost(
 	if dnsr := dnsres.DNSRewrites(); len(dnsr) > 0 {
 		res = d.processDNSRewrites(dnsr)
 		if res.Reason == RewrittenRule && res.CanonName == host {
-			// A rewrite of a host to itself.  Go on and try
-			// matching other things.
+			// A rewrite of a host to itself.  Go on and try matching other
+			// things.
 		} else {
 			return res, nil
 		}
@@ -868,8 +878,8 @@ func New(c *Config, blockFilters []Filter) *DNSFilter {
 	}
 
 	d.hostCheckers = []hostChecker{{
-		check: d.checkEtcHosts,
-		name:  "etchosts",
+		check: d.matchSysHosts,
+		name:  "hosts container",
 	}, {
 		check: d.matchHost,
 		name:  "filtering",

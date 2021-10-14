@@ -44,20 +44,22 @@ type homeContext struct {
 	// Modules
 	// --
 
-	clients    clientsContainer          // per-client-settings module
-	stats      stats.Stats               // statistics module
-	queryLog   querylog.QueryLog         // query log module
-	dnsServer  *dnsforward.Server        // DNS module
-	rdns       *RDNS                     // rDNS module
-	whois      *WHOIS                    // WHOIS module
-	dnsFilter  *filtering.DNSFilter      // DNS filtering module
-	dhcpServer *dhcpd.Server             // DHCP module
-	auth       *Auth                     // HTTP authentication module
-	filters    Filtering                 // DNS filtering module
-	web        *Web                      // Web (HTTP, HTTPS) module
-	tls        *TLSMod                   // TLS module
-	etcHosts   *aghnet.EtcHostsContainer // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
-	updater    *updater.Updater
+	clients    clientsContainer     // per-client-settings module
+	stats      stats.Stats          // statistics module
+	queryLog   querylog.QueryLog    // query log module
+	dnsServer  *dnsforward.Server   // DNS module
+	rdns       *RDNS                // rDNS module
+	whois      *WHOIS               // WHOIS module
+	dnsFilter  *filtering.DNSFilter // DNS filtering module
+	dhcpServer *dhcpd.Server        // DHCP module
+	auth       *Auth                // HTTP authentication module
+	filters    Filtering            // DNS filtering module
+	web        *Web                 // Web (HTTP, HTTPS) module
+	tls        *TLSMod              // TLS module
+	// etcHosts is an IP-hostname pairs set taken from system configuration
+	// (e.g. /etc/hosts) files.
+	etcHosts *aghnet.HostsContainer
+	updater  *updater.Updater
 
 	subnetDetector *aghnet.SubnetDetector
 
@@ -257,8 +259,20 @@ func setupConfig(args options) (err error) {
 	})
 
 	if !args.noEtcHosts {
-		Context.etcHosts = &aghnet.EtcHostsContainer{}
-		Context.etcHosts.Init("")
+		var osWritesWatcher aghos.FSWatcher
+		osWritesWatcher, err = aghos.NewOSWritesWatcher()
+		if err != nil {
+			return fmt.Errorf("initing os watcher: %w", err)
+		}
+
+		Context.etcHosts, err = aghnet.NewHostsContainer(
+			aghos.RootDirFS(),
+			osWritesWatcher,
+			aghnet.DefaultHostsPaths()...,
+		)
+		if err != nil {
+			return fmt.Errorf("initing hosts container: %w", err)
+		}
 	}
 	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
 	config.Clients = nil
@@ -424,7 +438,6 @@ func run(args options, clientBuildFS fs.FS) {
 		fatalOnError(err)
 
 		Context.tls.Start()
-		Context.etcHosts.Start()
 
 		go func() {
 			serr := startDNSServer()
@@ -647,7 +660,11 @@ func cleanup(ctx context.Context) {
 		}
 	}
 
-	Context.etcHosts.Close()
+	if Context.etcHosts != nil {
+		if err = Context.etcHosts.Close(); err != nil {
+			log.Error("stopping hosts container: %s", err)
+		}
+	}
 
 	if Context.tls != nil {
 		Context.tls.Close()

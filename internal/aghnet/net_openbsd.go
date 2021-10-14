@@ -18,9 +18,9 @@ func canBindPrivilegedPorts() (can bool, err error) {
 }
 
 func ifaceHasStaticIP(ifaceName string) (ok bool, err error) {
-	filename := fmt.Sprintf("/etc/hostname.%s", ifaceName)
+	filename := fmt.Sprintf("etc/hostname.%s", ifaceName)
 
-	return aghos.FileWalker(hostnameIfStaticConfig).Walk(filename)
+	return aghos.FileWalker(hostnameIfStaticConfig).Walk(aghos.RootDirFS(), filename)
 }
 
 // hostnameIfStaticConfig checks if the interface is configured by

@@ -11,9 +11,10 @@ import (
 	"fmt"
 	"math/big"
 	"net"
-	"os"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -1057,23 +1058,43 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 }
 
 func TestPTRResponseFromHosts(t *testing.T) {
-	c := filtering.Config{
-		EtcHosts: &aghnet.EtcHostsContainer{},
+	// Prepare test hosts file.
+
+	const hostsFilename = "hosts"
+
+	testFS := fstest.MapFS{
+		hostsFilename: &fstest.MapFile{Data: []byte(`
+		127.0.0.1   host # comment
+		::1         localhost#comment
+	`)},
 	}
 
-	// Prepare test hosts file.
-	hf, err := os.CreateTemp("", "")
+	const closeCalled errors.Error = "close method called"
+
+	var eventsCalledCounter uint32
+	hc, err := aghnet.NewHostsContainer(testFS, &aghtest.FSWatcher{
+		OnEvents: func() (e <-chan struct{}) {
+			assert.Equal(t, uint32(1), atomic.AddUint32(&eventsCalledCounter, 1))
+
+			return nil
+		},
+		OnAdd: func(name string) (err error) {
+			assert.Equal(t, hostsFilename, name)
+
+			return nil
+		},
+		OnClose: func() (err error) { return closeCalled },
+	}, hostsFilename)
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		assert.NoError(t, hf.Close())
-		assert.NoError(t, os.Remove(hf.Name()))
+		assert.Equal(t, uint32(1), atomic.LoadUint32(&eventsCalledCounter))
+
+		require.ErrorIs(t, hc.Close(), closeCalled)
 	})
 
-	_, _ = hf.WriteString("  127.0.0.1   host # comment \n")
-	_, _ = hf.WriteString("  ::1   localhost#comment  \n")
-
-	c.EtcHosts.Init(hf.Name())
-	t.Cleanup(c.EtcHosts.Close)
+	c := filtering.Config{
+		EtcHosts: hc,
+	}
 
 	var snd *aghnet.SubnetDetector
 	snd, err = aghnet.NewSubnetDetector()
@@ -1109,7 +1130,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	resp, err := dns.Exchange(req, addr.String())
 	require.NoError(t, err)
 
-	require.Len(t, resp.Answer, 1)
+	require.Lenf(t, resp.Answer, 1, "%#v", resp)
 
 	assert.Equal(t, dns.TypePTR, resp.Answer[0].Header().Rrtype)
 	assert.Equal(t, "1.0.0.127.in-addr.arpa.", resp.Answer[0].Header().Name)

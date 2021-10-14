@@ -710,7 +710,6 @@ func enableFilters(async bool) {
 }
 
 func enableFiltersLocked(async bool) {
-	var whiteFilters []filtering.Filter
 	filters := []filtering.Filter{{
 		Data: []byte(strings.Join(config.UserRules, "\n")),
 	}}
@@ -725,18 +724,20 @@ func enableFiltersLocked(async bool) {
 			FilePath: filter.Path(),
 		})
 	}
+
+	var allowFilters []filtering.Filter
 	for _, filter := range config.WhitelistFilters {
 		if !filter.Enabled {
 			continue
 		}
 
-		whiteFilters = append(whiteFilters, filtering.Filter{
+		allowFilters = append(allowFilters, filtering.Filter{
 			ID:       filter.ID,
 			FilePath: filter.Path(),
 		})
 	}
 
-	if err := Context.dnsFilter.SetFilters(filters, whiteFilters, async); err != nil {
+	if err := Context.dnsFilter.SetFilters(filters, allowFilters, async); err != nil {
 		log.Debug("enabling filters: %s", err)
 	}
 

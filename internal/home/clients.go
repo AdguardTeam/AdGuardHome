@@ -95,7 +95,9 @@ type clientsContainer struct {
 	// dnsServer is used for checking clients IP status access list status
 	dnsServer *dnsforward.Server
 
-	etcHosts *aghnet.EtcHostsContainer // get entries from system hosts-files
+	// etcHosts contains list of rewrite rules taken from the operating system's
+	// hosts databse.
+	etcHosts *aghnet.HostsContainer
 
 	testing bool // if TRUE, this object is used for internal tests
 }
@@ -106,7 +108,7 @@ type clientsContainer struct {
 func (clients *clientsContainer) Init(
 	objects []clientObject,
 	dhcpServer *dhcpd.Server,
-	etcHosts *aghnet.EtcHostsContainer,
+	etcHosts *aghnet.HostsContainer,
 ) {
 	if clients.list != nil {
 		log.Fatal("clients.list != nil")
@@ -121,13 +123,22 @@ func (clients *clientsContainer) Init(
 	clients.etcHosts = etcHosts
 	clients.addFromConfig(objects)
 
-	if !clients.testing {
-		clients.updateFromDHCP(true)
-		if clients.dhcpServer != nil {
-			clients.dhcpServer.SetOnLeaseChanged(clients.onDHCPLeaseChanged)
-		}
-		if clients.etcHosts != nil {
-			clients.etcHosts.SetOnChanged(clients.onHostsChanged)
+	if clients.testing {
+		return
+	}
+
+	clients.updateFromDHCP(true)
+	if clients.dhcpServer != nil {
+		clients.dhcpServer.SetOnLeaseChanged(clients.onDHCPLeaseChanged)
+	}
+
+	go clients.handleHostsUpdates()
+}
+
+func (clients *clientsContainer) handleHostsUpdates() {
+	if clients.etcHosts != nil {
+		for upd := range clients.etcHosts.Upd() {
+			clients.addFromHostsFile(upd)
 		}
 	}
 }
@@ -248,10 +259,6 @@ func (clients *clientsContainer) onDHCPLeaseChanged(flags int) {
 	case dhcpd.LeaseChangedRemovedAll:
 		clients.updateFromDHCP(false)
 	}
-}
-
-func (clients *clientsContainer) onHostsChanged() {
-	clients.addFromHostsFile()
 }
 
 // Exists checks if client with this IP address already exists.
@@ -697,7 +704,7 @@ func (clients *clientsContainer) SetWHOISInfo(ip net.IP, wi *RuntimeClientWHOISI
 	log.Debug("clients: set whois info for runtime client with ip %s: %+v", ip, wi)
 }
 
-// AddHost adds a new IP-hostname pairing.  The priorities of the sources is
+// AddHost adds a new IP-hostname pairing.  The priorities of the sources are
 // taken into account.  ok is true if the pairing was added.
 func (clients *clientsContainer) AddHost(ip net.IP, host string, src clientSource) (ok bool, err error) {
 	clients.lock.Lock()
@@ -757,13 +764,7 @@ func (clients *clientsContainer) rmHostsBySrc(src clientSource) {
 
 // addFromHostsFile fills the client-hostname pairing index from the system's
 // hosts files.
-func (clients *clientsContainer) addFromHostsFile() {
-	if clients.etcHosts == nil {
-		return
-	}
-
-	hosts := clients.etcHosts.List()
-
+func (clients *clientsContainer) addFromHostsFile(hosts *netutil.IPMap) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 

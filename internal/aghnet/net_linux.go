@@ -85,17 +85,17 @@ func ifaceHasStaticIP(ifaceName string) (has bool, err error) {
 
 	iface := interfaceName(ifaceName)
 
-	for _, pair := range []struct {
+	for _, pair := range [...]struct {
 		aghos.FileWalker
 		filename string
 	}{{
 		FileWalker: iface.dhcpcdStaticConfig,
-		filename:   "/etc/dhcpcd.conf",
+		filename:   "etc/dhcpcd.conf",
 	}, {
 		FileWalker: iface.ifacesStaticConfig,
-		filename:   "/etc/network/interfaces",
+		filename:   "etc/network/interfaces",
 	}} {
-		has, err = pair.Walk(pair.filename)
+		has, err = pair.Walk(aghos.RootDirFS(), pair.filename)
 		if err != nil {
 			return false, err
 		}

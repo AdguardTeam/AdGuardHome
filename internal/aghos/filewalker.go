@@ -3,8 +3,7 @@ package aghos
 import (
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
+	"io/fs"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/golibs/errors"
@@ -14,10 +13,10 @@ import (
 // FileWalker is the signature of a function called for files in the file tree.
 // As opposed to filepath.Walk it only walk the files (not directories) matching
 // the provided pattern and those returned by function itself.  All patterns
-// should be valid for filepath.Glob.  If cont is false, the walking terminates.
-// Each opened file is also limited for reading to MaxWalkedFileSize.
+// should be valid for fs.Glob.  If cont is false, the walking terminates.  Each
+// opened file is also limited for reading to MaxWalkedFileSize.
 //
-// TODO(e.burkov):  Consider moving to the separate package like pathutil.
+// TODO(e.burkov, a.garipov): Move into another package like aghfs.
 //
 // TODO(e.burkov):  Think about passing filename or any additional data.
 type FileWalker func(r io.Reader) (patterns []string, cont bool, err error)
@@ -26,15 +25,19 @@ type FileWalker func(r io.Reader) (patterns []string, cont bool, err error)
 // check.
 const MaxWalkedFileSize = 1024 * 1024
 
-// checkFile tries to open and process a single file located on sourcePath.
-func checkFile(c FileWalker, sourcePath string) (patterns []string, cont bool, err error) {
-	var f *os.File
-	f, err = os.Open(sourcePath)
+// checkFile tries to open and process a single file located on sourcePath in
+// the specified fsys.  The path is skipped if it's a directory.
+func checkFile(
+	fsys fs.FS,
+	c FileWalker,
+	sourcePath string,
+) (patterns []string, cont bool, err error) {
+	var f fs.File
+	f, err = fsys.Open(sourcePath)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			// Ignore non-existing files since this may only happen
-			// when the file was removed after filepath.Glob matched
-			// it.
+		if errors.Is(err, fs.ErrNotExist) {
+			// Ignore non-existing files since this may only happen when the
+			// file was removed after filepath.Glob matched it.
 			return nil, true, nil
 		}
 
@@ -42,9 +45,18 @@ func checkFile(c FileWalker, sourcePath string) (patterns []string, cont bool, e
 	}
 	defer func() { err = errors.WithDeferred(err, f.Close()) }()
 
+	var fi fs.FileInfo
+	if fi, err = f.Stat(); err != nil {
+		return nil, true, err
+	}
+	if fi.IsDir() {
+		// Skip the directories.
+		return nil, true, nil
+	}
+
 	var r io.Reader
-	// Ignore the error since LimitReader function returns error only if
-	// passed limit value is less than zero, but the constant used.
+	// Ignore the error since LimitReader function returns error only if passed
+	// limit value is less than zero, but the constant used.
 	//
 	// TODO(e.burkov):  Make variable.
 	r, _ = aghio.LimitReader(f, MaxWalkedFileSize)
@@ -52,13 +64,17 @@ func checkFile(c FileWalker, sourcePath string) (patterns []string, cont bool, e
 	return c(r)
 }
 
-// handlePatterns parses the patterns and ignores duplicates using srcSet.
-// srcSet must be non-nil.
-func handlePatterns(srcSet *stringutil.Set, patterns ...string) (sub []string, err error) {
+// handlePatterns parses the patterns in fsys and ignores duplicates using
+// srcSet.  srcSet must be non-nil.
+func handlePatterns(
+	fsys fs.FS,
+	srcSet *stringutil.Set,
+	patterns ...string,
+) (sub []string, err error) {
 	sub = make([]string, 0, len(patterns))
 	for _, p := range patterns {
 		var matches []string
-		matches, err = filepath.Glob(p)
+		matches, err = fs.Glob(fsys, p)
 		if err != nil {
 			// Enrich error with the pattern because filepath.Glob
 			// doesn't do it.
@@ -78,14 +94,14 @@ func handlePatterns(srcSet *stringutil.Set, patterns ...string) (sub []string, e
 	return sub, nil
 }
 
-// Walk starts walking the files defined by initPattern.  It only returns true
-// if c signed to stop walking.
-func (c FileWalker) Walk(initPattern string) (ok bool, err error) {
-	// The slice of sources keeps the order in which the files are walked
-	// since srcSet.Values() returns strings in undefined order.
+// Walk starts walking the files in fsys defined by patterns from initial.
+// It only returns true if fw signed to stop walking.
+func (fw FileWalker) Walk(fsys fs.FS, initial ...string) (ok bool, err error) {
+	// The slice of sources keeps the order in which the files are walked since
+	// srcSet.Values() returns strings in undefined order.
 	srcSet := stringutil.NewSet()
 	var src []string
-	src, err = handlePatterns(srcSet, initPattern)
+	src, err = handlePatterns(fsys, srcSet, initial...)
 	if err != nil {
 		return false, err
 	}
@@ -97,7 +113,7 @@ func (c FileWalker) Walk(initPattern string) (ok bool, err error) {
 		var patterns []string
 		var cont bool
 		filename = src[i]
-		patterns, cont, err = checkFile(c, src[i])
+		patterns, cont, err = checkFile(fsys, fw, src[i])
 		if err != nil {
 			return false, err
 		}
@@ -107,7 +123,7 @@ func (c FileWalker) Walk(initPattern string) (ok bool, err error) {
 		}
 
 		var subsrc []string
-		subsrc, err = handlePatterns(srcSet, patterns...)
+		subsrc, err = handlePatterns(fsys, srcSet, patterns...)
 		if err != nil {
 			return false, err
 		}
