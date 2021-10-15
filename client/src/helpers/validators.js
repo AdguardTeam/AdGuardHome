@@ -87,6 +87,21 @@ export const validateClientId = (value) => {
  * @param value {string}
  * @returns {undefined|string}
  */
+export const validateConfigClientId = (value) => {
+    if (!value) {
+        return undefined;
+    }
+    const formattedValue = value.trim();
+    if (formattedValue && !R_CLIENT_ID.test(formattedValue)) {
+        return 'form_error_client_id_format';
+    }
+    return undefined;
+};
+
+/**
+ * @param value {string}
+ * @returns {undefined|string}
+ */
 export const validateServerName = (value) => {
     if (!value) {
         return undefined;

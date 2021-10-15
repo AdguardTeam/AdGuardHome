@@ -24,7 +24,7 @@ export const R_UNIX_ABSOLUTE_PATH = /^(\/[^/\x00]+)+$/;
 // eslint-disable-next-line no-control-regex
 export const R_WIN_ABSOLUTE_PATH = /^([a-zA-Z]:)?(\\|\/)(?:[^\\/:*?"<>|\x00]+\\)*[^\\/:*?"<>|\x00]*$/;
 
-export const R_CLIENT_ID = /^[a-z0-9-]{1,64}$/;
+export const R_CLIENT_ID = /^[a-z0-9-]{1,63}$/;
 
 export const HTML_PAGES = {
     INSTALL: '/install.html',

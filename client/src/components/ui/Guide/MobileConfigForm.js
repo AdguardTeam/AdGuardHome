@@ -14,7 +14,7 @@ import {
     toNumber,
 } from '../../../helpers/form';
 import {
-    validateClientId,
+    validateConfigClientId,
     validateServerName,
     validatePort,
     validateIsSafePort,
@@ -132,7 +132,7 @@ const MobileConfigForm = ({ invalid }) => {
                         component={renderInputField}
                         className="form-control"
                         placeholder={i18next.t('client_id_placeholder')}
-                        validate={validateClientId}
+                        validate={validateConfigClientId}
                     />
                 </div>
                 <div className="form__group form__group--settings">
