@@ -900,9 +900,10 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 			resp.UpdateOption(dhcpv4.OptGeneric(code, configured.Get(code)))
 		}
 	}
-	// Update the value of Domain Name Server option separately from others
-	// since its value is set after server's creating.
-	if requested.Has(dhcpv4.OptionDomainNameServer) {
+	// Update the value of Domain Name Server option separately from others if
+	// not assigned yet since its value is set after server's creating.
+	if requested.Has(dhcpv4.OptionDomainNameServer) &&
+		!resp.Options.Has(dhcpv4.OptionDomainNameServer) {
 		resp.UpdateOption(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
 	}
 

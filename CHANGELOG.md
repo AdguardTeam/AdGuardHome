@@ -114,6 +114,7 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- Incorrect assignment of explicitly configured DHCP options ([#3744]).
 - Occasional panic during shutdown ([#3655]).
 - Addition of IPs into only one as opposed to all matching ipsets on Linux
   ([#3638]).
@@ -204,6 +205,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3607]: https://github.com/AdguardTeam/AdGuardHome/issues/3607
 [#3638]: https://github.com/AdguardTeam/AdGuardHome/issues/3638
 [#3655]: https://github.com/AdguardTeam/AdGuardHome/issues/3655
+[#3744]: https://github.com/AdguardTeam/AdGuardHome/issues/3744
 
 
 
