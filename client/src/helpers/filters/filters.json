@@ -60,12 +60,6 @@
             "homepage": "https://github.com/crazy-max/WindowsSpyBlocker",
             "source": "https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt"
         },
-        "spam404": {
-            "name": "Spam404",
-            "categoryId": "security",
-            "homepage": "https://github.com/Spam404/lists",
-            "source": "https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt"
-        },
         "nocoin-filter-list": {
             "name": "NoCoin Filter List",
             "categoryId": "security",
@@ -156,11 +150,11 @@
             "homepage": "https://github.com/ABPindo/indonesianadblockrules/",
             "source": "https://raw.githubusercontent.com/ABPindo/indonesianadblockrules/master/subscriptions/abpindo.txt"
         },
-        "barb-block": {
-            "name": "BarbBlock",
-            "categoryId": "other",
-            "homepage": "https://github.com/paulgb/BarbBlock/",
-            "source": "https://paulgb.github.io/BarbBlock/blacklists/hosts-file.txt"
-        }
+        "NLD-Easylist": {
+            "name": "NLD: Easylist",
+            "categoryId": "regional",
+            "homepage": "https://forums.lanik.us/viewforum.php?f=100",
+            "source": "https://easylist-downloads.adblockplus.org/easylistdutch.txt"
+        },
     }
 }
