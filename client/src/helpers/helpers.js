@@ -555,6 +555,20 @@ export const isIpInCidr = (ip, cidr) => {
 /**
  *
  * @param {string} subnetMask
+ * @returns {IPv4 | null}
+ */
+export const parseSubnetMask = (subnetMask) => {
+    try {
+        return ipaddr.parse(subnetMask).prefixLengthFromSubnetMask();
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+};
+
+/**
+ *
+ * @param {string} subnetMask
  * @returns {*}
  */
 export const subnetMaskToBitMask = (subnetMask) => subnetMask

@@ -293,6 +293,8 @@ func (s *v4Server) addLease(l *Lease) (err error) {
 	offset, inOffset := r.offset(l.IP)
 
 	if l.IsStatic() {
+		// TODO(a.garipov, d.seregin): Subnet can be nil when dhcp server is
+		// disabled.
 		if sn := s.conf.subnet; !sn.Contains(l.IP) {
 			return fmt.Errorf("subnet %s does not contain the ip %q", sn, l.IP)
 		}
@@ -1125,6 +1127,29 @@ func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
 		return s, fmt.Errorf("dhcpv4: %w", err)
 	}
 
+	if s.conf.ipRange.contains(routerIP) {
+		return s, fmt.Errorf("dhcpv4: gateway ip %v in the ip range: %v-%v",
+			routerIP,
+			conf.RangeStart,
+			conf.RangeEnd,
+		)
+	}
+
+	if !s.conf.subnet.Contains(conf.RangeStart) {
+		return s, fmt.Errorf("dhcpv4: range start %v is outside network %v",
+			conf.RangeStart,
+			s.conf.subnet,
+		)
+	}
+
+	if !s.conf.subnet.Contains(conf.RangeEnd) {
+		return s, fmt.Errorf("dhcpv4: range end %v is outside network %v",
+			conf.RangeEnd,
+			s.conf.subnet,
+		)
+	}
+
+	// TODO(a.garipov, d.seregin): Check that every lease is inside the IPRange.
 	s.leasedOffsets = newBitSet()
 
 	if conf.LeaseDuration == 0 {

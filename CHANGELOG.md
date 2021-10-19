@@ -46,6 +46,8 @@ and this project adheres to
 
 ### Changed
 
+- DHCP gateway address, subnet mask, IP address range, and leases validations
+  ([#3529]).
 - The `systemd` service script will now create the `/var/log` directory when it
   doesn't exist ([#3579]).
 - Items in allowed clients, disallowed clients, and blocked hosts lists are now
@@ -196,6 +198,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3450]: https://github.com/AdguardTeam/AdGuardHome/issues/3450
 [#3457]: https://github.com/AdguardTeam/AdGuardHome/issues/3457
 [#3506]: https://github.com/AdguardTeam/AdGuardHome/issues/3506
+[#3529]: https://github.com/AdguardTeam/AdGuardHome/issues/3529
 [#3538]: https://github.com/AdguardTeam/AdGuardHome/issues/3538
 [#3551]: https://github.com/AdguardTeam/AdGuardHome/issues/3551
 [#3564]: https://github.com/AdguardTeam/AdGuardHome/issues/3564

@@ -1,4 +1,5 @@
 import i18next from 'i18next';
+
 import {
     MAX_PORT,
     R_CIDR,
@@ -14,7 +15,7 @@ import {
     R_DOMAIN,
 } from './constants';
 import { ip4ToInt, isValidAbsolutePath } from './form';
-import { isIpInCidr } from './helpers';
+import { isIpInCidr, parseSubnetMask } from './helpers';
 
 // Validation functions
 // https://redux-form.com/8.3.0/examples/fieldlevelvalidation/
@@ -44,7 +45,7 @@ export const validateIpv4RangeEnd = (_, allValues) => {
     const { range_end, range_start } = allValues.v4;
 
     if (ip4ToInt(range_end) <= ip4ToInt(range_start)) {
-        return 'range_end_error';
+        return 'greater_range_start_error';
     }
 
     return undefined;
@@ -58,6 +59,114 @@ export const validateIpv4 = (value) => {
     if (value && !R_IPV4.test(value)) {
         return 'form_error_ip4_format';
     }
+    return undefined;
+};
+
+/**
+ * @returns {undefined|string}
+ * @param _
+ * @param allValues
+ */
+export const validateNotInRange = (value, allValues) => {
+    const { range_start, range_end } = allValues.v4;
+
+    if (range_start && validateIpv4(range_start)) {
+        return 'form_error_ip4_range_start_format';
+    }
+
+    if (range_end && validateIpv4(range_end)) {
+        return 'form_error_ip4_range_end_format';
+    }
+
+    const isAboveMin = range_start && ip4ToInt(value) >= ip4ToInt(range_start);
+    const isBelowMax = range_end && ip4ToInt(value) <= ip4ToInt(range_end);
+
+    if (isAboveMin && isBelowMax) {
+        return i18next.t('out_of_range_error', {
+            start: range_start,
+            end: range_end,
+        });
+    }
+
+    if (!range_end && isAboveMin) {
+        return 'lower_range_start_error';
+    }
+
+    if (!range_start && isBelowMax) {
+        return 'greater_range_end_error';
+    }
+
+    return undefined;
+};
+
+/**
+ * @returns {undefined|string}
+ * @param _
+ * @param allValues
+ */
+export const validateInRange = (value, allValues) => {
+    const { rangeStart, rangeEnd } = allValues;
+
+    if (rangeStart && validateIpv4(rangeStart)) {
+        return 'form_error_ip4_range_start_format';
+    }
+
+    if (rangeEnd && validateIpv4(rangeEnd)) {
+        return 'form_error_ip4_range_end_format';
+    }
+
+    const isBelowMin = rangeStart && ip4ToInt(value) < ip4ToInt(rangeStart);
+    const isAboveMax = rangeEnd && ip4ToInt(value) > ip4ToInt(rangeEnd);
+
+    if (isAboveMax || isBelowMin) {
+        return i18next.t('in_range_error', {
+            start: rangeStart,
+            end: rangeEnd,
+        });
+    }
+
+    return undefined;
+};
+
+/**
+ * @returns {undefined|string}
+ * @param _
+ * @param allValues
+ */
+export const validateGatewaySubnetMask = (_, allValues) => {
+    if (!allValues || !allValues.v4 || !allValues.v4.subnet_mask || !allValues.v4.gateway_ip) {
+        return 'gateway_or_subnet_invalid';
+    }
+
+    const { subnet_mask, gateway_ip } = allValues.v4;
+
+    if (validateIpv4(gateway_ip)) {
+        return 'form_error_ip4_gateway_format';
+    }
+
+    return parseSubnetMask(subnet_mask) ? undefined : 'gateway_or_subnet_invalid';
+};
+
+/**
+ * @returns {undefined|string}
+ * @param value
+ * @param allValues
+ */
+export const validateIpForGatewaySubnetMask = (value, allValues) => {
+    if (!allValues || !allValues.v4 || !value) {
+        return undefined;
+    }
+
+    const {
+        gateway_ip, subnet_mask,
+    } = allValues.v4;
+
+    const subnetPrefix = parseSubnetMask(subnet_mask);
+
+    if (!isIpInCidr(value, `${gateway_ip}/${subnetPrefix}`)) {
+        return 'subnet_error';
+    }
+
     return undefined;
 };
 

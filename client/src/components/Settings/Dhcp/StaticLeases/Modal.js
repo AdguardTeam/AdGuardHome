@@ -11,6 +11,8 @@ const Modal = ({
     handleSubmit,
     processingAdding,
     cidr,
+    rangeStart,
+    rangeEnd,
 }) => {
     const dispatch = useDispatch();
 
@@ -38,10 +40,14 @@ const Modal = ({
                         ip: '',
                         hostname: '',
                         cidr,
+                        rangeStart,
+                        rangeEnd,
                     }}
                     onSubmit={handleSubmit}
                     processingAdding={processingAdding}
                     cidr={cidr}
+                    rangeStart={rangeStart}
+                    rangeEnd={rangeEnd}
                 />
             </div>
         </ReactModal>
@@ -53,6 +59,8 @@ Modal.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
     processingAdding: PropTypes.bool.isRequired,
     cidr: PropTypes.string.isRequired,
+    rangeStart: PropTypes.string,
+    rangeEnd: PropTypes.string,
 };
 
 export default withTranslation()(Modal);
