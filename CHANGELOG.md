@@ -46,6 +46,8 @@ and this project adheres to
 
 ### Changed
 
+- `$dnsrewrite` rules and other DNS rewrites will now be applied even when the
+  protection is disabled ([#1558]).
 - DHCP gateway address, subnet mask, IP address range, and leases validations
   ([#3529]).
 - The `systemd` service script will now create the `/var/log` directory when it
@@ -155,6 +157,7 @@ In this release, the schema version has changed from 10 to 12.
 - Go 1.15 support.
 
 [#1381]: https://github.com/AdguardTeam/AdGuardHome/issues/1381
+[#1558]: https://github.com/AdguardTeam/AdGuardHome/issues/1558
 [#1691]: https://github.com/AdguardTeam/AdGuardHome/issues/1691
 [#1898]: https://github.com/AdguardTeam/AdGuardHome/issues/1898
 [#1992]: https://github.com/AdguardTeam/AdGuardHome/issues/1992

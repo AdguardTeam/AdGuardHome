@@ -909,6 +909,7 @@ func TestRewrite(t *testing.T) {
 		}},
 	}
 	f := filtering.New(c, nil)
+	f.SetEnabled(true)
 
 	snd, err := aghnet.NewSubnetDetector()
 	require.NoError(t, err)
@@ -945,45 +946,56 @@ func TestRewrite(t *testing.T) {
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
-	req := createTestMessageWithType("test.com.", dns.TypeA)
-	reply, err := dns.Exchange(req, addr.String())
-	require.NoError(t, err)
+	subTestFunc := func(t *testing.T) {
+		req := createTestMessageWithType("test.com.", dns.TypeA)
+		reply, eerr := dns.Exchange(req, addr.String())
+		require.NoError(t, eerr)
 
-	require.Len(t, reply.Answer, 1)
+		require.Len(t, reply.Answer, 1)
 
-	a, ok := reply.Answer[0].(*dns.A)
-	require.True(t, ok)
+		a, ok := reply.Answer[0].(*dns.A)
+		require.True(t, ok)
 
-	assert.True(t, net.IP{1, 2, 3, 4}.Equal(a.A))
+		assert.True(t, net.IP{1, 2, 3, 4}.Equal(a.A))
 
-	req = createTestMessageWithType("test.com.", dns.TypeAAAA)
-	reply, err = dns.Exchange(req, addr.String())
-	require.NoError(t, err)
+		req = createTestMessageWithType("test.com.", dns.TypeAAAA)
+		reply, eerr = dns.Exchange(req, addr.String())
+		require.NoError(t, eerr)
 
-	assert.Empty(t, reply.Answer)
+		assert.Empty(t, reply.Answer)
 
-	req = createTestMessageWithType("alias.test.com.", dns.TypeA)
-	reply, err = dns.Exchange(req, addr.String())
-	require.NoError(t, err)
+		req = createTestMessageWithType("alias.test.com.", dns.TypeA)
+		reply, eerr = dns.Exchange(req, addr.String())
+		require.NoError(t, eerr)
 
-	require.Len(t, reply.Answer, 2)
+		require.Len(t, reply.Answer, 2)
 
-	assert.Equal(t, "test.com.", reply.Answer[0].(*dns.CNAME).Target)
-	assert.True(t, net.IP{1, 2, 3, 4}.Equal(reply.Answer[1].(*dns.A).A))
+		assert.Equal(t, "test.com.", reply.Answer[0].(*dns.CNAME).Target)
+		assert.True(t, net.IP{1, 2, 3, 4}.Equal(reply.Answer[1].(*dns.A).A))
 
-	req = createTestMessageWithType("my.alias.example.org.", dns.TypeA)
-	reply, err = dns.Exchange(req, addr.String())
-	require.NoError(t, err)
+		req = createTestMessageWithType("my.alias.example.org.", dns.TypeA)
+		reply, eerr = dns.Exchange(req, addr.String())
+		require.NoError(t, eerr)
 
-	// The original question is restored.
-	require.Len(t, reply.Question, 1)
+		// The original question is restored.
+		require.Len(t, reply.Question, 1)
 
-	assert.Equal(t, "my.alias.example.org.", reply.Question[0].Name)
+		assert.Equal(t, "my.alias.example.org.", reply.Question[0].Name)
 
-	require.Len(t, reply.Answer, 2)
+		require.Len(t, reply.Answer, 2)
 
-	assert.Equal(t, "example.org.", reply.Answer[0].(*dns.CNAME).Target)
-	assert.Equal(t, dns.TypeA, reply.Answer[1].Header().Rrtype)
+		assert.Equal(t, "example.org.", reply.Answer[0].(*dns.CNAME).Target)
+		assert.Equal(t, dns.TypeA, reply.Answer[1].Header().Rrtype)
+	}
+
+	for _, protect := range []bool{true, false} {
+		val := protect
+		conf := s.getDNSConfig()
+		conf.ProtectionEnabled = &val
+		s.setConfig(conf)
+
+		t.Run(fmt.Sprintf("protection_is_%t", val), subTestFunc)
+	}
 }
 
 func publicKey(priv interface{}) interface{} {
@@ -1092,9 +1104,10 @@ func TestPTRResponseFromHosts(t *testing.T) {
 		require.ErrorIs(t, hc.Close(), closeCalled)
 	})
 
-	c := filtering.Config{
+	flt := filtering.New(&filtering.Config{
 		EtcHosts: hc,
-	}
+	}, nil)
+	flt.SetEnabled(true)
 
 	var snd *aghnet.SubnetDetector
 	snd, err = aghnet.NewSubnetDetector()
@@ -1104,7 +1117,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	var s *Server
 	s, err = NewServer(DNSCreateParams{
 		DHCPServer:     &testDHCP{},
-		DNSFilter:      filtering.New(&c, nil),
+		DNSFilter:      flt,
 		SubnetDetector: snd,
 	})
 	require.NoError(t, err)
@@ -1112,32 +1125,41 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	s.conf.UDPListenAddrs = []*net.UDPAddr{{}}
 	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
-	s.conf.FilteringConfig.ProtectionEnabled = true
 
 	err = s.Prepare(nil)
 	require.NoError(t, err)
 
 	err = s.Start()
 	require.NoError(t, err)
-
 	t.Cleanup(func() {
 		s.Close()
 	})
 
-	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
-	req := createTestMessageWithType("1.0.0.127.in-addr.arpa.", dns.TypePTR)
+	subTestFunc := func(t *testing.T) {
+		addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+		req := createTestMessageWithType("1.0.0.127.in-addr.arpa.", dns.TypePTR)
 
-	resp, err := dns.Exchange(req, addr.String())
-	require.NoError(t, err)
+		resp, eerr := dns.Exchange(req, addr.String())
+		require.NoError(t, eerr)
 
-	require.Lenf(t, resp.Answer, 1, "%#v", resp)
+		require.Len(t, resp.Answer, 1)
 
-	assert.Equal(t, dns.TypePTR, resp.Answer[0].Header().Rrtype)
-	assert.Equal(t, "1.0.0.127.in-addr.arpa.", resp.Answer[0].Header().Name)
+		assert.Equal(t, dns.TypePTR, resp.Answer[0].Header().Rrtype)
+		assert.Equal(t, "1.0.0.127.in-addr.arpa.", resp.Answer[0].Header().Name)
 
-	ptr, ok := resp.Answer[0].(*dns.PTR)
-	require.True(t, ok)
-	assert.Equal(t, "host.", ptr.Ptr)
+		ptr, ok := resp.Answer[0].(*dns.PTR)
+		require.True(t, ok)
+		assert.Equal(t, "host.", ptr.Ptr)
+	}
+
+	for _, protect := range []bool{true, false} {
+		val := protect
+		conf := s.getDNSConfig()
+		conf.ProtectionEnabled = &val
+		s.setConfig(conf)
+
+		t.Run(fmt.Sprintf("protection_is_%t", val), subTestFunc)
+	}
 }
 
 func TestNewServer(t *testing.T) {

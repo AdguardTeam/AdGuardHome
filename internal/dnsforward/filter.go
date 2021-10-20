@@ -52,6 +52,7 @@ func (s *Server) beforeRequestHandler(
 // the client's IP address and ID, if any, from ctx.
 func (s *Server) getClientRequestFilteringSettings(ctx *dnsContext) *filtering.Settings {
 	setts := s.dnsFilter.GetConfig()
+	setts.ProtectionEnabled = ctx.protectionEnabled
 	if s.conf.FilterHandler != nil {
 		ip, _ := netutil.IPAndPortFromAddr(ctx.proxyCtx.Addr)
 		s.conf.FilterHandler(ip, ctx.clientID, &setts)
@@ -65,32 +66,31 @@ func (s *Server) getClientRequestFilteringSettings(ctx *dnsContext) *filtering.S
 func (s *Server) filterDNSRequest(ctx *dnsContext) (*filtering.Result, error) {
 	d := ctx.proxyCtx
 	req := d.Req
-	host := strings.TrimSuffix(req.Question[0].Name, ".")
-	res, err := s.dnsFilter.CheckHost(host, req.Question[0].Qtype, ctx.setts)
-	if err != nil {
-		// Return immediately if there's an error
-		return nil, fmt.Errorf("filtering failed to check host %q: %w", host, err)
-	} else if res.IsFiltered {
-		log.Tracef("Host %s is filtered, reason - %q, matched rule: %q", host, res.Reason, res.Rules[0].Text)
+	q := req.Question[0]
+	host := strings.TrimSuffix(q.Name, ".")
+	res, err := s.dnsFilter.CheckHost(host, q.Qtype, ctx.setts)
+	switch {
+	case err != nil:
+		return nil, fmt.Errorf("failed to check host %q: %w", host, err)
+	case res.IsFiltered:
+		log.Tracef("host %q is filtered, reason %q, rule: %q", host, res.Reason, res.Rules[0].Text)
 		d.Res = s.genDNSFilterMessage(d, &res)
-	} else if res.Reason.In(filtering.Rewritten, filtering.RewrittenRule) &&
+	case res.Reason.In(filtering.Rewritten, filtering.RewrittenRule) &&
 		res.CanonName != "" &&
-		len(res.IPList) == 0 {
-		// Resolve the new canonical name, not the original host
-		// name.  The original question is readded in
-		// processFilteringAfterResponse.
-		ctx.origQuestion = req.Question[0]
+		len(res.IPList) == 0:
+		// Resolve the new canonical name, not the original host name.  The
+		// original question is readded in processFilteringAfterResponse.
+		ctx.origQuestion = q
 		req.Question[0].Name = dns.Fqdn(res.CanonName)
-	} else if res.Reason == filtering.RewrittenAutoHosts && len(res.ReverseHosts) != 0 {
+	case res.Reason == filtering.RewrittenAutoHosts && len(res.ReverseHosts) != 0:
 		resp := s.makeResponse(req)
+		hdr := dns.RR_Header{
+			Name:   q.Name,
+			Rrtype: dns.TypePTR,
+			Ttl:    s.conf.BlockedResponseTTL,
+			Class:  dns.ClassINET,
+		}
 		for _, h := range res.ReverseHosts {
-			hdr := dns.RR_Header{
-				Name:   req.Question[0].Name,
-				Rrtype: dns.TypePTR,
-				Ttl:    s.conf.BlockedResponseTTL,
-				Class:  dns.ClassINET,
-			}
-
 			ptr := &dns.PTR{
 				Hdr: hdr,
 				Ptr: h,
@@ -100,7 +100,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*filtering.Result, error) {
 		}
 
 		d.Res = resp
-	} else if res.Reason.In(filtering.Rewritten, filtering.RewrittenAutoHosts) {
+	case res.Reason.In(filtering.Rewritten, filtering.RewrittenAutoHosts):
 		resp := s.makeResponse(req)
 
 		name := host
@@ -110,11 +110,12 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*filtering.Result, error) {
 		}
 
 		for _, ip := range res.IPList {
-			if req.Question[0].Qtype == dns.TypeA {
+			switch q.Qtype {
+			case dns.TypeA:
 				a := s.genAnswerA(req, ip.To4())
 				a.Hdr.Name = dns.Fqdn(name)
 				resp.Answer = append(resp.Answer, a)
-			} else if req.Question[0].Qtype == dns.TypeAAAA {
+			case dns.TypeAAAA:
 				a := s.genAnswerAAAA(req, ip)
 				a.Hdr.Name = dns.Fqdn(name)
 				resp.Answer = append(resp.Answer, a)
@@ -122,9 +123,8 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*filtering.Result, error) {
 		}
 
 		d.Res = resp
-	} else if res.Reason == filtering.RewrittenRule {
-		err = s.filterDNSRewrite(req, res, d)
-		if err != nil {
+	case res.Reason == filtering.RewrittenRule:
+		if err = s.filterDNSRewrite(req, res, d); err != nil {
 			return nil, err
 		}
 	}
@@ -179,6 +179,7 @@ func (s *Server) filterDNSResponse(ctx *dnsContext) (*filtering.Result, error) {
 			continue
 		}
 
+		host = strings.TrimSuffix(host, ".")
 		res, err := s.checkHostRules(host, d.Req.Question[0].Qtype, ctx.setts)
 		if err != nil {
 			return nil, err

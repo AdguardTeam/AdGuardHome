@@ -117,6 +117,7 @@ func TestSBPC_checkErrorUpstream(t *testing.T) {
 	d.SetParentalUpstream(ups)
 
 	setts := &Settings{
+		ProtectionEnabled:   true,
 		SafeBrowsingEnabled: true,
 		ParentalEnabled:     true,
 	}
@@ -135,35 +136,36 @@ func TestSBPC(t *testing.T) {
 	const hostname = "example.org"
 
 	setts := &Settings{
+		ProtectionEnabled:   true,
 		SafeBrowsingEnabled: true,
 		ParentalEnabled:     true,
 	}
 
 	testCases := []struct {
+		testCache cache.Cache
+		testFunc  func(host string, _ uint16, _ *Settings) (res Result, err error)
 		name      string
 		block     bool
-		testFunc  func(host string, _ uint16, _ *Settings) (res Result, err error)
-		testCache cache.Cache
 	}{{
+		testCache: gctx.safebrowsingCache,
+		testFunc:  d.checkSafeBrowsing,
 		name:      "sb_no_block",
 		block:     false,
-		testFunc:  d.checkSafeBrowsing,
-		testCache: gctx.safebrowsingCache,
 	}, {
+		testCache: gctx.safebrowsingCache,
+		testFunc:  d.checkSafeBrowsing,
 		name:      "sb_block",
 		block:     true,
-		testFunc:  d.checkSafeBrowsing,
-		testCache: gctx.safebrowsingCache,
 	}, {
+		testCache: gctx.parentalCache,
+		testFunc:  d.checkParental,
 		name:      "pc_no_block",
 		block:     false,
-		testFunc:  d.checkParental,
-		testCache: gctx.parentalCache,
 	}, {
+		testCache: gctx.parentalCache,
+		testFunc:  d.checkParental,
 		name:      "pc_block",
 		block:     true,
-		testFunc:  d.checkParental,
-		testCache: gctx.parentalCache,
 	}}
 
 	for _, tc := range testCases {
