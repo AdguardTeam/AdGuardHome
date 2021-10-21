@@ -74,7 +74,7 @@ func (d *DNSFilter) checkSafeSearch(
 	_ uint16,
 	setts *Settings,
 ) (res Result, err error) {
-	if !setts.SafeSearchEnabled {
+	if !setts.ProtectionEnabled || !setts.SafeSearchEnabled {
 		return Result{}, nil
 	}
 

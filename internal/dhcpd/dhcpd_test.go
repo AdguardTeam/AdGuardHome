@@ -11,6 +11,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -136,6 +137,49 @@ func TestNormalizeLeases(t *testing.T) {
 	assert.Equal(t, leases[0].IP, staticLeases[0].IP)
 	assert.Equal(t, leases[1].HWAddr, staticLeases[1].HWAddr)
 	assert.Equal(t, leases[2].HWAddr, dynLeases[1].HWAddr)
+}
+
+func TestV4Server_badRange(t *testing.T) {
+	testCases := []struct {
+		name       string
+		gatewayIP  net.IP
+		subnetMask net.IP
+		wantErrMsg string
+	}{{
+		name:       "gateway_in_range",
+		gatewayIP:  net.IP{192, 168, 10, 120},
+		subnetMask: net.IP{255, 255, 255, 0},
+		wantErrMsg: "dhcpv4: gateway ip 192.168.10.120 in the ip range: " +
+			"192.168.10.20-192.168.10.200",
+	}, {
+		name:       "outside_range_start",
+		gatewayIP:  net.IP{192, 168, 10, 1},
+		subnetMask: net.IP{255, 255, 255, 240},
+		wantErrMsg: "dhcpv4: range start 192.168.10.20 is outside network " +
+			"192.168.10.1/28",
+	}, {
+		name:       "outside_range_end",
+		gatewayIP:  net.IP{192, 168, 10, 1},
+		subnetMask: net.IP{255, 255, 255, 224},
+		wantErrMsg: "dhcpv4: range end 192.168.10.200 is outside network " +
+			"192.168.10.1/27",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			conf := V4ServerConf{
+				Enabled:    true,
+				RangeStart: net.IP{192, 168, 10, 20},
+				RangeEnd:   net.IP{192, 168, 10, 200},
+				GatewayIP:  tc.gatewayIP,
+				SubnetMask: tc.subnetMask,
+				notify:     testNotify,
+			}
+
+			_, err := v4Create(conf)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
+		})
+	}
 }
 
 // cloneUDPAddr returns a deep copy of a.

@@ -90,7 +90,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 		s.processRestrictLocal,
 		s.processInternalIPAddrs,
 		s.processClientID,
-		processFilteringBeforeRequest,
+		s.processFilteringBeforeRequest,
 		s.processLocalPTR,
 		s.processUpstream,
 		processDNSSECAfterResponse,
@@ -468,19 +468,18 @@ func (s *Server) processLocalPTR(ctx *dnsContext) (rc resultCode) {
 }
 
 // Apply filtering logic
-func processFilteringBeforeRequest(ctx *dnsContext) (rc resultCode) {
-	s := ctx.srv
-	d := ctx.proxyCtx
-
-	if d.Res != nil {
-		return resultCodeSuccess // response is already set - nothing to do
+func (s *Server) processFilteringBeforeRequest(ctx *dnsContext) (rc resultCode) {
+	if ctx.proxyCtx.Res != nil {
+		// Go on since the response is already set.
+		return resultCodeSuccess
 	}
 
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	ctx.protectionEnabled = s.conf.ProtectionEnabled && s.dnsFilter != nil
-	if !ctx.protectionEnabled {
+	ctx.protectionEnabled = s.conf.ProtectionEnabled
+
+	if s.dnsFilter == nil {
 		return resultCodeSuccess
 	}
 
@@ -489,8 +488,7 @@ func processFilteringBeforeRequest(ctx *dnsContext) (rc resultCode) {
 	}
 
 	var err error
-	ctx.result, err = s.filterDNSRequest(ctx)
-	if err != nil {
+	if ctx.result, err = s.filterDNSRequest(ctx); err != nil {
 		ctx.err = err
 
 		return resultCodeError
@@ -608,47 +606,49 @@ func processDNSSECAfterResponse(ctx *dnsContext) (rc resultCode) {
 func processFilteringAfterResponse(ctx *dnsContext) (rc resultCode) {
 	s := ctx.srv
 	d := ctx.proxyCtx
-	res := ctx.result
-	var err error
 
-	switch res.Reason {
-	case filtering.Rewritten,
+	switch res := ctx.result; res.Reason {
+	case filtering.NotFilteredAllowList:
+		// Go on.
+	case
+		filtering.Rewritten,
 		filtering.RewrittenRule:
 
 		if len(ctx.origQuestion.Name) == 0 {
-			// origQuestion is set in case we get only CNAME without IP from rewrites table
+			// origQuestion is set in case we get only CNAME without IP from
+			// rewrites table.
 			break
 		}
 
-		d.Req.Question[0] = ctx.origQuestion
-		d.Res.Question[0] = ctx.origQuestion
-
-		if len(d.Res.Answer) != 0 {
-			answer := []dns.RR{}
-			answer = append(answer, s.genAnswerCNAME(d.Req, res.CanonName))
-			answer = append(answer, d.Res.Answer...)
+		d.Req.Question[0], d.Res.Question[0] = ctx.origQuestion, ctx.origQuestion
+		if len(d.Res.Answer) > 0 {
+			answer := append([]dns.RR{s.genAnswerCNAME(d.Req, res.CanonName)}, d.Res.Answer...)
 			d.Res.Answer = answer
 		}
-
-	case filtering.NotFilteredAllowList:
-		// nothing
-
 	default:
-		if !ctx.protectionEnabled || // filters are disabled: there's nothing to check for
-			!ctx.responseFromUpstream { // only check response if it's from an upstream server
+		// Check the response only if the it's from an upstream.  Don't check
+		// the response if the protection is disabled since dnsrewrite rules
+		// aren't applied to it anyway.
+		if !ctx.protectionEnabled || !ctx.responseFromUpstream || s.dnsFilter == nil {
 			break
 		}
-		origResp2 := d.Res
-		ctx.result, err = s.filterDNSResponse(ctx)
+
+		origResp := d.Res
+		result, err := s.filterDNSResponse(ctx)
 		if err != nil {
 			ctx.err = err
+
 			return resultCodeError
 		}
-		if ctx.result != nil {
-			ctx.origResp = origResp2 // matched by response
-		} else {
-			ctx.result = &filtering.Result{}
+
+		if result != nil {
+			ctx.result = result
+			ctx.origResp = origResp
 		}
+	}
+
+	if ctx.result == nil {
+		ctx.result = &filtering.Result{}
 	}
 
 	return resultCodeSuccess

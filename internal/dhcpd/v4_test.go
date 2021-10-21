@@ -5,8 +5,10 @@ package dhcpd
 
 import (
 	"net"
+	"strings"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/mdlayher/raw"
 	"github.com/stretchr/testify/assert"
@@ -16,16 +18,33 @@ import (
 func notify4(flags uint32) {
 }
 
-func TestV4_AddRemove_static(t *testing.T) {
-	s, err := v4Create(V4ServerConf{
+// defaultV4ServerConf returns the default configuration for *v4Server to use in
+// tests.
+func defaultV4ServerConf() (conf V4ServerConf) {
+	return V4ServerConf{
 		Enabled:    true,
 		RangeStart: net.IP{192, 168, 10, 100},
 		RangeEnd:   net.IP{192, 168, 10, 200},
 		GatewayIP:  net.IP{192, 168, 10, 1},
 		SubnetMask: net.IP{255, 255, 255, 0},
 		notify:     notify4,
-	})
+	}
+}
+
+// defaultSrv prepares the default DHCPServer to use in tests.  The underlying
+// type of s is *v4Server.
+func defaultSrv(t *testing.T) (s DHCPServer) {
+	t.Helper()
+
+	var err error
+	s, err = v4Create(defaultV4ServerConf())
 	require.NoError(t, err)
+
+	return s
+}
+
+func TestV4_AddRemove_static(t *testing.T) {
+	s := defaultSrv(t)
 
 	ls := s.GetLeases(LeasesStatic)
 	assert.Empty(t, ls)
@@ -37,7 +56,7 @@ func TestV4_AddRemove_static(t *testing.T) {
 		IP:       net.IP{192, 168, 10, 150},
 	}
 
-	err = s.AddStaticLease(l)
+	err := s.AddStaticLease(l)
 	require.NoError(t, err)
 
 	err = s.AddStaticLease(l)
@@ -65,15 +84,7 @@ func TestV4_AddRemove_static(t *testing.T) {
 }
 
 func TestV4_AddReplace(t *testing.T) {
-	sIface, err := v4Create(V4ServerConf{
-		Enabled:    true,
-		RangeStart: net.IP{192, 168, 10, 100},
-		RangeEnd:   net.IP{192, 168, 10, 200},
-		GatewayIP:  net.IP{192, 168, 10, 1},
-		SubnetMask: net.IP{255, 255, 255, 0},
-		notify:     notify4,
-	})
-	require.NoError(t, err)
+	sIface := defaultSrv(t)
 
 	s, ok := sIface.(*v4Server)
 	require.True(t, ok)
@@ -89,7 +100,7 @@ func TestV4_AddReplace(t *testing.T) {
 	}}
 
 	for i := range dynLeases {
-		err = s.addLease(&dynLeases[i])
+		err := s.addLease(&dynLeases[i])
 		require.NoError(t, err)
 	}
 
@@ -104,7 +115,7 @@ func TestV4_AddReplace(t *testing.T) {
 	}}
 
 	for _, l := range stLeases {
-		err = s.AddStaticLease(l)
+		err := s.AddStaticLease(l)
 		require.NoError(t, err)
 	}
 
@@ -118,17 +129,80 @@ func TestV4_AddReplace(t *testing.T) {
 	}
 }
 
-func TestV4StaticLease_Get(t *testing.T) {
-	var err error
-	sIface, err := v4Create(V4ServerConf{
-		Enabled:    true,
-		RangeStart: net.IP{192, 168, 10, 100},
-		RangeEnd:   net.IP{192, 168, 10, 200},
-		GatewayIP:  net.IP{192, 168, 10, 1},
-		SubnetMask: net.IP{255, 255, 255, 0},
-		notify:     notify4,
+func TestV4Server_Process_optionsPriority(t *testing.T) {
+	defaultIP := net.IP{192, 168, 1, 1}
+	knownIP := net.IP{1, 2, 3, 4}
+
+	// prepareSrv creates a *v4Server and sets the opt6IPs in the initial
+	// configuration of the server as the value for DHCP option 6.
+	prepareSrv := func(t *testing.T, opt6IPs []net.IP) (s *v4Server) {
+		t.Helper()
+
+		conf := defaultV4ServerConf()
+		if len(opt6IPs) > 0 {
+			b := &strings.Builder{}
+			stringutil.WriteToBuilder(b, "6 ips ", opt6IPs[0].String())
+			for _, ip := range opt6IPs[1:] {
+				stringutil.WriteToBuilder(b, ",", ip.String())
+			}
+			conf.Options = []string{b.String()}
+		}
+
+		ss, err := v4Create(conf)
+		require.NoError(t, err)
+
+		var ok bool
+		s, ok = ss.(*v4Server)
+		require.True(t, ok)
+
+		s.conf.dnsIPAddrs = []net.IP{defaultIP}
+
+		return s
+	}
+
+	// checkResp creates a discovery message with DHCP option 6 requested amd
+	// asserts the response to contain wantIPs in this option.
+	checkResp := func(t *testing.T, s *v4Server, wantIPs []net.IP) {
+		t.Helper()
+
+		mac := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
+		req, err := dhcpv4.NewDiscovery(mac, dhcpv4.WithRequestedOptions(
+			dhcpv4.OptionDomainNameServer,
+		))
+		require.NoError(t, err)
+
+		var resp *dhcpv4.DHCPv4
+		resp, err = dhcpv4.NewReplyFromRequest(req)
+		require.NoError(t, err)
+
+		res := s.process(req, resp)
+		require.Equal(t, 1, res)
+
+		o := resp.GetOneOption(dhcpv4.OptionDomainNameServer)
+		require.NotEmpty(t, o)
+
+		wantData := []byte{}
+		for _, ip := range wantIPs {
+			wantData = append(wantData, ip...)
+		}
+		assert.Equal(t, o, wantData)
+	}
+
+	t.Run("default", func(t *testing.T) {
+		s := prepareSrv(t, nil)
+
+		checkResp(t, s, []net.IP{defaultIP})
 	})
-	require.NoError(t, err)
+
+	t.Run("explicitly_configured", func(t *testing.T) {
+		s := prepareSrv(t, []net.IP{knownIP, knownIP})
+
+		checkResp(t, s, []net.IP{knownIP, knownIP})
+	})
+}
+
+func TestV4StaticLease_Get(t *testing.T) {
+	sIface := defaultSrv(t)
 
 	s, ok := sIface.(*v4Server)
 	require.True(t, ok)
@@ -140,7 +214,7 @@ func TestV4StaticLease_Get(t *testing.T) {
 		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 		IP:       net.IP{192, 168, 10, 150},
 	}
-	err = s.AddStaticLease(l)
+	err := s.AddStaticLease(l)
 	require.NoError(t, err)
 
 	var req, resp *dhcpv4.DHCPv4
@@ -208,19 +282,14 @@ func TestV4StaticLease_Get(t *testing.T) {
 }
 
 func TestV4DynamicLease_Get(t *testing.T) {
+	conf := defaultV4ServerConf()
+	conf.Options = []string{
+		"81 hex 303132",
+		"82 ip 1.2.3.4",
+	}
+
 	var err error
-	sIface, err := v4Create(V4ServerConf{
-		Enabled:    true,
-		RangeStart: net.IP{192, 168, 10, 100},
-		RangeEnd:   net.IP{192, 168, 10, 200},
-		GatewayIP:  net.IP{192, 168, 10, 1},
-		SubnetMask: net.IP{255, 255, 255, 0},
-		notify:     notify4,
-		Options: []string{
-			"81 hex 303132",
-			"82 ip 1.2.3.4",
-		},
-	})
+	sIface, err := v4Create(conf)
 	require.NoError(t, err)
 
 	s, ok := sIface.(*v4Server)

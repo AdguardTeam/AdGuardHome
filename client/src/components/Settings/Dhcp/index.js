@@ -275,6 +275,8 @@ const Dhcp = () => {
                             processingAdding={processingAdding}
                             processingDeleting={processingDeleting}
                             cidr={cidr}
+                            rangeStart={dhcp?.values?.v4?.range_start}
+                            rangeEnd={dhcp?.values?.v4?.range_end}
                         />
                         <div className="btn-list mt-2">
                             <button

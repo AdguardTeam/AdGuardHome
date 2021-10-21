@@ -22,6 +22,8 @@ const StaticLeases = ({
     processingDeleting,
     staticLeases,
     cidr,
+    rangeStart,
+    rangeEnd,
 }) => {
     const [t] = useTranslation();
     const dispatch = useDispatch();
@@ -100,6 +102,8 @@ const StaticLeases = ({
                 handleSubmit={handleSubmit}
                 processingAdding={processingAdding}
                 cidr={cidr}
+                rangeStart={rangeStart}
+                rangeEnd={rangeEnd}
             />
         </>
     );
@@ -111,6 +115,8 @@ StaticLeases.propTypes = {
     processingAdding: PropTypes.bool.isRequired,
     processingDeleting: PropTypes.bool.isRequired,
     cidr: PropTypes.string.isRequired,
+    rangeStart: PropTypes.string,
+    rangeEnd: PropTypes.string,
 };
 
 cellWrap.propTypes = {

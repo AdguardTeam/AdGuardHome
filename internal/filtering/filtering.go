@@ -38,6 +38,7 @@ type Settings struct {
 
 	ServicesRules []ServiceEntry
 
+	ProtectionEnabled   bool
 	FilteringEnabled    bool
 	SafeSearchEnabled   bool
 	SafeBrowsingEnabled bool
@@ -221,12 +222,13 @@ func (r Reason) String() string {
 }
 
 // In returns true if reasons include r.
-func (r Reason) In(reasons ...Reason) bool {
+func (r Reason) In(reasons ...Reason) (ok bool) {
 	for _, reason := range reasons {
 		if r == reason {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -245,7 +247,7 @@ func (d *DNSFilter) GetConfig() (s Settings) {
 	defer d.confLock.RUnlock()
 
 	return Settings{
-		FilteringEnabled:    atomic.LoadUint32(&d.Config.enabled) == 1,
+		FilteringEnabled:    atomic.LoadUint32(&d.Config.enabled) != 0,
 		SafeSearchEnabled:   d.Config.SafeSearchEnabled,
 		SafeBrowsingEnabled: d.Config.SafeBrowsingEnabled,
 		ParentalEnabled:     d.Config.ParentalEnabled,
@@ -421,14 +423,16 @@ func (d *DNSFilter) CheckHost(
 	// Sometimes clients try to resolve ".", which is a request to get root
 	// servers.
 	if host == "" {
-		return Result{Reason: NotFilteredNotFound}, nil
+		return Result{}, nil
 	}
 
 	host = strings.ToLower(host)
 
-	res = d.processRewrites(host, qtype)
-	if res.Reason == Rewritten {
-		return res, nil
+	if setts.FilteringEnabled {
+		res = d.processRewrites(host, qtype)
+		if res.Reason == Rewritten {
+			return res, nil
+		}
 	}
 
 	for _, hc := range d.hostCheckers {
@@ -448,7 +452,7 @@ func (d *DNSFilter) CheckHost(
 // matchSysHosts tries to match the host against the operating system's hosts
 // database.
 func (d *DNSFilter) matchSysHosts(host string, qtype uint16, setts *Settings) (res Result, err error) {
-	if d.EtcHosts == nil {
+	if !setts.FilteringEnabled || d.EtcHosts == nil {
 		return Result{}, nil
 	}
 
@@ -468,10 +472,8 @@ func (d *DNSFilter) matchSysHosts(host string, qtype uint16, setts *Settings) (r
 
 	var ips []net.IP
 	var revHosts []string
-
 	for _, nr := range dnsr {
-		dr := nr.DNSRewrite
-		if dr == nil {
+		if nr.DNSRewrite == nil {
 			continue
 		}
 
@@ -553,6 +555,10 @@ func matchBlockedServicesRules(
 	_ uint16,
 	setts *Settings,
 ) (res Result, err error) {
+	if !setts.ProtectionEnabled {
+		return Result{}, nil
+	}
+
 	svcs := setts.ServicesRules
 	if len(svcs) == 0 {
 		return Result{}, nil
@@ -784,7 +790,7 @@ func (d *DNSFilter) matchHost(
 	// TODO(e.burkov):  Inspect if the above is true.
 	defer d.engineLock.RUnlock()
 
-	if d.filteringEngineAllow != nil {
+	if setts.ProtectionEnabled && d.filteringEngineAllow != nil {
 		dnsres, ok := d.filteringEngineAllow.MatchRequest(ureq)
 		if ok {
 			return d.matchHostProcessAllowList(host, dnsres)
@@ -807,6 +813,11 @@ func (d *DNSFilter) matchHost(
 			return res, nil
 		}
 	} else if !ok {
+		return Result{}, nil
+	}
+
+	if !setts.ProtectionEnabled {
+		// Don't check non-dnsrewrite filtering results.
 		return Result{}, nil
 	}
 

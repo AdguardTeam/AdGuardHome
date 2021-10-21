@@ -21,7 +21,9 @@ func TestMain(m *testing.M) {
 	aghtest.DiscardLogOutput(m)
 }
 
-var setts Settings
+var setts = Settings{
+	ProtectionEnabled: true,
+}
 
 // Helpers.
 
@@ -39,9 +41,9 @@ func purgeCaches() {
 
 func newForTest(c *Config, filters []Filter) *DNSFilter {
 	setts = Settings{
-		FilteringEnabled: true,
+		ProtectionEnabled: true,
+		FilteringEnabled:  true,
 	}
-	setts.FilteringEnabled = true
 	if c != nil {
 		c.SafeBrowsingCacheSize = 10000
 		c.ParentalCacheSize = 10000
@@ -797,7 +799,11 @@ func TestClientSettings(t *testing.T) {
 
 	makeTester := func(tc testCase, before bool) func(t *testing.T) {
 		return func(t *testing.T) {
-			r, _ := d.CheckHost(tc.host, dns.TypeA, &setts)
+			t.Helper()
+
+			r, err := d.CheckHost(tc.host, dns.TypeA, &setts)
+			require.NoError(t, err)
+
 			if before {
 				assert.True(t, r.IsFiltered)
 				assert.Equal(t, tc.wantReason, r.Reason)
@@ -808,7 +814,7 @@ func TestClientSettings(t *testing.T) {
 	}
 
 	// Check behaviour without any per-client settings, then apply per-client
-	// settings and check behaviour once again.
+	// settings and check behavior once again.
 	for _, tc := range testCases {
 		t.Run(tc.name, makeTester(tc, tc.before))
 	}

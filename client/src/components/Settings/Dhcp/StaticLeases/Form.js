@@ -10,6 +10,7 @@ import {
     validateMac,
     validateRequiredValue,
     validateIpv4InCidr,
+    validateInRange,
 } from '../../../../helpers/validators';
 import { FORM_NAME } from '../../../../helpers/constants';
 import { toggleLeaseModal } from '../../../../actions';
@@ -53,7 +54,12 @@ const Form = ({
                         type="text"
                         className="form-control"
                         placeholder={t('form_enter_subnet_ip', { cidr })}
-                        validate={[validateRequiredValue, validateIpv4, validateIpv4InCidr]}
+                        validate={[
+                            validateRequiredValue,
+                            validateIpv4,
+                            validateIpv4InCidr,
+                            validateInRange,
+                        ]}
                     />
                 </div>
                 <div className="form__group">

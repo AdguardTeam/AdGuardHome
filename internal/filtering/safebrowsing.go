@@ -306,7 +306,7 @@ func (d *DNSFilter) checkSafeBrowsing(
 	_ uint16,
 	setts *Settings,
 ) (res Result, err error) {
-	if !setts.SafeBrowsingEnabled {
+	if !setts.ProtectionEnabled || !setts.SafeBrowsingEnabled {
 		return Result{}, nil
 	}
 
@@ -339,7 +339,7 @@ func (d *DNSFilter) checkParental(
 	_ uint16,
 	setts *Settings,
 ) (res Result, err error) {
-	if !setts.ParentalEnabled {
+	if !setts.ProtectionEnabled || !setts.ParentalEnabled {
 		return Result{}, nil
 	}
 

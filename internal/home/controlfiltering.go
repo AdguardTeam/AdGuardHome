@@ -404,6 +404,7 @@ func (f *Filtering) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 
 	setts := Context.dnsFilter.GetConfig()
 	setts.FilteringEnabled = true
+	setts.ProtectionEnabled = true
 	Context.dnsFilter.ApplyBlockedServices(&setts, nil, true)
 	result, err := Context.dnsFilter.CheckHost(host, dns.TypeA, &setts)
 	if err != nil {

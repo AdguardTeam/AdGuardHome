@@ -46,6 +46,10 @@ and this project adheres to
 
 ### Changed
 
+- `$dnsrewrite` rules and other DNS rewrites will now be applied even when the
+  protection is disabled ([#1558]).
+- DHCP gateway address, subnet mask, IP address range, and leases validations
+  ([#3529]).
 - The `systemd` service script will now create the `/var/log` directory when it
   doesn't exist ([#3579]).
 - Items in allowed clients, disallowed clients, and blocked hosts lists are now
@@ -114,6 +118,7 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- Incorrect assignment of explicitly configured DHCP options ([#3744]).
 - Occasional panic during shutdown ([#3655]).
 - Addition of IPs into only one as opposed to all matching ipsets on Linux
   ([#3638]).
@@ -152,6 +157,7 @@ In this release, the schema version has changed from 10 to 12.
 - Go 1.15 support.
 
 [#1381]: https://github.com/AdguardTeam/AdGuardHome/issues/1381
+[#1558]: https://github.com/AdguardTeam/AdGuardHome/issues/1558
 [#1691]: https://github.com/AdguardTeam/AdGuardHome/issues/1691
 [#1898]: https://github.com/AdguardTeam/AdGuardHome/issues/1898
 [#1992]: https://github.com/AdguardTeam/AdGuardHome/issues/1992
@@ -195,6 +201,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3450]: https://github.com/AdguardTeam/AdGuardHome/issues/3450
 [#3457]: https://github.com/AdguardTeam/AdGuardHome/issues/3457
 [#3506]: https://github.com/AdguardTeam/AdGuardHome/issues/3506
+[#3529]: https://github.com/AdguardTeam/AdGuardHome/issues/3529
 [#3538]: https://github.com/AdguardTeam/AdGuardHome/issues/3538
 [#3551]: https://github.com/AdguardTeam/AdGuardHome/issues/3551
 [#3564]: https://github.com/AdguardTeam/AdGuardHome/issues/3564
@@ -204,6 +211,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3607]: https://github.com/AdguardTeam/AdGuardHome/issues/3607
 [#3638]: https://github.com/AdguardTeam/AdGuardHome/issues/3638
 [#3655]: https://github.com/AdguardTeam/AdGuardHome/issues/3655
+[#3744]: https://github.com/AdguardTeam/AdGuardHome/issues/3744
 
 
 
