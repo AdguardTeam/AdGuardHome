@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,13 +46,7 @@ func TestNullBool_UnmarshalJSON(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var got nullBool
 			err := got.UnmarshalJSON(tc.data)
-			if tc.wantErrMsg == "" {
-				assert.NoError(t, err)
-			} else {
-				require.Error(t, err)
-
-				assert.Equal(t, tc.wantErrMsg, err.Error())
-			}
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 
 			assert.Equal(t, tc.want, got)
 		})

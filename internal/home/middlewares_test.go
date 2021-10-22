@@ -46,7 +46,7 @@ func TestLimitRequestBody(t *testing.T) {
 			var b []byte
 			b, *err = io.ReadAll(r.Body)
 			_, werr := w.Write(b)
-			require.Nil(t, werr)
+			require.NoError(t, werr)
 		})
 	}
 

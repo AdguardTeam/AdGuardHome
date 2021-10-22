@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,11 +38,12 @@ func TestStats(t *testing.T) {
 	}
 
 	s, err := createObject(conf)
-	require.Nil(t, err)
-	t.Cleanup(func() {
+	require.NoError(t, err)
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
 		s.clear()
 		s.Close()
-		assert.Nil(t, os.Remove(conf.Filename))
+
+		return os.Remove(conf.Filename)
 	})
 
 	s.Update(Entry{
@@ -109,10 +111,11 @@ func TestLargeNumbers(t *testing.T) {
 		UnitID:    newID,
 	}
 	s, err := createObject(conf)
-	require.Nil(t, err)
-	t.Cleanup(func() {
+	require.NoError(t, err)
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
 		s.Close()
-		assert.Nil(t, os.Remove(conf.Filename))
+
+		return os.Remove(conf.Filename)
 	})
 
 	// Number of distinct clients and domains every hour.

@@ -157,7 +157,7 @@ func TestProcessQueryLogsAndStats(t *testing.T) {
 	}}
 
 	ups, err := upstream.AddressToUpstream("1.1.1.1", nil)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

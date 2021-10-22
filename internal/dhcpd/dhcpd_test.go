@@ -68,9 +68,7 @@ func TestDB(t *testing.T) {
 	err = s.dbStore()
 	require.NoError(t, err)
 
-	t.Cleanup(func() {
-		assert.NoError(t, os.Remove(dbFilename))
-	})
+	testutil.CleanupAndRequireSuccess(t, func() (err error) { return os.Remove(dbFilename) })
 
 	err = s.srv4.ResetLeases(nil)
 	require.NoError(t, err)

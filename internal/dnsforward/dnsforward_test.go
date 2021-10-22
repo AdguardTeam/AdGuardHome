@@ -24,6 +24,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -45,10 +46,7 @@ func startDeferStop(t *testing.T, s *Server) {
 	err := s.Start()
 	require.NoErrorf(t, err, "failed to start server: %s", err)
 
-	t.Cleanup(func() {
-		serr := s.Stop()
-		require.NoErrorf(t, serr, "dns server failed to stop: %s", serr)
-	})
+	testutil.CleanupAndRequireSuccess(t, s.Stop)
 }
 
 func createTestServer(
@@ -1049,9 +1047,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	err = s.Start()
 	require.NoError(t, err)
 
-	t.Cleanup(func() {
-		s.Close()
-	})
+	t.Cleanup(s.Close)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 	req := createTestMessageWithType("34.12.168.192.in-addr.arpa.", dns.TypePTR)
@@ -1131,9 +1127,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 	err = s.Start()
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		s.Close()
-	})
+	t.Cleanup(s.Close)
 
 	subTestFunc := func(t *testing.T) {
 		addr := s.dnsProxy.Addr(proxy.ProtoUDP)
@@ -1197,12 +1191,7 @@ func TestNewServer(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := NewServer(tc.in)
-			if tc.wantErrMsg == "" {
-				assert.NoError(t, err)
-			} else {
-				require.Error(t, err)
-				assert.Equal(t, tc.wantErrMsg, err.Error())
-			}
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
 }

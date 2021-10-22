@@ -95,6 +95,7 @@ func TestParseOpt(t *testing.T) {
 			opt, err := parseDHCPOption(tc.in)
 			if tc.wantErrMsg != "" {
 				require.Error(t, err)
+
 				assert.Equal(t, tc.wantErrMsg, err.Error())
 
 				return

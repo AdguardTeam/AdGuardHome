@@ -14,6 +14,7 @@ import (
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDecodeLogEntry(t *testing.T) {
@@ -45,7 +46,7 @@ func TestDecodeLogEntry(t *testing.T) {
 			`"Elapsed":837429}`
 
 		ans, err := base64.StdEncoding.DecodeString(ansStr)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 
 		want := &logEntry{
 			IP:          net.IPv4(127, 0, 0, 1),

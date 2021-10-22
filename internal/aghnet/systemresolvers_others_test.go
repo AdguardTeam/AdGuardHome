@@ -79,8 +79,8 @@ func TestSystemResolvers_DialFunc(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			conn, err := imp.dialFunc(context.Background(), "", tc.address)
-
 			require.Nil(t, conn)
+
 			assert.ErrorIs(t, err, tc.want)
 		})
 	}

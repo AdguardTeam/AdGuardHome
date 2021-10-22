@@ -14,6 +14,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -38,9 +39,7 @@ func loadTestData(t *testing.T, casesFileName string, cases interface{}) {
 	var f *os.File
 	f, err := os.Open(filepath.Join("testdata", casesFileName))
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, f.Close())
-	})
+	testutil.CleanupAndRequireSuccess(t, f.Close)
 
 	err = json.NewDecoder(f).Decode(cases)
 	require.NoError(t, err)
@@ -69,10 +68,8 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 	s := createTestServer(t, filterConf, forwardConf, nil)
 	s.sysResolvers = &fakeSystemResolvers{}
 
-	require.Nil(t, s.Start())
-	t.Cleanup(func() {
-		require.Nil(t, s.Stop())
-	})
+	require.NoError(t, s.Start())
+	testutil.CleanupAndRequireSuccess(t, s.Stop)
 
 	defaultConf := s.conf
 
@@ -147,10 +144,8 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	defaultConf := s.conf
 
 	err := s.Start()
-	assert.Nil(t, err)
-	t.Cleanup(func() {
-		assert.Nil(t, s.Stop())
-	})
+	assert.NoError(t, err)
+	testutil.CleanupAndRequireSuccess(t, s.Stop)
 
 	w := httptest.NewRecorder()
 
@@ -221,14 +216,12 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		require.True(t, ok)
 
 		t.Run(tc.name, func(t *testing.T) {
-			t.Cleanup(func() {
-				s.conf = defaultConf
-			})
+			t.Cleanup(func() { s.conf = defaultConf })
 
 			rBody := io.NopCloser(bytes.NewReader(caseData.Req))
 			var r *http.Request
 			r, err = http.NewRequest(http.MethodPost, "http://example.com", rBody)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			s.handleSetConfig(w, r)
 			assert.Equal(t, tc.wantSet, strings.TrimSuffix(w.Body.String(), "\n"))

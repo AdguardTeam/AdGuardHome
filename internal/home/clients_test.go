@@ -290,7 +290,9 @@ func TestClientsAddExisting(t *testing.T) {
 
 		clients.dhcpServer, err = dhcpd.Create(config)
 		require.NoError(t, err)
-
+		// TODO(e.burkov):  leases.db isn't created on Windows so removing it
+		// causes an error.  Split the test to make it run properly on different
+		// operating systems.
 		t.Cleanup(func() { _ = os.Remove("leases.db") })
 
 		err = clients.dhcpServer.AddStaticLease(&dhcpd.Lease{
@@ -309,8 +311,7 @@ func TestClientsAddExisting(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, ok)
 
-		// Add a new client with the IP from the first client's IP
-		// range.
+		// Add a new client with the IP from the first client's IP range.
 		ok, err = clients.Add(&Client{
 			IDs:  []string{"2.2.2.2"},
 			Name: "client3",

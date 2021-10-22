@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/mdlayher/raw"
 	"github.com/stretchr/testify/assert"
@@ -430,14 +431,7 @@ func TestNormalizeHostname(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := normalizeHostname(tc.hostname)
-			if tc.wantErrMsg == "" {
-				assert.NoError(t, err)
-			} else {
-				require.Error(t, err)
-
-				assert.Equal(t, tc.wantErrMsg, err.Error())
-			}
-
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 			assert.Equal(t, tc.want, got)
 		})
 	}

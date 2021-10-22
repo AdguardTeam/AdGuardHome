@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -333,8 +334,7 @@ func TestUpgradeSchema9to10(t *testing.T) {
 			err := upgradeSchema9to10(conf)
 
 			if tc.wantErr != "" {
-				require.Error(t, err)
-				assert.Equal(t, tc.wantErr, err.Error())
+				testutil.AssertErrorMsg(t, tc.wantErr, err)
 
 				return
 			}
@@ -366,8 +366,7 @@ func TestUpgradeSchema9to10(t *testing.T) {
 			"dns": ultimateAns,
 		})
 
-		require.Error(t, err)
-		assert.Equal(t, "unexpected type of dns: int", err.Error())
+		testutil.AssertErrorMsg(t, "unexpected type of dns: int", err)
 	})
 }
 
@@ -448,6 +447,7 @@ func TestUpgradeSchema11to12(t *testing.T) {
 
 			if tc.wantErr != "" {
 				require.Error(t, err)
+
 				assert.Equal(t, tc.wantErr, err.Error())
 
 				return
@@ -482,8 +482,7 @@ func TestUpgradeSchema11to12(t *testing.T) {
 			"dns": 0,
 		})
 
-		require.Error(t, err)
-		assert.Equal(t, "unexpected type of dns: int", err.Error())
+		testutil.AssertErrorMsg(t, "unexpected type of dns: int", err)
 	})
 
 	t.Run("no_field", func(t *testing.T) {

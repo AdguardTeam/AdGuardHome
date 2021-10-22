@@ -11,7 +11,7 @@ type LimitReachedError struct {
 	Limit int64
 }
 
-// Error implements error interface for LimitReachedError.
+// Error implements the error interface for LimitReachedError.
 //
 // TODO(a.garipov): Think about error string format.
 func (lre *LimitReachedError) Error() string {

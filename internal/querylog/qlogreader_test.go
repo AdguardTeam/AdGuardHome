@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,12 +19,10 @@ func newTestQLogReader(t *testing.T, filesNum, linesNum int) (reader *QLogReader
 
 	// Create the new QLogReader instance.
 	reader, err := NewQLogReader(testFiles)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	assert.NotNil(t, reader)
-	t.Cleanup(func() {
-		assert.Nil(t, reader.Close())
-	})
+	testutil.CleanupAndRequireSuccess(t, reader.Close)
 
 	return reader
 }
@@ -53,7 +52,7 @@ func TestQLogReader(t *testing.T) {
 
 			// Seek to the start.
 			err := r.SeekStart()
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			// Read everything.
 			var read int
@@ -112,7 +111,7 @@ func TestQLogReader_Seek(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ts, err := time.Parse(time.RFC3339Nano, tc.time)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			err = r.SeekTS(ts.UnixNano())
 			assert.ErrorIs(t, err, tc.want)
@@ -142,11 +141,11 @@ func TestQLogReader_ReadNext(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := r.SeekStart()
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			for i := 1; i < tc.start; i++ {
 				_, err = r.ReadNext()
-				require.Nil(t, err)
+				require.NoError(t, err)
 			}
 
 			_, err = r.ReadNext()

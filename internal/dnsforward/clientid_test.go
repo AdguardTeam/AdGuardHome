@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/lucas-clemente/quic-go"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // testTLSConn is a tlsConn for tests.
@@ -179,13 +179,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 			clientID, err := srv.clientIDFromDNSContext(pctx)
 			assert.Equal(t, tc.wantClientID, clientID)
 
-			if tc.wantErrMsg == "" {
-				assert.NoError(t, err)
-			} else {
-				require.Error(t, err)
-
-				assert.Equal(t, tc.wantErrMsg, err.Error())
-			}
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
 }
@@ -250,13 +244,7 @@ func TestClientIDFromDNSContextHTTPS(t *testing.T) {
 			clientID, err := clientIDFromDNSContextHTTPS(pctx)
 			assert.Equal(t, tc.wantClientID, clientID)
 
-			if tc.wantErrMsg == "" {
-				assert.NoError(t, err)
-			} else {
-				require.Error(t, err)
-
-				assert.Equal(t, tc.wantErrMsg, err.Error())
-			}
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
 }

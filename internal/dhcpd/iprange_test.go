@@ -4,6 +4,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -64,14 +65,8 @@ func TestNewIPRange(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			r, err := newIPRange(tc.start, tc.end)
-			if tc.wantErrMsg == "" {
-				assert.NoError(t, err)
-				assert.NotNil(t, r)
-			} else {
-				require.Error(t, err)
-				assert.Equal(t, tc.wantErrMsg, err.Error())
-			}
+			_, err := newIPRange(tc.start, tc.end)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
 }
