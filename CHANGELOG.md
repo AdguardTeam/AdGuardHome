@@ -10,7 +10,7 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.107.0] - 2021-09-28 (APPROX.)
+## [v0.107.0] - 2021-11-02 (APPROX.)
 -->
 
 ### Added
