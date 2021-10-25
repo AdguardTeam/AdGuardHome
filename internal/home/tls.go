@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
@@ -464,6 +465,7 @@ func validatePkey(data *tlsConfigStatus, pkey string) error {
 	_, keytype, err := parsePrivateKey(key.Bytes)
 	if err != nil {
 		data.WarningValidation = fmt.Sprintf("Failed to parse private key: %s", err)
+
 		return errors.Error(data.WarningValidation)
 	}
 
@@ -509,23 +511,31 @@ func validateCertificates(certChain, pkey, serverName string) tlsConfigStatus {
 // Attempt to parse the given private key DER block. OpenSSL 0.9.8 generates
 // PKCS#1 private keys by default, while OpenSSL 1.0.0 generates PKCS#8 keys.
 // OpenSSL ecparam generates SEC1 EC private keys for ECDSA. We try all three.
-func parsePrivateKey(der []byte) (crypto.PrivateKey, string, error) {
-	if key, err := x509.ParsePKCS1PrivateKey(der); err == nil {
+//
+// TODO(a.garipov): Find out if this version of parsePrivateKey from the stdlib
+// is actually necessary.
+func parsePrivateKey(der []byte) (key crypto.PrivateKey, typ string, err error) {
+	if key, err = x509.ParsePKCS1PrivateKey(der); err == nil {
 		return key, "RSA", nil
 	}
 
-	if key, err := x509.ParsePKCS8PrivateKey(der); err == nil {
+	if key, err = x509.ParsePKCS8PrivateKey(der); err == nil {
 		switch key := key.(type) {
 		case *rsa.PrivateKey:
 			return key, "RSA", nil
 		case *ecdsa.PrivateKey:
 			return key, "ECDSA", nil
+		case ed25519.PrivateKey:
+			return key, "ED25519", nil
 		default:
-			return nil, "", errors.Error("tls: found unknown private key type in PKCS#8 wrapping")
+			return nil, "", fmt.Errorf(
+				"tls: found unknown private key type %T in PKCS#8 wrapping",
+				key,
+			)
 		}
 	}
 
-	if key, err := x509.ParseECPrivateKey(der); err == nil {
+	if key, err = x509.ParseECPrivateKey(der); err == nil {
 		return key, "ECDSA", nil
 	}
 

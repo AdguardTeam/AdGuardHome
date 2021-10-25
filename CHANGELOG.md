@@ -118,6 +118,7 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- ED25519 private key validation ([#3737]).
 - Incorrect assignment of explicitly configured DHCP options ([#3744]).
 - Occasional panic during shutdown ([#3655]).
 - Addition of IPs into only one as opposed to all matching ipsets on Linux
