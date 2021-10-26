@@ -46,6 +46,7 @@ and this project adheres to
 
 ### Changed
 
+- Cache now follows RFC more closely for negative answers ([#3707]).
 - `$dnsrewrite` rules and other DNS rewrites will now be applied even when the
   protection is disabled ([#1558]).
 - DHCP gateway address, subnet mask, IP address range, and leases validations
@@ -212,6 +213,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3607]: https://github.com/AdguardTeam/AdGuardHome/issues/3607
 [#3638]: https://github.com/AdguardTeam/AdGuardHome/issues/3638
 [#3655]: https://github.com/AdguardTeam/AdGuardHome/issues/3655
+[#3707]: https://github.com/AdguardTeam/AdGuardHome/issues/3707
 [#3744]: https://github.com/AdguardTeam/AdGuardHome/issues/3744
 
 
