@@ -3,6 +3,7 @@ package querylog
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"time"
 
@@ -92,15 +93,15 @@ func (l *queryLog) rotate() error {
 	err := os.Rename(from, to)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
+			log.Debug("querylog: no log to rotate")
+
 			return nil
 		}
 
-		log.Error("querylog: failed to rename file: %s", err)
-
-		return err
+		return fmt.Errorf("failed to rename old file: %w", err)
 	}
 
-	log.Debug("querylog: renamed %s -> %s", from, to)
+	log.Debug("querylog: renamed %s into %s", from, to)
 
 	return nil
 }
@@ -135,22 +136,36 @@ func (l *queryLog) readFileFirstTimeValue() (first time.Time, err error) {
 func (l *queryLog) periodicRotate() {
 	defer log.OnPanic("querylog: rotating")
 
-	var err error
-	for {
-		var oldest time.Time
-		oldest, err = l.readFileFirstTimeValue()
+	rotations := time.NewTicker(1 * timeutil.Day)
+	defer rotations.Stop()
+
+	for range rotations.C {
+		oldest, err := l.readFileFirstTimeValue()
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			log.Error("querylog: reading oldest record for rotation: %s", err)
+
+			continue
+		}
+
+		rot := oldest.Add(l.conf.RotationIvl)
+		now := time.Now()
+		if rot.After(time.Now()) {
+			log.Debug(
+				"querylog: %s <= %s, not rotating",
+				now.Format(time.RFC3339),
+				rot.Format(time.RFC3339),
+			)
+
+			continue
+		}
+
+		err = l.rotate()
 		if err != nil {
-			log.Debug("%s", err)
+			log.Error("querylog: rotating: %s", err)
+
+			continue
 		}
 
-		if oldest.Add(l.conf.RotationIvl).After(time.Now()) {
-			err = l.rotate()
-			if err != nil {
-				log.Debug("%s", err)
-			}
-		}
-
-		// What?
-		time.Sleep(timeutil.Day)
+		log.Debug("querylog: rotated successfully")
 	}
 }

@@ -46,11 +46,11 @@ type Config struct {
 	// old log file will be renamed, NOT deleted, so the actual log
 	// retention time is twice the interval.  The value must be one of:
 	//
-	//         6 * time.Hour
-	//        24 * time.Hour
-	//    7 * 24 * time.Hour
-	//   30 * 24 * time.Hour
-	//   90 * 24 * time.Hour
+	//    6 * time.Hour
+	//    1 * timeutil.Day
+	//    7 * timeutil.Day
+	//   30 * timeutil.Day
+	//   90 * timeutil.Day
 	//
 	RotationIvl time.Duration
 
@@ -123,7 +123,7 @@ func newQueryLog(conf Config) (l *queryLog) {
 
 	if !checkInterval(conf.RotationIvl) {
 		log.Info(
-			"querylog: warning: unsupported rotation interval %d, setting to 1 day",
+			"querylog: warning: unsupported rotation interval %s, setting to 1 day",
 			conf.RotationIvl,
 		)
 		l.conf.RotationIvl = timeutil.Day
