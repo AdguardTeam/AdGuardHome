@@ -450,27 +450,36 @@ func validatePkey(data *tlsConfigStatus, pkey string) error {
 		if decoded == nil {
 			break
 		}
+
 		if decoded.Type == "PRIVATE KEY" || strings.HasSuffix(decoded.Type, " PRIVATE KEY") {
 			key = decoded
+
 			break
 		}
 	}
 
 	if key == nil {
 		data.WarningValidation = "No valid keys were found"
+
 		return errors.Error(data.WarningValidation)
 	}
 
 	// parse the decoded key
-	_, keytype, err := parsePrivateKey(key.Bytes)
+	_, keyType, err := parsePrivateKey(key.Bytes)
 	if err != nil {
 		data.WarningValidation = fmt.Sprintf("Failed to parse private key: %s", err)
+
+		return errors.Error(data.WarningValidation)
+	} else if keyType == keyTypeED25519 {
+		data.WarningValidation = "ED25519 keys are not supported by browsers; " +
+			"did you mean to use X25519 for key exchange?"
 
 		return errors.Error(data.WarningValidation)
 	}
 
 	data.ValidKey = true
-	data.KeyType = keytype
+	data.KeyType = keyType
+
 	return nil
 }
 
@@ -508,6 +517,13 @@ func validateCertificates(certChain, pkey, serverName string) tlsConfigStatus {
 	return data
 }
 
+// Key types.
+const (
+	keyTypeECDSA   = "ECDSA"
+	keyTypeED25519 = "ED25519"
+	keyTypeRSA     = "RSA"
+)
+
 // Attempt to parse the given private key DER block. OpenSSL 0.9.8 generates
 // PKCS#1 private keys by default, while OpenSSL 1.0.0 generates PKCS#8 keys.
 // OpenSSL ecparam generates SEC1 EC private keys for ECDSA. We try all three.
@@ -516,17 +532,17 @@ func validateCertificates(certChain, pkey, serverName string) tlsConfigStatus {
 // is actually necessary.
 func parsePrivateKey(der []byte) (key crypto.PrivateKey, typ string, err error) {
 	if key, err = x509.ParsePKCS1PrivateKey(der); err == nil {
-		return key, "RSA", nil
+		return key, keyTypeRSA, nil
 	}
 
 	if key, err = x509.ParsePKCS8PrivateKey(der); err == nil {
 		switch key := key.(type) {
 		case *rsa.PrivateKey:
-			return key, "RSA", nil
+			return key, keyTypeRSA, nil
 		case *ecdsa.PrivateKey:
-			return key, "ECDSA", nil
+			return key, keyTypeECDSA, nil
 		case ed25519.PrivateKey:
-			return key, "ED25519", nil
+			return key, keyTypeED25519, nil
 		default:
 			return nil, "", fmt.Errorf(
 				"tls: found unknown private key type %T in PKCS#8 wrapping",
@@ -536,7 +552,7 @@ func parsePrivateKey(der []byte) (key crypto.PrivateKey, typ string, err error) 
 	}
 
 	if key, err = x509.ParseECPrivateKey(der); err == nil {
-		return key, "ECDSA", nil
+		return key, keyTypeECDSA, nil
 	}
 
 	return nil, "", errors.Error("tls: failed to parse private key")

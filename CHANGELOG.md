@@ -46,6 +46,8 @@ and this project adheres to
 
 ### Changed
 
+- Better error message for ED25519 private keys, which are not widely supported
+  ([#3737]).
 - Cache now follows RFC more closely for negative answers ([#3707]).
 - `$dnsrewrite` rules and other DNS rewrites will now be applied even when the
   protection is disabled ([#1558]).
@@ -119,7 +121,6 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
-- ED25519 private key validation ([#3737]).
 - Incorrect assignment of explicitly configured DHCP options ([#3744]).
 - Occasional panic during shutdown ([#3655]).
 - Addition of IPs into only one as opposed to all matching ipsets on Linux
