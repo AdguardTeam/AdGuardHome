@@ -104,35 +104,6 @@ export const validateNotInRange = (value, allValues) => {
  * @param _
  * @param allValues
  */
-export const validateInRange = (value, allValues) => {
-    const { rangeStart, rangeEnd } = allValues;
-
-    if (rangeStart && validateIpv4(rangeStart)) {
-        return 'form_error_ip4_range_start_format';
-    }
-
-    if (rangeEnd && validateIpv4(rangeEnd)) {
-        return 'form_error_ip4_range_end_format';
-    }
-
-    const isBelowMin = rangeStart && ip4ToInt(value) < ip4ToInt(rangeStart);
-    const isAboveMax = rangeEnd && ip4ToInt(value) > ip4ToInt(rangeEnd);
-
-    if (isAboveMax || isBelowMin) {
-        return i18next.t('in_range_error', {
-            start: rangeStart,
-            end: rangeEnd,
-        });
-    }
-
-    return undefined;
-};
-
-/**
- * @returns {undefined|string}
- * @param _
- * @param allValues
- */
 export const validateGatewaySubnetMask = (_, allValues) => {
     if (!allValues || !allValues.v4 || !allValues.v4.subnet_mask || !allValues.v4.gateway_ip) {
         return 'gateway_or_subnet_invalid';

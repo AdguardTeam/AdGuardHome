@@ -10,7 +10,6 @@ import {
     validateMac,
     validateRequiredValue,
     validateIpv4InCidr,
-    validateInRange,
 } from '../../../../helpers/validators';
 import { FORM_NAME } from '../../../../helpers/constants';
 import { toggleLeaseModal } from '../../../../actions';
@@ -58,7 +57,6 @@ const Form = ({
                             validateRequiredValue,
                             validateIpv4,
                             validateIpv4InCidr,
-                            validateInRange,
                         ]}
                     />
                 </div>
