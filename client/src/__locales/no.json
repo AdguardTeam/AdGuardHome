@@ -436,6 +436,7 @@
     "encryption_key_source_content": "Lim inn innholdet til den private nøkkelen",
     "stats_params": "Statistikk-oppsett",
     "config_successfully_saved": "Oppsettet ble vellykket lagret",
+    "interval_6_hour": "6 timer",
     "interval_24_hour": "24 timer",
     "interval_days": "{{count}} dag",
     "interval_days_plural": "{{count}} dager",

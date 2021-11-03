@@ -41,6 +41,7 @@
     "delete_confirm": "คุณแน่ใจหรือว่าต้องการลบ \"{{key}}\"?",
     "form_enter_hostname": "ป้อนชื่อโฮสต์",
     "error_details": "รายละเอียดข้อผิดพลาด",
+    "request_details": "ขอรายละเอียด",
     "back": "กลับ",
     "dashboard": "แผงควบคุม",
     "settings": "การตั้งค่า",
@@ -87,6 +88,7 @@
     "no_servers_specified": "ไม่ได้ระบุเซิร์ฟเวอร์",
     "general_settings": "การตั้งค่าทั่วไป",
     "dns_settings": "การตั้งค่า DNS",
+    "custom_filtering_rules": "กฎการกรองที่กำหนดเอง",
     "encryption_settings": "การตั้งค่าการเข้ารหัส",
     "dhcp_settings": "การตั้งค่า DHCP",
     "upstream_dns": "เซิร์ฟเวอร์ DNS ต้นทาง",
@@ -169,6 +171,9 @@
     "custom_ip": "IP กำหนดเอง",
     "blocking_ipv4": "ปิดกั้น IPv4",
     "blocking_ipv6": "ปิดกั้น IPv6",
+    "dnscrypt": "DNSCrypt",
+    "dns_over_https": "DNS-over-HTTPS",
+    "dns_over_tls": "DNS-over-TLS",
     "form_enter_rate_limit": "ป้อนขีดจำกัดอัตรา",
     "rate_limit": "จำกัดอัตรา",
     "edns_enable": "เปิดใช้งานซับเน็ตไคลเอ็นต์ EDNS",
@@ -333,6 +338,7 @@
     "encryption_key_source_content": "วางเนื้อหาคีย์ส่วนตัว",
     "stats_params": "การกำหนดค่าสถิติ",
     "config_successfully_saved": "บันทึกการตั้งค่าเรีบยร้อยแล้ว",
+    "interval_6_hour": "6 ชั่วโมง",
     "interval_24_hour": "24 ชั่วโมง",
     "interval_days": "{{count}} วัน",
     "interval_days_plural": "{{count}} วัน",
@@ -383,5 +389,8 @@
     "form_select_tags": "เลือกแท็กเครื่อง",
     "check_title": "ตรวจสอบการกรอง",
     "check_desc": "ตรวจสอบว่าชื่อโฮสต์ถูกกรอง",
-    "form_enter_host": "ป้อนชื่อโฮสต์"
+    "form_enter_host": "ป้อนชื่อโฮสต์",
+    "show_processed_responses": "การประมวลผล",
+    "safe_search": "ค้นหาอย่างปลอดภัย",
+    "filter_category_other": "อื่น ๆ"
 }
