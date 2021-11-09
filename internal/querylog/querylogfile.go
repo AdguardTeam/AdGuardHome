@@ -9,7 +9,6 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // flushLogBuffer flushes the current buffer to file and resets the current buffer
@@ -136,36 +135,49 @@ func (l *queryLog) readFileFirstTimeValue() (first time.Time, err error) {
 func (l *queryLog) periodicRotate() {
 	defer log.OnPanic("querylog: rotating")
 
-	rotations := time.NewTicker(1 * timeutil.Day)
+	l.checkAndRotate()
+
+	// rotationCheckIvl is the period of time between checking the need for
+	// rotating log files.  It's smaller of any available rotation interval to
+	// increase time accuracy.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/3823.
+	const rotationCheckIvl = 1 * time.Hour
+
+	rotations := time.NewTicker(rotationCheckIvl)
 	defer rotations.Stop()
 
 	for range rotations.C {
-		oldest, err := l.readFileFirstTimeValue()
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			log.Error("querylog: reading oldest record for rotation: %s", err)
-
-			continue
-		}
-
-		rot := oldest.Add(l.conf.RotationIvl)
-		now := time.Now()
-		if rot.After(time.Now()) {
-			log.Debug(
-				"querylog: %s <= %s, not rotating",
-				now.Format(time.RFC3339),
-				rot.Format(time.RFC3339),
-			)
-
-			continue
-		}
-
-		err = l.rotate()
-		if err != nil {
-			log.Error("querylog: rotating: %s", err)
-
-			continue
-		}
-
-		log.Debug("querylog: rotated successfully")
+		l.checkAndRotate()
 	}
+}
+
+// checkAndRotate rotates log files if those are older than the specified
+// rotation interval.
+func (l *queryLog) checkAndRotate() {
+	oldest, err := l.readFileFirstTimeValue()
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Error("querylog: reading oldest record for rotation: %s", err)
+
+		return
+	}
+
+	if rot, now := oldest.Add(l.conf.RotationIvl), time.Now(); rot.After(now) {
+		log.Debug(
+			"querylog: %s <= %s, not rotating",
+			now.Format(time.RFC3339),
+			rot.Format(time.RFC3339),
+		)
+
+		return
+	}
+
+	err = l.rotate()
+	if err != nil {
+		log.Error("querylog: rotating: %s", err)
+
+		return
+	}
+
+	log.Debug("querylog: rotated successfully")
 }
