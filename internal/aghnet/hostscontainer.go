@@ -112,16 +112,16 @@ func NewHostsContainer(
 }
 
 // MatchRequest is the request processing method to resolve hostnames and
-// addresses from the operating system's hosts files.  Any request not of A/AAAA
-// or PTR type will return with an empty result.  It's safe for concurrent use.
+// addresses from the operating system's hosts files.  res is nil for any
+// request having not an A/AAAA or PTR type.  It's safe for concurrent use.
 func (hc *HostsContainer) MatchRequest(
 	req urlfilter.DNSRequest,
-) (res urlfilter.DNSResult, ok bool) {
+) (res *urlfilter.DNSResult, ok bool) {
 	switch req.DNSType {
 	case dns.TypeA, dns.TypeAAAA, dns.TypePTR:
 		log.Debug("%s: handling the request", hostsContainerPref)
 	default:
-		return urlfilter.DNSResult{}, false
+		return nil, false
 	}
 
 	hc.engLock.RLock()

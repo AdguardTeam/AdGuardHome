@@ -256,39 +256,42 @@ func TestHostsContainer_MatchRequest(t *testing.T) {
 
 	testCase := []struct {
 		name string
-		want interface{}
+		want []interface{}
 		req  urlfilter.DNSRequest
 	}{{
 		name: "a",
-		want: ip4.To16(),
+		want: []interface{}{ip4.To16()},
 		req: urlfilter.DNSRequest{
 			Hostname: hostname4,
 			DNSType:  dns.TypeA,
 		},
 	}, {
 		name: "aaaa",
-		want: ip6,
+		want: []interface{}{ip6},
 		req: urlfilter.DNSRequest{
 			Hostname: hostname6,
-			DNSType:  dns.TypeA,
+			DNSType:  dns.TypeAAAA,
 		},
 	}, {
 		name: "ptr",
-		want: dns.Fqdn(hostname4),
+		want: []interface{}{
+			dns.Fqdn(hostname4),
+			dns.Fqdn(hostname4a),
+		},
 		req: urlfilter.DNSRequest{
 			Hostname: reversed4,
 			DNSType:  dns.TypePTR,
 		},
 	}, {
 		name: "ptr_v6",
-		want: dns.Fqdn(hostname6),
+		want: []interface{}{dns.Fqdn(hostname6)},
 		req: urlfilter.DNSRequest{
 			Hostname: reversed6,
 			DNSType:  dns.TypePTR,
 		},
 	}, {
 		name: "a_alias",
-		want: ip4.To16(),
+		want: []interface{}{ip4.To16()},
 		req: urlfilter.DNSRequest{
 			Hostname: hostname4a,
 			DNSType:  dns.TypeA,
@@ -299,8 +302,19 @@ func TestHostsContainer_MatchRequest(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			res, ok := hc.MatchRequest(tc.req)
 			require.False(t, ok)
+			require.NotNil(t, res)
 
-			assert.Equal(t, tc.want, res.DNSRewrites()[0].DNSRewrite.Value)
+			rws := res.DNSRewrites()
+			require.Len(t, rws, len(tc.want))
+
+			for i, w := range tc.want {
+				require.NotNil(t, rws[i])
+
+				rw := rws[i].DNSRewrite
+				require.NotNil(t, rw)
+
+				assert.Equal(t, w, rw.Value)
+			}
 		})
 	}
 
@@ -311,7 +325,7 @@ func TestHostsContainer_MatchRequest(t *testing.T) {
 		})
 		require.False(t, ok)
 
-		assert.Empty(t, res)
+		assert.Nil(t, res)
 	})
 }
 

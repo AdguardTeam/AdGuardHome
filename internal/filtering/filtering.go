@@ -451,7 +451,11 @@ func (d *DNSFilter) CheckHost(
 
 // matchSysHosts tries to match the host against the operating system's hosts
 // database.
-func (d *DNSFilter) matchSysHosts(host string, qtype uint16, setts *Settings) (res Result, err error) {
+func (d *DNSFilter) matchSysHosts(
+	host string,
+	qtype uint16,
+	setts *Settings,
+) (res Result, err error) {
 	if !setts.FilteringEnabled || d.EtcHosts == nil {
 		return Result{}, nil
 	}
@@ -464,6 +468,9 @@ func (d *DNSFilter) matchSysHosts(host string, qtype uint16, setts *Settings) (r
 		ClientName: setts.ClientName,
 		DNSType:    qtype,
 	})
+	if dnsres == nil {
+		return Result{}, nil
+	}
 
 	dnsr := dnsres.DNSRewrites()
 	if len(dnsr) == 0 {
@@ -695,7 +702,7 @@ func hostRulesToRules(netRules []*rules.HostRule) (res []rules.Rule) {
 // matching.
 func (d *DNSFilter) matchHostProcessAllowList(
 	host string,
-	dnsres urlfilter.DNSResult,
+	dnsres *urlfilter.DNSResult,
 ) (res Result, err error) {
 	var matchedRules []rules.Rule
 	if dnsres.NetworkRule != nil {
@@ -718,7 +725,7 @@ func (d *DNSFilter) matchHostProcessAllowList(
 // matchHostProcessDNSResult processes the matched DNS filtering result.
 func (d *DNSFilter) matchHostProcessDNSResult(
 	qtype uint16,
-	dnsres urlfilter.DNSResult,
+	dnsres *urlfilter.DNSResult,
 ) (res Result) {
 	if dnsres.NetworkRule != nil {
 		reason := FilteredBlockList

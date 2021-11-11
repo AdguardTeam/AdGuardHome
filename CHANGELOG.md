@@ -121,6 +121,7 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- Matching against rules with `|` at the end of the domain name ([#3371]).
 - Incorrect assignment of explicitly configured DHCP options ([#3744]).
 - Occasional panic during shutdown ([#3655]).
 - Addition of IPs into only one as opposed to all matching ipsets on Linux
@@ -195,6 +196,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3335]: https://github.com/AdguardTeam/AdGuardHome/issues/3335
 [#3343]: https://github.com/AdguardTeam/AdGuardHome/issues/3343
 [#3351]: https://github.com/AdguardTeam/AdGuardHome/issues/3351
+[#3371]: https://github.com/AdguardTeam/AdGuardHome/issues/3371
 [#3372]: https://github.com/AdguardTeam/AdGuardHome/issues/3372
 [#3417]: https://github.com/AdguardTeam/AdGuardHome/issues/3417
 [#3419]: https://github.com/AdguardTeam/AdGuardHome/issues/3419
