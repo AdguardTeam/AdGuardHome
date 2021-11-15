@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Added
 
+- Finnish and Ukrainian translations.
 - Setting the timeout for IP address pinging in the "Fastest IP address" mode
   through the new `fastest_timeout` field in the configuration file ([#1992]).
 - Static IP address detection on FreeBSD ([#3289]).
