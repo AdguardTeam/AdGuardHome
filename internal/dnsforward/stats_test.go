@@ -160,6 +160,12 @@ func TestProcessQueryLogsAndStats(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, tc := range testCases {
+		ql := &testQueryLog{}
+		st := &testStats{}
+		srv := &Server{
+			queryLog: ql,
+			stats:    st,
+		}
 		t.Run(tc.name, func(t *testing.T) {
 			req := &dns.Msg{
 				Question: []dns.Question{{
@@ -173,14 +179,7 @@ func TestProcessQueryLogsAndStats(t *testing.T) {
 				Addr:     tc.addr,
 				Upstream: ups,
 			}
-
-			ql := &testQueryLog{}
-			st := &testStats{}
 			dctx := &dnsContext{
-				srv: &Server{
-					queryLog: ql,
-					stats:    st,
-				},
 				proxyCtx:  pctx,
 				startTime: time.Now(),
 				result: &filtering.Result{
@@ -189,7 +188,7 @@ func TestProcessQueryLogsAndStats(t *testing.T) {
 				clientID: tc.clientID,
 			}
 
-			code := processQueryLogsAndStats(dctx)
+			code := srv.processQueryLogsAndStats(dctx)
 			assert.Equal(t, tc.wantCode, code)
 			assert.Equal(t, tc.wantLogProto, ql.lastParams.ClientProto)
 			assert.Equal(t, tc.wantStatClient, st.lastEntry.Client)

@@ -13,9 +13,8 @@ import (
 )
 
 // Write Stats data and logs
-func processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
+func (s *Server) processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
 	elapsed := time.Since(ctx.startTime)
-	s := ctx.srv
 	pctx := ctx.proxyCtx
 
 	shouldLog := true
