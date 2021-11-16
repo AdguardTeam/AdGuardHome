@@ -378,6 +378,10 @@ type Result struct {
 
 	// ReverseHosts is the reverse lookup rewrite result.  It is empty unless
 	// Reason is set to RewrittenAutoHosts.
+	//
+	// TODO(e.burkov):  There is no need for AutoHosts-related fields any more
+	// since the hosts container now uses $dnsrewrite rules.  These fields are
+	// only used in query log to decode old format.
 	ReverseHosts []string `json:",omitempty"`
 
 	// IPList is the lookup rewrite result.  It is empty unless Reason is set to
@@ -450,53 +454,39 @@ func (d *DNSFilter) CheckHost(
 }
 
 // matchSysHosts tries to match the host against the operating system's hosts
-// database.
+// database.  err is always nil.
 func (d *DNSFilter) matchSysHosts(
 	host string,
 	qtype uint16,
 	setts *Settings,
 ) (res Result, err error) {
 	if !setts.FilteringEnabled || d.EtcHosts == nil {
-		return Result{}, nil
+		return res, nil
 	}
 
 	dnsres, _ := d.EtcHosts.MatchRequest(urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
-		// TODO(e.burkov): Wait for urlfilter update to pass net.IP.
+		// TODO(e.burkov):  Wait for urlfilter update to pass net.IP.
 		ClientIP:   setts.ClientIP.String(),
 		ClientName: setts.ClientName,
 		DNSType:    qtype,
 	})
 	if dnsres == nil {
-		return Result{}, nil
+		return res, nil
 	}
 
-	dnsr := dnsres.DNSRewrites()
-	if len(dnsr) == 0 {
-		return Result{}, nil
+	if dnsr := dnsres.DNSRewrites(); len(dnsr) > 0 {
+		// Check DNS rewrites first, because the API there is a bit awkward.
+		res = d.processDNSRewrites(dnsr)
+		res.Reason = RewrittenAutoHosts
+		// TODO(e.burkov):  Put real hosts-syntax rules.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/3846.
+		res.Rules = nil
 	}
 
-	var ips []net.IP
-	var revHosts []string
-	for _, nr := range dnsr {
-		if nr.DNSRewrite == nil {
-			continue
-		}
-
-		switch val := nr.DNSRewrite.Value.(type) {
-		case net.IP:
-			ips = append(ips, val)
-		case string:
-			revHosts = append(revHosts, val)
-		}
-	}
-
-	return Result{
-		Reason:       RewrittenAutoHosts,
-		IPList:       ips,
-		ReverseHosts: revHosts,
-	}, nil
+	return res, nil
 }
 
 // Process rewrites table

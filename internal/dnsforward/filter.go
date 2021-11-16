@@ -82,25 +82,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*filtering.Result, error) {
 		// original question is readded in processFilteringAfterResponse.
 		ctx.origQuestion = q
 		req.Question[0].Name = dns.Fqdn(res.CanonName)
-	case res.Reason == filtering.RewrittenAutoHosts && len(res.ReverseHosts) != 0:
-		resp := s.makeResponse(req)
-		hdr := dns.RR_Header{
-			Name:   q.Name,
-			Rrtype: dns.TypePTR,
-			Ttl:    s.conf.BlockedResponseTTL,
-			Class:  dns.ClassINET,
-		}
-		for _, h := range res.ReverseHosts {
-			ptr := &dns.PTR{
-				Hdr: hdr,
-				Ptr: h,
-			}
-
-			resp.Answer = append(resp.Answer, ptr)
-		}
-
-		d.Res = resp
-	case res.Reason.In(filtering.Rewritten, filtering.RewrittenAutoHosts):
+	case res.Reason == filtering.Rewritten:
 		resp := s.makeResponse(req)
 
 		name := host
@@ -123,7 +105,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*filtering.Result, error) {
 		}
 
 		d.Res = resp
-	case res.Reason == filtering.RewrittenRule:
+	case res.Reason.In(filtering.RewrittenRule, filtering.RewrittenAutoHosts):
 		if err = s.filterDNSRewrite(req, res, d); err != nil {
 			return nil, err
 		}

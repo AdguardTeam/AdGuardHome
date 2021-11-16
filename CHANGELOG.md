@@ -122,6 +122,8 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- Incorrect `$dnsrewrite` results for entries from the operating system's hosts
+  file ([#3815]).
 - Matching against rules with `|` at the end of the domain name ([#3371]).
 - Incorrect assignment of explicitly configured DHCP options ([#3744]).
 - Occasional panic during shutdown ([#3655]).
@@ -219,6 +221,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3655]: https://github.com/AdguardTeam/AdGuardHome/issues/3655
 [#3707]: https://github.com/AdguardTeam/AdGuardHome/issues/3707
 [#3744]: https://github.com/AdguardTeam/AdGuardHome/issues/3744
+[#3815]: https://github.com/AdguardTeam/AdGuardHome/issues/3815
 
 
 

@@ -12,6 +12,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -164,11 +165,14 @@ func TestHostsContainer_Refresh(t *testing.T) {
 		},
 	}
 
-	eventsCh := make(chan struct{}, 1)
+	// event is a convenient alias for an empty struct{} to emit test events.
+	type event = struct{}
+
+	eventsCh := make(chan event, 1)
 	t.Cleanup(func() { close(eventsCh) })
 
 	w := &aghtest.FSWatcher{
-		OnEvents: func() (e <-chan struct{}) { return eventsCh },
+		OnEvents: func() (e <-chan event) { return eventsCh },
 		OnAdd: func(name string) (err error) {
 			assert.Equal(t, dirname, name)
 
@@ -181,7 +185,7 @@ func TestHostsContainer_Refresh(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.ErrorIs(t, hc.Close(), closeCalled) })
 
-	checkRefresh := func(t *testing.T, wantHosts []string) {
+	checkRefresh := func(t *testing.T, wantHosts *stringutil.Set) {
 		upd, ok := <-hc.Upd()
 		require.True(t, ok)
 		require.NotNil(t, upd)
@@ -191,26 +195,30 @@ func TestHostsContainer_Refresh(t *testing.T) {
 		v, ok := upd.Get(knownIP)
 		require.True(t, ok)
 
-		var hosts []string
-		hosts, ok = v.([]string)
+		var hosts *stringutil.Set
+		hosts, ok = v.(*stringutil.Set)
 		require.True(t, ok)
-		require.Len(t, hosts, len(wantHosts))
 
-		assert.Equal(t, wantHosts, hosts)
+		assert.True(t, hosts.Equal(wantHosts))
 	}
 
 	t.Run("initial_refresh", func(t *testing.T) {
-		checkRefresh(t, []string{knownHost})
+		checkRefresh(t, stringutil.NewSet(knownHost))
 	})
 
 	testFS[p2] = &fstest.MapFile{
 		Data: []byte(strings.Join([]string{knownIP.String(), knownAlias}, sp) + nl),
 	}
-
-	eventsCh <- struct{}{}
+	eventsCh <- event{}
 
 	t.Run("second_refresh", func(t *testing.T) {
-		checkRefresh(t, []string{knownHost, knownAlias})
+		checkRefresh(t, stringutil.NewSet(knownHost, knownAlias))
+	})
+
+	eventsCh <- event{}
+
+	t.Run("no_changes_refresh", func(t *testing.T) {
+		assert.Empty(t, hc.Upd())
 	})
 }
 
@@ -218,7 +226,7 @@ func TestHostsContainer_MatchRequest(t *testing.T) {
 	var (
 		ip4 = net.IP{127, 0, 0, 1}
 		ip6 = net.IP{
-			0, 0, 0, 0,
+			128, 0, 0, 0,
 			0, 0, 0, 0,
 			0, 0, 0, 0,
 			0, 0, 0, 1,
@@ -236,9 +244,9 @@ func TestHostsContainer_MatchRequest(t *testing.T) {
 
 	gsfs := fstest.MapFS{
 		filename: &fstest.MapFile{Data: []byte(
-			strings.Join([]string{ip4.String(), hostname4, hostname4a}, sp) + nl +
-				strings.Join([]string{ip6.String(), hostname6}, sp) + nl +
-				strings.Join([]string{"256.256.256.256", "fakebroadcast"}, sp) + nl,
+			ip4.String() + " " + hostname4 + " " + hostname4a + nl +
+				ip6.String() + " " + hostname6 + nl +
+				`256.256.256.256 fakebroadcast` + nl,
 		)},
 	}
 
@@ -264,6 +272,15 @@ func TestHostsContainer_MatchRequest(t *testing.T) {
 		req: urlfilter.DNSRequest{
 			Hostname: hostname4,
 			DNSType:  dns.TypeA,
+		},
+	}, {
+		name: "a_for_aaaa",
+		want: []interface{}{
+			ip4.To16(),
+		},
+		req: urlfilter.DNSRequest{
+			Hostname: hostname4,
+			DNSType:  dns.TypeAAAA,
 		},
 	}, {
 		name: "aaaa",
@@ -408,7 +425,7 @@ func TestUniqueRules_AddPair(t *testing.T) {
 	const knownHost = "host1"
 
 	ipToHost := netutil.NewIPMap(0)
-	ipToHost.Set(knownIP, []string{knownHost})
+	ipToHost.Set(knownIP, *stringutil.NewSet(knownHost))
 
 	testCases := []struct {
 		name      string
@@ -422,10 +439,11 @@ func TestUniqueRules_AddPair(t *testing.T) {
 			"||4.3.2.1.in-addr.arpa^$dnsrewrite=NOERROR;PTR;host2.\n",
 		ip: knownIP,
 	}, {
-		name:      "existing_one",
-		host:      knownHost,
-		wantRules: "",
-		ip:        knownIP,
+		name: "existing_one",
+		host: knownHost,
+		wantRules: "||" + knownHost + "^$dnsrewrite=NOERROR;A;1.2.3.4\n" +
+			"||4.3.2.1.in-addr.arpa^$dnsrewrite=NOERROR;PTR;host1.\n",
+		ip: knownIP,
 	}, {
 		name: "new_ip",
 		host: knownHost,
