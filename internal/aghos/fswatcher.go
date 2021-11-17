@@ -82,6 +82,8 @@ func (w *osWatcher) Events() (e <-chan event) {
 }
 
 // Add implements the FSWatcher interface for *osWatcher.
+//
+// TODO(e.burkov):  Make it accept non-existing files to detect it's creating.
 func (w *osWatcher) Add(name string) (err error) {
 	defer func() { err = errors.Annotate(err, "%s: %w", osWatcherPref) }()
 

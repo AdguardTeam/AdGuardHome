@@ -59,7 +59,10 @@ type homeContext struct {
 	// etcHosts is an IP-hostname pairs set taken from system configuration
 	// (e.g. /etc/hosts) files.
 	etcHosts *aghnet.HostsContainer
-	updater  *updater.Updater
+	// hostsWatcher is the watcher to detect changes in the hosts files.
+	hostsWatcher aghos.FSWatcher
+
+	updater *updater.Updater
 
 	subnetDetector *aghnet.SubnetDetector
 
@@ -232,6 +235,33 @@ func configureOS(conf *configuration) (err error) {
 	return nil
 }
 
+// setupHostsContainer initializes the structures to keep up-to-date the hosts
+// provided by the OS.
+func setupHostsContainer() (err error) {
+	Context.hostsWatcher, err = aghos.NewOSWritesWatcher()
+	if err != nil {
+		return fmt.Errorf("initing hosts watcher: %w", err)
+	}
+
+	Context.etcHosts, err = aghnet.NewHostsContainer(
+		aghos.RootDirFS(),
+		Context.hostsWatcher,
+		aghnet.DefaultHostsPaths()...,
+	)
+	if err != nil {
+		cerr := Context.hostsWatcher.Close()
+		if errors.Is(err, aghnet.ErrNoHostsPaths) && cerr == nil {
+			log.Info("warning: initing hosts container: %s", err)
+
+			return nil
+		}
+
+		return errors.WithDeferred(fmt.Errorf("initing hosts container: %w", err), cerr)
+	}
+
+	return nil
+}
+
 func setupConfig(args options) (err error) {
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
@@ -259,19 +289,8 @@ func setupConfig(args options) (err error) {
 	})
 
 	if !args.noEtcHosts {
-		var osWritesWatcher aghos.FSWatcher
-		osWritesWatcher, err = aghos.NewOSWritesWatcher()
-		if err != nil {
-			return fmt.Errorf("initing os watcher: %w", err)
-		}
-
-		Context.etcHosts, err = aghnet.NewHostsContainer(
-			aghos.RootDirFS(),
-			osWritesWatcher,
-			aghnet.DefaultHostsPaths()...,
-		)
-		if err != nil {
-			return fmt.Errorf("initing hosts container: %w", err)
+		if err = setupHostsContainer(); err != nil {
+			return err
 		}
 	}
 	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
@@ -661,8 +680,15 @@ func cleanup(ctx context.Context) {
 	}
 
 	if Context.etcHosts != nil {
+		// Currently Context.hostsWatcher is only used in Context.etcHosts and
+		// needs closing only in case of the successful initialization of
+		// Context.etcHosts.
+		if err = Context.hostsWatcher.Close(); err != nil {
+			log.Error("closing hosts watcher: %s", err)
+		}
+
 		if err = Context.etcHosts.Close(); err != nil {
-			log.Error("stopping hosts container: %s", err)
+			log.Error("closing hosts container: %s", err)
 		}
 	}
 

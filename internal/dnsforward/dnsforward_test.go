@@ -1077,8 +1077,6 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	`)},
 	}
 
-	const closeCalled errors.Error = "close method called"
-
 	var eventsCalledCounter uint32
 	hc, err := aghnet.NewHostsContainer(testFS, &aghtest.FSWatcher{
 		OnEvents: func() (e <-chan struct{}) {
@@ -1091,13 +1089,11 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 			return nil
 		},
-		OnClose: func() (err error) { return closeCalled },
+		OnClose: func() (err error) { panic("not implemented") },
 	}, hostsFilename)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		assert.Equal(t, uint32(1), atomic.LoadUint32(&eventsCalledCounter))
-
-		require.ErrorIs(t, hc.Close(), closeCalled)
 	})
 
 	flt := filtering.New(&filtering.Config{

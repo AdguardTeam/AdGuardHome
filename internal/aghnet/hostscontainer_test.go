@@ -24,14 +24,6 @@ const (
 	sp = " "
 )
 
-const closeCalled errors.Error = "close method called"
-
-// fsWatcherOnCloseStub is a stub implementation of the Close method of
-// aghos.FSWatcher.
-func fsWatcherOnCloseStub() (err error) {
-	return closeCalled
-}
-
 func TestNewHostsContainer(t *testing.T) {
 	const dirname = "dir"
 	const filename = "file1"
@@ -43,30 +35,25 @@ func TestNewHostsContainer(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name         string
-		paths        []string
-		wantErr      error
-		wantPatterns []string
+		wantErr error
+		name    string
+		paths   []string
 	}{{
-		name:         "one_file",
-		paths:        []string{p},
-		wantErr:      nil,
-		wantPatterns: []string{p},
+		wantErr: nil,
+		name:    "one_file",
+		paths:   []string{p},
 	}, {
-		name:         "no_files",
-		paths:        []string{},
-		wantErr:      errNoPaths,
-		wantPatterns: nil,
+		wantErr: ErrNoHostsPaths,
+		name:    "no_files",
+		paths:   []string{},
 	}, {
-		name:         "non-existent_file",
-		paths:        []string{path.Join(dirname, filename+"2")},
-		wantErr:      fs.ErrNotExist,
-		wantPatterns: nil,
+		wantErr: ErrNoHostsPaths,
+		name:    "non-existent_file",
+		paths:   []string{path.Join(dirname, filename+"2")},
 	}, {
-		name:         "whole_dir",
-		paths:        []string{dirname},
-		wantErr:      nil,
-		wantPatterns: []string{path.Join(dirname, "*")},
+		wantErr: nil,
+		name:    "whole_dir",
+		paths:   []string{dirname},
 	}}
 
 	for _, tc := range testCases {
@@ -88,7 +75,7 @@ func TestNewHostsContainer(t *testing.T) {
 			hc, err := NewHostsContainer(testFS, &aghtest.FSWatcher{
 				OnEvents: onEvents,
 				OnAdd:    onAdd,
-				OnClose:  fsWatcherOnCloseStub,
+				OnClose:  func() (err error) { panic("not implemented") },
 			}, tc.paths...)
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
@@ -99,13 +86,8 @@ func TestNewHostsContainer(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			t.Cleanup(func() {
-				require.ErrorIs(t, hc.Close(), closeCalled)
-			})
-
 			require.NotNil(t, hc)
 
-			assert.Equal(t, tc.wantPatterns, hc.patterns)
 			assert.NotNil(t, <-hc.Upd())
 
 			eventsCh <- struct{}{}
@@ -178,12 +160,11 @@ func TestHostsContainer_Refresh(t *testing.T) {
 
 			return nil
 		},
-		OnClose: fsWatcherOnCloseStub,
+		OnClose: func() (err error) { panic("not implemented") },
 	}
 
 	hc, err := NewHostsContainer(testFS, w, dirname)
 	require.NoError(t, err)
-	t.Cleanup(func() { require.ErrorIs(t, hc.Close(), closeCalled) })
 
 	checkRefresh := func(t *testing.T, wantHosts *stringutil.Set) {
 		upd, ok := <-hc.Upd()
@@ -257,10 +238,9 @@ func TestHostsContainer_MatchRequest(t *testing.T) {
 
 			return nil
 		},
-		OnClose: fsWatcherOnCloseStub,
+		OnClose: func() (err error) { panic("not implemented") },
 	}, filename)
 	require.NoError(t, err)
-	t.Cleanup(func() { require.ErrorIs(t, hc.Close(), closeCalled) })
 
 	testCase := []struct {
 		name string
@@ -398,7 +378,7 @@ func TestHostsContainer_PathsToPatterns(t *testing.T) {
 		paths:   []string{fp1, path.Join(dir0, dir1)},
 	}, {
 		name:    "non-existing",
-		wantErr: fs.ErrNotExist,
+		wantErr: nil,
 		want:    nil,
 		paths:   []string{path.Join(dir0, "file_3")},
 	}}
@@ -417,6 +397,19 @@ func TestHostsContainer_PathsToPatterns(t *testing.T) {
 			assert.Equal(t, tc.want, patterns)
 		})
 	}
+
+	t.Run("bad_file", func(t *testing.T) {
+		const errStat errors.Error = "bad file"
+
+		badFS := &aghtest.StatFS{
+			OnStat: func(name string) (fs.FileInfo, error) {
+				return nil, errStat
+			},
+		}
+
+		_, err := pathsToPatterns(badFS, []string{""})
+		assert.ErrorIs(t, err, errStat)
+	})
 }
 
 func TestUniqueRules_AddPair(t *testing.T) {

@@ -43,6 +43,9 @@ type HostsContainer struct {
 	// engine serves rulesStrg.
 	engine *urlfilter.DNSEngine
 
+	// done is the channel to sign closing the container.
+	done chan struct{}
+
 	// updates is the channel for receiving updated hosts.
 	updates chan *netutil.IPMap
 	// last is the set of hosts that was cached within last detected change.
@@ -57,12 +60,12 @@ type HostsContainer struct {
 	patterns []string
 }
 
-// errNoPaths is returned when there are no paths to watch passed to the
-// HostsContainer.
-const errNoPaths errors.Error = "hosts paths are empty"
+// ErrNoHostsPaths is returned when there are no valid paths to watch passed to
+// the HostsContainer.
+const ErrNoHostsPaths errors.Error = "no valid paths to hosts files provided"
 
 // NewHostsContainer creates a container of hosts, that watches the paths with
-// w.  paths shouldn't be empty and each of them should locate either a file or
+// w.  paths shouldn't be empty and each of paths should locate either a file or
 // a directory in fsys.  fsys and w must be non-nil.
 func NewHostsContainer(
 	fsys fs.FS,
@@ -72,16 +75,20 @@ func NewHostsContainer(
 	defer func() { err = errors.Annotate(err, "%s: %w", hostsContainerPref) }()
 
 	if len(paths) == 0 {
-		return nil, errNoPaths
+		return nil, ErrNoHostsPaths
 	}
 
-	patterns, err := pathsToPatterns(fsys, paths)
+	var patterns []string
+	patterns, err = pathsToPatterns(fsys, paths)
 	if err != nil {
 		return nil, err
+	} else if len(patterns) == 0 {
+		return nil, ErrNoHostsPaths
 	}
 
 	hc = &HostsContainer{
 		engLock:  &sync.RWMutex{},
+		done:     make(chan struct{}, 1),
 		updates:  make(chan *netutil.IPMap, 1),
 		last:     &netutil.IPMap{},
 		fsys:     fsys,
@@ -97,16 +104,13 @@ func NewHostsContainer(
 	}
 
 	for _, p := range paths {
-		err = w.Add(p)
-		if err == nil {
-			continue
-		} else if errors.Is(err, fs.ErrNotExist) {
+		if err = w.Add(p); err != nil {
+			if !errors.Is(err, fs.ErrNotExist) {
+				return nil, fmt.Errorf("adding path: %w", err)
+			}
+
 			log.Debug("%s: file %q expected to exist but doesn't", hostsContainerPref, p)
-
-			continue
 		}
-
-		return nil, fmt.Errorf("adding path: %w", err)
 	}
 
 	go hc.handleEvents()
@@ -130,16 +134,17 @@ func (hc *HostsContainer) MatchRequest(
 	hc.engLock.RLock()
 	defer hc.engLock.RUnlock()
 
-	res, ok = hc.engine.MatchRequest(req)
-
-	return res, ok
+	return hc.engine.MatchRequest(req)
 }
 
-// Close implements the io.Closer interface for *HostsContainer.
+// Close implements the io.Closer interface for *HostsContainer.  Close must
+// only be called once.  The returned err is always nil.
 func (hc *HostsContainer) Close() (err error) {
 	log.Debug("%s: closing", hostsContainerPref)
 
-	return errors.Annotate(hc.w.Close(), "%s: closing: %w", hostsContainerPref)
+	close(hc.done)
+
+	return nil
 }
 
 // Upd returns the channel into which the updates are sent.  The receivable
@@ -152,8 +157,14 @@ func (hc *HostsContainer) Upd() (updates <-chan *netutil.IPMap) {
 func pathsToPatterns(fsys fs.FS, paths []string) (patterns []string, err error) {
 	for i, p := range paths {
 		var fi fs.FileInfo
-		if fi, err = fs.Stat(fsys, p); err != nil {
-			return nil, fmt.Errorf("%q at index %d: %w", p, i, err)
+		fi, err = fs.Stat(fsys, p)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+
+			// Don't put a filename here since it's already added by fs.Stat.
+			return nil, fmt.Errorf("path at index %d: %w", i, err)
 		}
 
 		if fi.IsDir() {
@@ -173,9 +184,21 @@ func (hc *HostsContainer) handleEvents() {
 
 	defer close(hc.updates)
 
-	for range hc.w.Events() {
-		if err := hc.refresh(); err != nil {
-			log.Error("%s: %s", hostsContainerPref, err)
+	ok, eventsCh := true, hc.w.Events()
+	for ok {
+		select {
+		case _, ok = <-eventsCh:
+			if !ok {
+				log.Debug("%s: watcher closed the events channel", hostsContainerPref)
+
+				continue
+			}
+
+			if err := hc.refresh(); err != nil {
+				log.Error("%s: %s", hostsContainerPref, err)
+			}
+		case _, ok = <-hc.done:
+			// Go on.
 		}
 	}
 }
@@ -373,6 +396,8 @@ func (hp *hostsParser) newStrg() (s *filterlist.RuleStorage, err error) {
 
 // refresh gets the data from specified files and propagates the updates if
 // needed.
+//
+// TODO(e.burkov):  Accept a parameter to specify the files to refresh.
 func (hc *HostsContainer) refresh() (err error) {
 	log.Debug("%s: refreshing", hostsContainerPref)
 
