@@ -90,7 +90,6 @@ func NewHostsContainer(
 		engLock:  &sync.RWMutex{},
 		done:     make(chan struct{}, 1),
 		updates:  make(chan *netutil.IPMap, 1),
-		last:     &netutil.IPMap{},
 		fsys:     fsys,
 		w:        w,
 		patterns: patterns,
@@ -347,6 +346,11 @@ func (hp *hostsParser) addPair(ip net.IP, host string) {
 
 // equalSet returns true if the internal hosts table just parsed equals target.
 func (hp *hostsParser) equalSet(target *netutil.IPMap) (ok bool) {
+	if target == nil {
+		// hp.table shouldn't appear nil since it's initialized on each refresh.
+		return target == hp.table
+	}
+
 	if hp.table.Len() != target.Len() {
 		return false
 	}
