@@ -1,0 +1,14 @@
+#
+# Test /etc/hosts file
+#
+
+1.0.0.1 simplehost
+1.0.0.0 hello hello.world
+
+# See https://github.com/AdguardTeam/AdGuardHome/issues/3846.
+1.0.0.2 a.whole lot.of aliases for.testing
+
+# Same for IPv6.
+::1 simplehost
+::  hello hello.world
+::2 a.whole lot.of aliases for.testing

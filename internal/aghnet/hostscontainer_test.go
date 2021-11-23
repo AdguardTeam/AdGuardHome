@@ -3,6 +3,7 @@ package aghnet
 import (
 	"io/fs"
 	"net"
+	"os"
 	"path"
 	"strings"
 	"sync/atomic"
@@ -11,9 +12,9 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
+	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -203,129 +204,6 @@ func TestHostsContainer_Refresh(t *testing.T) {
 	})
 }
 
-func TestHostsContainer_MatchRequest(t *testing.T) {
-	var (
-		ip4 = net.IP{127, 0, 0, 1}
-		ip6 = net.IP{
-			128, 0, 0, 0,
-			0, 0, 0, 0,
-			0, 0, 0, 0,
-			0, 0, 0, 1,
-		}
-
-		hostname4  = "localhost"
-		hostname6  = "localhostv6"
-		hostname4a = "abcd"
-
-		reversed4, _ = netutil.IPToReversedAddr(ip4)
-		reversed6, _ = netutil.IPToReversedAddr(ip6)
-	)
-
-	const filename = "file1"
-
-	gsfs := fstest.MapFS{
-		filename: &fstest.MapFile{Data: []byte(
-			ip4.String() + " " + hostname4 + " " + hostname4a + nl +
-				ip6.String() + " " + hostname6 + nl +
-				`256.256.256.256 fakebroadcast` + nl,
-		)},
-	}
-
-	hc, err := NewHostsContainer(gsfs, &aghtest.FSWatcher{
-		OnEvents: func() (e <-chan struct{}) { panic("not implemented") },
-		OnAdd: func(name string) (err error) {
-			assert.Equal(t, filename, name)
-
-			return nil
-		},
-		OnClose: func() (err error) { panic("not implemented") },
-	}, filename)
-	require.NoError(t, err)
-
-	testCase := []struct {
-		name string
-		want []interface{}
-		req  urlfilter.DNSRequest
-	}{{
-		name: "a",
-		want: []interface{}{ip4.To16()},
-		req: urlfilter.DNSRequest{
-			Hostname: hostname4,
-			DNSType:  dns.TypeA,
-		},
-	}, {
-		name: "a_for_aaaa",
-		want: []interface{}{
-			ip4.To16(),
-		},
-		req: urlfilter.DNSRequest{
-			Hostname: hostname4,
-			DNSType:  dns.TypeAAAA,
-		},
-	}, {
-		name: "aaaa",
-		want: []interface{}{ip6},
-		req: urlfilter.DNSRequest{
-			Hostname: hostname6,
-			DNSType:  dns.TypeAAAA,
-		},
-	}, {
-		name: "ptr",
-		want: []interface{}{
-			dns.Fqdn(hostname4),
-			dns.Fqdn(hostname4a),
-		},
-		req: urlfilter.DNSRequest{
-			Hostname: reversed4,
-			DNSType:  dns.TypePTR,
-		},
-	}, {
-		name: "ptr_v6",
-		want: []interface{}{dns.Fqdn(hostname6)},
-		req: urlfilter.DNSRequest{
-			Hostname: reversed6,
-			DNSType:  dns.TypePTR,
-		},
-	}, {
-		name: "a_alias",
-		want: []interface{}{ip4.To16()},
-		req: urlfilter.DNSRequest{
-			Hostname: hostname4a,
-			DNSType:  dns.TypeA,
-		},
-	}}
-
-	for _, tc := range testCase {
-		t.Run(tc.name, func(t *testing.T) {
-			res, ok := hc.MatchRequest(tc.req)
-			require.False(t, ok)
-			require.NotNil(t, res)
-
-			rws := res.DNSRewrites()
-			require.Len(t, rws, len(tc.want))
-
-			for i, w := range tc.want {
-				require.NotNil(t, rws[i])
-
-				rw := rws[i].DNSRewrite
-				require.NotNil(t, rw)
-
-				assert.Equal(t, w, rw.Value)
-			}
-		})
-	}
-
-	t.Run("cname", func(t *testing.T) {
-		res, ok := hc.MatchRequest(urlfilter.DNSRequest{
-			Hostname: hostname4,
-			DNSType:  dns.TypeCNAME,
-		})
-		require.False(t, ok)
-
-		assert.Nil(t, res)
-	})
-}
-
 func TestHostsContainer_PathsToPatterns(t *testing.T) {
 	const (
 		dir0 = "dir"
@@ -412,53 +290,108 @@ func TestHostsContainer_PathsToPatterns(t *testing.T) {
 	})
 }
 
-func TestUniqueRules_AddPair(t *testing.T) {
-	knownIP := net.IP{1, 2, 3, 4}
+func TestHostsContainer(t *testing.T) {
+	testdata := os.DirFS("./testdata")
 
-	const knownHost = "host1"
+	nRewrites := func(t *testing.T, res *urlfilter.DNSResult, n int) (rws []*rules.DNSRewrite) {
+		t.Helper()
 
-	ipToHost := netutil.NewIPMap(0)
-	ipToHost.Set(knownIP, *stringutil.NewSet(knownHost))
+		rewrites := res.DNSRewrites()
+		assert.Len(t, rewrites, n)
 
-	testCases := []struct {
-		name      string
-		host      string
-		wantRules string
-		ip        net.IP
-	}{{
-		name: "new_one",
-		host: "host2",
-		wantRules: "||host2^$dnsrewrite=NOERROR;A;1.2.3.4\n" +
-			"||4.3.2.1.in-addr.arpa^$dnsrewrite=NOERROR;PTR;host2.\n",
-		ip: knownIP,
-	}, {
-		name: "existing_one",
-		host: knownHost,
-		wantRules: "||" + knownHost + "^$dnsrewrite=NOERROR;A;1.2.3.4\n" +
-			"||4.3.2.1.in-addr.arpa^$dnsrewrite=NOERROR;PTR;host1.\n",
-		ip: knownIP,
-	}, {
-		name: "new_ip",
-		host: knownHost,
-		wantRules: "||" + knownHost + "^$dnsrewrite=NOERROR;A;1.2.3.5\n" +
-			"||5.3.2.1.in-addr.arpa^$dnsrewrite=NOERROR;PTR;" + knownHost + ".\n",
-		ip: net.IP{1, 2, 3, 5},
-	}, {
-		name:      "bad_ip",
-		host:      knownHost,
-		wantRules: "",
-		ip:        net.IP{1, 2, 3, 4, 5},
-	}}
+		for _, rewrite := range rewrites {
+			rw := rewrite.DNSRewrite
+			require.NotNil(t, rw)
 
-	for _, tc := range testCases {
-		hp := hostsParser{
-			rules: &strings.Builder{},
-			table: ipToHost.ShallowClone(),
+			rws = append(rws, rw)
 		}
 
+		return rws
+	}
+
+	testCases := []struct {
+		testTail func(t *testing.T, res *urlfilter.DNSResult)
+		name     string
+		req      urlfilter.DNSRequest
+	}{{
+		name: "simple",
+		req: urlfilter.DNSRequest{
+			Hostname: "simplehost",
+			DNSType:  dns.TypeA,
+		},
+		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
+			rws := nRewrites(t, res, 2)
+
+			v, ok := rws[0].Value.(net.IP)
+			require.True(t, ok)
+
+			assert.True(t, net.IP{1, 0, 0, 1}.Equal(v))
+
+			v, ok = rws[1].Value.(net.IP)
+			require.True(t, ok)
+
+			// It's ::1.
+			assert.True(t, net.IP(append((&[15]byte{})[:], byte(1))).Equal(v))
+		},
+	}, {
+		name: "hello_alias",
+		req: urlfilter.DNSRequest{
+			Hostname: "hello.world",
+			DNSType:  dns.TypeA,
+		},
+		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
+			assert.Equal(t, "hello", nRewrites(t, res, 1)[0].NewCNAME)
+		},
+	}, {
+		name: "lots_of_aliases",
+		req: urlfilter.DNSRequest{
+			Hostname: "for.testing",
+			DNSType:  dns.TypeA,
+		},
+		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
+			assert.Equal(t, "a.whole", nRewrites(t, res, 1)[0].NewCNAME)
+		},
+	}, {
+		name: "reverse",
+		req: urlfilter.DNSRequest{
+			Hostname: "1.0.0.1.in-addr.arpa",
+			DNSType:  dns.TypePTR,
+		},
+		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
+			rws := nRewrites(t, res, 1)
+
+			assert.Equal(t, dns.TypePTR, rws[0].RRType)
+			assert.Equal(t, "simplehost.", rws[0].Value)
+		},
+	}, {
+		name: "non-existing",
+		req: urlfilter.DNSRequest{
+			Hostname: "nonexisting",
+			DNSType:  dns.TypeA,
+		},
+		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
+			require.NotNil(t, res)
+
+			assert.Nil(t, res.DNSRewrites())
+		},
+	}}
+
+	stubWatcher := aghtest.FSWatcher{
+		OnEvents: func() (e <-chan struct{}) { return nil },
+		OnAdd:    func(name string) (err error) { return nil },
+		OnClose:  func() (err error) { panic("not implemented") },
+	}
+
+	hc, err := NewHostsContainer(testdata, &stubWatcher, "etc_hosts")
+	require.NoError(t, err)
+
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			hp.addPair(tc.ip, tc.host)
-			assert.Equal(t, tc.wantRules, hp.rules.String())
+			res, ok := hc.MatchRequest(tc.req)
+			require.False(t, ok)
+			require.NotNil(t, res)
+
+			tc.testTail(t, res)
 		})
 	}
 }

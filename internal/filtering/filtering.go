@@ -376,16 +376,8 @@ type Result struct {
 	// Rules are applied rules.  If Rules are not empty, each rule is not nil.
 	Rules []*ResultRule `json:",omitempty"`
 
-	// ReverseHosts is the reverse lookup rewrite result.  It is empty unless
-	// Reason is set to RewrittenAutoHosts.
-	//
-	// TODO(e.burkov):  There is no need for AutoHosts-related fields any more
-	// since the hosts container now uses $dnsrewrite rules.  These fields are
-	// only used in query log to decode old format.
-	ReverseHosts []string `json:",omitempty"`
-
 	// IPList is the lookup rewrite result.  It is empty unless Reason is set to
-	// RewrittenAutoHosts or Rewritten.
+	// Rewritten.
 	IPList []net.IP `json:",omitempty"`
 
 	// CanonName is the CNAME value from the lookup rewrite result.  It is empty
@@ -464,7 +456,7 @@ func (d *DNSFilter) matchSysHosts(
 		return res, nil
 	}
 
-	dnsres, _ := d.EtcHosts.MatchRequest(urlfilter.DNSRequest{
+	return d.matchSysHostsIntl(&urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
 		// TODO(e.burkov):  Wait for urlfilter update to pass net.IP.
@@ -472,18 +464,34 @@ func (d *DNSFilter) matchSysHosts(
 		ClientName: setts.ClientName,
 		DNSType:    qtype,
 	})
+}
+
+// matchSysHostsIntl actually matches the request.  It's separated to avoid
+// perfoming checks twice.
+func (d *DNSFilter) matchSysHostsIntl(
+	req *urlfilter.DNSRequest,
+) (res Result, err error) {
+	dnsres, _ := d.EtcHosts.MatchRequest(*req)
 	if dnsres == nil {
 		return res, nil
 	}
 
-	if dnsr := dnsres.DNSRewrites(); len(dnsr) > 0 {
-		// Check DNS rewrites first, because the API there is a bit awkward.
-		res = d.processDNSRewrites(dnsr)
-		res.Reason = RewrittenAutoHosts
-		// TODO(e.burkov):  Put real hosts-syntax rules.
-		//
-		// See https://github.com/AdguardTeam/AdGuardHome/issues/3846.
-		res.Rules = nil
+	dnsr := dnsres.DNSRewrites()
+	if len(dnsr) == 0 {
+		return res, nil
+	}
+
+	res = d.processDNSRewrites(dnsr)
+	if cn := res.CanonName; cn != "" {
+		// Probably an alias.
+		req.Hostname = cn
+
+		return d.matchSysHostsIntl(req)
+	}
+
+	res.Reason = RewrittenAutoHosts
+	for _, r := range res.Rules {
+		r.Text = stringutil.Coalesce(d.EtcHosts.Translate(r.Text), r.Text)
 	}
 
 	return res, nil
@@ -799,7 +807,6 @@ func (d *DNSFilter) matchHost(
 	}
 
 	dnsres, ok := d.filteringEngine.MatchRequest(ureq)
-
 	// Check DNS rewrites first, because the API there is a bit awkward.
 	if dnsr := dnsres.DNSRewrites(); len(dnsr) > 0 {
 		res = d.processDNSRewrites(dnsr)

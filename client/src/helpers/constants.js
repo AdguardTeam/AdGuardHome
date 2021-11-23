@@ -529,6 +529,7 @@ export const DETAILED_DATE_FORMAT_OPTIONS = {
 };
 
 export const CUSTOM_FILTERING_RULES_ID = 0;
+export const SYSTEM_HOSTS_FILTER_ID = -1;
 
 export const BLOCK_ACTIONS = {
     BLOCK: 'block',

@@ -27,7 +27,7 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 	for _, nr := range dnsr {
 		dr := nr.DNSRewrite
 		if dr.NewCNAME != "" {
-			// NewCNAME rules have a higher priority than the other rules.
+			// NewCNAME rules have a higher priority than other rules.
 			rules = []*ResultRule{{
 				FilterListID: int64(nr.GetFilterListID()),
 				Text:         nr.RuleText,

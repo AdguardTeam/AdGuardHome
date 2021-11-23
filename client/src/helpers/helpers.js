@@ -26,6 +26,7 @@ import {
     STANDARD_DNS_PORT,
     STANDARD_HTTPS_PORT,
     STANDARD_WEB_PORT,
+    SYSTEM_HOSTS_FILTER_ID,
 } from './constants';
 
 /**
@@ -791,9 +792,12 @@ export const getFilterName = (
         return i18n.t(customFilterTranslationKey);
     }
 
+    if (filterId === SYSTEM_HOSTS_FILTER_ID) {
+        return i18n.t('system_host_files');
+    }
+
     const matchIdPredicate = (filter) => filter.id === filterId;
     const filter = filters.find(matchIdPredicate) || whitelistFilters.find(matchIdPredicate);
-
     return resolveFilterName(filter);
 };
 

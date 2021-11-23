@@ -36,7 +36,6 @@ func TestDecodeLogEntry(t *testing.T) {
 			`"Result":{` +
 			`"IsFiltered":true,` +
 			`"Reason":3,` +
-			`"ReverseHosts":["example.net"],` +
 			`"IPList":["127.0.0.2"],` +
 			`"Rules":[{"FilterListID":42,"Text":"||an.yandex.ru","IP":"127.0.0.2"},` +
 			`{"FilterListID":43,"Text":"||an2.yandex.ru","IP":"127.0.0.3"}],` +
@@ -58,10 +57,9 @@ func TestDecodeLogEntry(t *testing.T) {
 			ClientProto: "",
 			Answer:      ans,
 			Result: filtering.Result{
-				IsFiltered:   true,
-				Reason:       filtering.FilteredBlockList,
-				ReverseHosts: []string{"example.net"},
-				IPList:       []net.IP{net.IPv4(127, 0, 0, 2)},
+				IsFiltered: true,
+				Reason:     filtering.FilteredBlockList,
+				IPList:     []net.IP{net.IPv4(127, 0, 0, 2)},
 				Rules: []*filtering.ResultRule{{
 					FilterListID: 42,
 					Text:         "||an.yandex.ru",
@@ -170,8 +168,7 @@ func TestDecodeLogEntry(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			l := &logEntry{}
-			decodeLogEntry(l, tc.log)
+			decodeLogEntry(new(logEntry), tc.log)
 
 			s := logOutput.String()
 			if tc.want == "" {
@@ -182,6 +179,68 @@ func TestDecodeLogEntry(t *testing.T) {
 			}
 
 			logOutput.Reset()
+		})
+	}
+}
+
+func TestDecodeLogEntry_backwardCompatability(t *testing.T) {
+	var (
+		a1, a2       = net.IP{127, 0, 0, 1}.To16(), net.IP{127, 0, 0, 2}.To16()
+		aaaa1, aaaa2 = net.ParseIP("::1"), net.ParseIP("::2")
+	)
+
+	testCases := []struct {
+		want  *logEntry
+		entry string
+		name  string
+	}{{
+		entry: `{"Result":{"ReverseHosts":["example.net","example.org"]}`,
+		want: &logEntry{
+			Result: filtering.Result{DNSRewriteResult: &filtering.DNSRewriteResult{
+				RCode: dns.RcodeSuccess,
+				Response: filtering.DNSRewriteResultResponse{
+					dns.TypePTR: []rules.RRValue{"example.net.", "example.org."},
+				},
+			}},
+		},
+		name: "reverse_hosts",
+	}, {
+		entry: `{"Result":{"IPList":["127.0.0.1","127.0.0.2","::1","::2"],"Reason":10}}`,
+		want: &logEntry{
+			Result: filtering.Result{
+				DNSRewriteResult: &filtering.DNSRewriteResult{
+					RCode: dns.RcodeSuccess,
+					Response: filtering.DNSRewriteResultResponse{
+						dns.TypeA:    []rules.RRValue{a1, a2},
+						dns.TypeAAAA: []rules.RRValue{aaaa1, aaaa2},
+					},
+				},
+				Reason: filtering.RewrittenAutoHosts,
+			},
+		},
+		name: "iplist_autohosts",
+	}, {
+		entry: `{"Result":{"IPList":["127.0.0.1","127.0.0.2","::1","::2"],"Reason":9}}`,
+		want: &logEntry{
+			Result: filtering.Result{
+				IPList: []net.IP{
+					a1,
+					a2,
+					aaaa1,
+					aaaa2,
+				},
+				Reason: filtering.Rewritten,
+			},
+		},
+		name: "iplist_rewritten",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			e := &logEntry{}
+			decodeLogEntry(e, tc.entry)
+
+			assert.Equal(t, tc.want, e)
 		})
 	}
 }
