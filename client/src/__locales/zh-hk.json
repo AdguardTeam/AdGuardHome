@@ -45,7 +45,6 @@
     "form_error_subnet": "子網路 \"{{cidr}}\" 不包含 IP 位址 \"{{ip}}\"",
     "form_error_positive": "數值必須大於 0",
     "form_error_negative": "數值必須大於等於 0",
-    "range_end_error": "必須大於起始值",
     "dhcp_form_gateway_input": "閘道 IP 位址",
     "dhcp_form_subnet_input": "子網路遮罩",
     "dhcp_form_range_title": "IP 位址範圍",
@@ -612,6 +611,5 @@
     "click_to_view_queries": "按一下以檢視查詢結果",
     "port_53_faq_link": "連接埠 53 經常被「DNSStubListener」或「systemd-resolved」服務佔用。請閱讀下列有關解決<0>這個問題</0>的說明",
     "adg_will_drop_dns_queries": "AdGuard Home 將停止回應此用戶端的所有 DNS 查詢。",
-    "client_not_in_allowed_clients": "此用戶端不被允許，它不在\"允許的用戶端\"列表中。",
     "experimental": "實驗性"
 }

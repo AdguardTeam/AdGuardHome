@@ -10,7 +10,7 @@
     "dhcp_leases": "DHCP раздадени адреси",
     "dhcp_leases_not_found": "Няма намерени активни DHCP адреси",
     "form_error_required": "Задължително поле",
-    "form_error_ip_format": "Невалиден IPv4 адрес",
+    "form_error_ip_format": "Невалиден IP адрес",
     "form_error_positive": "Проверете дали е положително число",
     "dhcp_form_gateway_input": "IP шлюз",
     "dhcp_form_subnet_input": "Мрежова маска",

@@ -45,7 +45,6 @@
     "form_error_subnet": "IPアドレス「{{ip}}」はサブネット「{{cidr}}」に含まれていません",
     "form_error_positive": "0より大きい必要があります",
     "form_error_negative": "0以上である必要があります",
-    "range_end_error": "範囲開始よりも大きくなければなりません",
     "dhcp_form_gateway_input": "ゲートウェイIP",
     "dhcp_form_subnet_input": "サブネットマスク",
     "dhcp_form_range_title": "IPアドレスの範囲",

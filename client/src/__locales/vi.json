@@ -45,7 +45,6 @@
     "form_error_subnet": "Mạng con \"{{cidr}}\" không chứa địa chỉ IP \"{{ip}}\"",
     "form_error_positive": "Phải lớn hơn 0",
     "form_error_negative": "Phải lớn hơn hoặc bằng 0",
-    "range_end_error": "Phải lớn hơn khoảng bắt đầu",
     "dhcp_form_gateway_input": "Cổng IP",
     "dhcp_form_subnet_input": "Mặt nạ mạng con",
     "dhcp_form_range_title": "Phạm vi của địa chỉ IP",

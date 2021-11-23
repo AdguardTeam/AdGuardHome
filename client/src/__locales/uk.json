@@ -497,7 +497,7 @@
     "interval_6_hour": "6 годин",
     "interval_24_hour": "24 години",
     "interval_days": "{{count}} день",
-    "interval_days_plural": "{{count}} днів",
+    "interval_days_plural": "{{count}} дні(в)",
     "domain": "Домен",
     "punycode": "Punycode",
     "answer": "Відповідь",

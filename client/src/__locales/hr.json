@@ -45,7 +45,6 @@
     "form_error_subnet": "Podmrežu \"{{cidr}}\" ne sadrži IP adresu \"{{ip}}\"",
     "form_error_positive": "Mora biti veće od 0",
     "form_error_negative": "Mora biti jednako ili veće od 0",
-    "range_end_error": "Mora biti veće od početne vrijednosti raspona",
     "dhcp_form_gateway_input": "Gateway IP",
     "dhcp_form_subnet_input": "Subnet maskiranje",
     "dhcp_form_range_title": "Raspon IP adresa",

@@ -45,7 +45,6 @@
     "form_error_subnet": "서브넷 \"{{cidr}}\"에 \"{{ip}}\" IP 주소가 없습니다",
     "form_error_positive": "0보다 커야 합니다",
     "form_error_negative": "반드시 0 이상이여야 합니다",
-    "range_end_error": "입력 값은 범위의 시작 지점보다 큰 값 이여야 합니다.",
     "dhcp_form_gateway_input": "게이트웨이 IP",
     "dhcp_form_subnet_input": "서브넷 마스크",
     "dhcp_form_range_title": "IP 주소 범위",

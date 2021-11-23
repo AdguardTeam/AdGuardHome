@@ -45,7 +45,6 @@
     "form_error_subnet": "子网 \"{{cidr}}\" 不包含 IP 地址 \"{{ip}}\"",
     "form_error_positive": "必须大于 0",
     "form_error_negative": "必须大于等于 0",
-    "range_end_error": "必须大于范围起始值",
     "dhcp_form_gateway_input": "网关 IP",
     "dhcp_form_subnet_input": "子网掩码",
     "dhcp_form_range_title": "IP 地址范围",

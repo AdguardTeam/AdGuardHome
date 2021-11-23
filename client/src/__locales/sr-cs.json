@@ -27,7 +27,6 @@
     "form_error_client_id_format": "Nevažeći format klijenta",
     "form_error_positive": "Mora biti veće od 0",
     "form_error_negative": "Mora biti 0 ili veće",
-    "range_end_error": "Mora biti veće od početnog opsega",
     "dhcp_form_gateway_input": "IP mrežnog prolaza",
     "dhcp_form_subnet_input": "Subnet mask",
     "dhcp_form_range_title": "Opseg IP adresa",
@@ -552,6 +551,5 @@
     "click_to_view_queries": "Kliknite da pogledate zahteve",
     "port_53_faq_link": "Port 53 je najčešće zauzet od \"DNSStubListener\" ili \"systemd-resolved\" usluga. Pročitajte <0>ovo uputstvo</0> kako da to rešite.",
     "adg_will_drop_dns_queries": "AdGuard Home će odbacivati sve DNS unose od ovog klijenta.",
-    "client_not_in_allowed_clients": "Klijent nije dozvoljen zato što se ne nalazi na spisku dozvoljenih klijenata.",
     "experimental": "Eksperimentalno"
 }
