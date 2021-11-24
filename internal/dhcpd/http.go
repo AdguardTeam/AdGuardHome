@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {
@@ -533,6 +535,13 @@ func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+const (
+	// DefaultDHCPLeaseTTL is the default time-to-live for leases.
+	DefaultDHCPLeaseTTL = uint32(timeutil.Day / time.Second)
+	// DefaultDHCPTimeoutICMP is the default timeout for waiting ICMP responses.
+	DefaultDHCPTimeoutICMP = 1000
+)
+
 func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
 	err := s.Stop()
 	if err != nil {
@@ -547,19 +556,24 @@ func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	oldconf := s.conf
-	s.conf = ServerConfig{}
-	s.conf.WorkDir = oldconf.WorkDir
-	s.conf.HTTPRegister = oldconf.HTTPRegister
-	s.conf.ConfigModified = oldconf.ConfigModified
-	s.conf.DBFilePath = oldconf.DBFilePath
+	s.conf = ServerConfig{
+		WorkDir:        oldconf.WorkDir,
+		HTTPRegister:   oldconf.HTTPRegister,
+		ConfigModified: oldconf.ConfigModified,
+		DBFilePath:     oldconf.DBFilePath,
+	}
 
-	v4conf := V4ServerConf{}
-	v4conf.ICMPTimeout = 1000
-	v4conf.notify = s.onNotify
+	v4conf := V4ServerConf{
+		LeaseDuration: DefaultDHCPLeaseTTL,
+		ICMPTimeout:   DefaultDHCPTimeoutICMP,
+		notify:        s.onNotify,
+	}
 	s.srv4, _ = v4Create(v4conf)
 
-	v6conf := V6ServerConf{}
-	v6conf.notify = s.onNotify
+	v6conf := V6ServerConf{
+		LeaseDuration: DefaultDHCPLeaseTTL,
+		notify:        s.onNotify,
+	}
 	s.srv6, _ = v6Create(v6conf)
 
 	s.conf.ConfigModified()

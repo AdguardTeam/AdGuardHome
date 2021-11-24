@@ -102,6 +102,7 @@ const Dhcp = () => {
             Object.values(DHCP_FORM_NAMES)
                 .forEach((formName) => dispatch(destroy(formName)));
             dispatch(resetDhcp());
+            dispatch(getDhcpStatus());
         }
     };
 

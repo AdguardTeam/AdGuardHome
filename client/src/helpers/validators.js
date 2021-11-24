@@ -68,6 +68,10 @@ export const validateIpv4 = (value) => {
  * @param allValues
  */
 export const validateNotInRange = (value, allValues) => {
+    if (!allValues.v4) {
+        return undefined;
+    }
+
     const { range_start, range_end } = allValues.v4;
 
     if (range_start && validateIpv4(range_start)) {
