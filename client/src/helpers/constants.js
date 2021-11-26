@@ -528,8 +528,14 @@ export const DETAILED_DATE_FORMAT_OPTIONS = {
     month: 'long',
 };
 
-export const CUSTOM_FILTERING_RULES_ID = 0;
-export const SYSTEM_HOSTS_FILTER_ID = -1;
+export const SPECIAL_FILTER_ID = {
+    CUSTOM_FILTERING_RULES: 0,
+    SYSTEM_HOSTS: -1,
+    BLOCKED_SERVICES: -2,
+    PARENTAL: -3,
+    SAFE_BROWSING: -4,
+    SAFE_SEARCH: -5,
+};
 
 export const BLOCK_ACTIONS = {
     BLOCK: 'block',

@@ -108,7 +108,7 @@ func TestSafeBrowsingCache(t *testing.T) {
 }
 
 func TestSBPC_checkErrorUpstream(t *testing.T) {
-	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	d := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
 
 	ups := &aghtest.TestErrUpstream{}
@@ -130,7 +130,7 @@ func TestSBPC_checkErrorUpstream(t *testing.T) {
 }
 
 func TestSBPC(t *testing.T) {
-	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	d := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
 
 	const hostname = "example.org"
@@ -147,22 +147,22 @@ func TestSBPC(t *testing.T) {
 		name      string
 		block     bool
 	}{{
-		testCache: gctx.safebrowsingCache,
+		testCache: d.safebrowsingCache,
 		testFunc:  d.checkSafeBrowsing,
 		name:      "sb_no_block",
 		block:     false,
 	}, {
-		testCache: gctx.safebrowsingCache,
+		testCache: d.safebrowsingCache,
 		testFunc:  d.checkSafeBrowsing,
 		name:      "sb_block",
 		block:     true,
 	}, {
-		testCache: gctx.parentalCache,
+		testCache: d.parentalCache,
 		testFunc:  d.checkParental,
 		name:      "pc_no_block",
 		block:     false,
 	}, {
-		testCache: gctx.parentalCache,
+		testCache: d.parentalCache,
 		testFunc:  d.checkParental,
 		name:      "pc_block",
 		block:     true,
@@ -217,6 +217,6 @@ func TestSBPC(t *testing.T) {
 			assert.Equal(t, 1, ups.RequestsCount())
 		})
 
-		purgeCaches()
+		purgeCaches(d)
 	}
 }

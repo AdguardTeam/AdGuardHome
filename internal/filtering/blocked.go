@@ -239,7 +239,7 @@ func initBlockedServices() {
 	for _, s := range serviceRulesArray {
 		netRules := []*rules.NetworkRule{}
 		for _, text := range s.rules {
-			rule, err := rules.NewNetworkRule(text, 0)
+			rule, err := rules.NewNetworkRule(text, BlockedSvcsListID)
 			if err != nil {
 				log.Error("rules.NewNetworkRule: %s  rule: %s", err, text)
 				continue

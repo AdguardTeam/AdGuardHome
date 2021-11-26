@@ -73,7 +73,7 @@ func TestNewHostsContainer(t *testing.T) {
 				return eventsCh
 			}
 
-			hc, err := NewHostsContainer(testFS, &aghtest.FSWatcher{
+			hc, err := NewHostsContainer(0, testFS, &aghtest.FSWatcher{
 				OnEvents: onEvents,
 				OnAdd:    onAdd,
 				OnClose:  func() (err error) { panic("not implemented") },
@@ -98,7 +98,7 @@ func TestNewHostsContainer(t *testing.T) {
 
 	t.Run("nil_fs", func(t *testing.T) {
 		require.Panics(t, func() {
-			_, _ = NewHostsContainer(nil, &aghtest.FSWatcher{
+			_, _ = NewHostsContainer(0, nil, &aghtest.FSWatcher{
 				// Those shouldn't panic.
 				OnEvents: func() (e <-chan struct{}) { return nil },
 				OnAdd:    func(name string) (err error) { return nil },
@@ -109,7 +109,7 @@ func TestNewHostsContainer(t *testing.T) {
 
 	t.Run("nil_watcher", func(t *testing.T) {
 		require.Panics(t, func() {
-			_, _ = NewHostsContainer(testFS, nil, p)
+			_, _ = NewHostsContainer(0, testFS, nil, p)
 		})
 	})
 
@@ -122,7 +122,7 @@ func TestNewHostsContainer(t *testing.T) {
 			OnClose:  func() (err error) { panic("not implemented") },
 		}
 
-		hc, err := NewHostsContainer(testFS, errWatcher, p)
+		hc, err := NewHostsContainer(0, testFS, errWatcher, p)
 		require.ErrorIs(t, err, errOnAdd)
 
 		assert.Nil(t, hc)
@@ -164,7 +164,7 @@ func TestHostsContainer_Refresh(t *testing.T) {
 		OnClose: func() (err error) { panic("not implemented") },
 	}
 
-	hc, err := NewHostsContainer(testFS, w, dirname)
+	hc, err := NewHostsContainer(0, testFS, w, dirname)
 	require.NoError(t, err)
 
 	checkRefresh := func(t *testing.T, wantHosts *stringutil.Set) {
@@ -291,6 +291,8 @@ func TestHostsContainer_PathsToPatterns(t *testing.T) {
 }
 
 func TestHostsContainer(t *testing.T) {
+	const listID = 1234
+
 	testdata := os.DirFS("./testdata")
 
 	nRewrites := func(t *testing.T, res *urlfilter.DNSResult, n int) (rws []*rules.DNSRewrite) {
@@ -300,6 +302,8 @@ func TestHostsContainer(t *testing.T) {
 		assert.Len(t, rewrites, n)
 
 		for _, rewrite := range rewrites {
+			require.Equal(t, listID, rewrite.FilterListID)
+
 			rw := rewrite.DNSRewrite
 			require.NotNil(t, rw)
 
@@ -382,7 +386,7 @@ func TestHostsContainer(t *testing.T) {
 		OnClose:  func() (err error) { panic("not implemented") },
 	}
 
-	hc, err := NewHostsContainer(testdata, &stubWatcher, "etc_hosts")
+	hc, err := NewHostsContainer(listID, testdata, &stubWatcher, "etc_hosts")
 	require.NoError(t, err)
 
 	for _, tc := range testCases {

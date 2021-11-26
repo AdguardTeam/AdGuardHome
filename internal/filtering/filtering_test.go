@@ -27,11 +27,11 @@ var setts = Settings{
 
 // Helpers.
 
-func purgeCaches() {
+func purgeCaches(d *DNSFilter) {
 	for _, c := range []cache.Cache{
-		gctx.safebrowsingCache,
-		gctx.parentalCache,
-		gctx.safeSearchCache,
+		d.safebrowsingCache,
+		d.parentalCache,
+		d.safeSearchCache,
 	} {
 		if c != nil {
 			c.Clear()
@@ -39,7 +39,7 @@ func purgeCaches() {
 	}
 }
 
-func newForTest(c *Config, filters []Filter) *DNSFilter {
+func newForTest(t testing.TB, c *Config, filters []Filter) *DNSFilter {
 	setts = Settings{
 		ProtectionEnabled: true,
 		FilteringEnabled:  true,
@@ -54,7 +54,8 @@ func newForTest(c *Config, filters []Filter) *DNSFilter {
 		setts.ParentalEnabled = c.ParentalEnabled
 	}
 	d := New(c, filters)
-	purgeCaches()
+	purgeCaches(d)
+
 	return d
 }
 
@@ -105,7 +106,7 @@ func TestEtcHostsMatching(t *testing.T) {
 	filters := []Filter{{
 		ID: 0, Data: []byte(text),
 	}}
-	d := newForTest(nil, filters)
+	d := newForTest(t, nil, filters)
 	t.Cleanup(d.Close)
 
 	d.checkMatchIP(t, "google.com", addr, dns.TypeA)
@@ -170,7 +171,7 @@ func TestSafeBrowsing(t *testing.T) {
 	aghtest.ReplaceLogWriter(t, logOutput)
 	aghtest.ReplaceLogLevel(t, log.DEBUG)
 
-	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	d := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
 	const matching = "wmconvirus.narod.ru"
 	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
@@ -193,7 +194,7 @@ func TestSafeBrowsing(t *testing.T) {
 }
 
 func TestParallelSB(t *testing.T) {
-	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	d := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
 	const matching = "wmconvirus.narod.ru"
 	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
@@ -217,7 +218,7 @@ func TestParallelSB(t *testing.T) {
 // Safe Search.
 
 func TestSafeSearch(t *testing.T) {
-	d := newForTest(&Config{SafeSearchEnabled: true}, nil)
+	d := newForTest(t, &Config{SafeSearchEnabled: true}, nil)
 	t.Cleanup(d.Close)
 	val, ok := d.SafeSearchDomain("www.google.com")
 	require.True(t, ok)
@@ -226,7 +227,9 @@ func TestSafeSearch(t *testing.T) {
 }
 
 func TestCheckHostSafeSearchYandex(t *testing.T) {
-	d := newForTest(&Config{SafeSearchEnabled: true}, nil)
+	d := newForTest(t, &Config{
+		SafeSearchEnabled: true,
+	}, nil)
 	t.Cleanup(d.Close)
 
 	yandexIP := net.IPv4(213, 180, 193, 56)
@@ -249,13 +252,14 @@ func TestCheckHostSafeSearchYandex(t *testing.T) {
 			require.Len(t, res.Rules, 1)
 
 			assert.Equal(t, yandexIP, res.Rules[0].IP)
+			assert.EqualValues(t, SafeSearchListID, res.Rules[0].FilterListID)
 		})
 	}
 }
 
 func TestCheckHostSafeSearchGoogle(t *testing.T) {
 	resolver := &aghtest.TestResolver{}
-	d := newForTest(&Config{
+	d := newForTest(t, &Config{
 		SafeSearchEnabled: true,
 		CustomResolver:    resolver,
 	}, nil)
@@ -282,12 +286,13 @@ func TestCheckHostSafeSearchGoogle(t *testing.T) {
 			require.Len(t, res.Rules, 1)
 
 			assert.Equal(t, ip, res.Rules[0].IP)
+			assert.EqualValues(t, SafeSearchListID, res.Rules[0].FilterListID)
 		})
 	}
 }
 
 func TestSafeSearchCacheYandex(t *testing.T) {
-	d := newForTest(nil, nil)
+	d := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 	const domain = "yandex.ru"
 
@@ -301,7 +306,7 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 
 	yandexIP := net.IPv4(213, 180, 193, 56)
 
-	d = newForTest(&Config{SafeSearchEnabled: true}, nil)
+	d = newForTest(t, &Config{SafeSearchEnabled: true}, nil)
 	t.Cleanup(d.Close)
 
 	res, err = d.CheckHost(domain, dns.TypeA, &setts)
@@ -312,7 +317,7 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 	assert.Equal(t, res.Rules[0].IP, yandexIP)
 
 	// Check cache.
-	cachedValue, isFound := getCachedResult(gctx.safeSearchCache, domain)
+	cachedValue, isFound := getCachedResult(d.safeSearchCache, domain)
 	require.True(t, isFound)
 	require.Len(t, cachedValue.Rules, 1)
 
@@ -321,7 +326,7 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 
 func TestSafeSearchCacheGoogle(t *testing.T) {
 	resolver := &aghtest.TestResolver{}
-	d := newForTest(&Config{
+	d := newForTest(t, &Config{
 		CustomResolver: resolver,
 	}, nil)
 	t.Cleanup(d.Close)
@@ -334,7 +339,7 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 
 	require.Empty(t, res.Rules)
 
-	d = newForTest(&Config{SafeSearchEnabled: true}, nil)
+	d = newForTest(t, &Config{SafeSearchEnabled: true}, nil)
 	t.Cleanup(d.Close)
 	d.resolver = resolver
 
@@ -361,7 +366,7 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 	assert.True(t, res.Rules[0].IP.Equal(ip))
 
 	// Check cache.
-	cachedValue, isFound := getCachedResult(gctx.safeSearchCache, domain)
+	cachedValue, isFound := getCachedResult(d.safeSearchCache, domain)
 	require.True(t, isFound)
 	require.Len(t, cachedValue.Rules, 1)
 
@@ -375,7 +380,7 @@ func TestParentalControl(t *testing.T) {
 	aghtest.ReplaceLogWriter(t, logOutput)
 	aghtest.ReplaceLogLevel(t, log.DEBUG)
 
-	d := newForTest(&Config{ParentalEnabled: true}, nil)
+	d := newForTest(t, &Config{ParentalEnabled: true}, nil)
 	t.Cleanup(d.Close)
 	const matching = "pornhub.com"
 	d.SetParentalUpstream(&aghtest.TestBlockUpstream{
@@ -679,7 +684,7 @@ func TestMatching(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s-%s", tc.name, tc.host), func(t *testing.T) {
 			filters := []Filter{{ID: 0, Data: []byte(tc.rules)}}
-			d := newForTest(nil, filters)
+			d := newForTest(t, nil, filters)
 			t.Cleanup(d.Close)
 
 			res, err := d.CheckHost(tc.host, tc.wantDNSType, &setts)
@@ -705,7 +710,7 @@ func TestWhitelist(t *testing.T) {
 	whiteFilters := []Filter{{
 		ID: 0, Data: []byte(whiteRules),
 	}}
-	d := newForTest(nil, filters)
+	d := newForTest(t, nil, filters)
 
 	err := d.SetFilters(filters, whiteFilters, false)
 	require.NoError(t, err)
@@ -750,7 +755,7 @@ func applyClientSettings(setts *Settings) {
 }
 
 func TestClientSettings(t *testing.T) {
-	d := newForTest(
+	d := newForTest(t,
 		&Config{
 			ParentalEnabled:     true,
 			SafeBrowsingEnabled: false,
@@ -829,7 +834,7 @@ func TestClientSettings(t *testing.T) {
 // Benchmarks.
 
 func BenchmarkSafeBrowsing(b *testing.B) {
-	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	d := newForTest(b, &Config{SafeBrowsingEnabled: true}, nil)
 	b.Cleanup(d.Close)
 	blocked := "wmconvirus.narod.ru"
 	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
@@ -845,7 +850,7 @@ func BenchmarkSafeBrowsing(b *testing.B) {
 }
 
 func BenchmarkSafeBrowsingParallel(b *testing.B) {
-	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	d := newForTest(b, &Config{SafeBrowsingEnabled: true}, nil)
 	b.Cleanup(d.Close)
 	blocked := "wmconvirus.narod.ru"
 	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
@@ -863,7 +868,7 @@ func BenchmarkSafeBrowsingParallel(b *testing.B) {
 }
 
 func BenchmarkSafeSearch(b *testing.B) {
-	d := newForTest(&Config{SafeSearchEnabled: true}, nil)
+	d := newForTest(b, &Config{SafeSearchEnabled: true}, nil)
 	b.Cleanup(d.Close)
 	for n := 0; n < b.N; n++ {
 		val, ok := d.SafeSearchDomain("www.google.com")
@@ -874,7 +879,7 @@ func BenchmarkSafeSearch(b *testing.B) {
 }
 
 func BenchmarkSafeSearchParallel(b *testing.B) {
-	d := newForTest(&Config{SafeSearchEnabled: true}, nil)
+	d := newForTest(b, &Config{SafeSearchEnabled: true}, nil)
 	b.Cleanup(d.Close)
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {

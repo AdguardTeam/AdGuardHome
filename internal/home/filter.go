@@ -711,6 +711,7 @@ func enableFilters(async bool) {
 
 func enableFiltersLocked(async bool) {
 	filters := []filtering.Filter{{
+		ID:   filtering.CustomListID,
 		Data: []byte(strings.Join(config.UserRules, "\n")),
 	}}
 

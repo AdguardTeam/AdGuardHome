@@ -102,6 +102,9 @@ type HostsContainer struct {
 	// embedded to implement MatchRequest and Translate for *HostsContainer.
 	requestMatcher
 
+	// listID is the identifier for the list of generated rules.
+	listID int
+
 	// done is the channel to sign closing the container.
 	done chan struct{}
 
@@ -124,9 +127,11 @@ type HostsContainer struct {
 const ErrNoHostsPaths errors.Error = "no valid paths to hosts files provided"
 
 // NewHostsContainer creates a container of hosts, that watches the paths with
-// w.  paths shouldn't be empty and each of paths should locate either a file or
-// a directory in fsys.  fsys and w must be non-nil.
+// w.  listID is used as an identifier of the underlying rules list.  paths
+// shouldn't be empty and each of paths should locate either a file or a
+// directory in fsys.  fsys and w must be non-nil.
 func NewHostsContainer(
+	listID int,
 	fsys fs.FS,
 	w aghos.FSWatcher,
 	paths ...string,
@@ -149,6 +154,7 @@ func NewHostsContainer(
 		requestMatcher: requestMatcher{
 			stateLock: &sync.RWMutex{},
 		},
+		listID:   listID,
 		done:     make(chan struct{}, 1),
 		updates:  make(chan *netutil.IPMap, 1),
 		fsys:     fsys,
@@ -507,10 +513,9 @@ func (hp *hostsParser) sendUpd(ch chan *netutil.IPMap) {
 }
 
 // newStrg creates a new rules storage from parsed data.
-func (hp *hostsParser) newStrg() (s *filterlist.RuleStorage, err error) {
+func (hp *hostsParser) newStrg(id int) (s *filterlist.RuleStorage, err error) {
 	return filterlist.NewRuleStorage([]filterlist.RuleList{&filterlist.StringRuleList{
-		// TODO(e.burkov):  Make configurable.
-		ID:             -1,
+		ID:             id,
 		RulesText:      hp.rulesBuilder.String(),
 		IgnoreCosmetic: true,
 	}})
@@ -538,7 +543,7 @@ func (hc *HostsContainer) refresh() (err error) {
 	hc.last = hp.table.ShallowClone()
 
 	var rulesStrg *filterlist.RuleStorage
-	if rulesStrg, err = hp.newStrg(); err != nil {
+	if rulesStrg, err = hp.newStrg(hc.listID); err != nil {
 		return fmt.Errorf("initializing rules storage: %w", err)
 	}
 

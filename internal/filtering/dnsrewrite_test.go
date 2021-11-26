@@ -49,7 +49,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 |1.2.3.5.in-addr.arpa^$dnsrewrite=NOERROR;PTR;new-ptr-with-dot.
 `
 
-	f := newForTest(nil, []Filter{{ID: 0, Data: []byte(text)}})
+	f := newForTest(t, nil, []Filter{{ID: 0, Data: []byte(text)}})
 	setts := &Settings{
 		FilteringEnabled: true,
 	}

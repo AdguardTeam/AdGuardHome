@@ -84,7 +84,7 @@ func (d *DNSFilter) checkSafeSearch(
 	}
 
 	// Check cache. Return cached result if it was found
-	cachedValue, isFound := getCachedResult(gctx.safeSearchCache, host)
+	cachedValue, isFound := getCachedResult(d.safeSearchCache, host)
 	if isFound {
 		// atomic.AddUint64(&gctx.stats.Safesearch.CacheHits, 1)
 		log.Tracef("SafeSearch: found in cache: %s", host)
@@ -99,12 +99,14 @@ func (d *DNSFilter) checkSafeSearch(
 	res = Result{
 		IsFiltered: true,
 		Reason:     FilteredSafeSearch,
-		Rules:      []*ResultRule{{}},
+		Rules: []*ResultRule{{
+			FilterListID: SafeSearchListID,
+		}},
 	}
 
 	if ip := net.ParseIP(safeHost); ip != nil {
 		res.Rules[0].IP = ip
-		valLen := d.setCacheResult(gctx.safeSearchCache, host, res)
+		valLen := d.setCacheResult(d.safeSearchCache, host, res)
 		log.Debug("SafeSearch: stored in cache: %s (%d bytes)", host, valLen)
 
 		return res, nil
@@ -123,7 +125,7 @@ func (d *DNSFilter) checkSafeSearch(
 
 		res.Rules[0].IP = ip
 
-		l := d.setCacheResult(gctx.safeSearchCache, host, res)
+		l := d.setCacheResult(d.safeSearchCache, host, res)
 		log.Debug("SafeSearch: stored in cache: %s (%d bytes)", host, l)
 
 		return res, nil

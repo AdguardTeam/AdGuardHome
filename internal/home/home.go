@@ -244,6 +244,7 @@ func setupHostsContainer() (err error) {
 	}
 
 	Context.etcHosts, err = aghnet.NewHostsContainer(
+		filtering.SysHostsListID,
 		aghos.RootDirFS(),
 		Context.hostsWatcher,
 		aghnet.DefaultHostsPaths()...,

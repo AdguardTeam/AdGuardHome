@@ -318,7 +318,7 @@ func (d *DNSFilter) checkSafeBrowsing(
 	sctx := &sbCtx{
 		host:      host,
 		svc:       "SafeBrowsing",
-		cache:     gctx.safebrowsingCache,
+		cache:     d.safebrowsingCache,
 		cacheTime: d.Config.CacheTime,
 	}
 
@@ -326,7 +326,8 @@ func (d *DNSFilter) checkSafeBrowsing(
 		IsFiltered: true,
 		Reason:     FilteredSafeBrowsing,
 		Rules: []*ResultRule{{
-			Text: "adguard-malware-shavar",
+			Text:         "adguard-malware-shavar",
+			FilterListID: SafeBrowsingListID,
 		}},
 	}
 
@@ -351,7 +352,7 @@ func (d *DNSFilter) checkParental(
 	sctx := &sbCtx{
 		host:      host,
 		svc:       "Parental",
-		cache:     gctx.parentalCache,
+		cache:     d.parentalCache,
 		cacheTime: d.Config.CacheTime,
 	}
 
@@ -359,7 +360,8 @@ func (d *DNSFilter) checkParental(
 		IsFiltered: true,
 		Reason:     FilteredParental,
 		Rules: []*ResultRule{{
-			Text: "parental CATEGORY_BLACKLISTED",
+			Text:         "parental CATEGORY_BLACKLISTED",
+			FilterListID: ParentalListID,
 		}},
 	}
 

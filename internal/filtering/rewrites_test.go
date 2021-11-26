@@ -12,7 +12,7 @@ import (
 // TODO(e.burkov): All the tests in this file may and should me merged together.
 
 func TestRewrites(t *testing.T) {
-	d := newForTest(nil, nil)
+	d := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 
 	d.Rewrites = []RewriteEntry{{
@@ -163,7 +163,7 @@ func TestRewrites(t *testing.T) {
 }
 
 func TestRewritesLevels(t *testing.T) {
-	d := newForTest(nil, nil)
+	d := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 	// Exact host, wildcard L2, wildcard L3.
 	d.Rewrites = []RewriteEntry{{
@@ -209,7 +209,7 @@ func TestRewritesLevels(t *testing.T) {
 }
 
 func TestRewritesExceptionCNAME(t *testing.T) {
-	d := newForTest(nil, nil)
+	d := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 	// Wildcard and exception for a sub-domain.
 	d.Rewrites = []RewriteEntry{{
@@ -257,7 +257,7 @@ func TestRewritesExceptionCNAME(t *testing.T) {
 }
 
 func TestRewritesExceptionIP(t *testing.T) {
-	d := newForTest(nil, nil)
+	d := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 	// Exception for AAAA record.
 	d.Rewrites = []RewriteEntry{{

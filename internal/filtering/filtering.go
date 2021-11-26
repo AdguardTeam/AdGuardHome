@@ -4,6 +4,7 @@ package filtering
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
@@ -16,12 +17,25 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
+)
+
+// The IDs of built-in filter lists.
+//
+// Keep in sync with client/src/helpers/contants.js.
+const (
+	CustomListID = -iota
+	SysHostsListID
+	BlockedSvcsListID
+	ParentalListID
+	SafeBrowsingListID
+	SafeSearchListID
 )
 
 // ServiceEntry - blocked service array element
@@ -124,6 +138,10 @@ type DNSFilter struct {
 	safeBrowsingServer   string // access via methods
 	parentalUpstream     upstream.Upstream
 	safeBrowsingUpstream upstream.Upstream
+
+	safebrowsingCache cache.Cache
+	parentalCache     cache.Cache
+	safeSearchCache   cache.Cache
 
 	Config // for direct access by library users, even a = assignment
 	// confLock protects Config.
@@ -339,14 +357,6 @@ func (d *DNSFilter) reset() {
 		}
 	}
 }
-
-type dnsFilterContext struct {
-	safebrowsingCache cache.Cache
-	parentalCache     cache.Cache
-	safeSearchCache   cache.Cache
-}
-
-var gctx dnsFilterContext
 
 // ResultRule contains information about applied rules.
 type ResultRule struct {
@@ -598,70 +608,69 @@ func matchBlockedServicesRules(
 // Adding rule and matching against the rules
 //
 
-// fileExists returns true if file exists.
-func fileExists(fn string) bool {
-	_, err := os.Stat(fn)
-	return err == nil
-}
-
-func createFilteringEngine(filters []Filter) (*filterlist.RuleStorage, *urlfilter.DNSEngine, error) {
-	listArray := []filterlist.RuleList{}
+func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
+	lists := make([]filterlist.RuleList, 0, len(filters))
 	for _, f := range filters {
-		var list filterlist.RuleList
-
-		if f.ID == 0 {
-			list = &filterlist.StringRuleList{
-				ID:             0,
+		switch id := int(f.ID); {
+		case len(f.Data) != 0:
+			lists = append(lists, &filterlist.StringRuleList{
+				ID:             id,
 				RulesText:      string(f.Data),
 				IgnoreCosmetic: true,
-			}
-		} else if !fileExists(f.FilePath) {
-			list = &filterlist.StringRuleList{
-				ID:             int(f.ID),
-				IgnoreCosmetic: true,
-			}
-		} else if runtime.GOOS == "windows" {
-			// On Windows we don't pass a file to urlfilter because
-			// it's difficult to update this file while it's being
-			// used.
-			data, err := os.ReadFile(f.FilePath)
-			if err != nil {
-				return nil, nil, fmt.Errorf("reading filter content: %w", err)
+			})
+		case f.FilePath == "":
+			continue
+		case runtime.GOOS == "windows":
+			// On Windows we don't pass a file to urlfilter because it's
+			// difficult to update this file while it's being used.
+			var data []byte
+			data, err = os.ReadFile(f.FilePath)
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			} else if err != nil {
+				return nil, fmt.Errorf("reading filter content: %w", err)
 			}
 
-			list = &filterlist.StringRuleList{
-				ID:             int(f.ID),
+			lists = append(lists, &filterlist.StringRuleList{
+				ID:             id,
 				RulesText:      string(data),
 				IgnoreCosmetic: true,
+			})
+		default:
+			var list *filterlist.FileRuleList
+			list, err = filterlist.NewFileRuleList(id, f.FilePath, true)
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			} else if err != nil {
+				return nil, fmt.Errorf("creating file rule list with %q: %w", f.FilePath, err)
 			}
-		} else {
-			var err error
-			list, err = filterlist.NewFileRuleList(int(f.ID), f.FilePath, true)
-			if err != nil {
-				return nil, nil, fmt.Errorf("filterlist.NewFileRuleList(): %s: %w", f.FilePath, err)
-			}
+
+			lists = append(lists, list)
 		}
-		listArray = append(listArray, list)
 	}
 
-	rulesStorage, err := filterlist.NewRuleStorage(listArray)
+	rs, err = filterlist.NewRuleStorage(lists)
 	if err != nil {
-		return nil, nil, fmt.Errorf("filterlist.NewRuleStorage(): %w", err)
+		return nil, fmt.Errorf("creating rule stroage: %w", err)
 	}
-	filteringEngine := urlfilter.NewDNSEngine(rulesStorage)
-	return rulesStorage, filteringEngine, nil
+
+	return rs, nil
 }
 
 // Initialize urlfilter objects.
 func (d *DNSFilter) initFiltering(allowFilters, blockFilters []Filter) error {
-	rulesStorage, filteringEngine, err := createFilteringEngine(blockFilters)
+	rulesStorage, err := newRuleStorage(blockFilters)
 	if err != nil {
 		return err
 	}
-	rulesStorageAllow, filteringEngineAllow, err := createFilteringEngine(allowFilters)
+
+	rulesStorageAllow, err := newRuleStorage(allowFilters)
 	if err != nil {
 		return err
 	}
+
+	filteringEngine := urlfilter.NewDNSEngine(rulesStorage)
+	filteringEngineAllow := urlfilter.NewDNSEngine(rulesStorageAllow)
 
 	func() {
 		d.engineLock.Lock()
@@ -855,41 +864,35 @@ func makeResult(matchedRules []rules.Rule, reason Reason) (res Result) {
 	}
 }
 
-// InitModule manually initializes blocked services map.
+// InitModule manually initializes blocked services map using blockedSvcListID
+// as list ID for the rules.
 func InitModule() {
 	initBlockedServices()
 }
 
 // New creates properly initialized DNS Filter that is ready to be used.
-func New(c *Config, blockFilters []Filter) *DNSFilter {
-	var resolver Resolver = net.DefaultResolver
+func New(c *Config, blockFilters []Filter) (d *DNSFilter) {
+	d = &DNSFilter{
+		resolver: net.DefaultResolver,
+	}
 	if c != nil {
-		cacheConf := cache.Config{
+
+		d.safebrowsingCache = cache.New(cache.Config{
 			EnableLRU: true,
-		}
-
-		if gctx.safebrowsingCache == nil {
-			cacheConf.MaxSize = c.SafeBrowsingCacheSize
-			gctx.safebrowsingCache = cache.New(cacheConf)
-		}
-
-		if gctx.safeSearchCache == nil {
-			cacheConf.MaxSize = c.SafeSearchCacheSize
-			gctx.safeSearchCache = cache.New(cacheConf)
-		}
-
-		if gctx.parentalCache == nil {
-			cacheConf.MaxSize = c.ParentalCacheSize
-			gctx.parentalCache = cache.New(cacheConf)
-		}
+			MaxSize:   c.SafeBrowsingCacheSize,
+		})
+		d.safeSearchCache = cache.New(cache.Config{
+			EnableLRU: true,
+			MaxSize:   c.SafeSearchCacheSize,
+		})
+		d.parentalCache = cache.New(cache.Config{
+			EnableLRU: true,
+			MaxSize:   c.ParentalCacheSize,
+		})
 
 		if c.CustomResolver != nil {
-			resolver = c.CustomResolver
+			d.resolver = c.CustomResolver
 		}
-	}
-
-	d := &DNSFilter{
-		resolver: resolver,
 	}
 
 	d.hostCheckers = []hostChecker{{

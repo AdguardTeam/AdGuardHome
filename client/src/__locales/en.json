@@ -625,5 +625,7 @@
     "filter_allowlist": "WARNING: This action also will exclude the rule \"{{disallowed_rule}}\" from the list of allowed clients.",
     "last_rule_in_allowlist": "Cannot disallow this client because excluding the rule \"{{disallowed_rule}}\" will DISABLE \"Allowed clients\" list.",
     "experimental": "Experimental",
-    "use_saved_key": "Use the previously saved key"
+    "use_saved_key": "Use the previously saved key",
+    "parental_control": "Parental control",
+    "safe_browsing": "Safe browsing"
 }
