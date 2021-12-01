@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/fs"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
@@ -13,17 +12,14 @@ import (
 // FileWalker is the signature of a function called for files in the file tree.
 // As opposed to filepath.Walk it only walk the files (not directories) matching
 // the provided pattern and those returned by function itself.  All patterns
-// should be valid for fs.Glob.  If cont is false, the walking terminates.  Each
-// opened file is also limited for reading to MaxWalkedFileSize.
+// should be valid for fs.Glob.  If FileWalker returns false for cont then
+// walking terminates.  Prefer using bufio.Scanner to read the r since the input
+// is not limited.
 //
-// TODO(e.burkov, a.garipov): Move into another package like aghfs.
+// TODO(e.burkov, a.garipov):  Move into another package like aghfs.
 //
 // TODO(e.burkov):  Think about passing filename or any additional data.
 type FileWalker func(r io.Reader) (patterns []string, cont bool, err error)
-
-// MaxWalkedFileSize is the maximum length of the file that FileWalker can
-// check.
-const MaxWalkedFileSize = 1024 * 1024
 
 // checkFile tries to open and process a single file located on sourcePath in
 // the specified fsys.  The path is skipped if it's a directory.
@@ -48,20 +44,12 @@ func checkFile(
 	var fi fs.FileInfo
 	if fi, err = f.Stat(); err != nil {
 		return nil, true, err
-	}
-	if fi.IsDir() {
+	} else if fi.IsDir() {
 		// Skip the directories.
 		return nil, true, nil
 	}
 
-	var r io.Reader
-	// Ignore the error since LimitReader function returns error only if passed
-	// limit value is less than zero, but the constant used.
-	//
-	// TODO(e.burkov):  Make variable.
-	r, _ = aghio.LimitReader(f, MaxWalkedFileSize)
-
-	return c(r)
+	return c(f)
 }
 
 // handlePatterns parses the patterns in fsys and ignores duplicates using
