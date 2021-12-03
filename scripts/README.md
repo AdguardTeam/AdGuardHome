@@ -6,6 +6,8 @@
 
 Run `make init` from the project root.
 
+
+
 ##  `querylog/`: Query Log Helpers
 
  ###  Usage
@@ -14,11 +16,15 @@ Run `make init` from the project root.
  *  `npm run anonymize <source> <dst>`: read the query log from the `<source>`
     and write anonymized version to `<dst>`.
 
+
+
 ##  `make/`: Makefile Scripts
 
 The release channels are: `development` (the default), `edge`, `beta`, and
 `release`.  If verbosity levels aren't documented here, there are only two: `0`,
 don't print anything, and `1`, be verbose.
+
+
 
  ###  `build-docker.sh`: Build A Multi-Architecture Docker Image
 
@@ -37,6 +43,8 @@ Optional environment:
     `type=image,name=${DOCKER_IMAGE_NAME},push=false`.
  *  `SUDO`: allow users to use `sudo` or `doas` with `docker`.  By default none
     is used.
+
+
 
  ###  `build-release.sh`: Build A Release For All Platforms
 
@@ -67,6 +75,8 @@ Optional environment:
  *  `VERSION`: release version.  Will be set by `version.sh` if it is unset or
     if it has the default `Makefile` value of `v0.0.0`.
 
+
+
  ###  `clean.sh`: Cleanup
 
 Optional environment:
@@ -74,6 +84,8 @@ Optional environment:
 
 Required environment:
  *  `DIST_DIR`: the directory where a release has previously been built.
+
+
 
  ###  `go-build.sh`: Build The Backend
 
@@ -95,6 +107,8 @@ Optional environment:
 Required environment:
  *  `CHANNEL`: release channel, see above.
 
+
+
  ###  `go-deps.sh`: Install Backend Dependencies
 
 Optional environment:
@@ -102,6 +116,8 @@ Optional environment:
  *  `VERBOSE`: verbosity level.  `1` shows every command that is run and every
     Go package that is processed.  `2` also shows subcommands and environment.
     The default value is `0`, don't be verbose.
+
+
 
  ###  `go-lint.sh`: Run Backend Static Analyzers
 
@@ -113,6 +129,8 @@ Optional environment:
  *  `GO`: set an alternative name for the Go compiler.
  *  `VERBOSE`: verbosity level.  `1` shows every command that is run.  `2` also
     shows subcommands.  The default value is `0`, don't be verbose.
+
+
 
  ###  `go-test.sh`: Run Backend Tests
 
@@ -126,6 +144,8 @@ Optional environment:
     Go package that is processed.  `2` also shows subcommands.  The default
     value is `0`, don't be verbose.
 
+
+
  ###  `go-tools.sh`: Install Backend Tooling
 
 Installs the Go static analysis and other tools into `${PWD}/bin`.  Either add
@@ -135,15 +155,21 @@ directly, or use the commands through `make` (for example, `make go-lint`).
 Optional environment:
  *  `GO`: set an alternative name for the Go compiler.
 
+
+
  ###  `version.sh`: Generate And Print The Current Version
 
 Required environment:
  *  `CHANNEL`: release channel, see above.
 
+
+
 ##  `snap/`: Snap GUI Files
 
 App icons (see https://github.com/AdguardTeam/AdGuardHome/pull/1836), Snap
 manifest file templates, and helper scripts.
+
+
 
 ##  `translations/`: Twosky Integration Script
 
@@ -157,6 +183,12 @@ manifest file templates, and helper scripts.
 
 After the download you'll find the output locales in the `client/src/__locales/`
 directory.
+
+Optional environment:
+ *  `UPLOAD_LANGUAGE`: set an alternative language for `locales:upload` to
+    upload.
+
+
 
 ##  `whotracksme/`: Whotracks.me Database Converter
 

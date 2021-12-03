@@ -3,7 +3,7 @@ const fs = require('fs');
 const request = require('request-promise');
 const twoskyConfig = require('../../.twosky.json')[0];
 
-const { project_id: TWOSKY_PROJECT_ID, base_locale: LANGUAGE } = twoskyConfig;
+const { project_id: TWOSKY_PROJECT_ID, base_locale: DEFAULT_LANGUAGE } = twoskyConfig;
 const LOCALES_DIR = '../../client/src/__locales';
 const BASE_FILE = 'en.json';
 const TWOSKY_URI = process.env.TWOSKY_URI;
@@ -12,13 +12,16 @@ const TWOSKY_URI = process.env.TWOSKY_URI;
  * Prepare post params
  */
 const getRequestData = (url, projectId) => {
+    const language = process.env.UPLOAD_LANGUAGE || DEFAULT_LANGUAGE;
     const formData = {
         format: 'json',
-        language: LANGUAGE,
+        language: language,
         filename: BASE_FILE,
         project: projectId,
-        file: fs.createReadStream(path.resolve(LOCALES_DIR, `${LANGUAGE}.json`)),
+        file: fs.createReadStream(path.resolve(LOCALES_DIR, `${language}.json`)),
     };
+
+    console.log(`uploading ${language}`);
 
     return {
         url: `${url}/upload`,
