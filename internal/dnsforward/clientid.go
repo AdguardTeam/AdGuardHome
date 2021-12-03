@@ -2,7 +2,6 @@ package dnsforward
 
 import (
 	"crypto/tls"
-	"encoding/binary"
 	"fmt"
 	"path"
 	"strings"
@@ -171,20 +170,4 @@ func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string
 	}
 
 	return clientID, nil
-}
-
-// processClientID puts the clientID into the DNS context, if there is one.
-func (s *Server) processClientID(dctx *dnsContext) (rc resultCode) {
-	pctx := dctx.proxyCtx
-
-	var key [8]byte
-	binary.BigEndian.PutUint64(key[:], pctx.RequestID)
-	clientIDData := s.clientIDCache.Get(key[:])
-	if clientIDData == nil {
-		return resultCodeSuccess
-	}
-
-	dctx.clientID = string(clientIDData)
-
-	return resultCodeSuccess
 }
