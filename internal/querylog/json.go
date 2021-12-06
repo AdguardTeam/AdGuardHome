@@ -2,46 +2,30 @@ package querylog
 
 import (
 	"fmt"
-	"net"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
 	"golang.org/x/net/idna"
 )
 
 // TODO(a.garipov): Use a proper structured approach here.
 
-// Get Client IP address
-func (l *queryLog) getClientIP(ip net.IP) (clientIP net.IP) {
-	if l.conf.AnonymizeClientIP && ip != nil {
-		const AnonymizeClientIPv4Mask = 16
-		const AnonymizeClientIPv6Mask = 112
-
-		if ip.To4() != nil {
-			return ip.Mask(net.CIDRMask(AnonymizeClientIPv4Mask, 32))
-		}
-
-		return ip.Mask(net.CIDRMask(AnonymizeClientIPv6Mask, 128))
-	}
-
-	return ip
-}
-
 // jobject is a JSON object alias.
 type jobject = map[string]interface{}
 
 // entriesToJSON converts query log entries to JSON.
 func (l *queryLog) entriesToJSON(entries []*logEntry, oldest time.Time) (res jobject) {
-	data := []jobject{}
+	data := make([]jobject, 0, len(entries))
 
-	// the elements order is already reversed (from newer to older)
-	for i := 0; i < len(entries); i++ {
-		entry := entries[i]
-		jsonEntry := l.logEntryToJSONEntry(entry)
+	// The elements order is already reversed to be from newer to older.
+	for _, entry := range entries {
+		jsonEntry := l.entryToJSON(entry, l.anonymizer.Load())
 		data = append(data, jsonEntry)
 	}
 
@@ -56,7 +40,7 @@ func (l *queryLog) entriesToJSON(entries []*logEntry, oldest time.Time) (res job
 	return res
 }
 
-func (l *queryLog) logEntryToJSONEntry(entry *logEntry) (jsonEntry jobject) {
+func (l *queryLog) entryToJSON(entry *logEntry, anonFunc aghnet.IPMutFunc) (jsonEntry jobject) {
 	var msg *dns.Msg
 
 	if len(entry.Answer) > 0 {
@@ -81,15 +65,20 @@ func (l *queryLog) logEntryToJSONEntry(entry *logEntry) (jsonEntry jobject) {
 		log.Debug("translating %q into unicode: %s", hostname, err)
 	}
 
+	eip := netutil.CloneIP(entry.IP)
+	anonFunc(eip)
+
 	jsonEntry = jobject{
 		"reason":       entry.Result.Reason.String(),
 		"elapsedMs":    strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
 		"time":         entry.Time.Format(time.RFC3339Nano),
-		"client":       l.getClientIP(entry.IP),
-		"client_info":  entry.client,
+		"client":       eip,
 		"client_proto": entry.ClientProto,
 		"upstream":     entry.Upstream,
 		"question":     question,
+	}
+	if eip.Equal(entry.IP) {
+		jsonEntry["client_info"] = entry.client
 	}
 
 	if entry.ClientID != "" {

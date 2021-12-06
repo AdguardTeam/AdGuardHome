@@ -26,11 +26,13 @@ const (
 
 // statsCtx - global context
 type statsCtx struct {
+	// mu protects unit.
+	mu *sync.Mutex
+	// current is the actual statistics collection result.
+	current *unit
+
 	db   *bolt.DB
 	conf *Config
-
-	unit     *unit      // the current unit
-	unitLock sync.Mutex // protect 'unit'
 }
 
 // data for 1 time unit
@@ -66,7 +68,9 @@ type unitDB struct {
 }
 
 func createObject(conf Config) (s *statsCtx, err error) {
-	s = &statsCtx{}
+	s = &statsCtx{
+		mu: &sync.Mutex{},
+	}
 	if !checkInterval(conf.LimitDays) {
 		conf.LimitDays = 1
 	}
@@ -112,7 +116,7 @@ func createObject(conf Config) (s *statsCtx, err error) {
 	if udb != nil {
 		deserialize(&u, udb)
 	}
-	s.unit = &u
+	s.current = &u
 
 	log.Debug("stats: initialized")
 
@@ -178,11 +182,13 @@ func (s *statsCtx) dbOpen() bool {
 
 // Atomically swap the currently active unit with a new value
 // Return old value
-func (s *statsCtx) swapUnit(new *unit) *unit {
-	s.unitLock.Lock()
-	u := s.unit
-	s.unit = new
-	s.unitLock.Unlock()
+func (s *statsCtx) swapUnit(new *unit) (u *unit) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	u = s.current
+	s.current = new
+
 	return u
 }
 
@@ -250,6 +256,13 @@ func unitNameToID(name []byte) (id uint32, ok bool) {
 	return uint32(binary.BigEndian.Uint64(name)), true
 }
 
+func (s *statsCtx) ongoing() (u *unit) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.current
+}
+
 // Flush the current unit to DB and delete an old unit when a new hour is started
 // If a unit must be flushed:
 // . lock DB
@@ -260,10 +273,7 @@ func unitNameToID(name []byte) (id uint32, ok bool) {
 // . unlock DB
 func (s *statsCtx) periodicFlush() {
 	for {
-		s.unitLock.Lock()
-		ptr := s.unit
-		s.unitLock.Unlock()
-
+		ptr := s.ongoing()
 		if ptr == nil {
 			break
 		}
@@ -491,22 +501,6 @@ func (s *statsCtx) clear() {
 	log.Debug("stats: cleared")
 }
 
-// Get Client IP address
-func (s *statsCtx) getClientIP(ip net.IP) (clientIP net.IP) {
-	if s.conf.AnonymizeClientIP && ip != nil {
-		const AnonymizeClientIP4Mask = 16
-		const AnonymizeClientIP6Mask = 112
-
-		if ip.To4() != nil {
-			return ip.Mask(net.CIDRMask(AnonymizeClientIP4Mask, 32))
-		}
-
-		return ip.Mask(net.CIDRMask(AnonymizeClientIP6Mask, 128))
-	}
-
-	return ip
-}
-
 func (s *statsCtx) Update(e Entry) {
 	if s.conf.limit == 0 {
 		return
@@ -521,14 +515,13 @@ func (s *statsCtx) Update(e Entry) {
 
 	clientID := e.Client
 	if ip := net.ParseIP(clientID); ip != nil {
-		ip = s.getClientIP(ip)
 		clientID = ip.String()
 	}
 
-	s.unitLock.Lock()
-	defer s.unitLock.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	u := s.unit
+	u := s.current
 
 	u.nResult[e.Result]++
 
@@ -549,10 +542,8 @@ func (s *statsCtx) loadUnits(limit uint32) ([]*unitDB, uint32) {
 		return nil, 0
 	}
 
-	s.unitLock.Lock()
-	curUnit := serialize(s.unit)
-	curID := s.unit.id
-	s.unitLock.Unlock()
+	cur := s.ongoing()
+	curID := cur.id
 
 	// Per-hour units.
 	units := []*unitDB{}
@@ -568,7 +559,7 @@ func (s *statsCtx) loadUnits(limit uint32) ([]*unitDB, uint32) {
 
 	_ = tx.Rollback()
 
-	units = append(units, curUnit)
+	units = append(units, serialize(cur))
 
 	if len(units) != int(limit) {
 		log.Fatalf("len(units) != limit: %d %d", len(units), limit)

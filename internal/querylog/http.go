@@ -3,6 +3,7 @@ package querylog
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"golang.org/x/net/idna"
 )
 
@@ -88,23 +90,59 @@ func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// anonymizeIPSlow masks ip to anonymize the client if the ip is a valid one.
+// It only exists in purposes of benchmark demonstration.
+func anonymizeIPSlow(ip net.IP) {
+	if ip4 := ip.To4(); ip4 != nil {
+		copy(ip4[net.IPv4len-2:], []byte{0, 0})
+	} else if len(ip) == net.IPv6len {
+		copy(ip[net.IPv6len-10:], []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	}
+}
+
+// AnonymizeIP masks ip to anonymize the client if the ip is a valid one.
+func AnonymizeIP(ip net.IP) {
+	// We use an assignment operator here since it compiles into more efficient
+	// code than copy().  See BenchmarkAnonymizeIP.
+	if ip4 := ip.To4(); ip4 != nil {
+		ip4[net.IPv4len-2], ip4[net.IPv4len-1] = 0, 0
+	} else if len(ip) == net.IPv6len {
+		ip[net.IPv6len-10],
+			ip[net.IPv6len-9],
+			ip[net.IPv6len-8],
+			ip[net.IPv6len-7],
+			ip[net.IPv6len-6],
+			ip[net.IPv6len-5],
+			ip[net.IPv6len-4],
+			ip[net.IPv6len-3],
+			ip[net.IPv6len-2],
+			ip[net.IPv6len-1] =
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	}
+}
+
 // Set configuration
 func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) {
-	d := qlogConfig{}
-	req, err := jsonutil.DecodeObject(&d, r.Body)
+	d := &qlogConfig{}
+	req, err := jsonutil.DecodeObject(d, r.Body)
 	if err != nil {
 		httpError(r, w, http.StatusBadRequest, "%s", err)
 		return
 	}
 
-	ivl := time.Duration(24*d.Interval) * time.Hour
+	ivl := time.Duration(float64(timeutil.Day) * d.Interval)
 	if req.Exists("interval") && !checkInterval(ivl) {
 		httpError(r, w, http.StatusBadRequest, "Unsupported interval")
 		return
 	}
 
+	defer l.conf.ConfigModified()
+
 	l.lock.Lock()
-	// copy data, modify it, then activate.  Other threads (readers) don't need to use this lock.
+	defer l.lock.Unlock()
+
+	// Copy data, modify it, then activate.  Other threads (readers) don't need
+	// to use this lock.
 	conf := *l.conf
 	if req.Exists("enabled") {
 		conf.Enabled = d.Enabled
@@ -113,12 +151,13 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 		conf.RotationIvl = ivl
 	}
 	if req.Exists("anonymize_client_ip") {
-		conf.AnonymizeClientIP = d.AnonymizeClientIP
+		if conf.AnonymizeClientIP = d.AnonymizeClientIP; conf.AnonymizeClientIP {
+			l.anonymizer.Store(AnonymizeIP)
+		} else {
+			l.anonymizer.Store(nil)
+		}
 	}
 	l.conf = &conf
-	l.lock.Unlock()
-
-	l.conf.ConfigModified()
 }
 
 // "value" -> value, return TRUE

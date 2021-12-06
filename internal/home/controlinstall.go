@@ -270,14 +270,12 @@ func copyInstallSettings(dst, src *configuration) {
 // shutdownTimeout is the timeout for shutting HTTP server down operation.
 const shutdownTimeout = 5 * time.Second
 
-func shutdownSrv(ctx context.Context, cancel context.CancelFunc, srv *http.Server) {
+func shutdownSrv(ctx context.Context, srv *http.Server) {
 	defer log.OnPanic("")
 
 	if srv == nil {
 		return
 	}
-
-	defer cancel()
 
 	err := srv.Shutdown(ctx)
 	if err != nil {
@@ -354,14 +352,22 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		f.Flush()
 	}
 
-	// Method http.(*Server).Shutdown needs to be called in a separate
-	// goroutine and with its own context, because it waits until all
-	// requests are handled and will be blocked by it's own caller.
-	if restartHTTP {
-		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-		go shutdownSrv(ctx, cancel, web.httpServer)
-		go shutdownSrv(ctx, cancel, web.httpServerBeta)
+	if !restartHTTP {
+		return
 	}
+
+	// Method http.(*Server).Shutdown needs to be called in a separate goroutine
+	// and with its own context, because it waits until all requests are handled
+	// and will be blocked by it's own caller.
+	go func(timeout time.Duration) {
+		defer log.OnPanic("web")
+
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+
+		shutdownSrv(ctx, web.httpServer)
+		shutdownSrv(ctx, web.httpServerBeta)
+	}(shutdownTimeout)
 }
 
 // decodeApplyConfigReq decodes the configuration, validates some parameters,

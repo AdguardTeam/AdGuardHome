@@ -151,7 +151,8 @@ func (web *Web) TLSConfigChanged(ctx context.Context, tlsConf tlsConfigSettings)
 	if web.httpsServer.server != nil {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, shutdownTimeout)
-		shutdownSrv(ctx, cancel, web.httpsServer.server)
+		shutdownSrv(ctx, web.httpsServer.server)
+		cancel()
 	}
 
 	web.httpsServer.enabled = enabled
@@ -222,10 +223,11 @@ func (web *Web) Close(ctx context.Context) {
 
 	var cancel context.CancelFunc
 	ctx, cancel = context.WithTimeout(ctx, shutdownTimeout)
+	defer cancel()
 
-	shutdownSrv(ctx, cancel, web.httpsServer.server)
-	shutdownSrv(ctx, cancel, web.httpServer)
-	shutdownSrv(ctx, cancel, web.httpServerBeta)
+	shutdownSrv(ctx, web.httpsServer.server)
+	shutdownSrv(ctx, web.httpServer)
+	shutdownSrv(ctx, web.httpServerBeta)
 
 	log.Info("stopped http server")
 }

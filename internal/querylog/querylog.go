@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -67,6 +68,9 @@ type Config struct {
 	// AnonymizeClientIP tells if the query log should anonymize clients' IP
 	// addresses.
 	AnonymizeClientIP bool
+
+	// Anonymizer proccesses the IP addresses to anonymize those if needed.
+	Anonymizer *aghnet.IPMut
 }
 
 // AddParams - parameters for Add()
@@ -115,7 +119,8 @@ func newQueryLog(conf Config) (l *queryLog) {
 	l = &queryLog{
 		findClient: findClient,
 
-		logFile: filepath.Join(conf.BaseDir, queryLogFileName),
+		logFile:    filepath.Join(conf.BaseDir, queryLogFileName),
+		anonymizer: conf.Anonymizer,
 	}
 
 	l.conf = &Config{}

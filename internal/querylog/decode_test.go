@@ -244,3 +244,59 @@ func TestDecodeLogEntry_backwardCompatability(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkAnonymizeIP(b *testing.B) {
+	benchCases := []struct {
+		name string
+		ip   net.IP
+		want net.IP
+	}{{
+		name: "v4",
+		ip:   net.IP{1, 2, 3, 4},
+		want: net.IP{1, 2, 0, 0},
+	}, {
+		name: "v4_mapped",
+		ip:   net.IP{1, 2, 3, 4}.To16(),
+		want: net.IP{1, 2, 0, 0}.To16(),
+	}, {
+		name: "v6",
+		ip: net.IP{
+			0xa, 0xb, 0x0, 0x0,
+			0x0, 0xb, 0xa, 0x9,
+			0x8, 0x7, 0x6, 0x5,
+			0x4, 0x3, 0x2, 0x1,
+		},
+		want: net.IP{
+			0xa, 0xb, 0x0, 0x0,
+			0x0, 0xb, 0x0, 0x0,
+			0x0, 0x0, 0x0, 0x0,
+			0x0, 0x0, 0x0, 0x0,
+		},
+	}, {
+		name: "invalid",
+		ip:   net.IP{1, 2, 3},
+		want: net.IP{1, 2, 3},
+	}}
+
+	for _, bc := range benchCases {
+		b.Run(bc.name, func(b *testing.B) {
+			b.ReportAllocs()
+
+			for i := 0; i < b.N; i++ {
+				AnonymizeIP(bc.ip)
+			}
+
+			assert.Equal(b, bc.want, bc.ip)
+		})
+
+		b.Run(bc.name+"_slow", func(b *testing.B) {
+			b.ReportAllocs()
+
+			for i := 0; i < b.N; i++ {
+				anonymizeIPSlow(bc.ip)
+			}
+
+			assert.Equal(b, bc.want, bc.ip)
+		})
+	}
+}

@@ -122,6 +122,8 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- Incomplete propagation of the client's IP anonymization setting to the
+  statistics ([#3890]).
 - Incorrect `$dnsrewrite` results for entries from the operating system's hosts
   file ([#3815]).
 - Matching against rules with `|` at the end of the domain name ([#3371]).
@@ -222,6 +224,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3707]: https://github.com/AdguardTeam/AdGuardHome/issues/3707
 [#3744]: https://github.com/AdguardTeam/AdGuardHome/issues/3744
 [#3815]: https://github.com/AdguardTeam/AdGuardHome/issues/3815
+[#3890]: https://github.com/AdguardTeam/AdGuardHome/issues/3890
 
 
 

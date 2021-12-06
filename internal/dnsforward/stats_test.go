@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
@@ -163,8 +164,9 @@ func TestProcessQueryLogsAndStats(t *testing.T) {
 		ql := &testQueryLog{}
 		st := &testStats{}
 		srv := &Server{
-			queryLog: ql,
-			stats:    st,
+			queryLog:   ql,
+			stats:      st,
+			anonymizer: aghnet.NewIPMut(nil),
 		}
 		t.Run(tc.name, func(t *testing.T) {
 			req := &dns.Msg{

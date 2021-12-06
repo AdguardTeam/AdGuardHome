@@ -1,6 +1,7 @@
 package dnsforward
 
 import (
+	"net"
 	"strings"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
 )
@@ -28,10 +30,16 @@ func (s *Server) processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	// Synchronize access to s.queryLog and s.stats so they won't be suddenly uninitialized while in use.
-	// This can happen after proxy server has been stopped, but its workers haven't yet exited.
+	ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
+	ip = netutil.CloneIP(ip)
+	s.anonymizer.Load()(ip)
+
+	log.Debug("client ip: %s", ip)
+
+	// Synchronize access to s.queryLog and s.stats so they won't be suddenly
+	// uninitialized while in use.  This can happen after proxy server has been
+	// stopped, but its workers haven't yet exited.
 	if shouldLog && s.queryLog != nil {
-		ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
 		p := querylog.AddParams{
 			Question:   msg,
 			Answer:     pctx.Res,
@@ -63,12 +71,17 @@ func (s *Server) processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
 		s.queryLog.Add(p)
 	}
 
-	s.updateStats(ctx, elapsed, *ctx.result)
+	s.updateStats(ctx, elapsed, *ctx.result, ip)
 
 	return resultCodeSuccess
 }
 
-func (s *Server) updateStats(ctx *dnsContext, elapsed time.Duration, res filtering.Result) {
+func (s *Server) updateStats(
+	ctx *dnsContext,
+	elapsed time.Duration,
+	res filtering.Result,
+	clientIP net.IP,
+) {
 	if s.stats == nil {
 		return
 	}
@@ -80,8 +93,8 @@ func (s *Server) updateStats(ctx *dnsContext, elapsed time.Duration, res filteri
 
 	if clientID := ctx.clientID; clientID != "" {
 		e.Client = clientID
-	} else if ip, _ := netutil.IPAndPortFromAddr(pctx.Addr); ip != nil {
-		e.Client = ip.String()
+	} else if clientIP != nil {
+		e.Client = clientIP.String()
 	}
 
 	e.Time = uint32(elapsed / 1000)

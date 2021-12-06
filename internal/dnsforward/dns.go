@@ -307,8 +307,8 @@ func (s *Server) processInternalHosts(dctx *dnsContext) (rc resultCode) {
 
 	ip, ok := s.hostToIP(host)
 	if !ok {
-		// TODO(e.burkov): Inspect special cases when user want to apply
-		// some rules handled by other processors to the hosts with TLD.
+		// TODO(e.burkov): Inspect special cases when user want to apply some
+		// rules handled by other processors to the hosts with TLD.
 		d.Res = s.genNXDomain(req)
 
 		return resultCodeFinish

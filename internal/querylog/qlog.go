@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -36,6 +37,8 @@ type queryLog struct {
 	fileFlushLock sync.Mutex // synchronize a file-flushing goroutine and main thread
 	flushPending  bool       // don't start another goroutine while the previous one is still running
 	fileWriteLock sync.Mutex
+
+	anonymizer *aghnet.IPMut
 }
 
 // ClientProto values are names of the client protocols.
@@ -162,7 +165,7 @@ func (l *queryLog) Add(params AddParams) {
 
 	now := time.Now()
 	entry := logEntry{
-		IP:   l.getClientIP(params.ClientIP),
+		IP:   params.ClientIP,
 		Time: now,
 
 		Result:      *params.Result,

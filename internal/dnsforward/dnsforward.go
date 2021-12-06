@@ -79,6 +79,9 @@ type Server struct {
 	sysResolvers   aghnet.SystemResolvers
 	recDetector    *recursionDetector
 
+	// anonymizer masks the client's IP addresses if needed.
+	anonymizer *aghnet.IPMut
+
 	tableHostToIP     hostToIPTable
 	tableHostToIPLock sync.Mutex
 
@@ -113,6 +116,7 @@ type DNSCreateParams struct {
 	QueryLog       querylog.QueryLog
 	DHCPServer     dhcpd.ServerInterface
 	SubnetDetector *aghnet.SubnetDetector
+	Anonymizer     *aghnet.IPMut
 	LocalDomain    string
 }
 
@@ -150,6 +154,9 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		localDomainSuffix = domainNameToSuffix(p.LocalDomain)
 	}
 
+	if p.Anonymizer == nil {
+		p.Anonymizer = aghnet.NewIPMut(nil)
+	}
 	s = &Server{
 		dnsFilter:         p.DNSFilter,
 		stats:             p.Stats,
@@ -161,6 +168,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 			EnableLRU: true,
 			MaxCount:  defaultClientIDCacheCount,
 		}),
+		anonymizer: p.Anonymizer,
 	}
 
 	// TODO(e.burkov): Enable the refresher after the actual implementation
