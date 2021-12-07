@@ -4,6 +4,11 @@
 
 ## v0.107: API changes
 
+## The new field `"cached"` in `QueryLogItem`
+
+* The new field `"cached"` in `GET /control/querylog` is true if the response is
+  served from cache instead of being resolved by an upstream server.
+
 ### New constant values for `filter_list_id` field in `ResultRule`
 
 * Value of `0` is now used for custom filtering rules list.

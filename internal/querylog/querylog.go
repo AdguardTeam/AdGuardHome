@@ -73,16 +73,24 @@ type Config struct {
 	Anonymizer *aghnet.IPMut
 }
 
-// AddParams - parameters for Add()
+// AddParams is the parameters for adding an entry.
 type AddParams struct {
-	Question    *dns.Msg
-	Answer      *dns.Msg          // The response we sent to the client (optional)
-	OrigAnswer  *dns.Msg          // The response from an upstream server (optional)
-	Result      *filtering.Result // Filtering result (optional)
-	Elapsed     time.Duration     // Time spent for processing the request
-	ClientID    string
-	ClientIP    net.IP
-	Upstream    string // Upstream server URL
+	Question *dns.Msg
+	// Answer is the response which is sent to the client, if any.
+	Answer *dns.Msg
+	// OrigAnswer is the response from an upstream server.  It's only set if the
+	// answer has been modified by filtering.
+	OrigAnswer *dns.Msg
+	// Cached indicates if the response is served from cache.
+	Cached bool
+	// Result is the filtering result (optional).
+	Result *filtering.Result
+	// Elapsed is the time spent for processing the request.
+	Elapsed  time.Duration
+	ClientID string
+	ClientIP net.IP
+	// Upstream is the URL of the upstream DNS server.
+	Upstream    string
 	ClientProto ClientProto
 }
 

@@ -1868,6 +1868,10 @@
           'description': 'Answer from upstream server (optional)'
           'items':
             '$ref': '#/components/schemas/DnsAnswer'
+        'cached':
+          'type': 'boolean'
+          'description': >
+            Defines if the response has been served from cache.
         'upstream':
           'type': 'string'
           'description': >

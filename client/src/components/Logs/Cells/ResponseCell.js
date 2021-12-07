@@ -21,6 +21,7 @@ const ResponseCell = ({
     upstream,
     rules,
     service_name,
+    cached,
 }) => {
     const { t } = useTranslation();
     const filters = useSelector((state) => state.filtering.filters, shallowEqual);
@@ -36,6 +37,9 @@ const ResponseCell = ({
 
     const statusLabel = t(isBlockedByResponse ? 'blocked_by_cname_or_ip' : FILTERED_STATUS_TO_META_MAP[reason]?.LABEL || reason);
     const boldStatusLabel = <span className="font-weight-bold">{statusLabel}</span>;
+    const upstreamString = cached
+        ? t('served_from_cache', { value: upstream, i: <i /> })
+        : upstream;
 
     const renderResponses = (responseArr) => {
         if (!responseArr || responseArr.length === 0) {
@@ -53,7 +57,7 @@ const ResponseCell = ({
 
     const COMMON_CONTENT = {
         encryption_status: boldStatusLabel,
-        install_settings_dns: upstream,
+        install_settings_dns: upstreamString,
         elapsed: formattedElapsedMs,
         response_code: status,
         ...(service_name
@@ -90,8 +94,9 @@ const ResponseCell = ({
 
     const detailedInfo = getDetailedInfo(reason);
 
-    return <div className="logs__cell logs__cell--response" role="gridcell">
-        <IconTooltip
+    return (
+        <div className="logs__cell logs__cell--response" role="gridcell">
+            <IconTooltip
                 className={classNames('icons mr-4 icon--24 icon--lightgray', { 'my-3': isDetailed })}
                 columnClass='grid grid--limited'
                 tooltipClass='px-5 pb-5 pt-4 mw-75 custom-tooltip__response-details'
@@ -100,14 +105,15 @@ const ResponseCell = ({
                 title='response_details'
                 content={content}
                 placement='bottom'
-        />
-        <div className="text-truncate">
-            <div className="text-truncate" title={statusLabel}>{statusLabel}</div>
-            {isDetailed && <div
-                    className="detailed-info d-none d-sm-block pt-1 text-truncate"
-                    title={detailedInfo}>{detailedInfo}</div>}
+            />
+            <div className="text-truncate">
+                <div className="text-truncate" title={statusLabel}>{statusLabel}</div>
+                {isDetailed && <div
+                        className="detailed-info d-none d-sm-block pt-1 text-truncate"
+                        title={detailedInfo}>{detailedInfo}</div>}
+            </div>
         </div>
-    </div>;
+    );
 };
 
 ResponseCell.propTypes = {
@@ -117,6 +123,7 @@ ResponseCell.propTypes = {
     response: propTypes.array.isRequired,
     status: propTypes.string.isRequired,
     upstream: propTypes.string.isRequired,
+    cached: propTypes.bool.isRequired,
     rules: propTypes.arrayOf(propTypes.shape({
         text: propTypes.string.isRequired,
         filter_list_id: propTypes.number.isRequired,

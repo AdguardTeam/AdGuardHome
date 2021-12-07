@@ -47,7 +47,6 @@
     "form_error_server_name": "Invalid server name",
     "form_error_subnet": "Subnet \"{{cidr}}\" does not contain the IP address \"{{ip}}\"",
     "form_error_positive": "Must be greater than 0",
-    "form_error_negative": "Must be equal to 0 or greater",
     "out_of_range_error": "Must be out of range \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Must be lower than range start",
     "greater_range_start_error": "Must be greater than range start",
@@ -627,5 +626,6 @@
     "experimental": "Experimental",
     "use_saved_key": "Use the previously saved key",
     "parental_control": "Parental control",
-    "safe_browsing": "Safe browsing"
+    "safe_browsing": "Safe browsing",
+    "served_from_cache": "{{value}} <i>(served from cache)</i>"
 }

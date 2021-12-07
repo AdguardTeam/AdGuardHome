@@ -27,11 +27,12 @@ func (s *Server) processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
 		shouldLog = false
 	}
 
+	ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
+	ip = netutil.CloneIP(ip)
+
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
-	ip = netutil.CloneIP(ip)
 	s.anonymizer.Load()(ip)
 
 	log.Debug("client ip: %s", ip)
@@ -60,12 +61,14 @@ func (s *Server) processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
 		case proxy.ProtoDNSCrypt:
 			p.ClientProto = querylog.ClientProtoDNSCrypt
 		default:
-			// Consider this a plain DNS-over-UDP or DNS-over-TCP
-			// request.
+			// Consider this a plain DNS-over-UDP or DNS-over-TCP request.
 		}
 
 		if pctx.Upstream != nil {
 			p.Upstream = pctx.Upstream.Address()
+		} else if cachedUps := pctx.CachedUpstreamAddr; cachedUps != "" {
+			p.Upstream = pctx.CachedUpstreamAddr
+			p.Cached = true
 		}
 
 		s.queryLog.Add(p)

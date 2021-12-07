@@ -87,10 +87,11 @@ type logEntry struct {
 
 	Answer     []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
 	OrigAnswer []byte `json:",omitempty"`
+	Cached     bool   `json:",omitempty"`
 
 	Result   filtering.Result
 	Elapsed  time.Duration
-	Upstream string `json:",omitempty"` // if empty, means it was cached
+	Upstream string `json:",omitempty"`
 }
 
 func (l *queryLog) Start() {
@@ -171,6 +172,7 @@ func (l *queryLog) Add(params AddParams) {
 		Result:      *params.Result,
 		Elapsed:     params.Elapsed,
 		Upstream:    params.Upstream,
+		Cached:      params.Cached,
 		ClientID:    params.ClientID,
 		ClientProto: params.ClientProto,
 	}

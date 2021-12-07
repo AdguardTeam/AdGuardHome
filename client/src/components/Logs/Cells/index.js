@@ -76,6 +76,7 @@ const Row = memo(({
             originalResponse,
             status,
             service_name,
+            cached,
         } = rowProps;
 
         const hasTracker = !!tracker;
@@ -116,6 +117,9 @@ const Row = memo(({
 
         const blockingForClientKey = isFiltered ? 'unblock_for_this_client_only' : 'block_for_this_client_only';
         const clientNameBlockingFor = getBlockingClientName(clients, client);
+        const upstreamString = cached
+            ? t('served_from_cache', { value: upstream, i: <i /> })
+            : upstream;
 
         const onBlockingForClientClick = () => {
             dispatch(toggleBlockingForClient(buttonType, domain, clientNameBlockingFor));
@@ -175,7 +179,7 @@ const Row = memo(({
                             className="link--green">{sourceData.name}
                     </a>,
             response_details: 'title',
-            install_settings_dns: upstream,
+            install_settings_dns: upstreamString,
             elapsed: formattedElapsedMs,
             ...(rules.length > 0
                     && { rule_label: getRulesToFilterList(rules, filters, whitelistFilters) }
@@ -230,6 +234,7 @@ Row.propTypes = {
         time: propTypes.string.isRequired,
         tracker: propTypes.object,
         upstream: propTypes.string.isRequired,
+        cached: propTypes.bool.isRequired,
         type: propTypes.string.isRequired,
         client_proto: propTypes.string.isRequired,
         client_id: propTypes.string,

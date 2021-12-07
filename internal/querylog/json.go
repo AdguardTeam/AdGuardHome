@@ -74,6 +74,7 @@ func (l *queryLog) entryToJSON(entry *logEntry, anonFunc aghnet.IPMutFunc) (json
 		"time":         entry.Time.Format(time.RFC3339Nano),
 		"client":       eip,
 		"client_proto": entry.ClientProto,
+		"cached":       entry.Cached,
 		"upstream":     entry.Upstream,
 		"question":     question,
 	}

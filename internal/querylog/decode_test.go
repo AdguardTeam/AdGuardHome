@@ -33,6 +33,7 @@ func TestDecodeLogEntry(t *testing.T) {
 			`"QC":"IN",` +
 			`"CP":"",` +
 			`"Answer":"` + ansStr + `",` +
+			`"Cached":true,` +
 			`"Result":{` +
 			`"IsFiltered":true,` +
 			`"Reason":3,` +
@@ -42,6 +43,7 @@ func TestDecodeLogEntry(t *testing.T) {
 			`"CanonName":"example.com",` +
 			`"ServiceName":"example.org",` +
 			`"DNSRewriteResult":{"RCode":0,"Response":{"1":["127.0.0.2"]}}},` +
+			`"Upstream":"https://some.upstream",` +
 			`"Elapsed":837429}`
 
 		ans, err := base64.StdEncoding.DecodeString(ansStr)
@@ -56,6 +58,7 @@ func TestDecodeLogEntry(t *testing.T) {
 			ClientID:    "cli42",
 			ClientProto: "",
 			Answer:      ans,
+			Cached:      true,
 			Result: filtering.Result{
 				IsFiltered: true,
 				Reason:     filtering.FilteredBlockList,
@@ -78,7 +81,8 @@ func TestDecodeLogEntry(t *testing.T) {
 					},
 				},
 			},
-			Elapsed: 837429,
+			Upstream: "https://some.upstream",
+			Elapsed:  837429,
 		}
 
 		got := &logEntry{}

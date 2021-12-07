@@ -232,17 +232,6 @@ export const validateMac = (value) => {
 
 /**
  * @param value {number}
- * @returns {boolean|*}
- */
-export const validateBiggerOrEqualZeroValue = (value) => {
-    if (value < 0) {
-        return 'form_error_negative';
-    }
-    return false;
-};
-
-/**
- * @param value {number}
  * @returns {undefined|string}
  */
 export const validatePort = (value) => {

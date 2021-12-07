@@ -44,8 +44,10 @@ var logEntryHandlers = map[string]logEntryHandler{
 		if !ok {
 			return nil
 		}
+
 		var err error
 		ent.Time, err = time.Parse(time.RFC3339, v)
+
 		return err
 	},
 	"QH": func(t json.Token, ent *logEntry) error {
@@ -69,7 +71,9 @@ var logEntryHandlers = map[string]logEntryHandler{
 		if !ok {
 			return nil
 		}
+
 		ent.QClass = v
+
 		return nil
 	},
 	"CP": func(t json.Token, ent *logEntry) error {
@@ -77,8 +81,10 @@ var logEntryHandlers = map[string]logEntryHandler{
 		if !ok {
 			return nil
 		}
+
 		var err error
 		ent.ClientProto, err = NewClientProto(v)
+
 		return err
 	},
 	"Answer": func(t json.Token, ent *logEntry) error {
@@ -86,8 +92,10 @@ var logEntryHandlers = map[string]logEntryHandler{
 		if !ok {
 			return nil
 		}
+
 		var err error
 		ent.Answer, err = base64.StdEncoding.DecodeString(v)
+
 		return err
 	},
 	"OrigAnswer": func(t json.Token, ent *logEntry) error {
@@ -95,16 +103,30 @@ var logEntryHandlers = map[string]logEntryHandler{
 		if !ok {
 			return nil
 		}
+
 		var err error
 		ent.OrigAnswer, err = base64.StdEncoding.DecodeString(v)
+
 		return err
+	},
+	"Cached": func(t json.Token, ent *logEntry) error {
+		v, ok := t.(bool)
+		if !ok {
+			return nil
+		}
+
+		ent.Cached = v
+
+		return nil
 	},
 	"Upstream": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
 			return nil
 		}
+
 		ent.Upstream = v
+
 		return nil
 	},
 	"Elapsed": func(t json.Token, ent *logEntry) error {
@@ -112,11 +134,14 @@ var logEntryHandlers = map[string]logEntryHandler{
 		if !ok {
 			return nil
 		}
+
 		i, err := v.Int64()
 		if err != nil {
 			return err
 		}
+
 		ent.Elapsed = time.Duration(i)
+
 		return nil
 	},
 }
