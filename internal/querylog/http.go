@@ -90,34 +90,17 @@ func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// anonymizeIPSlow masks ip to anonymize the client if the ip is a valid one.
-// It only exists in purposes of benchmark demonstration.
-func anonymizeIPSlow(ip net.IP) {
-	if ip4 := ip.To4(); ip4 != nil {
-		copy(ip4[net.IPv4len-2:], []byte{0, 0})
-	} else if len(ip) == net.IPv6len {
-		copy(ip[net.IPv6len-10:], []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
-	}
-}
-
 // AnonymizeIP masks ip to anonymize the client if the ip is a valid one.
 func AnonymizeIP(ip net.IP) {
-	// We use an assignment operator here since it compiles into more efficient
-	// code than copy().  See BenchmarkAnonymizeIP.
+	// zeroes is a slice of zero bytes from which the IP address tail is copied.
+	// Using constant string as source of copying is more efficient than byte
+	// slice, see https://github.com/golang/go/issues/49997.
+	const zeroes = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+
 	if ip4 := ip.To4(); ip4 != nil {
-		ip4[net.IPv4len-2], ip4[net.IPv4len-1] = 0, 0
+		copy(ip4[net.IPv4len-2:net.IPv4len], zeroes)
 	} else if len(ip) == net.IPv6len {
-		ip[net.IPv6len-10],
-			ip[net.IPv6len-9],
-			ip[net.IPv6len-8],
-			ip[net.IPv6len-7],
-			ip[net.IPv6len-6],
-			ip[net.IPv6len-5],
-			ip[net.IPv6len-4],
-			ip[net.IPv6len-3],
-			ip[net.IPv6len-2],
-			ip[net.IPv6len-1] =
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		copy(ip[net.IPv6len-10:net.IPv6len], zeroes)
 	}
 }
 

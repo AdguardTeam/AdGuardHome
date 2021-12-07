@@ -245,6 +245,16 @@ func TestDecodeLogEntry_backwardCompatability(t *testing.T) {
 	}
 }
 
+// anonymizeIPSlow masks ip to anonymize the client if the ip is a valid one.
+// It only exists in purposes of benchmark comparison, see BenchmarkAnonymizeIP.
+func anonymizeIPSlow(ip net.IP) {
+	if ip4 := ip.To4(); ip4 != nil {
+		copy(ip4[net.IPv4len-2:net.IPv4len], []byte{0, 0})
+	} else if len(ip) == net.IPv6len {
+		copy(ip[net.IPv6len-10:net.IPv6len], []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	}
+}
+
 func BenchmarkAnonymizeIP(b *testing.B) {
 	benchCases := []struct {
 		name string
