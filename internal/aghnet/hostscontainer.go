@@ -309,21 +309,22 @@ func (hp *hostsParser) parseLine(line string) (ip net.IP, hosts []string) {
 		return nil, nil
 	}
 
-loop:
 	for _, f := range fields[1:] {
 		switch hashIdx := strings.IndexByte(f, '#'); hashIdx {
-		case 0:
-			// The rest of the fields are a part of the comment so skip
-			// immediately.
-			break loop
 		case -1:
 			hosts = append(hosts, f)
+
+			continue
+		case 0:
+			// Go on.
 		default:
 			// Only a part of the field is a comment.
 			hosts = append(hosts, f[:hashIdx])
-
-			break loop
 		}
+
+		// The rest of the fields are a part of the comment so skip
+		// immediately.
+		break
 	}
 
 	return ip, hosts

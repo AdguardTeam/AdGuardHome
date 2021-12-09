@@ -63,7 +63,7 @@ func TestLargestLabeled(t *testing.T) {
 		r := bytes.NewReader(tc.data)
 
 		t.Run(tc.name, func(t *testing.T) {
-			pid, instNum, err := parsePSOutput(r, comm)
+			pid, instNum, err := parsePSOutput(r, comm, nil)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.wantPID, pid)
@@ -76,7 +76,7 @@ func TestLargestLabeled(t *testing.T) {
 		require.NoError(t, err)
 
 		target := &aghio.LimitReachedError{}
-		_, _, err = parsePSOutput(lr, "")
+		_, _, err = parsePSOutput(lr, "", nil)
 		require.ErrorAs(t, err, &target)
 
 		assert.EqualValues(t, 0, target.Limit)
@@ -89,7 +89,7 @@ func TestLargestLabeled(t *testing.T) {
 			`3` + comm + nl,
 		))
 
-		pid, instances, err := parsePSOutput(r, comm, 1, 3)
+		pid, instances, err := parsePSOutput(r, comm, []int{1, 3})
 		require.NoError(t, err)
 
 		assert.Equal(t, 2, pid)

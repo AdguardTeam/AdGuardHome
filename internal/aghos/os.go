@@ -91,7 +91,7 @@ func PIDByCommand(command string, except ...int) (pid int, err error) {
 	}
 
 	var instNum int
-	pid, instNum, err = parsePSOutput(stdout, command, except...)
+	pid, instNum, err = parsePSOutput(stdout, command, except)
 	if err != nil {
 		return 0, err
 	}
@@ -125,9 +125,8 @@ func PIDByCommand(command string, except ...int) (pid int, err error) {
 //   1230 some/base/path/example-cmd
 //   3210 example-cmd
 //
-func parsePSOutput(r io.Reader, cmdName string, ignore ...int) (largest, instNum int, err error) {
+func parsePSOutput(r io.Reader, cmdName string, ignore []int) (largest, instNum int, err error) {
 	s := bufio.NewScanner(r)
-ScanLoop:
 	for s.Scan() {
 		fields := strings.Fields(s.Text())
 		if len(fields) != 2 || path.Base(fields[1]) != cmdName {
@@ -135,14 +134,8 @@ ScanLoop:
 		}
 
 		cur, aerr := strconv.Atoi(fields[0])
-		if aerr != nil || cur < 0 {
+		if aerr != nil || cur < 0 || intIn(cur, ignore) {
 			continue
-		}
-
-		for _, pid := range ignore {
-			if cur == pid {
-				continue ScanLoop
-			}
 		}
 
 		instNum++
@@ -155,6 +148,17 @@ ScanLoop:
 	}
 
 	return largest, instNum, nil
+}
+
+// intIn returns true if nums contains n.
+func intIn(n int, nums []int) (ok bool) {
+	for _, nn := range nums {
+		if n == nn {
+			return true
+		}
+	}
+
+	return false
 }
 
 // IsOpenWrt returns true if host OS is OpenWrt.
