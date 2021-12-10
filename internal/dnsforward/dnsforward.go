@@ -559,7 +559,7 @@ func (s *Server) IsRunning() bool {
 	return s.isRunning
 }
 
-// srvClosedErr is returned when the method can't complete without unacessible
+// srvClosedErr is returned when the method can't complete without inacessible
 // data from the closing server.
 const srvClosedErr errors.Error = "server is closed"
 

@@ -118,8 +118,8 @@ func PIDByCommand(command string, except ...int) (pid int, err error) {
 }
 
 // parsePSOutput scans the output of ps searching the largest PID of the process
-// associated with cmdName ignoring PIDs from ignore.  Valid r's line shoud be
-// like:
+// associated with cmdName ignoring PIDs from ignore.  A valid line from
+// r should look like these:
 //
 //    123 ./example-cmd
 //   1230 some/base/path/example-cmd

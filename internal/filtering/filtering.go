@@ -651,7 +651,7 @@ func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
 
 	rs, err = filterlist.NewRuleStorage(lists)
 	if err != nil {
-		return nil, fmt.Errorf("creating rule stroage: %w", err)
+		return nil, fmt.Errorf("creating rule storage: %w", err)
 	}
 
 	return rs, nil
