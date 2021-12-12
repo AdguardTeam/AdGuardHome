@@ -222,6 +222,9 @@ func (clients *clientsContainer) addFromConfig(objects []clientObject) {
 // WriteDiskConfig - write configuration
 func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
 	clients.lock.Lock()
+	defer clients.lock.Unlock()
+
+	clientObjects := []clientObject{}
 	for _, cli := range clients.list {
 		cy := clientObject{
 			Name:                     cli.Name,
@@ -238,9 +241,17 @@ func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
 		cy.BlockedServices = stringutil.CloneSlice(cli.BlockedServices)
 		cy.Upstreams = stringutil.CloneSlice(cli.Upstreams)
 
-		*objects = append(*objects, cy)
+		clientObjects = append(clientObjects, cy)
 	}
-	clients.lock.Unlock()
+
+	// Maps aren't guaranteed to iterate in the same order each time, so the
+	// above loop can generate different orderings when writing to the
+	// config file: this produces lots of diffs in config files, so sort
+	// objects by name before writing.
+	sort.Slice(clientObjects, func(i, j int) bool {
+		return clientObjects[i].Name < clientObjects[j].Name
+	})
+	*objects = append(*objects, clientObjects...)
 }
 
 func (clients *clientsContainer) periodicUpdate() {
