@@ -220,6 +220,10 @@ func (l *queryLog) Add(params *AddParams) {
 	if !l.conf.FileEnabled {
 		if len(l.buffer) > int(l.conf.MemSize) {
 			// writing to file is disabled - just remove the oldest entry from array
+			//
+			// TODO(a.garipov): This should be replaced by a proper ring buffer,
+			// but it's currently difficult to do that.
+			l.buffer[0] = nil
 			l.buffer = l.buffer[1:]
 		}
 	} else if !l.flushPending {
