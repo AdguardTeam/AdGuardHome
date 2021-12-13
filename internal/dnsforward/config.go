@@ -118,7 +118,7 @@ type FilteringConfig struct {
 
 	BogusNXDomain          []string `yaml:"bogus_nxdomain"`     // transform responses with these IP addresses to NXDOMAIN
 	AAAADisabled           bool     `yaml:"aaaa_disabled"`      // Respond with an empty answer to all AAAA requests
-	EnableDNSSEC           bool     `yaml:"enable_dnssec"`      // Set DNSSEC flag in outcoming DNS request
+	EnableDNSSEC           bool     `yaml:"enable_dnssec"`      // Set AD flag in outcoming DNS request
 	EnableEDNSClientSubnet bool     `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
 	MaxGoroutines          uint32   `yaml:"max_goroutines"`     // Max. number of parallel goroutines for processing incoming requests
 

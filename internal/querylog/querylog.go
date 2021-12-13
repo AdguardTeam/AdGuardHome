@@ -22,7 +22,7 @@ type QueryLog interface {
 	Close()
 
 	// Add a log entry
-	Add(params AddParams)
+	Add(params *AddParams)
 
 	// WriteDiskConfig - write configuration
 	WriteDiskConfig(c *Config)
@@ -76,22 +76,34 @@ type Config struct {
 // AddParams is the parameters for adding an entry.
 type AddParams struct {
 	Question *dns.Msg
+
 	// Answer is the response which is sent to the client, if any.
 	Answer *dns.Msg
+
 	// OrigAnswer is the response from an upstream server.  It's only set if the
 	// answer has been modified by filtering.
 	OrigAnswer *dns.Msg
-	// Cached indicates if the response is served from cache.
-	Cached bool
+
 	// Result is the filtering result (optional).
 	Result *filtering.Result
+
 	// Elapsed is the time spent for processing the request.
-	Elapsed  time.Duration
+	Elapsed time.Duration
+
 	ClientID string
+
 	ClientIP net.IP
+
 	// Upstream is the URL of the upstream DNS server.
-	Upstream    string
+	Upstream string
+
 	ClientProto ClientProto
+
+	// Cached indicates if the response is served from cache.
+	Cached bool
+
+	// AuthenticatedData shows if the response had the AD bit set.
+	AuthenticatedData bool
 }
 
 // validate returns an error if the parameters aren't valid.

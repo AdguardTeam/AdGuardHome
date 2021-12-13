@@ -49,6 +49,8 @@ and this project adheres to
 
 ### Changed
 
+- The DNSSEC check now simply checks against the AD flag in the response
+  ([#3904]).
 - Client objects in the configuration file are now sorted ([#3933]).
 - Responses from cache are now labeled ([#3772]).
 - Better error message for ED25519 private keys, which are not widely supported
@@ -233,6 +235,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3772]: https://github.com/AdguardTeam/AdGuardHome/issues/3772
 [#3815]: https://github.com/AdguardTeam/AdGuardHome/issues/3815
 [#3890]: https://github.com/AdguardTeam/AdGuardHome/issues/3890
+[#3904]: https://github.com/AdguardTeam/AdGuardHome/issues/3904
 [#3933]: https://github.com/AdguardTeam/AdGuardHome/pull/3933
 
 

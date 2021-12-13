@@ -22,11 +22,11 @@ type testQueryLog struct {
 	// a querylog.QueryLog without actually implementing all methods.
 	querylog.QueryLog
 
-	lastParams querylog.AddParams
+	lastParams *querylog.AddParams
 }
 
 // Add implements the querylog.QueryLog interface for *testQueryLog.
-func (l *testQueryLog) Add(p querylog.AddParams) {
+func (l *testQueryLog) Add(p *querylog.AddParams) {
 	l.lastParams = p
 }
 

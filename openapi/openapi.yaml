@@ -1878,6 +1878,8 @@
             Upstream URL starting with tcp://, tls://, https://, or with an IP
             address.
         'answer_dnssec':
+          'description': >
+            If true, the response had the Authenticated Data (AD) flag set.
           'type': 'boolean'
         'client':
           'description': >

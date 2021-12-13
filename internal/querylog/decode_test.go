@@ -34,6 +34,7 @@ func TestDecodeLogEntry(t *testing.T) {
 			`"CP":"",` +
 			`"Answer":"` + ansStr + `",` +
 			`"Cached":true,` +
+			`"AD":true,` +
 			`"Result":{` +
 			`"IsFiltered":true,` +
 			`"Reason":3,` +
@@ -81,8 +82,9 @@ func TestDecodeLogEntry(t *testing.T) {
 					},
 				},
 			},
-			Upstream: "https://some.upstream",
-			Elapsed:  837429,
+			Upstream:          "https://some.upstream",
+			Elapsed:           837429,
+			AuthenticatedData: true,
 		}
 
 		got := &logEntry{}

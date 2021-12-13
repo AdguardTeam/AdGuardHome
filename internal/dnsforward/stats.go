@@ -15,9 +15,9 @@ import (
 )
 
 // Write Stats data and logs
-func (s *Server) processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
-	elapsed := time.Since(ctx.startTime)
-	pctx := ctx.proxyCtx
+func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
+	elapsed := time.Since(dctx.startTime)
+	pctx := dctx.proxyCtx
 
 	shouldLog := true
 	msg := pctx.Req
@@ -41,14 +41,15 @@ func (s *Server) processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
 	// uninitialized while in use.  This can happen after proxy server has been
 	// stopped, but its workers haven't yet exited.
 	if shouldLog && s.queryLog != nil {
-		p := querylog.AddParams{
-			Question:   msg,
-			Answer:     pctx.Res,
-			OrigAnswer: ctx.origResp,
-			Result:     ctx.result,
-			Elapsed:    elapsed,
-			ClientIP:   ip,
-			ClientID:   ctx.clientID,
+		p := &querylog.AddParams{
+			Question:          msg,
+			Answer:            pctx.Res,
+			OrigAnswer:        dctx.origResp,
+			Result:            dctx.result,
+			Elapsed:           elapsed,
+			ClientID:          dctx.clientID,
+			ClientIP:          ip,
+			AuthenticatedData: dctx.responseAD,
 		}
 
 		switch pctx.Proto {
@@ -74,7 +75,7 @@ func (s *Server) processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
 		s.queryLog.Add(p)
 	}
 
-	s.updateStats(ctx, elapsed, *ctx.result, ip)
+	s.updateStats(dctx, elapsed, *dctx.result, ip)
 
 	return resultCodeSuccess
 }

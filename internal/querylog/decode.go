@@ -119,6 +119,16 @@ var logEntryHandlers = map[string]logEntryHandler{
 
 		return nil
 	},
+	"AD": func(t json.Token, ent *logEntry) error {
+		v, ok := t.(bool)
+		if !ok {
+			return nil
+		}
+
+		ent.AuthenticatedData = v
+
+		return nil
+	},
 	"Upstream": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {

@@ -18,33 +18,44 @@ import (
 // To transfer information between modules
 type dnsContext struct {
 	proxyCtx *proxy.DNSContext
+
 	// setts are the filtering settings for the client.
-	setts     *filtering.Settings
-	startTime time.Time
-	result    *filtering.Result
+	setts *filtering.Settings
+
+	result *filtering.Result
 	// origResp is the response received from upstream.  It is set when the
 	// response is modified by filters.
 	origResp *dns.Msg
+
 	// unreversedReqIP stores an IP address obtained from PTR request if it
 	// parsed successfully and belongs to one of locally-served IP ranges as per
 	// RFC 6303.
 	unreversedReqIP net.IP
+
 	// err is the error returned from a processing function.
 	err error
+
 	// clientID is the clientID from DoH, DoQ, or DoT, if provided.
 	clientID string
+
 	// origQuestion is the question received from the client.  It is set
 	// when the request is modified by rewrites.
 	origQuestion dns.Question
+
+	// startTime is the time at which the processing of the request has started.
+	startTime time.Time
+
 	// protectionEnabled shows if the filtering is enabled, and if the
 	// server's DNS filter is ready.
 	protectionEnabled bool
+
 	// responseFromUpstream shows if the response is received from the
 	// upstream servers.
 	responseFromUpstream bool
-	// origReqDNSSEC shows if the DNSSEC flag in the original request from
-	// the client is set.
-	origReqDNSSEC bool
+
+	// responseAD shows if the response had the AD bit set.
+	responseAD bool
+
 	// isLocalClient shows if client's IP address is from locally-served
 	// network.
 	isLocalClient bool
@@ -90,7 +101,6 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 		s.processFilteringBeforeRequest,
 		s.processLocalPTR,
 		s.processUpstream,
-		s.processDNSSECAfterResponse,
 		s.processFilteringAfterResponse,
 		s.ipset.process,
 		s.processQueryLogsAndStats,
@@ -514,96 +524,53 @@ func ipStringFromAddr(addr net.Addr) (ipStr string) {
 }
 
 // processUpstream passes request to upstream servers and handles the response.
-func (s *Server) processUpstream(ctx *dnsContext) (rc resultCode) {
-	d := ctx.proxyCtx
-	if d.Res != nil {
-		return resultCodeSuccess // response is already set - nothing to do
+func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
+	pctx := dctx.proxyCtx
+	if pctx.Res != nil {
+		// The response has already been set.
+		return resultCodeSuccess
 	}
 
-	if d.Addr != nil && s.conf.GetCustomUpstreamByClient != nil {
+	if pctx.Addr != nil && s.conf.GetCustomUpstreamByClient != nil {
 		// Use the clientID first, since it has a higher priority.
-		id := stringutil.Coalesce(ctx.clientID, ipStringFromAddr(d.Addr))
+		id := stringutil.Coalesce(dctx.clientID, ipStringFromAddr(pctx.Addr))
 		upsConf, err := s.conf.GetCustomUpstreamByClient(id)
 		if err != nil {
 			log.Error("dns: getting custom upstreams for client %s: %s", id, err)
 		} else if upsConf != nil {
 			log.Debug("dns: using custom upstreams for client %s", id)
-			d.CustomUpstreamConfig = upsConf
+			pctx.CustomUpstreamConfig = upsConf
 		}
 	}
 
-	req := d.Req
+	req := pctx.Req
+	origReqAD := false
 	if s.conf.EnableDNSSEC {
-		opt := req.IsEdns0()
-		if opt == nil {
-			log.Debug("dns: adding OPT record with DNSSEC flag")
-			req.SetEdns0(4096, true)
-		} else if !opt.Do() {
-			opt.SetDo(true)
+		if req.AuthenticatedData {
+			origReqAD = true
 		} else {
-			ctx.origReqDNSSEC = true
+			req.AuthenticatedData = true
 		}
 	}
 
 	// Process the request further since it wasn't filtered.
-
 	prx := s.proxy()
 	if prx == nil {
-		ctx.err = srvClosedErr
+		dctx.err = srvClosedErr
 
 		return resultCodeError
 	}
 
-	if ctx.err = prx.Resolve(d); ctx.err != nil {
+	if dctx.err = prx.Resolve(pctx); dctx.err != nil {
 		return resultCodeError
 	}
 
-	ctx.responseFromUpstream = true
+	dctx.responseFromUpstream = true
+	dctx.responseAD = pctx.Res.AuthenticatedData
 
-	return resultCodeSuccess
-}
-
-// Process DNSSEC after response from upstream server
-func (s *Server) processDNSSECAfterResponse(ctx *dnsContext) (rc resultCode) {
-	d := ctx.proxyCtx
-
-	// Don't process response if it's not from upstream servers.
-	if !ctx.responseFromUpstream || !s.conf.EnableDNSSEC {
-		return resultCodeSuccess
-	}
-
-	if !ctx.origReqDNSSEC {
-		optResp := d.Res.IsEdns0()
-		if optResp != nil && !optResp.Do() {
-			return resultCodeSuccess
-		}
-
-		// Remove RRSIG records from response
-		// because there is no DO flag in the original request from client,
-		// but we have EnableDNSSEC set, so we have set DO flag ourselves,
-		// and now we have to clean up the DNS records our client didn't ask for.
-
-		answers := []dns.RR{}
-		for _, a := range d.Res.Answer {
-			switch a.(type) {
-			case *dns.RRSIG:
-				log.Debug("Removing RRSIG record from response: %v", a)
-			default:
-				answers = append(answers, a)
-			}
-		}
-		d.Res.Answer = answers
-
-		answers = []dns.RR{}
-		for _, a := range d.Res.Ns {
-			switch a.(type) {
-			case *dns.RRSIG:
-				log.Debug("Removing RRSIG record from response: %v", a)
-			default:
-				answers = append(answers, a)
-			}
-		}
-		d.Res.Ns = answers
+	if s.conf.EnableDNSSEC && !origReqAD {
+		pctx.Req.AuthenticatedData = false
+		pctx.Res.AuthenticatedData = false
 	}
 
 	return resultCodeSuccess

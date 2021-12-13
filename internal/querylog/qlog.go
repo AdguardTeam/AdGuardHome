@@ -75,7 +75,6 @@ type logEntry struct {
 	// client is the found client information, if any.
 	client *Client
 
-	IP   net.IP    `json:"IP"` // Client IP
 	Time time.Time `json:"T"`
 
 	QHost  string `json:"QH"`
@@ -87,11 +86,16 @@ type logEntry struct {
 
 	Answer     []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
 	OrigAnswer []byte `json:",omitempty"`
-	Cached     bool   `json:",omitempty"`
 
 	Result   filtering.Result
-	Elapsed  time.Duration
 	Upstream string `json:",omitempty"`
+
+	IP net.IP `json:"IP"`
+
+	Elapsed time.Duration
+
+	Cached            bool `json:",omitempty"`
+	AuthenticatedData bool `json:"AD,omitempty"`
 }
 
 func (l *queryLog) Start() {
@@ -146,14 +150,12 @@ func (l *queryLog) clear() {
 	log.Debug("Query log: cleared")
 }
 
-func (l *queryLog) Add(params AddParams) {
-	var err error
-
+func (l *queryLog) Add(params *AddParams) {
 	if !l.conf.Enabled {
 		return
 	}
 
-	err = params.validate()
+	err := params.validate()
 	if err != nil {
 		log.Error("querylog: adding record: %s, skipping", err)
 
@@ -165,21 +167,27 @@ func (l *queryLog) Add(params AddParams) {
 	}
 
 	now := time.Now()
+	q := params.Question.Question[0]
 	entry := logEntry{
-		IP:   params.ClientIP,
 		Time: now,
 
-		Result:      *params.Result,
-		Elapsed:     params.Elapsed,
-		Upstream:    params.Upstream,
-		Cached:      params.Cached,
+		QHost:  strings.ToLower(q.Name[:len(q.Name)-1]),
+		QType:  dns.Type(q.Qtype).String(),
+		QClass: dns.Class(q.Qclass).String(),
+
 		ClientID:    params.ClientID,
 		ClientProto: params.ClientProto,
+
+		Result:   *params.Result,
+		Upstream: params.Upstream,
+
+		IP: params.ClientIP,
+
+		Elapsed: params.Elapsed,
+
+		Cached:            params.Cached,
+		AuthenticatedData: params.AuthenticatedData,
 	}
-	q := params.Question.Question[0]
-	entry.QHost = strings.ToLower(q.Name[:len(q.Name)-1]) // remove the last dot
-	entry.QType = dns.Type(q.Qtype).String()
-	entry.QClass = dns.Class(q.Qclass).String()
 
 	if params.Answer != nil {
 		var a []byte

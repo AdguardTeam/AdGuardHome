@@ -269,6 +269,7 @@ func addEntry(l *queryLog, host string, answerStr, client net.IP) {
 			A: answerStr,
 		}},
 	}
+
 	res := filtering.Result{
 		IsFiltered:  true,
 		Reason:      filtering.Rewritten,
@@ -278,7 +279,8 @@ func addEntry(l *queryLog, host string, answerStr, client net.IP) {
 			Text:         "SomeRule",
 		}},
 	}
-	params := AddParams{
+
+	params := &AddParams{
 		Question:   &q,
 		Answer:     &a,
 		OrigAnswer: &a,
@@ -286,6 +288,7 @@ func addEntry(l *queryLog, host string, answerStr, client net.IP) {
 		ClientIP:   client,
 		Upstream:   "upstream",
 	}
+
 	l.Add(params)
 }
 

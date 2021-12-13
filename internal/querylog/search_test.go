@@ -52,20 +52,20 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 		}},
 	}
 
-	l.Add(AddParams{
+	l.Add(&AddParams{
 		Question: q,
 		ClientID: knownClientID,
 		ClientIP: net.IP{1, 2, 3, 4},
 	})
 
 	// Add the same thing again to test the cache.
-	l.Add(AddParams{
+	l.Add(&AddParams{
 		Question: q,
 		ClientID: knownClientID,
 		ClientIP: net.IP{1, 2, 3, 4},
 	})
 
-	l.Add(AddParams{
+	l.Add(&AddParams{
 		Question: q,
 		ClientID: unknownClientID,
 		ClientIP: net.IP{1, 2, 3, 5},
