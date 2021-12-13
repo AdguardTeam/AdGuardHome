@@ -224,6 +224,7 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
+	objs = make([]*clientObject, 0, len(clients.list))
 	for _, cli := range clients.list {
 		o := &clientObject{
 			Name: cli.Name,
