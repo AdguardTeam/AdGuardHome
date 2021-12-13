@@ -53,35 +53,44 @@ func NewQLogReader(files []string) (*QLogReader, error) {
 	}, nil
 }
 
-// SeekTS performs binary search of a query log record with the specified
+// seekTS performs binary search of a query log record with the specified
 // timestamp.  If the record is found, it sets QLogReader's position to point to
 // that line, so that the next ReadNext call returned this line.
-func (r *QLogReader) SeekTS(timestamp int64) (err error) {
+func (r *QLogReader) seekTS(timestamp int64) (err error) {
 	for i := len(r.qFiles) - 1; i >= 0; i-- {
 		q := r.qFiles[i]
-		_, _, err = q.SeekTS(timestamp)
-		if err == nil {
-			// Search is finished, and the searched element have
-			// been found. Update currentFile only, position is
-			// already set properly in QLogFile.
-			r.currentFile = i
+		_, _, err = q.seekTS(timestamp)
+		if err != nil {
+			if errors.Is(err, ErrTSTooEarly) {
+				// Look at the next file, since we've reached the end of this
+				// one.  If there is no next file, it's not found.
+				err = ErrTSNotFound
 
-			return nil
-		} else if errors.Is(err, ErrTSTooEarly) {
-			// Look at the next file, since we've reached the end of
-			// this one.
-			continue
-		} else if errors.Is(err, ErrTSTooLate) {
-			// Just seek to the start then.  timestamp is probably
-			// between the end of the previous one and the start of
-			// this one.
-			return r.SeekStart()
-		} else if errors.Is(err, ErrTSNotFound) {
-			break
+				continue
+			} else if errors.Is(err, ErrTSTooLate) {
+				// Just seek to the start then.  timestamp is probably between
+				// the end of the previous one and the start of this one.
+				return r.SeekStart()
+			} else if errors.Is(err, ErrTSNotFound) {
+				return err
+			} else {
+				return fmt.Errorf("seekts: file at index %d: %w", i, err)
+			}
 		}
+
+		// The search is finished, and the searched element has been found.
+		// Update currentFile only, position is already set properly in
+		// QLogFile.
+		r.currentFile = i
+
+		return nil
 	}
 
-	return fmt.Errorf("querylog: %w", err)
+	if err != nil {
+		return fmt.Errorf("seekts: %w", err)
+	}
+
+	return nil
 }
 
 // SeekStart changes the current position to the end of the newest file

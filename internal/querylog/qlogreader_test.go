@@ -97,7 +97,7 @@ func TestQLogReader_Seek(t *testing.T) {
 	}, {
 		name: "non-existent_long_ago",
 		time: "2000-02-19T01:23:16.920973+03:00",
-		want: ErrTSTooEarly,
+		want: ErrTSNotFound,
 	}, {
 		name: "non-existent_far_ahead",
 		time: "2100-02-19T01:23:16.920973+03:00",
@@ -113,7 +113,7 @@ func TestQLogReader_Seek(t *testing.T) {
 			ts, err := time.Parse(time.RFC3339Nano, tc.time)
 			require.NoError(t, err)
 
-			err = r.SeekTS(ts.UnixNano())
+			err = r.seekTS(ts.UnixNano())
 			assert.ErrorIs(t, err, tc.want)
 		})
 	}

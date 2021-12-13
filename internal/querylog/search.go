@@ -152,7 +152,7 @@ func (l *queryLog) searchFiles(
 	if params.olderThan.IsZero() {
 		err = r.SeekStart()
 	} else {
-		err = r.SeekTS(params.olderThan.UnixNano())
+		err = r.seekTS(params.olderThan.UnixNano())
 		if err == nil {
 			// Read to the next record, because we only need the one
 			// that goes after it.

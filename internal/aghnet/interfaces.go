@@ -92,6 +92,8 @@ func IfaceDNSIPAddrs(
 		time.Sleep(backoff)
 	}
 
+	n--
+
 	switch len(addrs) {
 	case 0:
 		// Don't return errors in case the users want to try and enable
