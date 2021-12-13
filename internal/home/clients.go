@@ -224,9 +224,9 @@ func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	clientObjects := []clientObject{}
+	var clientObjects []clientObject
 	for _, cli := range clients.list {
-		cy := clientObject{
+		cliObj := clientObject{
 			Name:                     cli.Name,
 			UseGlobalSettings:        !cli.UseOwnSettings,
 			FilteringEnabled:         cli.FilteringEnabled,
@@ -236,18 +236,18 @@ func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
 		}
 
-		cy.Tags = stringutil.CloneSlice(cli.Tags)
-		cy.IDs = stringutil.CloneSlice(cli.IDs)
-		cy.BlockedServices = stringutil.CloneSlice(cli.BlockedServices)
-		cy.Upstreams = stringutil.CloneSlice(cli.Upstreams)
+		cliObj.Tags = stringutil.CloneSlice(cli.Tags)
+		cliObj.IDs = stringutil.CloneSlice(cli.IDs)
+		cliObj.BlockedServices = stringutil.CloneSlice(cli.BlockedServices)
+		cliObj.Upstreams = stringutil.CloneSlice(cli.Upstreams)
 
-		clientObjects = append(clientObjects, cy)
+		clientObjects = append(clientObjects, cliObj)
 	}
 
 	// Maps aren't guaranteed to iterate in the same order each time, so the
-	// above loop can generate different orderings when writing to the
-	// config file: this produces lots of diffs in config files, so sort
-	// objects by name before writing.
+	// above loop can generate different orderings when writing to the config
+	// file: this produces lots of diffs in config files, so sort objects by
+	// name before writing.
 	sort.Slice(clientObjects, func(i, j int) bool {
 		return clientObjects[i].Name < clientObjects[j].Name
 	})
