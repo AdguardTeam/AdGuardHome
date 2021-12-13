@@ -84,10 +84,9 @@ type configuration struct {
 
 	DHCP dhcpd.ServerConfig `yaml:"dhcp"`
 
-	// Note: this array is filled only before file read/write and then it's
-	// cleared.
-	//
-	// TODO(a.garipov): Do something with this.
+	// Clients contains the YAML representations of the persistent clients.
+	// This field is only used for reading and writing persistent client data.
+	// Keep this field sorted to ensure consistent ordering.
 	Clients []*clientObject `yaml:"clients"`
 
 	logSettings `yaml:",inline"`
