@@ -84,8 +84,11 @@ type configuration struct {
 
 	DHCP dhcpd.ServerConfig `yaml:"dhcp"`
 
-	// Note: this array is filled only before file read/write and then it's cleared
-	Clients []clientObject `yaml:"clients"`
+	// Note: this array is filled only before file read/write and then it's
+	// cleared.
+	//
+	// TODO(a.garipov): Do something with this.
+	Clients []*clientObject `yaml:"clients"`
 
 	logSettings `yaml:",inline"`
 
@@ -316,8 +319,6 @@ func (c *configuration) write() error {
 	c.Lock()
 	defer c.Unlock()
 
-	Context.clients.WriteDiskConfig(&config.Clients)
-
 	if Context.auth != nil {
 		config.Users = Context.auth.GetUsers()
 	}
@@ -365,10 +366,11 @@ func (c *configuration) write() error {
 		config.DHCP = c
 	}
 
+	config.Clients = Context.clients.forConfig()
+
 	configFile := config.getConfigFilename()
 	log.Debug("Writing YAML file: %s", configFile)
 	yamlText, err := yaml.Marshal(&config)
-	config.Clients = nil
 	if err != nil {
 		log.Error("Couldn't generate YAML file: %s", err)
 

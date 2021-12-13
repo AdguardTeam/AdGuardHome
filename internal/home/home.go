@@ -294,8 +294,8 @@ func setupConfig(args options) (err error) {
 			return err
 		}
 	}
+
 	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
-	config.Clients = nil
 
 	// override bind host/port from the console
 	if args.bindHost != nil {

@@ -106,7 +106,7 @@ type clientsContainer struct {
 // dhcpServer: optional
 // Note: this function must be called only once
 func (clients *clientsContainer) Init(
-	objects []clientObject,
+	objects []*clientObject,
 	dhcpServer *dhcpd.Server,
 	etcHosts *aghnet.HostsContainer,
 ) {
@@ -175,59 +175,64 @@ type clientObject struct {
 	UseGlobalBlockedServices bool `yaml:"use_global_blocked_services"`
 }
 
-func (clients *clientsContainer) tagKnown(tag string) (ok bool) {
-	return clients.allTags.Has(tag)
-}
-
-func (clients *clientsContainer) addFromConfig(objects []clientObject) {
-	for _, cy := range objects {
+// addFromConfig initializes the clients containter with objects from the
+// configuration file.
+func (clients *clientsContainer) addFromConfig(objects []*clientObject) {
+	for _, o := range objects {
 		cli := &Client{
-			Name:                cy.Name,
-			IDs:                 cy.IDs,
-			UseOwnSettings:      !cy.UseGlobalSettings,
-			FilteringEnabled:    cy.FilteringEnabled,
-			ParentalEnabled:     cy.ParentalEnabled,
-			SafeSearchEnabled:   cy.SafeSearchEnabled,
-			SafeBrowsingEnabled: cy.SafeBrowsingEnabled,
+			Name: o.Name,
 
-			UseOwnBlockedServices: !cy.UseGlobalBlockedServices,
+			IDs:       o.IDs,
+			Upstreams: o.Upstreams,
 
-			Upstreams: cy.Upstreams,
+			UseOwnSettings:        !o.UseGlobalSettings,
+			FilteringEnabled:      o.FilteringEnabled,
+			ParentalEnabled:       o.ParentalEnabled,
+			SafeSearchEnabled:     o.SafeSearchEnabled,
+			SafeBrowsingEnabled:   o.SafeBrowsingEnabled,
+			UseOwnBlockedServices: !o.UseGlobalBlockedServices,
 		}
 
-		for _, s := range cy.BlockedServices {
-			if !filtering.BlockedSvcKnown(s) {
-				log.Debug("clients: skipping unknown blocked-service %q", s)
-				continue
+		for _, s := range o.BlockedServices {
+			if filtering.BlockedSvcKnown(s) {
+				cli.BlockedServices = append(cli.BlockedServices, s)
+			} else {
+				log.Info("clients: skipping unknown blocked service %q", s)
 			}
-			cli.BlockedServices = append(cli.BlockedServices, s)
 		}
 
-		for _, t := range cy.Tags {
-			if !clients.tagKnown(t) {
-				log.Debug("clients: skipping unknown tag %q", t)
-				continue
+		for _, t := range o.Tags {
+			if clients.allTags.Has(t) {
+				cli.Tags = append(cli.Tags, t)
+			} else {
+				log.Info("clients: skipping unknown tag %q", t)
 			}
-			cli.Tags = append(cli.Tags, t)
 		}
+
 		sort.Strings(cli.Tags)
 
 		_, err := clients.Add(cli)
 		if err != nil {
-			log.Tracef("clientAdd: %s", err)
+			log.Error("clients: adding clients %s: %s", cli.Name, err)
 		}
 	}
 }
 
-// WriteDiskConfig - write configuration
-func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
+// forConfig returns all currently known persistent clients as objects for the
+// configuration file.
+func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	var clientObjects []clientObject
 	for _, cli := range clients.list {
-		cliObj := clientObject{
-			Name:                     cli.Name,
+		o := &clientObject{
+			Name: cli.Name,
+
+			Tags:            stringutil.CloneSlice(cli.Tags),
+			IDs:             stringutil.CloneSlice(cli.IDs),
+			BlockedServices: stringutil.CloneSlice(cli.BlockedServices),
+			Upstreams:       stringutil.CloneSlice(cli.Upstreams),
+
 			UseGlobalSettings:        !cli.UseOwnSettings,
 			FilteringEnabled:         cli.FilteringEnabled,
 			ParentalEnabled:          cli.ParentalEnabled,
@@ -236,22 +241,16 @@ func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
 		}
 
-		cliObj.Tags = stringutil.CloneSlice(cli.Tags)
-		cliObj.IDs = stringutil.CloneSlice(cli.IDs)
-		cliObj.BlockedServices = stringutil.CloneSlice(cli.BlockedServices)
-		cliObj.Upstreams = stringutil.CloneSlice(cli.Upstreams)
-
-		clientObjects = append(clientObjects, cliObj)
+		objs = append(objs, o)
 	}
 
 	// Maps aren't guaranteed to iterate in the same order each time, so the
 	// above loop can generate different orderings when writing to the config
 	// file: this produces lots of diffs in config files, so sort objects by
 	// name before writing.
-	sort.Slice(clientObjects, func(i, j int) bool {
-		return clientObjects[i].Name < clientObjects[j].Name
-	})
-	*objects = append(*objects, clientObjects...)
+	sort.Slice(objs, func(i, j int) bool { return objs[i].Name < objs[j].Name })
+
+	return objs
 }
 
 func (clients *clientsContainer) periodicUpdate() {
@@ -537,7 +536,7 @@ func (clients *clientsContainer) check(c *Client) (err error) {
 	}
 
 	for _, t := range c.Tags {
-		if !clients.tagKnown(t) {
+		if !clients.allTags.Has(t) {
 			return fmt.Errorf("invalid tag: %q", t)
 		}
 	}
