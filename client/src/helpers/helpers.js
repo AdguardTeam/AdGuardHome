@@ -301,10 +301,10 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
     const {
         protocol, hostname, hash, port,
     } = window.location;
-    const { enabled, port_https } = values;
+    const { enabled, force_https, port_https } = values;
     const httpsPort = port_https !== STANDARD_HTTPS_PORT ? `:${port_https}` : '';
 
-    if (protocol !== 'https:' && enabled && port_https) {
+    if (protocol !== 'https:' && enabled && force_https && port_https) {
         checkRedirect(`https://${hostname}${httpsPort}/${hash}`);
     } else if (protocol === 'https:' && enabled && port_https && port_https !== parseInt(port, 10)) {
         checkRedirect(`https://${hostname}${httpsPort}/${hash}`);

@@ -125,6 +125,8 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- Invalid redirection to the HTTPS web interface after saving enabled encryption
+  settings ([#3558]).
 - Incomplete propagation of the client's IP anonymization setting to the
   statistics ([#3890]).
 - Incorrect `$dnsrewrite` results for entries from the operating system's hosts
@@ -217,6 +219,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3529]: https://github.com/AdguardTeam/AdGuardHome/issues/3529
 [#3538]: https://github.com/AdguardTeam/AdGuardHome/issues/3538
 [#3551]: https://github.com/AdguardTeam/AdGuardHome/issues/3551
+[#3558]: https://github.com/AdguardTeam/AdGuardHome/issues/3558
 [#3564]: https://github.com/AdguardTeam/AdGuardHome/issues/3564
 [#3567]: https://github.com/AdguardTeam/AdGuardHome/issues/3567
 [#3568]: https://github.com/AdguardTeam/AdGuardHome/issues/3568
