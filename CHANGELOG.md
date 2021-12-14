@@ -128,6 +128,8 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- The length of the EDNS client subnet option appearing too long for some
+  upstream servers ([#3887]).
 - Invalid redirection to the HTTPS web interface after saving enabled encryption
   settings ([#3558]).
 - Incomplete propagation of the client's IP anonymization setting to the
@@ -234,6 +236,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3744]: https://github.com/AdguardTeam/AdGuardHome/issues/3744
 [#3772]: https://github.com/AdguardTeam/AdGuardHome/issues/3772
 [#3815]: https://github.com/AdguardTeam/AdGuardHome/issues/3815
+[#3887]: https://github.com/AdguardTeam/AdGuardHome/issues/3887
 [#3890]: https://github.com/AdguardTeam/AdGuardHome/issues/3890
 [#3904]: https://github.com/AdguardTeam/AdGuardHome/issues/3904
 [#3933]: https://github.com/AdguardTeam/AdGuardHome/pull/3933
