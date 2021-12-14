@@ -128,6 +128,8 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- Rules with the `$denyallow` modifier applying to IP addresses when they
+  shouldn't ([#3175]).
 - The length of the EDNS client subnet option appearing too long for some
   upstream servers ([#3887]).
 - Invalid redirection to the HTTPS web interface after saving enabled encryption
@@ -197,6 +199,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3162]: https://github.com/AdguardTeam/AdGuardHome/issues/3162
 [#3166]: https://github.com/AdguardTeam/AdGuardHome/issues/3166
 [#3172]: https://github.com/AdguardTeam/AdGuardHome/issues/3172
+[#3175]: https://github.com/AdguardTeam/AdGuardHome/issues/3175
 [#3184]: https://github.com/AdguardTeam/AdGuardHome/issues/3184
 [#3185]: https://github.com/AdguardTeam/AdGuardHome/issues/3185
 [#3186]: https://github.com/AdguardTeam/AdGuardHome/issues/3186
