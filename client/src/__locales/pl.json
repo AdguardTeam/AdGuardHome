@@ -47,7 +47,6 @@
     "form_error_server_name": "Nieprawidłowa nazwa serwera",
     "form_error_subnet": "Podsieć \"{{cidr}}\" nie zawiera adresu IP \"{{ip}}\"",
     "form_error_positive": "Musi być większa niż 0",
-    "form_error_negative": "Musi być równy 0 lub większy",
     "out_of_range_error": "Musi być spoza zakresu \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Musi być niższy niż początek zakresu",
     "greater_range_start_error": "Musi być większy niż początek zakresu",
@@ -201,6 +200,7 @@
     "form_error_url_or_path_format": "Adres URL lub bezwzględna ścieżka listy jest nieprawidłowa",
     "custom_filter_rules": "Niestandardowe reguły filtrowania",
     "custom_filter_rules_hint": "Wpisz jedną regułę w jednej linii. Możesz użyć reguł adblock lub składni plików hostów.",
+    "system_host_files": "Pliki hosts systemu",
     "examples_title": "Przykłady",
     "example_meaning_filter_block": "zablokuj dostęp do domeny example.org i wszystkich jej subdomen",
     "example_meaning_filter_whitelist": "odblokuj dostęp do domeny example.org i wszystkich jej subdomen",
@@ -624,5 +624,8 @@
     "filter_allowlist": "OSTRZEŻENIE: To działanie spowoduje również wykluczenie reguły \"{{disallowed_rule}}\" z listy dozwolonych klientów.",
     "last_rule_in_allowlist": "Nie można odrzucić tego klienta, ponieważ wykluczenie reguły \"{{disallowed_rule}}\" spowoduje WYŁĄCZENIE listy „Dozwolonych klientów”.",
     "experimental": "Funkcja eksperymentalna",
-    "use_saved_key": "Użyj wcześniej zapisanego klucza"
+    "use_saved_key": "Użyj wcześniej zapisanego klucza",
+    "parental_control": "Kontrola rodzicielska",
+    "safe_browsing": "Bezpieczne przeglądanie",
+    "served_from_cache": "{{value}} <i>(podawane z pamięci podręcznej)</i>"
 }

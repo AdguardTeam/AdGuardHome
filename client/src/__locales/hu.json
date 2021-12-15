@@ -44,7 +44,6 @@
     "form_error_server_name": "Érvénytelen szervernév",
     "form_error_subnet": "A(z) \"{{cidr}}\" alhálózat nem tartalmazza a(z) \"{{ip}}\" IP címet",
     "form_error_positive": "0-nál nagyobbnak kell lennie",
-    "form_error_negative": "Legalább 0-nak kell lennie",
     "dhcp_form_gateway_input": "Átjáró IP",
     "dhcp_form_subnet_input": "Alhálózati maszk",
     "dhcp_form_range_title": "IP-címek tartománya",
@@ -613,5 +612,6 @@
     "port_53_faq_link": "Az 53-as portot gyakran a \"DNSStubListener\" vagy a \"systemd-resolved\" (rendszer által feloldott) szolgáltatások használják. Kérjük, olvassa el <0>ezt az útmutatót</0> a probléma megoldásához.",
     "adg_will_drop_dns_queries": "Az AdGuard Home eldobja az összes DNS kérést erről a kliensről.",
     "experimental": "Kísérleti",
-    "use_saved_key": "Előzőleg mentett kulcs használata"
+    "use_saved_key": "Előzőleg mentett kulcs használata",
+    "parental_control": "Szülői felügyelet"
 }

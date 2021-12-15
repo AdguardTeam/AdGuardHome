@@ -44,7 +44,6 @@
     "form_error_server_name": "無效伺服器名稱",
     "form_error_subnet": "子網路 \"{{cidr}}\" 不包含 IP 位址 \"{{ip}}\"",
     "form_error_positive": "數值必須大於 0",
-    "form_error_negative": "數值必須大於等於 0",
     "dhcp_form_gateway_input": "閘道 IP 位址",
     "dhcp_form_subnet_input": "子網路遮罩",
     "dhcp_form_range_title": "IP 位址範圍",

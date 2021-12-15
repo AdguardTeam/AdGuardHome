@@ -47,7 +47,6 @@
     "form_error_server_name": "Nome de servidor inválido",
     "form_error_subnet": "A sub-rede \"{{cidr}}\" não contém o endereço IP \"{{ip}}\"",
     "form_error_positive": "Deve ser maior que 0",
-    "form_error_negative": "Deve ser igual ou superior a 0",
     "out_of_range_error": "Deve estar fora do intervalo \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Deve ser inferior ao início do intervalo",
     "greater_range_start_error": "Deve ser maior que o início do intervalo",
@@ -201,6 +200,7 @@
     "form_error_url_or_path_format": "URL ou local da lista inválida",
     "custom_filter_rules": "Regras de filtragem personalizadas",
     "custom_filter_rules_hint": "Insira uma regra por linha. Pode usar regras de bloqueio de anúncios ou a sintaxe de ficheiros de hosts.",
+    "system_host_files": "Arquivos hosts do sistema",
     "examples_title": "Exemplos",
     "example_meaning_filter_block": "bloqueia o acesso ao domínio exemplo.org e a todos os seus subdomínios",
     "example_meaning_filter_whitelist": "desbloqueia o acesso ao domínio exemplo.org e a todos os seus subdomínios",
@@ -624,5 +624,8 @@
     "filter_allowlist": "AVISO: Esta ação também excluirá a regra \"{{disallowed_rule}}\" da lista de clientes permitidos.",
     "last_rule_in_allowlist": "Não é possível desautorizar este cliente porque excluir a regra \"{{disallowed_rule}}\" DESATIVARÁ a lista de \"Clientes permitidos\".",
     "experimental": "Experimental",
-    "use_saved_key": "Use a chave guardada anteriormente"
+    "use_saved_key": "Use a chave guardada anteriormente",
+    "parental_control": "Controle parental",
+    "safe_browsing": "Navegação segura",
+    "served_from_cache": "{{value}} <i>(servido do cache)</i>"
 }

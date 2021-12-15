@@ -20,7 +20,6 @@
     "form_error_mac_format": "รูปแบบ MAC ไม่ถูกต้อง",
     "form_error_client_id_format": "รูปแบบ ID ลูกค้าไม่ถูกต้อง",
     "form_error_positive": "ต้องมากกว่า 0",
-    "form_error_negative": "ต้องเท่ากับ 0 หรือมากกว่า",
     "dhcp_form_gateway_input": "IP ของเกตเวย์",
     "dhcp_form_subnet_input": "ซับเน็ตมาสก์",
     "dhcp_form_range_title": "ช่วงของที่อยู่ IP",
@@ -392,5 +391,6 @@
     "form_enter_host": "ป้อนชื่อโฮสต์",
     "show_processed_responses": "การประมวลผล",
     "safe_search": "ค้นหาอย่างปลอดภัย",
-    "filter_category_other": "อื่น ๆ"
+    "filter_category_other": "อื่น ๆ",
+    "parental_control": "ควบคุมโดยผู้ปกครอง"
 }

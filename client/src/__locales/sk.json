@@ -47,7 +47,6 @@
     "form_error_server_name": "Neplatné meno servera",
     "form_error_subnet": "Podsieť \"{{cidr}}\" neobsahuje IP adresu \"{{ip}}\"",
     "form_error_positive": "Musí byť väčšie ako 0",
-    "form_error_negative": "Musí byť číslo 0 alebo viac",
     "out_of_range_error": "Musí byť mimo rozsahu \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Musí byť nižšie ako začiatok rozsahu",
     "greater_range_start_error": "Musí byť väčšie ako začiatok rozsahu",
@@ -201,6 +200,7 @@
     "form_error_url_or_path_format": "Neplatná URL adresa alebo absolútna adresa zoznamu",
     "custom_filter_rules": "Vlastné filtračné pravidlá",
     "custom_filter_rules_hint": "Zadajte na každý riadok jedno pravidlo. Môžete použiť buď adblock pravidlá alebo syntax host súborov.",
+    "system_host_files": "Systémové súbory hosts",
     "examples_title": "Príklady",
     "example_meaning_filter_block": "zablokovať prístup k doméne example.org  a všetkým jej subdoménam",
     "example_meaning_filter_whitelist": "odblokovať prístup k doméne example.org  a všetkým jej subdoménam",
@@ -624,5 +624,8 @@
     "filter_allowlist": "UPOZORNENIE: Táto akcia tiež vylúči pravidlo \"\"{{disallowed_rule}}\"\" zo zoznamu povolených klientov.",
     "last_rule_in_allowlist": "Nemôžete zakázať tohto klienta, pretože vylúčenie pravidla \"{{disallowed_rule}}\" zakáže zoznam \"povolených klientov\".",
     "experimental": "Experimentálne",
-    "use_saved_key": "Použiť predtým uložený kľúč"
+    "use_saved_key": "Použiť predtým uložený kľúč",
+    "parental_control": "Rodičovská kontrola",
+    "safe_browsing": "Bezpečné prehliadanie",
+    "served_from_cache": "{{value}} <i>(prevzatá z cache pamäte)</i>"
 }

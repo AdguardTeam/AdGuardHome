@@ -47,7 +47,6 @@
     "form_error_server_name": "Ongeldige servernaam",
     "form_error_subnet": "Subnet “{{cidr}}” bevat niet het IP-adres “{{ip}}”",
     "form_error_positive": "Moet groter zijn dan 0",
-    "form_error_negative": "Moet 0 of hoger dan 0 zijn",
     "out_of_range_error": "Moet buiten bereik zijn \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Moet lager zijn dan begin reeks",
     "greater_range_start_error": "Moet groter zijn dan begin reeks",
@@ -201,6 +200,7 @@
     "form_error_url_or_path_format": "Ongeldig URL of pad van de lijst",
     "custom_filter_rules": "Aangepaste filterregels",
     "custom_filter_rules_hint": "Voer één regel op een regel in. U kunt adblock-regels gebruiken of de syntaxis van hosts-bestanden gebruiken.",
+    "system_host_files": "Systeem host-bestanden",
     "examples_title": "Voorbeelden",
     "example_meaning_filter_block": "blokkeer toegang tot het example.org domein en alle subdomeinen",
     "example_meaning_filter_whitelist": "deblokkering van toegang tot het example.org-domein en alle bijbehorende subdomeinen",
@@ -624,5 +624,8 @@
     "filter_allowlist": "WAARSCHUWING: Deze actie zal ook de regel \"{{disallowed_rule}}\" uitsluiten van de lijst met toegestane clients.",
     "last_rule_in_allowlist": "Kan deze client niet weigeren omdat het uitsluiten van de regel \"{{disallowed_rule}}\" de lijst \"Toegestane clients\" zal UITSCHAKELEN.",
     "experimental": "Experimenteel",
-    "use_saved_key": "De eerder opgeslagen sleutel gebruiken"
+    "use_saved_key": "De eerder opgeslagen sleutel gebruiken",
+    "parental_control": "Ouderlijk toezicht",
+    "safe_browsing": "Veilig surfen",
+    "served_from_cache": "{{value}} <i>(geleverd vanuit cache)</i>"
 }

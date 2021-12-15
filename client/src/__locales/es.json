@@ -47,7 +47,6 @@
     "form_error_server_name": "Nombre de servidor no válido",
     "form_error_subnet": "La subred \"{{cidr}}\" no contiene la dirección IP \"{{ip}}\"",
     "form_error_positive": "Debe ser mayor que 0",
-    "form_error_negative": "Debe ser igual o mayor que 0",
     "out_of_range_error": "Debe estar fuera del rango \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Debe ser inferior que el inicio de rango",
     "greater_range_start_error": "Debe ser mayor que el inicio de rango",
@@ -201,6 +200,7 @@
     "form_error_url_or_path_format": "URL o ruta absoluta no válida para la lista",
     "custom_filter_rules": "Reglas de filtrado personalizado",
     "custom_filter_rules_hint": "Ingresa una regla por línea. Puedes utilizar reglas de bloqueo o la sintaxis de los archivos hosts.",
+    "system_host_files": "Archivos hosts del sistema",
     "examples_title": "Ejemplos",
     "example_meaning_filter_block": "bloquea el acceso al dominio ejemplo.org y a todos sus subdominios",
     "example_meaning_filter_whitelist": "desbloquea el acceso al dominio ejemplo.org y a todos sus subdominios",
@@ -624,5 +624,8 @@
     "filter_allowlist": "ADVERTENCIA: Esta acción también excluirá la regla \"{{disallowed_rule}}\" de la lista de clientes permitidos.",
     "last_rule_in_allowlist": "No se puede desautorizar a este cliente porque al excluir la regla \"{{disallowed_rule}}\" DESHABILITARÁ la lista de \"Clientes permitidos\".",
     "experimental": "experimental",
-    "use_saved_key": "Usar la clave guardada previamente"
+    "use_saved_key": "Usar la clave guardada previamente",
+    "parental_control": "Control parental",
+    "safe_browsing": "Navegación segura",
+    "served_from_cache": "{{value}} <i>(servido desde la caché)</i>"
 }

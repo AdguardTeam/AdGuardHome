@@ -47,7 +47,6 @@
     "form_error_server_name": "Nume de server nevalid",
     "form_error_subnet": "Subrețeaua „{{cidr}}” nu conține adresa IP „{{ip}}”",
     "form_error_positive": "Trebuie să fie mai mare de 0",
-    "form_error_negative": "Trebuie să fie egală cu 0 sau mai mare",
     "out_of_range_error": "Trebuie să fie în afara intervalului „{{start}}”-„{{end}}”",
     "lower_range_start_error": "Trebuie să fie mai mică decât începutul intervalului",
     "greater_range_start_error": "Trebuie să fie mai mare decât începutul intervalului",
@@ -201,6 +200,7 @@
     "form_error_url_or_path_format": "Invalid URL sau o cale absolută a listei",
     "custom_filter_rules": "Reguli de filtrare personalizate",
     "custom_filter_rules_hint": "Introduceți o regulă pe linie. Puteți utiliza reguli de blocare sau sintaxa de fișiere hosts.",
+    "system_host_files": "Fișiere de sistem hosts",
     "examples_title": "Exemple",
     "example_meaning_filter_block": "blochează accesul la domeniul exemplu.org și la toate subdomeniile sale",
     "example_meaning_filter_whitelist": "deblochează accesul la domeniul exemplu.org și la toate subdomeniile sale",
@@ -624,5 +624,7 @@
     "filter_allowlist": "AVERTISMENT: Această acțiune va exclude și regula „{{disallowed_rule}}” din lista de clienți permiși.",
     "last_rule_in_allowlist": "Acest client nu poate fi exclus deoarece excluderea regulii „{{disallowed_rule}}” va DEZACTIVA lista „Clienți acceptați”.",
     "experimental": "Experimental",
-    "use_saved_key": "Folosiți cheia salvată anterior"
+    "use_saved_key": "Folosiți cheia salvată anterior",
+    "parental_control": "Control parental",
+    "safe_browsing": "Navigare sigura"
 }

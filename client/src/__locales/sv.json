@@ -358,6 +358,7 @@
     "safe_search": "Säker surf",
     "filter_category_general": "General",
     "filter_category_security": "säkerhet",
-    "filter_category_other": "Annat",
-    "use_saved_key": "Använd den tidigare sparade nyckeln"
+    "filter_category_other": "Övrigt",
+    "use_saved_key": "Använd den tidigare sparade nyckeln",
+    "parental_control": "Föräldrakontroll"
 }

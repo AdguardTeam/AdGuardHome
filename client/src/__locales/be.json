@@ -47,7 +47,6 @@
     "form_error_server_name": "Няслушнае імя сервера",
     "form_error_subnet": "Падсетка «{{cidr}}» не ўтрымвае IP-адраса «{{ip}}»",
     "form_error_positive": "Павінна быць больш 0",
-    "form_error_negative": "Павінна быць не менш 0",
     "out_of_range_error": "Павінна быць па-за дыяпазонам «{{start}}»-«{{end}}»",
     "lower_range_start_error": "Павінна быць менш за пачатак дыяпазону",
     "greater_range_start_error": "Павінна быць больш за пачатак дыяпазону",
@@ -624,5 +623,6 @@
     "filter_allowlist": "УВАГА: Гэта дзеянне таксама выключыць правіла «{{disallowed_rule}}» са спіса дазволеных кліентаў.",
     "last_rule_in_allowlist": "Няможна заблакаваць гэтага кліента, бо вынятак правіла «{{disallowed_rule}}» АДКЛЮЧЫЦЬ рэжым белага спіса.",
     "experimental": "Эксперыментальны",
-    "use_saved_key": "Скарыстаць захаваны раней ключ"
+    "use_saved_key": "Скарыстаць захаваны раней ключ",
+    "parental_control": "Бацькоўскі кантроль"
 }

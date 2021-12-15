@@ -47,7 +47,6 @@
     "form_error_server_name": "Ugyldigt servernavn",
     "form_error_subnet": "Subnet \"{{cidr}}\" indeholder ikke IP-adressen \"{{ip}}\"",
     "form_error_positive": "Skal være større end 0",
-    "form_error_negative": "Skal være lig med 0 eller større",
     "out_of_range_error": "Skal være uden for området \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Skal være mindre end starten på området",
     "greater_range_start_error": "Skal være større end starten på ​​området",
@@ -201,6 +200,7 @@
     "form_error_url_or_path_format": "Ugyldig URL eller absolut listesti",
     "custom_filter_rules": "Tilpassede filtreringsregler",
     "custom_filter_rules_hint": "Angiv én regel pr. linje. Du kan bruge enten adblockingregler eller værtsfilsyntaks.",
+    "system_host_files": "System hosts-filer",
     "examples_title": "Eksempler",
     "example_meaning_filter_block": "blokér adgang til example.org-domænet samt alle underdomæner",
     "example_meaning_filter_whitelist": "afblokér adgang til example.ord-domænet samt alle underdomæner",
@@ -624,5 +624,8 @@
     "filter_allowlist": "ADVARSEL: Denne handling udelukker også reglen \"{{disallowed_rule}}\" fra listen over tilladte klienter.",
     "last_rule_in_allowlist": "Kan ikke afvise denne klient, da udelukkelse af reglen \"{{disallowed_rule}}\" DEAKTIVERER listen \"Tilladte klienter\".",
     "experimental": "Eksperimentel",
-    "use_saved_key": "Brug den tidligere gemte nøgle"
+    "use_saved_key": "Brug den tidligere gemte nøgle",
+    "parental_control": "Forældrekontrol",
+    "safe_browsing": "Sikker browsing",
+    "served_from_cache": "{{value}} <i>(leveret fra cache)</i>"
 }

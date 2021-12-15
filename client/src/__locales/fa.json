@@ -21,7 +21,6 @@
     "form_error_mac_format": "فرمت مَک نامعتبر است",
     "form_error_client_id_format": "فرمت شناسه کلاینت نامعتبر است",
     "form_error_positive": "باید بزرگتر از 0 باشد",
-    "form_error_negative": "باید برابر با 0 یا بزرگتر باشد",
     "dhcp_form_gateway_input": "آی پی دروازه",
     "dhcp_form_subnet_input": "ماسک زیر شبکه",
     "dhcp_form_range_title": "دامنه آدرس های آی پی",
@@ -489,5 +488,6 @@
     "milliseconds_abbreviation": "هـ ثـ",
     "filter_category_general": "General",
     "filter_category_security": "مسدودسازی بدافزار و فیشینگ",
-    "filter_category_other": "ساير"
+    "filter_category_other": "ساير",
+    "parental_control": "نظارت والدین"
 }

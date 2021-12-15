@@ -28,7 +28,6 @@
     "form_error_client_id_format": "Ugyldig ID-klientformat",
     "form_error_server_name": "Ugyldig tjenernavn",
     "form_error_positive": "Må være høyere enn 0",
-    "form_error_negative": "Må være ≥0",
     "dhcp_form_gateway_input": "Gateway-IP",
     "dhcp_form_subnet_input": "Nettverksmaske",
     "dhcp_form_range_title": "Spennvidden til IP-adressene",
@@ -555,5 +554,6 @@
     "click_to_view_queries": "Klikk for å vise forespørsler",
     "port_53_faq_link": "Port 53 er ofte opptatt av «DNSStubListener»- eller «systemd-resolved»-tjenestene. Vennligst les <0>denne instruksjonen</0> om hvordan man løser dette.",
     "adg_will_drop_dns_queries": "AdGuard Home vil droppe alle DNS-forespørsler fra denne klienten.",
-    "experimental": "Eksperimentell"
+    "experimental": "Eksperimentell",
+    "parental_control": "Foreldrekontroll"
 }

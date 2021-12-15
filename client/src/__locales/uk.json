@@ -47,7 +47,6 @@
     "form_error_server_name": "Неправильна назва сервера",
     "form_error_subnet": "Підмережа «{{cidr}}» не містить IP-адресу «{{ip}}»",
     "form_error_positive": "Повинно бути більше 0",
-    "form_error_negative": "Повинно дорівнювати 0 або більше",
     "out_of_range_error": "Не повинна бути в діапазоні «{{start}}»−«{{end}}»",
     "lower_range_start_error": "Має бути меншим за початкову адресу",
     "greater_range_start_error": "Має бути більшим за початкову адресу",
@@ -104,7 +103,7 @@
     "on": "УВІМК",
     "off": "ВИМК",
     "copyright": "Авторське право",
-    "homepage": "Домівка",
+    "homepage": "Домашня сторінка",
     "report_an_issue": "Повідомити про проблему",
     "privacy_policy": "Політика приватності",
     "enable_protection": "Увімкнути захист",
@@ -201,6 +200,7 @@
     "form_error_url_or_path_format": "Помилкова URL-адреса чи абсолютний шлях до списку",
     "custom_filter_rules": "Власні правила фільтрування",
     "custom_filter_rules_hint": "Вводьте одне правило на рядок. Ви можете використовувати правила блокування чи синтаксис файлів hosts.",
+    "system_host_files": "Системні hosts-файли",
     "examples_title": "Зразки",
     "example_meaning_filter_block": "блокує доступ до домену example.org та всіх його піддоменів",
     "example_meaning_filter_whitelist": "розблоковує доступ до домену example.org та всіх його піддоменів",
@@ -624,5 +624,8 @@
     "filter_allowlist": "ПОПЕРЕДЖЕННЯ: Таким чином ви також виключите правило «{{disallowed_rule}}» зі списку дозволених клієнтів.",
     "last_rule_in_allowlist": "Неможливо заблокувати цього клієнта, тому що правило «{{disallowed_rule}}» ВИМКНЕ режим списку дозволів.",
     "experimental": "Експериментальний",
-    "use_saved_key": "Використати раніше збережений ключ"
+    "use_saved_key": "Використати раніше збережений ключ",
+    "parental_control": "Батьківський контроль",
+    "safe_browsing": "Безпечний інтернет",
+    "served_from_cache": "{{value}} <i>(отримано з кешу)</i>"
 }

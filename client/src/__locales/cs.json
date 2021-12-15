@@ -47,7 +47,6 @@
     "form_error_server_name": "Neplatný název serveru",
     "form_error_subnet": "Podsíť \"{{cidr}}\" neobsahuje IP adresu \"{{ip}}\"",
     "form_error_positive": "Musí být větší než 0",
-    "form_error_negative": "Musí být rovno nebo větší než 0",
     "out_of_range_error": "Musí být mimo rozsah \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Musí být menší než začátek rozsahu",
     "greater_range_start_error": "Musí být větší než začátek rozsahu",
@@ -201,6 +200,7 @@
     "form_error_url_or_path_format": "Neplatná URL nebo úplná cesta k seznamu",
     "custom_filter_rules": "Vlastní pravidla filtrování",
     "custom_filter_rules_hint": "Na každý řádek vložte jedno pravidlo. Můžete použít buď pravidla blokování reklam nebo syntaxe hostitelských souborů.",
+    "system_host_files": "Systémové soubory hostitelů",
     "examples_title": "Příklady",
     "example_meaning_filter_block": "zablokovat přístup k doméně example.org a všem jejím subdoménám",
     "example_meaning_filter_whitelist": "odblokovat přístup k doméně example.org a všem jejím subdoménám",
@@ -624,5 +624,8 @@
     "filter_allowlist": "VAROVÁNÍ: Tato akce také vyloučí pravidlo \"{{disallowed_rule}}\" ze seznamu povolených klientů.",
     "last_rule_in_allowlist": "Nelze zakázat tohoto klienta, protože vyloučení pravidla \"{{disallowed_rule}}\" ZRUŠÍ seznam \"Povolených klientů\".",
     "experimental": "Experimentální",
-    "use_saved_key": "Použít dříve uložený klíče"
+    "use_saved_key": "Použít dříve uložený klíče",
+    "parental_control": "Rodičovská kontrola",
+    "safe_browsing": "Bezpečné prohlížení",
+    "served_from_cache": "{{value}} <i>(převzato z mezipaměti)</i>"
 }
