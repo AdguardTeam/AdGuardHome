@@ -455,10 +455,11 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+	
+	var ip net.IP
+	ip, err = realIP(r)
 
 	if len(cookie) == 0 {
-		var ip net.IP
-		ip, err = realIP(r)
 		if err != nil {
 			log.Info("auth: getting real ip from request: %s", err)
 		} else if ip == nil {
@@ -472,6 +473,15 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid username or password", http.StatusBadRequest)
 
 		return
+	}
+	
+	if err != nil {
+		log.Info("auth: getting real ip from request: %s", err)
+	} else if ip == nil {
+		// Technically shouldn't happen.
+		log.Info("auth: user %q successfully logged in from unknown ip", req.Name)
+	} else {
+		log.Info("auth: user %q successfully logged in from ip %q", req.Name, ip)
 	}
 
 	w.Header().Set("Set-Cookie", cookie)
