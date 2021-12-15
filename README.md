@@ -322,10 +322,18 @@ Here is a link to AdGuard Home project: https://crowdin.com/project/adguard-appl
 
 Here's what you can also do to contribute:
 
-1. [Look for issues](https://github.com/AdguardTeam/AdGuardHome/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22+) marked as "help wanted".
-2. Actualize the list of *Blocked services*. It can be found in [filtering/blocked.go](https://github.com/AdguardTeam/AdGuardHome/blob/master/internal/filtering/blocked.go).
-3. Actualize the list of known *trackers*. It it can be found in [client/src/helpers/trackers/adguard.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/src/helpers/trackers/adguard.json).
-4. Actualize the list of vetted *blocklists*. It it can be found in [client/src/helpers/filters/filters.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/src/helpers/filters/filters.json).
+1. [Look for issues][helpissues] marked as "help wanted".
+2. Actualize the list of *Blocked services*. It can be found in
+   [filtering/blocked.go][blocked.go].
+3. Actualize the list of known *trackers*. It it can be found in [this repo]
+   [companiesdb].
+4. Actualize the list of vetted *blocklists*. It it can be found in
+   [client/src/helpers/filters/filters.json][filters.json].
+
+[helpissues]: https://github.com/AdguardTeam/AdGuardHome/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22+
+[blocked.go]: https://github.com/AdguardTeam/AdGuardHome/blob/master/internal/filtering/blocked.go
+[companiesdb]: https://github.com/AdguardTeam/companiesdb
+[filters.json]: https://github.com/AdguardTeam/AdGuardHome/blob/master/client/src/helpers/filters/filters.json
 
 <a id="uses"></a>
 ## Projects that use AdGuard Home

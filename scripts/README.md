@@ -190,16 +190,16 @@ Optional environment:
 
 
 
-##  `whotracksme/`: Whotracks.me Database Converter
+##  `companiesdb/`: Whotracks.me Database Converter
 
-A simple script that converts the Ghostery/Cliqz trackers database to a json format.
+A simple script that downloads and updates the companies DB in the `client` 
+code from [the repo][companiesrepo].
 
  ###  Usage
 
 ```sh
-yarn install
-node index.js
+cd scripts/companiesdb
+./download.sh
 ```
 
-You'll find the output in the `whotracksmedb.json` file.  Then, move it to
-`client/src/helpers/trackers`.
+[companiesrepo]: https://github.com/AdguardTeam/companiesdb

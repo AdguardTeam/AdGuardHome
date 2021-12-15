@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2018-10-14",
+    "timeUpdated": "2021-12-15",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -14,6 +14,7 @@
         "10": "hosting",
         "11": "unknown",
         "12": "extensions",
+        "13": "email",
         "101": "mobile_analytics"
     },
     "trackers": {
