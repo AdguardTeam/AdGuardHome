@@ -128,9 +128,10 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- EDNS0 TCP keepalive option handling ([#3778]).
 - Rules with the `$denyallow` modifier applying to IP addresses when they
   shouldn't ([#3175]).
-- The length of the EDNS client subnet option appearing too long for some
+- The length of the EDNS0 client subnet option appearing too long for some
   upstream servers ([#3887]).
 - Invalid redirection to the HTTPS web interface after saving enabled encryption
   settings ([#3558]).
@@ -238,6 +239,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3707]: https://github.com/AdguardTeam/AdGuardHome/issues/3707
 [#3744]: https://github.com/AdguardTeam/AdGuardHome/issues/3744
 [#3772]: https://github.com/AdguardTeam/AdGuardHome/issues/3772
+[#3778]: https://github.com/AdguardTeam/AdGuardHome/issues/3778
 [#3815]: https://github.com/AdguardTeam/AdGuardHome/issues/3815
 [#3887]: https://github.com/AdguardTeam/AdGuardHome/issues/3887
 [#3890]: https://github.com/AdguardTeam/AdGuardHome/issues/3890
