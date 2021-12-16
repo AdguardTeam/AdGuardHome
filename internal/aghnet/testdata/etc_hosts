@@ -8,7 +8,13 @@
 # See https://github.com/AdguardTeam/AdGuardHome/issues/3846.
 1.0.0.2 a.whole lot.of aliases for.testing
 
+# See https://github.com/AdguardTeam/AdGuardHome/issues/3946.
+1.0.0.3 *
+1.0.0.4 *.com
+
 # Same for IPv6.
 ::1 simplehost
 ::  hello hello.world
 ::2 a.whole lot.of aliases for.testing
+::3 *
+::4 *.com

@@ -100,16 +100,16 @@ const hostsContainerPref = "hosts container"
 type HostsContainer struct {
 	// requestMatcher matches the requests and translates the rules.  It's
 	// embedded to implement MatchRequest and Translate for *HostsContainer.
+	//
+	// TODO(a.garipov, e.burkov): Consider fully merging into HostsContainer.
 	requestMatcher
-
-	// listID is the identifier for the list of generated rules.
-	listID int
 
 	// done is the channel to sign closing the container.
 	done chan struct{}
 
 	// updates is the channel for receiving updated hosts.
 	updates chan *netutil.IPMap
+
 	// last is the set of hosts that was cached within last detected change.
 	last *netutil.IPMap
 
@@ -118,8 +118,12 @@ type HostsContainer struct {
 
 	// w tracks the changes in specified files and directories.
 	w aghos.FSWatcher
+
 	// patterns stores specified paths in the fs.Glob-compatible form.
 	patterns []string
+
+	// listID is the identifier for the list of generated rules.
+	listID int
 }
 
 // ErrNoHostsPaths is returned when there are no valid paths to watch passed to
@@ -288,7 +292,7 @@ func (hp *hostsParser) parseFile(
 	s := bufio.NewScanner(r)
 	for s.Scan() {
 		ip, hosts := hp.parseLine(s.Text())
-		if ip == nil {
+		if ip == nil || len(hosts) == 0 {
 			continue
 		}
 
@@ -310,21 +314,26 @@ func (hp *hostsParser) parseLine(line string) (ip net.IP, hosts []string) {
 	}
 
 	for _, f := range fields[1:] {
-		switch hashIdx := strings.IndexByte(f, '#'); hashIdx {
-		case -1:
-			hosts = append(hosts, f)
-
-			continue
-		case 0:
-			// Go on.
-		default:
+		hashIdx := strings.IndexByte(f, '#')
+		if hashIdx == 0 {
+			// The rest of the fields are a part of the comment so return.
+			break
+		} else if hashIdx > 0 {
 			// Only a part of the field is a comment.
-			hosts = append(hosts, f[:hashIdx])
+			f = f[:hashIdx]
 		}
 
-		// The rest of the fields are a part of the comment so skip
-		// immediately.
-		break
+		// Make sure that invalid hosts aren't turned into rules.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/3946.
+		err := netutil.ValidateDomainName(f)
+		if err != nil {
+			log.Error("%s: host %q is invalid, ignoring", hostsContainerPref, f)
+
+			continue
+		}
+
+		hosts = append(hosts, f)
 	}
 
 	return ip, hosts
