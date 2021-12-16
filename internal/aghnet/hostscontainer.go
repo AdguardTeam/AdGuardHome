@@ -431,7 +431,7 @@ func (hp *hostsParser) writeMainHostRule(host string, ip net.IP) (added, addedPt
 		rwSuccess    = "^$dnsrewrite=NOERROR;"
 		rwSuccessPTR = "^$dnsrewrite=NOERROR;PTR;"
 
-		modLen    = len("||") + len(rwSuccess)
+		modLen    = len("||") + len(rwSuccess) + len(";")
 		modLenPTR = len("||") + len(rwSuccessPTR)
 	)
 

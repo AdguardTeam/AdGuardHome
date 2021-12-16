@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
@@ -206,7 +207,8 @@ func (d *DNSFilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(arr)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "json.Encode: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "json.Encode: %s", err)
+
 		return
 	}
 }
@@ -215,7 +217,8 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 	jsent := rewriteEntryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&jsent)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+
 		return
 	}
 
@@ -237,7 +240,8 @@ func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) 
 	jsent := rewriteEntryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&jsent)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+
 		return
 	}
 

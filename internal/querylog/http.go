@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
@@ -33,18 +34,11 @@ func (l *queryLog) initWeb() {
 	l.conf.HTTPRegister(http.MethodPost, "/control/querylog_config", l.handleQueryLogConfig)
 }
 
-func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {
-	text := fmt.Sprintf(format, args...)
-
-	log.Info("QueryLog: %s %s: %s", r.Method, r.URL, text)
-
-	http.Error(w, text, code)
-}
-
 func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	params, err := l.parseSearchParams(r)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "failed to parse params: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "failed to parse params: %s", err)
+
 		return
 	}
 
@@ -56,14 +50,21 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 
 	jsonVal, err := json.Marshal(data)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Couldn't marshal data into json: %s", err)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Couldn't marshal data into json: %s",
+			err,
+		)
+
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 	}
 }
 
@@ -80,13 +81,15 @@ func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 
 	jsonVal, err := json.Marshal(resp)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "json encode: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
+
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "http write: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "http write: %s", err)
 	}
 }
 
@@ -109,13 +112,15 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 	d := &qlogConfig{}
 	req, err := jsonutil.DecodeObject(d, r.Body)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+
 		return
 	}
 
 	ivl := time.Duration(float64(timeutil.Day) * d.Interval)
 	if req.Exists("interval") && !checkInterval(ivl) {
-		httpError(r, w, http.StatusBadRequest, "Unsupported interval")
+		aghhttp.Error(r, w, http.StatusBadRequest, "Unsupported interval")
+
 		return
 	}
 

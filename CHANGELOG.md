@@ -49,6 +49,7 @@ and this project adheres to
 
 ### Changed
 
+- Port bindings are now checked for uniqueness ([#3835]).
 - The DNSSEC check now simply checks against the AD flag in the response
   ([#3904]).
 - Client objects in the configuration file are now sorted ([#3933]).
@@ -241,6 +242,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3772]: https://github.com/AdguardTeam/AdGuardHome/issues/3772
 [#3778]: https://github.com/AdguardTeam/AdGuardHome/issues/3778
 [#3815]: https://github.com/AdguardTeam/AdGuardHome/issues/3815
+[#3835]: https://github.com/AdguardTeam/AdGuardHome/issues/3835
 [#3887]: https://github.com/AdguardTeam/AdGuardHome/issues/3887
 [#3890]: https://github.com/AdguardTeam/AdGuardHome/issues/3890
 [#3904]: https://github.com/AdguardTeam/AdGuardHome/issues/3904

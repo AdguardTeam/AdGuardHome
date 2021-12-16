@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -187,7 +188,7 @@ func (s *Server) handleAccessList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(j)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "encoding response: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "encoding response: %s", err)
 
 		return
 	}
@@ -251,14 +252,14 @@ func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 	list := accessListJSON{}
 	err := json.NewDecoder(r.Body).Decode(&list)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "decoding request: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "decoding request: %s", err)
 
 		return
 	}
 
 	err = validateAccessSet(list)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, err.Error())
+		aghhttp.Error(r, w, http.StatusBadRequest, err.Error())
 
 		return
 	}
@@ -266,7 +267,7 @@ func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 	var a *accessCtx
 	a, err = newAccessCtx(list.AllowedClients, list.DisallowedClients, list.BlockedHosts)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "creating access ctx: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "creating access ctx: %s", err)
 
 		return
 	}

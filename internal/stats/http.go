@@ -4,20 +4,12 @@ package stats
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 )
-
-func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {
-	text := fmt.Sprintf(format, args...)
-
-	log.Info("Stats: %s %s: %s", r.Method, r.URL, text)
-
-	http.Error(w, text, code)
-}
 
 // topAddrs is an alias for the types of the TopFoo fields of statsResponse.
 // The key is either a client's address or a requested address.
@@ -71,7 +63,7 @@ func (s *statsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 		log.Debug("stats: prepared data in %v", time.Since(start))
 
 		if !ok {
-			httpError(r, w, http.StatusInternalServerError, "Couldn't get statistics data")
+			aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't get statistics data")
 
 			return
 		}
@@ -81,7 +73,7 @@ func (s *statsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewEncoder(w).Encode(resp)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "json encode: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
 
 		return
 	}
@@ -98,13 +90,14 @@ func (s *statsCtx) handleStatsInfo(w http.ResponseWriter, r *http.Request) {
 
 	data, err := json.Marshal(resp)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "json encode: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
+
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(data)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "http write: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "http write: %s", err)
 	}
 }
 
@@ -113,12 +106,14 @@ func (s *statsCtx) handleStatsConfig(w http.ResponseWriter, r *http.Request) {
 	reqData := config{}
 	err := json.NewDecoder(r.Body).Decode(&reqData)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
+
 		return
 	}
 
 	if !checkInterval(reqData.IntervalDays) {
-		httpError(r, w, http.StatusBadRequest, "Unsupported interval")
+		aghhttp.Error(r, w, http.StatusBadRequest, "Unsupported interval")
+
 		return
 	}
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 )
@@ -287,7 +288,8 @@ func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Req
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(list)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "json.Encode: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "json.Encode: %s", err)
+
 		return
 	}
 }
@@ -296,7 +298,8 @@ func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 	list := []string{}
 	err := json.NewDecoder(r.Body).Decode(&list)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+
 		return
 	}
 

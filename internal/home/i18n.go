@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
@@ -96,5 +97,5 @@ func handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	onConfigModified()
-	returnOK(w)
+	aghhttp.OK(w)
 }

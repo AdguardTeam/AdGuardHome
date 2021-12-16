@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
@@ -49,7 +50,8 @@ func (f *Filtering) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 	fj := filterAddJSON{}
 	err := json.NewDecoder(r.Body).Decode(&fj)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse request body json: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to parse request body json: %s", err)
+
 		return
 	}
 
@@ -63,7 +65,8 @@ func (f *Filtering) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 
 	// Check for duplicates
 	if filterExists(fj.URL) {
-		httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", fj.URL)
+		aghhttp.Error(r, w, http.StatusBadRequest, "Filter URL already added -- %s", fj.URL)
+
 		return
 	}
 
@@ -79,17 +82,35 @@ func (f *Filtering) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 	// Download the filter contents
 	ok, err := f.update(&filt)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Couldn't fetch filter from url %s: %s", filt.URL, err)
-		return
-	}
-	if !ok {
-		httpError(w, http.StatusBadRequest, "Filter at the url %s is invalid (maybe it points to blank page?)", filt.URL)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusBadRequest,
+			"Couldn't fetch filter from url %s: %s",
+			filt.URL,
+			err,
+		)
+
 		return
 	}
 
-	// URL is deemed valid, append it to filters, update config, write new filter file and tell dns to reload it
+	if !ok {
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusBadRequest,
+			"Filter at the url %s is invalid (maybe it points to blank page?)",
+			filt.URL,
+		)
+
+		return
+	}
+
+	// URL is assumed valid so append it to filters, update config, write new
+	// file and reload it to engines.
 	if !filterAdd(filt) {
-		httpError(w, http.StatusBadRequest, "Filter URL already added -- %s", filt.URL)
+		aghhttp.Error(r, w, http.StatusBadRequest, "Filter URL already added -- %s", filt.URL)
+
 		return
 	}
 
@@ -98,7 +119,7 @@ func (f *Filtering) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 
 	_, err = fmt.Fprintf(w, "OK %d rules\n", filt.RulesCount)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write body: %s", err)
 	}
 }
 
@@ -111,7 +132,8 @@ func (f *Filtering) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 	req := request{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "failed to parse request body json: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "failed to parse request body json: %s", err)
+
 		return
 	}
 
@@ -152,7 +174,7 @@ func (f *Filtering) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 
 	_, err = fmt.Fprintf(w, "OK %d rules\n", deleted.RulesCount)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "couldn't write body: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "couldn't write body: %s", err)
 	}
 }
 
@@ -172,7 +194,8 @@ func (f *Filtering) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 	fj := filterURLReq{}
 	err := json.NewDecoder(r.Body).Decode(&fj)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
+
 		return
 	}
 
@@ -228,7 +251,8 @@ func (f *Filtering) handleFilteringSetRules(w http.ResponseWriter, r *http.Reque
 	// This use of ReadAll is safe, because request's body is now limited.
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to read request body: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to read request body: %s", err)
+
 		return
 	}
 
@@ -250,7 +274,8 @@ func (f *Filtering) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 	req := Req{}
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
+
 		return
 	}
 
@@ -270,13 +295,15 @@ func (f *Filtering) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 		resp.Updated, err = f.refreshFilters(flags|filterRefreshForce, false)
 	}()
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "%s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
+
 		return
 	}
 
 	js, err := json.Marshal(resp)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "json encode: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
+
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -335,13 +362,14 @@ func (f *Filtering) handleFilteringStatus(w http.ResponseWriter, r *http.Request
 
 	jsonVal, err := json.Marshal(resp)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "json encode: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
+
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "http write: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "http write: %s", err)
 	}
 }
 
@@ -350,12 +378,14 @@ func (f *Filtering) handleFilteringConfig(w http.ResponseWriter, r *http.Request
 	req := filteringConfig{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
+
 		return
 	}
 
 	if !checkFiltersUpdateIntervalHours(req.Interval) {
-		httpError(w, http.StatusBadRequest, "Unsupported interval")
+		aghhttp.Error(r, w, http.StatusBadRequest, "Unsupported interval")
+
 		return
 	}
 
@@ -408,7 +438,15 @@ func (f *Filtering) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 	Context.dnsFilter.ApplyBlockedServices(&setts, nil, true)
 	result, err := Context.dnsFilter.CheckHost(host, dns.TypeA, &setts)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "couldn't apply filtering: %s: %s", host, err)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusInternalServerError,
+			"couldn't apply filtering: %s: %s",
+			host,
+			err,
+		)
+
 		return
 	}
 
@@ -433,7 +471,8 @@ func (f *Filtering) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 
 	js, err := json.Marshal(resp)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "json encode: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
+
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

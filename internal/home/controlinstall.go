@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -34,7 +35,8 @@ func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request
 
 	ifaces, err := aghnet.GetValidNetInterfacesForWeb()
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
+
 		return
 	}
 
@@ -46,7 +48,14 @@ func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(data)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to marshal default addresses to json: %s", err)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Unable to marshal default addresses to json: %s",
+			err,
+		)
+
 		return
 	}
 }
@@ -84,23 +93,32 @@ type checkConfigResp struct {
 func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 	reqData := checkConfigReq{}
 	respData := checkConfigResp{}
+
 	err := json.NewDecoder(r.Body).Decode(&reqData)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse 'check_config' JSON data: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to parse 'check_config' JSON data: %s", err)
+
 		return
 	}
 
-	if reqData.Web.Port != 0 && reqData.Web.Port != config.BindPort && reqData.Web.Port != config.BetaBindPort {
-		err = aghnet.CheckPortAvailable(reqData.Web.IP, reqData.Web.Port)
+	pm := portsMap{}
+	pm.add(config.BindPort, config.BetaBindPort, reqData.Web.Port)
+	if err = pm.validate(); err != nil {
+		respData.Web.Status = err.Error()
+	} else if reqData.Web.Port != 0 {
+		err = aghnet.CheckPort("tcp", reqData.Web.IP, reqData.Web.Port)
 		if err != nil {
 			respData.Web.Status = err.Error()
 		}
 	}
 
-	if reqData.DNS.Port != 0 {
-		err = aghnet.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+	pm.add(reqData.DNS.Port)
+	if err = pm.validate(); err != nil {
+		respData.DNS.Status = err.Error()
+	} else if reqData.DNS.Port != 0 {
+		err = aghnet.CheckPort("udp", reqData.DNS.IP, reqData.DNS.Port)
 
-		if aghnet.ErrorIsAddrInUse(err) {
+		if aghnet.IsAddrInUse(err) {
 			canAutofix := checkDNSStubListener()
 			if canAutofix && reqData.DNS.Autofix {
 
@@ -109,7 +127,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 					log.Error("Couldn't disable DNSStubListener: %s", err)
 				}
 
-				err = aghnet.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+				err = aghnet.CheckPort("udp", reqData.DNS.IP, reqData.DNS.Port)
 				canAutofix = false
 			}
 
@@ -117,7 +135,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 		}
 
 		if err == nil {
-			err = aghnet.CheckPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+			err = aghnet.CheckPort("tcp", reqData.DNS.IP, reqData.DNS.Port)
 		}
 
 		if err != nil {
@@ -130,7 +148,8 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(respData)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to marshal JSON: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to marshal JSON: %s", err)
+
 		return
 	}
 }
@@ -287,21 +306,21 @@ func shutdownSrv(ctx context.Context, srv *http.Server) {
 func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	req, restartHTTP, err := decodeApplyConfigReq(r.Body)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "%s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
-	err = aghnet.CheckPacketPortAvailable(req.DNS.IP, req.DNS.Port)
+	err = aghnet.CheckPort("udp", req.DNS.IP, req.DNS.Port)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "%s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
-	err = aghnet.CheckPortAvailable(req.DNS.IP, req.DNS.Port)
+	err = aghnet.CheckPort("tcp", req.DNS.IP, req.DNS.Port)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "%s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -315,28 +334,29 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	config.DNS.BindHosts = []net.IP{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
 
-	// TODO(e.burkov): StartMods() should be put in a separate goroutine at
-	// the moment we'll allow setting up TLS in the initial configuration or
-	// the configuration itself will use HTTPS protocol, because the
-	// underlying functions potentially restart the HTTPS server.
+	// TODO(e.burkov): StartMods() should be put in a separate goroutine at the
+	// moment we'll allow setting up TLS in the initial configuration or the
+	// configuration itself will use HTTPS protocol, because the underlying
+	// functions potentially restart the HTTPS server.
 	err = StartMods()
 	if err != nil {
 		Context.firstRun = true
 		copyInstallSettings(config, curConfig)
-		httpError(w, http.StatusInternalServerError, "%s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
 
-	u := User{}
-	u.Name = req.Username
-	Context.auth.UserAdd(&u, req.Password)
+	u := &User{
+		Name: req.Username,
+	}
+	Context.auth.UserAdd(u, req.Password)
 
 	err = config.write()
 	if err != nil {
 		Context.firstRun = true
 		copyInstallSettings(config, curConfig)
-		httpError(w, http.StatusInternalServerError, "Couldn't write config: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write config: %s", err)
 
 		return
 	}
@@ -347,7 +367,7 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 
 	registerControlHandlers()
 
-	returnOK(w)
+	aghhttp.OK(w)
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()
 	}
@@ -386,7 +406,7 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 
 	restartHTTP = !config.BindHost.Equal(req.Web.IP) || config.BindPort != req.Web.Port
 	if restartHTTP {
-		err = aghnet.CheckPortAvailable(req.Web.IP, req.Web.Port)
+		err = aghnet.CheckPort("tcp", req.Web.IP, req.Web.Port)
 		if err != nil {
 			return nil, false, fmt.Errorf(
 				"checking address %s:%d: %w",
@@ -437,12 +457,14 @@ func (web *Web) handleInstallCheckConfigBeta(w http.ResponseWriter, r *http.Requ
 	reqData := checkConfigReqBeta{}
 	err := json.NewDecoder(r.Body).Decode(&reqData)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse 'check_config' JSON data: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to parse 'check_config' JSON data: %s", err)
+
 		return
 	}
 
 	if len(reqData.DNS.IP) == 0 || len(reqData.Web.IP) == 0 {
-		httpError(w, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+		aghhttp.Error(r, w, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+
 		return
 	}
 
@@ -464,7 +486,14 @@ func (web *Web) handleInstallCheckConfigBeta(w http.ResponseWriter, r *http.Requ
 
 	err = json.NewEncoder(nonBetaReqBody).Encode(nonBetaReqData)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to encode 'check_config' JSON data: %s", err)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusBadRequest,
+			"Failed to encode 'check_config' JSON data: %s",
+			err,
+		)
+
 		return
 	}
 	body := nonBetaReqBody.String()
@@ -505,12 +534,14 @@ func (web *Web) handleInstallConfigureBeta(w http.ResponseWriter, r *http.Reques
 	reqData := applyConfigReqBeta{}
 	err := json.NewDecoder(r.Body).Decode(&reqData)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to parse 'check_config' JSON data: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to parse 'check_config' JSON data: %s", err)
+
 		return
 	}
 
 	if len(reqData.DNS.IP) == 0 || len(reqData.Web.IP) == 0 {
-		httpError(w, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+		aghhttp.Error(r, w, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+
 		return
 	}
 
@@ -531,7 +562,14 @@ func (web *Web) handleInstallConfigureBeta(w http.ResponseWriter, r *http.Reques
 
 	err = json.NewEncoder(nonBetaReqBody).Encode(nonBetaReqData)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to encode 'check_config' JSON data: %s", err)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusBadRequest,
+			"Failed to encode 'check_config' JSON data: %s",
+			err,
+		)
+
 		return
 	}
 	body := nonBetaReqBody.String()
@@ -564,7 +602,8 @@ func (web *Web) handleInstallGetAddressesBeta(w http.ResponseWriter, r *http.Req
 
 	ifaces, err := aghnet.GetValidNetInterfacesForWeb()
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
+
 		return
 	}
 
@@ -573,7 +612,14 @@ func (web *Web) handleInstallGetAddressesBeta(w http.ResponseWriter, r *http.Req
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(data)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to marshal default addresses to json: %s", err)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Unable to marshal default addresses to json: %s",
+			err,
+		)
+
 		return
 	}
 }

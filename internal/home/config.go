@@ -1,7 +1,6 @@
 package home
 
 import (
-	"fmt"
 	"net"
 	"os"
 	"path/filepath"
@@ -274,17 +273,34 @@ func getLogSettings() logSettings {
 }
 
 // parseConfig loads configuration from the YAML file
-func parseConfig() error {
-	configFile := config.getConfigFilename()
-	log.Debug("Reading config file: %s", configFile)
-	yamlFile, err := readConfigFile()
+func parseConfig() (err error) {
+	var fileData []byte
+	fileData, err = readConfigFile()
 	if err != nil {
 		return err
 	}
+
 	config.fileData = nil
-	err = yaml.Unmarshal(yamlFile, &config)
+	err = yaml.Unmarshal(fileData, &config)
 	if err != nil {
-		log.Error("Couldn't parse config file: %s", err)
+		return err
+	}
+
+	pm := portsMap{}
+	pm.add(
+		config.BindPort,
+		config.BetaBindPort,
+		config.DNS.Port,
+	)
+	if config.TLS.Enabled {
+		pm.add(
+			config.TLS.PortHTTPS,
+			config.TLS.PortDNSOverTLS,
+			config.TLS.PortDNSOverQUIC,
+			config.TLS.PortDNSCrypt,
+		)
+	}
+	if err = pm.validate(); err != nil {
 		return err
 	}
 
@@ -299,18 +315,17 @@ func parseConfig() error {
 	return nil
 }
 
-// readConfigFile reads config file contents if it exists
-func readConfigFile() ([]byte, error) {
-	if len(config.fileData) != 0 {
+// readConfigFile reads configuration file contents.
+func readConfigFile() (fileData []byte, err error) {
+	if len(config.fileData) > 0 {
 		return config.fileData, nil
 	}
 
-	configFile := config.getConfigFilename()
-	d, err := os.ReadFile(configFile)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't read config file %s: %w", configFile, err)
-	}
-	return d, nil
+	name := config.getConfigFilename()
+	log.Debug("reading config file: %s", name)
+
+	// Do not wrap the error because it's informative enough as is.
+	return os.ReadFile(name)
 }
 
 // Saves configuration to the YAML file and also saves the user filter contents to a file
