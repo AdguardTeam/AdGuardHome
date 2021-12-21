@@ -10,8 +10,10 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.107.0] - 2021-11-02 (APPROX.)
+## [v0.107.1] - 2022-01-25 (APPROX.)
 -->
+
+## [v0.107.0] - 2021-12-21
 
 ### Added
 
@@ -238,6 +240,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3638]: https://github.com/AdguardTeam/AdGuardHome/issues/3638
 [#3655]: https://github.com/AdguardTeam/AdGuardHome/issues/3655
 [#3707]: https://github.com/AdguardTeam/AdGuardHome/issues/3707
+[#3737]: https://github.com/AdguardTeam/AdGuardHome/issues/3737
 [#3744]: https://github.com/AdguardTeam/AdGuardHome/issues/3744
 [#3772]: https://github.com/AdguardTeam/AdGuardHome/issues/3772
 [#3778]: https://github.com/AdguardTeam/AdGuardHome/issues/3778
@@ -610,11 +613,12 @@ In this release, the schema version has changed from 10 to 12.
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.0...HEAD
-[v0.107.0]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.3...v0.107.0
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.1...HEAD
+[v0.107.1]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.0...v0.107.1
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.3...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.0...HEAD
+[v0.107.0]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.3...v0.107.0
 [v0.106.3]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.2...v0.106.3
 [v0.106.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.1...v0.106.2
 [v0.106.1]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.0...v0.106.1
