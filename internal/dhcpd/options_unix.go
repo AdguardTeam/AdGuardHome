@@ -130,21 +130,19 @@ func parseDHCPOption(s string) (opt dhcpv4.Option, err error) {
 // prepareOptions builds the set of DHCP options according to host requirements
 // document and values from conf.
 func prepareOptions(conf V4ServerConf) (opts dhcpv4.Options) {
+	// Set default values for host configuration parameters listed in Appendix
+	// A of RFC-2131.  Those parameters, if requested by client, should be
+	// returned with values defined by Host Requirements Document.
+	//
+	// See https://datatracker.ietf.org/doc/html/rfc2131#appendix-A.
+	//
+	// See also https://datatracker.ietf.org/doc/html/rfc1122,
+	// https://datatracker.ietf.org/doc/html/rfc1123, and
+	// https://datatracker.ietf.org/doc/html/rfc2132.
 	opts = dhcpv4.Options{
-		// Set default values for host configuration parameters listed
-		// in Appendix A of RFC-2131.  Those parameters, if requested by
-		// client, should be returned with values defined by Host
-		// Requirements Document.
-		//
-		// See https://datatracker.ietf.org/doc/html/rfc2131#appendix-A.
-		//
-		// See also https://datatracker.ietf.org/doc/html/rfc1122,
-		// https://datatracker.ietf.org/doc/html/rfc1123, and
-		// https://datatracker.ietf.org/doc/html/rfc2132.
-
 		// IP-Layer Per Host
-
 		dhcpv4.OptionNonLocalSourceRouting.Code(): []byte{0},
+
 		// Set the current recommended default time to live for the
 		// Internet Protocol which is 64, see
 		// https://datatracker.ietf.org/doc/html/rfc1700.

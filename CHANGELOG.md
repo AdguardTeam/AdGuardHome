@@ -7,11 +7,33 @@ The format is based on
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+
 ## [Unreleased]
 
 <!--
-## [v0.107.1] - 2022-01-25 (APPROX.)
+## [v0.108.0] - 2021-06-01 (APPROX.)
 -->
+
+### Added
+
+- `windows/arm64` support ([#3057]).
+
+### Deprecated
+
+<!--
+    TODO(a.garipov): Remove this deprecation, if v0.108.0 is released before
+    that.
+-->
+- Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
+
+### Removed
+
+- Go 1.16 support.
+
+[#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+
+
 
 ## [v0.107.0] - 2021-12-21
 
