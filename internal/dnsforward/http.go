@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
@@ -17,12 +18,6 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
 )
-
-func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {
-	text := fmt.Sprintf(format, args...)
-	log.Info("dns: %s %s: %s", r.Method, r.URL, text)
-	http.Error(w, text, code)
-}
 
 type dnsConfig struct {
 	Upstreams     *[]string `json:"upstream_dns"`
@@ -119,7 +114,8 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if err = json.NewEncoder(w).Encode(resp); err != nil {
-		httpError(r, w, http.StatusInternalServerError, "json.Encoder: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "json.Encoder: %s", err)
+
 		return
 	}
 }
@@ -198,34 +194,52 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	req := dnsConfig{}
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&req); err != nil {
-		httpError(r, w, http.StatusBadRequest, "json Encode: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "json Encode: %s", err)
+
 		return
 	}
 
 	if req.Upstreams != nil {
 		if err := ValidateUpstreams(*req.Upstreams); err != nil {
-			httpError(r, w, http.StatusBadRequest, "wrong upstreams specification: %s", err)
+			aghhttp.Error(r, w, http.StatusBadRequest, "wrong upstreams specification: %s", err)
+
 			return
 		}
 	}
 
 	if errBoot, err := req.checkBootstrap(); err != nil {
-		httpError(r, w, http.StatusBadRequest, "%s can not be used as bootstrap dns cause: %s", errBoot, err)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusBadRequest,
+			"%s can not be used as bootstrap dns cause: %s",
+			errBoot,
+			err,
+		)
+
 		return
 	}
 
 	if !req.checkBlockingMode() {
-		httpError(r, w, http.StatusBadRequest, "blocking_mode: incorrect value")
+		aghhttp.Error(r, w, http.StatusBadRequest, "blocking_mode: incorrect value")
+
 		return
 	}
 
 	if !req.checkUpstreamsMode() {
-		httpError(r, w, http.StatusBadRequest, "upstream_mode: incorrect value")
+		aghhttp.Error(r, w, http.StatusBadRequest, "upstream_mode: incorrect value")
+
 		return
 	}
 
 	if !req.checkCacheTTL() {
-		httpError(r, w, http.StatusBadRequest, "cache_ttl_min must be less or equal than cache_ttl_max")
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusBadRequest,
+			"cache_ttl_min must be less or equal than cache_ttl_max",
+		)
+
 		return
 	}
 
@@ -234,8 +248,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 
 	if restart {
 		if err := s.Reconfigure(nil); err != nil {
-			httpError(r, w, http.StatusInternalServerError, "%s", err)
-			return
+			aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 		}
 	}
 }
@@ -582,7 +595,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	req := &upstreamJSON{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "Failed to read request body: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to read request body: %s", err)
 
 		return
 	}
@@ -620,7 +633,13 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 
 	jsonVal, err := json.Marshal(result)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Unable to marshal status json: %s",
+			err,
+		)
 
 		return
 	}
@@ -628,9 +647,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Couldn't write body: %s", err)
-
-		return
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write body: %s", err)
 	}
 }
 
@@ -641,12 +658,12 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 //  -> dnsforward.handleDNSRequest
 func (s *Server) handleDoH(w http.ResponseWriter, r *http.Request) {
 	if !s.conf.TLSAllowUnencryptedDoH && r.TLS == nil {
-		httpError(r, w, http.StatusNotFound, "Not Found")
+		aghhttp.Error(r, w, http.StatusNotFound, "Not Found")
 		return
 	}
 
 	if !s.IsRunning() {
-		httpError(r, w, http.StatusInternalServerError, "dns server is not running")
+		aghhttp.Error(r, w, http.StatusInternalServerError, "dns server is not running")
 		return
 	}
 

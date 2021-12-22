@@ -7,11 +7,35 @@ The format is based on
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+
 ## [Unreleased]
 
 <!--
-## [v0.107.0] - 2021-11-02 (APPROX.)
+## [v0.108.0] - 2021-06-01 (APPROX.)
 -->
+
+### Added
+
+- `windows/arm64` support ([#3057]).
+
+### Deprecated
+
+<!--
+    TODO(a.garipov): Remove this deprecation, if v0.108.0 is released before
+    that.
+-->
+- Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
+
+### Removed
+
+- Go 1.16 support.
+
+[#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+
+
+
+## [v0.107.0] - 2021-12-21
 
 ### Added
 
@@ -49,6 +73,7 @@ and this project adheres to
 
 ### Changed
 
+- Port bindings are now checked for uniqueness ([#3835]).
 - The DNSSEC check now simply checks against the AD flag in the response
   ([#3904]).
 - Client objects in the configuration file are now sorted ([#3933]).
@@ -237,10 +262,12 @@ In this release, the schema version has changed from 10 to 12.
 [#3638]: https://github.com/AdguardTeam/AdGuardHome/issues/3638
 [#3655]: https://github.com/AdguardTeam/AdGuardHome/issues/3655
 [#3707]: https://github.com/AdguardTeam/AdGuardHome/issues/3707
+[#3737]: https://github.com/AdguardTeam/AdGuardHome/issues/3737
 [#3744]: https://github.com/AdguardTeam/AdGuardHome/issues/3744
 [#3772]: https://github.com/AdguardTeam/AdGuardHome/issues/3772
 [#3778]: https://github.com/AdguardTeam/AdGuardHome/issues/3778
 [#3815]: https://github.com/AdguardTeam/AdGuardHome/issues/3815
+[#3835]: https://github.com/AdguardTeam/AdGuardHome/issues/3835
 [#3887]: https://github.com/AdguardTeam/AdGuardHome/issues/3887
 [#3890]: https://github.com/AdguardTeam/AdGuardHome/issues/3890
 [#3904]: https://github.com/AdguardTeam/AdGuardHome/issues/3904
@@ -608,11 +635,12 @@ In this release, the schema version has changed from 10 to 12.
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.0...HEAD
-[v0.107.0]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.3...v0.107.0
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.1...HEAD
+[v0.107.1]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.0...v0.107.1
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.3...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.0...HEAD
+[v0.107.0]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.3...v0.107.0
 [v0.106.3]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.2...v0.106.3
 [v0.106.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.1...v0.106.2
 [v0.106.1]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.0...v0.106.1

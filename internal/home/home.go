@@ -159,14 +159,11 @@ func setupContext(args options) {
 	}
 
 	if !Context.firstRun {
-		// Do the upgrade if necessary
+		// Do the upgrade if necessary.
 		err := upgradeConfig()
-		if err != nil {
-			log.Fatal(err)
-		}
+		fatalOnError(err)
 
-		err = parseConfig()
-		if err != nil {
+		if err = parseConfig(); err != nil {
 			log.Error("parsing configuration file: %s", err)
 
 			os.Exit(1)
@@ -186,13 +183,13 @@ func setupContext(args options) {
 // unsupported errors and returns nil.  If err is nil, logIfUnsupported returns
 // nil.  Otherise, it returns err.
 func logIfUnsupported(msg string, err error) (outErr error) {
-	if unsupErr := (&aghos.UnsupportedError{}); errors.As(err, &unsupErr) {
+	if errors.As(err, new(*aghos.UnsupportedError)) {
 		log.Debug(msg, err)
-	} else if err != nil {
-		return err
+
+		return nil
 	}
 
-	return nil
+	return err
 }
 
 // configureOS sets the OS-related configuration.
@@ -297,12 +294,31 @@ func setupConfig(args options) (err error) {
 
 	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
 
+	if args.bindPort != 0 {
+		pm := portsMap{}
+		pm.add(
+			args.bindPort,
+			config.BetaBindPort,
+			config.DNS.Port,
+		)
+		if config.TLS.Enabled {
+			pm.add(
+				config.TLS.PortHTTPS,
+				config.TLS.PortDNSOverTLS,
+				config.TLS.PortDNSOverQUIC,
+				config.TLS.PortDNSCrypt,
+			)
+		}
+		if err = pm.validate(); err != nil {
+			return err
+		}
+
+		config.BindPort = args.bindPort
+	}
+
 	// override bind host/port from the console
 	if args.bindHost != nil {
 		config.BindHost = args.bindHost
-	}
-	if args.bindPort != 0 {
-		config.BindPort = args.bindPort
 	}
 	if len(args.pidFile) != 0 && writePIDFile(args.pidFile) {
 		Context.pidFileName = args.pidFile
@@ -766,8 +782,7 @@ func printHTTPAddresses(proto string) {
 		port = tlsConf.PortHTTPS
 	}
 
-	// TODO(e.burkov): Inspect and perhaps merge with the previous
-	// condition.
+	// TODO(e.burkov): Inspect and perhaps merge with the previous condition.
 	if proto == schemeHTTPS && tlsConf.ServerName != "" {
 		printWebAddrs(proto, tlsConf.ServerName, tlsConf.PortHTTPS, 0)
 

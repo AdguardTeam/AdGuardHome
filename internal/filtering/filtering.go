@@ -864,8 +864,7 @@ func makeResult(matchedRules []rules.Rule, reason Reason) (res Result) {
 	}
 }
 
-// InitModule manually initializes blocked services map using blockedSvcListID
-// as list ID for the rules.
+// InitModule manually initializes blocked services map.
 func InitModule() {
 	initBlockedServices()
 }

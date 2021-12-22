@@ -118,3 +118,11 @@ func IfaceDNSIPAddrs(
 
 	return addrs, nil
 }
+
+// interfaceName is a string containing network interface's name.  The name is
+// used in file walking methods.
+type interfaceName string
+
+// Use interfaceName in the OS-independent code since it's actually only used in
+// several OS-dependent implementations which causes linting issues.
+var _ = interfaceName("")

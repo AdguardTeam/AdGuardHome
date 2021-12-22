@@ -35,10 +35,13 @@ fi
 readonly race_flags
 
 go="${GO:-go}"
+readonly go
 
 count_flags='--count=1'
 cover_flags='--coverprofile=./coverage.txt'
+shuffle_flags='--shuffle=on'
 timeout_flags="${TIMEOUT_FLAGS:---timeout=30s}"
-readonly go timeout_flags cover_flags count_flags
+readonly count_flags cover_flags shuffle_flags timeout_flags
 
-"$go" test "$count_flags" "$cover_flags" "$race_flags" "$timeout_flags" "$x_flags" "$v_flags" ./...
+"$go" test "$count_flags" "$cover_flags" "$race_flags" "$shuffle_flags" "$timeout_flags"\
+	"$x_flags" "$v_flags" ./...

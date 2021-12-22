@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -152,8 +153,13 @@ func (d *DNSFilter) handleSafeSearchStatus(w http.ResponseWriter, r *http.Reques
 		Enabled: d.Config.SafeSearchEnabled,
 	})
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-		return
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Unable to write response json: %s",
+			err,
+		)
 	}
 }
 

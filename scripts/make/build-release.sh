@@ -159,7 +159,8 @@ linux    ppc64le   0   0          0
 openbsd  amd64     0   0          0
 openbsd  arm64     0   0          0
 windows  386       0   0          0
-windows  amd64     0   0          0"
+windows  amd64     0   0          0
+windows  arm64     0   0          0"
 readonly platforms
 
 # Function build builds the release for one platform.  It builds a binary, an

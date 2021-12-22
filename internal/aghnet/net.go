@@ -4,13 +4,11 @@ package aghnet
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
-	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -189,57 +187,30 @@ func GetSubnet(ifaceName string) *net.IPNet {
 	return nil
 }
 
-// CheckPortAvailable - check if TCP port is available
-func CheckPortAvailable(host net.IP, port int) error {
-	ln, err := net.Listen("tcp", netutil.JoinHostPort(host.String(), port))
-	if err != nil {
-		return err
+// CheckPort checks if the port is available for binding.
+func CheckPort(network string, ip net.IP, port int) (err error) {
+	var c io.Closer
+	addr := netutil.IPPort{IP: ip, Port: port}.String()
+	switch network {
+	case "tcp":
+		c, err = net.Listen(network, addr)
+	case "udp":
+		c, err = net.ListenPacket(network, addr)
+	default:
+		return nil
 	}
-	_ = ln.Close()
 
-	// It seems that net.Listener.Close() doesn't close file descriptors right away.
-	// We wait for some time and hope that this fd will be closed.
-	time.Sleep(100 * time.Millisecond)
-	return nil
+	return errors.WithDeferred(err, closePortChecker(c))
 }
 
-// CheckPacketPortAvailable - check if UDP port is available
-func CheckPacketPortAvailable(host net.IP, port int) error {
-	ln, err := net.ListenPacket("udp", netutil.JoinHostPort(host.String(), port))
-	if err != nil {
-		return err
-	}
-	_ = ln.Close()
-
-	// It seems that net.Listener.Close() doesn't close file descriptors right away.
-	// We wait for some time and hope that this fd will be closed.
-	time.Sleep(100 * time.Millisecond)
-	return err
-}
-
-// ErrorIsAddrInUse - check if error is "address already in use"
-func ErrorIsAddrInUse(err error) bool {
-	errOpError, ok := err.(*net.OpError)
-	if !ok {
+// IsAddrInUse checks if err is about unsuccessful address binding.
+func IsAddrInUse(err error) (ok bool) {
+	var sysErr syscall.Errno
+	if !errors.As(err, &sysErr) {
 		return false
 	}
 
-	errSyscallError, ok := errOpError.Err.(*os.SyscallError)
-	if !ok {
-		return false
-	}
-
-	errErrno, ok := errSyscallError.Err.(syscall.Errno)
-	if !ok {
-		return false
-	}
-
-	if runtime.GOOS == "windows" {
-		const WSAEADDRINUSE = 10048
-		return errErrno == WSAEADDRINUSE
-	}
-
-	return errErrno == syscall.EADDRINUSE
+	return isAddrInUse(sysErr)
 }
 
 // SplitHost is a wrapper for net.SplitHostPort for the cases when the hostport

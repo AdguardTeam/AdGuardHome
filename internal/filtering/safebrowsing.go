@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
@@ -368,12 +369,6 @@ func (d *DNSFilter) checkParental(
 	return check(sctx, res, d.parentalUpstream)
 }
 
-func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {
-	text := fmt.Sprintf(format, args...)
-	log.Info("DNSFilter: %s %s: %s", r.Method, r.URL, text)
-	http.Error(w, text, code)
-}
-
 func (d *DNSFilter) handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
 	d.Config.SafeBrowsingEnabled = true
 	d.Config.ConfigModified()
@@ -392,7 +387,8 @@ func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Requ
 		Enabled: d.Config.SafeBrowsingEnabled,
 	})
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
+
 		return
 	}
 }
@@ -415,8 +411,7 @@ func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request)
 		Enabled: d.Config.ParentalEnabled,
 	})
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-		return
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 	}
 }
 

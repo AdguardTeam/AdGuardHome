@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -224,7 +225,7 @@ type tlsConfigSettingsExt struct {
 	PrivateKeySaved bool `yaml:"-" json:"private_key_saved,inline"`
 }
 
-func (t *TLSMod) handleTLSStatus(w http.ResponseWriter, _ *http.Request) {
+func (t *TLSMod) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 	t.confLock.Lock()
 	data := tlsConfig{
 		tlsConfigSettingsExt: tlsConfigSettingsExt{
@@ -233,13 +234,14 @@ func (t *TLSMod) handleTLSStatus(w http.ResponseWriter, _ *http.Request) {
 		tlsConfigStatus: t.status,
 	}
 	t.confLock.Unlock()
-	marshalTLS(w, data)
+	marshalTLS(w, r, data)
 }
 
 func (t *TLSMod) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	setts, err := unmarshalTLS(r)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
+
 		return
 	}
 
@@ -247,8 +249,31 @@ func (t *TLSMod) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		setts.PrivateKey = t.conf.PrivateKey
 	}
 
+	if setts.Enabled {
+		if err = validatePorts(
+			config.BindPort,
+			config.BetaBindPort,
+			config.DNS.Port,
+			setts.PortHTTPS,
+			setts.PortDNSOverTLS,
+			setts.PortDNSOverQUIC,
+			setts.PortDNSCrypt,
+		); err != nil {
+			aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+
+			return
+		}
+	}
+
 	if !WebCheckPortAvailable(setts.PortHTTPS) {
-		httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", setts.PortHTTPS)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusBadRequest,
+			"port %d is not available, cannot enable HTTPS on it",
+			setts.PortHTTPS,
+		)
+
 		return
 	}
 
@@ -261,7 +286,8 @@ func (t *TLSMod) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		tlsConfigSettingsExt: setts,
 		tlsConfigStatus:      status,
 	}
-	marshalTLS(w, data)
+
+	marshalTLS(w, r, data)
 }
 
 func (t *TLSMod) setConfig(newConf tlsConfigSettings, status tlsConfigStatus) (restartHTTPS bool) {
@@ -302,7 +328,8 @@ func (t *TLSMod) setConfig(newConf tlsConfigSettings, status tlsConfigStatus) (r
 func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	data, err := unmarshalTLS(r)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
+
 		return
 	}
 
@@ -310,8 +337,32 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		data.PrivateKey = t.conf.PrivateKey
 	}
 
+	if data.Enabled {
+		if err = validatePorts(
+			config.BindPort,
+			config.BetaBindPort,
+			config.DNS.Port,
+			data.PortHTTPS,
+			data.PortDNSOverTLS,
+			data.PortDNSOverQUIC,
+			data.PortDNSCrypt,
+		); err != nil {
+			aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+
+			return
+		}
+	}
+
+	// TODO(e.burkov):  Investigate and perhaps check other ports.
 	if !WebCheckPortAvailable(data.PortHTTPS) {
-		httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusBadRequest,
+			"port %d is not available, cannot enable HTTPS on it",
+			data.PortHTTPS,
+		)
+
 		return
 	}
 
@@ -321,7 +372,7 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 			tlsConfigSettingsExt: data,
 			tlsConfigStatus:      t.status,
 		}
-		marshalTLS(w, data2)
+		marshalTLS(w, r, data2)
 
 		return
 	}
@@ -334,7 +385,7 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 
 	err = reconfigureDNSServer()
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "%s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
@@ -344,15 +395,15 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		tlsConfigStatus:      t.status,
 	}
 
-	marshalTLS(w, data2)
+	marshalTLS(w, r, data2)
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()
 	}
 
-	// The background context is used because the TLSConfigChanged wraps
-	// context with timeout on its own and shuts down the server, which
-	// handles current request. It is also should be done in a separate
-	// goroutine due to the same reason.
+	// The background context is used because the TLSConfigChanged wraps context
+	// with timeout on its own and shuts down the server, which handles current
+	// request. It is also should be done in a separate goroutine due to the
+	// same reason.
 	if restartHTTPS {
 		go func() {
 			Context.web.TLSConfigChanged(context.Background(), data.tlsConfigSettings)
@@ -595,7 +646,7 @@ func unmarshalTLS(r *http.Request) (tlsConfigSettingsExt, error) {
 	return data, nil
 }
 
-func marshalTLS(w http.ResponseWriter, data tlsConfig) {
+func marshalTLS(w http.ResponseWriter, r *http.Request, data tlsConfig) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if data.CertificateChain != "" {
@@ -610,8 +661,13 @@ func marshalTLS(w http.ResponseWriter, data tlsConfig) {
 
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Failed to marshal json with TLS status: %s", err)
-		return
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Failed to marshal json with TLS status: %s",
+			err,
+		)
 	}
 }
 

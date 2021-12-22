@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -417,7 +418,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	req := loginJSON{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
 
 		return
 	}
@@ -430,7 +431,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	//
 	// TODO(e.burkov): Use realIP when the issue will be fixed.
 	if remoteAddr, err = netutil.SplitHost(r.RemoteAddr); err != nil {
-		httpError(w, http.StatusBadRequest, "auth: getting remote address: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "auth: getting remote address: %s", err)
 
 		return
 	}
@@ -438,7 +439,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	if blocker := Context.auth.blocker; blocker != nil {
 		if left := blocker.check(remoteAddr); left > 0 {
 			w.Header().Set("Retry-After", strconv.Itoa(int(left.Seconds())))
-			httpError(w, http.StatusTooManyRequests, "auth: blocked for %s", left)
+			aghhttp.Error(r, w, http.StatusTooManyRequests, "auth: blocked for %s", left)
 
 			return
 		}
@@ -447,7 +448,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	var cookie string
 	cookie, err = Context.auth.httpCookie(req, remoteAddr)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "crypto rand reader: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "crypto rand reader: %s", err)
 
 		return
 	}
@@ -479,7 +480,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	h.Set("Pragma", "no-cache")
 	h.Set("Expires", "0")
 
-	returnOK(w)
+	aghhttp.OK(w)
 }
 
 func handleLogout(w http.ResponseWriter, r *http.Request) {

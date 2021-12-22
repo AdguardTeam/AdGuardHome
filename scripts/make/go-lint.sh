@@ -52,7 +52,7 @@ trap not_found EXIT
 go_version="$( "$GO" version )"
 readonly go_version
 
-go_min_version='go1.16'
+go_min_version='go1.17'
 go_version_msg="
 warning: your go version (${go_version}) is different from the recommended minimal one (${go_min_version}).
 if you have the version installed, please set the GO environment variable.
@@ -193,7 +193,7 @@ exit_on_output method_const
 
 exit_on_output underscores
 
-exit_on_output gofumpt --extra -l -s .
+exit_on_output gofumpt --extra -e -l .
 
 golint --set_exit_status ./...
 

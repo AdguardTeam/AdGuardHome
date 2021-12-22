@@ -29,6 +29,11 @@
     # (cap_net_bind_service) and also to bind to a particular interface using
     # SO_BINDTODEVICE (cap_net_raw).
     - 'network-observe'
+    # Add the "network-control" plug to be able to use raw sockets in the DHCP
+    # server.
+    #
+    # TODO(a.garipov): If this works, request auto-connect of this plug.
+    - 'network-control'
     'daemon': 'simple'
     'restart-condition': 'always'
   'adguard-home-web':
