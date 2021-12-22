@@ -403,8 +403,8 @@ func realIP(r *http.Request) (ip net.IP, err error) {
 		return ip, nil
 	}
 
-	// When everything else fails, just return the remote address as
-	// understood by the stdlib.
+	// When everything else fails, just return the remote address as understood
+	// by the stdlib.
 	ipStr, err := netutil.SplitHost(r.RemoteAddr)
 	if err != nil {
 		return nil, fmt.Errorf("getting ip from client addr: %w", err)
@@ -423,7 +423,8 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var remoteAddr string
-	// The realIP couldn't be used here due to security issues.
+	// realIP cannot be used here without taking TrustedProxies into accound due
+	// to security issues.
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
 	//
@@ -437,12 +438,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	if blocker := Context.auth.blocker; blocker != nil {
 		if left := blocker.check(remoteAddr); left > 0 {
 			w.Header().Set("Retry-After", strconv.Itoa(int(left.Seconds())))
-			httpError(
-				w,
-				http.StatusTooManyRequests,
-				"auth: blocked for %s",
-				left,
-			)
+			httpError(w, http.StatusTooManyRequests, "auth: blocked for %s", left)
 
 			return
 		}
@@ -455,40 +451,33 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	
-	var ip net.IP
-	ip, err = realIP(r)
+
+	// Use realIP here, since this IP address is only used for logging.
+	ip, err := realIP(r)
+	if err != nil {
+		log.Error("auth: getting real ip from request: %s", err)
+	} else if ip == nil {
+		// Technically shouldn't happen.
+		log.Error("auth: unknown ip")
+	}
 
 	if len(cookie) == 0 {
-		if err != nil {
-			log.Info("auth: getting real ip from request: %s", err)
-		} else if ip == nil {
-			// Technically shouldn't happen.
-			log.Info("auth: failed to login user %q from unknown ip", req.Name)
-		} else {
-			log.Info("auth: failed to login user %q from ip %q", req.Name, ip)
-		}
+		log.Info("auth: failed to login user %q from ip %v", req.Name, ip)
+
 		time.Sleep(1 * time.Second)
 
 		http.Error(w, "invalid username or password", http.StatusBadRequest)
 
 		return
 	}
-	
-	if err != nil {
-		log.Info("auth: getting real ip from request: %s", err)
-	} else if ip == nil {
-		// Technically shouldn't happen.
-		log.Info("auth: user %q successfully logged in from unknown ip", req.Name)
-	} else {
-		log.Info("auth: user %q successfully logged in from ip %q", req.Name, ip)
-	}
 
-	w.Header().Set("Set-Cookie", cookie)
+	log.Info("auth: user %q successfully logged in from ip %v", req.Name, ip)
 
-	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
-	w.Header().Set("Pragma", "no-cache")
-	w.Header().Set("Expires", "0")
+	h := w.Header()
+	h.Set("Set-Cookie", cookie)
+	h.Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+	h.Set("Pragma", "no-cache")
+	h.Set("Expires", "0")
 
 	returnOK(w)
 }
