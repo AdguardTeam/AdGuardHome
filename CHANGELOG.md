@@ -27,11 +27,16 @@ and this project adheres to
 -->
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
+### Fixed
+
+- Panic on port availability check during installation ([#3987]).
+
 ### Removed
 
 - Go 1.16 support.
 
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+[#3987]: https://github.com/AdguardTeam/AdGuardHome/issues/3987
 
 
 
