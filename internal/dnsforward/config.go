@@ -98,10 +98,10 @@ type FilteringConfig struct {
 	AllowedClients    []string `yaml:"allowed_clients"`    // IP addresses of whitelist clients
 	DisallowedClients []string `yaml:"disallowed_clients"` // IP addresses of clients that should be blocked
 	BlockedHosts      []string `yaml:"blocked_hosts"`      // hosts that should be blocked
-	// TrustedProxies is the list of IP addresses and CIDR networks to
-	// detect proxy servers addresses the DoH requests from which should be
-	// handled.  The value of nil or an empty slice for this field makes
-	// Proxy not trust any address.
+	// TrustedProxies is the list of IP addresses and CIDR networks to detect
+	// proxy servers addresses the DoH requests from which should be handled.
+	// The value of nil or an empty slice for this field makes Proxy not trust
+	// any address.
 	TrustedProxies []string `yaml:"trusted_proxies"`
 
 	// DNS cache settings
