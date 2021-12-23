@@ -20,7 +20,7 @@ require (
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/netlink v1.4.0
 	github.com/mdlayher/raw v0.0.0-20210412142147-51b895745faf
-	github.com/miekg/dns v1.1.43
+	github.com/miekg/dns v1.1.45
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.7.0
 	github.com/ti-mo/netfilter v0.4.0
@@ -34,9 +34,3 @@ require (
 )
 
 require github.com/stretchr/objx v0.1.1 // indirect
-
-// TODO(e.burkov):  Get rid of the fork in v0.108.0.
-replace github.com/insomniacslk/dhcp => github.com/AdguardTeam/dhcp v0.0.0-20210519141215-51808c73c0bf
-
-// TODO(a.garipov): Return to the main repo once miekg/dns#1317 is merged.
-replace github.com/miekg/dns => github.com/ameshkov/dns v1.1.32-0.20211214123418-7a5e0dc5f1b0
