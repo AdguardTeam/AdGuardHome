@@ -410,11 +410,11 @@ func (hp *hostsParser) writeAliasHostRule(alias, host string) {
 		sc = ";"
 
 		rwSuccess = rules.MaskSeparator + "$dnsrewrite=NOERROR" + sc + "CNAME" + sc
-		constLen  = len(rules.MaskStartURL) + len(rwSuccess) + len(nl)
+		constLen  = len(rules.MaskPipe) + len(rwSuccess) + len(nl)
 	)
 
 	hp.rulesBuilder.Grow(constLen + len(host) + len(alias))
-	stringutil.WriteToBuilder(hp.rulesBuilder, rules.MaskStartURL, alias, rwSuccess, host, nl)
+	stringutil.WriteToBuilder(hp.rulesBuilder, rules.MaskPipe, alias, rwSuccess, host, nl)
 }
 
 // writeMainHostRule writes the actual rule for the qtype and the PTR for the
@@ -431,8 +431,8 @@ func (hp *hostsParser) writeMainHostRule(host string, ip net.IP) (added, addedPt
 		rwSuccess    = "^$dnsrewrite=NOERROR;"
 		rwSuccessPTR = "^$dnsrewrite=NOERROR;PTR;"
 
-		modLen    = len("||") + len(rwSuccess) + len(";")
-		modLenPTR = len("||") + len(rwSuccessPTR)
+		modLen    = len(rules.MaskPipe) + len(rwSuccess) + len(";")
+		modLenPTR = len(rules.MaskPipe) + len(rwSuccessPTR)
 	)
 
 	var qtype string
@@ -451,7 +451,7 @@ func (hp *hostsParser) writeMainHostRule(host string, ip net.IP) (added, addedPt
 	ruleBuilder.Grow(modLen + len(host) + len(qtype) + len(ipStr))
 	stringutil.WriteToBuilder(
 		ruleBuilder,
-		"||",
+		rules.MaskPipe,
 		host,
 		rwSuccess,
 		qtype,
@@ -461,14 +461,10 @@ func (hp *hostsParser) writeMainHostRule(host string, ip net.IP) (added, addedPt
 	added = ruleBuilder.String()
 
 	ruleBuilder.Reset()
+
 	ruleBuilder.Grow(modLenPTR + len(arpa) + len(fqdn))
-	stringutil.WriteToBuilder(
-		ruleBuilder,
-		"||",
-		arpa,
-		rwSuccessPTR,
-		fqdn,
-	)
+	stringutil.WriteToBuilder(ruleBuilder, rules.MaskPipe, arpa, rwSuccessPTR, fqdn)
+
 	addedPtr = ruleBuilder.String()
 
 	hp.rulesBuilder.Grow(len(added) + len(addedPtr) + 2*len(nl))
