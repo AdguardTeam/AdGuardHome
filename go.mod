@@ -20,7 +20,7 @@ require (
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/netlink v1.5.0
 	github.com/mdlayher/raw v0.0.0-20211126142749-4eae47f3d54b
-	github.com/miekg/dns v1.1.43
+	github.com/miekg/dns v1.1.45
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.7.0
 	github.com/ti-mo/netfilter v0.4.0
@@ -64,6 +64,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 	honnef.co/go/tools v0.2.2 // indirect
 )
-
-// TODO(a.garipov): Return to the main repo once miekg/dns#1317 is merged.
-replace github.com/miekg/dns => github.com/ameshkov/dns v1.1.32-0.20211214123418-7a5e0dc5f1b0
