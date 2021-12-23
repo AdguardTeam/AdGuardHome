@@ -347,6 +347,24 @@ func TestHostsContainer(t *testing.T) {
 			assert.Equal(t, "hello", nRewrites(t, res, 1)[0].NewCNAME)
 		},
 	}, {
+		name: "hello_subdomain",
+		req: urlfilter.DNSRequest{
+			Hostname: "say.hello",
+			DNSType:  dns.TypeA,
+		},
+		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
+			assert.Empty(t, res.DNSRewrites())
+		},
+	}, {
+		name: "hello_alias_subdomain",
+		req: urlfilter.DNSRequest{
+			Hostname: "say.hello.world",
+			DNSType:  dns.TypeA,
+		},
+		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
+			assert.Empty(t, res.DNSRewrites())
+		},
+	}, {
 		name: "lots_of_aliases",
 		req: urlfilter.DNSRequest{
 			Hostname: "for.testing",
