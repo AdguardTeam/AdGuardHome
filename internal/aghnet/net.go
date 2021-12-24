@@ -187,7 +187,8 @@ func GetSubnet(ifaceName string) *net.IPNet {
 	return nil
 }
 
-// CheckPort checks if the port is available for binding.
+// CheckPort checks if the port is available for binding.  network is expected
+// to be one of "udp" and "tcp".
 func CheckPort(network string, ip net.IP, port int) (err error) {
 	var c io.Closer
 	addr := netutil.IPPort{IP: ip, Port: port}.String()
@@ -200,7 +201,11 @@ func CheckPort(network string, ip net.IP, port int) (err error) {
 		return nil
 	}
 
-	return errors.WithDeferred(err, closePortChecker(c))
+	if err != nil {
+		return err
+	}
+
+	return closePortChecker(c)
 }
 
 // IsAddrInUse checks if err is about unsuccessful address binding.

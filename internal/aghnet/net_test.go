@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -68,4 +70,21 @@ func TestBroadcastFromIPNet(t *testing.T) {
 			assert.True(t, bc.Equal(tc.want), bc)
 		})
 	}
+}
+
+func TestCheckPort(t *testing.T) {
+	l, err := net.Listen("tcp", "127.0.0.1:")
+	require.NoError(t, err)
+	testutil.CleanupAndRequireSuccess(t, l.Close)
+
+	ipp := netutil.IPPortFromAddr(l.Addr())
+	require.NotNil(t, ipp)
+	require.NotNil(t, ipp.IP)
+	require.NotZero(t, ipp.Port)
+
+	err = CheckPort("tcp", ipp.IP, ipp.Port)
+	target := &net.OpError{}
+	require.ErrorAs(t, err, &target)
+
+	assert.Equal(t, "listen", target.Op)
 }

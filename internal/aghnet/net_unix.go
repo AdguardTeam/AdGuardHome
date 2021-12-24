@@ -10,6 +10,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 )
 
+// closePortChecker closes c.  c must be non-nil.
 func closePortChecker(c io.Closer) (err error) {
 	return c.Close()
 }

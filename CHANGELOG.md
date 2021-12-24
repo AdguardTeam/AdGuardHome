@@ -10,8 +10,37 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.107.1] - 2022-01-25 (APPROX.)
+## [v0.108.0] - 2021-06-01 (APPROX.)
 -->
+
+### Added
+
+- `windows/arm64` support ([#3057]).
+
+### Deprecated
+
+- Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
+
+### Removed
+
+- Go 1.16 support.
+
+[#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+
+
+
+<!--
+## [v0.107.1] - 2021-12-29 (APPROX.)
+-->
+## v0.107.1 - UNRELEASED
+
+### Fixed
+
+- Panic on port availability check during installation ([#3987]).
+
+[#3987]: https://github.com/AdguardTeam/AdGuardHome/issues/3987
+
+
 
 ## [v0.107.0] - 2021-12-21
 

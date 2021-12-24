@@ -25,6 +25,7 @@ func ifaceSetStaticIP(string) (err error) {
 	return aghos.Unsupported("setting static ip")
 }
 
+// closePortChecker closes c.  c must be non-nil.
 func closePortChecker(c io.Closer) (err error) {
 	if err = c.Close(); err != nil {
 		return err
