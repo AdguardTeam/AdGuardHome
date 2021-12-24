@@ -507,59 +507,74 @@ func (d *DNSFilter) matchSysHostsIntl(
 	return res, nil
 }
 
-// Process rewrites table
-// . Find CNAME for a domain name (exact match or by wildcard)
-//  . if found and CNAME equals to domain name - this is an exception;  exit
-//  . if found, set domain name to canonical name
-//  . repeat for the new domain name (Note: we return only the last CNAME)
-// . Find A or AAAA record for a domain name (exact match or by wildcard)
-//  . if found, set IP addresses (IPv4 or IPv6 depending on qtype) in Result.IPList array
+// processRewrites performs filtering based on the legacy rewrite records.
+//
+// Firstly, it finds CNAME rewrites for host.  If the CNAME is the same as host,
+// this query isn't filtered.  If it's different, repeat the process for the new
+// CNAME, breaking loops in the process.
+//
+// Secondly, it finds A or AAAA rewrites for host and, if found, sets res.IPList
+// accordingly.  If the found rewrite has a special value of "A" or "AAAA", the
+// result is an exception.
 func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 	d.confLock.RLock()
 	defer d.confLock.RUnlock()
 
-	rr := findRewrites(d.Rewrites, host, qtype)
-	if len(rr) != 0 {
-		res.Reason = Rewritten
+	rewrites, matched := findRewrites(d.Rewrites, host, qtype)
+	if !matched {
+		return Result{}
 	}
+
+	res.Reason = Rewritten
 
 	cnames := stringutil.NewSet()
 	origHost := host
-	for len(rr) != 0 && rr[0].Type == dns.TypeCNAME {
-		log.Debug("rewrite: CNAME for %s is %s", host, rr[0].Answer)
+	for matched && len(rewrites) > 0 && rewrites[0].Type == dns.TypeCNAME {
+		rwAns := rewrites[0].Answer
 
-		if host == rr[0].Answer { // "host == CNAME" is an exception
+		log.Debug("rewrite: cname for %s is %s", host, rwAns)
+
+		if host == rwAns {
+			// Rewrite of a domain onto itself is an exception rule.
 			res.Reason = NotFilteredNotFound
 
 			return res
 		}
 
-		host = rr[0].Answer
+		host = rwAns
 		if cnames.Has(host) {
-			log.Info("rewrite: breaking CNAME redirection loop: %s.  Question: %s", host, origHost)
+			log.Info("rewrite: cname loop for %q on %q", origHost, host)
 
 			return res
 		}
 
 		cnames.Add(host)
-		res.CanonName = rr[0].Answer
-		rr = findRewrites(d.Rewrites, host, qtype)
+		res.CanonName = host
+		rewrites, matched = findRewrites(d.Rewrites, host, qtype)
 	}
 
-	for _, r := range rr {
-		if r.Type == qtype && (qtype == dns.TypeA || qtype == dns.TypeAAAA) {
-			if r.IP == nil { // IP exception
-				res.Reason = NotFilteredNotFound
-
-				return res
-			}
-
-			res.IPList = append(res.IPList, r.IP)
-			log.Debug("rewrite: A/AAAA for %s is %s", host, r.IP)
-		}
-	}
+	setRewriteResult(&res, host, rewrites, qtype)
 
 	return res
+}
+
+// setRewriteResult sets the Reason or IPList of res if necessary.  res must not
+// be nil.
+func setRewriteResult(res *Result, host string, rewrites []RewriteEntry, qtype uint16) {
+	for _, rw := range rewrites {
+		if rw.Type == qtype && (qtype == dns.TypeA || qtype == dns.TypeAAAA) {
+			if rw.IP == nil {
+				// "A"/"AAAA" exception: allow getting from upstream.
+				res.Reason = NotFilteredNotFound
+
+				return
+			}
+
+			res.IPList = append(res.IPList, rw.IP)
+
+			log.Debug("rewrite: a/aaaa for %s is %s", host, rw.IP)
+		}
+	}
 }
 
 // matchBlockedServicesRules checks the host against the blocked services rules
