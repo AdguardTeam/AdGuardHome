@@ -298,7 +298,11 @@ func shutdownSrv(ctx context.Context, srv *http.Server) {
 
 	err := srv.Shutdown(ctx)
 	if err != nil {
-		log.Error("error while shutting down http server %q: %s", srv.Addr, err)
+		if errors.Is(err, context.Canceled) {
+			log.Debug("shutting down http server %q: %s", srv.Addr, err)
+		} else {
+			log.Error("shutting down http server %q: %s", srv.Addr, err)
+		}
 	}
 }
 
