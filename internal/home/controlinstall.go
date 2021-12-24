@@ -22,16 +22,17 @@ import (
 
 // getAddrsResponse is the response for /install/get_addresses endpoint.
 type getAddrsResponse struct {
+	Interfaces map[string]*aghnet.NetInterface `json:"interfaces"`
 	WebPort    int                             `json:"web_port"`
 	DNSPort    int                             `json:"dns_port"`
-	Interfaces map[string]*aghnet.NetInterface `json:"interfaces"`
 }
 
 // handleInstallGetAddresses is the handler for /install/get_addresses endpoint.
 func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
-	data := getAddrsResponse{}
-	data.WebPort = defaultPortHTTP
-	data.DNSPort = defaultPortDNS
+	data := getAddrsResponse{
+		WebPort: defaultPortHTTP,
+		DNSPort: defaultPortDNS,
+	}
 
 	ifaces, err := aghnet.GetValidNetInterfacesForWeb()
 	if err != nil {
@@ -61,8 +62,8 @@ func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request
 }
 
 type checkConfigReqEnt struct {
-	Port    int    `json:"port"`
 	IP      net.IP `json:"ip"`
+	Port    int    `json:"port"`
 	Autofix bool   `json:"autofix"`
 }
 
@@ -84,9 +85,9 @@ type staticIPJSON struct {
 }
 
 type checkConfigResp struct {
+	StaticIP staticIPJSON       `json:"static_ip"`
 	Web      checkConfigRespEnt `json:"web"`
 	DNS      checkConfigRespEnt `json:"dns"`
-	StaticIP staticIPJSON       `json:"static_ip"`
 }
 
 // Check if ports are available, respond with results
@@ -298,10 +299,11 @@ func shutdownSrv(ctx context.Context, srv *http.Server) {
 
 	err := srv.Shutdown(ctx)
 	if err != nil {
+		const msgFmt = "shutting down http server %q: %s"
 		if errors.Is(err, context.Canceled) {
-			log.Debug("shutting down http server %q: %s", srv.Addr, err)
+			log.Debug(msgFmt, srv.Addr, err)
 		} else {
-			log.Error("shutting down http server %q: %s", srv.Addr, err)
+			log.Error(msgFmt, srv.Addr, err)
 		}
 	}
 }
@@ -436,8 +438,8 @@ func (web *Web) registerInstallHandlers() {
 // TODO(e.burkov): This should removed with the API v1 when the appropriate
 // functionality will appear in default checkConfigReqEnt.
 type checkConfigReqEntBeta struct {
-	Port    int      `json:"port"`
 	IP      []net.IP `json:"ip"`
+	Port    int      `json:"port"`
 	Autofix bool     `json:"autofix"`
 }
 
@@ -474,13 +476,13 @@ func (web *Web) handleInstallCheckConfigBeta(w http.ResponseWriter, r *http.Requ
 
 	nonBetaReqData := checkConfigReq{
 		Web: checkConfigReqEnt{
-			Port:    reqData.Web.Port,
 			IP:      reqData.Web.IP[0],
+			Port:    reqData.Web.Port,
 			Autofix: reqData.Web.Autofix,
 		},
 		DNS: checkConfigReqEnt{
-			Port:    reqData.DNS.Port,
 			IP:      reqData.DNS.IP[0],
+			Port:    reqData.DNS.Port,
 			Autofix: reqData.DNS.Autofix,
 		},
 		SetStaticIP: reqData.SetStaticIP,
@@ -589,9 +591,9 @@ func (web *Web) handleInstallConfigureBeta(w http.ResponseWriter, r *http.Reques
 // TODO(e.burkov): This should removed with the API v1 when the appropriate
 // functionality will appear in default firstRunData.
 type getAddrsResponseBeta struct {
+	Interfaces []*aghnet.NetInterface `json:"interfaces"`
 	WebPort    int                    `json:"web_port"`
 	DNSPort    int                    `json:"dns_port"`
-	Interfaces []*aghnet.NetInterface `json:"interfaces"`
 }
 
 // handleInstallConfigureBeta is a substitution of /install/get_addresses
@@ -600,9 +602,10 @@ type getAddrsResponseBeta struct {
 // TODO(e.burkov): This should removed with the API v1 when the appropriate
 // functionality will appear in default handleInstallGetAddresses.
 func (web *Web) handleInstallGetAddressesBeta(w http.ResponseWriter, r *http.Request) {
-	data := getAddrsResponseBeta{}
-	data.WebPort = defaultPortHTTP
-	data.DNSPort = defaultPortDNS
+	data := getAddrsResponseBeta{
+		WebPort: defaultPortHTTP,
+		DNSPort: defaultPortDNS,
+	}
 
 	ifaces, err := aghnet.GetValidNetInterfacesForWeb()
 	if err != nil {

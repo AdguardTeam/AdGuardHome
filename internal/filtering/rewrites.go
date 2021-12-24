@@ -18,12 +18,15 @@ import (
 type RewriteEntry struct {
 	// Domain is the domain for which this rewrite should work.
 	Domain string `yaml:"domain"`
+
 	// Answer is the IP address, canonical name, or one of the special
 	// values: "A" or "AAAA".
 	Answer string `yaml:"answer"`
+
 	// IP is the IP address that should be used in the response if Type is
 	// A or AAAA.
 	IP net.IP `yaml:"-"`
+
 	// Type is the DNS record type: A, AAAA, or CNAME.
 	Type uint16 `yaml:"-"`
 }
@@ -143,39 +146,46 @@ func (d *DNSFilter) prepareRewrites() {
 	}
 }
 
-// findRewrites returns the list of matched rewrite entries.  The priority is:
-// CNAME, then A and AAAA; exact, then wildcard.  If the host is matched
-// exactly, wildcard entries aren't returned.  If the host matched by wildcards,
-// return the most specific for the question type.
-func findRewrites(entries []RewriteEntry, host string, qtype uint16) (matched []RewriteEntry) {
-	rr := rewritesSorted{}
+// findRewrites returns the list of matched rewrite entries.  If rewrites are
+// empty, but matched is true, the domain is found among the rewrite rules but
+// not for this question type.
+//
+// The result priority is: CNAME, then A and AAAA; exact, then wildcard.  If the
+// host is matched exactly, wildcard entries aren't returned.  If the host
+// matched by wildcards, return the most specific for the question type.
+func findRewrites(
+	entries []RewriteEntry,
+	host string,
+	qtype uint16,
+) (rewrites []RewriteEntry, matched bool) {
 	for _, e := range entries {
 		if e.Domain != host && !matchDomainWildcard(host, e.Domain) {
 			continue
 		}
 
+		matched = true
 		if e.matchesQType(qtype) {
-			rr = append(rr, e)
+			rewrites = append(rewrites, e)
 		}
 	}
 
-	if len(rr) == 0 {
-		return nil
+	if len(rewrites) == 0 {
+		return nil, matched
 	}
 
-	sort.Sort(rr)
+	sort.Sort(rewritesSorted(rewrites))
 
-	for i, r := range rr {
+	for i, r := range rewrites {
 		if isWildcard(r.Domain) {
-			// Don't use rr[:0], because we need to return at least
-			// one item here.
-			rr = rr[:max(1, i)]
+			// Don't use rewrites[:0], because we need to return at least one
+			// item here.
+			rewrites = rewrites[:max(1, i)]
 
 			break
 		}
 	}
 
-	return rr
+	return rewrites, matched
 }
 
 func max(a, b int) int {
@@ -230,8 +240,7 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 	d.confLock.Lock()
 	d.Config.Rewrites = append(d.Config.Rewrites, ent)
 	d.confLock.Unlock()
-	log.Debug("Rewrites: added element: %s -> %s [%d]",
-		ent.Domain, ent.Answer, len(d.Config.Rewrites))
+	log.Debug("rewrite: added element: %s -> %s [%d]", ent.Domain, ent.Answer, len(d.Config.Rewrites))
 
 	d.Config.ConfigModified()
 }
@@ -253,9 +262,11 @@ func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) 
 	d.confLock.Lock()
 	for _, ent := range d.Config.Rewrites {
 		if ent.equal(entDel) {
-			log.Debug("Rewrites: removed element: %s -> %s", ent.Domain, ent.Answer)
+			log.Debug("rewrite: removed element: %s -> %s", ent.Domain, ent.Answer)
+
 			continue
 		}
+
 		arr = append(arr, ent)
 	}
 	d.Config.Rewrites = arr
