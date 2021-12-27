@@ -28,7 +28,7 @@ import (
 
 // The IDs of built-in filter lists.
 //
-// Keep in sync with client/src/helpers/contants.js.
+// Keep in sync with client/src/helpers/constants.js.
 const (
 	CustomListID = -iota
 	SysHostsListID
@@ -80,7 +80,7 @@ type Config struct {
 	ParentalCacheSize     uint `yaml:"parental_cache_size"`     // (in bytes)
 	CacheTime             uint `yaml:"cache_time"`              // Element's TTL (in minutes)
 
-	Rewrites []RewriteEntry `yaml:"rewrites"`
+	Rewrites []*LegacyRewrite `yaml:"rewrites"`
 
 	// Names of services to block (globally).
 	// Per-client settings can override this configuration.
@@ -161,9 +161,14 @@ type DNSFilter struct {
 
 // Filter represents a filter list
 type Filter struct {
-	ID       int64  // auto-assigned when filter is added (see nextFilterID)
-	Data     []byte `yaml:"-"` // List of rules divided by '\n'
-	FilePath string `yaml:"-"` // Path to a filtering rules file
+	// FilePath is the path to a filtering rules list file.
+	FilePath string `yaml:"-"`
+
+	// Data is the content of the file.
+	Data []byte `yaml:"-"`
+
+	// ID is automatically assigned when filter is added using nextFilterID.
+	ID int64
 }
 
 // Reason holds an enum detailing why it was filtered or not filtered
@@ -281,8 +286,14 @@ func (d *DNSFilter) WriteDiskConfig(c *Config) {
 	c.Rewrites = cloneRewrites(c.Rewrites)
 }
 
-func cloneRewrites(entries []RewriteEntry) (clone []RewriteEntry) {
-	return append([]RewriteEntry(nil), entries...)
+// cloneRewrites returns a deep copy of entries.
+func cloneRewrites(entries []*LegacyRewrite) (clone []*LegacyRewrite) {
+	clone = make([]*LegacyRewrite, len(entries))
+	for i, rw := range entries {
+		clone[i] = rw.clone()
+	}
+
+	return clone
 }
 
 // SetFilters - set new filters (synchronously or asynchronously)
@@ -477,10 +488,8 @@ func (d *DNSFilter) matchSysHosts(
 }
 
 // matchSysHostsIntl actually matches the request.  It's separated to avoid
-// perfoming checks twice.
-func (d *DNSFilter) matchSysHostsIntl(
-	req *urlfilter.DNSRequest,
-) (res Result, err error) {
+// performing checks twice.
+func (d *DNSFilter) matchSysHostsIntl(req *urlfilter.DNSRequest) (res Result, err error) {
 	dnsres, _ := d.EtcHosts.MatchRequest(*req)
 	if dnsres == nil {
 		return res, nil
@@ -530,15 +539,25 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 	cnames := stringutil.NewSet()
 	origHost := host
 	for matched && len(rewrites) > 0 && rewrites[0].Type == dns.TypeCNAME {
-		rwAns := rewrites[0].Answer
+		rw := rewrites[0]
+		rwPat := rw.Domain
+		rwAns := rw.Answer
 
 		log.Debug("rewrite: cname for %s is %s", host, rwAns)
 
-		if host == rwAns {
-			// Rewrite of a domain onto itself is an exception rule.
-			res.Reason = NotFilteredNotFound
+		if origHost == rwAns || rwPat == rwAns {
+			// Either a request for the hostname itself or a rewrite of
+			// a pattern onto itself, both of which are an exception rules.
+			// Return a not filtered result.
+			return Result{}
+		} else if host == rwAns && isWildcard(rwPat) {
+			// An "*.example.com → sub.example.com" rewrite matching in a loop.
+			//
+			// See https://github.com/AdguardTeam/AdGuardHome/issues/4016.
 
-			return res
+			res.CanonName = host
+
+			break
 		}
 
 		host = rwAns
@@ -560,7 +579,7 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 
 // setRewriteResult sets the Reason or IPList of res if necessary.  res must not
 // be nil.
-func setRewriteResult(res *Result, host string, rewrites []RewriteEntry, qtype uint16) {
+func setRewriteResult(res *Result, host string, rewrites []*LegacyRewrite, qtype uint16) {
 	for _, rw := range rewrites {
 		if rw.Type == qtype && (qtype == dns.TypeA || qtype == dns.TypeAAAA) {
 			if rw.IP == nil {
@@ -932,12 +951,18 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter) {
 	err := d.initSecurityServices()
 	if err != nil {
 		log.Error("filtering: initialize services: %s", err)
+
 		return nil
 	}
 
 	if c != nil {
 		d.Config = *c
-		d.prepareRewrites()
+		err = d.prepareRewrites()
+		if err != nil {
+			log.Error("rewrites: preparing: %s", err)
+
+			return nil
+		}
 	}
 
 	bsvcs := []string{}

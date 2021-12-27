@@ -69,7 +69,7 @@ type Config struct {
 	// addresses.
 	AnonymizeClientIP bool
 
-	// Anonymizer proccesses the IP addresses to anonymize those if needed.
+	// Anonymizer processes the IP addresses to anonymize those if needed.
 	Anonymizer *aghnet.IPMut
 }
 

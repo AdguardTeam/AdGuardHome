@@ -373,7 +373,7 @@ func (hp *hostsParser) add(ip net.IP, host string) (hostType int) {
 // addPair puts the pair of ip and host to the rules builder if needed.  For
 // each ip the first member of hosts will become the main one.
 func (hp *hostsParser) addPairs(ip net.IP, hosts []string) {
-	// Put the rule in a preproccesed format like:
+	// Put the rule in a processed format like:
 	//
 	//   ip host1 host2 ...
 	//
@@ -488,14 +488,14 @@ func (hp *hostsParser) equalSet(target *netutil.IPMap) (ok bool) {
 		v, hasIP := target.Get(ip)
 		// ok is set to true if the target doesn't contain ip or if the
 		// appropriate hosts set isn't equal to the checked one, i.e. the maps
-		// have at least one disperancy.
+		// have at least one discrepancy.
 		ok = !hasIP || !v.(*stringutil.Set).Equal(val.(*stringutil.Set))
 
 		// Continue only if maps has no discrepancies.
 		return !ok
 	})
 
-	// Return true if every value from the IP map has no disperancies with the
+	// Return true if every value from the IP map has no discrepancies with the
 	// appropriate one from the target.
 	return !ok
 }

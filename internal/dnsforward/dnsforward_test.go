@@ -892,7 +892,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 
 func TestRewrite(t *testing.T) {
 	c := &filtering.Config{
-		Rewrites: []filtering.RewriteEntry{{
+		Rewrites: []*filtering.LegacyRewrite{{
 			Domain: "test.com",
 			Answer: "1.2.3.4",
 			Type:   dns.TypeA,

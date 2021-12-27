@@ -85,7 +85,7 @@ func ctDomainOrClientCaseNonStrict(
 
 // quickMatch quickly checks if the line matches the given search criterion.
 // It returns false if the like doesn't match.  This method is only here for
-// optimisation purposes.
+// optimization purposes.
 func (c *searchCriterion) quickMatch(line string, findClient quickMatchClientFunc) (ok bool) {
 	switch c.criterionType {
 	case ctTerm:

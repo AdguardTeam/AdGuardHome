@@ -78,8 +78,8 @@ func newRecursionDetector(ttl time.Duration, suspectsNum uint) (rd *recursionDet
 // msgToSignature converts msg into it's signature represented in bytes.
 func msgToSignature(msg dns.Msg) (sig []byte) {
 	sig = make([]byte, uint16sz*2+netutil.MaxDomainNameLen)
-	// The binary.BigEndian byte order is used everywhere except when the
-	// real machine's endianess is needed.
+	// The binary.BigEndian byte order is used everywhere except when the real
+	// machine's endianness is needed.
 	byteOrder := binary.BigEndian
 	byteOrder.PutUint16(sig[0:], msg.Id)
 	q := msg.Question[0]

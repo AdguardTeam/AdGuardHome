@@ -96,7 +96,7 @@ type clientsContainer struct {
 	dnsServer *dnsforward.Server
 
 	// etcHosts contains list of rewrite rules taken from the operating system's
-	// hosts databse.
+	// hosts database.
 	etcHosts *aghnet.HostsContainer
 
 	testing bool // if TRUE, this object is used for internal tests
@@ -175,7 +175,7 @@ type clientObject struct {
 	UseGlobalBlockedServices bool `yaml:"use_global_blocked_services"`
 }
 
-// addFromConfig initializes the clients containter with objects from the
+// addFromConfig initializes the clients container with objects from the
 // configuration file.
 func (clients *clientsContainer) addFromConfig(objects []*clientObject) {
 	for _, o := range objects {

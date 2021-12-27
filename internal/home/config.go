@@ -164,7 +164,7 @@ type tlsConfigSettings struct {
 
 // config is the global configuration structure.
 //
-// TODO(a.garipov, e.burkov): This global is afwul and must be removed.
+// TODO(a.garipov, e.burkov): This global is awful and must be removed.
 var config = &configuration{
 	BindPort:     3000,
 	BetaBindPort: 0,

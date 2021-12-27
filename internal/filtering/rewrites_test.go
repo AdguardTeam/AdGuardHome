@@ -15,7 +15,7 @@ func TestRewrites(t *testing.T) {
 	d := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 
-	d.Rewrites = []RewriteEntry{{
+	d.Rewrites = []*LegacyRewrite{{
 		// This one and below are about CNAME, A and AAAA.
 		Domain: "somecname",
 		Answer: "somehost.com",
@@ -66,8 +66,12 @@ func TestRewrites(t *testing.T) {
 	}, {
 		Domain: "BIGHOST.COM",
 		Answer: "1.2.3.7",
+	}, {
+		Domain: "*.issue4016.com",
+		Answer: "sub.issue4016.com",
 	}}
-	d.prepareRewrites()
+
+	require.NoError(t, d.prepareRewrites())
 
 	testCases := []struct {
 		name       string
@@ -153,6 +157,20 @@ func TestRewrites(t *testing.T) {
 		wantIPs:    nil,
 		wantReason: Rewritten,
 		dtyp:       dns.TypeHTTPS,
+	}, {
+		name:       "issue4016",
+		host:       "www.issue4016.com",
+		wantCName:  "sub.issue4016.com",
+		wantIPs:    nil,
+		wantReason: Rewritten,
+		dtyp:       dns.TypeA,
+	}, {
+		name:       "issue4016_self",
+		host:       "sub.issue4016.com",
+		wantCName:  "",
+		wantIPs:    nil,
+		wantReason: NotFilteredNotFound,
+		dtyp:       dns.TypeA,
 	}}
 
 	for _, tc := range testCases {
@@ -173,7 +191,7 @@ func TestRewritesLevels(t *testing.T) {
 	d := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 	// Exact host, wildcard L2, wildcard L3.
-	d.Rewrites = []RewriteEntry{{
+	d.Rewrites = []*LegacyRewrite{{
 		Domain: "host.com",
 		Answer: "1.1.1.1",
 		Type:   dns.TypeA,
@@ -186,7 +204,8 @@ func TestRewritesLevels(t *testing.T) {
 		Answer: "3.3.3.3",
 		Type:   dns.TypeA,
 	}}
-	d.prepareRewrites()
+
+	require.NoError(t, d.prepareRewrites())
 
 	testCases := []struct {
 		name string
@@ -219,7 +238,7 @@ func TestRewritesExceptionCNAME(t *testing.T) {
 	d := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 	// Wildcard and exception for a sub-domain.
-	d.Rewrites = []RewriteEntry{{
+	d.Rewrites = []*LegacyRewrite{{
 		Domain: "*.host.com",
 		Answer: "2.2.2.2",
 	}, {
@@ -229,7 +248,8 @@ func TestRewritesExceptionCNAME(t *testing.T) {
 		Domain: "*.sub.host.com",
 		Answer: "*.sub.host.com",
 	}}
-	d.prepareRewrites()
+
+	require.NoError(t, d.prepareRewrites())
 
 	testCases := []struct {
 		name string
@@ -253,7 +273,7 @@ func TestRewritesExceptionCNAME(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			r := d.processRewrites(tc.host, dns.TypeA)
 			if tc.want == nil {
-				assert.Equal(t, NotFilteredNotFound, r.Reason)
+				assert.Equal(t, NotFilteredNotFound, r.Reason, "got %s", r.Reason)
 
 				return
 			}
@@ -269,7 +289,7 @@ func TestRewritesExceptionIP(t *testing.T) {
 	d := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 	// Exception for AAAA record.
-	d.Rewrites = []RewriteEntry{{
+	d.Rewrites = []*LegacyRewrite{{
 		Domain: "host.com",
 		Answer: "1.2.3.4",
 		Type:   dns.TypeA,
@@ -290,7 +310,8 @@ func TestRewritesExceptionIP(t *testing.T) {
 		Answer: "A",
 		Type:   dns.TypeA,
 	}}
-	d.prepareRewrites()
+
+	require.NoError(t, d.prepareRewrites())
 
 	testCases := []struct {
 		name string

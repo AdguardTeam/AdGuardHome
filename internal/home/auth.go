@@ -424,7 +424,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var remoteAddr string
-	// realIP cannot be used here without taking TrustedProxies into accound due
+	// realIP cannot be used here without taking TrustedProxies into account due
 	// to security issues.
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
@@ -528,7 +528,7 @@ func optionalAuthThird(w http.ResponseWriter, r *http.Request) (authFirst bool) 
 	cookie, err := r.Cookie(sessionCookieName)
 
 	if glProcessCookie(r) {
-		log.Debug("auth: authentification was handled by GL-Inet submodule")
+		log.Debug("auth: authentication was handled by GL-Inet submodule")
 		ok = true
 	} else if err == nil {
 		r := Context.auth.checkSession(cookie.Value)

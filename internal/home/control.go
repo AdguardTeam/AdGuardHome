@@ -37,7 +37,7 @@ func appendDNSAddrs(dst []string, addrs ...net.IP) (res []string) {
 
 // appendDNSAddrsWithIfaces formats and appends all DNS addresses from src to
 // dst.  It also adds the IP addresses of all network interfaces if src contains
-// an unspecified IP addresss.
+// an unspecified IP address.
 func appendDNSAddrsWithIfaces(dst []string, src []net.IP) (res []string, err error) {
 	ifacesAdded := false
 	for _, h := range src {

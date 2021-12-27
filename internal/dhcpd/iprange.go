@@ -14,8 +14,8 @@ import (
 //
 // It is safe for concurrent use.
 //
-// TODO(a.garipov): Perhaps create an optimised version with uint32 for
-// IPv4 ranges?  Or use one of uint128 packages?
+// TODO(a.garipov): Perhaps create an optimized version with uint32 for IPv4
+// ranges?  Or use one of uint128 packages?
 type ipRange struct {
 	start *big.Int
 	end   *big.Int
