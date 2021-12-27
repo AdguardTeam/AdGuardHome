@@ -443,7 +443,7 @@ func (s *Server) setupResolvers(localAddrs []string) (err error) {
 		&upstream.Options{
 			Bootstrap: bootstraps,
 			Timeout:   defaultLocalTimeout,
-			// TODO(e.burkov): Should we verify server's ceritificates?
+			// TODO(e.burkov): Should we verify server's certificates?
 		},
 	)
 	if err != nil {
@@ -559,7 +559,7 @@ func (s *Server) IsRunning() bool {
 	return s.isRunning
 }
 
-// srvClosedErr is returned when the method can't complete without inacessible
+// srvClosedErr is returned when the method can't complete without inaccessible
 // data from the closing server.
 const srvClosedErr errors.Error = "server is closed"
 

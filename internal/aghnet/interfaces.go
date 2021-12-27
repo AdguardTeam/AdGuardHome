@@ -8,8 +8,8 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// IPVersion is a documentational alias for int.  Use it when the integer means
-// IP version.
+// IPVersion is a alias for int for documentation purposes.  Use it when the
+// integer means IP version.
 type IPVersion = int
 
 // IP version constants.
@@ -67,7 +67,7 @@ func IfaceIPAddrs(iface NetIface, ipv IPVersion) (ips []net.IP, err error) {
 //
 // It makes up to maxAttempts attempts to get the addresses if there are none,
 // each time using the provided backoff.  Sometimes an interface needs a few
-// seconds to really ititialize.
+// seconds to really initialize.
 //
 // See https://github.com/AdguardTeam/AdGuardHome/issues/2304.
 func IfaceDNSIPAddrs(

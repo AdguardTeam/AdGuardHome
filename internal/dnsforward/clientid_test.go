@@ -31,8 +31,8 @@ func (c testTLSConn) ConnectionState() (cs tls.ConnectionState) {
 
 // testQUICSession is a quicSession for tests.
 type testQUICSession struct {
-	// Session is embedded here simply to make testQUICSession
-	// a quic.Session without acctually implementing all methods.
+	// Session is embedded here simply to make testQUICSession a quic.Session
+	// without actually implementing all methods.
 	quic.Session
 
 	serverName string
