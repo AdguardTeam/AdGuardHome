@@ -14,6 +14,7 @@ import (
 	"github.com/digineo/go-ipset/v2"
 	"github.com/mdlayher/netlink"
 	"github.com/ti-mo/netfilter"
+	"golang.org/x/sys/unix"
 )
 
 // How to test on a real Linux machine:
@@ -42,11 +43,17 @@ import (
 
 // newIpsetMgr returns a new Linux ipset manager.
 func newIpsetMgr(ipsetConf []string) (set IpsetManager, err error) {
-	dial := func(pf netfilter.ProtoFamily, conf *netlink.Config) (conn ipsetConn, err error) {
-		return ipset.Dial(pf, conf)
+	return newIpsetMgrWithDialer(ipsetConf, defaultDial)
+}
+
+// defaultDial is the default netfilter dialing function.
+func defaultDial(pf netfilter.ProtoFamily, conf *netlink.Config) (conn ipsetConn, err error) {
+	conn, err = ipset.Dial(pf, conf)
+	if err != nil {
+		return nil, err
 	}
 
-	return newIpsetMgrWithDialer(ipsetConf, dial)
+	return conn, nil
 }
 
 // ipsetConn is the ipset conn interface.
@@ -103,8 +110,8 @@ func (m *ipsetMgr) dialNetfilter(conf *netlink.Config) (err error) {
 	// The kernel API does not actually require two sockets but package
 	// github.com/digineo/go-ipset does.
 	//
-	// TODO(a.garipov): Perhaps we can ditch package ipset altogether and
-	// just use packages netfilter and netlink.
+	// TODO(a.garipov): Perhaps we can ditch package ipset altogether and just
+	// use packages netfilter and netlink.
 	m.ipv4Conn, err = m.dial(netfilter.ProtoIPv4, conf)
 	if err != nil {
 		return fmt.Errorf("dialing v4: %w", err)
@@ -214,6 +221,14 @@ func newIpsetMgrWithDialer(ipsetConf []string, dial ipsetDialer) (mgr IpsetManag
 
 	err = m.dialNetfilter(&netlink.Config{})
 	if err != nil {
+		if errors.Is(err, unix.EPROTONOSUPPORT) {
+			// The implementation doesn't support this protocol version.  Just
+			// issue a warning.
+			log.Info("ipset: dialing netfilter: warning: %s", err)
+
+			return nil, nil
+		}
+
 		return nil, fmt.Errorf("dialing netfilter: %w", err)
 	}
 

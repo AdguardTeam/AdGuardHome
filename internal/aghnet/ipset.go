@@ -20,7 +20,12 @@ type IpsetManager interface {
 //
 //   DOMAIN[,DOMAIN].../IPSET_NAME[,IPSET_NAME]...
 //
-// The error is of type *aghos.UnsupportedError if the OS is not supported.
+// If ipsetConf is empty, msg and err are nil.  The error is of type
+// *aghos.UnsupportedError if the OS is not supported.
 func NewIpsetManager(ipsetConf []string) (mgr IpsetManager, err error) {
+	if len(ipsetConf) == 0 {
+		return nil, nil
+	}
+
 	return newIpsetMgr(ipsetConf)
 }
