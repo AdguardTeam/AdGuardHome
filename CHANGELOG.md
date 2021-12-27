@@ -23,12 +23,14 @@ and this project adheres to
 
 <!--
     TODO(a.garipov): Remove this deprecation, if v0.108.0 is released before
-    that.
+    the Go 1.18 release.
 -->
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
 ### Fixed
 
+- Service not being stopped before running the `uninstall` service action
+  ([#3868]).
 - Legacy DNS rewrites responding from upstream when a request other than `A` or
   `AAAA` is received ([#4008]).
 - Panic on port availability check during installation ([#3987]).
@@ -38,6 +40,7 @@ and this project adheres to
 - Go 1.16 support.
 
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+[#3868]: https://github.com/AdguardTeam/AdGuardHome/issues/3868
 [#3987]: https://github.com/AdguardTeam/AdGuardHome/issues/3987
 [#4008]: https://github.com/AdguardTeam/AdGuardHome/issues/4008
 
