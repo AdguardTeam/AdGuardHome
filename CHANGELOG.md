@@ -42,6 +42,7 @@ and this project adheres to
 
 - Service not being stopped before running the `uninstall` service action
   ([#3868]).
+- Broken `reload` service action on FreeBSD.
 - Legacy DNS rewrites responding from upstream when a request other than `A` or
   `AAAA` is received ([#4008]).
 - Panic on port availability check during installation ([#3987]).
