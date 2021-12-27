@@ -40,6 +40,7 @@ and this project adheres to
 
 ### Fixed
 
+- `ipset` initialization bugs ([#4027]).
 - Legacy DNS rewrites from a wildcard pattern to a subdomain ([#4016]).
 - Service not being stopped before running the `uninstall` service action
   ([#3868]).
@@ -52,6 +53,7 @@ and this project adheres to
 [#3987]: https://github.com/AdguardTeam/AdGuardHome/issues/3987
 [#4008]: https://github.com/AdguardTeam/AdGuardHome/issues/4008
 [#4016]: https://github.com/AdguardTeam/AdGuardHome/issues/4016
+[#4027]: https://github.com/AdguardTeam/AdGuardHome/issues/4027
 
 
 
