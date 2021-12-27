@@ -28,8 +28,7 @@ import (
 //
 // TODO(e.burkov):  Perhaps, file a PR to github.com/kardianos/service.
 
-// sysVersion is the version of local service.System interface
-// implementation.
+// sysVersion is the version of local service.System interface implementation.
 const sysVersion = "openbsd-runcom"
 
 func chooseSystem() {

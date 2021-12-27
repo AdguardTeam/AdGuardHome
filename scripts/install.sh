@@ -481,6 +481,7 @@ handle_existing() {
 "to reinstall/uninstall the AdGuard Home using this script specify one of the '-r' or '-u' flags"
 		fi
 
+		# TODO(e.burkov):  Remove the stop once v0.107.1 released.
 		if ( cd "$agh_dir" && ! ./AdGuardHome -s stop || ! ./AdGuardHome -s uninstall )
 		then
 			# It doesn't terminate the script since it is possible

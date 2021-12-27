@@ -102,9 +102,9 @@ func sendSigReload() {
 		return
 	}
 
-	pidfile := fmt.Sprintf("/var/run/%s.pid", serviceName)
+	pidFile := fmt.Sprintf("/var/run/%s.pid", serviceName)
 	var pid int
-	data, err := os.ReadFile(pidfile)
+	data, err := os.ReadFile(pidFile)
 	if errors.Is(err, os.ErrNotExist) {
 		if pid, err = aghos.PIDByCommand(serviceName, os.Getpid()); err != nil {
 			log.Error("service: finding AdGuardHome process: %s", err)
@@ -112,19 +112,19 @@ func sendSigReload() {
 			return
 		}
 	} else if err != nil {
-		log.Error("service: reading pid file %s: %s", pidfile, err)
+		log.Error("service: reading pid file %s: %s", pidFile, err)
 
 		return
 	} else {
 		parts := strings.SplitN(string(data), "\n", 2)
 		if len(parts) == 0 {
-			log.Error("service: parsing pid file %s: bad value", pidfile)
+			log.Error("service: parsing pid file %s: bad value", pidFile)
 
 			return
 		}
 
 		if pid, err = strconv.Atoi(strings.TrimSpace(parts[0])); err != nil {
-			log.Error("service: parsing pid from file %s: %s", pidfile, err)
+			log.Error("service: parsing pid from file %s: %s", pidFile, err)
 
 			return
 		}
@@ -243,7 +243,7 @@ func handleServiceInstallCommand(s service.Service) {
 
 	if aghos.IsOpenWrt() {
 		// On OpenWrt it is important to run enable after the service
-		// installation Otherwise, the service won't start on the system
+		// installation.  Otherwise, the service won't start on the system
 		// startup.
 		_, err = runInitdCommand("enable")
 		if err != nil {
@@ -277,6 +277,10 @@ func handleServiceUninstallCommand(s service.Service) {
 		if err != nil {
 			log.Fatalf("service: running init disable: %s", err)
 		}
+	}
+
+	if err := svcAction(s, "stop"); err != nil {
+		log.Debug("service: executing action %q: %s", "stop", err)
 	}
 
 	if err := svcAction(s, "uninstall"); err != nil {
@@ -341,7 +345,9 @@ func configureService(c *service.Config) {
 // returns command code or error if any
 func runInitdCommand(action string) (int, error) {
 	confPath := "/etc/init.d/" + serviceName
+	// Pass the script and action as a single string argument.
 	code, _, err := aghos.RunCommand("sh", "-c", confPath+" "+action)
+
 	return code, err
 }
 
@@ -579,9 +585,10 @@ const freeBSDScript = `#!/bin/sh
 name="{{.Name}}"
 {{.Name}}_env="IS_DAEMON=1"
 {{.Name}}_user="root"
-pidfile="/var/run/${name}.pid"
+pidfile_child="/var/run/${name}.pid"
+pidfile="/var/run/${name}_daemon.pid"
 command="/usr/sbin/daemon"
-command_args="-p ${pidfile} -f -r {{.WorkingDirectory}}/{{.Name}}"
+command_args="-P ${pidfile} -p ${pidfile_child} -f -r {{.WorkingDirectory}}/{{.Name}}"
 run_rc_command "$1"
 `
 
