@@ -1,11 +1,13 @@
 package home
 
 import (
+	"fmt"
 	"net"
 	"os"
 	"path/filepath"
 	"sync"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalgo"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -286,22 +288,25 @@ func parseConfig() (err error) {
 		return err
 	}
 
-	pm := portsMap{}
-	pm.add(
+	uv := aghalgo.UniquenessValidator{}
+	addPorts(
+		uv,
 		config.BindPort,
 		config.BetaBindPort,
 		config.DNS.Port,
 	)
+
 	if config.TLS.Enabled {
-		pm.add(
+		addPorts(
+			uv,
 			config.TLS.PortHTTPS,
 			config.TLS.PortDNSOverTLS,
 			config.TLS.PortDNSOverQUIC,
 			config.TLS.PortDNSCrypt,
 		)
 	}
-	if err = pm.validate(); err != nil {
-		return err
+	if err = uv.Validate(aghalgo.IntIsBefore); err != nil {
+		return fmt.Errorf("validating ports: %w", err)
 	}
 
 	if !checkFiltersUpdateIntervalHours(config.DNS.FiltersUpdateIntervalHours) {
@@ -313,6 +318,15 @@ func parseConfig() (err error) {
 	}
 
 	return nil
+}
+
+// addPorts is a helper for ports validation.  It skips zero ports.
+func addPorts(uv aghalgo.UniquenessValidator, ports ...int) {
+	for _, p := range ports {
+		if p != 0 {
+			uv.Add(p)
+		}
+	}
 }
 
 // readConfigFile reads configuration file contents.
