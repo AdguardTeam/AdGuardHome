@@ -19,6 +19,11 @@ and this project adheres to
 
 - `windows/arm64` support ([#3057]).
 
+### Changed
+
+- The validation error message for duplicated allow- and blocklists in DNS
+  settings now shows the duplicated elements ([#3975]).
+
 ### Deprecated
 
 <!--
@@ -44,6 +49,7 @@ and this project adheres to
 
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#3868]: https://github.com/AdguardTeam/AdGuardHome/issues/3868
+[#3975]: https://github.com/AdguardTeam/AdGuardHome/issues/3975
 [#3987]: https://github.com/AdguardTeam/AdGuardHome/issues/3987
 [#4008]: https://github.com/AdguardTeam/AdGuardHome/issues/4008
 [#4016]: https://github.com/AdguardTeam/AdGuardHome/issues/4016

@@ -19,6 +19,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalgo"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
@@ -295,22 +296,24 @@ func setupConfig(args options) (err error) {
 	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
 
 	if args.bindPort != 0 {
-		pm := portsMap{}
-		pm.add(
+		uv := aghalgo.UniquenessValidator{}
+		addPorts(
+			uv,
 			args.bindPort,
 			config.BetaBindPort,
 			config.DNS.Port,
 		)
 		if config.TLS.Enabled {
-			pm.add(
+			addPorts(
+				uv,
 				config.TLS.PortHTTPS,
 				config.TLS.PortDNSOverTLS,
 				config.TLS.PortDNSOverQUIC,
 				config.TLS.PortDNSCrypt,
 			)
 		}
-		if err = pm.validate(); err != nil {
-			return err
+		if err = uv.Validate(aghalgo.IntIsBefore); err != nil {
+			return fmt.Errorf("validating ports: %w", err)
 		}
 
 		config.BindPort = args.bindPort
@@ -374,7 +377,7 @@ func fatalOnError(err error) {
 	}
 }
 
-// run performs configurating and starts AdGuard Home.
+// run configures and starts AdGuard Home.
 func run(args options, clientBuildFS fs.FS) {
 	var err error
 

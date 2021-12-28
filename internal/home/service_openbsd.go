@@ -173,7 +173,7 @@ func (s *openbsdRunComService) template() (t *template.Template) {
 	)))
 }
 
-// execPath returns the absolute path to the excutable to be run as a service.
+// execPath returns the absolute path to the executable to be run as a service.
 func (s *openbsdRunComService) execPath() (path string, err error) {
 	if c := s.cfg; c != nil && len(c.Executable) != 0 {
 		return filepath.Abs(c.Executable)

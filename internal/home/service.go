@@ -157,7 +157,7 @@ func sendSigReload() {
 // it is specified when we register a service, and it indicates to the app
 // that it is being run as a service/daemon.
 func handleServiceControlAction(opts options, clientBuildFS fs.FS) {
-	// Call chooseSystem expicitly to introduce OpenBSD support for service
+	// Call chooseSystem explicitly to introduce OpenBSD support for service
 	// package.  It's a noop for other GOOS values.
 	chooseSystem()
 

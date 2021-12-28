@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalgo"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/errors"
@@ -250,7 +251,9 @@ func (t *TLSMod) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if setts.Enabled {
-		if err = validatePorts(
+		uv := aghalgo.UniquenessValidator{}
+		addPorts(
+			uv,
 			config.BindPort,
 			config.BetaBindPort,
 			config.DNS.Port,
@@ -258,8 +261,11 @@ func (t *TLSMod) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 			setts.PortDNSOverTLS,
 			setts.PortDNSOverQUIC,
 			setts.PortDNSCrypt,
-		); err != nil {
-			aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		)
+
+		err = uv.Validate(aghalgo.IntIsBefore)
+		if err != nil {
+			aghhttp.Error(r, w, http.StatusBadRequest, "validating ports: %s", err)
 
 			return
 		}
@@ -338,7 +344,9 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if data.Enabled {
-		if err = validatePorts(
+		uv := aghalgo.UniquenessValidator{}
+		addPorts(
+			uv,
 			config.BindPort,
 			config.BetaBindPort,
 			config.DNS.Port,
@@ -346,7 +354,10 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 			data.PortDNSOverTLS,
 			data.PortDNSOverQUIC,
 			data.PortDNSCrypt,
-		); err != nil {
+		)
+
+		err = uv.Validate(aghalgo.IntIsBefore)
+		if err != nil {
 			aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 			return

@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalgo"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
@@ -102,9 +103,15 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	pm := portsMap{}
-	pm.add(config.BindPort, config.BetaBindPort, reqData.Web.Port)
-	if err = pm.validate(); err != nil {
+	uv := aghalgo.UniquenessValidator{}
+	addPorts(
+		uv,
+		config.BindPort,
+		config.BetaBindPort,
+		reqData.Web.Port,
+	)
+	if err = uv.Validate(aghalgo.IntIsBefore); err != nil {
+		err = fmt.Errorf("validating ports: %w", err)
 		respData.Web.Status = err.Error()
 	} else if reqData.Web.Port != 0 {
 		err = aghnet.CheckPort("tcp", reqData.Web.IP, reqData.Web.Port)
@@ -113,8 +120,9 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	pm.add(reqData.DNS.Port)
-	if err = pm.validate(); err != nil {
+	addPorts(uv, reqData.DNS.Port)
+	if err = uv.Validate(aghalgo.IntIsBefore); err != nil {
+		err = fmt.Errorf("validating ports: %w", err)
 		respData.DNS.Status = err.Error()
 	} else if reqData.DNS.Port != 0 {
 		err = aghnet.CheckPort("udp", reqData.DNS.IP, reqData.DNS.Port)
