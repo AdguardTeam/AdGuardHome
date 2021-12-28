@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/NYTimes/gziphandler"
@@ -175,33 +176,46 @@ func (web *Web) Start() {
 			WriteTimeout:      web.conf.WriteTimeout,
 		}
 		go func() {
+			defer log.OnPanic("web: plain")
+
 			errs <- web.httpServer.ListenAndServe()
 		}()
 
-		if web.conf.BetaBindPort != 0 {
-			web.httpServerBeta = &http.Server{
-				ErrorLog:          log.StdLog("web: plain", log.DEBUG),
-				Addr:              netutil.JoinHostPort(hostStr, web.conf.BetaBindPort),
-				Handler:           withMiddlewares(Context.mux, limitRequestBody, web.wrapIndexBeta),
-				ReadTimeout:       web.conf.ReadTimeout,
-				ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
-				WriteTimeout:      web.conf.WriteTimeout,
-			}
-			go func() {
-				betaErr := web.httpServerBeta.ListenAndServe()
-				if betaErr != nil {
-					log.Error("starting beta http server: %s", betaErr)
-				}
-			}()
-		}
+		web.startBetaServer(hostStr)
 
 		err := <-errs
-		if err != http.ErrServerClosed {
+		if !errors.Is(err, http.ErrServerClosed) {
 			cleanupAlways()
 			log.Fatal(err)
 		}
-		// We use ErrServerClosed as a sign that we need to rebind on new address, so go back to the start of the loop
+
+		// We use ErrServerClosed as a sign that we need to rebind on a new
+		// address, so go back to the start of the loop.
 	}
+}
+
+// startBetaServer starts the beta HTTP server if necessary.
+func (web *Web) startBetaServer(hostStr string) {
+	if web.conf.BetaBindPort == 0 {
+		return
+	}
+
+	web.httpServerBeta = &http.Server{
+		ErrorLog:          log.StdLog("web: plain: beta", log.DEBUG),
+		Addr:              netutil.JoinHostPort(hostStr, web.conf.BetaBindPort),
+		Handler:           withMiddlewares(Context.mux, limitRequestBody, web.wrapIndexBeta),
+		ReadTimeout:       web.conf.ReadTimeout,
+		ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
+		WriteTimeout:      web.conf.WriteTimeout,
+	}
+	go func() {
+		defer log.OnPanic("web: plain: beta")
+
+		betaErr := web.httpServerBeta.ListenAndServe()
+		if betaErr != nil && !errors.Is(betaErr, http.ErrServerClosed) {
+			log.Error("starting beta http server: %s", betaErr)
+		}
+	}()
 }
 
 // Close gracefully shuts down the HTTP servers.
