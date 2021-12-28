@@ -1056,8 +1056,6 @@ func (s *v4Server) Start() (err error) {
 	go func() {
 		if serr := s.srv.Serve(); errors.Is(serr, net.ErrClosed) {
 			log.Info("dhcpv4: server is closed")
-
-			return
 		} else if serr != nil {
 			log.Error("dhcpv4: srv.Serve: %s", serr)
 		}

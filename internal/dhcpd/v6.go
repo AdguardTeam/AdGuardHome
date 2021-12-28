@@ -662,8 +662,11 @@ func (s *v6Server) Start() (err error) {
 	}
 
 	go func() {
-		err = s.srv.Serve()
-		log.Error("dhcpv6: srv.Serve: %s", err)
+		if serr := s.srv.Serve(); errors.Is(serr, net.ErrClosed) {
+			log.Info("dhcpv6: server is closed")
+		} else if serr != nil {
+			log.Error("dhcpv6: srv.Serve: %s", serr)
+		}
 	}()
 
 	return nil
