@@ -270,6 +270,11 @@
 # release-vX.Y.Z branches are the branches from which the actual final release
 # is built.
 - '^release-v[0-9]+\.[0-9]+\.[0-9]+':
+    # Disable integration branches for release branches.
+    'branch-config':
+      'integration':
+        'push-on-success': false
+        'merge-from': 'beta-v0.107'
     # Build final releases on release branches manually.
     'triggers': []
     # Set the default release channel on the final branch to release, as these
