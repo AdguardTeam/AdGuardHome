@@ -17,11 +17,6 @@ and this project adheres to
 
 - `windows/arm64` support ([#3057]).
 
-### Changed
-
-- The validation error message for duplicated allow- and blocklists in DNS
-  settings now shows the duplicated elements ([#3975]).
-
 ### Deprecated
 
 <!--
@@ -42,6 +37,11 @@ and this project adheres to
 ## [v0.107.1] - 2021-12-29 (APPROX.)
 -->
 ## v0.107.1 - UNRELEASED
+
+### Changed
+
+- The validation error message for duplicated allow- and blocklists in DNS
+  settings now shows the duplicated elements ([#3975]).
 
 ### Fixed
 
