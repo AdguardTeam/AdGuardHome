@@ -53,10 +53,12 @@ and this project adheres to
 - Legacy DNS rewrites responding from upstream when a request other than `A` or
   `AAAA` is received ([#4008]).
 - Panic on port availability check during installation ([#3987]).
+- Incorrect application of rules from the OS's hosts files ([#3998]).
 
 [#3868]: https://github.com/AdguardTeam/AdGuardHome/issues/3868
 [#3975]: https://github.com/AdguardTeam/AdGuardHome/issues/3975
 [#3987]: https://github.com/AdguardTeam/AdGuardHome/issues/3987
+[#3998]: https://github.com/AdguardTeam/AdGuardHome/issues/3998
 [#4008]: https://github.com/AdguardTeam/AdGuardHome/issues/4008
 [#4016]: https://github.com/AdguardTeam/AdGuardHome/issues/4016
 [#4027]: https://github.com/AdguardTeam/AdGuardHome/issues/4027
