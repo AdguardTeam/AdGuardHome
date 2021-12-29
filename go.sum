@@ -7,8 +7,8 @@ dmitri.shuralyov.com/html/belt v0.0.0-20180602232347-f7d459c86be0/go.mod h1:JLBr
 dmitri.shuralyov.com/service/change v0.0.0-20181023043359-a85b471d5412/go.mod h1:a1inKt/atXimZ4Mv927x+r7UpyzRUf4emIoiiSC2TN4=
 dmitri.shuralyov.com/state v0.0.0-20180228185332-28bcc343414c/go.mod h1:0PRwlb0D6DFvNNtx+9ybjezNCa8XF0xaYcETyp6rHWU=
 git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
-github.com/AdguardTeam/dnsproxy v0.40.2 h1:GG4StH+d4rB7YW3d20sdQjJG8URUeaIQicnEAsYJY7w=
-github.com/AdguardTeam/dnsproxy v0.40.2/go.mod h1:PZ9l22h3Er+5mxFQB7oHZMTvx+aa9R6LbzA/ikXQlS0=
+github.com/AdguardTeam/dnsproxy v0.40.3 h1:rdQBp3LMmOdD4EpRtnutfP4zwqNA/Q5TyYNNDyjSeQY=
+github.com/AdguardTeam/dnsproxy v0.40.3/go.mod h1:PZ9l22h3Er+5mxFQB7oHZMTvx+aa9R6LbzA/ikXQlS0=
 github.com/AdguardTeam/golibs v0.4.0/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
 github.com/AdguardTeam/golibs v0.4.2/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
 github.com/AdguardTeam/golibs v0.9.2/go.mod h1:fCAMwPBJ8S7YMYbTWvYS+eeTLblP5E04IDtNAo7y7IY=
