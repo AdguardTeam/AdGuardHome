@@ -7,10 +7,12 @@ The format is based on
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+
 ## [Unreleased]
 
 <!--
-## [v0.108.0] - 2021-06-01 (APPROX.)
+## [v0.108.0] - 2022-06-01 (APPROX.)
 -->
 
 ### Added
@@ -34,8 +36,18 @@ and this project adheres to
 
 
 <!--
-## [v0.107.2] - 2021-01-19 (APPROX.)
+## [v0.107.3] - 2022-01-19 (APPROX.)
 -->
+
+
+
+## [v0.107.2] - 2021-12-29
+
+### Fixed
+
+- Infinite loops when TCP connections time out ([#4042]).
+
+[#4042]: https://github.com/AdguardTeam/AdGuardHome/issues/4042
 
 
 
@@ -668,11 +680,12 @@ In this release, the schema version has changed from 10 to 12.
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.2...HEAD
-[v0.107.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.1...v0.107.2
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...HEAD
+[v0.107.3]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.2...v0.107.3
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.1...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.2...HEAD
+[v0.107.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.1...v0.107.2
 [v0.107.1]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.0...v0.107.1
 [v0.107.0]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.3...v0.107.0
 [v0.106.3]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.2...v0.106.3
