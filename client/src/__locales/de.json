@@ -588,7 +588,7 @@
     "show_whitelisted_responses": "Auf der Positivliste",
     "show_processed_responses": "Verarbeitet",
     "blocked_safebrowsing": "Gesperrt durch Internetsicherheit",
-    "blocked_adult_websites": "Gesperrte jugendgefährdende Websites",
+    "blocked_adult_websites": "Gesperrt durch Kindersicherung",
     "blocked_threats": "Gesperrte Bedrohungen",
     "allowed": "Zugelassen",
     "filtered": "Gefiltert",

@@ -587,8 +587,8 @@
     "show_blocked_responses": "Zablokované",
     "show_whitelisted_responses": "Povolené",
     "show_processed_responses": "Zpracovaný",
-    "blocked_safebrowsing": "Blokované bezpečné prohlížení",
-    "blocked_adult_websites": "Blokované stránky pro dospělé",
+    "blocked_safebrowsing": "Blokováno modulem Bezpečné prohlížení",
+    "blocked_adult_websites": "Blokováno modulem Rodičovská kontrola",
     "blocked_threats": "Blokované hrozby",
     "allowed": "Povoleno",
     "filtered": "Filtrováno",
@@ -625,7 +625,7 @@
     "last_rule_in_allowlist": "Nelze zakázat tohoto klienta, protože vyloučení pravidla \"{{disallowed_rule}}\" ZRUŠÍ seznam \"Povolených klientů\".",
     "experimental": "Experimentální",
     "use_saved_key": "Použít dříve uložený klíče",
-    "parental_control": "Rodičovská kontrola",
+    "parental_control": "Rodičovská ochrana",
     "safe_browsing": "Bezpečné prohlížení",
     "served_from_cache": "{{value}} <i>(převzato z mezipaměti)</i>"
 }

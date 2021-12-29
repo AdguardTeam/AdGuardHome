@@ -128,7 +128,6 @@
     "example_upstream_doh": "เข้ารหัส <0>DNS-over-HTTPS</0> แล้ว",
     "example_upstream_sdns": "คุณสามรถใช้ <0>DNS Stamps</0> กับ <1>DNSCrypt</1> หรือ <2>DNS-over-HTTPS</2> ตัวแก้ปัญหา",
     "example_upstream_tcp": "dNS ปกติ (ผ่าน TCP)",
-    "updated_upstream_dns_toast": "อัปเดตเซิร์ฟเวอร์ DNS ต้นทาง",
     "dns_test_ok_toast": "เซิร์ฟเวอร์ DNS ที่ระบุทำงานอย่างถูกต้อง",
     "dns_test_not_ok_toast": "เซิร์ฟเวอร์ \"{{key}}\": ไม่สามารถใช้งานได้ โปรดตรวจสอบว่าคุณเขียนถูกต้อง",
     "unblock": "เลิกปิดกั้น",
@@ -390,6 +389,7 @@
     "check_desc": "ตรวจสอบว่าชื่อโฮสต์ถูกกรอง",
     "form_enter_host": "ป้อนชื่อโฮสต์",
     "show_processed_responses": "การประมวลผล",
+    "blocked_adult_websites": "ถูกปิดกั้นโดยการควบคุมของผู้ปกครอง",
     "safe_search": "ค้นหาอย่างปลอดภัย",
     "filter_category_other": "อื่น ๆ",
     "parental_control": "ควบคุมโดยผู้ปกครอง"

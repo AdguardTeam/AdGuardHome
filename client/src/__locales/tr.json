@@ -163,8 +163,8 @@
     "apply_btn": "Uygula",
     "disabled_filtering_toast": "Filtreleme devre dışı",
     "enabled_filtering_toast": "Filtreleme etkin",
-    "disabled_safe_browsing_toast": "Güvenli gezinti devre dışı",
-    "enabled_safe_browsing_toast": "Güvenli gezinti etkin",
+    "disabled_safe_browsing_toast": "Güvenli Gezinti devre dışı bırakıldı",
+    "enabled_safe_browsing_toast": "Güvenli Gezinti etkinleştirildi",
     "disabled_parental_toast": "Ebeveyn denetimi devre dışı",
     "enabled_parental_toast": "Ebeveyn denetimi etkin",
     "disabled_safe_search_toast": "Güvenli arama devre dışı",
@@ -587,8 +587,8 @@
     "show_blocked_responses": "Engellenen",
     "show_whitelisted_responses": "İzin verilen",
     "show_processed_responses": "İşlenen",
-    "blocked_safebrowsing": "Güvenli gezinti tarafından engellendi",
-    "blocked_adult_websites": "Engellenen yetişkin içerikli siteler",
+    "blocked_safebrowsing": "Güvenli Gezinti tarafından engellendi",
+    "blocked_adult_websites": "Ebeveyn Denetimi tarafından engellendi",
     "blocked_threats": "Engellenen tehditler",
     "allowed": "İzin verilen",
     "filtered": "Filtrelenen",
@@ -625,6 +625,6 @@
     "last_rule_in_allowlist": "\"{{disallowed_rule}}\" kuralı hariç tutulduğunda \"İzin verilen istemciler\" listesi DEVRE DIŞI bırakılacağı için bu istemciye izin verilemez.",
     "experimental": "Deneysel",
     "use_saved_key": "Önceden kaydedilmiş anahtarı kullan",
-    "parental_control": "Ebeveyn denetimi",
-    "safe_browsing": "Güvenli gezinti"
+    "parental_control": "Ebeveyn Denetimi",
+    "safe_browsing": "Güvenli Gezinti"
 }

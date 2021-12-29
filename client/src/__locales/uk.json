@@ -587,8 +587,8 @@
     "show_blocked_responses": "Заблоковані",
     "show_whitelisted_responses": "Дозволені",
     "show_processed_responses": "Оброблені",
-    "blocked_safebrowsing": "Безпечний перегляд заблоковано",
-    "blocked_adult_websites": "Заблоковані вебсайти для дорослих",
+    "blocked_safebrowsing": "Заблоковано Безпечним переглядом",
+    "blocked_adult_websites": "Заблоковано Батьківським контролем",
     "blocked_threats": "Заблоковано загроз",
     "allowed": "Дозволено",
     "filtered": "Відфільтровано",
@@ -626,6 +626,6 @@
     "experimental": "Експериментальний",
     "use_saved_key": "Використати раніше збережений ключ",
     "parental_control": "Батьківський контроль",
-    "safe_browsing": "Безпечний інтернет",
+    "safe_browsing": "Безпечний перегляд",
     "served_from_cache": "{{value}} <i>(отримано з кешу)</i>"
 }
