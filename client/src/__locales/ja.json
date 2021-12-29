@@ -588,7 +588,7 @@
     "show_whitelisted_responses": "ホワイトリストにあり",
     "show_processed_responses": "処理済",
     "blocked_safebrowsing": "ブロックされたセーフブラウジング",
-    "blocked_adult_websites": "ブロックされたアダルトウェブサイト",
+    "blocked_adult_websites": "ペアレンタルコントロールによってブロックされました",
     "blocked_threats": "ブロックされた脅威",
     "allowed": "許可",
     "filtered": "フィルタで処理",

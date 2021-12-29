@@ -129,7 +129,6 @@
     "example_upstream_doh": "krypterat <0>DNS-over-HTTPS</0>",
     "example_upstream_sdns": "Du kan använda <0>DNS-stamps</0> för <1>DNSCrypt</1> eller <2>DNS-over-HTTPS</2>-resolvers",
     "example_upstream_tcp": "vanlig DNS (över UDP)",
-    "updated_upstream_dns_toast": "Uppdaterade uppströms-dns-servrar",
     "dns_test_ok_toast": "Angivna DNS servrar fungerar korrekt",
     "dns_test_not_ok_toast": "Server \"{{key}}\": kunde inte användas. Var snäll och kolla att du skrivit in rätt",
     "unblock": "Avblockera",
@@ -352,7 +351,7 @@
     "show_blocked_responses": "Blockerade",
     "show_whitelisted_responses": "Vitlistade",
     "show_processed_responses": "Utförda",
-    "blocked_adult_websites": "Blockerade vuxensajter",
+    "blocked_adult_websites": "Blockerad av Föräldrakontrollen",
     "blocked_threats": "Blockerade hot",
     "allowed": "Vitlistade",
     "safe_search": "Säker surf",
@@ -360,5 +359,5 @@
     "filter_category_security": "säkerhet",
     "filter_category_other": "Övrigt",
     "use_saved_key": "Använd den tidigare sparade nyckeln",
-    "parental_control": "Föräldrakontroll"
+    "parental_control": "Föräldrarkontroll"
 }

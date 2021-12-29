@@ -588,7 +588,7 @@
     "show_whitelisted_responses": "已列入白名单",
     "show_processed_responses": "已处理",
     "blocked_safebrowsing": "被安全浏览阻止",
-    "blocked_adult_websites": "拦截的成人网站",
+    "blocked_adult_websites": "已由家长控制拦截",
     "blocked_threats": "拦截的威胁",
     "allowed": "允许项",
     "filtered": "已过滤",

@@ -588,7 +588,7 @@
     "show_whitelisted_responses": "Permitido",
     "show_processed_responses": "Procesado",
     "blocked_safebrowsing": "Bloqueado por navegación segura",
-    "blocked_adult_websites": "Sitios web para adultos bloqueado",
+    "blocked_adult_websites": "Bloqueado por control parental",
     "blocked_threats": "Amenazas bloqueadas",
     "allowed": "Permitido",
     "filtered": "Filtrado",

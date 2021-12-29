@@ -588,7 +588,7 @@
     "show_whitelisted_responses": "Ajouté à la liste blanche",
     "show_processed_responses": "Traité",
     "blocked_safebrowsing": "Navigation sécurisée bloquée",
-    "blocked_adult_websites": "Sites à contenu adulte bloqués",
+    "blocked_adult_websites": "Bloqué par le Contrôle Parental",
     "blocked_threats": "Menaces bloquées",
     "allowed": "Autorisé",
     "filtered": "Filtré",

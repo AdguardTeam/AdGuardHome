@@ -588,7 +588,7 @@
     "show_whitelisted_responses": "Na lista branca",
     "show_processed_responses": "Processado",
     "blocked_safebrowsing": "Bloqueado pela navegação segura",
-    "blocked_adult_websites": "Sítios adultos bloqueados",
+    "blocked_adult_websites": "Bloqueado pelo controlo parental",
     "blocked_threats": "Ameaças bloqueadas",
     "allowed": "Permitido",
     "filtered": "Filtrado",
@@ -625,7 +625,7 @@
     "last_rule_in_allowlist": "Não é possível desautorizar este cliente porque excluir a regra \"{{disallowed_rule}}\" DESATIVARÁ a lista de \"Clientes permitidos\".",
     "experimental": "Experimental",
     "use_saved_key": "Use a chave guardada anteriormente",
-    "parental_control": "Controle parental",
+    "parental_control": "Controlo parental",
     "safe_browsing": "Navegação segura",
     "served_from_cache": "{{value}} <i>(servido do cache)</i>"
 }

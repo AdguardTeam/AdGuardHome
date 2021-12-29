@@ -587,8 +587,8 @@
     "show_blocked_responses": "Geblokkeerd",
     "show_whitelisted_responses": "Op toestemmingslijst",
     "show_processed_responses": "Verwerkt",
-    "blocked_safebrowsing": "Geblokkeerd door Veilig Browsen",
-    "blocked_adult_websites": "Geblokkeerde 18+ websites",
+    "blocked_safebrowsing": "Geblokkeerd door Veilig browsen",
+    "blocked_adult_websites": "Geblokkeerd door ouderlijk toezicht",
     "blocked_threats": "Geblokkeerde bedreigingen",
     "allowed": "Toegestaan",
     "filtered": "Gefilterd",
@@ -626,6 +626,6 @@
     "experimental": "Experimenteel",
     "use_saved_key": "De eerder opgeslagen sleutel gebruiken",
     "parental_control": "Ouderlijk toezicht",
-    "safe_browsing": "Veilig surfen",
+    "safe_browsing": "Veilig browsen",
     "served_from_cache": "{{value}} <i>(geleverd vanuit cache)</i>"
 }

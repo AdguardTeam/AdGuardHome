@@ -571,7 +571,7 @@
     "show_whitelisted_responses": "Dalam Daftar Putih",
     "show_processed_responses": "Terproses",
     "blocked_safebrowsing": "Terblokir oleh Safebrowsing",
-    "blocked_adult_websites": "Situs Dewasa Terblokir",
+    "blocked_adult_websites": "Diblok oleh Kontrol Orang tua",
     "blocked_threats": "Blokir Ancaman",
     "allowed": "Dibolehkan",
     "filtered": "Tersaring",
@@ -606,5 +606,5 @@
     "adg_will_drop_dns_queries": "AdGuard Home akan menghapus semua permintaan DNS dari klien ini.",
     "experimental": "Eksperimental",
     "use_saved_key": "Gunakan kunci yang disimpan sebelumnya",
-    "parental_control": "Kontrol orang tua"
+    "parental_control": "Kontrol Orang Tua"
 }

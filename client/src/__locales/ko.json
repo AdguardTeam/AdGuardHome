@@ -588,7 +588,7 @@
     "show_whitelisted_responses": "예외 적용됨",
     "show_processed_responses": "처리됨",
     "blocked_safebrowsing": "차단된 세이프 브라우징",
-    "blocked_adult_websites": "차단된 성인 웹사이트",
+    "blocked_adult_websites": "자녀 보호로 차단됨",
     "blocked_threats": "차단된 위협",
     "allowed": "허용됨",
     "filtered": "필터링됨",

@@ -110,7 +110,6 @@
     "example_upstream_doh": "криптиран <a href='https://en.wikipedia.org/wiki/DNS_over_HTTPS' target='_blank'>DNS-върху-HTTPS</a>",
     "example_upstream_sdns": "може да ползвате <a href='https://dnscrypt.info/stamps/' target='_blank'>DNS Подписване</a> за <a href='https://dnscrypt.info/' target='_blank'>DNSCrypt</a> или <a href='https://en.wikipedia.org/wiki/DNS_over_HTTPS' target='_blank'>DNS-върху-HTTPS</a> сървъри",
     "example_upstream_tcp": "класически DNS (TCP протокол)",
-    "updated_upstream_dns_toast": "Глобалните DNS сървъри са обновени",
     "dns_test_ok_toast": "Въведените DNS сървъри работят коректно",
     "dns_test_not_ok_toast": "Сървър \"{{key}}\": не работи, моля проверете дали е въведен коректно",
     "unblock": "Отблокирай",
@@ -245,5 +244,6 @@
     "allowed": "В белия списък",
     "filter_category_general": "General",
     "filter_category_security": "Сигурност",
-    "port_53_faq_link": "Порт 53 често е зает от \"DNSStubListener\" или \"systemd-resolved\" услуги. Моля, прочетете <0>тази инструкция</0> как да решите това."
+    "port_53_faq_link": "Порт 53 често е зает от \"DNSStubListener\" или \"systemd-resolved\" услуги. Моля, прочетете <0>тази инструкция</0> как да решите това.",
+    "parental_control": "Родителски контрол"
 }

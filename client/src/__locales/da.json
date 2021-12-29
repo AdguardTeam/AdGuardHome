@@ -587,8 +587,8 @@
     "show_blocked_responses": "Blokeret",
     "show_whitelisted_responses": "Hvidlistet",
     "show_processed_responses": "Behandlet",
-    "blocked_safebrowsing": "Blokeret af Safebrowsing",
-    "blocked_adult_websites": "Blokerede Voksen Websteder",
+    "blocked_safebrowsing": "Blokeret af Safe Browsing",
+    "blocked_adult_websites": "Blokeret af Forælderkontrol",
     "blocked_threats": "Blokerede Trusler",
     "allowed": "Tilladt",
     "filtered": "Filtreret",
@@ -626,6 +626,6 @@
     "experimental": "Eksperimentel",
     "use_saved_key": "Brug den tidligere gemte nøgle",
     "parental_control": "Forældrekontrol",
-    "safe_browsing": "Sikker browsing",
+    "safe_browsing": "Sikker Browsing",
     "served_from_cache": "{{value}} <i>(leveret fra cache)</i>"
 }
