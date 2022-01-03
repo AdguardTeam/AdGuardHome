@@ -232,8 +232,8 @@ var serviceRulesArray = []svc{
 		"||tindersparks.com^",
 	}},
 	{"icloud_relay", []string{
-		"||mask.icloud.com^",
-		"||mask-h2.icloud.com^",
+		"|mask.icloud.com^$dnsrewrite=NXDOMAIN;;",
+		"|mask-h2.icloud.com^$dnsrewrite=NXDOMAIN;;",
 	}},
 }
 
