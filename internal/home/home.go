@@ -393,9 +393,9 @@ func run(args options, clientBuildFS fs.FS) {
 	// Go memory hacks
 	memoryUsage(args)
 
-	// print the first message after logger is configured
+	// Print the first message after logger is configured.
 	log.Println(version.Full())
-	log.Debug("Current working directory is %s", Context.workDir)
+	log.Debug("current working directory is %s", Context.workDir)
 	if args.runningAsService {
 		log.Info("AdGuard Home is running as a service")
 	}
@@ -631,13 +631,13 @@ func configureLogger(args options) {
 		log.SetLevel(log.DEBUG)
 	}
 
-	// Make sure that we see the microseconds in logs, as networking stuff
-	// can happen pretty quickly.
+	// Make sure that we see the microseconds in logs, as networking stuff can
+	// happen pretty quickly.
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 
 	if args.runningAsService && ls.LogFile == "" && runtime.GOOS == "windows" {
-		// When running as a Windows service, use eventlog by default if nothing else is configured
-		// Otherwise, we'll simply loose the log output
+		// When running as a Windows service, use eventlog by default if nothing
+		// else is configured.  Otherwise, we'll simply lose the log output.
 		ls.LogFile = configSyslog
 	}
 

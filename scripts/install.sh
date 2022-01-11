@@ -272,32 +272,12 @@ fix_darwin() {
 		return 0
 	fi
 
-	if [ "$cpu" = 'arm64' ]
-	then
-		case "$channel"
-		in
-		('beta'|'development'|'edge')
-			# Everything is fine, we have Apple Silicon support on
-			# these channels.
-			;;
-		('release')
-			cpu='amd64'
-			log "use $cpu build on Mac M1 until the native ARM support is added."
-			;;
-		(*)
-			# Generally shouldn't happen, since the release channel
-			# has already been validated.
-			error_exit "invalid channel '$channel'"
-			;;
-		esac
-	fi
-
 	# Set the package extension.
 	pkg_ext='zip'
 
-	# It is important to install AdGuard Home into the /Applications
-	# directory on macOS.  Otherwise, it may not grant enough privileges to
-	# the AdGuard Home.
+	# It is important to install AdGuard Home into the /Applications directory
+	# on macOS.  Otherwise, it may grant not enough privileges to the AdGuard
+	# Home.
 	out_dir='/Applications'
 }
 

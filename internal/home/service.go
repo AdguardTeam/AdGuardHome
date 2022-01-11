@@ -82,6 +82,12 @@ func svcStatus(s service.Service) (status service.Status, err error) {
 // On OpenWrt, the service utility may not exist.  We use our service script
 // directly in this case.
 func svcAction(s service.Service, action string) (err error) {
+	if runtime.GOOS == "darwin" &&
+		action == "start" &&
+		!strings.HasPrefix(Context.workDir, "/Applications/") {
+		log.Info("warning: service must be started from within the /Applications directory")
+	}
+
 	err = service.Control(s, action)
 	if err != nil && service.Platform() == "unix-systemv" &&
 		(action == "start" || action == "stop" || action == "restart") {
