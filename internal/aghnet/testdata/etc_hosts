@@ -12,9 +12,19 @@
 1.0.0.3 *
 1.0.0.4 *.com
 
+# See https://github.com/AdguardTeam/AdGuardHome/issues/4079.
+1.0.0.0 hello.world.again
+
+# Duplicates of a main host and an alias.
+1.0.0.1 simplehost
+1.0.0.0 hello.world
+
 # Same for IPv6.
 ::1 simplehost
 ::  hello hello.world
 ::2 a.whole lot.of aliases for.testing
 ::3 *
 ::4 *.com
+::  hello.world.again
+::1 simplehost
+::  hello.world

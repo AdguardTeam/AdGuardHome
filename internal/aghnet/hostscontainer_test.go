@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 	"testing"
 	"testing/fstest"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
@@ -129,24 +130,13 @@ func TestNewHostsContainer(t *testing.T) {
 	})
 }
 
-func TestHostsContainer_Refresh(t *testing.T) {
-	knownIP := net.IP{127, 0, 0, 1}
+func TestHostsContainer_refresh(t *testing.T) {
+	// TODO(e.burkov):  Test the case with no actual updates.
 
-	const knownHost = "localhost"
-	const knownAlias = "hocallost"
+	ip := net.IP{127, 0, 0, 1}
+	ipStr := ip.String()
 
-	const dirname = "dir"
-	const filename1 = "file1"
-	const filename2 = "file2"
-
-	p1 := path.Join(dirname, filename1)
-	p2 := path.Join(dirname, filename2)
-
-	testFS := fstest.MapFS{
-		p1: &fstest.MapFile{
-			Data: []byte(strings.Join([]string{knownIP.String(), knownHost}, sp) + nl),
-		},
-	}
+	testFS := fstest.MapFS{"dir/file1": &fstest.MapFile{Data: []byte(ipStr + ` hostname` + nl)}}
 
 	// event is a convenient alias for an empty struct{} to emit test events.
 	type event = struct{}
@@ -157,119 +147,117 @@ func TestHostsContainer_Refresh(t *testing.T) {
 	w := &aghtest.FSWatcher{
 		OnEvents: func() (e <-chan event) { return eventsCh },
 		OnAdd: func(name string) (err error) {
-			assert.Equal(t, dirname, name)
+			assert.Equal(t, "dir", name)
 
 			return nil
 		},
 		OnClose: func() (err error) { panic("not implemented") },
 	}
 
-	hc, err := NewHostsContainer(0, testFS, w, dirname)
+	hc, err := NewHostsContainer(0, testFS, w, "dir")
 	require.NoError(t, err)
 
-	checkRefresh := func(t *testing.T, wantHosts *stringutil.Set) {
+	checkRefresh := func(t *testing.T, wantHosts Hosts) {
 		upd, ok := <-hc.Upd()
 		require.True(t, ok)
 		require.NotNil(t, upd)
 
 		assert.Equal(t, 1, upd.Len())
 
-		v, ok := upd.Get(knownIP)
+		v, ok := upd.Get(ip)
 		require.True(t, ok)
 
-		var hosts *stringutil.Set
-		hosts, ok = v.(*stringutil.Set)
+		var hosts *Hosts
+		hosts, ok = v.(*Hosts)
 		require.True(t, ok)
 
-		assert.True(t, hosts.Equal(wantHosts))
+		assert.Equal(t, wantHosts.Main, hosts.Main)
+		assert.True(t, hosts.Aliases.Equal(wantHosts.Aliases))
 	}
 
 	t.Run("initial_refresh", func(t *testing.T) {
-		checkRefresh(t, stringutil.NewSet(knownHost))
+		checkRefresh(t, Hosts{Main: "hostname"})
 	})
-
-	testFS[p2] = &fstest.MapFile{
-		Data: []byte(strings.Join([]string{knownIP.String(), knownAlias}, sp) + nl),
-	}
-	eventsCh <- event{}
 
 	t.Run("second_refresh", func(t *testing.T) {
-		checkRefresh(t, stringutil.NewSet(knownHost, knownAlias))
+		testFS["dir/file2"] = &fstest.MapFile{Data: []byte(ipStr + ` alias` + nl)}
+		eventsCh <- event{}
+		checkRefresh(t, Hosts{Main: "hostname", Aliases: stringutil.NewSet("alias")})
 	})
 
-	eventsCh <- event{}
+	t.Run("double_refresh", func(t *testing.T) {
+		// Make a change once.
+		testFS["dir/file1"] = &fstest.MapFile{Data: []byte(ipStr + ` alias` + nl)}
+		eventsCh <- event{}
 
-	t.Run("no_changes_refresh", func(t *testing.T) {
-		assert.Empty(t, hc.Upd())
+		// Require the changes are written.
+		require.Eventually(t, func() bool {
+			res, ok := hc.MatchRequest(urlfilter.DNSRequest{
+				Hostname: "hostname",
+				DNSType:  dns.TypeA,
+			})
+
+			return !ok && res.DNSRewrites() == nil
+		}, 5*time.Second, time.Second/2)
+
+		// Make a change again.
+		testFS["dir/file2"] = &fstest.MapFile{Data: []byte(ipStr + ` hostname` + nl)}
+		eventsCh <- event{}
+
+		// Require the changes are written.
+		require.Eventually(t, func() bool {
+			res, ok := hc.MatchRequest(urlfilter.DNSRequest{
+				Hostname: "hostname",
+				DNSType:  dns.TypeA,
+			})
+
+			return !ok && res.DNSRewrites() != nil
+		}, 5*time.Second, time.Second/2)
+
+		assert.Len(t, hc.Upd(), 1)
 	})
 }
 
 func TestHostsContainer_PathsToPatterns(t *testing.T) {
-	const (
-		dir0 = "dir"
-		dir1 = "dir_1"
-		fn1  = "file_1"
-		fn2  = "file_2"
-		fn3  = "file_3"
-		fn4  = "file_4"
-	)
-
-	fp1 := path.Join(dir0, fn1)
-	fp2 := path.Join(dir0, fn2)
-	fp3 := path.Join(dir0, dir1, fn3)
-
 	gsfs := fstest.MapFS{
-		fp1: &fstest.MapFile{Data: []byte{1}},
-		fp2: &fstest.MapFile{Data: []byte{2}},
-		fp3: &fstest.MapFile{Data: []byte{3}},
+		"dir_0/file_1":       &fstest.MapFile{Data: []byte{1}},
+		"dir_0/file_2":       &fstest.MapFile{Data: []byte{2}},
+		"dir_0/dir_1/file_3": &fstest.MapFile{Data: []byte{3}},
 	}
 
 	testCases := []struct {
-		name    string
-		wantErr error
-		want    []string
-		paths   []string
+		name  string
+		paths []string
+		want  []string
 	}{{
-		name:    "no_paths",
-		wantErr: nil,
-		want:    nil,
-		paths:   nil,
+		name:  "no_paths",
+		paths: nil,
+		want:  nil,
 	}, {
-		name:    "single_file",
-		wantErr: nil,
-		want:    []string{fp1},
-		paths:   []string{fp1},
+		name:  "single_file",
+		paths: []string{"dir_0/file_1"},
+		want:  []string{"dir_0/file_1"},
 	}, {
-		name:    "several_files",
-		wantErr: nil,
-		want:    []string{fp1, fp2},
-		paths:   []string{fp1, fp2},
+		name:  "several_files",
+		paths: []string{"dir_0/file_1", "dir_0/file_2"},
+		want:  []string{"dir_0/file_1", "dir_0/file_2"},
 	}, {
-		name:    "whole_dir",
-		wantErr: nil,
-		want:    []string{path.Join(dir0, "*")},
-		paths:   []string{dir0},
+		name:  "whole_dir",
+		paths: []string{"dir_0"},
+		want:  []string{"dir_0/*"},
 	}, {
-		name:    "file_and_dir",
-		wantErr: nil,
-		want:    []string{fp1, path.Join(dir0, dir1, "*")},
-		paths:   []string{fp1, path.Join(dir0, dir1)},
+		name:  "file_and_dir",
+		paths: []string{"dir_0/file_1", "dir_0/dir_1"},
+		want:  []string{"dir_0/file_1", "dir_0/dir_1/*"},
 	}, {
-		name:    "non-existing",
-		wantErr: nil,
-		want:    nil,
-		paths:   []string{path.Join(dir0, "file_3")},
+		name:  "non-existing",
+		paths: []string{path.Join("dir_0", "file_3")},
+		want:  nil,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			patterns, err := pathsToPatterns(gsfs, tc.paths)
-			if tc.wantErr != nil {
-				assert.ErrorIs(t, err, tc.wantErr)
-
-				return
-			}
-
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, patterns)
@@ -290,16 +278,74 @@ func TestHostsContainer_PathsToPatterns(t *testing.T) {
 	})
 }
 
+func TestHostsContainer_Translate(t *testing.T) {
+	testdata := os.DirFS("./testdata")
+	stubWatcher := aghtest.FSWatcher{
+		OnEvents: func() (e <-chan struct{}) { return nil },
+		OnAdd:    func(name string) (err error) { return nil },
+		OnClose:  func() (err error) { panic("not implemented") },
+	}
+
+	hc, err := NewHostsContainer(0, testdata, &stubWatcher, "etc_hosts")
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name      string
+		rule      string
+		wantTrans []string
+	}{{
+		name:      "simplehost",
+		rule:      "|simplehost^$dnsrewrite=NOERROR;A;1.0.0.1",
+		wantTrans: []string{"1.0.0.1", "simplehost"},
+	}, {
+		name:      "hello",
+		rule:      "|hello^$dnsrewrite=NOERROR;A;1.0.0.0",
+		wantTrans: []string{"1.0.0.0", "hello", "hello.world", "hello.world.again"},
+	}, {
+		name:      "simplehost_v6",
+		rule:      "|simplehost^$dnsrewrite=NOERROR;AAAA;::1",
+		wantTrans: []string{"::1", "simplehost"},
+	}, {
+		name:      "hello_v6",
+		rule:      "|hello^$dnsrewrite=NOERROR;AAAA;::",
+		wantTrans: []string{"::", "hello", "hello.world", "hello.world.again"},
+	}, {
+		name:      "simplehost_ptr",
+		rule:      "|1.0.0.1.in-addr.arpa^$dnsrewrite=NOERROR;PTR;simplehost.",
+		wantTrans: []string{"1.0.0.1", "simplehost"},
+	}, {
+		name:      "hello_ptr",
+		rule:      "|0.0.0.1.in-addr.arpa^$dnsrewrite=NOERROR;PTR;hello.",
+		wantTrans: []string{"1.0.0.0", "hello", "hello.world", "hello.world.again"},
+	}, {
+		name: "simplehost_ptr_v6",
+		rule: "|1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa" +
+			"^$dnsrewrite=NOERROR;PTR;simplehost.",
+		wantTrans: []string{"::1", "simplehost"},
+	}, {
+		name: "hello_ptr_v6",
+		rule: "|0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa" +
+			"^$dnsrewrite=NOERROR;PTR;hello.",
+		wantTrans: []string{"::", "hello", "hello.world", "hello.world.again"},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			want := stringutil.NewSet(tc.wantTrans...)
+			got := stringutil.NewSet(strings.Fields(hc.Translate(tc.rule))...)
+			assert.True(t, want.Equal(got))
+		})
+	}
+}
+
 func TestHostsContainer(t *testing.T) {
 	const listID = 1234
 
 	testdata := os.DirFS("./testdata")
 
 	nRewrites := func(t *testing.T, res *urlfilter.DNSResult, n int) (rws []*rules.DNSRewrite) {
-		t.Helper()
-
 		rewrites := res.DNSRewrites()
-		assert.Len(t, rewrites, n)
+		require.Len(t, rewrites, n)
 
 		for _, rewrite := range rewrites {
 			require.Equal(t, listID, rewrite.FilterListID)
@@ -341,6 +387,15 @@ func TestHostsContainer(t *testing.T) {
 		name: "hello_alias",
 		req: urlfilter.DNSRequest{
 			Hostname: "hello.world",
+			DNSType:  dns.TypeA,
+		},
+		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
+			assert.Equal(t, "hello", nRewrites(t, res, 1)[0].NewCNAME)
+		},
+	}, {
+		name: "other_line_alias",
+		req: urlfilter.DNSRequest{
+			Hostname: "hello.world.again",
 			DNSType:  dns.TypeA,
 		},
 		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
@@ -419,12 +474,8 @@ func TestHostsContainer(t *testing.T) {
 }
 
 func TestUniqueRules_ParseLine(t *testing.T) {
-	const (
-		hostname = "localhost"
-		alias    = "hocallost"
-	)
-
-	knownIP := net.IP{127, 0, 0, 1}
+	ip := net.IP{127, 0, 0, 1}
+	ipStr := ip.String()
 
 	testCases := []struct {
 		name      string
@@ -433,39 +484,39 @@ func TestUniqueRules_ParseLine(t *testing.T) {
 		wantHosts []string
 	}{{
 		name:      "simple",
-		line:      strings.Join([]string{knownIP.String(), hostname}, sp),
-		wantIP:    knownIP,
-		wantHosts: []string{"localhost"},
+		line:      ipStr + ` hostname`,
+		wantIP:    ip,
+		wantHosts: []string{"hostname"},
 	}, {
 		name:      "aliases",
-		line:      strings.Join([]string{knownIP.String(), hostname, alias}, sp),
-		wantIP:    knownIP,
-		wantHosts: []string{"localhost", "hocallost"},
+		line:      ipStr + ` hostname alias`,
+		wantIP:    ip,
+		wantHosts: []string{"hostname", "alias"},
 	}, {
 		name:      "invalid_line",
-		line:      knownIP.String(),
+		line:      ipStr,
 		wantIP:    nil,
 		wantHosts: nil,
 	}, {
 		name:      "invalid_line_hostname",
-		line:      strings.Join([]string{knownIP.String(), "#" + hostname}, sp),
-		wantIP:    knownIP,
+		line:      ipStr + ` # hostname`,
+		wantIP:    ip,
 		wantHosts: nil,
 	}, {
 		name:      "commented_aliases",
-		line:      strings.Join([]string{knownIP.String(), hostname, "#" + alias}, sp),
-		wantIP:    knownIP,
-		wantHosts: []string{"localhost"},
+		line:      ipStr + ` hostname # alias`,
+		wantIP:    ip,
+		wantHosts: []string{"hostname"},
 	}, {
 		name:      "whole_comment",
-		line:      strings.Join([]string{"#", knownIP.String(), hostname}, sp),
+		line:      `# ` + ipStr + ` hostname`,
 		wantIP:    nil,
 		wantHosts: nil,
 	}, {
 		name:      "partial_comment",
-		line:      strings.Join([]string{knownIP.String(), hostname[:4] + "#" + hostname[4:]}, sp),
-		wantIP:    knownIP,
-		wantHosts: []string{hostname[:4]},
+		line:      ipStr + ` host#name`,
+		wantIP:    ip,
+		wantHosts: []string{"host"},
 	}, {
 		name:      "empty",
 		line:      ``,
@@ -476,8 +527,8 @@ func TestUniqueRules_ParseLine(t *testing.T) {
 	for _, tc := range testCases {
 		hp := hostsParser{}
 		t.Run(tc.name, func(t *testing.T) {
-			ip, hosts := hp.parseLine(tc.line)
-			assert.True(t, tc.wantIP.Equal(ip))
+			got, hosts := hp.parseLine(tc.line)
+			assert.True(t, tc.wantIP.Equal(got))
 			assert.Equal(t, tc.wantHosts, hosts)
 		})
 	}
