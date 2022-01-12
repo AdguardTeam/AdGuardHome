@@ -783,12 +783,17 @@ func (clients *clientsContainer) addFromHostsFile(hosts *netutil.IPMap) {
 
 	n := 0
 	hosts.Range(func(ip net.IP, v interface{}) (cont bool) {
-		names, ok := v.(*stringutil.Set)
+		hosts, ok := v.(*aghnet.Hosts)
 		if !ok {
 			log.Error("dns: bad type %T in ipToRC for %s", v, ip)
+
+			return true
 		}
 
-		names.Range(func(name string) (cont bool) {
+		if clients.addHostLocked(ip, hosts.Main, ClientSourceHostsFile) {
+			n++
+		}
+		hosts.Aliases.Range(func(name string) (cont bool) {
 			if clients.addHostLocked(ip, name, ClientSourceHostsFile) {
 				n++
 			}

@@ -27,6 +27,11 @@ TODO(a.garipov): Remove this deprecation, if v0.108.0 is released before the Go
 -->
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
+### Fixed
+
+- Omitted aliases of hosts specified by another line within the OS's hosts file
+  ([#4079]).
+
 ### Removed
 
 - Go 1.16 support.
@@ -77,6 +82,7 @@ TODO(a.garipov): Remove this deprecation, if v0.108.0 is released before the Go
 [#4008]: https://github.com/AdguardTeam/AdGuardHome/issues/4008
 [#4016]: https://github.com/AdguardTeam/AdGuardHome/issues/4016
 [#4027]: https://github.com/AdguardTeam/AdGuardHome/issues/4027
+[#4079]: https://github.com/AdguardTeam/AdGuardHome/issues/4079
 
 
 

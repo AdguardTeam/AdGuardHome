@@ -72,7 +72,11 @@ func (rm *requestMatcher) MatchRequest(
 }
 
 // Translate returns the source hosts-syntax rule for the generated dnsrewrite
-// rule or an empty string if the last doesn't exist.
+// rule or an empty string if the last doesn't exist.  The returned rules are in
+// a processed format like:
+//
+//   ip host1 host2 ...
+//
 func (rm *requestMatcher) Translate(rule string) (hostRule string) {
 	rm.stateLock.RLock()
 	defer rm.stateLock.RUnlock()
@@ -179,7 +183,7 @@ func NewHostsContainer(
 				return nil, fmt.Errorf("adding path: %w", err)
 			}
 
-			log.Debug("%s: file %q expected to exist but doesn't", hostsContainerPref, p)
+			log.Debug("%s: %s is expected to exist but doesn't", hostsContainerPref, p)
 		}
 	}
 
@@ -199,7 +203,7 @@ func (hc *HostsContainer) Close() (err error) {
 }
 
 // Upd returns the channel into which the updates are sent.  The receivable
-// map's values are guaranteed to be of type of *stringutil.Set.
+// map's values are guaranteed to be of type of *aghnet.Hosts.
 func (hc *HostsContainer) Upd() (updates <-chan *netutil.IPMap) {
 	return hc.updates
 }
@@ -228,8 +232,9 @@ func pathsToPatterns(fsys fs.FS, paths []string) (patterns []string, err error) 
 	return patterns, nil
 }
 
-// handleEvents concurrently handles the events.  It closes the update channel
-// of HostsContainer when finishes.  Used to be called within a goroutine.
+// handleEvents concurrently handles the file system events.  It closes the
+// update channel of HostsContainer when finishes.  It's used to be called
+// within a separate goroutine.
 func (hc *HostsContainer) handleEvents() {
 	defer log.OnPanic(fmt.Sprintf("%s: handling events", hostsContainerPref))
 
@@ -254,17 +259,27 @@ func (hc *HostsContainer) handleEvents() {
 	}
 }
 
+// ipRules is the pair of generated A/AAAA and PTR rules with related IP.
+type ipRules struct {
+	// rule is the A/AAAA $dnsrewrite rule.
+	rule string
+	// rulePtr is the PTR $dnsrewrite rule.
+	rulePtr string
+	// ip is the IP address related to the rules.
+	ip net.IP
+}
+
 // hostsParser is a helper type to parse rules from the operating system's hosts
 // file.  It exists for only a single refreshing session.
 type hostsParser struct {
-	// rulesBuilder builds the resulting rulesBuilder list content.
+	// rulesBuilder builds the resulting rules list content.
 	rulesBuilder *strings.Builder
 
-	// translations maps generated $dnsrewrite rules to the hosts-translations
-	// rules.
-	translations map[string]string
+	// rules stores the rules for main hosts to generate translations.
+	rules []ipRules
 
-	// cnameSet prevents duplicating cname rules.
+	// cnameSet prevents duplicating cname rules, e.g. same hostname for
+	// different IP versions.
 	cnameSet *stringutil.Set
 
 	// table stores only the unique IP-hostname pairs.  It's also sent to the
@@ -272,13 +287,16 @@ type hostsParser struct {
 	table *netutil.IPMap
 }
 
+// newHostsParser creates a new *hostsParser with buffers of size taken from the
+// previous parse.
 func (hc *HostsContainer) newHostsParser() (hp *hostsParser) {
+	lastLen := hc.last.Len()
+
 	return &hostsParser{
 		rulesBuilder: &strings.Builder{},
-		// For A/AAAA and PTRs.
-		translations: make(map[string]string, hc.last.Len()*2),
+		rules:        make([]ipRules, 0, lastLen),
 		cnameSet:     stringutil.NewSet(),
-		table:        netutil.NewIPMap(hc.last.Len()),
+		table:        netutil.NewIPMap(lastLen),
 	}
 }
 
@@ -286,9 +304,7 @@ func (hc *HostsContainer) newHostsParser() (hp *hostsParser) {
 // never signs to stop walking and never returns any additional patterns.
 //
 // See man hosts(5).
-func (hp *hostsParser) parseFile(
-	r io.Reader,
-) (patterns []string, cont bool, err error) {
+func (hp *hostsParser) parseFile(r io.Reader) (patterns []string, cont bool, err error) {
 	s := bufio.NewScanner(r)
 	for s.Scan() {
 		ip, hosts := hp.parseLine(s.Text())
@@ -339,62 +355,79 @@ func (hp *hostsParser) parseLine(line string) (ip net.IP, hosts []string) {
 	return ip, hosts
 }
 
-// Simple types of hosts in hosts database.  Zero value isn't used to be able
-// quizzaciously emulate nil with 0.
-const (
-	_ = iota
-	hostAlias
-	hostMain
-)
+// Hosts is used to contain the main host and all it's aliases.
+type Hosts struct {
+	// Aliases contains all the aliases for Main.
+	Aliases *stringutil.Set
+	// Main is the host itself.
+	Main string
+}
+
+// Equal returns true if h equals hh.
+func (h *Hosts) Equal(hh *Hosts) (ok bool) {
+	if h == nil || hh == nil {
+		return h == hh
+	}
+
+	return h.Main == hh.Main && h.Aliases.Equal(hh.Aliases)
+}
 
 // add tries to add the ip-host pair.  It returns:
 //
-//   hostAlias if the host is not the first one added for the ip.
-//   hostMain  if the host is the first one added for the ip.
-//   0         if the ip-host pair has already been added.
+//   main host    if the host is not the first one added for the ip.
+//   host itself  if the host is the first one added for the ip.
+//   ""           if the ip-host pair has already been added.
 //
-func (hp *hostsParser) add(ip net.IP, host string) (hostType int) {
+func (hp *hostsParser) add(ip net.IP, host string) (mainHost string) {
 	v, ok := hp.table.Get(ip)
-	switch hosts, _ := v.(*stringutil.Set); {
-	case ok && hosts.Has(host):
-		return 0
-	case hosts == nil:
-		hosts = stringutil.NewSet(host)
-		hp.table.Set(ip, hosts)
+	switch h, _ := v.(*Hosts); {
+	case !ok:
+		// This is the first host for the ip.
+		hp.table.Set(ip, &Hosts{Main: host})
 
-		return hostMain
+		return host
+	case h.Main == host:
+		// This is a duplicate.  Go on.
+	case h.Aliases == nil:
+		// This is the first alias.
+		h.Aliases = stringutil.NewSet(host)
+
+		return h.Main
+	case !h.Aliases.Has(host):
+		// This is a new alias.
+		h.Aliases.Add(host)
+
+		return h.Main
 	default:
-		hosts.Add(host)
-
-		return hostAlias
+		// This is a duplicate.  Go on.
 	}
+
+	return ""
 }
 
 // addPair puts the pair of ip and host to the rules builder if needed.  For
 // each ip the first member of hosts will become the main one.
 func (hp *hostsParser) addPairs(ip net.IP, hosts []string) {
-	// Put the rule in a processed format like:
-	//
-	//   ip host1 host2 ...
-	//
-	hostsLine := strings.Join(append([]string{ip.String()}, hosts...), " ")
-	var mainHost string
 	for _, host := range hosts {
-		switch hp.add(ip, host) {
-		case 0:
+		switch mainHost := hp.add(ip, host); mainHost {
+		case "":
+			// This host is a duplicate.
 			continue
-		case hostMain:
-			mainHost = host
-			added, addedPtr := hp.writeMainHostRule(host, ip)
-			hp.translations[added], hp.translations[addedPtr] = hostsLine, hostsLine
-		case hostAlias:
+		case host:
+			// This host is main.
+			added, addedPtr := hp.writeMainRule(host, ip)
+			hp.rules = append(hp.rules, ipRules{
+				rule:    added,
+				rulePtr: addedPtr,
+				ip:      ip,
+			})
+		default:
+			// This host is an alias.
 			pair := fmt.Sprint(host, " ", mainHost)
 			if hp.cnameSet.Has(pair) {
 				continue
 			}
-			// Since the hostAlias couldn't be returned from add before the
-			// hostMain the mainHost shouldn't appear empty.
-			hp.writeAliasHostRule(host, mainHost)
+			hp.writeAliasRule(host, mainHost)
 			hp.cnameSet.Add(pair)
 		}
 
@@ -402,9 +435,9 @@ func (hp *hostsParser) addPairs(ip net.IP, hosts []string) {
 	}
 }
 
-// writeAliasHostRule writes the CNAME rule for the alias-host pair into
-// internal builders.
-func (hp *hostsParser) writeAliasHostRule(alias, host string) {
+// writeAliasRule writes the CNAME rule for the alias-host pair into internal
+// builders.
+func (hp *hostsParser) writeAliasRule(alias, host string) {
 	const (
 		nl = "\n"
 		sc = ";"
@@ -417,9 +450,9 @@ func (hp *hostsParser) writeAliasHostRule(alias, host string) {
 	stringutil.WriteToBuilder(hp.rulesBuilder, rules.MaskPipe, alias, rwSuccess, host, nl)
 }
 
-// writeMainHostRule writes the actual rule for the qtype and the PTR for the
+// writeMainRule writes the actual rule for the qtype and the PTR for the
 // host-ip pair into internal builders.
-func (hp *hostsParser) writeMainHostRule(host string, ip net.IP) (added, addedPtr string) {
+func (hp *hostsParser) writeMainRule(host string, ip net.IP) (added, addedPtr string) {
 	arpa, err := netutil.IPToReversedAddr(ip)
 	if err != nil {
 		return
@@ -484,12 +517,15 @@ func (hp *hostsParser) equalSet(target *netutil.IPMap) (ok bool) {
 		return false
 	}
 
-	hp.table.Range(func(ip net.IP, val interface{}) (cont bool) {
-		v, hasIP := target.Get(ip)
+	hp.table.Range(func(ip net.IP, b interface{}) (cont bool) {
 		// ok is set to true if the target doesn't contain ip or if the
-		// appropriate hosts set isn't equal to the checked one, i.e. the maps
-		// have at least one discrepancy.
-		ok = !hasIP || !v.(*stringutil.Set).Equal(val.(*stringutil.Set))
+		// appropriate hosts set isn't equal to the checked one, i.e. the main
+		// hosts differ or the maps have at least one discrepancy.
+		if a, hasIP := target.Get(ip); !hasIP {
+			ok = true
+		} else if hosts, aok := a.(*Hosts); aok {
+			ok = !hosts.Equal(b.(*Hosts))
+		}
 
 		// Continue only if maps has no discrepancies.
 		return !ok
@@ -527,6 +563,35 @@ func (hp *hostsParser) newStrg(id int) (s *filterlist.RuleStorage, err error) {
 	}})
 }
 
+// translations generates the map to translate $dnsrewrite rules to
+// hosts-syntax ones.
+func (hp *hostsParser) translations() (trans map[string]string) {
+	l := len(hp.rules)
+	if l == 0 {
+		return nil
+	}
+
+	trans = make(map[string]string, l*2)
+	for _, r := range hp.rules {
+		v, ok := hp.table.Get(r.ip)
+		if !ok {
+			continue
+		}
+
+		var hosts *Hosts
+		hosts, ok = v.(*Hosts)
+		if !ok {
+			continue
+		}
+
+		strs := append([]string{r.ip.String(), hosts.Main}, hosts.Aliases.Values()...)
+		hostsLine := strings.Join(strs, " ")
+		trans[r.rule], trans[r.rulePtr] = hostsLine, hostsLine
+	}
+
+	return trans
+}
+
 // refresh gets the data from specified files and propagates the updates if
 // needed.
 //
@@ -540,7 +605,7 @@ func (hc *HostsContainer) refresh() (err error) {
 	}
 
 	if hp.equalSet(hc.last) {
-		log.Debug("%s: no updates detected", hostsContainerPref)
+		log.Debug("%s: no changes detected", hostsContainerPref)
 
 		return nil
 	}
@@ -553,7 +618,7 @@ func (hc *HostsContainer) refresh() (err error) {
 		return fmt.Errorf("initializing rules storage: %w", err)
 	}
 
-	hc.resetEng(rulesStrg, hp.translations)
+	hc.resetEng(rulesStrg, hp.translations())
 
 	return nil
 }
