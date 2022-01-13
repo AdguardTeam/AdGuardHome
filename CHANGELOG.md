@@ -29,6 +29,7 @@ and this project adheres to
 
 ### Fixed
 
+- Poor testing of domain-specific upstream servers ([#4074]).
 - Omitted aliases of hosts specified by another line within the OS's hosts file
   ([#4079]).
 
@@ -37,6 +38,8 @@ and this project adheres to
 - Go 1.16 support.
 
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+[#4074]: https://github.com/AdguardTeam/AdGuardHome/issues/4074
+[#4079]: https://github.com/AdguardTeam/AdGuardHome/issues/4079
 
 
 
@@ -82,7 +85,6 @@ and this project adheres to
 [#4008]: https://github.com/AdguardTeam/AdGuardHome/issues/4008
 [#4016]: https://github.com/AdguardTeam/AdGuardHome/issues/4016
 [#4027]: https://github.com/AdguardTeam/AdGuardHome/issues/4027
-[#4079]: https://github.com/AdguardTeam/AdGuardHome/issues/4079
 
 
 
