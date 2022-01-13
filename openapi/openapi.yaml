@@ -123,7 +123,9 @@
                     '8.8.8.8': 'OK'
                     '8.8.4.4': 'OK'
                     '192.168.1.104:53535': >
-                      Couldn't communicate with DNS server
+                      upstream "192.168.1.104:1234" fails to exchange: couldn't
+                      communicate with upstream: read udp
+                      192.168.1.100:60675->8.8.8.8:1234: i/o timeout
   '/version.json':
     'post':
       'tags':
