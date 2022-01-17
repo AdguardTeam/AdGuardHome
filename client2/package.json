@@ -58,7 +58,7 @@
         "less-loader": "^5.0.0",
         "mini-css-extract-plugin": "^1.1.1",
         "optimize-css-assets-webpack-plugin": "^5.0.4",
-        "postcss": "^8.1.2",
+        "postcss": "^8.2.13",
         "postcss-calc": "^7.0.5",
         "postcss-css-variables": "^0.17.0",
         "postcss-custom-media": "^7.0.8",
