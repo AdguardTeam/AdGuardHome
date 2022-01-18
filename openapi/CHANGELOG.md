@@ -2,9 +2,16 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
-## v0.107: API changes
+## v0.107.3: API changes
 
-## The new field `"cached"` in `QueryLogItem`
+### The new field `"version"` in `AddressesInfo`
+
+* The new field `"version"` in `GET /install/get_addresses` is the version of
+  the AdGuard Home instance.
+
+## v0.107.0: API changes
+
+### The new field `"cached"` in `QueryLogItem`
 
 * The new field `"cached"` in `GET /control/querylog` is true if the response is
   served from cache instead of being resolved by an upstream server.
