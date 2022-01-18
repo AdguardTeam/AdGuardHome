@@ -29,6 +29,7 @@ TODO(a.garipov): Remove this deprecation, if v0.108.0 is released before the Go
 
 ### Fixed
 
+- Incorrectly invalidated service domains ([#4120]).
 - Poor testing of domain-specific upstream servers ([#4074]).
 - Omitted aliases of hosts specified by another line within the OS's hosts file
   ([#4079]).
@@ -40,6 +41,7 @@ TODO(a.garipov): Remove this deprecation, if v0.108.0 is released before the Go
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#4074]: https://github.com/AdguardTeam/AdGuardHome/issues/4074
 [#4079]: https://github.com/AdguardTeam/AdGuardHome/issues/4079
+[#4120]: https://github.com/AdguardTeam/AdGuardHome/issues/4120
 
 
 

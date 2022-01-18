@@ -352,9 +352,22 @@ func (s *Server) processRestrictLocal(ctx *dnsContext) (rc resultCode) {
 
 	ip, err := netutil.IPFromReversedAddr(q.Name)
 	if err != nil {
-		log.Debug("dns: reversed addr: %s", err)
+		log.Debug("dns: parsing reversed addr: %s", err)
 
-		return resultCodeError
+		// DNS-Based Service Discovery uses PTR records having not an ARPA
+		// format of the domain name in question.  Those shouldn't be
+		// invalidated.  See http://www.dns-sd.org/ServerStaticSetup.html and
+		// RFC 2782.
+		name := strings.TrimSuffix(q.Name, ".")
+		if err = netutil.ValidateSRVDomainName(name); err != nil {
+			log.Debug("dns: validating service domain: %s", err)
+
+			return resultCodeError
+		}
+
+		log.Debug("dns: request is for a service domain")
+
+		return resultCodeSuccess
 	}
 
 	// Restrict an access to local addresses for external clients.  We also
