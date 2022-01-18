@@ -17,6 +17,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalgo"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -24,13 +25,23 @@ import (
 // getAddrsResponse is the response for /install/get_addresses endpoint.
 type getAddrsResponse struct {
 	Interfaces map[string]*aghnet.NetInterface `json:"interfaces"`
-	WebPort    int                             `json:"web_port"`
-	DNSPort    int                             `json:"dns_port"`
+
+	// Version is the version of AdGuard Home.
+	//
+	// TODO(a.garipov): In the new API, rename this endpoint to something more
+	// general, since there will be more information here than just network
+	// interfaces.
+	Version string `json:"version"`
+
+	WebPort int `json:"web_port"`
+	DNSPort int `json:"dns_port"`
 }
 
 // handleInstallGetAddresses is the handler for /install/get_addresses endpoint.
 func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	data := getAddrsResponse{
+		Version: version.Version(),
+
 		WebPort: defaultPortHTTP,
 		DNSPort: defaultPortDNS,
 	}
@@ -279,10 +290,11 @@ type applyConfigReqEnt struct {
 }
 
 type applyConfigReq struct {
-	Web      applyConfigReqEnt `json:"web"`
-	DNS      applyConfigReqEnt `json:"dns"`
-	Username string            `json:"username"`
-	Password string            `json:"password"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+
+	Web applyConfigReqEnt `json:"web"`
+	DNS applyConfigReqEnt `json:"dns"`
 }
 
 // copyInstallSettings copies the installation parameters between two
@@ -533,10 +545,11 @@ type applyConfigReqEntBeta struct {
 // TODO(e.burkov): This should removed with the API v1 when the appropriate
 // functionality will appear in default applyConfigReq.
 type applyConfigReqBeta struct {
-	Web      applyConfigReqEntBeta `json:"web"`
-	DNS      applyConfigReqEntBeta `json:"dns"`
-	Username string                `json:"username"`
-	Password string                `json:"password"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+
+	Web applyConfigReqEntBeta `json:"web"`
+	DNS applyConfigReqEntBeta `json:"dns"`
 }
 
 // handleInstallConfigureBeta is a substitution of /install/configure handler

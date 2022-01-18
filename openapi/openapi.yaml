@@ -1264,7 +1264,7 @@
           'type': 'boolean'
         'version':
           'type': 'string'
-          'example': '0.1'
+          'example': 'v0.123.4'
         'language':
           'type': 'string'
           'example': 'en'
@@ -2221,19 +2221,23 @@
       'description': 'AdGuard Home addresses configuration'
       'required':
       - 'dns_port'
-      - 'web_port'
       - 'interfaces'
+      - 'version'
+      - 'web_port'
       'properties':
         'dns_port':
           'type': 'integer'
           'format': 'uint16'
           'example': 53
+        'interfaces':
+          '$ref': '#/components/schemas/NetInterfaces'
+        'version':
+          'type': 'string'
+          'example': 'v0.123.4'
         'web_port':
           'type': 'integer'
           'format': 'uint16'
           'example': 80
-        'interfaces':
-          '$ref': '#/components/schemas/NetInterfaces'
     'AddressesInfoBeta':
       'type': 'object'
       'description': 'AdGuard Home addresses configuration'

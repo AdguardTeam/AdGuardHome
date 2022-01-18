@@ -62,18 +62,10 @@ func Version() (v string) {
 	return version
 }
 
-// Common formatting constants.
-const (
-	sp   = " "
-	nl   = "\n"
-	tb   = "\t"
-	nltb = nl + tb
-)
-
 // Constants defining the format of module information string.
 const (
 	modInfoAtSep    = "@"
-	modInfoDevSep   = sp
+	modInfoDevSep   = " "
 	modInfoSumLeft  = " (sum: "
 	modInfoSumRight = ")"
 )
@@ -142,6 +134,7 @@ const (
 func Verbose() (v string) {
 	b := &strings.Builder{}
 
+	const nl = "\n"
 	stringutil.WriteToBuilder(
 		b,
 		vFmtAGHHdr,
@@ -178,7 +171,7 @@ func Verbose() (v string) {
 	stringutil.WriteToBuilder(b, nl, vFmtDepsHdr)
 	for _, dep := range info.Deps {
 		if depStr := fmtModule(dep); depStr != "" {
-			stringutil.WriteToBuilder(b, nltb, depStr)
+			stringutil.WriteToBuilder(b, "\n\t", depStr)
 		}
 	}
 

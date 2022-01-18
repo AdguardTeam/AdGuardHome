@@ -13,6 +13,12 @@ const Version = () => {
         checkUpdateFlag,
     } = useSelector((state) => state?.dashboard ?? {}, shallowEqual);
 
+    const {
+        dnsVersion: installDnsVersion,
+    } = useSelector((state) => state?.install ?? {}, shallowEqual);
+
+    const version = dnsVersion || installDnsVersion;
+
     const onClick = () => {
         dispatch(getVersion(true));
     };
@@ -20,11 +26,12 @@ const Version = () => {
     return (
         <div className="version">
             <div className="version__text">
-                {dnsVersion
-                && <>
-                    <Trans>version</Trans>:&nbsp;
-                    <span className="version__value" title={dnsVersion}>{dnsVersion}</span>
-                </>}
+                {version && (
+                    <>
+                        <Trans>version</Trans>:&nbsp;
+                        <span className="version__value" title={version}>{version}</span>
+                    </>
+                )}
                 {checkUpdateFlag && <button
                     type="button"
                     className="btn btn-icon btn-icon-sm btn-outline-primary btn-sm ml-2"
