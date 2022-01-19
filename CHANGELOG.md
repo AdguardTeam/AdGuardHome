@@ -17,6 +17,8 @@ and this project adheres to
 
 ### Added
 
+- Support for a `$dnsrewrite` modifier with an empty `NOERROR` response
+  ([#4133]).
 - `windows/arm64` support ([#3057]).
 
 ### Deprecated
@@ -42,6 +44,7 @@ and this project adheres to
 [#4074]: https://github.com/AdguardTeam/AdGuardHome/issues/4074
 [#4079]: https://github.com/AdguardTeam/AdGuardHome/issues/4079
 [#4120]: https://github.com/AdguardTeam/AdGuardHome/issues/4120
+[#4133]: https://github.com/AdguardTeam/AdGuardHome/issues/4133
 
 
 
