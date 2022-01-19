@@ -1,7 +1,7 @@
-// Package aghalgo contains common generic algorithms and data structures.
+// Package aghalg contains common generic algorithms and data structures.
 //
 // TODO(a.garipov): Update to use type parameters in Go 1.18.
-package aghalgo
+package aghalg
 
 import (
 	"fmt"
@@ -14,20 +14,20 @@ import (
 // TODO(a.garipov): Remove in Go 1.18.
 type comparable = interface{}
 
-// UniquenessValidator allows validating uniqueness of comparable items.
-type UniquenessValidator map[comparable]int64
+// UniqChecker allows validating uniqueness of comparable items.
+type UniqChecker map[comparable]int64
 
 // Add adds a value to the validator.  v must not be nil.
-func (v UniquenessValidator) Add(elems ...comparable) {
+func (uc UniqChecker) Add(elems ...comparable) {
 	for _, e := range elems {
-		v[e]++
+		uc[e]++
 	}
 }
 
 // Merge returns a validator containing data from both v and other.
-func (v UniquenessValidator) Merge(other UniquenessValidator) (merged UniquenessValidator) {
-	merged = make(UniquenessValidator, len(v)+len(other))
-	for elem, num := range v {
+func (uc UniqChecker) Merge(other UniqChecker) (merged UniqChecker) {
+	merged = make(UniqChecker, len(uc)+len(other))
+	for elem, num := range uc {
 		merged[elem] += num
 	}
 
@@ -41,9 +41,9 @@ func (v UniquenessValidator) Merge(other UniquenessValidator) (merged Uniqueness
 // Validate returns an error enumerating all elements that aren't unique.
 // isBefore is an optional sorting function to make the error message
 // deterministic.
-func (v UniquenessValidator) Validate(isBefore func(a, b comparable) (less bool)) (err error) {
+func (uc UniqChecker) Validate(isBefore func(a, b comparable) (less bool)) (err error) {
 	var dup []comparable
-	for elem, num := range v {
+	for elem, num := range uc {
 		if num > 1 {
 			dup = append(dup, elem)
 		}
@@ -62,13 +62,13 @@ func (v UniquenessValidator) Validate(isBefore func(a, b comparable) (less bool)
 	return fmt.Errorf("duplicated values: %v", dup)
 }
 
-// IntIsBefore is a helper sort function for UniquenessValidator.Validate.
+// IntIsBefore is a helper sort function for UniqChecker.Validate.
 // a and b must be of type int.
 func IntIsBefore(a, b comparable) (less bool) {
 	return a.(int) < b.(int)
 }
 
-// StringIsBefore is a helper sort function for UniquenessValidator.Validate.
+// StringIsBefore is a helper sort function for UniqChecker.Validate.
 // a and b must be of type string.
 func StringIsBefore(a, b comparable) (less bool) {
 	return a.(string) < b.(string)
