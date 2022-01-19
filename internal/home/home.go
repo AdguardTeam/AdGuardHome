@@ -19,7 +19,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalgo"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
@@ -296,23 +296,23 @@ func setupConfig(args options) (err error) {
 	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
 
 	if args.bindPort != 0 {
-		uv := aghalgo.UniquenessValidator{}
+		uc := aghalg.UniqChecker{}
 		addPorts(
-			uv,
+			uc,
 			args.bindPort,
 			config.BetaBindPort,
 			config.DNS.Port,
 		)
 		if config.TLS.Enabled {
 			addPorts(
-				uv,
+				uc,
 				config.TLS.PortHTTPS,
 				config.TLS.PortDNSOverTLS,
 				config.TLS.PortDNSOverQUIC,
 				config.TLS.PortDNSCrypt,
 			)
 		}
-		if err = uv.Validate(aghalgo.IntIsBefore); err != nil {
+		if err = uc.Validate(aghalg.IntIsBefore); err != nil {
 			return fmt.Errorf("validating ports: %w", err)
 		}
 

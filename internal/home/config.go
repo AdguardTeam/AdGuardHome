@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalgo"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -288,9 +288,9 @@ func parseConfig() (err error) {
 		return err
 	}
 
-	uv := aghalgo.UniquenessValidator{}
+	uc := aghalg.UniqChecker{}
 	addPorts(
-		uv,
+		uc,
 		config.BindPort,
 		config.BetaBindPort,
 		config.DNS.Port,
@@ -298,14 +298,14 @@ func parseConfig() (err error) {
 
 	if config.TLS.Enabled {
 		addPorts(
-			uv,
+			uc,
 			config.TLS.PortHTTPS,
 			config.TLS.PortDNSOverTLS,
 			config.TLS.PortDNSOverQUIC,
 			config.TLS.PortDNSCrypt,
 		)
 	}
-	if err = uv.Validate(aghalgo.IntIsBefore); err != nil {
+	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
 		return fmt.Errorf("validating ports: %w", err)
 	}
 
@@ -321,10 +321,10 @@ func parseConfig() (err error) {
 }
 
 // addPorts is a helper for ports validation.  It skips zero ports.
-func addPorts(uv aghalgo.UniquenessValidator, ports ...int) {
+func addPorts(uc aghalg.UniqChecker, ports ...int) {
 	for _, p := range ports {
 		if p != 0 {
-			uv.Add(p)
+			uc.Add(p)
 		}
 	}
 }

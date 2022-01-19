@@ -31,6 +31,7 @@ and this project adheres to
 
 ### Fixed
 
+- Wrong set of ports checked for duplicates during the initial setup ([#4095]).
 - Incorrectly invalidated service domains ([#4120]).
 - Poor testing of domain-specific upstream servers ([#4074]).
 - Omitted aliases of hosts specified by another line within the OS's hosts file
@@ -43,6 +44,7 @@ and this project adheres to
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#4074]: https://github.com/AdguardTeam/AdGuardHome/issues/4074
 [#4079]: https://github.com/AdguardTeam/AdGuardHome/issues/4079
+[#4095]: https://github.com/AdguardTeam/AdGuardHome/issues/4095
 [#4120]: https://github.com/AdguardTeam/AdGuardHome/issues/4120
 [#4133]: https://github.com/AdguardTeam/AdGuardHome/issues/4133
 
