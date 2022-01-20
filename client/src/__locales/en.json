@@ -43,7 +43,7 @@
     "form_error_ip6_format": "Invalid IPv6 address",
     "form_error_ip_format": "Invalid IP address",
     "form_error_mac_format": "Invalid MAC address",
-    "form_error_client_id_format": "Invalid client ID",
+    "form_error_client_id_format": "Client ID must contain only numbers, lowercase letters, and hyphens",
     "form_error_server_name": "Invalid server name",
     "form_error_subnet": "Subnet \"{{cidr}}\" does not contain the IP address \"{{ip}}\"",
     "form_error_positive": "Must be greater than 0",
