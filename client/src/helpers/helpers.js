@@ -754,8 +754,10 @@ const getAddressesComparisonBytes = (item) => {
  */
 export const sortIp = (a, b) => {
     try {
-        const comparisonBytesA = getAddressesComparisonBytes(a);
-        const comparisonBytesB = getAddressesComparisonBytes(b);
+        const comparisonBytesA = Array.isArray(a)
+            ? getAddressesComparisonBytes(a[0]) : getAddressesComparisonBytes(a);
+        const comparisonBytesB = Array.isArray(b)
+            ? getAddressesComparisonBytes(b[0]) : getAddressesComparisonBytes(b);
 
         for (let i = 0; i < comparisonBytesA.length; i += 1) {
             const byteA = comparisonBytesA[i];

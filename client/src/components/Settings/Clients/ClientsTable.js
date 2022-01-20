@@ -4,7 +4,7 @@ import { Trans, withTranslation } from 'react-i18next';
 import ReactTable from 'react-table';
 
 import { MODAL_TYPE } from '../../../helpers/constants';
-import { splitByNewLine, countClientsStatistics } from '../../../helpers/helpers';
+import { splitByNewLine, countClientsStatistics, sortIp } from '../../../helpers/helpers';
 import Card from '../../ui/Card';
 import Modal from './Modal';
 import CellWrap from '../../ui/CellWrap';
@@ -106,6 +106,7 @@ class ClientsTable extends Component {
                     </div>
                 );
             },
+            sortMethod: sortIp,
         },
         {
             Header: this.props.t('table_name'),
