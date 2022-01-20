@@ -24,7 +24,7 @@ func (uc UniqChecker) Add(elems ...comparable) {
 	}
 }
 
-// Merge returns a validator containing data from both v and other.
+// Merge returns a checker containing data from both uc and other.
 func (uc UniqChecker) Merge(other UniqChecker) (merged UniqChecker) {
 	merged = make(UniqChecker, len(uc)+len(other))
 	for elem, num := range uc {

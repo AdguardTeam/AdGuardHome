@@ -128,7 +128,7 @@ func (req *checkConfReq) validateWeb(uc aghalg.UniqChecker) (err error) {
 }
 
 // validateDNS returns error if the DNS part of the initial configuration can't
-// be set.  autofix is true if the port can be unbound by AdGuard Home
+// be set.  canAutofix is true if the port can be unbound by AdGuard Home
 // automatically.
 func (req *checkConfReq) validateDNS(uc aghalg.UniqChecker) (canAutofix bool, err error) {
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
