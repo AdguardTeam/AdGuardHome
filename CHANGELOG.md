@@ -51,7 +51,7 @@ TODO(a.garipov): Remove this deprecation, if v0.108.0 is released before the Go
 
 
 <!--
-## [v0.107.3] - 2022-01-19 (APPROX.)
+## [v0.107.3] - 2022-02-08 (APPROX.)
 -->
 
 

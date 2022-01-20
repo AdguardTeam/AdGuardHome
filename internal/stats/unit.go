@@ -67,7 +67,29 @@ type unitDB struct {
 	TimeAvg uint32 // usec
 }
 
+// withRecovered turns the value recovered from panic if any into an error and
+// combines it with the one pointed by orig.  orig must be non-nil.
+func withRecovered(orig *error) {
+	p := recover()
+	if p == nil {
+		return
+	}
+
+	var err error
+	switch p := p.(type) {
+	case error:
+		err = fmt.Errorf("panic: %w", p)
+	default:
+		err = fmt.Errorf("panic: recovered value of type %[1]T: %[1]v", p)
+	}
+
+	*orig = errors.WithDeferred(*orig, err)
+}
+
+// createObject creates s from conf and properly initializes it.
 func createObject(conf Config) (s *statsCtx, err error) {
+	defer withRecovered(&err)
+
 	s = &statsCtx{
 		mu: &sync.Mutex{},
 	}
