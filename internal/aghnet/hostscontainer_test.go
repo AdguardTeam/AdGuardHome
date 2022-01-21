@@ -343,113 +343,93 @@ func TestHostsContainer(t *testing.T) {
 
 	testdata := os.DirFS("./testdata")
 
-	nRewrites := func(t *testing.T, res *urlfilter.DNSResult, n int) (rws []*rules.DNSRewrite) {
-		rewrites := res.DNSRewrites()
-		require.Len(t, rewrites, n)
-
-		for _, rewrite := range rewrites {
-			require.Equal(t, listID, rewrite.FilterListID)
-
-			rw := rewrite.DNSRewrite
-			require.NotNil(t, rw)
-
-			rws = append(rws, rw)
-		}
-
-		return rws
-	}
-
 	testCases := []struct {
-		testTail func(t *testing.T, res *urlfilter.DNSResult)
-		name     string
-		req      urlfilter.DNSRequest
+		want []*rules.DNSRewrite
+		name string
+		req  urlfilter.DNSRequest
 	}{{
+		want: []*rules.DNSRewrite{{
+			RCode:  dns.RcodeSuccess,
+			Value:  net.IPv4(1, 0, 0, 1),
+			RRType: dns.TypeA,
+		}, {
+			RCode:  dns.RcodeSuccess,
+			Value:  net.IP(append((&[15]byte{})[:], byte(1))),
+			RRType: dns.TypeAAAA,
+		}},
 		name: "simple",
 		req: urlfilter.DNSRequest{
 			Hostname: "simplehost",
 			DNSType:  dns.TypeA,
 		},
-		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
-			rws := nRewrites(t, res, 2)
-
-			v, ok := rws[0].Value.(net.IP)
-			require.True(t, ok)
-
-			assert.True(t, net.IP{1, 0, 0, 1}.Equal(v))
-
-			v, ok = rws[1].Value.(net.IP)
-			require.True(t, ok)
-
-			// It's ::1.
-			assert.True(t, net.IP(append((&[15]byte{})[:], byte(1))).Equal(v))
-		},
 	}, {
+		want: []*rules.DNSRewrite{{
+			RCode:    dns.RcodeSuccess,
+			NewCNAME: "hello",
+		}},
 		name: "hello_alias",
 		req: urlfilter.DNSRequest{
 			Hostname: "hello.world",
 			DNSType:  dns.TypeA,
 		},
-		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
-			assert.Equal(t, "hello", nRewrites(t, res, 1)[0].NewCNAME)
-		},
 	}, {
+		want: []*rules.DNSRewrite{{
+			RCode:    dns.RcodeSuccess,
+			NewCNAME: "hello",
+		}},
 		name: "other_line_alias",
 		req: urlfilter.DNSRequest{
 			Hostname: "hello.world.again",
 			DNSType:  dns.TypeA,
 		},
-		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
-			assert.Equal(t, "hello", nRewrites(t, res, 1)[0].NewCNAME)
-		},
 	}, {
+		want: []*rules.DNSRewrite{},
 		name: "hello_subdomain",
 		req: urlfilter.DNSRequest{
 			Hostname: "say.hello",
 			DNSType:  dns.TypeA,
 		},
-		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
-			assert.Empty(t, res.DNSRewrites())
-		},
 	}, {
+		want: []*rules.DNSRewrite{},
 		name: "hello_alias_subdomain",
 		req: urlfilter.DNSRequest{
 			Hostname: "say.hello.world",
 			DNSType:  dns.TypeA,
 		},
-		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
-			assert.Empty(t, res.DNSRewrites())
-		},
 	}, {
+		want: []*rules.DNSRewrite{{
+			RCode:    dns.RcodeSuccess,
+			NewCNAME: "a.whole",
+		}},
 		name: "lots_of_aliases",
 		req: urlfilter.DNSRequest{
 			Hostname: "for.testing",
 			DNSType:  dns.TypeA,
 		},
-		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
-			assert.Equal(t, "a.whole", nRewrites(t, res, 1)[0].NewCNAME)
-		},
 	}, {
+		want: []*rules.DNSRewrite{{
+			RCode:  dns.RcodeSuccess,
+			RRType: dns.TypePTR,
+			Value:  "simplehost.",
+		}},
 		name: "reverse",
 		req: urlfilter.DNSRequest{
 			Hostname: "1.0.0.1.in-addr.arpa",
 			DNSType:  dns.TypePTR,
 		},
-		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
-			rws := nRewrites(t, res, 1)
-
-			assert.Equal(t, dns.TypePTR, rws[0].RRType)
-			assert.Equal(t, "simplehost.", rws[0].Value)
-		},
 	}, {
+		want: []*rules.DNSRewrite{},
 		name: "non-existing",
 		req: urlfilter.DNSRequest{
 			Hostname: "nonexisting",
 			DNSType:  dns.TypeA,
 		},
-		testTail: func(t *testing.T, res *urlfilter.DNSResult) {
-			require.NotNil(t, res)
-
-			assert.Nil(t, res.DNSRewrites())
+	}, {
+		want: nil,
+		name: "bad_type",
+		req: urlfilter.DNSRequest{
+			Hostname: "1.0.0.1.in-addr.arpa",
+			DNSType:  dns.TypeSRV,
 		},
 	}}
 
@@ -466,9 +446,26 @@ func TestHostsContainer(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			res, ok := hc.MatchRequest(tc.req)
 			require.False(t, ok)
+
+			if tc.want == nil {
+				assert.Nil(t, res)
+
+				return
+			}
+
 			require.NotNil(t, res)
 
-			tc.testTail(t, res)
+			rewrites := res.DNSRewrites()
+			require.Len(t, rewrites, len(tc.want))
+
+			for i, rewrite := range rewrites {
+				require.Equal(t, listID, rewrite.FilterListID)
+
+				rw := rewrite.DNSRewrite
+				require.NotNil(t, rw)
+
+				assert.Equal(t, tc.want[i], rw)
+			}
 		})
 	}
 }

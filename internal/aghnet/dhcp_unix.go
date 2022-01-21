@@ -19,7 +19,8 @@ import (
 	"github.com/insomniacslk/dhcp/iana"
 )
 
-// defaultDiscoverTime is the
+// defaultDiscoverTime is the default timeout of checking another DHCP server
+// response.
 const defaultDiscoverTime = 3 * time.Second
 
 func checkOtherDHCP(ifaceName string) (ok4, ok6 bool, err4, err6 error) {

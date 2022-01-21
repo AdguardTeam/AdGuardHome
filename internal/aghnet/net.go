@@ -42,8 +42,7 @@ func GatewayIP(ifaceName string) net.IP {
 
 	fields := strings.Fields(string(d))
 	// The meaningful "ip route" command output should contain the word
-	// "default" at first field and default gateway IP address at third
-	// field.
+	// "default" at first field and default gateway IP address at third field.
 	if len(fields) < 3 || fields[0] != "default" {
 		return nil
 	}
@@ -216,28 +215,6 @@ func IsAddrInUse(err error) (ok bool) {
 	}
 
 	return isAddrInUse(sysErr)
-}
-
-// SplitHost is a wrapper for net.SplitHostPort for the cases when the hostport
-// does not necessarily contain a port.
-func SplitHost(hostport string) (host string, err error) {
-	host, _, err = net.SplitHostPort(hostport)
-	if err != nil {
-		// Check for the missing port error.  If it is that error, just
-		// use the host as is.
-		//
-		// See the source code for net.SplitHostPort.
-		const missingPort = "missing port in address"
-
-		addrErr := &net.AddrError{}
-		if !errors.As(err, &addrErr) || addrErr.Err != missingPort {
-			return "", err
-		}
-
-		host = hostport
-	}
-
-	return host, nil
 }
 
 // CollectAllIfacesAddrs returns the slice of all network interfaces IP
