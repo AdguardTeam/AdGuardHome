@@ -22,7 +22,7 @@
         "ipaddr.js": "^1.9.1",
         "js-yaml": "^3.14.0",
         "lodash": "^4.17.19",
-        "nanoid": "^3.1.9",
+        "nanoid": "^3.1.31",
         "prop-types": "^15.7.2",
         "query-string": "^6.13.1",
         "react": "^16.13.1",
