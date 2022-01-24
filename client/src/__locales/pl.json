@@ -43,7 +43,7 @@
     "form_error_ip6_format": "Nieprawidłowy adres IPv6",
     "form_error_ip_format": "Nieprawidłowy adres IP",
     "form_error_mac_format": "Nieprawidłowy adres MAC",
-    "form_error_client_id_format": "Nieprawidłowy ID klienta",
+    "form_error_client_id_format": "ID klienta musi zawierać tylko cyfry, małe litery i myślniki",
     "form_error_server_name": "Nieprawidłowa nazwa serwera",
     "form_error_subnet": "Podsieć \"{{cidr}}\" nie zawiera adresu IP \"{{ip}}\"",
     "form_error_positive": "Musi być większa niż 0",

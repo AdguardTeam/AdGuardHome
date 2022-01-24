@@ -163,8 +163,8 @@
     "apply_btn": "Ужыць",
     "disabled_filtering_toast": "Фільтрацыя выкл.",
     "enabled_filtering_toast": "Фільтрацыя ўкл.",
-    "disabled_safe_browsing_toast": "Бяспечная навігацыя выкл.",
-    "enabled_safe_browsing_toast": "Бяспечная навігацыя ўкл.",
+    "disabled_safe_browsing_toast": "Бяспечная навігацыя выключана",
+    "enabled_safe_browsing_toast": "Бяспечная навігацыя ўключана",
     "disabled_parental_toast": "Бацькоўскі кантроль выкл.",
     "enabled_parental_toast": "Бацькоўскі кантроль укл.",
     "disabled_safe_search_toast": "Бяспечны пошук выкл.",
@@ -200,6 +200,7 @@
     "form_error_url_or_path_format": "Няслушны URL ці абсалютны шлях да спіса",
     "custom_filter_rules": "Карыстацкае рэдагавала фільтрацыі",
     "custom_filter_rules_hint": "Уводзьце па адным правіле на радок. Вы можаце выкарыстоўваць правілы блакавання ці сінтаксіс файлаў hosts.",
+    "system_host_files": "Сістэмныя hosts-файлы",
     "examples_title": "Прыклады",
     "example_meaning_filter_block": "заблакаваць доступ да дамена example.org і ўсім яго паддаменам",
     "example_meaning_filter_whitelist": "адблакаваць доступ да дамена example.org і ўсім яго паддаменам",
@@ -586,8 +587,8 @@
     "show_blocked_responses": "Заблакавана",
     "show_whitelisted_responses": "Белы спіс",
     "show_processed_responses": "Апрацавана",
-    "blocked_safebrowsing": "Заблакавана згодна базе дадзеных Safebrowsing",
-    "blocked_adult_websites": "Заблакаваныя \"дарослыя\" сайты",
+    "blocked_safebrowsing": "Заблакавана згодна базе дадзеных Safe Browsing",
+    "blocked_adult_websites": "Заблакавана Бацькоўскім кантролем",
     "blocked_threats": "Заблакавана пагроз",
     "allowed": "Дазволены",
     "filtered": "Адфільтраваныя",
@@ -624,5 +625,7 @@
     "last_rule_in_allowlist": "Няможна заблакаваць гэтага кліента, бо вынятак правіла «{{disallowed_rule}}» АДКЛЮЧЫЦЬ рэжым белага спіса.",
     "experimental": "Эксперыментальны",
     "use_saved_key": "Скарыстаць захаваны раней ключ",
-    "parental_control": "Бацькоўскі кантроль"
+    "parental_control": "Бацькоўскі кантроль",
+    "safe_browsing": "Бяспечны інтэрнэт",
+    "served_from_cache": "{{value}} <i>(атрымана з кэша)</i>"
 }

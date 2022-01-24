@@ -17,7 +17,7 @@
     "form_error_required": "فیلد مورد نیاز",
     "form_error_ip4_format": "فرمت نامعتبر IPv4",
     "form_error_ip6_format": "فرمت نامعتبر IPv6",
-    "form_error_ip_format": "فرمت IPv4 نامعتبر است",
+    "form_error_ip_format": "آدرس آی پی نامعتبر است",
     "form_error_mac_format": "فرمت مَک نامعتبر است",
     "form_error_client_id_format": "فرمت شناسه کلاینت نامعتبر است",
     "form_error_positive": "باید بزرگتر از 0 باشد",

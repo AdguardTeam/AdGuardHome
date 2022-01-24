@@ -43,7 +43,7 @@
     "form_error_ip6_format": "Neplatná adresa IPv6",
     "form_error_ip_format": "Neplatná adresa IP",
     "form_error_mac_format": "Neplatná adresa MAC",
-    "form_error_client_id_format": "Neplatné ID klienta",
+    "form_error_client_id_format": "ID klienta musí obsahovat pouze čísla, malá písmena a spojovníky",
     "form_error_server_name": "Neplatný název serveru",
     "form_error_subnet": "Podsíť \"{{cidr}}\" neobsahuje IP adresu \"{{ip}}\"",
     "form_error_positive": "Musí být větší než 0",
