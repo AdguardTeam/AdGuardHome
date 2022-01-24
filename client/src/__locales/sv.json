@@ -16,6 +16,8 @@
     "dhcp_static_leases": "Statiska DHCP-leases",
     "dhcp_leases_not_found": "Ingen DHCP-lease hittad",
     "form_error_required": "Obligatoriskt fält",
+    "form_error_ip4_format": "Ogiltig IPv4-adress",
+    "form_error_ip6_format": "Ogiltig IPv6-adress",
     "form_error_ip_format": "Ogiltig IP-adress",
     "form_error_mac_format": "Ogiltig MAC-adress",
     "form_error_positive": "Måste vara större än noll",
@@ -351,7 +353,7 @@
     "show_blocked_responses": "Blockerade",
     "show_whitelisted_responses": "Vitlistade",
     "show_processed_responses": "Utförda",
-    "blocked_adult_websites": "Blockerad av Föräldrakontrollen",
+    "blocked_adult_websites": "Blockerad av Föräldrakontroll",
     "blocked_threats": "Blockerade hot",
     "allowed": "Vitlistade",
     "safe_search": "Säker surf",
@@ -359,5 +361,5 @@
     "filter_category_security": "säkerhet",
     "filter_category_other": "Övrigt",
     "use_saved_key": "Använd den tidigare sparade nyckeln",
-    "parental_control": "Föräldrarkontroll"
+    "parental_control": "Föräldrakontroll"
 }

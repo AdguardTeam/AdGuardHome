@@ -43,7 +43,7 @@
     "form_error_ip6_format": "Ongeldig IPv6-adres",
     "form_error_ip_format": "Ongeldig IP-adres",
     "form_error_mac_format": "Ongeldig MAC-adres",
-    "form_error_client_id_format": "Ongeldige cliënt-ID",
+    "form_error_client_id_format": "Client-ID mag alleen cijfers, kleine letters en koppeltekens bevatten",
     "form_error_server_name": "Ongeldige servernaam",
     "form_error_subnet": "Subnet “{{cidr}}” bevat niet het IP-adres “{{ip}}”",
     "form_error_positive": "Moet groter zijn dan 0",

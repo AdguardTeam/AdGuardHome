@@ -43,7 +43,7 @@
     "form_error_ip6_format": "Adresa IPv6 nevalidă",
     "form_error_ip_format": "Adresă IP nevalidă",
     "form_error_mac_format": "Adresă MAC nevalidă",
-    "form_error_client_id_format": "ID client nevalid",
+    "form_error_client_id_format": "ID-ul clientului trebuie să conțină numai numere, litere minuscule și liniuțe.",
     "form_error_server_name": "Nume de server nevalid",
     "form_error_subnet": "Subrețeaua „{{cidr}}” nu conține adresa IP „{{ip}}”",
     "form_error_positive": "Trebuie să fie mai mare de 0",

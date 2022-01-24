@@ -43,7 +43,7 @@
     "form_error_ip6_format": "Dirección IPv6 no válida",
     "form_error_ip_format": "Dirección IP no válida",
     "form_error_mac_format": "Dirección MAC no válida",
-    "form_error_client_id_format": "ID de cliente no válido",
+    "form_error_client_id_format": "El ID de cliente debe contener solo números, letras minúsculas y guiones",
     "form_error_server_name": "Nombre de servidor no válido",
     "form_error_subnet": "La subred \"{{cidr}}\" no contiene la dirección IP \"{{ip}}\"",
     "form_error_positive": "Debe ser mayor que 0",
