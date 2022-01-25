@@ -41,7 +41,7 @@ and this project adheres to
 
 
 
-## [v0.107.3] - 2022-02-08 (APPROX.)
+## [v0.107.3] - 2022-01-25
 
 ### Added
 
