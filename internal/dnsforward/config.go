@@ -243,15 +243,15 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 		proxyConfig.FastestPingTimeout = s.conf.FastestTimeout.Duration
 	}
 
-	if len(s.conf.BogusNXDomain) > 0 {
-		for _, s := range s.conf.BogusNXDomain {
-			ip := net.ParseIP(s)
-			if ip == nil {
-				log.Error("Invalid bogus IP: %s", s)
-			} else {
-				proxyConfig.BogusNXDomain = append(proxyConfig.BogusNXDomain, ip)
-			}
+	for i, s := range s.conf.BogusNXDomain {
+		subnet, err := netutil.ParseSubnet(s)
+		if err != nil {
+			log.Error("subnet at index %d: %s", i, err)
+
+			continue
 		}
+
+		proxyConfig.BogusNXDomain = append(proxyConfig.BogusNXDomain, subnet)
 	}
 
 	// TLS settings

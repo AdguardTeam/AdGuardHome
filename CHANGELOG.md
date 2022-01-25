@@ -19,6 +19,11 @@ and this project adheres to
 
 - `windows/arm64` support ([#3057]).
 
+### Changed
+
+- The `dns.bogus_nxdomain` configuration file parameter now supports CIDR
+  notation alongside IP addresses ([#1730]).
+
 ### Deprecated
 
 <!--
@@ -31,6 +36,7 @@ and this project adheres to
 
 - Go 1.16 support.
 
+[#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 
 
