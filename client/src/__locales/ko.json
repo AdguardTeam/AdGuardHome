@@ -43,7 +43,7 @@
     "form_error_ip6_format": "잘못된 IPv6 형식",
     "form_error_ip_format": "잘못된 IP 형식",
     "form_error_mac_format": "잘못된 MAC 형식",
-    "form_error_client_id_format": "잘못된 클라이언트 ID 형식",
+    "form_error_client_id_format": "클라이언트 ID는 숫자, 소문자 및 하이픈만 포함해야 합니다",
     "form_error_server_name": "유효하지 않은 서버 이름입니다",
     "form_error_subnet": "서브넷 \"{{cidr}}\"에 \"{{ip}}\" IP 주소가 없습니다",
     "form_error_positive": "0보다 커야 합니다",
@@ -587,8 +587,8 @@
     "show_blocked_responses": "차단됨",
     "show_whitelisted_responses": "예외 적용됨",
     "show_processed_responses": "처리됨",
-    "blocked_safebrowsing": "차단된 세이프 브라우징",
-    "blocked_adult_websites": "자녀 보호로 차단됨",
+    "blocked_safebrowsing": "세이프 브라우징에 의해 차단됨",
+    "blocked_adult_websites": "자녀 보호에 의해 차단됨",
     "blocked_threats": "차단된 위협",
     "allowed": "허용됨",
     "filtered": "필터링됨",
@@ -626,6 +626,6 @@
     "experimental": "실험",
     "use_saved_key": "이전에 저장했던 키 사용하기",
     "parental_control": "자녀 보호",
-    "safe_browsing": "안전한 브라우징",
+    "safe_browsing": "세이프 브라우징",
     "served_from_cache": "{{value}} <i>(캐시에서 제공)</i>"
 }
