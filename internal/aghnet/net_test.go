@@ -1,7 +1,9 @@
 package aghnet
 
 import (
+	"io/fs"
 	"net"
+	"os"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
@@ -14,6 +16,9 @@ import (
 func TestMain(m *testing.M) {
 	aghtest.DiscardLogOutput(m)
 }
+
+// testdata is the filesystem containing data for testing the package.
+var testdata fs.FS = os.DirFS("./testdata")
 
 func TestGetInterfaceByIP(t *testing.T) {
 	ifaces, err := GetValidNetInterfacesForWeb()
