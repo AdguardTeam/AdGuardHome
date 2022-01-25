@@ -3,10 +3,12 @@ package home
 import (
 	"net"
 	"os"
+	"runtime"
 	"testing"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
+	"github.com/AdguardTeam/golibs/testutil"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -271,12 +273,18 @@ func TestClientsAddExisting(t *testing.T) {
 	})
 
 	t.Run("complicated", func(t *testing.T) {
+		// TODO(a.garipov): Properly decouple the DHCP server from the client
+		// storage.
+		if runtime.GOOS == "windows" {
+			t.Skip("skipping dhcp test on windows")
+		}
+
 		var err error
 
 		ip := net.IP{1, 2, 3, 4}
 
 		// First, init a DHCP server with a single static lease.
-		config := dhcpd.ServerConfig{
+		config := &dhcpd.ServerConfig{
 			Enabled:    true,
 			DBFilePath: "leases.db",
 			Conf4: dhcpd.V4ServerConf{
@@ -290,10 +298,9 @@ func TestClientsAddExisting(t *testing.T) {
 
 		clients.dhcpServer, err = dhcpd.Create(config)
 		require.NoError(t, err)
-		// TODO(e.burkov):  leases.db isn't created on Windows so removing it
-		// causes an error.  Split the test to make it run properly on different
-		// operating systems.
-		t.Cleanup(func() { _ = os.Remove("leases.db") })
+		testutil.CleanupAndRequireSuccess(t, func() (err error) {
+			return os.Remove("leases.db")
+		})
 
 		err = clients.dhcpServer.AddStaticLease(&dhcpd.Lease{
 			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},

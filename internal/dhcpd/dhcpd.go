@@ -119,23 +119,28 @@ func (l *Lease) UnmarshalJSON(data []byte) (err error) {
 	return nil
 }
 
-// ServerConfig - DHCP server configuration
-// field ordering is important -- yaml fields will mirror ordering from here
+// ServerConfig is the configuration for the DHCP server.  The order of YAML
+// fields is important, since the YAML configuration file follows it.
 type ServerConfig struct {
-	Enabled       bool   `yaml:"enabled"`
-	InterfaceName string `yaml:"interface_name"`
-
-	Conf4 V4ServerConf `yaml:"dhcpv4"`
-	Conf6 V6ServerConf `yaml:"dhcpv6"`
-
-	WorkDir    string `yaml:"-"`
-	DBFilePath string `yaml:"-"` // path to DB file
-
 	// Called when the configuration is changed by HTTP request
 	ConfigModified func() `yaml:"-"`
 
 	// Register an HTTP handler
 	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `yaml:"-"`
+
+	Enabled       bool   `yaml:"enabled"`
+	InterfaceName string `yaml:"interface_name"`
+
+	// LocalDomainName is the domain name used for DHCP hosts.  For example,
+	// a DHCP client with the hostname "myhost" can be addressed as "myhost.lan"
+	// when LocalDomainName is "lan".
+	LocalDomainName string `yaml:"local_domain_name"`
+
+	Conf4 V4ServerConf `yaml:"dhcpv4"`
+	Conf6 V6ServerConf `yaml:"dhcpv6"`
+
+	WorkDir    string `yaml:"-"`
+	DBFilePath string `yaml:"-"`
 }
 
 // OnLeaseChangedT is a callback for lease changes.
@@ -156,7 +161,9 @@ type Server struct {
 	srv4 DHCPServer
 	srv6 DHCPServer
 
-	conf ServerConfig
+	// TODO(a.garipov): Either create a separate type for the internal config or
+	// just put the config values into Server.
+	conf *ServerConfig
 
 	// Called when the leases DB is modified
 	onLeaseChanged []OnLeaseChangedT
@@ -181,14 +188,21 @@ type ServerInterface interface {
 }
 
 // Create - create object
-func Create(conf ServerConfig) (s *Server, err error) {
-	s = &Server{}
+func Create(conf *ServerConfig) (s *Server, err error) {
+	s = &Server{
+		conf: &ServerConfig{
+			ConfigModified: conf.ConfigModified,
 
-	s.conf.Enabled = conf.Enabled
-	s.conf.InterfaceName = conf.InterfaceName
-	s.conf.HTTPRegister = conf.HTTPRegister
-	s.conf.ConfigModified = conf.ConfigModified
-	s.conf.DBFilePath = filepath.Join(conf.WorkDir, dbFilename)
+			HTTPRegister: conf.HTTPRegister,
+
+			Enabled:       conf.Enabled,
+			InterfaceName: conf.InterfaceName,
+
+			LocalDomainName: conf.LocalDomainName,
+
+			DBFilePath: filepath.Join(conf.WorkDir, dbFilename),
+		},
+	}
 
 	if !webHandlersRegistered && s.conf.HTTPRegister != nil {
 		if runtime.GOOS == "windows" {
@@ -305,6 +319,7 @@ func (s *Server) notify(flags int) {
 func (s *Server) WriteDiskConfig(c *ServerConfig) {
 	c.Enabled = s.conf.Enabled
 	c.InterfaceName = s.conf.InterfaceName
+	c.LocalDomainName = s.conf.LocalDomainName
 	s.srv4.WriteDiskConfig4(&c.Conf4)
 	s.srv6.WriteDiskConfig6(&c.Conf6)
 }

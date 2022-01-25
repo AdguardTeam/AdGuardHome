@@ -21,8 +21,32 @@ and this project adheres to
 
 ### Changed
 
+- The setting `local_domain_name` is now in the `dhcp` block in the
+  configuration file to avoid confusion ([#3367]).
 - The `dns.bogus_nxdomain` configuration file parameter now supports CIDR
   notation alongside IP addresses ([#1730]).
+
+#### Configuration Changes
+
+In this release, the schema version has changed from 12 to 13.
+
+- Parameter `local_domain_name`, which in schema versions 12 and earlier used to
+  be a part of the `dns` object, is now a part of the `dhcp` object:
+
+  ```yaml
+  # BEFORE:
+  'dns':
+    # …
+    'local_domain_name': 'lan'
+
+  # AFTER:
+  'dhcp':
+    # …
+    'local_domain_name': 'lan'
+  ```
+
+  To rollback this change, move the parameter back into `dns` and change the
+  `schema_version` back to `12`.
 
 ### Deprecated
 
@@ -38,6 +62,7 @@ and this project adheres to
 
 [#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+[#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
 
 
 

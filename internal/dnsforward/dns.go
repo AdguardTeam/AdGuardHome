@@ -215,9 +215,8 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 		ipToHost = netutil.NewIPMap(len(ll))
 
 		for _, l := range ll {
-			// TODO(a.garipov): Remove this after we're finished
-			// with the client hostname validations in the DHCP
-			// server code.
+			// TODO(a.garipov): Remove this after we're finished with the client
+			// hostname validations in the DHCP server code.
 			err = netutil.ValidateDomainName(l.Hostname)
 			if err != nil {
 				log.Debug(
@@ -301,6 +300,8 @@ func (s *Server) processInternalHosts(dctx *dnsContext) (rc resultCode) {
 	}
 
 	reqHost := strings.ToLower(q.Name)
+	// TODO(a.garipov): Move everything related to DHCP local domain to the DHCP
+	// server.
 	host := strings.TrimSuffix(reqHost, s.localDomainSuffix)
 	if host == reqHost {
 		return resultCodeSuccess

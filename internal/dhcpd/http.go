@@ -575,12 +575,15 @@ func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
 		log.Error("dhcp: removing db: %s", err)
 	}
 
-	oldconf := s.conf
-	s.conf = ServerConfig{
-		WorkDir:        oldconf.WorkDir,
-		HTTPRegister:   oldconf.HTTPRegister,
-		ConfigModified: oldconf.ConfigModified,
-		DBFilePath:     oldconf.DBFilePath,
+	s.conf = &ServerConfig{
+		ConfigModified: s.conf.ConfigModified,
+
+		HTTPRegister: s.conf.HTTPRegister,
+
+		LocalDomainName: s.conf.LocalDomainName,
+
+		WorkDir:    s.conf.WorkDir,
+		DBFilePath: s.conf.DBFilePath,
 	}
 
 	v4conf := V4ServerConf{

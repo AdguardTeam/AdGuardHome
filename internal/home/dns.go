@@ -83,7 +83,7 @@ func initDNSServer() (err error) {
 		QueryLog:       Context.queryLog,
 		SubnetDetector: Context.subnetDetector,
 		Anonymizer:     anonymizer,
-		LocalDomain:    config.DNS.LocalDomainName,
+		LocalDomain:    config.DHCP.LocalDomainName,
 	}
 	if Context.dhcpServer != nil {
 		p.DHCPServer = Context.dhcpServer

@@ -83,7 +83,7 @@ type configuration struct {
 	WhitelistFilters []filter `yaml:"whitelist_filters"`
 	UserRules        []string `yaml:"user_rules"`
 
-	DHCP dhcpd.ServerConfig `yaml:"dhcp"`
+	DHCP *dhcpd.ServerConfig `yaml:"dhcp"`
 
 	// Clients contains the YAML representations of the persistent clients.
 	// This field is only used for reading and writing persistent client data.
@@ -122,11 +122,6 @@ type dnsConfig struct {
 
 	// UpstreamTimeout is the timeout for querying upstream servers.
 	UpstreamTimeout timeutil.Duration `yaml:"upstream_timeout"`
-
-	// LocalDomainName is the domain name used for known internal hosts.
-	// For example, a machine called "myhost" can be addressed as
-	// "myhost.lan" when LocalDomainName is "lan".
-	LocalDomainName string `yaml:"local_domain_name"`
 
 	// ResolveClients enables and disables resolving clients with RDNS.
 	ResolveClients bool `yaml:"resolve_clients"`
@@ -199,7 +194,6 @@ var config = &configuration{
 		FilteringEnabled:           true, // whether or not use filter lists
 		FiltersUpdateIntervalHours: 24,
 		UpstreamTimeout:            timeutil.Duration{Duration: dnsforward.DefaultTimeout},
-		LocalDomainName:            "lan",
 		ResolveClients:             true,
 		UsePrivateRDNS:             true,
 	},
@@ -207,6 +201,9 @@ var config = &configuration{
 		PortHTTPS:       defaultPortHTTPS,
 		PortDNSOverTLS:  defaultPortTLS, // needs to be passed through to dnsproxy
 		PortDNSOverQUIC: defaultPortQUIC,
+	},
+	DHCP: &dhcpd.ServerConfig{
+		LocalDomainName: "lan",
 	},
 	logSettings: logSettings{
 		LogCompress:   false,
@@ -389,8 +386,8 @@ func (c *configuration) write() error {
 	}
 
 	if Context.dhcpServer != nil {
-		c := dhcpd.ServerConfig{}
-		Context.dhcpServer.WriteDiskConfig(&c)
+		c := &dhcpd.ServerConfig{}
+		Context.dhcpServer.WriteDiskConfig(c)
 		config.DHCP = c
 	}
 

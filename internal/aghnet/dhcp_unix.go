@@ -111,7 +111,7 @@ func discover4(iface *net.Interface, dstAddr *net.UDPAddr, hostname string) (ok 
 	// is spoiled.
 	//
 	// It's also known that listening on the specified interface's address
-	// ignores broadcasted packets when reading.
+	// ignores broadcast packets when reading.
 	var c net.PacketConn
 	if c, err = listenPacketReusable(iface.Name, "udp4", ":68"); err != nil {
 		return false, fmt.Errorf("couldn't listen on :68: %w", err)
