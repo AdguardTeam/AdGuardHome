@@ -43,7 +43,7 @@
     "form_error_ip6_format": "Endereço de IPv6 inválido",
     "form_error_ip_format": "Endereço de IP inválido",
     "form_error_mac_format": "Endereço de MAC inválido",
-    "form_error_client_id_format": "ID de cliente inválido",
+    "form_error_client_id_format": "O ID do cliente deve conter apenas números, letras minúsculas e hifens",
     "form_error_server_name": "Nome de servidor inválido",
     "form_error_subnet": "A sub-rede \"{{cidr}}\" não contém o endereço IP \"{{ip}}\"",
     "form_error_positive": "Deve ser maior que 0",

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalgo"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -214,7 +214,7 @@ func validateAccessSet(list *accessListJSON) (err error) {
 	}
 
 	merged := allowed.Merge(disallowed)
-	err = merged.Validate(aghalgo.StringIsBefore)
+	err = merged.Validate(aghalg.StringIsBefore)
 	if err != nil {
 		return fmt.Errorf("items in allowed and disallowed clients intersect: %w", err)
 	}
@@ -223,13 +223,13 @@ func validateAccessSet(list *accessListJSON) (err error) {
 }
 
 // validateStrUniq returns an informative error if clients are not unique.
-func validateStrUniq(clients []string) (uv aghalgo.UniquenessValidator, err error) {
-	uv = make(aghalgo.UniquenessValidator, len(clients))
+func validateStrUniq(clients []string) (uc aghalg.UniqChecker, err error) {
+	uc = make(aghalg.UniqChecker, len(clients))
 	for _, c := range clients {
-		uv.Add(c)
+		uc.Add(c)
 	}
 
-	return uv, uv.Validate(aghalgo.StringIsBefore)
+	return uc, uc.Validate(aghalg.StringIsBefore)
 }
 
 func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {

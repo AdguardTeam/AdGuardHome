@@ -15,12 +15,20 @@ func TestMain(m *testing.M) {
 	aghtest.DiscardLogOutput(m)
 }
 
-func TestGetValidNetInterfacesForWeb(t *testing.T) {
+func TestGetInterfaceByIP(t *testing.T) {
 	ifaces, err := GetValidNetInterfacesForWeb()
-	require.NoErrorf(t, err, "cannot get net interfaces: %s", err)
-	require.NotEmpty(t, ifaces, "no net interfaces found")
+	require.NoError(t, err)
+	require.NotEmpty(t, ifaces)
+
 	for _, iface := range ifaces {
-		require.NotEmptyf(t, iface.Addresses, "no addresses found for %s", iface.Name)
+		t.Run(iface.Name, func(t *testing.T) {
+			require.NotEmpty(t, iface.Addresses)
+
+			for _, ip := range iface.Addresses {
+				ifaceName := GetInterfaceByIP(ip)
+				require.Equal(t, iface.Name, ifaceName)
+			}
+		})
 	}
 }
 
@@ -73,18 +81,47 @@ func TestBroadcastFromIPNet(t *testing.T) {
 }
 
 func TestCheckPort(t *testing.T) {
-	l, err := net.Listen("tcp", "127.0.0.1:")
-	require.NoError(t, err)
-	testutil.CleanupAndRequireSuccess(t, l.Close)
+	t.Run("tcp_bound", func(t *testing.T) {
+		l, err := net.Listen("tcp", "127.0.0.1:")
+		require.NoError(t, err)
+		testutil.CleanupAndRequireSuccess(t, l.Close)
 
-	ipp := netutil.IPPortFromAddr(l.Addr())
-	require.NotNil(t, ipp)
-	require.NotNil(t, ipp.IP)
-	require.NotZero(t, ipp.Port)
+		ipp := netutil.IPPortFromAddr(l.Addr())
+		require.NotNil(t, ipp)
+		require.NotNil(t, ipp.IP)
+		require.NotZero(t, ipp.Port)
 
-	err = CheckPort("tcp", ipp.IP, ipp.Port)
-	target := &net.OpError{}
-	require.ErrorAs(t, err, &target)
+		err = CheckPort("tcp", ipp.IP, ipp.Port)
+		target := &net.OpError{}
+		require.ErrorAs(t, err, &target)
 
-	assert.Equal(t, "listen", target.Op)
+		assert.Equal(t, "listen", target.Op)
+	})
+
+	t.Run("udp_bound", func(t *testing.T) {
+		conn, err := net.ListenPacket("udp", "127.0.0.1:")
+		require.NoError(t, err)
+		testutil.CleanupAndRequireSuccess(t, conn.Close)
+
+		ipp := netutil.IPPortFromAddr(conn.LocalAddr())
+		require.NotNil(t, ipp)
+		require.NotNil(t, ipp.IP)
+		require.NotZero(t, ipp.Port)
+
+		err = CheckPort("udp", ipp.IP, ipp.Port)
+		target := &net.OpError{}
+		require.ErrorAs(t, err, &target)
+
+		assert.Equal(t, "listen", target.Op)
+	})
+
+	t.Run("bad_network", func(t *testing.T) {
+		err := CheckPort("bad_network", nil, 0)
+		assert.NoError(t, err)
+	})
+
+	t.Run("can_bind", func(t *testing.T) {
+		err := CheckPort("udp", net.IP{0, 0, 0, 0}, 0)
+		assert.NoError(t, err)
+	})
 }

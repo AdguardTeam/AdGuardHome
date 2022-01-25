@@ -22,32 +22,45 @@ and this project adheres to
 ### Deprecated
 
 <!--
-TODO(a.garipov): Remove this deprecation, if v0.108.0 is released before the Go
-1.18 release.
+    TODO(a.garipov): Remove this deprecation, if v0.108.0 is released before
+    the Go 1.18 release.
 -->
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
-
-### Fixed
-
-- Incorrectly invalidated service domains ([#4120]).
-- Poor testing of domain-specific upstream servers ([#4074]).
-- Omitted aliases of hosts specified by another line within the OS's hosts file
-  ([#4079]).
 
 ### Removed
 
 - Go 1.16 support.
 
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
-[#4074]: https://github.com/AdguardTeam/AdGuardHome/issues/4074
-[#4079]: https://github.com/AdguardTeam/AdGuardHome/issues/4079
-[#4120]: https://github.com/AdguardTeam/AdGuardHome/issues/4120
 
 
 
 <!--
-## [v0.107.3] - 2022-01-19 (APPROX.)
+## [v0.107.4] - 2022-03-01 (APPROX.)
 -->
+
+
+
+## [v0.107.3] - 2022-01-25
+
+### Added
+
+- Support for a `$dnsrewrite` modifier with an empty `NOERROR` response
+  ([#4133]).
+
+### Fixed
+
+- Wrong set of ports checked for duplicates during the initial setup ([#4095]).
+- Incorrectly invalidated service domains ([#4120]).
+- Poor testing of domain-specific upstream servers ([#4074]).
+- Omitted aliases of hosts specified by another line within the OS's hosts file
+  ([#4079]).
+
+[#4074]: https://github.com/AdguardTeam/AdGuardHome/issues/4074
+[#4079]: https://github.com/AdguardTeam/AdGuardHome/issues/4079
+[#4095]: https://github.com/AdguardTeam/AdGuardHome/issues/4095
+[#4120]: https://github.com/AdguardTeam/AdGuardHome/issues/4120
+[#4133]: https://github.com/AdguardTeam/AdGuardHome/issues/4133
 
 
 
@@ -690,11 +703,12 @@ In this release, the schema version has changed from 10 to 12.
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...HEAD
-[v0.107.3]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.2...v0.107.3
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...HEAD
+[v0.107.4]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...v0.107.4
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.2...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...HEAD
+[v0.107.3]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.2...v0.107.3
 [v0.107.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.1...v0.107.2
 [v0.107.1]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.0...v0.107.1
 [v0.107.0]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.3...v0.107.0

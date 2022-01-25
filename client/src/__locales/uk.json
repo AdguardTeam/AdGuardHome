@@ -43,7 +43,7 @@
     "form_error_ip6_format": "Неправильна IPv6-адреса",
     "form_error_ip_format": "Неправильна IP-адреса",
     "form_error_mac_format": "Неправильна MAC-адреса",
-    "form_error_client_id_format": "Неправильний ID клієнта",
+    "form_error_client_id_format": "ID клієнта має містити лише цифри, малі букви та дефіси",
     "form_error_server_name": "Неправильна назва сервера",
     "form_error_subnet": "Підмережа «{{cidr}}» не містить IP-адресу «{{ip}}»",
     "form_error_positive": "Повинно бути більше 0",

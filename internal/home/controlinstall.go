@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalgo"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
@@ -73,19 +73,19 @@ func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request
 	}
 }
 
-type checkConfigReqEnt struct {
+type checkConfReqEnt struct {
 	IP      net.IP `json:"ip"`
 	Port    int    `json:"port"`
 	Autofix bool   `json:"autofix"`
 }
 
-type checkConfigReq struct {
-	Web         checkConfigReqEnt `json:"web"`
-	DNS         checkConfigReqEnt `json:"dns"`
-	SetStaticIP bool              `json:"set_static_ip"`
+type checkConfReq struct {
+	Web         checkConfReqEnt `json:"web"`
+	DNS         checkConfReqEnt `json:"dns"`
+	SetStaticIP bool            `json:"set_static_ip"`
 }
 
-type checkConfigRespEnt struct {
+type checkConfRespEnt struct {
 	Status     string `json:"status"`
 	CanAutofix bool   `json:"can_autofix"`
 }
@@ -96,79 +96,110 @@ type staticIPJSON struct {
 	Error  string `json:"error"`
 }
 
-type checkConfigResp struct {
-	StaticIP staticIPJSON       `json:"static_ip"`
-	Web      checkConfigRespEnt `json:"web"`
-	DNS      checkConfigRespEnt `json:"dns"`
+type checkConfResp struct {
+	StaticIP staticIPJSON     `json:"static_ip"`
+	Web      checkConfRespEnt `json:"web"`
+	DNS      checkConfRespEnt `json:"dns"`
 }
 
-// Check if ports are available, respond with results
-func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
-	reqData := checkConfigReq{}
-	respData := checkConfigResp{}
+// validateWeb returns error is the web part if the initial configuration can't
+// be set.
+func (req *checkConfReq) validateWeb(uc aghalg.UniqChecker) (err error) {
+	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
-	err := json.NewDecoder(r.Body).Decode(&reqData)
+	port := req.Web.Port
+	addPorts(uc, config.BetaBindPort, port)
+	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
+		// Avoid duplicating the error into the status of DNS.
+		uc[port] = 1
+
+		return err
+	}
+
+	switch port {
+	case 0, config.BindPort:
+		return nil
+	default:
+		// Go on and check the port binding only if it's not zero or won't be
+		// unbound after install.
+	}
+
+	return aghnet.CheckPort("tcp", req.Web.IP, port)
+}
+
+// validateDNS returns error if the DNS part of the initial configuration can't
+// be set.  canAutofix is true if the port can be unbound by AdGuard Home
+// automatically.
+func (req *checkConfReq) validateDNS(uc aghalg.UniqChecker) (canAutofix bool, err error) {
+	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
+
+	port := req.DNS.Port
+	addPorts(uc, port)
+	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
+		return false, err
+	}
+
+	switch port {
+	case 0:
+		return false, nil
+	case config.BindPort:
+		// Go on and only check the UDP port since the TCP one is already bound
+		// by AdGuard Home for web interface.
+	default:
+		// Check TCP as well.
+		err = aghnet.CheckPort("tcp", req.DNS.IP, port)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	err = aghnet.CheckPort("udp", req.DNS.IP, port)
+	if !aghnet.IsAddrInUse(err) {
+		return false, err
+	}
+
+	// Try to fix automatically.
+	canAutofix = checkDNSStubListener()
+	if canAutofix && req.DNS.Autofix {
+		if derr := disableDNSStubListener(); derr != nil {
+			log.Error("disabling DNSStubListener: %s", err)
+		}
+
+		err = aghnet.CheckPort("udp", req.DNS.IP, port)
+		canAutofix = false
+	}
+
+	return canAutofix, err
+}
+
+// handleInstallCheckConfig handles the /check_config endpoint.
+func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
+	req := &checkConfReq{}
+
+	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to parse 'check_config' JSON data: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "decoding the request: %s", err)
 
 		return
 	}
 
-	uv := aghalgo.UniquenessValidator{}
-	addPorts(
-		uv,
-		config.BindPort,
-		config.BetaBindPort,
-		reqData.Web.Port,
-	)
-	if err = uv.Validate(aghalgo.IntIsBefore); err != nil {
-		err = fmt.Errorf("validating ports: %w", err)
-		respData.Web.Status = err.Error()
-	} else if reqData.Web.Port != 0 {
-		err = aghnet.CheckPort("tcp", reqData.Web.IP, reqData.Web.Port)
-		if err != nil {
-			respData.Web.Status = err.Error()
-		}
+	resp := &checkConfResp{}
+	uc := aghalg.UniqChecker{}
+
+	if err = req.validateWeb(uc); err != nil {
+		resp.Web.Status = err.Error()
 	}
 
-	addPorts(uv, reqData.DNS.Port)
-	if err = uv.Validate(aghalgo.IntIsBefore); err != nil {
-		err = fmt.Errorf("validating ports: %w", err)
-		respData.DNS.Status = err.Error()
-	} else if reqData.DNS.Port != 0 {
-		err = aghnet.CheckPort("udp", reqData.DNS.IP, reqData.DNS.Port)
-
-		if aghnet.IsAddrInUse(err) {
-			canAutofix := checkDNSStubListener()
-			if canAutofix && reqData.DNS.Autofix {
-
-				err = disableDNSStubListener()
-				if err != nil {
-					log.Error("Couldn't disable DNSStubListener: %s", err)
-				}
-
-				err = aghnet.CheckPort("udp", reqData.DNS.IP, reqData.DNS.Port)
-				canAutofix = false
-			}
-
-			respData.DNS.CanAutofix = canAutofix
-		}
-
-		if err == nil {
-			err = aghnet.CheckPort("tcp", reqData.DNS.IP, reqData.DNS.Port)
-		}
-
-		if err != nil {
-			respData.DNS.Status = err.Error()
-		} else if !reqData.DNS.IP.IsUnspecified() {
-			respData.StaticIP = handleStaticIP(reqData.DNS.IP, reqData.SetStaticIP)
-		}
+	if resp.DNS.CanAutofix, err = req.validateDNS(uc); err != nil {
+		resp.DNS.Status = err.Error()
+	} else if !req.DNS.IP.IsUnspecified() {
+		resp.StaticIP = handleStaticIP(req.DNS.IP, req.SetStaticIP)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(respData)
+	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to marshal JSON: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "encoding the response: %s", err)
 
 		return
 	}
@@ -494,13 +525,13 @@ func (web *Web) handleInstallCheckConfigBeta(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	nonBetaReqData := checkConfigReq{
-		Web: checkConfigReqEnt{
+	nonBetaReqData := checkConfReq{
+		Web: checkConfReqEnt{
 			IP:      reqData.Web.IP[0],
 			Port:    reqData.Web.Port,
 			Autofix: reqData.Web.Autofix,
 		},
-		DNS: checkConfigReqEnt{
+		DNS: checkConfReqEnt{
 			IP:      reqData.DNS.IP[0],
 			Port:    reqData.DNS.Port,
 			Autofix: reqData.DNS.Autofix,
