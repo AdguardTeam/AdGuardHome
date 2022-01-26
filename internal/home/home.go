@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -80,7 +81,6 @@ type homeContext struct {
 	disableUpdate    bool   // If set, don't check for updates
 	controlLock      sync.Mutex
 	tlsRoots         *x509.CertPool // list of root CAs for TLSv1.2
-	tlsCiphers       []uint16       // list of TLS ciphers to use
 	transport        *http.Transport
 	client           *http.Client
 	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
@@ -145,13 +145,13 @@ func setupContext(args options) {
 	initConfig()
 
 	Context.tlsRoots = LoadSystemRootCAs()
-	Context.tlsCiphers = InitTLSCiphers()
 	Context.transport = &http.Transport{
 		DialContext: customDialContext,
 		Proxy:       getHTTPProxy,
 		TLSClientConfig: &tls.Config{
-			RootCAs:    Context.tlsRoots,
-			MinVersion: tls.VersionTLS12,
+			RootCAs:      Context.tlsRoots,
+			CipherSuites: aghtls.SaferCipherSuites(),
+			MinVersion:   tls.VersionTLS12,
 		},
 	}
 	Context.client = &http.Client{
@@ -182,7 +182,7 @@ func setupContext(args options) {
 
 // logIfUnsupported logs a formatted warning if the error is one of the
 // unsupported errors and returns nil.  If err is nil, logIfUnsupported returns
-// nil.  Otherise, it returns err.
+// nil.  Otherwise, it returns err.
 func logIfUnsupported(msg string, err error) (outErr error) {
 	if errors.As(err, new(*aghos.UnsupportedError)) {
 		log.Debug(msg, err)

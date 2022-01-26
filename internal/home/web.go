@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -34,14 +35,13 @@ const (
 )
 
 type webConfig struct {
+	clientFS     fs.FS
+	clientBetaFS fs.FS
+
 	BindHost     net.IP
 	BindPort     int
 	BetaBindPort int
 	PortHTTPS    int
-	firstRun     bool
-
-	clientFS     fs.FS
-	clientBetaFS fs.FS
 
 	// ReadTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
@@ -54,6 +54,8 @@ type webConfig struct {
 	// WriteTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
 	WriteTimeout time.Duration
+
+	firstRun bool
 }
 
 // HTTPSServer - HTTPS Server
@@ -263,9 +265,9 @@ func (web *Web) tlsServerLoop() {
 			Addr:     address,
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
-				MinVersion:   tls.VersionTLS12,
 				RootCAs:      Context.tlsRoots,
-				CipherSuites: Context.tlsCiphers,
+				CipherSuites: aghtls.SaferCipherSuites(),
+				MinVersion:   tls.VersionTLS12,
 			},
 			Handler:           withMiddlewares(Context.mux, limitRequestBody),
 			ReadTimeout:       web.conf.ReadTimeout,

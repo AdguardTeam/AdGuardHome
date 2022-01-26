@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -426,6 +427,7 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 
 	proxyConfig.TLSConfig = &tls.Config{
 		GetCertificate: s.onGetCertificate,
+		CipherSuites:   aghtls.SaferCipherSuites(),
 		MinVersion:     tls.VersionTLS12,
 	}
 

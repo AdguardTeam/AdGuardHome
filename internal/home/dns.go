@@ -211,7 +211,6 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	}
 
 	newConf.TLSv12Roots = Context.tlsRoots
-	newConf.TLSCiphers = Context.tlsCiphers
 	newConf.TLSAllowUnencryptedDoH = tlsConf.AllowUnencryptedDoH
 
 	newConf.FilterHandler = applyAdditionalFiltering
