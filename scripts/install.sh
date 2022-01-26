@@ -384,16 +384,15 @@ rerun_with_root() {
 
 	log 'restarting with root privileges'
 	
-	# Group curl together with an echo, so that if curl fails before
-	# producing any output, the echo prints an exit command for the
-	# following shell to execute to prevent it from getting an empty input
-	# and exiting with a zero code in that case.
+	# Group curl together with an echo, so that if curl fails before producing
+	# any output, the echo prints an exit command for the following shell to
+	# execute to prevent it from getting an empty input and exiting with a zero
+	# code in that case.
 	{ curl -L -S -s "$script_url" || echo 'exit 1'; }\
 		| $sudo_cmd sh -s -- -c "$channel" -C "$cpu" -O "$os" -o "$out_dir" "$r" "$u" "$v"
 
-	# Exit the script.  Since if the code of the previous pipeline is
-	# non-zero, the execution won't reach this point thanks to set -e, exit
-	# with zero.
+	# Exit the script.  Since if the code of the previous pipeline is non-zero,
+	# the execution won't reach this point thanks to set -e, exit with zero.
 	exit 0
 }
 
@@ -483,11 +482,7 @@ handle_existing() {
 
 # Function install_service tries to install AGH as service.
 install_service() {
-	# Installing as root is required at least on FreeBSD.
-	#
-	# TODO(e.burkov): Think about AGH's output suppressing with no verbose
-	# flag.
-	if ( cd "$agh_dir" && $sudo_cmd ./AdGuardHome -s install )
+	if ( cd "$agh_dir" && ./AdGuardHome -s install )
 	then
 		return 0
 	fi
