@@ -6,8 +6,7 @@ import "crypto/tls"
 // SaferCipherSuites returns a set of default cipher suites with vulnerable and
 // weak cipher suites removed.
 func SaferCipherSuites() (safe []uint16) {
-	suites := tls.CipherSuites()
-	for _, s := range suites {
+	for _, s := range tls.CipherSuites() {
 		switch s.ID {
 		case
 			tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,

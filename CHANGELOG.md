@@ -63,7 +63,7 @@ In this release, the schema version has changed from 12 to 13.
 ### Security
 
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
-  operation have been disabled (#2993).
+  operation have been disabled ([#2993]).
 
 [#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
