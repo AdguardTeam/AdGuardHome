@@ -14,6 +14,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -86,6 +87,7 @@ func TestNewHostsContainer(t *testing.T) {
 
 				return
 			}
+			testutil.CleanupAndRequireSuccess(t, hc.Close)
 
 			require.NoError(t, err)
 			require.NotNil(t, hc)
@@ -156,8 +158,9 @@ func TestHostsContainer_refresh(t *testing.T) {
 
 	hc, err := NewHostsContainer(0, testFS, w, "dir")
 	require.NoError(t, err)
+	testutil.CleanupAndRequireSuccess(t, hc.Close)
 
-	checkRefresh := func(t *testing.T, wantHosts Hosts) {
+	checkRefresh := func(t *testing.T, wantHosts *stringutil.Set) {
 		upd, ok := <-hc.Upd()
 		require.True(t, ok)
 		require.NotNil(t, upd)
@@ -167,22 +170,21 @@ func TestHostsContainer_refresh(t *testing.T) {
 		v, ok := upd.Get(ip)
 		require.True(t, ok)
 
-		var hosts *Hosts
-		hosts, ok = v.(*Hosts)
+		var set *stringutil.Set
+		set, ok = v.(*stringutil.Set)
 		require.True(t, ok)
 
-		assert.Equal(t, wantHosts.Main, hosts.Main)
-		assert.True(t, hosts.Aliases.Equal(wantHosts.Aliases))
+		assert.True(t, set.Equal(wantHosts))
 	}
 
 	t.Run("initial_refresh", func(t *testing.T) {
-		checkRefresh(t, Hosts{Main: "hostname"})
+		checkRefresh(t, stringutil.NewSet("hostname"))
 	})
 
 	t.Run("second_refresh", func(t *testing.T) {
 		testFS["dir/file2"] = &fstest.MapFile{Data: []byte(ipStr + ` alias` + nl)}
 		eventsCh <- event{}
-		checkRefresh(t, Hosts{Main: "hostname", Aliases: stringutil.NewSet("alias")})
+		checkRefresh(t, stringutil.NewSet("hostname", "alias"))
 	})
 
 	t.Run("double_refresh", func(t *testing.T) {
@@ -288,6 +290,7 @@ func TestHostsContainer_Translate(t *testing.T) {
 
 	hc, err := NewHostsContainer(0, testdata, &stubWatcher, "etc_hosts")
 	require.NoError(t, err)
+	testutil.CleanupAndRequireSuccess(t, hc.Close)
 
 	testCases := []struct {
 		name      string
@@ -300,7 +303,11 @@ func TestHostsContainer_Translate(t *testing.T) {
 	}, {
 		name:      "hello",
 		rule:      "|hello^$dnsrewrite=NOERROR;A;1.0.0.0",
-		wantTrans: []string{"1.0.0.0", "hello", "hello.world", "hello.world.again"},
+		wantTrans: []string{"1.0.0.0", "hello", "hello.world"},
+	}, {
+		name:      "hello-alias",
+		rule:      "|hello.world.again^$dnsrewrite=NOERROR;A;1.0.0.0",
+		wantTrans: []string{"1.0.0.0", "hello.world.again"},
 	}, {
 		name:      "simplehost_v6",
 		rule:      "|simplehost^$dnsrewrite=NOERROR;AAAA;::1",
@@ -308,7 +315,11 @@ func TestHostsContainer_Translate(t *testing.T) {
 	}, {
 		name:      "hello_v6",
 		rule:      "|hello^$dnsrewrite=NOERROR;AAAA;::",
-		wantTrans: []string{"::", "hello", "hello.world", "hello.world.again"},
+		wantTrans: []string{"::", "hello", "hello.world"},
+	}, {
+		name:      "hello_v6-alias",
+		rule:      "|hello.world.again^$dnsrewrite=NOERROR;AAAA;::",
+		wantTrans: []string{"::", "hello.world.again"},
 	}, {
 		name:      "simplehost_ptr",
 		rule:      "|1.0.0.1.in-addr.arpa^$dnsrewrite=NOERROR;PTR;simplehost.",
@@ -316,7 +327,11 @@ func TestHostsContainer_Translate(t *testing.T) {
 	}, {
 		name:      "hello_ptr",
 		rule:      "|0.0.0.1.in-addr.arpa^$dnsrewrite=NOERROR;PTR;hello.",
-		wantTrans: []string{"1.0.0.0", "hello", "hello.world", "hello.world.again"},
+		wantTrans: []string{"1.0.0.0", "hello", "hello.world"},
+	}, {
+		name:      "hello_ptr-alias",
+		rule:      "|0.0.0.1.in-addr.arpa^$dnsrewrite=NOERROR;PTR;hello.world.again.",
+		wantTrans: []string{"1.0.0.0", "hello.world.again"},
 	}, {
 		name: "simplehost_ptr_v6",
 		rule: "|1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa" +
@@ -326,14 +341,18 @@ func TestHostsContainer_Translate(t *testing.T) {
 		name: "hello_ptr_v6",
 		rule: "|0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa" +
 			"^$dnsrewrite=NOERROR;PTR;hello.",
-		wantTrans: []string{"::", "hello", "hello.world", "hello.world.again"},
+		wantTrans: []string{"::", "hello", "hello.world"},
+	}, {
+		name: "hello_ptr_v6-alias",
+		rule: "|0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa" +
+			"^$dnsrewrite=NOERROR;PTR;hello.world.again.",
+		wantTrans: []string{"::", "hello.world.again"},
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			want := stringutil.NewSet(tc.wantTrans...)
 			got := stringutil.NewSet(strings.Fields(hc.Translate(tc.rule))...)
-			assert.True(t, want.Equal(got))
+			assert.True(t, stringutil.NewSet(tc.wantTrans...).Equal(got))
 		})
 	}
 }
@@ -354,7 +373,7 @@ func TestHostsContainer(t *testing.T) {
 			RRType: dns.TypeA,
 		}, {
 			RCode:  dns.RcodeSuccess,
-			Value:  net.IP(append((&[15]byte{})[:], byte(1))),
+			Value:  net.ParseIP("::1"),
 			RRType: dns.TypeAAAA,
 		}},
 		name: "simple",
@@ -364,8 +383,13 @@ func TestHostsContainer(t *testing.T) {
 		},
 	}, {
 		want: []*rules.DNSRewrite{{
-			RCode:    dns.RcodeSuccess,
-			NewCNAME: "hello",
+			RCode:  dns.RcodeSuccess,
+			Value:  net.IPv4(1, 0, 0, 0),
+			RRType: dns.TypeA,
+		}, {
+			RCode:  dns.RcodeSuccess,
+			Value:  net.ParseIP("::"),
+			RRType: dns.TypeAAAA,
 		}},
 		name: "hello_alias",
 		req: urlfilter.DNSRequest{
@@ -374,8 +398,13 @@ func TestHostsContainer(t *testing.T) {
 		},
 	}, {
 		want: []*rules.DNSRewrite{{
-			RCode:    dns.RcodeSuccess,
-			NewCNAME: "hello",
+			RCode:  dns.RcodeSuccess,
+			Value:  net.IPv4(1, 0, 0, 0),
+			RRType: dns.TypeA,
+		}, {
+			RCode:  dns.RcodeSuccess,
+			Value:  net.ParseIP("::"),
+			RRType: dns.TypeAAAA,
 		}},
 		name: "other_line_alias",
 		req: urlfilter.DNSRequest{
@@ -398,8 +427,13 @@ func TestHostsContainer(t *testing.T) {
 		},
 	}, {
 		want: []*rules.DNSRewrite{{
-			RCode:    dns.RcodeSuccess,
-			NewCNAME: "a.whole",
+			RCode:  dns.RcodeSuccess,
+			RRType: dns.TypeA,
+			Value:  net.IPv4(1, 0, 0, 2),
+		}, {
+			RCode:  dns.RcodeSuccess,
+			RRType: dns.TypeAAAA,
+			Value:  net.ParseIP("::2"),
 		}},
 		name: "lots_of_aliases",
 		req: urlfilter.DNSRequest{
@@ -431,6 +465,51 @@ func TestHostsContainer(t *testing.T) {
 			Hostname: "1.0.0.1.in-addr.arpa",
 			DNSType:  dns.TypeSRV,
 		},
+	}, {
+		want: []*rules.DNSRewrite{{
+			RCode:  dns.RcodeSuccess,
+			RRType: dns.TypeA,
+			Value:  net.IPv4(4, 2, 1, 6),
+		}, {
+			RCode:  dns.RcodeSuccess,
+			RRType: dns.TypeAAAA,
+			Value:  net.ParseIP("::42"),
+		}},
+		name: "issue_4216_4_6",
+		req: urlfilter.DNSRequest{
+			Hostname: "domain",
+			DNSType:  dns.TypeA,
+		},
+	}, {
+		want: []*rules.DNSRewrite{{
+			RCode:  dns.RcodeSuccess,
+			RRType: dns.TypeA,
+			Value:  net.IPv4(7, 5, 3, 1),
+		}, {
+			RCode:  dns.RcodeSuccess,
+			RRType: dns.TypeA,
+			Value:  net.IPv4(1, 3, 5, 7),
+		}},
+		name: "issue_4216_4",
+		req: urlfilter.DNSRequest{
+			Hostname: "domain4",
+			DNSType:  dns.TypeA,
+		},
+	}, {
+		want: []*rules.DNSRewrite{{
+			RCode:  dns.RcodeSuccess,
+			RRType: dns.TypeAAAA,
+			Value:  net.ParseIP("::13"),
+		}, {
+			RCode:  dns.RcodeSuccess,
+			RRType: dns.TypeAAAA,
+			Value:  net.ParseIP("::31"),
+		}},
+		name: "issue_4216_6",
+		req: urlfilter.DNSRequest{
+			Hostname: "domain6",
+			DNSType:  dns.TypeAAAA,
+		},
 	}}
 
 	stubWatcher := aghtest.FSWatcher{
@@ -441,6 +520,7 @@ func TestHostsContainer(t *testing.T) {
 
 	hc, err := NewHostsContainer(listID, testdata, &stubWatcher, "etc_hosts")
 	require.NoError(t, err)
+	testutil.CleanupAndRequireSuccess(t, hc.Close)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

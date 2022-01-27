@@ -477,7 +477,7 @@ func (d *DNSFilter) matchSysHosts(
 		return res, nil
 	}
 
-	return d.matchSysHostsIntl(&urlfilter.DNSRequest{
+	dnsres, _ := d.EtcHosts.MatchRequest(urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
 		// TODO(e.burkov):  Wait for urlfilter update to pass net.IP.
@@ -485,12 +485,6 @@ func (d *DNSFilter) matchSysHosts(
 		ClientName: setts.ClientName,
 		DNSType:    qtype,
 	})
-}
-
-// matchSysHostsIntl actually matches the request.  It's separated to avoid
-// performing checks twice.
-func (d *DNSFilter) matchSysHostsIntl(req *urlfilter.DNSRequest) (res Result, err error) {
-	dnsres, _ := d.EtcHosts.MatchRequest(*req)
 	if dnsres == nil {
 		return res, nil
 	}
@@ -501,13 +495,6 @@ func (d *DNSFilter) matchSysHostsIntl(req *urlfilter.DNSRequest) (res Result, er
 	}
 
 	res = d.processDNSRewrites(dnsr)
-	if cn := res.CanonName; cn != "" {
-		// Probably an alias.
-		req.Hostname = cn
-
-		return d.matchSysHostsIntl(req)
-	}
-
 	res.Reason = RewrittenAutoHosts
 	for _, r := range res.Rules {
 		r.Text = stringutil.Coalesce(d.EtcHosts.Translate(r.Text), r.Text)

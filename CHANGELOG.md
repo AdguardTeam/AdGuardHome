@@ -27,6 +27,11 @@ and this project adheres to
 -->
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
+## Fixed
+
+- Unnecessarily complex hosts-related logic leading to infinite recursion in
+  some cases ([#4216]).
+
 ### Removed
 
 - Go 1.16 support.
