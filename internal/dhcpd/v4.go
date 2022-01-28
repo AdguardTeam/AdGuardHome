@@ -969,11 +969,10 @@ func (s *v4Server) send(peer net.Addr, conn net.PacketConn, req, resp *dhcpv4.DH
 			Port: dhcpv4.ServerPort,
 		}
 		if mtype == dhcpv4.MessageTypeNak {
-			// Set the broadcast bit in the DHCPNAK, so that the
-			// relay agent broadcasted it to the client, because the
-			// client may not have a correct network address or
-			// subnet mask, and the client may not be answering ARP
-			// requests.
+			// Set the broadcast bit in the DHCPNAK, so that the relay agent
+			// broadcasts it to the client, because the client may not have
+			// a correct network address or subnet mask, and the client may not
+			// be answering ARP requests.
 			resp.SetBroadcast()
 		}
 	case mtype == dhcpv4.MessageTypeNak:

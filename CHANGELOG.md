@@ -27,11 +27,6 @@ and this project adheres to
 -->
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
-## Fixed
-
-- Unnecessarily complex hosts-related logic leading to infinite recursion in
-  some cases ([#4216]).
-
 ### Removed
 
 - Go 1.16 support.
@@ -40,9 +35,14 @@ and this project adheres to
 
 
 
-<!--
 ## [v0.107.4] - 2022-03-01 (APPROX.)
--->
+
+### Fixed
+
+- Unnecessarily complex hosts-related logic leading to infinite recursion in
+  some cases ([#4216]).
+
+[#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
 
 
 

@@ -12,33 +12,33 @@ import (
 func TestNullBool_UnmarshalJSON(t *testing.T) {
 	testCases := []struct {
 		name       string
-		data       []byte
 		wantErrMsg string
+		data       []byte
 		want       nullBool
 	}{{
 		name:       "empty",
-		data:       []byte{},
 		wantErrMsg: "",
+		data:       []byte{},
 		want:       nbNull,
 	}, {
 		name:       "null",
-		data:       []byte("null"),
 		wantErrMsg: "",
+		data:       []byte("null"),
 		want:       nbNull,
 	}, {
 		name:       "true",
-		data:       []byte("true"),
 		wantErrMsg: "",
+		data:       []byte("true"),
 		want:       nbTrue,
 	}, {
 		name:       "false",
-		data:       []byte("false"),
 		wantErrMsg: "",
+		data:       []byte("false"),
 		want:       nbFalse,
 	}, {
 		name:       "invalid",
-		data:       []byte("flase"),
-		wantErrMsg: `invalid nullBool value "flase"`,
+		wantErrMsg: `invalid nullBool value "invalid"`,
+		data:       []byte("invalid"),
 		want:       nbNull,
 	}}
 
