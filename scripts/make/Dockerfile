@@ -27,8 +27,8 @@ ARG TARGETARCH
 ARG TARGETOS
 ARG TARGETVARIANT
 
-COPY --chown=nobody:nogroup\
-	./${DIST_DIR}/docker/AdGuardHome_${TARGETOS}_${TARGETARCH}_${TARGETVARIANT}\
+COPY --chown=nobody:nogroup \
+	./${DIST_DIR}/docker/AdGuardHome_${TARGETOS}_${TARGETARCH}_${TARGETVARIANT} \
 	/opt/adguardhome/AdGuardHome
 
 RUN setcap 'cap_net_bind_service=+eip' /opt/adguardhome/AdGuardHome
@@ -45,8 +45,8 @@ RUN setcap 'cap_net_bind_service=+eip' /opt/adguardhome/AdGuardHome
 # 5443   : TCP, UDP : DNSCrypt (alt)
 # 6060   : TCP      : HTTP (pprof)
 # 8853   :      UDP : DNS-over-QUIC (experimental)
-EXPOSE 53/tcp 53/udp 67/udp 68/udp 80/tcp 443/tcp 443/udp 784/udp\
-	853/tcp 853/udp 3000/tcp 3000/udp 3001/tcp 3001/udp 5443/tcp\
+EXPOSE 53/tcp 53/udp 67/udp 68/udp 80/tcp 443/tcp 443/udp 784/udp \
+	853/tcp 853/udp 3000/tcp 3000/udp 3001/tcp 3001/udp 5443/tcp \
 	5443/udp 6060/tcp 8853/udp
 
 WORKDIR /opt/adguardhome/work
@@ -55,7 +55,6 @@ ENTRYPOINT ["/opt/adguardhome/AdGuardHome"]
 
 CMD [ \
 	"--no-check-update", \
-	"-c", "/opt/adguardhome/conf/AdGuardHome.yaml", \
-	"-h", "0.0.0.0", \
-	"-w", "/opt/adguardhome/work" \
+	"--config", "/opt/adguardhome/conf/AdGuardHome.yaml", \
+	"--work-dir", "/opt/adguardhome/work" \
 ]
