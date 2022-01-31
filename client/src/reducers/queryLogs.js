@@ -28,11 +28,7 @@ const queryLogs = handleActions(
             };
         },
 
-        [actions.setLogsFilterRequest]: (state, { payload }) => {
-            const { filter } = payload;
-
-            return { ...state, filter };
-        },
+        [actions.setLogsFilterRequest]: (state, { payload }) => ({ ...state, filter: payload }),
 
         [actions.getLogsRequest]: (state) => ({ ...state, processingGetLogs: true }),
         [actions.getLogsFailure]: (state) => ({ ...state, processingGetLogs: false }),
