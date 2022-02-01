@@ -7,7 +7,7 @@
 # Experienced readers may find it overly verbose.
 
 # The default verbosity level is 0.  Show log messages if the caller requested
-# verbosity level greather than 0.  Show every command that is run if the
+# verbosity level greater than 0.  Show every command that is run if the
 # verbosity level is greater than 1.  Show the environment if the verbosity
 # level is greater than 2.  Otherwise, print nothing.
 #
@@ -369,20 +369,17 @@ log "writing versions"
 
 echo "version=$version" > "./${dist}/version.txt"
 
-# Create the verison.json file.
+# Create the version.json file.
 
 version_download_url="https://static.adguard.com/adguardhome/${channel}"
 version_json="./${dist}/version.json"
 readonly version_download_url version_json
 
-# Point users to the master branch if the channel is edge.
+# If the channel is edge, point users to the "Platforms" page on the Wiki,
+# because the direct links to the edge packages are listed there.
 if [ "$channel" = 'edge' ]
 then
-	# TODO(a.garipov): Put a link to the platforms page here.  Something like:
-	#
-	#   announcement_url='https://github.com/AdguardTeam/AdGuardHome/wiki/Platforms'
-	#
-	announcement_url='https://github.com/AdguardTeam/AdGuardHome/commits/master'
+	announcement_url='https://github.com/AdguardTeam/AdGuardHome/wiki/Platforms'
 else
 	announcement_url="https://github.com/AdguardTeam/AdGuardHome/releases/tag/${version}"
 fi
