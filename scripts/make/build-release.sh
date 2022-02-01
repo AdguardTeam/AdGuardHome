@@ -378,17 +378,21 @@ readonly version_download_url version_json
 # Point users to the master branch if the channel is edge.
 if [ "$channel" = 'edge' ]
 then
-	version_history_url='https://github.com/AdguardTeam/AdGuardHome/commits/master'
+	# TODO(a.garipov): Put a link to the platforms page here.  Something like:
+	#
+	#   announcement_url='https://github.com/AdguardTeam/AdGuardHome/wiki/Platforms'
+	#
+	announcement_url='https://github.com/AdguardTeam/AdGuardHome/commits/master'
 else
-	version_history_url='https://github.com/AdguardTeam/AdGuardHome/releases'
+	announcement_url="https://github.com/AdguardTeam/AdGuardHome/releases/tag/${version}"
 fi
-readonly version_history_url
+readonly announcement_url
 
 rm -f "$version_json"
 echo "{
   \"version\": \"${version}\",
   \"announcement\": \"AdGuard Home ${version} is now available!\",
-  \"announcement_url\": \"${version_history_url}\",
+  \"announcement_url\": \"${announcement_url}\",
   \"selfupdate_min_version\": \"0.0\",
 " >> "$version_json"
 
