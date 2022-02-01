@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AdguardTeam/golibs/stringutil"
 )
@@ -26,11 +27,11 @@ const (
 // TODO(a.garipov): Find out if we can get GOARM and GOMIPS values the same way
 // we can GOARCH and GOOS.
 var (
-	channel   string = ChannelDevelopment
-	goarm     string
-	gomips    string
-	version   string
-	buildtime string
+	channel    string = ChannelDevelopment
+	goarm      string
+	gomips     string
+	version    string
+	committime string
 )
 
 // Channel returns the current AdGuard Home release channel.
@@ -106,7 +107,7 @@ const (
 	vFmtVerHdr    = "Version: "
 	vFmtChanHdr   = "Channel: "
 	vFmtGoHdr     = "Go version: "
-	vFmtTimeHdr   = "Build time: "
+	vFmtTimeHdr   = "Commit time: "
 	vFmtRaceHdr   = "Race: "
 	vFmtGOOSHdr   = "GOOS: " + runtime.GOOS
 	vFmtGOARCHHdr = "GOARCH: " + runtime.GOARCH
@@ -148,15 +149,23 @@ func Verbose() (v string) {
 		vFmtGoHdr,
 		runtime.Version(),
 	)
-	if buildtime != "" {
-		stringutil.WriteToBuilder(b, nl, vFmtTimeHdr, buildtime)
+
+	if committime != "" {
+		commitTimeUnix, err := strconv.ParseInt(committime, 10, 64)
+		if err != nil {
+			stringutil.WriteToBuilder(b, nl, vFmtTimeHdr, fmt.Sprintf("parse error: %s", err))
+		} else {
+			stringutil.WriteToBuilder(b, nl, vFmtTimeHdr, time.Unix(commitTimeUnix, 0).String())
+		}
 	}
+
 	stringutil.WriteToBuilder(b, nl, vFmtGOOSHdr, nl, vFmtGOARCHHdr)
 	if goarm != "" {
 		stringutil.WriteToBuilder(b, nl, vFmtGOARMHdr, "v", goarm)
 	} else if gomips != "" {
 		stringutil.WriteToBuilder(b, nl, vFmtGOMIPSHdr, gomips)
 	}
+
 	stringutil.WriteToBuilder(b, nl, vFmtRaceHdr, strconv.FormatBool(isRace))
 
 	info, ok := debug.ReadBuildInfo()

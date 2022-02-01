@@ -21,6 +21,11 @@ and this project adheres to
 
 ### Changed
 
+- Instead of adding the build time information, the build scripts now use the
+  standardized environment variable [`SOURCE_DATE_EPOCH`][repr] to add the date
+  of the commit from which the binary was built ([#4221]).  This should simplify
+  reproducible builds for package maintainers and those who compile their own
+  AdGuard Home.
 - The setting `local_domain_name` is now in the `dhcp` block in the
   configuration file to avoid confusion ([#3367]).
 - The `dns.bogus_nxdomain` configuration file parameter now supports CIDR
@@ -74,6 +79,9 @@ In this release, the schema version has changed from 12 to 13.
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
+[#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
+
+[repr]: https://reproducible-builds.org/docs/source-date-epoch/
 
 
 

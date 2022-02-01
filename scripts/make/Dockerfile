@@ -5,22 +5,26 @@ FROM alpine:3.13
 ARG BUILD_DATE
 ARG VERSION
 ARG VCS_REF
-LABEL maintainer="AdGuard Team <devteam@adguard.com>" \
-  org.opencontainers.image.created=$BUILD_DATE \
-  org.opencontainers.image.url="https://adguard.com/adguard-home.html" \
-  org.opencontainers.image.source="https://github.com/AdguardTeam/AdGuardHome" \
-  org.opencontainers.image.version=$VERSION \
-  org.opencontainers.image.revision=$VCS_REF \
-  org.opencontainers.image.vendor="AdGuard" \
-  org.opencontainers.image.title="AdGuard Home" \
-  org.opencontainers.image.description="Network-wide ads & trackers blocking DNS server" \
-  org.opencontainers.image.licenses="GPL-3.0"
+
+LABEL\
+	maintainer="AdGuard Team <devteam@adguard.com>" \
+	org.opencontainers.image.authors="AdGuard Team <devteam@adguard.com>" \
+	org.opencontainers.image.created=$BUILD_DATE \
+	org.opencontainers.image.description="Network-wide ads & trackers blocking DNS server" \
+	org.opencontainers.image.documentation="https://github.com/AdguardTeam/AdGuardHome/wiki/" \
+	org.opencontainers.image.licenses="GPL-3.0" \
+	org.opencontainers.image.revision=$VCS_REF \
+	org.opencontainers.image.source="https://github.com/AdguardTeam/AdGuardHome" \
+	org.opencontainers.image.title="AdGuard Home" \
+	org.opencontainers.image.url="https://adguard.com/en/adguard-home/overview.html" \
+	org.opencontainers.image.vendor="AdGuard" \
+	org.opencontainers.image.version=$VERSION
 
 # Update certificates.
 RUN apk --no-cache --update add ca-certificates libcap tzdata && \
-    rm -rf /var/cache/apk/* && \
-    mkdir -p /opt/adguardhome/conf /opt/adguardhome/work && \
-    chown -R nobody: /opt/adguardhome
+	rm -rf /var/cache/apk/* && \
+	mkdir -p /opt/adguardhome/conf /opt/adguardhome/work && \
+	chown -R nobody: /opt/adguardhome
 
 ARG DIST_DIR
 ARG TARGETARCH

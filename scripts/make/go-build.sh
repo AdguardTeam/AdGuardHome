@@ -65,9 +65,9 @@ then
 fi
 readonly version
 
-# Set date and time of the current build unless already set.
-buildtime="${BUILD_TIME:-$( date -u +%FT%TZ%z )}"
-readonly buildtime
+# Set date and time of the latest commit unless already set.
+committime="${SOURCE_DATE_EPOCH:-$( git log -1 --pretty=%ct )}"
+readonly committime
 
 # Set the linker flags accordingly: set the release channel and the current
 # version as well as goarm and gomips variable values, if the variables are set
@@ -78,7 +78,7 @@ readonly version_pkg
 ldflags="-s -w"
 ldflags="${ldflags} -X ${version_pkg}.version=${version}"
 ldflags="${ldflags} -X ${version_pkg}.channel=${channel}"
-ldflags="${ldflags} -X ${version_pkg}.buildtime=${buildtime}"
+ldflags="${ldflags} -X ${version_pkg}.committime=${committime}"
 if [ "${GOARM:-}" != '' ]
 then
 	ldflags="${ldflags} -X ${version_pkg}.goarm=${GOARM}"
