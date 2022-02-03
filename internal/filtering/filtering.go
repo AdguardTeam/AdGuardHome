@@ -420,14 +420,8 @@ func (r Reason) Matched() bool {
 }
 
 // CheckHostRules tries to match the host against filtering rules only.
-func (d *DNSFilter) CheckHostRules(host string, qtype uint16, setts *Settings) (Result, error) {
-	if !setts.FilteringEnabled {
-		return Result{}, nil
-	}
-
-	host = strings.ToLower(host)
-
-	return d.matchHost(host, qtype, setts)
+func (d *DNSFilter) CheckHostRules(host string, rrtype uint16, setts *Settings) (Result, error) {
+	return d.matchHost(strings.ToLower(host), rrtype, setts)
 }
 
 // CheckHost tries to match the host against filtering rules, then safebrowsing
@@ -726,8 +720,7 @@ func hostRulesToRules(netRules []*rules.HostRule) (res []rules.Rule) {
 	return res
 }
 
-// matchHostProcessAllowList processes the allowlist logic of host
-// matching.
+// matchHostProcessAllowList processes the allowlist logic of host matching.
 func (d *DNSFilter) matchHostProcessAllowList(
 	host string,
 	dnsres *urlfilter.DNSResult,
@@ -798,11 +791,11 @@ func (d *DNSFilter) matchHostProcessDNSResult(
 	return Result{}
 }
 
-// matchHost is a low-level way to check only if hostname is filtered by rules,
+// matchHost is a low-level way to check only if host is filtered by rules,
 // skipping expensive safebrowsing and parental lookups.
 func (d *DNSFilter) matchHost(
 	host string,
-	qtype uint16,
+	rrtype uint16,
 	setts *Settings,
 ) (res Result, err error) {
 	if !setts.FilteringEnabled {
@@ -815,7 +808,7 @@ func (d *DNSFilter) matchHost(
 		// TODO(e.burkov): Wait for urlfilter update to pass net.IP.
 		ClientIP:   setts.ClientIP.String(),
 		ClientName: setts.ClientName,
-		DNSType:    qtype,
+		DNSType:    rrtype,
 	}
 
 	d.engineLock.RLock()
@@ -855,7 +848,7 @@ func (d *DNSFilter) matchHost(
 		return Result{}, nil
 	}
 
-	res = d.matchHostProcessDNSResult(qtype, dnsres)
+	res = d.matchHostProcessDNSResult(rrtype, dnsres)
 	for _, r := range res.Rules {
 		log.Debug(
 			"filtering: found rule %q for host %q, filter list id: %d",

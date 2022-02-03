@@ -613,9 +613,9 @@ func (s *Server) processFilteringAfterResponse(ctx *dnsContext) (rc resultCode) 
 			d.Res.Answer = answer
 		}
 	default:
-		// Check the response only if the it's from an upstream.  Don't check
-		// the response if the protection is disabled since dnsrewrite rules
-		// aren't applied to it anyway.
+		// Check the response only if it's from an upstream.  Don't check the
+		// response if the protection is disabled since dnsrewrite rules aren't
+		// applied to it anyway.
 		if !ctx.protectionEnabled || !ctx.responseFromUpstream || s.dnsFilter == nil {
 			break
 		}

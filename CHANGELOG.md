@@ -21,6 +21,8 @@ and this project adheres to
 
 ### Changed
 
+- Response filtering is now performed using the record types of the answer
+  section of messages as opposed to the type of the question ([#4238]).
 - Instead of adding the build time information, the build scripts now use the
   standardized environment variable [`SOURCE_DATE_EPOCH`][repr] to add the date
   of the commit from which the binary was built ([#4221]).  This should simplify
@@ -80,6 +82,7 @@ In this release, the schema version has changed from 12 to 13.
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
 [#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
+[#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
 
 [repr]: https://reproducible-builds.org/docs/source-date-epoch/
 

@@ -116,7 +116,7 @@ func (s *Server) filterDNSRequest(ctx *dnsContext) (*filtering.Result, error) {
 
 // checkHostRules checks the host against filters.  It is safe for concurrent
 // use.
-func (s *Server) checkHostRules(host string, qtype uint16, setts *filtering.Settings) (
+func (s *Server) checkHostRules(host string, rrtype uint16, setts *filtering.Settings) (
 	r *filtering.Result,
 	err error,
 ) {
@@ -128,7 +128,7 @@ func (s *Server) checkHostRules(host string, qtype uint16, setts *filtering.Sett
 	}
 
 	var res filtering.Result
-	res, err = s.dnsFilter.CheckHostRules(host, qtype, setts)
+	res, err = s.dnsFilter.CheckHostRules(host, rrtype, setts)
 	if err != nil {
 		return nil, err
 	}
@@ -136,33 +136,36 @@ func (s *Server) checkHostRules(host string, qtype uint16, setts *filtering.Sett
 	return &res, err
 }
 
-// If response contains CNAME, A or AAAA records, we apply filtering to each
-// canonical host name or IP address.  If this is a match, we set a new response
-// in d.Res and return.
-func (s *Server) filterDNSResponse(ctx *dnsContext) (*filtering.Result, error) {
+// filterDNSResponse checks each resource record of the response's answer
+// section from ctx and returns a non-nil res if at least one of canonnical
+// names or IP addresses in it matches the filtering rules.
+func (s *Server) filterDNSResponse(ctx *dnsContext) (res *filtering.Result, err error) {
 	d := ctx.proxyCtx
+	setts := ctx.setts
+	if !setts.FilteringEnabled {
+		return nil, nil
+	}
+
 	for _, a := range d.Res.Answer {
 		host := ""
-
-		switch v := a.(type) {
+		var rrtype uint16
+		switch a := a.(type) {
 		case *dns.CNAME:
-			log.Debug("DNSFwd: Checking CNAME %s for %s", v.Target, v.Hdr.Name)
-			host = strings.TrimSuffix(v.Target, ".")
-
+			host = strings.TrimSuffix(a.Target, ".")
+			rrtype = dns.TypeCNAME
 		case *dns.A:
-			host = v.A.String()
-			log.Debug("DNSFwd: Checking record A (%s) for %s", host, v.Hdr.Name)
-
+			host = a.A.String()
+			rrtype = dns.TypeA
 		case *dns.AAAA:
-			host = v.AAAA.String()
-			log.Debug("DNSFwd: Checking record AAAA (%s) for %s", host, v.Hdr.Name)
-
+			host = a.AAAA.String()
+			rrtype = dns.TypeAAAA
 		default:
 			continue
 		}
 
-		host = strings.TrimSuffix(host, ".")
-		res, err := s.checkHostRules(host, d.Req.Question[0].Qtype, ctx.setts)
+		log.Debug("dnsforward: checking %s %s for %s", dns.Type(rrtype), host, a.Header().Name)
+
+		res, err = s.checkHostRules(host, rrtype, setts)
 		if err != nil {
 			return nil, err
 		} else if res == nil {
