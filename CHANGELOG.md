@@ -21,10 +21,6 @@ and this project adheres to
 
 ### Deprecated
 
-<!--
-    TODO(a.garipov): Remove this deprecation, if v0.108.0 is released before
-    the Go 1.18 release.
--->
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
 ### Removed
@@ -37,6 +33,8 @@ and this project adheres to
 
 ## [v0.107.4] - 2022-03-01 (APPROX.)
 
+See also the [v0.107.4 GitHub milestone][ms-v0.107.4].
+
 ### Fixed
 
 - Unnecessarily complex hosts-related logic leading to infinite recursion in
@@ -44,9 +42,13 @@ and this project adheres to
 
 [#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
 
+[ms-v0.107.4]: https://github.com/AdguardTeam/AdGuardHome/milestone/41?closed=1
+
 
 
 ## [v0.107.3] - 2022-01-25
+
+See also the [v0.107.3 GitHub milestone][ms-v0.107.3].
 
 ### Added
 
@@ -67,9 +69,13 @@ and this project adheres to
 [#4120]: https://github.com/AdguardTeam/AdGuardHome/issues/4120
 [#4133]: https://github.com/AdguardTeam/AdGuardHome/issues/4133
 
+[ms-v0.107.3]: https://github.com/AdguardTeam/AdGuardHome/milestone/40?closed=1
+
 
 
 ## [v0.107.2] - 2021-12-29
+
+See also the [v0.107.2 GitHub milestone][ms-v0.107.2].
 
 ### Fixed
 
@@ -77,9 +83,13 @@ and this project adheres to
 
 [#4042]: https://github.com/AdguardTeam/AdGuardHome/issues/4042
 
+[ms-v0.107.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/38?closed=1
+
 
 
 ## [v0.107.1] - 2021-12-29
+
+See also the [v0.107.1 GitHub milestone][ms-v0.107.1].
 
 ### Changed
 
@@ -106,9 +116,13 @@ and this project adheres to
 [#4016]: https://github.com/AdguardTeam/AdGuardHome/issues/4016
 [#4027]: https://github.com/AdguardTeam/AdGuardHome/issues/4027
 
+[ms-v0.107.1]: https://github.com/AdguardTeam/AdGuardHome/milestone/37?closed=1
+
 
 
 ## [v0.107.0] - 2021-12-21
+
+See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
 
 ### Added
 
@@ -346,9 +360,13 @@ In this release, the schema version has changed from 10 to 12.
 [#3904]: https://github.com/AdguardTeam/AdGuardHome/issues/3904
 [#3933]: https://github.com/AdguardTeam/AdGuardHome/pull/3933
 
+[ms-v0.107.0]: https://github.com/AdguardTeam/AdGuardHome/milestone/23?closed=1
+
 
 
 ## [v0.106.3] - 2021-05-19
+
+See also the [v0.106.3 GitHub milestone][ms-v0.106.3].
 
 ### Added
 
@@ -379,9 +397,13 @@ In this release, the schema version has changed from 10 to 12.
 [#3115]: https://github.com/AdguardTeam/AdGuardHome/issues/3115
 [#3127]: https://github.com/AdguardTeam/AdGuardHome/issues/3127
 
+[ms-v0.106.3]: https://github.com/AdguardTeam/AdGuardHome/milestone/35?closed=1
+
 
 
 ## [v0.106.2] - 2021-05-06
+
+See also the [v0.106.2 GitHub milestone][ms-v0.106.2].
 
 ### Fixed
 
@@ -389,9 +411,13 @@ In this release, the schema version has changed from 10 to 12.
 
 [#3056]: https://github.com/AdguardTeam/AdGuardHome/issues/3056
 
+[ms-v0.106.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/34?closed=1
+
 
 
 ## [v0.106.1] - 2021-04-30
+
+See also the [v0.106.1 GitHub milestone][ms-v0.106.1].
 
 ### Fixed
 
@@ -403,9 +429,13 @@ In this release, the schema version has changed from 10 to 12.
 [#3027]: https://github.com/AdguardTeam/AdGuardHome/issues/3027
 [#3028]: https://github.com/AdguardTeam/AdGuardHome/issues/3028
 
+[ms-v0.106.1]: https://github.com/AdguardTeam/AdGuardHome/milestone/33?closed=1
+
 
 
 ## [v0.106.0] - 2021-04-28
+
+See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 
 ### Added
 
@@ -495,10 +525,13 @@ In this release, the schema version has changed from 10 to 12.
 [#2994]: https://github.com/AdguardTeam/AdGuardHome/issues/2994
 
 [doq-draft-02]: https://tools.ietf.org/html/draft-ietf-dprive-dnsoquic-02
+[ms-v0.106.0]:  https://github.com/AdguardTeam/AdGuardHome/milestone/26?closed=1
 
 
 
 ## [v0.105.2] - 2021-03-10
+
+See also the [v0.105.2 GitHub milestone][ms-v0.105.2].
 
 ### Fixed
 
@@ -511,6 +544,11 @@ In this release, the schema version has changed from 10 to 12.
 - Incomplete DNS upstreams validation ([#2674]).
 - Wrong parsing of DHCP options of the `ip` type ([#2688]).
 
+### Security
+
+- Session token doesn't contain user's information anymore ([#2470]).
+
+[#2470]: https://github.com/AdguardTeam/AdGuardHome/issues/2470
 [#2582]: https://github.com/AdguardTeam/AdGuardHome/issues/2582
 [#2600]: https://github.com/AdguardTeam/AdGuardHome/issues/2600
 [#2674]: https://github.com/AdguardTeam/AdGuardHome/issues/2674
@@ -519,15 +557,13 @@ In this release, the schema version has changed from 10 to 12.
 [#2692]: https://github.com/AdguardTeam/AdGuardHome/issues/2692
 [#2757]: https://github.com/AdguardTeam/AdGuardHome/issues/2757
 
-### Security
-
-- Session token doesn't contain user's information anymore ([#2470]).
-
-[#2470]: https://github.com/AdguardTeam/AdGuardHome/issues/2470
+[ms-v0.105.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/32?closed=1
 
 
 
 ## [v0.105.1] - 2021-02-15
+
+See also the [v0.105.1 GitHub milestone][ms-v0.105.1].
 
 ### Changed
 
@@ -568,9 +604,13 @@ In this release, the schema version has changed from 10 to 12.
 [#2678]: https://github.com/AdguardTeam/AdGuardHome/issues/2678
 [#2682]: https://github.com/AdguardTeam/AdGuardHome/issues/2682
 
+[ms-v0.105.1]: https://github.com/AdguardTeam/AdGuardHome/milestone/31?closed=1
+
 
 
 ## [v0.105.0] - 2021-02-10
+
+See also the [v0.105.0 GitHub milestone][ms-v0.105.0].
 
 ### Added
 
@@ -669,7 +709,13 @@ In this release, the schema version has changed from 10 to 12.
 [#2639]: https://github.com/AdguardTeam/AdGuardHome/issues/2639
 [#2646]: https://github.com/AdguardTeam/AdGuardHome/issues/2646
 
+[ms-v0.105.0]: https://github.com/AdguardTeam/AdGuardHome/milestone/27?closed=1
+
+
+
 ## [v0.104.3] - 2020-11-19
+
+See also the [v0.104.3 GitHub milestone][ms-v0.104.3].
 
 ### Fixed
 
@@ -677,9 +723,13 @@ In this release, the schema version has changed from 10 to 12.
 
 [#2336]: https://github.com/AdguardTeam/AdGuardHome/issues/2336
 
+[ms-v0.104.3]: https://github.com/AdguardTeam/AdGuardHome/milestone/30?closed=1
+
 
 
 ## [v0.104.2] - 2020-11-19
+
+See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 ### Added
 
@@ -704,6 +754,9 @@ In this release, the schema version has changed from 10 to 12.
 [#2301]: https://github.com/AdguardTeam/AdGuardHome/issues/2301
 [#2324]: https://github.com/AdguardTeam/AdGuardHome/issues/2324
 [#2325]: https://github.com/AdguardTeam/AdGuardHome/issues/2325
+
+[ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
+
 
 
 
