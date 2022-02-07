@@ -37,10 +37,13 @@ See also the [v0.107.4 GitHub milestone][ms-v0.107.4].
 
 ### Fixed
 
+- Optimistic cache now responds with expired items even if those can't be
+  resolved again ([#4254]).
 - Unnecessarily complex hosts-related logic leading to infinite recursion in
   some cases ([#4216]).
 
 [#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
+[#4254]: https://github.com/AdguardTeam/AdGuardHome/issues/4254
 
 [ms-v0.107.4]: https://github.com/AdguardTeam/AdGuardHome/milestone/41?closed=1
 
