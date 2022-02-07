@@ -57,14 +57,12 @@ In this release, the schema version has changed from 12 to 13.
 
 ### Deprecated
 
-<!--
-    TODO(a.garipov): Remove this deprecation, if v0.108.0 is released before
-    the Go 1.18 release.
--->
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
 ### Fixed
 
+- Optimistic cache now responds with expired items even if those can't be
+  resolved again ([#4254]).
 - Unnecessarily complex hosts-related logic leading to infinite recursion in
   some cases ([#4216]).
 
@@ -81,8 +79,10 @@ In this release, the schema version has changed from 12 to 13.
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
+[#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
 [#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
+[#4254]: https://github.com/AdguardTeam/AdGuardHome/issues/4254
 
 [repr]: https://reproducible-builds.org/docs/source-date-epoch/
 
