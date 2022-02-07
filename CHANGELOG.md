@@ -19,6 +19,42 @@ and this project adheres to
 
 - `windows/arm64` support ([#3057]).
 
+### Changed
+
+- Response filtering is now performed using the record types of the answer
+  section of messages as opposed to the type of the question ([#4238]).
+- Instead of adding the build time information, the build scripts now use the
+  standardized environment variable [`SOURCE_DATE_EPOCH`][repr] to add the date
+  of the commit from which the binary was built ([#4221]).  This should simplify
+  reproducible builds for package maintainers and those who compile their own
+  AdGuard Home.
+- The setting `local_domain_name` is now in the `dhcp` block in the
+  configuration file to avoid confusion ([#3367]).
+- The `dns.bogus_nxdomain` configuration file parameter now supports CIDR
+  notation alongside IP addresses ([#1730]).
+
+#### Configuration Changes
+
+In this release, the schema version has changed from 12 to 13.
+
+- Parameter `local_domain_name`, which in schema versions 12 and earlier used to
+  be a part of the `dns` object, is now a part of the `dhcp` object:
+
+  ```yaml
+  # BEFORE:
+  'dns':
+    # …
+    'local_domain_name': 'lan'
+
+  # AFTER:
+  'dhcp':
+    # …
+    'local_domain_name': 'lan'
+  ```
+
+  To rollback this change, move the parameter back into `dns` and change the
+  `schema_version` back to `12`.
+
 ### Deprecated
 
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
@@ -27,7 +63,19 @@ and this project adheres to
 
 - Go 1.16 support.
 
+### Security
+
+- Weaker cipher suites that use the CBC (cipher block chaining) mode of
+  operation have been disabled ([#2993]).
+
+[#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
+[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+[#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
+[#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
+[#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
+
+[repr]: https://reproducible-builds.org/docs/source-date-epoch/
 
 
 
