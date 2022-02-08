@@ -313,7 +313,7 @@
     "fix": "تعمیر",
     "dns_providers": "در اینجا یک <0>لیست از سرویس های ارائه دهنده DNS</0> برای انتخاب هست.",
     "update_now": "حالا بروز رسانی",
-    "update_failed": "بروز رسانی خودکار موفق نشد. لطفا <a href='https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#update'>مراحل را دنبال کرده</a> تا بطور دستی بروز رسانی کنید.",
+    "update_failed": "بروز رسانی خودکار موفق نشد. لطفا <a>مراحل را دنبال کرده</a> تا بطور دستی بروز رسانی کنید.",
     "processing_update": "منتظر بمانید،AdGuard Home در حال بروز رسانی است",
     "clients_title": "کلاینت ها",
     "clients_desc": "پیکربندی دستگاه های متصل شده به AdGuard Home",

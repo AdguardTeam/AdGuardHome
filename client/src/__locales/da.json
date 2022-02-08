@@ -403,6 +403,7 @@
     "dns_providers": "Her er en <0>liste over kendte DNS-udbydere</ 0> at vælge imellem.",
     "update_now": "Opdatér nu",
     "update_failed": "Autoopdatering mislykkedes. Følg <a>disse trin</a> for at opdatere manuelt.",
+    "manual_update": "<a>Følg disse trin</a> for at opdatere manuelt.",
     "processing_update": "Vent venligst, AdGuard Home bliver opdateret",
     "clients_title": "Klienter",
     "clients_desc": "Opsæt enheder forbundet til AdGuard Home",

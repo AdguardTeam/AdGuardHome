@@ -403,6 +403,7 @@
     "dns_providers": "Qui c'è un <0>elenco di fornitori DNS noti</0> da cui scegliere.",
     "update_now": "Aggiorna ora",
     "update_failed": "Aggiornamento automatico non riuscito. Ti suggeriamo di <a>seguire questi passaggi</a> per aggiornare manualmente.",
+    "manual_update": "Ti invitiamo a <a>seguire questi passaggi</a> per aggiornare manualmente.",
     "processing_update": "Perfavore aspetta, AdGuard Home si sta aggiornando",
     "clients_title": "Client",
     "clients_desc": "Configura i dispositivi connessi ad AdGuard Home",
