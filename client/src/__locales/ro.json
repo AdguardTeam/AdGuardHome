@@ -403,6 +403,7 @@
     "dns_providers": "Iată o <0>listă de furnizori DNS cunoscuți</0> ce pot fi aleși.",
     "update_now": "Actualizați acum",
     "update_failed": "Auto-actualizarea a eșuat. Vă rugăm să <a>urmați aceste etape</a> pentru a actualiza manual.",
+    "manual_update": "Vă rugăm <a>să urmați etapele următoare</a> pentru a actualiza manual.",
     "processing_update": "Vă rugăm să așteptați, AdGuard Home se actualizează...",
     "clients_title": "Clienți",
     "clients_desc": "Configură aparatele conectate la AdGuard Home",

@@ -403,6 +403,7 @@
     "dns_providers": "こちらは、選択可能な<0>既知のDNSプロバイダの一覧</0>です。",
     "update_now": "今すぐ更新する",
     "update_failed": "自動更新に失敗しました。手動で更新するには、<a>手順に従って</a>ください。",
+    "manual_update": "手動でアップデートするには、<a>こちらの手順</a>を使ってください。",
     "processing_update": "AdGuard Homeを更新しています。しばらくお待ちください",
     "clients_title": "クライアント",
     "clients_desc": "AdGuard Homeに接続されているデバイスを設定します",

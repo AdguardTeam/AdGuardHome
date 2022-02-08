@@ -403,6 +403,7 @@
     "dns_providers": "Tukaj je  <0>seznam znanih ponudnikov DNS</0>, med katerimi lahko izbirate.",
     "update_now": "Posodobi zdaj",
     "update_failed": "Samodejna posodobitev ni uspela. Prosimo <a>sledite korakom</a>, da ročno posodobite.",
+    "manual_update": "Za ročno posodobitev <a>sledite tem korakom</a>.",
     "processing_update": "Prosimo, počakajte. AdGuard Home se posodablja!",
     "clients_title": "Odjemalci",
     "clients_desc": "Konfigurirajte naprave, ki so povezane z AdGuard Home",

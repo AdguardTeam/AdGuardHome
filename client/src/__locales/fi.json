@@ -403,6 +403,7 @@
     "dns_providers": "Katso <0>luettelo tunnetuista DNS-palveluista</0>, joista valita.",
     "update_now": "Päivitä nyt",
     "update_failed": "Automaattinen päivitys epäonnistui. Seuraa <a>näitä ohjeita</a> päivittääksesi manuaalisesti.",
+    "manual_update": "Seuraa <a>näitä ohjeita</a> päivittääksesi manuaalisesti.",
     "processing_update": "Odota kun AdGuard Home päivittyy",
     "clients_title": "Päätelaitteet",
     "clients_desc": "Määritä AdGuard Homeen yhdistetyt päätelaitteet",

@@ -403,6 +403,7 @@
     "dns_providers": "此为可从中选择的<0>已知 DNS 提供商列表</0>。",
     "update_now": "立即更新",
     "update_failed": "自动更新失败。请<a>跟随这些步骤</a>以手动更新。",
+    "manual_update": "请跟随<a>此步骤</a>以进行手动更新。",
     "processing_update": "正在更新 AdGuard Home，请稍侯",
     "clients_title": "客户端",
     "clients_desc": "配置已连接到 AdGuard Home 的设备",

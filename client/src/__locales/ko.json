@@ -403,6 +403,7 @@
     "dns_providers": "다음은 선택할 수 있는 <0>알려진 DNS 공급자 목록</0>입니다.",
     "update_now": "지금 업데이트",
     "update_failed": "자동 업데이트 실패 되었습니다. <a> 단계를 따라 수동으로 업데이트하세요</a>",
+    "manual_update": "<a>절차를 따라</a> 수동으로 업데이트하십시오.",
     "processing_update": "잠시만 기다려주세요, AdGuard Home가 업데이트 중입니다.",
     "clients_title": "클라이언트",
     "clients_desc": "AdGuard Home에 연결할 기기들을 설정",

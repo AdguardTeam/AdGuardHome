@@ -403,6 +403,7 @@
     "dns_providers": "Zde je <0>seznam známých poskytovatelů DNS</0>, z nichž si můžete vybrat.",
     "update_now": "Aktualizovat nyní",
     "update_failed": "Automatická aktualizace selhala. Prosím <a>následujte tyto kroky</a> a aktualizujte ručně.",
+    "manual_update": "Prosím <a>následujte tyto kroky</a> a aktualizujte ručně.",
     "processing_update": "Čekejte prosím, AdGuard Home se aktualizuje",
     "clients_title": "Klienti",
     "clients_desc": "Konfigurace zařízení připojených k AdGuard Home",

@@ -403,6 +403,7 @@
     "dns_providers": "hier is een <0>lijst of gekende DNS providers</0> waarvan je kan kiezen.",
     "update_now": "Update nu",
     "update_failed": "Automatisch bijwerken is mislukt. <a>Volg deze stappen</a> om handmatig bij te werken.",
+    "manual_update": "<a>Volg deze stappen</a> om handmatig bij te werken.",
     "processing_update": "Even geduld, AdGuard Home wordt bijgewerkt",
     "clients_title": "Gebruikers",
     "clients_desc": "Configureer apparaten die gebruik maken van AdGuard Home",
