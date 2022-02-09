@@ -130,37 +130,34 @@ done
 readonly sha256sum_cmd
 
 # Data section.  Arrange data into space-separated tables for read -r to read.
-# Use 0 for missing values.
-#
-# TODO(a.garipov): Remove armv6, because it was always overwritten by armv7.
-# Rename armv7 to armhf.  Rename the 386 snap to i386.
+# Use a hyphen for missing values.
 
 #    os  arch      arm mips       snap
 platforms="\
-darwin   amd64     0   0          0
-darwin   arm64     0   0          0
-freebsd  386       0   0          0
-freebsd  amd64     0   0          0
-freebsd  arm       5   0          0
-freebsd  arm       6   0          0
-freebsd  arm       7   0          0
-freebsd  arm64     0   0          0
-linux    386       0   0          386
-linux    amd64     0   0          amd64
-linux    arm       5   0          0
-linux    arm       6   0          armv6
-linux    arm       7   0          armv7
-linux    arm64     0   0          arm64
-linux    mips      0   softfloat  0
-linux    mips64    0   softfloat  0
-linux    mips64le  0   softfloat  0
-linux    mipsle    0   softfloat  0
-linux    ppc64le   0   0          0
-openbsd  amd64     0   0          0
-openbsd  arm64     0   0          0
-windows  386       0   0          0
-windows  amd64     0   0          0
-windows  arm64     0   0          0"
+darwin   amd64     -   -          -
+darwin   arm64     -   -          -
+freebsd  386       -   -          -
+freebsd  amd64     -   -          -
+freebsd  arm       5   -          -
+freebsd  arm       6   -          -
+freebsd  arm       7   -          -
+freebsd  arm64     -   -          -
+linux    386       -   -          i386
+linux    amd64     -   -          amd64
+linux    arm       5   -          -
+linux    arm       6   -          -
+linux    arm       7   -          armhf
+linux    arm64     -   -          arm64
+linux    mips      -   softfloat  -
+linux    mips64    -   softfloat  -
+linux    mips64le  -   softfloat  -
+linux    mipsle    -   softfloat  -
+linux    ppc64le   -   -          -
+openbsd  amd64     -   -          -
+openbsd  arm64     -   -          -
+windows  386       -   -          -
+windows  amd64     -   -          -
+windows  arm64     -   -          -"
 readonly platforms
 
 # Function build builds the release for one platform.  It builds a binary, an
@@ -189,15 +186,15 @@ build() {
 
 	# Build the binary.
 	#
-	# Set GOARM and GOMIPS to an empty string if $build_arm and $build_mips
-	# are zero by removing the zero as if it's a prefix.
+	# Set GOARM and GOMIPS to an empty string if $build_arm and $build_mips are
+	# the zero value by removing the hyphen as if it's a prefix.
 	#
 	# Don't use quotes with $build_par because we want an empty space if
 	# parallelism wasn't set.
 	env\
 		GOARCH="$build_arch"\
-		GOARM="${build_arm#0}"\
-		GOMIPS="${build_mips#0}"\
+		GOARM="${build_arm#-}"\
+		GOMIPS="${build_mips#-}"\
 		GOOS="$os"\
 		VERBOSE="$(( verbose - 1 ))"\
 		VERSION="$version"\
@@ -228,8 +225,8 @@ build() {
 	in
 	('darwin'|'windows')
 		build_archive="./${dist}/${build_ar}.zip"
-		# TODO(a.garipov): Find an option similar to the -C option of
-		# tar for zip.
+		# TODO(a.garipov): Find an option similar to the -C option of tar for
+		# zip.
 		( cd "${dist}/${1}" && zip -9 -q -r "../../${build_archive}" "./AdGuardHome" )
 		;;
 	(*)
@@ -240,58 +237,38 @@ build() {
 
 	log "$build_archive"
 
-	# build_snap is a string, so use string comparison for it.
-	#
-	# TODO(a.garipov): Consider using a different empty value in the
-	# platforms table.
-	if [ "$build_snap" = '0' ] || [ "$snap_enabled" -eq '0' ]
+	# Exit if we don't need to build the Snap package.
+	if [ "$build_snap" = '-' ] || [ "$snap_enabled" -eq '0' ]
 	then
 		return
 	fi
 
-	# Prepare snap build.
+	# Prepare the Snap build.
 	build_snap_output="./${dist}/AdGuardHome_${build_snap}.snap"
 	build_snap_dir="${build_snap_output}.dir"
 
 	# Create the meta subdirectory and copy files there.
 	mkdir -p "${build_snap_dir}/meta"
-	cp "$build_output"\
-		'./scripts/snap/local/adguard-home-web.sh'\
-		"$build_snap_dir"
-	cp -r './scripts/snap/gui'\
-		"${build_snap_dir}/meta/"
-
-	# TODO(a.garipov): Remove this crutch later.
-	case "$build_snap"
-	in
-	('386')
-		build_snap_arch="i386"
-		;;
-	('armv6'|'armv7')
-		build_snap_arch="armhf"
-		;;
-	(*)
-		build_snap_arch="$build_snap"
-		;;
-	esac
+	cp "$build_output" './scripts/snap/local/adguard-home-web.sh' "$build_snap_dir"
+	cp -r './scripts/snap/gui' "${build_snap_dir}/meta/"
 
 	# Create a snap.yaml file, setting the values.
 	sed -e 's/%VERSION%/'"$version"'/'\
-		-e 's/%ARCH%/'"$build_snap_arch"'/'\
+		-e 's/%ARCH%/'"$build_snap"'/'\
 		./scripts/snap/snap.tmpl.yaml\
 		>"${build_snap_dir}/meta/snap.yaml"
 
 	# TODO(a.garipov): The snapcraft tool will *always* write everything,
-	# including errors, to stdout.  And there doesn't seem to be a way to
-	# change that.  So, save the combined output, but only show it when
-	# snapcraft actually fails.
+	# including errors, to stdout.  And there doesn't seem to be a way to change
+	# that.  So, save the combined output, but only show it when snapcraft
+	# actually fails.
 	set +e
 	build_snapcraft_output="$(
 		snapcraft pack "$build_snap_dir" --output "$build_snap_output" 2>&1
 	)"
 	build_snapcraft_exit_code="$?"
 	set -e
-	if [ "$build_snapcraft_exit_code" != '0' ]
+	if [ "$build_snapcraft_exit_code" -ne '0' ]
 	then
 		log "$build_snapcraft_output"
 		exit "$build_snapcraft_exit_code"
