@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -359,11 +360,26 @@ func shutdownSrv(ctx context.Context, srv *http.Server) {
 	}
 }
 
+// PasswordMinRunes is the minimum length of user's password in runes.
+const PasswordMinRunes = 8
+
 // Apply new configuration, start DNS server, restart Web server
 func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	req, restartHTTP, err := decodeApplyConfigReq(r.Body)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+
+		return
+	}
+
+	if utf8.RuneCountInString(req.Password) < PasswordMinRunes {
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusUnprocessableEntity,
+			"password must be at least %d symbols long",
+			PasswordMinRunes,
+		)
 
 		return
 	}

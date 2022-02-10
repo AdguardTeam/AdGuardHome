@@ -72,6 +72,7 @@ In this release, the schema version has changed from 12 to 13.
 
 ### Security
 
+- Enforced password strength policy ([3503]).
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).
 
@@ -79,6 +80,7 @@ In this release, the schema version has changed from 12 to 13.
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
+[#3503]: https://github.com/AdguardTeam/AdGuardHome/issues/3503
 [#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
 [#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238

@@ -4,6 +4,12 @@
 
 ## v0.107.3: API changes
 
+### The new possible status code in `/install/configure` response.
+
+* The new status code `422 Unprocessable Entity` in the response for
+  `POST /install/configure` which means that the specified password does not
+  meet the strength requirements.
+
 ### The new field `"version"` in `AddressesInfo`
 
 * The new field `"version"` in `GET /install/get_addresses` is the version of
