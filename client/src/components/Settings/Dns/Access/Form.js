@@ -9,7 +9,7 @@ import {
     trimMultilineString,
     removeEmptyLines,
 } from '../../../../helpers/helpers';
-import { FORM_NAME } from '../../../../helpers/constants';
+import { CLIENT_ID_LINK, FORM_NAME } from '../../../../helpers/constants';
 
 const fields = [
     {
@@ -48,7 +48,7 @@ let Form = (props) => {
             </>}
         </label>
         <div className="form__desc form__desc--top">
-            <Trans>{subtitle}</Trans>
+            <Trans components={{ a: <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer">text</a> }}>{subtitle}</Trans>
         </div>
         <Field
             id={id}

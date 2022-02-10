@@ -532,7 +532,7 @@ func (clients *clientsContainer) check(c *Client) (err error) {
 		} else if err = dnsforward.ValidateClientID(id); err == nil {
 			c.IDs[i] = id
 		} else {
-			return fmt.Errorf("invalid client id at index %d: %q", i, id)
+			return fmt.Errorf("invalid clientid at index %d: %q", i, id)
 		}
 	}
 

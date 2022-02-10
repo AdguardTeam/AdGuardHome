@@ -822,12 +822,12 @@
       - 'clients'
       'operationId': 'clientsFind'
       'summary': >
-        Get information about clients by their IP addresses or client IDs.
+        Get information about clients by their IP addresses or ClientIDs.
       'parameters':
       - 'name': 'ip0'
         'in': 'query'
         'description': >
-          Filter by IP address or client IDs.  Parameters with names `ip1`,
+          Filter by IP address or ClientIDs.  Parameters with names `ip1`,
           `ip2`, and so on are also accepted and interpreted as "ip0 OR ip1 OR
           ip2".
 
@@ -1150,7 +1150,7 @@
         'schema':
           'type': 'string'
       - 'description': >
-          Client ID.
+          ClientID.
         'example': 'client-1'
         'in': 'query'
         'name': 'client_id'
@@ -1185,7 +1185,7 @@
         'schema':
           'type': 'string'
       - 'description': >
-          Client ID.
+          ClientID.
         'example': 'client-1'
         'in': 'query'
         'name': 'client_id'
@@ -1890,7 +1890,7 @@
           'type': 'string'
         'client_id':
           'description': >
-            The client ID, if provided in DoH, DoQ, or DoT.
+            The ClientID, if provided in DoH, DoQ, or DoT.
           'example': 'cli123'
           'type': 'string'
         'client_info':
@@ -2276,7 +2276,7 @@
           'example': 'localhost'
         'ids':
           'type': 'array'
-          'description': 'IP, CIDR, MAC, or client ID.'
+          'description': 'IP, CIDR, MAC, or ClientID.'
           'items':
             'type': 'string'
         'use_global_settings':
@@ -2381,13 +2381,13 @@
       'properties':
         'allowed_clients':
           'description': >
-            The allowlist of clients: IP addresses, CIDRs, or client IDs.
+            The allowlist of clients: IP addresses, CIDRs, or ClientIDs.
           'items':
             'type': 'string'
           'type': 'array'
         'disallowed_clients':
           'description': >
-            The blocklist of clients: IP addresses, CIDRs, or client IDs.
+            The blocklist of clients: IP addresses, CIDRs, or ClientIDs.
           'items':
             'type': 'string'
           'type': 'array'
@@ -2411,7 +2411,7 @@
           'example': 'localhost'
         'ids':
           'type': 'array'
-          'description': 'IP, CIDR, MAC, or client ID.'
+          'description': 'IP, CIDR, MAC, or ClientID.'
           'items':
             'type': 'string'
         'use_global_settings':

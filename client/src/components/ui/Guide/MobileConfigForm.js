@@ -7,7 +7,12 @@ import i18next from 'i18next';
 import cn from 'classnames';
 
 import { getPathWithQueryString } from '../../../helpers/helpers';
-import { FORM_NAME, MOBILE_CONFIG_LINKS, STANDARD_HTTPS_PORT } from '../../../helpers/constants';
+import {
+    CLIENT_ID_LINK,
+    FORM_NAME,
+    MOBILE_CONFIG_LINKS,
+    STANDARD_HTTPS_PORT,
+} from '../../../helpers/constants';
 import {
     renderInputField,
     renderSelectField,
@@ -62,7 +67,7 @@ const MobileConfigForm = ({ invalid }) => {
 
     const githubLink = (
         <a
-            href="https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#idclient"
+            href={CLIENT_ID_LINK}
             target="_blank"
             rel="noopener noreferrer"
         >

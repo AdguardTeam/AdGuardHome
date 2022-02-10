@@ -65,7 +65,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantErrMsg:   "",
 		strictSNI:    false,
 	}, {
-		name:         "tls_no_client_id",
+		name:         "tls_no_clientid",
 		proto:        proxy.ProtoTLS,
 		hostSrvName:  "example.com",
 		cliSrvName:   "example.com",
@@ -78,7 +78,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		hostSrvName:  "example.com",
 		cliSrvName:   "",
 		wantClientID: "",
-		wantErrMsg: `client id check: client server name "" ` +
+		wantErrMsg: `clientid check: client server name "" ` +
 			`doesn't match host server name "example.com"`,
 		strictSNI: true,
 	}, {
@@ -90,7 +90,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantErrMsg:   "",
 		strictSNI:    false,
 	}, {
-		name:         "tls_client_id",
+		name:         "tls_clientid",
 		proto:        proxy.ProtoTLS,
 		hostSrvName:  "example.com",
 		cliSrvName:   "cli.example.com",
@@ -98,36 +98,36 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantErrMsg:   "",
 		strictSNI:    true,
 	}, {
-		name:         "tls_client_id_hostname_error",
+		name:         "tls_clientid_hostname_error",
 		proto:        proxy.ProtoTLS,
 		hostSrvName:  "example.com",
 		cliSrvName:   "cli.example.net",
 		wantClientID: "",
-		wantErrMsg: `client id check: client server name "cli.example.net" ` +
+		wantErrMsg: `clientid check: client server name "cli.example.net" ` +
 			`doesn't match host server name "example.com"`,
 		strictSNI: true,
 	}, {
-		name:         "tls_invalid_client_id",
+		name:         "tls_invalid_clientid",
 		proto:        proxy.ProtoTLS,
 		hostSrvName:  "example.com",
 		cliSrvName:   "!!!.example.com",
 		wantClientID: "",
-		wantErrMsg: `client id check: invalid client id "!!!": ` +
+		wantErrMsg: `clientid check: invalid clientid "!!!": ` +
 			`bad domain name label rune '!'`,
 		strictSNI: true,
 	}, {
-		name:        "tls_client_id_too_long",
+		name:        "tls_clientid_too_long",
 		proto:       proxy.ProtoTLS,
 		hostSrvName: "example.com",
 		cliSrvName: `abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmno` +
 			`pqrstuvwxyz0123456789.example.com`,
 		wantClientID: "",
-		wantErrMsg: `client id check: invalid client id "abcdefghijklmno` +
+		wantErrMsg: `clientid check: invalid clientid "abcdefghijklmno` +
 			`pqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789": ` +
 			`domain name label is too long: got 72, max 63`,
 		strictSNI: true,
 	}, {
-		name:         "quic_client_id",
+		name:         "quic_clientid",
 		proto:        proxy.ProtoQUIC,
 		hostSrvName:  "example.com",
 		cliSrvName:   "cli.example.com",
@@ -135,12 +135,12 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantErrMsg:   "",
 		strictSNI:    true,
 	}, {
-		name:         "tls_client_id_issue3437",
+		name:         "tls_clientid_issue3437",
 		proto:        proxy.ProtoTLS,
 		hostSrvName:  "example.com",
 		cliSrvName:   "cli.myexample.com",
 		wantClientID: "",
-		wantErrMsg: `client id check: client server name "cli.myexample.com" ` +
+		wantErrMsg: `clientid check: client server name "cli.myexample.com" ` +
 			`doesn't match host server name "example.com"`,
 		strictSNI: true,
 	}}
@@ -191,22 +191,22 @@ func TestClientIDFromDNSContextHTTPS(t *testing.T) {
 		wantClientID string
 		wantErrMsg   string
 	}{{
-		name:         "no_client_id",
+		name:         "no_clientid",
 		path:         "/dns-query",
 		wantClientID: "",
 		wantErrMsg:   "",
 	}, {
-		name:         "no_client_id_slash",
+		name:         "no_clientid_slash",
 		path:         "/dns-query/",
 		wantClientID: "",
 		wantErrMsg:   "",
 	}, {
-		name:         "client_id",
+		name:         "clientid",
 		path:         "/dns-query/cli",
 		wantClientID: "cli",
 		wantErrMsg:   "",
 	}, {
-		name:         "client_id_slash",
+		name:         "clientid_slash",
 		path:         "/dns-query/cli/",
 		wantClientID: "cli",
 		wantErrMsg:   "",
@@ -214,18 +214,17 @@ func TestClientIDFromDNSContextHTTPS(t *testing.T) {
 		name:         "bad_url",
 		path:         "/foo",
 		wantClientID: "",
-		wantErrMsg:   `client id check: invalid path "/foo"`,
+		wantErrMsg:   `clientid check: invalid path "/foo"`,
 	}, {
 		name:         "extra",
 		path:         "/dns-query/cli/foo",
 		wantClientID: "",
-		wantErrMsg:   `client id check: invalid path "/dns-query/cli/foo": extra parts`,
+		wantErrMsg:   `clientid check: invalid path "/dns-query/cli/foo": extra parts`,
 	}, {
-		name:         "invalid_client_id",
+		name:         "invalid_clientid",
 		path:         "/dns-query/!!!",
 		wantClientID: "",
-		wantErrMsg: `client id check: invalid client id "!!!": ` +
-			`bad domain name label rune '!'`,
+		wantErrMsg:   `clientid check: invalid clientid "!!!": bad domain name label rune '!'`,
 	}}
 
 	for _, tc := range testCases {

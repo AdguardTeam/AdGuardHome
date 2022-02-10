@@ -8,7 +8,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// client finds the client info, if any, by its client ID and IP address,
+// client finds the client info, if any, by its ClientID and IP address,
 // optionally checking the provided cache.  It will use the IP address
 // regardless of if the IP anonymization is enabled now, because the
 // anonymization could have been disabled in the past, and client will try to
@@ -57,7 +57,7 @@ func (l *queryLog) searchMemory(params *searchParams, cache clientCache) (entrie
 		e.client, err = l.client(e.ClientID, e.IP.String(), cache)
 		if err != nil {
 			msg := "querylog: enriching memory record at time %s" +
-				" for client %q (client id %q): %s"
+				" for client %q (clientid %q): %s"
 			log.Error(msg, e.Time, e.IP, e.ClientID, err)
 
 			// Go on and try to match anyway.
@@ -216,8 +216,8 @@ func (f quickMatchClientFinder) findClient(clientID, ip string) (c *Client) {
 	var err error
 	c, err = f.client(clientID, ip, f.cache)
 	if err != nil {
-		log.Error("querylog: enriching file record for quick search:"+
-			" for client %q (client id %q): %s",
+		log.Error(
+			"querylog: enriching file record for quick search: for client %q (clientid %q): %s",
 			ip,
 			clientID,
 			err,
@@ -259,8 +259,7 @@ func (l *queryLog) readNextEntry(
 	e.client, err = l.client(e.ClientID, e.IP.String(), cache)
 	if err != nil {
 		log.Error(
-			"querylog: enriching file record at time %s"+
-				" for client %q (client id %q): %s",
+			"querylog: enriching file record at time %s for client %q (clientid %q): %s",
 			e.Time,
 			e.IP,
 			e.ClientID,
