@@ -28,7 +28,7 @@ import (
 // DefaultTimeout is the default upstream timeout
 const DefaultTimeout = 10 * time.Second
 
-// defaultClientIDCacheCount is the default count of items in the LRU client ID
+// defaultClientIDCacheCount is the default count of items in the LRU ClientID
 // cache.  The assumption here is that there won't be more than this many
 // requests between the BeforeRequestHandler stage and the actual processing.
 const defaultClientIDCacheCount = 1024
@@ -88,8 +88,8 @@ type Server struct {
 	tableIPToHost     *netutil.IPMap
 	tableIPToHostLock sync.Mutex
 
-	// clientIDCache is a temporary storage for clientIDs that were
-	// extracted during the BeforeRequestHandler stage.
+	// clientIDCache is a temporary storage for ClientIDs that were extracted
+	// during the BeforeRequestHandler stage.
 	clientIDCache cache.Cache
 
 	// DNS proxy instance for internal usage

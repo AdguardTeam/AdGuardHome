@@ -66,7 +66,7 @@ func TestProcessQueryLogsAndStats(t *testing.T) {
 		reason:         filtering.NotFilteredNotFound,
 		wantStatResult: stats.RNotFiltered,
 	}, {
-		name:           "success_tls_client_id",
+		name:           "success_tls_clientid",
 		proto:          proxy.ProtoTLS,
 		addr:           &net.TCPAddr{IP: net.IP{1, 2, 3, 4}, Port: 1234},
 		clientID:       "cli42",

@@ -201,8 +201,6 @@ let Form = (props) => {
                     <div className="form__group form__group--settings">
                         <label className="form__label" htmlFor="port_dns_over_quic">
                             <Trans>encryption_doq</Trans>
-                            &nbsp;
-                            <span className="text-lowercase">(<Trans>experimental</Trans>)</span>
                         </label>
                         <Field
                                 id="port_dns_over_quic"

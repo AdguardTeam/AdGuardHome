@@ -69,9 +69,9 @@
 
 * The type of `"interval"` field is now `number` instead of `integer`.
 
-### Client IDs in Access Settings
+### ClientIDs in Access Settings
 
-* The `POST /control/access/set` HTTP API now accepts client IDs in
+* The `POST /control/access/set` HTTP API now accepts ClientIDs in
   `"allowed_clients"` and `"disallowed_clients"` fields.
 
 ### The new field `"unicode_name"` in `DNSQuestion`

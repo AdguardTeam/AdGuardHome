@@ -8,10 +8,10 @@ const Examples = (props) => (
         <Trans>examples_title</Trans>:
         <ol className="leading-loose">
             <li>
-                <code>94.140.14.140</code> - {props.t('example_upstream_regular')}
+                <code>94.140.14.140</code>: {props.t('example_upstream_regular')}
             </li>
             <li>
-                <code>tls://dns-unfiltered.adguard.com</code> –&nbsp;
+                <code>tls://dns-unfiltered.adguard.com</code>:
                 <span>
                     <Trans
                         components={[
@@ -30,7 +30,7 @@ const Examples = (props) => (
                 </span>
             </li>
             <li>
-                <code>https://dns-unfiltered.adguard.com/dns-query</code> –&nbsp;
+                <code>https://dns-unfiltered.adguard.com/dns-query</code>:
                 <span>
                     <Trans
                         components={[
@@ -49,7 +49,7 @@ const Examples = (props) => (
                 </span>
             </li>
             <li>
-                <code>quic://dns-unfiltered.adguard.com:784</code> –&nbsp;
+                <code>quic://dns-unfiltered.adguard.com:784</code>:
                 <span>
                     <Trans
                         components={[
@@ -65,15 +65,13 @@ const Examples = (props) => (
                     >
                         example_upstream_doq
                     </Trans>
-                    &nbsp;
-                    <span className="text-lowercase">(<Trans>experimental</Trans>)</span>
                 </span>
             </li>
             <li>
-                <code>tcp://94.140.14.140</code> – <Trans>example_upstream_tcp</Trans>
+                <code>tcp://94.140.14.140</code>: <Trans>example_upstream_tcp</Trans>
             </li>
             <li>
-                <code>sdns://...</code> –&nbsp;
+                <code>sdns://...</code>:
                 <span>
                     <Trans
                         components={[
@@ -108,7 +106,7 @@ const Examples = (props) => (
                 </span>
             </li>
             <li>
-                <code>[/example.local/]94.140.14.140</code> –&nbsp;
+                <code>[/example.local/]94.140.14.140</code>:
                 <span>
                     <Trans
                         components={[
@@ -127,7 +125,7 @@ const Examples = (props) => (
                 </span>
             </li>
             <li>
-                <code>{COMMENT_LINE_DEFAULT_TOKEN} comment</code> –&nbsp;
+                <code>{COMMENT_LINE_DEFAULT_TOKEN} comment</code>:
                 <span>
                     <Trans>example_upstream_comment</Trans>
                 </span>

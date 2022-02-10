@@ -19,7 +19,7 @@ import {
     renderServiceField,
 } from '../../../helpers/form';
 import { validateClientId, validateRequiredValue } from '../../../helpers/validators';
-import { FORM_NAME, SERVICES } from '../../../helpers/constants';
+import { CLIENT_ID_LINK, FORM_NAME, SERVICES } from '../../../helpers/constants';
 import './Service.css';
 
 const settingsCheckboxes = [
@@ -281,11 +281,11 @@ let Form = (props) => {
                         </div>
                         <div className="form__desc mt-0">
                             <Trans
-                                components={[
-                                    <a href="https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#idclient" key="0" target="_blank" rel="noopener noreferrer">
-                                        link
+                                components={{
+                                    a: <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer">
+                                        text
                                     </a>,
-                                ]}
+                                }}
                             >
                                 client_identifier_desc
                             </Trans>

@@ -119,8 +119,8 @@ func (a *accessCtx) allowlistMode() (ok bool) {
 func (a *accessCtx) isBlockedClientID(id string) (ok bool) {
 	allowlistMode := a.allowlistMode()
 	if id == "" {
-		// In allowlist mode, consider requests without client IDs
-		// blocked by default.
+		// In allowlist mode, consider requests without ClientIDs blocked by
+		// default.
 		return allowlistMode
 	}
 

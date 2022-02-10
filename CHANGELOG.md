@@ -186,7 +186,7 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
 - Static IP address detection on FreeBSD ([#3289]).
 - Optimistic cache ([#2145]).
 - New possible value of `6h` for `querylog_interval` setting ([#2504]).
-- Blocking access using client IDs ([#2624], [#3162]).
+- Blocking access using ClientIDs ([#2624], [#3162]).
 - `source` directives support in `/etc/network/interfaces` on Linux ([#3257]).
 - RFC 9000 support in DNS-over-QUIC.
 - Completely disabling statistics by setting the statistics interval to zero
@@ -317,7 +317,7 @@ In this release, the schema version has changed from 10 to 12.
 - Occasional panics when reading old statistics databases ([#3506]).
 - `reload` service action on macOS and FreeBSD ([#3457]).
 - Inaccurate using of service actions in the installation script ([#3450]).
-- Client ID checking ([#3437]).
+- ClientID checking ([#3437]).
 - Discovering other DHCP servers on `darwin` and `freebsd` ([#3417]).
 - Switching listening address to unspecified one when bound to a single
   specified IPv4 address on Darwin (macOS) ([#2807]).
@@ -334,7 +334,7 @@ In this release, the schema version has changed from 10 to 12.
 - Redundant hostname generating while loading static leases with empty hostname
   ([#3166]).
 - Domain name case in responses ([#3194]).
-- Custom upstreams selection for clients with client IDs in DNS-over-TLS and
+- Custom upstreams selection for clients with ClientIDs in DNS-over-TLS and
   DNS-over-HTTP ([#3186]).
 - Incorrect client-based filtering applying logic ([#2875]).
 
@@ -668,7 +668,7 @@ See also the [v0.105.0 GitHub milestone][ms-v0.105.0].
 
 - Added more services to the "Blocked services" list ([#2224], [#2401]).
 - `ipset` subdomain matching, just like `dnsmasq` does ([#2179]).
-- Client ID support for DNS-over-HTTPS, DNS-over-QUIC, and DNS-over-TLS
+- ClientID support for DNS-over-HTTPS, DNS-over-QUIC, and DNS-over-TLS
   ([#1383]).
 - `$dnsrewrite` modifier for filters ([#2102]).
 - The host checking API and the query logs API can now return multiple matched

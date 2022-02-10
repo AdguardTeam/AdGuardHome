@@ -35,7 +35,7 @@ type dnsContext struct {
 	// err is the error returned from a processing function.
 	err error
 
-	// clientID is the clientID from DoH, DoQ, or DoT, if provided.
+	// clientID is the ClientID from DoH, DoQ, or DoT, if provided.
 	clientID string
 
 	// origQuestion is the question received from the client.  It is set
@@ -546,7 +546,7 @@ func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
 	}
 
 	if pctx.Addr != nil && s.conf.GetCustomUpstreamByClient != nil {
-		// Use the clientID first, since it has a higher priority.
+		// Use the ClientID first, since it has a higher priority.
 		id := stringutil.Coalesce(dctx.clientID, ipStringFromAddr(pctx.Addr))
 		upsConf, err := s.conf.GetCustomUpstreamByClient(id)
 		if err != nil {
