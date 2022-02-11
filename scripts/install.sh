@@ -39,8 +39,25 @@ is_command() {
 }
 
 # Function is_little_endian checks if the CPU is little-endian.
+#
+# See https://serverfault.com/a/163493/267530.
 is_little_endian() {
-	[ "$( head -c 6 /bin/sh | tail -c 1 )" = "$( printf '\001' )" ]
+	# The ASCII character "I" has the octal code of 111.  In the two-byte octal
+	# display mode (-o), hexdump will print it either as "000111" on a little
+	# endian system or as a "111000" on a big endian one.  Return the sixth
+	# character to compare it against the number '1'.
+	#
+	# Do not use echo -n, because its behavior in the presence of the -n flag is
+	# explicitly implementation-defined in POSIX.  Use hexdump instead of od,
+	# because OpenWrt and its derivatives have the former but not the latter.
+	is_little_endian_result="$(
+		printf 'I'\
+			| hexdump -o\
+			| awk '{ print substr($2, 6, 1); exit; }'
+	)"
+	readonly is_little_endian_result
+
+	[ "$is_little_endian_result" -eq '1' ]
 }
 
 # Function check_required checks if the required software is available on the
