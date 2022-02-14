@@ -6,16 +6,18 @@ import (
 
 // SubnetDetector describes IP address properties.
 type SubnetDetector struct {
-	// spNets is the slice of special-purpose address registries as defined
-	// by RFC-6890 (https://tools.ietf.org/html/rfc6890).
+	// spNets is the collection of special-purpose address registries as defined
+	// by RFC 6890.
 	spNets []*net.IPNet
 
-	// locServedNets is the slice of locally-served networks as defined by
-	// RFC-6303 (https://tools.ietf.org/html/rfc6303).
+	// locServedNets is the collection of locally-served networks as defined by
+	// RFC 6303.
 	locServedNets []*net.IPNet
 }
 
 // NewSubnetDetector returns a new IP detector.
+//
+// TODO(a.garipov):  Decide whether an error is actually needed.
 func NewSubnetDetector() (snd *SubnetDetector, err error) {
 	spNets := []string{
 		// "This" network.

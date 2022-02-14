@@ -21,6 +21,11 @@ and this project adheres to
 
 ### Changed
 
+- Domain-specific private reverse DNS upstream servers are now validated to
+  allow only `*.in-addr.arpa` and `*.ip6.arpa` domains pointing to
+  locally-served networks ([#3381]).  **Note:**  If you already have invalid
+  entires in your configuration, consider removing them manually, since they
+  essentially had no effect.
 - Response filtering is now performed using the record types of the answer
   section of messages as opposed to the type of the question ([#4238]).
 - Instead of adding the build time information, the build scripts now use the
@@ -80,6 +85,7 @@ In this release, the schema version has changed from 12 to 13.
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
+[#3381]: https://github.com/AdguardTeam/AdGuardHome/issues/3381
 [#3503]: https://github.com/AdguardTeam/AdGuardHome/issues/3503
 [#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
 [#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
