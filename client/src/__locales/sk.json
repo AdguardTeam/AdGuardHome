@@ -624,9 +624,9 @@
     "adg_will_drop_dns_queries": "AdGuard Home zruší všetky DNS dopyty od tohto klienta.",
     "filter_allowlist": "UPOZORNENIE: Táto akcia tiež vylúči pravidlo \"\"{{disallowed_rule}}\"\" zo zoznamu povolených klientov.",
     "last_rule_in_allowlist": "Nemôžete zakázať tohto klienta, pretože vylúčenie pravidla \"{{disallowed_rule}}\" zakáže zoznam \"povolených klientov\".",
-    "experimental": "Experimentálne",
     "use_saved_key": "Použiť predtým uložený kľúč",
     "parental_control": "Rodičovská kontrola",
     "safe_browsing": "Bezpečné prehliadanie",
-    "served_from_cache": "{{value}} <i>(prevzatá z cache pamäte)</i>"
+    "served_from_cache": "{{value}} <i>(prevzatá z cache pamäte)</i>",
+    "form_error_password_length": "Heslo musí mať dĺžku aspoň {{value}} znakov."
 }

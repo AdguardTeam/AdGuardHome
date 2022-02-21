@@ -242,6 +242,7 @@
     "show_whitelisted_responses": "В белия списък",
     "show_processed_responses": "Обработен",
     "allowed": "В белия списък",
+    "safe_search": "Безопасно търсене",
     "filter_category_general": "General",
     "filter_category_security": "Сигурност",
     "port_53_faq_link": "Порт 53 често е зает от \"DNSStubListener\" или \"systemd-resolved\" услуги. Моля, прочетете <0>тази инструкция</0> как да решите това.",

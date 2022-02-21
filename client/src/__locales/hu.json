@@ -623,7 +623,6 @@
     "adg_will_drop_dns_queries": "Az AdGuard Home eldobja az összes DNS kérést erről a kliensről.",
     "filter_allowlist": "FIGYELMEZTETÉS: Ez a művelet a \"{{disallowed_rule}}\" szabályt is kizárja az engedélyezett ügyfelek listájából.",
     "last_rule_in_allowlist": "Nem lehet letiltani ezt az ügyfelet, mert a \"{{disallowed_rule}}\" szabály kizárása letiltja az \"Allowed clients\" listát.",
-    "experimental": "Kísérleti",
     "use_saved_key": "Előzőleg mentett kulcs használata",
     "parental_control": "Szülői felügyelet",
     "safe_browsing": "Biztonságos böngészés",

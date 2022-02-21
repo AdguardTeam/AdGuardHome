@@ -623,7 +623,6 @@
     "adg_will_drop_dns_queries": "AdGuard Home odbaciti će sve DNS upite od ovog klijenta.",
     "filter_allowlist": "UPOZORENJE: Ova akcija će također isključiti pravilo \"{{disallowed_rule}}\" s popisa dopuštenih klijenata.",
     "last_rule_in_allowlist": "Ovaj klijent nije moguće onemogućiti jer će isključivanje pravila \"{{disallowed_rule}}\" ONEMOGUĆITI popis \"Dopušteni klijenti\".",
-    "experimental": "Eksperimentalno",
     "use_saved_key": "Korištenje prethodno spremljenog ključa",
     "parental_control": "Roditeljska zaštita",
     "safe_browsing": "Sigurno surfanje",
