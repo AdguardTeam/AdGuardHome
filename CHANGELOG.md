@@ -87,6 +87,17 @@ In this release, the schema version has changed from 12 to 13.
 
 
 
+<!--
+## [v0.107.5] - 2022-04-04 (APPROX.)
+
+See also the [v0.107.5 GitHub milestone][ms-v0.107.5].
+
+[ms-v0.107.5]: https://github.com/AdguardTeam/AdGuardHome/milestone/42?closed=1
+-->
+
+
+
+
 ## [v0.107.4] - 2022-03-01 (APPROX.)
 
 See also the [v0.107.4 GitHub milestone][ms-v0.107.4].
