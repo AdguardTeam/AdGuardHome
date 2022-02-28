@@ -17,6 +17,8 @@ and this project adheres to
 
 ### Added
 
+- Logs are now collected by default on FreeBSD and OpenBSD when AdGuard Home is
+  installed as a service ([#4213]).
 - `windows/arm64` support ([#3057]).
 
 ### Changed
@@ -87,6 +89,7 @@ In this release, the schema version has changed from 12 to 13.
 [#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
 [#3381]: https://github.com/AdguardTeam/AdGuardHome/issues/3381
 [#3503]: https://github.com/AdguardTeam/AdGuardHome/issues/3503
+[#4213]: https://github.com/AdguardTeam/AdGuardHome/issues/4213
 [#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
 [#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
