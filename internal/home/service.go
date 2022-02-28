@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -82,10 +83,15 @@ func svcStatus(s service.Service) (status service.Status, err error) {
 // On OpenWrt, the service utility may not exist.  We use our service script
 // directly in this case.
 func svcAction(s service.Service, action string) (err error) {
-	if runtime.GOOS == "darwin" &&
-		action == "start" &&
-		!strings.HasPrefix(Context.workDir, "/Applications/") {
-		log.Info("warning: service must be started from within the /Applications directory")
+	if runtime.GOOS == "darwin" && action == "start" {
+		var exe string
+		if exe, err = os.Executable(); err != nil {
+			log.Error("starting service: getting executable path: %s", err)
+		} else if exe, err = filepath.EvalSymlinks(exe); err != nil {
+			log.Error("starting service: evaluating executable symlinks: %s", err)
+		} else if !strings.HasPrefix(exe, "/Applications/") {
+			log.Info("warning: service must be started from within the /Applications directory")
+		}
 	}
 
 	err = service.Control(s, action)
@@ -579,6 +585,9 @@ status() {
 }
 `
 
+// freeBSDScript is the source of the daemon script for FreeBSD.  Keep as close
+// as possible to the https://github.com/kardianos/service/blob/18c957a3dc1120a2efe77beb401d476bade9e577/service_freebsd.go#L204.
+//
 // TODO(a.garipov): Don't use .WorkingDirectory here.  There are currently no
 // guarantees that it will actually be the required directory.
 //
@@ -587,14 +596,16 @@ const freeBSDScript = `#!/bin/sh
 # PROVIDE: {{.Name}}
 # REQUIRE: networking
 # KEYWORD: shutdown
+
 . /etc/rc.subr
+
 name="{{.Name}}"
 {{.Name}}_env="IS_DAEMON=1"
 {{.Name}}_user="root"
 pidfile_child="/var/run/${name}.pid"
 pidfile="/var/run/${name}_daemon.pid"
 command="/usr/sbin/daemon"
-command_args="-P ${pidfile} -p ${pidfile_child} -f -r {{.WorkingDirectory}}/{{.Name}}"
+command_args="-P ${pidfile} -p ${pidfile_child} -T ${name} -r {{.WorkingDirectory}}/{{.Name}}"
 run_rc_command "$1"
 `
 
@@ -604,6 +615,7 @@ const openBSDScript = `#!/bin/ksh
 
 daemon="{{.Path}}"
 daemon_flags={{ .Arguments | args }}
+daemon_logger="daemon.info"
 
 . /etc/rc.d/rc.subr
 
