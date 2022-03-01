@@ -100,8 +100,7 @@ See also the [v0.107.5 GitHub milestone][ms-v0.107.5].
 
 
 
-
-## [v0.107.4] - 2022-03-01 (APPROX.)
+## [v0.107.4] - 2022-03-01
 
 See also the [v0.107.4 GitHub milestone][ms-v0.107.4].
 
