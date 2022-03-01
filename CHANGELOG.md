@@ -26,7 +26,7 @@ and this project adheres to
 - Domain-specific private reverse DNS upstream servers are now validated to
   allow only `*.in-addr.arpa` and `*.ip6.arpa` domains pointing to
   locally-served networks ([#3381]).  **Note:**  If you already have invalid
-  entires in your configuration, consider removing them manually, since they
+  entries in your configuration, consider removing them manually, since they
   essentially had no effect.
 - Response filtering is now performed using the record types of the answer
   section of messages as opposed to the type of the question ([#4238]).
@@ -66,20 +66,13 @@ In this release, the schema version has changed from 12 to 13.
 
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
-### Fixed
-
-- Optimistic cache now responds with expired items even if those can't be
-  resolved again ([#4254]).
-- Unnecessarily complex hosts-related logic leading to infinite recursion in
-  some cases ([#4216]).
-
 ### Removed
 
 - Go 1.16 support.
 
 ### Security
 
-- Enforced password strength policy ([3503]).
+- Enforced password strength policy ([#3503]).
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).
 
@@ -90,22 +83,46 @@ In this release, the schema version has changed from 12 to 13.
 [#3381]: https://github.com/AdguardTeam/AdGuardHome/issues/3381
 [#3503]: https://github.com/AdguardTeam/AdGuardHome/issues/3503
 [#4213]: https://github.com/AdguardTeam/AdGuardHome/issues/4213
-[#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
 [#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
-[#4254]: https://github.com/AdguardTeam/AdGuardHome/issues/4254
 
 [repr]: https://reproducible-builds.org/docs/source-date-epoch/
 
 
 
 <!--
-## [v0.107.4] - 2022-03-01 (APPROX.)
+## [v0.107.5] - 2022-04-04 (APPROX.)
+
+See also the [v0.107.5 GitHub milestone][ms-v0.107.5].
+
+[ms-v0.107.5]: https://github.com/AdguardTeam/AdGuardHome/milestone/42?closed=1
+-->
+
+
+
+## [v0.107.4] - 2022-03-01
 
 See also the [v0.107.4 GitHub milestone][ms-v0.107.4].
 
-[ms-v0.107.4]: https://github.com/AdguardTeam/AdGuardHome/milestone/41?closed=1
--->
+### Fixed
+
+- Optimistic cache now responds with expired items even if those can't be
+  resolved again ([#4254]).
+- Unnecessarily complex hosts-related logic leading to infinite recursion in
+  some cases ([#4216]).
+
+### Security
+
+- Go version was updated to prevent the possibility of exploiting
+  [CVE-2022-23806], [CVE-2022-23772], and [CVE-2022-23773].
+
+[#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
+[#4254]: https://github.com/AdguardTeam/AdGuardHome/issues/4254
+
+[CVE-2022-23772]: https://www.cvedetails.com/cve/CVE-2022-23772
+[CVE-2022-23773]: https://www.cvedetails.com/cve/CVE-2022-23773
+[CVE-2022-23806]: https://www.cvedetails.com/cve/CVE-2022-23806
+[ms-v0.107.4]:    https://github.com/AdguardTeam/AdGuardHome/milestone/41?closed=1
 
 
 
@@ -824,11 +841,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...HEAD
-[v0.107.4]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...v0.107.4
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.5...HEAD
+[v0.107.5]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...v0.107.5
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...HEAD
+[v0.107.4]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...v0.107.4
 [v0.107.3]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.2...v0.107.3
 [v0.107.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.1...v0.107.2
 [v0.107.1]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.0...v0.107.1
