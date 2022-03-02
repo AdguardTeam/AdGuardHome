@@ -11,6 +11,15 @@ const Examples = (props) => (
                 <code>94.140.14.140</code>: {props.t('example_upstream_regular')}
             </li>
             <li>
+                <code>udp://dns-unfiltered.adguard.com</code>: <Trans>example_upstream_udp</Trans>
+            </li>
+            <li>
+                <code>tcp://94.140.14.140</code>: <Trans>example_upstream_tcp</Trans>
+            </li>
+            <li>
+                <code>tcp://dns-unfiltered.adguard.com</code>: <Trans>example_upstream_tcp_hostname</Trans>
+            </li>
+            <li>
                 <code>tls://dns-unfiltered.adguard.com</code>:
                 <span>
                     <Trans
@@ -66,9 +75,6 @@ const Examples = (props) => (
                         example_upstream_doq
                     </Trans>
                 </span>
-            </li>
-            <li>
-                <code>tcp://94.140.14.140</code>: <Trans>example_upstream_tcp</Trans>
             </li>
             <li>
                 <code>sdns://...</code>:

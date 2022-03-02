@@ -304,6 +304,14 @@ func TestValidateUpstream(t *testing.T) {
 		upstream: "sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
 		wantErr:  ``,
 	}, {
+		wantDef:  assert.True,
+		name:     "default_udp_host",
+		upstream: "udp://dns.google",
+	}, {
+		wantDef:  assert.True,
+		name:     "default_udp_ip",
+		upstream: "udp://8.8.8.8",
+	}, {
 		wantDef:  assert.False,
 		name:     "valid",
 		upstream: "[/host.com/]1.1.1.1",
