@@ -459,7 +459,7 @@ func ValidateUpstreamsPrivate(upstreams []string, lnc LocalNetChecker) (err erro
 	return nil
 }
 
-var protocols = []string{"tls://", "https://", "tcp://", "sdns://", "quic://"}
+var protocols = []string{"udp://", "tcp://", "tls://", "https://", "sdns://", "quic://"}
 
 func validateUpstream(u string) (useDefault bool, err error) {
 	// Check if the user tries to specify upstream for domain.
