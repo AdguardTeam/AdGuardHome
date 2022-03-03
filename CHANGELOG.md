@@ -17,6 +17,8 @@ and this project adheres to
 
 ### Added
 
+- EDNS Client-Subnet information in the request details section of a query log
+  record ([#3978]).
 - Support for hostnames for plain UDP upstream servers using the `udp://` scheme
   ([#4166]).
 - Logs are now collected by default on FreeBSD and OpenBSD when AdGuard Home is
@@ -84,8 +86,10 @@ In this release, the schema version has changed from 12 to 13.
 [#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
 [#3381]: https://github.com/AdguardTeam/AdGuardHome/issues/3381
 [#3503]: https://github.com/AdguardTeam/AdGuardHome/issues/3503
+[#3978]: https://github.com/AdguardTeam/AdGuardHome/issues/3978
 [#4166]: https://github.com/AdguardTeam/AdGuardHome/issues/4166
 [#4213]: https://github.com/AdguardTeam/AdGuardHome/issues/4213
+[#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
 [#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
 

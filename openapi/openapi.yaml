@@ -1905,6 +1905,12 @@
           - 'doq'
           - 'dnscrypt'
           - ''
+        'ecs':
+          'type': 'string'
+          'example': '192.168.0.0/16'
+          'description': >
+            The IP network defined by an EDNS Client-Subnet option in the
+            request message if any.
         'elapsedMs':
           'type': 'string'
           'example': '54.023928'

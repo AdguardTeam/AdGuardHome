@@ -81,6 +81,8 @@ type logEntry struct {
 	QType  string `json:"QT"`
 	QClass string `json:"QC"`
 
+	ReqECS string `json:"ECS,omitempty"`
+
 	ClientID    string      `json:"CID,omitempty"`
 	ClientProto ClientProto `json:"CP"`
 
@@ -187,6 +189,10 @@ func (l *queryLog) Add(params *AddParams) {
 
 		Cached:            params.Cached,
 		AuthenticatedData: params.AuthenticatedData,
+	}
+
+	if params.ReqECS != nil {
+		entry.ReqECS = params.ReqECS.String()
 	}
 
 	if params.Answer != nil {

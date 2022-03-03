@@ -77,6 +77,10 @@ type Config struct {
 type AddParams struct {
 	Question *dns.Msg
 
+	// ReqECS is the IP network extracted from EDNS Client-Subnet option of a
+	// request.
+	ReqECS *net.IPNet
+
 	// Answer is the response which is sent to the client, if any.
 	Answer *dns.Msg
 

@@ -76,6 +76,7 @@ export const normalizeLogs = (logs) => logs.map((log) => {
         original_answer,
         upstream,
         cached,
+        ecs,
     } = log;
 
     const { name: domain, unicode_name: unicodeName, type } = question;
@@ -118,6 +119,7 @@ export const normalizeLogs = (logs) => logs.map((log) => {
         elapsedMs,
         upstream,
         cached,
+        ecs,
     };
 });
 
