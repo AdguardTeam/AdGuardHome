@@ -238,6 +238,7 @@ Row.propTypes = {
         type: propTypes.string.isRequired,
         client_proto: propTypes.string.isRequired,
         client_id: propTypes.string,
+        ecs: propTypes.string,
         client_info: propTypes.shape({
             name: propTypes.string.isRequired,
             whois: propTypes.shape({
