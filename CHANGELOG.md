@@ -91,12 +91,25 @@ In this release, the schema version has changed from 12 to 13.
 
 
 <!--
-## [v0.107.5] - 2022-04-04 (APPROX.)
+## [v0.107.6] - 2022-04-04 (APPROX.)
 
-See also the [v0.107.5 GitHub milestone][ms-v0.107.5].
+See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
 
-[ms-v0.107.5]: https://github.com/AdguardTeam/AdGuardHome/milestone/42?closed=1
+[ms-v0.107.6]: https://github.com/AdguardTeam/AdGuardHome/milestone/42?closed=1
 -->
+
+
+
+## [v0.107.5] - 2022-03-04
+
+This is a security update.
+
+### Security
+
+- Go version was updated to prevent the possibility of exploiting the
+  [CVE-2022-24921] vulnerability.
+
+[CVE-2022-24921]: https://www.cvedetails.com/cve/CVE-2022-24921
 
 
 
@@ -113,8 +126,8 @@ See also the [v0.107.4 GitHub milestone][ms-v0.107.4].
 
 ### Security
 
-- Go version was updated to prevent the possibility of exploiting
-  [CVE-2022-23806], [CVE-2022-23772], and [CVE-2022-23773].
+- Go version was updated to prevent the possibility of exploiting the
+  [CVE-2022-23806], [CVE-2022-23772], and [CVE-2022-23773] vulnerabilities.
 
 [#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
 [#4254]: https://github.com/AdguardTeam/AdGuardHome/issues/4254
@@ -841,11 +854,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.5...HEAD
-[v0.107.5]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...v0.107.5
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.6...HEAD
+[v0.107.6]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.5...v0.107.6
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.5...HEAD
+[v0.107.5]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...v0.107.5
 [v0.107.4]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...v0.107.4
 [v0.107.3]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.2...v0.107.3
 [v0.107.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.1...v0.107.2
