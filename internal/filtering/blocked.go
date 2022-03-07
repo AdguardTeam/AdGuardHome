@@ -182,7 +182,7 @@ var serviceRulesArray = []svc{
 	}},
 	{"qq", []string{
 		// block qq.com and subdomains excluding WeChat domains
-		"^(?!weixin|wx)([^.]+\\.)?qq\\.com$",
+		"||qq.com^$denyallow=wx*.qq.com|weixin.qq.com",
 		"||qqzaixian.com^",
 	}},
 	{"wechat", []string{
