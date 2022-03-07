@@ -7,27 +7,27 @@ const Examples = () => (
             <Trans>examples_title</Trans>:
             <ol className="leading-loose">
                 <li>
-                    <code>||example.org^</code> –&nbsp;
+                    <code>||example.org^</code>:
                     <Trans>example_meaning_filter_block</Trans>
                 </li>
                 <li>
-                    <code> @@||example.org^</code> –&nbsp;
+                    <code> @@||example.org^</code>:
                     <Trans>example_meaning_filter_whitelist</Trans>
                 </li>
                 <li>
-                    <code>127.0.0.1 example.org</code> –&nbsp;
+                    <code>127.0.0.1 example.org</code>:
                     <Trans>example_meaning_host_block</Trans>
                 </li>
                 <li>
-                    <code><Trans>example_comment</Trans></code> –&nbsp;
+                    <code><Trans>example_comment</Trans></code>:
                     <Trans>example_comment_meaning</Trans>
                 </li>
                 <li>
-                    <code><Trans>example_comment_hash</Trans></code> –&nbsp;
+                    <code><Trans>example_comment_hash</Trans></code>:
                     <Trans>example_comment_meaning</Trans>
                 </li>
                 <li>
-                    <code>/REGEX/</code> –&nbsp;
+                    <code>/REGEX/</code>:
                     <Trans>example_regex_meaning</Trans>
                 </li>
             </ol>

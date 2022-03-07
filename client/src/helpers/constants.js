@@ -24,7 +24,9 @@ export const R_UNIX_ABSOLUTE_PATH = /^(\/[^/\x00]+)+$/;
 // eslint-disable-next-line no-control-regex
 export const R_WIN_ABSOLUTE_PATH = /^([a-zA-Z]:)?(\\|\/)(?:[^\\/:*?"<>|\x00]+\\)*[^\\/:*?"<>|\x00]*$/;
 
-export const R_CLIENT_ID = /^[a-z0-9-]{1,64}$/;
+export const R_CLIENT_ID = /^[a-z0-9-]{1,63}$/;
+
+export const MIN_PASSWORD_LENGTH = 8;
 
 export const HTML_PAGES = {
     INSTALL: '/install.html',
@@ -55,10 +57,11 @@ export const REPOSITORY = {
     ISSUES: 'https://github.com/AdguardTeam/AdGuardHome/issues/new/choose',
 };
 
-export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
+export const CLIENT_ID_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid';
+export const MANUAL_UPDATE_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#manual-update';
 export const PORT_53_FAQ_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#bindinuse';
+export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
 export const UPSTREAM_CONFIGURATION_WIKI_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams';
-export const GETTING_STARTED_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#update';
 
 export const FILTERS_RELATIVE_LINK = '#filters';
 
@@ -528,7 +531,14 @@ export const DETAILED_DATE_FORMAT_OPTIONS = {
     month: 'long',
 };
 
-export const CUSTOM_FILTERING_RULES_ID = 0;
+export const SPECIAL_FILTER_ID = {
+    CUSTOM_FILTERING_RULES: 0,
+    SYSTEM_HOSTS: -1,
+    BLOCKED_SERVICES: -2,
+    PARENTAL: -3,
+    SAFE_BROWSING: -4,
+    SAFE_SEARCH: -5,
+};
 
 export const BLOCK_ACTIONS = {
     BLOCK: 'block',

@@ -5,9 +5,9 @@ package dhcpd
 
 import (
 	"net"
-	"strings"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/insomniacslk/dhcp/dhcpv4"
@@ -45,7 +45,7 @@ func TestDHCPConn_WriteTo_common(t *testing.T) {
 		n, err := conn.WriteTo(nil, &unexpectedAddrType{})
 		require.Error(t, err)
 
-		assert.True(t, strings.Contains(err.Error(), "peer is of unexpected type"))
+		testutil.AssertErrorMsg(t, "peer is of unexpected type *dhcpd.unexpectedAddrType", err)
 		assert.Zero(t, n)
 	})
 }

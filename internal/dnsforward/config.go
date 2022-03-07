@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -98,10 +99,10 @@ type FilteringConfig struct {
 	AllowedClients    []string `yaml:"allowed_clients"`    // IP addresses of whitelist clients
 	DisallowedClients []string `yaml:"disallowed_clients"` // IP addresses of clients that should be blocked
 	BlockedHosts      []string `yaml:"blocked_hosts"`      // hosts that should be blocked
-	// TrustedProxies is the list of IP addresses and CIDR networks to
-	// detect proxy servers addresses the DoH requests from which should be
-	// handled.  The value of nil or an empty slice for this field makes
-	// Proxy not trust any address.
+	// TrustedProxies is the list of IP addresses and CIDR networks to detect
+	// proxy servers addresses the DoH requests from which should be handled.
+	// The value of nil or an empty slice for this field makes Proxy not trust
+	// any address.
 	TrustedProxies []string `yaml:"trusted_proxies"`
 
 	// DNS cache settings
@@ -118,7 +119,7 @@ type FilteringConfig struct {
 
 	BogusNXDomain          []string `yaml:"bogus_nxdomain"`     // transform responses with these IP addresses to NXDOMAIN
 	AAAADisabled           bool     `yaml:"aaaa_disabled"`      // Respond with an empty answer to all AAAA requests
-	EnableDNSSEC           bool     `yaml:"enable_dnssec"`      // Set DNSSEC flag in outcoming DNS request
+	EnableDNSSEC           bool     `yaml:"enable_dnssec"`      // Set AD flag in outcoming DNS request
 	EnableEDNSClientSubnet bool     `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
 	MaxGoroutines          uint32   `yaml:"max_goroutines"`     // Max. number of parallel goroutines for processing incoming requests
 
@@ -149,8 +150,8 @@ type TLSConfig struct {
 	CertificateChainData []byte `yaml:"-" json:"-"`
 	PrivateKeyData       []byte `yaml:"-" json:"-"`
 
-	// ServerName is the hostname of the server.  Currently, it is only
-	// being used for client ID checking.
+	// ServerName is the hostname of the server.  Currently, it is only being
+	// used for ClientID checking.
 	ServerName string `yaml:"-" json:"-"`
 
 	cert tls.Certificate
@@ -243,15 +244,15 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 		proxyConfig.FastestPingTimeout = s.conf.FastestTimeout.Duration
 	}
 
-	if len(s.conf.BogusNXDomain) > 0 {
-		for _, s := range s.conf.BogusNXDomain {
-			ip := net.ParseIP(s)
-			if ip == nil {
-				log.Error("Invalid bogus IP: %s", s)
-			} else {
-				proxyConfig.BogusNXDomain = append(proxyConfig.BogusNXDomain, ip)
-			}
+	for i, s := range s.conf.BogusNXDomain {
+		subnet, err := netutil.ParseSubnet(s)
+		if err != nil {
+			log.Error("subnet at index %d: %s", i, err)
+
+			continue
 		}
+
+		proxyConfig.BogusNXDomain = append(proxyConfig.BogusNXDomain, subnet)
 	}
 
 	// TLS settings
@@ -426,6 +427,7 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 
 	proxyConfig.TLSConfig = &tls.Config{
 		GetCertificate: s.onGetCertificate,
+		CipherSuites:   aghtls.SaferCipherSuites(),
 		MinVersion:     tls.VersionTLS12,
 	}
 

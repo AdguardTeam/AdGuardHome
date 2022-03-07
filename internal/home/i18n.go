@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
 
-// TODO(a.garipov): Get rid of a global variable?
+// TODO(a.garipov): Get rid of a global or generate from .twosky.json.
 var allowedLanguages = stringutil.NewSet(
 	"be",
 	"bg",
@@ -20,6 +21,7 @@ var allowedLanguages = stringutil.NewSet(
 	"en",
 	"es",
 	"fa",
+	"fi",
 	"fr",
 	"hr",
 	"hu",
@@ -41,6 +43,7 @@ var allowedLanguages = stringutil.NewSet(
 	"sv",
 	"th",
 	"tr",
+	"uk",
 	"vi",
 	"zh-cn",
 	"zh-hk",
@@ -94,5 +97,5 @@ func handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	onConfigModified()
-	returnOK(w)
+	aghhttp.OK(w)
 }

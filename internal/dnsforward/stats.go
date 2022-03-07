@@ -1,6 +1,7 @@
 package dnsforward
 
 import (
+	"net"
 	"strings"
 	"time"
 
@@ -8,15 +9,15 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
 )
 
 // Write Stats data and logs
-func processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
-	elapsed := time.Since(ctx.startTime)
-	s := ctx.srv
-	pctx := ctx.proxyCtx
+func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
+	elapsed := time.Since(dctx.startTime)
+	pctx := dctx.proxyCtx
 
 	shouldLog := true
 	msg := pctx.Req
@@ -26,54 +27,79 @@ func processQueryLogsAndStats(ctx *dnsContext) (rc resultCode) {
 		shouldLog = false
 	}
 
+	ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
+	ip = netutil.CloneIP(ip)
+
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	// Synchronize access to s.queryLog and s.stats so they won't be suddenly uninitialized while in use.
-	// This can happen after proxy server has been stopped, but its workers haven't yet exited.
+	s.anonymizer.Load()(ip)
+
+	log.Debug("client ip: %s", ip)
+
+	// Synchronize access to s.queryLog and s.stats so they won't be suddenly
+	// uninitialized while in use.  This can happen after proxy server has been
+	// stopped, but its workers haven't yet exited.
 	if shouldLog && s.queryLog != nil {
-		ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
-		p := querylog.AddParams{
-			Question:   msg,
-			Answer:     pctx.Res,
-			OrigAnswer: ctx.origResp,
-			Result:     ctx.result,
-			Elapsed:    elapsed,
-			ClientIP:   ip,
-			ClientID:   ctx.clientID,
-		}
-
-		switch pctx.Proto {
-		case proxy.ProtoHTTPS:
-			p.ClientProto = querylog.ClientProtoDoH
-		case proxy.ProtoQUIC:
-			p.ClientProto = querylog.ClientProtoDoQ
-		case proxy.ProtoTLS:
-			p.ClientProto = querylog.ClientProtoDoT
-		case proxy.ProtoDNSCrypt:
-			p.ClientProto = querylog.ClientProtoDNSCrypt
-		default:
-			// Consider this a plain DNS-over-UDP or DNS-over-TCP
-			// request.
-		}
-
-		if pctx.Upstream != nil {
-			p.Upstream = pctx.Upstream.Address()
-		}
-
-		s.queryLog.Add(p)
+		s.logQuery(dctx, pctx, elapsed, ip)
 	}
 
-	s.updateStats(ctx, elapsed, *ctx.result)
+	if s.stats != nil {
+		s.updateStats(dctx, elapsed, *dctx.result, ip)
+	}
 
 	return resultCodeSuccess
 }
 
-func (s *Server) updateStats(ctx *dnsContext, elapsed time.Duration, res filtering.Result) {
-	if s.stats == nil {
-		return
+// logQuery pushes the request details into the query log.
+func (s *Server) logQuery(
+	dctx *dnsContext,
+	pctx *proxy.DNSContext,
+	elapsed time.Duration,
+	ip net.IP,
+) {
+	p := &querylog.AddParams{
+		Question:          pctx.Req,
+		ReqECS:            pctx.ReqECS,
+		Answer:            pctx.Res,
+		OrigAnswer:        dctx.origResp,
+		Result:            dctx.result,
+		Elapsed:           elapsed,
+		ClientID:          dctx.clientID,
+		ClientIP:          ip,
+		AuthenticatedData: dctx.responseAD,
 	}
 
+	switch pctx.Proto {
+	case proxy.ProtoHTTPS:
+		p.ClientProto = querylog.ClientProtoDoH
+	case proxy.ProtoQUIC:
+		p.ClientProto = querylog.ClientProtoDoQ
+	case proxy.ProtoTLS:
+		p.ClientProto = querylog.ClientProtoDoT
+	case proxy.ProtoDNSCrypt:
+		p.ClientProto = querylog.ClientProtoDNSCrypt
+	default:
+		// Consider this a plain DNS-over-UDP or DNS-over-TCP request.
+	}
+
+	if pctx.Upstream != nil {
+		p.Upstream = pctx.Upstream.Address()
+	} else if cachedUps := pctx.CachedUpstreamAddr; cachedUps != "" {
+		p.Upstream = pctx.CachedUpstreamAddr
+		p.Cached = true
+	}
+
+	s.queryLog.Add(p)
+}
+
+// updatesStats writes the request into statistics.
+func (s *Server) updateStats(
+	ctx *dnsContext,
+	elapsed time.Duration,
+	res filtering.Result,
+	clientIP net.IP,
+) {
 	pctx := ctx.proxyCtx
 	e := stats.Entry{}
 	e.Domain = strings.ToLower(pctx.Req.Question[0].Name)
@@ -81,8 +107,8 @@ func (s *Server) updateStats(ctx *dnsContext, elapsed time.Duration, res filteri
 
 	if clientID := ctx.clientID; clientID != "" {
 		e.Client = clientID
-	} else if ip, _ := netutil.IPAndPortFromAddr(pctx.Addr); ip != nil {
-		e.Client = ip.String()
+	} else if clientIP != nil {
+		e.Client = clientIP.String()
 	}
 
 	e.Time = uint32(elapsed / 1000)

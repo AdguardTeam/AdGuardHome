@@ -123,7 +123,9 @@
                     '8.8.8.8': 'OK'
                     '8.8.4.4': 'OK'
                     '192.168.1.104:53535': >
-                      Couldn't communicate with DNS server
+                      upstream "192.168.1.104:1234" fails to exchange: couldn't
+                      communicate with upstream: read udp
+                      192.168.1.100:60675->8.8.8.8:1234: i/o timeout
   '/version.json':
     'post':
       'tags':
@@ -820,12 +822,12 @@
       - 'clients'
       'operationId': 'clientsFind'
       'summary': >
-        Get information about clients by their IP addresses or client IDs.
+        Get information about clients by their IP addresses or ClientIDs.
       'parameters':
       - 'name': 'ip0'
         'in': 'query'
         'description': >
-          Filter by IP address or client IDs.  Parameters with names `ip1`,
+          Filter by IP address or ClientIDs.  Parameters with names `ip1`,
           `ip2`, and so on are also accepted and interpreted as "ip0 OR ip1 OR
           ip2".
 
@@ -1086,6 +1088,9 @@
           'description': >
             Failed to parse initial configuration or cannot listen to the
             specified addresses.
+        '422':
+          'description': >
+            The specified password does not meet the strength requirements.
         '500':
           'description': 'Cannot start the DNS server'
   '/login':
@@ -1148,7 +1153,7 @@
         'schema':
           'type': 'string'
       - 'description': >
-          Client ID.
+          ClientID.
         'example': 'client-1'
         'in': 'query'
         'name': 'client_id'
@@ -1183,7 +1188,7 @@
         'schema':
           'type': 'string'
       - 'description': >
-          Client ID.
+          ClientID.
         'example': 'client-1'
         'in': 'query'
         'name': 'client_id'
@@ -1262,7 +1267,7 @@
           'type': 'boolean'
         'version':
           'type': 'string'
-          'example': '0.1'
+          'example': 'v0.123.4'
         'language':
           'type': 'string'
           'example': 'en'
@@ -1868,12 +1873,18 @@
           'description': 'Answer from upstream server (optional)'
           'items':
             '$ref': '#/components/schemas/DnsAnswer'
+        'cached':
+          'type': 'boolean'
+          'description': >
+            Defines if the response has been served from cache.
         'upstream':
           'type': 'string'
           'description': >
             Upstream URL starting with tcp://, tls://, https://, or with an IP
             address.
         'answer_dnssec':
+          'description': >
+            If true, the response had the Authenticated Data (AD) flag set.
           'type': 'boolean'
         'client':
           'description': >
@@ -1882,7 +1893,7 @@
           'type': 'string'
         'client_id':
           'description': >
-            The client ID, if provided in DoH, DoQ, or DoT.
+            The ClientID, if provided in DoH, DoQ, or DoT.
           'example': 'cli123'
           'type': 'string'
         'client_info':
@@ -1894,6 +1905,12 @@
           - 'doq'
           - 'dnscrypt'
           - ''
+        'ecs':
+          'type': 'string'
+          'example': '192.168.0.0/16'
+          'description': >
+            The IP network defined by an EDNS Client-Subnet option in the
+            request message if any.
         'elapsedMs':
           'type': 'string'
           'example': '54.023928'
@@ -2213,19 +2230,23 @@
       'description': 'AdGuard Home addresses configuration'
       'required':
       - 'dns_port'
-      - 'web_port'
       - 'interfaces'
+      - 'version'
+      - 'web_port'
       'properties':
         'dns_port':
           'type': 'integer'
           'format': 'uint16'
           'example': 53
+        'interfaces':
+          '$ref': '#/components/schemas/NetInterfaces'
+        'version':
+          'type': 'string'
+          'example': 'v0.123.4'
         'web_port':
           'type': 'integer'
           'format': 'uint16'
           'example': 80
-        'interfaces':
-          '$ref': '#/components/schemas/NetInterfaces'
     'AddressesInfoBeta':
       'type': 'object'
       'description': 'AdGuard Home addresses configuration'
@@ -2264,7 +2285,7 @@
           'example': 'localhost'
         'ids':
           'type': 'array'
-          'description': 'IP, CIDR, MAC, or client ID.'
+          'description': 'IP, CIDR, MAC, or ClientID.'
           'items':
             'type': 'string'
         'use_global_settings':
@@ -2369,13 +2390,13 @@
       'properties':
         'allowed_clients':
           'description': >
-            The allowlist of clients: IP addresses, CIDRs, or client IDs.
+            The allowlist of clients: IP addresses, CIDRs, or ClientIDs.
           'items':
             'type': 'string'
           'type': 'array'
         'disallowed_clients':
           'description': >
-            The blocklist of clients: IP addresses, CIDRs, or client IDs.
+            The blocklist of clients: IP addresses, CIDRs, or ClientIDs.
           'items':
             'type': 'string'
           'type': 'array'
@@ -2399,7 +2420,7 @@
           'example': 'localhost'
         'ids':
           'type': 'array'
-          'description': 'IP, CIDR, MAC, or client ID.'
+          'description': 'IP, CIDR, MAC, or ClientID.'
           'items':
             'type': 'string'
         'use_global_settings':

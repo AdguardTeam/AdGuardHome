@@ -12,13 +12,19 @@ const install = handleActions({
     [actions.getDefaultAddressesRequest]: (state) => ({ ...state, processingDefault: true }),
     [actions.getDefaultAddressesFailure]: (state) => ({ ...state, processingDefault: false }),
     [actions.getDefaultAddressesSuccess]: (state, { payload }) => {
-        const { interfaces } = payload;
+        const { interfaces, version } = payload;
         const web = { ...state.web, port: payload.web_port };
         const dns = { ...state.dns, port: payload.dns_port };
 
         const newState = {
-            ...state, web, dns, interfaces, processingDefault: false,
+            ...state,
+            web,
+            dns,
+            interfaces,
+            processingDefault: false,
+            dnsVersion: version,
         };
+
         return newState;
     },
 
@@ -64,6 +70,7 @@ const install = handleActions({
         error: '',
     },
     interfaces: {},
+    dnsVersion: '',
 });
 
 export default combineReducers({

@@ -15,14 +15,10 @@ type DNSRewriteResult struct {
 // the server returns.
 type DNSRewriteResultResponse map[rules.RRType][]rules.RRValue
 
-// processDNSRewrites processes DNS rewrite rules in dnsr.  It returns
-// an empty result if dnsr is empty.  Otherwise, the result will have
-// either CanonName or DNSRewriteResult set.
+// processDNSRewrites processes DNS rewrite rules in dnsr.  It returns an empty
+// result if dnsr is empty.  Otherwise, the result will have either CanonName or
+// DNSRewriteResult set.  dnsr is expected to be non-empty.
 func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
-	if len(dnsr) == 0 {
-		return Result{}
-	}
-
 	var rules []*ResultRule
 	dnsrr := &DNSRewriteResult{
 		Response: DNSRewriteResultResponse{},
@@ -31,8 +27,7 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 	for _, nr := range dnsr {
 		dr := nr.DNSRewrite
 		if dr.NewCNAME != "" {
-			// NewCNAME rules have a higher priority than
-			// the other rules.
+			// NewCNAME rules have a higher priority than other rules.
 			rules = []*ResultRule{{
 				FilterListID: int64(nr.GetFilterListID()),
 				Text:         nr.RuleText,
@@ -54,8 +49,8 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 				Text:         nr.RuleText,
 			})
 		default:
-			// RcodeRefused and other such codes have higher
-			// priority.  Return immediately.
+			// RcodeRefused and other such codes have higher priority.  Return
+			// immediately.
 			rules = []*ResultRule{{
 				FilterListID: int64(nr.GetFilterListID()),
 				Text:         nr.RuleText,

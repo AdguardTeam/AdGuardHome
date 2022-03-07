@@ -261,7 +261,7 @@ func TestServer_ProcessInternalHosts(t *testing.T) {
 }
 
 func TestServer_ProcessRestrictLocal(t *testing.T) {
-	ups := &aghtest.TestUpstream{
+	ups := &aghtest.Upstream{
 		Reverse: map[string][]string{
 			"251.252.253.254.in-addr.arpa.": {"host1.example.net."},
 			"1.1.168.192.in-addr.arpa.":     {"some.local-client."},
@@ -339,7 +339,7 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 	s := createTestServer(t, &filtering.Config{}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-	}, &aghtest.TestUpstream{
+	}, &aghtest.Upstream{
 		Reverse: map[string][]string{
 			reqAddr: {locDomain},
 		},

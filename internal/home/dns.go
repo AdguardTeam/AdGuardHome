@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -36,20 +37,24 @@ func onConfigModified() {
 // initDNSServer creates an instance of the dnsforward.Server
 // Please note that we must do it even if we don't start it
 // so that we had access to the query log and the stats
-func initDNSServer() error {
-	var err error
+func initDNSServer() (err error) {
 	baseDir := Context.getDataDir()
 
+	var anonFunc aghnet.IPMutFunc
+	if config.DNS.AnonymizeClientIP {
+		anonFunc = querylog.AnonymizeIP
+	}
+	anonymizer := aghnet.NewIPMut(anonFunc)
+
 	statsConf := stats.Config{
-		Filename:          filepath.Join(baseDir, "stats.db"),
-		LimitDays:         config.DNS.StatsInterval,
-		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
-		ConfigModified:    onConfigModified,
-		HTTPRegister:      httpRegister,
+		Filename:       filepath.Join(baseDir, "stats.db"),
+		LimitDays:      config.DNS.StatsInterval,
+		ConfigModified: onConfigModified,
+		HTTPRegister:   httpRegister,
 	}
 	Context.stats, err = stats.New(statsConf)
 	if err != nil {
-		return fmt.Errorf("couldn't initialize statistics module")
+		return fmt.Errorf("init stats: %w", err)
 	}
 
 	conf := querylog.Config{
@@ -62,6 +67,7 @@ func initDNSServer() error {
 		Enabled:           config.DNS.QueryLogEnabled,
 		FileEnabled:       config.DNS.QueryLogFileEnabled,
 		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
+		Anonymizer:        anonymizer,
 	}
 	Context.queryLog = querylog.New(conf)
 
@@ -76,7 +82,8 @@ func initDNSServer() error {
 		Stats:          Context.stats,
 		QueryLog:       Context.queryLog,
 		SubnetDetector: Context.subnetDetector,
-		LocalDomain:    config.DNS.LocalDomainName,
+		Anonymizer:     anonymizer,
+		LocalDomain:    config.DHCP.LocalDomainName,
 	}
 	if Context.dhcpServer != nil {
 		p.DHCPServer = Context.dhcpServer
@@ -90,7 +97,8 @@ func initDNSServer() error {
 	}
 
 	Context.clients.dnsServer = Context.dnsServer
-	dnsConfig, err := generateServerConfig()
+	var dnsConfig dnsforward.ServerConfig
+	dnsConfig, err = generateServerConfig()
 	if err != nil {
 		closeDNSServer()
 
@@ -100,6 +108,7 @@ func initDNSServer() error {
 	err = Context.dnsServer.Prepare(&dnsConfig)
 	if err != nil {
 		closeDNSServer()
+
 		return fmt.Errorf("dnsServer.Prepare: %w", err)
 	}
 
@@ -202,7 +211,6 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	}
 
 	newConf.TLSv12Roots = Context.tlsRoots
-	newConf.TLSCiphers = Context.tlsCiphers
 	newConf.TLSAllowUnencryptedDoH = tlsConf.AllowUnencryptedDoH
 
 	newConf.FilterHandler = applyAdditionalFiltering
@@ -310,7 +318,7 @@ func applyAdditionalFiltering(clientAddr net.IP, clientID string, setts *filteri
 		}
 	}
 
-	log.Debug("using settings for client %s with ip %s and id %q", c.Name, clientAddr, clientID)
+	log.Debug("using settings for client %s with ip %s and clientid %q", c.Name, clientAddr, clientID)
 
 	if c.UseOwnBlockedServices {
 		Context.dnsFilter.ApplyBlockedServices(setts, c.BlockedServices, false)

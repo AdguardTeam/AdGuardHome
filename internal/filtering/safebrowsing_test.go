@@ -108,7 +108,7 @@ func TestSafeBrowsingCache(t *testing.T) {
 }
 
 func TestSBPC_checkErrorUpstream(t *testing.T) {
-	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	d := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
 
 	ups := &aghtest.TestErrUpstream{}
@@ -117,6 +117,7 @@ func TestSBPC_checkErrorUpstream(t *testing.T) {
 	d.SetParentalUpstream(ups)
 
 	setts := &Settings{
+		ProtectionEnabled:   true,
 		SafeBrowsingEnabled: true,
 		ParentalEnabled:     true,
 	}
@@ -129,41 +130,42 @@ func TestSBPC_checkErrorUpstream(t *testing.T) {
 }
 
 func TestSBPC(t *testing.T) {
-	d := newForTest(&Config{SafeBrowsingEnabled: true}, nil)
+	d := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
 
 	const hostname = "example.org"
 
 	setts := &Settings{
+		ProtectionEnabled:   true,
 		SafeBrowsingEnabled: true,
 		ParentalEnabled:     true,
 	}
 
 	testCases := []struct {
+		testCache cache.Cache
+		testFunc  func(host string, _ uint16, _ *Settings) (res Result, err error)
 		name      string
 		block     bool
-		testFunc  func(host string, _ uint16, _ *Settings) (res Result, err error)
-		testCache cache.Cache
 	}{{
+		testCache: d.safebrowsingCache,
+		testFunc:  d.checkSafeBrowsing,
 		name:      "sb_no_block",
 		block:     false,
-		testFunc:  d.checkSafeBrowsing,
-		testCache: gctx.safebrowsingCache,
 	}, {
+		testCache: d.safebrowsingCache,
+		testFunc:  d.checkSafeBrowsing,
 		name:      "sb_block",
 		block:     true,
-		testFunc:  d.checkSafeBrowsing,
-		testCache: gctx.safebrowsingCache,
 	}, {
+		testCache: d.parentalCache,
+		testFunc:  d.checkParental,
 		name:      "pc_no_block",
 		block:     false,
-		testFunc:  d.checkParental,
-		testCache: gctx.parentalCache,
 	}, {
+		testCache: d.parentalCache,
+		testFunc:  d.checkParental,
 		name:      "pc_block",
 		block:     true,
-		testFunc:  d.checkParental,
-		testCache: gctx.parentalCache,
 	}}
 
 	for _, tc := range testCases {
@@ -215,6 +217,6 @@ func TestSBPC(t *testing.T) {
 			assert.Equal(t, 1, ups.RequestsCount())
 		})
 
-		purgeCaches()
+		purgeCaches(d)
 	}
 }

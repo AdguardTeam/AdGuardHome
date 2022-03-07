@@ -7,20 +7,221 @@ The format is based on
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+
 ## [Unreleased]
 
 <!--
-## [v0.107.0] - 2021-09-28 (APPROX.)
+## [v0.108.0] - 2022-06-01 (APPROX.)
 -->
 
 ### Added
 
+- EDNS Client-Subnet information in the request details section of a query log
+  record ([#3978]).
+- Support for hostnames for plain UDP upstream servers using the `udp://` scheme
+  ([#4166]).
+- Logs are now collected by default on FreeBSD and OpenBSD when AdGuard Home is
+  installed as a service ([#4213]).
+- `windows/arm64` support ([#3057]).
+
+### Changed
+
+- Domain-specific private reverse DNS upstream servers are now validated to
+  allow only `*.in-addr.arpa` and `*.ip6.arpa` domains pointing to
+  locally-served networks ([#3381]).  **Note:**  If you already have invalid
+  entries in your configuration, consider removing them manually, since they
+  essentially had no effect.
+- Response filtering is now performed using the record types of the answer
+  section of messages as opposed to the type of the question ([#4238]).
+- Instead of adding the build time information, the build scripts now use the
+  standardized environment variable [`SOURCE_DATE_EPOCH`][repr] to add the date
+  of the commit from which the binary was built ([#4221]).  This should simplify
+  reproducible builds for package maintainers and those who compile their own
+  AdGuard Home.
+- The setting `local_domain_name` is now in the `dhcp` block in the
+  configuration file to avoid confusion ([#3367]).
+- The `dns.bogus_nxdomain` configuration file parameter now supports CIDR
+  notation alongside IP addresses ([#1730]).
+
+#### Configuration Changes
+
+In this release, the schema version has changed from 12 to 13.
+
+- Parameter `local_domain_name`, which in schema versions 12 and earlier used to
+  be a part of the `dns` object, is now a part of the `dhcp` object:
+
+  ```yaml
+  # BEFORE:
+  'dns':
+    # …
+    'local_domain_name': 'lan'
+
+  # AFTER:
+  'dhcp':
+    # …
+    'local_domain_name': 'lan'
+  ```
+
+  To rollback this change, move the parameter back into `dns` and change the
+  `schema_version` back to `12`.
+
+### Deprecated
+
+- Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
+
+### Removed
+
+- Go 1.16 support.
+
+### Security
+
+- Enforced password strength policy ([#3503]).
+- Weaker cipher suites that use the CBC (cipher block chaining) mode of
+  operation have been disabled ([#2993]).
+
+[#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
+[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+[#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+[#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
+[#3381]: https://github.com/AdguardTeam/AdGuardHome/issues/3381
+[#3503]: https://github.com/AdguardTeam/AdGuardHome/issues/3503
+[#3978]: https://github.com/AdguardTeam/AdGuardHome/issues/3978
+[#4166]: https://github.com/AdguardTeam/AdGuardHome/issues/4166
+[#4213]: https://github.com/AdguardTeam/AdGuardHome/issues/4213
+[#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
+[#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
+[#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
+
+[repr]: https://reproducible-builds.org/docs/source-date-epoch/
+
+
+
+<!--
+## [v0.107.5] - 2022-04-04 (APPROX.)
+
+See also the [v0.107.5 GitHub milestone][ms-v0.107.5].
+
+[ms-v0.107.5]: https://github.com/AdguardTeam/AdGuardHome/milestone/42?closed=1
+-->
+
+
+
+## [v0.107.4] - 2022-03-01
+
+See also the [v0.107.4 GitHub milestone][ms-v0.107.4].
+
+### Fixed
+
+- Optimistic cache now responds with expired items even if those can't be
+  resolved again ([#4254]).
+- Unnecessarily complex hosts-related logic leading to infinite recursion in
+  some cases ([#4216]).
+
+### Security
+
+- Go version was updated to prevent the possibility of exploiting
+  [CVE-2022-23806], [CVE-2022-23772], and [CVE-2022-23773].
+
+[#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
+[#4254]: https://github.com/AdguardTeam/AdGuardHome/issues/4254
+
+[CVE-2022-23772]: https://www.cvedetails.com/cve/CVE-2022-23772
+[CVE-2022-23773]: https://www.cvedetails.com/cve/CVE-2022-23773
+[CVE-2022-23806]: https://www.cvedetails.com/cve/CVE-2022-23806
+[ms-v0.107.4]:    https://github.com/AdguardTeam/AdGuardHome/milestone/41?closed=1
+
+
+
+## [v0.107.3] - 2022-01-25
+
+See also the [v0.107.3 GitHub milestone][ms-v0.107.3].
+
+### Added
+
+- Support for a `$dnsrewrite` modifier with an empty `NOERROR` response
+  ([#4133]).
+
+### Fixed
+
+- Wrong set of ports checked for duplicates during the initial setup ([#4095]).
+- Incorrectly invalidated service domains ([#4120]).
+- Poor testing of domain-specific upstream servers ([#4074]).
+- Omitted aliases of hosts specified by another line within the OS's hosts file
+  ([#4079]).
+
+[#4074]: https://github.com/AdguardTeam/AdGuardHome/issues/4074
+[#4079]: https://github.com/AdguardTeam/AdGuardHome/issues/4079
+[#4095]: https://github.com/AdguardTeam/AdGuardHome/issues/4095
+[#4120]: https://github.com/AdguardTeam/AdGuardHome/issues/4120
+[#4133]: https://github.com/AdguardTeam/AdGuardHome/issues/4133
+
+[ms-v0.107.3]: https://github.com/AdguardTeam/AdGuardHome/milestone/40?closed=1
+
+
+
+## [v0.107.2] - 2021-12-29
+
+See also the [v0.107.2 GitHub milestone][ms-v0.107.2].
+
+### Fixed
+
+- Infinite loops when TCP connections time out ([#4042]).
+
+[#4042]: https://github.com/AdguardTeam/AdGuardHome/issues/4042
+
+[ms-v0.107.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/38?closed=1
+
+
+
+## [v0.107.1] - 2021-12-29
+
+See also the [v0.107.1 GitHub milestone][ms-v0.107.1].
+
+### Changed
+
+- The validation error message for duplicated allow- and blocklists in DNS
+  settings now shows the duplicated elements ([#3975]).
+
+### Fixed
+
+- `ipset` initialization bugs ([#4027]).
+- Legacy DNS rewrites from a wildcard pattern to a subdomain ([#4016]).
+- Service not being stopped before running the `uninstall` service action
+  ([#3868]).
+- Broken `reload` service action on FreeBSD.
+- Legacy DNS rewrites responding from upstream when a request other than `A` or
+  `AAAA` is received ([#4008]).
+- Panic on port availability check during installation ([#3987]).
+- Incorrect application of rules from the OS's hosts files ([#3998]).
+
+[#3868]: https://github.com/AdguardTeam/AdGuardHome/issues/3868
+[#3975]: https://github.com/AdguardTeam/AdGuardHome/issues/3975
+[#3987]: https://github.com/AdguardTeam/AdGuardHome/issues/3987
+[#3998]: https://github.com/AdguardTeam/AdGuardHome/issues/3998
+[#4008]: https://github.com/AdguardTeam/AdGuardHome/issues/4008
+[#4016]: https://github.com/AdguardTeam/AdGuardHome/issues/4016
+[#4027]: https://github.com/AdguardTeam/AdGuardHome/issues/4027
+
+[ms-v0.107.1]: https://github.com/AdguardTeam/AdGuardHome/milestone/37?closed=1
+
+
+
+## [v0.107.0] - 2021-12-21
+
+See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
+
+### Added
+
+- Upstream server information for responses from cache ([#3772]).  Note that old
+  log entries concerning cached responses won't include that information.
+- Finnish and Ukrainian translations.
 - Setting the timeout for IP address pinging in the "Fastest IP address" mode
   through the new `fastest_timeout` field in the configuration file ([#1992]).
 - Static IP address detection on FreeBSD ([#3289]).
 - Optimistic cache ([#2145]).
 - New possible value of `6h` for `querylog_interval` setting ([#2504]).
-- Blocking access using client IDs ([#2624], [#3162]).
+- Blocking access using ClientIDs ([#2624], [#3162]).
 - `source` directives support in `/etc/network/interfaces` on Linux ([#3257]).
 - RFC 9000 support in DNS-over-QUIC.
 - Completely disabling statistics by setting the statistics interval to zero
@@ -46,6 +247,18 @@ and this project adheres to
 
 ### Changed
 
+- Port bindings are now checked for uniqueness ([#3835]).
+- The DNSSEC check now simply checks against the AD flag in the response
+  ([#3904]).
+- Client objects in the configuration file are now sorted ([#3933]).
+- Responses from cache are now labeled ([#3772]).
+- Better error message for ED25519 private keys, which are not widely supported
+  ([#3737]).
+- Cache now follows RFC more closely for negative answers ([#3707]).
+- `$dnsrewrite` rules and other DNS rewrites will now be applied even when the
+  protection is disabled ([#1558]).
+- DHCP gateway address, subnet mask, IP address range, and leases validations
+  ([#3529]).
 - The `systemd` service script will now create the `/var/log` directory when it
   doesn't exist ([#3579]).
 - Items in allowed clients, disallowed clients, and blocked hosts lists are now
@@ -114,6 +327,19 @@ In this release, the schema version has changed from 10 to 12.
 
 ### Fixed
 
+- EDNS0 TCP keepalive option handling ([#3778]).
+- Rules with the `$denyallow` modifier applying to IP addresses when they
+  shouldn't ([#3175]).
+- The length of the EDNS0 client subnet option appearing too long for some
+  upstream servers ([#3887]).
+- Invalid redirection to the HTTPS web interface after saving enabled encryption
+  settings ([#3558]).
+- Incomplete propagation of the client's IP anonymization setting to the
+  statistics ([#3890]).
+- Incorrect `$dnsrewrite` results for entries from the operating system's hosts
+  file ([#3815]).
+- Matching against rules with `|` at the end of the domain name ([#3371]).
+- Incorrect assignment of explicitly configured DHCP options ([#3744]).
 - Occasional panic during shutdown ([#3655]).
 - Addition of IPs into only one as opposed to all matching ipsets on Linux
   ([#3638]).
@@ -126,7 +352,7 @@ In this release, the schema version has changed from 10 to 12.
 - Occasional panics when reading old statistics databases ([#3506]).
 - `reload` service action on macOS and FreeBSD ([#3457]).
 - Inaccurate using of service actions in the installation script ([#3450]).
-- Client ID checking ([#3437]).
+- ClientID checking ([#3437]).
 - Discovering other DHCP servers on `darwin` and `freebsd` ([#3417]).
 - Switching listening address to unspecified one when bound to a single
   specified IPv4 address on Darwin (macOS) ([#2807]).
@@ -143,7 +369,7 @@ In this release, the schema version has changed from 10 to 12.
 - Redundant hostname generating while loading static leases with empty hostname
   ([#3166]).
 - Domain name case in responses ([#3194]).
-- Custom upstreams selection for clients with client IDs in DNS-over-TLS and
+- Custom upstreams selection for clients with ClientIDs in DNS-over-TLS and
   DNS-over-HTTP ([#3186]).
 - Incorrect client-based filtering applying logic ([#2875]).
 
@@ -152,6 +378,7 @@ In this release, the schema version has changed from 10 to 12.
 - Go 1.15 support.
 
 [#1381]: https://github.com/AdguardTeam/AdGuardHome/issues/1381
+[#1558]: https://github.com/AdguardTeam/AdGuardHome/issues/1558
 [#1691]: https://github.com/AdguardTeam/AdGuardHome/issues/1691
 [#1898]: https://github.com/AdguardTeam/AdGuardHome/issues/1898
 [#1992]: https://github.com/AdguardTeam/AdGuardHome/issues/1992
@@ -172,6 +399,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3162]: https://github.com/AdguardTeam/AdGuardHome/issues/3162
 [#3166]: https://github.com/AdguardTeam/AdGuardHome/issues/3166
 [#3172]: https://github.com/AdguardTeam/AdGuardHome/issues/3172
+[#3175]: https://github.com/AdguardTeam/AdGuardHome/issues/3175
 [#3184]: https://github.com/AdguardTeam/AdGuardHome/issues/3184
 [#3185]: https://github.com/AdguardTeam/AdGuardHome/issues/3185
 [#3186]: https://github.com/AdguardTeam/AdGuardHome/issues/3186
@@ -186,6 +414,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3335]: https://github.com/AdguardTeam/AdGuardHome/issues/3335
 [#3343]: https://github.com/AdguardTeam/AdGuardHome/issues/3343
 [#3351]: https://github.com/AdguardTeam/AdGuardHome/issues/3351
+[#3371]: https://github.com/AdguardTeam/AdGuardHome/issues/3371
 [#3372]: https://github.com/AdguardTeam/AdGuardHome/issues/3372
 [#3417]: https://github.com/AdguardTeam/AdGuardHome/issues/3417
 [#3419]: https://github.com/AdguardTeam/AdGuardHome/issues/3419
@@ -195,8 +424,10 @@ In this release, the schema version has changed from 10 to 12.
 [#3450]: https://github.com/AdguardTeam/AdGuardHome/issues/3450
 [#3457]: https://github.com/AdguardTeam/AdGuardHome/issues/3457
 [#3506]: https://github.com/AdguardTeam/AdGuardHome/issues/3506
+[#3529]: https://github.com/AdguardTeam/AdGuardHome/issues/3529
 [#3538]: https://github.com/AdguardTeam/AdGuardHome/issues/3538
 [#3551]: https://github.com/AdguardTeam/AdGuardHome/issues/3551
+[#3558]: https://github.com/AdguardTeam/AdGuardHome/issues/3558
 [#3564]: https://github.com/AdguardTeam/AdGuardHome/issues/3564
 [#3567]: https://github.com/AdguardTeam/AdGuardHome/issues/3567
 [#3568]: https://github.com/AdguardTeam/AdGuardHome/issues/3568
@@ -204,10 +435,25 @@ In this release, the schema version has changed from 10 to 12.
 [#3607]: https://github.com/AdguardTeam/AdGuardHome/issues/3607
 [#3638]: https://github.com/AdguardTeam/AdGuardHome/issues/3638
 [#3655]: https://github.com/AdguardTeam/AdGuardHome/issues/3655
+[#3707]: https://github.com/AdguardTeam/AdGuardHome/issues/3707
+[#3737]: https://github.com/AdguardTeam/AdGuardHome/issues/3737
+[#3744]: https://github.com/AdguardTeam/AdGuardHome/issues/3744
+[#3772]: https://github.com/AdguardTeam/AdGuardHome/issues/3772
+[#3778]: https://github.com/AdguardTeam/AdGuardHome/issues/3778
+[#3815]: https://github.com/AdguardTeam/AdGuardHome/issues/3815
+[#3835]: https://github.com/AdguardTeam/AdGuardHome/issues/3835
+[#3887]: https://github.com/AdguardTeam/AdGuardHome/issues/3887
+[#3890]: https://github.com/AdguardTeam/AdGuardHome/issues/3890
+[#3904]: https://github.com/AdguardTeam/AdGuardHome/issues/3904
+[#3933]: https://github.com/AdguardTeam/AdGuardHome/pull/3933
+
+[ms-v0.107.0]: https://github.com/AdguardTeam/AdGuardHome/milestone/23?closed=1
 
 
 
 ## [v0.106.3] - 2021-05-19
+
+See also the [v0.106.3 GitHub milestone][ms-v0.106.3].
 
 ### Added
 
@@ -238,9 +484,13 @@ In this release, the schema version has changed from 10 to 12.
 [#3115]: https://github.com/AdguardTeam/AdGuardHome/issues/3115
 [#3127]: https://github.com/AdguardTeam/AdGuardHome/issues/3127
 
+[ms-v0.106.3]: https://github.com/AdguardTeam/AdGuardHome/milestone/35?closed=1
+
 
 
 ## [v0.106.2] - 2021-05-06
+
+See also the [v0.106.2 GitHub milestone][ms-v0.106.2].
 
 ### Fixed
 
@@ -248,9 +498,13 @@ In this release, the schema version has changed from 10 to 12.
 
 [#3056]: https://github.com/AdguardTeam/AdGuardHome/issues/3056
 
+[ms-v0.106.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/34?closed=1
+
 
 
 ## [v0.106.1] - 2021-04-30
+
+See also the [v0.106.1 GitHub milestone][ms-v0.106.1].
 
 ### Fixed
 
@@ -262,9 +516,13 @@ In this release, the schema version has changed from 10 to 12.
 [#3027]: https://github.com/AdguardTeam/AdGuardHome/issues/3027
 [#3028]: https://github.com/AdguardTeam/AdGuardHome/issues/3028
 
+[ms-v0.106.1]: https://github.com/AdguardTeam/AdGuardHome/milestone/33?closed=1
+
 
 
 ## [v0.106.0] - 2021-04-28
+
+See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 
 ### Added
 
@@ -354,10 +612,13 @@ In this release, the schema version has changed from 10 to 12.
 [#2994]: https://github.com/AdguardTeam/AdGuardHome/issues/2994
 
 [doq-draft-02]: https://tools.ietf.org/html/draft-ietf-dprive-dnsoquic-02
+[ms-v0.106.0]:  https://github.com/AdguardTeam/AdGuardHome/milestone/26?closed=1
 
 
 
 ## [v0.105.2] - 2021-03-10
+
+See also the [v0.105.2 GitHub milestone][ms-v0.105.2].
 
 ### Fixed
 
@@ -370,6 +631,11 @@ In this release, the schema version has changed from 10 to 12.
 - Incomplete DNS upstreams validation ([#2674]).
 - Wrong parsing of DHCP options of the `ip` type ([#2688]).
 
+### Security
+
+- Session token doesn't contain user's information anymore ([#2470]).
+
+[#2470]: https://github.com/AdguardTeam/AdGuardHome/issues/2470
 [#2582]: https://github.com/AdguardTeam/AdGuardHome/issues/2582
 [#2600]: https://github.com/AdguardTeam/AdGuardHome/issues/2600
 [#2674]: https://github.com/AdguardTeam/AdGuardHome/issues/2674
@@ -378,15 +644,13 @@ In this release, the schema version has changed from 10 to 12.
 [#2692]: https://github.com/AdguardTeam/AdGuardHome/issues/2692
 [#2757]: https://github.com/AdguardTeam/AdGuardHome/issues/2757
 
-### Security
-
-- Session token doesn't contain user's information anymore ([#2470]).
-
-[#2470]: https://github.com/AdguardTeam/AdGuardHome/issues/2470
+[ms-v0.105.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/32?closed=1
 
 
 
 ## [v0.105.1] - 2021-02-15
+
+See also the [v0.105.1 GitHub milestone][ms-v0.105.1].
 
 ### Changed
 
@@ -427,15 +691,19 @@ In this release, the schema version has changed from 10 to 12.
 [#2678]: https://github.com/AdguardTeam/AdGuardHome/issues/2678
 [#2682]: https://github.com/AdguardTeam/AdGuardHome/issues/2682
 
+[ms-v0.105.1]: https://github.com/AdguardTeam/AdGuardHome/milestone/31?closed=1
+
 
 
 ## [v0.105.0] - 2021-02-10
+
+See also the [v0.105.0 GitHub milestone][ms-v0.105.0].
 
 ### Added
 
 - Added more services to the "Blocked services" list ([#2224], [#2401]).
 - `ipset` subdomain matching, just like `dnsmasq` does ([#2179]).
-- Client ID support for DNS-over-HTTPS, DNS-over-QUIC, and DNS-over-TLS
+- ClientID support for DNS-over-HTTPS, DNS-over-QUIC, and DNS-over-TLS
   ([#1383]).
 - `$dnsrewrite` modifier for filters ([#2102]).
 - The host checking API and the query logs API can now return multiple matched
@@ -528,7 +796,13 @@ In this release, the schema version has changed from 10 to 12.
 [#2639]: https://github.com/AdguardTeam/AdGuardHome/issues/2639
 [#2646]: https://github.com/AdguardTeam/AdGuardHome/issues/2646
 
+[ms-v0.105.0]: https://github.com/AdguardTeam/AdGuardHome/milestone/27?closed=1
+
+
+
 ## [v0.104.3] - 2020-11-19
+
+See also the [v0.104.3 GitHub milestone][ms-v0.104.3].
 
 ### Fixed
 
@@ -536,9 +810,13 @@ In this release, the schema version has changed from 10 to 12.
 
 [#2336]: https://github.com/AdguardTeam/AdGuardHome/issues/2336
 
+[ms-v0.104.3]: https://github.com/AdguardTeam/AdGuardHome/milestone/30?closed=1
+
 
 
 ## [v0.104.2] - 2020-11-19
+
+See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 ### Added
 
@@ -564,14 +842,22 @@ In this release, the schema version has changed from 10 to 12.
 [#2324]: https://github.com/AdguardTeam/AdGuardHome/issues/2324
 [#2325]: https://github.com/AdguardTeam/AdGuardHome/issues/2325
 
+[ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
+
+
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.0...HEAD
-[v0.107.0]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.3...v0.107.0
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.5...HEAD
+[v0.107.5]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...v0.107.5
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.3...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...HEAD
+[v0.107.4]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...v0.107.4
+[v0.107.3]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.2...v0.107.3
+[v0.107.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.1...v0.107.2
+[v0.107.1]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.0...v0.107.1
+[v0.107.0]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.3...v0.107.0
 [v0.106.3]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.2...v0.106.3
 [v0.106.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.1...v0.106.2
 [v0.106.1]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.106.0...v0.106.1

@@ -1,38 +1,38 @@
 package aghio
 
 import (
-	"fmt"
 	"io"
 	"strings"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestLimitReader(t *testing.T) {
 	testCases := []struct {
-		want error
-		name string
-		n    int64
+		wantErrMsg string
+		name       string
+		n          int64
 	}{{
-		want: nil,
-		name: "positive",
-		n:    1,
+		wantErrMsg: "",
+		name:       "positive",
+		n:          1,
 	}, {
-		want: nil,
-		name: "zero",
-		n:    0,
+		wantErrMsg: "",
+		name:       "zero",
+		n:          0,
 	}, {
-		want: fmt.Errorf("aghio: invalid n in LimitReader: -1"),
-		name: "negative",
-		n:    -1,
+		wantErrMsg: "aghio: invalid n in LimitReader: -1",
+		name:       "negative",
+		n:          -1,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := LimitReader(nil, tc.n)
-			assert.Equal(t, tc.want, err)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
 }
@@ -73,36 +73,23 @@ func TestLimitedReader_Read(t *testing.T) {
 	}}
 
 	for _, tc := range testCases {
+		readCloser := io.NopCloser(strings.NewReader(tc.rStr))
+		lreader, err := LimitReader(readCloser, tc.limit)
+		require.NoError(t, err)
+		require.NotNil(t, lreader)
+
 		t.Run(tc.name, func(t *testing.T) {
-			readCloser := io.NopCloser(strings.NewReader(tc.rStr))
 			buf := make([]byte, tc.limit+1)
+			n, rerr := lreader.Read(buf)
+			require.Equal(t, rerr, tc.err)
 
-			lreader, err := LimitReader(readCloser, tc.limit)
-			require.NoError(t, err)
-
-			n, err := lreader.Read(buf)
-			require.Equal(t, tc.err, err)
 			assert.Equal(t, tc.want, n)
 		})
 	}
 }
 
 func TestLimitedReader_LimitReachedError(t *testing.T) {
-	testCases := []struct {
-		err  error
-		name string
-		want string
-	}{{
-		err: &LimitReachedError{
-			Limit: 0,
-		},
-		name: "simplest",
-		want: "attempted to read more than 0 bytes",
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.want, tc.err.Error())
-		})
-	}
+	testutil.AssertErrorMsg(t, "attempted to read more than 0 bytes", &LimitReachedError{
+		Limit: 0,
+	})
 }

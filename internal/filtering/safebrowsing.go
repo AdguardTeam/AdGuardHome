@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
@@ -306,7 +307,7 @@ func (d *DNSFilter) checkSafeBrowsing(
 	_ uint16,
 	setts *Settings,
 ) (res Result, err error) {
-	if !setts.SafeBrowsingEnabled {
+	if !setts.ProtectionEnabled || !setts.SafeBrowsingEnabled {
 		return Result{}, nil
 	}
 
@@ -318,7 +319,7 @@ func (d *DNSFilter) checkSafeBrowsing(
 	sctx := &sbCtx{
 		host:      host,
 		svc:       "SafeBrowsing",
-		cache:     gctx.safebrowsingCache,
+		cache:     d.safebrowsingCache,
 		cacheTime: d.Config.CacheTime,
 	}
 
@@ -326,7 +327,8 @@ func (d *DNSFilter) checkSafeBrowsing(
 		IsFiltered: true,
 		Reason:     FilteredSafeBrowsing,
 		Rules: []*ResultRule{{
-			Text: "adguard-malware-shavar",
+			Text:         "adguard-malware-shavar",
+			FilterListID: SafeBrowsingListID,
 		}},
 	}
 
@@ -339,7 +341,7 @@ func (d *DNSFilter) checkParental(
 	_ uint16,
 	setts *Settings,
 ) (res Result, err error) {
-	if !setts.ParentalEnabled {
+	if !setts.ProtectionEnabled || !setts.ParentalEnabled {
 		return Result{}, nil
 	}
 
@@ -351,7 +353,7 @@ func (d *DNSFilter) checkParental(
 	sctx := &sbCtx{
 		host:      host,
 		svc:       "Parental",
-		cache:     gctx.parentalCache,
+		cache:     d.parentalCache,
 		cacheTime: d.Config.CacheTime,
 	}
 
@@ -359,17 +361,12 @@ func (d *DNSFilter) checkParental(
 		IsFiltered: true,
 		Reason:     FilteredParental,
 		Rules: []*ResultRule{{
-			Text: "parental CATEGORY_BLACKLISTED",
+			Text:         "parental CATEGORY_BLACKLISTED",
+			FilterListID: ParentalListID,
 		}},
 	}
 
 	return check(sctx, res, d.parentalUpstream)
-}
-
-func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {
-	text := fmt.Sprintf(format, args...)
-	log.Info("DNSFilter: %s %s: %s", r.Method, r.URL, text)
-	http.Error(w, text, code)
 }
 
 func (d *DNSFilter) handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
@@ -390,7 +387,8 @@ func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Requ
 		Enabled: d.Config.SafeBrowsingEnabled,
 	})
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
+
 		return
 	}
 }
@@ -413,8 +411,7 @@ func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request)
 		Enabled: d.Config.ParentalEnabled,
 	})
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-		return
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 	}
 }
 

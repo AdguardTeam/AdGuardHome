@@ -49,10 +49,10 @@ trap not_found EXIT
 
 # Warnings
 
-go_version="$( "$GO" version )"
+go_version="$( "${GO:-go}" version )"
 readonly go_version
 
-go_min_version='go1.16'
+go_min_version='go1.17'
 go_version_msg="
 warning: your go version (${go_version}) is different from the recommended minimal one (${go_min_version}).
 if you have the version installed, please set the GO environment variable.
@@ -61,7 +61,6 @@ for example:
 	export GO='${go_min_version}'
 "
 readonly go_min_version go_version_msg
-
 
 case "$go_version"
 in
@@ -80,10 +79,10 @@ esac
 # blocklist_imports is a simple check against unwanted packages.  The following
 # packages are banned:
 #
-#   *  Package io/ioutil is soft-deprecated.
-#
 #   *  Packages errors and log are replaced by our own packages in the
 #      github.com/AdguardTeam/golibs module.
+#
+#   *  Package io/ioutil is soft-deprecated.
 #
 #   *  Package reflect is often an overkill, and for deep comparisons there are
 #      much better functions in module github.com/google/go-cmp.  Which is
@@ -94,6 +93,8 @@ esac
 #
 #   *  Package unsafe is… unsafe.
 #
+#   *  Package golang.org/x/net/context has been moved into stdlib.
+#
 blocklist_imports() {
 	git grep\
 		-e '[[:space:]]"errors"$'\
@@ -101,33 +102,55 @@ blocklist_imports() {
 		-e '[[:space:]]"log"$'\
 		-e '[[:space:]]"reflect"$'\
 		-e '[[:space:]]"unsafe"$'\
-		-- '*.go' || exit 0;
+		-e '[[:space:]]"golang.org/x/net/context"$'\
+		-n\
+		-- '*.go'\
+		| sed -e 's/^\([^[:space:]]\+\)\(.*\)$/\1 blocked import:\2/'\
+		|| exit 0
 }
 
 # method_const is a simple check against the usage of some raw strings and
 # numbers where one should use named constants.
 method_const() {
-	git grep -F -e '"GET"' -e '"POST"' -- '*.go' || exit 0;
+	git grep -F\
+		-e '"DELETE"'\
+		-e '"GET"'\
+		-e '"POST"'\
+		-e '"PUT"'\
+		-n\
+		-- '*.go'\
+		| sed -e 's/^\([^[:space:]]\+\)\(.*\)$/\1 http method literal:\2/'\
+		|| exit 0
 }
 
-# underscores is a simple check against Go filenames with underscores.
+# underscores is a simple check against Go filenames with underscores.  Add new
+# build tags and OS as you go.  The main goal of this check is to discourage the
+# use of filenames like client_manager.go.
 underscores() {
-	git ls-files '*_*.go' | {
-		grep -F\
-		-e '_big.go'\
-		-e '_bsd.go'\
-		-e '_darwin.go'\
-		-e '_freebsd.go'\
-		-e '_openbsd.go'\
-		-e '_linux.go'\
-		-e '_little.go'\
-		-e '_others.go'\
-		-e '_test.go'\
-		-e '_unix.go'\
-		-e '_windows.go' \
-		-v\
-		|| exit 0
-	}
+	underscore_files="$(
+		git ls-files '*_*.go'\
+			| grep -F\
+			-e '_big.go'\
+			-e '_bsd.go'\
+			-e '_darwin.go'\
+			-e '_freebsd.go'\
+			-e '_openbsd.go'\
+			-e '_linux.go'\
+			-e '_little.go'\
+			-e '_others.go'\
+			-e '_test.go'\
+			-e '_unix.go'\
+			-e '_windows.go' \
+			-v\
+			| sed -e 's/./\t\0/'
+	)"
+	readonly underscore_files
+
+	if [ "$underscore_files" != '' ]
+	then
+		echo 'found file names with underscores:'
+		echo "$underscore_files"
+	fi
 }
 
 # TODO(a.garipov): Add an analyser to look for `fallthrough`, `goto`, and `new`?
@@ -151,7 +174,7 @@ exit_on_output() (
 
 	output="$( "$cmd" "$@" 2>&1 )"
 	exitcode="$?"
-	if [ "$exitcode" != '0' ]
+	if [ "$exitcode" -ne '0' ]
 	then
 		echo "'$cmd' failed with code $exitcode"
 	fi
@@ -160,9 +183,9 @@ exit_on_output() (
 	then
 		if [ "$*" != '' ]
 		then
-			echo "combined output of '$cmd $*':"
+			echo "combined output of linter '$cmd $*':"
 		else
-			echo "combined output of '$cmd':"
+			echo "combined output of linter '$cmd':"
 		fi
 
 		echo "$output"
@@ -178,13 +201,6 @@ exit_on_output() (
 
 
 
-# Constants
-
-go_files='./main.go ./internal/'
-readonly go_files
-
-
-
 # Checks
 
 exit_on_output blocklist_imports
@@ -193,7 +209,7 @@ exit_on_output method_const
 
 exit_on_output underscores
 
-exit_on_output gofumpt --extra -l -s .
+exit_on_output gofumpt --extra -e -l .
 
 golint --set_exit_status ./...
 
@@ -208,8 +224,6 @@ gocyclo --over 10 ./internal/aghio/ ./internal/aghnet/ ./internal/aghos/\
 	./internal/aghtest/ ./internal/stats/ ./internal/tools/\
 	./internal/updater/ ./internal/version/ ./main.go
 
-gosec --quiet $go_files
-
 ineffassign ./...
 
 unparam ./...
@@ -221,6 +235,9 @@ looppointer ./...
 nilness ./...
 
 exit_on_output shadow --strict ./...
+
+# TODO(a.garipov): Enable in v0.108.0.
+# gosec --quiet ./...
 
 # TODO(a.garipov): Enable --blank?
 errcheck --asserts ./...

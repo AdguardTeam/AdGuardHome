@@ -27,7 +27,6 @@ type DHCPServer interface {
 	Start() (err error)
 	// Stop - stop server
 	Stop() (err error)
-
 	getLeasesRef() []*Lease
 }
 

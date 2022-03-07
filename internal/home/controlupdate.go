@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
@@ -43,7 +44,8 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	if r.ContentLength != 0 {
 		err = json.NewDecoder(r.Body).Decode(req)
 		if err != nil {
-			httpError(w, http.StatusBadRequest, "JSON parse: %s", err)
+			aghhttp.Error(r, w, http.StatusBadRequest, "JSON parse: %s", err)
+
 			return
 		}
 	}
@@ -77,7 +79,15 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		vcu := Context.updater.VersionCheckURL()
 		// TODO(a.garipov): Figure out the purpose of %T verb.
-		httpError(w, http.StatusBadGateway, "Couldn't get version check json from %s: %T %s\n", vcu, err, err)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusBadGateway,
+			"Couldn't get version check json from %s: %T %s\n",
+			vcu,
+			err,
+			err,
+		)
 
 		return
 	}
@@ -87,24 +97,26 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write body: %s", err)
 	}
 }
 
 // handleUpdate performs an update to the latest available version procedure.
-func handleUpdate(w http.ResponseWriter, _ *http.Request) {
+func handleUpdate(w http.ResponseWriter, r *http.Request) {
 	if Context.updater.NewVersion() == "" {
-		httpError(w, http.StatusBadRequest, "/update request isn't allowed now")
+		aghhttp.Error(r, w, http.StatusBadRequest, "/update request isn't allowed now")
+
 		return
 	}
 
 	err := Context.updater.Update()
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "%s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
+
 		return
 	}
 
-	returnOK(w)
+	aghhttp.OK(w)
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()
 	}

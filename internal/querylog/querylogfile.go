@@ -3,12 +3,12 @@ package querylog
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // flushLogBuffer flushes the current buffer to file and resets the current buffer
@@ -92,15 +92,15 @@ func (l *queryLog) rotate() error {
 	err := os.Rename(from, to)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
+			log.Debug("querylog: no log to rotate")
+
 			return nil
 		}
 
-		log.Error("querylog: failed to rename file: %s", err)
-
-		return err
+		return fmt.Errorf("failed to rename old file: %w", err)
 	}
 
-	log.Debug("querylog: renamed %s -> %s", from, to)
+	log.Debug("querylog: renamed %s into %s", from, to)
 
 	return nil
 }
@@ -135,22 +135,49 @@ func (l *queryLog) readFileFirstTimeValue() (first time.Time, err error) {
 func (l *queryLog) periodicRotate() {
 	defer log.OnPanic("querylog: rotating")
 
-	var err error
-	for {
-		var oldest time.Time
-		oldest, err = l.readFileFirstTimeValue()
-		if err != nil {
-			log.Debug("%s", err)
-		}
+	l.checkAndRotate()
 
-		if oldest.Add(l.conf.RotationIvl).After(time.Now()) {
-			err = l.rotate()
-			if err != nil {
-				log.Debug("%s", err)
-			}
-		}
+	// rotationCheckIvl is the period of time between checking the need for
+	// rotating log files.  It's smaller of any available rotation interval to
+	// increase time accuracy.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/3823.
+	const rotationCheckIvl = 1 * time.Hour
 
-		// What?
-		time.Sleep(timeutil.Day)
+	rotations := time.NewTicker(rotationCheckIvl)
+	defer rotations.Stop()
+
+	for range rotations.C {
+		l.checkAndRotate()
 	}
+}
+
+// checkAndRotate rotates log files if those are older than the specified
+// rotation interval.
+func (l *queryLog) checkAndRotate() {
+	oldest, err := l.readFileFirstTimeValue()
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Error("querylog: reading oldest record for rotation: %s", err)
+
+		return
+	}
+
+	if rot, now := oldest.Add(l.conf.RotationIvl), time.Now(); rot.After(now) {
+		log.Debug(
+			"querylog: %s <= %s, not rotating",
+			now.Format(time.RFC3339),
+			rot.Format(time.RFC3339),
+		)
+
+		return
+	}
+
+	err = l.rotate()
+	if err != nil {
+		log.Error("querylog: rotating: %s", err)
+
+		return
+	}
+
+	log.Debug("querylog: rotated successfully")
 }

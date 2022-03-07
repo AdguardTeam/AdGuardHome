@@ -20,6 +20,7 @@ const DomainCell = ({
     time,
     tracker,
     type,
+    ecs,
 }) => {
     const { t } = useTranslation();
     const dnssec_enabled = useSelector((state) => state.dnsConfig.dnssec_enabled);
@@ -53,6 +54,13 @@ const DomainCell = ({
             ...requestDetailsObj,
             domain: unicodeName,
             punycode: domain,
+        };
+    }
+
+    if (ecs) {
+        requestDetailsObj = {
+            ...requestDetailsObj,
+            ecs,
         };
     }
 
@@ -168,6 +176,7 @@ DomainCell.propTypes = {
     time: propTypes.string.isRequired,
     type: propTypes.string.isRequired,
     tracker: propTypes.object,
+    ecs: propTypes.string,
 };
 
 export default DomainCell;

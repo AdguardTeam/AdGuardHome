@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,7 +22,7 @@ const testFltsFileName = "1.txt"
 func testStartFilterListener(t *testing.T, fltContent *[]byte) (l net.Listener) {
 	t.Helper()
 
-	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		n, werr := w.Write(*fltContent)
 		require.NoError(t, werr)
 		require.Equal(t, len(*fltContent), n)
@@ -34,9 +35,7 @@ func testStartFilterListener(t *testing.T, fltContent *[]byte) (l net.Listener) 
 	go func() {
 		_ = http.Serve(l, h)
 	}()
-	t.Cleanup(func() {
-		require.NoError(t, l.Close())
-	})
+	testutil.CleanupAndRequireSuccess(t, l.Close)
 
 	return l
 }
@@ -100,9 +99,7 @@ func TestFilters(t *testing.T) {
 
 	t.Run("refresh_actually", func(t *testing.T) {
 		fltContent = []byte(`||example.com^`)
-		t.Cleanup(func() {
-			fltContent = []byte(content)
-		})
+		t.Cleanup(func() { fltContent = []byte(content) })
 
 		updateAndAssert(t, require.True, 1)
 	})

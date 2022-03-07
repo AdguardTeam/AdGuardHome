@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/NYTimes/gziphandler"
@@ -33,14 +35,13 @@ const (
 )
 
 type webConfig struct {
+	clientFS     fs.FS
+	clientBetaFS fs.FS
+
 	BindHost     net.IP
 	BindPort     int
 	BetaBindPort int
 	PortHTTPS    int
-	firstRun     bool
-
-	clientFS     fs.FS
-	clientBetaFS fs.FS
 
 	// ReadTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
@@ -53,6 +54,8 @@ type webConfig struct {
 	// WriteTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
 	WriteTimeout time.Duration
+
+	firstRun bool
 }
 
 // HTTPSServer - HTTPS Server
@@ -114,17 +117,8 @@ func CreateWeb(conf *webConfig) *Web {
 // WebCheckPortAvailable - check if port is available
 // BUT: if we are already using this port, no need
 func WebCheckPortAvailable(port int) bool {
-	alreadyRunning := false
-	if Context.web.httpsServer.server != nil {
-		alreadyRunning = true
-	}
-	if !alreadyRunning {
-		err := aghnet.CheckPortAvailable(config.BindHost, port)
-		if err != nil {
-			return false
-		}
-	}
-	return true
+	return Context.web.httpsServer.server != nil ||
+		aghnet.CheckPort("tcp", config.BindHost, port) == nil
 }
 
 // TLSConfigChanged updates the TLS configuration and restarts the HTTPS server
@@ -151,7 +145,8 @@ func (web *Web) TLSConfigChanged(ctx context.Context, tlsConf tlsConfigSettings)
 	if web.httpsServer.server != nil {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, shutdownTimeout)
-		shutdownSrv(ctx, cancel, web.httpsServer.server)
+		shutdownSrv(ctx, web.httpsServer.server)
+		cancel()
 	}
 
 	web.httpsServer.enabled = enabled
@@ -183,33 +178,46 @@ func (web *Web) Start() {
 			WriteTimeout:      web.conf.WriteTimeout,
 		}
 		go func() {
+			defer log.OnPanic("web: plain")
+
 			errs <- web.httpServer.ListenAndServe()
 		}()
 
-		if web.conf.BetaBindPort != 0 {
-			web.httpServerBeta = &http.Server{
-				ErrorLog:          log.StdLog("web: plain", log.DEBUG),
-				Addr:              netutil.JoinHostPort(hostStr, web.conf.BetaBindPort),
-				Handler:           withMiddlewares(Context.mux, limitRequestBody, web.wrapIndexBeta),
-				ReadTimeout:       web.conf.ReadTimeout,
-				ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
-				WriteTimeout:      web.conf.WriteTimeout,
-			}
-			go func() {
-				betaErr := web.httpServerBeta.ListenAndServe()
-				if betaErr != nil {
-					log.Error("starting beta http server: %s", betaErr)
-				}
-			}()
-		}
+		web.startBetaServer(hostStr)
 
 		err := <-errs
-		if err != http.ErrServerClosed {
+		if !errors.Is(err, http.ErrServerClosed) {
 			cleanupAlways()
 			log.Fatal(err)
 		}
-		// We use ErrServerClosed as a sign that we need to rebind on new address, so go back to the start of the loop
+
+		// We use ErrServerClosed as a sign that we need to rebind on a new
+		// address, so go back to the start of the loop.
 	}
+}
+
+// startBetaServer starts the beta HTTP server if necessary.
+func (web *Web) startBetaServer(hostStr string) {
+	if web.conf.BetaBindPort == 0 {
+		return
+	}
+
+	web.httpServerBeta = &http.Server{
+		ErrorLog:          log.StdLog("web: plain: beta", log.DEBUG),
+		Addr:              netutil.JoinHostPort(hostStr, web.conf.BetaBindPort),
+		Handler:           withMiddlewares(Context.mux, limitRequestBody, web.wrapIndexBeta),
+		ReadTimeout:       web.conf.ReadTimeout,
+		ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
+		WriteTimeout:      web.conf.WriteTimeout,
+	}
+	go func() {
+		defer log.OnPanic("web: plain: beta")
+
+		betaErr := web.httpServerBeta.ListenAndServe()
+		if betaErr != nil && !errors.Is(betaErr, http.ErrServerClosed) {
+			log.Error("starting beta http server: %s", betaErr)
+		}
+	}()
 }
 
 // Close gracefully shuts down the HTTP servers.
@@ -222,10 +230,11 @@ func (web *Web) Close(ctx context.Context) {
 
 	var cancel context.CancelFunc
 	ctx, cancel = context.WithTimeout(ctx, shutdownTimeout)
+	defer cancel()
 
-	shutdownSrv(ctx, cancel, web.httpsServer.server)
-	shutdownSrv(ctx, cancel, web.httpServer)
-	shutdownSrv(ctx, cancel, web.httpServerBeta)
+	shutdownSrv(ctx, web.httpsServer.server)
+	shutdownSrv(ctx, web.httpServer)
+	shutdownSrv(ctx, web.httpServerBeta)
 
 	log.Info("stopped http server")
 }
@@ -256,9 +265,9 @@ func (web *Web) tlsServerLoop() {
 			Addr:     address,
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
-				MinVersion:   tls.VersionTLS12,
 				RootCAs:      Context.tlsRoots,
-				CipherSuites: Context.tlsCiphers,
+				CipherSuites: aghtls.SaferCipherSuites(),
+				MinVersion:   tls.VersionTLS12,
 			},
 			Handler:           withMiddlewares(Context.mux, limitRequestBody),
 			ReadTimeout:       web.conf.ReadTimeout,

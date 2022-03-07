@@ -11,6 +11,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +27,7 @@ func testNotify(flags uint32) {
 func TestDB(t *testing.T) {
 	var err error
 	s := Server{
-		conf: ServerConfig{
+		conf: &ServerConfig{
 			DBFilePath: dbFilename,
 		},
 	}
@@ -67,9 +68,7 @@ func TestDB(t *testing.T) {
 	err = s.dbStore()
 	require.NoError(t, err)
 
-	t.Cleanup(func() {
-		assert.NoError(t, os.Remove(dbFilename))
-	})
+	testutil.CleanupAndRequireSuccess(t, func() (err error) { return os.Remove(dbFilename) })
 
 	err = s.srv4.ResetLeases(nil)
 	require.NoError(t, err)
@@ -136,6 +135,49 @@ func TestNormalizeLeases(t *testing.T) {
 	assert.Equal(t, leases[0].IP, staticLeases[0].IP)
 	assert.Equal(t, leases[1].HWAddr, staticLeases[1].HWAddr)
 	assert.Equal(t, leases[2].HWAddr, dynLeases[1].HWAddr)
+}
+
+func TestV4Server_badRange(t *testing.T) {
+	testCases := []struct {
+		name       string
+		wantErrMsg string
+		gatewayIP  net.IP
+		subnetMask net.IP
+	}{{
+		name: "gateway_in_range",
+		wantErrMsg: "dhcpv4: gateway ip 192.168.10.120 in the ip range: " +
+			"192.168.10.20-192.168.10.200",
+		gatewayIP:  net.IP{192, 168, 10, 120},
+		subnetMask: net.IP{255, 255, 255, 0},
+	}, {
+		name: "outside_range_start",
+		wantErrMsg: "dhcpv4: range start 192.168.10.20 is outside network " +
+			"192.168.10.1/28",
+		gatewayIP:  net.IP{192, 168, 10, 1},
+		subnetMask: net.IP{255, 255, 255, 240},
+	}, {
+		name: "outside_range_end",
+		wantErrMsg: "dhcpv4: range end 192.168.10.200 is outside network " +
+			"192.168.10.1/27",
+		gatewayIP:  net.IP{192, 168, 10, 1},
+		subnetMask: net.IP{255, 255, 255, 224},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			conf := V4ServerConf{
+				Enabled:    true,
+				RangeStart: net.IP{192, 168, 10, 20},
+				RangeEnd:   net.IP{192, 168, 10, 200},
+				GatewayIP:  tc.gatewayIP,
+				SubnetMask: tc.subnetMask,
+				notify:     testNotify,
+			}
+
+			_, err := v4Create(conf)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
+		})
+	}
 }
 
 // cloneUDPAddr returns a deep copy of a.

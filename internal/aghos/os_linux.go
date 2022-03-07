@@ -26,6 +26,8 @@ func haveAdminRights() (bool, error) {
 }
 
 func isOpenWrt() (ok bool) {
+	const etcReleasePattern = "etc/*release*"
+
 	var err error
 	ok, err = FileWalker(func(r io.Reader) (_ []string, cont bool, err error) {
 		const osNameData = "openwrt"
@@ -39,7 +41,7 @@ func isOpenWrt() (ok bool) {
 		}
 
 		return nil, !stringutil.ContainsFold(string(data), osNameData), nil
-	}).Walk("/etc/*release*")
+	}).Walk(RootDirFS(), etcReleasePattern)
 
 	return err == nil && ok
 }

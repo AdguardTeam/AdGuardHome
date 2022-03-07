@@ -1,8 +1,20 @@
-//go:build openbsd || freebsd || linux
-// +build openbsd freebsd linux
+//go:build openbsd || freebsd || linux || darwin
+// +build openbsd freebsd linux darwin
 
 package aghnet
 
-// interfaceName is a string containing network interface's name.  The name is
-// used in file walking methods.
-type interfaceName string
+import (
+	"io"
+	"syscall"
+
+	"github.com/AdguardTeam/golibs/errors"
+)
+
+// closePortChecker closes c.  c must be non-nil.
+func closePortChecker(c io.Closer) (err error) {
+	return c.Close()
+}
+
+func isAddrInUse(err syscall.Errno) (ok bool) {
+	return errors.Is(err, syscall.EADDRINUSE)
+}

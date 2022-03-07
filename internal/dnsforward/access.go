@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
@@ -118,8 +119,8 @@ func (a *accessCtx) allowlistMode() (ok bool) {
 func (a *accessCtx) isBlockedClientID(id string) (ok bool) {
 	allowlistMode := a.allowlistMode()
 	if id == "" {
-		// In allowlist mode, consider requests without client IDs
-		// blocked by default.
+		// In allowlist mode, consider requests without ClientIDs blocked by
+		// default.
 		return allowlistMode
 	}
 
@@ -187,78 +188,62 @@ func (s *Server) handleAccessList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(j)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "encoding response: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "encoding response: %s", err)
 
 		return
 	}
 }
 
-func isUniq(slice []string) (ok bool, uniqueMap map[string]unit) {
-	exists := make(map[string]unit)
-	for _, key := range slice {
-		if _, has := exists[key]; has {
-			return false, nil
-		}
-		exists[key] = unit{}
-	}
-	return true, exists
-}
-
-func intersect(mapA, mapB map[string]unit) bool {
-	for key := range mapA {
-		if _, has := mapB[key]; has {
-			return true
-		}
-	}
-	return false
-}
-
 // validateAccessSet checks the internal accessListJSON lists.  To search for
 // duplicates, we cannot compare the new stringutil.Set and []string, because
 // creating a set for a large array can be an unnecessary algorithmic complexity
-func validateAccessSet(list accessListJSON) (err error) {
-	const (
-		errAllowedDup    errors.Error = "duplicates in allowed clients"
-		errDisallowedDup errors.Error = "duplicates in disallowed clients"
-		errBlockedDup    errors.Error = "duplicates in blocked hosts"
-		errIntersect     errors.Error = "some items in allowed and " +
-			"disallowed lists at the same time"
-	)
-
-	ok, allowedClients := isUniq(list.AllowedClients)
-	if !ok {
-		return errAllowedDup
+func validateAccessSet(list *accessListJSON) (err error) {
+	allowed, err := validateStrUniq(list.AllowedClients)
+	if err != nil {
+		return fmt.Errorf("validating allowed clients: %w", err)
 	}
 
-	ok, disallowedClients := isUniq(list.DisallowedClients)
-	if !ok {
-		return errDisallowedDup
+	disallowed, err := validateStrUniq(list.DisallowedClients)
+	if err != nil {
+		return fmt.Errorf("validating disallowed clients: %w", err)
 	}
 
-	ok, _ = isUniq(list.BlockedHosts)
-	if !ok {
-		return errBlockedDup
+	_, err = validateStrUniq(list.BlockedHosts)
+	if err != nil {
+		return fmt.Errorf("validating blocked hosts: %w", err)
 	}
 
-	if intersect(allowedClients, disallowedClients) {
-		return errIntersect
+	merged := allowed.Merge(disallowed)
+	err = merged.Validate(aghalg.StringIsBefore)
+	if err != nil {
+		return fmt.Errorf("items in allowed and disallowed clients intersect: %w", err)
 	}
 
 	return nil
 }
 
+// validateStrUniq returns an informative error if clients are not unique.
+func validateStrUniq(clients []string) (uc aghalg.UniqChecker, err error) {
+	uc = make(aghalg.UniqChecker, len(clients))
+	for _, c := range clients {
+		uc.Add(c)
+	}
+
+	return uc, uc.Validate(aghalg.StringIsBefore)
+}
+
 func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
-	list := accessListJSON{}
+	list := &accessListJSON{}
 	err := json.NewDecoder(r.Body).Decode(&list)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "decoding request: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "decoding request: %s", err)
 
 		return
 	}
 
 	err = validateAccessSet(list)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, err.Error())
+		aghhttp.Error(r, w, http.StatusBadRequest, err.Error())
 
 		return
 	}
@@ -266,7 +251,7 @@ func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 	var a *accessCtx
 	a, err = newAccessCtx(list.AllowedClients, list.DisallowedClients, list.BlockedHosts)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "creating access ctx: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "creating access ctx: %s", err)
 
 		return
 	}

@@ -8,8 +8,8 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// IPVersion is a documentational alias for int.  Use it when the integer means
-// IP version.
+// IPVersion is a alias for int for documentation purposes.  Use it when the
+// integer means IP version.
 type IPVersion = int
 
 // IP version constants.
@@ -25,6 +25,13 @@ type NetIface interface {
 
 // IfaceIPAddrs returns the interface's IP addresses.
 func IfaceIPAddrs(iface NetIface, ipv IPVersion) (ips []net.IP, err error) {
+	switch ipv {
+	case IPVersion4, IPVersion6:
+		// Go on.
+	default:
+		return nil, fmt.Errorf("invalid ip version %d", ipv)
+	}
+
 	addrs, err := iface.Addrs()
 	if err != nil {
 		return nil, err
@@ -41,20 +48,16 @@ func IfaceIPAddrs(iface NetIface, ipv IPVersion) (ips []net.IP, err error) {
 			continue
 		}
 
-		// Assume that net.(*Interface).Addrs can only return valid IPv4
-		// and IPv6 addresses.  Thus, if it isn't an IPv4 address, it
-		// must be an IPv6 one.
-		switch ipv {
-		case IPVersion4:
-			if ip4 := ip.To4(); ip4 != nil {
+		// Assume that net.(*Interface).Addrs can only return valid IPv4 and
+		// IPv6 addresses.  Thus, if it isn't an IPv4 address, it must be an
+		// IPv6 one.
+		ip4 := ip.To4()
+		if ipv == IPVersion4 {
+			if ip4 != nil {
 				ips = append(ips, ip4)
 			}
-		case IPVersion6:
-			if ip6 := ip.To4(); ip6 == nil {
-				ips = append(ips, ip)
-			}
-		default:
-			return nil, fmt.Errorf("invalid ip version %d", ipv)
+		} else if ip4 == nil {
+			ips = append(ips, ip)
 		}
 	}
 
@@ -67,7 +70,7 @@ func IfaceIPAddrs(iface NetIface, ipv IPVersion) (ips []net.IP, err error) {
 //
 // It makes up to maxAttempts attempts to get the addresses if there are none,
 // each time using the provided backoff.  Sometimes an interface needs a few
-// seconds to really ititialize.
+// seconds to really initialize.
 //
 // See https://github.com/AdguardTeam/AdGuardHome/issues/2304.
 func IfaceDNSIPAddrs(
@@ -92,18 +95,20 @@ func IfaceDNSIPAddrs(
 		time.Sleep(backoff)
 	}
 
+	n--
+
 	switch len(addrs) {
 	case 0:
-		// Don't return errors in case the users want to try and enable
-		// the DHCP server later.
+		// Don't return errors in case the users want to try and enable the DHCP
+		// server later.
 		t := time.Duration(n) * backoff
 		log.Error("dhcpv%d: no ip for iface after %d attempts and %s", ipv, n, t)
 
 		return nil, nil
 	case 1:
-		// Some Android devices use 8.8.8.8 if there is not a secondary
-		// DNS server.  Fix that by setting the secondary DNS address to
-		// the same address.
+		// Some Android devices use 8.8.8.8 if there is not a secondary DNS
+		// server.  Fix that by setting the secondary DNS address to the same
+		// address.
 		//
 		// See https://github.com/AdguardTeam/AdGuardHome/issues/1708.
 		log.Debug("dhcpv%d: setting secondary dns ip to itself", ipv)
@@ -116,3 +121,11 @@ func IfaceDNSIPAddrs(
 
 	return addrs, nil
 }
+
+// interfaceName is a string containing network interface's name.  The name is
+// used in file walking methods.
+type interfaceName string
+
+// Use interfaceName in the OS-independent code since it's actually only used in
+// several OS-dependent implementations which causes linting issues.
+var _ = interfaceName("")

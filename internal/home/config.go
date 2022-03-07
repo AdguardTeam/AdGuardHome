@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -82,10 +83,12 @@ type configuration struct {
 	WhitelistFilters []filter `yaml:"whitelist_filters"`
 	UserRules        []string `yaml:"user_rules"`
 
-	DHCP dhcpd.ServerConfig `yaml:"dhcp"`
+	DHCP *dhcpd.ServerConfig `yaml:"dhcp"`
 
-	// Note: this array is filled only before file read/write and then it's cleared
-	Clients []clientObject `yaml:"clients"`
+	// Clients contains the YAML representations of the persistent clients.
+	// This field is only used for reading and writing persistent client data.
+	// Keep this field sorted to ensure consistent ordering.
+	Clients []*clientObject `yaml:"clients"`
 
 	logSettings `yaml:",inline"`
 
@@ -120,11 +123,6 @@ type dnsConfig struct {
 	// UpstreamTimeout is the timeout for querying upstream servers.
 	UpstreamTimeout timeutil.Duration `yaml:"upstream_timeout"`
 
-	// LocalDomainName is the domain name used for known internal hosts.
-	// For example, a machine called "myhost" can be addressed as
-	// "myhost.lan" when LocalDomainName is "lan".
-	LocalDomainName string `yaml:"local_domain_name"`
-
 	// ResolveClients enables and disables resolving clients with RDNS.
 	ResolveClients bool `yaml:"resolve_clients"`
 
@@ -140,7 +138,7 @@ type dnsConfig struct {
 type tlsConfigSettings struct {
 	Enabled         bool   `yaml:"enabled" json:"enabled"`                                 // Enabled is the encryption (DoT/DoH/HTTPS) status
 	ServerName      string `yaml:"server_name" json:"server_name,omitempty"`               // ServerName is the hostname of your HTTPS/TLS server
-	ForceHTTPS      bool   `yaml:"force_https" json:"force_https,omitempty"`               // ForceHTTPS: if true, forces HTTP->HTTPS redirect
+	ForceHTTPS      bool   `yaml:"force_https" json:"force_https"`                         // ForceHTTPS: if true, forces HTTP->HTTPS redirect
 	PortHTTPS       int    `yaml:"port_https" json:"port_https,omitempty"`                 // HTTPS port. If 0, HTTPS will be disabled
 	PortDNSOverTLS  int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"`   // DNS-over-TLS port. If 0, DoT will be disabled
 	PortDNSOverQUIC int    `yaml:"port_dns_over_quic" json:"port_dns_over_quic,omitempty"` // DNS-over-QUIC port. If 0, DoQ will be disabled
@@ -163,7 +161,7 @@ type tlsConfigSettings struct {
 
 // config is the global configuration structure.
 //
-// TODO(a.garipov, e.burkov): This global is afwul and must be removed.
+// TODO(a.garipov, e.burkov): This global is awful and must be removed.
 var config = &configuration{
 	BindPort:     3000,
 	BetaBindPort: 0,
@@ -196,7 +194,6 @@ var config = &configuration{
 		FilteringEnabled:           true, // whether or not use filter lists
 		FiltersUpdateIntervalHours: 24,
 		UpstreamTimeout:            timeutil.Duration{Duration: dnsforward.DefaultTimeout},
-		LocalDomainName:            "lan",
 		ResolveClients:             true,
 		UsePrivateRDNS:             true,
 	},
@@ -204,6 +201,9 @@ var config = &configuration{
 		PortHTTPS:       defaultPortHTTPS,
 		PortDNSOverTLS:  defaultPortTLS, // needs to be passed through to dnsproxy
 		PortDNSOverQUIC: defaultPortQUIC,
+	},
+	DHCP: &dhcpd.ServerConfig{
+		LocalDomainName: "lan",
 	},
 	logSettings: logSettings{
 		LogCompress:   false,
@@ -232,9 +232,9 @@ func initConfig() {
 	config.DNS.DnsfilterConf.CacheTime = 30
 	config.Filters = defaultFilters()
 
-	config.DHCP.Conf4.LeaseDuration = 86400
-	config.DHCP.Conf4.ICMPTimeout = 1000
-	config.DHCP.Conf6.LeaseDuration = 86400
+	config.DHCP.Conf4.LeaseDuration = dhcpd.DefaultDHCPLeaseTTL
+	config.DHCP.Conf4.ICMPTimeout = dhcpd.DefaultDHCPTimeoutICMP
+	config.DHCP.Conf6.LeaseDuration = dhcpd.DefaultDHCPLeaseTTL
 
 	if ch := version.Channel(); ch == version.ChannelEdge || ch == version.ChannelDevelopment {
 		config.BetaBindPort = 3001
@@ -272,18 +272,38 @@ func getLogSettings() logSettings {
 }
 
 // parseConfig loads configuration from the YAML file
-func parseConfig() error {
-	configFile := config.getConfigFilename()
-	log.Debug("Reading config file: %s", configFile)
-	yamlFile, err := readConfigFile()
+func parseConfig() (err error) {
+	var fileData []byte
+	fileData, err = readConfigFile()
 	if err != nil {
 		return err
 	}
+
 	config.fileData = nil
-	err = yaml.Unmarshal(yamlFile, &config)
+	err = yaml.Unmarshal(fileData, &config)
 	if err != nil {
-		log.Error("Couldn't parse config file: %s", err)
 		return err
+	}
+
+	uc := aghalg.UniqChecker{}
+	addPorts(
+		uc,
+		config.BindPort,
+		config.BetaBindPort,
+		config.DNS.Port,
+	)
+
+	if config.TLS.Enabled {
+		addPorts(
+			uc,
+			config.TLS.PortHTTPS,
+			config.TLS.PortDNSOverTLS,
+			config.TLS.PortDNSOverQUIC,
+			config.TLS.PortDNSCrypt,
+		)
+	}
+	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
+		return fmt.Errorf("validating ports: %w", err)
 	}
 
 	if !checkFiltersUpdateIntervalHours(config.DNS.FiltersUpdateIntervalHours) {
@@ -297,26 +317,32 @@ func parseConfig() error {
 	return nil
 }
 
-// readConfigFile reads config file contents if it exists
-func readConfigFile() ([]byte, error) {
-	if len(config.fileData) != 0 {
+// addPorts is a helper for ports validation.  It skips zero ports.
+func addPorts(uc aghalg.UniqChecker, ports ...int) {
+	for _, p := range ports {
+		if p != 0 {
+			uc.Add(p)
+		}
+	}
+}
+
+// readConfigFile reads configuration file contents.
+func readConfigFile() (fileData []byte, err error) {
+	if len(config.fileData) > 0 {
 		return config.fileData, nil
 	}
 
-	configFile := config.getConfigFilename()
-	d, err := os.ReadFile(configFile)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't read config file %s: %w", configFile, err)
-	}
-	return d, nil
+	name := config.getConfigFilename()
+	log.Debug("reading config file: %s", name)
+
+	// Do not wrap the error because it's informative enough as is.
+	return os.ReadFile(name)
 }
 
 // Saves configuration to the YAML file and also saves the user filter contents to a file
 func (c *configuration) write() error {
 	c.Lock()
 	defer c.Unlock()
-
-	Context.clients.WriteDiskConfig(&config.Clients)
 
 	if Context.auth != nil {
 		config.Users = Context.auth.GetUsers()
@@ -360,15 +386,16 @@ func (c *configuration) write() error {
 	}
 
 	if Context.dhcpServer != nil {
-		c := dhcpd.ServerConfig{}
-		Context.dhcpServer.WriteDiskConfig(&c)
+		c := &dhcpd.ServerConfig{}
+		Context.dhcpServer.WriteDiskConfig(c)
 		config.DHCP = c
 	}
+
+	config.Clients = Context.clients.forConfig()
 
 	configFile := config.getConfigFilename()
 	log.Debug("Writing YAML file: %s", configFile)
 	yamlText, err := yaml.Marshal(&config)
-	config.Clients = nil
 	if err != nil {
 		log.Error("Couldn't generate YAML file: %s", err)
 

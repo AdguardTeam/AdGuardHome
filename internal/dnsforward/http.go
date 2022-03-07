@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strconv"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
@@ -17,12 +19,6 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
 )
-
-func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {
-	text := fmt.Sprintf(format, args...)
-	log.Info("dns: %s %s: %s", r.Method, r.URL, text)
-	http.Error(w, text, code)
-}
 
 type dnsConfig struct {
 	Upstreams     *[]string `json:"upstream_dns"`
@@ -47,7 +43,7 @@ type dnsConfig struct {
 	LocalPTRUpstreams *[]string     `json:"local_ptr_upstreams"`
 }
 
-func (s *Server) getDNSConfig() dnsConfig {
+func (s *Server) getDNSConfig() (c *dnsConfig) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
@@ -76,7 +72,7 @@ func (s *Server) getDNSConfig() dnsConfig {
 		upstreamMode = "parallel"
 	}
 
-	return dnsConfig{
+	return &dnsConfig{
 		Upstreams:         &upstreams,
 		UpstreamsFile:     &upstreamFile,
 		Bootstraps:        &bootstraps,
@@ -112,14 +108,15 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 		// since there is no need to omit it while decoding from JSON.
 		DefautLocalPTRUpstreams []string `json:"default_local_ptr_upstreams,omitempty"`
 	}{
-		dnsConfig:               s.getDNSConfig(),
+		dnsConfig:               *s.getDNSConfig(),
 		DefautLocalPTRUpstreams: defLocalPTRUps,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 
 	if err = json.NewEncoder(w).Encode(resp); err != nil {
-		httpError(r, w, http.StatusInternalServerError, "json.Encoder: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "json.Encoder: %s", err)
+
 		return
 	}
 }
@@ -143,39 +140,63 @@ func (req *dnsConfig) checkBlockingMode() bool {
 }
 
 func (req *dnsConfig) checkUpstreamsMode() bool {
-	if req.UpstreamMode == nil {
-		return true
-	}
+	valid := []string{"", "fastest_addr", "parallel"}
 
-	for _, valid := range []string{
-		"",
-		"fastest_addr",
-		"parallel",
-	} {
-		if *req.UpstreamMode == valid {
-			return true
-		}
-	}
-
-	return false
+	return req.UpstreamMode == nil || stringutil.InSlice(valid, *req.UpstreamMode)
 }
 
-func (req *dnsConfig) checkBootstrap() (string, error) {
+func (req *dnsConfig) checkBootstrap() (err error) {
 	if req.Bootstraps == nil {
-		return "", nil
+		return nil
 	}
 
-	for _, boot := range *req.Bootstraps {
-		if boot == "" {
-			return boot, fmt.Errorf("invalid bootstrap server address: empty")
+	var b string
+	defer func() { err = errors.Annotate(err, "checking bootstrap %s: invalid address: %w", b) }()
+
+	for _, b = range *req.Bootstraps {
+		if b == "" {
+			return errors.Error("empty")
 		}
 
-		if _, err := upstream.NewResolver(boot, nil); err != nil {
-			return boot, fmt.Errorf("invalid bootstrap server address: %w", err)
+		if _, err = upstream.NewResolver(b, nil); err != nil {
+			return err
 		}
 	}
 
-	return "", nil
+	return nil
+}
+
+// validate returns an error if any field of req is invalid.
+func (req *dnsConfig) validate(snd *aghnet.SubnetDetector) (err error) {
+	if req.Upstreams != nil {
+		err = ValidateUpstreams(*req.Upstreams)
+		if err != nil {
+			return fmt.Errorf("validating upstream servers: %w", err)
+		}
+	}
+
+	if req.LocalPTRUpstreams != nil {
+		err = ValidateUpstreamsPrivate(*req.LocalPTRUpstreams, snd)
+		if err != nil {
+			return fmt.Errorf("validating private upstream servers: %w", err)
+		}
+	}
+
+	err = req.checkBootstrap()
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case !req.checkBlockingMode():
+		return errors.Error("blocking_mode: incorrect value")
+	case !req.checkUpstreamsMode():
+		return errors.Error("upstream_mode: incorrect value")
+	case !req.checkCacheTTL():
+		return errors.Error("cache_ttl_min must be less or equal than cache_ttl_max")
+	default:
+		return nil
+	}
 }
 
 func (req *dnsConfig) checkCacheTTL() bool {
@@ -195,37 +216,18 @@ func (req *dnsConfig) checkCacheTTL() bool {
 }
 
 func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
-	req := dnsConfig{}
-	dec := json.NewDecoder(r.Body)
-	if err := dec.Decode(&req); err != nil {
-		httpError(r, w, http.StatusBadRequest, "json Encode: %s", err)
+	req := &dnsConfig{}
+	err := json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "decoding request: %s", err)
+
 		return
 	}
 
-	if req.Upstreams != nil {
-		if err := ValidateUpstreams(*req.Upstreams); err != nil {
-			httpError(r, w, http.StatusBadRequest, "wrong upstreams specification: %s", err)
-			return
-		}
-	}
+	err = req.validate(s.subnetDetector)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
-	if errBoot, err := req.checkBootstrap(); err != nil {
-		httpError(r, w, http.StatusBadRequest, "%s can not be used as bootstrap dns cause: %s", errBoot, err)
-		return
-	}
-
-	if !req.checkBlockingMode() {
-		httpError(r, w, http.StatusBadRequest, "blocking_mode: incorrect value")
-		return
-	}
-
-	if !req.checkUpstreamsMode() {
-		httpError(r, w, http.StatusBadRequest, "upstream_mode: incorrect value")
-		return
-	}
-
-	if !req.checkCacheTTL() {
-		httpError(r, w, http.StatusBadRequest, "cache_ttl_min must be less or equal than cache_ttl_max")
 		return
 	}
 
@@ -233,14 +235,14 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	s.conf.ConfigModified()
 
 	if restart {
-		if err := s.Reconfigure(nil); err != nil {
-			httpError(r, w, http.StatusInternalServerError, "%s", err)
-			return
+		err = s.Reconfigure(nil)
+		if err != nil {
+			aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 		}
 	}
 }
 
-func (s *Server) setConfigRestartable(dc dnsConfig) (restart bool) {
+func (s *Server) setConfigRestartable(dc *dnsConfig) (restart bool) {
 	if dc.Upstreams != nil {
 		s.conf.UpstreamDNS = *dc.Upstreams
 		restart = true
@@ -261,9 +263,9 @@ func (s *Server) setConfigRestartable(dc dnsConfig) (restart bool) {
 		restart = true
 	}
 
-	if dc.RateLimit != nil {
-		restart = restart || s.conf.Ratelimit != *dc.RateLimit
+	if dc.RateLimit != nil && s.conf.Ratelimit != *dc.RateLimit {
 		s.conf.Ratelimit = *dc.RateLimit
+		restart = true
 	}
 
 	if dc.EDNSCSEnabled != nil {
@@ -294,7 +296,7 @@ func (s *Server) setConfigRestartable(dc dnsConfig) (restart bool) {
 	return restart
 }
 
-func (s *Server) setConfig(dc dnsConfig) (restart bool) {
+func (s *Server) setConfig(dc *dnsConfig) (restart bool) {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
@@ -341,103 +343,180 @@ type upstreamJSON struct {
 	PrivateUpstreams []string `json:"private_upstream"`
 }
 
-// IsCommentOrEmpty returns true of the string starts with a "#" character or is
-// an empty string.  This function is useful for filtering out non-upstream
-// lines from upstream configs.
+// IsCommentOrEmpty returns true if s starts with a "#" character or is empty.
+// This function is useful for filtering out non-upstream lines from upstream
+// configs.
 func IsCommentOrEmpty(s string) (ok bool) {
 	return len(s) == 0 || s[0] == '#'
+}
+
+// LocalNetChecker is used to check if the IP address belongs to a local
+// network.
+type LocalNetChecker interface {
+	// IsLocallyServedNetwork returns true if ip is contained in any of address
+	// registries defined by RFC 6303.
+	IsLocallyServedNetwork(ip net.IP) (ok bool)
+}
+
+// type check
+var _ LocalNetChecker = (*aghnet.SubnetDetector)(nil)
+
+// newUpstreamConfig validates upstreams and returns an appropriate upstream
+// configuration or nil if it can't be built.
+//
+// TODO(e.burkov):  Perhaps proxy.ParseUpstreamsConfig should validate upstreams
+// slice already so that this function may be considered useless.
+func newUpstreamConfig(upstreams []string) (conf *proxy.UpstreamConfig, err error) {
+	// No need to validate comments and empty lines.
+	upstreams = stringutil.FilterOut(upstreams, IsCommentOrEmpty)
+	if len(upstreams) == 0 {
+		// Consider this case valid since it means the default server should be
+		// used.
+		return nil, nil
+	}
+
+	conf, err = proxy.ParseUpstreamsConfig(
+		upstreams,
+		&upstream.Options{Bootstrap: []string{}, Timeout: DefaultTimeout},
+	)
+	if err != nil {
+		return nil, err
+	} else if len(conf.Upstreams) == 0 {
+		return nil, errors.Error("no default upstreams specified")
+	}
+
+	for _, u := range upstreams {
+		_, err = validateUpstream(u)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return conf, nil
 }
 
 // ValidateUpstreams validates each upstream and returns an error if any
 // upstream is invalid or if there are no default upstreams specified.
 //
-// TODO(e.burkov): Move into aghnet or even into dnsproxy.
+// TODO(e.burkov):  Move into aghnet or even into dnsproxy.
 func ValidateUpstreams(upstreams []string) (err error) {
-	// No need to validate comments
-	upstreams = stringutil.FilterOut(upstreams, IsCommentOrEmpty)
+	_, err = newUpstreamConfig(upstreams)
 
-	// Consider this case valid because defaultDNS will be used
-	if len(upstreams) == 0 {
-		return nil
+	return err
+}
+
+// stringKeysSorted returns the sorted slice of string keys of m.
+//
+// TODO(e.burkov):  Use generics in Go 1.18.  Move into golibs.
+func stringKeysSorted(m map[string][]upstream.Upstream) (sorted []string) {
+	sorted = make([]string, 0, len(m))
+	for s := range m {
+		sorted = append(sorted, s)
 	}
 
-	_, err = proxy.ParseUpstreamsConfig(
-		upstreams,
-		&upstream.Options{
-			Bootstrap: []string{},
-			Timeout:   DefaultTimeout,
-		},
-	)
+	sort.Strings(sorted)
+
+	return sorted
+}
+
+// ValidateUpstreamsPrivate validates each upstream and returns an error if any
+// upstream is invalid or if there are no default upstreams specified.  It also
+// checks each domain of domain-specific upstreams for being ARPA pointing to
+// a locally-served network.  lnc must not be nil.
+func ValidateUpstreamsPrivate(upstreams []string, lnc LocalNetChecker) (err error) {
+	conf, err := newUpstreamConfig(upstreams)
 	if err != nil {
 		return err
 	}
 
-	var defaultUpstreamFound bool
-	for _, u := range upstreams {
-		var ok bool
-		ok, err = validateUpstream(u)
+	if conf == nil {
+		return nil
+	}
+
+	var errs []error
+
+	for _, domain := range stringKeysSorted(conf.DomainReservedUpstreams) {
+		var subnet *net.IPNet
+		subnet, err = netutil.SubnetFromReversedAddr(domain)
 		if err != nil {
-			return err
+			errs = append(errs, err)
+
+			continue
 		}
 
-		if !defaultUpstreamFound {
-			defaultUpstreamFound = ok
+		if !lnc.IsLocallyServedNetwork(subnet.IP) {
+			errs = append(
+				errs,
+				fmt.Errorf("arpa domain %q should point to a locally-served network", domain),
+			)
 		}
 	}
 
-	if !defaultUpstreamFound {
-		return fmt.Errorf("no default upstreams specified")
+	if len(errs) > 0 {
+		return errors.List("checking domain-specific upstreams", errs...)
 	}
 
 	return nil
 }
 
-var protocols = []string{"tls://", "https://", "tcp://", "sdns://", "quic://"}
+var protocols = []string{"udp://", "tcp://", "tls://", "https://", "sdns://", "quic://"}
 
-func validateUpstream(u string) (bool, error) {
+func validateUpstream(u string) (useDefault bool, err error) {
 	// Check if the user tries to specify upstream for domain.
-	u, useDefault, err := separateUpstream(u)
+	var isDomainSpec bool
+	u, isDomainSpec, err = separateUpstream(u)
 	if err != nil {
-		return useDefault, err
+		return !isDomainSpec, err
 	}
 
-	// The special server address '#' means "use the default servers"
-	if u == "#" && !useDefault {
+	// The special server address '#' means that default server must be used.
+	if useDefault = !isDomainSpec; u == "#" && isDomainSpec {
 		return useDefault, nil
 	}
 
-	// Check if the upstream has a valid protocol prefix
+	// Check if the upstream has a valid protocol prefix.
+	//
+	// TODO(e.burkov):  Validate the domain name.
 	for _, proto := range protocols {
 		if strings.HasPrefix(u, proto) {
 			return useDefault, nil
 		}
 	}
 
-	// Return error if the upstream contains '://' without any valid protocol
 	if strings.Contains(u, "://") {
-		return useDefault, fmt.Errorf("wrong protocol")
+		return useDefault, errors.Error("wrong protocol")
 	}
 
-	// Check if upstream is valid plain DNS
-	return useDefault, checkPlainDNS(u)
+	// Check if upstream is either an IP or IP with port.
+	if net.ParseIP(u) != nil {
+		return useDefault, nil
+	} else if _, err = netutil.ParseIPPort(u); err != nil {
+		return useDefault, err
+	}
+
+	return useDefault, nil
 }
 
 // separateUpstream returns the upstream without the specified domains.
-// useDefault is true when a default upstream must be used.
-func separateUpstream(upstreamStr string) (upstream string, useDefault bool, err error) {
-	defer func() { err = errors.Annotate(err, "bad upstream for domain spec %q: %w", upstreamStr) }()
-
+// isDomainSpec is true when the upstream is domains-specific.
+func separateUpstream(upstreamStr string) (upstream string, isDomainSpec bool, err error) {
 	if !strings.HasPrefix(upstreamStr, "[/") {
-		return upstreamStr, true, nil
+		return upstreamStr, false, nil
 	}
+	defer func() { err = errors.Annotate(err, "bad upstream for domain %q: %w", upstreamStr) }()
 
 	parts := strings.Split(upstreamStr[2:], "/]")
-	if len(parts) != 2 {
-		return "", false, errors.Error("duplicated separator")
+	switch len(parts) {
+	case 2:
+		// Go on.
+	case 1:
+		return "", false, errors.Error("missing separator")
+	default:
+		return "", true, errors.Error("duplicated separator")
 	}
 
-	domains := parts[0]
-	upstream = parts[1]
+	var domains string
+	domains, upstream = parts[0], parts[1]
 	for i, host := range strings.Split(domains, "/") {
 		if host == "" {
 			continue
@@ -445,36 +524,11 @@ func separateUpstream(upstreamStr string) (upstream string, useDefault bool, err
 
 		err = netutil.ValidateDomainName(host)
 		if err != nil {
-			return "", false, fmt.Errorf("domain at index %d: %w", i, err)
+			return "", true, fmt.Errorf("domain at index %d: %w", i, err)
 		}
 	}
 
-	return upstream, false, nil
-}
-
-// checkPlainDNS checks if host is plain DNS
-func checkPlainDNS(upstream string) error {
-	// Check if host is ip without port
-	if net.ParseIP(upstream) != nil {
-		return nil
-	}
-
-	// Check if host is ip with port
-	ip, port, err := net.SplitHostPort(upstream)
-	if err != nil {
-		return err
-	}
-
-	if net.ParseIP(ip) == nil {
-		return fmt.Errorf("%s is not a valid IP", ip)
-	}
-
-	_, err = strconv.ParseInt(port, 0, 64)
-	if err != nil {
-		return fmt.Errorf("%s is not a valid port: %w", port, err)
-	}
-
-	return nil
+	return upstream, true, nil
 }
 
 // excFunc is a signature of function to check if upstream exchanges correctly.
@@ -502,12 +556,8 @@ func checkDNSUpstreamExc(u upstream.Upstream) (err error) {
 
 	if len(reply.Answer) != 1 {
 		return fmt.Errorf("wrong response")
-	}
-
-	if t, ok := reply.Answer[0].(*dns.A); ok {
-		if !net.IPv4(8, 8, 8, 8).Equal(t.A) {
-			return fmt.Errorf("wrong response")
-		}
+	} else if a, ok := reply.Answer[0].(*dns.A); !ok || !a.A.Equal(net.IP{8, 8, 8, 8}) {
+		return fmt.Errorf("wrong response")
 	}
 
 	return nil
@@ -542,7 +592,7 @@ func checkDNS(input string, bootstrap []string, timeout time.Duration, ef excFun
 
 	// Separate upstream from domains list.
 	var useDefault bool
-	if input, useDefault, err = separateUpstream(input); err != nil {
+	if useDefault, err = validateUpstream(input); err != nil {
 		return fmt.Errorf("wrong upstream format: %w", err)
 	}
 
@@ -551,7 +601,7 @@ func checkDNS(input string, bootstrap []string, timeout time.Duration, ef excFun
 		return nil
 	}
 
-	if _, err = validateUpstream(input); err != nil {
+	if input, _, err = separateUpstream(input); err != nil {
 		return fmt.Errorf("wrong upstream format: %w", err)
 	}
 
@@ -559,7 +609,8 @@ func checkDNS(input string, bootstrap []string, timeout time.Duration, ef excFun
 		bootstrap = defaultBootstrap
 	}
 
-	log.Debug("checking if dns server %q works...", input)
+	log.Debug("checking if upstream %s works", input)
+
 	var u upstream.Upstream
 	u, err = upstream.AddressToUpstream(input, &upstream.Options{
 		Bootstrap: bootstrap,
@@ -573,7 +624,7 @@ func checkDNS(input string, bootstrap []string, timeout time.Duration, ef excFun
 		return fmt.Errorf("upstream %q fails to exchange: %w", input, err)
 	}
 
-	log.Debug("dns %s works OK", input)
+	log.Debug("upstream %s is ok", input)
 
 	return nil
 }
@@ -582,7 +633,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	req := &upstreamJSON{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "Failed to read request body: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to read request body: %s", err)
 
 		return
 	}
@@ -607,9 +658,9 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		err = checkDNS(host, bootstraps, timeout, checkPrivateUpstreamExc)
 		if err != nil {
 			log.Info("%v", err)
-			// TODO(e.burkov): If passed upstream have already
-			// written an error above, we rewriting the error for
-			// it.  These cases should be handled properly instead.
+			// TODO(e.burkov): If passed upstream have already written an error
+			// above, we rewriting the error for it.  These cases should be
+			// handled properly instead.
 			result[host] = err.Error()
 
 			continue
@@ -620,7 +671,13 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 
 	jsonVal, err := json.Marshal(result)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to marshal status json: %s", err)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Unable to marshal status json: %s",
+			err,
+		)
 
 		return
 	}
@@ -628,9 +685,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Couldn't write body: %s", err)
-
-		return
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write body: %s", err)
 	}
 }
 
@@ -641,12 +696,12 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 //  -> dnsforward.handleDNSRequest
 func (s *Server) handleDoH(w http.ResponseWriter, r *http.Request) {
 	if !s.conf.TLSAllowUnencryptedDoH && r.TLS == nil {
-		httpError(r, w, http.StatusNotFound, "Not Found")
+		aghhttp.Error(r, w, http.StatusNotFound, "Not Found")
 		return
 	}
 
 	if !s.IsRunning() {
-		httpError(r, w, http.StatusInternalServerError, "dns server is not running")
+		aghhttp.Error(r, w, http.StatusInternalServerError, "dns server is not running")
 		return
 	}
 

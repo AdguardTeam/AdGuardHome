@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -58,7 +59,7 @@ type clientListJSON struct {
 }
 
 // respond with information about configured clients
-func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, _ *http.Request) {
+func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http.Request) {
 	data := clientListJSON{}
 
 	clients.lock.Lock()
@@ -106,7 +107,14 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, _ *http
 	w.Header().Set("Content-Type", "application/json")
 	e := json.NewEncoder(w).Encode(data)
 	if e != nil {
-		httpError(w, http.StatusInternalServerError, "Failed to encode to json: %v", e)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Failed to encode to json: %v",
+			e,
+		)
+
 		return
 	}
 }
@@ -154,7 +162,7 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 	cj := clientJSON{}
 	err := json.NewDecoder(r.Body).Decode(&cj)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "failed to process request body: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "failed to process request body: %s", err)
 
 		return
 	}
@@ -162,11 +170,14 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 	c := jsonToClient(cj)
 	ok, err := clients.Add(c)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "%s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+
 		return
 	}
+
 	if !ok {
-		httpError(w, http.StatusBadRequest, "Client already exists")
+		aghhttp.Error(r, w, http.StatusBadRequest, "Client already exists")
+
 		return
 	}
 
@@ -178,19 +189,19 @@ func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.
 	cj := clientJSON{}
 	err := json.NewDecoder(r.Body).Decode(&cj)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "failed to process request body: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "failed to process request body: %s", err)
 
 		return
 	}
 
 	if len(cj.Name) == 0 {
-		httpError(w, http.StatusBadRequest, "client's name must be non-empty")
+		aghhttp.Error(r, w, http.StatusBadRequest, "client's name must be non-empty")
 
 		return
 	}
 
 	if !clients.Del(cj.Name) {
-		httpError(w, http.StatusBadRequest, "Client not found")
+		aghhttp.Error(r, w, http.StatusBadRequest, "Client not found")
 		return
 	}
 
@@ -207,20 +218,22 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 	dj := updateJSON{}
 	err := json.NewDecoder(r.Body).Decode(&dj)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "failed to process request body: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "failed to process request body: %s", err)
 
 		return
 	}
 
 	if len(dj.Name) == 0 {
-		httpError(w, http.StatusBadRequest, "Invalid request")
+		aghhttp.Error(r, w, http.StatusBadRequest, "Invalid request")
+
 		return
 	}
 
 	c := jsonToClient(dj.Data)
 	err = clients.Update(dj.Name, c)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "%s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+
 		return
 	}
 
@@ -256,7 +269,7 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write response: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write response: %s", err)
 	}
 }
 

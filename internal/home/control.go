@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
@@ -16,23 +17,6 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/NYTimes/gziphandler"
 )
-
-// ----------------
-// helper functions
-// ----------------
-
-func returnOK(w http.ResponseWriter) {
-	_, err := fmt.Fprintf(w, "OK\n")
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Couldn't write body: %s", err)
-	}
-}
-
-func httpError(w http.ResponseWriter, code int, format string, args ...interface{}) {
-	text := fmt.Sprintf(format, args...)
-	log.Info(text)
-	http.Error(w, text, code)
-}
 
 // appendDNSAddrs is a convenient helper for appending a formatted form of DNS
 // addresses to a slice of strings.
@@ -53,7 +37,7 @@ func appendDNSAddrs(dst []string, addrs ...net.IP) (res []string) {
 
 // appendDNSAddrsWithIfaces formats and appends all DNS addresses from src to
 // dst.  It also adds the IP addresses of all network interfaces if src contains
-// an unspecified IP addresss.
+// an unspecified IP address.
 func appendDNSAddrsWithIfaces(dst []string, src []net.IP) (res []string, err error) {
 	ifacesAdded := false
 	for _, h := range src {
@@ -125,12 +109,12 @@ type statusResponse struct {
 	Language        string `json:"language"`
 }
 
-func handleStatus(w http.ResponseWriter, _ *http.Request) {
+func handleStatus(w http.ResponseWriter, r *http.Request) {
 	dnsAddrs, err := collectDNSAddresses()
 	if err != nil {
 		// Don't add a lot of formatting, since the error is already
 		// wrapped by collectDNSAddresses.
-		httpError(w, http.StatusInternalServerError, "%s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
@@ -165,7 +149,7 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Unable to write response json: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 
 		return
 	}
@@ -182,7 +166,7 @@ func handleGetProfile(w http.ResponseWriter, r *http.Request) {
 
 	data, err := json.Marshal(pj)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "json.Marshal: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "json.Marshal: %s", err)
 		return
 	}
 	_, _ = w.Write(data)
@@ -295,7 +279,7 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 
 	host, err := netutil.SplitHost(r.Host)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "bad host: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "bad host: %s", err)
 
 		return false
 	}

@@ -19,8 +19,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -44,20 +46,25 @@ type homeContext struct {
 	// Modules
 	// --
 
-	clients    clientsContainer          // per-client-settings module
-	stats      stats.Stats               // statistics module
-	queryLog   querylog.QueryLog         // query log module
-	dnsServer  *dnsforward.Server        // DNS module
-	rdns       *RDNS                     // rDNS module
-	whois      *WHOIS                    // WHOIS module
-	dnsFilter  *filtering.DNSFilter      // DNS filtering module
-	dhcpServer *dhcpd.Server             // DHCP module
-	auth       *Auth                     // HTTP authentication module
-	filters    Filtering                 // DNS filtering module
-	web        *Web                      // Web (HTTP, HTTPS) module
-	tls        *TLSMod                   // TLS module
-	etcHosts   *aghnet.EtcHostsContainer // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
-	updater    *updater.Updater
+	clients    clientsContainer     // per-client-settings module
+	stats      stats.Stats          // statistics module
+	queryLog   querylog.QueryLog    // query log module
+	dnsServer  *dnsforward.Server   // DNS module
+	rdns       *RDNS                // rDNS module
+	whois      *WHOIS               // WHOIS module
+	dnsFilter  *filtering.DNSFilter // DNS filtering module
+	dhcpServer *dhcpd.Server        // DHCP module
+	auth       *Auth                // HTTP authentication module
+	filters    Filtering            // DNS filtering module
+	web        *Web                 // Web (HTTP, HTTPS) module
+	tls        *TLSMod              // TLS module
+	// etcHosts is an IP-hostname pairs set taken from system configuration
+	// (e.g. /etc/hosts) files.
+	etcHosts *aghnet.HostsContainer
+	// hostsWatcher is the watcher to detect changes in the hosts files.
+	hostsWatcher aghos.FSWatcher
+
+	updater *updater.Updater
 
 	subnetDetector *aghnet.SubnetDetector
 
@@ -74,7 +81,6 @@ type homeContext struct {
 	disableUpdate    bool   // If set, don't check for updates
 	controlLock      sync.Mutex
 	tlsRoots         *x509.CertPool // list of root CAs for TLSv1.2
-	tlsCiphers       []uint16       // list of TLS ciphers to use
 	transport        *http.Transport
 	client           *http.Client
 	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
@@ -139,13 +145,13 @@ func setupContext(args options) {
 	initConfig()
 
 	Context.tlsRoots = LoadSystemRootCAs()
-	Context.tlsCiphers = InitTLSCiphers()
 	Context.transport = &http.Transport{
 		DialContext: customDialContext,
 		Proxy:       getHTTPProxy,
 		TLSClientConfig: &tls.Config{
-			RootCAs:    Context.tlsRoots,
-			MinVersion: tls.VersionTLS12,
+			RootCAs:      Context.tlsRoots,
+			CipherSuites: aghtls.SaferCipherSuites(),
+			MinVersion:   tls.VersionTLS12,
 		},
 	}
 	Context.client = &http.Client{
@@ -154,14 +160,11 @@ func setupContext(args options) {
 	}
 
 	if !Context.firstRun {
-		// Do the upgrade if necessary
+		// Do the upgrade if necessary.
 		err := upgradeConfig()
-		if err != nil {
-			log.Fatal(err)
-		}
+		fatalOnError(err)
 
-		err = parseConfig()
-		if err != nil {
+		if err = parseConfig(); err != nil {
 			log.Error("parsing configuration file: %s", err)
 
 			os.Exit(1)
@@ -179,15 +182,15 @@ func setupContext(args options) {
 
 // logIfUnsupported logs a formatted warning if the error is one of the
 // unsupported errors and returns nil.  If err is nil, logIfUnsupported returns
-// nil.  Otherise, it returns err.
+// nil.  Otherwise, it returns err.
 func logIfUnsupported(msg string, err error) (outErr error) {
-	if unsupErr := (&aghos.UnsupportedError{}); errors.As(err, &unsupErr) {
+	if errors.As(err, new(*aghos.UnsupportedError)) {
 		log.Debug(msg, err)
-	} else if err != nil {
-		return err
+
+		return nil
 	}
 
-	return nil
+	return err
 }
 
 // configureOS sets the OS-related configuration.
@@ -230,6 +233,34 @@ func configureOS(conf *configuration) (err error) {
 	return nil
 }
 
+// setupHostsContainer initializes the structures to keep up-to-date the hosts
+// provided by the OS.
+func setupHostsContainer() (err error) {
+	Context.hostsWatcher, err = aghos.NewOSWritesWatcher()
+	if err != nil {
+		return fmt.Errorf("initing hosts watcher: %w", err)
+	}
+
+	Context.etcHosts, err = aghnet.NewHostsContainer(
+		filtering.SysHostsListID,
+		aghos.RootDirFS(),
+		Context.hostsWatcher,
+		aghnet.DefaultHostsPaths()...,
+	)
+	if err != nil {
+		cerr := Context.hostsWatcher.Close()
+		if errors.Is(err, aghnet.ErrNoHostsPaths) && cerr == nil {
+			log.Info("warning: initing hosts container: %s", err)
+
+			return nil
+		}
+
+		return errors.WithDeferred(fmt.Errorf("initing hosts container: %w", err), cerr)
+	}
+
+	return nil
+}
+
 func setupConfig(args options) (err error) {
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
@@ -257,18 +288,40 @@ func setupConfig(args options) (err error) {
 	})
 
 	if !args.noEtcHosts {
-		Context.etcHosts = &aghnet.EtcHostsContainer{}
-		Context.etcHosts.Init("")
+		if err = setupHostsContainer(); err != nil {
+			return err
+		}
 	}
+
 	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
-	config.Clients = nil
+
+	if args.bindPort != 0 {
+		uc := aghalg.UniqChecker{}
+		addPorts(
+			uc,
+			args.bindPort,
+			config.BetaBindPort,
+			config.DNS.Port,
+		)
+		if config.TLS.Enabled {
+			addPorts(
+				uc,
+				config.TLS.PortHTTPS,
+				config.TLS.PortDNSOverTLS,
+				config.TLS.PortDNSOverQUIC,
+				config.TLS.PortDNSCrypt,
+			)
+		}
+		if err = uc.Validate(aghalg.IntIsBefore); err != nil {
+			return fmt.Errorf("validating ports: %w", err)
+		}
+
+		config.BindPort = args.bindPort
+	}
 
 	// override bind host/port from the console
 	if args.bindHost != nil {
 		config.BindHost = args.bindHost
-	}
-	if args.bindPort != 0 {
-		config.BindPort = args.bindPort
 	}
 	if len(args.pidFile) != 0 && writePIDFile(args.pidFile) {
 		Context.pidFileName = args.pidFile
@@ -324,7 +377,7 @@ func fatalOnError(err error) {
 	}
 }
 
-// run performs configurating and starts AdGuard Home.
+// run configures and starts AdGuard Home.
 func run(args options, clientBuildFS fs.FS) {
 	var err error
 
@@ -340,9 +393,9 @@ func run(args options, clientBuildFS fs.FS) {
 	// Go memory hacks
 	memoryUsage(args)
 
-	// print the first message after logger is configured
+	// Print the first message after logger is configured.
 	log.Println(version.Full())
-	log.Debug("Current working directory is %s", Context.workDir)
+	log.Debug("current working directory is %s", Context.workDir)
 	if args.runningAsService {
 		log.Info("AdGuard Home is running as a service")
 	}
@@ -424,7 +477,6 @@ func run(args options, clientBuildFS fs.FS) {
 		fatalOnError(err)
 
 		Context.tls.Start()
-		Context.etcHosts.Start()
 
 		go func() {
 			serr := startDNSServer()
@@ -579,13 +631,13 @@ func configureLogger(args options) {
 		log.SetLevel(log.DEBUG)
 	}
 
-	// Make sure that we see the microseconds in logs, as networking stuff
-	// can happen pretty quickly.
+	// Make sure that we see the microseconds in logs, as networking stuff can
+	// happen pretty quickly.
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 
 	if args.runningAsService && ls.LogFile == "" && runtime.GOOS == "windows" {
-		// When running as a Windows service, use eventlog by default if nothing else is configured
-		// Otherwise, we'll simply loose the log output
+		// When running as a Windows service, use eventlog by default if nothing
+		// else is configured.  Otherwise, we'll simply lose the log output.
 		ls.LogFile = configSyslog
 	}
 
@@ -647,7 +699,18 @@ func cleanup(ctx context.Context) {
 		}
 	}
 
-	Context.etcHosts.Close()
+	if Context.etcHosts != nil {
+		// Currently Context.hostsWatcher is only used in Context.etcHosts and
+		// needs closing only in case of the successful initialization of
+		// Context.etcHosts.
+		if err = Context.hostsWatcher.Close(); err != nil {
+			log.Error("closing hosts watcher: %s", err)
+		}
+
+		if err = Context.etcHosts.Close(); err != nil {
+			log.Error("closing hosts container: %s", err)
+		}
+	}
 
 	if Context.tls != nil {
 		Context.tls.Close()
@@ -722,8 +785,7 @@ func printHTTPAddresses(proto string) {
 		port = tlsConf.PortHTTPS
 	}
 
-	// TODO(e.burkov): Inspect and perhaps merge with the previous
-	// condition.
+	// TODO(e.burkov): Inspect and perhaps merge with the previous condition.
 	if proto == schemeHTTPS && tlsConf.ServerName != "" {
 		printWebAddrs(proto, tlsConf.ServerName, tlsConf.PortHTTPS, 0)
 

@@ -19,7 +19,8 @@ import (
 	"github.com/insomniacslk/dhcp/iana"
 )
 
-// defaultDiscoverTime is the
+// defaultDiscoverTime is the default timeout of checking another DHCP server
+// response.
 const defaultDiscoverTime = 3 * time.Second
 
 func checkOtherDHCP(ifaceName string) (ok4, ok6 bool, err4, err6 error) {
@@ -110,7 +111,7 @@ func discover4(iface *net.Interface, dstAddr *net.UDPAddr, hostname string) (ok 
 	// is spoiled.
 	//
 	// It's also known that listening on the specified interface's address
-	// ignores broadcasted packets when reading.
+	// ignores broadcast packets when reading.
 	var c net.PacketConn
 	if c, err = listenPacketReusable(iface.Name, "udp4", ":68"); err != nil {
 		return false, fmt.Errorf("couldn't listen on :68: %w", err)

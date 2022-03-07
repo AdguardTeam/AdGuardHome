@@ -12,10 +12,10 @@ import (
 // TODO(e.burkov): All the tests in this file may and should me merged together.
 
 func TestRewrites(t *testing.T) {
-	d := newForTest(nil, nil)
+	d := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 
-	d.Rewrites = []RewriteEntry{{
+	d.Rewrites = []*LegacyRewrite{{
 		// This one and below are about CNAME, A and AAAA.
 		Domain: "somecname",
 		Answer: "somehost.com",
@@ -66,107 +66,132 @@ func TestRewrites(t *testing.T) {
 	}, {
 		Domain: "BIGHOST.COM",
 		Answer: "1.2.3.7",
+	}, {
+		Domain: "*.issue4016.com",
+		Answer: "sub.issue4016.com",
 	}}
-	d.prepareRewrites()
+
+	require.NoError(t, d.prepareRewrites())
 
 	testCases := []struct {
-		name      string
-		host      string
-		wantCName string
-		wantVals  []net.IP
-		dtyp      uint16
+		name       string
+		host       string
+		wantCName  string
+		wantIPs    []net.IP
+		wantReason Reason
+		dtyp       uint16
 	}{{
-		name:      "not_filtered_not_found",
-		host:      "hoost.com",
-		wantCName: "",
-		wantVals:  nil,
-		dtyp:      dns.TypeA,
+		name:       "not_filtered_not_found",
+		host:       "hoost.com",
+		wantCName:  "",
+		wantIPs:    nil,
+		wantReason: NotFilteredNotFound,
+		dtyp:       dns.TypeA,
 	}, {
-		name:      "rewritten_a",
-		host:      "www.host.com",
-		wantCName: "host.com",
-		wantVals:  []net.IP{{1, 2, 3, 4}, {1, 2, 3, 5}},
-		dtyp:      dns.TypeA,
+		name:       "rewritten_a",
+		host:       "www.host.com",
+		wantCName:  "host.com",
+		wantIPs:    []net.IP{{1, 2, 3, 4}, {1, 2, 3, 5}},
+		wantReason: Rewritten,
+		dtyp:       dns.TypeA,
 	}, {
-		name:      "rewritten_aaaa",
-		host:      "www.host.com",
-		wantCName: "host.com",
-		wantVals:  []net.IP{net.ParseIP("1:2:3::4")},
-		dtyp:      dns.TypeAAAA,
+		name:       "rewritten_aaaa",
+		host:       "www.host.com",
+		wantCName:  "host.com",
+		wantIPs:    []net.IP{net.ParseIP("1:2:3::4")},
+		wantReason: Rewritten,
+		dtyp:       dns.TypeAAAA,
 	}, {
-		name:      "wildcard_match",
-		host:      "abc.host.com",
-		wantCName: "",
-		wantVals:  []net.IP{{1, 2, 3, 5}},
-		dtyp:      dns.TypeA,
+		name:       "wildcard_match",
+		host:       "abc.host.com",
+		wantCName:  "",
+		wantIPs:    []net.IP{{1, 2, 3, 5}},
+		wantReason: Rewritten,
+		dtyp:       dns.TypeA,
 	}, {
-		name:      "wildcard_override",
-		host:      "a.host.com",
-		wantCName: "",
-		wantVals:  []net.IP{{1, 2, 3, 4}},
-		dtyp:      dns.TypeA,
+		name:       "wildcard_override",
+		host:       "a.host.com",
+		wantCName:  "",
+		wantIPs:    []net.IP{{1, 2, 3, 4}},
+		wantReason: Rewritten,
+		dtyp:       dns.TypeA,
 	}, {
-		name:      "wildcard_cname_interaction",
-		host:      "www.host2.com",
-		wantCName: "host.com",
-		wantVals:  []net.IP{{1, 2, 3, 4}, {1, 2, 3, 5}},
-		dtyp:      dns.TypeA,
+		name:       "wildcard_cname_interaction",
+		host:       "www.host2.com",
+		wantCName:  "host.com",
+		wantIPs:    []net.IP{{1, 2, 3, 4}, {1, 2, 3, 5}},
+		wantReason: Rewritten,
+		dtyp:       dns.TypeA,
 	}, {
-		name:      "two_cnames",
-		host:      "b.host.com",
-		wantCName: "somehost.com",
-		wantVals:  []net.IP{{0, 0, 0, 0}},
-		dtyp:      dns.TypeA,
+		name:       "two_cnames",
+		host:       "b.host.com",
+		wantCName:  "somehost.com",
+		wantIPs:    []net.IP{{0, 0, 0, 0}},
+		wantReason: Rewritten,
+		dtyp:       dns.TypeA,
 	}, {
-		name:      "two_cnames_and_wildcard",
-		host:      "b.host3.com",
-		wantCName: "x.host.com",
-		wantVals:  []net.IP{{1, 2, 3, 5}},
-		dtyp:      dns.TypeA,
+		name:       "two_cnames_and_wildcard",
+		host:       "b.host3.com",
+		wantCName:  "x.host.com",
+		wantIPs:    []net.IP{{1, 2, 3, 5}},
+		wantReason: Rewritten,
+		dtyp:       dns.TypeA,
 	}, {
-		name:      "issue3343",
-		host:      "www.hostboth.com",
-		wantCName: "",
-		wantVals:  []net.IP{net.ParseIP("1234::5678")},
-		dtyp:      dns.TypeAAAA,
+		name:       "issue3343",
+		host:       "www.hostboth.com",
+		wantCName:  "",
+		wantIPs:    []net.IP{net.ParseIP("1234::5678")},
+		wantReason: Rewritten,
+		dtyp:       dns.TypeAAAA,
 	}, {
-		name:      "issue3351",
-		host:      "bighost.com",
-		wantCName: "",
-		wantVals:  []net.IP{{1, 2, 3, 7}},
-		dtyp:      dns.TypeA,
+		name:       "issue3351",
+		host:       "bighost.com",
+		wantCName:  "",
+		wantIPs:    []net.IP{{1, 2, 3, 7}},
+		wantReason: Rewritten,
+		dtyp:       dns.TypeA,
+	}, {
+		name:       "issue4008",
+		host:       "somehost.com",
+		wantCName:  "",
+		wantIPs:    nil,
+		wantReason: Rewritten,
+		dtyp:       dns.TypeHTTPS,
+	}, {
+		name:       "issue4016",
+		host:       "www.issue4016.com",
+		wantCName:  "sub.issue4016.com",
+		wantIPs:    nil,
+		wantReason: Rewritten,
+		dtyp:       dns.TypeA,
+	}, {
+		name:       "issue4016_self",
+		host:       "sub.issue4016.com",
+		wantCName:  "",
+		wantIPs:    nil,
+		wantReason: NotFilteredNotFound,
+		dtyp:       dns.TypeA,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			valsNum := len(tc.wantVals)
-
 			r := d.processRewrites(tc.host, tc.dtyp)
-			if valsNum == 0 {
-				assert.Equal(t, NotFilteredNotFound, r.Reason)
-
-				return
-			}
-
-			require.Equalf(t, Rewritten, r.Reason, "got %s", r.Reason)
+			require.Equalf(t, tc.wantReason, r.Reason, "got %s", r.Reason)
 
 			if tc.wantCName != "" {
 				assert.Equal(t, tc.wantCName, r.CanonName)
 			}
 
-			require.Len(t, r.IPList, valsNum)
-			for i, ip := range tc.wantVals {
-				assert.Equal(t, ip, r.IPList[i])
-			}
+			assert.Equal(t, tc.wantIPs, r.IPList)
 		})
 	}
 }
 
 func TestRewritesLevels(t *testing.T) {
-	d := newForTest(nil, nil)
+	d := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 	// Exact host, wildcard L2, wildcard L3.
-	d.Rewrites = []RewriteEntry{{
+	d.Rewrites = []*LegacyRewrite{{
 		Domain: "host.com",
 		Answer: "1.1.1.1",
 		Type:   dns.TypeA,
@@ -179,7 +204,8 @@ func TestRewritesLevels(t *testing.T) {
 		Answer: "3.3.3.3",
 		Type:   dns.TypeA,
 	}}
-	d.prepareRewrites()
+
+	require.NoError(t, d.prepareRewrites())
 
 	testCases := []struct {
 		name string
@@ -209,10 +235,10 @@ func TestRewritesLevels(t *testing.T) {
 }
 
 func TestRewritesExceptionCNAME(t *testing.T) {
-	d := newForTest(nil, nil)
+	d := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 	// Wildcard and exception for a sub-domain.
-	d.Rewrites = []RewriteEntry{{
+	d.Rewrites = []*LegacyRewrite{{
 		Domain: "*.host.com",
 		Answer: "2.2.2.2",
 	}, {
@@ -222,29 +248,32 @@ func TestRewritesExceptionCNAME(t *testing.T) {
 		Domain: "*.sub.host.com",
 		Answer: "*.sub.host.com",
 	}}
-	d.prepareRewrites()
+
+	require.NoError(t, d.prepareRewrites())
 
 	testCases := []struct {
 		name string
 		host string
 		want net.IP
 	}{{
-		name: "match_sub-domain",
+		name: "match_subdomain",
 		host: "my.host.com",
 		want: net.IP{2, 2, 2, 2},
 	}, {
 		name: "exception_cname",
 		host: "sub.host.com",
+		want: nil,
 	}, {
 		name: "exception_wildcard",
 		host: "my.sub.host.com",
+		want: nil,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			r := d.processRewrites(tc.host, dns.TypeA)
 			if tc.want == nil {
-				assert.Equal(t, NotFilteredNotFound, r.Reason)
+				assert.Equal(t, NotFilteredNotFound, r.Reason, "got %s", r.Reason)
 
 				return
 			}
@@ -257,10 +286,10 @@ func TestRewritesExceptionCNAME(t *testing.T) {
 }
 
 func TestRewritesExceptionIP(t *testing.T) {
-	d := newForTest(nil, nil)
+	d := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 	// Exception for AAAA record.
-	d.Rewrites = []RewriteEntry{{
+	d.Rewrites = []*LegacyRewrite{{
 		Domain: "host.com",
 		Answer: "1.2.3.4",
 		Type:   dns.TypeA,
@@ -281,7 +310,8 @@ func TestRewritesExceptionIP(t *testing.T) {
 		Answer: "A",
 		Type:   dns.TypeA,
 	}}
-	d.prepareRewrites()
+
+	require.NoError(t, d.prepareRewrites())
 
 	testCases := []struct {
 		name string

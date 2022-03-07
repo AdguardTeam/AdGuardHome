@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,19 +25,17 @@ func TestMain(m *testing.M) {
 func TestNewSessionToken(t *testing.T) {
 	// Successful case.
 	token, err := newSessionToken()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.Len(t, token, sessionTokenSize)
 
 	// Break the rand.Reader.
 	prevReader := rand.Reader
-	t.Cleanup(func() {
-		rand.Reader = prevReader
-	})
+	t.Cleanup(func() { rand.Reader = prevReader })
 	rand.Reader = &bytes.Buffer{}
 
 	// Unsuccessful case.
 	token, err = newSessionToken()
-	require.NotNil(t, err)
+	require.Error(t, err)
 	assert.Empty(t, token)
 }
 
@@ -58,7 +57,7 @@ func TestAuth(t *testing.T) {
 	a.RemoveSession("notfound")
 
 	sess, err := newSessionToken()
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	sessStr := hex.EncodeToString(sess)
 
 	now := time.Now().UTC().Unix()
@@ -152,7 +151,7 @@ func TestAuthHTTP(t *testing.T) {
 
 	// perform login
 	cookie, err := Context.auth.httpCookie(loginJSON{Name: "name", Password: "password"}, "")
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotEmpty(t, cookie)
 
 	// get /
@@ -251,12 +250,7 @@ func TestRealIP(t *testing.T) {
 			ip, err := realIP(r)
 			assert.Equal(t, tc.wantIP, ip)
 
-			if tc.wantErrMsg == "" {
-				assert.NoError(t, err)
-			} else {
-				require.Error(t, err)
-				assert.Equal(t, tc.wantErrMsg, err.Error())
-			}
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
 }

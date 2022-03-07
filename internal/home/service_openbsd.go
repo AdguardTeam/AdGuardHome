@@ -28,8 +28,7 @@ import (
 //
 // TODO(e.burkov):  Perhaps, file a PR to github.com/kardianos/service.
 
-// sysVersion is the version of local service.System interface
-// implementation.
+// sysVersion is the version of local service.System interface implementation.
 const sysVersion = "openbsd-runcom"
 
 func chooseSystem() {
@@ -174,7 +173,7 @@ func (s *openbsdRunComService) template() (t *template.Template) {
 	)))
 }
 
-// execPath returns the absolute path to the excutable to be run as a service.
+// execPath returns the absolute path to the executable to be run as a service.
 func (s *openbsdRunComService) execPath() (path string, err error) {
 	if c := s.cfg; c != nil && len(c.Executable) != 0 {
 		return filepath.Abs(c.Executable)

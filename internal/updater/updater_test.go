@@ -12,7 +12,9 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TODO(a.garipov): Rewrite these tests.
@@ -67,7 +69,7 @@ func TestUpdateGetVersion(t *testing.T) {
 }`
 
 	l, lport := startHTTPServer(jsonData)
-	t.Cleanup(func() { assert.Nil(t, l.Close()) })
+	testutil.CleanupAndRequireSuccess(t, l.Close)
 
 	u := NewUpdater(&Config{
 		Client:  &http.Client{},
@@ -85,7 +87,8 @@ func TestUpdateGetVersion(t *testing.T) {
 	u.versionCheckURL = fakeURL.String()
 
 	info, err := u.VersionInfo(false)
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "v0.103.0-beta.2", info.NewVersion)
 	assert.Equal(t, "AdGuard Home v0.103.0-beta.2 is now available!", info.Announcement)
 	assert.Equal(t, "https://github.com/AdguardTeam/AdGuardHome/internal/releases", info.AnnouncementURL)
@@ -96,22 +99,23 @@ func TestUpdateGetVersion(t *testing.T) {
 
 	// check cached
 	_, err = u.VersionInfo(false)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func TestUpdate(t *testing.T) {
 	wd := t.TempDir()
 
-	assert.Nil(t, os.WriteFile(filepath.Join(wd, "AdGuardHome"), []byte("AdGuardHome"), 0o755))
-	assert.Nil(t, os.WriteFile(filepath.Join(wd, "README.md"), []byte("README.md"), 0o644))
-	assert.Nil(t, os.WriteFile(filepath.Join(wd, "LICENSE.txt"), []byte("LICENSE.txt"), 0o644))
-	assert.Nil(t, os.WriteFile(filepath.Join(wd, "AdGuardHome.yaml"), []byte("AdGuardHome.yaml"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(wd, "AdGuardHome"), []byte("AdGuardHome"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(wd, "README.md"), []byte("README.md"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(wd, "LICENSE.txt"), []byte("LICENSE.txt"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(wd, "AdGuardHome.yaml"), []byte("AdGuardHome.yaml"), 0o644))
 
 	// start server for returning package file
 	pkgData, err := os.ReadFile("testdata/AdGuardHome.tar.gz")
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	l, lport := startHTTPServer(string(pkgData))
-	t.Cleanup(func() { assert.Nil(t, l.Close()) })
+	testutil.CleanupAndRequireSuccess(t, l.Close)
 
 	u := NewUpdater(&Config{
 		Client:  &http.Client{},
@@ -129,56 +133,66 @@ func TestUpdate(t *testing.T) {
 	u.newVersion = "v0.103.1"
 	u.packageURL = fakeURL.String()
 
-	assert.Nil(t, u.prepare())
+	require.NoError(t, u.prepare())
+
 	u.currentExeName = filepath.Join(wd, "AdGuardHome")
-	assert.Nil(t, u.downloadPackageFile(u.packageURL, u.packageName))
-	assert.Nil(t, u.unpack())
-	// assert.Nil(t, u.check())
-	assert.Nil(t, u.backup())
-	assert.Nil(t, u.replace())
+
+	require.NoError(t, u.downloadPackageFile(u.packageURL, u.packageName))
+	require.NoError(t, u.unpack())
+
+	// require.NoError(t, u.check())
+	require.NoError(t, u.backup())
+	require.NoError(t, u.replace())
+
 	u.clean()
 
 	// check backup files
 	d, err := os.ReadFile(filepath.Join(wd, "agh-backup", "AdGuardHome.yaml"))
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "AdGuardHome.yaml", string(d))
 
 	d, err = os.ReadFile(filepath.Join(wd, "agh-backup", "AdGuardHome"))
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "AdGuardHome", string(d))
 
 	// check updated files
 	d, err = os.ReadFile(filepath.Join(wd, "AdGuardHome"))
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "1", string(d))
 
 	d, err = os.ReadFile(filepath.Join(wd, "README.md"))
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "2", string(d))
 
 	d, err = os.ReadFile(filepath.Join(wd, "LICENSE.txt"))
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "3", string(d))
 
 	d, err = os.ReadFile(filepath.Join(wd, "AdGuardHome.yaml"))
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "AdGuardHome.yaml", string(d))
 }
 
 func TestUpdateWindows(t *testing.T) {
 	wd := t.TempDir()
 
-	assert.Nil(t, os.WriteFile(filepath.Join(wd, "AdGuardHome.exe"), []byte("AdGuardHome.exe"), 0o755))
-	assert.Nil(t, os.WriteFile(filepath.Join(wd, "README.md"), []byte("README.md"), 0o644))
-	assert.Nil(t, os.WriteFile(filepath.Join(wd, "LICENSE.txt"), []byte("LICENSE.txt"), 0o644))
-	assert.Nil(t, os.WriteFile(filepath.Join(wd, "AdGuardHome.yaml"), []byte("AdGuardHome.yaml"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(wd, "AdGuardHome.exe"), []byte("AdGuardHome.exe"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(wd, "README.md"), []byte("README.md"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(wd, "LICENSE.txt"), []byte("LICENSE.txt"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(wd, "AdGuardHome.yaml"), []byte("AdGuardHome.yaml"), 0o644))
 
 	// start server for returning package file
 	pkgData, err := os.ReadFile("testdata/AdGuardHome.zip")
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	l, lport := startHTTPServer(string(pkgData))
-	t.Cleanup(func() { assert.Nil(t, l.Close()) })
+	testutil.CleanupAndRequireSuccess(t, l.Close)
 
 	u := NewUpdater(&Config{
 		Client:  &http.Client{},
@@ -197,39 +211,48 @@ func TestUpdateWindows(t *testing.T) {
 	u.newVersion = "v0.103.1"
 	u.packageURL = fakeURL.String()
 
-	assert.Nil(t, u.prepare())
+	require.NoError(t, u.prepare())
+
 	u.currentExeName = filepath.Join(wd, "AdGuardHome.exe")
-	assert.Nil(t, u.downloadPackageFile(u.packageURL, u.packageName))
-	assert.Nil(t, u.unpack())
+
+	require.NoError(t, u.downloadPackageFile(u.packageURL, u.packageName))
+	require.NoError(t, u.unpack())
 	// assert.Nil(t, u.check())
-	assert.Nil(t, u.backup())
-	assert.Nil(t, u.replace())
+	require.NoError(t, u.backup())
+	require.NoError(t, u.replace())
+
 	u.clean()
 
 	// check backup files
 	d, err := os.ReadFile(filepath.Join(wd, "agh-backup", "AdGuardHome.yaml"))
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "AdGuardHome.yaml", string(d))
 
 	d, err = os.ReadFile(filepath.Join(wd, "agh-backup", "AdGuardHome.exe"))
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "AdGuardHome.exe", string(d))
 
 	// check updated files
 	d, err = os.ReadFile(filepath.Join(wd, "AdGuardHome.exe"))
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "1", string(d))
 
 	d, err = os.ReadFile(filepath.Join(wd, "README.md"))
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "2", string(d))
 
 	d, err = os.ReadFile(filepath.Join(wd, "LICENSE.txt"))
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "3", string(d))
 
 	d, err = os.ReadFile(filepath.Join(wd, "AdGuardHome.yaml"))
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "AdGuardHome.yaml", string(d))
 }
 
@@ -243,7 +266,7 @@ func TestUpdater_VersionInto_ARM(t *testing.T) {
 }`
 
 	l, lport := startHTTPServer(jsonData)
-	t.Cleanup(func() { assert.Nil(t, l.Close()) })
+	testutil.CleanupAndRequireSuccess(t, l.Close)
 
 	u := NewUpdater(&Config{
 		Client:  &http.Client{},
@@ -262,7 +285,8 @@ func TestUpdater_VersionInto_ARM(t *testing.T) {
 	u.versionCheckURL = fakeURL.String()
 
 	info, err := u.VersionInfo(false)
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "v0.103.0-beta.2", info.NewVersion)
 	assert.Equal(t, "AdGuard Home v0.103.0-beta.2 is now available!", info.Announcement)
 	assert.Equal(t, "https://github.com/AdguardTeam/AdGuardHome/internal/releases", info.AnnouncementURL)
@@ -282,7 +306,7 @@ func TestUpdater_VersionInto_MIPS(t *testing.T) {
 }`
 
 	l, lport := startHTTPServer(jsonData)
-	t.Cleanup(func() { assert.Nil(t, l.Close()) })
+	testutil.CleanupAndRequireSuccess(t, l.Close)
 
 	u := NewUpdater(&Config{
 		Client:  &http.Client{},
@@ -301,7 +325,8 @@ func TestUpdater_VersionInto_MIPS(t *testing.T) {
 	u.versionCheckURL = fakeURL.String()
 
 	info, err := u.VersionInfo(false)
-	assert.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.Equal(t, "v0.103.0-beta.2", info.NewVersion)
 	assert.Equal(t, "AdGuard Home v0.103.0-beta.2 is now available!", info.Announcement)
 	assert.Equal(t, "https://github.com/AdguardTeam/AdGuardHome/internal/releases", info.AnnouncementURL)

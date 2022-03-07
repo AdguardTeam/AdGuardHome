@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AdguardTeam/golibs/stringutil"
 )
@@ -26,11 +27,11 @@ const (
 // TODO(a.garipov): Find out if we can get GOARM and GOMIPS values the same way
 // we can GOARCH and GOOS.
 var (
-	channel   string = ChannelDevelopment
-	goarm     string
-	gomips    string
-	version   string
-	buildtime string
+	channel    string = ChannelDevelopment
+	goarm      string
+	gomips     string
+	version    string
+	committime string
 )
 
 // Channel returns the current AdGuard Home release channel.
@@ -62,18 +63,10 @@ func Version() (v string) {
 	return version
 }
 
-// Common formatting constants.
-const (
-	sp   = " "
-	nl   = "\n"
-	tb   = "\t"
-	nltb = nl + tb
-)
-
 // Constants defining the format of module information string.
 const (
 	modInfoAtSep    = "@"
-	modInfoDevSep   = sp
+	modInfoDevSep   = " "
 	modInfoSumLeft  = " (sum: "
 	modInfoSumRight = ")"
 )
@@ -114,7 +107,7 @@ const (
 	vFmtVerHdr    = "Version: "
 	vFmtChanHdr   = "Channel: "
 	vFmtGoHdr     = "Go version: "
-	vFmtTimeHdr   = "Build time: "
+	vFmtTimeHdr   = "Commit time: "
 	vFmtRaceHdr   = "Race: "
 	vFmtGOOSHdr   = "GOOS: " + runtime.GOOS
 	vFmtGOARCHHdr = "GOARCH: " + runtime.GOARCH
@@ -142,6 +135,7 @@ const (
 func Verbose() (v string) {
 	b := &strings.Builder{}
 
+	const nl = "\n"
 	stringutil.WriteToBuilder(
 		b,
 		vFmtAGHHdr,
@@ -155,15 +149,23 @@ func Verbose() (v string) {
 		vFmtGoHdr,
 		runtime.Version(),
 	)
-	if buildtime != "" {
-		stringutil.WriteToBuilder(b, nl, vFmtTimeHdr, buildtime)
+
+	if committime != "" {
+		commitTimeUnix, err := strconv.ParseInt(committime, 10, 64)
+		if err != nil {
+			stringutil.WriteToBuilder(b, nl, vFmtTimeHdr, fmt.Sprintf("parse error: %s", err))
+		} else {
+			stringutil.WriteToBuilder(b, nl, vFmtTimeHdr, time.Unix(commitTimeUnix, 0).String())
+		}
 	}
+
 	stringutil.WriteToBuilder(b, nl, vFmtGOOSHdr, nl, vFmtGOARCHHdr)
 	if goarm != "" {
 		stringutil.WriteToBuilder(b, nl, vFmtGOARMHdr, "v", goarm)
 	} else if gomips != "" {
 		stringutil.WriteToBuilder(b, nl, vFmtGOMIPSHdr, gomips)
 	}
+
 	stringutil.WriteToBuilder(b, nl, vFmtRaceHdr, strconv.FormatBool(isRace))
 
 	info, ok := debug.ReadBuildInfo()
@@ -178,7 +180,7 @@ func Verbose() (v string) {
 	stringutil.WriteToBuilder(b, nl, vFmtDepsHdr)
 	for _, dep := range info.Deps {
 		if depStr := fmtModule(dep); depStr != "" {
-			stringutil.WriteToBuilder(b, nltb, depStr)
+			stringutil.WriteToBuilder(b, "\n\t", depStr)
 		}
 	}
 

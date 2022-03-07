@@ -95,7 +95,9 @@ type clientsContainer struct {
 	// dnsServer is used for checking clients IP status access list status
 	dnsServer *dnsforward.Server
 
-	etcHosts *aghnet.EtcHostsContainer // get entries from system hosts-files
+	// etcHosts contains list of rewrite rules taken from the operating system's
+	// hosts database.
+	etcHosts *aghnet.HostsContainer
 
 	testing bool // if TRUE, this object is used for internal tests
 }
@@ -104,9 +106,9 @@ type clientsContainer struct {
 // dhcpServer: optional
 // Note: this function must be called only once
 func (clients *clientsContainer) Init(
-	objects []clientObject,
+	objects []*clientObject,
 	dhcpServer *dhcpd.Server,
-	etcHosts *aghnet.EtcHostsContainer,
+	etcHosts *aghnet.HostsContainer,
 ) {
 	if clients.list != nil {
 		log.Fatal("clients.list != nil")
@@ -121,13 +123,22 @@ func (clients *clientsContainer) Init(
 	clients.etcHosts = etcHosts
 	clients.addFromConfig(objects)
 
-	if !clients.testing {
-		clients.updateFromDHCP(true)
-		if clients.dhcpServer != nil {
-			clients.dhcpServer.SetOnLeaseChanged(clients.onDHCPLeaseChanged)
-		}
-		if clients.etcHosts != nil {
-			clients.etcHosts.SetOnChanged(clients.onHostsChanged)
+	if clients.testing {
+		return
+	}
+
+	clients.updateFromDHCP(true)
+	if clients.dhcpServer != nil {
+		clients.dhcpServer.SetOnLeaseChanged(clients.onDHCPLeaseChanged)
+	}
+
+	go clients.handleHostsUpdates()
+}
+
+func (clients *clientsContainer) handleHostsUpdates() {
+	if clients.etcHosts != nil {
+		for upd := range clients.etcHosts.Upd() {
+			clients.addFromHostsFile(upd)
 		}
 	}
 }
@@ -164,56 +175,65 @@ type clientObject struct {
 	UseGlobalBlockedServices bool `yaml:"use_global_blocked_services"`
 }
 
-func (clients *clientsContainer) tagKnown(tag string) (ok bool) {
-	return clients.allTags.Has(tag)
-}
-
-func (clients *clientsContainer) addFromConfig(objects []clientObject) {
-	for _, cy := range objects {
+// addFromConfig initializes the clients container with objects from the
+// configuration file.
+func (clients *clientsContainer) addFromConfig(objects []*clientObject) {
+	for _, o := range objects {
 		cli := &Client{
-			Name:                cy.Name,
-			IDs:                 cy.IDs,
-			UseOwnSettings:      !cy.UseGlobalSettings,
-			FilteringEnabled:    cy.FilteringEnabled,
-			ParentalEnabled:     cy.ParentalEnabled,
-			SafeSearchEnabled:   cy.SafeSearchEnabled,
-			SafeBrowsingEnabled: cy.SafeBrowsingEnabled,
+			Name: o.Name,
 
-			UseOwnBlockedServices: !cy.UseGlobalBlockedServices,
+			IDs:       o.IDs,
+			Upstreams: o.Upstreams,
 
-			Upstreams: cy.Upstreams,
+			UseOwnSettings:        !o.UseGlobalSettings,
+			FilteringEnabled:      o.FilteringEnabled,
+			ParentalEnabled:       o.ParentalEnabled,
+			SafeSearchEnabled:     o.SafeSearchEnabled,
+			SafeBrowsingEnabled:   o.SafeBrowsingEnabled,
+			UseOwnBlockedServices: !o.UseGlobalBlockedServices,
 		}
 
-		for _, s := range cy.BlockedServices {
-			if !filtering.BlockedSvcKnown(s) {
-				log.Debug("clients: skipping unknown blocked-service %q", s)
-				continue
+		for _, s := range o.BlockedServices {
+			if filtering.BlockedSvcKnown(s) {
+				cli.BlockedServices = append(cli.BlockedServices, s)
+			} else {
+				log.Info("clients: skipping unknown blocked service %q", s)
 			}
-			cli.BlockedServices = append(cli.BlockedServices, s)
 		}
 
-		for _, t := range cy.Tags {
-			if !clients.tagKnown(t) {
-				log.Debug("clients: skipping unknown tag %q", t)
-				continue
+		for _, t := range o.Tags {
+			if clients.allTags.Has(t) {
+				cli.Tags = append(cli.Tags, t)
+			} else {
+				log.Info("clients: skipping unknown tag %q", t)
 			}
-			cli.Tags = append(cli.Tags, t)
 		}
+
 		sort.Strings(cli.Tags)
 
 		_, err := clients.Add(cli)
 		if err != nil {
-			log.Tracef("clientAdd: %s", err)
+			log.Error("clients: adding clients %s: %s", cli.Name, err)
 		}
 	}
 }
 
-// WriteDiskConfig - write configuration
-func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
+// forConfig returns all currently known persistent clients as objects for the
+// configuration file.
+func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 	clients.lock.Lock()
+	defer clients.lock.Unlock()
+
+	objs = make([]*clientObject, 0, len(clients.list))
 	for _, cli := range clients.list {
-		cy := clientObject{
-			Name:                     cli.Name,
+		o := &clientObject{
+			Name: cli.Name,
+
+			Tags:            stringutil.CloneSlice(cli.Tags),
+			IDs:             stringutil.CloneSlice(cli.IDs),
+			BlockedServices: stringutil.CloneSlice(cli.BlockedServices),
+			Upstreams:       stringutil.CloneSlice(cli.Upstreams),
+
 			UseGlobalSettings:        !cli.UseOwnSettings,
 			FilteringEnabled:         cli.FilteringEnabled,
 			ParentalEnabled:          cli.ParentalEnabled,
@@ -222,14 +242,16 @@ func (clients *clientsContainer) WriteDiskConfig(objects *[]clientObject) {
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
 		}
 
-		cy.Tags = stringutil.CloneSlice(cli.Tags)
-		cy.IDs = stringutil.CloneSlice(cli.IDs)
-		cy.BlockedServices = stringutil.CloneSlice(cli.BlockedServices)
-		cy.Upstreams = stringutil.CloneSlice(cli.Upstreams)
-
-		*objects = append(*objects, cy)
+		objs = append(objs, o)
 	}
-	clients.lock.Unlock()
+
+	// Maps aren't guaranteed to iterate in the same order each time, so the
+	// above loop can generate different orderings when writing to the config
+	// file: this produces lots of diffs in config files, so sort objects by
+	// name before writing.
+	sort.Slice(objs, func(i, j int) bool { return objs[i].Name < objs[j].Name })
+
+	return objs
 }
 
 func (clients *clientsContainer) periodicUpdate() {
@@ -248,10 +270,6 @@ func (clients *clientsContainer) onDHCPLeaseChanged(flags int) {
 	case dhcpd.LeaseChangedRemovedAll:
 		clients.updateFromDHCP(false)
 	}
-}
-
-func (clients *clientsContainer) onHostsChanged() {
-	clients.addFromHostsFile()
 }
 
 // Exists checks if client with this IP address already exists.
@@ -514,12 +532,12 @@ func (clients *clientsContainer) check(c *Client) (err error) {
 		} else if err = dnsforward.ValidateClientID(id); err == nil {
 			c.IDs[i] = id
 		} else {
-			return fmt.Errorf("invalid client id at index %d: %q", i, id)
+			return fmt.Errorf("invalid clientid at index %d: %q", i, id)
 		}
 	}
 
 	for _, t := range c.Tags {
-		if !clients.tagKnown(t) {
+		if !clients.allTags.Has(t) {
 			return fmt.Errorf("invalid tag: %q", t)
 		}
 	}
@@ -697,7 +715,7 @@ func (clients *clientsContainer) SetWHOISInfo(ip net.IP, wi *RuntimeClientWHOISI
 	log.Debug("clients: set whois info for runtime client with ip %s: %+v", ip, wi)
 }
 
-// AddHost adds a new IP-hostname pairing.  The priorities of the sources is
+// AddHost adds a new IP-hostname pairing.  The priorities of the sources are
 // taken into account.  ok is true if the pairing was added.
 func (clients *clientsContainer) AddHost(ip net.IP, host string, src clientSource) (ok bool, err error) {
 	clients.lock.Lock()
@@ -757,13 +775,7 @@ func (clients *clientsContainer) rmHostsBySrc(src clientSource) {
 
 // addFromHostsFile fills the client-hostname pairing index from the system's
 // hosts files.
-func (clients *clientsContainer) addFromHostsFile() {
-	if clients.etcHosts == nil {
-		return
-	}
-
-	hosts := clients.etcHosts.List()
-
+func (clients *clientsContainer) addFromHostsFile(hosts *netutil.IPMap) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -771,17 +783,20 @@ func (clients *clientsContainer) addFromHostsFile() {
 
 	n := 0
 	hosts.Range(func(ip net.IP, v interface{}) (cont bool) {
-		names, ok := v.([]string)
+		hosts, ok := v.(*stringutil.Set)
 		if !ok {
 			log.Error("dns: bad type %T in ipToRC for %s", v, ip)
+
+			return true
 		}
 
-		for _, name := range names {
-			ok = clients.addHostLocked(ip, name, ClientSourceHostsFile)
-			if ok {
+		hosts.Range(func(name string) (cont bool) {
+			if clients.addHostLocked(ip, name, ClientSourceHostsFile) {
 				n++
 			}
-		}
+
+			return true
+		})
 
 		return true
 	})

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
@@ -21,11 +22,11 @@ type testQueryLog struct {
 	// a querylog.QueryLog without actually implementing all methods.
 	querylog.QueryLog
 
-	lastParams querylog.AddParams
+	lastParams *querylog.AddParams
 }
 
 // Add implements the querylog.QueryLog interface for *testQueryLog.
-func (l *testQueryLog) Add(p querylog.AddParams) {
+func (l *testQueryLog) Add(p *querylog.AddParams) {
 	l.lastParams = p
 }
 
@@ -65,7 +66,7 @@ func TestProcessQueryLogsAndStats(t *testing.T) {
 		reason:         filtering.NotFilteredNotFound,
 		wantStatResult: stats.RNotFiltered,
 	}, {
-		name:           "success_tls_client_id",
+		name:           "success_tls_clientid",
 		proto:          proxy.ProtoTLS,
 		addr:           &net.TCPAddr{IP: net.IP{1, 2, 3, 4}, Port: 1234},
 		clientID:       "cli42",
@@ -157,9 +158,16 @@ func TestProcessQueryLogsAndStats(t *testing.T) {
 	}}
 
 	ups, err := upstream.AddressToUpstream("1.1.1.1", nil)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	for _, tc := range testCases {
+		ql := &testQueryLog{}
+		st := &testStats{}
+		srv := &Server{
+			queryLog:   ql,
+			stats:      st,
+			anonymizer: aghnet.NewIPMut(nil),
+		}
 		t.Run(tc.name, func(t *testing.T) {
 			req := &dns.Msg{
 				Question: []dns.Question{{
@@ -173,14 +181,7 @@ func TestProcessQueryLogsAndStats(t *testing.T) {
 				Addr:     tc.addr,
 				Upstream: ups,
 			}
-
-			ql := &testQueryLog{}
-			st := &testStats{}
 			dctx := &dnsContext{
-				srv: &Server{
-					queryLog: ql,
-					stats:    st,
-				},
 				proxyCtx:  pctx,
 				startTime: time.Now(),
 				result: &filtering.Result{
@@ -189,7 +190,7 @@ func TestProcessQueryLogsAndStats(t *testing.T) {
 				clientID: tc.clientID,
 			}
 
-			code := processQueryLogsAndStats(dctx)
+			code := srv.processQueryLogsAndStats(dctx)
 			assert.Equal(t, tc.wantCode, code)
 			assert.Equal(t, tc.wantLogProto, ql.lastParams.ClientProto)
 			assert.Equal(t, tc.wantStatClient, st.lastEntry.Client)

@@ -16,10 +16,9 @@ type DiskConfig struct {
 
 // Config - module configuration
 type Config struct {
-	Filename          string         // database file name
-	LimitDays         uint32         // time limit (in days)
-	UnitID            unitIDCallback // user function to get the current unit ID.  If nil, the current time hour is used.
-	AnonymizeClientIP bool           // anonymize clients' IP addresses
+	Filename  string         // database file name
+	LimitDays uint32         // time limit (in days)
+	UnitID    unitIDCallback // user function to get the current unit ID.  If nil, the current time hour is used.
 
 	// Called when the configuration is changed by HTTP request
 	ConfigModified func()

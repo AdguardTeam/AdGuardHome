@@ -39,40 +39,55 @@ is_command() {
 }
 
 # Function is_little_endian checks if the CPU is little-endian.
+#
+# See https://serverfault.com/a/163493/267530.
 is_little_endian() {
-	[ "$( head -c 6 /bin/sh | tail -c 1 )" = "$( printf '\001' )" ]
+	# The ASCII character "I" has the octal code of 111.  In the two-byte octal
+	# display mode (-o), hexdump will print it either as "000111" on a little
+	# endian system or as a "111000" on a big endian one.  Return the sixth
+	# character to compare it against the number '1'.
+	#
+	# Do not use echo -n, because its behavior in the presence of the -n flag is
+	# explicitly implementation-defined in POSIX.  Use hexdump instead of od,
+	# because OpenWrt and its derivatives have the former but not the latter.
+	is_little_endian_result="$(
+		printf 'I'\
+			| hexdump -o\
+			| awk '{ print substr($2, 6, 1); exit; }'
+	)"
+	readonly is_little_endian_result
+
+	[ "$is_little_endian_result" -eq '1' ]
 }
 
 # Function check_required checks if the required software is available on the
 # machine.  The required software:
 #
-#   curl
 #   unzip (macOS) / tar (other unixes)
 #
+# curl/wget are checked in function configure.
 check_required() {
 	required_darwin="unzip"
 	required_unix="tar"
 	readonly required_darwin required_unix
 
-	# Split with space.
-	required="curl"
 	case "$os"
 	in
 	('freebsd'|'linux'|'openbsd')
-		required="$required $required_unix"
+		required="$required_unix"
 		;;
 	('darwin')
-		required="$required $required_darwin"
+		required="$required_darwin"
 		;;
 	(*)
-		# Generally shouldn't happen, since the OS has already been
-		# validated.
+		# Generally shouldn't happen, since the OS has already been validated.
 		error_exit "unsupported operating system: '$os'"
 		;;
 	esac
+	readonly required
 
 	# Don't use quotes to get word splitting.
-	for cmd in ${required}
+	for cmd in $required
 	do
 		log "checking $cmd"
 		if ! is_command "$cmd"
@@ -189,6 +204,9 @@ set_os() {
 		('OpenBSD')
 			os='openbsd'
 			;;
+		(*)
+			error_exit "unsupported operating system: '$os'"
+			;;
 		esac
 	fi
 
@@ -240,6 +258,9 @@ set_cpu() {
 			fi
 			cpu="${cpu}_softfloat"
 			;;
+		(*)
+			error_exit "unsupported cpu type: $cpu"
+			;;
 		esac
 	fi
 
@@ -272,32 +293,12 @@ fix_darwin() {
 		return 0
 	fi
 
-	if [ "$cpu" = 'arm64' ]
-	then
-		case "$channel"
-		in
-		('beta'|'development'|'edge')
-			# Everything is fine, we have Apple Silicon support on
-			# these channels.
-			;;
-		('release')
-			cpu='amd64'
-			log "use $cpu build on Mac M1 until the native ARM support is added."
-			;;
-		(*)
-			# Generally shouldn't happen, since the release channel
-			# has already been validated.
-			error_exit "invalid channel '$channel'"
-			;;
-		esac
-	fi
-
 	# Set the package extension.
 	pkg_ext='zip'
 
-	# It is important to install AdGuard Home into the /Applications
-	# directory on macOS.  Otherwise, it may not grant enough privileges to
-	# the AdGuard Home.
+	# It is important to install AdGuard Home into the /Applications directory
+	# on macOS.  Otherwise, it may grant not enough privileges to the AdGuard
+	# Home.
 	out_dir='/Applications'
 }
 
@@ -314,6 +315,41 @@ fix_freebsd() {
 	if ! [ -d "$rcd" ]
 	then
 		mkdir "$rcd"
+	fi
+}
+
+# download_curl uses curl(1) to download a file.  The first argument is the URL.
+# The second argument is optional and is the output file.
+download_curl() {
+	curl_output="${2:-}"
+	if [ "$curl_output" = '' ]
+	then
+		curl -L -S -s "$1"
+	else
+		curl -L -S -o "$curl_output" -s "$1"
+	fi
+}
+
+# download_wget uses wget(1) to download a file.  The first argument is the URL.
+# The second argument is optional and is the output file.
+download_wget() {
+	wget_output="${2:--}"
+
+	wget --no-verbose -O "$wget_output" "$1"
+}
+
+# Function set_download_func sets the appropriate function for downloading
+# files.
+set_download_func() {
+	if is_command 'curl'
+	then
+		# Go on and use the default, download_curl.
+		return 0
+	elif is_command 'wget'
+	then
+		download_func='download_wget'
+	else
+		error_exit "either curl or wget is required to install AdGuard Home via this script"
 	fi
 }
 
@@ -340,6 +376,7 @@ configure() {
 	set_os
 	set_cpu
 	fix_darwin
+	set_download_func
 	set_sudo_cmd
 	check_out_dir
 
@@ -404,16 +441,15 @@ rerun_with_root() {
 
 	log 'restarting with root privileges'
 	
-	# Group curl together with an echo, so that if curl fails before
-	# producing any output, the echo prints an exit command for the
-	# following shell to execute to prevent it from getting an empty input
-	# and exiting with a zero code in that case.
-	{ curl -L -S -s "$script_url" || echo 'exit 1'; }\
+	# Group curl/wget together with an echo, so that if the former fails before
+	# producing any output, the latter prints an exit command for the following
+	# shell to execute to prevent it from getting an empty input and exiting
+	# with a zero code in that case.
+	{ "$download_func" "$script_url" || echo 'exit 1'; }\
 		| $sudo_cmd sh -s -- -c "$channel" -C "$cpu" -O "$os" -o "$out_dir" "$r" "$u" "$v"
 
-	# Exit the script.  Since if the code of the previous pipeline is
-	# non-zero, the execution won't reach this point thanks to set -e, exit
-	# with zero.
+	# Exit the script.  Since if the code of the previous pipeline is non-zero,
+	# the execution won't reach this point thanks to set -e, exit with zero.
 	exit 0
 }
 
@@ -422,7 +458,7 @@ rerun_with_root() {
 download() {
 	log "downloading package from $url -> $pkg_name"
 
-	if ! curl -s "$url" --output "$pkg_name"
+	if ! "$download_func" "$url" "$pkg_name"
 	then
 		error_exit "cannot download the package from $url into $pkg_name"
 	fi
@@ -471,7 +507,7 @@ handle_existing() {
 		return 0
 	fi
 
-	if [ "$( ls -1 -A $agh_dir )" != '' ]
+	if [ "$( ls -1 -A "$agh_dir" )" != '' ]
 	then
 		log 'the existing AdGuard Home installation is detected'
 
@@ -481,6 +517,7 @@ handle_existing() {
 "to reinstall/uninstall the AdGuard Home using this script specify one of the '-r' or '-u' flags"
 		fi
 
+		# TODO(e.burkov):  Remove the stop once v0.107.1 released.
 		if ( cd "$agh_dir" && ! ./AdGuardHome -s stop || ! ./AdGuardHome -s uninstall )
 		then
 			# It doesn't terminate the script since it is possible
@@ -502,11 +539,7 @@ handle_existing() {
 
 # Function install_service tries to install AGH as service.
 install_service() {
-	# Installing as root is required at least on FreeBSD.
-	#
-	# TODO(e.burkov): Think about AGH's output suppressing with no verbose
-	# flag.
-	if ( cd "$agh_dir" && $sudo_cmd ./AdGuardHome -s install )
+	if ( cd "$agh_dir" && ./AdGuardHome -s install )
 	then
 		return 0
 	fi
@@ -546,6 +579,7 @@ cpu=''
 os=''
 out_dir='/opt'
 pkg_ext='tar.gz'
+download_func='download_curl'
 sudo_cmd='sudo'
 
 parse_opts "$@"

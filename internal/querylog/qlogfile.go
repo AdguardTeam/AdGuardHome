@@ -54,7 +54,7 @@ func NewQLogFile(path string) (*QLogFile, error) {
 	}, nil
 }
 
-// SeekTS performs binary search in the query log file looking for a record
+// seekTS performs binary search in the query log file looking for a record
 // with the specified timestamp. Once the record is found, it sets
 // "position" so that the next ReadNext call returned that record.
 //
@@ -71,7 +71,7 @@ func NewQLogFile(path string) (*QLogFile, error) {
 // so that when we call "ReadNext" this line was returned.
 // * Depth of the search (how many times we compared timestamps).
 // * If we could not find it, it returns one of the errors described above.
-func (q *QLogFile) SeekTS(timestamp int64) (int64, int, error) {
+func (q *QLogFile) seekTS(timestamp int64) (int64, int, error) {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 

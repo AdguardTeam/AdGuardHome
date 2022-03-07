@@ -153,7 +153,6 @@ func TestHandleMobileConfigDoT(t *testing.T) {
 
 		handleMobileConfigDoT(w, r)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-
 		assert.JSONEq(t, w.Body.String(), b.String())
 	})
 

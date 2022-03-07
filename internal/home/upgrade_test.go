@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -54,7 +55,7 @@ func TestUpgradeSchema2to3(t *testing.T) {
 		require.Len(t, v, 1)
 		require.Equal(t, "8.8.8.8:53", v[0])
 	default:
-		t.Fatalf("wrong type for bootsrap dns: %T", v)
+		t.Fatalf("wrong type for bootstrap dns: %T", v)
 	}
 
 	excludedEntries := []string{"bootstrap_dns"}
@@ -333,8 +334,7 @@ func TestUpgradeSchema9to10(t *testing.T) {
 			err := upgradeSchema9to10(conf)
 
 			if tc.wantErr != "" {
-				require.Error(t, err)
-				assert.Equal(t, tc.wantErr, err.Error())
+				testutil.AssertErrorMsg(t, tc.wantErr, err)
 
 				return
 			}
@@ -366,8 +366,7 @@ func TestUpgradeSchema9to10(t *testing.T) {
 			"dns": ultimateAns,
 		})
 
-		require.Error(t, err)
-		assert.Equal(t, "unexpected type of dns: int", err.Error())
+		testutil.AssertErrorMsg(t, "unexpected type of dns: int", err)
 	})
 }
 
@@ -448,6 +447,7 @@ func TestUpgradeSchema11to12(t *testing.T) {
 
 			if tc.wantErr != "" {
 				require.Error(t, err)
+
 				assert.Equal(t, tc.wantErr, err.Error())
 
 				return
@@ -482,8 +482,7 @@ func TestUpgradeSchema11to12(t *testing.T) {
 			"dns": 0,
 		})
 
-		require.Error(t, err)
-		assert.Equal(t, "unexpected type of dns: int", err.Error())
+		testutil.AssertErrorMsg(t, "unexpected type of dns: int", err)
 	})
 
 	t.Run("no_field", func(t *testing.T) {
@@ -510,5 +509,50 @@ func TestUpgradeSchema11to12(t *testing.T) {
 		require.True(t, ok)
 
 		assert.Equal(t, 90*24*time.Hour, ivlVal.Duration)
+	})
+}
+
+func TestUpgradeSchema12to13(t *testing.T) {
+	t.Run("no_dns", func(t *testing.T) {
+		conf := yobj{}
+
+		err := upgradeSchema12to13(conf)
+		require.NoError(t, err)
+
+		assert.Equal(t, conf["schema_version"], 13)
+	})
+
+	t.Run("no_dhcp", func(t *testing.T) {
+		conf := yobj{
+			"dns": yobj{},
+		}
+
+		err := upgradeSchema12to13(conf)
+		require.NoError(t, err)
+
+		assert.Equal(t, conf["schema_version"], 13)
+	})
+
+	t.Run("good", func(t *testing.T) {
+		conf := yobj{
+			"dns": yobj{
+				"local_domain_name": "lan",
+			},
+			"dhcp":           yobj{},
+			"schema_version": 12,
+		}
+
+		wantConf := yobj{
+			"dns": yobj{},
+			"dhcp": yobj{
+				"local_domain_name": "lan",
+			},
+			"schema_version": 13,
+		}
+
+		err := upgradeSchema12to13(conf)
+		require.NoError(t, err)
+
+		assert.Equal(t, wantConf, conf)
 	})
 }

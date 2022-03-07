@@ -24,20 +24,19 @@ type ipsetCtx struct {
 func (c *ipsetCtx) init(ipsetConf []string) (err error) {
 	c.ipsetMgr, err = aghnet.NewIpsetManager(ipsetConf)
 	if errors.Is(err, os.ErrInvalid) || errors.Is(err, os.ErrPermission) {
-		// ipset cannot currently be initialized if the server was
-		// installed from Snap or when the user or the binary doesn't
-		// have the required permissions, or when the kernel doesn't
-		// support netfilter.
+		// ipset cannot currently be initialized if the server was installed
+		// from Snap or when the user or the binary doesn't have the required
+		// permissions, or when the kernel doesn't support netfilter.
 		//
 		// Log and go on.
 		//
-		// TODO(a.garipov): The Snap problem can probably be solved if
-		// we add the netlink-connector interface plug.
-		log.Info("warning: cannot initialize ipset: %s", err)
+		// TODO(a.garipov): The Snap problem can probably be solved if we add
+		// the netlink-connector interface plug.
+		log.Info("ipset: warning: cannot initialize: %s", err)
 
 		return nil
 	} else if unsupErr := (&aghos.UnsupportedError{}); errors.As(err, &unsupErr) {
-		log.Info("warning: %s", err)
+		log.Info("ipset: warning: %s", err)
 
 		return nil
 	} else if err != nil {

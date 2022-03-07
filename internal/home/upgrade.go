@@ -21,7 +21,7 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 12
+const currentSchemaVersion = 13
 
 // These aliases are provided for convenience.
 type (
@@ -85,6 +85,7 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema9to10,
 		upgradeSchema10to11,
 		upgradeSchema11to12,
+		upgradeSchema12to13,
 	}
 
 	n := 0
@@ -686,6 +687,52 @@ func upgradeSchema11to12(diskConf yobj) (err error) {
 	}
 
 	dns[field] = timeutil.Duration{Duration: time.Duration(qlogIvl) * timeutil.Day}
+
+	return nil
+}
+
+// upgradeSchema12to13 performs the following changes:
+//
+//   # BEFORE:
+//   'dns':
+//     # …
+//     'local_domain_name': 'lan'
+//
+//   # AFTER:
+//   'dhcp':
+//     # …
+//     'local_domain_name': 'lan'
+//
+func upgradeSchema12to13(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 12 to 13")
+	diskConf["schema_version"] = 13
+
+	dnsVal, ok := diskConf["dns"]
+	if !ok {
+		return nil
+	}
+
+	var dns yobj
+	dns, ok = dnsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of dns: %T", dnsVal)
+	}
+
+	dhcpVal, ok := diskConf["dhcp"]
+	if !ok {
+		return nil
+	}
+
+	var dhcp yobj
+	dhcp, ok = dhcpVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of dhcp: %T", dnsVal)
+	}
+
+	const field = "local_domain_name"
+
+	dhcp[field] = dns[field]
+	delete(dns, field)
 
 	return nil
 }

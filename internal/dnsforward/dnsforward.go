@@ -28,7 +28,7 @@ import (
 // DefaultTimeout is the default upstream timeout
 const DefaultTimeout = 10 * time.Second
 
-// defaultClientIDCacheCount is the default count of items in the LRU client ID
+// defaultClientIDCacheCount is the default count of items in the LRU ClientID
 // cache.  The assumption here is that there won't be more than this many
 // requests between the BeforeRequestHandler stage and the actual processing.
 const defaultClientIDCacheCount = 1024
@@ -79,14 +79,17 @@ type Server struct {
 	sysResolvers   aghnet.SystemResolvers
 	recDetector    *recursionDetector
 
+	// anonymizer masks the client's IP addresses if needed.
+	anonymizer *aghnet.IPMut
+
 	tableHostToIP     hostToIPTable
 	tableHostToIPLock sync.Mutex
 
 	tableIPToHost     *netutil.IPMap
 	tableIPToHostLock sync.Mutex
 
-	// clientIDCache is a temporary storage for clientIDs that were
-	// extracted during the BeforeRequestHandler stage.
+	// clientIDCache is a temporary storage for ClientIDs that were extracted
+	// during the BeforeRequestHandler stage.
 	clientIDCache cache.Cache
 
 	// DNS proxy instance for internal usage
@@ -113,6 +116,7 @@ type DNSCreateParams struct {
 	QueryLog       querylog.QueryLog
 	DHCPServer     dhcpd.ServerInterface
 	SubnetDetector *aghnet.SubnetDetector
+	Anonymizer     *aghnet.IPMut
 	LocalDomain    string
 }
 
@@ -150,6 +154,9 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		localDomainSuffix = domainNameToSuffix(p.LocalDomain)
 	}
 
+	if p.Anonymizer == nil {
+		p.Anonymizer = aghnet.NewIPMut(nil)
+	}
 	s = &Server{
 		dnsFilter:         p.DNSFilter,
 		stats:             p.Stats,
@@ -161,6 +168,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 			EnableLRU: true,
 			MaxCount:  defaultClientIDCacheCount,
 		}),
+		anonymizer: p.Anonymizer,
 	}
 
 	// TODO(e.burkov): Enable the refresher after the actual implementation
@@ -435,7 +443,7 @@ func (s *Server) setupResolvers(localAddrs []string) (err error) {
 		&upstream.Options{
 			Bootstrap: bootstraps,
 			Timeout:   defaultLocalTimeout,
-			// TODO(e.burkov): Should we verify server's ceritificates?
+			// TODO(e.burkov): Should we verify server's certificates?
 		},
 	)
 	if err != nil {
@@ -551,7 +559,7 @@ func (s *Server) IsRunning() bool {
 	return s.isRunning
 }
 
-// srvClosedErr is returned when the method can't complete without unacessible
+// srvClosedErr is returned when the method can't complete without inaccessible
 // data from the closing server.
 const srvClosedErr errors.Error = "server is closed"
 

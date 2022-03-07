@@ -102,6 +102,7 @@ const Dhcp = () => {
             Object.values(DHCP_FORM_NAMES)
                 .forEach((formName) => dispatch(destroy(formName)));
             dispatch(resetDhcp());
+            dispatch(getDhcpStatus());
         }
     };
 
@@ -275,6 +276,8 @@ const Dhcp = () => {
                             processingAdding={processingAdding}
                             processingDeleting={processingDeleting}
                             cidr={cidr}
+                            rangeStart={dhcp?.values?.v4?.range_start}
+                            rangeEnd={dhcp?.values?.v4?.range_end}
                         />
                         <div className="btn-list mt-2">
                             <button

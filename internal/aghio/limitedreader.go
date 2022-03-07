@@ -11,7 +11,7 @@ type LimitReachedError struct {
 	Limit int64
 }
 
-// Error implements error interface for LimitReachedError.
+// Error implements the error interface for LimitReachedError.
 //
 // TODO(a.garipov): Think about error string format.
 func (lre *LimitReachedError) Error() string {
@@ -35,7 +35,7 @@ func (lr *limitedReader) Read(p []byte) (n int, err error) {
 	}
 
 	if int64(len(p)) > lr.n {
-		p = p[0:lr.n]
+		p = p[:lr.n]
 	}
 
 	n, err = lr.r.Read(p)

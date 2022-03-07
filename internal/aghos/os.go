@@ -7,6 +7,8 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/fs"
+	"os"
 	"os/exec"
 	"path"
 	"runtime"
@@ -89,7 +91,7 @@ func PIDByCommand(command string, except ...int) (pid int, err error) {
 	}
 
 	var instNum int
-	pid, instNum, err = parsePSOutput(stdout, command, except...)
+	pid, instNum, err = parsePSOutput(stdout, command, except)
 	if err != nil {
 		return 0, err
 	}
@@ -116,16 +118,15 @@ func PIDByCommand(command string, except ...int) (pid int, err error) {
 }
 
 // parsePSOutput scans the output of ps searching the largest PID of the process
-// associated with cmdName ignoring PIDs from ignore.  Valid r's line shoud be
-// like:
+// associated with cmdName ignoring PIDs from ignore.  A valid line from
+// r should look like these:
 //
 //    123 ./example-cmd
 //   1230 some/base/path/example-cmd
 //   3210 example-cmd
 //
-func parsePSOutput(r io.Reader, cmdName string, ignore ...int) (largest, instNum int, err error) {
+func parsePSOutput(r io.Reader, cmdName string, ignore []int) (largest, instNum int, err error) {
 	s := bufio.NewScanner(r)
-ScanLoop:
 	for s.Scan() {
 		fields := strings.Fields(s.Text())
 		if len(fields) != 2 || path.Base(fields[1]) != cmdName {
@@ -133,14 +134,8 @@ ScanLoop:
 		}
 
 		cur, aerr := strconv.Atoi(fields[0])
-		if aerr != nil || cur < 0 {
+		if aerr != nil || cur < 0 || intIn(cur, ignore) {
 			continue
-		}
-
-		for _, pid := range ignore {
-			if cur == pid {
-				continue ScanLoop
-			}
 		}
 
 		instNum++
@@ -155,7 +150,25 @@ ScanLoop:
 	return largest, instNum, nil
 }
 
+// intIn returns true if nums contains n.
+func intIn(n int, nums []int) (ok bool) {
+	for _, nn := range nums {
+		if n == nn {
+			return true
+		}
+	}
+
+	return false
+}
+
 // IsOpenWrt returns true if host OS is OpenWrt.
 func IsOpenWrt() (ok bool) {
 	return isOpenWrt()
+}
+
+// RootDirFS returns the fs.FS rooted at the operating system's root.
+func RootDirFS() (fsys fs.FS) {
+	// Use empty string since os.DirFS implicitly prepends a slash to it.  This
+	// behavior is undocumented but it currently works.
+	return os.DirFS("")
 }

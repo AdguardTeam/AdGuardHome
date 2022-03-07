@@ -13,7 +13,7 @@ func testParseOK(t *testing.T, ss ...string) options {
 	t.Helper()
 
 	o, _, err := parse("", ss)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	return o
 }
@@ -22,7 +22,7 @@ func testParseErr(t *testing.T, descr string, ss ...string) {
 	t.Helper()
 
 	_, _, err := parse("", ss)
-	require.NotNilf(t, err, "expected an error because %s but no error returned", descr)
+	require.Error(t, err)
 }
 
 func testParseParamMissing(t *testing.T, param string) {

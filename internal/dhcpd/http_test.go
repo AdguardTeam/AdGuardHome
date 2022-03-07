@@ -15,7 +15,7 @@ func TestServer_notImplemented(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r, err := http.NewRequest(http.MethodGet, "/unsupported", nil)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	h(w, r)
 	assert.Equal(t, http.StatusNotImplemented, w.Code)

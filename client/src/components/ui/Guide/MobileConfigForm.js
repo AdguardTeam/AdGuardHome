@@ -7,14 +7,19 @@ import i18next from 'i18next';
 import cn from 'classnames';
 
 import { getPathWithQueryString } from '../../../helpers/helpers';
-import { FORM_NAME, MOBILE_CONFIG_LINKS, STANDARD_HTTPS_PORT } from '../../../helpers/constants';
+import {
+    CLIENT_ID_LINK,
+    FORM_NAME,
+    MOBILE_CONFIG_LINKS,
+    STANDARD_HTTPS_PORT,
+} from '../../../helpers/constants';
 import {
     renderInputField,
     renderSelectField,
     toNumber,
 } from '../../../helpers/form';
 import {
-    validateClientId,
+    validateConfigClientId,
     validateServerName,
     validatePort,
     validateIsSafePort,
@@ -62,7 +67,7 @@ const MobileConfigForm = ({ invalid }) => {
 
     const githubLink = (
         <a
-            href="https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#idclient"
+            href={CLIENT_ID_LINK}
             target="_blank"
             rel="noopener noreferrer"
         >
@@ -132,7 +137,7 @@ const MobileConfigForm = ({ invalid }) => {
                         component={renderInputField}
                         className="form-control"
                         placeholder={i18next.t('client_id_placeholder')}
-                        validate={validateClientId}
+                        validate={validateConfigClientId}
                     />
                 </div>
                 <div className="form__group form__group--settings">

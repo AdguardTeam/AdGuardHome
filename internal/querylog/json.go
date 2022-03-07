@@ -2,46 +2,30 @@ package querylog
 
 import (
 	"fmt"
-	"net"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
 	"golang.org/x/net/idna"
 )
 
 // TODO(a.garipov): Use a proper structured approach here.
 
-// Get Client IP address
-func (l *queryLog) getClientIP(ip net.IP) (clientIP net.IP) {
-	if l.conf.AnonymizeClientIP && ip != nil {
-		const AnonymizeClientIPv4Mask = 16
-		const AnonymizeClientIPv6Mask = 112
-
-		if ip.To4() != nil {
-			return ip.Mask(net.CIDRMask(AnonymizeClientIPv4Mask, 32))
-		}
-
-		return ip.Mask(net.CIDRMask(AnonymizeClientIPv6Mask, 128))
-	}
-
-	return ip
-}
-
 // jobject is a JSON object alias.
 type jobject = map[string]interface{}
 
 // entriesToJSON converts query log entries to JSON.
 func (l *queryLog) entriesToJSON(entries []*logEntry, oldest time.Time) (res jobject) {
-	data := []jobject{}
+	data := make([]jobject, 0, len(entries))
 
-	// the elements order is already reversed (from newer to older)
-	for i := 0; i < len(entries); i++ {
-		entry := entries[i]
-		jsonEntry := l.logEntryToJSONEntry(entry)
+	// The elements order is already reversed to be from newer to older.
+	for _, entry := range entries {
+		jsonEntry := l.entryToJSON(entry, l.anonymizer.Load())
 		data = append(data, jsonEntry)
 	}
 
@@ -56,88 +40,105 @@ func (l *queryLog) entriesToJSON(entries []*logEntry, oldest time.Time) (res job
 	return res
 }
 
-func (l *queryLog) logEntryToJSONEntry(entry *logEntry) (jsonEntry jobject) {
-	var msg *dns.Msg
-
-	if len(entry.Answer) > 0 {
-		msg = new(dns.Msg)
-		if err := msg.Unpack(entry.Answer); err != nil {
-			log.Debug("Failed to unpack dns message answer: %s: %s", err, string(entry.Answer))
-			msg = nil
-		}
-	}
-
+// entryToJSON converts a log entry's data into an entry for the JSON API.
+func (l *queryLog) entryToJSON(entry *logEntry, anonFunc aghnet.IPMutFunc) (jsonEntry jobject) {
 	hostname := entry.QHost
 	question := jobject{
 		"type":  entry.QType,
 		"class": entry.QClass,
 		"name":  hostname,
 	}
-	if qhost, err := idna.ToUnicode(hostname); err == nil {
-		if qhost != hostname && qhost != "" {
-			question["unicode_name"] = qhost
-		}
-	} else {
-		log.Debug("translating %q into unicode: %s", hostname, err)
+
+	if qhost, err := idna.ToUnicode(hostname); err != nil {
+		log.Debug("querylog: translating %q into unicode: %s", hostname, err)
+	} else if qhost != hostname && qhost != "" {
+		question["unicode_name"] = qhost
 	}
+
+	eip := netutil.CloneIP(entry.IP)
+	anonFunc(eip)
 
 	jsonEntry = jobject{
 		"reason":       entry.Result.Reason.String(),
 		"elapsedMs":    strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
 		"time":         entry.Time.Format(time.RFC3339Nano),
-		"client":       l.getClientIP(entry.IP),
-		"client_info":  entry.client,
+		"client":       eip,
 		"client_proto": entry.ClientProto,
+		"cached":       entry.Cached,
 		"upstream":     entry.Upstream,
 		"question":     question,
+		"rules":        resultRulesToJSONRules(entry.Result.Rules),
+	}
+
+	if eip.Equal(entry.IP) {
+		jsonEntry["client_info"] = entry.client
 	}
 
 	if entry.ClientID != "" {
 		jsonEntry["client_id"] = entry.ClientID
 	}
 
-	if msg != nil {
-		jsonEntry["status"] = dns.RcodeToString[msg.Rcode]
-
-		opt := msg.IsEdns0()
-		dnssecOk := false
-		if opt != nil {
-			dnssecOk = opt.Do()
-		}
-
-		jsonEntry["answer_dnssec"] = dnssecOk
+	if entry.ReqECS != "" {
+		jsonEntry["ecs"] = entry.ReqECS
 	}
 
-	jsonEntry["rules"] = resultRulesToJSONRules(entry.Result.Rules)
-
-	if len(entry.Result.Rules) > 0 && len(entry.Result.Rules[0].Text) > 0 {
-		jsonEntry["rule"] = entry.Result.Rules[0].Text
-		jsonEntry["filterId"] = entry.Result.Rules[0].FilterListID
+	if len(entry.Result.Rules) > 0 {
+		if r := entry.Result.Rules[0]; len(r.Text) > 0 {
+			jsonEntry["rule"] = r.Text
+			jsonEntry["filterId"] = r.FilterListID
+		}
 	}
 
 	if len(entry.Result.ServiceName) != 0 {
 		jsonEntry["service_name"] = entry.Result.ServiceName
 	}
 
-	answers := answerToMap(msg)
-	if answers != nil {
-		jsonEntry["answer"] = answers
-	}
-
-	if len(entry.OrigAnswer) != 0 {
-		a := new(dns.Msg)
-		err := a.Unpack(entry.OrigAnswer)
-		if err == nil {
-			answers = answerToMap(a)
-			if answers != nil {
-				jsonEntry["original_answer"] = answers
-			}
-		} else {
-			log.Debug("Querylog: msg.Unpack(entry.OrigAnswer): %s: %s", err, string(entry.OrigAnswer))
-		}
-	}
+	l.setMsgData(entry, jsonEntry)
+	l.setOrigAns(entry, jsonEntry)
 
 	return jsonEntry
+}
+
+// setMsgData sets the message data in jsonEntry.
+func (l *queryLog) setMsgData(entry *logEntry, jsonEntry jobject) {
+	if len(entry.Answer) == 0 {
+		return
+	}
+
+	msg := &dns.Msg{}
+	if err := msg.Unpack(entry.Answer); err != nil {
+		log.Debug("querylog: failed to unpack dns msg answer: %v: %s", entry.Answer, err)
+
+		return
+	}
+
+	jsonEntry["status"] = dns.RcodeToString[msg.Rcode]
+	// Old query logs may still keep AD flag value in the message.  Try to get
+	// it from there as well.
+	jsonEntry["answer_dnssec"] = entry.AuthenticatedData || msg.AuthenticatedData
+
+	if a := answerToMap(msg); a != nil {
+		jsonEntry["answer"] = a
+	}
+}
+
+// setOrigAns sets the original answer data in jsonEntry.
+func (l *queryLog) setOrigAns(entry *logEntry, jsonEntry jobject) {
+	if len(entry.OrigAnswer) == 0 {
+		return
+	}
+
+	orig := &dns.Msg{}
+	err := orig.Unpack(entry.OrigAnswer)
+	if err != nil {
+		log.Debug("querylog: orig.Unpack(entry.OrigAnswer): %v: %s", entry.OrigAnswer, err)
+
+		return
+	}
+
+	if a := answerToMap(orig); a != nil {
+		jsonEntry["original_answer"] = a
+	}
 }
 
 func resultRulesToJSONRules(rules []*filtering.ResultRule) (jsonRules []jobject) {

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -21,7 +22,7 @@ type QueryLog interface {
 	Close()
 
 	// Add a log entry
-	Add(params AddParams)
+	Add(params *AddParams)
 
 	// WriteDiskConfig - write configuration
 	WriteDiskConfig(c *Config)
@@ -46,11 +47,11 @@ type Config struct {
 	// old log file will be renamed, NOT deleted, so the actual log
 	// retention time is twice the interval.  The value must be one of:
 	//
-	//         6 * time.Hour
-	//        24 * time.Hour
-	//    7 * 24 * time.Hour
-	//   30 * 24 * time.Hour
-	//   90 * 24 * time.Hour
+	//    6 * time.Hour
+	//    1 * timeutil.Day
+	//    7 * timeutil.Day
+	//   30 * timeutil.Day
+	//   90 * timeutil.Day
 	//
 	RotationIvl time.Duration
 
@@ -67,19 +68,46 @@ type Config struct {
 	// AnonymizeClientIP tells if the query log should anonymize clients' IP
 	// addresses.
 	AnonymizeClientIP bool
+
+	// Anonymizer processes the IP addresses to anonymize those if needed.
+	Anonymizer *aghnet.IPMut
 }
 
-// AddParams - parameters for Add()
+// AddParams is the parameters for adding an entry.
 type AddParams struct {
-	Question    *dns.Msg
-	Answer      *dns.Msg          // The response we sent to the client (optional)
-	OrigAnswer  *dns.Msg          // The response from an upstream server (optional)
-	Result      *filtering.Result // Filtering result (optional)
-	Elapsed     time.Duration     // Time spent for processing the request
-	ClientID    string
-	ClientIP    net.IP
-	Upstream    string // Upstream server URL
+	Question *dns.Msg
+
+	// ReqECS is the IP network extracted from EDNS Client-Subnet option of a
+	// request.
+	ReqECS *net.IPNet
+
+	// Answer is the response which is sent to the client, if any.
+	Answer *dns.Msg
+
+	// OrigAnswer is the response from an upstream server.  It's only set if the
+	// answer has been modified by filtering.
+	OrigAnswer *dns.Msg
+
+	// Result is the filtering result (optional).
+	Result *filtering.Result
+
+	// Elapsed is the time spent for processing the request.
+	Elapsed time.Duration
+
+	ClientID string
+
+	ClientIP net.IP
+
+	// Upstream is the URL of the upstream DNS server.
+	Upstream string
+
 	ClientProto ClientProto
+
+	// Cached indicates if the response is served from cache.
+	Cached bool
+
+	// AuthenticatedData shows if the response had the AD bit set.
+	AuthenticatedData bool
 }
 
 // validate returns an error if the parameters aren't valid.
@@ -115,7 +143,8 @@ func newQueryLog(conf Config) (l *queryLog) {
 	l = &queryLog{
 		findClient: findClient,
 
-		logFile: filepath.Join(conf.BaseDir, queryLogFileName),
+		logFile:    filepath.Join(conf.BaseDir, queryLogFileName),
+		anonymizer: conf.Anonymizer,
 	}
 
 	l.conf = &Config{}
@@ -123,7 +152,7 @@ func newQueryLog(conf Config) (l *queryLog) {
 
 	if !checkInterval(conf.RotationIvl) {
 		log.Info(
-			"querylog: warning: unsupported rotation interval %d, setting to 1 day",
+			"querylog: warning: unsupported rotation interval %s, setting to 1 day",
 			conf.RotationIvl,
 		)
 		l.conf.RotationIvl = timeutil.Day

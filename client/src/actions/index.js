@@ -13,7 +13,7 @@ import {
     STATUS_RESPONSE,
     SETTINGS_NAMES,
     FORM_NAME,
-    GETTING_STARTED_LINK,
+    MANUAL_UPDATE_LINK,
 } from '../helpers/constants';
 import { areEqualVersions } from '../helpers/version';
 import { getTlsStatus } from './encryption';
@@ -193,7 +193,7 @@ export const getUpdate = () => async (dispatch, getState) => {
     const handleRequestError = () => {
         const options = {
             components: {
-                a: <a href={GETTING_STARTED_LINK} target="_blank"
+                a: <a href={MANUAL_UPDATE_LINK} target="_blank"
                       rel="noopener noreferrer" />,
             },
         };

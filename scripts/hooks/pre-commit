@@ -2,9 +2,72 @@
 
 set -e -f -u
 
-# Show all temporary todos to the programmer but don't fail the commit
-# if there are any, because the commit could be in a temporary branch.
-git grep -e 'TODO.*!!' -- ':!scripts/hooks/pre-commit' | cat || :
+# Only show interactive prompts if there is a terminal attached.  This
+# should work on all of our supported Unix systems.
+is_tty='0'
+if [ -e /dev/tty ]
+then
+	is_tty='1'
+fi
+readonly is_tty
+
+# prompt is a helper that prompts the user for interactive input if that
+# can be done.  If there is no terminal attached, it sleeps for two
+# seconds, giving the programmer some time to react, and returns with
+# a zero exit code.
+prompt() {
+	if [ "$is_tty" -eq '0' ]
+	then
+		sleep 2
+
+		return 0
+	fi
+
+	while true
+	do
+		printf 'commit anyway? y/[n]: '
+		read -r ans < /dev/tty
+
+		case "$ans"
+		in
+		('y'|'Y')
+			break
+			;;
+		(''|'n'|'N')
+			exit 1
+			;;
+		(*)
+			continue
+			;;
+		esac
+	done
+}
+
+# Warn the programmer about unstaged changes and untracked files, but do
+# not fail the commit, because those changes might be temporary or for
+# a different branch.
+awk_prog='substr($2, 2, 1) != "." { print $9; } $1 == "?" { print $2; }'
+readonly awk_prog
+
+unstaged="$( git status --porcelain=2 | awk "$awk_prog" )"
+readonly unstaged
+
+if [ "$unstaged" != "" ]
+then
+	printf 'WARNING: you have unstaged changes:\n\n%s\n\n' "$unstaged"
+	prompt
+fi
+
+# Warn the programmer about temporary todos, but do not fail the commit,
+# because the commit could be in a temporary branch.
+temp_todos="$( git grep -e 'TODO.*!!' -- ':!scripts/hooks/pre-commit' || : )"
+readonly temp_todos
+
+if [ "$temp_todos" != "" ]
+then
+	printf 'WARNING: you have temporary todos:\n\n%s\n\n' "$temp_todos"
+	prompt
+fi
 
 verbose="${VERBOSE:-0}"
 readonly verbose

@@ -293,6 +293,8 @@ func (s *v4Server) addLease(l *Lease) (err error) {
 	offset, inOffset := r.offset(l.IP)
 
 	if l.IsStatic() {
+		// TODO(a.garipov, d.seregin): Subnet can be nil when dhcp server is
+		// disabled.
 		if sn := s.conf.subnet; !sn.Contains(l.IP) {
 			return fmt.Errorf("subnet %s does not contain the ip %q", sn, l.IP)
 		}
@@ -900,9 +902,10 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 			resp.UpdateOption(dhcpv4.OptGeneric(code, configured.Get(code)))
 		}
 	}
-	// Update the value of Domain Name Server option separately from others
-	// since its value is set after server's creating.
-	if requested.Has(dhcpv4.OptionDomainNameServer) {
+	// Update the value of Domain Name Server option separately from others if
+	// not assigned yet since its value is set after server's creating.
+	if requested.Has(dhcpv4.OptionDomainNameServer) &&
+		!resp.Options.Has(dhcpv4.OptionDomainNameServer) {
 		resp.UpdateOption(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
 	}
 
@@ -966,11 +969,10 @@ func (s *v4Server) send(peer net.Addr, conn net.PacketConn, req, resp *dhcpv4.DH
 			Port: dhcpv4.ServerPort,
 		}
 		if mtype == dhcpv4.MessageTypeNak {
-			// Set the broadcast bit in the DHCPNAK, so that the
-			// relay agent broadcasted it to the client, because the
-			// client may not have a correct network address or
-			// subnet mask, and the client may not be answering ARP
-			// requests.
+			// Set the broadcast bit in the DHCPNAK, so that the relay agent
+			// broadcasts it to the client, because the client may not have
+			// a correct network address or subnet mask, and the client may not
+			// be answering ARP requests.
 			resp.SetBroadcast()
 		}
 	case mtype == dhcpv4.MessageTypeNak:
@@ -1053,8 +1055,6 @@ func (s *v4Server) Start() (err error) {
 	go func() {
 		if serr := s.srv.Serve(); errors.Is(serr, net.ErrClosed) {
 			log.Info("dhcpv4: server is closed")
-
-			return
 		} else if serr != nil {
 			log.Error("dhcpv4: srv.Serve: %s", serr)
 		}
@@ -1124,6 +1124,29 @@ func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
 		return s, fmt.Errorf("dhcpv4: %w", err)
 	}
 
+	if s.conf.ipRange.contains(routerIP) {
+		return s, fmt.Errorf("dhcpv4: gateway ip %v in the ip range: %v-%v",
+			routerIP,
+			conf.RangeStart,
+			conf.RangeEnd,
+		)
+	}
+
+	if !s.conf.subnet.Contains(conf.RangeStart) {
+		return s, fmt.Errorf("dhcpv4: range start %v is outside network %v",
+			conf.RangeStart,
+			s.conf.subnet,
+		)
+	}
+
+	if !s.conf.subnet.Contains(conf.RangeEnd) {
+		return s, fmt.Errorf("dhcpv4: range end %v is outside network %v",
+			conf.RangeEnd,
+			s.conf.subnet,
+		)
+	}
+
+	// TODO(a.garipov, d.seregin): Check that every lease is inside the IPRange.
 	s.leasedOffsets = newBitSet()
 
 	if conf.LeaseDuration == 0 {

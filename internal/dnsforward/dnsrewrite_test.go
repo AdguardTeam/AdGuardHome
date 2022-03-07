@@ -61,8 +61,8 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		d := &proxy.DNSContext{}
 
 		err := srv.filterDNSRewrite(req, res, d)
+		require.NoError(t, err)
 
-		require.Nil(t, err)
 		assert.Equal(t, dns.RcodeNameError, d.Res.Rcode)
 	})
 
@@ -72,7 +72,8 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		d := &proxy.DNSContext{}
 
 		err := srv.filterDNSRewrite(req, res, d)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 		assert.Empty(t, d.Res.Answer)
 	})
@@ -83,7 +84,8 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		d := &proxy.DNSContext{}
 
 		err := srv.filterDNSRewrite(req, res, d)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 
 		require.Len(t, d.Res.Answer, 1)
@@ -96,7 +98,8 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		d := &proxy.DNSContext{}
 
 		err := srv.filterDNSRewrite(req, res, d)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 
 		require.Len(t, d.Res.Answer, 1)
@@ -109,7 +112,8 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		d := &proxy.DNSContext{}
 
 		err := srv.filterDNSRewrite(req, res, d)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 
 		require.Len(t, d.Res.Answer, 1)
@@ -122,7 +126,8 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		d := &proxy.DNSContext{}
 
 		err := srv.filterDNSRewrite(req, res, d)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 
 		require.Len(t, d.Res.Answer, 1)
@@ -135,7 +140,8 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		d := &proxy.DNSContext{}
 
 		err := srv.filterDNSRewrite(req, res, d)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 
 		require.Len(t, d.Res.Answer, 1)
@@ -152,7 +158,8 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		d := &proxy.DNSContext{}
 
 		err := srv.filterDNSRewrite(req, res, d)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 
 		require.Len(t, d.Res.Answer, 1)
@@ -171,7 +178,8 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		d := &proxy.DNSContext{}
 
 		err := srv.filterDNSRewrite(req, res, d)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 
 		require.Len(t, d.Res.Answer, 1)
@@ -190,7 +198,8 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		d := &proxy.DNSContext{}
 
 		err := srv.filterDNSRewrite(req, res, d)
-		require.Nil(t, err)
+		require.NoError(t, err)
+
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 
 		require.Len(t, d.Res.Answer, 1)

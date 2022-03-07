@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -403,8 +404,8 @@ func realIP(r *http.Request) (ip net.IP, err error) {
 		return ip, nil
 	}
 
-	// When everything else fails, just return the remote address as
-	// understood by the stdlib.
+	// When everything else fails, just return the remote address as understood
+	// by the stdlib.
 	ipStr, err := netutil.SplitHost(r.RemoteAddr)
 	if err != nil {
 		return nil, fmt.Errorf("getting ip from client addr: %w", err)
@@ -417,19 +418,20 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	req := loginJSON{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
 
 		return
 	}
 
 	var remoteAddr string
-	// The realIP couldn't be used here due to security issues.
+	// realIP cannot be used here without taking TrustedProxies into account due
+	// to security issues.
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
 	//
 	// TODO(e.burkov): Use realIP when the issue will be fixed.
 	if remoteAddr, err = netutil.SplitHost(r.RemoteAddr); err != nil {
-		httpError(w, http.StatusBadRequest, "auth: getting remote address: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "auth: getting remote address: %s", err)
 
 		return
 	}
@@ -437,12 +439,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	if blocker := Context.auth.blocker; blocker != nil {
 		if left := blocker.check(remoteAddr); left > 0 {
 			w.Header().Set("Retry-After", strconv.Itoa(int(left.Seconds())))
-			httpError(
-				w,
-				http.StatusTooManyRequests,
-				"auth: blocked for %s",
-				left,
-			)
+			aghhttp.Error(r, w, http.StatusTooManyRequests, "auth: blocked for %s", left)
 
 			return
 		}
@@ -451,22 +448,23 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	var cookie string
 	cookie, err = Context.auth.httpCookie(req, remoteAddr)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "crypto rand reader: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "crypto rand reader: %s", err)
 
 		return
 	}
 
+	// Use realIP here, since this IP address is only used for logging.
+	ip, err := realIP(r)
+	if err != nil {
+		log.Error("auth: getting real ip from request: %s", err)
+	} else if ip == nil {
+		// Technically shouldn't happen.
+		log.Error("auth: unknown ip")
+	}
+
 	if len(cookie) == 0 {
-		var ip net.IP
-		ip, err = realIP(r)
-		if err != nil {
-			log.Info("auth: getting real ip from request: %s", err)
-		} else if ip == nil {
-			// Technically shouldn't happen.
-			log.Info("auth: failed to login user %q from unknown ip", req.Name)
-		} else {
-			log.Info("auth: failed to login user %q from ip %q", req.Name, ip)
-		}
+		log.Info("auth: failed to login user %q from ip %v", req.Name, ip)
+
 		time.Sleep(1 * time.Second)
 
 		http.Error(w, "invalid username or password", http.StatusBadRequest)
@@ -474,13 +472,15 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Set-Cookie", cookie)
+	log.Info("auth: user %q successfully logged in from ip %v", req.Name, ip)
 
-	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
-	w.Header().Set("Pragma", "no-cache")
-	w.Header().Set("Expires", "0")
+	h := w.Header()
+	h.Set("Set-Cookie", cookie)
+	h.Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+	h.Set("Pragma", "no-cache")
+	h.Set("Expires", "0")
 
-	returnOK(w)
+	aghhttp.OK(w)
 }
 
 func handleLogout(w http.ResponseWriter, r *http.Request) {
@@ -528,7 +528,7 @@ func optionalAuthThird(w http.ResponseWriter, r *http.Request) (authFirst bool) 
 	cookie, err := r.Cookie(sessionCookieName)
 
 	if glProcessCookie(r) {
-		log.Debug("auth: authentification was handled by GL-Inet submodule")
+		log.Debug("auth: authentication was handled by GL-Inet submodule")
 		ok = true
 	} else if err == nil {
 		r := Context.auth.checkSession(cookie.Value)

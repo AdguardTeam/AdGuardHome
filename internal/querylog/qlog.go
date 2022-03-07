@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -36,6 +37,8 @@ type queryLog struct {
 	fileFlushLock sync.Mutex // synchronize a file-flushing goroutine and main thread
 	flushPending  bool       // don't start another goroutine while the previous one is still running
 	fileWriteLock sync.Mutex
+
+	anonymizer *aghnet.IPMut
 }
 
 // ClientProto values are names of the client protocols.
@@ -72,12 +75,13 @@ type logEntry struct {
 	// client is the found client information, if any.
 	client *Client
 
-	IP   net.IP    `json:"IP"` // Client IP
 	Time time.Time `json:"T"`
 
 	QHost  string `json:"QH"`
 	QType  string `json:"QT"`
 	QClass string `json:"QC"`
+
+	ReqECS string `json:"ECS,omitempty"`
 
 	ClientID    string      `json:"CID,omitempty"`
 	ClientProto ClientProto `json:"CP"`
@@ -86,8 +90,14 @@ type logEntry struct {
 	OrigAnswer []byte `json:",omitempty"`
 
 	Result   filtering.Result
-	Elapsed  time.Duration
-	Upstream string `json:",omitempty"` // if empty, means it was cached
+	Upstream string `json:",omitempty"`
+
+	IP net.IP `json:"IP"`
+
+	Elapsed time.Duration
+
+	Cached            bool `json:",omitempty"`
+	AuthenticatedData bool `json:"AD,omitempty"`
 }
 
 func (l *queryLog) Start() {
@@ -142,14 +152,12 @@ func (l *queryLog) clear() {
 	log.Debug("Query log: cleared")
 }
 
-func (l *queryLog) Add(params AddParams) {
-	var err error
-
+func (l *queryLog) Add(params *AddParams) {
 	if !l.conf.Enabled {
 		return
 	}
 
-	err = params.validate()
+	err := params.validate()
 	if err != nil {
 		log.Error("querylog: adding record: %s, skipping", err)
 
@@ -161,20 +169,31 @@ func (l *queryLog) Add(params AddParams) {
 	}
 
 	now := time.Now()
+	q := params.Question.Question[0]
 	entry := logEntry{
-		IP:   l.getClientIP(params.ClientIP),
 		Time: now,
 
-		Result:      *params.Result,
-		Elapsed:     params.Elapsed,
-		Upstream:    params.Upstream,
+		QHost:  strings.ToLower(q.Name[:len(q.Name)-1]),
+		QType:  dns.Type(q.Qtype).String(),
+		QClass: dns.Class(q.Qclass).String(),
+
 		ClientID:    params.ClientID,
 		ClientProto: params.ClientProto,
+
+		Result:   *params.Result,
+		Upstream: params.Upstream,
+
+		IP: params.ClientIP,
+
+		Elapsed: params.Elapsed,
+
+		Cached:            params.Cached,
+		AuthenticatedData: params.AuthenticatedData,
 	}
-	q := params.Question.Question[0]
-	entry.QHost = strings.ToLower(q.Name[:len(q.Name)-1]) // remove the last dot
-	entry.QType = dns.Type(q.Qtype).String()
-	entry.QClass = dns.Class(q.Qclass).String()
+
+	if params.ReqECS != nil {
+		entry.ReqECS = params.ReqECS.String()
+	}
 
 	if params.Answer != nil {
 		var a []byte
@@ -207,6 +226,10 @@ func (l *queryLog) Add(params AddParams) {
 	if !l.conf.FileEnabled {
 		if len(l.buffer) > int(l.conf.MemSize) {
 			// writing to file is disabled - just remove the oldest entry from array
+			//
+			// TODO(a.garipov): This should be replaced by a proper ring buffer,
+			// but it's currently difficult to do that.
+			l.buffer[0] = nil
 			l.buffer = l.buffer[1:]
 		}
 	} else if !l.flushPending {

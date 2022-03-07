@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -80,11 +81,10 @@ func newTestQLogFile(t *testing.T, linesNum int) (file *QLogFile) {
 
 	// Create the new QLogFile instance.
 	file, err := NewQLogFile(testFile)
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	assert.NotNil(t, file)
-	t.Cleanup(func() {
-		assert.Nil(t, file.Close())
-	})
+	testutil.CleanupAndRequireSuccess(t, file.Close)
 
 	return file
 }
@@ -107,7 +107,7 @@ func TestQLogFile_ReadNext(t *testing.T) {
 
 			// Calculate the expected position.
 			fileInfo, err := q.file.Stat()
-			require.Nil(t, err)
+			require.NoError(t, err)
 			var expPos int64
 			if expPos = fileInfo.Size(); expPos > 0 {
 				expPos--
@@ -115,7 +115,7 @@ func TestQLogFile_ReadNext(t *testing.T) {
 
 			// Seek to the start.
 			pos, err := q.SeekStart()
-			require.Nil(t, err)
+			require.NoError(t, err)
 			require.EqualValues(t, expPos, pos)
 
 			var read int
@@ -170,17 +170,17 @@ func TestQLogFile_SeekTS_good(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(l.name+"_"+tc.name, func(t *testing.T) {
 				line, err := getQLogFileLine(q, tc.line)
-				require.Nil(t, err)
+				require.NoError(t, err)
 				ts := readQLogTimestamp(line)
 				assert.NotEqualValues(t, 0, ts)
 
 				// Try seeking to that line now.
-				pos, _, err := q.SeekTS(ts)
-				require.Nil(t, err)
+				pos, _, err := q.seekTS(ts)
+				require.NoError(t, err)
 				assert.NotEqualValues(t, 0, pos)
 
 				testLine, err := q.ReadNext()
-				require.Nil(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, line, testLine)
 			})
 		}
@@ -220,7 +220,7 @@ func TestQLogFile_SeekTS_bad(t *testing.T) {
 		testCases[1].ts = lateTS.UnixNano()
 
 		line, err := getQLogFileLine(q, l.num/2)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		testCases[2].ts = readQLogTimestamp(line) - 1
 
 		for _, tc := range testCases {
@@ -228,9 +228,10 @@ func TestQLogFile_SeekTS_bad(t *testing.T) {
 				assert.NotEqualValues(t, 0, tc.ts)
 
 				var depth int
-				_, depth, err = q.SeekTS(tc.ts)
+				_, depth, err = q.seekTS(tc.ts)
 				assert.NotEmpty(t, l.num)
-				require.NotNil(t, err)
+				require.Error(t, err)
+
 				if tc.leq {
 					assert.LessOrEqual(t, depth, int(math.Log2(float64(l.num))+3))
 				}
@@ -260,19 +261,19 @@ func TestQLogFile(t *testing.T) {
 
 	// Seek to the start.
 	pos, err := q.SeekStart()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.Greater(t, pos, int64(0))
 
 	// Read first line.
 	line, err := q.ReadNext()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.Contains(t, line, "0.0.0.2")
 	assert.True(t, strings.HasPrefix(line, "{"), line)
 	assert.True(t, strings.HasSuffix(line, "}"), line)
 
 	// Read second line.
 	line, err = q.ReadNext()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.EqualValues(t, 0, q.position)
 	assert.Contains(t, line, "0.0.0.1")
 	assert.True(t, strings.HasPrefix(line, "{"), line)
@@ -286,19 +287,15 @@ func TestQLogFile(t *testing.T) {
 
 func NewTestQLogFileData(t *testing.T, data string) (file *QLogFile) {
 	f, err := os.CreateTemp(t.TempDir(), "*.txt")
-	require.Nil(t, err)
-	t.Cleanup(func() {
-		assert.Nil(t, f.Close())
-	})
+	require.NoError(t, err)
+	testutil.CleanupAndRequireSuccess(t, f.Close)
 
 	_, err = f.WriteString(data)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	file, err = NewQLogFile(f.Name())
-	require.Nil(t, err)
-	t.Cleanup(func() {
-		assert.Nil(t, file.Close())
-	})
+	require.NoError(t, err)
+	testutil.CleanupAndRequireSuccess(t, file.Close)
 
 	return file
 }
@@ -343,7 +340,7 @@ func TestQLog_Seek(t *testing.T) {
 
 			q := NewTestQLogFileData(t, data)
 
-			_, depth, err := q.SeekTS(timestamp.Add(time.Second * time.Duration(tc.delta)).UnixNano())
+			_, depth, err := q.seekTS(timestamp.Add(time.Second * time.Duration(tc.delta)).UnixNano())
 			require.Truef(t, errors.Is(err, tc.wantErr), "%v", err)
 			assert.Equal(t, tc.wantDepth, depth)
 		})

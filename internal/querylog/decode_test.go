@@ -14,6 +14,7 @@ import (
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDecodeLogEntry(t *testing.T) {
@@ -31,21 +32,24 @@ func TestDecodeLogEntry(t *testing.T) {
 			`"QT":"A",` +
 			`"QC":"IN",` +
 			`"CP":"",` +
+			`"ECS":"1.2.3.0/24",` +
 			`"Answer":"` + ansStr + `",` +
+			`"Cached":true,` +
+			`"AD":true,` +
 			`"Result":{` +
 			`"IsFiltered":true,` +
 			`"Reason":3,` +
-			`"ReverseHosts":["example.net"],` +
 			`"IPList":["127.0.0.2"],` +
 			`"Rules":[{"FilterListID":42,"Text":"||an.yandex.ru","IP":"127.0.0.2"},` +
 			`{"FilterListID":43,"Text":"||an2.yandex.ru","IP":"127.0.0.3"}],` +
 			`"CanonName":"example.com",` +
 			`"ServiceName":"example.org",` +
 			`"DNSRewriteResult":{"RCode":0,"Response":{"1":["127.0.0.2"]}}},` +
+			`"Upstream":"https://some.upstream",` +
 			`"Elapsed":837429}`
 
 		ans, err := base64.StdEncoding.DecodeString(ansStr)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 
 		want := &logEntry{
 			IP:          net.IPv4(127, 0, 0, 1),
@@ -55,12 +59,13 @@ func TestDecodeLogEntry(t *testing.T) {
 			QClass:      "IN",
 			ClientID:    "cli42",
 			ClientProto: "",
+			ReqECS:      "1.2.3.0/24",
 			Answer:      ans,
+			Cached:      true,
 			Result: filtering.Result{
-				IsFiltered:   true,
-				Reason:       filtering.FilteredBlockList,
-				ReverseHosts: []string{"example.net"},
-				IPList:       []net.IP{net.IPv4(127, 0, 0, 2)},
+				IsFiltered: true,
+				Reason:     filtering.FilteredBlockList,
+				IPList:     []net.IP{net.IPv4(127, 0, 0, 2)},
 				Rules: []*filtering.ResultRule{{
 					FilterListID: 42,
 					Text:         "||an.yandex.ru",
@@ -79,7 +84,9 @@ func TestDecodeLogEntry(t *testing.T) {
 					},
 				},
 			},
-			Elapsed: 837429,
+			Upstream:          "https://some.upstream",
+			Elapsed:           837429,
+			AuthenticatedData: true,
 		}
 
 		got := &logEntry{}
@@ -169,8 +176,7 @@ func TestDecodeLogEntry(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			l := &logEntry{}
-			decodeLogEntry(l, tc.log)
+			decodeLogEntry(new(logEntry), tc.log)
 
 			s := logOutput.String()
 			if tc.want == "" {
@@ -181,6 +187,134 @@ func TestDecodeLogEntry(t *testing.T) {
 			}
 
 			logOutput.Reset()
+		})
+	}
+}
+
+func TestDecodeLogEntry_backwardCompatability(t *testing.T) {
+	var (
+		a1, a2       = net.IP{127, 0, 0, 1}.To16(), net.IP{127, 0, 0, 2}.To16()
+		aaaa1, aaaa2 = net.ParseIP("::1"), net.ParseIP("::2")
+	)
+
+	testCases := []struct {
+		want  *logEntry
+		entry string
+		name  string
+	}{{
+		entry: `{"Result":{"ReverseHosts":["example.net","example.org"]}`,
+		want: &logEntry{
+			Result: filtering.Result{DNSRewriteResult: &filtering.DNSRewriteResult{
+				RCode: dns.RcodeSuccess,
+				Response: filtering.DNSRewriteResultResponse{
+					dns.TypePTR: []rules.RRValue{"example.net.", "example.org."},
+				},
+			}},
+		},
+		name: "reverse_hosts",
+	}, {
+		entry: `{"Result":{"IPList":["127.0.0.1","127.0.0.2","::1","::2"],"Reason":10}}`,
+		want: &logEntry{
+			Result: filtering.Result{
+				DNSRewriteResult: &filtering.DNSRewriteResult{
+					RCode: dns.RcodeSuccess,
+					Response: filtering.DNSRewriteResultResponse{
+						dns.TypeA:    []rules.RRValue{a1, a2},
+						dns.TypeAAAA: []rules.RRValue{aaaa1, aaaa2},
+					},
+				},
+				Reason: filtering.RewrittenAutoHosts,
+			},
+		},
+		name: "iplist_autohosts",
+	}, {
+		entry: `{"Result":{"IPList":["127.0.0.1","127.0.0.2","::1","::2"],"Reason":9}}`,
+		want: &logEntry{
+			Result: filtering.Result{
+				IPList: []net.IP{
+					a1,
+					a2,
+					aaaa1,
+					aaaa2,
+				},
+				Reason: filtering.Rewritten,
+			},
+		},
+		name: "iplist_rewritten",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			e := &logEntry{}
+			decodeLogEntry(e, tc.entry)
+
+			assert.Equal(t, tc.want, e)
+		})
+	}
+}
+
+// anonymizeIPSlow masks ip to anonymize the client if the ip is a valid one.
+// It only exists in purposes of benchmark comparison, see BenchmarkAnonymizeIP.
+func anonymizeIPSlow(ip net.IP) {
+	if ip4 := ip.To4(); ip4 != nil {
+		copy(ip4[net.IPv4len-2:net.IPv4len], []byte{0, 0})
+	} else if len(ip) == net.IPv6len {
+		copy(ip[net.IPv6len-10:net.IPv6len], []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	}
+}
+
+func BenchmarkAnonymizeIP(b *testing.B) {
+	benchCases := []struct {
+		name string
+		ip   net.IP
+		want net.IP
+	}{{
+		name: "v4",
+		ip:   net.IP{1, 2, 3, 4},
+		want: net.IP{1, 2, 0, 0},
+	}, {
+		name: "v4_mapped",
+		ip:   net.IP{1, 2, 3, 4}.To16(),
+		want: net.IP{1, 2, 0, 0}.To16(),
+	}, {
+		name: "v6",
+		ip: net.IP{
+			0xa, 0xb, 0x0, 0x0,
+			0x0, 0xb, 0xa, 0x9,
+			0x8, 0x7, 0x6, 0x5,
+			0x4, 0x3, 0x2, 0x1,
+		},
+		want: net.IP{
+			0xa, 0xb, 0x0, 0x0,
+			0x0, 0xb, 0x0, 0x0,
+			0x0, 0x0, 0x0, 0x0,
+			0x0, 0x0, 0x0, 0x0,
+		},
+	}, {
+		name: "invalid",
+		ip:   net.IP{1, 2, 3},
+		want: net.IP{1, 2, 3},
+	}}
+
+	for _, bc := range benchCases {
+		b.Run(bc.name, func(b *testing.B) {
+			b.ReportAllocs()
+
+			for i := 0; i < b.N; i++ {
+				AnonymizeIP(bc.ip)
+			}
+
+			assert.Equal(b, bc.want, bc.ip)
+		})
+
+		b.Run(bc.name+"_slow", func(b *testing.B) {
+			b.ReportAllocs()
+
+			for i := 0; i < b.N; i++ {
+				anonymizeIPSlow(bc.ip)
+			}
+
+			assert.Equal(b, bc.want, bc.ip)
 		})
 	}
 }

@@ -13,7 +13,6 @@ import {
     ADDRESS_TYPES,
     CHECK_TIMEOUT,
     COMMENT_LINE_DEFAULT_TOKEN,
-    CUSTOM_FILTERING_RULES_ID,
     DEFAULT_DATE_FORMAT_OPTIONS,
     DEFAULT_LANGUAGE,
     DEFAULT_TIME_FORMAT,
@@ -26,6 +25,7 @@ import {
     STANDARD_DNS_PORT,
     STANDARD_HTTPS_PORT,
     STANDARD_WEB_PORT,
+    SPECIAL_FILTER_ID,
 } from './constants';
 
 /**
@@ -75,6 +75,8 @@ export const normalizeLogs = (logs) => logs.map((log) => {
         service_name,
         original_answer,
         upstream,
+        cached,
+        ecs,
     } = log;
 
     const { name: domain, unicode_name: unicodeName, type } = question;
@@ -116,6 +118,8 @@ export const normalizeLogs = (logs) => logs.map((log) => {
         answer_dnssec,
         elapsedMs,
         upstream,
+        cached,
+        ecs,
     };
 });
 
@@ -299,10 +303,10 @@ export const redirectToCurrentProtocol = (values, httpPort = 80) => {
     const {
         protocol, hostname, hash, port,
     } = window.location;
-    const { enabled, port_https } = values;
+    const { enabled, force_https, port_https } = values;
     const httpsPort = port_https !== STANDARD_HTTPS_PORT ? `:${port_https}` : '';
 
-    if (protocol !== 'https:' && enabled && port_https) {
+    if (protocol !== 'https:' && enabled && force_https && port_https) {
         checkRedirect(`https://${hostname}${httpsPort}/${hash}`);
     } else if (protocol === 'https:' && enabled && port_https && port_https !== parseInt(port, 10)) {
         checkRedirect(`https://${hostname}${httpsPort}/${hash}`);
@@ -555,6 +559,20 @@ export const isIpInCidr = (ip, cidr) => {
 /**
  *
  * @param {string} subnetMask
+ * @returns {IPv4 | null}
+ */
+export const parseSubnetMask = (subnetMask) => {
+    try {
+        return ipaddr.parse(subnetMask).prefixLengthFromSubnetMask();
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+};
+
+/**
+ *
+ * @param {string} subnetMask
  * @returns {*}
  */
 export const subnetMaskToBitMask = (subnetMask) => subnetMask
@@ -738,8 +756,10 @@ const getAddressesComparisonBytes = (item) => {
  */
 export const sortIp = (a, b) => {
     try {
-        const comparisonBytesA = getAddressesComparisonBytes(a);
-        const comparisonBytesB = getAddressesComparisonBytes(b);
+        const comparisonBytesA = Array.isArray(a)
+            ? getAddressesComparisonBytes(a[0]) : getAddressesComparisonBytes(a);
+        const comparisonBytesB = Array.isArray(b)
+            ? getAddressesComparisonBytes(b[0]) : getAddressesComparisonBytes(b);
 
         for (let i = 0; i < comparisonBytesA.length; i += 1) {
             const byteA = comparisonBytesA[i];
@@ -759,6 +779,30 @@ export const sortIp = (a, b) => {
     }
 };
 
+
+/**
+ * @param {number} filterId
+ * @returns {string}
+ */
+export const getSpecialFilterName = (filterId) => {
+    switch (filterId) {
+        case SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES:
+            return i18n.t('custom_filter_rules');
+        case SPECIAL_FILTER_ID.SYSTEM_HOSTS:
+            return i18n.t('system_host_files');
+        case SPECIAL_FILTER_ID.BLOCKED_SERVICES:
+            return i18n.t('blocked_services');
+        case SPECIAL_FILTER_ID.PARENTAL:
+            return i18n.t('parental_control');
+        case SPECIAL_FILTER_ID.SAFE_BROWSING:
+            return i18n.t('safe_browsing');
+        case SPECIAL_FILTER_ID.SAFE_SEARCH:
+            return i18n.t('safe_search');
+        default:
+            return i18n.t('unknown_filter', { filterId });
+    }
+};
+
 /**
  * @param {array} filters
  * @param {array} whitelistFilters
@@ -770,16 +814,15 @@ export const getFilterName = (
     filters,
     whitelistFilters,
     filterId,
-    customFilterTranslationKey = 'custom_filter_rules',
     resolveFilterName = (filter) => (filter ? filter.name : i18n.t('unknown_filter', { filterId })),
 ) => {
-    if (filterId === CUSTOM_FILTERING_RULES_ID) {
-        return i18n.t(customFilterTranslationKey);
+    const specialFilterIds = Object.values(SPECIAL_FILTER_ID);
+    if (specialFilterIds.includes(filterId)) {
+        return getSpecialFilterName(filterId);
     }
 
     const matchIdPredicate = (filter) => filter.id === filterId;
     const filter = filters.find(matchIdPredicate) || whitelistFilters.find(matchIdPredicate);
-
     return resolveFilterName(filter);
 };
 

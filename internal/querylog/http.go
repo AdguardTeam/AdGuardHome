@@ -3,15 +3,18 @@ package querylog
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"golang.org/x/net/idna"
 )
 
@@ -31,18 +34,11 @@ func (l *queryLog) initWeb() {
 	l.conf.HTTPRegister(http.MethodPost, "/control/querylog_config", l.handleQueryLogConfig)
 }
 
-func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {
-	text := fmt.Sprintf(format, args...)
-
-	log.Info("QueryLog: %s %s: %s", r.Method, r.URL, text)
-
-	http.Error(w, text, code)
-}
-
 func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	params, err := l.parseSearchParams(r)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "failed to parse params: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "failed to parse params: %s", err)
+
 		return
 	}
 
@@ -54,14 +50,21 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 
 	jsonVal, err := json.Marshal(data)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Couldn't marshal data into json: %s", err)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Couldn't marshal data into json: %s",
+			err,
+		)
+
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 	}
 }
 
@@ -78,33 +81,56 @@ func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 
 	jsonVal, err := json.Marshal(resp)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "json encode: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
+
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonVal)
 	if err != nil {
-		httpError(r, w, http.StatusInternalServerError, "http write: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "http write: %s", err)
+	}
+}
+
+// AnonymizeIP masks ip to anonymize the client if the ip is a valid one.
+func AnonymizeIP(ip net.IP) {
+	// zeroes is a slice of zero bytes from which the IP address tail is copied.
+	// Using constant string as source of copying is more efficient than byte
+	// slice, see https://github.com/golang/go/issues/49997.
+	const zeroes = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+
+	if ip4 := ip.To4(); ip4 != nil {
+		copy(ip4[net.IPv4len-2:net.IPv4len], zeroes)
+	} else if len(ip) == net.IPv6len {
+		copy(ip[net.IPv6len-10:net.IPv6len], zeroes)
 	}
 }
 
 // Set configuration
 func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) {
-	d := qlogConfig{}
-	req, err := jsonutil.DecodeObject(&d, r.Body)
+	d := &qlogConfig{}
+	req, err := jsonutil.DecodeObject(d, r.Body)
 	if err != nil {
-		httpError(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+
 		return
 	}
 
-	ivl := time.Duration(24*d.Interval) * time.Hour
+	ivl := time.Duration(float64(timeutil.Day) * d.Interval)
 	if req.Exists("interval") && !checkInterval(ivl) {
-		httpError(r, w, http.StatusBadRequest, "Unsupported interval")
+		aghhttp.Error(r, w, http.StatusBadRequest, "Unsupported interval")
+
 		return
 	}
+
+	defer l.conf.ConfigModified()
 
 	l.lock.Lock()
-	// copy data, modify it, then activate.  Other threads (readers) don't need to use this lock.
+	defer l.lock.Unlock()
+
+	// Copy data, modify it, then activate.  Other threads (readers) don't need
+	// to use this lock.
 	conf := *l.conf
 	if req.Exists("enabled") {
 		conf.Enabled = d.Enabled
@@ -113,12 +139,13 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 		conf.RotationIvl = ivl
 	}
 	if req.Exists("anonymize_client_ip") {
-		conf.AnonymizeClientIP = d.AnonymizeClientIP
+		if conf.AnonymizeClientIP = d.AnonymizeClientIP; conf.AnonymizeClientIP {
+			l.anonymizer.Store(AnonymizeIP)
+		} else {
+			l.anonymizer.Store(nil)
+		}
 	}
 	l.conf = &conf
-	l.lock.Unlock()
-
-	l.conf.ConfigModified()
 }
 
 // "value" -> value, return TRUE

@@ -18,9 +18,11 @@ func canBindPrivilegedPorts() (can bool, err error) {
 }
 
 func ifaceHasStaticIP(ifaceName string) (ok bool, err error) {
-	const filename = "/etc/rc.conf"
+	const rcConfFilename = "etc/rc.conf"
 
-	return aghos.FileWalker(interfaceName(ifaceName).rcConfStaticConfig).Walk(filename)
+	walker := aghos.FileWalker(interfaceName(ifaceName).rcConfStaticConfig)
+
+	return walker.Walk(aghos.RootDirFS(), rcConfFilename)
 }
 
 // rcConfStaticConfig checks if the interface is configured by /etc/rc.conf to

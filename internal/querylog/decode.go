@@ -14,7 +14,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-type logEntryHandler (func(t json.Token, ent *logEntry) error)
+type logEntryHandler func(t json.Token, ent *logEntry) error
 
 var logEntryHandlers = map[string]logEntryHandler{
 	"CID": func(t json.Token, ent *logEntry) error {
@@ -44,8 +44,10 @@ var logEntryHandlers = map[string]logEntryHandler{
 		if !ok {
 			return nil
 		}
+
 		var err error
 		ent.Time, err = time.Parse(time.RFC3339, v)
+
 		return err
 	},
 	"QH": func(t json.Token, ent *logEntry) error {
@@ -69,7 +71,9 @@ var logEntryHandlers = map[string]logEntryHandler{
 		if !ok {
 			return nil
 		}
+
 		ent.QClass = v
+
 		return nil
 	},
 	"CP": func(t json.Token, ent *logEntry) error {
@@ -77,8 +81,10 @@ var logEntryHandlers = map[string]logEntryHandler{
 		if !ok {
 			return nil
 		}
+
 		var err error
 		ent.ClientProto, err = NewClientProto(v)
+
 		return err
 	},
 	"Answer": func(t json.Token, ent *logEntry) error {
@@ -86,8 +92,10 @@ var logEntryHandlers = map[string]logEntryHandler{
 		if !ok {
 			return nil
 		}
+
 		var err error
 		ent.Answer, err = base64.StdEncoding.DecodeString(v)
+
 		return err
 	},
 	"OrigAnswer": func(t json.Token, ent *logEntry) error {
@@ -95,16 +103,50 @@ var logEntryHandlers = map[string]logEntryHandler{
 		if !ok {
 			return nil
 		}
+
 		var err error
 		ent.OrigAnswer, err = base64.StdEncoding.DecodeString(v)
+
 		return err
+	},
+	"ECS": func(t json.Token, ent *logEntry) error {
+		v, ok := t.(string)
+		if !ok {
+			return nil
+		}
+
+		ent.ReqECS = v
+
+		return nil
+	},
+	"Cached": func(t json.Token, ent *logEntry) error {
+		v, ok := t.(bool)
+		if !ok {
+			return nil
+		}
+
+		ent.Cached = v
+
+		return nil
+	},
+	"AD": func(t json.Token, ent *logEntry) error {
+		v, ok := t.(bool)
+		if !ok {
+			return nil
+		}
+
+		ent.AuthenticatedData = v
+
+		return nil
 	},
 	"Upstream": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
 			return nil
 		}
+
 		ent.Upstream = v
+
 		return nil
 	},
 	"Elapsed": func(t json.Token, ent *logEntry) error {
@@ -112,11 +154,14 @@ var logEntryHandlers = map[string]logEntryHandler{
 		if !ok {
 			return nil
 		}
+
 		i, err := v.Int64()
 		if err != nil {
 			return err
 		}
+
 		ent.Elapsed = time.Duration(i)
+
 		return nil
 	},
 }
@@ -291,10 +336,13 @@ func decodeResultRules(dec *json.Decoder, ent *logEntry) {
 			}
 
 			if d, ok := keyToken.(json.Delim); ok {
-				if d == '}' {
+				switch d {
+				case '}':
 					i++
-				} else if d == ']' {
+				case ']':
 					return
+				default:
+					// Go on.
 				}
 
 				continue
@@ -312,6 +360,11 @@ func decodeResultRules(dec *json.Decoder, ent *logEntry) {
 	}
 }
 
+// decodeResultReverseHosts parses the dec's tokens into ent interpreting it as
+// the result of hosts container's $dnsrewrite rule.  It assumes there are no
+// other occurrences of DNSRewriteResult in the entry since hosts container's
+// rewrites currently has the highest priority along the entire filtering
+// pipeline.
 func decodeResultReverseHosts(dec *json.Decoder, ent *logEntry) {
 	for {
 		itemToken, err := dec.Token()
@@ -335,7 +388,25 @@ func decodeResultReverseHosts(dec *json.Decoder, ent *logEntry) {
 
 			return
 		case string:
-			ent.Result.ReverseHosts = append(ent.Result.ReverseHosts, v)
+			v = dns.Fqdn(v)
+			if res := &ent.Result; res.DNSRewriteResult == nil {
+				res.DNSRewriteResult = &filtering.DNSRewriteResult{
+					RCode: dns.RcodeSuccess,
+					Response: filtering.DNSRewriteResultResponse{
+						dns.TypePTR: []rules.RRValue{v},
+					},
+				}
+
+				continue
+			} else {
+				res.DNSRewriteResult.RCode = dns.RcodeSuccess
+			}
+
+			if rres := ent.Result.DNSRewriteResult; rres.Response == nil {
+				rres.Response = filtering.DNSRewriteResultResponse{dns.TypePTR: []rules.RRValue{v}}
+			} else {
+				rres.Response[dns.TypePTR] = append(rres.Response[dns.TypePTR], v)
+			}
 		default:
 			continue
 		}
@@ -407,9 +478,9 @@ func decodeResultDNSRewriteResultKey(key string, dec *json.Decoder, ent *logEntr
 			ent.Result.DNSRewriteResult.Response = filtering.DNSRewriteResultResponse{}
 		}
 
-		// TODO(a.garipov): I give up.  This whole file is a mess.
-		// Luckily, we can assume that this field is relatively rare and
-		// just use the normal decoding and correct the values.
+		// TODO(a.garipov): I give up.  This whole file is a mess.  Luckily, we
+		// can assume that this field is relatively rare and just use the normal
+		// decoding and correct the values.
 		err = dec.Decode(&ent.Result.DNSRewriteResult.Response)
 		if err != nil {
 			log.Debug("decodeResultDNSRewriteResultKey response err: %s", err)
@@ -463,7 +534,40 @@ func decodeResultDNSRewriteResult(dec *json.Decoder, ent *logEntry) {
 	}
 }
 
+// translateResult converts some fields of the ent.Result to the format
+// consistent with current implementation.
+func translateResult(ent *logEntry) {
+	res := &ent.Result
+	if res.Reason != filtering.RewrittenAutoHosts || len(res.IPList) == 0 {
+		return
+	}
+
+	if res.DNSRewriteResult == nil {
+		res.DNSRewriteResult = &filtering.DNSRewriteResult{
+			RCode: dns.RcodeSuccess,
+		}
+	}
+
+	if res.DNSRewriteResult.Response == nil {
+		res.DNSRewriteResult.Response = filtering.DNSRewriteResultResponse{}
+	}
+
+	resp := res.DNSRewriteResult.Response
+	for _, ip := range res.IPList {
+		qType := dns.TypeAAAA
+		if ip.To4() != nil {
+			qType = dns.TypeA
+		}
+
+		resp[qType] = append(resp[qType], ip)
+	}
+
+	res.IPList = nil
+}
+
 func decodeResult(dec *json.Decoder, ent *logEntry) {
+	defer translateResult(ent)
+
 	for {
 		keyToken, err := dec.Token()
 		if err != nil {

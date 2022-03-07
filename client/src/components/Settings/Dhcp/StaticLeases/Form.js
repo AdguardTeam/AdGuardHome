@@ -53,7 +53,11 @@ const Form = ({
                         type="text"
                         className="form-control"
                         placeholder={t('form_enter_subnet_ip', { cidr })}
-                        validate={[validateRequiredValue, validateIpv4, validateIpv4InCidr]}
+                        validate={[
+                            validateRequiredValue,
+                            validateIpv4,
+                            validateIpv4InCidr,
+                        ]}
                     />
                 </div>
                 <div className="form__group">

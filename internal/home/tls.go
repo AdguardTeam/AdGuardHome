@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
@@ -19,11 +20,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/google/go-cmp/cmp"
-	"golang.org/x/sys/cpu"
 )
 
 var tlsWebHandlersRegistered = false
@@ -223,7 +225,7 @@ type tlsConfigSettingsExt struct {
 	PrivateKeySaved bool `yaml:"-" json:"private_key_saved,inline"`
 }
 
-func (t *TLSMod) handleTLSStatus(w http.ResponseWriter, _ *http.Request) {
+func (t *TLSMod) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 	t.confLock.Lock()
 	data := tlsConfig{
 		tlsConfigSettingsExt: tlsConfigSettingsExt{
@@ -232,13 +234,14 @@ func (t *TLSMod) handleTLSStatus(w http.ResponseWriter, _ *http.Request) {
 		tlsConfigStatus: t.status,
 	}
 	t.confLock.Unlock()
-	marshalTLS(w, data)
+	marshalTLS(w, r, data)
 }
 
 func (t *TLSMod) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	setts, err := unmarshalTLS(r)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
+
 		return
 	}
 
@@ -246,8 +249,36 @@ func (t *TLSMod) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		setts.PrivateKey = t.conf.PrivateKey
 	}
 
+	if setts.Enabled {
+		uc := aghalg.UniqChecker{}
+		addPorts(
+			uc,
+			config.BindPort,
+			config.BetaBindPort,
+			config.DNS.Port,
+			setts.PortHTTPS,
+			setts.PortDNSOverTLS,
+			setts.PortDNSOverQUIC,
+			setts.PortDNSCrypt,
+		)
+
+		err = uc.Validate(aghalg.IntIsBefore)
+		if err != nil {
+			aghhttp.Error(r, w, http.StatusBadRequest, "validating ports: %s", err)
+
+			return
+		}
+	}
+
 	if !WebCheckPortAvailable(setts.PortHTTPS) {
-		httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", setts.PortHTTPS)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusBadRequest,
+			"port %d is not available, cannot enable HTTPS on it",
+			setts.PortHTTPS,
+		)
+
 		return
 	}
 
@@ -260,7 +291,8 @@ func (t *TLSMod) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		tlsConfigSettingsExt: setts,
 		tlsConfigStatus:      status,
 	}
-	marshalTLS(w, data)
+
+	marshalTLS(w, r, data)
 }
 
 func (t *TLSMod) setConfig(newConf tlsConfigSettings, status tlsConfigStatus) (restartHTTPS bool) {
@@ -301,7 +333,8 @@ func (t *TLSMod) setConfig(newConf tlsConfigSettings, status tlsConfigStatus) (r
 func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	data, err := unmarshalTLS(r)
 	if err != nil {
-		httpError(w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
+
 		return
 	}
 
@@ -309,8 +342,37 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		data.PrivateKey = t.conf.PrivateKey
 	}
 
+	if data.Enabled {
+		uc := aghalg.UniqChecker{}
+		addPorts(
+			uc,
+			config.BindPort,
+			config.BetaBindPort,
+			config.DNS.Port,
+			data.PortHTTPS,
+			data.PortDNSOverTLS,
+			data.PortDNSOverQUIC,
+			data.PortDNSCrypt,
+		)
+
+		err = uc.Validate(aghalg.IntIsBefore)
+		if err != nil {
+			aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+
+			return
+		}
+	}
+
+	// TODO(e.burkov):  Investigate and perhaps check other ports.
 	if !WebCheckPortAvailable(data.PortHTTPS) {
-		httpError(w, http.StatusBadRequest, "port %d is not available, cannot enable HTTPS on it", data.PortHTTPS)
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusBadRequest,
+			"port %d is not available, cannot enable HTTPS on it",
+			data.PortHTTPS,
+		)
+
 		return
 	}
 
@@ -320,7 +382,7 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 			tlsConfigSettingsExt: data,
 			tlsConfigStatus:      t.status,
 		}
-		marshalTLS(w, data2)
+		marshalTLS(w, r, data2)
 
 		return
 	}
@@ -333,7 +395,7 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 
 	err = reconfigureDNSServer()
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "%s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
@@ -343,15 +405,15 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		tlsConfigStatus:      t.status,
 	}
 
-	marshalTLS(w, data2)
+	marshalTLS(w, r, data2)
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()
 	}
 
-	// The background context is used because the TLSConfigChanged wraps
-	// context with timeout on its own and shuts down the server, which
-	// handles current request. It is also should be done in a separate
-	// goroutine due to the same reason.
+	// The background context is used because the TLSConfigChanged wraps context
+	// with timeout on its own and shuts down the server, which handles current
+	// request. It is also should be done in a separate goroutine due to the
+	// same reason.
 	if restartHTTPS {
 		go func() {
 			Context.web.TLSConfigChanged(context.Background(), data.tlsConfigSettings)
@@ -449,26 +511,36 @@ func validatePkey(data *tlsConfigStatus, pkey string) error {
 		if decoded == nil {
 			break
 		}
+
 		if decoded.Type == "PRIVATE KEY" || strings.HasSuffix(decoded.Type, " PRIVATE KEY") {
 			key = decoded
+
 			break
 		}
 	}
 
 	if key == nil {
 		data.WarningValidation = "No valid keys were found"
+
 		return errors.Error(data.WarningValidation)
 	}
 
 	// parse the decoded key
-	_, keytype, err := parsePrivateKey(key.Bytes)
+	_, keyType, err := parsePrivateKey(key.Bytes)
 	if err != nil {
 		data.WarningValidation = fmt.Sprintf("Failed to parse private key: %s", err)
+
+		return errors.Error(data.WarningValidation)
+	} else if keyType == keyTypeED25519 {
+		data.WarningValidation = "ED25519 keys are not supported by browsers; " +
+			"did you mean to use X25519 for key exchange?"
+
 		return errors.Error(data.WarningValidation)
 	}
 
 	data.ValidKey = true
-	data.KeyType = keytype
+	data.KeyType = keyType
+
 	return nil
 }
 
@@ -506,27 +578,42 @@ func validateCertificates(certChain, pkey, serverName string) tlsConfigStatus {
 	return data
 }
 
+// Key types.
+const (
+	keyTypeECDSA   = "ECDSA"
+	keyTypeED25519 = "ED25519"
+	keyTypeRSA     = "RSA"
+)
+
 // Attempt to parse the given private key DER block. OpenSSL 0.9.8 generates
 // PKCS#1 private keys by default, while OpenSSL 1.0.0 generates PKCS#8 keys.
 // OpenSSL ecparam generates SEC1 EC private keys for ECDSA. We try all three.
-func parsePrivateKey(der []byte) (crypto.PrivateKey, string, error) {
-	if key, err := x509.ParsePKCS1PrivateKey(der); err == nil {
-		return key, "RSA", nil
+//
+// TODO(a.garipov): Find out if this version of parsePrivateKey from the stdlib
+// is actually necessary.
+func parsePrivateKey(der []byte) (key crypto.PrivateKey, typ string, err error) {
+	if key, err = x509.ParsePKCS1PrivateKey(der); err == nil {
+		return key, keyTypeRSA, nil
 	}
 
-	if key, err := x509.ParsePKCS8PrivateKey(der); err == nil {
+	if key, err = x509.ParsePKCS8PrivateKey(der); err == nil {
 		switch key := key.(type) {
 		case *rsa.PrivateKey:
-			return key, "RSA", nil
+			return key, keyTypeRSA, nil
 		case *ecdsa.PrivateKey:
-			return key, "ECDSA", nil
+			return key, keyTypeECDSA, nil
+		case ed25519.PrivateKey:
+			return key, keyTypeED25519, nil
 		default:
-			return nil, "", errors.Error("tls: found unknown private key type in PKCS#8 wrapping")
+			return nil, "", fmt.Errorf(
+				"tls: found unknown private key type %T in PKCS#8 wrapping",
+				key,
+			)
 		}
 	}
 
-	if key, err := x509.ParseECPrivateKey(der); err == nil {
-		return key, "ECDSA", nil
+	if key, err = x509.ParseECPrivateKey(der); err == nil {
+		return key, keyTypeECDSA, nil
 	}
 
 	return nil, "", errors.Error("tls: failed to parse private key")
@@ -569,7 +656,7 @@ func unmarshalTLS(r *http.Request) (tlsConfigSettingsExt, error) {
 	return data, nil
 }
 
-func marshalTLS(w http.ResponseWriter, data tlsConfig) {
+func marshalTLS(w http.ResponseWriter, r *http.Request, data tlsConfig) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if data.CertificateChain != "" {
@@ -584,8 +671,13 @@ func marshalTLS(w http.ResponseWriter, data tlsConfig) {
 
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
-		httpError(w, http.StatusInternalServerError, "Failed to marshal json with TLS status: %s", err)
-		return
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusInternalServerError,
+			"Failed to marshal json with TLS status: %s",
+			err,
+		)
 	}
 }
 
@@ -637,53 +729,4 @@ func LoadSystemRootCAs() (roots *x509.CertPool) {
 	}
 
 	return nil
-}
-
-// InitTLSCiphers performs the same work as initDefaultCipherSuites() from
-// crypto/tls/common.go but don't uses lots of other default ciphers.
-func InitTLSCiphers() (ciphers []uint16) {
-	// Check the cpu flags for each platform that has optimized GCM
-	// implementations.  The worst case is when all these variables are
-	// false.
-	var (
-		hasGCMAsmAMD64 = cpu.X86.HasAES && cpu.X86.HasPCLMULQDQ
-		hasGCMAsmARM64 = cpu.ARM64.HasAES && cpu.ARM64.HasPMULL
-		// Keep in sync with crypto/aes/cipher_s390x.go.
-		hasGCMAsmS390X = cpu.S390X.HasAES &&
-			cpu.S390X.HasAESCBC &&
-			cpu.S390X.HasAESCTR &&
-			(cpu.S390X.HasGHASH || cpu.S390X.HasAESGCM)
-
-		hasGCMAsm = hasGCMAsmAMD64 || hasGCMAsmARM64 || hasGCMAsmS390X
-	)
-
-	if hasGCMAsm {
-		// If AES-GCM hardware is provided then prioritize AES-GCM
-		// cipher suites.
-		ciphers = []uint16{
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-		}
-	} else {
-		// Without AES-GCM hardware, we put the ChaCha20-Poly1305 cipher
-		// suites first.
-		ciphers = []uint16{
-			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-		}
-	}
-
-	return append(
-		ciphers,
-		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
-	)
 }
