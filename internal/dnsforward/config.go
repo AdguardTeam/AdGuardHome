@@ -4,9 +4,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -329,14 +331,38 @@ func (s *Server) prepareUpstreamSettings() error {
 	// Load upstreams either from the file, or from the settings
 	var upstreams []string
 	if s.conf.UpstreamDNSFileName != "" {
-		data, err := os.ReadFile(s.conf.UpstreamDNSFileName)
+		fileInfo, err := os.Stat(s.conf.UpstreamDNSFileName)
 		if err != nil {
 			return err
 		}
 
-		upstreams = stringutil.SplitTrimmed(string(data), "\n")
+		var files []string
+		if fileInfo.IsDir() {
+			root := filepath.Clean(s.conf.UpstreamDNSFileName)
+			_ = filepath.WalkDir(root, func(f string, d fs.DirEntry, e error) error {
+				if root == f || e != nil {
+					return e
+				}
+				if d.IsDir() {
+					return filepath.SkipDir
+				}
+				files = append(files, f)
+				return nil
+			})
+		} else {
+			files = []string{s.conf.UpstreamDNSFileName}
+		}
 
-		log.Debug("dns: using %d upstream servers from file %s", len(upstreams), s.conf.UpstreamDNSFileName)
+		for _, f := range files {
+			data, e := os.ReadFile(f)
+			if e != nil {
+				return e
+			}
+
+			upstreams = stringutil.SplitTrimmed(string(data), "\n")
+
+			log.Debug("dns: using %d upstream servers from file %s", len(upstreams), f)
+		}
 	} else {
 		upstreams = s.conf.UpstreamDNS
 	}
