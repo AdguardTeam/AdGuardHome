@@ -43,7 +43,8 @@
     # Use always() to signal to the runner that this job must run even if the
     # previous ones failed.
     'if':
-      ${{ always() &&
+      ${{ github.repository_owner == 'AdguardTeam' &&
+        always() &&
         (
           github.event_name == 'push' ||
           github.event.pull_request.head.repo.full_name == github.repository
