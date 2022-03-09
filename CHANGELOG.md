@@ -27,6 +27,8 @@ and this project adheres to
 
 ### Changed
 
+- The TTL of responses served from the optimistic cache is now lowered to 10
+  seconds.
 - Domain-specific private reverse DNS upstream servers are now validated to
   allow only `*.in-addr.arpa` and `*.ip6.arpa` domains pointing to
   locally-served networks ([#3381]).  **Note:**  If you already have invalid
@@ -76,6 +78,7 @@ In this release, the schema version has changed from 12 to 13.
 
 ### Security
 
+- `User-Agent` HTTP header removed from outcoming DNS-over-HTTPS requests.
 - Enforced password strength policy ([#3503]).
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).
