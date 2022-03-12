@@ -316,7 +316,7 @@ type filterJSON struct {
 	URL         string `json:"url"`
 	Name        string `json:"name"`
 	RulesCount  uint32 `json:"rules_count"`
-	LastUpdated string `json:"last_updated"`
+	LastUpdated string `json:"last_updated,omitempty"`
 }
 
 type filteringConfig struct {
