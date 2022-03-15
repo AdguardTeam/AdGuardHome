@@ -1,7 +1,9 @@
 package aghnet
 
 import (
+	"io/fs"
 	"net"
+	"os"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
@@ -10,6 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// testdata is the filesystem containing data for testing the package.
+var testdata fs.FS = os.DirFS("./testdata")
 
 func TestMain(m *testing.M) {
 	aghtest.DiscardLogOutput(m)

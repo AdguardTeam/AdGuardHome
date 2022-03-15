@@ -1,0 +1,230 @@
+//go:build linux
+// +build linux
+
+package aghnet
+
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"io/fs"
+	"net"
+	"strings"
+	"sync"
+
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/stringutil"
+)
+
+func newARPDB() (arp *arpdbs) {
+	// Use the common storage among the implementations.
+	ns := &neighs{
+		mu: &sync.RWMutex{},
+		ns: make([]Neighbor, 0),
+	}
+
+	var parseF parseNeighsFunc
+	if aghos.IsOpenWrt() {
+		parseF = parseArpAWrt
+	} else {
+		parseF = parseArpA
+	}
+
+	return newARPDBs(
+		// Try /proc/net/arp first.
+		&fsysARPDB{ns: ns, fsys: aghos.RootDirFS(), filename: "proc/net/arp"},
+		// Try "arp -a" then.
+		&cmdARPDB{parse: parseF, runcmd: rcArpA, ns: ns},
+		// Try "ip neigh" finally.
+		&cmdARPDB{parse: parseIPNeigh, runcmd: rcIPNeigh, ns: ns},
+	)
+}
+
+// fsysARPDB accesses the ARP cache file to update the database.
+type fsysARPDB struct {
+	ns       *neighs
+	fsys     fs.FS
+	filename string
+}
+
+// type check
+var _ ARPDB = (*fsysARPDB)(nil)
+
+// Refresh implements the ARPDB interface for *fsysARPDB.
+func (arp *fsysARPDB) Refresh() (err error) {
+	var f fs.File
+	f, err = arp.fsys.Open(arp.filename)
+	if err != nil {
+		return fmt.Errorf("opening %q: %w", arp.filename, err)
+	}
+
+	sc := bufio.NewScanner(f)
+	// Skip the header.
+	if !sc.Scan() {
+		return nil
+	} else if err = sc.Err(); err != nil {
+		return err
+	}
+
+	ns := make([]Neighbor, 0, arp.ns.len())
+	for sc.Scan() {
+		ln := sc.Text()
+		fields := stringutil.SplitTrimmed(ln, " ")
+		if len(fields) != 6 {
+			continue
+		}
+
+		n := Neighbor{}
+		if n.IP = net.ParseIP(fields[0]); n.IP == nil || n.IP.IsUnspecified() {
+			continue
+		} else if n.MAC, err = net.ParseMAC(fields[3]); err != nil {
+			continue
+		}
+
+		ns = append(ns, n)
+	}
+
+	arp.ns.reset(ns)
+
+	return nil
+}
+
+// Neighbors implements the ARPDB interface for *fsysARPDB.
+func (arp *fsysARPDB) Neighbors() (ns []Neighbor) {
+	return arp.ns.clone()
+}
+
+// parseArpAWrt parses the output of the "arp -a" command on OpenWrt.  The
+// expected input format:
+//
+//   IP address       HW type     Flags       HW address            Mask     Device
+//   192.168.11.98    0x1         0x2         5a:92:df:a9:7e:28     *        wan
+//
+func parseArpAWrt(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
+	if !sc.Scan() {
+		// Skip the header.
+		return
+	}
+
+	ns = make([]Neighbor, 0, lenHint)
+	for sc.Scan() {
+		ln := sc.Text()
+
+		fields := strings.Fields(ln)
+		if len(fields) < 4 {
+			continue
+		}
+
+		n := Neighbor{}
+
+		if ip := net.ParseIP(fields[0]); ip == nil || n.IP.IsUnspecified() {
+			continue
+		} else {
+			n.IP = ip
+		}
+
+		hwStr := fields[3]
+		if mac, err := net.ParseMAC(hwStr); err != nil {
+			log.Debug("parsing arp output: %s", err)
+
+			continue
+		} else {
+			n.MAC = mac
+		}
+
+		ns = append(ns, n)
+	}
+
+	return ns
+}
+
+// parseArpA parses the output of the "arp -a" command on Linux.  The expected
+// input format:
+//
+//   hostname (192.168.1.1) at ab:cd:ef:ab:cd:ef [ether] on enp0s3
+//
+func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
+	ns = make([]Neighbor, 0, lenHint)
+	for sc.Scan() {
+		ln := sc.Text()
+
+		fields := strings.Fields(ln)
+		if len(fields) < 4 {
+			continue
+		}
+
+		n := Neighbor{}
+
+		if ipStr := fields[1]; len(ipStr) < 2 {
+			continue
+		} else if ip := net.ParseIP(ipStr[1 : len(ipStr)-1]); ip == nil {
+			continue
+		} else {
+			n.IP = ip
+		}
+
+		hwStr := fields[3]
+		if mac, err := net.ParseMAC(hwStr); err != nil {
+			log.Debug("parsing arp output: %s", err)
+
+			continue
+		} else {
+			n.MAC = mac
+		}
+
+		host := fields[0]
+		if verr := netutil.ValidateDomainName(host); verr != nil {
+			log.Debug("parsing arp output: %s", verr)
+		} else {
+			n.Name = host
+		}
+
+		ns = append(ns, n)
+	}
+
+	return ns
+}
+
+// rcIPNeigh runs "ip neigh".
+func rcIPNeigh() (r io.Reader, err error) {
+	return runCmd("ip", "neigh")
+}
+
+// parseIPNeigh parses the output of the "ip neigh" command on Linux.  The
+// expected input format:
+//
+//   192.168.1.1 dev enp0s3 lladdr ab:cd:ef:ab:cd:ef REACHABLE
+//
+func parseIPNeigh(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
+	ns = make([]Neighbor, 0, lenHint)
+	for sc.Scan() {
+		ln := sc.Text()
+
+		fields := strings.Fields(ln)
+		if len(fields) < 5 {
+			continue
+		}
+
+		n := Neighbor{}
+
+		if ip := net.ParseIP(fields[0]); ip == nil {
+			continue
+		} else {
+			n.IP = ip
+		}
+
+		if mac, err := net.ParseMAC(fields[4]); err != nil {
+			log.Debug("parsing arp output: %s", err)
+
+			continue
+		} else {
+			n.MAC = mac
+		}
+
+		ns = append(ns, n)
+	}
+
+	return ns
+}

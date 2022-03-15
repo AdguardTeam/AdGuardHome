@@ -293,7 +293,15 @@ func setupConfig(args options) (err error) {
 		}
 	}
 
-	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
+	var arpdb aghnet.ARPDB
+	arpdb, err = aghnet.NewARPDB()
+	if err != nil {
+		log.Info("warning: creating arpdb: %s; using stub", err)
+
+		arpdb = aghnet.EmptyARPDB{}
+	}
+
+	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts, arpdb)
 
 	if args.bindPort != 0 {
 		uc := aghalg.UniqChecker{}

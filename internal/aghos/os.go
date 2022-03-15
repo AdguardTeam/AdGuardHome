@@ -52,11 +52,12 @@ func HaveAdminRights() (bool, error) {
 	return haveAdminRights()
 }
 
-// MaxCmdOutputSize is the maximum length of performed shell command output.
-const MaxCmdOutputSize = 2 * 1024
+// MaxCmdOutputSize is the maximum length of performed shell command output in
+// bytes.
+const MaxCmdOutputSize = 64 * 1024
 
 // RunCommand runs shell command.
-func RunCommand(command string, arguments ...string) (int, string, error) {
+func RunCommand(command string, arguments ...string) (code int, output string, err error) {
 	cmd := exec.Command(command, arguments...)
 	out, err := cmd.Output()
 	if len(out) > MaxCmdOutputSize {
@@ -66,7 +67,7 @@ func RunCommand(command string, arguments ...string) (int, string, error) {
 	if errors.As(err, new(*exec.ExitError)) {
 		return cmd.ProcessState.ExitCode(), string(out), nil
 	} else if err != nil {
-		return 1, "", fmt.Errorf("exec.Command(%s) failed: %w: %s", command, err, string(out))
+		return 1, "", fmt.Errorf("command %q failed: %w: %s", command, err, out)
 	}
 
 	return cmd.ProcessState.ExitCode(), string(out), nil

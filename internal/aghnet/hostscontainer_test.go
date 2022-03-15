@@ -3,7 +3,6 @@ package aghnet
 import (
 	"io/fs"
 	"net"
-	"os"
 	"path"
 	"strings"
 	"sync/atomic"
@@ -281,7 +280,6 @@ func TestHostsContainer_PathsToPatterns(t *testing.T) {
 }
 
 func TestHostsContainer_Translate(t *testing.T) {
-	testdata := os.DirFS("./testdata")
 	stubWatcher := aghtest.FSWatcher{
 		OnEvents: func() (e <-chan struct{}) { return nil },
 		OnAdd:    func(name string) (err error) { return nil },
@@ -359,8 +357,6 @@ func TestHostsContainer_Translate(t *testing.T) {
 
 func TestHostsContainer(t *testing.T) {
 	const listID = 1234
-
-	testdata := os.DirFS("./testdata")
 
 	testCases := []struct {
 		want []*rules.DNSRewrite
