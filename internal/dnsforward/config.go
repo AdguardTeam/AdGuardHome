@@ -376,13 +376,25 @@ func (s *Server) prepareUpstreamSettings() error {
 
 // prepareIntlProxy - initializes DNS proxy that we use for internal DNS queries
 func (s *Server) prepareIntlProxy() {
-	s.internalProxy = &proxy.Proxy{
+	proxyConfig := &proxy.Proxy{
 		Config: proxy.Config{
 			CacheEnabled:   true,
 			CacheSizeBytes: 4096,
 			UpstreamConfig: s.conf.UpstreamConfig,
+			MaxGoroutines:  int(s.conf.MaxGoroutines),
 		},
 	}
+
+	if s.conf.AllServers {
+		proxyConfig.UpstreamMode = proxy.UModeParallel
+	} else if s.conf.FastestAddr {
+		proxyConfig.UpstreamMode = proxy.UModeFastestAddr
+		proxyConfig.FastestPingTimeout = s.conf.FastestTimeout.Duration
+	} else {
+		proxyConfig.UpstreamMode = proxy.UModeLoadBalance
+	}
+
+	s.internalProxy = proxyConfig
 }
 
 // prepareTLS - prepares TLS configuration for the DNS proxy
