@@ -4,35 +4,41 @@ import (
 	"net"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestServer_ProcessDetermineLocal(t *testing.T) {
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
 	s := &Server{
-		subnetDetector: snd,
+		privateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	}
 
 	testCases := []struct {
+		want  assert.BoolAssertionFunc
 		name  string
 		cliIP net.IP
-		want  bool
 	}{{
+		want:  assert.True,
 		name:  "local",
 		cliIP: net.IP{192, 168, 0, 1},
-		want:  true,
 	}, {
+		want:  assert.False,
 		name:  "external",
 		cliIP: net.IP{250, 249, 0, 1},
-		want:  false,
+	}, {
+		want:  assert.False,
+		name:  "invalid",
+		cliIP: net.IP{1, 2, 3, 4, 5},
+	}, {
+		want:  assert.False,
+		name:  "nil",
+		cliIP: nil,
 	}}
 
 	for _, tc := range testCases {
@@ -47,7 +53,7 @@ func TestServer_ProcessDetermineLocal(t *testing.T) {
 			}
 			s.processDetermineLocal(dctx)
 
-			assert.Equal(t, tc.want, dctx.isLocalClient)
+			tc.want(t, dctx.isLocalClient)
 		})
 	}
 }

@@ -126,6 +126,10 @@ type dnsConfig struct {
 	// ResolveClients enables and disables resolving clients with RDNS.
 	ResolveClients bool `yaml:"resolve_clients"`
 
+	// PrivateNets is the set of IP networks for which the private reverse DNS
+	// resolver should be used.
+	PrivateNets []string `yaml:"private_networks"`
+
 	// UsePrivateRDNS defines if the PTR requests for unknown addresses from
 	// locally-served networks should be resolved via private PTR resolvers.
 	UsePrivateRDNS bool `yaml:"use_private_ptr_resolvers"`

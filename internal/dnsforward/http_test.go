@@ -14,6 +14,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -410,8 +411,7 @@ func TestValidateUpstreams(t *testing.T) {
 }
 
 func TestValidateUpstreamsPrivate(t *testing.T) {
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
+	ss := netutil.SubnetSetFunc(netutil.IsLocallyServed)
 
 	testCases := []struct {
 		name    string
@@ -452,7 +452,7 @@ func TestValidateUpstreamsPrivate(t *testing.T) {
 		set := []string{"192.168.0.1", tc.u}
 
 		t.Run(tc.name, func(t *testing.T) {
-			err = ValidateUpstreamsPrivate(set, snd)
+			err := ValidateUpstreamsPrivate(set, ss)
 			testutil.AssertErrorMsg(t, tc.wantErr, err)
 		})
 	}

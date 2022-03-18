@@ -66,8 +66,6 @@ type homeContext struct {
 
 	updater *updater.Updater
 
-	subnetDetector *aghnet.SubnetDetector
-
 	// mux is our custom http.ServeMux.
 	mux *http.ServeMux
 
@@ -475,9 +473,6 @@ func run(args options, clientBuildFS fs.FS) {
 	}
 
 	Context.web, err = initWeb(args, clientBuildFS)
-	fatalOnError(err)
-
-	Context.subnetDetector, err = aghnet.NewSubnetDetector()
 	fatalOnError(err)
 
 	if !Context.firstRun {

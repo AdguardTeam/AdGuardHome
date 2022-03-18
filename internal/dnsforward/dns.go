@@ -252,7 +252,7 @@ func (s *Server) processDetermineLocal(dctx *dnsContext) (rc resultCode) {
 		return rc
 	}
 
-	dctx.isLocalClient = s.subnetDetector.IsLocallyServedNetwork(ip)
+	dctx.isLocalClient = s.privateNets.Contains(ip)
 
 	return rc
 }
@@ -374,7 +374,7 @@ func (s *Server) processRestrictLocal(ctx *dnsContext) (rc resultCode) {
 	// Restrict an access to local addresses for external clients.  We also
 	// assume that all the DHCP leases we give are locally-served or at least
 	// don't need to be inaccessible externally.
-	if !s.subnetDetector.IsLocallyServedNetwork(ip) {
+	if !s.privateNets.Contains(ip) {
 		log.Debug("dns: addr %s is not from locally-served network", ip)
 
 		return resultCodeSuccess
@@ -481,7 +481,7 @@ func (s *Server) processLocalPTR(ctx *dnsContext) (rc resultCode) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	if !s.subnetDetector.IsLocallyServedNetwork(ip) {
+	if !s.privateNets.Contains(ip) {
 		return resultCodeSuccess
 	}
 

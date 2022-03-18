@@ -77,13 +77,36 @@ func initDNSServer() (err error) {
 	filterConf.HTTPRegister = httpRegister
 	Context.dnsFilter = filtering.New(&filterConf, nil)
 
+	var privateNets netutil.SubnetSet
+	switch len(config.DNS.PrivateNets) {
+	case 0:
+		// Use an optimized locally-served matcher.
+		privateNets = netutil.SubnetSetFunc(netutil.IsLocallyServed)
+	case 1:
+		var n *net.IPNet
+		n, err = netutil.ParseSubnet(config.DNS.PrivateNets[0])
+		if err != nil {
+			return fmt.Errorf("preparing the set of private subnets: %w", err)
+		}
+
+		privateNets = n
+	default:
+		var nets []*net.IPNet
+		nets, err = netutil.ParseSubnets(config.DNS.PrivateNets...)
+		if err != nil {
+			return fmt.Errorf("preparing the set of private subnets: %w", err)
+		}
+
+		privateNets = netutil.SliceSubnetSet(nets)
+	}
+
 	p := dnsforward.DNSCreateParams{
-		DNSFilter:      Context.dnsFilter,
-		Stats:          Context.stats,
-		QueryLog:       Context.queryLog,
-		SubnetDetector: Context.subnetDetector,
-		Anonymizer:     anonymizer,
-		LocalDomain:    config.DHCP.LocalDomainName,
+		DNSFilter:   Context.dnsFilter,
+		Stats:       Context.stats,
+		QueryLog:    Context.queryLog,
+		PrivateNets: privateNets,
+		Anonymizer:  anonymizer,
+		LocalDomain: config.DHCP.LocalDomainName,
 	}
 	if Context.dhcpServer != nil {
 		p.DHCPServer = Context.dhcpServer
@@ -133,7 +156,7 @@ func onDNSRequest(pctx *proxy.DNSContext) {
 	if config.DNS.ResolveClients && !ip.IsLoopback() {
 		Context.rdns.Begin(ip)
 	}
-	if !Context.subnetDetector.IsSpecialNetwork(ip) {
+	if !netutil.IsSpecialPurpose(ip) {
 		Context.whois.Begin(ip)
 	}
 }
@@ -360,10 +383,14 @@ func startDNSServer() error {
 
 	const topClientsNumber = 100 // the number of clients to get
 	for _, ip := range Context.stats.GetTopClientsIP(topClientsNumber) {
+		if ip == nil {
+			continue
+		}
+
 		if config.DNS.ResolveClients && !ip.IsLoopback() {
 			Context.rdns.Begin(ip)
 		}
-		if !Context.subnetDetector.IsSpecialNetwork(ip) {
+		if !netutil.IsSpecialPurpose(ip) {
 			Context.whois.Begin(ip)
 		}
 	}

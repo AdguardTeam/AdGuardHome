@@ -17,6 +17,8 @@ and this project adheres to
 
 ### Added
 
+- The ability to customize the set of networks considered private through the
+  new `private_networks` setting ([#3142]).
 - EDNS Client-Subnet information in the request details section of a query log
   record ([#3978]).
 - Support for hostnames for plain UDP upstream servers using the `udp://` scheme
@@ -88,6 +90,7 @@ In this release, the schema version has changed from 12 to 13.
 [#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+[#3142]: https://github.com/AdguardTeam/AdGuardHome/issues/3142
 [#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
 [#3381]: https://github.com/AdguardTeam/AdGuardHome/issues/3381
 [#3503]: https://github.com/AdguardTeam/AdGuardHome/issues/3503
