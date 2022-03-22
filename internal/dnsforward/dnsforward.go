@@ -314,7 +314,7 @@ func (s *Server) Exchange(ip net.IP) (host string, err error) {
 		StartTime: time.Now(),
 	}
 
-	resolver := s.internalProxy
+	var resolver *proxy.Proxy
 	if s.privateNets.Contains(ip) {
 		if !s.conf.UsePrivateRDNS {
 			return "", nil
@@ -322,6 +322,8 @@ func (s *Server) Exchange(ip net.IP) (host string, err error) {
 
 		resolver = s.localResolvers
 		s.recDetector.add(*req)
+	} else {
+		resolver = s.internalProxy
 	}
 
 	if err = resolver.Resolve(ctx); err != nil {

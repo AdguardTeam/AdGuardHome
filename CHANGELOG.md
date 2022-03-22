@@ -29,6 +29,8 @@ and this project adheres to
 
 ### Changed
 
+- Reverse DNS now has a greater priority as the source of runtime clients'
+  informmation than ARP neighborhood.
 - Improved detection of runtime clients through more resilient ARP processing
   ([#3597]).
 - The TTL of responses served from the optimistic cache is now lowered to 10
