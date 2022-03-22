@@ -735,6 +735,7 @@ func (clients *clientsContainer) addHostLocked(ip net.IP, host string, src clien
 			return false
 		}
 
+		rc.Host = host
 		rc.Source = src
 	} else {
 		rc = &RuntimeClient{
@@ -829,7 +830,7 @@ func (clients *clientsContainer) addFromSystemARP() {
 
 	added := 0
 	for _, n := range ns {
-		if clients.addHostLocked(n.IP, "", ClientSourceARP) {
+		if clients.addHostLocked(n.IP, n.Name, ClientSourceARP) {
 			added++
 		}
 	}
