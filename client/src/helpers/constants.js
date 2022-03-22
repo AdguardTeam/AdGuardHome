@@ -244,6 +244,10 @@ export const SERVICES = [
         name: 'Hulu',
     },
     {
+        id: 'icloud_relay',
+        name: 'iCloud Private Relay',
+    },
+    {
         id: 'imgur',
         name: 'Imgur',
     },

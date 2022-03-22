@@ -232,6 +232,10 @@ var serviceRulesArray = []svc{
 		"||tinder.com^",
 		"||tindersparks.com^",
 	}},
+	{"icloud_relay", []string{
+		"|mask.icloud.com^$dnsrewrite=NXDOMAIN;;",
+		"|mask-h2.icloud.com^$dnsrewrite=NXDOMAIN;;",
+	}},
 }
 
 // convert array to map
