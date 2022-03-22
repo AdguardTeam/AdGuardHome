@@ -124,14 +124,12 @@ func (r *RDNS) workerLoop() {
 			log.Debug("rdns: resolving %q: %s", ip, err)
 
 			continue
-		}
-
-		if host == "" {
+		} else if host == "" {
 			continue
 		}
 
-		// Don't handle any errors since AddHost doesn't return non-nil
-		// errors for now.
+		// Don't handle any errors since AddHost doesn't return non-nil errors
+		// for now.
 		_, _ = r.clients.AddHost(ip, host, ClientSourceRDNS)
 	}
 }

@@ -56,8 +56,8 @@ type clientSource uint
 // Client sources.  The order determines the priority.
 const (
 	ClientSourceWHOIS clientSource = iota
-	ClientSourceRDNS
 	ClientSourceARP
+	ClientSourceRDNS
 	ClientSourceDHCP
 	ClientSourceHostsFile
 )
@@ -721,9 +721,7 @@ func (clients *clientsContainer) AddHost(ip net.IP, host string, src clientSourc
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	ok = clients.addHostLocked(ip, host, src)
-
-	return ok, nil
+	return clients.addHostLocked(ip, host, src), nil
 }
 
 // addHostLocked adds a new IP-hostname pairing.  For internal use only.
