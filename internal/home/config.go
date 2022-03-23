@@ -291,18 +291,20 @@ func parseConfig() (err error) {
 	uc := aghalg.UniqChecker{}
 	addPorts(
 		uc,
-		config.BindPort,
-		config.BetaBindPort,
-		config.DNS.Port,
+		tcpPort(config.BindPort),
+		tcpPort(config.BetaBindPort),
+		udpPort(config.DNS.Port),
 	)
 
 	if config.TLS.Enabled {
 		addPorts(
 			uc,
-			config.TLS.PortHTTPS,
-			config.TLS.PortDNSOverTLS,
-			config.TLS.PortDNSOverQUIC,
-			config.TLS.PortDNSCrypt,
+			// TODO(e.burkov):  Consider adding a udpPort with the same value if
+			// we ever support the HTTP/3 for web admin interface.
+			tcpPort(config.TLS.PortHTTPS),
+			tcpPort(config.TLS.PortDNSOverTLS),
+			udpPort(config.TLS.PortDNSOverQUIC),
+			tcpPort(config.TLS.PortDNSCrypt),
 		)
 	}
 	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
@@ -320,11 +322,23 @@ func parseConfig() (err error) {
 	return nil
 }
 
-// addPorts is a helper for ports validation.  It skips zero ports.
-func addPorts(uc aghalg.UniqChecker, ports ...int) {
+// udpPort is the port number for UDP protocol.
+type udpPort int
+
+// tcpPort is the port number for TCP protocol.
+type tcpPort int
+
+// addPorts is a helper for ports validation.  It skips zero ports.  Each of
+// ports should be either a udpPort or a tcpPort.
+func addPorts(uc aghalg.UniqChecker, ports ...interface{}) {
 	for _, p := range ports {
-		if p != 0 {
-			uc.Add(p)
+		switch p := p.(type) {
+		case tcpPort, udpPort:
+			if p != 0 {
+				uc.Add(p)
+			}
+		default:
+			// Go on.
 		}
 	}
 }

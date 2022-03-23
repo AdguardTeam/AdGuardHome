@@ -23,6 +23,14 @@ and this project adheres to
 
 ### Changed
 
+- The default DNS-over-QUIC port number is now `853` instead of `754` in
+  accoradance with the latest [RFC draft][doq-draft-10] ([#4276]).
+- Reverse DNS now has a greater priority as the source of runtime clients'
+  informmation than ARP neighborhood.
+- Improved detection of runtime clients through more resilient ARP processing
+  ([#3597]).
+- The TTL of responses served from the optimistic cache is now lowered to 10
+  seconds.
 - Domain-specific private reverse DNS upstream servers are now validated to
   allow only `*.in-addr.arpa` and `*.ip6.arpa` domains pointing to
   locally-served networks ([#3381]).  **Note:**  If you already have invalid
@@ -85,8 +93,10 @@ In this release, the schema version has changed from 12 to 13.
 [#4213]: https://github.com/AdguardTeam/AdGuardHome/issues/4213
 [#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
+[#4276]: https://github.com/AdguardTeam/AdGuardHome/issues/4276
 
-[repr]: https://reproducible-builds.org/docs/source-date-epoch/
+[repr]:         https://reproducible-builds.org/docs/source-date-epoch/
+[doq-draft-10]: https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-10#section-10.2
 
 
 
@@ -229,7 +239,7 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
 - New possible value of `6h` for `querylog_interval` setting ([#2504]).
 - Blocking access using ClientIDs ([#2624], [#3162]).
 - `source` directives support in `/etc/network/interfaces` on Linux ([#3257]).
-- RFC 9000 support in DNS-over-QUIC.
+- [RFC 9000][rfc-9000] support in QUIC.
 - Completely disabling statistics by setting the statistics interval to zero
   ([#2141]).
 - The ability to completely purge DHCP leases ([#1691]).
@@ -454,6 +464,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3933]: https://github.com/AdguardTeam/AdGuardHome/pull/3933
 
 [ms-v0.107.0]: https://github.com/AdguardTeam/AdGuardHome/milestone/23?closed=1
+[rfc-9000]:    https://datatracker.ietf.org/doc/html/rfc9000
 
 
 

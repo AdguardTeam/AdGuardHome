@@ -299,17 +299,17 @@ func setupConfig(args options) (err error) {
 		uc := aghalg.UniqChecker{}
 		addPorts(
 			uc,
-			args.bindPort,
-			config.BetaBindPort,
-			config.DNS.Port,
+			tcpPort(args.bindPort),
+			tcpPort(config.BetaBindPort),
+			udpPort(config.DNS.Port),
 		)
 		if config.TLS.Enabled {
 			addPorts(
 				uc,
-				config.TLS.PortHTTPS,
-				config.TLS.PortDNSOverTLS,
-				config.TLS.PortDNSOverQUIC,
-				config.TLS.PortDNSCrypt,
+				tcpPort(config.TLS.PortHTTPS),
+				tcpPort(config.TLS.PortDNSOverTLS),
+				udpPort(config.TLS.PortDNSOverQUIC),
+				tcpPort(config.TLS.PortDNSCrypt),
 			)
 		}
 		if err = uc.Validate(aghalg.IntIsBefore); err != nil {
