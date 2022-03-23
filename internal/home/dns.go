@@ -25,7 +25,7 @@ const (
 	defaultPortDNS   = 53
 	defaultPortHTTP  = 80
 	defaultPortHTTPS = 443
-	defaultPortQUIC  = 784
+	defaultPortQUIC  = 853
 	defaultPortTLS   = 853
 )
 
