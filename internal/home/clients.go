@@ -257,6 +257,8 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 }
 
 func (clients *clientsContainer) periodicUpdate() {
+	defer log.OnPanic("clients container")
+
 	for {
 		clients.Reload()
 		time.Sleep(clientsUpdatePeriod)

@@ -291,14 +291,7 @@ func setupConfig(args options) (err error) {
 		}
 	}
 
-	var arpdb aghnet.ARPDB
-	arpdb, err = aghnet.NewARPDB()
-	if err != nil {
-		log.Info("warning: creating arpdb: %s; using stub", err)
-
-		arpdb = aghnet.EmptyARPDB{}
-	}
-
+	arpdb := aghnet.NewARPDB()
 	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts, arpdb)
 
 	if args.bindPort != 0 {

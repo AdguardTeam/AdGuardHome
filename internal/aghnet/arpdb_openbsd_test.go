@@ -9,6 +9,8 @@ import (
 
 const arpAOutput = `
 Host        Ethernet Address  Netif Expire    Flags
+1.2.3.4.5   aa:bb:cc:dd:ee:ff   em0 permanent
+1.2.3.4     12:34:56:78:910     em0 permanent
 192.168.1.2 ab:cd:ef:ab:cd:ef   em0 19m56s
 ::ffff:ffff ef:cd:ab:ef:cd:ab   em0 permanent l
 `

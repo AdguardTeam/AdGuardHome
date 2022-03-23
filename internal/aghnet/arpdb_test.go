@@ -6,12 +6,22 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"testing/iotest"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestNewARPDB(t *testing.T) {
+	var a ARPDB
+	require.NotPanics(t, func() {
+		a = NewARPDB()
+	})
+
+	assert.NotNil(t, a)
+}
 
 // TestARPDB is the mock implementation of ARPDB to use in tests.
 type TestARPDB struct {
@@ -164,5 +174,48 @@ func TestCmdARPDB_arpa(t *testing.T) {
 
 		err := a.Refresh()
 		testutil.AssertErrorMsg(t, "cmd arpdb: running command: can't run", err)
+	})
+}
+
+func TestCmdARPDB_errors(t *testing.T) {
+	const errRead errors.Error = "can't read"
+
+	badReaderRunCmd := runCmdFunc(func() (r io.Reader, err error) {
+		return iotest.ErrReader(errRead), nil
+	})
+
+	a := &cmdARPDB{
+		runcmd: badReaderRunCmd,
+		parse:  parseArpA,
+		ns: &neighs{
+			mu: &sync.RWMutex{},
+			ns: make([]Neighbor, 0),
+		},
+	}
+
+	const wantErrMsg string = "cmd arpdb: scanning the output: " + string(errRead)
+
+	testutil.AssertErrorMsg(t, wantErrMsg, a.Refresh())
+}
+
+func TestEmptyARPDB(t *testing.T) {
+	a := EmptyARPDB{}
+
+	t.Run("refresh", func(t *testing.T) {
+		var err error
+		require.NotPanics(t, func() {
+			err = a.Refresh()
+		})
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("neighbors", func(t *testing.T) {
+		var ns []Neighbor
+		require.NotPanics(t, func() {
+			ns = a.Neighbors()
+		})
+
+		assert.Empty(t, ns)
 	})
 }

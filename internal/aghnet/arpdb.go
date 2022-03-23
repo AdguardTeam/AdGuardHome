@@ -27,15 +27,8 @@ type ARPDB interface {
 }
 
 // NewARPDB returns the ARPDB properly initialized for the OS.
-func NewARPDB() (arp ARPDB, err error) {
-	arp = newARPDB()
-
-	err = arp.Refresh()
-	if err != nil {
-		return nil, fmt.Errorf("arpdb initial refresh: %w", err)
-	}
-
-	return arp, nil
+func NewARPDB() (arp ARPDB) {
+	return newARPDB()
 }
 
 // Empty ARPDB implementation

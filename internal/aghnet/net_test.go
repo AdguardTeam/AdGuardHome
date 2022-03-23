@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
@@ -128,5 +129,29 @@ func TestCheckPort(t *testing.T) {
 	t.Run("can_bind", func(t *testing.T) {
 		err := CheckPort("udp", net.IP{0, 0, 0, 0}, 0)
 		assert.NoError(t, err)
+	})
+}
+
+func TestCollectAllIfacesAddrs(t *testing.T) {
+	addrs, err := CollectAllIfacesAddrs()
+	require.NoError(t, err)
+
+	assert.NotEmpty(t, addrs)
+}
+
+func TestIsAddrInUse(t *testing.T) {
+	t.Run("addr_in_use", func(t *testing.T) {
+		l, err := net.Listen("tcp", "0.0.0.0:0")
+		require.NoError(t, err)
+		testutil.CleanupAndRequireSuccess(t, l.Close)
+
+		_, err = net.Listen(l.Addr().Network(), l.Addr().String())
+		assert.True(t, IsAddrInUse(err))
+	})
+
+	t.Run("another", func(t *testing.T) {
+		const anotherErr errors.Error = "not addr in use"
+
+		assert.False(t, IsAddrInUse(anotherErr))
 	})
 }

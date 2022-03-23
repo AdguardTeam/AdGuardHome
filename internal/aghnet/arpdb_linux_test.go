@@ -16,14 +16,21 @@ import (
 
 const arpAOutputWrt = `
 IP address    HW type     Flags       HW address            Mask     Device
+1.2.3.4.5     0x1         0x2         aa:bb:cc:dd:ee:ff     *        wan
+1.2.3.4       0x1         0x2         12:34:56:78:910       *        wan
 192.168.1.2   0x1         0x2         ab:cd:ef:ab:cd:ef     *        wan
 ::ffff:ffff   0x1         0x2         ef:cd:ab:ef:cd:ab     *        wan`
 
 const arpAOutput = `
+invalid.mac (1.2.3.4) at 12:34:56:78:910 on el0 ifscope [ethernet]
+invalid.ip  (1.2.3.4.5) at ab:cd:ef:ab:cd:12 on ek0 ifscope [ethernet]
+invalid.fmt 1 at 12:cd:ef:ab:cd:ef on er0 ifscope [ethernet]
 ? (192.168.1.2) at ab:cd:ef:ab:cd:ef on en0 ifscope [ethernet]
 ? (::ffff:ffff) at ef:cd:ab:ef:cd:ab on em0 expires in 100 seconds [ethernet]`
 
 const ipNeighOutput = `
+1.2.3.4.5 dev enp0s3 lladdr aa:bb:cc:dd:ee:ff DELAY
+1.2.3.4 dev enp0s3 lladdr 12:34:56:78:910 DELAY
 192.168.1.2 dev enp0s3 lladdr ab:cd:ef:ab:cd:ef DELAY
 ::ffff:ffff dev enp0s3 lladdr ef:cd:ab:ef:cd:ab router STALE`
 
