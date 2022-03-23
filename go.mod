@@ -20,7 +20,7 @@ require (
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/netlink v1.6.0
 	github.com/mdlayher/raw v0.0.0-20211126142749-4eae47f3d54b
-	github.com/miekg/dns v1.1.45
+	github.com/miekg/dns v1.1.47
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.7.1
 	github.com/ti-mo/netfilter v0.4.0
