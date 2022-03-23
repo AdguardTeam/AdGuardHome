@@ -22,7 +22,7 @@ require (
 	github.com/mdlayher/raw v0.0.0-20211126142749-4eae47f3d54b
 	github.com/miekg/dns v1.1.45
 	github.com/satori/go.uuid v1.2.0
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/ti-mo/netfilter v0.4.0
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
