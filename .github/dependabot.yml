@@ -1,6 +1,6 @@
 version: 2
 updates:
-- package-ecosystem: gosum
+- package-ecosystem: gomod
   directory: "/"
   schedule:
     interval: daily
