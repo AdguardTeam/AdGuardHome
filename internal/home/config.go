@@ -333,8 +333,14 @@ type tcpPort int
 // ports should be either a udpPort or a tcpPort.
 func addPorts(uc aghalg.UniqChecker, ports ...interface{}) {
 	for _, p := range ports {
+		// Use separate cases for tcpPort and udpPort so that the untyped
+		// constant zero is converted to the appropriate type.
 		switch p := p.(type) {
-		case tcpPort, udpPort:
+		case tcpPort:
+			if p != 0 {
+				uc.Add(p)
+			}
+		case udpPort:
 			if p != 0 {
 				uc.Add(p)
 			}
