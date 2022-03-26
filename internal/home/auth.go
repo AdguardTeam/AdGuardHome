@@ -636,7 +636,7 @@ func (a *Auth) UserFind(login, password string) User {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 	for _, u := range a.users {
-		if u.Name == login &&
+		if strings.ToLower(u.Name) == strings.ToLower(login) &&
 			bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)) == nil {
 			return u
 		}
