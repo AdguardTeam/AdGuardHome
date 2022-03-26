@@ -87,6 +87,9 @@ func TestAuth(t *testing.T) {
 	u := a.UserFind("name", "password")
 	assert.NotEmpty(t, u.Name)
 
+	u = a.UserFind("Name", "password")
+	assert.NotEmpty(t, u.Name)
+
 	time.Sleep(3 * time.Second)
 
 	// load and remove expired sessions
