@@ -17,6 +17,7 @@ DIST_DIR = dist
 # See https://unix.stackexchange.com/q/646255/105635.
 GO.MACRO = $${GO:-go}
 GOPROXY = https://goproxy.cn|https://proxy.golang.org|direct
+GOSUMDB = sum.golang.google.cn
 GPG_KEY = devteam@adguard.com
 GPG_KEY_PASSPHRASE = not-a-real-password
 NPM = npm
@@ -56,6 +57,7 @@ ENV = env\
 	DIST_DIR='$(DIST_DIR)'\
 	GO="$(GO.MACRO)"\
 	GOPROXY='$(GOPROXY)'\
+	GOSUMDB='$(GOSUMDB)'\
 	PATH="$${PWD}/bin:$$( "$(GO.MACRO)" env GOPATH )/bin:$${PATH}"\
 	RACE='$(RACE)'\
 	SIGN='$(SIGN)'\
