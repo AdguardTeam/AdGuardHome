@@ -74,6 +74,10 @@ In this release, the schema version has changed from 12 to 13.
 
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
+### Fixed
+
+- I/O timeout errors on checking another DHCP server.
+
 ### Removed
 
 - Go 1.16 support.
