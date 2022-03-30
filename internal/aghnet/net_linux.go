@@ -21,8 +21,7 @@ import (
 // have a static IP.
 func (n interfaceName) dhcpcdStaticConfig(r io.Reader) (subsources []string, cont bool, err error) {
 	s := bufio.NewScanner(r)
-	ifaceFound := findIfaceLine(s, string(n))
-	if !ifaceFound {
+	if !findIfaceLine(s, string(n)) {
 		return nil, true, s.Err()
 	}
 
@@ -61,9 +60,9 @@ func (n interfaceName) ifacesStaticConfig(r io.Reader) (sub []string, cont bool,
 		fields := strings.Fields(line)
 		fieldsNum := len(fields)
 
-		// Man page interfaces(5) declares that interface definition
-		// should consist of the key word "iface" followed by interface
-		// name, and method at fourth field.
+		// Man page interfaces(5) declares that interface definition should
+		// consist of the key word "iface" followed by interface name, and
+		// method at fourth field.
 		if fieldsNum >= 4 &&
 			fields[0] == "iface" && fields[1] == string(n) && fields[3] == "static" {
 			return nil, false, nil
@@ -78,10 +77,10 @@ func (n interfaceName) ifacesStaticConfig(r io.Reader) (sub []string, cont bool,
 }
 
 func ifaceHasStaticIP(ifaceName string) (has bool, err error) {
-	// TODO(a.garipov): Currently, this function returns the first
-	// definitive result.  So if /etc/dhcpcd.conf has a static IP while
-	// /etc/network/interfaces doesn't, it will return true.  Perhaps this
-	// is not the most desirable behavior.
+	// TODO(a.garipov): Currently, this function returns the first definitive
+	// result.  So if /etc/dhcpcd.conf has and /etc/network/interfaces has no
+	// static IP configuration, it will return true.  Perhaps this is not the
+	// most desirable behavior.
 
 	iface := interfaceName(ifaceName)
 
@@ -95,12 +94,10 @@ func ifaceHasStaticIP(ifaceName string) (has bool, err error) {
 		FileWalker: iface.ifacesStaticConfig,
 		filename:   "etc/network/interfaces",
 	}} {
-		has, err = pair.Walk(aghos.RootDirFS(), pair.filename)
+		has, err = pair.Walk(rootDirFS, pair.filename)
 		if err != nil {
 			return false, err
-		}
-
-		if has {
+		} else if has {
 			return true, nil
 		}
 	}
@@ -141,13 +138,15 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 	gatewayIP := GatewayIP(ifaceName)
 	add := dhcpcdConfIface(ifaceName, ipNet, gatewayIP, ipNet.IP)
 
-	body, err := os.ReadFile("/etc/dhcpcd.conf")
+	const filename = "/etc/dhcpcd.conf"
+
+	body, err := os.ReadFile(filename)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
 
 	body = append(body, []byte(add)...)
-	err = maybe.WriteFile("/etc/dhcpcd.conf", body, 0o644)
+	err = maybe.WriteFile(filename, body, 0o644)
 	if err != nil {
 		return fmt.Errorf("writing conf: %w", err)
 	}

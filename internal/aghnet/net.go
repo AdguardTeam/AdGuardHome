@@ -2,18 +2,26 @@
 package aghnet
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net"
-	"os/exec"
-	"strings"
 	"syscall"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 )
+
+// aghosRunCommand is the function to run shell commands.  It's an unexported
+// variable instead of a direct call to make it substitutable in tests.
+var aghosRunCommand = aghos.RunCommand
+
+// rootDirFS is the filesystem pointing to the root directory.  It's an
+// unexported variable instead to make it substitutable in tests.
+var rootDirFS = aghos.RootDirFS()
 
 // ErrNoStaticIPInfo is returned by IfaceHasStaticIP when no information about
 // the IP being static is available.
@@ -32,22 +40,29 @@ func IfaceSetStaticIP(ifaceName string) (err error) {
 }
 
 // GatewayIP returns IP address of interface's gateway.
-func GatewayIP(ifaceName string) net.IP {
-	cmd := exec.Command("ip", "route", "show", "dev", ifaceName)
-	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
-	d, err := cmd.Output()
-	if err != nil || cmd.ProcessState.ExitCode() != 0 {
+//
+// TODO(e.burkov):  Investigate if the gateway address may be fetched in another
+// way since not every machine has the software installed.
+func GatewayIP(ifaceName string) (ip net.IP) {
+	code, out, err := aghosRunCommand("ip", "route", "show", "dev", ifaceName)
+	if err != nil {
+		log.Debug("%s", err)
+
+		return nil
+	} else if code != 0 {
+		log.Debug("fetching gateway ip: unexpected exit code: %d", code)
+
 		return nil
 	}
 
-	fields := strings.Fields(string(d))
+	fields := bytes.Fields(out)
 	// The meaningful "ip route" command output should contain the word
 	// "default" at first field and default gateway IP address at third field.
-	if len(fields) < 3 || fields[0] != "default" {
+	if len(fields) < 3 || string(fields[0]) != "default" {
 		return nil
 	}
 
-	return net.ParseIP(fields[2])
+	return net.ParseIP(string(fields[2]))
 }
 
 // CanBindPort checks if we can bind to the given port.
@@ -101,15 +116,13 @@ func (iface NetInterface) MarshalJSON() ([]byte, error) {
 
 // GetValidNetInterfacesForWeb returns interfaces that are eligible for DNS and WEB only
 // we do not return link-local addresses here
-func GetValidNetInterfacesForWeb() ([]*NetInterface, error) {
+func GetValidNetInterfacesForWeb() (netInterfaces []*NetInterface, err error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return nil, fmt.Errorf("couldn't get interfaces: %w", err)
 	} else if len(ifaces) == 0 {
 		return nil, errors.Error("couldn't find any legible interface")
 	}
-
-	var netInterfaces []*NetInterface
 
 	for _, iface := range ifaces {
 		var addrs []net.Addr
@@ -130,12 +143,14 @@ func GetValidNetInterfacesForWeb() ([]*NetInterface, error) {
 			ipNet, ok := addr.(*net.IPNet)
 			if !ok {
 				// Should be net.IPNet, this is weird.
-				return nil, fmt.Errorf("got iface.Addrs() element %s that is not net.IPNet, it is %T", addr, addr)
+				return nil, fmt.Errorf("got %s that is not net.IPNet, it is %T", addr, addr)
 			}
+
 			// Ignore link-local.
 			if ipNet.IP.IsLinkLocalUnicast() {
 				continue
 			}
+
 			netIface.Addresses = append(netIface.Addresses, ipNet.IP)
 			netIface.Subnets = append(netIface.Subnets, ipNet)
 		}

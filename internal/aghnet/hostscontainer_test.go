@@ -286,6 +286,8 @@ func TestHostsContainer_Translate(t *testing.T) {
 		OnClose:  func() (err error) { panic("not implemented") },
 	}
 
+	require.NoError(t, fstest.TestFS(testdata, "etc_hosts"))
+
 	hc, err := NewHostsContainer(0, testdata, &stubWatcher, "etc_hosts")
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, hc.Close)
@@ -357,6 +359,8 @@ func TestHostsContainer_Translate(t *testing.T) {
 
 func TestHostsContainer(t *testing.T) {
 	const listID = 1234
+
+	require.NoError(t, fstest.TestFS(testdata, "etc_hosts"))
 
 	testCases := []struct {
 		want []*rules.DNSRewrite

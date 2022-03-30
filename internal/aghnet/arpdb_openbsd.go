@@ -14,12 +14,13 @@ import (
 
 func newARPDB() *cmdARPDB {
 	return &cmdARPDB{
-		runcmd: rcArpA,
-		parse:  parseArpA,
+		parse: parseArpA,
 		ns: &neighs{
 			mu: &sync.RWMutex{},
 			ns: make([]Neighbor, 0),
 		},
+		cmd:  "arp",
+		args: []string{"-a"},
 	}
 }
 

@@ -1,12 +1,9 @@
 package aghnet
 
 import (
-	"io"
 	"net"
-	"strings"
 	"sync"
 	"testing"
-	"testing/iotest"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -16,9 +13,7 @@ import (
 
 func TestNewARPDB(t *testing.T) {
 	var a ARPDB
-	require.NotPanics(t, func() {
-		a = NewARPDB()
-	})
+	require.NotPanics(t, func() { a = NewARPDB() })
 
 	assert.NotNil(t, a)
 }
@@ -135,11 +130,11 @@ func TestARPDBS(t *testing.T) {
 		assert.Equal(t, 1, succRefrCount)
 		assert.NotEmpty(t, a.Neighbors())
 
-		// Only the last succeeded ARPDB should be used.
+		// Unstable ARPDB should refresh successfully again.
 		err = a.Refresh()
 		require.NoError(t, err)
 
-		assert.Equal(t, 2, succRefrCount)
+		assert.Equal(t, 1, succRefrCount)
 		assert.NotEmpty(t, a.Neighbors())
 	})
 
@@ -153,6 +148,7 @@ func TestARPDBS(t *testing.T) {
 
 func TestCmdARPDB_arpa(t *testing.T) {
 	a := &cmdARPDB{
+		cmd:   "cmd",
 		parse: parseArpA,
 		ns: &neighs{
 			mu: &sync.RWMutex{},
@@ -161,7 +157,8 @@ func TestCmdARPDB_arpa(t *testing.T) {
 	}
 
 	t.Run("arp_a", func(t *testing.T) {
-		a.runcmd = func() (r io.Reader, err error) { return strings.NewReader(arpAOutput), nil }
+		sh := theOnlyCmd("cmd", 0, arpAOutput, nil)
+		substShell(t, sh.RunCmd)
 
 		err := a.Refresh()
 		require.NoError(t, err)
@@ -170,32 +167,20 @@ func TestCmdARPDB_arpa(t *testing.T) {
 	})
 
 	t.Run("runcmd_error", func(t *testing.T) {
-		a.runcmd = func() (r io.Reader, err error) { return nil, errors.Error("can't run") }
+		sh := theOnlyCmd("cmd", 0, "", errors.Error("can't run"))
+		substShell(t, sh.RunCmd)
 
 		err := a.Refresh()
 		testutil.AssertErrorMsg(t, "cmd arpdb: running command: can't run", err)
 	})
-}
 
-func TestCmdARPDB_errors(t *testing.T) {
-	const errRead errors.Error = "can't read"
+	t.Run("bad_code", func(t *testing.T) {
+		sh := theOnlyCmd("cmd", 1, "", nil)
+		substShell(t, sh.RunCmd)
 
-	badReaderRunCmd := runCmdFunc(func() (r io.Reader, err error) {
-		return iotest.ErrReader(errRead), nil
+		err := a.Refresh()
+		testutil.AssertErrorMsg(t, "cmd arpdb: running command: unexpected exit code 1", err)
 	})
-
-	a := &cmdARPDB{
-		runcmd: badReaderRunCmd,
-		parse:  parseArpA,
-		ns: &neighs{
-			mu: &sync.RWMutex{},
-			ns: make([]Neighbor, 0),
-		},
-	}
-
-	const wantErrMsg string = "cmd arpdb: scanning the output: " + string(errRead)
-
-	testutil.AssertErrorMsg(t, wantErrMsg, a.Refresh())
 }
 
 func TestEmptyARPDB(t *testing.T) {

@@ -1,9 +1,11 @@
 package aghnet
 
 import (
+	"fmt"
 	"io/fs"
 	"net"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
@@ -14,11 +16,102 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestMain(m *testing.M) {
+	aghtest.DiscardLogOutput(m)
+}
+
 // testdata is the filesystem containing data for testing the package.
 var testdata fs.FS = os.DirFS("./testdata")
 
-func TestMain(m *testing.M) {
-	aghtest.DiscardLogOutput(m)
+// substRootDirFS replaces the aghos.RootDirFS function used throughout the
+// package with fsys for tests ran under t.
+func substRootDirFS(t testing.TB, fsys fs.FS) {
+	t.Helper()
+
+	prev := rootDirFS
+	t.Cleanup(func() { rootDirFS = prev })
+	rootDirFS = fsys
+}
+
+// RunCmdFunc is the signature of aghos.RunCommand function.
+type RunCmdFunc func(cmd string, args ...string) (code int, out []byte, err error)
+
+// substShell replaces the the aghos.RunCommand function used throughout the
+// package with rc for tests ran under t.
+func substShell(t testing.TB, rc RunCmdFunc) {
+	t.Helper()
+
+	prev := aghosRunCommand
+	t.Cleanup(func() { aghosRunCommand = prev })
+	aghosRunCommand = rc
+}
+
+// mapShell is a substitution of aghos.RunCommand that maps the command to it's
+// execution result.  It's only needed to simplify testing.
+//
+// TODO(e.burkov):  Perhaps put all the shell interactions behind an interface.
+type mapShell map[string]struct {
+	err  error
+	out  string
+	code int
+}
+
+// theOnlyCmd returns s that only handles a single command and arguments
+// combination from cmd.
+func theOnlyCmd(cmd string, code int, out string, err error) (s mapShell) {
+	return mapShell{cmd: {code: code, out: out, err: err}}
+}
+
+// RunCmd is a RunCmdFunc handled by s.
+func (s mapShell) RunCmd(cmd string, args ...string) (code int, out []byte, err error) {
+	key := strings.Join(append([]string{cmd}, args...), " ")
+	ret, ok := s[key]
+	if !ok {
+		return 0, nil, fmt.Errorf("unexpected shell command %q", key)
+	}
+
+	return ret.code, []byte(ret.out), ret.err
+}
+
+func TestGatewayIP(t *testing.T) {
+	testCases := []struct {
+		name  string
+		shell mapShell
+		want  net.IP
+	}{{
+		name:  "success_v4",
+		shell: theOnlyCmd("ip route show dev ifaceName", 0, `default via 1.2.3.4 onlink`, nil),
+		want:  net.IP{1, 2, 3, 4}.To16(),
+	}, {
+		name:  "success_v6",
+		shell: theOnlyCmd("ip route show dev ifaceName", 0, `default via ::ffff onlink`, nil),
+		want: net.IP{
+			0x0, 0x0, 0x0, 0x0,
+			0x0, 0x0, 0x0, 0x0,
+			0x0, 0x0, 0x0, 0x0,
+			0x0, 0x0, 0xFF, 0xFF,
+		},
+	}, {
+		name:  "bad_output",
+		shell: theOnlyCmd("ip route show dev ifaceName", 0, `non-default via 1.2.3.4 onlink`, nil),
+		want:  nil,
+	}, {
+		name:  "err_runcmd",
+		shell: theOnlyCmd("ip route show dev ifaceName", 0, "", errors.Error("can't run command")),
+		want:  nil,
+	}, {
+		name:  "bad_code",
+		shell: theOnlyCmd("ip route show dev ifaceName", 1, "", nil),
+		want:  nil,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			substShell(t, tc.shell.RunCmd)
+
+			assert.Equal(t, tc.want, GatewayIP("ifaceName"))
+		})
+	}
 }
 
 func TestGetInterfaceByIP(t *testing.T) {
@@ -133,6 +226,8 @@ func TestCheckPort(t *testing.T) {
 }
 
 func TestCollectAllIfacesAddrs(t *testing.T) {
+	t.Skip("TODO(e.burkov):  Substitute the net.Interfaces.")
+
 	addrs, err := CollectAllIfacesAddrs()
 	require.NoError(t, err)
 
