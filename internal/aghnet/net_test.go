@@ -56,7 +56,7 @@ type mapShell map[string]struct {
 	code int
 }
 
-// theOnlyCmd returns s that only handles a single command and arguments
+// theOnlyCmd returns mapShell that only handles a single command and arguments
 // combination from cmd.
 func theOnlyCmd(cmd string, code int, out string, err error) (s mapShell) {
 	return mapShell{cmd: {code: code, out: out, err: err}}
@@ -73,18 +73,34 @@ func (s mapShell) RunCmd(cmd string, args ...string) (code int, out []byte, err 
 	return ret.code, []byte(ret.out), ret.err
 }
 
+// ifaceAddrsFunc is the signature of net.InterfaceAddrs function.
+type ifaceAddrsFunc func() (ifaces []net.Addr, err error)
+
+// substNetInterfaceAddrs replaces the the net.InterfaceAddrs function used
+// throughout the package with f for tests ran under t.
+func substNetInterfaceAddrs(t *testing.T, f ifaceAddrsFunc) {
+	t.Helper()
+
+	prev := netInterfaceAddrs
+	t.Cleanup(func() { netInterfaceAddrs = prev })
+	netInterfaceAddrs = f
+}
+
 func TestGatewayIP(t *testing.T) {
+	const ifaceName = "ifaceName"
+	const cmd = "ip route show dev " + ifaceName
+
 	testCases := []struct {
 		name  string
 		shell mapShell
 		want  net.IP
 	}{{
 		name:  "success_v4",
-		shell: theOnlyCmd("ip route show dev ifaceName", 0, `default via 1.2.3.4 onlink`, nil),
+		shell: theOnlyCmd(cmd, 0, `default via 1.2.3.4 onlink`, nil),
 		want:  net.IP{1, 2, 3, 4}.To16(),
 	}, {
 		name:  "success_v6",
-		shell: theOnlyCmd("ip route show dev ifaceName", 0, `default via ::ffff onlink`, nil),
+		shell: theOnlyCmd(cmd, 0, `default via ::ffff onlink`, nil),
 		want: net.IP{
 			0x0, 0x0, 0x0, 0x0,
 			0x0, 0x0, 0x0, 0x0,
@@ -93,15 +109,15 @@ func TestGatewayIP(t *testing.T) {
 		},
 	}, {
 		name:  "bad_output",
-		shell: theOnlyCmd("ip route show dev ifaceName", 0, `non-default via 1.2.3.4 onlink`, nil),
+		shell: theOnlyCmd(cmd, 0, `non-default via 1.2.3.4 onlink`, nil),
 		want:  nil,
 	}, {
 		name:  "err_runcmd",
-		shell: theOnlyCmd("ip route show dev ifaceName", 0, "", errors.Error("can't run command")),
+		shell: theOnlyCmd(cmd, 0, "", errors.Error("can't run command")),
 		want:  nil,
 	}, {
 		name:  "bad_code",
-		shell: theOnlyCmd("ip route show dev ifaceName", 1, "", nil),
+		shell: theOnlyCmd(cmd, 1, "", nil),
 		want:  nil,
 	}}
 
@@ -109,7 +125,7 @@ func TestGatewayIP(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			substShell(t, tc.shell.RunCmd)
 
-			assert.Equal(t, tc.want, GatewayIP("ifaceName"))
+			assert.Equal(t, tc.want, GatewayIP(ifaceName))
 		})
 	}
 }
@@ -226,12 +242,56 @@ func TestCheckPort(t *testing.T) {
 }
 
 func TestCollectAllIfacesAddrs(t *testing.T) {
-	t.Skip("TODO(e.burkov):  Substitute the net.Interfaces.")
+	testCases := []struct {
+		name       string
+		wantErrMsg string
+		addrs      []net.Addr
+		wantAddrs  []string
+	}{{
+		name:       "success",
+		wantErrMsg: ``,
+		addrs: []net.Addr{&net.IPNet{
+			IP:   net.IP{1, 2, 3, 4},
+			Mask: net.CIDRMask(24, netutil.IPv4BitLen),
+		}, &net.IPNet{
+			IP:   net.IP{4, 3, 2, 1},
+			Mask: net.CIDRMask(16, netutil.IPv4BitLen),
+		}},
+		wantAddrs: []string{"1.2.3.4", "4.3.2.1"},
+	}, {
+		name:       "not_cidr",
+		wantErrMsg: `parsing cidr: invalid CIDR address: 1.2.3.4`,
+		addrs: []net.Addr{&net.IPAddr{
+			IP: net.IP{1, 2, 3, 4},
+		}},
+		wantAddrs: nil,
+	}, {
+		name:       "empty",
+		wantErrMsg: ``,
+		addrs:      []net.Addr{},
+		wantAddrs:  nil,
+	}}
 
-	addrs, err := CollectAllIfacesAddrs()
-	require.NoError(t, err)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			substNetInterfaceAddrs(t, func() ([]net.Addr, error) { return tc.addrs, nil })
 
-	assert.NotEmpty(t, addrs)
+			addrs, err := CollectAllIfacesAddrs()
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
+
+			assert.Equal(t, tc.wantAddrs, addrs)
+		})
+	}
+
+	t.Run("internal_error", func(t *testing.T) {
+		const errAddrs errors.Error = "can't get addresses"
+		const wantErrMsg string = `getting interfaces addresses: ` + string(errAddrs)
+
+		substNetInterfaceAddrs(t, func() ([]net.Addr, error) { return nil, errAddrs })
+
+		_, err := CollectAllIfacesAddrs()
+		testutil.AssertErrorMsg(t, wantErrMsg, err)
+	})
 }
 
 func TestIsAddrInUse(t *testing.T) {
@@ -249,4 +309,34 @@ func TestIsAddrInUse(t *testing.T) {
 
 		assert.False(t, IsAddrInUse(anotherErr))
 	})
+}
+
+func TestNetInterface_MarshalText(t *testing.T) {
+	const want = `{` +
+		`"hardware_address":"aa:bb:cc:dd:ee:ff",` +
+		`"flags":"up|multicast",` +
+		`"ip_addresses":["1.2.3.4","aaaa::1"],` +
+		`"name":"iface0",` +
+		`"mtu":1500` +
+		`}`
+
+	ip4, ip6 := net.IP{1, 2, 3, 4}, net.IP{0xAA, 0xAA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
+	mask4, mask6 := net.CIDRMask(24, netutil.IPv4BitLen), net.CIDRMask(8, netutil.IPv6BitLen)
+
+	iface := &NetInterface{
+		Addresses: []net.IP{ip4, ip6},
+		Subnets: []*net.IPNet{{
+			IP:   ip4.Mask(mask4),
+			Mask: mask4,
+		}, {
+			IP:   ip6.Mask(mask6),
+			Mask: mask6,
+		}},
+		Name:         "iface0",
+		HardwareAddr: net.HardwareAddr{0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF},
+		Flags:        net.FlagUp | net.FlagMulticast,
+		MTU:          1500,
+	}
+
+	testutil.AssertMarshalText(t, want, iface)
 }

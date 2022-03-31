@@ -5,7 +5,6 @@ package aghnet
 
 import (
 	"io/fs"
-	"net"
 	"testing"
 	"testing/fstest"
 
@@ -123,41 +122,6 @@ func TestHasStaticIP(t *testing.T) {
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 
 			tc.wantHas(t, has)
-		})
-	}
-}
-
-func TestSetStaticIP_dhcpcdConfIface(t *testing.T) {
-	testCases := []struct {
-		name       string
-		dhcpcdConf string
-		routers    net.IP
-	}{{
-		name: "with_gateway",
-		dhcpcdConf: nl + `# wlan0 added by AdGuard Home.` + nl +
-			`interface wlan0` + nl +
-			`static ip_address=192.168.0.2/24` + nl +
-			`static routers=192.168.0.1` + nl +
-			`static domain_name_servers=192.168.0.2` + nl + nl,
-		routers: net.IP{192, 168, 0, 1},
-	}, {
-		name: "without_gateway",
-		dhcpcdConf: nl + `# wlan0 added by AdGuard Home.` + nl +
-			`interface wlan0` + nl +
-			`static ip_address=192.168.0.2/24` + nl +
-			`static domain_name_servers=192.168.0.2` + nl + nl,
-		routers: nil,
-	}}
-
-	ipNet := &net.IPNet{
-		IP:   net.IP{192, 168, 0, 2},
-		Mask: net.IPMask{255, 255, 255, 0},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			s := dhcpcdConfIface("wlan0", ipNet, tc.routers, net.IP{192, 168, 0, 2})
-			assert.Equal(t, tc.dhcpcdConf, s)
 		})
 	}
 }

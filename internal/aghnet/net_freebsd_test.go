@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRcConfStaticConfig(t *testing.T) {
+func TestIfaceHasStaticIP(t *testing.T) {
 	const (
 		ifaceName = `em0`
 		rcConf    = "etc/rc.conf"

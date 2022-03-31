@@ -13,10 +13,6 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-func canBindPrivilegedPorts() (can bool, err error) {
-	return aghos.HaveAdminRights()
-}
-
 func ifaceHasStaticIP(string) (ok bool, err error) {
 	return false, aghos.Unsupported("checking static ip")
 }

@@ -134,9 +134,10 @@ underscores() {
 			-e '_bsd.go'\
 			-e '_darwin.go'\
 			-e '_freebsd.go'\
-			-e '_openbsd.go'\
 			-e '_linux.go'\
 			-e '_little.go'\
+			-e '_nolinux.go'\
+			-e '_openbsd.go'\
 			-e '_others.go'\
 			-e '_test.go'\
 			-e '_unix.go'\

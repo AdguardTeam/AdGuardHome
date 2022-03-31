@@ -13,9 +13,27 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/google/renameio/maybe"
 	"golang.org/x/sys/unix"
 )
+
+// dhcpсdConf is the name of /etc/dhcpcd.conf file in the root filesystem.
+const dhcpcdConf = "etc/dhcpcd.conf"
+
+func canBindPrivilegedPorts() (can bool, err error) {
+	cnbs, err := unix.PrctlRetInt(
+		unix.PR_CAP_AMBIENT,
+		unix.PR_CAP_AMBIENT_IS_SET,
+		unix.CAP_NET_BIND_SERVICE,
+		0,
+		0,
+	)
+	// Don't check the error because it's always nil on Linux.
+	adm, _ := aghos.HaveAdminRights()
+
+	return cnbs == 1 || adm, err
+}
 
 // dhcpcdStaticConfig checks if interface is configured by /etc/dhcpcd.conf to
 // have a static IP.
@@ -89,7 +107,7 @@ func ifaceHasStaticIP(ifaceName string) (has bool, err error) {
 		filename string
 	}{{
 		FileWalker: iface.dhcpcdStaticConfig,
-		filename:   "etc/dhcpcd.conf",
+		filename:   dhcpcdConf,
 	}, {
 		FileWalker: iface.ifacesStaticConfig,
 		filename:   "etc/network/interfaces",
@@ -103,14 +121,6 @@ func ifaceHasStaticIP(ifaceName string) (has bool, err error) {
 	}
 
 	return false, ErrNoStaticIPInfo
-}
-
-func canBindPrivilegedPorts() (can bool, err error) {
-	cnbs, err := unix.PrctlRetInt(unix.PR_CAP_AMBIENT, unix.PR_CAP_AMBIENT_IS_SET, unix.CAP_NET_BIND_SERVICE, 0, 0)
-	// Don't check the error because it's always nil on Linux.
-	adm, _ := aghos.HaveAdminRights()
-
-	return cnbs == 1 || adm, err
 }
 
 // findIfaceLine scans s until it finds the line that declares an interface with
@@ -128,25 +138,23 @@ func findIfaceLine(s *bufio.Scanner, name string) (ok bool) {
 }
 
 // ifaceSetStaticIP configures the system to retain its current IP on the
-// interface through dhcpdc.conf.
+// interface through dhcpcd.conf.
 func ifaceSetStaticIP(ifaceName string) (err error) {
 	ipNet := GetSubnet(ifaceName)
 	if ipNet.IP == nil {
 		return errors.Error("can't get IP address")
 	}
 
-	gatewayIP := GatewayIP(ifaceName)
-	add := dhcpcdConfIface(ifaceName, ipNet, gatewayIP, ipNet.IP)
-
-	const filename = "/etc/dhcpcd.conf"
-
-	body, err := os.ReadFile(filename)
+	body, err := os.ReadFile(dhcpcdConf)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
 
+	gatewayIP := GatewayIP(ifaceName)
+	add := dhcpcdConfIface(ifaceName, ipNet, gatewayIP)
+
 	body = append(body, []byte(add)...)
-	err = maybe.WriteFile(filename, body, 0o644)
+	err = maybe.WriteFile(dhcpcdConf, body, 0o644)
 	if err != nil {
 		return fmt.Errorf("writing conf: %w", err)
 	}
@@ -156,22 +164,24 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 
 // dhcpcdConfIface returns configuration lines for the dhcpdc.conf files that
 // configure the interface to have a static IP.
-func dhcpcdConfIface(ifaceName string, ipNet *net.IPNet, gatewayIP, dnsIP net.IP) (conf string) {
-	var body []byte
-
-	add := fmt.Sprintf(
-		"\n# %[1]s added by AdGuard Home.\ninterface %[1]s\nstatic ip_address=%s\n",
+func dhcpcdConfIface(ifaceName string, ipNet *net.IPNet, gwIP net.IP) (conf string) {
+	b := &strings.Builder{}
+	stringutil.WriteToBuilder(
+		b,
+		"\n# ",
 		ifaceName,
-		ipNet)
-	body = append(body, []byte(add)...)
+		" added by AdGuard Home.\ninterface ",
+		ifaceName,
+		"\nstatic ip_address=",
+		ipNet.String(),
+		"\n",
+	)
 
-	if gatewayIP != nil {
-		add = fmt.Sprintf("static routers=%s\n", gatewayIP)
-		body = append(body, []byte(add)...)
+	if gwIP != nil {
+		stringutil.WriteToBuilder(b, "static routers=", gwIP.String(), "\n")
 	}
 
-	add = fmt.Sprintf("static domain_name_servers=%s\n\n", dnsIP)
-	body = append(body, []byte(add)...)
+	stringutil.WriteToBuilder(b, "static domain_name_servers=", ipNet.IP.String(), "\n\n")
 
-	return string(body)
+	return b.String()
 }

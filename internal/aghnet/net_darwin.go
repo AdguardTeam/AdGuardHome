@@ -24,10 +24,6 @@ type hardwarePortInfo struct {
 	static    bool
 }
 
-func canBindPrivilegedPorts() (can bool, err error) {
-	return aghos.HaveAdminRights()
-}
-
 func ifaceHasStaticIP(ifaceName string) (ok bool, err error) {
 	portInfo, err := getCurrentHardwarePortInfo(ifaceName)
 	if err != nil {

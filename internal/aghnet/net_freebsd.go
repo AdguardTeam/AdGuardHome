@@ -13,10 +13,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 )
 
-func canBindPrivilegedPorts() (can bool, err error) {
-	return aghos.HaveAdminRights()
-}
-
 func ifaceHasStaticIP(ifaceName string) (ok bool, err error) {
 	const rcConfFilename = "etc/rc.conf"
 

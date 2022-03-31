@@ -15,13 +15,17 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 )
 
-// aghosRunCommand is the function to run shell commands.  It's an unexported
-// variable instead of a direct call to make it substitutable in tests.
-var aghosRunCommand = aghos.RunCommand
+// Variables and functions to substitute in tests.
+var (
+	// aghosRunCommand is the function to run shell commands.
+	aghosRunCommand = aghos.RunCommand
 
-// rootDirFS is the filesystem pointing to the root directory.  It's an
-// unexported variable instead to make it substitutable in tests.
-var rootDirFS = aghos.RootDirFS()
+	// netInterfaces is the function to get the available network interfaces.
+	netInterfaceAddrs = net.InterfaceAddrs
+
+	// rootDirFS is the filesystem pointing to the root directory.
+	rootDirFS = aghos.RootDirFS()
+)
 
 // ErrNoStaticIPInfo is returned by IfaceHasStaticIP when no information about
 // the IP being static is available.
@@ -65,23 +69,6 @@ func GatewayIP(ifaceName string) (ip net.IP) {
 	return net.ParseIP(string(fields[2]))
 }
 
-// CanBindPort checks if we can bind to the given port.
-func CanBindPort(port int) (can bool, err error) {
-	var addr *net.TCPAddr
-	addr, err = net.ResolveTCPAddr("tcp", fmt.Sprintf("127.0.0.1:%d", port))
-	if err != nil {
-		return false, err
-	}
-
-	var listener *net.TCPListener
-	listener, err = net.ListenTCP("tcp", addr)
-	if err != nil {
-		return false, err
-	}
-	_ = listener.Close()
-	return true, nil
-}
-
 // CanBindPrivilegedPorts checks if current process can bind to privileged
 // ports.
 func CanBindPrivilegedPorts() (can bool, err error) {
@@ -100,8 +87,8 @@ type NetInterface struct {
 	MTU          int              `json:"mtu"`
 }
 
-// MarshalJSON implements the json.Marshaler interface for NetInterface.
-func (iface NetInterface) MarshalJSON() ([]byte, error) {
+// MarshalText implements the json.Marshaler interface for NetInterface.
+func (iface NetInterface) MarshalText() ([]byte, error) {
 	type netInterface NetInterface
 	return json.Marshal(&struct {
 		HardwareAddr string `json:"hardware_address"`
@@ -114,9 +101,12 @@ func (iface NetInterface) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// GetValidNetInterfacesForWeb returns interfaces that are eligible for DNS and WEB only
-// we do not return link-local addresses here
-func GetValidNetInterfacesForWeb() (netInterfaces []*NetInterface, err error) {
+// GetValidNetInterfacesForWeb returns interfaces that are eligible for DNS and
+// WEB only we do not return link-local addresses here.
+//
+// TODO(e.burkov):  Can't properly test the function since it's nontrivial to
+// substitute net.Interface.Addrs and the net.InterfaceAddrs can't be used.
+func GetValidNetInterfacesForWeb() (netIfaces []*NetInterface, err error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return nil, fmt.Errorf("couldn't get interfaces: %w", err)
@@ -157,14 +147,16 @@ func GetValidNetInterfacesForWeb() (netInterfaces []*NetInterface, err error) {
 
 		// Discard interfaces with no addresses.
 		if len(netIface.Addresses) != 0 {
-			netInterfaces = append(netInterfaces, netIface)
+			netIfaces = append(netIfaces, netIface)
 		}
 	}
 
-	return netInterfaces, nil
+	return netIfaces, nil
 }
 
 // GetInterfaceByIP returns the name of interface containing provided ip.
+//
+// TODO(e.burkov):  See TODO on GetValidInterfacesForWeb.
 func GetInterfaceByIP(ip net.IP) string {
 	ifaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
@@ -184,6 +176,8 @@ func GetInterfaceByIP(ip net.IP) string {
 
 // GetSubnet returns pointer to net.IPNet for the specified interface or nil if
 // the search fails.
+//
+// TODO(e.burkov):  See TODO on GetValidInterfacesForWeb.
 func GetSubnet(ifaceName string) *net.IPNet {
 	netIfaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
@@ -234,29 +228,21 @@ func IsAddrInUse(err error) (ok bool) {
 // CollectAllIfacesAddrs returns the slice of all network interfaces IP
 // addresses without port number.
 func CollectAllIfacesAddrs() (addrs []string, err error) {
-	var ifaces []net.Interface
-	ifaces, err = net.Interfaces()
+	var ifaceAddrs []net.Addr
+	ifaceAddrs, err = netInterfaceAddrs()
 	if err != nil {
-		return nil, fmt.Errorf("getting network interfaces: %w", err)
+		return nil, fmt.Errorf("getting interfaces addresses: %w", err)
 	}
 
-	for _, iface := range ifaces {
-		var ifaceAddrs []net.Addr
-		ifaceAddrs, err = iface.Addrs()
+	for _, addr := range ifaceAddrs {
+		cidr := addr.String()
+		var ip net.IP
+		ip, _, err = net.ParseCIDR(cidr)
 		if err != nil {
-			return nil, fmt.Errorf("getting addresses for %q: %w", iface.Name, err)
+			return nil, fmt.Errorf("parsing cidr: %w", err)
 		}
 
-		for _, addr := range ifaceAddrs {
-			cidr := addr.String()
-			var ip net.IP
-			ip, _, err = net.ParseCIDR(cidr)
-			if err != nil {
-				return nil, fmt.Errorf("parsing cidr: %w", err)
-			}
-
-			addrs = append(addrs, ip.String())
-		}
+		addrs = append(addrs, ip.String())
 	}
 
 	return addrs, nil

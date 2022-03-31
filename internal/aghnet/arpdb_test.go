@@ -181,6 +181,16 @@ func TestCmdARPDB_arpa(t *testing.T) {
 		err := a.Refresh()
 		testutil.AssertErrorMsg(t, "cmd arpdb: running command: unexpected exit code 1", err)
 	})
+
+	t.Run("empty", func(t *testing.T) {
+		sh := theOnlyCmd("cmd", 0, "", nil)
+		substShell(t, sh.RunCmd)
+
+		err := a.Refresh()
+		require.NoError(t, err)
+
+		assert.Empty(t, a.Neighbors())
+	})
 }
 
 func TestEmptyARPDB(t *testing.T) {
