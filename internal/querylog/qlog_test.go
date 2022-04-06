@@ -306,7 +306,7 @@ func assertLogEntry(t *testing.T, entry *logEntry, host string, answer, client n
 	require.NoError(t, msg.Unpack(entry.Answer))
 	require.Len(t, msg.Answer, 1)
 
-	ip := proxyutil.GetIPFromDNSRecord(msg.Answer[0]).To16()
+	ip := proxyutil.IPFromRR(msg.Answer[0]).To16()
 	assert.Equal(t, answer, ip)
 }
 

@@ -249,7 +249,10 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 			if ip == nil {
 				log.Error("Invalid bogus IP: %s", s)
 			} else {
-				proxyConfig.BogusNXDomain = append(proxyConfig.BogusNXDomain, ip)
+				proxyConfig.BogusNXDomain = append(
+					proxyConfig.BogusNXDomain,
+					netutil.SingleIPSubnet(ip),
+				)
 			}
 		}
 	}

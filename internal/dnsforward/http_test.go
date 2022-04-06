@@ -386,7 +386,7 @@ func TestValidateUpstreamsSet(t *testing.T) {
 		},
 	}, {
 		name:    "invalid",
-		wantErr: `cannot prepare the upstream dhcp://fake.dns ([]): unsupported URL scheme: dhcp`,
+		wantErr: `cannot prepare the upstream dhcp://fake.dns ([]): unsupported url scheme: dhcp`,
 		set:     []string{"dhcp://fake.dns"},
 	}}
 

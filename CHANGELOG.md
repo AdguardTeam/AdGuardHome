@@ -12,11 +12,24 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.108.0] - 2022-06-01 (APPROX.)
+## [v0.108.0] - 2022-07-01 (APPROX.)
 -->
+
+### Security
+
+- Enforced password strength policy ([#3503]).
+- Weaker cipher suites that use the CBC (cipher block chaining) mode of
+  operation have been disabled ([#2993]).
 
 ### Added
 
+- The ability to customize the set of networks that are considered private
+  through the new `dns.private_networks` property in the configuration file
+  ([#3142]).
+- EDNS Client-Subnet information in the request details section of a query log
+  record ([#3978]).
+- Support for hostnames for plain UDP upstream servers using the `udp://` scheme
+  ([#4166]).
 - Logs are now collected by default on FreeBSD and OpenBSD when AdGuard Home is
   installed as a service ([#4213]).
 - `windows/arm64` support ([#3057]).
@@ -26,7 +39,7 @@ and this project adheres to
 - The default DNS-over-QUIC port number is now `853` instead of `754` in
   accoradance with the latest [RFC draft][doq-draft-10] ([#4276]).
 - Reverse DNS now has a greater priority as the source of runtime clients'
-  informmation than ARP neighborhood.
+  information than ARP neighborhood.
 - Improved detection of runtime clients through more resilient ARP processing
   ([#3597]).
 - The TTL of responses served from the optimistic cache is now lowered to 10
@@ -43,16 +56,16 @@ and this project adheres to
   of the commit from which the binary was built ([#4221]).  This should simplify
   reproducible builds for package maintainers and those who compile their own
   AdGuard Home.
-- The setting `local_domain_name` is now in the `dhcp` block in the
+- The property `local_domain_name` is now in the `dhcp` object in the
   configuration file to avoid confusion ([#3367]).
-- The `dns.bogus_nxdomain` configuration file parameter now supports CIDR
+- The `dns.bogus_nxdomain` property in the configuration file now supports CIDR
   notation alongside IP addresses ([#1730]).
 
 #### Configuration Changes
 
 In this release, the schema version has changed from 12 to 13.
 
-- Parameter `local_domain_name`, which in schema versions 12 and earlier used to
+- Property `local_domain_name`, which in schema versions 12 and earlier used to
   be a part of the `dns` object, is now a part of the `dhcp` object:
 
   ```yaml
@@ -67,33 +80,23 @@ In this release, the schema version has changed from 12 to 13.
     'local_domain_name': 'lan'
   ```
 
-  To rollback this change, move the parameter back into `dns` and change the
-  `schema_version` back to `12`.
+  To rollback this change, move the property back into the `dns` object and
+  change the `schema_version` back to `12`.
 
 ### Deprecated
 
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
-### Fixed
-
-- I/O timeout errors on checking another DHCP server.
-
-### Removed
-
-- Go 1.16 support.
-
-### Security
-
-- Enforced password strength policy ([#3503]).
-- Weaker cipher suites that use the CBC (cipher block chaining) mode of
-  operation have been disabled ([#2993]).
-
 [#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+[#3142]: https://github.com/AdguardTeam/AdGuardHome/issues/3142
 [#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
 [#3381]: https://github.com/AdguardTeam/AdGuardHome/issues/3381
 [#3503]: https://github.com/AdguardTeam/AdGuardHome/issues/3503
+[#3597]: https://github.com/AdguardTeam/AdGuardHome/issues/3597
+[#3978]: https://github.com/AdguardTeam/AdGuardHome/issues/3978
+[#4166]: https://github.com/AdguardTeam/AdGuardHome/issues/4166
 [#4213]: https://github.com/AdguardTeam/AdGuardHome/issues/4213
 [#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
@@ -105,18 +108,40 @@ In this release, the schema version has changed from 12 to 13.
 
 
 <!--
-## [v0.107.6] - 2022-04-04 (APPROX.)
+## [v0.107.7] - 2022-05-18 (APPROX.)
+
+See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
+
+[ms-v0.107.7]: https://github.com/AdguardTeam/AdGuardHome/milestone/43?closed=1
+-->
+
+
+
+## [v0.107.6] - 2022-04-07
 
 See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
 
+### Security
+
+- Go 1.16 support, since that branch of the Go compiler has reached end of life
+  and doesn't receive security updates anymore.
+
+### Fixed
+
+- I/O timeout errors when checking the presence of another DHCP server.
+- Network interfaces being incorrectly labelled as down during installation.
+- Rules for blocking the QQ service ([#3171]).
+
+[#3171]: https://github.com/AdguardTeam/AdGuardHome/issues/3171
+
 [ms-v0.107.6]: https://github.com/AdguardTeam/AdGuardHome/milestone/42?closed=1
--->
 
 
 
 ## [v0.107.5] - 2022-03-04
 
-This is a security update.
+This is a security update.  There is no GitHub milestone, since no GitHub issues
+were resolved.
 
 ### Security
 
@@ -131,17 +156,17 @@ This is a security update.
 
 See also the [v0.107.4 GitHub milestone][ms-v0.107.4].
 
+### Security
+
+- Go version was updated to prevent the possibility of exploiting the
+  [CVE-2022-23806], [CVE-2022-23772], and [CVE-2022-23773] vulnerabilities.
+
 ### Fixed
 
 - Optimistic cache now responds with expired items even if those can't be
   resolved again ([#4254]).
 - Unnecessarily complex hosts-related logic leading to infinite recursion in
   some cases ([#4216]).
-
-### Security
-
-- Go version was updated to prevent the possibility of exploiting the
-  [CVE-2022-23806], [CVE-2022-23772], and [CVE-2022-23773] vulnerabilities.
 
 [#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
 [#4254]: https://github.com/AdguardTeam/AdGuardHome/issues/4254
@@ -240,7 +265,7 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
   through the new `fastest_timeout` field in the configuration file ([#1992]).
 - Static IP address detection on FreeBSD ([#3289]).
 - Optimistic cache ([#2145]).
-- New possible value of `6h` for `querylog_interval` setting ([#2504]).
+- New possible value of `6h` for `querylog_interval` property ([#2504]).
 - Blocking access using ClientIDs ([#2624], [#3162]).
 - `source` directives support in `/etc/network/interfaces` on Linux ([#3257]).
 - [RFC 9000][rfc-9000] support in QUIC.
@@ -248,7 +273,7 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
   ([#2141]).
 - The ability to completely purge DHCP leases ([#1691]).
 - Settable timeouts for querying the upstream servers ([#2280]).
-- Configuration file parameters to change group and user ID on startup on Unix
+- Configuration file properties to change group and user ID on startup on Unix
   ([#2763]).
 - Experimental OpenBSD support for AMD64 and 64-bit ARM CPUs ([#2439], [#3225],
   [#3226]).
@@ -291,22 +316,22 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
   proxy ([#2799]).
 - Clients who are blocked by access settings now receive a `REFUSED` response
   when a protocol other than DNS-over-UDP and DNSCrypt is used.
-- `querylog_interval` setting is now formatted in hours.
+- `dns.querylog_interval` property is now formatted in hours.
 - Query log search now supports internationalized domains ([#3012]).
 - Internationalized domains are now shown decoded in the query log with the
   original encoded version shown in request details ([#3013]).
 - When /etc/hosts-type rules have several IPs for one host, all IPs are now
   returned instead of only the first one ([#1381]).
-- The setting `rlimit_nofile` is now in the `os` block of the configuration
-  file, together with the new `group` and `user` settings ([#2763]).
+- Property `rlimit_nofile` is now in the `os` object of the configuration
+  file, together with the new `group` and `user` properties ([#2763]).
 - Permissions on filter files are now `0o644` instead of `0o600` ([#3198]).
 
 #### Configuration Changes
 
 In this release, the schema version has changed from 10 to 12.
 
-- Parameter `dns.querylog_interval`, which in schema versions 11 and earlier
-  used to be an integer number of days, is now a string with a human-readable
+- Property `dns.querylog_interval`, which in schema versions 11 and earlier used
+  to be an integer number of days, is now a string with a human-readable
   duration:
 
   ```yaml
@@ -321,10 +346,10 @@ In this release, the schema version has changed from 10 to 12.
     'querylog_interval': '2160h'
   ```
 
-  To rollback this change, convert the parameter back into days and change the
+  To rollback this change, convert the property back into days and change the
   `schema_version` back to `11`.
 
-- Parameter `rlimit_nofile`, which in schema versions 10 and earlier used to be
+- Property `rlimit_nofile`, which in schema versions 10 and earlier used to be
   on the top level, is now moved to the new `os` object:
 
   ```yaml
@@ -338,7 +363,7 @@ In this release, the schema version has changed from 10 to 12.
     'user': ''
   ```
 
-  To rollback this change, move the parameter on the top level and change the
+  To rollback this change, move the property on the top level and change the
   `schema_version` back to `10`.
 
 ### Deprecated
@@ -639,6 +664,10 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 
 ## [v0.105.2] - 2021-03-10
 
+### Security
+
+- Session token doesn't contain user's information anymore ([#2470]).
+
 See also the [v0.105.2 GitHub milestone][ms-v0.105.2].
 
 ### Fixed
@@ -651,10 +680,6 @@ See also the [v0.105.2 GitHub milestone][ms-v0.105.2].
 - DHCP lease's `expired` field incorrect time format ([#2692]).
 - Incomplete DNS upstreams validation ([#2674]).
 - Wrong parsing of DHCP options of the `ip` type ([#2688]).
-
-### Security
-
-- Session token doesn't contain user's information anymore ([#2470]).
 
 [#2470]: https://github.com/AdguardTeam/AdGuardHome/issues/2470
 [#2582]: https://github.com/AdguardTeam/AdGuardHome/issues/2582
@@ -691,8 +716,8 @@ See also the [v0.105.1 GitHub milestone][ms-v0.105.1].
 - Occasional crashes during startup.
 - The field `"range_start"` in the `GET /control/dhcp/status` HTTP API response
   is now correctly named again ([#2678]).
-- DHCPv6 server's `ra_slaac_only` and `ra_allow_slaac` settings aren't reset to
-  `false` on update anymore ([#2653]).
+- DHCPv6 server's `ra_slaac_only` and `ra_allow_slaac` properties aren't reset
+  to `false` on update anymore ([#2653]).
 - The `Vary` header is now added along with `Access-Control-Allow-Origin` to
   prevent cache-related and other issues in browsers ([#2658]).
 - The request body size limit is now set for HTTPS requests as well.
@@ -867,13 +892,13 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 
-
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.6...HEAD
-[v0.107.6]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.5...v0.107.6
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.7...HEAD
+[v0.107.7]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.6...v0.107.7
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.5...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.6...HEAD
+[v0.107.6]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.5...v0.107.6
 [v0.107.5]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...v0.107.5
 [v0.107.4]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...v0.107.4
 [v0.107.3]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.2...v0.107.3

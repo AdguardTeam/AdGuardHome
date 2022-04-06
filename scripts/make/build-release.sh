@@ -156,7 +156,8 @@ linux    ppc64le   -   -          -
 openbsd  amd64     -   -          -
 openbsd  arm64     -   -          -
 windows  386       -   -          -
-windows  amd64     -   -          -"
+windows  amd64     -   -          -
+windows  arm64     -   -          -"
 readonly platforms
 
 # Function build builds the release for one platform.  It builds a binary, an

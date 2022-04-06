@@ -1,1 +1,5 @@
 client/* linguist-vendored
+# This file contains a lot of inline SVG data, which often interferes with
+# grepping.  Technically, this file must be reviewed when new icons appear, but
+# that happens fairly rarely.
+client/src/components/ui/Icons.js -diff
