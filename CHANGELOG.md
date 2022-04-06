@@ -79,6 +79,8 @@ In this release, the schema version has changed from 12 to 13.
 
 ### Deprecated
 
+- Obsolete `--no-mem-optimization` option ([#4437]).  v0.109.0 will remove the
+  flag completely.
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
 ### Fixed
@@ -111,6 +113,7 @@ In this release, the schema version has changed from 12 to 13.
 [#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
 [#4276]: https://github.com/AdguardTeam/AdGuardHome/issues/4276
+[#4437]: https://github.com/AdguardTeam/AdGuardHome/issues/4437
 
 [repr]:         https://reproducible-builds.org/docs/source-date-epoch/
 [doq-draft-10]: https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-10#section-10.2

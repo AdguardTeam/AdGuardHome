@@ -389,9 +389,6 @@ func run(args options, clientBuildFS fs.FS) {
 	// configure log level and output
 	configureLogger(args)
 
-	// Go memory hacks
-	memoryUsage(args)
-
 	// Print the first message after logger is configured.
 	log.Println(version.Full())
 	log.Debug("current working directory is %s", Context.workDir)
