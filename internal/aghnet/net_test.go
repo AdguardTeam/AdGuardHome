@@ -1,6 +1,8 @@
 package aghnet
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"net"
@@ -311,14 +313,14 @@ func TestIsAddrInUse(t *testing.T) {
 	})
 }
 
-func TestNetInterface_MarshalText(t *testing.T) {
+func TestNetInterface_MarshalJSON(t *testing.T) {
 	const want = `{` +
 		`"hardware_address":"aa:bb:cc:dd:ee:ff",` +
 		`"flags":"up|multicast",` +
 		`"ip_addresses":["1.2.3.4","aaaa::1"],` +
 		`"name":"iface0",` +
 		`"mtu":1500` +
-		`}`
+		`}` + "\n"
 
 	ip4, ip6 := net.IP{1, 2, 3, 4}, net.IP{0xAA, 0xAA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
 	mask4, mask6 := net.CIDRMask(24, netutil.IPv4BitLen), net.CIDRMask(8, netutil.IPv6BitLen)
@@ -338,5 +340,9 @@ func TestNetInterface_MarshalText(t *testing.T) {
 		MTU:          1500,
 	}
 
-	testutil.AssertMarshalText(t, want, iface)
+	b := &bytes.Buffer{}
+	err := json.NewEncoder(b).Encode(iface)
+	require.NoError(t, err)
+
+	assert.Equal(t, want, b.String())
 }

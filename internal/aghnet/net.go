@@ -87,8 +87,8 @@ type NetInterface struct {
 	MTU          int              `json:"mtu"`
 }
 
-// MarshalText implements the json.Marshaler interface for NetInterface.
-func (iface NetInterface) MarshalText() ([]byte, error) {
+// MarshalJSON implements the json.Marshaler interface for NetInterface.
+func (iface NetInterface) MarshalJSON() ([]byte, error) {
 	type netInterface NetInterface
 	return json.Marshal(&struct {
 		HardwareAddr string `json:"hardware_address"`
