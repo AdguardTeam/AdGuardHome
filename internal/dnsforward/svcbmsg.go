@@ -32,12 +32,16 @@ func (s *Server) genAnswerHTTPS(req *dns.Msg, svcb *rules.DNSSVCB) (ans *dns.HTT
 // github.com/miekg/dns module.
 var strToSVCBKey = map[string]dns.SVCBKey{
 	"alpn":            dns.SVCB_ALPN,
-	"echconfig":       dns.SVCB_ECHCONFIG,
+	"ech":             dns.SVCB_ECHCONFIG,
 	"ipv4hint":        dns.SVCB_IPV4HINT,
 	"ipv6hint":        dns.SVCB_IPV6HINT,
 	"mandatory":       dns.SVCB_MANDATORY,
 	"no-default-alpn": dns.SVCB_NO_DEFAULT_ALPN,
 	"port":            dns.SVCB_PORT,
+
+	// TODO(a.garipov): This is the previous name for the parameter that has
+	// since been changed.  Remove this in v0.109.0.
+	"echconfig": dns.SVCB_ECHCONFIG,
 }
 
 // svcbKeyHandler is a handler for one SVCB parameter key.
@@ -51,10 +55,10 @@ var svcbKeyHandlers = map[string]svcbKeyHandler{
 		}
 	},
 
-	"echconfig": func(valStr string) (val dns.SVCBKeyValue) {
+	"ech": func(valStr string) (val dns.SVCBKeyValue) {
 		ech, err := base64.StdEncoding.DecodeString(valStr)
 		if err != nil {
-			log.Debug("can't parse svcb/https echconfig: %s; ignoring", err)
+			log.Debug("can't parse svcb/https ech: %s; ignoring", err)
 
 			return nil
 		}
@@ -117,6 +121,26 @@ var svcbKeyHandlers = map[string]svcbKeyHandler{
 
 		return &dns.SVCBPort{
 			Port: uint16(port64),
+		}
+	},
+
+	// TODO(a.garipov): This is the previous name for the parameter that has
+	// since been changed.  Remove this in v0.109.0.
+	"echconfig": func(valStr string) (val dns.SVCBKeyValue) {
+		log.Info(
+			`warning: svcb/https record parameter name "echconfig" is deprecated; ` +
+				`use "ech" instead`,
+		)
+
+		ech, err := base64.StdEncoding.DecodeString(valStr)
+		if err != nil {
+			log.Debug("can't parse svcb/https ech: %s; ignoring", err)
+
+			return nil
+		}
+
+		return &dns.SVCBECHConfig{
+			ECH: ech,
 		}
 	},
 }
