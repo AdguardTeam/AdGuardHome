@@ -30,8 +30,11 @@ and this project adheres to
 
 ### Changed
 
+- Filtering rules with the `dnsrewrite` modifier that create SVCB or HTTPS
+  responses should use `ech` instead of `echconfig` to conform with the [latest
+  drafts][svcb-draft-08].
 - The default DNS-over-QUIC port number is now `853` instead of `754` in
-  accoradance with the latest [RFC draft][doq-draft-10] ([#4276]).
+  accordance with the latest [RFC draft][doq-draft-10] ([#4276]).
 - Reverse DNS now has a greater priority as the source of runtime clients'
   information than ARP neighborhood.
 - Improved detection of runtime clients through more resilient ARP processing
@@ -79,6 +82,9 @@ In this release, the schema version has changed from 12 to 13.
 
 ### Deprecated
 
+- SVCB/HTTPS parameter name `echconfig` in filtering rules with the `dnsrewrite`
+  modifier.  Use `ech` instead.  v0.109.0 will remove support for the outdated
+  name `echconfig`.
 - Obsolete `--no-mem-optimization` option ([#4437]).  v0.109.0 will remove the
   flag completely.
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
@@ -115,8 +121,9 @@ In this release, the schema version has changed from 12 to 13.
 [#4276]: https://github.com/AdguardTeam/AdGuardHome/issues/4276
 [#4437]: https://github.com/AdguardTeam/AdGuardHome/issues/4437
 
-[repr]:         https://reproducible-builds.org/docs/source-date-epoch/
-[doq-draft-10]: https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-10#section-10.2
+[repr]:          https://reproducible-builds.org/docs/source-date-epoch/
+[doq-draft-10]:  https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-10#section-10.2
+[svcb-draft-08]: https://www.ietf.org/archive/id/draft-ietf-dnsop-svcb-https-08.html
 
 
 
@@ -176,7 +183,7 @@ See also the [v0.107.3 GitHub milestone][ms-v0.107.3].
 
 ### Added
 
-- Support for a `$dnsrewrite` modifier with an empty `NOERROR` response
+- Support for a `dnsrewrite` modifier with an empty `NOERROR` response
   ([#4133]).
 
 ### Fixed
@@ -292,7 +299,7 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
 - Better error message for ED25519 private keys, which are not widely supported
   ([#3737]).
 - Cache now follows RFC more closely for negative answers ([#3707]).
-- `$dnsrewrite` rules and other DNS rewrites will now be applied even when the
+- `dnsrewrite` rules and other DNS rewrites will now be applied even when the
   protection is disabled ([#1558]).
 - DHCP gateway address, subnet mask, IP address range, and leases validations
   ([#3529]).
@@ -365,7 +372,7 @@ In this release, the schema version has changed from 10 to 12.
 ### Fixed
 
 - EDNS0 TCP keepalive option handling ([#3778]).
-- Rules with the `$denyallow` modifier applying to IP addresses when they
+- Rules with the `denyallow` modifier applying to IP addresses when they
   shouldn't ([#3175]).
 - The length of the EDNS0 client subnet option appearing too long for some
   upstream servers ([#3887]).
@@ -373,8 +380,8 @@ In this release, the schema version has changed from 10 to 12.
   settings ([#3558]).
 - Incomplete propagation of the client's IP anonymization setting to the
   statistics ([#3890]).
-- Incorrect `$dnsrewrite` results for entries from the operating system's hosts
-  file ([#3815]).
+- Incorrect results with the `dnsrewrite` modifier for entries from the
+  operating system's hosts file ([#3815]).
 - Matching against rules with `|` at the end of the domain name ([#3371]).
 - Incorrect assignment of explicitly configured DHCP options ([#3744]).
 - Occasional panic during shutdown ([#3655]).
@@ -401,8 +408,8 @@ In this release, the schema version has changed from 10 to 12.
 - Letter case mismatches in `CNAME` filtering ([#3335]).
 - Occasional breakages on network errors with DNS-over-HTTP upstreams ([#3217]).
 - Errors when setting static IP on Linux ([#3257]).
-- Treatment of domain names and FQDNs in custom rules with `$dnsrewrite` that
-  use the `PTR` type ([#3256]).
+- Treatment of domain names and FQDNs in custom rules with the `dnsrewrite`
+  modifier that use the `PTR` type ([#3256]).
 - Redundant hostname generating while loading static leases with empty hostname
   ([#3166]).
 - Domain name case in responses ([#3194]).
@@ -566,7 +573,7 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 
 - The ability to block user for login after configurable number of unsuccessful
   attempts for configurable time ([#2826]).
-- `$denyallow` modifier for filters ([#2923]).
+- `denyallow` modifier for filters ([#2923]).
 - Hostname uniqueness validation in the DHCP server ([#2952]).
 - Hostname generating for DHCP clients which don't provide their own ([#2723]).
 - New flag `--no-etc-hosts` to disable client domain name lookups in the
@@ -581,7 +588,8 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
   network ([#2393], [#2961]).
 - The ability to serve DNS queries on multiple hosts and interfaces ([#1401]).
 - `ips` and `text` DHCP server options ([#2385]).
-- `SRV` records support in `$dnsrewrite` filters ([#2533]).
+- `SRV` records support in filtering rules with the `dnsrewrite` modifier
+  ([#2533]).
 
 ### Changed
 
@@ -595,7 +603,8 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
   ([#2704]).
 - Stricter validation of the IP addresses of static leases in the DHCP server
   with regards to the netmask ([#2838]).
-- Stricter validation of `$dnsrewrite` filter modifier parameters ([#2498]).
+- Stricter validation of `dnsrewrite` filtering rule modifier parameters
+  ([#2498]).
 - New, more correct versioning scheme ([#2412]).
 
 ### Deprecated
@@ -604,7 +613,7 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 
 ### Fixed
 
-- Multiple answers for `$dnsrewrite` rule matching requests with repeating
+- Multiple answers for a `dnsrewrite` rule matching requests with repeating
   patterns in it ([#2981]).
 - Root server resolving when custom upstreams for hosts are specified ([#2994]).
 - Inconsistent resolving of DHCP clients when the DHCP server is disabled
@@ -743,7 +752,7 @@ See also the [v0.105.0 GitHub milestone][ms-v0.105.0].
 - `ipset` subdomain matching, just like `dnsmasq` does ([#2179]).
 - ClientID support for DNS-over-HTTPS, DNS-over-QUIC, and DNS-over-TLS
   ([#1383]).
-- `$dnsrewrite` modifier for filters ([#2102]).
+- The new `dnsrewrite` modifier for filters ([#2102]).
 - The host checking API and the query logs API can now return multiple matched
   rules ([#2102]).
 - Detecting of network interface configured to have static IP address via
@@ -751,7 +760,7 @@ See also the [v0.105.0 GitHub milestone][ms-v0.105.0].
 - DNSCrypt protocol support ([#1361]).
 - A 5 second wait period until a DHCP server's network interface gets an IP
   address ([#2304]).
-- `$dnstype` modifier for filters ([#2337]).
+- `dnstype` modifier for filters ([#2337]).
 - HTTP API request body size limit ([#2305]).
 
 ### Changed
