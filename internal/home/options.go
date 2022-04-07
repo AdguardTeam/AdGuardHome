@@ -175,7 +175,7 @@ var noCheckUpdateArg = arg{
 }
 
 var disableMemoryOptimizationArg = arg{
-	"Disable memory optimization.",
+	"Deprecated.  Disable memory optimization.",
 	"no-mem-optimization", "",
 	nil, nil, func(_ options, _ string) (f effect, err error) {
 		log.Info("warning: using --no-mem-optimization flag has no effect and is deprecated")
