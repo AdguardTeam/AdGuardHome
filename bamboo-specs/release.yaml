@@ -183,8 +183,27 @@
 
         cd ./dist/
 
+        channel="${bamboo.channel}"
+        readonly channel
+        case "$channel"
+        in
+        ('release')
+              snapchannel='candidate'
+              ;;
+        ('beta')
+              snapchannel='beta'
+              ;;
+        ('edge')
+              snapchannel='edge'
+              ;;
+        (*)
+              echo "invalid channel '$channel'"
+              exit 1
+              ;;
+        esac
+
         env\
-                SNAPCRAFT_CHANNEL=edge\
+                SNAPCRAFT_CHANNEL="$snapchannel"\
                 SNAPCRAFT_EMAIL="${bamboo.snapcraftEmail}"\
                 SNAPCRAFT_MACAROON="${bamboo.snapcraftMacaroonPassword}"\
                 SNAPCRAFT_UBUNTU_DISCHARGE="${bamboo.snapcraftUbuntuDischargePassword}"\
