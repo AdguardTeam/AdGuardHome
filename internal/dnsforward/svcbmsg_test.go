@@ -128,6 +128,10 @@ func TestGenAnswerHTTPS_andSVCB(t *testing.T) {
 		want: wantsvcb(&dns.SVCBNoDefaultAlpn{}),
 		name: "no_default_alpn",
 	}, {
+		svcb: dnssvcb("dohpath", "/dns-query"),
+		want: wantsvcb(&dns.SVCBDoHPath{Template: "/dns-query"}),
+		name: "dohpath",
+	}, {
 		svcb: dnssvcb("port", "8080"),
 		want: wantsvcb(&dns.SVCBPort{Port: 8080}),
 		name: "port",
