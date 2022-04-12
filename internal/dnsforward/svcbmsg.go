@@ -143,6 +143,12 @@ var svcbKeyHandlers = map[string]svcbKeyHandler{
 			ECH: ech,
 		}
 	},
+
+	"dohpath": func(valStr string) (val dns.SVCBKeyValue) {
+		return &dns.SVCBDoHPath{
+			Template: valStr,
+		}
+	},
 }
 
 // genAnswerSVCB returns a properly initialized SVCB resource record.

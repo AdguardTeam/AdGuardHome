@@ -17,6 +17,8 @@ and this project adheres to
 
 ### Added
 
+- Support for SVCB/HTTPS parameter `dohpath` in filtering rules with 
+  `dnsrewrite` modifier according to the [RFC draft][dns-draft-02] ([#4463]).
 - The ability to customize the set of networks that are considered private
   through the new `dns.private_networks` property in the configuration file
   ([#3142]).
@@ -120,10 +122,12 @@ In this release, the schema version has changed from 12 to 13.
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
 [#4276]: https://github.com/AdguardTeam/AdGuardHome/issues/4276
 [#4437]: https://github.com/AdguardTeam/AdGuardHome/issues/4437
+[#4463]: https://github.com/AdguardTeam/AdGuardHome/issues/4463
 
 [repr]:          https://reproducible-builds.org/docs/source-date-epoch/
 [doq-draft-10]:  https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-10#section-10.2
 [svcb-draft-08]: https://www.ietf.org/archive/id/draft-ietf-dnsop-svcb-https-08.html
+[dns-draft-02]:  https://datatracker.ietf.org/doc/html/draft-ietf-add-svcb-dns-02#section-5.1
 
 
 
