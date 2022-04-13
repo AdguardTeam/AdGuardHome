@@ -51,7 +51,7 @@ type requestMatcher struct {
 //
 // It's safe for concurrent use.
 func (rm *requestMatcher) MatchRequest(
-	req urlfilter.DNSRequest,
+	req *urlfilter.DNSRequest,
 ) (res *urlfilter.DNSResult, ok bool) {
 	switch req.DNSType {
 	case dns.TypeA, dns.TypeAAAA, dns.TypePTR:

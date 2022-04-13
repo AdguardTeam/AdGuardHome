@@ -471,7 +471,7 @@ func (d *DNSFilter) matchSysHosts(
 		return res, nil
 	}
 
-	dnsres, _ := d.EtcHosts.MatchRequest(urlfilter.DNSRequest{
+	dnsres, _ := d.EtcHosts.MatchRequest(&urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
 		// TODO(e.burkov):  Wait for urlfilter update to pass net.IP.
@@ -802,7 +802,7 @@ func (d *DNSFilter) matchHost(
 		return Result{}, nil
 	}
 
-	ureq := urlfilter.DNSRequest{
+	ureq := &urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
 		// TODO(e.burkov): Wait for urlfilter update to pass net.IP.
