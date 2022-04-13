@@ -23,8 +23,6 @@ and this project adheres to
 
 ### Added
 
-- Support for SVCB/HTTPS parameter `dohpath` in filtering rules with 
-  `dnsrewrite` modifier according to the [RFC draft][dns-draft-02] ([#4463]).
 - The ability to customize the set of networks that are considered private
   through the new `dns.private_networks` property in the configuration file
   ([#3142]).
@@ -38,9 +36,6 @@ and this project adheres to
 
 ### Changed
 
-- Filtering rules with the `dnsrewrite` modifier that create SVCB or HTTPS
-  responses should use `ech` instead of `echconfig` to conform with the [latest
-  drafts][svcb-draft-08].
 - The default DNS-over-QUIC port number is now `853` instead of `754` in
   accordance with the latest [RFC draft][doq-draft-10] ([#4276]).
 - Reverse DNS now has a greater priority as the source of runtime clients'
@@ -90,11 +85,6 @@ In this release, the schema version has changed from 12 to 13.
 
 ### Deprecated
 
-- SVCB/HTTPS parameter name `echconfig` in filtering rules with the `dnsrewrite`
-  modifier.  Use `ech` instead.  v0.109.0 will remove support for the outdated
-  name `echconfig`.
-- Obsolete `--no-mem-optimization` option ([#4437]).  v0.109.0 will remove the
-  flag completely.
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
 [#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
@@ -111,13 +101,9 @@ In this release, the schema version has changed from 12 to 13.
 [#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
 [#4276]: https://github.com/AdguardTeam/AdGuardHome/issues/4276
-[#4437]: https://github.com/AdguardTeam/AdGuardHome/issues/4437
-[#4463]: https://github.com/AdguardTeam/AdGuardHome/issues/4463
 
-[repr]:          https://reproducible-builds.org/docs/source-date-epoch/
-[doq-draft-10]:  https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-10#section-10.2
-[svcb-draft-08]: https://www.ietf.org/archive/id/draft-ietf-dnsop-svcb-https-08.html
-[dns-draft-02]:  https://datatracker.ietf.org/doc/html/draft-ietf-add-svcb-dns-02#section-5.1
+[repr]:         https://reproducible-builds.org/docs/source-date-epoch/
+[doq-draft-10]: https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-10#section-10.2
 
 
 
@@ -131,24 +117,56 @@ See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
 
 
 
-## [v0.107.6] - 2022-04-07
+## [v0.107.6] - 2022-04-13
 
 See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
 
 ### Security
 
-- Go 1.16 support, since that branch of the Go compiler has reached end of life
-  and doesn't receive security updates anymore.
+- Go version was updated to prevent the possibility of exploiting the
+  [CVE-2022-24675], [CVE-2022-27536], and [CVE-2022-28327] vulnerabilities.
+
+### Added
+
+- Support for SVCB/HTTPS parameter `dohpath` in filtering rules with
+  the `dnsrewrite` modifier according to the [RFC draft][dns-draft-02]
+  ([#4463]).
+
+### Changed
+
+- Filtering rules with the `dnsrewrite` modifier that create SVCB or HTTPS
+  responses should use `ech` instead of `echconfig` to conform with the [latest
+  drafts][svcb-draft-08].
+
+### Deprecated
+
+- SVCB/HTTPS parameter name `echconfig` in filtering rules with the `dnsrewrite`
+  modifier.  Use `ech` instead.  v0.109.0 will remove support for the outdated
+  name `echconfig`.
+- Obsolete `--no-mem-optimization` option ([#4437]).  v0.109.0 will remove the
+  flag completely.
 
 ### Fixed
 
 - I/O timeout errors when checking the presence of another DHCP server.
-- Network interfaces being incorrectly labelled as down during installation.
+- Network interfaces being incorrectly labeled as down during installation.
 - Rules for blocking the QQ service ([#3171]).
 
-[#3171]: https://github.com/AdguardTeam/AdGuardHome/issues/3171
+### Removed
 
-[ms-v0.107.6]: https://github.com/AdguardTeam/AdGuardHome/milestone/42?closed=1
+- Go 1.16 support, since that branch of the Go compiler has reached end of life
+  and doesn't receive security updates anymore.
+
+[#3171]: https://github.com/AdguardTeam/AdGuardHome/issues/3171
+[#4437]: https://github.com/AdguardTeam/AdGuardHome/issues/4437
+[#4463]: https://github.com/AdguardTeam/AdGuardHome/issues/4463
+
+[CVE-2022-24675]: https://www.cvedetails.com/cve/CVE-2022-24675
+[CVE-2022-27536]: https://www.cvedetails.com/cve/CVE-2022-27536
+[CVE-2022-28327]: https://www.cvedetails.com/cve/CVE-2022-28327
+[dns-draft-02]:   https://datatracker.ietf.org/doc/html/draft-ietf-add-svcb-dns-02#section-5.1
+[ms-v0.107.6]:    https://github.com/AdguardTeam/AdGuardHome/milestone/42?closed=1
+[svcb-draft-08]:  https://www.ietf.org/archive/id/draft-ietf-dnsop-svcb-https-08.html
 
 
 
