@@ -173,7 +173,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 
 	// TODO(e.burkov): Enable the refresher after the actual implementation
 	// passes the public testing.
-	s.sysResolvers, err = aghnet.NewSystemResolvers(0, nil)
+	s.sysResolvers, err = aghnet.NewSystemResolvers(nil)
 	if err != nil {
 		return nil, fmt.Errorf("initializing system resolvers: %w", err)
 	}

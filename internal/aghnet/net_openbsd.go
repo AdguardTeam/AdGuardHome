@@ -16,7 +16,7 @@ import (
 func ifaceHasStaticIP(ifaceName string) (ok bool, err error) {
 	filename := fmt.Sprintf("etc/hostname.%s", ifaceName)
 
-	return aghos.FileWalker(hostnameIfStaticConfig).Walk(aghos.RootDirFS(), filename)
+	return aghos.FileWalker(hostnameIfStaticConfig).Walk(rootDirFS, filename)
 }
 
 // hostnameIfStaticConfig checks if the interface is configured by

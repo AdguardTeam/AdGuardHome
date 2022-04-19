@@ -52,24 +52,27 @@ func HaveAdminRights() (bool, error) {
 	return haveAdminRights()
 }
 
-// MaxCmdOutputSize is the maximum length of performed shell command output.
-const MaxCmdOutputSize = 2 * 1024
+// MaxCmdOutputSize is the maximum length of performed shell command output in
+// bytes.
+const MaxCmdOutputSize = 64 * 1024
 
 // RunCommand runs shell command.
-func RunCommand(command string, arguments ...string) (int, string, error) {
+func RunCommand(command string, arguments ...string) (code int, output []byte, err error) {
 	cmd := exec.Command(command, arguments...)
 	out, err := cmd.Output()
 	if len(out) > MaxCmdOutputSize {
 		out = out[:MaxCmdOutputSize]
 	}
 
-	if errors.As(err, new(*exec.ExitError)) {
-		return cmd.ProcessState.ExitCode(), string(out), nil
-	} else if err != nil {
-		return 1, "", fmt.Errorf("exec.Command(%s) failed: %w: %s", command, err, string(out))
+	if err != nil {
+		if eerr := new(exec.ExitError); errors.As(err, &eerr) {
+			return eerr.ExitCode(), eerr.Stderr, nil
+		}
+
+		return 1, nil, fmt.Errorf("command %q failed: %w: %s", command, err, out)
 	}
 
-	return cmd.ProcessState.ExitCode(), string(out), nil
+	return cmd.ProcessState.ExitCode(), out, nil
 }
 
 // PIDByCommand searches for process named command and returns its PID ignoring
@@ -171,4 +174,14 @@ func RootDirFS() (fsys fs.FS) {
 	// Use empty string since os.DirFS implicitly prepends a slash to it.  This
 	// behavior is undocumented but it currently works.
 	return os.DirFS("")
+}
+
+// NotifyShutdownSignal notifies c on receiving shutdown signals.
+func NotifyShutdownSignal(c chan<- os.Signal) {
+	notifyShutdownSignal(c)
+}
+
+// IsShutdownSignal returns true if sig is a shutdown signal.
+func IsShutdownSignal(sig os.Signal) (ok bool) {
+	return isShutdownSignal(sig)
 }

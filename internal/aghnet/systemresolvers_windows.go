@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -27,7 +26,7 @@ type systemResolvers struct {
 	addrsLock sync.RWMutex
 }
 
-func newSystemResolvers(refreshIvl time.Duration, _ HostGenFunc) (sr SystemResolvers) {
+func newSystemResolvers(_ HostGenFunc) (sr SystemResolvers) {
 	return &systemResolvers{}
 }
 

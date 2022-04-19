@@ -16,18 +16,17 @@ type RDNS struct {
 	exchanger dnsforward.RDNSExchanger
 	clients   *clientsContainer
 
-	// usePrivate is used to store the state of current private RDNS
-	// resolving settings and to react to it's changes.
+	// usePrivate is used to store the state of current private RDNS resolving
+	// settings and to react to it's changes.
 	usePrivate uint32
 
 	// ipCh used to pass client's IP to rDNS workerLoop.
 	ipCh chan net.IP
 
 	// ipCache caches the IP addresses to be resolved by rDNS.  The resolved
-	// address stays here while it's inside clients.  After leaving clients
-	// the address will be resolved once again.  If the address couldn't be
-	// resolved, cache prevents further attempts to resolve it for some
-	// time.
+	// address stays here while it's inside clients.  After leaving clients the
+	// address will be resolved once again.  If the address couldn't be
+	// resolved, cache prevents further attempts to resolve it for some time.
 	ipCache cache.Cache
 }
 

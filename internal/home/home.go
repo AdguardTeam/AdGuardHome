@@ -518,44 +518,31 @@ func StartMods() error {
 func checkPermissions() {
 	log.Info("Checking if AdGuard Home has necessary permissions")
 
-	if runtime.GOOS == "windows" {
-		// On Windows we need to have admin rights to run properly
-
-		admin, _ := aghos.HaveAdminRights()
-		if admin {
-			return
-		}
-
+	if ok, err := aghnet.CanBindPrivilegedPorts(); !ok || err != nil {
 		log.Fatal("This is the first launch of AdGuard Home. You must run it as Administrator.")
 	}
 
 	// We should check if AdGuard Home is able to bind to port 53
-	ok, err := aghnet.CanBindPort(53)
-
-	if ok {
-		log.Info("AdGuard Home can bind to port 53")
-		return
-	}
-
-	if errors.Is(err, os.ErrPermission) {
-		msg := `Permission check failed.
-
+	err := aghnet.CheckPort("tcp", net.IP{127, 0, 0, 1}, defaultPortDNS)
+	if err != nil {
+		if errors.Is(err, os.ErrPermission) {
+			log.Fatal(`Permission check failed.
 AdGuard Home is not allowed to bind to privileged ports (for instance, port 53).
 Please note, that this is crucial for a server to be able to use privileged ports.
-
 You have two options:
 1. Run AdGuard Home with root privileges
 2. On Linux you can grant the CAP_NET_BIND_SERVICE capability:
-https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser`
+https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser`)
+		}
 
-		log.Fatal(msg)
+		log.Info(
+			"AdGuard failed to bind to port 53: %s\n\n"+
+				"Please note, that this is crucial for a DNS server to be able to use that port.",
+			err,
+		)
 	}
 
-	msg := fmt.Sprintf(`AdGuard failed to bind to port 53 due to %v
-
-Please note, that this is crucial for a DNS server to be able to use that port.`, err)
-
-	log.Info(msg)
+	log.Info("AdGuard Home can bind to port 53")
 }
 
 // Write PID to a file

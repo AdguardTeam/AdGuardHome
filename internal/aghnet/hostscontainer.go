@@ -368,8 +368,8 @@ func (hp *hostsParser) addPairs(ip net.IP, hosts []string) {
 	}
 }
 
-// writeRules writes the actual rule for the qtype and the PTR for the
-// host-ip pair into internal builders.
+// writeRules writes the actual rule for the qtype and the PTR for the host-ip
+// pair into internal builders.
 func (hp *hostsParser) writeRules(host string, ip net.IP) (rule, rulePtr string) {
 	arpa, err := netutil.IPToReversedAddr(ip)
 	if err != nil {

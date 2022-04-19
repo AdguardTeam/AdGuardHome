@@ -34,10 +34,6 @@ and this project adheres to
 
 ### Changed
 
-- Reverse DNS now has a greater priority as the source of runtime clients'
-  information than ARP neighborhood.
-- Improved detection of runtime clients through more resilient ARP processing
-  ([#3597]).
 - The TTL of responses served from the optimistic cache is now lowered to 10
   seconds.
 - Domain-specific private reverse DNS upstream servers are now validated to
@@ -114,7 +110,6 @@ In this release, the schema version has changed from 12 to 14.
 [#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
 [#3381]: https://github.com/AdguardTeam/AdGuardHome/issues/3381
 [#3503]: https://github.com/AdguardTeam/AdGuardHome/issues/3503
-[#3597]: https://github.com/AdguardTeam/AdGuardHome/issues/3597
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
 
 [ddr-draft-06]:   https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html
@@ -150,6 +145,10 @@ See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
 
 ### Changed
 
+- Reverse DNS now has a greater priority as the source of runtime clients'
+  information than ARP neighborhood.
+- Improved detection of runtime clients through more resilient ARP processing
+  ([#3597]).
 - On OpenBSD, the daemon script now uses the recommended `/bin/ksh` shell
   instead of the `/bin/sh` one ([#4533]).  To apply this change, backup your
   data and run `AdGuardHome -s uninstall && AdGuardHome -s install`.
@@ -169,6 +168,7 @@ See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
 
 [#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
 [#3157]: https://github.com/AdguardTeam/AdGuardHome/issues/3157
+[#3597]: https://github.com/AdguardTeam/AdGuardHome/issues/3597
 [#3978]: https://github.com/AdguardTeam/AdGuardHome/issues/3978
 [#4166]: https://github.com/AdguardTeam/AdGuardHome/issues/4166
 [#4213]: https://github.com/AdguardTeam/AdGuardHome/issues/4213

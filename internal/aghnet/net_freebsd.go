@@ -18,7 +18,7 @@ func ifaceHasStaticIP(ifaceName string) (ok bool, err error) {
 
 	walker := aghos.FileWalker(interfaceName(ifaceName).rcConfStaticConfig)
 
-	return walker.Walk(aghos.RootDirFS(), rcConfFilename)
+	return walker.Walk(rootDirFS, rcConfFilename)
 }
 
 // rcConfStaticConfig checks if the interface is configured by /etc/rc.conf to

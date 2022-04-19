@@ -135,7 +135,6 @@ func (s *Server) processRecursion(dctx *dnsContext) (rc resultCode) {
 		pctx.Res = s.genNXDomain(pctx.Req)
 
 		return resultCodeFinish
-
 	}
 
 	return resultCodeSuccess
