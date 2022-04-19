@@ -38,12 +38,17 @@ func newARPDB() (arp *arpdbs) {
 			fsys:     rootDirFS,
 			filename: "proc/net/arp",
 		},
-		// Then, try "arp -a".
+		// Then, try "arp -a -n".
 		&cmdARPDB{
 			parse: parseF,
 			ns:    ns,
 			cmd:   "arp",
-			args:  []string{"-a"},
+			// Use -n flag to avoid resolving the hostnames of the neighbors.
+			// By default ARP attempts to resolve the hostnames via DNS.  See
+			// man 8 arp.
+			//
+			// See also https://github.com/AdguardTeam/AdGuardHome/issues/3157.
+			args: []string{"-a", "-n"},
 		},
 		// Finally, try "ip neigh".
 		&cmdARPDB{
@@ -109,11 +114,11 @@ func (arp *fsysARPDB) Neighbors() (ns []Neighbor) {
 	return arp.ns.clone()
 }
 
-// parseArpAWrt parses the output of the "arp -a" command on OpenWrt.  The
+// parseArpAWrt parses the output of the "arp -a -n" command on OpenWrt.  The
 // expected input format:
 //
-//   IP address       HW type     Flags       HW address            Mask     Device
-//   192.168.11.98    0x1         0x2         5a:92:df:a9:7e:28     *        wan
+//   IP address     HW type  Flags  HW address         Mask  Device
+//   192.168.11.98  0x1      0x2    5a:92:df:a9:7e:28  *     wan
 //
 func parseArpAWrt(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 	if !sc.Scan() {
@@ -153,8 +158,8 @@ func parseArpAWrt(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 	return ns
 }
 
-// parseArpA parses the output of the "arp -a" command on Linux.  The expected
-// input format:
+// parseArpA parses the output of the "arp -a -n" command on Linux.  The
+// expected input format:
 //
 //   hostname (192.168.1.1) at ab:cd:ef:ab:cd:ef [ether] on enp0s3
 //

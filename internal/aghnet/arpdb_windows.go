@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-func newARPDB() *cmdARPDB {
+func newARPDB() (arp *cmdARPDB) {
 	return &cmdARPDB{
 		parse: parseArpA,
 		ns: &neighs{

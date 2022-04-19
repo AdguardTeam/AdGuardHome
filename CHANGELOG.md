@@ -87,10 +87,15 @@ In this release, the schema version has changed from 12 to 13.
 
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
+### Fixed
+
+- ARP tables refreshing process causing excessive PTR requests ([#3157]).
+
 [#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#3142]: https://github.com/AdguardTeam/AdGuardHome/issues/3142
+[#3157]: https://github.com/AdguardTeam/AdGuardHome/issues/3157
 [#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
 [#3381]: https://github.com/AdguardTeam/AdGuardHome/issues/3381
 [#3503]: https://github.com/AdguardTeam/AdGuardHome/issues/3503
