@@ -1,5 +1,5 @@
-//go:build !(linux || darwin || freebsd || openbsd)
-// +build !linux,!darwin,!freebsd,!openbsd
+//go:build windows
+// +build windows
 
 package aghnet
 
@@ -12,6 +12,10 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"golang.org/x/sys/windows"
 )
+
+func canBindPrivilegedPorts() (can bool, err error) {
+	return true, nil
+}
 
 func ifaceHasStaticIP(string) (ok bool, err error) {
 	return false, aghos.Unsupported("checking static ip")
