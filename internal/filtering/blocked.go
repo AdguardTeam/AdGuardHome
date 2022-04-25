@@ -331,6 +331,21 @@ func (d *DNSFilter) ApplyBlockedServices(setts *Settings, list []string, global 
 	}
 }
 
+func (d *DNSFilter) handleBlockedServicesAvailableServices(w http.ResponseWriter, r *http.Request) {	
+	var list []string
+	for _, v := range serviceRulesArray {
+		list = append(list, s.name)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(list)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusInternalServerError, "json.Encode: %s", err)
+
+		return
+	}
+}
+
 func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Request) {
 	d.confLock.RLock()
 	list := d.Config.BlockedServices
@@ -365,6 +380,7 @@ func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 
 // registerBlockedServicesHandlers - register HTTP handlers
 func (d *DNSFilter) registerBlockedServicesHandlers() {
+	d.Config.HTTPRegister(http.MethodGet, "/control/blocked_services/services", d.handleBlockedServicesAvailableServices)
 	d.Config.HTTPRegister(http.MethodGet, "/control/blocked_services/list", d.handleBlockedServicesList)
 	d.Config.HTTPRegister(http.MethodPost, "/control/blocked_services/set", d.handleBlockedServicesSet)
 }
