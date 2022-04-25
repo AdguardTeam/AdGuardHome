@@ -693,8 +693,8 @@ export const replaceZeroWithEmptyString = (value) => (parseInt(value, 10) === 0 
  * @returns {string}
  */
 export const getLogsUrlParams = (search, response_status) => `?${queryString.stringify({
-    search,
-    response_status,
+    search: search || undefined,
+    response_status: response_status || undefined,
 })}`;
 
 export const processContent = (
