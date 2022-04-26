@@ -135,9 +135,11 @@ func initDNSServer() (err error) {
 		return fmt.Errorf("dnsServer.Prepare: %w", err)
 	}
 
-	Context.rdns = NewRDNS(Context.dnsServer, &Context.clients, config.DNS.UsePrivateRDNS)
+	if config.Clients.Sources.RDNS {
+		Context.rdns = NewRDNS(Context.dnsServer, &Context.clients, config.DNS.UsePrivateRDNS)
+	}
 
-	if !config.Clients.Sources.WHOIS {
+	if config.Clients.Sources.WHOIS {
 		Context.whois = initWHOIS(&Context.clients)
 	}
 
