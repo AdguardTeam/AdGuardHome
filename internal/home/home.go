@@ -173,6 +173,11 @@ func setupContext(args options) {
 
 			os.Exit(0)
 		}
+
+		if !args.noEtcHosts && config.Clients.Sources.HostsFile {
+			err = setupHostsContainer()
+			fatalOnError(err)
+		}
 	}
 
 	Context.mux = http.NewServeMux()
@@ -285,14 +290,12 @@ func setupConfig(args options) (err error) {
 		ConfName: config.getConfigFilename(),
 	})
 
-	if !args.noEtcHosts {
-		if err = setupHostsContainer(); err != nil {
-			return err
-		}
+	var arpdb aghnet.ARPDB
+	if config.Clients.Sources.ARP {
+		arpdb = aghnet.NewARPDB()
 	}
 
-	arpdb := aghnet.NewARPDB()
-	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts, arpdb)
+	Context.clients.Init(config.Clients.Persistent, Context.dhcpServer, Context.etcHosts, arpdb)
 
 	if args.bindPort != 0 {
 		uc := aghalg.UniqChecker{}

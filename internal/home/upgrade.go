@@ -21,9 +21,11 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 13
+const currentSchemaVersion = 14
 
 // These aliases are provided for convenience.
+//
+// TODO(e.burkov):  Remove any after updating to Go 1.18.
 type (
 	any  = interface{}
 	yarr = []any
@@ -86,6 +88,7 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema10to11,
 		upgradeSchema11to12,
 		upgradeSchema12to13,
+		upgradeSchema13to14,
 	}
 
 	n := 0
@@ -726,13 +729,75 @@ func upgradeSchema12to13(diskConf yobj) (err error) {
 	var dhcp yobj
 	dhcp, ok = dhcpVal.(yobj)
 	if !ok {
-		return fmt.Errorf("unexpected type of dhcp: %T", dnsVal)
+		return fmt.Errorf("unexpected type of dhcp: %T", dhcpVal)
 	}
 
 	const field = "local_domain_name"
 
 	dhcp[field] = dns[field]
 	delete(dns, field)
+
+	return nil
+}
+
+// upgradeSchema13to14 performs the following changes:
+//
+//   # BEFORE:
+//   'clients':
+//   - 'name': 'client-name'
+//     # …
+//
+//   # AFTER:
+//   'clients':
+//     'persistent':
+//     - 'name': 'client-name'
+//       # …
+//     'runtime_sources':
+//       'whois': true
+//       'arp': true
+//       'rdns': true
+//       'dhcp': true
+//       'hosts': true
+//
+func upgradeSchema13to14(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 13 to 14")
+	diskConf["schema_version"] = 14
+
+	clientsVal, ok := diskConf["clients"]
+	if !ok {
+		clientsVal = yarr{}
+	}
+
+	var rdnsSrc bool
+	if dnsVal, dok := diskConf["dns"]; dok {
+		var dnsSettings yobj
+		dnsSettings, ok = dnsVal.(yobj)
+		if !ok {
+			return fmt.Errorf("unexpected type of dns: %T", dnsVal)
+		}
+
+		var rdnsSrcVal any
+		rdnsSrcVal, ok = dnsSettings["resolve_clients"]
+		if ok {
+			rdnsSrc, ok = rdnsSrcVal.(bool)
+			if !ok {
+				return fmt.Errorf("unexpected type of resolve_clients: %T", rdnsSrcVal)
+			}
+
+			delete(dnsSettings, "resolve_clients")
+		}
+	}
+
+	diskConf["clients"] = yobj{
+		"persistent": clientsVal,
+		"runtime_sources": &clientSourcesConf{
+			WHOIS:     true,
+			ARP:       true,
+			RDNS:      rdnsSrc,
+			DHCP:      true,
+			HostsFile: true,
+		},
+	}
 
 	return nil
 }
