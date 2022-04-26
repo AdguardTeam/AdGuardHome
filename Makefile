@@ -34,6 +34,8 @@ YARN_INSTALL_FLAGS = $(YARN_FLAGS) --network-timeout 120000 --silent\
 	--ignore-engines --ignore-optional --ignore-platform\
 	--ignore-scripts
 
+V1API = 0
+
 # Macros for the build-release target.  If FRONTEND_PREBUILT is 0, the
 # default, the macro $(BUILD_RELEASE_DEPS_$(FRONTEND_PREBUILT)) expands
 # into BUILD_RELEASE_DEPS_0, and so both frontend and backend
@@ -61,6 +63,7 @@ ENV = env\
 	PATH="$${PWD}/bin:$$( "$(GO.MACRO)" env GOPATH )/bin:$${PATH}"\
 	RACE='$(RACE)'\
 	SIGN='$(SIGN)'\
+	V1API='$(V1API)'\
 	VERBOSE='$(VERBOSE)'\
 	VERSION='$(VERSION)'\
 
