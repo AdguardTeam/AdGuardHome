@@ -14,6 +14,152 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const ddrTestDomainName = "dns.example.net"
+
+func TestServer_ProcessDDRQuery(t *testing.T) {
+	dohSVCB := &dns.SVCB{
+		Priority: 1,
+		Target:   ddrTestDomainName,
+		Value: []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"h2"}},
+			&dns.SVCBPort{Port: 8044},
+			&dns.SVCBDoHPath{Template: "/dns-query?dns"},
+		},
+	}
+
+	dotSVCB := &dns.SVCB{
+		Priority: 2,
+		Target:   ddrTestDomainName,
+		Value: []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"dot"}},
+			&dns.SVCBPort{Port: 8043},
+		},
+	}
+
+	testCases := []struct {
+		name       string
+		host       string
+		want       []*dns.SVCB
+		wantRes    resultCode
+		portDoH    int
+		portDoT    int
+		qtype      uint16
+		ddrEnabled bool
+	}{{
+		name:       "pass_host",
+		wantRes:    resultCodeSuccess,
+		host:       "example.net.",
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		portDoH:    8043,
+	}, {
+		name:       "pass_qtype",
+		wantRes:    resultCodeFinish,
+		host:       ddrHostFQDN,
+		qtype:      dns.TypeA,
+		ddrEnabled: true,
+		portDoH:    8043,
+	}, {
+		name:       "pass_disabled_tls",
+		wantRes:    resultCodeFinish,
+		host:       ddrHostFQDN,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+	}, {
+		name:       "pass_disabled_ddr",
+		wantRes:    resultCodeSuccess,
+		host:       ddrHostFQDN,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: false,
+		portDoH:    8043,
+	}, {
+		name:       "dot",
+		wantRes:    resultCodeFinish,
+		want:       []*dns.SVCB{dotSVCB},
+		host:       ddrHostFQDN,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		portDoT:    8043,
+	}, {
+		name:       "doh",
+		wantRes:    resultCodeFinish,
+		want:       []*dns.SVCB{dohSVCB},
+		host:       ddrHostFQDN,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		portDoH:    8044,
+	}, {
+		name:       "dot_doh",
+		wantRes:    resultCodeFinish,
+		want:       []*dns.SVCB{dotSVCB, dohSVCB},
+		host:       ddrHostFQDN,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		portDoT:    8043,
+		portDoH:    8044,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := prepareTestServer(t, tc.portDoH, tc.portDoT, tc.ddrEnabled)
+
+			req := createTestMessageWithType(tc.host, tc.qtype)
+
+			dctx := &dnsContext{
+				proxyCtx: &proxy.DNSContext{
+					Req: req,
+				},
+			}
+
+			res := s.processDDRQuery(dctx)
+			require.Equal(t, tc.wantRes, res)
+
+			if tc.wantRes != resultCodeFinish {
+				return
+			}
+
+			msg := dctx.proxyCtx.Res
+			require.NotNil(t, msg)
+
+			for _, v := range tc.want {
+				v.Hdr = s.hdr(req, dns.TypeSVCB)
+			}
+
+			assert.ElementsMatch(t, tc.want, msg.Answer)
+		})
+	}
+}
+
+func prepareTestServer(t *testing.T, portDoH, portDoT int, ddrEnabled bool) (s *Server) {
+	t.Helper()
+
+	proxyConf := proxy.Config{}
+
+	if portDoH > 0 {
+		proxyConf.HTTPSListenAddr = []*net.TCPAddr{{Port: portDoH}}
+	}
+
+	if portDoT > 0 {
+		proxyConf.TLSListenAddr = []*net.TCPAddr{{Port: portDoT}}
+	}
+
+	s = &Server{
+		dnsProxy: &proxy.Proxy{
+			Config: proxyConf,
+		},
+		conf: ServerConfig{
+			FilteringConfig: FilteringConfig{
+				HandleDDR: ddrEnabled,
+			},
+			TLSConfig: TLSConfig{
+				ServerName: ddrTestDomainName,
+			},
+		},
+	}
+
+	return s
+}
+
 func TestServer_ProcessDetermineLocal(t *testing.T) {
 	s := &Server{
 		privateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
