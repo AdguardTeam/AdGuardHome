@@ -9,7 +9,7 @@
     "bootstrap_dns": "Bootstrap DNS-servers",
     "bootstrap_dns_desc": "Bootstrap DNS-servers worden gebruikt om IP-adressen op te lossen van de DoH / DoT-resolvers die u opgeeft als upstreams.",
     "local_ptr_title": "Private omgekeerde DNS-servers",
-    "local_ptr_desc": "De DNS-servers die AdGuard Home zal gebruiken voor lokale PTR zoekopdrachten. Deze server wordt gebruikt om de hostnamen van de clients met private IP-adressen, bijvoorbeeld \"192.168.12.34\", dmv. rDNS. Indien niet ingesteld, gebruikt AdGuard Home automatisch je standaard DNS-resolver.",
+    "local_ptr_desc": "De DNS-servers die AdGuard Home gebruikt voor lokale PTR-zoekopdrachten. Deze servers worden gebruikt om PTR-verzoeken voor adressen in privé-IP-bereiken op te lossen, bijvoorbeeld \"192.168.12.34\", met behulp van reverse DNS. Indien niet ingesteld, gebruikt AdGuard Home de adressen van de standaard DNS-resolvers van uw besturingssysteem, behalve de adressen van AdGuard Home zelf.",
     "local_ptr_default_resolver": "Standaard gebruikt AdGuard Home de volgende omgekeerde DNS-resolvers: {{ip}}.",
     "local_ptr_no_default_resolver": "AdGuard Home kon voor dit systeem geen geschikte private omgekeerde DNS-resolvers bepalen.",
     "local_ptr_placeholder": "Voer één serveradres per regel in",

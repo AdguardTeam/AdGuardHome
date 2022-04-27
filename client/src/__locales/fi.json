@@ -338,7 +338,7 @@
     "install_devices_windows_list_2": "Avaa \"Verkko ja Internet\" -ryhmä ja sitten \"Verkko ja jakamiskeskus\".",
     "install_devices_windows_list_3": "Paina ikkunan vasemmasta laidasta \"Muuta sovittimen asetuksia\".",
     "install_devices_windows_list_4": "Paina aktiivista yhteyttäsi hiiren kakkospainikkeella ja valitse \"Ominaisuudet\".",
-    "install_devices_windows_list_5": "Etsi listasta \"Internet protokolla versio 4 (TCP/IP)\", valitse se ja paina jälleen \"Ominaisuudet\".",
+    "install_devices_windows_list_5": "Etsi listasta \"Internet Protocol Version 4 (TCP/IPv4)\" (tai IPv6:lle \"Internet Protocol Version 6 (TCP/IPv6)\"), valitse se ja paina jälleen \"Ominaisuudet\".",
     "install_devices_windows_list_6": "Valitse \"Käytä seuraavia DNS-palvelinten osoitteita\" ja syötä AdGuard Home -palvelimesi osoitteet.",
     "install_devices_macos_list_1": "Paina Omena-kuvaketta ja valitse \"Järjestelmäasetukset\".",
     "install_devices_macos_list_2": "Paina \"Verkko\".",
