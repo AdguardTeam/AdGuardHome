@@ -330,24 +330,28 @@ func getDNSEncryption() (de dnsEncryption) {
 
 // applyAdditionalFiltering adds additional client information and settings if
 // the client has them.
-func applyAdditionalFiltering(clientAddr net.IP, clientID string, setts *filtering.Settings) {
+func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering.Settings) {
 	Context.dnsFilter.ApplyBlockedServices(setts, nil, true)
 
-	if clientAddr == nil {
+	log.Debug("looking up settings for client with ip %s and clientid %q", clientIP, clientID)
+
+	if clientIP == nil {
 		return
 	}
 
-	setts.ClientIP = clientAddr
+	setts.ClientIP = clientIP
 
 	c, ok := Context.clients.Find(clientID)
 	if !ok {
-		c, ok = Context.clients.Find(clientAddr.String())
+		c, ok = Context.clients.Find(clientIP.String())
 		if !ok {
+			log.Debug("client with ip %s and clientid %q not found", clientIP, clientID)
+
 			return
 		}
 	}
 
-	log.Debug("using settings for client %s with ip %s and clientid %q", c.Name, clientAddr, clientID)
+	log.Debug("using settings for client %q with ip %s and clientid %q", c.Name, clientIP, clientID)
 
 	if c.UseOwnBlockedServices {
 		Context.dnsFilter.ApplyBlockedServices(setts, c.BlockedServices, false)
