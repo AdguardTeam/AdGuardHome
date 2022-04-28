@@ -175,3 +175,13 @@ func RootDirFS() (fsys fs.FS) {
 	// behavior is undocumented but it currently works.
 	return os.DirFS("")
 }
+
+// NotifyShutdownSignal notifies c on receiving shutdown signals.
+func NotifyShutdownSignal(c chan<- os.Signal) {
+	notifyShutdownSignal(c)
+}
+
+// IsShutdownSignal returns true if sig is a shutdown signal.
+func IsShutdownSignal(sig os.Signal) (ok bool) {
+	return isShutdownSignal(sig)
+}

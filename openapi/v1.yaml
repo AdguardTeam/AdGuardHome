@@ -1,0 +1,4913 @@
+'openapi': '3.0.3'
+'info':
+  'contact':
+    'email': 'devteam@adguard.com'
+    'name': 'AdGuard Home'
+    'url': 'https://github.com/AdguardTeam/AdGuardHome'
+  'description': |
+    **!! WARNING!  API IS AT THE DRAFT STAGE! THINGS WILL BREAK! !!**
+
+    AdGuard Home REST API, V1 **DRAFT**.  Our administration web interface is
+    built on top of this REST API.
+
+    This API is currently a **DRAFT** and is not covered by any stability
+    guarantees.  Once this API reaches maturity, the old `/control/` API will
+    mostly be removed.
+
+    ##  Information For API Users
+
+     *  Empty arrays are always sent by the backend, unless documented
+        otherwise.  If the backend doesn't, it's a backend error.
+
+     *  `PATCH` requests with JSON bodies use RFC 7396 JSON Merge Patch unless
+        documented otherwise.
+
+     *  The property `x-error-class` on plain text error responses suggests,
+        which class of error should be used if the API user wants to wrap it
+        into an object.  The property `x-error-code` suggest the error code for
+        the error object.  The code usually goes into the `code` property, and
+        the content, into `msg`.
+
+     *  The property `x-skip-web-api` on operations suggests API clients for
+        web, like our frontend, to skip this operation in their generated code.
+
+     *  The header `Server` will be set to `AdGuardHome/<<full-version>>`.  For
+        example: `AdGuardHome/v0.107.0-a.42+abcd1234`.
+
+    ##  Conventions For API Authors
+
+       ###  Naming
+
+     *  `CapitalCamelCase` for entities.
+
+     *  Initialisms are spelled like `DhcpSettings` and not `DHCPSettings`.
+
+     *  `lower_snake_case` for path and query parameters.
+
+     *  No unit suffices.
+
+     *  Path parameters's names start with `Path`; query, with `Query`.
+
+     *  Requests end with `Req`; responses, with `Resp`.
+
+       ###  Structure
+
+     *  Add `400` and `422` responses to requests that accept data.
+
+     *  Add `401` responses, unless the method can work without authorization.
+
+     *  Add `500` responses.
+
+     *  Descriptions are always on their own lines.
+
+     *  Don't add a description if there is already one a level above.
+
+     *  Five levels of indentation max, except for descriptions and array
+        items.
+
+     *  Keep things in alphabetical order.
+
+     *  Mark required things as such.  Document possibly-absent fields **both**
+        in `required` **and** in `description`, if there is one.
+
+     *  Prefer flat objects.  Example: `resp.top_user`, not `resp.top.user.val`.
+
+     *  Prefer to make it easier for the frontend where possible.
+
+     *  Provide examples for requests and responses.  If examples are provided
+        elsewhere, document that.
+
+     *  Summaries and descriptions with dots.
+
+     *  Top-level value in a JSON request or response must be an object.
+
+       ###  Types
+
+     *  Add `'maximum': 65535` for 16-bit unsigned integers (for example, port
+        numbers).
+
+     *  Add `'minimum': 0` for unsigned integers.
+
+     *  Duration in milliseconds.  Time in milliseconds in the Unix epoch.  Both
+        of type `double`, because that is easier for the JS frontend.
+
+     *  Integers are always `int64`, numbers are always `double.
+
+  'license':
+    'name': 'GNU General Public License v3.0'
+    'url': 'https://www.gnu.org/licenses/gpl-3.0.txt'
+  'title': 'AdGuard Home V1 DRAFT API'
+  'version': '0.108'
+
+'servers':
+- 'description': >
+    The V1 HTTP API namespace.
+  'url': '/api/v1'
+
+'security':
+- 'basicAuth': []
+
+'tags':
+- 'description': >
+    Authorization and account management.
+  'name': 'accounts'
+- 'description': >
+    Configuration and settings for Apple products.
+  'name': 'apple'
+- 'description': >
+    Runtime and persistent client information.
+  'name': 'clients'
+- 'description': >
+    DHCP server methods.
+  'name': 'dhcp'
+- 'description': >
+    First-time install configuration handlers.  Will not be available once the
+    installation is done.
+  'name': 'install'
+- 'description': >
+    Query logs.
+  'name': 'log'
+- 'description': >
+    Filter lists, blocked services, and custom filtering rules.
+  'name': 'protection'
+- 'description': >
+    Settings management.
+  'name': 'settings'
+- 'description': >
+    Query, filtering, system, and other statistics.
+  'name': 'stats'
+- 'description': >
+    Information about the AdGuard Home server and the host system.
+  'name': 'system'
+
+'paths':
+  '/health-check':
+    'get':
+      'operationId': 'HealthCheck'
+      'servers':
+        - 'url': '/'
+      'summary': 'Check if the server is up.'
+      'tags':
+      - 'system'
+
+  '/accounts/profile':
+    'get':
+      'operationId': 'GetV1AccountsProfile'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1AccountsProfileResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get the profile of the current user.'
+      'tags':
+      - 'accounts'
+    'patch':
+      'operationId': 'PatchV1AccountsProfile'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PatchV1AccountsProfileReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PatchV1AccountsProfileResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Update the profile of the current user.'
+      'tags':
+      - 'accounts'
+
+  '/accounts/session':
+    'delete':
+      'operationId': 'DeleteV1AccountsSession'
+      'responses':
+        '204':
+          '$ref': '#/components/responses/NoContentResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Log out of the system.'
+      'tags':
+      - 'accounts'
+    'post':
+      'operationId': 'PostV1AccountsSession'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1AccountsSessionReq'
+      'responses':
+        '204':
+          '$ref': '#/components/responses/NoContentResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Log into the system.'
+      'tags':
+      - 'accounts'
+
+  '/apple/doh.mobileconfig':
+    'get':
+      'operationId': 'GetV1AppleDohMobileconfig'
+      'parameters':
+      - '$ref': '#/components/parameters/QueryClientId'
+      - '$ref': '#/components/parameters/QueryHost'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1AppleDohMobileconfigResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get a DNS-over-HTTPS .mobileconfig.'
+      'tags':
+      - 'apple'
+      'x-skip-web-api': true
+
+  '/apple/dot.mobileconfig':
+    'get':
+      'operationId': 'GetV1AppleDotMobileconfig'
+      'parameters':
+      - '$ref': '#/components/parameters/QueryHost'
+      - '$ref': '#/components/parameters/QueryClientId'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1AppleDotMobileconfigResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get a DNS-over-HTTPS .mobileconfig.'
+      'tags':
+      - 'apple'
+      'x-skip-web-api': true
+
+  '/clients/persistent':
+    'get':
+      'operationId': 'GetV1ClientsPersistent'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1ClientsPersistentResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get all persistent clients.'
+      'tags':
+      - 'clients'
+    'post':
+      'operationId': 'PostV1ClientsPersistent'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1ClientsPersistentReq'
+      'responses':
+        '201':
+          '$ref': '#/components/responses/PostV1ClientsPersistentResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Create a new persistent client.'
+      'tags':
+      - 'clients'
+
+  '/clients/persistent/{client_uid}':
+    'delete':
+      'operationId': 'DeleteV1ClientPersistent'
+      'responses':
+        '204':
+          '$ref': '#/components/responses/NoContentResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '404':
+          '$ref': '#/components/responses/NotFoundResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Delete a persistent client.'
+      'tags':
+      - 'clients'
+    'parameters':
+    - '$ref': '#/components/parameters/PathClientUid'
+    'patch':
+      'operationId': 'PatchV1ClientPersistent'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PatchV1ClientPersistentReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PatchV1ClientPersistentResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '404':
+          '$ref': '#/components/responses/NotFoundResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Update a persistent client.'
+      'tags':
+      - 'clients'
+
+  '/clients/runtime':
+    'get':
+      'operationId': 'GetV1ClientsRuntime'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1ClientsRuntimeResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get all runtime clients.'
+      'tags':
+      - 'clients'
+
+  '/dhcp/leases':
+    'get':
+      'operationId': 'GetV1DhcpLeases'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1DhcpLeasesResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get all dynamic and static DHCP leases.'
+      'tags':
+      - 'dhcp'
+    'post':
+      'operationId': 'PostV1DhcpLeases'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1DhcpLeasesReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PostV1DhcpLeasesResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Create a new static DHCP lease.'
+      'tags':
+      - 'dhcp'
+
+  '/dhcp/leases/{lease_uid}':
+    'delete':
+      'operationId': 'DeleteV1DhcpLease'
+      'responses':
+        '204':
+          '$ref': '#/components/responses/NoContentResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '404':
+          '$ref': '#/components/responses/NotFoundResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Delete a static DHCP lease.'
+      'tags':
+      - 'dhcp'
+    'parameters':
+    - '$ref': '#/components/parameters/PathLeaseUid'
+    'patch':
+      'operationId': 'PatchV1DhcpLease'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PatchV1DhcpLeaseReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PatchV1DhcpLeaseResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '404':
+          '$ref': '#/components/responses/NotFoundResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Update a static DHCP lease.'
+      'tags':
+      - 'dhcp'
+
+  '/dhcp/status':
+    'get':
+      'operationId': 'GetV1DhcpStatus'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1DhcpStatusResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get DHCP server status.'
+      'tags':
+      - 'dhcp'
+
+  '/install/check':
+    'post':
+      'operationId': 'PostV1InstallCheck'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1InstallCheckReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PostV1InstallCheckResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Check initial configuration.'
+      'tags':
+      - 'install'
+
+  '/install/configure':
+    'post':
+      'operationId': 'PostV1InstallConfigure'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1InstallConfigureReq'
+      'responses':
+        '204':
+          '$ref': '#/components/responses/NoContentResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Apply initial configuration.'
+      'tags':
+      - 'install'
+
+  '/install/info':
+    'get':
+      'operationId': 'GetV1InstallInfo'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1InstallInfoResp'
+        '404':
+          '$ref': '#/components/responses/NotFoundResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get initial configuration information.'
+      'tags':
+      - 'install'
+
+  '/log/clear':
+    'post':
+      'operationId': 'PostV1LogClear'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1LogClearReq'
+      'responses':
+        '204':
+          '$ref': '#/components/responses/NoContentResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Clear the whole query log.'
+      'tags':
+      - 'log'
+
+  '/log/search':
+    'get':
+      'operationId': 'GetV1LogSearch'
+      'parameters':
+      - '$ref': '#/components/parameters/QueryBefore'
+      - '$ref': '#/components/parameters/QueryLimit'
+      - '$ref': '#/components/parameters/QueryReason'
+      - '$ref': '#/components/parameters/QueryTerm'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1LogSearchResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Search query logs.'
+      'tags':
+      - 'log'
+
+  '/protection/blocked_services':
+    'get':
+      'operationId': 'GetV1ProtectionBlockedServices'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1ProtectionBlockedServicesResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get blocked services.'
+      'tags':
+      - 'protection'
+    'put':
+      'operationId': 'PutV1ProtectionBlockedServices'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PutV1ProtectionBlockedServicesReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1ProtectionBlockedServicesResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Replace blocked services.'
+      'tags':
+      - 'protection'
+
+  '/protection/check_custom_rules':
+    'post':
+      'operationId': 'PostV1ProtectionCheckCustomRules'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1ProtectionCheckCustomRulesReq'
+      'responses':
+        '201':
+          '$ref': '#/components/responses/PostV1ProtectionCheckCustomRulesResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Check custom filtering rules.'
+      'tags':
+      - 'protection'
+
+  '/protection/custom_rules':
+    'get':
+      'operationId': 'GetV1ProtectionCustomRules'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1ProtectionCustomRulesResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get custom rules.'
+      'tags':
+      - 'protection'
+    'put':
+      'operationId': 'PutV1ProtectionCustomRules'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PutV1ProtectionCustomRulesReq'
+      'responses':
+        '204':
+          '$ref': '#/components/responses/NoContentResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Replace custom rules.'
+      'tags':
+      - 'protection'
+
+  '/protection/dns_rewrites':
+    'get':
+      'operationId': 'GetV1ProtectionDnsRewrites'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1ProtectionDnsRewritesResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get all classic DNS rewrites.'
+      'tags':
+      - 'protection'
+    'post':
+      'operationId': 'PostV1ProtectionDnsRewrites'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1ProtectionDnsRewritesReq'
+      'responses':
+        '201':
+          '$ref': '#/components/responses/PostV1ProtectionDnsRewritesResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Add a new classic DNS rewrite.'
+      'tags':
+      - 'protection'
+
+  '/protection/dns_rewrites/{dns_rewrite_uid}':
+    'delete':
+      'operationId': 'DeleteV1ProtectionDnsRewrite'
+      'responses':
+        '204':
+          '$ref': '#/components/responses/NoContentResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '404':
+          '$ref': '#/components/responses/NotFoundResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Delete a classic DNS rewrite.'
+      'tags':
+      - 'protection'
+    'parameters':
+    - '$ref': '#/components/parameters/PathDnsRewriteUid'
+
+  '/protection/filters':
+    'get':
+      'operationId': 'GetV1ProtectionFilters'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1ProtectionFiltersResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get all filters.'
+      'tags':
+      - 'protection'
+    'post':
+      'operationId': 'PostV1ProtectionFilters'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1ProtectionFiltersReq'
+      'responses':
+        '201':
+          '$ref': '#/components/responses/PostV1ProtectionFiltersResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Add a new filter.'
+      'tags':
+      - 'protection'
+
+  '/protection/filters/{filter_uid}':
+    'delete':
+      'operationId': 'DeleteV1ProtectionFilter'
+      'responses':
+        '204':
+          '$ref': '#/components/responses/NoContentResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '404':
+          '$ref': '#/components/responses/NotFoundResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Delete a filter.'
+      'tags':
+      - 'protection'
+    'parameters':
+    - '$ref': '#/components/parameters/PathFilterUid'
+    'patch':
+      'operationId': 'PatchV1ProtectionFilter'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PatchV1ProtectionFilterReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PatchV1ProtectionFilterResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '404':
+          '$ref': '#/components/responses/NotFoundResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': >
+        Update a filter's settings.
+      'tags':
+      - 'protection'
+
+  '/protection/refresh_filters':
+    'post':
+      'operationId': 'PostV1ProtectionRefreshFilters'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1ProtectionRefreshFiltersReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PostV1ProtectionRefreshFiltersResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': >
+        Refresh all filters.
+      'tags':
+      - 'protection'
+
+  '/protection/refresh_filters/{filter_uid}':
+    'parameters':
+    - '$ref': '#/components/parameters/PathFilterUid'
+    'post':
+      'operationId': 'PostV1ProtectionRefreshFilter'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1ProtectionRefreshFilterReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PostV1ProtectionRefreshFilterResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': >
+        Refresh a filter.
+      'tags':
+      - 'protection'
+
+  '/settings/all':
+    'get':
+      'operationId': 'GetV1SettingsAll'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1SettingsAllResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get all settings.'
+      'tags':
+      - 'settings'
+
+  '/settings/dhcp':
+    'patch':
+      'operationId': 'PatchV1SettingsDhcp'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PatchV1SettingsDhcpReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PatchV1SettingsDhcpResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Update DHCP server settings.'
+      'tags':
+      - 'settings'
+
+  '/settings/dns':
+    'patch':
+      'operationId': 'PatchV1SettingsDns'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PatchV1SettingsDnsReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PatchV1SettingsDnsResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Update DNS server settings.'
+      'tags':
+      - 'settings'
+
+  '/settings/dns/access':
+    'get':
+      'description': >
+        Get DNS access settings.  This is a separate API, because these lists
+        can become quite big.
+      'operationId': 'GetV1SettingsDnsAccess'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1SettingsDnsAccessResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get DNS access settings.'
+      'tags':
+      - 'settings'
+    'put':
+      'description': >
+        Update DNS access settings.  This is a separate API, because these lists
+        can become quite big.
+      'operationId': 'PutV1SettingsDnsAccess'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PutV1SettingsDnsAccessReq'
+      'responses':
+        '204':
+          '$ref': '#/components/responses/NoContentResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Update DNS access settings.'
+      'tags':
+      - 'settings'
+
+  '/settings/dns/check':
+    'post':
+      'operationId': 'PostV1SettingsDnsCheck'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1SettingsDnsCheckReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PostV1SettingsDnsCheckResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Check DNS upstream settings.'
+      'tags':
+      - 'settings'
+
+  '/settings/log':
+    'patch':
+      'operationId': 'PatchV1SettingsLog'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PatchV1SettingsLogReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PatchV1SettingsLogResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Update query logging settings.'
+      'tags':
+      - 'settings'
+
+  '/settings/protection':
+    'patch':
+      'operationId': 'PatchV1SettingsProtection'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PatchV1SettingsProtectionReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PatchV1SettingsProtectionResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Update protection settings.'
+      'tags':
+      - 'settings'
+
+  '/settings/stats':
+    'patch':
+      'operationId': 'PatchV1SettingsStats'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PatchV1SettingsStatsReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PatchV1SettingsStatsResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Update statistics settings.'
+      'tags':
+      - 'settings'
+
+  '/settings/tls':
+    'patch':
+      'operationId': 'PatchV1SettingsTls'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PatchV1SettingsTlsReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PatchV1SettingsTlsResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Update TLS and encryption settings.'
+      'tags':
+      - 'settings'
+
+  '/settings/tls/check':
+    'post':
+      'operationId': 'PostV1SettingsTlsCheck'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1SettingsTlsCheckReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PostV1SettingsTlsCheckResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Check TLS and encryption settings.'
+      'tags':
+      - 'settings'
+
+  '/stats/all':
+    'get':
+      'operationId': 'GetV1StatsAll'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1StatsAllResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get all statistics.'
+      'tags':
+      - 'stats'
+
+  '/stats/clear':
+    'post':
+      'operationId': 'PostV1StatsClear'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1StatsClearReq'
+      'responses':
+        '204':
+          '$ref': '#/components/responses/NoContentResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Clear all statistics.'
+      'tags':
+      - 'stats'
+
+  '/system/info':
+    'get':
+      'operationId': 'GetV1SystemInfo'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/GetV1SystemInfoResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Get server information.'
+      'tags':
+      - 'system'
+
+  '/system/reset':
+    'post':
+      'operationId': 'PostV1SystemReset'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1SystemResetReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PostV1SystemResetResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Reset all settings to defaults.'
+      'tags':
+      - 'system'
+
+  '/system/update':
+    'post':
+      'operationId': 'PostV1SystemUpdate'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PostV1SystemUpdateReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PostV1SystemUpdateResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Update AdGuard Home.'
+      'tags':
+      - 'system'
+
+'components':
+  'parameters':
+    'PathDnsRewriteUid':
+      'description': >
+        DNS rewrite ID.
+      'example': 'abcd1234'
+      'in': 'path'
+      'name': 'dns_rewrite_uid'
+      'required': true
+      'schema':
+        '$ref': '#/components/schemas/Uid'
+
+    'PathClientUid':
+      'description': >
+        The unique ID of a client.
+      'example': 'abcd1234'
+      'in': 'path'
+      'name': 'client_uid'
+      'required': true
+      'schema':
+        '$ref': '#/components/schemas/Uid'
+
+    'PathFilterUid':
+      'description': >
+        The ID of a filter.
+      'example': 'abcd1234'
+      'in': 'path'
+      'name': 'filter_uid'
+      'required': true
+      'schema':
+        '$ref': '#/components/schemas/Uid'
+
+    'PathLeaseUid':
+      'description': >
+        The ID of a static lease.
+      'example': 'abcd1234'
+      'in': 'path'
+      'name': 'lease_uid'
+      'required': true
+      'schema':
+        '$ref': '#/components/schemas/Uid'
+
+    'QueryBefore':
+      'description': >
+        Unix time, before which to show the search results, in milliseconds.
+      'example': 1614345496000
+      'in': 'query'
+      'name': 'before'
+      'required': false
+      'schema':
+        'format': 'double'
+        'type': 'number'
+
+    'QueryClientId':
+      'description': >
+        ClientID, **not** its UID.
+      'example': 'client-1'
+      'in': 'query'
+      'name': 'client_id'
+      'required': false
+      'schema':
+        '$ref': '#/components/schemas/ClientId'
+
+    'QueryHost':
+      'description': >
+        The host for which the Configuration is generated.
+      'example': 'example.org'
+      'in': 'query'
+      'name': 'host'
+      'required': true
+      'schema':
+        'type': 'string'
+
+    'QueryLimit':
+      'description': >
+        Maximum amount of records to return.
+      'example': 100
+      'in': 'query'
+      'name': 'limit'
+      'required': false
+      'schema':
+        'format': 'int64'
+        'type': 'integer'
+
+    'QueryReason':
+      'description': >
+        Filter query log results by filtering reason.
+      'example': 'not_filtered_notfound'
+      'in': 'query'
+      'name': 'reason'
+      'required': false
+      'schema':
+        '$ref': '#/components/schemas/FilteringReason'
+
+    'QueryTerm':
+      'description': >
+        Search term.
+      'example': '127.0.0.1'
+      'in': 'query'
+      'name': 'term'
+      'required': false
+      'schema':
+        'type': 'string'
+
+  'requestBodies':
+    'PatchV1AccountsProfileReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1AccountsProfileReq'
+      'required': true
+
+    'PatchV1ClientPersistentReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1ClientPersistentReq'
+      'required': true
+
+    'PatchV1DhcpLeaseReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1DhcpLeaseReq'
+      'required': true
+
+    'PatchV1ProtectionFilterReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1ProtectionFilterReq'
+      'required': true
+
+    'PatchV1SettingsDhcpReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1SettingsDhcpReq'
+      'required': true
+
+    'PatchV1SettingsDnsReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1SettingsDnsReq'
+      'required': true
+
+    'PatchV1SettingsLogReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1SettingsLogReq'
+      'required': true
+
+    'PatchV1SettingsProtectionReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1SettingsProtectionReq'
+      'required': true
+
+    'PatchV1SettingsStatsReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1SettingsStatsReq'
+      'required': true
+
+    'PatchV1SettingsTlsReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1SettingsTlsReq'
+      'required': true
+
+    'PostV1AccountsSessionReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1AccountsSessionReq'
+      'required': true
+
+    'PostV1ClientsPersistentReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1ClientsPersistentReq'
+      'required': true
+
+    'PostV1DhcpLeasesReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1DhcpLeasesReq'
+      'required': true
+
+    'PostV1InstallCheckReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1InstallCheckReq'
+      'required': true
+
+    'PostV1InstallConfigureReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1InstallConfigureReq'
+      'required': true
+
+    'PostV1LogClearReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1LogClearReq'
+      'required': true
+
+    'PostV1ProtectionCheckCustomRulesReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1ProtectionCheckCustomRulesReq'
+      'required': true
+
+    'PostV1ProtectionDnsRewritesReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1ProtectionDnsRewritesReq'
+      'required': true
+
+    'PostV1ProtectionFiltersReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1ProtectionFiltersReq'
+      'required': true
+
+    'PostV1ProtectionRefreshFilterReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1ProtectionRefreshFilterReq'
+      'required': true
+
+    'PostV1ProtectionRefreshFiltersReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1ProtectionRefreshFiltersReq'
+      'required': true
+
+    'PostV1SettingsDnsCheckReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1SettingsDnsCheckReq'
+      'required': true
+
+    'PostV1SettingsTlsCheckReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1SettingsTlsCheckReq'
+      'required': true
+
+    'PostV1StatsClearReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1StatsClearReq'
+      'required': true
+
+    'PostV1SystemResetReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1SystemResetReq'
+      'required': true
+
+    'PostV1SystemUpdateReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1SystemUpdateReq'
+      'required': true
+
+    'PutV1ProtectionBlockedServicesReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PutV1ProtectionBlockedServicesReq'
+      'required': true
+
+    'PutV1ProtectionCustomRulesReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PutV1ProtectionCustomRulesReq'
+      'required': true
+
+    'PutV1SettingsDnsAccessReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PutV1SettingsDnsAccessReq'
+      'required': true
+
+  'responses':
+    'BadRequestResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/BadRequestResp'
+        'text/plain':
+          'example': >-
+            invalid character '{' looking for beginning of object key string
+          'x-error-class': '#/components/schemas/BadRequestResp'
+          'x-error-code': 'TXT400'
+      'description': >
+        Generic bad request response.  Sent when the request data is malformed
+        (for example, invalid JSON).
+
+    'GetV1AccountsProfileResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1AccountsProfileResp'
+      'description': >
+        A successful response to a `GET /api/v1/accounts/profile` request.
+
+    'GetV1AppleDohMobileconfigResp':
+      'content':
+        'application/xml':
+          'schema':
+            '$ref': '#/components/schemas/GetV1AppleDohMobileconfigResp'
+      'description': >
+        A successful response to a `GET /api/v1/apple/doh.mobileconfig` request.
+
+    'GetV1AppleDotMobileconfigResp':
+      'content':
+        'application/xml':
+          'schema':
+            '$ref': '#/components/schemas/GetV1AppleDotMobileconfigResp'
+      'description': >
+        A successful response to a `GET /api/v1/apple/dot.mobileconfig` request.
+
+    'GetV1ClientsPersistentResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1ClientsPersistentResp'
+      'description': >
+        A successful response to a `GET /api/v1/clients/persistent` request.
+
+    'GetV1ClientsRuntimeResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1ClientsRuntimeResp'
+      'description': >
+        A successful response to a `GET /api/v1/clients/runtime` request.
+
+    'GetV1DhcpLeasesResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1DhcpLeasesResp'
+      'description': >
+        A successful response to a `GET /api/v1/dhcp/leases` request.
+
+    'GetV1DhcpStatusResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1DhcpStatusResp'
+      'description': >
+        A successful response to a `GET /api/v1/dhcp/status` request.
+
+    'GetV1InstallInfoResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1InstallInfoResp'
+      'description': >
+        A successful response to a `GET /api/v1/install/info` request.
+
+    'GetV1LogSearchResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1LogSearchResp'
+      'description': >
+        A successful response to a `GET /api/v1/log/search` request.
+
+    'GetV1ProtectionBlockedServicesResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1ProtectionBlockedServicesResp'
+      'description': >
+        A successful response to a `GET /api/v1/protection/blocked_services`
+        or a `PUT /api/v1/protection/blocked_services` request.
+
+    'GetV1ProtectionCustomRulesResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1ProtectionCustomRulesResp'
+      'description': >
+        A successful response to a `GET /api/v1/protection/custom_rules`
+        request.
+
+    'GetV1ProtectionDnsRewritesResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1ProtectionDnsRewritesResp'
+      'description': >
+        A successful response to a `GET /api/v1/protection/dns_rewrites`
+        request.
+
+    'GetV1ProtectionFiltersResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1ProtectionFiltersResp'
+      'description': >
+        A successful response to a `GET /api/v1/protection/filters` request.
+
+    'GetV1SettingsAllResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1SettingsAllResp'
+      'description': >
+        A successful response to a `GET /api/v1/settings/all` request.
+
+    'GetV1SettingsDnsAccessResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1SettingsDnsAccessResp'
+      'description': >
+        A successful response to a `GET /api/v1/settings/dns/access` request.
+
+    'GetV1StatsAllResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1StatsAllResp'
+      'description': >
+        A successful response to a `GET /api/v1/stats/all` request.
+
+    'GetV1SystemInfoResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/GetV1SystemInfoResp'
+      'description': >
+        A successful response to a `GET /api/v1/server/info` request.
+
+    'InternalServerErrorResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/InternalServerErrorResp'
+        'text/plain':
+          'example': >-
+            runtime error: invalid memory address or nil pointer dereference
+          'x-error-class': '#/components/schemas/InternalServerErrorResp'
+          'x-error-code': 'TXT500'
+      'description': >
+        Generic internal server error.
+
+    'NoContentResp':
+      'description': >
+        Generic no-error no-content response.
+
+    'NotFoundResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/NotFoundResp'
+        'text/plain':
+          'example': >-
+            Not found.
+          'x-error-class': '#/components/schemas/NotFoundResp'
+          'x-error-code': 'TXT404'
+      'description': >
+        Generic not found response.
+
+    'PatchV1AccountsProfileResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1AccountsProfileResp'
+      'description': >
+        A successful response to a `PATCH /api/v1/accounts/profile` request.
+
+    'PatchV1ClientPersistentResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1ClientPersistentResp'
+      'description': >
+        A successful response to
+        a `PATCH /api/v1/clients/persistent/{client_uid}` request.
+
+    'PatchV1DhcpLeaseResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1DhcpLeaseResp'
+      'description': >
+        A successful response to a `PATCH /api/v1/dhcp/leases/{lease_uid}`
+        request.
+
+    'PatchV1ProtectionFilterResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1ProtectionFilterResp'
+      'description': >
+        A successful response to a `PATCH /api/v1/filters/{filter_uid}` request.
+
+    'PatchV1SettingsDhcpResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1SettingsDhcpResp'
+      'description': >
+        A successful response to a `PATCH /api/v1/settings/dhcp` request.
+
+    'PatchV1SettingsDnsResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1SettingsDnsResp'
+      'description': >
+        A successful response to a `PATCH /api/v1/settings/dns` request.
+
+    'PatchV1SettingsLogResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1SettingsLogResp'
+      'description': >
+        A successful response to a `PATCH /api/v1/settings/log` request.
+
+    'PatchV1SettingsProtectionResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1SettingsProtectionResp'
+      'description': >
+        A successful response to a `PATCH /api/v1/settings/protection` request.
+
+    'PatchV1SettingsStatsResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1SettingsStatsResp'
+      'description': >
+        A successful response to a `PATCH /api/v1/settings/stats` request.
+
+    'PatchV1SettingsTlsResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1SettingsTlsResp'
+      'description': >
+        A successful response to a `PATCH /api/v1/settings/tls` request.
+
+    'PostV1ClientsPersistentResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1ClientsPersistentResp'
+      'description': >
+        A successful response to a `POST /api/v1/clients/persistent` request.
+
+    'PostV1DhcpLeasesResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1DhcpLeasesResp'
+      'description': >
+        A successful response to a `POST /api/v1/dhcp/leases` request.
+
+    'PostV1InstallCheckResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1InstallCheckResp'
+      'description': >
+        A successful response to a `POST /api/v1/install/check` request.
+
+    'PostV1ProtectionCheckCustomRulesResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1ProtectionCheckCustomRulesResp'
+      'description': >
+        A successful response to a `POST /api/v1/protection/check_custom_rules`
+        request.
+
+    'PostV1ProtectionDnsRewritesResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1ProtectionDnsRewritesResp'
+      'description': >
+        A successful response to a `POST /api/v1/protection/dns_rewrites`
+        request.
+
+    'PostV1ProtectionFiltersResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1ProtectionFiltersResp'
+      'description': >
+        A successful response to a `POST /api/v1/protection/filters` request.
+
+    'PostV1ProtectionRefreshFilterResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1ProtectionRefreshFilterResp'
+      'description': >
+        A successful response to
+        a `POST /api/v1/protection/refresh_filters/{filter_uid}` request.
+
+    'PostV1ProtectionRefreshFiltersResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1ProtectionRefreshFiltersResp'
+      'description': >
+        A successful response to a `POST /api/v1/protection/refresh_filters`
+        request.
+
+    'PostV1SettingsDnsCheckResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1SettingsDnsCheckResp'
+      'description': >
+        A successful response to a `POST /api/v1/settings/dns/check` request.
+
+    'PostV1SettingsTlsCheckResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1SettingsTlsCheckResp'
+      'description': >
+        A successful response to a `POST /api/v1/settings/tls/check` request.
+
+    'PostV1SystemResetResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1SystemResetResp'
+      'description': >
+        A successful response to a `POST /api/v1/system/reset` request.
+
+    'PostV1SystemUpdateResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PostV1SystemUpdateResp'
+      'description': >
+        A successful response to a `POST /api/v1/system/update` request.
+
+    'UnauthorizedResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/UnauthorizedResp'
+        'text/plain':
+          'example': 'no or bad authorization provided'
+          'x-error-class': '#/components/schemas/UnauthorizedResp'
+          'x-error-code': 'TXT401'
+      'description': >
+        This API requires authorization.
+      'headers':
+        'WWW-Authenticate':
+          'description': >
+            The required WWW-Authenticate header.
+          'example': 'Basic realm="AdGuard Home", charset="UTF-8"'
+          'required': true
+          'schema':
+            'type': 'string'
+
+    'UnprocessableEntityResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/UnprocessableEntityResp'
+      'description': >
+        Generic bad request data response.  Sent when the request data is
+        well-formed but is invalid for this request.
+
+  'schemas':
+    'BadRequestResp':
+      'example':
+        'code': 'JSN000'
+        'msg': >-
+          invalid character '{' looking for beginning of object key string
+      'properties':
+        'code':
+          '$ref': '#/components/schemas/ErrorCode'
+        'msg':
+          'description': >
+            Error message string.
+          'type': 'string'
+      'required':
+      - 'code'
+      - 'msg'
+      'type': 'object'
+
+    'BlockedServiceId':
+      'description': >
+        ID of a blocked service.
+      'enum':
+      - '9gag'
+      - 'amazon'
+      - 'cloudflare'
+      - 'dailymotion'
+      - 'discord'
+      - 'disneyplus'
+      - 'ebay'
+      - 'epic_games'
+      - 'facebook'
+      - 'hulu'
+      - 'imgur'
+      - 'instagram'
+      - 'mail_ru'
+      - 'netflix'
+      - 'ok'
+      - 'origin'
+      - 'pinterest'
+      - 'qq'
+      - 'reddit'
+      - 'skype'
+      - 'snapchat'
+      - 'spotify'
+      - 'steam'
+      - 'telegram'
+      - 'tiktok'
+      - 'tinder'
+      - 'twitch'
+      - 'twitter'
+      - 'viber'
+      - 'vimeo'
+      - 'vk'
+      - 'wechat'
+      - 'weibo'
+      - 'whatsapp'
+      - 'youtube'
+      'type': 'string'
+
+    'BlockedServices':
+      'description': >
+        Blocked services.
+      'example':
+        'services':
+        - '9gag'
+        - 'dailymotion'
+      'properties':
+        'services':
+          'description': >
+            All blocked services.
+          'items':
+            '$ref': '#/components/schemas/BlockedServiceId'
+          'type': 'array'
+      'required':
+      - 'services'
+      'type': 'object'
+
+    'Channel':
+      'description': >
+        AdGuard Home release channel.
+      'enum':
+      - 'beta'
+      - 'development'
+      - 'edge'
+      - 'release'
+      'type': 'string'
+
+    'ClientId':
+      'pattern': '[0-9a-z-]{1,64}'
+      'type': 'string'
+
+    'ClientInfo':
+      'description': >
+        A shorter information about a client.  If the `uid` field is present,
+        this is a persistent client.  Otherwise, this is a runtime client.
+      'properties':
+        'blocked':
+          'description': >
+            If `true`, client is blocked.
+          'type': 'boolean'
+        'ids':
+          'description': |
+            Client identifiers.  That includes ClientIDs set by users as well as
+            IP addresses.  There must be at least one identifier.
+
+            Not to be confused with the `uid` field.
+          'example':
+          - '1.2.3.4'
+          - 'user-1'
+          'items':
+            'type': 'string'
+          'minItems': 1
+          'type': 'array'
+        'name':
+          'description': >
+            The name of the client, if any.  If there are none, this field is
+            absent.
+          'example': 'User 1'
+          'type': 'string'
+        'num':
+          'description': >
+            Total number of requests for this client.
+          'example': 1000
+          'format': 'int64'
+          'type': 'integer'
+        'num_blocked':
+          'description': >
+            Total number of blocked requests for this client.
+          'example': 1000
+          'format': 'int64'
+          'type': 'integer'
+        'uid':
+          '$ref': '#/components/schemas/Uid'
+        'whois':
+          '$ref': '#/components/schemas/Whois'
+      'required':
+      - 'blocked'
+      - 'ids'
+      - 'num'
+      - 'num_blocked'
+      'type': 'object'
+
+    'CustomRules':
+      'description': >
+        Custom filtering rules.
+      'example':
+        'rules':
+        - '||example.com'
+        - '# Some comment'
+      'properties':
+        'rules':
+          'description': >
+            All custom filtering rules
+          'items':
+            'type': 'string'
+          'type': 'array'
+      'required':
+      - 'rules'
+      'type': 'object'
+
+    'DhcpLease':
+      'allOf':
+      - '$ref': '#/components/schemas/DhcpLeasePost'
+      - 'description': >
+          A dynamic or static DHCP lease.  If the `uid` field is present, this is
+          a static lease.  Otherwise, this is a dynamic lease.
+        'example':
+          'expires': 1614345496000
+          'hostname': 'my-mobile'
+          'ip': '192.168.1.2'
+          'mac': '01:23:45:67:89:ab'
+          'uid': 'abcd1234'
+        'properties':
+          'uid':
+            '$ref': '#/components/schemas/Uid'
+
+    'DhcpLeasePatch':
+      'description': >
+        A static DHCP lease update object.
+      'example':
+        'expires': 1614345496000
+      'properties':
+        'expires':
+          'description': >
+            The Unix time of the lease's expiry time, in milliseconds.
+          'format': 'double'
+          'type': 'number'
+        'hostname':
+          'description': >
+            Client's hostname.
+          'type': 'string'
+        'ip':
+          'description': >
+            IP address leased to the client.
+          'type': 'string'
+        'mac':
+          'description': >
+            Hardware address of the lease client.
+          'type': 'string'
+      'type': 'object'
+
+    'DhcpLeasePost':
+      'allOf':
+      - '$ref': '#/components/schemas/DhcpLeasePatch'
+      - 'description': >
+          A static DHCP lease create object.
+        'example':
+          'expires': 1614345496000
+          'hostname': 'my-mobile'
+          'ip': '192.168.1.2'
+          'mac': '01:23:45:67:89:ab'
+        'required':
+        - 'expires'
+        - 'hostname'
+        - 'ip'
+        - 'mac'
+
+    'DhcpSettings':
+      'allOf':
+      - '$ref': '#/components/schemas/DhcpSettingsPatch'
+      - 'description': >
+          DHCP server settings.
+        'example':
+          'enabled': true
+          'interface_name': 'wlan0'
+          'ipv4_gateway_ip': '192.168.1.1'
+          'ipv4_lease_duration': 86400000
+          'ipv4_range_end': '192.168.1.101'
+          'ipv4_range_start': '192.168.1.2'
+          'ipv4_subnet_mask': '255.255.255.0'
+          'ipv6_range_start': '2001:db8::1'
+          'ipv6_lease_duration': 86400000
+        'required':
+        - 'enabled'
+
+    'DhcpSettingsPatch':
+      'description': >
+        DHCP server settings update object.
+      'example':
+        'enabled': true
+        'interface_name': 'wlan0'
+        'ipv4_gateway_ip': '192.168.1.1'
+        'ipv4_lease_duration': 86400000
+        'ipv4_range_end': '192.168.1.101'
+        'ipv4_range_start': '192.168.1.2'
+        'ipv4_subnet_mask': '255.255.255.0'
+      'properties':
+        'enabled':
+          'description': >
+            If `true`, the DHCP server is enabled.
+          'type': 'boolean'
+        'interface_name':
+          'description': >
+            The name of network interface to serve on.
+          'type': 'string'
+        'ipv4_gateway_ip':
+          'description': >
+            The IP address of the gateway.
+          'type': 'string'
+        'ipv4_lease_duration':
+          'description': >
+            The duration of the IPv4 lease, in milliseconds.
+          'type': 'number'
+        'ipv4_range_end':
+          'description': >
+            The end of the IPv4 addresses to serve to clients.
+          'type': 'string'
+        'ipv4_range_start':
+          'description': >
+            The start of the IPv4 addresses to serve to clients.
+          'type': 'string'
+        'ipv4_subnet_mask':
+          'description': >
+            The IP subnet mask.
+          'type': 'string'
+        'ipv6_lease_duration':
+          'description': >
+            The duration of the IPv6 lease, in milliseconds.
+          'type': 'number'
+        'ipv6_range_start':
+          'description': >
+            The start of the IPv6 addresses to serve to clients.
+          'type': 'string'
+      'type': 'object'
+
+    'DnsAccessSettings':
+      'description': >
+        DNS server access settings.
+      'example':
+        'allowed_clients': []
+        'blocked_clients':
+        - '1.2.3.4'
+        - '5.6.7.8/16'
+        'blocked_domain_rules':
+        - 'id.server'
+        - '*.example.org'
+        - '||example.com^'
+      'properties':
+        'allowed_clients':
+          'description': >
+            CIDR or IP addresses of clients in the allowlist.  If non-empty,
+            AdGuard Home will accept requests from these IP addresses only.
+          'items':
+            'type': 'string'
+          'type': 'array'
+        'blocked_clients':
+          'description': >
+            CIDR or IP addresses of clients in the blocklist.  If non-empty,
+            AdGuard Home will drop requests from these IP addresses.
+          'items':
+            'type': 'string'
+          'type': 'array'
+        'blocked_domain_rules':
+          'description': >
+            AdGuard Home will drop DNS queries, if the domains in their queries
+            match these rules.  Here you can specify the exact domain
+            names, wildcards, and `urlfilter` rules.  Examples:
+
+             *  `example.org`
+
+             *  `*.example.org`
+
+             *  `||example.org^`
+          'items':
+            'type': 'string'
+          'type': 'array'
+      'required':
+      - 'allowed_clients'
+      - 'blocked_clients'
+      - 'blocked_domain_rules'
+      'type': 'object'
+
+    'DnsBlockingMode':
+      'description': |
+        DNS blocking mode.
+
+         *  `custom_ip`: Respond with a custom IP address.  If this mode is
+             selected, both `blocking_ipv4` and `blocking_ipv6` parameters must
+             be set.
+
+         *  `default`: Same as `null_ip` for Adblock-style rules, but respond
+             with the IP address specified in the rule when blocked by an
+            `/etc/hosts`-style rule.
+
+         *  `null_ip`: Respond with a zero IP address: `0.0.0.0` for `A`
+             requests and `::` for `AAAA` ones.
+
+         *  `nxdomain`: Respond with the `NXDOMAIN` code.
+
+         *  `refused`: Respond with the `REFUSET` code.
+
+      'enum':
+      - 'custom_ip'
+      - 'default'
+      - 'null_ip'
+      - 'nxdomain'
+      - 'refused'
+      'type': 'string'
+
+    'DnsClass':
+      'description': >
+        DNS resource record class, aka `CLASS`.
+      'enum':
+      - 'any'
+      - 'ch'
+      - 'cs'
+      - 'hs'
+      - 'in'
+      'type': 'string'
+
+    'DnsProto':
+      'description': >
+        DNS protocol.
+      'enum':
+      - 'dot'
+      - 'doh'
+      - 'doq'
+      - 'dnscrypt'
+      - 'udp'
+      'type': 'string'
+
+    'DnsResponseCode':
+      'description': >
+        DNS response code, aka `RCODE`.
+      'enum':
+      - 'badalg'
+      - 'badcookie'
+      - 'badkey'
+      - 'badmode'
+      - 'badname'
+      - 'badsig'
+      - 'badtime'
+      - 'badtrunc'
+      - 'badvers'
+      - 'formerr'
+      - 'noerror'
+      - 'notauth'
+      - 'notimp'
+      - 'notzone'
+      - 'nxdomain'
+      - 'nxrrset'
+      - 'refused'
+      - 'servfail'
+      - 'yxdomain'
+      - 'yxrrset'
+      'type': 'string'
+
+    'DnsRewrite':
+      'allOf':
+      - '$ref': '#/components/schemas/DnsRewritePost'
+      - 'description': >
+          A classic DNS rewrite.
+        'example':
+          'answer': 'A'
+          'domain': 'example.com'
+          'id': 'abcd1234'
+        'properties':
+          'id':
+            '$ref': '#/components/schemas/Uid'
+        'required':
+        - 'answer'
+        - 'domain'
+        - 'id'
+        'type': 'object'
+
+    'DnsRewritePost':
+      'description': >
+        A classic DNS rewrite create object.
+      'example':
+        'answer': 'A'
+        'domain': 'example.com'
+      'properties':
+        'answer':
+          'description': >
+            The value of an `A`, `AAAA`, or `CNAME` DNS record in the response.
+            Acceptable formats:
+
+             *   Domain name: add a `CNAME` record with this domain name.
+
+             *   IPv4 address: use this IP in an `A` response.
+
+             *   IPv6 address: use this IP in an `AAAA` response.
+
+             *   The literal `A`: keep only `A` records from the upstream
+                 response.
+
+             *   The literal `AAAA`: keep only `AAAA` records from the upstream
+                 response.
+          'type': 'string'
+        'domain':
+          'description': >
+            Domain name or wildcard.
+          'type': 'string'
+      'required':
+      - 'answer'
+      - 'domain'
+      'type': 'object'
+
+    'DnsSettings':
+      'allOf':
+      - '$ref': '#/components/schemas/DnsSettingsPatch'
+      - 'description': >
+          DNS server settings.
+        'example':
+          'blocking_mode': 'default'
+          'bootstrap_servers':
+          - '9.9.9.10'
+          - '149.112.112.10'
+          'cache_size': 4194304
+          'cache_ttl_max': 0
+          'cache_ttl_min': 0
+          'dnssec': false
+          'edns_client_subnet': false
+          'ipv6': true
+          'rate_limit': 20
+          'upstream_mode': 'load_balancing'
+          'upstream_servers':
+          - '1.1.1.1'
+          - '8.8.8.8'
+        'required':
+        - 'blocking_mode'
+        - 'bootstrap_servers'
+        - 'cache_size'
+        - 'cache_ttl_max'
+        - 'cache_ttl_min'
+        - 'dnssec'
+        - 'edns_client_subnet'
+        - 'ipv6'
+        - 'rate_limit'
+        - 'upstream_mode'
+        - 'upstream_servers'
+
+    'DnsSettingsPatch':
+      'description': >
+        DNS server settings update object.
+      'example':
+        'cache_size': 4194304
+        'upstream_servers':
+        - '1.1.1.1'
+      'properties':
+        'blocking_ipv4':
+          'description': >
+            IPv4 address to respond with when `blocking_mode` is `custom_ip`.
+            See the documentation for the `DnsBlockingMode` schema.  If
+            `blocking_mode` is different from `custom_ip`, this property is not
+            included.
+          'type': 'string'
+        'blocking_ipv6':
+          'description': >
+            IPv6 address to respond with when `blocking_mode` is `custom_ip`.
+            See the documentation for the `DnsBlockingMode` schema.  If
+            `blocking_mode` is different from `custom_ip`, this property is not
+            included.
+          'type': 'string'
+        'blocking_mode':
+          '$ref': '#/components/schemas/DnsBlockingMode'
+        'bootstrap_servers':
+          'description': |
+            Bootstrap DNS servers' IP addresses to resolve the hostnames of the
+            encrypted DNS server providers.
+          'items':
+            'type': 'string'
+          'type': 'array'
+        'cache_size':
+          'description': >
+            DNS cache size in bytes.
+          'format': 'int64'
+          'minimum': 0
+          'type': 'integer'
+        'cache_ttl_max':
+          'description': >
+            Set a maximum time-to-live value for entries in the DNS cache.  `0`
+            means no override.  The value is in **seconds**, like in DNS record
+            headers.
+          'format': 'int64'
+          'minimum': 0
+          'type': 'integer'
+        'cache_ttl_min':
+          'description': >
+            Extend short time-to-live values received from the upstream server
+            when caching DNS responses.  `0` means no override.  TThe value is
+            in **seconds**, like in DNS record headers.
+          'format': 'int64'
+          'minimum': 0
+          'type': 'integer'
+        'dnssec':
+          'description': >
+            If `true`, set DNSSEC flag in outcoming DNS queries and check the
+            result.  A DNSSEC-enabled resolver is required.
+          'type': 'boolean'
+        'edns_client_subnet':
+          'description': >
+            If `true`, enable EDNS Client Subnet support and send clients'
+            subnets to DNS servers.
+          'type': 'boolean'
+        'ipv6':
+          'description': >
+            If `true`, accept `AAAA` DNS queries.  If `false`, respond to them
+            with an empty answer.
+          'type': 'boolean'
+        'rate_limit':
+          'description': >
+            The number of requests per second that a single client is allowed to
+            make.  `0` means no limit.
+          'format': 'int64'
+          'minimum': 0
+          'type': 'integer'
+        'upstream_mode':
+          '$ref': '#/components/schemas/DnsUpstreamMode'
+        'upstream_servers':
+          'description': >
+            Upstream DNS servers.
+          'items':
+            '$ref': '#/components/schemas/UpstreamServerAddr'
+          'type': 'array'
+      'type': 'object'
+
+    'DnsType':
+      'description': >
+        DNS resource record type, aka `TYPE`.
+      'enum':
+      - 'a'
+      - 'aaaa'
+      - 'afsdb'
+      - 'any'
+      - 'apl'
+      - 'atma'
+      - 'avc'
+      - 'axfr'
+      - 'caa'
+      - 'cdnskey'
+      - 'cds'
+      - 'cert'
+      - 'cname'
+      - 'csync'
+      - 'dhcid'
+      - 'dlv'
+      - 'dname'
+      - 'dnskey'
+      - 'ds'
+      - 'eid'
+      - 'eui48'
+      - 'eui64'
+      - 'gid'
+      - 'gpos'
+      - 'hinfo'
+      - 'hip'
+      - 'https'
+      - 'isdn'
+      - 'ixfr'
+      - 'key'
+      - 'kx'
+      - 'l32'
+      - 'l64'
+      - 'loc'
+      - 'lp'
+      - 'maila'
+      - 'mailb'
+      - 'mb'
+      - 'md'
+      - 'mf'
+      - 'mg'
+      - 'minfo'
+      - 'mr'
+      - 'mx'
+      - 'naptr'
+      - 'nid'
+      - 'nimloc'
+      - 'ninfo'
+      - 'ns'
+      - 'nsap-ptr'
+      - 'nsec'
+      - 'nsec3'
+      - 'nsec3param'
+      - 'null'
+      - 'nxt'
+      - 'openpgpkey'
+      - 'opt'
+      - 'ptr'
+      - 'px'
+      - 'rkey'
+      - 'rp'
+      - 'rrsig'
+      - 'rt'
+      - 'sig'
+      - 'smimea'
+      - 'soa'
+      - 'spf'
+      - 'srv'
+      - 'sshfp'
+      - 'svcb'
+      - 'ta'
+      - 'talink'
+      - 'tkey'
+      - 'tlsa'
+      - 'tsig'
+      - 'txt'
+      - 'uid'
+      - 'uinfo'
+      - 'unspec'
+      - 'uri'
+      - 'x25'
+      'type': 'string'
+
+    'DnsUpstreamMode':
+      'description': |
+        Upstream request mode.
+
+         *  `fastest`: Query all DNS servers and return the IP address that was
+             returned by the fastest response.  Slows down DNS responses, since
+             it waits for responses from all upstreams, but improves the overall
+             connectivity.
+
+         *  `load_balancing`: Query one server at a time using a weighted random
+             algorithm picking the server so that the fastest server is used
+             more often.
+
+         *  `parallel`: Use parallel requests to speed up resolving by
+             simultaneously querying all upstream servers.
+      'enum':
+      - 'fastest'
+      - 'load_balancing'
+      - 'parallel'
+      'type': 'string'
+
+    'ErrorCode':
+      'description': |
+        An error code.
+
+         *  `AUT000`:  No or bad authorization credentials provided.
+
+         *  `ENT404`:  Entity not found; as opposed to path not found.
+
+         *  `JSN000`:  A JSON syntax error.
+
+         *  `JSN001`:  A JSON type error.
+
+         *  `OSS000`:  The server's operating system doesn't support the
+             requested functionality.
+
+         *  `PTH404`:  Path not found; as opposed to entity not found.
+
+         *  `RNT000`:  A server runtime error.
+
+         *  `TXT400`:  A plaintext bad request error.  Used when a plaintext
+             error is wrapped.
+
+         *  `TXT401`:  A plaintext unauthorized error.  Used when a plaintext
+             error is wrapped.
+
+         *  `TXT404`:  A plaintext not found error.  Used when a plaintext error
+             is wrapped.
+
+         *  `TXT500`:  A plaintext internal server error.  Used when a plaintext
+             error is wrapped.
+
+        TODO(a.garipov): Expand with TLS validation errors, DHCP errors, filter
+        URL reaching errors, OS and I/O errors, and so on.
+      'enum':
+      - 'AUT000'
+      - 'ENT404'
+      - 'JSN000'
+      - 'JSN001'
+      - 'OSS000'
+      - 'PTH404'
+      - 'RNT000'
+      - 'TXT400'
+      - 'TXT401'
+      - 'TXT404'
+      - 'TXT500'
+      'type': 'string'
+
+    'Filter':
+      'allOf':
+      - '$ref': '#/components/schemas/FilterPatch'
+      - 'description': >
+          A single filter list of rules.
+        'example':
+          'allowlist': false
+          'enabled': true
+          'name': 'AdMaster 5000 Super List v2.0 Final'
+          'num_rules': 36766
+          'refreshed': 1614345496000
+          'uid': 'abcd1234'
+          'url': 'https://admaster.example.com/list.txt'
+        'properties':
+          'num_rules':
+            'description': >
+              Number of rules in this filter.
+            'format': 'int64'
+            'minimum': 0
+            'type': 'integer'
+          'refreshed':
+            'description': >
+              Unix time of last refresh for this filter, in milliseconds.
+            'format': 'double'
+            'type': 'number'
+          'uid':
+            '$ref': '#/components/schemas/Uid'
+        'required':
+        - 'allowlist'
+        - 'enabled'
+        - 'name'
+        - 'num_rules'
+        - 'refreshed'
+        - 'uid'
+        - 'url'
+
+    'FilterPatch':
+      'description': >
+        A filter update object.
+      'example':
+        'enabled': true
+      'properties':
+        'allowlist':
+          'description': >
+            If `true`, this filter works as an allowlist filters.
+          'type': 'boolean'
+        'enabled':
+          'description': >
+            If `true`, this filter is applied.
+          'type': 'boolean'
+        'name':
+          'description': >
+            The name of this filter.
+          'type': 'string'
+        'url':
+          'description': |
+            A URL of the file containing filtering rules.
+
+            Examples of allowed schemes:
+
+             *  `file:///home/user/ads/rules.txt`: A local file.
+
+             *  `http://example.com/ads/rules.txt`: Remote list, fetched over
+                 plain HTTP.
+
+             *  `https://example.com/ads/rules.txt`: Remote list, fetched over
+                 HTTPS.
+          'type': 'string'
+      'type': 'object'
+
+    'FilterPost':
+      'allOf':
+      - '$ref': '#/components/schemas/FilterPatch'
+      - 'description': >
+          A filter create object.
+        'example':
+          'allowlist': false
+          'enabled': true
+          'name': 'AdMaster 5000 Super List v2.0 Final'
+          'url': 'https://admaster.example.com/list.txt'
+        'required':
+        - 'allowlist'
+        - 'enabled'
+        - 'name'
+        - 'url'
+
+    'FilteringReason':
+      'description': >
+        Request filtering status.
+      'enum':
+      - 'filtered_blocked_service'
+      - 'filtered_blocklist'
+      - 'filtered_invalid'
+      - 'filtered_parental'
+      - 'filtered_safe_browsing'
+      - 'filtered_safe_search'
+      - 'not_filtered_allowlist'
+      - 'not_filtered_error'
+      - 'not_filtered_notfound'
+      - 'rewrite'
+      - 'rewrite_etc_hosts'
+      - 'rewrite_rule'
+      'type': 'string'
+
+    'FilteringResultRule':
+      'description': >
+        Applied filtering rule.
+      'properties':
+        'filter_list_uid':
+          '$ref': '#/components/schemas/Uid'
+        'text':
+          'description': >
+            The text of the filtering rule applied to the request, if any.
+          'type': 'string'
+      'required':
+      - 'filter_list_uid'
+      - 'text'
+      'type': 'object'
+
+    'GetV1AccountsProfileResp':
+      '$ref': '#/components/schemas/Profile'
+
+    # TODO(a.garipov): Find a way to describe such XML documents using OpenAPI.
+    # If that is even possible.
+    'GetV1AppleDohMobileconfigResp':
+      'example': |
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+          <dict>
+            <key>PayloadContent</key>
+            <array>
+              <dict>
+                <key>DNSSettings</key>
+                <dict>
+                  <key>DNSProtocol</key>
+                  <string>HTTPS</string>
+                  <key>ServerName</key>
+                  <string>example.com</string>
+                  <key>ServerURL</key>
+                  <string>https://example.com/dns-query/123</string>
+                </dict>
+                <key>Name</key>
+                <string>myexample.local DoH</string>
+                <key>PayloadDescription</key>
+                <string>Configures device to use AdGuard Home</string>
+                <key>PayloadDisplayName</key>
+                <string>myexample.local DoH</string>
+                <key>PayloadIdentifier</key>
+                <string>com.apple.dnsSettings.managed.b6928468-ae3a-4368-a70d-cb7122275013</string>
+                <key>PayloadType</key>
+                <string>com.apple.dnsSettings.managed</string>
+                <key>PayloadUUID</key>
+                <string>18526b8c-6065-4b96-b635-9cde769ac0f2</string>
+                <key>PayloadVersion</key>
+                <integer>1</integer>
+              </dict>
+            </array>
+            <key>PayloadDescription</key>
+            <string>Adds AdGuard Home to Big Sur and iOS 14 or newer systems</string>
+            <key>PayloadDisplayName</key>
+            <string>myexample.local DoH</string>
+            <key>PayloadIdentifier</key>
+            <string>9a37b659-7541-4f9e-8b4d-6e2a59a123c8</string>
+            <key>PayloadRemovalDisallowed</key>
+            <false/>
+            <key>PayloadType</key>
+            <string>Configuration</string>
+            <key>PayloadUUID</key>
+            <string>255dbaf7-0c52-4855-9b22-ad8209690197</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+          </dict>
+        </plist>
+      'type': 'object'
+
+    # TODO(a.garipov): See the comment on GetV1AppleDohMobileconfigResp.
+    'GetV1AppleDotMobileconfigResp':
+      'example': |
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+          <dict>
+            <key>PayloadContent</key>
+            <array>
+              <dict>
+                <key>DNSSettings</key>
+                <dict>
+                  <key>DNSProtocol</key>
+                  <string>TLS</string>
+                  <key>ServerName</key>
+                  <string>123.example.com</string>
+                </dict>
+                <key>Name</key>
+                <string>example.com DoT</string>
+                <key>PayloadDescription</key>
+                <string>Configures device to use AdGuard Home</string>
+                <key>PayloadDisplayName</key>
+                <string>example.com DoT</string>
+                <key>PayloadIdentifier</key>
+                <string>com.apple.dnsSettings.managed.7807cb66-c6ec-4c78-be29-d8ffcb3321ee</string>
+                <key>PayloadType</key>
+                <string>com.apple.dnsSettings.managed</string>
+                <key>PayloadUUID</key>
+                <string>b0fb9137-e27a-4f95-abc3-556103ad9ac1</string>
+                <key>PayloadVersion</key>
+                <integer>1</integer>
+              </dict>
+            </array>
+            <key>PayloadDescription</key>
+            <string>Adds AdGuard Home to Big Sur and iOS 14 or newer systems</string>
+            <key>PayloadDisplayName</key>
+            <string>myexample.local DoT</string>
+            <key>PayloadIdentifier</key>
+            <string>f1095036-406e-4243-8210-cf0ffa52b3f6</string>
+            <key>PayloadRemovalDisallowed</key>
+            <false/>
+            <key>PayloadType</key>
+            <string>Configuration</string>
+            <key>PayloadUUID</key>
+            <string>21cd3597-0769-486a-86d0-7b5e32d24305</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+          </dict>
+        </plist>
+      'type': 'object'
+
+    'GetV1ClientsPersistentResp':
+      'description': >
+        Persistent clients.
+      'example':
+        'clients':
+        - 'blocked': false
+          'blocked_services': []
+          'filtering': false
+          'ids': ['client-1']
+          'name': 'Client 1'
+          'parental': false
+          'safe_browsing': false
+          'safe_search': false
+          'tags': ['user_admin']
+          'use_global_blocked_services': true
+          'use_global_settings': true
+          'uid': 'abcd1234'
+          'upstream_servers': []
+        - 'blocked': false
+          'blocked_services': []
+          'filtering': true
+          'ids': ['client-2']
+          'name': 'Client 2'
+          'parental': true
+          'safe_browsing': true
+          'safe_search': true
+          'tags': ['user_child']
+          'use_global_blocked_services': false
+          'use_global_settings': false
+          'uid': 'efgh5678'
+          'upstream_servers': []
+      'properties':
+        'clients':
+          'description': >
+            All persistent clients.
+          'items':
+            '$ref': '#/components/schemas/PersistentClient'
+          'type': 'array'
+      'required':
+      - 'clients'
+      'type': 'object'
+
+    'GetV1ClientsRuntimeResp':
+      'description': >
+        Runtime clients.
+      'example':
+        'clients':
+        - 'host': 'my-box'
+          'ip': '1.2.3.4'
+          'num_blocked_requests': 0
+          'num_requests': 100
+          'sources':
+          - 'arp'
+        - 'ip': '5.6.7.8'
+          'num_blocked_requests': 100
+          'num_requests': 100
+          'sources':
+          - 'whois'
+          'whois':
+            'city': 'Minsk'
+            'country': 'BY'
+      'properties':
+        'clients':
+          'description': >
+            All runtime clients.
+          'items':
+            '$ref': '#/components/schemas/RuntimeClient'
+          'type': 'array'
+      'required':
+      - 'clients'
+      'type': 'object'
+
+    'GetV1DhcpLeasesResp':
+      'description': >
+        All dynamic and static DHCP leases.
+      'example':
+        'leases':
+        - 'expires': 1614345496000
+          'hostname': 'my-mobile'
+          'ip': '192.168.1.2'
+          'mac': '01:23:45:67:89:ab'
+          'uid': 'abcd1234'
+        - 'expires': 1614345497000
+          'hostname': ''
+          'ip': '192.168.1.3'
+          'mac': '01:23:45:67:89:cd'
+      'properties':
+        'leases':
+          'description': >
+            Dynamic and static DHCP leases.
+          'items':
+            '$ref': '#/components/schemas/DhcpLease'
+          'type': 'array'
+      'required':
+      - 'leases'
+      'type': 'object'
+
+    'GetV1DhcpStatusResp':
+      'description': >
+        Current DHCP server status and data for enabling it.
+      'example':
+        'interfaces':
+        - 'ips':
+          - '192.168.1.1'
+          'mac': '01:23:45:67:89:ab'
+          'mtu': 1500
+          'name': 'lan0'
+          'up': true
+        'ipv4_other_servers':
+          'ips':
+          - '192.169.1.1'
+        'ipv4_static_ip':
+          'ip': '192.168.1.1'
+          'static': true
+          'supported': true
+        'ipv6_other_servers':
+          'ips': []
+          'error': 'permission denied'
+        'ipv6_static_ip':
+          'ip': '200f::1'
+          'static': true
+          'supported': true
+      'properties':
+        'interfaces':
+          'description': >
+            Available network interfaces.
+          'items':
+            '$ref': '#/components/schemas/NetworkInterface'
+          'type': 'array'
+        'ipv4_other_servers':
+          '$ref': '#/components/schemas/GetV1DhcpStatusRespOtherServer'
+        'ipv4_static_ip':
+          '$ref': '#/components/schemas/StaticIpCheckResult'
+        'ipv6_other_servers':
+          '$ref': '#/components/schemas/GetV1DhcpStatusRespOtherServer'
+        'ipv6_static_ip':
+          '$ref': '#/components/schemas/StaticIpCheckResult'
+      'required':
+      - 'interfaces'
+      - 'ipv4_other_servers'
+      - 'ipv4_static_ip'
+      - 'ipv6_other_servers'
+      - 'ipv6_static_ip'
+      'type': 'object'
+
+    'GetV1DhcpStatusRespOtherServer':
+      'properties':
+        'error':
+          'description': >
+            Error, if any.  If there is no error, this field is absent.
+          'type': 'string'
+        'ips':
+          'description': >
+            IP addresses of other DHCP servers, if found.
+      'required':
+      - 'ips'
+      'type': 'object'
+
+    'GetV1InstallInfoResp':
+      'description': >
+        AdGuard Home addresses configuration.
+      'example':
+        'dns_port': 53
+        'interfaces':
+        - 'ips':
+          - '192.168.1.1'
+          'mac': '01:23:45:67:89:ab'
+          'mtu': 1500
+          'name': 'lan0'
+          'up': true
+        'web_port': 80
+      'properties':
+        'dns_port':
+          'description': >
+            Recommended DNS port.
+          'format': 'int64'
+          'maximum': 65535
+          'minimum': 0
+          'type': 'integer'
+        'interfaces':
+          'description': >
+            Available network interfaces.
+          'items':
+            '$ref': '#/components/schemas/NetworkInterface'
+          'type': 'array'
+        'web_port':
+          'description': >
+            Recommended web interface port.
+          'format': 'int64'
+          'maximum': 65535
+          'minimum': 0
+          'type': 'integer'
+      'required':
+      - 'dns_port'
+      - 'interfaces'
+      - 'web_port'
+      'type': 'object'
+
+    'GetV1LogSearchResp':
+      'description': >
+        Query log search results.
+      'example':
+        'results':
+        - 'answer':
+          - 'ttl': 60
+            'type': 'a'
+            'value': '5.6.7.8'
+          'answer_dnssec': false
+          'client':
+            'blocked': false
+            'ids':
+            - '1.2.3.4'
+            - 'user-1'
+            'name': 'User 1'
+            'num': 100
+            'num_blocked': 50
+            'uid': 'abcd1234'
+            'whois':
+              'city': 'Minsk'
+              'country': 'BY'
+          'elapsed': 3.2
+          'proto': 'udp'
+          'question':
+            'class': 'in'
+            'host': 'example.com'
+            'type': 'a'
+          'rcode': 'noerror'
+          'reason': 'not_filtered_notfound'
+          'rules': []
+          'start': 1614345496000
+          'upstream': '8.8.8.8'
+      'properties':
+        'results':
+          'description': >
+            The query log.
+          'items':
+            '$ref': '#/components/schemas/LogRecord'
+          'type': 'array'
+      'required':
+      - 'results'
+      'type': 'object'
+
+    'GetV1ProtectionBlockedServicesResp':
+      '$ref': '#/components/schemas/BlockedServices'
+
+    'GetV1ProtectionCustomRulesResp':
+      '$ref': '#/components/schemas/CustomRules'
+
+    'GetV1ProtectionDnsRewritesResp':
+      'description': >
+        Classic DNS rewrites.
+      'example':
+        'rules':
+        - 'answer': 'A'
+          'domain': 'example.com'
+          'id': 'abcd1234'
+        - 'answer': '0.0.0.0'
+          'domain': '*.example.org'
+          'id': 'efgh5678'
+        - 'answer': 'my.example.net'
+          'domain': 'example.net'
+          'id': 'ijkl9012'
+      'properties':
+        'rules':
+          'description': >
+            All classic DNS rewrites.
+          'items':
+            '$ref': '#/components/schemas/DnsRewrite'
+          'type': 'array'
+      'required':
+      - 'rules'
+      'type': 'object'
+
+    'GetV1ProtectionFiltersResp':
+      'description': >
+        Filters.
+      'example':
+        'filters':
+        - 'allowlist': false
+          'enabled': true
+          'name': 'AdMaster 5000 Super List v2.0 Final'
+          'num_rules': 36766
+          'refreshed': 1614345496000
+          'uid': 'abcd1234'
+          'url': 'https://admaster.example.com/list.txt'
+        - 'allowlist': false
+          'enabled': true
+          'name': 'My personal list'
+          'num_rules': 0
+          'refreshed': 1614345497000
+          'uid': 'efgh5678'
+          'url': 'file:///home/user/Documents/ad_list.txt'
+      'properties':
+        'filters':
+          'description': >
+            All current filters.
+          'items':
+            '$ref': '#/components/schemas/Filter'
+          'type': 'array'
+      'required':
+      - 'filters'
+      'type': 'object'
+
+    # Perhaps a lot of these belong in separate APIs, but our colleagues asked
+    # to pack as much data into every request as reasonably possible.
+    'GetV1SettingsAllResp':
+      'description': >
+        Most settings.
+      # Don't add examples, as are provided by the subclasses.
+      'properties':
+        'dhcp':
+          '$ref': '#/components/schemas/DhcpSettings'
+        'dns':
+          '$ref': '#/components/schemas/DnsSettings'
+        'log':
+          '$ref': '#/components/schemas/LogSettings'
+        'protection':
+          '$ref': '#/components/schemas/ProtectionSettings'
+        'stats':
+          '$ref': '#/components/schemas/StatsSettings'
+        'tls':
+          '$ref': '#/components/schemas/TlsSettings'
+      'required':
+      - 'dhcp'
+      - 'dns'
+      - 'log'
+      - 'protection'
+      - 'stats'
+      - 'tls'
+      'type': 'object'
+
+    'GetV1SettingsDnsAccessResp':
+      '$ref': '#/components/schemas/DnsAccessSettings'
+
+    # See the comment on the GetV1SettingsAllResp schema.
+    'GetV1StatsAllResp':
+      'description': >
+        All statistics.
+      'example':
+        'dns_cache_hit_rate': 56.7
+        'dns_cache_records': 123
+        'graph_avg_processing':
+        - 3.0
+        - 0.4
+        'graph_blocked_ad_queries':
+        - 10
+        - 20
+        'graph_blocked_custom_rule_queries':
+        - 10
+        - 20
+        'graph_blocked_domains':
+        - 10
+        - 20
+        'graph_blocked_parental_control_queries':
+        - 10
+        - 20
+        'graph_blocked_safe_browsing_queries':
+        - 10
+        - 20
+        'graph_blocked_safe_search_queries':
+        - 10
+        - 20
+        'graph_blocked_service_queries':
+        - 10
+        - 20
+        'graph_blocked_tracker_queries':
+        - 10
+        - 20
+        'graph_cpu_percent':
+        - 50
+        - 75
+        'graph_domains':
+        - 20
+        - 30
+        'graph_queries':
+        - 1000
+        - 2002
+        'graph_ram_resident':
+        - 1048576
+        - 2097152
+        'time_unit': 'hour'
+        'top_blocked_domains':
+        - 'name': 'example.net'
+          'num': 100
+        'top_clients':
+        - 'blocked': false
+          'ids':
+          - '1.2.3.4'
+          - 'user-1'
+          'name': 'User 1'
+          'num': 100
+          'num_blocked': 50
+          'uid': 'abcd1234'
+          'whois':
+            'city': 'Minsk'
+            'country': 'BY'
+        - 'blocked': true
+          'ids':
+          - '5.6.7.8'
+          'num': 100
+          'num_blocked': 100
+        'top_domains':
+        - 'name': 'example.com'
+          'num': 1000
+        - 'name': 'example.net'
+          'num': 100
+        'total_blocked_ad_queries': 100
+        'total_blocked_custom_rule_queries': 10
+        'total_blocked_domains': 500
+        'total_blocked_parental_control_queries': 10
+        'total_blocked_safe_browsing_queries': 10
+        'total_blocked_safe_search_queries': 10
+        'total_blocked_service_queries': 10
+        'total_blocked_tracker_queries': 10
+        'total_domains': 1000
+        'total_queries': 10000
+      'properties':
+        'dns_cache_hit_rate':
+          'description': >
+            DNS cache hit rate, in percent.
+          'maximum': 100.0
+          'minimum': 0.0
+          'format': 'double'
+          'type': 'number'
+        'dns_cache_records':
+          'description': >
+            Number of DNS responses currently in cache.
+          'minimum': 0
+          'format': 'int64'
+          'type': 'integer'
+        'graph_avg_processing':
+          'description': >
+            Average DNS query processing duration graph information.  Each item
+            is one `time_unit` long.  The duration is in milliseconds.  Sorted
+            by time in descending order.
+          'items':
+            'format': 'double'
+            'type': 'number'
+          'type': 'array'
+        'graph_blocked_ad_queries':
+          'description': >
+            Number of queries blocked by advertising filters graph information.
+            Each item is one `time_unit` long.  Sorted by time in descending
+            order.
+          'items':
+            'format': 'int64'
+            'type': 'integer'
+          'type': 'array'
+        'graph_blocked_custom_rule_queries':
+          'description': >
+            Number of queries blocked by custom filtering rules graph
+            information.  Each item is one `time_unit` long.  Sorted by time in
+            descending order.
+          'items':
+            'format': 'int64'
+            'type': 'integer'
+          'type': 'array'
+        'graph_blocked_domains':
+          'description': >
+            Blocked queried domains graph information.  Each item is one
+            `time_unit` long.  Sorted by time in descending order.
+          'items':
+            'format': 'int64'
+            'type': 'integer'
+          'type': 'array'
+        'graph_blocked_parental_control_queries':
+          'description': >
+            Number of queries blocked by parental control services graph
+            information.  Each item is one `time_unit` long.  Sorted by time in
+            descending order.
+          'items':
+            'format': 'int64'
+            'type': 'integer'
+          'type': 'array'
+        'graph_blocked_safe_browsing_queries':
+          'description': >
+            Number of queries blocked by safe browsing services graph
+            information.  Each item is one `time_unit` long.  Sorted by time in
+            descending order.
+          'items':
+            'format': 'int64'
+            'type': 'integer'
+          'type': 'array'
+        'graph_blocked_safe_search_queries':
+          'description': >
+            Number of queries blocked by safe search services graph information.
+            Each item is one `time_unit` long.  Sorted by time in descending
+            order.
+          'items':
+            'format': 'int64'
+            'type': 'integer'
+          'type': 'array'
+        'graph_blocked_service_queries':
+          'description': >
+            Number of queries blocked by blocked service settings graph
+            information.  Each item is one `time_unit` long.  Sorted by time in
+            descending order.
+          'items':
+            'format': 'int64'
+            'type': 'integer'
+          'type': 'array'
+        'graph_blocked_tracker_queries':
+          'description': >
+            Number of queries blocked by tracker filters graph information.
+            Each item is one `time_unit` long.  Sorted by time in descending
+            order.
+          'items':
+            'format': 'int64'
+            'type': 'integer'
+          'type': 'array'
+        'graph_cpu_percent':
+          'description': >
+            CPU usage percentage graph information.  Each item is one
+            `time_unit` long.  Sorted by time in descending order.
+          'items':
+            'format': 'double'
+            'type': 'number'
+          'type': 'array'
+        'graph_domains':
+          'description': >
+            Queried domains graph information.  Each item is one `time_unit`
+            long.  Sorted by time in descending order.
+          'items':
+            'format': 'int64'
+            'type': 'integer'
+          'type': 'array'
+        'graph_queries':
+          'description': >
+            Number of served DNS queries graph information.  Each item is one
+            `time_unit` long.  Sorted by time in descending order.
+          'items':
+            'format': 'int64'
+            'type': 'integer'
+          'type': 'array'
+        'graph_ram_resident':
+          'description': >
+            AdGuard Home's resident memory usage graph information.  The size is
+            in bytes.  Each item is one `time_unit` long.  Sorted by time in
+            descending order.
+          'items':
+            'format': 'int64'
+            'type': 'integer'
+          'type': 'array'
+        'time_unit':
+          '$ref': '#/components/schemas/TimeUnit'
+        'top_blocked_domains':
+          'description': >
+            Top blocked queried domains.  Sorted by number in descending order.
+          'items':
+            '$ref': '#/components/schemas/GetV1StatsAllRespTopsItem'
+          'type': 'array'
+        'top_clients':
+          'description': >
+            Top clients.  Sorted by number in descending order.
+          'items':
+            '$ref': '#/components/schemas/ClientInfo'
+          'type': 'array'
+        'top_domains':
+          'description': >
+            Top queried domains.  Sorted by number in descending order.
+          'items':
+            '$ref': '#/components/schemas/GetV1StatsAllRespTopsItem'
+          'type': 'array'
+        'total_blocked_ad_queries':
+          'description': >
+            Total number of queries blocked by advertising filters.
+          'format': 'int64'
+          'type': 'integer'
+        'total_blocked_custom_rule_queries':
+          'description': >
+            Total number of queries blocked by custom filtering rules.
+          'format': 'int64'
+          'type': 'integer'
+        'total_blocked_domains':
+          'description': >
+            Total number of blocked queried domains.
+          'format': 'int64'
+          'type': 'integer'
+        'total_blocked_parental_control_queries':
+          'description': >
+            Total number of queries blocked by parental control services.
+          'format': 'int64'
+          'type': 'integer'
+        'total_blocked_safe_browsing_queries':
+          'description': >
+            Total number of queries blocked by safe browsing services.
+          'format': 'int64'
+          'type': 'integer'
+        'total_blocked_safe_search_queries':
+          'description': >
+            Total number of queries blocked by safe search services.
+          'format': 'int64'
+          'type': 'integer'
+        'total_blocked_service_queries':
+          'description': >
+            Total number of queries blocked by blocked service settings.
+          'format': 'int64'
+          'type': 'integer'
+        'total_blocked_tracker_queries':
+          'description': >
+            Total number of queries blocked by tracker filters.
+          'format': 'int64'
+          'type': 'integer'
+        'total_domains':
+          'description': >
+            Total number of queried domains.
+          'format': 'int64'
+          'type': 'integer'
+        'total_queries':
+          'description': >
+            Total number of served DNS queries.
+          'format': 'int64'
+          'type': 'integer'
+      'required':
+      - 'dns_cache_hit_rate'
+      - 'dns_cache_records'
+      - 'graph_avg_processing'
+      - 'graph_blocked_ad_queries'
+      - 'graph_blocked_custom_rule_queries'
+      - 'graph_blocked_domains'
+      - 'graph_blocked_parental_control_queries'
+      - 'graph_blocked_safe_browsing_queries'
+      - 'graph_blocked_safe_search_queries'
+      - 'graph_blocked_service_queries'
+      - 'graph_blocked_tracker_queries'
+      - 'graph_cpu_percent'
+      - 'graph_domains'
+      - 'graph_queries'
+      - 'graph_ram_resident'
+      - 'time_unit'
+      - 'top_blocked_domains'
+      - 'top_clients'
+      - 'top_domains'
+      - 'total_blocked_ad_queries'
+      - 'total_blocked_custom_rule_queries'
+      - 'total_blocked_domains'
+      - 'total_blocked_parental_control_queries'
+      - 'total_blocked_safe_browsing_queries'
+      - 'total_blocked_safe_search_queries'
+      - 'total_blocked_service_queries'
+      - 'total_blocked_tracker_queries'
+      - 'total_domains'
+      - 'total_queries'
+      'type': 'object'
+
+    'GetV1StatsAllRespTopsItem':
+      'description': >
+        A top array item.
+      'properties':
+        'name':
+          'description': >
+            The name of the entity.  Mostly domain names.
+          'example': 'example.com'
+          'type': 'string'
+        'num':
+          'description': >
+            The value of the statistic.
+          'example': 1000
+          'format': 'int64'
+          'type': 'integer'
+      'required':
+      - 'name'
+      - 'num'
+      'type': 'object'
+
+    'GetV1SystemInfoResp':
+      'description': >
+        Information about the AdGuard Home server.
+      'example':
+        'channel': 'release'
+        'new_version': 'v0.106.1'
+        'start': 1614345496000
+        'version': 'v0.106.0'
+      'properties':
+        'channel':
+          '$ref': '#/components/schemas/Channel'
+        'new_version':
+          'description': >
+            New available version of AdGuard Home to which the server can be
+            updated, if any.  If there are none, this field is absent.
+          'type': 'string'
+        'start':
+          'description': >
+            Unix time at which AdGuard Home started working, in milliseconds.
+          'format': 'double'
+          'type': 'number'
+        'version':
+          'description': >
+            Current AdGuard Home version.
+          'type': 'string'
+      'required':
+      - 'channel'
+      - 'start'
+      - 'version'
+      'type': 'object'
+
+    'InternalServerErrorResp':
+      'example':
+        'code': 'RNT000'
+        'msg': >-
+          runtime error: invalid memory address or nil pointer dereference
+      'properties':
+        'code':
+          '$ref': '#/components/schemas/ErrorCode'
+        'msg':
+          'description': >
+            Error message string.
+          'type': 'string'
+      'required':
+      - 'code'
+      - 'msg'
+      'type': 'object'
+
+    'Lang':
+      'description': >
+        Language code.
+      # Hold the enum in sync with .twosky.json.
+      'enum':
+      - 'be'
+      - 'bg'
+      - 'cs'
+      - 'da'
+      - 'de'
+      - 'en'
+      - 'es'
+      - 'fa'
+      - 'fr'
+      - 'hr'
+      - 'hu'
+      - 'id'
+      - 'it'
+      - 'ja'
+      - 'ko'
+      - 'nl'
+      - 'no'
+      - 'pl'
+      - 'pt-br'
+      - 'pt-pt'
+      - 'ro'
+      - 'ru'
+      - 'si-lk'
+      - 'sk'
+      - 'sl'
+      - 'sr-cs'
+      - 'sv'
+      - 'th'
+      - 'tr'
+      - 'vi'
+      - 'zh-cn'
+      - 'zh-hk'
+      - 'zh-tw'
+      'type': 'string'
+
+    'LogRecord':
+      'description': >
+        Query log record.
+      'properties':
+        'answer':
+          'description': >
+            The answer given to the user.
+          'items':
+            '$ref': '#/components/schemas/LogRecordDnsAnswer'
+          'type': 'array'
+        'answer_dnssec':
+          'description': >
+            If `true`, DNSSEC was used.
+          'type': 'boolean'
+        'blocked_service':
+          'description': >
+            Set if `reason` is `filtered_blocked_service`.  Otherwise, this
+            field is absent.
+          'type': 'string'
+        'client':
+          '$ref': '#/components/schemas/ClientInfo'
+        'elapsed':
+          'description': >
+            Time it took to process the request, in milliseconds.
+          'format': 'double'
+          'type': 'number'
+        'original_answer':
+          'description': >
+            Original answer from the upstream server, if the answer was
+            rewritten.
+          'items':
+            '$ref': '#/components/schemas/LogRecordDnsAnswer'
+          'type': 'array'
+        'proto':
+          '$ref': '#/components/schemas/DnsProto'
+        'question':
+          '$ref': '#/components/schemas/LogRecordDnsQuestion'
+        'rcode':
+          '$ref': '#/components/schemas/DnsResponseCode'
+        'reason':
+          '$ref': '#/components/schemas/FilteringReason'
+        'rules':
+          'description': >
+            Applied rules.
+          'items':
+            '$ref': '#/components/schemas/FilteringResultRule'
+          'type': 'array'
+        'start':
+          'description': >
+            Request processing start Unix time, in milliseconds.
+          'format': 'double'
+          'type': 'number'
+        'upstream':
+          '$ref': '#/components/schemas/UpstreamServerAddr'
+      'required':
+      - 'answer'
+      - 'answer_dnssec'
+      - 'client'
+      - 'elapsed'
+      - 'proto'
+      - 'question'
+      - 'rcode'
+      - 'reason'
+      - 'rules'
+      - 'start'
+      - 'upstream'
+      'type': 'object'
+
+    'LogRecordDnsAnswer':
+      'description': >
+        DNS answer section.
+      'properties':
+        'ttl':
+          'description': >
+            TTL of a record.  This value is in **seconds**, like in DNS record
+            headers.
+          'format': 'int64'
+          'minimum': 0
+          'type': 'integer'
+        'type':
+          '$ref': '#/components/schemas/DnsType'
+        'value':
+          'description': >
+            An opaque string describing the result value.
+          'type': 'string'
+      'required':
+      - 'ttl'
+      - 'type'
+      - 'value'
+      'type': 'object'
+
+    'LogRecordDnsQuestion':
+      'description': >
+        DNS question section.
+      'properties':
+        'class':
+          '$ref': '#/components/schemas/DnsClass'
+        'host':
+          'description': >
+            Host from the query.
+          'type': 'string'
+        'type':
+          '$ref': '#/components/schemas/DnsType'
+      'required':
+      - 'class'
+      - 'host'
+      - 'type'
+      'type': 'object'
+
+    'LogSettings':
+      'allOf':
+      - '$ref': '#/components/schemas/LogSettingsPatch'
+      - 'description': >
+          Query logging settings.
+        'example':
+          'anonymize': true
+          'enabled': true
+          'rotation': 604800000
+        'required':
+        - 'anonymize'
+        - 'enabled'
+        - 'rotation'
+
+    'LogSettingsPatch':
+      'description': >
+        Query logging settings update object.
+      'properties':
+        'anonymize':
+          'description': >
+            If `true`, client IP address anonymization is enabled.
+          'type': 'boolean'
+        'enabled':
+          'description': >
+            If `true`, query logging is enabled.
+          'type': 'boolean'
+        'rotation':
+          'description': >
+            Log rotation interval, in milliseconds.  After that time, the log
+            file will be replaced by a new one, while the old one gets renamed.
+          'format': 'double'
+          'minimum': 86400000
+          'maximum': 7776000000
+          'type': 'number'
+      'type': 'object'
+
+    'NetworkInterface':
+      'properties':
+        'ips':
+          'description': >
+            The IP addresses of the interface, if any.
+          'items':
+            'type': 'string'
+          'type': 'array'
+        'mac':
+          'description': >
+            The MAC address of the interface.
+          'type': 'string'
+        'mtu':
+          'description': >
+            The interface's MTU, the maximum transmission unit.
+          'format': 'int64'
+          'type': 'integer'
+        'name':
+          'description': >
+            The name of the interface.
+          'type': 'string'
+        'up':
+          'description': >
+            If `true`, the interface is up.
+          'type': 'boolean'
+      'required':
+      - 'ips'
+      - 'mac'
+      - 'mtu'
+      - 'name'
+      - 'up'
+      'type': 'object'
+
+    'NotFoundResp':
+      'example':
+        'code': 'ENT404'
+        'msg': >-
+          entity not found
+      'properties':
+        'code':
+          '$ref': '#/components/schemas/ErrorCode'
+        'msg':
+          'description': >
+            Error message string.
+          'type': 'string'
+      'required':
+      - 'code'
+      - 'msg'
+      'type': 'object'
+
+    'PatchV1AccountsProfileReq':
+      'example':
+        'lang': 'ru'
+      'properties':
+        'lang':
+          '$ref': '#/components/schemas/Lang'
+      'type': 'object'
+
+    'PatchV1AccountsProfileResp':
+      '$ref': '#/components/schemas/Profile'
+
+    'PatchV1ClientPersistentReq':
+      '$ref': '#/components/schemas/PersistentClientPatch'
+
+    'PatchV1ClientPersistentResp':
+      '$ref': '#/components/schemas/PersistentClient'
+
+    'PatchV1DhcpLeaseReq':
+      '$ref': '#/components/schemas/DhcpLeasePatch'
+
+    'PatchV1DhcpLeaseResp':
+      '$ref': '#/components/schemas/DhcpLease'
+
+    'PatchV1ProtectionFilterReq':
+      '$ref': '#/components/schemas/FilterPatch'
+
+    'PatchV1ProtectionFilterResp':
+      '$ref': '#/components/schemas/Filter'
+
+    'PatchV1SettingsDhcpReq':
+      '$ref': '#/components/schemas/DhcpSettingsPatch'
+
+    'PatchV1SettingsDhcpResp':
+      '$ref': '#/components/schemas/DhcpSettings'
+
+    'PatchV1SettingsDnsReq':
+      '$ref': '#/components/schemas/DnsSettingsPatch'
+
+    'PatchV1SettingsDnsResp':
+      '$ref': '#/components/schemas/DnsSettings'
+
+    'PatchV1SettingsLogReq':
+      '$ref': '#/components/schemas/LogSettingsPatch'
+
+    'PatchV1SettingsLogResp':
+      '$ref': '#/components/schemas/LogSettings'
+
+    'PatchV1SettingsProtectionReq':
+      '$ref': '#/components/schemas/ProtectionSettingsPatch'
+
+    'PatchV1SettingsProtectionResp':
+      '$ref': '#/components/schemas/ProtectionSettings'
+
+    'PatchV1SettingsStatsReq':
+      '$ref': '#/components/schemas/StatsSettingsPatch'
+
+    'PatchV1SettingsStatsResp':
+      '$ref': '#/components/schemas/StatsSettings'
+
+    'PatchV1SettingsTlsReq':
+      '$ref': '#/components/schemas/TlsSettingsPatch'
+
+    'PatchV1SettingsTlsResp':
+      '$ref': '#/components/schemas/TlsSettings'
+
+    'PersistentClient':
+      'allOf':
+      - '$ref': '#/components/schemas/PersistentClientPatch'
+      - 'description': >
+          Persistent client.
+        'example':
+          'blocked': false
+          'blocked_services': []
+          'filtering': false
+          'ids': ['client-1']
+          'name': 'Client 1'
+          'num_blocked_requests': 50
+          'num_requests': 100
+          'parental': false
+          'safe_browsing': false
+          'safe_search': false
+          'tags': ['user_admin']
+          'use_global_blocked_services': true
+          'use_global_settings': true
+          'uid': 'abcd1234'
+          'upstream_servers': []
+        'properties':
+          'num_blocked_requests':
+            'description': >
+              Total number of blocked requests for this runtime client.
+            'format': 'int64'
+            'minimum': 0
+            'type': 'integer'
+          'num_requests':
+            'description': >
+              Total number of requests for this runtime client.
+            'format': 'int64'
+            'minimum': 0
+            'type': 'integer'
+          'uid':
+            '$ref': '#/components/schemas/Uid'
+        'required':
+        - 'blocked'
+        - 'blocked_services'
+        - 'filtering'
+        - 'ids'
+        - 'name'
+        - 'parental'
+        - 'safe_browsing'
+        - 'safe_search'
+        - 'tags'
+        - 'uid'
+        - 'upstream_servers'
+        - 'use_global_blocked_services'
+        - 'use_global_settings'
+
+    'PersistentClientPatch':
+      'description': >
+        Persistent client update object.
+      'example':
+        'filtering': false
+        'parental': false
+        'safe_browsing': false
+        'safe_search': false
+        'tags': ['user_admin']
+      'properties':
+        'blocked':
+          'description': >
+            If `true`, the client is blocked.
+          'type': 'boolean'
+        'blocked_services':
+          'description': >
+            Custom blocked services for this client.
+          'items':
+            '$ref': '#/components/schemas/BlockedServiceId'
+          'type': 'array'
+        'filtering':
+          'description': >
+            If `true`, filtering based on filter rule lists is enabled for this
+            client.
+          'type': 'boolean'
+        'ids':
+          'description': >
+            IP, CIDR, MAC, or ClientID (not to be confused with the `uid` field)
+            for client identification.
+          'items':
+            'type': 'string'
+          'type': 'array'
+        'name':
+          'description': >
+            The name of this client.
+          'type': 'string'
+        'parental':
+          'description': >
+            If `true`, parental protection is enabled for this client.
+          'type': 'boolean'
+        'safe_browsing':
+          'description': >
+            If `true`, safe browsing protection is enabled for this client.
+          'type': 'boolean'
+        'safe_search':
+          'description': >
+            If `true`, safe search protection is enabled for this client.
+          'type': 'boolean'
+        'tags':
+          'description': >
+            Client tags.
+          'items':
+            '$ref': '#/components/schemas/PersistentClientTag'
+          'type': 'array'
+        'use_global_blocked_services':
+          'description': >
+            If `true`, use global blocked services for this client instead of
+            the custom ones.
+          'type': 'boolean'
+        'use_global_settings':
+          'description': >
+            If `true`, use global protection settings for this client instead of
+            the custom ones.
+          'type': 'boolean'
+        'upstream_servers':
+          'description': >
+            Custom upstream DNS servers for this client.
+          'items':
+            '$ref': '#/components/schemas/UpstreamServerAddr'
+          'type': 'array'
+      'type': 'object'
+
+    'PersistentClientPost':
+      'allOf':
+      - '$ref': '#/components/schemas/PersistentClientPatch'
+      - 'description': >
+          Persistent client create object.
+        'example':
+          'blocked': false
+          'blocked_services': []
+          'filtering': false
+          'ids': ['client-1']
+          'name': 'Client 1'
+          'parental': false
+          'safe_browsing': false
+          'safe_search': false
+          'tags': ['user_admin']
+          'use_global_blocked_services': true
+          'use_global_settings': true
+          'upstream_servers': []
+        'required':
+        - 'blocked'
+        - 'blocked_services'
+        - 'filtering'
+        - 'ids'
+        - 'name'
+        - 'parental'
+        - 'safe_browsing'
+        - 'safe_search'
+        - 'tags'
+        - 'upstream_servers'
+        - 'use_global_blocked_services'
+        - 'use_global_settings'
+
+    'PersistentClientTag':
+      'description': >
+        Tags can be included in filtering rules to allow you to apply them more
+        accurately.
+      'enum':
+      - 'device_audio'
+      - 'device_camera'
+      - 'device_gameconsole'
+      - 'device_laptop'
+      - 'device_nas'
+      - 'device_other'
+      - 'device_pc'
+      - 'device_phone'
+      - 'device_printer'
+      - 'device_securityalarm'
+      - 'device_tablet'
+      - 'device_tv'
+      - 'os_android'
+      - 'os_ios'
+      - 'os_linux'
+      - 'os_macos'
+      - 'os_other'
+      - 'os_windows'
+      - 'user_admin'
+      - 'user_child'
+      - 'user_regular'
+      'type': 'string'
+
+    'PostV1AccountsSessionReq':
+      'example':
+        'password': 'G00dp455word!'
+        'username': 'admin'
+      'properties':
+        'password':
+          'description': >
+            Password.
+          'format': 'password'
+          'type': 'string'
+        'username':
+          'description': >
+            Username.
+          'type': 'string'
+      'required':
+      - 'password'
+      - 'username'
+      'type': 'object'
+
+    'PostV1ClientsPersistentReq':
+      '$ref': '#/components/schemas/PersistentClientPost'
+
+    'PostV1ClientsPersistentResp':
+      '$ref': '#/components/schemas/PersistentClient'
+
+    'PostV1DhcpLeasesReq':
+      '$ref': '#/components/schemas/DhcpLeasePost'
+
+    'PostV1DhcpLeasesResp':
+      '$ref': '#/components/schemas/DhcpLease'
+
+    'PostV1InstallCheckReq':
+      'description': >
+        Configuration for checking.
+      'example':
+        'dns':
+          'ip':
+          - '0.0.0.0'
+          'port': 53
+        'static_ip': false
+        'web':
+          'ip':
+          - '0.0.0.0'
+          'port': 80
+      'properties':
+        'dns':
+          '$ref': '#/components/schemas/PostV1InstallCheckReqServer'
+        'static_ip':
+          'description': >
+            If `true`, check if a static IP is set or can be set.
+          'type': 'boolean'
+        'web':
+          '$ref': '#/components/schemas/PostV1InstallCheckReqServer'
+      'required':
+      - 'dns'
+      - 'static_ip'
+      - 'web'
+      'type': 'object'
+
+    'PostV1InstallCheckReqServer':
+      'description': >
+        A configuration for a server check.
+      'properties':
+        'ip':
+          'description': >
+            IP addresses to check for availability.
+          'items':
+            'type': 'string'
+          'minItems': 1
+          'type': 'array'
+        'port':
+          'description': >
+            Port to check for availability.
+          'format': 'int64'
+          'maximum': 65535
+          'minimum': 0
+          'type': 'integer'
+      'required':
+      - 'ip'
+      - 'port'
+      'type': 'object'
+
+    'PostV1InstallCheckResp':
+      'description': >
+        Configuration checking response.
+      'example':
+        'dns':
+          'error': 'permission denied'
+        'static_ip':
+          'ip': '192.168.1.1'
+          'static': true
+          'supported': true
+        'web': {}
+      'properties':
+        'dns':
+          '$ref': '#/components/schemas/PostV1InstallCheckRespNetwork'
+        'static_ip':
+          '$ref': '#/components/schemas/StaticIpCheckResult'
+        'web':
+          '$ref': '#/components/schemas/PostV1InstallCheckRespNetwork'
+      'required':
+      - 'dns'
+      - 'static_ip'
+      - 'web'
+      'type': 'object'
+
+    'PostV1InstallCheckRespNetwork':
+      'properties':
+        'error':
+          'description': >
+            Error, if any.  If there is no error, this field is absent.
+          'type': 'string'
+      'type': 'object'
+
+    'PostV1InstallConfigureReq':
+      'description': >
+        AdGuard Home initial configuration.
+      'example':
+        'dns_ip': '0.0.0.0'
+        'dns_port': 53
+        'password': 'G00dp455word!'
+        'username': 'admin'
+        'set_static_ip': true
+        'web_ip': '0.0.0.0'
+        'web_port': 80
+      'properties':
+        'dns_ip':
+          'description': >
+            The IP address to serve DNS queries on.
+          'type': 'string'
+        'dns_port':
+          'description': >
+            The port to serve DNS queries on.
+          'format': 'int64'
+          'maximum': 65535
+          'minimum': 0
+          'type': 'integer'
+        'password':
+          'description': >
+            Password.
+          'type': 'string'
+        'username':
+          'description': >
+            Username.
+          'type': 'string'
+        'set_static_ip':
+          'description': >
+            If `true`, set the server's IP address to static.
+          'type': 'boolean'
+        'web_ip':
+          'description': >
+            The IP address to serve the web interface on.
+          'type': 'string'
+        'web_port':
+          'description': >
+            The port to serve the web interface on.
+          'format': 'int64'
+          'maximum': 65535
+          'minimum': 0
+          'type': 'integer'
+      'required':
+      - 'dns_ip'
+      - 'dns_port'
+      - 'password'
+      - 'username'
+      - 'set_static_ip'
+      - 'web_ip'
+      - 'web_port'
+      'type': 'object'
+
+    'PostV1LogClearReq':
+      'description': >
+        Currently empty, may get more fields in the future.
+      'type': 'object'
+
+    'PostV1ProtectionCheckCustomRulesReq':
+      'description': >
+        Data to check using custom filtering rules.
+      'example':
+        'host': 'example.com'
+      'properties':
+        'host':
+          'description': >
+            The hostname to check.
+          'type': 'string'
+      'required':
+      - 'host'
+      'type': 'object'
+
+    'PostV1ProtectionCheckCustomRulesResp':
+      'description': >
+        Custom filtering rules check results.
+      'example':
+        'reason': 'filtered_blocklist'
+        'rules':
+        - 'filter_list_uid': 'abcd1234'
+          'text': '||example.com^'
+      'properties':
+        'cname':
+          'description': >
+            Set if `reason` is `Rewrite`.  Otherwise, this field is absent.
+          'type': 'string'
+        'ip_addrs':
+          'description': >
+            Set if `reason` is `Rewrite`.  Otherwise, this field is absent.
+          'items':
+            'type': 'string'
+          'type': 'array'
+        'reason':
+          '$ref': '#/components/schemas/FilteringReason'
+        'rules':
+          'description': >
+            Applied rules.
+          'items':
+            '$ref': '#/components/schemas/FilteringResultRule'
+          'type': 'array'
+        'service_name':
+          'description': >
+            Set if `reason` is `FilteredBlockedService`.  Otherwise, this field
+            is absent.
+          'type': 'string'
+      'required':
+      - 'reason'
+      - 'rules'
+      'type': 'object'
+
+    'PostV1ProtectionDnsRewritesReq':
+      '$ref': '#/components/schemas/DnsRewritePost'
+
+    'PostV1ProtectionDnsRewritesResp':
+      '$ref': '#/components/schemas/DnsRewrite'
+
+    'PostV1ProtectionFiltersReq':
+      '$ref': '#/components/schemas/FilterPost'
+
+    'PostV1ProtectionFiltersResp':
+      '$ref': '#/components/schemas/Filter'
+
+    'PostV1ProtectionRefreshFilterReq':
+      'description': >
+        Currently empty, may get more fields in the future.
+      'type': 'object'
+
+    'PostV1ProtectionRefreshFilterResp':
+      '$ref': '#/components/schemas/Filter'
+
+    'PostV1ProtectionRefreshFiltersReq':
+      'description': >
+        Filters refresh parameters.
+      'example':
+        'allowlist': false
+        'blocklist': true
+      'properties':
+        'allowlist':
+          'description': >
+            If `true`, refresh all allowlist filters.
+          'type': 'boolean'
+        'blocklist':
+          'description': >
+            If `true`, refresh all blocklist filters.
+          'type': 'boolean'
+      'required':
+      - 'allowlist'
+      - 'blocklist'
+      'type': 'object'
+
+    'PostV1ProtectionRefreshFiltersResp':
+      'description': >
+        Refresh results.
+      'example':
+        'errors':
+        - 'msg': 'context deadline exceeded'
+          'uid': 'efgh5678'
+        'refreshed':
+        - 'allowlist': false
+          'enabled': true
+          'name': 'AdMaster 5000 Super List v2.0 Final'
+          'num_rules': 36766
+          'refreshed': 1614345496000
+          'uid': 'abcd1234'
+          'url': 'https://admaster.example.com/list.txt'
+      'properties':
+        'errors':
+          'description': >
+            All encountered errors.
+          'items':
+            '$ref': '#/components/schemas/RefreshFilterError'
+          'type': 'array'
+        'refreshed':
+          'description': >
+            Refreshed filters.
+          'items':
+            '$ref': '#/components/schemas/Filter'
+          'type': 'array'
+      'required':
+      - 'errors'
+      - 'refreshed'
+      'type': 'object'
+
+    'PostV1SettingsDnsCheckReq':
+      'description': >
+        Validatable DNS settings.
+      'example':
+        'bootstrap_servers':
+        - '9.9.9.10'
+        - '149.112.112.10'
+        'upstream_servers':
+        - '1.1.1.1'
+        - '8.8.8.8'
+      'properties':
+        'bootstrap_servers':
+          'description': |
+            Bootstrap DNS servers' IP addresses to check.
+          'items':
+            'type': 'string'
+          'type': 'array'
+        'upstream_servers':
+          'description': >
+            Upstream DNS servers to check.
+          'items':
+            '$ref': '#/components/schemas/UpstreamServerAddr'
+          'type': 'array'
+      'required':
+      - 'bootstrap_servers'
+      - 'upstream_servers'
+      'type': 'object'
+
+    'PostV1SettingsDnsCheckResp':
+      'description': >
+        DNS settings validation results.
+      'example':
+        'bootstrap_servers':
+          '9.9.9.10': 'network is unreachable'
+        'upstream_servers':
+          '8.8.8.8': 'network is unreachable'
+      'properties':
+        'bootstrap_servers':
+          'additionalProperties':
+            'minLength': 1
+            'type': 'string'
+          'description': >
+            An IP-address-to-error mapping.  If an address is not in this
+            object, the check for that address is successful.  If there were no
+            errors, this field is absent.
+        'upstream_servers':
+          'additionalProperties':
+            'type': 'string'
+          'description': >
+            An upstream-address-to-error mapping.  If an address is not in this
+            object, the check for that address is successful.  If there were no
+            errors, this field is absent.
+      'type': 'object'
+
+    'PostV1SettingsTlsCheckReq':
+      'description': >
+        Validatable TLS settings.
+      'example':
+        'certificate_path': '/etc/ssl/example.com.cert'
+        'port_dns_over_quic': 784
+        'port_dns_over_tls': 853
+        'port_https': 443
+        'private_key_path': '/etc/ssl/example.com.key'
+        'server_name': 'dns.example.com'
+      'properties':
+        'certificate':
+          'description': |
+            Base64-encoded string with PEM-encoded certificate chain.
+
+            Should not be sent if `certificate_path` is sent.  Otherwise, must
+            be sent.
+          'format': 'byte'
+          'type': 'string'
+        'certificate_path':
+          'description': |
+            Path to the certificate file.
+
+            Should not be sent if `certificate` is sent.  Otherwise, must be
+            sent.
+          'type': 'string'
+        'port_dns_over_quic':
+          'default': 784
+          'description': >
+            The DNS-over-QUIC port.  If `0`, DNS-over-QUIC is disabled.
+          'format': 'int64'
+          'maximum': 65535
+          'minimum': 0
+          'type': 'integer'
+        'port_dns_over_tls':
+          'default': 853
+          'description': >
+            The DNS-over-TLS port.  If `0`, DNS-over-TLS is disabled.
+          'format': 'int64'
+          'maximum': 65535
+          'minimum': 0
+          'type': 'integer'
+        'port_https':
+          'default': 443
+          'description': >
+            The HTTPS port.  If `0`, HTTPS is disabled.
+          'format': 'int64'
+          'maximum': 65535
+          'minimum': 0
+          'type': 'integer'
+        'private_key':
+          'description': |
+            Base64-encoded string with PEM-encoded private key.
+
+            Should not be sent if `private_key_path` is sent.  Otherwise, must
+            be sent.
+          'format': 'byte'
+          'type': 'string'
+        'private_key_path':
+          'description': |
+            Path to the private key file.
+
+            Should not be sent if `private_key` is sent.  Otherwise, must be
+            sent.
+          'type': 'string'
+        'server_name':
+          'description': >
+            The name of the server.  Used to validate the certificates as well
+            as to check ClientIDs in DNS-over-HTTP and DNS-over-TLS.
+          'type': 'string'
+      'required':
+      - 'port_dns_over_quic'
+      - 'port_dns_over_tls'
+      - 'port_https'
+      - 'server_name'
+      'type': 'object'
+
+    'PostV1SettingsTlsCheckResp':
+      'description': >
+        TLS settings validation results.
+      'example':
+        'dns_names':
+          - '*.example.com'
+          - 'example.com'
+        'issuer': 'CN=Example CA,OU=Development,O=Example CA,L=Canberra,ST=Canberra,C=AU'
+        'key_type': 'RSA'
+        'not_after': 1614345497000
+        'not_before': 1614345496000
+        'port_https_error': 'address already in use'
+        'subject': 'CN=Example CA,OU=Development,O=Example CA,L=Canberra,ST=Canberra,C=AU'
+        'warnings': []
+      'properties':
+        'cert_error':
+          'description': >
+            Certificate validation error, if any.  If the certificate is valid,
+            this field is absent.
+          'type': 'string'
+        'chain_error':
+          'description': >
+            Certificate chain validation error, if any.  If the certificate
+            chain is valid, this field is absent.
+          'type': 'string'
+        'dns_names':
+          'description': >
+            The value of the `SubjectAltNames` field of the first certificate in
+            the chain.
+          'items':
+            'type': 'string'
+          'type': 'array'
+        'issuer':
+          'description': >
+            The issuer of the first certificate in the chain.
+          'type': 'string'
+        'key_error':
+          'description': >
+            Private key pair error, if any.  If the key is valid, this field is
+            absent.
+          'type': 'string'
+        'key_type':
+          '$ref': '#/components/schemas/TlsKeyType'
+        'not_after':
+          'description': >
+            The value of the `NotAfter` field of the first certificate in the
+            chain, as a Unix time, in milliseconds.
+          'format': 'double'
+          'type': 'number'
+        'not_before':
+          'description': >
+            The value of the `NotBefore` field of the first certificate in the
+            chain, as a Unix time, in milliseconds.
+          'format': 'double'
+          'type': 'number'
+        'port_dns_over_quic_error':
+          'description': >
+            DNS-over-QUIC port checking error, if any.  If the port is
+            available, this field is absent.
+          'type': 'string'
+        'port_dns_over_tls_error':
+          'description': >
+            DNS-over-TLS port checking error, if any.  If the port is available,
+            this field is absent.
+          'type': 'string'
+        'port_https_error':
+          'description': >
+            DNS-over-HTTPS port checking error, if any.  If the port is
+            available, this field is absent.
+          'type': 'string'
+        'pair_error':
+          'description': >
+            Certificate and key pair error, if any.  If the pair is valid, this
+            field is absent.
+          'type': 'string'
+        'subject':
+          'description': >
+            The subject of the first certificate in the chain.
+          'type': 'string'
+        'warnings':
+          'description': >
+            Validation warnings, if any.
+          'items':
+            'type': 'string'
+          'type': 'array'
+      'required':
+      - 'dns_names'
+      - 'issuer'
+      - 'key_type'
+      - 'not_after'
+      - 'not_before'
+      - 'subject'
+      - 'warnings'
+      'type': 'object'
+
+    'PostV1StatsClearReq':
+      'description': >
+        Currently empty, may get more fields in the future.
+      'type': 'object'
+
+    'PostV1SystemResetReq':
+      'description': >
+        Currently empty, may get more fields in the future.
+      'type': 'object'
+
+    'PostV1SystemResetResp':
+      'description': >
+        Currently empty, may get more fields in the future.
+      'type': 'object'
+
+    'PostV1SystemUpdateReq':
+      'description': >
+        Currently empty, may get more fields in the future.
+      'type': 'object'
+
+    'PostV1SystemUpdateResp':
+      'example':
+        'reload': 10000
+      'properties':
+        'reload':
+          'description': >
+            Time, after which the frontend must reload the page, in
+            milliseconds.
+          'format': 'double'
+          'type': 'number'
+      'type': 'object'
+
+    'Profile':
+      'description': >
+        Current user's profile.
+      'example':
+        'lang': 'en'
+        'username': 'admin'
+      'properties':
+        'lang':
+          '$ref': '#/components/schemas/Lang'
+        'username':
+          'description': >
+            Current user's name.
+          'type': 'string'
+      'required':
+      - 'lang'
+      - 'username'
+      'type': 'object'
+
+    'ProtectionSettings':
+      'allOf':
+      - '$ref': '#/components/schemas/ProtectionSettingsPatch'
+      - 'description': >
+          Protection settings.
+        'example':
+          'autoupdate': 86400000
+          'filtering': true
+          'parental': true
+          'safe_browsing': false
+          'safe_search': false
+        'required':
+        - 'autoupdate'
+        - 'filtering'
+        - 'parental'
+        - 'safe_browsing'
+        - 'safe_search'
+
+    'ProtectionSettingsPatch':
+      'description': >
+        Protection settings update object.
+      'example':
+        'autoupdate': 0
+      'properties':
+        'autoupdate':
+          'description': >
+            Filter automatic update interval, in milliseconds.  Set to `0` to
+            disable automatic updates.
+          'format': 'double'
+          'minimum': 0
+          'maximum': 604800000
+          'type': 'number'
+        'filtering':
+          'description': >
+            If `true`, filtering based on filter rule lists is enabled.
+          'type': 'boolean'
+        'parental':
+          'description': >
+            If `true`, parental protection is enabled.
+          'type': 'boolean'
+        'pause_end':
+          'description': |
+            If `state` is `paused`, `pause_end` will show the Unix time until
+            which the protection is disabled in milliseconds.  Otherwise, the
+            property won't be set.
+
+            When updating, if `state` is set to `paused`, `pause_end` must be
+            set to a timestamp in the future.
+          'format': 'double'
+          'type': 'number'
+        'safe_browsing':
+          'description': >
+            If `true`, safe browsing protection is enabled.
+          'type': 'boolean'
+        'safe_search':
+          'description': >
+            If `true`, safe search protection is enabled.
+          'type': 'boolean'
+        'state':
+          '$ref': '#/components/schemas/ProtectionSettingsState'
+      'type': 'object'
+
+    'ProtectionSettingsState':
+      'description': |
+        State of protection.
+
+         *  `off`: Protection is disabled.
+
+         *  `on`: Protection is enabled.
+
+         *  `paused`: Protection is paused.  See the `pause_end` property to get
+             or set the end of the pause.
+      'enum':
+      - 'off'
+      - 'on'
+      - 'paused'
+      'type': 'string'
+
+    'PutV1ProtectionBlockedServicesReq':
+      '$ref': '#/components/schemas/BlockedServices'
+
+    'PutV1ProtectionCustomRulesReq':
+      '$ref': '#/components/schemas/CustomRules'
+
+    'PutV1SettingsDnsAccessReq':
+      '$ref': '#/components/schemas/DnsAccessSettings'
+
+    'RefreshFilterError':
+      'description': >
+        Filter refresh error.
+      'properties':
+        'msg':
+          'description': >
+            Error message.
+          'type': 'string'
+        'uid':
+          '$ref': '#/components/schemas/Uid'
+      'required':
+      - 'msg'
+      - 'uid'
+      'type': 'object'
+
+    'RuntimeClient':
+      'description': >
+        A runtime client's information.
+      'properties':
+        'host':
+          'description': >
+            The RDNS host of the runtime, if any.  If there is none, this field
+            is absent.
+          'type': 'string'
+        'ip':
+          'description': >
+            The IP-address of the runtime client.
+          'type': 'string'
+        'sources':
+          'description': >
+            The sources from which the information about this runtime client was
+            collected.
+          'items':
+            '$ref': '#/components/schemas/RuntimeClientSource'
+          'minItems': 1
+          'type': 'array'
+        'num_blocked_requests':
+          'description': >
+            Total number of blocked requests for this runtime client.
+          'format': 'int64'
+          'minimum': 0
+          'type': 'integer'
+        'num_requests':
+          'description': >
+            Total number of requests for this runtime client.
+          'format': 'int64'
+          'minimum': 0
+          'type': 'integer'
+        'whois':
+          '$ref': '#/components/schemas/Whois'
+      'required':
+      - 'ip'
+      - 'num_blocked_requests'
+      - 'num_requests'
+      - 'sources'
+      'type': 'object'
+
+    'RuntimeClientSource':
+      'description': >
+        The source from which the information about this runtime client was
+        collected.
+
+         *  `arp`: The information was collected from the `arp -a` output.
+
+         *  `dhcp`: The information was collected from our DHCP server.
+
+         *  `hosts_file`: The information was collected from the `/etc/hosts`
+             file.
+
+         *  `rdns`: The information was collected by performing a reverse DNS
+             lookup.
+
+         *  `whois`: The information was collected by performing a WHOIS lookup.
+      'enum':
+      - 'arp'
+      - 'dhcp'
+      - 'hosts_file'
+      - 'rdns'
+      - 'whois'
+      'type': 'string'
+
+    'StaticIpCheckResult':
+      'properties':
+        'error':
+          'description': >
+            Error, if any.  If there is no error, this field is absent.
+          'type': 'string'
+        'ip':
+          'description': >
+            The IP address.
+          'type': 'string'
+        'static':
+          'description': >
+            If `true`, the interface has a static IP address.
+          'type': 'boolean'
+        'supported':
+          'description': >
+            If `true`, setting a static IP on this system is supported.
+          'type': 'boolean'
+      'required':
+      - 'ip'
+      - 'static'
+      - 'supported'
+      'type': 'object'
+
+    'StatsSettings':
+      'allOf':
+      - '$ref': '#/components/schemas/StatsSettingsPatch'
+      - 'description': >
+          Statistics settings.
+        'required':
+        - 'autorefresh'
+        - 'retention'
+
+    'StatsSettingsPatch':
+      'description': >
+        Statistics settings update object.
+      'properties':
+        'autorefresh':
+          'description': >
+            Statistics UI autorefresh time in milliseconds.  `0` means
+            autorefresh is disabled.
+          'format': 'double'
+          'type': 'number'
+        'retention':
+          'description': >
+            Statistics retention interval, in milliseconds.
+          'format': 'double'
+          'type': 'number'
+      'type': 'object'
+
+    'TimeUnit':
+      'description': >
+        Time units used for statistics.  See the documentation for the
+        `GET /api/v1/stats/all` request.
+      'enum':
+      - 'hour'
+      - 'day'
+      'type': 'string'
+
+    'TlsKeyType':
+      'description': >
+        TLS key type.
+      'enum':
+      - 'ECDSA'
+      - 'RSA'
+      'type': 'string'
+
+    'TlsSettings':
+      'allOf':
+      - '$ref': '#/components/schemas/TlsSettingsPatch'
+      - 'description': >
+          TLS and encryption settings.
+        'example':
+          'certificate_path': '/etc/ssl/example.com.cert'
+          'enabled': true
+          'force_https': true
+          'port_dns_over_quic': 784
+          'port_dns_over_tls': 853
+          'port_https': 443
+          'private_key_path': '/etc/ssl/example.com.key'
+          'server_name': 'dns.example.com'
+        'required':
+        - 'enabled'
+        - 'force_https'
+        - 'port_dns_over_quic'
+        - 'port_dns_over_tls'
+        - 'port_https'
+        - 'server_name'
+
+    'TlsSettingsPatch':
+      'description': >
+        TLS and encryption settings update object.
+      'example':
+        'certificate': 'Base64KeyDatAA=='
+        'enabled': true
+        'private_key': 'Base64CertDatA=='
+      'properties':
+        'certificate':
+          'description': |
+            Base64-encoded string with PEM-encoded certificate chain.
+
+            Should not be sent if `certificate_path` is sent.  Otherwise, must
+            be sent.
+          'format': 'byte'
+          'type': 'string'
+        'certificate_path':
+          'description': |
+            Path to the certificate file.
+
+            Should not be sent if `certificate` is sent.  Otherwise, must be
+            sent.
+          'type': 'string'
+        'enabled':
+          'description': >
+            If `true`,  AdGuard Home the administration interface will be served
+            over HTTPS, and the DNS server will listen requests over
+            DNS-over-TLS and other protocols.
+          'type': 'boolean'
+        'force_https':
+          'description': >
+            If `true`, enabled the HTTP-to-HTTPS redirect.
+          'type': 'boolean'
+        'port_dns_over_quic':
+          'default': 784
+          'description': >
+            The DNS-over-QUIC port.  If `0`, DNS-over-QUIC is disabled.
+          'format': 'int64'
+          'maximum': 65535
+          'minimum': 0
+          'type': 'integer'
+        'port_dns_over_tls':
+          'default': 853
+          'description': >
+            The DNS-over-TLS port.  If `0`, DNS-over-TLS is disabled.
+          'format': 'int64'
+          'maximum': 65535
+          'minimum': 0
+          'type': 'integer'
+        'port_https':
+          'default': 443
+          'description': >
+            The HTTPS port.  If `0`, HTTPS is disabled.
+          'format': 'int64'
+          'maximum': 65535
+          'minimum': 0
+          'type': 'integer'
+        'private_key':
+          'description': |
+            Base64-encoded string with PEM-encoded private key.
+
+            Should not be sent if `private_key_path` is sent.  Otherwise, must
+            be sent.
+          'format': 'byte'
+          'type': 'string'
+        'private_key_path':
+          'description': |
+            Path to the private key file.
+
+            Should not be sent if `private_key` is sent.  Otherwise, must be
+            sent.
+          'type': 'string'
+        'server_name':
+          'description': >
+            The name of the server.  Used to validate the certificates as well
+            as to check ClientIDs in DNS-over-HTTP and DNS-over-TLS.
+          'type': 'string'
+      'type': 'object'
+
+    'Uid':
+      'description': >
+        A unique ID of an entity, an opaque string.
+      'pattern': '[0-9a-zA-Z_-]{1,64}'
+      'type': 'string'
+
+    'UnauthorizedResp':
+      'example':
+        'code': 'AUT000'
+        'msg': 'no or bad authorization provided'
+      'properties':
+        'code':
+          '$ref': '#/components/schemas/ErrorCode'
+        'msg':
+          'description': >
+            Error message string.
+          'type': 'string'
+      'required':
+      - 'code'
+      - 'msg'
+      'type': 'object'
+
+    'UnprocessableEntityResp':
+      'example':
+        'code': 'JSN001'
+        'msg': >-
+          json: cannot unmarshal string into Go struct field T.A of type int
+      'properties':
+        'code':
+          '$ref': '#/components/schemas/ErrorCode'
+        'msg':
+          'description': >
+            Error message string.
+          'type': 'string'
+      'required':
+      - 'code'
+      - 'msg'
+      'type': 'object'
+
+    'UpstreamServerAddr':
+      'description': |
+        Upstream DNS server address.  Supported item formats:
+
+         *  `94.140.14.140`: plain DNS-over-UDP.
+
+         *  `tls://dns-unfiltered.adguard.com`: encrypted DNS-over-TLS.
+
+         *  `https://dns-unfiltered.adguard.com/dns-query`: encrypted
+             DNS-over-HTTPS.
+
+         *  `quic://dns-unfiltered.adguard.com:784`: encrypted DNS-over-QUIC
+             (experimental).
+
+         *  `tcp://94.140.14.140`: plain DNS-over-TCP.
+
+         *  `sdns://...`: DNS Stamps for DNSCrypt or DNS-over-HTTPS
+             resolvers.
+
+         *  `[/example.local/]94.140.14.140`: DNS upstream for specific
+             domain(s).
+
+         *  `# comment`: A comment.
+      'type': 'string'
+
+    'Whois':
+      'additionalProperties':
+        'type': 'string'
+      'description': >
+        WHOIS information, if any.  If there are none, this field is usually
+        absent.
+      'minProperties': 1
+      'type': 'object'
+
+  # TODO(a.garipov): Find a way to specify a cookie authorization.
+  'securitySchemes':
+    'basicAuth':
+      'description': >
+        Basic HTTP authorization.
+      'scheme': 'basic'
+      'type': 'http'

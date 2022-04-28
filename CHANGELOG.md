@@ -23,6 +23,10 @@ and this project adheres to
 
 ### Added
 
+- Support for Discovery of Designated Resolvers (DDR) according to the 
+  [RFC draft][ddr-draft-06] ([#4463]).
+- The ability to control each source of runtime clients separately via
+  `clients.runtime_sources` configuration object ([#3020]).
 - The ability to customize the set of networks that are considered private
   through the new `dns.private_networks` property in the configuration file
   ([#3142]).
@@ -63,8 +67,36 @@ and this project adheres to
 
 #### Configuration Changes
 
-In this release, the schema version has changed from 12 to 13.
+In this release, the schema version has changed from 12 to 14.
 
+- Object `clients`, which in schema versions 13 and earlier was an array of
+  actual persistent clients, is now consist of `persistent` and
+  `runtime_sources` properties:
+
+  ```yaml
+  # BEFORE:
+  'clients':
+  - name: client-name
+    # …
+
+  # AFTER:
+  'clients':
+    'persistent':
+      - name: client-name
+        # …
+    'runtime_sources':
+      whois: true
+      arp: true
+      rdns: true
+      dhcp: true
+      hosts: true
+  ```
+
+  The value for `clients.runtime_sources.rdns` field is taken from
+  `dns.resolve_clients` property.  To rollback this change, remove the
+  `runtime_sources` property, move the contents of `persistent` into the
+  `clients` itself, the value of `clients.runtime_sources.rdns` into the
+  `dns.resolve_clietns`, and change the `schema_version` back to `13`.
 - Property `local_domain_name`, which in schema versions 12 and earlier used to
   be a part of the `dns` object, is now a part of the `dhcp` object:
 
@@ -85,14 +117,19 @@ In this release, the schema version has changed from 12 to 13.
 
 ### Deprecated
 
+- The `--no-etc-hosts` option.  Its' functionality is now controlled by
+  `clients.runtime_sources.hosts` configuration property.  v0.109.0 will remove
+  the flag completely.
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
 ### Fixed
 
+- Slow version update queries making other HTTP APIs unresponsible ([#4499]).
 - ARP tables refreshing process causing excessive PTR requests ([#3157]).
 
 [#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+[#3020]: https://github.com/AdguardTeam/AdGuardHome/issues/3020
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#3142]: https://github.com/AdguardTeam/AdGuardHome/issues/3142
 [#3157]: https://github.com/AdguardTeam/AdGuardHome/issues/3157
@@ -106,9 +143,11 @@ In this release, the schema version has changed from 12 to 13.
 [#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
 [#4276]: https://github.com/AdguardTeam/AdGuardHome/issues/4276
+[#4499]: https://github.com/AdguardTeam/AdGuardHome/issues/4499
 
-[repr]:         https://reproducible-builds.org/docs/source-date-epoch/
+[ddr-draft-06]: https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html
 [doq-draft-10]: https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-10#section-10.2
+[repr]:         https://reproducible-builds.org/docs/source-date-epoch/
 
 
 

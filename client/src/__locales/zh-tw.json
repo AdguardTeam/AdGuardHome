@@ -9,7 +9,7 @@
     "bootstrap_dns": "自我啟動（Bootstrap）DNS 伺服器",
     "bootstrap_dns_desc": "自我啟動（Bootstrap）DNS 伺服器被用於解析您明確指定作為上游的 DoH/DoT 解析器之 IP 位址。",
     "local_ptr_title": "私人反向的 DNS 伺服器",
-    "local_ptr_desc": "AdGuard Home 用於區域指標（PTR）查詢之 DNS 伺服器。這些伺服器被用於解析含私人 IP 位址的用戶端之主機名稱，例如，\"192.168.12.34\"，使用反向的 DNS。如果未被設定，除 AdGuard Home 它本身的位址之外，AdGuard Home 使用您的作業系統之預設 DNS 解析器的位址。",
+    "local_ptr_desc": "AdGuard Home 用於區域指標（PTR）查詢之 DNS 伺服器。這些伺服器被用於解析有關在私人 IP 範圍的位址之區域指標查詢，例如，\"192.168.12.34\"，使用反向的 DNS。如果未被設定，AdGuard Home 使用您的作業系統之預設 DNS 解析器的位址。",
     "local_ptr_default_resolver": "預設下，AdGuard Home 使用以下反向的 DNS 解析器：{{ip}}。",
     "local_ptr_no_default_resolver": "AdGuard Home 無法為此系統決定合適的私人反向的 DNS 解析器。",
     "local_ptr_placeholder": "每行輸入一個伺服器位址",

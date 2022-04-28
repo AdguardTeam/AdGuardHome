@@ -17,11 +17,11 @@ const versionCheckPeriod = 8 * time.Hour
 
 // VersionInfo contains information about a new version.
 type VersionInfo struct {
+	CanAutoUpdate        *bool  `json:"can_autoupdate,omitempty"`
 	NewVersion           string `json:"new_version,omitempty"`
 	Announcement         string `json:"announcement,omitempty"`
 	AnnouncementURL      string `json:"announcement_url,omitempty"`
 	SelfUpdateMinVersion string `json:"-"`
-	CanAutoUpdate        *bool  `json:"can_autoupdate,omitempty"`
 }
 
 // MaxResponseSize is responses on server's requests maximum length in bytes.
