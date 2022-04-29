@@ -23,8 +23,8 @@ and this project adheres to
 
 ### Added
 
-- Support for Discovery of Designated Resolvers (DDR) according to the 
-  [RFC draft][ddr-draft-06] ([#4463]).
+- Support for Discovery of Designated Resolvers (DDR) according to the [RFC
+  draft][ddr-draft-06] ([#4463]).
 - The ability to control each source of runtime clients separately via
   `clients.runtime_sources` configuration object ([#3020]).
 - The ability to customize the set of networks that are considered private
@@ -40,6 +40,9 @@ and this project adheres to
 
 ### Changed
 
+- On OpenBSD, the daemon script now uses the recommended `/bin/ksh` shell
+  instead of the `/bin/sh` one ([#4533]).  To apply this change, backup your
+  data and run `AdGuardHome -s uninstall && AdGuardHome -s install`.
 - The default DNS-over-QUIC port number is now `853` instead of `754` in
   accordance with the latest [RFC draft][doq-draft-10] ([#4276]).
 - Reverse DNS now has a greater priority as the source of runtime clients'
@@ -144,6 +147,7 @@ In this release, the schema version has changed from 12 to 14.
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
 [#4276]: https://github.com/AdguardTeam/AdGuardHome/issues/4276
 [#4499]: https://github.com/AdguardTeam/AdGuardHome/issues/4499
+[#4533]: https://github.com/AdguardTeam/AdGuardHome/issues/4533
 
 [ddr-draft-06]: https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html
 [doq-draft-10]: https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-10#section-10.2

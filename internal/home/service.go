@@ -609,7 +609,7 @@ command_args="-P ${pidfile} -p ${pidfile_child} -T ${name} -r {{.WorkingDirector
 run_rc_command "$1"
 `
 
-const openBSDScript = `#!/bin/sh
+const openBSDScript = `#!/bin/ksh
 #
 # $OpenBSD: {{ .SvcInfo }}
 
