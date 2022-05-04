@@ -65,7 +65,7 @@ func clientIDFromClientServerName(
 		return "", err
 	}
 
-	return clientID, nil
+	return strings.ToLower(clientID), nil
 }
 
 // clientIDFromDNSContextHTTPS extracts the client's ID from the path of the
@@ -104,7 +104,7 @@ func clientIDFromDNSContextHTTPS(pctx *proxy.DNSContext) (clientID string, err e
 		return "", fmt.Errorf("clientid check: %w", err)
 	}
 
-	return clientID, nil
+	return strings.ToLower(clientID), nil
 }
 
 // tlsConn is a narrow interface for *tls.Conn to simplify testing.

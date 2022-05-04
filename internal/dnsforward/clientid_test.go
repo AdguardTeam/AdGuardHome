@@ -143,6 +143,22 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantErrMsg: `clientid check: client server name "cli.myexample.com" ` +
 			`doesn't match host server name "example.com"`,
 		strictSNI: true,
+	}, {
+		name:         "tls_case",
+		proto:        proxy.ProtoTLS,
+		hostSrvName:  "example.com",
+		cliSrvName:   "InSeNsItIvE.example.com",
+		wantClientID: "insensitive",
+		wantErrMsg:   ``,
+		strictSNI:    true,
+	}, {
+		name:         "quic_case",
+		proto:        proxy.ProtoQUIC,
+		hostSrvName:  "example.com",
+		cliSrvName:   "InSeNsItIvE.example.com",
+		wantClientID: "insensitive",
+		wantErrMsg:   ``,
+		strictSNI:    true,
 	}}
 
 	for _, tc := range testCases {
@@ -210,6 +226,11 @@ func TestClientIDFromDNSContextHTTPS(t *testing.T) {
 		path:         "/dns-query/cli/",
 		wantClientID: "cli",
 		wantErrMsg:   "",
+	}, {
+		name:         "clientid_case",
+		path:         "/dns-query/InSeNsItIvE",
+		wantClientID: "insensitive",
+		wantErrMsg:   ``,
 	}, {
 		name:         "bad_url",
 		path:         "/foo",
