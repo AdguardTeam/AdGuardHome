@@ -530,7 +530,7 @@ func (clients *clientsContainer) check(c *Client) (err error) {
 		} else if mac, err = net.ParseMAC(id); err == nil {
 			c.IDs[i] = mac.String()
 		} else if err = dnsforward.ValidateClientID(id); err == nil {
-			c.IDs[i] = id
+			c.IDs[i] = strings.ToLower(id)
 		} else {
 			return fmt.Errorf("invalid clientid at index %d: %q", i, id)
 		}
