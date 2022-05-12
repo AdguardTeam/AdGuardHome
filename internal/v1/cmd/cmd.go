@@ -20,7 +20,8 @@ import (
 func Main(clientBuildFS fs.FS) {
 	// # Initial Configuration
 
-	rand.Seed(time.Now().UnixNano())
+	start := time.Now()
+	rand.Seed(start.UnixNano())
 
 	// TODO(a.garipov): Set up logging.
 
@@ -35,6 +36,7 @@ func Main(clientBuildFS fs.FS) {
 			IP:   net.IP{127, 0, 0, 1},
 			Port: 3001,
 		}},
+		Start:   start,
 		Timeout: 60 * time.Second,
 	})
 

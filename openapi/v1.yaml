@@ -3393,17 +3393,27 @@
       'description': >
         Information about the AdGuard Home server.
       'example':
+        'arch': 'amd64'
         'channel': 'release'
-        'new_version': 'v0.106.1'
+        'new_version': 'v0.108.1'
+        'os': 'linux'
         'start': 1614345496000
-        'version': 'v0.106.0'
+        'version': 'v0.108.0'
       'properties':
+        'arch':
+          'description': >
+            CPU architecture.
+          'type': 'string'
         'channel':
           '$ref': '#/components/schemas/Channel'
         'new_version':
           'description': >
             New available version of AdGuard Home to which the server can be
             updated, if any.  If there are none, this field is absent.
+          'type': 'string'
+        'os':
+          'description': >
+            Operating system type.
           'type': 'string'
         'start':
           'description': >
@@ -3415,7 +3425,9 @@
             Current AdGuard Home version.
           'type': 'string'
       'required':
+      - 'arch'
       - 'channel'
+      - 'os'
       - 'start'
       - 'version'
       'type': 'object'

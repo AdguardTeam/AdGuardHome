@@ -9,6 +9,7 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.2.3
 	github.com/digineo/go-ipset/v2 v2.2.1
+	github.com/dimfeld/httptreemux/v5 v5.4.0
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/go-ping/ping v0.0.0-20211130115550-779d1e919534
 	github.com/google/go-cmp v0.5.7
