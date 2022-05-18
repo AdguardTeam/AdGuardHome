@@ -127,6 +127,7 @@ In this release, the schema version has changed from 12 to 14.
 
 ### Fixed
 
+- Detection of the stopped service status on macOS and Linux ([#4273]).
 - Case-sensitive ClientID ([#4542]).
 - Slow version update queries making other HTTP APIs unresponsible ([#4499]).
 - ARP tables refreshing process causing excessive PTR requests ([#3157]).
@@ -146,6 +147,7 @@ In this release, the schema version has changed from 12 to 14.
 [#4213]: https://github.com/AdguardTeam/AdGuardHome/issues/4213
 [#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
+[#4273]: https://github.com/AdguardTeam/AdGuardHome/issues/4273
 [#4276]: https://github.com/AdguardTeam/AdGuardHome/issues/4276
 [#4499]: https://github.com/AdguardTeam/AdGuardHome/issues/4499
 [#4533]: https://github.com/AdguardTeam/AdGuardHome/issues/4533
