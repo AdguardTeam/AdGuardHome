@@ -23,6 +23,7 @@ and this project adheres to
 
 ### Added
 
+- Support upstreams for subdomains of a domain only ([#4503]).
 - Support for Discovery of Designated Resolvers (DDR) according to the [RFC
   draft][ddr-draft-06] ([#4463]).
 - The ability to control each source of runtime clients separately via
@@ -150,6 +151,7 @@ In this release, the schema version has changed from 12 to 14.
 [#4273]: https://github.com/AdguardTeam/AdGuardHome/issues/4273
 [#4276]: https://github.com/AdguardTeam/AdGuardHome/issues/4276
 [#4499]: https://github.com/AdguardTeam/AdGuardHome/issues/4499
+[#4503]: https://github.com/AdguardTeam/AdGuardHome/issues/4503
 [#4533]: https://github.com/AdguardTeam/AdGuardHome/issues/4533
 [#4542]: https://github.com/AdguardTeam/AdGuardHome/issues/4542
 
