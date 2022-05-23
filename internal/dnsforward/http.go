@@ -467,6 +467,7 @@ func separateUpstream(upstreamStr string) (upstream string, isDomainSpec bool, e
 			continue
 		}
 
+		host = strings.TrimPrefix(host, "*.")
 		err = netutil.ValidateDomainName(host)
 		if err != nil {
 			return "", true, fmt.Errorf("domain at index %d: %w", i, err)
