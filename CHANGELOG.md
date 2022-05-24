@@ -23,6 +23,7 @@ and this project adheres to
 
 ### Added
 
+- Support for the final DNS-over-QUIC standard, [RFC 9250][rfc-9250] ([#4592]).
 - Support upstreams for subdomains of a domain only ([#4503]).
 - Support for Discovery of Designated Resolvers (DDR) according to the [RFC
   draft][ddr-draft-06] ([#4463]).
@@ -45,7 +46,7 @@ and this project adheres to
   instead of the `/bin/sh` one ([#4533]).  To apply this change, backup your
   data and run `AdGuardHome -s uninstall && AdGuardHome -s install`.
 - The default DNS-over-QUIC port number is now `853` instead of `754` in
-  accordance with the latest [RFC draft][doq-draft-10] ([#4276]).
+  accordance with [RFC 9250][rfc-9250] ([#4276]).
 - Reverse DNS now has a greater priority as the source of runtime clients'
   information than ARP neighborhood.
 - Improved detection of runtime clients through more resilient ARP processing
@@ -100,7 +101,7 @@ In this release, the schema version has changed from 12 to 14.
   `dns.resolve_clients` property.  To rollback this change, remove the
   `runtime_sources` property, move the contents of `persistent` into the
   `clients` itself, the value of `clients.runtime_sources.rdns` into the
-  `dns.resolve_clietns`, and change the `schema_version` back to `13`.
+  `dns.resolve_clients`, and change the `schema_version` back to `13`.
 - Property `local_domain_name`, which in schema versions 12 and earlier used to
   be a part of the `dns` object, is now a part of the `dhcp` object:
 
@@ -131,7 +132,7 @@ In this release, the schema version has changed from 12 to 14.
 - Service startup on boot on systems using SysV-init ([#4480]).
 - Detection of the stopped service status on macOS and Linux ([#4273]).
 - Case-sensitive ClientID ([#4542]).
-- Slow version update queries making other HTTP APIs unresponsible ([#4499]).
+- Slow version update queries making other HTTP APIs unresponsive ([#4499]).
 - ARP tables refreshing process causing excessive PTR requests ([#3157]).
 
 [#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
@@ -156,9 +157,10 @@ In this release, the schema version has changed from 12 to 14.
 [#4503]: https://github.com/AdguardTeam/AdGuardHome/issues/4503
 [#4533]: https://github.com/AdguardTeam/AdGuardHome/issues/4533
 [#4542]: https://github.com/AdguardTeam/AdGuardHome/issues/4542
+[#4592]: https://github.com/AdguardTeam/AdGuardHome/issues/4592
 
+[rfc-9250]:     https://datatracker.ietf.org/doc/html/rfc9250
 [ddr-draft-06]: https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html
-[doq-draft-10]: https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-10#section-10.2
 [repr]:         https://reproducible-builds.org/docs/source-date-epoch/
 
 

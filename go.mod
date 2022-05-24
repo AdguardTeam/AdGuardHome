@@ -3,7 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.17
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.42.4
+	github.com/AdguardTeam/dnsproxy v0.43.0
 	github.com/AdguardTeam/golibs v0.10.8
 	github.com/AdguardTeam/urlfilter v0.16.0
 	github.com/NYTimes/gziphandler v1.1.1
@@ -17,7 +17,7 @@ require (
 	github.com/google/renameio v1.0.1
 	github.com/insomniacslk/dhcp v0.0.0-20220405050111-12fbdcb11b41
 	github.com/kardianos/service v1.2.1
-	github.com/lucas-clemente/quic-go v0.26.0
+	github.com/lucas-clemente/quic-go v0.27.1
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/netlink v1.6.0
 	// TODO(a.garipov): This package is deprecated; find a new one or use
