@@ -433,8 +433,11 @@ EnvironmentFile=-/etc/sysconfig/{{.Name}}
 WantedBy=multi-user.target
 `
 
-// Note: we should keep it in sync with the template from service_sysv_linux.go file
-// Use "ps | grep -v grep | grep $(get_pid)" because "ps PID" may not work on OpenWrt
+// sysvScript is the source of the daemon script for SysV-based Linux systems.
+// Keep as close as possible to the https://github.com/kardianos/service/blob/29f8c79c511bc18422bb99992779f96e6bc33921/service_sysv_linux.go#L187.
+//
+// Use ps command instead of reading the procfs since it's a more
+// implementation-independent approach.
 const sysvScript = `#!/bin/sh
 # For RedHat and cousins:
 # chkconfig: - 99 01
@@ -465,7 +468,7 @@ get_pid() {
 }
 
 is_running() {
-    [ -f "$pid_file" ] && ps | grep -v grep | grep $(get_pid) > /dev/null 2>&1
+    [ -f "$pid_file" ] && ps -p "$(get_pid)" > /dev/null 2>&1
 }
 
 case "$1" in
