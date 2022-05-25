@@ -58,6 +58,7 @@ func initDNSServer() (err error) {
 	}
 
 	conf := querylog.Config{
+		Anonymizer:        anonymizer,
 		ConfigModified:    onConfigModified,
 		HTTPRegister:      httpRegister,
 		FindClient:        Context.clients.findMultiple,
@@ -67,7 +68,6 @@ func initDNSServer() (err error) {
 		Enabled:           config.DNS.QueryLogEnabled,
 		FileEnabled:       config.DNS.QueryLogFileEnabled,
 		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
-		Anonymizer:        anonymizer,
 	}
 	Context.queryLog = querylog.New(conf)
 

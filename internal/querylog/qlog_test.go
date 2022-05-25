@@ -285,8 +285,8 @@ func addEntry(l *queryLog, host string, answerStr, client net.IP) {
 		Answer:     &a,
 		OrigAnswer: &a,
 		Result:     &res,
-		ClientIP:   client,
 		Upstream:   "upstream",
+		ClientIP:   client,
 	}
 
 	l.Add(params)

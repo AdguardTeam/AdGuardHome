@@ -19,10 +19,10 @@ import (
 )
 
 type qlogConfig struct {
-	Enabled bool `json:"enabled"`
 	// Use float64 here to support fractional numbers and not mess the API
 	// users by changing the units.
 	Interval          float64 `json:"interval"`
+	Enabled           bool    `json:"enabled"`
 	AnonymizeClientIP bool    `json:"anonymize_client_ip"`
 }
 
