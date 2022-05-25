@@ -73,7 +73,7 @@ func (l *queryLog) searchMemory(params *searchParams, cache clientCache) (entrie
 
 // search - searches log entries in the query log using specified parameters
 // returns the list of entries found + time of the oldest entry
-func (l *queryLog) search(params *searchParams) ([]*logEntry, time.Time) {
+func (l *queryLog) search(params *searchParams) (entries []*logEntry, oldest time.Time) {
 	now := time.Now()
 
 	if params.limit == 0 {
@@ -88,7 +88,7 @@ func (l *queryLog) search(params *searchParams) ([]*logEntry, time.Time) {
 	totalLimit := params.offset + params.limit
 
 	// now let's get a unified collection
-	entries := append(memoryEntries, fileEntries...)
+	entries = append(memoryEntries, fileEntries...)
 	if len(entries) > totalLimit {
 		// remove extra records
 		entries = entries[:totalLimit]
@@ -111,13 +111,18 @@ func (l *queryLog) search(params *searchParams) ([]*logEntry, time.Time) {
 		}
 	}
 
-	if len(entries) > 0 && len(entries) <= totalLimit {
+	if len(entries) > 0 {
 		// Update oldest after merging in the memory buffer.
 		oldest = entries[len(entries)-1].Time
 	}
 
-	log.Debug("QueryLog: prepared data (%d/%d) older than %s in %s",
-		len(entries), total, params.olderThan, time.Since(now))
+	log.Debug(
+		"querylog: prepared data (%d/%d) older than %s in %s",
+		len(entries),
+		total,
+		params.olderThan,
+		time.Since(now),
+	)
 
 	return entries, oldest
 }
@@ -180,6 +185,8 @@ func (l *queryLog) searchFiles(
 		e, ts, err = l.readNextEntry(r, params, cache)
 		if err != nil {
 			if err == io.EOF {
+				oldestNano = 0
+
 				break
 			}
 

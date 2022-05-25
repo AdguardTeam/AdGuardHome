@@ -129,6 +129,7 @@ In this release, the schema version has changed from 12 to 14.
 
 ### Fixed
 
+- Query log occasionally going into an infinite loop ([#4591]).
 - Service startup on boot on systems using SysV-init ([#4480]).
 - Detection of the stopped service status on macOS and Linux ([#4273]).
 - Case-sensitive ClientID ([#4542]).
@@ -157,6 +158,7 @@ In this release, the schema version has changed from 12 to 14.
 [#4503]: https://github.com/AdguardTeam/AdGuardHome/issues/4503
 [#4533]: https://github.com/AdguardTeam/AdGuardHome/issues/4533
 [#4542]: https://github.com/AdguardTeam/AdGuardHome/issues/4542
+[#4591]: https://github.com/AdguardTeam/AdGuardHome/issues/4591
 [#4592]: https://github.com/AdguardTeam/AdGuardHome/issues/4592
 
 [rfc-9250]:     https://datatracker.ietf.org/doc/html/rfc9250

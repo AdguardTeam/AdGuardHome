@@ -149,7 +149,7 @@ func (l *queryLog) clear() {
 		log.Error("removing log file %q: %s", l.logFile, err)
 	}
 
-	log.Debug("Query log: cleared")
+	log.Debug("querylog: cleared")
 }
 
 func (l *queryLog) Add(params *AddParams) {
