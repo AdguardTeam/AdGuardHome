@@ -351,6 +351,7 @@
     "install_devices_android_list_5": "将 DNS 1 和 DNS 2 的值改为您的 AdGuard Home 服务器地址。",
     "install_devices_ios_list_1": "从主屏幕中点击「设置」。",
     "install_devices_ios_list_2": "从左侧目录中选择「无线局域网」（移动数据网络环境下不支持修改 DNS ）。",
+    "install_devices_ios_list_3": "点击当前已连接网络的名称。",
     "install_devices_ios_list_4": "在 DNS 字段中输入您的 AdGuard Home 服务器地址。",
     "get_started": "开始配置",
     "next": "下一步",
