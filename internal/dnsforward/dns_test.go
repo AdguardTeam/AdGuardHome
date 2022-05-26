@@ -36,6 +36,15 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		},
 	}
 
+	doqSVCB := &dns.SVCB{
+		Priority: 3,
+		Target:   ddrTestDomainName,
+		Value: []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"doq"}},
+			&dns.SVCBPort{Port: 8042},
+		},
+	}
+
 	testCases := []struct {
 		name       string
 		host       string
@@ -43,6 +52,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		wantRes    resultCode
 		portDoH    int
 		portDoT    int
+		portDoQ    int
 		qtype      uint16
 		ddrEnabled bool
 	}{{
@@ -89,6 +99,14 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		ddrEnabled: true,
 		portDoH:    8044,
 	}, {
+		name:       "doq",
+		wantRes:    resultCodeFinish,
+		want:       []*dns.SVCB{doqSVCB},
+		host:       ddrHostFQDN,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		portDoQ:    8042,
+	}, {
 		name:       "dot_doh",
 		wantRes:    resultCodeFinish,
 		want:       []*dns.SVCB{dotSVCB, dohSVCB},
@@ -101,7 +119,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := prepareTestServer(t, tc.portDoH, tc.portDoT, tc.ddrEnabled)
+			s := prepareTestServer(t, tc.portDoH, tc.portDoT, tc.portDoQ, tc.ddrEnabled)
 
 			req := createTestMessageWithType(tc.host, tc.qtype)
 
@@ -130,7 +148,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}
 }
 
-func prepareTestServer(t *testing.T, portDoH, portDoT int, ddrEnabled bool) (s *Server) {
+func prepareTestServer(t *testing.T, portDoH, portDoT, portDoQ int, ddrEnabled bool) (s *Server) {
 	t.Helper()
 
 	proxyConf := proxy.Config{}
@@ -141,6 +159,10 @@ func prepareTestServer(t *testing.T, portDoH, portDoT int, ddrEnabled bool) (s *
 
 	if portDoT > 0 {
 		proxyConf.TLSListenAddr = []*net.TCPAddr{{Port: portDoT}}
+	}
+
+	if portDoQ > 0 {
+		proxyConf.QUICListenAddr = []*net.UDPAddr{{Port: portDoQ}}
 	}
 
 	s = &Server{

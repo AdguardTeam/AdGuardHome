@@ -260,9 +260,8 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 	}
 
 	if question.Name == ddrHostFQDN {
-		// TODO(a.garipov): Check DoQ support in next RFC drafts.
-		if s.dnsProxy.TLSListenAddr == nil && s.dnsProxy.HTTPSListenAddr == nil ||
-			question.Qtype != dns.TypeSVCB {
+		if s.dnsProxy.TLSListenAddr == nil && s.dnsProxy.HTTPSListenAddr == nil &&
+			s.dnsProxy.QUICListenAddr == nil || question.Qtype != dns.TypeSVCB {
 			d.Res = s.makeResponse(d.Req)
 
 			return resultCodeFinish
@@ -307,6 +306,22 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 		ans := &dns.SVCB{
 			Hdr:      s.hdr(req, dns.TypeSVCB),
 			Priority: 2,
+			Target:   domainName,
+			Value:    values,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
+	}
+
+	for _, addr := range s.dnsProxy.QUICListenAddr {
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"doq"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
+		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 3,
 			Target:   domainName,
 			Value:    values,
 		}
