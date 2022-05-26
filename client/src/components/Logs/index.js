@@ -152,6 +152,16 @@ const Logs = () => {
         };
     }, []);
 
+    useEffect(() => {
+        if (!history.location.search) {
+            (async () => {
+                setIsLoading(true);
+                await dispatch(setFilteredLogs());
+                setIsLoading(false);
+            })();
+        }
+    }, [history.location.search]);
+
     const renderPage = () => <>
         <Filters
                 filter={{
