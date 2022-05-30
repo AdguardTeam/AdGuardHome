@@ -14,12 +14,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const ddrTestDomainName = "dns.example.net"
+const (
+	ddrTestDomainName = "dns.example.net"
+	ddrTestFQDN       = ddrTestDomainName + "."
+)
 
 func TestServer_ProcessDDRQuery(t *testing.T) {
 	dohSVCB := &dns.SVCB{
 		Priority: 1,
-		Target:   ddrTestDomainName,
+		Target:   ddrTestFQDN,
 		Value: []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"h2"}},
 			&dns.SVCBPort{Port: 8044},
@@ -29,7 +32,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 
 	dotSVCB := &dns.SVCB{
 		Priority: 2,
-		Target:   ddrTestDomainName,
+		Target:   ddrTestFQDN,
 		Value: []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"dot"}},
 			&dns.SVCBPort{Port: 8043},
@@ -38,7 +41,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 
 	doqSVCB := &dns.SVCB{
 		Priority: 3,
-		Target:   ddrTestDomainName,
+		Target:   ddrTestFQDN,
 		Value: []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"doq"}},
 			&dns.SVCBPort{Port: 8042},

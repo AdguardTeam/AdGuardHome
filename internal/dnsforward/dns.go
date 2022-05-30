@@ -278,7 +278,9 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 // makeDDRResponse creates DDR answer according to server configuration.
 func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	resp = s.makeResponse(req)
-	domainName := s.conf.ServerName
+	// TODO(e.burkov):  Think about stroing the FQDN version of the server's
+	// name somewhere.
+	domainName := dns.Fqdn(s.conf.ServerName)
 
 	for _, addr := range s.dnsProxy.HTTPSListenAddr {
 		values := []dns.SVCBKeyValue{
