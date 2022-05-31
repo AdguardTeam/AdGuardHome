@@ -134,8 +134,9 @@ type FilteringConfig struct {
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
 type TLSConfig struct {
-	TLSListenAddrs  []*net.TCPAddr `yaml:"-" json:"-"`
-	QUICListenAddrs []*net.UDPAddr `yaml:"-" json:"-"`
+	TLSListenAddrs   []*net.TCPAddr `yaml:"-" json:"-"`
+	QUICListenAddrs  []*net.UDPAddr `yaml:"-" json:"-"`
+	HTTPSListenAddrs []*net.TCPAddr `yaml:"-" json:"-"`
 
 	// Reject connection if the client uses server name (in SNI) that doesn't match the certificate
 	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`

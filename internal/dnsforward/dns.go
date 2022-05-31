@@ -260,7 +260,7 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 	}
 
 	if question.Name == ddrHostFQDN {
-		if s.dnsProxy.TLSListenAddr == nil && s.dnsProxy.HTTPSListenAddr == nil &&
+		if s.dnsProxy.TLSListenAddr == nil && s.conf.HTTPSListenAddrs == nil &&
 			s.dnsProxy.QUICListenAddr == nil || question.Qtype != dns.TypeSVCB {
 			d.Res = s.makeResponse(d.Req)
 
@@ -278,11 +278,11 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 // makeDDRResponse creates DDR answer according to server configuration.
 func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	resp = s.makeResponse(req)
-	// TODO(e.burkov):  Think about stroing the FQDN version of the server's
+	// TODO(e.burkov):  Think about storing the FQDN version of the server's
 	// name somewhere.
 	domainName := dns.Fqdn(s.conf.ServerName)
 
-	for _, addr := range s.dnsProxy.HTTPSListenAddr {
+	for _, addr := range s.conf.HTTPSListenAddrs {
 		values := []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"h2"}},
 			&dns.SVCBPort{Port: uint16(addr.Port)},

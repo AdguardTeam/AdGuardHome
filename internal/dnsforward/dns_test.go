@@ -156,10 +156,6 @@ func prepareTestServer(t *testing.T, portDoH, portDoT, portDoQ int, ddrEnabled b
 
 	proxyConf := proxy.Config{}
 
-	if portDoH > 0 {
-		proxyConf.HTTPSListenAddr = []*net.TCPAddr{{Port: portDoH}}
-	}
-
 	if portDoT > 0 {
 		proxyConf.TLSListenAddr = []*net.TCPAddr{{Port: portDoT}}
 	}
@@ -180,6 +176,10 @@ func prepareTestServer(t *testing.T, portDoH, portDoT, portDoQ int, ddrEnabled b
 				ServerName: ddrTestDomainName,
 			},
 		},
+	}
+
+	if portDoH > 0 {
+		s.conf.TLSConfig.HTTPSListenAddrs = []*net.TCPAddr{{Port: portDoH}}
 	}
 
 	return s
