@@ -34,8 +34,6 @@ and this project adheres to
 
 ### Changed
 
-- The TTL of responses served from the optimistic cache is now lowered to 10
-  seconds.
 - Domain-specific private reverse DNS upstream servers are now validated to
   allow only `*.in-addr.arpa` and `*.ip6.arpa` domains pointing to
   locally-served networks ([#3381]).  **Note:**  If you already have invalid
@@ -145,15 +143,22 @@ See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
 
 ### Changed
 
-- Reverse DNS now has a greater priority as the source of runtime clients'
-  information than ARP neighborhood.
-- Improved detection of runtime clients through more resilient ARP processing
-  ([#3597]).
 - On OpenBSD, the daemon script now uses the recommended `/bin/ksh` shell
   instead of the `/bin/sh` one ([#4533]).  To apply this change, backup your
   data and run `AdGuardHome -s uninstall && AdGuardHome -s install`.
 - The default DNS-over-QUIC port number is now `853` instead of `754` in
   accordance with [RFC 9250][rfc-9250] ([#4276]).
+- Reverse DNS now has a greater priority as the source of runtime clients'
+  information than ARP neighborhood.
+- Improved detection of runtime clients through more resilient ARP processing
+  ([#3597]).
+- The TTL of responses served from the optimistic cache is now lowered to 10
+  seconds.
+- Instead of adding the build time information, the build scripts now use the
+  standardized environment variable [`SOURCE_DATE_EPOCH`][repr] to add the date
+  of the commit from which the binary was built ([#4221]).  This should simplify
+  reproducible builds for package maintainers and those who compile their own
+  AdGuard Home.
 - The `dns.bogus_nxdomain` property in the configuration file now supports CIDR
   notation alongside IP addresses ([#1730]).
 
@@ -172,6 +177,7 @@ See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
 [#3978]: https://github.com/AdguardTeam/AdGuardHome/issues/3978
 [#4166]: https://github.com/AdguardTeam/AdGuardHome/issues/4166
 [#4213]: https://github.com/AdguardTeam/AdGuardHome/issues/4213
+[#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4273]: https://github.com/AdguardTeam/AdGuardHome/issues/4273
 [#4276]: https://github.com/AdguardTeam/AdGuardHome/issues/4276
 [#4480]: https://github.com/AdguardTeam/AdGuardHome/issues/4480
@@ -213,11 +219,6 @@ See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
 - Filtering rules with the `dnsrewrite` modifier that create SVCB or HTTPS
   responses should use `ech` instead of `echconfig` to conform with the [latest
   drafts][svcb-draft-08].
-- Instead of adding the build time information, the build scripts now use the
-  standardized environment variable [`SOURCE_DATE_EPOCH`][repr] to add the date
-  of the commit from which the binary was built ([#4221]).  This should simplify
-  reproducible builds for package maintainers and those who compile their own
-  AdGuard Home.
 
 ### Deprecated
 
@@ -239,7 +240,6 @@ See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
   and doesn't receive security updates anymore.
 
 [#3717]: https://github.com/AdguardTeam/AdGuardHome/issues/3717
-[#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4437]: https://github.com/AdguardTeam/AdGuardHome/issues/4437
 [#4463]: https://github.com/AdguardTeam/AdGuardHome/issues/4463
 
