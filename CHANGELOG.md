@@ -12,7 +12,7 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.108.0] - 2022-07-01 (APPROX.)
+## [v0.108.0] - 2022-10-01 (APPROX.)
 -->
 
 ### Security
@@ -23,21 +23,17 @@ and this project adheres to
 
 ### Added
 
+- Support for Discovery of Designated Resolvers (DDR) according to the [RFC
+  draft][ddr-draft-06] ([#4463]).
+- The ability to control each source of runtime clients separately via
+  `clients.runtime_sources` configuration object ([#3020]).
 - The ability to customize the set of networks that are considered private
   through the new `dns.private_networks` property in the configuration file
   ([#3142]).
-- EDNS Client-Subnet information in the request details section of a query log
-  record ([#3978]).
-- Support for hostnames for plain UDP upstream servers using the `udp://` scheme
-  ([#4166]).
-- Logs are now collected by default on FreeBSD and OpenBSD when AdGuard Home is
-  installed as a service ([#4213]).
 - `windows/arm64` support ([#3057]).
 
 ### Changed
 
-- The default DNS-over-QUIC port number is now `853` instead of `754` in
-  accordance with the latest [RFC draft][doq-draft-10] ([#4276]).
 - Reverse DNS now has a greater priority as the source of runtime clients'
   information than ARP neighborhood.
 - Improved detection of runtime clients through more resilient ARP processing
@@ -51,20 +47,41 @@ and this project adheres to
   essentially had no effect.
 - Response filtering is now performed using the record types of the answer
   section of messages as opposed to the type of the question ([#4238]).
-- Instead of adding the build time information, the build scripts now use the
-  standardized environment variable [`SOURCE_DATE_EPOCH`][repr] to add the date
-  of the commit from which the binary was built ([#4221]).  This should simplify
-  reproducible builds for package maintainers and those who compile their own
-  AdGuard Home.
 - The property `local_domain_name` is now in the `dhcp` object in the
   configuration file to avoid confusion ([#3367]).
-- The `dns.bogus_nxdomain` property in the configuration file now supports CIDR
-  notation alongside IP addresses ([#1730]).
 
 #### Configuration Changes
 
-In this release, the schema version has changed from 12 to 13.
+In this release, the schema version has changed from 12 to 14.
 
+- Object `clients`, which in schema versions 13 and earlier was an array of
+  actual persistent clients, is now consist of `persistent` and
+  `runtime_sources` properties:
+
+  ```yaml
+  # BEFORE:
+  'clients':
+  - name: client-name
+    # …
+
+  # AFTER:
+  'clients':
+    'persistent':
+      - name: client-name
+        # …
+    'runtime_sources':
+      whois: true
+      arp: true
+      rdns: true
+      dhcp: true
+      hosts: true
+  ```
+
+  The value for `clients.runtime_sources.rdns` field is taken from
+  `dns.resolve_clients` property.  To rollback this change, remove the
+  `runtime_sources` property, move the contents of `persistent` into the
+  `clients` itself, the value of `clients.runtime_sources.rdns` into the
+  `dns.resolve_clients`, and change the `schema_version` back to `13`.
 - Property `local_domain_name`, which in schema versions 12 and earlier used to
   be a part of the `dns` object, is now a part of the `dhcp` object:
 
@@ -85,35 +102,93 @@ In this release, the schema version has changed from 12 to 13.
 
 ### Deprecated
 
+- The `--no-etc-hosts` option.  Its' functionality is now controlled by
+  `clients.runtime_sources.hosts` configuration property.  v0.109.0 will remove
+  the flag completely.
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
-[#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+[#3020]: https://github.com/AdguardTeam/AdGuardHome/issues/3020
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#3142]: https://github.com/AdguardTeam/AdGuardHome/issues/3142
 [#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
 [#3381]: https://github.com/AdguardTeam/AdGuardHome/issues/3381
 [#3503]: https://github.com/AdguardTeam/AdGuardHome/issues/3503
 [#3597]: https://github.com/AdguardTeam/AdGuardHome/issues/3597
-[#3978]: https://github.com/AdguardTeam/AdGuardHome/issues/3978
-[#4166]: https://github.com/AdguardTeam/AdGuardHome/issues/4166
-[#4213]: https://github.com/AdguardTeam/AdGuardHome/issues/4213
-[#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
-[#4276]: https://github.com/AdguardTeam/AdGuardHome/issues/4276
 
-[repr]:         https://reproducible-builds.org/docs/source-date-epoch/
-[doq-draft-10]: https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-10#section-10.2
+[ddr-draft-06]:   https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html
 
 
 
 <!--
-## [v0.107.7] - 2022-05-18 (APPROX.)
+## [v0.107.8] - 2022-07-12 (APPROX.)
+-->
+
+
+
+## [v0.107.7] - 2022-06-03 (APPROX.)
 
 See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
 
-[ms-v0.107.7]: https://github.com/AdguardTeam/AdGuardHome/milestone/43?closed=1
--->
+### Security
+
+- Go version was updated to prevent the possibility of exploiting the
+  [CVE-2022-29526], [CVE-2022-30634], [CVE-2022-30629], [CVE-2022-30580], and
+  [CVE-2022-29804] vulnerabilities.
+
+### Added
+
+- Support for the final DNS-over-QUIC standard, [RFC 9250][rfc-9250] ([#4592]).
+- Support upstreams for subdomains of a domain only ([#4503]).
+- EDNS Client-Subnet information in the request details section of a query log
+  record ([#3978]).
+- Support for hostnames for plain UDP upstream servers using the `udp://` scheme
+  ([#4166]).
+- Logs are now collected by default on FreeBSD and OpenBSD when AdGuard Home is
+  installed as a service ([#4213]).
+
+### Changed
+
+- On OpenBSD, the daemon script now uses the recommended `/bin/ksh` shell
+  instead of the `/bin/sh` one ([#4533]).  To apply this change, backup your
+  data and run `AdGuardHome -s uninstall && AdGuardHome -s install`.
+- The default DNS-over-QUIC port number is now `853` instead of `754` in
+  accordance with [RFC 9250][rfc-9250] ([#4276]).
+- The `dns.bogus_nxdomain` property in the configuration file now supports CIDR
+  notation alongside IP addresses ([#1730]).
+
+### Fixed
+
+- Query log occasionally going into an infinite loop ([#4591]).
+- Service startup on boot on systems using SysV-init ([#4480]).
+- Detection of the stopped service status on macOS and Linux ([#4273]).
+- Case-sensitive ClientID ([#4542]).
+- Slow version update queries making other HTTP APIs unresponsive ([#4499]).
+- ARP tables refreshing process causing excessive PTR requests ([#3157]).
+
+[#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
+[#3157]: https://github.com/AdguardTeam/AdGuardHome/issues/3157
+[#3978]: https://github.com/AdguardTeam/AdGuardHome/issues/3978
+[#4166]: https://github.com/AdguardTeam/AdGuardHome/issues/4166
+[#4213]: https://github.com/AdguardTeam/AdGuardHome/issues/4213
+[#4273]: https://github.com/AdguardTeam/AdGuardHome/issues/4273
+[#4276]: https://github.com/AdguardTeam/AdGuardHome/issues/4276
+[#4480]: https://github.com/AdguardTeam/AdGuardHome/issues/4480
+[#4499]: https://github.com/AdguardTeam/AdGuardHome/issues/4499
+[#4503]: https://github.com/AdguardTeam/AdGuardHome/issues/4503
+[#4533]: https://github.com/AdguardTeam/AdGuardHome/issues/4533
+[#4542]: https://github.com/AdguardTeam/AdGuardHome/issues/4542
+[#4591]: https://github.com/AdguardTeam/AdGuardHome/issues/4591
+[#4592]: https://github.com/AdguardTeam/AdGuardHome/issues/4592
+
+[CVE-2022-29526]: https://www.cvedetails.com/cve/CVE-2022-29526
+[CVE-2022-29804]: https://www.cvedetails.com/cve/CVE-2022-29804
+[CVE-2022-30580]: https://www.cvedetails.com/cve/CVE-2022-30580
+[CVE-2022-30629]: https://www.cvedetails.com/cve/CVE-2022-30629
+[CVE-2022-30634]: https://www.cvedetails.com/cve/CVE-2022-30634
+[ms-v0.107.7]:    https://github.com/AdguardTeam/AdGuardHome/milestone/43?closed=1
+[rfc-9250]:       https://datatracker.ietf.org/doc/html/rfc9250
 
 
 
@@ -123,6 +198,7 @@ See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
 
 ### Security
 
+- `User-Agent` HTTP header removed from outgoing DNS-over-HTTPS requests.
 - Go version was updated to prevent the possibility of exploiting the
   [CVE-2022-24675], [CVE-2022-27536], and [CVE-2022-28327] vulnerabilities.
 
@@ -137,6 +213,11 @@ See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
 - Filtering rules with the `dnsrewrite` modifier that create SVCB or HTTPS
   responses should use `ech` instead of `echconfig` to conform with the [latest
   drafts][svcb-draft-08].
+- Instead of adding the build time information, the build scripts now use the
+  standardized environment variable [`SOURCE_DATE_EPOCH`][repr] to add the date
+  of the commit from which the binary was built ([#4221]).  This should simplify
+  reproducible builds for package maintainers and those who compile their own
+  AdGuard Home.
 
 ### Deprecated
 
@@ -148,16 +229,17 @@ See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
 
 ### Fixed
 
-- I/O timeout errors when checking the presence of another DHCP server.
+- I/O timeout errors when checking for the presence of another DHCP server.
 - Network interfaces being incorrectly labeled as down during installation.
-- Rules for blocking the QQ service ([#3171]).
+- Rules for blocking the QQ service ([#3717]).
 
 ### Removed
 
 - Go 1.16 support, since that branch of the Go compiler has reached end of life
   and doesn't receive security updates anymore.
 
-[#3171]: https://github.com/AdguardTeam/AdGuardHome/issues/3171
+[#3717]: https://github.com/AdguardTeam/AdGuardHome/issues/3717
+[#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
 [#4437]: https://github.com/AdguardTeam/AdGuardHome/issues/4437
 [#4463]: https://github.com/AdguardTeam/AdGuardHome/issues/4463
 
@@ -166,6 +248,7 @@ See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
 [CVE-2022-28327]: https://www.cvedetails.com/cve/CVE-2022-28327
 [dns-draft-02]:   https://datatracker.ietf.org/doc/html/draft-ietf-add-svcb-dns-02#section-5.1
 [ms-v0.107.6]:    https://github.com/AdguardTeam/AdGuardHome/milestone/42?closed=1
+[repr]:           https://reproducible-builds.org/docs/source-date-epoch/
 [svcb-draft-08]:  https://www.ietf.org/archive/id/draft-ietf-dnsop-svcb-https-08.html
 
 
@@ -927,11 +1010,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.7...HEAD
-[v0.107.7]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.6...v0.107.7
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.8...HEAD
+[v0.107.8]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.7...v0.107.8
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.6...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.7...HEAD
+[v0.107.7]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.6...v0.107.7
 [v0.107.6]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.5...v0.107.6
 [v0.107.5]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...v0.107.5
 [v0.107.4]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...v0.107.4
