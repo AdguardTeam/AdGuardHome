@@ -676,7 +676,9 @@ func (s *statsCtx) getData() (statsResponse, bool) {
 		timeUnit = Days
 	}
 
+	s.mu.Lock();
 	units, firstID := s.loadUnits(limit)
+	s.mu.Unlock();
 	if units == nil {
 		return statsResponse{}, false
 	}
