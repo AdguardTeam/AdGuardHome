@@ -77,13 +77,36 @@ func initDNSServer() (err error) {
 	filterConf.HTTPRegister = httpRegister
 	Context.dnsFilter = filtering.New(&filterConf, nil)
 
+	var privateNets netutil.SubnetSet
+	switch len(config.DNS.PrivateNets) {
+	case 0:
+		// Use an optimized locally-served matcher.
+		privateNets = netutil.SubnetSetFunc(netutil.IsLocallyServed)
+	case 1:
+		var n *net.IPNet
+		n, err = netutil.ParseSubnet(config.DNS.PrivateNets[0])
+		if err != nil {
+			return fmt.Errorf("preparing the set of private subnets: %w", err)
+		}
+
+		privateNets = n
+	default:
+		var nets []*net.IPNet
+		nets, err = netutil.ParseSubnets(config.DNS.PrivateNets...)
+		if err != nil {
+			return fmt.Errorf("preparing the set of private subnets: %w", err)
+		}
+
+		privateNets = netutil.SliceSubnetSet(nets)
+	}
+
 	p := dnsforward.DNSCreateParams{
-		DNSFilter:      Context.dnsFilter,
-		Stats:          Context.stats,
-		QueryLog:       Context.queryLog,
-		SubnetDetector: Context.subnetDetector,
-		Anonymizer:     anonymizer,
-		LocalDomain:    config.DNS.LocalDomainName,
+		DNSFilter:   Context.dnsFilter,
+		Stats:       Context.stats,
+		QueryLog:    Context.queryLog,
+		PrivateNets: privateNets,
+		Anonymizer:  anonymizer,
+		LocalDomain: config.DHCP.LocalDomainName,
 	}
 	if Context.dhcpServer != nil {
 		p.DHCPServer = Context.dhcpServer
@@ -112,8 +135,13 @@ func initDNSServer() (err error) {
 		return fmt.Errorf("dnsServer.Prepare: %w", err)
 	}
 
-	Context.rdns = NewRDNS(Context.dnsServer, &Context.clients, config.DNS.UsePrivateRDNS)
-	Context.whois = initWHOIS(&Context.clients)
+	if config.Clients.Sources.RDNS {
+		Context.rdns = NewRDNS(Context.dnsServer, &Context.clients, config.DNS.UsePrivateRDNS)
+	}
+
+	if config.Clients.Sources.WHOIS {
+		Context.whois = initWHOIS(&Context.clients)
+	}
 
 	Context.filters.Init()
 	return nil
@@ -130,10 +158,11 @@ func onDNSRequest(pctx *proxy.DNSContext) {
 		return
 	}
 
-	if config.DNS.ResolveClients && !ip.IsLoopback() {
+	srcs := config.Clients.Sources
+	if srcs.RDNS && !ip.IsLoopback() {
 		Context.rdns.Begin(ip)
 	}
-	if !Context.subnetDetector.IsSpecialNetwork(ip) {
+	if srcs.WHOIS && !netutil.IsSpecialPurpose(ip) {
 		Context.whois.Begin(ip)
 	}
 }
@@ -192,6 +221,10 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 		newConf.TLSConfig = tlsConf.TLSConfig
 		newConf.TLSConfig.ServerName = tlsConf.ServerName
 
+		if tlsConf.PortHTTPS != 0 {
+			newConf.HTTPSListenAddrs = ipsToTCPAddrs(hosts, tlsConf.PortHTTPS)
+		}
+
 		if tlsConf.PortDNSOverTLS != 0 {
 			newConf.TLSListenAddrs = ipsToTCPAddrs(hosts, tlsConf.PortDNSOverTLS)
 		}
@@ -217,7 +250,7 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	newConf.FilterHandler = applyAdditionalFiltering
 	newConf.GetCustomUpstreamByClient = Context.clients.findUpstreams
 
-	newConf.ResolveClients = dnsConf.ResolveClients
+	newConf.ResolveClients = config.Clients.Sources.RDNS
 	newConf.UsePrivateRDNS = dnsConf.UsePrivateRDNS
 	newConf.LocalPTRResolvers = dnsConf.LocalPTRResolvers
 	newConf.UpstreamTimeout = dnsConf.UpstreamTimeout.Duration
@@ -365,10 +398,15 @@ func startDNSServer() error {
 
 	const topClientsNumber = 100 // the number of clients to get
 	for _, ip := range Context.stats.GetTopClientsIP(topClientsNumber) {
-		if config.DNS.ResolveClients && !ip.IsLoopback() {
+		if ip == nil {
+			continue
+		}
+
+		srcs := config.Clients.Sources
+		if srcs.RDNS && !ip.IsLoopback() {
 			Context.rdns.Begin(ip)
 		}
-		if !Context.subnetDetector.IsSpecialNetwork(ip) {
+		if srcs.WHOIS && !netutil.IsSpecialPurpose(ip) {
 			Context.whois.Begin(ip)
 		}
 	}

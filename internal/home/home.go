@@ -65,8 +65,6 @@ type homeContext struct {
 
 	updater *updater.Updater
 
-	subnetDetector *aghnet.SubnetDetector
-
 	// mux is our custom http.ServeMux.
 	mux *http.ServeMux
 
@@ -175,6 +173,11 @@ func setupContext(args options) {
 
 			os.Exit(0)
 		}
+
+		if !args.noEtcHosts && config.Clients.Sources.HostsFile {
+			err = setupHostsContainer()
+			fatalOnError(err)
+		}
 	}
 
 	Context.mux = http.NewServeMux()
@@ -182,7 +185,7 @@ func setupContext(args options) {
 
 // logIfUnsupported logs a formatted warning if the error is one of the
 // unsupported errors and returns nil.  If err is nil, logIfUnsupported returns
-// nil.  Otherise, it returns err.
+// nil.  Otherwise, it returns err.
 func logIfUnsupported(msg string, err error) (outErr error) {
 	if errors.As(err, new(*aghos.UnsupportedError)) {
 		log.Debug(msg, err)
@@ -287,13 +290,12 @@ func setupConfig(args options) (err error) {
 		ConfName: config.getConfigFilename(),
 	})
 
-	if !args.noEtcHosts {
-		if err = setupHostsContainer(); err != nil {
-			return err
-		}
+	var arpdb aghnet.ARPDB
+	if config.Clients.Sources.ARP {
+		arpdb = aghnet.NewARPDB()
 	}
 
-	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
+	Context.clients.Init(config.Clients.Persistent, Context.dhcpServer, Context.etcHosts, arpdb)
 
 	if args.bindPort != 0 {
 		uc := aghalg.UniqChecker{}
@@ -466,9 +468,6 @@ func run(args options, clientBuildFS fs.FS) {
 	Context.web, err = initWeb(args, clientBuildFS)
 	fatalOnError(err)
 
-	Context.subnetDetector, err = aghnet.NewSubnetDetector()
-	fatalOnError(err)
-
 	if !Context.firstRun {
 		err = initDNSServer()
 		fatalOnError(err)
@@ -527,8 +526,10 @@ func checkPermissions() {
 	if err != nil {
 		if errors.Is(err, os.ErrPermission) {
 			log.Fatal(`Permission check failed.
+
 AdGuard Home is not allowed to bind to privileged ports (for instance, port 53).
 Please note, that this is crucial for a server to be able to use privileged ports.
+
 You have two options:
 1. Run AdGuard Home with root privileges
 2. On Linux you can grant the CAP_NET_BIND_SERVICE capability:

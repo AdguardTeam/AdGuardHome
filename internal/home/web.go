@@ -34,14 +34,13 @@ const (
 )
 
 type webConfig struct {
+	clientFS     fs.FS
+	clientBetaFS fs.FS
+
 	BindHost     net.IP
 	BindPort     int
 	BetaBindPort int
 	PortHTTPS    int
-	firstRun     bool
-
-	clientFS     fs.FS
-	clientBetaFS fs.FS
 
 	// ReadTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
@@ -54,6 +53,8 @@ type webConfig struct {
 	// WriteTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
 	WriteTimeout time.Duration
+
+	firstRun bool
 }
 
 // HTTPSServer - HTTPS Server

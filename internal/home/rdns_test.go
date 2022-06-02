@@ -167,7 +167,7 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 	w := &bytes.Buffer{}
 	aghtest.ReplaceLogWriter(t, w)
 
-	locUpstream := &aghtest.TestUpstream{
+	locUpstream := &aghtest.Upstream{
 		Reverse: map[string][]string{
 			"192.168.1.1":            {"local.domain"},
 			"2a00:1450:400c:c06::93": {"ipv6.domain"},

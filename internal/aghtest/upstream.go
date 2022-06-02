@@ -11,10 +11,10 @@ import (
 	"github.com/miekg/dns"
 )
 
-// TestUpstream is a mock of real upstream.
-type TestUpstream struct {
+// Upstream is a mock implementation of upstream.Upstream.
+type Upstream struct {
 	// CName is a map of hostname to canonical name.
-	CName map[string]string
+	CName map[string][]string
 	// IPv4 is a map of hostname to IPv4.
 	IPv4 map[string][]net.IP
 	// IPv6 is a map of hostname to IPv6.
@@ -25,78 +25,45 @@ type TestUpstream struct {
 	Addr string
 }
 
-// Exchange implements upstream.Upstream interface for *TestUpstream.
+// Exchange implements the upstream.Upstream interface for *Upstream.
 //
 // TODO(a.garipov): Split further into handlers.
-func (u *TestUpstream) Exchange(m *dns.Msg) (resp *dns.Msg, err error) {
-	resp = &dns.Msg{}
-	resp.SetReply(m)
+func (u *Upstream) Exchange(m *dns.Msg) (resp *dns.Msg, err error) {
+	resp = new(dns.Msg).SetReply(m)
 
 	if len(m.Question) == 0 {
 		return nil, fmt.Errorf("question should not be empty")
 	}
 
-	name := m.Question[0].Name
-
-	if cname, ok := u.CName[name]; ok {
-		ans := &dns.CNAME{
-			Hdr: dns.RR_Header{
-				Name:   name,
-				Rrtype: dns.TypeCNAME,
-			},
+	q := m.Question[0]
+	name := q.Name
+	for _, cname := range u.CName[name] {
+		resp.Answer = append(resp.Answer, &dns.CNAME{
+			Hdr:    dns.RR_Header{Name: name, Rrtype: dns.TypeCNAME},
 			Target: cname,
-		}
-
-		resp.Answer = append(resp.Answer, ans)
+		})
 	}
 
-	rrType := m.Question[0].Qtype
+	qtype := q.Qtype
 	hdr := dns.RR_Header{
 		Name:   name,
-		Rrtype: rrType,
+		Rrtype: qtype,
 	}
 
-	var names []string
-	var ips []net.IP
-	switch m.Question[0].Qtype {
+	switch qtype {
 	case dns.TypeA:
-		ips = u.IPv4[name]
+		for _, ip := range u.IPv4[name] {
+			resp.Answer = append(resp.Answer, &dns.A{Hdr: hdr, A: ip})
+		}
 	case dns.TypeAAAA:
-		ips = u.IPv6[name]
+		for _, ip := range u.IPv6[name] {
+			resp.Answer = append(resp.Answer, &dns.AAAA{Hdr: hdr, AAAA: ip})
+		}
 	case dns.TypePTR:
-		names = u.Reverse[name]
-	}
-
-	for _, ip := range ips {
-		var ans dns.RR
-		if rrType == dns.TypeA {
-			ans = &dns.A{
-				Hdr: hdr,
-				A:   ip,
-			}
-
-			resp.Answer = append(resp.Answer, ans)
-
-			continue
+		for _, name := range u.Reverse[name] {
+			resp.Answer = append(resp.Answer, &dns.PTR{Hdr: hdr, Ptr: name})
 		}
-
-		ans = &dns.AAAA{
-			Hdr:  hdr,
-			AAAA: ip,
-		}
-
-		resp.Answer = append(resp.Answer, ans)
 	}
-
-	for _, n := range names {
-		ans := &dns.PTR{
-			Hdr: hdr,
-			Ptr: n,
-		}
-
-		resp.Answer = append(resp.Answer, ans)
-	}
-
 	if len(resp.Answer) == 0 {
 		resp.SetRcode(m, dns.RcodeNameError)
 	}
@@ -104,8 +71,8 @@ func (u *TestUpstream) Exchange(m *dns.Msg) (resp *dns.Msg, err error) {
 	return resp, nil
 }
 
-// Address implements upstream.Upstream interface for *TestUpstream.
-func (u *TestUpstream) Address() string {
+// Address implements upstream.Upstream interface for *Upstream.
+func (u *Upstream) Address() string {
 	return u.Addr
 }
 

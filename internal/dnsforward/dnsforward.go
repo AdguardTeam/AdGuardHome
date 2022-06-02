@@ -74,7 +74,7 @@ type Server struct {
 	localDomainSuffix string
 
 	ipset          ipsetCtx
-	subnetDetector *aghnet.SubnetDetector
+	privateNets    netutil.SubnetSet
 	localResolvers *proxy.Proxy
 	sysResolvers   aghnet.SystemResolvers
 	recDetector    *recursionDetector
@@ -111,13 +111,13 @@ const defaultLocalDomainSuffix = ".lan."
 
 // DNSCreateParams are parameters to create a new server.
 type DNSCreateParams struct {
-	DNSFilter      *filtering.DNSFilter
-	Stats          stats.Stats
-	QueryLog       querylog.QueryLog
-	DHCPServer     dhcpd.ServerInterface
-	SubnetDetector *aghnet.SubnetDetector
-	Anonymizer     *aghnet.IPMut
-	LocalDomain    string
+	DNSFilter   *filtering.DNSFilter
+	Stats       stats.Stats
+	QueryLog    querylog.QueryLog
+	DHCPServer  dhcpd.ServerInterface
+	PrivateNets netutil.SubnetSet
+	Anonymizer  *aghnet.IPMut
+	LocalDomain string
 }
 
 // domainNameToSuffix converts a domain name into a local domain suffix.
@@ -161,7 +161,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		dnsFilter:         p.DNSFilter,
 		stats:             p.Stats,
 		queryLog:          p.QueryLog,
-		subnetDetector:    p.SubnetDetector,
+		privateNets:       p.PrivateNets,
 		localDomainSuffix: localDomainSuffix,
 		recDetector:       newRecursionDetector(recursionTTL, cachedRecurrentReqNum),
 		clientIDCache: cache.New(cache.Config{
@@ -315,7 +315,7 @@ func (s *Server) Exchange(ip net.IP) (host string, err error) {
 	}
 
 	var resolver *proxy.Proxy
-	if s.subnetDetector.IsLocallyServedNetwork(ip) {
+	if s.privateNets.Contains(ip) {
 		if !s.conf.UsePrivateRDNS {
 			return "", nil
 		}

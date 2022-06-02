@@ -14,6 +14,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -184,12 +185,11 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		wantSet: "",
 	}, {
 		name: "upstream_dns_bad",
-		wantSet: `wrong upstreams specification: bad ipport address "!!!": address !!!: ` +
-			`missing port in address`,
+		wantSet: `validating upstream servers: bad ipport address "!!!": ` +
+			`address !!!: missing port in address`,
 	}, {
 		name: "bootstraps_bad",
-		wantSet: `a can not be used as bootstrap dns cause: ` +
-			`invalid bootstrap server address: ` +
+		wantSet: `checking bootstrap a: invalid address: ` +
 			`Resolver a is not eligible to be a bootstrap DNS server`,
 	}, {
 		name:    "cache_bad_ttl",
@@ -200,6 +200,10 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	}, {
 		name:    "local_ptr_upstreams_good",
 		wantSet: "",
+	}, {
+		name: "local_ptr_upstreams_bad",
+		wantSet: `validating private upstream servers: checking domain-specific upstreams: ` +
+			`bad arpa domain name "non.arpa": not a reversed ip network`,
 	}, {
 		name:    "local_ptr_upstreams_null",
 		wantSet: "",
@@ -358,7 +362,7 @@ func TestValidateUpstream(t *testing.T) {
 	}
 }
 
-func TestValidateUpstreamsSet(t *testing.T) {
+func TestValidateUpstreams(t *testing.T) {
 	testCases := []struct {
 		name    string
 		wantErr string
@@ -401,6 +405,54 @@ func TestValidateUpstreamsSet(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := ValidateUpstreams(tc.set)
+			testutil.AssertErrorMsg(t, tc.wantErr, err)
+		})
+	}
+}
+
+func TestValidateUpstreamsPrivate(t *testing.T) {
+	ss := netutil.SubnetSetFunc(netutil.IsLocallyServed)
+
+	testCases := []struct {
+		name    string
+		wantErr string
+		u       string
+	}{{
+		name:    "success_address",
+		wantErr: ``,
+		u:       "[/1.0.0.127.in-addr.arpa/]#",
+	}, {
+		name:    "success_subnet",
+		wantErr: ``,
+		u:       "[/127.in-addr.arpa/]#",
+	}, {
+		name: "not_arpa_subnet",
+		wantErr: `checking domain-specific upstreams: ` +
+			`bad arpa domain name "hello.world": not a reversed ip network`,
+		u: "[/hello.world/]#",
+	}, {
+		name: "non-private_arpa_address",
+		wantErr: `checking domain-specific upstreams: ` +
+			`arpa domain "1.2.3.4.in-addr.arpa." should point to a locally-served network`,
+		u: "[/1.2.3.4.in-addr.arpa/]#",
+	}, {
+		name: "non-private_arpa_subnet",
+		wantErr: `checking domain-specific upstreams: ` +
+			`arpa domain "128.in-addr.arpa." should point to a locally-served network`,
+		u: "[/128.in-addr.arpa/]#",
+	}, {
+		name: "several_bad",
+		wantErr: `checking domain-specific upstreams: 2 errors: ` +
+			`"arpa domain \"1.2.3.4.in-addr.arpa.\" should point to a locally-served network", ` +
+			`"bad arpa domain name \"non.arpa\": not a reversed ip network"`,
+		u: "[/non.arpa/1.2.3.4.in-addr.arpa/127.in-addr.arpa/]#",
+	}}
+
+	for _, tc := range testCases {
+		set := []string{"192.168.0.1", tc.u}
+
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateUpstreamsPrivate(set, ss)
 			testutil.AssertErrorMsg(t, tc.wantErr, err)
 		})
 	}

@@ -51,6 +51,13 @@ type osConfig struct {
 	RlimitNoFile uint64 `yaml:"rlimit_nofile"`
 }
 
+type clientsConfig struct {
+	// Sources defines the set of sources to fetch the runtime clients from.
+	Sources *clientSourcesConf `yaml:"runtime_sources"`
+	// Persistent are the configured clients.
+	Persistent []*clientObject `yaml:"persistent"`
+}
+
 // configuration is loaded from YAML
 // field ordering is important -- yaml fields will mirror ordering from here
 type configuration struct {
@@ -83,12 +90,12 @@ type configuration struct {
 	WhitelistFilters []filter `yaml:"whitelist_filters"`
 	UserRules        []string `yaml:"user_rules"`
 
-	DHCP dhcpd.ServerConfig `yaml:"dhcp"`
+	DHCP *dhcpd.ServerConfig `yaml:"dhcp"`
 
 	// Clients contains the YAML representations of the persistent clients.
 	// This field is only used for reading and writing persistent client data.
 	// Keep this field sorted to ensure consistent ordering.
-	Clients []*clientObject `yaml:"clients"`
+	Clients *clientsConfig `yaml:"clients"`
 
 	logSettings `yaml:",inline"`
 
@@ -123,13 +130,9 @@ type dnsConfig struct {
 	// UpstreamTimeout is the timeout for querying upstream servers.
 	UpstreamTimeout timeutil.Duration `yaml:"upstream_timeout"`
 
-	// LocalDomainName is the domain name used for known internal hosts.
-	// For example, a machine called "myhost" can be addressed as
-	// "myhost.lan" when LocalDomainName is "lan".
-	LocalDomainName string `yaml:"local_domain_name"`
-
-	// ResolveClients enables and disables resolving clients with RDNS.
-	ResolveClients bool `yaml:"resolve_clients"`
+	// PrivateNets is the set of IP networks for which the private reverse DNS
+	// resolver should be used.
+	PrivateNets []string `yaml:"private_networks"`
 
 	// UsePrivateRDNS defines if the PTR requests for unknown addresses from
 	// locally-served networks should be resolved via private PTR resolvers.
@@ -199,14 +202,24 @@ var config = &configuration{
 		FilteringEnabled:           true, // whether or not use filter lists
 		FiltersUpdateIntervalHours: 24,
 		UpstreamTimeout:            timeutil.Duration{Duration: dnsforward.DefaultTimeout},
-		LocalDomainName:            "lan",
-		ResolveClients:             true,
 		UsePrivateRDNS:             true,
 	},
 	TLS: tlsConfigSettings{
 		PortHTTPS:       defaultPortHTTPS,
 		PortDNSOverTLS:  defaultPortTLS, // needs to be passed through to dnsproxy
 		PortDNSOverQUIC: defaultPortQUIC,
+	},
+	DHCP: &dhcpd.ServerConfig{
+		LocalDomainName: "lan",
+	},
+	Clients: &clientsConfig{
+		Sources: &clientSourcesConf{
+			WHOIS:     true,
+			ARP:       true,
+			RDNS:      true,
+			DHCP:      true,
+			HostsFile: true,
+		},
 	},
 	logSettings: logSettings{
 		LogCompress:   false,
@@ -403,18 +416,16 @@ func (c *configuration) write() error {
 		s.WriteDiskConfig(&c)
 		dns := &config.DNS
 		dns.FilteringConfig = c
-		dns.LocalPTRResolvers,
-			dns.ResolveClients,
-			dns.UsePrivateRDNS = s.RDNSSettings()
+		dns.LocalPTRResolvers, config.Clients.Sources.RDNS, dns.UsePrivateRDNS = s.RDNSSettings()
 	}
 
 	if Context.dhcpServer != nil {
-		c := dhcpd.ServerConfig{}
-		Context.dhcpServer.WriteDiskConfig(&c)
+		c := &dhcpd.ServerConfig{}
+		Context.dhcpServer.WriteDiskConfig(c)
 		config.DHCP = c
 	}
 
-	config.Clients = Context.clients.forConfig()
+	config.Clients.Persistent = Context.clients.forConfig()
 
 	configFile := config.getConfigFilename()
 	log.Debug("Writing YAML file: %s", configFile)

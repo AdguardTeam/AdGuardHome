@@ -27,7 +27,7 @@ func testNotify(flags uint32) {
 func TestDB(t *testing.T) {
 	var err error
 	s := Server{
-		conf: ServerConfig{
+		conf: &ServerConfig{
 			DBFilePath: dbFilename,
 		},
 	}
@@ -140,27 +140,27 @@ func TestNormalizeLeases(t *testing.T) {
 func TestV4Server_badRange(t *testing.T) {
 	testCases := []struct {
 		name       string
+		wantErrMsg string
 		gatewayIP  net.IP
 		subnetMask net.IP
-		wantErrMsg string
 	}{{
-		name:       "gateway_in_range",
-		gatewayIP:  net.IP{192, 168, 10, 120},
-		subnetMask: net.IP{255, 255, 255, 0},
+		name: "gateway_in_range",
 		wantErrMsg: "dhcpv4: gateway ip 192.168.10.120 in the ip range: " +
 			"192.168.10.20-192.168.10.200",
+		gatewayIP:  net.IP{192, 168, 10, 120},
+		subnetMask: net.IP{255, 255, 255, 0},
 	}, {
-		name:       "outside_range_start",
-		gatewayIP:  net.IP{192, 168, 10, 1},
-		subnetMask: net.IP{255, 255, 255, 240},
+		name: "outside_range_start",
 		wantErrMsg: "dhcpv4: range start 192.168.10.20 is outside network " +
 			"192.168.10.1/28",
-	}, {
-		name:       "outside_range_end",
 		gatewayIP:  net.IP{192, 168, 10, 1},
-		subnetMask: net.IP{255, 255, 255, 224},
+		subnetMask: net.IP{255, 255, 255, 240},
+	}, {
+		name: "outside_range_end",
 		wantErrMsg: "dhcpv4: range end 192.168.10.200 is outside network " +
 			"192.168.10.1/27",
+		gatewayIP:  net.IP{192, 168, 10, 1},
+		subnetMask: net.IP{255, 255, 255, 224},
 	}}
 
 	for _, tc := range testCases {

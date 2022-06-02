@@ -214,9 +214,8 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 		ipToHost = netutil.NewIPMap(len(ll))
 
 		for _, l := range ll {
-			// TODO(a.garipov): Remove this after we're finished
-			// with the client hostname validations in the DHCP
-			// server code.
+			// TODO(a.garipov): Remove this after we're finished with the client
+			// hostname validations in the DHCP server code.
 			err = netutil.ValidateDomainName(l.Hostname)
 			if err != nil {
 				log.Debug(
@@ -252,7 +251,7 @@ func (s *Server) processDetermineLocal(dctx *dnsContext) (rc resultCode) {
 		return rc
 	}
 
-	dctx.isLocalClient = s.subnetDetector.IsLocallyServedNetwork(ip)
+	dctx.isLocalClient = s.privateNets.Contains(ip)
 
 	return rc
 }
@@ -300,6 +299,8 @@ func (s *Server) processInternalHosts(dctx *dnsContext) (rc resultCode) {
 	}
 
 	reqHost := strings.ToLower(q.Name)
+	// TODO(a.garipov): Move everything related to DHCP local domain to the DHCP
+	// server.
 	host := strings.TrimSuffix(reqHost, s.localDomainSuffix)
 	if host == reqHost {
 		return resultCodeSuccess
@@ -372,7 +373,7 @@ func (s *Server) processRestrictLocal(ctx *dnsContext) (rc resultCode) {
 	// Restrict an access to local addresses for external clients.  We also
 	// assume that all the DHCP leases we give are locally-served or at least
 	// don't need to be inaccessible externally.
-	if !s.subnetDetector.IsLocallyServedNetwork(ip) {
+	if !s.privateNets.Contains(ip) {
 		log.Debug("dns: addr %s is not from locally-served network", ip)
 
 		return resultCodeSuccess
@@ -479,7 +480,7 @@ func (s *Server) processLocalPTR(ctx *dnsContext) (rc resultCode) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	if !s.subnetDetector.IsLocallyServedNetwork(ip) {
+	if !s.privateNets.Contains(ip) {
 		return resultCodeSuccess
 	}
 
@@ -611,9 +612,9 @@ func (s *Server) processFilteringAfterResponse(ctx *dnsContext) (rc resultCode) 
 			d.Res.Answer = answer
 		}
 	default:
-		// Check the response only if the it's from an upstream.  Don't check
-		// the response if the protection is disabled since dnsrewrite rules
-		// aren't applied to it anyway.
+		// Check the response only if it's from an upstream.  Don't check the
+		// response if the protection is disabled since dnsrewrite rules aren't
+		// applied to it anyway.
 		if !ctx.protectionEnabled || !ctx.responseFromUpstream || s.dnsFilter == nil {
 			break
 		}

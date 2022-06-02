@@ -4,13 +4,13 @@
 
 ## v0.108.0: API changes
 
+## v0.107.7: API changes
+
 ### The new possible status code in `/install/configure` response.
 
 * The new status code `422 Unprocessable Entity` in the response for
   `POST /install/configure` which means that the specified password does not
   meet the strength requirements.
-
-## v0.107.7: API changes
 
 ### The new optional field `"ecs"` in `QueryLogItem`
 

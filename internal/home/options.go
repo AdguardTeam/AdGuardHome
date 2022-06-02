@@ -230,13 +230,19 @@ var helpArg = arg{
 }
 
 var noEtcHostsArg = arg{
-	description:     "Do not use the OS-provided hosts.",
+	description:     "Deprecated.  Do not use the OS-provided hosts.",
 	longName:        "no-etc-hosts",
 	shortName:       "",
 	updateWithValue: nil,
 	updateNoValue:   func(o options) (options, error) { o.noEtcHosts = true; return o, nil },
-	effect:          nil,
-	serialize:       func(o options) []string { return boolSliceOrNil(o.noEtcHosts) },
+	effect: func(_ options, _ string) (f effect, err error) {
+		log.Info(
+			"warning: --no-etc-hosts flag is deprecated and will be removed in the future versions",
+		)
+
+		return nil, nil
+	},
+	serialize: func(o options) []string { return boolSliceOrNil(o.noEtcHosts) },
 }
 
 var localFrontendArg = arg{

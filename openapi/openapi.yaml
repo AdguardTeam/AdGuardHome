@@ -1088,6 +1088,9 @@
           'description': >
             Failed to parse initial configuration or cannot listen to the
             specified addresses.
+        '422':
+          'description': >
+            The specified password does not meet the strength requirements.
         '500':
           'description': 'Cannot start the DNS server'
   '/login':
