@@ -17,6 +17,9 @@ and this project adheres to
 
 ### Security
 
+- Go version was updated to prevent the possibility of exploiting the
+  [CVE-2022-29526], [CVE-2022-30634], [CVE-2022-30629], [CVE-2022-30580], and
+  [CVE-2022-29804] vulnerabilities.
 - Enforced password strength policy ([#3503]).
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).
@@ -161,10 +164,14 @@ In this release, the schema version has changed from 12 to 14.
 [#4591]: https://github.com/AdguardTeam/AdGuardHome/issues/4591
 [#4592]: https://github.com/AdguardTeam/AdGuardHome/issues/4592
 
-[rfc-9250]:     https://datatracker.ietf.org/doc/html/rfc9250
-[ddr-draft-06]: https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html
-[repr]:         https://reproducible-builds.org/docs/source-date-epoch/
-
+[CVE-2022-29526]: https://www.cvedetails.com/cve/CVE-2022-29526
+[CVE-2022-29804]: https://www.cvedetails.com/cve/CVE-2022-29804
+[CVE-2022-30580]: https://www.cvedetails.com/cve/CVE-2022-30580
+[CVE-2022-30629]: https://www.cvedetails.com/cve/CVE-2022-30629
+[CVE-2022-30634]: https://www.cvedetails.com/cve/CVE-2022-30634
+[ddr-draft-06]:   https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html
+[repr]:           https://reproducible-builds.org/docs/source-date-epoch/
+[rfc-9250]:       https://datatracker.ietf.org/doc/html/rfc9250
 
 
 <!--
