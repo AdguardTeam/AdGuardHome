@@ -15,6 +15,7 @@ require (
 	github.com/google/go-cmp v0.5.7
 	github.com/google/gopacket v1.1.19
 	github.com/google/renameio v1.0.1
+	github.com/google/uuid v1.3.0
 	github.com/insomniacslk/dhcp v0.0.0-20220405050111-12fbdcb11b41
 	github.com/kardianos/service v1.2.1
 	github.com/lucas-clemente/quic-go v0.27.1
@@ -23,8 +24,7 @@ require (
 	// TODO(a.garipov): This package is deprecated; find a new one or use
 	// our own code for that.
 	github.com/mdlayher/raw v0.0.0-20211126142749-4eae47f3d54b
-	github.com/miekg/dns v1.1.48
-	github.com/satori/go.uuid v1.2.0
+	github.com/miekg/dns v1.1.49
 	github.com/stretchr/testify v1.7.0
 	github.com/ti-mo/netfilter v0.4.0
 	go.etcd.io/bbolt v1.3.6
@@ -45,7 +45,6 @@ require (
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/josharian/native v1.0.0 // indirect
 	github.com/marten-seemann/qtls-go1-16 v0.1.5 // indirect
 	github.com/marten-seemann/qtls-go1-17 v0.1.1 // indirect
@@ -66,6 +65,3 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
-
-// TODO(a.garipov): Return to the main repo once miekg/dns#1359 is merged.
-replace github.com/miekg/dns => github.com/ainar-g/dns v1.1.49-0.20220411125901-8a162bbc18d8
