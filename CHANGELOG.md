@@ -12,8 +12,40 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.108.0] - 2022-07-01 (APPROX.)
+## [v0.108.0] - 2022-10-01 (APPROX.)
 -->
+
+### Security
+
+- Weaker cipher suites that use the CBC (cipher block chaining) mode of
+  operation have been disabled ([#2993]).
+
+### Added
+
+- Support for Discovery of Designated Resolvers (DDR) according to the [RFC
+  draft][ddr-draft-06] ([#4463]).
+- `windows/arm64` support ([#3057]).
+
+### Deprecated
+
+- Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
+
+[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+[#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+
+[ddr-draft-06]:   https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html
+
+
+
+<!--
+## [v0.107.8] - 2022-07-12 (APPROX.)
+-->
+
+
+
+## [v0.107.7] - 2022-06-06
+
+See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
 
 ### Security
 
@@ -21,15 +53,11 @@ and this project adheres to
   [CVE-2022-29526], [CVE-2022-30634], [CVE-2022-30629], [CVE-2022-30580], and
   [CVE-2022-29804] vulnerabilities.
 - Enforced password strength policy ([#3503]).
-- Weaker cipher suites that use the CBC (cipher block chaining) mode of
-  operation have been disabled ([#2993]).
 
 ### Added
 
 - Support for the final DNS-over-QUIC standard, [RFC 9250][rfc-9250] ([#4592]).
 - Support upstreams for subdomains of a domain only ([#4503]).
-- Support for Discovery of Designated Resolvers (DDR) according to the [RFC
-  draft][ddr-draft-06] ([#4463]).
 - The ability to control each source of runtime clients separately via
   `clients.runtime_sources` configuration object ([#3020]).
 - The ability to customize the set of networks that are considered private
@@ -41,7 +69,6 @@ and this project adheres to
   ([#4166]).
 - Logs are now collected by default on FreeBSD and OpenBSD when AdGuard Home is
   installed as a service ([#4213]).
-- `windows/arm64` support ([#3057]).
 
 ### Changed
 
@@ -125,10 +152,9 @@ In this release, the schema version has changed from 12 to 14.
 
 ### Deprecated
 
-- The `--no-etc-hosts` option.  Its' functionality is now controlled by
+- The `--no-etc-hosts` option.  Its functionality is now controlled by
   `clients.runtime_sources.hosts` configuration property.  v0.109.0 will remove
   the flag completely.
-- Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
 ### Fixed
 
@@ -140,9 +166,7 @@ In this release, the schema version has changed from 12 to 14.
 - ARP tables refreshing process causing excessive PTR requests ([#3157]).
 
 [#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
-[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3020]: https://github.com/AdguardTeam/AdGuardHome/issues/3020
-[#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#3142]: https://github.com/AdguardTeam/AdGuardHome/issues/3142
 [#3157]: https://github.com/AdguardTeam/AdGuardHome/issues/3157
 [#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
@@ -169,18 +193,8 @@ In this release, the schema version has changed from 12 to 14.
 [CVE-2022-30580]: https://www.cvedetails.com/cve/CVE-2022-30580
 [CVE-2022-30629]: https://www.cvedetails.com/cve/CVE-2022-30629
 [CVE-2022-30634]: https://www.cvedetails.com/cve/CVE-2022-30634
-[ddr-draft-06]:   https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html
-[repr]:           https://reproducible-builds.org/docs/source-date-epoch/
+[ms-v0.107.7]:    https://github.com/AdguardTeam/AdGuardHome/milestone/43?closed=1
 [rfc-9250]:       https://datatracker.ietf.org/doc/html/rfc9250
-
-
-<!--
-## [v0.107.7] - 2022-05-18 (APPROX.)
-
-See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
-
-[ms-v0.107.7]: https://github.com/AdguardTeam/AdGuardHome/milestone/43?closed=1
--->
 
 
 
@@ -234,6 +248,7 @@ See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
 [CVE-2022-28327]: https://www.cvedetails.com/cve/CVE-2022-28327
 [dns-draft-02]:   https://datatracker.ietf.org/doc/html/draft-ietf-add-svcb-dns-02#section-5.1
 [ms-v0.107.6]:    https://github.com/AdguardTeam/AdGuardHome/milestone/42?closed=1
+[repr]:           https://reproducible-builds.org/docs/source-date-epoch/
 [svcb-draft-08]:  https://www.ietf.org/archive/id/draft-ietf-dnsop-svcb-https-08.html
 
 
@@ -995,11 +1010,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.7...HEAD
-[v0.107.7]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.6...v0.107.7
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.8...HEAD
+[v0.107.8]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.7...v0.107.8
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.6...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.7...HEAD
+[v0.107.7]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.6...v0.107.7
 [v0.107.6]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.5...v0.107.6
 [v0.107.5]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...v0.107.5
 [v0.107.4]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...v0.107.4
