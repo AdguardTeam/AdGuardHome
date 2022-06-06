@@ -43,7 +43,7 @@ and this project adheres to
 
 
 
-## [v0.107.7] - 2022-06-06 (APPROX.)
+## [v0.107.7] - 2022-06-06
 
 See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
 
