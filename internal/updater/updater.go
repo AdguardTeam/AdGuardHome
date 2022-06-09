@@ -104,11 +104,14 @@ func NewUpdater(conf *Config) *Updater {
 }
 
 // Update performs the auto-update.
-func (u *Updater) Update() error {
+func (u *Updater) Update() (err error) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 
-	err := u.prepare()
+	log.Info("updater: updating")
+	defer func() { log.Info("updater: finished; errors: %v", err) }()
+
+	err = u.prepare()
 	if err != nil {
 		return err
 	}
@@ -178,7 +181,12 @@ func (u *Updater) prepare() (err error) {
 	u.backupExeName = filepath.Join(u.backupDir, exeName)
 	u.updateExeName = filepath.Join(u.updateDir, exeName)
 
-	log.Info("Updating from %s to %s.  URL:%s", version.Version(), u.newVersion, u.packageURL)
+	log.Debug(
+		"updater: updating from %s to %s using url: %s",
+		version.Version(),
+		u.newVersion,
+		u.packageURL,
+	)
 
 	// TODO(a.garipov): Use os.Args[0] instead?
 	u.currentExeName = filepath.Join(u.workDir, exeName)
@@ -194,7 +202,7 @@ func (u *Updater) unpack() error {
 	var err error
 	_, pkgNameOnly := filepath.Split(u.packageURL)
 
-	log.Debug("updater: unpacking the package")
+	log.Debug("updater: unpacking package")
 	if strings.HasSuffix(pkgNameOnly, ".zip") {
 		u.unpackedFiles, err = zipFileUnpack(u.packageName, u.updateDir)
 		if err != nil {
@@ -229,7 +237,7 @@ func (u *Updater) check() error {
 }
 
 func (u *Updater) backup() error {
-	log.Debug("updater: backing up the current configuration")
+	log.Debug("updater: backing up current configuration")
 	_ = os.Mkdir(u.backupDir, 0o755)
 	err := copyFile(u.confName, filepath.Join(u.backupDir, "AdGuardHome.yaml"))
 	if err != nil {
@@ -252,7 +260,7 @@ func (u *Updater) replace() error {
 		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %s", u.updateDir, u.workDir, err)
 	}
 
-	log.Debug("updater: renaming: %s -> %s", u.currentExeName, u.backupExeName)
+	log.Debug("updater: renaming: %s to %s", u.currentExeName, u.backupExeName)
 	err = os.Rename(u.currentExeName, u.backupExeName)
 	if err != nil {
 		return err
@@ -268,7 +276,7 @@ func (u *Updater) replace() error {
 		return err
 	}
 
-	log.Debug("updater: renamed: %s -> %s", u.updateExeName, u.currentExeName)
+	log.Debug("updater: renamed: %s to %s", u.updateExeName, u.currentExeName)
 
 	return nil
 }
@@ -297,7 +305,7 @@ func (u *Updater) downloadPackageFile(url, filename string) (err error) {
 		return fmt.Errorf("http request failed: %w", err)
 	}
 
-	log.Debug("updater: reading HTTP body")
+	log.Debug("updater: reading http body")
 	// This use of ReadAll is now safe, because we limited body's Reader.
 	body, err := io.ReadAll(r)
 	if err != nil {
@@ -343,7 +351,7 @@ func tarGzFileUnpackOne(outDir string, tr *tar.Reader, hdr *tar.Header) (name st
 	}
 
 	if hdr.Typeflag != tar.TypeReg {
-		log.Debug("updater: %s: unknown file type %d, skipping", name, hdr.Typeflag)
+		log.Info("updater: %s: unknown file type %d, skipping", name, hdr.Typeflag)
 
 		return "", nil
 	}
@@ -364,7 +372,7 @@ func tarGzFileUnpackOne(outDir string, tr *tar.Reader, hdr *tar.Header) (name st
 		return "", fmt.Errorf("io.Copy(): %w", err)
 	}
 
-	log.Tracef("updater: created file %s", outputName)
+	log.Debug("updater: created file %q", outputName)
 
 	return name, nil
 }
@@ -440,7 +448,7 @@ func zipFileUnpackOne(outDir string, zf *zip.File) (name string, err error) {
 			return "", fmt.Errorf("os.Mkdir(%q): %w", outputName, err)
 		}
 
-		log.Tracef("created directory %q", outputName)
+		log.Debug("updater: created directory %q", outputName)
 
 		return "", nil
 	}
@@ -457,7 +465,7 @@ func zipFileUnpackOne(outDir string, zf *zip.File) (name string, err error) {
 		return "", fmt.Errorf("io.Copy(): %w", err)
 	}
 
-	log.Tracef("created file %s", outputName)
+	log.Debug("updater: created file %q", outputName)
 
 	return name, nil
 }
@@ -516,7 +524,7 @@ func copySupportingFiles(files []string, srcdir, dstdir string) error {
 			return err
 		}
 
-		log.Debug("updater: copied: %q -> %q", src, dst)
+		log.Debug("updater: copied: %q to %q", src, dst)
 	}
 
 	return nil
