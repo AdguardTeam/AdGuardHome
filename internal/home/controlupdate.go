@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
@@ -147,8 +148,8 @@ type versionResponse struct {
 // setAllowedToAutoUpdate sets CanAutoUpdate to true if AdGuard Home is actually
 // allowed to perform an automatic update by the OS.
 func (vr *versionResponse) setAllowedToAutoUpdate() (err error) {
-	if vr.CanAutoUpdate == nil || !*vr.CanAutoUpdate {
-		return
+	if vr.CanAutoUpdate != aghalg.NBTrue {
+		return nil
 	}
 
 	tlsConf := &tlsConfigSettings{}
@@ -162,7 +163,7 @@ func (vr *versionResponse) setAllowedToAutoUpdate() (err error) {
 		}
 	}
 
-	vr.CanAutoUpdate = &canUpdate
+	vr.CanAutoUpdate = aghalg.BoolToNullBool(canUpdate)
 
 	return nil
 }

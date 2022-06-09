@@ -363,6 +363,7 @@ else
 fi
 readonly announcement_url
 
+# TODO(a.garipov): Remove "selfupdate_min_version" in future versions.
 rm -f "$version_json"
 echo "{
   \"version\": \"${version}\",
