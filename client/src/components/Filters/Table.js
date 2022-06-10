@@ -36,6 +36,7 @@ class Table extends Component {
             Cell: this.renderCheckbox,
             width: 90,
             className: 'text-center',
+            resizable: false,
         },
         {
             Header: <Trans>name_table_header</Trans>,
@@ -77,10 +78,11 @@ class Table extends Component {
         },
         {
             Header: <Trans>actions_table_header</Trans>,
-            accessor: 'url',
+            accessor: 'actions',
             className: 'text-center',
             width: 100,
             sortable: false,
+            resizable: false,
             Cell: (row) => {
                 const { value } = row;
                 const { t, toggleFilteringModal, handleDelete } = this.props;
