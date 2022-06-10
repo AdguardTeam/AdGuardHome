@@ -261,7 +261,7 @@
     "query_log_strict_search": "검색을 제한하려면 쌍따옴표를 사용해주세요",
     "query_log_retention_confirm": "정말로 쿼리 로그 저장 기간을 변경하시겠습니까? 저장 주기를 낮출 경우, 일부 데이터가 손실됩니다",
     "anonymize_client_ip": "클라이언트 IP 익명화",
-    "anonymize_client_ip_desc": "클라이언트의 전체 IP 주소를 로그와 통계에 저장하저장하지 마세요",
+    "anonymize_client_ip_desc": "클라이언트의 전체 IP 주소를 로그와 통계에 저장하지 마세요",
     "dns_config": "DNS 서버 설정",
     "dns_cache_config": "DNS 캐시 구성",
     "dns_cache_config_desc": "여기에서 DNS 캐시를 구성 할 수 있습니다",
