@@ -70,6 +70,8 @@ const StaticLeases = ({
                         Header: <Trans>actions_table_header</Trans>,
                         accessor: 'actions',
                         maxWidth: 150,
+                        sortable: false,
+                        resizable: false,
                         // eslint-disable-next-line react/display-name
                         Cell: (row) => {
                             const { ip, mac, hostname } = row.original;
