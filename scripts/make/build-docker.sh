@@ -50,6 +50,11 @@ readonly docker_image_name
 
 # Set DOCKER_OUTPUT to 'type=image,name=adguard/adguard-home,push=true' if you
 # want (and are allowed) to push to DockerHub.
+#
+# If you want to inspect the resulting image using commands like "docker image
+# ls", change type to docker and also set docker_platforms to a single platform.
+#
+# See https://github.com/docker/buildx/issues/166.
 docker_output="${DOCKER_OUTPUT:-type=image,name=${docker_image_name},push=false}"
 readonly docker_output
 
