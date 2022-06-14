@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -92,10 +93,7 @@ func TestUpdateGetVersion(t *testing.T) {
 	assert.Equal(t, "v0.103.0-beta.2", info.NewVersion)
 	assert.Equal(t, "AdGuard Home v0.103.0-beta.2 is now available!", info.Announcement)
 	assert.Equal(t, "https://github.com/AdguardTeam/AdGuardHome/internal/releases", info.AnnouncementURL)
-	assert.Equal(t, "v0.0", info.SelfUpdateMinVersion)
-	if assert.NotNil(t, info.CanAutoUpdate) {
-		assert.True(t, *info.CanAutoUpdate)
-	}
+	assert.Equal(t, aghalg.NBTrue, info.CanAutoUpdate)
 
 	// check cached
 	_, err = u.VersionInfo(false)
@@ -290,10 +288,7 @@ func TestUpdater_VersionInto_ARM(t *testing.T) {
 	assert.Equal(t, "v0.103.0-beta.2", info.NewVersion)
 	assert.Equal(t, "AdGuard Home v0.103.0-beta.2 is now available!", info.Announcement)
 	assert.Equal(t, "https://github.com/AdguardTeam/AdGuardHome/internal/releases", info.AnnouncementURL)
-	assert.Equal(t, "v0.0", info.SelfUpdateMinVersion)
-	if assert.NotNil(t, info.CanAutoUpdate) {
-		assert.True(t, *info.CanAutoUpdate)
-	}
+	assert.Equal(t, aghalg.NBTrue, info.CanAutoUpdate)
 }
 
 func TestUpdater_VersionInto_MIPS(t *testing.T) {
@@ -330,8 +325,5 @@ func TestUpdater_VersionInto_MIPS(t *testing.T) {
 	assert.Equal(t, "v0.103.0-beta.2", info.NewVersion)
 	assert.Equal(t, "AdGuard Home v0.103.0-beta.2 is now available!", info.Announcement)
 	assert.Equal(t, "https://github.com/AdguardTeam/AdGuardHome/internal/releases", info.AnnouncementURL)
-	assert.Equal(t, "v0.0", info.SelfUpdateMinVersion)
-	if assert.NotNil(t, info.CanAutoUpdate) {
-		assert.True(t, *info.CanAutoUpdate)
-	}
+	assert.Equal(t, aghalg.NBTrue, info.CanAutoUpdate)
 }

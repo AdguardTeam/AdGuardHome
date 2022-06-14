@@ -19,9 +19,12 @@ type svc struct {
 // Keep in sync with:
 // client/src/helpers/constants.js
 // client/src/components/ui/Icons.js
-var serviceRulesArray = []svc{
-	{"whatsapp", []string{"||whatsapp.net^", "||whatsapp.com^"}},
-	{"facebook", []string{
+var serviceRulesArray = []svc{{
+	name:  "whatsapp",
+	rules: []string{"||whatsapp.net^", "||whatsapp.com^"},
+}, {
+	name: "facebook",
+	rules: []string{
 		"||facebook.com^",
 		"||facebook.net^",
 		"||fbcdn.net^",
@@ -33,9 +36,13 @@ var serviceRulesArray = []svc{
 		"||facebookcorewwwi.onion^",
 		"||fbcdn.com^",
 		"||fb.watch^",
-	}},
-	{"twitter", []string{"||twitter.com^", "||twttr.com^", "||t.co^", "||twimg.com^"}},
-	{"youtube", []string{
+	},
+}, {
+	name:  "twitter",
+	rules: []string{"||twitter.com^", "||twttr.com^", "||t.co^", "||twimg.com^"},
+}, {
+	name: "youtube",
+	rules: []string{
 		"||youtube.com^",
 		"||ytimg.com^",
 		"||youtu.be^",
@@ -43,35 +50,75 @@ var serviceRulesArray = []svc{
 		"||youtubei.googleapis.com^",
 		"||youtube-nocookie.com^",
 		"||youtube",
-	}},
-	{"twitch", []string{"||twitch.tv^", "||ttvnw.net^", "||jtvnw.net^", "||twitchcdn.net^"}},
-	{"netflix", []string{"||nflxext.com^", "||netflix.com^", "||nflximg.net^", "||nflxvideo.net^", "||nflxso.net^"}},
-	{"instagram", []string{"||instagram.com^", "||cdninstagram.com^"}},
-	{"snapchat", []string{
+	},
+}, {
+	name:  "twitch",
+	rules: []string{"||twitch.tv^", "||ttvnw.net^", "||jtvnw.net^", "||twitchcdn.net^"},
+}, {
+	name: "netflix",
+	rules: []string{
+		"||nflxext.com^",
+		"||netflix.com^",
+		"||nflximg.net^",
+		"||nflxvideo.net^",
+		"||nflxso.net^",
+	},
+}, {
+	name:  "instagram",
+	rules: []string{"||instagram.com^", "||cdninstagram.com^"},
+}, {
+	name: "snapchat",
+	rules: []string{
 		"||snapchat.com^",
 		"||sc-cdn.net^",
 		"||snap-dev.net^",
 		"||snapkit.co",
 		"||snapads.com^",
 		"||impala-media-production.s3.amazonaws.com^",
-	}},
-	{"discord", []string{"||discord.gg^", "||discordapp.net^", "||discordapp.com^", "||discord.com^", "||discord.media^"}},
-	{"ok", []string{"||ok.ru^"}},
-	{"skype", []string{"||skype.com^", "||skypeassets.com^"}},
-	{"vk", []string{"||vk.com^", "||userapi.com^", "||vk-cdn.net^", "||vkuservideo.net^"}},
-	{"origin", []string{"||origin.com^", "||signin.ea.com^", "||accounts.ea.com^"}},
-	{"steam", []string{
+	},
+}, {
+	name: "discord",
+	rules: []string{
+		"||discord.gg^",
+		"||discordapp.net^",
+		"||discordapp.com^",
+		"||discord.com^",
+		"||discord.media^",
+	},
+}, {
+	name:  "ok",
+	rules: []string{"||ok.ru^"},
+}, {
+	name:  "skype",
+	rules: []string{"||skype.com^", "||skypeassets.com^"},
+}, {
+	name:  "vk",
+	rules: []string{"||vk.com^", "||userapi.com^", "||vk-cdn.net^", "||vkuservideo.net^"},
+}, {
+	name:  "origin",
+	rules: []string{"||origin.com^", "||signin.ea.com^", "||accounts.ea.com^"},
+}, {
+	name: "steam",
+	rules: []string{
 		"||steam.com^",
 		"||steampowered.com^",
 		"||steamcommunity.com^",
 		"||steamstatic.com^",
 		"||steamstore-a.akamaihd.net^",
 		"||steamcdn-a.akamaihd.net^",
-	}},
-	{"epic_games", []string{"||epicgames.com^", "||easyanticheat.net^", "||easy.ac^", "||eac-cdn.com^"}},
-	{"reddit", []string{"||reddit.com^", "||redditstatic.com^", "||redditmedia.com^", "||redd.it^"}},
-	{"mail_ru", []string{"||mail.ru^"}},
-	{"cloudflare", []string{
+	},
+}, {
+	name:  "epic_games",
+	rules: []string{"||epicgames.com^", "||easyanticheat.net^", "||easy.ac^", "||eac-cdn.com^"},
+}, {
+	name:  "reddit",
+	rules: []string{"||reddit.com^", "||redditstatic.com^", "||redditmedia.com^", "||redd.it^"},
+}, {
+	name:  "mail_ru",
+	rules: []string{"||mail.ru^"},
+}, {
+	name: "cloudflare",
+	rules: []string{
 		"||cloudflare.com^",
 		"||cloudflare-dns.com^",
 		"||cloudflare.net^",
@@ -86,8 +133,10 @@ var serviceRulesArray = []svc{
 		"||warp.plus^",
 		"||1.1.1.1^",
 		"||dns4torpnlfs2ifuz2s2yf3fc7rdmsbhm6rw75euj35pac6ap25zgqad.onion^",
-	}},
-	{"amazon", []string{
+	},
+}, {
+	name: "amazon",
+	rules: []string{
 		"||amazon.com^",
 		"||media-amazon.com^",
 		"||primevideo.com^",
@@ -114,8 +163,10 @@ var serviceRulesArray = []svc{
 		"||amazon.co.uk^",
 		"||createspace.com^",
 		"||aws",
-	}},
-	{"ebay", []string{
+	},
+}, {
+	name: "ebay",
+	rules: []string{
 		"||ebay.com^",
 		"||ebayimg.com^",
 		"||ebaystatic.com^",
@@ -141,8 +192,10 @@ var serviceRulesArray = []svc{
 		"||ebay.com.my^",
 		"||ebay.com.sg^",
 		"||ebay.co.uk^",
-	}},
-	{"tiktok", []string{
+	},
+}, {
+	name: "tiktok",
+	rules: []string{
 		"||tiktok.com^",
 		"||tiktokcdn.com^",
 		"||musical.ly^",
@@ -162,59 +215,55 @@ var serviceRulesArray = []svc{
 		"||bytedance.map.fastly.net^",
 		"||douyin.com^",
 		"||tiktokv.com^",
-	}},
-	{"vimeo", []string{
-		"||vimeo.com^",
-		"||vimeocdn.com^",
-		"*vod-adaptive.akamaized.net^",
-	}},
-	{"pinterest", []string{
-		"||pinterest.*^",
-		"||pinimg.com^",
-	}},
-	{"imgur", []string{
-		"||imgur.com^",
-	}},
-	{"dailymotion", []string{
-		"||dailymotion.com^",
-		"||dm-event.net^",
-		"||dmcdn.net^",
-	}},
-	{"qq", []string{
-		// block qq.com and subdomains excluding WeChat domains
-		"^(?!weixin|wx)([^.]+\\.)?qq\\.com$",
+	},
+}, {
+	name:  "vimeo",
+	rules: []string{"||vimeo.com^", "||vimeocdn.com^", "*vod-adaptive.akamaized.net^"},
+}, {
+	name:  "pinterest",
+	rules: []string{"||pinterest.*^", "||pinimg.com^"},
+}, {
+	name:  "imgur",
+	rules: []string{"||imgur.com^"},
+}, {
+	name:  "dailymotion",
+	rules: []string{"||dailymotion.com^", "||dm-event.net^", "||dmcdn.net^"},
+}, {
+	name: "qq",
+	rules: []string{
+		// Block qq.com and subdomains excluding WeChat's domains.
+		"||qq.com^$denyallow=wx.qq.com|weixin.qq.com",
 		"||qqzaixian.com^",
-	}},
-	{"wechat", []string{
-		"||wechat.com^",
-		"||weixin.qq.com^",
-		"||wx.qq.com^",
-	}},
-	{"viber", []string{
-		"||viber.com^",
-	}},
-	{"weibo", []string{
-		"||weibo.com^",
-	}},
-	{"9gag", []string{
-		"||9cache.com^",
-		"||9gag.com^",
-	}},
-	{"telegram", []string{
-		"||t.me^",
-		"||telegram.me^",
-		"||telegram.org^",
-	}},
-	{"disneyplus", []string{
+	},
+}, {
+	name:  "wechat",
+	rules: []string{"||wechat.com^", "||weixin.qq.com^", "||wx.qq.com^"},
+}, {
+	name:  "viber",
+	rules: []string{"||viber.com^"},
+}, {
+	name:  "weibo",
+	rules: []string{"||weibo.com^"},
+}, {
+	name:  "9gag",
+	rules: []string{"||9cache.com^", "||9gag.com^"},
+}, {
+	name:  "telegram",
+	rules: []string{"||t.me^", "||telegram.me^", "||telegram.org^"},
+}, {
+	name: "disneyplus",
+	rules: []string{
 		"||disney-plus.net^",
 		"||disneyplus.com^",
 		"||disney.playback.edge.bamgrid.com^",
 		"||media.dssott.com^",
-	}},
-	{"hulu", []string{
-		"||hulu.com^",
-	}},
-	{"spotify", []string{
+	},
+}, {
+	name:  "hulu",
+	rules: []string{"||hulu.com^"},
+}, {
+	name: "spotify",
+	rules: []string{
 		"/_spotify-connect._tcp.local/",
 		"||spotify.com^",
 		"||scdn.co^",
@@ -226,13 +275,15 @@ var serviceRulesArray = []svc{
 		"||audio4-ak-spotify-com.akamaized.net^",
 		"||heads-ak-spotify-com.akamaized.net^",
 		"||heads4-ak-spotify-com.akamaized.net^",
-	}},
-	{"tinder", []string{
+	},
+}, {
+	name: "tinder",
+	rules: []string{
 		"||gotinder.com^",
 		"||tinder.com^",
 		"||tindersparks.com^",
-	}},
-}
+	},
+}}
 
 // convert array to map
 func initBlockedServices() {

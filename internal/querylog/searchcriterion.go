@@ -99,24 +99,10 @@ func (c *searchCriterion) quickMatch(line string, findClient quickMatchClientFun
 		}
 
 		if c.strict {
-			return ctDomainOrClientCaseStrict(
-				c.value,
-				c.asciiVal,
-				clientID,
-				name,
-				host,
-				ip,
-			)
+			return ctDomainOrClientCaseStrict(c.value, c.asciiVal, clientID, name, host, ip)
 		}
 
-		return ctDomainOrClientCaseNonStrict(
-			c.value,
-			c.asciiVal,
-			clientID,
-			name,
-			host,
-			ip,
-		)
+		return ctDomainOrClientCaseNonStrict(c.value, c.asciiVal, clientID, name, host, ip)
 	case ctFilteringStatus:
 		// Go on, as we currently don't do quick matches against
 		// filtering statuses.

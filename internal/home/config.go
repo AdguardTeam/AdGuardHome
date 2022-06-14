@@ -51,6 +51,13 @@ type osConfig struct {
 	RlimitNoFile uint64 `yaml:"rlimit_nofile"`
 }
 
+type clientsConfig struct {
+	// Sources defines the set of sources to fetch the runtime clients from.
+	Sources *clientSourcesConf `yaml:"runtime_sources"`
+	// Persistent are the configured clients.
+	Persistent []*clientObject `yaml:"persistent"`
+}
+
 // configuration is loaded from YAML
 // field ordering is important -- yaml fields will mirror ordering from here
 type configuration struct {
@@ -88,7 +95,7 @@ type configuration struct {
 	// Clients contains the YAML representations of the persistent clients.
 	// This field is only used for reading and writing persistent client data.
 	// Keep this field sorted to ensure consistent ordering.
-	Clients []*clientObject `yaml:"clients"`
+	Clients *clientsConfig `yaml:"clients"`
 
 	logSettings `yaml:",inline"`
 
@@ -123,8 +130,9 @@ type dnsConfig struct {
 	// UpstreamTimeout is the timeout for querying upstream servers.
 	UpstreamTimeout timeutil.Duration `yaml:"upstream_timeout"`
 
-	// ResolveClients enables and disables resolving clients with RDNS.
-	ResolveClients bool `yaml:"resolve_clients"`
+	// PrivateNets is the set of IP networks for which the private reverse DNS
+	// resolver should be used.
+	PrivateNets []string `yaml:"private_networks"`
 
 	// UsePrivateRDNS defines if the PTR requests for unknown addresses from
 	// locally-served networks should be resolved via private PTR resolvers.
@@ -179,6 +187,7 @@ var config = &configuration{
 			Ratelimit:          20,
 			RefuseAny:          true,
 			AllServers:         false,
+			HandleDDR:          true,
 			FastestTimeout: timeutil.Duration{
 				Duration: fastip.DefaultPingWaitTimeout,
 			},
@@ -194,7 +203,6 @@ var config = &configuration{
 		FilteringEnabled:           true, // whether or not use filter lists
 		FiltersUpdateIntervalHours: 24,
 		UpstreamTimeout:            timeutil.Duration{Duration: dnsforward.DefaultTimeout},
-		ResolveClients:             true,
 		UsePrivateRDNS:             true,
 	},
 	TLS: tlsConfigSettings{
@@ -204,6 +212,15 @@ var config = &configuration{
 	},
 	DHCP: &dhcpd.ServerConfig{
 		LocalDomainName: "lan",
+	},
+	Clients: &clientsConfig{
+		Sources: &clientSourcesConf{
+			WHOIS:     true,
+			ARP:       true,
+			RDNS:      true,
+			DHCP:      true,
+			HostsFile: true,
+		},
 	},
 	logSettings: logSettings{
 		LogCompress:   false,
@@ -288,18 +305,20 @@ func parseConfig() (err error) {
 	uc := aghalg.UniqChecker{}
 	addPorts(
 		uc,
-		config.BindPort,
-		config.BetaBindPort,
-		config.DNS.Port,
+		tcpPort(config.BindPort),
+		tcpPort(config.BetaBindPort),
+		udpPort(config.DNS.Port),
 	)
 
 	if config.TLS.Enabled {
 		addPorts(
 			uc,
-			config.TLS.PortHTTPS,
-			config.TLS.PortDNSOverTLS,
-			config.TLS.PortDNSOverQUIC,
-			config.TLS.PortDNSCrypt,
+			// TODO(e.burkov):  Consider adding a udpPort with the same value if
+			// we ever support the HTTP/3 for web admin interface.
+			tcpPort(config.TLS.PortHTTPS),
+			tcpPort(config.TLS.PortDNSOverTLS),
+			udpPort(config.TLS.PortDNSOverQUIC),
+			tcpPort(config.TLS.PortDNSCrypt),
 		)
 	}
 	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
@@ -317,11 +336,29 @@ func parseConfig() (err error) {
 	return nil
 }
 
-// addPorts is a helper for ports validation.  It skips zero ports.
-func addPorts(uc aghalg.UniqChecker, ports ...int) {
+// udpPort is the port number for UDP protocol.
+type udpPort int
+
+// tcpPort is the port number for TCP protocol.
+type tcpPort int
+
+// addPorts is a helper for ports validation.  It skips zero ports.  Each of
+// ports should be either a udpPort or a tcpPort.
+func addPorts(uc aghalg.UniqChecker, ports ...interface{}) {
 	for _, p := range ports {
-		if p != 0 {
-			uc.Add(p)
+		// Use separate cases for tcpPort and udpPort so that the untyped
+		// constant zero is converted to the appropriate type.
+		switch p := p.(type) {
+		case tcpPort:
+			if p != 0 {
+				uc.Add(p)
+			}
+		case udpPort:
+			if p != 0 {
+				uc.Add(p)
+			}
+		default:
+			// Go on.
 		}
 	}
 }
@@ -380,9 +417,7 @@ func (c *configuration) write() error {
 		s.WriteDiskConfig(&c)
 		dns := &config.DNS
 		dns.FilteringConfig = c
-		dns.LocalPTRResolvers,
-			dns.ResolveClients,
-			dns.UsePrivateRDNS = s.RDNSSettings()
+		dns.LocalPTRResolvers, config.Clients.Sources.RDNS, dns.UsePrivateRDNS = s.RDNSSettings()
 	}
 
 	if Context.dhcpServer != nil {
@@ -391,7 +426,7 @@ func (c *configuration) write() error {
 		config.DHCP = c
 	}
 
-	config.Clients = Context.clients.forConfig()
+	config.Clients.Persistent = Context.clients.forConfig()
 
 	configFile := config.getConfigFilename()
 	log.Debug("Writing YAML file: %s", configFile)

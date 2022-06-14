@@ -3,6 +3,7 @@ package home
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
@@ -11,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
@@ -27,12 +29,16 @@ type temporaryError interface {
 
 // Get the latest available version from the Internet
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	resp := &versionResponse{}
 	if Context.disableUpdate {
-		// w.Header().Set("Content-Type", "application/json")
 		resp.Disabled = true
-		_ = json.NewEncoder(w).Encode(resp)
-		// TODO(e.burkov): Add error handling and deal with headers.
+		err := json.NewEncoder(w).Encode(resp)
+		if err != nil {
+			aghhttp.Error(r, w, http.StatusInternalServerError, "writing body: %s", err)
+		}
+
 		return
 	}
 
@@ -44,30 +50,48 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	if r.ContentLength != 0 {
 		err = json.NewDecoder(r.Body).Decode(req)
 		if err != nil {
-			aghhttp.Error(r, w, http.StatusBadRequest, "JSON parse: %s", err)
+			aghhttp.Error(r, w, http.StatusBadRequest, "parsing request: %s", err)
 
 			return
 		}
 	}
 
+	err = requestVersionInfo(resp, req.Recheck)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		aghhttp.Error(r, w, http.StatusBadGateway, "%s", err)
+
+		return
+	}
+
+	err = resp.setAllowedToAutoUpdate()
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
+
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(resp)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusInternalServerError, "writing body: %s", err)
+	}
+}
+
+// requestVersionInfo sets the VersionInfo field of resp if it can reach the
+// update server.
+func requestVersionInfo(resp *versionResponse, recheck bool) (err error) {
 	for i := 0; i != 3; i++ {
-		func() {
-			Context.controlLock.Lock()
-			defer Context.controlLock.Unlock()
-
-			resp.VersionInfo, err = Context.updater.VersionInfo(req.Recheck)
-		}()
-
+		resp.VersionInfo, err = Context.updater.VersionInfo(recheck)
 		if err != nil {
 			var terr temporaryError
 			if errors.As(err, &terr) && terr.Temporary() {
-				// Temporary network error.  This case may happen while
-				// we're restarting our DNS server.  Log and sleep for
-				// some time.
+				// Temporary network error.  This case may happen while we're
+				// restarting our DNS server.  Log and sleep for some time.
 				//
 				// See https://github.com/AdguardTeam/AdGuardHome/issues/934.
 				d := time.Duration(i) * time.Second
-				log.Info("temp net error: %q; sleeping for %s and retrying", err, d)
+				log.Info("update: temp net error: %q; sleeping for %s and retrying", err, d)
 				time.Sleep(d)
 
 				continue
@@ -76,29 +100,14 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 
 		break
 	}
+
 	if err != nil {
 		vcu := Context.updater.VersionCheckURL()
-		// TODO(a.garipov): Figure out the purpose of %T verb.
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusBadGateway,
-			"Couldn't get version check json from %s: %T %s\n",
-			vcu,
-			err,
-			err,
-		)
 
-		return
+		return fmt.Errorf("getting version info from %s: %s", vcu, err)
 	}
 
-	resp.confirmAutoUpdate()
-
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write body: %s", err)
-	}
+	return nil
 }
 
 // handleUpdate performs an update to the latest available version procedure.
@@ -132,31 +141,37 @@ func handleUpdate(w http.ResponseWriter, r *http.Request) {
 
 // versionResponse is the response for /control/version.json endpoint.
 type versionResponse struct {
-	Disabled bool `json:"disabled"`
 	updater.VersionInfo
+	Disabled bool `json:"disabled"`
 }
 
-// confirmAutoUpdate checks the real possibility of auto update.
-func (vr *versionResponse) confirmAutoUpdate() {
-	if vr.CanAutoUpdate != nil && *vr.CanAutoUpdate {
-		canUpdate := true
-
-		var tlsConf *tlsConfigSettings
-		if runtime.GOOS != "windows" {
-			tlsConf = &tlsConfigSettings{}
-			Context.tls.WriteDiskConfig(tlsConf)
-		}
-
-		if tlsConf != nil &&
-			((tlsConf.Enabled && (tlsConf.PortHTTPS < 1024 ||
-				tlsConf.PortDNSOverTLS < 1024 ||
-				tlsConf.PortDNSOverQUIC < 1024)) ||
-				config.BindPort < 1024 ||
-				config.DNS.Port < 1024) {
-			canUpdate, _ = aghnet.CanBindPrivilegedPorts()
-		}
-		vr.CanAutoUpdate = &canUpdate
+// setAllowedToAutoUpdate sets CanAutoUpdate to true if AdGuard Home is actually
+// allowed to perform an automatic update by the OS.
+func (vr *versionResponse) setAllowedToAutoUpdate() (err error) {
+	if vr.CanAutoUpdate != aghalg.NBTrue {
+		return nil
 	}
+
+	tlsConf := &tlsConfigSettings{}
+	Context.tls.WriteDiskConfig(tlsConf)
+
+	canUpdate := true
+	if tlsConfUsesPrivilegedPorts(tlsConf) || config.BindPort < 1024 || config.DNS.Port < 1024 {
+		canUpdate, err = aghnet.CanBindPrivilegedPorts()
+		if err != nil {
+			return fmt.Errorf("checking ability to bind privileged ports: %w", err)
+		}
+	}
+
+	vr.CanAutoUpdate = aghalg.BoolToNullBool(canUpdate)
+
+	return nil
+}
+
+// tlsConfUsesPrivilegedPorts returns true if the provided TLS configuration
+// indicates that privileged ports are used.
+func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
+	return c.Enabled && (c.PortHTTPS < 1024 || c.PortDNSOverTLS < 1024 || c.PortDNSOverQUIC < 1024)
 }
 
 // finishUpdate completes an update procedure.

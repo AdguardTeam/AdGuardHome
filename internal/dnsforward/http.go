@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
@@ -167,7 +166,7 @@ func (req *dnsConfig) checkBootstrap() (err error) {
 }
 
 // validate returns an error if any field of req is invalid.
-func (req *dnsConfig) validate(snd *aghnet.SubnetDetector) (err error) {
+func (req *dnsConfig) validate(privateNets netutil.SubnetSet) (err error) {
 	if req.Upstreams != nil {
 		err = ValidateUpstreams(*req.Upstreams)
 		if err != nil {
@@ -176,7 +175,7 @@ func (req *dnsConfig) validate(snd *aghnet.SubnetDetector) (err error) {
 	}
 
 	if req.LocalPTRUpstreams != nil {
-		err = ValidateUpstreamsPrivate(*req.LocalPTRUpstreams, snd)
+		err = ValidateUpstreamsPrivate(*req.LocalPTRUpstreams, privateNets)
 		if err != nil {
 			return fmt.Errorf("validating private upstream servers: %w", err)
 		}
@@ -224,7 +223,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = req.validate(s.subnetDetector)
+	err = req.validate(s.privateNets)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
@@ -350,17 +349,6 @@ func IsCommentOrEmpty(s string) (ok bool) {
 	return len(s) == 0 || s[0] == '#'
 }
 
-// LocalNetChecker is used to check if the IP address belongs to a local
-// network.
-type LocalNetChecker interface {
-	// IsLocallyServedNetwork returns true if ip is contained in any of address
-	// registries defined by RFC 6303.
-	IsLocallyServedNetwork(ip net.IP) (ok bool)
-}
-
-// type check
-var _ LocalNetChecker = (*aghnet.SubnetDetector)(nil)
-
 // newUpstreamConfig validates upstreams and returns an appropriate upstream
 // configuration or nil if it can't be built.
 //
@@ -422,8 +410,8 @@ func stringKeysSorted(m map[string][]upstream.Upstream) (sorted []string) {
 // ValidateUpstreamsPrivate validates each upstream and returns an error if any
 // upstream is invalid or if there are no default upstreams specified.  It also
 // checks each domain of domain-specific upstreams for being ARPA pointing to
-// a locally-served network.  lnc must not be nil.
-func ValidateUpstreamsPrivate(upstreams []string, lnc LocalNetChecker) (err error) {
+// a locally-served network.  privateNets must not be nil.
+func ValidateUpstreamsPrivate(upstreams []string, privateNets netutil.SubnetSet) (err error) {
 	conf, err := newUpstreamConfig(upstreams)
 	if err != nil {
 		return err
@@ -444,7 +432,7 @@ func ValidateUpstreamsPrivate(upstreams []string, lnc LocalNetChecker) (err erro
 			continue
 		}
 
-		if !lnc.IsLocallyServedNetwork(subnet.IP) {
+		if !privateNets.Contains(subnet.IP) {
 			errs = append(
 				errs,
 				fmt.Errorf("arpa domain %q should point to a locally-served network", domain),
@@ -459,7 +447,7 @@ func ValidateUpstreamsPrivate(upstreams []string, lnc LocalNetChecker) (err erro
 	return nil
 }
 
-var protocols = []string{"tls://", "https://", "tcp://", "sdns://", "quic://"}
+var protocols = []string{"udp://", "tcp://", "tls://", "https://", "sdns://", "quic://"}
 
 func validateUpstream(u string) (useDefault bool, err error) {
 	// Check if the user tries to specify upstream for domain.
@@ -522,6 +510,7 @@ func separateUpstream(upstreamStr string) (upstream string, isDomainSpec bool, e
 			continue
 		}
 
+		host = strings.TrimPrefix(host, "*.")
 		err = netutil.ValidateDomainName(host)
 		if err != nil {
 			return "", true, fmt.Errorf("domain at index %d: %w", i, err)

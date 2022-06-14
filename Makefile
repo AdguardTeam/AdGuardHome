@@ -17,6 +17,7 @@ DIST_DIR = dist
 # See https://unix.stackexchange.com/q/646255/105635.
 GO.MACRO = $${GO:-go}
 GOPROXY = https://goproxy.cn|https://proxy.golang.org|direct
+GOSUMDB = sum.golang.google.cn
 GPG_KEY = devteam@adguard.com
 GPG_KEY_PASSPHRASE = not-a-real-password
 NPM = npm
@@ -32,6 +33,8 @@ YARN_FLAGS = --cwd $(CLIENT_BETA_DIR)
 YARN_INSTALL_FLAGS = $(YARN_FLAGS) --network-timeout 120000 --silent\
 	--ignore-engines --ignore-optional --ignore-platform\
 	--ignore-scripts
+
+V1API = 0
 
 # Macros for the build-release target.  If FRONTEND_PREBUILT is 0, the
 # default, the macro $(BUILD_RELEASE_DEPS_$(FRONTEND_PREBUILT)) expands
@@ -56,9 +59,11 @@ ENV = env\
 	DIST_DIR='$(DIST_DIR)'\
 	GO="$(GO.MACRO)"\
 	GOPROXY='$(GOPROXY)'\
+	GOSUMDB='$(GOSUMDB)'\
 	PATH="$${PWD}/bin:$$( "$(GO.MACRO)" env GOPATH )/bin:$${PATH}"\
 	RACE='$(RACE)'\
 	SIGN='$(SIGN)'\
+	V1API='$(V1API)'\
 	VERBOSE='$(VERBOSE)'\
 	VERSION='$(VERSION)'\
 

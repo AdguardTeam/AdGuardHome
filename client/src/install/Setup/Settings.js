@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Field, reduxForm, formValueSelector } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
+import i18n from 'i18next';
 
 import Controls from './Controls';
 import AddressList from './AddressList';
@@ -31,10 +32,10 @@ const renderInterfaces = (interfaces) => Object.values(interfaces)
 
         if (option && ip_addresses?.length > 0) {
             const ip = getInterfaceIp(option);
-            const isDown = flags?.includes('down');
+            const isUp = flags?.includes('up');
 
-            return <option value={ip} key={name} disabled={isDown}>
-                {name} - {ip} {isDown && `(${<Trans>down</Trans>})`}
+            return <option value={ip} key={name} disabled={!isUp}>
+                {name} - {ip} {!isUp && `(${i18n.t('down')})`}
             </option>;
         }
 

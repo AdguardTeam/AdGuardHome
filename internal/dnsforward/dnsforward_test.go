@@ -24,6 +24,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
@@ -69,14 +70,11 @@ func createTestServer(
 	f := filtering.New(filterConf, filters)
 	f.SetEnabled(true)
 
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
-	require.NotNil(t, snd)
-
+	var err error
 	s, err = NewServer(DNSCreateParams{
-		DHCPServer:     &testDHCP{},
-		DNSFilter:      f,
-		SubnetDetector: snd,
+		DHCPServer:  &testDHCP{},
+		DNSFilter:   f,
+		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
 	require.NoError(t, err)
 
@@ -770,16 +768,11 @@ func TestBlockedCustomIP(t *testing.T) {
 		Data: []byte(rules),
 	}}
 
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
-	require.NotNil(t, snd)
-
 	f := filtering.New(&filtering.Config{}, filters)
-	var s *Server
-	s, err = NewServer(DNSCreateParams{
-		DHCPServer:     &testDHCP{},
-		DNSFilter:      f,
-		SubnetDetector: snd,
+	s, err := NewServer(DNSCreateParams{
+		DHCPServer:  &testDHCP{},
+		DNSFilter:   f,
+		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
 	require.NoError(t, err)
 
@@ -913,15 +906,10 @@ func TestRewrite(t *testing.T) {
 	f := filtering.New(c, nil)
 	f.SetEnabled(true)
 
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
-	require.NotNil(t, snd)
-
-	var s *Server
-	s, err = NewServer(DNSCreateParams{
-		DHCPServer:     &testDHCP{},
-		DNSFilter:      f,
-		SubnetDetector: snd,
+	s, err := NewServer(DNSCreateParams{
+		DHCPServer:  &testDHCP{},
+		DNSFilter:   f,
+		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
 	require.NoError(t, err)
 
@@ -1028,15 +1016,10 @@ func (d *testDHCP) Leases(flags dhcpd.GetLeasesFlags) (leases []*dhcpd.Lease) {
 func (d *testDHCP) SetOnLeaseChanged(onLeaseChanged dhcpd.OnLeaseChangedT) {}
 
 func TestPTRResponseFromDHCPLeases(t *testing.T) {
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
-	require.NotNil(t, snd)
-
-	var s *Server
-	s, err = NewServer(DNSCreateParams{
-		DNSFilter:      filtering.New(&filtering.Config{}, nil),
-		DHCPServer:     &testDHCP{},
-		SubnetDetector: snd,
+	s, err := NewServer(DNSCreateParams{
+		DNSFilter:   filtering.New(&filtering.Config{}, nil),
+		DHCPServer:  &testDHCP{},
+		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
 	require.NoError(t, err)
 
@@ -1105,16 +1088,11 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	}, nil)
 	flt.SetEnabled(true)
 
-	var snd *aghnet.SubnetDetector
-	snd, err = aghnet.NewSubnetDetector()
-	require.NoError(t, err)
-	require.NotNil(t, snd)
-
 	var s *Server
 	s, err = NewServer(DNSCreateParams{
-		DHCPServer:     &testDHCP{},
-		DNSFilter:      flt,
-		SubnetDetector: snd,
+		DHCPServer:  &testDHCP{},
+		DNSFilter:   flt,
+		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
 	require.NoError(t, err)
 
@@ -1227,9 +1205,7 @@ func TestServer_Exchange(t *testing.T) {
 	srv.conf.ResolveClients = true
 	srv.conf.UsePrivateRDNS = true
 
-	var err error
-	srv.subnetDetector, err = aghnet.NewSubnetDetector()
-	require.NoError(t, err)
+	srv.privateNets = netutil.SubnetSetFunc(netutil.IsLocallyServed)
 
 	localIP := net.IP{192, 168, 1, 1}
 	testCases := []struct {

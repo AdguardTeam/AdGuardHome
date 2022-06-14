@@ -14,7 +14,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-type logEntryHandler (func(t json.Token, ent *logEntry) error)
+type logEntryHandler func(t json.Token, ent *logEntry) error
 
 var logEntryHandlers = map[string]logEntryHandler{
 	"CID": func(t json.Token, ent *logEntry) error {
@@ -108,6 +108,16 @@ var logEntryHandlers = map[string]logEntryHandler{
 		ent.OrigAnswer, err = base64.StdEncoding.DecodeString(v)
 
 		return err
+	},
+	"ECS": func(t json.Token, ent *logEntry) error {
+		v, ok := t.(string)
+		if !ok {
+			return nil
+		}
+
+		ent.ReqECS = v
+
+		return nil
 	},
 	"Cached": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(bool)

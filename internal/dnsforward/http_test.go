@@ -14,6 +14,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -307,6 +308,14 @@ func TestValidateUpstream(t *testing.T) {
 		upstream: "sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
 		wantErr:  ``,
 	}, {
+		wantDef:  assert.True,
+		name:     "default_udp_host",
+		upstream: "udp://dns.google",
+	}, {
+		wantDef:  assert.True,
+		name:     "default_udp_ip",
+		upstream: "udp://8.8.8.8",
+	}, {
 		wantDef:  assert.False,
 		name:     "valid",
 		upstream: "[/host.com/]1.1.1.1",
@@ -389,7 +398,7 @@ func TestValidateUpstreams(t *testing.T) {
 		},
 	}, {
 		name:    "invalid",
-		wantErr: `cannot prepare the upstream dhcp://fake.dns ([]): unsupported URL scheme: dhcp`,
+		wantErr: `cannot prepare the upstream dhcp://fake.dns ([]): unsupported url scheme: dhcp`,
 		set:     []string{"dhcp://fake.dns"},
 	}}
 
@@ -402,8 +411,7 @@ func TestValidateUpstreams(t *testing.T) {
 }
 
 func TestValidateUpstreamsPrivate(t *testing.T) {
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
+	ss := netutil.SubnetSetFunc(netutil.IsLocallyServed)
 
 	testCases := []struct {
 		name    string
@@ -444,7 +452,7 @@ func TestValidateUpstreamsPrivate(t *testing.T) {
 		set := []string{"192.168.0.1", tc.u}
 
 		t.Run(tc.name, func(t *testing.T) {
-			err = ValidateUpstreamsPrivate(set, snd)
+			err := ValidateUpstreamsPrivate(set, ss)
 			testutil.AssertErrorMsg(t, tc.wantErr, err)
 		})
 	}

@@ -280,13 +280,10 @@ let Form = (props) => {
                             </strong>
                         </div>
                         <div className="form__desc mt-0">
-                            <Trans
-                                components={{
-                                    a: <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer">
-                                        text
-                                    </a>,
-                                }}
-                            >
+                            <Trans components={[
+                                <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer"
+                                    key="0">text</a>,
+                            ]}>
                                 client_identifier_desc
                             </Trans>
                         </div>

@@ -338,8 +338,17 @@
     text-overflow: ellipsis;
 }
 
+.logs__row--icons {
+    flex-wrap: wrap;
+}
+
 .logs__table .logs__row {
     border-bottom: 2px solid var(--gray-216);
+}
+
+.logs__tag {
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 /* QUERY_STATUS_COLORS */

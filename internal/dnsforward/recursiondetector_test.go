@@ -83,7 +83,7 @@ func TestRecursionDetector_Suspect(t *testing.T) {
 	testCases := []struct {
 		name string
 		msg  dns.Msg
-		want bool
+		want int
 	}{{
 		name: "simple",
 		msg: dns.Msg{
@@ -95,24 +95,18 @@ func TestRecursionDetector_Suspect(t *testing.T) {
 				Qtype: dns.TypeA,
 			}},
 		},
-		want: true,
+		want: 1,
 	}, {
 		name: "unencumbered",
 		msg:  dns.Msg{},
-		want: false,
+		want: 0,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Cleanup(rd.clear)
-
 			rd.add(tc.msg)
-
-			if tc.want {
-				assert.Equal(t, 1, rd.recentRequests.Stats().Count)
-			} else {
-				assert.Zero(t, rd.recentRequests.Stats().Count)
-			}
+			assert.Equal(t, tc.want, rd.recentRequests.Stats().Count)
 		})
 	}
 }

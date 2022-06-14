@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -82,10 +83,15 @@ func svcStatus(s service.Service) (status service.Status, err error) {
 // On OpenWrt, the service utility may not exist.  We use our service script
 // directly in this case.
 func svcAction(s service.Service, action string) (err error) {
-	if runtime.GOOS == "darwin" &&
-		action == "start" &&
-		!strings.HasPrefix(Context.workDir, "/Applications/") {
-		log.Info("warning: service must be started from within the /Applications directory")
+	if runtime.GOOS == "darwin" && action == "start" {
+		var exe string
+		if exe, err = os.Executable(); err != nil {
+			log.Error("starting service: getting executable path: %s", err)
+		} else if exe, err = filepath.EvalSymlinks(exe); err != nil {
+			log.Error("starting service: evaluating executable symlinks: %s", err)
+		} else if !strings.HasPrefix(exe, "/Applications/") {
+			log.Info("warning: service must be started from within the /Applications directory")
+		}
 	}
 
 	err = service.Control(s, action)
@@ -427,8 +433,11 @@ EnvironmentFile=-/etc/sysconfig/{{.Name}}
 WantedBy=multi-user.target
 `
 
-// Note: we should keep it in sync with the template from service_sysv_linux.go file
-// Use "ps | grep -v grep | grep $(get_pid)" because "ps PID" may not work on OpenWrt
+// sysvScript is the source of the daemon script for SysV-based Linux systems.
+// Keep as close as possible to the https://github.com/kardianos/service/blob/29f8c79c511bc18422bb99992779f96e6bc33921/service_sysv_linux.go#L187.
+//
+// Use ps command instead of reading the procfs since it's a more
+// implementation-independent approach.
 const sysvScript = `#!/bin/sh
 # For RedHat and cousins:
 # chkconfig: - 99 01
@@ -459,7 +468,7 @@ get_pid() {
 }
 
 is_running() {
-    [ -f "$pid_file" ] && ps | grep -v grep | grep $(get_pid) > /dev/null 2>&1
+    [ -f "$pid_file" ] && ps -p "$(get_pid)" > /dev/null 2>&1
 }
 
 case "$1" in
@@ -579,6 +588,9 @@ status() {
 }
 `
 
+// freeBSDScript is the source of the daemon script for FreeBSD.  Keep as close
+// as possible to the https://github.com/kardianos/service/blob/18c957a3dc1120a2efe77beb401d476bade9e577/service_freebsd.go#L204.
+//
 // TODO(a.garipov): Don't use .WorkingDirectory here.  There are currently no
 // guarantees that it will actually be the required directory.
 //
@@ -587,23 +599,26 @@ const freeBSDScript = `#!/bin/sh
 # PROVIDE: {{.Name}}
 # REQUIRE: networking
 # KEYWORD: shutdown
+
 . /etc/rc.subr
+
 name="{{.Name}}"
 {{.Name}}_env="IS_DAEMON=1"
 {{.Name}}_user="root"
 pidfile_child="/var/run/${name}.pid"
 pidfile="/var/run/${name}_daemon.pid"
 command="/usr/sbin/daemon"
-command_args="-P ${pidfile} -p ${pidfile_child} -f -r {{.WorkingDirectory}}/{{.Name}}"
+command_args="-P ${pidfile} -p ${pidfile_child} -T ${name} -r {{.WorkingDirectory}}/{{.Name}}"
 run_rc_command "$1"
 `
 
-const openBSDScript = `#!/bin/sh
+const openBSDScript = `#!/bin/ksh
 #
 # $OpenBSD: {{ .SvcInfo }}
 
 daemon="{{.Path}}"
 daemon_flags={{ .Arguments | args }}
+daemon_logger="daemon.info"
 
 . /etc/rc.d/rc.subr
 

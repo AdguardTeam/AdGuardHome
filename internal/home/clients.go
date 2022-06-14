@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"net"
-	"os/exec"
-	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -56,11 +54,21 @@ type clientSource uint
 // Client sources.  The order determines the priority.
 const (
 	ClientSourceWHOIS clientSource = iota
-	ClientSourceRDNS
 	ClientSourceARP
+	ClientSourceRDNS
 	ClientSourceDHCP
 	ClientSourceHostsFile
 )
+
+// clientSourceConf is used to configure where the runtime clients will be
+// obtained from.
+type clientSourcesConf struct {
+	WHOIS     bool `yaml:"whois"`
+	ARP       bool `yaml:"arp"`
+	RDNS      bool `yaml:"rdns"`
+	DHCP      bool `yaml:"dhcp"`
+	HostsFile bool `yaml:"hosts"`
+}
 
 // RuntimeClient information
 type RuntimeClient struct {
@@ -99,6 +107,9 @@ type clientsContainer struct {
 	// hosts database.
 	etcHosts *aghnet.HostsContainer
 
+	// arpdb stores the neighbors retrieved from ARP.
+	arpdb aghnet.ARPDB
+
 	testing bool // if TRUE, this object is used for internal tests
 }
 
@@ -109,6 +120,7 @@ func (clients *clientsContainer) Init(
 	objects []*clientObject,
 	dhcpServer *dhcpd.Server,
 	etcHosts *aghnet.HostsContainer,
+	arpdb aghnet.ARPDB,
 ) {
 	if clients.list != nil {
 		log.Fatal("clients.list != nil")
@@ -121,6 +133,7 @@ func (clients *clientsContainer) Init(
 
 	clients.dhcpServer = dhcpServer
 	clients.etcHosts = etcHosts
+	clients.arpdb = arpdb
 	clients.addFromConfig(objects)
 
 	if clients.testing {
@@ -132,14 +145,14 @@ func (clients *clientsContainer) Init(
 		clients.dhcpServer.SetOnLeaseChanged(clients.onDHCPLeaseChanged)
 	}
 
-	go clients.handleHostsUpdates()
+	if clients.etcHosts != nil {
+		go clients.handleHostsUpdates()
+	}
 }
 
 func (clients *clientsContainer) handleHostsUpdates() {
-	if clients.etcHosts != nil {
-		for upd := range clients.etcHosts.Upd() {
-			clients.addFromHostsFile(upd)
-		}
+	for upd := range clients.etcHosts.Upd() {
+		clients.addFromHostsFile(upd)
 	}
 }
 
@@ -156,7 +169,9 @@ func (clients *clientsContainer) Start() {
 
 // Reload reloads runtime clients.
 func (clients *clientsContainer) Reload() {
-	clients.addFromSystemARP()
+	if clients.arpdb != nil {
+		clients.addFromSystemARP()
+	}
 }
 
 type clientObject struct {
@@ -255,6 +270,8 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 }
 
 func (clients *clientsContainer) periodicUpdate() {
+	defer log.OnPanic("clients container")
+
 	for {
 		clients.Reload()
 		time.Sleep(clientsUpdatePeriod)
@@ -530,7 +547,7 @@ func (clients *clientsContainer) check(c *Client) (err error) {
 		} else if mac, err = net.ParseMAC(id); err == nil {
 			c.IDs[i] = mac.String()
 		} else if err = dnsforward.ValidateClientID(id); err == nil {
-			c.IDs[i] = id
+			c.IDs[i] = strings.ToLower(id)
 		} else {
 			return fmt.Errorf("invalid clientid at index %d: %q", i, id)
 		}
@@ -721,9 +738,7 @@ func (clients *clientsContainer) AddHost(ip net.IP, host string, src clientSourc
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	ok = clients.addHostLocked(ip, host, src)
-
-	return ok, nil
+	return clients.addHostLocked(ip, host, src), nil
 }
 
 // addHostLocked adds a new IP-hostname pairing.  For internal use only.
@@ -735,6 +750,7 @@ func (clients *clientsContainer) addHostLocked(ip net.IP, host string, src clien
 			return false
 		}
 
+		rc.Host = host
 		rc.Source = src
 	} else {
 		rc = &RuntimeClient{
@@ -807,16 +823,18 @@ func (clients *clientsContainer) addFromHostsFile(hosts *netutil.IPMap) {
 // addFromSystemARP adds the IP-hostname pairings from the output of the arp -a
 // command.
 func (clients *clientsContainer) addFromSystemARP() {
-	if runtime.GOOS == "windows" {
+	if err := clients.arpdb.Refresh(); err != nil {
+		log.Error("refreshing arp container: %s", err)
+
+		clients.arpdb = aghnet.EmptyARPDB{}
+
 		return
 	}
 
-	cmd := exec.Command("arp", "-a")
-	log.Tracef("executing %q %q", cmd.Path, cmd.Args)
-	data, err := cmd.Output()
-	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		log.Debug("command %q has failed: %q code:%d",
-			cmd.Path, err, cmd.ProcessState.ExitCode())
+	ns := clients.arpdb.Neighbors()
+	if len(ns) == 0 {
+		log.Debug("refreshing arp container: the update is empty")
+
 		return
 	}
 
@@ -825,36 +843,20 @@ func (clients *clientsContainer) addFromSystemARP() {
 
 	clients.rmHostsBySrc(ClientSourceARP)
 
-	n := 0
-	// TODO(a.garipov): Rewrite to use bufio.Scanner.
-	lines := strings.Split(string(data), "\n")
-	for _, ln := range lines {
-		lparen := strings.Index(ln, " (")
-		rparen := strings.Index(ln, ") ")
-		if lparen == -1 || rparen == -1 || lparen >= rparen {
-			continue
-		}
-
-		host := ln[:lparen]
-		ipStr := ln[lparen+2 : rparen]
-		ip := net.ParseIP(ipStr)
-		if netutil.ValidateDomainName(host) != nil || ip == nil {
-			continue
-		}
-
-		ok := clients.addHostLocked(ip, host, ClientSourceARP)
-		if ok {
-			n++
+	added := 0
+	for _, n := range ns {
+		if clients.addHostLocked(n.IP, n.Name, ClientSourceARP) {
+			added++
 		}
 	}
 
-	log.Debug("clients: added %d client aliases from 'arp -a' command output", n)
+	log.Debug("clients: added %d client aliases from arp neighborhood", added)
 }
 
 // updateFromDHCP adds the clients that have a non-empty hostname from the DHCP
 // server.
 func (clients *clientsContainer) updateFromDHCP(add bool) {
-	if clients.dhcpServer == nil {
+	if clients.dhcpServer == nil || !config.Clients.Sources.DHCP {
 		return
 	}
 

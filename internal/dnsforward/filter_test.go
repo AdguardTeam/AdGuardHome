@@ -4,7 +4,6 @@ import (
 	"net"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -39,14 +38,10 @@ func TestHandleDNSRequest_filterDNSResponse(t *testing.T) {
 	f := filtering.New(&filtering.Config{}, filters)
 	f.SetEnabled(true)
 
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
-	require.NotNil(t, snd)
-
 	s, err := NewServer(DNSCreateParams{
-		DHCPServer:     &testDHCP{},
-		DNSFilter:      f,
-		SubnetDetector: snd,
+		DHCPServer:  &testDHCP{},
+		DNSFilter:   f,
+		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
 	require.NoError(t, err)
 

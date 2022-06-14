@@ -78,6 +78,10 @@ func (l *queryLog) entryToJSON(entry *logEntry, anonFunc aghnet.IPMutFunc) (json
 		jsonEntry["client_id"] = entry.ClientID
 	}
 
+	if entry.ReqECS != "" {
+		jsonEntry["ecs"] = entry.ReqECS
+	}
+
 	if len(entry.Result.Rules) > 0 {
 		if r := entry.Result.Rules[0]; len(r.Text) > 0 {
 			jsonEntry["rule"] = r.Text
