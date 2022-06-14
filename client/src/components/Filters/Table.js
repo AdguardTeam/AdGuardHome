@@ -84,7 +84,8 @@ class Table extends Component {
             sortable: false,
             resizable: false,
             Cell: (row) => {
-                const { value } = row;
+                const { original } = row;
+                const { url } = original;
                 const { t, toggleFilteringModal, handleDelete } = this.props;
 
                 return (
@@ -95,7 +96,7 @@ class Table extends Component {
                             title={t('edit_table_action')}
                             onClick={() => toggleFilteringModal({
                                 type: MODAL_TYPE.EDIT_FILTERS,
-                                url: value,
+                                url,
                             })
                             }
                         >
@@ -106,7 +107,7 @@ class Table extends Component {
                         <button
                             type="button"
                             className="btn btn-icon btn-outline-secondary btn-sm"
-                            onClick={() => handleDelete(value)}
+                            onClick={() => handleDelete(url)}
                             title={t('delete_table_action')}
                         >
                             <svg className="icons">
