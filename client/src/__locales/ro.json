@@ -445,7 +445,7 @@
     "access_blocked_title": "Domenii blocate",
     "access_blocked_desc": "A nu se confunda cu filtrele. AdGuard Home respinge cererile DNS pentru aceste domenii, iar aceste cereri nici măcar nu apar în jurnalul de solicitări. Puteți specifica nume exacte de domenii, metacaractere sau reguli de filtrare URL, cum ar fi \"example.org\", \"*.exemple.org\" sau \"||example.org^\" în mod corespunzător.",
     "access_settings_saved": "Setările de acces au fost salvate cu succes",
-    "updates_checked": "Actualizările au fost verificate cu succes",
+    "updates_checked": "Este disponibilă o nouă versiune de AdGuard Home\n",
     "updates_version_equal": "AdGuard Home este la zi",
     "check_updates_now": "Verificați actualizările acum",
     "dns_privacy": "Confidențialitate DNS",

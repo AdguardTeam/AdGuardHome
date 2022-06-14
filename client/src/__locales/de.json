@@ -445,7 +445,7 @@
     "access_blocked_title": "Nicht zugelassene Domains",
     "access_blocked_desc": "Verwechseln Sie dies nicht mit Filtern. AdGuard Home verwirft DNS-Abfragen, die mit diesen Domänen übereinstimmen, und diese Abfragen erscheinen nicht einmal im Abfrageprotokoll. Hier können Sie die genauen Domain-Namen, Wildcards und URL-Filter-Regeln angeben, z.B. 'beispiel.org', '*.beispiel.org' oder '||beispiel.org^'.",
     "access_settings_saved": "Zugriffseinstellungen erfolgreich gespeichert",
-    "updates_checked": "Erfolgreich auf Aktualisierungen geprüft",
+    "updates_checked": "Neue Version von AdGuard Home ist jetzt verfügbar",
     "updates_version_equal": "AdGuard Home ist aktuell",
     "check_updates_now": "Jetzt nach Aktualisierungen suchen",
     "dns_privacy": "DNS-Datenschutz",

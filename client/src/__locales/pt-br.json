@@ -445,7 +445,7 @@
     "access_blocked_title": "Domínios bloqueados",
     "access_blocked_desc": "Não deve ser confundido com filtros. O AdGuard Home elimina as consultas DNS que correspondem a esses domínios, e essas consultas nem aparecem no registro de consultas. Você pode especificar nomes de domínio exatos, caracteres curinga ou regras de filtro de URL, por exemplo \"exemplo.org\", \"*.exemplo.org\", ou \"||exemplo.org^\" correspondentemente.",
     "access_settings_saved": "Configurações de acesso foram salvas com sucesso",
-    "updates_checked": "Atualizações verificadas com sucesso",
+    "updates_checked": "Uma nova versão do AdGuard Home está disponível\n",
     "updates_version_equal": "O AdGuard Home está atualizado.",
     "check_updates_now": "Verificar atualizações",
     "dns_privacy": "Privacidade de DNS",

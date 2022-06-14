@@ -445,7 +445,7 @@
     "access_blocked_title": "Неразрешённые домены",
     "access_blocked_desc": "Не путать с фильтрами. AdGuard Home будет игнорировать DNS-запросы с этими доменами. Здесь вы можете уточнить точные имена доменов, шаблоны, правила URL-фильтрации, например, «example.org», «*.example.org» или «||example.org».",
     "access_settings_saved": "Настройки доступа успешно сохранены",
-    "updates_checked": "Проверка обновлений прошла успешно",
+    "updates_checked": "Доступна новая версия AdGuard Home",
     "updates_version_equal": "Версия AdGuard Home актуальна",
     "check_updates_now": "Проверить обновления",
     "dns_privacy": "Зашифрованный DNS",

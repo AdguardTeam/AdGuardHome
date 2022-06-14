@@ -445,7 +445,7 @@
     "access_blocked_title": "Nem engedélyezett domainek",
     "access_blocked_desc": "Ne keverje össze ezt a szűrőkkel. Az AdGuard Home az összes DNS kérést el fogja dobni, ami ezekkel a domainekkel megegyezik, és ezek a lekérések nem is fognak megjelenni a lekérdezési naplóban sem. Megadhatja a pontos domain neveket, a helyettesítő karaktereket vagy az URL szűrési szabályokat, pl. ennek megfelelően \"example.org\", \"*.example.org\", vagy \"||example.org^\".",
     "access_settings_saved": "A hozzáférési beállítások sikeresen mentésre kerültek",
-    "updates_checked": "A frissítések sikeresen ellenőrizve lettek",
+    "updates_checked": "Elérhető az AdGuard Home új verziója",
     "updates_version_equal": "Az AdGuard Home naprakész",
     "check_updates_now": "Frissítések ellenőrzése most",
     "dns_privacy": "DNS Adatvédelem",

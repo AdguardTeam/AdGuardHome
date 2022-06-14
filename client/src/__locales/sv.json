@@ -445,7 +445,7 @@
     "access_blocked_title": "Blockerade domäner",
     "access_blocked_desc": "Ej att förväxla med filter. AdGuard Home kastar DNS-frågor som matchar dessa domäner, och dessa frågor visas inte ens i frågeloggen. Du kan ange exakta domännamn, jokertecken eller URL-filterregler, t.ex. \"example.org\", \"*.example.org\" eller \"||example.org^\" på motsvarande sätt.",
     "access_settings_saved": "Åtkomstinställningar sparade",
-    "updates_checked": "Sökning efter uppdateringar genomförd",
+    "updates_checked": "En ny version av AdGuard Home är tillgänglig\n",
     "updates_version_equal": "AdGuard Home är uppdaterat",
     "check_updates_now": "Sök efter uppdateringar nu",
     "dns_privacy": "DNS-Integritet",

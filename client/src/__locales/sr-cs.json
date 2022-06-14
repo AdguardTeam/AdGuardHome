@@ -445,7 +445,7 @@
     "access_blocked_title": "Blokirani domeni",
     "access_blocked_desc": "Da ne bude zabune sa filterima. AdGuard Home odustaje od DNS upita koji se podudaraju sa ovim domenima, a ovi upiti se čak i ne pojavljuju u evidenciji upita. Možete da navedete tačna imena domena, džoker znakove ili pravila URL filtera, npr. \"example.org\", \"*.example.org\" ili \"|| example.org^\" dopisno.",
     "access_settings_saved": "Postavke pristupa su uspešno sačuvane",
-    "updates_checked": "Ažuriranja su uspešno proverena",
+    "updates_checked": "Dostupna je nova verzija AdGuard Home-a",
     "updates_version_equal": "AdGuard Home je ažuriran na najnoviju verziju",
     "check_updates_now": "Proveri da li postoje ispravke",
     "dns_privacy": "DNS privatnost",

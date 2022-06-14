@@ -445,7 +445,7 @@
     "access_blocked_title": "Domain yang diblokir",
     "access_blocked_desc": "Jangan bingung dengan filter. AdGuard Home menghapus kueri DNS yang cocok dengan domain ini, dan kueri ini bahkan tidak muncul di log kueri. Anda dapat menentukan nama domain, karakter pengganti, atau aturan filter URL yang tepat, mis. \"example.org\", \"*.example.org\", atau \"||example.org^\" yang sesuai.",
     "access_settings_saved": "Pengaturan akses berhasil disimpan",
-    "updates_checked": "Pembaruan berhasil dicek",
+    "updates_checked": "Versi baru AdGuard Home tersedia\n",
     "updates_version_equal": "AdGuard Home sudah tebaru",
     "check_updates_now": "Periksa pembaruan sekarang",
     "dns_privacy": "DNS Privasi",

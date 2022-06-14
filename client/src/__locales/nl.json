@@ -445,7 +445,7 @@
     "access_blocked_title": "Niet toegelaten domeinen",
     "access_blocked_desc": "Verwar dit niet met filters. AdGuard Home zal deze DNS-zoekopdrachten niet uitvoeren die deze domeinen in de zoekopdracht bevatten. Hier kan je de exacte domeinnamen, wildcards en URL-filter-regels specifiëren, bijv. \"example.org\", \"*.example.org\" of \"||example.org^\".",
     "access_settings_saved": "Toegangsinstellingen succesvol opgeslagen",
-    "updates_checked": "Met succes op updates gecontroleerd",
+    "updates_checked": "Een nieuwe versie van AdGuard Home is beschikbaar\n",
     "updates_version_equal": "AdGuard Home is actueel",
     "check_updates_now": "Controleer op updates",
     "dns_privacy": "DNS Privacy",

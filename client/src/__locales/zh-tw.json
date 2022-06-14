@@ -445,7 +445,7 @@
     "access_blocked_title": "未被允許的網域",
     "access_blocked_desc": "不要把這個和過濾器混淆。AdGuard Home 排除與這些網域相符的 DNS 查詢，且這些查詢甚至不會出現在查詢記錄中。您可相應地明確指定確切的域名、萬用字元（wildcard）或網址過濾器的規則，例如，\"example.org\"、\"*.example.org\" 或 \"||example.org^\"。",
     "access_settings_saved": "存取設定被成功地儲存",
-    "updates_checked": "更新被成功地檢查",
+    "updates_checked": "AdGuard Home 的新版本為可用的",
     "updates_version_equal": "AdGuard Home 為最新的",
     "check_updates_now": "立即檢查更新",
     "dns_privacy": "DNS 隱私",

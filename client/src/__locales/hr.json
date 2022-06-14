@@ -445,7 +445,7 @@
     "access_blocked_title": "Nedopuštene domene",
     "access_blocked_desc": "Ne smije se miješati s filterima. AdGuard Home ispušta DNS upite koji odgovaraju tim domenama, a ti se upiti čak i ne pojavljuju u zapisniku upita. Možete navesti točne nazive domena, zamjenske znakove ili pravila filtriranja URL-a, npr || example.org example.org. example.org^\" u skladu s tim.",
     "access_settings_saved": "Postavke pristupa su uspješno spremljene",
-    "updates_checked": "Uspješna provjera ažuriranja",
+    "updates_checked": "Dostupna je nova verzija AdGuard Home-a",
     "updates_version_equal": "AdGuard Home je ažuriran",
     "check_updates_now": "Provjeri ažuriranja sada",
     "dns_privacy": "DNS privatnost",

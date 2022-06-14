@@ -445,7 +445,7 @@
     "access_blocked_title": "Kielletyt verkkotunnukset",
     "access_blocked_desc": "Ei pidä sekoittaa suodattimiin. AdGuard Home hylkää näiden verkkotunnusten DNS-pyynnöt, eivätkä nämä pyynnöt näy edes pyyntöhistoriassa. Tähän voidaan syöttää tarkkoja verkkotunnuksia, jokerimerkkejä tai URL-suodatussääntöjä, kuten \"example.org\", \"*.example.org\" tai \"||example.org^\".",
     "access_settings_saved": "Käytön asetukset tallennettiin",
-    "updates_checked": "Päivitykset tarkastettiin",
+    "updates_checked": "Uusi versio AdGuard Home -ohjelmasta on saatavana\n",
     "updates_version_equal": "AdGuard Home on ajan tasalla",
     "check_updates_now": "Tarkista päivitykset nyt",
     "dns_privacy": "DNS-tietosuoja",

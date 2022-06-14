@@ -445,7 +445,7 @@
     "access_blocked_title": "Domaines interdits",
     "access_blocked_desc": "A ne pas confondre avec les filtres. AdGuard Home rejette les requêtes DNS correspondant à ces domaines, et ces requêtes n'apparaissent même pas dans le journal des requêtes. Vous pouvez spécifier des noms de domaine exacts, des caractères génériques ou des règles de filtrage d'URL, par exemple « exemple.org », « *.exemple.org » ou « ||example.org^ » de manière correspondante.",
     "access_settings_saved": "Paramètres d'accès enregistrés avec succès",
-    "updates_checked": "Mises à jour vérifiées",
+    "updates_checked": "Une nouvelle version de AdGuard Home est disponible",
     "updates_version_equal": "AdGuard Home est à jour",
     "check_updates_now": "Vérifier les mises à jour",
     "dns_privacy": "Confidentialité DNS",

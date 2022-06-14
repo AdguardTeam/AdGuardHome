@@ -445,7 +445,7 @@
     "access_blocked_title": "Заборонені домени",
     "access_blocked_desc": "Не плутайте з фільтрами. AdGuard Home буде ігнорувати DNS-запити з цими доменами, такі запити навіть не будуть записані до журналу. Ви можете вказати точні доменні імена, замінні знаки та правила фільтрування URL-адрес, наприклад, 'example.org', '*.example.org' або '||example.org^' відповідно.",
     "access_settings_saved": "Налаштування доступу успішно збережено",
-    "updates_checked": "Оновлення успішно перевірені",
+    "updates_checked": "Доступна нова версія AdGuard Home",
     "updates_version_equal": "AdGuard Home останньої версії",
     "check_updates_now": "Перевірити наявність оновлень",
     "dns_privacy": "Конфіденційність DNS",

@@ -445,7 +445,7 @@
     "access_blocked_title": "Niedozwolone domeny",
     "access_blocked_desc": "Nie należy ich mylić z filtrami. AdGuard Home usuwa zapytania DNS pasujące do tych domen, a zapytania te nie pojawiają się nawet w dzienniku zapytań. Możesz określić dokładne nazwy domen, symbole wieloznaczne lub reguły filtrowania adresów URL, np. \"example.org\", \"*.example.org\" lub \"||example.org^\".",
     "access_settings_saved": "Ustawienia dostępu zostały pomyślnie zapisane",
-    "updates_checked": "Aktualizacje pomyślnie sprawdzone",
+    "updates_checked": "Dostępna jest nowa wersja programu AdGuard Home\n",
     "updates_version_equal": "AdGuard Home jest aktualny",
     "check_updates_now": "Sprawdź aktualizacje teraz",
     "dns_privacy": "Prywatny DNS",

@@ -445,7 +445,7 @@
     "access_blocked_title": "İzin verilmeyen alan adları",
     "access_blocked_desc": "Bu işlem filtrelerle ilgili değildir. AdGuard Home, bu alan adlarından gelen DNS sorgularını yanıtsız bırakır ve bu sorgular sorgu günlüğünde görünmez. Tam alan adlarını, joker karakterleri veya URL filtre kurallarını belirtebilirsiniz, ör. \"example.org\", \"*.example.org\" veya \"||example.org^\".",
     "access_settings_saved": "Erişim ayarları başarıyla kaydedildi!",
-    "updates_checked": "Güncelleme kontrolü başarılı",
+    "updates_checked": "AdGuard Home'un yeni bir sürümü mevcut",
     "updates_version_equal": "AdGuard Home yazılımı güncel durumda",
     "check_updates_now": "Güncellemeleri şimdi denetle",
     "dns_privacy": "DNS Gizliliği",

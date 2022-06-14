@@ -445,7 +445,7 @@
     "access_blocked_title": "拒否するドメイン",
     "access_blocked_desc": "こちらをフィルタと混同しないでください。AdGuard Homeは、ここで入力されたドメインに一致するDNSクエリをドロップし、そういったクエリはクエリログにも表示されません。ここでは、「example.org」、「*.example.org」、「 ||example.org^ 」など、特定のドメイン名、ワイルドカード、URLフィルタルールを入力できます。",
     "access_settings_saved": "アクセス設定の保存に成功しました",
-    "updates_checked": "アップデートの確認に成功しました",
+    "updates_checked": "AdGuard Homeの新バージョンが利用可能です。",
     "updates_version_equal": "AdGuard Homeは既に最新です",
     "check_updates_now": "今すぐアップデートを確認する",
     "dns_privacy": "DNSプライバシー",

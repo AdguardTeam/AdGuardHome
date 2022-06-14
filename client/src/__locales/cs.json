@@ -445,7 +445,7 @@
     "access_blocked_title": "Blokované domény",
     "access_blocked_desc": "Nezaměňujte to s filtry. AdGuard Home zruší dotazy DNS odpovídající těmto doménám a tyto dotazy se neobjeví ani v protokolu dotazů. Zde můžete určit přesné názvy domén, zástupné znaky a pravidla filtrování URL adres, např. \"example.org\", \"*.example.org\" nebo \"||example.org^\".",
     "access_settings_saved": "Nastavení přístupu bylo úspěšně uloženo",
-    "updates_checked": "Aktualizace úspěšně zkontrolovány",
+    "updates_checked": "Nová verze AdGuard Home je k dispozici\n",
     "updates_version_equal": "AdGuard Home je aktuální",
     "check_updates_now": "Zkontrolovat aktualizace nyní",
     "dns_privacy": "Soukromí DNS",

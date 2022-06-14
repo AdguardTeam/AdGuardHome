@@ -445,7 +445,7 @@
     "access_blocked_title": "Заблакаваныя дамены",
     "access_blocked_desc": "Не блытайце гэта з фільтрамі. AdGuard Home будзе ігнараваць DNS-запыты з гэтымі даменамі.",
     "access_settings_saved": "Налады доступу паспяхова захаваны",
-    "updates_checked": "Праверка абнаўленняў прайшла паспяхова",
+    "updates_checked": "Даступная новая версія AdGuard Home",
     "updates_version_equal": "Версія AdGuard Home актуальная",
     "check_updates_now": "Праверыць абнаўленні",
     "dns_privacy": "Зашыфраваны DNS",

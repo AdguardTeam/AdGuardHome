@@ -445,7 +445,7 @@
     "access_blocked_title": "Prepovedane domene",
     "access_blocked_desc": "Ne gre zamenjati s filtri. AdGuard Home spusti poizvedbe DNS, ki se ujemajo s temi domenami, in te poizvedbe se niti ne pojavijo v dnevniku poizvedb. Določite lahko natančna imena domen, nadomestne znake ali pravila filtriranja URL-jev, npr. ustrezno \"example.org\", \"*.example.org\" ali \"|| example.org ^\".",
     "access_settings_saved": "Nastavitve dostopa so uspešno shranjene",
-    "updates_checked": "Posodobitve so uspešno preverjene",
+    "updates_checked": "Na voljo je nova različica programa AdGuard Home\n",
     "updates_version_equal": "AdGuard Home je posodobljen",
     "check_updates_now": "Preveri obstoj posodobitev zdaj",
     "dns_privacy": "Zasebnost DNS",
