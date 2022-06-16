@@ -26,6 +26,8 @@ export const R_WIN_ABSOLUTE_PATH = /^([a-zA-Z]:)?(\\|\/)(?:[^\\/:*?"<>|\x00]+\\)
 
 export const R_CLIENT_ID = /^[a-z0-9-]{1,63}$/;
 
+export const MIN_PASSWORD_LENGTH = 8;
+
 export const HTML_PAGES = {
     INSTALL: '/install.html',
     LOGIN: '/login.html',
@@ -55,10 +57,11 @@ export const REPOSITORY = {
     ISSUES: 'https://github.com/AdguardTeam/AdGuardHome/issues/new/choose',
 };
 
-export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
-export const PORT_53_FAQ_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#bindinuse';
-export const UPSTREAM_CONFIGURATION_WIKI_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams';
+export const CLIENT_ID_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid';
 export const MANUAL_UPDATE_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#manual-update';
+export const PORT_53_FAQ_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#bindinuse';
+export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
+export const UPSTREAM_CONFIGURATION_WIKI_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams';
 
 export const FILTERS_RELATIVE_LINK = '#filters';
 

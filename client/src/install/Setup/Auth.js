@@ -8,6 +8,7 @@ import i18n from '../../i18n';
 import Controls from './Controls';
 import { renderInputField } from '../../helpers/form';
 import { FORM_NAME } from '../../helpers/constants';
+import { validatePasswordLength } from '../../helpers/validators';
 
 const required = (value) => {
     if (value || value === 0) {
@@ -67,7 +68,7 @@ const Auth = (props) => {
                         type="password"
                         className="form-control"
                         placeholder={ t('install_auth_password_enter') }
-                        validate={[required]}
+                        validate={[required, validatePasswordLength]}
                         autoComplete="new-password"
                     />
                 </div>

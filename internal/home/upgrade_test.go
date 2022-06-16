@@ -513,46 +513,129 @@ func TestUpgradeSchema11to12(t *testing.T) {
 }
 
 func TestUpgradeSchema12to13(t *testing.T) {
-	t.Run("no_dns", func(t *testing.T) {
-		conf := yobj{}
+	const newSchemaVer = 13
 
-		err := upgradeSchema12to13(conf)
-		require.NoError(t, err)
-
-		assert.Equal(t, conf["schema_version"], 13)
-	})
-
-	t.Run("no_dhcp", func(t *testing.T) {
-		conf := yobj{
-			"dns": yobj{},
-		}
-
-		err := upgradeSchema12to13(conf)
-		require.NoError(t, err)
-
-		assert.Equal(t, conf["schema_version"], 13)
-	})
-
-	t.Run("good", func(t *testing.T) {
-		conf := yobj{
+	testCases := []struct {
+		in   yobj
+		want yobj
+		name string
+	}{{
+		in:   yobj{},
+		want: yobj{"schema_version": newSchemaVer},
+		name: "no_dns",
+	}, {
+		in: yobj{"dns": yobj{}},
+		want: yobj{
+			"dns":            yobj{},
+			"schema_version": newSchemaVer,
+		},
+		name: "no_dhcp",
+	}, {
+		in: yobj{
 			"dns": yobj{
 				"local_domain_name": "lan",
 			},
 			"dhcp":           yobj{},
-			"schema_version": 12,
-		}
-
-		wantConf := yobj{
+			"schema_version": newSchemaVer - 1,
+		},
+		want: yobj{
 			"dns": yobj{},
 			"dhcp": yobj{
 				"local_domain_name": "lan",
 			},
-			"schema_version": 13,
-		}
+			"schema_version": newSchemaVer,
+		},
+		name: "good",
+	}}
 
-		err := upgradeSchema12to13(conf)
-		require.NoError(t, err)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema12to13(tc.in)
+			require.NoError(t, err)
 
-		assert.Equal(t, wantConf, conf)
-	})
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}
+
+func TestUpgradeSchema13to14(t *testing.T) {
+	const newSchemaVer = 14
+
+	testClient := &clientObject{
+		Name:              "agh-client",
+		IDs:               []string{"id1"},
+		UseGlobalSettings: true,
+	}
+
+	testCases := []struct {
+		in   yobj
+		want yobj
+		name string
+	}{{
+		in: yobj{},
+		want: yobj{
+			"schema_version": newSchemaVer,
+			// The clients field will be added anyway.
+			"clients": yobj{
+				"persistent": yarr{},
+				"runtime_sources": &clientSourcesConf{
+					WHOIS:     true,
+					ARP:       true,
+					RDNS:      false,
+					DHCP:      true,
+					HostsFile: true,
+				},
+			},
+		},
+		name: "no_clients",
+	}, {
+		in: yobj{
+			"clients": []*clientObject{testClient},
+		},
+		want: yobj{
+			"schema_version": newSchemaVer,
+			"clients": yobj{
+				"persistent": []*clientObject{testClient},
+				"runtime_sources": &clientSourcesConf{
+					WHOIS:     true,
+					ARP:       true,
+					RDNS:      false,
+					DHCP:      true,
+					HostsFile: true,
+				},
+			},
+		},
+		name: "no_dns",
+	}, {
+		in: yobj{
+			"clients": []*clientObject{testClient},
+			"dns": yobj{
+				"resolve_clients": true,
+			},
+		},
+		want: yobj{
+			"schema_version": newSchemaVer,
+			"clients": yobj{
+				"persistent": []*clientObject{testClient},
+				"runtime_sources": &clientSourcesConf{
+					WHOIS:     true,
+					ARP:       true,
+					RDNS:      true,
+					DHCP:      true,
+					HostsFile: true,
+				},
+			},
+			"dns": yobj{},
+		},
+		name: "good",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema13to14(tc.in)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
 }

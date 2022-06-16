@@ -90,14 +90,15 @@ Required environment:
  ###  `go-build.sh`: Build The Backend
 
 Optional environment:
- *  `BUILD_TIME`: If set, overrides the build time information.  Useful for
-    reproducible builds.
  *  `GOARM`: ARM processor options for the Go compiler.
  *  `GOMIPS`: ARM processor options for the Go compiler.
  *  `GO`: set an alternative name for the Go compiler.
  *  `OUT`: output binary name.
  *  `PARALLELISM`: set the maximum number of concurrently run build commands
     (that is, compiler, linker, etc.).
+ *  `SOURCE_DATE_EPOCH`: the [standardized][repr] environment variable for the
+    Unix epoch time of the latest commit in the repository.  If set, overrides
+    the default obtained from Git.  Useful for reproducible builds.
  *  `VERBOSE`: verbosity level.  `1` shows every command that is run and every
     Go package that is processed.  `2` also shows subcommands and environment.
     The default value is `0`, don't be verbose.
@@ -106,6 +107,8 @@ Optional environment:
 
 Required environment:
  *  `CHANNEL`: release channel, see above.
+
+[repr]: https://reproducible-builds.org/docs/source-date-epoch/
 
 
 

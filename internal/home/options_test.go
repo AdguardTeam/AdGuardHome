@@ -101,9 +101,13 @@ func TestParseDisableUpdate(t *testing.T) {
 	assert.True(t, testParseOK(t, "--no-check-update").disableUpdate, "--no-check-update is disable update")
 }
 
+// TODO(e.burkov):  Remove after v0.108.0.
 func TestParseDisableMemoryOptimization(t *testing.T) {
-	assert.False(t, testParseOK(t).disableMemoryOptimization, "empty is not disable update")
-	assert.True(t, testParseOK(t, "--no-mem-optimization").disableMemoryOptimization, "--no-mem-optimization is disable update")
+	o, eff, err := parse("", []string{"--no-mem-optimization"})
+	require.NoError(t, err)
+
+	assert.Nil(t, eff)
+	assert.Zero(t, o)
 }
 
 func TestParseService(t *testing.T) {
@@ -127,8 +131,6 @@ func TestParseUnknown(t *testing.T) {
 }
 
 func TestSerialize(t *testing.T) {
-	const reportFmt = "expected %s but got %s"
-
 	testCases := []struct {
 		name string
 		opts options
@@ -174,18 +176,13 @@ func TestSerialize(t *testing.T) {
 		opts: options{glinetMode: true},
 		ss:   []string{"--glinet"},
 	}, {
-		name: "disable_mem_opt",
-		opts: options{disableMemoryOptimization: true},
-		ss:   []string{"--no-mem-optimization"},
-	}, {
 		name: "multiple",
 		opts: options{
-			serviceControlAction:      "run",
-			configFilename:            "config",
-			workDir:                   "work",
-			pidFile:                   "pid",
-			disableUpdate:             true,
-			disableMemoryOptimization: true,
+			serviceControlAction: "run",
+			configFilename:       "config",
+			workDir:              "work",
+			pidFile:              "pid",
+			disableUpdate:        true,
 		},
 		ss: []string{
 			"-c", "config",
@@ -193,18 +190,13 @@ func TestSerialize(t *testing.T) {
 			"-s", "run",
 			"--pidfile", "pid",
 			"--no-check-update",
-			"--no-mem-optimization",
 		},
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			result := serialize(tc.opts)
-			require.Lenf(t, result, len(tc.ss), reportFmt, tc.ss, result)
-
-			for i, r := range result {
-				assert.Equalf(t, tc.ss[i], r, reportFmt, tc.ss, result)
-			}
+			assert.ElementsMatch(t, tc.ss, result)
 		})
 	}
 }

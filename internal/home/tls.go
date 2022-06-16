@@ -253,13 +253,13 @@ func (t *TLSMod) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		uc := aghalg.UniqChecker{}
 		addPorts(
 			uc,
-			config.BindPort,
-			config.BetaBindPort,
-			config.DNS.Port,
-			setts.PortHTTPS,
-			setts.PortDNSOverTLS,
-			setts.PortDNSOverQUIC,
-			setts.PortDNSCrypt,
+			tcpPort(config.BindPort),
+			tcpPort(config.BetaBindPort),
+			udpPort(config.DNS.Port),
+			tcpPort(setts.PortHTTPS),
+			tcpPort(setts.PortDNSOverTLS),
+			udpPort(setts.PortDNSOverQUIC),
+			tcpPort(setts.PortDNSCrypt),
 		)
 
 		err = uc.Validate(aghalg.IntIsBefore)
@@ -346,13 +346,13 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		uc := aghalg.UniqChecker{}
 		addPorts(
 			uc,
-			config.BindPort,
-			config.BetaBindPort,
-			config.DNS.Port,
-			data.PortHTTPS,
-			data.PortDNSOverTLS,
-			data.PortDNSOverQUIC,
-			data.PortDNSCrypt,
+			tcpPort(config.BindPort),
+			tcpPort(config.BetaBindPort),
+			udpPort(config.DNS.Port),
+			tcpPort(data.PortHTTPS),
+			tcpPort(data.PortDNSOverTLS),
+			udpPort(data.PortDNSOverQUIC),
+			tcpPort(data.PortDNSCrypt),
 		)
 
 		err = uc.Validate(aghalg.IntIsBefore)

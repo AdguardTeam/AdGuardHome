@@ -1,4 +1,5 @@
 import i18next from 'i18next';
+import stringLength from 'string-length';
 
 import {
     MAX_PORT,
@@ -13,6 +14,7 @@ import {
     UNSAFE_PORTS,
     R_CLIENT_ID,
     R_DOMAIN,
+    MIN_PASSWORD_LENGTH,
 } from './constants';
 import { ip4ToInt, isValidAbsolutePath } from './form';
 import { isIpInCidr, parseSubnetMask } from './helpers';
@@ -320,10 +322,20 @@ export const validatePath = (value) => {
  * @param cidr {string}
  * @returns {Function}
  */
-
 export const validateIpv4InCidr = (valueIp, allValues) => {
     if (!isIpInCidr(valueIp, allValues.cidr)) {
         return i18next.t('form_error_subnet', { ip: valueIp, cidr: allValues.cidr });
+    }
+    return undefined;
+};
+
+/**
+ * @param value {string}
+ * @returns {Function}
+ */
+export const validatePasswordLength = (value) => {
+    if (value && stringLength(value) < MIN_PASSWORD_LENGTH) {
+        return i18next.t('form_error_password_length', { value: MIN_PASSWORD_LENGTH });
     }
     return undefined;
 };

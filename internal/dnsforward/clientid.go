@@ -12,12 +12,12 @@ import (
 	"github.com/lucas-clemente/quic-go"
 )
 
-// ValidateClientID returns an error if clientID is not a valid client ID.
-func ValidateClientID(clientID string) (err error) {
-	err = netutil.ValidateDomainNameLabel(clientID)
+// ValidateClientID returns an error if id is not a valid ClientID.
+func ValidateClientID(id string) (err error) {
+	err = netutil.ValidateDomainNameLabel(id)
 	if err != nil {
 		// Replace the domain name label wrapper with our own.
-		return fmt.Errorf("invalid client id %q: %w", clientID, errors.Unwrap(err))
+		return fmt.Errorf("invalid clientid %q: %w", id, errors.Unwrap(err))
 	}
 
 	return nil
@@ -33,7 +33,7 @@ func hasLabelSuffix(s, suffix string) (ok bool) {
 	return strings.HasSuffix(s, suffix) && s[len(s)-len(suffix)-1] == '.'
 }
 
-// clientIDFromClientServerName extracts and validates a client ID.  hostSrvName
+// clientIDFromClientServerName extracts and validates a ClientID.  hostSrvName
 // is the server name of the host.  cliSrvName is the server name as sent by the
 // client.  When strict is true, and client and host server name don't match,
 // clientIDFromClientServerName will return an error.
@@ -65,7 +65,7 @@ func clientIDFromClientServerName(
 		return "", err
 	}
 
-	return clientID, nil
+	return strings.ToLower(clientID), nil
 }
 
 // clientIDFromDNSContextHTTPS extracts the client's ID from the path of the
@@ -86,25 +86,25 @@ func clientIDFromDNSContextHTTPS(pctx *proxy.DNSContext) (clientID string, err e
 	}
 
 	if len(parts) == 0 || parts[0] != "dns-query" {
-		return "", fmt.Errorf("client id check: invalid path %q", origPath)
+		return "", fmt.Errorf("clientid check: invalid path %q", origPath)
 	}
 
 	switch len(parts) {
 	case 1:
-		// Just /dns-query, no client ID.
+		// Just /dns-query, no ClientID.
 		return "", nil
 	case 2:
 		clientID = parts[1]
 	default:
-		return "", fmt.Errorf("client id check: invalid path %q: extra parts", origPath)
+		return "", fmt.Errorf("clientid check: invalid path %q: extra parts", origPath)
 	}
 
 	err = ValidateClientID(clientID)
 	if err != nil {
-		return "", fmt.Errorf("client id check: %w", err)
+		return "", fmt.Errorf("clientid check: %w", err)
 	}
 
-	return clientID, nil
+	return strings.ToLower(clientID), nil
 }
 
 // tlsConn is a narrow interface for *tls.Conn to simplify testing.
@@ -112,8 +112,8 @@ type tlsConn interface {
 	ConnectionState() (cs tls.ConnectionState)
 }
 
-// quicSession is a narrow interface for quic.Session to simplify testing.
-type quicSession interface {
+// quicConnection is a narrow interface for quic.Connection to simplify testing.
+type quicConnection interface {
 	ConnectionState() (cs quic.ConnectionState)
 }
 
@@ -148,16 +148,16 @@ func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string
 
 		cliSrvName = tc.ConnectionState().ServerName
 	case proxy.ProtoQUIC:
-		qs, ok := pctx.QUICSession.(quicSession)
+		conn, ok := pctx.QUICConnection.(quicConnection)
 		if !ok {
 			return "", fmt.Errorf(
-				"proxy ctx quic session of proto %s is %T, want quic.Session",
+				"proxy ctx quic conn of proto %s is %T, want quic.Connection",
 				proto,
-				pctx.QUICSession,
+				pctx.QUICConnection,
 			)
 		}
 
-		cliSrvName = qs.ConnectionState().TLS.ServerName
+		cliSrvName = conn.ConnectionState().TLS.ServerName
 	}
 
 	clientID, err = clientIDFromClientServerName(
@@ -166,7 +166,7 @@ func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string
 		s.conf.StrictSNICheck,
 	)
 	if err != nil {
-		return "", fmt.Errorf("client id check: %w", err)
+		return "", fmt.Errorf("clientid check: %w", err)
 	}
 
 	return clientID, nil

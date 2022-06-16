@@ -29,6 +29,8 @@ class Table extends Component {
             Header: this.props.t('actions_table_header'),
             accessor: 'actions',
             maxWidth: 100,
+            sortable: false,
+            resizable: false,
             Cell: (value) => (
                 <div className="logs__row logs__row--center">
                     <button

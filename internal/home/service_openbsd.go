@@ -314,12 +314,13 @@ func (s *openbsdRunComService) runCom(cmd string) (out string, err error) {
 	// TODO(e.burkov):  It's possible that os.ErrNotExist is caused by
 	// something different than the service script's non-existence.  Keep it
 	// in mind, when replace the aghos.RunCommand.
-	_, out, err = aghos.RunCommand(scriptPath, cmd)
+	var outData []byte
+	_, outData, err = aghos.RunCommand(scriptPath, cmd)
 	if errors.Is(err, os.ErrNotExist) {
 		return "", service.ErrNotInstalled
 	}
 
-	return out, err
+	return string(outData), err
 }
 
 // Status implements service.Service interface for *openbsdRunComService.

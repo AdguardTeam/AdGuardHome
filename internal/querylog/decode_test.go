@@ -32,6 +32,7 @@ func TestDecodeLogEntry(t *testing.T) {
 			`"QT":"A",` +
 			`"QC":"IN",` +
 			`"CP":"",` +
+			`"ECS":"1.2.3.0/24",` +
 			`"Answer":"` + ansStr + `",` +
 			`"Cached":true,` +
 			`"AD":true,` +
@@ -58,6 +59,7 @@ func TestDecodeLogEntry(t *testing.T) {
 			QClass:      "IN",
 			ClientID:    "cli42",
 			ClientProto: "",
+			ReqECS:      "1.2.3.0/24",
 			Answer:      ans,
 			Cached:      true,
 			Result: filtering.Result{

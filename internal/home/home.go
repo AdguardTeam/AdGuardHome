@@ -66,8 +66,6 @@ type homeContext struct {
 
 	updater *updater.Updater
 
-	subnetDetector *aghnet.SubnetDetector
-
 	// mux is our custom http.ServeMux.
 	mux *http.ServeMux
 
@@ -174,6 +172,11 @@ func setupContext(args options) {
 			log.Info("configuration file is ok")
 
 			os.Exit(0)
+		}
+
+		if !args.noEtcHosts && config.Clients.Sources.HostsFile {
+			err = setupHostsContainer()
+			fatalOnError(err)
 		}
 	}
 
@@ -287,29 +290,28 @@ func setupConfig(args options) (err error) {
 		ConfName: config.getConfigFilename(),
 	})
 
-	if !args.noEtcHosts {
-		if err = setupHostsContainer(); err != nil {
-			return err
-		}
+	var arpdb aghnet.ARPDB
+	if config.Clients.Sources.ARP {
+		arpdb = aghnet.NewARPDB()
 	}
 
-	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts)
+	Context.clients.Init(config.Clients.Persistent, Context.dhcpServer, Context.etcHosts, arpdb)
 
 	if args.bindPort != 0 {
 		uc := aghalg.UniqChecker{}
 		addPorts(
 			uc,
-			args.bindPort,
-			config.BetaBindPort,
-			config.DNS.Port,
+			tcpPort(args.bindPort),
+			tcpPort(config.BetaBindPort),
+			udpPort(config.DNS.Port),
 		)
 		if config.TLS.Enabled {
 			addPorts(
 				uc,
-				config.TLS.PortHTTPS,
-				config.TLS.PortDNSOverTLS,
-				config.TLS.PortDNSOverQUIC,
-				config.TLS.PortDNSCrypt,
+				tcpPort(config.TLS.PortHTTPS),
+				tcpPort(config.TLS.PortDNSOverTLS),
+				udpPort(config.TLS.PortDNSOverQUIC),
+				tcpPort(config.TLS.PortDNSCrypt),
 			)
 		}
 		if err = uc.Validate(aghalg.IntIsBefore); err != nil {
@@ -390,9 +392,6 @@ func run(args options, clientBuildFS fs.FS) {
 	// configure log level and output
 	configureLogger(args)
 
-	// Go memory hacks
-	memoryUsage(args)
-
 	// Print the first message after logger is configured.
 	log.Println(version.Full())
 	log.Debug("current working directory is %s", Context.workDir)
@@ -469,9 +468,6 @@ func run(args options, clientBuildFS fs.FS) {
 	Context.web, err = initWeb(args, clientBuildFS)
 	fatalOnError(err)
 
-	Context.subnetDetector, err = aghnet.NewSubnetDetector()
-	fatalOnError(err)
-
 	if !Context.firstRun {
 		err = initDNSServer()
 		fatalOnError(err)
@@ -521,27 +517,15 @@ func StartMods() error {
 func checkPermissions() {
 	log.Info("Checking if AdGuard Home has necessary permissions")
 
-	if runtime.GOOS == "windows" {
-		// On Windows we need to have admin rights to run properly
-
-		admin, _ := aghos.HaveAdminRights()
-		if admin {
-			return
-		}
-
+	if ok, err := aghnet.CanBindPrivilegedPorts(); !ok || err != nil {
 		log.Fatal("This is the first launch of AdGuard Home. You must run it as Administrator.")
 	}
 
 	// We should check if AdGuard Home is able to bind to port 53
-	ok, err := aghnet.CanBindPort(53)
-
-	if ok {
-		log.Info("AdGuard Home can bind to port 53")
-		return
-	}
-
-	if errors.Is(err, os.ErrPermission) {
-		msg := `Permission check failed.
+	err := aghnet.CheckPort("tcp", net.IP{127, 0, 0, 1}, defaultPortDNS)
+	if err != nil {
+		if errors.Is(err, os.ErrPermission) {
+			log.Fatal(`Permission check failed.
 
 AdGuard Home is not allowed to bind to privileged ports (for instance, port 53).
 Please note, that this is crucial for a server to be able to use privileged ports.
@@ -549,16 +533,17 @@ Please note, that this is crucial for a server to be able to use privileged port
 You have two options:
 1. Run AdGuard Home with root privileges
 2. On Linux you can grant the CAP_NET_BIND_SERVICE capability:
-https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser`
+https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser`)
+		}
 
-		log.Fatal(msg)
+		log.Info(
+			"AdGuard failed to bind to port 53: %s\n\n"+
+				"Please note, that this is crucial for a DNS server to be able to use that port.",
+			err,
+		)
 	}
 
-	msg := fmt.Sprintf(`AdGuard failed to bind to port 53 due to %v
-
-Please note, that this is crucial for a DNS server to be able to use that port.`, err)
-
-	log.Info(msg)
+	log.Info("AdGuard Home can bind to port 53")
 }
 
 // Write PID to a file

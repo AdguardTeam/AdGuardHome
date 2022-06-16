@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -108,7 +109,7 @@ func (req *checkConfReq) validateWeb(uc aghalg.UniqChecker) (err error) {
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
 	port := req.Web.Port
-	addPorts(uc, config.BetaBindPort, port)
+	addPorts(uc, tcpPort(config.BetaBindPort), tcpPort(port))
 	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
 		// Avoid duplicating the error into the status of DNS.
 		uc[port] = 1
@@ -134,7 +135,7 @@ func (req *checkConfReq) validateDNS(uc aghalg.UniqChecker) (canAutofix bool, er
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
 	port := req.DNS.Port
-	addPorts(uc, port)
+	addPorts(uc, udpPort(port))
 	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
 		return false, err
 	}
@@ -359,11 +360,26 @@ func shutdownSrv(ctx context.Context, srv *http.Server) {
 	}
 }
 
+// PasswordMinRunes is the minimum length of user's password in runes.
+const PasswordMinRunes = 8
+
 // Apply new configuration, start DNS server, restart Web server
 func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	req, restartHTTP, err := decodeApplyConfigReq(r.Body)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+
+		return
+	}
+
+	if utf8.RuneCountInString(req.Password) < PasswordMinRunes {
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusUnprocessableEntity,
+			"password must be at least %d symbols long",
+			PasswordMinRunes,
+		)
 
 		return
 	}

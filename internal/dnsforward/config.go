@@ -122,6 +122,7 @@ type FilteringConfig struct {
 	EnableDNSSEC           bool     `yaml:"enable_dnssec"`      // Set AD flag in outcoming DNS request
 	EnableEDNSClientSubnet bool     `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
 	MaxGoroutines          uint32   `yaml:"max_goroutines"`     // Max. number of parallel goroutines for processing incoming requests
+	HandleDDR              bool     `yaml:"handle_ddr"`         // Handle DDR requests
 
 	// IpsetList is the ipset configuration that allows AdGuard Home to add
 	// IP addresses of the specified domain names to an ipset list.  Syntax:
@@ -133,8 +134,9 @@ type FilteringConfig struct {
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
 type TLSConfig struct {
-	TLSListenAddrs  []*net.TCPAddr `yaml:"-" json:"-"`
-	QUICListenAddrs []*net.UDPAddr `yaml:"-" json:"-"`
+	TLSListenAddrs   []*net.TCPAddr `yaml:"-" json:"-"`
+	QUICListenAddrs  []*net.UDPAddr `yaml:"-" json:"-"`
+	HTTPSListenAddrs []*net.TCPAddr `yaml:"-" json:"-"`
 
 	// Reject connection if the client uses server name (in SNI) that doesn't match the certificate
 	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
@@ -150,8 +152,8 @@ type TLSConfig struct {
 	CertificateChainData []byte `yaml:"-" json:"-"`
 	PrivateKeyData       []byte `yaml:"-" json:"-"`
 
-	// ServerName is the hostname of the server.  Currently, it is only
-	// being used for client ID checking.
+	// ServerName is the hostname of the server.  Currently, it is only being
+	// used for ClientID checking and Discovery of Designated Resolvers (DDR).
 	ServerName string `yaml:"-" json:"-"`
 
 	cert tls.Certificate

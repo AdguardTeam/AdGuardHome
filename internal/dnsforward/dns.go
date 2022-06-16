@@ -35,7 +35,7 @@ type dnsContext struct {
 	// err is the error returned from a processing function.
 	err error
 
-	// clientID is the clientID from DoH, DoQ, or DoT, if provided.
+	// clientID is the ClientID from DoH, DoQ, or DoT, if provided.
 	clientID string
 
 	// origQuestion is the question received from the client.  It is set
@@ -76,6 +76,10 @@ const (
 	resultCodeError
 )
 
+// ddrHostFQDN is the FQDN used in Discovery of Designated Resolvers (DDR) requests.
+// See https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
+const ddrHostFQDN = "_dns.resolver.arpa."
+
 // handleDNSRequest filters the incoming DNS requests and writes them to the query log
 func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 	ctx := &dnsContext{
@@ -94,6 +98,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 	mods := []modProcessFunc{
 		s.processRecursion,
 		s.processInitial,
+		s.processDDRQuery,
 		s.processDetermineLocal,
 		s.processInternalHosts,
 		s.processRestrictLocal,
@@ -135,7 +140,6 @@ func (s *Server) processRecursion(dctx *dnsContext) (rc resultCode) {
 		pctx.Res = s.genNXDomain(pctx.Req)
 
 		return resultCodeFinish
-
 	}
 
 	return resultCodeSuccess
@@ -242,6 +246,94 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 	s.setTableIPToHost(ipToHost)
 }
 
+// processDDRQuery responds to SVCB query for a special use domain name
+// ‘_dns.resolver.arpa’.  The result contains different types of encryption
+// supported by current user configuration.
+//
+// See https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
+func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
+	d := ctx.proxyCtx
+	question := d.Req.Question[0]
+
+	if !s.conf.HandleDDR {
+		return resultCodeSuccess
+	}
+
+	if question.Name == ddrHostFQDN {
+		if s.dnsProxy.TLSListenAddr == nil && s.conf.HTTPSListenAddrs == nil &&
+			s.dnsProxy.QUICListenAddr == nil || question.Qtype != dns.TypeSVCB {
+			d.Res = s.makeResponse(d.Req)
+
+			return resultCodeFinish
+		}
+
+		d.Res = s.makeDDRResponse(d.Req)
+
+		return resultCodeFinish
+	}
+
+	return resultCodeSuccess
+}
+
+// makeDDRResponse creates DDR answer according to server configuration.
+func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
+	resp = s.makeResponse(req)
+	// TODO(e.burkov):  Think about storing the FQDN version of the server's
+	// name somewhere.
+	domainName := dns.Fqdn(s.conf.ServerName)
+
+	for _, addr := range s.conf.HTTPSListenAddrs {
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"h2"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
+			&dns.SVCBDoHPath{Template: "/dns-query?dns"},
+		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 1,
+			Target:   domainName,
+			Value:    values,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
+	}
+
+	for _, addr := range s.dnsProxy.TLSListenAddr {
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"dot"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
+		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 2,
+			Target:   domainName,
+			Value:    values,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
+	}
+
+	for _, addr := range s.dnsProxy.QUICListenAddr {
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"doq"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
+		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 3,
+			Target:   domainName,
+			Value:    values,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
+	}
+
+	return resp
+}
+
 // processDetermineLocal determines if the client's IP address is from
 // locally-served network and saves the result into the context.
 func (s *Server) processDetermineLocal(dctx *dnsContext) (rc resultCode) {
@@ -252,7 +344,7 @@ func (s *Server) processDetermineLocal(dctx *dnsContext) (rc resultCode) {
 		return rc
 	}
 
-	dctx.isLocalClient = s.subnetDetector.IsLocallyServedNetwork(ip)
+	dctx.isLocalClient = s.privateNets.Contains(ip)
 
 	return rc
 }
@@ -374,7 +466,7 @@ func (s *Server) processRestrictLocal(ctx *dnsContext) (rc resultCode) {
 	// Restrict an access to local addresses for external clients.  We also
 	// assume that all the DHCP leases we give are locally-served or at least
 	// don't need to be inaccessible externally.
-	if !s.subnetDetector.IsLocallyServedNetwork(ip) {
+	if !s.privateNets.Contains(ip) {
 		log.Debug("dns: addr %s is not from locally-served network", ip)
 
 		return resultCodeSuccess
@@ -481,7 +573,7 @@ func (s *Server) processLocalPTR(ctx *dnsContext) (rc resultCode) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	if !s.subnetDetector.IsLocallyServedNetwork(ip) {
+	if !s.privateNets.Contains(ip) {
 		return resultCodeSuccess
 	}
 
@@ -546,7 +638,7 @@ func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
 	}
 
 	if pctx.Addr != nil && s.conf.GetCustomUpstreamByClient != nil {
-		// Use the clientID first, since it has a higher priority.
+		// Use the ClientID first, since it has a higher priority.
 		id := stringutil.Coalesce(dctx.clientID, ipStringFromAddr(pctx.Addr))
 		upsConf, err := s.conf.GetCustomUpstreamByClient(id)
 		if err != nil {
@@ -613,9 +705,9 @@ func (s *Server) processFilteringAfterResponse(ctx *dnsContext) (rc resultCode) 
 			d.Res.Answer = answer
 		}
 	default:
-		// Check the response only if the it's from an upstream.  Don't check
-		// the response if the protection is disabled since dnsrewrite rules
-		// aren't applied to it anyway.
+		// Check the response only if it's from an upstream.  Don't check the
+		// response if the protection is disabled since dnsrewrite rules aren't
+		// applied to it anyway.
 		if !ctx.protectionEnabled || !ctx.responseFromUpstream || s.dnsFilter == nil {
 			break
 		}

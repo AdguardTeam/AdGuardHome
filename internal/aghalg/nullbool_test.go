@@ -1,9 +1,10 @@
-package dhcpd
+package aghalg_test
 
 import (
 	"encoding/json"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,37 +15,37 @@ func TestNullBool_UnmarshalJSON(t *testing.T) {
 		name       string
 		wantErrMsg string
 		data       []byte
-		want       nullBool
+		want       aghalg.NullBool
 	}{{
 		name:       "empty",
 		wantErrMsg: "",
 		data:       []byte{},
-		want:       nbNull,
+		want:       aghalg.NBNull,
 	}, {
 		name:       "null",
 		wantErrMsg: "",
 		data:       []byte("null"),
-		want:       nbNull,
+		want:       aghalg.NBNull,
 	}, {
 		name:       "true",
 		wantErrMsg: "",
 		data:       []byte("true"),
-		want:       nbTrue,
+		want:       aghalg.NBTrue,
 	}, {
 		name:       "false",
 		wantErrMsg: "",
 		data:       []byte("false"),
-		want:       nbFalse,
+		want:       aghalg.NBFalse,
 	}, {
 		name:       "invalid",
-		wantErrMsg: `invalid nullBool value "invalid"`,
+		wantErrMsg: `unmarshalling json data into aghalg.NullBool: bad value "invalid"`,
 		data:       []byte("invalid"),
-		want:       nbNull,
+		want:       aghalg.NBNull,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var got nullBool
+			var got aghalg.NullBool
 			err := got.UnmarshalJSON(tc.data)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 
@@ -53,9 +54,9 @@ func TestNullBool_UnmarshalJSON(t *testing.T) {
 	}
 
 	t.Run("json", func(t *testing.T) {
-		want := nbTrue
+		want := aghalg.NBTrue
 		var got struct {
-			A nullBool
+			A aghalg.NullBool
 		}
 
 		err := json.Unmarshal([]byte(`{"A":true}`), &got)

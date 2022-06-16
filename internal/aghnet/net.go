@@ -2,17 +2,29 @@
 package aghnet
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net"
-	"os/exec"
-	"strings"
 	"syscall"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+)
+
+// Variables and functions to substitute in tests.
+var (
+	// aghosRunCommand is the function to run shell commands.
+	aghosRunCommand = aghos.RunCommand
+
+	// netInterfaces is the function to get the available network interfaces.
+	netInterfaceAddrs = net.InterfaceAddrs
+
+	// rootDirFS is the filesystem pointing to the root directory.
+	rootDirFS = aghos.RootDirFS()
 )
 
 // ErrNoStaticIPInfo is returned by IfaceHasStaticIP when no information about
@@ -32,39 +44,29 @@ func IfaceSetStaticIP(ifaceName string) (err error) {
 }
 
 // GatewayIP returns IP address of interface's gateway.
-func GatewayIP(ifaceName string) net.IP {
-	cmd := exec.Command("ip", "route", "show", "dev", ifaceName)
-	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
-	d, err := cmd.Output()
-	if err != nil || cmd.ProcessState.ExitCode() != 0 {
+//
+// TODO(e.burkov):  Investigate if the gateway address may be fetched in another
+// way since not every machine has the software installed.
+func GatewayIP(ifaceName string) (ip net.IP) {
+	code, out, err := aghosRunCommand("ip", "route", "show", "dev", ifaceName)
+	if err != nil {
+		log.Debug("%s", err)
+
+		return nil
+	} else if code != 0 {
+		log.Debug("fetching gateway ip: unexpected exit code: %d", code)
+
 		return nil
 	}
 
-	fields := strings.Fields(string(d))
+	fields := bytes.Fields(out)
 	// The meaningful "ip route" command output should contain the word
 	// "default" at first field and default gateway IP address at third field.
-	if len(fields) < 3 || fields[0] != "default" {
+	if len(fields) < 3 || string(fields[0]) != "default" {
 		return nil
 	}
 
-	return net.ParseIP(fields[2])
-}
-
-// CanBindPort checks if we can bind to the given port.
-func CanBindPort(port int) (can bool, err error) {
-	var addr *net.TCPAddr
-	addr, err = net.ResolveTCPAddr("tcp", fmt.Sprintf("127.0.0.1:%d", port))
-	if err != nil {
-		return false, err
-	}
-
-	var listener *net.TCPListener
-	listener, err = net.ListenTCP("tcp", addr)
-	if err != nil {
-		return false, err
-	}
-	_ = listener.Close()
-	return true, nil
+	return net.ParseIP(string(fields[2]))
 }
 
 // CanBindPrivilegedPorts checks if current process can bind to privileged
@@ -99,18 +101,18 @@ func (iface NetInterface) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// GetValidNetInterfacesForWeb returns interfaces that are eligible for DNS and WEB only
-// we do not return link-local addresses here
-func GetValidNetInterfacesForWeb() ([]*NetInterface, error) {
+// GetValidNetInterfacesForWeb returns interfaces that are eligible for DNS and
+// WEB only we do not return link-local addresses here.
+//
+// TODO(e.burkov):  Can't properly test the function since it's nontrivial to
+// substitute net.Interface.Addrs and the net.InterfaceAddrs can't be used.
+func GetValidNetInterfacesForWeb() (netIfaces []*NetInterface, err error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return nil, fmt.Errorf("couldn't get interfaces: %w", err)
-	}
-	if len(ifaces) == 0 {
+	} else if len(ifaces) == 0 {
 		return nil, errors.Error("couldn't find any legible interface")
 	}
-
-	var netInterfaces []*NetInterface
 
 	for _, iface := range ifaces {
 		var addrs []net.Addr
@@ -131,26 +133,30 @@ func GetValidNetInterfacesForWeb() ([]*NetInterface, error) {
 			ipNet, ok := addr.(*net.IPNet)
 			if !ok {
 				// Should be net.IPNet, this is weird.
-				return nil, fmt.Errorf("got iface.Addrs() element %s that is not net.IPNet, it is %T", addr, addr)
+				return nil, fmt.Errorf("got %s that is not net.IPNet, it is %T", addr, addr)
 			}
+
 			// Ignore link-local.
 			if ipNet.IP.IsLinkLocalUnicast() {
 				continue
 			}
+
 			netIface.Addresses = append(netIface.Addresses, ipNet.IP)
 			netIface.Subnets = append(netIface.Subnets, ipNet)
 		}
 
 		// Discard interfaces with no addresses.
 		if len(netIface.Addresses) != 0 {
-			netInterfaces = append(netInterfaces, netIface)
+			netIfaces = append(netIfaces, netIface)
 		}
 	}
 
-	return netInterfaces, nil
+	return netIfaces, nil
 }
 
 // GetInterfaceByIP returns the name of interface containing provided ip.
+//
+// TODO(e.burkov):  See TODO on GetValidInterfacesForWeb.
 func GetInterfaceByIP(ip net.IP) string {
 	ifaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
@@ -170,6 +176,8 @@ func GetInterfaceByIP(ip net.IP) string {
 
 // GetSubnet returns pointer to net.IPNet for the specified interface or nil if
 // the search fails.
+//
+// TODO(e.burkov):  See TODO on GetValidInterfacesForWeb.
 func GetSubnet(ifaceName string) *net.IPNet {
 	netIfaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
@@ -220,29 +228,21 @@ func IsAddrInUse(err error) (ok bool) {
 // CollectAllIfacesAddrs returns the slice of all network interfaces IP
 // addresses without port number.
 func CollectAllIfacesAddrs() (addrs []string, err error) {
-	var ifaces []net.Interface
-	ifaces, err = net.Interfaces()
+	var ifaceAddrs []net.Addr
+	ifaceAddrs, err = netInterfaceAddrs()
 	if err != nil {
-		return nil, fmt.Errorf("getting network interfaces: %w", err)
+		return nil, fmt.Errorf("getting interfaces addresses: %w", err)
 	}
 
-	for _, iface := range ifaces {
-		var ifaceAddrs []net.Addr
-		ifaceAddrs, err = iface.Addrs()
+	for _, addr := range ifaceAddrs {
+		cidr := addr.String()
+		var ip net.IP
+		ip, _, err = net.ParseCIDR(cidr)
 		if err != nil {
-			return nil, fmt.Errorf("getting addresses for %q: %w", iface.Name, err)
+			return nil, fmt.Errorf("parsing cidr: %w", err)
 		}
 
-		for _, addr := range ifaceAddrs {
-			cidr := addr.String()
-			var ip net.IP
-			ip, _, err = net.ParseCIDR(cidr)
-			if err != nil {
-				return nil, fmt.Errorf("parsing cidr: %w", err)
-			}
-
-			addrs = append(addrs, ip.String())
-		}
+		addrs = append(addrs, ip.String())
 	}
 
 	return addrs, nil

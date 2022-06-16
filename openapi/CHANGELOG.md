@@ -2,6 +2,19 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
+## v0.108.0: API changes
+
+### The new optional field `"ecs"` in `QueryLogItem`
+
+* The new optional field `"ecs"` in `GET /control/querylog` contains the IP
+  network from an EDNS Client-Subnet option from the request message if any.
+
+### The new possible status code in `/install/configure` response.
+
+* The new status code `422 Unprocessable Entity` in the response for
+  `POST /install/configure` which means that the specified password does not
+  meet the strength requirements.
+
 ## v0.107.3: API changes
 
 ### The new field `"version"` in `AddressesInfo`
@@ -69,9 +82,9 @@
 
 * The type of `"interval"` field is now `number` instead of `integer`.
 
-### Client IDs in Access Settings
+### ClientIDs in Access Settings
 
-* The `POST /control/access/set` HTTP API now accepts client IDs in
+* The `POST /control/access/set` HTTP API now accepts ClientIDs in
   `"allowed_clients"` and `"disallowed_clients"` fields.
 
 ### The new field `"unicode_name"` in `DNSQuestion`

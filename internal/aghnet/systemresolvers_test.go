@@ -2,7 +2,6 @@ package aghnet
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -10,13 +9,12 @@ import (
 
 func createTestSystemResolvers(
 	t *testing.T,
-	refreshDur time.Duration,
 	hostGenFunc HostGenFunc,
 ) (sr SystemResolvers) {
 	t.Helper()
 
 	var err error
-	sr, err = NewSystemResolvers(refreshDur, hostGenFunc)
+	sr, err = NewSystemResolvers(hostGenFunc)
 	require.NoError(t, err)
 	require.NotNil(t, sr)
 
@@ -24,8 +22,14 @@ func createTestSystemResolvers(
 }
 
 func TestSystemResolvers_Get(t *testing.T) {
-	sr := createTestSystemResolvers(t, 0, nil)
-	assert.NotEmpty(t, sr.Get())
+	sr := createTestSystemResolvers(t, nil)
+
+	var rs []string
+	require.NotPanics(t, func() {
+		rs = sr.Get()
+	})
+
+	assert.NotEmpty(t, rs)
 }
 
 // TODO(e.burkov): Write tests for refreshWithTicker.

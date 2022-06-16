@@ -28,7 +28,7 @@ import (
 // DefaultTimeout is the default upstream timeout
 const DefaultTimeout = 10 * time.Second
 
-// defaultClientIDCacheCount is the default count of items in the LRU client ID
+// defaultClientIDCacheCount is the default count of items in the LRU ClientID
 // cache.  The assumption here is that there won't be more than this many
 // requests between the BeforeRequestHandler stage and the actual processing.
 const defaultClientIDCacheCount = 1024
@@ -74,7 +74,7 @@ type Server struct {
 	localDomainSuffix string
 
 	ipset          ipsetCtx
-	subnetDetector *aghnet.SubnetDetector
+	privateNets    netutil.SubnetSet
 	localResolvers *proxy.Proxy
 	sysResolvers   aghnet.SystemResolvers
 	recDetector    *recursionDetector
@@ -88,8 +88,8 @@ type Server struct {
 	tableIPToHost     *netutil.IPMap
 	tableIPToHostLock sync.Mutex
 
-	// clientIDCache is a temporary storage for clientIDs that were
-	// extracted during the BeforeRequestHandler stage.
+	// clientIDCache is a temporary storage for ClientIDs that were extracted
+	// during the BeforeRequestHandler stage.
 	clientIDCache cache.Cache
 
 	// DNS proxy instance for internal usage
@@ -111,13 +111,13 @@ const defaultLocalDomainSuffix = ".lan."
 
 // DNSCreateParams are parameters to create a new server.
 type DNSCreateParams struct {
-	DNSFilter      *filtering.DNSFilter
-	Stats          stats.Stats
-	QueryLog       querylog.QueryLog
-	DHCPServer     dhcpd.ServerInterface
-	SubnetDetector *aghnet.SubnetDetector
-	Anonymizer     *aghnet.IPMut
-	LocalDomain    string
+	DNSFilter   *filtering.DNSFilter
+	Stats       stats.Stats
+	QueryLog    querylog.QueryLog
+	DHCPServer  dhcpd.ServerInterface
+	PrivateNets netutil.SubnetSet
+	Anonymizer  *aghnet.IPMut
+	LocalDomain string
 }
 
 // domainNameToSuffix converts a domain name into a local domain suffix.
@@ -161,7 +161,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		dnsFilter:         p.DNSFilter,
 		stats:             p.Stats,
 		queryLog:          p.QueryLog,
-		subnetDetector:    p.SubnetDetector,
+		privateNets:       p.PrivateNets,
 		localDomainSuffix: localDomainSuffix,
 		recDetector:       newRecursionDetector(recursionTTL, cachedRecurrentReqNum),
 		clientIDCache: cache.New(cache.Config{
@@ -173,7 +173,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 
 	// TODO(e.burkov): Enable the refresher after the actual implementation
 	// passes the public testing.
-	s.sysResolvers, err = aghnet.NewSystemResolvers(0, nil)
+	s.sysResolvers, err = aghnet.NewSystemResolvers(nil)
 	if err != nil {
 		return nil, fmt.Errorf("initializing system resolvers: %w", err)
 	}
@@ -314,14 +314,16 @@ func (s *Server) Exchange(ip net.IP) (host string, err error) {
 		StartTime: time.Now(),
 	}
 
-	resolver := s.internalProxy
-	if s.subnetDetector.IsLocallyServedNetwork(ip) {
+	var resolver *proxy.Proxy
+	if s.privateNets.Contains(ip) {
 		if !s.conf.UsePrivateRDNS {
 			return "", nil
 		}
 
 		resolver = s.localResolvers
 		s.recDetector.add(*req)
+	} else {
+		resolver = s.internalProxy
 	}
 
 	if err = resolver.Resolve(ctx); err != nil {
