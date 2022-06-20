@@ -30,8 +30,13 @@ and this project adheres to
 
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
+### Fixed
+
+- Broken service installation on OpenWrt ([#4677]).
+
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+[#4677]: https://github.com/AdguardTeam/AdGuardHome/issues/4677
 
 [ddr-draft-06]:   https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html
 

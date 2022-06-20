@@ -9,7 +9,14 @@ import (
 )
 
 func chooseSystem() {
-	if sys := service.ChosenSystem(); sys.String() == "unix-systemv" {
+	sys := service.ChosenSystem()
+	// By default, package service uses the SysV system if it cannot detect
+	// anything other, but the update-rc.d fix should not be applied on OpenWrt,
+	// so exclude it explicitly.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/4480 and
+	// https://github.com/AdguardTeam/AdGuardHome/issues/4677.
+	if sys.String() == "unix-systemv" && !aghos.IsOpenWrt() {
 		service.ChooseSystem(sysvSystem{System: sys})
 	}
 }
