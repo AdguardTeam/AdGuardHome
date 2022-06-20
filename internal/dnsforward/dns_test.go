@@ -31,7 +31,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}
 
 	dotSVCB := &dns.SVCB{
-		Priority: 2,
+		Priority: 1,
 		Target:   ddrTestFQDN,
 		Value: []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"dot"}},
@@ -40,7 +40,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}
 
 	doqSVCB := &dns.SVCB{
-		Priority: 3,
+		Priority: 1,
 		Target:   ddrTestFQDN,
 		Value: []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"doq"}},

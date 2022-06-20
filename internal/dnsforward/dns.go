@@ -275,7 +275,11 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 	return resultCodeSuccess
 }
 
-// makeDDRResponse creates DDR answer according to server configuration.
+// makeDDRResponse creates DDR answer according to server configuration.  The
+// contructed SVCB resource records have the priority of 1 for each entry,
+// similar to examples provided by https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
+//
+// TODO(a.meshkov):  Consider setting the priority values based on the protocol.
 func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	resp = s.makeResponse(req)
 	// TODO(e.burkov):  Think about storing the FQDN version of the server's
@@ -307,7 +311,7 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 
 		ans := &dns.SVCB{
 			Hdr:      s.hdr(req, dns.TypeSVCB),
-			Priority: 2,
+			Priority: 1,
 			Target:   domainName,
 			Value:    values,
 		}
@@ -323,7 +327,7 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 
 		ans := &dns.SVCB{
 			Hdr:      s.hdr(req, dns.TypeSVCB),
-			Priority: 3,
+			Priority: 1,
 			Target:   domainName,
 			Value:    values,
 		}
