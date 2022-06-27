@@ -117,7 +117,7 @@
     "stats_adult": "Zablokowane witryny dla dorosłych",
     "stats_query_domain": "Najczęściej wyszukiwane domeny",
     "for_last_24_hours": "przez ostatnie 24 godziny",
-    "for_last_days": "z ostatniego dnia",
+    "for_last_days": "za ostatni dzień {{count}}",
     "for_last_days_plural": "z ostatnich {{count}} dni",
     "stats_disabled": "Statystyki zostały wyłączone. Można je włączyć na <0>stronie ustawień</0>.",
     "stats_disabled_short": "Statystyki zostały wyłączone",

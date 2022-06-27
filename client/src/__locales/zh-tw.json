@@ -630,6 +630,6 @@
     "use_saved_key": "使用該先前已儲存的金鑰",
     "parental_control": "家長控制",
     "safe_browsing": "安全瀏覽",
-    "served_from_cache": "{{value}} <i>（由快取提供）</i>",
+    "served_from_cache": "{{value}} <i>(由快取提供)</i>",
     "form_error_password_length": "密碼必須為至少長 {{value}} 個字元"
 }

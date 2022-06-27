@@ -589,7 +589,7 @@
     "validated_with_dnssec": "Подтверждено с помощью DNSSEC",
     "all_queries": "Все запросы",
     "show_blocked_responses": "Заблокировано",
-    "show_whitelisted_responses": "В белом списке",
+    "show_whitelisted_responses": "Разрешённые",
     "show_processed_responses": "Обработан",
     "blocked_safebrowsing": "Заблокировано согласно базе данных Safe Browsing",
     "blocked_adult_websites": "Заблокировано Родительским контролем",
