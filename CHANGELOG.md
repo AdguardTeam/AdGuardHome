@@ -32,11 +32,14 @@ and this project adheres to
 
 ### Fixed
 
+- PTR requests for addresses leased by DHCP will now be resolved into hostnames
+  under `dhcp.local_domain_name` ([#4699]).
 - Broken service installation on OpenWrt ([#4677]).
 
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#4677]: https://github.com/AdguardTeam/AdGuardHome/issues/4677
+[#4699]: https://github.com/AdguardTeam/AdGuardHome/issues/4699
 
 [ddr-draft-06]:   https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html
 

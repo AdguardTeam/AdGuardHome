@@ -107,7 +107,7 @@ type Server struct {
 // when no suffix is provided.
 //
 // See the documentation for Server.localDomainSuffix.
-const defaultLocalDomainSuffix = ".lan."
+const defaultLocalDomainSuffix = "lan"
 
 // DNSCreateParams are parameters to create a new server.
 type DNSCreateParams struct {
@@ -118,17 +118,6 @@ type DNSCreateParams struct {
 	PrivateNets netutil.SubnetSet
 	Anonymizer  *aghnet.IPMut
 	LocalDomain string
-}
-
-// domainNameToSuffix converts a domain name into a local domain suffix.
-func domainNameToSuffix(tld string) (suffix string) {
-	l := len(tld) + 2
-	b := make([]byte, l)
-	b[0] = '.'
-	copy(b[1:], tld)
-	b[l-1] = '.'
-
-	return string(b)
 }
 
 const (
@@ -151,7 +140,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 			return nil, fmt.Errorf("local domain: %w", err)
 		}
 
-		localDomainSuffix = domainNameToSuffix(p.LocalDomain)
+		localDomainSuffix = p.LocalDomain
 	}
 
 	if p.Anonymizer == nil {
