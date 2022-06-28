@@ -1016,10 +1016,13 @@ func (d *testDHCP) Leases(flags dhcpd.GetLeasesFlags) (leases []*dhcpd.Lease) {
 func (d *testDHCP) SetOnLeaseChanged(onLeaseChanged dhcpd.OnLeaseChangedT) {}
 
 func TestPTRResponseFromDHCPLeases(t *testing.T) {
+	const localDomain = "lan"
+
 	s, err := NewServer(DNSCreateParams{
 		DNSFilter:   filtering.New(&filtering.Config{}, nil),
 		DHCPServer:  &testDHCP{},
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
+		LocalDomain: localDomain,
 	})
 	require.NoError(t, err)
 
@@ -1033,14 +1036,13 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 
 	err = s.Start()
 	require.NoError(t, err)
-
 	t.Cleanup(s.Close)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 	req := createTestMessageWithType("34.12.168.192.in-addr.arpa.", dns.TypePTR)
 
 	resp, err := dns.Exchange(req, addr.String())
-	require.NoError(t, err)
+	require.NoErrorf(t, err, "%s", addr)
 
 	require.Len(t, resp.Answer, 1)
 
@@ -1049,7 +1051,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 
 	ptr, ok := resp.Answer[0].(*dns.PTR)
 	require.True(t, ok)
-	assert.Equal(t, "myhost.", ptr.Ptr)
+	assert.Equal(t, dns.Fqdn("myhost."+localDomain), ptr.Ptr)
 }
 
 func TestPTRResponseFromHosts(t *testing.T) {

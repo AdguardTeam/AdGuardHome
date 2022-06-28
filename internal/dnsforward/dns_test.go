@@ -58,7 +58,7 @@ func TestServer_ProcessDetermineLocal(t *testing.T) {
 	}
 }
 
-func TestServer_ProcessInternalHosts_localRestriction(t *testing.T) {
+func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 	knownIP := net.IP{1, 2, 3, 4}
 
 	testCases := []struct {
@@ -99,7 +99,7 @@ func TestServer_ProcessInternalHosts_localRestriction(t *testing.T) {
 				dhcpServer:        &testDHCP{},
 				localDomainSuffix: defaultLocalDomainSuffix,
 				tableHostToIP: hostToIPTable{
-					"example": knownIP,
+					"example." + defaultLocalDomainSuffix: knownIP,
 				},
 			}
 
@@ -121,7 +121,7 @@ func TestServer_ProcessInternalHosts_localRestriction(t *testing.T) {
 				isLocalClient: tc.isLocalCli,
 			}
 
-			res := s.processInternalHosts(dctx)
+			res := s.processDHCPHosts(dctx)
 			require.Equal(t, tc.wantRes, res)
 			pctx := dctx.proxyCtx
 			if tc.wantRes == resultCodeFinish {
@@ -147,10 +147,10 @@ func TestServer_ProcessInternalHosts_localRestriction(t *testing.T) {
 	}
 }
 
-func TestServer_ProcessInternalHosts(t *testing.T) {
+func TestServer_ProcessDHCPHosts(t *testing.T) {
 	const (
 		examplecom = "example.com"
-		examplelan = "example.lan"
+		examplelan = "example." + defaultLocalDomainSuffix
 	)
 
 	knownIP := net.IP{1, 2, 3, 4}
@@ -199,41 +199,41 @@ func TestServer_ProcessInternalHosts(t *testing.T) {
 	}, {
 		name:    "success_custom_suffix",
 		host:    "example.custom",
-		suffix:  ".custom.",
+		suffix:  "custom",
 		wantIP:  knownIP,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}}
 
 	for _, tc := range testCases {
+		s := &Server{
+			dhcpServer:        &testDHCP{},
+			localDomainSuffix: tc.suffix,
+			tableHostToIP: hostToIPTable{
+				"example." + tc.suffix: knownIP,
+			},
+		}
+
+		req := &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Id: 1234,
+			},
+			Question: []dns.Question{{
+				Name:   dns.Fqdn(tc.host),
+				Qtype:  tc.qtyp,
+				Qclass: dns.ClassINET,
+			}},
+		}
+
+		dctx := &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: req,
+			},
+			isLocalClient: true,
+		}
+
 		t.Run(tc.name, func(t *testing.T) {
-			s := &Server{
-				dhcpServer:        &testDHCP{},
-				localDomainSuffix: tc.suffix,
-				tableHostToIP: hostToIPTable{
-					"example": knownIP,
-				},
-			}
-
-			req := &dns.Msg{
-				MsgHdr: dns.MsgHdr{
-					Id: 1234,
-				},
-				Question: []dns.Question{{
-					Name:   dns.Fqdn(tc.host),
-					Qtype:  tc.qtyp,
-					Qclass: dns.ClassINET,
-				}},
-			}
-
-			dctx := &dnsContext{
-				proxyCtx: &proxy.DNSContext{
-					Req: req,
-				},
-				isLocalClient: true,
-			}
-
-			res := s.processInternalHosts(dctx)
+			res := s.processDHCPHosts(dctx)
 			pctx := dctx.proxyCtx
 			assert.Equal(t, tc.wantRes, res)
 			if tc.wantRes == resultCodeFinish {

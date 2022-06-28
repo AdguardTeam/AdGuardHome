@@ -95,9 +95,9 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 		s.processRecursion,
 		s.processInitial,
 		s.processDetermineLocal,
-		s.processInternalHosts,
+		s.processDHCPHosts,
 		s.processRestrictLocal,
-		s.processInternalIPAddrs,
+		s.processDHCPAddrs,
 		s.processFilteringBeforeRequest,
 		s.processLocalPTR,
 		s.processUpstream,
@@ -225,12 +225,10 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 				)
 			}
 
-			lowhost := strings.ToLower(l.Hostname)
+			lowhost := strings.ToLower(l.Hostname + "." + s.localDomainSuffix)
+			ip := netutil.CloneIP(l.IP)
 
-			ipToHost.Set(l.IP, lowhost)
-
-			ip := make(net.IP, 4)
-			copy(ip, l.IP.To4())
+			ipToHost.Set(ip, lowhost)
 			hostToIP[lowhost] = ip
 		}
 
@@ -279,11 +277,11 @@ func (s *Server) hostToIP(host string) (ip net.IP, ok bool) {
 	return ip, true
 }
 
-// processInternalHosts respond to A requests if the target hostname is known to
+// processDHCPHosts respond to A requests if the target hostname is known to
 // the server.
 //
 // TODO(a.garipov): Adapt to AAAA as well.
-func (s *Server) processInternalHosts(dctx *dnsContext) (rc resultCode) {
+func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
 	if !s.dhcpServer.Enabled() {
 		return resultCodeSuccess
 	}
@@ -298,11 +296,10 @@ func (s *Server) processInternalHosts(dctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	reqHost := strings.ToLower(q.Name)
+	reqHost := strings.ToLower(q.Name[:len(q.Name)-1])
 	// TODO(a.garipov): Move everything related to DHCP local domain to the DHCP
 	// server.
-	host := strings.TrimSuffix(reqHost, s.localDomainSuffix)
-	if host == reqHost {
+	if !strings.HasSuffix(reqHost, s.localDomainSuffix) {
 		return resultCodeSuccess
 	}
 
@@ -315,7 +312,7 @@ func (s *Server) processInternalHosts(dctx *dnsContext) (rc resultCode) {
 		return resultCodeFinish
 	}
 
-	ip, ok := s.hostToIP(host)
+	ip, ok := s.hostToIP(reqHost)
 	if !ok {
 		// TODO(e.burkov): Inspect special cases when user want to apply some
 		// rules handled by other processors to the hosts with TLD.
@@ -372,7 +369,7 @@ func (s *Server) processRestrictLocal(ctx *dnsContext) (rc resultCode) {
 
 	// Restrict an access to local addresses for external clients.  We also
 	// assume that all the DHCP leases we give are locally-served or at least
-	// don't need to be inaccessible externally.
+	// don't need to be accessible externally.
 	if !s.privateNets.Contains(ip) {
 		log.Debug("dns: addr %s is not from locally-served network", ip)
 
@@ -429,7 +426,7 @@ func (s *Server) ipToHost(ip net.IP) (host string, ok bool) {
 
 // Respond to PTR requests if the target IP is leased by our DHCP server and the
 // requestor is inside the local network.
-func (s *Server) processInternalIPAddrs(ctx *dnsContext) (rc resultCode) {
+func (s *Server) processDHCPAddrs(ctx *dnsContext) (rc resultCode) {
 	d := ctx.proxyCtx
 	if d.Res != nil {
 		return resultCodeSuccess
