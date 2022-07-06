@@ -54,6 +54,10 @@ EXPOSE 53/tcp 53/udp 67/udp 68/udp 80/tcp 443/tcp 443/udp 784/udp\
 
 WORKDIR /opt/adguardhome/work
 
+RUN addgroup -S adguardhome
+RUN adduser -s /sbin/nologin -S -D -H -G adguardhome adguardhome
+USER adguardhome
+
 ENTRYPOINT ["/opt/adguardhome/AdGuardHome"]
 
 CMD [ \
