@@ -32,6 +32,8 @@ and this project adheres to
 
 ### Fixed
 
+- Updater no longer expects a hardcoded name for  `AdGuardHome` executable
+  ([#4219]).
 - Inconsistent names of runtime clients from hosts files ([#4683]).
 - PTR requests for addresses leased by DHCP will now be resolved into hostnames
   under `dhcp.local_domain_name` ([#4699]).
@@ -39,6 +41,7 @@ and this project adheres to
 
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+[#4219]: https://github.com/AdguardTeam/AdGuardHome/issues/4219
 [#4677]: https://github.com/AdguardTeam/AdGuardHome/issues/4677
 [#4683]: https://github.com/AdguardTeam/AdGuardHome/issues/4683
 [#4699]: https://github.com/AdguardTeam/AdGuardHome/issues/4699
