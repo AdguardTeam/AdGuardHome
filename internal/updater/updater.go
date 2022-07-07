@@ -111,7 +111,12 @@ func (u *Updater) Update() (err error) {
 	log.Info("updater: updating")
 	defer func() { log.Info("updater: finished; errors: %v", err) }()
 
-	err = u.prepare()
+	execPath, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	err = u.prepare(filepath.Base(execPath))
 	if err != nil {
 		return err
 	}
@@ -162,7 +167,8 @@ func (u *Updater) VersionCheckURL() (vcu string) {
 	return u.versionCheckURL
 }
 
-func (u *Updater) prepare() (err error) {
+// prepare fills all necessary fields in Updater object.
+func (u *Updater) prepare(exeName string) (err error) {
 	u.updateDir = filepath.Join(u.workDir, fmt.Sprintf("agh-update-%s", u.newVersion))
 
 	_, pkgNameOnly := filepath.Split(u.packageURL)
@@ -173,13 +179,13 @@ func (u *Updater) prepare() (err error) {
 	u.packageName = filepath.Join(u.updateDir, pkgNameOnly)
 	u.backupDir = filepath.Join(u.workDir, "agh-backup")
 
-	exeName := "AdGuardHome"
+	updateExeName := "AdGuardHome"
 	if u.goos == "windows" {
-		exeName = "AdGuardHome.exe"
+		updateExeName = "AdGuardHome.exe"
 	}
 
 	u.backupExeName = filepath.Join(u.backupDir, exeName)
-	u.updateExeName = filepath.Join(u.updateDir, exeName)
+	u.updateExeName = filepath.Join(u.updateDir, updateExeName)
 
 	log.Debug(
 		"updater: updating from %s to %s using url: %s",
@@ -188,7 +194,6 @@ func (u *Updater) prepare() (err error) {
 		u.packageURL,
 	)
 
-	// TODO(a.garipov): Use os.Args[0] instead?
 	u.currentExeName = filepath.Join(u.workDir, exeName)
 	_, err = os.Stat(u.currentExeName)
 	if err != nil {

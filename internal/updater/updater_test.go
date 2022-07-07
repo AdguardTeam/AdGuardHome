@@ -131,7 +131,7 @@ func TestUpdate(t *testing.T) {
 	u.newVersion = "v0.103.1"
 	u.packageURL = fakeURL.String()
 
-	require.NoError(t, u.prepare())
+	require.NoError(t, u.prepare("AdGuardHome"))
 
 	u.currentExeName = filepath.Join(wd, "AdGuardHome")
 
@@ -209,7 +209,7 @@ func TestUpdateWindows(t *testing.T) {
 	u.newVersion = "v0.103.1"
 	u.packageURL = fakeURL.String()
 
-	require.NoError(t, u.prepare())
+	require.NoError(t, u.prepare("AdGuardHome.exe"))
 
 	u.currentExeName = filepath.Join(wd, "AdGuardHome.exe")
 

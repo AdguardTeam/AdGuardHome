@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"syscall"
 	"time"
@@ -180,11 +179,10 @@ func finishUpdate(ctx context.Context) {
 	cleanup(ctx)
 	cleanupAlways()
 
-	exeName := "AdGuardHome"
-	if runtime.GOOS == "windows" {
-		exeName = "AdGuardHome.exe"
+	curBinName, err := os.Executable()
+	if err != nil {
+		log.Fatalf("executable path request failed: %s", err)
 	}
-	curBinName := filepath.Join(Context.workDir, exeName)
 
 	if runtime.GOOS == "windows" {
 		if Context.runningAsService {
@@ -192,7 +190,7 @@ func finishUpdate(ctx context.Context) {
 			// we can't restart the service via "kardianos/service" package - it kills the process first
 			// we can't start a new instance - Windows doesn't allow it
 			cmd := exec.Command("cmd", "/c", "net stop AdGuardHome & net start AdGuardHome")
-			err := cmd.Start()
+			err = cmd.Start()
 			if err != nil {
 				log.Fatalf("exec.Command() failed: %s", err)
 			}
@@ -204,14 +202,14 @@ func finishUpdate(ctx context.Context) {
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		err := cmd.Start()
+		err = cmd.Start()
 		if err != nil {
 			log.Fatalf("exec.Command() failed: %s", err)
 		}
 		os.Exit(0)
 	} else {
 		log.Info("Restarting: %v", os.Args)
-		err := syscall.Exec(curBinName, os.Args, os.Environ())
+		err = syscall.Exec(curBinName, os.Args, os.Environ())
 		if err != nil {
 			log.Fatalf("syscall.Exec() failed: %s", err)
 		}
