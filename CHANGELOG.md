@@ -23,7 +23,7 @@ and this project adheres to
 ### Added
 
 - Support for Discovery of Designated Resolvers (DDR) according to the [RFC
-  draft][ddr-draft-06] ([#4463]).
+  draft][ddr-draft] ([#4463]).
 - `windows/arm64` support ([#3057]).
 
 ### Deprecated
@@ -32,6 +32,7 @@ and this project adheres to
 
 ### Fixed
 
+- Inconsistent names of runtime clients from hosts files ([#4683]).
 - PTR requests for addresses leased by DHCP will now be resolved into hostnames
   under `dhcp.local_domain_name` ([#4699]).
 - Broken service installation on OpenWrt ([#4677]).
@@ -39,9 +40,10 @@ and this project adheres to
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#4677]: https://github.com/AdguardTeam/AdGuardHome/issues/4677
+[#4683]: https://github.com/AdguardTeam/AdGuardHome/issues/4683
 [#4699]: https://github.com/AdguardTeam/AdGuardHome/issues/4699
 
-[ddr-draft-06]:   https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html
+[ddr-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
 
 
 
