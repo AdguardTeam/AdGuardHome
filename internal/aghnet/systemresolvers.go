@@ -19,7 +19,7 @@ type SystemResolvers interface {
 }
 
 // NewSystemResolvers returns a SystemResolvers with the cache refresh rate
-// defined by refreshIvl. It disables auto-resfreshing if refreshIvl is 0.  If
+// defined by refreshIvl. It disables auto-refreshing if refreshIvl is 0.  If
 // nil is passed for hostGenFunc, the default generator will be used.
 func NewSystemResolvers(
 	hostGenFunc HostGenFunc,

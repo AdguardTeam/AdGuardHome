@@ -743,8 +743,7 @@ func (clients *clientsContainer) AddHost(ip net.IP, host string, src clientSourc
 
 // addHostLocked adds a new IP-hostname pairing.  For internal use only.
 func (clients *clientsContainer) addHostLocked(ip net.IP, host string, src clientSource) (ok bool) {
-	var rc *RuntimeClient
-	rc, ok = clients.findRuntimeClientLocked(ip)
+	rc, ok := clients.findRuntimeClientLocked(ip)
 	if ok {
 		if rc.Source > src {
 			return false
@@ -799,25 +798,20 @@ func (clients *clientsContainer) addFromHostsFile(hosts *netutil.IPMap) {
 
 	n := 0
 	hosts.Range(func(ip net.IP, v interface{}) (cont bool) {
-		hosts, ok := v.(*stringutil.Set)
+		rec, ok := v.(*aghnet.HostsRecord)
 		if !ok {
 			log.Error("dns: bad type %T in ipToRC for %s", v, ip)
 
 			return true
 		}
 
-		hosts.Range(func(name string) (cont bool) {
-			if clients.addHostLocked(ip, name, ClientSourceHostsFile) {
-				n++
-			}
-
-			return true
-		})
+		clients.addHostLocked(ip, rec.Canonical, ClientSourceHostsFile)
+		n++
 
 		return true
 	})
 
-	log.Debug("clients: added %d client aliases from system hosts-file", n)
+	log.Debug("clients: added %d client aliases from system hosts file", n)
 }
 
 // addFromSystemARP adds the IP-hostname pairings from the output of the arp -a
