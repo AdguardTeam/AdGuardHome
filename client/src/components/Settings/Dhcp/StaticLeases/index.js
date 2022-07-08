@@ -24,6 +24,7 @@ const StaticLeases = ({
     cidr,
     rangeStart,
     rangeEnd,
+    gatewayIp,
 }) => {
     const [t] = useTranslation();
     const dispatch = useDispatch();
@@ -106,6 +107,7 @@ const StaticLeases = ({
                 cidr={cidr}
                 rangeStart={rangeStart}
                 rangeEnd={rangeEnd}
+                gatewayIp={gatewayIp}
             />
         </>
     );
@@ -119,6 +121,7 @@ StaticLeases.propTypes = {
     cidr: PropTypes.string.isRequired,
     rangeStart: PropTypes.string,
     rangeEnd: PropTypes.string,
+    gatewayIp: PropTypes.string,
 };
 
 cellWrap.propTypes = {
