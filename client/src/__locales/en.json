@@ -47,6 +47,7 @@
     "form_error_server_name": "Invalid server name",
     "form_error_subnet": "Subnet \"{{cidr}}\" does not contain the IP address \"{{ip}}\"",
     "form_error_positive": "Must be greater than 0",
+    "form_error_gateway_ip": "Lease can't have the IP address of the gateway",
     "out_of_range_error": "Must be out of range \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Must be lower than range start",
     "greater_range_start_error": "Must be greater than range start",

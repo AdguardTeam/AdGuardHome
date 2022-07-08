@@ -498,7 +498,6 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 	}
 
 	ip4 := l.IP.To4()
-
 	if ip4 == nil {
 		l.IP = l.IP.To16()
 

@@ -32,6 +32,8 @@ and this project adheres to
 
 ### Fixed
 
+- DHCP lease validation incorrectly letting users assign the IP address of the
+  gateway as the address of the lease ([#4698]).
 - Updater no longer expects a hardcoded name for  `AdGuardHome` executable
   ([#4219]).
 - Inconsistent names of runtime clients from hosts files ([#4683]).
@@ -44,6 +46,7 @@ and this project adheres to
 [#4219]: https://github.com/AdguardTeam/AdGuardHome/issues/4219
 [#4677]: https://github.com/AdguardTeam/AdGuardHome/issues/4677
 [#4683]: https://github.com/AdguardTeam/AdGuardHome/issues/4683
+[#4698]: https://github.com/AdguardTeam/AdGuardHome/issues/4698
 [#4699]: https://github.com/AdguardTeam/AdGuardHome/issues/4699
 
 [ddr-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08

@@ -333,12 +333,16 @@ func (s *v4Server) rmLease(lease *Lease) (err error) {
 	return errors.Error("lease not found")
 }
 
-// AddStaticLease adds a static lease.  It is safe for concurrent use.
+// AddStaticLease implements the DHCPServer interface for *v4Server.  It is safe
+// for concurrent use.
 func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv4: adding static lease: %w") }()
 
-	if ip4 := l.IP.To4(); ip4 == nil {
+	ip := l.IP.To4()
+	if ip == nil {
 		return fmt.Errorf("invalid ip %q, only ipv4 is supported", l.IP)
+	} else if gwIP := s.conf.GatewayIP; gwIP.Equal(ip) {
+		return fmt.Errorf("can't assign the gateway IP %s to the lease", gwIP)
 	}
 
 	l.Expiry = time.Unix(leaseExpireStatic, 0)
@@ -377,7 +381,7 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 		if err != nil {
 			err = fmt.Errorf(
 				"removing dynamic leases for %s (%s): %w",
-				l.IP,
+				ip,
 				l.HWAddr,
 				err,
 			)
@@ -387,7 +391,7 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 
 		err = s.addLease(l)
 		if err != nil {
-			err = fmt.Errorf("adding static lease for %s (%s): %w", l.IP, l.HWAddr, err)
+			err = fmt.Errorf("adding static lease for %s (%s): %w", ip, l.HWAddr, err)
 
 			return
 		}
