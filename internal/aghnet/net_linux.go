@@ -24,7 +24,7 @@ const dhcpcdConf = "etc/dhcpcd.conf"
 func canBindPrivilegedPorts() (can bool, err error) {
 	cnbs, err := unix.PrctlRetInt(
 		unix.PR_CAP_AMBIENT,
-		unix.PR_CAP_AMBIENT_IS_SET,
+		unix.PR_CAP_AMBIENT_RAISE,
 		unix.CAP_NET_BIND_SERVICE,
 		0,
 		0,
