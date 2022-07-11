@@ -41,6 +41,14 @@ func BoolToNullBool(cond bool) (nb NullBool) {
 }
 
 // type check
+var _ json.Marshaler = NBNull
+
+// MarshalJSON implements the json.Marshaler interface for NullBool.
+func (nb NullBool) MarshalJSON() (b []byte, err error) {
+	return []byte(nb.String()), nil
+}
+
+// type check
 var _ json.Unmarshaler = (*NullBool)(nil)
 
 // UnmarshalJSON implements the json.Unmarshaler interface for *NullBool.
