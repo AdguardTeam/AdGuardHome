@@ -47,6 +47,7 @@
     "form_error_server_name": "Nieprawidłowa nazwa serwera",
     "form_error_subnet": "Podsieć \"{{cidr}}\" nie zawiera adresu IP \"{{ip}}\"",
     "form_error_positive": "Musi być większa niż 0",
+    "form_error_gateway_ip": "Lease nie może mieć adresu IP bramy",
     "out_of_range_error": "Musi być spoza zakresu \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Musi być niższy niż początek zakresu",
     "greater_range_start_error": "Musi być większy niż początek zakresu",

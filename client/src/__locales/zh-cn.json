@@ -47,6 +47,7 @@
     "form_error_server_name": "无效的服务器名",
     "form_error_subnet": "子网 \"{{cidr}}\" 不包含 IP 地址 \"{{ip}}\"",
     "form_error_positive": "必须大于 0",
+    "form_error_gateway_ip": "租约期限不能有网关的 IP 地址",
     "out_of_range_error": "必定超出了范围 \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "必须小于范围起始值",
     "greater_range_start_error": "必须大于范围起始值",

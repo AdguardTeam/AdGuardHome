@@ -47,6 +47,7 @@
     "form_error_server_name": "Nombre de servidor no válido",
     "form_error_subnet": "La subred \"{{cidr}}\" no contiene la dirección IP \"{{ip}}\"",
     "form_error_positive": "Debe ser mayor que 0",
+    "form_error_gateway_ip": "Asignación no puede tener la dirección IP de la puerta de enlace",
     "out_of_range_error": "Debe estar fuera del rango \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Debe ser inferior que el inicio de rango",
     "greater_range_start_error": "Debe ser mayor que el inicio de rango",

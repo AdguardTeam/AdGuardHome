@@ -47,6 +47,7 @@
     "form_error_server_name": "Neplatný název serveru",
     "form_error_subnet": "Podsíť \"{{cidr}}\" neobsahuje IP adresu \"{{ip}}\"",
     "form_error_positive": "Musí být větší než 0",
+    "form_error_gateway_ip": "Pronájem nemůže mít IP adresu brány",
     "out_of_range_error": "Musí být mimo rozsah \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Musí být menší než začátek rozsahu",
     "greater_range_start_error": "Musí být větší než začátek rozsahu",

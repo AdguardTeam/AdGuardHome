@@ -47,6 +47,7 @@
     "form_error_server_name": "Няслушнае імя сервера",
     "form_error_subnet": "Падсетка «{{cidr}}» не ўтрымвае IP-адраса «{{ip}}»",
     "form_error_positive": "Павінна быць больш 0",
+    "form_error_gateway_ip": "Арэнда не можа мець IP-адрас шлюза",
     "out_of_range_error": "Павінна быць па-за дыяпазонам «{{start}}»-«{{end}}»",
     "lower_range_start_error": "Павінна быць менш за пачатак дыяпазону",
     "greater_range_start_error": "Павінна быць больш за пачатак дыяпазону",

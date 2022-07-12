@@ -47,6 +47,7 @@
     "form_error_server_name": "Nevažeće ime servera",
     "form_error_subnet": "Subnet \"{{cidr}}\" ne sadrži IP adresu \"{{ip}}\"",
     "form_error_positive": "Mora biti veće od 0",
+    "form_error_gateway_ip": "Zakup ne može imati IP adresu mrežnog prolaza",
     "out_of_range_error": "Mora biti izvan opsega \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Mora biti manje od početnog opsega",
     "greater_range_start_error": "Mora biti veće od početnog opsega",

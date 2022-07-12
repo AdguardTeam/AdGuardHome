@@ -47,6 +47,7 @@
     "form_error_server_name": "Érvénytelen szervernév",
     "form_error_subnet": "A(z) \"{{cidr}}\" alhálózat nem tartalmazza a(z) \"{{ip}}\" IP címet",
     "form_error_positive": "0-nál nagyobbnak kell lennie",
+    "form_error_gateway_ip": "A bérleti szerződés nem tartalmazhatja az átjáró IP-címét",
     "out_of_range_error": "A következő tartományon kívül legyen: \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Kisebb legyen, mint a tartomány kezdete",
     "greater_range_start_error": "Nagyobbnak kell lennie, mint a tartomány kezdete",

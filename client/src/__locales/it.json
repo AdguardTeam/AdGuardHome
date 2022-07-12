@@ -47,6 +47,7 @@
     "form_error_server_name": "Nome server non valido",
     "form_error_subnet": "Il subnet \"{{cidr}}\" non contiene l'indirizzo IP \"{{ip}}\"",
     "form_error_positive": "Deve essere maggiore di 0",
+    "form_error_gateway_ip": "Il leasing non può avere l'indirizzo IP del gateway",
     "out_of_range_error": "Deve essere fuori intervallo \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Deve essere inferiore dell'intervallo di inizio",
     "greater_range_start_error": "Deve essere maggiore dell'intervallo di inizio",

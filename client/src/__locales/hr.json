@@ -47,6 +47,7 @@
     "form_error_server_name": "Nevažeće ime poslužitelja",
     "form_error_subnet": "Podmrežu \"{{cidr}}\" ne sadrži IP adresu \"{{ip}}\"",
     "form_error_positive": "Mora biti veće od 0",
+    "form_error_gateway_ip": "Najam ne može imati IP adresu pristupnika",
     "out_of_range_error": "Mora biti izvan ranga \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Mora biti niže od početnog ranga",
     "greater_range_start_error": "Mora biti veće od krajnjeg ranga",

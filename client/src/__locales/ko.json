@@ -47,6 +47,7 @@
     "form_error_server_name": "유효하지 않은 서버 이름",
     "form_error_subnet": "서브넷 \"{{cidr}}\"에 \"{{ip}}\" IP 주소가 없습니다",
     "form_error_positive": "0보다 커야 합니다",
+    "form_error_gateway_ip": "임대는 게이트웨이의 IP 주소를 가질 수 없습니다",
     "out_of_range_error": "\"{{start}}\"-\"{{end}}\" 범위 밖이어야 합니다",
     "lower_range_start_error": "범위 시작보다 작은 값이어야 합니다",
     "greater_range_start_error": "범위 시작보다 큰 값이어야 합니다",

@@ -47,6 +47,7 @@
     "form_error_server_name": "Ogiltigt servernamn",
     "form_error_subnet": "Subnätet \"{{cidr}}\" innehåller inte IP-adressen \"{{ip}}\"",
     "form_error_positive": "Måste vara större än noll",
+    "form_error_gateway_ip": "Lease kan inte ha IP-adressen för gatewayen",
     "out_of_range_error": "Måste vara utanför intervallet \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Måste vara lägre än starten på intervallet",
     "greater_range_start_error": "Måste vara högre än starten på intervallet",

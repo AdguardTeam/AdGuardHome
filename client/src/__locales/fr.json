@@ -47,6 +47,7 @@
     "form_error_server_name": "Nom de serveur invalide",
     "form_error_subnet": "Le sous-réseau « {{cidr}} » ne contient pas l'adresse IP « {{ip}} »",
     "form_error_positive": "Doit être supérieur à 0",
+    "form_error_gateway_ip": "Le bail ne peut pas avoir d'adresse IP de la passerelle",
     "out_of_range_error": "Doit être hors plage « {{start}} » - « {{end}} »",
     "lower_range_start_error": "Doit être inférieur au début de plage",
     "greater_range_start_error": "Doit être supérieur au début de plage",

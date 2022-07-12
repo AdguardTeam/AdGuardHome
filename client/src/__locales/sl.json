@@ -47,6 +47,7 @@
     "form_error_server_name": "Neveljavno ime strežnika",
     "form_error_subnet": "Podomrežje \"{{cidr}}\" ne vsebuje naslova IP \"{{ip}}\"",
     "form_error_positive": "Mora biti večja od 0",
+    "form_error_gateway_ip": "Najem ne more imeti naslova IP prehoda",
     "out_of_range_error": "Mora biti izven razpona \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Mora biti manjši od začetka razpona",
     "greater_range_start_error": "Mora biti večji od začetka razpona",

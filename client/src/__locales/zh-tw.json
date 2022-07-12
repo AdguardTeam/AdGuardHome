@@ -47,6 +47,7 @@
     "form_error_server_name": "無效的伺服器名稱",
     "form_error_subnet": "子網路 \"{{cidr}}\" 不包含該 IP 位址 \"{{ip}}\"",
     "form_error_positive": "必須大於 0",
+    "form_error_gateway_ip": "租約不能有閘道的 IP 位址",
     "out_of_range_error": "必須在\"{{start}}\"-\"{{end}}\"範圍之外",
     "lower_range_start_error": "必須低於起始範圍",
     "greater_range_start_error": "必須大於起始範圍",

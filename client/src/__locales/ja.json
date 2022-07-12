@@ -47,6 +47,7 @@
     "form_error_server_name": "サーバー名が無効です",
     "form_error_subnet": "IPアドレス「{{ip}}」がサブネット「{{cidr}}」に含まれていません",
     "form_error_positive": "0より大きい値でなければなりません",
+    "form_error_gateway_ip": "リースはゲートウェイのIPアドレスになっていることができません",
     "out_of_range_error": "\"{{start}}\"〜\"{{end}}\" の範囲外である必要があります",
     "lower_range_start_error": "範囲開始よりも低い値である必要があります",
     "greater_range_start_error": "範囲開始値より大きい値でなければなりません",
