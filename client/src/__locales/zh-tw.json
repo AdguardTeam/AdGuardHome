@@ -47,6 +47,7 @@
     "form_error_server_name": "無效的伺服器名稱",
     "form_error_subnet": "子網路 \"{{cidr}}\" 不包含該 IP 位址 \"{{ip}}\"",
     "form_error_positive": "必須大於 0",
+    "form_error_gateway_ip": "租約不能有閘道的 IP 位址",
     "out_of_range_error": "必須在\"{{start}}\"-\"{{end}}\"範圍之外",
     "lower_range_start_error": "必須低於起始範圍",
     "greater_range_start_error": "必須大於起始範圍",
@@ -445,7 +446,7 @@
     "access_blocked_title": "未被允許的網域",
     "access_blocked_desc": "不要把這個和過濾器混淆。AdGuard Home 排除與這些網域相符的 DNS 查詢，且這些查詢甚至不會出現在查詢記錄中。您可相應地明確指定確切的域名、萬用字元（wildcard）或網址過濾器的規則，例如，\"example.org\"、\"*.example.org\" 或 \"||example.org^\"。",
     "access_settings_saved": "存取設定被成功地儲存",
-    "updates_checked": "更新被成功地檢查",
+    "updates_checked": "AdGuard Home 的新版本為可用的",
     "updates_version_equal": "AdGuard Home 為最新的",
     "check_updates_now": "立即檢查更新",
     "dns_privacy": "DNS 隱私",
@@ -630,6 +631,6 @@
     "use_saved_key": "使用該先前已儲存的金鑰",
     "parental_control": "家長控制",
     "safe_browsing": "安全瀏覽",
-    "served_from_cache": "{{value}} <i>（由快取提供）</i>",
+    "served_from_cache": "{{value}} <i>(由快取提供)</i>",
     "form_error_password_length": "密碼必須為至少長 {{value}} 個字元"
 }

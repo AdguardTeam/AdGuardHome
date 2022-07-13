@@ -445,7 +445,7 @@
     "access_blocked_title": "Ikke tilladte domæner",
     "access_blocked_desc": "Ikke at forveksle med filtre. AdGuard Home dropper DNS-forespørgsler matchende disse domæner, ej heller vil forespørgslerne optræde i forespørgselsloggen. Der kan angives præcise domænenavne, jokertegn eller URL-filterregler, f.eks. \"eksempel.org\", \"*.eksempel.org\", \"||eksempel.org^\" eller tilsvarende.",
     "access_settings_saved": "Adgangsindstillinger gemt",
-    "updates_checked": "Opdateringstjek foretaget",
+    "updates_checked": "En ny version af AdGuard Home er tilgængelig\n",
     "updates_version_equal": "AdGuard Home er opdateret",
     "check_updates_now": "Søg efter opdateringer nu",
     "dns_privacy": "DNS-fortrolighed",
