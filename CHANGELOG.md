@@ -45,6 +45,8 @@ and this project adheres to
 
 ## [v0.107.8] - 2022-07-13
 
+See also the [v0.107.8 GitHub milestone][ms-v0.107.8].
+
 ### Security
 
 - Go version was updated to prevent the possibility of exploiting the
@@ -72,7 +74,8 @@ and this project adheres to
 [#4698]: https://github.com/AdguardTeam/AdGuardHome/issues/4698
 [#4699]: https://github.com/AdguardTeam/AdGuardHome/issues/4699
 
-[go-1.17.12]: https://groups.google.com/g/golang-announce/c/nqrv9fbR0zE
+[go-1.17.12]:  https://groups.google.com/g/golang-announce/c/nqrv9fbR0zE
+[ms-v0.107.8]: https://github.com/AdguardTeam/AdGuardHome/milestone/44?closed=1
 
 
 
