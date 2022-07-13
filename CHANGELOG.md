@@ -17,13 +17,6 @@ and this project adheres to
 
 ### Security
 
-- Go version was updated to prevent the possibility of exploiting the
-  CVE-2022-1705, CVE-2022-32148, CVE-2022-30631, and other Go vulnerabilities
-  fixed in [Go 1.17.12][go-1.17.12].
-
-  <!--
-      TODO(a.garipov): Use the above format in all similar announcements below.
-  -->
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).
 
@@ -37,6 +30,31 @@ and this project adheres to
 
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
 
+[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+[#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+
+[ddr-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
+
+
+
+<!--
+## [v0.107.9] - 2022-08-23 (APPROX.)
+-->
+
+
+
+## [v0.107.8] - 2022-07-13
+
+### Security
+
+- Go version was updated to prevent the possibility of exploiting the
+  CVE-2022-1705, CVE-2022-32148, CVE-2022-30631, and other Go vulnerabilities
+  fixed in [Go 1.17.12][go-1.17.12].
+
+  <!--
+      TODO(a.garipov): Use the above format in all similar announcements below.
+  -->
+
 ### Fixed
 
 - DHCP lease validation incorrectly letting users assign the IP address of the
@@ -48,22 +66,13 @@ and this project adheres to
   under `dhcp.local_domain_name` ([#4699]).
 - Broken service installation on OpenWrt ([#4677]).
 
-[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
-[#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#4219]: https://github.com/AdguardTeam/AdGuardHome/issues/4219
 [#4677]: https://github.com/AdguardTeam/AdGuardHome/issues/4677
 [#4683]: https://github.com/AdguardTeam/AdGuardHome/issues/4683
 [#4698]: https://github.com/AdguardTeam/AdGuardHome/issues/4698
 [#4699]: https://github.com/AdguardTeam/AdGuardHome/issues/4699
 
-[ddr-draft]:  https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
 [go-1.17.12]: https://groups.google.com/g/golang-announce/c/nqrv9fbR0zE
-
-
-
-<!--
-## [v0.107.8] - 2022-07-12 (APPROX.)
--->
 
 
 
@@ -1034,11 +1043,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.8...HEAD
-[v0.107.8]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.7...v0.107.8
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.9...HEAD
+[v0.107.9]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.8...v0.107.9
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.7...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.8...HEAD
+[v0.107.8]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.7...v0.107.8
 [v0.107.7]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.6...v0.107.7
 [v0.107.6]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.5...v0.107.6
 [v0.107.5]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...v0.107.5
