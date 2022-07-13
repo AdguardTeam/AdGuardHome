@@ -17,6 +17,13 @@ and this project adheres to
 
 ### Security
 
+- Go version was updated to prevent the possibility of exploiting the
+  CVE-2022-1705, CVE-2022-32148, CVE-2022-30631, and other Go vulnerabilities
+  fixed in [Go 1.17.12][go-1.17.12].
+
+  <!--
+      TODO(a.garipov): Use the above format in all similar announcements below.
+  -->
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).
 
@@ -49,7 +56,8 @@ and this project adheres to
 [#4698]: https://github.com/AdguardTeam/AdGuardHome/issues/4698
 [#4699]: https://github.com/AdguardTeam/AdGuardHome/issues/4699
 
-[ddr-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
+[ddr-draft]:  https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
+[go-1.17.12]: https://groups.google.com/g/golang-announce/c/nqrv9fbR0zE
 
 
 
@@ -67,7 +75,7 @@ See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
 
 - Go version was updated to prevent the possibility of exploiting the
   [CVE-2022-29526], [CVE-2022-30634], [CVE-2022-30629], [CVE-2022-30580], and
-  [CVE-2022-29804] vulnerabilities.
+  [CVE-2022-29804] Go vulnerabilities.
 - Enforced password strength policy ([#3503]).
 
 ### Added
@@ -222,7 +230,7 @@ See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
 
 - `User-Agent` HTTP header removed from outgoing DNS-over-HTTPS requests.
 - Go version was updated to prevent the possibility of exploiting the
-  [CVE-2022-24675], [CVE-2022-27536], and [CVE-2022-28327] vulnerabilities.
+  [CVE-2022-24675], [CVE-2022-27536], and [CVE-2022-28327] Go vulnerabilities.
 
 ### Added
 
@@ -277,7 +285,7 @@ were resolved.
 ### Security
 
 - Go version was updated to prevent the possibility of exploiting the
-  [CVE-2022-24921] vulnerability.
+  [CVE-2022-24921] Go vulnerability.
 
 [CVE-2022-24921]: https://www.cvedetails.com/cve/CVE-2022-24921
 
@@ -290,7 +298,7 @@ See also the [v0.107.4 GitHub milestone][ms-v0.107.4].
 ### Security
 
 - Go version was updated to prevent the possibility of exploiting the
-  [CVE-2022-23806], [CVE-2022-23772], and [CVE-2022-23773] vulnerabilities.
+  [CVE-2022-23806], [CVE-2022-23772], and [CVE-2022-23773] Go vulnerabilities.
 
 ### Fixed
 
