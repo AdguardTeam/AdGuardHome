@@ -202,18 +202,16 @@ func CheckPort(network string, ip netip.Addr, port int) (err error) {
 	addr := netip.AddrPortFrom(ip, uint16(port))
 
 	switch network {
-	case
-		"tcp",
-		"tcp6",
-		"udp",
-		"udp6":
-		c, err = net.Listen(network, addr.Addr().String())
-		if err != nil {
-			return err
-		}
-
+	case "tcp", "tcp6":
+		c, err = net.Listen(network, addr.String())
+	case "udp", "udp6":
+		c, err = net.ListenPacket(network, addr.String())
 	default:
 		return nil
+	}
+
+	if err != nil {
+		return err
 	}
 
 	return closePortChecker(c)
