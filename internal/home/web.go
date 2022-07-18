@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"io/fs"
-	"net"
 	"net/http"
+	"net/netip"
 	"sync"
 	"time"
 
@@ -38,7 +38,7 @@ type webConfig struct {
 	clientFS     fs.FS
 	clientBetaFS fs.FS
 
-	BindHost     net.IP
+	BindHost     netip.Addr
 	BindPort     int
 	BetaBindPort int
 	PortHTTPS    int
@@ -171,7 +171,7 @@ func (web *Web) Start() {
 		// we need to have new instance, because after Shutdown() the Server is not usable
 		web.httpServer = &http.Server{
 			ErrorLog:          log.StdLog("web: plain", log.DEBUG),
-			Addr:              netutil.JoinHostPort(hostStr, web.conf.BindPort),
+			Addr:              netutil.JoinHostPort(hostStr, int(web.conf.BindPort)),
 			Handler:           withMiddlewares(Context.mux, limitRequestBody),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
@@ -204,7 +204,7 @@ func (web *Web) startBetaServer(hostStr string) {
 
 	web.httpServerBeta = &http.Server{
 		ErrorLog:          log.StdLog("web: plain: beta", log.DEBUG),
-		Addr:              netutil.JoinHostPort(hostStr, web.conf.BetaBindPort),
+		Addr:              netutil.JoinHostPort(hostStr, int(web.conf.BetaBindPort)),
 		Handler:           withMiddlewares(Context.mux, limitRequestBody, web.wrapIndexBeta),
 		ReadTimeout:       web.conf.ReadTimeout,
 		ReadHeaderTimeout: web.conf.ReadHeaderTimeout,

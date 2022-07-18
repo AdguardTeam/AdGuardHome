@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/netip"
 	"syscall"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
@@ -78,9 +79,9 @@ func CanBindPrivilegedPorts() (can bool, err error) {
 // NetInterface represents an entry of network interfaces map.
 type NetInterface struct {
 	// Addresses are the network interface addresses.
-	Addresses []net.IP `json:"ip_addresses,omitempty"`
+	Addresses []netip.Addr `json:"ip_addresses,omitempty"`
 	// Subnets are the IP networks for this network interface.
-	Subnets      []*net.IPNet     `json:"-"`
+	Subnets      []*netip.Prefix  `json:"-"`
 	Name         string           `json:"name"`
 	HardwareAddr net.HardwareAddr `json:"hardware_address"`
 	Flags        net.Flags        `json:"flags"`
@@ -130,19 +131,19 @@ func GetValidNetInterfacesForWeb() (netIfaces []*NetInterface, err error) {
 
 		// Collect network interface addresses.
 		for _, addr := range addrs {
-			ipNet, ok := addr.(*net.IPNet)
-			if !ok {
-				// Should be net.IPNet, this is weird.
-				return nil, fmt.Errorf("got %s that is not net.IPNet, it is %T", addr, addr)
+			ip, err := netip.ParsePrefix(addr.String())
+			if err != nil {
+				// This should always work
+				return nil, err
 			}
 
 			// Ignore link-local.
-			if ipNet.IP.IsLinkLocalUnicast() {
+			if ip.Addr().IsLinkLocalUnicast() {
 				continue
 			}
 
-			netIface.Addresses = append(netIface.Addresses, ipNet.IP)
-			netIface.Subnets = append(netIface.Subnets, ipNet)
+			netIface.Addresses = append(netIface.Addresses, ip.Addr())
+			netIface.Subnets = append(netIface.Subnets, &ip)
 		}
 
 		// Discard interfaces with no addresses.
@@ -157,7 +158,7 @@ func GetValidNetInterfacesForWeb() (netIfaces []*NetInterface, err error) {
 // GetInterfaceByIP returns the name of interface containing provided ip.
 //
 // TODO(e.burkov):  See TODO on GetValidInterfacesForWeb.
-func GetInterfaceByIP(ip net.IP) string {
+func GetInterfaceByIP(ip netip.Addr) string {
 	ifaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
 		return ""
@@ -165,7 +166,7 @@ func GetInterfaceByIP(ip net.IP) string {
 
 	for _, iface := range ifaces {
 		for _, addr := range iface.Addresses {
-			if ip.Equal(addr) {
+			if ip == addr {
 				return iface.Name
 			}
 		}
@@ -178,7 +179,7 @@ func GetInterfaceByIP(ip net.IP) string {
 // the search fails.
 //
 // TODO(e.burkov):  See TODO on GetValidInterfacesForWeb.
-func GetSubnet(ifaceName string) *net.IPNet {
+func GetSubnet(ifaceName string) *netip.Prefix {
 	netIfaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
 		log.Error("Could not get network interfaces info: %v", err)
@@ -195,21 +196,24 @@ func GetSubnet(ifaceName string) *net.IPNet {
 }
 
 // CheckPort checks if the port is available for binding.  network is expected
-// to be one of "udp" and "tcp".
-func CheckPort(network string, ip net.IP, port int) (err error) {
+// to be one of "udp", "udp6", "tcp" or "tcp6".
+func CheckPort(network string, ip netip.Addr, port int) (err error) {
 	var c io.Closer
-	addr := netutil.IPPort{IP: ip, Port: port}.String()
+	addr := netip.AddrPortFrom(ip, uint16(port))
+
 	switch network {
-	case "tcp":
-		c, err = net.Listen(network, addr)
-	case "udp":
-		c, err = net.ListenPacket(network, addr)
+	case
+		"tcp",
+		"tcp6",
+		"udp",
+		"udp6":
+		c, err = net.Listen(network, addr.Addr().String())
+		if err != nil {
+			return err
+		}
+
 	default:
 		return nil
-	}
-
-	if err != nil {
-		return err
 	}
 
 	return closePortChecker(c)

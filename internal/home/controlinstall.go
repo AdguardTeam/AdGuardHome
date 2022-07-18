@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -75,9 +75,9 @@ func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request
 }
 
 type checkConfReqEnt struct {
-	IP      net.IP `json:"ip"`
-	Port    int    `json:"port"`
-	Autofix bool   `json:"autofix"`
+	IP      netip.Addr `json:"ip"`
+	Port    int        `json:"port"`
+	Autofix bool       `json:"autofix"`
 }
 
 type checkConfReq struct {
@@ -108,7 +108,7 @@ type checkConfResp struct {
 func (req *checkConfReq) validateWeb(uc aghalg.UniqChecker) (err error) {
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
-	port := req.Web.Port
+	port := int(req.Web.Port)
 	addPorts(uc, tcpPort(config.BetaBindPort), tcpPort(port))
 	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
 		// Avoid duplicating the error into the status of DNS.
@@ -134,7 +134,7 @@ func (req *checkConfReq) validateWeb(uc aghalg.UniqChecker) (err error) {
 func (req *checkConfReq) validateDNS(uc aghalg.UniqChecker) (canAutofix bool, err error) {
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
-	port := req.DNS.Port
+	port := int(req.DNS.Port)
 	addPorts(uc, udpPort(port))
 	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
 		return false, err
@@ -209,7 +209,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 // handleStaticIP - handles static IP request
 // It either checks if we have a static IP
 // Or if set=true, it tries to set it
-func handleStaticIP(ip net.IP, set bool) staticIPJSON {
+func handleStaticIP(ip netip.Addr, set bool) staticIPJSON {
 	resp := staticIPJSON{}
 
 	interfaceName := aghnet.GetInterfaceByIP(ip)
@@ -317,8 +317,8 @@ func disableDNSStubListener() error {
 }
 
 type applyConfigReqEnt struct {
-	IP   net.IP `json:"ip"`
-	Port int    `json:"port"`
+	IP   netip.Addr `json:"ip"`
+	Port int        `json:"port"`
 }
 
 type applyConfigReq struct {
@@ -404,7 +404,7 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	Context.firstRun = false
 	config.BindHost = req.Web.IP
 	config.BindPort = req.Web.Port
-	config.DNS.BindHosts = []net.IP{req.DNS.IP}
+	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
 
 	// TODO(e.burkov): StartMods() should be put in a separate goroutine at the
@@ -477,7 +477,7 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 		return nil, false, errors.Error("ports cannot be 0")
 	}
 
-	restartHTTP = !config.BindHost.Equal(req.Web.IP) || config.BindPort != req.Web.Port
+	restartHTTP = config.BindHost != req.Web.IP || config.BindPort != req.Web.Port
 	if restartHTTP {
 		err = aghnet.CheckPort("tcp", req.Web.IP, req.Web.Port)
 		if err != nil {
@@ -505,9 +505,9 @@ func (web *Web) registerInstallHandlers() {
 // TODO(e.burkov): This should removed with the API v1 when the appropriate
 // functionality will appear in default checkConfigReqEnt.
 type checkConfigReqEntBeta struct {
-	IP      []net.IP `json:"ip"`
-	Port    int      `json:"port"`
-	Autofix bool     `json:"autofix"`
+	IP      []netip.Addr `json:"ip"`
+	Port    int          `json:"port"`
+	Autofix bool         `json:"autofix"`
 }
 
 // checkConfigReqBeta is a struct representing new client's config check request
@@ -582,8 +582,8 @@ func (web *Web) handleInstallCheckConfigBeta(w http.ResponseWriter, r *http.Requ
 // TODO(e.burkov): This should removed with the API v1 when the appropriate
 // functionality will appear in default applyConfigReqEnt.
 type applyConfigReqEntBeta struct {
-	IP   []net.IP `json:"ip"`
-	Port int      `json:"port"`
+	IP   []netip.Addr `json:"ip"`
+	Port int          `json:"port"`
 }
 
 // applyConfigReqBeta is a struct representing new client's config setting
