@@ -173,9 +173,11 @@ type tlsConfigSettings struct {
 var config = &configuration{
 	BindPort:     3000,
 	BetaBindPort: 0,
+	BindHost:     netip.IPv4Unspecified(),
 	AuthAttempts: 5,
 	AuthBlockMin: 15,
 	DNS: dnsConfig{
+		BindHosts:     []netip.Addr{netip.IPv4Unspecified()},
 		Port:          defaultPortDNS,
 		StatsInterval: 1,
 		FilteringConfig: dnsforward.FilteringConfig{
@@ -298,14 +300,6 @@ func parseConfig() (err error) {
 	err = yaml.Unmarshal(fileData, &config)
 	if err != nil {
 		return err
-	}
-
-	if !config.BindHost.IsValid() {
-		config.BindHost = netip.IPv4Unspecified()
-	}
-
-	if len(config.DNS.BindHosts) == 0 {
-		config.DNS.BindHosts = []netip.Addr{netip.IPv4Unspecified()}
 	}
 
 	uc := aghalg.UniqChecker{}
