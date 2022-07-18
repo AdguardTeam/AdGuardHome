@@ -773,14 +773,14 @@ func printHTTPAddresses(proto string) {
 
 	// TODO(e.burkov): Inspect and perhaps merge with the previous condition.
 	if proto == schemeHTTPS && tlsConf.ServerName != "" {
-		printWebAddrs(proto, tlsConf.ServerName, int(tlsConf.PortHTTPS), 0)
+		printWebAddrs(proto, tlsConf.ServerName, tlsConf.PortHTTPS, 0)
 
 		return
 	}
 
 	bindhost := config.BindHost
 	if !bindhost.IsUnspecified() {
-		printWebAddrs(proto, bindhost.String(), int(port), int(config.BetaBindPort))
+		printWebAddrs(proto, bindhost.String(), port, config.BetaBindPort)
 
 		return
 	}
@@ -791,14 +791,14 @@ func printHTTPAddresses(proto string) {
 		// That's weird, but we'll ignore it.
 		//
 		// TODO(e.burkov): Find out when it happens.
-		printWebAddrs(proto, bindhost.String(), int(port), int(config.BetaBindPort))
+		printWebAddrs(proto, bindhost.String(), port, config.BetaBindPort)
 
 		return
 	}
 
 	for _, iface := range ifaces {
 		for _, addr := range iface.Addresses {
-			printWebAddrs(proto, addr.String(), int(config.BindPort), int(config.BetaBindPort))
+			printWebAddrs(proto, addr.String(), config.BindPort, config.BetaBindPort)
 		}
 	}
 }

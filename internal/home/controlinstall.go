@@ -108,7 +108,7 @@ type checkConfResp struct {
 func (req *checkConfReq) validateWeb(uc aghalg.UniqChecker) (err error) {
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
-	port := int(req.Web.Port)
+	port := req.Web.Port
 	addPorts(uc, tcpPort(config.BetaBindPort), tcpPort(port))
 	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
 		// Avoid duplicating the error into the status of DNS.
@@ -134,7 +134,7 @@ func (req *checkConfReq) validateWeb(uc aghalg.UniqChecker) (err error) {
 func (req *checkConfReq) validateDNS(uc aghalg.UniqChecker) (canAutofix bool, err error) {
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
-	port := int(req.DNS.Port)
+	port := req.DNS.Port
 	addPorts(uc, udpPort(port))
 	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
 		return false, err
