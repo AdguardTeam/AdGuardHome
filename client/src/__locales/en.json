@@ -363,7 +363,7 @@
     "encryption_config_saved": "Encryption configuration saved",
     "encryption_server": "Server name",
     "encryption_server_enter": "Enter your domain name",
-    "encryption_server_desc": "In order to use HTTPS, you need to enter the server name that matches your SSL certificate or wildcard certificate. If the field is not set, it will accept TLS connections for any domain.",
+    "encryption_server_desc": "If set, AdGuard Home detects ClientIDs, responds to DDR queries, and performs additional connection validations. If not set, these features are disabled. Must match one of the DNS Names in the certificate.",
     "encryption_redirect": "Redirect to HTTPS automatically",
     "encryption_redirect_desc": "If checked, AdGuard Home will automatically redirect you from HTTP to HTTPS addresses.",
     "encryption_https": "HTTPS port",
