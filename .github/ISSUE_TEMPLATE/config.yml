@@ -1,0 +1,17 @@
+'blank_issues_enabled': false
+'contact_links':
+  - 'about': >
+        Please report filtering issues, for example advertising filters
+        misfiring or safe browsing false positives, using the form on our
+        website
+    'name': 'AdGuard filters issues'
+    'url': 'https://reports.adguard.com/en/new_issue.html'
+  - 'about': >
+        Please use GitHub Discussions for questions
+    'name': 'Q&A Discussions'
+    'url': 'https://github.com/AdguardTeam/AdGuardHome/discussions'
+  - 'about': >
+        Please check our Wiki for configuration file description, frequently
+        asked questions, and other documentation
+    'name': 'Wiki'
+    'url': 'https://github.com/AdguardTeam/AdGuardHome/wiki'
