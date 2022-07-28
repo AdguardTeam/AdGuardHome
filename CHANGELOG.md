@@ -26,6 +26,11 @@ and this project adheres to
   draft][ddr-draft] ([#4463]).
 - `windows/arm64` support ([#3057]).
 
+### Changed
+
+- UI and update links have been changed to make them more resistant to DNS
+  blocking.
+
 ### Deprecated
 
 - Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
