@@ -8,7 +8,10 @@
         'label': 'Prerequisites'
         'options':
           - 'label': >
-                I have checked the Wiki and Discussions and found no answer
+                I have checked the
+                [Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki) and
+                [Discussions](https://github.com/AdguardTeam/AdGuardHome/discussions)
+                and found no answer
             'required': true
           - 'label': >
                 I have searched other issues and found no duplicates
@@ -23,13 +26,13 @@
         'description': 'Please describe the request'
         'label': 'Description'
         'value': |
-            ### What problem are you trying to solve?
+            #### What problem are you trying to solve?
 
-            ### Proposed solution
+            #### Proposed solution
 
-            ### Alternatives considered
+            #### Alternatives considered
 
-            ### Additional information
+            #### Additional information
     'id': 'description'
     'type': 'textarea'
     'validations':
