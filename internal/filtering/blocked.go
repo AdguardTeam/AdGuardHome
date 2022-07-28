@@ -43,13 +43,14 @@ var serviceRulesArray = []svc{{
 }, {
 	name: "youtube",
 	rules: []string{
-		"||youtube.com^",
-		"||ytimg.com^",
-		"||youtu.be^",
 		"||googlevideo.com^",
-		"||youtubei.googleapis.com^",
-		"||youtube-nocookie.com^",
+		"||wide-youtube.l.google.com^",
+		"||youtu.be^",
 		"||youtube",
+		"||youtube-nocookie.com^",
+		"||youtube.com^",
+		"||youtubei.googleapis.com^",
+		"||ytimg.com^",
 	},
 }, {
 	name:  "twitch",
