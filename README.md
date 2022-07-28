@@ -1,6 +1,6 @@
 &nbsp;
 <p align="center">
-  <img src="https://cdn.adguard.com/public/Adguard/Common/adguard_home.svg" width="300px" alt="AdGuard Home" />
+  <img src="https://cdn.adtidy.org/public/Adguard/Common/adguard_home.svg" width="300px" alt="AdGuard Home" />
 </p>
 <h3 align="center">Privacy protection center for you and your devices</h3>
 <p align="center">
@@ -38,7 +38,7 @@
 <br />
 
 <p align="center">
-    <img src="https://cdn.adguard.com/public/Adguard/Common/adguard_home.gif" width="800" />
+    <img src="https://cdn.adtidy.org/public/Adguard/Common/adguard_home.gif" width="800" />
 </p>
 
 <hr />
@@ -281,28 +281,28 @@ curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/s
 ```
 
  *  Beta channel builds
-     *  Linux: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_386.tar.gz)
-     *  Linux ARM: [32-bit ARMv6](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv6.tar.gz) (recommended for Raspberry Pi OS stable), [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv5.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv7.tar.gz)
-     *  Linux MIPS: [32-bit MIPS](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips_softfloat.tar.gz), [32-bit MIPSLE](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mipsle_softfloat.tar.gz), [64-bit MIPS](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips64_softfloat.tar.gz), [64-bit MIPSLE](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips64le_softfloat.tar.gz)
-     *  Windows: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_windows_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_windows_386.zip)
-     *  macOS: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_darwin_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_darwin_386.zip)
-     *  macOS ARM: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_darwin_arm64.zip)
-     *  FreeBSD: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_386.tar.gz)
-     *  FreeBSD ARM: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv5.tar.gz), [32-bit ARMv6](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv6.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv7.tar.gz)
+     *  Linux: [64-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_amd64.tar.gz), [32-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_386.tar.gz)
+     *  Linux ARM: [32-bit ARMv6](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_armv6.tar.gz) (recommended for Raspberry Pi OS stable), [64-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_arm64.tar.gz), [32-bit ARMv5](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_armv5.tar.gz), [32-bit ARMv7](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_armv7.tar.gz)
+     *  Linux MIPS: [32-bit MIPS](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_mips_softfloat.tar.gz), [32-bit MIPSLE](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_mipsle_softfloat.tar.gz), [64-bit MIPS](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_mips64_softfloat.tar.gz), [64-bit MIPSLE](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_mips64le_softfloat.tar.gz)
+     *  Windows: [64-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_windows_amd64.zip), [32-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_windows_386.zip)
+     *  macOS: [64-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_darwin_amd64.zip), [32-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_darwin_386.zip)
+     *  macOS ARM: [64-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_darwin_arm64.zip)
+     *  FreeBSD: [64-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_amd64.tar.gz), [32-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_386.tar.gz)
+     *  FreeBSD ARM: [64-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_arm64.tar.gz), [32-bit ARMv5](https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_armv5.tar.gz), [32-bit ARMv6](https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_armv6.tar.gz), [32-bit ARMv7](https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_armv7.tar.gz)
      *  OpenBSD: (coming soon)
      *  OpenBSD ARM: (coming soon)
 
  *  Edge channel builds
-     *  Linux: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_386.tar.gz)
-     *  Linux ARM: [32-bit ARMv6](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_armv6.tar.gz) (recommended for Raspberry Pi OS stable), [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_armv5.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_armv7.tar.gz)
-     *  Linux MIPS: [32-bit MIPS](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mips_softfloat.tar.gz), [32-bit MIPSLE](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mipsle_softfloat.tar.gz), [64-bit MIPS](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mips64_softfloat.tar.gz), [64-bit MIPSLE](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mips64le_softfloat.tar.gz)
-     *  Windows: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_windows_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_windows_386.zip)
-     *  macOS: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_darwin_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_darwin_386.zip)
-     *  macOS ARM: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_darwin_arm64.zip)
-     *  FreeBSD: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_386.tar.gz)
-     *  FreeBSD ARM: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv5.tar.gz), [32-bit ARMv6](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv6.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv7.tar.gz)
-     *  OpenBSD: [64-bit (experimental)](https://static.adguard.com/adguardhome/edge/AdGuardHome_openbsd_amd64.tar.gz)
-     *  OpenBSD ARM: [64-bit (experimental)](https://static.adguard.com/adguardhome/edge/AdGuardHome_openbsd_arm64.tar.gz)
+     *  Linux: [64-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_amd64.tar.gz), [32-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_386.tar.gz)
+     *  Linux ARM: [32-bit ARMv6](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_armv6.tar.gz) (recommended for Raspberry Pi OS stable), [64-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_arm64.tar.gz), [32-bit ARMv5](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_armv5.tar.gz), [32-bit ARMv7](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_armv7.tar.gz)
+     *  Linux MIPS: [32-bit MIPS](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_mips_softfloat.tar.gz), [32-bit MIPSLE](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_mipsle_softfloat.tar.gz), [64-bit MIPS](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_mips64_softfloat.tar.gz), [64-bit MIPSLE](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_mips64le_softfloat.tar.gz)
+     *  Windows: [64-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_windows_amd64.zip), [32-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_windows_386.zip)
+     *  macOS: [64-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_darwin_amd64.zip), [32-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_darwin_386.zip)
+     *  macOS ARM: [64-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_darwin_arm64.zip)
+     *  FreeBSD: [64-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_freebsd_amd64.tar.gz), [32-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_freebsd_386.tar.gz)
+     *  FreeBSD ARM: [64-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_freebsd_arm64.tar.gz), [32-bit ARMv5](https://static.adtidy.org/adguardhome/edge/AdGuardHome_freebsd_armv5.tar.gz), [32-bit ARMv6](https://static.adtidy.org/adguardhome/edge/AdGuardHome_freebsd_armv6.tar.gz), [32-bit ARMv7](https://static.adtidy.org/adguardhome/edge/AdGuardHome_freebsd_armv7.tar.gz)
+     *  OpenBSD: [64-bit (experimental)](https://static.adtidy.org/adguardhome/edge/AdGuardHome_openbsd_amd64.tar.gz)
+     *  OpenBSD ARM: [64-bit (experimental)](https://static.adtidy.org/adguardhome/edge/AdGuardHome_openbsd_arm64.tar.gz)
 
 
 <a id="reporting-issues"></a>

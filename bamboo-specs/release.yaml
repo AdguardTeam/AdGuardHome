@@ -22,11 +22,11 @@
     'jobs':
     - 'Make and publish docker'
 
-- 'Publish to static.adguard.com':
+- 'Publish to static storage':
     'manual': false
     'final': false
     'jobs':
-    - 'Publish to static.adguard.com'
+    - 'Publish to static storage'
 
 - 'Publish to Snapstore':
     'manual': false
@@ -132,7 +132,7 @@
   'requirements':
   - 'adg-docker': 'true'
 
-'Publish to static.adguard.com':
+'Publish to static storage':
   'key': 'PUB'
   'other':
     'clean-working-dir': true

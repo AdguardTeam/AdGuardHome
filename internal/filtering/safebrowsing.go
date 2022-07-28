@@ -24,10 +24,11 @@ import (
 
 // Safe browsing and parental control methods.
 
+// TODO(a.garipov): Make configurable.
 const (
 	dnsTimeout                = 3 * time.Second
-	defaultSafebrowsingServer = `https://dns-family.adguard.com/dns-query`
-	defaultParentalServer     = `https://dns-family.adguard.com/dns-query`
+	defaultSafebrowsingServer = `https://family.adguard-dns.com/dns-query`
+	defaultParentalServer     = `https://family.adguard-dns.com/dns-query`
 	sbTXTSuffix               = `sb.dns.adguard.com.`
 	pcTXTSuffix               = `pc.dns.adguard.com.`
 )
