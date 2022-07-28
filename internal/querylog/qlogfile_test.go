@@ -303,7 +303,7 @@ func NewTestQLogFileData(t *testing.T, data string) (file *QLogFile) {
 func TestQLog_Seek(t *testing.T) {
 	const nl = "\n"
 	const strV = "%s"
-	const recs = `{"T":"` + strV + `","QH":"wfqvjymurpwegyv","QT":"A","QC":"IN","CP":"","Answer":"","Result":{},"Elapsed":66286385,"Upstream":"tls://dns-unfiltered.adguard.com:853"}` + nl +
+	const recs = `{"T":"` + strV + `","QH":"wfqvjymurpwegyv","QT":"A","QC":"IN","CP":"","Answer":"","Result":{},"Elapsed":66286385,"Upstream":"tls://unfiltered.adguard-dns.com:853"}` + nl +
 		`{"T":"` + strV + `"}` + nl +
 		`{"T":"` + strV + `"}` + nl
 	timestamp, _ := time.Parse(time.RFC3339Nano, "2020-08-31T18:44:25.376690873+03:00")

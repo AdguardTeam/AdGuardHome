@@ -33,11 +33,6 @@ const DefaultTimeout = 10 * time.Second
 // requests between the BeforeRequestHandler stage and the actual processing.
 const defaultClientIDCacheCount = 1024
 
-const (
-	safeBrowsingBlockHost = "standard-block.dns.adguard.com"
-	parentalBlockHost     = "family-block.dns.adguard.com"
-)
-
 var defaultDNS = []string{
 	"https://dns10.quad9.net/dns-query",
 }

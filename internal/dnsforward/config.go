@@ -276,6 +276,11 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 	return proxyConfig, nil
 }
 
+const (
+	defaultSafeBrowsingBlockHost = "standard-block.dns.adguard.com"
+	defaultParentalBlockHost     = "family-block.dns.adguard.com"
+)
+
 // initDefaultSettings initializes default settings if nothing
 // is configured
 func (s *Server) initDefaultSettings() {
@@ -287,12 +292,12 @@ func (s *Server) initDefaultSettings() {
 		s.conf.BootstrapDNS = defaultBootstrap
 	}
 
-	if len(s.conf.ParentalBlockHost) == 0 {
-		s.conf.ParentalBlockHost = parentalBlockHost
+	if s.conf.ParentalBlockHost == "" {
+		s.conf.ParentalBlockHost = defaultParentalBlockHost
 	}
 
-	if len(s.conf.SafeBrowsingBlockHost) == 0 {
-		s.conf.SafeBrowsingBlockHost = safeBrowsingBlockHost
+	if s.conf.SafeBrowsingBlockHost == "" {
+		s.conf.SafeBrowsingBlockHost = defaultSafeBrowsingBlockHost
 	}
 
 	if s.conf.UDPListenAddrs == nil {
