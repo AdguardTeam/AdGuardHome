@@ -4888,12 +4888,12 @@
 
          *  `94.140.14.140`: plain DNS-over-UDP.
 
-         *  `tls://dns-unfiltered.adguard.com`: encrypted DNS-over-TLS.
+         *  `tls://unfiltered.adguard-dns.com`: encrypted DNS-over-TLS.
 
-         *  `https://dns-unfiltered.adguard.com/dns-query`: encrypted
+         *  `https://unfiltered.adguard-dns.com/dns-query`: encrypted
              DNS-over-HTTPS.
 
-         *  `quic://dns-unfiltered.adguard.com:784`: encrypted DNS-over-QUIC
+         *  `quic://unfiltered.adguard-dns.com:784`: encrypted DNS-over-QUIC
              (experimental).
 
          *  `tcp://94.140.14.140`: plain DNS-over-TCP.

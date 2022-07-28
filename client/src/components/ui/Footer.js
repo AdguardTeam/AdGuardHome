@@ -44,7 +44,7 @@ const Footer = () => {
     const renderCopyright = () => <div className="footer__column">
         <div className="footer__copyright">
             {t('copyright')} &copy; {getYear()}{' '}
-            <a target="_blank" rel="noopener noreferrer" href="https://adguard.com/">AdGuard</a>
+            <a target="_blank" rel="noopener noreferrer" href="https://link.adtidy.org/forward.html?action=home&from=ui&app=home">AdGuard</a>
         </div>
     </div>;
 
