@@ -22,6 +22,8 @@ and this project adheres to
 
 ### Added
 
+- Domain-specific upstream servers test.  Such test fails with an appropriate
+  warning message ([#4517]).
 - Support for Discovery of Designated Resolvers (DDR) according to the [RFC
   draft][ddr-draft] ([#4463]).
 - `windows/arm64` support ([#3057]).
@@ -37,6 +39,7 @@ and this project adheres to
 
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+[#4517]: https://github.com/AdguardTeam/AdGuardHome/issues/4517
 
 [ddr-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
 
