@@ -216,6 +216,8 @@ var serviceRulesArray = []svc{{
 		"||bytedance.map.fastly.net^",
 		"||douyin.com^",
 		"||tiktokv.com^",
+		"||toutiaovod.com^",
+		"||douyincdn.com^",
 	},
 }, {
 	name:  "vimeo",
@@ -235,16 +237,24 @@ var serviceRulesArray = []svc{{
 		// Block qq.com and subdomains excluding WeChat's domains.
 		"||qq.com^$denyallow=wx.qq.com|weixin.qq.com",
 		"||qqzaixian.com^",
+		"||qq-video.cdn-go.cn^",
+		"||url.cn^",
 	},
 }, {
-	name:  "wechat",
-	rules: []string{"||wechat.com^", "||weixin.qq.com^", "||wx.qq.com^"},
+	name: "wechat",
+	rules: []string{
+		"||wechat.com^",
+		"||wx.qq.com^",
+		"||weixin.qq.com^",
+		"||weixin.qq.com.cn^",
+		"||weixinbridge.com^",
+	},
 }, {
 	name:  "viber",
 	rules: []string{"||viber.com^"},
 }, {
 	name:  "weibo",
-	rules: []string{"||weibo.com^"},
+	rules: []string{"||weibo.com^", "||weibo.cn^"},
 }, {
 	name:  "9gag",
 	rules: []string{"||9cache.com^", "||9gag.com^"},
@@ -283,6 +293,16 @@ var serviceRulesArray = []svc{{
 		"||gotinder.com^",
 		"||tinder.com^",
 		"||tindersparks.com^",
+	},
+}, {
+	name: "bilibili",
+	rules: []string{
+		"||bilibili.com^",
+		"||bilivideo.com^",
+		"||biligame.com^",
+		"||biliapi.net^",
+		"||dreamcast.hk^",
+		"||hdslb.com^",
 	},
 }}
 

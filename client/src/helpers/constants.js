@@ -212,6 +212,10 @@ export const SERVICES = [
         name: 'Amazon',
     },
     {
+        id: 'bilibili',
+        name: 'Bilibili',
+    },
+    {
         id: 'cloudflare',
         name: 'CloudFlare',
     },
