@@ -153,7 +153,7 @@ underscores() {
 	fi
 }
 
-# TODO(a.garipov): Add an analyser to look for `fallthrough`, `goto`, and `new`?
+# TODO(a.garipov): Add an analyzer to look for `fallthrough`, `goto`, and `new`?
 
 
 
@@ -211,7 +211,10 @@ exit_on_output underscores
 
 exit_on_output gofumpt --extra -e -l .
 
-golint --set_exit_status ./...
+# TODO(a.garipov): golint is deprecated, and seems to cause more and more
+# issues with each release.  Find a suitable replacement.
+#
+#	golint --set_exit_status ./...
 
 "$GO" vet ./...
 

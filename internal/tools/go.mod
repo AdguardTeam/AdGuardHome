@@ -9,7 +9,6 @@ require (
 	github.com/kisielk/errcheck v1.6.0
 	github.com/kyoh86/looppointer v0.1.7
 	github.com/securego/gosec/v2 v2.11.0
-	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/tools v0.1.11-0.20220316014157-77aa08bb151a
 	honnef.co/go/tools v0.3.1
 	mvdan.cc/gofumpt v0.3.1
