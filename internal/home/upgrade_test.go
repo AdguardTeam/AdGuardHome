@@ -500,7 +500,7 @@ func TestUpgradeSchema11to12(t *testing.T) {
 		dnsVal, ok = dns.(yobj)
 		require.True(t, ok)
 
-		var ivl interface{}
+		var ivl any
 		ivl, ok = dnsVal["querylog_interval"]
 		require.True(t, ok)
 

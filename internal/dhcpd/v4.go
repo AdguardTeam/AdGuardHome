@@ -20,7 +20,7 @@ import (
 	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
-	"github.com/mdlayher/raw"
+	"github.com/mdlayher/packet"
 )
 
 // v4Server is a DHCPv4 server.
@@ -992,7 +992,7 @@ func (s *v4Server) send(peer net.Addr, conn net.PacketConn, req, resp *dhcpv4.DH
 		// Unicast DHCPOFFER and DHCPACK messages to the client's
 		// hardware address and yiaddr.
 		peer = &dhcpUnicastAddr{
-			Addr:   raw.Addr{HardwareAddr: req.ClientHWAddr},
+			Addr:   packet.Addr{HardwareAddr: req.ClientHWAddr},
 			yiaddr: resp.YourIPAddr,
 		}
 	default:

@@ -53,7 +53,7 @@ func (t *jsonTime) UnmarshalJSON(b []byte) (err error) {
 
 // writeJSONResponse encodes v into w and logs any errors it encounters.  r is
 // used to get additional information from the request.
-func writeJSONResponse(w io.Writer, r *http.Request, v interface{}) {
+func writeJSONResponse(w io.Writer, r *http.Request, v any) {
 	err := json.NewEncoder(w).Encode(v)
 	if err != nil {
 		log.Error("websvc: writing resp to %s %s: %s", r.Method, r.URL.Path, err)

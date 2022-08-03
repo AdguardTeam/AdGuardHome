@@ -298,24 +298,27 @@ func setupConfig(args options) (err error) {
 	Context.clients.Init(config.Clients.Persistent, Context.dhcpServer, Context.etcHosts, arpdb)
 
 	if args.bindPort != 0 {
-		uc := aghalg.UniqChecker{}
-		addPorts(
-			uc,
-			tcpPort(args.bindPort),
-			tcpPort(config.BetaBindPort),
-			udpPort(config.DNS.Port),
-		)
+		tcpPorts := aghalg.UniqChecker[tcpPort]{}
+		addPorts(tcpPorts, tcpPort(args.bindPort), tcpPort(config.BetaBindPort))
+
+		udpPorts := aghalg.UniqChecker[udpPort]{}
+		addPorts(udpPorts, udpPort(config.DNS.Port))
+
 		if config.TLS.Enabled {
 			addPorts(
-				uc,
+				tcpPorts,
 				tcpPort(config.TLS.PortHTTPS),
 				tcpPort(config.TLS.PortDNSOverTLS),
-				udpPort(config.TLS.PortDNSOverQUIC),
 				tcpPort(config.TLS.PortDNSCrypt),
 			)
+
+			addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
 		}
-		if err = uc.Validate(aghalg.IntIsBefore); err != nil {
-			return fmt.Errorf("validating ports: %w", err)
+
+		if err = tcpPorts.Validate(); err != nil {
+			return fmt.Errorf("validating tcp ports: %w", err)
+		} else if err = udpPorts.Validate(); err != nil {
+			return fmt.Errorf("validating udp ports: %w", err)
 		}
 
 		config.BindPort = args.bindPort

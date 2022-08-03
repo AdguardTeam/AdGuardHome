@@ -12,7 +12,7 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/mdlayher/raw"
+	"github.com/mdlayher/packet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -554,7 +554,7 @@ func TestV4Server_Send(t *testing.T) {
 		req:  &dhcpv4.DHCPv4{ClientHWAddr: knownMAC},
 		resp: &dhcpv4.DHCPv4{YourIPAddr: knownIP},
 		want: &dhcpUnicastAddr{
-			Addr:   raw.Addr{HardwareAddr: knownMAC},
+			Addr:   packet.Addr{HardwareAddr: knownMAC},
 			yiaddr: knownIP,
 		},
 	}, {

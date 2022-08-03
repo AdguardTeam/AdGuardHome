@@ -13,6 +13,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/google/renameio/maybe"
 	"golang.org/x/sys/unix"
@@ -22,17 +23,27 @@ import (
 const dhcpcdConf = "etc/dhcpcd.conf"
 
 func canBindPrivilegedPorts() (can bool, err error) {
-	cnbs, err := unix.PrctlRetInt(
+	res, err := unix.PrctlRetInt(
 		unix.PR_CAP_AMBIENT,
 		unix.PR_CAP_AMBIENT_IS_SET,
 		unix.CAP_NET_BIND_SERVICE,
 		0,
 		0,
 	)
+	if err != nil {
+		if errors.Is(err, unix.EINVAL) {
+			// Older versions of Linux kernel do not support this.  Print a
+			// warning and check admin rights.
+			log.Info("warning: cannot check capability cap_net_bind_service: %s", err)
+		} else {
+			return false, err
+		}
+	}
+
 	// Don't check the error because it's always nil on Linux.
 	adm, _ := aghos.HaveAdminRights()
 
-	return cnbs == 1 || adm, err
+	return res == 1 || adm, nil
 }
 
 // dhcpcdStaticConfig checks if interface is configured by /etc/dhcpcd.conf to

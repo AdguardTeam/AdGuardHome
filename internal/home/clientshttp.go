@@ -70,7 +70,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 		data.Clients = append(data.Clients, cj)
 	}
 
-	clients.ipToRC.Range(func(ip net.IP, v interface{}) (cont bool) {
+	clients.ipToRC.Range(func(ip net.IP, v any) (cont bool) {
 		rc, ok := v.(*RuntimeClient)
 		if !ok {
 			log.Error("dns: bad type %T in ipToRC for %s", v, ip)
