@@ -17,6 +17,10 @@ and this project adheres to
 
 ### Security
 
+- Go version was updated to prevent the possibility of exploiting the
+  CVE-2022-32189 Go vulnerability fixed in [Go 1.18.5][go-1.18.5].  Go 1.17
+  support has also been removed, as it has reached end of life and will not
+  receive security updates.
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).
 
@@ -35,13 +39,18 @@ and this project adheres to
 
 ### Deprecated
 
-- Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
+- Go 1.18 support.  v0.109.0 will require at least Go 1.19 to build.
+
+### Removed
+
+- Go 1.17 support, as it has reached end of life.
 
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#4517]: https://github.com/AdguardTeam/AdGuardHome/issues/4517
 
 [ddr-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
+[go-1.18.5]: https://groups.google.com/g/golang-announce/c/YqYYG87xB10
 
 
 

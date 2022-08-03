@@ -302,27 +302,28 @@ func parseConfig() (err error) {
 		return err
 	}
 
-	uc := aghalg.UniqChecker{}
-	addPorts(
-		uc,
-		tcpPort(config.BindPort),
-		tcpPort(config.BetaBindPort),
-		udpPort(config.DNS.Port),
-	)
+	tcpPorts := aghalg.UniqChecker[tcpPort]{}
+	addPorts(tcpPorts, tcpPort(config.BindPort), tcpPort(config.BetaBindPort))
+
+	udpPorts := aghalg.UniqChecker[udpPort]{}
+	addPorts(udpPorts, udpPort(config.DNS.Port))
 
 	if config.TLS.Enabled {
 		addPorts(
-			uc,
-			// TODO(e.burkov):  Consider adding a udpPort with the same value if
-			// we ever support the HTTP/3 for web admin interface.
+			tcpPorts,
 			tcpPort(config.TLS.PortHTTPS),
 			tcpPort(config.TLS.PortDNSOverTLS),
-			udpPort(config.TLS.PortDNSOverQUIC),
 			tcpPort(config.TLS.PortDNSCrypt),
 		)
+
+		// TODO(e.burkov):  Consider adding a udpPort with the same value when
+		// we add support for HTTP/3 for web admin interface.
+		addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
 	}
-	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
-		return fmt.Errorf("validating ports: %w", err)
+	if err = tcpPorts.Validate(); err != nil {
+		return fmt.Errorf("validating tcp ports: %w", err)
+	} else if err = udpPorts.Validate(); err != nil {
+		return fmt.Errorf("validating udp ports: %w", err)
 	}
 
 	if !checkFiltersUpdateIntervalHours(config.DNS.FiltersUpdateIntervalHours) {
@@ -342,23 +343,11 @@ type udpPort int
 // tcpPort is the port number for TCP protocol.
 type tcpPort int
 
-// addPorts is a helper for ports validation.  It skips zero ports.  Each of
-// ports should be either a udpPort or a tcpPort.
-func addPorts(uc aghalg.UniqChecker, ports ...interface{}) {
+// addPorts is a helper for ports validation that skips zero ports.
+func addPorts[T tcpPort | udpPort](uc aghalg.UniqChecker[T], ports ...T) {
 	for _, p := range ports {
-		// Use separate cases for tcpPort and udpPort so that the untyped
-		// constant zero is converted to the appropriate type.
-		switch p := p.(type) {
-		case tcpPort:
-			if p != 0 {
-				uc.Add(p)
-			}
-		case udpPort:
-			if p != 0 {
-				uc.Add(p)
-			}
-		default:
-			// Go on.
+		if p != 0 {
+			uc.Add(p)
 		}
 	}
 }

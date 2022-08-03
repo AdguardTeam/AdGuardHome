@@ -11,7 +11,7 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/mdlayher/raw"
+	"github.com/mdlayher/packet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -56,7 +56,7 @@ func TestBuildEtherPkt(t *testing.T) {
 		srcIP:  net.IP{1, 2, 3, 4},
 	}
 	peer := &dhcpUnicastAddr{
-		Addr:   raw.Addr{HardwareAddr: net.HardwareAddr{6, 5, 4, 3, 2, 1}},
+		Addr:   packet.Addr{HardwareAddr: net.HardwareAddr{6, 5, 4, 3, 2, 1}},
 		yiaddr: net.IP{4, 3, 2, 1},
 	}
 	payload := (&dhcpv4.DHCPv4{}).ToBytes()
@@ -102,7 +102,7 @@ func TestBuildEtherPkt(t *testing.T) {
 	t.Run("serializing_error", func(t *testing.T) {
 		// Create a peer with invalid MAC.
 		badPeer := &dhcpUnicastAddr{
-			Addr:   raw.Addr{HardwareAddr: net.HardwareAddr{5, 4, 3, 2, 1}},
+			Addr:   packet.Addr{HardwareAddr: net.HardwareAddr{5, 4, 3, 2, 1}},
 			yiaddr: net.IP{4, 3, 2, 1},
 		}
 

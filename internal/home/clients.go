@@ -493,7 +493,7 @@ func (clients *clientsContainer) findLocked(id string) (c *Client, ok bool) {
 // findRuntimeClientLocked finds a runtime client by their IP address.  For
 // internal use only.
 func (clients *clientsContainer) findRuntimeClientLocked(ip net.IP) (rc *RuntimeClient, ok bool) {
-	var v interface{}
+	var v any
 	v, ok = clients.ipToRC.Get(ip)
 	if !ok {
 		return nil, false
@@ -769,7 +769,7 @@ func (clients *clientsContainer) addHostLocked(ip net.IP, host string, src clien
 // rmHostsBySrc removes all entries that match the specified source.
 func (clients *clientsContainer) rmHostsBySrc(src clientSource) {
 	n := 0
-	clients.ipToRC.Range(func(ip net.IP, v interface{}) (cont bool) {
+	clients.ipToRC.Range(func(ip net.IP, v any) (cont bool) {
 		rc, ok := v.(*RuntimeClient)
 		if !ok {
 			log.Error("clients: bad type %T in ipToRC for %s", v, ip)
@@ -797,7 +797,7 @@ func (clients *clientsContainer) addFromHostsFile(hosts *netutil.IPMap) {
 	clients.rmHostsBySrc(ClientSourceHostsFile)
 
 	n := 0
-	hosts.Range(func(ip net.IP, v interface{}) (cont bool) {
+	hosts.Range(func(ip net.IP, v any) (cont bool) {
 		rec, ok := v.(*aghnet.HostsRecord)
 		if !ok {
 			log.Error("dns: bad type %T in ipToRC for %s", v, ip)
