@@ -24,10 +24,7 @@ import (
 const currentSchemaVersion = 14
 
 // These aliases are provided for convenience.
-//
-// TODO(e.burkov):  Remove any after updating to Go 1.18.
 type (
-	any  = interface{}
 	yarr = []any
 	yobj = map[any]any
 )
@@ -176,11 +173,11 @@ func upgradeSchema2to3(diskConf yobj) error {
 		return fmt.Errorf("no DNS configuration in config file")
 	}
 
-	// Convert interface{} to yobj
+	// Convert any to yobj
 	newDNSConfig := make(yobj)
 
 	switch v := dnsConfig.(type) {
-	case map[interface{}]interface{}:
+	case map[any]any:
 		for k, v := range v {
 			newDNSConfig[fmt.Sprint(k)] = v
 		}
@@ -216,12 +213,12 @@ func upgradeSchema3to4(diskConf yobj) error {
 	}
 
 	switch arr := clients.(type) {
-	case []interface{}:
+	case []any:
 
 		for i := range arr {
 			switch c := arr[i].(type) {
 
-			case map[interface{}]interface{}:
+			case map[any]any:
 				c["use_global_blocked_services"] = true
 
 			default:
@@ -307,11 +304,11 @@ func upgradeSchema5to6(diskConf yobj) error {
 	}
 
 	switch arr := clients.(type) {
-	case []interface{}:
+	case []any:
 		for i := range arr {
 			switch c := arr[i].(type) {
-			case map[interface{}]interface{}:
-				var ipVal interface{}
+			case map[any]any:
+				var ipVal any
 				ipVal, ok = c["ip"]
 				ids := []string{}
 				if ok {
@@ -326,7 +323,7 @@ func upgradeSchema5to6(diskConf yobj) error {
 					}
 				}
 
-				var macVal interface{}
+				var macVal any
 				macVal, ok = c["mac"]
 				if ok {
 					var mac string
@@ -377,7 +374,7 @@ func upgradeSchema6to7(diskConf yobj) error {
 	}
 
 	switch dhcp := dhcpVal.(type) {
-	case map[interface{}]interface{}:
+	case map[any]any:
 		var str string
 		str, ok = dhcp["gateway_ip"].(string)
 		if !ok {

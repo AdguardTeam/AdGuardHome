@@ -455,8 +455,8 @@ func (hp *hostsParser) equalSet(target *netutil.IPMap) (ok bool) {
 		return false
 	}
 
-	hp.table.Range(func(ip net.IP, recVal interface{}) (cont bool) {
-		var targetVal interface{}
+	hp.table.Range(func(ip net.IP, recVal any) (cont bool) {
+		var targetVal any
 		targetVal, ok = target.Get(ip)
 		if !ok {
 			return false

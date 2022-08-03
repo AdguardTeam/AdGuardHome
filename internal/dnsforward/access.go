@@ -214,7 +214,7 @@ func validateAccessSet(list *accessListJSON) (err error) {
 	}
 
 	merged := allowed.Merge(disallowed)
-	err = merged.Validate(aghalg.StringIsBefore)
+	err = merged.Validate()
 	if err != nil {
 		return fmt.Errorf("items in allowed and disallowed clients intersect: %w", err)
 	}
@@ -223,13 +223,13 @@ func validateAccessSet(list *accessListJSON) (err error) {
 }
 
 // validateStrUniq returns an informative error if clients are not unique.
-func validateStrUniq(clients []string) (uc aghalg.UniqChecker, err error) {
-	uc = make(aghalg.UniqChecker, len(clients))
+func validateStrUniq(clients []string) (uc aghalg.UniqChecker[string], err error) {
+	uc = make(aghalg.UniqChecker[string], len(clients))
 	for _, c := range clients {
 		uc.Add(c)
 	}
 
-	return uc, uc.Validate(aghalg.StringIsBefore)
+	return uc, uc.Validate()
 }
 
 func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {

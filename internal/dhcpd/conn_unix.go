@@ -16,16 +16,16 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 	"github.com/mdlayher/ethernet"
-	"github.com/mdlayher/raw"
+	"github.com/mdlayher/packet"
 )
 
 // dhcpUnicastAddr is the combination of MAC and IP addresses for responding to
 // the unconfigured host.
 type dhcpUnicastAddr struct {
-	// raw.Addr is embedded here to make *dhcpUcastAddr a net.Addr without
+	// packet.Addr is embedded here to make *dhcpUcastAddr a net.Addr without
 	// actually implementing all methods.  It also contains the client's
 	// hardware address.
-	raw.Addr
+	packet.Addr
 
 	// yiaddr is an IP address just allocated by server for the host.
 	yiaddr net.IP
@@ -49,16 +49,21 @@ type dhcpConn struct {
 }
 
 // newDHCPConn creates the special connection for DHCP server.
-func (s *v4Server) newDHCPConn(ifi *net.Interface) (c net.PacketConn, err error) {
-	// Create the raw connection.
+func (s *v4Server) newDHCPConn(iface *net.Interface) (c net.PacketConn, err error) {
 	var ucast net.PacketConn
-	if ucast, err = raw.ListenPacket(ifi, uint16(ethernet.EtherTypeIPv4), nil); err != nil {
+	ucast, err = packet.Listen(
+		iface,
+		packet.Raw,
+		int(ethernet.EtherTypeIPv4),
+		nil,
+	)
+	if err != nil {
 		return nil, fmt.Errorf("creating raw udp connection: %w", err)
 	}
 
 	// Create the UDP connection.
 	var bcast net.PacketConn
-	bcast, err = server4.NewIPv4UDPConn(ifi.Name, &net.UDPAddr{
+	bcast, err = server4.NewIPv4UDPConn(iface.Name, &net.UDPAddr{
 		// TODO(e.burkov):  Listening on zeroes makes the server handle
 		// requests from all the interfaces.  Inspect the ways to
 		// specify the interface-specific listening addresses.
@@ -75,7 +80,7 @@ func (s *v4Server) newDHCPConn(ifi *net.Interface) (c net.PacketConn, err error)
 		udpConn: bcast,
 		bcastIP: s.conf.broadcastIP,
 		rawConn: ucast,
-		srcMAC:  ifi.HardwareAddr,
+		srcMAC:  iface.HardwareAddr,
 		srcIP:   s.conf.dnsIPAddrs[0],
 	}, nil
 }

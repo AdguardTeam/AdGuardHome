@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"sort"
 	"strings"
 	"time"
 
@@ -17,6 +16,8 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 type dnsConfig struct {
@@ -401,20 +402,6 @@ func ValidateUpstreams(upstreams []string) (err error) {
 	return err
 }
 
-// stringKeysSorted returns the sorted slice of string keys of m.
-//
-// TODO(e.burkov):  Use generics in Go 1.18.  Move into golibs.
-func stringKeysSorted(m map[string][]upstream.Upstream) (sorted []string) {
-	sorted = make([]string, 0, len(m))
-	for s := range m {
-		sorted = append(sorted, s)
-	}
-
-	sort.Strings(sorted)
-
-	return sorted
-}
-
 // ValidateUpstreamsPrivate validates each upstream and returns an error if any
 // upstream is invalid or if there are no default upstreams specified.  It also
 // checks each domain of domain-specific upstreams for being ARPA pointing to
@@ -429,9 +416,11 @@ func ValidateUpstreamsPrivate(upstreams []string, privateNets netutil.SubnetSet)
 		return nil
 	}
 
-	var errs []error
+	keys := maps.Keys(conf.DomainReservedUpstreams)
+	slices.Sort(keys)
 
-	for _, domain := range stringKeysSorted(conf.DomainReservedUpstreams) {
+	var errs []error
+	for _, domain := range keys {
 		var subnet *net.IPNet
 		subnet, err = netutil.SubnetFromReversedAddr(domain)
 		if err != nil {
