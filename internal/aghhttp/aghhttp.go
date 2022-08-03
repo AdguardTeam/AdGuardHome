@@ -17,7 +17,7 @@ func OK(w http.ResponseWriter) {
 }
 
 // Error writes formatted message to w and also logs it.
-func Error(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {
+func Error(r *http.Request, w http.ResponseWriter, code int, format string, args ...any) {
 	text := fmt.Sprintf(format, args...)
 	log.Error("%s %s: %s", r.Method, r.URL, text)
 	http.Error(w, text, code)

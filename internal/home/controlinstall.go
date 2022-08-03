@@ -105,19 +105,22 @@ type checkConfResp struct {
 
 // validateWeb returns error is the web part if the initial configuration can't
 // be set.
-func (req *checkConfReq) validateWeb(uc aghalg.UniqChecker) (err error) {
+func (req *checkConfReq) validateWeb(tcpPorts aghalg.UniqChecker[tcpPort]) (err error) {
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
-	port := req.Web.Port
-	addPorts(uc, tcpPort(config.BetaBindPort), tcpPort(port))
-	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
-		// Avoid duplicating the error into the status of DNS.
-		uc[port] = 1
+	portInt := req.Web.Port
+	port := tcpPort(portInt)
+	addPorts(tcpPorts, tcpPort(config.BetaBindPort), port)
+	if err = tcpPorts.Validate(); err != nil {
+		// Reset the value for the port to 1 to make sure that validateDNS
+		// doesn't throw the same error, unless the same TCP port is set there
+		// as well.
+		tcpPorts[port] = 1
 
 		return err
 	}
 
-	switch port {
+	switch portInt {
 	case 0, config.BindPort:
 		return nil
 	default:
@@ -125,21 +128,18 @@ func (req *checkConfReq) validateWeb(uc aghalg.UniqChecker) (err error) {
 		// unbound after install.
 	}
 
-	return aghnet.CheckPort("tcp", req.Web.IP, port)
+	return aghnet.CheckPort("tcp", req.Web.IP, portInt)
 }
 
 // validateDNS returns error if the DNS part of the initial configuration can't
 // be set.  canAutofix is true if the port can be unbound by AdGuard Home
 // automatically.
-func (req *checkConfReq) validateDNS(uc aghalg.UniqChecker) (canAutofix bool, err error) {
+func (req *checkConfReq) validateDNS(
+	tcpPorts aghalg.UniqChecker[tcpPort],
+) (canAutofix bool, err error) {
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
 	port := req.DNS.Port
-	addPorts(uc, udpPort(port))
-	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
-		return false, err
-	}
-
 	switch port {
 	case 0:
 		return false, nil
@@ -148,6 +148,11 @@ func (req *checkConfReq) validateDNS(uc aghalg.UniqChecker) (canAutofix bool, er
 		// by AdGuard Home for web interface.
 	default:
 		// Check TCP as well.
+		addPorts(tcpPorts, tcpPort(port))
+		if err = tcpPorts.Validate(); err != nil {
+			return false, err
+		}
+
 		err = aghnet.CheckPort("tcp", req.DNS.IP, port)
 		if err != nil {
 			return false, err
@@ -185,13 +190,12 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 	}
 
 	resp := &checkConfResp{}
-	uc := aghalg.UniqChecker{}
-
-	if err = req.validateWeb(uc); err != nil {
+	tcpPorts := aghalg.UniqChecker[tcpPort]{}
+	if err = req.validateWeb(tcpPorts); err != nil {
 		resp.Web.Status = err.Error()
 	}
 
-	if resp.DNS.CanAutofix, err = req.validateDNS(uc); err != nil {
+	if resp.DNS.CanAutofix, err = req.validateDNS(tcpPorts); err != nil {
 		resp.DNS.Status = err.Error()
 	} else if !req.DNS.IP.IsUnspecified() {
 		resp.StaticIP = handleStaticIP(req.DNS.IP, req.SetStaticIP)

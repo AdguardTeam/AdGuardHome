@@ -409,7 +409,7 @@ func (s *Server) ipToHost(ip net.IP) (host string, ok bool) {
 		return "", false
 	}
 
-	var v interface{}
+	var v any
 	v, ok = s.tableIPToHost.Get(ip)
 	if !ok {
 		return "", false
