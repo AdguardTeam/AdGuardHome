@@ -61,12 +61,19 @@ and this project adheres to
 - UI and update links have been changed to make them more resistant to DNS
   blocking.
 
+### Fixed
+
+- Several UI issues ([#4775], [#4776], [#4782]).
+
 ### Removed
 
 - Go 1.17 support, as it has reached end of life.
 
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#4517]: https://github.com/AdguardTeam/AdGuardHome/issues/4517
+[#4775]: https://github.com/AdguardTeam/AdGuardHome/issues/4775
+[#4776]: https://github.com/AdguardTeam/AdGuardHome/issues/4776
+[#4782]: https://github.com/AdguardTeam/AdGuardHome/issues/4782
 
 [go-1.18.5]: https://groups.google.com/g/golang-announce/c/YqYYG87xB10
 
