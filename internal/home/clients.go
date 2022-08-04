@@ -2,6 +2,7 @@ package home
 
 import (
 	"bytes"
+	"encoding"
 	"fmt"
 	"net"
 	"sort"
@@ -59,6 +60,33 @@ const (
 	ClientSourceDHCP
 	ClientSourceHostsFile
 )
+
+var _ fmt.Stringer = clientSource(0)
+
+// String returns a human-readable name of cs.
+func (cs clientSource) String() (s string) {
+	switch cs {
+	case ClientSourceWHOIS:
+		return "WHOIS"
+	case ClientSourceARP:
+		return "ARP"
+	case ClientSourceRDNS:
+		return "rDNS"
+	case ClientSourceDHCP:
+		return "DHCP"
+	case ClientSourceHostsFile:
+		return "etc/hosts"
+	default:
+		return ""
+	}
+}
+
+var _ encoding.TextMarshaler = clientSource(0)
+
+// MarshalText implements encoding.TextMarshaler for the clientSource.
+func (cs clientSource) MarshalText() (text []byte, err error) {
+	return []byte(cs.String()), nil
+}
 
 // clientSourceConf is used to configure where the runtime clients will be
 // obtained from.
@@ -397,6 +425,7 @@ func (clients *clientsContainer) Find(id string) (c *Client, ok bool) {
 	c.Tags = stringutil.CloneSlice(c.Tags)
 	c.BlockedServices = stringutil.CloneSlice(c.BlockedServices)
 	c.Upstreams = stringutil.CloneSlice(c.Upstreams)
+
 	return c, true
 }
 

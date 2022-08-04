@@ -46,7 +46,7 @@ type homeContext struct {
 	// --
 
 	clients    clientsContainer     // per-client-settings module
-	stats      stats.Stats          // statistics module
+	stats      stats.Interface      // statistics module
 	queryLog   querylog.QueryLog    // query log module
 	dnsServer  *dnsforward.Server   // DNS module
 	rdns       *RDNS                // rDNS module

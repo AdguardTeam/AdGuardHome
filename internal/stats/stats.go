@@ -4,75 +4,85 @@ package stats
 
 import (
 	"net"
-	"net/http"
+
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 )
 
-type unitIDCallback func() uint32
+// UnitIDGenFunc is the signature of a function that generates a unique ID for
+// the statistics unit.
+type UnitIDGenFunc func() (id uint32)
 
-// DiskConfig - configuration settings that are stored on disk
+// DiskConfig is the configuration structure that is stored in file.
 type DiskConfig struct {
-	Interval uint32 `yaml:"statistics_interval"` // time interval for statistics (in days)
+	// Interval is the number of days for which the statistics are collected
+	// before flushing to the database.
+	Interval uint32 `yaml:"statistics_interval"`
 }
 
-// Config - module configuration
+// Config is the configuration structure for the statistics collecting.
 type Config struct {
-	Filename  string         // database file name
-	LimitDays uint32         // time limit (in days)
-	UnitID    unitIDCallback // user function to get the current unit ID.  If nil, the current time hour is used.
+	// UnitID is the function to generate the identifier for current unit.  If
+	// nil, the default function is used, see newUnitID.
+	UnitID UnitIDGenFunc
 
-	// Called when the configuration is changed by HTTP request
+	// ConfigModified will be called each time the configuration changed via web
+	// interface.
 	ConfigModified func()
 
-	// Register an HTTP handler
-	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request))
+	// HTTPRegister is the function that registers handlers for the stats
+	// endpoints.
+	HTTPRegister aghhttp.RegisterFunc
 
-	limit uint32 // maximum time we need to keep data for (in hours)
+	// Filename is the name of the database file.
+	Filename string
+
+	// LimitDays is the maximum number of days to collect statistics into the
+	// current unit.
+	LimitDays uint32
 }
 
-// New - create object
-func New(conf Config) (Stats, error) {
-	return createObject(conf)
-}
-
-// Stats - main interface
-type Stats interface {
+// Interface is the statistics interface to be used by other packages.
+type Interface interface {
+	// Start begins the statistics collecting.
 	Start()
 
-	// Close object.
-	// This function is not thread safe
-	//  (can't be called in parallel with any other function of this interface).
+	// Close stops the statistics collecting.
 	Close()
 
-	// Update counters
+	// Update collects the incoming statistics data.
 	Update(e Entry)
 
-	// Get IP addresses of the clients with the most number of requests
+	// GetTopClientIP returns at most limit IP addresses corresponding to the
+	// clients with the most number of requests.
 	GetTopClientsIP(limit uint) []net.IP
 
-	// WriteDiskConfig - write configuration
+	// WriteDiskConfig puts the Interface's configuration to the dc.
 	WriteDiskConfig(dc *DiskConfig)
 }
 
-// TimeUnit - time unit
+// TimeUnit is the unit of measuring time while aggregating the statistics.
 type TimeUnit int
 
-// Supported time units
+// Supported TimeUnit values.
 const (
 	Hours TimeUnit = iota
 	Days
 )
 
-// Result of DNS request processing
+// Result is the resulting code of processing the DNS request.
 type Result int
 
-// Supported result values
+// Supported Result values.
+//
+// TODO(e.burkov):  Think about better naming.
 const (
 	RNotFiltered Result = iota + 1
 	RFiltered
 	RSafeBrowsing
 	RSafeSearch
 	RParental
-	rLast
+
+	resultLast = RParental + 1
 )
 
 // Entry is a statistics data entry.
@@ -82,7 +92,12 @@ type Entry struct {
 	// TODO(a.garipov): Make this a {net.IP, string} enum?
 	Client string
 
+	// Domain is the domain name requested.
 	Domain string
+
+	// Result is the result of processing the request.
 	Result Result
-	Time   uint32 // processing time (msec)
+
+	// Time is the duration of the request processing in milliseconds.
+	Time uint32
 }

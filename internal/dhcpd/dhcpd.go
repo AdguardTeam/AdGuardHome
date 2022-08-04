@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"net/http"
 	"path/filepath"
 	"runtime"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 )
@@ -126,7 +126,7 @@ type ServerConfig struct {
 	ConfigModified func() `yaml:"-"`
 
 	// Register an HTTP handler
-	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `yaml:"-"`
+	HTTPRegister aghhttp.RegisterFunc `yaml:"-"`
 
 	Enabled       bool   `yaml:"enabled"`
 	InterfaceName string `yaml:"interface_name"`

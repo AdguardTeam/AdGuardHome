@@ -61,7 +61,7 @@ type Server struct {
 	dnsFilter  *filtering.DNSFilter  // DNS filter instance
 	dhcpServer dhcpd.ServerInterface // DHCP server instance (optional)
 	queryLog   querylog.QueryLog     // Query log instance
-	stats      stats.Stats
+	stats      stats.Interface
 	access     *accessCtx
 
 	// localDomainSuffix is the suffix used to detect internal hosts.  It
@@ -107,7 +107,7 @@ const defaultLocalDomainSuffix = "lan"
 // DNSCreateParams are parameters to create a new server.
 type DNSCreateParams struct {
 	DNSFilter   *filtering.DNSFilter
-	Stats       stats.Stats
+	Stats       stats.Interface
 	QueryLog    querylog.QueryLog
 	DHCPServer  dhcpd.ServerInterface
 	PrivateNets netutil.SubnetSet

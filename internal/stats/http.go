@@ -39,34 +39,21 @@ type statsResponse struct {
 }
 
 // handleStats is a handler for getting statistics.
-func (s *statsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
+func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	var resp statsResponse
-	if s.conf.limit == 0 {
-		resp = statsResponse{
-			TimeUnits: "days",
+	var ok bool
+	resp, ok = s.getData()
 
-			TopBlocked: []topAddrs{},
-			TopClients: []topAddrs{},
-			TopQueried: []topAddrs{},
+	log.Debug("stats: prepared data in %v", time.Since(start))
 
-			BlockedFiltering:     []uint64{},
-			DNSQueries:           []uint64{},
-			ReplacedParental:     []uint64{},
-			ReplacedSafebrowsing: []uint64{},
-		}
-	} else {
-		var ok bool
-		resp, ok = s.getData()
+	if !ok {
+		// Don't bring the message to the lower case since it's a part of UI
+		// text for the moment.
+		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't get statistics data")
 
-		log.Debug("stats: prepared data in %v", time.Since(start))
-
-		if !ok {
-			aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't get statistics data")
-
-			return
-		}
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -84,9 +71,9 @@ type config struct {
 }
 
 // Get configuration
-func (s *statsCtx) handleStatsInfo(w http.ResponseWriter, r *http.Request) {
+func (s *StatsCtx) handleStatsInfo(w http.ResponseWriter, r *http.Request) {
 	resp := config{}
-	resp.IntervalDays = s.conf.limit / 24
+	resp.IntervalDays = s.limitHours / 24
 
 	data, err := json.Marshal(resp)
 	if err != nil {
@@ -102,7 +89,7 @@ func (s *statsCtx) handleStatsInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 // Set configuration
-func (s *statsCtx) handleStatsConfig(w http.ResponseWriter, r *http.Request) {
+func (s *StatsCtx) handleStatsConfig(w http.ResponseWriter, r *http.Request) {
 	reqData := config{}
 	err := json.NewDecoder(r.Body).Decode(&reqData)
 	if err != nil {
@@ -118,22 +105,22 @@ func (s *statsCtx) handleStatsConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.setLimit(int(reqData.IntervalDays))
-	s.conf.ConfigModified()
+	s.configModified()
 }
 
 // Reset data
-func (s *statsCtx) handleStatsReset(w http.ResponseWriter, r *http.Request) {
+func (s *StatsCtx) handleStatsReset(w http.ResponseWriter, r *http.Request) {
 	s.clear()
 }
 
 // Register web handlers
-func (s *statsCtx) initWeb() {
-	if s.conf.HTTPRegister == nil {
+func (s *StatsCtx) initWeb() {
+	if s.httpRegister == nil {
 		return
 	}
 
-	s.conf.HTTPRegister(http.MethodGet, "/control/stats", s.handleStats)
-	s.conf.HTTPRegister(http.MethodPost, "/control/stats_reset", s.handleStatsReset)
-	s.conf.HTTPRegister(http.MethodPost, "/control/stats_config", s.handleStatsConfig)
-	s.conf.HTTPRegister(http.MethodGet, "/control/stats_info", s.handleStatsInfo)
+	s.httpRegister(http.MethodGet, "/control/stats", s.handleStats)
+	s.httpRegister(http.MethodPost, "/control/stats_reset", s.handleStatsReset)
+	s.httpRegister(http.MethodPost, "/control/stats_config", s.handleStatsConfig)
+	s.httpRegister(http.MethodGet, "/control/stats_info", s.handleStatsInfo)
 }

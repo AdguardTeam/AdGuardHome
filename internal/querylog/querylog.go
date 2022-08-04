@@ -2,10 +2,10 @@ package querylog
 
 import (
 	"net"
-	"net/http"
 	"path/filepath"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
@@ -38,7 +38,7 @@ type Config struct {
 	ConfigModified func()
 
 	// HTTPRegister registers an HTTP handler.
-	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request))
+	HTTPRegister aghhttp.RegisterFunc
 
 	// FindClient returns client information by their IDs.
 	FindClient func(ids []string) (c *Client, err error)

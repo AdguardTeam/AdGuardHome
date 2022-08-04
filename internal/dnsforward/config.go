@@ -5,12 +5,12 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net"
-	"net/http"
 	"os"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -191,7 +191,7 @@ type ServerConfig struct {
 	ConfigModified func()
 
 	// Register an HTTP handler
-	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request))
+	HTTPRegister aghhttp.RegisterFunc
 
 	// ResolveClients signals if the RDNS should resolve clients' addresses.
 	ResolveClients bool

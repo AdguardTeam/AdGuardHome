@@ -37,7 +37,7 @@ func TestStats(t *testing.T) {
 		LimitDays: 1,
 	}
 
-	s, err := createObject(conf)
+	s, err := New(conf)
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, func() (err error) {
 		s.clear()
@@ -110,7 +110,7 @@ func TestLargeNumbers(t *testing.T) {
 		LimitDays: 1,
 		UnitID:    newID,
 	}
-	s, err := createObject(conf)
+	s, err := New(conf)
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, func() (err error) {
 		s.Close()
