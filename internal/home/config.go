@@ -2,7 +2,7 @@ package home
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"sync"
@@ -65,10 +65,10 @@ type configuration struct {
 	// It's reset after config is parsed
 	fileData []byte
 
-	BindHost     net.IP `yaml:"bind_host"`      // BindHost is the IP address of the HTTP server to bind to
-	BindPort     int    `yaml:"bind_port"`      // BindPort is the port the HTTP server
-	BetaBindPort int    `yaml:"beta_bind_port"` // BetaBindPort is the port for new client
-	Users        []User `yaml:"users"`          // Users that can access HTTP server
+	BindHost     netip.Addr `yaml:"bind_host"`      // BindHost is the IP address of the HTTP server to bind to
+	BindPort     int        `yaml:"bind_port"`      // BindPort is the port the HTTP server
+	BetaBindPort int        `yaml:"beta_bind_port"` // BetaBindPort is the port for new client
+	Users        []User     `yaml:"users"`          // Users that can access HTTP server
 	// AuthAttempts is the maximum number of failed login attempts a user
 	// can do before being blocked.
 	AuthAttempts uint `yaml:"auth_attempts"`
@@ -108,8 +108,8 @@ type configuration struct {
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type dnsConfig struct {
-	BindHosts []net.IP `yaml:"bind_hosts"`
-	Port      int      `yaml:"port"`
+	BindHosts []netip.Addr `yaml:"bind_hosts"`
+	Port      int          `yaml:"port"`
 
 	// time interval for statistics (in days)
 	StatsInterval uint32 `yaml:"statistics_interval"`
@@ -173,11 +173,11 @@ type tlsConfigSettings struct {
 var config = &configuration{
 	BindPort:     3000,
 	BetaBindPort: 0,
-	BindHost:     net.IP{0, 0, 0, 0},
+	BindHost:     netip.IPv4Unspecified(),
 	AuthAttempts: 5,
 	AuthBlockMin: 15,
 	DNS: dnsConfig{
-		BindHosts:     []net.IP{{0, 0, 0, 0}},
+		BindHosts:     []netip.Addr{netip.IPv4Unspecified()},
 		Port:          defaultPortDNS,
 		StatsInterval: 1,
 		FilteringConfig: dnsforward.FilteringConfig{

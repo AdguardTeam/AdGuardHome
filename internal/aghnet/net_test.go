@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net"
+	"net/netip"
 	"os"
 	"strings"
 	"testing"
@@ -200,18 +201,19 @@ func TestBroadcastFromIPNet(t *testing.T) {
 func TestCheckPort(t *testing.T) {
 	t.Run("tcp_bound", func(t *testing.T) {
 		l, err := net.Listen("tcp", "127.0.0.1:")
+
 		require.NoError(t, err)
 		testutil.CleanupAndRequireSuccess(t, l.Close)
 
-		ipp := netutil.IPPortFromAddr(l.Addr())
-		require.NotNil(t, ipp)
-		require.NotNil(t, ipp.IP)
-		require.NotZero(t, ipp.Port)
+		ip, err := netip.ParseAddrPort(l.Addr().String())
+		require.Nil(t, err)
+		require.NotNil(t, ip)
+		require.True(t, ip.IsValid())
+		require.NotZero(t, ip.Port())
 
-		err = CheckPort("tcp", ipp.IP, ipp.Port)
+		err = CheckPort("tcp", ip.Addr(), int(ip.Port()))
 		target := &net.OpError{}
 		require.ErrorAs(t, err, &target)
-
 		assert.Equal(t, "listen", target.Op)
 	})
 
@@ -220,12 +222,13 @@ func TestCheckPort(t *testing.T) {
 		require.NoError(t, err)
 		testutil.CleanupAndRequireSuccess(t, conn.Close)
 
-		ipp := netutil.IPPortFromAddr(conn.LocalAddr())
-		require.NotNil(t, ipp)
-		require.NotNil(t, ipp.IP)
-		require.NotZero(t, ipp.Port)
+		ip, err := netip.ParseAddrPort(conn.LocalAddr().String())
+		require.Nil(t, err)
+		require.NotNil(t, ip)
+		require.True(t, ip.IsValid())
+		require.NotZero(t, ip.Port())
 
-		err = CheckPort("udp", ipp.IP, ipp.Port)
+		err = CheckPort("udp", ip.Addr(), int(ip.Port()))
 		target := &net.OpError{}
 		require.ErrorAs(t, err, &target)
 
@@ -233,12 +236,12 @@ func TestCheckPort(t *testing.T) {
 	})
 
 	t.Run("bad_network", func(t *testing.T) {
-		err := CheckPort("bad_network", nil, 0)
+		err := CheckPort("bad_network", netip.Addr{}, 0)
 		assert.NoError(t, err)
 	})
 
 	t.Run("can_bind", func(t *testing.T) {
-		err := CheckPort("udp", net.IP{0, 0, 0, 0}, 0)
+		err := CheckPort("udp", netip.IPv4Unspecified(), 0)
 		assert.NoError(t, err)
 	})
 }
@@ -322,18 +325,12 @@ func TestNetInterface_MarshalJSON(t *testing.T) {
 		`"mtu":1500` +
 		`}` + "\n"
 
-	ip4, ip6 := net.IP{1, 2, 3, 4}, net.IP{0xAA, 0xAA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
-	mask4, mask6 := net.CIDRMask(24, netutil.IPv4BitLen), net.CIDRMask(8, netutil.IPv6BitLen)
+	ip4, ip6 := netip.AddrFrom4([4]byte{1, 2, 3, 4}), netip.AddrFrom16([16]byte{0xAA, 0xAA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	v4Subnet, v6Subnet := netip.PrefixFrom(ip4, 24), netip.PrefixFrom(ip6, 8)
 
 	iface := &NetInterface{
-		Addresses: []net.IP{ip4, ip6},
-		Subnets: []*net.IPNet{{
-			IP:   ip4.Mask(mask4),
-			Mask: mask4,
-		}, {
-			IP:   ip6.Mask(mask6),
-			Mask: mask6,
-		}},
+		Addresses:    []netip.Addr{ip4, ip6},
+		Subnets:      []*netip.Prefix{&v4Subnet, &v6Subnet},
 		Name:         "iface0",
 		HardwareAddr: net.HardwareAddr{0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF},
 		Flags:        net.FlagUp | net.FlagMulticast,

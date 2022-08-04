@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"io/fs"
-	"net"
 	"net/http"
+	"net/netip"
 	"sync"
 	"time"
 
@@ -38,7 +38,7 @@ type webConfig struct {
 	clientFS     fs.FS
 	clientBetaFS fs.FS
 
-	BindHost     net.IP
+	BindHost     netip.Addr
 	BindPort     int
 	BetaBindPort int
 	PortHTTPS    int

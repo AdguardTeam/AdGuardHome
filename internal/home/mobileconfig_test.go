@@ -3,12 +3,11 @@ package home
 import (
 	"bytes"
 	"encoding/json"
-	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"testing"
 
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"howett.net/plist"
@@ -28,7 +27,7 @@ func setupDNSIPs(t testing.TB) {
 
 	config = &configuration{
 		DNS: dnsConfig{
-			BindHosts: []net.IP{netutil.IPv4Zero()},
+			BindHosts: []netip.Addr{netip.IPv4Unspecified()},
 			Port:      defaultPortDNS,
 		},
 	}

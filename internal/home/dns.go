@@ -3,6 +3,7 @@ package home
 import (
 	"fmt"
 	"net"
+	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -167,15 +168,16 @@ func onDNSRequest(pctx *proxy.DNSContext) {
 	}
 }
 
-func ipsToTCPAddrs(ips []net.IP, port int) (tcpAddrs []*net.TCPAddr) {
-	if ips == nil {
+func ipsToTCPAddrs(addrs []netip.Addr, port int) (tcpAddrs []*net.TCPAddr) {
+	if addrs == nil {
 		return nil
 	}
 
-	tcpAddrs = make([]*net.TCPAddr, len(ips))
-	for i, ip := range ips {
+	tcpAddrs = make([]*net.TCPAddr, len(addrs))
+	for i, addr := range addrs {
 		tcpAddrs[i] = &net.TCPAddr{
-			IP:   ip,
+			IP:   addr.AsSlice(),
+			Zone: addr.Zone(),
 			Port: port,
 		}
 	}
@@ -183,15 +185,16 @@ func ipsToTCPAddrs(ips []net.IP, port int) (tcpAddrs []*net.TCPAddr) {
 	return tcpAddrs
 }
 
-func ipsToUDPAddrs(ips []net.IP, port int) (udpAddrs []*net.UDPAddr) {
-	if ips == nil {
+func ipsToUDPAddrs(addrs []netip.Addr, port int) (udpAddrs []*net.UDPAddr) {
+	if addrs == nil {
 		return nil
 	}
 
-	udpAddrs = make([]*net.UDPAddr, len(ips))
-	for i, ip := range ips {
+	udpAddrs = make([]*net.UDPAddr, len(addrs))
+	for i, addr := range addrs {
 		udpAddrs[i] = &net.UDPAddr{
-			IP:   ip,
+			IP:   addr.AsSlice(),
+			Zone: addr.Zone(),
 			Port: port,
 		}
 	}
@@ -203,7 +206,7 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	dnsConf := config.DNS
 	hosts := dnsConf.BindHosts
 	if len(hosts) == 0 {
-		hosts = []net.IP{{127, 0, 0, 1}}
+		hosts = []netip.Addr{netip.AddrFrom4([4]byte{127, 0, 0, 1})}
 	}
 
 	newConf = dnsforward.ServerConfig{
@@ -257,7 +260,7 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	return newConf, nil
 }
 
-func newDNSCrypt(hosts []net.IP, tlsConf tlsConfigSettings) (dnscc dnsforward.DNSCryptConfig, err error) {
+func newDNSCrypt(hosts []netip.Addr, tlsConf tlsConfigSettings) (dnscc dnsforward.DNSCryptConfig, err error) {
 	if tlsConf.DNSCryptConfigFile == "" {
 		return dnscc, errors.Error("no dnscrypt_config_file")
 	}
