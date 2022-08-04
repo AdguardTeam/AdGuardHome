@@ -254,7 +254,7 @@ var serviceRulesArray = []svc{{
 	rules: []string{"||viber.com^"},
 }, {
 	name:  "weibo",
-	rules: []string{"||weibo.com^", "||weibo.cn^"},
+	rules: []string{"||weibo.com^", "||weibo.cn^", "||weibocdn.com^"},
 }, {
 	name:  "9gag",
 	rules: []string{"||9cache.com^", "||9gag.com^"},
@@ -299,6 +299,7 @@ var serviceRulesArray = []svc{{
 	rules: []string{
 		"||bilibili.com^",
 		"||bilivideo.com^",
+		"||bilivideo.cn^",
 		"||biligame.com^",
 		"||biliapi.net^",
 		"||dreamcast.hk^",
