@@ -21,6 +21,7 @@ require (
 	github.com/lucas-clemente/quic-go v0.28.1
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/netlink v1.6.0
+	github.com/mdlayher/packet v1.0.0
 	// TODO(a.garipov): This package is deprecated; find a new one or use
 	// our own code for that.
 	github.com/mdlayher/raw v0.1.0 // indirect
@@ -29,16 +30,12 @@ require (
 	github.com/ti-mo/netfilter v0.4.0
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
+	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	golang.org/x/net v0.0.0-20220728211354-c7608f3a8462
 	golang.org/x/sys v0.0.0-20220731174439-a90be440212d
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
-	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.0
-)
-
-require (
-	github.com/mdlayher/packet v1.0.0
-	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 )
 
 require (
@@ -68,5 +65,4 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

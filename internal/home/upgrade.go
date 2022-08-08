@@ -1,6 +1,7 @@
 package home
 
 import (
+	"bytes"
 	"fmt"
 	"net/url"
 	"os"
@@ -17,7 +18,7 @@ import (
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/renameio/maybe"
 	"golang.org/x/crypto/bcrypt"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // currentSchemaVersion is the current schema version.
@@ -104,16 +105,20 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		return fmt.Errorf("unknown configuration schema version %d", oldVersion)
 	}
 
-	body, err := yaml.Marshal(diskConf)
+	buf := &bytes.Buffer{}
+	enc := yaml.NewEncoder(buf)
+	enc.SetIndent(2)
+
+	err = enc.Encode(diskConf)
 	if err != nil {
 		return fmt.Errorf("generating new config: %w", err)
 	}
 
-	config.fileData = body
+	config.fileData = buf.Bytes()
 	confFile := config.getConfigFilename()
-	err = maybe.WriteFile(confFile, body, 0o644)
+	err = maybe.WriteFile(confFile, config.fileData, 0o644)
 	if err != nil {
-		return fmt.Errorf("saving new config: %w", err)
+		return fmt.Errorf("writing new config: %w", err)
 	}
 
 	return nil

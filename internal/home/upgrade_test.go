@@ -190,7 +190,7 @@ func testDiskConf(schemaVersion int) (diskConf yobj) {
 	return diskConf
 }
 
-// testDNSConf creates a DNS config for test the way gopkg.in/yaml.v2 would
+// testDNSConf creates a DNS config for test the way gopkg.in/yaml.v3 would
 // unmarshal it.  In YAML, keys aren't guaranteed to always only be strings.
 func testDNSConf(schemaVersion int) (dnsConf yobj) {
 	dnsConf = yobj{
