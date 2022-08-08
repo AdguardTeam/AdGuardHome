@@ -602,17 +602,17 @@ func configureLogger(args options) {
 		ls.Verbose = true
 	}
 	if args.logFile != "" {
-		ls.LogFile = args.logFile
-	} else if config.LogFile != "" {
-		ls.LogFile = config.LogFile
+		ls.File = args.logFile
+	} else if config.File != "" {
+		ls.File = config.File
 	}
 
 	// Handle default log settings overrides
-	ls.LogCompress = config.LogCompress
-	ls.LogLocalTime = config.LogLocalTime
-	ls.LogMaxBackups = config.LogMaxBackups
-	ls.LogMaxSize = config.LogMaxSize
-	ls.LogMaxAge = config.LogMaxAge
+	ls.Compress = config.Compress
+	ls.LocalTime = config.LocalTime
+	ls.MaxBackups = config.MaxBackups
+	ls.MaxSize = config.MaxSize
+	ls.MaxAge = config.MaxAge
 
 	// log.SetLevel(log.INFO) - default
 	if ls.Verbose {
@@ -623,27 +623,27 @@ func configureLogger(args options) {
 	// happen pretty quickly.
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 
-	if args.runningAsService && ls.LogFile == "" && runtime.GOOS == "windows" {
+	if args.runningAsService && ls.File == "" && runtime.GOOS == "windows" {
 		// When running as a Windows service, use eventlog by default if nothing
 		// else is configured.  Otherwise, we'll simply lose the log output.
-		ls.LogFile = configSyslog
+		ls.File = configSyslog
 	}
 
 	// logs are written to stdout (default)
-	if ls.LogFile == "" {
+	if ls.File == "" {
 		return
 	}
 
-	if ls.LogFile == configSyslog {
+	if ls.File == configSyslog {
 		// Use syslog where it is possible and eventlog on Windows
 		err := aghos.ConfigureSyslog(serviceName)
 		if err != nil {
 			log.Fatalf("cannot initialize syslog: %s", err)
 		}
 	} else {
-		logFilePath := filepath.Join(Context.workDir, ls.LogFile)
-		if filepath.IsAbs(ls.LogFile) {
-			logFilePath = ls.LogFile
+		logFilePath := filepath.Join(Context.workDir, ls.File)
+		if filepath.IsAbs(ls.File) {
+			logFilePath = ls.File
 		}
 
 		_, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
@@ -653,11 +653,11 @@ func configureLogger(args options) {
 
 		log.SetOutput(&lumberjack.Logger{
 			Filename:   logFilePath,
-			Compress:   ls.LogCompress, // disabled by default
-			LocalTime:  ls.LogLocalTime,
-			MaxBackups: ls.LogMaxBackups,
-			MaxSize:    ls.LogMaxSize, // megabytes
-			MaxAge:     ls.LogMaxAge,  // days
+			Compress:   ls.Compress, // disabled by default
+			LocalTime:  ls.LocalTime,
+			MaxBackups: ls.MaxBackups,
+			MaxSize:    ls.MaxSize, // megabytes
+			MaxAge:     ls.MaxAge,  // days
 		})
 	}
 }

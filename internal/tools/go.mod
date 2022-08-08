@@ -6,7 +6,7 @@ require (
 	github.com/fzipp/gocyclo v0.6.0
 	github.com/golangci/misspell v0.3.5
 	github.com/gordonklaus/ineffassign v0.0.0-20210914165742-4cc7213b9bc8
-	github.com/kisielk/errcheck v1.6.1
+	github.com/kisielk/errcheck v1.6.2
 	github.com/kyoh86/looppointer v0.1.7
 	github.com/securego/gosec/v2 v2.12.0
 	golang.org/x/tools v0.1.12
@@ -27,6 +27,6 @@ require (
 	golang.org/x/exp/typeparams v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/sys v0.0.0-20220731174439-a90be440212d // indirect
+	golang.org/x/sys v0.0.0-20220804214406-8e32c043e418 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
