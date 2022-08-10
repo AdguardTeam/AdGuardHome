@@ -3,14 +3,13 @@ package websvc_test
 import (
 	"context"
 	"io"
-	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"testing"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/v1/websvc"
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,11 +29,8 @@ func newTestServer(t testing.TB) (svc *websvc.Service, addr string) {
 	t.Helper()
 
 	c := &websvc.Config{
-		TLS: nil,
-		Addresses: []*netutil.IPPort{{
-			IP:   net.IP{127, 0, 0, 1},
-			Port: 0,
-		}},
+		TLS:             nil,
+		Addresses:       []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:0")},
 		SecureAddresses: nil,
 		Timeout:         testTimeout,
 		Start:           testStart,

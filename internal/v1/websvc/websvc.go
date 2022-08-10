@@ -10,13 +10,13 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/netip"
 	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/v1/agh"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/netutil"
 	httptreemux "github.com/dimfeld/httptreemux/v5"
 )
 
@@ -27,11 +27,11 @@ type Config struct {
 	TLS *tls.Config
 
 	// Addresses are the addresses on which to serve the plain HTTP API.
-	Addresses []*netutil.IPPort
+	Addresses []netip.AddrPort
 
 	// SecureAddresses are the addresses on which to serve the HTTPS API.  If
 	// SecureAddresses is not empty, TLS must not be nil.
-	SecureAddresses []*netutil.IPPort
+	SecureAddresses []netip.AddrPort
 
 	// Start is the time of start of AdGuard Home.
 	Start time.Time
