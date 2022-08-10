@@ -22,6 +22,7 @@ and this project adheres to
 
 ### Added
 
+- Arabic localization.
 - Support for Discovery of Designated Resolvers (DDR) according to the [RFC
   draft][ddr-draft] ([#4463]).
 
@@ -462,7 +463,7 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
 
 - Upstream server information for responses from cache ([#3772]).  Note that old
   log entries concerning cached responses won't include that information.
-- Finnish and Ukrainian translations.
+- Finnish and Ukrainian localizations.
 - Setting the timeout for IP address pinging in the "Fastest IP address" mode
   through the new `fastest_timeout` field in the configuration file ([#1992]).
 - Static IP address detection on FreeBSD ([#3289]).
