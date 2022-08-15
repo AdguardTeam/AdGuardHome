@@ -101,7 +101,7 @@
         git checkout "${bamboo.repository.revision.number}"
 
         # Run the build with the specified channel.
-        echo "${bamboo.gpgSecretKey}"\
+        echo "${bamboo.gpgSecretKeyPart1}${bamboo.gpgSecretKeyPart2}"\
                 | awk '{ gsub(/\\n/, "\n"); print; }'\
                 | gpg --import --batch --yes
 
