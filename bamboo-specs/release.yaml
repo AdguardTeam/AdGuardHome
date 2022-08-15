@@ -68,7 +68,7 @@
         # Explicitly checkout the revision that we need.
         git checkout "${bamboo.repository.revision.number}"
 
-        make js-build
+        make js-deps js-build
   'artifacts':
   - 'name': 'AdGuardHome frontend'
     'pattern': 'build*/**'
