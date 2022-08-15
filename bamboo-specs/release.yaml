@@ -10,6 +10,12 @@
   'dockerGo': 'adguard/golang-ubuntu:5.0'
 
 'stages':
+- 'Build frontend':
+    'manual': false
+    'final': false
+    'jobs':
+    - 'Build frontend'
+
 - 'Make release':
     'manual': false
     'final': false
@@ -40,11 +46,41 @@
     'jobs':
     - 'Publish to GitHub Releases'
 
-'Make release':
+'Build frontend':
   'docker':
     'image': '${bamboo.dockerGo}'
     'volumes':
       '${system.YARN_DIR}': '${bamboo.cacheYarn}'
+  'key': 'BF'
+  'other':
+    'clean-working-dir': true
+  'tasks':
+  - 'checkout':
+      'force-clean-build': true
+  - 'script':
+      'interpreter': 'SHELL'
+      'scripts':
+      - |
+        #!/bin/sh
+
+        set -e -f -u -x
+
+        # Explicitly checkout the revision that we need.
+        git checkout "${bamboo.repository.revision.number}"
+
+        make js-build
+  'artifacts':
+  - 'name': 'AdGuardHome frontend'
+    'pattern': 'build*/**'
+    'shared': true
+    'required': true
+  'requirements':
+  - 'adg-docker': 'true'
+
+'Make release':
+  'docker':
+    'image': '${bamboo.dockerGo}'
+    'volumes':
       '${system.GO_CACHE_DIR}': '${bamboo.cacheGo}'
       '${system.GO_PKG_CACHE_DIR}': '${bamboo.cacheGoPkg}'
   'key': 'MR'
@@ -72,6 +108,7 @@
         make\
                 CHANNEL=${bamboo.channel}\
                 GPG_KEY_PASSPHRASE=${bamboo.gpgPassword}\
+                FRONTEND_PREBUILT=1\
                 VERBOSE=1\
                 build-release
   # TODO(a.garipov): Use more fine-grained artifact rules.
