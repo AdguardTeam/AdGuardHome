@@ -21,10 +21,9 @@ require (
 	github.com/lucas-clemente/quic-go v0.28.1
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/netlink v1.6.0
-	github.com/mdlayher/packet v1.0.0
 	// TODO(a.garipov): This package is deprecated; find a new one or use
-	// our own code for that.
-	github.com/mdlayher/raw v0.1.0 // indirect
+	// our own code for that.  Perhaps, use gopacket.
+	github.com/mdlayher/raw v0.1.0
 	github.com/miekg/dns v1.1.50
 	github.com/stretchr/testify v1.7.1
 	github.com/ti-mo/netfilter v0.4.0
@@ -52,6 +51,7 @@ require (
 	github.com/marten-seemann/qtls-go1-17 v0.1.2 // indirect
 	github.com/marten-seemann/qtls-go1-18 v0.1.2 // indirect
 	github.com/marten-seemann/qtls-go1-19 v0.1.0-beta.1 // indirect
+	github.com/mdlayher/packet v1.0.0 // indirect
 	github.com/mdlayher/socket v0.2.3 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
