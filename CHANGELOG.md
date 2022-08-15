@@ -78,6 +78,7 @@ See also the [v0.107.9 GitHub milestone][ms-v0.107.9].
 
 ### Fixed
 
+- DHCP not working on most OSes ([#4836]).
 - Several UI issues ([#4775], [#4776], [#4782]).
 
 ### Removed
@@ -89,6 +90,7 @@ See also the [v0.107.9 GitHub milestone][ms-v0.107.9].
 [#4775]: https://github.com/AdguardTeam/AdGuardHome/issues/4775
 [#4776]: https://github.com/AdguardTeam/AdGuardHome/issues/4776
 [#4782]: https://github.com/AdguardTeam/AdGuardHome/issues/4782
+[#4836]: https://github.com/AdguardTeam/AdGuardHome/issues/4836
 
 [go-1.18.5]:   https://groups.google.com/g/golang-announce/c/YqYYG87xB10
 [ms-v0.107.9]: https://github.com/AdguardTeam/AdGuardHome/milestone/45?closed=1
