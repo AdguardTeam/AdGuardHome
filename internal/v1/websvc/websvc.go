@@ -40,8 +40,8 @@ type Config struct {
 	Timeout time.Duration
 }
 
-// Service is the AdGuard Home web service.  A nil *Service is a valid service
-// that does nothing.
+// Service is the AdGuard Home web service.  A nil *Service is a valid
+// [agh.Service] that does nothing.
 type Service struct {
 	tls     *tls.Config
 	servers []*http.Server
@@ -155,7 +155,7 @@ type unit = struct{}
 // type check
 var _ agh.Service = (*Service)(nil)
 
-// Start implements the agh.Service interface for *Service.  svc may be nil.
+// Start implements the [agh.Service] interface for *Service.  svc may be nil.
 // After Start exits, all HTTP servers have tried to start, possibly failing and
 // writing error messages to the log.
 func (svc *Service) Start() (err error) {
@@ -205,7 +205,8 @@ func serve(srv *http.Server, wg *sync.WaitGroup) {
 	}
 }
 
-// Shutdown implements the agh.Service interface for *Service.  svc may be nil.
+// Shutdown implements the [agh.Service] interface for *Service.  svc may be
+// nil.
 func (svc *Service) Shutdown(ctx context.Context) (err error) {
 	if svc == nil {
 		return nil
