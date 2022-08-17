@@ -5,6 +5,7 @@ package stats
 import (
 	"encoding/json"
 	"net/http"
+	"sync/atomic"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -15,17 +16,9 @@ import (
 // The key is either a client's address or a requested address.
 type topAddrs = map[string]uint64
 
-// statsResponse is a response for getting statistics.
-type statsResponse struct {
+// StatsResp is a response to the GET /control/stats.
+type StatsResp struct {
 	TimeUnits string `json:"time_units"`
-
-	NumDNSQueries           uint64 `json:"num_dns_queries"`
-	NumBlockedFiltering     uint64 `json:"num_blocked_filtering"`
-	NumReplacedSafebrowsing uint64 `json:"num_replaced_safebrowsing"`
-	NumReplacedSafesearch   uint64 `json:"num_replaced_safesearch"`
-	NumReplacedParental     uint64 `json:"num_replaced_parental"`
-
-	AvgProcessingTime float64 `json:"avg_processing_time"`
 
 	TopQueried []topAddrs `json:"top_queried_domains"`
 	TopClients []topAddrs `json:"top_clients"`
@@ -36,16 +29,22 @@ type statsResponse struct {
 	BlockedFiltering     []uint64 `json:"blocked_filtering"`
 	ReplacedSafebrowsing []uint64 `json:"replaced_safebrowsing"`
 	ReplacedParental     []uint64 `json:"replaced_parental"`
+
+	NumDNSQueries           uint64 `json:"num_dns_queries"`
+	NumBlockedFiltering     uint64 `json:"num_blocked_filtering"`
+	NumReplacedSafebrowsing uint64 `json:"num_replaced_safebrowsing"`
+	NumReplacedSafesearch   uint64 `json:"num_replaced_safesearch"`
+	NumReplacedParental     uint64 `json:"num_replaced_parental"`
+
+	AvgProcessingTime float64 `json:"avg_processing_time"`
 }
 
-// handleStats is a handler for getting statistics.
+// handleStats handles requests to the GET /control/stats endpoint.
 func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
+	limit := atomic.LoadUint32(&s.limitHours)
+
 	start := time.Now()
-
-	var resp statsResponse
-	var ok bool
-	resp, ok = s.getData()
-
+	resp, ok := s.getData(limit)
 	log.Debug("stats: prepared data in %v", time.Since(start))
 
 	if !ok {
@@ -61,36 +60,30 @@ func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 	err := json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
-
-		return
 	}
 }
 
-type config struct {
+// configResp is the response to the GET /control/stats_info.
+type configResp struct {
 	IntervalDays uint32 `json:"interval"`
 }
 
-// Get configuration
+// handleStatsInfo handles requests to the GET /control/stats_info endpoint.
 func (s *StatsCtx) handleStatsInfo(w http.ResponseWriter, r *http.Request) {
-	resp := config{}
-	resp.IntervalDays = s.limitHours / 24
+	resp := configResp{IntervalDays: atomic.LoadUint32(&s.limitHours) / 24}
 
-	data, err := json.Marshal(resp)
+	w.Header().Set("Content-Type", "application/json")
+
+	err := json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
-
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(data)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "http write: %s", err)
 	}
 }
 
-// Set configuration
+// handleStatsConfig handles requests to the POST /control/stats_config
+// endpoint.
 func (s *StatsCtx) handleStatsConfig(w http.ResponseWriter, r *http.Request) {
-	reqData := config{}
+	reqData := configResp{}
 	err := json.NewDecoder(r.Body).Decode(&reqData)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
@@ -108,12 +101,15 @@ func (s *StatsCtx) handleStatsConfig(w http.ResponseWriter, r *http.Request) {
 	s.configModified()
 }
 
-// Reset data
+// handleStatsReset handles requests to the POST /control/stats_reset endpoint.
 func (s *StatsCtx) handleStatsReset(w http.ResponseWriter, r *http.Request) {
-	s.clear()
+	err := s.clear()
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusInternalServerError, "stats: %s", err)
+	}
 }
 
-// Register web handlers
+// initWeb registers the handlers for web endpoints of statistics module.
 func (s *StatsCtx) initWeb() {
 	if s.httpRegister == nil {
 		return
