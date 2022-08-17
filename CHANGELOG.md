@@ -42,8 +42,6 @@ See also the [v0.107.11 GitHub milestone][ms-v0.107.11].
 
 See also the [v0.107.10 GitHub milestone][ms-v0.107.10].
 
-[ms-v0.107.10]: https://github.com/AdguardTeam/AdGuardHome/milestone/46?closed=1
-
 ### Added
 
 - Arabic localization.
@@ -67,7 +65,8 @@ See also the [v0.107.10 GitHub milestone][ms-v0.107.10].
 [#4836]: https://github.com/AdguardTeam/AdGuardHome/issues/4836
 [#4843]: https://github.com/AdguardTeam/AdGuardHome/issues/4843
 
-[ddr-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
+[ddr-draft]:    https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
+[ms-v0.107.10]: https://github.com/AdguardTeam/AdGuardHome/milestone/46?closed=1
 
 
 
