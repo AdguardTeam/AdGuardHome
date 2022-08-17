@@ -17,7 +17,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/ameshkov/dnscrypt/v2"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // Default ports.
@@ -58,6 +58,7 @@ func initDNSServer() (err error) {
 	}
 
 	conf := querylog.Config{
+		Anonymizer:        anonymizer,
 		ConfigModified:    onConfigModified,
 		HTTPRegister:      httpRegister,
 		FindClient:        Context.clients.findMultiple,
@@ -67,7 +68,6 @@ func initDNSServer() (err error) {
 		Enabled:           config.DNS.QueryLogEnabled,
 		FileEnabled:       config.DNS.QueryLogFileEnabled,
 		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
-		Anonymizer:        anonymizer,
 	}
 	Context.queryLog = querylog.New(conf)
 
@@ -135,8 +135,13 @@ func initDNSServer() (err error) {
 		return fmt.Errorf("dnsServer.Prepare: %w", err)
 	}
 
-	Context.rdns = NewRDNS(Context.dnsServer, &Context.clients, config.DNS.UsePrivateRDNS)
-	Context.whois = initWHOIS(&Context.clients)
+	if config.Clients.Sources.RDNS {
+		Context.rdns = NewRDNS(Context.dnsServer, &Context.clients, config.DNS.UsePrivateRDNS)
+	}
+
+	if config.Clients.Sources.WHOIS {
+		Context.whois = initWHOIS(&Context.clients)
+	}
 
 	Context.filters.Init()
 	return nil
@@ -153,10 +158,11 @@ func onDNSRequest(pctx *proxy.DNSContext) {
 		return
 	}
 
-	if config.DNS.ResolveClients && !ip.IsLoopback() {
+	srcs := config.Clients.Sources
+	if srcs.RDNS && !ip.IsLoopback() {
 		Context.rdns.Begin(ip)
 	}
-	if !netutil.IsSpecialPurpose(ip) {
+	if srcs.WHOIS && !netutil.IsSpecialPurpose(ip) {
 		Context.whois.Begin(ip)
 	}
 }
@@ -215,6 +221,10 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 		newConf.TLSConfig = tlsConf.TLSConfig
 		newConf.TLSConfig.ServerName = tlsConf.ServerName
 
+		if tlsConf.PortHTTPS != 0 {
+			newConf.HTTPSListenAddrs = ipsToTCPAddrs(hosts, tlsConf.PortHTTPS)
+		}
+
 		if tlsConf.PortDNSOverTLS != 0 {
 			newConf.TLSListenAddrs = ipsToTCPAddrs(hosts, tlsConf.PortDNSOverTLS)
 		}
@@ -239,7 +249,7 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	newConf.FilterHandler = applyAdditionalFiltering
 	newConf.GetCustomUpstreamByClient = Context.clients.findUpstreams
 
-	newConf.ResolveClients = dnsConf.ResolveClients
+	newConf.ResolveClients = config.Clients.Sources.RDNS
 	newConf.UsePrivateRDNS = dnsConf.UsePrivateRDNS
 	newConf.LocalPTRResolvers = dnsConf.LocalPTRResolvers
 	newConf.UpstreamTimeout = dnsConf.UpstreamTimeout.Duration
@@ -324,24 +334,28 @@ func getDNSEncryption() (de dnsEncryption) {
 
 // applyAdditionalFiltering adds additional client information and settings if
 // the client has them.
-func applyAdditionalFiltering(clientAddr net.IP, clientID string, setts *filtering.Settings) {
+func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering.Settings) {
 	Context.dnsFilter.ApplyBlockedServices(setts, nil, true)
 
-	if clientAddr == nil {
+	log.Debug("looking up settings for client with ip %s and clientid %q", clientIP, clientID)
+
+	if clientIP == nil {
 		return
 	}
 
-	setts.ClientIP = clientAddr
+	setts.ClientIP = clientIP
 
 	c, ok := Context.clients.Find(clientID)
 	if !ok {
-		c, ok = Context.clients.Find(clientAddr.String())
+		c, ok = Context.clients.Find(clientIP.String())
 		if !ok {
+			log.Debug("client with ip %s and clientid %q not found", clientIP, clientID)
+
 			return
 		}
 	}
 
-	log.Debug("using settings for client %s with ip %s and clientid %q", c.Name, clientAddr, clientID)
+	log.Debug("using settings for client %q with ip %s and clientid %q", c.Name, clientIP, clientID)
 
 	if c.UseOwnBlockedServices {
 		Context.dnsFilter.ApplyBlockedServices(setts, c.BlockedServices, false)
@@ -382,15 +396,16 @@ func startDNSServer() error {
 	Context.queryLog.Start()
 
 	const topClientsNumber = 100 // the number of clients to get
-	for _, ip := range Context.stats.GetTopClientsIP(topClientsNumber) {
+	for _, ip := range Context.stats.TopClientsIP(topClientsNumber) {
 		if ip == nil {
 			continue
 		}
 
-		if config.DNS.ResolveClients && !ip.IsLoopback() {
+		srcs := config.Clients.Sources
+		if srcs.RDNS && !ip.IsLoopback() {
 			Context.rdns.Begin(ip)
 		}
-		if !netutil.IsSpecialPurpose(ip) {
+		if srcs.WHOIS && !netutil.IsSpecialPurpose(ip) {
 			Context.whois.Begin(ip)
 		}
 	}
@@ -440,7 +455,12 @@ func closeDNSServer() {
 	}
 
 	if Context.stats != nil {
-		Context.stats.Close()
+		err := Context.stats.Close()
+		if err != nil {
+			log.Debug("closing stats: %s", err)
+		}
+
+		// TODO(e.burkov):  Find out if it's safe.
 		Context.stats = nil
 	}
 

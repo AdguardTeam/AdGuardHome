@@ -34,7 +34,7 @@ func (l *testQueryLog) Add(p *querylog.AddParams) {
 type testStats struct {
 	// Stats is embedded here simply to make testStats a stats.Stats without
 	// actually implementing all methods.
-	stats.Stats
+	stats.Interface
 
 	lastEntry stats.Entry
 }

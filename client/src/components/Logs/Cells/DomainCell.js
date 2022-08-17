@@ -147,11 +147,11 @@ const DomainCell = ({
             />
             <div className={valueClass}>
                 {unicodeName ? (
-                    <div className="text-truncate" title={unicodeName}>
+                    <div className="text-truncate overflow-break-mobile" title={unicodeName}>
                         {unicodeName}
                     </div>
                 ) : (
-                    <div className="text-truncate" title={domain}>
+                    <div className="text-truncate overflow-break-mobile" title={domain}>
                         {domain}
                     </div>
                 )}

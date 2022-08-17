@@ -1,4 +1,5 @@
 import whotracksmeDb from './whotracksme.json';
+import whotracksmeWebsites from './whotracksme_web.json';
 import adguardDb from './adguard.json';
 import { REPOSITORY } from '../constants';
 
@@ -21,6 +22,22 @@ export const sources = {
 };
 
 /**
+ * Gets link to tracker page on whotracks.me.
+ *
+ * @param trackerId
+ * @return {string}
+ */
+const getWhotracksmeUrl = (trackerId) => {
+    const websiteId = whotracksmeWebsites.websites[trackerId];
+    if (websiteId) {
+        // Overrides links to websites.
+        return `https://whotracks.me/websites/${websiteId}.html`;
+    }
+
+    return `https://whotracks.me/trackers/${trackerId}.html`;
+};
+
+/**
  * Gets the source metadata for the specified tracker
  * @param {TrackerData} trackerData tracker data
  * @returns {source} source metadata or null if no matching tracker found
@@ -33,7 +50,7 @@ export const getSourceData = (trackerData) => {
     if (trackerData.source === sources.WHOTRACKSME) {
         return {
             name: 'Whotracks.me',
-            url: `https://whotracks.me/trackers/${trackerData.id}.html`,
+            url: getWhotracksmeUrl(trackerData.id),
         };
     }
     if (trackerData.source === sources.ADGUARD) {

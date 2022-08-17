@@ -149,7 +149,7 @@ const Form = ({
                 {' '}
                 <Trans components={[
                     <a
-                        href="https://kb.adguard.com/general/dns-providers"
+                        href="https://link.adtidy.org/forward.html?action=dns_kb_providers&from=ui&app=home"
                         target="_blank"
                         rel="noopener noreferrer"
                         key="0"

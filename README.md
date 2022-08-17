@@ -1,6 +1,6 @@
 &nbsp;
 <p align="center">
-  <img src="https://cdn.adguard.com/public/Adguard/Common/adguard_home.svg" width="300px" alt="AdGuard Home" />
+  <img src="https://cdn.adtidy.org/public/Adguard/Common/adguard_home.svg" width="300px" alt="AdGuard Home" />
 </p>
 <h3 align="center">Privacy protection center for you and your devices</h3>
 <p align="center">
@@ -23,9 +23,6 @@
     <a href="https://hub.docker.com/r/adguard/adguardhome">
         <img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/adguard/adguardhome.svg?maxAge=604800" />
     </a>
-    <a href="https://hub.docker.com/r/adguard/adguardhome">
-        <img alt="Docker Stars" src="https://img.shields.io/docker/stars/adguard/adguardhome.svg?maxAge=604800" />
-    </a>
     <br />
     <a href="https://github.com/AdguardTeam/AdGuardHome/releases">
         <img src="https://img.shields.io/github/release/AdguardTeam/AdGuardHome/all.svg" alt="Latest release" />
@@ -38,14 +35,19 @@
 <br />
 
 <p align="center">
-    <img src="https://cdn.adguard.com/public/Adguard/Common/adguard_home.gif" width="800" />
+    <img src="https://cdn.adtidy.org/public/Adguard/Common/adguard_home.gif" width="800" />
 </p>
 
 <hr />
 
 AdGuard Home is a network-wide software for blocking ads & tracking. After you set it up, it'll cover ALL your home devices, and you don't need any client-side software for that.
 
-It operates as a DNS server that re-routes tracking domains to a "black hole", thus preventing your devices from connecting to those servers. It's based on software we use for our public [AdGuard DNS](https://adguard.com/en/adguard-dns/overview.html) servers -- both share a lot of common code.
+It operates as a DNS server that re-routes tracking domains to a “black hole”,
+thus preventing your devices from connecting to those servers.  It's based on
+software we use for our public [AdGuard DNS](https://adguard-dns.io/) servers,
+and both share a lot of code.
+
+
 
 * [Getting Started](#getting-started)
 * [Comparing AdGuard Home to other solutions](#comparison)
@@ -114,7 +116,7 @@ If you're running **Linux**, there's a secure and easy way to install AdGuard Ho
 ### API
 
 If you want to integrate with AdGuard Home, you can use our [REST API](https://github.com/AdguardTeam/AdGuardHome/tree/master/openapi).
-Alternatively, you can use this [python client](https://pypi.org/project/adguardhome/), which is used to build the [AdGuard Home Hass.io Add-on](https://community.home-assistant.io/t/community-hass-io-add-on-adguard-home).
+Alternatively, you can use this [python client](https://pypi.org/project/adguardhome/), which is used to build the [AdGuard Home Hass.io Add-on](https://www.home-assistant.io/integrations/adguard/).
 
 <a id="comparison"></a>
 ## Comparing AdGuard Home to other solutions
@@ -161,7 +163,15 @@ AdGuard Home provides a lot of features out-of-the-box with no need to install a
 
 It depends.
 
-"DNS sinkholing" is capable of blocking a big percentage of ads, but it lacks flexibility and power of traditional ad blockers. You can get a good impression about the difference between these methods by reading [this article](https://adguard.com/en/blog/adguard-vs-adaway-dns66/). It compares AdGuard for Android (a traditional ad blocker) to hosts-level ad blockers (which are almost identical to DNS-based blockers in their capabilities). This level of protection is enough for some users. 
+“DNS sinkholing” is capable of blocking a big percentage of ads, but it lacks
+flexibility and power of traditional ad blockers.  You can get a good impression
+about the difference between these methods by reading
+[this article](https://adguard.com/en/blog/adguard-vs-adaway-dns66/). It
+compares AdGuard for Android (a traditional ad blocker) to hosts-level ad
+blockers (which are almost identical to DNS-based blockers in their
+capabilities).  This level of protection is enough for some users.
+
+
 
 Additionally, using a DNS-based blocker can help to block ads, tracking and analytics requests on other types of devices, such as SmartTVs, smart speakers or other kinds of IoT devices (on which you can't install traditional ad blockers).
 
@@ -185,7 +195,7 @@ Run `make init` to prepare the development environment.
 
 You will need this to build AdGuard Home:
 
- * [go](https://golang.org/dl/) v1.17 or later.
+ * [go](https://golang.org/dl/) v1.18 or later.
  * [node.js](https://nodejs.org/en/download/) v10.16.2 or later.
  * [npm](https://www.npmjs.com/) v6.14 or later (temporary requirement, TODO: remove when redesign is finished).
  * [yarn](https://yarnpkg.com/) v1.22.5 or later.
@@ -281,28 +291,28 @@ curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/s
 ```
 
  *  Beta channel builds
-     *  Linux: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_386.tar.gz)
-     *  Linux ARM: [32-bit ARMv6](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv6.tar.gz) (recommended for Raspberry Pi OS stable), [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv5.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv7.tar.gz)
-     *  Linux MIPS: [32-bit MIPS](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips_softfloat.tar.gz), [32-bit MIPSLE](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mipsle_softfloat.tar.gz), [64-bit MIPS](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips64_softfloat.tar.gz), [64-bit MIPSLE](https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips64le_softfloat.tar.gz)
-     *  Windows: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_windows_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_windows_386.zip)
-     *  macOS: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_darwin_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_darwin_386.zip)
-     *  macOS ARM: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_darwin_arm64.zip)
-     *  FreeBSD: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_386.tar.gz)
-     *  FreeBSD ARM: [64-bit](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv5.tar.gz), [32-bit ARMv6](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv6.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv7.tar.gz)
+     *  Linux: [64-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_amd64.tar.gz), [32-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_386.tar.gz)
+     *  Linux ARM: [32-bit ARMv6](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_armv6.tar.gz) (recommended for Raspberry Pi OS stable), [64-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_arm64.tar.gz), [32-bit ARMv5](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_armv5.tar.gz), [32-bit ARMv7](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_armv7.tar.gz)
+     *  Linux MIPS: [32-bit MIPS](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_mips_softfloat.tar.gz), [32-bit MIPSLE](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_mipsle_softfloat.tar.gz), [64-bit MIPS](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_mips64_softfloat.tar.gz), [64-bit MIPSLE](https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_mips64le_softfloat.tar.gz)
+     *  Windows: [64-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_windows_amd64.zip), [32-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_windows_386.zip)
+     *  macOS: [64-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_darwin_amd64.zip), [32-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_darwin_386.zip)
+     *  macOS ARM: [64-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_darwin_arm64.zip)
+     *  FreeBSD: [64-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_amd64.tar.gz), [32-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_386.tar.gz)
+     *  FreeBSD ARM: [64-bit](https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_arm64.tar.gz), [32-bit ARMv5](https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_armv5.tar.gz), [32-bit ARMv6](https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_armv6.tar.gz), [32-bit ARMv7](https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_armv7.tar.gz)
      *  OpenBSD: (coming soon)
      *  OpenBSD ARM: (coming soon)
 
  *  Edge channel builds
-     *  Linux: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_386.tar.gz)
-     *  Linux ARM: [32-bit ARMv6](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_armv6.tar.gz) (recommended for Raspberry Pi OS stable), [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_armv5.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_armv7.tar.gz)
-     *  Linux MIPS: [32-bit MIPS](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mips_softfloat.tar.gz), [32-bit MIPSLE](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mipsle_softfloat.tar.gz), [64-bit MIPS](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mips64_softfloat.tar.gz), [64-bit MIPSLE](https://static.adguard.com/adguardhome/edge/AdGuardHome_linux_mips64le_softfloat.tar.gz)
-     *  Windows: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_windows_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_windows_386.zip)
-     *  macOS: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_darwin_amd64.zip), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_darwin_386.zip)
-     *  macOS ARM: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_darwin_arm64.zip)
-     *  FreeBSD: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_amd64.tar.gz), [32-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_386.tar.gz)
-     *  FreeBSD ARM: [64-bit](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_arm64.tar.gz), [32-bit ARMv5](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv5.tar.gz), [32-bit ARMv6](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv6.tar.gz), [32-bit ARMv7](https://static.adguard.com/adguardhome/edge/AdGuardHome_freebsd_armv7.tar.gz)
-     *  OpenBSD: [64-bit (experimental)](https://static.adguard.com/adguardhome/edge/AdGuardHome_openbsd_amd64.tar.gz)
-     *  OpenBSD ARM: [64-bit (experimental)](https://static.adguard.com/adguardhome/edge/AdGuardHome_openbsd_arm64.tar.gz)
+     *  Linux: [64-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_amd64.tar.gz), [32-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_386.tar.gz)
+     *  Linux ARM: [32-bit ARMv6](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_armv6.tar.gz) (recommended for Raspberry Pi OS stable), [64-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_arm64.tar.gz), [32-bit ARMv5](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_armv5.tar.gz), [32-bit ARMv7](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_armv7.tar.gz)
+     *  Linux MIPS: [32-bit MIPS](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_mips_softfloat.tar.gz), [32-bit MIPSLE](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_mipsle_softfloat.tar.gz), [64-bit MIPS](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_mips64_softfloat.tar.gz), [64-bit MIPSLE](https://static.adtidy.org/adguardhome/edge/AdGuardHome_linux_mips64le_softfloat.tar.gz)
+     *  Windows: [64-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_windows_amd64.zip), [32-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_windows_386.zip)
+     *  macOS: [64-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_darwin_amd64.zip), [32-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_darwin_386.zip)
+     *  macOS ARM: [64-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_darwin_arm64.zip)
+     *  FreeBSD: [64-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_freebsd_amd64.tar.gz), [32-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_freebsd_386.tar.gz)
+     *  FreeBSD ARM: [64-bit](https://static.adtidy.org/adguardhome/edge/AdGuardHome_freebsd_arm64.tar.gz), [32-bit ARMv5](https://static.adtidy.org/adguardhome/edge/AdGuardHome_freebsd_armv5.tar.gz), [32-bit ARMv6](https://static.adtidy.org/adguardhome/edge/AdGuardHome_freebsd_armv6.tar.gz), [32-bit ARMv7](https://static.adtidy.org/adguardhome/edge/AdGuardHome_freebsd_armv7.tar.gz)
+     *  OpenBSD: [64-bit (experimental)](https://static.adtidy.org/adguardhome/edge/AdGuardHome_openbsd_amd64.tar.gz)
+     *  OpenBSD ARM: [64-bit (experimental)](https://static.adtidy.org/adguardhome/edge/AdGuardHome_openbsd_arm64.tar.gz)
 
 
 <a id="reporting-issues"></a>
@@ -313,9 +323,12 @@ If you run into any problem or have a suggestion, head to [this page](https://gi
 <a id="translate"></a>
 ### Help with translations
 
-If you want to help with AdGuard Home translations, please learn more about translating AdGuard products here: https://kb.adguard.com/en/general/adguard-translations
+If you want to help with AdGuard Home translations, please learn more about
+translating AdGuard products
+[in our Knowledge Base](https://kb.adguard.com/en/general/adguard-translations).
 
-Here is a link to AdGuard Home project: https://crowdin.com/project/adguard-applications/en#/adguard-home
+Here is a link to AdGuard Home project:
+<https://crowdin.com/project/adguard-applications/en#/adguard-home>
 
 <a id="help-other"></a>
 ### Other
@@ -364,11 +377,17 @@ This software wouldn't have been possible without:
    * And many more node.js packages.
  * [whotracks.me data](https://github.com/cliqz-oss/whotracks.me)
 
-You might have seen that [CoreDNS](https://coredns.io) was mentioned here before — we've stopped using it in AdGuard Home. While we still use it on our servers for [AdGuard DNS](https://adguard.com/adguard-dns/overview.html) service, it seemed like an overkill for Home as it impeded Home features that we plan to implement.
+You might have seen that [CoreDNS](https://coredns.io) was mentioned here
+before, but we've stopped using it in AdGuard Home.
 
 For a full list of all node.js packages in use, please take a look at [client/package.json](https://github.com/AdguardTeam/AdGuardHome/blob/master/client/package.json) file.
 
 <a id="privacy"></a>
 ## Privacy
 
-Our main idea is that you are the one, who should be in control of your data. So it is only natural, that AdGuard Home does not collect any usage statistics, and does not use any web services unless you configure it to do so. Full policy with every bit that _could in theory be_ sent by AdGuard Home is available [here](https://adguard.com/en/privacy/home.html).
+
+Our main idea is that you are the one, who should be in control of your data.
+So it is only natural, that AdGuard Home does not collect any usage statistics,
+and does not use any web services unless you configure it to do so.  Full policy
+with every bit that *could in theory be* sent by AdGuard Home is available
+[here](https://adguard.com/en/privacy/home.html)

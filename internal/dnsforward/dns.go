@@ -76,6 +76,10 @@ const (
 	resultCodeError
 )
 
+// ddrHostFQDN is the FQDN used in Discovery of Designated Resolvers (DDR) requests.
+// See https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
+const ddrHostFQDN = "_dns.resolver.arpa."
+
 // handleDNSRequest filters the incoming DNS requests and writes them to the query log
 func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 	ctx := &dnsContext{
@@ -94,10 +98,11 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 	mods := []modProcessFunc{
 		s.processRecursion,
 		s.processInitial,
+		s.processDDRQuery,
 		s.processDetermineLocal,
-		s.processInternalHosts,
+		s.processDHCPHosts,
 		s.processRestrictLocal,
-		s.processInternalIPAddrs,
+		s.processDHCPAddrs,
 		s.processFilteringBeforeRequest,
 		s.processLocalPTR,
 		s.processUpstream,
@@ -135,7 +140,6 @@ func (s *Server) processRecursion(dctx *dnsContext) (rc resultCode) {
 		pctx.Res = s.genNXDomain(pctx.Req)
 
 		return resultCodeFinish
-
 	}
 
 	return resultCodeSuccess
@@ -226,12 +230,10 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 				)
 			}
 
-			lowhost := strings.ToLower(l.Hostname)
+			lowhost := strings.ToLower(l.Hostname + "." + s.localDomainSuffix)
+			ip := netutil.CloneIP(l.IP)
 
-			ipToHost.Set(l.IP, lowhost)
-
-			ip := make(net.IP, 4)
-			copy(ip, l.IP.To4())
+			ipToHost.Set(ip, lowhost)
 			hostToIP[lowhost] = ip
 		}
 
@@ -240,6 +242,98 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 
 	s.setTableHostToIP(hostToIP)
 	s.setTableIPToHost(ipToHost)
+}
+
+// processDDRQuery responds to SVCB query for a special use domain name
+// ‘_dns.resolver.arpa’.  The result contains different types of encryption
+// supported by current user configuration.
+//
+// See https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
+func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
+	d := ctx.proxyCtx
+	question := d.Req.Question[0]
+
+	if !s.conf.HandleDDR {
+		return resultCodeSuccess
+	}
+
+	if question.Name == ddrHostFQDN {
+		if s.dnsProxy.TLSListenAddr == nil && s.conf.HTTPSListenAddrs == nil &&
+			s.dnsProxy.QUICListenAddr == nil || question.Qtype != dns.TypeSVCB {
+			d.Res = s.makeResponse(d.Req)
+
+			return resultCodeFinish
+		}
+
+		d.Res = s.makeDDRResponse(d.Req)
+
+		return resultCodeFinish
+	}
+
+	return resultCodeSuccess
+}
+
+// makeDDRResponse creates DDR answer according to server configuration.  The
+// contructed SVCB resource records have the priority of 1 for each entry,
+// similar to examples provided by https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
+//
+// TODO(a.meshkov):  Consider setting the priority values based on the protocol.
+func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
+	resp = s.makeResponse(req)
+	// TODO(e.burkov):  Think about storing the FQDN version of the server's
+	// name somewhere.
+	domainName := dns.Fqdn(s.conf.ServerName)
+
+	for _, addr := range s.conf.HTTPSListenAddrs {
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"h2"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
+			&dns.SVCBDoHPath{Template: "/dns-query?dns"},
+		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 1,
+			Target:   domainName,
+			Value:    values,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
+	}
+
+	for _, addr := range s.dnsProxy.TLSListenAddr {
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"dot"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
+		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 1,
+			Target:   domainName,
+			Value:    values,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
+	}
+
+	for _, addr := range s.dnsProxy.QUICListenAddr {
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"doq"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
+		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 1,
+			Target:   domainName,
+			Value:    values,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
+	}
+
+	return resp
 }
 
 // processDetermineLocal determines if the client's IP address is from
@@ -280,11 +374,11 @@ func (s *Server) hostToIP(host string) (ip net.IP, ok bool) {
 	return ip, true
 }
 
-// processInternalHosts respond to A requests if the target hostname is known to
+// processDHCPHosts respond to A requests if the target hostname is known to
 // the server.
 //
 // TODO(a.garipov): Adapt to AAAA as well.
-func (s *Server) processInternalHosts(dctx *dnsContext) (rc resultCode) {
+func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
 	if !s.dhcpServer.Enabled() {
 		return resultCodeSuccess
 	}
@@ -299,11 +393,10 @@ func (s *Server) processInternalHosts(dctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	reqHost := strings.ToLower(q.Name)
+	reqHost := strings.ToLower(q.Name[:len(q.Name)-1])
 	// TODO(a.garipov): Move everything related to DHCP local domain to the DHCP
 	// server.
-	host := strings.TrimSuffix(reqHost, s.localDomainSuffix)
-	if host == reqHost {
+	if !strings.HasSuffix(reqHost, s.localDomainSuffix) {
 		return resultCodeSuccess
 	}
 
@@ -316,7 +409,7 @@ func (s *Server) processInternalHosts(dctx *dnsContext) (rc resultCode) {
 		return resultCodeFinish
 	}
 
-	ip, ok := s.hostToIP(host)
+	ip, ok := s.hostToIP(reqHost)
 	if !ok {
 		// TODO(e.burkov): Inspect special cases when user want to apply some
 		// rules handled by other processors to the hosts with TLD.
@@ -373,7 +466,7 @@ func (s *Server) processRestrictLocal(ctx *dnsContext) (rc resultCode) {
 
 	// Restrict an access to local addresses for external clients.  We also
 	// assume that all the DHCP leases we give are locally-served or at least
-	// don't need to be inaccessible externally.
+	// don't need to be accessible externally.
 	if !s.privateNets.Contains(ip) {
 		log.Debug("dns: addr %s is not from locally-served network", ip)
 
@@ -413,7 +506,7 @@ func (s *Server) ipToHost(ip net.IP) (host string, ok bool) {
 		return "", false
 	}
 
-	var v interface{}
+	var v any
 	v, ok = s.tableIPToHost.Get(ip)
 	if !ok {
 		return "", false
@@ -430,7 +523,7 @@ func (s *Server) ipToHost(ip net.IP) (host string, ok bool) {
 
 // Respond to PTR requests if the target IP is leased by our DHCP server and the
 // requestor is inside the local network.
-func (s *Server) processInternalIPAddrs(ctx *dnsContext) (rc resultCode) {
+func (s *Server) processDHCPAddrs(ctx *dnsContext) (rc resultCode) {
 	d := ctx.proxyCtx
 	if d.Res != nil {
 		return resultCodeSuccess

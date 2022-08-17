@@ -47,7 +47,7 @@ type homeContext struct {
 	// --
 
 	clients    clientsContainer     // per-client-settings module
-	stats      stats.Stats          // statistics module
+	stats      stats.Interface      // statistics module
 	queryLog   querylog.QueryLog    // query log module
 	dnsServer  *dnsforward.Server   // DNS module
 	rdns       *RDNS                // rDNS module
@@ -173,6 +173,11 @@ func setupContext(args options) {
 
 			os.Exit(0)
 		}
+
+		if !args.noEtcHosts && config.Clients.Sources.HostsFile {
+			err = setupHostsContainer()
+			fatalOnError(err)
+		}
 	}
 
 	Context.mux = http.NewServeMux()
@@ -285,34 +290,35 @@ func setupConfig(args options) (err error) {
 		ConfName: config.getConfigFilename(),
 	})
 
-	if !args.noEtcHosts {
-		if err = setupHostsContainer(); err != nil {
-			return err
-		}
+	var arpdb aghnet.ARPDB
+	if config.Clients.Sources.ARP {
+		arpdb = aghnet.NewARPDB()
 	}
 
-	arpdb := aghnet.NewARPDB()
-	Context.clients.Init(config.Clients, Context.dhcpServer, Context.etcHosts, arpdb)
+	Context.clients.Init(config.Clients.Persistent, Context.dhcpServer, Context.etcHosts, arpdb)
 
 	if args.bindPort != 0 {
-		uc := aghalg.UniqChecker{}
-		addPorts(
-			uc,
-			tcpPort(args.bindPort),
-			tcpPort(config.BetaBindPort),
-			udpPort(config.DNS.Port),
-		)
+		tcpPorts := aghalg.UniqChecker[tcpPort]{}
+		addPorts(tcpPorts, tcpPort(args.bindPort), tcpPort(config.BetaBindPort))
+
+		udpPorts := aghalg.UniqChecker[udpPort]{}
+		addPorts(udpPorts, udpPort(config.DNS.Port))
+
 		if config.TLS.Enabled {
 			addPorts(
-				uc,
+				tcpPorts,
 				tcpPort(config.TLS.PortHTTPS),
 				tcpPort(config.TLS.PortDNSOverTLS),
-				udpPort(config.TLS.PortDNSOverQUIC),
 				tcpPort(config.TLS.PortDNSCrypt),
 			)
+
+			addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
 		}
-		if err = uc.Validate(aghalg.IntIsBefore); err != nil {
-			return fmt.Errorf("validating ports: %w", err)
+
+		if err = tcpPorts.Validate(); err != nil {
+			return fmt.Errorf("validating tcp ports: %w", err)
+		} else if err = udpPorts.Validate(); err != nil {
+			return fmt.Errorf("validating udp ports: %w", err)
 		}
 
 		config.BindPort = args.bindPort
@@ -388,9 +394,6 @@ func run(args options, clientBuildFS fs.FS) {
 
 	// configure log level and output
 	configureLogger(args)
-
-	// Go memory hacks
-	memoryUsage(args)
 
 	// Print the first message after logger is configured.
 	log.Println(version.Full())
@@ -517,27 +520,15 @@ func StartMods() error {
 func checkPermissions() {
 	log.Info("Checking if AdGuard Home has necessary permissions")
 
-	if runtime.GOOS == "windows" {
-		// On Windows we need to have admin rights to run properly
-
-		admin, _ := aghos.HaveAdminRights()
-		if admin {
-			return
-		}
-
+	if ok, err := aghnet.CanBindPrivilegedPorts(); !ok || err != nil {
 		log.Fatal("This is the first launch of AdGuard Home. You must run it as Administrator.")
 	}
 
 	// We should check if AdGuard Home is able to bind to port 53
-	ok, err := aghnet.CanBindPort(53)
-
-	if ok {
-		log.Info("AdGuard Home can bind to port 53")
-		return
-	}
-
-	if errors.Is(err, os.ErrPermission) {
-		msg := `Permission check failed.
+	err := aghnet.CheckPort("tcp", net.IP{127, 0, 0, 1}, defaultPortDNS)
+	if err != nil {
+		if errors.Is(err, os.ErrPermission) {
+			log.Fatal(`Permission check failed.
 
 AdGuard Home is not allowed to bind to privileged ports (for instance, port 53).
 Please note, that this is crucial for a server to be able to use privileged ports.
@@ -545,16 +536,17 @@ Please note, that this is crucial for a server to be able to use privileged port
 You have two options:
 1. Run AdGuard Home with root privileges
 2. On Linux you can grant the CAP_NET_BIND_SERVICE capability:
-https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser`
+https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started#running-without-superuser`)
+		}
 
-		log.Fatal(msg)
+		log.Info(
+			"AdGuard failed to bind to port 53: %s\n\n"+
+				"Please note, that this is crucial for a DNS server to be able to use that port.",
+			err,
+		)
 	}
 
-	msg := fmt.Sprintf(`AdGuard failed to bind to port 53 due to %v
-
-Please note, that this is crucial for a DNS server to be able to use that port.`, err)
-
-	log.Info(msg)
+	log.Info("AdGuard Home can bind to port 53")
 }
 
 // Write PID to a file
@@ -610,17 +602,17 @@ func configureLogger(args options) {
 		ls.Verbose = true
 	}
 	if args.logFile != "" {
-		ls.LogFile = args.logFile
-	} else if config.LogFile != "" {
-		ls.LogFile = config.LogFile
+		ls.File = args.logFile
+	} else if config.File != "" {
+		ls.File = config.File
 	}
 
 	// Handle default log settings overrides
-	ls.LogCompress = config.LogCompress
-	ls.LogLocalTime = config.LogLocalTime
-	ls.LogMaxBackups = config.LogMaxBackups
-	ls.LogMaxSize = config.LogMaxSize
-	ls.LogMaxAge = config.LogMaxAge
+	ls.Compress = config.Compress
+	ls.LocalTime = config.LocalTime
+	ls.MaxBackups = config.MaxBackups
+	ls.MaxSize = config.MaxSize
+	ls.MaxAge = config.MaxAge
 
 	// log.SetLevel(log.INFO) - default
 	if ls.Verbose {
@@ -631,27 +623,27 @@ func configureLogger(args options) {
 	// happen pretty quickly.
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 
-	if args.runningAsService && ls.LogFile == "" && runtime.GOOS == "windows" {
+	if args.runningAsService && ls.File == "" && runtime.GOOS == "windows" {
 		// When running as a Windows service, use eventlog by default if nothing
 		// else is configured.  Otherwise, we'll simply lose the log output.
-		ls.LogFile = configSyslog
+		ls.File = configSyslog
 	}
 
 	// logs are written to stdout (default)
-	if ls.LogFile == "" {
+	if ls.File == "" {
 		return
 	}
 
-	if ls.LogFile == configSyslog {
+	if ls.File == configSyslog {
 		// Use syslog where it is possible and eventlog on Windows
 		err := aghos.ConfigureSyslog(serviceName)
 		if err != nil {
 			log.Fatalf("cannot initialize syslog: %s", err)
 		}
 	} else {
-		logFilePath := filepath.Join(Context.workDir, ls.LogFile)
-		if filepath.IsAbs(ls.LogFile) {
-			logFilePath = ls.LogFile
+		logFilePath := filepath.Join(Context.workDir, ls.File)
+		if filepath.IsAbs(ls.File) {
+			logFilePath = ls.File
 		}
 
 		_, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
@@ -661,11 +653,11 @@ func configureLogger(args options) {
 
 		log.SetOutput(&lumberjack.Logger{
 			Filename:   logFilePath,
-			Compress:   ls.LogCompress, // disabled by default
-			LocalTime:  ls.LogLocalTime,
-			MaxBackups: ls.LogMaxBackups,
-			MaxSize:    ls.LogMaxSize, // megabytes
-			MaxAge:     ls.LogMaxAge,  // days
+			Compress:   ls.Compress, // disabled by default
+			LocalTime:  ls.LocalTime,
+			MaxBackups: ls.MaxBackups,
+			MaxSize:    ls.MaxSize, // megabytes
+			MaxAge:     ls.MaxAge,  // days
 		})
 	}
 }

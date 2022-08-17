@@ -4,11 +4,10 @@
 package aghnet
 
 import (
-	"io"
 	"net"
-	"strings"
 	"sync"
 	"testing"
+	"testing/fstest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -43,6 +42,8 @@ var wantNeighs = []Neighbor{{
 }}
 
 func TestFSysARPDB(t *testing.T) {
+	require.NoError(t, fstest.TestFS(testdata, "proc_net_arp"))
+
 	a := &fsysARPDB{
 		ns: &neighs{
 			mu: &sync.RWMutex{},
@@ -59,33 +60,43 @@ func TestFSysARPDB(t *testing.T) {
 	assert.Equal(t, wantNeighs, ns)
 }
 
-func TestCmdARPDB_arpawrt(t *testing.T) {
-	a := &cmdARPDB{
-		parse:  parseArpAWrt,
-		runcmd: func() (r io.Reader, err error) { return strings.NewReader(arpAOutputWrt), nil },
-		ns: &neighs{
-			mu: &sync.RWMutex{},
-			ns: make([]Neighbor, 0),
-		},
+func TestCmdARPDB_linux(t *testing.T) {
+	sh := mapShell{
+		"arp -a":   {err: nil, out: arpAOutputWrt, code: 0},
+		"ip neigh": {err: nil, out: ipNeighOutput, code: 0},
 	}
+	substShell(t, sh.RunCmd)
 
-	err := a.Refresh()
-	require.NoError(t, err)
+	t.Run("wrt", func(t *testing.T) {
+		a := &cmdARPDB{
+			parse: parseArpAWrt,
+			cmd:   "arp",
+			args:  []string{"-a"},
+			ns: &neighs{
+				mu: &sync.RWMutex{},
+				ns: make([]Neighbor, 0),
+			},
+		}
 
-	assert.Equal(t, wantNeighs, a.Neighbors())
-}
+		err := a.Refresh()
+		require.NoError(t, err)
 
-func TestCmdARPDB_ipneigh(t *testing.T) {
-	a := &cmdARPDB{
-		parse:  parseIPNeigh,
-		runcmd: func() (r io.Reader, err error) { return strings.NewReader(ipNeighOutput), nil },
-		ns: &neighs{
-			mu: &sync.RWMutex{},
-			ns: make([]Neighbor, 0),
-		},
-	}
-	err := a.Refresh()
-	require.NoError(t, err)
+		assert.Equal(t, wantNeighs, a.Neighbors())
+	})
 
-	assert.Equal(t, wantNeighs, a.Neighbors())
+	t.Run("ip_neigh", func(t *testing.T) {
+		a := &cmdARPDB{
+			parse: parseIPNeigh,
+			cmd:   "ip",
+			args:  []string{"neigh"},
+			ns: &neighs{
+				mu: &sync.RWMutex{},
+				ns: make([]Neighbor, 0),
+			},
+		}
+		err := a.Refresh()
+		require.NoError(t, err)
+
+		assert.Equal(t, wantNeighs, a.Neighbors())
+	})
 }

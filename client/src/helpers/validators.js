@@ -339,3 +339,14 @@ export const validatePasswordLength = (value) => {
     }
     return undefined;
 };
+
+/**
+ * @param value {string}
+ * @returns {Function}
+ */
+export const validateIpGateway = (value, allValues) => {
+    if (value === allValues.gatewayIp) {
+        return i18next.t('form_error_gateway_ip');
+    }
+    return undefined;
+};

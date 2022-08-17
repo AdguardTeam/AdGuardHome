@@ -21,6 +21,11 @@ func TestMain(m *testing.M) {
 	aghtest.DiscardLogOutput(m)
 }
 
+const (
+	sbBlocked = "wmconvirus.narod.ru"
+	pcBlocked = "pornhub.com"
+)
+
 var setts = Settings{
 	ProtectionEnabled: true,
 }
@@ -173,43 +178,37 @@ func TestSafeBrowsing(t *testing.T) {
 
 	d := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
-	const matching = "wmconvirus.narod.ru"
-	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
-		Hostname: matching,
-		Block:    true,
-	})
-	d.checkMatch(t, matching)
 
-	require.Contains(t, logOutput.String(), "SafeBrowsing lookup for "+matching)
+	d.SetSafeBrowsingUpstream(aghtest.NewBlockUpstream(sbBlocked, true))
+	d.checkMatch(t, sbBlocked)
 
-	d.checkMatch(t, "test."+matching)
+	require.Contains(t, logOutput.String(), fmt.Sprintf("safebrowsing lookup for %q", sbBlocked))
+
+	d.checkMatch(t, "test."+sbBlocked)
 	d.checkMatchEmpty(t, "yandex.ru")
-	d.checkMatchEmpty(t, "pornhub.com")
+	d.checkMatchEmpty(t, pcBlocked)
 
 	// Cached result.
 	d.safeBrowsingServer = "127.0.0.1"
-	d.checkMatch(t, matching)
-	d.checkMatchEmpty(t, "pornhub.com")
+	d.checkMatch(t, sbBlocked)
+	d.checkMatchEmpty(t, pcBlocked)
 	d.safeBrowsingServer = defaultSafebrowsingServer
 }
 
 func TestParallelSB(t *testing.T) {
 	d := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
-	const matching = "wmconvirus.narod.ru"
-	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
-		Hostname: matching,
-		Block:    true,
-	})
+
+	d.SetSafeBrowsingUpstream(aghtest.NewBlockUpstream(sbBlocked, true))
 
 	t.Run("group", func(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			t.Run(fmt.Sprintf("aaa%d", i), func(t *testing.T) {
 				t.Parallel()
-				d.checkMatch(t, matching)
-				d.checkMatch(t, "test."+matching)
+				d.checkMatch(t, sbBlocked)
+				d.checkMatch(t, "test."+sbBlocked)
 				d.checkMatchEmpty(t, "yandex.ru")
-				d.checkMatchEmpty(t, "pornhub.com")
+				d.checkMatchEmpty(t, pcBlocked)
 			})
 		}
 	})
@@ -382,23 +381,19 @@ func TestParentalControl(t *testing.T) {
 
 	d := newForTest(t, &Config{ParentalEnabled: true}, nil)
 	t.Cleanup(d.Close)
-	const matching = "pornhub.com"
-	d.SetParentalUpstream(&aghtest.TestBlockUpstream{
-		Hostname: matching,
-		Block:    true,
-	})
 
-	d.checkMatch(t, matching)
-	require.Contains(t, logOutput.String(), "Parental lookup for "+matching)
+	d.SetParentalUpstream(aghtest.NewBlockUpstream(pcBlocked, true))
+	d.checkMatch(t, pcBlocked)
+	require.Contains(t, logOutput.String(), fmt.Sprintf("parental lookup for %q", pcBlocked))
 
-	d.checkMatch(t, "www."+matching)
+	d.checkMatch(t, "www."+pcBlocked)
 	d.checkMatchEmpty(t, "www.yandex.ru")
 	d.checkMatchEmpty(t, "yandex.ru")
 	d.checkMatchEmpty(t, "api.jquery.com")
 
 	// Test cached result.
 	d.parentalServer = "127.0.0.1"
-	d.checkMatch(t, matching)
+	d.checkMatch(t, pcBlocked)
 	d.checkMatchEmpty(t, "yandex.ru")
 }
 
@@ -445,7 +440,7 @@ func TestMatching(t *testing.T) {
 	}, {
 		name:           "sanity",
 		rules:          "||doubleclick.net^",
-		host:           "wmconvirus.narod.ru",
+		host:           sbBlocked,
 		wantIsFiltered: false,
 		wantReason:     NotFilteredNotFound,
 		wantDNSType:    dns.TypeA,
@@ -765,14 +760,9 @@ func TestClientSettings(t *testing.T) {
 		}},
 	)
 	t.Cleanup(d.Close)
-	d.SetParentalUpstream(&aghtest.TestBlockUpstream{
-		Hostname: "pornhub.com",
-		Block:    true,
-	})
-	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
-		Hostname: "wmconvirus.narod.ru",
-		Block:    true,
-	})
+
+	d.SetParentalUpstream(aghtest.NewBlockUpstream(pcBlocked, true))
+	d.SetSafeBrowsingUpstream(aghtest.NewBlockUpstream(sbBlocked, true))
 
 	type testCase struct {
 		name       string
@@ -787,12 +777,12 @@ func TestClientSettings(t *testing.T) {
 		wantReason: FilteredBlockList,
 	}, {
 		name:       "parental",
-		host:       "pornhub.com",
+		host:       pcBlocked,
 		before:     true,
 		wantReason: FilteredParental,
 	}, {
 		name:       "safebrowsing",
-		host:       "wmconvirus.narod.ru",
+		host:       sbBlocked,
 		before:     false,
 		wantReason: FilteredSafeBrowsing,
 	}, {
@@ -836,33 +826,29 @@ func TestClientSettings(t *testing.T) {
 func BenchmarkSafeBrowsing(b *testing.B) {
 	d := newForTest(b, &Config{SafeBrowsingEnabled: true}, nil)
 	b.Cleanup(d.Close)
-	blocked := "wmconvirus.narod.ru"
-	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
-		Hostname: blocked,
-		Block:    true,
-	})
+
+	d.SetSafeBrowsingUpstream(aghtest.NewBlockUpstream(sbBlocked, true))
+
 	for n := 0; n < b.N; n++ {
-		res, err := d.CheckHost(blocked, dns.TypeA, &setts)
+		res, err := d.CheckHost(sbBlocked, dns.TypeA, &setts)
 		require.NoError(b, err)
 
-		assert.True(b, res.IsFiltered, "Expected hostname %s to match", blocked)
+		assert.Truef(b, res.IsFiltered, "expected hostname %q to match", sbBlocked)
 	}
 }
 
 func BenchmarkSafeBrowsingParallel(b *testing.B) {
 	d := newForTest(b, &Config{SafeBrowsingEnabled: true}, nil)
 	b.Cleanup(d.Close)
-	blocked := "wmconvirus.narod.ru"
-	d.SetSafeBrowsingUpstream(&aghtest.TestBlockUpstream{
-		Hostname: blocked,
-		Block:    true,
-	})
+
+	d.SetSafeBrowsingUpstream(aghtest.NewBlockUpstream(sbBlocked, true))
+
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			res, err := d.CheckHost(blocked, dns.TypeA, &setts)
+			res, err := d.CheckHost(sbBlocked, dns.TypeA, &setts)
 			require.NoError(b, err)
 
-			assert.True(b, res.IsFiltered, "Expected hostname %s to match", blocked)
+			assert.Truef(b, res.IsFiltered, "expected hostname %q to match", sbBlocked)
 		}
 	})
 }

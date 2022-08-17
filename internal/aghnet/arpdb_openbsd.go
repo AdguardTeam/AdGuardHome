@@ -12,19 +12,25 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-func newARPDB() *cmdARPDB {
+func newARPDB() (arp *cmdARPDB) {
 	return &cmdARPDB{
-		runcmd: rcArpA,
-		parse:  parseArpA,
+		parse: parseArpA,
 		ns: &neighs{
 			mu: &sync.RWMutex{},
 			ns: make([]Neighbor, 0),
 		},
+		cmd: "arp",
+		// Use -n flag to avoid resolving the hostnames of the neighbors.  By
+		// default ARP attempts to resolve the hostnames via DNS.  See man 8
+		// arp.
+		//
+		// See also https://github.com/AdguardTeam/AdGuardHome/issues/3157.
+		args: []string{"-a", "-n"},
 	}
 }
 
-// parseArpA parses the output of the "arp -a" command on OpenBSD.  The expected
-// input format:
+// parseArpA parses the output of the "arp -a -n" command on OpenBSD.  The
+// expected input format:
 //
 //   Host        Ethernet Address  Netif Expire    Flags
 //   192.168.1.1 ab:cd:ef:ab:cd:ef   em0 19m59s
