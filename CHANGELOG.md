@@ -20,6 +20,28 @@ and this project adheres to
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).
 
+### Deprecated
+
+- Go 1.18 support.  v0.109.0 will require at least Go 1.19 to build.
+
+[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+
+
+
+<!--
+## [v0.107.11] - 2022-09-28 (APPROX.)
+
+See also the [v0.107.11 GitHub milestone][ms-v0.107.11].
+
+[ms-v0.107.11]: https://github.com/AdguardTeam/AdGuardHome/milestone/47?closed=1
+-->
+
+
+
+## [v0.107.10] - 2022-08-17
+
+See also the [v0.107.10 GitHub milestone][ms-v0.107.10].
+
 ### Added
 
 - Arabic localization.
@@ -32,30 +54,19 @@ and this project adheres to
 
 ### Fixed
 
-- Data races and concurrent map access in statistics module ([#4358], [#4342]).
-
-### Deprecated
-
-- Go 1.18 support.  v0.109.0 will require at least Go 1.19 to build.
-
-### Fixed
-
+- DHCP not working on most OSes ([#4836]).
 - `invalid argument` errors during update checks on older Linux kernels
   ([#4670]).
+- Data races and concurrent map access in statistics module ([#4358], [#4342]).
 
-[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#4342]: https://github.com/AdguardTeam/AdGuardHome/issues/4342
 [#4358]: https://github.com/AdguardTeam/AdGuardHome/issues/4358
 [#4670]: https://github.com/AdguardTeam/AdGuardHome/issues/4670
+[#4836]: https://github.com/AdguardTeam/AdGuardHome/issues/4836
 [#4843]: https://github.com/AdguardTeam/AdGuardHome/issues/4843
 
-[ddr-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
-
-
-
-<!--
-## [v0.107.10] - 2022-09-06 (APPROX.)
--->
+[ddr-draft]:    https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
+[ms-v0.107.10]: https://github.com/AdguardTeam/AdGuardHome/milestone/46?closed=1
 
 
 
@@ -1105,11 +1116,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.10...HEAD
-[v0.107.9]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.9...v0.107.10
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...HEAD
+[v0.107.11]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.10...v0.107.11
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.9...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.10...HEAD
+[v0.107.10]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.9...v0.107.10
 [v0.107.9]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.8...v0.107.9
 [v0.107.8]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.7...v0.107.8
 [v0.107.7]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.6...v0.107.7
