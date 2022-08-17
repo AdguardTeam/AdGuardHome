@@ -30,6 +30,10 @@ and this project adheres to
 
 <!--
 ## [v0.107.11] - 2022-09-28 (APPROX.)
+
+See also the [v0.107.11 GitHub milestone][ms-v0.107.11].
+
+[ms-v0.107.11]: https://github.com/AdguardTeam/AdGuardHome/milestone/47?closed=1
 -->
 
 
