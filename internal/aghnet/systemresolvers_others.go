@@ -24,12 +24,15 @@ func defaultHostGen() (host string) {
 
 // systemResolvers is a default implementation of SystemResolvers interface.
 type systemResolvers struct {
-	resolver    *net.Resolver
-	hostGenFunc HostGenFunc
-
-	// addrs is the set that contains cached local resolvers' addresses.
-	addrs     *stringutil.Set
+	// addrsLock protects addrs.
 	addrsLock sync.RWMutex
+	// addrs is the set that contains cached local resolvers' addresses.
+	addrs *stringutil.Set
+
+	// resolver is used to fetch the resolvers' addresses.
+	resolver *net.Resolver
+	// hostGenFunc generates hosts to resolve.
+	hostGenFunc HostGenFunc
 }
 
 const (
@@ -44,6 +47,7 @@ const (
 	errUnexpectedHostFormat errors.Error = "unexpected host format"
 )
 
+// refresh implements the SystemResolvers interface for *systemResolvers.
 func (sr *systemResolvers) refresh() (err error) {
 	defer func() { err = errors.Annotate(err, "systemResolvers: %w") }()
 
@@ -56,7 +60,7 @@ func (sr *systemResolvers) refresh() (err error) {
 	return err
 }
 
-func newSystemResolvers(refreshIvl time.Duration, hostGenFunc HostGenFunc) (sr SystemResolvers) {
+func newSystemResolvers(hostGenFunc HostGenFunc) (sr SystemResolvers) {
 	if hostGenFunc == nil {
 		hostGenFunc = defaultHostGen
 	}
@@ -76,19 +80,18 @@ func newSystemResolvers(refreshIvl time.Duration, hostGenFunc HostGenFunc) (sr S
 func validateDialedHost(host string) (err error) {
 	defer func() { err = errors.Annotate(err, "parsing %q: %w", host) }()
 
-	var ipStr string
 	parts := strings.Split(host, "%")
 	switch len(parts) {
 	case 1:
-		ipStr = host
+		// host
 	case 2:
 		// Remove the zone and check the IP address part.
-		ipStr = parts[0]
+		host = parts[0]
 	default:
 		return errUnexpectedHostFormat
 	}
 
-	if net.ParseIP(ipStr) == nil {
+	if _, err = netutil.ParseIP(host); err != nil {
 		return errBadAddrPassed
 	}
 

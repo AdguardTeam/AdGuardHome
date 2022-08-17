@@ -250,21 +250,17 @@ func (t *TLSMod) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if setts.Enabled {
-		uc := aghalg.UniqChecker{}
-		addPorts(
-			uc,
-			config.BindPort,
-			config.BetaBindPort,
-			config.DNS.Port,
-			setts.PortHTTPS,
-			setts.PortDNSOverTLS,
-			setts.PortDNSOverQUIC,
-			setts.PortDNSCrypt,
+		err = validatePorts(
+			tcpPort(config.BindPort),
+			tcpPort(config.BetaBindPort),
+			tcpPort(setts.PortHTTPS),
+			tcpPort(setts.PortDNSOverTLS),
+			tcpPort(setts.PortDNSCrypt),
+			udpPort(config.DNS.Port),
+			udpPort(setts.PortDNSOverQUIC),
 		)
-
-		err = uc.Validate(aghalg.IntIsBefore)
 		if err != nil {
-			aghhttp.Error(r, w, http.StatusBadRequest, "validating ports: %s", err)
+			aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 			return
 		}
@@ -343,19 +339,15 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if data.Enabled {
-		uc := aghalg.UniqChecker{}
-		addPorts(
-			uc,
-			config.BindPort,
-			config.BetaBindPort,
-			config.DNS.Port,
-			data.PortHTTPS,
-			data.PortDNSOverTLS,
-			data.PortDNSOverQUIC,
-			data.PortDNSCrypt,
+		err = validatePorts(
+			tcpPort(config.BindPort),
+			tcpPort(config.BetaBindPort),
+			tcpPort(data.PortHTTPS),
+			tcpPort(data.PortDNSOverTLS),
+			tcpPort(data.PortDNSCrypt),
+			udpPort(config.DNS.Port),
+			udpPort(data.PortDNSOverQUIC),
 		)
-
-		err = uc.Validate(aghalg.IntIsBefore)
 		if err != nil {
 			aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
@@ -419,6 +411,38 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 			Context.web.TLSConfigChanged(context.Background(), data.tlsConfigSettings)
 		}()
 	}
+}
+
+// validatePorts validates the uniqueness of TCP and UDP ports for AdGuard Home
+// DNS protocols.
+func validatePorts(
+	bindPort, betaBindPort, dohPort, dotPort, dnscryptTCPPort tcpPort,
+	dnsPort, doqPort udpPort,
+) (err error) {
+	tcpPorts := aghalg.UniqChecker[tcpPort]{}
+	addPorts(
+		tcpPorts,
+		tcpPort(bindPort),
+		tcpPort(betaBindPort),
+		tcpPort(dohPort),
+		tcpPort(dotPort),
+		tcpPort(dnscryptTCPPort),
+	)
+
+	err = tcpPorts.Validate()
+	if err != nil {
+		return fmt.Errorf("validating tcp ports: %w", err)
+	}
+
+	udpPorts := aghalg.UniqChecker[udpPort]{}
+	addPorts(udpPorts, udpPort(dnsPort), udpPort(doqPort))
+
+	err = udpPorts.Validate()
+	if err != nil {
+		return fmt.Errorf("validating udp ports: %w", err)
+	}
+
+	return nil
 }
 
 func verifyCertChain(data *tlsConfigStatus, certChain, serverName string) error {

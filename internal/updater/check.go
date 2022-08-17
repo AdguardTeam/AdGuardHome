@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/golibs/errors"
 )
@@ -17,11 +17,12 @@ const versionCheckPeriod = 8 * time.Hour
 
 // VersionInfo contains information about a new version.
 type VersionInfo struct {
-	NewVersion           string `json:"new_version,omitempty"`
-	Announcement         string `json:"announcement,omitempty"`
-	AnnouncementURL      string `json:"announcement_url,omitempty"`
-	SelfUpdateMinVersion string `json:"-"`
-	CanAutoUpdate        *bool  `json:"can_autoupdate,omitempty"`
+	NewVersion      string `json:"new_version,omitempty"`
+	Announcement    string `json:"announcement,omitempty"`
+	AnnouncementURL string `json:"announcement_url,omitempty"`
+	// TODO(a.garipov): See if the frontend actually still cares about
+	// nullability.
+	CanAutoUpdate aghalg.NullBool `json:"can_autoupdate,omitempty"`
 }
 
 // MaxResponseSize is responses on server's requests maximum length in bytes.
@@ -67,15 +68,13 @@ func (u *Updater) VersionInfo(forceRecheck bool) (vi VersionInfo, err error) {
 }
 
 func (u *Updater) parseVersionResponse(data []byte) (VersionInfo, error) {
-	var canAutoUpdate bool
 	info := VersionInfo{
-		CanAutoUpdate: &canAutoUpdate,
+		CanAutoUpdate: aghalg.NBFalse,
 	}
 	versionJSON := map[string]string{
-		"version":                "",
-		"announcement":           "",
-		"announcement_url":       "",
-		"selfupdate_min_version": "",
+		"version":          "",
+		"announcement":     "",
+		"announcement_url": "",
 	}
 	err := json.Unmarshal(data, &versionJSON)
 	if err != nil {
@@ -91,14 +90,9 @@ func (u *Updater) parseVersionResponse(data []byte) (VersionInfo, error) {
 	info.NewVersion = versionJSON["version"]
 	info.Announcement = versionJSON["announcement"]
 	info.AnnouncementURL = versionJSON["announcement_url"]
-	info.SelfUpdateMinVersion = versionJSON["selfupdate_min_version"]
 
 	packageURL, ok := u.downloadURL(versionJSON)
-	if ok &&
-		info.NewVersion != u.version &&
-		strings.TrimPrefix(u.version, "v") >= strings.TrimPrefix(info.SelfUpdateMinVersion, "v") {
-		canAutoUpdate = true
-	}
+	info.CanAutoUpdate = aghalg.BoolToNullBool(ok && info.NewVersion != u.version)
 
 	u.newVersion = info.NewVersion
 	u.packageURL = packageURL

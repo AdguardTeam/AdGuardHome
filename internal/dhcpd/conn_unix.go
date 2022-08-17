@@ -16,6 +16,8 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 	"github.com/mdlayher/ethernet"
+
+	//lint:ignore SA1019 See the TODO in go.mod.
 	"github.com/mdlayher/raw"
 )
 
@@ -49,16 +51,15 @@ type dhcpConn struct {
 }
 
 // newDHCPConn creates the special connection for DHCP server.
-func (s *v4Server) newDHCPConn(ifi *net.Interface) (c net.PacketConn, err error) {
-	// Create the raw connection.
+func (s *v4Server) newDHCPConn(iface *net.Interface) (c net.PacketConn, err error) {
 	var ucast net.PacketConn
-	if ucast, err = raw.ListenPacket(ifi, uint16(ethernet.EtherTypeIPv4), nil); err != nil {
+	if ucast, err = raw.ListenPacket(iface, uint16(ethernet.EtherTypeIPv4), nil); err != nil {
 		return nil, fmt.Errorf("creating raw udp connection: %w", err)
 	}
 
 	// Create the UDP connection.
 	var bcast net.PacketConn
-	bcast, err = server4.NewIPv4UDPConn(ifi.Name, &net.UDPAddr{
+	bcast, err = server4.NewIPv4UDPConn(iface.Name, &net.UDPAddr{
 		// TODO(e.burkov):  Listening on zeroes makes the server handle
 		// requests from all the interfaces.  Inspect the ways to
 		// specify the interface-specific listening addresses.
@@ -75,7 +76,7 @@ func (s *v4Server) newDHCPConn(ifi *net.Interface) (c net.PacketConn, err error)
 		udpConn: bcast,
 		bcastIP: s.conf.broadcastIP,
 		rawConn: ucast,
-		srcMAC:  ifi.HardwareAddr,
+		srcMAC:  iface.HardwareAddr,
 		srcIP:   s.conf.dnsIPAddrs[0],
 	}, nil
 }

@@ -51,7 +51,7 @@ type requestMatcher struct {
 //
 // It's safe for concurrent use.
 func (rm *requestMatcher) MatchRequest(
-	req urlfilter.DNSRequest,
+	req *urlfilter.DNSRequest,
 ) (res *urlfilter.DNSResult, ok bool) {
 	switch req.DNSType {
 	case dns.TypeA, dns.TypeAAAA, dns.TypePTR:
@@ -198,7 +198,7 @@ func (hc *HostsContainer) Close() (err error) {
 }
 
 // Upd returns the channel into which the updates are sent.  The receivable
-// map's values are guaranteed to be of type of *stringutil.Set.
+// map's values are guaranteed to be of type of *HostsRecord.
 func (hc *HostsContainer) Upd() (updates <-chan *netutil.IPMap) {
 	return hc.updates
 }
@@ -290,7 +290,7 @@ func (hp *hostsParser) parseFile(r io.Reader) (patterns []string, cont bool, err
 			continue
 		}
 
-		hp.addPairs(ip, hosts)
+		hp.addRecord(ip, hosts)
 	}
 
 	return nil, true, s.Err()
@@ -335,41 +335,68 @@ func (hp *hostsParser) parseLine(line string) (ip net.IP, hosts []string) {
 	return ip, hosts
 }
 
-// addPair puts the pair of ip and host to the rules builder if needed.  For
-// each ip the first member of hosts will become the main one.
-func (hp *hostsParser) addPairs(ip net.IP, hosts []string) {
+// HostsRecord represents a single hosts file record.
+type HostsRecord struct {
+	Aliases   *stringutil.Set
+	Canonical string
+}
+
+// Equal returns true if all fields of rec are equal to field in other or they
+// both are nil.
+func (rec *HostsRecord) Equal(other *HostsRecord) (ok bool) {
+	if rec == nil {
+		return other == nil
+	}
+
+	return rec.Canonical == other.Canonical && rec.Aliases.Equal(other.Aliases)
+}
+
+// addRecord puts the record for the IP address to the rules builder if needed.
+// The first host is considered to be the canonical name for the IP address.
+// hosts must have at least one name.
+func (hp *hostsParser) addRecord(ip net.IP, hosts []string) {
+	line := strings.Join(append([]string{ip.String()}, hosts...), " ")
+
+	var rec *HostsRecord
 	v, ok := hp.table.Get(ip)
 	if !ok {
-		// This ip is added at the first time.
-		v = stringutil.NewSet()
-		hp.table.Set(ip, v)
+		rec = &HostsRecord{
+			Aliases: stringutil.NewSet(),
+		}
+
+		rec.Canonical, hosts = hosts[0], hosts[1:]
+		hp.addRules(ip, rec.Canonical, line)
+		hp.table.Set(ip, rec)
+	} else {
+		rec, ok = v.(*HostsRecord)
+		if !ok {
+			log.Error("%s: adding pairs: unexpected type %T", hostsContainerPref, v)
+
+			return
+		}
 	}
 
-	var set *stringutil.Set
-	set, ok = v.(*stringutil.Set)
-	if !ok {
-		log.Debug("%s: adding pairs: unexpected value type %T", hostsContainerPref, v)
-
-		return
-	}
-
-	processed := strings.Join(append([]string{ip.String()}, hosts...), " ")
-	for _, h := range hosts {
-		if set.Has(h) {
+	for _, host := range hosts {
+		if rec.Canonical == host || rec.Aliases.Has(host) {
 			continue
 		}
 
-		set.Add(h)
+		rec.Aliases.Add(host)
 
-		rule, rulePtr := hp.writeRules(h, ip)
-		hp.translations[rule], hp.translations[rulePtr] = processed, processed
-
-		log.Debug("%s: added ip-host pair %q-%q", hostsContainerPref, ip, h)
+		hp.addRules(ip, host, line)
 	}
 }
 
-// writeRules writes the actual rule for the qtype and the PTR for the
-// host-ip pair into internal builders.
+// addRules adds rules and rule translations for the line.
+func (hp *hostsParser) addRules(ip net.IP, host, line string) {
+	rule, rulePtr := hp.writeRules(host, ip)
+	hp.translations[rule], hp.translations[rulePtr] = line, line
+
+	log.Debug("%s: added ip-host pair %q-%q", hostsContainerPref, ip, host)
+}
+
+// writeRules writes the actual rule for the qtype and the PTR for the host-ip
+// pair into internal builders.
 func (hp *hostsParser) writeRules(host string, ip net.IP) (rule, rulePtr string) {
 	arpa, err := netutil.IPToReversedAddr(ip)
 	if err != nil {
@@ -417,6 +444,7 @@ func (hp *hostsParser) writeRules(host string, ip net.IP) (rule, rulePtr string)
 }
 
 // equalSet returns true if the internal hosts table just parsed equals target.
+// target's values must be of type *HostsRecord.
 func (hp *hostsParser) equalSet(target *netutil.IPMap) (ok bool) {
 	if target == nil {
 		// hp.table shouldn't appear nil since it's initialized on each refresh.
@@ -427,22 +455,35 @@ func (hp *hostsParser) equalSet(target *netutil.IPMap) (ok bool) {
 		return false
 	}
 
-	hp.table.Range(func(ip net.IP, b interface{}) (cont bool) {
-		// ok is set to true if the target doesn't contain ip or if the
-		// appropriate hosts set isn't equal to the checked one.
-		if a, hasIP := target.Get(ip); !hasIP {
-			ok = true
-		} else if hosts, aok := a.(*stringutil.Set); aok {
-			ok = !hosts.Equal(b.(*stringutil.Set))
+	hp.table.Range(func(ip net.IP, recVal any) (cont bool) {
+		var targetVal any
+		targetVal, ok = target.Get(ip)
+		if !ok {
+			return false
 		}
 
-		// Continue only if maps has no discrepancies.
-		return !ok
+		var rec *HostsRecord
+		rec, ok = recVal.(*HostsRecord)
+		if !ok {
+			log.Error("%s: comparing: unexpected type %T", hostsContainerPref, recVal)
+
+			return false
+		}
+
+		var targetRec *HostsRecord
+		targetRec, ok = targetVal.(*HostsRecord)
+		if !ok {
+			log.Error("%s: comparing: target: unexpected type %T", hostsContainerPref, targetVal)
+
+			return false
+		}
+
+		ok = rec.Equal(targetRec)
+
+		return ok
 	})
 
-	// Return true if every value from the IP map has no discrepancies with the
-	// appropriate one from the target.
-	return !ok
+	return ok
 }
 
 // sendUpd tries to send the parsed data to the ch.

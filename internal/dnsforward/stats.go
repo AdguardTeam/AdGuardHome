@@ -64,9 +64,9 @@ func (s *Server) logQuery(
 		Answer:            pctx.Res,
 		OrigAnswer:        dctx.origResp,
 		Result:            dctx.result,
-		Elapsed:           elapsed,
 		ClientID:          dctx.clientID,
 		ClientIP:          ip,
+		Elapsed:           elapsed,
 		AuthenticatedData: dctx.responseAD,
 	}
 

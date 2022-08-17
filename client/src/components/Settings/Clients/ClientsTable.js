@@ -193,7 +193,7 @@ class ClientsTable extends Component {
                     <div className="logs__row o-hidden">
                         <span className="logs__text">
                             {value.map((tag) => (
-                                <div key={tag} title={tag} className="small">
+                                <div key={tag} title={tag} className="logs__tag small">
                                     {tag}
                                 </div>
                             ))}
@@ -225,6 +225,8 @@ class ClientsTable extends Component {
             Header: this.props.t('actions_table_header'),
             accessor: 'actions',
             maxWidth: 100,
+            sortable: false,
+            resizable: false,
             Cell: (row) => {
                 const clientName = row.original.name;
                 const {

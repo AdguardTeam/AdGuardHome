@@ -1,3 +1,6 @@
+//go:build !v1
+// +build !v1
+
 package main
 
 import (

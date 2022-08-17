@@ -4,6 +4,7 @@
 package dhcpd
 
 import (
+	"fmt"
 	"net"
 	"strings"
 	"testing"
@@ -11,9 +12,18 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/mdlayher/raw"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	//lint:ignore SA1019 See the TODO in go.mod.
+	"github.com/mdlayher/raw"
+)
+
+var (
+	DefaultRangeStart = net.IP{192, 168, 10, 100}
+	DefaultRangeEnd   = net.IP{192, 168, 10, 200}
+	DefaultGatewayIP  = net.IP{192, 168, 10, 1}
+	DefaultSubnetMask = net.IP{255, 255, 255, 0}
 )
 
 func notify4(flags uint32) {
@@ -24,10 +34,10 @@ func notify4(flags uint32) {
 func defaultV4ServerConf() (conf V4ServerConf) {
 	return V4ServerConf{
 		Enabled:    true,
-		RangeStart: net.IP{192, 168, 10, 100},
-		RangeEnd:   net.IP{192, 168, 10, 200},
-		GatewayIP:  net.IP{192, 168, 10, 1},
-		SubnetMask: net.IP{255, 255, 255, 0},
+		RangeStart: DefaultRangeStart,
+		RangeEnd:   DefaultRangeEnd,
+		GatewayIP:  DefaultGatewayIP,
+		SubnetMask: DefaultSubnetMask,
 		notify:     notify4,
 	}
 }
@@ -44,44 +54,86 @@ func defaultSrv(t *testing.T) (s DHCPServer) {
 	return s
 }
 
-func TestV4_AddRemove_static(t *testing.T) {
+func TestV4Server_AddRemove_static(t *testing.T) {
 	s := defaultSrv(t)
 
 	ls := s.GetLeases(LeasesStatic)
-	assert.Empty(t, ls)
+	require.Empty(t, ls)
 
-	// Add static lease.
-	l := &Lease{
-		Hostname: "static-1.local",
-		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-		IP:       net.IP{192, 168, 10, 150},
+	testCases := []struct {
+		lease      *Lease
+		name       string
+		wantErrMsg string
+	}{{
+		lease: &Lease{
+			Hostname: "success.local",
+			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
+			IP:       net.IP{192, 168, 10, 150},
+		},
+		name:       "success",
+		wantErrMsg: "",
+	}, {
+		lease: &Lease{
+			Hostname: "probably-router.local",
+			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
+			IP:       DefaultGatewayIP,
+		},
+		name: "with_gateway_ip",
+		wantErrMsg: "dhcpv4: adding static lease: " +
+			"can't assign the gateway IP 192.168.10.1 to the lease",
+	}, {
+		lease: &Lease{
+			Hostname: "ip6.local",
+			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
+			IP:       net.ParseIP("ffff::1"),
+		},
+		name: "ipv6",
+		wantErrMsg: `dhcpv4: adding static lease: ` +
+			`invalid ip "ffff::1", only ipv4 is supported`,
+	}, {
+		lease: &Lease{
+			Hostname: "bad-mac.local",
+			HWAddr:   net.HardwareAddr{0xAA, 0xAA},
+			IP:       net.IP{192, 168, 10, 150},
+		},
+		name: "bad_mac",
+		wantErrMsg: `dhcpv4: adding static lease: bad mac address "aa:aa": ` +
+			`bad mac address length 2, allowed: [6 8 20]`,
+	}, {
+		lease: &Lease{
+			Hostname: "bad-lbl-.local",
+			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
+			IP:       net.IP{192, 168, 10, 150},
+		},
+		name: "bad_hostname",
+		wantErrMsg: `dhcpv4: adding static lease: validating hostname: ` +
+			`bad domain name "bad-lbl-.local": ` +
+			`bad domain name label "bad-lbl-": bad domain name label rune '-'`,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := s.AddStaticLease(tc.lease)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
+			if tc.wantErrMsg != "" {
+				return
+			}
+
+			err = s.RemoveStaticLease(&Lease{
+				IP:     tc.lease.IP,
+				HWAddr: tc.lease.HWAddr,
+			})
+			diffErrMsg := fmt.Sprintf("dhcpv4: lease for ip %s is different: %+v", tc.lease.IP, tc.lease)
+			testutil.AssertErrorMsg(t, diffErrMsg, err)
+
+			// Remove static lease.
+			err = s.RemoveStaticLease(tc.lease)
+			require.NoError(t, err)
+		})
+
+		ls = s.GetLeases(LeasesStatic)
+		require.Emptyf(t, ls, "after %s", tc.name)
 	}
-
-	err := s.AddStaticLease(l)
-	require.NoError(t, err)
-
-	err = s.AddStaticLease(l)
-	assert.Error(t, err)
-
-	ls = s.GetLeases(LeasesStatic)
-	require.Len(t, ls, 1)
-
-	assert.True(t, l.IP.Equal(ls[0].IP))
-	assert.Equal(t, l.HWAddr, ls[0].HWAddr)
-	assert.True(t, ls[0].IsStatic())
-
-	// Try to remove static lease.
-	err = s.RemoveStaticLease(&Lease{
-		IP:     net.IP{192, 168, 10, 110},
-		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-	})
-	assert.Error(t, err)
-
-	// Remove static lease.
-	err = s.RemoveStaticLease(l)
-	require.NoError(t, err)
-	ls = s.GetLeases(LeasesStatic)
-	assert.Empty(t, ls)
 }
 
 func TestV4_AddReplace(t *testing.T) {

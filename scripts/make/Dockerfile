@@ -1,6 +1,6 @@
 # A docker file for scripts/make/build-docker.sh.
 
-FROM alpine:3.13
+FROM alpine:3.16
 
 ARG BUILD_DATE
 ARG VERSION
@@ -21,8 +21,7 @@ LABEL\
 	org.opencontainers.image.version=$VERSION
 
 # Update certificates.
-RUN apk --no-cache --update add ca-certificates libcap tzdata && \
-	rm -rf /var/cache/apk/* && \
+RUN apk --no-cache add ca-certificates libcap tzdata && \
 	mkdir -p /opt/adguardhome/conf /opt/adguardhome/work && \
 	chown -R nobody: /opt/adguardhome
 

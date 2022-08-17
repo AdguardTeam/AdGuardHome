@@ -2,10 +2,10 @@ package querylog
 
 import (
 	"net"
-	"net/http"
 	"path/filepath"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
@@ -28,14 +28,17 @@ type QueryLog interface {
 	WriteDiskConfig(c *Config)
 }
 
-// Config - configuration object
+// Config is the query log configuration structure.
 type Config struct {
+	// Anonymizer processes the IP addresses to anonymize those if needed.
+	Anonymizer *aghnet.IPMut
+
 	// ConfigModified is called when the configuration is changed, for
 	// example by HTTP requests.
 	ConfigModified func()
 
 	// HTTPRegister registers an HTTP handler.
-	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request))
+	HTTPRegister aghhttp.RegisterFunc
 
 	// FindClient returns client information by their IDs.
 	FindClient func(ids []string) (c *Client, err error)
@@ -68,9 +71,6 @@ type Config struct {
 	// AnonymizeClientIP tells if the query log should anonymize clients' IP
 	// addresses.
 	AnonymizeClientIP bool
-
-	// Anonymizer processes the IP addresses to anonymize those if needed.
-	Anonymizer *aghnet.IPMut
 }
 
 // AddParams is the parameters for adding an entry.
@@ -91,17 +91,17 @@ type AddParams struct {
 	// Result is the filtering result (optional).
 	Result *filtering.Result
 
-	// Elapsed is the time spent for processing the request.
-	Elapsed time.Duration
-
 	ClientID string
-
-	ClientIP net.IP
 
 	// Upstream is the URL of the upstream DNS server.
 	Upstream string
 
 	ClientProto ClientProto
+
+	ClientIP net.IP
+
+	// Elapsed is the time spent for processing the request.
+	Elapsed time.Duration
 
 	// Cached indicates if the response is served from cache.
 	Cached bool

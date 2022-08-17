@@ -38,7 +38,7 @@ const getDnsPrivacyList = () => [
                 components: [
                     {
                         key: 0,
-                        href: 'https://adguard.com/adguard-android/overview.html',
+                        href: 'https://link.adtidy.org/forward.html?action=android&from=ui&app=home',
                     },
                     <code key="1">text</code>,
                 ],
@@ -63,7 +63,7 @@ const getDnsPrivacyList = () => [
                 components: [
                     {
                         key: 0,
-                        href: 'https://adguard.com/adguard-ios/overview.html',
+                        href: 'https://link.adtidy.org/forward.html?action=ios&from=ui&app=home',
                     },
                     <code key="1">text</code>,
                 ],

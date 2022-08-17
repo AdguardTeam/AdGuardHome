@@ -10,6 +10,7 @@ import {
     validateMac,
     validateRequiredValue,
     validateIpv4InCidr,
+    validateIpGateway,
 } from '../../../../helpers/validators';
 import { FORM_NAME } from '../../../../helpers/constants';
 import { toggleLeaseModal } from '../../../../actions';
@@ -57,6 +58,7 @@ const Form = ({
                             validateRequiredValue,
                             validateIpv4,
                             validateIpv4InCidr,
+                            validateIpGateway,
                         ]}
                     />
                 </div>
@@ -101,6 +103,7 @@ Form.propTypes = {
         ip: PropTypes.string.isRequired,
         hostname: PropTypes.string.isRequired,
         cidr: PropTypes.string.isRequired,
+        gatewayIp: PropTypes.string,
     }),
     pristine: PropTypes.bool.isRequired,
     handleSubmit: PropTypes.func.isRequired,

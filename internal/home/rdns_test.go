@@ -3,15 +3,16 @@ package home
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"net"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
-	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
@@ -80,8 +81,10 @@ func TestRDNS_Begin(t *testing.T) {
 		binary.BigEndian.PutUint64(ttl, uint64(time.Now().Add(100*time.Hour).Unix()))
 
 		rdns := &RDNS{
-			ipCache:   ipCache,
-			exchanger: &rDNSExchanger{},
+			ipCache: ipCache,
+			exchanger: &rDNSExchanger{
+				ex: aghtest.NewErrorUpstream(),
+			},
 			clients: &clientsContainer{
 				list:    map[string]*Client{},
 				idIndex: tc.cliIDIndex,
@@ -108,16 +111,22 @@ func TestRDNS_Begin(t *testing.T) {
 
 // rDNSExchanger is a mock dnsforward.RDNSExchanger implementation for tests.
 type rDNSExchanger struct {
-	ex         aghtest.Exchanger
+	ex         upstream.Upstream
 	usePrivate bool
 }
 
 // Exchange implements dnsforward.RDNSExchanger interface for *RDNSExchanger.
 func (e *rDNSExchanger) Exchange(ip net.IP) (host string, err error) {
+	rev, err := netutil.IPToReversedAddr(ip)
+	if err != nil {
+		return "", fmt.Errorf("reversing ip: %w", err)
+	}
+
 	req := &dns.Msg{
 		Question: []dns.Question{{
-			Name:  ip.String(),
-			Qtype: dns.TypePTR,
+			Name:   dns.Fqdn(rev),
+			Qclass: dns.ClassINET,
+			Qtype:  dns.TypePTR,
 		}},
 	}
 
@@ -146,7 +155,9 @@ func TestRDNS_ensurePrivateCache(t *testing.T) {
 		MaxCount:  defaultRDNSCacheSize,
 	})
 
-	ex := &rDNSExchanger{}
+	ex := &rDNSExchanger{
+		ex: aghtest.NewErrorUpstream(),
+	}
 
 	rdns := &RDNS{
 		ipCache:   ipCache,
@@ -167,15 +178,27 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 	w := &bytes.Buffer{}
 	aghtest.ReplaceLogWriter(t, w)
 
-	locUpstream := &aghtest.Upstream{
-		Reverse: map[string][]string{
-			"192.168.1.1":            {"local.domain"},
-			"2a00:1450:400c:c06::93": {"ipv6.domain"},
+	localIP := net.IP{192, 168, 1, 1}
+	revIPv4, err := netutil.IPToReversedAddr(localIP)
+	require.NoError(t, err)
+
+	revIPv6, err := netutil.IPToReversedAddr(net.ParseIP("2a00:1450:400c:c06::93"))
+	require.NoError(t, err)
+
+	locUpstream := &aghtest.UpstreamMock{
+		OnAddress: func() (addr string) { return "local.upstream.example" },
+		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
+			resp = aghalg.Coalesce(
+				aghtest.RespondTo(t, req, dns.ClassINET, dns.TypePTR, revIPv4, "local.domain"),
+				aghtest.RespondTo(t, req, dns.ClassINET, dns.TypePTR, revIPv6, "ipv6.domain"),
+				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+			)
+
+			return resp, nil
 		},
 	}
-	errUpstream := &aghtest.TestErrUpstream{
-		Err: errors.Error("1234"),
-	}
+
+	errUpstream := aghtest.NewErrorUpstream()
 
 	testCases := []struct {
 		ups     upstream.Upstream
@@ -186,10 +209,10 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 		ups:     locUpstream,
 		wantLog: "",
 		name:    "all_good",
-		cliIP:   net.IP{192, 168, 1, 1},
+		cliIP:   localIP,
 	}, {
 		ups:     errUpstream,
-		wantLog: `rdns: resolving "192.168.1.2": errupstream: 1234`,
+		wantLog: `rdns: resolving "192.168.1.2": test upstream error`,
 		name:    "resolve_error",
 		cliIP:   net.IP{192, 168, 1, 2},
 	}, {
@@ -211,9 +234,7 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 		ch := make(chan net.IP)
 		rdns := &RDNS{
 			exchanger: &rDNSExchanger{
-				ex: aghtest.Exchanger{
-					Ups: tc.ups,
-				},
+				ex: tc.ups,
 			},
 			clients: cc,
 			ipCh:    ch,
