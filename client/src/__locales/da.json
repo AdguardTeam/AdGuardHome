@@ -222,6 +222,7 @@
     "updated_upstream_dns_toast": "Upstream-servere er gemt",
     "dns_test_ok_toast": "Angivne DNS-servere fungerer korrekt",
     "dns_test_not_ok_toast": "Server \"{{key}}\": Kunne ikke bruges. Tjek, at du har angivet den korrekt",
+    "dns_test_warning_toast": "Upstream \"{{key}}\" svarer ikke på testforespørgsler og fungerer muligvis ikke korrekt",
     "unblock": "Afblokering",
     "block": "Blokering",
     "disallow_this_client": "Afvis denne klient",

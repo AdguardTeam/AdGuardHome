@@ -314,7 +314,7 @@ func (d *DNSFilter) checkSafeBrowsing(
 
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
-		defer timer.LogElapsed("SafeBrowsing lookup for %s", host)
+		defer timer.LogElapsed("safebrowsing lookup for %q", host)
 	}
 
 	sctx := &sbCtx{
@@ -348,7 +348,7 @@ func (d *DNSFilter) checkParental(
 
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
-		defer timer.LogElapsed("Parental lookup for %s", host)
+		defer timer.LogElapsed("parental lookup for %q", host)
 	}
 
 	sctx := &sbCtx{

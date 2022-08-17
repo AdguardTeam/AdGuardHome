@@ -76,6 +76,10 @@ const (
 	resultCodeError
 )
 
+// ddrHostFQDN is the FQDN used in Discovery of Designated Resolvers (DDR) requests.
+// See https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
+const ddrHostFQDN = "_dns.resolver.arpa."
+
 // handleDNSRequest filters the incoming DNS requests and writes them to the query log
 func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 	ctx := &dnsContext{
@@ -94,6 +98,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 	mods := []modProcessFunc{
 		s.processRecursion,
 		s.processInitial,
+		s.processDDRQuery,
 		s.processDetermineLocal,
 		s.processDHCPHosts,
 		s.processRestrictLocal,
@@ -237,6 +242,98 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 
 	s.setTableHostToIP(hostToIP)
 	s.setTableIPToHost(ipToHost)
+}
+
+// processDDRQuery responds to SVCB query for a special use domain name
+// ‘_dns.resolver.arpa’.  The result contains different types of encryption
+// supported by current user configuration.
+//
+// See https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
+func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
+	d := ctx.proxyCtx
+	question := d.Req.Question[0]
+
+	if !s.conf.HandleDDR {
+		return resultCodeSuccess
+	}
+
+	if question.Name == ddrHostFQDN {
+		if s.dnsProxy.TLSListenAddr == nil && s.conf.HTTPSListenAddrs == nil &&
+			s.dnsProxy.QUICListenAddr == nil || question.Qtype != dns.TypeSVCB {
+			d.Res = s.makeResponse(d.Req)
+
+			return resultCodeFinish
+		}
+
+		d.Res = s.makeDDRResponse(d.Req)
+
+		return resultCodeFinish
+	}
+
+	return resultCodeSuccess
+}
+
+// makeDDRResponse creates DDR answer according to server configuration.  The
+// contructed SVCB resource records have the priority of 1 for each entry,
+// similar to examples provided by https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
+//
+// TODO(a.meshkov):  Consider setting the priority values based on the protocol.
+func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
+	resp = s.makeResponse(req)
+	// TODO(e.burkov):  Think about storing the FQDN version of the server's
+	// name somewhere.
+	domainName := dns.Fqdn(s.conf.ServerName)
+
+	for _, addr := range s.conf.HTTPSListenAddrs {
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"h2"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
+			&dns.SVCBDoHPath{Template: "/dns-query?dns"},
+		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 1,
+			Target:   domainName,
+			Value:    values,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
+	}
+
+	for _, addr := range s.dnsProxy.TLSListenAddr {
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"dot"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
+		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 1,
+			Target:   domainName,
+			Value:    values,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
+	}
+
+	for _, addr := range s.dnsProxy.QUICListenAddr {
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"doq"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
+		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 1,
+			Target:   domainName,
+			Value:    values,
+		}
+
+		resp.Answer = append(resp.Answer, ans)
+	}
+
+	return resp
 }
 
 // processDetermineLocal determines if the client's IP address is from

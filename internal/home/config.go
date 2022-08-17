@@ -209,6 +209,7 @@ var config = &configuration{
 			Ratelimit:          20,
 			RefuseAny:          true,
 			AllServers:         false,
+			HandleDDR:          true,
 			FastestTimeout: timeutil.Duration{
 				Duration: fastip.DefaultPingWaitTimeout,
 			},

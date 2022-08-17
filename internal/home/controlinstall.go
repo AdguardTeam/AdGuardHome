@@ -216,7 +216,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 func handleStaticIP(ip net.IP, set bool) staticIPJSON {
 	resp := staticIPJSON{}
 
-	interfaceName := aghnet.GetInterfaceByIP(ip)
+	interfaceName := aghnet.InterfaceByIP(ip)
 	resp.Static = "no"
 
 	if len(interfaceName) == 0 {

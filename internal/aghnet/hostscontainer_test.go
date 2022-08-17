@@ -470,7 +470,7 @@ func TestHostsContainer(t *testing.T) {
 		}},
 	}, {
 		req: &urlfilter.DNSRequest{
-			Hostname: "nonexisting",
+			Hostname: "nonexistent.example",
 			DNSType:  dns.TypeA,
 		},
 		name: "non-existing",
