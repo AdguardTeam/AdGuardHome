@@ -24,13 +24,7 @@ and this project adheres to
 
 - Go 1.18 support.  v0.109.0 will require at least Go 1.19 to build.
 
-### Fixed
-
-- `invalid argument` errors during update checks on older Linux kernels
-  ([#4670]).
-
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
-[#4670]: https://github.com/AdguardTeam/AdGuardHome/issues/4670
 
 
 

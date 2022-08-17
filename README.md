@@ -116,7 +116,7 @@ If you're running **Linux**, there's a secure and easy way to install AdGuard Ho
 ### API
 
 If you want to integrate with AdGuard Home, you can use our [REST API](https://github.com/AdguardTeam/AdGuardHome/tree/master/openapi).
-Alternatively, you can use this [python client](https://pypi.org/project/adguardhome/), which is used to build the [AdGuard Home Hass.io Add-on](https://community.home-assistant.io/t/community-hass-io-add-on-adguard-home).
+Alternatively, you can use this [python client](https://pypi.org/project/adguardhome/), which is used to build the [AdGuard Home Hass.io Add-on](https://www.home-assistant.io/integrations/adguard/).
 
 <a id="comparison"></a>
 ## Comparing AdGuard Home to other solutions
