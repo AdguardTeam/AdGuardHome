@@ -26,6 +26,10 @@ and this project adheres to
 - Support for Discovery of Designated Resolvers (DDR) according to the [RFC
   draft][ddr-draft] ([#4463]).
 
+### Changed
+
+- Our snap package now uses the `core22` image as its base ([#4843]).
+
 ### Fixed
 
 - Data races and concurrent map access in statistics module ([#4358], [#4342]).
@@ -43,6 +47,7 @@ and this project adheres to
 [#4342]: https://github.com/AdguardTeam/AdGuardHome/issues/4342
 [#4358]: https://github.com/AdguardTeam/AdGuardHome/issues/4358
 [#4670]: https://github.com/AdguardTeam/AdGuardHome/issues/4670
+[#4843]: https://github.com/AdguardTeam/AdGuardHome/issues/4843
 
 [ddr-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
 
