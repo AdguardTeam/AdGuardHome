@@ -154,10 +154,13 @@ func GetValidNetInterfacesForWeb() (netIfaces []*NetInterface, err error) {
 	return netIfaces, nil
 }
 
-// GetInterfaceByIP returns the name of interface containing provided ip.
+// InterfaceByIP returns the name of the interface bound to ip.
 //
-// TODO(e.burkov):  See TODO on GetValidInterfacesForWeb.
-func GetInterfaceByIP(ip net.IP) string {
+// TODO(a.garipov, e.burkov): This function is technically incorrect, since one
+// IP address can be shared by multiple interfaces in some configurations.
+//
+// TODO(e.burkov):  See TODO on GetValidNetInterfacesForWeb.
+func InterfaceByIP(ip net.IP) (ifaceName string) {
 	ifaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
 		return ""
@@ -177,7 +180,7 @@ func GetInterfaceByIP(ip net.IP) string {
 // GetSubnet returns pointer to net.IPNet for the specified interface or nil if
 // the search fails.
 //
-// TODO(e.burkov):  See TODO on GetValidInterfacesForWeb.
+// TODO(e.burkov):  See TODO on GetValidNetInterfacesForWeb.
 func GetSubnet(ifaceName string) *net.IPNet {
 	netIfaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {

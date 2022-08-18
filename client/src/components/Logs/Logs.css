@@ -102,10 +102,6 @@
     padding: 0.5rem 0.75rem 0.5rem 2rem !important;
 }
 
-.bg--danger {
-    color: var(--danger) !important;
-}
-
 .form-control--search {
     box-shadow: 0 1px 0 #ddd;
     padding: 0 2.5rem;
@@ -230,6 +226,12 @@
     height: 1.6rem;
 }
 
+@media screen and (max-width: 1024px) {
+    .button-action__container {
+        display: none;
+    }
+}
+
 .button-action__container--detailed {
     bottom: 1.3rem;
 }
@@ -310,16 +312,34 @@
     border: 0;
     display: block;
     width: 100%;
-    text-align: left;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    text-align: center;
+    font-weight: 700;
     color: inherit;
+    cursor: pointer;
+}
+
+.button-action--arrow-option:hover,
+.button-action--arrow-option:focus {
+    outline: none;
+}
+
+.button-action--arrow-option:focus-visible {
+    outline: 2px solid #295a9f;
 }
 
 .button-action--arrow-option:disabled {
     display: none;
 }
 
+.tooltip-custom__container .button-action--arrow-option {
+    padding-bottom: 0;
+    text-align: left;
+    font-weight: 400;
+}
+
 .tooltip-custom__container .button-action--arrow-option:not(:disabled):hover {
-    cursor: pointer;
     background: var(--gray-f3);
     overflow: hidden;
 }
@@ -456,4 +476,12 @@
     font-style: italic;
     font-weight: normal;
     margin-bottom: 1rem;
+}
+
+.bg--danger {
+    color: var(--danger);
+}
+
+.bg--green {
+    color: var(--green79);
 }

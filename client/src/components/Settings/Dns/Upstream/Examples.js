@@ -63,7 +63,7 @@ const Examples = (props) => (
                     <Trans
                         components={[
                             <a
-                                href="https://tools.ietf.org/html/draft-huitema-quic-dnsoquic-07"
+                                href="https://datatracker.ietf.org/doc/html/rfc9250"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 key="0"

@@ -17,7 +17,7 @@ import (
 // TODO(a.garipov): Use a proper structured approach here.
 
 // jobject is a JSON object alias.
-type jobject = map[string]interface{}
+type jobject = map[string]any
 
 // entriesToJSON converts query log entries to JSON.
 func (l *queryLog) entriesToJSON(entries []*logEntry, oldest time.Time) (res jobject) {

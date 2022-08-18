@@ -11,9 +11,11 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/mdlayher/raw"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	//lint:ignore SA1019 See the TODO in go.mod.
+	"github.com/mdlayher/raw"
 )
 
 func TestDHCPConn_WriteTo_common(t *testing.T) {

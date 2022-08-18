@@ -2,6 +2,7 @@ package home
 
 import (
 	"bytes"
+	"encoding"
 	"fmt"
 	"net"
 	"sort"
@@ -59,6 +60,33 @@ const (
 	ClientSourceDHCP
 	ClientSourceHostsFile
 )
+
+var _ fmt.Stringer = clientSource(0)
+
+// String returns a human-readable name of cs.
+func (cs clientSource) String() (s string) {
+	switch cs {
+	case ClientSourceWHOIS:
+		return "WHOIS"
+	case ClientSourceARP:
+		return "ARP"
+	case ClientSourceRDNS:
+		return "rDNS"
+	case ClientSourceDHCP:
+		return "DHCP"
+	case ClientSourceHostsFile:
+		return "etc/hosts"
+	default:
+		return ""
+	}
+}
+
+var _ encoding.TextMarshaler = clientSource(0)
+
+// MarshalText implements encoding.TextMarshaler for the clientSource.
+func (cs clientSource) MarshalText() (text []byte, err error) {
+	return []byte(cs.String()), nil
+}
 
 // clientSourceConf is used to configure where the runtime clients will be
 // obtained from.
@@ -397,6 +425,7 @@ func (clients *clientsContainer) Find(id string) (c *Client, ok bool) {
 	c.Tags = stringutil.CloneSlice(c.Tags)
 	c.BlockedServices = stringutil.CloneSlice(c.BlockedServices)
 	c.Upstreams = stringutil.CloneSlice(c.Upstreams)
+
 	return c, true
 }
 
@@ -493,7 +522,7 @@ func (clients *clientsContainer) findLocked(id string) (c *Client, ok bool) {
 // findRuntimeClientLocked finds a runtime client by their IP address.  For
 // internal use only.
 func (clients *clientsContainer) findRuntimeClientLocked(ip net.IP) (rc *RuntimeClient, ok bool) {
-	var v interface{}
+	var v any
 	v, ok = clients.ipToRC.Get(ip)
 	if !ok {
 		return nil, false
@@ -769,7 +798,7 @@ func (clients *clientsContainer) addHostLocked(ip net.IP, host string, src clien
 // rmHostsBySrc removes all entries that match the specified source.
 func (clients *clientsContainer) rmHostsBySrc(src clientSource) {
 	n := 0
-	clients.ipToRC.Range(func(ip net.IP, v interface{}) (cont bool) {
+	clients.ipToRC.Range(func(ip net.IP, v any) (cont bool) {
 		rc, ok := v.(*RuntimeClient)
 		if !ok {
 			log.Error("clients: bad type %T in ipToRC for %s", v, ip)
@@ -797,7 +826,7 @@ func (clients *clientsContainer) addFromHostsFile(hosts *netutil.IPMap) {
 	clients.rmHostsBySrc(ClientSourceHostsFile)
 
 	n := 0
-	hosts.Range(func(ip net.IP, v interface{}) (cont bool) {
+	hosts.Range(func(ip net.IP, v any) (cont bool) {
 		rec, ok := v.(*aghnet.HostsRecord)
 		if !ok {
 			log.Error("dns: bad type %T in ipToRC for %s", v, ip)

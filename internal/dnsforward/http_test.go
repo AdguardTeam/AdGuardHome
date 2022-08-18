@@ -34,7 +34,7 @@ func (fsr *fakeSystemResolvers) Get() (rs []string) {
 	return nil
 }
 
-func loadTestData(t *testing.T, casesFileName string, cases interface{}) {
+func loadTestData(t *testing.T, casesFileName string, cases any) {
 	t.Helper()
 
 	var f *os.File

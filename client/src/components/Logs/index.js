@@ -7,7 +7,7 @@ import queryString from 'query-string';
 import classNames from 'classnames';
 import {
     BLOCK_ACTIONS,
-    SMALL_SCREEN_SIZE,
+    MEDIUM_SCREEN_SIZE,
 } from '../../helpers/constants';
 import Loading from '../ui/Loading';
 import Filters from './Filters';
@@ -80,7 +80,7 @@ const Logs = () => {
     const search = search_url_param || filter?.search || '';
     const response_status = response_status_url_param || filter?.response_status || '';
 
-    const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < SMALL_SCREEN_SIZE);
+    const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth <= MEDIUM_SCREEN_SIZE);
     const [detailedDataCurrent, setDetailedDataCurrent] = useState({});
     const [buttonType, setButtonType] = useState(BLOCK_ACTIONS.BLOCK);
     const [isModalOpened, setModalOpened] = useState(false);
@@ -99,7 +99,7 @@ const Logs = () => {
         })();
     }, [response_status, search]);
 
-    const mediaQuery = window.matchMedia(`(max-width: ${SMALL_SCREEN_SIZE}px)`);
+    const mediaQuery = window.matchMedia(`(max-width: ${MEDIUM_SCREEN_SIZE}px)`);
     const mediaQueryHandler = (e) => {
         setIsSmallScreen(e.matches);
         if (e.matches) {

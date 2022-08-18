@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/fs"
 	"net"
-	"net/http"
 	"os"
 	"runtime"
 	"runtime/debug"
@@ -14,6 +13,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
@@ -94,7 +94,7 @@ type Config struct {
 	ConfigModified func() `yaml:"-"`
 
 	// Register an HTTP handler
-	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `yaml:"-"`
+	HTTPRegister aghhttp.RegisterFunc `yaml:"-"`
 
 	// CustomResolver is the resolver used by DNSFilter.
 	CustomResolver Resolver `yaml:"-"`

@@ -20,12 +20,71 @@ and this project adheres to
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).
 
+### Deprecated
+
+- Go 1.18 support.  v0.109.0 will require at least Go 1.19 to build.
+
+[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+
+
+
+<!--
+## [v0.107.11] - 2022-09-28 (APPROX.)
+
+See also the [v0.107.11 GitHub milestone][ms-v0.107.11].
+
+[ms-v0.107.11]: https://github.com/AdguardTeam/AdGuardHome/milestone/47?closed=1
+-->
+
+
+
+## [v0.107.10] - 2022-08-17
+
+See also the [v0.107.10 GitHub milestone][ms-v0.107.10].
+
 ### Added
 
-- Domain-specific upstream servers test.  Such test fails with an appropriate
-  warning message ([#4517]).
+- Arabic localization.
 - Support for Discovery of Designated Resolvers (DDR) according to the [RFC
   draft][ddr-draft] ([#4463]).
+
+### Changed
+
+- Our snap package now uses the `core22` image as its base ([#4843]).
+
+### Fixed
+
+- DHCP not working on most OSes ([#4836]).
+- `invalid argument` errors during update checks on older Linux kernels
+  ([#4670]).
+- Data races and concurrent map access in statistics module ([#4358], [#4342]).
+
+[#4342]: https://github.com/AdguardTeam/AdGuardHome/issues/4342
+[#4358]: https://github.com/AdguardTeam/AdGuardHome/issues/4358
+[#4670]: https://github.com/AdguardTeam/AdGuardHome/issues/4670
+[#4836]: https://github.com/AdguardTeam/AdGuardHome/issues/4836
+[#4843]: https://github.com/AdguardTeam/AdGuardHome/issues/4843
+
+[ddr-draft]:    https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
+[ms-v0.107.10]: https://github.com/AdguardTeam/AdGuardHome/milestone/46?closed=1
+
+
+
+## [v0.107.9] - 2022-08-03
+
+See also the [v0.107.9 GitHub milestone][ms-v0.107.9].
+
+### Security
+
+- Go version was updated to prevent the possibility of exploiting the
+  CVE-2022-32189 Go vulnerability fixed in [Go 1.18.5][go-1.18.5].  Go 1.17
+  support has also been removed, as it has reached end of life and will not
+  receive security updates.
+
+### Added
+
+- Domain-specific upstream servers test.  If such test fails, a warning message
+  is shown ([#4517]).
 - `windows/arm64` support ([#3057]).
 
 ### Changed
@@ -33,21 +92,24 @@ and this project adheres to
 - UI and update links have been changed to make them more resistant to DNS
   blocking.
 
-### Deprecated
+### Fixed
 
-- Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
+- DHCP not working on most OSes ([#4836]).
+- Several UI issues ([#4775], [#4776], [#4782]).
 
-[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+### Removed
+
+- Go 1.17 support, as it has reached end of life.
+
 [#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
 [#4517]: https://github.com/AdguardTeam/AdGuardHome/issues/4517
+[#4775]: https://github.com/AdguardTeam/AdGuardHome/issues/4775
+[#4776]: https://github.com/AdguardTeam/AdGuardHome/issues/4776
+[#4782]: https://github.com/AdguardTeam/AdGuardHome/issues/4782
+[#4836]: https://github.com/AdguardTeam/AdGuardHome/issues/4836
 
-[ddr-draft]: https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
-
-
-
-<!--
-## [v0.107.9] - 2022-08-23 (APPROX.)
--->
+[go-1.18.5]:   https://groups.google.com/g/golang-announce/c/YqYYG87xB10
+[ms-v0.107.9]: https://github.com/AdguardTeam/AdGuardHome/milestone/45?closed=1
 
 
 
@@ -419,7 +481,7 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
 
 - Upstream server information for responses from cache ([#3772]).  Note that old
   log entries concerning cached responses won't include that information.
-- Finnish and Ukrainian translations.
+- Finnish and Ukrainian localizations.
 - Setting the timeout for IP address pinging in the "Fastest IP address" mode
   through the new `fastest_timeout` field in the configuration file ([#1992]).
 - Static IP address detection on FreeBSD ([#3289]).
@@ -1054,11 +1116,13 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.9...HEAD
-[v0.107.9]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.8...v0.107.9
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...HEAD
+[v0.107.11]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.10...v0.107.11
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.8...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.10...HEAD
+[v0.107.10]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.9...v0.107.10
+[v0.107.9]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.8...v0.107.9
 [v0.107.8]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.7...v0.107.8
 [v0.107.7]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.6...v0.107.7
 [v0.107.6]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.5...v0.107.6

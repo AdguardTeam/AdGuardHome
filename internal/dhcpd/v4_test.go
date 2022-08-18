@@ -12,9 +12,11 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/mdlayher/raw"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	//lint:ignore SA1019 See the TODO in go.mod.
+	"github.com/mdlayher/raw"
 )
 
 var (

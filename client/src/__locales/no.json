@@ -347,7 +347,7 @@
     "encryption_config_saved": "Krypteringsoppsettet ble lagret",
     "encryption_server": "Tjenerens navn",
     "encryption_server_enter": "Skriv inn domenenavnet ditt",
-    "encryption_server_desc": "For å kunne bruke HTTPS, må du skrive inn tjenernavnet som samsvarer med ditt SSL-sertifikat eller jokertegnsertifikat. Hvis feltet er tomt, vil den akseptere TLS-tilkoblinger til ethvert domene.",
+    "encryption_server_desc": "Hvis angitt, oppdager AdGuard Home klient-IDer, svarer på DDR-spørringer og utfører ytterligere tilkoblingsvalideringer. Hvis ikke angitt, er disse funksjonene deaktivert. Må samsvare med ett av DNS-navnene i sertifikatet.",
     "encryption_redirect": "Automatisk omdiriger til HTTPS",
     "encryption_redirect_desc": "Dersom dette er valgt, vil AdGuard Home automatisk omdirigere deg fra HTTP til HTTPS-adresser.",
     "encryption_https": "HTTPS-port",

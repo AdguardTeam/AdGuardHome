@@ -17,7 +17,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/ameshkov/dnscrypt/v2"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // Default ports.
@@ -396,7 +396,7 @@ func startDNSServer() error {
 	Context.queryLog.Start()
 
 	const topClientsNumber = 100 // the number of clients to get
-	for _, ip := range Context.stats.GetTopClientsIP(topClientsNumber) {
+	for _, ip := range Context.stats.TopClientsIP(topClientsNumber) {
 		if ip == nil {
 			continue
 		}
@@ -455,7 +455,12 @@ func closeDNSServer() {
 	}
 
 	if Context.stats != nil {
-		Context.stats.Close()
+		err := Context.stats.Close()
+		if err != nil {
+			log.Debug("closing stats: %s", err)
+		}
+
+		// TODO(e.burkov):  Find out if it's safe.
 		Context.stats = nil
 	}
 

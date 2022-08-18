@@ -8,12 +8,11 @@ import (
 	"context"
 	"io/fs"
 	"math/rand"
-	"net"
+	"net/netip"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/v1/websvc"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/netutil"
 )
 
 // Main is the entry point of application.
@@ -32,12 +31,9 @@ func Main(clientBuildFS fs.FS) {
 
 	// TODO(a.garipov): Make configurable.
 	web := websvc.New(&websvc.Config{
-		Addresses: []*netutil.IPPort{{
-			IP:   net.IP{127, 0, 0, 1},
-			Port: 3001,
-		}},
-		Start:   start,
-		Timeout: 60 * time.Second,
+		Addresses: []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:3001")},
+		Start:     start,
+		Timeout:   60 * time.Second,
 	})
 
 	err := web.Start()

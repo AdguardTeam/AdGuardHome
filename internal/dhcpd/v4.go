@@ -20,6 +20,8 @@ import (
 	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
+
+	//lint:ignore SA1019 See the TODO in go.mod.
 	"github.com/mdlayher/raw"
 )
 

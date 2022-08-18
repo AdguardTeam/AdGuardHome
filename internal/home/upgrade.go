@@ -1,6 +1,7 @@
 package home
 
 import (
+	"bytes"
 	"fmt"
 	"net/url"
 	"os"
@@ -17,17 +18,14 @@ import (
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/renameio/maybe"
 	"golang.org/x/crypto/bcrypt"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // currentSchemaVersion is the current schema version.
 const currentSchemaVersion = 14
 
 // These aliases are provided for convenience.
-//
-// TODO(e.burkov):  Remove any after updating to Go 1.18.
 type (
-	any  = interface{}
 	yarr = []any
 	yobj = map[any]any
 )
@@ -107,16 +105,20 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		return fmt.Errorf("unknown configuration schema version %d", oldVersion)
 	}
 
-	body, err := yaml.Marshal(diskConf)
+	buf := &bytes.Buffer{}
+	enc := yaml.NewEncoder(buf)
+	enc.SetIndent(2)
+
+	err = enc.Encode(diskConf)
 	if err != nil {
 		return fmt.Errorf("generating new config: %w", err)
 	}
 
-	config.fileData = body
+	config.fileData = buf.Bytes()
 	confFile := config.getConfigFilename()
-	err = maybe.WriteFile(confFile, body, 0o644)
+	err = maybe.WriteFile(confFile, config.fileData, 0o644)
 	if err != nil {
-		return fmt.Errorf("saving new config: %w", err)
+		return fmt.Errorf("writing new config: %w", err)
 	}
 
 	return nil
@@ -176,11 +178,11 @@ func upgradeSchema2to3(diskConf yobj) error {
 		return fmt.Errorf("no DNS configuration in config file")
 	}
 
-	// Convert interface{} to yobj
+	// Convert any to yobj
 	newDNSConfig := make(yobj)
 
 	switch v := dnsConfig.(type) {
-	case map[interface{}]interface{}:
+	case map[any]any:
 		for k, v := range v {
 			newDNSConfig[fmt.Sprint(k)] = v
 		}
@@ -216,12 +218,12 @@ func upgradeSchema3to4(diskConf yobj) error {
 	}
 
 	switch arr := clients.(type) {
-	case []interface{}:
+	case []any:
 
 		for i := range arr {
 			switch c := arr[i].(type) {
 
-			case map[interface{}]interface{}:
+			case map[any]any:
 				c["use_global_blocked_services"] = true
 
 			default:
@@ -307,11 +309,11 @@ func upgradeSchema5to6(diskConf yobj) error {
 	}
 
 	switch arr := clients.(type) {
-	case []interface{}:
+	case []any:
 		for i := range arr {
 			switch c := arr[i].(type) {
-			case map[interface{}]interface{}:
-				var ipVal interface{}
+			case map[any]any:
+				var ipVal any
 				ipVal, ok = c["ip"]
 				ids := []string{}
 				if ok {
@@ -326,7 +328,7 @@ func upgradeSchema5to6(diskConf yobj) error {
 					}
 				}
 
-				var macVal interface{}
+				var macVal any
 				macVal, ok = c["mac"]
 				if ok {
 					var mac string
@@ -377,7 +379,7 @@ func upgradeSchema6to7(diskConf yobj) error {
 	}
 
 	switch dhcp := dhcpVal.(type) {
-	case map[interface{}]interface{}:
+	case map[any]any:
 		var str string
 		str, ok = dhcp["gateway_ip"].(string)
 		if !ok {

@@ -592,7 +592,7 @@ export const FORM_NAME = {
 };
 
 export const SMALL_SCREEN_SIZE = 767;
-export const MEDIUM_SCREEN_SIZE = 1023;
+export const MEDIUM_SCREEN_SIZE = 1024;
 
 export const SECONDS_IN_DAY = 60 * 60 * 24;
 

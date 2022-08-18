@@ -190,7 +190,7 @@ func testDiskConf(schemaVersion int) (diskConf yobj) {
 	return diskConf
 }
 
-// testDNSConf creates a DNS config for test the way gopkg.in/yaml.v2 would
+// testDNSConf creates a DNS config for test the way gopkg.in/yaml.v3 would
 // unmarshal it.  In YAML, keys aren't guaranteed to always only be strings.
 func testDNSConf(schemaVersion int) (dnsConf yobj) {
 	dnsConf = yobj{
@@ -500,7 +500,7 @@ func TestUpgradeSchema11to12(t *testing.T) {
 		dnsVal, ok = dns.(yobj)
 		require.True(t, ok)
 
-		var ivl interface{}
+		var ivl any
 		ivl, ok = dnsVal["querylog_interval"]
 		require.True(t, ok)
 

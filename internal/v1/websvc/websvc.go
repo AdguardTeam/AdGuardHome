@@ -10,13 +10,13 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/netip"
 	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/v1/agh"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/netutil"
 	httptreemux "github.com/dimfeld/httptreemux/v5"
 )
 
@@ -27,11 +27,11 @@ type Config struct {
 	TLS *tls.Config
 
 	// Addresses are the addresses on which to serve the plain HTTP API.
-	Addresses []*netutil.IPPort
+	Addresses []netip.AddrPort
 
 	// SecureAddresses are the addresses on which to serve the HTTPS API.  If
 	// SecureAddresses is not empty, TLS must not be nil.
-	SecureAddresses []*netutil.IPPort
+	SecureAddresses []netip.AddrPort
 
 	// Start is the time of start of AdGuard Home.
 	Start time.Time
@@ -40,8 +40,8 @@ type Config struct {
 	Timeout time.Duration
 }
 
-// Service is the AdGuard Home web service.  A nil *Service is a valid service
-// that does nothing.
+// Service is the AdGuard Home web service.  A nil *Service is a valid
+// [agh.Service] that does nothing.
 type Service struct {
 	tls     *tls.Config
 	servers []*http.Server
@@ -155,7 +155,7 @@ type unit = struct{}
 // type check
 var _ agh.Service = (*Service)(nil)
 
-// Start implements the agh.Service interface for *Service.  svc may be nil.
+// Start implements the [agh.Service] interface for *Service.  svc may be nil.
 // After Start exits, all HTTP servers have tried to start, possibly failing and
 // writing error messages to the log.
 func (svc *Service) Start() (err error) {
@@ -205,7 +205,8 @@ func serve(srv *http.Server, wg *sync.WaitGroup) {
 	}
 }
 
-// Shutdown implements the agh.Service interface for *Service.  svc may be nil.
+// Shutdown implements the [agh.Service] interface for *Service.  svc may be
+// nil.
 func (svc *Service) Shutdown(ctx context.Context) (err error) {
 	if svc == nil {
 		return nil
