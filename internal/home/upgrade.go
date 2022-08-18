@@ -240,8 +240,9 @@ func upgradeSchema3to4(diskConf yobj) error {
 
 // Replace "auth_name", "auth_pass" string settings with an array:
 // users:
-// - name: "..."
-//   password: "..."
+//   - name: "..."
+//     password: "..."
+//
 // ...
 func upgradeSchema4to5(diskConf yobj) error {
 	log.Printf("%s(): called", funcName())
@@ -288,16 +289,18 @@ func upgradeSchema4to5(diskConf yobj) error {
 
 // clients:
 // ...
-//   ip: 127.0.0.1
-//   mac: ...
+//
+//	ip: 127.0.0.1
+//	mac: ...
 //
 // ->
 //
 // clients:
 // ...
-//   ids:
-//   - 127.0.0.1
-//   - ...
+//
+//	ids:
+//	- 127.0.0.1
+//	- ...
 func upgradeSchema5to6(diskConf yobj) error {
 	log.Printf("%s(): called", funcName())
 
@@ -355,19 +358,21 @@ func upgradeSchema5to6(diskConf yobj) error {
 }
 
 // dhcp:
-//   enabled: false
-//   interface_name: vboxnet0
-//   gateway_ip: 192.168.56.1
-//   ...
+//
+//	enabled: false
+//	interface_name: vboxnet0
+//	gateway_ip: 192.168.56.1
+//	...
 //
 // ->
 //
 // dhcp:
-//   enabled: false
-//   interface_name: vboxnet0
-//   dhcpv4:
-//     gateway_ip: 192.168.56.1
-//     ...
+//
+//	enabled: false
+//	interface_name: vboxnet0
+//	dhcpv4:
+//	  gateway_ip: 192.168.56.1
+//	  ...
 func upgradeSchema6to7(diskConf yobj) error {
 	log.Printf("Upgrade yaml: 6 to 7")
 
@@ -443,15 +448,14 @@ func upgradeSchema6to7(diskConf yobj) error {
 
 // upgradeSchema7to8 performs the following changes:
 //
-//   # BEFORE:
-//   'dns':
-//     'bind_host': '127.0.0.1'
+//	# BEFORE:
+//	'dns':
+//	  'bind_host': '127.0.0.1'
 //
-//   # AFTER:
-//   'dns':
-//     'bind_hosts':
-//     - '127.0.0.1'
-//
+//	# AFTER:
+//	'dns':
+//	  'bind_hosts':
+//	  - '127.0.0.1'
 func upgradeSchema7to8(diskConf yobj) (err error) {
 	log.Printf("Upgrade yaml: 7 to 8")
 
@@ -481,14 +485,13 @@ func upgradeSchema7to8(diskConf yobj) (err error) {
 
 // upgradeSchema8to9 performs the following changes:
 //
-//   # BEFORE:
-//   'dns':
-//     'autohost_tld': 'lan'
+//	# BEFORE:
+//	'dns':
+//	  'autohost_tld': 'lan'
 //
-//   # AFTER:
-//   'dns':
-//     'local_domain_name': 'lan'
-//
+//	# AFTER:
+//	'dns':
+//	  'local_domain_name': 'lan'
 func upgradeSchema8to9(diskConf yobj) (err error) {
 	log.Printf("Upgrade yaml: 8 to 9")
 
@@ -564,16 +567,15 @@ func addQUICPort(ups string, port int) (withPort string) {
 
 // upgradeSchema9to10 performs the following changes:
 //
-//   # BEFORE:
-//   'dns':
-//     'upstream_dns':
-//      - 'quic://some-upstream.com'
+//	# BEFORE:
+//	'dns':
+//	  'upstream_dns':
+//	   - 'quic://some-upstream.com'
 //
-//   # AFTER:
-//   'dns':
-//     'upstream_dns':
-//      - 'quic://some-upstream.com:784'
-//
+//	# AFTER:
+//	'dns':
+//	  'upstream_dns':
+//	   - 'quic://some-upstream.com:784'
 func upgradeSchema9to10(diskConf yobj) (err error) {
 	log.Printf("Upgrade yaml: 9 to 10")
 
@@ -623,15 +625,14 @@ func upgradeSchema9to10(diskConf yobj) (err error) {
 
 // upgradeSchema10to11 performs the following changes:
 //
-//   # BEFORE:
-//   'rlimit_nofile': 42
+//	# BEFORE:
+//	'rlimit_nofile': 42
 //
-//   # AFTER:
-//   'os':
-//     'group': ''
-//     'rlimit_nofile': 42
-//     'user': ''
-//
+//	# AFTER:
+//	'os':
+//	  'group': ''
+//	  'rlimit_nofile': 42
+//	  'user': ''
 func upgradeSchema10to11(diskConf yobj) (err error) {
 	log.Printf("Upgrade yaml: 10 to 11")
 
@@ -658,12 +659,11 @@ func upgradeSchema10to11(diskConf yobj) (err error) {
 
 // upgradeSchema11to12 performs the following changes:
 //
-//   # BEFORE:
-//   'querylog_interval': 90
+//	# BEFORE:
+//	'querylog_interval': 90
 //
-//   # AFTER:
-//   'querylog_interval': '2160h'
-//
+//	# AFTER:
+//	'querylog_interval': '2160h'
 func upgradeSchema11to12(diskConf yobj) (err error) {
 	log.Printf("Upgrade yaml: 11 to 12")
 	diskConf["schema_version"] = 12
@@ -698,16 +698,15 @@ func upgradeSchema11to12(diskConf yobj) (err error) {
 
 // upgradeSchema12to13 performs the following changes:
 //
-//   # BEFORE:
-//   'dns':
-//     # …
-//     'local_domain_name': 'lan'
+//	# BEFORE:
+//	'dns':
+//	  # …
+//	  'local_domain_name': 'lan'
 //
-//   # AFTER:
-//   'dhcp':
-//     # …
-//     'local_domain_name': 'lan'
-//
+//	# AFTER:
+//	'dhcp':
+//	  # …
+//	  'local_domain_name': 'lan'
 func upgradeSchema12to13(diskConf yobj) (err error) {
 	log.Printf("Upgrade yaml: 12 to 13")
 	diskConf["schema_version"] = 13
@@ -720,7 +719,7 @@ func upgradeSchema12to13(diskConf yobj) (err error) {
 	var dns yobj
 	dns, ok = dnsVal.(yobj)
 	if !ok {
-		return fmt.Errorf("unexpected type of dns: %T", dnsVal)
+		return fmt.Errorf("unexpected type of dns: %T; want: %T", dnsVal, dns)
 	}
 
 	dhcpVal, ok := diskConf["dhcp"]
@@ -744,23 +743,22 @@ func upgradeSchema12to13(diskConf yobj) (err error) {
 
 // upgradeSchema13to14 performs the following changes:
 //
-//   # BEFORE:
-//   'clients':
-//   - 'name': 'client-name'
-//     # …
+//	# BEFORE:
+//	'clients':
+//	- 'name': 'client-name'
+//	  # …
 //
-//   # AFTER:
-//   'clients':
-//     'persistent':
-//     - 'name': 'client-name'
-//       # …
-//     'runtime_sources':
-//       'whois': true
-//       'arp': true
-//       'rdns': true
-//       'dhcp': true
-//       'hosts': true
-//
+//	# AFTER:
+//	'clients':
+//	  'persistent':
+//	  - 'name': 'client-name'
+//	    # …
+//	  'runtime_sources':
+//	    'whois': true
+//	    'arp': true
+//	    'rdns': true
+//	    'dhcp': true
+//	    'hosts': true
 func upgradeSchema13to14(diskConf yobj) (err error) {
 	log.Printf("Upgrade yaml: 13 to 14")
 	diskConf["schema_version"] = 14

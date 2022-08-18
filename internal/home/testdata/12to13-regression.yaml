@@ -1,0 +1,3 @@
+schema_version: 12
+dns:
+  port: 53

@@ -1,6 +1,7 @@
 package home
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 // TODO(a.garipov): Cover all migrations, use a testdata/ dir.
@@ -556,6 +558,18 @@ func TestUpgradeSchema12to13(t *testing.T) {
 			assert.Equal(t, tc.want, tc.in)
 		})
 	}
+}
+
+func TestUpgradeSchema12to13Regression(t *testing.T) {
+	body, err := os.ReadFile("testdata/12to13-regression.yaml")
+	assert.NoError(t, err)
+	diskConf := yobj{}
+	err = yaml.Unmarshal(body, &diskConf)
+	assert.NoError(t, err)
+
+	err = upgradeSchema12to13(diskConf)
+
+	assert.NoError(t, err)
 }
 
 func TestUpgradeSchema13to14(t *testing.T) {
