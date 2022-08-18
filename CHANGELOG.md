@@ -24,6 +24,10 @@ and this project adheres to
 
 - Bilibili service blocking ([#4795]).
 
+### Changed
+
+- DNS-over-QUIC connections now use keptalive.
+
 ### Deprecated
 
 - Go 1.18 support.  v0.109.0 will require at least Go 1.19 to build.
