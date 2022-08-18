@@ -68,8 +68,10 @@ and both share a lot of code.
 ## Getting Started
 
 ### Automated install (Linux and Mac)
+
 Run the following command in your terminal:
-```
+
+```sh
 curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s -- -v
 ```
 
@@ -204,7 +206,7 @@ You will need this to build AdGuard Home:
 
 Open Terminal and execute these commands:
 
-```bash
+```sh
 git clone https://github.com/AdguardTeam/AdGuardHome
 cd AdGuardHome
 make
@@ -222,11 +224,14 @@ Check the [`Makefile`](https://github.com/AdguardTeam/AdGuardHome/blob/master/Ma
 In order to do this, specify `GOOS` and `GOARCH` env variables before running make.
 
 For example:
-```
+
+```sh
 env GOOS='linux' GOARCH='arm64' make
 ```
-Or:
-```
+
+or:
+
+```sh
 make GOOS='linux' GOARCH='arm64'
 ```
 
@@ -238,7 +243,7 @@ You'll need this to prepare a release build:
 
 Commands:
 
-```
+```sh
 make build-release CHANNEL='...' VERSION='...'
 ```
 
@@ -281,12 +286,14 @@ There are three options how you can install an unstable version:
 3. Standalone builds. Use the automated installation script or look for the available builds below.
 
 Beta:
-```
+
+```sh
 curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s -- -c beta
 ```
 
 Edge:
-```
+
+```sh
 curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s -- -c edge
 ```
 
