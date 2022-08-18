@@ -28,8 +28,13 @@ and this project adheres to
 
 - Go 1.18 support.  v0.109.0 will require at least Go 1.19 to build.
 
+### Fixed
+
+- Migrations from releases older than v0.107.7 failing ([#4846]).
+
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#4795]: https://github.com/AdguardTeam/AdGuardHome/issues/4795
+[#4846]: https://github.com/AdguardTeam/AdGuardHome/issues/4846
 
 
 

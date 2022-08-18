@@ -27,7 +27,7 @@ const currentSchemaVersion = 14
 // These aliases are provided for convenience.
 type (
 	yarr = []any
-	yobj = map[any]any
+	yobj = map[string]any
 )
 
 // Performs necessary upgrade operations if needed
@@ -182,12 +182,12 @@ func upgradeSchema2to3(diskConf yobj) error {
 	newDNSConfig := make(yobj)
 
 	switch v := dnsConfig.(type) {
-	case map[any]any:
+	case yobj:
 		for k, v := range v {
 			newDNSConfig[fmt.Sprint(k)] = v
 		}
 	default:
-		return fmt.Errorf("dns configuration is not a map")
+		return fmt.Errorf("unexpected type of dns: %T", dnsConfig)
 	}
 
 	// Replace bootstrap_dns value filed with new array contains old bootstrap_dns inside
