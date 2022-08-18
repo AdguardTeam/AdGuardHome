@@ -14,12 +14,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const ddrTestDomainName = "dns.example.net"
+const (
+	ddrTestDomainName = "dns.example.net"
+	ddrTestFQDN       = ddrTestDomainName + "."
+)
 
 func TestServer_ProcessDDRQuery(t *testing.T) {
 	dohSVCB := &dns.SVCB{
 		Priority: 1,
-		Target:   ddrTestDomainName,
+		Target:   ddrTestFQDN,
 		Value: []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"h2"}},
 			&dns.SVCBPort{Port: 8044},
@@ -28,11 +31,20 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}
 
 	dotSVCB := &dns.SVCB{
-		Priority: 2,
-		Target:   ddrTestDomainName,
+		Priority: 1,
+		Target:   ddrTestFQDN,
 		Value: []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"dot"}},
 			&dns.SVCBPort{Port: 8043},
+		},
+	}
+
+	doqSVCB := &dns.SVCB{
+		Priority: 1,
+		Target:   ddrTestFQDN,
+		Value: []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"doq"}},
+			&dns.SVCBPort{Port: 8042},
 		},
 	}
 
@@ -43,6 +55,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		wantRes    resultCode
 		portDoH    int
 		portDoT    int
+		portDoQ    int
 		qtype      uint16
 		ddrEnabled bool
 	}{{
@@ -89,6 +102,14 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		ddrEnabled: true,
 		portDoH:    8044,
 	}, {
+		name:       "doq",
+		wantRes:    resultCodeFinish,
+		want:       []*dns.SVCB{doqSVCB},
+		host:       ddrHostFQDN,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		portDoQ:    8042,
+	}, {
 		name:       "dot_doh",
 		wantRes:    resultCodeFinish,
 		want:       []*dns.SVCB{dotSVCB, dohSVCB},
@@ -101,7 +122,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := prepareTestServer(t, tc.portDoH, tc.portDoT, tc.ddrEnabled)
+			s := prepareTestServer(t, tc.portDoH, tc.portDoT, tc.portDoQ, tc.ddrEnabled)
 
 			req := createTestMessageWithType(tc.host, tc.qtype)
 
@@ -130,17 +151,17 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}
 }
 
-func prepareTestServer(t *testing.T, portDoH, portDoT int, ddrEnabled bool) (s *Server) {
+func prepareTestServer(t *testing.T, portDoH, portDoT, portDoQ int, ddrEnabled bool) (s *Server) {
 	t.Helper()
 
 	proxyConf := proxy.Config{}
 
-	if portDoH > 0 {
-		proxyConf.HTTPSListenAddr = []*net.TCPAddr{{Port: portDoH}}
-	}
-
 	if portDoT > 0 {
 		proxyConf.TLSListenAddr = []*net.TCPAddr{{Port: portDoT}}
+	}
+
+	if portDoQ > 0 {
+		proxyConf.QUICListenAddr = []*net.UDPAddr{{Port: portDoQ}}
 	}
 
 	s = &Server{
@@ -155,6 +176,10 @@ func prepareTestServer(t *testing.T, portDoH, portDoT int, ddrEnabled bool) (s *
 				ServerName: ddrTestDomainName,
 			},
 		},
+	}
+
+	if portDoH > 0 {
+		s.conf.TLSConfig.HTTPSListenAddrs = []*net.TCPAddr{{Port: portDoH}}
 	}
 
 	return s
@@ -204,7 +229,7 @@ func TestServer_ProcessDetermineLocal(t *testing.T) {
 	}
 }
 
-func TestServer_ProcessInternalHosts_localRestriction(t *testing.T) {
+func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 	knownIP := net.IP{1, 2, 3, 4}
 
 	testCases := []struct {
@@ -245,7 +270,7 @@ func TestServer_ProcessInternalHosts_localRestriction(t *testing.T) {
 				dhcpServer:        &testDHCP{},
 				localDomainSuffix: defaultLocalDomainSuffix,
 				tableHostToIP: hostToIPTable{
-					"example": knownIP,
+					"example." + defaultLocalDomainSuffix: knownIP,
 				},
 			}
 
@@ -267,7 +292,7 @@ func TestServer_ProcessInternalHosts_localRestriction(t *testing.T) {
 				isLocalClient: tc.isLocalCli,
 			}
 
-			res := s.processInternalHosts(dctx)
+			res := s.processDHCPHosts(dctx)
 			require.Equal(t, tc.wantRes, res)
 			pctx := dctx.proxyCtx
 			if tc.wantRes == resultCodeFinish {
@@ -293,10 +318,10 @@ func TestServer_ProcessInternalHosts_localRestriction(t *testing.T) {
 	}
 }
 
-func TestServer_ProcessInternalHosts(t *testing.T) {
+func TestServer_ProcessDHCPHosts(t *testing.T) {
 	const (
 		examplecom = "example.com"
-		examplelan = "example.lan"
+		examplelan = "example." + defaultLocalDomainSuffix
 	)
 
 	knownIP := net.IP{1, 2, 3, 4}
@@ -345,41 +370,41 @@ func TestServer_ProcessInternalHosts(t *testing.T) {
 	}, {
 		name:    "success_custom_suffix",
 		host:    "example.custom",
-		suffix:  ".custom.",
+		suffix:  "custom",
 		wantIP:  knownIP,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}}
 
 	for _, tc := range testCases {
+		s := &Server{
+			dhcpServer:        &testDHCP{},
+			localDomainSuffix: tc.suffix,
+			tableHostToIP: hostToIPTable{
+				"example." + tc.suffix: knownIP,
+			},
+		}
+
+		req := &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Id: 1234,
+			},
+			Question: []dns.Question{{
+				Name:   dns.Fqdn(tc.host),
+				Qtype:  tc.qtyp,
+				Qclass: dns.ClassINET,
+			}},
+		}
+
+		dctx := &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: req,
+			},
+			isLocalClient: true,
+		}
+
 		t.Run(tc.name, func(t *testing.T) {
-			s := &Server{
-				dhcpServer:        &testDHCP{},
-				localDomainSuffix: tc.suffix,
-				tableHostToIP: hostToIPTable{
-					"example": knownIP,
-				},
-			}
-
-			req := &dns.Msg{
-				MsgHdr: dns.MsgHdr{
-					Id: 1234,
-				},
-				Question: []dns.Question{{
-					Name:   dns.Fqdn(tc.host),
-					Qtype:  tc.qtyp,
-					Qclass: dns.ClassINET,
-				}},
-			}
-
-			dctx := &dnsContext{
-				proxyCtx: &proxy.DNSContext{
-					Req: req,
-				},
-				isLocalClient: true,
-			}
-
-			res := s.processInternalHosts(dctx)
+			res := s.processDHCPHosts(dctx)
 			pctx := dctx.proxyCtx
 			assert.Equal(t, tc.wantRes, res)
 			if tc.wantRes == resultCodeFinish {

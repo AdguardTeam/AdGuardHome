@@ -20,8 +20,11 @@ type svc struct {
 // client/src/helpers/constants.js
 // client/src/components/ui/Icons.js
 var serviceRulesArray = []svc{{
-	name:  "whatsapp",
-	rules: []string{"||whatsapp.net^", "||whatsapp.com^"},
+	name: "whatsapp",
+	rules: []string{
+		"||whatsapp.com^",
+		"||whatsapp.net^",
+	},
 }, {
 	name: "facebook",
 	rules: []string{
@@ -38,22 +41,33 @@ var serviceRulesArray = []svc{{
 		"||fb.watch^",
 	},
 }, {
-	name:  "twitter",
-	rules: []string{"||twitter.com^", "||twttr.com^", "||t.co^", "||twimg.com^"},
+	name: "twitter",
+	rules: []string{
+		"||t.co^",
+		"||twimg.com^",
+		"||twitter.com^",
+		"||twttr.com^",
+	},
 }, {
 	name: "youtube",
 	rules: []string{
-		"||youtube.com^",
-		"||ytimg.com^",
-		"||youtu.be^",
 		"||googlevideo.com^",
-		"||youtubei.googleapis.com^",
-		"||youtube-nocookie.com^",
+		"||wide-youtube.l.google.com^",
+		"||youtu.be^",
 		"||youtube",
+		"||youtube-nocookie.com^",
+		"||youtube.com^",
+		"||youtubei.googleapis.com^",
+		"||ytimg.com^",
 	},
 }, {
-	name:  "twitch",
-	rules: []string{"||twitch.tv^", "||ttvnw.net^", "||jtvnw.net^", "||twitchcdn.net^"},
+	name: "twitch",
+	rules: []string{
+		"||jtvnw.net^",
+		"||ttvnw.net^",
+		"||twitch.tv^",
+		"||twitchcdn.net^",
+	},
 }, {
 	name: "netflix",
 	rules: []string{
@@ -215,41 +229,73 @@ var serviceRulesArray = []svc{{
 		"||bytedance.map.fastly.net^",
 		"||douyin.com^",
 		"||tiktokv.com^",
+		"||toutiaovod.com^",
+		"||douyincdn.com^",
 	},
 }, {
-	name:  "vimeo",
-	rules: []string{"||vimeo.com^", "||vimeocdn.com^", "*vod-adaptive.akamaized.net^"},
+	name: "vimeo",
+	rules: []string{
+		"*vod-adaptive.akamaized.net^",
+		"||vimeo.com^",
+		"||vimeocdn.com^",
+	},
 }, {
-	name:  "pinterest",
-	rules: []string{"||pinterest.*^", "||pinimg.com^"},
+	name: "pinterest",
+	rules: []string{
+		"||pinimg.com^",
+		"||pinterest.*^",
+	},
 }, {
 	name:  "imgur",
 	rules: []string{"||imgur.com^"},
 }, {
-	name:  "dailymotion",
-	rules: []string{"||dailymotion.com^", "||dm-event.net^", "||dmcdn.net^"},
+	name: "dailymotion",
+	rules: []string{
+		"||dailymotion.com^",
+		"||dm-event.net^",
+		"||dmcdn.net^",
+	},
 }, {
 	name: "qq",
 	rules: []string{
 		// Block qq.com and subdomains excluding WeChat's domains.
 		"||qq.com^$denyallow=wx.qq.com|weixin.qq.com",
 		"||qqzaixian.com^",
+		"||qq-video.cdn-go.cn^",
+		"||url.cn^",
 	},
 }, {
-	name:  "wechat",
-	rules: []string{"||wechat.com^", "||weixin.qq.com^", "||wx.qq.com^"},
+	name: "wechat",
+	rules: []string{
+		"||wechat.com^",
+		"||weixin.qq.com.cn^",
+		"||weixin.qq.com^",
+		"||weixinbridge.com^",
+		"||wx.qq.com^",
+	},
 }, {
 	name:  "viber",
 	rules: []string{"||viber.com^"},
 }, {
-	name:  "weibo",
-	rules: []string{"||weibo.com^"},
+	name: "weibo",
+	rules: []string{
+		"||weibo.cn^",
+		"||weibo.com^",
+		"||weibocdn.com^",
+	},
 }, {
-	name:  "9gag",
-	rules: []string{"||9cache.com^", "||9gag.com^"},
+	name: "9gag",
+	rules: []string{
+		"||9cache.com^",
+		"||9gag.com^",
+	},
 }, {
-	name:  "telegram",
-	rules: []string{"||t.me^", "||telegram.me^", "||telegram.org^"},
+	name: "telegram",
+	rules: []string{
+		"||t.me^",
+		"||telegram.me^",
+		"||telegram.org^",
+	},
 }, {
 	name: "disneyplus",
 	rules: []string{
@@ -282,6 +328,17 @@ var serviceRulesArray = []svc{{
 		"||gotinder.com^",
 		"||tinder.com^",
 		"||tindersparks.com^",
+	},
+}, {
+	name: "bilibili",
+	rules: []string{
+		"||biliapi.net^",
+		"||bilibili.com^",
+		"||biligame.com^",
+		"||bilivideo.cn^",
+		"||bilivideo.com^",
+		"||dreamcast.hk^",
+		"||hdslb.com^",
 	},
 }}
 

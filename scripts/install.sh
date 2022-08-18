@@ -381,7 +381,7 @@ configure() {
 	check_out_dir
 
 	pkg_name="AdGuardHome_${os}_${cpu}.${pkg_ext}"
-	url="https://static.adguard.com/adguardhome/${channel}/${pkg_name}"
+	url="https://static.adtidy.org/adguardhome/${channel}/${pkg_name}"
 	agh_dir="${out_dir}/AdGuardHome"
 	readonly pkg_name url agh_dir
 

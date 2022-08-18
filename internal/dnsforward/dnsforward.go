@@ -33,11 +33,6 @@ const DefaultTimeout = 10 * time.Second
 // requests between the BeforeRequestHandler stage and the actual processing.
 const defaultClientIDCacheCount = 1024
 
-const (
-	safeBrowsingBlockHost = "standard-block.dns.adguard.com"
-	parentalBlockHost     = "family-block.dns.adguard.com"
-)
-
 var defaultDNS = []string{
 	"https://dns10.quad9.net/dns-query",
 }
@@ -66,7 +61,7 @@ type Server struct {
 	dnsFilter  *filtering.DNSFilter  // DNS filter instance
 	dhcpServer dhcpd.ServerInterface // DHCP server instance (optional)
 	queryLog   querylog.QueryLog     // Query log instance
-	stats      stats.Stats
+	stats      stats.Interface
 	access     *accessCtx
 
 	// localDomainSuffix is the suffix used to detect internal hosts.  It
@@ -107,28 +102,17 @@ type Server struct {
 // when no suffix is provided.
 //
 // See the documentation for Server.localDomainSuffix.
-const defaultLocalDomainSuffix = ".lan."
+const defaultLocalDomainSuffix = "lan"
 
 // DNSCreateParams are parameters to create a new server.
 type DNSCreateParams struct {
 	DNSFilter   *filtering.DNSFilter
-	Stats       stats.Stats
+	Stats       stats.Interface
 	QueryLog    querylog.QueryLog
 	DHCPServer  dhcpd.ServerInterface
 	PrivateNets netutil.SubnetSet
 	Anonymizer  *aghnet.IPMut
 	LocalDomain string
-}
-
-// domainNameToSuffix converts a domain name into a local domain suffix.
-func domainNameToSuffix(tld string) (suffix string) {
-	l := len(tld) + 2
-	b := make([]byte, l)
-	b[0] = '.'
-	copy(b[1:], tld)
-	b[l-1] = '.'
-
-	return string(b)
 }
 
 const (
@@ -151,7 +135,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 			return nil, fmt.Errorf("local domain: %w", err)
 		}
 
-		localDomainSuffix = domainNameToSuffix(p.LocalDomain)
+		localDomainSuffix = p.LocalDomain
 	}
 
 	if p.Anonymizer == nil {

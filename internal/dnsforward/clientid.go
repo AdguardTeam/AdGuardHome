@@ -112,8 +112,8 @@ type tlsConn interface {
 	ConnectionState() (cs tls.ConnectionState)
 }
 
-// quicSession is a narrow interface for quic.Session to simplify testing.
-type quicSession interface {
+// quicConnection is a narrow interface for quic.Connection to simplify testing.
+type quicConnection interface {
 	ConnectionState() (cs quic.ConnectionState)
 }
 
@@ -148,16 +148,16 @@ func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string
 
 		cliSrvName = tc.ConnectionState().ServerName
 	case proxy.ProtoQUIC:
-		qs, ok := pctx.QUICSession.(quicSession)
+		conn, ok := pctx.QUICConnection.(quicConnection)
 		if !ok {
 			return "", fmt.Errorf(
-				"proxy ctx quic session of proto %s is %T, want quic.Session",
+				"proxy ctx quic conn of proto %s is %T, want quic.Connection",
 				proto,
-				pctx.QUICSession,
+				pctx.QUICConnection,
 			)
 		}
 
-		cliSrvName = qs.ConnectionState().TLS.ServerName
+		cliSrvName = conn.ConnectionState().TLS.ServerName
 	}
 
 	clientID, err = clientIDFromClientServerName(

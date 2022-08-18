@@ -1,0 +1,109 @@
+'body':
+  - 'attributes':
+        'description': >
+            Please make sure that the issue is not a duplicate or a question.
+            If it's a duplicate, please react to the original issue with a
+            thumbs up.  If it's a question, please post it to the GitHub
+            Discussions page.
+        'label': 'Prerequisites'
+        'options':
+          - 'label': >
+                I have checked the
+                [Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki) and
+                [Discussions](https://github.com/AdguardTeam/AdGuardHome/discussions)
+                and found no answer
+            'required': true
+          - 'label': >
+                I have searched other issues and found no duplicates
+            'required': true
+          - 'label': >
+                I want to report a bug and not ask a question
+            'required': true
+    'id': 'prerequisites'
+    'type': 'checkboxes'
+  - 'attributes':
+        'description': 'On which operating system type does the issue occur?'
+        'label': 'Operating system type'
+        'options':
+          - 'FreeBSD'
+          - 'Linux, OpenWrt'
+          - 'Linux, Other (please mention the version in the description)'
+          - 'macOS (aka Darwin)'
+          - 'OpenBSD'
+          - 'Windows'
+          - 'Other (please mention in the description)'
+    'id': 'os'
+    'type': 'dropdown'
+    'validations':
+        'required': true
+  - 'attributes':
+        'description': 'On which CPU architecture does the issue occur?'
+        'label': 'CPU architecture'
+        'options':
+          - 'AMD64'
+          - 'x86'
+          - '64-bit ARM'
+          - 'ARMv5'
+          - 'ARMv6'
+          - 'ARMv7'
+          - '64-bit MIPS'
+          - '64-bit MIPS LE'
+          - '32-bit MIPS'
+          - '32-bit MIPS LE'
+          - '64-bit PowerPC LE'
+          - 'Other (please mention in the description)'
+    'id': 'arch'
+    'type': 'dropdown'
+    'validations':
+        'required': true
+  - 'attributes':
+        'description': 'How did you install AdGuard Home?'
+        'label': 'Installation'
+        'options':
+          - 'GitHub releases or script from README'
+          - 'Docker'
+          - 'Snapcraft'
+          - 'Custom port'
+          - 'Other (please mention in the description)'
+    'id': 'install'
+    'type': 'dropdown'
+    'validations':
+        'required': true
+  - 'attributes':
+        'description': 'How did you setup AdGuard Home?'
+        'label': 'Setup'
+        'options':
+          - 'On one machine'
+          - 'On a router, DHCP is handled by the router'
+          - 'On a router, DHCP is handled by AdGuard Home'
+          - 'Other (please mention in the description)'
+    'id': 'setup'
+    'type': 'dropdown'
+    'validations':
+        'required': true
+  - 'attributes':
+        'description': 'What version of AdGuard Home are you using?'
+        'label': 'AdGuard Home version'
+    'id': 'version'
+    'type': 'input'
+    'validations':
+        'required': true
+  - 'attributes':
+        'description': 'Please describe the bug'
+        'label': 'Description'
+        'value': |
+            #### What did you do?
+
+            #### Expected result
+
+            #### Actual result
+
+            #### Screenshots (if applicable)
+
+            #### Additional information
+    'id': 'description'
+    'type': 'textarea'
+    'validations':
+        'required': true
+'description': 'File a bug report'
+'name': 'Bug'

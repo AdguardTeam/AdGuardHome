@@ -60,7 +60,7 @@ export const REPOSITORY = {
 export const CLIENT_ID_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid';
 export const MANUAL_UPDATE_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#manual-update';
 export const PORT_53_FAQ_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#bindinuse';
-export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
+export const PRIVACY_POLICY_LINK = 'https://link.adtidy.org/forward.html?action=privacy&from=ui&app=home';
 export const UPSTREAM_CONFIGURATION_WIKI_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams';
 
 export const FILTERS_RELATIVE_LINK = '#filters';
@@ -210,6 +210,10 @@ export const SERVICES = [
     {
         id: 'amazon',
         name: 'Amazon',
+    },
+    {
+        id: 'bilibili',
+        name: 'Bilibili',
     },
     {
         id: 'cloudflare',
@@ -588,7 +592,7 @@ export const FORM_NAME = {
 };
 
 export const SMALL_SCREEN_SIZE = 767;
-export const MEDIUM_SCREEN_SIZE = 1023;
+export const MEDIUM_SCREEN_SIZE = 1024;
 
 export const SECONDS_IN_DAY = 60 * 60 * 24;
 

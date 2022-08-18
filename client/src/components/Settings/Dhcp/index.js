@@ -278,6 +278,7 @@ const Dhcp = () => {
                             cidr={cidr}
                             rangeStart={dhcp?.values?.v4?.range_start}
                             rangeEnd={dhcp?.values?.v4?.range_end}
+                            gatewayIp={dhcp?.values?.v4?.gateway_ip}
                         />
                         <div className="btn-list mt-2">
                             <button

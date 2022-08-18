@@ -29,17 +29,18 @@ func (c testTLSConn) ConnectionState() (cs tls.ConnectionState) {
 	return cs
 }
 
-// testQUICSession is a quicSession for tests.
-type testQUICSession struct {
-	// Session is embedded here simply to make testQUICSession a quic.Session
-	// without actually implementing all methods.
-	quic.Session
+// testQUICConnection is a quicConnection for tests.
+type testQUICConnection struct {
+	// Connection is embedded here simply to make testQUICConnection a
+	// quic.Connection without actually implementing all methods.
+	quic.Connection
 
 	serverName string
 }
 
-// ConnectionState implements the quicSession interface for testQUICSession.
-func (c testQUICSession) ConnectionState() (cs quic.ConnectionState) {
+// ConnectionState implements the quicConnection interface for
+// testQUICConnection.
+func (c testQUICConnection) ConnectionState() (cs quic.ConnectionState) {
 	cs.TLS.ServerName = c.serverName
 
 	return cs
@@ -179,17 +180,17 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 				}
 			}
 
-			var qs quic.Session
+			var qconn quic.Connection
 			if tc.proto == proxy.ProtoQUIC {
-				qs = testQUICSession{
+				qconn = testQUICConnection{
 					serverName: tc.cliSrvName,
 				}
 			}
 
 			pctx := &proxy.DNSContext{
-				Proto:       tc.proto,
-				Conn:        conn,
-				QUICSession: qs,
+				Proto:          tc.proto,
+				Conn:           conn,
+				QUICConnection: qconn,
 			}
 
 			clientID, err := srv.clientIDFromDNSContext(pctx)

@@ -47,7 +47,7 @@ type homeContext struct {
 	// --
 
 	clients    clientsContainer     // per-client-settings module
-	stats      stats.Stats          // statistics module
+	stats      stats.Interface      // statistics module
 	queryLog   querylog.QueryLog    // query log module
 	dnsServer  *dnsforward.Server   // DNS module
 	rdns       *RDNS                // rDNS module
@@ -298,24 +298,27 @@ func setupConfig(args options) (err error) {
 	Context.clients.Init(config.Clients.Persistent, Context.dhcpServer, Context.etcHosts, arpdb)
 
 	if args.bindPort != 0 {
-		uc := aghalg.UniqChecker{}
-		addPorts(
-			uc,
-			tcpPort(args.bindPort),
-			tcpPort(config.BetaBindPort),
-			udpPort(config.DNS.Port),
-		)
+		tcpPorts := aghalg.UniqChecker[tcpPort]{}
+		addPorts(tcpPorts, tcpPort(args.bindPort), tcpPort(config.BetaBindPort))
+
+		udpPorts := aghalg.UniqChecker[udpPort]{}
+		addPorts(udpPorts, udpPort(config.DNS.Port))
+
 		if config.TLS.Enabled {
 			addPorts(
-				uc,
+				tcpPorts,
 				tcpPort(config.TLS.PortHTTPS),
 				tcpPort(config.TLS.PortDNSOverTLS),
-				udpPort(config.TLS.PortDNSOverQUIC),
 				tcpPort(config.TLS.PortDNSCrypt),
 			)
+
+			addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
 		}
-		if err = uc.Validate(aghalg.IntIsBefore); err != nil {
-			return fmt.Errorf("validating ports: %w", err)
+
+		if err = tcpPorts.Validate(); err != nil {
+			return fmt.Errorf("validating tcp ports: %w", err)
+		} else if err = udpPorts.Validate(); err != nil {
+			return fmt.Errorf("validating udp ports: %w", err)
 		}
 
 		config.BindPort = args.bindPort
@@ -599,17 +602,17 @@ func configureLogger(args options) {
 		ls.Verbose = true
 	}
 	if args.logFile != "" {
-		ls.LogFile = args.logFile
-	} else if config.LogFile != "" {
-		ls.LogFile = config.LogFile
+		ls.File = args.logFile
+	} else if config.File != "" {
+		ls.File = config.File
 	}
 
 	// Handle default log settings overrides
-	ls.LogCompress = config.LogCompress
-	ls.LogLocalTime = config.LogLocalTime
-	ls.LogMaxBackups = config.LogMaxBackups
-	ls.LogMaxSize = config.LogMaxSize
-	ls.LogMaxAge = config.LogMaxAge
+	ls.Compress = config.Compress
+	ls.LocalTime = config.LocalTime
+	ls.MaxBackups = config.MaxBackups
+	ls.MaxSize = config.MaxSize
+	ls.MaxAge = config.MaxAge
 
 	// log.SetLevel(log.INFO) - default
 	if ls.Verbose {
@@ -620,27 +623,27 @@ func configureLogger(args options) {
 	// happen pretty quickly.
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 
-	if args.runningAsService && ls.LogFile == "" && runtime.GOOS == "windows" {
+	if args.runningAsService && ls.File == "" && runtime.GOOS == "windows" {
 		// When running as a Windows service, use eventlog by default if nothing
 		// else is configured.  Otherwise, we'll simply lose the log output.
-		ls.LogFile = configSyslog
+		ls.File = configSyslog
 	}
 
 	// logs are written to stdout (default)
-	if ls.LogFile == "" {
+	if ls.File == "" {
 		return
 	}
 
-	if ls.LogFile == configSyslog {
+	if ls.File == configSyslog {
 		// Use syslog where it is possible and eventlog on Windows
 		err := aghos.ConfigureSyslog(serviceName)
 		if err != nil {
 			log.Fatalf("cannot initialize syslog: %s", err)
 		}
 	} else {
-		logFilePath := filepath.Join(Context.workDir, ls.LogFile)
-		if filepath.IsAbs(ls.LogFile) {
-			logFilePath = ls.LogFile
+		logFilePath := filepath.Join(Context.workDir, ls.File)
+		if filepath.IsAbs(ls.File) {
+			logFilePath = ls.File
 		}
 
 		_, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
@@ -650,11 +653,11 @@ func configureLogger(args options) {
 
 		log.SetOutput(&lumberjack.Logger{
 			Filename:   logFilePath,
-			Compress:   ls.LogCompress, // disabled by default
-			LocalTime:  ls.LogLocalTime,
-			MaxBackups: ls.LogMaxBackups,
-			MaxSize:    ls.LogMaxSize, // megabytes
-			MaxAge:     ls.LogMaxAge,  // days
+			Compress:   ls.Compress, // disabled by default
+			LocalTime:  ls.LocalTime,
+			MaxBackups: ls.MaxBackups,
+			MaxSize:    ls.MaxSize, // megabytes
+			MaxAge:     ls.MaxAge,  // days
 		})
 	}
 }

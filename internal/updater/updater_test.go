@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -44,28 +45,28 @@ func TestUpdateGetVersion(t *testing.T) {
   "announcement": "AdGuard Home v0.103.0-beta.2 is now available!",
   "announcement_url": "https://github.com/AdguardTeam/AdGuardHome/internal/releases",
   "selfupdate_min_version": "v0.0",
-  "download_windows_amd64": "https://static.adguard.com/adguardhome/beta/AdGuardHome_windows_amd64.zip",
-  "download_windows_386": "https://static.adguard.com/adguardhome/beta/AdGuardHome_windows_386.zip",
-  "download_darwin_amd64": "https://static.adguard.com/adguardhome/beta/AdGuardHome_darwin_amd64.zip",
-  "download_darwin_386": "https://static.adguard.com/adguardhome/beta/AdGuardHome_darwin_386.zip",
-  "download_linux_amd64": "https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_amd64.tar.gz",
-  "download_linux_386": "https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_386.tar.gz",
-  "download_linux_arm": "https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv6.tar.gz",
-  "download_linux_armv5": "https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv5.tar.gz",
-  "download_linux_armv6": "https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv6.tar.gz",
-  "download_linux_armv7": "https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv7.tar.gz",
-  "download_linux_arm64": "https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_arm64.tar.gz",
-  "download_linux_mips": "https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips_softfloat.tar.gz",
-  "download_linux_mipsle": "https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mipsle_softfloat.tar.gz",
-  "download_linux_mips64": "https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips64_softfloat.tar.gz",
-  "download_linux_mips64le": "https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips64le_softfloat.tar.gz",
-  "download_freebsd_386": "https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_386.tar.gz",
-  "download_freebsd_amd64": "https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_amd64.tar.gz",
-  "download_freebsd_arm": "https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv6.tar.gz",
-  "download_freebsd_armv5": "https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv5.tar.gz",
-  "download_freebsd_armv6": "https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv6.tar.gz",
-  "download_freebsd_armv7": "https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_armv7.tar.gz",
-  "download_freebsd_arm64": "https://static.adguard.com/adguardhome/beta/AdGuardHome_freebsd_arm64.tar.gz"
+  "download_windows_amd64": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_windows_amd64.zip",
+  "download_windows_386": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_windows_386.zip",
+  "download_darwin_amd64": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_darwin_amd64.zip",
+  "download_darwin_386": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_darwin_386.zip",
+  "download_linux_amd64": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_amd64.tar.gz",
+  "download_linux_386": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_386.tar.gz",
+  "download_linux_arm": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_armv6.tar.gz",
+  "download_linux_armv5": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_armv5.tar.gz",
+  "download_linux_armv6": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_armv6.tar.gz",
+  "download_linux_armv7": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_armv7.tar.gz",
+  "download_linux_arm64": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_arm64.tar.gz",
+  "download_linux_mips": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_mips_softfloat.tar.gz",
+  "download_linux_mipsle": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_mipsle_softfloat.tar.gz",
+  "download_linux_mips64": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_mips64_softfloat.tar.gz",
+  "download_linux_mips64le": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_mips64le_softfloat.tar.gz",
+  "download_freebsd_386": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_386.tar.gz",
+  "download_freebsd_amd64": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_amd64.tar.gz",
+  "download_freebsd_arm": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_armv6.tar.gz",
+  "download_freebsd_armv5": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_armv5.tar.gz",
+  "download_freebsd_armv6": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_armv6.tar.gz",
+  "download_freebsd_armv7": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_armv7.tar.gz",
+  "download_freebsd_arm64": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_freebsd_arm64.tar.gz"
 }`
 
 	l, lport := startHTTPServer(jsonData)
@@ -92,10 +93,7 @@ func TestUpdateGetVersion(t *testing.T) {
 	assert.Equal(t, "v0.103.0-beta.2", info.NewVersion)
 	assert.Equal(t, "AdGuard Home v0.103.0-beta.2 is now available!", info.Announcement)
 	assert.Equal(t, "https://github.com/AdguardTeam/AdGuardHome/internal/releases", info.AnnouncementURL)
-	assert.Equal(t, "v0.0", info.SelfUpdateMinVersion)
-	if assert.NotNil(t, info.CanAutoUpdate) {
-		assert.True(t, *info.CanAutoUpdate)
-	}
+	assert.Equal(t, aghalg.NBTrue, info.CanAutoUpdate)
 
 	// check cached
 	_, err = u.VersionInfo(false)
@@ -133,7 +131,7 @@ func TestUpdate(t *testing.T) {
 	u.newVersion = "v0.103.1"
 	u.packageURL = fakeURL.String()
 
-	require.NoError(t, u.prepare())
+	require.NoError(t, u.prepare("AdGuardHome"))
 
 	u.currentExeName = filepath.Join(wd, "AdGuardHome")
 
@@ -211,7 +209,7 @@ func TestUpdateWindows(t *testing.T) {
 	u.newVersion = "v0.103.1"
 	u.packageURL = fakeURL.String()
 
-	require.NoError(t, u.prepare())
+	require.NoError(t, u.prepare("AdGuardHome.exe"))
 
 	u.currentExeName = filepath.Join(wd, "AdGuardHome.exe")
 
@@ -262,7 +260,7 @@ func TestUpdater_VersionInto_ARM(t *testing.T) {
   "announcement": "AdGuard Home v0.103.0-beta.2 is now available!",
   "announcement_url": "https://github.com/AdguardTeam/AdGuardHome/internal/releases",
   "selfupdate_min_version": "v0.0",
-  "download_linux_armv7": "https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_armv7.tar.gz"
+  "download_linux_armv7": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_armv7.tar.gz"
 }`
 
 	l, lport := startHTTPServer(jsonData)
@@ -290,10 +288,7 @@ func TestUpdater_VersionInto_ARM(t *testing.T) {
 	assert.Equal(t, "v0.103.0-beta.2", info.NewVersion)
 	assert.Equal(t, "AdGuard Home v0.103.0-beta.2 is now available!", info.Announcement)
 	assert.Equal(t, "https://github.com/AdguardTeam/AdGuardHome/internal/releases", info.AnnouncementURL)
-	assert.Equal(t, "v0.0", info.SelfUpdateMinVersion)
-	if assert.NotNil(t, info.CanAutoUpdate) {
-		assert.True(t, *info.CanAutoUpdate)
-	}
+	assert.Equal(t, aghalg.NBTrue, info.CanAutoUpdate)
 }
 
 func TestUpdater_VersionInto_MIPS(t *testing.T) {
@@ -302,7 +297,7 @@ func TestUpdater_VersionInto_MIPS(t *testing.T) {
   "announcement": "AdGuard Home v0.103.0-beta.2 is now available!",
   "announcement_url": "https://github.com/AdguardTeam/AdGuardHome/internal/releases",
   "selfupdate_min_version": "v0.0",
-  "download_linux_mips_softfloat": "https://static.adguard.com/adguardhome/beta/AdGuardHome_linux_mips_softfloat.tar.gz"
+  "download_linux_mips_softfloat": "https://static.adtidy.org/adguardhome/beta/AdGuardHome_linux_mips_softfloat.tar.gz"
 }`
 
 	l, lport := startHTTPServer(jsonData)
@@ -330,8 +325,5 @@ func TestUpdater_VersionInto_MIPS(t *testing.T) {
 	assert.Equal(t, "v0.103.0-beta.2", info.NewVersion)
 	assert.Equal(t, "AdGuard Home v0.103.0-beta.2 is now available!", info.Announcement)
 	assert.Equal(t, "https://github.com/AdguardTeam/AdGuardHome/internal/releases", info.AnnouncementURL)
-	assert.Equal(t, "v0.0", info.SelfUpdateMinVersion)
-	if assert.NotNil(t, info.CanAutoUpdate) {
-		assert.True(t, *info.CanAutoUpdate)
-	}
+	assert.Equal(t, aghalg.NBTrue, info.CanAutoUpdate)
 }

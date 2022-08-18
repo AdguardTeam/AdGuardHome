@@ -13,6 +13,7 @@ import (
 
 // TODO(a.garipov): Get rid of a global or generate from .twosky.json.
 var allowedLanguages = stringutil.NewSet(
+	"ar",
 	"be",
 	"bg",
 	"cs",
@@ -50,7 +51,7 @@ var allowedLanguages = stringutil.NewSet(
 	"zh-tw",
 )
 
-func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
+func handleI18nCurrentLanguage(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	log.Printf("config.Language is %s", config.Language)
 	_, err := fmt.Fprintf(w, "%s\n", config.Language)
@@ -58,6 +59,7 @@ func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
 		msg := fmt.Sprintf("Unable to write response json: %s", err)
 		log.Println(msg)
 		http.Error(w, msg, http.StatusInternalServerError)
+
 		return
 	}
 }
@@ -69,6 +71,7 @@ func handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
 		msg := fmt.Sprintf("failed to read request body: %s", err)
 		log.Println(msg)
 		http.Error(w, msg, http.StatusBadRequest)
+
 		return
 	}
 

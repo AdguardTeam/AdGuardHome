@@ -12,6 +12,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter"
@@ -159,31 +160,47 @@ func TestHostsContainer_refresh(t *testing.T) {
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, hc.Close)
 
-	checkRefresh := func(t *testing.T, wantHosts *stringutil.Set) {
-		upd, ok := <-hc.Upd()
-		require.True(t, ok)
-		require.NotNil(t, upd)
+	checkRefresh := func(t *testing.T, want *HostsRecord) {
+		t.Helper()
+
+		var ok bool
+		var upd *netutil.IPMap
+		select {
+		case upd, ok = <-hc.Upd():
+			require.True(t, ok)
+			require.NotNil(t, upd)
+		case <-time.After(1 * time.Second):
+			t.Fatal("did not receive after 1s")
+		}
 
 		assert.Equal(t, 1, upd.Len())
 
 		v, ok := upd.Get(ip)
 		require.True(t, ok)
 
-		var set *stringutil.Set
-		set, ok = v.(*stringutil.Set)
-		require.True(t, ok)
+		require.IsType(t, (*HostsRecord)(nil), v)
 
-		assert.True(t, set.Equal(wantHosts))
+		rec, _ := v.(*HostsRecord)
+		require.NotNil(t, rec)
+
+		assert.Truef(t, rec.Equal(want), "%+v != %+v", rec, want)
 	}
 
 	t.Run("initial_refresh", func(t *testing.T) {
-		checkRefresh(t, stringutil.NewSet("hostname"))
+		checkRefresh(t, &HostsRecord{
+			Aliases:   stringutil.NewSet(),
+			Canonical: "hostname",
+		})
 	})
 
 	t.Run("second_refresh", func(t *testing.T) {
 		testFS["dir/file2"] = &fstest.MapFile{Data: []byte(ipStr + ` alias` + nl)}
 		eventsCh <- event{}
-		checkRefresh(t, stringutil.NewSet("hostname", "alias"))
+
+		checkRefresh(t, &HostsRecord{
+			Aliases:   stringutil.NewSet("alias"),
+			Canonical: "hostname",
+		})
 	})
 
 	t.Run("double_refresh", func(t *testing.T) {
@@ -363,10 +380,15 @@ func TestHostsContainer(t *testing.T) {
 	require.NoError(t, fstest.TestFS(testdata, "etc_hosts"))
 
 	testCases := []struct {
-		want []*rules.DNSRewrite
-		name string
 		req  *urlfilter.DNSRequest
+		name string
+		want []*rules.DNSRewrite
 	}{{
+		req: &urlfilter.DNSRequest{
+			Hostname: "simplehost",
+			DNSType:  dns.TypeA,
+		},
+		name: "simple",
 		want: []*rules.DNSRewrite{{
 			RCode:  dns.RcodeSuccess,
 			Value:  net.IPv4(1, 0, 0, 1),
@@ -376,27 +398,12 @@ func TestHostsContainer(t *testing.T) {
 			Value:  net.ParseIP("::1"),
 			RRType: dns.TypeAAAA,
 		}},
-		name: "simple",
-		req: &urlfilter.DNSRequest{
-			Hostname: "simplehost",
-			DNSType:  dns.TypeA,
-		},
 	}, {
-		want: []*rules.DNSRewrite{{
-			RCode:  dns.RcodeSuccess,
-			Value:  net.IPv4(1, 0, 0, 0),
-			RRType: dns.TypeA,
-		}, {
-			RCode:  dns.RcodeSuccess,
-			Value:  net.ParseIP("::"),
-			RRType: dns.TypeAAAA,
-		}},
-		name: "hello_alias",
 		req: &urlfilter.DNSRequest{
 			Hostname: "hello.world",
 			DNSType:  dns.TypeA,
 		},
-	}, {
+		name: "hello_alias",
 		want: []*rules.DNSRewrite{{
 			RCode:  dns.RcodeSuccess,
 			Value:  net.IPv4(1, 0, 0, 0),
@@ -406,26 +413,41 @@ func TestHostsContainer(t *testing.T) {
 			Value:  net.ParseIP("::"),
 			RRType: dns.TypeAAAA,
 		}},
-		name: "other_line_alias",
+	}, {
 		req: &urlfilter.DNSRequest{
 			Hostname: "hello.world.again",
 			DNSType:  dns.TypeA,
 		},
+		name: "other_line_alias",
+		want: []*rules.DNSRewrite{{
+			RCode:  dns.RcodeSuccess,
+			Value:  net.IPv4(1, 0, 0, 0),
+			RRType: dns.TypeA,
+		}, {
+			RCode:  dns.RcodeSuccess,
+			Value:  net.ParseIP("::"),
+			RRType: dns.TypeAAAA,
+		}},
 	}, {
-		want: []*rules.DNSRewrite{},
-		name: "hello_subdomain",
 		req: &urlfilter.DNSRequest{
 			Hostname: "say.hello",
 			DNSType:  dns.TypeA,
 		},
-	}, {
+		name: "hello_subdomain",
 		want: []*rules.DNSRewrite{},
-		name: "hello_alias_subdomain",
+	}, {
 		req: &urlfilter.DNSRequest{
 			Hostname: "say.hello.world",
 			DNSType:  dns.TypeA,
 		},
+		name: "hello_alias_subdomain",
+		want: []*rules.DNSRewrite{},
 	}, {
+		req: &urlfilter.DNSRequest{
+			Hostname: "for.testing",
+			DNSType:  dns.TypeA,
+		},
+		name: "lots_of_aliases",
 		want: []*rules.DNSRewrite{{
 			RCode:  dns.RcodeSuccess,
 			RRType: dns.TypeA,
@@ -435,37 +457,37 @@ func TestHostsContainer(t *testing.T) {
 			RRType: dns.TypeAAAA,
 			Value:  net.ParseIP("::2"),
 		}},
-		name: "lots_of_aliases",
-		req: &urlfilter.DNSRequest{
-			Hostname: "for.testing",
-			DNSType:  dns.TypeA,
-		},
 	}, {
+		req: &urlfilter.DNSRequest{
+			Hostname: "1.0.0.1.in-addr.arpa",
+			DNSType:  dns.TypePTR,
+		},
+		name: "reverse",
 		want: []*rules.DNSRewrite{{
 			RCode:  dns.RcodeSuccess,
 			RRType: dns.TypePTR,
 			Value:  "simplehost.",
 		}},
-		name: "reverse",
-		req: &urlfilter.DNSRequest{
-			Hostname: "1.0.0.1.in-addr.arpa",
-			DNSType:  dns.TypePTR,
-		},
 	}, {
-		want: []*rules.DNSRewrite{},
-		name: "non-existing",
 		req: &urlfilter.DNSRequest{
-			Hostname: "nonexisting",
+			Hostname: "nonexistent.example",
 			DNSType:  dns.TypeA,
 		},
+		name: "non-existing",
+		want: []*rules.DNSRewrite{},
 	}, {
-		want: nil,
-		name: "bad_type",
 		req: &urlfilter.DNSRequest{
 			Hostname: "1.0.0.1.in-addr.arpa",
 			DNSType:  dns.TypeSRV,
 		},
+		name: "bad_type",
+		want: nil,
 	}, {
+		req: &urlfilter.DNSRequest{
+			Hostname: "domain",
+			DNSType:  dns.TypeA,
+		},
+		name: "issue_4216_4_6",
 		want: []*rules.DNSRewrite{{
 			RCode:  dns.RcodeSuccess,
 			RRType: dns.TypeA,
@@ -475,12 +497,12 @@ func TestHostsContainer(t *testing.T) {
 			RRType: dns.TypeAAAA,
 			Value:  net.ParseIP("::42"),
 		}},
-		name: "issue_4216_4_6",
+	}, {
 		req: &urlfilter.DNSRequest{
-			Hostname: "domain",
+			Hostname: "domain4",
 			DNSType:  dns.TypeA,
 		},
-	}, {
+		name: "issue_4216_4",
 		want: []*rules.DNSRewrite{{
 			RCode:  dns.RcodeSuccess,
 			RRType: dns.TypeA,
@@ -490,12 +512,12 @@ func TestHostsContainer(t *testing.T) {
 			RRType: dns.TypeA,
 			Value:  net.IPv4(1, 3, 5, 7),
 		}},
-		name: "issue_4216_4",
-		req: &urlfilter.DNSRequest{
-			Hostname: "domain4",
-			DNSType:  dns.TypeA,
-		},
 	}, {
+		req: &urlfilter.DNSRequest{
+			Hostname: "domain6",
+			DNSType:  dns.TypeAAAA,
+		},
+		name: "issue_4216_6",
 		want: []*rules.DNSRewrite{{
 			RCode:  dns.RcodeSuccess,
 			RRType: dns.TypeAAAA,
@@ -505,11 +527,6 @@ func TestHostsContainer(t *testing.T) {
 			RRType: dns.TypeAAAA,
 			Value:  net.ParseIP("::31"),
 		}},
-		name: "issue_4216_6",
-		req: &urlfilter.DNSRequest{
-			Hostname: "domain6",
-			DNSType:  dns.TypeAAAA,
-		},
 	}}
 
 	stubWatcher := aghtest.FSWatcher{

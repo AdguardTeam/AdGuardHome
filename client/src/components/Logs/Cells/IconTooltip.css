@@ -19,6 +19,13 @@
     overflow-wrap: break-word;
 }
 
+@media (max-width: 991.98px) {
+    .overflow-break-mobile {
+        white-space: normal !important;
+        overflow-wrap: break-word;
+    }
+}
+
 .grid {
     display: grid;
     grid-template-columns: repeat(2, min-content);

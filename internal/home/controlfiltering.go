@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
@@ -57,8 +58,8 @@ func (f *Filtering) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 
 	err = validateFilterURL(fj.URL)
 	if err != nil {
-		msg := fmt.Sprintf("invalid url: %s", err)
-		http.Error(w, msg, http.StatusBadRequest)
+		err = fmt.Errorf("invalid url: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -178,16 +179,16 @@ func (f *Filtering) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-type filterURLJSON struct {
+type filterURLReqData struct {
 	Name    string `json:"name"`
 	URL     string `json:"url"`
 	Enabled bool   `json:"enabled"`
 }
 
 type filterURLReq struct {
-	URL       string        `json:"url"`
-	Whitelist bool          `json:"whitelist"`
-	Data      filterURLJSON `json:"data"`
+	Data      *filterURLReqData `json:"data"`
+	URL       string            `json:"url"`
+	Whitelist bool              `json:"whitelist"`
 }
 
 func (f *Filtering) handleFilteringSetURL(w http.ResponseWriter, r *http.Request) {
@@ -199,10 +200,17 @@ func (f *Filtering) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	if fj.Data == nil {
+		err = errors.Error("data cannot be null")
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+
+		return
+	}
+
 	err = validateFilterURL(fj.Data.URL)
 	if err != nil {
-		msg := fmt.Sprintf("invalid url: %s", err)
-		http.Error(w, msg, http.StatusBadRequest)
+		err = fmt.Errorf("invalid url: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -223,11 +231,8 @@ func (f *Filtering) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 	}
 
 	onConfigModified()
-	restart := false
-	if (status & statusEnabledChanged) != 0 {
-		// we must add or remove filter rules
-		restart = true
-	}
+
+	restart := (status & statusEnabledChanged) != 0
 	if (status&statusUpdateRequired) != 0 && fj.Data.Enabled {
 		// download new filter and apply its rules
 		flags := filterRefreshBlocklists
@@ -242,6 +247,7 @@ func (f *Filtering) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 			restart = true
 		}
 	}
+
 	if restart {
 		enableFilters(true)
 	}
@@ -311,20 +317,20 @@ func (f *Filtering) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 }
 
 type filterJSON struct {
-	ID          int64  `json:"id"`
-	Enabled     bool   `json:"enabled"`
 	URL         string `json:"url"`
 	Name        string `json:"name"`
+	LastUpdated string `json:"last_updated,omitempty"`
+	ID          int64  `json:"id"`
 	RulesCount  uint32 `json:"rules_count"`
-	LastUpdated string `json:"last_updated"`
+	Enabled     bool   `json:"enabled"`
 }
 
 type filteringConfig struct {
-	Enabled          bool         `json:"enabled"`
-	Interval         uint32       `json:"interval"` // in hours
 	Filters          []filterJSON `json:"filters"`
 	WhitelistFilters []filterJSON `json:"whitelist_filters"`
 	UserRules        []string     `json:"user_rules"`
+	Interval         uint32       `json:"interval"` // in hours
+	Enabled          bool         `json:"enabled"`
 }
 
 func filterToJSON(f filter) filterJSON {
@@ -402,16 +408,12 @@ func (f *Filtering) handleFilteringConfig(w http.ResponseWriter, r *http.Request
 }
 
 type checkHostRespRule struct {
-	FilterListID int64  `json:"filter_list_id"`
 	Text         string `json:"text"`
+	FilterListID int64  `json:"filter_list_id"`
 }
 
 type checkHostResp struct {
 	Reason string `json:"reason"`
-	// FilterID is the ID of the rule's filter list.
-	//
-	// Deprecated: Use Rules[*].FilterListID.
-	FilterID int64 `json:"filter_id"`
 
 	// Rule is the text of the matched rule.
 	//
@@ -426,6 +428,11 @@ type checkHostResp struct {
 	// for Rewrite:
 	CanonName string   `json:"cname"`    // CNAME value
 	IPList    []net.IP `json:"ip_addrs"` // list of IP addresses
+
+	// FilterID is the ID of the rule's filter list.
+	//
+	// Deprecated: Use Rules[*].FilterListID.
+	FilterID int64 `json:"filter_id"`
 }
 
 func (f *Filtering) handleCheckHost(w http.ResponseWriter, r *http.Request) {
