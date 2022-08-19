@@ -20,16 +20,11 @@ and this project adheres to
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).
 
-### Added
-
-- Bilibili service blocking ([#4795]).
-
 ### Deprecated
 
 - Go 1.18 support.  v0.109.0 will require at least Go 1.19 to build.
 
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
-[#4795]: https://github.com/AdguardTeam/AdGuardHome/issues/4795
 
 
 
