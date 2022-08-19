@@ -22,6 +22,7 @@ type svc struct {
 var serviceRulesArray = []svc{{
 	name: "whatsapp",
 	rules: []string{
+		"||wa.me^",
 		"||whatsapp.com^",
 		"||whatsapp.net^",
 	},
@@ -34,7 +35,9 @@ var serviceRulesArray = []svc{{
 		"||accountkit.com^",
 		"||fb.me^",
 		"||fb.com^",
+		"||fb.gg^",
 		"||fbsbx.com^",
+		"||fbwat.ch^",
 		"||messenger.com^",
 		"||facebookcorewwwi.onion^",
 		"||fbcdn.com^",
@@ -58,6 +61,7 @@ var serviceRulesArray = []svc{{
 		"||youtube-nocookie.com^",
 		"||youtube.com^",
 		"||youtubei.googleapis.com^",
+		"||youtubekids.com^",
 		"||ytimg.com^",
 	},
 }, {
@@ -97,6 +101,7 @@ var serviceRulesArray = []svc{{
 		"||discordapp.net^",
 		"||discordapp.com^",
 		"||discord.com^",
+		"||discord.gift",
 		"||discord.media^",
 	},
 }, {
@@ -174,6 +179,7 @@ var serviceRulesArray = []svc{{
 		"||amazon.com.br^",
 		"||amazon.co.jp^",
 		"||amazon.com.mx^",
+		"||amazon.com.tr^",
 		"||amazon.co.uk^",
 		"||createspace.com^",
 		"||aws",
@@ -223,7 +229,9 @@ var serviceRulesArray = []svc{{
 		"||toutiaocloud.net^",
 		"||bdurl.com^",
 		"||bytecdn.cn^",
+		"||bytedapm.com^",
 		"||byteimg.com^",
+		"||byteoversea.com^",
 		"||ixigua.com^",
 		"||muscdn.com^",
 		"||bytedance.map.fastly.net^",
