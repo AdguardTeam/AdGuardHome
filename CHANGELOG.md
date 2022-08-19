@@ -12,7 +12,7 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.108.0] - 2022-10-01 (APPROX.)
+## [v0.108.0] - 2022-12-01 (APPROX.)
 -->
 
 ### Security
@@ -29,12 +29,35 @@ and this project adheres to
 
 
 <!--
-## [v0.107.11] - 2022-09-28 (APPROX.)
+## [v0.107.12] - 2022-09-28 (APPROX.)
+
+See also the [v0.107.12 GitHub milestone][ms-v0.107.12].
+
+[ms-v0.107.12]: https://github.com/AdguardTeam/AdGuardHome/milestone/47?closed=1
+-->
+
+
+
+## [v0.107.11] - 2022-08-19
 
 See also the [v0.107.11 GitHub milestone][ms-v0.107.11].
 
+### Added
+
+- Bilibili service blocking ([#4795]).
+
+### Changed
+
+- DNS-over-QUIC connections now use keepalive.
+
+### Fixed
+
+- Migrations from releases older than v0.107.7 failing ([#4846]).
+
+[#4795]: https://github.com/AdguardTeam/AdGuardHome/issues/4795
+[#4846]: https://github.com/AdguardTeam/AdGuardHome/issues/4846
+
 [ms-v0.107.11]: https://github.com/AdguardTeam/AdGuardHome/milestone/47?closed=1
--->
 
 
 
@@ -1116,11 +1139,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...HEAD
-[v0.107.11]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.10...v0.107.11
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...HEAD
+[v0.107.12]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...v0.107.12
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.10...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...HEAD
+[v0.107.11]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.10...v0.107.11
 [v0.107.10]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.9...v0.107.10
 [v0.107.9]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.8...v0.107.9
 [v0.107.8]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.7...v0.107.8
