@@ -4405,7 +4405,7 @@
         Validatable TLS settings.
       'example':
         'certificate_path': '/etc/ssl/example.com.cert'
-        'port_dns_over_quic': 784
+        'port_dns_over_quic': 853
         'port_dns_over_tls': 853
         'port_https': 443
         'private_key_path': '/etc/ssl/example.com.key'
@@ -4427,7 +4427,7 @@
             sent.
           'type': 'string'
         'port_dns_over_quic':
-          'default': 784
+          'default': 853
           'description': >
             The DNS-over-QUIC port.  If `0`, DNS-over-QUIC is disabled.
           'format': 'int64'
@@ -4865,7 +4865,7 @@
         'example':
           'certificate_path': '/etc/ssl/example.com.cert'
           'enabled': true
-          'port_dns_over_quic': 784
+          'port_dns_over_quic': 853
           'port_dns_over_tls': 853
           'port_https': 443
           'private_key_path': '/etc/ssl/example.com.key'
@@ -4907,7 +4907,7 @@
             DNS-over-TLS and other protocols.
           'type': 'boolean'
         'port_dns_over_quic':
-          'default': 784
+          'default': 853
           'description': >
             The DNS-over-QUIC port.  If `0`, DNS-over-QUIC is disabled.
           'format': 'int64'
@@ -5002,8 +5002,7 @@
          *  `https://unfiltered.adguard-dns.com/dns-query`: encrypted
              DNS-over-HTTPS.
 
-         *  `quic://unfiltered.adguard-dns.com:784`: encrypted DNS-over-QUIC
-             (experimental).
+         *  `quic://unfiltered.adguard-dns.com`: encrypted DNS-over-QUIC.
 
          *  `tcp://94.140.14.140`: plain DNS-over-TCP.
 

@@ -22,6 +22,10 @@ and this project adheres to
 
 ### Deprecated
 
+- Ports 784 and 8853 for DNS-over-QUIC in Docker images.  Users who still serve
+  DoQ on these ports are encouraged to move to the standard port 853.  These
+  ports will be removed from the `EXPOSE` section of our `Dockerfile` in a
+  future release.
 - Go 1.18 support.  v0.109.0 will require at least Go 1.19 to build.
 
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
@@ -48,7 +52,7 @@ See also the [v0.107.11 GitHub milestone][ms-v0.107.11].
 
 ### Changed
 
-- DNS-over-QUIC connections now use keepalive.
+- DNS-over-QUIC connections now use keptalive.
 
 ### Fixed
 
