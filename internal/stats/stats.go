@@ -385,33 +385,37 @@ func (s *StatsCtx) flush() (cont bool, sleepFor time.Duration) {
 		return true, 0
 	}
 
+	isCommitable := true
 	tx, err := db.Begin(true)
 	if err != nil {
 		log.Error("stats: opening transaction: %s", err)
 
 		return true, 0
 	}
+	defer func() {
+		if err = finishTxn(tx, isCommitable); err != nil {
+			log.Error("stats: %s", err)
+		}
+	}()
 
 	s.curr = newUnit(id)
-	isCommitable := true
 
-	ferr := ptr.serialize().flushUnitToDB(tx, ptr.id)
-	if ferr != nil {
-		log.Error("stats: flushing unit: %s", ferr)
+	flushErr := ptr.serialize().flushUnitToDB(tx, ptr.id)
+	if flushErr != nil {
+		log.Error("stats: flushing unit: %s", flushErr)
 		isCommitable = false
 	}
 
-	derr := tx.DeleteBucket(idToUnitName(id - limit))
-	if derr != nil {
-		log.Error("stats: deleting unit: %s", derr)
-		if !errors.Is(derr, bbolt.ErrBucketNotFound) {
+	delErr := tx.DeleteBucket(idToUnitName(id - limit))
+	if delErr != nil {
+		// TODO(e.burkov):  Improve the algorithm of deleting the oldest bucket
+		// to avoid the error.
+		if errors.Is(delErr, bbolt.ErrBucketNotFound) {
+			log.Debug("stats: warning: deleting unit: %s", delErr)
+		} else {
 			isCommitable = false
+			log.Error("stats: deleting unit: %s", delErr)
 		}
-	}
-
-	err = finishTxn(tx, isCommitable)
-	if err != nil {
-		log.Error("stats: %s", err)
 	}
 
 	return true, 0

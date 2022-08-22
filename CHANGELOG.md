@@ -28,7 +28,12 @@ and this project adheres to
   future release.
 - Go 1.18 support.  v0.109.0 will require at least Go 1.19 to build.
 
+### Fixed
+
+- Unnecessary logging of non-critical statistics errors ([#4850]).
+
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+[#4850]: https://github.com/AdguardTeam/AdGuardHome/issues/4850
 
 
 
