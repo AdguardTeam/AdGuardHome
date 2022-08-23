@@ -30,9 +30,11 @@ and this project adheres to
 
 ### Fixed
 
+- Dynamic leases created with empty hostnames ([#4745]).
 - Unnecessary logging of non-critical statistics errors ([#4850]).
 
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+[#4745]: https://github.com/AdguardTeam/AdGuardHome/issues/4745
 [#4850]: https://github.com/AdguardTeam/AdGuardHome/issues/4850
 
 

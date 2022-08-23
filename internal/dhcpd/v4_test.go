@@ -8,7 +8,9 @@ import (
 	"net"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/insomniacslk/dhcp/dhcpv4"
@@ -23,6 +25,7 @@ var (
 	DefaultRangeStart = net.IP{192, 168, 10, 100}
 	DefaultRangeEnd   = net.IP{192, 168, 10, 200}
 	DefaultGatewayIP  = net.IP{192, 168, 10, 1}
+	DefaultSelfIP     = net.IP{192, 168, 10, 2}
 	DefaultSubnetMask = net.IP{255, 255, 255, 0}
 )
 
@@ -39,6 +42,7 @@ func defaultV4ServerConf() (conf V4ServerConf) {
 		GatewayIP:  DefaultGatewayIP,
 		SubnetMask: DefaultSubnetMask,
 		notify:     notify4,
+		dnsIPAddrs: []net.IP{DefaultSelfIP},
 	}
 }
 
@@ -52,6 +56,148 @@ func defaultSrv(t *testing.T) (s DHCPServer) {
 	require.NoError(t, err)
 
 	return s
+}
+
+func TestV4Server_leasing(t *testing.T) {
+	const (
+		staticName  = "static-client"
+		anotherName = "another-client"
+	)
+
+	staticIP := net.IP{192, 168, 10, 10}
+	anotherIP := DefaultRangeStart
+	staticMAC := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
+	anotherMAC := net.HardwareAddr{0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB}
+
+	s := defaultSrv(t)
+
+	t.Run("add_static", func(t *testing.T) {
+		err := s.AddStaticLease(&Lease{
+			Expiry:   time.Unix(leaseExpireStatic, 0),
+			Hostname: staticName,
+			HWAddr:   staticMAC,
+			IP:       staticIP,
+		})
+		require.NoError(t, err)
+
+		t.Run("same_name", func(t *testing.T) {
+			err = s.AddStaticLease(&Lease{
+				Expiry:   time.Unix(leaseExpireStatic, 0),
+				Hostname: staticName,
+				HWAddr:   anotherMAC,
+				IP:       anotherIP,
+			})
+			assert.ErrorIs(t, err, ErrDupHostname)
+		})
+
+		t.Run("same_mac", func(t *testing.T) {
+			wantErrMsg := "dhcpv4: adding static lease: removing " +
+				"dynamic leases for " + anotherIP.String() +
+				" (" + staticMAC.String() + "): static lease already exists"
+
+			err = s.AddStaticLease(&Lease{
+				Expiry:   time.Unix(leaseExpireStatic, 0),
+				Hostname: anotherName,
+				HWAddr:   staticMAC,
+				IP:       anotherIP,
+			})
+			testutil.AssertErrorMsg(t, wantErrMsg, err)
+		})
+
+		t.Run("same_ip", func(t *testing.T) {
+			wantErrMsg := "dhcpv4: adding static lease: removing " +
+				"dynamic leases for " + staticIP.String() +
+				" (" + anotherMAC.String() + "): static lease already exists"
+
+			err = s.AddStaticLease(&Lease{
+				Expiry:   time.Unix(leaseExpireStatic, 0),
+				Hostname: anotherName,
+				HWAddr:   anotherMAC,
+				IP:       staticIP,
+			})
+			testutil.AssertErrorMsg(t, wantErrMsg, err)
+		})
+	})
+
+	t.Run("add_dynamic", func(t *testing.T) {
+		s4, ok := s.(*v4Server)
+		require.True(t, ok)
+
+		discoverAnOffer := func(
+			t *testing.T,
+			name string,
+			ip net.IP,
+			mac net.HardwareAddr,
+		) (resp *dhcpv4.DHCPv4) {
+			testutil.CleanupAndRequireSuccess(t, func() (err error) {
+				return s.ResetLeases(s.GetLeases(LeasesStatic))
+			})
+
+			req, err := dhcpv4.NewDiscovery(
+				mac,
+				dhcpv4.WithOption(dhcpv4.OptHostName(name)),
+				dhcpv4.WithOption(dhcpv4.OptRequestedIPAddress(ip)),
+				dhcpv4.WithOption(dhcpv4.OptClientIdentifier([]byte{1, 2, 3, 4, 5, 6, 8})),
+				dhcpv4.WithGatewayIP(DefaultGatewayIP),
+			)
+			require.NoError(t, err)
+
+			resp = &dhcpv4.DHCPv4{}
+			res := s4.process(req, resp)
+			require.Positive(t, res)
+			require.Equal(t, dhcpv4.MessageTypeOffer, resp.MessageType())
+
+			resp.ClientHWAddr = mac
+
+			return resp
+		}
+
+		t.Run("same_name", func(t *testing.T) {
+			resp := discoverAnOffer(t, staticName, anotherIP, anotherMAC)
+
+			req, err := dhcpv4.NewRequestFromOffer(resp, dhcpv4.WithOption(
+				dhcpv4.OptHostName(staticName),
+			))
+			require.NoError(t, err)
+
+			res := s4.process(req, resp)
+			require.Positive(t, res)
+
+			assert.Equal(t, aghnet.GenerateHostname(resp.YourIPAddr), resp.HostName())
+		})
+
+		t.Run("same_mac", func(t *testing.T) {
+			resp := discoverAnOffer(t, anotherName, anotherIP, staticMAC)
+
+			req, err := dhcpv4.NewRequestFromOffer(resp, dhcpv4.WithOption(
+				dhcpv4.OptHostName(anotherName),
+			))
+			require.NoError(t, err)
+
+			res := s4.process(req, resp)
+			require.Positive(t, res)
+
+			fqdnOptData := resp.Options.Get(dhcpv4.OptionFQDN)
+			require.Len(t, fqdnOptData, 3+len(staticName))
+			assert.Equal(t, []uint8(staticName), fqdnOptData[3:])
+
+			assert.Equal(t, staticIP, resp.YourIPAddr)
+		})
+
+		t.Run("same_ip", func(t *testing.T) {
+			resp := discoverAnOffer(t, anotherName, staticIP, anotherMAC)
+
+			req, err := dhcpv4.NewRequestFromOffer(resp, dhcpv4.WithOption(
+				dhcpv4.OptHostName(anotherName),
+			))
+			require.NoError(t, err)
+
+			res := s4.process(req, resp)
+			require.Positive(t, res)
+
+			assert.NotEqual(t, staticIP, resp.YourIPAddr)
+		})
+	})
 }
 
 func TestV4Server_AddRemove_static(t *testing.T) {
