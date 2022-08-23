@@ -108,14 +108,29 @@ var serviceRulesArray = []svc{{
 	name:  "ok",
 	rules: []string{"||ok.ru^"},
 }, {
-	name:  "skype",
-	rules: []string{"||skype.com^", "||skypeassets.com^"},
+	name: "skype",
+	rules: []string{
+		"||edge-skype-com.s-0001.s-msedge.net^",
+		"||skype-edf.akadns.net^",
+		"||skype.com^",
+		"||skypeassets.com^",
+		"||skypedata.akadns.net^",
+	},
 }, {
-	name:  "vk",
-	rules: []string{"||vk.com^", "||userapi.com^", "||vk-cdn.net^", "||vkuservideo.net^"},
+	name: "vk",
+	rules: []string{
+		"||userapi.com^",
+		"||vk-cdn.net^",
+		"||vk.com^",
+		"||vkuservideo.net^",
+	},
 }, {
-	name:  "origin",
-	rules: []string{"||origin.com^", "||signin.ea.com^", "||accounts.ea.com^"},
+	name: "origin",
+	rules: []string{
+		"||accounts.ea.com^",
+		"||origin.com^",
+		"||signin.ea.com^",
+	},
 }, {
 	name: "steam",
 	rules: []string{
