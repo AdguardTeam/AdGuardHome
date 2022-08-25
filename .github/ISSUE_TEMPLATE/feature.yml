@@ -1,0 +1,41 @@
+'body':
+  - 'attributes':
+        'description': >
+            Please make sure that the issue is not a duplicate or a question.
+            If it's a duplicate, please react to the original issue with a
+            thumbs up.  If it's a question, please post it to the GitHub
+            Discussions page.
+        'label': 'Prerequisites'
+        'options':
+          - 'label': >
+                I have checked the
+                [Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki) and
+                [Discussions](https://github.com/AdguardTeam/AdGuardHome/discussions)
+                and found no answer
+            'required': true
+          - 'label': >
+                I have searched other issues and found no duplicates
+            'required': true
+          - 'label': >
+                I want to request a feature or enhancement and not ask a
+                question
+            'required': true
+    'id': 'prerequisites'
+    'type': 'checkboxes'
+  - 'attributes':
+        'description': 'Please describe the request'
+        'label': 'Description'
+        'value': |
+            #### What problem are you trying to solve?
+
+            #### Proposed solution
+
+            #### Alternatives considered
+
+            #### Additional information
+    'id': 'description'
+    'type': 'textarea'
+    'validations':
+        'required': true
+'description': 'Suggest a feature or an enhancement for AdGuard Home'
+'name': 'Feature request or enhancement'

@@ -17,13 +17,14 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
@@ -69,14 +70,11 @@ func createTestServer(
 	f := filtering.New(filterConf, filters)
 	f.SetEnabled(true)
 
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
-	require.NotNil(t, snd)
-
+	var err error
 	s, err = NewServer(DNSCreateParams{
-		DHCPServer:     &testDHCP{},
-		DNSFilter:      f,
-		SubnetDetector: snd,
+		DHCPServer:  &testDHCP{},
+		DNSFilter:   f,
+		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
 	require.NoError(t, err)
 
@@ -770,16 +768,11 @@ func TestBlockedCustomIP(t *testing.T) {
 		Data: []byte(rules),
 	}}
 
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
-	require.NotNil(t, snd)
-
 	f := filtering.New(&filtering.Config{}, filters)
-	var s *Server
-	s, err = NewServer(DNSCreateParams{
-		DHCPServer:     &testDHCP{},
-		DNSFilter:      f,
-		SubnetDetector: snd,
+	s, err := NewServer(DNSCreateParams{
+		DHCPServer:  &testDHCP{},
+		DNSFilter:   f,
+		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
 	require.NoError(t, err)
 
@@ -860,10 +853,7 @@ func TestBlockedByHosts(t *testing.T) {
 func TestBlockedBySafeBrowsing(t *testing.T) {
 	const hostname = "wmconvirus.narod.ru"
 
-	sbUps := &aghtest.TestBlockUpstream{
-		Hostname: hostname,
-		Block:    true,
-	}
+	sbUps := aghtest.NewBlockUpstream(hostname, true)
 	ans4, _ := (&aghtest.TestResolver{}).HostToIPs(hostname)
 
 	filterConf := &filtering.Config{
@@ -913,15 +903,10 @@ func TestRewrite(t *testing.T) {
 	f := filtering.New(c, nil)
 	f.SetEnabled(true)
 
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
-	require.NotNil(t, snd)
-
-	var s *Server
-	s, err = NewServer(DNSCreateParams{
-		DHCPServer:     &testDHCP{},
-		DNSFilter:      f,
-		SubnetDetector: snd,
+	s, err := NewServer(DNSCreateParams{
+		DHCPServer:  &testDHCP{},
+		DNSFilter:   f,
+		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
 	require.NoError(t, err)
 
@@ -1000,7 +985,7 @@ func TestRewrite(t *testing.T) {
 	}
 }
 
-func publicKey(priv interface{}) interface{} {
+func publicKey(priv any) any {
 	switch k := priv.(type) {
 	case *rsa.PrivateKey:
 		return &k.PublicKey
@@ -1028,36 +1013,33 @@ func (d *testDHCP) Leases(flags dhcpd.GetLeasesFlags) (leases []*dhcpd.Lease) {
 func (d *testDHCP) SetOnLeaseChanged(onLeaseChanged dhcpd.OnLeaseChangedT) {}
 
 func TestPTRResponseFromDHCPLeases(t *testing.T) {
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
-	require.NotNil(t, snd)
+	const localDomain = "lan"
 
-	var s *Server
-	s, err = NewServer(DNSCreateParams{
-		DNSFilter:      filtering.New(&filtering.Config{}, nil),
-		DHCPServer:     &testDHCP{},
-		SubnetDetector: snd,
+	s, err := NewServer(DNSCreateParams{
+		DNSFilter:   filtering.New(&filtering.Config{}, nil),
+		DHCPServer:  &testDHCP{},
+		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
+		LocalDomain: localDomain,
 	})
 	require.NoError(t, err)
 
 	s.conf.UDPListenAddrs = []*net.UDPAddr{{}}
 	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
-	s.conf.FilteringConfig.ProtectionEnabled = true
+	s.conf.ProtectionEnabled = true
 
 	err = s.Prepare(nil)
 	require.NoError(t, err)
 
 	err = s.Start()
 	require.NoError(t, err)
-
 	t.Cleanup(s.Close)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 	req := createTestMessageWithType("34.12.168.192.in-addr.arpa.", dns.TypePTR)
 
 	resp, err := dns.Exchange(req, addr.String())
-	require.NoError(t, err)
+	require.NoErrorf(t, err, "%s", addr)
 
 	require.Len(t, resp.Answer, 1)
 
@@ -1066,7 +1048,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 
 	ptr, ok := resp.Answer[0].(*dns.PTR)
 	require.True(t, ok)
-	assert.Equal(t, "myhost.", ptr.Ptr)
+	assert.Equal(t, dns.Fqdn("myhost."+localDomain), ptr.Ptr)
 }
 
 func TestPTRResponseFromHosts(t *testing.T) {
@@ -1105,16 +1087,11 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	}, nil)
 	flt.SetEnabled(true)
 
-	var snd *aghnet.SubnetDetector
-	snd, err = aghnet.NewSubnetDetector()
-	require.NoError(t, err)
-	require.NotNil(t, snd)
-
 	var s *Server
 	s, err = NewServer(DNSCreateParams{
-		DHCPServer:     &testDHCP{},
-		DNSFilter:      flt,
-		SubnetDetector: snd,
+		DHCPServer:  &testDHCP{},
+		DNSFilter:   flt,
+		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
 	require.NoError(t, err)
 
@@ -1197,25 +1174,48 @@ func TestNewServer(t *testing.T) {
 }
 
 func TestServer_Exchange(t *testing.T) {
-	extUpstream := &aghtest.Upstream{
-		Reverse: map[string][]string{
-			"1.1.1.1.in-addr.arpa.": {"one.one.one.one"},
+	const (
+		onesHost        = "one.one.one.one"
+		localDomainHost = "local.domain"
+	)
+
+	var (
+		onesIP  = net.IP{1, 1, 1, 1}
+		localIP = net.IP{192, 168, 1, 1}
+	)
+
+	revExtIPv4, err := netutil.IPToReversedAddr(onesIP)
+	require.NoError(t, err)
+
+	extUpstream := &aghtest.UpstreamMock{
+		OnAddress: func() (addr string) { return "external.upstream.example" },
+		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
+			resp = aghalg.Coalesce(
+				aghtest.RespondTo(t, req, dns.ClassINET, dns.TypePTR, revExtIPv4, onesHost),
+				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+			)
+
+			return resp, nil
 		},
 	}
-	locUpstream := &aghtest.Upstream{
-		Reverse: map[string][]string{
-			"1.1.168.192.in-addr.arpa.": {"local.domain"},
-			"2.1.168.192.in-addr.arpa.": {},
+
+	revLocIPv4, err := netutil.IPToReversedAddr(localIP)
+	require.NoError(t, err)
+
+	locUpstream := &aghtest.UpstreamMock{
+		OnAddress: func() (addr string) { return "local.upstream.example" },
+		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
+			resp = aghalg.Coalesce(
+				aghtest.RespondTo(t, req, dns.ClassINET, dns.TypePTR, revLocIPv4, localDomainHost),
+				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+			)
+
+			return resp, nil
 		},
 	}
-	upstreamErr := errors.Error("upstream error")
-	errUpstream := &aghtest.TestErrUpstream{
-		Err: upstreamErr,
-	}
-	nonPtrUpstream := &aghtest.TestBlockUpstream{
-		Hostname: "some-host",
-		Block:    true,
-	}
+
+	errUpstream := aghtest.NewErrorUpstream()
+	nonPtrUpstream := aghtest.NewBlockUpstream("some-host", true)
 
 	srv := NewCustomServer(&proxy.Proxy{
 		Config: proxy.Config{
@@ -1227,11 +1227,8 @@ func TestServer_Exchange(t *testing.T) {
 	srv.conf.ResolveClients = true
 	srv.conf.UsePrivateRDNS = true
 
-	var err error
-	srv.subnetDetector, err = aghnet.NewSubnetDetector()
-	require.NoError(t, err)
+	srv.privateNets = netutil.SubnetSetFunc(netutil.IsLocallyServed)
 
-	localIP := net.IP{192, 168, 1, 1}
 	testCases := []struct {
 		name        string
 		want        string
@@ -1240,20 +1237,20 @@ func TestServer_Exchange(t *testing.T) {
 		req         net.IP
 	}{{
 		name:        "external_good",
-		want:        "one.one.one.one",
+		want:        onesHost,
 		wantErr:     nil,
 		locUpstream: nil,
-		req:         net.IP{1, 1, 1, 1},
+		req:         onesIP,
 	}, {
 		name:        "local_good",
-		want:        "local.domain",
+		want:        localDomainHost,
 		wantErr:     nil,
 		locUpstream: locUpstream,
 		req:         localIP,
 	}, {
 		name:        "upstream_error",
 		want:        "",
-		wantErr:     upstreamErr,
+		wantErr:     aghtest.ErrUpstream,
 		locUpstream: errUpstream,
 		req:         localIP,
 	}, {

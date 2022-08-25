@@ -24,10 +24,11 @@ import (
 
 // Safe browsing and parental control methods.
 
+// TODO(a.garipov): Make configurable.
 const (
 	dnsTimeout                = 3 * time.Second
-	defaultSafebrowsingServer = `https://dns-family.adguard.com/dns-query`
-	defaultParentalServer     = `https://dns-family.adguard.com/dns-query`
+	defaultSafebrowsingServer = `https://family.adguard-dns.com/dns-query`
+	defaultParentalServer     = `https://family.adguard-dns.com/dns-query`
 	sbTXTSuffix               = `sb.dns.adguard.com.`
 	pcTXTSuffix               = `pc.dns.adguard.com.`
 )
@@ -313,7 +314,7 @@ func (d *DNSFilter) checkSafeBrowsing(
 
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
-		defer timer.LogElapsed("SafeBrowsing lookup for %s", host)
+		defer timer.LogElapsed("safebrowsing lookup for %q", host)
 	}
 
 	sctx := &sbCtx{
@@ -347,7 +348,7 @@ func (d *DNSFilter) checkParental(
 
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
-		defer timer.LogElapsed("Parental lookup for %s", host)
+		defer timer.LogElapsed("parental lookup for %q", host)
 	}
 
 	sctx := &sbCtx{

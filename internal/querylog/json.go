@@ -17,7 +17,7 @@ import (
 // TODO(a.garipov): Use a proper structured approach here.
 
 // jobject is a JSON object alias.
-type jobject = map[string]interface{}
+type jobject = map[string]any
 
 // entriesToJSON converts query log entries to JSON.
 func (l *queryLog) entriesToJSON(entries []*logEntry, oldest time.Time) (res jobject) {
@@ -76,6 +76,10 @@ func (l *queryLog) entryToJSON(entry *logEntry, anonFunc aghnet.IPMutFunc) (json
 
 	if entry.ClientID != "" {
 		jsonEntry["client_id"] = entry.ClientID
+	}
+
+	if entry.ReqECS != "" {
+		jsonEntry["ecs"] = entry.ReqECS
 	}
 
 	if len(entry.Result.Rules) > 0 {

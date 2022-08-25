@@ -12,19 +12,227 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.108.0] - 2022-06-01 (APPROX.)
+## [v0.108.0] - 2022-12-01 (APPROX.)
 -->
+
+### Security
+
+- Weaker cipher suites that use the CBC (cipher block chaining) mode of
+  operation have been disabled ([#2993]).
 
 ### Added
 
+- A new HTTP API, `GET /control/blocked_services/services`, that lists all
+  available blocked services ([#4535]).
+
+### Deprecated
+
+- Ports 784 and 8853 for DNS-over-QUIC in Docker images.  Users who still serve
+  DoQ on these ports are encouraged to move to the standard port 853.  These
+  ports will be removed from the `EXPOSE` section of our `Dockerfile` in a
+  future release.
+- Go 1.18 support.  v0.109.0 will require at least Go 1.19 to build.
+
+### Fixed
+
+- Dynamic leases created with empty hostnames ([#4745]).
+- Unnecessary logging of non-critical statistics errors ([#4850]).
+
+[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+[#4535]: https://github.com/AdguardTeam/AdGuardHome/issues/4535
+[#4745]: https://github.com/AdguardTeam/AdGuardHome/issues/4745
+[#4850]: https://github.com/AdguardTeam/AdGuardHome/issues/4850
+
+
+
+<!--
+## [v0.107.12] - 2022-09-28 (APPROX.)
+
+See also the [v0.107.12 GitHub milestone][ms-v0.107.12].
+
+[ms-v0.107.12]: https://github.com/AdguardTeam/AdGuardHome/milestone/47?closed=1
+-->
+
+
+
+## [v0.107.11] - 2022-08-19
+
+See also the [v0.107.11 GitHub milestone][ms-v0.107.11].
+
+### Added
+
+- Bilibili service blocking ([#4795]).
+
+### Changed
+
+- DNS-over-QUIC connections now use keepalive.
+
+### Fixed
+
+- Migrations from releases older than v0.107.7 failing ([#4846]).
+
+[#4795]: https://github.com/AdguardTeam/AdGuardHome/issues/4795
+[#4846]: https://github.com/AdguardTeam/AdGuardHome/issues/4846
+
+[ms-v0.107.11]: https://github.com/AdguardTeam/AdGuardHome/milestone/47?closed=1
+
+
+
+## [v0.107.10] - 2022-08-17
+
+See also the [v0.107.10 GitHub milestone][ms-v0.107.10].
+
+### Added
+
+- Arabic localization.
+- Support for Discovery of Designated Resolvers (DDR) according to the [RFC
+  draft][ddr-draft] ([#4463]).
+
+### Changed
+
+- Our snap package now uses the `core22` image as its base ([#4843]).
+
+### Fixed
+
+- DHCP not working on most OSes ([#4836]).
+- `invalid argument` errors during update checks on older Linux kernels
+  ([#4670]).
+- Data races and concurrent map access in statistics module ([#4358], [#4342]).
+
+[#4342]: https://github.com/AdguardTeam/AdGuardHome/issues/4342
+[#4358]: https://github.com/AdguardTeam/AdGuardHome/issues/4358
+[#4670]: https://github.com/AdguardTeam/AdGuardHome/issues/4670
+[#4836]: https://github.com/AdguardTeam/AdGuardHome/issues/4836
+[#4843]: https://github.com/AdguardTeam/AdGuardHome/issues/4843
+
+[ddr-draft]:    https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
+[ms-v0.107.10]: https://github.com/AdguardTeam/AdGuardHome/milestone/46?closed=1
+
+
+
+## [v0.107.9] - 2022-08-03
+
+See also the [v0.107.9 GitHub milestone][ms-v0.107.9].
+
+### Security
+
+- Go version was updated to prevent the possibility of exploiting the
+  CVE-2022-32189 Go vulnerability fixed in [Go 1.18.5][go-1.18.5].  Go 1.17
+  support has also been removed, as it has reached end of life and will not
+  receive security updates.
+
+### Added
+
+- Domain-specific upstream servers test.  If such test fails, a warning message
+  is shown ([#4517]).
 - `windows/arm64` support ([#3057]).
 
 ### Changed
 
+- UI and update links have been changed to make them more resistant to DNS
+  blocking.
+
+### Fixed
+
+- DHCP not working on most OSes ([#4836]).
+- Several UI issues ([#4775], [#4776], [#4782]).
+
+### Removed
+
+- Go 1.17 support, as it has reached end of life.
+
+[#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
+[#4517]: https://github.com/AdguardTeam/AdGuardHome/issues/4517
+[#4775]: https://github.com/AdguardTeam/AdGuardHome/issues/4775
+[#4776]: https://github.com/AdguardTeam/AdGuardHome/issues/4776
+[#4782]: https://github.com/AdguardTeam/AdGuardHome/issues/4782
+[#4836]: https://github.com/AdguardTeam/AdGuardHome/issues/4836
+
+[go-1.18.5]:   https://groups.google.com/g/golang-announce/c/YqYYG87xB10
+[ms-v0.107.9]: https://github.com/AdguardTeam/AdGuardHome/milestone/45?closed=1
+
+
+
+## [v0.107.8] - 2022-07-13
+
+See also the [v0.107.8 GitHub milestone][ms-v0.107.8].
+
+### Security
+
+- Go version was updated to prevent the possibility of exploiting the
+  CVE-2022-1705, CVE-2022-32148, CVE-2022-30631, and other Go vulnerabilities
+  fixed in [Go 1.17.12][go-1.17.12].
+
+  <!--
+      TODO(a.garipov): Use the above format in all similar announcements below.
+  -->
+
+### Fixed
+
+- DHCP lease validation incorrectly letting users assign the IP address of the
+  gateway as the address of the lease ([#4698]).
+- Updater no longer expects a hardcoded name for  `AdGuardHome` executable
+  ([#4219]).
+- Inconsistent names of runtime clients from hosts files ([#4683]).
+- PTR requests for addresses leased by DHCP will now be resolved into hostnames
+  under `dhcp.local_domain_name` ([#4699]).
+- Broken service installation on OpenWrt ([#4677]).
+
+[#4219]: https://github.com/AdguardTeam/AdGuardHome/issues/4219
+[#4677]: https://github.com/AdguardTeam/AdGuardHome/issues/4677
+[#4683]: https://github.com/AdguardTeam/AdGuardHome/issues/4683
+[#4698]: https://github.com/AdguardTeam/AdGuardHome/issues/4698
+[#4699]: https://github.com/AdguardTeam/AdGuardHome/issues/4699
+
+[go-1.17.12]:  https://groups.google.com/g/golang-announce/c/nqrv9fbR0zE
+[ms-v0.107.8]: https://github.com/AdguardTeam/AdGuardHome/milestone/44?closed=1
+
+
+
+## [v0.107.7] - 2022-06-06
+
+See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
+
+### Security
+
+- Go version was updated to prevent the possibility of exploiting the
+  [CVE-2022-29526], [CVE-2022-30634], [CVE-2022-30629], [CVE-2022-30580], and
+  [CVE-2022-29804] Go vulnerabilities.
+- Enforced password strength policy ([#3503]).
+
+### Added
+
+- Support for the final DNS-over-QUIC standard, [RFC 9250][rfc-9250] ([#4592]).
+- Support upstreams for subdomains of a domain only ([#4503]).
+- The ability to control each source of runtime clients separately via
+  `clients.runtime_sources` configuration object ([#3020]).
+- The ability to customize the set of networks that are considered private
+  through the new `dns.private_networks` property in the configuration file
+  ([#3142]).
+- EDNS Client-Subnet information in the request details section of a query log
+  record ([#3978]).
+- Support for hostnames for plain UDP upstream servers using the `udp://` scheme
+  ([#4166]).
+- Logs are now collected by default on FreeBSD and OpenBSD when AdGuard Home is
+  installed as a service ([#4213]).
+
+### Changed
+
+- On OpenBSD, the daemon script now uses the recommended `/bin/ksh` shell
+  instead of the `/bin/sh` one ([#4533]).  To apply this change, backup your
+  data and run `AdGuardHome -s uninstall && AdGuardHome -s install`.
+- The default DNS-over-QUIC port number is now `853` instead of `754` in
+  accordance with [RFC 9250][rfc-9250] ([#4276]).
+- Reverse DNS now has a greater priority as the source of runtime clients'
+  information than ARP neighborhood.
+- Improved detection of runtime clients through more resilient ARP processing
+  ([#3597]).
+- The TTL of responses served from the optimistic cache is now lowered to 10
+  seconds.
 - Domain-specific private reverse DNS upstream servers are now validated to
   allow only `*.in-addr.arpa` and `*.ip6.arpa` domains pointing to
   locally-served networks ([#3381]).  **Note:**  If you already have invalid
-  entires in your configuration, consider removing them manually, since they
+  entries in your configuration, consider removing them manually, since they
   essentially had no effect.
 - Response filtering is now performed using the record types of the answer
   section of messages as opposed to the type of the question ([#4238]).
@@ -33,16 +241,44 @@ and this project adheres to
   of the commit from which the binary was built ([#4221]).  This should simplify
   reproducible builds for package maintainers and those who compile their own
   AdGuard Home.
-- The setting `local_domain_name` is now in the `dhcp` block in the
+- The property `local_domain_name` is now in the `dhcp` object in the
   configuration file to avoid confusion ([#3367]).
-- The `dns.bogus_nxdomain` configuration file parameter now supports CIDR
+- The `dns.bogus_nxdomain` property in the configuration file now supports CIDR
   notation alongside IP addresses ([#1730]).
 
 #### Configuration Changes
 
-In this release, the schema version has changed from 12 to 13.
+In this release, the schema version has changed from 12 to 14.
 
-- Parameter `local_domain_name`, which in schema versions 12 and earlier used to
+- Object `clients`, which in schema versions 13 and earlier was an array of
+  actual persistent clients, is now consist of `persistent` and
+  `runtime_sources` properties:
+
+  ```yaml
+  # BEFORE:
+  'clients':
+  - name: client-name
+    # …
+
+  # AFTER:
+  'clients':
+    'persistent':
+      - name: client-name
+        # …
+    'runtime_sources':
+      whois: true
+      arp: true
+      rdns: true
+      dhcp: true
+      hosts: true
+  ```
+
+  The value for `clients.runtime_sources.rdns` field is taken from
+  `dns.resolve_clients` property.  To rollback this change, remove the
+  `runtime_sources` property, move the contents of `persistent` into the
+  `clients` itself, the value of `clients.runtime_sources.rdns` into the
+  `dns.resolve_clients`, and change the `schema_version` back to `13`.
+- Property `local_domain_name`, which in schema versions 12 and earlier used to
   be a part of the `dns` object, is now a part of the `dhcp` object:
 
   ```yaml
@@ -57,12 +293,134 @@ In this release, the schema version has changed from 12 to 13.
     'local_domain_name': 'lan'
   ```
 
-  To rollback this change, move the parameter back into `dns` and change the
-  `schema_version` back to `12`.
+  To rollback this change, move the property back into the `dns` object and
+  change the `schema_version` back to `12`.
 
 ### Deprecated
 
-- Go 1.17 support.  v0.109.0 will require at least Go 1.18 to build.
+- The `--no-etc-hosts` option.  Its functionality is now controlled by
+  `clients.runtime_sources.hosts` configuration property.  v0.109.0 will remove
+  the flag completely.
+
+### Fixed
+
+- Query log occasionally going into an infinite loop ([#4591]).
+- Service startup on boot on systems using SysV-init ([#4480]).
+- Detection of the stopped service status on macOS and Linux ([#4273]).
+- Case-sensitive ClientID ([#4542]).
+- Slow version update queries making other HTTP APIs unresponsive ([#4499]).
+- ARP tables refreshing process causing excessive PTR requests ([#3157]).
+
+[#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
+[#3020]: https://github.com/AdguardTeam/AdGuardHome/issues/3020
+[#3142]: https://github.com/AdguardTeam/AdGuardHome/issues/3142
+[#3157]: https://github.com/AdguardTeam/AdGuardHome/issues/3157
+[#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
+[#3381]: https://github.com/AdguardTeam/AdGuardHome/issues/3381
+[#3503]: https://github.com/AdguardTeam/AdGuardHome/issues/3503
+[#3597]: https://github.com/AdguardTeam/AdGuardHome/issues/3597
+[#3978]: https://github.com/AdguardTeam/AdGuardHome/issues/3978
+[#4166]: https://github.com/AdguardTeam/AdGuardHome/issues/4166
+[#4213]: https://github.com/AdguardTeam/AdGuardHome/issues/4213
+[#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
+[#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
+[#4273]: https://github.com/AdguardTeam/AdGuardHome/issues/4273
+[#4276]: https://github.com/AdguardTeam/AdGuardHome/issues/4276
+[#4480]: https://github.com/AdguardTeam/AdGuardHome/issues/4480
+[#4499]: https://github.com/AdguardTeam/AdGuardHome/issues/4499
+[#4503]: https://github.com/AdguardTeam/AdGuardHome/issues/4503
+[#4533]: https://github.com/AdguardTeam/AdGuardHome/issues/4533
+[#4542]: https://github.com/AdguardTeam/AdGuardHome/issues/4542
+[#4591]: https://github.com/AdguardTeam/AdGuardHome/issues/4591
+[#4592]: https://github.com/AdguardTeam/AdGuardHome/issues/4592
+
+[CVE-2022-29526]: https://www.cvedetails.com/cve/CVE-2022-29526
+[CVE-2022-29804]: https://www.cvedetails.com/cve/CVE-2022-29804
+[CVE-2022-30580]: https://www.cvedetails.com/cve/CVE-2022-30580
+[CVE-2022-30629]: https://www.cvedetails.com/cve/CVE-2022-30629
+[CVE-2022-30634]: https://www.cvedetails.com/cve/CVE-2022-30634
+[ms-v0.107.7]:    https://github.com/AdguardTeam/AdGuardHome/milestone/43?closed=1
+[rfc-9250]:       https://datatracker.ietf.org/doc/html/rfc9250
+
+
+
+## [v0.107.6] - 2022-04-13
+
+See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
+
+### Security
+
+- `User-Agent` HTTP header removed from outgoing DNS-over-HTTPS requests.
+- Go version was updated to prevent the possibility of exploiting the
+  [CVE-2022-24675], [CVE-2022-27536], and [CVE-2022-28327] Go vulnerabilities.
+
+### Added
+
+- Support for SVCB/HTTPS parameter `dohpath` in filtering rules with
+  the `dnsrewrite` modifier according to the [RFC draft][dns-draft-02]
+  ([#4463]).
+
+### Changed
+
+- Filtering rules with the `dnsrewrite` modifier that create SVCB or HTTPS
+  responses should use `ech` instead of `echconfig` to conform with the [latest
+  drafts][svcb-draft-08].
+
+### Deprecated
+
+- SVCB/HTTPS parameter name `echconfig` in filtering rules with the `dnsrewrite`
+  modifier.  Use `ech` instead.  v0.109.0 will remove support for the outdated
+  name `echconfig`.
+- Obsolete `--no-mem-optimization` option ([#4437]).  v0.109.0 will remove the
+  flag completely.
+
+### Fixed
+
+- I/O timeout errors when checking for the presence of another DHCP server.
+- Network interfaces being incorrectly labeled as down during installation.
+- Rules for blocking the QQ service ([#3717]).
+
+### Removed
+
+- Go 1.16 support, since that branch of the Go compiler has reached end of life
+  and doesn't receive security updates anymore.
+
+[#3717]: https://github.com/AdguardTeam/AdGuardHome/issues/3717
+[#4437]: https://github.com/AdguardTeam/AdGuardHome/issues/4437
+[#4463]: https://github.com/AdguardTeam/AdGuardHome/issues/4463
+
+[CVE-2022-24675]: https://www.cvedetails.com/cve/CVE-2022-24675
+[CVE-2022-27536]: https://www.cvedetails.com/cve/CVE-2022-27536
+[CVE-2022-28327]: https://www.cvedetails.com/cve/CVE-2022-28327
+[dns-draft-02]:   https://datatracker.ietf.org/doc/html/draft-ietf-add-svcb-dns-02#section-5.1
+[ms-v0.107.6]:    https://github.com/AdguardTeam/AdGuardHome/milestone/42?closed=1
+[repr]:           https://reproducible-builds.org/docs/source-date-epoch/
+[svcb-draft-08]:  https://www.ietf.org/archive/id/draft-ietf-dnsop-svcb-https-08.html
+
+
+
+## [v0.107.5] - 2022-03-04
+
+This is a security update.  There is no GitHub milestone, since no GitHub issues
+were resolved.
+
+### Security
+
+- Go version was updated to prevent the possibility of exploiting the
+  [CVE-2022-24921] Go vulnerability.
+
+[CVE-2022-24921]: https://www.cvedetails.com/cve/CVE-2022-24921
+
+
+
+## [v0.107.4] - 2022-03-01
+
+See also the [v0.107.4 GitHub milestone][ms-v0.107.4].
+
+### Security
+
+- Go version was updated to prevent the possibility of exploiting the
+  [CVE-2022-23806], [CVE-2022-23772], and [CVE-2022-23773] Go vulnerabilities.
 
 ### Fixed
 
@@ -71,38 +429,13 @@ In this release, the schema version has changed from 12 to 13.
 - Unnecessarily complex hosts-related logic leading to infinite recursion in
   some cases ([#4216]).
 
-### Removed
-
-- Go 1.16 support.
-
-### Security
-
-- Enforced password strength policy ([3503]).
-- Weaker cipher suites that use the CBC (cipher block chaining) mode of
-  operation have been disabled ([#2993]).
-
-[#1730]: https://github.com/AdguardTeam/AdGuardHome/issues/1730
-[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
-[#3057]: https://github.com/AdguardTeam/AdGuardHome/issues/3057
-[#3367]: https://github.com/AdguardTeam/AdGuardHome/issues/3367
-[#3381]: https://github.com/AdguardTeam/AdGuardHome/issues/3381
-[#3503]: https://github.com/AdguardTeam/AdGuardHome/issues/3503
 [#4216]: https://github.com/AdguardTeam/AdGuardHome/issues/4216
-[#4221]: https://github.com/AdguardTeam/AdGuardHome/issues/4221
-[#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
 [#4254]: https://github.com/AdguardTeam/AdGuardHome/issues/4254
 
-[repr]: https://reproducible-builds.org/docs/source-date-epoch/
-
-
-
-<!--
-## [v0.107.4] - 2022-03-01 (APPROX.)
-
-See also the [v0.107.4 GitHub milestone][ms-v0.107.4].
-
-[ms-v0.107.4]: https://github.com/AdguardTeam/AdGuardHome/milestone/41?closed=1
--->
+[CVE-2022-23772]: https://www.cvedetails.com/cve/CVE-2022-23772
+[CVE-2022-23773]: https://www.cvedetails.com/cve/CVE-2022-23773
+[CVE-2022-23806]: https://www.cvedetails.com/cve/CVE-2022-23806
+[ms-v0.107.4]:    https://github.com/AdguardTeam/AdGuardHome/milestone/41?closed=1
 
 
 
@@ -112,7 +445,7 @@ See also the [v0.107.3 GitHub milestone][ms-v0.107.3].
 
 ### Added
 
-- Support for a `$dnsrewrite` modifier with an empty `NOERROR` response
+- Support for a `dnsrewrite` modifier with an empty `NOERROR` response
   ([#4133]).
 
 ### Fixed
@@ -188,20 +521,20 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
 
 - Upstream server information for responses from cache ([#3772]).  Note that old
   log entries concerning cached responses won't include that information.
-- Finnish and Ukrainian translations.
+- Finnish and Ukrainian localizations.
 - Setting the timeout for IP address pinging in the "Fastest IP address" mode
   through the new `fastest_timeout` field in the configuration file ([#1992]).
 - Static IP address detection on FreeBSD ([#3289]).
 - Optimistic cache ([#2145]).
-- New possible value of `6h` for `querylog_interval` setting ([#2504]).
+- New possible value of `6h` for `querylog_interval` property ([#2504]).
 - Blocking access using ClientIDs ([#2624], [#3162]).
 - `source` directives support in `/etc/network/interfaces` on Linux ([#3257]).
-- RFC 9000 support in DNS-over-QUIC.
+- [RFC 9000][rfc-9000] support in QUIC.
 - Completely disabling statistics by setting the statistics interval to zero
   ([#2141]).
 - The ability to completely purge DHCP leases ([#1691]).
 - Settable timeouts for querying the upstream servers ([#2280]).
-- Configuration file parameters to change group and user ID on startup on Unix
+- Configuration file properties to change group and user ID on startup on Unix
   ([#2763]).
 - Experimental OpenBSD support for AMD64 and 64-bit ARM CPUs ([#2439], [#3225],
   [#3226]).
@@ -228,7 +561,7 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
 - Better error message for ED25519 private keys, which are not widely supported
   ([#3737]).
 - Cache now follows RFC more closely for negative answers ([#3707]).
-- `$dnsrewrite` rules and other DNS rewrites will now be applied even when the
+- `dnsrewrite` rules and other DNS rewrites will now be applied even when the
   protection is disabled ([#1558]).
 - DHCP gateway address, subnet mask, IP address range, and leases validations
   ([#3529]).
@@ -244,22 +577,22 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
   proxy ([#2799]).
 - Clients who are blocked by access settings now receive a `REFUSED` response
   when a protocol other than DNS-over-UDP and DNSCrypt is used.
-- `querylog_interval` setting is now formatted in hours.
+- `dns.querylog_interval` property is now formatted in hours.
 - Query log search now supports internationalized domains ([#3012]).
 - Internationalized domains are now shown decoded in the query log with the
   original encoded version shown in request details ([#3013]).
 - When /etc/hosts-type rules have several IPs for one host, all IPs are now
   returned instead of only the first one ([#1381]).
-- The setting `rlimit_nofile` is now in the `os` block of the configuration
-  file, together with the new `group` and `user` settings ([#2763]).
+- Property `rlimit_nofile` is now in the `os` object of the configuration
+  file, together with the new `group` and `user` properties ([#2763]).
 - Permissions on filter files are now `0o644` instead of `0o600` ([#3198]).
 
 #### Configuration Changes
 
 In this release, the schema version has changed from 10 to 12.
 
-- Parameter `dns.querylog_interval`, which in schema versions 11 and earlier
-  used to be an integer number of days, is now a string with a human-readable
+- Property `dns.querylog_interval`, which in schema versions 11 and earlier used
+  to be an integer number of days, is now a string with a human-readable
   duration:
 
   ```yaml
@@ -274,10 +607,10 @@ In this release, the schema version has changed from 10 to 12.
     'querylog_interval': '2160h'
   ```
 
-  To rollback this change, convert the parameter back into days and change the
+  To rollback this change, convert the property back into days and change the
   `schema_version` back to `11`.
 
-- Parameter `rlimit_nofile`, which in schema versions 10 and earlier used to be
+- Property `rlimit_nofile`, which in schema versions 10 and earlier used to be
   on the top level, is now moved to the new `os` object:
 
   ```yaml
@@ -291,7 +624,7 @@ In this release, the schema version has changed from 10 to 12.
     'user': ''
   ```
 
-  To rollback this change, move the parameter on the top level and change the
+  To rollback this change, move the property on the top level and change the
   `schema_version` back to `10`.
 
 ### Deprecated
@@ -301,7 +634,7 @@ In this release, the schema version has changed from 10 to 12.
 ### Fixed
 
 - EDNS0 TCP keepalive option handling ([#3778]).
-- Rules with the `$denyallow` modifier applying to IP addresses when they
+- Rules with the `denyallow` modifier applying to IP addresses when they
   shouldn't ([#3175]).
 - The length of the EDNS0 client subnet option appearing too long for some
   upstream servers ([#3887]).
@@ -309,8 +642,8 @@ In this release, the schema version has changed from 10 to 12.
   settings ([#3558]).
 - Incomplete propagation of the client's IP anonymization setting to the
   statistics ([#3890]).
-- Incorrect `$dnsrewrite` results for entries from the operating system's hosts
-  file ([#3815]).
+- Incorrect results with the `dnsrewrite` modifier for entries from the
+  operating system's hosts file ([#3815]).
 - Matching against rules with `|` at the end of the domain name ([#3371]).
 - Incorrect assignment of explicitly configured DHCP options ([#3744]).
 - Occasional panic during shutdown ([#3655]).
@@ -337,8 +670,8 @@ In this release, the schema version has changed from 10 to 12.
 - Letter case mismatches in `CNAME` filtering ([#3335]).
 - Occasional breakages on network errors with DNS-over-HTTP upstreams ([#3217]).
 - Errors when setting static IP on Linux ([#3257]).
-- Treatment of domain names and FQDNs in custom rules with `$dnsrewrite` that
-  use the `PTR` type ([#3256]).
+- Treatment of domain names and FQDNs in custom rules with the `dnsrewrite`
+  modifier that use the `PTR` type ([#3256]).
 - Redundant hostname generating while loading static leases with empty hostname
   ([#3166]).
 - Domain name case in responses ([#3194]).
@@ -421,6 +754,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3933]: https://github.com/AdguardTeam/AdGuardHome/pull/3933
 
 [ms-v0.107.0]: https://github.com/AdguardTeam/AdGuardHome/milestone/23?closed=1
+[rfc-9000]:    https://datatracker.ietf.org/doc/html/rfc9000
 
 
 
@@ -501,7 +835,7 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 
 - The ability to block user for login after configurable number of unsuccessful
   attempts for configurable time ([#2826]).
-- `$denyallow` modifier for filters ([#2923]).
+- `denyallow` modifier for filters ([#2923]).
 - Hostname uniqueness validation in the DHCP server ([#2952]).
 - Hostname generating for DHCP clients which don't provide their own ([#2723]).
 - New flag `--no-etc-hosts` to disable client domain name lookups in the
@@ -516,7 +850,8 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
   network ([#2393], [#2961]).
 - The ability to serve DNS queries on multiple hosts and interfaces ([#1401]).
 - `ips` and `text` DHCP server options ([#2385]).
-- `SRV` records support in `$dnsrewrite` filters ([#2533]).
+- `SRV` records support in filtering rules with the `dnsrewrite` modifier
+  ([#2533]).
 
 ### Changed
 
@@ -530,7 +865,8 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
   ([#2704]).
 - Stricter validation of the IP addresses of static leases in the DHCP server
   with regards to the netmask ([#2838]).
-- Stricter validation of `$dnsrewrite` filter modifier parameters ([#2498]).
+- Stricter validation of `dnsrewrite` filtering rule modifier parameters
+  ([#2498]).
 - New, more correct versioning scheme ([#2412]).
 
 ### Deprecated
@@ -539,7 +875,7 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 
 ### Fixed
 
-- Multiple answers for `$dnsrewrite` rule matching requests with repeating
+- Multiple answers for a `dnsrewrite` rule matching requests with repeating
   patterns in it ([#2981]).
 - Root server resolving when custom upstreams for hosts are specified ([#2994]).
 - Inconsistent resolving of DHCP clients when the DHCP server is disabled
@@ -591,6 +927,10 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 
 ## [v0.105.2] - 2021-03-10
 
+### Security
+
+- Session token doesn't contain user's information anymore ([#2470]).
+
 See also the [v0.105.2 GitHub milestone][ms-v0.105.2].
 
 ### Fixed
@@ -603,10 +943,6 @@ See also the [v0.105.2 GitHub milestone][ms-v0.105.2].
 - DHCP lease's `expired` field incorrect time format ([#2692]).
 - Incomplete DNS upstreams validation ([#2674]).
 - Wrong parsing of DHCP options of the `ip` type ([#2688]).
-
-### Security
-
-- Session token doesn't contain user's information anymore ([#2470]).
 
 [#2470]: https://github.com/AdguardTeam/AdGuardHome/issues/2470
 [#2582]: https://github.com/AdguardTeam/AdGuardHome/issues/2582
@@ -643,8 +979,8 @@ See also the [v0.105.1 GitHub milestone][ms-v0.105.1].
 - Occasional crashes during startup.
 - The field `"range_start"` in the `GET /control/dhcp/status` HTTP API response
   is now correctly named again ([#2678]).
-- DHCPv6 server's `ra_slaac_only` and `ra_allow_slaac` settings aren't reset to
-  `false` on update anymore ([#2653]).
+- DHCPv6 server's `ra_slaac_only` and `ra_allow_slaac` properties aren't reset
+  to `false` on update anymore ([#2653]).
 - The `Vary` header is now added along with `Access-Control-Allow-Origin` to
   prevent cache-related and other issues in browsers ([#2658]).
 - The request body size limit is now set for HTTPS requests as well.
@@ -678,7 +1014,7 @@ See also the [v0.105.0 GitHub milestone][ms-v0.105.0].
 - `ipset` subdomain matching, just like `dnsmasq` does ([#2179]).
 - ClientID support for DNS-over-HTTPS, DNS-over-QUIC, and DNS-over-TLS
   ([#1383]).
-- `$dnsrewrite` modifier for filters ([#2102]).
+- The new `dnsrewrite` modifier for filters ([#2102]).
 - The host checking API and the query logs API can now return multiple matched
   rules ([#2102]).
 - Detecting of network interface configured to have static IP address via
@@ -686,7 +1022,7 @@ See also the [v0.105.0 GitHub milestone][ms-v0.105.0].
 - DNSCrypt protocol support ([#1361]).
 - A 5 second wait period until a DHCP server's network interface gets an IP
   address ([#2304]).
-- `$dnstype` modifier for filters ([#2337]).
+- `dnstype` modifier for filters ([#2337]).
 - HTTP API request body size limit ([#2305]).
 
 ### Changed
@@ -819,13 +1155,20 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 
-
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...HEAD
-[v0.107.4]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...v0.107.4
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...HEAD
+[v0.107.12]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...v0.107.12
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...HEAD
+[v0.107.11]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.10...v0.107.11
+[v0.107.10]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.9...v0.107.10
+[v0.107.9]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.8...v0.107.9
+[v0.107.8]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.7...v0.107.8
+[v0.107.7]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.6...v0.107.7
+[v0.107.6]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.5...v0.107.6
+[v0.107.5]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.4...v0.107.5
+[v0.107.4]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.3...v0.107.4
 [v0.107.3]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.2...v0.107.3
 [v0.107.2]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.1...v0.107.2
 [v0.107.1]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.0...v0.107.1

@@ -14,6 +14,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,7 +34,7 @@ func (fsr *fakeSystemResolvers) Get() (rs []string) {
 	return nil
 }
 
-func loadTestData(t *testing.T, casesFileName string, cases interface{}) {
+func loadTestData(t *testing.T, casesFileName string, cases any) {
 	t.Helper()
 
 	var f *os.File
@@ -184,7 +185,8 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		wantSet: "",
 	}, {
 		name: "upstream_dns_bad",
-		wantSet: `validating upstream servers: bad ipport address "!!!": ` +
+		wantSet: `validating upstream servers: ` +
+			`validating upstream "!!!": bad ipport address "!!!": ` +
 			`address !!!: missing port in address`,
 	}, {
 		name: "bootstraps_bad",
@@ -255,104 +257,6 @@ func TestIsCommentOrEmpty(t *testing.T) {
 	}
 }
 
-func TestValidateUpstream(t *testing.T) {
-	testCases := []struct {
-		wantDef  assert.BoolAssertionFunc
-		name     string
-		upstream string
-		wantErr  string
-	}{{
-		wantDef:  assert.True,
-		name:     "invalid",
-		upstream: "1.2.3.4.5",
-		wantErr:  `bad ipport address "1.2.3.4.5": address 1.2.3.4.5: missing port in address`,
-	}, {
-		wantDef:  assert.True,
-		name:     "invalid",
-		upstream: "123.3.7m",
-		wantErr:  `bad ipport address "123.3.7m": address 123.3.7m: missing port in address`,
-	}, {
-		wantDef:  assert.True,
-		name:     "invalid",
-		upstream: "htttps://google.com/dns-query",
-		wantErr:  `wrong protocol`,
-	}, {
-		wantDef:  assert.True,
-		name:     "invalid",
-		upstream: "[/host.com]tls://dns.adguard.com",
-		wantErr:  `bad upstream for domain "[/host.com]tls://dns.adguard.com": missing separator`,
-	}, {
-		wantDef:  assert.True,
-		name:     "invalid",
-		upstream: "[host.ru]#",
-		wantErr:  `bad ipport address "[host.ru]#": address [host.ru]#: missing port in address`,
-	}, {
-		wantDef:  assert.True,
-		name:     "valid_default",
-		upstream: "1.1.1.1",
-		wantErr:  ``,
-	}, {
-		wantDef:  assert.True,
-		name:     "valid_default",
-		upstream: "tls://1.1.1.1",
-		wantErr:  ``,
-	}, {
-		wantDef:  assert.True,
-		name:     "valid_default",
-		upstream: "https://dns.adguard.com/dns-query",
-		wantErr:  ``,
-	}, {
-		wantDef:  assert.True,
-		name:     "valid_default",
-		upstream: "sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
-		wantErr:  ``,
-	}, {
-		wantDef:  assert.False,
-		name:     "valid",
-		upstream: "[/host.com/]1.1.1.1",
-		wantErr:  ``,
-	}, {
-		wantDef:  assert.False,
-		name:     "valid",
-		upstream: "[//]tls://1.1.1.1",
-		wantErr:  ``,
-	}, {
-		wantDef:  assert.False,
-		name:     "valid",
-		upstream: "[/www.host.com/]#",
-		wantErr:  ``,
-	}, {
-		wantDef:  assert.False,
-		name:     "valid",
-		upstream: "[/host.com/google.com/]8.8.8.8",
-		wantErr:  ``,
-	}, {
-		wantDef:  assert.False,
-		name:     "valid",
-		upstream: "[/host/]sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
-		wantErr:  ``,
-	}, {
-		wantDef:  assert.False,
-		name:     "idna",
-		upstream: "[/пример.рф/]8.8.8.8",
-		wantErr:  ``,
-	}, {
-		wantDef:  assert.False,
-		name:     "bad_domain",
-		upstream: "[/!/]8.8.8.8",
-		wantErr: `bad upstream for domain "[/!/]8.8.8.8": domain at index 0: ` +
-			`bad domain name "!": bad domain name label "!": bad domain name label rune '!'`,
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			defaultUpstream, err := validateUpstream(tc.upstream)
-			testutil.AssertErrorMsg(t, tc.wantErr, err)
-			tc.wantDef(t, defaultUpstream)
-		})
-	}
-}
-
 func TestValidateUpstreams(t *testing.T) {
 	testCases := []struct {
 		name    string
@@ -367,7 +271,7 @@ func TestValidateUpstreams(t *testing.T) {
 		wantErr: ``,
 		set:     []string{"# comment"},
 	}, {
-		name:    "valid_no_default",
+		name:    "no_default",
 		wantErr: `no default upstreams specified`,
 		set: []string{
 			"[/host.com/]1.1.1.1",
@@ -377,7 +281,7 @@ func TestValidateUpstreams(t *testing.T) {
 			"[/host/]sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
 		},
 	}, {
-		name:    "valid_with_default",
+		name:    "with_default",
 		wantErr: ``,
 		set: []string{
 			"[/host.com/]1.1.1.1",
@@ -389,8 +293,46 @@ func TestValidateUpstreams(t *testing.T) {
 		},
 	}, {
 		name:    "invalid",
-		wantErr: `cannot prepare the upstream dhcp://fake.dns ([]): unsupported URL scheme: dhcp`,
+		wantErr: `validating upstream "dhcp://fake.dns": wrong protocol`,
 		set:     []string{"dhcp://fake.dns"},
+	}, {
+		name:    "invalid",
+		wantErr: `validating upstream "1.2.3.4.5": bad ipport address "1.2.3.4.5": address 1.2.3.4.5: missing port in address`,
+		set:     []string{"1.2.3.4.5"},
+	}, {
+		name:    "invalid",
+		wantErr: `validating upstream "123.3.7m": bad ipport address "123.3.7m": address 123.3.7m: missing port in address`,
+		set:     []string{"123.3.7m"},
+	}, {
+		name:    "invalid",
+		wantErr: `bad upstream for domain "[/host.com]tls://dns.adguard.com": missing separator`,
+		set:     []string{"[/host.com]tls://dns.adguard.com"},
+	}, {
+		name:    "invalid",
+		wantErr: `validating upstream "[host.ru]#": bad ipport address "[host.ru]#": address [host.ru]#: missing port in address`,
+		set:     []string{"[host.ru]#"},
+	}, {
+		name:    "valid_default",
+		wantErr: ``,
+		set: []string{
+			"1.1.1.1",
+			"tls://1.1.1.1",
+			"https://dns.adguard.com/dns-query",
+			"sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
+			"udp://dns.google",
+			"udp://8.8.8.8",
+			"[/host.com/]1.1.1.1",
+			"[//]tls://1.1.1.1",
+			"[/www.host.com/]#",
+			"[/host.com/google.com/]8.8.8.8",
+			"[/host/]sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_JS3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczEuYWRndWFyZC5jb20",
+			"[/пример.рф/]8.8.8.8",
+		},
+	}, {
+		name: "bad_domain",
+		wantErr: `bad upstream for domain "[/!/]8.8.8.8": domain at index 0: ` +
+			`bad domain name "!": bad domain name label "!": bad domain name label rune '!'`,
+		set: []string{"[/!/]8.8.8.8"},
 	}}
 
 	for _, tc := range testCases {
@@ -402,8 +344,7 @@ func TestValidateUpstreams(t *testing.T) {
 }
 
 func TestValidateUpstreamsPrivate(t *testing.T) {
-	snd, err := aghnet.NewSubnetDetector()
-	require.NoError(t, err)
+	ss := netutil.SubnetSetFunc(netutil.IsLocallyServed)
 
 	testCases := []struct {
 		name    string
@@ -444,7 +385,7 @@ func TestValidateUpstreamsPrivate(t *testing.T) {
 		set := []string{"192.168.0.1", tc.u}
 
 		t.Run(tc.name, func(t *testing.T) {
-			err = ValidateUpstreamsPrivate(set, snd)
+			err := ValidateUpstreamsPrivate(set, ss)
 			testutil.AssertErrorMsg(t, tc.wantErr, err)
 		})
 	}

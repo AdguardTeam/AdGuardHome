@@ -481,9 +481,16 @@ class Api {
     }
 
     // Blocked services
+    BLOCKED_SERVICES_SERVICES = { path: 'blocked_services/services', method: 'GET' };
+
     BLOCKED_SERVICES_LIST = { path: 'blocked_services/list', method: 'GET' };
 
     BLOCKED_SERVICES_SET = { path: 'blocked_services/set', method: 'POST' };
+
+    getBlockedServicesAvailableServices() {
+        const { path, method } = this.BLOCKED_SERVICES_SERVICES;
+        return this.makeRequest(path, method);
+    }
 
     getBlockedServices() {
         const { path, method } = this.BLOCKED_SERVICES_LIST;

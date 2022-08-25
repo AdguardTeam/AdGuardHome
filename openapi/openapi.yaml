@@ -874,6 +874,19 @@
       'summary': 'Set (dis)allowed clients, blocked hosts, etc.'
       'tags':
       - 'clients'
+  '/blocked_services/services':
+    'get':
+      'tags':
+      - 'blocked_services'
+      'operationId': 'blockedServicesAvailableServices'
+      'summary': 'Get available services to use for blocking'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/BlockedServicesArray'
   '/blocked_services/list':
     'get':
       'tags':
@@ -1396,7 +1409,6 @@
       'required':
       - 'enabled'
       - 'id'
-      - 'last_updated'
       - 'name'
       - 'rules_count'
       - 'url'
@@ -1434,6 +1446,10 @@
           'type': 'array'
           'items':
             '$ref': '#/components/schemas/Filter'
+        'whitelist_filters':
+          'type': 'array'
+          'items':
+            '$ref': '#/components/schemas/Filter'
         'user_rules':
           'type': 'array'
           'items':
@@ -1451,18 +1467,28 @@
       'description': 'Filtering URL settings'
       'properties':
         'data':
-          'properties':
-            'enabled':
-              'type': 'boolean'
-            'name':
-              'type': 'string'
-            'url':
-              'type': 'string'
-          'type': 'object'
+          '$ref': '#/components/schemas/FilterSetUrlData'
         'url':
           'type': 'string'
         'whitelist':
           'type': 'boolean'
+    'FilterSetUrlData':
+      'type': 'object'
+      'description': 'Filter update data'
+      'required':
+      - 'enabled'
+      - 'name'
+      - 'url'
+      'properties':
+        'enabled':
+          'type': 'boolean'
+        'name':
+          'example': 'AdGuard Simplified Domain Names filter'
+          'type': 'string'
+        'url':
+          'type': 'string'
+          'example': >
+            https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
     'FilterRefreshRequest':
       'type': 'object'
       'description': 'Refresh Filters request data'
@@ -1860,6 +1886,8 @@
           'description': 'Previously added URL containing filtering rules'
           'type': 'string'
           'example': 'https://filters.adtidy.org/windows/filters/15.txt'
+        'whitelist':
+          'type': 'boolean'
     'QueryLogItem':
       'type': 'object'
       'description': 'Query log item'
@@ -1905,6 +1933,12 @@
           - 'doq'
           - 'dnscrypt'
           - ''
+        'ecs':
+          'type': 'string'
+          'example': '192.168.0.0/16'
+          'description': >
+            The IP network defined by an EDNS Client-Subnet option in the
+            request message if any.
         'elapsedMs':
           'type': 'string'
           'example': '54.023928'

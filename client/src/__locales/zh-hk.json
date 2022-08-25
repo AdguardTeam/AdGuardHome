@@ -38,12 +38,18 @@
     "form_error_required": "必要欄位",
     "form_error_ip4_format": "無效的 IPv4 格式",
     "form_error_ip6_format": "無效的 IPv6 格式",
+    "form_error_ip4_range_start_format": "無效的 IPv4 範圍起始位址",
+    "form_error_ip4_range_end_format": "無效的 IPv4 範圍結束位址",
+    "form_error_ip4_gateway_format": "閘道的 IPv4 位址無效",
     "form_error_ip_format": "無效的 IP 位址",
     "form_error_mac_format": "無效的 「MAC 位址」格式",
     "form_error_client_id_format": "無效的「客戶端 ID」格式",
     "form_error_server_name": "無效伺服器名稱",
     "form_error_subnet": "子網路 \"{{cidr}}\" 不包含 IP 位址 \"{{ip}}\"",
     "form_error_positive": "數值必須大於 0",
+    "out_of_range_error": "必須介於 \"{{start}}\" - \"{{end}}\" 範圍之外",
+    "lower_range_start_error": "必須小於起始值",
+    "greater_range_start_error": "必須大於起始值",
     "dhcp_form_gateway_input": "閘道 IP 位址",
     "dhcp_form_subnet_input": "子網路遮罩",
     "dhcp_form_range_title": "IP 位址範圍",
@@ -608,6 +614,5 @@
     "original_response": "原始回應",
     "click_to_view_queries": "按一下以檢視查詢結果",
     "port_53_faq_link": "連接埠 53 經常被「DNSStubListener」或「systemd-resolved」服務佔用。請閱讀下列有關解決<0>這個問題</0>的說明",
-    "adg_will_drop_dns_queries": "AdGuard Home 將停止回應此用戶端的所有 DNS 查詢。",
-    "experimental": "實驗性"
+    "adg_will_drop_dns_queries": "AdGuard Home 將停止回應此用戶端的所有 DNS 查詢。"
 }

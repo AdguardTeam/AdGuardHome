@@ -156,7 +156,7 @@ func tryConn4(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface) (ok, n
 	b := make([]byte, 1500)
 	n, _, err := c.ReadFrom(b)
 	if err != nil {
-		if isTimeout(err) {
+		if errors.Is(err, os.ErrDeadlineExceeded) {
 			log.Debug("dhcpv4: didn't receive dhcp response")
 
 			return false, false, nil
@@ -176,20 +176,21 @@ func tryConn4(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface) (ok, n
 
 	log.Debug("dhcpv4: received message from server: %s", response.Summary())
 
-	if !(response.OpCode == dhcpv4.OpcodeBootReply &&
-		response.HWType == iana.HWTypeEthernet &&
-		bytes.Equal(response.ClientHWAddr, iface.HardwareAddr) &&
-		bytes.Equal(response.TransactionID[:], req.TransactionID[:]) &&
-		response.Options.Has(dhcpv4.OptionDHCPMessageType)) {
-
-		log.Debug("dhcpv4: received message from server doesn't match our request")
+	switch {
+	case
+		response.OpCode != dhcpv4.OpcodeBootReply,
+		response.HWType != iana.HWTypeEthernet,
+		!bytes.Equal(response.ClientHWAddr, iface.HardwareAddr),
+		response.TransactionID != req.TransactionID,
+		!response.Options.Has(dhcpv4.OptionDHCPMessageType):
+		log.Debug("dhcpv4: received response doesn't match the request")
 
 		return false, true, nil
+	default:
+		log.Tracef("dhcpv4: the packet is from an active dhcp server")
+
+		return true, false, nil
 	}
-
-	log.Tracef("dhcpv4: the packet is from an active dhcp server")
-
-	return true, false, nil
 }
 
 // checkOtherDHCPv6 sends a DHCP request to the specified network interface, and
@@ -275,7 +276,7 @@ func tryConn6(req *dhcpv6.Message, c net.PacketConn) (ok, next bool, err error) 
 
 	n, _, err := c.ReadFrom(b)
 	if err != nil {
-		if isTimeout(err) {
+		if errors.Is(err, os.ErrDeadlineExceeded) {
 			log.Debug("dhcpv6: didn't receive dhcp response")
 
 			return false, false, nil
@@ -317,16 +318,4 @@ func tryConn6(req *dhcpv6.Message, c net.PacketConn) (ok, next bool, err error) 
 	log.Tracef("dhcpv6: the packet is from an active dhcp server")
 
 	return true, false, nil
-}
-
-// isTimeout returns true if err is an operation timeout error from net package.
-//
-// TODO(e.burkov):  Consider moving into netutil.
-func isTimeout(err error) (ok bool) {
-	var operr *net.OpError
-	if errors.As(err, &operr) {
-		return operr.Timeout()
-	}
-
-	return false
 }

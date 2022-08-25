@@ -1,5 +1,5 @@
-//go:build !(linux || darwin || freebsd || openbsd)
-// +build !linux,!darwin,!freebsd,!openbsd
+//go:build windows
+// +build windows
 
 package aghnet
 
@@ -14,7 +14,7 @@ import (
 )
 
 func canBindPrivilegedPorts() (can bool, err error) {
-	return aghos.HaveAdminRights()
+	return true, nil
 }
 
 func ifaceHasStaticIP(string) (ok bool, err error) {

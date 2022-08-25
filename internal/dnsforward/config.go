@@ -5,12 +5,12 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net"
-	"net/http"
 	"os"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -122,6 +122,7 @@ type FilteringConfig struct {
 	EnableDNSSEC           bool     `yaml:"enable_dnssec"`      // Set AD flag in outcoming DNS request
 	EnableEDNSClientSubnet bool     `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
 	MaxGoroutines          uint32   `yaml:"max_goroutines"`     // Max. number of parallel goroutines for processing incoming requests
+	HandleDDR              bool     `yaml:"handle_ddr"`         // Handle DDR requests
 
 	// IpsetList is the ipset configuration that allows AdGuard Home to add
 	// IP addresses of the specified domain names to an ipset list.  Syntax:
@@ -133,8 +134,9 @@ type FilteringConfig struct {
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
 type TLSConfig struct {
-	TLSListenAddrs  []*net.TCPAddr `yaml:"-" json:"-"`
-	QUICListenAddrs []*net.UDPAddr `yaml:"-" json:"-"`
+	TLSListenAddrs   []*net.TCPAddr `yaml:"-" json:"-"`
+	QUICListenAddrs  []*net.UDPAddr `yaml:"-" json:"-"`
+	HTTPSListenAddrs []*net.TCPAddr `yaml:"-" json:"-"`
 
 	// Reject connection if the client uses server name (in SNI) that doesn't match the certificate
 	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
@@ -151,7 +153,7 @@ type TLSConfig struct {
 	PrivateKeyData       []byte `yaml:"-" json:"-"`
 
 	// ServerName is the hostname of the server.  Currently, it is only being
-	// used for ClientID checking.
+	// used for ClientID checking and Discovery of Designated Resolvers (DDR).
 	ServerName string `yaml:"-" json:"-"`
 
 	cert tls.Certificate
@@ -191,7 +193,7 @@ type ServerConfig struct {
 	ConfigModified func()
 
 	// Register an HTTP handler
-	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request))
+	HTTPRegister aghhttp.RegisterFunc
 
 	// ResolveClients signals if the RDNS should resolve clients' addresses.
 	ResolveClients bool
@@ -276,6 +278,11 @@ func (s *Server) createProxyConfig() (proxy.Config, error) {
 	return proxyConfig, nil
 }
 
+const (
+	defaultSafeBrowsingBlockHost = "standard-block.dns.adguard.com"
+	defaultParentalBlockHost     = "family-block.dns.adguard.com"
+)
+
 // initDefaultSettings initializes default settings if nothing
 // is configured
 func (s *Server) initDefaultSettings() {
@@ -287,12 +294,12 @@ func (s *Server) initDefaultSettings() {
 		s.conf.BootstrapDNS = defaultBootstrap
 	}
 
-	if len(s.conf.ParentalBlockHost) == 0 {
-		s.conf.ParentalBlockHost = parentalBlockHost
+	if s.conf.ParentalBlockHost == "" {
+		s.conf.ParentalBlockHost = defaultParentalBlockHost
 	}
 
-	if len(s.conf.SafeBrowsingBlockHost) == 0 {
-		s.conf.SafeBrowsingBlockHost = safeBrowsingBlockHost
+	if s.conf.SafeBrowsingBlockHost == "" {
+		s.conf.SafeBrowsingBlockHost = defaultSafeBrowsingBlockHost
 	}
 
 	if s.conf.UDPListenAddrs == nil {

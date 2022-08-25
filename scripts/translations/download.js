@@ -107,7 +107,7 @@ const download = async () => {
 
         // Don't request the Crowdin API too aggressively to prevent spurious
         // 400 errors.
-        await sleep(200);
+        await sleep(300);
     }
 
     Promise

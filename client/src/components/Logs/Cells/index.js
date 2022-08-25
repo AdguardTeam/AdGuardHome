@@ -139,11 +139,23 @@ const Row = memo(({
             }
         };
 
-        const blockButton = <button
-                className={classNames('title--border text-center button-action--arrow-option', { 'bg--danger': !isBlocked })}
-                onClick={onToggleBlock}>
-            {t(buttonType)}
-        </button>;
+        const blockButton = (
+            <>
+                <div className="title--border" />
+                <button
+                    type="button"
+                    className={
+                        classNames(
+                            'button-action--arrow-option',
+                            { 'bg--danger': !isBlocked },
+                            { 'bg--green': isFiltered },
+                        )}
+                    onClick={onToggleBlock}
+                >
+                    {t(buttonType)}
+                </button>
+            </>
+        );
 
         const blockForClientButton = <button
                 className='text-center font-weight-bold py-2 button-action--arrow-option'
@@ -238,6 +250,7 @@ Row.propTypes = {
         type: propTypes.string.isRequired,
         client_proto: propTypes.string.isRequired,
         client_id: propTypes.string,
+        ecs: propTypes.string,
         client_info: propTypes.shape({
             name: propTypes.string.isRequired,
             whois: propTypes.shape({

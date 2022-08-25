@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/golibs/log"
 )
 
 // options passed from command-line arguments
@@ -26,10 +27,6 @@ type options struct {
 
 	// runningAsService flag is set to true when options are passed from the service runner
 	runningAsService bool
-
-	// disableMemoryOptimization - disables memory optimization hacks
-	// see memoryUsage() function for the details
-	disableMemoryOptimization bool
 
 	glinetMode bool // Activate GL-Inet compatibility mode
 
@@ -178,10 +175,14 @@ var noCheckUpdateArg = arg{
 }
 
 var disableMemoryOptimizationArg = arg{
-	"Disable memory optimization.",
+	"Deprecated.  Disable memory optimization.",
 	"no-mem-optimization", "",
-	nil, func(o options) (options, error) { o.disableMemoryOptimization = true; return o, nil }, nil,
-	func(o options) []string { return boolSliceOrNil(o.disableMemoryOptimization) },
+	nil, nil, func(_ options, _ string) (f effect, err error) {
+		log.Info("warning: using --no-mem-optimization flag has no effect and is deprecated")
+
+		return nil, nil
+	},
+	func(o options) []string { return nil },
 }
 
 var verboseArg = arg{
@@ -229,13 +230,19 @@ var helpArg = arg{
 }
 
 var noEtcHostsArg = arg{
-	description:     "Do not use the OS-provided hosts.",
+	description:     "Deprecated.  Do not use the OS-provided hosts.",
 	longName:        "no-etc-hosts",
 	shortName:       "",
 	updateWithValue: nil,
 	updateNoValue:   func(o options) (options, error) { o.noEtcHosts = true; return o, nil },
-	effect:          nil,
-	serialize:       func(o options) []string { return boolSliceOrNil(o.noEtcHosts) },
+	effect: func(_ options, _ string) (f effect, err error) {
+		log.Info(
+			"warning: --no-etc-hosts flag is deprecated and will be removed in the future versions",
+		)
+
+		return nil, nil
+	},
+	serialize: func(o options) []string { return boolSliceOrNil(o.noEtcHosts) },
 }
 
 var localFrontendArg = arg{
