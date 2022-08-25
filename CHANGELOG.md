@@ -20,6 +20,11 @@ and this project adheres to
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).
 
+### Added
+
+- A new HTTP API, `GET /control/blocked_services/services`, that lists all
+  available blocked services ([#4535]).
+
 ### Deprecated
 
 - Ports 784 and 8853 for DNS-over-QUIC in Docker images.  Users who still serve
@@ -34,6 +39,7 @@ and this project adheres to
 - Unnecessary logging of non-critical statistics errors ([#4850]).
 
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+[#4535]: https://github.com/AdguardTeam/AdGuardHome/issues/4535
 [#4745]: https://github.com/AdguardTeam/AdGuardHome/issues/4745
 [#4850]: https://github.com/AdguardTeam/AdGuardHome/issues/4850
 
@@ -59,7 +65,7 @@ See also the [v0.107.11 GitHub milestone][ms-v0.107.11].
 
 ### Changed
 
-- DNS-over-QUIC connections now use keptalive.
+- DNS-over-QUIC connections now use keepalive.
 
 ### Fixed
 
