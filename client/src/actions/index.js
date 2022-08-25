@@ -314,13 +314,15 @@ export const testUpstream = (
         const testMessages = Object.keys(upstreamResponse)
             .map((key) => {
                 const message = upstreamResponse[key];
-                if (message !== 'OK') {
+                if (message.startsWith('WARNING:')) {
+                    dispatch(addErrorToast({ error: i18next.t('dns_test_warning_toast', { key }) }));
+                } else if (message !== 'OK') {
                     dispatch(addErrorToast({ error: i18next.t('dns_test_not_ok_toast', { key }) }));
                 }
                 return message;
             });
 
-        if (testMessages.every((message) => message === 'OK')) {
+        if (testMessages.every((message) => message === 'OK' || message.startsWith('WARNING:'))) {
             dispatch(addSuccessToast('dns_test_ok_toast'));
         }
 

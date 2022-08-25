@@ -20,8 +20,12 @@ type svc struct {
 // client/src/helpers/constants.js
 // client/src/components/ui/Icons.js
 var serviceRulesArray = []svc{{
-	name:  "whatsapp",
-	rules: []string{"||whatsapp.net^", "||whatsapp.com^"},
+	name: "whatsapp",
+	rules: []string{
+		"||wa.me^",
+		"||whatsapp.com^",
+		"||whatsapp.net^",
+	},
 }, {
 	name: "facebook",
 	rules: []string{
@@ -31,29 +35,43 @@ var serviceRulesArray = []svc{{
 		"||accountkit.com^",
 		"||fb.me^",
 		"||fb.com^",
+		"||fb.gg^",
 		"||fbsbx.com^",
+		"||fbwat.ch^",
 		"||messenger.com^",
 		"||facebookcorewwwi.onion^",
 		"||fbcdn.com^",
 		"||fb.watch^",
 	},
 }, {
-	name:  "twitter",
-	rules: []string{"||twitter.com^", "||twttr.com^", "||t.co^", "||twimg.com^"},
+	name: "twitter",
+	rules: []string{
+		"||t.co^",
+		"||twimg.com^",
+		"||twitter.com^",
+		"||twttr.com^",
+	},
 }, {
 	name: "youtube",
 	rules: []string{
-		"||youtube.com^",
-		"||ytimg.com^",
-		"||youtu.be^",
 		"||googlevideo.com^",
-		"||youtubei.googleapis.com^",
-		"||youtube-nocookie.com^",
+		"||wide-youtube.l.google.com^",
+		"||youtu.be^",
 		"||youtube",
+		"||youtube-nocookie.com^",
+		"||youtube.com^",
+		"||youtubei.googleapis.com^",
+		"||youtubekids.com^",
+		"||ytimg.com^",
 	},
 }, {
-	name:  "twitch",
-	rules: []string{"||twitch.tv^", "||ttvnw.net^", "||jtvnw.net^", "||twitchcdn.net^"},
+	name: "twitch",
+	rules: []string{
+		"||jtvnw.net^",
+		"||ttvnw.net^",
+		"||twitch.tv^",
+		"||twitchcdn.net^",
+	},
 }, {
 	name: "netflix",
 	rules: []string{
@@ -83,20 +101,36 @@ var serviceRulesArray = []svc{{
 		"||discordapp.net^",
 		"||discordapp.com^",
 		"||discord.com^",
+		"||discord.gift",
 		"||discord.media^",
 	},
 }, {
 	name:  "ok",
 	rules: []string{"||ok.ru^"},
 }, {
-	name:  "skype",
-	rules: []string{"||skype.com^", "||skypeassets.com^"},
+	name: "skype",
+	rules: []string{
+		"||edge-skype-com.s-0001.s-msedge.net^",
+		"||skype-edf.akadns.net^",
+		"||skype.com^",
+		"||skypeassets.com^",
+		"||skypedata.akadns.net^",
+	},
 }, {
-	name:  "vk",
-	rules: []string{"||vk.com^", "||userapi.com^", "||vk-cdn.net^", "||vkuservideo.net^"},
+	name: "vk",
+	rules: []string{
+		"||userapi.com^",
+		"||vk-cdn.net^",
+		"||vk.com^",
+		"||vkuservideo.net^",
+	},
 }, {
-	name:  "origin",
-	rules: []string{"||origin.com^", "||signin.ea.com^", "||accounts.ea.com^"},
+	name: "origin",
+	rules: []string{
+		"||accounts.ea.com^",
+		"||origin.com^",
+		"||signin.ea.com^",
+	},
 }, {
 	name: "steam",
 	rules: []string{
@@ -160,6 +194,7 @@ var serviceRulesArray = []svc{{
 		"||amazon.com.br^",
 		"||amazon.co.jp^",
 		"||amazon.com.mx^",
+		"||amazon.com.tr^",
 		"||amazon.co.uk^",
 		"||createspace.com^",
 		"||aws",
@@ -209,47 +244,81 @@ var serviceRulesArray = []svc{{
 		"||toutiaocloud.net^",
 		"||bdurl.com^",
 		"||bytecdn.cn^",
+		"||bytedapm.com^",
 		"||byteimg.com^",
+		"||byteoversea.com^",
 		"||ixigua.com^",
 		"||muscdn.com^",
 		"||bytedance.map.fastly.net^",
 		"||douyin.com^",
 		"||tiktokv.com^",
+		"||toutiaovod.com^",
+		"||douyincdn.com^",
 	},
 }, {
-	name:  "vimeo",
-	rules: []string{"||vimeo.com^", "||vimeocdn.com^", "*vod-adaptive.akamaized.net^"},
+	name: "vimeo",
+	rules: []string{
+		"*vod-adaptive.akamaized.net^",
+		"||vimeo.com^",
+		"||vimeocdn.com^",
+	},
 }, {
-	name:  "pinterest",
-	rules: []string{"||pinterest.*^", "||pinimg.com^"},
+	name: "pinterest",
+	rules: []string{
+		"||pinimg.com^",
+		"||pinterest.*^",
+	},
 }, {
 	name:  "imgur",
 	rules: []string{"||imgur.com^"},
 }, {
-	name:  "dailymotion",
-	rules: []string{"||dailymotion.com^", "||dm-event.net^", "||dmcdn.net^"},
+	name: "dailymotion",
+	rules: []string{
+		"||dailymotion.com^",
+		"||dm-event.net^",
+		"||dmcdn.net^",
+	},
 }, {
 	name: "qq",
 	rules: []string{
 		// Block qq.com and subdomains excluding WeChat's domains.
 		"||qq.com^$denyallow=wx.qq.com|weixin.qq.com",
 		"||qqzaixian.com^",
+		"||qq-video.cdn-go.cn^",
+		"||url.cn^",
 	},
 }, {
-	name:  "wechat",
-	rules: []string{"||wechat.com^", "||weixin.qq.com^", "||wx.qq.com^"},
+	name: "wechat",
+	rules: []string{
+		"||wechat.com^",
+		"||weixin.qq.com.cn^",
+		"||weixin.qq.com^",
+		"||weixinbridge.com^",
+		"||wx.qq.com^",
+	},
 }, {
 	name:  "viber",
 	rules: []string{"||viber.com^"},
 }, {
-	name:  "weibo",
-	rules: []string{"||weibo.com^"},
+	name: "weibo",
+	rules: []string{
+		"||weibo.cn^",
+		"||weibo.com^",
+		"||weibocdn.com^",
+	},
 }, {
-	name:  "9gag",
-	rules: []string{"||9cache.com^", "||9gag.com^"},
+	name: "9gag",
+	rules: []string{
+		"||9cache.com^",
+		"||9gag.com^",
+	},
 }, {
-	name:  "telegram",
-	rules: []string{"||t.me^", "||telegram.me^", "||telegram.org^"},
+	name: "telegram",
+	rules: []string{
+		"||t.me^",
+		"||telegram.me^",
+		"||telegram.org^",
+	},
 }, {
 	name: "disneyplus",
 	rules: []string{
@@ -282,6 +351,17 @@ var serviceRulesArray = []svc{{
 		"||gotinder.com^",
 		"||tinder.com^",
 		"||tindersparks.com^",
+	},
+}, {
+	name: "bilibili",
+	rules: []string{
+		"||biliapi.net^",
+		"||bilibili.com^",
+		"||biligame.com^",
+		"||bilivideo.cn^",
+		"||bilivideo.com^",
+		"||dreamcast.hk^",
+		"||hdslb.com^",
 	},
 }}
 

@@ -132,7 +132,7 @@ func TestGatewayIP(t *testing.T) {
 	}
 }
 
-func TestGetInterfaceByIP(t *testing.T) {
+func TestInterfaceByIP(t *testing.T) {
 	ifaces, err := GetValidNetInterfacesForWeb()
 	require.NoError(t, err)
 	require.NotEmpty(t, ifaces)
@@ -142,7 +142,7 @@ func TestGetInterfaceByIP(t *testing.T) {
 			require.NotEmpty(t, iface.Addresses)
 
 			for _, ip := range iface.Addresses {
-				ifaceName := GetInterfaceByIP(ip)
+				ifaceName := InterfaceByIP(ip)
 				require.Equal(t, iface.Name, ifaceName)
 			}
 		})

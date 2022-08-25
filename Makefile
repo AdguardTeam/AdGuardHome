@@ -41,7 +41,7 @@ V1API = 0
 # into BUILD_RELEASE_DEPS_0, and so both frontend and backend
 # dependencies are fetched and the frontend is built.  Otherwise, if
 # FRONTEND_PREBUILT is 1, only backend dependencies are fetched and the
-# frontend isn't reuilt.
+# frontend isn't rebuilt.
 #
 # TODO(a.garipov): We could probably do that from .../build-release.sh,
 # but that would mean either calling make from inside make or

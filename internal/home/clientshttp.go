@@ -47,9 +47,9 @@ type clientJSON struct {
 type runtimeClientJSON struct {
 	WHOISInfo *RuntimeClientWHOISInfo `json:"whois_info"`
 
-	Name   string `json:"name"`
-	Source string `json:"source"`
-	IP     net.IP `json:"ip"`
+	Name   string       `json:"name"`
+	Source clientSource `json:"source"`
+	IP     net.IP       `json:"ip"`
 }
 
 type clientListJSON struct {
@@ -70,7 +70,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 		data.Clients = append(data.Clients, cj)
 	}
 
-	clients.ipToRC.Range(func(ip net.IP, v interface{}) (cont bool) {
+	clients.ipToRC.Range(func(ip net.IP, v any) (cont bool) {
 		rc, ok := v.(*RuntimeClient)
 		if !ok {
 			log.Error("dns: bad type %T in ipToRC for %s", v, ip)
@@ -81,20 +81,9 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 		cj := runtimeClientJSON{
 			WHOISInfo: rc.WHOISInfo,
 
-			Name: rc.Host,
-			IP:   ip,
-		}
-
-		cj.Source = "etc/hosts"
-		switch rc.Source {
-		case ClientSourceDHCP:
-			cj.Source = "DHCP"
-		case ClientSourceRDNS:
-			cj.Source = "rDNS"
-		case ClientSourceARP:
-			cj.Source = "ARP"
-		case ClientSourceWHOIS:
-			cj.Source = "WHOIS"
+			Name:   rc.Host,
+			Source: rc.Source,
+			IP:     ip,
 		}
 
 		data.RuntimeClients = append(data.RuntimeClients, cj)
@@ -107,13 +96,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 	w.Header().Set("Content-Type", "application/json")
 	e := json.NewEncoder(w).Encode(data)
 	if e != nil {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusInternalServerError,
-			"Failed to encode to json: %v",
-			e,
-		)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "failed to encode to json: %v", e)
 
 		return
 	}
@@ -279,9 +262,9 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 func (clients *clientsContainer) findRuntime(ip net.IP, idStr string) (cj *clientJSON) {
 	rc, ok := clients.FindRuntimeClient(ip)
 	if !ok {
-		// It is still possible that the IP used to be in the runtime
-		// clients list, but then the server was reloaded.  So, check
-		// the DNS server's blocked IP list.
+		// It is still possible that the IP used to be in the runtime clients
+		// list, but then the server was reloaded.  So, check the DNS server's
+		// blocked IP list.
 		//
 		// See https://github.com/AdguardTeam/AdGuardHome/issues/2428.
 		disallowed, rule := clients.dnsServer.IsBlockedClient(ip, idStr)

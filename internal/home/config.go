@@ -1,6 +1,7 @@
 package home
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"os"
@@ -19,7 +20,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/renameio/maybe"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 const (
@@ -27,15 +28,36 @@ const (
 	filterDir = "filters" // cache location for downloaded filters, it's under DataDir
 )
 
-// logSettings
+// logSettings are the logging settings part of the configuration file.
+//
+// TODO(a.garipov): Put them into a separate object.
 type logSettings struct {
-	LogCompress   bool   `yaml:"log_compress"`    // Compress determines if the rotated log files should be compressed using gzip (default: false)
-	LogLocalTime  bool   `yaml:"log_localtime"`   // If the time used for formatting the timestamps in is the computer's local time (default: false [UTC])
-	LogMaxBackups int    `yaml:"log_max_backups"` // Maximum number of old log files to retain (MaxAge may still cause them to get deleted)
-	LogMaxSize    int    `yaml:"log_max_size"`    // Maximum size in megabytes of the log file before it gets rotated (default 100 MB)
-	LogMaxAge     int    `yaml:"log_max_age"`     // MaxAge is the maximum number of days to retain old log files
-	LogFile       string `yaml:"log_file"`        // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
-	Verbose       bool   `yaml:"verbose"`         // If true, verbose logging is enabled
+	// File is the path to the log file.  If empty, logs are written to stdout.
+	// If "syslog", logs are written to syslog.
+	File string `yaml:"log_file"`
+
+	// MaxBackups is the maximum number of old log files to retain.
+	//
+	// NOTE: MaxAge may still cause them to get deleted.
+	MaxBackups int `yaml:"log_max_backups"`
+
+	// MaxSize is the maximum size of the log file before it gets rotated, in
+	// megabytes.  The default value is 100 MB.
+	MaxSize int `yaml:"log_max_size"`
+
+	// MaxAge is the maximum duration for retaining old log files, in days.
+	MaxAge int `yaml:"log_max_age"`
+
+	// Compress determines, if the rotated log files should be compressed using
+	// gzip.
+	Compress bool `yaml:"log_compress"`
+
+	// LocalTime determines, if the time used for formatting the timestamps in
+	// is the computer's local time.
+	LocalTime bool `yaml:"log_localtime"`
+
+	// Verbose determines, if verbose (aka debug) logging is enabled.
+	Verbose bool `yaml:"verbose"`
 }
 
 // osConfig contains OS-related configuration.
@@ -223,11 +245,11 @@ var config = &configuration{
 		},
 	},
 	logSettings: logSettings{
-		LogCompress:   false,
-		LogLocalTime:  false,
-		LogMaxBackups: 0,
-		LogMaxSize:    100,
-		LogMaxAge:     3,
+		Compress:   false,
+		LocalTime:  false,
+		MaxBackups: 0,
+		MaxSize:    100,
+		MaxAge:     3,
 	},
 	OSConfig:      &osConfig{},
 	SchemaVersion: currentSchemaVersion,
@@ -302,27 +324,28 @@ func parseConfig() (err error) {
 		return err
 	}
 
-	uc := aghalg.UniqChecker{}
-	addPorts(
-		uc,
-		tcpPort(config.BindPort),
-		tcpPort(config.BetaBindPort),
-		udpPort(config.DNS.Port),
-	)
+	tcpPorts := aghalg.UniqChecker[tcpPort]{}
+	addPorts(tcpPorts, tcpPort(config.BindPort), tcpPort(config.BetaBindPort))
+
+	udpPorts := aghalg.UniqChecker[udpPort]{}
+	addPorts(udpPorts, udpPort(config.DNS.Port))
 
 	if config.TLS.Enabled {
 		addPorts(
-			uc,
-			// TODO(e.burkov):  Consider adding a udpPort with the same value if
-			// we ever support the HTTP/3 for web admin interface.
+			tcpPorts,
 			tcpPort(config.TLS.PortHTTPS),
 			tcpPort(config.TLS.PortDNSOverTLS),
-			udpPort(config.TLS.PortDNSOverQUIC),
 			tcpPort(config.TLS.PortDNSCrypt),
 		)
+
+		// TODO(e.burkov):  Consider adding a udpPort with the same value when
+		// we add support for HTTP/3 for web admin interface.
+		addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
 	}
-	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
-		return fmt.Errorf("validating ports: %w", err)
+	if err = tcpPorts.Validate(); err != nil {
+		return fmt.Errorf("validating tcp ports: %w", err)
+	} else if err = udpPorts.Validate(); err != nil {
+		return fmt.Errorf("validating udp ports: %w", err)
 	}
 
 	if !checkFiltersUpdateIntervalHours(config.DNS.FiltersUpdateIntervalHours) {
@@ -342,23 +365,11 @@ type udpPort int
 // tcpPort is the port number for TCP protocol.
 type tcpPort int
 
-// addPorts is a helper for ports validation.  It skips zero ports.  Each of
-// ports should be either a udpPort or a tcpPort.
-func addPorts(uc aghalg.UniqChecker, ports ...interface{}) {
+// addPorts is a helper for ports validation that skips zero ports.
+func addPorts[T tcpPort | udpPort](uc aghalg.UniqChecker[T], ports ...T) {
 	for _, p := range ports {
-		// Use separate cases for tcpPort and udpPort so that the untyped
-		// constant zero is converted to the appropriate type.
-		switch p := p.(type) {
-		case tcpPort:
-			if p != 0 {
-				uc.Add(p)
-			}
-		case udpPort:
-			if p != 0 {
-				uc.Add(p)
-			}
-		default:
-			// Go on.
+		if p != 0 {
+			uc.Add(p)
 		}
 	}
 }
@@ -377,13 +388,14 @@ func readConfigFile() (fileData []byte, err error) {
 }
 
 // Saves configuration to the YAML file and also saves the user filter contents to a file
-func (c *configuration) write() error {
+func (c *configuration) write() (err error) {
 	c.Lock()
 	defer c.Unlock()
 
 	if Context.auth != nil {
 		config.Users = Context.auth.GetUsers()
 	}
+
 	if Context.tls != nil {
 		tlsConf := tlsConfigSettings{}
 		Context.tls.WriteDiskConfig(&tlsConf)
@@ -429,19 +441,20 @@ func (c *configuration) write() error {
 	config.Clients.Persistent = Context.clients.forConfig()
 
 	configFile := config.getConfigFilename()
-	log.Debug("Writing YAML file: %s", configFile)
-	yamlText, err := yaml.Marshal(&config)
-	if err != nil {
-		log.Error("Couldn't generate YAML file: %s", err)
+	log.Debug("writing config file %q", configFile)
 
-		return err
+	buf := &bytes.Buffer{}
+	enc := yaml.NewEncoder(buf)
+	enc.SetIndent(2)
+
+	err = enc.Encode(config)
+	if err != nil {
+		return fmt.Errorf("generating config file: %w", err)
 	}
 
-	err = maybe.WriteFile(configFile, yamlText, 0o644)
+	err = maybe.WriteFile(configFile, buf.Bytes(), 0o644)
 	if err != nil {
-		log.Error("Couldn't save YAML config: %s", err)
-
-		return err
+		return fmt.Errorf("writing config file: %w", err)
 	}
 
 	return nil

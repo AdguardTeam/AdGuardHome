@@ -17,7 +17,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/ameshkov/dnscrypt/v2"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // Default ports.
@@ -58,6 +58,7 @@ func initDNSServer() (err error) {
 	}
 
 	conf := querylog.Config{
+		Anonymizer:        anonymizer,
 		ConfigModified:    onConfigModified,
 		HTTPRegister:      httpRegister,
 		FindClient:        Context.clients.findMultiple,
@@ -67,7 +68,6 @@ func initDNSServer() (err error) {
 		Enabled:           config.DNS.QueryLogEnabled,
 		FileEnabled:       config.DNS.QueryLogFileEnabled,
 		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
-		Anonymizer:        anonymizer,
 	}
 	Context.queryLog = querylog.New(conf)
 
@@ -220,6 +220,10 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	if tlsConf.Enabled {
 		newConf.TLSConfig = tlsConf.TLSConfig
 		newConf.TLSConfig.ServerName = tlsConf.ServerName
+
+		if tlsConf.PortHTTPS != 0 {
+			newConf.HTTPSListenAddrs = ipsToTCPAddrs(hosts, tlsConf.PortHTTPS)
+		}
 
 		if tlsConf.PortDNSOverTLS != 0 {
 			newConf.TLSListenAddrs = ipsToTCPAddrs(hosts, tlsConf.PortDNSOverTLS)
@@ -392,7 +396,7 @@ func startDNSServer() error {
 	Context.queryLog.Start()
 
 	const topClientsNumber = 100 // the number of clients to get
-	for _, ip := range Context.stats.GetTopClientsIP(topClientsNumber) {
+	for _, ip := range Context.stats.TopClientsIP(topClientsNumber) {
 		if ip == nil {
 			continue
 		}
@@ -451,7 +455,12 @@ func closeDNSServer() {
 	}
 
 	if Context.stats != nil {
-		Context.stats.Close()
+		err := Context.stats.Close()
+		if err != nil {
+			log.Debug("closing stats: %s", err)
+		}
+
+		// TODO(e.burkov):  Find out if it's safe.
 		Context.stats = nil
 	}
 

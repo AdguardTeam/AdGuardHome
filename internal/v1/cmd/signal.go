@@ -19,10 +19,10 @@ type signalHandler struct {
 
 // handle processes OS signals.
 func (h *signalHandler) handle() {
-	defer log.OnPanic("signalProcessor.handle")
+	defer log.OnPanic("signalHandler.handle")
 
 	for sig := range h.signal {
-		log.Info("sigproc: received signal %q", sig)
+		log.Info("sighdlr: received signal %q", sig)
 
 		if aghos.IsShutdownSignal(sig) {
 			h.shutdown()
@@ -43,16 +43,16 @@ func (h *signalHandler) shutdown() {
 
 	status := statusSuccess
 
-	log.Info("sigproc: shutting down services")
+	log.Info("sighdlr: shutting down services")
 	for i, service := range h.services {
 		err := service.Shutdown(ctx)
 		if err != nil {
-			log.Error("sigproc: shutting down service at index %d: %s", i, err)
+			log.Error("sighdlr: shutting down service at index %d: %s", i, err)
 			status = statusError
 		}
 	}
 
-	log.Info("sigproc: shutting down adguard home")
+	log.Info("sighdlr: shutting down adguard home")
 
 	os.Exit(status)
 }
