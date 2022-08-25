@@ -491,7 +491,7 @@ class Api {
         const { path, method } = this.BLOCKED_SERVICES_SERVICES;
         return this.makeRequest(path, method);
     }
-    
+
     getBlockedServices() {
         const { path, method } = this.BLOCKED_SERVICES_LIST;
         return this.makeRequest(path, method);
