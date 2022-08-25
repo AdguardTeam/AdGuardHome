@@ -4,6 +4,15 @@
 
 ## v0.108.0: API changes
 
+## v0.107.12: API changes
+
+### `GET /control/blocked_services/services`
+
+* The new `GET /control/blocked_services/services` HTTP API allows inspecting
+  all available services.
+
+## v0.107.7: API changes
+
 ### The new optional field `"ecs"` in `QueryLogItem`
 
 * The new optional field `"ecs"` in `GET /control/querylog` contains the IP

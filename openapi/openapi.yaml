@@ -874,6 +874,19 @@
       'summary': 'Set (dis)allowed clients, blocked hosts, etc.'
       'tags':
       - 'clients'
+  '/blocked_services/services':
+    'get':
+      'tags':
+      - 'blocked_services'
+      'operationId': 'blockedServicesAvailableServices'
+      'summary': 'Get available services to use for blocking'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/BlockedServicesArray'
   '/blocked_services/list':
     'get':
       'tags':

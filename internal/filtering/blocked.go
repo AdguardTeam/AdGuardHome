@@ -7,19 +7,21 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
+	"golang.org/x/exp/slices"
 )
 
-var serviceRules map[string][]*rules.NetworkRule // service name -> filtering rules
-
+// svc represents a single blocked service.
 type svc struct {
 	name  string
 	rules []string
 }
 
+// servicesData contains raw blocked service data.
+//
 // Keep in sync with:
-// client/src/helpers/constants.js
-// client/src/components/ui/Icons.js
-var serviceRulesArray = []svc{{
+//   - client/src/helpers/constants.js
+//   - client/src/components/ui/Icons.js
+var servicesData = []svc{{
 	name: "whatsapp",
 	rules: []string{
 		"||wa.me^",
@@ -365,21 +367,38 @@ var serviceRulesArray = []svc{{
 	},
 }}
 
-// convert array to map
+// serviceRules maps a service ID to its filtering rules.
+var serviceRules map[string][]*rules.NetworkRule
+
+// serviceIDs contains service IDs sorted alphabetically.
+var serviceIDs []string
+
+// initBlockedServices initializes package-level blocked service data.
 func initBlockedServices() {
-	serviceRules = make(map[string][]*rules.NetworkRule)
-	for _, s := range serviceRulesArray {
-		netRules := []*rules.NetworkRule{}
+	l := len(servicesData)
+	serviceIDs = make([]string, l)
+	serviceRules = make(map[string][]*rules.NetworkRule, l)
+
+	for i, s := range servicesData {
+		netRules := make([]*rules.NetworkRule, 0, len(s.rules))
 		for _, text := range s.rules {
 			rule, err := rules.NewNetworkRule(text, BlockedSvcsListID)
 			if err != nil {
-				log.Error("rules.NewNetworkRule: %s  rule: %s", err, text)
+				log.Error("parsing blocked service %q rule %q: %s", s.name, text, err)
+
 				continue
 			}
+
 			netRules = append(netRules, rule)
 		}
+
+		serviceIDs[i] = s.name
 		serviceRules[s.name] = netRules
 	}
+
+	slices.Sort(serviceIDs)
+
+	log.Debug("filtering: initialized %d services", l)
 }
 
 // BlockedSvcKnown - return TRUE if a blocked service name is known
@@ -411,6 +430,16 @@ func (d *DNSFilter) ApplyBlockedServices(setts *Settings, list []string, global 
 	}
 }
 
+func (d *DNSFilter) handleBlockedServicesAvailableServices(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(serviceIDs)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusInternalServerError, "encoding available services: %s", err)
+
+		return
+	}
+}
+
 func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Request) {
 	d.confLock.RLock()
 	list := d.Config.BlockedServices
@@ -419,7 +448,7 @@ func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Req
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(list)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "json.Encode: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "encoding services: %s", err)
 
 		return
 	}
@@ -445,6 +474,7 @@ func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 
 // registerBlockedServicesHandlers - register HTTP handlers
 func (d *DNSFilter) registerBlockedServicesHandlers() {
+	d.Config.HTTPRegister(http.MethodGet, "/control/blocked_services/services", d.handleBlockedServicesAvailableServices)
 	d.Config.HTTPRegister(http.MethodGet, "/control/blocked_services/list", d.handleBlockedServicesList)
 	d.Config.HTTPRegister(http.MethodPost, "/control/blocked_services/set", d.handleBlockedServicesSet)
 }

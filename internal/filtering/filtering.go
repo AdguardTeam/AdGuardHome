@@ -296,9 +296,11 @@ func cloneRewrites(entries []*LegacyRewrite) (clone []*LegacyRewrite) {
 	return clone
 }
 
-// SetFilters - set new filters (synchronously or asynchronously)
-// When filters are set asynchronously, the old filters continue working until the new filters are ready.
-//  In this case the caller must ensure that the old filter files are intact.
+// SetFilters sets new filters, synchronously or asynchronously.  When filters
+// are set asynchronously, the old filters continue working until the new
+// filters are ready.
+//
+// In this case the caller must ensure that the old filter files are intact.
 func (d *DNSFilter) SetFilters(blockFilters, allowFilters []Filter, async bool) error {
 	if async {
 		params := filtersInitializerParams{

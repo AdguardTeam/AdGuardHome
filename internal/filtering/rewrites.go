@@ -130,10 +130,9 @@ func matchDomainWildcard(host, wildcard string) (ok bool) {
 //
 // The sorting priority:
 //
-//   A and AAAA > CNAME
-//   wildcard > exact
-//   lower level wildcard > higher level wildcard
-//
+//  1. A and AAAA > CNAME
+//  2. wildcard > exact
+//  3. lower level wildcard > higher level wildcard
 type rewritesSorted []*LegacyRewrite
 
 // Len implements the sort.Interface interface for legacyRewritesSorted.
