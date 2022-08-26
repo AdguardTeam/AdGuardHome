@@ -875,11 +875,18 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 		resp.YourIPAddr = netutil.CloneIP(l.IP)
 	}
 
-	// Set IP address lease time for all DHCPOFFER messages and DHCPACK
-	// messages replied for DHCPREQUEST.
+	// Set IP address lease time for all DHCPOFFER messages and DHCPACK messages
+	// replied for DHCPREQUEST.
 	//
 	// TODO(e.burkov):  Inspect why this is always set to configured value.
 	resp.UpdateOption(dhcpv4.OptIPAddressLeaseTime(s.conf.leaseTime))
+
+	// Delete options explicitly configured to be removed.
+	for code := range resp.Options {
+		if val, ok := s.options[code]; ok && val == nil {
+			delete(resp.Options, code)
+		}
+	}
 
 	// Update values for each explicitly configured parameter requested by
 	// client.
@@ -887,15 +894,12 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 	// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.1.
 	requested := req.ParameterRequestList()
 	for _, code := range requested {
-		if configured := s.options; configured.Has(code) {
-			resp.UpdateOption(dhcpv4.OptGeneric(code, configured.Get(code)))
+		if val := s.options.Get(code); val != nil {
+			resp.UpdateOption(dhcpv4.Option{
+				Code:  code,
+				Value: dhcpv4.OptionGeneric{Data: s.options.Get(code)},
+			})
 		}
-	}
-	// Update the value of Domain Name Server option separately from others if
-	// not assigned yet since its value is set after server's creating.
-	if requested.Has(dhcpv4.OptionDomainNameServer) &&
-		!resp.Options.Has(dhcpv4.OptionDomainNameServer) {
-		resp.UpdateOption(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
 	}
 
 	return 1
@@ -924,6 +928,7 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 	resp, err := dhcpv4.NewReplyFromRequest(req)
 	if err != nil {
 		log.Debug("dhcpv4: dhcpv4.New: %s", err)
+
 		return
 	}
 
@@ -1019,6 +1024,11 @@ func (s *v4Server) Start() (err error) {
 	if len(dnsIPAddrs) == 0 {
 		// No available IP addresses which may appear later.
 		return nil
+	}
+	// Update the value of Domain Name Server option separately from others if
+	// not assigned yet since its value is available only at server's start.
+	if !s.options.Has(dhcpv4.OptionDomainNameServer) {
+		s.options.Update(dhcpv4.OptDNS(dnsIPAddrs...))
 	}
 
 	s.conf.dnsIPAddrs = dnsIPAddrs

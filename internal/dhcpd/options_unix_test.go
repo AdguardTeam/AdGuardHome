@@ -8,103 +8,111 @@ import (
 	"net"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestParseOpt(t *testing.T) {
 	testCases := []struct {
 		name       string
 		in         string
-		wantErrMsg string
 		wantOpt    dhcpv4.Option
+		wantErrMsg string
 	}{{
-		name:       "hex_success",
-		in:         "6 hex c0a80101c0a80102",
-		wantErrMsg: "",
-		wantOpt: dhcpv4.OptDNS(
-			net.IP{0xC0, 0xA8, 0x01, 0x01},
-			net.IP{0xC0, 0xA8, 0x01, 0x02},
+		name: "hex_success",
+		in:   "6 hex c0a80101c0a80102",
+		wantOpt: dhcpv4.OptGeneric(
+			dhcpv4.GenericOptionCode(6),
+			[]byte{
+				0xC0, 0xA8, 0x01, 0x01,
+				0xC0, 0xA8, 0x01, 0x02,
+			},
 		),
+		wantErrMsg: "",
 	}, {
-		name:       "ip_success",
-		in:         "6 ip 1.2.3.4",
+		name: "ip_success",
+		in:   "6 ip 1.2.3.4",
+		wantOpt: dhcpv4.Option{
+			Code:  dhcpv4.GenericOptionCode(6),
+			Value: dhcpv4.IP(net.IP{0x01, 0x02, 0x03, 0x04}),
+		},
 		wantErrMsg: "",
-		wantOpt: dhcpv4.OptDNS(
-			net.IP{0x01, 0x02, 0x03, 0x04},
-		),
 	}, {
 		name:       "ip_fail_v6",
 		in:         "6 ip ::1234",
-		wantErrMsg: "invalid option string \"6 ip ::1234\": bad ipv4 address \"::1234\"",
 		wantOpt:    dhcpv4.Option{},
+		wantErrMsg: "invalid option string \"6 ip ::1234\": bad ipv4 address \"::1234\"",
 	}, {
-		name:       "ips_success",
-		in:         "6 ips 192.168.1.1,192.168.1.2",
+		name: "ips_success",
+		in:   "6 ips 192.168.1.1,192.168.1.2",
+		wantOpt: dhcpv4.Option{
+			Code: dhcpv4.GenericOptionCode(6),
+			Value: dhcpv4.IPs([]net.IP{
+				{0xC0, 0xA8, 0x01, 0x01},
+				{0xC0, 0xA8, 0x01, 0x02},
+			}),
+		},
 		wantErrMsg: "",
-		wantOpt: dhcpv4.OptDNS(
-			net.IP{0xC0, 0xA8, 0x01, 0x01},
-			net.IP{0xC0, 0xA8, 0x01, 0x02},
-		),
 	}, {
-		name:       "text_success",
-		in:         "252 text http://192.168.1.1/",
-		wantErrMsg: "",
+		name: "text_success",
+		in:   "252 text http://192.168.1.1/",
 		wantOpt: dhcpv4.OptGeneric(
 			dhcpv4.GenericOptionCode(252),
 			[]byte("http://192.168.1.1/"),
 		),
+		wantErrMsg: "",
+	}, {
+		name: "del_success",
+		in:   "61 del",
+		wantOpt: dhcpv4.Option{
+			Code:  dhcpv4.GenericOptionCode(dhcpv4.OptionClientIdentifier),
+			Value: dhcpv4.OptionGeneric{Data: nil},
+		},
+		wantErrMsg: "",
 	}, {
 		name:       "bad_parts",
 		in:         "6 ip",
-		wantErrMsg: `invalid option string "6 ip": need at least three fields`,
 		wantOpt:    dhcpv4.Option{},
+		wantErrMsg: `invalid option string "6 ip": bad option format`,
 	}, {
-		name: "bad_code",
-		in:   "256 ip 1.1.1.1",
+		name:    "bad_code",
+		in:      "256 ip 1.1.1.1",
+		wantOpt: dhcpv4.Option{},
 		wantErrMsg: `invalid option string "256 ip 1.1.1.1": parsing option code: ` +
 			`strconv.ParseUint: parsing "256": value out of range`,
-		wantOpt: dhcpv4.Option{},
 	}, {
 		name:       "bad_type",
 		in:         "6 bad 1.1.1.1",
-		wantErrMsg: `invalid option string "6 bad 1.1.1.1": unknown option type "bad"`,
 		wantOpt:    dhcpv4.Option{},
+		wantErrMsg: `invalid option string "6 bad 1.1.1.1": unknown option type "bad"`,
 	}, {
-		name: "hex_error",
-		in:   "6 hex ZZZ",
+		name:    "hex_error",
+		in:      "6 hex ZZZ",
+		wantOpt: dhcpv4.Option{},
 		wantErrMsg: `invalid option string "6 hex ZZZ": decoding hex: ` +
 			`encoding/hex: invalid byte: U+005A 'Z'`,
-		wantOpt: dhcpv4.Option{},
 	}, {
 		name:       "ip_error",
 		in:         "6 ip 1.2.3.x",
-		wantErrMsg: "invalid option string \"6 ip 1.2.3.x\": bad ipv4 address \"1.2.3.x\"",
 		wantOpt:    dhcpv4.Option{},
+		wantErrMsg: "invalid option string \"6 ip 1.2.3.x\": bad ipv4 address \"1.2.3.x\"",
 	}, {
-		name: "ips_error",
-		in:   "6 ips 192.168.1.1,192.168.1.x",
+		name:    "ips_error",
+		in:      "6 ips 192.168.1.1,192.168.1.x",
+		wantOpt: dhcpv4.Option{},
 		wantErrMsg: "invalid option string \"6 ips 192.168.1.1,192.168.1.x\": " +
 			"parsing ip at index 1: bad ipv4 address \"192.168.1.x\"",
-		wantOpt: dhcpv4.Option{},
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			opt, err := parseDHCPOption(tc.in)
-			if tc.wantErrMsg != "" {
-				require.Error(t, err)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 
-				assert.Equal(t, tc.wantErrMsg, err.Error())
-
-				return
-			}
-
-			require.NoError(t, err)
-
-			assert.Equal(t, tc.wantOpt.Code.Code(), opt.Code.Code())
-			assert.Equal(t, tc.wantOpt.Value.ToBytes(), opt.Value.ToBytes())
+			// assert.Equal(t, tc.wantOpt.Code.Code(), opt.Code.Code())
+			// assert.Equal(t, tc.wantOpt.Value.ToBytes(), opt.Value.ToBytes())
+			assert.Equal(t, tc.wantOpt, opt)
 		})
 	}
 }
@@ -127,51 +135,80 @@ func TestPrepareOptions(t *testing.T) {
 
 	testCases := []struct {
 		name   string
-		opts   []string
 		checks dhcpv4.Options
+		opts   []string
 	}{{
 		name:   "all_default",
 		checks: allDefault,
+		opts:   nil,
 	}, {
 		name: "configured_ip",
-		opts: []string{
-			fmt.Sprintf("%d ip %s", dhcpv4.OptionBroadcastAddress, oneIP),
-		},
 		checks: dhcpv4.Options{
 			dhcpv4.OptionBroadcastAddress.Code(): oneIP,
 		},
+		opts: []string{
+			fmt.Sprintf("%d ip %s", dhcpv4.OptionBroadcastAddress, oneIP),
+		},
 	}, {
 		name: "configured_ips",
-		opts: []string{
-			fmt.Sprintf("%d ips %s,%s", dhcpv4.OptionDomainNameServer, oneIP, otherIP),
-		},
 		checks: dhcpv4.Options{
 			dhcpv4.OptionDomainNameServer.Code(): append(oneIP, otherIP...),
 		},
+		opts: []string{
+			fmt.Sprintf("%d ips %s,%s", dhcpv4.OptionDomainNameServer, oneIP, otherIP),
+		},
 	}, {
-		name: "configured_bad",
+		name:   "configured_bad",
+		checks: allDefault,
 		opts: []string{
 			"20 hex",
 			"23 hex abc",
 			"32 ips 1,2,3,4",
 			"28 256.256.256.256",
 		},
-		checks: allDefault,
+	}, {
+		name: "configured_del",
+		checks: dhcpv4.Options{
+			dhcpv4.OptionBroadcastAddress.Code(): nil,
+		},
+		opts: []string{
+			"28 del",
+		},
+	}, {
+		name: "rewritten_del",
+		checks: dhcpv4.Options{
+			dhcpv4.OptionBroadcastAddress.Code(): []byte{255, 255, 255, 255},
+		},
+		opts: []string{
+			"28 del",
+			"28 ip 255.255.255.255",
+		},
+	}, {
+		name: "configured_and_del",
+		checks: dhcpv4.Options{
+			123: []byte("cba"),
+		},
+		opts: []string{
+			"123 text abc",
+			"123 del",
+			"123 text cba",
+		},
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.name == "configured_del" {
+				assert.True(t, true)
+			}
 			opts := prepareOptions(V4ServerConf{
 				// Just to avoid nil pointer dereference.
 				subnet:  &net.IPNet{},
 				Options: tc.opts,
 			})
 			for c, v := range tc.checks {
-				optVal := opts.Get(dhcpv4.GenericOptionCode(c))
-				require.NotNil(t, optVal)
-
-				assert.Len(t, optVal, len(v))
-				assert.Equal(t, v, optVal)
+				val := opts.Get(dhcpv4.GenericOptionCode(c))
+				assert.Lenf(t, val, len(v), "Code: %v", c)
+				assert.Equal(t, v, val)
 			}
 		})
 	}

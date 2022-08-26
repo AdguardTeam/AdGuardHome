@@ -22,6 +22,11 @@ and this project adheres to
 
 ### Added
 
+- New `del` DHCP option which removes the corresponding option from server's
+  response ([#4337]).
+    
+  **NOTE:** This modifier affects all the parameters in the response and not
+  only the requested ones.
 - A new HTTP API, `GET /control/blocked_services/services`, that lists all
   available blocked services ([#4535]).
 
@@ -39,6 +44,7 @@ and this project adheres to
 - Unnecessary logging of non-critical statistics errors ([#4850]).
 
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+[#4337]: https://github.com/AdguardTeam/AdGuardHome/issues/4337
 [#4535]: https://github.com/AdguardTeam/AdGuardHome/issues/4535
 [#4745]: https://github.com/AdguardTeam/AdGuardHome/issues/4745
 [#4850]: https://github.com/AdguardTeam/AdGuardHome/issues/4850
@@ -231,9 +237,10 @@ See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
   seconds.
 - Domain-specific private reverse DNS upstream servers are now validated to
   allow only `*.in-addr.arpa` and `*.ip6.arpa` domains pointing to
-  locally-served networks ([#3381]).  **Note:**  If you already have invalid
-  entries in your configuration, consider removing them manually, since they
-  essentially had no effect.
+  locally-served networks ([#3381]).
+    
+  **NOTE:**  If you already have invalid entries in your configuration, consider
+  removing them manually, since they essentially had no effect.
 - Response filtering is now performed using the record types of the answer
   section of messages as opposed to the type of the question ([#4238]).
 - Instead of adding the build time information, the build scripts now use the

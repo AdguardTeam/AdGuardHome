@@ -345,6 +345,8 @@ func TestV4Server_Process_optionsPriority(t *testing.T) {
 				stringutil.WriteToBuilder(b, ",", ip.String())
 			}
 			conf.Options = []string{b.String()}
+		} else {
+			defer func() { s.options.Update(dhcpv4.OptDNS(defaultIP)) }()
 		}
 
 		ss, err := v4Create(conf)
@@ -407,6 +409,7 @@ func TestV4StaticLease_Get(t *testing.T) {
 	require.True(t, ok)
 
 	s.conf.dnsIPAddrs = []net.IP{{192, 168, 10, 1}}
+	s.options.Update(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
 
 	l := &Lease{
 		Hostname: "static-1.local",
@@ -495,6 +498,7 @@ func TestV4DynamicLease_Get(t *testing.T) {
 	require.True(t, ok)
 
 	s.conf.dnsIPAddrs = []net.IP{{192, 168, 10, 1}}
+	s.options.Update(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
 
 	var req, resp *dhcpv4.DHCPv4
 	mac := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
