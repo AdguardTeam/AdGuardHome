@@ -370,6 +370,7 @@ Here's what you can also do to contribute:
 * [AdGuard Home on GLInet routers](https://forum.gl-inet.com/t/adguardhome-on-gl-routers/10664) by [Gl-Inet](https://gl-inet.com/)
 * [Cloudron app](https://git.cloudron.io/cloudron/adguard-home-app) by [@gramakri](https://github.com/gramakri)
 * [Asuswrt-Merlin-AdGuardHome-Installer](https://github.com/jumpsmm7/Asuswrt-Merlin-AdGuardHome-Installer) by [@jumpsmm7](https://github.com/jumpsmm7) aka [@SomeWhereOverTheRainBow](https://www.snbforums.com/members/somewhereovertherainbow.64179/)
+* [Node.js library](https://github.com/Andrea055/AdguardHomeAPI) by [@Andrea055](https://github.com/Andrea055/)
 
 <a id="acknowledgments"></a>
 ## Acknowledgments
