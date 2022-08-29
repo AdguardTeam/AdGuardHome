@@ -73,8 +73,7 @@ const (
 
 // fmtModule returns formatted information about module.  The result looks like:
 //
-//   github.com/Username/module@v1.2.3 (sum: someHASHSUM=)
-//
+//	github.com/Username/module@v1.2.3 (sum: someHASHSUM=)
 func fmtModule(m *debug.Module) (formatted string) {
 	if m == nil {
 		return ""
@@ -118,18 +117,18 @@ const (
 
 // Verbose returns formatted build information.  Output example:
 //
-//   AdGuard Home
-//   Version: v0.105.3
-//   Channel: development
-//   Go version: go1.15.3
-//   Build time: 2021-03-30T16:26:08Z+0300
-//   GOOS: darwin
-//   GOARCH: amd64
-//   Race: false
-//   Main module:
-//           ...
-//   Dependencies:
-//           ...
+//	AdGuard Home
+//	Version: v0.105.3
+//	Channel: development
+//	Go version: go1.15.3
+//	Build time: 2021-03-30T16:26:08Z+0300
+//	GOOS: darwin
+//	GOARCH: amd64
+//	Race: false
+//	Main module:
+//	        ...
+//	Dependencies:
+//	        ...
 //
 // TODO(e.burkov): Make it write into passed io.Writer.
 func Verbose() (v string) {

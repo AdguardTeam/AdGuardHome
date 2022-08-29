@@ -711,11 +711,16 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// handleDoH is the DNS-over-HTTPs handler.
+//
 // Control flow:
-// web
-//  -> dnsforward.handleDoH -> dnsforward.ServeHTTP
-//  -> proxy.ServeHTTP -> proxy.handleDNSRequest
-//  -> dnsforward.handleDNSRequest
+//
+//	HTTP server
+//	-> dnsforward.handleDoH
+//	-> dnsforward.ServeHTTP
+//	-> proxy.ServeHTTP
+//	-> proxy.handleDNSRequest
+//	-> dnsforward.handleDNSRequest
 func (s *Server) handleDoH(w http.ResponseWriter, r *http.Request) {
 	if !s.conf.TLSAllowUnencryptedDoH && r.TLS == nil {
 		aghhttp.Error(r, w, http.StatusNotFound, "Not Found")

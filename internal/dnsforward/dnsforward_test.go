@@ -1217,13 +1217,17 @@ func TestServer_Exchange(t *testing.T) {
 	errUpstream := aghtest.NewErrorUpstream()
 	nonPtrUpstream := aghtest.NewBlockUpstream("some-host", true)
 
-	srv := NewCustomServer(&proxy.Proxy{
-		Config: proxy.Config{
-			UpstreamConfig: &proxy.UpstreamConfig{
-				Upstreams: []upstream.Upstream{extUpstream},
+	srv := &Server{
+		recDetector: newRecursionDetector(0, 1),
+		internalProxy: &proxy.Proxy{
+			Config: proxy.Config{
+				UpstreamConfig: &proxy.UpstreamConfig{
+					Upstreams: []upstream.Upstream{extUpstream},
+				},
 			},
 		},
-	})
+	}
+
 	srv.conf.ResolveClients = true
 	srv.conf.UsePrivateRDNS = true
 

@@ -157,10 +157,10 @@ var svcbKeyHandlers = map[string]svcbKeyHandler{
 // Firstly, the parsing of non-contiguous values isn't supported.  Secondly, the
 // parsing of value-lists is not supported either.
 //
-//   ipv4hint=127.0.0.1             // Supported.
-//   ipv4hint="127.0.0.1"           // Unsupported.
-//   ipv4hint=127.0.0.1,127.0.0.2   // Unsupported.
-//   ipv4hint="127.0.0.1,127.0.0.2" // Unsupported.
+//	ipv4hint=127.0.0.1             // Supported.
+//	ipv4hint="127.0.0.1"           // Unsupported.
+//	ipv4hint=127.0.0.1,127.0.0.2   // Unsupported.
+//	ipv4hint="127.0.0.1,127.0.0.2" // Unsupported.
 //
 // TODO(a.garipov): Support all of these.
 func (s *Server) genAnswerSVCB(req *dns.Msg, svcb *rules.DNSSVCB) (ans *dns.SVCB) {

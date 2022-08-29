@@ -163,10 +163,10 @@ type TLSConfig struct {
 
 // DNSCryptConfig is the DNSCrypt server configuration struct.
 type DNSCryptConfig struct {
+	ResolverCert   *dnscrypt.Cert
+	ProviderName   string
 	UDPListenAddrs []*net.UDPAddr
 	TCPListenAddrs []*net.TCPAddr
-	ProviderName   string
-	ResolverCert   *dnscrypt.Cert
 	Enabled        bool
 }
 
@@ -214,68 +214,67 @@ var defaultValues = ServerConfig{
 	FilteringConfig: FilteringConfig{BlockedResponseTTL: 3600},
 }
 
-// createProxyConfig creates and validates configuration for the main proxy
-func (s *Server) createProxyConfig() (proxy.Config, error) {
-	proxyConfig := proxy.Config{
-		UDPListenAddr:          s.conf.UDPListenAddrs,
-		TCPListenAddr:          s.conf.TCPListenAddrs,
-		Ratelimit:              int(s.conf.Ratelimit),
-		RatelimitWhitelist:     s.conf.RatelimitWhitelist,
-		RefuseAny:              s.conf.RefuseAny,
-		TrustedProxies:         s.conf.TrustedProxies,
-		CacheMinTTL:            s.conf.CacheMinTTL,
-		CacheMaxTTL:            s.conf.CacheMaxTTL,
-		CacheOptimistic:        s.conf.CacheOptimistic,
-		UpstreamConfig:         s.conf.UpstreamConfig,
+// createProxyConfig creates and validates configuration for the main proxy.
+func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
+	srvConf := s.conf
+	conf = proxy.Config{
+		UDPListenAddr:          srvConf.UDPListenAddrs,
+		TCPListenAddr:          srvConf.TCPListenAddrs,
+		Ratelimit:              int(srvConf.Ratelimit),
+		RatelimitWhitelist:     srvConf.RatelimitWhitelist,
+		RefuseAny:              srvConf.RefuseAny,
+		TrustedProxies:         srvConf.TrustedProxies,
+		CacheMinTTL:            srvConf.CacheMinTTL,
+		CacheMaxTTL:            srvConf.CacheMaxTTL,
+		CacheOptimistic:        srvConf.CacheOptimistic,
+		UpstreamConfig:         srvConf.UpstreamConfig,
 		BeforeRequestHandler:   s.beforeRequestHandler,
 		RequestHandler:         s.handleDNSRequest,
-		EnableEDNSClientSubnet: s.conf.EnableEDNSClientSubnet,
-		MaxGoroutines:          int(s.conf.MaxGoroutines),
+		EnableEDNSClientSubnet: srvConf.EnableEDNSClientSubnet,
+		MaxGoroutines:          int(srvConf.MaxGoroutines),
 	}
 
-	if s.conf.CacheSize != 0 {
-		proxyConfig.CacheEnabled = true
-		proxyConfig.CacheSizeBytes = int(s.conf.CacheSize)
+	if srvConf.CacheSize != 0 {
+		conf.CacheEnabled = true
+		conf.CacheSizeBytes = int(srvConf.CacheSize)
 	}
 
-	proxyConfig.UpstreamMode = proxy.UModeLoadBalance
-	if s.conf.AllServers {
-		proxyConfig.UpstreamMode = proxy.UModeParallel
-	} else if s.conf.FastestAddr {
-		proxyConfig.UpstreamMode = proxy.UModeFastestAddr
-		proxyConfig.FastestPingTimeout = s.conf.FastestTimeout.Duration
-	}
+	setProxyUpstreamMode(
+		&conf,
+		srvConf.AllServers,
+		srvConf.FastestAddr,
+		srvConf.FastestTimeout.Duration,
+	)
 
-	for i, s := range s.conf.BogusNXDomain {
-		subnet, err := netutil.ParseSubnet(s)
+	for i, s := range srvConf.BogusNXDomain {
+		var subnet *net.IPNet
+		subnet, err = netutil.ParseSubnet(s)
 		if err != nil {
 			log.Error("subnet at index %d: %s", i, err)
 
 			continue
 		}
 
-		proxyConfig.BogusNXDomain = append(proxyConfig.BogusNXDomain, subnet)
+		conf.BogusNXDomain = append(conf.BogusNXDomain, subnet)
 	}
 
-	// TLS settings
-	err := s.prepareTLS(&proxyConfig)
+	err = s.prepareTLS(&conf)
 	if err != nil {
-		return proxyConfig, err
+		return conf, fmt.Errorf("validating tls: %w", err)
 	}
 
-	if s.conf.DNSCryptConfig.Enabled {
-		proxyConfig.DNSCryptUDPListenAddr = s.conf.DNSCryptConfig.UDPListenAddrs
-		proxyConfig.DNSCryptTCPListenAddr = s.conf.DNSCryptConfig.TCPListenAddrs
-		proxyConfig.DNSCryptProviderName = s.conf.DNSCryptConfig.ProviderName
-		proxyConfig.DNSCryptResolverCert = s.conf.DNSCryptConfig.ResolverCert
+	if c := srvConf.DNSCryptConfig; c.Enabled {
+		conf.DNSCryptUDPListenAddr = c.UDPListenAddrs
+		conf.DNSCryptTCPListenAddr = c.TCPListenAddrs
+		conf.DNSCryptProviderName = c.ProviderName
+		conf.DNSCryptResolverCert = c.ResolverCert
 	}
 
-	// Validate proxy config
-	if proxyConfig.UpstreamConfig == nil || len(proxyConfig.UpstreamConfig.Upstreams) == 0 {
-		return proxyConfig, errors.Error("no default upstream servers configured")
+	if conf.UpstreamConfig == nil || len(conf.UpstreamConfig.Upstreams) == 0 {
+		return conf, errors.Error("no default upstream servers configured")
 	}
 
-	return proxyConfig, nil
+	return conf, nil
 }
 
 const (
@@ -381,27 +380,46 @@ func (s *Server) prepareUpstreamSettings() error {
 	return nil
 }
 
-// prepareIntlProxy - initializes DNS proxy that we use for internal DNS queries
-func (s *Server) prepareIntlProxy() {
-	proxyConfig := &proxy.Proxy{
-		Config: proxy.Config{
-			CacheEnabled:   true,
-			CacheSizeBytes: 4096,
-			UpstreamConfig: s.conf.UpstreamConfig,
-			MaxGoroutines:  int(s.conf.MaxGoroutines),
-		},
+// prepareInternalProxy initializes the DNS proxy that is used for internal DNS
+// queries, such at client PTR resolving and udpater hostname resolving.
+func (s *Server) prepareInternalProxy() {
+	conf := &proxy.Config{
+		CacheEnabled:   true,
+		CacheSizeBytes: 4096,
+		UpstreamConfig: s.conf.UpstreamConfig,
+		MaxGoroutines:  int(s.conf.MaxGoroutines),
 	}
 
-	if s.conf.AllServers {
-		proxyConfig.UpstreamMode = proxy.UModeParallel
-	} else if s.conf.FastestAddr {
-		proxyConfig.UpstreamMode = proxy.UModeFastestAddr
-		proxyConfig.FastestPingTimeout = s.conf.FastestTimeout.Duration
+	srvConf := s.conf
+	setProxyUpstreamMode(
+		conf,
+		srvConf.AllServers,
+		srvConf.FastestAddr,
+		srvConf.FastestTimeout.Duration,
+	)
+
+	// TODO(a.garipov): Make a proper constructor for proxy.Proxy.
+	s.internalProxy = &proxy.Proxy{
+		Config: *conf,
+	}
+}
+
+// setProxyUpstreamMode sets the upstream mode and related settings in conf
+// based on provided parameters.
+func setProxyUpstreamMode(
+	conf *proxy.Config,
+	allServers bool,
+	fastestAddr bool,
+	fastestTimeout time.Duration,
+) {
+	if allServers {
+		conf.UpstreamMode = proxy.UModeParallel
+	} else if fastestAddr {
+		conf.UpstreamMode = proxy.UModeFastestAddr
+		conf.FastestPingTimeout = fastestTimeout
 	} else {
-		proxyConfig.UpstreamMode = proxy.UModeLoadBalance
+		conf.UpstreamMode = proxy.UModeLoadBalance
 	}
-
-	s.internalProxy = proxyConfig
 }
 
 // prepareTLS - prepares TLS configuration for the DNS proxy
