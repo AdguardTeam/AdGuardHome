@@ -1,4 +1,4 @@
-package aghos
+package aghos_test
 
 import (
 	"testing"

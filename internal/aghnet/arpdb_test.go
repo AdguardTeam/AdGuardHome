@@ -1,9 +1,7 @@
 package aghnet
 
 import (
-	"io"
 	"net"
-	"strings"
 	"sync"
 	"testing"
 
@@ -12,6 +10,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestNewARPDB(t *testing.T) {
+	var a ARPDB
+	require.NotPanics(t, func() { a = NewARPDB() })
+
+	assert.NotNil(t, a)
+}
 
 // TestARPDB is the mock implementation of ARPDB to use in tests.
 type TestARPDB struct {
@@ -125,11 +130,11 @@ func TestARPDBS(t *testing.T) {
 		assert.Equal(t, 1, succRefrCount)
 		assert.NotEmpty(t, a.Neighbors())
 
-		// Only the last succeeded ARPDB should be used.
+		// Unstable ARPDB should refresh successfully again.
 		err = a.Refresh()
 		require.NoError(t, err)
 
-		assert.Equal(t, 2, succRefrCount)
+		assert.Equal(t, 1, succRefrCount)
 		assert.NotEmpty(t, a.Neighbors())
 	})
 
@@ -143,6 +148,7 @@ func TestARPDBS(t *testing.T) {
 
 func TestCmdARPDB_arpa(t *testing.T) {
 	a := &cmdARPDB{
+		cmd:   "cmd",
 		parse: parseArpA,
 		ns: &neighs{
 			mu: &sync.RWMutex{},
@@ -151,7 +157,8 @@ func TestCmdARPDB_arpa(t *testing.T) {
 	}
 
 	t.Run("arp_a", func(t *testing.T) {
-		a.runcmd = func() (r io.Reader, err error) { return strings.NewReader(arpAOutput), nil }
+		sh := theOnlyCmd("cmd", 0, arpAOutput, nil)
+		substShell(t, sh.RunCmd)
 
 		err := a.Refresh()
 		require.NoError(t, err)
@@ -160,9 +167,50 @@ func TestCmdARPDB_arpa(t *testing.T) {
 	})
 
 	t.Run("runcmd_error", func(t *testing.T) {
-		a.runcmd = func() (r io.Reader, err error) { return nil, errors.Error("can't run") }
+		sh := theOnlyCmd("cmd", 0, "", errors.Error("can't run"))
+		substShell(t, sh.RunCmd)
 
 		err := a.Refresh()
 		testutil.AssertErrorMsg(t, "cmd arpdb: running command: can't run", err)
+	})
+
+	t.Run("bad_code", func(t *testing.T) {
+		sh := theOnlyCmd("cmd", 1, "", nil)
+		substShell(t, sh.RunCmd)
+
+		err := a.Refresh()
+		testutil.AssertErrorMsg(t, "cmd arpdb: running command: unexpected exit code 1", err)
+	})
+
+	t.Run("empty", func(t *testing.T) {
+		sh := theOnlyCmd("cmd", 0, "", nil)
+		substShell(t, sh.RunCmd)
+
+		err := a.Refresh()
+		require.NoError(t, err)
+
+		assert.Empty(t, a.Neighbors())
+	})
+}
+
+func TestEmptyARPDB(t *testing.T) {
+	a := EmptyARPDB{}
+
+	t.Run("refresh", func(t *testing.T) {
+		var err error
+		require.NotPanics(t, func() {
+			err = a.Refresh()
+		})
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("neighbors", func(t *testing.T) {
+		var ns []Neighbor
+		require.NotPanics(t, func() {
+			ns = a.Neighbors()
+		})
+
+		assert.Empty(t, ns)
 	})
 }

@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"sort"
 	"strings"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
@@ -18,6 +16,8 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 type dnsConfig struct {
@@ -167,7 +167,7 @@ func (req *dnsConfig) checkBootstrap() (err error) {
 }
 
 // validate returns an error if any field of req is invalid.
-func (req *dnsConfig) validate(snd *aghnet.SubnetDetector) (err error) {
+func (req *dnsConfig) validate(privateNets netutil.SubnetSet) (err error) {
 	if req.Upstreams != nil {
 		err = ValidateUpstreams(*req.Upstreams)
 		if err != nil {
@@ -176,7 +176,7 @@ func (req *dnsConfig) validate(snd *aghnet.SubnetDetector) (err error) {
 	}
 
 	if req.LocalPTRUpstreams != nil {
-		err = ValidateUpstreamsPrivate(*req.LocalPTRUpstreams, snd)
+		err = ValidateUpstreamsPrivate(*req.LocalPTRUpstreams, privateNets)
 		if err != nil {
 			return fmt.Errorf("validating private upstream servers: %w", err)
 		}
@@ -224,7 +224,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = req.validate(s.subnetDetector)
+	err = req.validate(s.privateNets)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
@@ -350,17 +350,6 @@ func IsCommentOrEmpty(s string) (ok bool) {
 	return len(s) == 0 || s[0] == '#'
 }
 
-// LocalNetChecker is used to check if the IP address belongs to a local
-// network.
-type LocalNetChecker interface {
-	// IsLocallyServedNetwork returns true if ip is contained in any of address
-	// registries defined by RFC 6303.
-	IsLocallyServedNetwork(ip net.IP) (ok bool)
-}
-
-// type check
-var _ LocalNetChecker = (*aghnet.SubnetDetector)(nil)
-
 // newUpstreamConfig validates upstreams and returns an appropriate upstream
 // configuration or nil if it can't be built.
 //
@@ -375,6 +364,21 @@ func newUpstreamConfig(upstreams []string) (conf *proxy.UpstreamConfig, err erro
 		return nil, nil
 	}
 
+	for _, u := range upstreams {
+		var ups string
+		var domains []string
+		ups, domains, err = separateUpstream(u)
+		if err != nil {
+			// Don't wrap the error since it's informative enough as is.
+			return nil, err
+		}
+
+		_, err = validateUpstream(ups, domains)
+		if err != nil {
+			return nil, fmt.Errorf("validating upstream %q: %w", u, err)
+		}
+	}
+
 	conf, err = proxy.ParseUpstreamsConfig(
 		upstreams,
 		&upstream.Options{Bootstrap: []string{}, Timeout: DefaultTimeout},
@@ -383,13 +387,6 @@ func newUpstreamConfig(upstreams []string) (conf *proxy.UpstreamConfig, err erro
 		return nil, err
 	} else if len(conf.Upstreams) == 0 {
 		return nil, errors.Error("no default upstreams specified")
-	}
-
-	for _, u := range upstreams {
-		_, err = validateUpstream(u)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return conf, nil
@@ -405,25 +402,11 @@ func ValidateUpstreams(upstreams []string) (err error) {
 	return err
 }
 
-// stringKeysSorted returns the sorted slice of string keys of m.
-//
-// TODO(e.burkov):  Use generics in Go 1.18.  Move into golibs.
-func stringKeysSorted(m map[string][]upstream.Upstream) (sorted []string) {
-	sorted = make([]string, 0, len(m))
-	for s := range m {
-		sorted = append(sorted, s)
-	}
-
-	sort.Strings(sorted)
-
-	return sorted
-}
-
 // ValidateUpstreamsPrivate validates each upstream and returns an error if any
 // upstream is invalid or if there are no default upstreams specified.  It also
 // checks each domain of domain-specific upstreams for being ARPA pointing to
-// a locally-served network.  lnc must not be nil.
-func ValidateUpstreamsPrivate(upstreams []string, lnc LocalNetChecker) (err error) {
+// a locally-served network.  privateNets must not be nil.
+func ValidateUpstreamsPrivate(upstreams []string, privateNets netutil.SubnetSet) (err error) {
 	conf, err := newUpstreamConfig(upstreams)
 	if err != nil {
 		return err
@@ -433,9 +416,11 @@ func ValidateUpstreamsPrivate(upstreams []string, lnc LocalNetChecker) (err erro
 		return nil
 	}
 
-	var errs []error
+	keys := maps.Keys(conf.DomainReservedUpstreams)
+	slices.Sort(keys)
 
-	for _, domain := range stringKeysSorted(conf.DomainReservedUpstreams) {
+	var errs []error
+	for _, domain := range keys {
 		var subnet *net.IPNet
 		subnet, err = netutil.SubnetFromReversedAddr(domain)
 		if err != nil {
@@ -444,7 +429,7 @@ func ValidateUpstreamsPrivate(upstreams []string, lnc LocalNetChecker) (err erro
 			continue
 		}
 
-		if !lnc.IsLocallyServedNetwork(subnet.IP) {
+		if !privateNets.Contains(subnet.IP) {
 			errs = append(
 				errs,
 				fmt.Errorf("arpa domain %q should point to a locally-served network", domain),
@@ -461,16 +446,14 @@ func ValidateUpstreamsPrivate(upstreams []string, lnc LocalNetChecker) (err erro
 
 var protocols = []string{"udp://", "tcp://", "tls://", "https://", "sdns://", "quic://"}
 
-func validateUpstream(u string) (useDefault bool, err error) {
-	// Check if the user tries to specify upstream for domain.
-	var isDomainSpec bool
-	u, isDomainSpec, err = separateUpstream(u)
-	if err != nil {
-		return !isDomainSpec, err
-	}
-
+// validateUpstream returns an error if u alongside with domains is not a valid
+// upstream configuration.  useDefault is true if the upstream is
+// domain-specific and is configured to point at the default upstream server
+// which is validated separately.  The upstream is considered domain-specific
+// only if domains is at least not nil.
+func validateUpstream(u string, domains []string) (useDefault bool, err error) {
 	// The special server address '#' means that default server must be used.
-	if useDefault = !isDomainSpec; u == "#" && isDomainSpec {
+	if useDefault = u == "#" && domains != nil; useDefault {
 		return useDefault, nil
 	}
 
@@ -497,12 +480,14 @@ func validateUpstream(u string) (useDefault bool, err error) {
 	return useDefault, nil
 }
 
-// separateUpstream returns the upstream without the specified domains.
-// isDomainSpec is true when the upstream is domains-specific.
-func separateUpstream(upstreamStr string) (upstream string, isDomainSpec bool, err error) {
+// separateUpstream returns the upstream and the specified domains.  domains is
+// nil when the upstream is not domains-specific.  Otherwise it may also be
+// empty.
+func separateUpstream(upstreamStr string) (ups string, domains []string, err error) {
 	if !strings.HasPrefix(upstreamStr, "[/") {
-		return upstreamStr, false, nil
+		return upstreamStr, nil, nil
 	}
+
 	defer func() { err = errors.Annotate(err, "bad upstream for domain %q: %w", upstreamStr) }()
 
 	parts := strings.Split(upstreamStr[2:], "/]")
@@ -510,39 +495,46 @@ func separateUpstream(upstreamStr string) (upstream string, isDomainSpec bool, e
 	case 2:
 		// Go on.
 	case 1:
-		return "", false, errors.Error("missing separator")
+		return "", nil, errors.Error("missing separator")
 	default:
-		return "", true, errors.Error("duplicated separator")
+		return "", []string{}, errors.Error("duplicated separator")
 	}
 
-	var domains string
-	domains, upstream = parts[0], parts[1]
-	for i, host := range strings.Split(domains, "/") {
+	for i, host := range strings.Split(parts[0], "/") {
 		if host == "" {
 			continue
 		}
 
-		err = netutil.ValidateDomainName(host)
+		err = netutil.ValidateDomainName(strings.TrimPrefix(host, "*."))
 		if err != nil {
-			return "", true, fmt.Errorf("domain at index %d: %w", i, err)
+			return "", domains, fmt.Errorf("domain at index %d: %w", i, err)
 		}
+
+		domains = append(domains, host)
 	}
 
-	return upstream, true, nil
+	return parts[1], domains, nil
 }
 
-// excFunc is a signature of function to check if upstream exchanges correctly.
-type excFunc func(u upstream.Upstream) (err error)
+// healthCheckFunc is a signature of function to check if upstream exchanges
+// properly.
+type healthCheckFunc func(u upstream.Upstream) (err error)
 
 // checkDNSUpstreamExc checks if the DNS upstream exchanges correctly.
 func checkDNSUpstreamExc(u upstream.Upstream) (err error) {
+	// testTLD is the special-use fully-qualified domain name for testing the
+	// DNS server reachability.
+	//
+	// See https://datatracker.ietf.org/doc/html/rfc6761#section-6.2.
+	const testTLD = "test."
+
 	req := &dns.Msg{
 		MsgHdr: dns.MsgHdr{
 			Id:               dns.Id(),
 			RecursionDesired: true,
 		},
 		Question: []dns.Question{{
-			Name:   "google-public-dns-a.google.com.",
+			Name:   testTLD,
 			Qtype:  dns.TypeA,
 			Qclass: dns.ClassINET,
 		}},
@@ -552,12 +544,8 @@ func checkDNSUpstreamExc(u upstream.Upstream) (err error) {
 	reply, err = u.Exchange(req)
 	if err != nil {
 		return fmt.Errorf("couldn't communicate with upstream: %w", err)
-	}
-
-	if len(reply.Answer) != 1 {
-		return fmt.Errorf("wrong response")
-	} else if a, ok := reply.Answer[0].(*dns.A); !ok || !a.A.Equal(net.IP{8, 8, 8, 8}) {
-		return fmt.Errorf("wrong response")
+	} else if len(reply.Answer) != 0 {
+		return errors.Error("wrong response")
 	}
 
 	return nil
@@ -565,14 +553,22 @@ func checkDNSUpstreamExc(u upstream.Upstream) (err error) {
 
 // checkPrivateUpstreamExc checks if the upstream for resolving private
 // addresses exchanges correctly.
+//
+// TODO(e.burkov):  Think about testing the ip6.arpa. as well.
 func checkPrivateUpstreamExc(u upstream.Upstream) (err error) {
+	// inAddrArpaTLD is the special-use fully-qualified domain name for PTR IP
+	// address resolution.
+	//
+	// See https://datatracker.ietf.org/doc/html/rfc1035#section-3.5.
+	const inAddrArpaTLD = "in-addr.arpa."
+
 	req := &dns.Msg{
 		MsgHdr: dns.MsgHdr{
 			Id:               dns.Id(),
 			RecursionDesired: true,
 		},
 		Question: []dns.Question{{
-			Name:   "1.0.0.127.in-addr.arpa.",
+			Name:   inAddrArpaTLD,
 			Qtype:  dns.TypePTR,
 			Qclass: dns.ClassINET,
 		}},
@@ -585,46 +581,66 @@ func checkPrivateUpstreamExc(u upstream.Upstream) (err error) {
 	return nil
 }
 
-func checkDNS(input string, bootstrap []string, timeout time.Duration, ef excFunc) (err error) {
-	if IsCommentOrEmpty(input) {
+// domainSpecificTestError is a wrapper for errors returned by checkDNS to mark
+// the tested upstream domain-specific and therefore consider its errors
+// non-critical.
+//
+// TODO(a.garipov):  Some common mechanism of distinguishing between errors and
+// warnings (non-critical errors) is desired.
+type domainSpecificTestError struct {
+	error
+}
+
+// checkDNS checks the upstream server defined by upstreamConfigStr using
+// healthCheck for actually exchange messages.  It uses bootstrap to resolve the
+// upstream's address.
+func checkDNS(
+	upstreamConfigStr string,
+	bootstrap []string,
+	timeout time.Duration,
+	healthCheck healthCheckFunc,
+) (err error) {
+	if IsCommentOrEmpty(upstreamConfigStr) {
 		return nil
 	}
 
 	// Separate upstream from domains list.
-	var useDefault bool
-	if useDefault, err = validateUpstream(input); err != nil {
+	upstreamAddr, domains, err := separateUpstream(upstreamConfigStr)
+	if err != nil {
 		return fmt.Errorf("wrong upstream format: %w", err)
 	}
 
-	// No need to check this DNS server.
-	if !useDefault {
+	useDefault, err := validateUpstream(upstreamAddr, domains)
+	if err != nil {
+		return fmt.Errorf("wrong upstream format: %w", err)
+	} else if useDefault {
 		return nil
-	}
-
-	if input, _, err = separateUpstream(input); err != nil {
-		return fmt.Errorf("wrong upstream format: %w", err)
 	}
 
 	if len(bootstrap) == 0 {
 		bootstrap = defaultBootstrap
 	}
 
-	log.Debug("checking if upstream %s works", input)
+	log.Debug("dnsforward: checking if upstream %q works", upstreamAddr)
 
-	var u upstream.Upstream
-	u, err = upstream.AddressToUpstream(input, &upstream.Options{
+	u, err := upstream.AddressToUpstream(upstreamAddr, &upstream.Options{
 		Bootstrap: bootstrap,
 		Timeout:   timeout,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to choose upstream for %q: %w", input, err)
+		return fmt.Errorf("failed to choose upstream for %q: %w", upstreamAddr, err)
 	}
 
-	if err = ef(u); err != nil {
-		return fmt.Errorf("upstream %q fails to exchange: %w", input, err)
+	if err = healthCheck(u); err != nil {
+		err = fmt.Errorf("upstream %q fails to exchange: %w", upstreamAddr, err)
+		if domains != nil {
+			return domainSpecificTestError{error: err}
+		}
+
+		return err
 	}
 
-	log.Debug("upstream %s is ok", input)
+	log.Debug("dnsforward: upstream %q is ok", upstreamAddr)
 
 	return nil
 }
@@ -647,6 +663,9 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Info("%v", err)
 			result[host] = err.Error()
+			if _, ok := err.(domainSpecificTestError); ok {
+				result[host] = fmt.Sprintf("WARNING: %s", result[host])
+			}
 
 			continue
 		}
@@ -662,6 +681,9 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 			// above, we rewriting the error for it.  These cases should be
 			// handled properly instead.
 			result[host] = err.Error()
+			if _, ok := err.(domainSpecificTestError); ok {
+				result[host] = fmt.Sprintf("WARNING: %s", result[host])
+			}
 
 			continue
 		}

@@ -7,87 +7,181 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
+	"golang.org/x/exp/slices"
 )
 
-var serviceRules map[string][]*rules.NetworkRule // service name -> filtering rules
-
+// svc represents a single blocked service.
 type svc struct {
 	name  string
 	rules []string
 }
 
+// servicesData contains raw blocked service data.
+//
 // Keep in sync with:
-// client/src/helpers/constants.js
-// client/src/components/ui/Icons.js
-var serviceRulesArray = []svc{
-	{"whatsapp", []string{"||whatsapp.net^", "||whatsapp.com^"}},
-	{"facebook", []string{
+//   - client/src/helpers/constants.js
+//   - client/src/components/ui/Icons.js
+var servicesData = []svc{{
+	name: "whatsapp",
+	rules: []string{
+		"||wa.me^",
+		"||whatsapp.com^",
+		"||whatsapp.net^",
+	},
+}, {
+	name: "facebook",
+	rules: []string{
 		"||facebook.com^",
 		"||facebook.net^",
 		"||fbcdn.net^",
 		"||accountkit.com^",
 		"||fb.me^",
 		"||fb.com^",
+		"||fb.gg^",
 		"||fbsbx.com^",
+		"||fbwat.ch^",
 		"||messenger.com^",
 		"||facebookcorewwwi.onion^",
 		"||fbcdn.com^",
 		"||fb.watch^",
-	}},
-	{"twitter", []string{"||twitter.com^", "||twttr.com^", "||t.co^", "||twimg.com^"}},
-	{"youtube", []string{
-		"||youtube.com^",
-		"||ytimg.com^",
-		"||youtu.be^",
+	},
+}, {
+	name: "twitter",
+	rules: []string{
+		"||t.co^",
+		"||twimg.com^",
+		"||twitter.com^",
+		"||twttr.com^",
+	},
+}, {
+	name: "youtube",
+	rules: []string{
 		"||googlevideo.com^",
-		"||youtubei.googleapis.com^",
-		"||youtube-nocookie.com^",
+		"||wide-youtube.l.google.com^",
+		"||youtu.be^",
 		"||youtube",
-	}},
-	{"twitch", []string{"||twitch.tv^", "||ttvnw.net^", "||jtvnw.net^", "||twitchcdn.net^"}},
-	{"netflix", []string{"||nflxext.com^", "||netflix.com^", "||nflximg.net^", "||nflxvideo.net^", "||nflxso.net^"}},
-	{"instagram", []string{"||instagram.com^", "||cdninstagram.com^"}},
-	{"snapchat", []string{
+		"||youtube-nocookie.com^",
+		"||youtube.com^",
+		"||youtubei.googleapis.com^",
+		"||youtubekids.com^",
+		"||ytimg.com^",
+	},
+}, {
+	name: "twitch",
+	rules: []string{
+		"||jtvnw.net^",
+		"||ttvnw.net^",
+		"||twitch.tv^",
+		"||twitchcdn.net^",
+	},
+}, {
+	name: "netflix",
+	rules: []string{
+		"||nflxext.com^",
+		"||netflix.com^",
+		"||nflximg.net^",
+		"||nflxvideo.net^",
+		"||nflxso.net^",
+	},
+}, {
+	name:  "instagram",
+	rules: []string{"||instagram.com^", "||cdninstagram.com^"},
+}, {
+	name: "snapchat",
+	rules: []string{
 		"||snapchat.com^",
 		"||sc-cdn.net^",
 		"||snap-dev.net^",
 		"||snapkit.co",
 		"||snapads.com^",
 		"||impala-media-production.s3.amazonaws.com^",
-	}},
-	{"discord", []string{"||discord.gg^", "||discordapp.net^", "||discordapp.com^", "||discord.com^", "||discord.media^"}},
-	{"ok", []string{"||ok.ru^"}},
-	{"skype", []string{"||skype.com^", "||skypeassets.com^"}},
-	{"vk", []string{"||vk.com^", "||userapi.com^", "||vk-cdn.net^", "||vkuservideo.net^"}},
-	{"origin", []string{"||origin.com^", "||signin.ea.com^", "||accounts.ea.com^"}},
-	{"steam", []string{
+	},
+}, {
+	name: "discord",
+	rules: []string{
+		"||discord.gg^",
+		"||discordapp.net^",
+		"||discordapp.com^",
+		"||discord.com^",
+		"||discord.gift",
+		"||discord.media^",
+	},
+}, {
+	name:  "ok",
+	rules: []string{"||ok.ru^"},
+}, {
+	name: "skype",
+	rules: []string{
+		"||edge-skype-com.s-0001.s-msedge.net^",
+		"||skype-edf.akadns.net^",
+		"||skype.com^",
+		"||skypeassets.com^",
+		"||skypedata.akadns.net^",
+	},
+}, {
+	name: "vk",
+	rules: []string{
+		"||userapi.com^",
+		"||vk-cdn.net^",
+		"||vk.com^",
+		"||vkuservideo.net^",
+	},
+}, {
+	name: "origin",
+	rules: []string{
+		"||accounts.ea.com^",
+		"||origin.com^",
+		"||signin.ea.com^",
+	},
+}, {
+	name: "steam",
+	rules: []string{
 		"||steam.com^",
 		"||steampowered.com^",
 		"||steamcommunity.com^",
 		"||steamstatic.com^",
 		"||steamstore-a.akamaihd.net^",
 		"||steamcdn-a.akamaihd.net^",
-	}},
-	{"epic_games", []string{"||epicgames.com^", "||easyanticheat.net^", "||easy.ac^", "||eac-cdn.com^"}},
-	{"reddit", []string{"||reddit.com^", "||redditstatic.com^", "||redditmedia.com^", "||redd.it^"}},
-	{"mail_ru", []string{"||mail.ru^"}},
-	{"cloudflare", []string{
-		"||cloudflare.com^",
-		"||cloudflare-dns.com^",
-		"||cloudflare.net^",
-		"||cloudflareinsights.com^",
-		"||cloudflarestream.com^",
-		"||cloudflareresolve.com^",
-		"||cloudflareclient.com^",
-		"||cloudflarebolt.com^",
-		"||cloudflarestatus.com^",
-		"||cloudflare.cn^",
-		"||one.one^",
-		"||warp.plus^",
+	},
+}, {
+	name:  "epic_games",
+	rules: []string{"||epicgames.com^", "||easyanticheat.net^", "||easy.ac^", "||eac-cdn.com^"},
+}, {
+	name:  "reddit",
+	rules: []string{"||reddit.com^", "||redditstatic.com^", "||redditmedia.com^", "||redd.it^"},
+}, {
+	name:  "mail_ru",
+	rules: []string{"||mail.ru^"},
+}, {
+	name: "cloudflare",
+	rules: []string{
 		"||1.1.1.1^",
+		"||argotunnel.com^",
+		"||cloudflare-dns.com^",
+		"||cloudflare-ipfs.com^",
+		"||cloudflare-quic.com^",
+		"||cloudflare.cn^",
+		"||cloudflare.com^",
+		"||cloudflare.net^",
+		"||cloudflareapps.com^",
+		"||cloudflarebolt.com^",
+		"||cloudflareclient.com^",
+		"||cloudflareinsights.com^",
+		"||cloudflareresolve.com^",
+		"||cloudflarestatus.com^",
+		"||cloudflarestream.com^",
+		"||cloudflarewarp.com^",
 		"||dns4torpnlfs2ifuz2s2yf3fc7rdmsbhm6rw75euj35pac6ap25zgqad.onion^",
-	}},
-	{"amazon", []string{
+		"||one.one^",
+		"||pages.dev^",
+		"||trycloudflare.com^",
+		"||videodelivery.net^",
+		"||warp.plus^",
+		"||workers.dev^",
+	},
+}, {
+	name: "amazon",
+	rules: []string{
 		"||amazon.com^",
 		"||media-amazon.com^",
 		"||primevideo.com^",
@@ -111,11 +205,14 @@ var serviceRulesArray = []svc{
 		"||amazon.com.br^",
 		"||amazon.co.jp^",
 		"||amazon.com.mx^",
+		"||amazon.com.tr^",
 		"||amazon.co.uk^",
 		"||createspace.com^",
 		"||aws",
-	}},
-	{"ebay", []string{
+	},
+}, {
+	name: "ebay",
+	rules: []string{
 		"||ebay.com^",
 		"||ebayimg.com^",
 		"||ebaystatic.com^",
@@ -141,8 +238,10 @@ var serviceRulesArray = []svc{
 		"||ebay.com.my^",
 		"||ebay.com.sg^",
 		"||ebay.co.uk^",
-	}},
-	{"tiktok", []string{
+	},
+}, {
+	name: "tiktok",
+	rules: []string{
 		"||tiktok.com^",
 		"||tiktokcdn.com^",
 		"||musical.ly^",
@@ -156,65 +255,95 @@ var serviceRulesArray = []svc{
 		"||toutiaocloud.net^",
 		"||bdurl.com^",
 		"||bytecdn.cn^",
+		"||bytedapm.com^",
 		"||byteimg.com^",
+		"||byteoversea.com^",
 		"||ixigua.com^",
 		"||muscdn.com^",
 		"||bytedance.map.fastly.net^",
 		"||douyin.com^",
 		"||tiktokv.com^",
-	}},
-	{"vimeo", []string{
+		"||toutiaovod.com^",
+		"||douyincdn.com^",
+	},
+}, {
+	name: "vimeo",
+	rules: []string{
+		"*vod-adaptive.akamaized.net^",
 		"||vimeo.com^",
 		"||vimeocdn.com^",
-		"*vod-adaptive.akamaized.net^",
-	}},
-	{"pinterest", []string{
-		"||pinterest.*^",
+	},
+}, {
+	name: "pinterest",
+	rules: []string{
 		"||pinimg.com^",
-	}},
-	{"imgur", []string{
-		"||imgur.com^",
-	}},
-	{"dailymotion", []string{
+		"||pinterest.*^",
+	},
+}, {
+	name:  "imgur",
+	rules: []string{"||imgur.com^"},
+}, {
+	name: "dailymotion",
+	rules: []string{
 		"||dailymotion.com^",
 		"||dm-event.net^",
 		"||dmcdn.net^",
-	}},
-	{"qq", []string{
-		// block qq.com and subdomains excluding WeChat domains
-		"||qq.com^$denyallow=wx*.qq.com|weixin.qq.com",
+	},
+}, {
+	name: "qq",
+	rules: []string{
+		// Block qq.com and subdomains excluding WeChat's domains.
+		"||qq.com^$denyallow=wx.qq.com|weixin.qq.com",
 		"||qqzaixian.com^",
-	}},
-	{"wechat", []string{
+		"||qq-video.cdn-go.cn^",
+		"||url.cn^",
+	},
+}, {
+	name: "wechat",
+	rules: []string{
 		"||wechat.com^",
+		"||weixin.qq.com.cn^",
 		"||weixin.qq.com^",
+		"||weixinbridge.com^",
 		"||wx.qq.com^",
-	}},
-	{"viber", []string{
-		"||viber.com^",
-	}},
-	{"weibo", []string{
+	},
+}, {
+	name:  "viber",
+	rules: []string{"||viber.com^"},
+}, {
+	name: "weibo",
+	rules: []string{
+		"||weibo.cn^",
 		"||weibo.com^",
-	}},
-	{"9gag", []string{
+		"||weibocdn.com^",
+	},
+}, {
+	name: "9gag",
+	rules: []string{
 		"||9cache.com^",
 		"||9gag.com^",
-	}},
-	{"telegram", []string{
+	},
+}, {
+	name: "telegram",
+	rules: []string{
 		"||t.me^",
 		"||telegram.me^",
 		"||telegram.org^",
-	}},
-	{"disneyplus", []string{
+	},
+}, {
+	name: "disneyplus",
+	rules: []string{
 		"||disney-plus.net^",
 		"||disneyplus.com^",
 		"||disney.playback.edge.bamgrid.com^",
 		"||media.dssott.com^",
-	}},
-	{"hulu", []string{
-		"||hulu.com^",
-	}},
-	{"spotify", []string{
+	},
+}, {
+	name:  "hulu",
+	rules: []string{"||hulu.com^"},
+}, {
+	name: "spotify",
+	rules: []string{
 		"/_spotify-connect._tcp.local/",
 		"||spotify.com^",
 		"||scdn.co^",
@@ -226,29 +355,59 @@ var serviceRulesArray = []svc{
 		"||audio4-ak-spotify-com.akamaized.net^",
 		"||heads-ak-spotify-com.akamaized.net^",
 		"||heads4-ak-spotify-com.akamaized.net^",
-	}},
-	{"tinder", []string{
+	},
+}, {
+	name: "tinder",
+	rules: []string{
 		"||gotinder.com^",
 		"||tinder.com^",
 		"||tindersparks.com^",
-	}},
-}
+	},
+}, {
+	name: "bilibili",
+	rules: []string{
+		"||biliapi.net^",
+		"||bilibili.com^",
+		"||biligame.com^",
+		"||bilivideo.cn^",
+		"||bilivideo.com^",
+		"||dreamcast.hk^",
+		"||hdslb.com^",
+	},
+}}
 
-// convert array to map
+// serviceRules maps a service ID to its filtering rules.
+var serviceRules map[string][]*rules.NetworkRule
+
+// serviceIDs contains service IDs sorted alphabetically.
+var serviceIDs []string
+
+// initBlockedServices initializes package-level blocked service data.
 func initBlockedServices() {
-	serviceRules = make(map[string][]*rules.NetworkRule)
-	for _, s := range serviceRulesArray {
-		netRules := []*rules.NetworkRule{}
+	l := len(servicesData)
+	serviceIDs = make([]string, l)
+	serviceRules = make(map[string][]*rules.NetworkRule, l)
+
+	for i, s := range servicesData {
+		netRules := make([]*rules.NetworkRule, 0, len(s.rules))
 		for _, text := range s.rules {
 			rule, err := rules.NewNetworkRule(text, BlockedSvcsListID)
 			if err != nil {
-				log.Error("rules.NewNetworkRule: %s  rule: %s", err, text)
+				log.Error("parsing blocked service %q rule %q: %s", s.name, text, err)
+
 				continue
 			}
+
 			netRules = append(netRules, rule)
 		}
+
+		serviceIDs[i] = s.name
 		serviceRules[s.name] = netRules
 	}
+
+	slices.Sort(serviceIDs)
+
+	log.Debug("filtering: initialized %d services", l)
 }
 
 // BlockedSvcKnown - return TRUE if a blocked service name is known
@@ -280,6 +439,16 @@ func (d *DNSFilter) ApplyBlockedServices(setts *Settings, list []string, global 
 	}
 }
 
+func (d *DNSFilter) handleBlockedServicesAvailableServices(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(serviceIDs)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusInternalServerError, "encoding available services: %s", err)
+
+		return
+	}
+}
+
 func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Request) {
 	d.confLock.RLock()
 	list := d.Config.BlockedServices
@@ -288,7 +457,7 @@ func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Req
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(list)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "json.Encode: %s", err)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "encoding services: %s", err)
 
 		return
 	}
@@ -314,6 +483,7 @@ func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 
 // registerBlockedServicesHandlers - register HTTP handlers
 func (d *DNSFilter) registerBlockedServicesHandlers() {
+	d.Config.HTTPRegister(http.MethodGet, "/control/blocked_services/services", d.handleBlockedServicesAvailableServices)
 	d.Config.HTTPRegister(http.MethodGet, "/control/blocked_services/list", d.handleBlockedServicesList)
 	d.Config.HTTPRegister(http.MethodPost, "/control/blocked_services/set", d.handleBlockedServicesSet)
 }

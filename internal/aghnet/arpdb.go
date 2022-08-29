@@ -2,13 +2,11 @@ package aghnet
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
-	"io"
 	"net"
-	"strings"
 	"sync"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
 )
@@ -27,15 +25,8 @@ type ARPDB interface {
 }
 
 // NewARPDB returns the ARPDB properly initialized for the OS.
-func NewARPDB() (arp ARPDB, err error) {
-	arp = newARPDB()
-
-	err = arp.Refresh()
-	if err != nil {
-		return nil, fmt.Errorf("arpdb initial refresh: %w", err)
-	}
-
-	return arp, nil
+func NewARPDB() (arp ARPDB) {
+	return newARPDB()
 }
 
 // Empty ARPDB implementation
@@ -123,50 +114,33 @@ func (ns *neighs) reset(with []Neighbor) {
 // of Neighbors.
 type parseNeighsFunc func(sc *bufio.Scanner, lenHint int) (ns []Neighbor)
 
-// runCmdFunc is the function that runs some command and returns its output
-// wrapped to be a io.Reader.
-type runCmdFunc func() (r io.Reader, err error)
-
 // cmdARPDB is the implementation of the ARPDB that uses command line to
 // retrieve data.
 type cmdARPDB struct {
-	parse  parseNeighsFunc
-	runcmd runCmdFunc
-	ns     *neighs
+	parse parseNeighsFunc
+	ns    *neighs
+	cmd   string
+	args  []string
 }
 
 // type check
 var _ ARPDB = (*cmdARPDB)(nil)
 
-// runCmd runs the cmd with it's args and returns the result wrapped to be an
-// io.Reader.  The error is returned either if the exit code retured by command
-// not equals 0 or the execution itself failed.
-func runCmd(cmd string, args ...string) (r io.Reader, err error) {
-	var code int
-	var out string
-	code, out, err = aghos.RunCommand(cmd, args...)
-	if err != nil {
-		return nil, err
-	} else if code != 0 {
-		return nil, fmt.Errorf("unexpected exit code %d", code)
-	}
-
-	return strings.NewReader(out), nil
-}
-
 // Refresh implements the ARPDB interface for *cmdARPDB.
 func (arp *cmdARPDB) Refresh() (err error) {
 	defer func() { err = errors.Annotate(err, "cmd arpdb: %w") }()
 
-	var r io.Reader
-	r, err = arp.runcmd()
+	code, out, err := aghosRunCommand(arp.cmd, arp.args...)
 	if err != nil {
 		return fmt.Errorf("running command: %w", err)
+	} else if code != 0 {
+		return fmt.Errorf("running command: unexpected exit code %d", code)
 	}
 
-	sc := bufio.NewScanner(r)
+	sc := bufio.NewScanner(bytes.NewReader(out))
 	ns := arp.parse(sc, arp.ns.len())
 	if err = sc.Err(); err != nil {
+		// TODO(e.burkov):  This error seems unreachable.  Investigate.
 		return fmt.Errorf("scanning the output: %w", err)
 	}
 
@@ -187,8 +161,7 @@ func (arp *cmdARPDB) Neighbors() (ns []Neighbor) {
 type arpdbs struct {
 	// arps is the set of ARPDB implementations to range through.
 	arps []ARPDB
-	// last is the last succeeded ARPDB index.
-	last int
+	neighs
 }
 
 // newARPDBs returns a properly initialized *arpdbs.  It begins refreshing from
@@ -196,7 +169,10 @@ type arpdbs struct {
 func newARPDBs(arps ...ARPDB) (arp *arpdbs) {
 	return &arpdbs{
 		arps: arps,
-		last: 0,
+		neighs: neighs{
+			mu: &sync.RWMutex{},
+			ns: make([]Neighbor, 0),
+		},
 	}
 }
 
@@ -206,20 +182,18 @@ var _ ARPDB = (*arpdbs)(nil)
 // Refresh implements the ARPDB interface for *arpdbs.
 func (arp *arpdbs) Refresh() (err error) {
 	var errs []error
-	l := len(arp.arps)
-	// Start from the last succeeded implementation.
-	for i := 0; i < l; i++ {
-		cur := (arp.last + i) % l
-		err = arp.arps[cur].Refresh()
-		if err == nil {
-			// The succeeded implementation found so update the last succeeded
-			// index.
-			arp.last = cur
 
-			return nil
+	for _, a := range arp.arps {
+		err = a.Refresh()
+		if err != nil {
+			errs = append(errs, err)
+
+			continue
 		}
 
-		errs = append(errs, err)
+		arp.reset(a.Neighbors())
+
+		return nil
 	}
 
 	if len(errs) > 0 {
@@ -230,10 +204,8 @@ func (arp *arpdbs) Refresh() (err error) {
 }
 
 // Neighbors implements the ARPDB interface for *arpdbs.
+//
+// TODO(e.burkov):  Think of a way to avoid cloning the slice twice.
 func (arp *arpdbs) Neighbors() (ns []Neighbor) {
-	if l := len(arp.arps); l > 0 && arp.last < l {
-		return arp.arps[arp.last].Neighbors()
-	}
-
-	return nil
+	return arp.clone()
 }

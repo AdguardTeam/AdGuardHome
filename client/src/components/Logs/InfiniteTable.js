@@ -43,7 +43,7 @@ const InfiniteTable = ({
 
     useEffect(() => {
         listener();
-    }, [items.length < QUERY_LOGS_PAGE_LIMIT]);
+    }, [items.length < QUERY_LOGS_PAGE_LIMIT, isEntireLog]);
 
     useEffect(() => {
         const THROTTLE_TIME = 100;
@@ -66,15 +66,24 @@ const InfiniteTable = ({
 
     const isNothingFound = items.length === 0 && !processingGetLogs;
 
-    return <div className='logs__table' role='grid'>
-        {loading && <Loading />}
-        <Header />
-        {isNothingFound
-            ? <label className="logs__no-data">{t('nothing_found')}</label>
-            : <>{items.map(renderRow)}
-                    {!isEntireLog && <div ref={loader} className="logs__loading text-center">{t('loading_table_status')}</div>}
-            </>}
-    </div>;
+    return (
+        <div className="logs__table" role="grid">
+            {loading && <Loading />}
+            <Header />
+            {isNothingFound ? (
+                <label className="logs__no-data">{t('nothing_found')}</label>
+            ) : (
+                <>
+                    {items.map(renderRow)}
+                    {!isEntireLog && (
+                        <div ref={loader} className="logs__loading text-center">
+                            {t('loading_table_status')}
+                        </div>
+                    )}
+                </>
+            )}
+        </div>
+    );
 };
 
 InfiniteTable.propTypes = {

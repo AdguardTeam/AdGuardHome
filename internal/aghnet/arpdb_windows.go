@@ -5,26 +5,21 @@ package aghnet
 
 import (
 	"bufio"
-	"io"
 	"net"
 	"strings"
 	"sync"
 )
 
-func newARPDB() *cmdARPDB {
+func newARPDB() (arp *cmdARPDB) {
 	return &cmdARPDB{
-		runcmd: rcArpA,
+		parse: parseArpA,
 		ns: &neighs{
 			mu: &sync.RWMutex{},
 			ns: make([]Neighbor, 0),
 		},
-		parse: parseArpA,
+		cmd:  "arp",
+		args: []string{"/a"},
 	}
-}
-
-// rcArpA runs "arp /a".
-func rcArpA() (r io.Reader, err error) {
-	return runCmd("arp", "/a")
 }
 
 // parseArpA parses the output of the "arp /a" command on Windows.  The expected

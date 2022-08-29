@@ -24,6 +24,7 @@ export const getTlsStatus = () => async (dispatch) => {
 export const setTlsConfigRequest = createAction('SET_TLS_CONFIG_REQUEST');
 export const setTlsConfigFailure = createAction('SET_TLS_CONFIG_FAILURE');
 export const setTlsConfigSuccess = createAction('SET_TLS_CONFIG_SUCCESS');
+export const dnsStatusSuccess = createAction('DNS_STATUS_SUCCESS');
 
 export const setTlsConfig = (config) => async (dispatch, getState) => {
     dispatch(setTlsConfigRequest());
@@ -39,6 +40,12 @@ export const setTlsConfig = (config) => async (dispatch, getState) => {
         const response = await apiClient.setTlsConfig(values);
         response.certificate_chain = atob(response.certificate_chain);
         response.private_key = atob(response.private_key);
+
+        const dnsStatus = await apiClient.getGlobalStatus();
+        if (dnsStatus) {
+            dispatch(dnsStatusSuccess(dnsStatus));
+        }
+
         dispatch(setTlsConfigSuccess(response));
         dispatch(addSuccessToast('encryption_config_saved'));
         redirectToCurrentProtocol(response, httpPort);

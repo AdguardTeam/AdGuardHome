@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/fs"
 	"net"
-	"net/http"
 	"os"
 	"runtime"
 	"runtime/debug"
@@ -14,6 +13,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
@@ -94,7 +94,7 @@ type Config struct {
 	ConfigModified func() `yaml:"-"`
 
 	// Register an HTTP handler
-	HTTPRegister func(string, string, func(http.ResponseWriter, *http.Request)) `yaml:"-"`
+	HTTPRegister aghhttp.RegisterFunc `yaml:"-"`
 
 	// CustomResolver is the resolver used by DNSFilter.
 	CustomResolver Resolver `yaml:"-"`
@@ -296,9 +296,11 @@ func cloneRewrites(entries []*LegacyRewrite) (clone []*LegacyRewrite) {
 	return clone
 }
 
-// SetFilters - set new filters (synchronously or asynchronously)
-// When filters are set asynchronously, the old filters continue working until the new filters are ready.
-//  In this case the caller must ensure that the old filter files are intact.
+// SetFilters sets new filters, synchronously or asynchronously.  When filters
+// are set asynchronously, the old filters continue working until the new
+// filters are ready.
+//
+// In this case the caller must ensure that the old filter files are intact.
 func (d *DNSFilter) SetFilters(blockFilters, allowFilters []Filter, async bool) error {
 	if async {
 		params := filtersInitializerParams{
@@ -471,7 +473,7 @@ func (d *DNSFilter) matchSysHosts(
 		return res, nil
 	}
 
-	dnsres, _ := d.EtcHosts.MatchRequest(urlfilter.DNSRequest{
+	dnsres, _ := d.EtcHosts.MatchRequest(&urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
 		// TODO(e.burkov):  Wait for urlfilter update to pass net.IP.
@@ -802,7 +804,7 @@ func (d *DNSFilter) matchHost(
 		return Result{}, nil
 	}
 
-	ureq := urlfilter.DNSRequest{
+	ureq := &urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
 		// TODO(e.burkov): Wait for urlfilter update to pass net.IP.

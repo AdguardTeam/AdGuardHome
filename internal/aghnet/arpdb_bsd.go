@@ -13,18 +13,24 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 )
 
-func newARPDB() *cmdARPDB {
+func newARPDB() (arp *cmdARPDB) {
 	return &cmdARPDB{
-		parse:  parseArpA,
-		runcmd: rcArpA,
+		parse: parseArpA,
 		ns: &neighs{
 			mu: &sync.RWMutex{},
 			ns: make([]Neighbor, 0),
 		},
+		cmd: "arp",
+		// Use -n flag to avoid resolving the hostnames of the neighbors.  By
+		// default ARP attempts to resolve the hostnames via DNS.  See man 8
+		// arp.
+		//
+		// See also https://github.com/AdguardTeam/AdGuardHome/issues/3157.
+		args: []string{"-a", "-n"},
 	}
 }
 
-// parseArpA parses the output of the "arp -a" command on macOS and FreeBSD.
+// parseArpA parses the output of the "arp -a -n" command on macOS and FreeBSD.
 // The expected input format:
 //
 //   host.name (192.168.0.1) at ff:ff:ff:ff:ff:ff on en0 ifscope [ethernet]

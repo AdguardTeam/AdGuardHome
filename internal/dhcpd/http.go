@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
@@ -145,7 +146,7 @@ type dhcpServerConfigJSON struct {
 	V4            *v4ServerConfJSON `json:"v4"`
 	V6            *v6ServerConfJSON `json:"v6"`
 	InterfaceName string            `json:"interface_name"`
-	Enabled       nullBool          `json:"enabled"`
+	Enabled       aghalg.NullBool   `json:"enabled"`
 }
 
 func (s *Server) handleDHCPSetConfigV4(
@@ -156,7 +157,7 @@ func (s *Server) handleDHCPSetConfigV4(
 	}
 
 	v4Conf := v4JSONToServerConf(conf.V4)
-	v4Conf.Enabled = conf.Enabled == nbTrue
+	v4Conf.Enabled = conf.Enabled == aghalg.NBTrue
 	if len(v4Conf.RangeStart) == 0 {
 		v4Conf.Enabled = false
 	}
@@ -183,7 +184,7 @@ func (s *Server) handleDHCPSetConfigV6(
 	}
 
 	v6Conf := v6JSONToServerConf(conf.V6)
-	v6Conf.Enabled = conf.Enabled == nbTrue
+	v6Conf.Enabled = conf.Enabled == aghalg.NBTrue
 	if len(v6Conf.RangeStart) == 0 {
 		v6Conf.Enabled = false
 	}
@@ -206,7 +207,7 @@ func (s *Server) handleDHCPSetConfigV6(
 
 func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	conf := &dhcpServerConfigJSON{}
-	conf.Enabled = boolToNullBool(s.conf.Enabled)
+	conf.Enabled = aghalg.BoolToNullBool(s.conf.Enabled)
 	conf.InterfaceName = s.conf.InterfaceName
 
 	err := json.NewDecoder(r.Body).Decode(conf)
@@ -230,7 +231,7 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if conf.Enabled == nbTrue && !v4Enabled && !v6Enabled {
+	if conf.Enabled == aghalg.NBTrue && !v4Enabled && !v6Enabled {
 		aghhttp.Error(r, w, http.StatusBadRequest, "dhcpv4 or dhcpv6 configuration must be complete")
 
 		return
@@ -243,8 +244,8 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if conf.Enabled != nbNull {
-		s.conf.Enabled = conf.Enabled == nbTrue
+	if conf.Enabled != aghalg.NBNull {
+		s.conf.Enabled = conf.Enabled == aghalg.NBTrue
 	}
 
 	if conf.InterfaceName != "" {
@@ -279,11 +280,11 @@ func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 
 type netInterfaceJSON struct {
 	Name         string   `json:"name"`
-	GatewayIP    net.IP   `json:"gateway_ip"`
 	HardwareAddr string   `json:"hardware_address"`
+	Flags        string   `json:"flags"`
+	GatewayIP    net.IP   `json:"gateway_ip"`
 	Addrs4       []net.IP `json:"ipv4_addresses"`
 	Addrs6       []net.IP `json:"ipv6_addresses"`
-	Flags        string   `json:"flags"`
 }
 
 func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
@@ -497,7 +498,6 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 	}
 
 	ip4 := l.IP.To4()
-
 	if ip4 == nil {
 		l.IP = l.IP.To16()
 

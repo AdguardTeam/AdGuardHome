@@ -88,13 +88,17 @@ func TestGenAnswerHTTPS_andSVCB(t *testing.T) {
 		want: wantsvcb(&dns.SVCBAlpn{Alpn: []string{"h3"}}),
 		name: "alpn",
 	}, {
+		svcb: dnssvcb("ech", "AAAA"),
+		want: wantsvcb(&dns.SVCBECHConfig{ECH: []byte{0, 0, 0}}),
+		name: "ech",
+	}, {
 		svcb: dnssvcb("echconfig", "AAAA"),
 		want: wantsvcb(&dns.SVCBECHConfig{ECH: []byte{0, 0, 0}}),
-		name: "echconfig",
+		name: "ech_deprecated",
 	}, {
 		svcb: dnssvcb("echconfig", "%BAD%"),
 		want: wantsvcb(nil),
-		name: "echconfig_invalid",
+		name: "ech_invalid",
 	}, {
 		svcb: dnssvcb("ipv4hint", "127.0.0.1"),
 		want: wantsvcb(&dns.SVCBIPv4Hint{Hint: []net.IP{ip4}}),
@@ -123,6 +127,10 @@ func TestGenAnswerHTTPS_andSVCB(t *testing.T) {
 		svcb: dnssvcb("no-default-alpn", ""),
 		want: wantsvcb(&dns.SVCBNoDefaultAlpn{}),
 		name: "no_default_alpn",
+	}, {
+		svcb: dnssvcb("dohpath", "/dns-query"),
+		want: wantsvcb(&dns.SVCBDoHPath{Template: "/dns-query"}),
+		name: "dohpath",
 	}, {
 		svcb: dnssvcb("port", "8080"),
 		want: wantsvcb(&dns.SVCBPort{Port: 8080}),
