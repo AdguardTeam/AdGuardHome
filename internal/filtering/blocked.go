@@ -335,9 +335,13 @@ var servicesData = []svc{{
 	name: "disneyplus",
 	rules: []string{
 		"||disney-plus.net^",
-		"||disneyplus.com^",
 		"||disney.playback.edge.bamgrid.com^",
+		"||disneynow.com^",
+		"||disneyplus.com^",
+		"||hotstar.com^",
 		"||media.dssott.com^",
+		"||star.playback.edge.bamgrid.com^",
+		"||starplus.com^",
 	},
 }, {
 	name:  "hulu",
