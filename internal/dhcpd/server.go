@@ -71,12 +71,12 @@ type V4ServerConf struct {
 	// gateway.
 	subnet *net.IPNet
 
-	// notify is a way to signal to other components that leases have
-	// change.  notify must be called outside of locked sections, since the
+	// notify is a way to signal to other components that leases have been
+	// changed.  notify must be called outside of locked sections, since the
 	// clients might want to get the new data.
 	//
-	// TODO(a.garipov): This is utter madness and must be refactored.  It
-	// just begs for deadlock bugs and other nastiness.
+	// TODO(a.garipov): This is utter madness and must be refactored.  It just
+	// begs for deadlock bugs and other nastiness.
 	notify func(uint32)
 }
 

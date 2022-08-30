@@ -143,7 +143,7 @@ func TestV4Server_leasing(t *testing.T) {
 			require.NoError(t, err)
 
 			resp = &dhcpv4.DHCPv4{}
-			res := s4.process(req, resp)
+			res := s4.handle(req, resp)
 			require.Positive(t, res)
 			require.Equal(t, dhcpv4.MessageTypeOffer, resp.MessageType())
 
@@ -160,7 +160,7 @@ func TestV4Server_leasing(t *testing.T) {
 			))
 			require.NoError(t, err)
 
-			res := s4.process(req, resp)
+			res := s4.handle(req, resp)
 			require.Positive(t, res)
 
 			assert.Equal(t, aghnet.GenerateHostname(resp.YourIPAddr), resp.HostName())
@@ -174,7 +174,7 @@ func TestV4Server_leasing(t *testing.T) {
 			))
 			require.NoError(t, err)
 
-			res := s4.process(req, resp)
+			res := s4.handle(req, resp)
 			require.Positive(t, res)
 
 			fqdnOptData := resp.Options.Get(dhcpv4.OptionFQDN)
@@ -192,7 +192,7 @@ func TestV4Server_leasing(t *testing.T) {
 			))
 			require.NoError(t, err)
 
-			res := s4.process(req, resp)
+			res := s4.handle(req, resp)
 			require.Positive(t, res)
 
 			assert.NotEqual(t, staticIP, resp.YourIPAddr)
@@ -328,7 +328,7 @@ func TestV4_AddReplace(t *testing.T) {
 	}
 }
 
-func TestV4Server_Process_optionsPriority(t *testing.T) {
+func TestV4Server_handle_optionsPriority(t *testing.T) {
 	defaultIP := net.IP{192, 168, 1, 1}
 	knownIP := net.IP{1, 2, 3, 4}
 
@@ -376,7 +376,7 @@ func TestV4Server_Process_optionsPriority(t *testing.T) {
 		resp, err = dhcpv4.NewReplyFromRequest(req)
 		require.NoError(t, err)
 
-		res := s.process(req, resp)
+		res := s.handle(req, resp)
 		require.Equal(t, 1, res)
 
 		o := resp.GetOneOption(dhcpv4.OptionDomainNameServer)
@@ -431,7 +431,7 @@ func TestV4StaticLease_Get(t *testing.T) {
 		resp, err = dhcpv4.NewReplyFromRequest(req)
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, s.process(req, resp))
+		assert.Equal(t, 1, s.handle(req, resp))
 	})
 
 	// Don't continue if we got any errors in the previous subtest.
@@ -454,7 +454,7 @@ func TestV4StaticLease_Get(t *testing.T) {
 		resp, err = dhcpv4.NewReplyFromRequest(req)
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, s.process(req, resp))
+		assert.Equal(t, 1, s.handle(req, resp))
 	})
 
 	require.NoError(t, err)
@@ -513,7 +513,7 @@ func TestV4DynamicLease_Get(t *testing.T) {
 		resp, err = dhcpv4.NewReplyFromRequest(req)
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, s.process(req, resp))
+		assert.Equal(t, 1, s.handle(req, resp))
 	})
 
 	// Don't continue if we got any errors in the previous subtest.
@@ -547,7 +547,7 @@ func TestV4DynamicLease_Get(t *testing.T) {
 		resp, err = dhcpv4.NewReplyFromRequest(req)
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, s.process(req, resp))
+		assert.Equal(t, 1, s.handle(req, resp))
 	})
 
 	require.NoError(t, err)

@@ -32,6 +32,7 @@ and this project adheres to
 
 ### Changed
 
+- The DHCPREQUEST handling is now closer to the [RFC 2131][rfc-2131] ([#4863]).
 - The internal DNS client, used to resolve hostnames of external clients and
   also during automatic updates, now respects the upstream mode settings for the
   main DNS client ([#4403]).
@@ -55,6 +56,9 @@ and this project adheres to
 [#4535]: https://github.com/AdguardTeam/AdGuardHome/issues/4535
 [#4745]: https://github.com/AdguardTeam/AdGuardHome/issues/4745
 [#4850]: https://github.com/AdguardTeam/AdGuardHome/issues/4850
+[#4863]: https://github.com/AdguardTeam/AdGuardHome/issues/4863
+
+[rfc-2131]: https://datatracker.ietf.org/doc/html/rfc2131
 
 
 

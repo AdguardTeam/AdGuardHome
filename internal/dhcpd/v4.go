@@ -94,9 +94,6 @@ func (s *v4Server) validHostnameForClient(cliHostname string, ip net.IP) (hostna
 
 	if hostname == "" {
 		hostname = aghnet.GenerateHostname(ip)
-	} else if s.leaseHosts.Has(hostname) {
-		log.Info("dhcpv4: hostname %q already exists", hostname)
-		hostname = aghnet.GenerateHostname(ip)
 	}
 
 	err = netutil.ValidateDomainName(hostname)
@@ -421,19 +418,19 @@ func (s *v4Server) RemoveStaticLease(l *Lease) (err error) {
 		return fmt.Errorf("validating lease: %w", err)
 	}
 
+	defer func() {
+		if err != nil {
+			return
+		}
+
+		s.conf.notify(LeaseChangedDBStore)
+		s.conf.notify(LeaseChangedRemovedStatic)
+	}()
+
 	s.leasesLock.Lock()
-	err = s.rmLease(l)
-	if err != nil {
-		s.leasesLock.Unlock()
+	defer s.leasesLock.Unlock()
 
-		return err
-	}
-	s.leasesLock.Unlock()
-
-	s.conf.notify(LeaseChangedDBStore)
-	s.conf.notify(LeaseChangedRemovedStatic)
-
-	return nil
+	return s.rmLease(l)
 }
 
 // addrAvailable sends an ICP request to the specified IP address.  It returns
@@ -545,21 +542,34 @@ func (s *v4Server) reserveLease(mac net.HardwareAddr) (l *Lease, err error) {
 	return l, nil
 }
 
-func (s *v4Server) commitLease(l *Lease) {
-	l.Expiry = time.Now().Add(s.conf.leaseTime)
+// commitLease refreshes l's values.  It takes the desired hostname into account
+// when setting it into the lease, but generates a unique one if the provided
+// can't be used.
+func (s *v4Server) commitLease(l *Lease, hostname string) {
+	prev := l.Hostname
+	hostname = s.validHostnameForClient(hostname, l.IP)
 
-	func() {
-		s.leasesLock.Lock()
-		defer s.leasesLock.Unlock()
+	if s.leaseHosts.Has(hostname) {
+		log.Info("dhcpv4: hostname %q already exists", hostname)
 
-		s.conf.notify(LeaseChangedDBStore)
-
-		if l.Hostname != "" {
-			s.leaseHosts.Add(l.Hostname)
+		if prev == "" {
+			// The lease is just allocated due to DHCPDISCOVER.
+			hostname = aghnet.GenerateHostname(l.IP)
+		} else {
+			hostname = prev
 		}
-	}()
+	}
+	if l.Hostname != hostname {
+		l.Hostname = hostname
+	}
 
-	s.conf.notify(LeaseChangedAdded)
+	l.Expiry = time.Now().Add(s.conf.leaseTime)
+	if prev != "" && prev != l.Hostname {
+		s.leaseHosts.Del(prev)
+	}
+	if l.Hostname != "" {
+		s.leaseHosts.Add(l.Hostname)
+	}
 }
 
 // allocateLease allocates a new lease for the MAC address.  If there are no IP
@@ -581,8 +591,8 @@ func (s *v4Server) allocateLease(mac net.HardwareAddr) (l *Lease, err error) {
 	}
 }
 
-// processDiscover is the handler for the DHCP Discover request.
-func (s *v4Server) processDiscover(req, resp *dhcpv4.DHCPv4) (l *Lease, err error) {
+// handleDiscover is the handler for the DHCP Discover request.
+func (s *v4Server) handleDiscover(req, resp *dhcpv4.DHCPv4) (l *Lease, err error) {
 	mac := req.ClientHWAddr
 
 	defer s.conf.notify(LeaseChangedDBStore)
@@ -664,63 +674,177 @@ func (s *v4Server) checkLease(mac net.HardwareAddr, ip net.IP) (lease *Lease, mi
 	return nil, false
 }
 
-// processRequest is the handler for the DHCP Request request.
-func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needsReply bool) {
+// handleSelecting handles the DHCPREQUEST generated during SELECTING state.
+func (s *v4Server) handleSelecting(
+	req *dhcpv4.DHCPv4,
+	reqIP net.IP,
+	sid net.IP,
+) (l *Lease, needsReply bool) {
+	// Client inserts the address of the selected server in server identifier,
+	// ciaddr MUST be zero.
 	mac := req.ClientHWAddr
-	// TODO(e.burkov):  The IP address can only be requested in DHCPDISCOVER
-	// message.
-	reqIP := req.RequestedIPAddress()
-	if reqIP == nil {
-		reqIP = req.ClientIPAddr
-	}
+	if !sid.Equal(s.conf.dnsIPAddrs[0]) {
+		log.Debug("dhcpv4: bad server identifier in req msg for %s: %s", mac, sid)
 
-	sid := req.ServerIdentifier()
-	if len(sid) != 0 && !sid.Equal(s.conf.dnsIPAddrs[0]) {
-		log.Debug("dhcpv4: bad OptionServerIdentifier in req msg for %s", mac)
+		return nil, false
+	} else if ciaddr := req.ClientIPAddr; ciaddr != nil && !ciaddr.IsUnspecified() {
+		log.Debug("dhcpv4: non-zero ciaddr in selecting req msg for %s", mac)
 
 		return nil, false
 	}
 
+	// Requested IP address MUST be filled in with the yiaddr value from the
+	// chosen DHCPOFFER.
 	if ip4 := reqIP.To4(); ip4 == nil {
-		log.Debug("dhcpv4: bad OptionRequestedIPAddress in req msg for %s", mac)
+		log.Debug("dhcpv4: bad requested address in req msg for %s: %s", mac, reqIP)
 
 		return nil, false
 	}
 
 	var mismatch bool
-	if lease, mismatch = s.checkLease(mac, reqIP); mismatch {
+	if l, mismatch = s.checkLease(mac, reqIP); mismatch {
 		return nil, true
-	}
-
-	if lease == nil {
+	} else if l == nil {
 		log.Debug("dhcpv4: no reserved lease for %s", mac)
+	}
+
+	return l, true
+}
+
+// handleInitReboot handles the DHCPREQUEST generated during INIT-REBOOT state.
+func (s *v4Server) handleInitReboot(req *dhcpv4.DHCPv4, reqIP net.IP) (l *Lease, needsReply bool) {
+	mac := req.ClientHWAddr
+
+	if ip4 := reqIP.To4(); ip4 == nil {
+		log.Debug("dhcpv4: bad requested address in req msg for %s: %s", mac, reqIP)
+
+		return nil, false
+	}
+
+	// ciaddr MUST be zero.  The client is seeking to verify a previously
+	// allocated, cached configuration.
+	if ciaddr := req.ClientIPAddr; ciaddr != nil && !ciaddr.IsUnspecified() {
+		log.Debug("dhcpv4: non-zero ciaddr in init-reboot req msg for %s", mac)
+
+		return nil, false
+	}
+
+	if !s.conf.subnet.Contains(reqIP) {
+		// If the DHCP server detects that the client is on the wrong net then
+		// the server SHOULD send a DHCPNAK message to the client.
+		log.Debug("dhcpv4: wrong subnet in init-reboot req msg for %s: %s", mac, reqIP)
 
 		return nil, true
 	}
 
-	if !lease.IsStatic() {
-		cliHostname := req.HostName()
-		hostname := s.validHostnameForClient(cliHostname, reqIP)
-		if lease.Hostname != hostname {
-			lease.Hostname = hostname
-			resp.UpdateOption(dhcpv4.OptHostName(hostname))
-		}
+	var mismatch bool
+	if l, mismatch = s.checkLease(mac, reqIP); mismatch {
+		return nil, true
+	} else if l == nil {
+		// If the DHCP server has no record of this client, then it MUST remain
+		// silent, and MAY output a warning to the network administrator.
+		log.Info("dhcpv4: warning: no existing lease for %s", mac)
 
-		s.commitLease(lease)
-	} else if lease.Hostname != "" {
-		// TODO(e.burkov):  This option is used to update the server's DNS
-		// mapping.  The option should only be answered when it has been
-		// requested.
-		resp.UpdateOption(OptionFQDN(lease.Hostname))
+		return nil, false
+	}
+
+	return l, true
+}
+
+// handleRenew handles the DHCPREQUEST generated during RENEWING or REBINDING
+// state.
+func (s *v4Server) handleRenew(req *dhcpv4.DHCPv4) (l *Lease, needsReply bool) {
+	mac := req.ClientHWAddr
+
+	// ciaddr MUST be filled in with client's IP address.
+	ciaddr := req.ClientIPAddr
+	if ciaddr == nil || ciaddr.IsUnspecified() || ciaddr.To4() == nil {
+		log.Debug("dhcpv4: bad ciaddr in renew req msg for %s: %s", mac, ciaddr)
+
+		return nil, false
+	}
+
+	var mismatch bool
+	if l, mismatch = s.checkLease(mac, ciaddr); mismatch {
+		return nil, true
+	} else if l == nil {
+		// If the DHCP server has no record of this client, then it MUST remain
+		// silent, and MAY output a warning to the network administrator.
+		log.Info("dhcpv4: warning: no existing lease for %s", mac)
+
+		return nil, false
+	}
+
+	return l, true
+}
+
+// handleByRequestType handles the DHCPREQUEST according to the state during
+// which it's generated by client.
+func (s *v4Server) handleByRequestType(req *dhcpv4.DHCPv4) (lease *Lease, needsReply bool) {
+	reqIP, sid := req.RequestedIPAddress(), req.ServerIdentifier()
+
+	if sid != nil && !sid.IsUnspecified() {
+		// If the DHCPREQUEST message contains a server identifier option, the
+		// message is in response to a DHCPOFFER message.  Otherwise, the
+		// message is a request to verify or extend an existing lease.
+		return s.handleSelecting(req, reqIP, sid)
+	}
+
+	if reqIP != nil && !reqIP.IsUnspecified() {
+		// Requested IP address option MUST be filled in with client's notion of
+		// its previously assigned address.
+		return s.handleInitReboot(req, reqIP)
+	}
+
+	// Server identifier MUST NOT be filled in, requested IP address option MUST
+	// NOT be filled in.
+	return s.handleRenew(req)
+}
+
+// handleRequest is the handler for a DHCPREQUEST message.
+//
+// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.2.
+func (s *v4Server) handleRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needsReply bool) {
+	lease, needsReply = s.handleByRequestType(req)
+	if lease == nil {
+		return nil, needsReply
 	}
 
 	resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeAck))
 
-	return lease, true
+	hostname := req.HostName()
+	isRequested := hostname != "" || req.ParameterRequestList().Has(dhcpv4.OptionHostName)
+
+	defer func() {
+		s.conf.notify(LeaseChangedAdded)
+		s.conf.notify(LeaseChangedDBStore)
+	}()
+
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	if lease.IsStatic() {
+		if lease.Hostname != "" {
+			// TODO(e.burkov):  This option is used to update the server's DNS
+			// mapping.  The option should only be answered when it has been
+			// requested.
+			resp.UpdateOption(OptionFQDN(lease.Hostname))
+		}
+
+		return lease, needsReply
+	}
+
+	s.commitLease(lease, hostname)
+
+	if isRequested {
+		resp.UpdateOption(dhcpv4.OptHostName(lease.Hostname))
+	}
+
+	return lease, needsReply
 }
 
-// processRequest is the handler for the DHCP Decline request.
-func (s *v4Server) processDecline(req, resp *dhcpv4.DHCPv4) (err error) {
+// handleDecline is the handler for the DHCP Decline request.
+func (s *v4Server) handleDecline(req, resp *dhcpv4.DHCPv4) (err error) {
 	s.conf.notify(LeaseChangedDBStore)
 
 	s.leasesLock.Lock()
@@ -782,8 +906,8 @@ func (s *v4Server) processDecline(req, resp *dhcpv4.DHCPv4) (err error) {
 	return nil
 }
 
-// processRelease is the handler for the DHCP Release request.
-func (s *v4Server) processRelease(req, resp *dhcpv4.DHCPv4) (err error) {
+// handleRelease is the handler for the DHCP Release request.
+func (s *v4Server) handleRelease(req, resp *dhcpv4.DHCPv4) (err error) {
 	mac := req.ClientHWAddr
 	reqIP := req.RequestedIPAddress()
 	if reqIP == nil {
@@ -824,7 +948,7 @@ func (s *v4Server) processRelease(req, resp *dhcpv4.DHCPv4) (err error) {
 // Return 1: OK
 // Return 0: error; reply with Nak
 // Return -1: error; don't reply
-func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
+func (s *v4Server) handle(req, resp *dhcpv4.DHCPv4) int {
 	var err error
 
 	// Include server's identifier option since any reply should contain it.
@@ -836,9 +960,9 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 	var l *Lease
 	switch mt := req.MessageType(); mt {
 	case dhcpv4.MessageTypeDiscover:
-		l, err = s.processDiscover(req, resp)
+		l, err = s.handleDiscover(req, resp)
 		if err != nil {
-			log.Error("dhcpv4: processing discover: %s", err)
+			log.Error("dhcpv4: handling discover: %s", err)
 
 			return 0
 		}
@@ -848,7 +972,7 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 		}
 	case dhcpv4.MessageTypeRequest:
 		var toReply bool
-		l, toReply = s.processRequest(req, resp)
+		l, toReply = s.handleRequest(req, resp)
 		if l == nil {
 			if toReply {
 				return 0
@@ -856,16 +980,16 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 			return -1 // drop packet
 		}
 	case dhcpv4.MessageTypeDecline:
-		err = s.processDecline(req, resp)
+		err = s.handleDecline(req, resp)
 		if err != nil {
-			log.Error("dhcpv4: processing decline: %s", err)
+			log.Error("dhcpv4: handling decline: %s", err)
 
 			return 0
 		}
 	case dhcpv4.MessageTypeRelease:
-		err = s.processRelease(req, resp)
+		err = s.handleRelease(req, resp)
 		if err != nil {
-			log.Error("dhcpv4: processing release: %s", err)
+			log.Error("dhcpv4: handling release: %s", err)
 
 			return 0
 		}
@@ -939,7 +1063,7 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 		return
 	}
 
-	r := s.process(req, resp)
+	r := s.handle(req, resp)
 	if r < 0 {
 		return
 	} else if r == 0 {
