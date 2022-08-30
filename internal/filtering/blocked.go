@@ -342,6 +342,7 @@ var servicesData = []svc{{
 		"||media.dssott.com^",
 		"||star.playback.edge.bamgrid.com^",
 		"||starplus.com^",
+		"||hulu.com^",
 	},
 }, {
 	name:  "hulu",
