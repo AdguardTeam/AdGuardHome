@@ -347,9 +347,10 @@ export const SERVICES = [
         id: 'youtube',
         name: 'YouTube',
     },
+
     {
-        id: 'warnerbrosdiscovery',
-        name: 'Warner Bros. Discovery',
+        id: 'globo',
+        name: 'Globo',
     },
 ];
 
