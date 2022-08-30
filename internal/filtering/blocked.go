@@ -171,6 +171,7 @@ var servicesData = []svc{{
 		"||cloudflarestatus.com^",
 		"||cloudflarestream.com^",
 		"||cloudflarewarp.com^",
+		"||cloudflareaccess.com^",
 		"||dns4torpnlfs2ifuz2s2yf3fc7rdmsbhm6rw75euj35pac6ap25zgqad.onion^",
 		"||one.one^",
 		"||pages.dev^",
