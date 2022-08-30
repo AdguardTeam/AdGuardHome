@@ -163,6 +163,7 @@ var servicesData = []svc{{
 		"||cloudflare.cn^",
 		"||cloudflare.com^",
 		"||cloudflare.net^",
+		"||cloudflareaccess.com^",
 		"||cloudflareapps.com^",
 		"||cloudflarebolt.com^",
 		"||cloudflareclient.com^",
