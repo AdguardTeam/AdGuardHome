@@ -347,6 +347,10 @@ export const SERVICES = [
         id: 'youtube',
         name: 'YouTube',
     },
+    {
+        id: 'warnerbrosdiscovery',
+        name: 'Warner Bros. Discovery',
+    },
 ];
 
 export const SERVICES_ID_NAME_MAP = SERVICES.reduce((acc, { id, name }) => {

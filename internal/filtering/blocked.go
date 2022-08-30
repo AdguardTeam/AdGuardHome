@@ -379,6 +379,20 @@ var servicesData = []svc{{
 		"||dreamcast.hk^",
 		"||hdslb.com^",
 	},
+}, {
+	name: "warnerbrosdiscovery",
+	rules: []string{
+		"||hbomax.com^",
+		"||hbonow.com^",
+		"||hbonow.com^",
+		"||hbomax-images.warnermediacdn.com^",
+		"||art-gallery-latam.api.hbo.com^",
+		"||artist.api.cdn.hbo.com^",
+		"||hbogoasia.id^",
+		"||tntgo.tv^",
+		"||discoveryplus.com^",
+		"||go.cnn.com^",
+	},
 }}
 
 // serviceRules maps a service ID to its filtering rules.
