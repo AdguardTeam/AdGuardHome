@@ -374,6 +374,19 @@ var servicesData = []svc{{
 		"||dreamcast.hk^",
 		"||hdslb.com^",
 	},
+}, {
+	name: "globo",
+	rules: []string{
+		"||globoplay.globo.com^",
+		"||globoplay.com^",
+		"||globoplay.com.br^",
+		"||canaisglobo.globo.com^",
+		"||premiere.globo.com^",
+		"||canaisglobo.globo.com^",
+		"||glbimg.com^",
+		"||cloud-jarvis.globo.com^",
+		"||api-soccer.globosat.tv^",
+	},
 }}
 
 // serviceRules maps a service ID to its filtering rules.
