@@ -18,7 +18,7 @@ type IpsetManager interface {
 //
 // The syntax of the ipsetConf is:
 //
-//   DOMAIN[,DOMAIN].../IPSET_NAME[,IPSET_NAME]...
+//	DOMAIN[,DOMAIN].../IPSET_NAME[,IPSET_NAME]...
 //
 // If ipsetConf is empty, msg and err are nil.  The error is of type
 // *aghos.UnsupportedError if the OS is not supported.

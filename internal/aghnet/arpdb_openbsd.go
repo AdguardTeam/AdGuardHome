@@ -32,9 +32,8 @@ func newARPDB() (arp *cmdARPDB) {
 // parseArpA parses the output of the "arp -a -n" command on OpenBSD.  The
 // expected input format:
 //
-//   Host        Ethernet Address  Netif Expire    Flags
-//   192.168.1.1 ab:cd:ef:ab:cd:ef   em0 19m59s
-//
+//	Host        Ethernet Address  Netif Expire    Flags
+//	192.168.1.1 ab:cd:ef:ab:cd:ef   em0 19m59s
 func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 	// Skip the header.
 	if !sc.Scan() {

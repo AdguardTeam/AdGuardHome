@@ -70,8 +70,7 @@ func (rm *requestMatcher) MatchRequest(
 // rule or an empty string if the last doesn't exist.  The returned rules are in
 // a processed format like:
 //
-//   ip host1 host2 ...
-//
+//	ip host1 host2 ...
 func (rm *requestMatcher) Translate(rule string) (hostRule string) {
 	rm.stateLock.RLock()
 	defer rm.stateLock.RUnlock()

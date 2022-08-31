@@ -741,11 +741,10 @@ func loadOptions() options {
 
 // printWebAddrs prints addresses built from proto, addr, and an appropriate
 // port.  At least one address is printed with the value of port.  If the value
-// of betaPort is 0, the second address is not printed.  The output example:
+// of betaPort is 0, the second address is not printed.  Output example:
 //
-//   Go to http://127.0.0.1:80
-//   Go to http://127.0.0.1:3000 (BETA)
-//
+//	Go to http://127.0.0.1:80
+//	Go to http://127.0.0.1:3000 (BETA)
 func printWebAddrs(proto, addr string, port, betaPort int) {
 	const (
 		hostMsg     = "Go to %s://%s"
