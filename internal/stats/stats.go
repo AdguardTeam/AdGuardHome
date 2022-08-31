@@ -423,9 +423,9 @@ func (s *StatsCtx) flush() (cont bool, sleepFor time.Duration) {
 
 // periodicFlush checks and flushes the unit to the database if the freshly
 // generated unit ID differs from the current's ID.  Flushing process includes:
-//  - swapping the current unit with the new empty one;
-//  - writing the current unit to the database;
-//  - removing the stale unit from the database.
+//   - swapping the current unit with the new empty one;
+//   - writing the current unit to the database;
+//   - removing the stale unit from the database.
 func (s *StatsCtx) periodicFlush() {
 	for cont, sleepFor := true, time.Duration(0); cont; time.Sleep(sleepFor) {
 		cont, sleepFor = s.flush()

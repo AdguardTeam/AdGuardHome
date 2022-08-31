@@ -121,13 +121,12 @@ func PIDByCommand(command string, except ...int) (pid int, err error) {
 }
 
 // parsePSOutput scans the output of ps searching the largest PID of the process
-// associated with cmdName ignoring PIDs from ignore.  A valid line from
-// r should look like these:
+// associated with cmdName ignoring PIDs from ignore.  A valid line from r
+// should look like these:
 //
-//    123 ./example-cmd
-//   1230 some/base/path/example-cmd
-//   3210 example-cmd
-//
+//	 123 ./example-cmd
+//	1230 some/base/path/example-cmd
+//	3210 example-cmd
 func parsePSOutput(r io.Reader, cmdName string, ignore []int) (largest, instNum int, err error) {
 	s := bufio.NewScanner(r)
 	for s.Scan() {

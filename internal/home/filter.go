@@ -267,7 +267,8 @@ func (f *Filtering) periodicallyRefreshFilters() {
 // Refresh filters
 // flags: filterRefresh*
 // important:
-//  TRUE: ignore the fact that we're currently updating the filters
+//
+// TRUE: ignore the fact that we're currently updating the filters
 func (f *Filtering) refreshFilters(flags int, important bool) (int, error) {
 	set := atomic.CompareAndSwapUint32(&f.refreshStatus, 0, 1)
 	if !important && !set {
@@ -363,25 +364,24 @@ const (
 	filterRefreshBlocklists = 4 // update block-lists
 )
 
-// Checks filters updates if necessary
-// If force is true, it ignores the filter.LastUpdated field value
-// flags: filterRefresh*
+// refreshFiltersIfNecessary checks filters and updates them if necessary.  If
+// force is true, it ignores the filter.LastUpdated field value.
 //
 // Algorithm:
-// . Get the list of filters to be updated
-// . For each filter run the download and checksum check operation
-//  . Store downloaded data in a temporary file inside data/filters directory
-// . For each filter:
-//  . If filter data hasn't changed, just set new update time on file
-//  . If filter data has changed:
-//    . rename the temporary file (<temp> -> 1.txt)
-//      Note that this method works only on UNIX.
-//      On Windows we don't pass files to filtering - we pass the whole data.
-//  . Pass new filters to filtering object - it analyzes new data while the old filters are still active
-//  . filtering activates new filters
 //
-// Return the number of updated filters
-// Return TRUE - there was a network error and nothing could be updated
+//  1. Get the list of filters to be updated.  For each filter, run the download
+//     and checksum check operation.  Store downloaded data in a temporary file
+//     inside data/filters directory
+//
+//  2. For each filter, if filter data hasn't changed, just set new update time
+//     on file.  Otherwise, rename the temporary file (<temp> -> 1.txt).  Note
+//     that this method works only on Unix systems.  On Windows, don't pass
+//     files to filtering, pass the whole data.
+//
+// refreshFiltersIfNecessary returns the number of updated filters.  It also
+// returns true if there was a network error and nothing could be updated.
+//
+// TODO(a.garipov, e.burkov): What the hell?
 func (f *Filtering) refreshFiltersIfNecessary(flags int) (int, bool) {
 	log.Debug("Filters: updating...")
 

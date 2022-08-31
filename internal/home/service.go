@@ -159,15 +159,16 @@ func sendSigReload() {
 }
 
 // handleServiceControlAction one of the possible control actions:
-// install -- installs a service/daemon
-// uninstall -- uninstalls it
-// status -- prints the service status
-// start -- starts the previously installed service
-// stop -- stops the previously installed service
-// restart - restarts the previously installed service
-// run - this is a special command that is not supposed to be used directly
-// it is specified when we register a service, and it indicates to the app
-// that it is being run as a service/daemon.
+//
+//   - install:  Installs a service/daemon.
+//   - uninstall:  Uninstalls it.
+//   - status:  Prints the service status.
+//   - start:  Starts the previously installed service.
+//   - stop:  Stops the previously installed service.
+//   - restart:  Restarts the previously installed service.
+//   - run:  This is a special command that is not supposed to be used directly
+//     it is specified when we register a service, and it indicates to the app
+//     that it is being run as a service/daemon.
 func handleServiceControlAction(opts options, clientBuildFS fs.FS) {
 	// Call chooseSystem explicitly to introduce OpenBSD support for service
 	// package.  It's a noop for other GOOS values.
@@ -397,12 +398,11 @@ var launchdConfig = `<?xml version='1.0' encoding='UTF-8'?>
 // the systemdScript constant in file service_systemd_linux.go in module
 // github.com/kardianos/service.  The following changes have been made:
 //
-// 1.  The RestartSec setting is set to a lower value of 10 to make sure we
+//  1. The RestartSec setting is set to a lower value of 10 to make sure we
 //     always restart quickly.
 //
-// 2.  The ExecStartPre setting is added to make sure that the log directory is
+//  2. The ExecStartPre setting is added to make sure that the log directory is
 //     always created to prevent the 209/STDOUT errors.
-//
 const systemdScript = `[Unit]
 Description={{.Description}}
 ConditionFileIsExecutable={{.Path|cmdEscape}}

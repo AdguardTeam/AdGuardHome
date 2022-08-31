@@ -117,9 +117,8 @@ func (arp *fsysARPDB) Neighbors() (ns []Neighbor) {
 // parseArpAWrt parses the output of the "arp -a -n" command on OpenWrt.  The
 // expected input format:
 //
-//   IP address     HW type  Flags  HW address         Mask  Device
-//   192.168.11.98  0x1      0x2    5a:92:df:a9:7e:28  *     wan
-//
+//	IP address     HW type  Flags  HW address         Mask  Device
+//	192.168.11.98  0x1      0x2    5a:92:df:a9:7e:28  *     wan
 func parseArpAWrt(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 	if !sc.Scan() {
 		// Skip the header.
@@ -161,8 +160,7 @@ func parseArpAWrt(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 // parseArpA parses the output of the "arp -a -n" command on Linux.  The
 // expected input format:
 //
-//   hostname (192.168.1.1) at ab:cd:ef:ab:cd:ef [ether] on enp0s3
-//
+//	hostname (192.168.1.1) at ab:cd:ef:ab:cd:ef [ether] on enp0s3
 func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 	ns = make([]Neighbor, 0, lenHint)
 	for sc.Scan() {
@@ -208,8 +206,7 @@ func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 // parseIPNeigh parses the output of the "ip neigh" command on Linux.  The
 // expected input format:
 //
-//   192.168.1.1 dev enp0s3 lladdr ab:cd:ef:ab:cd:ef REACHABLE
-//
+//	192.168.1.1 dev enp0s3 lladdr ab:cd:ef:ab:cd:ef REACHABLE
 func parseIPNeigh(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 	ns = make([]Neighbor, 0, lenHint)
 	for sc.Scan() {

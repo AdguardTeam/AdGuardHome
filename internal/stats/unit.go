@@ -353,33 +353,25 @@ func topsCollector(units []*unitDB, max int, pg pairsGetter) []map[string]uint64
 	return convertTopSlice(a2)
 }
 
-/* Algorithm:
-. Prepare array of N units, where N is the value of "limit" configuration setting
- . Load data for the most recent units from file
-   If a unit with required ID doesn't exist, just add an empty unit
- . Get data for the current unit
-. Process data from the units and prepare an output map object:
- * per time unit counters:
-  * DNS-queries/time-unit
-  * blocked/time-unit
-  * safebrowsing-blocked/time-unit
-  * parental-blocked/time-unit
-  If time-unit is an hour, just add values from each unit to an array.
-  If time-unit is a day, aggregate per-hour data into days.
- * top counters:
-  * queries/domain
-  * queries/blocked-domain
-  * queries/client
-  To get these values we first sum up data for all units into a single map.
-  Then we get the pairs with the highest numbers (the values are sorted in descending order)
- * total counters:
-  * DNS-queries
-  * blocked
-  * safebrowsing-blocked
-  * safesearch-blocked
-  * parental-blocked
-  These values are just the sum of data for all units.
-*/
+// getData returns the statistics data using the following algorithm:
+//
+//  1. Prepare a slice of N units, where N is the value of "limit" configuration
+//     setting.  Load data for the most recent units from the file.  If a unit
+//     with required ID doesn't exist, just add an empty unit.  Get data for the
+//     current unit.
+//
+//  2. Process data from the units and prepare an output map object, including
+//     per time unit counters (DNS queries per time-unit, blocked queries per
+//     time unit, etc.).  If the time unit is hour, just add values from each
+//     unit to the slice; otherwise, the time unit is day, so aggregate per-hour
+//     data into days.
+//
+//     To get the top counters (queries per domain, queries per blocked domain,
+//     etc.), first sum up data for all units into a single map.  Then,  get the
+//     pairs with the highest numbers.
+//
+//     The total counters (DNS queries, blocked, etc.) are just the sum of data
+//     for all units.
 func (s *StatsCtx) getData(limit uint32) (StatsResp, bool) {
 	if limit == 0 {
 		return StatsResp{
