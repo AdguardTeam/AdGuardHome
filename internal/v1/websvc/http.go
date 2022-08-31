@@ -26,6 +26,14 @@ type ReqPatchSettingsHTTP struct {
 	SecureAddresses []netip.AddrPort `json:"secure_addresses"`
 }
 
+// httpAPIDNSSettings are the HTTP settings as used by the HTTP API.
+type httpAPIHTTPSettings struct {
+	// TODO(a.garipov): Add more as we go.
+
+	Addresses       []netip.AddrPort `json:"addresses"`
+	SecureAddresses []netip.AddrPort `json:"secure_addresses"`
+}
+
 // handlePatchSettingsHTTP is the handler for the PATCH /api/v1/settings/http
 // HTTP API.
 func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +60,7 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 		ForceHTTPS:      svc.forceHTTPS,
 	}
 
-	writeJSONResponse(w, r, &respGetV1SettingsAllHTTP{
+	writeJSONResponse(w, r, &httpAPIHTTPSettings{
 		Addresses:       newConf.Addresses,
 		SecureAddresses: newConf.SecureAddresses,
 	})

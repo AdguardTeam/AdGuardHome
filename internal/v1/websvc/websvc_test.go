@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// testTimeout is the common timeout for tests.
 const testTimeout = 1 * time.Second
 
 // testStart is the server start value for tests.

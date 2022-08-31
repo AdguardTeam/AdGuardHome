@@ -22,8 +22,6 @@ import (
 )
 
 // ConfigManager is the configuration manager interface.
-//
-// See internal/v1/svc/ for the main implementation.
 type ConfigManager interface {
 	DNS() (svc *dnssvc.Service)
 	Web() (svc *Service)
