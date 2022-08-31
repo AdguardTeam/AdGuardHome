@@ -27,7 +27,7 @@ const nsecPerMsec = float64(time.Millisecond / time.Nanosecond)
 // always nil.
 func (t jsonTime) MarshalJSON() (b []byte, err error) {
 	msec := float64(time.Time(t).UnixNano()) / nsecPerMsec
-	b = strconv.AppendFloat(nil, msec, 'f', 3, 64)
+	b = strconv.AppendFloat(nil, msec, 'f', -1, 64)
 
 	return b, nil
 }
@@ -57,5 +57,18 @@ func writeJSONResponse(w io.Writer, r *http.Request, v any) {
 	err := json.NewEncoder(w).Encode(v)
 	if err != nil {
 		log.Error("websvc: writing resp to %s %s: %s", r.Method, r.URL.Path, err)
+	}
+}
+
+// writeHTTPError is a helper for logging and writing HTTP errors.
+//
+// TODO(a.garipov): Improve codes, and add JSON error codes.
+func writeHTTPError(w http.ResponseWriter, r *http.Request, err error) {
+	log.Error("websvc: %s %s: %s", r.Method, r.URL.Path, err)
+
+	w.WriteHeader(http.StatusUnprocessableEntity)
+	_, werr := io.WriteString(w, err.Error())
+	if werr != nil {
+		log.Debug("websvc: writing error resp to %s %s: %s", r.Method, r.URL.Path, werr)
 	}
 }

@@ -17,7 +17,7 @@ func TestService_handleGetV1SystemInfo(t *testing.T) {
 	_, addr := newTestServer(t)
 	u := &url.URL{
 		Scheme: "http",
-		Host:   addr,
+		Host:   addr.String(),
 		Path:   websvc.PathV1SystemInfo,
 	}
 

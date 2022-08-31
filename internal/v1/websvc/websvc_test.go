@@ -25,7 +25,7 @@ var testStart = time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
 // instance down.
 //
 // TODO(a.garipov): Use svc or remove it.
-func newTestServer(t testing.TB) (svc *websvc.Service, addr string) {
+func newTestServer(t testing.TB) (svc *websvc.Service, addr netip.AddrPort) {
 	t.Helper()
 
 	c := &websvc.Config{
@@ -48,10 +48,11 @@ func newTestServer(t testing.TB) (svc *websvc.Service, addr string) {
 		require.NoError(t, err)
 	})
 
-	addrs := svc.Addrs()
-	require.Len(t, addrs, 1)
+	c = svc.Config()
+	require.NotNil(t, c)
+	require.Len(t, c.Addresses, 1)
 
-	return svc, addrs[0]
+	return svc, c.Addresses[0]
 }
 
 // httpGet is a helper that performs an HTTP GET request and returns the body of
@@ -83,7 +84,7 @@ func TestService_Start_getHealthCheck(t *testing.T) {
 	_, addr := newTestServer(t)
 	u := &url.URL{
 		Scheme: "http",
-		Host:   addr,
+		Host:   addr.String(),
 		Path:   websvc.PathHealthCheck,
 	}
 
