@@ -103,10 +103,15 @@ func TestUpdateGetVersion(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	wd := t.TempDir()
 
-	require.NoError(t, os.WriteFile(filepath.Join(wd, "AdGuardHome"), []byte("AdGuardHome"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(wd, "README.md"), []byte("README.md"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(wd, "LICENSE.txt"), []byte("LICENSE.txt"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(wd, "AdGuardHome.yaml"), []byte("AdGuardHome.yaml"), 0o644))
+	exePath := filepath.Join(wd, "AdGuardHome")
+	yamlPath := filepath.Join(wd, "AdGuardHome.yaml")
+	readmePath := filepath.Join(wd, "README.md")
+	licensePath := filepath.Join(wd, "LICENSE.txt")
+
+	require.NoError(t, os.WriteFile(exePath, []byte("AdGuardHome"), 0o755))
+	require.NoError(t, os.WriteFile(yamlPath, []byte("AdGuardHome.yaml"), 0o644))
+	require.NoError(t, os.WriteFile(readmePath, []byte("README.md"), 0o644))
+	require.NoError(t, os.WriteFile(licensePath, []byte("LICENSE.txt"), 0o644))
 
 	// start server for returning package file
 	pkgData, err := os.ReadFile("testdata/AdGuardHome.tar.gz")
@@ -127,17 +132,13 @@ func TestUpdate(t *testing.T) {
 	}
 
 	u.workDir = wd
-	u.confName = filepath.Join(u.workDir, "AdGuardHome.yaml")
+	u.confName = yamlPath
 	u.newVersion = "v0.103.1"
 	u.packageURL = fakeURL.String()
 
-	require.NoError(t, u.prepare("AdGuardHome"))
-
-	u.currentExeName = filepath.Join(wd, "AdGuardHome")
-
+	require.NoError(t, u.prepare(exePath))
 	require.NoError(t, u.downloadPackageFile(u.packageURL, u.packageName))
 	require.NoError(t, u.unpack())
-
 	// require.NoError(t, u.check())
 	require.NoError(t, u.backup())
 	require.NoError(t, u.replace())
@@ -156,22 +157,22 @@ func TestUpdate(t *testing.T) {
 	assert.Equal(t, "AdGuardHome", string(d))
 
 	// check updated files
-	d, err = os.ReadFile(filepath.Join(wd, "AdGuardHome"))
+	d, err = os.ReadFile(exePath)
 	require.NoError(t, err)
 
 	assert.Equal(t, "1", string(d))
 
-	d, err = os.ReadFile(filepath.Join(wd, "README.md"))
+	d, err = os.ReadFile(readmePath)
 	require.NoError(t, err)
 
 	assert.Equal(t, "2", string(d))
 
-	d, err = os.ReadFile(filepath.Join(wd, "LICENSE.txt"))
+	d, err = os.ReadFile(licensePath)
 	require.NoError(t, err)
 
 	assert.Equal(t, "3", string(d))
 
-	d, err = os.ReadFile(filepath.Join(wd, "AdGuardHome.yaml"))
+	d, err = os.ReadFile(yamlPath)
 	require.NoError(t, err)
 
 	assert.Equal(t, "AdGuardHome.yaml", string(d))
@@ -180,10 +181,15 @@ func TestUpdate(t *testing.T) {
 func TestUpdateWindows(t *testing.T) {
 	wd := t.TempDir()
 
-	require.NoError(t, os.WriteFile(filepath.Join(wd, "AdGuardHome.exe"), []byte("AdGuardHome.exe"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(wd, "README.md"), []byte("README.md"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(wd, "LICENSE.txt"), []byte("LICENSE.txt"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(wd, "AdGuardHome.yaml"), []byte("AdGuardHome.yaml"), 0o644))
+	exePath := filepath.Join(wd, "AdGuardHome.exe")
+	yamlPath := filepath.Join(wd, "AdGuardHome.yaml")
+	readmePath := filepath.Join(wd, "README.md")
+	licensePath := filepath.Join(wd, "LICENSE.txt")
+
+	require.NoError(t, os.WriteFile(exePath, []byte("AdGuardHome.exe"), 0o755))
+	require.NoError(t, os.WriteFile(yamlPath, []byte("AdGuardHome.yaml"), 0o644))
+	require.NoError(t, os.WriteFile(readmePath, []byte("README.md"), 0o644))
+	require.NoError(t, os.WriteFile(licensePath, []byte("LICENSE.txt"), 0o644))
 
 	// start server for returning package file
 	pkgData, err := os.ReadFile("testdata/AdGuardHome.zip")
@@ -205,14 +211,11 @@ func TestUpdateWindows(t *testing.T) {
 	}
 
 	u.workDir = wd
-	u.confName = filepath.Join(u.workDir, "AdGuardHome.yaml")
+	u.confName = yamlPath
 	u.newVersion = "v0.103.1"
 	u.packageURL = fakeURL.String()
 
-	require.NoError(t, u.prepare("AdGuardHome.exe"))
-
-	u.currentExeName = filepath.Join(wd, "AdGuardHome.exe")
-
+	require.NoError(t, u.prepare(exePath))
 	require.NoError(t, u.downloadPackageFile(u.packageURL, u.packageName))
 	require.NoError(t, u.unpack())
 	// assert.Nil(t, u.check())
@@ -233,22 +236,22 @@ func TestUpdateWindows(t *testing.T) {
 	assert.Equal(t, "AdGuardHome.exe", string(d))
 
 	// check updated files
-	d, err = os.ReadFile(filepath.Join(wd, "AdGuardHome.exe"))
+	d, err = os.ReadFile(exePath)
 	require.NoError(t, err)
 
 	assert.Equal(t, "1", string(d))
 
-	d, err = os.ReadFile(filepath.Join(wd, "README.md"))
+	d, err = os.ReadFile(readmePath)
 	require.NoError(t, err)
 
 	assert.Equal(t, "2", string(d))
 
-	d, err = os.ReadFile(filepath.Join(wd, "LICENSE.txt"))
+	d, err = os.ReadFile(licensePath)
 	require.NoError(t, err)
 
 	assert.Equal(t, "3", string(d))
 
-	d, err = os.ReadFile(filepath.Join(wd, "AdGuardHome.yaml"))
+	d, err = os.ReadFile(yamlPath)
 	require.NoError(t, err)
 
 	assert.Equal(t, "AdGuardHome.yaml", string(d))

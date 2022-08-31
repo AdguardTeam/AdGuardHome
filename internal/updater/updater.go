@@ -117,7 +117,7 @@ func (u *Updater) Update() (err error) {
 		return err
 	}
 
-	err = u.prepare(filepath.Base(execPath))
+	err = u.prepare(execPath)
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func (u *Updater) VersionCheckURL() (vcu string) {
 }
 
 // prepare fills all necessary fields in Updater object.
-func (u *Updater) prepare(exeName string) (err error) {
+func (u *Updater) prepare(exePath string) (err error) {
 	u.updateDir = filepath.Join(u.workDir, fmt.Sprintf("agh-update-%s", u.newVersion))
 
 	_, pkgNameOnly := filepath.Split(u.packageURL)
@@ -185,7 +185,7 @@ func (u *Updater) prepare(exeName string) (err error) {
 		updateExeName = "AdGuardHome.exe"
 	}
 
-	u.backupExeName = filepath.Join(u.backupDir, exeName)
+	u.backupExeName = filepath.Join(u.backupDir, filepath.Base(exePath))
 	u.updateExeName = filepath.Join(u.updateDir, updateExeName)
 
 	log.Debug(
@@ -195,7 +195,7 @@ func (u *Updater) prepare(exeName string) (err error) {
 		u.packageURL,
 	)
 
-	u.currentExeName = filepath.Join(u.workDir, exeName)
+	u.currentExeName = exePath
 	_, err = os.Stat(u.currentExeName)
 	if err != nil {
 		return fmt.Errorf("checking %q: %w", u.currentExeName, err)
