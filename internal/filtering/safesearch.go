@@ -98,11 +98,11 @@ func (d *DNSFilter) checkSafeSearch(
 	}
 
 	res = Result{
-		IsFiltered: true,
-		Reason:     FilteredSafeSearch,
 		Rules: []*ResultRule{{
 			FilterListID: SafeSearchListID,
 		}},
+		Reason:     FilteredSafeSearch,
+		IsFiltered: true,
 	}
 
 	if ip := net.ParseIP(safeHost); ip != nil {

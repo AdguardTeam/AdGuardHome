@@ -63,9 +63,15 @@ func TestDecodeLogEntry(t *testing.T) {
 			Answer:      ans,
 			Cached:      true,
 			Result: filtering.Result{
-				IsFiltered: true,
-				Reason:     filtering.FilteredBlockList,
-				IPList:     []net.IP{net.IPv4(127, 0, 0, 2)},
+				DNSRewriteResult: &filtering.DNSRewriteResult{
+					RCode: dns.RcodeSuccess,
+					Response: filtering.DNSRewriteResultResponse{
+						dns.TypeA: []rules.RRValue{net.IPv4(127, 0, 0, 2)},
+					},
+				},
+				CanonName:   "example.com",
+				ServiceName: "example.org",
+				IPList:      []net.IP{net.IPv4(127, 0, 0, 2)},
 				Rules: []*filtering.ResultRule{{
 					FilterListID: 42,
 					Text:         "||an.yandex.ru",
@@ -75,14 +81,8 @@ func TestDecodeLogEntry(t *testing.T) {
 					Text:         "||an2.yandex.ru",
 					IP:           net.IPv4(127, 0, 0, 3),
 				}},
-				CanonName:   "example.com",
-				ServiceName: "example.org",
-				DNSRewriteResult: &filtering.DNSRewriteResult{
-					RCode: dns.RcodeSuccess,
-					Response: filtering.DNSRewriteResultResponse{
-						dns.TypeA: []rules.RRValue{net.IPv4(127, 0, 0, 2)},
-					},
-				},
+				Reason:     filtering.FilteredBlockList,
+				IsFiltered: true,
 			},
 			Upstream:          "https://some.upstream",
 			Elapsed:           837429,

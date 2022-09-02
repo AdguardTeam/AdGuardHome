@@ -325,12 +325,12 @@ func (d *DNSFilter) checkSafeBrowsing(
 	}
 
 	res = Result{
-		IsFiltered: true,
-		Reason:     FilteredSafeBrowsing,
 		Rules: []*ResultRule{{
 			Text:         "adguard-malware-shavar",
 			FilterListID: SafeBrowsingListID,
 		}},
+		Reason:     FilteredSafeBrowsing,
+		IsFiltered: true,
 	}
 
 	return check(sctx, res, d.safeBrowsingUpstream)
@@ -359,12 +359,12 @@ func (d *DNSFilter) checkParental(
 	}
 
 	res = Result{
-		IsFiltered: true,
-		Reason:     FilteredParental,
 		Rules: []*ResultRule{{
 			Text:         "parental CATEGORY_BLACKLISTED",
 			FilterListID: ParentalListID,
 		}},
+		Reason:     FilteredParental,
+		IsFiltered: true,
 	}
 
 	return check(sctx, res, d.parentalUpstream)
