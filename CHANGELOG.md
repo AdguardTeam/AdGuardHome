@@ -32,6 +32,9 @@ and this project adheres to
 
 ### Changed
 
+- When the DHCP server is enabled, queries for domain names under
+  `dhcp.local_domain_name` not pointing to real DHCP client hostnames are now
+  processed by filters ([#4865]).
 - The DHCPREQUEST handling is now closer to the [RFC 2131][rfc-2131] ([#4863]).
 - The internal DNS client, used to resolve hostnames of external clients and
   also during automatic updates, now respects the upstream mode settings for the
@@ -57,6 +60,7 @@ and this project adheres to
 [#4745]: https://github.com/AdguardTeam/AdGuardHome/issues/4745
 [#4850]: https://github.com/AdguardTeam/AdGuardHome/issues/4850
 [#4863]: https://github.com/AdguardTeam/AdGuardHome/issues/4863
+[#4865]: https://github.com/AdguardTeam/AdGuardHome/issues/4865
 
 [rfc-2131]: https://datatracker.ietf.org/doc/html/rfc2131
 

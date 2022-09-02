@@ -381,7 +381,7 @@ func (s *Server) prepareUpstreamSettings() error {
 }
 
 // prepareInternalProxy initializes the DNS proxy that is used for internal DNS
-// queries, such at client PTR resolving and udpater hostname resolving.
+// queries, such at client PTR resolving and updater hostname resolving.
 func (s *Server) prepareInternalProxy() {
 	conf := &proxy.Config{
 		CacheEnabled:   true,
