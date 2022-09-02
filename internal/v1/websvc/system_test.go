@@ -14,7 +14,8 @@ import (
 )
 
 func TestService_handleGetV1SystemInfo(t *testing.T) {
-	_, addr := newTestServer(t)
+	confMgr := newConfigManager()
+	_, addr := newTestServer(t, confMgr)
 	u := &url.URL{
 		Scheme: "http",
 		Host:   addr.String(),

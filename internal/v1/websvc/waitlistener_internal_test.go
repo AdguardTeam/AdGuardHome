@@ -1,13 +1,12 @@
 package websvc
 
 import (
-	"fmt"
 	"net"
 	"sync"
 	"sync/atomic"
 	"testing"
-	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghchan"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,15 +32,7 @@ func TestWaitListener_Accept(t *testing.T) {
 	wg.Add(1)
 
 	done := make(chan struct{})
-	a := time.After(testTimeout)
-	go func() {
-		select {
-		case <-a:
-			panic(fmt.Errorf("did not finish after %s", testTimeout))
-		case <-done:
-			// Success.
-		}
-	}()
+	go aghchan.MustReceive(done, testTimeout)
 
 	go func() {
 		var wrapper net.Listener = &waitListener{

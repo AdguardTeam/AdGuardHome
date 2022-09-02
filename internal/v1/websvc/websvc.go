@@ -170,10 +170,12 @@ func newMux(svc *Service) (mux *httptreemux.ContextMux) {
 }
 
 // addrs returns all addresses on which this server serves the HTTP API.  addrs
-// must not be called until Start returns.
-func (svc *Service) addrs() (addrs, secAddrs []netip.AddrPort) {
+// must not be called simultaneously with Start.  If svc was initialized with
+// ":0" addresses, addrs will not return the actual bound ports until Start is
+// finished.
+func (svc *Service) addrs() (addrs, secureAddrs []netip.AddrPort) {
 	for _, srv := range svc.servers {
-		ipp, err := netip.ParseAddrPort(srv.Addr)
+		addrPort, err := netip.ParseAddrPort(srv.Addr)
 		if err != nil {
 			// Technically shouldn't happen, since all servers must have a valid
 			// address.
@@ -184,14 +186,14 @@ func (svc *Service) addrs() (addrs, secAddrs []netip.AddrPort) {
 		// relying only on the nilness of TLSConfig, check the length of the
 		// certificates field as well.
 		if srv.TLSConfig == nil || len(srv.TLSConfig.Certificates) == 0 {
-			addrs = append(addrs, ipp)
+			addrs = append(addrs, addrPort)
 		} else {
-			secAddrs = append(secAddrs, ipp)
+			secureAddrs = append(secureAddrs, addrPort)
 		}
 
 	}
 
-	return addrs, secAddrs
+	return addrs, secureAddrs
 }
 
 // handleGetHealthCheck is the handler for the GET /health-check HTTP API.
@@ -279,8 +281,10 @@ func (svc *Service) Shutdown(ctx context.Context) (err error) {
 	return nil
 }
 
-// Config returns the current configuration of the web service.  Currently, only
-// the Addresses and SecureAddresses fields are filled in c.
+// Config returns the current configuration of the web service.  Config must not
+// be called simultaneously with Start.  If svc was initialized with ":0"
+// addresses, addrs will not return the actual bound ports until Start is
+// finished.
 func (svc *Service) Config() (c *Config) {
 	c = &Config{
 		ConfigManager: svc.confMgr,

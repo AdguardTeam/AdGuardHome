@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // HTTP Settings Handlers
@@ -22,25 +23,25 @@ type ReqPatchSettingsHTTP struct {
 	//
 	// TODO(a.garipov): Add wait time.
 
-	Addresses       []netip.AddrPort `json:"addresses"`
-	SecureAddresses []netip.AddrPort `json:"secure_addresses"`
+	Addresses       []netip.AddrPort  `json:"addresses"`
+	SecureAddresses []netip.AddrPort  `json:"secure_addresses"`
+	Timeout         timeutil.Duration `json:"timeout"`
 }
 
-// httpAPIDNSSettings are the HTTP settings as used by the HTTP API.
-type httpAPIHTTPSettings struct {
+// HTTPAPIHTTPSettings are the HTTP settings as used by the HTTP API.  See the
+// HttpSettings object in the OpenAPI specification.
+type HTTPAPIHTTPSettings struct {
 	// TODO(a.garipov): Add more as we go.
 
-	Addresses       []netip.AddrPort `json:"addresses"`
-	SecureAddresses []netip.AddrPort `json:"secure_addresses"`
+	Addresses       []netip.AddrPort  `json:"addresses"`
+	SecureAddresses []netip.AddrPort  `json:"secure_addresses"`
+	Timeout         timeutil.Duration `json:"timeout"`
 }
 
 // handlePatchSettingsHTTP is the handler for the PATCH /api/v1/settings/http
 // HTTP API.
 func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Request) {
-	req := &ReqPatchSettingsHTTP{
-		Addresses:       []netip.AddrPort{},
-		SecureAddresses: []netip.AddrPort{},
-	}
+	req := &ReqPatchSettingsHTTP{}
 
 	// TODO(a.garipov): Validate nulls and proper JSON patch.
 
@@ -56,13 +57,14 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 		TLS:             svc.tls,
 		Addresses:       req.Addresses,
 		SecureAddresses: req.SecureAddresses,
-		Timeout:         svc.timeout,
+		Timeout:         req.Timeout.Duration,
 		ForceHTTPS:      svc.forceHTTPS,
 	}
 
-	writeJSONResponse(w, r, &httpAPIHTTPSettings{
+	writeJSONResponse(w, r, &HTTPAPIHTTPSettings{
 		Addresses:       newConf.Addresses,
 		SecureAddresses: newConf.SecureAddresses,
+		Timeout:         timeutil.Duration{Duration: newConf.Timeout},
 	})
 
 	cancelUpd := func() {}

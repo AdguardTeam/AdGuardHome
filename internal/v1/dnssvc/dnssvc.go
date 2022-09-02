@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"sync/atomic"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/v1/agh"
@@ -47,6 +48,11 @@ type Config struct {
 // Service is the AdGuard Home DNS service.  A nil *Service is a valid
 // [agh.Service] that does nothing.
 type Service struct {
+	// running is an atomic boolean value.  Keep it the first value in the
+	// struct to ensure atomic alignment.  0 means that the service is not
+	// running, 1 means that it is running.
+	running uint64
+
 	proxy      *proxy.Proxy
 	bootstraps []string
 	upstreams  []string
@@ -160,6 +166,13 @@ func (svc *Service) Start() (err error) {
 		return nil
 	}
 
+	defer func() {
+		// TODO(a.garipov): [proxy.Proxy.Start] doesn't actually have any way to
+		// tell when all servers are actually up, so at best this is merely an
+		// assumption.
+		atomic.StoreUint64(&svc.running, 1)
+	}()
+
 	return svc.proxy.Start()
 }
 
@@ -173,13 +186,27 @@ func (svc *Service) Shutdown(ctx context.Context) (err error) {
 	return svc.proxy.Stop()
 }
 
-// Config returns the current configuration of the web service.
+// Config returns the current configuration of the web service.  Config must not
+// be called simultaneously with Start.  If svc was initialized with ":0"
+// addresses, addrs will not return the actual bound ports until Start is
+// finished.
 func (svc *Service) Config() (c *Config) {
 	// TODO(a.garipov): Do we need to get the TCP addresses separately?
-	udpAddrs := svc.proxy.Addrs(proxy.ProtoUDP)
-	addrs := make([]netip.AddrPort, len(udpAddrs))
-	for i, a := range udpAddrs {
-		addrs[i] = a.(*net.UDPAddr).AddrPort()
+
+	var addrs []netip.AddrPort
+	if atomic.LoadUint64(&svc.running) == 1 {
+		udpAddrs := svc.proxy.Addrs(proxy.ProtoUDP)
+		addrs = make([]netip.AddrPort, len(udpAddrs))
+		for i, a := range udpAddrs {
+			addrs[i] = a.(*net.UDPAddr).AddrPort()
+		}
+	} else {
+		conf := svc.proxy.Config
+		udpAddrs := conf.UDPListenAddr
+		addrs = make([]netip.AddrPort, len(udpAddrs))
+		for i, a := range udpAddrs {
+			addrs[i] = a.AddrPort()
+		}
 	}
 
 	c = &Config{

@@ -25,8 +25,9 @@ type ReqPatchSettingsDNS struct {
 	UpstreamTimeout  timeutil.Duration `json:"upstream_timeout"`
 }
 
-// httpAPIDNSSettings are the DNS settings as used by the HTTP API.
-type httpAPIDNSSettings struct {
+// HTTPAPIDNSSettings are the DNS settings as used by the HTTP API.  See the
+// DnsSettings object in the OpenAPI specification.
+type HTTPAPIDNSSettings struct {
 	// TODO(a.garipov): Add more as we go.
 
 	Addresses        []netip.AddrPort  `json:"addresses"`
@@ -76,7 +77,7 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	writeJSONResponse(w, r, &httpAPIDNSSettings{
+	writeJSONResponse(w, r, &HTTPAPIDNSSettings{
 		Addresses:        newConf.Addresses,
 		BootstrapServers: newConf.BootstrapServers,
 		UpstreamServers:  newConf.UpstreamServers,

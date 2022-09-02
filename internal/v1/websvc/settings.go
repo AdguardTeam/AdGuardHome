@@ -15,8 +15,8 @@ import (
 type RespGetV1SettingsAll struct {
 	// TODO(a.garipov): Add more as we go.
 
-	DNS  *httpAPIDNSSettings  `json:"dns"`
-	HTTP *httpAPIHTTPSettings `json:"http"`
+	DNS  *HTTPAPIDNSSettings  `json:"dns"`
+	HTTP *HTTPAPIHTTPSettings `json:"http"`
 }
 
 // handleGetSettingsAll is the handler for the GET /api/v1/settings/all HTTP
@@ -25,18 +25,21 @@ func (svc *Service) handleGetSettingsAll(w http.ResponseWriter, r *http.Request)
 	dnsSvc := svc.confMgr.DNS()
 	dnsConf := dnsSvc.Config()
 
-	httpConf := svc.Config()
+	webSvc := svc.confMgr.Web()
+	httpConf := webSvc.Config()
 
+	// TODO(a.garipov): Add all currently supported parameters.
 	writeJSONResponse(w, r, &RespGetV1SettingsAll{
-		DNS: &httpAPIDNSSettings{
+		DNS: &HTTPAPIDNSSettings{
 			Addresses:        dnsConf.Addresses,
 			BootstrapServers: dnsConf.BootstrapServers,
 			UpstreamServers:  dnsConf.UpstreamServers,
 			UpstreamTimeout:  timeutil.Duration{Duration: dnsConf.UpstreamTimeout},
 		},
-		HTTP: &httpAPIHTTPSettings{
+		HTTP: &HTTPAPIHTTPSettings{
 			Addresses:       httpConf.Addresses,
 			SecureAddresses: httpConf.SecureAddresses,
+			Timeout:         timeutil.Duration{Duration: httpConf.Timeout},
 		},
 	})
 }
