@@ -271,13 +271,13 @@ func addEntry(l *queryLog, host string, answerStr, client net.IP) {
 	}
 
 	res := filtering.Result{
-		IsFiltered:  true,
-		Reason:      filtering.Rewritten,
 		ServiceName: "SomeService",
 		Rules: []*filtering.ResultRule{{
 			FilterListID: 1,
 			Text:         "SomeRule",
 		}},
+		Reason:     filtering.Rewritten,
+		IsFiltered: true,
 	}
 
 	params := &AddParams{

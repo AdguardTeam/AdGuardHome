@@ -12,12 +12,16 @@ import (
 	"github.com/miekg/dns"
 )
 
-// filterDNSRewriteResponse handles a single DNS rewrite response entry.
-// It returns the properly constructed answer resource record.
-func (s *Server) filterDNSRewriteResponse(req *dns.Msg, rr rules.RRType, v rules.RRValue) (ans dns.RR, err error) {
-	// TODO(a.garipov): As more types are added, we will probably want to
-	// use a handler-oriented approach here.  So, think of a way to decouple
-	// the answer generation logic from the Server.
+// filterDNSRewriteResponse handles a single DNS rewrite response entry.  It
+// returns the properly constructed answer resource record.
+func (s *Server) filterDNSRewriteResponse(
+	req *dns.Msg,
+	rr rules.RRType,
+	v rules.RRValue,
+) (ans dns.RR, err error) {
+	// TODO(a.garipov): As more types are added, we will probably want to use a
+	// handler-oriented approach here.  So, think of a way to decouple the
+	// answer generation logic from the Server.
 
 	switch rr {
 	case dns.TypeA,
@@ -77,9 +81,13 @@ func (s *Server) filterDNSRewriteResponse(req *dns.Msg, rr rules.RRType, v rules
 	}
 }
 
-// filterDNSRewrite handles dnsrewrite filters.  It constructs a DNS
-// response and sets it into d.Res.
-func (s *Server) filterDNSRewrite(req *dns.Msg, res filtering.Result, d *proxy.DNSContext) (err error) {
+// filterDNSRewrite handles dnsrewrite filters.  It constructs a DNS response
+// and sets it into pctx.Res.  All parameters must not be nil.
+func (s *Server) filterDNSRewrite(
+	req *dns.Msg,
+	res *filtering.Result,
+	pctx *proxy.DNSContext,
+) (err error) {
 	resp := s.makeResponse(req)
 	dnsrr := res.DNSRewriteResult
 	if dnsrr == nil {
@@ -88,7 +96,7 @@ func (s *Server) filterDNSRewrite(req *dns.Msg, res filtering.Result, d *proxy.D
 
 	resp.Rcode = dnsrr.RCode
 	if resp.Rcode != dns.RcodeSuccess {
-		d.Res = resp
+		pctx.Res = resp
 
 		return nil
 	}
@@ -109,7 +117,7 @@ func (s *Server) filterDNSRewrite(req *dns.Msg, res filtering.Result, d *proxy.D
 		resp.Answer = append(resp.Answer, ans)
 	}
 
-	d.Res = resp
+	pctx.Res = resp
 
 	return nil
 }

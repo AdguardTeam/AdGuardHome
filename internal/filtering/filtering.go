@@ -390,18 +390,8 @@ type ResultRule struct {
 // TODO(a.garipov): Clarify relationships between fields.  Perhaps
 // replace with a sum type or an interface?
 type Result struct {
-	// IsFiltered is true if the request is filtered.
-	IsFiltered bool `json:",omitempty"`
-
-	// Reason is the reason for blocking or unblocking the request.
-	Reason Reason `json:",omitempty"`
-
-	// Rules are applied rules.  If Rules are not empty, each rule is not nil.
-	Rules []*ResultRule `json:",omitempty"`
-
-	// IPList is the lookup rewrite result.  It is empty unless Reason is set to
-	// Rewritten.
-	IPList []net.IP `json:",omitempty"`
+	// DNSRewriteResult is the $dnsrewrite filter rule result.
+	DNSRewriteResult *DNSRewriteResult `json:",omitempty"`
 
 	// CanonName is the CNAME value from the lookup rewrite result.  It is empty
 	// unless Reason is set to Rewritten or RewrittenRule.
@@ -411,8 +401,18 @@ type Result struct {
 	// Reason is set to FilteredBlockedService.
 	ServiceName string `json:",omitempty"`
 
-	// DNSRewriteResult is the $dnsrewrite filter rule result.
-	DNSRewriteResult *DNSRewriteResult `json:",omitempty"`
+	// IPList is the lookup rewrite result.  It is empty unless Reason is set to
+	// Rewritten.
+	IPList []net.IP `json:",omitempty"`
+
+	// Rules are applied rules.  If Rules are not empty, each rule is not nil.
+	Rules []*ResultRule `json:",omitempty"`
+
+	// Reason is the reason for blocking or unblocking the request.
+	Reason Reason `json:",omitempty"`
+
+	// IsFiltered is true if the request is filtered.
+	IsFiltered bool `json:",omitempty"`
 }
 
 // Matched returns true if any match at all was found regardless of
@@ -874,9 +874,9 @@ func makeResult(matchedRules []rules.Rule, reason Reason) (res Result) {
 	}
 
 	return Result{
-		IsFiltered: reason == FilteredBlockList,
-		Reason:     reason,
 		Rules:      resRules,
+		Reason:     reason,
+		IsFiltered: reason == FilteredBlockList,
 	}
 }
 

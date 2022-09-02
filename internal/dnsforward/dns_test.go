@@ -248,7 +248,7 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 		name:       "local_client_unknown_host",
 		host:       "wronghost.lan",
 		wantIP:     nil,
-		wantRes:    resultCodeFinish,
+		wantRes:    resultCodeSuccess,
 		isLocalCli: true,
 	}, {
 		name:       "external_client_known_host",
@@ -358,7 +358,7 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 		host:    "example-new.lan",
 		suffix:  defaultLocalDomainSuffix,
 		wantIP:  nil,
-		wantRes: resultCodeFinish,
+		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}, {
 		name:    "success_internal_aaaa",
