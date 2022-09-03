@@ -37,6 +37,8 @@ var defaultDNS = []string{
 	"https://i.passcloud.xyz/dns-query",
 	"quic://c.passcloud.xyz:784",
 	"https://a.passcloud.xyz/dns-query",
+	"quic://x.passcloud.xyz:784",
+	"quic://j.iqiq.io:784",
 	"https://dns10.quad9.net/dns-query",
 }
 var defaultBootstrap = []string{"9.9.9.10", "149.112.112.10", "2620:fe::10", "2620:fe::fe:10"}
