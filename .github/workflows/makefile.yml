@@ -1,0 +1,27 @@
+name: Makefile CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: linux-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: configure
+      run: ./configure
+      
+    - name: Run check linux arm64
+      run: make GOOS='linux' GOARCH='arm64' make
+      
+    - name: Run check linux amd64
+      run: make GOOS='linux' GOARCH='amd64' make
+      
+    - name: Run check WINDOS amd64
+      run: make GOOS='windows' GOARCH='amd64' make
