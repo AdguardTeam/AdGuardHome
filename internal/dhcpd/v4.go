@@ -33,6 +33,17 @@ type v4Server struct {
 	conf V4ServerConf
 	srv  *server4.Server
 
+	// implicitOpts are the options listed in Appendix A of RFC 2131 initialized
+	// with default values.  It must not have intersections with [explicitOpts].
+	implicitOpts dhcpv4.Options
+
+	// explicitOpts are the options parsed from the configuration.  It must not
+	// have intersections with [implicitOpts].
+	explicitOpts dhcpv4.Options
+
+	// leasesLock protects leases, leaseHosts, and leasedOffsets.
+	leasesLock sync.Mutex
+
 	// leasedOffsets contains offsets from conf.ipRange.start that have been
 	// leased.
 	leasedOffsets *bitSet
@@ -42,12 +53,6 @@ type v4Server struct {
 
 	// leases contains all dynamic and static leases.
 	leases []*Lease
-
-	// leasesLock protects leases, leaseHosts, and leasedOffsets.
-	leasesLock sync.Mutex
-
-	// options holds predefined DHCP options to return to clients.
-	options dhcpv4.Options
 }
 
 // WriteDiskConfig4 - write configuration
@@ -999,34 +1004,42 @@ func (s *v4Server) handle(req, resp *dhcpv4.DHCPv4) int {
 		resp.YourIPAddr = netutil.CloneIP(l.IP)
 	}
 
+	s.updateOptions(req, resp)
+
+	return 1
+}
+
+// updateOptions updates the options of the response in accordance with the
+// request and RFC 2131.
+//
+// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.1.
+func (s *v4Server) updateOptions(req, resp *dhcpv4.DHCPv4) {
 	// Set IP address lease time for all DHCPOFFER messages and DHCPACK messages
 	// replied for DHCPREQUEST.
 	//
 	// TODO(e.burkov):  Inspect why this is always set to configured value.
 	resp.UpdateOption(dhcpv4.OptIPAddressLeaseTime(s.conf.leaseTime))
 
-	// Delete options explicitly configured to be removed.
-	for code := range resp.Options {
-		if val, ok := s.options[code]; ok && val == nil {
+	// If the server recognizes the parameter as a parameter defined in the Host
+	// Requirements Document, the server MUST include the default value for that
+	// parameter.
+	for _, code := range req.ParameterRequestList() {
+		if val := s.implicitOpts.Get(code); val != nil {
+			resp.UpdateOption(dhcpv4.OptGeneric(code, val))
+		}
+	}
+
+	// If the server has been explicitly configured with a default value for the
+	// parameter or the parameter has a non-default value on the client's
+	// subnet, the server MUST include that value in an appropriate option.
+	for code, val := range s.explicitOpts {
+		if val != nil {
+			resp.Options[code] = val
+		} else {
+			// Delete options explicitly configured to be removed.
 			delete(resp.Options, code)
 		}
 	}
-
-	// Update values for each explicitly configured parameter requested by
-	// client.
-	//
-	// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.1.
-	requested := req.ParameterRequestList()
-	for _, code := range requested {
-		if val := s.options.Get(code); val != nil {
-			resp.UpdateOption(dhcpv4.Option{
-				Code:  code,
-				Value: dhcpv4.OptionGeneric{Data: s.options.Get(code)},
-			})
-		}
-	}
-
-	return 1
 }
 
 // client(0.0.0.0:68) -> (Request:ClientMAC,Type=Discover,ClientID,ReqIP,HostName) -> server(255.255.255.255:67)
@@ -1151,8 +1164,11 @@ func (s *v4Server) Start() (err error) {
 	}
 	// Update the value of Domain Name Server option separately from others if
 	// not assigned yet since its value is available only at server's start.
-	if !s.options.Has(dhcpv4.OptionDomainNameServer) {
-		s.options.Update(dhcpv4.OptDNS(dnsIPAddrs...))
+	//
+	// TODO(e.burkov):  Initialize as implicit option with the rest of default
+	// options when it will be possible to do before the call to Start.
+	if !s.explicitOpts.Has(dhcpv4.OptionDomainNameServer) {
+		s.implicitOpts.Update(dhcpv4.OptDNS(dnsIPAddrs...))
 	}
 
 	s.conf.dnsIPAddrs = dnsIPAddrs
@@ -1279,7 +1295,7 @@ func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
 		s.conf.leaseTime = time.Second * time.Duration(conf.LeaseDuration)
 	}
 
-	s.options = prepareOptions(s.conf)
+	s.implicitOpts, s.explicitOpts = prepareOptions(s.conf)
 
 	return s, nil
 }
