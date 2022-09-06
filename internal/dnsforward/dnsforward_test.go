@@ -78,9 +78,11 @@ func createTestServer(
 	})
 	require.NoError(t, err)
 
-	s.conf = forwardConf
+	if forwardConf.BlockingMode == "" {
+		forwardConf.BlockingMode = BlockingModeDefault
+	}
 
-	err = s.Prepare(nil)
+	err = s.Prepare(&forwardConf)
 	require.NoError(t, err)
 
 	s.serverLock.Lock()
@@ -152,7 +154,7 @@ func createTestTLS(t *testing.T, tlsConf TLSConfig) (s *Server, certPem []byte) 
 	tlsConf.CertificateChainData, tlsConf.PrivateKeyData = certPem, keyPem
 	s.conf.TLSConfig = tlsConf
 
-	err := s.Prepare(nil)
+	err := s.Prepare(&s.conf)
 	require.NoErrorf(t, err, "failed to prepare server: %s", err)
 
 	return s, certPem
@@ -286,6 +288,9 @@ func TestServer_timeout(t *testing.T) {
 	t.Run("custom", func(t *testing.T) {
 		srvConf := &ServerConfig{
 			UpstreamTimeout: timeout,
+			FilteringConfig: FilteringConfig{
+				BlockingMode: BlockingModeDefault,
+			},
 		}
 
 		s, err := NewServer(DNSCreateParams{})
@@ -301,7 +306,8 @@ func TestServer_timeout(t *testing.T) {
 		s, err := NewServer(DNSCreateParams{})
 		require.NoError(t, err)
 
-		err = s.Prepare(nil)
+		s.conf.FilteringConfig.BlockingMode = BlockingModeDefault
+		err = s.Prepare(&s.conf)
 		require.NoError(t, err)
 
 		assert.Equal(t, DefaultTimeout, s.conf.UpstreamTimeout)
@@ -915,6 +921,7 @@ func TestRewrite(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
+			BlockingMode:      BlockingModeDefault,
 			UpstreamDNS:       []string{"8.8.8.8:53"},
 		},
 	}))
@@ -1026,9 +1033,10 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	s.conf.UDPListenAddrs = []*net.UDPAddr{{}}
 	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
-	s.conf.ProtectionEnabled = true
+	s.conf.FilteringConfig.ProtectionEnabled = true
+	s.conf.FilteringConfig.BlockingMode = BlockingModeDefault
 
-	err = s.Prepare(nil)
+	err = s.Prepare(&s.conf)
 	require.NoError(t, err)
 
 	err = s.Start()
@@ -1098,8 +1106,9 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	s.conf.UDPListenAddrs = []*net.UDPAddr{{}}
 	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
+	s.conf.FilteringConfig.BlockingMode = BlockingModeDefault
 
-	err = s.Prepare(nil)
+	err = s.Prepare(&s.conf)
 	require.NoError(t, err)
 
 	err = s.Start()

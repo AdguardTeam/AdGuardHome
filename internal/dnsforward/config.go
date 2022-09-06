@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -337,7 +338,7 @@ func (s *Server) prepareUpstreamSettings() error {
 	if s.conf.UpstreamDNSFileName != "" {
 		data, err := os.ReadFile(s.conf.UpstreamDNSFileName)
 		if err != nil {
-			return err
+			return fmt.Errorf("reading upstream from file: %w", err)
 		}
 
 		upstreams = stringutil.SplitTrimmed(string(data), "\n")
@@ -356,7 +357,7 @@ func (s *Server) prepareUpstreamSettings() error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("dns: proxy.ParseUpstreamsConfig: %w", err)
+		return fmt.Errorf("parsing upstream config: %w", err)
 	}
 
 	if len(upstreamConfig.Upstreams) == 0 {
@@ -370,38 +371,15 @@ func (s *Server) prepareUpstreamSettings() error {
 			},
 		)
 		if err != nil {
-			return fmt.Errorf("dns: failed to parse default upstreams: %v", err)
+			return fmt.Errorf("parsing default upstreams: %w", err)
 		}
+
 		upstreamConfig.Upstreams = uc.Upstreams
 	}
 
 	s.conf.UpstreamConfig = upstreamConfig
 
 	return nil
-}
-
-// prepareInternalProxy initializes the DNS proxy that is used for internal DNS
-// queries, such at client PTR resolving and updater hostname resolving.
-func (s *Server) prepareInternalProxy() {
-	conf := &proxy.Config{
-		CacheEnabled:   true,
-		CacheSizeBytes: 4096,
-		UpstreamConfig: s.conf.UpstreamConfig,
-		MaxGoroutines:  int(s.conf.MaxGoroutines),
-	}
-
-	srvConf := s.conf
-	setProxyUpstreamMode(
-		conf,
-		srvConf.AllServers,
-		srvConf.FastestAddr,
-		srvConf.FastestTimeout.Duration,
-	)
-
-	// TODO(a.garipov): Make a proper constructor for proxy.Proxy.
-	s.internalProxy = &proxy.Proxy{
-		Config: *conf,
-	}
 }
 
 // setProxyUpstreamMode sets the upstream mode and related settings in conf
@@ -432,13 +410,15 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 		return nil
 	}
 
-	if s.conf.TLSListenAddrs != nil {
-		proxyConfig.TLSListenAddr = s.conf.TLSListenAddrs
-	}
+	proxyConfig.TLSListenAddr = aghalg.CoalesceSlice(
+		s.conf.TLSListenAddrs,
+		proxyConfig.TLSListenAddr,
+	)
 
-	if s.conf.QUICListenAddrs != nil {
-		proxyConfig.QUICListenAddr = s.conf.QUICListenAddrs
-	}
+	proxyConfig.QUICListenAddr = aghalg.CoalesceSlice(
+		s.conf.QUICListenAddrs,
+		proxyConfig.QUICListenAddr,
+	)
 
 	var err error
 	s.conf.cert, err = tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)

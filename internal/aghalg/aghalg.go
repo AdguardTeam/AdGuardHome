@@ -10,9 +10,14 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// Coalesce returns the first non-zero value.  It is named after the function
+// Coalesce returns the first non-zero value.  It is named after function
 // COALESCE in SQL.  If values or all its elements are empty, it returns a zero
 // value.
+//
+// T is comparable, because Go currently doesn't have a comparableWithZeroValue
+// constraint.
+//
+// TODO(a.garipov): Think of ways to merge with [CoalesceSlice].
 func Coalesce[T comparable](values ...T) (res T) {
 	var zero T
 	for _, v := range values {
@@ -22,6 +27,20 @@ func Coalesce[T comparable](values ...T) (res T) {
 	}
 
 	return zero
+}
+
+// CoalesceSlice returns the first non-zero value.  It is named after function
+// COALESCE in SQL.  If values or all its elements are empty, it returns nil.
+//
+// TODO(a.garipov): Think of ways to merge with [Coalesce].
+func CoalesceSlice[E any, S []E](values ...S) (res S) {
+	for _, v := range values {
+		if v != nil {
+			return v
+		}
+	}
+
+	return nil
 }
 
 // UniqChecker allows validating uniqueness of comparable items.
