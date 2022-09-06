@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/insomniacslk/dhcp/dhcpv4"
@@ -346,7 +347,7 @@ func TestV4Server_handle_optionsPriority(t *testing.T) {
 			}
 			conf.Options = []string{b.String()}
 		} else {
-			defer func() { s.options.Update(dhcpv4.OptDNS(defaultIP)) }()
+			defer func() { s.implicitOpts.Update(dhcpv4.OptDNS(defaultIP)) }()
 		}
 
 		ss, err := v4Create(conf)
@@ -402,6 +403,111 @@ func TestV4Server_handle_optionsPriority(t *testing.T) {
 	})
 }
 
+func TestV4Server_updateOptions(t *testing.T) {
+	testIP := net.IP{1, 2, 3, 4}
+
+	dontWant := func(c dhcpv4.OptionCode) (opt dhcpv4.Option) {
+		return dhcpv4.OptGeneric(c, nil)
+	}
+
+	testCases := []struct {
+		name     string
+		wantOpts dhcpv4.Options
+		reqMods  []dhcpv4.Modifier
+		confOpts []string
+	}{{
+		name: "requested_default",
+		wantOpts: dhcpv4.OptionsFromList(
+			dhcpv4.OptBroadcastAddress(netutil.IPv4bcast()),
+		),
+		reqMods: []dhcpv4.Modifier{
+			dhcpv4.WithRequestedOptions(dhcpv4.OptionBroadcastAddress),
+		},
+		confOpts: nil,
+	}, {
+		name: "requested_non-default",
+		wantOpts: dhcpv4.OptionsFromList(
+			dhcpv4.OptBroadcastAddress(testIP),
+		),
+		reqMods: []dhcpv4.Modifier{
+			dhcpv4.WithRequestedOptions(dhcpv4.OptionBroadcastAddress),
+		},
+		confOpts: []string{
+			fmt.Sprintf("%d ip %s", dhcpv4.OptionBroadcastAddress, testIP),
+		},
+	}, {
+		name: "non-requested_default",
+		wantOpts: dhcpv4.OptionsFromList(
+			dontWant(dhcpv4.OptionBroadcastAddress),
+		),
+		reqMods:  nil,
+		confOpts: nil,
+	}, {
+		name: "non-requested_non-default",
+		wantOpts: dhcpv4.OptionsFromList(
+			dhcpv4.OptBroadcastAddress(testIP),
+		),
+		reqMods: nil,
+		confOpts: []string{
+			fmt.Sprintf("%d ip %s", dhcpv4.OptionBroadcastAddress, testIP),
+		},
+	}, {
+		name: "requested_deleted",
+		wantOpts: dhcpv4.OptionsFromList(
+			dontWant(dhcpv4.OptionBroadcastAddress),
+		),
+		reqMods: []dhcpv4.Modifier{
+			dhcpv4.WithRequestedOptions(dhcpv4.OptionBroadcastAddress),
+		},
+		confOpts: []string{
+			fmt.Sprintf("%d del", dhcpv4.OptionBroadcastAddress),
+		},
+	}, {
+		name: "requested_non-default_deleted",
+		wantOpts: dhcpv4.OptionsFromList(
+			dontWant(dhcpv4.OptionBroadcastAddress),
+		),
+		reqMods: []dhcpv4.Modifier{
+			dhcpv4.WithRequestedOptions(dhcpv4.OptionBroadcastAddress),
+		},
+		confOpts: []string{
+			fmt.Sprintf("%d ip %s", dhcpv4.OptionBroadcastAddress, testIP),
+			fmt.Sprintf("%d del", dhcpv4.OptionBroadcastAddress),
+		},
+	}}
+
+	for _, tc := range testCases {
+		req, err := dhcpv4.New(tc.reqMods...)
+		require.NoError(t, err)
+
+		resp, err := dhcpv4.NewReplyFromRequest(req)
+		require.NoError(t, err)
+
+		conf := defaultV4ServerConf()
+		conf.Options = tc.confOpts
+
+		s, err := v4Create(conf)
+		require.NoError(t, err)
+
+		require.IsType(t, (*v4Server)(nil), s)
+		s4, _ := s.(*v4Server)
+
+		t.Run(tc.name, func(t *testing.T) {
+			s4.updateOptions(req, resp)
+
+			for c, v := range tc.wantOpts {
+				if v == nil {
+					assert.NotContains(t, resp.Options, c)
+
+					continue
+				}
+
+				assert.Equal(t, v, resp.Options.Get(dhcpv4.GenericOptionCode(c)))
+			}
+		})
+	}
+}
+
 func TestV4StaticLease_Get(t *testing.T) {
 	sIface := defaultSrv(t)
 
@@ -409,7 +515,7 @@ func TestV4StaticLease_Get(t *testing.T) {
 	require.True(t, ok)
 
 	s.conf.dnsIPAddrs = []net.IP{{192, 168, 10, 1}}
-	s.options.Update(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
+	s.implicitOpts.Update(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
 
 	l := &Lease{
 		Hostname: "static-1.local",
@@ -498,7 +604,7 @@ func TestV4DynamicLease_Get(t *testing.T) {
 	require.True(t, ok)
 
 	s.conf.dnsIPAddrs = []net.IP{{192, 168, 10, 1}}
-	s.options.Update(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
+	s.implicitOpts.Update(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
 
 	var req, resp *dhcpv4.DHCPv4
 	mac := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}

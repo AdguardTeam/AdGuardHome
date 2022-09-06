@@ -22,8 +22,12 @@ and this project adheres to
 
 ### Added
 
+- New `bool`, `dur`, `u8`, and `u16` DHCP options to provide more convenience on
+  options control by setting values in a human-readable format ([#4705]).  See
+  also a [Wiki page][wiki-dhcp-opts].
+
 - New `del` DHCP option which removes the corresponding option from server's
-  response ([#4337]).
+  response ([#4337]).  See also a [Wiki page][wiki-dhcp-opts].
 
   **NOTE:** This modifier affects all the parameters in the response and not
   only the requested ones.
@@ -32,6 +36,7 @@ and this project adheres to
 
 ### Changed
 
+- The DHCP options handling is now closer to the [RFC 2131][rfc-2131] ([#4705]).
 - When the DHCP server is enabled, queries for domain names under
   `dhcp.local_domain_name` not pointing to real DHCP client hostnames are now
   processed by filters ([#4865]).
@@ -57,12 +62,14 @@ and this project adheres to
 [#4337]: https://github.com/AdguardTeam/AdGuardHome/issues/4337
 [#4403]: https://github.com/AdguardTeam/AdGuardHome/issues/4403
 [#4535]: https://github.com/AdguardTeam/AdGuardHome/issues/4535
+[#4705]: https://github.com/AdguardTeam/AdGuardHome/issues/4705
 [#4745]: https://github.com/AdguardTeam/AdGuardHome/issues/4745
 [#4850]: https://github.com/AdguardTeam/AdGuardHome/issues/4850
 [#4863]: https://github.com/AdguardTeam/AdGuardHome/issues/4863
 [#4865]: https://github.com/AdguardTeam/AdGuardHome/issues/4865
 
-[rfc-2131]: https://datatracker.ietf.org/doc/html/rfc2131
+[rfc-2131]:       https://datatracker.ietf.org/doc/html/rfc2131
+[wiki-dhcp-opts]: https://github.com/adguardTeam/adGuardHome/wiki/DHCP#config-4
 
 
 
