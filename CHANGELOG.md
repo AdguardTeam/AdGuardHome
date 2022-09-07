@@ -75,7 +75,7 @@ See also the [v0.107.12 GitHub milestone][ms-v0.107.12].
   DoQ on these ports are encouraged to move to the standard port 853.  These
   ports will be removed from the `EXPOSE` section of our `Dockerfile` in a
   future release.
-- Go 1.18 support.  v0.109.0 will require at least Go 1.19 to build.
+- Go 1.18 support.  Future versions will require at least Go 1.19 to build.
 
 ### Fixed
 
