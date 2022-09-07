@@ -16,7 +16,7 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/google/renameio v1.0.1
 	github.com/google/uuid v1.3.0
-	github.com/insomniacslk/dhcp v0.0.0-20220504074936-1ca156eafb9f
+	github.com/insomniacslk/dhcp v0.0.0-20220822114210-de18a9d48e84
 	github.com/kardianos/service v1.2.1
 	github.com/lucas-clemente/quic-go v0.29.0
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
@@ -30,8 +30,8 @@ require (
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91
-	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b
-	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261
+	golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
+	golang.org/x/sys v0.0.0-20220906135438-9e1f76180b77
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.0
@@ -58,7 +58,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/u-root/uio v0.0.0-20220204230159-dac05f7d2cb4 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220818022119-ed83ed61efb9 // indirect
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
+	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect

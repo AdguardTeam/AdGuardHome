@@ -219,6 +219,8 @@ exit_on_output gofumpt --extra -e -l .
 
 "$GO" vet ./...
 
+govulncheck ./...
+
 # Apply more lax standards to the code we haven't properly refactored yet.
 gocyclo --over 17 ./internal/querylog/
 gocyclo --over 15 ./internal/home/ ./internal/dhcpd

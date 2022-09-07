@@ -32,10 +32,13 @@ readonly go
 # prevent the "cannot install cross-compiled binaries when GOBIN is set" error.
 env\
 	GOARCH=""\
-	GOOS=""\
 	GOBIN="${PWD}/bin"\
-	"$go" install --modfile=./internal/tools/go.mod\
-	$v_flags $x_flags\
+	GOOS=""\
+	GOWORK='off'\
+	"$go" install\
+	--modfile=./internal/tools/go.mod\
+	$v_flags\
+	$x_flags\
 	github.com/fzipp/gocyclo/cmd/gocyclo\
 	github.com/golangci/misspell/cmd/misspell\
 	github.com/gordonklaus/ineffassign\
@@ -44,6 +47,7 @@ env\
 	github.com/securego/gosec/v2/cmd/gosec\
 	golang.org/x/tools/go/analysis/passes/nilness/cmd/nilness\
 	golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow\
+	golang.org/x/vuln/cmd/govulncheck\
 	honnef.co/go/tools/cmd/staticcheck\
 	mvdan.cc/gofumpt\
 	mvdan.cc/unparam\

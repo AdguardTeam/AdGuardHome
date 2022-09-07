@@ -17,6 +17,9 @@ and this project adheres to
 
 ### Security
 
+- Go version was updated to prevent the possibility of exploiting the
+  CVE-2022-27664 and CVE-2022-32190 Go vulnerabilities fixed in
+  [Go 1.18.6][go-1.18.6].
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).
 
@@ -68,6 +71,7 @@ and this project adheres to
 [#4863]: https://github.com/AdguardTeam/AdGuardHome/issues/4863
 [#4865]: https://github.com/AdguardTeam/AdGuardHome/issues/4865
 
+[go-1.18.6]:      https://groups.google.com/g/golang-announce/c/x49AQzIVX-s
 [rfc-2131]:       https://datatracker.ietf.org/doc/html/rfc2131
 [wiki-dhcp-opts]: https://github.com/adguardTeam/adGuardHome/wiki/DHCP#config-4
 
