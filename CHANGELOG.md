@@ -17,18 +17,39 @@ and this project adheres to
 
 ### Security
 
+- Weaker cipher suites that use the CBC (cipher block chaining) mode of
+  operation have been disabled ([#2993]).
+
+[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+
+
+
+
+<!--
+## [v0.107.13] - 2022-10-05 (APPROX.)
+
+See also the [v0.107.13 GitHub milestone][ms-v0.107.13].
+
+[ms-v0.107.13]:   https://github.com/AdguardTeam/AdGuardHome/milestone/49?closed=1
+-->
+
+
+
+## [v0.107.12] - 2022-09-07
+
+See also the [v0.107.12 GitHub milestone][ms-v0.107.12].
+
+### Security
+
 - Go version was updated to prevent the possibility of exploiting the
   CVE-2022-27664 and CVE-2022-32190 Go vulnerabilities fixed in
   [Go 1.18.6][go-1.18.6].
-- Weaker cipher suites that use the CBC (cipher block chaining) mode of
-  operation have been disabled ([#2993]).
 
 ### Added
 
 - New `bool`, `dur`, `u8`, and `u16` DHCP options to provide more convenience on
   options control by setting values in a human-readable format ([#4705]).  See
   also a [Wiki page][wiki-dhcp-opts].
-
 - New `del` DHCP option which removes the corresponding option from server's
   response ([#4337]).  See also a [Wiki page][wiki-dhcp-opts].
 
@@ -43,7 +64,8 @@ and this project adheres to
 - When the DHCP server is enabled, queries for domain names under
   `dhcp.local_domain_name` not pointing to real DHCP client hostnames are now
   processed by filters ([#4865]).
-- The DHCPREQUEST handling is now closer to the [RFC 2131][rfc-2131] ([#4863]).
+- The `DHCPREQUEST` handling is now closer to the [RFC 2131][rfc-2131]
+  ([#4863]).
 - The internal DNS client, used to resolve hostnames of external clients and
   also during automatic updates, now respects the upstream mode settings for the
   main DNS client ([#4403]).
@@ -54,16 +76,15 @@ and this project adheres to
   DoQ on these ports are encouraged to move to the standard port 853.  These
   ports will be removed from the `EXPOSE` section of our `Dockerfile` in a
   future release.
-- Go 1.18 support.  v0.109.0 will require at least Go 1.19 to build.
+- Go 1.18 support.  Future versions will require at least Go 1.19 to build.
 
 ### Fixed
 
-- The length of the DHCP server's response is now at least 576 bytes as per RFC
-  2131 recommendation ([#4337]).
+- The length of the DHCP server's response is now at least 576 bytes as per
+  [RFC 2131][rfc-2131] recommendation ([#4337]).
 - Dynamic leases created with empty hostnames ([#4745]).
 - Unnecessary logging of non-critical statistics errors ([#4850]).
 
-[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#4337]: https://github.com/AdguardTeam/AdGuardHome/issues/4337
 [#4403]: https://github.com/AdguardTeam/AdGuardHome/issues/4403
 [#4535]: https://github.com/AdguardTeam/AdGuardHome/issues/4535
@@ -74,18 +95,9 @@ and this project adheres to
 [#4865]: https://github.com/AdguardTeam/AdGuardHome/issues/4865
 
 [go-1.18.6]:      https://groups.google.com/g/golang-announce/c/x49AQzIVX-s
+[ms-v0.107.12]:   https://github.com/AdguardTeam/AdGuardHome/milestone/48?closed=1
 [rfc-2131]:       https://datatracker.ietf.org/doc/html/rfc2131
 [wiki-dhcp-opts]: https://github.com/adguardTeam/adGuardHome/wiki/DHCP#config-4
-
-
-
-<!--
-## [v0.107.12] - 2022-09-28 (APPROX.)
-
-See also the [v0.107.12 GitHub milestone][ms-v0.107.12].
-
-[ms-v0.107.12]: https://github.com/AdguardTeam/AdGuardHome/milestone/47?closed=1
--->
 
 
 
@@ -1191,11 +1203,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...HEAD
-[v0.107.12]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...v0.107.12
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...HEAD
+[v0.107.13]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...v0.107.13
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...HEAD
+[v0.107.12]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...v0.107.12
 [v0.107.11]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.10...v0.107.11
 [v0.107.10]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.9...v0.107.10
 [v0.107.9]:   https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.8...v0.107.9
