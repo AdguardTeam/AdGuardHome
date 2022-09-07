@@ -218,14 +218,17 @@ exit_on_output gofumpt --extra -e -l .
 
 "$GO" vet ./...
 
+govulncheck ./...
+
 # Apply more lax standards to the code we haven't properly refactored yet.
-gocyclo --over 17 ./internal/dhcpd/ ./internal/dnsforward/\
-	./internal/filtering/ ./internal/home/ ./internal/querylog/
+gocyclo --over 17 ./internal/querylog/
+gocyclo --over 15 ./internal/home/ ./internal/dhcpd
+gocyclo --over 13 ./internal/filtering/
 
 # Apply stricter standards to new or somewhat refactored code.
 gocyclo --over 10 ./internal/aghio/ ./internal/aghnet/ ./internal/aghos/\
-	./internal/aghtest/ ./internal/stats/ ./internal/tools/\
-	./internal/updater/ ./internal/version/ ./main.go
+	./internal/aghtest/ ./internal/dnsforward/ ./internal/stats/\
+	./internal/tools/ ./internal/updater/ ./internal/version/ ./main.go
 
 ineffassign ./...
 

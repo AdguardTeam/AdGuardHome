@@ -81,9 +81,9 @@ const (
 const ddrHostFQDN = "_dns.resolver.arpa."
 
 // handleDNSRequest filters the incoming DNS requests and writes them to the query log
-func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
-	ctx := &dnsContext{
-		proxyCtx:  d,
+func (s *Server) handleDNSRequest(_ *proxy.Proxy, pctx *proxy.DNSContext) error {
+	dctx := &dnsContext{
+		proxyCtx:  pctx,
 		result:    &filtering.Result{},
 		startTime: time.Now(),
 	}
@@ -111,7 +111,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 		s.processQueryLogsAndStats,
 	}
 	for _, process := range mods {
-		r := process(ctx)
+		r := process(dctx)
 		switch r {
 		case resultCodeSuccess:
 			// continue: call the next filter
@@ -120,13 +120,15 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 			return nil
 
 		case resultCodeError:
-			return ctx.err
+			return dctx.err
 		}
 	}
 
-	if d.Res != nil {
-		d.Res.Compress = true // some devices require DNS message compression
+	if pctx.Res != nil {
+		// Some devices require DNS message compression.
+		pctx.Res.Compress = true
 	}
+
 	return nil
 }
 
@@ -149,34 +151,38 @@ func (s *Server) processRecursion(dctx *dnsContext) (rc resultCode) {
 // needed and enriches the ctx with some client-specific information.
 //
 // TODO(e.burkov):  Decompose into less general processors.
-func (s *Server) processInitial(ctx *dnsContext) (rc resultCode) {
-	d := ctx.proxyCtx
-	if s.conf.AAAADisabled && d.Req.Question[0].Qtype == dns.TypeAAAA {
-		_ = proxy.CheckDisabledAAAARequest(d, true)
+func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
+	pctx := dctx.proxyCtx
+	q := pctx.Req.Question[0]
+	qt := q.Qtype
+	if s.conf.AAAADisabled && qt == dns.TypeAAAA {
+		_ = proxy.CheckDisabledAAAARequest(pctx, true)
+
 		return resultCodeFinish
 	}
 
 	if s.conf.OnDNSRequest != nil {
-		s.conf.OnDNSRequest(d)
+		s.conf.OnDNSRequest(pctx)
 	}
 
-	// disable Mozilla DoH
-	// https://support.mozilla.org/en-US/kb/canary-domain-use-application-dnsnet
-	if (d.Req.Question[0].Qtype == dns.TypeA || d.Req.Question[0].Qtype == dns.TypeAAAA) &&
-		d.Req.Question[0].Name == "use-application-dns.net." {
-		d.Res = s.genNXDomain(d.Req)
+	// Disable Mozilla DoH.
+	//
+	// See https://support.mozilla.org/en-US/kb/canary-domain-use-application-dnsnet.
+	if (qt == dns.TypeA || qt == dns.TypeAAAA) && q.Name == "use-application-dns.net." {
+		pctx.Res = s.genNXDomain(pctx.Req)
+
 		return resultCodeFinish
 	}
 
-	// Get the client's ID if any.  It should be performed before getting
-	// client-specific filtering settings.
+	// Get the ClientID, if any, before getting client-specific filtering
+	// settings.
 	var key [8]byte
-	binary.BigEndian.PutUint64(key[:], d.RequestID)
-	ctx.clientID = string(s.clientIDCache.Get(key[:]))
+	binary.BigEndian.PutUint64(key[:], pctx.RequestID)
+	dctx.clientID = string(s.clientIDCache.Get(key[:]))
 
 	// Get the client-specific filtering settings.
-	ctx.protectionEnabled = s.conf.ProtectionEnabled
-	ctx.setts = s.getClientRequestFilteringSettings(ctx)
+	dctx.protectionEnabled = s.conf.ProtectionEnabled
+	dctx.setts = s.getClientRequestFilteringSettings(dctx)
 
 	return resultCodeSuccess
 }
@@ -244,28 +250,28 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 	s.setTableIPToHost(ipToHost)
 }
 
-// processDDRQuery responds to SVCB query for a special use domain name
-// ‘_dns.resolver.arpa’.  The result contains different types of encryption
-// supported by current user configuration.
+// processDDRQuery responds to Discovery of Designated Resolvers (DDR) SVCB
+// queries.  The response contains different types of encryption supported by
+// current user configuration.
 //
-// See https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
-func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
-	d := ctx.proxyCtx
-	question := d.Req.Question[0]
+// See https://www.ietf.org/archive/id/draft-ietf-add-ddr-10.html.
+func (s *Server) processDDRQuery(dctx *dnsContext) (rc resultCode) {
+	pctx := dctx.proxyCtx
+	q := pctx.Req.Question[0]
 
 	if !s.conf.HandleDDR {
 		return resultCodeSuccess
 	}
 
-	if question.Name == ddrHostFQDN {
+	if q.Name == ddrHostFQDN {
 		if s.dnsProxy.TLSListenAddr == nil && s.conf.HTTPSListenAddrs == nil &&
-			s.dnsProxy.QUICListenAddr == nil || question.Qtype != dns.TypeSVCB {
-			d.Res = s.makeResponse(d.Req)
+			s.dnsProxy.QUICListenAddr == nil || q.Qtype != dns.TypeSVCB {
+			pctx.Res = s.makeResponse(pctx.Req)
 
 			return resultCodeFinish
 		}
 
-		d.Res = s.makeDDRResponse(d.Req)
+		pctx.Res = s.makeDDRResponse(pctx.Req)
 
 		return resultCodeFinish
 	}
@@ -273,11 +279,13 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 	return resultCodeSuccess
 }
 
-// makeDDRResponse creates DDR answer according to server configuration.  The
-// contructed SVCB resource records have the priority of 1 for each entry,
-// similar to examples provided by https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
+// makeDDRResponse creates a DDR answer based on the server configuration.  The
+// constructed SVCB resource records have the priority of 1 for each entry,
+// similar to examples provided by the [draft standard].
 //
 // TODO(a.meshkov):  Consider setting the priority values based on the protocol.
+//
+// [draft standard]: https://www.ietf.org/archive/id/draft-ietf-add-ddr-10.html.
 func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	resp = s.makeResponse(req)
 	// TODO(e.burkov):  Think about storing the FQDN version of the server's
@@ -351,10 +359,10 @@ func (s *Server) processDetermineLocal(dctx *dnsContext) (rc resultCode) {
 	return rc
 }
 
-// hostToIP tries to get an IP leased by DHCP and returns the copy of address
-// since the data inside the internal table may be changed while request
+// dhcpHostToIP tries to get an IP leased by DHCP and returns the copy of
+// address since the data inside the internal table may be changed while request
 // processing.  It's safe for concurrent use.
-func (s *Server) hostToIP(host string) (ip net.IP, ok bool) {
+func (s *Server) dhcpHostToIP(host string) (ip net.IP, ok bool) {
 	s.tableHostToIPLock.Lock()
 	defer s.tableHostToIPLock.Unlock()
 
@@ -379,46 +387,32 @@ func (s *Server) hostToIP(host string) (ip net.IP, ok bool) {
 //
 // TODO(a.garipov): Adapt to AAAA as well.
 func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
-	if !s.dhcpServer.Enabled() {
-		return resultCodeSuccess
-	}
-
-	req := dctx.proxyCtx.Req
+	pctx := dctx.proxyCtx
+	req := pctx.Req
 	q := req.Question[0]
-
-	// Go on processing the AAAA request despite the fact that we don't support
-	// it yet.  The expected behavior here is to respond with an empty answer
-	// and not NXDOMAIN.
-	if q.Qtype != dns.TypeA && q.Qtype != dns.TypeAAAA {
+	reqHost, ok := s.isDHCPClientHostQ(q)
+	if !ok {
 		return resultCodeSuccess
 	}
 
-	reqHost := strings.ToLower(q.Name[:len(q.Name)-1])
-	// TODO(a.garipov): Move everything related to DHCP local domain to the DHCP
-	// server.
-	if !strings.HasSuffix(reqHost, s.localDomainSuffix) {
-		return resultCodeSuccess
-	}
-
-	d := dctx.proxyCtx
 	if !dctx.isLocalClient {
-		log.Debug("dns: %q requests for internal host", d.Addr)
-		d.Res = s.genNXDomain(req)
+		log.Debug("dns: %q requests for dhcp host %q", pctx.Addr, reqHost)
+		pctx.Res = s.genNXDomain(req)
 
 		// Do not even put into query log.
 		return resultCodeFinish
 	}
 
-	ip, ok := s.hostToIP(reqHost)
+	ip, ok := s.dhcpHostToIP(reqHost)
 	if !ok {
-		// TODO(e.burkov): Inspect special cases when user want to apply some
-		// rules handled by other processors to the hosts with TLD.
-		d.Res = s.genNXDomain(req)
+		// Go on and process them with filters, including dnsrewrite ones, and
+		// possibly route them to a domain-specific upstream.
+		log.Debug("dns: no dhcp record for %q", reqHost)
 
-		return resultCodeFinish
+		return resultCodeSuccess
 	}
 
-	log.Debug("dns: internal record: %s -> %s", q.Name, ip)
+	log.Debug("dns: dhcp record for %q is %s", reqHost, ip)
 
 	resp := s.makeResponse(req)
 	if q.Qtype == dns.TypeA {
@@ -435,9 +429,9 @@ func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
 
 // processRestrictLocal responds with NXDOMAIN to PTR requests for IP addresses
 // in locally-served network from external clients.
-func (s *Server) processRestrictLocal(ctx *dnsContext) (rc resultCode) {
-	d := ctx.proxyCtx
-	req := d.Req
+func (s *Server) processRestrictLocal(dctx *dnsContext) (rc resultCode) {
+	pctx := dctx.proxyCtx
+	req := pctx.Req
 	q := req.Question[0]
 	if q.Qtype != dns.TypePTR {
 		// No need for restriction.
@@ -473,32 +467,32 @@ func (s *Server) processRestrictLocal(ctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	if !ctx.isLocalClient {
-		log.Debug("dns: %q requests an internal ip", d.Addr)
-		d.Res = s.genNXDomain(req)
+	if !dctx.isLocalClient {
+		log.Debug("dns: %q requests an internal ip", pctx.Addr)
+		pctx.Res = s.genNXDomain(req)
 
 		// Do not even put into query log.
 		return resultCodeFinish
 	}
 
 	// Do not perform unreversing ever again.
-	ctx.unreversedReqIP = ip
+	dctx.unreversedReqIP = ip
 
 	// There is no need to filter request from external addresses since this
 	// code is only executed when the request is for locally-served ARPA
 	// hostname so disable redundant filters.
-	ctx.setts.ParentalEnabled = false
-	ctx.setts.SafeBrowsingEnabled = false
-	ctx.setts.SafeSearchEnabled = false
-	ctx.setts.ServicesRules = nil
+	dctx.setts.ParentalEnabled = false
+	dctx.setts.SafeBrowsingEnabled = false
+	dctx.setts.SafeSearchEnabled = false
+	dctx.setts.ServicesRules = nil
 
 	// Nothing to restrict.
 	return resultCodeSuccess
 }
 
-// ipToHost tries to get a hostname leased by DHCP.  It's safe for concurrent
-// use.
-func (s *Server) ipToHost(ip net.IP) (host string, ok bool) {
+// ipToDHCPHost tries to get a hostname leased by DHCP.  It's safe for
+// concurrent use.
+func (s *Server) ipToDHCPHost(ip net.IP) (host string, ok bool) {
 	s.tableIPToHostLock.Lock()
 	defer s.tableIPToHostLock.Unlock()
 
@@ -521,27 +515,27 @@ func (s *Server) ipToHost(ip net.IP) (host string, ok bool) {
 	return host, true
 }
 
-// Respond to PTR requests if the target IP is leased by our DHCP server and the
-// requestor is inside the local network.
-func (s *Server) processDHCPAddrs(ctx *dnsContext) (rc resultCode) {
-	d := ctx.proxyCtx
-	if d.Res != nil {
+// processDHCPAddrs responds to PTR requests if the target IP is leased by the
+// DHCP server.
+func (s *Server) processDHCPAddrs(dctx *dnsContext) (rc resultCode) {
+	pctx := dctx.proxyCtx
+	if pctx.Res != nil {
 		return resultCodeSuccess
 	}
 
-	ip := ctx.unreversedReqIP
+	ip := dctx.unreversedReqIP
 	if ip == nil {
 		return resultCodeSuccess
 	}
 
-	host, ok := s.ipToHost(ip)
+	host, ok := s.ipToDHCPHost(ip)
 	if !ok {
 		return resultCodeSuccess
 	}
 
-	log.Debug("dns: reverse-lookup: %s -> %s", ip, host)
+	log.Debug("dns: dhcp reverse record for %s is %q", ip, host)
 
-	req := d.Req
+	req := pctx.Req
 	resp := s.makeResponse(req)
 	ptr := &dns.PTR{
 		Hdr: dns.RR_Header{
@@ -553,20 +547,20 @@ func (s *Server) processDHCPAddrs(ctx *dnsContext) (rc resultCode) {
 		Ptr: dns.Fqdn(host),
 	}
 	resp.Answer = append(resp.Answer, ptr)
-	d.Res = resp
+	pctx.Res = resp
 
 	return resultCodeSuccess
 }
 
 // processLocalPTR responds to PTR requests if the target IP is detected to be
 // inside the local network and the query was not answered from DHCP.
-func (s *Server) processLocalPTR(ctx *dnsContext) (rc resultCode) {
-	d := ctx.proxyCtx
-	if d.Res != nil {
+func (s *Server) processLocalPTR(dctx *dnsContext) (rc resultCode) {
+	pctx := dctx.proxyCtx
+	if pctx.Res != nil {
 		return resultCodeSuccess
 	}
 
-	ip := ctx.unreversedReqIP
+	ip := dctx.unreversedReqIP
 	if ip == nil {
 		return resultCodeSuccess
 	}
@@ -579,16 +573,16 @@ func (s *Server) processLocalPTR(ctx *dnsContext) (rc resultCode) {
 	}
 
 	if s.conf.UsePrivateRDNS {
-		s.recDetector.add(*d.Req)
-		if err := s.localResolvers.Resolve(d); err != nil {
-			ctx.err = err
+		s.recDetector.add(*pctx.Req)
+		if err := s.localResolvers.Resolve(pctx); err != nil {
+			dctx.err = err
 
 			return resultCodeError
 		}
 	}
 
-	if d.Res == nil {
-		d.Res = s.genNXDomain(d.Req)
+	if pctx.Res == nil {
+		pctx.Res = s.genNXDomain(pctx.Req)
 
 		// Do not even put into query log.
 		return resultCodeFinish
@@ -633,24 +627,25 @@ func ipStringFromAddr(addr net.Addr) (ipStr string) {
 // processUpstream passes request to upstream servers and handles the response.
 func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
 	pctx := dctx.proxyCtx
+	req := pctx.Req
+	q := req.Question[0]
 	if pctx.Res != nil {
 		// The response has already been set.
 		return resultCodeSuccess
+	} else if reqHost, ok := s.isDHCPClientHostQ(q); ok {
+		// A DHCP client hostname query that hasn't been handled or filtered.
+		// Respond with an NXDOMAIN.
+		//
+		// TODO(a.garipov): Route such queries to a custom upstream for the
+		// local domain name if there is one.
+		log.Debug("dns: dhcp client hostname %q was not filtered", reqHost)
+		pctx.Res = s.genNXDomain(req)
+
+		return resultCodeFinish
 	}
 
-	if pctx.Addr != nil && s.conf.GetCustomUpstreamByClient != nil {
-		// Use the ClientID first, since it has a higher priority.
-		id := stringutil.Coalesce(dctx.clientID, ipStringFromAddr(pctx.Addr))
-		upsConf, err := s.conf.GetCustomUpstreamByClient(id)
-		if err != nil {
-			log.Error("dns: getting custom upstreams for client %s: %s", id, err)
-		} else if upsConf != nil {
-			log.Debug("dns: using custom upstreams for client %s", id)
-			pctx.CustomUpstreamConfig = upsConf
-		}
-	}
+	s.setCustomUpstream(pctx, dctx.clientID)
 
-	req := pctx.Req
 	origReqAD := false
 	if s.conf.EnableDNSSEC {
 		if req.AuthenticatedData {
@@ -683,52 +678,100 @@ func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
 	return resultCodeSuccess
 }
 
-// Apply filtering logic after we have received response from upstream servers
-func (s *Server) processFilteringAfterResponse(ctx *dnsContext) (rc resultCode) {
-	d := ctx.proxyCtx
+// isDHCPClientHostQ returns true if q is from a request for a DHCP client
+// hostname.  If ok is true, reqHost contains the requested hostname.
+func (s *Server) isDHCPClientHostQ(q dns.Question) (reqHost string, ok bool) {
+	if !s.dhcpServer.Enabled() {
+		return "", false
+	}
 
-	switch res := ctx.result; res.Reason {
+	// Include AAAA here, because despite the fact that we don't support it yet,
+	// the expected behavior here is to respond with an empty answer and not
+	// NXDOMAIN.
+	if qt := q.Qtype; qt != dns.TypeA && qt != dns.TypeAAAA {
+		return "", false
+	}
+
+	reqHost = strings.ToLower(q.Name[:len(q.Name)-1])
+	if strings.HasSuffix(reqHost, s.localDomainSuffix) {
+		return reqHost, true
+	}
+
+	return "", false
+}
+
+// setCustomUpstream sets custom upstream settings in pctx, if necessary.
+func (s *Server) setCustomUpstream(pctx *proxy.DNSContext, clientID string) {
+	customUpsByClient := s.conf.GetCustomUpstreamByClient
+	if pctx.Addr == nil || customUpsByClient == nil {
+		return
+	}
+
+	// Use the ClientID first, since it has a higher priority.
+	id := stringutil.Coalesce(clientID, ipStringFromAddr(pctx.Addr))
+	upsConf, err := customUpsByClient(id)
+	if err != nil {
+		log.Error("dns: getting custom upstreams for client %s: %s", id, err)
+
+		return
+	}
+
+	if upsConf != nil {
+		log.Debug("dns: using custom upstreams for client %s", id)
+	}
+
+	pctx.CustomUpstreamConfig = upsConf
+}
+
+// Apply filtering logic after we have received response from upstream servers
+func (s *Server) processFilteringAfterResponse(dctx *dnsContext) (rc resultCode) {
+	pctx := dctx.proxyCtx
+	switch res := dctx.result; res.Reason {
 	case filtering.NotFilteredAllowList:
-		// Go on.
+		return resultCodeSuccess
 	case
 		filtering.Rewritten,
 		filtering.RewrittenRule:
 
-		if len(ctx.origQuestion.Name) == 0 {
+		if dctx.origQuestion.Name == "" {
 			// origQuestion is set in case we get only CNAME without IP from
 			// rewrites table.
-			break
+			return resultCodeSuccess
 		}
 
-		d.Req.Question[0], d.Res.Question[0] = ctx.origQuestion, ctx.origQuestion
-		if len(d.Res.Answer) > 0 {
-			answer := append([]dns.RR{s.genAnswerCNAME(d.Req, res.CanonName)}, d.Res.Answer...)
-			d.Res.Answer = answer
+		pctx.Req.Question[0], pctx.Res.Question[0] = dctx.origQuestion, dctx.origQuestion
+		if len(pctx.Res.Answer) > 0 {
+			rr := s.genAnswerCNAME(pctx.Req, res.CanonName)
+			answer := append([]dns.RR{rr}, pctx.Res.Answer...)
+			pctx.Res.Answer = answer
 		}
+
+		return resultCodeSuccess
 	default:
-		// Check the response only if it's from an upstream.  Don't check the
-		// response if the protection is disabled since dnsrewrite rules aren't
-		// applied to it anyway.
-		if !ctx.protectionEnabled || !ctx.responseFromUpstream || s.dnsFilter == nil {
-			break
-		}
+		return s.filterAfterResponse(dctx, pctx)
+	}
+}
 
-		origResp := d.Res
-		result, err := s.filterDNSResponse(ctx)
-		if err != nil {
-			ctx.err = err
-
-			return resultCodeError
-		}
-
-		if result != nil {
-			ctx.result = result
-			ctx.origResp = origResp
-		}
+// filterAfterResponse returns the result of filtering the response that wasn't
+// explicitly allowed or rewritten.
+func (s *Server) filterAfterResponse(dctx *dnsContext, pctx *proxy.DNSContext) (res resultCode) {
+	// Check the response only if it's from an upstream.  Don't check the
+	// response if the protection is disabled since dnsrewrite rules aren't
+	// applied to it anyway.
+	if !dctx.protectionEnabled || !dctx.responseFromUpstream || s.dnsFilter == nil {
+		return resultCodeSuccess
 	}
 
-	if ctx.result == nil {
-		ctx.result = &filtering.Result{}
+	result, err := s.filterDNSResponse(pctx, dctx.setts)
+	if err != nil {
+		dctx.err = err
+
+		return resultCodeError
+	}
+
+	if result != nil {
+		dctx.result = result
+		dctx.origResp = pctx.Res
 	}
 
 	return resultCodeSuccess

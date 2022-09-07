@@ -281,10 +281,10 @@ func newDNSCrypt(hosts []net.IP, tlsConf tlsConfigSettings) (dnscc dnsforward.DN
 	}
 
 	return dnsforward.DNSCryptConfig{
-		UDPListenAddrs: ipsToUDPAddrs(hosts, tlsConf.PortDNSCrypt),
-		TCPListenAddrs: ipsToTCPAddrs(hosts, tlsConf.PortDNSCrypt),
 		ResolverCert:   cert,
 		ProviderName:   rc.ProviderName,
+		UDPListenAddrs: ipsToUDPAddrs(hosts, tlsConf.PortDNSCrypt),
+		TCPListenAddrs: ipsToTCPAddrs(hosts, tlsConf.PortDNSCrypt),
 		Enabled:        true,
 	}, nil
 }

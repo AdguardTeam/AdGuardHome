@@ -83,7 +83,7 @@ func (s *v4Server) newDHCPConn(iface *net.Interface) (c net.PacketConn, err erro
 
 // wrapErrs is a helper to wrap the errors from two independent underlying
 // connections.
-func (c *dhcpConn) wrapErrs(action string, udpConnErr, rawConnErr error) (err error) {
+func (*dhcpConn) wrapErrs(action string, udpConnErr, rawConnErr error) (err error) {
 	switch {
 	case udpConnErr != nil && rawConnErr != nil:
 		return errors.List(fmt.Sprintf("%s both connections", action), udpConnErr, rawConnErr)
@@ -129,7 +129,7 @@ func (c *dhcpConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 		// connection.
 		return c.udpConn.WriteTo(p, addr)
 	default:
-		return 0, fmt.Errorf("peer is of unexpected type %T", addr)
+		return 0, fmt.Errorf("addr has an unexpected type %T", addr)
 	}
 }
 
@@ -188,32 +188,20 @@ func (c *dhcpConn) SetWriteDeadline(t time.Time) error {
 	)
 }
 
-// ipv4DefaultTTL is the default Time to Live value as recommended by
-// RFC-1700 (https://datatracker.ietf.org/doc/html/rfc1700) in seconds.
+// ipv4DefaultTTL is the default Time to Live value in seconds as recommended by
+// RFC-1700.
+//
+// See https://datatracker.ietf.org/doc/html/rfc1700.
 const ipv4DefaultTTL = 64
 
-// errInvalidPktDHCP is returned when the provided payload is not a valid DHCP
-// packet.
-const errInvalidPktDHCP errors.Error = "packet is not a valid dhcp packet"
-
-// buildEtherPkt wraps the payload with IPv4, UDP and Ethernet frames.  The
-// payload is expected to be an encoded DHCP packet.
+// buildEtherPkt wraps the payload with IPv4, UDP and Ethernet frames.
+// Validation of the payload is a caller's responsibility.
 func (c *dhcpConn) buildEtherPkt(payload []byte, peer *dhcpUnicastAddr) (pkt []byte, err error) {
-	dhcpLayer := gopacket.NewPacket(payload, layers.LayerTypeDHCPv4, gopacket.DecodeOptions{
-		NoCopy: true,
-	}).Layer(layers.LayerTypeDHCPv4)
-
-	// Check if the decoding succeeded and the resulting layer doesn't
-	// contain any errors.  It should guarantee panic-safe converting of the
-	// layer into gopacket.SerializableLayer.
-	if dhcpLayer == nil || dhcpLayer.LayerType() != layers.LayerTypeDHCPv4 {
-		return nil, errInvalidPktDHCP
-	}
-
 	udpLayer := &layers.UDP{
 		SrcPort: dhcpv4.ServerPort,
 		DstPort: dhcpv4.ClientPort,
 	}
+
 	ipv4Layer := &layers.IPv4{
 		Version:  uint8(layers.IPProtocolIPv4),
 		Flags:    layers.IPv4DontFragment,
@@ -226,6 +214,7 @@ func (c *dhcpConn) buildEtherPkt(payload []byte, peer *dhcpUnicastAddr) (pkt []b
 	// Ignore the error since it's only returned for invalid network layer's
 	// type.
 	_ = udpLayer.SetNetworkLayerForChecksum(ipv4Layer)
+
 	ethLayer := &layers.Ethernet{
 		SrcMAC:       c.srcMAC,
 		DstMAC:       peer.HardwareAddr,
@@ -233,10 +222,19 @@ func (c *dhcpConn) buildEtherPkt(payload []byte, peer *dhcpUnicastAddr) (pkt []b
 	}
 
 	buf := gopacket.NewSerializeBuffer()
-	err = gopacket.SerializeLayers(buf, gopacket.SerializeOptions{
+	setts := gopacket.SerializeOptions{
 		FixLengths:       true,
 		ComputeChecksums: true,
-	}, ethLayer, ipv4Layer, udpLayer, dhcpLayer.(gopacket.SerializableLayer))
+	}
+
+	err = gopacket.SerializeLayers(
+		buf,
+		setts,
+		ethLayer,
+		ipv4Layer,
+		udpLayer,
+		gopacket.Payload(payload),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("serializing layers: %w", err)
 	}

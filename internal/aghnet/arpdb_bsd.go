@@ -33,8 +33,7 @@ func newARPDB() (arp *cmdARPDB) {
 // parseArpA parses the output of the "arp -a -n" command on macOS and FreeBSD.
 // The expected input format:
 //
-//   host.name (192.168.0.1) at ff:ff:ff:ff:ff:ff on en0 ifscope [ethernet]
-//
+//	host.name (192.168.0.1) at ff:ff:ff:ff:ff:ff on en0 ifscope [ethernet]
 func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 	ns = make([]Neighbor, 0, lenHint)
 	for sc.Scan() {

@@ -47,7 +47,7 @@ func TestDHCPConn_WriteTo_common(t *testing.T) {
 		n, err := conn.WriteTo(nil, &unexpectedAddrType{})
 		require.Error(t, err)
 
-		testutil.AssertErrorMsg(t, "peer is of unexpected type *dhcpd.unexpectedAddrType", err)
+		testutil.AssertErrorMsg(t, "addr has an unexpected type *dhcpd.unexpectedAddrType", err)
 		assert.Zero(t, n)
 	})
 }
@@ -91,14 +91,13 @@ func TestBuildEtherPkt(t *testing.T) {
 		}
 	})
 
-	t.Run("non-serializable", func(t *testing.T) {
+	t.Run("bad_payload", func(t *testing.T) {
 		// Create an invalid DHCP packet.
 		invalidPayload := []byte{1, 2, 3, 4}
-		pkt, err := conn.buildEtherPkt(invalidPayload, nil)
-		require.Error(t, err)
+		pkt, err := conn.buildEtherPkt(invalidPayload, peer)
+		require.NoError(t, err)
 
-		assert.ErrorIs(t, err, errInvalidPktDHCP)
-		assert.Empty(t, pkt)
+		assert.NotEmpty(t, pkt)
 	})
 
 	t.Run("serializing_error", func(t *testing.T) {

@@ -42,11 +42,11 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 			}},
 		}
 	}
-	makeRes := func(rcode rules.RCode, rr rules.RRType, v rules.RRValue) (res filtering.Result) {
+	makeRes := func(rcode rules.RCode, rr rules.RRType, v rules.RRValue) (res *filtering.Result) {
 		resp := filtering.DNSRewriteResultResponse{
 			rr: []rules.RRValue{v},
 		}
-		return filtering.Result{
+		return &filtering.Result{
 			DNSRewriteResult: &filtering.DNSRewriteResult{
 				RCode:    rcode,
 				Response: resp,

@@ -20,16 +20,14 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type dnsConfig struct {
-	Upstreams     *[]string `json:"upstream_dns"`
-	UpstreamsFile *string   `json:"upstream_dns_file"`
-	Bootstraps    *[]string `json:"bootstrap_dns"`
-
+// jsonDNSConfig is the JSON representation of the DNS server configuration.
+type jsonDNSConfig struct {
+	Upstreams         *[]string     `json:"upstream_dns"`
+	UpstreamsFile     *string       `json:"upstream_dns_file"`
+	Bootstraps        *[]string     `json:"bootstrap_dns"`
 	ProtectionEnabled *bool         `json:"protection_enabled"`
 	RateLimit         *uint32       `json:"ratelimit"`
 	BlockingMode      *BlockingMode `json:"blocking_mode"`
-	BlockingIPv4      net.IP        `json:"blocking_ipv4"`
-	BlockingIPv6      net.IP        `json:"blocking_ipv6"`
 	EDNSCSEnabled     *bool         `json:"edns_cs_enabled"`
 	DNSSECEnabled     *bool         `json:"dnssec_enabled"`
 	DisableIPv6       *bool         `json:"disable_ipv6"`
@@ -41,9 +39,11 @@ type dnsConfig struct {
 	ResolveClients    *bool         `json:"resolve_clients"`
 	UsePrivateRDNS    *bool         `json:"use_private_ptr_resolvers"`
 	LocalPTRUpstreams *[]string     `json:"local_ptr_upstreams"`
+	BlockingIPv4      net.IP        `json:"blocking_ipv4"`
+	BlockingIPv6      net.IP        `json:"blocking_ipv6"`
 }
 
-func (s *Server) getDNSConfig() (c *dnsConfig) {
+func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
@@ -72,7 +72,7 @@ func (s *Server) getDNSConfig() (c *dnsConfig) {
 		upstreamMode = "parallel"
 	}
 
-	return &dnsConfig{
+	return &jsonDNSConfig{
 		Upstreams:         &upstreams,
 		UpstreamsFile:     &upstreamFile,
 		Bootstraps:        &bootstraps,
@@ -102,13 +102,13 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := struct {
-		dnsConfig
+		jsonDNSConfig
 		// DefautLocalPTRUpstreams is used to pass the addresses from
 		// systemResolvers to the front-end.  It's not a pointer to the slice
 		// since there is no need to omit it while decoding from JSON.
 		DefautLocalPTRUpstreams []string `json:"default_local_ptr_upstreams,omitempty"`
 	}{
-		dnsConfig:               *s.getDNSConfig(),
+		jsonDNSConfig:           *s.getDNSConfig(),
 		DefautLocalPTRUpstreams: defLocalPTRUps,
 	}
 
@@ -121,31 +121,21 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (req *dnsConfig) checkBlockingMode() bool {
+func (req *jsonDNSConfig) checkBlockingMode() (err error) {
 	if req.BlockingMode == nil {
-		return true
+		return nil
 	}
 
-	switch bm := *req.BlockingMode; bm {
-	case BlockingModeDefault,
-		BlockingModeREFUSED,
-		BlockingModeNXDOMAIN,
-		BlockingModeNullIP:
-		return true
-	case BlockingModeCustomIP:
-		return req.BlockingIPv4.To4() != nil && req.BlockingIPv6 != nil
-	default:
-		return false
-	}
+	return validateBlockingMode(*req.BlockingMode, req.BlockingIPv4, req.BlockingIPv6)
 }
 
-func (req *dnsConfig) checkUpstreamsMode() bool {
+func (req *jsonDNSConfig) checkUpstreamsMode() bool {
 	valid := []string{"", "fastest_addr", "parallel"}
 
 	return req.UpstreamMode == nil || stringutil.InSlice(valid, *req.UpstreamMode)
 }
 
-func (req *dnsConfig) checkBootstrap() (err error) {
+func (req *jsonDNSConfig) checkBootstrap() (err error) {
 	if req.Bootstraps == nil {
 		return nil
 	}
@@ -167,7 +157,7 @@ func (req *dnsConfig) checkBootstrap() (err error) {
 }
 
 // validate returns an error if any field of req is invalid.
-func (req *dnsConfig) validate(privateNets netutil.SubnetSet) (err error) {
+func (req *jsonDNSConfig) validate(privateNets netutil.SubnetSet) (err error) {
 	if req.Upstreams != nil {
 		err = ValidateUpstreams(*req.Upstreams)
 		if err != nil {
@@ -187,9 +177,12 @@ func (req *dnsConfig) validate(privateNets netutil.SubnetSet) (err error) {
 		return err
 	}
 
+	err = req.checkBlockingMode()
+	if err != nil {
+		return err
+	}
+
 	switch {
-	case !req.checkBlockingMode():
-		return errors.Error("blocking_mode: incorrect value")
 	case !req.checkUpstreamsMode():
 		return errors.Error("upstream_mode: incorrect value")
 	case !req.checkCacheTTL():
@@ -199,7 +192,7 @@ func (req *dnsConfig) validate(privateNets netutil.SubnetSet) (err error) {
 	}
 }
 
-func (req *dnsConfig) checkCacheTTL() bool {
+func (req *jsonDNSConfig) checkCacheTTL() bool {
 	if req.CacheMinTTL == nil && req.CacheMaxTTL == nil {
 		return true
 	}
@@ -216,7 +209,7 @@ func (req *dnsConfig) checkCacheTTL() bool {
 }
 
 func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
-	req := &dnsConfig{}
+	req := &jsonDNSConfig{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "decoding request: %s", err)
@@ -242,82 +235,18 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) setConfigRestartable(dc *dnsConfig) (restart bool) {
-	if dc.Upstreams != nil {
-		s.conf.UpstreamDNS = *dc.Upstreams
-		restart = true
-	}
-
-	if dc.LocalPTRUpstreams != nil {
-		s.conf.LocalPTRResolvers = *dc.LocalPTRUpstreams
-		restart = true
-	}
-
-	if dc.UpstreamsFile != nil {
-		s.conf.UpstreamDNSFileName = *dc.UpstreamsFile
-		restart = true
-	}
-
-	if dc.Bootstraps != nil {
-		s.conf.BootstrapDNS = *dc.Bootstraps
-		restart = true
-	}
-
-	if dc.RateLimit != nil && s.conf.Ratelimit != *dc.RateLimit {
-		s.conf.Ratelimit = *dc.RateLimit
-		restart = true
-	}
-
-	if dc.EDNSCSEnabled != nil {
-		s.conf.EnableEDNSClientSubnet = *dc.EDNSCSEnabled
-		restart = true
-	}
-
-	if dc.CacheSize != nil {
-		s.conf.CacheSize = *dc.CacheSize
-		restart = true
-	}
-
-	if dc.CacheMinTTL != nil {
-		s.conf.CacheMinTTL = *dc.CacheMinTTL
-		restart = true
-	}
-
-	if dc.CacheMaxTTL != nil {
-		s.conf.CacheMaxTTL = *dc.CacheMaxTTL
-		restart = true
-	}
-
-	if dc.CacheOptimistic != nil {
-		s.conf.CacheOptimistic = *dc.CacheOptimistic
-		restart = true
-	}
-
-	return restart
-}
-
-func (s *Server) setConfig(dc *dnsConfig) (restart bool) {
+// setConfigRestartable sets the server parameters.  shouldRestart is true if
+// the server should be restarted to apply changes.
+func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
-	if dc.ProtectionEnabled != nil {
-		s.conf.ProtectionEnabled = *dc.ProtectionEnabled
-	}
-
 	if dc.BlockingMode != nil {
 		s.conf.BlockingMode = *dc.BlockingMode
-		if *dc.BlockingMode == "custom_ip" {
+		if *dc.BlockingMode == BlockingModeCustomIP {
 			s.conf.BlockingIPv4 = dc.BlockingIPv4.To4()
 			s.conf.BlockingIPv6 = dc.BlockingIPv6.To16()
 		}
-	}
-
-	if dc.DNSSECEnabled != nil {
-		s.conf.EnableDNSSEC = *dc.DNSSECEnabled
-	}
-
-	if dc.DisableIPv6 != nil {
-		s.conf.AAAADisabled = *dc.DisableIPv6
 	}
 
 	if dc.UpstreamMode != nil {
@@ -325,15 +254,54 @@ func (s *Server) setConfig(dc *dnsConfig) (restart bool) {
 		s.conf.FastestAddr = *dc.UpstreamMode == "fastest_addr"
 	}
 
-	if dc.ResolveClients != nil {
-		s.conf.ResolveClients = *dc.ResolveClients
-	}
-
-	if dc.UsePrivateRDNS != nil {
-		s.conf.UsePrivateRDNS = *dc.UsePrivateRDNS
-	}
+	setIfNotNil(&s.conf.ProtectionEnabled, dc.ProtectionEnabled)
+	setIfNotNil(&s.conf.EnableDNSSEC, dc.DNSSECEnabled)
+	setIfNotNil(&s.conf.AAAADisabled, dc.DisableIPv6)
+	setIfNotNil(&s.conf.ResolveClients, dc.ResolveClients)
+	setIfNotNil(&s.conf.UsePrivateRDNS, dc.UsePrivateRDNS)
 
 	return s.setConfigRestartable(dc)
+}
+
+// setIfNotNil sets the value pointed at by currentPtr to the value pointed at
+// by newPtr if newPtr is not nil.  currentPtr must not be nil.
+func setIfNotNil[T any](currentPtr, newPtr *T) (hasSet bool) {
+	if newPtr == nil {
+		return false
+	}
+
+	*currentPtr = *newPtr
+
+	return true
+}
+
+// setConfigRestartable sets the parameters which trigger a restart.
+// shouldRestart is true if the server should be restarted to apply changes.
+// s.serverLock is expected to be locked.
+func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
+	for _, hasSet := range []bool{
+		setIfNotNil(&s.conf.UpstreamDNS, dc.Upstreams),
+		setIfNotNil(&s.conf.LocalPTRResolvers, dc.LocalPTRUpstreams),
+		setIfNotNil(&s.conf.UpstreamDNSFileName, dc.UpstreamsFile),
+		setIfNotNil(&s.conf.BootstrapDNS, dc.Bootstraps),
+		setIfNotNil(&s.conf.EnableEDNSClientSubnet, dc.EDNSCSEnabled),
+		setIfNotNil(&s.conf.CacheSize, dc.CacheSize),
+		setIfNotNil(&s.conf.CacheMinTTL, dc.CacheMinTTL),
+		setIfNotNil(&s.conf.CacheMaxTTL, dc.CacheMaxTTL),
+		setIfNotNil(&s.conf.CacheOptimistic, dc.CacheOptimistic),
+	} {
+		shouldRestart = shouldRestart || hasSet
+		if shouldRestart {
+			break
+		}
+	}
+
+	if dc.RateLimit != nil && s.conf.Ratelimit != *dc.RateLimit {
+		s.conf.Ratelimit = *dc.RateLimit
+		shouldRestart = true
+	}
+
+	return shouldRestart
 }
 
 // upstreamJSON is a request body for handleTestUpstreamDNS endpoint.
@@ -711,11 +679,16 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// handleDoH is the DNS-over-HTTPs handler.
+//
 // Control flow:
-// web
-//  -> dnsforward.handleDoH -> dnsforward.ServeHTTP
-//  -> proxy.ServeHTTP -> proxy.handleDNSRequest
-//  -> dnsforward.handleDNSRequest
+//
+//	HTTP server
+//	-> dnsforward.handleDoH
+//	-> dnsforward.ServeHTTP
+//	-> proxy.ServeHTTP
+//	-> proxy.handleDNSRequest
+//	-> dnsforward.handleDNSRequest
 func (s *Server) handleDoH(w http.ResponseWriter, r *http.Request) {
 	if !s.conf.TLSAllowUnencryptedDoH && r.TLS == nil {
 		aghhttp.Error(r, w, http.StatusNotFound, "Not Found")

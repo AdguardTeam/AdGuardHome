@@ -20,6 +20,7 @@ import (
 	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
+	"golang.org/x/exp/slices"
 
 	//lint:ignore SA1019 See the TODO in go.mod.
 	"github.com/mdlayher/raw"
@@ -32,6 +33,17 @@ type v4Server struct {
 	conf V4ServerConf
 	srv  *server4.Server
 
+	// implicitOpts are the options listed in Appendix A of RFC 2131 initialized
+	// with default values.  It must not have intersections with [explicitOpts].
+	implicitOpts dhcpv4.Options
+
+	// explicitOpts are the options parsed from the configuration.  It must not
+	// have intersections with [implicitOpts].
+	explicitOpts dhcpv4.Options
+
+	// leasesLock protects leases, leaseHosts, and leasedOffsets.
+	leasesLock sync.Mutex
+
 	// leasedOffsets contains offsets from conf.ipRange.start that have been
 	// leased.
 	leasedOffsets *bitSet
@@ -41,12 +53,6 @@ type v4Server struct {
 
 	// leases contains all dynamic and static leases.
 	leases []*Lease
-
-	// leasesLock protects leases, leaseHosts, and leasedOffsets.
-	leasesLock sync.Mutex
-
-	// options holds predefined DHCP options to return to clients.
-	options dhcpv4.Options
 }
 
 // WriteDiskConfig4 - write configuration
@@ -252,11 +258,11 @@ func (s *v4Server) rmLeaseByIndex(i int) {
 // Remove a dynamic lease with the same properties
 // Return error if a static lease is found
 func (s *v4Server) rmDynamicLease(lease *Lease) (err error) {
-	for i := 0; i < len(s.leases); i++ {
-		l := s.leases[i]
+	for i, l := range s.leases {
+		isStatic := l.IsStatic()
 
-		if bytes.Equal(l.HWAddr, lease.HWAddr) {
-			if l.IsStatic() {
+		if bytes.Equal(l.HWAddr, lease.HWAddr) || l.IP.Equal(lease.IP) {
+			if isStatic {
 				return errors.Error("static lease already exists")
 			}
 
@@ -268,26 +274,17 @@ func (s *v4Server) rmDynamicLease(lease *Lease) (err error) {
 			l = s.leases[i]
 		}
 
-		if l.IP.Equal(lease.IP) {
-			if l.IsStatic() {
-				return errors.Error("static lease already exists")
-			}
-
-			s.rmLeaseByIndex(i)
-			if i == len(s.leases) {
-				break
-			}
-
-			l = s.leases[i]
-		}
-
-		if l.Hostname == lease.Hostname {
+		if !isStatic && l.Hostname == lease.Hostname {
 			l.Hostname = ""
 		}
 	}
 
 	return nil
 }
+
+// ErrDupHostname is returned by addLease when the added lease has a not empty
+// non-unique hostname.
+const ErrDupHostname = errors.Error("hostname is not unique")
 
 // addLease adds a dynamic or static lease.
 func (s *v4Server) addLease(l *Lease) (err error) {
@@ -304,12 +301,16 @@ func (s *v4Server) addLease(l *Lease) (err error) {
 		return fmt.Errorf("lease %s (%s) out of range, not adding", l.IP, l.HWAddr)
 	}
 
-	s.leases = append(s.leases, l)
-	s.leasedOffsets.set(offset, true)
-
 	if l.Hostname != "" {
+		if s.leaseHosts.Has(l.Hostname) {
+			return ErrDupHostname
+		}
+
 		s.leaseHosts.Add(l.Hostname)
 	}
+
+	s.leases = append(s.leases, l)
+	s.leasedOffsets.set(offset, true)
 
 	return nil
 }
@@ -365,10 +366,11 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 			return fmt.Errorf("validating hostname: %w", err)
 		}
 
-		// Don't check for hostname uniqueness, since we try to emulate
-		// dnsmasq here, which means that rmDynamicLease below will
-		// simply empty the hostname of the dynamic lease if there even
-		// is one.
+		// Don't check for hostname uniqueness, since we try to emulate dnsmasq
+		// here, which means that rmDynamicLease below will simply empty the
+		// hostname of the dynamic lease if there even is one.  In case a static
+		// lease with the same name already exists, addLease will return an
+		// error and the lease won't be added.
 
 		l.Hostname = hostname
 	}
@@ -421,19 +423,19 @@ func (s *v4Server) RemoveStaticLease(l *Lease) (err error) {
 		return fmt.Errorf("validating lease: %w", err)
 	}
 
+	defer func() {
+		if err != nil {
+			return
+		}
+
+		s.conf.notify(LeaseChangedDBStore)
+		s.conf.notify(LeaseChangedRemovedStatic)
+	}()
+
 	s.leasesLock.Lock()
-	err = s.rmLease(l)
-	if err != nil {
-		s.leasesLock.Unlock()
+	defer s.leasesLock.Unlock()
 
-		return err
-	}
-	s.leasesLock.Unlock()
-
-	s.conf.notify(LeaseChangedDBStore)
-	s.conf.notify(LeaseChangedRemovedStatic)
-
-	return nil
+	return s.rmLease(l)
 }
 
 // addrAvailable sends an ICP request to the specified IP address.  It returns
@@ -523,11 +525,7 @@ func (s *v4Server) findExpiredLease() int {
 // reserveLease reserves a lease for a client by its MAC-address.  It returns
 // nil if it couldn't allocate a new lease.
 func (s *v4Server) reserveLease(mac net.HardwareAddr) (l *Lease, err error) {
-	l = &Lease{
-		HWAddr: make([]byte, len(mac)),
-	}
-
-	copy(l.HWAddr, mac)
+	l = &Lease{HWAddr: slices.Clone(mac)}
 
 	l.IP = s.nextIP()
 	if l.IP == nil {
@@ -549,21 +547,34 @@ func (s *v4Server) reserveLease(mac net.HardwareAddr) (l *Lease, err error) {
 	return l, nil
 }
 
-func (s *v4Server) commitLease(l *Lease) {
-	l.Expiry = time.Now().Add(s.conf.leaseTime)
+// commitLease refreshes l's values.  It takes the desired hostname into account
+// when setting it into the lease, but generates a unique one if the provided
+// can't be used.
+func (s *v4Server) commitLease(l *Lease, hostname string) {
+	prev := l.Hostname
+	hostname = s.validHostnameForClient(hostname, l.IP)
 
-	func() {
-		s.leasesLock.Lock()
-		defer s.leasesLock.Unlock()
+	if s.leaseHosts.Has(hostname) {
+		log.Info("dhcpv4: hostname %q already exists", hostname)
 
-		s.conf.notify(LeaseChangedDBStore)
-
-		if l.Hostname != "" {
-			s.leaseHosts.Add(l.Hostname)
+		if prev == "" {
+			// The lease is just allocated due to DHCPDISCOVER.
+			hostname = aghnet.GenerateHostname(l.IP)
+		} else {
+			hostname = prev
 		}
-	}()
+	}
+	if l.Hostname != hostname {
+		l.Hostname = hostname
+	}
 
-	s.conf.notify(LeaseChangedAdded)
+	l.Expiry = time.Now().Add(s.conf.leaseTime)
+	if prev != "" && prev != l.Hostname {
+		s.leaseHosts.Del(prev)
+	}
+	if l.Hostname != "" {
+		s.leaseHosts.Add(l.Hostname)
+	}
 }
 
 // allocateLease allocates a new lease for the MAC address.  If there are no IP
@@ -585,8 +596,8 @@ func (s *v4Server) allocateLease(mac net.HardwareAddr) (l *Lease, err error) {
 	}
 }
 
-// processDiscover is the handler for the DHCP Discover request.
-func (s *v4Server) processDiscover(req, resp *dhcpv4.DHCPv4) (l *Lease, err error) {
+// handleDiscover is the handler for the DHCP Discover request.
+func (s *v4Server) handleDiscover(req, resp *dhcpv4.DHCPv4) (l *Lease, err error) {
 	mac := req.ClientHWAddr
 
 	defer s.conf.notify(LeaseChangedDBStore)
@@ -620,33 +631,25 @@ func (s *v4Server) processDiscover(req, resp *dhcpv4.DHCPv4) (l *Lease, err erro
 	return l, nil
 }
 
-type optFQDN struct {
-	name string
-}
+// OptionFQDN returns a DHCPv4 option for sending the FQDN to the client
+// requested another hostname.
+//
+// See https://datatracker.ietf.org/doc/html/rfc4702.
+func OptionFQDN(fqdn string) (opt dhcpv4.Option) {
+	optData := []byte{
+		// Set only S and O DHCP client FQDN option flags.
+		//
+		// See https://datatracker.ietf.org/doc/html/rfc4702#section-2.1.
+		1<<0 | 1<<1,
+		// The RCODE fields should be set to 0xFF in the server responses.
+		//
+		// See https://datatracker.ietf.org/doc/html/rfc4702#section-2.2.
+		0xFF,
+		0xFF,
+	}
+	optData = append(optData, fqdn...)
 
-func (o *optFQDN) String() string {
-	return "optFQDN"
-}
-
-// flags[1]
-// A-RR[1]
-// PTR-RR[1]
-// name[]
-func (o *optFQDN) ToBytes() []byte {
-	b := make([]byte, 3+len(o.name))
-	i := 0
-
-	b[i] = 0x03 // f_server_overrides | f_server
-	i++
-
-	b[i] = 255 // A-RR
-	i++
-
-	b[i] = 255 // PTR-RR
-	i++
-
-	copy(b[i:], []byte(o.name))
-	return b
+	return dhcpv4.OptGeneric(dhcpv4.OptionFQDN, optData)
 }
 
 // checkLease checks if the pair of mac and ip is already leased.  The mismatch
@@ -676,68 +679,177 @@ func (s *v4Server) checkLease(mac net.HardwareAddr, ip net.IP) (lease *Lease, mi
 	return nil, false
 }
 
-// processRequest is the handler for the DHCP Request request.
-func (s *v4Server) processRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needsReply bool) {
+// handleSelecting handles the DHCPREQUEST generated during SELECTING state.
+func (s *v4Server) handleSelecting(
+	req *dhcpv4.DHCPv4,
+	reqIP net.IP,
+	sid net.IP,
+) (l *Lease, needsReply bool) {
+	// Client inserts the address of the selected server in server identifier,
+	// ciaddr MUST be zero.
 	mac := req.ClientHWAddr
-	reqIP := req.RequestedIPAddress()
-	if reqIP == nil {
-		reqIP = req.ClientIPAddr
-	}
+	if !sid.Equal(s.conf.dnsIPAddrs[0]) {
+		log.Debug("dhcpv4: bad server identifier in req msg for %s: %s", mac, sid)
 
-	sid := req.ServerIdentifier()
-	if len(sid) != 0 && !sid.Equal(s.conf.dnsIPAddrs[0]) {
-		log.Debug("dhcpv4: bad OptionServerIdentifier in req msg for %s", mac)
+		return nil, false
+	} else if ciaddr := req.ClientIPAddr; ciaddr != nil && !ciaddr.IsUnspecified() {
+		log.Debug("dhcpv4: non-zero ciaddr in selecting req msg for %s", mac)
 
 		return nil, false
 	}
 
+	// Requested IP address MUST be filled in with the yiaddr value from the
+	// chosen DHCPOFFER.
 	if ip4 := reqIP.To4(); ip4 == nil {
-		log.Debug("dhcpv4: bad OptionRequestedIPAddress in req msg for %s", mac)
+		log.Debug("dhcpv4: bad requested address in req msg for %s: %s", mac, reqIP)
 
 		return nil, false
 	}
 
 	var mismatch bool
-	if lease, mismatch = s.checkLease(mac, reqIP); mismatch {
+	if l, mismatch = s.checkLease(mac, reqIP); mismatch {
 		return nil, true
-	}
-
-	if lease == nil {
+	} else if l == nil {
 		log.Debug("dhcpv4: no reserved lease for %s", mac)
+	}
+
+	return l, true
+}
+
+// handleInitReboot handles the DHCPREQUEST generated during INIT-REBOOT state.
+func (s *v4Server) handleInitReboot(req *dhcpv4.DHCPv4, reqIP net.IP) (l *Lease, needsReply bool) {
+	mac := req.ClientHWAddr
+
+	if ip4 := reqIP.To4(); ip4 == nil {
+		log.Debug("dhcpv4: bad requested address in req msg for %s: %s", mac, reqIP)
+
+		return nil, false
+	}
+
+	// ciaddr MUST be zero.  The client is seeking to verify a previously
+	// allocated, cached configuration.
+	if ciaddr := req.ClientIPAddr; ciaddr != nil && !ciaddr.IsUnspecified() {
+		log.Debug("dhcpv4: non-zero ciaddr in init-reboot req msg for %s", mac)
+
+		return nil, false
+	}
+
+	if !s.conf.subnet.Contains(reqIP) {
+		// If the DHCP server detects that the client is on the wrong net then
+		// the server SHOULD send a DHCPNAK message to the client.
+		log.Debug("dhcpv4: wrong subnet in init-reboot req msg for %s: %s", mac, reqIP)
 
 		return nil, true
 	}
 
-	if !lease.IsStatic() {
-		cliHostname := req.HostName()
-		hostname := s.validHostnameForClient(cliHostname, reqIP)
-		if hostname != lease.Hostname && s.leaseHosts.Has(hostname) {
-			log.Info("dhcpv4: hostname %q already exists", hostname)
-			lease.Hostname = ""
-		} else {
-			lease.Hostname = hostname
-		}
+	var mismatch bool
+	if l, mismatch = s.checkLease(mac, reqIP); mismatch {
+		return nil, true
+	} else if l == nil {
+		// If the DHCP server has no record of this client, then it MUST remain
+		// silent, and MAY output a warning to the network administrator.
+		log.Info("dhcpv4: warning: no existing lease for %s", mac)
 
-		s.commitLease(lease)
-	} else if lease.Hostname != "" {
-		o := &optFQDN{
-			name: lease.Hostname,
-		}
-		fqdn := dhcpv4.Option{
-			Code:  dhcpv4.OptionFQDN,
-			Value: o,
-		}
+		return nil, false
+	}
 
-		resp.UpdateOption(fqdn)
+	return l, true
+}
+
+// handleRenew handles the DHCPREQUEST generated during RENEWING or REBINDING
+// state.
+func (s *v4Server) handleRenew(req *dhcpv4.DHCPv4) (l *Lease, needsReply bool) {
+	mac := req.ClientHWAddr
+
+	// ciaddr MUST be filled in with client's IP address.
+	ciaddr := req.ClientIPAddr
+	if ciaddr == nil || ciaddr.IsUnspecified() || ciaddr.To4() == nil {
+		log.Debug("dhcpv4: bad ciaddr in renew req msg for %s: %s", mac, ciaddr)
+
+		return nil, false
+	}
+
+	var mismatch bool
+	if l, mismatch = s.checkLease(mac, ciaddr); mismatch {
+		return nil, true
+	} else if l == nil {
+		// If the DHCP server has no record of this client, then it MUST remain
+		// silent, and MAY output a warning to the network administrator.
+		log.Info("dhcpv4: warning: no existing lease for %s", mac)
+
+		return nil, false
+	}
+
+	return l, true
+}
+
+// handleByRequestType handles the DHCPREQUEST according to the state during
+// which it's generated by client.
+func (s *v4Server) handleByRequestType(req *dhcpv4.DHCPv4) (lease *Lease, needsReply bool) {
+	reqIP, sid := req.RequestedIPAddress(), req.ServerIdentifier()
+
+	if sid != nil && !sid.IsUnspecified() {
+		// If the DHCPREQUEST message contains a server identifier option, the
+		// message is in response to a DHCPOFFER message.  Otherwise, the
+		// message is a request to verify or extend an existing lease.
+		return s.handleSelecting(req, reqIP, sid)
+	}
+
+	if reqIP != nil && !reqIP.IsUnspecified() {
+		// Requested IP address option MUST be filled in with client's notion of
+		// its previously assigned address.
+		return s.handleInitReboot(req, reqIP)
+	}
+
+	// Server identifier MUST NOT be filled in, requested IP address option MUST
+	// NOT be filled in.
+	return s.handleRenew(req)
+}
+
+// handleRequest is the handler for a DHCPREQUEST message.
+//
+// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.2.
+func (s *v4Server) handleRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needsReply bool) {
+	lease, needsReply = s.handleByRequestType(req)
+	if lease == nil {
+		return nil, needsReply
 	}
 
 	resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeAck))
 
-	return lease, true
+	hostname := req.HostName()
+	isRequested := hostname != "" || req.ParameterRequestList().Has(dhcpv4.OptionHostName)
+
+	defer func() {
+		s.conf.notify(LeaseChangedAdded)
+		s.conf.notify(LeaseChangedDBStore)
+	}()
+
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	if lease.IsStatic() {
+		if lease.Hostname != "" {
+			// TODO(e.burkov):  This option is used to update the server's DNS
+			// mapping.  The option should only be answered when it has been
+			// requested.
+			resp.UpdateOption(OptionFQDN(lease.Hostname))
+		}
+
+		return lease, needsReply
+	}
+
+	s.commitLease(lease, hostname)
+
+	if isRequested {
+		resp.UpdateOption(dhcpv4.OptHostName(lease.Hostname))
+	}
+
+	return lease, needsReply
 }
 
-// processRequest is the handler for the DHCP Decline request.
-func (s *v4Server) processDecline(req, resp *dhcpv4.DHCPv4) (err error) {
+// handleDecline is the handler for the DHCP Decline request.
+func (s *v4Server) handleDecline(req, resp *dhcpv4.DHCPv4) (err error) {
 	s.conf.notify(LeaseChangedDBStore)
 
 	s.leasesLock.Lock()
@@ -799,8 +911,8 @@ func (s *v4Server) processDecline(req, resp *dhcpv4.DHCPv4) (err error) {
 	return nil
 }
 
-// processRelease is the handler for the DHCP Release request.
-func (s *v4Server) processRelease(req, resp *dhcpv4.DHCPv4) (err error) {
+// handleRelease is the handler for the DHCP Release request.
+func (s *v4Server) handleRelease(req, resp *dhcpv4.DHCPv4) (err error) {
 	mac := req.ClientHWAddr
 	reqIP := req.RequestedIPAddress()
 	if reqIP == nil {
@@ -841,7 +953,7 @@ func (s *v4Server) processRelease(req, resp *dhcpv4.DHCPv4) (err error) {
 // Return 1: OK
 // Return 0: error; reply with Nak
 // Return -1: error; don't reply
-func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
+func (s *v4Server) handle(req, resp *dhcpv4.DHCPv4) int {
 	var err error
 
 	// Include server's identifier option since any reply should contain it.
@@ -851,11 +963,11 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 
 	// TODO(a.garipov): Refactor this into handlers.
 	var l *Lease
-	switch req.MessageType() {
+	switch mt := req.MessageType(); mt {
 	case dhcpv4.MessageTypeDiscover:
-		l, err = s.processDiscover(req, resp)
+		l, err = s.handleDiscover(req, resp)
 		if err != nil {
-			log.Error("dhcpv4: processing discover: %s", err)
+			log.Error("dhcpv4: handling discover: %s", err)
 
 			return 0
 		}
@@ -865,7 +977,7 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 		}
 	case dhcpv4.MessageTypeRequest:
 		var toReply bool
-		l, toReply = s.processRequest(req, resp)
+		l, toReply = s.handleRequest(req, resp)
 		if l == nil {
 			if toReply {
 				return 0
@@ -873,16 +985,16 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 			return -1 // drop packet
 		}
 	case dhcpv4.MessageTypeDecline:
-		err = s.processDecline(req, resp)
+		err = s.handleDecline(req, resp)
 		if err != nil {
-			log.Error("dhcpv4: processing decline: %s", err)
+			log.Error("dhcpv4: handling decline: %s", err)
 
 			return 0
 		}
 	case dhcpv4.MessageTypeRelease:
-		err = s.processRelease(req, resp)
+		err = s.handleRelease(req, resp)
 		if err != nil {
-			log.Error("dhcpv4: processing release: %s", err)
+			log.Error("dhcpv4: handling release: %s", err)
 
 			return 0
 		}
@@ -892,30 +1004,42 @@ func (s *v4Server) process(req, resp *dhcpv4.DHCPv4) int {
 		resp.YourIPAddr = netutil.CloneIP(l.IP)
 	}
 
-	// Set IP address lease time for all DHCPOFFER messages and DHCPACK
-	// messages replied for DHCPREQUEST.
+	s.updateOptions(req, resp)
+
+	return 1
+}
+
+// updateOptions updates the options of the response in accordance with the
+// request and RFC 2131.
+//
+// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.1.
+func (s *v4Server) updateOptions(req, resp *dhcpv4.DHCPv4) {
+	// Set IP address lease time for all DHCPOFFER messages and DHCPACK messages
+	// replied for DHCPREQUEST.
 	//
 	// TODO(e.burkov):  Inspect why this is always set to configured value.
 	resp.UpdateOption(dhcpv4.OptIPAddressLeaseTime(s.conf.leaseTime))
 
-	// Update values for each explicitly configured parameter requested by
-	// client.
-	//
-	// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.1.
-	requested := req.ParameterRequestList()
-	for _, code := range requested {
-		if configured := s.options; configured.Has(code) {
-			resp.UpdateOption(dhcpv4.OptGeneric(code, configured.Get(code)))
+	// If the server recognizes the parameter as a parameter defined in the Host
+	// Requirements Document, the server MUST include the default value for that
+	// parameter.
+	for _, code := range req.ParameterRequestList() {
+		if val := s.implicitOpts.Get(code); val != nil {
+			resp.UpdateOption(dhcpv4.OptGeneric(code, val))
 		}
 	}
-	// Update the value of Domain Name Server option separately from others if
-	// not assigned yet since its value is set after server's creating.
-	if requested.Has(dhcpv4.OptionDomainNameServer) &&
-		!resp.Options.Has(dhcpv4.OptionDomainNameServer) {
-		resp.UpdateOption(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
-	}
 
-	return 1
+	// If the server has been explicitly configured with a default value for the
+	// parameter or the parameter has a non-default value on the client's
+	// subnet, the server MUST include that value in an appropriate option.
+	for code, val := range s.explicitOpts {
+		if val != nil {
+			resp.Options[code] = val
+		} else {
+			// Delete options explicitly configured to be removed.
+			delete(resp.Options, code)
+		}
+	}
 }
 
 // client(0.0.0.0:68) -> (Request:ClientMAC,Type=Discover,ClientID,ReqIP,HostName) -> server(255.255.255.255:67)
@@ -941,6 +1065,7 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 	resp, err := dhcpv4.NewReplyFromRequest(req)
 	if err != nil {
 		log.Debug("dhcpv4: dhcpv4.New: %s", err)
+
 		return
 	}
 
@@ -951,7 +1076,7 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 		return
 	}
 
-	r := s.process(req, resp)
+	r := s.handle(req, resp)
 	if r < 0 {
 		return
 	} else if r == 0 {
@@ -960,6 +1085,12 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 
 	s.send(peer, conn, req, resp)
 }
+
+// minDHCPMsgSize is the minimum length of the encoded DHCP message in bytes
+// according to RFC-2131.
+//
+// See https://datatracker.ietf.org/doc/html/rfc2131#section-2.
+const minDHCPMsgSize = 576
 
 // send writes resp for peer to conn considering the req's parameters according
 // to RFC-2131.
@@ -1001,8 +1132,22 @@ func (s *v4Server) send(peer net.Addr, conn net.PacketConn, req, resp *dhcpv4.DH
 		// Go on since peer is already set to broadcast.
 	}
 
-	log.Debug("dhcpv4: sending to %s: %s", peer, resp.Summary())
-	if _, err := conn.WriteTo(resp.ToBytes(), peer); err != nil {
+	pktData := resp.ToBytes()
+	pktLen := len(pktData)
+	if pktLen < minDHCPMsgSize {
+		// Expand the packet to match the minimum DHCP message length.  Although
+		// the dhpcv4 package deals with the BOOTP's lower packet length
+		// constraint, it seems some clients expecting the length being at least
+		// 576 bytes as per RFC 2131 (and an obsolete RFC 1533).
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/4337.
+		pktData = append(pktData, make([]byte, minDHCPMsgSize-pktLen)...)
+	}
+
+	log.Debug("dhcpv4: sending %d bytes to %s: %s", len(pktData), peer, resp.Summary())
+
+	_, err := conn.WriteTo(pktData, peer)
+	if err != nil {
 		log.Error("dhcpv4: conn.Write to %s failed: %s", peer, err)
 	}
 }
@@ -1036,6 +1181,14 @@ func (s *v4Server) Start() (err error) {
 	if len(dnsIPAddrs) == 0 {
 		// No available IP addresses which may appear later.
 		return nil
+	}
+	// Update the value of Domain Name Server option separately from others if
+	// not assigned yet since its value is available only at server's start.
+	//
+	// TODO(e.burkov):  Initialize as implicit option with the rest of default
+	// options when it will be possible to do before the call to Start.
+	if !s.explicitOpts.Has(dhcpv4.OptionDomainNameServer) {
+		s.implicitOpts.Update(dhcpv4.OptDNS(dnsIPAddrs...))
 	}
 
 	s.conf.dnsIPAddrs = dnsIPAddrs
@@ -1162,7 +1315,7 @@ func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
 		s.conf.leaseTime = time.Second * time.Duration(conf.LeaseDuration)
 	}
 
-	s.options = prepareOptions(s.conf)
+	s.implicitOpts, s.explicitOpts = prepareOptions(s.conf)
 
 	return s, nil
 }

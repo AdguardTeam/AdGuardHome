@@ -49,11 +49,12 @@ type hostToIPTable = map[string]net.IP
 // Server is the main way to start a DNS server.
 //
 // Example:
-//  s := dnsforward.Server{}
-//  err := s.Start(nil) // will start a DNS server listening on default port 53, in a goroutine
-//  err := s.Reconfigure(ServerConfig{UDPListenAddr: &net.UDPAddr{Port: 53535}}) // will reconfigure running DNS server to listen on UDP port 53535
-//  err := s.Stop() // will stop listening on port 53535 and cancel all goroutines
-//  err := s.Start(nil) // will start listening again, on port 53535, in a goroutine
+//
+//	s := dnsforward.Server{}
+//	err := s.Start(nil) // will start a DNS server listening on default port 53, in a goroutine
+//	err := s.Reconfigure(ServerConfig{UDPListenAddr: &net.UDPAddr{Port: 53535}}) // will reconfigure running DNS server to listen on UDP port 53535
+//	err := s.Stop() // will stop listening on port 53535 and cancel all goroutines
+//	err := s.Start(nil) // will start listening again, on port 53535, in a goroutine
 //
 // The zero Server is empty and ready for use.
 type Server struct {
@@ -174,18 +175,6 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 	}
 
 	return s, nil
-}
-
-// NewCustomServer creates a new instance of *Server with custom internal proxy.
-func NewCustomServer(internalProxy *proxy.Proxy) *Server {
-	s := &Server{
-		recDetector: newRecursionDetector(0, 1),
-	}
-	if internalProxy != nil {
-		s.internalProxy = internalProxy
-	}
-
-	return s
 }
 
 // Close gracefully closes the server.  It is safe for concurrent use.
@@ -445,65 +434,54 @@ func (s *Server) setupResolvers(localAddrs []string) (err error) {
 	return nil
 }
 
-// Prepare the object
-func (s *Server) Prepare(config *ServerConfig) error {
-	// Initialize the server configuration
-	// --
-	if config != nil {
-		s.conf = *config
-		if s.conf.BlockingMode == "custom_ip" {
-			if s.conf.BlockingIPv4 == nil || s.conf.BlockingIPv6 == nil {
-				return fmt.Errorf("dns: invalid custom blocking IP address specified")
-			}
-		}
+// Prepare initializes parameters of s using data from conf.  conf must not be
+// nil.
+func (s *Server) Prepare(conf *ServerConfig) (err error) {
+	s.conf = *conf
+
+	err = validateBlockingMode(s.conf.BlockingMode, s.conf.BlockingIPv4, s.conf.BlockingIPv6)
+	if err != nil {
+		return fmt.Errorf("checking blocking mode: %w", err)
 	}
 
-	// Set default values in the case if nothing is configured
-	// --
 	s.initDefaultSettings()
 
-	// Initialize ipset configuration
-	// --
-	err := s.ipset.init(s.conf.IpsetList)
+	err = s.ipset.init(s.conf.IpsetList)
 	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	log.Debug("inited ipset")
-
-	// Prepare DNS servers settings
-	// --
 	err = s.prepareUpstreamSettings()
 	if err != nil {
-		return err
+		return fmt.Errorf("preparing upstream settings: %w", err)
 	}
 
-	// Create DNS proxy configuration
-	// --
 	var proxyConfig proxy.Config
 	proxyConfig, err = s.createProxyConfig()
 	if err != nil {
-		return err
+		return fmt.Errorf("preparing proxy: %w", err)
 	}
 
-	// Prepare a DNS proxy instance that we use for internal DNS queries
-	// --
-	s.prepareIntlProxy()
-
-	s.access, err = newAccessCtx(s.conf.AllowedClients, s.conf.DisallowedClients, s.conf.BlockedHosts)
+	err = s.prepareInternalProxy()
 	if err != nil {
-		return err
+		return fmt.Errorf("preparing internal proxy: %w", err)
 	}
 
-	// Register web handlers if necessary
-	// --
+	s.access, err = newAccessCtx(
+		s.conf.AllowedClients,
+		s.conf.DisallowedClients,
+		s.conf.BlockedHosts,
+	)
+	if err != nil {
+		return fmt.Errorf("preparing access: %w", err)
+	}
+
 	if !webRegistered && s.conf.HTTPRegister != nil {
 		webRegistered = true
 		s.registerHandlers()
 	}
 
-	// Create the main DNS proxy instance
-	// --
 	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
 
 	err = s.setupResolvers(s.conf.LocalPTRResolvers)
@@ -512,6 +490,61 @@ func (s *Server) Prepare(config *ServerConfig) error {
 	}
 
 	s.recDetector.clear()
+
+	return nil
+}
+
+// validateBlockingMode returns an error if the blocking mode data aren't valid.
+func validateBlockingMode(mode BlockingMode, blockingIPv4, blockingIPv6 net.IP) (err error) {
+	switch mode {
+	case
+		BlockingModeDefault,
+		BlockingModeNXDOMAIN,
+		BlockingModeREFUSED,
+		BlockingModeNullIP:
+		return nil
+	case BlockingModeCustomIP:
+		if blockingIPv4 == nil {
+			return fmt.Errorf("blocking_ipv4 must be set when blocking_mode is custom_ip")
+		} else if blockingIPv6 == nil {
+			return fmt.Errorf("blocking_ipv6 must be set when blocking_mode is custom_ip")
+		}
+
+		return nil
+	default:
+		return fmt.Errorf("bad blocking mode %q", mode)
+	}
+}
+
+// prepareInternalProxy initializes the DNS proxy that is used for internal DNS
+// queries, such at client PTR resolving and updater hostname resolving.
+func (s *Server) prepareInternalProxy() (err error) {
+	conf := &proxy.Config{
+		CacheEnabled:   true,
+		CacheSizeBytes: 4096,
+		UpstreamConfig: s.conf.UpstreamConfig,
+		MaxGoroutines:  int(s.conf.MaxGoroutines),
+	}
+
+	srvConf := s.conf
+	setProxyUpstreamMode(
+		conf,
+		srvConf.AllServers,
+		srvConf.FastestAddr,
+		srvConf.FastestTimeout.Duration,
+	)
+
+	// TODO(a.garipov): Make a proper constructor for proxy.Proxy.
+	p := &proxy.Proxy{
+		Config: *conf,
+	}
+
+	err = p.Init()
+	if err != nil {
+		return err
+	}
+
+	s.internalProxy = p
 
 	return nil
 }
@@ -561,7 +594,7 @@ func (s *Server) proxy() (p *proxy.Proxy) {
 }
 
 // Reconfigure applies the new configuration to the DNS server.
-func (s *Server) Reconfigure(config *ServerConfig) error {
+func (s *Server) Reconfigure(conf *ServerConfig) error {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
@@ -575,7 +608,12 @@ func (s *Server) Reconfigure(config *ServerConfig) error {
 	// We wait for some time and hope that this fd will be closed.
 	time.Sleep(100 * time.Millisecond)
 
-	err = s.Prepare(config)
+	// TODO(a.garipov): This whole piece of API is weird and needs to be remade.
+	if conf == nil {
+		conf = &s.conf
+	}
+
+	err = s.Prepare(conf)
 	if err != nil {
 		return fmt.Errorf("could not reconfigure the server: %w", err)
 	}

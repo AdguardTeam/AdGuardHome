@@ -12,64 +12,30 @@ import (
 	"github.com/miekg/dns"
 )
 
-// filterDNSRewriteResponse handles a single DNS rewrite response entry.
-// It returns the properly constructed answer resource record.
-func (s *Server) filterDNSRewriteResponse(req *dns.Msg, rr rules.RRType, v rules.RRValue) (ans dns.RR, err error) {
-	// TODO(a.garipov): As more types are added, we will probably want to
-	// use a handler-oriented approach here.  So, think of a way to decouple
-	// the answer generation logic from the Server.
-
+// filterDNSRewriteResponse handles a single DNS rewrite response entry.  It
+// returns the properly constructed answer resource record.
+func (s *Server) filterDNSRewriteResponse(
+	req *dns.Msg,
+	rr rules.RRType,
+	v rules.RRValue,
+) (ans dns.RR, err error) {
 	switch rr {
-	case dns.TypeA,
+	case
+		dns.TypeA,
 		dns.TypeAAAA:
-		ip, ok := v.(net.IP)
-		if !ok {
-			return nil, fmt.Errorf("value for rr type %d has type %T, not net.IP", rr, v)
-		}
-
-		if rr == dns.TypeA {
-			return s.genAnswerA(req, ip.To4()), nil
-		}
-
-		return s.genAnswerAAAA(req, ip), nil
-	case dns.TypePTR,
+		return s.ansFromDNSRewriteIP(v, rr, req)
+	case
+		dns.TypePTR,
 		dns.TypeTXT:
-		str, ok := v.(string)
-		if !ok {
-			return nil, fmt.Errorf("value for rr type %d has type %T, not string", rr, v)
-		}
-
-		if rr == dns.TypeTXT {
-			return s.genAnswerTXT(req, []string{str}), nil
-		}
-
-		return s.genAnswerPTR(req, str), nil
+		return s.ansFromDNSRewriteText(v, rr, req)
 	case dns.TypeMX:
-		mx, ok := v.(*rules.DNSMX)
-		if !ok {
-			return nil, fmt.Errorf("value for rr type %d has type %T, not *rules.DNSMX", rr, v)
-		}
-
-		return s.genAnswerMX(req, mx), nil
-	case dns.TypeHTTPS,
+		return s.ansFromDNSRewriteMX(v, rr, req)
+	case
+		dns.TypeHTTPS,
 		dns.TypeSVCB:
-		svcb, ok := v.(*rules.DNSSVCB)
-		if !ok {
-			return nil, fmt.Errorf("value for rr type %d has type %T, not *rules.DNSSVCB", rr, v)
-		}
-
-		if rr == dns.TypeHTTPS {
-			return s.genAnswerHTTPS(req, svcb), nil
-		}
-
-		return s.genAnswerSVCB(req, svcb), nil
+		return s.ansFromDNSRewriteSVCB(v, rr, req)
 	case dns.TypeSRV:
-		srv, ok := v.(*rules.DNSSRV)
-		if !ok {
-			return nil, fmt.Errorf("value for rr type %d has type %T, not *rules.DNSSRV", rr, v)
-		}
-
-		return s.genAnswerSRV(req, srv), nil
+		return s.ansFromDNSRewriteSRV(v, rr, req)
 	default:
 		log.Debug("don't know how to handle dns rr type %d, skipping", rr)
 
@@ -77,9 +43,112 @@ func (s *Server) filterDNSRewriteResponse(req *dns.Msg, rr rules.RRType, v rules
 	}
 }
 
-// filterDNSRewrite handles dnsrewrite filters.  It constructs a DNS
-// response and sets it into d.Res.
-func (s *Server) filterDNSRewrite(req *dns.Msg, res filtering.Result, d *proxy.DNSContext) (err error) {
+// ansFromDNSRewriteIP creates a new answer resource record from the A/AAAA
+// dnsrewrite rule data.
+func (s *Server) ansFromDNSRewriteIP(
+	v rules.RRValue,
+	rr rules.RRType,
+	req *dns.Msg,
+) (ans dns.RR, err error) {
+	ip, ok := v.(net.IP)
+	if !ok {
+		return nil, fmt.Errorf("value for rr type %s has type %T, not net.IP", dns.Type(rr), v)
+	}
+
+	if rr == dns.TypeA {
+		return s.genAnswerA(req, ip.To4()), nil
+	}
+
+	return s.genAnswerAAAA(req, ip), nil
+}
+
+// ansFromDNSRewriteText creates a new answer resource record from the TXT/PTR
+// dnsrewrite rule data.
+func (s *Server) ansFromDNSRewriteText(
+	v rules.RRValue,
+	rr rules.RRType,
+	req *dns.Msg,
+) (ans dns.RR, err error) {
+	str, ok := v.(string)
+	if !ok {
+		return nil, fmt.Errorf("value for rr type %s has type %T, not string", dns.Type(rr), v)
+	}
+
+	if rr == dns.TypeTXT {
+		return s.genAnswerTXT(req, []string{str}), nil
+	}
+
+	return s.genAnswerPTR(req, str), nil
+}
+
+// ansFromDNSRewriteMX creates a new answer resource record from the MX
+// dnsrewrite rule data.
+func (s *Server) ansFromDNSRewriteMX(
+	v rules.RRValue,
+	rr rules.RRType,
+	req *dns.Msg,
+) (ans dns.RR, err error) {
+	mx, ok := v.(*rules.DNSMX)
+	if !ok {
+		return nil, fmt.Errorf(
+			"value for rr type %s has type %T, not *rules.DNSMX",
+			dns.Type(rr),
+			v,
+		)
+	}
+
+	return s.genAnswerMX(req, mx), nil
+}
+
+// ansFromDNSRewriteSVCB creates a new answer resource record from the
+// SVCB/HTTPS dnsrewrite rule data.
+func (s *Server) ansFromDNSRewriteSVCB(
+	v rules.RRValue,
+	rr rules.RRType,
+	req *dns.Msg,
+) (ans dns.RR, err error) {
+	svcb, ok := v.(*rules.DNSSVCB)
+	if !ok {
+		return nil, fmt.Errorf(
+			"value for rr type %s has type %T, not *rules.DNSSVCB",
+			dns.Type(rr),
+			v,
+		)
+	}
+
+	if rr == dns.TypeHTTPS {
+		return s.genAnswerHTTPS(req, svcb), nil
+	}
+
+	return s.genAnswerSVCB(req, svcb), nil
+}
+
+// ansFromDNSRewriteSRV creates a new answer resource record from the SRV
+// dnsrewrite rule data.
+func (s *Server) ansFromDNSRewriteSRV(
+	v rules.RRValue,
+	rr rules.RRType,
+	req *dns.Msg,
+) (dns.RR, error) {
+	srv, ok := v.(*rules.DNSSRV)
+	if !ok {
+		return nil, fmt.Errorf(
+			"value for rr type %s has type %T, not *rules.DNSSRV",
+			dns.Type(rr),
+			v,
+		)
+	}
+
+	return s.genAnswerSRV(req, srv), nil
+}
+
+// filterDNSRewrite handles dnsrewrite filters.  It constructs a DNS response
+// and sets it into pctx.Res.  All parameters must not be nil.
+func (s *Server) filterDNSRewrite(
+	req *dns.Msg,
+	res *filtering.Result,
+	pctx *proxy.DNSContext,
+) (err error) {
 	resp := s.makeResponse(req)
 	dnsrr := res.DNSRewriteResult
 	if dnsrr == nil {
@@ -88,7 +157,7 @@ func (s *Server) filterDNSRewrite(req *dns.Msg, res filtering.Result, d *proxy.D
 
 	resp.Rcode = dnsrr.RCode
 	if resp.Rcode != dns.RcodeSuccess {
-		d.Res = resp
+		pctx.Res = resp
 
 		return nil
 	}
@@ -109,7 +178,7 @@ func (s *Server) filterDNSRewrite(req *dns.Msg, res filtering.Result, d *proxy.D
 		resp.Answer = append(resp.Answer, ans)
 	}
 
-	d.Res = resp
+	pctx.Res = resp
 
 	return nil
 }

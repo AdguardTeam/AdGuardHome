@@ -62,6 +62,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
+			BlockingMode:      BlockingModeDefault,
 			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
 		},
 		ConfigModified: func() {},
@@ -135,6 +136,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
+			BlockingMode:      BlockingModeDefault,
 			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
 		},
 		ConfigModified: func() {},
@@ -164,7 +166,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		wantSet: "",
 	}, {
 		name:    "blocking_mode_bad",
-		wantSet: "blocking_mode: incorrect value",
+		wantSet: "blocking_ipv4 must be set when blocking_mode is custom_ip",
 	}, {
 		name:    "ratelimit",
 		wantSet: "",

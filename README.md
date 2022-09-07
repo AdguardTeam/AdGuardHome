@@ -1,10 +1,14 @@
 &nbsp;
 <p align="center">
-  <img src="https://cdn.adtidy.org/public/Adguard/Common/adguard_home.svg" width="300px" alt="AdGuard Home" />
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="doc/adguard_home_darkmode.svg">
+        <img alt="AdGuard Home" src="doc/adguard_home_lightmode.svg" width="300px">
+    </picture>
 </p>
 <h3 align="center">Privacy protection center for you and your devices</h3>
 <p align="center">
-  Free and open source, powerful network-wide ads & trackers blocking DNS server.
+    Free and open source, powerful network-wide ads & trackers blocking DNS
+    server.
 </p>
 
 <p align="center">
@@ -366,6 +370,7 @@ Here's what you can also do to contribute:
 * [AdGuard Home on GLInet routers](https://forum.gl-inet.com/t/adguardhome-on-gl-routers/10664) by [Gl-Inet](https://gl-inet.com/)
 * [Cloudron app](https://git.cloudron.io/cloudron/adguard-home-app) by [@gramakri](https://github.com/gramakri)
 * [Asuswrt-Merlin-AdGuardHome-Installer](https://github.com/jumpsmm7/Asuswrt-Merlin-AdGuardHome-Installer) by [@jumpsmm7](https://github.com/jumpsmm7) aka [@SomeWhereOverTheRainBow](https://www.snbforums.com/members/somewhereovertherainbow.64179/)
+* [Node.js library](https://github.com/Andrea055/AdguardHomeAPI) by [@Andrea055](https://github.com/Andrea055/)
 
 <a id="acknowledgments"></a>
 ## Acknowledgments

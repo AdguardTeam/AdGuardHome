@@ -1,8 +1,14 @@
 package stats
 
 import (
+	"fmt"
+	"path/filepath"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,4 +29,77 @@ func TestStatsCollector(t *testing.T) {
 			require.Lenf(t, statsData, 30, "i=%d", i)
 		}
 	})
+}
+
+func TestStats_races(t *testing.T) {
+	var r uint32
+	idGen := func() (id uint32) { return atomic.LoadUint32(&r) }
+	conf := Config{
+		UnitID:    idGen,
+		Filename:  filepath.Join(t.TempDir(), "./stats.db"),
+		LimitDays: 1,
+	}
+
+	s, err := New(conf)
+	require.NoError(t, err)
+
+	s.Start()
+	startTime := time.Now()
+	testutil.CleanupAndRequireSuccess(t, s.Close)
+
+	type signal = struct{}
+
+	writeFunc := func(start, fin *sync.WaitGroup, waitCh <-chan unit, i int) {
+		e := Entry{
+			Domain: fmt.Sprintf("example-%d.org", i),
+			Client: fmt.Sprintf("client_%d", i),
+			Result: Result(i)%(resultLast-1) + 1,
+			Time:   uint32(time.Since(startTime).Milliseconds()),
+		}
+
+		start.Done()
+		defer fin.Done()
+
+		<-waitCh
+
+		s.Update(e)
+	}
+	readFunc := func(start, fin *sync.WaitGroup, waitCh <-chan unit) {
+		start.Done()
+		defer fin.Done()
+
+		<-waitCh
+
+		_, _ = s.getData(24)
+	}
+
+	const (
+		roundsNum = 3
+
+		writersNum = 10
+		readersNum = 5
+	)
+
+	for round := 0; round < roundsNum; round++ {
+		atomic.StoreUint32(&r, uint32(round))
+
+		startWG, finWG := &sync.WaitGroup{}, &sync.WaitGroup{}
+		waitCh := make(chan unit)
+
+		for i := 0; i < writersNum; i++ {
+			startWG.Add(1)
+			finWG.Add(1)
+			go writeFunc(startWG, finWG, waitCh, i)
+		}
+
+		for i := 0; i < readersNum; i++ {
+			startWG.Add(1)
+			finWG.Add(1)
+			go readFunc(startWG, finWG, waitCh)
+		}
+
+		startWG.Wait()
+		close(waitCh)
+		finWG.Wait()
+	}
 }

@@ -203,9 +203,9 @@ var config = &configuration{
 		Port:          defaultPortDNS,
 		StatsInterval: 1,
 		FilteringConfig: dnsforward.FilteringConfig{
-			ProtectionEnabled:  true,      // whether or not use any of filtering features
-			BlockingMode:       "default", // mode how to answer filtered requests
-			BlockedResponseTTL: 10,        // in seconds
+			ProtectionEnabled:  true, // whether or not use any of filtering features
+			BlockingMode:       dnsforward.BlockingModeDefault,
+			BlockedResponseTTL: 10, // in seconds
 			Ratelimit:          20,
 			RefuseAny:          true,
 			AllServers:         false,
