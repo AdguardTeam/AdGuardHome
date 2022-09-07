@@ -64,7 +64,8 @@ See also the [v0.107.12 GitHub milestone][ms-v0.107.12].
 - When the DHCP server is enabled, queries for domain names under
   `dhcp.local_domain_name` not pointing to real DHCP client hostnames are now
   processed by filters ([#4865]).
-- The DHCPREQUEST handling is now closer to the [RFC 2131][rfc-2131] ([#4863]).
+- The `DHCPREQUEST` handling is now closer to the [RFC 2131][rfc-2131]
+  ([#4863]).
 - The internal DNS client, used to resolve hostnames of external clients and
   also during automatic updates, now respects the upstream mode settings for the
   main DNS client ([#4403]).
@@ -79,8 +80,8 @@ See also the [v0.107.12 GitHub milestone][ms-v0.107.12].
 
 ### Fixed
 
-- The length of the DHCP server's response is now at least 576 bytes as per RFC
-  2131 recommendation ([#4337]).
+- The length of the DHCP server's response is now at least 576 bytes as per
+  [RFC 2131][rfc-2131] recommendation ([#4337]).
 - Dynamic leases created with empty hostnames ([#4745]).
 - Unnecessary logging of non-critical statistics errors ([#4850]).
 
