@@ -58,6 +58,8 @@ and this project adheres to
 
 ### Fixed
 
+- The length of the DHCP server's response is now at least 576 bytes as per RFC
+  2131 recommendation ([#4337]).
 - Dynamic leases created with empty hostnames ([#4745]).
 - Unnecessary logging of non-critical statistics errors ([#4850]).
 
