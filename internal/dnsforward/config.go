@@ -131,6 +131,10 @@ type FilteringConfig struct {
 	//   DOMAIN[,DOMAIN].../IPSET_NAME
 	//
 	IpsetList []string `yaml:"ipset"`
+
+	// IpsetListFileName, if set, points to the file with ipset configuration.
+	// The format is the same as in IpsetList.
+	IpsetListFileName string `yaml:"ipset_file"`
 }
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
@@ -500,4 +504,23 @@ func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, er
 		return nil, fmt.Errorf("invalid SNI")
 	}
 	return &s.conf.cert, nil
+}
+
+// prepareIpsetListSettings - prepares ipset list settings
+func (s *Server) prepareIpsetListSettings() error {
+	var ipsets []string
+	if s.conf.IpsetListFileName != "" {
+		data, err := os.ReadFile(s.conf.IpsetListFileName)
+		if err != nil {
+			return err
+		}
+
+		ipsets = stringutil.SplitTrimmed(string(data), "\n")
+
+		log.Debug("dns: using %d ipset list from file %s", len(ipsets), s.conf.IpsetListFileName)
+	} else {
+		ipsets = s.conf.IpsetList
+	}
+
+	return s.ipset.init(ipsets)
 }

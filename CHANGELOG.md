@@ -31,6 +31,12 @@ and this project adheres to
 See also the [v0.107.13 GitHub milestone][ms-v0.107.13].
 
 [ms-v0.107.13]:   https://github.com/AdguardTeam/AdGuardHome/milestone/49?closed=1
+
+### Added
+
+- The `dns.ipset_file` property in the configuration file now allows you to
+  load the ipset list from a separate file instead of setting all upstreams
+  in AdGuard Home settings.  ([#4686]).
 -->
 
 
