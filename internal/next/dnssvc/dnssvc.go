@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/v1/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	// TODO(a.garipov): Add a “dnsproxy proxy” package to shield us from changes
 	// and replacement of module dnsproxy.
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -51,6 +51,9 @@ type Service struct {
 	// running is an atomic boolean value.  Keep it the first value in the
 	// struct to ensure atomic alignment.  0 means that the service is not
 	// running, 1 means that it is running.
+	//
+	// TODO(a.garipov): Use [atomic.Bool] in Go 1.19 or get rid of it
+	// completely.
 	running uint64
 
 	proxy      *proxy.Proxy

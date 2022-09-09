@@ -8,8 +8,6 @@ import (
 
 // All Settings Handlers
 
-// TODO(a.garipov): !! Write tests!
-
 // RespGetV1SettingsAll describes the response of the GET /api/v1/settings/all
 // HTTP API.
 type RespGetV1SettingsAll struct {
@@ -40,6 +38,7 @@ func (svc *Service) handleGetSettingsAll(w http.ResponseWriter, r *http.Request)
 			Addresses:       httpConf.Addresses,
 			SecureAddresses: httpConf.SecureAddresses,
 			Timeout:         timeutil.Duration{Duration: httpConf.Timeout},
+			ForceHTTPS:      httpConf.ForceHTTPS,
 		},
 	})
 }

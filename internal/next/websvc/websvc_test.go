@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
-	"github.com/AdguardTeam/AdGuardHome/internal/v1/dnssvc"
-	"github.com/AdguardTeam/AdGuardHome/internal/v1/websvc"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

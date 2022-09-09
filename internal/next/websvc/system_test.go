@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/v1/websvc"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

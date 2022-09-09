@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/AdGuardHome/internal/v1/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/golibs/log"
 )
 

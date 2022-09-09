@@ -36,6 +36,7 @@ type HTTPAPIHTTPSettings struct {
 	Addresses       []netip.AddrPort  `json:"addresses"`
 	SecureAddresses []netip.AddrPort  `json:"secure_addresses"`
 	Timeout         timeutil.Duration `json:"timeout"`
+	ForceHTTPS      bool              `json:"force_https"`
 }
 
 // handlePatchSettingsHTTP is the handler for the PATCH /api/v1/settings/http
@@ -65,6 +66,7 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 		Addresses:       newConf.Addresses,
 		SecureAddresses: newConf.SecureAddresses,
 		Timeout:         timeutil.Duration{Duration: newConf.Timeout},
+		ForceHTTPS:      newConf.ForceHTTPS,
 	})
 
 	cancelUpd := func() {}

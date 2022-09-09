@@ -1,5 +1,8 @@
 // Package websvc contains the AdGuard Home HTTP API service.
 //
+// NOTE: Packages other than cmd must not import this package, as it imports
+// most other packages.
+//
 // TODO(a.garipov): Add tests.
 package websvc
 
@@ -14,8 +17,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/v1/agh"
-	"github.com/AdguardTeam/AdGuardHome/internal/v1/dnssvc"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	httptreemux "github.com/dimfeld/httptreemux/v5"
