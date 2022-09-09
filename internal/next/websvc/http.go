@@ -9,12 +9,9 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // HTTP Settings Handlers
-
-// TODO(a.garipov): !! Write tests!
 
 // ReqPatchSettingsHTTP describes the request to the PATCH /api/v1/settings/http
 // HTTP API.
@@ -23,9 +20,9 @@ type ReqPatchSettingsHTTP struct {
 	//
 	// TODO(a.garipov): Add wait time.
 
-	Addresses       []netip.AddrPort  `json:"addresses"`
-	SecureAddresses []netip.AddrPort  `json:"secure_addresses"`
-	Timeout         timeutil.Duration `json:"timeout"`
+	Addresses       []netip.AddrPort `json:"addresses"`
+	SecureAddresses []netip.AddrPort `json:"secure_addresses"`
+	Timeout         JSONDuration     `json:"timeout"`
 }
 
 // HTTPAPIHTTPSettings are the HTTP settings as used by the HTTP API.  See the
@@ -33,10 +30,10 @@ type ReqPatchSettingsHTTP struct {
 type HTTPAPIHTTPSettings struct {
 	// TODO(a.garipov): Add more as we go.
 
-	Addresses       []netip.AddrPort  `json:"addresses"`
-	SecureAddresses []netip.AddrPort  `json:"secure_addresses"`
-	Timeout         timeutil.Duration `json:"timeout"`
-	ForceHTTPS      bool              `json:"force_https"`
+	Addresses       []netip.AddrPort `json:"addresses"`
+	SecureAddresses []netip.AddrPort `json:"secure_addresses"`
+	Timeout         JSONDuration     `json:"timeout"`
+	ForceHTTPS      bool             `json:"force_https"`
 }
 
 // handlePatchSettingsHTTP is the handler for the PATCH /api/v1/settings/http
@@ -58,14 +55,14 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 		TLS:             svc.tls,
 		Addresses:       req.Addresses,
 		SecureAddresses: req.SecureAddresses,
-		Timeout:         req.Timeout.Duration,
+		Timeout:         time.Duration(req.Timeout),
 		ForceHTTPS:      svc.forceHTTPS,
 	}
 
 	writeJSONResponse(w, r, &HTTPAPIHTTPSettings{
 		Addresses:       newConf.Addresses,
 		SecureAddresses: newConf.SecureAddresses,
-		Timeout:         timeutil.Duration{Duration: newConf.Timeout},
+		Timeout:         JSONDuration(newConf.Timeout),
 		ForceHTTPS:      newConf.ForceHTTPS,
 	})
 

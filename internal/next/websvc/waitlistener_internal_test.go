@@ -20,12 +20,8 @@ func TestWaitListener_Accept(t *testing.T) {
 
 			return nil, nil
 		},
-		OnAddr: func() (addr net.Addr) {
-			panic("not implemented")
-		},
-		OnClose: func() (err error) {
-			panic("not implemented")
-		},
+		OnAddr:  func() (addr net.Addr) { panic("not implemented") },
+		OnClose: func() (err error) { panic("not implemented") },
 	}
 
 	wg := &sync.WaitGroup{}

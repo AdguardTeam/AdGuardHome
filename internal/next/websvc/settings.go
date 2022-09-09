@@ -2,8 +2,6 @@ package websvc
 
 import (
 	"net/http"
-
-	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // All Settings Handlers
@@ -32,12 +30,12 @@ func (svc *Service) handleGetSettingsAll(w http.ResponseWriter, r *http.Request)
 			Addresses:        dnsConf.Addresses,
 			BootstrapServers: dnsConf.BootstrapServers,
 			UpstreamServers:  dnsConf.UpstreamServers,
-			UpstreamTimeout:  timeutil.Duration{Duration: dnsConf.UpstreamTimeout},
+			UpstreamTimeout:  JSONDuration(dnsConf.UpstreamTimeout),
 		},
 		HTTP: &HTTPAPIHTTPSettings{
 			Addresses:       httpConf.Addresses,
 			SecureAddresses: httpConf.SecureAddresses,
-			Timeout:         timeutil.Duration{Duration: httpConf.Timeout},
+			Timeout:         JSONDuration(httpConf.Timeout),
 			ForceHTTPS:      httpConf.ForceHTTPS,
 		},
 	})

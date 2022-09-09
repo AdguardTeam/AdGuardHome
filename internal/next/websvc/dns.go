@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/netip"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
-	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // DNS Settings Handlers
@@ -19,10 +19,10 @@ import (
 type ReqPatchSettingsDNS struct {
 	// TODO(a.garipov): Add more as we go.
 
-	Addresses        []netip.AddrPort  `json:"addresses"`
-	BootstrapServers []string          `json:"bootstrap_servers"`
-	UpstreamServers  []string          `json:"upstream_servers"`
-	UpstreamTimeout  timeutil.Duration `json:"upstream_timeout"`
+	Addresses        []netip.AddrPort `json:"addresses"`
+	BootstrapServers []string         `json:"bootstrap_servers"`
+	UpstreamServers  []string         `json:"upstream_servers"`
+	UpstreamTimeout  JSONDuration     `json:"upstream_timeout"`
 }
 
 // HTTPAPIDNSSettings are the DNS settings as used by the HTTP API.  See the
@@ -30,10 +30,10 @@ type ReqPatchSettingsDNS struct {
 type HTTPAPIDNSSettings struct {
 	// TODO(a.garipov): Add more as we go.
 
-	Addresses        []netip.AddrPort  `json:"addresses"`
-	BootstrapServers []string          `json:"bootstrap_servers"`
-	UpstreamServers  []string          `json:"upstream_servers"`
-	UpstreamTimeout  timeutil.Duration `json:"upstream_timeout"`
+	Addresses        []netip.AddrPort `json:"addresses"`
+	BootstrapServers []string         `json:"bootstrap_servers"`
+	UpstreamServers  []string         `json:"upstream_servers"`
+	UpstreamTimeout  JSONDuration     `json:"upstream_timeout"`
 }
 
 // handlePatchSettingsDNS is the handler for the PATCH /api/v1/settings/dns HTTP
@@ -58,7 +58,7 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 		Addresses:        req.Addresses,
 		BootstrapServers: req.BootstrapServers,
 		UpstreamServers:  req.UpstreamServers,
-		UpstreamTimeout:  req.UpstreamTimeout.Duration,
+		UpstreamTimeout:  time.Duration(req.UpstreamTimeout),
 	}
 
 	ctx := r.Context()
@@ -81,6 +81,6 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 		Addresses:        newConf.Addresses,
 		BootstrapServers: newConf.BootstrapServers,
 		UpstreamServers:  newConf.UpstreamServers,
-		UpstreamTimeout:  timeutil.Duration{Duration: newConf.UpstreamTimeout},
+		UpstreamTimeout:  JSONDuration(newConf.UpstreamTimeout),
 	})
 }

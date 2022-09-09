@@ -13,19 +13,54 @@ import (
 
 // JSON Utilities
 
-// jsonTime is a time.Time that can be decoded from JSON and encoded into JSON
-// according to our API conventions.
-type jsonTime time.Time
+// JSONDuration is a time.Duration that can be decoded from JSON and encoded
+// into JSON according to our API conventions.
+type JSONDuration time.Duration
 
 // type check
-var _ json.Marshaler = jsonTime{}
+var _ json.Marshaler = JSONDuration(0)
+
+// MarshalJSON implements the json.Marshaler interface for JSONDuration.  err is
+// always nil.
+func (d JSONDuration) MarshalJSON() (b []byte, err error) {
+	msec := float64(time.Duration(d)) / nsecPerMsec
+	b = strconv.AppendFloat(nil, msec, 'f', -1, 64)
+
+	return b, nil
+}
+
+// type check
+var _ json.Unmarshaler = (*JSONDuration)(nil)
+
+// UnmarshalJSON implements the json.Marshaler interface for *JSONDuration.
+func (d *JSONDuration) UnmarshalJSON(b []byte) (err error) {
+	if d == nil {
+		return fmt.Errorf("json duration is nil")
+	}
+
+	msec, err := strconv.ParseFloat(string(b), 64)
+	if err != nil {
+		return fmt.Errorf("parsing json time: %w", err)
+	}
+
+	*d = JSONDuration(int64(msec * nsecPerMsec))
+
+	return nil
+}
+
+// JSONTime is a time.Time that can be decoded from JSON and encoded into JSON
+// according to our API conventions.
+type JSONTime time.Time
+
+// type check
+var _ json.Marshaler = JSONTime{}
 
 // nsecPerMsec is the number of nanoseconds in a millisecond.
 const nsecPerMsec = float64(time.Millisecond / time.Nanosecond)
 
-// MarshalJSON implements the json.Marshaler interface for jsonTime.  err is
+// MarshalJSON implements the json.Marshaler interface for JSONTime.  err is
 // always nil.
-func (t jsonTime) MarshalJSON() (b []byte, err error) {
+func (t JSONTime) MarshalJSON() (b []byte, err error) {
 	msec := float64(time.Time(t).UnixNano()) / nsecPerMsec
 	b = strconv.AppendFloat(nil, msec, 'f', -1, 64)
 
@@ -33,10 +68,10 @@ func (t jsonTime) MarshalJSON() (b []byte, err error) {
 }
 
 // type check
-var _ json.Unmarshaler = (*jsonTime)(nil)
+var _ json.Unmarshaler = (*JSONTime)(nil)
 
-// UnmarshalJSON implements the json.Marshaler interface for *jsonTime.
-func (t *jsonTime) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalJSON implements the json.Marshaler interface for *JSONTime.
+func (t *JSONTime) UnmarshalJSON(b []byte) (err error) {
 	if t == nil {
 		return fmt.Errorf("json time is nil")
 	}
@@ -46,7 +81,7 @@ func (t *jsonTime) UnmarshalJSON(b []byte) (err error) {
 		return fmt.Errorf("parsing json time: %w", err)
 	}
 
-	*t = jsonTime(time.Unix(0, int64(msec*nsecPerMsec)).UTC())
+	*t = JSONTime(time.Unix(0, int64(msec*nsecPerMsec)).UTC())
 
 	return nil
 }

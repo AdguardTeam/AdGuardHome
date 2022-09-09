@@ -1,7 +1,9 @@
 package websvc_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/netip"
@@ -113,6 +115,9 @@ func newTestServer(
 	return svc, c.Addresses[0]
 }
 
+// jobj is a utility alias for JSON objects.
+type jobj map[string]any
+
 // httpGet is a helper that performs an HTTP GET request and returns the body of
 // the response as well as checks that the status code is correct.
 //
@@ -121,6 +126,35 @@ func httpGet(t testing.TB, u *url.URL, wantCode int) (body []byte) {
 	t.Helper()
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoErrorf(t, err, "creating req")
+
+	httpCli := &http.Client{
+		Timeout: testTimeout,
+	}
+	resp, err := httpCli.Do(req)
+	require.NoErrorf(t, err, "performing req")
+	require.Equal(t, wantCode, resp.StatusCode)
+
+	testutil.CleanupAndRequireSuccess(t, resp.Body.Close)
+
+	body, err = io.ReadAll(resp.Body)
+	require.NoErrorf(t, err, "reading body")
+
+	return body
+}
+
+// httpPatch is a helper that performs an HTTP PATCH request with JSON-encoded
+// reqBody as the request body and returns the body of the response as well as
+// checks that the status code is correct.
+//
+// TODO(a.garipov): Add helpers for other methods.
+func httpPatch(t testing.TB, u *url.URL, reqBody any, wantCode int) (body []byte) {
+	t.Helper()
+
+	b, err := json.Marshal(reqBody)
+	require.NoErrorf(t, err, "marshaling reqBody")
+
+	req, err := http.NewRequest(http.MethodPatch, u.String(), bytes.NewReader(b))
 	require.NoErrorf(t, err, "creating req")
 
 	httpCli := &http.Client{

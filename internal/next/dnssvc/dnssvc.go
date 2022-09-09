@@ -173,7 +173,11 @@ func (svc *Service) Start() (err error) {
 		// TODO(a.garipov): [proxy.Proxy.Start] doesn't actually have any way to
 		// tell when all servers are actually up, so at best this is merely an
 		// assumption.
-		atomic.StoreUint64(&svc.running, 1)
+		if err != nil {
+			atomic.StoreUint64(&svc.running, 0)
+		} else {
+			atomic.StoreUint64(&svc.running, 1)
+		}
 	}()
 
 	return svc.proxy.Start()
