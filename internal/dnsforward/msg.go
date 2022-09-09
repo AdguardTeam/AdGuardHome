@@ -37,66 +37,73 @@ func ipsFromRules(resRules []*filtering.ResultRule) (ips []net.IP) {
 	return ips
 }
 
-// genDNSFilterMessage generates a DNS message corresponding to the filtering result
-func (s *Server) genDNSFilterMessage(d *proxy.DNSContext, result *filtering.Result) *dns.Msg {
-	m := d.Req
-
-	if m.Question[0].Qtype != dns.TypeA && m.Question[0].Qtype != dns.TypeAAAA {
+// genDNSFilterMessage generates a filtered response to req for the filtering
+// result res.
+func (s *Server) genDNSFilterMessage(
+	dctx *proxy.DNSContext,
+	res *filtering.Result,
+) (resp *dns.Msg) {
+	req := dctx.Req
+	if qt := req.Question[0].Qtype; qt != dns.TypeA && qt != dns.TypeAAAA {
 		if s.conf.BlockingMode == BlockingModeNullIP {
-			return s.makeResponse(m)
+			return s.makeResponse(req)
 		}
-		return s.genNXDomain(m)
+
+		return s.genNXDomain(req)
 	}
 
-	ips := ipsFromRules(result.Rules)
-	switch result.Reason {
+	switch res.Reason {
 	case filtering.FilteredSafeBrowsing:
-		return s.genBlockedHost(m, s.conf.SafeBrowsingBlockHost, d)
+		return s.genBlockedHost(req, s.conf.SafeBrowsingBlockHost, dctx)
 	case filtering.FilteredParental:
-		return s.genBlockedHost(m, s.conf.ParentalBlockHost, d)
+		return s.genBlockedHost(req, s.conf.ParentalBlockHost, dctx)
 	default:
-		// If the query was filtered by "Safe search", filtering also must return
-		// the IP address that must be used in response.
-		// In this case regardless of the filtering method, we should return it
-		if result.Reason == filtering.FilteredSafeSearch && len(ips) > 0 {
-			return s.genResponseWithIPs(m, ips)
+		// If the query was filtered by Safe Search, filtering also must return
+		// the IP addresses that must be used in response.  Return them
+		// regardless of the filtering method.
+		ips := ipsFromRules(res.Rules)
+		if res.Reason == filtering.FilteredSafeSearch && len(ips) > 0 {
+			return s.genResponseWithIPs(req, ips)
 		}
 
-		switch s.conf.BlockingMode {
-		case BlockingModeCustomIP:
-			switch m.Question[0].Qtype {
-			case dns.TypeA:
-				return s.genARecord(m, s.conf.BlockingIPv4)
-			case dns.TypeAAAA:
-				return s.genAAAARecord(m, s.conf.BlockingIPv6)
-			default:
-				// Generally shouldn't happen, since the types
-				// are checked above.
-				log.Error(
-					"dns: invalid msg type %d for blocking mode %s",
-					m.Question[0].Qtype,
-					s.conf.BlockingMode,
-				)
+		return s.genForBlockingMode(req, ips)
+	}
+}
 
-				return s.makeResponse(m)
-			}
-		case BlockingModeDefault:
-			if len(ips) > 0 {
-				return s.genResponseWithIPs(m, ips)
-			}
-
-			return s.makeResponseNullIP(m)
-		case BlockingModeNullIP:
-			return s.makeResponseNullIP(m)
-		case BlockingModeNXDOMAIN:
-			return s.genNXDomain(m)
-		case BlockingModeREFUSED:
-			return s.makeResponseREFUSED(m)
+// genForBlockingMode generates a filtered response to req based on the server's
+// blocking mode.
+func (s *Server) genForBlockingMode(req *dns.Msg, ips []net.IP) (resp *dns.Msg) {
+	qt := req.Question[0].Qtype
+	switch m := s.conf.BlockingMode; m {
+	case BlockingModeCustomIP:
+		switch qt {
+		case dns.TypeA:
+			return s.genARecord(req, s.conf.BlockingIPv4)
+		case dns.TypeAAAA:
+			return s.genAAAARecord(req, s.conf.BlockingIPv6)
 		default:
-			log.Error("dns: invalid blocking mode %q", s.conf.BlockingMode)
+			// Generally shouldn't happen, since the types are checked in
+			// genDNSFilterMessage.
+			log.Error("dns: invalid msg type %s for blocking mode %s", dns.Type(qt), m)
 
-			return s.makeResponse(m)
+			return s.makeResponse(req)
 		}
+	case BlockingModeDefault:
+		if len(ips) > 0 {
+			return s.genResponseWithIPs(req, ips)
+		}
+
+		return s.makeResponseNullIP(req)
+	case BlockingModeNullIP:
+		return s.makeResponseNullIP(req)
+	case BlockingModeNXDOMAIN:
+		return s.genNXDomain(req)
+	case BlockingModeREFUSED:
+		return s.makeResponseREFUSED(req)
+	default:
+		log.Error("dns: invalid blocking mode %q", s.conf.BlockingMode)
+
+		return s.makeResponse(req)
 	}
 }
 

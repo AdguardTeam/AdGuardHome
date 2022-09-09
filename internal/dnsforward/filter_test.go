@@ -45,8 +45,7 @@ func TestHandleDNSRequest_filterDNSResponse(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	s.conf = forwardConf
-	err = s.Prepare(nil)
+	err = s.Prepare(&forwardConf)
 	require.NoError(t, err)
 
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
