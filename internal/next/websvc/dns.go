@@ -12,8 +12,6 @@ import (
 
 // DNS Settings Handlers
 
-// TODO(a.garipov): !! Write tests!
-
 // ReqPatchSettingsDNS describes the request to the PATCH /api/v1/settings/dns
 // HTTP API.
 type ReqPatchSettingsDNS struct {
@@ -49,7 +47,7 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		writeHTTPError(w, r, fmt.Errorf("decoding: %w", err))
+		writeJSONErrorResponse(w, r, fmt.Errorf("decoding: %w", err))
 
 		return
 	}
@@ -64,7 +62,7 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 	err = svc.confMgr.UpdateDNS(ctx, newConf)
 	if err != nil {
-		writeHTTPError(w, r, fmt.Errorf("updating: %w", err))
+		writeJSONErrorResponse(w, r, fmt.Errorf("updating: %w", err))
 
 		return
 	}
@@ -72,12 +70,12 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 	newSvc := svc.confMgr.DNS()
 	err = newSvc.Start()
 	if err != nil {
-		writeHTTPError(w, r, fmt.Errorf("starting new service: %w", err))
+		writeJSONErrorResponse(w, r, fmt.Errorf("starting new service: %w", err))
 
 		return
 	}
 
-	writeJSONResponse(w, r, &HTTPAPIDNSSettings{
+	writeJSONOKResponse(w, r, &HTTPAPIDNSSettings{
 		Addresses:        newConf.Addresses,
 		BootstrapServers: newConf.BootstrapServers,
 		UpstreamServers:  newConf.UpstreamServers,

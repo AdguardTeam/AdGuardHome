@@ -45,7 +45,7 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		writeHTTPError(w, r, fmt.Errorf("decoding: %w", err))
+		writeJSONErrorResponse(w, r, fmt.Errorf("decoding: %w", err))
 
 		return
 	}
@@ -59,7 +59,7 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 		ForceHTTPS:      svc.forceHTTPS,
 	}
 
-	writeJSONResponse(w, r, &HTTPAPIHTTPSettings{
+	writeJSONOKResponse(w, r, &HTTPAPIHTTPSettings{
 		Addresses:       newConf.Addresses,
 		SecureAddresses: newConf.SecureAddresses,
 		Timeout:         JSONDuration(newConf.Timeout),
@@ -81,13 +81,13 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 
 		updErr := svc.confMgr.UpdateWeb(updCtx, newConf)
 		if updErr != nil {
-			writeHTTPError(w, r, fmt.Errorf("updating: %w", updErr))
+			writeJSONErrorResponse(w, r, fmt.Errorf("updating: %w", updErr))
 
 			return
 		}
 
 		// TODO(a.garipov): !! Add some kind of timeout?  Context?
-		var newSvc *Service
+		var newSvc ServiceWithConfig[*Config]
 		for newSvc = svc.confMgr.Web(); newSvc == svc; {
 			log.Debug("websvc: waiting for new websvc to be configured")
 			time.Sleep(1 * time.Second)

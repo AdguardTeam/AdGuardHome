@@ -34,20 +34,20 @@ var _ websvc.ConfigManager = (*configManager)(nil)
 
 // configManager is a [websvc.ConfigManager] for tests.
 type configManager struct {
-	onDNS func() (svc *dnssvc.Service)
-	onWeb func() (svc *websvc.Service)
+	onDNS func() (svc websvc.ServiceWithConfig[*dnssvc.Config])
+	onWeb func() (svc websvc.ServiceWithConfig[*websvc.Config])
 
 	onUpdateDNS func(ctx context.Context, c *dnssvc.Config) (err error)
 	onUpdateWeb func(ctx context.Context, c *websvc.Config) (err error)
 }
 
 // DNS implements the [websvc.ConfigManager] interface for *configManager.
-func (m *configManager) DNS() (svc *dnssvc.Service) {
+func (m *configManager) DNS() (svc websvc.ServiceWithConfig[*dnssvc.Config]) {
 	return m.onDNS()
 }
 
 // Web implements the [websvc.ConfigManager] interface for *configManager.
-func (m *configManager) Web() (svc *websvc.Service) {
+func (m *configManager) Web() (svc websvc.ServiceWithConfig[*websvc.Config]) {
 	return m.onWeb()
 }
 
@@ -64,8 +64,8 @@ func (m *configManager) UpdateWeb(ctx context.Context, c *websvc.Config) (err er
 // newConfigManager returns a *configManager all methods of which panic.
 func newConfigManager() (m *configManager) {
 	return &configManager{
-		onDNS: func() (svc *dnssvc.Service) { panic("not implemented") },
-		onWeb: func() (svc *websvc.Service) { panic("not implemented") },
+		onDNS: func() (svc websvc.ServiceWithConfig[*dnssvc.Config]) { panic("not implemented") },
+		onWeb: func() (svc websvc.ServiceWithConfig[*websvc.Config]) { panic("not implemented") },
 		onUpdateDNS: func(_ context.Context, _ *dnssvc.Config) (err error) {
 			panic("not implemented")
 		},

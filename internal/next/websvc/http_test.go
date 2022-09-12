@@ -24,7 +24,7 @@ func TestService_HandlePatchSettingsHTTP(t *testing.T) {
 	}
 
 	confMgr := newConfigManager()
-	confMgr.onWeb = func() (c *websvc.Service) {
+	confMgr.onWeb = func() (s websvc.ServiceWithConfig[*websvc.Config]) {
 		return websvc.New(&websvc.Config{
 			TLS: &tls.Config{
 				Certificates: []tls.Certificate{{}},
@@ -50,7 +50,7 @@ func TestService_HandlePatchSettingsHTTP(t *testing.T) {
 		"addresses":        wantWeb.Addresses,
 		"secure_addresses": wantWeb.SecureAddresses,
 		"timeout":          wantWeb.Timeout,
-		"ForceHTTPS":       wantWeb.ForceHTTPS,
+		"force_https":      wantWeb.ForceHTTPS,
 	}
 
 	respBody := httpPatch(t, u, req, http.StatusOK)

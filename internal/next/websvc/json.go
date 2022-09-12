@@ -3,7 +3,6 @@ package websvc
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -87,13 +86,23 @@ func (t *JSONTime) UnmarshalJSON(b []byte) (err error) {
 	return nil
 }
 
-// writeJSONResponse encodes v into w and logs any errors it encounters.  r is
-// used to get additional information from the request.
-func writeJSONResponse(w http.ResponseWriter, r *http.Request, v any) {
+// writeJSONOKResponse writes headers with the code 200 OK, encodes v into w,
+// and logs any errors it encounters.  r is used to get additional information
+// from the request.
+func writeJSONOKResponse(w http.ResponseWriter, r *http.Request, v any) {
+	writeJSONResponse(w, r, v, http.StatusOK)
+}
+
+// writeJSONResponse writes headers with code, encodes v into w, and logs any
+// errors it encounters.  r is used to get additional information from the
+// request.
+func writeJSONResponse(w http.ResponseWriter, r *http.Request, v any, code int) {
 	// TODO(a.garipov): Put some of these to a middleware.
 	h := w.Header()
 	h.Set(aghhttp.HdrNameContentType, aghhttp.HdrValApplicationJSON)
 	h.Set(aghhttp.HdrNameServer, aghhttp.UserAgent())
+
+	w.WriteHeader(code)
 
 	err := json.NewEncoder(w).Encode(v)
 	if err != nil {
@@ -101,15 +110,34 @@ func writeJSONResponse(w http.ResponseWriter, r *http.Request, v any) {
 	}
 }
 
-// writeHTTPError is a helper for logging and writing HTTP errors.
+// ErrorCode is the error code as used by the HTTP API.  See the ErrorCode
+// definition in the OpenAPI specification.
+type ErrorCode string
+
+// ErrorCode constants.
 //
-// TODO(a.garipov): Improve codes, and add JSON error codes.
-func writeHTTPError(w http.ResponseWriter, r *http.Request, err error) {
+// TODO(a.garipov): Expand and document codes.
+const (
+	// ErrorCodeTMP000 is the temporary error code used for all errors.
+	ErrorCodeTMP000 = ""
+)
+
+// HTTPAPIErrorResp is the error response as used by the HTTP API.  See the
+// BadRequestResp, InternalServerErrorResp, and similar objects in the OpenAPI
+// specification.
+type HTTPAPIErrorResp struct {
+	Code ErrorCode `json:"code"`
+	Msg  string    `json:"msg"`
+}
+
+// writeJSONErrorResponse encodes err as a JSON error into w, and logs any
+// errors it encounters.  r is used to get additional information from the
+// request.
+func writeJSONErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	log.Error("websvc: %s %s: %s", r.Method, r.URL.Path, err)
 
-	w.WriteHeader(http.StatusUnprocessableEntity)
-	_, werr := io.WriteString(w, err.Error())
-	if werr != nil {
-		log.Debug("websvc: writing error resp to %s %s: %s", r.Method, r.URL.Path, werr)
-	}
+	writeJSONResponse(w, r, &HTTPAPIErrorResp{
+		Code: ErrorCodeTMP000,
+		Msg:  err.Error(),
+	}, http.StatusUnprocessableEntity)
 }

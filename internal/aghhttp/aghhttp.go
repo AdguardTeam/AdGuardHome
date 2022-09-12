@@ -33,5 +33,5 @@ func Error(r *http.Request, w http.ResponseWriter, code int, format string, args
 // UserAgent returns the ID of the service as a User-Agent string.  It can also
 // be used as the value of the Server HTTP header.
 func UserAgent() (ua string) {
-	return fmt.Sprintf("AdGuardDNS/%s", version.Version())
+	return fmt.Sprintf("AdGuardHome/%s", version.Version())
 }
