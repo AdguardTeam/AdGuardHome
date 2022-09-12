@@ -17,9 +17,9 @@ and this project adheres to
 
 ### Added
 
-- The new optional `dns.ipset_file` property in the configuration file allows
-  loading the `ipset` list from a file, just like `dns.upstream_dns_file` does
-  for upstream servers ([#4686]).
+- The new optional `dns.ipset_file` property in the configuration file.  It
+  allows loading the `ipset` list from a file, just like `dns.upstream_dns_file`
+  does for upstream servers ([#4686]).
 
 ### Changed
 
