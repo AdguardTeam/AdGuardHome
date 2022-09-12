@@ -8,10 +8,14 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 )
 
 // JSON Utilities
+
+// nsecPerMsec is the number of nanoseconds in a millisecond.
+const nsecPerMsec = float64(time.Millisecond / time.Nanosecond)
 
 // JSONDuration is a time.Duration that can be decoded from JSON and encoded
 // into JSON according to our API conventions.
@@ -55,9 +59,6 @@ type JSONTime time.Time
 // type check
 var _ json.Marshaler = JSONTime{}
 
-// nsecPerMsec is the number of nanoseconds in a millisecond.
-const nsecPerMsec = float64(time.Millisecond / time.Nanosecond)
-
 // MarshalJSON implements the json.Marshaler interface for JSONTime.  err is
 // always nil.
 func (t JSONTime) MarshalJSON() (b []byte, err error) {
@@ -88,7 +89,12 @@ func (t *JSONTime) UnmarshalJSON(b []byte) (err error) {
 
 // writeJSONResponse encodes v into w and logs any errors it encounters.  r is
 // used to get additional information from the request.
-func writeJSONResponse(w io.Writer, r *http.Request, v any) {
+func writeJSONResponse(w http.ResponseWriter, r *http.Request, v any) {
+	// TODO(a.garipov): Put some of these to a middleware.
+	h := w.Header()
+	h.Set(aghhttp.HdrNameContentType, aghhttp.HdrValApplicationJSON)
+	h.Set(aghhttp.HdrNameServer, aghhttp.UserAgent())
+
 	err := json.NewEncoder(w).Encode(v)
 	if err != nil {
 		log.Error("websvc: writing resp to %s %s: %s", r.Method, r.URL.Path, err)
