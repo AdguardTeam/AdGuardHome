@@ -15,6 +15,12 @@ and this project adheres to
 ## [v0.108.0] - 2022-12-01 (APPROX.)
 -->
 
+### Added
+
+- The new optional `dns.ipset_file` property in the configuration file allows
+  loading the `ipset` list from a file, just like `dns.upstream_dns_file` does
+  for upstream servers ([#4686]).
+
 ### Changed
 
 - The minimum DHCP message size is reassigned back to BOOTP's constraint of 300
@@ -26,6 +32,7 @@ and this project adheres to
   operation have been disabled ([#2993]).
 
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+[#4686]: https://github.com/AdguardTeam/AdGuardHome/issues/4686
 [#4904]: https://github.com/AdguardTeam/AdGuardHome/issues/4904
 
 
@@ -37,12 +44,6 @@ and this project adheres to
 See also the [v0.107.13 GitHub milestone][ms-v0.107.13].
 
 [ms-v0.107.13]:   https://github.com/AdguardTeam/AdGuardHome/milestone/49?closed=1
-
-### Added
-
-- The `dns.ipset_file` property in the configuration file now allows you to
-  load the ipset list from a separate file instead of setting all upstreams
-  in AdGuard Home settings.  ([#4686]).
 -->
 
 

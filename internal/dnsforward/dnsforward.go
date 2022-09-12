@@ -449,7 +449,7 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 	err = s.prepareIpsetListSettings()
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		return err
+		return fmt.Errorf("preparing ipset settings: %w", err)
 	}
 
 	err = s.prepareUpstreamSettings()

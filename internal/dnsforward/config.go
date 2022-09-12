@@ -128,12 +128,13 @@ type FilteringConfig struct {
 	// IpsetList is the ipset configuration that allows AdGuard Home to add
 	// IP addresses of the specified domain names to an ipset list.  Syntax:
 	//
-	//   DOMAIN[,DOMAIN].../IPSET_NAME
+	//	DOMAIN[,DOMAIN].../IPSET_NAME
 	//
+	// This field is ignored if [IpsetListFileName] is set.
 	IpsetList []string `yaml:"ipset"`
 
 	// IpsetListFileName, if set, points to the file with ipset configuration.
-	// The format is the same as in IpsetList.
+	// The format is the same as in [IpsetList].
 	IpsetListFileName string `yaml:"ipset_file"`
 }
 
@@ -404,6 +405,26 @@ func setProxyUpstreamMode(
 	}
 }
 
+// prepareIpsetListSettings reads and prepares the ipset configuration either
+// from a file or from the data in the configuration file.
+func (s *Server) prepareIpsetListSettings() (err error) {
+	fn := s.conf.IpsetListFileName
+	if fn == "" {
+		return s.ipset.init(s.conf.IpsetList)
+	}
+
+	data, err := os.ReadFile(fn)
+	if err != nil {
+		return err
+	}
+
+	ipsets := stringutil.SplitTrimmed(string(data), "\n")
+
+	log.Debug("dns: using %d ipset rules from file %q", len(ipsets), fn)
+
+	return s.ipset.init(ipsets)
+}
+
 // prepareTLS - prepares TLS configuration for the DNS proxy
 func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 	if len(s.conf.CertificateChainData) == 0 || len(s.conf.PrivateKeyData) == 0 {
@@ -504,23 +525,4 @@ func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, er
 		return nil, fmt.Errorf("invalid SNI")
 	}
 	return &s.conf.cert, nil
-}
-
-// prepareIpsetListSettings - prepares ipset list settings
-func (s *Server) prepareIpsetListSettings() error {
-	var ipsets []string
-	if s.conf.IpsetListFileName != "" {
-		data, err := os.ReadFile(s.conf.IpsetListFileName)
-		if err != nil {
-			return err
-		}
-
-		ipsets = stringutil.SplitTrimmed(string(data), "\n")
-
-		log.Debug("dns: using %d ipset list from file %s", len(ipsets), s.conf.IpsetListFileName)
-	} else {
-		ipsets = s.conf.IpsetList
-	}
-
-	return s.ipset.init(ipsets)
 }
