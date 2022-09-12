@@ -1086,12 +1086,6 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 	s.send(peer, conn, req, resp)
 }
 
-// minDHCPMsgSize is the minimum length of the encoded DHCP message in bytes
-// according to RFC-2131.
-//
-// See https://datatracker.ietf.org/doc/html/rfc2131#section-2.
-const minDHCPMsgSize = 576
-
 // send writes resp for peer to conn considering the req's parameters according
 // to RFC-2131.
 //
@@ -1133,16 +1127,6 @@ func (s *v4Server) send(peer net.Addr, conn net.PacketConn, req, resp *dhcpv4.DH
 	}
 
 	pktData := resp.ToBytes()
-	pktLen := len(pktData)
-	if pktLen < minDHCPMsgSize {
-		// Expand the packet to match the minimum DHCP message length.  Although
-		// the dhpcv4 package deals with the BOOTP's lower packet length
-		// constraint, it seems some clients expecting the length being at least
-		// 576 bytes as per RFC 2131 (and an obsolete RFC 1533).
-		//
-		// See https://github.com/AdguardTeam/AdGuardHome/issues/4337.
-		pktData = append(pktData, make([]byte, minDHCPMsgSize-pktLen)...)
-	}
 
 	log.Debug("dhcpv4: sending %d bytes to %s: %s", len(pktData), peer, resp.Summary())
 
