@@ -1,5 +1,4 @@
-//go:build aix || darwin || dragonfly || linux || netbsd || solaris
-// +build aix darwin dragonfly linux netbsd solaris
+//go:build darwin || linux
 
 package dhcpd
 
