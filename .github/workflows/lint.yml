@@ -1,7 +1,7 @@
 'name': 'lint'
 
 'env':
-  'GO_VERSION': '1.18'
+  'GO_VERSION': '1.18.6'
 
 'on':
   'push':
@@ -17,7 +17,7 @@
     'steps':
     - 'uses': 'actions/checkout@v2'
     - 'name': 'Set up Go'
-      'uses': 'actions/setup-go@v2'
+      'uses': 'actions/setup-go@v3'
       'with':
         'go-version': '${{ env.GO_VERSION }}'
     - 'name': 'run-lint'
