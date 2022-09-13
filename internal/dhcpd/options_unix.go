@@ -196,10 +196,10 @@ func parseDHCPOption(s string) (code dhcpv4.OptionCode, val dhcpv4.OptionValue, 
 
 // prepareOptions builds the set of DHCP options according to host requirements
 // document and values from conf.
-func prepareOptions(conf V4ServerConf) (implicit, explicit dhcpv4.Options) {
+func (s *v4Server) prepareOptions() {
 	// Set default values of host configuration parameters listed in Appendix A
 	// of RFC-2131.
-	implicit = dhcpv4.OptionsFromList(
+	s.implicitOpts = dhcpv4.OptionsFromList(
 		// IP-Layer Per Host
 
 		// An Internet host that includes embedded gateway code MUST have a
@@ -375,14 +375,14 @@ func prepareOptions(conf V4ServerConf) (implicit, explicit dhcpv4.Options) {
 
 		// Set the Router Option to working subnet's IP since it's initialized
 		// with the address of the gateway.
-		dhcpv4.OptRouter(conf.subnet.IP),
+		dhcpv4.OptRouter(s.conf.subnet.IP),
 
-		dhcpv4.OptSubnetMask(conf.subnet.Mask),
+		dhcpv4.OptSubnetMask(s.conf.subnet.Mask),
 	)
 
 	// Set values for explicitly configured options.
-	explicit = dhcpv4.Options{}
-	for i, o := range conf.Options {
+	s.explicitOpts = dhcpv4.Options{}
+	for i, o := range s.conf.Options {
 		code, val, err := parseDHCPOption(o)
 		if err != nil {
 			log.Error("dhcpv4: bad option string at index %d: %s", i, err)
@@ -390,17 +390,15 @@ func prepareOptions(conf V4ServerConf) (implicit, explicit dhcpv4.Options) {
 			continue
 		}
 
-		explicit.Update(dhcpv4.Option{Code: code, Value: val})
+		s.explicitOpts.Update(dhcpv4.Option{Code: code, Value: val})
 		// Remove those from the implicit options.
-		delete(implicit, code.Code())
+		delete(s.implicitOpts, code.Code())
 	}
 
-	log.Debug("dhcpv4: implicit options:\n%s", implicit.Summary(nil))
-	log.Debug("dhcpv4: explicit options:\n%s", explicit.Summary(nil))
+	log.Debug("dhcpv4: implicit options:\n%s", s.implicitOpts.Summary(nil))
+	log.Debug("dhcpv4: explicit options:\n%s", s.explicitOpts.Summary(nil))
 
-	if len(explicit) == 0 {
-		explicit = nil
+	if len(s.explicitOpts) == 0 {
+		s.explicitOpts = nil
 	}
-
-	return implicit, explicit
 }

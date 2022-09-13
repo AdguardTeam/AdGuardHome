@@ -53,7 +53,7 @@ type homeContext struct {
 	rdns       *RDNS                // rDNS module
 	whois      *WHOIS               // WHOIS module
 	dnsFilter  *filtering.DNSFilter // DNS filtering module
-	dhcpServer *dhcpd.Server        // DHCP module
+	dhcpServer dhcpd.Interface      // DHCP module
 	auth       *Auth                // HTTP authentication module
 	filters    Filtering            // DNS filtering module
 	web        *Web                 // Web (HTTP, HTTPS) module
@@ -641,14 +641,9 @@ func configureLogger(args options) {
 			log.Fatalf("cannot initialize syslog: %s", err)
 		}
 	} else {
-		logFilePath := filepath.Join(Context.workDir, ls.File)
-		if filepath.IsAbs(ls.File) {
-			logFilePath = ls.File
-		}
-
-		_, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
-		if err != nil {
-			log.Fatalf("cannot create a log file: %s", err)
+		logFilePath := ls.File
+		if !filepath.IsAbs(logFilePath) {
+			logFilePath = filepath.Join(Context.workDir, logFilePath)
 		}
 
 		log.SetOutput(&lumberjack.Logger{

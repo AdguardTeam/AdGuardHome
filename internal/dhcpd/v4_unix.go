@@ -1,5 +1,4 @@
-//go:build aix || darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris
-// +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
+//go:build darwin || freebsd || linux || openbsd
 
 package dhcpd
 
@@ -30,8 +29,9 @@ import (
 //
 // TODO(a.garipov): Think about unifying this and v6Server.
 type v4Server struct {
-	conf V4ServerConf
-	srv  *server4.Server
+	conf *V4ServerConf
+
+	srv *server4.Server
 
 	// implicitOpts are the options listed in Appendix A of RFC 2131 initialized
 	// with default values.  It must not have intersections with [explicitOpts].
@@ -55,9 +55,15 @@ type v4Server struct {
 	leases []*Lease
 }
 
+func (s *v4Server) enabled() (ok bool) {
+	return s.conf != nil && s.conf.Enabled
+}
+
 // WriteDiskConfig4 - write configuration
 func (s *v4Server) WriteDiskConfig4(c *V4ServerConf) {
-	*c = s.conf
+	if s.conf != nil {
+		*c = *s.conf
+	}
 }
 
 // WriteDiskConfig6 - write configuration
@@ -114,8 +120,8 @@ func (s *v4Server) validHostnameForClient(cliHostname string, ip net.IP) (hostna
 func (s *v4Server) ResetLeases(leases []*Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
 
-	if !s.conf.Enabled {
-		return
+	if s.conf == nil {
+		return nil
 	}
 
 	s.leasedOffsets = newBitSet()
@@ -129,12 +135,7 @@ func (s *v4Server) ResetLeases(leases []*Lease) (err error) {
 		err = s.addLease(l)
 		if err != nil {
 			// TODO(a.garipov): Wrap and bubble up the error.
-			log.Error(
-				"dhcpv4: reset: re-adding a lease for %s (%s): %s",
-				l.IP,
-				l.HWAddr,
-				err,
-			)
+			log.Error("dhcpv4: reset: re-adding a lease for %s (%s): %s", l.IP, l.HWAddr, err)
 
 			continue
 		}
@@ -336,10 +337,18 @@ func (s *v4Server) rmLease(lease *Lease) (err error) {
 	return errors.Error("lease not found")
 }
 
+// ErrUnconfigured is returned from the server's method when it requires the
+// server to be configured and it's not.
+const ErrUnconfigured errors.Error = "server is unconfigured"
+
 // AddStaticLease implements the DHCPServer interface for *v4Server.  It is safe
 // for concurrent use.
 func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv4: adding static lease: %w") }()
+
+	if s.conf == nil {
+		return ErrUnconfigured
+	}
 
 	ip := l.IP.To4()
 	if ip == nil {
@@ -413,6 +422,10 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 // RemoveStaticLease removes a static lease.  It is safe for concurrent use.
 func (s *v4Server) RemoveStaticLease(l *Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
+
+	if s.conf == nil {
+		return ErrUnconfigured
+	}
 
 	if len(l.IP) != 4 {
 		return fmt.Errorf("invalid IP")
@@ -1140,7 +1153,7 @@ func (s *v4Server) send(peer net.Addr, conn net.PacketConn, req, resp *dhcpv4.DH
 func (s *v4Server) Start() (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
 
-	if !s.conf.Enabled {
+	if !s.enabled() {
 		return nil
 	}
 
@@ -1232,62 +1245,20 @@ func (s *v4Server) Stop() (err error) {
 }
 
 // Create DHCPv4 server
-func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
-	s := &v4Server{}
-	s.conf = conf
-	s.leaseHosts = stringutil.NewSet()
-
-	// TODO(a.garipov): Don't use a disabled server in other places or just
-	// use an interface.
-	if !conf.Enabled {
-		return s, nil
+func v4Create(conf *V4ServerConf) (srv *v4Server, err error) {
+	s := &v4Server{
+		leaseHosts: stringutil.NewSet(),
 	}
 
-	var routerIP net.IP
-	routerIP, err = tryTo4(s.conf.GatewayIP)
+	err = conf.Validate()
 	if err != nil {
-		return s, fmt.Errorf("dhcpv4: %w", err)
+		// TODO(a.garipov): Don't use a disabled server in other places or just
+		// use an interface.
+		return s, err
 	}
 
-	if s.conf.SubnetMask == nil {
-		return s, fmt.Errorf("dhcpv4: invalid subnet mask: %v", s.conf.SubnetMask)
-	}
-
-	subnetMask := make([]byte, 4)
-	copy(subnetMask, s.conf.SubnetMask.To4())
-
-	s.conf.subnet = &net.IPNet{
-		IP:   routerIP,
-		Mask: subnetMask,
-	}
-	s.conf.broadcastIP = aghnet.BroadcastFromIPNet(s.conf.subnet)
-
-	s.conf.ipRange, err = newIPRange(conf.RangeStart, conf.RangeEnd)
-	if err != nil {
-		return s, fmt.Errorf("dhcpv4: %w", err)
-	}
-
-	if s.conf.ipRange.contains(routerIP) {
-		return s, fmt.Errorf("dhcpv4: gateway ip %v in the ip range: %v-%v",
-			routerIP,
-			conf.RangeStart,
-			conf.RangeEnd,
-		)
-	}
-
-	if !s.conf.subnet.Contains(conf.RangeStart) {
-		return s, fmt.Errorf("dhcpv4: range start %v is outside network %v",
-			conf.RangeStart,
-			s.conf.subnet,
-		)
-	}
-
-	if !s.conf.subnet.Contains(conf.RangeEnd) {
-		return s, fmt.Errorf("dhcpv4: range end %v is outside network %v",
-			conf.RangeEnd,
-			s.conf.subnet,
-		)
-	}
+	s.conf = &V4ServerConf{}
+	*s.conf = *conf
 
 	// TODO(a.garipov, d.seregin): Check that every lease is inside the IPRange.
 	s.leasedOffsets = newBitSet()
@@ -1299,7 +1270,7 @@ func v4Create(conf V4ServerConf) (srv DHCPServer, err error) {
 		s.conf.leaseTime = time.Second * time.Duration(conf.LeaseDuration)
 	}
 
-	s.implicitOpts, s.explicitOpts = prepareOptions(s.conf)
+	s.prepareOptions()
 
 	return s, nil
 }

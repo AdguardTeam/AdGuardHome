@@ -72,7 +72,7 @@ func createTestServer(
 
 	var err error
 	s, err = NewServer(DNSCreateParams{
-		DHCPServer:  &testDHCP{},
+		DHCPServer:  testDHCP,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
@@ -776,7 +776,7 @@ func TestBlockedCustomIP(t *testing.T) {
 
 	f := filtering.New(&filtering.Config{}, filters)
 	s, err := NewServer(DNSCreateParams{
-		DHCPServer:  &testDHCP{},
+		DHCPServer:  testDHCP,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
@@ -910,7 +910,7 @@ func TestRewrite(t *testing.T) {
 	f.SetEnabled(true)
 
 	s, err := NewServer(DNSCreateParams{
-		DHCPServer:  &testDHCP{},
+		DHCPServer:  testDHCP,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
@@ -1005,26 +1005,36 @@ func publicKey(priv any) any {
 	}
 }
 
-type testDHCP struct{}
-
-func (d *testDHCP) Enabled() (ok bool) { return true }
-
-func (d *testDHCP) Leases(flags dhcpd.GetLeasesFlags) (leases []*dhcpd.Lease) {
-	return []*dhcpd.Lease{{
-		IP:       net.IP{192, 168, 12, 34},
-		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-		Hostname: "myhost",
-	}}
+var testDHCP = &dhcpd.MockInterface{
+	OnStart:   func() (err error) { panic("not implemented") },
+	OnStop:    func() (err error) { panic("not implemented") },
+	OnEnabled: func() (ok bool) { return true },
+	OnLeases: func(flags dhcpd.GetLeasesFlags) (leases []*dhcpd.Lease) {
+		return []*dhcpd.Lease{{
+			IP:       net.IP{192, 168, 12, 34},
+			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
+			Hostname: "myhost",
+		}}
+	},
+	OnSetOnLeaseChanged: func(olct dhcpd.OnLeaseChangedT) {},
+	OnFindMACbyIP:       func(ip net.IP) (mac net.HardwareAddr) { panic("not implemented") },
+	OnWriteDiskConfig:   func(c *dhcpd.ServerConfig) { panic("not implemented") },
 }
 
-func (d *testDHCP) SetOnLeaseChanged(onLeaseChanged dhcpd.OnLeaseChangedT) {}
+// func (*testDHCP) Leases(flags dhcpd.GetLeasesFlags) (leases []*dhcpd.Lease) {
+// 	return []*dhcpd.Lease{{
+// 		IP:       net.IP{192, 168, 12, 34},
+// 		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
+// 		Hostname: "myhost",
+// 	}}
+// }
 
 func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	const localDomain = "lan"
 
 	s, err := NewServer(DNSCreateParams{
 		DNSFilter:   filtering.New(&filtering.Config{}, nil),
-		DHCPServer:  &testDHCP{},
+		DHCPServer:  testDHCP,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 		LocalDomain: localDomain,
 	})
@@ -1097,7 +1107,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 	var s *Server
 	s, err = NewServer(DNSCreateParams{
-		DHCPServer:  &testDHCP{},
+		DHCPServer:  testDHCP,
 		DNSFilter:   flt,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})

@@ -1,3 +1,5 @@
+//go:build darwin || freebsd || linux || openbsd
+
 package dhcpd
 
 import (
@@ -8,14 +10,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 type v4ServerConfJSON struct {
@@ -26,12 +26,12 @@ type v4ServerConfJSON struct {
 	LeaseDuration uint32 `json:"lease_duration"`
 }
 
-func v4JSONToServerConf(j *v4ServerConfJSON) V4ServerConf {
+func (j *v4ServerConfJSON) toServerConf() *V4ServerConf {
 	if j == nil {
-		return V4ServerConf{}
+		return &V4ServerConf{}
 	}
 
-	return V4ServerConf{
+	return &V4ServerConf{
 		GatewayIP:     j.GatewayIP,
 		SubnetMask:    j.SubnetMask,
 		RangeStart:    j.RangeStart,
@@ -66,7 +66,7 @@ type dhcpStatusResponse struct {
 	Enabled      bool         `json:"enabled"`
 }
 
-func (s *Server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	status := &dhcpStatusResponse{
 		Enabled:   s.conf.Enabled,
 		IfaceName: s.conf.InterfaceName,
@@ -81,6 +81,7 @@ func (s *Server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	status.StaticLeases = s.Leases(LeasesStatic)
 
 	w.Header().Set("Content-Type", "application/json")
+
 	err := json.NewEncoder(w).Encode(status)
 	if err != nil {
 		aghhttp.Error(
@@ -93,28 +94,26 @@ func (s *Server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) enableDHCP(ifaceName string) (code int, err error) {
+func (s *server) enableDHCP(ifaceName string) (code int, err error) {
 	var hasStaticIP bool
 	hasStaticIP, err = aghnet.IfaceHasStaticIP(ifaceName)
 	if err != nil {
 		if errors.Is(err, os.ErrPermission) {
-			// ErrPermission may happen here on Linux systems where
-			// AdGuard Home is installed using Snap.  That doesn't
-			// necessarily mean that the machine doesn't have
-			// a static IP, so we can assume that it has and go on.
-			// If the machine doesn't, we'll get an error later.
+			// ErrPermission may happen here on Linux systems where AdGuard Home
+			// is installed using Snap.  That doesn't necessarily mean that the
+			// machine doesn't have a static IP, so we can assume that it has
+			// and go on.  If the machine doesn't, we'll get an error later.
 			//
 			// See https://github.com/AdguardTeam/AdGuardHome/issues/2667.
 			//
-			// TODO(a.garipov): I was thinking about moving this
-			// into IfaceHasStaticIP, but then we wouldn't be able
-			// to log it.  Think about it more.
+			// TODO(a.garipov): I was thinking about moving this into
+			// IfaceHasStaticIP, but then we wouldn't be able to log it.  Think
+			// about it more.
 			log.Info("error while checking static ip: %s; "+
 				"assuming machine has static ip and going on", err)
 			hasStaticIP = true
 		} else if errors.Is(err, aghnet.ErrNoStaticIPInfo) {
-			// Couldn't obtain a definitive answer.  Assume static
-			// IP an go on.
+			// Couldn't obtain a definitive answer.  Assume static IP an go on.
 			log.Info("can't check for static ip; " +
 				"assuming machine has static ip and going on")
 			hasStaticIP = true
@@ -149,34 +148,39 @@ type dhcpServerConfigJSON struct {
 	Enabled       aghalg.NullBool   `json:"enabled"`
 }
 
-func (s *Server) handleDHCPSetConfigV4(
+func (s *server) handleDHCPSetConfigV4(
 	conf *dhcpServerConfigJSON,
-) (srv4 DHCPServer, enabled bool, err error) {
+) (srv DHCPServer, enabled bool, err error) {
 	if conf.V4 == nil {
 		return nil, false, nil
 	}
 
-	v4Conf := v4JSONToServerConf(conf.V4)
+	v4Conf := conf.V4.toServerConf()
 	v4Conf.Enabled = conf.Enabled == aghalg.NBTrue
 	if len(v4Conf.RangeStart) == 0 {
 		v4Conf.Enabled = false
 	}
 
-	enabled = v4Conf.Enabled
 	v4Conf.InterfaceName = conf.InterfaceName
 
-	c4 := V4ServerConf{}
-	s.srv4.WriteDiskConfig4(&c4)
+	// Set the default values for the fields not configurable via web API.
+	c4 := &V4ServerConf{
+		notify:      s.onNotify,
+		ICMPTimeout: s.conf.Conf4.ICMPTimeout,
+		Options:     s.conf.Conf4.Options,
+	}
+
+	s.srv4.WriteDiskConfig4(c4)
 	v4Conf.notify = c4.notify
 	v4Conf.ICMPTimeout = c4.ICMPTimeout
 	v4Conf.Options = c4.Options
 
-	srv4, err = v4Create(v4Conf)
+	srv4, err := v4Create(v4Conf)
 
-	return srv4, enabled, err
+	return srv4, srv4.enabled(), err
 }
 
-func (s *Server) handleDHCPSetConfigV6(
+func (s *server) handleDHCPSetConfigV6(
 	conf *dhcpServerConfigJSON,
 ) (srv6 DHCPServer, enabled bool, err error) {
 	if conf.V6 == nil {
@@ -205,7 +209,7 @@ func (s *Server) handleDHCPSetConfigV6(
 	return srv6, enabled, err
 }
 
-func (s *Server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	conf := &dhcpServerConfigJSON{}
 	conf.Enabled = aghalg.BoolToNullBool(s.conf.Enabled)
 	conf.InterfaceName = s.conf.InterfaceName
@@ -287,7 +291,7 @@ type netInterfaceJSON struct {
 	Addrs6       []net.IP `json:"ipv6_addresses"`
 }
 
-func (s *Server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 	response := map[string]netInterfaceJSON{}
 
 	ifaces, err := net.Interfaces()
@@ -410,7 +414,7 @@ type dhcpSearchResult struct {
 // . Search for another DHCP server running
 // . Check if a static IP is configured for the network interface
 // Respond with results
-func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
 	// This use of ReadAll is safe, because request's body is now limited.
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -482,7 +486,7 @@ func (s *Server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
 	l := &Lease{}
 	err := json.NewDecoder(r.Body).Decode(l)
 	if err != nil {
@@ -497,20 +501,16 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	ip4 := l.IP.To4()
-	if ip4 == nil {
+	var srv DHCPServer
+	if ip4 := l.IP.To4(); ip4 != nil {
+		l.IP = ip4
+		srv = s.srv4
+	} else {
 		l.IP = l.IP.To16()
-
-		err = s.srv6.AddStaticLease(l)
-		if err != nil {
-			aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
-		}
-
-		return
+		srv = s.srv6
 	}
 
-	l.IP = ip4
-	err = s.srv4.AddStaticLease(l)
+	err = srv.AddStaticLease(l)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
@@ -518,7 +518,7 @@ func (s *Server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Request) {
 	l := &Lease{}
 	err := json.NewDecoder(r.Body).Decode(l)
 	if err != nil {
@@ -555,14 +555,7 @@ func (s *Server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-const (
-	// DefaultDHCPLeaseTTL is the default time-to-live for leases.
-	DefaultDHCPLeaseTTL = uint32(timeutil.Day / time.Second)
-	// DefaultDHCPTimeoutICMP is the default timeout for waiting ICMP responses.
-	DefaultDHCPTimeoutICMP = 1000
-)
-
-func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 	err := s.Stop()
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusInternalServerError, "stopping dhcp: %s", err)
@@ -586,7 +579,7 @@ func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
 		DBFilePath: s.conf.DBFilePath,
 	}
 
-	v4conf := V4ServerConf{
+	v4conf := &V4ServerConf{
 		LeaseDuration: DefaultDHCPLeaseTTL,
 		ICMPTimeout:   DefaultDHCPTimeoutICMP,
 		notify:        s.onNotify,
@@ -602,7 +595,7 @@ func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
 	s.conf.ConfigModified()
 }
 
-func (s *Server) handleResetLeases(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleResetLeases(w http.ResponseWriter, r *http.Request) {
 	err := s.resetLeases()
 	if err != nil {
 		msg := "resetting leases: %s"
@@ -612,7 +605,11 @@ func (s *Server) handleResetLeases(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) registerHandlers() {
+func (s *server) registerHandlers() {
+	if s.conf.HTTPRegister == nil {
+		return
+	}
+
 	s.conf.HTTPRegister(http.MethodGet, "/control/dhcp/status", s.handleDHCPStatus)
 	s.conf.HTTPRegister(http.MethodGet, "/control/dhcp/interfaces", s.handleDHCPInterfaces)
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/set_config", s.handleDHCPSetConfig)
@@ -621,45 +618,4 @@ func (s *Server) registerHandlers() {
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/remove_static_lease", s.handleDHCPRemoveStaticLease)
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset", s.handleReset)
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset_leases", s.handleResetLeases)
-}
-
-// jsonError is a generic JSON error response.
-//
-// TODO(a.garipov): Merge together with the implementations in .../home and
-// other packages after refactoring the web handler registering.
-type jsonError struct {
-	// Message is the error message, an opaque string.
-	Message string `json:"message"`
-}
-
-// notImplemented returns a handler that replies to any request with an HTTP 501
-// Not Implemented status and a JSON error with the provided message msg.
-//
-// TODO(a.garipov): Either take the logger from the server after we've
-// refactored logging or make this not a method of *Server.
-func (s *Server) notImplemented(msg string) (f func(http.ResponseWriter, *http.Request)) {
-	return func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotImplemented)
-
-		err := json.NewEncoder(w).Encode(&jsonError{
-			Message: msg,
-		})
-		if err != nil {
-			log.Debug("writing 501 json response: %s", err)
-		}
-	}
-}
-
-func (s *Server) registerNotImplementedHandlers() {
-	h := s.notImplemented("dhcp is not supported on windows")
-
-	s.conf.HTTPRegister(http.MethodGet, "/control/dhcp/status", h)
-	s.conf.HTTPRegister(http.MethodGet, "/control/dhcp/interfaces", h)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/set_config", h)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/find_active_dhcp", h)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/add_static_lease", h)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/remove_static_lease", h)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset", h)
-	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset_leases", h)
 }

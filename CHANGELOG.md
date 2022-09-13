@@ -15,6 +15,11 @@ and this project adheres to
 ## [v0.108.0] - 2022-12-01 (APPROX.)
 -->
 
+### Security
+
+- Weaker cipher suites that use the CBC (cipher block chaining) mode of
+  operation have been disabled ([#2993]).
+
 ### Added
 
 - The new optional `dns.ipset_file` property in the configuration file.  It
@@ -26,13 +31,13 @@ and this project adheres to
 - The minimum DHCP message size is reassigned back to BOOTP's constraint of 300
   bytes ([#4904]).
 
-### Security
+### Fixed
 
-- Weaker cipher suites that use the CBC (cipher block chaining) mode of
-  operation have been disabled ([#2993]).
+- Panic when adding a static lease within the disabled DHCP server ([#4722]).
 
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#4686]: https://github.com/AdguardTeam/AdGuardHome/issues/4686
+[#4722]: https://github.com/AdguardTeam/AdGuardHome/issues/4722
 [#4904]: https://github.com/AdguardTeam/AdGuardHome/issues/4904
 
 

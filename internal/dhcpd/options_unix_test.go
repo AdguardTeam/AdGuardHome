@@ -249,17 +249,21 @@ func TestPrepareOptions(t *testing.T) {
 	}}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			implicit, explicit := prepareOptions(V4ServerConf{
+		s := &v4Server{
+			conf: &V4ServerConf{
 				// Just to avoid nil pointer dereference.
 				subnet:  &net.IPNet{},
 				Options: tc.opts,
-			})
+			},
+		}
 
-			assert.Equal(t, tc.wantExplicit, explicit)
+		t.Run(tc.name, func(t *testing.T) {
+			s.prepareOptions()
 
-			for c := range explicit {
-				assert.NotContains(t, implicit, c)
+			assert.Equal(t, tc.wantExplicit, s.explicitOpts)
+
+			for c := range s.explicitOpts {
+				assert.NotContains(t, s.implicitOpts, c)
 			}
 		})
 	}

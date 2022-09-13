@@ -1,5 +1,4 @@
-//go:build aix || darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris
-// +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
+//go:build darwin || freebsd || linux || openbsd
 
 package dhcpd
 
@@ -173,7 +172,7 @@ func (s *v6Server) rmDynamicLease(lease *Lease) (err error) {
 func (s *v6Server) AddStaticLease(l *Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv6: %w") }()
 
-	if len(l.IP) != 16 {
+	if len(l.IP) != net.IPv6len {
 		return fmt.Errorf("invalid IP")
 	}
 

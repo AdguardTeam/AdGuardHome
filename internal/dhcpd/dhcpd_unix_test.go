@@ -1,5 +1,4 @@
-//go:build aix || darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris
-// +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
+//go:build darwin || freebsd || linux || openbsd
 
 package dhcpd
 
@@ -26,13 +25,13 @@ func testNotify(flags uint32) {
 // Leases database store/load.
 func TestDB(t *testing.T) {
 	var err error
-	s := Server{
+	s := server{
 		conf: &ServerConfig{
 			DBFilePath: dbFilename,
 		},
 	}
 
-	s.srv4, err = v4Create(V4ServerConf{
+	s.srv4, err = v4Create(&V4ServerConf{
 		Enabled:    true,
 		RangeStart: net.IP{192, 168, 10, 100},
 		RangeEnd:   net.IP{192, 168, 10, 200},
@@ -86,32 +85,6 @@ func TestDB(t *testing.T) {
 	assert.Equal(t, leases[0].HWAddr, ll[1].HWAddr)
 	assert.Equal(t, leases[0].IP, ll[1].IP)
 	assert.Equal(t, leases[0].Expiry.Unix(), ll[1].Expiry.Unix())
-}
-
-func TestIsValidSubnetMask(t *testing.T) {
-	testCases := []struct {
-		mask net.IP
-		want bool
-	}{{
-		mask: net.IP{255, 255, 255, 0},
-		want: true,
-	}, {
-		mask: net.IP{255, 255, 254, 0},
-		want: true,
-	}, {
-		mask: net.IP{255, 255, 252, 0},
-		want: true,
-	}, {
-		mask: net.IP{255, 255, 253, 0},
-	}, {
-		mask: net.IP{255, 255, 255, 1},
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.mask.String(), func(t *testing.T) {
-			assert.Equal(t, tc.want, isValidSubnetMask(tc.mask))
-		})
-	}
 }
 
 func TestNormalizeLeases(t *testing.T) {
@@ -174,7 +147,7 @@ func TestV4Server_badRange(t *testing.T) {
 				notify:     testNotify,
 			}
 
-			_, err := v4Create(conf)
+			_, err := v4Create(&conf)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
