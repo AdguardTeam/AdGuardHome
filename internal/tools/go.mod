@@ -10,7 +10,7 @@ require (
 	github.com/kyoh86/looppointer v0.1.7
 	github.com/securego/gosec/v2 v2.13.1
 	golang.org/x/tools v0.1.13-0.20220803210227-8b9a1fbdf5c3
-	golang.org/x/vuln v0.0.0-20220902211423-27dd78d2ca39
+	golang.org/x/vuln v0.0.0-20220912202342-0ed43f12cb05
 	honnef.co/go/tools v0.3.3
 	mvdan.cc/gofumpt v0.3.1
 	mvdan.cc/unparam v0.0.0-20220831102321-2fc90a84c7ec
@@ -25,10 +25,10 @@ require (
 	github.com/kyoh86/nolint v0.0.1 // indirect
 	github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
-	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91 // indirect
+	golang.org/x/exp v0.0.0-20220909182711-5c715a9e8561 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20220827204233-334a2380cb91 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde // indirect
-	golang.org/x/sys v0.0.0-20220906135438-9e1f76180b77 // indirect
+	golang.org/x/sys v0.0.0-20220909162455-aba9fc2a8ff2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
