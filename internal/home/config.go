@@ -433,9 +433,7 @@ func (c *configuration) write() (err error) {
 	}
 
 	if Context.dhcpServer != nil {
-		c := &dhcpd.ServerConfig{}
-		Context.dhcpServer.WriteDiskConfig(c)
-		config.DHCP = c
+		Context.dhcpServer.WriteDiskConfig(config.DHCP)
 	}
 
 	config.Clients.Persistent = Context.clients.forConfig()

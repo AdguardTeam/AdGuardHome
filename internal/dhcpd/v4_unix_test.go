@@ -1,5 +1,4 @@
-//go:build aix || darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris
-// +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
+//go:build darwin || freebsd || linux || openbsd
 
 package dhcpd
 
@@ -30,19 +29,16 @@ var (
 	DefaultSubnetMask = net.IP{255, 255, 255, 0}
 )
 
-func notify4(flags uint32) {
-}
-
 // defaultV4ServerConf returns the default configuration for *v4Server to use in
 // tests.
-func defaultV4ServerConf() (conf V4ServerConf) {
-	return V4ServerConf{
+func defaultV4ServerConf() (conf *V4ServerConf) {
+	return &V4ServerConf{
 		Enabled:    true,
 		RangeStart: DefaultRangeStart,
 		RangeEnd:   DefaultRangeEnd,
 		GatewayIP:  DefaultGatewayIP,
 		SubnetMask: DefaultSubnetMask,
-		notify:     notify4,
+		notify:     testNotify,
 		dnsIPAddrs: []net.IP{DefaultSelfIP},
 	}
 }
@@ -350,12 +346,9 @@ func TestV4Server_handle_optionsPriority(t *testing.T) {
 			defer func() { s.implicitOpts.Update(dhcpv4.OptDNS(defaultIP)) }()
 		}
 
-		ss, err := v4Create(conf)
+		var err error
+		s, err = v4Create(conf)
 		require.NoError(t, err)
-
-		var ok bool
-		s, ok = ss.(*v4Server)
-		require.True(t, ok)
 
 		s.conf.dnsIPAddrs = []net.IP{defaultIP}
 
@@ -490,10 +483,9 @@ func TestV4Server_updateOptions(t *testing.T) {
 		require.NoError(t, err)
 
 		require.IsType(t, (*v4Server)(nil), s)
-		s4, _ := s.(*v4Server)
 
 		t.Run(tc.name, func(t *testing.T) {
-			s4.updateOptions(req, resp)
+			s.updateOptions(req, resp)
 
 			for c, v := range tc.wantOpts {
 				if v == nil {
@@ -596,12 +588,8 @@ func TestV4DynamicLease_Get(t *testing.T) {
 		"82 ip 1.2.3.4",
 	}
 
-	var err error
-	sIface, err := v4Create(conf)
+	s, err := v4Create(conf)
 	require.NoError(t, err)
-
-	s, ok := sIface.(*v4Server)
-	require.True(t, ok)
 
 	s.conf.dnsIPAddrs = []net.IP{{192, 168, 10, 1}}
 	s.implicitOpts.Update(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))

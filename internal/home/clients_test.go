@@ -279,8 +279,6 @@ func TestClientsAddExisting(t *testing.T) {
 			t.Skip("skipping dhcp test on windows")
 		}
 
-		var err error
-
 		ip := net.IP{1, 2, 3, 4}
 
 		// First, init a DHCP server with a single static lease.
@@ -296,13 +294,15 @@ func TestClientsAddExisting(t *testing.T) {
 			},
 		}
 
-		clients.dhcpServer, err = dhcpd.Create(config)
+		dhcpServer, err := dhcpd.Create(config)
 		require.NoError(t, err)
 		testutil.CleanupAndRequireSuccess(t, func() (err error) {
 			return os.Remove("leases.db")
 		})
 
-		err = clients.dhcpServer.AddStaticLease(&dhcpd.Lease{
+		clients.dhcpServer = dhcpServer
+
+		err = dhcpServer.AddStaticLease(&dhcpd.Lease{
 			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 			IP:       ip,
 			Hostname: "testhost",

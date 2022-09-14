@@ -127,9 +127,14 @@ type FilteringConfig struct {
 	// IpsetList is the ipset configuration that allows AdGuard Home to add
 	// IP addresses of the specified domain names to an ipset list.  Syntax:
 	//
-	//   DOMAIN[,DOMAIN].../IPSET_NAME
+	//	DOMAIN[,DOMAIN].../IPSET_NAME
 	//
+	// This field is ignored if [IpsetListFileName] is set.
 	IpsetList []string `yaml:"ipset"`
+
+	// IpsetListFileName, if set, points to the file with ipset configuration.
+	// The format is the same as in [IpsetList].
+	IpsetListFileName string `yaml:"ipset_file"`
 }
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
@@ -397,6 +402,26 @@ func setProxyUpstreamMode(
 	} else {
 		conf.UpstreamMode = proxy.UModeLoadBalance
 	}
+}
+
+// prepareIpsetListSettings reads and prepares the ipset configuration either
+// from a file or from the data in the configuration file.
+func (s *Server) prepareIpsetListSettings() (err error) {
+	fn := s.conf.IpsetListFileName
+	if fn == "" {
+		return s.ipset.init(s.conf.IpsetList)
+	}
+
+	data, err := os.ReadFile(fn)
+	if err != nil {
+		return err
+	}
+
+	ipsets := stringutil.SplitTrimmed(string(data), "\n")
+
+	log.Debug("dns: using %d ipset rules from file %q", len(ipsets), fn)
+
+	return s.ipset.init(ipsets)
 }
 
 // prepareTLS - prepares TLS configuration for the DNS proxy

@@ -26,12 +26,39 @@ and this project adheres to
 
 
 <!--
-## [v0.107.13] - 2022-10-05 (APPROX.)
+## [v0.107.14] - 2022-10-05 (APPROX.)
+
+See also the [v0.107.14 GitHub milestone][ms-v0.107.14].
+
+[ms-v0.107.14]:   https://github.com/AdguardTeam/AdGuardHome/milestone/50?closed=1
+-->
+
+
+
+## [v0.107.13] - 2022-09-14
 
 See also the [v0.107.13 GitHub milestone][ms-v0.107.13].
 
+### Added
+
+- The new optional `dns.ipset_file` property in the configuration file.  It
+  allows loading the `ipset` list from a file, just like `dns.upstream_dns_file`
+  does for upstream servers ([#4686]).
+
+### Changed
+
+- The minimum DHCP message size is reassigned back to BOOTP's constraint of 300
+  bytes ([#4904]).
+
+### Fixed
+
+- Panic when adding a static lease within the disabled DHCP server ([#4722]).
+
+[#4686]: https://github.com/AdguardTeam/AdGuardHome/issues/4686
+[#4722]: https://github.com/AdguardTeam/AdGuardHome/issues/4722
+[#4904]: https://github.com/AdguardTeam/AdGuardHome/issues/4904
+
 [ms-v0.107.13]:   https://github.com/AdguardTeam/AdGuardHome/milestone/49?closed=1
--->
 
 
 
@@ -1203,11 +1230,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...HEAD
-[v0.107.13]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...v0.107.13
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...HEAD
+[v0.107.14]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...v0.107.14
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...HEAD
+[v0.107.13]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...v0.107.13
 [v0.107.12]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...v0.107.12
 [v0.107.11]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.10...v0.107.11
 [v0.107.10]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.9...v0.107.10

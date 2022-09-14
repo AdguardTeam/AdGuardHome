@@ -267,7 +267,7 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := &Server{
-				dhcpServer:        &testDHCP{},
+				dhcpServer:        testDHCP,
 				localDomainSuffix: defaultLocalDomainSuffix,
 				tableHostToIP: hostToIPTable{
 					"example." + defaultLocalDomainSuffix: knownIP,
@@ -378,7 +378,7 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 
 	for _, tc := range testCases {
 		s := &Server{
-			dhcpServer:        &testDHCP{},
+			dhcpServer:        testDHCP,
 			localDomainSuffix: tc.suffix,
 			tableHostToIP: hostToIPTable{
 				"example." + tc.suffix: knownIP,

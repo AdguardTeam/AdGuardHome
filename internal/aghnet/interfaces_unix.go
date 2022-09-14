@@ -1,5 +1,4 @@
-//go:build aix || darwin || dragonfly || freebsd || netbsd || openbsd || solaris
-// +build aix darwin dragonfly freebsd netbsd openbsd solaris
+//go:build darwin || freebsd || openbsd
 
 package aghnet
 

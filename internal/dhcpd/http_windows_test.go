@@ -1,23 +1,28 @@
+//go:build windows
+
 package dhcpd
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestServer_notImplemented(t *testing.T) {
-	s := &Server{}
-	h := s.notImplemented("never!")
+	s := &server{}
 
 	w := httptest.NewRecorder()
 	r, err := http.NewRequest(http.MethodGet, "/unsupported", nil)
 	require.NoError(t, err)
 
-	h(w, r)
+	s.notImplemented(w, r)
 	assert.Equal(t, http.StatusNotImplemented, w.Code)
-	assert.Equal(t, `{"message":"never!"}`+"\n", w.Body.String())
+
+	wantStr := fmt.Sprintf("{%q:%q}", "message", aghos.Unsupported("dhcp"))
+	assert.JSONEq(t, wantStr, w.Body.String())
 }

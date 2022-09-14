@@ -1,9 +1,39 @@
 package dhcpd
 
 import (
+	"fmt"
 	"net"
 	"time"
+
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/netutil"
 )
+
+// ServerConfig is the configuration for the DHCP server.  The order of YAML
+// fields is important, since the YAML configuration file follows it.
+type ServerConfig struct {
+	// Called when the configuration is changed by HTTP request
+	ConfigModified func() `yaml:"-"`
+
+	// Register an HTTP handler
+	HTTPRegister aghhttp.RegisterFunc `yaml:"-"`
+
+	Enabled       bool   `yaml:"enabled"`
+	InterfaceName string `yaml:"interface_name"`
+
+	// LocalDomainName is the domain name used for DHCP hosts.  For example,
+	// a DHCP client with the hostname "myhost" can be addressed as "myhost.lan"
+	// when LocalDomainName is "lan".
+	LocalDomainName string `yaml:"local_domain_name"`
+
+	Conf4 V4ServerConf `yaml:"dhcpv4"`
+	Conf6 V6ServerConf `yaml:"dhcpv6"`
+
+	WorkDir    string `yaml:"-"`
+	DBFilePath string `yaml:"-"`
+}
 
 // DHCPServer - DHCP server interface
 type DHCPServer interface {
@@ -78,6 +108,86 @@ type V4ServerConf struct {
 	// TODO(a.garipov): This is utter madness and must be refactored.  It just
 	// begs for deadlock bugs and other nastiness.
 	notify func(uint32)
+}
+
+// errNilConfig is an error returned by validation method if the config is nil.
+const errNilConfig errors.Error = "nil config"
+
+// ensureV4 returns a 4-byte version of ip.  An error is returned if the passed
+// ip is not an IPv4.
+func ensureV4(ip net.IP) (ip4 net.IP, err error) {
+	if ip == nil {
+		return nil, fmt.Errorf("%v is not an IP address", ip)
+	}
+
+	ip4 = ip.To4()
+	if ip4 == nil {
+		return nil, fmt.Errorf("%v is not an IPv4 address", ip)
+	}
+
+	return ip4, nil
+}
+
+// Validate returns an error if c is not a valid configuration.
+//
+// TODO(e.burkov):  Don't set the config fields when the server itself will stop
+// containing the config.
+func (c *V4ServerConf) Validate() (err error) {
+	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
+
+	if c == nil {
+		return errNilConfig
+	}
+
+	var gatewayIP net.IP
+	gatewayIP, err = ensureV4(c.GatewayIP)
+	if err != nil {
+		// Don't wrap an errors since it's inforative enough as is and there is
+		// an annotation deferred already.
+		return err
+	}
+
+	if c.SubnetMask == nil {
+		return fmt.Errorf("invalid subnet mask: %v", c.SubnetMask)
+	}
+
+	subnetMask := net.IPMask(netutil.CloneIP(c.SubnetMask.To4()))
+	c.subnet = &net.IPNet{
+		IP:   gatewayIP,
+		Mask: subnetMask,
+	}
+	c.broadcastIP = aghnet.BroadcastFromIPNet(c.subnet)
+
+	c.ipRange, err = newIPRange(c.RangeStart, c.RangeEnd)
+	if err != nil {
+		// Don't wrap an errors since it's inforative enough as is and there is
+		// an annotation deferred already.
+		return err
+	}
+
+	if c.ipRange.contains(gatewayIP) {
+		return fmt.Errorf("gateway ip %v in the ip range: %v-%v",
+			gatewayIP,
+			c.RangeStart,
+			c.RangeEnd,
+		)
+	}
+
+	if !c.subnet.Contains(c.RangeStart) {
+		return fmt.Errorf("range start %v is outside network %v",
+			c.RangeStart,
+			c.subnet,
+		)
+	}
+
+	if !c.subnet.Contains(c.RangeEnd) {
+		return fmt.Errorf("range end %v is outside network %v",
+			c.RangeEnd,
+			c.subnet,
+		)
+	}
+
+	return nil
 }
 
 // V6ServerConf - server configuration

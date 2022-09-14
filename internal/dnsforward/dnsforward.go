@@ -58,10 +58,10 @@ type hostToIPTable = map[string]net.IP
 //
 // The zero Server is empty and ready for use.
 type Server struct {
-	dnsProxy   *proxy.Proxy          // DNS proxy instance
-	dnsFilter  *filtering.DNSFilter  // DNS filter instance
-	dhcpServer dhcpd.ServerInterface // DHCP server instance (optional)
-	queryLog   querylog.QueryLog     // Query log instance
+	dnsProxy   *proxy.Proxy         // DNS proxy instance
+	dnsFilter  *filtering.DNSFilter // DNS filter instance
+	dhcpServer dhcpd.Interface      // DHCP server instance (optional)
+	queryLog   querylog.QueryLog    // Query log instance
 	stats      stats.Interface
 	access     *accessCtx
 
@@ -110,7 +110,7 @@ type DNSCreateParams struct {
 	DNSFilter   *filtering.DNSFilter
 	Stats       stats.Interface
 	QueryLog    querylog.QueryLog
-	DHCPServer  dhcpd.ServerInterface
+	DHCPServer  dhcpd.Interface
 	PrivateNets netutil.SubnetSet
 	Anonymizer  *aghnet.IPMut
 	LocalDomain string
@@ -446,10 +446,10 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 
 	s.initDefaultSettings()
 
-	err = s.ipset.init(s.conf.IpsetList)
+	err = s.prepareIpsetListSettings()
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
-		return err
+		return fmt.Errorf("preparing ipset settings: %w", err)
 	}
 
 	err = s.prepareUpstreamSettings()
