@@ -526,8 +526,8 @@ export const DEFAULT_DATE_FORMAT_OPTIONS = {
     month: 'numeric',
     day: 'numeric',
     hour: 'numeric',
+    hourCycle: 'h23',
     minute: 'numeric',
-    hour12: false,
 };
 
 export const DETAILED_DATE_FORMAT_OPTIONS = {
