@@ -104,6 +104,8 @@ const Logs = () => {
         setIsSmallScreen(e.matches);
         if (e.matches) {
             dispatch(toggleDetailedLogs(false));
+        } else {
+            dispatch(toggleDetailedLogs(true));
         }
     };
 
