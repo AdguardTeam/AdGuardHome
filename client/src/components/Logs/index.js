@@ -25,6 +25,7 @@ import {
 import InfiniteTable from './InfiniteTable';
 import './Logs.css';
 import { BUTTON_PREFIX } from './Cells/helpers';
+import AnonymizerNotification from './AnonymizerNotification';
 
 const processContent = (data) => Object.entries(data)
     .map(([key, value]) => {
@@ -73,6 +74,7 @@ const Logs = () => {
         processingGetConfig,
         processingAdditionalLogs,
         processingGetLogs,
+        anonymize_client_ip: anonymizeClientIp,
     } = useSelector((state) => state.queryLogs, shallowEqual);
     const filter = useSelector((state) => state.queryLogs.filter, shallowEqual);
     const logs = useSelector((state) => state.queryLogs.logs, shallowEqual);
@@ -206,11 +208,18 @@ const Logs = () => {
         </Modal>
     </>;
 
-    return <>
-        {enabled && processingGetConfig && <Loading />}
-        {enabled && !processingGetConfig && renderPage()}
-        {!enabled && !processingGetConfig && <Disabled />}
-    </>;
+    return (
+        <>
+            {enabled && (
+                <>
+                    {processingGetConfig && <Loading />}
+                    {anonymizeClientIp && <AnonymizerNotification />}
+                    {!processingGetConfig && renderPage()}
+                </>
+            )}
+            {!enabled && !processingGetConfig && <Disabled />}
+        </>
+    );
 };
 
 export default Logs;
