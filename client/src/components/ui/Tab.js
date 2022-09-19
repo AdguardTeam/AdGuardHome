@@ -19,11 +19,9 @@ const Tab = ({
             className={tabClass}
             onClick={handleClick}
         >
-            <div>
-                <svg className="tab__icon">
-                    <use xlinkHref={`#${label.toLowerCase()}`} />
-                </svg>
-            </div>
+            <svg className="tab__icon">
+                <use xlinkHref={`#${label.toLowerCase()}`} />
+            </svg>
             {t(title || label)}
         </div>
     );
