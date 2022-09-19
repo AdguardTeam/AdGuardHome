@@ -15,6 +15,8 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/NYTimes/gziphandler"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 // HTTP scheme constants.
@@ -167,12 +169,15 @@ func (web *Web) Start() {
 		printHTTPAddresses(schemeHTTP)
 		errs := make(chan error, 2)
 
+		// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
+		hdlr := h2c.NewHandler(withMiddlewares(Context.mux, limitRequestBody), &http2.Server{})
+
+		// Create a new instance, because the Web is not usable after Shutdown.
 		hostStr := web.conf.BindHost.String()
-		// we need to have new instance, because after Shutdown() the Server is not usable
 		web.httpServer = &http.Server{
 			ErrorLog:          log.StdLog("web: plain", log.DEBUG),
 			Addr:              netutil.JoinHostPort(hostStr, web.conf.BindPort),
-			Handler:           withMiddlewares(Context.mux, limitRequestBody),
+			Handler:           hdlr,
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 			WriteTimeout:      web.conf.WriteTimeout,
@@ -202,10 +207,16 @@ func (web *Web) startBetaServer(hostStr string) {
 		return
 	}
 
+	// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
+	hdlr := h2c.NewHandler(
+		withMiddlewares(Context.mux, limitRequestBody, web.wrapIndexBeta),
+		&http2.Server{},
+	)
+
 	web.httpServerBeta = &http.Server{
 		ErrorLog:          log.StdLog("web: plain: beta", log.DEBUG),
 		Addr:              netutil.JoinHostPort(hostStr, web.conf.BetaBindPort),
-		Handler:           withMiddlewares(Context.mux, limitRequestBody, web.wrapIndexBeta),
+		Handler:           hdlr,
 		ReadTimeout:       web.conf.ReadTimeout,
 		ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 		WriteTimeout:      web.conf.WriteTimeout,

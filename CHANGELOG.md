@@ -20,7 +20,13 @@ and this project adheres to
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).
 
+### Added
+
+- Support for plain (unencrypted) HTTP/2 ([#4930]).  This is useful for AdGuard
+  Home installations behind a reverse proxy.
+
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+[#4930]: https://github.com/AdguardTeam/AdGuardHome/issues/4930
 
 
 
