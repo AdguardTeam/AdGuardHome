@@ -296,7 +296,7 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 		values := []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"h2"}},
 			&dns.SVCBPort{Port: uint16(addr.Port)},
-			&dns.SVCBDoHPath{Template: "/dns-query?dns"},
+			&dns.SVCBDoHPath{Template: "/dns-query{?dns}"},
 		}
 
 		ans := &dns.SVCB{

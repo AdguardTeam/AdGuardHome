@@ -25,7 +25,12 @@ and this project adheres to
 - Support for plain (unencrypted) HTTP/2 ([#4930]).  This is useful for AdGuard
   Home installations behind a reverse proxy.
 
+### Fixed
+
+- Incorrect path template in DDR responses ([#4927]).
+
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+[#4927]: https://github.com/AdguardTeam/AdGuardHome/issues/4927
 [#4930]: https://github.com/AdguardTeam/AdGuardHome/issues/4930
 
 
