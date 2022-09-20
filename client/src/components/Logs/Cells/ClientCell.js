@@ -62,7 +62,7 @@ const ClientCell = ({
         'white-space--nowrap': isDetailed,
     });
 
-    const hintClass = classNames('icons mr-4 icon--24 icon--lightgray', {
+    const hintClass = classNames('icons mr-4 icon--24 logs__question icon--lightgray', {
         'my-3': isDetailed,
     });
 

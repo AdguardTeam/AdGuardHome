@@ -485,3 +485,13 @@
 .bg--green {
     color: var(--green79);
 }
+
+@media (max-width: 1024px) {
+    .logs__question {
+        display: none;
+    }
+}
+
+.logs__modal {
+    max-width: 720px;
+}
