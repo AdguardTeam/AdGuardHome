@@ -85,11 +85,7 @@ in
 	# num_commits_since_minor is the number of commits since the last new
 	# minor release.  If the current commit is the new minor release,
 	# num_commits_since_minor is zero.
-	num_commits_since_minor="$( git rev-list "${last_minor_zero}..HEAD" | wc -l )"
-
-	# The output of darwin's implementation of wc needs to be trimmed from
-	# redundant spaces.
-	num_commits_since_minor="$( echo "$num_commits_since_minor" | tr -d '[:space:]' )"
+	num_commits_since_minor="$( git rev-list --count "${last_minor_zero}..HEAD" )"
 	readonly num_commits_since_minor
 
 	# next_minor is the next minor release version.
