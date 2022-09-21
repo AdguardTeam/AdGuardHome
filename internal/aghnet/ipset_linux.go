@@ -18,27 +18,18 @@ import (
 
 // How to test on a real Linux machine:
 //
-// 1.  Run:
+//  1. Run "sudo ipset create example_set hash:ip family ipv4".
 //
-//   sudo ipset create example_set hash:ip family ipv4
+//  2. Run "sudo ipset list example_set".  The Members field should be empty.
 //
-// 2.  Run:
+//  3. Add the line "example.com/example_set" to your AdGuardHome.yaml.
 //
-//   sudo ipset list example_set
+//  4. Start AdGuardHome.
 //
-// The Members field should be empty.
+//  5. Make requests to example.com and its subdomains.
 //
-// 3.  Add the line "example.com/example_set" to your AdGuardHome.yaml.
-//
-// 4.  Start AdGuardHome.
-//
-// 5.  Make requests to example.com and its subdomains.
-//
-// 6.  Run:
-//
-//   sudo ipset list example_set
-//
-// The Members field should contain the resolved IP addresses.
+//  6. Run "sudo ipset list example_set".  The Members field should contain the
+//     resolved IP addresses.
 
 // newIpsetMgr returns a new Linux ipset manager.
 func newIpsetMgr(ipsetConf []string) (set IpsetManager, err error) {
