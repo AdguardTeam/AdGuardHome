@@ -34,7 +34,7 @@ func SaferCipherSuites() (safe []uint16) {
 	return safe
 }
 
-func UserPreferedCipherSuites(ciphers []string) (userCiphers []uint16) {
+func UserPreferredCipherSuites(ciphers []string) (userCiphers []uint16) {
 	for _, s := range tls.CipherSuites() {
 		if slices.Contains(ciphers, s.Name) {
 			userCiphers = append(userCiphers, s.ID)

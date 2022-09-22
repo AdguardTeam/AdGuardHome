@@ -277,7 +277,7 @@ func (web *Web) tlsServerLoop() {
 		if len(web.conf.tlsCiphers) == 0 {
 			cipher = aghtls.SaferCipherSuites()
 		} else {
-			cipher = aghtls.UserPreferedCipherSuites(web.conf.tlsCiphers)
+			cipher = aghtls.UserPreferredCipherSuites(web.conf.tlsCiphers)
 		}
 		// prepare HTTPS server
 		address := netutil.JoinHostPort(web.conf.BindHost.String(), web.conf.PortHTTPS)
