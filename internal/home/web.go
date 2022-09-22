@@ -58,6 +58,9 @@ type webConfig struct {
 	WriteTimeout time.Duration
 
 	firstRun bool
+
+	// ciphers specified by user
+	tlsCiphers []string
 }
 
 // HTTPSServer - HTTPS Server
@@ -269,6 +272,13 @@ func (web *Web) tlsServerLoop() {
 
 		web.httpsServer.cond.L.Unlock()
 
+		var cipher []uint16
+
+		if len(web.conf.tlsCiphers) == 0 {
+			cipher = aghtls.SaferCipherSuites()
+		} else {
+			cipher = aghtls.UserPreferedCipherSuites(web.conf.tlsCiphers)
+		}
 		// prepare HTTPS server
 		address := netutil.JoinHostPort(web.conf.BindHost.String(), web.conf.PortHTTPS)
 		web.httpsServer.server = &http.Server{
@@ -277,7 +287,7 @@ func (web *Web) tlsServerLoop() {
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
 				RootCAs:      Context.tlsRoots,
-				CipherSuites: aghtls.SaferCipherSuites(),
+				CipherSuites: cipher,
 				MinVersion:   tls.VersionTLS12,
 			},
 			Handler:           withMiddlewares(Context.mux, limitRequestBody),

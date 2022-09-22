@@ -1,7 +1,12 @@
 // Package aghtls contains utilities for work with TLS.
 package aghtls
 
-import "crypto/tls"
+import (
+	"crypto/tls"
+
+	"github.com/AdguardTeam/golibs/log"
+	"golang.org/x/exp/slices"
+)
 
 // SaferCipherSuites returns a set of default cipher suites with vulnerable and
 // weak cipher suites removed.
@@ -27,4 +32,15 @@ func SaferCipherSuites() (safe []uint16) {
 	}
 
 	return safe
+}
+
+func UserPreferedCipherSuites(ciphers []string) (userCiphers []uint16) {
+	for _, s := range tls.CipherSuites() {
+		if slices.Contains(ciphers, s.Name) {
+			userCiphers = append(userCiphers, s.ID)
+			log.Debug("user specified cipher : %s, ID : %d", s.Name, s.ID)
+		}
+	}
+
+	return userCiphers
 }

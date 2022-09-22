@@ -366,6 +366,7 @@ func initWeb(args options, clientBuildFS fs.FS) (web *Web, err error) {
 
 		clientFS:     clientFS,
 		clientBetaFS: clientBetaFS,
+		tlsCiphers:   config.TLS.TLSCiphers,
 	}
 
 	web = CreateWeb(&webConf)
