@@ -310,7 +310,7 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		Scheme: schemeHTTP,
 		Host:   r.Host,
 	}
-	if config.TLS.Enabled {
+	if config.TLS.ForceHTTPS {
 		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 	}
 	w.Header().Set("Access-Control-Allow-Origin", originURL.String())
