@@ -1,4 +1,4 @@
-package home
+package filtering
 
 import (
 	"io/fs"
@@ -51,15 +51,17 @@ func TestFilters(t *testing.T) {
 
 	l := testStartFilterListener(t, &fltContent)
 
-	Context = homeContext{
-		workDir: t.TempDir(),
-		client: &http.Client{
+	tempDir := t.TempDir()
+
+	filters, err := New(&Config{
+		DataDir: tempDir,
+		HTTPClient: &http.Client{
 			Timeout: 5 * time.Second,
 		},
-	}
-	Context.filters.Init()
+	}, nil)
+	require.NoError(t, err)
 
-	f := &filter{
+	f := &FilterYAML{
 		URL: (&url.URL{
 			Scheme: "http",
 			Host: (&netutil.IPPort{
@@ -71,21 +73,22 @@ func TestFilters(t *testing.T) {
 	}
 
 	updateAndAssert := func(t *testing.T, want require.BoolAssertionFunc, wantRulesCount int) {
-		ok, err := Context.filters.update(f)
+		var ok bool
+		ok, err = filters.update(f)
 		require.NoError(t, err)
 		want(t, ok)
 
 		assert.Equal(t, wantRulesCount, f.RulesCount)
 
 		var dir []fs.DirEntry
-		dir, err = os.ReadDir(filepath.Join(Context.getDataDir(), filterDir))
+		dir, err = os.ReadDir(filepath.Join(tempDir, filterDir))
 		require.NoError(t, err)
 
 		assert.Len(t, dir, 1)
 
-		require.FileExists(t, f.Path())
+		require.FileExists(t, f.Path(tempDir))
 
-		err = Context.filters.load(f)
+		err = filters.load(f)
 		require.NoError(t, err)
 	}
 
@@ -105,11 +108,9 @@ func TestFilters(t *testing.T) {
 	})
 
 	t.Run("load_unload", func(t *testing.T) {
-		err := Context.filters.load(f)
+		err = filters.load(f)
 		require.NoError(t, err)
 
 		f.unload()
 	})
-
-	require.NoError(t, os.Remove(f.Path()))
 }

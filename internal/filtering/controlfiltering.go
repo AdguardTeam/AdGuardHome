@@ -1,4 +1,4 @@
-package home
+package filtering
 
 import (
 	"encoding/json"
@@ -34,7 +34,7 @@ func validateFilterURL(urlStr string) (err error) {
 		return fmt.Errorf("checking filter url: %w", err)
 	}
 
-	if s := url.Scheme; s != schemeHTTP && s != schemeHTTPS {
+	if s := url.Scheme; s != aghhttp.SchemeHTTP && s != aghhttp.SchemeHTTPS {
 		return fmt.Errorf("checking filter url: invalid scheme %q", s)
 	}
 
@@ -47,7 +47,7 @@ type filterAddJSON struct {
 	Whitelist bool   `json:"whitelist"`
 }
 
-func (f *Filtering) handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request) {
 	fj := filterAddJSON{}
 	err := json.NewDecoder(r.Body).Decode(&fj)
 	if err != nil {
@@ -65,14 +65,14 @@ func (f *Filtering) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 	}
 
 	// Check for duplicates
-	if filterExists(fj.URL) {
+	if d.filterExists(fj.URL) {
 		aghhttp.Error(r, w, http.StatusBadRequest, "Filter URL already added -- %s", fj.URL)
 
 		return
 	}
 
 	// Set necessary properties
-	filt := filter{
+	filt := FilterYAML{
 		Enabled: true,
 		URL:     fj.URL,
 		Name:    fj.Name,
@@ -81,7 +81,7 @@ func (f *Filtering) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 	filt.ID = assignUniqueFilterID()
 
 	// Download the filter contents
-	ok, err := f.update(&filt)
+	ok, err := d.update(&filt)
 	if err != nil {
 		aghhttp.Error(
 			r,
@@ -109,14 +109,14 @@ func (f *Filtering) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 
 	// URL is assumed valid so append it to filters, update config, write new
 	// file and reload it to engines.
-	if !filterAdd(filt) {
+	if !d.filterAdd(filt) {
 		aghhttp.Error(r, w, http.StatusBadRequest, "Filter URL already added -- %s", filt.URL)
 
 		return
 	}
 
-	onConfigModified()
-	enableFilters(true)
+	d.ConfigModified()
+	d.EnableFilters(true)
 
 	_, err = fmt.Fprintf(w, "OK %d rules\n", filt.RulesCount)
 	if err != nil {
@@ -124,7 +124,7 @@ func (f *Filtering) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (f *Filtering) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Request) {
 	type request struct {
 		URL       string `json:"url"`
 		Whitelist bool   `json:"whitelist"`
@@ -138,23 +138,23 @@ func (f *Filtering) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	config.Lock()
-	filters := &config.Filters
+	d.filtersMu.Lock()
+	filters := &d.Filters
 	if req.Whitelist {
-		filters = &config.WhitelistFilters
+		filters = &d.WhitelistFilters
 	}
 
-	var deleted filter
-	var newFilters []filter
-	for _, f := range *filters {
-		if f.URL != req.URL {
-			newFilters = append(newFilters, f)
+	var deleted FilterYAML
+	var newFilters []FilterYAML
+	for _, flt := range *filters {
+		if flt.URL != req.URL {
+			newFilters = append(newFilters, flt)
 
 			continue
 		}
 
-		deleted = f
-		path := f.Path()
+		deleted = flt
+		path := flt.Path(d.DataDir)
 		err = os.Rename(path, path+".old")
 		if err != nil {
 			log.Error("deleting filter %q: %s", path, err)
@@ -162,10 +162,10 @@ func (f *Filtering) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 	}
 
 	*filters = newFilters
-	config.Unlock()
+	d.filtersMu.Unlock()
 
-	onConfigModified()
-	enableFilters(true)
+	d.ConfigModified()
+	d.EnableFilters(true)
 
 	// NOTE: The old files "filter.txt.old" aren't deleted.  It's not really
 	// necessary, but will require the additional complicated code to run
@@ -191,55 +191,51 @@ type filterURLReq struct {
 	Whitelist bool              `json:"whitelist"`
 }
 
-func (f *Filtering) handleFilteringSetURL(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleFilteringSetURL(w http.ResponseWriter, r *http.Request) {
 	fj := filterURLReq{}
 	err := json.NewDecoder(r.Body).Decode(&fj)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "decoding request: %s", err)
 
 		return
 	}
 
 	if fj.Data == nil {
-		err = errors.Error("data cannot be null")
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", errors.Error("data is absent"))
 
 		return
 	}
 
 	err = validateFilterURL(fj.Data.URL)
 	if err != nil {
-		err = fmt.Errorf("invalid url: %s", err)
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "invalid url: %s", err)
 
 		return
 	}
 
-	filt := filter{
+	filt := FilterYAML{
 		Enabled: fj.Data.Enabled,
 		Name:    fj.Data.Name,
 		URL:     fj.Data.URL,
 	}
-	status := f.filterSetProperties(fj.URL, filt, fj.Whitelist)
+	status := d.filterSetProperties(fj.URL, filt, fj.Whitelist)
 	if (status & statusFound) == 0 {
-		http.Error(w, "URL doesn't exist", http.StatusBadRequest)
+		aghhttp.Error(r, w, http.StatusBadRequest, "URL doesn't exist")
+
 		return
 	}
 	if (status & statusURLExists) != 0 {
-		http.Error(w, "URL already exists", http.StatusBadRequest)
+		aghhttp.Error(r, w, http.StatusBadRequest, "URL already exists")
+
 		return
 	}
 
-	onConfigModified()
+	d.ConfigModified()
 
 	restart := (status & statusEnabledChanged) != 0
 	if (status&statusUpdateRequired) != 0 && fj.Data.Enabled {
-		// download new filter and apply its rules
-		flags := filterRefreshBlocklists
-		if fj.Whitelist {
-			flags = filterRefreshAllowlists
-		}
-		nUpdated, _ := f.refreshFilters(flags, true)
+		// download new filter and apply its rules.
+		nUpdated := d.refreshFilters(!fj.Whitelist, fj.Whitelist, false)
 		// if at least 1 filter has been updated, refreshFilters() restarts the filtering automatically
 		// if not - we restart the filtering ourselves
 		restart = false
@@ -249,11 +245,11 @@ func (f *Filtering) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 	}
 
 	if restart {
-		enableFilters(true)
+		d.EnableFilters(true)
 	}
 }
 
-func (f *Filtering) handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 	// This use of ReadAll is safe, because request's body is now limited.
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -262,12 +258,12 @@ func (f *Filtering) handleFilteringSetRules(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	config.UserRules = strings.Split(string(body), "\n")
-	onConfigModified()
-	enableFilters(true)
+	d.UserRules = strings.Split(string(body), "\n")
+	d.ConfigModified()
+	d.EnableFilters(true)
 }
 
-func (f *Filtering) handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleFilteringRefresh(w http.ResponseWriter, r *http.Request) {
 	type Req struct {
 		White bool `json:"whitelist"`
 	}
@@ -285,35 +281,27 @@ func (f *Filtering) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	flags := filterRefreshBlocklists
-	if req.White {
-		flags = filterRefreshAllowlists
-	}
-	func() {
-		// Temporarily unlock the Context.controlLock because the
-		// f.refreshFilters waits for it to be unlocked but it's
-		// actually locked in ensure wrapper.
-		//
-		// TODO(e.burkov):  Reconsider this messy syncing process.
-		Context.controlLock.Unlock()
-		defer Context.controlLock.Lock()
-
-		resp.Updated, err = f.refreshFilters(flags|filterRefreshForce, false)
-	}()
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
+	var ok bool
+	resp.Updated, _, ok = d.tryRefreshFilters(!req.White, req.White, true)
+	if !ok {
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusInternalServerError,
+			"filters update procedure is already running",
+		)
 
 		return
 	}
 
-	js, err := json.Marshal(resp)
+	w.Header().Set("Content-Type", "application/json")
+
+	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
 
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(js)
 }
 
 type filterJSON struct {
@@ -333,7 +321,7 @@ type filteringConfig struct {
 	Enabled          bool         `json:"enabled"`
 }
 
-func filterToJSON(f filter) filterJSON {
+func filterToJSON(f FilterYAML) filterJSON {
 	fj := filterJSON{
 		ID:         f.ID,
 		Enabled:    f.Enabled,
@@ -350,21 +338,21 @@ func filterToJSON(f filter) filterJSON {
 }
 
 // Get filtering configuration
-func (f *Filtering) handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleFilteringStatus(w http.ResponseWriter, r *http.Request) {
 	resp := filteringConfig{}
-	config.RLock()
-	resp.Enabled = config.DNS.FilteringEnabled
-	resp.Interval = config.DNS.FiltersUpdateIntervalHours
-	for _, f := range config.Filters {
+	d.filtersMu.RLock()
+	resp.Enabled = d.FilteringEnabled
+	resp.Interval = d.FiltersUpdateIntervalHours
+	for _, f := range d.Filters {
 		fj := filterToJSON(f)
 		resp.Filters = append(resp.Filters, fj)
 	}
-	for _, f := range config.WhitelistFilters {
+	for _, f := range d.WhitelistFilters {
 		fj := filterToJSON(f)
 		resp.WhitelistFilters = append(resp.WhitelistFilters, fj)
 	}
-	resp.UserRules = config.UserRules
-	config.RUnlock()
+	resp.UserRules = d.UserRules
+	d.filtersMu.RUnlock()
 
 	jsonVal, err := json.Marshal(resp)
 	if err != nil {
@@ -380,7 +368,7 @@ func (f *Filtering) handleFilteringStatus(w http.ResponseWriter, r *http.Request
 }
 
 // Set filtering configuration
-func (f *Filtering) handleFilteringConfig(w http.ResponseWriter, r *http.Request) {
+func (d *DNSFilter) handleFilteringConfig(w http.ResponseWriter, r *http.Request) {
 	req := filteringConfig{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -389,22 +377,22 @@ func (f *Filtering) handleFilteringConfig(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if !checkFiltersUpdateIntervalHours(req.Interval) {
+	if !ValidateUpdateIvl(req.Interval) {
 		aghhttp.Error(r, w, http.StatusBadRequest, "Unsupported interval")
 
 		return
 	}
 
 	func() {
-		config.Lock()
-		defer config.Unlock()
+		d.filtersMu.Lock()
+		defer d.filtersMu.Unlock()
 
-		config.DNS.FilteringEnabled = req.Enabled
-		config.DNS.FiltersUpdateIntervalHours = req.Interval
+		d.FilteringEnabled = req.Enabled
+		d.FiltersUpdateIntervalHours = req.Interval
 	}()
 
-	onConfigModified()
-	enableFilters(true)
+	d.ConfigModified()
+	d.EnableFilters(true)
 }
 
 type checkHostRespRule struct {
@@ -435,15 +423,15 @@ type checkHostResp struct {
 	FilterID int64 `json:"filter_id"`
 }
 
-func (f *Filtering) handleCheckHost(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query()
-	host := q.Get("name")
+func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
+	host := r.URL.Query().Get("name")
 
-	setts := Context.dnsFilter.GetConfig()
+	setts := d.GetConfig()
 	setts.FilteringEnabled = true
 	setts.ProtectionEnabled = true
-	Context.dnsFilter.ApplyBlockedServices(&setts, nil, true)
-	result, err := Context.dnsFilter.CheckHost(host, dns.TypeA, &setts)
+
+	d.ApplyBlockedServices(&setts, nil)
+	result, err := d.CheckHost(host, dns.TypeA, &setts)
 	if err != nil {
 		aghhttp.Error(
 			r,
@@ -457,18 +445,20 @@ func (f *Filtering) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := checkHostResp{}
-	resp.Reason = result.Reason.String()
-	resp.SvcName = result.ServiceName
-	resp.CanonName = result.CanonName
-	resp.IPList = result.IPList
+	rulesLen := len(result.Rules)
+	resp := checkHostResp{
+		Reason:    result.Reason.String(),
+		SvcName:   result.ServiceName,
+		CanonName: result.CanonName,
+		IPList:    result.IPList,
+		Rules:     make([]*checkHostRespRule, len(result.Rules)),
+	}
 
-	if len(result.Rules) > 0 {
+	if rulesLen > 0 {
 		resp.FilterID = result.Rules[0].FilterListID
 		resp.Rule = result.Rules[0].Text
 	}
 
-	resp.Rules = make([]*checkHostRespRule, len(result.Rules))
 	for i, r := range result.Rules {
 		resp.Rules[i] = &checkHostRespRule{
 			FilterListID: r.FilterListID,
@@ -476,28 +466,51 @@ func (f *Filtering) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	js, err := json.Marshal(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
-
-		return
-	}
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(js)
+	err = json.NewEncoder(w).Encode(resp)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusInternalServerError, "encoding response: %s", err)
+	}
 }
 
 // RegisterFilteringHandlers - register handlers
-func (f *Filtering) RegisterFilteringHandlers() {
-	httpRegister(http.MethodGet, "/control/filtering/status", f.handleFilteringStatus)
-	httpRegister(http.MethodPost, "/control/filtering/config", f.handleFilteringConfig)
-	httpRegister(http.MethodPost, "/control/filtering/add_url", f.handleFilteringAddURL)
-	httpRegister(http.MethodPost, "/control/filtering/remove_url", f.handleFilteringRemoveURL)
-	httpRegister(http.MethodPost, "/control/filtering/set_url", f.handleFilteringSetURL)
-	httpRegister(http.MethodPost, "/control/filtering/refresh", f.handleFilteringRefresh)
-	httpRegister(http.MethodPost, "/control/filtering/set_rules", f.handleFilteringSetRules)
-	httpRegister(http.MethodGet, "/control/filtering/check_host", f.handleCheckHost)
+func (d *DNSFilter) RegisterFilteringHandlers() {
+	registerHTTP := d.HTTPRegister
+	if registerHTTP == nil {
+		return
+	}
+
+	registerHTTP(http.MethodPost, "/control/safebrowsing/enable", d.handleSafeBrowsingEnable)
+	registerHTTP(http.MethodPost, "/control/safebrowsing/disable", d.handleSafeBrowsingDisable)
+	registerHTTP(http.MethodGet, "/control/safebrowsing/status", d.handleSafeBrowsingStatus)
+
+	registerHTTP(http.MethodPost, "/control/parental/enable", d.handleParentalEnable)
+	registerHTTP(http.MethodPost, "/control/parental/disable", d.handleParentalDisable)
+	registerHTTP(http.MethodGet, "/control/parental/status", d.handleParentalStatus)
+
+	registerHTTP(http.MethodPost, "/control/safesearch/enable", d.handleSafeSearchEnable)
+	registerHTTP(http.MethodPost, "/control/safesearch/disable", d.handleSafeSearchDisable)
+	registerHTTP(http.MethodGet, "/control/safesearch/status", d.handleSafeSearchStatus)
+
+	registerHTTP(http.MethodGet, "/control/rewrite/list", d.handleRewriteList)
+	registerHTTP(http.MethodPost, "/control/rewrite/add", d.handleRewriteAdd)
+	registerHTTP(http.MethodPost, "/control/rewrite/delete", d.handleRewriteDelete)
+
+	registerHTTP(http.MethodGet, "/control/blocked_services/services", d.handleBlockedServicesAvailableServices)
+	registerHTTP(http.MethodGet, "/control/blocked_services/list", d.handleBlockedServicesList)
+	registerHTTP(http.MethodPost, "/control/blocked_services/set", d.handleBlockedServicesSet)
+
+	registerHTTP(http.MethodGet, "/control/filtering/status", d.handleFilteringStatus)
+	registerHTTP(http.MethodPost, "/control/filtering/config", d.handleFilteringConfig)
+	registerHTTP(http.MethodPost, "/control/filtering/add_url", d.handleFilteringAddURL)
+	registerHTTP(http.MethodPost, "/control/filtering/remove_url", d.handleFilteringRemoveURL)
+	registerHTTP(http.MethodPost, "/control/filtering/set_url", d.handleFilteringSetURL)
+	registerHTTP(http.MethodPost, "/control/filtering/refresh", d.handleFilteringRefresh)
+	registerHTTP(http.MethodPost, "/control/filtering/set_rules", d.handleFilteringSetRules)
+	registerHTTP(http.MethodGet, "/control/filtering/check_host", d.handleCheckHost)
 }
 
-func checkFiltersUpdateIntervalHours(i uint32) bool {
+// ValidateUpdateIvl returns false if i is not a valid filters update interval.
+func ValidateUpdateIvl(i uint32) bool {
 	return i == 0 || i == 1 || i == 12 || i == 1*24 || i == 3*24 || i == 7*24
 }

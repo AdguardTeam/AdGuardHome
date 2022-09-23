@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/golibs/errors"
@@ -17,12 +18,6 @@ import (
 	"github.com/NYTimes/gziphandler"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-)
-
-// HTTP scheme constants.
-const (
-	schemeHTTP  = "http"
-	schemeHTTPS = "https"
 )
 
 const (
@@ -166,7 +161,7 @@ func (web *Web) Start() {
 
 	// this loop is used as an ability to change listening host and/or port
 	for !web.httpsServer.shutdown {
-		printHTTPAddresses(schemeHTTP)
+		printHTTPAddresses(aghhttp.SchemeHTTP)
 		errs := make(chan error, 2)
 
 		// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
@@ -286,7 +281,7 @@ func (web *Web) tlsServerLoop() {
 			WriteTimeout:      web.conf.WriteTimeout,
 		}
 
-		printHTTPAddresses(schemeHTTPS)
+		printHTTPAddresses(aghhttp.SchemeHTTPS)
 		err := web.httpsServer.server.ListenAndServeTLS("", "")
 		if err != http.ErrServerClosed {
 			cleanupAlways()
