@@ -3,8 +3,8 @@ package home
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"runtime"
 	"strings"
@@ -20,11 +20,11 @@ import (
 
 // appendDNSAddrs is a convenient helper for appending a formatted form of DNS
 // addresses to a slice of strings.
-func appendDNSAddrs(dst []string, addrs ...net.IP) (res []string) {
+func appendDNSAddrs(dst []string, addrs ...netip.Addr) (res []string) {
 	for _, addr := range addrs {
 		var hostport string
 		if config.DNS.Port != defaultPortDNS {
-			hostport = netutil.JoinHostPort(addr.String(), config.DNS.Port)
+			hostport = netip.AddrPortFrom(addr, uint16(config.DNS.Port)).String()
 		} else {
 			hostport = addr.String()
 		}
@@ -38,7 +38,7 @@ func appendDNSAddrs(dst []string, addrs ...net.IP) (res []string) {
 // appendDNSAddrsWithIfaces formats and appends all DNS addresses from src to
 // dst.  It also adds the IP addresses of all network interfaces if src contains
 // an unspecified IP address.
-func appendDNSAddrsWithIfaces(dst []string, src []net.IP) (res []string, err error) {
+func appendDNSAddrsWithIfaces(dst []string, src []netip.Addr) (res []string, err error) {
 	ifacesAdded := false
 	for _, h := range src {
 		if !h.IsUnspecified() {
@@ -71,7 +71,9 @@ func appendDNSAddrsWithIfaces(dst []string, src []net.IP) (res []string, err err
 // on, including the addresses on all interfaces in cases of unspecified IPs.
 func collectDNSAddresses() (addrs []string, err error) {
 	if hosts := config.DNS.BindHosts; len(hosts) == 0 {
-		addrs = appendDNSAddrs(addrs, net.IP{127, 0, 0, 1})
+		addr := netip.AddrFrom4([4]byte{127, 0, 0, 1})
+
+		addrs = appendDNSAddrs(addrs, addr)
 	} else {
 		addrs, err = appendDNSAddrsWithIfaces(addrs, hosts)
 		if err != nil {

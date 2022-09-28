@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
+	"net/netip"
 	"sync"
 	"time"
 
@@ -35,6 +36,7 @@ type webConfig struct {
 	clientFS     fs.FS
 	clientBetaFS fs.FS
 
+	// TODO(e.burkov):  !! use netip
 	BindHost     net.IP
 	BindPort     int
 	BetaBindPort int
@@ -114,8 +116,14 @@ func CreateWeb(conf *webConfig) *Web {
 // WebCheckPortAvailable - check if port is available
 // BUT: if we are already using this port, no need
 func WebCheckPortAvailable(port int) bool {
-	return Context.web.httpsServer.server != nil ||
-		aghnet.CheckPort("tcp", config.BindHost, port) == nil
+	if Context.web.httpsServer.server != nil {
+		return true
+	}
+
+	// TODO(e.burkov):  !! use netip
+	addr, ok := netip.AddrFromSlice(config.BindHost)
+
+	return ok && aghnet.CheckPort("tcp", netip.AddrPortFrom(addr, uint16(port))) == nil
 }
 
 // TLSConfigChanged updates the TLS configuration and restarts the HTTPS server

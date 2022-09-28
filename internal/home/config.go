@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"sync"
@@ -135,8 +136,8 @@ type configuration struct {
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type dnsConfig struct {
-	BindHosts []net.IP `yaml:"bind_hosts"`
-	Port      int      `yaml:"port"`
+	BindHosts []netip.Addr `yaml:"bind_hosts"`
+	Port      int          `yaml:"port"`
 
 	// time interval for statistics (in days)
 	StatsInterval uint32 `yaml:"statistics_interval"`
@@ -203,7 +204,7 @@ var config = &configuration{
 	AuthBlockMin:       15,
 	WebSessionTTLHours: 30 * 24,
 	DNS: dnsConfig{
-		BindHosts:           []net.IP{{0, 0, 0, 0}},
+		BindHosts:           []netip.Addr{netip.IPv4Unspecified()},
 		Port:                defaultPortDNS,
 		StatsInterval:       1,
 		QueryLogEnabled:     true,

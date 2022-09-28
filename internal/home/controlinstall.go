@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -75,9 +75,9 @@ func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request
 }
 
 type checkConfReqEnt struct {
-	IP      net.IP `json:"ip"`
-	Port    int    `json:"port"`
-	Autofix bool   `json:"autofix"`
+	IP      netip.Addr `json:"ip"`
+	Port    int        `json:"port"`
+	Autofix bool       `json:"autofix"`
 }
 
 type checkConfReq struct {
@@ -128,7 +128,7 @@ func (req *checkConfReq) validateWeb(tcpPorts aghalg.UniqChecker[tcpPort]) (err 
 		// unbound after install.
 	}
 
-	return aghnet.CheckPort("tcp", req.Web.IP, portInt)
+	return aghnet.CheckPort("tcp", netip.AddrPortFrom(req.Web.IP, uint16(portInt)))
 }
 
 // validateDNS returns error if the DNS part of the initial configuration can't
@@ -153,13 +153,13 @@ func (req *checkConfReq) validateDNS(
 			return false, err
 		}
 
-		err = aghnet.CheckPort("tcp", req.DNS.IP, port)
+		err = aghnet.CheckPort("tcp", netip.AddrPortFrom(req.DNS.IP, uint16(port)))
 		if err != nil {
 			return false, err
 		}
 	}
 
-	err = aghnet.CheckPort("udp", req.DNS.IP, port)
+	err = aghnet.CheckPort("udp", netip.AddrPortFrom(req.DNS.IP, uint16(port)))
 	if !aghnet.IsAddrInUse(err) {
 		return false, err
 	}
@@ -171,7 +171,7 @@ func (req *checkConfReq) validateDNS(
 			log.Error("disabling DNSStubListener: %s", err)
 		}
 
-		err = aghnet.CheckPort("udp", req.DNS.IP, port)
+		err = aghnet.CheckPort("udp", netip.AddrPortFrom(req.DNS.IP, uint16(port)))
 		canAutofix = false
 	}
 
@@ -213,7 +213,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 // handleStaticIP - handles static IP request
 // It either checks if we have a static IP
 // Or if set=true, it tries to set it
-func handleStaticIP(ip net.IP, set bool) staticIPJSON {
+func handleStaticIP(ip netip.Addr, set bool) staticIPJSON {
 	resp := staticIPJSON{}
 
 	interfaceName := aghnet.InterfaceByIP(ip)
@@ -321,8 +321,8 @@ func disableDNSStubListener() error {
 }
 
 type applyConfigReqEnt struct {
-	IP   net.IP `json:"ip"`
-	Port int    `json:"port"`
+	IP   netip.Addr `json:"ip"`
+	Port int        `json:"port"`
 }
 
 type applyConfigReq struct {
@@ -388,14 +388,14 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = aghnet.CheckPort("udp", req.DNS.IP, req.DNS.Port)
+	err = aghnet.CheckPort("udp", netip.AddrPortFrom(req.DNS.IP, uint16(req.DNS.Port)))
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
-	err = aghnet.CheckPort("tcp", req.DNS.IP, req.DNS.Port)
+	err = aghnet.CheckPort("tcp", netip.AddrPortFrom(req.DNS.IP, uint16(req.DNS.Port)))
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
@@ -406,9 +406,9 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	copyInstallSettings(curConfig, config)
 
 	Context.firstRun = false
-	config.BindHost = req.Web.IP
+	config.BindHost = req.Web.IP.AsSlice()
 	config.BindPort = req.Web.Port
-	config.DNS.BindHosts = []net.IP{req.DNS.IP}
+	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
 
 	// TODO(e.burkov): StartMods() should be put in a separate goroutine at the
@@ -439,7 +439,7 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	web.conf.firstRun = false
-	web.conf.BindHost = req.Web.IP
+	web.conf.BindHost = req.Web.IP.AsSlice()
 	web.conf.BindPort = req.Web.Port
 
 	registerControlHandlers()
@@ -481,9 +481,9 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 		return nil, false, errors.Error("ports cannot be 0")
 	}
 
-	restartHTTP = !config.BindHost.Equal(req.Web.IP) || config.BindPort != req.Web.Port
+	restartHTTP = !config.BindHost.Equal(req.Web.IP.AsSlice()) || config.BindPort != req.Web.Port
 	if restartHTTP {
-		err = aghnet.CheckPort("tcp", req.Web.IP, req.Web.Port)
+		err = aghnet.CheckPort("tcp", netip.AddrPortFrom(req.Web.IP, uint16(req.Web.Port)))
 		if err != nil {
 			return nil, false, fmt.Errorf(
 				"checking address %s:%d: %w",
@@ -509,9 +509,9 @@ func (web *Web) registerInstallHandlers() {
 // TODO(e.burkov): This should removed with the API v1 when the appropriate
 // functionality will appear in default checkConfigReqEnt.
 type checkConfigReqEntBeta struct {
-	IP      []net.IP `json:"ip"`
-	Port    int      `json:"port"`
-	Autofix bool     `json:"autofix"`
+	IP      []netip.Addr `json:"ip"`
+	Port    int          `json:"port"`
+	Autofix bool         `json:"autofix"`
 }
 
 // checkConfigReqBeta is a struct representing new client's config check request
@@ -586,8 +586,8 @@ func (web *Web) handleInstallCheckConfigBeta(w http.ResponseWriter, r *http.Requ
 // TODO(e.burkov): This should removed with the API v1 when the appropriate
 // functionality will appear in default applyConfigReqEnt.
 type applyConfigReqEntBeta struct {
-	IP   []net.IP `json:"ip"`
-	Port int      `json:"port"`
+	IP   []netip.Addr `json:"ip"`
+	Port int          `json:"port"`
 }
 
 // applyConfigReqBeta is a struct representing new client's config setting

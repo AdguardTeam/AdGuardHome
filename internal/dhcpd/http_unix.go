@@ -349,6 +349,8 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			// ignore link-local
+			//
+			// TODO(e.burkov):  Try to listen DHCP on LLA as well.
 			if ipnet.IP.IsLinkLocalUnicast() {
 				continue
 			}
@@ -359,7 +361,7 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if len(jsonIface.Addrs4)+len(jsonIface.Addrs6) != 0 {
-			jsonIface.GatewayIP = aghnet.GatewayIP(iface.Name)
+			jsonIface.GatewayIP = aghnet.GatewayIP(iface.Name).AsSlice()
 			response[iface.Name] = jsonIface
 		}
 	}
