@@ -277,6 +277,7 @@ func setupConfig(args options) (err error) {
 	config.DNS.DnsfilterConf.DataDir = Context.getDataDir()
 	config.DNS.DnsfilterConf.Filters = slices.Clone(config.Filters)
 	config.DNS.DnsfilterConf.WhitelistFilters = slices.Clone(config.WhitelistFilters)
+	config.DNS.DnsfilterConf.UserRules = slices.Clone(config.UserRules)
 	config.DNS.DnsfilterConf.HTTPClient = Context.client
 
 	config.DHCP.WorkDir = Context.workDir
