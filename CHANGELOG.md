@@ -12,7 +12,7 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.108.0] - 2022-12-01 (APPROX.)
+## [v0.108.0] - TBA (APPROX.)
 -->
 
 
@@ -32,6 +32,41 @@ See also the [v0.107.15 GitHub milestone][ms-v0.107.15].
 See also the [v0.107.14 GitHub milestone][ms-v0.107.14].
 
 ### Security
+
+A Cross-Site Request Forgery (CSRF) vulnerability has been discovered.  The CVE
+number is to be assigned.  We thank Daniel Elkabes from Mend.io for reporting
+this vulnerability to us.
+
+#### `SameSite` Policy
+
+The `SameSite` policy on the AdGuard Home session cookies is now set to `Lax`.
+Which means that the only cross-site HTTP request for which the browser is
+allowed to send the session cookie is navigating to the AdGuard Home domain.
+
+**Users are strongly advised to log out, clear browser cache, and log in again
+after updating.**
+
+#### Removal Of Plain-Text APIs (BREAKING API CHANGE)
+
+We have implemented several measures to prevent such vulnerabilities in the
+future, but some of these measures break backwards compatibility for the sake of
+better protection.
+
+The following APIs, which previously accepted or returned `text/plain` data,
+now accept or return data as JSON.  All new formats for the request and response
+bodies are documented in `openapi/openapi.yaml` and `openapi/CHANGELOG.md`.
+
+- `GET  /control/i18n/current_language`;
+- `POST /control/dhcp/find_active_dhcp`;
+- `POST /control/filtering/set_rules`;
+- `POST /control/i18n/change_language`.
+
+#### Stricter Content-Type Checks (BREAKING API CHANGE)
+
+All JSON APIs now check if the request actually has the `application/json`
+content-type.
+
+#### Other Security Changes
 
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).

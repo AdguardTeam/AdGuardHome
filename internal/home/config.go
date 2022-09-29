@@ -85,10 +85,10 @@ type configuration struct {
 	// It's reset after config is parsed
 	fileData []byte
 
-	BindHost     net.IP `yaml:"bind_host"`      // BindHost is the IP address of the HTTP server to bind to
-	BindPort     int    `yaml:"bind_port"`      // BindPort is the port the HTTP server
-	BetaBindPort int    `yaml:"beta_bind_port"` // BetaBindPort is the port for new client
-	Users        []User `yaml:"users"`          // Users that can access HTTP server
+	BindHost     net.IP    `yaml:"bind_host"`      // BindHost is the IP address of the HTTP server to bind to
+	BindPort     int       `yaml:"bind_port"`      // BindPort is the port the HTTP server
+	BetaBindPort int       `yaml:"beta_bind_port"` // BetaBindPort is the port for new client
+	Users        []webUser `yaml:"users"`          // Users that can access HTTP server
 	// AuthAttempts is the maximum number of failed login attempts a user
 	// can do before being blocked.
 	AuthAttempts uint `yaml:"auth_attempts"`

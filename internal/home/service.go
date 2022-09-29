@@ -176,7 +176,8 @@ func handleServiceControlAction(opts options, clientBuildFS fs.FS) {
 	chooseSystem()
 
 	action := opts.serviceControlAction
-	log.Printf("service: control action: %s", action)
+	log.Info(version.Full())
+	log.Info("service: control action: %s", action)
 
 	if action == "reload" {
 		sendSigReload()

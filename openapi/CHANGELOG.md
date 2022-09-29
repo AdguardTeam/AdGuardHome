@@ -4,12 +4,72 @@
 
 ## v0.108.0: API changes
 
+
+
+## v0.107.14: BREAKING API CHANGES
+
+A Cross-Site Request Forgery (CSRF) vulnerability has been discovered.  We have
+implemented several measures to prevent such vulnerabilities in the future, but
+some of these measures break backwards compatibility for the sake of better
+protection.
+
+All new formats for the request and response bodies are documented in
+`openapi.yaml`.
+
+### `POST /control/filtering/set_rules` And Other Plain-Text APIs
+
+The following APIs, which previously accepted or returned `text/plain` data,
+now accept or return data as JSON.
+
+#### `POST /control/filtering/set_rules`
+
+Previously, the API accepted a raw list of filters as a plain-text file.  Now,
+the filters must be presented in a JSON object with the following format:
+
+```json
+{
+  "rules":
+  [
+    "||example.com^",
+    "# comment",
+    "@@||www.example.com^"
+  ]
+}
+```
+
+#### `GET /control/i18n/current_language` And `POST /control/i18n/change_language`
+
+Previously, these APIs accepted and returned the language code in plain text.
+Now, they accept and return them in a JSON object with the following format:
+
+```json
+{
+  "language": "en"
+}
+```
+
+#### `POST /control/dhcp/find_active_dhcp`
+
+Previously, the API accepted the name of the network interface as a plain-text
+string.  Now, it must be contained within a JSON object with the following
+format:
+
+```json
+{
+  "interface": "eth0"
+}
+```
+
+
+
 ## v0.107.12: API changes
 
 ### `GET /control/blocked_services/services`
 
 * The new `GET /control/blocked_services/services` HTTP API allows inspecting
   all available services.
+
+
 
 ## v0.107.7: API changes
 
@@ -24,12 +84,16 @@
   `POST /install/configure` which means that the specified password does not
   meet the strength requirements.
 
+
+
 ## v0.107.3: API changes
 
 ### The new field `"version"` in `AddressesInfo`
 
 * The new field `"version"` in `GET /install/get_addresses` is the version of
   the AdGuard Home instance.
+
+
 
 ## v0.107.0: API changes
 

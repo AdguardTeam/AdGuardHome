@@ -5,11 +5,9 @@ package dhcpd
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -410,31 +408,37 @@ type dhcpSearchResult struct {
 	V6 dhcpSearchV6Result `json:"v6"`
 }
 
-// Perform the following tasks:
-// . Search for another DHCP server running
-// . Check if a static IP is configured for the network interface
-// Respond with results
+// findActiveServerReq is the JSON structure for the request to find active DHCP
+// servers.
+type findActiveServerReq struct {
+	Interface string `json:"interface"`
+}
+
+// handleDHCPFindActiveServer performs the following tasks:
+//  1. searches for another DHCP server in the network;
+//  2. check if a static IP is configured for the network interface;
+//  3. responds with the results.
 func (s *server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Request) {
-	// This use of ReadAll is safe, because request's body is now limited.
-	body, err := io.ReadAll(r.Body)
+	if aghhttp.WriteTextPlainDeprecated(w, r) {
+		return
+	}
+
+	req := &findActiveServerReq{}
+	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		msg := fmt.Sprintf("failed to read request body: %s", err)
-		log.Error(msg)
-		http.Error(w, msg, http.StatusBadRequest)
+		aghhttp.Error(r, w, http.StatusBadRequest, "reading req: %s", err)
 
 		return
 	}
 
-	ifaceName := strings.TrimSpace(string(body))
+	ifaceName := req.Interface
 	if ifaceName == "" {
-		msg := "empty interface name specified"
-		log.Error(msg)
-		http.Error(w, msg, http.StatusBadRequest)
+		aghhttp.Error(r, w, http.StatusBadRequest, "empty interface name")
 
 		return
 	}
 
-	result := dhcpSearchResult{
+	result := &dhcpSearchResult{
 		V4: dhcpSearchV4Result{
 			OtherServer: dhcpSearchOtherResult{
 				Found: "no",
@@ -459,6 +463,14 @@ func (s *server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 		result.V4.StaticIP.IP = aghnet.GetSubnet(ifaceName).String()
 	}
 
+	setOtherDHCPResult(ifaceName, result)
+
+	_ = aghhttp.WriteJSONResponse(w, r, result)
+}
+
+// setOtherDHCPResult sets the results of the check for another DHCP server in
+// result.
+func setOtherDHCPResult(ifaceName string, result *dhcpSearchResult) {
 	found4, found6, err4, err6 := aghnet.CheckOtherDHCP(ifaceName)
 	if err4 != nil {
 		result.V4.OtherServer.Found = "error"
@@ -466,23 +478,12 @@ func (s *server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 	} else if found4 {
 		result.V4.OtherServer.Found = "yes"
 	}
+
 	if err6 != nil {
 		result.V6.OtherServer.Found = "error"
 		result.V6.OtherServer.Error = err6.Error()
 	} else if found6 {
 		result.V6.OtherServer.Found = "yes"
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(result)
-	if err != nil {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusInternalServerError,
-			"Failed to marshal DHCP found json: %s",
-			err,
-		)
 	}
 }
 

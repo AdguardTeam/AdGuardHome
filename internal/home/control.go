@@ -146,13 +146,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		resp.IsDHCPAvailable = Context.dhcpServer != nil
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-
-		return
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 type profileJSON struct {
@@ -162,13 +156,16 @@ type profileJSON struct {
 func handleGetProfile(w http.ResponseWriter, r *http.Request) {
 	pj := profileJSON{}
 	u := Context.auth.getCurrentUser(r)
+
 	pj.Name = u.Name
 
 	data, err := json.Marshal(pj)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusInternalServerError, "json.Marshal: %s", err)
+
 		return
 	}
+
 	_, _ = w.Write(data)
 }
 
@@ -207,11 +204,24 @@ func ensure(method string, handler func(http.ResponseWriter, *http.Request)) fun
 		log.Debug("%s %v", r.Method, r.URL)
 
 		if r.Method != method {
-			http.Error(w, "This request must be "+method, http.StatusMethodNotAllowed)
+			aghhttp.Error(r, w, http.StatusMethodNotAllowed, "only %s is allowed", method)
+
 			return
 		}
 
 		if method == http.MethodPost || method == http.MethodPut || method == http.MethodDelete {
+			if r.Header.Get(aghhttp.HdrNameContentType) != aghhttp.HdrValApplicationJSON {
+				aghhttp.Error(
+					r,
+					w,
+					http.StatusUnsupportedMediaType,
+					"only %s is allowed",
+					aghhttp.HdrValApplicationJSON,
+				)
+
+				return
+			}
+
 			Context.controlLock.Lock()
 			defer Context.controlLock.Unlock()
 		}
