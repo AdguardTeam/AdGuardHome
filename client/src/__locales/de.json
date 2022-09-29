@@ -635,5 +635,6 @@
     "parental_control": "Kindersicherung",
     "safe_browsing": "Internetsicherheit",
     "served_from_cache": "{{value}} <i>(aus dem Cache abgerufen)</i>",
-    "form_error_password_length": "Das Passwort muss mindestens {{value}} Zeichen enthalten"
+    "form_error_password_length": "Das Passwort muss mindestens {{value}} Zeichen enthalten",
+    "anonymizer_notification": "<0>Hinweis:</0> Die IP-Anonymisierung ist aktiviert. Sie können sie in den <1>Allgemeinen Einstellungen</1> deaktivieren."
 }

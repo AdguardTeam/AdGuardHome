@@ -635,5 +635,6 @@
     "parental_control": "Quản lý của phụ huynh",
     "safe_browsing": "Duyệt web an toàn",
     "served_from_cache": "{{value}} <i>(được phục vụ từ bộ nhớ cache)</i>",
-    "form_error_password_length": "Mật khẩu phải có ít nhất {{value}} ký tự"
+    "form_error_password_length": "Mật khẩu phải có ít nhất {{value}} ký tự",
+    "anonymizer_notification": "<0> Lưu ý:</0> Tính năng ẩn danh IP được bật. Bạn có thể tắt nó trong <1> Cài đặt chung</1>."
 }

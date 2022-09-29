@@ -635,5 +635,6 @@
     "parental_control": "Starševski nadzor",
     "safe_browsing": "Varno brskanje",
     "served_from_cache": "{{value}} <i>(postreženo iz predpomnilnika)</i>",
-    "form_error_password_length": "Geslo mora vsebovati najmanj {{value}} znakov"
+    "form_error_password_length": "Geslo mora vsebovati najmanj {{value}} znakov",
+    "anonymizer_notification": "<0>Opomba:</0> Anonimizacija IP je omogočena. Onemogočite ga lahko v <1>Splošnih nastavitvah</1>."
 }

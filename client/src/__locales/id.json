@@ -635,5 +635,6 @@
     "parental_control": "Kontrol Orang Tua",
     "safe_browsing": "Penjelajahan Aman",
     "served_from_cache": "{{value}} <i>(disajikan dari cache)</i>",
-    "form_error_password_length": "Kata sandi harus minimal {{value}} karakter"
+    "form_error_password_length": "Kata sandi harus minimal {{value}} karakter",
+    "anonymizer_notification": "<0>Catatan:</0> Anonimisasi IP diaktifkan. Anda dapat menonaktifkannya di <1>Pengaturan umum</1> ."
 }
