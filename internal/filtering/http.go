@@ -3,13 +3,11 @@ package filtering
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -249,16 +247,25 @@ func (d *DNSFilter) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// filteringRulesReq is the JSON structure for settings custom filtering rules.
+type filteringRulesReq struct {
+	Rules []string `json:"rules"`
+}
+
 func (d *DNSFilter) handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
-	// This use of ReadAll is safe, because request's body is now limited.
-	body, err := io.ReadAll(r.Body)
+	if aghhttp.WriteTextPlainDeprecated(w, r) {
+		return
+	}
+
+	req := &filteringRulesReq{}
+	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to read request body: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "reading req: %s", err)
 
 		return
 	}
 
-	d.UserRules = strings.Split(string(body), "\n")
+	d.UserRules = req.Rules
 	d.ConfigModified()
 	d.EnableFilters(true)
 }

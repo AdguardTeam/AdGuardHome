@@ -413,6 +413,11 @@
       - 'dhcp'
       'operationId': 'checkActiveDhcp'
       'summary': 'Searches for an active DHCP server on the network'
+      'requestBody':
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/DhcpFindActiveReq'
       'responses':
         '200':
           'description': 'OK.'
@@ -667,24 +672,6 @@
       - 'parental'
       'operationId': 'parentalEnable'
       'summary': 'Enable parental filtering'
-      'requestBody':
-        'content':
-          'text/plain':
-            'schema':
-              'type': 'string'
-              'enum':
-              - 'EARLY_CHILDHOOD'
-              - 'YOUNG'
-              - 'TEEN'
-              - 'MATURE'
-              'example': 'sensitivity=TEEN'
-        'description': |
-          Age sensitivity for parental filtering,
-          EARLY_CHILDHOOD is 3
-          YOUNG is 10
-          TEEN is 13
-          MATURE is 17
-        'required': true
       'responses':
         '200':
           'description': 'OK.'
@@ -958,10 +945,9 @@
         Change current language.  Argument must be an ISO 639-1 two-letter code.
       'requestBody':
         'content':
-          'text/plain':
+          'application/json':
             'schema':
-              'type': 'string'
-              'example': 'en'
+              '$ref': '#/components/schemas/LanguageSettings'
         'description': >
           New language.  It must be known to the server and must be an ISO 639-1
           two-letter code.
@@ -980,10 +966,9 @@
         '200':
           'description': 'OK.'
           'content':
-            'text/plain':
-              'examples':
-                'response':
-                  'value': 'en'
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/LanguageSettings'
   '/install/get_addresses_beta':
     'get':
       'tags':
@@ -1776,6 +1761,16 @@
         Network interfaces dictionary, keys are interface names.
       'additionalProperties':
         '$ref': '#/components/schemas/NetInterface'
+
+    'DhcpFindActiveReq':
+      'description': >
+        Request for checking for other DHCP servers in the network.
+      'properties':
+        'interface':
+          'description': 'The name of the network interface'
+          'example': 'eth0'
+          'type': 'string'
+      'type': 'object'
 
     'DhcpSearchResult':
       'type': 'object'
@@ -2691,6 +2686,15 @@
         'message':
           'description': 'The error message, an opaque string.'
           'type': 'string'
+      'type': 'object'
+    'LanguageSettings':
+      'description': 'Language settings object.'
+      'properties':
+        'language':
+          'description': 'The current language or the language to set.'
+          'type': 'string'
+      'required':
+      - 'language'
       'type': 'object'
   'securitySchemes':
     'basicAuth':

@@ -130,7 +130,7 @@ class Api {
         const { path, method } = this.FILTERING_SET_RULES;
         const parameters = {
             data: rules,
-            headers: { 'Content-Type': 'text/plain' },
+            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -173,12 +173,7 @@ class Api {
 
     enableParentalControl() {
         const { path, method } = this.PARENTAL_ENABLE;
-        const parameter = 'sensitivity=TEEN'; // this parameter TEEN is hardcoded
-        const config = {
-            data: parameter,
-            headers: { 'Content-Type': 'text/plain' },
-        };
-        return this.makeRequest(path, method, config);
+        return this.makeRequest(path, method);
     }
 
     disableParentalControl() {
@@ -240,11 +235,11 @@ class Api {
         return this.makeRequest(path, method);
     }
 
-    changeLanguage(lang) {
+    changeLanguage(config) {
         const { path, method } = this.CHANGE_LANGUAGE;
         const parameters = {
-            data: lang,
-            headers: { 'Content-Type': 'text/plain' },
+            data: config,
+            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -285,11 +280,11 @@ class Api {
         return this.makeRequest(path, method, parameters);
     }
 
-    findActiveDhcp(name) {
+    findActiveDhcp(req) {
         const { path, method } = this.DHCP_FIND_ACTIVE;
         const parameters = {
-            data: name,
-            headers: { 'Content-Type': 'text/plain' },
+            data: req,
+            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }

@@ -278,11 +278,11 @@ func upgradeSchema4to5(diskConf yobj) error {
 		log.Fatalf("Can't use password \"%s\": bcrypt.GenerateFromPassword: %s", passStr, err)
 		return nil
 	}
-	u := User{
+	u := webUser{
 		Name:         nameStr,
 		PasswordHash: string(hash),
 	}
-	users := []User{u}
+	users := []webUser{u}
 	diskConf["users"] = users
 	return nil
 }

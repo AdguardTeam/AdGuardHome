@@ -409,7 +409,7 @@ func run(args options, clientBuildFS fs.FS) {
 	configureLogger(args)
 
 	// Print the first message after logger is configured.
-	log.Println(version.Full())
+	log.Info(version.Full())
 	log.Debug("current working directory is %s", Context.workDir)
 	if args.runningAsService {
 		log.Info("AdGuard Home is running as a service")
@@ -455,9 +455,9 @@ func run(args options, clientBuildFS fs.FS) {
 
 	sessFilename := filepath.Join(Context.getDataDir(), "sessions.db")
 	GLMode = args.glinetMode
-	var arl *authRateLimiter
+	var rateLimiter *authRateLimiter
 	if config.AuthAttempts > 0 && config.AuthBlockMin > 0 {
-		arl = newAuthRateLimiter(
+		rateLimiter = newAuthRateLimiter(
 			time.Duration(config.AuthBlockMin)*time.Minute,
 			config.AuthAttempts,
 		)
@@ -469,7 +469,7 @@ func run(args options, clientBuildFS fs.FS) {
 		sessFilename,
 		config.Users,
 		config.WebSessionTTLHours*60*60,
-		arl,
+		rateLimiter,
 	)
 	if Context.auth == nil {
 		log.Fatalf("Couldn't initialize Auth module")

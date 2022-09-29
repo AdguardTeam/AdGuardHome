@@ -680,8 +680,6 @@ func unmarshalTLS(r *http.Request) (tlsConfigSettingsExt, error) {
 }
 
 func marshalTLS(w http.ResponseWriter, r *http.Request, data tlsConfig) {
-	w.Header().Set("Content-Type", "application/json")
-
 	if data.CertificateChain != "" {
 		encoded := base64.StdEncoding.EncodeToString([]byte(data.CertificateChain))
 		data.CertificateChain = encoded
@@ -692,16 +690,7 @@ func marshalTLS(w http.ResponseWriter, r *http.Request, data tlsConfig) {
 		data.PrivateKey = ""
 	}
 
-	err := json.NewEncoder(w).Encode(data)
-	if err != nil {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusInternalServerError,
-			"Failed to marshal json with TLS status: %s",
-			err,
-		)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, data)
 }
 
 // registerWebHandlers registers HTTP handlers for TLS configuration
