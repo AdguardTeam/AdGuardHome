@@ -635,5 +635,6 @@
     "parental_control": "Controllo Parentale",
     "safe_browsing": "Navigazione Sicura",
     "served_from_cache": "{{value}} <i>(fornito dalla cache)</i>",
-    "form_error_password_length": "La password deve contenere almeno {{value}} caratteri"
+    "form_error_password_length": "La password deve contenere almeno {{value}} caratteri",
+    "anonymizer_notification": "<0>Attenzione:</0> L'anonimizzazione dell'IP è abilitata. Puoi disabilitarla in <1>Impostazioni generali</1>."
 }

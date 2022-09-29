@@ -635,5 +635,6 @@
     "parental_control": "家长控制",
     "safe_browsing": "安全浏览",
     "served_from_cache": "{{value}}<i>(由缓存提供)</i>",
-    "form_error_password_length": "密码必须至少有 {{value}} 个字符"
+    "form_error_password_length": "密码必须至少有 {{value}} 个字符",
+    "anonymizer_notification": "<0>注意：</0> IP 匿名化已启用。您可以在<1>常规设置</1>中禁用它。"
 }

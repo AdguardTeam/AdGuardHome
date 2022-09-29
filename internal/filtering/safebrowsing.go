@@ -415,17 +415,3 @@ func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request)
 		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 	}
 }
-
-func (d *DNSFilter) registerSecurityHandlers() {
-	d.Config.HTTPRegister(http.MethodPost, "/control/safebrowsing/enable", d.handleSafeBrowsingEnable)
-	d.Config.HTTPRegister(http.MethodPost, "/control/safebrowsing/disable", d.handleSafeBrowsingDisable)
-	d.Config.HTTPRegister(http.MethodGet, "/control/safebrowsing/status", d.handleSafeBrowsingStatus)
-
-	d.Config.HTTPRegister(http.MethodPost, "/control/parental/enable", d.handleParentalEnable)
-	d.Config.HTTPRegister(http.MethodPost, "/control/parental/disable", d.handleParentalDisable)
-	d.Config.HTTPRegister(http.MethodGet, "/control/parental/status", d.handleParentalStatus)
-
-	d.Config.HTTPRegister(http.MethodPost, "/control/safesearch/enable", d.handleSafeSearchEnable)
-	d.Config.HTTPRegister(http.MethodPost, "/control/safesearch/disable", d.handleSafeSearchDisable)
-	d.Config.HTTPRegister(http.MethodGet, "/control/safesearch/status", d.handleSafeSearchStatus)
-}

@@ -218,10 +218,7 @@ exit_on_output gofumpt --extra -e -l .
 
 "$GO" vet ./...
 
-# TODO(a.garipov): Reenable this once https://github.com/golang/go/issues/55035
-# is fixed.
-#
-#	govulncheck ./...
+govulncheck ./...
 
 # Apply more lax standards to the code we haven't properly refactored yet.
 gocyclo --over 17 ./internal/querylog/

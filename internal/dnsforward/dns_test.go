@@ -26,7 +26,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		Value: []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"h2"}},
 			&dns.SVCBPort{Port: 8044},
-			&dns.SVCBDoHPath{Template: "/dns-query?dns"},
+			&dns.SVCBDoHPath{Template: "/dns-query{?dns}"},
 		},
 	}
 

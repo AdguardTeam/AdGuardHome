@@ -635,5 +635,6 @@
     "parental_control": "Forældrekontrol",
     "safe_browsing": "Sikker Browsing",
     "served_from_cache": "{{value}} <i>(leveret fra cache)</i>",
-    "form_error_password_length": "Adgangskoden skal udgøre mindst {{value}} tegn."
+    "form_error_password_length": "Adgangskoden skal udgøre mindst {{value}} tegn.",
+    "anonymizer_notification": "<0>Bemærk:</0> IP-anonymisering er aktiveret. Det kan deaktiveres via <1>Generelle indstillinger</1>."
 }

@@ -635,5 +635,6 @@
     "parental_control": "Roditeljska zaštita",
     "safe_browsing": "Sigurno surfanje",
     "served_from_cache": "{{value}} <i>(dohvaćeno iz predmemorije)</i>",
-    "form_error_password_length": "Lozinka mora imati najmanje {{value}} znakova"
+    "form_error_password_length": "Lozinka mora imati najmanje {{value}} znakova",
+    "anonymizer_notification": "<0>Napomena:</0>IP anonimizacija je omogućena. Možete ju onemogućiti u <1>općim postavkama</1>."
 }

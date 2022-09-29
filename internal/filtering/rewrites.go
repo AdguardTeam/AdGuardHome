@@ -133,34 +133,31 @@ func matchDomainWildcard(host, wildcard string) (ok bool) {
 //  1. A and AAAA > CNAME
 //  2. wildcard > exact
 //  3. lower level wildcard > higher level wildcard
+//
+// TODO(a.garipov):  Replace with slices.Sort.
 type rewritesSorted []*LegacyRewrite
 
-// Len implements the sort.Interface interface for legacyRewritesSorted.
+// Len implements the sort.Interface interface for rewritesSorted.
 func (a rewritesSorted) Len() (l int) { return len(a) }
 
-// Swap implements the sort.Interface interface for legacyRewritesSorted.
+// Swap implements the sort.Interface interface for rewritesSorted.
 func (a rewritesSorted) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
-// Less implements the sort.Interface interface for legacyRewritesSorted.
+// Less implements the sort.Interface interface for rewritesSorted.
 func (a rewritesSorted) Less(i, j int) (less bool) {
-	if a[i].Type == dns.TypeCNAME && a[j].Type != dns.TypeCNAME {
+	ith, jth := a[i], a[j]
+	if ith.Type == dns.TypeCNAME && jth.Type != dns.TypeCNAME {
 		return true
-	} else if a[i].Type != dns.TypeCNAME && a[j].Type == dns.TypeCNAME {
+	} else if ith.Type != dns.TypeCNAME && jth.Type == dns.TypeCNAME {
 		return false
 	}
 
-	if isWildcard(a[i].Domain) {
-		if !isWildcard(a[j].Domain) {
-			return false
-		}
-	} else {
-		if isWildcard(a[j].Domain) {
-			return true
-		}
+	if iw, jw := isWildcard(ith.Domain), isWildcard(jth.Domain); iw != jw {
+		return jw
 	}
 
-	// Both are wildcards.
-	return len(a[i].Domain) > len(a[j].Domain)
+	// Both are either wildcards or not.
+	return len(ith.Domain) > len(jth.Domain)
 }
 
 // prepareRewrites normalizes and validates all legacy DNS rewrites.
@@ -312,10 +309,4 @@ func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) 
 	d.confLock.Unlock()
 
 	d.Config.ConfigModified()
-}
-
-func (d *DNSFilter) registerRewritesHandlers() {
-	d.Config.HTTPRegister(http.MethodGet, "/control/rewrite/list", d.handleRewriteList)
-	d.Config.HTTPRegister(http.MethodPost, "/control/rewrite/add", d.handleRewriteAdd)
-	d.Config.HTTPRegister(http.MethodPost, "/control/rewrite/delete", d.handleRewriteDelete)
 }

@@ -34,7 +34,7 @@ const DomainCell = ({
         'my-3': isDetailed,
     });
 
-    const privacyIconClass = classNames('icons mx-2 icon--24 d-none d-sm-block', {
+    const privacyIconClass = classNames('icons mx-2 icon--24 d-none d-sm-block logs__question', {
         'icon--green': hasTracker,
         'icon--disabled': !hasTracker,
         'my-3': isDetailed,

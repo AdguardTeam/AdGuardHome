@@ -97,7 +97,7 @@ const ResponseCell = ({
     return (
         <div className="logs__cell logs__cell--response" role="gridcell">
             <IconTooltip
-                className={classNames('icons mr-4 icon--24 icon--lightgray', { 'my-3': isDetailed })}
+                className={classNames('icons mr-4 icon--24 icon--lightgray logs__question', { 'my-3': isDetailed })}
                 columnClass='grid grid--limited'
                 tooltipClass='px-5 pb-5 pt-4 mw-75 custom-tooltip__response-details'
                 contentItemClass='text-truncate key-colon o-hidden'

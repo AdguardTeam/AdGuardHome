@@ -635,5 +635,6 @@
     "parental_control": "Lapsilukko",
     "safe_browsing": "Turvallinen selaus",
     "served_from_cache": "{{value}} <i>(jaettu välimuistista)</i>",
-    "form_error_password_length": "Salasanan on oltava ainakin {{value}} merkkiä"
+    "form_error_password_length": "Salasanan on oltava ainakin {{value}} merkkiä",
+    "anonymizer_notification": "<0>Huomioi:</0> IP-osoitteen anonymisointi on käytössä. Voit poistaa sen käytöstä <1>Yleisistä asetuksista</1>."
 }

@@ -20,8 +20,10 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -32,6 +34,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"golang.org/x/exp/slices"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -51,10 +54,9 @@ type homeContext struct {
 	dnsServer  *dnsforward.Server   // DNS module
 	rdns       *RDNS                // rDNS module
 	whois      *WHOIS               // WHOIS module
-	dnsFilter  *filtering.DNSFilter // DNS filtering module
 	dhcpServer dhcpd.Interface      // DHCP module
 	auth       *Auth                // HTTP authentication module
-	filters    Filtering            // DNS filtering module
+	filters    *filtering.DNSFilter // DNS filtering module
 	web        *Web                 // Web (HTTP, HTTPS) module
 	tls        *TLSMod              // TLS module
 	// etcHosts is an IP-hostname pairs set taken from system configuration
@@ -78,7 +80,6 @@ type homeContext struct {
 	disableUpdate    bool   // If set, don't check for updates
 	controlLock      sync.Mutex
 	tlsRoots         *x509.CertPool // list of root CAs for TLSv1.2
-	tlsCiphers       []uint16       // list of TLS ciphers to use
 	transport        *http.Transport
 	client           *http.Client
 	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
@@ -140,16 +141,21 @@ func setupContext(args options) {
 		checkPermissions()
 	}
 
-	initConfig()
+	switch version.Channel() {
+	case version.ChannelEdge, version.ChannelDevelopment:
+		config.BetaBindPort = 3001
+	default:
+		// Go on.
+	}
 
 	Context.tlsRoots = LoadSystemRootCAs()
-	Context.tlsCiphers = InitTLSCiphers()
 	Context.transport = &http.Transport{
 		DialContext: customDialContext,
 		Proxy:       getHTTPProxy,
 		TLSClientConfig: &tls.Config{
-			RootCAs:    Context.tlsRoots,
-			MinVersion: tls.VersionTLS12,
+			RootCAs:      Context.tlsRoots,
+			CipherSuites: aghtls.SaferCipherSuites(),
+			MinVersion:   tls.VersionTLS12,
 		},
 	}
 	Context.client = &http.Client{
@@ -265,6 +271,14 @@ func setupHostsContainer() (err error) {
 }
 
 func setupConfig(args options) (err error) {
+	config.DNS.DnsfilterConf.EtcHosts = Context.etcHosts
+	config.DNS.DnsfilterConf.ConfigModified = onConfigModified
+	config.DNS.DnsfilterConf.HTTPRegister = httpRegister
+	config.DNS.DnsfilterConf.DataDir = Context.getDataDir()
+	config.DNS.DnsfilterConf.Filters = slices.Clone(config.Filters)
+	config.DNS.DnsfilterConf.WhitelistFilters = slices.Clone(config.WhitelistFilters)
+	config.DNS.DnsfilterConf.HTTPClient = Context.client
+
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified
@@ -384,8 +398,6 @@ func fatalOnError(err error) {
 
 // run configures and starts AdGuard Home.
 func run(args options, clientBuildFS fs.FS) {
-	var err error
-
 	// configure config filename
 	initConfigFilename(args)
 
@@ -404,7 +416,7 @@ func run(args options, clientBuildFS fs.FS) {
 
 	setupContext(args)
 
-	err = configureOS(config)
+	err := configureOS(config)
 	fatalOnError(err)
 
 	// clients package uses filtering package's static data (filtering.BlockedSvcKnown()),
@@ -763,12 +775,12 @@ func printHTTPAddresses(proto string) {
 	}
 
 	port := config.BindPort
-	if proto == schemeHTTPS {
+	if proto == aghhttp.SchemeHTTPS {
 		port = tlsConf.PortHTTPS
 	}
 
 	// TODO(e.burkov): Inspect and perhaps merge with the previous condition.
-	if proto == schemeHTTPS && tlsConf.ServerName != "" {
+	if proto == aghhttp.SchemeHTTPS && tlsConf.ServerName != "" {
 		printWebAddrs(proto, tlsConf.ServerName, tlsConf.PortHTTPS, 0)
 
 		return

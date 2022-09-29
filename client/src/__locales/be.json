@@ -635,5 +635,6 @@
     "parental_control": "Бацькоўскі кантроль",
     "safe_browsing": "Бяспечны інтэрнэт",
     "served_from_cache": "{{value}} <i>(атрымана з кэша)</i>",
-    "form_error_password_length": "Пароль павінен быць не менш за {{value}} сімвалаў"
+    "form_error_password_length": "Пароль павінен быць не менш за {{value}} сімвалаў",
+    "anonymizer_notification": "<0>Заўвага:</0> Ананімізацыя IP уключана. Вы можаце адключыць яго ў <1>Агульных наладах</1> ."
 }

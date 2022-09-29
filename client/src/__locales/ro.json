@@ -635,5 +635,6 @@
     "parental_control": "Control Parental",
     "safe_browsing": "Navigare în siguranță",
     "served_from_cache": "{{value}} <i>(furnizat din cache)</i>",
-    "form_error_password_length": "Parola trebuie să aibă cel puțin {{value}} caractere"
+    "form_error_password_length": "Parola trebuie să aibă cel puțin {{value}} caractere",
+    "anonymizer_notification": "<0>Nota:</0> Anonimizarea IP este activată. Puteți să o dezactivați în <1>Setări generale</1>."
 }

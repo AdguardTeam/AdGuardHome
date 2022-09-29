@@ -9,6 +9,12 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
+// HTTP scheme constants.
+const (
+	SchemeHTTP  = "http"
+	SchemeHTTPS = "https"
+)
+
 // RegisterFunc is the function that sets the handler to handle the URL for the
 // method.
 //
