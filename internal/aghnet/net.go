@@ -130,7 +130,7 @@ func NetInterfaceFrom(iface *net.Interface) (niface *NetInterface, err error) {
 	for _, addr := range addrs {
 		n, ok := addr.(*net.IPNet)
 		if !ok {
-			// Should be net.IPNet, this is weird.
+			// Should be *net.IPNet, this is weird.
 			return nil, fmt.Errorf("expected %[2]s to be %[1]T, got %[2]T", n, addr)
 		} else if ip4 := n.IP.To4(); ip4 != nil {
 			n.IP = ip4
@@ -141,13 +141,13 @@ func NetInterfaceFrom(iface *net.Interface) (niface *NetInterface, err error) {
 			return nil, fmt.Errorf("bad address %s", n.IP)
 		}
 
-		ip = ip.WithZone(iface.Name)
+		if ip.IsLinkLocalUnicast() {
+			// Ignore link-local IPv4.
+			if ip.Is4() {
+				continue
+			}
 
-		// Ignore link-local IPv4.
-		//
-		// TODO(e.burkov):  !! or not??
-		if ip.Is4() && ip.IsLinkLocalUnicast() {
-			continue
+			ip = ip.WithZone(iface.Name)
 		}
 
 		ones, _ := n.Mask.Size()

@@ -406,7 +406,7 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	copyInstallSettings(curConfig, config)
 
 	Context.firstRun = false
-	config.BindHost = req.Web.IP.AsSlice()
+	config.BindHost = req.Web.IP
 	config.BindPort = req.Web.Port
 	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
@@ -439,7 +439,7 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	web.conf.firstRun = false
-	web.conf.BindHost = req.Web.IP.AsSlice()
+	web.conf.BindHost = req.Web.IP
 	web.conf.BindPort = req.Web.Port
 
 	registerControlHandlers()
@@ -481,7 +481,7 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 		return nil, false, errors.Error("ports cannot be 0")
 	}
 
-	restartHTTP = !config.BindHost.Equal(req.Web.IP.AsSlice()) || config.BindPort != req.Web.Port
+	restartHTTP = config.BindHost != req.Web.IP || config.BindPort != req.Web.Port
 	if restartHTTP {
 		err = aghnet.CheckPort("tcp", netip.AddrPortFrom(req.Web.IP, uint16(req.Web.Port)))
 		if err != nil {

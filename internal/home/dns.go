@@ -195,7 +195,7 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	dnsConf := config.DNS
 	hosts := dnsConf.BindHosts
 	if len(hosts) == 0 {
-		hosts = []netip.Addr{netip.AddrFrom4([4]byte{127, 0, 0, 1})}
+		hosts = []netip.Addr{aghnet.IPv4Localhost()}
 	}
 
 	newConf = dnsforward.ServerConfig{

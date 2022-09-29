@@ -2,7 +2,7 @@ package home
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 	"os"
 	"strconv"
 
@@ -12,15 +12,15 @@ import (
 
 // options passed from command-line arguments
 type options struct {
-	verbose        bool   // is verbose logging enabled
-	configFilename string // path to the config file
-	workDir        string // path to the working directory where we will store the filters data and the querylog
-	bindHost       net.IP // host address to bind HTTP server on
-	bindPort       int    // port to serve HTTP pages on
-	logFile        string // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
-	pidFile        string // File name to save PID to
-	checkConfig    bool   // Check configuration and exit
-	disableUpdate  bool   // If set, don't check for updates
+	verbose        bool       // is verbose logging enabled
+	configFilename string     // path to the config file
+	workDir        string     // path to the working directory where we will store the filters data and the querylog
+	bindHost       netip.Addr // host address to bind HTTP server on
+	bindPort       int        // port to serve HTTP pages on
+	logFile        string     // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
+	pidFile        string     // File name to save PID to
+	checkConfig    bool       // Check configuration and exit
+	disableUpdate  bool       // If set, don't check for updates
 
 	// service control action (see service.ControlAction array + "status" command)
 	serviceControlAction string
@@ -60,8 +60,8 @@ type arg struct {
 // against its zero value and return nil if the parameter value is
 // zero otherwise they return a string slice of the parameter
 
-func ipSliceOrNil(ip net.IP) []string {
-	if ip == nil {
+func ipSliceOrNil(ip netip.Addr) []string {
+	if !ip.IsValid() {
 		return nil
 	}
 
@@ -113,7 +113,7 @@ var workDirArg = arg{
 var hostArg = arg{
 	"Host address to bind HTTP server on.",
 	"host", "h",
-	func(o options, v string) (options, error) { o.bindHost = net.ParseIP(v); return o, nil }, nil, nil,
+	func(o options, v string) (options, error) { o.bindHost, _ = netip.ParseAddr(v); return o, nil }, nil, nil,
 	func(o options) []string { return ipSliceOrNil(o.bindHost) },
 }
 

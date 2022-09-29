@@ -3,7 +3,6 @@ package home
 import (
 	"bytes"
 	"fmt"
-	"net"
 	"net/netip"
 	"os"
 	"path/filepath"
@@ -86,10 +85,10 @@ type configuration struct {
 	// It's reset after config is parsed
 	fileData []byte
 
-	BindHost     net.IP `yaml:"bind_host"`      // BindHost is the IP address of the HTTP server to bind to
-	BindPort     int    `yaml:"bind_port"`      // BindPort is the port the HTTP server
-	BetaBindPort int    `yaml:"beta_bind_port"` // BetaBindPort is the port for new client
-	Users        []User `yaml:"users"`          // Users that can access HTTP server
+	BindHost     netip.Addr `yaml:"bind_host"`      // BindHost is the IP address of the HTTP server to bind to
+	BindPort     int        `yaml:"bind_port"`      // BindPort is the port the HTTP server
+	BetaBindPort int        `yaml:"beta_bind_port"` // BetaBindPort is the port for new client
+	Users        []User     `yaml:"users"`          // Users that can access HTTP server
 	// AuthAttempts is the maximum number of failed login attempts a user
 	// can do before being blocked.
 	AuthAttempts uint `yaml:"auth_attempts"`
@@ -199,7 +198,7 @@ type tlsConfigSettings struct {
 var config = &configuration{
 	BindPort:           3000,
 	BetaBindPort:       0,
-	BindHost:           net.IP{0, 0, 0, 0},
+	BindHost:           netip.IPv4Unspecified(),
 	AuthAttempts:       5,
 	AuthBlockMin:       15,
 	WebSessionTTLHours: 30 * 24,

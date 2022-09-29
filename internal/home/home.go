@@ -340,7 +340,7 @@ func setupConfig(args options) (err error) {
 	}
 
 	// override bind host/port from the console
-	if args.bindHost != nil {
+	if args.bindHost.IsValid() {
 		config.BindHost = args.bindHost
 	}
 	if len(args.pidFile) != 0 && writePIDFile(args.pidFile) {

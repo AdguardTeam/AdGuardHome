@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"io/fs"
-	"net"
 	"net/http"
 	"net/netip"
 	"sync"
@@ -36,8 +35,7 @@ type webConfig struct {
 	clientFS     fs.FS
 	clientBetaFS fs.FS
 
-	// TODO(e.burkov):  !! use netip
-	BindHost     net.IP
+	BindHost     netip.Addr
 	BindPort     int
 	BetaBindPort int
 	PortHTTPS    int
@@ -120,10 +118,7 @@ func WebCheckPortAvailable(port int) bool {
 		return true
 	}
 
-	// TODO(e.burkov):  !! use netip
-	addr, ok := netip.AddrFromSlice(config.BindHost)
-
-	return ok && aghnet.CheckPort("tcp", netip.AddrPortFrom(addr, uint16(port))) == nil
+	return aghnet.CheckPort("tcp", netip.AddrPortFrom(config.BindHost, uint16(port))) == nil
 }
 
 // TLSConfigChanged updates the TLS configuration and restarts the HTTPS server
