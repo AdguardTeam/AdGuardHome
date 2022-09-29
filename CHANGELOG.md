@@ -15,6 +15,22 @@ and this project adheres to
 ## [v0.108.0] - 2022-12-01 (APPROX.)
 -->
 
+
+
+<!--
+## [v0.107.15] - 2022-10-26 (APPROX.)
+
+See also the [v0.107.15 GitHub milestone][ms-v0.107.15].
+
+[ms-v0.107.15]:   https://github.com/AdguardTeam/AdGuardHome/milestone/51?closed=1
+-->
+
+
+
+## [v0.107.14] - 2022-09-29
+
+See also the [v0.107.14 GitHub milestone][ms-v0.107.14].
+
 ### Security
 
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
@@ -33,16 +49,7 @@ and this project adheres to
 [#4927]: https://github.com/AdguardTeam/AdGuardHome/issues/4927
 [#4930]: https://github.com/AdguardTeam/AdGuardHome/issues/4930
 
-
-
-
-<!--
-## [v0.107.14] - 2022-10-05 (APPROX.)
-
-See also the [v0.107.14 GitHub milestone][ms-v0.107.14].
-
 [ms-v0.107.14]:   https://github.com/AdguardTeam/AdGuardHome/milestone/50?closed=1
--->
 
 
 
@@ -1241,11 +1248,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...HEAD
-[v0.107.14]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...v0.107.14
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...HEAD
+[v0.107.15]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...v0.107.15
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...HEAD
+[v0.107.14]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...v0.107.14
 [v0.107.13]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...v0.107.13
 [v0.107.12]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...v0.107.12
 [v0.107.11]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.10...v0.107.11
