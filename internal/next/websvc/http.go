@@ -86,16 +86,24 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		// TODO(a.garipov): !! Add some kind of timeout?  Context?
+		// TODO(a.garipov): Consider better ways to do this.
+		const maxUpdDur = 10 * time.Second
+		updStart := time.Now()
 		var newSvc ServiceWithConfig[*Config]
 		for newSvc = svc.confMgr.Web(); newSvc == svc; {
+			if time.Since(updStart) >= maxUpdDur {
+				log.Error("websvc: failed to update svc after %s", maxUpdDur)
+
+				return
+			}
+
 			log.Debug("websvc: waiting for new websvc to be configured")
 			time.Sleep(1 * time.Second)
 		}
 
 		updErr = newSvc.Start()
 		if updErr != nil {
-			log.Error("websvc: new svc failed to start: %s", updErr)
+			log.Error("websvc: new svc failed to start with error: %s", updErr)
 		}
 	}()
 }
