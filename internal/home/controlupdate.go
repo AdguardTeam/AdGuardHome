@@ -28,8 +28,6 @@ type temporaryError interface {
 
 // Get the latest available version from the Internet
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	resp := &versionResponse{}
 	if Context.disableUpdate {
 		resp.Disabled = true
@@ -71,10 +69,7 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "writing body: %s", err)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 // requestVersionInfo sets the VersionInfo field of resp if it can reach the

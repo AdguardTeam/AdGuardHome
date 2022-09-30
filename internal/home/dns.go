@@ -31,7 +31,10 @@ const (
 
 // Called by other modules when configuration is changed
 func onConfigModified() {
-	_ = config.write()
+	err := config.write()
+	if err != nil {
+		log.Error("writing config: %s", err)
+	}
 }
 
 // initDNSServer creates an instance of the dnsforward.Server
@@ -71,11 +74,11 @@ func initDNSServer() (err error) {
 	}
 	Context.queryLog = querylog.New(conf)
 
-	filterConf := config.DNS.DnsfilterConf
-	filterConf.EtcHosts = Context.etcHosts
-	filterConf.ConfigModified = onConfigModified
-	filterConf.HTTPRegister = httpRegister
-	Context.dnsFilter = filtering.New(&filterConf, nil)
+	Context.filters, err = filtering.New(config.DNS.DnsfilterConf, nil)
+	if err != nil {
+		// Don't wrap the error, since it's informative enough as is.
+		return err
+	}
 
 	var privateNets netutil.SubnetSet
 	switch len(config.DNS.PrivateNets) {
@@ -83,13 +86,10 @@ func initDNSServer() (err error) {
 		// Use an optimized locally-served matcher.
 		privateNets = netutil.SubnetSetFunc(netutil.IsLocallyServed)
 	case 1:
-		var n *net.IPNet
-		n, err = netutil.ParseSubnet(config.DNS.PrivateNets[0])
+		privateNets, err = netutil.ParseSubnet(config.DNS.PrivateNets[0])
 		if err != nil {
 			return fmt.Errorf("preparing the set of private subnets: %w", err)
 		}
-
-		privateNets = n
 	default:
 		var nets []*net.IPNet
 		nets, err = netutil.ParseSubnets(config.DNS.PrivateNets...)
@@ -101,15 +101,13 @@ func initDNSServer() (err error) {
 	}
 
 	p := dnsforward.DNSCreateParams{
-		DNSFilter:   Context.dnsFilter,
+		DNSFilter:   Context.filters,
 		Stats:       Context.stats,
 		QueryLog:    Context.queryLog,
 		PrivateNets: privateNets,
 		Anonymizer:  anonymizer,
 		LocalDomain: config.DHCP.LocalDomainName,
-	}
-	if Context.dhcpServer != nil {
-		p.DHCPServer = Context.dhcpServer
+		DHCPServer:  Context.dhcpServer,
 	}
 
 	Context.dnsServer, err = dnsforward.NewServer(p)
@@ -143,7 +141,6 @@ func initDNSServer() (err error) {
 		Context.whois = initWHOIS(&Context.clients)
 	}
 
-	Context.filters.Init()
 	return nil
 }
 
@@ -335,9 +332,12 @@ func getDNSEncryption() (de dnsEncryption) {
 // applyAdditionalFiltering adds additional client information and settings if
 // the client has them.
 func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering.Settings) {
-	Context.dnsFilter.ApplyBlockedServices(setts, nil, true)
+	// pref is a prefix for logging messages around the scope.
+	const pref = "applying filters"
 
-	log.Debug("looking up settings for client with ip %s and clientid %q", clientIP, clientID)
+	Context.filters.ApplyBlockedServices(setts, nil)
+
+	log.Debug("%s: looking for client with ip %s and clientid %q", pref, clientIP, clientID)
 
 	if clientIP == nil {
 		return
@@ -349,16 +349,16 @@ func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering
 	if !ok {
 		c, ok = Context.clients.Find(clientIP.String())
 		if !ok {
-			log.Debug("client with ip %s and clientid %q not found", clientIP, clientID)
+			log.Debug("%s: no clients with ip %s and clientid %q", pref, clientIP, clientID)
 
 			return
 		}
 	}
 
-	log.Debug("using settings for client %q with ip %s and clientid %q", c.Name, clientIP, clientID)
+	log.Debug("%s: using settings for client %q (%s; %q)", pref, c.Name, clientIP, clientID)
 
 	if c.UseOwnBlockedServices {
-		Context.dnsFilter.ApplyBlockedServices(setts, c.BlockedServices, false)
+		Context.filters.ApplyBlockedServices(setts, c.BlockedServices)
 	}
 
 	setts.ClientName = c.Name
@@ -381,7 +381,7 @@ func startDNSServer() error {
 		return fmt.Errorf("unable to start forwarding DNS server: Already running")
 	}
 
-	enableFiltersLocked(false)
+	Context.filters.EnableFilters(false)
 
 	Context.clients.Start()
 
@@ -390,7 +390,6 @@ func startDNSServer() error {
 		return fmt.Errorf("couldn't start forwarding DNS server: %w", err)
 	}
 
-	Context.dnsFilter.Start()
 	Context.filters.Start()
 	Context.stats.Start()
 	Context.queryLog.Start()
@@ -449,10 +448,7 @@ func closeDNSServer() {
 		Context.dnsServer = nil
 	}
 
-	if Context.dnsFilter != nil {
-		Context.dnsFilter.Close()
-		Context.dnsFilter = nil
-	}
+	Context.filters.Close()
 
 	if Context.stats != nil {
 		err := Context.stats.Close()
@@ -469,7 +465,5 @@ func closeDNSServer() {
 		Context.queryLog = nil
 	}
 
-	Context.filters.Close()
-
-	log.Debug("Closed all DNS modules")
+	log.Debug("all dns modules are closed")
 }

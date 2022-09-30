@@ -126,7 +126,7 @@ type clientsContainer struct {
 	allTags *stringutil.Set
 
 	// dhcpServer is used for looking up clients IP addresses by MAC addresses
-	dhcpServer *dhcpd.Server
+	dhcpServer dhcpd.Interface
 
 	// dnsServer is used for checking clients IP status access list status
 	dnsServer *dnsforward.Server
@@ -146,7 +146,7 @@ type clientsContainer struct {
 // Note: this function must be called only once
 func (clients *clientsContainer) Init(
 	objects []*clientObject,
-	dhcpServer *dhcpd.Server,
+	dhcpServer dhcpd.Interface,
 	etcHosts *aghnet.HostsContainer,
 	arpdb aghnet.ARPDB,
 ) {

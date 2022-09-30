@@ -635,5 +635,6 @@
     "parental_control": "家長控制",
     "safe_browsing": "安全瀏覽",
     "served_from_cache": "{{value}} <i>(由快取提供)</i>",
-    "form_error_password_length": "密碼必須為至少長 {{value}} 個字元"
+    "form_error_password_length": "密碼必須為至少長 {{value}} 個字元",
+    "anonymizer_notification": "<0>注意：</0>IP 匿名化被啟用。您可在<1>一般設定</1>中禁用它。"
 }

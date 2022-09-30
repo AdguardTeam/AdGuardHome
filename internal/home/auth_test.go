@@ -43,14 +43,14 @@ func TestAuth(t *testing.T) {
 	dir := t.TempDir()
 	fn := filepath.Join(dir, "sessions.db")
 
-	users := []User{{
+	users := []webUser{{
 		Name:         "name",
 		PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2",
 	}}
 	a := InitAuth(fn, nil, 60, nil)
 	s := session{}
 
-	user := User{Name: "name"}
+	user := webUser{Name: "name"}
 	a.UserAdd(&user, "password")
 
 	assert.Equal(t, checkSessionNotFound, a.checkSession("notfound"))
@@ -84,7 +84,8 @@ func TestAuth(t *testing.T) {
 	a.storeSession(sess, &s)
 	a.Close()
 
-	u := a.UserFind("name", "password")
+	u, ok := a.findUser("name", "password")
+	assert.True(t, ok)
 	assert.NotEmpty(t, u.Name)
 
 	time.Sleep(3 * time.Second)
@@ -118,7 +119,7 @@ func TestAuthHTTP(t *testing.T) {
 	dir := t.TempDir()
 	fn := filepath.Join(dir, "sessions.db")
 
-	users := []User{
+	users := []webUser{
 		{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
 	}
 	Context.auth = InitAuth(fn, users, 60, nil)
@@ -150,18 +151,19 @@ func TestAuthHTTP(t *testing.T) {
 	assert.True(t, handlerCalled)
 
 	// perform login
-	cookie, err := Context.auth.httpCookie(loginJSON{Name: "name", Password: "password"}, "")
+	cookie, err := Context.auth.newCookie(loginJSON{Name: "name", Password: "password"}, "")
 	require.NoError(t, err)
-	assert.NotEmpty(t, cookie)
+	require.NotNil(t, cookie)
 
 	// get /
 	handler2 = optionalAuth(handler)
 	w.hdr = make(http.Header)
-	r.Header.Set("Cookie", cookie)
+	r.Header.Set("Cookie", cookie.String())
 	r.URL = &url.URL{Path: "/"}
 	handlerCalled = false
 	handler2(&w, &r)
 	assert.True(t, handlerCalled)
+
 	r.Header.Del("Cookie")
 
 	// get / with basic auth
@@ -177,7 +179,7 @@ func TestAuthHTTP(t *testing.T) {
 	// get login page with a valid cookie - we're redirected to /
 	handler2 = optionalAuth(handler)
 	w.hdr = make(http.Header)
-	r.Header.Set("Cookie", cookie)
+	r.Header.Set("Cookie", cookie.String())
 	r.URL = &url.URL{Path: loginURL}
 	handlerCalled = false
 	handler2(&w, &r)

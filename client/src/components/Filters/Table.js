@@ -41,13 +41,13 @@ class Table extends Component {
         {
             Header: <Trans>name_table_header</Trans>,
             accessor: 'name',
-            minWidth: 200,
+            minWidth: 180,
             Cell: CellWrap,
         },
         {
             Header: <Trans>list_url_table_header</Trans>,
             accessor: 'url',
-            minWidth: 200,
+            minWidth: 180,
             Cell: ({ value }) => (
                 <div className="logs__row">
                     {isValidAbsolutePath(value) ? value
@@ -73,7 +73,7 @@ class Table extends Component {
             Header: <Trans>last_time_updated_table_header</Trans>,
             accessor: 'lastUpdated',
             className: 'text-center',
-            minWidth: 150,
+            minWidth: 180,
             Cell: this.getDateCell,
         },
         {

@@ -49,6 +49,12 @@
     padding-top: 1rem;
 }
 
+@media (max-width: 1024px) {
+    .grid .key-colon, .grid .title--border {
+        font-weight: 600;
+    }
+}
+
 @media (max-width: 767.98px) {
     .grid {
         grid-template-columns: 35% 55%;
@@ -69,10 +75,6 @@
     .grid > .value__time_table_header, .grid > .value__data, .grid > .value__encryption_status, .grid > .value__elapsed {
         grid-column: 2 / span 1;
         margin: 0 !important;
-    }
-
-    .grid .key-colon, .grid .title--border {
-        font-weight: 600;
     }
 }
 

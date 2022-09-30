@@ -25,6 +25,7 @@ import {
 import InfiniteTable from './InfiniteTable';
 import './Logs.css';
 import { BUTTON_PREFIX } from './Cells/helpers';
+import AnonymizerNotification from './AnonymizerNotification';
 
 const processContent = (data) => Object.entries(data)
     .map(([key, value]) => {
@@ -73,6 +74,7 @@ const Logs = () => {
         processingGetConfig,
         processingAdditionalLogs,
         processingGetLogs,
+        anonymize_client_ip: anonymizeClientIp,
     } = useSelector((state) => state.queryLogs, shallowEqual);
     const filter = useSelector((state) => state.queryLogs.filter, shallowEqual);
     const logs = useSelector((state) => state.queryLogs.logs, shallowEqual);
@@ -104,6 +106,8 @@ const Logs = () => {
         setIsSmallScreen(e.matches);
         if (e.matches) {
             dispatch(toggleDetailedLogs(false));
+        } else {
+            dispatch(toggleDetailedLogs(true));
         }
     };
 
@@ -180,35 +184,49 @@ const Logs = () => {
                 setButtonType={setButtonType}
                 setModalOpened={setModalOpened}
         />
-        <Modal portalClassName='grid' isOpen={isSmallScreen && isModalOpened}
-               onRequestClose={closeModal}
-               style={{
-                   content: {
-                       width: '100%',
-                       height: 'fit-content',
-                       left: 0,
-                       top: 47,
-                       padding: '1rem 1.5rem 1rem',
-                   },
-                   overlay: {
-                       backgroundColor: 'rgba(0,0,0,0.5)',
-                   },
-               }}
+        <Modal
+            portalClassName='grid'
+            isOpen={isSmallScreen && isModalOpened}
+            onRequestClose={closeModal}
+            style={{
+                content: {
+                    width: '100%',
+                    height: 'fit-content',
+                    left: '50%',
+                    top: 47,
+                    padding: '1rem 1.5rem 1rem',
+                    maxWidth: '720px',
+                    transform: 'translateX(-50%)',
+                },
+                overlay: {
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                },
+            }}
         >
-            <svg
-                    className="icon icon--24 icon-cross d-block d-md-none cursor--pointer"
-                    onClick={closeModal}>
-                <use xlinkHref="#cross" />
-            </svg>
-            {processContent(detailedDataCurrent, buttonType)}
+            <div className="logs__modal-wrap">
+                <svg
+                    className="icon icon--24 icon-cross d-block cursor--pointer"
+                    onClick={closeModal}
+                >
+                    <use xlinkHref="#cross" />
+                </svg>
+                {processContent(detailedDataCurrent, buttonType)}
+            </div>
         </Modal>
     </>;
 
-    return <>
-        {enabled && processingGetConfig && <Loading />}
-        {enabled && !processingGetConfig && renderPage()}
-        {!enabled && !processingGetConfig && <Disabled />}
-    </>;
+    return (
+        <>
+            {enabled && (
+                <>
+                    {processingGetConfig && <Loading />}
+                    {anonymizeClientIp && <AnonymizerNotification />}
+                    {!processingGetConfig && renderPage()}
+                </>
+            )}
+            {!enabled && !processingGetConfig && <Disabled />}
+        </>
+    );
 };
 
 export default Logs;

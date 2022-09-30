@@ -35,11 +35,12 @@ func TestHandleDNSRequest_filterDNSResponse(t *testing.T) {
 		ID: 0, Data: []byte(rules),
 	}}
 
-	f := filtering.New(&filtering.Config{}, filters)
+	f, err := filtering.New(&filtering.Config{}, filters)
+	require.NoError(t, err)
 	f.SetEnabled(true)
 
 	s, err := NewServer(DNSCreateParams{
-		DHCPServer:  &testDHCP{},
+		DHCPServer:  testDHCP,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})

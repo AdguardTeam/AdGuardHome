@@ -421,31 +421,34 @@ func initBlockedServices() {
 }
 
 // BlockedSvcKnown - return TRUE if a blocked service name is known
-func BlockedSvcKnown(s string) bool {
-	_, ok := serviceRules[s]
+func BlockedSvcKnown(s string) (ok bool) {
+	_, ok = serviceRules[s]
+
 	return ok
 }
 
 // ApplyBlockedServices - set blocked services settings for this DNS request
-func (d *DNSFilter) ApplyBlockedServices(setts *Settings, list []string, global bool) {
+func (d *DNSFilter) ApplyBlockedServices(setts *Settings, list []string) {
 	setts.ServicesRules = []ServiceEntry{}
-	if global {
+	if list == nil {
 		d.confLock.RLock()
 		defer d.confLock.RUnlock()
+
 		list = d.Config.BlockedServices
 	}
+
 	for _, name := range list {
 		rules, ok := serviceRules[name]
-
 		if !ok {
 			log.Error("unknown service name: %s", name)
+
 			continue
 		}
 
-		s := ServiceEntry{}
-		s.Name = name
-		s.Rules = rules
-		setts.ServicesRules = append(setts.ServicesRules, s)
+		setts.ServicesRules = append(setts.ServicesRules, ServiceEntry{
+			Name:  name,
+			Rules: rules,
+		})
 	}
 }
 
@@ -489,11 +492,4 @@ func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 	log.Debug("Updated blocked services list: %d", len(list))
 
 	d.ConfigModified()
-}
-
-// registerBlockedServicesHandlers - register HTTP handlers
-func (d *DNSFilter) registerBlockedServicesHandlers() {
-	d.Config.HTTPRegister(http.MethodGet, "/control/blocked_services/services", d.handleBlockedServicesAvailableServices)
-	d.Config.HTTPRegister(http.MethodGet, "/control/blocked_services/list", d.handleBlockedServicesList)
-	d.Config.HTTPRegister(http.MethodPost, "/control/blocked_services/set", d.handleBlockedServicesSet)
 }

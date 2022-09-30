@@ -67,6 +67,7 @@
     height: 24px;
     margin-bottom: 6px;
     fill: #4a4a4a;
+    touch-action: initial;
 }
 
 .tab__text {

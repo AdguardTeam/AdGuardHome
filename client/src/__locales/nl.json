@@ -557,7 +557,7 @@
     "fastest_addr_desc": "Alle DNS-servers bevragen en het snelste IP adres terugkoppelen. Dit zal de DNS verzoeken vertragen omdat AdGuard Home moet wachten op de antwoorden van alles DNS-servers, maar verbetert wel de connectiviteit.",
     "autofix_warning_text": "Als je op \"Repareren\" klikt, configureert AdGuard Home jouw systeem om de AdGuard Home DNS-server te gebruiken.",
     "autofix_warning_list": "De volgende taken worden uitgevoerd: <0> Deactiveren van Systeem DNSStubListener</0> <0> DNS-serveradres instellen op 127.0.0.1 </0> <0> Symbolisch koppelingsdoel van /etc/resolv.conf vervangen door /run/systemd/resolve/resolv.conf </0> <0> Stop DNSStubListener (herlaad systemd-resolved service) </0>",
-    "autofix_warning_result": "Als gevolg hiervan worden alle DNS-verzoeken van je systeem standaard door AdGuard Home verwerkt.",
+    "autofix_warning_result": "Als gevolg hiervan worden alle DNS-aanvragen van je systeem standaard door AdGuard Home verwerkt.",
     "tags_title": "Labels",
     "tags_desc": "Je kunt labels selecteren die overeenkomen met de client. Labels kunnen worden opgenomen in de filterregels om ze \n nauwkeuriger toe te passen. <0>Meer informatie</0>.",
     "form_select_tags": "Client tags selecteren",
@@ -628,12 +628,13 @@
     "original_response": "Oorspronkelijke reactie",
     "click_to_view_queries": "Klik om queries te bekijken",
     "port_53_faq_link": "Poort 53 wordt vaak gebruikt door services als DNSStubListener- of de systeem DNS-resolver. Lees a.u.b. <0>deze instructie</0> hoe dit is op te lossen.",
-    "adg_will_drop_dns_queries": "AdGuard Home zal alle DNS-verzoeken van deze cliënt laten vervallen.",
+    "adg_will_drop_dns_queries": "AdGuard Home zal alle DNS-aanvragen van deze cliënt laten vervallen.",
     "filter_allowlist": "WAARSCHUWING: Deze actie zal ook de regel \"{{disallowed_rule}}\" uitsluiten van de lijst met toegestane clients.",
     "last_rule_in_allowlist": "Kan deze client niet weigeren omdat het uitsluiten van de regel \"{{disallowed_rule}}\" de lijst \"Toegestane clients\" zal UITSCHAKELEN.",
     "use_saved_key": "De eerder opgeslagen sleutel gebruiken",
     "parental_control": "Ouderlijk toezicht",
     "safe_browsing": "Veilig browsen",
     "served_from_cache": "{{value}} <i>(geleverd vanuit cache)</i>",
-    "form_error_password_length": "Wachtwoord moet minimaal {{value}} tekens lang zijn"
+    "form_error_password_length": "Wachtwoord moet minimaal {{value}} tekens lang zijn",
+    "anonymizer_notification": "<0>Opmerking:</0> IP-anonimisering is ingeschakeld. Je kunt het uitschakelen in <1>Algemene instellingen</1>."
 }

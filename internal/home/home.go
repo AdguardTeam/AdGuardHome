@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
@@ -33,6 +34,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"golang.org/x/exp/slices"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -52,10 +54,9 @@ type homeContext struct {
 	dnsServer  *dnsforward.Server   // DNS module
 	rdns       *RDNS                // rDNS module
 	whois      *WHOIS               // WHOIS module
-	dnsFilter  *filtering.DNSFilter // DNS filtering module
-	dhcpServer *dhcpd.Server        // DHCP module
+	dhcpServer dhcpd.Interface      // DHCP module
 	auth       *Auth                // HTTP authentication module
-	filters    Filtering            // DNS filtering module
+	filters    *filtering.DNSFilter // DNS filtering module
 	web        *Web                 // Web (HTTP, HTTPS) module
 	tls        *TLSMod              // TLS module
 	// etcHosts is an IP-hostname pairs set taken from system configuration
@@ -140,7 +141,12 @@ func setupContext(args options) {
 		checkPermissions()
 	}
 
-	initConfig()
+	switch version.Channel() {
+	case version.ChannelEdge, version.ChannelDevelopment:
+		config.BetaBindPort = 3001
+	default:
+		// Go on.
+	}
 
 	Context.tlsRoots = LoadSystemRootCAs()
 	Context.transport = &http.Transport{
@@ -265,6 +271,15 @@ func setupHostsContainer() (err error) {
 }
 
 func setupConfig(args options) (err error) {
+	config.DNS.DnsfilterConf.EtcHosts = Context.etcHosts
+	config.DNS.DnsfilterConf.ConfigModified = onConfigModified
+	config.DNS.DnsfilterConf.HTTPRegister = httpRegister
+	config.DNS.DnsfilterConf.DataDir = Context.getDataDir()
+	config.DNS.DnsfilterConf.Filters = slices.Clone(config.Filters)
+	config.DNS.DnsfilterConf.WhitelistFilters = slices.Clone(config.WhitelistFilters)
+	config.DNS.DnsfilterConf.UserRules = slices.Clone(config.UserRules)
+	config.DNS.DnsfilterConf.HTTPClient = Context.client
+
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified
@@ -384,8 +399,6 @@ func fatalOnError(err error) {
 
 // run configures and starts AdGuard Home.
 func run(args options, clientBuildFS fs.FS) {
-	var err error
-
 	// configure config filename
 	initConfigFilename(args)
 
@@ -396,7 +409,7 @@ func run(args options, clientBuildFS fs.FS) {
 	configureLogger(args)
 
 	// Print the first message after logger is configured.
-	log.Println(version.Full())
+	log.Info(version.Full())
 	log.Debug("current working directory is %s", Context.workDir)
 	if args.runningAsService {
 		log.Info("AdGuard Home is running as a service")
@@ -404,7 +417,7 @@ func run(args options, clientBuildFS fs.FS) {
 
 	setupContext(args)
 
-	err = configureOS(config)
+	err := configureOS(config)
 	fatalOnError(err)
 
 	// clients package uses filtering package's static data (filtering.BlockedSvcKnown()),
@@ -442,9 +455,9 @@ func run(args options, clientBuildFS fs.FS) {
 
 	sessFilename := filepath.Join(Context.getDataDir(), "sessions.db")
 	GLMode = args.glinetMode
-	var arl *authRateLimiter
+	var rateLimiter *authRateLimiter
 	if config.AuthAttempts > 0 && config.AuthBlockMin > 0 {
-		arl = newAuthRateLimiter(
+		rateLimiter = newAuthRateLimiter(
 			time.Duration(config.AuthBlockMin)*time.Minute,
 			config.AuthAttempts,
 		)
@@ -456,7 +469,7 @@ func run(args options, clientBuildFS fs.FS) {
 		sessFilename,
 		config.Users,
 		config.WebSessionTTLHours*60*60,
-		arl,
+		rateLimiter,
 	)
 	if Context.auth == nil {
 		log.Fatalf("Couldn't initialize Auth module")
@@ -641,14 +654,9 @@ func configureLogger(args options) {
 			log.Fatalf("cannot initialize syslog: %s", err)
 		}
 	} else {
-		logFilePath := filepath.Join(Context.workDir, ls.File)
-		if filepath.IsAbs(ls.File) {
-			logFilePath = ls.File
-		}
-
-		_, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
-		if err != nil {
-			log.Fatalf("cannot create a log file: %s", err)
+		logFilePath := ls.File
+		if !filepath.IsAbs(logFilePath) {
+			logFilePath = filepath.Join(Context.workDir, logFilePath)
 		}
 
 		log.SetOutput(&lumberjack.Logger{
@@ -768,12 +776,12 @@ func printHTTPAddresses(proto string) {
 	}
 
 	port := config.BindPort
-	if proto == schemeHTTPS {
+	if proto == aghhttp.SchemeHTTPS {
 		port = tlsConf.PortHTTPS
 	}
 
 	// TODO(e.burkov): Inspect and perhaps merge with the previous condition.
-	if proto == schemeHTTPS && tlsConf.ServerName != "" {
+	if proto == aghhttp.SchemeHTTPS && tlsConf.ServerName != "" {
 		printWebAddrs(proto, tlsConf.ServerName, tlsConf.PortHTTPS, 0)
 
 		return

@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -97,16 +98,16 @@ func collectDNSAddresses() (addrs []string, err error) {
 
 // statusResponse is a response for /control/status endpoint.
 type statusResponse struct {
+	Version             string   `json:"version"`
+	Language            string   `json:"language"`
 	DNSAddrs            []string `json:"dns_addresses"`
 	DNSPort             int      `json:"dns_port"`
 	HTTPPort            int      `json:"http_port"`
 	IsProtectionEnabled bool     `json:"protection_enabled"`
 	// TODO(e.burkov): Inspect if front-end doesn't requires this field as
 	// openapi.yaml declares.
-	IsDHCPAvailable bool   `json:"dhcp_available"`
-	IsRunning       bool   `json:"running"`
-	Version         string `json:"version"`
-	Language        string `json:"language"`
+	IsDHCPAvailable bool `json:"dhcp_available"`
+	IsRunning       bool `json:"running"`
 }
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
@@ -125,12 +126,12 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		defer config.RUnlock()
 
 		resp = statusResponse{
+			Version:   version.Version(),
 			DNSAddrs:  dnsAddrs,
 			DNSPort:   config.DNS.Port,
 			HTTPPort:  config.BindPort,
-			IsRunning: isRunning(),
-			Version:   version.Version(),
 			Language:  config.Language,
+			IsRunning: isRunning(),
 		}
 	}()
 
@@ -146,13 +147,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		resp.IsDHCPAvailable = Context.dhcpServer != nil
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-
-		return
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 type profileJSON struct {
@@ -162,13 +157,16 @@ type profileJSON struct {
 func handleGetProfile(w http.ResponseWriter, r *http.Request) {
 	pj := profileJSON{}
 	u := Context.auth.getCurrentUser(r)
+
 	pj.Name = u.Name
 
 	data, err := json.Marshal(pj)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusInternalServerError, "json.Marshal: %s", err)
+
 		return
 	}
+
 	_, _ = w.Write(data)
 }
 
@@ -199,25 +197,71 @@ func httpRegister(method, url string, handler http.HandlerFunc) {
 	Context.mux.Handle(url, postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(ensureHandler(method, handler)))))
 }
 
-// ----------------------------------
-// helper functions for HTTP handlers
-// ----------------------------------
-func ensure(method string, handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+// ensure returns a wrapped handler that makes sure that the request has the
+// correct method as well as additional method and header checks.
+func ensure(
+	method string,
+	handler func(http.ResponseWriter, *http.Request),
+) (wrapped func(http.ResponseWriter, *http.Request)) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Debug("%s %v", r.Method, r.URL)
+		start := time.Now()
+		m, u := r.Method, r.URL
+		log.Debug("started %s %s %s", m, r.Host, u)
+		defer func() { log.Debug("finished %s %s %s in %s", m, r.Host, u, time.Since(start)) }()
 
-		if r.Method != method {
-			http.Error(w, "This request must be "+method, http.StatusMethodNotAllowed)
+		if m != method {
+			aghhttp.Error(r, w, http.StatusMethodNotAllowed, "only method %s is allowed", method)
+
 			return
 		}
 
-		if method == http.MethodPost || method == http.MethodPut || method == http.MethodDelete {
+		if modifiesData(m) {
+			if !ensureContentType(w, r) {
+				return
+			}
+
 			Context.controlLock.Lock()
 			defer Context.controlLock.Unlock()
 		}
 
 		handler(w, r)
 	}
+}
+
+// modifiesData returns true if m is an HTTP method that can modify data.
+func modifiesData(m string) (ok bool) {
+	return m == http.MethodPost || m == http.MethodPut || m == http.MethodDelete
+}
+
+// ensureContentType makes sure that the content type of a data-modifying
+// request is set correctly.  If it is not, ensureContentType writes a response
+// to w, and ok is false.
+func ensureContentType(w http.ResponseWriter, r *http.Request) (ok bool) {
+	const statusUnsup = http.StatusUnsupportedMediaType
+
+	cType := r.Header.Get(aghhttp.HdrNameContentType)
+	if r.ContentLength == 0 {
+		if cType == "" {
+			return true
+		}
+
+		// Assume that browsers always send a content type when submitting HTML
+		// forms and require no content type for requests with no body to make
+		// sure that the request comes from JavaScript.
+		aghhttp.Error(r, w, statusUnsup, "empty body with content-type %q not allowed", cType)
+
+		return false
+
+	}
+
+	const wantCType = aghhttp.HdrValApplicationJSON
+	if cType == wantCType {
+		return true
+	}
+
+	aghhttp.Error(r, w, statusUnsup, "only content-type %s is allowed", wantCType)
+
+	return false
 }
 
 func ensurePOST(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
@@ -291,7 +335,7 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		}
 
 		httpsURL := &url.URL{
-			Scheme:   schemeHTTPS,
+			Scheme:   aghhttp.SchemeHTTPS,
 			Host:     hostPort,
 			Path:     r.URL.Path,
 			RawQuery: r.URL.RawQuery,
@@ -307,7 +351,7 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 	//
 	// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin.
 	originURL := &url.URL{
-		Scheme: schemeHTTP,
+		Scheme: aghhttp.SchemeHTTP,
 		Host:   r.Host,
 	}
 	w.Header().Set("Access-Control-Allow-Origin", originURL.String())

@@ -12,26 +12,119 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.108.0] - 2022-12-01 (APPROX.)
+## [v0.108.0] - TBA (APPROX.)
 -->
 
 ### Security
 
-- Weaker cipher suites that use the CBC (cipher block chaining) mode of
-  operation have been disabled ([#2993]).
+- As an additional CSRF protection measure, AdGuard Home now ensures that
+  requests that change its state but have no body (such as `POST
+  /control/stats_reset` requests) do not have a `Content-Type` header set on
+  them ([#4970]).
 
-[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+### Fixed
 
+- `only application/json is allowed` errors in various APIs ([#4970]).
+
+[#4970]: https://github.com/AdguardTeam/AdGuardHome/issues/4970
 
 
 
 <!--
-## [v0.107.13] - 2022-10-05 (APPROX.)
+## [v0.107.15] - 2022-10-26 (APPROX.)
+
+See also the [v0.107.15 GitHub milestone][ms-v0.107.15].
+
+[ms-v0.107.15]:   https://github.com/AdguardTeam/AdGuardHome/milestone/51?closed=1
+-->
+
+
+
+## [v0.107.14] - 2022-09-29
+
+See also the [v0.107.14 GitHub milestone][ms-v0.107.14].
+
+### Security
+
+A Cross-Site Request Forgery (CSRF) vulnerability has been discovered.  The CVE
+number is to be assigned.  We thank Daniel Elkabes from Mend.io for reporting
+this vulnerability to us.
+
+#### `SameSite` Policy
+
+The `SameSite` policy on the AdGuard Home session cookies is now set to `Lax`.
+Which means that the only cross-site HTTP request for which the browser is
+allowed to send the session cookie is navigating to the AdGuard Home domain.
+
+**Users are strongly advised to log out, clear browser cache, and log in again
+after updating.**
+
+#### Removal Of Plain-Text APIs (BREAKING API CHANGE)
+
+We have implemented several measures to prevent such vulnerabilities in the
+future, but some of these measures break backwards compatibility for the sake of
+better protection.
+
+The following APIs, which previously accepted or returned `text/plain` data,
+now accept or return data as JSON.  All new formats for the request and response
+bodies are documented in `openapi/openapi.yaml` and `openapi/CHANGELOG.md`.
+
+- `GET  /control/i18n/current_language`;
+- `POST /control/dhcp/find_active_dhcp`;
+- `POST /control/filtering/set_rules`;
+- `POST /control/i18n/change_language`.
+
+#### Stricter Content-Type Checks (BREAKING API CHANGE)
+
+All JSON APIs that expect a body now check if the request actually has
+`Content-Type` set to `application/json`.
+
+#### Other Security Changes
+
+- Weaker cipher suites that use the CBC (cipher block chaining) mode of
+  operation have been disabled ([#2993]).
+
+### Added
+
+- Support for plain (unencrypted) HTTP/2 ([#4930]).  This is useful for AdGuard
+  Home installations behind a reverse proxy.
+
+### Fixed
+
+- Incorrect path template in DDR responses ([#4927]).
+
+[#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
+[#4927]: https://github.com/AdguardTeam/AdGuardHome/issues/4927
+[#4930]: https://github.com/AdguardTeam/AdGuardHome/issues/4930
+
+[ms-v0.107.14]:   https://github.com/AdguardTeam/AdGuardHome/milestone/50?closed=1
+
+
+
+## [v0.107.13] - 2022-09-14
 
 See also the [v0.107.13 GitHub milestone][ms-v0.107.13].
 
+### Added
+
+- The new optional `dns.ipset_file` property, which can be set in the
+  configuration file.  It allows loading the `ipset` list from a file, just like
+  `dns.upstream_dns_file` does for upstream servers ([#4686]).
+
+### Changed
+
+- The minimum DHCP message size is reassigned back to BOOTP's constraint of 300
+  bytes ([#4904]).
+
+### Fixed
+
+- Panic when adding a static lease within the disabled DHCP server ([#4722]).
+
+[#4686]: https://github.com/AdguardTeam/AdGuardHome/issues/4686
+[#4722]: https://github.com/AdguardTeam/AdGuardHome/issues/4722
+[#4904]: https://github.com/AdguardTeam/AdGuardHome/issues/4904
+
 [ms-v0.107.13]:   https://github.com/AdguardTeam/AdGuardHome/milestone/49?closed=1
--->
 
 
 
@@ -1203,11 +1296,13 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...HEAD
-[v0.107.13]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...v0.107.13
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...HEAD
+[v0.107.15]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...v0.107.15
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...HEAD
+[v0.107.14]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...v0.107.14
+[v0.107.13]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...v0.107.13
 [v0.107.12]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...v0.107.12
 [v0.107.11]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.10...v0.107.11
 [v0.107.10]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.9...v0.107.10

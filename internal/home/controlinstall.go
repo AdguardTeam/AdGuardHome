@@ -59,19 +59,7 @@ func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request
 		data.Interfaces[iface.Name] = iface
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(data)
-	if err != nil {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusInternalServerError,
-			"Unable to marshal default addresses to json: %s",
-			err,
-		)
-
-		return
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, data)
 }
 
 type checkConfReqEnt struct {
@@ -201,13 +189,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 		resp.StaticIP = handleStaticIP(req.DNS.IP, req.SetStaticIP)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "encoding the response: %s", err)
-
-		return
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 // handleStaticIP - handles static IP request
@@ -424,7 +406,7 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u := &User{
+	u := &webUser{
 		Name: req.Username,
 	}
 	Context.auth.UserAdd(u, req.Password)
@@ -688,19 +670,7 @@ func (web *Web) handleInstallGetAddressesBeta(w http.ResponseWriter, r *http.Req
 
 	data.Interfaces = ifaces
 
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(data)
-	if err != nil {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusInternalServerError,
-			"Unable to marshal default addresses to json: %s",
-			err,
-		)
-
-		return
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, data)
 }
 
 // registerBetaInstallHandlers registers the install handlers for new client

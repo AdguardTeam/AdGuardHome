@@ -4,15 +4,17 @@
 'daysUntilClose': 15
 # Issues with these labels will never be considered stale.
 'exemptLabels':
-- 'bug'
-- 'documentation'
-- 'enhancement'
-- 'feature request'
-- 'help wanted'
-- 'localization'
-- 'needs investigation'
-- 'recurrent'
-- 'research'
+  - 'bug'
+  - 'documentation'
+  - 'enhancement'
+  - 'feature request'
+  - 'help wanted'
+  - 'localization'
+  - 'needs investigation'
+  - 'recurrent'
+  - 'research'
+# Set to true to ignore issues in a milestone.
+'exemptMilestones': true
 # Label to use when marking an issue as stale.
 'staleLabel': 'wontfix'
 # Comment to post when marking an issue as stale. Set to `false` to disable.
@@ -22,3 +24,5 @@
   for your contributions.
 # Comment to post when closing a stale issue. Set to `false` to disable.
 'closeComment': false
+# Limit the number of actions per hour.
+'limitPerRun': 1

@@ -8,8 +8,8 @@ package aghhttp
 const (
 	HdrNameAcceptEncoding           = "Accept-Encoding"
 	HdrNameAccessControlAllowOrigin = "Access-Control-Allow-Origin"
-	HdrNameContentType              = "Content-Type"
 	HdrNameContentEncoding          = "Content-Encoding"
+	HdrNameContentType              = "Content-Type"
 	HdrNameServer                   = "Server"
 	HdrNameTrailer                  = "Trailer"
 	HdrNameUserAgent                = "User-Agent"
@@ -18,4 +18,5 @@ const (
 // HTTP header value constants.
 const (
 	HdrValApplicationJSON = "application/json"
+	HdrValTextPlain       = "text/plain"
 )

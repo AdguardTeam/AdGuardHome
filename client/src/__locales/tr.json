@@ -368,7 +368,7 @@
     "encryption_server_enter": "Alan adınızı girin",
     "encryption_server_desc": "Ayarlanırsa, AdGuard Home ClientID'leri algılar, DDR sorgularına yanıt verir ve ek bağlantı doğrulamaları gerçekleştirir. Ayarlanmazsa, bu özellikler devre dışı bırakılır. Sertifikadaki DNS Adlarından biriyle eşleşmelidir.",
     "encryption_redirect": "Otomatik olarak HTTPS'e yönlendir",
-    "encryption_redirect_desc": "Etkinleştirirseniz, AdGuard Home sizi HTTP adresi yerine HTTPS adresine yönlendirir.",
+    "encryption_redirect_desc": "İşaretlenirse, AdGuard Home sizi otomatik olarak HTTP adresinden HTTPS adreslerine yönlendirecektir.",
     "encryption_https": "HTTPS bağlantı noktası",
     "encryption_https_desc": "HTTPS bağlantı noktası yapılandırılırsa, AdGuard Home yönetici arayüzüne HTTPS aracılığıyla erişilebilir olacak ve ayrıca '/dns-query' üzerinden DNS-over-HTTPS bağlantısı sağlayacaktır.",
     "encryption_dot": "DNS-over-TLS bağlantı noktası",
@@ -408,7 +408,7 @@
     "fix": "Düzelt",
     "dns_providers": "Aralarından seçim yapabileceğiniz, bilinen <0>DNS sağlayıcıların listesi</0>.",
     "update_now": "Şimdi güncelle",
-    "update_failed": "Otomatik güncelleme başarısız oldu. Elle güncellemek için lütfen <a>bu adımları uygulayın</a>.",
+    "update_failed": "Otomatik güncelleme başarısız oldu. Elle güncellemek için lütfen <a>bu adımları izleyin</a>.",
     "manual_update": "Elle güncellemek için lütfen <a>bu adımları uygulayın</a>.",
     "processing_update": "Lütfen bekleyin, AdGuard Home güncelleniyor",
     "clients_title": "Kalıcı istemciler",
@@ -635,5 +635,6 @@
     "parental_control": "Ebeveyn Denetimi",
     "safe_browsing": "Güvenli Gezinti",
     "served_from_cache": "{{value}} <i>(önbellekten kullanıldı)</i>",
-    "form_error_password_length": "Parola en az {{value}} karakter uzunluğunda olmalıdır"
+    "form_error_password_length": "Parola en az {{value}} karakter uzunluğunda olmalıdır",
+    "anonymizer_notification": "<0>Not:</0> IP anonimleştirme etkinleştirildi. Bunu <1>Genel ayarlardan</1> devre dışı bırakabilirsiniz."
 }

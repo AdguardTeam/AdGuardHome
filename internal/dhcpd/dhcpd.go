@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"net"
 	"path/filepath"
-	"runtime"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 const (
@@ -21,9 +20,19 @@ const (
 	// TODO(e.burkov): Remove it when static leases determining mechanism
 	// will be improved.
 	leaseExpireStatic = 1
+
+	// DefaultDHCPLeaseTTL is the default time-to-live for leases.
+	DefaultDHCPLeaseTTL = uint32(timeutil.Day / time.Second)
+
+	// DefaultDHCPTimeoutICMP is the default timeout for waiting ICMP responses.
+	DefaultDHCPTimeoutICMP = 1000
 )
 
-var webHandlersRegistered = false
+// Currently used defaults for ifaceDNSAddrs.
+const (
+	defaultMaxAttempts int           = 10
+	defaultBackoff     time.Duration = 500 * time.Millisecond
+)
 
 // Lease contains the necessary information about a DHCP lease
 type Lease struct {
@@ -119,30 +128,6 @@ func (l *Lease) UnmarshalJSON(data []byte) (err error) {
 	return nil
 }
 
-// ServerConfig is the configuration for the DHCP server.  The order of YAML
-// fields is important, since the YAML configuration file follows it.
-type ServerConfig struct {
-	// Called when the configuration is changed by HTTP request
-	ConfigModified func() `yaml:"-"`
-
-	// Register an HTTP handler
-	HTTPRegister aghhttp.RegisterFunc `yaml:"-"`
-
-	Enabled       bool   `yaml:"enabled"`
-	InterfaceName string `yaml:"interface_name"`
-
-	// LocalDomainName is the domain name used for DHCP hosts.  For example,
-	// a DHCP client with the hostname "myhost" can be addressed as "myhost.lan"
-	// when LocalDomainName is "lan".
-	LocalDomainName string `yaml:"local_domain_name"`
-
-	Conf4 V4ServerConf `yaml:"dhcpv4"`
-	Conf6 V6ServerConf `yaml:"dhcpv6"`
-
-	WorkDir    string `yaml:"-"`
-	DBFilePath string `yaml:"-"`
-}
-
 // OnLeaseChangedT is a callback for lease changes.
 type OnLeaseChangedT func(flags int)
 
@@ -156,8 +141,68 @@ const (
 	LeaseChangedDBStore
 )
 
-// Server - the current state of the DHCP server
-type Server struct {
+// GetLeasesFlags are the flags for GetLeases.
+type GetLeasesFlags uint8
+
+// GetLeasesFlags values
+const (
+	LeasesDynamic GetLeasesFlags = 0b01
+	LeasesStatic  GetLeasesFlags = 0b10
+
+	LeasesAll = LeasesDynamic | LeasesStatic
+)
+
+// Interface is the DHCP server that deals with both IP address families.
+type Interface interface {
+	Start() (err error)
+	Stop() (err error)
+	Enabled() (ok bool)
+
+	Leases(flags GetLeasesFlags) (leases []*Lease)
+	SetOnLeaseChanged(onLeaseChanged OnLeaseChangedT)
+	FindMACbyIP(ip net.IP) (mac net.HardwareAddr)
+
+	WriteDiskConfig(c *ServerConfig)
+}
+
+// MockInterface is a mock Interface implementation.
+//
+// TODO(e.burkov):  Move to aghtest when the API stabilized.
+type MockInterface struct {
+	OnStart             func() (err error)
+	OnStop              func() (err error)
+	OnEnabled           func() (ok bool)
+	OnLeases            func(flags GetLeasesFlags) (leases []*Lease)
+	OnSetOnLeaseChanged func(f OnLeaseChangedT)
+	OnFindMACbyIP       func(ip net.IP) (mac net.HardwareAddr)
+	OnWriteDiskConfig   func(c *ServerConfig)
+}
+
+var _ Interface = (*MockInterface)(nil)
+
+// Start implements the Interface for *MockInterface.
+func (s *MockInterface) Start() (err error) { return s.OnStart() }
+
+// Stop implements the Interface for *MockInterface.
+func (s *MockInterface) Stop() (err error) { return s.OnStop() }
+
+// Enabled implements the Interface for *MockInterface.
+func (s *MockInterface) Enabled() (ok bool) { return s.OnEnabled() }
+
+// Leases implements the Interface for *MockInterface.
+func (s *MockInterface) Leases(flags GetLeasesFlags) (ls []*Lease) { return s.OnLeases(flags) }
+
+// SetOnLeaseChanged implements the Interface for *MockInterface.
+func (s *MockInterface) SetOnLeaseChanged(f OnLeaseChangedT) { s.OnSetOnLeaseChanged(f) }
+
+// FindMACbyIP implements the Interface for *MockInterface.
+func (s *MockInterface) FindMACbyIP(ip net.IP) (mac net.HardwareAddr) { return s.OnFindMACbyIP(ip) }
+
+// WriteDiskConfig implements the Interface for *MockInterface.
+func (s *MockInterface) WriteDiskConfig(c *ServerConfig) { s.OnWriteDiskConfig(c) }
+
+// server is the DHCP service that handles DHCPv4, DHCPv6, and HTTP API.
+type server struct {
 	srv4 DHCPServer
 	srv6 DHCPServer
 
@@ -169,27 +214,15 @@ type Server struct {
 	onLeaseChanged []OnLeaseChangedT
 }
 
-// GetLeasesFlags are the flags for GetLeases.
-type GetLeasesFlags uint8
+// type check
+var _ Interface = (*server)(nil)
 
-// GetLeasesFlags values
-const (
-	LeasesDynamic GetLeasesFlags = 0b0001
-	LeasesStatic  GetLeasesFlags = 0b0010
-
-	LeasesAll = LeasesDynamic | LeasesStatic
-)
-
-// ServerInterface is an interface for servers.
-type ServerInterface interface {
-	Enabled() (ok bool)
-	Leases(flags GetLeasesFlags) (leases []*Lease)
-	SetOnLeaseChanged(onLeaseChanged OnLeaseChangedT)
-}
-
-// Create - create object
-func Create(conf *ServerConfig) (s *Server, err error) {
-	s = &Server{
+// Create initializes and returns the DHCP server handling both address
+// families.  It also registers the corresponding HTTP API endpoints.
+//
+// TODO(e.burkov):  Don't register handlers, see TODO on [aghhttp.RegisterFunc].
+func Create(conf *ServerConfig) (s *server, err error) {
+	s = &server{
 		conf: &ServerConfig{
 			ConfigModified: conf.ConfigModified,
 
@@ -204,35 +237,20 @@ func Create(conf *ServerConfig) (s *Server, err error) {
 		},
 	}
 
-	if !webHandlersRegistered && s.conf.HTTPRegister != nil {
-		if runtime.GOOS == "windows" {
-			// Our DHCP server doesn't work on Windows yet, so
-			// signal that to the front with an HTTP 501.
-			//
-			// TODO(a.garipov): This needs refactoring.  We
-			// shouldn't even try and initialize a DHCP server on
-			// Windows, but there are currently too many
-			// interconnected parts--such as HTTP handlers and
-			// frontend--to make that work properly.
-			s.registerNotImplementedHandlers()
-		} else {
-			s.registerHandlers()
-		}
-
-		webHandlersRegistered = true
-	}
+	s.registerHandlers()
 
 	v4conf := conf.Conf4
-	v4conf.Enabled = s.conf.Enabled
-	if len(v4conf.RangeStart) == 0 {
-		v4conf.Enabled = false
-	}
-
 	v4conf.InterfaceName = s.conf.InterfaceName
 	v4conf.notify = s.onNotify
-	s.srv4, err = v4Create(v4conf)
+	v4conf.Enabled = s.conf.Enabled && len(v4conf.RangeStart) != 0
+
+	s.srv4, err = v4Create(&v4conf)
 	if err != nil {
-		return nil, fmt.Errorf("creating dhcpv4 srv: %w", err)
+		if v4conf.Enabled {
+			return nil, fmt.Errorf("creating dhcpv4 srv: %w", err)
+		}
+
+		log.Error("creating dhcpv4 srv: %s", err)
 	}
 
 	v6conf := conf.Conf6
@@ -265,12 +283,12 @@ func Create(conf *ServerConfig) (s *Server, err error) {
 }
 
 // Enabled returns true when the server is enabled.
-func (s *Server) Enabled() (ok bool) {
+func (s *server) Enabled() (ok bool) {
 	return s.conf.Enabled
 }
 
 // resetLeases resets all leases in the lease database.
-func (s *Server) resetLeases() (err error) {
+func (s *server) resetLeases() (err error) {
 	err = s.srv4.ResetLeases(nil)
 	if err != nil {
 		return err
@@ -287,7 +305,7 @@ func (s *Server) resetLeases() (err error) {
 }
 
 // server calls this function after DB is updated
-func (s *Server) onNotify(flags uint32) {
+func (s *server) onNotify(flags uint32) {
 	if flags == LeaseChangedDBStore {
 		err := s.dbStore()
 		if err != nil {
@@ -301,31 +319,28 @@ func (s *Server) onNotify(flags uint32) {
 }
 
 // SetOnLeaseChanged - set callback
-func (s *Server) SetOnLeaseChanged(onLeaseChanged OnLeaseChangedT) {
+func (s *server) SetOnLeaseChanged(onLeaseChanged OnLeaseChangedT) {
 	s.onLeaseChanged = append(s.onLeaseChanged, onLeaseChanged)
 }
 
-func (s *Server) notify(flags int) {
-	if len(s.onLeaseChanged) == 0 {
-		return
-	}
-
+func (s *server) notify(flags int) {
 	for _, f := range s.onLeaseChanged {
 		f(flags)
 	}
 }
 
 // WriteDiskConfig - write configuration
-func (s *Server) WriteDiskConfig(c *ServerConfig) {
+func (s *server) WriteDiskConfig(c *ServerConfig) {
 	c.Enabled = s.conf.Enabled
 	c.InterfaceName = s.conf.InterfaceName
 	c.LocalDomainName = s.conf.LocalDomainName
+
 	s.srv4.WriteDiskConfig4(&c.Conf4)
 	s.srv6.WriteDiskConfig6(&c.Conf6)
 }
 
 // Start will listen on port 67 and serve DHCP requests.
-func (s *Server) Start() (err error) {
+func (s *server) Start() (err error) {
 	err = s.srv4.Start()
 	if err != nil {
 		return err
@@ -340,7 +355,7 @@ func (s *Server) Start() (err error) {
 }
 
 // Stop closes the listening UDP socket
-func (s *Server) Stop() (err error) {
+func (s *server) Stop() (err error) {
 	err = s.srv4.Stop()
 	if err != nil {
 		return err
@@ -356,12 +371,12 @@ func (s *Server) Stop() (err error) {
 
 // Leases returns the list of active IPv4 and IPv6 DHCP leases.  It's safe for
 // concurrent use.
-func (s *Server) Leases(flags GetLeasesFlags) (leases []*Lease) {
+func (s *server) Leases(flags GetLeasesFlags) (leases []*Lease) {
 	return append(s.srv4.GetLeases(flags), s.srv6.GetLeases(flags)...)
 }
 
 // FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
-func (s *Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
+func (s *server) FindMACbyIP(ip net.IP) net.HardwareAddr {
 	if ip.To4() != nil {
 		return s.srv4.FindMACbyIP(ip)
 	}
@@ -369,6 +384,6 @@ func (s *Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
 }
 
 // AddStaticLease - add static v4 lease
-func (s *Server) AddStaticLease(l *Lease) error {
+func (s *server) AddStaticLease(l *Lease) error {
 	return s.srv4.AddStaticLease(l)
 }
