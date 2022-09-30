@@ -15,6 +15,19 @@ and this project adheres to
 ## [v0.108.0] - TBA (APPROX.)
 -->
 
+### Security
+
+- As an additional CSRF protection measure, AdGuard Home now ensures that
+  requests that change its state but have no body (such as `POST
+  /control/stats_reset` requests) do not have a `Content-Type` header set on
+  them ([#4970]).
+
+### Fixed
+
+- `only application/json is allowed` errors in various APIs ([#4970]).
+
+[#4970]: https://github.com/AdguardTeam/AdGuardHome/issues/4970
+
 
 
 <!--
@@ -63,8 +76,8 @@ bodies are documented in `openapi/openapi.yaml` and `openapi/CHANGELOG.md`.
 
 #### Stricter Content-Type Checks (BREAKING API CHANGE)
 
-All JSON APIs now check if the request actually has the `application/json`
-content-type.
+All JSON APIs that expect a body now check if the request actually has
+`Content-Type` set to `application/json`.
 
 #### Other Security Changes
 
