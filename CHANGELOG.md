@@ -24,6 +24,7 @@ and this project adheres to
 
 ### Fixed
 
+- User-specific blocked services not applying correctly.
 - `only application/json is allowed` errors in various APIs ([#4970]).
 
 [#4970]: https://github.com/AdguardTeam/AdGuardHome/issues/4970
@@ -37,7 +38,6 @@ See also the [v0.107.15 GitHub milestone][ms-v0.107.15].
 
 [ms-v0.107.15]:   https://github.com/AdguardTeam/AdGuardHome/milestone/51?closed=1
 -->
-
 
 
 ## [v0.107.14] - 2022-09-29

@@ -244,6 +244,10 @@ func (clients *clientsContainer) addFromConfig(objects []*clientObject) {
 			}
 		}
 
+		if cli.BlockedServices == nil && cli.UseOwnBlockedServices {
+			cli.BlockedServices = []string{}
+		}
+
 		for _, t := range o.Tags {
 			if clients.allTags.Has(t) {
 				cli.Tags = append(cli.Tags, t)
