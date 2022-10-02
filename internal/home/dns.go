@@ -335,8 +335,6 @@ func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering
 	// pref is a prefix for logging messages around the scope.
 	const pref = "applying filters"
 
-	Context.filters.ApplyBlockedServices(setts, nil)
-
 	log.Debug("%s: looking for client with ip %s and clientid %q", pref, clientIP, clientID)
 
 	if clientIP == nil {
@@ -359,6 +357,8 @@ func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering
 
 	if c.UseOwnBlockedServices {
 		Context.filters.ApplyBlockedServices(setts, c.BlockedServices)
+	} else {
+		Context.filters.ApplyBlockedServices(setts, nil)
 	}
 
 	setts.ClientName = c.Name
