@@ -24,7 +24,8 @@ and this project adheres to
 
 ### Fixed
 
-- User-specific blocked services not applying correctly.
+- User-specific blocked services not applying correctly ([#4945], [#4982],
+  [#4983]).
 - `only application/json is allowed` errors in various APIs ([#4970]).
 
 [#4970]: https://github.com/AdguardTeam/AdGuardHome/issues/4970
@@ -96,6 +97,9 @@ All JSON APIs that expect a body now check if the request actually has
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#4927]: https://github.com/AdguardTeam/AdGuardHome/issues/4927
 [#4930]: https://github.com/AdguardTeam/AdGuardHome/issues/4930
+[#4945]: https://github.com/AdguardTeam/AdGuardHome/issues/4945
+[#4982]: https://github.com/AdguardTeam/AdGuardHome/issues/4982
+[#4983]: https://github.com/AdguardTeam/AdGuardHome/issues/4983
 
 [ms-v0.107.14]:   https://github.com/AdguardTeam/AdGuardHome/milestone/50?closed=1
 

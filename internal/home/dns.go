@@ -364,7 +364,7 @@ func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering
 			svcs = []string{}
 		}
 		Context.filters.ApplyBlockedServices(setts, svcs)
-		log.Debug("services set: %v", setts.ServicesRules)
+		log.Debug("%s: services for client %q set: %s", pref, c.Name, svcs)
 	}
 
 	setts.ClientName = c.Name
