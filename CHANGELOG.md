@@ -15,6 +15,22 @@ and this project adheres to
 ## [v0.108.0] - TBA (APPROX.)
 -->
 
+
+
+<!--
+## [v0.107.16] - 2022-11-02 (APPROX.)
+
+See also the [v0.107.16 GitHub milestone][ms-v0.107.15].
+
+[ms-v0.107.16]:   https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
+-->
+
+
+
+## [v0.107.15] - 2022-10-03
+
+See also the [v0.107.15 GitHub milestone][ms-v0.107.15].
+
 ### Security
 
 - As an additional CSRF protection measure, AdGuard Home now ensures that
@@ -44,17 +60,13 @@ experimental and may break or change in the future.
 - `only application/json is allowed` errors in various APIs ([#4970]).
 
 [#3955]: https://github.com/AdguardTeam/AdGuardHome/issues/3955
+[#4945]: https://github.com/AdguardTeam/AdGuardHome/issues/4945
 [#4970]: https://github.com/AdguardTeam/AdGuardHome/issues/4970
-
-
-
-<!--
-## [v0.107.15] - 2022-10-26 (APPROX.)
-
-See also the [v0.107.15 GitHub milestone][ms-v0.107.15].
+[#4982]: https://github.com/AdguardTeam/AdGuardHome/issues/4982
+[#4983]: https://github.com/AdguardTeam/AdGuardHome/issues/4983
 
 [ms-v0.107.15]:   https://github.com/AdguardTeam/AdGuardHome/milestone/51?closed=1
--->
+
 
 
 ## [v0.107.14] - 2022-09-29
@@ -113,9 +125,6 @@ All JSON APIs that expect a body now check if the request actually has
 [#2993]: https://github.com/AdguardTeam/AdGuardHome/issues/2993
 [#4927]: https://github.com/AdguardTeam/AdGuardHome/issues/4927
 [#4930]: https://github.com/AdguardTeam/AdGuardHome/issues/4930
-[#4945]: https://github.com/AdguardTeam/AdGuardHome/issues/4945
-[#4982]: https://github.com/AdguardTeam/AdGuardHome/issues/4982
-[#4983]: https://github.com/AdguardTeam/AdGuardHome/issues/4983
 
 [ms-v0.107.14]:   https://github.com/AdguardTeam/AdGuardHome/milestone/50?closed=1
 
@@ -1316,11 +1325,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...HEAD
-[v0.107.15]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...v0.107.15
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...HEAD
+[v0.107.16]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...v0.107.15
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...HEAD
+[v0.107.15]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...v0.107.15
 [v0.107.14]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...v0.107.14
 [v0.107.13]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...v0.107.13
 [v0.107.12]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...v0.107.12
