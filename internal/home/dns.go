@@ -246,10 +246,13 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	newConf.FilterHandler = applyAdditionalFiltering
 	newConf.GetCustomUpstreamByClient = Context.clients.findUpstreams
 
-	newConf.ResolveClients = config.Clients.Sources.RDNS
-	newConf.UsePrivateRDNS = dnsConf.UsePrivateRDNS
 	newConf.LocalPTRResolvers = dnsConf.LocalPTRResolvers
 	newConf.UpstreamTimeout = dnsConf.UpstreamTimeout.Duration
+
+	newConf.ResolveClients = config.Clients.Sources.RDNS
+	newConf.UsePrivateRDNS = dnsConf.UsePrivateRDNS
+	newConf.ServeHTTP3 = dnsConf.ServeHTTP3
+	newConf.UseHTTP3Upstreams = dnsConf.UseHTTP3Upstreams
 
 	return newConf, nil
 }

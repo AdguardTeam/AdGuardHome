@@ -1,7 +1,6 @@
 package home
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -155,19 +154,12 @@ type profileJSON struct {
 }
 
 func handleGetProfile(w http.ResponseWriter, r *http.Request) {
-	pj := profileJSON{}
 	u := Context.auth.getCurrentUser(r)
-
-	pj.Name = u.Name
-
-	data, err := json.Marshal(pj)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "json.Marshal: %s", err)
-
-		return
+	resp := &profileJSON{
+		Name: u.Name,
 	}
 
-	_, _ = w.Write(data)
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 // ------------------------

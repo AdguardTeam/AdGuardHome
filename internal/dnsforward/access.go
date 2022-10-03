@@ -183,15 +183,7 @@ func (s *Server) accessListJSON() (j accessListJSON) {
 }
 
 func (s *Server) handleAccessList(w http.ResponseWriter, r *http.Request) {
-	j := s.accessListJSON()
-
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(j)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "encoding response: %s", err)
-
-		return
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, s.accessListJSON())
 }
 
 // validateAccessSet checks the internal accessListJSON lists.  To search for

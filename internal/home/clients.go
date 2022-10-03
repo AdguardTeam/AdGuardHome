@@ -456,8 +456,9 @@ func (clients *clientsContainer) findUpstreams(
 	conf, err = proxy.ParseUpstreamsConfig(
 		upstreams,
 		&upstream.Options{
-			Bootstrap: config.DNS.BootstrapDNS,
-			Timeout:   config.DNS.UpstreamTimeout.Duration,
+			Bootstrap:    config.DNS.BootstrapDNS,
+			Timeout:      config.DNS.UpstreamTimeout.Duration,
+			HTTPVersions: dnsforward.UpstreamHTTPVersions(config.DNS.UseHTTP3Upstreams),
 		},
 	)
 	if err != nil {

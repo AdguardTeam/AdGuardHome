@@ -21,6 +21,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/lucas-clemente/quic-go/http3"
 )
 
 // getAddrsResponse is the response for /install/get_addresses endpoint.
@@ -328,6 +329,7 @@ func copyInstallSettings(dst, src *configuration) {
 // shutdownTimeout is the timeout for shutting HTTP server down operation.
 const shutdownTimeout = 5 * time.Second
 
+// shutdownSrv shuts srv down and prints error messages to the log.
 func shutdownSrv(ctx context.Context, srv *http.Server) {
 	defer log.OnPanic("")
 
@@ -336,13 +338,38 @@ func shutdownSrv(ctx context.Context, srv *http.Server) {
 	}
 
 	err := srv.Shutdown(ctx)
-	if err != nil {
-		const msgFmt = "shutting down http server %q: %s"
-		if errors.Is(err, context.Canceled) {
-			log.Debug(msgFmt, srv.Addr, err)
-		} else {
-			log.Error(msgFmt, srv.Addr, err)
-		}
+	if err == nil {
+		return
+	}
+
+	const msgFmt = "shutting down http server %q: %s"
+	if errors.Is(err, context.Canceled) {
+		log.Debug(msgFmt, srv.Addr, err)
+	} else {
+		log.Error(msgFmt, srv.Addr, err)
+	}
+}
+
+// shutdownSrv3 shuts srv down and prints error messages to the log.
+//
+// TODO(a.garipov): Think of a good way to merge with [shutdownSrv].
+func shutdownSrv3(srv *http3.Server) {
+	defer log.OnPanic("")
+
+	if srv == nil {
+		return
+	}
+
+	err := srv.Close()
+	if err == nil {
+		return
+	}
+
+	const msgFmt = "shutting down http/3 server %q: %s"
+	if errors.Is(err, context.Canceled) {
+		log.Debug(msgFmt, srv.Addr, err)
+	} else {
+		log.Error(msgFmt, srv.Addr, err)
 	}
 }
 
@@ -545,16 +572,11 @@ func (web *Web) handleInstallCheckConfigBeta(w http.ResponseWriter, r *http.Requ
 
 	err = json.NewEncoder(nonBetaReqBody).Encode(nonBetaReqData)
 	if err != nil {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusBadRequest,
-			"Failed to encode 'check_config' JSON data: %s",
-			err,
-		)
+		aghhttp.Error(r, w, http.StatusBadRequest, "encoding check_config: %s", err)
 
 		return
 	}
+
 	body := nonBetaReqBody.String()
 	r.Body = io.NopCloser(strings.NewReader(body))
 	r.ContentLength = int64(len(body))
@@ -622,13 +644,7 @@ func (web *Web) handleInstallConfigureBeta(w http.ResponseWriter, r *http.Reques
 
 	err = json.NewEncoder(nonBetaReqBody).Encode(nonBetaReqData)
 	if err != nil {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusBadRequest,
-			"Failed to encode 'check_config' JSON data: %s",
-			err,
-		)
+		aghhttp.Error(r, w, http.StatusBadRequest, "encoding configure: %s", err)
 
 		return
 	}

@@ -166,6 +166,19 @@ type dnsConfig struct {
 	// LocalPTRResolvers is the slice of addresses to be used as upstreams
 	// for PTR queries for locally-served networks.
 	LocalPTRResolvers []string `yaml:"local_ptr_upstreams"`
+
+	// ServeHTTP3 defines if HTTP/3 is be allowed for incoming requests.
+	//
+	// TODO(a.garipov): Add to the UI when HTTP/3 support is no longer
+	// experimental.
+	ServeHTTP3 bool `yaml:"serve_http3"`
+
+	// UseHTTP3Upstreams defines if HTTP/3 is be allowed for DNS-over-HTTPS
+	// upstreams.
+	//
+	// TODO(a.garipov): Add to the UI when HTTP/3 support is no longer
+	// experimental.
+	UseHTTP3Upstreams bool `yaml:"use_http3_upstreams"`
 }
 
 type tlsConfigSettings struct {

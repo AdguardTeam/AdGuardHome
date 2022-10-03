@@ -201,6 +201,10 @@ type ServerConfig struct {
 	// Register an HTTP handler
 	HTTPRegister aghhttp.RegisterFunc
 
+	// LocalPTRResolvers is a slice of addresses to be used as upstreams for
+	// resolving PTR queries for local addresses.
+	LocalPTRResolvers []string
+
 	// ResolveClients signals if the RDNS should resolve clients' addresses.
 	ResolveClients bool
 
@@ -208,9 +212,12 @@ type ServerConfig struct {
 	// locally-served networks should be resolved via private PTR resolvers.
 	UsePrivateRDNS bool
 
-	// LocalPTRResolvers is a slice of addresses to be used as upstreams for
-	// resolving PTR queries for local addresses.
-	LocalPTRResolvers []string
+	// ServeHTTP3 defines if HTTP/3 is be allowed for incoming requests.
+	ServeHTTP3 bool
+
+	// UseHTTP3Upstreams defines if HTTP/3 is be allowed for DNS-over-HTTPS
+	// upstreams.
+	UseHTTP3Upstreams bool
 }
 
 // if any of ServerConfig values are zero, then default values from below are used
@@ -226,6 +233,7 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 	conf = proxy.Config{
 		UDPListenAddr:          srvConf.UDPListenAddrs,
 		TCPListenAddr:          srvConf.TCPListenAddrs,
+		HTTP3:                  srvConf.ServeHTTP3,
 		Ratelimit:              int(srvConf.Ratelimit),
 		RatelimitWhitelist:     srvConf.RatelimitWhitelist,
 		RefuseAny:              srvConf.RefuseAny,
@@ -324,6 +332,20 @@ func (s *Server) initDefaultSettings() {
 	}
 }
 
+// UpstreamHTTPVersions returns the HTTP versions for upstream configuration
+// depending on configuration.
+func UpstreamHTTPVersions(http3 bool) (v []upstream.HTTPVersion) {
+	if !http3 {
+		return upstream.DefaultHTTPVersions
+	}
+
+	return []upstream.HTTPVersion{
+		upstream.HTTPVersion3,
+		upstream.HTTPVersion2,
+		upstream.HTTPVersion11,
+	}
+}
+
 // prepareUpstreamSettings - prepares upstream DNS server settings
 func (s *Server) prepareUpstreamSettings() error {
 	// We're setting a customized set of RootCAs
@@ -353,12 +375,14 @@ func (s *Server) prepareUpstreamSettings() error {
 		upstreams = s.conf.UpstreamDNS
 	}
 
+	httpVersions := UpstreamHTTPVersions(s.conf.UseHTTP3Upstreams)
 	upstreams = stringutil.FilterOut(upstreams, IsCommentOrEmpty)
 	upstreamConfig, err := proxy.ParseUpstreamsConfig(
 		upstreams,
 		&upstream.Options{
-			Bootstrap: s.conf.BootstrapDNS,
-			Timeout:   s.conf.UpstreamTimeout,
+			Bootstrap:    s.conf.BootstrapDNS,
+			Timeout:      s.conf.UpstreamTimeout,
+			HTTPVersions: httpVersions,
 		},
 	)
 	if err != nil {
@@ -371,8 +395,9 @@ func (s *Server) prepareUpstreamSettings() error {
 		uc, err = proxy.ParseUpstreamsConfig(
 			defaultDNS,
 			&upstream.Options{
-				Bootstrap: s.conf.BootstrapDNS,
-				Timeout:   s.conf.UpstreamTimeout,
+				Bootstrap:    s.conf.BootstrapDNS,
+				Timeout:      s.conf.UpstreamTimeout,
+				HTTPVersions: httpVersions,
 			},
 		)
 		if err != nil {

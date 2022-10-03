@@ -151,7 +151,7 @@ func (s *Server) checkHostRules(host string, rrtype uint16, setts *filtering.Set
 }
 
 // filterDNSResponse checks each resource record of the response's answer
-// section from pctx and returns a non-nil res if at least one of canonnical
+// section from pctx and returns a non-nil res if at least one of canonical
 // names or IP addresses in it matches the filtering rules.
 func (s *Server) filterDNSResponse(
 	pctx *proxy.DNSContext,
