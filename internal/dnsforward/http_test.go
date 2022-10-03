@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -116,7 +117,8 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 			s.conf = tc.conf()
 			s.handleGetConfig(w, nil)
 
-			assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+			cType := w.Header().Get(aghhttp.HdrNameContentType)
+			assert.Equal(t, aghhttp.HdrValApplicationJSON, cType)
 			assert.JSONEq(t, string(caseWant), w.Body.String())
 		})
 	}

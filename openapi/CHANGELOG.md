@@ -6,12 +6,37 @@
 
 
 
+## v0.107.15: `POST` Requests Without Bodies
+
+As an additional CSRF protection measure, AdGuard Home now ensures that requests
+that change its state but have no body do not have a `Content-Type` header set
+on them.
+
+This concerns the following APIs:
+
+* `POST /control/dhcp/reset_leases`;
+* `POST /control/dhcp/reset`;
+* `POST /control/parental/disable`;
+* `POST /control/parental/enable`;
+* `POST /control/querylog_clear`;
+* `POST /control/safebrowsing/disable`;
+* `POST /control/safebrowsing/enable`;
+* `POST /control/safesearch/disable`;
+* `POST /control/safesearch/enable`;
+* `POST /control/stats_reset`;
+* `POST /control/update`.
+
+
+
 ## v0.107.14: BREAKING API CHANGES
 
 A Cross-Site Request Forgery (CSRF) vulnerability has been discovered.  We have
 implemented several measures to prevent such vulnerabilities in the future, but
 some of these measures break backwards compatibility for the sake of better
 protection.
+
+All JSON APIs that expect a body now check if the request actually has
+`Content-Type` set to `application/json`.
 
 All new formats for the request and response bodies are documented in
 `openapi.yaml`.

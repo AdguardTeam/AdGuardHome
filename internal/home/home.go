@@ -381,9 +381,11 @@ func initWeb(args options, clientBuildFS fs.FS) (web *Web, err error) {
 
 		clientFS:     clientFS,
 		clientBetaFS: clientBetaFS,
+
+		serveHTTP3: config.DNS.ServeHTTP3,
 	}
 
-	web = CreateWeb(&webConf)
+	web = newWeb(&webConf)
 	if web == nil {
 		return nil, fmt.Errorf("initializing web: %w", err)
 	}

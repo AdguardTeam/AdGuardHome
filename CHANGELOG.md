@@ -18,12 +18,54 @@ and this project adheres to
 
 
 <!--
-## [v0.107.15] - 2022-10-26 (APPROX.)
+## [v0.107.16] - 2022-11-02 (APPROX.)
+
+See also the [v0.107.16 GitHub milestone][ms-v0.107.15].
+
+[ms-v0.107.16]:   https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
+-->
+
+
+
+## [v0.107.15] - 2022-10-03
 
 See also the [v0.107.15 GitHub milestone][ms-v0.107.15].
 
+### Security
+
+- As an additional CSRF protection measure, AdGuard Home now ensures that
+  requests that change its state but have no body (such as `POST
+  /control/stats_reset` requests) do not have a `Content-Type` header set on
+  them ([#4970]).
+
+### Added
+
+#### Experimental HTTP/3 Support
+
+See [#3955] and the related issues for more details.  These features are still
+experimental and may break or change in the future.
+
+- DNS-over-HTTP/3 DNS and web UI client request support.  This feature must be
+  explicitly enabled by setting the new property `dns.serve_http3` in the
+  configuration file to `true`.
+- DNS-over-HTTP upstreams can now upgrade to HTTP/3 if the new configuration
+  file property `use_http3_upstreams` is set to `true`.
+- Upstreams with forced DNS-over-HTTP/3 and no fallback to prior HTTP versions
+  using the `h3://` scheme.
+
+### Fixed
+
+- User-specific blocked services not applying correctly ([#4945], [#4982],
+  [#4983]).
+- `only application/json is allowed` errors in various APIs ([#4970]).
+
+[#3955]: https://github.com/AdguardTeam/AdGuardHome/issues/3955
+[#4945]: https://github.com/AdguardTeam/AdGuardHome/issues/4945
+[#4970]: https://github.com/AdguardTeam/AdGuardHome/issues/4970
+[#4982]: https://github.com/AdguardTeam/AdGuardHome/issues/4982
+[#4983]: https://github.com/AdguardTeam/AdGuardHome/issues/4983
+
 [ms-v0.107.15]:   https://github.com/AdguardTeam/AdGuardHome/milestone/51?closed=1
--->
 
 
 
@@ -63,8 +105,8 @@ bodies are documented in `openapi/openapi.yaml` and `openapi/CHANGELOG.md`.
 
 #### Stricter Content-Type Checks (BREAKING API CHANGE)
 
-All JSON APIs now check if the request actually has the `application/json`
-content-type.
+All JSON APIs that expect a body now check if the request actually has
+`Content-Type` set to `application/json`.
 
 #### Other Security Changes
 
@@ -1283,11 +1325,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...HEAD
-[v0.107.15]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...v0.107.15
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...HEAD
+[v0.107.16]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...v0.107.15
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...HEAD
+[v0.107.15]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...v0.107.15
 [v0.107.14]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...v0.107.14
 [v0.107.13]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...v0.107.13
 [v0.107.12]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...v0.107.12

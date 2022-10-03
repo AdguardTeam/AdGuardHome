@@ -601,11 +601,10 @@
       'summary': 'Set user-defined filter rules'
       'requestBody':
         'content':
-          'text/plain':
+          'application/json':
             'schema':
-              'type': 'string'
-              'example': '@@||yandex.ru^|'
-        'description': 'All filtering rules, one line per rule'
+              '$ref': '#/components/schemas/SetRulesRequest'
+        'description': 'Custom filtering rules.'
       'responses':
         '200':
           'description': 'OK.'
@@ -1538,6 +1537,19 @@
       'properties':
         'updated':
           'type': 'integer'
+    'SetRulesRequest':
+      'description': 'Custom filtering rules setting request.'
+      'example':
+        'rules':
+        - '||example.com^'
+        - '# comment'
+        - '@@||www.example.com^'
+      'properties':
+        'rules':
+          'items':
+            'type': 'string'
+          'type': 'array'
+      'type': 'object'
     'GetVersionRequest':
       'type': 'object'
       'description': '/version.json request data'

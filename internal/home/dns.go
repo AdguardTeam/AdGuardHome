@@ -246,10 +246,13 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	newConf.FilterHandler = applyAdditionalFiltering
 	newConf.GetCustomUpstreamByClient = Context.clients.findUpstreams
 
-	newConf.ResolveClients = config.Clients.Sources.RDNS
-	newConf.UsePrivateRDNS = dnsConf.UsePrivateRDNS
 	newConf.LocalPTRResolvers = dnsConf.LocalPTRResolvers
 	newConf.UpstreamTimeout = dnsConf.UpstreamTimeout.Duration
+
+	newConf.ResolveClients = config.Clients.Sources.RDNS
+	newConf.UsePrivateRDNS = dnsConf.UsePrivateRDNS
+	newConf.ServeHTTP3 = dnsConf.ServeHTTP3
+	newConf.UseHTTP3Upstreams = dnsConf.UseHTTP3Upstreams
 
 	return newConf, nil
 }
@@ -358,7 +361,13 @@ func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering
 	log.Debug("%s: using settings for client %q (%s; %q)", pref, c.Name, clientIP, clientID)
 
 	if c.UseOwnBlockedServices {
-		Context.filters.ApplyBlockedServices(setts, c.BlockedServices)
+		// TODO(e.burkov):  Get rid of this crutch.
+		svcs := c.BlockedServices
+		if svcs == nil {
+			svcs = []string{}
+		}
+		Context.filters.ApplyBlockedServices(setts, svcs)
+		log.Debug("%s: services for client %q set: %s", pref, c.Name, svcs)
 	}
 
 	setts.ClientName = c.Name

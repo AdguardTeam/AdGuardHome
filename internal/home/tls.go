@@ -266,7 +266,7 @@ func (t *TLSMod) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if !WebCheckPortAvailable(setts.PortHTTPS) {
+	if !webCheckPortAvailable(setts.PortHTTPS) {
 		aghhttp.Error(
 			r,
 			w,
@@ -356,7 +356,7 @@ func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO(e.burkov):  Investigate and perhaps check other ports.
-	if !WebCheckPortAvailable(data.PortHTTPS) {
+	if !webCheckPortAvailable(data.PortHTTPS) {
 		aghhttp.Error(
 			r,
 			w,
