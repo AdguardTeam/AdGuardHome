@@ -78,18 +78,7 @@ func (s *server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	status.Leases = s.Leases(LeasesDynamic)
 	status.StaticLeases = s.Leases(LeasesStatic)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	err := json.NewEncoder(w).Encode(status)
-	if err != nil {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusInternalServerError,
-			"Unable to marshal DHCP status json: %s",
-			err,
-		)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, status)
 }
 
 func (s *server) enableDHCP(ifaceName string) (code int, err error) {

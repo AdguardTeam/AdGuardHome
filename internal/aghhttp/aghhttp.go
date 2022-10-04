@@ -62,9 +62,16 @@ func WriteTextPlainDeprecated(w http.ResponseWriter, r *http.Request) (isPlainTe
 }
 
 // WriteJSONResponse sets the content-type header in w.Header() to
-// "application/json", encodes resp to w, calls Error on any returned error, and
-// returns it as well.
+// "application/json", writes a header with a "200 OK" status, encodes resp to
+// w, calls [Error] on any returned error, and returns it as well.
 func WriteJSONResponse(w http.ResponseWriter, r *http.Request, resp any) (err error) {
+	return WriteJSONResponseCode(w, r, http.StatusOK, resp)
+}
+
+// WriteJSONResponseCode is like [WriteJSONResponse] but adds the ability to
+// redefine the status code.
+func WriteJSONResponseCode(w http.ResponseWriter, r *http.Request, code int, resp any) (err error) {
+	w.WriteHeader(code)
 	w.Header().Set(HdrNameContentType, HdrValApplicationJSON)
 	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {

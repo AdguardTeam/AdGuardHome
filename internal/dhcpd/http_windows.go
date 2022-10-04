@@ -3,11 +3,10 @@
 package dhcpd
 
 import (
-	"encoding/json"
 	"net/http"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/golibs/log"
 )
 
 // jsonError is a generic JSON error response.
@@ -25,15 +24,9 @@ type jsonError struct {
 // TODO(a.garipov): Either take the logger from the server after we've
 // refactored logging or make this not a method of *Server.
 func (s *server) notImplemented(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNotImplemented)
-
-	err := json.NewEncoder(w).Encode(&jsonError{
+	_ = aghhttp.WriteJSONResponseCode(w, r, http.StatusNotImplemented, &jsonError{
 		Message: aghos.Unsupported("dhcp").Error(),
 	})
-	if err != nil {
-		log.Debug("writing 501 json response: %s", err)
-	}
 }
 
 // registerHandlers sets the handlers for DHCP HTTP API that always respond with
