@@ -382,16 +382,18 @@ var servicesData = []svc{{
 }, {
 	name: "warnerbrosdiscovery",
 	rules: []string{
-		"||hbomax.com^",
-		"||hbonow.com^",
-		"||hbonow.com^",
-		"||hbomax-images.warnermediacdn.com^",
+		"||app.br.estadio.com^",
 		"||art-gallery-latam.api.hbo.com^",
 		"||artist.api.cdn.hbo.com^",
-		"||hbogoasia.id^",
-		"||tntgo.tv^",
-		"||discoveryplus.com^",
+		"||discoveryplus.com
+		"||warnermediacdn.com^",
 		"||go.cnn.com^",
+		"||go.tntsports.com.ar^",
+		"||go.tntsports.cl^",
+		"||hbogoasia.id^",
+		"||hbomax.com^",
+		"||hbonow.com^",
+		"||tntgo.tv^",
 	},
 }}
 
