@@ -383,6 +383,7 @@ func initWeb(args options, clientBuildFS fs.FS) (web *Web, err error) {
 		clientBetaFS: clientBetaFS,
 
 		serveHTTP3: config.DNS.ServeHTTP3,
+		tlsCiphers: config.TLS.TLSCiphers,
 	}
 
 	web = newWeb(&webConf)

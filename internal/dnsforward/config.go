@@ -165,6 +165,9 @@ type TLSConfig struct {
 	cert tls.Certificate
 	// DNS names from certificate (SAN) or CN value from Subject
 	dnsNames []string
+
+	// ciphers specified by user
+	TLSCiphers []string `yaml:"tls_ciphers" json:"-"`
 }
 
 // DNSCryptConfig is the DNSCrypt server configuration struct.
