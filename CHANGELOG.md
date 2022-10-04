@@ -49,7 +49,7 @@ experimental and may break or change in the future.
   explicitly enabled by setting the new property `dns.serve_http3` in the
   configuration file to `true`.
 - DNS-over-HTTP upstreams can now upgrade to HTTP/3 if the new configuration
-  file property `use_http3_upstreams` is set to `true`.
+  file property `dns.use_http3_upstreams` is set to `true`.
 - Upstreams with forced DNS-over-HTTP/3 and no fallback to prior HTTP versions
   using the `h3://` scheme.
 
