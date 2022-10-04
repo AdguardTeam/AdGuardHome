@@ -34,11 +34,14 @@ func SaferCipherSuites() (safe []uint16) {
 	return safe
 }
 
-func UserPreferredCipherSuites(ciphers []string) (userCiphers []uint16) {
+// ParseCipherIDs returns a set of cipher suites with the cipher names provided
+func ParseCipherIDs(ciphers []string) (userCiphers []uint16) {
 	for _, s := range tls.CipherSuites() {
 		if slices.Contains(ciphers, s.Name) {
 			userCiphers = append(userCiphers, s.ID)
 			log.Debug("user specified cipher : %s, ID : %d", s.Name, s.ID)
+		} else {
+			log.Error("unknown cipher : %s ", s)
 		}
 	}
 

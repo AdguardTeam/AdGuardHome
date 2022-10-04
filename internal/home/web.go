@@ -11,7 +11,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -34,6 +33,10 @@ const (
 )
 
 type webConfig struct {
+
+	// Ciphers that are used for https listener
+	tlsCiphers []uint16
+
 	clientFS     fs.FS
 	clientBetaFS fs.FS
 
@@ -57,9 +60,6 @@ type webConfig struct {
 	firstRun bool
 
 	serveHTTP3 bool
-
-	// ciphers specified by user
-	tlsCiphers []string
 }
 
 // httpsServer contains the data for the HTTPS server.
@@ -291,14 +291,6 @@ func (web *Web) tlsServerLoop() {
 
 		web.httpsServer.cond.L.Unlock()
 
-		var cipher []uint16
-
-		if len(web.conf.tlsCiphers) == 0 {
-			cipher = aghtls.SaferCipherSuites()
-		} else {
-			cipher = aghtls.UserPreferredCipherSuites(web.conf.tlsCiphers)
-		}
-
 		addr := netutil.JoinHostPort(web.conf.BindHost.String(), web.conf.PortHTTPS)
 		web.httpsServer.server = &http.Server{
 			ErrorLog: log.StdLog("web: https", log.DEBUG),
@@ -306,7 +298,7 @@ func (web *Web) tlsServerLoop() {
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
 				RootCAs:      Context.tlsRoots,
-				CipherSuites: cipher,
+				CipherSuites: web.conf.tlsCiphers,
 				MinVersion:   tls.VersionTLS12,
 			},
 			Handler:           withMiddlewares(Context.mux, limitRequestBody),
@@ -318,7 +310,7 @@ func (web *Web) tlsServerLoop() {
 		printHTTPAddresses(aghhttp.SchemeHTTPS)
 
 		if web.conf.serveHTTP3 {
-			go web.mustStartHTTP3(addr, cipher)
+			go web.mustStartHTTP3(addr)
 		}
 
 		log.Debug("web: starting https server")
@@ -330,7 +322,7 @@ func (web *Web) tlsServerLoop() {
 	}
 }
 
-func (web *Web) mustStartHTTP3(address string, ciphers []uint16) {
+func (web *Web) mustStartHTTP3(address string) {
 	defer log.OnPanic("web: http3")
 
 	web.httpsServer.server3 = &http3.Server{
@@ -340,7 +332,7 @@ func (web *Web) mustStartHTTP3(address string, ciphers []uint16) {
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{web.httpsServer.cert},
 			RootCAs:      Context.tlsRoots,
-			CipherSuites: ciphers,
+			CipherSuites: web.conf.tlsCiphers,
 			MinVersion:   tls.VersionTLS12,
 		},
 		Handler: withMiddlewares(Context.mux, limitRequestBody),

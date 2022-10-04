@@ -166,8 +166,10 @@ type TLSConfig struct {
 	// DNS names from certificate (SAN) or CN value from Subject
 	dnsNames []string
 
-	// ciphers specified by user
-	TLSCiphers []string `yaml:"tls_ciphers" json:"-"`
+	// OverrideTLSCiphers holds the cipher names. If the slice is empty
+	// default set of ciphers are used for https listener, else this is
+	// considered.
+	OverrideTLSCiphers []string `yaml:"override_tls_ciphers" json:"-"`
 }
 
 // DNSCryptConfig is the DNSCrypt server configuration struct.

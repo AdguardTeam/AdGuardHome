@@ -383,7 +383,7 @@ func initWeb(args options, clientBuildFS fs.FS) (web *Web, err error) {
 		clientBetaFS: clientBetaFS,
 
 		serveHTTP3: config.DNS.ServeHTTP3,
-		tlsCiphers: config.TLS.TLSCiphers,
+		tlsCiphers: getTLSCiphers(),
 	}
 
 	web = newWeb(&webConf)
@@ -887,4 +887,17 @@ func getHTTPProxy(_ *http.Request) (*url.URL, error) {
 type jsonError struct {
 	// Message is the error message, an opaque string.
 	Message string `json:"message"`
+}
+
+// getTLSCiphers check for overriden tls ciphers, if the slice is
+// empty, then default safe ciphers are used
+func getTLSCiphers() []uint16 {
+	var cipher []uint16
+
+	if len(config.TLS.OverrideTLSCiphers) == 0 {
+		cipher = aghtls.SaferCipherSuites()
+	} else {
+		cipher = aghtls.ParseCipherIDs(config.TLS.OverrideTLSCiphers)
+	}
+	return cipher
 }
