@@ -346,6 +346,11 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		Scheme: aghhttp.SchemeHTTP,
 		Host:   r.Host,
 	}
+
+	if config.DNS.ServeHTTP3 {
+		w.Header().Set("Alt-Svc", `h3=":443"; ma=2592000,h3-29=":443"; ma=2592000,h3-Q050=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000,quic=":443"; ma=2592000; v="46,43"`)
+	}
+
 	w.Header().Set("Access-Control-Allow-Origin", originURL.String())
 	w.Header().Set("Vary", "Origin")
 
