@@ -15,6 +15,16 @@ and this project adheres to
 ## [v0.108.0] - TBA (APPROX.)
 -->
 
+## Added
+
+- The ability to put [ClientIDs][clientid] into DNS-over-HTTPS hostnames as
+  opposed to URL paths ([#3418]).  Note that AdGuard Home checks the server name
+  only if the URL does not contain a ClientID.
+
+[#3418]: https://github.com/AdguardTeam/AdGuardHome/issues/3418
+
+[clientid]: https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid
+
 
 
 <!--
