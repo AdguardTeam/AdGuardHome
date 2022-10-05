@@ -235,22 +235,7 @@ func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if conf.Enabled != aghalg.NBNull {
-		s.conf.Enabled = conf.Enabled == aghalg.NBTrue
-	}
-
-	if conf.InterfaceName != "" {
-		s.conf.InterfaceName = conf.InterfaceName
-	}
-
-	if srv4 != nil {
-		s.srv4 = srv4
-	}
-
-	if srv6 != nil {
-		s.srv6 = srv6
-	}
-
+	s.setConfFromJSON(conf, srv4, srv6)
 	s.conf.ConfigModified()
 
 	err = s.dbLoad()
@@ -266,6 +251,26 @@ func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			aghhttp.Error(r, w, code, "enabling dhcp: %s", err)
 		}
+	}
+}
+
+// setConfFromJSON sets configuration parameters in s from the new configuration
+// decoded from JSON.
+func (s *server) setConfFromJSON(conf *dhcpServerConfigJSON, srv4, srv6 DHCPServer) {
+	if conf.Enabled != aghalg.NBNull {
+		s.conf.Enabled = conf.Enabled == aghalg.NBTrue
+	}
+
+	if conf.InterfaceName != "" {
+		s.conf.InterfaceName = conf.InterfaceName
+	}
+
+	if srv4 != nil {
+		s.srv4 = srv4
+	}
+
+	if srv6 != nil {
+		s.srv6 = srv6
 	}
 }
 

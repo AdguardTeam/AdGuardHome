@@ -197,7 +197,7 @@ func handleServiceControlAction(opts options, clientBuildFS fs.FS) {
 		DisplayName:      serviceDisplayName,
 		Description:      serviceDescription,
 		WorkingDirectory: pwd,
-		Arguments:        serialize(runOpts),
+		Arguments:        optsToArgs(runOpts),
 	}
 	configureService(svcConfig)
 

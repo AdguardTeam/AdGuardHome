@@ -223,8 +223,7 @@ govulncheck ./...
 
 # Apply more lax standards to the code we haven't properly refactored yet.
 gocyclo --over 17 ./internal/querylog/
-gocyclo --over 15 ./internal/home/ ./internal/dhcpd
-gocyclo --over 13 ./internal/filtering/
+gocyclo --over 13 ./internal/dhcpd ./internal/filtering/ ./internal/home/
 
 # Apply stricter standards to new or somewhat refactored code.
 gocyclo --over 10 ./internal/aghio/ ./internal/aghnet/ ./internal/aghos/\
