@@ -348,7 +348,8 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 	}
 
 	if config.DNS.ServeHTTP3 {
-		w.Header().Set("Alt-Svc", `h3=":443"; ma=2592000,h3-29=":443"; ma=2592000,h3-Q050=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000,quic=":443"; ma=2592000; v="46,43"`)
+		altSvc := fmt.Sprintf(`h3=":%[1]v"; ma=2592000,h3-29=":%[1]v"; ma=2592000,h3-Q050=":%[1]v";ma=2592000,h3-Q046=":%[1]v"; ma=2592000,h3-Q043=":%[1]v"; ma=2592000,quic=":%[1]v"; ma=2592000; v="46,43"`, config.TLS.PortHTTPS)
+		w.Header().Set("Alt-Svc", altSvc)
 	}
 
 	w.Header().Set("Access-Control-Allow-Origin", originURL.String())
