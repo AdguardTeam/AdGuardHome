@@ -32,7 +32,6 @@ and this project adheres to
 See also the [v0.107.16 GitHub milestone][ms-v0.107.15].
 
 [ms-v0.107.16]:   https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=
-
 -->
 
 
