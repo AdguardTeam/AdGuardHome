@@ -320,6 +320,16 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		return false
 	}
 
+	// Let the browser know that server support HTTP/3
+	// max-age is set to default (24 hourd)
+	//
+	// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Alt-Svc
+	// TODO: take max-age from config and set
+	if config.DNS.ServeHTTP3 {
+		altSvc := fmt.Sprintf(`h3=":%[1]v";`, config.TLS.PortHTTPS)
+		w.Header().Set("Alt-Svc", altSvc)
+	}
+
 	if r.TLS == nil && web.forceHTTPS {
 		hostPort := host
 		if port := web.conf.PortHTTPS; port != defaultPortHTTPS {
@@ -345,11 +355,6 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 	originURL := &url.URL{
 		Scheme: aghhttp.SchemeHTTP,
 		Host:   r.Host,
-	}
-
-	if config.DNS.ServeHTTP3 {
-		altSvc := fmt.Sprintf(`h3=":%[1]v"; ma=2592000,h3-29=":%[1]v"; ma=2592000,h3-Q050=":%[1]v";ma=2592000,h3-Q046=":%[1]v"; ma=2592000,h3-Q043=":%[1]v"; ma=2592000,quic=":%[1]v"; ma=2592000; v="46,43"`, config.TLS.PortHTTPS)
-		w.Header().Set("Alt-Svc", altSvc)
 	}
 
 	w.Header().Set("Access-Control-Allow-Origin", originURL.String())
