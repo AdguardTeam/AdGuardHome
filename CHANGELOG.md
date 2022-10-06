@@ -20,10 +20,13 @@ and this project adheres to
 - The ability to put [ClientIDs][clientid] into DNS-over-HTTPS hostnames as
   opposed to URL paths ([#3418]).  Note that AdGuard Home checks the server name
   only if the URL does not contain a ClientID.
+- Support for [HSTS][hsts], if `tls.force_https` is enabled ([#4941]).
 
 [#3418]: https://github.com/AdguardTeam/AdGuardHome/issues/3418
+[#4941]: https://github.com/AdguardTeam/AdGuardHome/pull/4941
 
 [clientid]: https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid
+[hsts]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
 
 
 
