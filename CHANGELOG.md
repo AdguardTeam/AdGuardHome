@@ -10,7 +10,10 @@ and this project adheres to
 
 
 ## [Unreleased]
+### Fixed
+- Web UI HTTP/3 not working  [#4986]
 
+[#4986]: https://github.com/AdguardTeam/AdGuardHome/issues/4986
 <!--
 ## [v0.108.0] - TBA (APPROX.)
 -->
