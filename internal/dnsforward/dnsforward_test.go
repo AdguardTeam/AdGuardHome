@@ -67,10 +67,11 @@ func createTestServer(
 		ID: 0, Data: []byte(rules),
 	}}
 
-	f := filtering.New(filterConf, filters)
+	f, err := filtering.New(filterConf, filters)
+	require.NoError(t, err)
+
 	f.SetEnabled(true)
 
-	var err error
 	s, err = NewServer(DNSCreateParams{
 		DHCPServer:  testDHCP,
 		DNSFilter:   f,
@@ -774,7 +775,9 @@ func TestBlockedCustomIP(t *testing.T) {
 		Data: []byte(rules),
 	}}
 
-	f := filtering.New(&filtering.Config{}, filters)
+	f, err := filtering.New(&filtering.Config{}, filters)
+	require.NoError(t, err)
+
 	s, err := NewServer(DNSCreateParams{
 		DHCPServer:  testDHCP,
 		DNSFilter:   f,
@@ -906,7 +909,9 @@ func TestRewrite(t *testing.T) {
 			Type:   dns.TypeCNAME,
 		}},
 	}
-	f := filtering.New(c, nil)
+	f, err := filtering.New(c, nil)
+	require.NoError(t, err)
+
 	f.SetEnabled(true)
 
 	s, err := NewServer(DNSCreateParams{
@@ -1021,19 +1026,14 @@ var testDHCP = &dhcpd.MockInterface{
 	OnWriteDiskConfig:   func(c *dhcpd.ServerConfig) { panic("not implemented") },
 }
 
-// func (*testDHCP) Leases(flags dhcpd.GetLeasesFlags) (leases []*dhcpd.Lease) {
-// 	return []*dhcpd.Lease{{
-// 		IP:       net.IP{192, 168, 12, 34},
-// 		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-// 		Hostname: "myhost",
-// 	}}
-// }
-
 func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	const localDomain = "lan"
 
+	flt, err := filtering.New(&filtering.Config{}, nil)
+	require.NoError(t, err)
+
 	s, err := NewServer(DNSCreateParams{
-		DNSFilter:   filtering.New(&filtering.Config{}, nil),
+		DNSFilter:   flt,
 		DHCPServer:  testDHCP,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 		LocalDomain: localDomain,
@@ -1100,9 +1100,11 @@ func TestPTRResponseFromHosts(t *testing.T) {
 		assert.Equal(t, uint32(1), atomic.LoadUint32(&eventsCalledCounter))
 	})
 
-	flt := filtering.New(&filtering.Config{
+	flt, err := filtering.New(&filtering.Config{
 		EtcHosts: hc,
 	}, nil)
+	require.NoError(t, err)
+
 	flt.SetEnabled(true)
 
 	var s *Server

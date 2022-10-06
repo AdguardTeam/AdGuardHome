@@ -10,9 +10,9 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghchan"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter"
@@ -163,15 +163,9 @@ func TestHostsContainer_refresh(t *testing.T) {
 	checkRefresh := func(t *testing.T, want *HostsRecord) {
 		t.Helper()
 
-		var ok bool
-		var upd *netutil.IPMap
-		select {
-		case upd, ok = <-hc.Upd():
-			require.True(t, ok)
-			require.NotNil(t, upd)
-		case <-time.After(1 * time.Second):
-			t.Fatal("did not receive after 1s")
-		}
+		upd, ok := aghchan.MustReceive(hc.Upd(), 1*time.Second)
+		require.True(t, ok)
+		require.NotNil(t, upd)
 
 		assert.Equal(t, 1, upd.Len())
 

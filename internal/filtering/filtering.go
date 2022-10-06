@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io/fs"
 	"net"
+	"net/http"
 	"os"
+	"path/filepath"
+	"regexp"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -24,6 +27,7 @@ import (
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
+	"golang.org/x/exp/slices"
 )
 
 // The IDs of built-in filter lists.
@@ -69,7 +73,12 @@ type Config struct {
 	// enabled is used to be returned within Settings.
 	//
 	// It is of type uint32 to be accessed by atomic.
+	//
+	// TODO(e.burkov):  Use atomic.Bool in Go 1.19.
 	enabled uint32
+
+	FilteringEnabled           bool   `yaml:"filtering_enabled"`       // whether or not use filter lists
+	FiltersUpdateIntervalHours uint32 `yaml:"filters_update_interval"` // time period to update filters (in hours)
 
 	ParentalEnabled     bool `yaml:"parental_enabled"`
 	SafeSearchEnabled   bool `yaml:"safesearch_enabled"`
@@ -98,6 +107,24 @@ type Config struct {
 
 	// CustomResolver is the resolver used by DNSFilter.
 	CustomResolver Resolver `yaml:"-"`
+
+	// HTTPClient is the client to use for updating the remote filters.
+	HTTPClient *http.Client `yaml:"-"`
+
+	// DataDir is used to store filters' contents.
+	DataDir string `yaml:"-"`
+
+	// filtersMu protects filter lists.
+	filtersMu *sync.RWMutex
+
+	// Filters are the blocking filter lists.
+	Filters []FilterYAML `yaml:"-"`
+
+	// WhitelistFilters are the allowing filter lists.
+	WhitelistFilters []FilterYAML `yaml:"-"`
+
+	// UserRules is the global list of custom rules.
+	UserRules []string `yaml:"-"`
 }
 
 // LookupStats store stats collected during safebrowsing or parental checks
@@ -128,11 +155,13 @@ type hostChecker struct {
 
 // DNSFilter matches hostnames and DNS requests against filtering rules.
 type DNSFilter struct {
-	rulesStorage         *filterlist.RuleStorage
-	filteringEngine      *urlfilter.DNSEngine
+	rulesStorage    *filterlist.RuleStorage
+	filteringEngine *urlfilter.DNSEngine
+
 	rulesStorageAllow    *filterlist.RuleStorage
 	filteringEngineAllow *urlfilter.DNSEngine
-	engineLock           sync.RWMutex
+
+	engineLock sync.RWMutex
 
 	parentalServer       string // access via methods
 	safeBrowsingServer   string // access via methods
@@ -156,6 +185,12 @@ type DNSFilter struct {
 	// TODO(e.burkov): Use upstream that configured in dnsforward instead.
 	resolver Resolver
 
+	refreshLock *sync.Mutex
+
+	// filterTitleRegexp is the regular expression to retrieve a name of a
+	// filter list.
+	filterTitleRegexp *regexp.Regexp
+
 	hostCheckers []hostChecker
 }
 
@@ -168,7 +203,7 @@ type Filter struct {
 	Data []byte `yaml:"-"`
 
 	// ID is automatically assigned when filter is added using nextFilterID.
-	ID int64
+	ID int64 `yaml:"id"`
 }
 
 // Reason holds an enum detailing why it was filtered or not filtered
@@ -245,15 +280,7 @@ func (r Reason) String() string {
 }
 
 // In returns true if reasons include r.
-func (r Reason) In(reasons ...Reason) (ok bool) {
-	for _, reason := range reasons {
-		if r == reason {
-			return true
-		}
-	}
-
-	return false
-}
+func (r Reason) In(reasons ...Reason) (ok bool) { return slices.Contains(reasons, r) }
 
 // SetEnabled sets the status of the *DNSFilter.
 func (d *DNSFilter) SetEnabled(enabled bool) {
@@ -261,6 +288,7 @@ func (d *DNSFilter) SetEnabled(enabled bool) {
 	if enabled {
 		i = 1
 	}
+
 	atomic.StoreUint32(&d.enabled, uint32(i))
 }
 
@@ -279,11 +307,20 @@ func (d *DNSFilter) GetConfig() (s Settings) {
 
 // WriteDiskConfig - write configuration
 func (d *DNSFilter) WriteDiskConfig(c *Config) {
-	d.confLock.Lock()
-	defer d.confLock.Unlock()
+	func() {
+		d.confLock.Lock()
+		defer d.confLock.Unlock()
 
-	*c = d.Config
-	c.Rewrites = cloneRewrites(c.Rewrites)
+		*c = d.Config
+		c.Rewrites = cloneRewrites(c.Rewrites)
+	}()
+
+	d.filtersMu.RLock()
+	defer d.filtersMu.RUnlock()
+
+	c.Filters = slices.Clone(d.Filters)
+	c.WhitelistFilters = slices.Clone(d.WhitelistFilters)
+	c.UserRules = slices.Clone(d.UserRules)
 }
 
 // cloneRewrites returns a deep copy of entries.
@@ -309,6 +346,8 @@ func (d *DNSFilter) SetFilters(blockFilters, allowFilters []Filter, async bool) 
 		}
 
 		d.filtersInitializerLock.Lock() // prevent multiple writers from adding more than 1 task
+		defer d.filtersInitializerLock.Unlock()
+
 		// remove all pending tasks
 		stop := false
 		for !stop {
@@ -321,7 +360,6 @@ func (d *DNSFilter) SetFilters(blockFilters, allowFilters []Filter, async bool) 
 		}
 
 		d.filtersInitializerChan <- params
-		d.filtersInitializerLock.Unlock()
 		return nil
 	}
 
@@ -350,22 +388,19 @@ func (d *DNSFilter) filtersInitializer() {
 func (d *DNSFilter) Close() {
 	d.engineLock.Lock()
 	defer d.engineLock.Unlock()
+
 	d.reset()
 }
 
 func (d *DNSFilter) reset() {
-	var err error
-
 	if d.rulesStorage != nil {
-		err = d.rulesStorage.Close()
-		if err != nil {
+		if err := d.rulesStorage.Close(); err != nil {
 			log.Error("filtering: rulesStorage.Close: %s", err)
 		}
 	}
 
 	if d.rulesStorageAllow != nil {
-		err = d.rulesStorageAllow.Close()
-		if err != nil {
+		if err := d.rulesStorageAllow.Close(); err != nil {
 			log.Error("filtering: rulesStorageAllow.Close: %s", err)
 		}
 	}
@@ -885,29 +920,30 @@ func InitModule() {
 	initBlockedServices()
 }
 
-// New creates properly initialized DNS Filter that is ready to be used.
-func New(c *Config, blockFilters []Filter) (d *DNSFilter) {
+// New creates properly initialized DNS Filter that is ready to be used.  c must
+// be non-nil.
+func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	d = &DNSFilter{
-		resolver: net.DefaultResolver,
+		resolver:          net.DefaultResolver,
+		refreshLock:       &sync.Mutex{},
+		filterTitleRegexp: regexp.MustCompile(`^! Title: +(.*)$`),
 	}
-	if c != nil {
 
-		d.safebrowsingCache = cache.New(cache.Config{
-			EnableLRU: true,
-			MaxSize:   c.SafeBrowsingCacheSize,
-		})
-		d.safeSearchCache = cache.New(cache.Config{
-			EnableLRU: true,
-			MaxSize:   c.SafeSearchCacheSize,
-		})
-		d.parentalCache = cache.New(cache.Config{
-			EnableLRU: true,
-			MaxSize:   c.ParentalCacheSize,
-		})
+	d.safebrowsingCache = cache.New(cache.Config{
+		EnableLRU: true,
+		MaxSize:   c.SafeBrowsingCacheSize,
+	})
+	d.safeSearchCache = cache.New(cache.Config{
+		EnableLRU: true,
+		MaxSize:   c.SafeSearchCacheSize,
+	})
+	d.parentalCache = cache.New(cache.Config{
+		EnableLRU: true,
+		MaxSize:   c.ParentalCacheSize,
+	})
 
-		if c.CustomResolver != nil {
-			d.resolver = c.CustomResolver
-		}
+	if r := c.CustomResolver; r != nil {
+		d.resolver = r
 	}
 
 	d.hostCheckers = []hostChecker{{
@@ -930,27 +966,26 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter) {
 		name:  "safe search",
 	}}
 
-	err := d.initSecurityServices()
-	if err != nil {
-		log.Error("filtering: initialize services: %s", err)
+	defer func() { err = errors.Annotate(err, "filtering: %w") }()
 
-		return nil
+	err = d.initSecurityServices()
+	if err != nil {
+		return nil, fmt.Errorf("initializing services: %s", err)
 	}
 
-	if c != nil {
-		d.Config = *c
-		err = d.prepareRewrites()
-		if err != nil {
-			log.Error("rewrites: preparing: %s", err)
+	d.Config = *c
+	d.filtersMu = &sync.RWMutex{}
 
-			return nil
-		}
+	err = d.prepareRewrites()
+	if err != nil {
+		return nil, fmt.Errorf("rewrites: preparing: %s", err)
 	}
 
 	bsvcs := []string{}
 	for _, s := range d.BlockedServices {
 		if !BlockedSvcKnown(s) {
 			log.Debug("skipping unknown blocked-service %q", s)
+
 			continue
 		}
 		bsvcs = append(bsvcs, s)
@@ -960,13 +995,24 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter) {
 	if blockFilters != nil {
 		err = d.initFiltering(nil, blockFilters)
 		if err != nil {
-			log.Error("Can't initialize filtering subsystem: %s", err)
 			d.Close()
-			return nil
+
+			return nil, fmt.Errorf("initializing filtering subsystem: %s", err)
 		}
 	}
 
-	return d
+	_ = os.MkdirAll(filepath.Join(d.DataDir, filterDir), 0o755)
+
+	d.loadFilters(d.Filters)
+	d.loadFilters(d.WhitelistFilters)
+
+	d.Filters = deduplicateFilters(d.Filters)
+	d.WhitelistFilters = deduplicateFilters(d.WhitelistFilters)
+
+	updateUniqueFilterID(d.Filters)
+	updateUniqueFilterID(d.WhitelistFilters)
+
+	return d, nil
 }
 
 // Start - start the module:
@@ -976,9 +1022,10 @@ func (d *DNSFilter) Start() {
 	d.filtersInitializerChan = make(chan filtersInitializerParams, 1)
 	go d.filtersInitializer()
 
-	if d.Config.HTTPRegister != nil { // for tests
-		d.registerSecurityHandlers()
-		d.registerRewritesHandlers()
-		d.registerBlockedServicesHandlers()
-	}
+	d.RegisterFilteringHandlers()
+
+	// Here we should start updating filters,
+	//  but currently we can't wake up the periodic task to do so.
+	// So for now we just start this periodic task from here.
+	go d.periodicallyRefreshFilters()
 }

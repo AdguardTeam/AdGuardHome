@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -381,17 +380,13 @@ func (d *DNSFilter) handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Req
 }
 
 func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(&struct {
+	resp := &struct {
 		Enabled bool `json:"enabled"`
 	}{
 		Enabled: d.Config.SafeBrowsingEnabled,
-	})
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-
-		return
 	}
+
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 func (d *DNSFilter) handleParentalEnable(w http.ResponseWriter, r *http.Request) {
@@ -405,27 +400,11 @@ func (d *DNSFilter) handleParentalDisable(w http.ResponseWriter, r *http.Request
 }
 
 func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(&struct {
+	resp := &struct {
 		Enabled bool `json:"enabled"`
 	}{
 		Enabled: d.Config.ParentalEnabled,
-	})
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 	}
-}
 
-func (d *DNSFilter) registerSecurityHandlers() {
-	d.Config.HTTPRegister(http.MethodPost, "/control/safebrowsing/enable", d.handleSafeBrowsingEnable)
-	d.Config.HTTPRegister(http.MethodPost, "/control/safebrowsing/disable", d.handleSafeBrowsingDisable)
-	d.Config.HTTPRegister(http.MethodGet, "/control/safebrowsing/status", d.handleSafeBrowsingStatus)
-
-	d.Config.HTTPRegister(http.MethodPost, "/control/parental/enable", d.handleParentalEnable)
-	d.Config.HTTPRegister(http.MethodPost, "/control/parental/disable", d.handleParentalDisable)
-	d.Config.HTTPRegister(http.MethodGet, "/control/parental/status", d.handleParentalStatus)
-
-	d.Config.HTTPRegister(http.MethodPost, "/control/safesearch/enable", d.handleSafeSearchEnable)
-	d.Config.HTTPRegister(http.MethodPost, "/control/safesearch/disable", d.handleSafeSearchDisable)
-	d.Config.HTTPRegister(http.MethodGet, "/control/safesearch/status", d.handleSafeSearchStatus)
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }

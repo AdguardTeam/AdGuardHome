@@ -14,7 +14,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
-	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -23,10 +22,9 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
-const (
-	dataDir   = "data"    // data storage
-	filterDir = "filters" // cache location for downloaded filters, it's under DataDir
-)
+// dataDir is the name of a directory under the working one to store some
+// persistent data.
+const dataDir = "data"
 
 // logSettings are the logging settings part of the configuration file.
 //
@@ -87,10 +85,10 @@ type configuration struct {
 	// It's reset after config is parsed
 	fileData []byte
 
-	BindHost     net.IP `yaml:"bind_host"`      // BindHost is the IP address of the HTTP server to bind to
-	BindPort     int    `yaml:"bind_port"`      // BindPort is the port the HTTP server
-	BetaBindPort int    `yaml:"beta_bind_port"` // BetaBindPort is the port for new client
-	Users        []User `yaml:"users"`          // Users that can access HTTP server
+	BindHost     net.IP    `yaml:"bind_host"`      // BindHost is the IP address of the HTTP server to bind to
+	BindPort     int       `yaml:"bind_port"`      // BindPort is the port the HTTP server
+	BetaBindPort int       `yaml:"beta_bind_port"` // BetaBindPort is the port for new client
+	Users        []webUser `yaml:"users"`          // Users that can access HTTP server
 	// AuthAttempts is the maximum number of failed login attempts a user
 	// can do before being blocked.
 	AuthAttempts uint `yaml:"auth_attempts"`
@@ -108,9 +106,16 @@ type configuration struct {
 	DNS dnsConfig         `yaml:"dns"`
 	TLS tlsConfigSettings `yaml:"tls"`
 
-	Filters          []filter `yaml:"filters"`
-	WhitelistFilters []filter `yaml:"whitelist_filters"`
-	UserRules        []string `yaml:"user_rules"`
+	// Filters reflects the filters from [filtering.Config].  It's cloned to the
+	// config used in the filtering module at the startup.  Afterwards it's
+	// cloned from the filtering module back here.
+	//
+	// TODO(e.burkov):  Move all the filtering configuration fields into the
+	// only configuration subsection covering the changes with a single
+	// migration.
+	Filters          []filtering.FilterYAML `yaml:"filters"`
+	WhitelistFilters []filtering.FilterYAML `yaml:"whitelist_filters"`
+	UserRules        []string               `yaml:"user_rules"`
 
 	DHCP *dhcpd.ServerConfig `yaml:"dhcp"`
 
@@ -145,9 +150,7 @@ type dnsConfig struct {
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 
-	FilteringEnabled           bool             `yaml:"filtering_enabled"`       // whether or not use filter lists
-	FiltersUpdateIntervalHours uint32           `yaml:"filters_update_interval"` // time period to update filters (in hours)
-	DnsfilterConf              filtering.Config `yaml:",inline"`
+	DnsfilterConf *filtering.Config `yaml:",inline"`
 
 	// UpstreamTimeout is the timeout for querying upstream servers.
 	UpstreamTimeout timeutil.Duration `yaml:"upstream_timeout"`
@@ -163,6 +166,19 @@ type dnsConfig struct {
 	// LocalPTRResolvers is the slice of addresses to be used as upstreams
 	// for PTR queries for locally-served networks.
 	LocalPTRResolvers []string `yaml:"local_ptr_upstreams"`
+
+	// ServeHTTP3 defines if HTTP/3 is be allowed for incoming requests.
+	//
+	// TODO(a.garipov): Add to the UI when HTTP/3 support is no longer
+	// experimental.
+	ServeHTTP3 bool `yaml:"serve_http3"`
+
+	// UseHTTP3Upstreams defines if HTTP/3 is be allowed for DNS-over-HTTPS
+	// upstreams.
+	//
+	// TODO(a.garipov): Add to the UI when HTTP/3 support is no longer
+	// experimental.
+	UseHTTP3Upstreams bool `yaml:"use_http3_upstreams"`
 }
 
 type tlsConfigSettings struct {
@@ -193,15 +209,20 @@ type tlsConfigSettings struct {
 //
 // TODO(a.garipov, e.burkov): This global is awful and must be removed.
 var config = &configuration{
-	BindPort:     3000,
-	BetaBindPort: 0,
-	BindHost:     net.IP{0, 0, 0, 0},
-	AuthAttempts: 5,
-	AuthBlockMin: 15,
+	BindPort:           3000,
+	BetaBindPort:       0,
+	BindHost:           net.IP{0, 0, 0, 0},
+	AuthAttempts:       5,
+	AuthBlockMin:       15,
+	WebSessionTTLHours: 30 * 24,
 	DNS: dnsConfig{
-		BindHosts:     []net.IP{{0, 0, 0, 0}},
-		Port:          defaultPortDNS,
-		StatsInterval: 1,
+		BindHosts:           []net.IP{{0, 0, 0, 0}},
+		Port:                defaultPortDNS,
+		StatsInterval:       1,
+		QueryLogEnabled:     true,
+		QueryLogFileEnabled: true,
+		QueryLogInterval:    timeutil.Duration{Duration: 90 * timeutil.Day},
+		QueryLogMemSize:     1000,
 		FilteringConfig: dnsforward.FilteringConfig{
 			ProtectionEnabled:  true, // whether or not use any of filtering features
 			BlockingMode:       dnsforward.BlockingModeDefault,
@@ -222,18 +243,42 @@ var config = &configuration{
 			// was later increased to 300 due to https://github.com/AdguardTeam/AdGuardHome/issues/2257
 			MaxGoroutines: 300,
 		},
-		FilteringEnabled:           true, // whether or not use filter lists
-		FiltersUpdateIntervalHours: 24,
-		UpstreamTimeout:            timeutil.Duration{Duration: dnsforward.DefaultTimeout},
-		UsePrivateRDNS:             true,
+		DnsfilterConf: &filtering.Config{
+			SafeBrowsingCacheSize:      1 * 1024 * 1024,
+			SafeSearchCacheSize:        1 * 1024 * 1024,
+			ParentalCacheSize:          1 * 1024 * 1024,
+			CacheTime:                  30,
+			FilteringEnabled:           true,
+			FiltersUpdateIntervalHours: 24,
+		},
+		UpstreamTimeout: timeutil.Duration{Duration: dnsforward.DefaultTimeout},
+		UsePrivateRDNS:  true,
 	},
 	TLS: tlsConfigSettings{
 		PortHTTPS:       defaultPortHTTPS,
 		PortDNSOverTLS:  defaultPortTLS, // needs to be passed through to dnsproxy
 		PortDNSOverQUIC: defaultPortQUIC,
 	},
+	Filters: []filtering.FilterYAML{{
+		Filter:  filtering.Filter{ID: 1},
+		Enabled: true,
+		URL:     "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+		Name:    "AdGuard DNS filter",
+	}, {
+		Filter:  filtering.Filter{ID: 2},
+		Enabled: false,
+		URL:     "https://adaway.org/hosts.txt",
+		Name:    "AdAway Default Blocklist",
+	}},
 	DHCP: &dhcpd.ServerConfig{
 		LocalDomainName: "lan",
+		Conf4: dhcpd.V4ServerConf{
+			LeaseDuration: dhcpd.DefaultDHCPLeaseTTL,
+			ICMPTimeout:   dhcpd.DefaultDHCPTimeoutICMP,
+		},
+		Conf6: dhcpd.V6ServerConf{
+			LeaseDuration: dhcpd.DefaultDHCPLeaseTTL,
+		},
 	},
 	Clients: &clientsConfig{
 		Sources: &clientSourcesConf{
@@ -253,31 +298,6 @@ var config = &configuration{
 	},
 	OSConfig:      &osConfig{},
 	SchemaVersion: currentSchemaVersion,
-}
-
-// initConfig initializes default configuration for the current OS&ARCH
-func initConfig() {
-	config.WebSessionTTLHours = 30 * 24
-
-	config.DNS.QueryLogEnabled = true
-	config.DNS.QueryLogFileEnabled = true
-	config.DNS.QueryLogInterval = timeutil.Duration{Duration: 90 * timeutil.Day}
-	config.DNS.QueryLogMemSize = 1000
-
-	config.DNS.CacheSize = 4 * 1024 * 1024
-	config.DNS.DnsfilterConf.SafeBrowsingCacheSize = 1 * 1024 * 1024
-	config.DNS.DnsfilterConf.SafeSearchCacheSize = 1 * 1024 * 1024
-	config.DNS.DnsfilterConf.ParentalCacheSize = 1 * 1024 * 1024
-	config.DNS.DnsfilterConf.CacheTime = 30
-	config.Filters = defaultFilters()
-
-	config.DHCP.Conf4.LeaseDuration = dhcpd.DefaultDHCPLeaseTTL
-	config.DHCP.Conf4.ICMPTimeout = dhcpd.DefaultDHCPTimeoutICMP
-	config.DHCP.Conf6.LeaseDuration = dhcpd.DefaultDHCPLeaseTTL
-
-	if ch := version.Channel(); ch == version.ChannelEdge || ch == version.ChannelDevelopment {
-		config.BetaBindPort = 3001
-	}
 }
 
 // getConfigFilename returns path to the current config file
@@ -348,8 +368,8 @@ func parseConfig() (err error) {
 		return fmt.Errorf("validating udp ports: %w", err)
 	}
 
-	if !checkFiltersUpdateIntervalHours(config.DNS.FiltersUpdateIntervalHours) {
-		config.DNS.FiltersUpdateIntervalHours = 24
+	if !filtering.ValidateUpdateIvl(config.DNS.DnsfilterConf.FiltersUpdateIntervalHours) {
+		config.DNS.DnsfilterConf.FiltersUpdateIntervalHours = 24
 	}
 
 	if config.DNS.UpstreamTimeout.Duration == 0 {
@@ -418,10 +438,11 @@ func (c *configuration) write() (err error) {
 		config.DNS.AnonymizeClientIP = dc.AnonymizeClientIP
 	}
 
-	if Context.dnsFilter != nil {
-		c := filtering.Config{}
-		Context.dnsFilter.WriteDiskConfig(&c)
-		config.DNS.DnsfilterConf = c
+	if Context.filters != nil {
+		Context.filters.WriteDiskConfig(config.DNS.DnsfilterConf)
+		config.Filters = config.DNS.DnsfilterConf.Filters
+		config.WhitelistFilters = config.DNS.DnsfilterConf.WhitelistFilters
+		config.UserRules = config.DNS.DnsfilterConf.UserRules
 	}
 
 	if s := Context.dnsServer; s != nil {

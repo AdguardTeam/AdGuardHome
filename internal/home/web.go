@@ -9,20 +9,17 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/NYTimes/gziphandler"
+	"github.com/lucas-clemente/quic-go"
+	"github.com/lucas-clemente/quic-go/http3"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-)
-
-// HTTP scheme constants.
-const (
-	schemeHTTP  = "http"
-	schemeHTTPS = "https"
 )
 
 const (
@@ -58,40 +55,56 @@ type webConfig struct {
 	WriteTimeout time.Duration
 
 	firstRun bool
+
+	serveHTTP3 bool
 }
 
-// HTTPSServer - HTTPS Server
-type HTTPSServer struct {
-	server   *http.Server
-	cond     *sync.Cond
-	condLock sync.Mutex
-	shutdown bool // if TRUE, don't restart the server
-	enabled  bool
-	cert     tls.Certificate
+// httpsServer contains the data for the HTTPS server.
+type httpsServer struct {
+	// server is the pre-HTTP/3 HTTPS server.
+	server *http.Server
+	// server3 is the HTTP/3 HTTPS server.  If it is not nil,
+	// [httpsServer.server] must also be non-nil.
+	server3 *http3.Server
+
+	// TODO(a.garipov): Why is there a *sync.Cond here?  Remove.
+	cond       *sync.Cond
+	condLock   sync.Mutex
+	cert       tls.Certificate
+	inShutdown bool
+	enabled    bool
 }
 
-// Web - module object
+// Web is the web UI and API server.
 type Web struct {
-	conf        *webConfig
-	forceHTTPS  bool
-	httpServer  *http.Server // HTTP module
-	httpsServer HTTPSServer  // HTTPS module
+	conf *webConfig
 
-	// handlerBeta is the handler for new client.
-	handlerBeta http.Handler
-	// installerBeta is the pre-install handler for new client.
-	installerBeta http.Handler
+	// TODO(a.garipov): Refactor all these servers.
+	httpServer *http.Server
 
 	// httpServerBeta is a server for new client.
 	httpServerBeta *http.Server
+
+	// handlerBeta is the handler for new client.
+	handlerBeta http.Handler
+
+	// installerBeta is the pre-install handler for new client.
+	installerBeta http.Handler
+
+	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
+	// [Web.http3Server] must also not be nil.
+	httpsServer httpsServer
+
+	forceHTTPS bool
 }
 
-// CreateWeb - create module
-func CreateWeb(conf *webConfig) *Web {
-	log.Info("Initialize web module")
+// newWeb creates a new instance of the web UI and API server.
+func newWeb(conf *webConfig) (w *Web) {
+	log.Info("web: initializing")
 
-	w := Web{}
-	w.conf = conf
+	w = &Web{
+		conf: conf,
+	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
 	betaClientFS := http.FileServer(http.FS(conf.clientBetaFS))
@@ -113,12 +126,15 @@ func CreateWeb(conf *webConfig) *Web {
 	}
 
 	w.httpsServer.cond = sync.NewCond(&w.httpsServer.condLock)
-	return &w
+
+	return w
 }
 
-// WebCheckPortAvailable - check if port is available
-// BUT: if we are already using this port, no need
-func WebCheckPortAvailable(port int) bool {
+// webCheckPortAvailable checks if port, which is considered an HTTPS port, is
+// available, unless the HTTPS server isn't active.
+//
+// TODO(a.garipov): Adapt for HTTP/3.
+func webCheckPortAvailable(port int) (ok bool) {
 	return Context.web.httpsServer.server != nil ||
 		aghnet.CheckPort("tcp", config.BindHost, port) == nil
 }
@@ -126,7 +142,7 @@ func WebCheckPortAvailable(port int) bool {
 // TLSConfigChanged updates the TLS configuration and restarts the HTTPS server
 // if necessary.
 func (web *Web) TLSConfigChanged(ctx context.Context, tlsConf tlsConfigSettings) {
-	log.Debug("Web: applying new TLS configuration")
+	log.Debug("web: applying new tls configuration")
 	web.conf.PortHTTPS = tlsConf.PortHTTPS
 	web.forceHTTPS = (tlsConf.ForceHTTPS && tlsConf.Enabled && tlsConf.PortHTTPS != 0)
 
@@ -148,6 +164,8 @@ func (web *Web) TLSConfigChanged(ctx context.Context, tlsConf tlsConfigSettings)
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, shutdownTimeout)
 		shutdownSrv(ctx, web.httpsServer.server)
+		shutdownSrv3(web.httpsServer.server3)
+
 		cancel()
 	}
 
@@ -165,8 +183,8 @@ func (web *Web) Start() {
 	go web.tlsServerLoop()
 
 	// this loop is used as an ability to change listening host and/or port
-	for !web.httpsServer.shutdown {
-		printHTTPAddresses(schemeHTTP)
+	for !web.httpsServer.inShutdown {
+		printHTTPAddresses(aghhttp.SchemeHTTP)
 		errs := make(chan error, 2)
 
 		// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
@@ -236,7 +254,7 @@ func (web *Web) Close(ctx context.Context) {
 	log.Info("stopping http server...")
 
 	web.httpsServer.cond.L.Lock()
-	web.httpsServer.shutdown = true
+	web.httpsServer.inShutdown = true
 	web.httpsServer.cond.L.Unlock()
 
 	var cancel context.CancelFunc
@@ -244,6 +262,7 @@ func (web *Web) Close(ctx context.Context) {
 	defer cancel()
 
 	shutdownSrv(ctx, web.httpsServer.server)
+	shutdownSrv3(web.httpsServer.server3)
 	shutdownSrv(ctx, web.httpServer)
 	shutdownSrv(ctx, web.httpServerBeta)
 
@@ -253,7 +272,7 @@ func (web *Web) Close(ctx context.Context) {
 func (web *Web) tlsServerLoop() {
 	for {
 		web.httpsServer.cond.L.Lock()
-		if web.httpsServer.shutdown {
+		if web.httpsServer.inShutdown {
 			web.httpsServer.cond.L.Unlock()
 			break
 		}
@@ -261,7 +280,7 @@ func (web *Web) tlsServerLoop() {
 		// this mechanism doesn't let us through until all conditions are met
 		for !web.httpsServer.enabled { // sleep until necessary data is supplied
 			web.httpsServer.cond.Wait()
-			if web.httpsServer.shutdown {
+			if web.httpsServer.inShutdown {
 				web.httpsServer.cond.L.Unlock()
 				return
 			}
@@ -269,11 +288,10 @@ func (web *Web) tlsServerLoop() {
 
 		web.httpsServer.cond.L.Unlock()
 
-		// prepare HTTPS server
-		address := netutil.JoinHostPort(web.conf.BindHost.String(), web.conf.PortHTTPS)
+		addr := netutil.JoinHostPort(web.conf.BindHost.String(), web.conf.PortHTTPS)
 		web.httpsServer.server = &http.Server{
 			ErrorLog: log.StdLog("web: https", log.DEBUG),
-			Addr:     address,
+			Addr:     addr,
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
 				RootCAs:      Context.tlsRoots,
@@ -286,11 +304,41 @@ func (web *Web) tlsServerLoop() {
 			WriteTimeout:      web.conf.WriteTimeout,
 		}
 
-		printHTTPAddresses(schemeHTTPS)
-		err := web.httpsServer.server.ListenAndServeTLS("", "")
-		if err != http.ErrServerClosed {
-			cleanupAlways()
-			log.Fatal(err)
+		printHTTPAddresses(aghhttp.SchemeHTTPS)
+
+		if web.conf.serveHTTP3 {
+			go web.mustStartHTTP3(addr)
 		}
+
+		log.Debug("web: starting https server")
+		err := web.httpsServer.server.ListenAndServeTLS("", "")
+		if !errors.Is(err, http.ErrServerClosed) {
+			cleanupAlways()
+			log.Fatalf("web: https: %s", err)
+		}
+	}
+}
+
+func (web *Web) mustStartHTTP3(address string) {
+	defer log.OnPanic("web: http3")
+
+	web.httpsServer.server3 = &http3.Server{
+		// TODO(a.garipov): See if there is a way to use the error log as
+		// well as timeouts here.
+		Addr: address,
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{web.httpsServer.cert},
+			RootCAs:      Context.tlsRoots,
+			CipherSuites: aghtls.SaferCipherSuites(),
+			MinVersion:   tls.VersionTLS12,
+		},
+		Handler: withMiddlewares(Context.mux, limitRequestBody),
+	}
+
+	log.Debug("web: starting http/3 server")
+	err := web.httpsServer.server3.ListenAndServe()
+	if !errors.Is(err, quic.ErrServerClosed) {
+		cleanupAlways()
+		log.Fatalf("web: http3: %s", err)
 	}
 }

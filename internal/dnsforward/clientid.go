@@ -123,7 +123,14 @@ type quicConnection interface {
 func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string, err error) {
 	proto := pctx.Proto
 	if proto == proxy.ProtoHTTPS {
-		return clientIDFromDNSContextHTTPS(pctx)
+		clientID, err = clientIDFromDNSContextHTTPS(pctx)
+		if err != nil {
+			return "", fmt.Errorf("checking url: %w", err)
+		} else if clientID != "" {
+			return clientID, nil
+		}
+
+		// Go on and check the domain name as well.
 	} else if proto != proxy.ProtoTLS && proto != proxy.ProtoQUIC {
 		return "", nil
 	}
@@ -133,31 +140,9 @@ func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string
 		return "", nil
 	}
 
-	cliSrvName := ""
-	switch proto {
-	case proxy.ProtoTLS:
-		conn := pctx.Conn
-		tc, ok := conn.(tlsConn)
-		if !ok {
-			return "", fmt.Errorf(
-				"proxy ctx conn of proto %s is %T, want *tls.Conn",
-				proto,
-				conn,
-			)
-		}
-
-		cliSrvName = tc.ConnectionState().ServerName
-	case proxy.ProtoQUIC:
-		conn, ok := pctx.QUICConnection.(quicConnection)
-		if !ok {
-			return "", fmt.Errorf(
-				"proxy ctx quic conn of proto %s is %T, want quic.Connection",
-				proto,
-				pctx.QUICConnection,
-			)
-		}
-
-		cliSrvName = conn.ConnectionState().TLS.ServerName
+	cliSrvName, err := clientServerName(pctx, proto)
+	if err != nil {
+		return "", err
 	}
 
 	clientID, err = clientIDFromClientServerName(
@@ -170,4 +155,36 @@ func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string
 	}
 
 	return clientID, nil
+}
+
+// clientServerName returns the TLS server name based on the protocol.
+func clientServerName(pctx *proxy.DNSContext, proto proxy.Proto) (srvName string, err error) {
+	switch proto {
+	case proxy.ProtoHTTPS:
+		if connState := pctx.HTTPRequest.TLS; connState != nil {
+			srvName = pctx.HTTPRequest.TLS.ServerName
+		}
+	case proxy.ProtoQUIC:
+		qConn := pctx.QUICConnection
+		conn, ok := qConn.(quicConnection)
+		if !ok {
+			return "", fmt.Errorf(
+				"proxy ctx quic conn of proto %s is %T, want quic.Connection",
+				proto,
+				qConn,
+			)
+		}
+
+		srvName = conn.ConnectionState().TLS.ServerName
+	case proxy.ProtoTLS:
+		conn := pctx.Conn
+		tc, ok := conn.(tlsConn)
+		if !ok {
+			return "", fmt.Errorf("proxy ctx conn of proto %s is %T, want *tls.Conn", proto, conn)
+		}
+
+		srvName = tc.ConnectionState().ServerName
+	}
+
+	return srvName, nil
 }

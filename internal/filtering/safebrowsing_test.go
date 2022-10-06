@@ -107,7 +107,7 @@ func TestSafeBrowsingCache(t *testing.T) {
 }
 
 func TestSBPC_checkErrorUpstream(t *testing.T) {
-	d := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
+	d, _ := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
 
 	ups := aghtest.NewErrorUpstream()
@@ -128,7 +128,7 @@ func TestSBPC_checkErrorUpstream(t *testing.T) {
 }
 
 func TestSBPC(t *testing.T) {
-	d := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
+	d, _ := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
 
 	const hostname = "example.org"

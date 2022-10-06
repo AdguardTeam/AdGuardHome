@@ -58,6 +58,22 @@ const Examples = (props) => (
                 </Trans>
             </li>
             <li>
+                <code>h3://unfiltered.adguard-dns.com/dns-query</code>: <Trans
+                    components={[
+                        <a
+                            href="https://en.wikipedia.org/wiki/HTTP/3"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            key="0"
+                        >
+                            HTTP/3
+                        </a>,
+                    ]}
+                >
+                    example_upstream_doh3
+                </Trans>
+            </li>
+            <li>
                 <code>quic://unfiltered.adguard-dns.com</code>: <Trans
                     components={[
                         <a

@@ -31,7 +31,9 @@ export const setRulesSuccess = createAction('SET_RULES_SUCCESS');
 export const setRules = (rules) => async (dispatch) => {
     dispatch(setRulesRequest());
     try {
-        const normalizedRules = normalizeRulesTextarea(rules);
+        const normalizedRules = {
+            rules: normalizeRulesTextarea(rules)?.split('\n'),
+        };
         await apiClient.setRules(normalizedRules);
         dispatch(addSuccessToast('updated_custom_filtering_toast'));
         dispatch(setRulesSuccess());

@@ -12,10 +12,113 @@ and this project adheres to
 ## [Unreleased]
 
 <!--
-## [v0.108.0] - 2022-12-01 (APPROX.)
+## [v0.108.0] - TBA (APPROX.)
 -->
 
+## Added
+
+- The ability to put [ClientIDs][clientid] into DNS-over-HTTPS hostnames as
+  opposed to URL paths ([#3418]).  Note that AdGuard Home checks the server name
+  only if the URL does not contain a ClientID.
+
+[#3418]: https://github.com/AdguardTeam/AdGuardHome/issues/3418
+
+[clientid]: https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid
+
+
+
+<!--
+## [v0.107.16] - 2022-11-02 (APPROX.)
+
+See also the [v0.107.16 GitHub milestone][ms-v0.107.15].
+
+[ms-v0.107.16]:   https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
+-->
+
+
+
+## [v0.107.15] - 2022-10-03
+
+See also the [v0.107.15 GitHub milestone][ms-v0.107.15].
+
 ### Security
+
+- As an additional CSRF protection measure, AdGuard Home now ensures that
+  requests that change its state but have no body (such as `POST
+  /control/stats_reset` requests) do not have a `Content-Type` header set on
+  them ([#4970]).
+
+### Added
+
+#### Experimental HTTP/3 Support
+
+See [#3955] and the related issues for more details.  These features are still
+experimental and may break or change in the future.
+
+- DNS-over-HTTP/3 DNS and web UI client request support.  This feature must be
+  explicitly enabled by setting the new property `dns.serve_http3` in the
+  configuration file to `true`.
+- DNS-over-HTTP upstreams can now upgrade to HTTP/3 if the new configuration
+  file property `dns.use_http3_upstreams` is set to `true`.
+- Upstreams with forced DNS-over-HTTP/3 and no fallback to prior HTTP versions
+  using the `h3://` scheme.
+
+### Fixed
+
+- User-specific blocked services not applying correctly ([#4945], [#4982],
+  [#4983]).
+- `only application/json is allowed` errors in various APIs ([#4970]).
+
+[#3955]: https://github.com/AdguardTeam/AdGuardHome/issues/3955
+[#4945]: https://github.com/AdguardTeam/AdGuardHome/issues/4945
+[#4970]: https://github.com/AdguardTeam/AdGuardHome/issues/4970
+[#4982]: https://github.com/AdguardTeam/AdGuardHome/issues/4982
+[#4983]: https://github.com/AdguardTeam/AdGuardHome/issues/4983
+
+[ms-v0.107.15]:   https://github.com/AdguardTeam/AdGuardHome/milestone/51?closed=1
+
+
+
+## [v0.107.14] - 2022-09-29
+
+See also the [v0.107.14 GitHub milestone][ms-v0.107.14].
+
+### Security
+
+A Cross-Site Request Forgery (CSRF) vulnerability has been discovered.  The CVE
+number is to be assigned.  We thank Daniel Elkabes from Mend.io for reporting
+this vulnerability to us.
+
+#### `SameSite` Policy
+
+The `SameSite` policy on the AdGuard Home session cookies is now set to `Lax`.
+Which means that the only cross-site HTTP request for which the browser is
+allowed to send the session cookie is navigating to the AdGuard Home domain.
+
+**Users are strongly advised to log out, clear browser cache, and log in again
+after updating.**
+
+#### Removal Of Plain-Text APIs (BREAKING API CHANGE)
+
+We have implemented several measures to prevent such vulnerabilities in the
+future, but some of these measures break backwards compatibility for the sake of
+better protection.
+
+The following APIs, which previously accepted or returned `text/plain` data,
+now accept or return data as JSON.  All new formats for the request and response
+bodies are documented in `openapi/openapi.yaml` and `openapi/CHANGELOG.md`.
+
+- `GET  /control/i18n/current_language`;
+- `POST /control/dhcp/find_active_dhcp`;
+- `POST /control/filtering/set_rules`;
+- `POST /control/i18n/change_language`.
+
+#### Stricter Content-Type Checks (BREAKING API CHANGE)
+
+All JSON APIs that expect a body now check if the request actually has
+`Content-Type` set to `application/json`.
+
+#### Other Security Changes
 
 - Weaker cipher suites that use the CBC (cipher block chaining) mode of
   operation have been disabled ([#2993]).
@@ -33,16 +136,7 @@ and this project adheres to
 [#4927]: https://github.com/AdguardTeam/AdGuardHome/issues/4927
 [#4930]: https://github.com/AdguardTeam/AdGuardHome/issues/4930
 
-
-
-
-<!--
-## [v0.107.14] - 2022-10-05 (APPROX.)
-
-See also the [v0.107.14 GitHub milestone][ms-v0.107.14].
-
 [ms-v0.107.14]:   https://github.com/AdguardTeam/AdGuardHome/milestone/50?closed=1
--->
 
 
 
@@ -1241,11 +1335,13 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...HEAD
-[v0.107.14]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...v0.107.14
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...HEAD
+[v0.107.16]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...v0.107.15
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...HEAD
+[v0.107.15]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...v0.107.15
+[v0.107.14]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...v0.107.14
 [v0.107.13]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...v0.107.13
 [v0.107.12]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.11...v0.107.12
 [v0.107.11]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.10...v0.107.11

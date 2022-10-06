@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
@@ -33,6 +34,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"golang.org/x/exp/slices"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -52,10 +54,9 @@ type homeContext struct {
 	dnsServer  *dnsforward.Server   // DNS module
 	rdns       *RDNS                // rDNS module
 	whois      *WHOIS               // WHOIS module
-	dnsFilter  *filtering.DNSFilter // DNS filtering module
 	dhcpServer dhcpd.Interface      // DHCP module
 	auth       *Auth                // HTTP authentication module
-	filters    Filtering            // DNS filtering module
+	filters    *filtering.DNSFilter // DNS filtering module
 	web        *Web                 // Web (HTTP, HTTPS) module
 	tls        *TLSMod              // TLS module
 	// etcHosts is an IP-hostname pairs set taken from system configuration
@@ -96,9 +97,15 @@ var Context homeContext
 
 // Main is the entry point
 func Main(clientBuildFS fs.FS) {
-	// config can be specified, which reads options from there, but other command line flags have to override config values
-	// therefore, we must do it manually instead of using a lib
-	args := loadOptions()
+	initCmdLineOpts()
+
+	// The configuration file path can be overridden, but other command-line
+	// options have to override config values.  Therefore, do it manually
+	// instead of using package flag.
+	//
+	// TODO(a.garipov): The comment above is most likely false.  Replace with
+	// package flag.
+	opts := loadCmdLineOpts()
 
 	Context.appSignalChannel = make(chan os.Signal)
 	signal.Notify(Context.appSignalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
@@ -119,28 +126,25 @@ func Main(clientBuildFS fs.FS) {
 		}
 	}()
 
-	if args.serviceControlAction != "" {
-		handleServiceControlAction(args, clientBuildFS)
+	if opts.serviceControlAction != "" {
+		handleServiceControlAction(opts, clientBuildFS)
 
 		return
 	}
 
 	// run the protection
-	run(args, clientBuildFS)
+	run(opts, clientBuildFS)
 }
 
-func setupContext(args options) {
-	Context.runningAsService = args.runningAsService
-	Context.disableUpdate = args.disableUpdate ||
-		version.Channel() == version.ChannelDevelopment
+func setupContext(opts options) {
+	setupContextFlags(opts)
 
-	Context.firstRun = detectFirstRun()
-	if Context.firstRun {
-		log.Info("This is the first time AdGuard Home is launched")
-		checkPermissions()
+	switch version.Channel() {
+	case version.ChannelEdge, version.ChannelDevelopment:
+		config.BetaBindPort = 3001
+	default:
+		// Go on.
 	}
-
-	initConfig()
 
 	Context.tlsRoots = LoadSystemRootCAs()
 	Context.transport = &http.Transport{
@@ -168,19 +172,37 @@ func setupContext(args options) {
 			os.Exit(1)
 		}
 
-		if args.checkConfig {
+		if opts.checkConfig {
 			log.Info("configuration file is ok")
 
 			os.Exit(0)
 		}
 
-		if !args.noEtcHosts && config.Clients.Sources.HostsFile {
+		if !opts.noEtcHosts && config.Clients.Sources.HostsFile {
 			err = setupHostsContainer()
 			fatalOnError(err)
 		}
 	}
 
 	Context.mux = http.NewServeMux()
+}
+
+// setupContextFlags sets global flags and prints their status to the log.
+func setupContextFlags(opts options) {
+	Context.firstRun = detectFirstRun()
+	if Context.firstRun {
+		log.Info("This is the first time AdGuard Home is launched")
+		checkPermissions()
+	}
+
+	Context.runningAsService = opts.runningAsService
+	// Don't print the runningAsService flag, since that has already been done
+	// in [run].
+
+	Context.disableUpdate = opts.disableUpdate || version.Channel() == version.ChannelDevelopment
+	if Context.disableUpdate {
+		log.Info("AdGuard Home updates are disabled")
+	}
 }
 
 // logIfUnsupported logs a formatted warning if the error is one of the
@@ -264,7 +286,16 @@ func setupHostsContainer() (err error) {
 	return nil
 }
 
-func setupConfig(args options) (err error) {
+func setupConfig(opts options) (err error) {
+	config.DNS.DnsfilterConf.EtcHosts = Context.etcHosts
+	config.DNS.DnsfilterConf.ConfigModified = onConfigModified
+	config.DNS.DnsfilterConf.HTTPRegister = httpRegister
+	config.DNS.DnsfilterConf.DataDir = Context.getDataDir()
+	config.DNS.DnsfilterConf.Filters = slices.Clone(config.Filters)
+	config.DNS.DnsfilterConf.WhitelistFilters = slices.Clone(config.WhitelistFilters)
+	config.DNS.DnsfilterConf.UserRules = slices.Clone(config.UserRules)
+	config.DNS.DnsfilterConf.HTTPClient = Context.client
+
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified
@@ -297,9 +328,9 @@ func setupConfig(args options) (err error) {
 
 	Context.clients.Init(config.Clients.Persistent, Context.dhcpServer, Context.etcHosts, arpdb)
 
-	if args.bindPort != 0 {
+	if opts.bindPort != 0 {
 		tcpPorts := aghalg.UniqChecker[tcpPort]{}
-		addPorts(tcpPorts, tcpPort(args.bindPort), tcpPort(config.BetaBindPort))
+		addPorts(tcpPorts, tcpPort(opts.bindPort), tcpPort(config.BetaBindPort))
 
 		udpPorts := aghalg.UniqChecker[udpPort]{}
 		addPorts(udpPorts, udpPort(config.DNS.Port))
@@ -321,23 +352,23 @@ func setupConfig(args options) (err error) {
 			return fmt.Errorf("validating udp ports: %w", err)
 		}
 
-		config.BindPort = args.bindPort
+		config.BindPort = opts.bindPort
 	}
 
 	// override bind host/port from the console
-	if args.bindHost != nil {
-		config.BindHost = args.bindHost
+	if opts.bindHost != nil {
+		config.BindHost = opts.bindHost
 	}
-	if len(args.pidFile) != 0 && writePIDFile(args.pidFile) {
-		Context.pidFileName = args.pidFile
+	if len(opts.pidFile) != 0 && writePIDFile(opts.pidFile) {
+		Context.pidFileName = opts.pidFile
 	}
 
 	return nil
 }
 
-func initWeb(args options, clientBuildFS fs.FS) (web *Web, err error) {
+func initWeb(opts options, clientBuildFS fs.FS) (web *Web, err error) {
 	var clientFS, clientBetaFS fs.FS
-	if args.localFrontend {
+	if opts.localFrontend {
 		log.Info("warning: using local frontend files")
 
 		clientFS = os.DirFS("build/static")
@@ -366,9 +397,11 @@ func initWeb(args options, clientBuildFS fs.FS) (web *Web, err error) {
 
 		clientFS:     clientFS,
 		clientBetaFS: clientBetaFS,
+
+		serveHTTP3: config.DNS.ServeHTTP3,
 	}
 
-	web = CreateWeb(&webConf)
+	web = newWeb(&webConf)
 	if web == nil {
 		return nil, fmt.Errorf("initializing web: %w", err)
 	}
@@ -383,28 +416,26 @@ func fatalOnError(err error) {
 }
 
 // run configures and starts AdGuard Home.
-func run(args options, clientBuildFS fs.FS) {
-	var err error
-
+func run(opts options, clientBuildFS fs.FS) {
 	// configure config filename
-	initConfigFilename(args)
+	initConfigFilename(opts)
 
 	// configure working dir and config path
-	initWorkingDir(args)
+	initWorkingDir(opts)
 
 	// configure log level and output
-	configureLogger(args)
+	configureLogger(opts)
 
 	// Print the first message after logger is configured.
-	log.Println(version.Full())
+	log.Info(version.Full())
 	log.Debug("current working directory is %s", Context.workDir)
-	if args.runningAsService {
+	if opts.runningAsService {
 		log.Info("AdGuard Home is running as a service")
 	}
 
-	setupContext(args)
+	setupContext(opts)
 
-	err = configureOS(config)
+	err := configureOS(config)
 	fatalOnError(err)
 
 	// clients package uses filtering package's static data (filtering.BlockedSvcKnown()),
@@ -412,7 +443,7 @@ func run(args options, clientBuildFS fs.FS) {
 	//  but also avoid relying on automatic Go init() function
 	filtering.InitModule()
 
-	err = setupConfig(args)
+	err = setupConfig(opts)
 	fatalOnError(err)
 
 	if !Context.firstRun {
@@ -441,10 +472,10 @@ func run(args options, clientBuildFS fs.FS) {
 	}
 
 	sessFilename := filepath.Join(Context.getDataDir(), "sessions.db")
-	GLMode = args.glinetMode
-	var arl *authRateLimiter
+	GLMode = opts.glinetMode
+	var rateLimiter *authRateLimiter
 	if config.AuthAttempts > 0 && config.AuthBlockMin > 0 {
-		arl = newAuthRateLimiter(
+		rateLimiter = newAuthRateLimiter(
 			time.Duration(config.AuthBlockMin)*time.Minute,
 			config.AuthAttempts,
 		)
@@ -456,7 +487,7 @@ func run(args options, clientBuildFS fs.FS) {
 		sessFilename,
 		config.Users,
 		config.WebSessionTTLHours*60*60,
-		arl,
+		rateLimiter,
 	)
 	if Context.auth == nil {
 		log.Fatalf("Couldn't initialize Auth module")
@@ -468,7 +499,7 @@ func run(args options, clientBuildFS fs.FS) {
 		log.Fatalf("Can't initialize TLS module")
 	}
 
-	Context.web, err = initWeb(args, clientBuildFS)
+	Context.web, err = initWeb(opts, clientBuildFS)
 	fatalOnError(err)
 
 	if !Context.firstRun {
@@ -560,10 +591,10 @@ func writePIDFile(fn string) bool {
 	return true
 }
 
-func initConfigFilename(args options) {
+func initConfigFilename(opts options) {
 	// config file path can be overridden by command-line arguments:
-	if args.configFilename != "" {
-		Context.configFilename = args.configFilename
+	if opts.confFilename != "" {
+		Context.configFilename = opts.confFilename
 	} else {
 		// Default config file name
 		Context.configFilename = "AdGuardHome.yaml"
@@ -572,15 +603,15 @@ func initConfigFilename(args options) {
 
 // initWorkingDir initializes the workDir
 // if no command-line arguments specified, we use the directory where our binary file is located
-func initWorkingDir(args options) {
+func initWorkingDir(opts options) {
 	execPath, err := os.Executable()
 	if err != nil {
 		panic(err)
 	}
 
-	if args.workDir != "" {
+	if opts.workDir != "" {
 		// If there is a custom config file, use it's directory as our working dir
-		Context.workDir = args.workDir
+		Context.workDir = opts.workDir
 	} else {
 		Context.workDir = filepath.Dir(execPath)
 	}
@@ -594,15 +625,15 @@ func initWorkingDir(args options) {
 }
 
 // configureLogger configures logger level and output
-func configureLogger(args options) {
+func configureLogger(opts options) {
 	ls := getLogSettings()
 
 	// command-line arguments can override config settings
-	if args.verbose || config.Verbose {
+	if opts.verbose || config.Verbose {
 		ls.Verbose = true
 	}
-	if args.logFile != "" {
-		ls.File = args.logFile
+	if opts.logFile != "" {
+		ls.File = opts.logFile
 	} else if config.File != "" {
 		ls.File = config.File
 	}
@@ -623,7 +654,7 @@ func configureLogger(args options) {
 	// happen pretty quickly.
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 
-	if args.runningAsService && ls.File == "" && runtime.GOOS == "windows" {
+	if opts.runningAsService && ls.File == "" && runtime.GOOS == "windows" {
 		// When running as a Windows service, use eventlog by default if nothing
 		// else is configured.  Otherwise, we'll simply lose the log output.
 		ls.File = configSyslog
@@ -713,25 +744,29 @@ func exitWithError() {
 	os.Exit(64)
 }
 
-// loadOptions reads command line arguments and initializes configuration
-func loadOptions() options {
-	o, f, err := parse(os.Args[0], os.Args[1:])
-
+// loadCmdLineOpts reads command line arguments and initializes configuration
+// from them.  If there is an error or an effect, loadCmdLineOpts processes them
+// and exits.
+func loadCmdLineOpts() (opts options) {
+	opts, eff, err := parseCmdOpts(os.Args[0], os.Args[1:])
 	if err != nil {
 		log.Error(err.Error())
-		_ = printHelp(os.Args[0])
+		printHelp(os.Args[0])
+
 		exitWithError()
-	} else if f != nil {
-		err = f()
+	}
+
+	if eff != nil {
+		err = eff()
 		if err != nil {
 			log.Error(err.Error())
 			exitWithError()
-		} else {
-			os.Exit(0)
 		}
+
+		os.Exit(0)
 	}
 
-	return o
+	return opts
 }
 
 // printWebAddrs prints addresses built from proto, addr, and an appropriate
@@ -763,12 +798,12 @@ func printHTTPAddresses(proto string) {
 	}
 
 	port := config.BindPort
-	if proto == schemeHTTPS {
+	if proto == aghhttp.SchemeHTTPS {
 		port = tlsConf.PortHTTPS
 	}
 
 	// TODO(e.burkov): Inspect and perhaps merge with the previous condition.
-	if proto == schemeHTTPS && tlsConf.ServerName != "" {
+	if proto == aghhttp.SchemeHTTPS && tlsConf.ServerName != "" {
 		printWebAddrs(proto, tlsConf.ServerName, tlsConf.PortHTTPS, 0)
 
 		return

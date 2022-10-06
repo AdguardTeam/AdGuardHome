@@ -3,7 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.18
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.44.0
+	github.com/AdguardTeam/dnsproxy v0.45.2
 	github.com/AdguardTeam/golibs v0.10.9
 	github.com/AdguardTeam/urlfilter v0.16.0
 	github.com/NYTimes/gziphandler v1.1.1
@@ -18,7 +18,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/insomniacslk/dhcp v0.0.0-20220822114210-de18a9d48e84
 	github.com/kardianos/service v1.2.1
-	github.com/lucas-clemente/quic-go v0.29.0
+	github.com/lucas-clemente/quic-go v0.29.1
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/netlink v1.6.0
 	// TODO(a.garipov): This package is deprecated; find a new one or use
@@ -28,10 +28,10 @@ require (
 	github.com/stretchr/testify v1.8.0
 	github.com/ti-mo/netfilter v0.4.0
 	go.etcd.io/bbolt v1.3.6
-	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
-	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91
-	golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
-	golang.org/x/sys v0.0.0-20220906135438-9e1f76180b77
+	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be
+	golang.org/x/exp v0.0.0-20220929160808-de9c53c655b9
+	golang.org/x/net v0.0.0-20220927171203-f486391704dc
+	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.0
@@ -43,10 +43,12 @@ require (
 	github.com/aead/poly1305 v0.0.0-20180717145839-3fee0db0b635 // indirect
 	github.com/ameshkov/dnsstamps v1.0.3 // indirect
 	github.com/beefsack/go-rate v0.0.0-20220214233405-116f4ca011a0 // indirect
+	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/josharian/native v1.0.0 // indirect
+	github.com/marten-seemann/qpack v0.2.1 // indirect
 	github.com/marten-seemann/qtls-go1-18 v0.1.2 // indirect
 	github.com/marten-seemann/qtls-go1-19 v0.1.0 // indirect
 	github.com/mdlayher/packet v1.0.0 // indirect
@@ -57,7 +59,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/u-root/uio v0.0.0-20220204230159-dac05f7d2cb4 // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220818022119-ed83ed61efb9 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220922195421-2adab6b8c60e // indirect
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.12 // indirect

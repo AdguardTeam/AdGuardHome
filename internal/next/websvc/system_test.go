@@ -8,16 +8,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/v1/websvc"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestService_handleGetV1SystemInfo(t *testing.T) {
-	_, addr := newTestServer(t)
+	confMgr := newConfigManager()
+	_, addr := newTestServer(t, confMgr)
 	u := &url.URL{
 		Scheme: "http",
-		Host:   addr,
+		Host:   addr.String(),
 		Path:   websvc.PathV1SystemInfo,
 	}
 

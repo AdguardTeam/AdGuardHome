@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/gob"
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -146,21 +145,13 @@ func (d *DNSFilter) handleSafeSearchDisable(w http.ResponseWriter, r *http.Reque
 }
 
 func (d *DNSFilter) handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(&struct {
+	resp := &struct {
 		Enabled bool `json:"enabled"`
 	}{
 		Enabled: d.Config.SafeSearchEnabled,
-	})
-	if err != nil {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusInternalServerError,
-			"Unable to write response json: %s",
-			err,
-		)
 	}
+
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 var safeSearchDomains = map[string]string{

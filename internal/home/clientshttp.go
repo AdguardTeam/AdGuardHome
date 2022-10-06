@@ -93,13 +93,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 
 	data.Tags = clientTags
 
-	w.Header().Set("Content-Type", "application/json")
-	e := json.NewEncoder(w).Encode(data)
-	if e != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "failed to encode to json: %v", e)
-
-		return
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, data)
 }
 
 // Convert JSON object to Client object
@@ -249,11 +243,7 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(data)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write response: %s", err)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, data)
 }
 
 // findRuntime looks up the IP in runtime and temporary storages, like

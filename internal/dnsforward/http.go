@@ -112,13 +112,7 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 		DefautLocalPTRUpstreams: defLocalPTRUps,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err = json.NewEncoder(w).Encode(resp); err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "json.Encoder: %s", err)
-
-		return
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 func (req *jsonDNSConfig) checkBlockingMode() (err error) {
@@ -349,7 +343,10 @@ func newUpstreamConfig(upstreams []string) (conf *proxy.UpstreamConfig, err erro
 
 	conf, err = proxy.ParseUpstreamsConfig(
 		upstreams,
-		&upstream.Options{Bootstrap: []string{}, Timeout: DefaultTimeout},
+		&upstream.Options{
+			Bootstrap: []string{},
+			Timeout:   DefaultTimeout,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -412,7 +409,15 @@ func ValidateUpstreamsPrivate(upstreams []string, privateNets netutil.SubnetSet)
 	return nil
 }
 
-var protocols = []string{"udp://", "tcp://", "tls://", "https://", "sdns://", "quic://"}
+var protocols = []string{
+	"h3://",
+	"https://",
+	"quic://",
+	"sdns://",
+	"tcp://",
+	"tls://",
+	"udp://",
+}
 
 // validateUpstream returns an error if u alongside with domains is not a valid
 // upstream configuration.  useDefault is true if the upstream is
@@ -659,24 +664,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		result[host] = "OK"
 	}
 
-	jsonVal, err := json.Marshal(result)
-	if err != nil {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusInternalServerError,
-			"Unable to marshal status json: %s",
-			err,
-		)
-
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write body: %s", err)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, result)
 }
 
 // handleDoH is the DNS-over-HTTPs handler.
@@ -692,11 +680,13 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleDoH(w http.ResponseWriter, r *http.Request) {
 	if !s.conf.TLSAllowUnencryptedDoH && r.TLS == nil {
 		aghhttp.Error(r, w, http.StatusNotFound, "Not Found")
+
 		return
 	}
 
 	if !s.IsRunning() {
 		aghhttp.Error(r, w, http.StatusInternalServerError, "dns server is not running")
+
 		return
 	}
 

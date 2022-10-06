@@ -2289,7 +2289,7 @@
           'upstream_servers':
           - '1.1.1.1'
           - '8.8.8.8'
-          'upstream_timeout': '1s'
+          'upstream_timeout': 1000
         'required':
         - 'addresses'
         - 'blocking_mode'
@@ -2397,8 +2397,9 @@
           'type': 'array'
         'upstream_timeout':
           'description': >
-            Upstream request timeout, as a human readable duration.
-          'type': 'string'
+            Upstream request timeout, in milliseconds.
+          'format': 'double'
+          'type': 'number'
       'type': 'object'
 
     'DnsType':
@@ -3505,14 +3506,16 @@
           'addresses':
           - '127.0.0.1:80'
           - '192.168.1.1:80'
+          'force_https': true
           'secure_addresses':
           - '127.0.0.1:443'
           - '192.168.1.1:443'
-          'force_https': true
+          'timeout': 10000
         'required':
         - 'addresses'
-        - 'secure_addresses'
         - 'force_https'
+        - 'secure_addresses'
+        - 'timeout'
 
     'HttpSettingsPatch':
       'description': >
@@ -3539,6 +3542,11 @@
           'items':
             'type': 'string'
           'type': 'array'
+        'timeout':
+          'description': >
+            HTTP request timeout, in milliseconds.
+          'format': 'double'
+          'type': 'number'
       'type': 'object'
 
     'InternalServerErrorResp':

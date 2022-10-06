@@ -1,7 +1,6 @@
 package querylog
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -48,24 +47,7 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	// convert log entries to JSON
 	data := l.entriesToJSON(entries, oldest)
 
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusInternalServerError,
-			"Couldn't marshal data into json: %s",
-			err,
-		)
-
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, data)
 }
 
 func (l *queryLog) handleQueryLogClear(_ http.ResponseWriter, _ *http.Request) {
@@ -74,23 +56,13 @@ func (l *queryLog) handleQueryLogClear(_ http.ResponseWriter, _ *http.Request) {
 
 // Get configuration
 func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
-	resp := qlogConfig{}
-	resp.Enabled = l.conf.Enabled
-	resp.Interval = l.conf.RotationIvl.Hours() / 24
-	resp.AnonymizeClientIP = l.conf.AnonymizeClientIP
-
-	jsonVal, err := json.Marshal(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
-
-		return
+	resp := qlogConfig{
+		Enabled:           l.conf.Enabled,
+		Interval:          l.conf.RotationIvl.Hours() / 24,
+		AnonymizeClientIP: l.conf.AnonymizeClientIP,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "http write: %s", err)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 // AnonymizeIP masks ip to anonymize the client if the ip is a valid one.
