@@ -11,6 +11,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+
+### Added
+
+- The new optional `tls.override_tls_ciphers` property list, which can be set in
+  the configuration file.  It allows overriding TLS Ciphers that are used for
+  https listeners ([#4925])
+
+[#4925]: https://github.com/AdguardTeam/AdGuardHome/issues/4925
+
 <!--
 ## [v0.108.0] - TBA (APPROX.)
 -->
@@ -23,15 +32,6 @@ and this project adheres to
 See also the [v0.107.16 GitHub milestone][ms-v0.107.15].
 
 [ms-v0.107.16]:   https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=
-
-### Added
-
-- The new optional `tls.override_tls_ciphers` property list, which can be set in
-  the configuration file.  It allows overriding TLS Ciphers that are used for
-  https listeners ([#4925])
-
-[#4925]: https://github.com/AdguardTeam/AdGuardHome/issues/4925
-
 
 -->
 

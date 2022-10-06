@@ -33,7 +33,6 @@ const (
 )
 
 type webConfig struct {
-
 	// Ciphers that are used for https listener
 	tlsCiphers []uint16
 

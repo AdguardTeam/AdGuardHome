@@ -3,9 +3,7 @@ package aghtls
 
 import (
 	"crypto/tls"
-
-	"github.com/AdguardTeam/golibs/log"
-	"golang.org/x/exp/slices"
+	"fmt"
 )
 
 // SaferCipherSuites returns a set of default cipher suites with vulnerable and
@@ -35,15 +33,26 @@ func SaferCipherSuites() (safe []uint16) {
 }
 
 // ParseCipherIDs returns a set of cipher suites with the cipher names provided
-func ParseCipherIDs(ciphers []string) (userCiphers []uint16) {
-	for _, s := range tls.CipherSuites() {
-		if slices.Contains(ciphers, s.Name) {
-			userCiphers = append(userCiphers, s.ID)
-			log.Debug("user specified cipher : %s, ID : %d", s.Name, s.ID)
+func ParseCipherIDs(ciphers []string) (userCiphers []uint16, err error) {
+	for _, cipher := range ciphers {
+		exists, cipherID := CipherExists(cipher)
+		if exists {
+			userCiphers = append(userCiphers, cipherID)
 		} else {
-			log.Error("unknown cipher : %s ", s)
+			return nil, fmt.Errorf("unknown cipher : %s ", cipher)
 		}
 	}
 
-	return userCiphers
+	return userCiphers, nil
+}
+
+// CipherExists returns cipherid if exists, else return false in boolean
+func CipherExists(cipher string) (exists bool, cipherID uint16) {
+	for _, s := range tls.CipherSuites() {
+		if s.Name == cipher {
+			return true, s.ID
+		}
+	}
+
+	return false, 0
 }

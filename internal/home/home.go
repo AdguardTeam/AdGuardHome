@@ -369,6 +369,11 @@ func initWeb(args options, clientBuildFS fs.FS) (web *Web, err error) {
 		}
 	}
 
+	tlsCiphers, err := getTLSCiphers()
+	if err != nil {
+		return nil, err
+	}
+
 	webConf := webConfig{
 		firstRun:     Context.firstRun,
 		BindHost:     config.BindHost,
@@ -383,7 +388,7 @@ func initWeb(args options, clientBuildFS fs.FS) (web *Web, err error) {
 		clientBetaFS: clientBetaFS,
 
 		serveHTTP3: config.DNS.ServeHTTP3,
-		tlsCiphers: getTLSCiphers(),
+		tlsCiphers: tlsCiphers,
 	}
 
 	web = newWeb(&webConf)
@@ -889,15 +894,13 @@ type jsonError struct {
 	Message string `json:"message"`
 }
 
-// getTLSCiphers check for overriden tls ciphers, if the slice is
+// getTLSCiphers check for overridden tls ciphers, if the slice is
 // empty, then default safe ciphers are used
-func getTLSCiphers() []uint16 {
-	var cipher []uint16
-
+func getTLSCiphers() (cipherIds []uint16, err error) {
 	if len(config.TLS.OverrideTLSCiphers) == 0 {
-		cipher = aghtls.SaferCipherSuites()
+		return aghtls.SaferCipherSuites(), nil
 	} else {
-		cipher = aghtls.ParseCipherIDs(config.TLS.OverrideTLSCiphers)
+		log.Info("Overriding TLS Ciphers : %s", config.TLS.OverrideTLSCiphers)
+		return aghtls.ParseCipherIDs(config.TLS.OverrideTLSCiphers)
 	}
-	return cipher
 }
