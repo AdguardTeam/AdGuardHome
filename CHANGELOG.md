@@ -18,12 +18,27 @@ and this project adheres to
 
 
 <!--
-## [v0.107.16] - 2022-11-02 (APPROX.)
+## [v0.107.17] - 2022-11-02 (APPROX.)
 
-See also the [v0.107.16 GitHub milestone][ms-v0.107.15].
+See also the [v0.107.17 GitHub milestone][ms-v0.107.17].
 
-[ms-v0.107.16]:   https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
+[ms-v0.107.17]:   https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
 -->
+
+
+
+## [v0.107.16] - 2022-10-07
+
+This is a security update.  There is no GitHub milestone, since no GitHub issues
+were resolved.
+
+## Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2022-2879, CVE-2022-2880, and CVE-2022-41715 Go vulnerabilities fixed in
+  [Go 1.18.7][go-1.18.7].
+
+[go-1.18.7]: https://groups.google.com/g/golang-announce/c/xtuG5faxtaU
 
 
 
@@ -1325,11 +1340,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...HEAD
-[v0.107.16]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...v0.107.15
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.17...HEAD
+[v0.107.17]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...v0.107.17
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...HEAD
+[v0.107.16]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...v0.107.16
 [v0.107.15]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...v0.107.15
 [v0.107.14]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...v0.107.14
 [v0.107.13]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...v0.107.13
