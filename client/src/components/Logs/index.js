@@ -47,17 +47,20 @@ const processContent = (data) => Object.entries(data)
             keyClass = '';
         }
 
-        return isHidden ? null : <div key={key}>
-            <div
+        return isHidden ? null : (
+            <div className="grid__row" key={key}>
+                <div
                     className={classNames(`key__${key}`, keyClass, {
                         'font-weight-bold': isBoolean && value === true,
-                    })}>
-                <Trans>{isButton ? value : key}</Trans>
+                    })}
+                >
+                    <Trans>{isButton ? value : key}</Trans>
+                </div>
+                <div className={`value__${key} text-pre text-truncate`}>
+                    <Trans>{(isTitle || isButton || isBoolean) ? '' : value || '—'}</Trans>
+                </div>
             </div>
-            <div className={`value__${key} text-pre text-truncate`}>
-                <Trans>{(isTitle || isButton || isBoolean) ? '' : value || '—'}</Trans>
-            </div>
-        </div>;
+        );
     });
 
 const Logs = () => {
