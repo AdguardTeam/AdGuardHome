@@ -10,10 +10,7 @@ and this project adheres to
 
 
 ## [Unreleased]
-### Fixed
-- Web UI HTTP/3 not working  [#4986]
 
-[#4986]: https://github.com/AdguardTeam/AdGuardHome/issues/4986
 <!--
 ## [v0.108.0] - TBA (APPROX.)
 -->
@@ -24,7 +21,13 @@ and this project adheres to
   opposed to URL paths ([#3418]).  Note that AdGuard Home checks the server name
   only if the URL does not contain a ClientID.
 
+### Fixed
+
+- Web UI not switching to HTTP/3 ([#4986], [#4993]).
+
 [#3418]: https://github.com/AdguardTeam/AdGuardHome/issues/3418
+[#4986]: https://github.com/AdguardTeam/AdGuardHome/issues/4986
+[#4993]: https://github.com/AdguardTeam/AdGuardHome/issues/4993
 
 [clientid]:  https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid
 
