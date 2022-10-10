@@ -8,6 +8,7 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -89,7 +90,7 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 		// TODO(a.garipov): Consider better ways to do this.
 		const maxUpdDur = 10 * time.Second
 		updStart := time.Now()
-		var newSvc ServiceWithConfig[*Config]
+		var newSvc agh.ServiceWithConfig[*Config]
 		for newSvc = svc.confMgr.Web(); newSvc == svc; {
 			if time.Since(updStart) >= maxUpdDur {
 				log.Error("websvc: failed to update svc after %s", maxUpdDur)

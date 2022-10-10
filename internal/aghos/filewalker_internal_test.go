@@ -15,11 +15,11 @@ import (
 // errFSOpen.
 type errFS struct{}
 
-// errFSOpen is returned from errGlobFS.Open.
+// errFSOpen is returned from errFS.Open.
 const errFSOpen errors.Error = "test open error"
 
-// Open implements the fs.FS interface for *errGlobFS.  fsys is always nil and
-// err is always errFSOpen.
+// Open implements the fs.FS interface for *errFS.  fsys is always nil and err
+// is always errFSOpen.
 func (efs *errFS) Open(name string) (fsys fs.File, err error) {
 	return nil, errFSOpen
 }

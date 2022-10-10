@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
 )
@@ -88,7 +89,7 @@ func (l *Listener) Close() (err error) {
 	return l.OnClose()
 }
 
-// Module AdGuardHome
+// Module adguard-home
 
 // Package aghos
 
@@ -117,29 +118,31 @@ func (w *FSWatcher) Close() (err error) {
 	return w.OnClose()
 }
 
-// Package websvc
+// Package agh
 
-// ServiceWithConfig is a mock [websvc.ServiceWithConfig] implementation for
-// tests.
+// type check
+var _ agh.ServiceWithConfig[struct{}] = (*ServiceWithConfig[struct{}])(nil)
+
+// ServiceWithConfig is a mock [agh.ServiceWithConfig] implementation for tests.
 type ServiceWithConfig[ConfigType any] struct {
 	OnStart    func() (err error)
 	OnShutdown func(ctx context.Context) (err error)
 	OnConfig   func() (c ConfigType)
 }
 
-// Start implements the [websvc.ServiceWithConfig] interface for
+// Start implements the [agh.ServiceWithConfig] interface for
 // *ServiceWithConfig.
 func (s *ServiceWithConfig[_]) Start() (err error) {
 	return s.OnStart()
 }
 
-// Shutdown implements the [websvc.ServiceWithConfig] interface for
+// Shutdown implements the [agh.ServiceWithConfig] interface for
 // *ServiceWithConfig.
 func (s *ServiceWithConfig[_]) Shutdown(ctx context.Context) (err error) {
 	return s.OnShutdown(ctx)
 }
 
-// Config implements the [websvc.ServiceWithConfig] interface for
+// Config implements the [agh.ServiceWithConfig] interface for
 // *ServiceWithConfig.
 func (s *ServiceWithConfig[ConfigType]) Config() (c ConfigType) {
 	return s.OnConfig()
