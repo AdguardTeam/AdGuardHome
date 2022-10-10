@@ -12,7 +12,7 @@ import (
 func testParseOK(t *testing.T, ss ...string) options {
 	t.Helper()
 
-	o, _, err := parse("", ss)
+	o, _, err := parseCmdOpts("", ss)
 	require.NoError(t, err)
 
 	return o
@@ -21,7 +21,7 @@ func testParseOK(t *testing.T, ss ...string) options {
 func testParseErr(t *testing.T, descr string, ss ...string) {
 	t.Helper()
 
-	_, _, err := parse("", ss)
+	_, _, err := parseCmdOpts("", ss)
 	require.Error(t, err)
 }
 
@@ -38,11 +38,11 @@ func TestParseVerbose(t *testing.T) {
 }
 
 func TestParseConfigFilename(t *testing.T) {
-	assert.Equal(t, "", testParseOK(t).configFilename, "empty is no config filename")
-	assert.Equal(t, "path", testParseOK(t, "-c", "path").configFilename, "-c is config filename")
+	assert.Equal(t, "", testParseOK(t).confFilename, "empty is no config filename")
+	assert.Equal(t, "path", testParseOK(t, "-c", "path").confFilename, "-c is config filename")
 	testParseParamMissing(t, "-c")
 
-	assert.Equal(t, "path", testParseOK(t, "--config", "path").configFilename, "--config is config filename")
+	assert.Equal(t, "path", testParseOK(t, "--config", "path").confFilename, "--config is config filename")
 	testParseParamMissing(t, "--config")
 }
 
@@ -103,7 +103,7 @@ func TestParseDisableUpdate(t *testing.T) {
 
 // TODO(e.burkov):  Remove after v0.108.0.
 func TestParseDisableMemoryOptimization(t *testing.T) {
-	o, eff, err := parse("", []string{"--no-mem-optimization"})
+	o, eff, err := parseCmdOpts("", []string{"--no-mem-optimization"})
 	require.NoError(t, err)
 
 	assert.Nil(t, eff)
@@ -130,73 +130,73 @@ func TestParseUnknown(t *testing.T) {
 	testParseErr(t, "unknown dash", "-")
 }
 
-func TestSerialize(t *testing.T) {
+func TestOptsToArgs(t *testing.T) {
 	testCases := []struct {
 		name string
+		args []string
 		opts options
-		ss   []string
 	}{{
 		name: "empty",
+		args: []string{},
 		opts: options{},
-		ss:   []string{},
 	}, {
 		name: "config_filename",
-		opts: options{configFilename: "path"},
-		ss:   []string{"-c", "path"},
+		args: []string{"-c", "path"},
+		opts: options{confFilename: "path"},
 	}, {
 		name: "work_dir",
+		args: []string{"-w", "path"},
 		opts: options{workDir: "path"},
-		ss:   []string{"-w", "path"},
 	}, {
 		name: "bind_host",
+		args: []string{"-h", "1.2.3.4"},
 		opts: options{bindHost: net.IP{1, 2, 3, 4}},
-		ss:   []string{"-h", "1.2.3.4"},
 	}, {
 		name: "bind_port",
+		args: []string{"-p", "666"},
 		opts: options{bindPort: 666},
-		ss:   []string{"-p", "666"},
 	}, {
 		name: "log_file",
+		args: []string{"-l", "path"},
 		opts: options{logFile: "path"},
-		ss:   []string{"-l", "path"},
 	}, {
 		name: "pid_file",
+		args: []string{"--pidfile", "path"},
 		opts: options{pidFile: "path"},
-		ss:   []string{"--pidfile", "path"},
 	}, {
 		name: "disable_update",
+		args: []string{"--no-check-update"},
 		opts: options{disableUpdate: true},
-		ss:   []string{"--no-check-update"},
 	}, {
 		name: "control_action",
+		args: []string{"-s", "run"},
 		opts: options{serviceControlAction: "run"},
-		ss:   []string{"-s", "run"},
 	}, {
 		name: "glinet_mode",
+		args: []string{"--glinet"},
 		opts: options{glinetMode: true},
-		ss:   []string{"--glinet"},
 	}, {
 		name: "multiple",
-		opts: options{
-			serviceControlAction: "run",
-			configFilename:       "config",
-			workDir:              "work",
-			pidFile:              "pid",
-			disableUpdate:        true,
-		},
-		ss: []string{
+		args: []string{
 			"-c", "config",
 			"-w", "work",
 			"-s", "run",
 			"--pidfile", "pid",
 			"--no-check-update",
 		},
+		opts: options{
+			serviceControlAction: "run",
+			confFilename:         "config",
+			workDir:              "work",
+			pidFile:              "pid",
+			disableUpdate:        true,
+		},
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := serialize(tc.opts)
-			assert.ElementsMatch(t, tc.ss, result)
+			result := optsToArgs(tc.opts)
+			assert.ElementsMatch(t, tc.args, result)
 		})
 	}
 }

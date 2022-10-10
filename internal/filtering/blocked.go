@@ -453,13 +453,7 @@ func (d *DNSFilter) ApplyBlockedServices(setts *Settings, list []string) {
 }
 
 func (d *DNSFilter) handleBlockedServicesAvailableServices(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(serviceIDs)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "encoding available services: %s", err)
-
-		return
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, serviceIDs)
 }
 
 func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Request) {
@@ -467,13 +461,7 @@ func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Req
 	list := d.Config.BlockedServices
 	d.confLock.RUnlock()
 
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(list)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "encoding services: %s", err)
-
-		return
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, list)
 }
 
 func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Request) {

@@ -16,20 +16,20 @@ type RespGetV1SystemInfo struct {
 	Channel    string   `json:"channel"`
 	OS         string   `json:"os"`
 	NewVersion string   `json:"new_version,omitempty"`
-	Start      jsonTime `json:"start"`
+	Start      JSONTime `json:"start"`
 	Version    string   `json:"version"`
 }
 
 // handleGetV1SystemInfo is the handler for the GET /api/v1/system/info HTTP
 // API.
 func (svc *Service) handleGetV1SystemInfo(w http.ResponseWriter, r *http.Request) {
-	writeJSONResponse(w, r, &RespGetV1SystemInfo{
+	writeJSONOKResponse(w, r, &RespGetV1SystemInfo{
 		Arch:    runtime.GOARCH,
 		Channel: version.Channel(),
 		OS:      runtime.GOOS,
 		// TODO(a.garipov): Fill this when we have an updater.
 		NewVersion: "",
-		Start:      jsonTime(svc.start),
+		Start:      JSONTime(svc.start),
 		Version:    version.Version(),
 	})
 }

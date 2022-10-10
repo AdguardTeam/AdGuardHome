@@ -63,14 +63,6 @@ func Version() (v string) {
 	return version
 }
 
-// Constants defining the format of module information string.
-const (
-	modInfoAtSep    = "@"
-	modInfoDevSep   = " "
-	modInfoSumLeft  = " (sum: "
-	modInfoSumRight = ")"
-)
-
 // fmtModule returns formatted information about module.  The result looks like:
 //
 //	github.com/Username/module@v1.2.3 (sum: someHASHSUM=)
@@ -87,14 +79,16 @@ func fmtModule(m *debug.Module) (formatted string) {
 
 	stringutil.WriteToBuilder(b, m.Path)
 	if ver := m.Version; ver != "" {
-		sep := modInfoAtSep
+		sep := "@"
 		if ver == "(devel)" {
-			sep = modInfoDevSep
+			sep = " "
 		}
+
 		stringutil.WriteToBuilder(b, sep, ver)
 	}
+
 	if sum := m.Sum; sum != "" {
-		stringutil.WriteToBuilder(b, modInfoSumLeft, sum, modInfoSumRight)
+		stringutil.WriteToBuilder(b, "(sum: ", sum, ")")
 	}
 
 	return b.String()

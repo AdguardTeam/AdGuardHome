@@ -240,13 +240,7 @@ func (d *DNSFilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
 	}
 	d.confLock.Unlock()
 
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(arr)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "json.Encode: %s", err)
-
-		return
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, arr)
 }
 
 func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {

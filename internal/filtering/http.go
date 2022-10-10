@@ -301,14 +301,7 @@ func (d *DNSFilter) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-
-	err = json.NewEncoder(w).Encode(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
-
-		return
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 type filterJSON struct {
@@ -361,17 +354,7 @@ func (d *DNSFilter) handleFilteringStatus(w http.ResponseWriter, r *http.Request
 	resp.UserRules = d.UserRules
 	d.filtersMu.RUnlock()
 
-	jsonVal, err := json.Marshal(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
-
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "http write: %s", err)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 // Set filtering configuration
@@ -473,11 +456,7 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "encoding response: %s", err)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 // RegisterFilteringHandlers - register handlers

@@ -160,6 +160,22 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantClientID: "insensitive",
 		wantErrMsg:   ``,
 		strictSNI:    true,
+	}, {
+		name:         "https_no_clientid",
+		proto:        proxy.ProtoHTTPS,
+		hostSrvName:  "example.com",
+		cliSrvName:   "example.com",
+		wantClientID: "",
+		wantErrMsg:   "",
+		strictSNI:    true,
+	}, {
+		name:         "https_clientid",
+		proto:        proxy.ProtoHTTPS,
+		hostSrvName:  "example.com",
+		cliSrvName:   "cli.example.com",
+		wantClientID: "cli",
+		wantErrMsg:   "",
+		strictSNI:    true,
 	}}
 
 	for _, tc := range testCases {
@@ -173,16 +189,32 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 				conf: ServerConfig{TLSConfig: tlsConf},
 			}
 
-			var conn net.Conn
-			if tc.proto == proxy.ProtoTLS {
-				conn = testTLSConn{
+			var (
+				conn    net.Conn
+				qconn   quic.Connection
+				httpReq *http.Request
+			)
+
+			switch tc.proto {
+			case proxy.ProtoHTTPS:
+				u := &url.URL{
+					Path: "/dns-query",
+				}
+
+				connState := &tls.ConnectionState{
+					ServerName: tc.cliSrvName,
+				}
+
+				httpReq = &http.Request{
+					URL: u,
+					TLS: connState,
+				}
+			case proxy.ProtoQUIC:
+				qconn = testQUICConnection{
 					serverName: tc.cliSrvName,
 				}
-			}
-
-			var qconn quic.Connection
-			if tc.proto == proxy.ProtoQUIC {
-				qconn = testQUICConnection{
+			case proxy.ProtoTLS:
+				conn = testTLSConn{
 					serverName: tc.cliSrvName,
 				}
 			}
@@ -190,6 +222,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 			pctx := &proxy.DNSContext{
 				Proto:          tc.proto,
 				Conn:           conn,
+				HTTPRequest:    httpReq,
 				QUICConnection: qconn,
 			}
 
@@ -205,56 +238,76 @@ func TestClientIDFromDNSContextHTTPS(t *testing.T) {
 	testCases := []struct {
 		name         string
 		path         string
+		cliSrvName   string
 		wantClientID string
 		wantErrMsg   string
 	}{{
 		name:         "no_clientid",
 		path:         "/dns-query",
+		cliSrvName:   "example.com",
 		wantClientID: "",
 		wantErrMsg:   "",
 	}, {
 		name:         "no_clientid_slash",
 		path:         "/dns-query/",
+		cliSrvName:   "example.com",
 		wantClientID: "",
 		wantErrMsg:   "",
 	}, {
 		name:         "clientid",
 		path:         "/dns-query/cli",
+		cliSrvName:   "example.com",
 		wantClientID: "cli",
 		wantErrMsg:   "",
 	}, {
 		name:         "clientid_slash",
 		path:         "/dns-query/cli/",
+		cliSrvName:   "example.com",
 		wantClientID: "cli",
 		wantErrMsg:   "",
 	}, {
 		name:         "clientid_case",
 		path:         "/dns-query/InSeNsItIvE",
+		cliSrvName:   "example.com",
 		wantClientID: "insensitive",
 		wantErrMsg:   ``,
 	}, {
 		name:         "bad_url",
 		path:         "/foo",
+		cliSrvName:   "example.com",
 		wantClientID: "",
 		wantErrMsg:   `clientid check: invalid path "/foo"`,
 	}, {
 		name:         "extra",
 		path:         "/dns-query/cli/foo",
+		cliSrvName:   "example.com",
 		wantClientID: "",
 		wantErrMsg:   `clientid check: invalid path "/dns-query/cli/foo": extra parts`,
 	}, {
 		name:         "invalid_clientid",
 		path:         "/dns-query/!!!",
+		cliSrvName:   "example.com",
 		wantClientID: "",
 		wantErrMsg:   `clientid check: invalid clientid "!!!": bad domain name label rune '!'`,
+	}, {
+		name:         "both_ids",
+		path:         "/dns-query/right",
+		cliSrvName:   "wrong.example.com",
+		wantClientID: "right",
+		wantErrMsg:   "",
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			connState := &tls.ConnectionState{
+				ServerName: tc.cliSrvName,
+			}
+
 			r := &http.Request{
 				URL: &url.URL{
 					Path: tc.path,
 				},
+				TLS: connState,
 			}
 
 			pctx := &proxy.DNSContext{

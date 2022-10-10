@@ -18,15 +18,40 @@ and this project adheres to
 ## [v0.108.0] - TBA (APPROX.)
 -->
 
+## Added
+
+- The ability to put [ClientIDs][clientid] into DNS-over-HTTPS hostnames as
+  opposed to URL paths ([#3418]).  Note that AdGuard Home checks the server name
+  only if the URL does not contain a ClientID.
+
+[#3418]: https://github.com/AdguardTeam/AdGuardHome/issues/3418
+
+[clientid]:  https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid
+
 
 
 <!--
-## [v0.107.16] - 2022-11-02 (APPROX.)
+## [v0.107.17] - 2022-11-02 (APPROX.)
 
-See also the [v0.107.16 GitHub milestone][ms-v0.107.15].
+See also the [v0.107.17 GitHub milestone][ms-v0.107.17].
 
-[ms-v0.107.16]:   https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
+[ms-v0.107.17]:   https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
 -->
+
+
+
+## [v0.107.16] - 2022-10-07
+
+This is a security update.  There is no GitHub milestone, since no GitHub issues
+were resolved.
+
+## Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2022-2879, CVE-2022-2880, and CVE-2022-41715 Go vulnerabilities fixed in
+  [Go 1.18.7][go-1.18.7].
+
+[go-1.18.7]: https://groups.google.com/g/golang-announce/c/xtuG5faxtaU
 
 
 
@@ -52,7 +77,7 @@ experimental and may break or change in the future.
   explicitly enabled by setting the new property `dns.serve_http3` in the
   configuration file to `true`.
 - DNS-over-HTTP upstreams can now upgrade to HTTP/3 if the new configuration
-  file property `use_http3_upstreams` is set to `true`.
+  file property `dns.use_http3_upstreams` is set to `true`.
 - Upstreams with forced DNS-over-HTTP/3 and no fallback to prior HTTP versions
   using the `h3://` scheme.
 
@@ -166,7 +191,7 @@ See also the [v0.107.12 GitHub milestone][ms-v0.107.12].
 
 ### Security
 
-- Go version was updated to prevent the possibility of exploiting the
+- Go version has been updated to prevent the possibility of exploiting the
   CVE-2022-27664 and CVE-2022-32190 Go vulnerabilities fixed in
   [Go 1.18.6][go-1.18.6].
 
@@ -287,7 +312,7 @@ See also the [v0.107.9 GitHub milestone][ms-v0.107.9].
 
 ### Security
 
-- Go version was updated to prevent the possibility of exploiting the
+- Go version has been updated to prevent the possibility of exploiting the
   CVE-2022-32189 Go vulnerability fixed in [Go 1.18.5][go-1.18.5].  Go 1.17
   support has also been removed, as it has reached end of life and will not
   receive security updates.
@@ -330,7 +355,7 @@ See also the [v0.107.8 GitHub milestone][ms-v0.107.8].
 
 ### Security
 
-- Go version was updated to prevent the possibility of exploiting the
+- Go version has been updated to prevent the possibility of exploiting the
   CVE-2022-1705, CVE-2022-32148, CVE-2022-30631, and other Go vulnerabilities
   fixed in [Go 1.17.12][go-1.17.12].
 
@@ -366,7 +391,7 @@ See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
 
 ### Security
 
-- Go version was updated to prevent the possibility of exploiting the
+- Go version has been updated to prevent the possibility of exploiting the
   [CVE-2022-29526], [CVE-2022-30634], [CVE-2022-30629], [CVE-2022-30580], and
   [CVE-2022-29804] Go vulnerabilities.
 - Enforced password strength policy ([#3503]).
@@ -523,7 +548,7 @@ See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
 ### Security
 
 - `User-Agent` HTTP header removed from outgoing DNS-over-HTTPS requests.
-- Go version was updated to prevent the possibility of exploiting the
+- Go version has been updated to prevent the possibility of exploiting the
   [CVE-2022-24675], [CVE-2022-27536], and [CVE-2022-28327] Go vulnerabilities.
 
 ### Added
@@ -578,7 +603,7 @@ were resolved.
 
 ### Security
 
-- Go version was updated to prevent the possibility of exploiting the
+- Go version has been updated to prevent the possibility of exploiting the
   [CVE-2022-24921] Go vulnerability.
 
 [CVE-2022-24921]: https://www.cvedetails.com/cve/CVE-2022-24921
@@ -591,7 +616,7 @@ See also the [v0.107.4 GitHub milestone][ms-v0.107.4].
 
 ### Security
 
-- Go version was updated to prevent the possibility of exploiting the
+- Go version has been updated to prevent the possibility of exploiting the
   [CVE-2022-23806], [CVE-2022-23772], and [CVE-2022-23773] Go vulnerabilities.
 
 ### Fixed
@@ -1328,11 +1353,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...HEAD
-[v0.107.16]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...v0.107.15
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.17...HEAD
+[v0.107.17]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...v0.107.17
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...HEAD
+[v0.107.16]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...v0.107.16
 [v0.107.15]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...v0.107.15
 [v0.107.14]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...v0.107.14
 [v0.107.13]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...v0.107.13
