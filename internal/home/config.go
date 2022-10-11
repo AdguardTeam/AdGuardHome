@@ -236,6 +236,7 @@ var config = &configuration{
 			},
 
 			TrustedProxies: []string{"127.0.0.0/8", "::1/128"},
+			CacheSize:      4 * 1024 * 1024,
 
 			// set default maximum concurrent queries to 300
 			// we introduced a default limit due to this:

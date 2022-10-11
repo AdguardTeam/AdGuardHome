@@ -27,6 +27,8 @@ and this project adheres to
 
 ### Fixed
 
+- The default value of `dns.cache_size` accidentally set to 0 has now been
+  reverted to 4 MiB ([#5010]).
 - Responses for which the DNSSEC validation had explicitly been omitted aren't
   cached now ([#4942]).
 - Web UI not switching to HTTP/3 ([#4986], [#4993]).
@@ -35,6 +37,7 @@ and this project adheres to
 [#4942]: https://github.com/AdguardTeam/AdGuardHome/issues/4942
 [#4986]: https://github.com/AdguardTeam/AdGuardHome/issues/4986
 [#4993]: https://github.com/AdguardTeam/AdGuardHome/issues/4993
+[#5010]: https://github.com/AdguardTeam/AdGuardHome/issues/5010
 
 [clientid]:  https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid
 
