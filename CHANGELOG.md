@@ -21,11 +21,18 @@ and this project adheres to
   opposed to URL paths ([#3418]).  Note that AdGuard Home checks the server name
   only if the URL does not contain a ClientID.
 
+### Changed
+
+- Responses with `SERVFAIL` code are now cached for at least 30 seconds.
+
 ### Fixed
 
+- Responses for which the DNSSEC validation had explicitly been omitted aren't
+  cached now ([#4942]).
 - Web UI not switching to HTTP/3 ([#4986], [#4993]).
 
 [#3418]: https://github.com/AdguardTeam/AdGuardHome/issues/3418
+[#4942]: https://github.com/AdguardTeam/AdGuardHome/issues/4942
 [#4986]: https://github.com/AdguardTeam/AdGuardHome/issues/4986
 [#4993]: https://github.com/AdguardTeam/AdGuardHome/issues/4993
 
