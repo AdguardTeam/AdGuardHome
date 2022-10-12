@@ -96,6 +96,12 @@
             "homepage": "https://github.com/DandelionSprout/adfilt",
             "source": "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/NorwegianExperimentalList%20alternate%20versions/NordicFiltersAdGuardHome.txt"
         },
+         "FR-red-flag-domains": {
+            "name": "FR: French filters RedFlagDomains",
+            "categoryId": "regional",
+            "homepage": "https://red.flag.domains",
+            "source": "https://dl.red.flag.domains/red.flag.domains.txt"
+        },
         "POL-polish-filters-for-pihole": {
             "name": "POL: Polish filters for Pi hole",
             "categoryId": "regional",
