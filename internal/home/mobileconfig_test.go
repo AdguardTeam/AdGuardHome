@@ -32,7 +32,7 @@ func setupDNSIPs(t testing.TB) {
 		},
 	}
 
-	Context.tls = &TLSMod{}
+	Context.tls = &tlsManager{}
 }
 
 func TestHandleMobileConfigDoH(t *testing.T) {
@@ -65,7 +65,7 @@ func TestHandleMobileConfigDoH(t *testing.T) {
 		oldTLSConf := Context.tls
 		t.Cleanup(func() { Context.tls = oldTLSConf })
 
-		Context.tls = &TLSMod{conf: tlsConfigSettings{}}
+		Context.tls = &tlsManager{conf: tlsConfigSettings{}}
 
 		r, err := http.NewRequest(http.MethodGet, "https://example.com:12345/apple/doh.mobileconfig", nil)
 		require.NoError(t, err)
@@ -137,7 +137,7 @@ func TestHandleMobileConfigDoT(t *testing.T) {
 		oldTLSConf := Context.tls
 		t.Cleanup(func() { Context.tls = oldTLSConf })
 
-		Context.tls = &TLSMod{conf: tlsConfigSettings{}}
+		Context.tls = &tlsManager{conf: tlsConfigSettings{}}
 
 		r, err := http.NewRequest(http.MethodGet, "https://example.com:12345/apple/dot.mobileconfig", nil)
 		require.NoError(t, err)

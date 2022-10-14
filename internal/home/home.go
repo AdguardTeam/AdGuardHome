@@ -59,7 +59,7 @@ type homeContext struct {
 	auth       *Auth                // HTTP authentication module
 	filters    *filtering.DNSFilter // DNS filtering module
 	web        *Web                 // Web (HTTP, HTTPS) module
-	tls        *TLSMod              // TLS module
+	tls        *tlsManager          // TLS module
 	// etcHosts is an IP-hostname pairs set taken from system configuration
 	// (e.g. /etc/hosts) files.
 	etcHosts *aghnet.HostsContainer
@@ -117,7 +117,7 @@ func Main(clientBuildFS fs.FS) {
 			switch sig {
 			case syscall.SIGHUP:
 				Context.clients.Reload()
-				Context.tls.Reload()
+				Context.tls.reload()
 
 			default:
 				cleanup(context.Background())
@@ -495,9 +495,9 @@ func run(opts options, clientBuildFS fs.FS) {
 	}
 	config.Users = nil
 
-	Context.tls = tlsCreate(config.TLS)
-	if Context.tls == nil {
-		log.Fatalf("Can't initialize TLS module")
+	Context.tls, err = newTLSManager(config.TLS)
+	if err != nil {
+		log.Fatalf("initializing tls: %s", err)
 	}
 
 	Context.web, err = initWeb(opts, clientBuildFS)
@@ -507,7 +507,7 @@ func run(opts options, clientBuildFS fs.FS) {
 		err = initDNSServer()
 		fatalOnError(err)
 
-		Context.tls.Start()
+		Context.tls.start()
 
 		go func() {
 			serr := startDNSServer()
@@ -531,20 +531,22 @@ func run(opts options, clientBuildFS fs.FS) {
 	select {}
 }
 
-// StartMods initializes and starts the DNS server after installation.
-func StartMods() error {
+// startMods initializes and starts the DNS server after installation.
+func startMods() error {
 	err := initDNSServer()
 	if err != nil {
 		return err
 	}
 
-	Context.tls.Start()
+	Context.tls.start()
 
 	err = startDNSServer()
 	if err != nil {
 		closeDNSServer()
+
 		return err
 	}
+
 	return nil
 }
 
@@ -728,7 +730,6 @@ func cleanup(ctx context.Context) {
 	}
 
 	if Context.tls != nil {
-		Context.tls.Close()
 		Context.tls = nil
 	}
 }
@@ -738,7 +739,8 @@ func cleanupAlways() {
 	if len(Context.pidFileName) != 0 {
 		_ = os.Remove(Context.pidFileName)
 	}
-	log.Info("Stopped")
+
+	log.Info("stopped")
 }
 
 func exitWithError() {
