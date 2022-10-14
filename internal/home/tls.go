@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -698,47 +696,4 @@ func (t *TLSMod) registerWebHandlers() {
 	httpRegister(http.MethodGet, "/control/tls/status", t.handleTLSStatus)
 	httpRegister(http.MethodPost, "/control/tls/configure", t.handleTLSConfigure)
 	httpRegister(http.MethodPost, "/control/tls/validate", t.handleTLSValidate)
-}
-
-// LoadSystemRootCAs tries to load root certificates from the operating system.
-// It returns nil in case nothing is found so that that Go.crypto will use it's
-// default algorithm to find system root CA list.
-//
-// See https://github.com/AdguardTeam/AdGuardHome/internal/issues/1311.
-func LoadSystemRootCAs() (roots *x509.CertPool) {
-	// TODO(e.burkov): Use build tags instead.
-	if runtime.GOOS != "linux" {
-		return nil
-	}
-
-	// Directories with the system root certificates, which aren't supported
-	// by Go.crypto.
-	dirs := []string{
-		// Entware.
-		"/opt/etc/ssl/certs",
-	}
-	roots = x509.NewCertPool()
-	for _, dir := range dirs {
-		dirEnts, err := os.ReadDir(dir)
-		if errors.Is(err, os.ErrNotExist) {
-			continue
-		} else if err != nil {
-			log.Error("opening directory: %q: %s", dir, err)
-		}
-
-		var rootsAdded bool
-		for _, de := range dirEnts {
-			var certData []byte
-			certData, err = os.ReadFile(filepath.Join(dir, de.Name()))
-			if err == nil && roots.AppendCertsFromPEM(certData) {
-				rootsAdded = true
-			}
-		}
-
-		if rootsAdded {
-			return roots
-		}
-	}
-
-	return nil
 }

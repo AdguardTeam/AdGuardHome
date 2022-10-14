@@ -147,7 +147,7 @@ func setupContext(opts options) {
 		// Go on.
 	}
 
-	Context.tlsRoots = LoadSystemRootCAs()
+	Context.tlsRoots = aghtls.SystemRootCAs()
 	Context.transport = &http.Transport{
 		DialContext: customDialContext,
 		Proxy:       getHTTPProxy,
