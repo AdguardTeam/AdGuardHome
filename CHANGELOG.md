@@ -54,20 +54,10 @@ and this project adheres to
 
 See also the [v0.107.17 GitHub milestone][ms-v0.107.17].
 
-<<<<<<< HEAD
-[ms-v0.107.16]: https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
-||||||| bf792b83f
-[ms-v0.107.16]:   https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
-=======
-[ms-v0.107.17]:   https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
->>>>>>> master
+[ms-v0.107.17]: https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
 -->
 
 
-<<<<<<< HEAD
-||||||| bf792b83f
-
-=======
 
 ## [v0.107.16] - 2022-10-07
 
@@ -84,7 +74,6 @@ were resolved.
 
 
 
->>>>>>> master
 ## [v0.107.15] - 2022-10-03
 
 See also the [v0.107.15 GitHub milestone][ms-v0.107.15].
