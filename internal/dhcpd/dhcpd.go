@@ -242,7 +242,7 @@ func Create(conf *ServerConfig) (s *server, err error) {
 	v4conf := conf.Conf4
 	v4conf.InterfaceName = s.conf.InterfaceName
 	v4conf.notify = s.onNotify
-	v4conf.Enabled = s.conf.Enabled && len(v4conf.RangeStart) != 0
+	v4conf.Enabled = s.conf.Enabled && v4conf.RangeStart.IsValid()
 
 	s.srv4, err = v4Create(&v4conf)
 	if err != nil {

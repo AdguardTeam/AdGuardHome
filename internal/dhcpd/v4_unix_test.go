@@ -5,6 +5,7 @@ package dhcpd
 import (
 	"fmt"
 	"net"
+	"net/netip"
 	"strings"
 	"testing"
 	"time"
@@ -22,11 +23,11 @@ import (
 )
 
 var (
-	DefaultRangeStart = net.IP{192, 168, 10, 100}
-	DefaultRangeEnd   = net.IP{192, 168, 10, 200}
-	DefaultGatewayIP  = net.IP{192, 168, 10, 1}
-	DefaultSelfIP     = net.IP{192, 168, 10, 2}
-	DefaultSubnetMask = net.IP{255, 255, 255, 0}
+	DefaultRangeStart = netip.MustParseAddr("192.168.10.100")
+	DefaultRangeEnd   = netip.MustParseAddr("192.168.10.200")
+	DefaultGatewayIP  = netip.MustParseAddr("192.168.10.1")
+	DefaultSelfIP     = netip.MustParseAddr("192.168.10.2")
+	DefaultSubnetMask = netip.MustParseAddr("255.255.255.0")
 )
 
 // defaultV4ServerConf returns the default configuration for *v4Server to use in
@@ -39,7 +40,7 @@ func defaultV4ServerConf() (conf *V4ServerConf) {
 		GatewayIP:  DefaultGatewayIP,
 		SubnetMask: DefaultSubnetMask,
 		notify:     testNotify,
-		dnsIPAddrs: []net.IP{DefaultSelfIP},
+		dnsIPAddrs: []netip.Addr{DefaultSelfIP},
 	}
 }
 
@@ -82,7 +83,7 @@ func TestV4Server_leasing(t *testing.T) {
 				Expiry:   time.Unix(leaseExpireStatic, 0),
 				Hostname: staticName,
 				HWAddr:   anotherMAC,
-				IP:       anotherIP,
+				IP:       anotherIP.AsSlice(),
 			})
 			assert.ErrorIs(t, err, ErrDupHostname)
 		})
@@ -96,7 +97,7 @@ func TestV4Server_leasing(t *testing.T) {
 				Expiry:   time.Unix(leaseExpireStatic, 0),
 				Hostname: anotherName,
 				HWAddr:   staticMAC,
-				IP:       anotherIP,
+				IP:       anotherIP.AsSlice(),
 			})
 			testutil.AssertErrorMsg(t, wantErrMsg, err)
 		})
@@ -135,7 +136,7 @@ func TestV4Server_leasing(t *testing.T) {
 				dhcpv4.WithOption(dhcpv4.OptHostName(name)),
 				dhcpv4.WithOption(dhcpv4.OptRequestedIPAddress(ip)),
 				dhcpv4.WithOption(dhcpv4.OptClientIdentifier([]byte{1, 2, 3, 4, 5, 6, 8})),
-				dhcpv4.WithGatewayIP(DefaultGatewayIP),
+				dhcpv4.WithGatewayIP(DefaultGatewayIP.AsSlice()),
 			)
 			require.NoError(t, err)
 
@@ -150,7 +151,7 @@ func TestV4Server_leasing(t *testing.T) {
 		}
 
 		t.Run("same_name", func(t *testing.T) {
-			resp := discoverAnOffer(t, staticName, anotherIP, anotherMAC)
+			resp := discoverAnOffer(t, staticName, anotherIP.AsSlice(), anotherMAC)
 
 			req, err := dhcpv4.NewRequestFromOffer(resp, dhcpv4.WithOption(
 				dhcpv4.OptHostName(staticName),
@@ -164,7 +165,7 @@ func TestV4Server_leasing(t *testing.T) {
 		})
 
 		t.Run("same_mac", func(t *testing.T) {
-			resp := discoverAnOffer(t, anotherName, anotherIP, staticMAC)
+			resp := discoverAnOffer(t, anotherName, anotherIP.AsSlice(), staticMAC)
 
 			req, err := dhcpv4.NewRequestFromOffer(resp, dhcpv4.WithOption(
 				dhcpv4.OptHostName(anotherName),
@@ -219,7 +220,7 @@ func TestV4Server_AddRemove_static(t *testing.T) {
 		lease: &Lease{
 			Hostname: "probably-router.local",
 			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-			IP:       DefaultGatewayIP,
+			IP:       DefaultGatewayIP.AsSlice(),
 		},
 		name: "with_gateway_ip",
 		wantErrMsg: "dhcpv4: adding static lease: " +
@@ -326,7 +327,7 @@ func TestV4_AddReplace(t *testing.T) {
 }
 
 func TestV4Server_handle_optionsPriority(t *testing.T) {
-	defaultIP := net.IP{192, 168, 1, 1}
+	defaultIP := netip.MustParseAddr("192.168.1.1")
 	knownIP := net.IP{1, 2, 3, 4}
 
 	// prepareSrv creates a *v4Server and sets the opt6IPs in the initial
@@ -343,14 +344,14 @@ func TestV4Server_handle_optionsPriority(t *testing.T) {
 			}
 			conf.Options = []string{b.String()}
 		} else {
-			defer func() { s.implicitOpts.Update(dhcpv4.OptDNS(defaultIP)) }()
+			defer func() { s.implicitOpts.Update(dhcpv4.OptDNS(defaultIP.AsSlice())) }()
 		}
 
 		var err error
 		s, err = v4Create(conf)
 		require.NoError(t, err)
 
-		s.conf.dnsIPAddrs = []net.IP{defaultIP}
+		s.conf.dnsIPAddrs = []netip.Addr{defaultIP}
 
 		return s
 	}
@@ -386,7 +387,7 @@ func TestV4Server_handle_optionsPriority(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
 		s := prepareSrv(t, nil)
 
-		checkResp(t, s, []net.IP{defaultIP})
+		checkResp(t, s, []net.IP{defaultIP.AsSlice()})
 	})
 
 	t.Run("explicitly_configured", func(t *testing.T) {
@@ -506,8 +507,9 @@ func TestV4StaticLease_Get(t *testing.T) {
 	s, ok := sIface.(*v4Server)
 	require.True(t, ok)
 
-	s.conf.dnsIPAddrs = []net.IP{{192, 168, 10, 1}}
-	s.implicitOpts.Update(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
+	dnsAddr := netip.MustParseAddr("192.168.10.1")
+	s.conf.dnsIPAddrs = []netip.Addr{dnsAddr}
+	s.implicitOpts.Update(dhcpv4.OptDNS(dnsAddr.AsSlice()))
 
 	l := &Lease{
 		Hostname: "static-1.local",
@@ -539,9 +541,12 @@ func TestV4StaticLease_Get(t *testing.T) {
 		assert.Equal(t, dhcpv4.MessageTypeOffer, resp.MessageType())
 		assert.Equal(t, mac, resp.ClientHWAddr)
 		assert.True(t, l.IP.Equal(resp.YourIPAddr))
-		assert.True(t, s.conf.GatewayIP.Equal(resp.Router()[0]))
-		assert.True(t, s.conf.GatewayIP.Equal(resp.ServerIdentifier()))
-		assert.Equal(t, s.conf.subnet.Mask, resp.SubnetMask())
+
+		assert.True(t, resp.Router()[0].Equal(s.conf.GatewayIP.AsSlice()))
+		assert.True(t, resp.ServerIdentifier().Equal(s.conf.GatewayIP.AsSlice()))
+
+		ones, _ := resp.SubnetMask().Size()
+		assert.Equal(t, s.conf.subnet.Bits(), ones)
 		assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
 	})
 
@@ -561,16 +566,19 @@ func TestV4StaticLease_Get(t *testing.T) {
 		assert.Equal(t, dhcpv4.MessageTypeAck, resp.MessageType())
 		assert.Equal(t, mac, resp.ClientHWAddr)
 		assert.True(t, l.IP.Equal(resp.YourIPAddr))
-		assert.True(t, s.conf.GatewayIP.Equal(resp.Router()[0]))
-		assert.True(t, s.conf.GatewayIP.Equal(resp.ServerIdentifier()))
-		assert.Equal(t, s.conf.subnet.Mask, resp.SubnetMask())
+
+		assert.True(t, resp.Router()[0].Equal(s.conf.GatewayIP.AsSlice()))
+		assert.True(t, resp.ServerIdentifier().Equal(s.conf.GatewayIP.AsSlice()))
+
+		ones, _ := resp.SubnetMask().Size()
+		assert.Equal(t, s.conf.subnet.Bits(), ones)
 		assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
 	})
 
 	dnsAddrs := resp.DNS()
 	require.Len(t, dnsAddrs, 1)
 
-	assert.True(t, s.conf.GatewayIP.Equal(dnsAddrs[0]))
+	assert.True(t, dnsAddrs[0].Equal(s.conf.GatewayIP.AsSlice()))
 
 	t.Run("check_lease", func(t *testing.T) {
 		ls := s.GetLeases(LeasesStatic)
@@ -591,8 +599,8 @@ func TestV4DynamicLease_Get(t *testing.T) {
 	s, err := v4Create(conf)
 	require.NoError(t, err)
 
-	s.conf.dnsIPAddrs = []net.IP{{192, 168, 10, 1}}
-	s.implicitOpts.Update(dhcpv4.OptDNS(s.conf.dnsIPAddrs...))
+	s.conf.dnsIPAddrs = []netip.Addr{netip.MustParseAddr("192.168.10.1")}
+	s.implicitOpts.Update(dhcpv4.OptDNS(s.conf.dnsIPAddrs[0].AsSlice()))
 
 	var req, resp *dhcpv4.DHCPv4
 	mac := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
@@ -617,15 +625,16 @@ func TestV4DynamicLease_Get(t *testing.T) {
 		assert.Equal(t, dhcpv4.MessageTypeOffer, resp.MessageType())
 		assert.Equal(t, mac, resp.ClientHWAddr)
 
-		assert.Equal(t, s.conf.RangeStart, resp.YourIPAddr)
-		assert.Equal(t, s.conf.GatewayIP, resp.ServerIdentifier())
+		assert.True(t, resp.YourIPAddr.Equal(s.conf.RangeStart.AsSlice()))
+		assert.True(t, resp.ServerIdentifier().Equal(s.conf.GatewayIP.AsSlice()))
 
 		router := resp.Router()
 		require.Len(t, router, 1)
 
-		assert.Equal(t, s.conf.GatewayIP, router[0])
+		assert.True(t, router[0].Equal(s.conf.GatewayIP.AsSlice()))
 
-		assert.Equal(t, s.conf.subnet.Mask, resp.SubnetMask())
+		ones, _ := resp.SubnetMask().Size()
+		assert.Equal(t, s.conf.subnet.Bits(), ones)
 		assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
 		assert.Equal(t, []byte("012"), resp.Options.Get(dhcpv4.OptionFQDN))
 
@@ -649,15 +658,17 @@ func TestV4DynamicLease_Get(t *testing.T) {
 	t.Run("ack", func(t *testing.T) {
 		assert.Equal(t, dhcpv4.MessageTypeAck, resp.MessageType())
 		assert.Equal(t, mac, resp.ClientHWAddr)
-		assert.True(t, s.conf.RangeStart.Equal(resp.YourIPAddr))
+		assert.True(t, resp.YourIPAddr.Equal(s.conf.RangeStart.AsSlice()))
 
 		router := resp.Router()
 		require.Len(t, router, 1)
 
-		assert.Equal(t, s.conf.GatewayIP, router[0])
+		assert.True(t, router[0].Equal(s.conf.GatewayIP.AsSlice()))
 
-		assert.True(t, s.conf.GatewayIP.Equal(resp.ServerIdentifier()))
-		assert.Equal(t, s.conf.subnet.Mask, resp.SubnetMask())
+		assert.True(t, resp.ServerIdentifier().Equal(s.conf.GatewayIP.AsSlice()))
+
+		ones, _ := resp.SubnetMask().Size()
+		assert.Equal(t, s.conf.subnet.Bits(), ones)
 		assert.Equal(t, s.conf.leaseTime.Seconds(), resp.IPAddressLeaseTime(-1).Seconds())
 	})
 

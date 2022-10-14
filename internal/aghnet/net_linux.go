@@ -6,7 +6,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"net"
+	"net/netip"
 	"os"
 	"strings"
 
@@ -151,7 +151,7 @@ func findIfaceLine(s *bufio.Scanner, name string) (ok bool) {
 // interface through dhcpcd.conf.
 func ifaceSetStaticIP(ifaceName string) (err error) {
 	ipNet := GetSubnet(ifaceName)
-	if ipNet.IP == nil {
+	if !ipNet.Addr().IsValid() {
 		return errors.Error("can't get IP address")
 	}
 
@@ -174,7 +174,7 @@ func ifaceSetStaticIP(ifaceName string) (err error) {
 
 // dhcpcdConfIface returns configuration lines for the dhcpdc.conf files that
 // configure the interface to have a static IP.
-func dhcpcdConfIface(ifaceName string, ipNet *net.IPNet, gwIP net.IP) (conf string) {
+func dhcpcdConfIface(ifaceName string, subnet netip.Prefix, gateway netip.Addr) (conf string) {
 	b := &strings.Builder{}
 	stringutil.WriteToBuilder(
 		b,
@@ -183,15 +183,15 @@ func dhcpcdConfIface(ifaceName string, ipNet *net.IPNet, gwIP net.IP) (conf stri
 		" added by AdGuard Home.\ninterface ",
 		ifaceName,
 		"\nstatic ip_address=",
-		ipNet.String(),
+		subnet.String(),
 		"\n",
 	)
 
-	if gwIP != nil {
-		stringutil.WriteToBuilder(b, "static routers=", gwIP.String(), "\n")
+	if gateway != (netip.Addr{}) {
+		stringutil.WriteToBuilder(b, "static routers=", gateway.String(), "\n")
 	}
 
-	stringutil.WriteToBuilder(b, "static domain_name_servers=", ipNet.IP.String(), "\n\n")
+	stringutil.WriteToBuilder(b, "static domain_name_servers=", subnet.Addr().String(), "\n\n")
 
 	return b.String()
 }

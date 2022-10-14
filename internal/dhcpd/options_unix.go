@@ -372,12 +372,9 @@ func (s *v4Server) prepareOptions() {
 		dhcpv4.OptGeneric(dhcpv4.OptionTCPKeepaliveGarbage, []byte{0x01}),
 
 		// Values From Configuration
+		dhcpv4.OptRouter(s.conf.GatewayIP.AsSlice()),
 
-		// Set the Router Option to working subnet's IP since it's initialized
-		// with the address of the gateway.
-		dhcpv4.OptRouter(s.conf.subnet.IP),
-
-		dhcpv4.OptSubnetMask(s.conf.subnet.Mask),
+		dhcpv4.OptSubnetMask(s.conf.SubnetMask.AsSlice()),
 	)
 
 	// Set values for explicitly configured options.

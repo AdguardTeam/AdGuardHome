@@ -17,6 +17,7 @@ and this project adheres to
 
 ## Added
 
+- The ability to serve DNS on link-local IPv6 addresses ([#2926]).
 - The ability to put [ClientIDs][clientid] into DNS-over-HTTPS hostnames as
   opposed to URL paths ([#3418]).  Note that AdGuard Home checks the server name
   only if the URL does not contain a ClientID.
@@ -33,6 +34,7 @@ and this project adheres to
   cached now ([#4942]).
 - Web UI not switching to HTTP/3 ([#4986], [#4993]).
 
+[#2926]: https://github.com/AdguardTeam/AdGuardHome/issues/2926
 [#3418]: https://github.com/AdguardTeam/AdGuardHome/issues/3418
 [#4942]: https://github.com/AdguardTeam/AdGuardHome/issues/4942
 [#4986]: https://github.com/AdguardTeam/AdGuardHome/issues/4986

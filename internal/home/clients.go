@@ -119,6 +119,8 @@ type clientsContainer struct {
 	idIndex map[string]*Client // ID -> client
 
 	// ipToRC is the IP address to *RuntimeClient map.
+	//
+	// TODO(e.burkov):  Use map[netip.Addr]struct{} instead.
 	ipToRC *netutil.IPMap
 
 	lock sync.Mutex

@@ -3,7 +3,7 @@ package home
 import (
 	"bytes"
 	"fmt"
-	"net"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"sync"
@@ -85,19 +85,28 @@ type configuration struct {
 	// It's reset after config is parsed
 	fileData []byte
 
-	BindHost     net.IP    `yaml:"bind_host"`      // BindHost is the IP address of the HTTP server to bind to
-	BindPort     int       `yaml:"bind_port"`      // BindPort is the port the HTTP server
-	BetaBindPort int       `yaml:"beta_bind_port"` // BetaBindPort is the port for new client
-	Users        []webUser `yaml:"users"`          // Users that can access HTTP server
+	// BindHost is the address for the web interface server to listen on.
+	BindHost netip.Addr `yaml:"bind_host"`
+	// BindPort is the port for the web interface server to listen on.
+	BindPort int `yaml:"bind_port"`
+	// BetaBindPort is the port for the new client's web interface server to
+	// listen on.
+	BetaBindPort int `yaml:"beta_bind_port"`
+
+	// Users are the clients capable for accessing the web interface.
+	Users []webUser `yaml:"users"`
 	// AuthAttempts is the maximum number of failed login attempts a user
 	// can do before being blocked.
 	AuthAttempts uint `yaml:"auth_attempts"`
 	// AuthBlockMin is the duration, in minutes, of the block of new login
 	// attempts after AuthAttempts unsuccessful login attempts.
-	AuthBlockMin uint   `yaml:"block_auth_min"`
-	ProxyURL     string `yaml:"http_proxy"`  // Proxy address for our HTTP client
-	Language     string `yaml:"language"`    // two-letter ISO 639-1 language code
-	DebugPProf   bool   `yaml:"debug_pprof"` // Enable pprof HTTP server on port 6060
+	AuthBlockMin uint `yaml:"block_auth_min"`
+	// ProxyURL is the address of proxy server for the internal HTTP client.
+	ProxyURL string `yaml:"http_proxy"`
+	// Language is a two-letter ISO 639-1 language code.
+	Language string `yaml:"language"`
+	// DebugPProf defines if the profiling HTTP handler will listen on :6060.
+	DebugPProf bool `yaml:"debug_pprof"`
 
 	// TTL for a web session (in hours)
 	// An active session is automatically refreshed once a day.
@@ -112,7 +121,7 @@ type configuration struct {
 	//
 	// TODO(e.burkov):  Move all the filtering configuration fields into the
 	// only configuration subsection covering the changes with a single
-	// migration.
+	// migration.  Also keep the blocked services in mind.
 	Filters          []filtering.FilterYAML `yaml:"filters"`
 	WhitelistFilters []filtering.FilterYAML `yaml:"whitelist_filters"`
 	UserRules        []string               `yaml:"user_rules"`
@@ -135,18 +144,26 @@ type configuration struct {
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type dnsConfig struct {
-	BindHosts []net.IP `yaml:"bind_hosts"`
-	Port      int      `yaml:"port"`
+	BindHosts []netip.Addr `yaml:"bind_hosts"`
+	Port      int          `yaml:"port"`
 
-	// time interval for statistics (in days)
+	// StatsInterval is the time interval for flushing statistics to the disk in
+	// days.
 	StatsInterval uint32 `yaml:"statistics_interval"`
 
-	QueryLogEnabled     bool `yaml:"querylog_enabled"`      // if true, query log is enabled
-	QueryLogFileEnabled bool `yaml:"querylog_file_enabled"` // if true, query log will be written to a file
+	// QueryLogEnabled defines if the query log is enabled.
+	QueryLogEnabled bool `yaml:"querylog_enabled"`
+	// QueryLogFileEnabled defines, if the query log is written to the file.
+	QueryLogFileEnabled bool `yaml:"querylog_file_enabled"`
 	// QueryLogInterval is the interval for query log's files rotation.
-	QueryLogInterval  timeutil.Duration `yaml:"querylog_interval"`
-	QueryLogMemSize   uint32            `yaml:"querylog_size_memory"` // number of entries kept in memory before they are flushed to disk
-	AnonymizeClientIP bool              `yaml:"anonymize_client_ip"`  // anonymize clients' IP addresses in logs and stats
+	QueryLogInterval timeutil.Duration `yaml:"querylog_interval"`
+	// QueryLogMemSize is the number of entries kept in memory before they are
+	// flushed to disk.
+	QueryLogMemSize uint32 `yaml:"querylog_size_memory"`
+
+	// AnonymizeClientIP defines if clients' IP addresses should be anonymized
+	// in query log and statistics.
+	AnonymizeClientIP bool `yaml:"anonymize_client_ip"`
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 
@@ -211,12 +228,12 @@ type tlsConfigSettings struct {
 var config = &configuration{
 	BindPort:           3000,
 	BetaBindPort:       0,
-	BindHost:           net.IP{0, 0, 0, 0},
+	BindHost:           netip.IPv4Unspecified(),
 	AuthAttempts:       5,
 	AuthBlockMin:       15,
 	WebSessionTTLHours: 30 * 24,
 	DNS: dnsConfig{
-		BindHosts:           []net.IP{{0, 0, 0, 0}},
+		BindHosts:           []netip.Addr{netip.IPv4Unspecified()},
 		Port:                defaultPortDNS,
 		StatsInterval:       1,
 		QueryLogEnabled:     true,

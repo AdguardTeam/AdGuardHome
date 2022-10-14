@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/pprof"
+	"net/netip"
 	"net/url"
 	"os"
 	"os/signal"
@@ -356,7 +357,7 @@ func setupConfig(opts options) (err error) {
 	}
 
 	// override bind host/port from the console
-	if opts.bindHost != nil {
+	if opts.bindHost.IsValid() {
 		config.BindHost = opts.bindHost
 	}
 	if len(opts.pidFile) != 0 && writePIDFile(opts.pidFile) {
@@ -556,7 +557,7 @@ func checkPermissions() {
 	}
 
 	// We should check if AdGuard Home is able to bind to port 53
-	err := aghnet.CheckPort("tcp", net.IP{127, 0, 0, 1}, defaultPortDNS)
+	err := aghnet.CheckPort("tcp", netip.AddrPortFrom(aghnet.IPv4Localhost(), defaultPortDNS))
 	if err != nil {
 		if errors.Is(err, os.ErrPermission) {
 			log.Fatal(`Permission check failed.

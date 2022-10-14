@@ -81,6 +81,7 @@ type Server struct {
 	tableHostToIP     hostToIPTable
 	tableHostToIPLock sync.Mutex
 
+	// TODO(e.burkov):  Use map[netip.Addr]struct{} instead.
 	tableIPToHost     *netutil.IPMap
 	tableIPToHostLock sync.Mutex
 
