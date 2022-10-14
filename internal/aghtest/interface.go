@@ -1,10 +1,12 @@
 package aghtest
 
 import (
+	"context"
 	"io/fs"
 	"net"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
 )
@@ -14,6 +16,8 @@ import (
 // Keep entities in this file in alphabetic order.
 
 // Standard Library
+
+// Package fs
 
 // type check
 var _ fs.FS = &FS{}
@@ -58,6 +62,8 @@ func (fsys *StatFS) Stat(name string) (fs.FileInfo, error) {
 	return fsys.OnStat(name)
 }
 
+// Package net
+
 // type check
 var _ net.Listener = (*Listener)(nil)
 
@@ -83,31 +89,9 @@ func (l *Listener) Close() (err error) {
 	return l.OnClose()
 }
 
-// Module dnsproxy
+// Module adguard-home
 
-// type check
-var _ upstream.Upstream = (*UpstreamMock)(nil)
-
-// UpstreamMock is a mock [upstream.Upstream] implementation for tests.
-//
-// TODO(a.garipov): Replace with all uses of Upstream with UpstreamMock and
-// rename it to just Upstream.
-type UpstreamMock struct {
-	OnAddress  func() (addr string)
-	OnExchange func(req *dns.Msg) (resp *dns.Msg, err error)
-}
-
-// Address implements the [upstream.Upstream] interface for *UpstreamMock.
-func (u *UpstreamMock) Address() (addr string) {
-	return u.OnAddress()
-}
-
-// Exchange implements the [upstream.Upstream] interface for *UpstreamMock.
-func (u *UpstreamMock) Exchange(req *dns.Msg) (resp *dns.Msg, err error) {
-	return u.OnExchange(req)
-}
-
-// Module AdGuardHome
+// Package aghos
 
 // type check
 var _ aghos.FSWatcher = (*FSWatcher)(nil)
@@ -132,4 +116,60 @@ func (w *FSWatcher) Add(name string) (err error) {
 // Close implements the [aghos.FSWatcher] interface for *FSWatcher.
 func (w *FSWatcher) Close() (err error) {
 	return w.OnClose()
+}
+
+// Package agh
+
+// type check
+var _ agh.ServiceWithConfig[struct{}] = (*ServiceWithConfig[struct{}])(nil)
+
+// ServiceWithConfig is a mock [agh.ServiceWithConfig] implementation for tests.
+type ServiceWithConfig[ConfigType any] struct {
+	OnStart    func() (err error)
+	OnShutdown func(ctx context.Context) (err error)
+	OnConfig   func() (c ConfigType)
+}
+
+// Start implements the [agh.ServiceWithConfig] interface for
+// *ServiceWithConfig.
+func (s *ServiceWithConfig[_]) Start() (err error) {
+	return s.OnStart()
+}
+
+// Shutdown implements the [agh.ServiceWithConfig] interface for
+// *ServiceWithConfig.
+func (s *ServiceWithConfig[_]) Shutdown(ctx context.Context) (err error) {
+	return s.OnShutdown(ctx)
+}
+
+// Config implements the [agh.ServiceWithConfig] interface for
+// *ServiceWithConfig.
+func (s *ServiceWithConfig[ConfigType]) Config() (c ConfigType) {
+	return s.OnConfig()
+}
+
+// Module dnsproxy
+
+// Package upstream
+
+// type check
+var _ upstream.Upstream = (*UpstreamMock)(nil)
+
+// UpstreamMock is a mock [upstream.Upstream] implementation for tests.
+//
+// TODO(a.garipov): Replace with all uses of Upstream with UpstreamMock and
+// rename it to just Upstream.
+type UpstreamMock struct {
+	OnAddress  func() (addr string)
+	OnExchange func(req *dns.Msg) (resp *dns.Msg, err error)
+}
+
+// Address implements the [upstream.Upstream] interface for *UpstreamMock.
+func (u *UpstreamMock) Address() (addr string) {
+	return u.OnAddress()
+}
+
+// Exchange implements the [upstream.Upstream] interface for *UpstreamMock.
+func (u *UpstreamMock) Exchange(req *dns.Msg) (resp *dns.Msg, err error) {
+	return u.OnExchange(req)
 }

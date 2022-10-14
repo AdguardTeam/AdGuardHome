@@ -4,7 +4,45 @@ package aghtls
 import (
 	"crypto/tls"
 	"fmt"
+
+	"github.com/AdguardTeam/golibs/log"
 )
+
+// init makes sure that the cipher name map is filled.
+//
+// TODO(a.garipov): Propose a similar API to crypto/tls.
+func init() {
+	suites := tls.CipherSuites()
+	cipherSuites = make(map[string]uint16, len(suites))
+	for _, s := range suites {
+		cipherSuites[s.Name] = s.ID
+	}
+
+	log.Debug("tls: known ciphers: %q", cipherSuites)
+}
+
+// cipherSuites are a name-to-ID mapping of cipher suites from crypto/tls.  It
+// is filled by init.  It must not be modified.
+var cipherSuites map[string]uint16
+
+// ParseCiphers parses a slice of cipher suites from cipher names.
+func ParseCiphers(cipherNames []string) (cipherIDs []uint16, err error) {
+	if cipherNames == nil {
+		return nil, nil
+	}
+
+	cipherIDs = make([]uint16, 0, len(cipherNames))
+	for _, name := range cipherNames {
+		id, ok := cipherSuites[name]
+		if !ok {
+			return nil, fmt.Errorf("unknown cipher %q", name)
+		}
+
+		cipherIDs = append(cipherIDs, id)
+	}
+
+	return cipherIDs, nil
+}
 
 // SaferCipherSuites returns a set of default cipher suites with vulnerable and
 // weak cipher suites removed.
@@ -30,29 +68,4 @@ func SaferCipherSuites() (safe []uint16) {
 	}
 
 	return safe
-}
-
-// ParseCipherIDs returns a set of cipher suites with the cipher names provided
-func ParseCipherIDs(ciphers []string) (userCiphers []uint16, err error) {
-	for _, cipher := range ciphers {
-		exists, cipherID := CipherExists(cipher)
-		if exists {
-			userCiphers = append(userCiphers, cipherID)
-		} else {
-			return nil, fmt.Errorf("unknown cipher : %s ", cipher)
-		}
-	}
-
-	return userCiphers, nil
-}
-
-// CipherExists returns cipherid if exists, else return false in boolean
-func CipherExists(cipher string) (exists bool, cipherID uint16) {
-	for _, s := range tls.CipherSuites() {
-		if s.Name == cipher {
-			return true, s.ID
-		}
-	}
-
-	return false, 0
 }

@@ -146,7 +146,7 @@ const Row = memo(({
                     type="button"
                     className={
                         classNames(
-                            'button-action--arrow-option',
+                            'button-action--arrow-option mb-1',
                             { 'bg--danger': !isBlocked },
                             { 'bg--green': isFiltered },
                         )}
@@ -158,13 +158,13 @@ const Row = memo(({
         );
 
         const blockForClientButton = <button
-                className='text-center font-weight-bold py-2 button-action--arrow-option'
+                className='text-center font-weight-bold py-1 button-action--arrow-option'
                 onClick={onBlockingForClientClick}>
             {t(blockingForClientKey)}
         </button>;
 
         const blockClientButton = <button
-                className='text-center font-weight-bold py-2 button-action--arrow-option'
+                className='text-center font-weight-bold py-1 button-action--arrow-option'
                 onClick={onBlockingClientClick}
                 disabled={processingSet || lastRuleInAllowlist}>
             {t(blockingClientKey)}

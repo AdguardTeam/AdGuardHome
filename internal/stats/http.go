@@ -55,12 +55,7 @@ func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-
-	err := json.NewEncoder(w).Encode(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 // configResp is the response to the GET /control/stats_info.
@@ -71,13 +66,7 @@ type configResp struct {
 // handleStatsInfo handles requests to the GET /control/stats_info endpoint.
 func (s *StatsCtx) handleStatsInfo(w http.ResponseWriter, r *http.Request) {
 	resp := configResp{IntervalDays: atomic.LoadUint32(&s.limitHours) / 24}
-
-	w.Header().Set("Content-Type", "application/json")
-
-	err := json.NewEncoder(w).Encode(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 // handleStatsConfig handles requests to the POST /control/stats_config

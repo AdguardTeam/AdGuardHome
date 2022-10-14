@@ -1,12 +1,12 @@
-//go:build v1
-// +build v1
+//go:build next
+// +build next
 
 package main
 
 import (
 	"embed"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/v1/cmd"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/cmd"
 )
 
 // Embed the prebuilt client here since we strive to keep .go files inside the

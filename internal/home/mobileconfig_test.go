@@ -3,12 +3,11 @@ package home
 import (
 	"bytes"
 	"encoding/json"
-	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"testing"
 
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"howett.net/plist"
@@ -28,12 +27,12 @@ func setupDNSIPs(t testing.TB) {
 
 	config = &configuration{
 		DNS: dnsConfig{
-			BindHosts: []net.IP{netutil.IPv4Zero()},
+			BindHosts: []netip.Addr{netip.IPv4Unspecified()},
 			Port:      defaultPortDNS,
 		},
 	}
 
-	Context.tls = &TLSMod{}
+	Context.tls = &tlsManager{}
 }
 
 func TestHandleMobileConfigDoH(t *testing.T) {
@@ -66,7 +65,7 @@ func TestHandleMobileConfigDoH(t *testing.T) {
 		oldTLSConf := Context.tls
 		t.Cleanup(func() { Context.tls = oldTLSConf })
 
-		Context.tls = &TLSMod{conf: tlsConfigSettings{}}
+		Context.tls = &tlsManager{conf: tlsConfigSettings{}}
 
 		r, err := http.NewRequest(http.MethodGet, "https://example.com:12345/apple/doh.mobileconfig", nil)
 		require.NoError(t, err)
@@ -138,7 +137,7 @@ func TestHandleMobileConfigDoT(t *testing.T) {
 		oldTLSConf := Context.tls
 		t.Cleanup(func() { Context.tls = oldTLSConf })
 
-		Context.tls = &TLSMod{conf: tlsConfigSettings{}}
+		Context.tls = &tlsManager{conf: tlsConfigSettings{}}
 
 		r, err := http.NewRequest(http.MethodGet, "https://example.com:12345/apple/dot.mobileconfig", nil)
 		require.NoError(t, err)

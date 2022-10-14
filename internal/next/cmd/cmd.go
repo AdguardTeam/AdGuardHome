@@ -8,39 +8,49 @@ import (
 	"context"
 	"io/fs"
 	"math/rand"
-	"net/netip"
+	"os"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/v1/websvc"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/configmgr"
+	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/log"
 )
 
 // Main is the entry point of application.
 func Main(clientBuildFS fs.FS) {
-	// # Initial Configuration
+	// Initial Configuration
 
 	start := time.Now()
 	rand.Seed(start.UnixNano())
 
 	// TODO(a.garipov): Set up logging.
 
-	// # Web Service
+	log.Info("starting adguard home, version %s, pid %d", version.Version(), os.Getpid())
+
+	// Web Service
 
 	// TODO(a.garipov): Use in the Web service.
 	_ = clientBuildFS
 
-	// TODO(a.garipov): Make configurable.
-	web := websvc.New(&websvc.Config{
-		Addresses: []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:3001")},
-		Start:     start,
-		Timeout:   60 * time.Second,
-	})
+	// TODO(a.garipov): Set up configuration file name.
+	const confFile = "AdGuardHome.1.yaml"
 
-	err := web.Start()
+	confMgr, err := configmgr.New(confFile, start)
+	fatalOnError(err)
+
+	web := confMgr.Web()
+	err = web.Start()
+	fatalOnError(err)
+
+	dns := confMgr.DNS()
+	err = dns.Start()
 	fatalOnError(err)
 
 	sigHdlr := newSignalHandler(
+		confFile,
+		start,
 		web,
+		dns,
 	)
 
 	go sigHdlr.handle()

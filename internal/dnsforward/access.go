@@ -19,6 +19,7 @@ import (
 // accessCtx controls IP and client blocking that takes place before all other
 // processing.  An accessCtx is safe for concurrent use.
 type accessCtx struct {
+	// TODO(e.burkov):  Use map[netip.Addr]struct{} instead.
 	allowedIPs *netutil.IPMap
 	blockedIPs *netutil.IPMap
 
