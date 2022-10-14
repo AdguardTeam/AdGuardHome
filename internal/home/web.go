@@ -33,9 +33,6 @@ const (
 )
 
 type webConfig struct {
-	// Ciphers that are used for https listener
-	tlsCiphers []uint16
-
 	clientFS     fs.FS
 	clientBetaFS fs.FS
 
@@ -300,7 +297,7 @@ func (web *Web) tlsServerLoop() {
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
 				RootCAs:      Context.tlsRoots,
-				CipherSuites: web.conf.tlsCiphers,
+				CipherSuites: Context.tlsCipherIDs,
 				MinVersion:   tls.VersionTLS12,
 			},
 			Handler:           withMiddlewares(Context.mux, limitRequestBody),
@@ -334,7 +331,7 @@ func (web *Web) mustStartHTTP3(address string) {
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{web.httpsServer.cert},
 			RootCAs:      Context.tlsRoots,
-			CipherSuites: web.conf.tlsCiphers,
+			CipherSuites: Context.tlsCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
 		Handler: withMiddlewares(Context.mux, limitRequestBody),

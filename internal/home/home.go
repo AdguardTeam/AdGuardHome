@@ -84,6 +84,10 @@ type homeContext struct {
 	transport        *http.Transport
 	client           *http.Client
 	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
+
+	// tlsCipherIDs are the ID of the cipher suites that AdGuard Home must use.
+	tlsCipherIDs []uint16
+
 	// runningAsService flag is set to true when options are passed from the service runner
 	runningAsService bool
 }
@@ -153,7 +157,7 @@ func setupContext(opts options) {
 		Proxy:       getHTTPProxy,
 		TLSClientConfig: &tls.Config{
 			RootCAs:      Context.tlsRoots,
-			CipherSuites: aghtls.SaferCipherSuites(),
+			CipherSuites: Context.tlsCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
 	}
@@ -386,11 +390,6 @@ func initWeb(opts options, clientBuildFS fs.FS) (web *Web, err error) {
 		}
 	}
 
-	tlsCiphers, err := getTLSCiphers()
-	if err != nil {
-		return nil, err
-	}
-
 	webConf := webConfig{
 		firstRun:     Context.firstRun,
 		BindHost:     config.BindHost,
@@ -405,7 +404,6 @@ func initWeb(opts options, clientBuildFS fs.FS) (web *Web, err error) {
 		clientBetaFS: clientBetaFS,
 
 		serveHTTP3: config.DNS.ServeHTTP3,
-		tlsCiphers: tlsCiphers,
 	}
 
 	web = newWeb(&webConf)
@@ -915,15 +913,4 @@ func getHTTPProxy(_ *http.Request) (*url.URL, error) {
 type jsonError struct {
 	// Message is the error message, an opaque string.
 	Message string `json:"message"`
-}
-
-// getTLSCiphers check for overridden tls ciphers, if the slice is
-// empty, then default safe ciphers are used
-func getTLSCiphers() (cipherIds []uint16, err error) {
-	if len(config.TLS.OverrideTLSCiphers) == 0 {
-		return aghtls.SaferCipherSuites(), nil
-	} else {
-		log.Info("Overriding TLS Ciphers : %s", config.TLS.OverrideTLSCiphers)
-		return aghtls.ParseCiphers(config.TLS.OverrideTLSCiphers)
-	}
 }
