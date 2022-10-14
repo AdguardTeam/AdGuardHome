@@ -17,6 +17,8 @@ and this project adheres to
 
 ## Added
 
+- The new optional `tls.override_tls_ciphers` property, which allows
+  overriding TLS ciphers used by AdGuard Home ([#4925], [#4990]).
 - The ability to serve DNS on link-local IPv6 addresses ([#2926]).
 - The ability to put [ClientIDs][clientid] into DNS-over-HTTPS hostnames as
   opposed to URL paths ([#3418]).  Note that AdGuard Home checks the server name
@@ -36,8 +38,10 @@ and this project adheres to
 
 [#2926]: https://github.com/AdguardTeam/AdGuardHome/issues/2926
 [#3418]: https://github.com/AdguardTeam/AdGuardHome/issues/3418
+[#4925]: https://github.com/AdguardTeam/AdGuardHome/issues/4925
 [#4942]: https://github.com/AdguardTeam/AdGuardHome/issues/4942
 [#4986]: https://github.com/AdguardTeam/AdGuardHome/issues/4986
+[#4990]: https://github.com/AdguardTeam/AdGuardHome/issues/4990
 [#4993]: https://github.com/AdguardTeam/AdGuardHome/issues/4993
 [#5010]: https://github.com/AdguardTeam/AdGuardHome/issues/5010
 
@@ -50,7 +54,7 @@ and this project adheres to
 
 See also the [v0.107.17 GitHub milestone][ms-v0.107.17].
 
-[ms-v0.107.17]:   https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
+[ms-v0.107.17]: https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
 -->
 
 

@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -380,6 +381,7 @@ func parseConfig() (err error) {
 		// we add support for HTTP/3 for web admin interface.
 		addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
 	}
+
 	if err = tcpPorts.Validate(); err != nil {
 		return fmt.Errorf("validating tcp ports: %w", err)
 	} else if err = udpPorts.Validate(); err != nil {
@@ -392,6 +394,11 @@ func parseConfig() (err error) {
 
 	if config.DNS.UpstreamTimeout.Duration == 0 {
 		config.DNS.UpstreamTimeout = timeutil.Duration{Duration: dnsforward.DefaultTimeout}
+	}
+
+	err = setContextTLSCipherIDs()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -492,6 +499,26 @@ func (c *configuration) write() (err error) {
 	err = maybe.WriteFile(configFile, buf.Bytes(), 0o644)
 	if err != nil {
 		return fmt.Errorf("writing config file: %w", err)
+	}
+
+	return nil
+}
+
+// setContextTLSCipherIDs sets the TLS cipher suite IDs to use.
+func setContextTLSCipherIDs() (err error) {
+	if len(config.TLS.OverrideTLSCiphers) == 0 {
+		log.Info("tls: using default ciphers")
+
+		Context.tlsCipherIDs = aghtls.SaferCipherSuites()
+
+		return nil
+	}
+
+	log.Info("tls: overriding ciphers: %s", config.TLS.OverrideTLSCiphers)
+
+	Context.tlsCipherIDs, err = aghtls.ParseCiphers(config.TLS.OverrideTLSCiphers)
+	if err != nil {
+		return fmt.Errorf("parsing override ciphers: %w", err)
 	}
 
 	return nil

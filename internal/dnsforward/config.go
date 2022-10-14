@@ -12,7 +12,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -165,6 +164,10 @@ type TLSConfig struct {
 	cert tls.Certificate
 	// DNS names from certificate (SAN) or CN value from Subject
 	dnsNames []string
+
+	// OverrideTLSCiphers, when set, contains the names of the cipher suites to
+	// use.  If the slice is empty, the default safe suites are used.
+	OverrideTLSCiphers []string `yaml:"override_tls_ciphers,omitempty" json:"-"`
 }
 
 // DNSCryptConfig is the DNSCrypt server configuration struct.
@@ -193,7 +196,9 @@ type ServerConfig struct {
 	UpstreamTimeout time.Duration
 
 	TLSv12Roots *x509.CertPool // list of root CAs for TLSv1.2
-	TLSCiphers  []uint16       // list of TLS ciphers to use
+
+	// TLSCiphers are the IDs of TLS cipher suites to use.
+	TLSCiphers []uint16
 
 	// Called when the configuration is changed by HTTP request
 	ConfigModified func()
@@ -348,17 +353,13 @@ func UpstreamHTTPVersions(http3 bool) (v []upstream.HTTPVersion) {
 
 // prepareUpstreamSettings - prepares upstream DNS server settings
 func (s *Server) prepareUpstreamSettings() error {
-	// We're setting a customized set of RootCAs
-	// The reason is that Go default mechanism of loading TLS roots
-	// does not always work properly on some routers so we're
-	// loading roots manually and pass it here.
-	// See "util.LoadSystemRootCAs"
+	// We're setting a customized set of RootCAs.  The reason is that Go default
+	// mechanism of loading TLS roots does not always work properly on some
+	// routers so we're loading roots manually and pass it here.
+	//
+	// See [aghtls.SystemRootCAs].
 	upstream.RootCAs = s.conf.TLSv12Roots
-
-	// See util.InitTLSCiphers -- removed unsafe ciphers
-	if len(s.conf.TLSCiphers) > 0 {
-		upstream.CipherSuites = s.conf.TLSCiphers
-	}
+	upstream.CipherSuites = s.conf.TLSCiphers
 
 	// Load upstreams either from the file, or from the settings
 	var upstreams []string
@@ -494,7 +495,7 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 
 	proxyConfig.TLSConfig = &tls.Config{
 		GetCertificate: s.onGetCertificate,
-		CipherSuites:   aghtls.SaferCipherSuites(),
+		CipherSuites:   s.conf.TLSCiphers,
 		MinVersion:     tls.VersionTLS12,
 	}
 

@@ -84,6 +84,10 @@ type homeContext struct {
 	transport        *http.Transport
 	client           *http.Client
 	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
+
+	// tlsCipherIDs are the ID of the cipher suites that AdGuard Home must use.
+	tlsCipherIDs []uint16
+
 	// runningAsService flag is set to true when options are passed from the service runner
 	runningAsService bool
 }
@@ -153,7 +157,7 @@ func setupContext(opts options) {
 		Proxy:       getHTTPProxy,
 		TLSClientConfig: &tls.Config{
 			RootCAs:      Context.tlsRoots,
-			CipherSuites: aghtls.SaferCipherSuites(),
+			CipherSuites: Context.tlsCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
 	}

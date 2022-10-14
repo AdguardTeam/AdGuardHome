@@ -11,7 +11,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -298,7 +297,7 @@ func (web *Web) tlsServerLoop() {
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
 				RootCAs:      Context.tlsRoots,
-				CipherSuites: aghtls.SaferCipherSuites(),
+				CipherSuites: Context.tlsCipherIDs,
 				MinVersion:   tls.VersionTLS12,
 			},
 			Handler:           withMiddlewares(Context.mux, limitRequestBody),
@@ -332,7 +331,7 @@ func (web *Web) mustStartHTTP3(address string) {
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{web.httpsServer.cert},
 			RootCAs:      Context.tlsRoots,
-			CipherSuites: aghtls.SaferCipherSuites(),
+			CipherSuites: Context.tlsCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
 		Handler: withMiddlewares(Context.mux, limitRequestBody),
