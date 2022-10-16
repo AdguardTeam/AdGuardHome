@@ -347,6 +347,10 @@ export const SERVICES = [
         id: 'youtube',
         name: 'YouTube',
     },
+    {
+        id: 'zhihu',
+        name: 'Zhihu',
+    },
 ];
 
 export const SERVICES_ID_NAME_MAP = SERVICES.reduce((acc, { id, name }) => {

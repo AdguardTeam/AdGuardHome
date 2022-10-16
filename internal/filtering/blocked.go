@@ -384,6 +384,12 @@ var servicesData = []svc{{
 		"||dreamcast.hk^",
 		"||hdslb.com^",
 	},
+}, {
+	name: "zhihu",
+	rules: []string{
+		"||zhihu.com^",
+		"||zhimg.com^",
+	},
 }}
 
 // serviceRules maps a service ID to its filtering rules.
