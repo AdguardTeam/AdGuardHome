@@ -232,6 +232,10 @@ export const SERVICES = [
         name: 'Disney+',
     },
     {
+        id: 'douban',
+        name: 'Douban',
+    },
+    {
         id: 'ebay',
         name: 'EBay',
     },
