@@ -45,7 +45,7 @@ and this project adheres to
 [#4993]: https://github.com/AdguardTeam/AdGuardHome/issues/4993
 [#5010]: https://github.com/AdguardTeam/AdGuardHome/issues/5010
 
-[clientid]:  https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid
+[clientid]: https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid
 
 
 
@@ -112,7 +112,7 @@ experimental and may break or change in the future.
 [#4982]: https://github.com/AdguardTeam/AdGuardHome/issues/4982
 [#4983]: https://github.com/AdguardTeam/AdGuardHome/issues/4983
 
-[ms-v0.107.15]:   https://github.com/AdguardTeam/AdGuardHome/milestone/51?closed=1
+[ms-v0.107.15]: https://github.com/AdguardTeam/AdGuardHome/milestone/51?closed=1
 
 
 
@@ -122,9 +122,9 @@ See also the [v0.107.14 GitHub milestone][ms-v0.107.14].
 
 ### Security
 
-A Cross-Site Request Forgery (CSRF) vulnerability has been discovered.  The CVE
-number is to be assigned.  We thank Daniel Elkabes from Mend.io for reporting
-this vulnerability to us.
+A Cross-Site Request Forgery (CSRF) vulnerability has been discovered.  We thank
+Daniel Elkabes from Mend.io for reporting this vulnerability to us.  This is
+[CVE-2022-32175].
 
 #### `SameSite` Policy
 
@@ -173,6 +173,7 @@ All JSON APIs that expect a body now check if the request actually has
 [#4927]: https://github.com/AdguardTeam/AdGuardHome/issues/4927
 [#4930]: https://github.com/AdguardTeam/AdGuardHome/issues/4930
 
+[CVE-2022-32175]: https://www.cvedetails.com/cve/CVE-2022-32175
 [ms-v0.107.14]:   https://github.com/AdguardTeam/AdGuardHome/milestone/50?closed=1
 
 
@@ -200,7 +201,7 @@ See also the [v0.107.13 GitHub milestone][ms-v0.107.13].
 [#4722]: https://github.com/AdguardTeam/AdGuardHome/issues/4722
 [#4904]: https://github.com/AdguardTeam/AdGuardHome/issues/4904
 
-[ms-v0.107.13]:   https://github.com/AdguardTeam/AdGuardHome/milestone/49?closed=1
+[ms-v0.107.13]: https://github.com/AdguardTeam/AdGuardHome/milestone/49?closed=1
 
 
 
