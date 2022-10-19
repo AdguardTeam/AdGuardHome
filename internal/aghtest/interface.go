@@ -162,6 +162,7 @@ var _ upstream.Upstream = (*UpstreamMock)(nil)
 type UpstreamMock struct {
 	OnAddress  func() (addr string)
 	OnExchange func(req *dns.Msg) (resp *dns.Msg, err error)
+	OnClose    func() (err error)
 }
 
 // Address implements the [upstream.Upstream] interface for *UpstreamMock.
@@ -172,4 +173,9 @@ func (u *UpstreamMock) Address() (addr string) {
 // Exchange implements the [upstream.Upstream] interface for *UpstreamMock.
 func (u *UpstreamMock) Exchange(req *dns.Msg) (resp *dns.Msg, err error) {
 	return u.OnExchange(req)
+}
+
+// Close implements the [upstream.Upstream] interface for *UpstreamMock.
+func (u *UpstreamMock) Close() (err error) {
+	return u.OnClose()
 }

@@ -518,7 +518,7 @@ func validateBlockingMode(mode BlockingMode, blockingIPv4, blockingIPv6 net.IP) 
 }
 
 // prepareInternalProxy initializes the DNS proxy that is used for internal DNS
-// queries, such at client PTR resolving and updater hostname resolving.
+// queries, such as public clients PTR resolving and updater hostname resolving.
 func (s *Server) prepareInternalProxy() (err error) {
 	conf := &proxy.Config{
 		CacheEnabled:   true,
@@ -558,16 +558,37 @@ func (s *Server) Stop() error {
 	return s.stopLocked()
 }
 
-// stopLocked stops the DNS server without locking. For internal use only.
-func (s *Server) stopLocked() error {
+// stopLocked stops the DNS server without locking.  For internal use only.
+func (s *Server) stopLocked() (err error) {
+	var errs []error
+
 	if s.dnsProxy != nil {
-		err := s.dnsProxy.Stop()
+		err = s.dnsProxy.Stop()
 		if err != nil {
-			return fmt.Errorf("could not stop the DNS server properly: %w", err)
+			errs = append(errs, fmt.Errorf("could not stop primary resolvers properly: %w", err))
 		}
 	}
 
-	s.isRunning = false
+	if s.internalProxy != nil && s.internalProxy.UpstreamConfig != nil {
+		err = s.internalProxy.UpstreamConfig.Close()
+		if err != nil {
+			errs = append(errs, fmt.Errorf("could not stop internal resolvers properly: %w", err))
+		}
+	}
+
+	if s.localResolvers != nil && s.localResolvers.UpstreamConfig != nil {
+		err = s.localResolvers.UpstreamConfig.Close()
+		if err != nil {
+			errs = append(errs, fmt.Errorf("could not stop local resolvers properly: %w", err))
+		}
+	}
+
+	if len(errs) > 0 {
+		return errors.List("stopping DNS server", errs...)
+	} else {
+		s.isRunning = false
+	}
+
 	return nil
 }
 

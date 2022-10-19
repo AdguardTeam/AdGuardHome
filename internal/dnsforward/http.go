@@ -603,6 +603,7 @@ func checkDNS(
 	if err != nil {
 		return fmt.Errorf("failed to choose upstream for %q: %w", upstreamAddr, err)
 	}
+	defer func() { err = errors.WithDeferred(err, u.Close()) }()
 
 	if err = healthCheck(u); err != nil {
 		err = fmt.Errorf("upstream %q fails to exchange: %w", upstreamAddr, err)

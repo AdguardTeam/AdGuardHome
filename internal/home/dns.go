@@ -431,17 +431,23 @@ func reconfigureDNSServer() (err error) {
 	return nil
 }
 
-func stopDNSServer() error {
+func stopDNSServer() (err error) {
 	if !isRunning() {
 		return nil
 	}
 
-	err := Context.dnsServer.Stop()
+	err = Context.dnsServer.Stop()
 	if err != nil {
-		return fmt.Errorf("couldn't stop forwarding DNS server: %w", err)
+		return fmt.Errorf("stopping forwarding dns server: %w", err)
+	}
+
+	err = Context.clients.Close()
+	if err != nil {
+		return fmt.Errorf("closing clients container: %w", err)
 	}
 
 	closeDNSServer()
+
 	return nil
 }
 

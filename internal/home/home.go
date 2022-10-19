@@ -122,7 +122,6 @@ func Main(clientBuildFS fs.FS) {
 			case syscall.SIGHUP:
 				Context.clients.Reload()
 				Context.tls.reload()
-
 			default:
 				cleanup(context.Background())
 				cleanupAlways()
