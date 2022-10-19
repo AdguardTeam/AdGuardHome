@@ -195,14 +195,13 @@ Optional environment:
 
 ##  `companiesdb/`: Whotracks.me Database Converter
 
-A simple script that downloads and updates the companies DB in the `client` 
+A simple script that downloads and updates the companies DB in the `client`
 code from [the repo][companiesrepo].
 
  ###  Usage
 
 ```sh
-cd scripts/companiesdb
-./download.sh
+( cd scripts/companiesdb && sh ./download.sh )
 ```
 
 [companiesrepo]: https://github.com/AdguardTeam/companiesdb
