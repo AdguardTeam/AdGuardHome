@@ -441,7 +441,7 @@ func stopDNSServer() (err error) {
 		return fmt.Errorf("stopping forwarding dns server: %w", err)
 	}
 
-	err = Context.clients.Close()
+	err = Context.clients.close()
 	if err != nil {
 		return fmt.Errorf("closing clients container: %w", err)
 	}

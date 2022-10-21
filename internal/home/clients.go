@@ -932,9 +932,9 @@ func (clients *clientsContainer) updateFromDHCP(add bool) {
 	log.Debug("clients: added %d client aliases from dhcp", n)
 }
 
-// Close gracefully closes all the client-specific upstream configurations of
+// close gracefully closes all the client-specific upstream configurations of
 // the persistent clients.
-func (clients *clientsContainer) Close() (err error) {
+func (clients *clientsContainer) close() (err error) {
 	persistent := maps.Values(clients.list)
 	slices.SortFunc(persistent, func(a, b *Client) (less bool) { return a.Name < b.Name })
 

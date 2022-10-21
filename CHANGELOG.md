@@ -30,6 +30,8 @@ and this project adheres to
 
 ### Fixed
 
+- Editing an enabled rule list's URL now also includes validation of the filter
+  contents preventing from saving a bad one ([#4916]).
 - The default value of `dns.cache_size` accidentally set to 0 has now been
   reverted to 4 MiB ([#5010]).
 - Responses for which the DNSSEC validation had explicitly been omitted aren't
@@ -38,6 +40,7 @@ and this project adheres to
 
 [#2926]: https://github.com/AdguardTeam/AdGuardHome/issues/2926
 [#3418]: https://github.com/AdguardTeam/AdGuardHome/issues/3418
+[#4916]: https://github.com/AdguardTeam/AdGuardHome/issues/4916
 [#4925]: https://github.com/AdguardTeam/AdGuardHome/issues/4925
 [#4942]: https://github.com/AdguardTeam/AdGuardHome/issues/4942
 [#4986]: https://github.com/AdguardTeam/AdGuardHome/issues/4986
