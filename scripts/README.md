@@ -205,3 +205,23 @@ code from [the repo][companiesrepo].
 ```
 
 [companiesrepo]: https://github.com/AdguardTeam/companiesdb
+
+
+
+##  `vetted-filters/`: Vetted Filters Updater
+
+A simple script that downloads and updates the vetted filtering list data from
+AdGuard's [Hostlists Registry][reg].
+
+Optional environment:
+
+ *  `URL`: the URL of the index file.  By default it's
+    `https://adguardteam.github.io/HostlistsRegistry/assets/filters.json`.
+
+ ###  Usage
+
+```sh
+go run ./scripts/vetted-filters/main.go
+```
+
+[reg]: https://github.com/AdguardTeam/HostlistsRegistry
