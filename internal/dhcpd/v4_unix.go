@@ -1018,7 +1018,7 @@ func (s *v4Server) handle(req, resp *dhcpv4.DHCPv4) int {
 	}
 
 	if l != nil {
-		resp.YourIPAddr = netutil.CloneIP(l.IP)
+		resp.YourIPAddr = slices.Clone(l.IP)
 	}
 
 	s.updateOptions(req, resp)

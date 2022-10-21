@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slices"
 )
 
 func TestMain(m *testing.M) {
@@ -157,7 +157,7 @@ func TestV4Server_badRange(t *testing.T) {
 // cloneUDPAddr returns a deep copy of a.
 func cloneUDPAddr(a *net.UDPAddr) (clone *net.UDPAddr) {
 	return &net.UDPAddr{
-		IP:   netutil.CloneIP(a.IP),
+		IP:   slices.Clone(a.IP),
 		Port: a.Port,
 		Zone: a.Zone,
 	}

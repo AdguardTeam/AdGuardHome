@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"golang.org/x/exp/slices"
 )
 
 const (
@@ -54,8 +54,8 @@ func (l *Lease) Clone() (clone *Lease) {
 	return &Lease{
 		Expiry:   l.Expiry,
 		Hostname: l.Hostname,
-		HWAddr:   netutil.CloneMAC(l.HWAddr),
-		IP:       netutil.CloneIP(l.IP),
+		HWAddr:   slices.Clone(l.HWAddr),
+		IP:       slices.Clone(l.IP),
 	}
 }
 

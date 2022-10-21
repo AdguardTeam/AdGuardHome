@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/netutil"
+	"golang.org/x/exp/slices"
 )
 
 // ARPDB: The Network Neighborhood Database
@@ -64,8 +64,8 @@ type Neighbor struct {
 func (n Neighbor) Clone() (clone Neighbor) {
 	return Neighbor{
 		Name: n.Name,
-		IP:   netutil.CloneIP(n.IP),
-		MAC:  netutil.CloneMAC(n.MAC),
+		IP:   slices.Clone(n.IP),
+		MAC:  slices.Clone(n.MAC),
 	}
 }
 
