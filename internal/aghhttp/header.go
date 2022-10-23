@@ -11,6 +11,7 @@ const (
 	HdrNameAltSvc                   = "Alt-Svc"
 	HdrNameContentEncoding          = "Content-Encoding"
 	HdrNameContentType              = "Content-Type"
+	HdrNameHsts                     = "Strict-Transport-Security"
 	HdrNameOrigin                   = "Origin"
 	HdrNameServer                   = "Server"
 	HdrNameTrailer                  = "Trailer"
@@ -21,5 +22,6 @@ const (
 // HTTP header value constants.
 const (
 	HdrValApplicationJSON = "application/json"
+	HdrValHsts            = "max-age=31536000; includeSubDomains"
 	HdrValTextPlain       = "text/plain"
 )

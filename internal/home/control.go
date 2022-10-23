@@ -343,17 +343,6 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		altSvc := fmt.Sprintf(`h3=":%d"`, portHTTPS)
 		respHdr.Set(aghhttp.HdrNameAltSvc, altSvc)
 	}
-  
-  
-	// Add headers for HSTS
-	// This informs browsers that the site should only be accessed using HTTPS,
-	// and that any future attempts to access it using HTTP should automatically be
-	// converted to HTTPS.
-	//
-	// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
-	if config.TLS.ForceHTTPS {
-		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-    }
 
 	if r.TLS == nil && web.forceHTTPS {
 		hostPort := host
@@ -370,6 +359,16 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		http.Redirect(w, r, httpsURL.String(), http.StatusTemporaryRedirect)
 
 		return false
+	}
+
+	// Add headers for HSTS
+	// This informs browsers that the site should only be accessed using HTTPS,
+	// and that any future attempts to access it using HTTP should automatically be
+	// converted to HTTPS.
+	//
+	// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+	if config.TLS.ForceHTTPS {
+		w.Header().Add(aghhttp.HdrNameHsts, aghhttp.HdrValHsts)
 	}
 
 	// Allow the frontend from the HTTP origin to send requests to the HTTPS
