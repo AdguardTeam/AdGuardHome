@@ -251,6 +251,8 @@ func TestPrepareOptions(t *testing.T) {
 	for _, tc := range testCases {
 		s := &v4Server{
 			conf: &V4ServerConf{
+				// Just to avoid nil pointer dereference.
+				subnet:  &net.IPNet{},
 				Options: tc.opts,
 			},
 		}

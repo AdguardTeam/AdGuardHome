@@ -13,8 +13,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
-	"golang.org/x/exp/slices"
 )
 
 // LegacyRewrite is a single legacy DNS rewrite record.
@@ -41,7 +41,7 @@ func (rw *LegacyRewrite) clone() (cloneRW *LegacyRewrite) {
 	return &LegacyRewrite{
 		Domain: rw.Domain,
 		Answer: rw.Answer,
-		IP:     slices.Clone(rw.IP),
+		IP:     netutil.CloneIP(rw.IP),
 		Type:   rw.Type,
 	}
 }

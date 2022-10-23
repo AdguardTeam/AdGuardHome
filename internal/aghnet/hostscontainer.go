@@ -106,13 +106,9 @@ type HostsContainer struct {
 	done chan struct{}
 
 	// updates is the channel for receiving updated hosts.
-	//
-	// TODO(e.burkov):  Use map[netip.Addr]struct{} instead.
 	updates chan *netutil.IPMap
 
 	// last is the set of hosts that was cached within last detected change.
-	//
-	// TODO(e.burkov):  Use map[netip.Addr]struct{} instead.
 	last *netutil.IPMap
 
 	// fsys is the working file system to read hosts files from.

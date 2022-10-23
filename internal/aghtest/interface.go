@@ -6,7 +6,6 @@ import (
 	"net"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
 )
@@ -89,7 +88,7 @@ func (l *Listener) Close() (err error) {
 	return l.OnClose()
 }
 
-// Module adguard-home
+// Module AdGuardHome
 
 // Package aghos
 
@@ -118,31 +117,29 @@ func (w *FSWatcher) Close() (err error) {
 	return w.OnClose()
 }
 
-// Package agh
+// Package websvc
 
-// type check
-var _ agh.ServiceWithConfig[struct{}] = (*ServiceWithConfig[struct{}])(nil)
-
-// ServiceWithConfig is a mock [agh.ServiceWithConfig] implementation for tests.
+// ServiceWithConfig is a mock [websvc.ServiceWithConfig] implementation for
+// tests.
 type ServiceWithConfig[ConfigType any] struct {
 	OnStart    func() (err error)
 	OnShutdown func(ctx context.Context) (err error)
 	OnConfig   func() (c ConfigType)
 }
 
-// Start implements the [agh.ServiceWithConfig] interface for
+// Start implements the [websvc.ServiceWithConfig] interface for
 // *ServiceWithConfig.
 func (s *ServiceWithConfig[_]) Start() (err error) {
 	return s.OnStart()
 }
 
-// Shutdown implements the [agh.ServiceWithConfig] interface for
+// Shutdown implements the [websvc.ServiceWithConfig] interface for
 // *ServiceWithConfig.
 func (s *ServiceWithConfig[_]) Shutdown(ctx context.Context) (err error) {
 	return s.OnShutdown(ctx)
 }
 
-// Config implements the [agh.ServiceWithConfig] interface for
+// Config implements the [websvc.ServiceWithConfig] interface for
 // *ServiceWithConfig.
 func (s *ServiceWithConfig[ConfigType]) Config() (c ConfigType) {
 	return s.OnConfig()
@@ -162,7 +159,6 @@ var _ upstream.Upstream = (*UpstreamMock)(nil)
 type UpstreamMock struct {
 	OnAddress  func() (addr string)
 	OnExchange func(req *dns.Msg) (resp *dns.Msg, err error)
-	OnClose    func() (err error)
 }
 
 // Address implements the [upstream.Upstream] interface for *UpstreamMock.
@@ -173,9 +169,4 @@ func (u *UpstreamMock) Address() (addr string) {
 // Exchange implements the [upstream.Upstream] interface for *UpstreamMock.
 func (u *UpstreamMock) Exchange(req *dns.Msg) (resp *dns.Msg, err error) {
 	return u.OnExchange(req)
-}
-
-// Close implements the [upstream.Upstream] interface for *UpstreamMock.
-func (u *UpstreamMock) Close() (err error) {
-	return u.OnClose()
 }

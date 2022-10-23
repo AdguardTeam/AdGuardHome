@@ -121,7 +121,7 @@ const ClientCell = ({
                     {options.map(({ name, onClick, disabled }) => (
                         <button
                             key={name}
-                            className="button-action--arrow-option px-4 py-1"
+                            className="button-action--arrow-option px-4 py-2"
                             onClick={onClick}
                             disabled={disabled}
                         >

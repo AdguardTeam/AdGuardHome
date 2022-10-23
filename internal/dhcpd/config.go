@@ -3,12 +3,12 @@ package dhcpd
 import (
 	"fmt"
 	"net"
-	"net/netip"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/netutil"
 )
 
 // ServerConfig is the configuration for the DHCP server.  The order of YAML
@@ -65,16 +65,16 @@ type V4ServerConf struct {
 	Enabled       bool   `yaml:"-" json:"-"`
 	InterfaceName string `yaml:"-" json:"-"`
 
-	GatewayIP  netip.Addr `yaml:"gateway_ip" json:"gateway_ip"`
-	SubnetMask netip.Addr `yaml:"subnet_mask" json:"subnet_mask"`
+	GatewayIP  net.IP `yaml:"gateway_ip" json:"gateway_ip"`
+	SubnetMask net.IP `yaml:"subnet_mask" json:"subnet_mask"`
 	// broadcastIP is the broadcasting address pre-calculated from the
 	// configured gateway IP and subnet mask.
-	broadcastIP netip.Addr
+	broadcastIP net.IP
 
 	// The first & the last IP address for dynamic leases
 	// Bytes [0..2] of the last allowed IP address must match the first IP
-	RangeStart netip.Addr `yaml:"range_start" json:"range_start"`
-	RangeEnd   netip.Addr `yaml:"range_end" json:"range_end"`
+	RangeStart net.IP `yaml:"range_start" json:"range_start"`
+	RangeEnd   net.IP `yaml:"range_end" json:"range_end"`
 
 	LeaseDuration uint32 `yaml:"lease_duration" json:"lease_duration"` // in seconds
 
@@ -95,11 +95,11 @@ type V4ServerConf struct {
 	ipRange *ipRange
 
 	leaseTime  time.Duration // the time during which a dynamic lease is considered valid
-	dnsIPAddrs []netip.Addr  // IPv4 addresses to return to DHCP clients as DNS server addresses
+	dnsIPAddrs []net.IP      // IPv4 addresses to return to DHCP clients as DNS server addresses
 
 	// subnet contains the DHCP server's subnet.  The IP is the IP of the
 	// gateway.
-	subnet netip.Prefix
+	subnet *net.IPNet
 
 	// notify is a way to signal to other components that leases have been
 	// changed.  notify must be called outside of locked sections, since the
@@ -113,12 +113,16 @@ type V4ServerConf struct {
 // errNilConfig is an error returned by validation method if the config is nil.
 const errNilConfig errors.Error = "nil config"
 
-// ensureV4 returns an unmapped version of ip.  An error is returned if the
-// passed ip is not an IPv4.
-func ensureV4(ip netip.Addr, kind string) (ip4 netip.Addr, err error) {
-	ip4 = ip.Unmap()
-	if !ip4.IsValid() || !ip4.Is4() {
-		return netip.Addr{}, fmt.Errorf("%v is not an IPv4 %s", ip, kind)
+// ensureV4 returns a 4-byte version of ip.  An error is returned if the passed
+// ip is not an IPv4.
+func ensureV4(ip net.IP) (ip4 net.IP, err error) {
+	if ip == nil {
+		return nil, fmt.Errorf("%v is not an IP address", ip)
+	}
+
+	ip4 = ip.To4()
+	if ip4 == nil {
+		return nil, fmt.Errorf("%v is not an IPv4 address", ip)
 	}
 
 	return ip4, nil
@@ -135,45 +139,33 @@ func (c *V4ServerConf) Validate() (err error) {
 		return errNilConfig
 	}
 
-	gatewayIP, err := ensureV4(c.GatewayIP, "address")
+	var gatewayIP net.IP
+	gatewayIP, err = ensureV4(c.GatewayIP)
 	if err != nil {
-		// Don't wrap an errors since it's informative enough as is and there is
+		// Don't wrap an errors since it's inforative enough as is and there is
 		// an annotation deferred already.
 		return err
 	}
 
-	subnetMask, err := ensureV4(c.SubnetMask, "subnet mask")
-	if err != nil {
-		// Don't wrap an errors since it's informative enough as is and there is
-		// an annotation deferred already.
-		return err
+	if c.SubnetMask == nil {
+		return fmt.Errorf("invalid subnet mask: %v", c.SubnetMask)
 	}
-	maskLen, _ := net.IPMask(subnetMask.AsSlice()).Size()
 
-	c.subnet = netip.PrefixFrom(gatewayIP, maskLen)
-	c.broadcastIP = aghnet.BroadcastFromPref(c.subnet)
-
-	rangeStart, err := ensureV4(c.RangeStart, "address")
-	if err != nil {
-		// Don't wrap an errors since it's informative enough as is and there is
-		// an annotation deferred already.
-		return err
+	subnetMask := net.IPMask(netutil.CloneIP(c.SubnetMask.To4()))
+	c.subnet = &net.IPNet{
+		IP:   gatewayIP,
+		Mask: subnetMask,
 	}
-	rangeEnd, err := ensureV4(c.RangeEnd, "address")
+	c.broadcastIP = aghnet.BroadcastFromIPNet(c.subnet)
+
+	c.ipRange, err = newIPRange(c.RangeStart, c.RangeEnd)
 	if err != nil {
-		// Don't wrap an errors since it's informative enough as is and there is
+		// Don't wrap an errors since it's inforative enough as is and there is
 		// an annotation deferred already.
 		return err
 	}
 
-	c.ipRange, err = newIPRange(rangeStart.AsSlice(), rangeEnd.AsSlice())
-	if err != nil {
-		// Don't wrap an errors since it's informative enough as is and there is
-		// an annotation deferred already.
-		return err
-	}
-
-	if c.ipRange.contains(gatewayIP.AsSlice()) {
+	if c.ipRange.contains(gatewayIP) {
 		return fmt.Errorf("gateway ip %v in the ip range: %v-%v",
 			gatewayIP,
 			c.RangeStart,
@@ -181,14 +173,14 @@ func (c *V4ServerConf) Validate() (err error) {
 		)
 	}
 
-	if !c.subnet.Contains(rangeStart) {
+	if !c.subnet.Contains(c.RangeStart) {
 		return fmt.Errorf("range start %v is outside network %v",
 			c.RangeStart,
 			c.subnet,
 		)
 	}
 
-	if !c.subnet.Contains(rangeEnd) {
+	if !c.subnet.Contains(c.RangeEnd) {
 		return fmt.Errorf("range end %v is outside network %v",
 			c.RangeEnd,
 			c.subnet,

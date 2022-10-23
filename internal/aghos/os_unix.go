@@ -9,16 +9,8 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func notifyReconfigureSignal(c chan<- os.Signal) {
-	signal.Notify(c, unix.SIGHUP)
-}
-
 func notifyShutdownSignal(c chan<- os.Signal) {
 	signal.Notify(c, unix.SIGINT, unix.SIGQUIT, unix.SIGTERM)
-}
-
-func isReconfigureSignal(sig os.Signal) (ok bool) {
-	return sig == unix.SIGHUP
 }
 
 func isShutdownSignal(sig os.Signal) (ok bool) {

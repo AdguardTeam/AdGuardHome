@@ -56,6 +56,7 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 
 	err = validateFilterURL(fj.URL)
 	if err != nil {
+		err = fmt.Errorf("invalid url: %s", err)
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
@@ -74,10 +75,8 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 		URL:     fj.URL,
 		Name:    fj.Name,
 		white:   fj.Whitelist,
-		Filter: Filter{
-			ID: assignUniqueFilterID(),
-		},
 	}
+	filt.ID = assignUniqueFilterID()
 
 	// Download the filter contents
 	ok, err := d.update(&filt)
@@ -217,15 +216,32 @@ func (d *DNSFilter) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 		Name:    fj.Data.Name,
 		URL:     fj.Data.URL,
 	}
+	status := d.filterSetProperties(fj.URL, filt, fj.Whitelist)
+	if (status & statusFound) == 0 {
+		aghhttp.Error(r, w, http.StatusBadRequest, "URL doesn't exist")
 
-	restart, err := d.filterSetProperties(fj.URL, filt, fj.Whitelist)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if (status & statusURLExists) != 0 {
+		aghhttp.Error(r, w, http.StatusBadRequest, "URL already exists")
 
 		return
 	}
 
 	d.ConfigModified()
+
+	restart := (status & statusEnabledChanged) != 0
+	if (status&statusUpdateRequired) != 0 && fj.Data.Enabled {
+		// download new filter and apply its rules.
+		nUpdated := d.refreshFilters(!fj.Whitelist, fj.Whitelist, false)
+		// if at least 1 filter has been updated, refreshFilters() restarts the filtering automatically
+		// if not - we restart the filtering ourselves
+		restart = false
+		if nUpdated == 0 {
+			restart = true
+		}
+	}
+
 	if restart {
 		d.EnableFilters(true)
 	}

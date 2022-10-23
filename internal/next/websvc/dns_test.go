@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
-	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +28,7 @@ func TestService_HandlePatchSettingsDNS(t *testing.T) {
 	// TODO(a.garipov): Use [atomic.Bool] in Go 1.19.
 	var numStarted uint64
 	confMgr := newConfigManager()
-	confMgr.onDNS = func() (s agh.ServiceWithConfig[*dnssvc.Config]) {
+	confMgr.onDNS = func() (s websvc.ServiceWithConfig[*dnssvc.Config]) {
 		return &aghtest.ServiceWithConfig[*dnssvc.Config]{
 			OnStart: func() (err error) {
 				atomic.AddUint64(&numStarted, 1)

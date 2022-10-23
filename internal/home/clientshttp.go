@@ -179,7 +179,6 @@ func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.
 
 	if !clients.Del(cj.Name) {
 		aghhttp.Error(r, w, http.StatusBadRequest, "Client not found")
-
 		return
 	}
 

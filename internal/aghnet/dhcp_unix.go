@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"fmt"
 	"net"
-	"net/netip"
 	"os"
 	"time"
 
@@ -39,44 +38,48 @@ func checkOtherDHCP(ifaceName string) (ok4, ok6 bool, err4, err6 error) {
 }
 
 // ifaceIPv4Subnet returns the first suitable IPv4 subnetwork iface has.
-func ifaceIPv4Subnet(iface *net.Interface) (subnet netip.Prefix, err error) {
+func ifaceIPv4Subnet(iface *net.Interface) (subnet *net.IPNet, err error) {
 	var addrs []net.Addr
 	if addrs, err = iface.Addrs(); err != nil {
-		return netip.Prefix{}, err
+		return nil, err
 	}
 
 	for _, a := range addrs {
-		var ip net.IP
-		var maskLen int
 		switch a := a.(type) {
 		case *net.IPAddr:
-			ip = a.IP
-			maskLen, _ = ip.DefaultMask().Size()
+			subnet = &net.IPNet{
+				IP:   a.IP,
+				Mask: a.IP.DefaultMask(),
+			}
 		case *net.IPNet:
-			ip = a.IP
-			maskLen, _ = a.Mask.Size()
+			subnet = a
 		default:
 			continue
 		}
 
-		if ip = ip.To4(); ip != nil {
-			return netip.PrefixFrom(netip.AddrFrom4(*(*[4]byte)(ip)), maskLen), nil
+		if ip4 := subnet.IP.To4(); ip4 != nil {
+			subnet.IP = ip4
+
+			return subnet, nil
 		}
 	}
 
-	return netip.Prefix{}, fmt.Errorf("interface %s has no ipv4 addresses", iface.Name)
+	return nil, fmt.Errorf("interface %s has no ipv4 addresses", iface.Name)
 }
 
 // checkOtherDHCPv4 sends a DHCP request to the specified network interface, and
 // waits for a response for a period defined by defaultDiscoverTime.
 func checkOtherDHCPv4(iface *net.Interface) (ok bool, err error) {
-	var subnet netip.Prefix
+	var subnet *net.IPNet
 	if subnet, err = ifaceIPv4Subnet(iface); err != nil {
 		return false, err
 	}
 
 	// Resolve broadcast addr.
-	dst := netip.AddrPortFrom(BroadcastFromPref(subnet), 67).String()
+	dst := netutil.IPPort{
+		IP:   BroadcastFromIPNet(subnet),
+		Port: 67,
+	}.String()
 	var dstAddr *net.UDPAddr
 	if dstAddr, err = net.ResolveUDPAddr("udp4", dst); err != nil {
 		return false, fmt.Errorf("couldn't resolve UDP address %s: %w", dst, err)

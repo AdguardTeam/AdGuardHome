@@ -1,48 +1,7 @@
 // Package aghtls contains utilities for work with TLS.
 package aghtls
 
-import (
-	"crypto/tls"
-	"fmt"
-
-	"github.com/AdguardTeam/golibs/log"
-)
-
-// init makes sure that the cipher name map is filled.
-//
-// TODO(a.garipov): Propose a similar API to crypto/tls.
-func init() {
-	suites := tls.CipherSuites()
-	cipherSuites = make(map[string]uint16, len(suites))
-	for _, s := range suites {
-		cipherSuites[s.Name] = s.ID
-	}
-
-	log.Debug("tls: known ciphers: %q", cipherSuites)
-}
-
-// cipherSuites are a name-to-ID mapping of cipher suites from crypto/tls.  It
-// is filled by init.  It must not be modified.
-var cipherSuites map[string]uint16
-
-// ParseCiphers parses a slice of cipher suites from cipher names.
-func ParseCiphers(cipherNames []string) (cipherIDs []uint16, err error) {
-	if cipherNames == nil {
-		return nil, nil
-	}
-
-	cipherIDs = make([]uint16, 0, len(cipherNames))
-	for _, name := range cipherNames {
-		id, ok := cipherSuites[name]
-		if !ok {
-			return nil, fmt.Errorf("unknown cipher %q", name)
-		}
-
-		cipherIDs = append(cipherIDs, id)
-	}
-
-	return cipherIDs, nil
-}
+import "crypto/tls"
 
 // SaferCipherSuites returns a set of default cipher suites with vulnerable and
 // weak cipher suites removed.

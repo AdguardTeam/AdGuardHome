@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/netip"
 	"syscall"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 )
 
 // Variables and functions to substitute in tests.
@@ -31,12 +31,6 @@ var (
 // the IP being static is available.
 const ErrNoStaticIPInfo errors.Error = "no information about static ip"
 
-// IPv4Localhost returns 127.0.0.1, which returns true for [netip.Addr.Is4].
-func IPv4Localhost() (ip netip.Addr) { return netip.AddrFrom4([4]byte{127, 0, 0, 1}) }
-
-// IPv6Localhost returns ::1, which returns true for [netip.Addr.Is6].
-func IPv6Localhost() (ip netip.Addr) { return netip.AddrFrom16([16]byte{15: 1}) }
-
 // IfaceHasStaticIP checks if interface is configured to have static IP address.
 // If it can't give a definitive answer, it returns false and an error for which
 // errors.Is(err, ErrNoStaticIPInfo) is true.
@@ -53,31 +47,26 @@ func IfaceSetStaticIP(ifaceName string) (err error) {
 //
 // TODO(e.burkov):  Investigate if the gateway address may be fetched in another
 // way since not every machine has the software installed.
-func GatewayIP(ifaceName string) (ip netip.Addr) {
+func GatewayIP(ifaceName string) (ip net.IP) {
 	code, out, err := aghosRunCommand("ip", "route", "show", "dev", ifaceName)
 	if err != nil {
 		log.Debug("%s", err)
 
-		return netip.Addr{}
+		return nil
 	} else if code != 0 {
 		log.Debug("fetching gateway ip: unexpected exit code: %d", code)
 
-		return netip.Addr{}
+		return nil
 	}
 
 	fields := bytes.Fields(out)
 	// The meaningful "ip route" command output should contain the word
 	// "default" at first field and default gateway IP address at third field.
 	if len(fields) < 3 || string(fields[0]) != "default" {
-		return netip.Addr{}
+		return nil
 	}
 
-	ip, err = netip.ParseAddr(string(fields[2]))
-	if err != nil {
-		return netip.Addr{}
-	}
-
-	return ip
+	return net.ParseIP(string(fields[2]))
 }
 
 // CanBindPrivilegedPorts checks if current process can bind to privileged
@@ -89,9 +78,9 @@ func CanBindPrivilegedPorts() (can bool, err error) {
 // NetInterface represents an entry of network interfaces map.
 type NetInterface struct {
 	// Addresses are the network interface addresses.
-	Addresses []netip.Addr `json:"ip_addresses,omitempty"`
+	Addresses []net.IP `json:"ip_addresses,omitempty"`
 	// Subnets are the IP networks for this network interface.
-	Subnets      []netip.Prefix   `json:"-"`
+	Subnets      []*net.IPNet     `json:"-"`
 	Name         string           `json:"name"`
 	HardwareAddr net.HardwareAddr `json:"hardware_address"`
 	Flags        net.Flags        `json:"flags"`
@@ -112,79 +101,57 @@ func (iface NetInterface) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func NetInterfaceFrom(iface *net.Interface) (niface *NetInterface, err error) {
-	niface = &NetInterface{
-		Name:         iface.Name,
-		HardwareAddr: iface.HardwareAddr,
-		Flags:        iface.Flags,
-		MTU:          iface.MTU,
-	}
-
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get addresses for interface %s: %w", iface.Name, err)
-	}
-
-	// Collect network interface addresses.
-	for _, addr := range addrs {
-		n, ok := addr.(*net.IPNet)
-		if !ok {
-			// Should be *net.IPNet, this is weird.
-			return nil, fmt.Errorf("expected %[2]s to be %[1]T, got %[2]T", n, addr)
-		} else if ip4 := n.IP.To4(); ip4 != nil {
-			n.IP = ip4
-		}
-
-		ip, ok := netip.AddrFromSlice(n.IP)
-		if !ok {
-			return nil, fmt.Errorf("bad address %s", n.IP)
-		}
-
-		ip = ip.Unmap()
-		if ip.IsLinkLocalUnicast() {
-			// Ignore link-local IPv4.
-			if ip.Is4() {
-				continue
-			}
-
-			ip = ip.WithZone(iface.Name)
-		}
-
-		ones, _ := n.Mask.Size()
-		p := netip.PrefixFrom(ip, ones)
-
-		niface.Addresses = append(niface.Addresses, ip)
-		niface.Subnets = append(niface.Subnets, p)
-	}
-
-	return niface, nil
-}
-
 // GetValidNetInterfacesForWeb returns interfaces that are eligible for DNS and
 // WEB only we do not return link-local addresses here.
 //
 // TODO(e.burkov):  Can't properly test the function since it's nontrivial to
 // substitute net.Interface.Addrs and the net.InterfaceAddrs can't be used.
-func GetValidNetInterfacesForWeb() (nifaces []*NetInterface, err error) {
+func GetValidNetInterfacesForWeb() (netIfaces []*NetInterface, err error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return nil, fmt.Errorf("getting interfaces: %w", err)
+		return nil, fmt.Errorf("couldn't get interfaces: %w", err)
 	} else if len(ifaces) == 0 {
-		return nil, errors.Error("no legible interfaces")
+		return nil, errors.Error("couldn't find any legible interface")
 	}
 
-	for i := range ifaces {
-		var niface *NetInterface
-		niface, err = NetInterfaceFrom(&ifaces[i])
+	for _, iface := range ifaces {
+		var addrs []net.Addr
+		addrs, err = iface.Addrs()
 		if err != nil {
-			return nil, err
-		} else if len(niface.Addresses) != 0 {
-			// Discard interfaces with no addresses.
-			nifaces = append(nifaces, niface)
+			return nil, fmt.Errorf("failed to get addresses for interface %s: %w", iface.Name, err)
+		}
+
+		netIface := &NetInterface{
+			MTU:          iface.MTU,
+			Name:         iface.Name,
+			HardwareAddr: iface.HardwareAddr,
+			Flags:        iface.Flags,
+		}
+
+		// Collect network interface addresses.
+		for _, addr := range addrs {
+			ipNet, ok := addr.(*net.IPNet)
+			if !ok {
+				// Should be net.IPNet, this is weird.
+				return nil, fmt.Errorf("got %s that is not net.IPNet, it is %T", addr, addr)
+			}
+
+			// Ignore link-local.
+			if ipNet.IP.IsLinkLocalUnicast() {
+				continue
+			}
+
+			netIface.Addresses = append(netIface.Addresses, ipNet.IP)
+			netIface.Subnets = append(netIface.Subnets, ipNet)
+		}
+
+		// Discard interfaces with no addresses.
+		if len(netIface.Addresses) != 0 {
+			netIfaces = append(netIfaces, netIface)
 		}
 	}
 
-	return nifaces, nil
+	return netIfaces, nil
 }
 
 // InterfaceByIP returns the name of the interface bound to ip.
@@ -193,7 +160,7 @@ func GetValidNetInterfacesForWeb() (nifaces []*NetInterface, err error) {
 // IP address can be shared by multiple interfaces in some configurations.
 //
 // TODO(e.burkov):  See TODO on GetValidNetInterfacesForWeb.
-func InterfaceByIP(ip netip.Addr) (ifaceName string) {
+func InterfaceByIP(ip net.IP) (ifaceName string) {
 	ifaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
 		return ""
@@ -201,7 +168,7 @@ func InterfaceByIP(ip netip.Addr) (ifaceName string) {
 
 	for _, iface := range ifaces {
 		for _, addr := range iface.Addresses {
-			if ip == addr {
+			if ip.Equal(addr) {
 				return iface.Name
 			}
 		}
@@ -210,16 +177,15 @@ func InterfaceByIP(ip netip.Addr) (ifaceName string) {
 	return ""
 }
 
-// GetSubnet returns the subnet corresponding to the interface of zero prefix if
+// GetSubnet returns pointer to net.IPNet for the specified interface or nil if
 // the search fails.
 //
 // TODO(e.burkov):  See TODO on GetValidNetInterfacesForWeb.
-func GetSubnet(ifaceName string) (p netip.Prefix) {
+func GetSubnet(ifaceName string) *net.IPNet {
 	netIfaces, err := GetValidNetInterfacesForWeb()
 	if err != nil {
 		log.Error("Could not get network interfaces info: %v", err)
-
-		return p
+		return nil
 	}
 
 	for _, netIface := range netIfaces {
@@ -228,14 +194,14 @@ func GetSubnet(ifaceName string) (p netip.Prefix) {
 		}
 	}
 
-	return p
+	return nil
 }
 
 // CheckPort checks if the port is available for binding.  network is expected
 // to be one of "udp" and "tcp".
-func CheckPort(network string, ipp netip.AddrPort) (err error) {
+func CheckPort(network string, ip net.IP, port int) (err error) {
 	var c io.Closer
-	addr := ipp.String()
+	addr := netutil.IPPort{IP: ip, Port: port}.String()
 	switch network {
 	case "tcp":
 		c, err = net.Listen(network, addr)
@@ -285,23 +251,18 @@ func CollectAllIfacesAddrs() (addrs []string, err error) {
 	return addrs, nil
 }
 
-// BroadcastFromPref calculates the broadcast IP address for p.
-func BroadcastFromPref(p netip.Prefix) (bc netip.Addr) {
-	bc = p.Addr().Unmap()
-	if !bc.IsValid() {
-		return netip.Addr{}
+// BroadcastFromIPNet calculates the broadcast IP address for n.
+func BroadcastFromIPNet(n *net.IPNet) (dc net.IP) {
+	dc = netutil.CloneIP(n.IP)
+
+	mask := n.Mask
+	if mask == nil {
+		mask = dc.DefaultMask()
 	}
 
-	maskLen, addrLen := p.Bits(), bc.BitLen()
-	if maskLen == addrLen {
-		return bc
+	for i, b := range mask {
+		dc[i] |= ^b
 	}
 
-	ipBytes := bc.AsSlice()
-	for i := maskLen; i < addrLen; i++ {
-		ipBytes[i/8] |= 1 << (7 - (i % 8))
-	}
-	bc, _ = netip.AddrFromSlice(ipBytes)
-
-	return bc
+	return dc
 }

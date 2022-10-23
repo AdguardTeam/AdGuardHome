@@ -1,4 +1,6 @@
 // Package agh contains common entities and interfaces of AdGuard Home.
+//
+// TODO(a.garipov): Move to the upper-level internal/.
 package agh
 
 import "context"
@@ -21,43 +23,11 @@ type Service interface {
 // type check
 var _ Service = EmptyService{}
 
-// EmptyService is a [Service] that does nothing.
-//
-// TODO(a.garipov): Remove if unnecessary.
+// EmptyService is a Service that does nothing.
 type EmptyService struct{}
 
-// Start implements the [Service] interface for EmptyService.
+// Start implements the Service interface for EmptyService.
 func (EmptyService) Start() (err error) { return nil }
 
-// Shutdown implements the [Service] interface for EmptyService.
+// Shutdown implements the Service interface for EmptyService.
 func (EmptyService) Shutdown(_ context.Context) (err error) { return nil }
-
-// ServiceWithConfig is an extension of the [Service] interface for services
-// that can return their configuration.
-//
-// TODO(a.garipov): Consider removing this generic interface if we figure out
-// how to make it testable in a better way.
-type ServiceWithConfig[ConfigType any] interface {
-	Service
-
-	Config() (c ConfigType)
-}
-
-// type check
-var _ ServiceWithConfig[struct{}] = (*EmptyServiceWithConfig[struct{}])(nil)
-
-// EmptyServiceWithConfig is a ServiceWithConfig that does nothing.  Its Config
-// method returns Conf.
-//
-// TODO(a.garipov): Remove if unnecessary.
-type EmptyServiceWithConfig[ConfigType any] struct {
-	EmptyService
-
-	Conf ConfigType
-}
-
-// Config implements the [ServiceWithConfig] interface for
-// *EmptyServiceWithConfig.
-func (s *EmptyServiceWithConfig[ConfigType]) Config() (conf ConfigType) {
-	return s.Conf
-}

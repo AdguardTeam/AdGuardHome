@@ -584,7 +584,7 @@
     "blocklist": "Blokkeringsliste",
     "milliseconds_abbreviation": "ms",
     "cache_size": "Mellomlagerstørrelse",
-    "cache_size_desc": "DNS-bufferstørrelse (i byte). For å deaktivere caching, la stå tomt.",
+    "cache_size_desc": "DNS-mellomlagerstørrelse (i bytes)",
     "cache_ttl_min_override": "Overstyr minimumslevetiden",
     "cache_ttl_max_override": "Overstyr maksimallevetiden",
     "enter_cache_size": "Skriv inn mellomlagerstørrelse (i bytes)",

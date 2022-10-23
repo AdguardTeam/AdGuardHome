@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/netip"
 	"os"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
@@ -18,11 +17,11 @@ import (
 )
 
 type v4ServerConfJSON struct {
-	GatewayIP     netip.Addr `json:"gateway_ip"`
-	SubnetMask    netip.Addr `json:"subnet_mask"`
-	RangeStart    netip.Addr `json:"range_start"`
-	RangeEnd      netip.Addr `json:"range_end"`
-	LeaseDuration uint32     `json:"lease_duration"`
+	GatewayIP     net.IP `json:"gateway_ip"`
+	SubnetMask    net.IP `json:"subnet_mask"`
+	RangeStart    net.IP `json:"range_start"`
+	RangeEnd      net.IP `json:"range_end"`
+	LeaseDuration uint32 `json:"lease_duration"`
 }
 
 func (j *v4ServerConfJSON) toServerConf() *V4ServerConf {
@@ -40,8 +39,8 @@ func (j *v4ServerConfJSON) toServerConf() *V4ServerConf {
 }
 
 type v6ServerConfJSON struct {
-	RangeStart    netip.Addr `json:"range_start"`
-	LeaseDuration uint32     `json:"lease_duration"`
+	RangeStart    net.IP `json:"range_start"`
+	LeaseDuration uint32 `json:"lease_duration"`
 }
 
 func v6JSONToServerConf(j *v6ServerConfJSON) V6ServerConf {
@@ -50,7 +49,7 @@ func v6JSONToServerConf(j *v6ServerConfJSON) V6ServerConf {
 	}
 
 	return V6ServerConf{
-		RangeStart:    j.RangeStart.AsSlice(),
+		RangeStart:    j.RangeStart,
 		LeaseDuration: j.LeaseDuration,
 	}
 }
@@ -145,7 +144,7 @@ func (s *server) handleDHCPSetConfigV4(
 
 	v4Conf := conf.V4.toServerConf()
 	v4Conf.Enabled = conf.Enabled == aghalg.NBTrue
-	if !v4Conf.RangeStart.IsValid() {
+	if len(v4Conf.RangeStart) == 0 {
 		v4Conf.Enabled = false
 	}
 
@@ -276,12 +275,12 @@ func (s *server) setConfFromJSON(conf *dhcpServerConfigJSON, srv4, srv6 DHCPServ
 }
 
 type netInterfaceJSON struct {
-	Name         string       `json:"name"`
-	HardwareAddr string       `json:"hardware_address"`
-	Flags        string       `json:"flags"`
-	GatewayIP    netip.Addr   `json:"gateway_ip"`
-	Addrs4       []netip.Addr `json:"ipv4_addresses"`
-	Addrs6       []netip.Addr `json:"ipv6_addresses"`
+	Name         string   `json:"name"`
+	HardwareAddr string   `json:"hardware_address"`
+	Flags        string   `json:"flags"`
+	GatewayIP    net.IP   `json:"gateway_ip"`
+	Addrs4       []net.IP `json:"ipv4_addresses"`
+	Addrs6       []net.IP `json:"ipv6_addresses"`
 }
 
 func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
@@ -342,18 +341,13 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			// ignore link-local
-			//
-			// TODO(e.burkov):  Try to listen DHCP on LLA as well.
 			if ipnet.IP.IsLinkLocalUnicast() {
 				continue
 			}
-
-			if ip4 := ipnet.IP.To4(); ip4 != nil {
-				addr := netip.AddrFrom4(*(*[4]byte)(ip4))
-				jsonIface.Addrs4 = append(jsonIface.Addrs4, addr)
+			if ipnet.IP.To4() != nil {
+				jsonIface.Addrs4 = append(jsonIface.Addrs4, ipnet.IP)
 			} else {
-				addr := netip.AddrFrom16(*(*[16]byte)(ipnet.IP))
-				jsonIface.Addrs6 = append(jsonIface.Addrs6, addr)
+				jsonIface.Addrs6 = append(jsonIface.Addrs6, ipnet.IP)
 			}
 		}
 		if len(jsonIface.Addrs4)+len(jsonIface.Addrs6) != 0 {

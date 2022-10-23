@@ -124,11 +124,11 @@ GO111MODULE='on'
 export CGO_ENABLED GO111MODULE
 
 # Build the new binary if requested.
-if [ "${NEXTAPI:-0}" -eq '0' ]
+if [ "${V1API:-0}" -eq '0' ]
 then
 	tags_flags='--tags='
 else
-	tags_flags='--tags=next'
+	tags_flags='--tags=v1'
 fi
 readonly tags_flags
 

@@ -13,7 +13,6 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
-	"golang.org/x/exp/slices"
 )
 
 // To transfer information between modules
@@ -238,7 +237,7 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 			}
 
 			lowhost := strings.ToLower(l.Hostname + "." + s.localDomainSuffix)
-			ip := slices.Clone(l.IP)
+			ip := netutil.CloneIP(l.IP)
 
 			ipToHost.Set(ip, lowhost)
 			hostToIP[lowhost] = ip

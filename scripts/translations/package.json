@@ -2,8 +2,8 @@
   "name": "translations",
   "version": "0.2.0",
   "scripts": {
-    "locales:download": "TWOSKY_URI=https://twosky.int.agrd.dev/api/v1 TWOSKY_PROJECT_ID=home node download.js ; node count.js",
-    "locales:upload": "TWOSKY_URI=https://twosky.int.agrd.dev/api/v1 TWOSKY_PROJECT_ID=home node upload.js",
+    "locales:download": "TWOSKY_URI=https://twosky.adtidy.org/api/v1 TWOSKY_PROJECT_ID=home node download.js ; node count.js",
+    "locales:upload": "TWOSKY_URI=https://twosky.adtidy.org/api/v1 TWOSKY_PROJECT_ID=home node upload.js",
     "locales:summary": "node count.js",
     "locales:unused": "node unused.js"
   },

@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"fmt"
 	"net"
-	"net/netip"
 	"strings"
 	"sync"
 	"time"
@@ -296,8 +295,7 @@ func (s *v4Server) addLease(l *Lease) (err error) {
 	if l.IsStatic() {
 		// TODO(a.garipov, d.seregin): Subnet can be nil when dhcp server is
 		// disabled.
-		addr := netip.AddrFrom4(*(*[4]byte)(l.IP.To4()))
-		if sn := s.conf.subnet; !sn.Contains(addr) {
+		if sn := s.conf.subnet; !sn.Contains(l.IP) {
 			return fmt.Errorf("subnet %s does not contain the ip %q", sn, l.IP)
 		}
 	} else if !inOffset {
@@ -355,7 +353,7 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 	ip := l.IP.To4()
 	if ip == nil {
 		return fmt.Errorf("invalid ip %q, only ipv4 is supported", l.IP)
-	} else if gwIP := s.conf.GatewayIP; gwIP == netip.AddrFrom4(*(*[4]byte)(ip)) {
+	} else if gwIP := s.conf.GatewayIP; gwIP.Equal(ip) {
 		return fmt.Errorf("can't assign the gateway IP %s to the lease", gwIP)
 	}
 
@@ -703,8 +701,7 @@ func (s *v4Server) handleSelecting(
 	// Client inserts the address of the selected server in server identifier,
 	// ciaddr MUST be zero.
 	mac := req.ClientHWAddr
-
-	if !sid.Equal(s.conf.dnsIPAddrs[0].AsSlice()) {
+	if !sid.Equal(s.conf.dnsIPAddrs[0]) {
 		log.Debug("dhcpv4: bad server identifier in req msg for %s: %s", mac, sid)
 
 		return nil, false
@@ -736,8 +733,7 @@ func (s *v4Server) handleSelecting(
 func (s *v4Server) handleInitReboot(req *dhcpv4.DHCPv4, reqIP net.IP) (l *Lease, needsReply bool) {
 	mac := req.ClientHWAddr
 
-	ip4 := reqIP.To4()
-	if ip4 == nil {
+	if ip4 := reqIP.To4(); ip4 == nil {
 		log.Debug("dhcpv4: bad requested address in req msg for %s: %s", mac, reqIP)
 
 		return nil, false
@@ -751,7 +747,7 @@ func (s *v4Server) handleInitReboot(req *dhcpv4.DHCPv4, reqIP net.IP) (l *Lease,
 		return nil, false
 	}
 
-	if !s.conf.subnet.Contains(netip.AddrFrom4(*(*[4]byte)(ip4))) {
+	if !s.conf.subnet.Contains(reqIP) {
 		// If the DHCP server detects that the client is on the wrong net then
 		// the server SHOULD send a DHCPNAK message to the client.
 		log.Debug("dhcpv4: wrong subnet in init-reboot req msg for %s: %s", mac, reqIP)
@@ -976,7 +972,7 @@ func (s *v4Server) handle(req, resp *dhcpv4.DHCPv4) int {
 	// Include server's identifier option since any reply should contain it.
 	//
 	// See https://datatracker.ietf.org/doc/html/rfc2131#page-29.
-	resp.UpdateOption(dhcpv4.OptServerIdentifier(s.conf.dnsIPAddrs[0].AsSlice()))
+	resp.UpdateOption(dhcpv4.OptServerIdentifier(s.conf.dnsIPAddrs[0]))
 
 	// TODO(a.garipov): Refactor this into handlers.
 	var l *Lease
@@ -1018,7 +1014,7 @@ func (s *v4Server) handle(req, resp *dhcpv4.DHCPv4) int {
 	}
 
 	if l != nil {
-		resp.YourIPAddr = slices.Clone(l.IP)
+		resp.YourIPAddr = netutil.CloneIP(l.IP)
 	}
 
 	s.updateOptions(req, resp)
@@ -1192,14 +1188,7 @@ func (s *v4Server) Start() (err error) {
 		s.implicitOpts.Update(dhcpv4.OptDNS(dnsIPAddrs...))
 	}
 
-	for _, ip := range dnsIPAddrs {
-		ip = ip.To4()
-		if ip == nil {
-			continue
-		}
-
-		s.conf.dnsIPAddrs = append(s.conf.dnsIPAddrs, netip.AddrFrom4(*(*[4]byte)(ip)))
-	}
+	s.conf.dnsIPAddrs = dnsIPAddrs
 
 	var c net.PacketConn
 	if c, err = s.newDHCPConn(iface); err != nil {

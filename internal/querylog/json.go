@@ -9,8 +9,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
-	"golang.org/x/exp/slices"
 	"golang.org/x/net/idna"
 )
 
@@ -55,14 +55,14 @@ func (l *queryLog) entryToJSON(entry *logEntry, anonFunc aghnet.IPMutFunc) (json
 		question["unicode_name"] = qhost
 	}
 
-	entIP := slices.Clone(entry.IP)
-	anonFunc(entIP)
+	eip := netutil.CloneIP(entry.IP)
+	anonFunc(eip)
 
 	jsonEntry = jobject{
 		"reason":       entry.Result.Reason.String(),
 		"elapsedMs":    strconv.FormatFloat(entry.Elapsed.Seconds()*1000, 'f', -1, 64),
 		"time":         entry.Time.Format(time.RFC3339Nano),
-		"client":       entIP,
+		"client":       eip,
 		"client_proto": entry.ClientProto,
 		"cached":       entry.Cached,
 		"upstream":     entry.Upstream,
@@ -70,7 +70,7 @@ func (l *queryLog) entryToJSON(entry *logEntry, anonFunc aghnet.IPMutFunc) (json
 		"rules":        resultRulesToJSONRules(entry.Result.Rules),
 	}
 
-	if entIP.Equal(entry.IP) {
+	if eip.Equal(entry.IP) {
 		jsonEntry["client_info"] = entry.client
 	}
 

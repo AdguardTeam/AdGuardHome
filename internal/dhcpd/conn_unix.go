@@ -73,10 +73,10 @@ func (s *v4Server) newDHCPConn(iface *net.Interface) (c net.PacketConn, err erro
 
 	return &dhcpConn{
 		udpConn: bcast,
-		bcastIP: s.conf.broadcastIP.AsSlice(),
+		bcastIP: s.conf.broadcastIP,
 		rawConn: ucast,
 		srcMAC:  iface.HardwareAddr,
-		srcIP:   s.conf.dnsIPAddrs[0].AsSlice(),
+		srcIP:   s.conf.dnsIPAddrs[0],
 	}, nil
 }
 

@@ -3,7 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.18
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.46.1
+	github.com/AdguardTeam/dnsproxy v0.45.2
 	github.com/AdguardTeam/golibs v0.10.9
 	github.com/AdguardTeam/urlfilter v0.16.0
 	github.com/NYTimes/gziphandler v1.1.1
@@ -18,7 +18,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/insomniacslk/dhcp v0.0.0-20220822114210-de18a9d48e84
 	github.com/kardianos/service v1.2.1
-	github.com/lucas-clemente/quic-go v0.29.2
+	github.com/lucas-clemente/quic-go v0.29.1
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/netlink v1.6.0
 	// TODO(a.garipov): This package is deprecated; find a new one or use
@@ -49,8 +49,8 @@ require (
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/josharian/native v1.0.0 // indirect
 	github.com/marten-seemann/qpack v0.2.1 // indirect
-	github.com/marten-seemann/qtls-go1-18 v0.1.3 // indirect
-	github.com/marten-seemann/qtls-go1-19 v0.1.1 // indirect
+	github.com/marten-seemann/qtls-go1-18 v0.1.2 // indirect
+	github.com/marten-seemann/qtls-go1-19 v0.1.0 // indirect
 	github.com/mdlayher/packet v1.0.0 // indirect
 	github.com/mdlayher/socket v0.2.3 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect

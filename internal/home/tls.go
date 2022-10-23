@@ -14,6 +14,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -26,256 +28,216 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-// tlsManager contains the current configuration and state of AdGuard Home TLS
-// encryption.
-type tlsManager struct {
-	// status is the current status of the configuration.  It is never nil.
-	status *tlsConfigStatus
+var tlsWebHandlersRegistered = false
 
-	// certLastMod is the last modification time of the certificate file.
-	certLastMod time.Time
-
-	confLock sync.Mutex
-	conf     tlsConfigSettings
+// TLSMod - TLS module object
+type TLSMod struct {
+	certLastMod time.Time // last modification time of the certificate file
+	status      tlsConfigStatus
+	confLock    sync.Mutex
+	conf        tlsConfigSettings
 }
 
-// newTLSManager initializes the TLS configuration.
-func newTLSManager(conf tlsConfigSettings) (m *tlsManager, err error) {
-	m = &tlsManager{
-		status: &tlsConfigStatus{},
-		conf:   conf,
-	}
-
-	if m.conf.Enabled {
-		err = m.load()
-		if err != nil {
-			return nil, err
+// Create TLS module
+func tlsCreate(conf tlsConfigSettings) *TLSMod {
+	t := &TLSMod{}
+	t.conf = conf
+	if t.conf.Enabled {
+		if !t.load() {
+			// Something is not valid - return an empty TLS config
+			return &TLSMod{conf: tlsConfigSettings{
+				Enabled:             conf.Enabled,
+				ServerName:          conf.ServerName,
+				PortHTTPS:           conf.PortHTTPS,
+				PortDNSOverTLS:      conf.PortDNSOverTLS,
+				PortDNSOverQUIC:     conf.PortDNSOverQUIC,
+				AllowUnencryptedDoH: conf.AllowUnencryptedDoH,
+			}}
 		}
-
-		m.setCertFileTime()
+		t.setCertFileTime()
 	}
-
-	return m, nil
+	return t
 }
 
-// load reloads the TLS configuration from files or data from the config file.
-func (m *tlsManager) load() (err error) {
-	err = loadTLSConf(&m.conf, m.status)
-	if err != nil {
-		return fmt.Errorf("loading config: %w", err)
+func (t *TLSMod) load() bool {
+	if !tlsLoadConfig(&t.conf, &t.status) {
+		log.Error("failed to load TLS config: %s", t.status.WarningValidation)
+		return false
 	}
 
-	return nil
+	// validate current TLS config and update warnings (it could have been loaded from file)
+	data := validateCertificates(string(t.conf.CertificateChainData), string(t.conf.PrivateKeyData), t.conf.ServerName)
+	if !data.ValidPair {
+		log.Error("failed to validate certificate: %s", data.WarningValidation)
+		return false
+	}
+	t.status = data
+	return true
+}
+
+// Close - close module
+func (t *TLSMod) Close() {
 }
 
 // WriteDiskConfig - write config
-func (m *tlsManager) WriteDiskConfig(conf *tlsConfigSettings) {
-	m.confLock.Lock()
-	*conf = m.conf
-	m.confLock.Unlock()
+func (t *TLSMod) WriteDiskConfig(conf *tlsConfigSettings) {
+	t.confLock.Lock()
+	*conf = t.conf
+	t.confLock.Unlock()
 }
 
-// setCertFileTime sets t.certLastMod from the certificate.  If there are
-// errors, setCertFileTime logs them.
-func (m *tlsManager) setCertFileTime() {
-	if len(m.conf.CertificatePath) == 0 {
+func (t *TLSMod) setCertFileTime() {
+	if len(t.conf.CertificatePath) == 0 {
 		return
 	}
-
-	fi, err := os.Stat(m.conf.CertificatePath)
+	fi, err := os.Stat(t.conf.CertificatePath)
 	if err != nil {
-		log.Error("tls: looking up certificate path: %s", err)
-
+		log.Error("TLS: %s", err)
 		return
 	}
-
-	m.certLastMod = fi.ModTime().UTC()
+	t.certLastMod = fi.ModTime().UTC()
 }
 
-// start updates the configuration of t and starts it.
-func (m *tlsManager) start() {
-	m.registerWebHandlers()
+// Start updates the configuration of TLSMod and starts it.
+func (t *TLSMod) Start() {
+	if !tlsWebHandlersRegistered {
+		tlsWebHandlersRegistered = true
+		t.registerWebHandlers()
+	}
 
-	m.confLock.Lock()
-	tlsConf := m.conf
-	m.confLock.Unlock()
+	t.confLock.Lock()
+	tlsConf := t.conf
+	t.confLock.Unlock()
 
-	// The background context is used because the TLSConfigChanged wraps context
-	// with timeout on its own and shuts down the server, which handles current
-	// request.
+	// The background context is used because the TLSConfigChanged wraps
+	// context with timeout on its own and shuts down the server, which
+	// handles current request.
 	Context.web.TLSConfigChanged(context.Background(), tlsConf)
 }
 
-// reload updates the configuration and restarts t.
-func (m *tlsManager) reload() {
-	m.confLock.Lock()
-	tlsConf := m.conf
-	m.confLock.Unlock()
+// Reload updates the configuration of TLSMod and restarts it.
+func (t *TLSMod) Reload() {
+	t.confLock.Lock()
+	tlsConf := t.conf
+	t.confLock.Unlock()
 
 	if !tlsConf.Enabled || len(tlsConf.CertificatePath) == 0 {
 		return
 	}
-
 	fi, err := os.Stat(tlsConf.CertificatePath)
 	if err != nil {
-		log.Error("tls: %s", err)
+		log.Error("TLS: %s", err)
+		return
+	}
+	if fi.ModTime().UTC().Equal(t.certLastMod) {
+		log.Debug("TLS: certificate file isn't modified")
+		return
+	}
+	log.Debug("TLS: certificate file is modified")
 
+	t.confLock.Lock()
+	r := t.load()
+	t.confLock.Unlock()
+	if !r {
 		return
 	}
 
-	if fi.ModTime().UTC().Equal(m.certLastMod) {
-		log.Debug("tls: certificate file isn't modified")
-
-		return
-	}
-
-	log.Debug("tls: certificate file is modified")
-
-	m.confLock.Lock()
-	err = m.load()
-	m.confLock.Unlock()
-	if err != nil {
-		log.Error("tls: reloading: %s", err)
-
-		return
-	}
-
-	m.certLastMod = fi.ModTime().UTC()
+	t.certLastMod = fi.ModTime().UTC()
 
 	_ = reconfigureDNSServer()
 
-	m.confLock.Lock()
-	tlsConf = m.conf
-	m.confLock.Unlock()
-
-	// The background context is used because the TLSConfigChanged wraps context
-	// with timeout on its own and shuts down the server, which handles current
-	// request.
+	t.confLock.Lock()
+	tlsConf = t.conf
+	t.confLock.Unlock()
+	// The background context is used because the TLSConfigChanged wraps
+	// context with timeout on its own and shuts down the server, which
+	// handles current request.
 	Context.web.TLSConfigChanged(context.Background(), tlsConf)
 }
 
-// loadTLSConf loads and validates the TLS configuration.  The returned error is
-// also set in status.WarningValidation.
-func loadTLSConf(tlsConf *tlsConfigSettings, status *tlsConfigStatus) (err error) {
-	defer func() {
+// Set certificate and private key data
+func tlsLoadConfig(tls *tlsConfigSettings, status *tlsConfigStatus) bool {
+	tls.CertificateChainData = []byte(tls.CertificateChain)
+	tls.PrivateKeyData = []byte(tls.PrivateKey)
+
+	var err error
+	if tls.CertificatePath != "" {
+		if tls.CertificateChain != "" {
+			status.WarningValidation = "certificate data and file can't be set together"
+			return false
+		}
+		tls.CertificateChainData, err = os.ReadFile(tls.CertificatePath)
 		if err != nil {
 			status.WarningValidation = err.Error()
+			return false
 		}
-	}()
-
-	tlsConf.CertificateChainData = []byte(tlsConf.CertificateChain)
-	tlsConf.PrivateKeyData = []byte(tlsConf.PrivateKey)
-
-	if tlsConf.CertificatePath != "" {
-		if tlsConf.CertificateChain != "" {
-			return errors.Error("certificate data and file can't be set together")
-		}
-
-		tlsConf.CertificateChainData, err = os.ReadFile(tlsConf.CertificatePath)
-		if err != nil {
-			return fmt.Errorf("reading cert file: %w", err)
-		}
-
 		status.ValidCert = true
 	}
 
-	if tlsConf.PrivateKeyPath != "" {
-		if tlsConf.PrivateKey != "" {
-			return errors.Error("private key data and file can't be set together")
+	if tls.PrivateKeyPath != "" {
+		if tls.PrivateKey != "" {
+			status.WarningValidation = "private key data and file can't be set together"
+			return false
 		}
-
-		tlsConf.PrivateKeyData, err = os.ReadFile(tlsConf.PrivateKeyPath)
+		tls.PrivateKeyData, err = os.ReadFile(tls.PrivateKeyPath)
 		if err != nil {
-			return fmt.Errorf("reading key file: %w", err)
+			status.WarningValidation = err.Error()
+			return false
 		}
-
 		status.ValidKey = true
 	}
 
-	err = validateCertificates(
-		status,
-		tlsConf.CertificateChainData,
-		tlsConf.PrivateKeyData,
-		tlsConf.ServerName,
-	)
-	if err != nil {
-		return fmt.Errorf("validating certificate pair: %w", err)
-	}
-
-	return nil
+	return true
 }
 
-// tlsConfigStatus contains the status of a certificate chain and key pair.
 type tlsConfigStatus struct {
-	// Subject is the subject of the first certificate in the chain.
-	Subject string `json:"subject,omitempty"`
+	ValidCert  bool      `json:"valid_cert"`           // ValidCert is true if the specified certificates chain is a valid chain of X509 certificates
+	ValidChain bool      `json:"valid_chain"`          // ValidChain is true if the specified certificates chain is verified and issued by a known CA
+	Subject    string    `json:"subject,omitempty"`    // Subject is the subject of the first certificate in the chain
+	Issuer     string    `json:"issuer,omitempty"`     // Issuer is the issuer of the first certificate in the chain
+	NotBefore  time.Time `json:"not_before,omitempty"` // NotBefore is the NotBefore field of the first certificate in the chain
+	NotAfter   time.Time `json:"not_after,omitempty"`  // NotAfter is the NotAfter field of the first certificate in the chain
+	DNSNames   []string  `json:"dns_names"`            // DNSNames is the value of SubjectAltNames field of the first certificate in the chain
 
-	// Issuer is the issuer of the first certificate in the chain.
-	Issuer string `json:"issuer,omitempty"`
+	// key status
+	ValidKey bool   `json:"valid_key"`          // ValidKey is true if the key is a valid private key
+	KeyType  string `json:"key_type,omitempty"` // KeyType is one of RSA or ECDSA
 
-	// KeyType is the type of the private key.
-	KeyType string `json:"key_type,omitempty"`
+	// is usable? set by validator
+	ValidPair bool `json:"valid_pair"` // ValidPair is true if both certificate and private key are correct
 
-	// NotBefore is the NotBefore field of the first certificate in the chain.
-	NotBefore time.Time `json:"not_before,omitempty"`
-
-	// NotAfter is the NotAfter field of the first certificate in the chain.
-	NotAfter time.Time `json:"not_after,omitempty"`
-
-	// WarningValidation is a validation warning message with the issue
-	// description.
-	WarningValidation string `json:"warning_validation,omitempty"`
-
-	// DNSNames is the value of SubjectAltNames field of the first certificate
-	// in the chain.
-	DNSNames []string `json:"dns_names"`
-
-	// ValidCert is true if the specified certificate chain is a valid chain of
-	// X509 certificates.
-	ValidCert bool `json:"valid_cert"`
-
-	// ValidChain is true if the specified certificate chain is verified and
-	// issued by a known CA.
-	ValidChain bool `json:"valid_chain"`
-
-	// ValidKey is true if the key is a valid private key.
-	ValidKey bool `json:"valid_key"`
-
-	// ValidPair is true if both certificate and private key are correct for
-	// each other.
-	ValidPair bool `json:"valid_pair"`
+	// warnings
+	WarningValidation string `json:"warning_validation,omitempty"` // WarningValidation is a validation warning message with the issue description
 }
 
-// tlsConfig is the TLS configuration and status response.
+// field ordering is important -- yaml fields will mirror ordering from here
 type tlsConfig struct {
-	*tlsConfigStatus     `json:",inline"`
+	tlsConfigStatus      `json:",inline"`
 	tlsConfigSettingsExt `json:",inline"`
 }
 
-// tlsConfigSettingsExt is used to (un)marshal the PrivateKeySaved field to
-// ensure that clients don't send and receive previously saved private keys.
+// tlsConfigSettingsExt is used to (un)marshal PrivateKeySaved to ensure that
+// clients don't send and receive previously saved private keys.
 type tlsConfigSettingsExt struct {
 	tlsConfigSettings `json:",inline"`
-
-	// PrivateKeySaved is true if the private key is saved as a string and omit
-	// key from answer.
+	// If private key saved as a string, we set this flag to true
+	// and omit key from answer.
 	PrivateKeySaved bool `yaml:"-" json:"private_key_saved,inline"`
 }
 
-func (m *tlsManager) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
-	m.confLock.Lock()
+func (t *TLSMod) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
+	t.confLock.Lock()
 	data := tlsConfig{
 		tlsConfigSettingsExt: tlsConfigSettingsExt{
-			tlsConfigSettings: m.conf,
+			tlsConfigSettings: t.conf,
 		},
-		tlsConfigStatus: m.status,
+		tlsConfigStatus: t.status,
 	}
-	m.confLock.Unlock()
-
+	t.confLock.Unlock()
 	marshalTLS(w, r, data)
 }
 
-func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
+func (t *TLSMod) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	setts, err := unmarshalTLS(r)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
@@ -284,7 +246,7 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if setts.PrivateKeySaved {
-		setts.PrivateKey = m.conf.PrivateKey
+		setts.PrivateKey = t.conf.PrivateKey
 	}
 
 	if setts.Enabled {
@@ -316,74 +278,75 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Skip the error check, since we are only interested in the value of
-	// status.WarningValidation.
-	status := &tlsConfigStatus{}
-	_ = loadTLSConf(&setts.tlsConfigSettings, status)
-	resp := tlsConfig{
+	status := tlsConfigStatus{}
+	if tlsLoadConfig(&setts.tlsConfigSettings, &status) {
+		status = validateCertificates(string(setts.CertificateChainData), string(setts.PrivateKeyData), setts.ServerName)
+	}
+
+	data := tlsConfig{
 		tlsConfigSettingsExt: setts,
 		tlsConfigStatus:      status,
 	}
 
-	marshalTLS(w, r, resp)
+	marshalTLS(w, r, data)
 }
 
-func (m *tlsManager) setConfig(newConf tlsConfigSettings, status *tlsConfigStatus) (restartHTTPS bool) {
-	m.confLock.Lock()
-	defer m.confLock.Unlock()
+func (t *TLSMod) setConfig(newConf tlsConfigSettings, status tlsConfigStatus) (restartHTTPS bool) {
+	t.confLock.Lock()
+	defer t.confLock.Unlock()
 
 	// Reset the DNSCrypt data before comparing, since we currently do not
 	// accept these from the frontend.
 	//
 	// TODO(a.garipov): Define a custom comparer for dnsforward.TLSConfig.
-	newConf.DNSCryptConfigFile = m.conf.DNSCryptConfigFile
-	newConf.PortDNSCrypt = m.conf.PortDNSCrypt
-	if !cmp.Equal(m.conf, newConf, cmp.AllowUnexported(dnsforward.TLSConfig{})) {
+	newConf.DNSCryptConfigFile = t.conf.DNSCryptConfigFile
+	newConf.PortDNSCrypt = t.conf.PortDNSCrypt
+	if !cmp.Equal(t.conf, newConf, cmp.AllowUnexported(dnsforward.TLSConfig{})) {
 		log.Info("tls config has changed, restarting https server")
 		restartHTTPS = true
 	} else {
-		log.Info("tls: config has not changed")
+		log.Info("tls config has not changed")
 	}
 
 	// Note: don't do just `t.conf = data` because we must preserve all other members of t.conf
-	m.conf.Enabled = newConf.Enabled
-	m.conf.ServerName = newConf.ServerName
-	m.conf.ForceHTTPS = newConf.ForceHTTPS
-	m.conf.PortHTTPS = newConf.PortHTTPS
-	m.conf.PortDNSOverTLS = newConf.PortDNSOverTLS
-	m.conf.PortDNSOverQUIC = newConf.PortDNSOverQUIC
-	m.conf.CertificateChain = newConf.CertificateChain
-	m.conf.CertificatePath = newConf.CertificatePath
-	m.conf.CertificateChainData = newConf.CertificateChainData
-	m.conf.PrivateKey = newConf.PrivateKey
-	m.conf.PrivateKeyPath = newConf.PrivateKeyPath
-	m.conf.PrivateKeyData = newConf.PrivateKeyData
-	m.status = status
+	t.conf.Enabled = newConf.Enabled
+	t.conf.ServerName = newConf.ServerName
+	t.conf.ForceHTTPS = newConf.ForceHTTPS
+	t.conf.PortHTTPS = newConf.PortHTTPS
+	t.conf.PortDNSOverTLS = newConf.PortDNSOverTLS
+	t.conf.PortDNSOverQUIC = newConf.PortDNSOverQUIC
+	t.conf.CertificateChain = newConf.CertificateChain
+	t.conf.CertificatePath = newConf.CertificatePath
+	t.conf.CertificateChainData = newConf.CertificateChainData
+	t.conf.PrivateKey = newConf.PrivateKey
+	t.conf.PrivateKeyPath = newConf.PrivateKeyPath
+	t.conf.PrivateKeyData = newConf.PrivateKeyData
+	t.status = status
 
 	return restartHTTPS
 }
 
-func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
-	req, err := unmarshalTLS(r)
+func (t *TLSMod) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
+	data, err := unmarshalTLS(r)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to unmarshal TLS config: %s", err)
 
 		return
 	}
 
-	if req.PrivateKeySaved {
-		req.PrivateKey = m.conf.PrivateKey
+	if data.PrivateKeySaved {
+		data.PrivateKey = t.conf.PrivateKey
 	}
 
-	if req.Enabled {
+	if data.Enabled {
 		err = validatePorts(
 			tcpPort(config.BindPort),
 			tcpPort(config.BetaBindPort),
-			tcpPort(req.PortHTTPS),
-			tcpPort(req.PortDNSOverTLS),
-			tcpPort(req.PortDNSCrypt),
+			tcpPort(data.PortHTTPS),
+			tcpPort(data.PortDNSOverTLS),
+			tcpPort(data.PortDNSCrypt),
 			udpPort(config.DNS.Port),
-			udpPort(req.PortDNSOverQUIC),
+			udpPort(data.PortDNSOverQUIC),
 		)
 		if err != nil {
 			aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
@@ -393,33 +356,33 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// TODO(e.burkov):  Investigate and perhaps check other ports.
-	if !webCheckPortAvailable(req.PortHTTPS) {
+	if !webCheckPortAvailable(data.PortHTTPS) {
 		aghhttp.Error(
 			r,
 			w,
 			http.StatusBadRequest,
-			"port %d is not available, cannot enable https on it",
-			req.PortHTTPS,
+			"port %d is not available, cannot enable HTTPS on it",
+			data.PortHTTPS,
 		)
 
 		return
 	}
 
-	status := &tlsConfigStatus{}
-	err = loadTLSConf(&req.tlsConfigSettings, status)
-	if err != nil {
-		resp := tlsConfig{
-			tlsConfigSettingsExt: req,
-			tlsConfigStatus:      status,
+	status := tlsConfigStatus{}
+	if !tlsLoadConfig(&data.tlsConfigSettings, &status) {
+		data2 := tlsConfig{
+			tlsConfigSettingsExt: data,
+			tlsConfigStatus:      t.status,
 		}
-
-		marshalTLS(w, r, resp)
+		marshalTLS(w, r, data2)
 
 		return
 	}
 
-	restartHTTPS := m.setConfig(req.tlsConfigSettings, status)
-	m.setCertFileTime()
+	status = validateCertificates(string(data.CertificateChainData), string(data.PrivateKeyData), data.ServerName)
+
+	restartHTTPS := t.setConfig(data.tlsConfigSettings, status)
+	t.setCertFileTime()
 	onConfigModified()
 
 	err = reconfigureDNSServer()
@@ -429,12 +392,12 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	resp := tlsConfig{
-		tlsConfigSettingsExt: req,
-		tlsConfigStatus:      m.status,
+	data2 := tlsConfig{
+		tlsConfigSettingsExt: data,
+		tlsConfigStatus:      t.status,
 	}
 
-	marshalTLS(w, r, resp)
+	marshalTLS(w, r, data2)
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()
 	}
@@ -445,7 +408,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	// same reason.
 	if restartHTTPS {
 		go func() {
-			Context.web.TLSConfigChanged(context.Background(), req.tlsConfigSettings)
+			Context.web.TLSConfigChanged(context.Background(), data.tlsConfigSettings)
 		}()
 	}
 }
@@ -482,105 +445,89 @@ func validatePorts(
 	return nil
 }
 
-// validateCertChain validates the certificate chain and sets data in status.
-// The returned error is also set in status.WarningValidation.
-func validateCertChain(status *tlsConfigStatus, certChain []byte, serverName string) (err error) {
-	defer func() {
-		if err != nil {
-			status.WarningValidation = err.Error()
-		}
-	}()
+func verifyCertChain(data *tlsConfigStatus, certChain, serverName string) error {
+	log.Tracef("TLS: got certificate: %d bytes", len(certChain))
 
-	log.Debug("tls: got certificate chain: %d bytes", len(certChain))
+	// now do a more extended validation
+	var certs []*pem.Block // PEM-encoded certificates
 
-	var certs []*pem.Block
-	pemblock := certChain
+	pemblock := []byte(certChain)
 	for {
 		var decoded *pem.Block
 		decoded, pemblock = pem.Decode(pemblock)
 		if decoded == nil {
 			break
 		}
-
 		if decoded.Type == "CERTIFICATE" {
 			certs = append(certs, decoded)
 		}
 	}
 
-	parsedCerts, err := parsePEMCerts(certs)
-	if err != nil {
-		return err
+	var parsedCerts []*x509.Certificate
+
+	for _, cert := range certs {
+		parsed, err := x509.ParseCertificate(cert.Bytes)
+		if err != nil {
+			data.WarningValidation = fmt.Sprintf("Failed to parse certificate: %s", err)
+			return errors.Error(data.WarningValidation)
+		}
+		parsedCerts = append(parsedCerts, parsed)
 	}
 
-	status.ValidCert = true
+	if len(parsedCerts) == 0 {
+		data.WarningValidation = "You have specified an empty certificate"
+		return errors.Error(data.WarningValidation)
+	}
+
+	data.ValidCert = true
+
+	// spew.Dump(parsedCerts)
 
 	opts := x509.VerifyOptions{
 		DNSName: serverName,
 		Roots:   Context.tlsRoots,
 	}
 
-	log.Info("tls: number of certs: %d", len(parsedCerts))
-
-	pool := x509.NewCertPool()
-	for _, cert := range parsedCerts[1:] {
-		log.Info("tls: got an intermediate cert")
-		pool.AddCert(cert)
+	log.Printf("number of certs - %d", len(parsedCerts))
+	if len(parsedCerts) > 1 {
+		// set up an intermediate
+		pool := x509.NewCertPool()
+		for _, cert := range parsedCerts[1:] {
+			log.Printf("got an intermediate cert")
+			pool.AddCert(cert)
+		}
+		opts.Intermediates = pool
 	}
 
-	opts.Intermediates = pool
-
+	// TODO: save it as a warning rather than error it out -- shouldn't be a big problem
 	mainCert := parsedCerts[0]
-	_, err = mainCert.Verify(opts)
+	_, err := mainCert.Verify(opts)
 	if err != nil {
-		// Let self-signed certs through and don't return this error.
-		status.WarningValidation = fmt.Sprintf("certificate does not verify: %s", err)
+		// let self-signed certs through
+		data.WarningValidation = fmt.Sprintf("Your certificate does not verify: %s", err)
 	} else {
-		status.ValidChain = true
+		data.ValidChain = true
 	}
+	// spew.Dump(chains)
 
+	// update status
 	if mainCert != nil {
-		status.Subject = mainCert.Subject.String()
-		status.Issuer = mainCert.Issuer.String()
-		status.NotAfter = mainCert.NotAfter
-		status.NotBefore = mainCert.NotBefore
-		status.DNSNames = mainCert.DNSNames
+		notAfter := mainCert.NotAfter
+		data.Subject = mainCert.Subject.String()
+		data.Issuer = mainCert.Issuer.String()
+		data.NotAfter = notAfter
+		data.NotBefore = mainCert.NotBefore
+		data.DNSNames = mainCert.DNSNames
 	}
 
 	return nil
 }
 
-// parsePEMCerts parses multiple PEM-encoded certificates.
-func parsePEMCerts(certs []*pem.Block) (parsedCerts []*x509.Certificate, err error) {
-	for i, cert := range certs {
-		var parsed *x509.Certificate
-		parsed, err = x509.ParseCertificate(cert.Bytes)
-		if err != nil {
-			return nil, fmt.Errorf("parsing certificate at index %d: %w", i, err)
-		}
+func validatePkey(data *tlsConfigStatus, pkey string) error {
+	// now do a more extended validation
+	var key *pem.Block // PEM-encoded certificates
 
-		parsedCerts = append(parsedCerts, parsed)
-	}
-
-	if len(parsedCerts) == 0 {
-		return nil, errors.Error("empty certificate")
-	}
-
-	return parsedCerts, nil
-}
-
-// validatePKey validates the private key and sets data in status.  The returned
-// error is also set in status.WarningValidation.
-func validatePKey(status *tlsConfigStatus, pkey []byte) (err error) {
-	defer func() {
-		if err != nil {
-			status.WarningValidation = err.Error()
-		}
-	}()
-
-	var key *pem.Block
-
-	// Go through all pem blocks, but take first valid pem block and drop the
-	// rest.
+	// go through all pem blocks, but take first valid pem block and drop the rest
 	pemblock := []byte(pkey)
 	for {
 		var decoded *pem.Block
@@ -597,77 +544,61 @@ func validatePKey(status *tlsConfigStatus, pkey []byte) (err error) {
 	}
 
 	if key == nil {
-		return errors.Error("no valid keys were found")
+		data.WarningValidation = "No valid keys were found"
+
+		return errors.Error(data.WarningValidation)
 	}
 
+	// parse the decoded key
 	_, keyType, err := parsePrivateKey(key.Bytes)
 	if err != nil {
-		return fmt.Errorf("parsing private key: %w", err)
+		data.WarningValidation = fmt.Sprintf("Failed to parse private key: %s", err)
+
+		return errors.Error(data.WarningValidation)
+	} else if keyType == keyTypeED25519 {
+		data.WarningValidation = "ED25519 keys are not supported by browsers; " +
+			"did you mean to use X25519 for key exchange?"
+
+		return errors.Error(data.WarningValidation)
 	}
 
-	if keyType == keyTypeED25519 {
-		return errors.Error(
-			"ED25519 keys are not supported by browsers; " +
-				"did you mean to use X25519 for key exchange?",
-		)
-	}
-
-	status.ValidKey = true
-	status.KeyType = keyType
+	data.ValidKey = true
+	data.KeyType = keyType
 
 	return nil
 }
 
 // validateCertificates processes certificate data and its private key.  All
-// parameters are optional.  status must not be nil.  The returned error is also
-// set in status.WarningValidation.
-func validateCertificates(
-	status *tlsConfigStatus,
-	certChain []byte,
-	pkey []byte,
-	serverName string,
-) (err error) {
-	defer func() {
-		// Capitalize the warning for the UI.  Assume that warnings are all
-		// ASCII-only.
-		//
-		// TODO(a.garipov): Figure out a better way to do this.  Perhaps a
-		// custom string or error type.
-		if w := status.WarningValidation; w != "" {
-			status.WarningValidation = strings.ToUpper(w[:1]) + w[1:]
-		}
-	}()
+// parameters are optional.  On error, validateCertificates returns a partially
+// set object with field WarningValidation containing error description.
+func validateCertificates(certChain, pkey, serverName string) tlsConfigStatus {
+	var data tlsConfigStatus
 
-	// Check only the public certificate separately from the key.
-	if len(certChain) > 0 {
-		err = validateCertChain(status, certChain, serverName)
-		if err != nil {
-			return err
+	// check only public certificate separately from the key
+	if certChain != "" {
+		if verifyCertChain(&data, certChain, serverName) != nil {
+			return data
 		}
 	}
 
-	// Validate the private key by parsing it.
-	if len(pkey) > 0 {
-		err = validatePKey(status, pkey)
-		if err != nil {
-			return err
+	// validate private key (right now the only validation possible is just parsing it)
+	if pkey != "" {
+		if validatePkey(&data, pkey) != nil {
+			return data
 		}
 	}
 
-	// If both are set, validate together.
-	if len(certChain) > 0 && len(pkey) > 0 {
-		_, err = tls.X509KeyPair(certChain, pkey)
+	// if both are set, validate both in unison
+	if pkey != "" && certChain != "" {
+		_, err := tls.X509KeyPair([]byte(certChain), []byte(pkey))
 		if err != nil {
-			err = fmt.Errorf("certificate-key pair: %w", err)
-			status.WarningValidation = err.Error()
-
-			return err
+			data.WarningValidation = fmt.Sprintf("Invalid certificate or key: %s", err)
+			return data
 		}
-
-		status.ValidPair = true
+		data.ValidPair = true
 	}
 
-	return nil
+	return data
 }
 
 // Key types.
@@ -762,9 +693,52 @@ func marshalTLS(w http.ResponseWriter, r *http.Request, data tlsConfig) {
 	_ = aghhttp.WriteJSONResponse(w, r, data)
 }
 
-// registerWebHandlers registers HTTP handlers for TLS configuration.
-func (m *tlsManager) registerWebHandlers() {
-	httpRegister(http.MethodGet, "/control/tls/status", m.handleTLSStatus)
-	httpRegister(http.MethodPost, "/control/tls/configure", m.handleTLSConfigure)
-	httpRegister(http.MethodPost, "/control/tls/validate", m.handleTLSValidate)
+// registerWebHandlers registers HTTP handlers for TLS configuration
+func (t *TLSMod) registerWebHandlers() {
+	httpRegister(http.MethodGet, "/control/tls/status", t.handleTLSStatus)
+	httpRegister(http.MethodPost, "/control/tls/configure", t.handleTLSConfigure)
+	httpRegister(http.MethodPost, "/control/tls/validate", t.handleTLSValidate)
+}
+
+// LoadSystemRootCAs tries to load root certificates from the operating system.
+// It returns nil in case nothing is found so that that Go.crypto will use it's
+// default algorithm to find system root CA list.
+//
+// See https://github.com/AdguardTeam/AdGuardHome/internal/issues/1311.
+func LoadSystemRootCAs() (roots *x509.CertPool) {
+	// TODO(e.burkov): Use build tags instead.
+	if runtime.GOOS != "linux" {
+		return nil
+	}
+
+	// Directories with the system root certificates, which aren't supported
+	// by Go.crypto.
+	dirs := []string{
+		// Entware.
+		"/opt/etc/ssl/certs",
+	}
+	roots = x509.NewCertPool()
+	for _, dir := range dirs {
+		dirEnts, err := os.ReadDir(dir)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		} else if err != nil {
+			log.Error("opening directory: %q: %s", dir, err)
+		}
+
+		var rootsAdded bool
+		for _, de := range dirEnts {
+			var certData []byte
+			certData, err = os.ReadFile(filepath.Join(dir, de.Name()))
+			if err == nil && roots.AppendCertsFromPEM(certData) {
+				rootsAdded = true
+			}
+		}
+
+		if rootsAdded {
+			return roots
+		}
+	}
+
+	return nil
 }

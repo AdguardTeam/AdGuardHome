@@ -3,7 +3,6 @@ package home
 import (
 	"fmt"
 	"net"
-	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -165,27 +164,33 @@ func onDNSRequest(pctx *proxy.DNSContext) {
 	}
 }
 
-func ipsToTCPAddrs(ips []netip.Addr, port int) (tcpAddrs []*net.TCPAddr) {
+func ipsToTCPAddrs(ips []net.IP, port int) (tcpAddrs []*net.TCPAddr) {
 	if ips == nil {
 		return nil
 	}
 
-	tcpAddrs = make([]*net.TCPAddr, 0, len(ips))
-	for _, ip := range ips {
-		tcpAddrs = append(tcpAddrs, net.TCPAddrFromAddrPort(netip.AddrPortFrom(ip, uint16(port))))
+	tcpAddrs = make([]*net.TCPAddr, len(ips))
+	for i, ip := range ips {
+		tcpAddrs[i] = &net.TCPAddr{
+			IP:   ip,
+			Port: port,
+		}
 	}
 
 	return tcpAddrs
 }
 
-func ipsToUDPAddrs(ips []netip.Addr, port int) (udpAddrs []*net.UDPAddr) {
+func ipsToUDPAddrs(ips []net.IP, port int) (udpAddrs []*net.UDPAddr) {
 	if ips == nil {
 		return nil
 	}
 
-	udpAddrs = make([]*net.UDPAddr, 0, len(ips))
-	for _, ip := range ips {
-		udpAddrs = append(udpAddrs, net.UDPAddrFromAddrPort(netip.AddrPortFrom(ip, uint16(port))))
+	udpAddrs = make([]*net.UDPAddr, len(ips))
+	for i, ip := range ips {
+		udpAddrs[i] = &net.UDPAddr{
+			IP:   ip,
+			Port: port,
+		}
 	}
 
 	return udpAddrs
@@ -195,7 +200,7 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	dnsConf := config.DNS
 	hosts := dnsConf.BindHosts
 	if len(hosts) == 0 {
-		hosts = []netip.Addr{aghnet.IPv4Localhost()}
+		hosts = []net.IP{{127, 0, 0, 1}}
 	}
 
 	newConf = dnsforward.ServerConfig{
@@ -252,7 +257,7 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	return newConf, nil
 }
 
-func newDNSCrypt(hosts []netip.Addr, tlsConf tlsConfigSettings) (dnscc dnsforward.DNSCryptConfig, err error) {
+func newDNSCrypt(hosts []net.IP, tlsConf tlsConfigSettings) (dnscc dnsforward.DNSCryptConfig, err error) {
 	if tlsConf.DNSCryptConfigFile == "" {
 		return dnscc, errors.Error("no dnscrypt_config_file")
 	}
@@ -431,23 +436,17 @@ func reconfigureDNSServer() (err error) {
 	return nil
 }
 
-func stopDNSServer() (err error) {
+func stopDNSServer() error {
 	if !isRunning() {
 		return nil
 	}
 
-	err = Context.dnsServer.Stop()
+	err := Context.dnsServer.Stop()
 	if err != nil {
-		return fmt.Errorf("stopping forwarding dns server: %w", err)
-	}
-
-	err = Context.clients.close()
-	if err != nil {
-		return fmt.Errorf("closing clients container: %w", err)
+		return fmt.Errorf("couldn't stop forwarding DNS server: %w", err)
 	}
 
 	closeDNSServer()
-
 	return nil
 }
 

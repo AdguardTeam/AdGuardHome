@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +33,7 @@ func TestService_HandleGetSettingsAll(t *testing.T) {
 	}
 
 	confMgr := newConfigManager()
-	confMgr.onDNS = func() (s agh.ServiceWithConfig[*dnssvc.Config]) {
+	confMgr.onDNS = func() (s websvc.ServiceWithConfig[*dnssvc.Config]) {
 		c, err := dnssvc.New(&dnssvc.Config{
 			Addresses:        wantDNS.Addresses,
 			UpstreamServers:  wantDNS.UpstreamServers,
@@ -46,7 +45,7 @@ func TestService_HandleGetSettingsAll(t *testing.T) {
 		return c
 	}
 
-	confMgr.onWeb = func() (s agh.ServiceWithConfig[*websvc.Config]) {
+	confMgr.onWeb = func() (s websvc.ServiceWithConfig[*websvc.Config]) {
 		return websvc.New(&websvc.Config{
 			TLS: &tls.Config{
 				Certificates: []tls.Certificate{{}},

@@ -2,8 +2,8 @@ package home
 
 import (
 	"fmt"
+	"net"
 	"net/http"
-	"net/netip"
 	"net/url"
 	"runtime"
 	"strings"
@@ -20,11 +20,11 @@ import (
 
 // appendDNSAddrs is a convenient helper for appending a formatted form of DNS
 // addresses to a slice of strings.
-func appendDNSAddrs(dst []string, addrs ...netip.Addr) (res []string) {
+func appendDNSAddrs(dst []string, addrs ...net.IP) (res []string) {
 	for _, addr := range addrs {
 		var hostport string
 		if config.DNS.Port != defaultPortDNS {
-			hostport = netip.AddrPortFrom(addr, uint16(config.DNS.Port)).String()
+			hostport = netutil.JoinHostPort(addr.String(), config.DNS.Port)
 		} else {
 			hostport = addr.String()
 		}
@@ -38,7 +38,7 @@ func appendDNSAddrs(dst []string, addrs ...netip.Addr) (res []string) {
 // appendDNSAddrsWithIfaces formats and appends all DNS addresses from src to
 // dst.  It also adds the IP addresses of all network interfaces if src contains
 // an unspecified IP address.
-func appendDNSAddrsWithIfaces(dst []string, src []netip.Addr) (res []string, err error) {
+func appendDNSAddrsWithIfaces(dst []string, src []net.IP) (res []string, err error) {
 	ifacesAdded := false
 	for _, h := range src {
 		if !h.IsUnspecified() {
@@ -71,9 +71,7 @@ func appendDNSAddrsWithIfaces(dst []string, src []netip.Addr) (res []string, err
 // on, including the addresses on all interfaces in cases of unspecified IPs.
 func collectDNSAddresses() (addrs []string, err error) {
 	if hosts := config.DNS.BindHosts; len(hosts) == 0 {
-		addr := aghnet.IPv4Localhost()
-
-		addrs = appendDNSAddrs(addrs, addr)
+		addrs = appendDNSAddrs(addrs, net.IP{127, 0, 0, 1})
 	} else {
 		addrs, err = appendDNSAddrsWithIfaces(addrs, hosts)
 		if err != nil {
@@ -322,26 +320,14 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		return false
 	}
 
-	var serveHTTP3 bool
-	var portHTTPS int
-	func() {
-		config.RLock()
-		defer config.RUnlock()
-
-		serveHTTP3, portHTTPS = config.DNS.ServeHTTP3, config.TLS.PortHTTPS
-	}()
-
-	respHdr := w.Header()
-
-	// Let the browser know that server supports HTTP/3.
+	// Add headers for HSTS
+	// This informs browsers that the site should only be accessed using HTTPS,
+	// and that any future attempts to access it using HTTP should automatically be
+	// converted to HTTPS.
 	//
-	// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Alt-Svc.
-	//
-	// TODO(a.garipov): Consider adding a configurable max-age.  Currently, the
-	// default is 24 hours.
-	if serveHTTP3 {
-		altSvc := fmt.Sprintf(`h3=":%d"`, portHTTPS)
-		respHdr.Set(aghhttp.HdrNameAltSvc, altSvc)
+	// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+	if config.TLS.ForceHTTPS {
+		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 	}
 
 	if r.TLS == nil && web.forceHTTPS {
@@ -361,16 +347,6 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		return false
 	}
 
-	// Add headers for HSTS
-	// This informs browsers that the site should only be accessed using HTTPS,
-	// and that any future attempts to access it using HTTP should automatically be
-	// converted to HTTPS.
-	//
-	// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
-	if config.TLS.ForceHTTPS {
-		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-	}
-
 	// Allow the frontend from the HTTP origin to send requests to the HTTPS
 	// server.  This can happen when the user has just set up HTTPS with
 	// redirects.  Prevent cache-related errors by setting the Vary header.
@@ -380,9 +356,8 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		Scheme: aghhttp.SchemeHTTP,
 		Host:   r.Host,
 	}
-
-	respHdr.Set(aghhttp.HdrNameAccessControlAllowOrigin, originURL.String())
-	respHdr.Set(aghhttp.HdrNameVary, aghhttp.HdrNameOrigin)
+	w.Header().Set("Access-Control-Allow-Origin", originURL.String())
+	w.Header().Set("Vary", "Origin")
 
 	return true
 }
