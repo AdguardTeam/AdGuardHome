@@ -21,6 +21,8 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 const clientsUpdatePeriod = 10 * time.Minute
@@ -48,6 +50,18 @@ type Client struct {
 	SafeBrowsingEnabled   bool
 	ParentalEnabled       bool
 	UseOwnBlockedServices bool
+}
+
+// closeUpstreams closes the client-specific upstream config of c if any.
+func (c *Client) closeUpstreams() (err error) {
+	if c.upstreamConfig != nil {
+		err = c.upstreamConfig.Close()
+		if err != nil {
+			return fmt.Errorf("closing upstreams of client %q: %w", c.Name, err)
+		}
+	}
+
+	return nil
 }
 
 type clientSource uint
@@ -119,6 +133,8 @@ type clientsContainer struct {
 	idIndex map[string]*Client // ID -> client
 
 	// ipToRC is the IP address to *RuntimeClient map.
+	//
+	// TODO(e.burkov):  Use map[netip.Addr]struct{} instead.
 	ipToRC *netutil.IPMap
 
 	lock sync.Mutex
@@ -649,6 +665,10 @@ func (clients *clientsContainer) Del(name string) (ok bool) {
 		return false
 	}
 
+	if err := c.closeUpstreams(); err != nil {
+		log.Error("client container: removing client %s: %s", name, err)
+	}
+
 	// update Name index
 	delete(clients.list, name)
 
@@ -707,7 +727,7 @@ func (clients *clientsContainer) Update(name string, c *Client) (err error) {
 			}
 		}
 
-		// update ID index
+		//  Update ID index.
 		for _, id := range prev.IDs {
 			delete(clients.idIndex, id)
 		}
@@ -716,14 +736,17 @@ func (clients *clientsContainer) Update(name string, c *Client) (err error) {
 		}
 	}
 
-	// update Name index
+	// Update name index.
 	if prev.Name != c.Name {
 		delete(clients.list, prev.Name)
 		clients.list[c.Name] = prev
 	}
 
-	// update upstreams cache
-	c.upstreamConfig = nil
+	// Update upstreams cache.
+	err = c.closeUpstreams()
+	if err != nil {
+		return err
+	}
 
 	*prev = *c
 
@@ -907,4 +930,25 @@ func (clients *clientsContainer) updateFromDHCP(add bool) {
 	}
 
 	log.Debug("clients: added %d client aliases from dhcp", n)
+}
+
+// close gracefully closes all the client-specific upstream configurations of
+// the persistent clients.
+func (clients *clientsContainer) close() (err error) {
+	persistent := maps.Values(clients.list)
+	slices.SortFunc(persistent, func(a, b *Client) (less bool) { return a.Name < b.Name })
+
+	var errs []error
+
+	for _, cli := range persistent {
+		if err = cli.closeUpstreams(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) > 0 {
+		return errors.List("closing client specific upstreams", errs...)
+	}
+
+	return nil
 }

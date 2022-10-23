@@ -24,21 +24,10 @@ import (
 	httptreemux "github.com/dimfeld/httptreemux/v5"
 )
 
-// ServiceWithConfig is an extension of the [agh.Service] interface for services
-// that can return their configuration.
-//
-// TODO(a.garipov): Consider removing this generic interface if we figure out
-// how to make it testable in a better way.
-type ServiceWithConfig[ConfigType any] interface {
-	agh.Service
-
-	Config() (c ConfigType)
-}
-
 // ConfigManager is the configuration manager interface.
 type ConfigManager interface {
-	DNS() (svc ServiceWithConfig[*dnssvc.Config])
-	Web() (svc ServiceWithConfig[*Config])
+	DNS() (svc agh.ServiceWithConfig[*dnssvc.Config])
+	Web() (svc agh.ServiceWithConfig[*Config])
 
 	UpdateDNS(ctx context.Context, c *dnssvc.Config) (err error)
 	UpdateWeb(ctx context.Context, c *Config) (err error)

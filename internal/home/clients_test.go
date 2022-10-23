@@ -2,6 +2,7 @@ package home
 
 import (
 	"net"
+	"net/netip"
 	"os"
 	"runtime"
 	"testing"
@@ -287,10 +288,10 @@ func TestClientsAddExisting(t *testing.T) {
 			DBFilePath: "leases.db",
 			Conf4: dhcpd.V4ServerConf{
 				Enabled:    true,
-				GatewayIP:  net.IP{1, 2, 3, 1},
-				SubnetMask: net.IP{255, 255, 255, 0},
-				RangeStart: net.IP{1, 2, 3, 2},
-				RangeEnd:   net.IP{1, 2, 3, 10},
+				GatewayIP:  netip.MustParseAddr("1.2.3.1"),
+				SubnetMask: netip.MustParseAddr("255.255.255.0"),
+				RangeStart: netip.MustParseAddr("1.2.3.2"),
+				RangeEnd:   netip.MustParseAddr("1.2.3.10"),
 			},
 		}
 

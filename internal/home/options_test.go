@@ -2,7 +2,7 @@ package home
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -56,11 +56,13 @@ func TestParseWorkDir(t *testing.T) {
 }
 
 func TestParseBindHost(t *testing.T) {
-	assert.Nil(t, testParseOK(t).bindHost, "empty is not host")
-	assert.Equal(t, net.IPv4(1, 2, 3, 4), testParseOK(t, "-h", "1.2.3.4").bindHost, "-h is host")
+	wantAddr := netip.MustParseAddr("1.2.3.4")
+
+	assert.Zero(t, testParseOK(t).bindHost, "empty is not host")
+	assert.Equal(t, wantAddr, testParseOK(t, "-h", "1.2.3.4").bindHost, "-h is host")
 	testParseParamMissing(t, "-h")
 
-	assert.Equal(t, net.IPv4(1, 2, 3, 4), testParseOK(t, "--host", "1.2.3.4").bindHost, "--host is host")
+	assert.Equal(t, wantAddr, testParseOK(t, "--host", "1.2.3.4").bindHost, "--host is host")
 	testParseParamMissing(t, "--host")
 }
 
@@ -149,8 +151,8 @@ func TestOptsToArgs(t *testing.T) {
 		opts: options{workDir: "path"},
 	}, {
 		name: "bind_host",
+		opts: options{bindHost: netip.MustParseAddr("1.2.3.4")},
 		args: []string{"-h", "1.2.3.4"},
-		opts: options{bindHost: net.IP{1, 2, 3, 4}},
 	}, {
 		name: "bind_port",
 		args: []string{"-p", "666"},

@@ -81,6 +81,7 @@ type Server struct {
 	tableHostToIP     hostToIPTable
 	tableHostToIPLock sync.Mutex
 
+	// TODO(e.burkov):  Use map[netip.Addr]struct{} instead.
 	tableIPToHost     *netutil.IPMap
 	tableIPToHostLock sync.Mutex
 
@@ -517,7 +518,7 @@ func validateBlockingMode(mode BlockingMode, blockingIPv4, blockingIPv6 net.IP) 
 }
 
 // prepareInternalProxy initializes the DNS proxy that is used for internal DNS
-// queries, such at client PTR resolving and updater hostname resolving.
+// queries, such as public clients PTR resolving and updater hostname resolving.
 func (s *Server) prepareInternalProxy() (err error) {
 	conf := &proxy.Config{
 		CacheEnabled:   true,
@@ -557,16 +558,49 @@ func (s *Server) Stop() error {
 	return s.stopLocked()
 }
 
-// stopLocked stops the DNS server without locking. For internal use only.
-func (s *Server) stopLocked() error {
+// stopLocked stops the DNS server without locking.  For internal use only.
+func (s *Server) stopLocked() (err error) {
 	if s.dnsProxy != nil {
-		err := s.dnsProxy.Stop()
+		err = s.dnsProxy.Stop()
 		if err != nil {
-			return fmt.Errorf("could not stop the DNS server properly: %w", err)
+			return fmt.Errorf("closing primary resolvers: %w", err)
 		}
 	}
 
-	s.isRunning = false
+	var errs []error
+
+	if upsConf := s.internalProxy.UpstreamConfig; upsConf != nil {
+		const action = "closing internal resolvers"
+
+		err = upsConf.Close()
+		if err != nil {
+			if errors.Is(err, net.ErrClosed) {
+				log.Debug("dnsforward: %s: %s", action, err)
+			} else {
+				errs = append(errs, fmt.Errorf("%s: %w", action, err))
+			}
+		}
+	}
+
+	if upsConf := s.localResolvers.UpstreamConfig; upsConf != nil {
+		const action = "closing local resolvers"
+
+		err = upsConf.Close()
+		if err != nil {
+			if errors.Is(err, net.ErrClosed) {
+				log.Debug("dnsforward: %s: %s", action, err)
+			} else {
+				errs = append(errs, fmt.Errorf("%s: %w", action, err))
+			}
+		}
+	}
+
+	if len(errs) > 0 {
+		return errors.List("stopping dns server", errs...)
+	} else {
+		s.isRunning = false
+	}
+
 	return nil
 }
 

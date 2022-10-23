@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -34,20 +35,20 @@ var _ websvc.ConfigManager = (*configManager)(nil)
 
 // configManager is a [websvc.ConfigManager] for tests.
 type configManager struct {
-	onDNS func() (svc websvc.ServiceWithConfig[*dnssvc.Config])
-	onWeb func() (svc websvc.ServiceWithConfig[*websvc.Config])
+	onDNS func() (svc agh.ServiceWithConfig[*dnssvc.Config])
+	onWeb func() (svc agh.ServiceWithConfig[*websvc.Config])
 
 	onUpdateDNS func(ctx context.Context, c *dnssvc.Config) (err error)
 	onUpdateWeb func(ctx context.Context, c *websvc.Config) (err error)
 }
 
 // DNS implements the [websvc.ConfigManager] interface for *configManager.
-func (m *configManager) DNS() (svc websvc.ServiceWithConfig[*dnssvc.Config]) {
+func (m *configManager) DNS() (svc agh.ServiceWithConfig[*dnssvc.Config]) {
 	return m.onDNS()
 }
 
 // Web implements the [websvc.ConfigManager] interface for *configManager.
-func (m *configManager) Web() (svc websvc.ServiceWithConfig[*websvc.Config]) {
+func (m *configManager) Web() (svc agh.ServiceWithConfig[*websvc.Config]) {
 	return m.onWeb()
 }
 
@@ -64,8 +65,8 @@ func (m *configManager) UpdateWeb(ctx context.Context, c *websvc.Config) (err er
 // newConfigManager returns a *configManager all methods of which panic.
 func newConfigManager() (m *configManager) {
 	return &configManager{
-		onDNS: func() (svc websvc.ServiceWithConfig[*dnssvc.Config]) { panic("not implemented") },
-		onWeb: func() (svc websvc.ServiceWithConfig[*websvc.Config]) { panic("not implemented") },
+		onDNS: func() (svc agh.ServiceWithConfig[*dnssvc.Config]) { panic("not implemented") },
+		onWeb: func() (svc agh.ServiceWithConfig[*websvc.Config]) { panic("not implemented") },
 		onUpdateDNS: func(_ context.Context, _ *dnssvc.Config) (err error) {
 			panic("not implemented")
 		},

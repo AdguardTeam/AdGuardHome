@@ -345,27 +345,29 @@ func (d *DNSFilter) SetFilters(blockFilters, allowFilters []Filter, async bool) 
 			blockFilters: blockFilters,
 		}
 
-		d.filtersInitializerLock.Lock() // prevent multiple writers from adding more than 1 task
+		d.filtersInitializerLock.Lock()
 		defer d.filtersInitializerLock.Unlock()
 
-		// remove all pending tasks
-		stop := false
-		for !stop {
+		// Remove all pending tasks.
+	removeLoop:
+		for {
 			select {
 			case <-d.filtersInitializerChan:
-				//
+				// Continue removing.
 			default:
-				stop = true
+				break removeLoop
 			}
 		}
 
 		d.filtersInitializerChan <- params
+
 		return nil
 	}
 
 	err := d.initFiltering(allowFilters, blockFilters)
 	if err != nil {
-		log.Error("Can't initialize filtering subsystem: %s", err)
+		log.Error("filtering: can't initialize filtering subsystem: %s", err)
+
 		return err
 	}
 

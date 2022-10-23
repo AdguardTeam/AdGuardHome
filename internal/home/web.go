@@ -4,14 +4,13 @@ import (
 	"context"
 	"crypto/tls"
 	"io/fs"
-	"net"
 	"net/http"
+	"net/netip"
 	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -37,7 +36,7 @@ type webConfig struct {
 	clientFS     fs.FS
 	clientBetaFS fs.FS
 
-	BindHost     net.IP
+	BindHost     netip.Addr
 	BindPort     int
 	BetaBindPort int
 	PortHTTPS    int
@@ -135,8 +134,11 @@ func newWeb(conf *webConfig) (w *Web) {
 //
 // TODO(a.garipov): Adapt for HTTP/3.
 func webCheckPortAvailable(port int) (ok bool) {
-	return Context.web.httpsServer.server != nil ||
-		aghnet.CheckPort("tcp", config.BindHost, port) == nil
+	if Context.web.httpsServer.server != nil {
+		return true
+	}
+
+	return aghnet.CheckPort("tcp", netip.AddrPortFrom(config.BindHost, uint16(port))) == nil
 }
 
 // TLSConfigChanged updates the TLS configuration and restarts the HTTPS server
@@ -295,7 +297,7 @@ func (web *Web) tlsServerLoop() {
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
 				RootCAs:      Context.tlsRoots,
-				CipherSuites: aghtls.SaferCipherSuites(),
+				CipherSuites: Context.tlsCipherIDs,
 				MinVersion:   tls.VersionTLS12,
 			},
 			Handler:           withMiddlewares(Context.mux, limitRequestBody),
@@ -329,7 +331,7 @@ func (web *Web) mustStartHTTP3(address string) {
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{web.httpsServer.cert},
 			RootCAs:      Context.tlsRoots,
-			CipherSuites: aghtls.SaferCipherSuites(),
+			CipherSuites: Context.tlsCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
 		Handler: withMiddlewares(Context.mux, limitRequestBody),

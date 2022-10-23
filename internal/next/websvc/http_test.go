@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,7 +25,7 @@ func TestService_HandlePatchSettingsHTTP(t *testing.T) {
 	}
 
 	confMgr := newConfigManager()
-	confMgr.onWeb = func() (s websvc.ServiceWithConfig[*websvc.Config]) {
+	confMgr.onWeb = func() (s agh.ServiceWithConfig[*websvc.Config]) {
 		return websvc.New(&websvc.Config{
 			TLS: &tls.Config{
 				Certificates: []tls.Certificate{{}},

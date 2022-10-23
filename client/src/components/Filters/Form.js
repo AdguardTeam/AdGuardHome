@@ -7,8 +7,7 @@ import classNames from 'classnames';
 import { validatePath, validateRequiredValue } from '../../helpers/validators';
 import { CheckboxField, renderInputField } from '../../helpers/form';
 import { MODAL_OPEN_TIMEOUT, MODAL_TYPE, FORM_NAME } from '../../helpers/constants';
-
-const filtersCatalog = require('../../helpers/filters/filters.json');
+import filtersCatalog from '../../helpers/filters/filters';
 
 const getIconsData = (homepage, source) => ([
     {

@@ -17,13 +17,40 @@ and this project adheres to
 
 ## Added
 
+- The new optional `tls.override_tls_ciphers` property, which allows
+  overriding TLS ciphers used by AdGuard Home ([#4925], [#4990]).
+- The ability to serve DNS on link-local IPv6 addresses ([#2926]).
 - The ability to put [ClientIDs][clientid] into DNS-over-HTTPS hostnames as
   opposed to URL paths ([#3418]).  Note that AdGuard Home checks the server name
   only if the URL does not contain a ClientID.
 - Support for [HSTS][hsts], if `tls.force_https` is enabled ([#4941]).
 
+### Changed
+
+- Responses with `SERVFAIL` code are now cached for at least 30 seconds.
+
+### Fixed
+
+- Editing an enabled rule list's URL now also includes validation of the filter
+  contents preventing from saving a bad one ([#4916]).
+- The default value of `dns.cache_size` accidentally set to 0 has now been
+  reverted to 4 MiB ([#5010]).
+- Responses for which the DNSSEC validation had explicitly been omitted aren't
+  cached now ([#4942]).
+- Web UI not switching to HTTP/3 ([#4986], [#4993]).
+
+[#2926]: https://github.com/AdguardTeam/AdGuardHome/issues/2926
 [#3418]: https://github.com/AdguardTeam/AdGuardHome/issues/3418
+
+[#4916]: https://github.com/AdguardTeam/AdGuardHome/issues/4916
+[#4925]: https://github.com/AdguardTeam/AdGuardHome/issues/4925
+[#4942]: https://github.com/AdguardTeam/AdGuardHome/issues/4942
+[#4986]: https://github.com/AdguardTeam/AdGuardHome/issues/4986
+[#4990]: https://github.com/AdguardTeam/AdGuardHome/issues/4990
+[#4993]: https://github.com/AdguardTeam/AdGuardHome/issues/4993
+[#5010]: https://github.com/AdguardTeam/AdGuardHome/issues/5010
 [#4941]: https://github.com/AdguardTeam/AdGuardHome/pull/4941
+
 
 [clientid]: https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid
 [hsts]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
@@ -31,12 +58,27 @@ and this project adheres to
 
 
 <!--
-## [v0.107.16] - 2022-11-02 (APPROX.)
+## [v0.107.17] - 2022-11-02 (APPROX.)
 
-See also the [v0.107.16 GitHub milestone][ms-v0.107.15].
+See also the [v0.107.17 GitHub milestone][ms-v0.107.17].
 
-[ms-v0.107.16]:   https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
+[ms-v0.107.17]: https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
 -->
+
+
+
+## [v0.107.16] - 2022-10-07
+
+This is a security update.  There is no GitHub milestone, since no GitHub issues
+were resolved.
+
+## Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2022-2879, CVE-2022-2880, and CVE-2022-41715 Go vulnerabilities fixed in
+  [Go 1.18.7][go-1.18.7].
+
+[go-1.18.7]: https://groups.google.com/g/golang-announce/c/xtuG5faxtaU
 
 
 
@@ -78,7 +120,7 @@ experimental and may break or change in the future.
 [#4982]: https://github.com/AdguardTeam/AdGuardHome/issues/4982
 [#4983]: https://github.com/AdguardTeam/AdGuardHome/issues/4983
 
-[ms-v0.107.15]:   https://github.com/AdguardTeam/AdGuardHome/milestone/51?closed=1
+[ms-v0.107.15]: https://github.com/AdguardTeam/AdGuardHome/milestone/51?closed=1
 
 
 
@@ -88,9 +130,9 @@ See also the [v0.107.14 GitHub milestone][ms-v0.107.14].
 
 ### Security
 
-A Cross-Site Request Forgery (CSRF) vulnerability has been discovered.  The CVE
-number is to be assigned.  We thank Daniel Elkabes from Mend.io for reporting
-this vulnerability to us.
+A Cross-Site Request Forgery (CSRF) vulnerability has been discovered.  We thank
+Daniel Elkabes from Mend.io for reporting this vulnerability to us.  This is
+[CVE-2022-32175].
 
 #### `SameSite` Policy
 
@@ -139,6 +181,7 @@ All JSON APIs that expect a body now check if the request actually has
 [#4927]: https://github.com/AdguardTeam/AdGuardHome/issues/4927
 [#4930]: https://github.com/AdguardTeam/AdGuardHome/issues/4930
 
+[CVE-2022-32175]: https://www.cvedetails.com/cve/CVE-2022-32175
 [ms-v0.107.14]:   https://github.com/AdguardTeam/AdGuardHome/milestone/50?closed=1
 
 
@@ -166,7 +209,7 @@ See also the [v0.107.13 GitHub milestone][ms-v0.107.13].
 [#4722]: https://github.com/AdguardTeam/AdGuardHome/issues/4722
 [#4904]: https://github.com/AdguardTeam/AdGuardHome/issues/4904
 
-[ms-v0.107.13]:   https://github.com/AdguardTeam/AdGuardHome/milestone/49?closed=1
+[ms-v0.107.13]: https://github.com/AdguardTeam/AdGuardHome/milestone/49?closed=1
 
 
 
@@ -176,7 +219,7 @@ See also the [v0.107.12 GitHub milestone][ms-v0.107.12].
 
 ### Security
 
-- Go version was updated to prevent the possibility of exploiting the
+- Go version has been updated to prevent the possibility of exploiting the
   CVE-2022-27664 and CVE-2022-32190 Go vulnerabilities fixed in
   [Go 1.18.6][go-1.18.6].
 
@@ -297,7 +340,7 @@ See also the [v0.107.9 GitHub milestone][ms-v0.107.9].
 
 ### Security
 
-- Go version was updated to prevent the possibility of exploiting the
+- Go version has been updated to prevent the possibility of exploiting the
   CVE-2022-32189 Go vulnerability fixed in [Go 1.18.5][go-1.18.5].  Go 1.17
   support has also been removed, as it has reached end of life and will not
   receive security updates.
@@ -340,7 +383,7 @@ See also the [v0.107.8 GitHub milestone][ms-v0.107.8].
 
 ### Security
 
-- Go version was updated to prevent the possibility of exploiting the
+- Go version has been updated to prevent the possibility of exploiting the
   CVE-2022-1705, CVE-2022-32148, CVE-2022-30631, and other Go vulnerabilities
   fixed in [Go 1.17.12][go-1.17.12].
 
@@ -376,7 +419,7 @@ See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
 
 ### Security
 
-- Go version was updated to prevent the possibility of exploiting the
+- Go version has been updated to prevent the possibility of exploiting the
   [CVE-2022-29526], [CVE-2022-30634], [CVE-2022-30629], [CVE-2022-30580], and
   [CVE-2022-29804] Go vulnerabilities.
 - Enforced password strength policy ([#3503]).
@@ -533,7 +576,7 @@ See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
 ### Security
 
 - `User-Agent` HTTP header removed from outgoing DNS-over-HTTPS requests.
-- Go version was updated to prevent the possibility of exploiting the
+- Go version has been updated to prevent the possibility of exploiting the
   [CVE-2022-24675], [CVE-2022-27536], and [CVE-2022-28327] Go vulnerabilities.
 
 ### Added
@@ -588,7 +631,7 @@ were resolved.
 
 ### Security
 
-- Go version was updated to prevent the possibility of exploiting the
+- Go version has been updated to prevent the possibility of exploiting the
   [CVE-2022-24921] Go vulnerability.
 
 [CVE-2022-24921]: https://www.cvedetails.com/cve/CVE-2022-24921
@@ -601,7 +644,7 @@ See also the [v0.107.4 GitHub milestone][ms-v0.107.4].
 
 ### Security
 
-- Go version was updated to prevent the possibility of exploiting the
+- Go version has been updated to prevent the possibility of exploiting the
   [CVE-2022-23806], [CVE-2022-23772], and [CVE-2022-23773] Go vulnerabilities.
 
 ### Fixed
@@ -1338,11 +1381,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...HEAD
-[v0.107.16]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...v0.107.15
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.17...HEAD
+[v0.107.17]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...v0.107.17
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...HEAD
+[v0.107.16]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...v0.107.16
 [v0.107.15]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...v0.107.15
 [v0.107.14]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...v0.107.14
 [v0.107.13]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.12...v0.107.13
