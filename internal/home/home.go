@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/pprof"
+	"net/netip"
 	"net/url"
 	"os"
 	"os/signal"
@@ -58,7 +59,7 @@ type homeContext struct {
 	auth       *Auth                // HTTP authentication module
 	filters    *filtering.DNSFilter // DNS filtering module
 	web        *Web                 // Web (HTTP, HTTPS) module
-	tls        *TLSMod              // TLS module
+	tls        *tlsManager          // TLS module
 	// etcHosts is an IP-hostname pairs set taken from system configuration
 	// (e.g. /etc/hosts) files.
 	etcHosts *aghnet.HostsContainer
@@ -83,6 +84,10 @@ type homeContext struct {
 	transport        *http.Transport
 	client           *http.Client
 	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
+
+	// tlsCipherIDs are the ID of the cipher suites that AdGuard Home must use.
+	tlsCipherIDs []uint16
+
 	// runningAsService flag is set to true when options are passed from the service runner
 	runningAsService bool
 }
@@ -116,8 +121,7 @@ func Main(clientBuildFS fs.FS) {
 			switch sig {
 			case syscall.SIGHUP:
 				Context.clients.Reload()
-				Context.tls.Reload()
-
+				Context.tls.reload()
 			default:
 				cleanup(context.Background())
 				cleanupAlways()
@@ -146,13 +150,13 @@ func setupContext(opts options) {
 		// Go on.
 	}
 
-	Context.tlsRoots = LoadSystemRootCAs()
+	Context.tlsRoots = aghtls.SystemRootCAs()
 	Context.transport = &http.Transport{
 		DialContext: customDialContext,
 		Proxy:       getHTTPProxy,
 		TLSClientConfig: &tls.Config{
 			RootCAs:      Context.tlsRoots,
-			CipherSuites: aghtls.SaferCipherSuites(),
+			CipherSuites: Context.tlsCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
 	}
@@ -356,7 +360,7 @@ func setupConfig(opts options) (err error) {
 	}
 
 	// override bind host/port from the console
-	if opts.bindHost != nil {
+	if opts.bindHost.IsValid() {
 		config.BindHost = opts.bindHost
 	}
 	if len(opts.pidFile) != 0 && writePIDFile(opts.pidFile) {
@@ -494,9 +498,9 @@ func run(opts options, clientBuildFS fs.FS) {
 	}
 	config.Users = nil
 
-	Context.tls = tlsCreate(config.TLS)
-	if Context.tls == nil {
-		log.Fatalf("Can't initialize TLS module")
+	Context.tls, err = newTLSManager(config.TLS)
+	if err != nil {
+		log.Fatalf("initializing tls: %s", err)
 	}
 
 	Context.web, err = initWeb(opts, clientBuildFS)
@@ -506,7 +510,7 @@ func run(opts options, clientBuildFS fs.FS) {
 		err = initDNSServer()
 		fatalOnError(err)
 
-		Context.tls.Start()
+		Context.tls.start()
 
 		go func() {
 			serr := startDNSServer()
@@ -530,20 +534,22 @@ func run(opts options, clientBuildFS fs.FS) {
 	select {}
 }
 
-// StartMods initializes and starts the DNS server after installation.
-func StartMods() error {
+// startMods initializes and starts the DNS server after installation.
+func startMods() error {
 	err := initDNSServer()
 	if err != nil {
 		return err
 	}
 
-	Context.tls.Start()
+	Context.tls.start()
 
 	err = startDNSServer()
 	if err != nil {
 		closeDNSServer()
+
 		return err
 	}
+
 	return nil
 }
 
@@ -556,7 +562,7 @@ func checkPermissions() {
 	}
 
 	// We should check if AdGuard Home is able to bind to port 53
-	err := aghnet.CheckPort("tcp", net.IP{127, 0, 0, 1}, defaultPortDNS)
+	err := aghnet.CheckPort("tcp", netip.AddrPortFrom(aghnet.IPv4Localhost(), defaultPortDNS))
 	if err != nil {
 		if errors.Is(err, os.ErrPermission) {
 			log.Fatal(`Permission check failed.
@@ -727,7 +733,6 @@ func cleanup(ctx context.Context) {
 	}
 
 	if Context.tls != nil {
-		Context.tls.Close()
 		Context.tls = nil
 	}
 }
@@ -737,7 +742,8 @@ func cleanupAlways() {
 	if len(Context.pidFileName) != 0 {
 		_ = os.Remove(Context.pidFileName)
 	}
-	log.Info("Stopped")
+
+	log.Info("stopped")
 }
 
 func exitWithError() {

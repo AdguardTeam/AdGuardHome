@@ -9,6 +9,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,6 +26,8 @@ func TestService(t *testing.T) {
 	const (
 		bootstrapAddr = "bootstrap.example"
 		upstreamAddr  = "upstream.example"
+
+		closeErr errors.Error = "closing failed"
 	)
 
 	ups := &aghtest.UpstreamMock{
@@ -35,6 +38,9 @@ func TestService(t *testing.T) {
 			resp = (&dns.Msg{}).SetReply(req)
 
 			return resp, nil
+		},
+		OnClose: func() (err error) {
+			return closeErr
 		},
 	}
 
@@ -85,5 +91,5 @@ func TestService(t *testing.T) {
 	defer cancel()
 
 	err = svc.Shutdown(ctx)
-	require.NoError(t, err)
+	require.ErrorIs(t, err, closeErr)
 }

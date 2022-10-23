@@ -12,6 +12,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
+	"golang.org/x/exp/slices"
 )
 
 // Write Stats data and logs
@@ -28,7 +29,7 @@ func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
 	}
 
 	ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
-	ip = netutil.CloneIP(ip)
+	ip = slices.Clone(ip)
 
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()

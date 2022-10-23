@@ -15,7 +15,7 @@ import {
     getObjDiff,
 } from '../../helpers/helpers';
 
-const filtersCatalog = require('../../helpers/filters/filters.json');
+import filtersCatalog from '../../helpers/filters/filters';
 
 class DnsBlocklist extends Component {
     componentDidMount() {

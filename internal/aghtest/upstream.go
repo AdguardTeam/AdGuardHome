@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/require"
@@ -30,6 +31,8 @@ type Upstream struct {
 	// Addr is the address for Address method.
 	Addr string
 }
+
+var _ upstream.Upstream = (*Upstream)(nil)
 
 // RespondTo returns a response with answer if req has class cl, question type
 // qt, and target targ.
@@ -68,7 +71,7 @@ func RespondTo(t testing.TB, req *dns.Msg, cl, qt uint16, targ, answer string) (
 	return resp
 }
 
-// Exchange implements the upstream.Upstream interface for *Upstream.
+// Exchange implements the [upstream.Upstream] interface for *Upstream.
 //
 // TODO(a.garipov): Split further into handlers.
 func (u *Upstream) Exchange(m *dns.Msg) (resp *dns.Msg, err error) {
@@ -114,9 +117,14 @@ func (u *Upstream) Exchange(m *dns.Msg) (resp *dns.Msg, err error) {
 	return resp, nil
 }
 
-// Address implements upstream.Upstream interface for *Upstream.
+// Address implements [upstream.Upstream] interface for *Upstream.
 func (u *Upstream) Address() string {
 	return u.Addr
+}
+
+// Close implements [upstream.Upstream] interface for *Upstream.
+func (u *Upstream) Close() (err error) {
+	return nil
 }
 
 // NewBlockUpstream returns an [*UpstreamMock] that works like an upstream that

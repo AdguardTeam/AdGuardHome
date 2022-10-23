@@ -2,7 +2,7 @@ package home
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 	"os"
 	"strconv"
 	"strings"
@@ -35,7 +35,7 @@ type options struct {
 	serviceControlAction string
 
 	// bindHost is the address on which to serve the HTTP UI.
-	bindHost net.IP
+	bindHost netip.Addr
 
 	// bindPort is the port on which to serve the HTTP UI.
 	bindPort int
@@ -130,14 +130,15 @@ var cmdLineOpts = []cmdLineOpt{{
 	longName:        "work-dir",
 	shortName:       "w",
 }, {
-	updateWithValue: func(o options, v string) (options, error) {
-		o.bindHost = net.ParseIP(v)
-		return o, nil
+	updateWithValue: func(o options, v string) (oo options, err error) {
+		o.bindHost, err = netip.ParseAddr(v)
+
+		return o, err
 	},
 	updateNoValue: nil,
 	effect:        nil,
 	serialize: func(o options) (val string, ok bool) {
-		if o.bindHost == nil {
+		if !o.bindHost.IsValid() {
 			return "", false
 		}
 
