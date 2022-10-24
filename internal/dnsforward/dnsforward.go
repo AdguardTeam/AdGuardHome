@@ -706,7 +706,5 @@ func (s *Server) IsBlockedClient(ip net.IP, clientID string) (blocked bool, rule
 		blocked = true
 	}
 
-	rule = aghalg.Coalesce(rule, clientID)
-
-	return blocked, rule
+	return blocked, aghalg.Coalesce(rule, clientID)
 }

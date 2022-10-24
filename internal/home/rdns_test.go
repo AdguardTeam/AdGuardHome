@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"net/netip"
 	"sync"
 	"testing"
 	"time"
@@ -88,7 +89,7 @@ func TestRDNS_Begin(t *testing.T) {
 			clients: &clientsContainer{
 				list:    map[string]*Client{},
 				idIndex: tc.cliIDIndex,
-				ipToRC:  netutil.NewIPMap(0),
+				ipToRC:  map[netip.Addr]*RuntimeClient{},
 				allTags: stringutil.NewSet(),
 			},
 		}
@@ -228,7 +229,7 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 		cc := &clientsContainer{
 			list:    map[string]*Client{},
 			idIndex: map[string]*Client{},
-			ipToRC:  netutil.NewIPMap(0),
+			ipToRC:  map[netip.Addr]*RuntimeClient{},
 			allTags: stringutil.NewSet(),
 		}
 		ch := make(chan net.IP)

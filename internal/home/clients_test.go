@@ -202,38 +202,30 @@ func TestClientsWHOIS(t *testing.T) {
 	}
 
 	t.Run("new_client", func(t *testing.T) {
-		ip := net.IP{1, 1, 1, 255}
-		clients.SetWHOISInfo(ip, whois)
-		v, _ := clients.ipToRC.Get(ip)
-		require.NotNil(t, v)
-
-		rc, ok := v.(*RuntimeClient)
-		require.True(t, ok)
+		ip := netip.MustParseAddr("1.1.1.255")
+		clients.SetWHOISInfo(ip.AsSlice(), whois)
+		rc := clients.ipToRC[ip]
 		require.NotNil(t, rc)
 
 		assert.Equal(t, rc.WHOISInfo, whois)
 	})
 
 	t.Run("existing_auto-client", func(t *testing.T) {
-		ip := net.IP{1, 1, 1, 1}
-		ok, err := clients.AddHost(ip, "host", ClientSourceRDNS)
+		ip := netip.MustParseAddr("1.1.1.1")
+		ok, err := clients.AddHost(ip.AsSlice(), "host", ClientSourceRDNS)
 		require.NoError(t, err)
 
 		assert.True(t, ok)
 
-		clients.SetWHOISInfo(ip, whois)
-		v, _ := clients.ipToRC.Get(ip)
-		require.NotNil(t, v)
-
-		rc, ok := v.(*RuntimeClient)
-		require.True(t, ok)
+		clients.SetWHOISInfo(ip.AsSlice(), whois)
+		rc := clients.ipToRC[ip]
 		require.NotNil(t, rc)
 
 		assert.Equal(t, rc.WHOISInfo, whois)
 	})
 
 	t.Run("can't_set_manually-added", func(t *testing.T) {
-		ip := net.IP{1, 1, 1, 2}
+		ip := netip.MustParseAddr("1.1.1.2")
 
 		ok, err := clients.Add(&Client{
 			IDs:  []string{"1.1.1.2"},
@@ -242,9 +234,9 @@ func TestClientsWHOIS(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, ok)
 
-		clients.SetWHOISInfo(ip, whois)
-		v, _ := clients.ipToRC.Get(ip)
-		require.Nil(t, v)
+		clients.SetWHOISInfo(ip.AsSlice(), whois)
+		rc := clients.ipToRC[ip]
+		require.Nil(t, rc)
 
 		assert.True(t, clients.Del("client1"))
 	})

@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/golibs/log"
 )
 
 // clientJSON is a common structure used by several handlers to deal with
@@ -70,26 +69,17 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 		data.Clients = append(data.Clients, cj)
 	}
 
-	clients.ipToRC.Range(func(ip net.IP, v any) (cont bool) {
-		rc, ok := v.(*RuntimeClient)
-		if !ok {
-			log.Error("dns: bad type %T in ipToRC for %s", v, ip)
-
-			return true
-		}
-
+	for ip, rc := range clients.ipToRC {
 		cj := runtimeClientJSON{
 			WHOISInfo: rc.WHOISInfo,
 
 			Name:   rc.Host,
 			Source: rc.Source,
-			IP:     ip,
+			IP:     ip.AsSlice(),
 		}
 
 		data.RuntimeClients = append(data.RuntimeClients, cj)
-
-		return true
-	})
+	}
 
 	data.Tags = clientTags
 

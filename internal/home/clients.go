@@ -5,6 +5,7 @@ import (
 	"encoding"
 	"fmt"
 	"net"
+	"net/netip"
 	"sort"
 	"strings"
 	"sync"
@@ -24,8 +25,6 @@ import (
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
-
-//lint:file-ignore SA1019 TODO(a.garipov):  Replace [*netutil.IPMap].
 
 const clientsUpdatePeriod = 10 * time.Minute
 
@@ -135,9 +134,7 @@ type clientsContainer struct {
 	idIndex map[string]*Client // ID -> client
 
 	// ipToRC is the IP address to *RuntimeClient map.
-	//
-	// TODO(e.burkov):  Use map[netip.Addr]struct{} instead.
-	ipToRC *netutil.IPMap
+	ipToRC map[netip.Addr]*RuntimeClient
 
 	lock sync.Mutex
 
@@ -173,7 +170,7 @@ func (clients *clientsContainer) Init(
 	}
 	clients.list = make(map[string]*Client)
 	clients.idIndex = make(map[string]*Client)
-	clients.ipToRC = netutil.NewIPMap(0)
+	clients.ipToRC = map[netip.Addr]*RuntimeClient{}
 
 	clients.allTags = stringutil.NewSet(clientTags...)
 
@@ -541,20 +538,17 @@ func (clients *clientsContainer) findLocked(id string) (c *Client, ok bool) {
 // findRuntimeClientLocked finds a runtime client by their IP address.  For
 // internal use only.
 func (clients *clientsContainer) findRuntimeClientLocked(ip net.IP) (rc *RuntimeClient, ok bool) {
-	var v any
-	v, ok = clients.ipToRC.Get(ip)
-	if !ok {
-		return nil, false
-	}
-
-	rc, ok = v.(*RuntimeClient)
-	if !ok {
-		log.Error("clients: bad type %T in ipToRC for %s", v, ip)
+	// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
+	ipAddr, err := netutil.IPToAddrNoMapped(ip)
+	if err != nil {
+		log.Error("clients: bad client ip %v: %s", ip, err)
 
 		return nil, false
 	}
 
-	return rc, true
+	rc, ok = clients.ipToRC[ipAddr]
+
+	return rc, ok
 }
 
 // FindRuntimeClient finds a runtime client by their IP.
@@ -782,7 +776,15 @@ func (clients *clientsContainer) SetWHOISInfo(ip net.IP, wi *RuntimeClientWHOISI
 
 	rc.WHOISInfo = wi
 
-	clients.ipToRC.Set(ip, rc)
+	// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
+	ipAddr, err := netutil.IPToAddrNoMapped(ip)
+	if err != nil {
+		log.Error("clients: bad client ip %v: %s", ip, err)
+
+		return
+	}
+
+	clients.ipToRC[ipAddr] = rc
 
 	log.Debug("clients: set whois info for runtime client with ip %s: %+v", ip, wi)
 }
@@ -813,10 +815,18 @@ func (clients *clientsContainer) addHostLocked(ip net.IP, host string, src clien
 			WHOISInfo: &RuntimeClientWHOISInfo{},
 		}
 
-		clients.ipToRC.Set(ip, rc)
+		// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
+		ipAddr, err := netutil.IPToAddrNoMapped(ip)
+		if err != nil {
+			log.Error("clients: bad client ip %v: %s", ip, err)
+
+			return false
+		}
+
+		clients.ipToRC[ipAddr] = rc
 	}
 
-	log.Debug("clients: added %s -> %q [%d]", ip, host, clients.ipToRC.Len())
+	log.Debug("clients: added %s -> %q [%d]", ip, host, len(clients.ipToRC))
 
 	return true
 }
@@ -824,27 +834,20 @@ func (clients *clientsContainer) addHostLocked(ip net.IP, host string, src clien
 // rmHostsBySrc removes all entries that match the specified source.
 func (clients *clientsContainer) rmHostsBySrc(src clientSource) {
 	n := 0
-	clients.ipToRC.Range(func(ip net.IP, v any) (cont bool) {
-		rc, ok := v.(*RuntimeClient)
-		if !ok {
-			log.Error("clients: bad type %T in ipToRC for %s", v, ip)
-
-			return true
-		}
-
+	for ip, rc := range clients.ipToRC {
 		if rc.Source == src {
-			clients.ipToRC.Del(ip)
+			delete(clients.ipToRC, ip)
 			n++
 		}
-
-		return true
-	})
+	}
 
 	log.Debug("clients: removed %d client aliases", n)
 }
 
 // addFromHostsFile fills the client-hostname pairing index from the system's
 // hosts files.
+//
+//lint:ignore SA1019 TODO(a.garipov):  Replace [*netutil.IPMap].
 func (clients *clientsContainer) addFromHostsFile(hosts *netutil.IPMap) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
@@ -855,7 +858,7 @@ func (clients *clientsContainer) addFromHostsFile(hosts *netutil.IPMap) {
 	hosts.Range(func(ip net.IP, v any) (cont bool) {
 		rec, ok := v.(*aghnet.HostsRecord)
 		if !ok {
-			log.Error("dns: bad type %T in ipToRC for %s", v, ip)
+			log.Error("clients: bad type %T in hosts for %s", v, ip)
 
 			return true
 		}
