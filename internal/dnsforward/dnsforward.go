@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -24,6 +25,8 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
 )
+
+//lint:file-ignore SA1019 TODO(a.garipov):  Replace [*netutil.IPMap].
 
 // DefaultTimeout is the default upstream timeout
 const DefaultTimeout = 10 * time.Second
@@ -63,7 +66,7 @@ type Server struct {
 	dhcpServer dhcpd.Interface      // DHCP server instance (optional)
 	queryLog   querylog.QueryLog    // Query log instance
 	stats      stats.Interface
-	access     *accessCtx
+	access     *accessManager
 
 	// localDomainSuffix is the suffix used to detect internal hosts.  It
 	// must be a valid domain name plus dots on each side.
@@ -673,27 +676,37 @@ func (s *Server) IsBlockedClient(ip net.IP, clientID string) (blocked bool, rule
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
+	blockedByIP := false
+	if ip != nil {
+		// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
+		ipAddr, err := netutil.IPToAddrNoMapped(ip)
+		if err != nil {
+			log.Error("dnsforward: bad client ip %v: %s", ip, err)
+
+			return false, ""
+		}
+
+		blockedByIP, rule = s.access.isBlockedIP(ipAddr)
+	}
+
 	allowlistMode := s.access.allowlistMode()
-	blockedByIP, rule := s.access.isBlockedIP(ip)
 	blockedByClientID := s.access.isBlockedClientID(clientID)
 
-	// Allow if at least one of the checks allows in allowlist mode, but
-	// block if at least one of the checks blocks in blocklist mode.
+	// Allow if at least one of the checks allows in allowlist mode, but block
+	// if at least one of the checks blocks in blocklist mode.
 	if allowlistMode && blockedByIP && blockedByClientID {
-		log.Debug("client %s (id %q) is not in access allowlist", ip, clientID)
+		log.Debug("client %v (id %q) is not in access allowlist", ip, clientID)
 
 		// Return now without substituting the empty rule for the
 		// clientID because the rule can't be empty here.
 		return true, rule
 	} else if !allowlistMode && (blockedByIP || blockedByClientID) {
-		log.Debug("client %s (id %q) is in access blocklist", ip, clientID)
+		log.Debug("client %v (id %q) is in access blocklist", ip, clientID)
 
 		blocked = true
 	}
 
-	if rule == "" {
-		rule = clientID
-	}
+	rule = aghalg.Coalesce(rule, clientID)
 
 	return blocked, rule
 }

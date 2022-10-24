@@ -16,6 +16,8 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+//lint:file-ignore SA1019 TODO(a.garipov):  Replace [*netutil.IPMap].
+
 // To transfer information between modules
 type dnsContext struct {
 	proxyCtx *proxy.DNSContext

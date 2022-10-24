@@ -21,6 +21,8 @@ import (
 	"github.com/miekg/dns"
 )
 
+//lint:file-ignore SA1019 TODO(a.garipov):  Replace [*netutil.IPMap].
+
 // DefaultHostsPaths returns the slice of paths default for the operating system
 // to files and directories which are containing the hosts database.  The result
 // is intended to be used within fs.FS so the initial slash is omitted.

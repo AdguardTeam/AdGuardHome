@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.46.1
-	github.com/AdguardTeam/golibs v0.10.9
+	github.com/AdguardTeam/golibs v0.11.0
 	github.com/AdguardTeam/urlfilter v0.16.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.2.5
@@ -29,9 +29,9 @@ require (
 	github.com/ti-mo/netfilter v0.4.0
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be
-	golang.org/x/exp v0.0.0-20220929160808-de9c53c655b9
-	golang.org/x/net v0.0.0-20220927171203-f486391704dc
-	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec
+	golang.org/x/exp v0.0.0-20221019170559-20944726eadf
+	golang.org/x/net v0.1.0
+	golang.org/x/sys v0.1.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.0
@@ -61,7 +61,7 @@ require (
 	github.com/u-root/uio v0.0.0-20220204230159-dac05f7d2cb4 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220922195421-2adab6b8c60e // indirect
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 )

@@ -3,25 +3,26 @@ package dnsforward
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
+	"net/netip"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 )
 
-// accessCtx controls IP and client blocking that takes place before all other
-// processing.  An accessCtx is safe for concurrent use.
-type accessCtx struct {
-	// TODO(e.burkov):  Use map[netip.Addr]struct{} instead.
-	allowedIPs *netutil.IPMap
-	blockedIPs *netutil.IPMap
+// unit is a convenient alias for struct{}
+type unit = struct{}
+
+// accessManager controls IP and client blocking that takes place before all
+// other processing.  An accessManager is safe for concurrent use.
+type accessManager struct {
+	allowedIPs map[netip.Addr]unit
+	blockedIPs map[netip.Addr]unit
 
 	allowedClientIDs *stringutil.Set
 	blockedClientIDs *stringutil.Set
@@ -29,36 +30,29 @@ type accessCtx struct {
 	blockedHostsEng *urlfilter.DNSEngine
 
 	// TODO(a.garipov): Create a type for a set of IP networks.
-	// netutil.IPNetSet?
-	allowedNets []*net.IPNet
-	blockedNets []*net.IPNet
+	allowedNets []netip.Prefix
+	blockedNets []netip.Prefix
 }
-
-// unit is a convenient alias for struct{}
-type unit = struct{}
 
 // processAccessClients is a helper for processing a list of client strings,
 // which may be an IP address, a CIDR, or a ClientID.
 func processAccessClients(
 	clientStrs []string,
-	ips *netutil.IPMap,
-	nets *[]*net.IPNet,
+	ips map[netip.Addr]unit,
+	nets *[]netip.Prefix,
 	clientIDs *stringutil.Set,
 ) (err error) {
 	for i, s := range clientStrs {
-		if ip := net.ParseIP(s); ip != nil {
-			ips.Set(ip, unit{})
-		} else if cidrIP, ipnet, cidrErr := net.ParseCIDR(s); cidrErr == nil {
-			ipnet.IP = cidrIP
+		var ip netip.Addr
+		var ipnet netip.Prefix
+		if ip, err = netip.ParseAddr(s); err == nil {
+			ips[ip] = unit{}
+		} else if ipnet, err = netip.ParsePrefix(s); err == nil {
 			*nets = append(*nets, ipnet)
 		} else {
-			idErr := ValidateClientID(s)
-			if idErr != nil {
-				return fmt.Errorf(
-					"value %q at index %d: bad ip, cidr, or clientid",
-					s,
-					i,
-				)
+			err = ValidateClientID(s)
+			if err != nil {
+				return fmt.Errorf("value %q at index %d: bad ip, cidr, or clientid", s, i)
 			}
 
 			clientIDs.Add(s)
@@ -69,10 +63,10 @@ func processAccessClients(
 }
 
 // newAccessCtx creates a new accessCtx.
-func newAccessCtx(allowed, blocked, blockedHosts []string) (a *accessCtx, err error) {
-	a = &accessCtx{
-		allowedIPs: netutil.NewIPMap(0),
-		blockedIPs: netutil.NewIPMap(0),
+func newAccessCtx(allowed, blocked, blockedHosts []string) (a *accessManager, err error) {
+	a = &accessManager{
+		allowedIPs: map[netip.Addr]unit{},
+		blockedIPs: map[netip.Addr]unit{},
 
 		allowedClientIDs: stringutil.NewSet(),
 		blockedClientIDs: stringutil.NewSet(),
@@ -112,12 +106,12 @@ func newAccessCtx(allowed, blocked, blockedHosts []string) (a *accessCtx, err er
 }
 
 // allowlistMode returns true if this *accessCtx is in the allowlist mode.
-func (a *accessCtx) allowlistMode() (ok bool) {
-	return a.allowedIPs.Len() != 0 || a.allowedClientIDs.Len() != 0 || len(a.allowedNets) != 0
+func (a *accessManager) allowlistMode() (ok bool) {
+	return len(a.allowedIPs) != 0 || a.allowedClientIDs.Len() != 0 || len(a.allowedNets) != 0
 }
 
 // isBlockedClientID returns true if the ClientID should be blocked.
-func (a *accessCtx) isBlockedClientID(id string) (ok bool) {
+func (a *accessManager) isBlockedClientID(id string) (ok bool) {
 	allowlistMode := a.allowlistMode()
 	if id == "" {
 		// In allowlist mode, consider requests without ClientIDs blocked by
@@ -133,7 +127,7 @@ func (a *accessCtx) isBlockedClientID(id string) (ok bool) {
 }
 
 // isBlockedHost returns true if host should be blocked.
-func (a *accessCtx) isBlockedHost(host string) (ok bool) {
+func (a *accessManager) isBlockedHost(host string) (ok bool) {
 	_, ok = a.blockedHostsEng.Match(strings.ToLower(host))
 
 	return ok
@@ -141,7 +135,7 @@ func (a *accessCtx) isBlockedHost(host string) (ok bool) {
 
 // isBlockedIP returns the status of the IP address blocking as well as the rule
 // that blocked it.
-func (a *accessCtx) isBlockedIP(ip net.IP) (blocked bool, rule string) {
+func (a *accessManager) isBlockedIP(ip netip.Addr) (blocked bool, rule string) {
 	blocked = true
 	ips := a.blockedIPs
 	ipnets := a.blockedNets
@@ -153,7 +147,7 @@ func (a *accessCtx) isBlockedIP(ip net.IP) (blocked bool, rule string) {
 		ipnets = a.allowedNets
 	}
 
-	if _, ok := ips.Get(ip); ok {
+	if _, ok := ips[ip]; ok {
 		return blocked, ip.String()
 	}
 
@@ -241,7 +235,7 @@ func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var a *accessCtx
+	var a *accessManager
 	a, err = newAccessCtx(list.AllowedClients, list.DisallowedClients, list.BlockedHosts)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "creating access ctx: %s", err)

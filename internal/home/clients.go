@@ -25,6 +25,8 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+//lint:file-ignore SA1019 TODO(a.garipov):  Replace [*netutil.IPMap].
+
 const clientsUpdatePeriod = 10 * time.Minute
 
 var webHandlersRegistered = false
