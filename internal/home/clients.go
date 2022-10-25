@@ -332,8 +332,8 @@ func (clients *clientsContainer) onDHCPLeaseChanged(flags int) {
 	}
 }
 
-// Exists checks if client with this IP address already exists.
-func (clients *clientsContainer) Exists(ip net.IP, source clientSource) (ok bool) {
+// exists checks if client with this IP address already exists.
+func (clients *clientsContainer) exists(ip net.IP, source clientSource) (ok bool) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -414,7 +414,7 @@ func (clients *clientsContainer) clientOrArtificial(
 	}
 
 	var rc *RuntimeClient
-	rc, ok = clients.FindRuntimeClient(ip)
+	rc, ok = clients.findRuntimeClient(ip)
 	if ok {
 		return &querylog.Client{
 			Name:  rc.Host,
@@ -551,8 +551,8 @@ func (clients *clientsContainer) findRuntimeClientLocked(ip net.IP) (rc *Runtime
 	return rc, ok
 }
 
-// FindRuntimeClient finds a runtime client by their IP.
-func (clients *clientsContainer) FindRuntimeClient(ip net.IP) (rc *RuntimeClient, ok bool) {
+// findRuntimeClient finds a runtime client by their IP.
+func (clients *clientsContainer) findRuntimeClient(ip net.IP) (rc *RuntimeClient, ok bool) {
 	if ip == nil {
 		return nil, false
 	}
@@ -749,8 +749,8 @@ func (clients *clientsContainer) Update(name string, c *Client) (err error) {
 	return nil
 }
 
-// SetWHOISInfo sets the WHOIS information for a client.
-func (clients *clientsContainer) SetWHOISInfo(ip net.IP, wi *RuntimeClientWHOISInfo) {
+// setWHOISInfo sets the WHOIS information for a client.
+func (clients *clientsContainer) setWHOISInfo(ip net.IP, wi *RuntimeClientWHOISInfo) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -795,12 +795,23 @@ func (clients *clientsContainer) AddHost(ip net.IP, host string, src clientSourc
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	return clients.addHostLocked(ip, host, src), nil
+	// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
+	ipAddr, err := netutil.IPToAddrNoMapped(ip)
+	if err != nil {
+		return false, fmt.Errorf("adding host: %w", err)
+	}
+
+	return clients.addHostLocked(ipAddr, host, src), nil
 }
 
-// addHostLocked adds a new IP-hostname pairing.  For internal use only.
-func (clients *clientsContainer) addHostLocked(ip net.IP, host string, src clientSource) (ok bool) {
-	rc, ok := clients.findRuntimeClientLocked(ip)
+// addHostLocked adds a new IP-hostname pairing.  clients.lock is expected to be
+// locked.
+func (clients *clientsContainer) addHostLocked(
+	ip netip.Addr,
+	host string,
+	src clientSource,
+) (ok bool) {
+	rc, ok := clients.ipToRC[ip]
 	if ok {
 		if rc.Source > src {
 			return false
@@ -815,15 +826,7 @@ func (clients *clientsContainer) addHostLocked(ip net.IP, host string, src clien
 			WHOISInfo: &RuntimeClientWHOISInfo{},
 		}
 
-		// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
-		ipAddr, err := netutil.IPToAddrNoMapped(ip)
-		if err != nil {
-			log.Error("clients: bad client ip %v: %s", ip, err)
-
-			return false
-		}
-
-		clients.ipToRC[ipAddr] = rc
+		clients.ipToRC[ip] = rc
 	}
 
 	log.Debug("clients: added %s -> %q [%d]", ip, host, len(clients.ipToRC))
@@ -846,28 +849,17 @@ func (clients *clientsContainer) rmHostsBySrc(src clientSource) {
 
 // addFromHostsFile fills the client-hostname pairing index from the system's
 // hosts files.
-//
-//lint:ignore SA1019 TODO(a.garipov):  Replace [*netutil.IPMap].
-func (clients *clientsContainer) addFromHostsFile(hosts *netutil.IPMap) {
+func (clients *clientsContainer) addFromHostsFile(hosts aghnet.HostsRecords) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
 	clients.rmHostsBySrc(ClientSourceHostsFile)
 
 	n := 0
-	hosts.Range(func(ip net.IP, v any) (cont bool) {
-		rec, ok := v.(*aghnet.HostsRecord)
-		if !ok {
-			log.Error("clients: bad type %T in hosts for %s", v, ip)
-
-			return true
-		}
-
+	for ip, rec := range hosts {
 		clients.addHostLocked(ip, rec.Canonical, ClientSourceHostsFile)
 		n++
-
-		return true
-	})
+	}
 
 	log.Debug("clients: added %d client aliases from system hosts file", n)
 }
@@ -928,7 +920,15 @@ func (clients *clientsContainer) updateFromDHCP(add bool) {
 			continue
 		}
 
-		ok := clients.addHostLocked(l.IP, l.Hostname, ClientSourceDHCP)
+		// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
+		ipAddr, err := netutil.IPToAddrNoMapped(l.IP)
+		if err != nil {
+			log.Error("clients: bad client ip %v from dhcp: %s", l.IP, err)
+
+			continue
+		}
+
+		ok := clients.addHostLocked(ipAddr, l.Hostname, ClientSourceDHCP)
 		if ok {
 			n++
 		}

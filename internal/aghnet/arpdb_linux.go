@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net"
+	"net/netip"
 	"strings"
 	"sync"
 
@@ -94,7 +95,8 @@ func (arp *fsysARPDB) Refresh() (err error) {
 		}
 
 		n := Neighbor{}
-		if n.IP = net.ParseIP(fields[0]); n.IP == nil || n.IP.IsUnspecified() {
+		n.IP, err = netip.ParseAddr(fields[0])
+		if err != nil || n.IP.IsUnspecified() {
 			continue
 		} else if n.MAC, err = net.ParseMAC(fields[3]); err != nil {
 			continue
@@ -135,15 +137,19 @@ func parseArpAWrt(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 
 		n := Neighbor{}
 
-		if ip := net.ParseIP(fields[0]); ip == nil || n.IP.IsUnspecified() {
+		ip, err := netip.ParseAddr(fields[0])
+		if err != nil || n.IP.IsUnspecified() {
+			log.Debug("arpdb: parsing arp output: ip: %s", err)
+
 			continue
 		} else {
 			n.IP = ip
 		}
 
 		hwStr := fields[3]
-		if mac, err := net.ParseMAC(hwStr); err != nil {
-			log.Debug("parsing arp output: %s", err)
+		mac, err := net.ParseMAC(hwStr)
+		if err != nil {
+			log.Debug("arpdb: parsing arp output: mac: %s", err)
 
 			continue
 		} else {
@@ -174,7 +180,9 @@ func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 
 		if ipStr := fields[1]; len(ipStr) < 2 {
 			continue
-		} else if ip := net.ParseIP(ipStr[1 : len(ipStr)-1]); ip == nil {
+		} else if ip, err := netip.ParseAddr(ipStr[1 : len(ipStr)-1]); err != nil {
+			log.Debug("arpdb: parsing arp output: ip: %s", err)
+
 			continue
 		} else {
 			n.IP = ip
@@ -182,7 +190,7 @@ func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 
 		hwStr := fields[3]
 		if mac, err := net.ParseMAC(hwStr); err != nil {
-			log.Debug("parsing arp output: %s", err)
+			log.Debug("arpdb: parsing arp output: mac: %s", err)
 
 			continue
 		} else {
@@ -191,7 +199,7 @@ func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 
 		host := fields[0]
 		if verr := netutil.ValidateDomainName(host); verr != nil {
-			log.Debug("parsing arp output: %s", verr)
+			log.Debug("arpdb: parsing arp output: host: %s", verr)
 		} else {
 			n.Name = host
 		}
@@ -218,14 +226,18 @@ func parseIPNeigh(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 
 		n := Neighbor{}
 
-		if ip := net.ParseIP(fields[0]); ip == nil {
+		ip, err := netip.ParseAddr(fields[0])
+		if err != nil {
+			log.Debug("arpdb: parsing arp output: ip: %s", err)
+
 			continue
 		} else {
 			n.IP = ip
 		}
 
-		if mac, err := net.ParseMAC(fields[4]); err != nil {
-			log.Debug("parsing arp output: %s", err)
+		mac, err := net.ParseMAC(fields[4])
+		if err != nil {
+			log.Debug("arpdb: parsing arp output: mac: %s", err)
 
 			continue
 		} else {

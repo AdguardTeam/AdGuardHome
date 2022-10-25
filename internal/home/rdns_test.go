@@ -259,7 +259,7 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 				return
 			}
 
-			assert.True(t, cc.Exists(tc.cliIP, ClientSourceRDNS))
+			assert.True(t, cc.exists(tc.cliIP, ClientSourceRDNS))
 		})
 	}
 }

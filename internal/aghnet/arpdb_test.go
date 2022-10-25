@@ -2,6 +2,7 @@ package aghnet
 
 import (
 	"net"
+	"net/netip"
 	"sync"
 	"testing"
 
@@ -35,7 +36,7 @@ func (arp *TestARPDB) Neighbors() (ns []Neighbor) {
 }
 
 func TestARPDBS(t *testing.T) {
-	knownIP := net.IP{1, 2, 3, 4}
+	knownIP := netip.MustParseAddr("1.2.3.4")
 	knownMAC := net.HardwareAddr{0xAB, 0xCD, 0xEF, 0xAB, 0xCD, 0xEF}
 
 	succRefrCount, failRefrCount := 0, 0

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"net/netip"
 	"sync"
 
 	"github.com/AdguardTeam/golibs/errors"
@@ -54,7 +55,7 @@ type Neighbor struct {
 	Name string
 
 	// IP contains either IPv4 or IPv6.
-	IP net.IP
+	IP netip.Addr
 
 	// MAC contains the hardware address.
 	MAC net.HardwareAddr
@@ -64,7 +65,7 @@ type Neighbor struct {
 func (n Neighbor) Clone() (clone Neighbor) {
 	return Neighbor{
 		Name: n.Name,
-		IP:   slices.Clone(n.IP),
+		IP:   n.IP,
 		MAC:  slices.Clone(n.MAC),
 	}
 }

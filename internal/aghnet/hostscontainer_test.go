@@ -3,6 +3,7 @@ package aghnet
 import (
 	"io/fs"
 	"net"
+	"net/netip"
 	"path"
 	"strings"
 	"sync/atomic"
@@ -13,6 +14,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghchan"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter"
@@ -135,7 +137,7 @@ func TestNewHostsContainer(t *testing.T) {
 func TestHostsContainer_refresh(t *testing.T) {
 	// TODO(e.burkov):  Test the case with no actual updates.
 
-	ip := net.IP{127, 0, 0, 1}
+	ip := netutil.IPv4Localhost()
 	ipStr := ip.String()
 
 	testFS := fstest.MapFS{"dir/file1": &fstest.MapFile{Data: []byte(ipStr + ` hostname` + nl)}}
@@ -167,17 +169,13 @@ func TestHostsContainer_refresh(t *testing.T) {
 		require.True(t, ok)
 		require.NotNil(t, upd)
 
-		assert.Equal(t, 1, upd.Len())
+		assert.Len(t, upd, 1)
 
-		v, ok := upd.Get(ip)
+		rec, ok := upd[ip]
 		require.True(t, ok)
-
-		require.IsType(t, (*HostsRecord)(nil), v)
-
-		rec, _ := v.(*HostsRecord)
 		require.NotNil(t, rec)
 
-		assert.Truef(t, rec.Equal(want), "%+v != %+v", rec, want)
+		assert.Truef(t, rec.equal(want), "%+v != %+v", rec, want)
 	}
 
 	t.Run("initial_refresh", func(t *testing.T) {
@@ -562,13 +560,13 @@ func TestHostsContainer(t *testing.T) {
 }
 
 func TestUniqueRules_ParseLine(t *testing.T) {
-	ip := net.IP{127, 0, 0, 1}
+	ip := netutil.IPv4Localhost()
 	ipStr := ip.String()
 
 	testCases := []struct {
 		name      string
 		line      string
-		wantIP    net.IP
+		wantIP    netip.Addr
 		wantHosts []string
 	}{{
 		name:      "simple",
@@ -583,7 +581,7 @@ func TestUniqueRules_ParseLine(t *testing.T) {
 	}, {
 		name:      "invalid_line",
 		line:      ipStr,
-		wantIP:    nil,
+		wantIP:    netip.Addr{},
 		wantHosts: nil,
 	}, {
 		name:      "invalid_line_hostname",
@@ -598,7 +596,7 @@ func TestUniqueRules_ParseLine(t *testing.T) {
 	}, {
 		name:      "whole_comment",
 		line:      `# ` + ipStr + ` hostname`,
-		wantIP:    nil,
+		wantIP:    netip.Addr{},
 		wantHosts: nil,
 	}, {
 		name:      "partial_comment",
@@ -608,7 +606,7 @@ func TestUniqueRules_ParseLine(t *testing.T) {
 	}, {
 		name:      "empty",
 		line:      ``,
-		wantIP:    nil,
+		wantIP:    netip.Addr{},
 		wantHosts: nil,
 	}}
 
@@ -616,7 +614,7 @@ func TestUniqueRules_ParseLine(t *testing.T) {
 		hp := hostsParser{}
 		t.Run(tc.name, func(t *testing.T) {
 			got, hosts := hp.parseLine(tc.line)
-			assert.True(t, tc.wantIP.Equal(got))
+			assert.Equal(t, tc.wantIP, got)
 			assert.Equal(t, tc.wantHosts, hosts)
 		})
 	}

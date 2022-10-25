@@ -4,6 +4,7 @@ package aghnet
 
 import (
 	"net"
+	"net/netip"
 	"sync"
 	"testing"
 	"testing/fstest"
@@ -33,10 +34,10 @@ const ipNeighOutput = `
 ::ffff:ffff dev enp0s3 lladdr ef:cd:ab:ef:cd:ab router STALE`
 
 var wantNeighs = []Neighbor{{
-	IP:  net.IPv4(192, 168, 1, 2),
+	IP:  netip.MustParseAddr("192.168.1.2"),
 	MAC: net.HardwareAddr{0xAB, 0xCD, 0xEF, 0xAB, 0xCD, 0xEF},
 }, {
-	IP:  net.ParseIP("::ffff:ffff"),
+	IP:  netip.MustParseAddr("::ffff:ffff"),
 	MAC: net.HardwareAddr{0xEF, 0xCD, 0xAB, 0xEF, 0xCD, 0xAB},
 }}
 

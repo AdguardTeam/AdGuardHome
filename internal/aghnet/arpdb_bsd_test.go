@@ -4,6 +4,7 @@ package aghnet
 
 import (
 	"net"
+	"net/netip"
 )
 
 const arpAOutput = `
@@ -17,14 +18,14 @@ hostname.two (::ffff:ffff) at ef:cd:ab:ef:cd:ab on em0 expires in 1198 seconds [
 
 var wantNeighs = []Neighbor{{
 	Name: "hostname.one",
-	IP:   net.IPv4(192, 168, 1, 2),
+	IP:   netip.MustParseAddr("192.168.1.2"),
 	MAC:  net.HardwareAddr{0xAB, 0xCD, 0xEF, 0xAB, 0xCD, 0xEF},
 }, {
 	Name: "hostname.two",
-	IP:   net.ParseIP("::ffff:ffff"),
+	IP:   netip.MustParseAddr("::ffff:ffff"),
 	MAC:  net.HardwareAddr{0xEF, 0xCD, 0xAB, 0xEF, 0xCD, 0xAB},
 }, {
 	Name: "",
-	IP:   net.ParseIP("::1234"),
+	IP:   netip.MustParseAddr("::1234"),
 	MAC:  net.HardwareAddr{0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF},
 }}
