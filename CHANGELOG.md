@@ -30,6 +30,7 @@ and this project adheres to
 
 ### Fixed
 
+- ClientIDs not working when using DNS-over-HTTPS with HTTP/3.
 - Editing an enabled rule list's URL now also includes validation of the filter
   contents preventing from saving a bad one ([#4916]).
 - The default value of `dns.cache_size` accidentally set to 0 has now been

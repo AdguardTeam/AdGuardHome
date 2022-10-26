@@ -161,18 +161,30 @@ func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string
 func clientServerName(pctx *proxy.DNSContext, proto proxy.Proto) (srvName string, err error) {
 	switch proto {
 	case proxy.ProtoHTTPS:
-		if connState := pctx.HTTPRequest.TLS; connState != nil {
-			srvName = pctx.HTTPRequest.TLS.ServerName
+		// github.com/lucas-clemente/quic-go seems to not populate the TLS
+		// field.  So, if the request comes over HTTP/3, use the Host header
+		// value as the server name.
+		//
+		// See https://github.com/lucas-clemente/quic-go/issues/2879.
+		//
+		// TODO(a.garipov): Remove this crutch once they fix it.
+		r := pctx.HTTPRequest
+		if r.ProtoAtLeast(3, 0) {
+			var host string
+			host, err = netutil.SplitHost(r.Host)
+			if err != nil {
+				return "", fmt.Errorf("parsing host: %w", err)
+			}
+
+			srvName = host
+		} else if connState := r.TLS; connState != nil {
+			srvName = r.TLS.ServerName
 		}
 	case proxy.ProtoQUIC:
 		qConn := pctx.QUICConnection
 		conn, ok := qConn.(quicConnection)
 		if !ok {
-			return "", fmt.Errorf(
-				"proxy ctx quic conn of proto %s is %T, want quic.Connection",
-				proto,
-				qConn,
-			)
+			return "", fmt.Errorf("pctx conn of proto %s is %T, want quic.Connection", proto, qConn)
 		}
 
 		srvName = conn.ConnectionState().TLS.ServerName
@@ -180,7 +192,7 @@ func clientServerName(pctx *proxy.DNSContext, proto proxy.Proto) (srvName string
 		conn := pctx.Conn
 		tc, ok := conn.(tlsConn)
 		if !ok {
-			return "", fmt.Errorf("proxy ctx conn of proto %s is %T, want *tls.Conn", proto, conn)
+			return "", fmt.Errorf("pctx conn of proto %s is %T, want *tls.Conn", proto, conn)
 		}
 
 		srvName = tc.ConnectionState().ServerName

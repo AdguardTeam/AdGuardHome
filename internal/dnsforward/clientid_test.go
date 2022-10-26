@@ -47,8 +47,6 @@ func (c testQUICConnection) ConnectionState() (cs quic.ConnectionState) {
 }
 
 func TestServer_clientIDFromDNSContext(t *testing.T) {
-	// TODO(a.garipov): Consider moving away from the text-based error
-	// checks and onto a more structured approach.
 	testCases := []struct {
 		name         string
 		proto        proxy.Proto
@@ -57,6 +55,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantClientID string
 		wantErrMsg   string
 		strictSNI    bool
+		useHTTP3     bool
 	}{{
 		name:         "udp",
 		proto:        proxy.ProtoUDP,
@@ -65,6 +64,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantClientID: "",
 		wantErrMsg:   "",
 		strictSNI:    false,
+		useHTTP3:     false,
 	}, {
 		name:         "tls_no_clientid",
 		proto:        proxy.ProtoTLS,
@@ -73,6 +73,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantClientID: "",
 		wantErrMsg:   "",
 		strictSNI:    true,
+		useHTTP3:     false,
 	}, {
 		name:         "tls_no_client_server_name",
 		proto:        proxy.ProtoTLS,
@@ -82,6 +83,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantErrMsg: `clientid check: client server name "" ` +
 			`doesn't match host server name "example.com"`,
 		strictSNI: true,
+		useHTTP3:  false,
 	}, {
 		name:         "tls_no_client_server_name_no_strict",
 		proto:        proxy.ProtoTLS,
@@ -90,6 +92,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantClientID: "",
 		wantErrMsg:   "",
 		strictSNI:    false,
+		useHTTP3:     false,
 	}, {
 		name:         "tls_clientid",
 		proto:        proxy.ProtoTLS,
@@ -98,6 +101,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantClientID: "cli",
 		wantErrMsg:   "",
 		strictSNI:    true,
+		useHTTP3:     false,
 	}, {
 		name:         "tls_clientid_hostname_error",
 		proto:        proxy.ProtoTLS,
@@ -107,6 +111,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantErrMsg: `clientid check: client server name "cli.example.net" ` +
 			`doesn't match host server name "example.com"`,
 		strictSNI: true,
+		useHTTP3:  false,
 	}, {
 		name:         "tls_invalid_clientid",
 		proto:        proxy.ProtoTLS,
@@ -116,6 +121,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantErrMsg: `clientid check: invalid clientid "!!!": ` +
 			`bad domain name label rune '!'`,
 		strictSNI: true,
+		useHTTP3:  false,
 	}, {
 		name:        "tls_clientid_too_long",
 		proto:       proxy.ProtoTLS,
@@ -127,6 +133,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 			`pqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789": ` +
 			`domain name label is too long: got 72, max 63`,
 		strictSNI: true,
+		useHTTP3:  false,
 	}, {
 		name:         "quic_clientid",
 		proto:        proxy.ProtoQUIC,
@@ -135,6 +142,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantClientID: "cli",
 		wantErrMsg:   "",
 		strictSNI:    true,
+		useHTTP3:     false,
 	}, {
 		name:         "tls_clientid_issue3437",
 		proto:        proxy.ProtoTLS,
@@ -144,6 +152,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantErrMsg: `clientid check: client server name "cli.myexample.com" ` +
 			`doesn't match host server name "example.com"`,
 		strictSNI: true,
+		useHTTP3:  false,
 	}, {
 		name:         "tls_case",
 		proto:        proxy.ProtoTLS,
@@ -152,6 +161,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantClientID: "insensitive",
 		wantErrMsg:   ``,
 		strictSNI:    true,
+		useHTTP3:     false,
 	}, {
 		name:         "quic_case",
 		proto:        proxy.ProtoQUIC,
@@ -160,6 +170,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantClientID: "insensitive",
 		wantErrMsg:   ``,
 		strictSNI:    true,
+		useHTTP3:     false,
 	}, {
 		name:         "https_no_clientid",
 		proto:        proxy.ProtoHTTPS,
@@ -168,6 +179,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantClientID: "",
 		wantErrMsg:   "",
 		strictSNI:    true,
+		useHTTP3:     false,
 	}, {
 		name:         "https_clientid",
 		proto:        proxy.ProtoHTTPS,
@@ -176,6 +188,16 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantClientID: "cli",
 		wantErrMsg:   "",
 		strictSNI:    true,
+		useHTTP3:     false,
+	}, {
+		name:         "https_clientid_quic",
+		proto:        proxy.ProtoHTTPS,
+		hostSrvName:  "example.com",
+		cliSrvName:   "cli.example.com",
+		wantClientID: "cli",
+		wantErrMsg:   "",
+		strictSNI:    true,
+		useHTTP3:     true,
 	}}
 
 	for _, tc := range testCases {
@@ -197,18 +219,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 
 			switch tc.proto {
 			case proxy.ProtoHTTPS:
-				u := &url.URL{
-					Path: "/dns-query",
-				}
-
-				connState := &tls.ConnectionState{
-					ServerName: tc.cliSrvName,
-				}
-
-				httpReq = &http.Request{
-					URL: u,
-					TLS: connState,
-				}
+				httpReq = newHTTPReq(tc.cliSrvName, tc.useHTTP3)
 			case proxy.ProtoQUIC:
 				qconn = testQUICConnection{
 					serverName: tc.cliSrvName,
@@ -231,6 +242,33 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
+	}
+}
+
+// newHTTPReq is a helper to create HTTP requests for tests.
+func newHTTPReq(cliSrvName string, useHTTP3 bool) (r *http.Request) {
+	u := &url.URL{
+		Path: "/dns-query",
+	}
+
+	if useHTTP3 {
+		return &http.Request{
+			ProtoMajor: 3,
+			ProtoMinor: 0,
+			URL:        u,
+			Host:       cliSrvName,
+			TLS:        &tls.ConnectionState{},
+		}
+	}
+
+	return &http.Request{
+		ProtoMajor: 1,
+		ProtoMinor: 1,
+		URL:        u,
+		Host:       cliSrvName,
+		TLS: &tls.ConnectionState{
+			ServerName: cliSrvName,
+		},
 	}
 }
 
