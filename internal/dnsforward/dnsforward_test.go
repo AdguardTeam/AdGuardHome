@@ -33,7 +33,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	aghtest.DiscardLogOutput(m)
+	testutil.DiscardLogOutput(m)
 }
 
 const (
@@ -1061,11 +1061,12 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 
 	require.Len(t, resp.Answer, 1)
 
-	assert.Equal(t, dns.TypePTR, resp.Answer[0].Header().Rrtype)
-	assert.Equal(t, "34.12.168.192.in-addr.arpa.", resp.Answer[0].Header().Name)
+	ans := resp.Answer[0]
+	assert.Equal(t, dns.TypePTR, ans.Header().Rrtype)
+	assert.Equal(t, "34.12.168.192.in-addr.arpa.", ans.Header().Name)
 
-	ptr, ok := resp.Answer[0].(*dns.PTR)
-	require.True(t, ok)
+	ptr := testutil.RequireTypeAssert[*dns.PTR](t, ans)
+
 	assert.Equal(t, dns.Fqdn("myhost."+localDomain), ptr.Ptr)
 }
 

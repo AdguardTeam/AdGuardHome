@@ -10,6 +10,8 @@ import (
 )
 
 // DiscardLogOutput runs tests with discarded logger output.
+//
+// TODO(a.garipov): Replace with testutil.
 func DiscardLogOutput(m *testing.M) {
 	// TODO(e.burkov): Refactor code and tests to not use the global mutable
 	// logger.

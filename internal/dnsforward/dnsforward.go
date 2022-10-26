@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/netip"
 	"runtime"
 	"strings"
 	"sync"
@@ -26,8 +27,6 @@ import (
 	"github.com/miekg/dns"
 )
 
-//lint:file-ignore SA1019 TODO(a.garipov):  Replace [*netutil.IPMap].
-
 // DefaultTimeout is the default upstream timeout
 const DefaultTimeout = 10 * time.Second
 
@@ -46,8 +45,13 @@ var defaultBlockedHosts = []string{"version.bind", "id.server", "hostname.bind"}
 
 var webRegistered bool
 
-// hostToIPTable is an alias for the type of Server.tableHostToIP.
-type hostToIPTable = map[string]net.IP
+// hostToIPTable is a convenient type alias for tables of host names to an IP
+// address.
+type hostToIPTable = map[string]netip.Addr
+
+// ipToHostTable is a convenient type alias for tables of IP addresses to their
+// host names.  For example, for use with PTR queries.
+type ipToHostTable = map[netip.Addr]string
 
 // Server is the main way to start a DNS server.
 //
@@ -84,8 +88,7 @@ type Server struct {
 	tableHostToIP     hostToIPTable
 	tableHostToIPLock sync.Mutex
 
-	// TODO(e.burkov):  Use map[netip.Addr]struct{} instead.
-	tableIPToHost     *netutil.IPMap
+	tableIPToHost     ipToHostTable
 	tableIPToHostLock sync.Mutex
 
 	// clientIDCache is a temporary storage for ClientIDs that were extracted
