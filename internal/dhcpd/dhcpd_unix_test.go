@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,7 +16,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	aghtest.DiscardLogOutput(m)
+	testutil.DiscardLogOutput(m)
 }
 
 func testNotify(flags uint32) {

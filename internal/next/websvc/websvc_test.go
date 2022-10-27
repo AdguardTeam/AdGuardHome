@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
@@ -21,7 +20,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	aghtest.DiscardLogOutput(m)
+	testutil.DiscardLogOutput(m)
 }
 
 // testTimeout is the common timeout for tests.

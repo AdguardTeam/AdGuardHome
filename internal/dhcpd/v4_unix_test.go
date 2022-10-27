@@ -482,7 +482,6 @@ func TestV4Server_updateOptions(t *testing.T) {
 
 		s, err := v4Create(conf)
 		require.NoError(t, err)
-
 		require.IsType(t, (*v4Server)(nil), s)
 
 		t.Run(tc.name, func(t *testing.T) {

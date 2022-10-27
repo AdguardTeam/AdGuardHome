@@ -5,6 +5,7 @@ import (
 	"net/netip"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -449,12 +450,27 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 }
 
 func TestServer_ProcessRestrictLocal(t *testing.T) {
-	ups := &aghtest.Upstream{
-		Reverse: map[string][]string{
-			"251.252.253.254.in-addr.arpa.": {"host1.example.net."},
-			"1.1.168.192.in-addr.arpa.":     {"some.local-client."},
+	const (
+		extPTRQuestion = "251.252.253.254.in-addr.arpa."
+		extPTRAnswer   = "host1.example.net."
+		intPTRQuestion = "1.1.168.192.in-addr.arpa."
+		intPTRAnswer   = "some.local-client."
+	)
+
+	ups := &aghtest.UpstreamMock{
+		OnAddress: func() (addr string) { return "upstream.example" },
+		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
+			resp = aghalg.Coalesce(
+				aghtest.RespondTo(t, req, dns.ClassINET, dns.TypePTR, extPTRQuestion, extPTRAnswer),
+				aghtest.RespondTo(t, req, dns.ClassINET, dns.TypePTR, intPTRQuestion, intPTRAnswer),
+				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+			)
+
+			return resp, nil
 		},
+		OnClose: func() (err error) { return nil },
 	}
+
 	s := createTestServer(t, &filtering.Config{}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
@@ -524,14 +540,26 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 	const locDomain = "some.local."
 	const reqAddr = "1.1.168.192.in-addr.arpa."
 
-	s := createTestServer(t, &filtering.Config{}, ServerConfig{
-		UDPListenAddrs: []*net.UDPAddr{{}},
-		TCPListenAddrs: []*net.TCPAddr{{}},
-	}, &aghtest.Upstream{
-		Reverse: map[string][]string{
-			reqAddr: {locDomain},
+	s := createTestServer(
+		t,
+		&filtering.Config{},
+		ServerConfig{
+			UDPListenAddrs: []*net.UDPAddr{{}},
+			TCPListenAddrs: []*net.TCPAddr{{}},
 		},
-	})
+		&aghtest.UpstreamMock{
+			OnAddress: func() (addr string) { return "upstream.example" },
+			OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
+				resp = aghalg.Coalesce(
+					aghtest.RespondTo(t, req, dns.ClassINET, dns.TypePTR, reqAddr, locDomain),
+					new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+				)
+
+				return resp, nil
+			},
+			OnClose: func() (err error) { return nil },
+		},
+	)
 
 	var proxyCtx *proxy.DNSContext
 	var dnsCtx *dnsContext

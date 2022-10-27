@@ -3,22 +3,10 @@ package aghtest
 
 import (
 	"io"
-	"os"
 	"testing"
 
 	"github.com/AdguardTeam/golibs/log"
 )
-
-// DiscardLogOutput runs tests with discarded logger output.
-//
-// TODO(a.garipov): Replace with testutil.
-func DiscardLogOutput(m *testing.M) {
-	// TODO(e.burkov): Refactor code and tests to not use the global mutable
-	// logger.
-	log.SetOutput(io.Discard)
-
-	os.Exit(m.Run())
-}
 
 // ReplaceLogWriter moves logger output to w and uses Cleanup method of t to
 // revert changes.

@@ -11,7 +11,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -20,7 +19,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	aghtest.DiscardLogOutput(m)
+	testutil.DiscardLogOutput(m)
 }
 
 // testdata is the filesystem containing data for testing the package.
@@ -196,10 +195,7 @@ func TestCheckPort(t *testing.T) {
 		require.NoError(t, err)
 		testutil.CleanupAndRequireSuccess(t, l.Close)
 
-		addr := l.Addr()
-		require.IsType(t, new(net.TCPAddr), addr)
-
-		ipp := addr.(*net.TCPAddr).AddrPort()
+		ipp := testutil.RequireTypeAssert[*net.TCPAddr](t, l.Addr()).AddrPort()
 		require.Equal(t, laddr.Addr(), ipp.Addr())
 		require.NotZero(t, ipp.Port())
 
@@ -215,10 +211,7 @@ func TestCheckPort(t *testing.T) {
 		require.NoError(t, err)
 		testutil.CleanupAndRequireSuccess(t, conn.Close)
 
-		addr := conn.LocalAddr()
-		require.IsType(t, new(net.UDPAddr), addr)
-
-		ipp := addr.(*net.UDPAddr).AddrPort()
+		ipp := testutil.RequireTypeAssert[*net.UDPAddr](t, conn.LocalAddr()).AddrPort()
 		require.Equal(t, laddr.Addr(), ipp.Addr())
 		require.NotZero(t, ipp.Port())
 

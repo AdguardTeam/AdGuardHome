@@ -3,10 +3,10 @@ package home
 import (
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/golibs/testutil"
 )
 
 func TestMain(m *testing.M) {
-	aghtest.DiscardLogOutput(m)
+	testutil.DiscardLogOutput(m)
 	initCmdLineOpts()
 }
