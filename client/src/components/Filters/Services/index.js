@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import Form from './Form';
 import Card from '../../ui/Card';
-import { getBlockedServices, setBlockedServices } from '../../../actions/services';
+import { getBlockedServices, getAllBlockedServices, setBlockedServices } from '../../../actions/services';
 import PageTitle from '../../ui/PageTitle';
 
 const getInitialDataForServices = (initial) => (initial ? initial.reduce(
@@ -21,6 +21,7 @@ const Services = () => {
 
     useEffect(() => {
         dispatch(getBlockedServices());
+        dispatch(getAllBlockedServices());
     }, []);
 
     const handleSubmit = (values) => {
@@ -49,6 +50,7 @@ const Services = () => {
                 <div className="form">
                     <Form
                         initialValues={initialValues}
+                        blockedServices={services.allServices}
                         processing={services.processing}
                         processingSet={services.processingSet}
                         onSubmit={handleSubmit}

@@ -16,6 +16,7 @@ import { getFilteringStatus } from '../../actions/filtering';
 import { getClients } from '../../actions';
 import { getDnsConfig } from '../../actions/dnsConfig';
 import { getAccessList } from '../../actions/access';
+import { getAllBlockedServices } from '../../actions/services';
 import {
     getLogsConfig,
     resetFilteredLogs,
@@ -130,6 +131,7 @@ const Logs = () => {
             setIsLoading(true);
             dispatch(getFilteringStatus());
             dispatch(getClients());
+            dispatch(getAllBlockedServices());
             try {
                 await Promise.all([
                     dispatch(getLogsConfig()),

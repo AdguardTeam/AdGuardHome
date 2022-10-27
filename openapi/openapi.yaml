@@ -862,6 +862,9 @@
       - 'clients'
   '/blocked_services/services':
     'get':
+      'deprecated': true
+      'description': >
+        Deprecated: Use `GET /blocked_services/all` instead.
       'tags':
       - 'blocked_services'
       'operationId': 'blockedServicesAvailableServices'
@@ -873,6 +876,19 @@
             'application/json':
               'schema':
                 '$ref': '#/components/schemas/BlockedServicesArray'
+  '/blocked_services/all':
+    'get':
+      'tags':
+      - 'blocked_services'
+      'operationId': 'blockedServicesAll'
+      'summary': 'Get available services to use for blocking'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/BlockedServicesAll'
   '/blocked_services/list':
     'get':
       'tags':
@@ -2539,6 +2555,42 @@
       'type': 'array'
       'items':
         'type': 'string'
+    'BlockedServicesAll':
+      'properties':
+        'blocked_services':
+          'items':
+            '$ref': '#/components/schemas/BlockedService'
+          'type': 'array'
+      'required':
+      - 'blocked_services'
+      'type': 'object'
+    'BlockedService':
+      'properties':
+        'icon_svg':
+          'description': >
+            The SVG icon as a Base64-encoded string to make it easier to embed
+            it into a data URL.
+          'type': 'string'
+        'id':
+          'description': >
+            The ID of this service.
+          'type': 'string'
+        'name':
+          'description': >
+            The human-readable name of this service.
+          'type': 'string'
+        'rules':
+          'description': >
+            The array of the filtering rules.
+          'items':
+            'type': 'string'
+          'type': 'array'
+      'required':
+      - 'icon_svg'
+      - 'id'
+      - 'name'
+      - 'rules'
+      'type': 'object'
     'CheckConfigRequestBeta':
       'type': 'object'
       'description': 'Configuration to be checked'

@@ -1,25 +1,57 @@
-import React, { Component, Fragment } from 'react';
+/* eslint-disable react/display-name */
+/* eslint-disable react/prop-types */
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Trans, withTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
 import ReactTable from 'react-table';
 
-import { MODAL_TYPE } from '../../../helpers/constants';
-import { splitByNewLine, countClientsStatistics, sortIp } from '../../../helpers/helpers';
-import Card from '../../ui/Card';
-import Modal from './Modal';
-import CellWrap from '../../ui/CellWrap';
-import LogsSearchLink from '../../ui/LogsSearchLink';
+import { getAllBlockedServices } from '../../../../actions/services';
+import {
+    splitByNewLine,
+    countClientsStatistics,
+    sortIp,
+    getService,
+} from '../../../../helpers/helpers';
+import { MODAL_TYPE } from '../../../../helpers/constants';
+import Card from '../../../ui/Card';
+import CellWrap from '../../../ui/CellWrap';
+import LogsSearchLink from '../../../ui/LogsSearchLink';
+import Modal from '../Modal';
 
-class ClientsTable extends Component {
-    handleFormAdd = (values) => {
-        this.props.addClient(values);
+const ClientsTable = ({
+    clients,
+    normalizedTopClients,
+    isModalOpen,
+    modalClientName,
+    modalType,
+    addClient,
+    updateClient,
+    deleteClient,
+    toggleClientModal,
+    processingAdding,
+    processingDeleting,
+    processingUpdating,
+    getStats,
+    supportedTags,
+}) => {
+    const [t] = useTranslation();
+    const dispatch = useDispatch();
+    const services = useSelector((store) => store?.services);
+
+    useEffect(() => {
+        dispatch(getAllBlockedServices());
+    }, []);
+
+    const handleFormAdd = (values) => {
+        addClient(values);
     };
 
-    handleFormUpdate = (values, name) => {
-        this.props.updateClient(values, name);
+    const handleFormUpdate = (values, name) => {
+        updateClient(values, name);
     };
 
-    handleSubmit = (values) => {
+    const handleSubmit = (values) => {
         const config = values;
 
         if (values) {
@@ -42,21 +74,21 @@ class ClientsTable extends Component {
             }
         }
 
-        if (this.props.modalType === MODAL_TYPE.EDIT_FILTERS) {
-            this.handleFormUpdate(config, this.props.modalClientName);
+        if (modalType === MODAL_TYPE.EDIT_FILTERS) {
+            handleFormUpdate(config, modalClientName);
         } else {
-            this.handleFormAdd(config);
+            handleFormAdd(config);
         }
     };
 
-    getOptionsWithLabels = (options) => (
+    const getOptionsWithLabels = (options) => (
         options.map((option) => ({
             value: option,
             label: option,
         }))
     );
 
-    getClient = (name, clients) => {
+    const getClient = (name, clients) => {
         const client = clients.find((item) => name === item.name);
 
         if (client) {
@@ -65,7 +97,7 @@ class ClientsTable extends Component {
             } = client;
             return {
                 upstreams: (upstreams && upstreams.join('\n')) || '',
-                tags: (tags && this.getOptionsWithLabels(tags)) || [],
+                tags: (tags && getOptionsWithLabels(tags)) || [],
                 ...values,
             };
         }
@@ -78,17 +110,17 @@ class ClientsTable extends Component {
         };
     };
 
-    handleDelete = (data) => {
+    const handleDelete = (data) => {
         // eslint-disable-next-line no-alert
-        if (window.confirm(this.props.t('client_confirm_delete', { key: data.name }))) {
-            this.props.deleteClient(data);
-            this.props.getStats();
+        if (window.confirm(t('client_confirm_delete', { key: data.name }))) {
+            deleteClient(data);
+            getStats();
         }
     };
 
-    columns = [
+    const columns = [
         {
-            Header: this.props.t('table_client'),
+            Header: t('table_client'),
             accessor: 'ids',
             minWidth: 150,
             Cell: (row) => {
@@ -109,13 +141,13 @@ class ClientsTable extends Component {
             sortMethod: sortIp,
         },
         {
-            Header: this.props.t('table_name'),
+            Header: t('table_name'),
             accessor: 'name',
             minWidth: 120,
             Cell: CellWrap,
         },
         {
-            Header: this.props.t('settings'),
+            Header: t('settings'),
             accessor: 'use_global_settings',
             minWidth: 120,
             Cell: ({ value }) => {
@@ -133,7 +165,7 @@ class ClientsTable extends Component {
             },
         },
         {
-            Header: this.props.t('blocked_services'),
+            Header: t('blocked_services'),
             accessor: 'blocked_services',
             minWidth: 180,
             Cell: (row) => {
@@ -143,25 +175,40 @@ class ClientsTable extends Component {
                     return <Trans>settings_global</Trans>;
                 }
 
+                if (value && services.allServices) {
+                    return (
+                        <div className="logs__row logs__row--icons">
+                            {value.map((service) => {
+                                const serviceInfo = getService(services.allServices, service);
+
+                                if (serviceInfo?.icon_svg) {
+                                    return (
+                                        <div
+                                            key={serviceInfo.name}
+                                            dangerouslySetInnerHTML={{
+                                                __html: window.atob(serviceInfo.icon_svg),
+                                            }}
+                                            className="service__icon service__icon--table"
+                                            title={serviceInfo.name}
+                                        />
+                                    );
+                                }
+
+                                return null;
+                            })}
+                        </div>
+                    );
+                }
+
                 return (
                     <div className="logs__row logs__row--icons">
-                        {value && value.length > 0
-                            ? value.map((service) => (
-                                <svg
-                                    className="service__icon service__icon--table"
-                                    title={service}
-                                    key={service}
-                                >
-                                    <use xlinkHref={`#service_${service}`} />
-                                </svg>
-                            ))
-                            : '–'}
+                        –
                     </div>
                 );
             },
         },
         {
-            Header: this.props.t('upstreams'),
+            Header: t('upstreams'),
             accessor: 'upstreams',
             minWidth: 120,
             Cell: ({ value }) => {
@@ -179,7 +226,7 @@ class ClientsTable extends Component {
             },
         },
         {
-            Header: this.props.t('tags_title'),
+            Header: t('tags_title'),
             accessor: 'tags',
             minWidth: 140,
             Cell: (row) => {
@@ -203,11 +250,11 @@ class ClientsTable extends Component {
             },
         },
         {
-            Header: this.props.t('requests_count'),
+            Header: t('requests_count'),
             id: 'statistics',
             accessor: (row) => countClientsStatistics(
                 row.ids,
-                this.props.normalizedTopClients.auto,
+                normalizedTopClients.auto,
             ),
             sortMethod: (a, b) => b - a,
             minWidth: 120,
@@ -222,16 +269,13 @@ class ClientsTable extends Component {
             },
         },
         {
-            Header: this.props.t('actions_table_header'),
+            Header: t('actions_table_header'),
             accessor: 'actions',
             maxWidth: 100,
             sortable: false,
             resizable: false,
             Cell: (row) => {
                 const clientName = row.original.name;
-                const {
-                    toggleClientModal, processingDeleting, processingUpdating, t,
-                } = this.props;
 
                 return (
                     <div className="logs__row logs__row--center">
@@ -253,7 +297,7 @@ class ClientsTable extends Component {
                         <button
                             type="button"
                             className="btn btn-icon btn-outline-secondary btn-sm"
-                            onClick={() => this.handleDelete({ name: clientName })}
+                            onClick={() => handleDelete({ name: clientName })}
                             disabled={processingDeleting}
                             title={t('delete_table_action')}
                         >
@@ -267,76 +311,61 @@ class ClientsTable extends Component {
         },
     ];
 
-    render() {
-        const {
-            t,
-            clients,
-            isModalOpen,
-            modalType,
-            modalClientName,
-            toggleClientModal,
-            processingAdding,
-            processingUpdating,
-            supportedTags,
-        } = this.props;
+    const currentClientData = getClient(modalClientName, clients);
+    const tagsOptions = getOptionsWithLabels(supportedTags);
 
-        const currentClientData = this.getClient(modalClientName, clients);
-        const tagsOptions = this.getOptionsWithLabels(supportedTags);
-
-        return (
-            <Card
-                title={t('clients_title')}
-                subtitle={t('clients_desc')}
-                bodyType="card-body box-body--settings"
-            >
-                <Fragment>
-                    <ReactTable
-                        data={clients || []}
-                        columns={this.columns}
-                        defaultSorted={[
-                            {
-                                id: 'statistics',
-                                asc: true,
-                            },
-                        ]}
-                        className="-striped -highlight card-table-overflow"
-                        showPagination
-                        defaultPageSize={10}
-                        minRows={5}
-                        ofText="/"
-                        previousText={t('previous_btn')}
-                        nextText={t('next_btn')}
-                        pageText={t('page_table_footer_text')}
-                        rowsText={t('rows_table_footer_text')}
-                        loadingText={t('loading_table_status')}
-                        noDataText={t('clients_not_found')}
-                    />
-                    <button
-                        type="button"
-                        className="btn btn-success btn-standard mt-3"
-                        onClick={() => toggleClientModal(MODAL_TYPE.ADD_FILTERS)}
-                        disabled={processingAdding}
-                    >
-                        <Trans>client_add</Trans>
-                    </button>
-                    <Modal
-                        isModalOpen={isModalOpen}
-                        modalType={modalType}
-                        toggleClientModal={toggleClientModal}
-                        currentClientData={currentClientData}
-                        handleSubmit={this.handleSubmit}
-                        processingAdding={processingAdding}
-                        processingUpdating={processingUpdating}
-                        tagsOptions={tagsOptions}
-                    />
-                </Fragment>
-            </Card>
-        );
-    }
-}
+    return (
+        <Card
+            title={t('clients_title')}
+            subtitle={t('clients_desc')}
+            bodyType="card-body box-body--settings"
+        >
+            <>
+                <ReactTable
+                    data={clients || []}
+                    columns={columns}
+                    defaultSorted={[
+                        {
+                            id: 'statistics',
+                            asc: true,
+                        },
+                    ]}
+                    className="-striped -highlight card-table-overflow"
+                    showPagination
+                    defaultPageSize={10}
+                    minRows={5}
+                    ofText="/"
+                    previousText={t('previous_btn')}
+                    nextText={t('next_btn')}
+                    pageText={t('page_table_footer_text')}
+                    rowsText={t('rows_table_footer_text')}
+                    loadingText={t('loading_table_status')}
+                    noDataText={t('clients_not_found')}
+                />
+                <button
+                    type="button"
+                    className="btn btn-success btn-standard mt-3"
+                    onClick={() => toggleClientModal(MODAL_TYPE.ADD_FILTERS)}
+                    disabled={processingAdding}
+                >
+                    <Trans>client_add</Trans>
+                </button>
+                <Modal
+                    isModalOpen={isModalOpen}
+                    modalType={modalType}
+                    toggleClientModal={toggleClientModal}
+                    currentClientData={currentClientData}
+                    handleSubmit={handleSubmit}
+                    processingAdding={processingAdding}
+                    processingUpdating={processingUpdating}
+                    tagsOptions={tagsOptions}
+                />
+            </>
+        </Card>
+    );
+};
 
 ClientsTable.propTypes = {
-    t: PropTypes.func.isRequired,
     clients: PropTypes.array.isRequired,
     normalizedTopClients: PropTypes.object.isRequired,
     toggleClientModal: PropTypes.func.isRequired,
@@ -353,4 +382,4 @@ ClientsTable.propTypes = {
     supportedTags: PropTypes.array.isRequired,
 };
 
-export default withTranslation()(ClientsTable);
+export default ClientsTable;

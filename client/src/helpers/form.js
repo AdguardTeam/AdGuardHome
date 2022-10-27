@@ -1,6 +1,8 @@
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { Trans } from 'react-i18next';
+import cn from 'classnames';
+
 import { createOnBlurHandler } from './helpers';
 import { R_MAC_WITHOUT_COLON, R_UNIX_ABSOLUTE_PATH, R_WIN_ABSOLUTE_PATH } from './constants';
 
@@ -229,24 +231,34 @@ export const renderServiceField = ({
     modifier,
     icon,
     meta: { touched, error },
-}) => <Fragment>
-    <label className={`service custom-switch ${modifier}`}>
-        <input
-            {...input}
-            type="checkbox"
-            className="custom-switch-input"
-            value={placeholder.toLowerCase()}
-            disabled={disabled}
-        />
-        <span className="service__switch custom-switch-indicator"></span>
-        <span className="service__text">{placeholder}</span>
-        <svg className="service__icon">
-            <use xlinkHref={`#${icon}`} />
-        </svg>
-    </label>
-    {!disabled && touched && error
-    && <span className="form__message form__message--error"><Trans>{error}</Trans></span>}
-</Fragment>;
+}) => (
+    <>
+        <label className={cn('service custom-switch', { [modifier]: modifier })}>
+            <input
+                {...input}
+                type="checkbox"
+                className="custom-switch-input"
+                value={placeholder.toLowerCase()}
+                disabled={disabled}
+            />
+            <span className="service__switch custom-switch-indicator"></span>
+            <span className="service__text" title={placeholder}>
+                {placeholder}
+            </span>
+            {icon && (
+                <div
+                    dangerouslySetInnerHTML={{ __html: window.atob(icon) }}
+                    className="service__icon"
+                />
+            )}
+        </label>
+        {!disabled && touched && error && (
+            <span className="form__message form__message--error">
+                <Trans>{error}</Trans>
+            </span>
+        )}
+    </>
+);
 
 renderServiceField.propTypes = {
     input: PropTypes.object.isRequired,

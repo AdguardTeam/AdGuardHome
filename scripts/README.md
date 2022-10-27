@@ -208,10 +208,30 @@ code from [the repo][companiesrepo].
 
 
 
+##  `blocked-services/`: Blocked Services Updater
+
+A simple script that downloads and updates the blocked services index from
+AdGuard's [Hostlists Registry][reg].
+
+Optional environment:
+
+ *  `URL`: the URL of the index file.  By default it's
+    `https://adguardteam.github.io/HostlistsRegistry/assets/services.json`.
+
+ ###  Usage
+
+```sh
+go run ./scripts/blocked-services/main.go
+```
+
+[reg]: https://github.com/AdguardTeam/HostlistsRegistry
+
+
+
 ##  `vetted-filters/`: Vetted Filters Updater
 
-A simple script that downloads and updates the vetted filtering list data from
-AdGuard's [Hostlists Registry][reg].
+Similar to the one above, a script that downloads and updates the vetted
+filtering list data from AdGuard's [Hostlists Registry][reg].
 
 Optional environment:
 
@@ -223,5 +243,3 @@ Optional environment:
 ```sh
 go run ./scripts/vetted-filters/main.go
 ```
-
-[reg]: https://github.com/AdguardTeam/HostlistsRegistry

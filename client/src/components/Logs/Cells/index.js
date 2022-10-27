@@ -52,6 +52,7 @@ const Row = memo(({
     const autoClients = useSelector((state) => state.dashboard.autoClients, shallowEqual);
     const processingSet = useSelector((state) => state.access.processingSet);
     const allowedСlients = useSelector((state) => state.access.allowed_clients, shallowEqual);
+    const services = useSelector((store) => store?.services);
 
     const clients = useSelector((state) => state.dashboard.clients);
 
@@ -175,8 +176,8 @@ const Row = memo(({
             date: formatDateTime(time, DEFAULT_SHORT_DATE_FORMAT_OPTIONS),
             encryption_status: isBlocked
                 ? <div className="bg--danger">{requestStatus}</div> : requestStatus,
-            ...(FILTERED_STATUS.FILTERED_BLOCKED_SERVICE && service_name
-                && { service_name: getServiceName(service_name) }),
+            ...(FILTERED_STATUS.FILTERED_BLOCKED_SERVICE && service_name && services.allServices
+                && { service_name: getServiceName(services.allServices, service_name) }),
             domain,
             type_table_header: type,
             protocol,

@@ -32,6 +32,21 @@ export const getBlockedServices = () => async (dispatch) => {
     }
 };
 
+export const getAllBlockedServicesRequest = createAction('GET_ALL_BLOCKED_SERVICES_REQUEST');
+export const getAllBlockedServicesFailure = createAction('GET_ALL_BLOCKED_SERVICES_FAILURE');
+export const getAllBlockedServicesSuccess = createAction('GET_ALL_BLOCKED_SERVICES_SUCCESS');
+
+export const getAllBlockedServices = () => async (dispatch) => {
+    dispatch(getAllBlockedServicesRequest());
+    try {
+        const data = await apiClient.getAllBlockedServices();
+        dispatch(getAllBlockedServicesSuccess(data));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(getAllBlockedServicesFailure());
+    }
+};
+
 export const setBlockedServicesRequest = createAction('SET_BLOCKED_SERVICES_REQUEST');
 export const setBlockedServicesFailure = createAction('SET_BLOCKED_SERVICES_FAILURE');
 export const setBlockedServicesSuccess = createAction('SET_BLOCKED_SERVICES_SUCCESS');

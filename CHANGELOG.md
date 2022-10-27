@@ -17,6 +17,10 @@ and this project adheres to
 
 ## Added
 
+- Several new blockable services ([#3972]).  Those will now be more in sync with
+  the services that are already blockable in AdGuard DNS.
+- A new HTTP API, `GET /control/blocked_services/all`, that lists all available
+  blocked services and their data, such as SVG icons ([#3972]).
 - The new optional `tls.override_tls_ciphers` property, which allows
   overriding TLS ciphers used by AdGuard Home ([#4925], [#4990]).
 - The ability to serve DNS on link-local IPv6 addresses ([#2926]).
@@ -27,6 +31,11 @@ and this project adheres to
 ### Changed
 
 - Responses with `SERVFAIL` code are now cached for at least 30 seconds.
+
+### Deprecated
+
+- The `GET /control/blocked_services/services` HTTP API; use the new
+  `GET /control/blocked_services/all` API instead ([#3972]).
 
 ### Fixed
 
@@ -41,6 +50,7 @@ and this project adheres to
 
 [#2926]: https://github.com/AdguardTeam/AdGuardHome/issues/2926
 [#3418]: https://github.com/AdguardTeam/AdGuardHome/issues/3418
+[#3972]: https://github.com/AdguardTeam/AdGuardHome/issues/3972
 [#4916]: https://github.com/AdguardTeam/AdGuardHome/issues/4916
 [#4925]: https://github.com/AdguardTeam/AdGuardHome/issues/4925
 [#4942]: https://github.com/AdguardTeam/AdGuardHome/issues/4942
