@@ -189,13 +189,11 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 	locUpstream := &aghtest.UpstreamMock{
 		OnAddress: func() (addr string) { return "local.upstream.example" },
 		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
-			resp = aghalg.Coalesce(
-				aghtest.RespondTo(t, req, dns.ClassINET, dns.TypePTR, revIPv4, "local.domain"),
-				aghtest.RespondTo(t, req, dns.ClassINET, dns.TypePTR, revIPv6, "ipv6.domain"),
+			return aghalg.Coalesce(
+				aghtest.MatchedResponse(req, dns.TypePTR, revIPv4, "local.domain"),
+				aghtest.MatchedResponse(req, dns.TypePTR, revIPv6, "ipv6.domain"),
 				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
-			)
-
-			return resp, nil
+			), nil
 		},
 	}
 

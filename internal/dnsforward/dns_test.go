@@ -457,19 +457,13 @@ func TestServer_ProcessRestrictLocal(t *testing.T) {
 		intPTRAnswer   = "some.local-client."
 	)
 
-	ups := &aghtest.UpstreamMock{
-		OnAddress: func() (addr string) { return "upstream.example" },
-		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
-			resp = aghalg.Coalesce(
-				aghtest.RespondTo(t, req, dns.ClassINET, dns.TypePTR, extPTRQuestion, extPTRAnswer),
-				aghtest.RespondTo(t, req, dns.ClassINET, dns.TypePTR, intPTRQuestion, intPTRAnswer),
-				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
-			)
-
-			return resp, nil
-		},
-		OnClose: func() (err error) { return nil },
-	}
+	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+		return aghalg.Coalesce(
+			aghtest.MatchedResponse(req, dns.TypePTR, extPTRQuestion, extPTRAnswer),
+			aghtest.MatchedResponse(req, dns.TypePTR, intPTRQuestion, intPTRAnswer),
+			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+		), nil
+	})
 
 	s := createTestServer(t, &filtering.Config{}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
@@ -547,18 +541,12 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 			UDPListenAddrs: []*net.UDPAddr{{}},
 			TCPListenAddrs: []*net.TCPAddr{{}},
 		},
-		&aghtest.UpstreamMock{
-			OnAddress: func() (addr string) { return "upstream.example" },
-			OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
-				resp = aghalg.Coalesce(
-					aghtest.RespondTo(t, req, dns.ClassINET, dns.TypePTR, reqAddr, locDomain),
-					new(dns.Msg).SetRcode(req, dns.RcodeNameError),
-				)
-
-				return resp, nil
-			},
-			OnClose: func() (err error) { return nil },
-		},
+		aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+			return aghalg.Coalesce(
+				aghtest.MatchedResponse(req, dns.TypePTR, reqAddr, locDomain),
+				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+			), nil
+		}),
 	)
 
 	var proxyCtx *proxy.DNSContext
