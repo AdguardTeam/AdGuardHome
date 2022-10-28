@@ -55,9 +55,7 @@ func isReconfigureSignal(sig os.Signal) (ok bool) {
 
 func isShutdownSignal(sig os.Signal) (ok bool) {
 	switch sig {
-	case
-		os.Interrupt,
-		syscall.SIGTERM:
+	case os.Interrupt, syscall.SIGTERM:
 		return true
 	default:
 		return false
