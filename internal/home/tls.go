@@ -13,6 +13,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/http"
+	"net/netip"
 	"os"
 	"strings"
 	"sync"
@@ -160,6 +161,10 @@ func loadTLSConf(tlsConf *tlsConfigSettings, status *tlsConfigStatus) (err error
 	defer func() {
 		if err != nil {
 			status.WarningValidation = err.Error()
+			if status.ValidCert && status.ValidKey && status.ValidPair {
+				// Do not return warnings since those aren't critical.
+				err = nil
+			}
 		}
 	}()
 
@@ -176,6 +181,8 @@ func loadTLSConf(tlsConf *tlsConfigSettings, status *tlsConfigStatus) (err error
 			return fmt.Errorf("reading cert file: %w", err)
 		}
 
+		// Set status.ValidCert to true to signal the frontend that the
+		// certificate opens successfully while the private key can't be opened.
 		status.ValidCert = true
 	}
 
@@ -482,71 +489,73 @@ func validatePorts(
 	return nil
 }
 
-// validateCertChain validates the certificate chain and sets data in status.
-// The returned error is also set in status.WarningValidation.
-func validateCertChain(status *tlsConfigStatus, certChain []byte, serverName string) (err error) {
-	defer func() {
-		if err != nil {
-			status.WarningValidation = err.Error()
-		}
-	}()
-
-	log.Debug("tls: got certificate chain: %d bytes", len(certChain))
-
-	var certs []*pem.Block
-	pemblock := certChain
-	for {
-		var decoded *pem.Block
-		decoded, pemblock = pem.Decode(pemblock)
-		if decoded == nil {
-			break
-		}
-
-		if decoded.Type == "CERTIFICATE" {
-			certs = append(certs, decoded)
-		}
-	}
-
-	parsedCerts, err := parsePEMCerts(certs)
-	if err != nil {
-		return err
-	}
-
-	status.ValidCert = true
-
-	opts := x509.VerifyOptions{
-		DNSName: serverName,
-		Roots:   Context.tlsRoots,
-	}
-
-	log.Info("tls: number of certs: %d", len(parsedCerts))
+// validateCertChain verifies certs using the first as the main one and others
+// as intermediate.  srvName stands for the expected DNS name.
+func validateCertChain(certs []*x509.Certificate, srvName string) (err error) {
+	main, others := certs[0], certs[1:]
 
 	pool := x509.NewCertPool()
-	for _, cert := range parsedCerts[1:] {
+	for _, cert := range others {
 		log.Info("tls: got an intermediate cert")
 		pool.AddCert(cert)
 	}
 
-	opts.Intermediates = pool
-
-	mainCert := parsedCerts[0]
-	_, err = mainCert.Verify(opts)
-	if err != nil {
-		// Let self-signed certs through and don't return this error.
-		status.WarningValidation = fmt.Sprintf("certificate does not verify: %s", err)
-	} else {
-		status.ValidChain = true
+	opts := x509.VerifyOptions{
+		DNSName:       srvName,
+		Roots:         Context.tlsRoots,
+		Intermediates: pool,
 	}
-
-	if mainCert != nil {
-		status.Subject = mainCert.Subject.String()
-		status.Issuer = mainCert.Issuer.String()
-		status.NotAfter = mainCert.NotAfter
-		status.NotBefore = mainCert.NotBefore
-		status.DNSNames = mainCert.DNSNames
+	_, err = main.Verify(opts)
+	if err != nil {
+		return fmt.Errorf("certificate does not verify: %w", err)
 	}
 
 	return nil
+}
+
+// certHasIP returns true if cert has at least a single IP address either in its
+// DNS names or in the IP addresses section.
+func certHasIP(cert *x509.Certificate) (ok bool) {
+	if len(cert.IPAddresses) > 0 {
+		return true
+	}
+
+	for _, name := range cert.DNSNames {
+		if _, err := netip.ParseAddr(name); err == nil {
+			return true
+		}
+	}
+
+	return false
+}
+
+// parseCertChain parses the certificate chain from raw data, and returns it.
+// If ok is true, the returned error, if any, is not critical.
+func parseCertChain(chain []byte) (parsedCerts []*x509.Certificate, ok bool, err error) {
+	log.Debug("tls: got certificate chain: %d bytes", len(chain))
+
+	var certs []*pem.Block
+	for decoded, pemblock := pem.Decode(chain); decoded != nil; {
+		if decoded.Type == "CERTIFICATE" {
+			certs = append(certs, decoded)
+		}
+
+		decoded, pemblock = pem.Decode(pemblock)
+	}
+
+	parsedCerts, err = parsePEMCerts(certs)
+	if err != nil {
+		return nil, false, err
+	}
+
+	log.Info("tls: number of certs: %d", len(parsedCerts))
+
+	if !certHasIP(parsedCerts[0]) {
+		err = errors.Error(`certificate has no IP addresses` +
+			`, this may cause issues with DNS-over-TLS clients`)
+	}
+
+	return parsedCerts, true, err
 }
 
 // parsePEMCerts parses multiple PEM-encoded certificates.
@@ -568,106 +577,99 @@ func parsePEMCerts(certs []*pem.Block) (parsedCerts []*x509.Certificate, err err
 	return parsedCerts, nil
 }
 
-// validatePKey validates the private key and sets data in status.  The returned
-// error is also set in status.WarningValidation.
-func validatePKey(status *tlsConfigStatus, pkey []byte) (err error) {
-	defer func() {
-		if err != nil {
-			status.WarningValidation = err.Error()
-		}
-	}()
-
+// validatePKey validates the private key, returning its type.  It returns an
+// empty string if error occurs.
+func validatePKey(pkey []byte) (keyType string, err error) {
 	var key *pem.Block
 
 	// Go through all pem blocks, but take first valid pem block and drop the
 	// rest.
-	pemblock := []byte(pkey)
-	for {
-		var decoded *pem.Block
-		decoded, pemblock = pem.Decode(pemblock)
-		if decoded == nil {
-			break
-		}
-
+	for decoded, pemblock := pem.Decode([]byte(pkey)); decoded != nil; {
 		if decoded.Type == "PRIVATE KEY" || strings.HasSuffix(decoded.Type, " PRIVATE KEY") {
 			key = decoded
 
 			break
 		}
+
+		decoded, pemblock = pem.Decode(pemblock)
 	}
 
 	if key == nil {
-		return errors.Error("no valid keys were found")
+		return "", errors.Error("no valid keys were found")
 	}
 
-	_, keyType, err := parsePrivateKey(key.Bytes)
+	_, keyType, err = parsePrivateKey(key.Bytes)
 	if err != nil {
-		return fmt.Errorf("parsing private key: %w", err)
+		return "", fmt.Errorf("parsing private key: %w", err)
 	}
 
 	if keyType == keyTypeED25519 {
-		return errors.Error(
+		return "", errors.Error(
 			"ED25519 keys are not supported by browsers; " +
 				"did you mean to use X25519 for key exchange?",
 		)
 	}
 
-	status.ValidKey = true
-	status.KeyType = keyType
-
-	return nil
+	return keyType, nil
 }
 
-// validateCertificates processes certificate data and its private key.  All
-// parameters are optional.  status must not be nil.  The returned error is also
-// set in status.WarningValidation.
+// validateCertificates processes certificate data and its private key.  status
+// must not be nil, since it's used to accumulate the validation results.  Other
+// parameters are optional.
 func validateCertificates(
 	status *tlsConfigStatus,
 	certChain []byte,
 	pkey []byte,
 	serverName string,
 ) (err error) {
-	defer func() {
-		// Capitalize the warning for the UI.  Assume that warnings are all
-		// ASCII-only.
-		//
-		// TODO(a.garipov): Figure out a better way to do this.  Perhaps a
-		// custom string or error type.
-		if w := status.WarningValidation; w != "" {
-			status.WarningValidation = strings.ToUpper(w[:1]) + w[1:]
-		}
-	}()
-
 	// Check only the public certificate separately from the key.
 	if len(certChain) > 0 {
-		err = validateCertChain(status, certChain, serverName)
-		if err != nil {
+		var certs []*x509.Certificate
+		certs, status.ValidCert, err = parseCertChain(certChain)
+		if !status.ValidCert {
+			// Don't wrap the error, since it's informative enough as is.
 			return err
+		}
+
+		mainCert := certs[0]
+		status.Subject = mainCert.Subject.String()
+		status.Issuer = mainCert.Issuer.String()
+		status.NotAfter = mainCert.NotAfter
+		status.NotBefore = mainCert.NotBefore
+		status.DNSNames = mainCert.DNSNames
+
+		if chainErr := validateCertChain(certs, serverName); chainErr != nil {
+			// Let self-signed certs through and don't return this error to set
+			// its message into the status.WarningValidation afterwards.
+			err = chainErr
+		} else {
+			status.ValidChain = true
 		}
 	}
 
 	// Validate the private key by parsing it.
 	if len(pkey) > 0 {
-		err = validatePKey(status, pkey)
-		if err != nil {
-			return err
+		var keyErr error
+		status.KeyType, keyErr = validatePKey(pkey)
+		if keyErr != nil {
+			// Don't wrap the error, since it's informative enough as is.
+			return keyErr
 		}
+
+		status.ValidKey = true
 	}
 
 	// If both are set, validate together.
 	if len(certChain) > 0 && len(pkey) > 0 {
-		_, err = tls.X509KeyPair(certChain, pkey)
-		if err != nil {
-			err = fmt.Errorf("certificate-key pair: %w", err)
-			status.WarningValidation = err.Error()
-
-			return err
+		_, pairErr := tls.X509KeyPair(certChain, pkey)
+		if pairErr != nil {
+			return fmt.Errorf("certificate-key pair: %w", pairErr)
 		}
 
 		status.ValidPair = true
 	}
 
-	return nil
+	return err
 }
 
 // Key types.

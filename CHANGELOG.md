@@ -17,6 +17,8 @@ and this project adheres to
 
 ## Added
 
+- The warning message when adding a certificate having no IP addresses
+  ([#4898]).
 - Several new blockable services ([#3972]).  Those will now be more in sync with
   the services that are already blockable in AdGuard DNS.
 - A new HTTP API, `GET /control/blocked_services/all`, that lists all available
@@ -51,6 +53,7 @@ and this project adheres to
 [#2926]: https://github.com/AdguardTeam/AdGuardHome/issues/2926
 [#3418]: https://github.com/AdguardTeam/AdGuardHome/issues/3418
 [#3972]: https://github.com/AdguardTeam/AdGuardHome/issues/3972
+[#4898]: https://github.com/AdguardTeam/AdGuardHome/issues/4898
 [#4916]: https://github.com/AdguardTeam/AdGuardHome/issues/4916
 [#4925]: https://github.com/AdguardTeam/AdGuardHome/issues/4925
 [#4942]: https://github.com/AdguardTeam/AdGuardHome/issues/4942
