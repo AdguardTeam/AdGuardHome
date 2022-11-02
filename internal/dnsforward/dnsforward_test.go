@@ -33,7 +33,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	aghtest.DiscardLogOutput(m)
+	testutil.DiscardLogOutput(m)
 }
 
 const (
@@ -161,8 +161,23 @@ func createTestTLS(t *testing.T, tlsConf TLSConfig) (s *Server, certPem []byte) 
 	return s, certPem
 }
 
+const googleDomainName = "google-public-dns-a.google.com."
+
 func createGoogleATestMessage() *dns.Msg {
-	return createTestMessage("google-public-dns-a.google.com.")
+	return createTestMessage(googleDomainName)
+}
+
+func newGoogleUpstream() (u upstream.Upstream) {
+	return &aghtest.UpstreamMock{
+		OnAddress: func() (addr string) { return "google.upstream.example" },
+		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
+			return aghalg.Coalesce(
+				aghtest.MatchedResponse(req, dns.TypeA, googleDomainName, "8.8.8.8"),
+				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+			), nil
+		},
+		OnClose: func() (err error) { return nil },
+	}
 }
 
 func createTestMessage(host string) *dns.Msg {
@@ -247,13 +262,7 @@ func TestServer(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 	}, nil)
-	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&aghtest.Upstream{
-			IPv4: map[string][]net.IP{
-				"google-public-dns-a.google.com.": {{8, 8, 8, 8}},
-			},
-		},
-	}
+	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 	startDeferStop(t, s)
 
 	testCases := []struct {
@@ -320,13 +329,7 @@ func TestServerWithProtectionDisabled(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 	}, nil)
-	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&aghtest.Upstream{
-			IPv4: map[string][]net.IP{
-				"google-public-dns-a.google.com.": {{8, 8, 8, 8}},
-			},
-		},
-	}
+	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 	startDeferStop(t, s)
 
 	// Message over UDP.
@@ -343,13 +346,7 @@ func TestDoTServer(t *testing.T) {
 	s, certPem := createTestTLS(t, TLSConfig{
 		TLSListenAddrs: []*net.TCPAddr{{}},
 	})
-	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&aghtest.Upstream{
-			IPv4: map[string][]net.IP{
-				"google-public-dns-a.google.com.": {{8, 8, 8, 8}},
-			},
-		},
-	}
+	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 	startDeferStop(t, s)
 
 	// Add our self-signed generated config to roots.
@@ -373,13 +370,7 @@ func TestDoQServer(t *testing.T) {
 	s, _ := createTestTLS(t, TLSConfig{
 		QUICListenAddrs: []*net.UDPAddr{{IP: net.IP{127, 0, 0, 1}}},
 	})
-	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&aghtest.Upstream{
-			IPv4: map[string][]net.IP{
-				"google-public-dns-a.google.com.": {{8, 8, 8, 8}},
-			},
-		},
-	}
+	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 	startDeferStop(t, s)
 
 	// Create a DNS-over-QUIC upstream.
@@ -417,13 +408,7 @@ func TestServerRace(t *testing.T) {
 		ConfigModified: func() {},
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
-	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&aghtest.Upstream{
-			IPv4: map[string][]net.IP{
-				"google-public-dns-a.google.com.": {{8, 8, 8, 8}},
-			},
-		},
-	}
+	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 	startDeferStop(t, s)
 
 	// Message over UDP.
@@ -557,11 +542,12 @@ func TestServerCustomClientUpstream(t *testing.T) {
 	}
 	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
 	s.conf.GetCustomUpstreamByClient = func(_ string) (conf *proxy.UpstreamConfig, err error) {
-		ups := &aghtest.Upstream{
-			IPv4: map[string][]net.IP{
-				"host.": {{192, 168, 0, 1}},
-			},
-		}
+		ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+			return aghalg.Coalesce(
+				aghtest.MatchedResponse(req, dns.TypeA, "host", "192.168.0.1"),
+				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+			), nil
+		})
 
 		return &proxy.UpstreamConfig{
 			Upstreams: []upstream.Upstream{ups},
@@ -604,7 +590,6 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 	testUpstm := &aghtest.Upstream{
 		CName: testCNAMEs,
 		IPv4:  testIPv4,
-		IPv6:  nil,
 	}
 	s.conf.ProtectionEnabled = false
 	s.dnsProxy.UpstreamConfig = &proxy.UpstreamConfig{
@@ -931,16 +916,13 @@ func TestRewrite(t *testing.T) {
 		},
 	}))
 
-	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
-		&aghtest.Upstream{
-			CName: map[string][]string{
-				"example.org": {"somename"},
-			},
-			IPv4: map[string][]net.IP{
-				"example.org.": {{4, 3, 2, 1}},
-			},
-		},
-	}
+	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+		return aghalg.Coalesce(
+			aghtest.MatchedResponse(req, dns.TypeA, "example.org", "4.3.2.1"),
+			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+		), nil
+	})
+	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
 	startDeferStop(t, s)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
@@ -1061,11 +1043,12 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 
 	require.Len(t, resp.Answer, 1)
 
-	assert.Equal(t, dns.TypePTR, resp.Answer[0].Header().Rrtype)
-	assert.Equal(t, "34.12.168.192.in-addr.arpa.", resp.Answer[0].Header().Name)
+	ans := resp.Answer[0]
+	assert.Equal(t, dns.TypePTR, ans.Header().Rrtype)
+	assert.Equal(t, "34.12.168.192.in-addr.arpa.", ans.Header().Name)
 
-	ptr, ok := resp.Answer[0].(*dns.PTR)
-	require.True(t, ok)
+	ptr := testutil.RequireTypeAssert[*dns.PTR](t, ans)
+
 	assert.Equal(t, dns.Fqdn("myhost."+localDomain), ptr.Ptr)
 }
 
@@ -1211,12 +1194,10 @@ func TestServer_Exchange(t *testing.T) {
 	extUpstream := &aghtest.UpstreamMock{
 		OnAddress: func() (addr string) { return "external.upstream.example" },
 		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
-			resp = aghalg.Coalesce(
-				aghtest.RespondTo(t, req, dns.ClassINET, dns.TypePTR, revExtIPv4, onesHost),
+			return aghalg.Coalesce(
+				aghtest.MatchedResponse(req, dns.TypePTR, revExtIPv4, onesHost),
 				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
-			)
-
-			return resp, nil
+			), nil
 		},
 	}
 
@@ -1226,12 +1207,10 @@ func TestServer_Exchange(t *testing.T) {
 	locUpstream := &aghtest.UpstreamMock{
 		OnAddress: func() (addr string) { return "local.upstream.example" },
 		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
-			resp = aghalg.Coalesce(
-				aghtest.RespondTo(t, req, dns.ClassINET, dns.TypePTR, revLocIPv4, localDomainHost),
+			return aghalg.Coalesce(
+				aghtest.MatchedResponse(req, dns.TypePTR, revLocIPv4, localDomainHost),
 				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
-			)
-
-			return resp, nil
+			), nil
 		},
 	}
 

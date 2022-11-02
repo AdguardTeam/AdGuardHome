@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/netip"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -43,8 +45,13 @@ var defaultBlockedHosts = []string{"version.bind", "id.server", "hostname.bind"}
 
 var webRegistered bool
 
-// hostToIPTable is an alias for the type of Server.tableHostToIP.
-type hostToIPTable = map[string]net.IP
+// hostToIPTable is a convenient type alias for tables of host names to an IP
+// address.
+type hostToIPTable = map[string]netip.Addr
+
+// ipToHostTable is a convenient type alias for tables of IP addresses to their
+// host names.  For example, for use with PTR queries.
+type ipToHostTable = map[netip.Addr]string
 
 // Server is the main way to start a DNS server.
 //
@@ -63,7 +70,7 @@ type Server struct {
 	dhcpServer dhcpd.Interface      // DHCP server instance (optional)
 	queryLog   querylog.QueryLog    // Query log instance
 	stats      stats.Interface
-	access     *accessCtx
+	access     *accessManager
 
 	// localDomainSuffix is the suffix used to detect internal hosts.  It
 	// must be a valid domain name plus dots on each side.
@@ -81,7 +88,7 @@ type Server struct {
 	tableHostToIP     hostToIPTable
 	tableHostToIPLock sync.Mutex
 
-	tableIPToHost     *netutil.IPMap
+	tableIPToHost     ipToHostTable
 	tableIPToHostLock sync.Mutex
 
 	// clientIDCache is a temporary storage for ClientIDs that were extracted
@@ -517,7 +524,7 @@ func validateBlockingMode(mode BlockingMode, blockingIPv4, blockingIPv6 net.IP) 
 }
 
 // prepareInternalProxy initializes the DNS proxy that is used for internal DNS
-// queries, such at client PTR resolving and updater hostname resolving.
+// queries, such as public clients PTR resolving and updater hostname resolving.
 func (s *Server) prepareInternalProxy() (err error) {
 	conf := &proxy.Config{
 		CacheEnabled:   true,
@@ -557,16 +564,49 @@ func (s *Server) Stop() error {
 	return s.stopLocked()
 }
 
-// stopLocked stops the DNS server without locking. For internal use only.
-func (s *Server) stopLocked() error {
+// stopLocked stops the DNS server without locking.  For internal use only.
+func (s *Server) stopLocked() (err error) {
 	if s.dnsProxy != nil {
-		err := s.dnsProxy.Stop()
+		err = s.dnsProxy.Stop()
 		if err != nil {
-			return fmt.Errorf("could not stop the DNS server properly: %w", err)
+			return fmt.Errorf("closing primary resolvers: %w", err)
 		}
 	}
 
-	s.isRunning = false
+	var errs []error
+
+	if upsConf := s.internalProxy.UpstreamConfig; upsConf != nil {
+		const action = "closing internal resolvers"
+
+		err = upsConf.Close()
+		if err != nil {
+			if errors.Is(err, net.ErrClosed) {
+				log.Debug("dnsforward: %s: %s", action, err)
+			} else {
+				errs = append(errs, fmt.Errorf("%s: %w", action, err))
+			}
+		}
+	}
+
+	if upsConf := s.localResolvers.UpstreamConfig; upsConf != nil {
+		const action = "closing local resolvers"
+
+		err = upsConf.Close()
+		if err != nil {
+			if errors.Is(err, net.ErrClosed) {
+				log.Debug("dnsforward: %s: %s", action, err)
+			} else {
+				errs = append(errs, fmt.Errorf("%s: %w", action, err))
+			}
+		}
+	}
+
+	if len(errs) > 0 {
+		return errors.List("stopping dns server", errs...)
+	} else {
+		s.isRunning = false
+	}
+
 	return nil
 }
 
@@ -639,27 +679,35 @@ func (s *Server) IsBlockedClient(ip net.IP, clientID string) (blocked bool, rule
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
+	blockedByIP := false
+	if ip != nil {
+		// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
+		ipAddr, err := netutil.IPToAddrNoMapped(ip)
+		if err != nil {
+			log.Error("dnsforward: bad client ip %v: %s", ip, err)
+
+			return false, ""
+		}
+
+		blockedByIP, rule = s.access.isBlockedIP(ipAddr)
+	}
+
 	allowlistMode := s.access.allowlistMode()
-	blockedByIP, rule := s.access.isBlockedIP(ip)
 	blockedByClientID := s.access.isBlockedClientID(clientID)
 
-	// Allow if at least one of the checks allows in allowlist mode, but
-	// block if at least one of the checks blocks in blocklist mode.
+	// Allow if at least one of the checks allows in allowlist mode, but block
+	// if at least one of the checks blocks in blocklist mode.
 	if allowlistMode && blockedByIP && blockedByClientID {
-		log.Debug("client %s (id %q) is not in access allowlist", ip, clientID)
+		log.Debug("client %v (id %q) is not in access allowlist", ip, clientID)
 
 		// Return now without substituting the empty rule for the
 		// clientID because the rule can't be empty here.
 		return true, rule
 	} else if !allowlistMode && (blockedByIP || blockedByClientID) {
-		log.Debug("client %s (id %q) is in access blocklist", ip, clientID)
+		log.Debug("client %v (id %q) is in access blocklist", ip, clientID)
 
 		blocked = true
 	}
 
-	if rule == "" {
-		rule = clientID
-	}
-
-	return blocked, rule
+	return blocked, aghalg.Coalesce(rule, clientID)
 }

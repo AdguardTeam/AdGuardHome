@@ -12,15 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestMain(m *testing.M) {
-	aghtest.DiscardLogOutput(m)
-}
 
 func TestNewSessionToken(t *testing.T) {
 	// Successful case.

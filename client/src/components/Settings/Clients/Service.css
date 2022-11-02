@@ -9,6 +9,12 @@
     cursor: pointer;
 }
 
+.service__text {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
 @media screen and (min-width: 768px) {
     .services {
         display: flex;
@@ -33,7 +39,7 @@
         margin-right: 30px;
         margin-left: 0;
     }
-    
+
     .service:nth-child(3n) {
         margin-right: 0;
         margin-left: auto;

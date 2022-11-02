@@ -5,10 +5,11 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"net/netip"
 	"sync"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/netutil"
+	"golang.org/x/exp/slices"
 )
 
 // ARPDB: The Network Neighborhood Database
@@ -54,7 +55,7 @@ type Neighbor struct {
 	Name string
 
 	// IP contains either IPv4 or IPv6.
-	IP net.IP
+	IP netip.Addr
 
 	// MAC contains the hardware address.
 	MAC net.HardwareAddr
@@ -64,8 +65,8 @@ type Neighbor struct {
 func (n Neighbor) Clone() (clone Neighbor) {
 	return Neighbor{
 		Name: n.Name,
-		IP:   netutil.CloneIP(n.IP),
-		MAC:  netutil.CloneMAC(n.MAC),
+		IP:   n.IP,
+		MAC:  slices.Clone(n.MAC),
 	}
 }
 

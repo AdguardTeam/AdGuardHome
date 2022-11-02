@@ -5,6 +5,7 @@ package aghnet
 import (
 	"bufio"
 	"net"
+	"net/netip"
 	"strings"
 	"sync"
 
@@ -47,22 +48,28 @@ func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 
 		if ipStr := fields[1]; len(ipStr) < 2 {
 			continue
-		} else if ip := net.ParseIP(ipStr[1 : len(ipStr)-1]); ip == nil {
+		} else if ip, err := netip.ParseAddr(ipStr[1 : len(ipStr)-1]); err != nil {
+			log.Debug("arpdb: parsing arp output: ip: %s", err)
+
 			continue
 		} else {
 			n.IP = ip
 		}
 
 		hwStr := fields[3]
-		if mac, err := net.ParseMAC(hwStr); err != nil {
+		mac, err := net.ParseMAC(hwStr)
+		if err != nil {
+			log.Debug("arpdb: parsing arp output: mac: %s", err)
+
 			continue
 		} else {
 			n.MAC = mac
 		}
 
 		host := fields[0]
-		if err := netutil.ValidateDomainName(host); err != nil {
-			log.Debug("parsing arp output: %s", err)
+		err = netutil.ValidateDomainName(host)
+		if err != nil {
+			log.Debug("arpdb: parsing arp output: host: %s", err)
 		} else {
 			n.Name = host
 		}

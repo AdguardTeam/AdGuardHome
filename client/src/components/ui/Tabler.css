@@ -15452,6 +15452,7 @@ a.tag-addon:hover {
 }
 
 .custom-switch-indicator {
+    flex-shrink: 0;
     display: inline-block;
     height: 1.25rem;
     width: 2.25rem;

@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"encoding/binary"
 	"net"
+	"net/netip"
 	"strings"
 	"time"
 
@@ -194,7 +195,7 @@ func (s *Server) setTableHostToIP(t hostToIPTable) {
 	s.tableHostToIP = t
 }
 
-func (s *Server) setTableIPToHost(t *netutil.IPMap) {
+func (s *Server) setTableIPToHost(t ipToHostTable) {
 	s.tableIPToHostLock.Lock()
 	defer s.tableIPToHostLock.Unlock()
 
@@ -202,52 +203,54 @@ func (s *Server) setTableIPToHost(t *netutil.IPMap) {
 }
 
 func (s *Server) onDHCPLeaseChanged(flags int) {
-	var err error
-
-	add := true
 	switch flags {
 	case dhcpd.LeaseChangedAdded,
 		dhcpd.LeaseChangedAddedStatic,
 		dhcpd.LeaseChangedRemovedStatic:
 		// Go on.
 	case dhcpd.LeaseChangedRemovedAll:
-		add = false
+		s.setTableHostToIP(nil)
+		s.setTableIPToHost(nil)
+
+		return
 	default:
 		return
 	}
 
-	var hostToIP hostToIPTable
-	var ipToHost *netutil.IPMap
-	if add {
-		ll := s.dhcpServer.Leases(dhcpd.LeasesAll)
+	ll := s.dhcpServer.Leases(dhcpd.LeasesAll)
+	hostToIP := make(hostToIPTable, len(ll))
+	ipToHost := make(ipToHostTable, len(ll))
 
-		hostToIP = make(hostToIPTable, len(ll))
-		ipToHost = netutil.NewIPMap(len(ll))
+	for _, l := range ll {
+		// TODO(a.garipov): Remove this after we're finished with the client
+		// hostname validations in the DHCP server code.
+		err := netutil.ValidateDomainName(l.Hostname)
+		if err != nil {
+			log.Debug("dnsforward: skipping invalid hostname %q from dhcp: %s", l.Hostname, err)
 
-		for _, l := range ll {
-			// TODO(a.garipov): Remove this after we're finished with the client
-			// hostname validations in the DHCP server code.
-			err = netutil.ValidateDomainName(l.Hostname)
-			if err != nil {
-				log.Debug(
-					"dns: skipping invalid hostname %q from dhcp: %s",
-					l.Hostname,
-					err,
-				)
-			}
-
-			lowhost := strings.ToLower(l.Hostname + "." + s.localDomainSuffix)
-			ip := netutil.CloneIP(l.IP)
-
-			ipToHost.Set(ip, lowhost)
-			hostToIP[lowhost] = ip
+			continue
 		}
 
-		log.Debug("dns: added %d A/PTR entries from DHCP", ipToHost.Len())
+		lowhost := strings.ToLower(l.Hostname + "." + s.localDomainSuffix)
+
+		// Assume that we only process IPv4 now.
+		//
+		// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
+		ip, err := netutil.IPToAddr(l.IP, netutil.AddrFamilyIPv4)
+		if err != nil {
+			log.Debug("dnsforward: skipping invalid ip %v from dhcp: %s", l.IP, err)
+
+			continue
+		}
+
+		ipToHost[ip] = lowhost
+		hostToIP[lowhost] = ip
 	}
 
 	s.setTableHostToIP(hostToIP)
 	s.setTableIPToHost(ipToHost)
+
+	log.Debug("dnsforward: added %d a and ptr entries from dhcp", len(ipToHost))
 }
 
 // processDDRQuery responds to Discovery of Designated Resolvers (DDR) SVCB
@@ -256,21 +259,13 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 //
 // See https://www.ietf.org/archive/id/draft-ietf-add-ddr-10.html.
 func (s *Server) processDDRQuery(dctx *dnsContext) (rc resultCode) {
-	pctx := dctx.proxyCtx
-	q := pctx.Req.Question[0]
-
 	if !s.conf.HandleDDR {
 		return resultCodeSuccess
 	}
 
+	pctx := dctx.proxyCtx
+	q := pctx.Req.Question[0]
 	if q.Name == ddrHostFQDN {
-		if s.dnsProxy.TLSListenAddr == nil && s.conf.HTTPSListenAddrs == nil &&
-			s.dnsProxy.QUICListenAddr == nil || q.Qtype != dns.TypeSVCB {
-			pctx.Res = s.makeResponse(pctx.Req)
-
-			return resultCodeFinish
-		}
-
 		pctx.Res = s.makeDDRResponse(pctx.Req)
 
 		return resultCodeFinish
@@ -288,6 +283,10 @@ func (s *Server) processDDRQuery(dctx *dnsContext) (rc resultCode) {
 // [draft standard]: https://www.ietf.org/archive/id/draft-ietf-add-ddr-10.html.
 func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	resp = s.makeResponse(req)
+	if req.Question[0].Qtype != dns.TypeSVCB {
+		return resp
+	}
+
 	// TODO(e.burkov):  Think about storing the FQDN version of the server's
 	// name somewhere.
 	domainName := dns.Fqdn(s.conf.ServerName)
@@ -309,20 +308,26 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 		resp.Answer = append(resp.Answer, ans)
 	}
 
-	for _, addr := range s.dnsProxy.TLSListenAddr {
-		values := []dns.SVCBKeyValue{
-			&dns.SVCBAlpn{Alpn: []string{"dot"}},
-			&dns.SVCBPort{Port: uint16(addr.Port)},
-		}
+	if s.conf.hasIPAddrs {
+		// Only add DNS-over-TLS resolvers in case the certificate contains IP
+		// addresses.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/4927.
+		for _, addr := range s.dnsProxy.TLSListenAddr {
+			values := []dns.SVCBKeyValue{
+				&dns.SVCBAlpn{Alpn: []string{"dot"}},
+				&dns.SVCBPort{Port: uint16(addr.Port)},
+			}
 
-		ans := &dns.SVCB{
-			Hdr:      s.hdr(req, dns.TypeSVCB),
-			Priority: 1,
-			Target:   domainName,
-			Value:    values,
-		}
+			ans := &dns.SVCB{
+				Hdr:      s.hdr(req, dns.TypeSVCB),
+				Priority: 1,
+				Target:   domainName,
+				Value:    values,
+			}
 
-		resp.Answer = append(resp.Answer, ans)
+			resp.Answer = append(resp.Answer, ans)
+		}
 	}
 
 	for _, addr := range s.dnsProxy.QUICListenAddr {
@@ -362,24 +367,13 @@ func (s *Server) processDetermineLocal(dctx *dnsContext) (rc resultCode) {
 // dhcpHostToIP tries to get an IP leased by DHCP and returns the copy of
 // address since the data inside the internal table may be changed while request
 // processing.  It's safe for concurrent use.
-func (s *Server) dhcpHostToIP(host string) (ip net.IP, ok bool) {
+func (s *Server) dhcpHostToIP(host string) (ip netip.Addr, ok bool) {
 	s.tableHostToIPLock.Lock()
 	defer s.tableHostToIPLock.Unlock()
 
-	if s.tableHostToIP == nil {
-		return nil, false
-	}
+	ip, ok = s.tableHostToIP[host]
 
-	var ipFromTable net.IP
-	ipFromTable, ok = s.tableHostToIP[host]
-	if !ok {
-		return nil, false
-	}
-
-	ip = make(net.IP, len(ipFromTable))
-	copy(ip, ipFromTable)
-
-	return ip, true
+	return ip, ok
 }
 
 // processDHCPHosts respond to A requests if the target hostname is known to
@@ -396,7 +390,7 @@ func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
 	}
 
 	if !dctx.isLocalClient {
-		log.Debug("dns: %q requests for dhcp host %q", pctx.Addr, reqHost)
+		log.Debug("dnsforward: %q requests for dhcp host %q", pctx.Addr, reqHost)
 		pctx.Res = s.genNXDomain(req)
 
 		// Do not even put into query log.
@@ -407,18 +401,18 @@ func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
 	if !ok {
 		// Go on and process them with filters, including dnsrewrite ones, and
 		// possibly route them to a domain-specific upstream.
-		log.Debug("dns: no dhcp record for %q", reqHost)
+		log.Debug("dnsforward: no dhcp record for %q", reqHost)
 
 		return resultCodeSuccess
 	}
 
-	log.Debug("dns: dhcp record for %q is %s", reqHost, ip)
+	log.Debug("dnsforward: dhcp record for %q is %s", reqHost, ip)
 
 	resp := s.makeResponse(req)
 	if q.Qtype == dns.TypeA {
 		a := &dns.A{
 			Hdr: s.hdr(req, dns.TypeA),
-			A:   ip,
+			A:   ip.AsSlice(),
 		}
 		resp.Answer = append(resp.Answer, a)
 	}
@@ -440,7 +434,7 @@ func (s *Server) processRestrictLocal(dctx *dnsContext) (rc resultCode) {
 
 	ip, err := netutil.IPFromReversedAddr(q.Name)
 	if err != nil {
-		log.Debug("dns: parsing reversed addr: %s", err)
+		log.Debug("dnsforward: parsing reversed addr: %s", err)
 
 		// DNS-Based Service Discovery uses PTR records having not an ARPA
 		// format of the domain name in question.  Those shouldn't be
@@ -448,12 +442,12 @@ func (s *Server) processRestrictLocal(dctx *dnsContext) (rc resultCode) {
 		// RFC 2782.
 		name := strings.TrimSuffix(q.Name, ".")
 		if err = netutil.ValidateSRVDomainName(name); err != nil {
-			log.Debug("dns: validating service domain: %s", err)
+			log.Debug("dnsforward: validating service domain: %s", err)
 
 			return resultCodeError
 		}
 
-		log.Debug("dns: request is for a service domain")
+		log.Debug("dnsforward: request is for a service domain")
 
 		return resultCodeSuccess
 	}
@@ -462,13 +456,13 @@ func (s *Server) processRestrictLocal(dctx *dnsContext) (rc resultCode) {
 	// assume that all the DHCP leases we give are locally-served or at least
 	// don't need to be accessible externally.
 	if !s.privateNets.Contains(ip) {
-		log.Debug("dns: addr %s is not from locally-served network", ip)
+		log.Debug("dnsforward: addr %s is not from locally-served network", ip)
 
 		return resultCodeSuccess
 	}
 
 	if !dctx.isLocalClient {
-		log.Debug("dns: %q requests an internal ip", pctx.Addr)
+		log.Debug("dnsforward: %q requests an internal ip", pctx.Addr)
 		pctx.Res = s.genNXDomain(req)
 
 		// Do not even put into query log.
@@ -492,27 +486,13 @@ func (s *Server) processRestrictLocal(dctx *dnsContext) (rc resultCode) {
 
 // ipToDHCPHost tries to get a hostname leased by DHCP.  It's safe for
 // concurrent use.
-func (s *Server) ipToDHCPHost(ip net.IP) (host string, ok bool) {
+func (s *Server) ipToDHCPHost(ip netip.Addr) (host string, ok bool) {
 	s.tableIPToHostLock.Lock()
 	defer s.tableIPToHostLock.Unlock()
 
-	if s.tableIPToHost == nil {
-		return "", false
-	}
+	host, ok = s.tableIPToHost[ip]
 
-	var v any
-	v, ok = s.tableIPToHost.Get(ip)
-	if !ok {
-		return "", false
-	}
-
-	if host, ok = v.(string); !ok {
-		log.Error("dns: bad type %T in tableIPToHost for %s", v, ip)
-
-		return "", false
-	}
-
-	return host, true
+	return host, ok
 }
 
 // processDHCPAddrs responds to PTR requests if the target IP is leased by the
@@ -528,12 +508,20 @@ func (s *Server) processDHCPAddrs(dctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	host, ok := s.ipToDHCPHost(ip)
+	// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
+	ipAddr, err := netutil.IPToAddrNoMapped(ip)
+	if err != nil {
+		log.Debug("dnsforward: bad reverse ip %v from dhcp: %s", ip, err)
+
+		return resultCodeSuccess
+	}
+
+	host, ok := s.ipToDHCPHost(ipAddr)
 	if !ok {
 		return resultCodeSuccess
 	}
 
-	log.Debug("dns: dhcp reverse record for %s is %q", ip, host)
+	log.Debug("dnsforward: dhcp reverse record for %s is %q", ip, host)
 
 	req := pctx.Req
 	resp := s.makeResponse(req)
@@ -638,7 +626,7 @@ func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
 		//
 		// TODO(a.garipov): Route such queries to a custom upstream for the
 		// local domain name if there is one.
-		log.Debug("dns: dhcp client hostname %q was not filtered", reqHost)
+		log.Debug("dnsforward: dhcp client hostname %q was not filtered", reqHost)
 		pctx.Res = s.genNXDomain(req)
 
 		return resultCodeFinish
@@ -711,13 +699,13 @@ func (s *Server) setCustomUpstream(pctx *proxy.DNSContext, clientID string) {
 	id := stringutil.Coalesce(clientID, ipStringFromAddr(pctx.Addr))
 	upsConf, err := customUpsByClient(id)
 	if err != nil {
-		log.Error("dns: getting custom upstreams for client %s: %s", id, err)
+		log.Error("dnsforward: getting custom upstreams for client %s: %s", id, err)
 
 		return
 	}
 
 	if upsConf != nil {
-		log.Debug("dns: using custom upstreams for client %s", id)
+		log.Debug("dnsforward: using custom upstreams for client %s", id)
 	}
 
 	pctx.CustomUpstreamConfig = upsConf

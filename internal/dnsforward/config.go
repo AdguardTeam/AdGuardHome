@@ -97,9 +97,16 @@ type FilteringConfig struct {
 	// Access settings
 	// --
 
-	AllowedClients    []string `yaml:"allowed_clients"`    // IP addresses of whitelist clients
-	DisallowedClients []string `yaml:"disallowed_clients"` // IP addresses of clients that should be blocked
-	BlockedHosts      []string `yaml:"blocked_hosts"`      // hosts that should be blocked
+	// AllowedClients is the slice of IP addresses, CIDR networks, and ClientIDs
+	// of allowed clients.  If not empty, only these clients are allowed, and
+	// [FilteringConfig.DisallowedClients] are ignored.
+	AllowedClients []string `yaml:"allowed_clients"`
+
+	// DisallowedClients is the slice of IP addresses, CIDR networks, and
+	// ClientIDs of disallowed clients.
+	DisallowedClients []string `yaml:"disallowed_clients"`
+
+	BlockedHosts []string `yaml:"blocked_hosts"` // hosts that should be blocked
 	// TrustedProxies is the list of IP addresses and CIDR networks to detect
 	// proxy servers addresses the DoH requests from which should be handled.
 	// The value of nil or an empty slice for this field makes Proxy not trust
@@ -140,12 +147,11 @@ type FilteringConfig struct {
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
 type TLSConfig struct {
+	cert tls.Certificate
+
 	TLSListenAddrs   []*net.TCPAddr `yaml:"-" json:"-"`
 	QUICListenAddrs  []*net.UDPAddr `yaml:"-" json:"-"`
 	HTTPSListenAddrs []*net.TCPAddr `yaml:"-" json:"-"`
-
-	// Reject connection if the client uses server name (in SNI) that doesn't match the certificate
-	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
 
 	// PEM-encoded certificates chain
 	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"`
@@ -162,9 +168,20 @@ type TLSConfig struct {
 	// used for ClientID checking and Discovery of Designated Resolvers (DDR).
 	ServerName string `yaml:"-" json:"-"`
 
-	cert tls.Certificate
 	// DNS names from certificate (SAN) or CN value from Subject
 	dnsNames []string
+
+	// OverrideTLSCiphers, when set, contains the names of the cipher suites to
+	// use.  If the slice is empty, the default safe suites are used.
+	OverrideTLSCiphers []string `yaml:"override_tls_ciphers,omitempty" json:"-"`
+
+	// StrictSNICheck controls if the connections with SNI mismatching the
+	// certificate's ones should be rejected.
+	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
+
+	// hasIPAddrs is set during the certificate parsing and is true if the
+	// configured certificate contains at least a single IP address.
+	hasIPAddrs bool
 }
 
 // DNSCryptConfig is the DNSCrypt server configuration struct.
@@ -193,7 +210,9 @@ type ServerConfig struct {
 	UpstreamTimeout time.Duration
 
 	TLSv12Roots *x509.CertPool // list of root CAs for TLSv1.2
-	TLSCiphers  []uint16       // list of TLS ciphers to use
+
+	// TLSCiphers are the IDs of TLS cipher suites to use.
+	TLSCiphers []uint16
 
 	// Called when the configuration is changed by HTTP request
 	ConfigModified func()
@@ -348,17 +367,13 @@ func UpstreamHTTPVersions(http3 bool) (v []upstream.HTTPVersion) {
 
 // prepareUpstreamSettings - prepares upstream DNS server settings
 func (s *Server) prepareUpstreamSettings() error {
-	// We're setting a customized set of RootCAs
-	// The reason is that Go default mechanism of loading TLS roots
-	// does not always work properly on some routers so we're
-	// loading roots manually and pass it here.
-	// See "util.LoadSystemRootCAs"
+	// We're setting a customized set of RootCAs.  The reason is that Go default
+	// mechanism of loading TLS roots does not always work properly on some
+	// routers so we're loading roots manually and pass it here.
+	//
+	// See [aghtls.SystemRootCAs].
 	upstream.RootCAs = s.conf.TLSv12Roots
-
-	// See util.InitTLSCiphers -- removed unsafe ciphers
-	if len(s.conf.TLSCiphers) > 0 {
-		upstream.CipherSuites = s.conf.TLSCiphers
-	}
+	upstream.CipherSuites = s.conf.TLSCiphers
 
 	// Load upstreams either from the file, or from the settings
 	var upstreams []string
@@ -451,7 +466,7 @@ func (s *Server) prepareIpsetListSettings() (err error) {
 }
 
 // prepareTLS - prepares TLS configuration for the DNS proxy
-func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
+func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
 	if len(s.conf.CertificateChainData) == 0 || len(s.conf.PrivateKeyData) == 0 {
 		return nil
 	}
@@ -470,31 +485,32 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 		proxyConfig.QUICListenAddr,
 	)
 
-	var err error
 	s.conf.cert, err = tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
 	if err != nil {
 		return fmt.Errorf("failed to parse TLS keypair: %w", err)
 	}
 
+	cert, err := x509.ParseCertificate(s.conf.cert.Certificate[0])
+	if err != nil {
+		return fmt.Errorf("x509.ParseCertificate(): %w", err)
+	}
+
+	s.conf.hasIPAddrs = aghtls.CertificateHasIP(cert)
+
 	if s.conf.StrictSNICheck {
-		var x *x509.Certificate
-		x, err = x509.ParseCertificate(s.conf.cert.Certificate[0])
-		if err != nil {
-			return fmt.Errorf("x509.ParseCertificate(): %w", err)
-		}
-		if len(x.DNSNames) != 0 {
-			s.conf.dnsNames = x.DNSNames
-			log.Debug("dns: using DNS names from certificate's SAN: %v", x.DNSNames)
+		if len(cert.DNSNames) != 0 {
+			s.conf.dnsNames = cert.DNSNames
+			log.Debug("dnsforward: using certificate's SAN as DNS names: %v", cert.DNSNames)
 			sort.Strings(s.conf.dnsNames)
 		} else {
-			s.conf.dnsNames = append(s.conf.dnsNames, x.Subject.CommonName)
-			log.Debug("dns: using DNS name from certificate's CN: %s", x.Subject.CommonName)
+			s.conf.dnsNames = append(s.conf.dnsNames, cert.Subject.CommonName)
+			log.Debug("dnsforward: using certificate's CN as DNS name: %s", cert.Subject.CommonName)
 		}
 	}
 
 	proxyConfig.TLSConfig = &tls.Config{
 		GetCertificate: s.onGetCertificate,
-		CipherSuites:   aghtls.SaferCipherSuites(),
+		CipherSuites:   s.conf.TLSCiphers,
 		MinVersion:     tls.VersionTLS12,
 	}
 

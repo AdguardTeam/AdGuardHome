@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/netip"
 	"strings"
 	"time"
 
@@ -435,22 +436,22 @@ func validateUpstream(u string, domains []string) (useDefault bool, err error) {
 	// TODO(e.burkov):  Validate the domain name.
 	for _, proto := range protocols {
 		if strings.HasPrefix(u, proto) {
-			return useDefault, nil
+			return false, nil
 		}
 	}
 
-	if strings.Contains(u, "://") {
-		return useDefault, errors.Error("wrong protocol")
+	if proto, _, ok := strings.Cut(u, "://"); ok {
+		return false, fmt.Errorf("bad protocol %q", proto)
 	}
 
 	// Check if upstream is either an IP or IP with port.
-	if net.ParseIP(u) != nil {
-		return useDefault, nil
-	} else if _, err = netutil.ParseIPPort(u); err != nil {
-		return useDefault, err
+	if _, err = netip.ParseAddr(u); err == nil {
+		return false, nil
+	} else if _, err = netip.ParseAddrPort(u); err == nil {
+		return false, nil
 	}
 
-	return useDefault, nil
+	return false, err
 }
 
 // separateUpstream returns the upstream and the specified domains.  domains is
@@ -603,6 +604,7 @@ func checkDNS(
 	if err != nil {
 		return fmt.Errorf("failed to choose upstream for %q: %w", upstreamAddr, err)
 	}
+	defer func() { err = errors.WithDeferred(err, u.Close()) }()
 
 	if err = healthCheck(u); err != nil {
 		err = fmt.Errorf("upstream %q fails to exchange: %w", upstreamAddr, err)

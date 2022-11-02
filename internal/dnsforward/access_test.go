@@ -1,7 +1,7 @@
 package dnsforward
 
 import (
-	"net"
+	"net/netip"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -95,27 +95,27 @@ func TestIsBlockedIP(t *testing.T) {
 	testCases := []struct {
 		name        string
 		wantRule    string
-		ip          net.IP
+		ip          netip.Addr
 		wantBlocked bool
 	}{{
 		name:        "match_ip",
 		wantRule:    "1.2.3.4",
-		ip:          net.IP{1, 2, 3, 4},
+		ip:          netip.MustParseAddr("1.2.3.4"),
 		wantBlocked: true,
 	}, {
 		name:        "match_cidr",
 		wantRule:    "5.6.7.8/24",
-		ip:          net.IP{5, 6, 7, 100},
+		ip:          netip.MustParseAddr("5.6.7.100"),
 		wantBlocked: true,
 	}, {
 		name:        "no_match_ip",
 		wantRule:    "",
-		ip:          net.IP{9, 2, 3, 4},
+		ip:          netip.MustParseAddr("9.2.3.4"),
 		wantBlocked: false,
 	}, {
 		name:        "no_match_cidr",
 		wantRule:    "",
-		ip:          net.IP{9, 6, 7, 100},
+		ip:          netip.MustParseAddr("9.6.7.100"),
 		wantBlocked: false,
 	}}
 

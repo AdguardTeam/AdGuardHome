@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	CertificateChain = `-----BEGIN CERTIFICATE-----
+var testCertChainData = []byte(`-----BEGIN CERTIFICATE-----
 MIICKzCCAZSgAwIBAgIJAMT9kPVJdM7LMA0GCSqGSIb3DQEBCwUAMC0xFDASBgNV
 BAoMC0FkR3VhcmQgTHRkMRUwEwYDVQQDDAxBZEd1YXJkIEhvbWUwHhcNMTkwMjI3
 MDkyNDIzWhcNNDYwNzE0MDkyNDIzWjAtMRQwEgYDVQQKDAtBZEd1YXJkIEx0ZDEV
@@ -21,8 +21,9 @@ eKO029jYd2AAZEQwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOBgQB8
 LwlXfbakf7qkVTlCNXgoY7RaJ8rJdPgOZPoCTVToEhT6u/cb1c2qp8QB0dNExDna
 b0Z+dnODTZqQOJo6z/wIXlcUrnR4cQVvytXt8lFn+26l6Y6EMI26twC/xWr+1swq
 Muj4FeWHVDerquH4yMr1jsYLD3ci+kc5sbIX6TfVxQ==
------END CERTIFICATE-----`
-	PrivateKey = `-----BEGIN PRIVATE KEY-----
+-----END CERTIFICATE-----`)
+
+var testPrivateKeyData = []byte(`-----BEGIN PRIVATE KEY-----
 MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBALC/BSc8mI68tw5p
 aYa7pjrySwWvXeetcFywOWHGVfLw9qiFWLdfESa3Y6tWMpZAXD9t1Xh9n211YUBV
 FGSB4ZshnM/tgEPU6t787lJD4NsIIRp++MkJxdAitN4oUTqL0bdpIwezQ/CrYuBX
@@ -37,36 +38,40 @@ An/jMjZSMCxNl6UyFcqt5Et1EGVhuFECQQCZLXxaT+qcyHjlHJTMzuMgkz1QFbEp
 O5EX70gpeGQMPDK0QSWpaazg956njJSDbNCFM4BccrdQbJu1cW4qOsfBAkAMgZuG
 O88slmgTRHX4JGFmy3rrLiHNI2BbJSuJ++Yllz8beVzh6NfvuY+HKRCmPqoBPATU
 kXS9jgARhhiWXJrk
------END PRIVATE KEY-----`
-)
+-----END PRIVATE KEY-----`)
 
 func TestValidateCertificates(t *testing.T) {
 	t.Run("bad_certificate", func(t *testing.T) {
-		data := validateCertificates("bad cert", "", "")
-		assert.NotEmpty(t, data.WarningValidation)
-		assert.False(t, data.ValidCert)
-		assert.False(t, data.ValidChain)
+		status := &tlsConfigStatus{}
+		err := validateCertificates(status, []byte("bad cert"), nil, "")
+		testutil.AssertErrorMsg(t, "empty certificate", err)
+		assert.False(t, status.ValidCert)
+		assert.False(t, status.ValidChain)
 	})
 
 	t.Run("bad_private_key", func(t *testing.T) {
-		data := validateCertificates("", "bad priv key", "")
-		assert.NotEmpty(t, data.WarningValidation)
-		assert.False(t, data.ValidKey)
+		status := &tlsConfigStatus{}
+		err := validateCertificates(status, nil, []byte("bad priv key"), "")
+		testutil.AssertErrorMsg(t, "no valid keys were found", err)
+		assert.False(t, status.ValidKey)
 	})
 
 	t.Run("valid", func(t *testing.T) {
-		data := validateCertificates(CertificateChain, PrivateKey, "")
-		notBefore, _ := time.Parse(time.RFC3339, "2019-02-27T09:24:23Z")
-		notAfter, _ := time.Parse(time.RFC3339, "2046-07-14T09:24:23Z")
-		assert.NotEmpty(t, data.WarningValidation)
-		assert.True(t, data.ValidCert)
-		assert.False(t, data.ValidChain)
-		assert.True(t, data.ValidKey)
-		assert.Equal(t, "RSA", data.KeyType)
-		assert.Equal(t, "CN=AdGuard Home,O=AdGuard Ltd", data.Subject)
-		assert.Equal(t, "CN=AdGuard Home,O=AdGuard Ltd", data.Issuer)
-		assert.Equal(t, notBefore, data.NotBefore)
-		assert.Equal(t, notAfter, data.NotAfter)
-		assert.True(t, data.ValidPair)
+		status := &tlsConfigStatus{}
+		err := validateCertificates(status, testCertChainData, testPrivateKeyData, "")
+		assert.Error(t, err)
+
+		notBefore := time.Date(2019, 2, 27, 9, 24, 23, 0, time.UTC)
+		notAfter := time.Date(2046, 7, 14, 9, 24, 23, 0, time.UTC)
+
+		assert.True(t, status.ValidCert)
+		assert.False(t, status.ValidChain)
+		assert.True(t, status.ValidKey)
+		assert.Equal(t, "RSA", status.KeyType)
+		assert.Equal(t, "CN=AdGuard Home,O=AdGuard Ltd", status.Subject)
+		assert.Equal(t, "CN=AdGuard Home,O=AdGuard Ltd", status.Issuer)
+		assert.Equal(t, notBefore, status.NotBefore)
+		assert.Equal(t, notAfter, status.NotAfter)
+		assert.True(t, status.ValidPair)
 	})
 }

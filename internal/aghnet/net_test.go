@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"io/fs"
 	"net"
+	"net/netip"
 	"os"
 	"strings"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -19,7 +19,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	aghtest.DiscardLogOutput(m)
+	testutil.DiscardLogOutput(m)
 }
 
 // testdata is the filesystem containing data for testing the package.
@@ -93,34 +93,29 @@ func TestGatewayIP(t *testing.T) {
 	const cmd = "ip route show dev " + ifaceName
 
 	testCases := []struct {
-		name  string
 		shell mapShell
-		want  net.IP
+		want  netip.Addr
+		name  string
 	}{{
-		name:  "success_v4",
 		shell: theOnlyCmd(cmd, 0, `default via 1.2.3.4 onlink`, nil),
-		want:  net.IP{1, 2, 3, 4}.To16(),
+		want:  netip.MustParseAddr("1.2.3.4"),
+		name:  "success_v4",
 	}, {
-		name:  "success_v6",
 		shell: theOnlyCmd(cmd, 0, `default via ::ffff onlink`, nil),
-		want: net.IP{
-			0x0, 0x0, 0x0, 0x0,
-			0x0, 0x0, 0x0, 0x0,
-			0x0, 0x0, 0x0, 0x0,
-			0x0, 0x0, 0xFF, 0xFF,
-		},
+		want:  netip.MustParseAddr("::ffff"),
+		name:  "success_v6",
 	}, {
-		name:  "bad_output",
 		shell: theOnlyCmd(cmd, 0, `non-default via 1.2.3.4 onlink`, nil),
-		want:  nil,
+		want:  netip.Addr{},
+		name:  "bad_output",
 	}, {
-		name:  "err_runcmd",
 		shell: theOnlyCmd(cmd, 0, "", errors.Error("can't run command")),
-		want:  nil,
+		want:  netip.Addr{},
+		name:  "err_runcmd",
 	}, {
-		name:  "bad_code",
 		shell: theOnlyCmd(cmd, 1, "", nil),
-		want:  nil,
+		want:  netip.Addr{},
+		name:  "bad_code",
 	}}
 
 	for _, tc := range testCases {
@@ -150,65 +145,61 @@ func TestInterfaceByIP(t *testing.T) {
 }
 
 func TestBroadcastFromIPNet(t *testing.T) {
-	known6 := net.IP{
-		1, 2, 3, 4,
-		5, 6, 7, 8,
-		9, 10, 11, 12,
-		13, 14, 15, 16,
-	}
+	known4 := netip.MustParseAddr("192.168.0.1")
+	fullBroadcast4 := netip.MustParseAddr("255.255.255.255")
+
+	known6 := netip.MustParseAddr("102:304:506:708:90a:b0c:d0e:f10")
 
 	testCases := []struct {
-		name   string
-		subnet *net.IPNet
-		want   net.IP
+		pref netip.Prefix
+		want netip.Addr
+		name string
 	}{{
+		pref: netip.PrefixFrom(known4, 0),
+		want: fullBroadcast4,
 		name: "full",
-		subnet: &net.IPNet{
-			IP:   net.IP{192, 168, 0, 1},
-			Mask: net.IPMask{255, 255, 15, 0},
-		},
-		want: net.IP{192, 168, 240, 255},
 	}, {
-		name: "ipv6_no_mask",
-		subnet: &net.IPNet{
-			IP: known6,
-		},
+		pref: netip.PrefixFrom(known4, 20),
+		want: netip.MustParseAddr("192.168.15.255"),
+		name: "full",
+	}, {
+		pref: netip.PrefixFrom(known6, netutil.IPv6BitLen),
 		want: known6,
+		name: "ipv6_no_mask",
 	}, {
+		pref: netip.PrefixFrom(known4, netutil.IPv4BitLen),
+		want: known4,
 		name: "ipv4_no_mask",
-		subnet: &net.IPNet{
-			IP: net.IP{192, 168, 1, 2},
-		},
-		want: net.IP{192, 168, 1, 255},
 	}, {
+		pref: netip.PrefixFrom(netip.IPv4Unspecified(), 0),
+		want: fullBroadcast4,
 		name: "unspecified",
-		subnet: &net.IPNet{
-			IP:   net.IP{0, 0, 0, 0},
-			Mask: net.IPMask{0, 0, 0, 0},
-		},
-		want: net.IPv4bcast,
+	}, {
+		pref: netip.Prefix{},
+		want: netip.Addr{},
+		name: "invalid",
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			bc := BroadcastFromIPNet(tc.subnet)
-			assert.True(t, bc.Equal(tc.want), bc)
+			assert.Equal(t, tc.want, BroadcastFromPref(tc.pref))
 		})
 	}
 }
 
 func TestCheckPort(t *testing.T) {
+	laddr := netip.AddrPortFrom(IPv4Localhost(), 0)
+
 	t.Run("tcp_bound", func(t *testing.T) {
-		l, err := net.Listen("tcp", "127.0.0.1:")
+		l, err := net.Listen("tcp", laddr.String())
 		require.NoError(t, err)
 		testutil.CleanupAndRequireSuccess(t, l.Close)
 
-		ipp := netutil.IPPortFromAddr(l.Addr())
-		require.NotNil(t, ipp)
-		require.NotNil(t, ipp.IP)
-		require.NotZero(t, ipp.Port)
+		ipp := testutil.RequireTypeAssert[*net.TCPAddr](t, l.Addr()).AddrPort()
+		require.Equal(t, laddr.Addr(), ipp.Addr())
+		require.NotZero(t, ipp.Port())
 
-		err = CheckPort("tcp", ipp.IP, ipp.Port)
+		err = CheckPort("tcp", ipp)
 		target := &net.OpError{}
 		require.ErrorAs(t, err, &target)
 
@@ -216,16 +207,15 @@ func TestCheckPort(t *testing.T) {
 	})
 
 	t.Run("udp_bound", func(t *testing.T) {
-		conn, err := net.ListenPacket("udp", "127.0.0.1:")
+		conn, err := net.ListenPacket("udp", laddr.String())
 		require.NoError(t, err)
 		testutil.CleanupAndRequireSuccess(t, conn.Close)
 
-		ipp := netutil.IPPortFromAddr(conn.LocalAddr())
-		require.NotNil(t, ipp)
-		require.NotNil(t, ipp.IP)
-		require.NotZero(t, ipp.Port)
+		ipp := testutil.RequireTypeAssert[*net.UDPAddr](t, conn.LocalAddr()).AddrPort()
+		require.Equal(t, laddr.Addr(), ipp.Addr())
+		require.NotZero(t, ipp.Port())
 
-		err = CheckPort("udp", ipp.IP, ipp.Port)
+		err = CheckPort("udp", ipp)
 		target := &net.OpError{}
 		require.ErrorAs(t, err, &target)
 
@@ -233,12 +223,12 @@ func TestCheckPort(t *testing.T) {
 	})
 
 	t.Run("bad_network", func(t *testing.T) {
-		err := CheckPort("bad_network", nil, 0)
+		err := CheckPort("bad_network", netip.AddrPortFrom(netip.Addr{}, 0))
 		assert.NoError(t, err)
 	})
 
 	t.Run("can_bind", func(t *testing.T) {
-		err := CheckPort("udp", net.IP{0, 0, 0, 0}, 0)
+		err := CheckPort("udp", netip.AddrPortFrom(netip.IPv4Unspecified(), 0))
 		assert.NoError(t, err)
 	})
 }
@@ -322,18 +312,18 @@ func TestNetInterface_MarshalJSON(t *testing.T) {
 		`"mtu":1500` +
 		`}` + "\n"
 
-	ip4, ip6 := net.IP{1, 2, 3, 4}, net.IP{0xAA, 0xAA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
-	mask4, mask6 := net.CIDRMask(24, netutil.IPv4BitLen), net.CIDRMask(8, netutil.IPv6BitLen)
+	ip4, ok := netip.AddrFromSlice([]byte{1, 2, 3, 4})
+	require.True(t, ok)
+
+	ip6, ok := netip.AddrFromSlice([]byte{0xAA, 0xAA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})
+	require.True(t, ok)
+
+	net4 := netip.PrefixFrom(ip4, 24)
+	net6 := netip.PrefixFrom(ip6, 8)
 
 	iface := &NetInterface{
-		Addresses: []net.IP{ip4, ip6},
-		Subnets: []*net.IPNet{{
-			IP:   ip4.Mask(mask4),
-			Mask: mask4,
-		}, {
-			IP:   ip6.Mask(mask6),
-			Mask: mask6,
-		}},
+		Addresses:    []netip.Addr{ip4, ip6},
+		Subnets:      []netip.Prefix{net4, net6},
 		Name:         "iface0",
 		HardwareAddr: net.HardwareAddr{0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF},
 		Flags:        net.FlagUp | net.FlagMulticast,

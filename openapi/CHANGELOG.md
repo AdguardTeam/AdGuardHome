@@ -6,6 +6,19 @@
 
 
 
+## v0.107.17: API Changes
+
+### `GET /control/blocked_services/services` is deprecated
+
+Use `GET /control/blocked_services/all`.
+
+### `GET /control/blocked_services/all`
+
+* The new `GET /control/blocked_services/all` HTTP API allows inspecting all
+  available services and their data, such as SVG icons and human-readable names.
+
+
+
 ## v0.107.15: `POST` Requests Without Bodies
 
 As an additional CSRF protection measure, AdGuard Home now ensures that requests

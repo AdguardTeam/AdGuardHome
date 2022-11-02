@@ -4,40 +4,43 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const testFltsFileName = "1.txt"
-
-func testStartFilterListener(t *testing.T, fltContent *[]byte) (l net.Listener) {
+// serveFiltersLocally is a helper that concurrently listens on a free port to
+// respond with fltContent.  It also gracefully closes the listener when the
+// test under t finishes.
+func serveFiltersLocally(t *testing.T, fltContent []byte) (ipp netip.AddrPort) {
 	t.Helper()
 
 	h := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		n, werr := w.Write(*fltContent)
-		require.NoError(t, werr)
-		require.Equal(t, len(*fltContent), n)
+		pt := testutil.PanicT{}
+
+		n, werr := w.Write(fltContent)
+		require.NoError(pt, werr)
+		require.Equal(pt, len(fltContent), n)
 	})
 
-	var err error
-	l, err = net.Listen("tcp", ":0")
+	l, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
 
-	go func() {
-		_ = http.Serve(l, h)
-	}()
+	go func() { _ = http.Serve(l, h) }()
 	testutil.CleanupAndRequireSuccess(t, l.Close)
 
-	return l
+	addr := l.Addr()
+	require.IsType(t, new(net.TCPAddr), addr)
+
+	return netip.AddrPortFrom(aghnet.IPv4Localhost(), uint16(addr.(*net.TCPAddr).Port))
 }
 
 func TestFilters(t *testing.T) {
@@ -49,7 +52,7 @@ func TestFilters(t *testing.T) {
 
 	fltContent := []byte(content)
 
-	l := testStartFilterListener(t, &fltContent)
+	addr := serveFiltersLocally(t, fltContent)
 
 	tempDir := t.TempDir()
 
@@ -64,11 +67,7 @@ func TestFilters(t *testing.T) {
 	f := &FilterYAML{
 		URL: (&url.URL{
 			Scheme: "http",
-			Host: (&netutil.IPPort{
-				IP:   net.IP{127, 0, 0, 1},
-				Port: l.Addr().(*net.TCPAddr).Port,
-			}).String(),
-			Path: path.Join(filterDir, testFltsFileName),
+			Host:   addr.String(),
 		}).String(),
 	}
 
@@ -101,8 +100,15 @@ func TestFilters(t *testing.T) {
 	})
 
 	t.Run("refresh_actually", func(t *testing.T) {
-		fltContent = []byte(`||example.com^`)
-		t.Cleanup(func() { fltContent = []byte(content) })
+		anotherContent := []byte(`||example.com^`)
+		oldURL := f.URL
+
+		ipp := serveFiltersLocally(t, anotherContent)
+		f.URL = (&url.URL{
+			Scheme: "http",
+			Host:   ipp.String(),
+		}).String()
+		t.Cleanup(func() { f.URL = oldURL })
 
 		updateAndAssert(t, require.True, 1)
 	})

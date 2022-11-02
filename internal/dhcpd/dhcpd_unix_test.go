@@ -4,19 +4,19 @@ package dhcpd
 
 import (
 	"net"
+	"net/netip"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slices"
 )
 
 func TestMain(m *testing.M) {
-	aghtest.DiscardLogOutput(m)
+	testutil.DiscardLogOutput(m)
 }
 
 func testNotify(flags uint32) {
@@ -33,10 +33,10 @@ func TestDB(t *testing.T) {
 
 	s.srv4, err = v4Create(&V4ServerConf{
 		Enabled:    true,
-		RangeStart: net.IP{192, 168, 10, 100},
-		RangeEnd:   net.IP{192, 168, 10, 200},
-		GatewayIP:  net.IP{192, 168, 10, 1},
-		SubnetMask: net.IP{255, 255, 255, 0},
+		RangeStart: netip.MustParseAddr("192.168.10.100"),
+		RangeEnd:   netip.MustParseAddr("192.168.10.200"),
+		GatewayIP:  netip.MustParseAddr("192.168.10.1"),
+		SubnetMask: netip.MustParseAddr("255.255.255.0"),
 		notify:     testNotify,
 	})
 	require.NoError(t, err)
@@ -113,35 +113,35 @@ func TestNormalizeLeases(t *testing.T) {
 func TestV4Server_badRange(t *testing.T) {
 	testCases := []struct {
 		name       string
+		gatewayIP  netip.Addr
+		subnetMask netip.Addr
 		wantErrMsg string
-		gatewayIP  net.IP
-		subnetMask net.IP
 	}{{
-		name: "gateway_in_range",
+		name:       "gateway_in_range",
+		gatewayIP:  netip.MustParseAddr("192.168.10.120"),
+		subnetMask: netip.MustParseAddr("255.255.255.0"),
 		wantErrMsg: "dhcpv4: gateway ip 192.168.10.120 in the ip range: " +
 			"192.168.10.20-192.168.10.200",
-		gatewayIP:  net.IP{192, 168, 10, 120},
-		subnetMask: net.IP{255, 255, 255, 0},
 	}, {
-		name: "outside_range_start",
+		name:       "outside_range_start",
+		gatewayIP:  netip.MustParseAddr("192.168.10.1"),
+		subnetMask: netip.MustParseAddr("255.255.255.240"),
 		wantErrMsg: "dhcpv4: range start 192.168.10.20 is outside network " +
 			"192.168.10.1/28",
-		gatewayIP:  net.IP{192, 168, 10, 1},
-		subnetMask: net.IP{255, 255, 255, 240},
 	}, {
-		name: "outside_range_end",
+		name:       "outside_range_end",
+		gatewayIP:  netip.MustParseAddr("192.168.10.1"),
+		subnetMask: netip.MustParseAddr("255.255.255.224"),
 		wantErrMsg: "dhcpv4: range end 192.168.10.200 is outside network " +
 			"192.168.10.1/27",
-		gatewayIP:  net.IP{192, 168, 10, 1},
-		subnetMask: net.IP{255, 255, 255, 224},
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			conf := V4ServerConf{
 				Enabled:    true,
-				RangeStart: net.IP{192, 168, 10, 20},
-				RangeEnd:   net.IP{192, 168, 10, 200},
+				RangeStart: netip.MustParseAddr("192.168.10.20"),
+				RangeEnd:   netip.MustParseAddr("192.168.10.200"),
 				GatewayIP:  tc.gatewayIP,
 				SubnetMask: tc.subnetMask,
 				notify:     testNotify,
@@ -156,7 +156,7 @@ func TestV4Server_badRange(t *testing.T) {
 // cloneUDPAddr returns a deep copy of a.
 func cloneUDPAddr(a *net.UDPAddr) (clone *net.UDPAddr) {
 	return &net.UDPAddr{
-		IP:   netutil.CloneIP(a.IP),
+		IP:   slices.Clone(a.IP),
 		Port: a.Port,
 		Zone: a.Zone,
 	}

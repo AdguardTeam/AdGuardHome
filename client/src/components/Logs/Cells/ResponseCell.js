@@ -27,6 +27,7 @@ const ResponseCell = ({
     const filters = useSelector((state) => state.filtering.filters, shallowEqual);
     const whitelistFilters = useSelector((state) => state.filtering.whitelistFilters, shallowEqual);
     const isDetailed = useSelector((state) => state.queryLogs.isDetailed);
+    const services = useSelector((store) => store?.services);
 
     const formattedElapsedMs = formatElapsedMs(elapsedMs, t);
 
@@ -60,8 +61,8 @@ const ResponseCell = ({
         install_settings_dns: upstreamString,
         elapsed: formattedElapsedMs,
         response_code: status,
-        ...(service_name
-                && { service_name: getServiceName(service_name) }
+        ...(service_name && services.allServices
+                && { service_name: getServiceName(services.allServices, service_name) }
         ),
         ...(rules.length > 0
                 && { rule_label: getRulesToFilterList(rules, filters, whitelistFilters) }
@@ -80,10 +81,10 @@ const ResponseCell = ({
     const getDetailedInfo = (reason) => {
         switch (reason) {
             case FILTERED_STATUS.FILTERED_BLOCKED_SERVICE:
-                if (!service_name) {
+                if (!service_name || !services.allServices) {
                     return formattedElapsedMs;
                 }
-                return getServiceName(service_name);
+                return getServiceName(services.allServices, service_name);
             case FILTERED_STATUS.FILTERED_BLACK_LIST:
             case FILTERED_STATUS.NOT_FILTERED_WHITE_LIST:
                 return getFilterNames(rules, filters, whitelistFilters).join(', ');

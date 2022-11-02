@@ -6,10 +6,11 @@ import flow from 'lodash/flow';
 
 import { toggleAllServices } from '../../../helpers/helpers';
 import { renderServiceField } from '../../../helpers/form';
-import { FORM_NAME, SERVICES } from '../../../helpers/constants';
+import { FORM_NAME } from '../../../helpers/constants';
 
 const Form = (props) => {
     const {
+        blockedServices,
         handleSubmit,
         change,
         pristine,
@@ -27,7 +28,7 @@ const Form = (props) => {
                             type="button"
                             className="btn btn-secondary btn-block"
                             disabled={processing || processingSet}
-                            onClick={() => toggleAllServices(SERVICES, change, true)}
+                            onClick={() => toggleAllServices(blockedServices, change, true)}
                         >
                             <Trans>block_all</Trans>
                         </button>
@@ -37,17 +38,17 @@ const Form = (props) => {
                             type="button"
                             className="btn btn-secondary btn-block"
                             disabled={processing || processingSet}
-                            onClick={() => toggleAllServices(SERVICES, change, false)}
+                            onClick={() => toggleAllServices(blockedServices, change, false)}
                         >
                             <Trans>unblock_all</Trans>
                         </button>
                     </div>
                 </div>
                 <div className="services">
-                    {SERVICES.map((service) => (
+                    {blockedServices.map((service) => (
                         <Field
                             key={service.id}
-                            icon={`service_${service.id}`}
+                            icon={service.icon_svg}
                             name={`blocked_services.${service.id}`}
                             type="checkbox"
                             component={renderServiceField}
@@ -72,6 +73,7 @@ const Form = (props) => {
 };
 
 Form.propTypes = {
+    blockedServices: PropTypes.array.isRequired,
     pristine: PropTypes.bool.isRequired,
     handleSubmit: PropTypes.func.isRequired,
     change: PropTypes.func.isRequired,

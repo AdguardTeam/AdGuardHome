@@ -188,10 +188,8 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		name:    "upstream_mode_fastest_addr",
 		wantSet: "",
 	}, {
-		name: "upstream_dns_bad",
-		wantSet: `validating upstream servers: ` +
-			`validating upstream "!!!": bad ipport address "!!!": ` +
-			`address !!!: missing port in address`,
+		name:    "upstream_dns_bad",
+		wantSet: `validating upstream servers: validating upstream "!!!": not an ip:port`,
 	}, {
 		name: "bootstraps_bad",
 		wantSet: `checking bootstrap a: invalid address: ` +
@@ -297,15 +295,15 @@ func TestValidateUpstreams(t *testing.T) {
 		},
 	}, {
 		name:    "invalid",
-		wantErr: `validating upstream "dhcp://fake.dns": wrong protocol`,
+		wantErr: `validating upstream "dhcp://fake.dns": bad protocol "dhcp"`,
 		set:     []string{"dhcp://fake.dns"},
 	}, {
 		name:    "invalid",
-		wantErr: `validating upstream "1.2.3.4.5": bad ipport address "1.2.3.4.5": address 1.2.3.4.5: missing port in address`,
+		wantErr: `validating upstream "1.2.3.4.5": not an ip:port`,
 		set:     []string{"1.2.3.4.5"},
 	}, {
 		name:    "invalid",
-		wantErr: `validating upstream "123.3.7m": bad ipport address "123.3.7m": address 123.3.7m: missing port in address`,
+		wantErr: `validating upstream "123.3.7m": not an ip:port`,
 		set:     []string{"123.3.7m"},
 	}, {
 		name:    "invalid",
@@ -313,7 +311,7 @@ func TestValidateUpstreams(t *testing.T) {
 		set:     []string{"[/host.com]tls://dns.adguard.com"},
 	}, {
 		name:    "invalid",
-		wantErr: `validating upstream "[host.ru]#": bad ipport address "[host.ru]#": address [host.ru]#: missing port in address`,
+		wantErr: `validating upstream "[host.ru]#": not an ip:port`,
 		set:     []string{"[host.ru]#"},
 	}, {
 		name:    "valid_default",

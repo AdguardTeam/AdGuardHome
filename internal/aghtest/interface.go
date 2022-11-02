@@ -15,6 +15,8 @@ import (
 
 // Standard Library
 
+// Package fs
+
 // type check
 var _ fs.FS = &FS{}
 
@@ -58,6 +60,8 @@ func (fsys *StatFS) Stat(name string) (fs.FileInfo, error) {
 	return fsys.OnStat(name)
 }
 
+// Package net
+
 // type check
 var _ net.Listener = (*Listener)(nil)
 
@@ -83,31 +87,9 @@ func (l *Listener) Close() (err error) {
 	return l.OnClose()
 }
 
-// Module dnsproxy
+// Module adguard-home
 
-// type check
-var _ upstream.Upstream = (*UpstreamMock)(nil)
-
-// UpstreamMock is a mock [upstream.Upstream] implementation for tests.
-//
-// TODO(a.garipov): Replace with all uses of Upstream with UpstreamMock and
-// rename it to just Upstream.
-type UpstreamMock struct {
-	OnAddress  func() (addr string)
-	OnExchange func(req *dns.Msg) (resp *dns.Msg, err error)
-}
-
-// Address implements the [upstream.Upstream] interface for *UpstreamMock.
-func (u *UpstreamMock) Address() (addr string) {
-	return u.OnAddress()
-}
-
-// Exchange implements the [upstream.Upstream] interface for *UpstreamMock.
-func (u *UpstreamMock) Exchange(req *dns.Msg) (resp *dns.Msg, err error) {
-	return u.OnExchange(req)
-}
-
-// Module AdGuardHome
+// Package aghos
 
 // type check
 var _ aghos.FSWatcher = (*FSWatcher)(nil)
@@ -132,4 +114,36 @@ func (w *FSWatcher) Add(name string) (err error) {
 // Close implements the [aghos.FSWatcher] interface for *FSWatcher.
 func (w *FSWatcher) Close() (err error) {
 	return w.OnClose()
+}
+
+// Module dnsproxy
+
+// Package upstream
+
+// type check
+var _ upstream.Upstream = (*UpstreamMock)(nil)
+
+// UpstreamMock is a mock [upstream.Upstream] implementation for tests.
+//
+// TODO(a.garipov): Replace with all uses of Upstream with UpstreamMock and
+// rename it to just Upstream.
+type UpstreamMock struct {
+	OnAddress  func() (addr string)
+	OnExchange func(req *dns.Msg) (resp *dns.Msg, err error)
+	OnClose    func() (err error)
+}
+
+// Address implements the [upstream.Upstream] interface for *UpstreamMock.
+func (u *UpstreamMock) Address() (addr string) {
+	return u.OnAddress()
+}
+
+// Exchange implements the [upstream.Upstream] interface for *UpstreamMock.
+func (u *UpstreamMock) Exchange(req *dns.Msg) (resp *dns.Msg, err error) {
+	return u.OnExchange(req)
+}
+
+// Close implements the [upstream.Upstream] interface for *UpstreamMock.
+func (u *UpstreamMock) Close() (err error) {
+	return u.OnClose()
 }

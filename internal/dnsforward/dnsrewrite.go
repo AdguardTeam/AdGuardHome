@@ -20,19 +20,13 @@ func (s *Server) filterDNSRewriteResponse(
 	v rules.RRValue,
 ) (ans dns.RR, err error) {
 	switch rr {
-	case
-		dns.TypeA,
-		dns.TypeAAAA:
+	case dns.TypeA, dns.TypeAAAA:
 		return s.ansFromDNSRewriteIP(v, rr, req)
-	case
-		dns.TypePTR,
-		dns.TypeTXT:
+	case dns.TypePTR, dns.TypeTXT:
 		return s.ansFromDNSRewriteText(v, rr, req)
 	case dns.TypeMX:
 		return s.ansFromDNSRewriteMX(v, rr, req)
-	case
-		dns.TypeHTTPS,
-		dns.TypeSVCB:
+	case dns.TypeHTTPS, dns.TypeSVCB:
 		return s.ansFromDNSRewriteSVCB(v, rr, req)
 	case dns.TypeSRV:
 		return s.ansFromDNSRewriteSRV(v, rr, req)

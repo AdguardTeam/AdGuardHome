@@ -252,6 +252,6 @@ func (w *WHOIS) workerLoop() {
 			continue
 		}
 
-		w.clients.SetWHOISInfo(ip, info)
+		w.clients.setWHOISInfo(ip, info)
 	}
 }

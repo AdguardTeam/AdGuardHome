@@ -2,7 +2,7 @@ import React, { Component, Fragment } from 'react';
 import { withTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
 
-import ClientsTable from './ClientsTable';
+import { ClientsTable } from './ClientsTable';
 import AutoClients from './AutoClients';
 import PageTitle from '../../ui/PageTitle';
 import Loading from '../../ui/Loading';

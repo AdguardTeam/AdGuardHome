@@ -54,97 +54,120 @@ func (filter *FilterYAML) Path(dataDir string) string {
 }
 
 const (
-	statusFound = 1 << iota
-	statusEnabledChanged
-	statusURLChanged
-	statusURLExists
-	statusUpdateRequired
+	// errFilterNotExist is returned from [filterSetProperties] when there are
+	// no lists with the desired URL to update.
+	//
+	// TODO(e.burkov):  Use wherever the same error is needed.
+	errFilterNotExist errors.Error = "url doesn't exist"
+
+	// errFilterExists is returned from [filterSetProperties] when there is
+	// another filter having the same URL as the one updated.
+	//
+	// TODO(e.burkov):  Use wherever the same error is needed.
+	errFilterExists errors.Error = "url already exists"
 )
 
-// Update properties for a filter specified by its URL
-// Return status* flags.
-func (d *DNSFilter) filterSetProperties(url string, newf FilterYAML, whitelist bool) int {
-	r := 0
+// filterSetProperties searches for the particular filter list by url and sets
+// the values of newList to it, updating afterwards if needed.  It returns true
+// if the update was performed and the filtering engine restart is required.
+func (d *DNSFilter) filterSetProperties(
+	listURL string,
+	newList FilterYAML,
+	isAllowlist bool,
+) (shouldRestart bool, err error) {
 	d.filtersMu.Lock()
 	defer d.filtersMu.Unlock()
 
 	filters := d.Filters
-	if whitelist {
+	if isAllowlist {
 		filters = d.WhitelistFilters
 	}
 
-	i := slices.IndexFunc(filters, func(filt FilterYAML) bool {
-		return filt.URL == url
-	})
+	i := slices.IndexFunc(filters, func(filt FilterYAML) bool { return filt.URL == listURL })
 	if i == -1 {
-		return 0
+		return false, errFilterNotExist
 	}
 
 	filt := &filters[i]
+	log.Debug(
+		"filtering: set name to %q, url to %s, enabled to %t for filter %s",
+		newList.Name,
+		newList.URL,
+		newList.Enabled,
+		filt.URL,
+	)
 
-	log.Debug("filter: set properties: %s: {%s %s %v}", filt.URL, newf.Name, newf.URL, newf.Enabled)
-	filt.Name = newf.Name
+	defer func(oldURL, oldName string, oldEnabled bool, oldUpdated time.Time) {
+		if err != nil {
+			filt.URL = oldURL
+			filt.Name = oldName
+			filt.Enabled = oldEnabled
+			filt.LastUpdated = oldUpdated
+		}
+	}(filt.URL, filt.Name, filt.Enabled, filt.LastUpdated)
 
-	if filt.URL != newf.URL {
-		r |= statusURLChanged | statusUpdateRequired
-		if d.filterExistsNoLock(newf.URL) {
-			return statusURLExists
+	filt.Name = newList.Name
+
+	if filt.URL != newList.URL {
+		if d.filterExistsLocked(newList.URL) {
+			return false, errFilterExists
 		}
 
-		filt.URL = newf.URL
-		filt.unload()
+		shouldRestart = true
+
+		filt.URL = newList.URL
 		filt.LastUpdated = time.Time{}
-		filt.checksum = 0
-		filt.RulesCount = 0
+		filt.unload()
 	}
 
-	if filt.Enabled != newf.Enabled {
-		r |= statusEnabledChanged
-		filt.Enabled = newf.Enabled
-		if filt.Enabled {
-			if (r & statusURLChanged) == 0 {
-				err := d.load(filt)
-				if err != nil {
-					// TODO(e.burkov):  It seems the error is only returned when
-					// the file exists and couldn't be open.  Investigate and
-					// improve.
-					log.Error("loading filter %d: %s", filt.ID, err)
+	if filt.Enabled != newList.Enabled {
+		filt.Enabled = newList.Enabled
+		shouldRestart = true
+	}
 
-					filt.LastUpdated = time.Time{}
-					filt.checksum = 0
-					filt.RulesCount = 0
-					r |= statusUpdateRequired
-				}
-			}
-		} else {
-			filt.unload()
+	if filt.Enabled {
+		if shouldRestart {
+			// Download the filter contents.
+			shouldRestart, err = d.update(filt)
 		}
+	} else {
+		// TODO(e.burkov):  The validation of the contents of the new URL is
+		// currently skipped if the rule list is disabled.  This makes it
+		// possible to set a bad rules source, but the validation should still
+		// kick in when the filter is enabled.  Consider making changing this
+		// behavior to be stricter.
+		filt.unload()
 	}
 
-	return r | statusFound
+	return shouldRestart, err
 }
 
-// Return TRUE if a filter with this URL exists
-func (d *DNSFilter) filterExists(url string) bool {
+// filterExists returns true if a filter with the same url exists in d.  It's
+// safe for concurrent use.
+func (d *DNSFilter) filterExists(url string) (ok bool) {
 	d.filtersMu.RLock()
 	defer d.filtersMu.RUnlock()
 
-	r := d.filterExistsNoLock(url)
+	r := d.filterExistsLocked(url)
 
 	return r
 }
 
-func (d *DNSFilter) filterExistsNoLock(url string) bool {
+// filterExistsLocked returns true if d contains the filter with the same url.
+// d.filtersMu is expected to be locked.
+func (d *DNSFilter) filterExistsLocked(url string) (ok bool) {
 	for _, f := range d.Filters {
 		if f.URL == url {
 			return true
 		}
 	}
+
 	for _, f := range d.WhitelistFilters {
 		if f.URL == url {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -155,7 +178,7 @@ func (d *DNSFilter) filterAdd(flt FilterYAML) bool {
 	defer d.filtersMu.Unlock()
 
 	// Check for duplicates
-	if d.filterExistsNoLock(flt.URL) {
+	if d.filterExistsLocked(flt.URL) {
 		return false
 	}
 
@@ -258,18 +281,6 @@ func (d *DNSFilter) tryRefreshFilters(block, allow, force bool) (updated int, is
 	return updated, isNetworkErr, ok
 }
 
-// refreshFilters updates the lists and returns the number of updated ones.
-// It's safe for concurrent use, but blocks at least until the previous
-// refreshing is finished.
-func (d *DNSFilter) refreshFilters(block, allow, force bool) (updated int) {
-	d.refreshLock.Lock()
-	defer d.refreshLock.Unlock()
-
-	updated, _ = d.refreshFiltersIntl(block, allow, force)
-
-	return updated
-}
-
 // listsToUpdate returns the slice of filter lists that could be updated.
 func (d *DNSFilter) listsToUpdate(filters *[]FilterYAML, force bool) (toUpd []FilterYAML) {
 	now := time.Now()
@@ -279,7 +290,6 @@ func (d *DNSFilter) listsToUpdate(filters *[]FilterYAML, force bool) (toUpd []Fi
 
 	for i := range *filters {
 		flt := &(*filters)[i] // otherwise we will be operating on a copy
-		log.Debug("checking list at index %d: %v", i, flt)
 
 		if !flt.Enabled {
 			continue

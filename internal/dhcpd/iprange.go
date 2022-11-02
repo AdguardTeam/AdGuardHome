@@ -27,6 +27,8 @@ const maxRangeLen = math.MaxUint32
 
 // newIPRange creates a new IP address range.  start must be less than end.  The
 // resulting range must not be greater than maxRangeLen.
+//
+// TODO(e.burkov):  Use netip.Addr.
 func newIPRange(start, end net.IP) (r *ipRange, err error) {
 	defer func() { err = errors.Annotate(err, "invalid ip range: %w") }()
 
