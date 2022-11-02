@@ -15,12 +15,26 @@ and this project adheres to
 ## [v0.108.0] - TBA (APPROX.)
 -->
 
+
+
+<!--
+## [v0.107.18] - 2022-11-16 (APPROX.)
+
+See also the [v0.107.18 GitHub milestone][ms-v0.107.18].
+
+[ms-v0.107.18]: https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
+-->
+
+
+
+## [v0.107.17] - 2022-11-02
+
+See also the [v0.107.17 GitHub milestone][ms-v0.107.17].
+
 ## Security
 
 - Go version has been updated to prevent the possibility of exploiting the
   CVE-2022-41716 Go vulnerability fixed in [Go 1.18.8][go-1.18.8].
-
-[go-1.18.8]: https://groups.google.com/g/golang-announce/c/mbHY1UY3BaM
 
 ## Added
 
@@ -65,24 +79,15 @@ and this project adheres to
 [#4898]: https://github.com/AdguardTeam/AdGuardHome/issues/4898
 [#4916]: https://github.com/AdguardTeam/AdGuardHome/issues/4916
 [#4925]: https://github.com/AdguardTeam/AdGuardHome/issues/4925
-[#4927]: https://github.com/AdguardTeam/AdGuardHome/issues/4927
 [#4942]: https://github.com/AdguardTeam/AdGuardHome/issues/4942
 [#4986]: https://github.com/AdguardTeam/AdGuardHome/issues/4986
 [#4990]: https://github.com/AdguardTeam/AdGuardHome/issues/4990
 [#4993]: https://github.com/AdguardTeam/AdGuardHome/issues/4993
 [#5010]: https://github.com/AdguardTeam/AdGuardHome/issues/5010
 
-[clientid]: https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid
-
-
-
-<!--
-## [v0.107.17] - 2022-11-02 (APPROX.)
-
-See also the [v0.107.17 GitHub milestone][ms-v0.107.17].
-
-[ms-v0.107.17]: https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
--->
+[clientid]:     https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid
+[go-1.18.8]:    https://groups.google.com/g/golang-announce/c/mbHY1UY3BaM
+[ms-v0.107.17]: https://github.com/AdguardTeam/AdGuardHome/milestone/53?closed=1
 
 
 
@@ -1400,11 +1405,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.17...HEAD
-[v0.107.17]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...v0.107.17
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.18...HEAD
+[v0.107.18]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.17...v0.107.18
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.17...HEAD
+[v0.107.17]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...v0.107.17
 [v0.107.16]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...v0.107.16
 [v0.107.15]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...v0.107.15
 [v0.107.14]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.13...v0.107.14
