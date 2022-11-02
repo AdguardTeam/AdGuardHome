@@ -157,19 +157,9 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 func prepareTestServer(t *testing.T, portDoH, portDoT, portDoQ int, ddrEnabled bool) (s *Server) {
 	t.Helper()
 
-	proxyConf := proxy.Config{}
-
-	if portDoT > 0 {
-		proxyConf.TLSListenAddr = []*net.TCPAddr{{Port: portDoT}}
-	}
-
-	if portDoQ > 0 {
-		proxyConf.QUICListenAddr = []*net.UDPAddr{{Port: portDoQ}}
-	}
-
 	s = &Server{
 		dnsProxy: &proxy.Proxy{
-			Config: proxyConf,
+			Config: proxy.Config{},
 		},
 		conf: ServerConfig{
 			FilteringConfig: FilteringConfig{
@@ -181,8 +171,17 @@ func prepareTestServer(t *testing.T, portDoH, portDoT, portDoQ int, ddrEnabled b
 		},
 	}
 
+	if portDoT > 0 {
+		s.dnsProxy.TLSListenAddr = []*net.TCPAddr{{Port: portDoT}}
+		s.conf.hasIPAddrs = true
+	}
+
+	if portDoQ > 0 {
+		s.dnsProxy.QUICListenAddr = []*net.UDPAddr{{Port: portDoQ}}
+	}
+
 	if portDoH > 0 {
-		s.conf.TLSConfig.HTTPSListenAddrs = []*net.TCPAddr{{Port: portDoH}}
+		s.conf.HTTPSListenAddrs = []*net.TCPAddr{{Port: portDoH}}
 	}
 
 	return s

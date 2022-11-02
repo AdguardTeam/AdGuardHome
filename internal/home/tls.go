@@ -13,7 +13,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/http"
-	"net/netip"
 	"os"
 	"strings"
 	"sync"
@@ -21,6 +20,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -513,22 +513,6 @@ func validateCertChain(certs []*x509.Certificate, srvName string) (err error) {
 	return nil
 }
 
-// certHasIP returns true if cert has at least a single IP address either in its
-// DNS names or in the IP addresses section.
-func certHasIP(cert *x509.Certificate) (ok bool) {
-	if len(cert.IPAddresses) > 0 {
-		return true
-	}
-
-	for _, name := range cert.DNSNames {
-		if _, err := netip.ParseAddr(name); err == nil {
-			return true
-		}
-	}
-
-	return false
-}
-
 // parseCertChain parses the certificate chain from raw data, and returns it.
 // If ok is true, the returned error, if any, is not critical.
 func parseCertChain(chain []byte) (parsedCerts []*x509.Certificate, ok bool, err error) {
@@ -550,7 +534,7 @@ func parseCertChain(chain []byte) (parsedCerts []*x509.Certificate, ok bool, err
 
 	log.Info("tls: number of certs: %d", len(parsedCerts))
 
-	if !certHasIP(parsedCerts[0]) {
+	if !aghtls.CertificateHasIP(parsedCerts[0]) {
 		err = errors.Error(`certificate has no IP addresses` +
 			`, this may cause issues with DNS-over-TLS clients`)
 	}

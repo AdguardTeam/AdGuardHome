@@ -259,21 +259,13 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 //
 // See https://www.ietf.org/archive/id/draft-ietf-add-ddr-10.html.
 func (s *Server) processDDRQuery(dctx *dnsContext) (rc resultCode) {
-	pctx := dctx.proxyCtx
-	q := pctx.Req.Question[0]
-
 	if !s.conf.HandleDDR {
 		return resultCodeSuccess
 	}
 
+	pctx := dctx.proxyCtx
+	q := pctx.Req.Question[0]
 	if q.Name == ddrHostFQDN {
-		if s.dnsProxy.TLSListenAddr == nil && s.conf.HTTPSListenAddrs == nil &&
-			s.dnsProxy.QUICListenAddr == nil || q.Qtype != dns.TypeSVCB {
-			pctx.Res = s.makeResponse(pctx.Req)
-
-			return resultCodeFinish
-		}
-
 		pctx.Res = s.makeDDRResponse(pctx.Req)
 
 		return resultCodeFinish
@@ -291,6 +283,10 @@ func (s *Server) processDDRQuery(dctx *dnsContext) (rc resultCode) {
 // [draft standard]: https://www.ietf.org/archive/id/draft-ietf-add-ddr-10.html.
 func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	resp = s.makeResponse(req)
+	if req.Question[0].Qtype != dns.TypeSVCB {
+		return resp
+	}
+
 	// TODO(e.burkov):  Think about storing the FQDN version of the server's
 	// name somewhere.
 	domainName := dns.Fqdn(s.conf.ServerName)
@@ -312,20 +308,26 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 		resp.Answer = append(resp.Answer, ans)
 	}
 
-	for _, addr := range s.dnsProxy.TLSListenAddr {
-		values := []dns.SVCBKeyValue{
-			&dns.SVCBAlpn{Alpn: []string{"dot"}},
-			&dns.SVCBPort{Port: uint16(addr.Port)},
-		}
+	if s.conf.hasIPAddrs {
+		// Only add DNS-over-TLS resolvers in case the certificate contains IP
+		// addresses.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/4927.
+		for _, addr := range s.dnsProxy.TLSListenAddr {
+			values := []dns.SVCBKeyValue{
+				&dns.SVCBAlpn{Alpn: []string{"dot"}},
+				&dns.SVCBPort{Port: uint16(addr.Port)},
+			}
 
-		ans := &dns.SVCB{
-			Hdr:      s.hdr(req, dns.TypeSVCB),
-			Priority: 1,
-			Target:   domainName,
-			Value:    values,
-		}
+			ans := &dns.SVCB{
+				Hdr:      s.hdr(req, dns.TypeSVCB),
+				Priority: 1,
+				Target:   domainName,
+				Value:    values,
+			}
 
-		resp.Answer = append(resp.Answer, ans)
+			resp.Answer = append(resp.Answer, ans)
+		}
 	}
 
 	for _, addr := range s.dnsProxy.QUICListenAddr {

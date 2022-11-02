@@ -12,6 +12,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -146,12 +147,11 @@ type FilteringConfig struct {
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
 type TLSConfig struct {
+	cert tls.Certificate
+
 	TLSListenAddrs   []*net.TCPAddr `yaml:"-" json:"-"`
 	QUICListenAddrs  []*net.UDPAddr `yaml:"-" json:"-"`
 	HTTPSListenAddrs []*net.TCPAddr `yaml:"-" json:"-"`
-
-	// Reject connection if the client uses server name (in SNI) that doesn't match the certificate
-	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
 
 	// PEM-encoded certificates chain
 	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"`
@@ -168,13 +168,20 @@ type TLSConfig struct {
 	// used for ClientID checking and Discovery of Designated Resolvers (DDR).
 	ServerName string `yaml:"-" json:"-"`
 
-	cert tls.Certificate
 	// DNS names from certificate (SAN) or CN value from Subject
 	dnsNames []string
 
 	// OverrideTLSCiphers, when set, contains the names of the cipher suites to
 	// use.  If the slice is empty, the default safe suites are used.
 	OverrideTLSCiphers []string `yaml:"override_tls_ciphers,omitempty" json:"-"`
+
+	// StrictSNICheck controls if the connections with SNI mismatching the
+	// certificate's ones should be rejected.
+	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
+
+	// hasIPAddrs is set during the certificate parsing and is true if the
+	// configured certificate contains at least a single IP address.
+	hasIPAddrs bool
 }
 
 // DNSCryptConfig is the DNSCrypt server configuration struct.
@@ -459,7 +466,7 @@ func (s *Server) prepareIpsetListSettings() (err error) {
 }
 
 // prepareTLS - prepares TLS configuration for the DNS proxy
-func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
+func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
 	if len(s.conf.CertificateChainData) == 0 || len(s.conf.PrivateKeyData) == 0 {
 		return nil
 	}
@@ -478,25 +485,26 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) error {
 		proxyConfig.QUICListenAddr,
 	)
 
-	var err error
 	s.conf.cert, err = tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
 	if err != nil {
 		return fmt.Errorf("failed to parse TLS keypair: %w", err)
 	}
 
+	cert, err := x509.ParseCertificate(s.conf.cert.Certificate[0])
+	if err != nil {
+		return fmt.Errorf("x509.ParseCertificate(): %w", err)
+	}
+
+	s.conf.hasIPAddrs = aghtls.CertificateHasIP(cert)
+
 	if s.conf.StrictSNICheck {
-		var x *x509.Certificate
-		x, err = x509.ParseCertificate(s.conf.cert.Certificate[0])
-		if err != nil {
-			return fmt.Errorf("x509.ParseCertificate(): %w", err)
-		}
-		if len(x.DNSNames) != 0 {
-			s.conf.dnsNames = x.DNSNames
-			log.Debug("dns: using DNS names from certificate's SAN: %v", x.DNSNames)
+		if len(cert.DNSNames) != 0 {
+			s.conf.dnsNames = cert.DNSNames
+			log.Debug("dnsforward: using certificate's SAN as DNS names: %v", cert.DNSNames)
 			sort.Strings(s.conf.dnsNames)
 		} else {
-			s.conf.dnsNames = append(s.conf.dnsNames, x.Subject.CommonName)
-			log.Debug("dns: using DNS name from certificate's CN: %s", x.Subject.CommonName)
+			s.conf.dnsNames = append(s.conf.dnsNames, cert.Subject.CommonName)
+			log.Debug("dnsforward: using certificate's CN as DNS name: %s", cert.Subject.CommonName)
 		}
 	}
 

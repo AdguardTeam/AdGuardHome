@@ -39,6 +39,8 @@ and this project adheres to
 
 ### Changed
 
+- DNS-over-TLS resolvers aren't returned anymore when the configured TLS
+  certificate contains no IP addresses ([#4927]).
 - Responses with `SERVFAIL` code are now cached for at least 30 seconds.
 
 ### Deprecated
@@ -63,6 +65,7 @@ and this project adheres to
 [#4898]: https://github.com/AdguardTeam/AdGuardHome/issues/4898
 [#4916]: https://github.com/AdguardTeam/AdGuardHome/issues/4916
 [#4925]: https://github.com/AdguardTeam/AdGuardHome/issues/4925
+[#4927]: https://github.com/AdguardTeam/AdGuardHome/issues/4927
 [#4942]: https://github.com/AdguardTeam/AdGuardHome/issues/4942
 [#4986]: https://github.com/AdguardTeam/AdGuardHome/issues/4986
 [#4990]: https://github.com/AdguardTeam/AdGuardHome/issues/4990
