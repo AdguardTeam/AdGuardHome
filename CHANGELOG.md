@@ -31,12 +31,12 @@ See also the [v0.107.18 GitHub milestone][ms-v0.107.18].
 
 See also the [v0.107.17 GitHub milestone][ms-v0.107.17].
 
-## Security
+### Security
 
 - Go version has been updated to prevent the possibility of exploiting the
   CVE-2022-41716 Go vulnerability fixed in [Go 1.18.8][go-1.18.8].
 
-## Added
+### Added
 
 - The warning message when adding a certificate having no IP addresses
   ([#4898]).
@@ -65,7 +65,7 @@ See also the [v0.107.17 GitHub milestone][ms-v0.107.17].
 ### Fixed
 
 - ClientIDs not working when using DNS-over-HTTPS with HTTP/3.
-- Editing an enabled rule list's URL now also includes validation of the filter
+- Editing the URL of an enabled rule list also includes validation of the filter
   contents preventing from saving a bad one ([#4916]).
 - The default value of `dns.cache_size` accidentally set to 0 has now been
   reverted to 4 MiB ([#5010]).
@@ -96,7 +96,7 @@ See also the [v0.107.17 GitHub milestone][ms-v0.107.17].
 This is a security update.  There is no GitHub milestone, since no GitHub issues
 were resolved.
 
-## Security
+### Security
 
 - Go version has been updated to prevent the possibility of exploiting the
   CVE-2022-2879, CVE-2022-2880, and CVE-2022-41715 Go vulnerabilities fixed in
