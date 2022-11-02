@@ -15,6 +15,13 @@ and this project adheres to
 ## [v0.108.0] - TBA (APPROX.)
 -->
 
+## Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2022-41716 Go vulnerability fixed in [Go 1.18.8][go-1.18.8].
+
+[go-1.18.8]: https://groups.google.com/g/golang-announce/c/mbHY1UY3BaM
+
 ## Added
 
 - The warning message when adding a certificate having no IP addresses
