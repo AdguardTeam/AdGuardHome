@@ -1,10 +1,11 @@
-package querylog
+package jsonfile
 
 import (
 	"io"
 	"sort"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog/logs"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -13,7 +14,7 @@ import (
 // regardless of if the IP anonymization is enabled now, because the
 // anonymization could have been disabled in the past, and client will try to
 // find those records as well.
-func (l *queryLog) client(clientID, ip string, cache clientCache) (c *Client, err error) {
+func (l *queryLog) client(clientID, ip string, cache clientCache) (c *logs.Client, err error) {
 	cck := clientCacheKey{clientID: clientID, ip: ip}
 
 	var ok bool
@@ -45,7 +46,7 @@ func (l *queryLog) client(clientID, ip string, cache clientCache) (c *Client, er
 // searchMemory looks up log records which are currently in the in-memory
 // buffer.  It optionally uses the client cache, if provided.  It also returns
 // the total amount of records in the buffer at the moment of searching.
-func (l *queryLog) searchMemory(params *searchParams, cache clientCache) (entries []*logEntry, total int) {
+func (l *queryLog) searchMemory(params *logs.SearchParams, cache clientCache) (entries []*logEntry, total int) {
 	l.bufferLock.Lock()
 	defer l.bufferLock.Unlock()
 
@@ -63,7 +64,7 @@ func (l *queryLog) searchMemory(params *searchParams, cache clientCache) (entrie
 			// Go on and try to match anyway.
 		}
 
-		if params.match(e) {
+		if matchParam(params, e) {
 			entries = append(entries, e)
 		}
 	}
@@ -73,10 +74,10 @@ func (l *queryLog) searchMemory(params *searchParams, cache clientCache) (entrie
 
 // search - searches log entries in the query log using specified parameters
 // returns the list of entries found + time of the oldest entry
-func (l *queryLog) search(params *searchParams) (entries []*logEntry, oldest time.Time) {
+func (l *queryLog) search(params *logs.SearchParams) (entries []*logEntry, oldest time.Time) {
 	now := time.Now()
 
-	if params.limit == 0 {
+	if params.Limit == 0 {
 		return []*logEntry{}, time.Time{}
 	}
 
@@ -85,7 +86,7 @@ func (l *queryLog) search(params *searchParams) (entries []*logEntry, oldest tim
 	memoryEntries, bufLen := l.searchMemory(params, cache)
 	total += bufLen
 
-	totalLimit := params.offset + params.limit
+	totalLimit := params.Offset + params.Limit
 
 	// now let's get a unified collection
 	entries = append(memoryEntries, fileEntries...)
@@ -102,9 +103,9 @@ func (l *queryLog) search(params *searchParams) (entries []*logEntry, oldest tim
 		return entries[i].Time.After(entries[j].Time)
 	})
 
-	if params.offset > 0 {
-		if len(entries) > params.offset {
-			entries = entries[params.offset:]
+	if params.Offset > 0 {
+		if len(entries) > params.Offset {
+			entries = entries[params.Offset:]
 		} else {
 			entries = make([]*logEntry, 0)
 			oldest = time.Time{}
@@ -120,7 +121,7 @@ func (l *queryLog) search(params *searchParams) (entries []*logEntry, oldest tim
 		"querylog: prepared data (%d/%d) older than %s in %s",
 		len(entries),
 		total,
-		params.olderThan,
+		params.OlderThan,
 		time.Since(now),
 	)
 
@@ -133,7 +134,7 @@ func (l *queryLog) search(params *searchParams) (entries []*logEntry, oldest tim
 // results.  oldset and total are the time of the oldest processed entry and the
 // total number of processed entries, including discarded ones, correspondingly.
 func (l *queryLog) searchFiles(
-	params *searchParams,
+	params *logs.SearchParams,
 	cache clientCache,
 ) (entries []*logEntry, oldest time.Time, total int) {
 	files := []string{
@@ -154,10 +155,10 @@ func (l *queryLog) searchFiles(
 		}
 	}()
 
-	if params.olderThan.IsZero() {
+	if params.OlderThan.IsZero() {
 		err = r.SeekStart()
 	} else {
-		err = r.seekTS(params.olderThan.UnixNano())
+		err = r.seekTS(params.OlderThan.UnixNano())
 		if err == nil {
 			// Read to the next record, because we only need the one
 			// that goes after it.
@@ -166,19 +167,19 @@ func (l *queryLog) searchFiles(
 	}
 
 	if err != nil {
-		log.Debug("querylog: cannot seek to %s: %s", params.olderThan, err)
+		log.Debug("querylog: cannot seek to %s: %s", params.OlderThan, err)
 
 		return entries, oldest, 0
 	}
 
-	totalLimit := params.offset + params.limit
+	totalLimit := params.Offset + params.Limit
 	oldestNano := int64(0)
 
 	// By default, we do not scan more than maxFileScanEntries at once.
 	// The idea is to make search calls faster so that the UI could handle
 	// it and show something quicker.  This behavior can be overridden if
 	// maxFileScanEntries is set to 0.
-	for total < params.maxFileScanEntries || params.maxFileScanEntries <= 0 {
+	for total < params.MaxFileScanEntries || params.MaxFileScanEntries <= 0 {
 		var e *logEntry
 		var ts int64
 
@@ -214,12 +215,12 @@ func (l *queryLog) searchFiles(
 // quickMatchClientFinder is a wrapper around the usual client finding function
 // to make it easier to use with quick matches.
 type quickMatchClientFinder struct {
-	client func(clientID, ip string, cache clientCache) (c *Client, err error)
+	client func(clientID, ip string, cache clientCache) (c *logs.Client, err error)
 	cache  clientCache
 }
 
 // findClient is a method that can be used as a quickMatchClientFinder.
-func (f quickMatchClientFinder) findClient(clientID, ip string) (c *Client) {
+func (f quickMatchClientFinder) findClient(clientID, ip string) (c *logs.Client) {
 	var err error
 	c, err = f.client(clientID, ip, f.cache)
 	if err != nil {
@@ -240,7 +241,7 @@ func (f quickMatchClientFinder) findClient(clientID, ip string) (c *Client) {
 // processed entry.
 func (l *queryLog) readNextEntry(
 	r *QLogReader,
-	params *searchParams,
+	params *logs.SearchParams,
 	cache clientCache,
 ) (e *logEntry, ts int64, err error) {
 	var line string
@@ -254,7 +255,7 @@ func (l *queryLog) readNextEntry(
 		cache:  cache,
 	}
 
-	if !params.quickMatch(line, clientFinder.findClient) {
+	if !quickMatchParam(params, line, clientFinder.findClient) {
 		ts = readQLogTimestamp(line)
 
 		return nil, ts, nil
@@ -277,9 +278,99 @@ func (l *queryLog) readNextEntry(
 	}
 
 	ts = e.Time.UnixNano()
-	if !params.match(e) {
+	if !matchParam(params, e) {
 		return nil, ts, nil
 	}
 
 	return e, ts, nil
+}
+
+// quickMatchClientFunc is a simplified client finder for quick matches.
+type quickMatchClientFunc = func(clientID, ip string) (c *logs.Client)
+
+// quickMatch quickly checks if the line matches the given search parameters.
+// It returns false if the line doesn't match.  This method is only here for
+// optimization purposes.
+func quickMatchParam(s *logs.SearchParams, line string, findClient quickMatchClientFunc) (ok bool) {
+	for _, c := range s.SearchCriteria {
+		if !quickMatchCrit(&c, line, findClient) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// match - checks if the logEntry matches the searchParams
+func matchParam(s *logs.SearchParams, entry *logEntry) bool {
+	if !s.OlderThan.IsZero() && !entry.Time.Before(s.OlderThan) {
+		// Ignore entries newer than what was requested
+		return false
+	}
+
+	for _, c := range s.SearchCriteria {
+		if !matchCrit(&c, entry) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// quickMatch quickly checks if the line matches the given search criterion.
+// It returns false if the like doesn't match.  This method is only here for
+// optimization purposes.
+func quickMatchCrit(c *logs.SearchCriterion, line string, findClient quickMatchClientFunc) (ok bool) {
+	switch c.CriterionType {
+	case logs.CtTerm:
+		host := readJSONValue(line, `"QH":"`)
+		ip := readJSONValue(line, `"IP":"`)
+		clientID := readJSONValue(line, `"CID":"`)
+
+		var name string
+		if cli := findClient(clientID, ip); cli != nil {
+			name = cli.Name
+		}
+
+		if c.Strict {
+			return logs.CtDomainOrClientCaseStrict(c.Value, c.AsciiVal, clientID, name, host, ip)
+		}
+
+		return logs.CtDomainOrClientCaseNonStrict(c.Value, c.AsciiVal, clientID, name, host, ip)
+	case logs.CtFilteringStatus:
+		// Go on, as we currently don't do quick matches against
+		// filtering statuses.
+		return true
+	default:
+		return true
+	}
+}
+
+// match checks if the log entry matches this search criterion.
+func matchCrit(c *logs.SearchCriterion, entry *logEntry) bool {
+	switch c.CriterionType {
+	case logs.CtTerm:
+		return ctDomainOrClientCase(c, entry)
+	case logs.CtFilteringStatus:
+		return logs.CtFilteringStatusCase(c, entry.Result)
+	}
+
+	return false
+}
+
+func ctDomainOrClientCase(c *logs.SearchCriterion, e *logEntry) bool {
+	clientID := e.ClientID
+	host := e.QHost
+
+	var name string
+	if e.client != nil {
+		name = e.client.Name
+	}
+
+	ip := e.IP.String()
+	if c.Strict {
+		return logs.CtDomainOrClientCaseStrict(c.Value, c.AsciiVal, clientID, name, host, ip)
+	}
+
+	return logs.CtDomainOrClientCaseNonStrict(c.Value, c.AsciiVal, clientID, name, host, ip)
 }

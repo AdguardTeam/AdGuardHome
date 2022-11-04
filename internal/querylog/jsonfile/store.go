@@ -1,17 +1,18 @@
-// Package querylog provides query log functions and interfaces.
-package querylog
+package jsonfile
 
 import (
-	"fmt"
+	"errors"
+	"math"
 	"net"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog/logs"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
@@ -23,9 +24,9 @@ const (
 
 // queryLog is a structure that writes and reads the DNS query log
 type queryLog struct {
-	findClient func(ids []string) (c *Client, err error)
+	findClient func(ids []string) (c *logs.Client, err error)
 
-	conf    *Config
+	conf    *logs.Config
 	lock    sync.Mutex
 	logFile string // path to the log file
 
@@ -41,39 +42,63 @@ type queryLog struct {
 	anonymizer *aghnet.IPMut
 }
 
-// ClientProto values are names of the client protocols.
-type ClientProto string
-
-// Client protocol names.
-const (
-	ClientProtoDoH      ClientProto = "doh"
-	ClientProtoDoQ      ClientProto = "doq"
-	ClientProtoDoT      ClientProto = "dot"
-	ClientProtoDNSCrypt ClientProto = "dnscrypt"
-	ClientProtoPlain    ClientProto = ""
-)
-
-// NewClientProto validates that the client protocol name is valid and returns
-// the name as a ClientProto.
-func NewClientProto(s string) (cp ClientProto, err error) {
-	switch cp = ClientProto(s); cp {
-	case
-		ClientProtoDoH,
-		ClientProtoDoQ,
-		ClientProtoDoT,
-		ClientProtoDNSCrypt,
-		ClientProtoPlain:
-
-		return cp, nil
-	default:
-		return "", fmt.Errorf("invalid client proto: %q", s)
+// Get the config info that will be returned for config info
+func (q *queryLog) ConfigInfo() *logs.ConfigPayload {
+	return &logs.ConfigPayload{
+		Enabled:           aghalg.BoolToNullBool(q.conf.Enabled),
+		Interval:          q.conf.RotationIvl.Hours() / 24,
+		AnonymizeClientIP: aghalg.BoolToNullBool(q.conf.AnonymizeClientIP),
 	}
+}
+
+// Config the logging implementation
+func (l *queryLog) ApplyConfig(newConf *logs.ConfigPayload) error {
+	ivl := time.Duration(float64(timeutil.Day) * newConf.Interval)
+	hasIvl := !math.IsNaN(newConf.Interval)
+	if hasIvl && !checkInterval(ivl) {
+		return errors.New("unsupported interval")
+	}
+
+	defer l.conf.ConfigModified()
+
+	l.lock.Lock()
+	defer l.lock.Unlock()
+
+	// Copy data, modify it, then activate.  Other threads (readers) don't need
+	// to use this lock.
+	conf := *l.conf
+	if newConf.Enabled != aghalg.NBNull {
+		conf.Enabled = newConf.Enabled == aghalg.NBTrue
+	}
+
+	if hasIvl {
+		conf.RotationIvl = ivl
+	}
+
+	if newConf.AnonymizeClientIP != aghalg.NBNull {
+		conf.AnonymizeClientIP = newConf.AnonymizeClientIP == aghalg.NBTrue
+		if conf.AnonymizeClientIP {
+			l.anonymizer.Store(logs.AnonymizeIP)
+		} else {
+			l.anonymizer.Store(nil)
+		}
+	}
+	l.conf = &conf
+	return nil
+}
+func (q *queryLog) Search(params *logs.SearchParams) *logs.LogsPayload {
+	// search for the log entries
+	entries, oldest := q.search(params)
+	// convert log entries to JSON
+	data := q.entriesToJSON(entries, oldest)
+	return data
+
 }
 
 // logEntry - represents a single log entry
 type logEntry struct {
 	// client is the found client information, if any.
-	client *Client
+	client *logs.Client
 
 	Time time.Time `json:"T"`
 
@@ -83,8 +108,8 @@ type logEntry struct {
 
 	ReqECS string `json:"ECS,omitempty"`
 
-	ClientID    string      `json:"CID,omitempty"`
-	ClientProto ClientProto `json:"CP"`
+	ClientID    string           `json:"CID,omitempty"`
+	ClientProto logs.ClientProto `json:"CP"`
 
 	Answer     []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
 	OrigAnswer []byte `json:",omitempty"`
@@ -101,9 +126,6 @@ type logEntry struct {
 }
 
 func (l *queryLog) Start() {
-	if l.conf.HTTPRegister != nil {
-		l.initWeb()
-	}
 	go l.periodicRotate()
 }
 
@@ -124,12 +146,12 @@ func checkInterval(ivl time.Duration) (ok bool) {
 	return ivl == quarterDay || ivl == day || ivl == week || ivl == month || ivl == threeMonths
 }
 
-func (l *queryLog) WriteDiskConfig(c *Config) {
+func (l *queryLog) WriteDiskConfig(c *logs.Config) {
 	*c = *l.conf
 }
 
 // Clear memory buffer and remove log files
-func (l *queryLog) clear() {
+func (l *queryLog) Clear() {
 	l.fileFlushLock.Lock()
 	defer l.fileFlushLock.Unlock()
 
@@ -152,15 +174,14 @@ func (l *queryLog) clear() {
 	log.Debug("querylog: cleared")
 }
 
-func (l *queryLog) Add(params *AddParams) {
+func (l *queryLog) Add(params *logs.AddParams) {
 	if !l.conf.Enabled {
 		return
 	}
 
-	err := params.validate()
+	err := params.Validate()
 	if err != nil {
 		log.Error("querylog: adding record: %s, skipping", err)
-
 		return
 	}
 

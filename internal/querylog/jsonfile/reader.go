@@ -1,4 +1,4 @@
-package querylog
+package jsonfile
 
 import (
 	"fmt"

@@ -15,7 +15,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog/logs"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -68,7 +68,7 @@ type Server struct {
 	dnsProxy   *proxy.Proxy         // DNS proxy instance
 	dnsFilter  *filtering.DNSFilter // DNS filter instance
 	dhcpServer dhcpd.Interface      // DHCP server instance (optional)
-	queryLog   querylog.QueryLog    // Query log instance
+	queryLog   logs.Api             // Query log instance
 	stats      stats.Interface
 	access     *accessManager
 
@@ -116,7 +116,7 @@ const defaultLocalDomainSuffix = "lan"
 type DNSCreateParams struct {
 	DNSFilter   *filtering.DNSFilter
 	Stats       stats.Interface
-	QueryLog    querylog.QueryLog
+	QueryLog    logs.Api
 	DHCPServer  dhcpd.Interface
 	PrivateNets netutil.SubnetSet
 	Anonymizer  *aghnet.IPMut

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog/logs"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
@@ -59,7 +59,7 @@ func (s *Server) logQuery(
 	elapsed time.Duration,
 	ip net.IP,
 ) {
-	p := &querylog.AddParams{
+	p := &logs.AddParams{
 		Question:          pctx.Req,
 		ReqECS:            pctx.ReqECS,
 		Answer:            pctx.Res,
@@ -73,13 +73,13 @@ func (s *Server) logQuery(
 
 	switch pctx.Proto {
 	case proxy.ProtoHTTPS:
-		p.ClientProto = querylog.ClientProtoDoH
+		p.ClientProto = logs.ClientProtoDoH
 	case proxy.ProtoQUIC:
-		p.ClientProto = querylog.ClientProtoDoQ
+		p.ClientProto = logs.ClientProtoDoQ
 	case proxy.ProtoTLS:
-		p.ClientProto = querylog.ClientProtoDoT
+		p.ClientProto = logs.ClientProtoDoT
 	case proxy.ProtoDNSCrypt:
-		p.ClientProto = querylog.ClientProtoDNSCrypt
+		p.ClientProto = logs.ClientProtoDNSCrypt
 	default:
 		// Consider this a plain DNS-over-UDP or DNS-over-TCP request.
 	}

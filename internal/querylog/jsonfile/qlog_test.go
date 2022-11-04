@@ -1,4 +1,4 @@
-package querylog
+package jsonfile
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog/logs"
 	"github.com/AdguardTeam/dnsproxy/proxyutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -24,7 +25,7 @@ func TestMain(m *testing.M) {
 // TestQueryLog tests adding and loading (with filtering) entries from disk and
 // memory.
 func TestQueryLog(t *testing.T) {
-	l := newQueryLog(Config{
+	l := newQueryLog(logs.Config{
 		Enabled:     true,
 		FileEnabled: true,
 		RotationIvl: timeutil.Day,
@@ -54,11 +55,11 @@ func TestQueryLog(t *testing.T) {
 
 	testCases := []struct {
 		name string
-		sCr  []searchCriterion
+		sCr  []logs.SearchCriterion
 		want []tcAssertion
 	}{{
 		name: "all",
-		sCr:  []searchCriterion{},
+		sCr:  []logs.SearchCriterion{},
 		want: []tcAssertion{
 			{num: 0, host: "example.com", answer: net.IPv4(1, 1, 1, 4), client: net.IPv4(2, 2, 2, 4)},
 			{num: 1, host: "test.example.org", answer: net.IPv4(1, 1, 1, 3), client: net.IPv4(2, 2, 2, 3)},
@@ -67,20 +68,20 @@ func TestQueryLog(t *testing.T) {
 		},
 	}, {
 		name: "by_domain_strict",
-		sCr: []searchCriterion{{
-			criterionType: ctTerm,
-			strict:        true,
-			value:         "TEST.example.org",
+		sCr: []logs.SearchCriterion{{
+			CriterionType: logs.CtTerm,
+			Strict:        true,
+			Value:         "TEST.example.org",
 		}},
 		want: []tcAssertion{{
 			num: 0, host: "test.example.org", answer: net.IPv4(1, 1, 1, 3), client: net.IPv4(2, 2, 2, 3),
 		}},
 	}, {
 		name: "by_domain_non-strict",
-		sCr: []searchCriterion{{
-			criterionType: ctTerm,
-			strict:        false,
-			value:         "example.ORG",
+		sCr: []logs.SearchCriterion{{
+			CriterionType: logs.CtTerm,
+			Strict:        false,
+			Value:         "example.ORG",
 		}},
 		want: []tcAssertion{
 			{num: 0, host: "test.example.org", answer: net.IPv4(1, 1, 1, 3), client: net.IPv4(2, 2, 2, 3)},
@@ -89,20 +90,20 @@ func TestQueryLog(t *testing.T) {
 		},
 	}, {
 		name: "by_client_ip_strict",
-		sCr: []searchCriterion{{
-			criterionType: ctTerm,
-			strict:        true,
-			value:         "2.2.2.2",
+		sCr: []logs.SearchCriterion{{
+			CriterionType: logs.CtTerm,
+			Strict:        true,
+			Value:         "2.2.2.2",
 		}},
 		want: []tcAssertion{{
 			num: 0, host: "example.org", answer: net.IPv4(1, 1, 1, 2), client: net.IPv4(2, 2, 2, 2),
 		}},
 	}, {
 		name: "by_client_ip_non-strict",
-		sCr: []searchCriterion{{
-			criterionType: ctTerm,
-			strict:        false,
-			value:         "2.2.2",
+		sCr: []logs.SearchCriterion{{
+			CriterionType: logs.CtTerm,
+			Strict:        false,
+			Value:         "2.2.2",
 		}},
 		want: []tcAssertion{
 			{num: 0, host: "example.com", answer: net.IPv4(1, 1, 1, 4), client: net.IPv4(2, 2, 2, 4)},
@@ -114,9 +115,8 @@ func TestQueryLog(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			params := newSearchParams()
-			params.searchCriteria = tc.sCr
-
+			params := logs.NewSearchParams()
+			params.SearchCriteria = tc.sCr
 			entries, _ := l.search(params)
 			require.Len(t, entries, len(tc.want))
 			for _, want := range tc.want {
@@ -127,7 +127,7 @@ func TestQueryLog(t *testing.T) {
 }
 
 func TestQueryLogOffsetLimit(t *testing.T) {
-	l := newQueryLog(Config{
+	l := newQueryLog(logs.Config{
 		Enabled:     true,
 		RotationIvl: timeutil.Day,
 		MemSize:     100,
@@ -150,7 +150,7 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 		addEntry(l, firstPageDomain, net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	}
 
-	params := newSearchParams()
+	params := logs.NewSearchParams()
 
 	testCases := []struct {
 		name    string
@@ -186,8 +186,8 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			params.offset = tc.offset
-			params.limit = tc.limit
+			params.Offset = tc.offset
+			params.Limit = tc.limit
 			entries, _ := l.search(params)
 
 			require.Len(t, entries, tc.wantLen)
@@ -201,7 +201,7 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 }
 
 func TestQueryLogMaxFileScanEntries(t *testing.T) {
-	l := newQueryLog(Config{
+	l := newQueryLog(logs.Config{
 		Enabled:     true,
 		FileEnabled: true,
 		RotationIvl: timeutil.Day,
@@ -217,11 +217,11 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 	// Write them to disk.
 	require.NoError(t, l.flushLogBuffer(true))
 
-	params := newSearchParams()
+	params := logs.NewSearchParams()
 
 	for _, maxFileScanEntries := range []int{5, 0} {
 		t.Run(fmt.Sprintf("limit_%d", maxFileScanEntries), func(t *testing.T) {
-			params.maxFileScanEntries = maxFileScanEntries
+			params.MaxFileScanEntries = maxFileScanEntries
 			entries, _ := l.search(params)
 			assert.Len(t, entries, entNum-maxFileScanEntries)
 		})
@@ -229,7 +229,7 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 }
 
 func TestQueryLogFileDisabled(t *testing.T) {
-	l := newQueryLog(Config{
+	l := newQueryLog(logs.Config{
 		Enabled:     true,
 		FileEnabled: false,
 		RotationIvl: timeutil.Day,
@@ -242,7 +242,7 @@ func TestQueryLogFileDisabled(t *testing.T) {
 	// The oldest entry is going to be removed from memory buffer.
 	addEntry(l, "example3.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 
-	params := newSearchParams()
+	params := logs.NewSearchParams()
 	ll, _ := l.search(params)
 	require.Len(t, ll, 2)
 	assert.Equal(t, "example3.org", ll[0].QHost)
@@ -280,7 +280,7 @@ func addEntry(l *queryLog, host string, answerStr, client net.IP) {
 		IsFiltered: true,
 	}
 
-	params := &AddParams{
+	params := &logs.AddParams{
 		Question:   &q,
 		Answer:     &a,
 		OrigAnswer: &a,

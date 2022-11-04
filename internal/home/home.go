@@ -28,7 +28,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog/logs"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
@@ -51,7 +51,7 @@ type homeContext struct {
 
 	clients    clientsContainer     // per-client-settings module
 	stats      stats.Interface      // statistics module
-	queryLog   querylog.QueryLog    // query log module
+	queryLog   logs.Api             // query log module
 	dnsServer  *dnsforward.Server   // DNS module
 	rdns       *RDNS                // rDNS module
 	whois      *WHOIS               // WHOIS module
