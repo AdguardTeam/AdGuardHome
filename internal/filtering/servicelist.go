@@ -32,6 +32,7 @@ var blockedServices = []blockedService{{
 		"||amazon.co.jp^",
 		"||amazon.co.uk^",
 		"||amazon.com.au^",
+		"||amazon.com.be^",
 		"||amazon.com.br^",
 		"||amazon.com.mx^",
 		"||amazon.com^",
