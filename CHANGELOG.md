@@ -17,6 +17,14 @@ and this project adheres to
 
 
 
+### Fixed
+
+- Crash on Windows when system hosts files are read ([#5089]).
+
+[#5089]: https://github.com/AdguardTeam/AdGuardHome/issues/5089
+
+
+
 <!--
 ## [v0.107.18] - 2022-11-16 (APPROX.)
 
@@ -1088,7 +1096,7 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 - Hostname uniqueness validation in the DHCP server ([#2952]).
 - Hostname generating for DHCP clients which don't provide their own ([#2723]).
 - New flag `--no-etc-hosts` to disable client domain name lookups in the
-  operating system's /etc/hosts files ([#1947]).
+  operating system's `/etc/hosts` files ([#1947]).
 - The ability to set up custom upstreams to resolve PTR queries for local
   addresses and to disable the automatic resolving of clients' addresses
   ([#2704]).
