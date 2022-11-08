@@ -17,6 +17,20 @@ and this project adheres to
 
 
 
+<!--
+## [v0.107.19] - 2022-11-23 (APPROX.)
+
+See also the [v0.107.19 GitHub milestone][ms-v0.107.19].
+
+[ms-v0.107.19]: https://github.com/AdguardTeam/AdGuardHome/milestone/55?closed=1
+-->
+
+
+
+## [v0.107.18] - 2022-11-08
+
+See also the [v0.107.18 GitHub milestone][ms-v0.107.18].
+
 ### Fixed
 
 - Crash on some systems when domains from system hosts files are processed
@@ -24,15 +38,7 @@ and this project adheres to
 
 [#5089]: https://github.com/AdguardTeam/AdGuardHome/issues/5089
 
-
-
-<!--
-## [v0.107.18] - 2022-11-16 (APPROX.)
-
-See also the [v0.107.18 GitHub milestone][ms-v0.107.18].
-
-[ms-v0.107.18]: https://github.com/AdguardTeam/AdGuardHome/milestone/52?closed=1
--->
+[ms-v0.107.18]: https://github.com/AdguardTeam/AdGuardHome/milestone/54?closed=1
 
 
 
@@ -839,7 +845,7 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
 - Query log search now supports internationalized domains ([#3012]).
 - Internationalized domains are now shown decoded in the query log with the
   original encoded version shown in request details ([#3013]).
-- When /etc/hosts-type rules have several IPs for one host, all IPs are now
+- When `/etc/hosts`-type rules have several IPs for one host, all IPs are now
   returned instead of only the first one ([#1381]).
 - Property `rlimit_nofile` is now in the `os` object of the configuration
   file, together with the new `group` and `user` properties ([#2763]).
@@ -1414,11 +1420,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.18...HEAD
-[v0.107.18]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.17...v0.107.18
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.19...HEAD
+[v0.107.19]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.18...v0.107.19
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.17...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.18...HEAD
+[v0.107.18]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.17...v0.107.18
 [v0.107.17]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...v0.107.17
 [v0.107.16]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.15...v0.107.16
 [v0.107.15]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.14...v0.107.15
