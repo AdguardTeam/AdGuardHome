@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.46.2
-	github.com/AdguardTeam/golibs v0.11.2
+	github.com/AdguardTeam/golibs v0.11.3
 	github.com/AdguardTeam/urlfilter v0.16.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.2.5
@@ -29,9 +29,9 @@ require (
 	github.com/ti-mo/netfilter v0.4.0
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/crypto v0.1.0
-	golang.org/x/exp v0.0.0-20221026153819-32f3d567a233
+	golang.org/x/exp v0.0.0-20221106115401-f9659909a136
 	golang.org/x/net v0.1.0
-	golang.org/x/sys v0.1.0
+	golang.org/x/sys v0.2.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.0
@@ -55,8 +55,8 @@ require (
 	github.com/mdlayher/socket v0.2.3 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
-	github.com/onsi/ginkgo/v2 v2.4.0 // indirect
-	github.com/onsi/gomega v1.22.1 // indirect
+	github.com/onsi/ginkgo/v2 v2.5.0 // indirect
+	github.com/onsi/gomega v1.24.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

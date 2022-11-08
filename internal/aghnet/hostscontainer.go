@@ -139,6 +139,8 @@ type HostsRecord struct {
 func (rec *HostsRecord) equal(other *HostsRecord) (ok bool) {
 	if rec == nil {
 		return other == nil
+	} else if other == nil {
+		return false
 	}
 
 	return rec.Canonical == other.Canonical && rec.Aliases.Equal(other.Aliases)
@@ -478,7 +480,11 @@ func (hc *HostsContainer) refresh() (err error) {
 		return fmt.Errorf("refreshing : %w", err)
 	}
 
-	if maps.EqualFunc(hp.table, hc.last, (*HostsRecord).equal) {
+	// hc.last is nil on the first refresh, so let that one through.
+	//
+	// TODO(a.garipov): Once https://github.com/golang/go/issues/56621 is
+	// resolved, remove the first condition.
+	if hc.last != nil && maps.EqualFunc(hp.table, hc.last, (*HostsRecord).equal) {
 		log.Debug("%s: no changes detected", hostsContainerPref)
 
 		return nil

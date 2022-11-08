@@ -188,6 +188,10 @@ After the download you'll find the output locales in the `client/src/__locales/`
 directory.
 
 Optional environment:
+
+ *  `SLEEP_TIME`: set the sleep time between downloads for `locales:download`,
+    in milliseconds.  The default is 250 ms.
+
  *  `UPLOAD_LANGUAGE`: set an alternative language for `locales:upload` to
     upload.
 

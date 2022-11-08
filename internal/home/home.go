@@ -76,9 +76,7 @@ type homeContext struct {
 
 	configFilename   string // Config filename (can be overridden via the command line arguments)
 	workDir          string // Location of our directory, used to protect against CWD being somewhere else
-	firstRun         bool   // if set to true, don't run any services except HTTP web interface, and serve only first-run html
 	pidFileName      string // PID file name.  Empty if no PID file was created.
-	disableUpdate    bool   // If set, don't check for updates
 	controlLock      sync.Mutex
 	tlsRoots         *x509.CertPool // list of root CAs for TLSv1.2
 	transport        *http.Transport
@@ -87,6 +85,13 @@ type homeContext struct {
 
 	// tlsCipherIDs are the ID of the cipher suites that AdGuard Home must use.
 	tlsCipherIDs []uint16
+
+	// disableUpdate, if true, tells AdGuard Home to not check for updates.
+	disableUpdate bool
+
+	// firstRun, if true, tells AdGuard Home to only start the web interface
+	// service, and only serve the first-run APIs.
+	firstRun bool
 
 	// runningAsService flag is set to true when options are passed from the service runner
 	runningAsService bool
@@ -462,6 +467,15 @@ func run(opts options, clientBuildFS fs.FS) {
 			mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
 			mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 			mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+
+			// See profileSupportsDelta in src/net/http/pprof/pprof.go.
+			mux.Handle("/debug/pprof/allocs", pprof.Handler("allocs"))
+			mux.Handle("/debug/pprof/block", pprof.Handler("block"))
+			mux.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+			mux.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+			mux.Handle("/debug/pprof/mutex", pprof.Handler("mutex"))
+			mux.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+
 			go func() {
 				log.Info("pprof: listening on localhost:6060")
 				lerr := http.ListenAndServe("localhost:6060", mux)
