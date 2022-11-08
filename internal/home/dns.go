@@ -11,7 +11,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog/jsonfile"
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog/logs"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
@@ -46,7 +47,7 @@ func initDNSServer() (err error) {
 
 	var anonFunc aghnet.IPMutFunc
 	if config.DNS.AnonymizeClientIP {
-		anonFunc = querylog.AnonymizeIP
+		anonFunc = logs.AnonymizeIP
 	}
 	anonymizer := aghnet.NewIPMut(anonFunc)
 
@@ -61,7 +62,7 @@ func initDNSServer() (err error) {
 		return fmt.Errorf("init stats: %w", err)
 	}
 
-	conf := querylog.Config{
+	conf := logs.Config{
 		Anonymizer:        anonymizer,
 		ConfigModified:    onConfigModified,
 		HTTPRegister:      httpRegister,
@@ -73,7 +74,8 @@ func initDNSServer() (err error) {
 		FileEnabled:       config.DNS.QueryLogFileEnabled,
 		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
 	}
-	Context.queryLog = querylog.New(conf)
+	Context.queryLog = jsonfile.New(conf)
+	logs.RegisterHTTP(Context.queryLog, httpRegister)
 
 	Context.filters, err = filtering.New(config.DNS.DnsfilterConf, nil)
 	if err != nil {

@@ -1,4 +1,4 @@
-package querylog
+package jsonfile
 
 import (
 	"encoding/base64"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog/logs"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -83,7 +84,7 @@ var logEntryHandlers = map[string]logEntryHandler{
 		}
 
 		var err error
-		ent.ClientProto, err = NewClientProto(v)
+		ent.ClientProto, err = logs.NewClientProto(v)
 
 		return err
 	},

@@ -1,10 +1,11 @@
-package querylog
+package jsonfile
 
 import (
 	"net"
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog/logs"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -16,12 +17,12 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 	const knownClientName = "Known Client 1"
 	const unknownClientID = "client-2"
 
-	knownClient := &Client{
+	knownClient := &logs.Client{
 		Name: knownClientName,
 	}
 
 	findClientCalls := 0
-	findClient := func(ids []string) (c *Client, _ error) {
+	findClient := func(ids []string) (c *logs.Client, _ error) {
 		defer func() { findClientCalls++ }()
 
 		if len(ids) == 0 {
@@ -35,7 +36,7 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 		return nil, nil
 	}
 
-	l := newQueryLog(Config{
+	l := newQueryLog(logs.Config{
 		FindClient:        findClient,
 		BaseDir:           t.TempDir(),
 		RotationIvl:       timeutil.Day,
@@ -52,33 +53,33 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 		}},
 	}
 
-	l.Add(&AddParams{
+	l.Add(&logs.AddParams{
 		Question: q,
 		ClientID: knownClientID,
 		ClientIP: net.IP{1, 2, 3, 4},
 	})
 
 	// Add the same thing again to test the cache.
-	l.Add(&AddParams{
+	l.Add(&logs.AddParams{
 		Question: q,
 		ClientID: knownClientID,
 		ClientIP: net.IP{1, 2, 3, 4},
 	})
 
-	l.Add(&AddParams{
+	l.Add(&logs.AddParams{
 		Question: q,
 		ClientID: unknownClientID,
 		ClientIP: net.IP{1, 2, 3, 5},
 	})
 
-	sp := &searchParams{
+	sp := &logs.SearchParams{
 		// Add some time to the "current" one to protect against
 		// low-resolution timers on some Windows machines.
 		//
 		// TODO(a.garipov): Use some kind of timeSource interface
 		// instead of relying on time.Now() in tests.
-		olderThan: time.Now().Add(10 * time.Second),
-		limit:     3,
+		OlderThan: time.Now().Add(10 * time.Second),
+		Limit:     3,
 	}
 	entries, _ := l.search(sp)
 	assert.Equal(t, 2, findClientCalls)

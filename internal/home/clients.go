@@ -15,7 +15,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog/logs"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
@@ -351,12 +351,12 @@ func (clients *clientsContainer) exists(ip net.IP, source clientSource) (ok bool
 	return source <= rc.Source
 }
 
-func toQueryLogWHOIS(wi *RuntimeClientWHOISInfo) (cw *querylog.ClientWHOIS) {
+func toQueryLogWHOIS(wi *RuntimeClientWHOISInfo) (cw *logs.ClientWHOIS) {
 	if wi == nil {
-		return &querylog.ClientWHOIS{}
+		return &logs.ClientWHOIS{}
 	}
 
-	return &querylog.ClientWHOIS{
+	return &logs.ClientWHOIS{
 		City:    wi.City,
 		Country: wi.Country,
 		Orgname: wi.Orgname,
@@ -367,8 +367,8 @@ func toQueryLogWHOIS(wi *RuntimeClientWHOISInfo) (cw *querylog.ClientWHOIS) {
 // the query log.  c is never nil; if no information about the client is found,
 // it returns an artificial client record by only setting the blocking-related
 // fields.  err is always nil.
-func (clients *clientsContainer) findMultiple(ids []string) (c *querylog.Client, err error) {
-	var artClient *querylog.Client
+func (clients *clientsContainer) findMultiple(ids []string) (c *logs.Client, err error) {
+	var artClient *logs.Client
 	var art bool
 	for _, id := range ids {
 		c, art = clients.clientOrArtificial(net.ParseIP(id), id)
@@ -391,24 +391,24 @@ func (clients *clientsContainer) findMultiple(ids []string) (c *querylog.Client,
 func (clients *clientsContainer) clientOrArtificial(
 	ip net.IP,
 	id string,
-) (c *querylog.Client, art bool) {
+) (c *logs.Client, art bool) {
 	defer func() {
 		c.Disallowed, c.DisallowedRule = clients.dnsServer.IsBlockedClient(ip, id)
 		if c.WHOIS == nil {
-			c.WHOIS = &querylog.ClientWHOIS{}
+			c.WHOIS = &logs.ClientWHOIS{}
 		}
 	}()
 
 	client, ok := clients.Find(id)
 	if ok {
-		return &querylog.Client{
+		return &logs.Client{
 			Name: client.Name,
 		}, false
 	}
 
 	if ip == nil {
 		// Technically should never happen, but still.
-		return &querylog.Client{
+		return &logs.Client{
 			Name: "",
 		}, true
 	}
@@ -416,13 +416,13 @@ func (clients *clientsContainer) clientOrArtificial(
 	var rc *RuntimeClient
 	rc, ok = clients.findRuntimeClient(ip)
 	if ok {
-		return &querylog.Client{
+		return &logs.Client{
 			Name:  rc.Host,
 			WHOIS: toQueryLogWHOIS(rc.WHOISInfo),
 		}, false
 	}
 
-	return &querylog.Client{
+	return &logs.Client{
 		Name: "",
 	}, true
 }
