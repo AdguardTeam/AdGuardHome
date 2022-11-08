@@ -19,7 +19,8 @@ and this project adheres to
 
 ### Fixed
 
-- Crash on Windows when system hosts files are read ([#5089]).
+- Crash on some systems when domains from system hosts files are processed
+  ([#5089]).
 
 [#5089]: https://github.com/AdguardTeam/AdGuardHome/issues/5089
 
