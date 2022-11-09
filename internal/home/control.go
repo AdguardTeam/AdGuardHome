@@ -71,9 +71,7 @@ func appendDNSAddrsWithIfaces(dst []string, src []netip.Addr) (res []string, err
 // on, including the addresses on all interfaces in cases of unspecified IPs.
 func collectDNSAddresses() (addrs []string, err error) {
 	if hosts := config.DNS.BindHosts; len(hosts) == 0 {
-		addr := aghnet.IPv4Localhost()
-
-		addrs = appendDNSAddrs(addrs, addr)
+		addrs = appendDNSAddrs(addrs, netutil.IPv4Localhost())
 	} else {
 		addrs, err = appendDNSAddrsWithIfaces(addrs, hosts)
 		if err != nil {

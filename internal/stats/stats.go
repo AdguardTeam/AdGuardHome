@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/netip"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -64,7 +65,7 @@ type Interface interface {
 
 	// GetTopClientIP returns at most limit IP addresses corresponding to the
 	// clients with the most number of requests.
-	TopClientsIP(limit uint) []net.IP
+	TopClientsIP(limit uint) []netip.Addr
 
 	// WriteDiskConfig puts the Interface's configuration to the dc.
 	WriteDiskConfig(dc *DiskConfig)
@@ -106,8 +107,6 @@ type StatsCtx struct {
 	// filename is the name of database file.
 	filename string
 }
-
-var _ Interface = &StatsCtx{}
 
 // New creates s from conf and properly initializes it.  Don't use s before
 // calling it's Start method.
@@ -177,6 +176,9 @@ func withRecovered(orig *error) {
 
 	*orig = errors.WithDeferred(*orig, err)
 }
+
+// type check
+var _ Interface = (*StatsCtx)(nil)
 
 // Start implements the Interface interface for *StatsCtx.
 func (s *StatsCtx) Start() {
@@ -250,8 +252,8 @@ func (s *StatsCtx) WriteDiskConfig(dc *DiskConfig) {
 	dc.Interval = atomic.LoadUint32(&s.limitHours) / 24
 }
 
-// TopClientsIP implements the Interface interface for *StatsCtx.
-func (s *StatsCtx) TopClientsIP(maxCount uint) (ips []net.IP) {
+// TopClientsIP implements the [Interface] interface for *StatsCtx.
+func (s *StatsCtx) TopClientsIP(maxCount uint) (ips []netip.Addr) {
 	limit := atomic.LoadUint32(&s.limitHours)
 	if limit == 0 {
 		return nil
@@ -271,10 +273,10 @@ func (s *StatsCtx) TopClientsIP(maxCount uint) (ips []net.IP) {
 	}
 
 	a := convertMapToSlice(m, int(maxCount))
-	ips = []net.IP{}
+	ips = []netip.Addr{}
 	for _, it := range a {
-		ip := net.ParseIP(it.Name)
-		if ip != nil {
+		ip, err := netip.ParseAddr(it.Name)
+		if err == nil {
 			ips = append(ips, ip)
 		}
 	}

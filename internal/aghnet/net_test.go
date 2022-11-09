@@ -188,7 +188,7 @@ func TestBroadcastFromIPNet(t *testing.T) {
 }
 
 func TestCheckPort(t *testing.T) {
-	laddr := netip.AddrPortFrom(IPv4Localhost(), 0)
+	laddr := netip.AddrPortFrom(netutil.IPv4Localhost(), 0)
 
 	t.Run("tcp_bound", func(t *testing.T) {
 		l, err := net.Listen("tcp", laddr.String())

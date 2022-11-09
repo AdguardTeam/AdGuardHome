@@ -23,16 +23,6 @@ func ValidateClientID(id string) (err error) {
 	return nil
 }
 
-// hasLabelSuffix returns true if s ends with suffix preceded by a dot.  It's
-// a helper function to prevent unnecessary allocations in code like:
-//
-// if strings.HasSuffix(s, "." + suffix) { /* … */ }
-//
-// s must be longer than suffix.
-func hasLabelSuffix(s, suffix string) (ok bool) {
-	return strings.HasSuffix(s, suffix) && s[len(s)-len(suffix)-1] == '.'
-}
-
 // clientIDFromClientServerName extracts and validates a ClientID.  hostSrvName
 // is the server name of the host.  cliSrvName is the server name as sent by the
 // client.  When strict is true, and client and host server name don't match,
@@ -46,7 +36,7 @@ func clientIDFromClientServerName(
 		return "", nil
 	}
 
-	if !hasLabelSuffix(cliSrvName, hostSrvName) {
+	if !netutil.IsImmediateSubdomain(cliSrvName, hostSrvName) {
 		if !strict {
 			return "", nil
 		}

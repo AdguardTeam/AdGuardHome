@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,7 +46,7 @@ func assertSuccessAndUnmarshal(t *testing.T, to any, handler http.Handler, req *
 }
 
 func TestStats(t *testing.T) {
-	cliIP := net.IP{127, 0, 0, 1}
+	cliIP := netutil.IPv4Localhost()
 	cliIPStr := cliIP.String()
 
 	handlers := map[string]http.Handler{}
@@ -123,7 +124,7 @@ func TestStats(t *testing.T) {
 		topClients := s.TopClientsIP(2)
 		require.NotEmpty(t, topClients)
 
-		assert.True(t, cliIP.Equal(topClients[0]))
+		assert.Equal(t, cliIP, topClients[0])
 	})
 
 	t.Run("reset", func(t *testing.T) {

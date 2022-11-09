@@ -246,6 +246,7 @@ type RDNSExchanger interface {
 	// Exchange tries to resolve the ip in a suitable way, e.g. either as
 	// local or as external.
 	Exchange(ip net.IP) (host string, err error)
+
 	// ResolvesPrivatePTR returns true if the RDNSExchanger is able to
 	// resolve PTR requests for locally-served addresses.
 	ResolvesPrivatePTR() (ok bool)
@@ -260,6 +261,9 @@ const (
 	// of PTR type.
 	rDNSNotPTRErr errors.Error = "the response is not a ptr"
 )
+
+// type check
+var _ RDNSExchanger = (*Server)(nil)
 
 // Exchange implements the RDNSExchanger interface for *Server.
 func (s *Server) Exchange(ip net.IP) (host string, err error) {
@@ -675,21 +679,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // IsBlockedClient returns true if the client is blocked by the current access
 // settings.
-func (s *Server) IsBlockedClient(ip net.IP, clientID string) (blocked bool, rule string) {
+func (s *Server) IsBlockedClient(ip netip.Addr, clientID string) (blocked bool, rule string) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
 	blockedByIP := false
-	if ip != nil {
-		// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
-		ipAddr, err := netutil.IPToAddrNoMapped(ip)
-		if err != nil {
-			log.Error("dnsforward: bad client ip %v: %s", ip, err)
-
-			return false, ""
-		}
-
-		blockedByIP, rule = s.access.isBlockedIP(ipAddr)
+	if ip != (netip.Addr{}) {
+		blockedByIP, rule = s.access.isBlockedIP(ip)
 	}
 
 	allowlistMode := s.access.allowlistMode()

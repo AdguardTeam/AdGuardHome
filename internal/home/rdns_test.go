@@ -27,14 +27,14 @@ func TestRDNS_Begin(t *testing.T) {
 	w := &bytes.Buffer{}
 	aghtest.ReplaceLogWriter(t, w)
 
-	ip1234, ip1235 := net.IP{1, 2, 3, 4}, net.IP{1, 2, 3, 5}
+	ip1234, ip1235 := netip.MustParseAddr("1.2.3.4"), netip.MustParseAddr("1.2.3.5")
 
 	testCases := []struct {
 		cliIDIndex    map[string]*Client
-		customChan    chan net.IP
+		customChan    chan netip.Addr
 		name          string
 		wantLog       string
-		req           net.IP
+		ip            netip.Addr
 		wantCacheHit  int
 		wantCacheMiss int
 	}{{
@@ -42,7 +42,7 @@ func TestRDNS_Begin(t *testing.T) {
 		customChan:    nil,
 		name:          "cached",
 		wantLog:       "",
-		req:           ip1234,
+		ip:            ip1234,
 		wantCacheHit:  1,
 		wantCacheMiss: 0,
 	}, {
@@ -50,7 +50,7 @@ func TestRDNS_Begin(t *testing.T) {
 		customChan:    nil,
 		name:          "not_cached",
 		wantLog:       "rdns: queue is full",
-		req:           ip1235,
+		ip:            ip1235,
 		wantCacheHit:  0,
 		wantCacheMiss: 1,
 	}, {
@@ -58,15 +58,15 @@ func TestRDNS_Begin(t *testing.T) {
 		customChan:    nil,
 		name:          "already_in_clients",
 		wantLog:       "",
-		req:           ip1235,
+		ip:            ip1235,
 		wantCacheHit:  0,
 		wantCacheMiss: 1,
 	}, {
 		cliIDIndex:    map[string]*Client{},
-		customChan:    make(chan net.IP, 1),
+		customChan:    make(chan netip.Addr, 1),
 		name:          "add_to_queue",
 		wantLog:       `rdns: "1.2.3.5" added to queue`,
-		req:           ip1235,
+		ip:            ip1235,
 		wantCacheHit:  0,
 		wantCacheMiss: 1,
 	}}
@@ -102,7 +102,7 @@ func TestRDNS_Begin(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			rdns.Begin(tc.req)
+			rdns.Begin(tc.ip)
 			assert.Equal(t, tc.wantCacheHit, ipCache.Stats().Hit)
 			assert.Equal(t, tc.wantCacheMiss, ipCache.Stats().Miss)
 			assert.Contains(t, w.String(), tc.wantLog)
@@ -179,8 +179,8 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 	w := &bytes.Buffer{}
 	aghtest.ReplaceLogWriter(t, w)
 
-	localIP := net.IP{192, 168, 1, 1}
-	revIPv4, err := netutil.IPToReversedAddr(localIP)
+	localIP := netip.MustParseAddr("192.168.1.1")
+	revIPv4, err := netutil.IPToReversedAddr(localIP.AsSlice())
 	require.NoError(t, err)
 
 	revIPv6, err := netutil.IPToReversedAddr(net.ParseIP("2a00:1450:400c:c06::93"))
@@ -201,24 +201,24 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 
 	testCases := []struct {
 		ups     upstream.Upstream
+		cliIP   netip.Addr
 		wantLog string
 		name    string
-		cliIP   net.IP
 	}{{
 		ups:     locUpstream,
+		cliIP:   localIP,
 		wantLog: "",
 		name:    "all_good",
-		cliIP:   localIP,
 	}, {
 		ups:     errUpstream,
+		cliIP:   netip.MustParseAddr("192.168.1.2"),
 		wantLog: `rdns: resolving "192.168.1.2": test upstream error`,
 		name:    "resolve_error",
-		cliIP:   net.IP{192, 168, 1, 2},
 	}, {
 		ups:     locUpstream,
+		cliIP:   netip.MustParseAddr("2a00:1450:400c:c06::93"),
 		wantLog: "",
 		name:    "ipv6_good",
-		cliIP:   net.ParseIP("2a00:1450:400c:c06::93"),
 	}}
 
 	for _, tc := range testCases {
@@ -230,7 +230,7 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 			ipToRC:  map[netip.Addr]*RuntimeClient{},
 			allTags: stringutil.NewSet(),
 		}
-		ch := make(chan net.IP)
+		ch := make(chan netip.Addr)
 		rdns := &RDNS{
 			exchanger: &rDNSExchanger{
 				ex: tc.ups,
