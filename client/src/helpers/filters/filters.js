@@ -62,7 +62,7 @@ export default {
             "name": "KOR: List-KR DNS",
             "categoryId": "regional",
             "homepage": "https://github.com/List-KR/List-KR",
-            "source": "https://github.com/List-KR/List-KR"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_25.txt"
         },
         "KOR_youslist": {
             "name": "KOR: YousList",
