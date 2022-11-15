@@ -103,6 +103,11 @@ func TestParseDisableUpdate(t *testing.T) {
 	assert.True(t, testParseOK(t, "--no-check-update").disableUpdate, "--no-check-update is disable update")
 }
 
+func TestParsePerformUpdate(t *testing.T) {
+	assert.False(t, testParseOK(t).performUpdate, "empty is not perform update")
+	assert.True(t, testParseOK(t, "--update").performUpdate, "--update is perform update")
+}
+
 // TODO(e.burkov):  Remove after v0.108.0.
 func TestParseDisableMemoryOptimization(t *testing.T) {
 	o, eff, err := parseCmdOpts("", []string{"--no-mem-optimization"})
@@ -169,6 +174,10 @@ func TestOptsToArgs(t *testing.T) {
 		name: "disable_update",
 		args: []string{"--no-check-update"},
 		opts: options{disableUpdate: true},
+	}, {
+		name: "perform_update",
+		args: []string{"--update"},
+		opts: options{performUpdate: true},
 	}, {
 		name: "control_action",
 		args: []string{"-s", "run"},

@@ -25,6 +25,13 @@ See also the [v0.107.19 GitHub milestone][ms-v0.107.19].
 [ms-v0.107.19]: https://github.com/AdguardTeam/AdGuardHome/milestone/55?closed=1
 -->
 
+### Added
+
+- The new `--update` command-line option, which allows updating AdGuard Home
+  silently ([#4223]).
+
+[#4223]: https://github.com/AdguardTeam/AdGuardHome/issues/4223
+
 
 
 ## [v0.107.18] - 2022-11-08
