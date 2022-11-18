@@ -83,7 +83,7 @@ func TestAuth(t *testing.T) {
 	assert.True(t, ok)
 	assert.NotEmpty(t, u.Name)
 
-	u = a.UserFind("Name", "password")
+	u = a.findUser("Name", "password")
 	assert.NotEmpty(t, u.Name)
 
 	time.Sleep(3 * time.Second)
