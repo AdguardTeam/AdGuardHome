@@ -2821,6 +2821,11 @@ fieldset:disabled a.btn {
 
 .btn-outline-primary:focus,
 .btn-outline-primary.focus {
+    box-shadow: none;
+}
+
+.btn-outline-primary:focus-visible,
+.btn-outline-primary.focus {
     box-shadow: 0 0 0 2px rgba(70, 127, 207, 0.5);
 }
 
@@ -2858,6 +2863,11 @@ fieldset:disabled a.btn {
 }
 
 .btn-outline-secondary:focus,
+.btn-outline-secondary.focus {
+    box-shadow: none;
+}
+
+.btn-outline-secondary:focus-visible,
 .btn-outline-secondary.focus {
     box-shadow: 0 0 0 2px rgba(134, 142, 150, 0.5);
 }
@@ -15442,6 +15452,7 @@ a.tag-addon:hover {
 }
 
 .custom-switch-indicator {
+    flex-shrink: 0;
     display: inline-block;
     height: 1.25rem;
     width: 2.25rem;

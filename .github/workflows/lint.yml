@@ -1,7 +1,7 @@
 'name': 'lint'
 
 'env':
-  'GO_VERSION': '1.17'
+  'GO_VERSION': '1.18.8'
 
 'on':
   'push':
@@ -17,7 +17,7 @@
     'steps':
     - 'uses': 'actions/checkout@v2'
     - 'name': 'Set up Go'
-      'uses': 'actions/setup-go@v2'
+      'uses': 'actions/setup-go@v3'
       'with':
         'go-version': '${{ env.GO_VERSION }}'
     - 'name': 'run-lint'
@@ -43,7 +43,9 @@
     # Use always() to signal to the runner that this job must run even if the
     # previous ones failed.
     'if':
-      ${{ always() &&
+      ${{
+        always() &&
+        github.repository_owner == 'AdguardTeam' &&
         (
           github.event_name == 'push' ||
           github.event.pull_request.head.repo.full_name == github.repository

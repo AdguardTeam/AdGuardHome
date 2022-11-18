@@ -314,13 +314,15 @@ export const testUpstream = (
         const testMessages = Object.keys(upstreamResponse)
             .map((key) => {
                 const message = upstreamResponse[key];
-                if (message !== 'OK') {
+                if (message.startsWith('WARNING:')) {
+                    dispatch(addErrorToast({ error: i18next.t('dns_test_warning_toast', { key }) }));
+                } else if (message !== 'OK') {
                     dispatch(addErrorToast({ error: i18next.t('dns_test_not_ok_toast', { key }) }));
                 }
                 return message;
             });
 
-        if (testMessages.every((message) => message === 'OK')) {
+        if (testMessages.every((message) => message === 'OK' || message.startsWith('WARNING:'))) {
             dispatch(addSuccessToast('dns_test_ok_toast'));
         }
 
@@ -353,7 +355,7 @@ export const changeLanguageSuccess = createAction('CHANGE_LANGUAGE_SUCCESS');
 export const changeLanguage = (lang) => async (dispatch) => {
     dispatch(changeLanguageRequest());
     try {
-        await apiClient.changeLanguage(lang);
+        await apiClient.changeLanguage({ language: lang });
         dispatch(changeLanguageSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -368,8 +370,8 @@ export const getLanguageSuccess = createAction('GET_LANGUAGE_SUCCESS');
 export const getLanguage = () => async (dispatch) => {
     dispatch(getLanguageRequest());
     try {
-        const language = await apiClient.getCurrentLanguage();
-        dispatch(getLanguageSuccess(language));
+        const langSettings = await apiClient.getCurrentLanguage();
+        dispatch(getLanguageSuccess(langSettings.language));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(getLanguageFailure());
@@ -419,7 +421,10 @@ export const findActiveDhcpFailure = createAction('FIND_ACTIVE_DHCP_FAILURE');
 export const findActiveDhcp = (name) => async (dispatch, getState) => {
     dispatch(findActiveDhcpRequest());
     try {
-        const activeDhcp = await apiClient.findActiveDhcp(name);
+        const req = {
+            interface: name,
+        };
+        const activeDhcp = await apiClient.findActiveDhcp(req);
         dispatch(findActiveDhcpSuccess(activeDhcp));
         const { check, interface_name, interfaces } = getState().dhcp;
         const selectedInterface = getState().form[FORM_NAME.DHCP_INTERFACES].values.interface_name;

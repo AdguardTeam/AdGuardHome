@@ -1,5 +1,4 @@
 //go:build openbsd
-// +build openbsd
 
 package aghnet
 
@@ -13,14 +12,10 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 )
 
-func canBindPrivilegedPorts() (can bool, err error) {
-	return aghos.HaveAdminRights()
-}
-
 func ifaceHasStaticIP(ifaceName string) (ok bool, err error) {
 	filename := fmt.Sprintf("etc/hostname.%s", ifaceName)
 
-	return aghos.FileWalker(hostnameIfStaticConfig).Walk(aghos.RootDirFS(), filename)
+	return aghos.FileWalker(hostnameIfStaticConfig).Walk(rootDirFS, filename)
 }
 
 // hostnameIfStaticConfig checks if the interface is configured by

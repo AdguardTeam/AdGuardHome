@@ -3,6 +3,7 @@ package querylog
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -10,20 +11,28 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/golibs/jsonutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"golang.org/x/net/idna"
 )
 
-type qlogConfig struct {
-	Enabled bool `json:"enabled"`
-	// Use float64 here to support fractional numbers and not mess the API
-	// users by changing the units.
-	Interval          float64 `json:"interval"`
-	AnonymizeClientIP bool    `json:"anonymize_client_ip"`
+// configJSON is the JSON structure for the querylog configuration.
+type configJSON struct {
+	// Interval is the querylog rotation interval.  Use float64 here to support
+	// fractional numbers and not mess the API users by changing the units.
+	Interval float64 `json:"interval"`
+
+	// Enabled shows if the querylog is enabled.  It is an [aghalg.NullBool]
+	// to be able to tell when it's set without using pointers.
+	Enabled aghalg.NullBool `json:"enabled"`
+
+	// AnonymizeClientIP shows if the clients' IP addresses must be anonymized.
+	// It is an [aghalg.NullBool] to be able to tell when it's set without using
+	// pointers.
+	AnonymizeClientIP aghalg.NullBool `json:"anonymize_client_ip"`
 }
 
 // Register web handlers
@@ -48,24 +57,7 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	// convert log entries to JSON
 	data := l.entriesToJSON(entries, oldest)
 
-	jsonVal, err := json.Marshal(data)
-	if err != nil {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusInternalServerError,
-			"Couldn't marshal data into json: %s",
-			err,
-		)
-
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, data)
 }
 
 func (l *queryLog) handleQueryLogClear(_ http.ResponseWriter, _ *http.Request) {
@@ -74,23 +66,11 @@ func (l *queryLog) handleQueryLogClear(_ http.ResponseWriter, _ *http.Request) {
 
 // Get configuration
 func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
-	resp := qlogConfig{}
-	resp.Enabled = l.conf.Enabled
-	resp.Interval = l.conf.RotationIvl.Hours() / 24
-	resp.AnonymizeClientIP = l.conf.AnonymizeClientIP
-
-	jsonVal, err := json.Marshal(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "json encode: %s", err)
-
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonVal)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "http write: %s", err)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, configJSON{
+		Enabled:           aghalg.BoolToNullBool(l.conf.Enabled),
+		Interval:          l.conf.RotationIvl.Hours() / 24,
+		AnonymizeClientIP: aghalg.BoolToNullBool(l.conf.AnonymizeClientIP),
+	})
 }
 
 // AnonymizeIP masks ip to anonymize the client if the ip is a valid one.
@@ -107,19 +87,25 @@ func AnonymizeIP(ip net.IP) {
 	}
 }
 
-// Set configuration
+// handleQueryLogConfig handles the POST /control/querylog_config queries.
 func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) {
-	d := &qlogConfig{}
-	req, err := jsonutil.DecodeObject(d, r.Body)
+	// Set NaN as initial value to be able to know if it changed later by
+	// comparing it to NaN.
+	newConf := &configJSON{
+		Interval: math.NaN(),
+	}
+
+	err := json.NewDecoder(r.Body).Decode(newConf)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
-	ivl := time.Duration(float64(timeutil.Day) * d.Interval)
-	if req.Exists("interval") && !checkInterval(ivl) {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Unsupported interval")
+	ivl := time.Duration(float64(timeutil.Day) * newConf.Interval)
+	hasIvl := !math.IsNaN(newConf.Interval)
+	if hasIvl && !checkInterval(ivl) {
+		aghhttp.Error(r, w, http.StatusBadRequest, "unsupported interval")
 
 		return
 	}
@@ -132,19 +118,23 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 	// Copy data, modify it, then activate.  Other threads (readers) don't need
 	// to use this lock.
 	conf := *l.conf
-	if req.Exists("enabled") {
-		conf.Enabled = d.Enabled
+	if newConf.Enabled != aghalg.NBNull {
+		conf.Enabled = newConf.Enabled == aghalg.NBTrue
 	}
-	if req.Exists("interval") {
+
+	if hasIvl {
 		conf.RotationIvl = ivl
 	}
-	if req.Exists("anonymize_client_ip") {
-		if conf.AnonymizeClientIP = d.AnonymizeClientIP; conf.AnonymizeClientIP {
+
+	if newConf.AnonymizeClientIP != aghalg.NBNull {
+		conf.AnonymizeClientIP = newConf.AnonymizeClientIP == aghalg.NBTrue
+		if conf.AnonymizeClientIP {
 			l.anonymizer.Store(AnonymizeIP)
 		} else {
 			l.anonymizer.Store(nil)
 		}
 	}
+
 	l.conf = &conf
 }
 

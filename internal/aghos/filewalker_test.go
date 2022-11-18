@@ -1,13 +1,13 @@
-package aghos
+package aghos_test
 
 import (
 	"bufio"
 	"io"
-	"io/fs"
 	"path"
 	"testing"
 	"testing/fstest"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +16,7 @@ import (
 func TestFileWalker_Walk(t *testing.T) {
 	const attribute = `000`
 
-	makeFileWalker := func(_ string) (fw FileWalker) {
+	makeFileWalker := func(_ string) (fw aghos.FileWalker) {
 		return func(r io.Reader) (patterns []string, cont bool, err error) {
 			s := bufio.NewScanner(r)
 			for s.Scan() {
@@ -113,7 +113,7 @@ func TestFileWalker_Walk(t *testing.T) {
 		f := fstest.MapFS{
 			filename: &fstest.MapFile{Data: []byte("[]")},
 		}
-		ok, err := FileWalker(func(r io.Reader) (patterns []string, cont bool, err error) {
+		ok, err := aghos.FileWalker(func(r io.Reader) (patterns []string, cont bool, err error) {
 			s := bufio.NewScanner(r)
 			for s.Scan() {
 				patterns = append(patterns, s.Text())
@@ -134,53 +134,11 @@ func TestFileWalker_Walk(t *testing.T) {
 			"mockfile.txt": &fstest.MapFile{Data: []byte(`mockdata`)},
 		}
 
-		ok, err := FileWalker(func(r io.Reader) (patterns []string, ok bool, err error) {
+		ok, err := aghos.FileWalker(func(r io.Reader) (patterns []string, ok bool, err error) {
 			return nil, true, rerr
 		}).Walk(f, "*")
 		require.ErrorIs(t, err, rerr)
 
 		assert.False(t, ok)
-	})
-}
-
-type errFS struct {
-	fs.GlobFS
-}
-
-const errErrFSOpen errors.Error = "this error is always returned"
-
-func (efs *errFS) Open(name string) (fs.File, error) {
-	return nil, errErrFSOpen
-}
-
-func TestWalkerFunc_CheckFile(t *testing.T) {
-	emptyFS := fstest.MapFS{}
-
-	t.Run("non-existing", func(t *testing.T) {
-		_, ok, err := checkFile(emptyFS, nil, "lol")
-		require.NoError(t, err)
-
-		assert.True(t, ok)
-	})
-
-	t.Run("invalid_argument", func(t *testing.T) {
-		_, ok, err := checkFile(&errFS{}, nil, "")
-		require.ErrorIs(t, err, errErrFSOpen)
-
-		assert.False(t, ok)
-	})
-
-	t.Run("ignore_dirs", func(t *testing.T) {
-		const dirName = "dir"
-
-		testFS := fstest.MapFS{
-			path.Join(dirName, "file"): &fstest.MapFile{Data: []byte{}},
-		}
-
-		patterns, ok, err := checkFile(testFS, nil, dirName)
-		require.NoError(t, err)
-
-		assert.Empty(t, patterns)
-		assert.True(t, ok)
 	})
 }

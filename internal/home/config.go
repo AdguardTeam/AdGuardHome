@@ -1,41 +1,62 @@
 package home
 
 import (
+	"bytes"
 	"fmt"
-	"net"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
-	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/renameio/maybe"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
-const (
-	dataDir   = "data"    // data storage
-	filterDir = "filters" // cache location for downloaded filters, it's under DataDir
-)
+// dataDir is the name of a directory under the working one to store some
+// persistent data.
+const dataDir = "data"
 
-// logSettings
+// logSettings are the logging settings part of the configuration file.
+//
+// TODO(a.garipov): Put them into a separate object.
 type logSettings struct {
-	LogCompress   bool   `yaml:"log_compress"`    // Compress determines if the rotated log files should be compressed using gzip (default: false)
-	LogLocalTime  bool   `yaml:"log_localtime"`   // If the time used for formatting the timestamps in is the computer's local time (default: false [UTC])
-	LogMaxBackups int    `yaml:"log_max_backups"` // Maximum number of old log files to retain (MaxAge may still cause them to get deleted)
-	LogMaxSize    int    `yaml:"log_max_size"`    // Maximum size in megabytes of the log file before it gets rotated (default 100 MB)
-	LogMaxAge     int    `yaml:"log_max_age"`     // MaxAge is the maximum number of days to retain old log files
-	LogFile       string `yaml:"log_file"`        // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
-	Verbose       bool   `yaml:"verbose"`         // If true, verbose logging is enabled
+	// File is the path to the log file.  If empty, logs are written to stdout.
+	// If "syslog", logs are written to syslog.
+	File string `yaml:"log_file"`
+
+	// MaxBackups is the maximum number of old log files to retain.
+	//
+	// NOTE: MaxAge may still cause them to get deleted.
+	MaxBackups int `yaml:"log_max_backups"`
+
+	// MaxSize is the maximum size of the log file before it gets rotated, in
+	// megabytes.  The default value is 100 MB.
+	MaxSize int `yaml:"log_max_size"`
+
+	// MaxAge is the maximum duration for retaining old log files, in days.
+	MaxAge int `yaml:"log_max_age"`
+
+	// Compress determines, if the rotated log files should be compressed using
+	// gzip.
+	Compress bool `yaml:"log_compress"`
+
+	// LocalTime determines, if the time used for formatting the timestamps in
+	// is the computer's local time.
+	LocalTime bool `yaml:"log_localtime"`
+
+	// Verbose determines, if verbose (aka debug) logging is enabled.
+	Verbose bool `yaml:"verbose"`
 }
 
 // osConfig contains OS-related configuration.
@@ -51,6 +72,13 @@ type osConfig struct {
 	RlimitNoFile uint64 `yaml:"rlimit_nofile"`
 }
 
+type clientsConfig struct {
+	// Sources defines the set of sources to fetch the runtime clients from.
+	Sources *clientSourcesConf `yaml:"runtime_sources"`
+	// Persistent are the configured clients.
+	Persistent []*clientObject `yaml:"persistent"`
+}
+
 // configuration is loaded from YAML
 // field ordering is important -- yaml fields will mirror ordering from here
 type configuration struct {
@@ -58,19 +86,28 @@ type configuration struct {
 	// It's reset after config is parsed
 	fileData []byte
 
-	BindHost     net.IP `yaml:"bind_host"`      // BindHost is the IP address of the HTTP server to bind to
-	BindPort     int    `yaml:"bind_port"`      // BindPort is the port the HTTP server
-	BetaBindPort int    `yaml:"beta_bind_port"` // BetaBindPort is the port for new client
-	Users        []User `yaml:"users"`          // Users that can access HTTP server
+	// BindHost is the address for the web interface server to listen on.
+	BindHost netip.Addr `yaml:"bind_host"`
+	// BindPort is the port for the web interface server to listen on.
+	BindPort int `yaml:"bind_port"`
+	// BetaBindPort is the port for the new client's web interface server to
+	// listen on.
+	BetaBindPort int `yaml:"beta_bind_port"`
+
+	// Users are the clients capable for accessing the web interface.
+	Users []webUser `yaml:"users"`
 	// AuthAttempts is the maximum number of failed login attempts a user
 	// can do before being blocked.
 	AuthAttempts uint `yaml:"auth_attempts"`
 	// AuthBlockMin is the duration, in minutes, of the block of new login
 	// attempts after AuthAttempts unsuccessful login attempts.
-	AuthBlockMin uint   `yaml:"block_auth_min"`
-	ProxyURL     string `yaml:"http_proxy"`  // Proxy address for our HTTP client
-	Language     string `yaml:"language"`    // two-letter ISO 639-1 language code
-	DebugPProf   bool   `yaml:"debug_pprof"` // Enable pprof HTTP server on port 6060
+	AuthBlockMin uint `yaml:"block_auth_min"`
+	// ProxyURL is the address of proxy server for the internal HTTP client.
+	ProxyURL string `yaml:"http_proxy"`
+	// Language is a two-letter ISO 639-1 language code.
+	Language string `yaml:"language"`
+	// DebugPProf defines if the profiling HTTP handler will listen on :6060.
+	DebugPProf bool `yaml:"debug_pprof"`
 
 	// TTL for a web session (in hours)
 	// An active session is automatically refreshed once a day.
@@ -79,16 +116,23 @@ type configuration struct {
 	DNS dnsConfig         `yaml:"dns"`
 	TLS tlsConfigSettings `yaml:"tls"`
 
-	Filters          []filter `yaml:"filters"`
-	WhitelistFilters []filter `yaml:"whitelist_filters"`
-	UserRules        []string `yaml:"user_rules"`
+	// Filters reflects the filters from [filtering.Config].  It's cloned to the
+	// config used in the filtering module at the startup.  Afterwards it's
+	// cloned from the filtering module back here.
+	//
+	// TODO(e.burkov):  Move all the filtering configuration fields into the
+	// only configuration subsection covering the changes with a single
+	// migration.  Also keep the blocked services in mind.
+	Filters          []filtering.FilterYAML `yaml:"filters"`
+	WhitelistFilters []filtering.FilterYAML `yaml:"whitelist_filters"`
+	UserRules        []string               `yaml:"user_rules"`
 
 	DHCP *dhcpd.ServerConfig `yaml:"dhcp"`
 
 	// Clients contains the YAML representations of the persistent clients.
 	// This field is only used for reading and writing persistent client data.
 	// Keep this field sorted to ensure consistent ordering.
-	Clients []*clientObject `yaml:"clients"`
+	Clients *clientsConfig `yaml:"clients"`
 
 	logSettings `yaml:",inline"`
 
@@ -101,30 +145,33 @@ type configuration struct {
 
 // field ordering is important -- yaml fields will mirror ordering from here
 type dnsConfig struct {
-	BindHosts []net.IP `yaml:"bind_hosts"`
-	Port      int      `yaml:"port"`
+	BindHosts []netip.Addr `yaml:"bind_hosts"`
+	Port      int          `yaml:"port"`
 
-	// time interval for statistics (in days)
+	// StatsInterval is the time interval for flushing statistics to the disk in
+	// days.
 	StatsInterval uint32 `yaml:"statistics_interval"`
 
-	QueryLogEnabled     bool `yaml:"querylog_enabled"`      // if true, query log is enabled
-	QueryLogFileEnabled bool `yaml:"querylog_file_enabled"` // if true, query log will be written to a file
+	// QueryLogEnabled defines if the query log is enabled.
+	QueryLogEnabled bool `yaml:"querylog_enabled"`
+	// QueryLogFileEnabled defines, if the query log is written to the file.
+	QueryLogFileEnabled bool `yaml:"querylog_file_enabled"`
 	// QueryLogInterval is the interval for query log's files rotation.
-	QueryLogInterval  timeutil.Duration `yaml:"querylog_interval"`
-	QueryLogMemSize   uint32            `yaml:"querylog_size_memory"` // number of entries kept in memory before they are flushed to disk
-	AnonymizeClientIP bool              `yaml:"anonymize_client_ip"`  // anonymize clients' IP addresses in logs and stats
+	QueryLogInterval timeutil.Duration `yaml:"querylog_interval"`
+	// QueryLogMemSize is the number of entries kept in memory before they are
+	// flushed to disk.
+	QueryLogMemSize uint32 `yaml:"querylog_size_memory"`
+
+	// AnonymizeClientIP defines if clients' IP addresses should be anonymized
+	// in query log and statistics.
+	AnonymizeClientIP bool `yaml:"anonymize_client_ip"`
 
 	dnsforward.FilteringConfig `yaml:",inline"`
 
-	FilteringEnabled           bool             `yaml:"filtering_enabled"`       // whether or not use filter lists
-	FiltersUpdateIntervalHours uint32           `yaml:"filters_update_interval"` // time period to update filters (in hours)
-	DnsfilterConf              filtering.Config `yaml:",inline"`
+	DnsfilterConf *filtering.Config `yaml:",inline"`
 
 	// UpstreamTimeout is the timeout for querying upstream servers.
 	UpstreamTimeout timeutil.Duration `yaml:"upstream_timeout"`
-
-	// ResolveClients enables and disables resolving clients with RDNS.
-	ResolveClients bool `yaml:"resolve_clients"`
 
 	// PrivateNets is the set of IP networks for which the private reverse DNS
 	// resolver should be used.
@@ -137,6 +184,19 @@ type dnsConfig struct {
 	// LocalPTRResolvers is the slice of addresses to be used as upstreams
 	// for PTR queries for locally-served networks.
 	LocalPTRResolvers []string `yaml:"local_ptr_upstreams"`
+
+	// ServeHTTP3 defines if HTTP/3 is be allowed for incoming requests.
+	//
+	// TODO(a.garipov): Add to the UI when HTTP/3 support is no longer
+	// experimental.
+	ServeHTTP3 bool `yaml:"serve_http3"`
+
+	// UseHTTP3Upstreams defines if HTTP/3 is be allowed for DNS-over-HTTPS
+	// upstreams.
+	//
+	// TODO(a.garipov): Add to the UI when HTTP/3 support is no longer
+	// experimental.
+	UseHTTP3Upstreams bool `yaml:"use_http3_upstreams"`
 }
 
 type tlsConfigSettings struct {
@@ -167,27 +227,34 @@ type tlsConfigSettings struct {
 //
 // TODO(a.garipov, e.burkov): This global is awful and must be removed.
 var config = &configuration{
-	BindPort:     3000,
-	BetaBindPort: 0,
-	BindHost:     net.IP{0, 0, 0, 0},
-	AuthAttempts: 5,
-	AuthBlockMin: 15,
+	BindPort:           3000,
+	BetaBindPort:       0,
+	BindHost:           netip.IPv4Unspecified(),
+	AuthAttempts:       5,
+	AuthBlockMin:       15,
+	WebSessionTTLHours: 30 * 24,
 	DNS: dnsConfig{
-		BindHosts:     []net.IP{{0, 0, 0, 0}},
-		Port:          defaultPortDNS,
-		StatsInterval: 1,
+		BindHosts:           []netip.Addr{netip.IPv4Unspecified()},
+		Port:                defaultPortDNS,
+		StatsInterval:       1,
+		QueryLogEnabled:     true,
+		QueryLogFileEnabled: true,
+		QueryLogInterval:    timeutil.Duration{Duration: 90 * timeutil.Day},
+		QueryLogMemSize:     1000,
 		FilteringConfig: dnsforward.FilteringConfig{
-			ProtectionEnabled:  true,      // whether or not use any of filtering features
-			BlockingMode:       "default", // mode how to answer filtered requests
-			BlockedResponseTTL: 10,        // in seconds
+			ProtectionEnabled:  true, // whether or not use any of filtering features
+			BlockingMode:       dnsforward.BlockingModeDefault,
+			BlockedResponseTTL: 10, // in seconds
 			Ratelimit:          20,
 			RefuseAny:          true,
 			AllServers:         false,
+			HandleDDR:          true,
 			FastestTimeout: timeutil.Duration{
 				Duration: fastip.DefaultPingWaitTimeout,
 			},
 
 			TrustedProxies: []string{"127.0.0.0/8", "::1/128"},
+			CacheSize:      4 * 1024 * 1024,
 
 			// set default maximum concurrent queries to 300
 			// we introduced a default limit due to this:
@@ -195,54 +262,61 @@ var config = &configuration{
 			// was later increased to 300 due to https://github.com/AdguardTeam/AdGuardHome/issues/2257
 			MaxGoroutines: 300,
 		},
-		FilteringEnabled:           true, // whether or not use filter lists
-		FiltersUpdateIntervalHours: 24,
-		UpstreamTimeout:            timeutil.Duration{Duration: dnsforward.DefaultTimeout},
-		ResolveClients:             true,
-		UsePrivateRDNS:             true,
+		DnsfilterConf: &filtering.Config{
+			SafeBrowsingCacheSize:      1 * 1024 * 1024,
+			SafeSearchCacheSize:        1 * 1024 * 1024,
+			ParentalCacheSize:          1 * 1024 * 1024,
+			CacheTime:                  30,
+			FilteringEnabled:           true,
+			FiltersUpdateIntervalHours: 24,
+		},
+		UpstreamTimeout: timeutil.Duration{Duration: dnsforward.DefaultTimeout},
+		UsePrivateRDNS:  true,
 	},
 	TLS: tlsConfigSettings{
 		PortHTTPS:       defaultPortHTTPS,
 		PortDNSOverTLS:  defaultPortTLS, // needs to be passed through to dnsproxy
 		PortDNSOverQUIC: defaultPortQUIC,
 	},
+	Filters: []filtering.FilterYAML{{
+		Filter:  filtering.Filter{ID: 1},
+		Enabled: true,
+		URL:     "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+		Name:    "AdGuard DNS filter",
+	}, {
+		Filter:  filtering.Filter{ID: 2},
+		Enabled: false,
+		URL:     "https://adaway.org/hosts.txt",
+		Name:    "AdAway Default Blocklist",
+	}},
 	DHCP: &dhcpd.ServerConfig{
 		LocalDomainName: "lan",
+		Conf4: dhcpd.V4ServerConf{
+			LeaseDuration: dhcpd.DefaultDHCPLeaseTTL,
+			ICMPTimeout:   dhcpd.DefaultDHCPTimeoutICMP,
+		},
+		Conf6: dhcpd.V6ServerConf{
+			LeaseDuration: dhcpd.DefaultDHCPLeaseTTL,
+		},
+	},
+	Clients: &clientsConfig{
+		Sources: &clientSourcesConf{
+			WHOIS:     true,
+			ARP:       true,
+			RDNS:      true,
+			DHCP:      true,
+			HostsFile: true,
+		},
 	},
 	logSettings: logSettings{
-		LogCompress:   false,
-		LogLocalTime:  false,
-		LogMaxBackups: 0,
-		LogMaxSize:    100,
-		LogMaxAge:     3,
+		Compress:   false,
+		LocalTime:  false,
+		MaxBackups: 0,
+		MaxSize:    100,
+		MaxAge:     3,
 	},
 	OSConfig:      &osConfig{},
 	SchemaVersion: currentSchemaVersion,
-}
-
-// initConfig initializes default configuration for the current OS&ARCH
-func initConfig() {
-	config.WebSessionTTLHours = 30 * 24
-
-	config.DNS.QueryLogEnabled = true
-	config.DNS.QueryLogFileEnabled = true
-	config.DNS.QueryLogInterval = timeutil.Duration{Duration: 90 * timeutil.Day}
-	config.DNS.QueryLogMemSize = 1000
-
-	config.DNS.CacheSize = 4 * 1024 * 1024
-	config.DNS.DnsfilterConf.SafeBrowsingCacheSize = 1 * 1024 * 1024
-	config.DNS.DnsfilterConf.SafeSearchCacheSize = 1 * 1024 * 1024
-	config.DNS.DnsfilterConf.ParentalCacheSize = 1 * 1024 * 1024
-	config.DNS.DnsfilterConf.CacheTime = 30
-	config.Filters = defaultFilters()
-
-	config.DHCP.Conf4.LeaseDuration = dhcpd.DefaultDHCPLeaseTTL
-	config.DHCP.Conf4.ICMPTimeout = dhcpd.DefaultDHCPTimeoutICMP
-	config.DHCP.Conf6.LeaseDuration = dhcpd.DefaultDHCPLeaseTTL
-
-	if ch := version.Channel(); ch == version.ChannelEdge || ch == version.ChannelDevelopment {
-		config.BetaBindPort = 3001
-	}
 }
 
 // getConfigFilename returns path to the current config file
@@ -289,35 +363,42 @@ func parseConfig() (err error) {
 		return err
 	}
 
-	uc := aghalg.UniqChecker{}
-	addPorts(
-		uc,
-		tcpPort(config.BindPort),
-		tcpPort(config.BetaBindPort),
-		udpPort(config.DNS.Port),
-	)
+	tcpPorts := aghalg.UniqChecker[tcpPort]{}
+	addPorts(tcpPorts, tcpPort(config.BindPort), tcpPort(config.BetaBindPort))
+
+	udpPorts := aghalg.UniqChecker[udpPort]{}
+	addPorts(udpPorts, udpPort(config.DNS.Port))
 
 	if config.TLS.Enabled {
 		addPorts(
-			uc,
-			// TODO(e.burkov):  Consider adding a udpPort with the same value if
-			// we ever support the HTTP/3 for web admin interface.
+			tcpPorts,
 			tcpPort(config.TLS.PortHTTPS),
 			tcpPort(config.TLS.PortDNSOverTLS),
-			udpPort(config.TLS.PortDNSOverQUIC),
 			tcpPort(config.TLS.PortDNSCrypt),
 		)
-	}
-	if err = uc.Validate(aghalg.IntIsBefore); err != nil {
-		return fmt.Errorf("validating ports: %w", err)
+
+		// TODO(e.burkov):  Consider adding a udpPort with the same value when
+		// we add support for HTTP/3 for web admin interface.
+		addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
 	}
 
-	if !checkFiltersUpdateIntervalHours(config.DNS.FiltersUpdateIntervalHours) {
-		config.DNS.FiltersUpdateIntervalHours = 24
+	if err = tcpPorts.Validate(); err != nil {
+		return fmt.Errorf("validating tcp ports: %w", err)
+	} else if err = udpPorts.Validate(); err != nil {
+		return fmt.Errorf("validating udp ports: %w", err)
+	}
+
+	if !filtering.ValidateUpdateIvl(config.DNS.DnsfilterConf.FiltersUpdateIntervalHours) {
+		config.DNS.DnsfilterConf.FiltersUpdateIntervalHours = 24
 	}
 
 	if config.DNS.UpstreamTimeout.Duration == 0 {
 		config.DNS.UpstreamTimeout = timeutil.Duration{Duration: dnsforward.DefaultTimeout}
+	}
+
+	err = setContextTLSCipherIDs()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -329,23 +410,11 @@ type udpPort int
 // tcpPort is the port number for TCP protocol.
 type tcpPort int
 
-// addPorts is a helper for ports validation.  It skips zero ports.  Each of
-// ports should be either a udpPort or a tcpPort.
-func addPorts(uc aghalg.UniqChecker, ports ...interface{}) {
+// addPorts is a helper for ports validation that skips zero ports.
+func addPorts[T tcpPort | udpPort](uc aghalg.UniqChecker[T], ports ...T) {
 	for _, p := range ports {
-		// Use separate cases for tcpPort and udpPort so that the untyped
-		// constant zero is converted to the appropriate type.
-		switch p := p.(type) {
-		case tcpPort:
-			if p != 0 {
-				uc.Add(p)
-			}
-		case udpPort:
-			if p != 0 {
-				uc.Add(p)
-			}
-		default:
-			// Go on.
+		if p != 0 {
+			uc.Add(p)
 		}
 	}
 }
@@ -364,13 +433,14 @@ func readConfigFile() (fileData []byte, err error) {
 }
 
 // Saves configuration to the YAML file and also saves the user filter contents to a file
-func (c *configuration) write() error {
+func (c *configuration) write() (err error) {
 	c.Lock()
 	defer c.Unlock()
 
 	if Context.auth != nil {
 		config.Users = Context.auth.GetUsers()
 	}
+
 	if Context.tls != nil {
 		tlsConf := tlsConfigSettings{}
 		Context.tls.WriteDiskConfig(&tlsConf)
@@ -393,10 +463,11 @@ func (c *configuration) write() error {
 		config.DNS.AnonymizeClientIP = dc.AnonymizeClientIP
 	}
 
-	if Context.dnsFilter != nil {
-		c := filtering.Config{}
-		Context.dnsFilter.WriteDiskConfig(&c)
-		config.DNS.DnsfilterConf = c
+	if Context.filters != nil {
+		Context.filters.WriteDiskConfig(config.DNS.DnsfilterConf)
+		config.Filters = config.DNS.DnsfilterConf.Filters
+		config.WhitelistFilters = config.DNS.DnsfilterConf.WhitelistFilters
+		config.UserRules = config.DNS.DnsfilterConf.UserRules
 	}
 
 	if s := Context.dnsServer; s != nil {
@@ -404,33 +475,50 @@ func (c *configuration) write() error {
 		s.WriteDiskConfig(&c)
 		dns := &config.DNS
 		dns.FilteringConfig = c
-		dns.LocalPTRResolvers,
-			dns.ResolveClients,
-			dns.UsePrivateRDNS = s.RDNSSettings()
+		dns.LocalPTRResolvers, config.Clients.Sources.RDNS, dns.UsePrivateRDNS = s.RDNSSettings()
 	}
 
 	if Context.dhcpServer != nil {
-		c := &dhcpd.ServerConfig{}
-		Context.dhcpServer.WriteDiskConfig(c)
-		config.DHCP = c
+		Context.dhcpServer.WriteDiskConfig(config.DHCP)
 	}
 
-	config.Clients = Context.clients.forConfig()
+	config.Clients.Persistent = Context.clients.forConfig()
 
 	configFile := config.getConfigFilename()
-	log.Debug("Writing YAML file: %s", configFile)
-	yamlText, err := yaml.Marshal(&config)
-	if err != nil {
-		log.Error("Couldn't generate YAML file: %s", err)
+	log.Debug("writing config file %q", configFile)
 
-		return err
+	buf := &bytes.Buffer{}
+	enc := yaml.NewEncoder(buf)
+	enc.SetIndent(2)
+
+	err = enc.Encode(config)
+	if err != nil {
+		return fmt.Errorf("generating config file: %w", err)
 	}
 
-	err = maybe.WriteFile(configFile, yamlText, 0o644)
+	err = maybe.WriteFile(configFile, buf.Bytes(), 0o644)
 	if err != nil {
-		log.Error("Couldn't save YAML config: %s", err)
+		return fmt.Errorf("writing config file: %w", err)
+	}
 
-		return err
+	return nil
+}
+
+// setContextTLSCipherIDs sets the TLS cipher suite IDs to use.
+func setContextTLSCipherIDs() (err error) {
+	if len(config.TLS.OverrideTLSCiphers) == 0 {
+		log.Info("tls: using default ciphers")
+
+		Context.tlsCipherIDs = aghtls.SaferCipherSuites()
+
+		return nil
+	}
+
+	log.Info("tls: overriding ciphers: %s", config.TLS.OverrideTLSCiphers)
+
+	Context.tlsCipherIDs, err = aghtls.ParseCiphers(config.TLS.OverrideTLSCiphers)
+	if err != nil {
+		return fmt.Errorf("parsing override ciphers: %w", err)
 	}
 
 	return nil

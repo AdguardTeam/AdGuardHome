@@ -74,21 +74,20 @@ func TestSafeBrowsingCache(t *testing.T) {
 	c.hashToHost[hash] = "sub.host.com"
 	assert.Equal(t, -1, c.getCached())
 
-	// match "sub.host.com" from cache,
-	//  but another hash for "nonexisting.com" is not in cache
-	//  which means that we must get data from server for it
+	// Match "sub.host.com" from cache.  Another hash for "host.example" is not
+	// in the cache, so get data for it from the server.
 	c.hashToHost = make(map[[32]byte]string)
 	hash = sha256.Sum256([]byte("sub.host.com"))
 	c.hashToHost[hash] = "sub.host.com"
-	hash = sha256.Sum256([]byte("nonexisting.com"))
-	c.hashToHost[hash] = "nonexisting.com"
+	hash = sha256.Sum256([]byte("host.example"))
+	c.hashToHost[hash] = "host.example"
 	assert.Empty(t, c.getCached())
 
 	hash = sha256.Sum256([]byte("sub.host.com"))
 	_, ok := c.hashToHost[hash]
 	assert.False(t, ok)
 
-	hash = sha256.Sum256([]byte("nonexisting.com"))
+	hash = sha256.Sum256([]byte("host.example"))
 	_, ok = c.hashToHost[hash]
 	assert.True(t, ok)
 
@@ -108,11 +107,10 @@ func TestSafeBrowsingCache(t *testing.T) {
 }
 
 func TestSBPC_checkErrorUpstream(t *testing.T) {
-	d := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
+	d, _ := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
 
-	ups := &aghtest.TestErrUpstream{}
-
+	ups := aghtest.NewErrorUpstream()
 	d.SetSafeBrowsingUpstream(ups)
 	d.SetParentalUpstream(ups)
 
@@ -130,7 +128,7 @@ func TestSBPC_checkErrorUpstream(t *testing.T) {
 }
 
 func TestSBPC(t *testing.T) {
-	d := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
+	d, _ := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
 	t.Cleanup(d.Close)
 
 	const hostname = "example.org"
@@ -170,10 +168,16 @@ func TestSBPC(t *testing.T) {
 
 	for _, tc := range testCases {
 		// Prepare the upstream.
-		ups := &aghtest.TestBlockUpstream{
-			Hostname: hostname,
-			Block:    tc.block,
+		ups := aghtest.NewBlockUpstream(hostname, tc.block)
+
+		var numReq int
+		onExchange := ups.OnExchange
+		ups.OnExchange = func(req *dns.Msg) (resp *dns.Msg, err error) {
+			numReq++
+
+			return onExchange(req)
 		}
+
 		d.SetSafeBrowsingUpstream(ups)
 		d.SetParentalUpstream(ups)
 
@@ -196,7 +200,7 @@ func TestSBPC(t *testing.T) {
 			assert.Equal(t, hits, tc.testCache.Stats().Hit)
 
 			// There was one request to an upstream.
-			assert.Equal(t, 1, ups.RequestsCount())
+			assert.Equal(t, 1, numReq)
 
 			// Now make the same request to check the cache was used.
 			res, err = tc.testFunc(hostname, dns.TypeA, setts)
@@ -214,7 +218,7 @@ func TestSBPC(t *testing.T) {
 			assert.Equal(t, hits+1, tc.testCache.Stats().Hit)
 
 			// Check that there were no additional requests.
-			assert.Equal(t, 1, ups.RequestsCount())
+			assert.Equal(t, 1, numReq)
 		})
 
 		purgeCaches(d)

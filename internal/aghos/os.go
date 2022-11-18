@@ -57,20 +57,22 @@ func HaveAdminRights() (bool, error) {
 const MaxCmdOutputSize = 64 * 1024
 
 // RunCommand runs shell command.
-func RunCommand(command string, arguments ...string) (code int, output string, err error) {
+func RunCommand(command string, arguments ...string) (code int, output []byte, err error) {
 	cmd := exec.Command(command, arguments...)
 	out, err := cmd.Output()
 	if len(out) > MaxCmdOutputSize {
 		out = out[:MaxCmdOutputSize]
 	}
 
-	if errors.As(err, new(*exec.ExitError)) {
-		return cmd.ProcessState.ExitCode(), string(out), nil
-	} else if err != nil {
-		return 1, "", fmt.Errorf("command %q failed: %w: %s", command, err, out)
+	if err != nil {
+		if eerr := new(exec.ExitError); errors.As(err, &eerr) {
+			return eerr.ExitCode(), eerr.Stderr, nil
+		}
+
+		return 1, nil, fmt.Errorf("command %q failed: %w: %s", command, err, out)
 	}
 
-	return cmd.ProcessState.ExitCode(), string(out), nil
+	return cmd.ProcessState.ExitCode(), out, nil
 }
 
 // PIDByCommand searches for process named command and returns its PID ignoring
@@ -119,13 +121,12 @@ func PIDByCommand(command string, except ...int) (pid int, err error) {
 }
 
 // parsePSOutput scans the output of ps searching the largest PID of the process
-// associated with cmdName ignoring PIDs from ignore.  A valid line from
-// r should look like these:
+// associated with cmdName ignoring PIDs from ignore.  A valid line from r
+// should look like these:
 //
-//    123 ./example-cmd
-//   1230 some/base/path/example-cmd
-//   3210 example-cmd
-//
+//	 123 ./example-cmd
+//	1230 some/base/path/example-cmd
+//	3210 example-cmd
 func parsePSOutput(r io.Reader, cmdName string, ignore []int) (largest, instNum int, err error) {
 	s := bufio.NewScanner(r)
 	for s.Scan() {
@@ -172,4 +173,24 @@ func RootDirFS() (fsys fs.FS) {
 	// Use empty string since os.DirFS implicitly prepends a slash to it.  This
 	// behavior is undocumented but it currently works.
 	return os.DirFS("")
+}
+
+// NotifyReconfigureSignal notifies c on receiving reconfigure signals.
+func NotifyReconfigureSignal(c chan<- os.Signal) {
+	notifyReconfigureSignal(c)
+}
+
+// NotifyShutdownSignal notifies c on receiving shutdown signals.
+func NotifyShutdownSignal(c chan<- os.Signal) {
+	notifyShutdownSignal(c)
+}
+
+// IsReconfigureSignal returns true if sig is a reconfigure signal.
+func IsReconfigureSignal(sig os.Signal) (ok bool) {
+	return isReconfigureSignal(sig)
+}
+
+// IsShutdownSignal returns true if sig is a shutdown signal.
+func IsShutdownSignal(sig os.Signal) (ok bool) {
+	return isShutdownSignal(sig)
 }

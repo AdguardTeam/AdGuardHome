@@ -1,9 +1,12 @@
 //go:build windows
-// +build windows
 
 package aghos
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
+
 	"golang.org/x/sys/windows"
 )
 
@@ -34,4 +37,27 @@ func haveAdminRights() (bool, error) {
 
 func isOpenWrt() (ok bool) {
 	return false
+}
+
+func notifyReconfigureSignal(c chan<- os.Signal) {
+	signal.Notify(c, windows.SIGHUP)
+}
+
+func notifyShutdownSignal(c chan<- os.Signal) {
+	// syscall.SIGTERM is processed automatically.  See go doc os/signal,
+	// section Windows.
+	signal.Notify(c, os.Interrupt)
+}
+
+func isReconfigureSignal(sig os.Signal) (ok bool) {
+	return sig == windows.SIGHUP
+}
+
+func isShutdownSignal(sig os.Signal) (ok bool) {
+	switch sig {
+	case os.Interrupt, syscall.SIGTERM:
+		return true
+	default:
+		return false
+	}
 }

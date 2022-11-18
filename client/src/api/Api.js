@@ -10,11 +10,17 @@ class Api {
     async makeRequest(path, method = 'POST', config) {
         const url = `${this.baseUrl}/${path}`;
 
+        const axiosConfig = config || {};
+        if (method !== 'GET' && axiosConfig.data) {
+            axiosConfig.headers = axiosConfig.headers || {};
+            axiosConfig.headers['Content-Type'] = axiosConfig.headers['Content-Type'] || 'application/json';
+        }
+
         try {
             const response = await axios({
                 url,
                 method,
-                ...config,
+                ...axiosConfig,
             });
             return response.data;
         } catch (error) {
@@ -55,7 +61,6 @@ class Api {
         const { path, method } = this.GLOBAL_TEST_UPSTREAM_DNS;
         const config = {
             data: servers,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, config);
     }
@@ -64,7 +69,6 @@ class Api {
         const { path, method } = this.GLOBAL_VERSION;
         const config = {
             data,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, config);
     }
@@ -100,7 +104,6 @@ class Api {
         const { path, method } = this.FILTERING_REFRESH;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
 
         return this.makeRequest(path, method, parameters);
@@ -110,7 +113,6 @@ class Api {
         const { path, method } = this.FILTERING_ADD_FILTER;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
 
         return this.makeRequest(path, method, parameters);
@@ -120,7 +122,6 @@ class Api {
         const { path, method } = this.FILTERING_REMOVE_FILTER;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
 
         return this.makeRequest(path, method, parameters);
@@ -130,7 +131,6 @@ class Api {
         const { path, method } = this.FILTERING_SET_RULES;
         const parameters = {
             data: rules,
-            headers: { 'Content-Type': 'text/plain' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -139,7 +139,6 @@ class Api {
         const { path, method } = this.FILTERING_CONFIG;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -148,7 +147,6 @@ class Api {
         const { path, method } = this.FILTERING_SET_URL;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -173,12 +171,7 @@ class Api {
 
     enableParentalControl() {
         const { path, method } = this.PARENTAL_ENABLE;
-        const parameter = 'sensitivity=TEEN'; // this parameter TEEN is hardcoded
-        const config = {
-            data: parameter,
-            headers: { 'Content-Type': 'text/plain' },
-        };
-        return this.makeRequest(path, method, config);
+        return this.makeRequest(path, method);
     }
 
     disableParentalControl() {
@@ -240,11 +233,10 @@ class Api {
         return this.makeRequest(path, method);
     }
 
-    changeLanguage(lang) {
+    changeLanguage(config) {
         const { path, method } = this.CHANGE_LANGUAGE;
         const parameters = {
-            data: lang,
-            headers: { 'Content-Type': 'text/plain' },
+            data: config,
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -280,16 +272,14 @@ class Api {
         const { path, method } = this.DHCP_SET_CONFIG;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
 
-    findActiveDhcp(name) {
+    findActiveDhcp(req) {
         const { path, method } = this.DHCP_FIND_ACTIVE;
         const parameters = {
-            data: name,
-            headers: { 'Content-Type': 'text/plain' },
+            data: req,
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -298,7 +288,6 @@ class Api {
         const { path, method } = this.DHCP_ADD_STATIC_LEASE;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -307,7 +296,6 @@ class Api {
         const { path, method } = this.DHCP_REMOVE_STATIC_LEASE;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -338,7 +326,6 @@ class Api {
         const { path, method } = this.INSTALL_CONFIGURE;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -347,7 +334,6 @@ class Api {
         const { path, method } = this.INSTALL_CHECK_CONFIG;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -368,7 +354,6 @@ class Api {
         const { path, method } = this.TLS_CONFIG;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -377,7 +362,6 @@ class Api {
         const { path, method } = this.TLS_VALIDATE;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -402,7 +386,6 @@ class Api {
         const { path, method } = this.ADD_CLIENT;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -411,7 +394,6 @@ class Api {
         const { path, method } = this.DELETE_CLIENT;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -420,7 +402,6 @@ class Api {
         const { path, method } = this.UPDATE_CLIENT;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -445,7 +426,6 @@ class Api {
         const { path, method } = this.ACCESS_SET;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -466,7 +446,6 @@ class Api {
         const { path, method } = this.REWRITE_ADD;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -475,15 +454,28 @@ class Api {
         const { path, method } = this.REWRITE_DELETE;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
 
     // Blocked services
+    BLOCKED_SERVICES_SERVICES = { path: 'blocked_services/services', method: 'GET' };
+
     BLOCKED_SERVICES_LIST = { path: 'blocked_services/list', method: 'GET' };
 
     BLOCKED_SERVICES_SET = { path: 'blocked_services/set', method: 'POST' };
+
+    BLOCKED_SERVICES_ALL = { path: 'blocked_services/all', method: 'GET' };
+
+    getBlockedServicesAvailableServices() {
+        const { path, method } = this.BLOCKED_SERVICES_SERVICES;
+        return this.makeRequest(path, method);
+    }
+
+    getAllBlockedServices() {
+        const { path, method } = this.BLOCKED_SERVICES_ALL;
+        return this.makeRequest(path, method);
+    }
 
     getBlockedServices() {
         const { path, method } = this.BLOCKED_SERVICES_LIST;
@@ -494,7 +486,6 @@ class Api {
         const { path, method } = this.BLOCKED_SERVICES_SET;
         const parameters = {
             data: config,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, parameters);
     }
@@ -522,7 +513,6 @@ class Api {
         const { path, method } = this.STATS_CONFIG;
         const config = {
             data,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, config);
     }
@@ -558,7 +548,6 @@ class Api {
         const { path, method } = this.QUERY_LOG_CONFIG;
         const config = {
             data,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, config);
     }
@@ -575,7 +564,6 @@ class Api {
         const { path, method } = this.LOGIN;
         const config = {
             data,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, config);
     }
@@ -602,7 +590,6 @@ class Api {
         const { path, method } = this.SET_DNS_CONFIG;
         const config = {
             data,
-            headers: { 'Content-Type': 'application/json' },
         };
         return this.makeRequest(path, method, config);
     }

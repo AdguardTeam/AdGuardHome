@@ -7,7 +7,7 @@ import queryString from 'query-string';
 import classNames from 'classnames';
 import {
     BLOCK_ACTIONS,
-    SMALL_SCREEN_SIZE,
+    MEDIUM_SCREEN_SIZE,
 } from '../../helpers/constants';
 import Loading from '../ui/Loading';
 import Filters from './Filters';
@@ -16,6 +16,7 @@ import { getFilteringStatus } from '../../actions/filtering';
 import { getClients } from '../../actions';
 import { getDnsConfig } from '../../actions/dnsConfig';
 import { getAccessList } from '../../actions/access';
+import { getAllBlockedServices } from '../../actions/services';
 import {
     getLogsConfig,
     resetFilteredLogs,
@@ -25,6 +26,7 @@ import {
 import InfiniteTable from './InfiniteTable';
 import './Logs.css';
 import { BUTTON_PREFIX } from './Cells/helpers';
+import AnonymizerNotification from './AnonymizerNotification';
 
 const processContent = (data) => Object.entries(data)
     .map(([key, value]) => {
@@ -46,17 +48,20 @@ const processContent = (data) => Object.entries(data)
             keyClass = '';
         }
 
-        return isHidden ? null : <div key={key}>
-            <div
+        return isHidden ? null : (
+            <div className="grid__row" key={key}>
+                <div
                     className={classNames(`key__${key}`, keyClass, {
                         'font-weight-bold': isBoolean && value === true,
-                    })}>
-                <Trans>{isButton ? value : key}</Trans>
+                    })}
+                >
+                    <Trans>{isButton ? value : key}</Trans>
+                </div>
+                <div className={`value__${key} text-pre text-truncate`}>
+                    <Trans>{(isTitle || isButton || isBoolean) ? '' : value || '—'}</Trans>
+                </div>
             </div>
-            <div className={`value__${key} text-pre text-truncate`}>
-                <Trans>{(isTitle || isButton || isBoolean) ? '' : value || '—'}</Trans>
-            </div>
-        </div>;
+        );
     });
 
 const Logs = () => {
@@ -73,6 +78,7 @@ const Logs = () => {
         processingGetConfig,
         processingAdditionalLogs,
         processingGetLogs,
+        anonymize_client_ip: anonymizeClientIp,
     } = useSelector((state) => state.queryLogs, shallowEqual);
     const filter = useSelector((state) => state.queryLogs.filter, shallowEqual);
     const logs = useSelector((state) => state.queryLogs.logs, shallowEqual);
@@ -80,7 +86,7 @@ const Logs = () => {
     const search = search_url_param || filter?.search || '';
     const response_status = response_status_url_param || filter?.response_status || '';
 
-    const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < SMALL_SCREEN_SIZE);
+    const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth <= MEDIUM_SCREEN_SIZE);
     const [detailedDataCurrent, setDetailedDataCurrent] = useState({});
     const [buttonType, setButtonType] = useState(BLOCK_ACTIONS.BLOCK);
     const [isModalOpened, setModalOpened] = useState(false);
@@ -99,11 +105,13 @@ const Logs = () => {
         })();
     }, [response_status, search]);
 
-    const mediaQuery = window.matchMedia(`(max-width: ${SMALL_SCREEN_SIZE}px)`);
+    const mediaQuery = window.matchMedia(`(max-width: ${MEDIUM_SCREEN_SIZE}px)`);
     const mediaQueryHandler = (e) => {
         setIsSmallScreen(e.matches);
         if (e.matches) {
             dispatch(toggleDetailedLogs(false));
+        } else {
+            dispatch(toggleDetailedLogs(true));
         }
     };
 
@@ -123,6 +131,7 @@ const Logs = () => {
             setIsLoading(true);
             dispatch(getFilteringStatus());
             dispatch(getClients());
+            dispatch(getAllBlockedServices());
             try {
                 await Promise.all([
                     dispatch(getLogsConfig()),
@@ -152,6 +161,16 @@ const Logs = () => {
         };
     }, []);
 
+    useEffect(() => {
+        if (!history.location.search) {
+            (async () => {
+                setIsLoading(true);
+                await dispatch(setFilteredLogs());
+                setIsLoading(false);
+            })();
+        }
+    }, [history.location.search]);
+
     const renderPage = () => <>
         <Filters
                 filter={{
@@ -170,35 +189,49 @@ const Logs = () => {
                 setButtonType={setButtonType}
                 setModalOpened={setModalOpened}
         />
-        <Modal portalClassName='grid' isOpen={isSmallScreen && isModalOpened}
-               onRequestClose={closeModal}
-               style={{
-                   content: {
-                       width: '100%',
-                       height: 'fit-content',
-                       left: 0,
-                       top: 47,
-                       padding: '1rem 1.5rem 1rem',
-                   },
-                   overlay: {
-                       backgroundColor: 'rgba(0,0,0,0.5)',
-                   },
-               }}
+        <Modal
+            portalClassName='grid'
+            isOpen={isSmallScreen && isModalOpened}
+            onRequestClose={closeModal}
+            style={{
+                content: {
+                    width: '100%',
+                    height: 'fit-content',
+                    left: '50%',
+                    top: 47,
+                    padding: '1rem 1.5rem 1rem',
+                    maxWidth: '720px',
+                    transform: 'translateX(-50%)',
+                },
+                overlay: {
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                },
+            }}
         >
-            <svg
-                    className="icon icon--24 icon-cross d-block d-md-none cursor--pointer"
-                    onClick={closeModal}>
-                <use xlinkHref="#cross" />
-            </svg>
-            {processContent(detailedDataCurrent, buttonType)}
+            <div className="logs__modal-wrap">
+                <svg
+                    className="icon icon--24 icon-cross d-block cursor--pointer"
+                    onClick={closeModal}
+                >
+                    <use xlinkHref="#cross" />
+                </svg>
+                {processContent(detailedDataCurrent, buttonType)}
+            </div>
         </Modal>
     </>;
 
-    return <>
-        {enabled && processingGetConfig && <Loading />}
-        {enabled && !processingGetConfig && renderPage()}
-        {!enabled && !processingGetConfig && <Disabled />}
-    </>;
+    return (
+        <>
+            {enabled && (
+                <>
+                    {processingGetConfig && <Loading />}
+                    {anonymizeClientIp && <AnonymizerNotification />}
+                    {!processingGetConfig && renderPage()}
+                </>
+            )}
+            {!enabled && !processingGetConfig && <Disabled />}
+        </>
+    );
 };
 
 export default Logs;

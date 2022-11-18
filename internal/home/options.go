@@ -2,36 +2,66 @@ package home
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 )
 
-// options passed from command-line arguments
-type options struct {
-	verbose        bool   // is verbose logging enabled
-	configFilename string // path to the config file
-	workDir        string // path to the working directory where we will store the filters data and the querylog
-	bindHost       net.IP // host address to bind HTTP server on
-	bindPort       int    // port to serve HTTP pages on
-	logFile        string // Path to the log file. If empty, write to stdout. If "syslog", writes to syslog
-	pidFile        string // File name to save PID to
-	checkConfig    bool   // Check configuration and exit
-	disableUpdate  bool   // If set, don't check for updates
+// TODO(a.garipov): Replace with package flag.
 
-	// service control action (see service.ControlAction array + "status" command)
+// options represents the command-line options.
+type options struct {
+	// confFilename is the path to the configuration file.
+	confFilename string
+
+	// workDir is the path to the working directory where AdGuard Home stores
+	// filter data, the query log, and other data.
+	workDir string
+
+	// logFile is the path to the log file.  If empty, AdGuard Home writes to
+	// stdout; if "syslog", to syslog.
+	logFile string
+
+	// pidFile is the file name for the file to which the PID is saved.
+	pidFile string
+
+	// serviceControlAction is the service action to perform.  See
+	// [service.ControlAction] and [handleServiceControlAction].
 	serviceControlAction string
 
-	// runningAsService flag is set to true when options are passed from the service runner
+	// bindHost is the address on which to serve the HTTP UI.
+	bindHost netip.Addr
+
+	// bindPort is the port on which to serve the HTTP UI.
+	bindPort int
+
+	// checkConfig is true if the current invocation is only required to check
+	// the configuration file and exit.
+	checkConfig bool
+
+	// disableUpdate, if set, makes AdGuard Home not check for updates.
+	disableUpdate bool
+
+	// performUpdate, if set, updates AdGuard Home without GUI and exits.
+	performUpdate bool
+
+	// verbose shows if verbose logging is enabled.
+	verbose bool
+
+	// runningAsService flag is set to true when options are passed from the
+	// service runner
+	//
+	// TODO(a.garipov): Perhaps this could be determined by a non-empty
+	// serviceControlAction?
 	runningAsService bool
 
-	// disableMemoryOptimization - disables memory optimization hacks
-	// see memoryUsage() function for the details
-	disableMemoryOptimization bool
-
-	glinetMode bool // Activate GL-Inet compatibility mode
+	// glinetMode shows if the GL-Inet compatibility mode is enabled.
+	glinetMode bool
 
 	// noEtcHosts flag should be provided when /etc/hosts file shouldn't be
 	// used.
@@ -42,88 +72,86 @@ type options struct {
 	localFrontend bool
 }
 
-// functions used for their side-effects
-type effect func() error
-
-type arg struct {
-	description string // a short, English description of the argument
-	longName    string // the name of the argument used after '--'
-	shortName   string // the name of the argument used after '-'
-
-	// only one of updateWithValue, updateNoValue, and effect should be present
-
-	updateWithValue func(o options, v string) (options, error)         // the mutator for arguments with parameters
-	updateNoValue   func(o options) (options, error)                   // the mutator for arguments without parameters
-	effect          func(o options, exec string) (f effect, err error) // the side-effect closure generator
-
-	serialize func(o options) []string // the re-serialization function back to arguments (return nil for omit)
+// initCmdLineOpts completes initialization of the global command-line option
+// slice.  It must only be called once.
+func initCmdLineOpts() {
+	// The --help option cannot be put directly into cmdLineOpts, because that
+	// causes initialization cycle due to printHelp referencing cmdLineOpts.
+	cmdLineOpts = append(cmdLineOpts, cmdLineOpt{
+		updateWithValue: nil,
+		updateNoValue:   nil,
+		effect: func(o options, exec string) (effect, error) {
+			return func() error { printHelp(exec); exitWithError(); return nil }, nil
+		},
+		serialize:   func(o options) (val string, ok bool) { return "", false },
+		description: "Print this help.",
+		longName:    "help",
+		shortName:   "",
+	})
 }
 
-// {type}SliceOrNil functions check their parameter of type {type}
-// against its zero value and return nil if the parameter value is
-// zero otherwise they return a string slice of the parameter
+// effect is the type for functions used for their side-effects.
+type effect func() (err error)
 
-func ipSliceOrNil(ip net.IP) []string {
-	if ip == nil {
-		return nil
-	}
+// cmdLineOpt contains the data for a single command-line option.  Only one of
+// updateWithValue, updateNoValue, and effect must be present.
+type cmdLineOpt struct {
+	updateWithValue func(o options, v string) (updated options, err error)
+	updateNoValue   func(o options) (updated options, err error)
+	effect          func(o options, exec string) (eff effect, err error)
 
-	return []string{ip.String()}
+	// serialize is a function that encodes the option into a slice of
+	// command-line arguments, if necessary.  If ok is false, this option should
+	// be skipped.
+	serialize func(o options) (val string, ok bool)
+
+	description string
+	longName    string
+	shortName   string
 }
 
-func stringSliceOrNil(s string) []string {
-	if s == "" {
-		return nil
-	}
+// cmdLineOpts are all command-line options of AdGuard Home.
+var cmdLineOpts = []cmdLineOpt{{
+	updateWithValue: func(o options, v string) (options, error) {
+		o.confFilename = v
+		return o, nil
+	},
+	updateNoValue: nil,
+	effect:        nil,
+	serialize: func(o options) (val string, ok bool) {
+		return o.confFilename, o.confFilename != ""
+	},
+	description: "Path to the config file.",
+	longName:    "config",
+	shortName:   "c",
+}, {
+	updateWithValue: func(o options, v string) (options, error) { o.workDir = v; return o, nil },
+	updateNoValue:   nil,
+	effect:          nil,
+	serialize:       func(o options) (val string, ok bool) { return o.workDir, o.workDir != "" },
+	description:     "Path to the working directory.",
+	longName:        "work-dir",
+	shortName:       "w",
+}, {
+	updateWithValue: func(o options, v string) (oo options, err error) {
+		o.bindHost, err = netip.ParseAddr(v)
 
-	return []string{s}
-}
+		return o, err
+	},
+	updateNoValue: nil,
+	effect:        nil,
+	serialize: func(o options) (val string, ok bool) {
+		if !o.bindHost.IsValid() {
+			return "", false
+		}
 
-func intSliceOrNil(i int) []string {
-	if i == 0 {
-		return nil
-	}
-
-	return []string{strconv.Itoa(i)}
-}
-
-func boolSliceOrNil(b bool) []string {
-	if b {
-		return []string{}
-	}
-
-	return nil
-}
-
-var args []arg
-
-var configArg = arg{
-	"Path to the config file.",
-	"config", "c",
-	func(o options, v string) (options, error) { o.configFilename = v; return o, nil },
-	nil,
-	nil,
-	func(o options) []string { return stringSliceOrNil(o.configFilename) },
-}
-
-var workDirArg = arg{
-	"Path to the working directory.",
-	"work-dir", "w",
-	func(o options, v string) (options, error) { o.workDir = v; return o, nil }, nil, nil,
-	func(o options) []string { return stringSliceOrNil(o.workDir) },
-}
-
-var hostArg = arg{
-	"Host address to bind HTTP server on.",
-	"host", "h",
-	func(o options, v string) (options, error) { o.bindHost = net.ParseIP(v); return o, nil }, nil, nil,
-	func(o options) []string { return ipSliceOrNil(o.bindHost) },
-}
-
-var portArg = arg{
-	"Port to serve HTTP pages on.",
-	"port", "p",
-	func(o options, v string) (options, error) {
+		return o.bindHost.String(), true
+	},
+	description: "Host address to bind HTTP server on.",
+	longName:    "host",
+	shortName:   "h",
+}, {
+	updateWithValue: func(o options, v string) (options, error) {
 		var err error
 		var p int
 		minPort, maxPort := 0, 1<<16-1
@@ -134,74 +162,127 @@ var portArg = arg{
 		} else {
 			o.bindPort = p
 		}
-		return o, err
-	}, nil, nil,
-	func(o options) []string { return intSliceOrNil(o.bindPort) },
-}
 
-var serviceArg = arg{
-	"Service control action: status, install, uninstall, start, stop, restart, reload (configuration).",
-	"service", "s",
-	func(o options, v string) (options, error) {
+		return o, err
+	},
+	updateNoValue: nil,
+	effect:        nil,
+	serialize: func(o options) (val string, ok bool) {
+		if o.bindPort == 0 {
+			return "", false
+		}
+
+		return strconv.Itoa(o.bindPort), true
+	},
+	description: "Port to serve HTTP pages on.",
+	longName:    "port",
+	shortName:   "p",
+}, {
+	updateWithValue: func(o options, v string) (options, error) {
 		o.serviceControlAction = v
 		return o, nil
-	}, nil, nil,
-	func(o options) []string { return stringSliceOrNil(o.serviceControlAction) },
-}
-
-var logfileArg = arg{
-	"Path to log file.  If empty: write to stdout; if 'syslog': write to system log.",
-	"logfile", "l",
-	func(o options, v string) (options, error) { o.logFile = v; return o, nil }, nil, nil,
-	func(o options) []string { return stringSliceOrNil(o.logFile) },
-}
-
-var pidfileArg = arg{
-	"Path to a file where PID is stored.",
-	"pidfile", "",
-	func(o options, v string) (options, error) { o.pidFile = v; return o, nil }, nil, nil,
-	func(o options) []string { return stringSliceOrNil(o.pidFile) },
-}
-
-var checkConfigArg = arg{
-	"Check configuration and exit.",
-	"check-config", "",
-	nil, func(o options) (options, error) { o.checkConfig = true; return o, nil }, nil,
-	func(o options) []string { return boolSliceOrNil(o.checkConfig) },
-}
-
-var noCheckUpdateArg = arg{
-	"Don't check for updates.",
-	"no-check-update", "",
-	nil, func(o options) (options, error) { o.disableUpdate = true; return o, nil }, nil,
-	func(o options) []string { return boolSliceOrNil(o.disableUpdate) },
-}
-
-var disableMemoryOptimizationArg = arg{
-	"Disable memory optimization.",
-	"no-mem-optimization", "",
-	nil, func(o options) (options, error) { o.disableMemoryOptimization = true; return o, nil }, nil,
-	func(o options) []string { return boolSliceOrNil(o.disableMemoryOptimization) },
-}
-
-var verboseArg = arg{
-	"Enable verbose output.",
-	"verbose", "v",
-	nil, func(o options) (options, error) { o.verbose = true; return o, nil }, nil,
-	func(o options) []string { return boolSliceOrNil(o.verbose) },
-}
-
-var glinetArg = arg{
-	"Run in GL-Inet compatibility mode.",
-	"glinet", "",
-	nil, func(o options) (options, error) { o.glinetMode = true; return o, nil }, nil,
-	func(o options) []string { return boolSliceOrNil(o.glinetMode) },
-}
-
-var versionArg = arg{
-	description:     "Show the version and exit.  Show more detailed version description with -v.",
-	longName:        "version",
+	},
+	updateNoValue: nil,
+	effect:        nil,
+	serialize: func(o options) (val string, ok bool) {
+		return o.serviceControlAction, o.serviceControlAction != ""
+	},
+	description: `Service control action: status, install (as a service), ` +
+		`uninstall (as a service), start, stop, restart, reload (configuration).`,
+	longName:  "service",
+	shortName: "s",
+}, {
+	updateWithValue: func(o options, v string) (options, error) { o.logFile = v; return o, nil },
+	updateNoValue:   nil,
+	effect:          nil,
+	serialize:       func(o options) (val string, ok bool) { return o.logFile, o.logFile != "" },
+	description: `Path to log file.  If empty, write to stdout; ` +
+		`if "syslog", write to system log.`,
+	longName:  "logfile",
+	shortName: "l",
+}, {
+	updateWithValue: func(o options, v string) (options, error) { o.pidFile = v; return o, nil },
+	updateNoValue:   nil,
+	effect:          nil,
+	serialize:       func(o options) (val string, ok bool) { return o.pidFile, o.pidFile != "" },
+	description:     "Path to a file where PID is stored.",
+	longName:        "pidfile",
 	shortName:       "",
+}, {
+	updateWithValue: nil,
+	updateNoValue:   func(o options) (options, error) { o.checkConfig = true; return o, nil },
+	effect:          nil,
+	serialize:       func(o options) (val string, ok bool) { return "", o.checkConfig },
+	description:     "Check configuration and exit.",
+	longName:        "check-config",
+	shortName:       "",
+}, {
+	updateWithValue: nil,
+	updateNoValue:   func(o options) (options, error) { o.disableUpdate = true; return o, nil },
+	effect:          nil,
+	serialize:       func(o options) (val string, ok bool) { return "", o.disableUpdate },
+	description:     "Don't check for updates.",
+	longName:        "no-check-update",
+	shortName:       "",
+}, {
+	updateWithValue: nil,
+	updateNoValue:   func(o options) (options, error) { o.performUpdate = true; return o, nil },
+	effect:          nil,
+	serialize:       func(o options) (val string, ok bool) { return "", o.performUpdate },
+	description:     "Update application and exit.",
+	longName:        "update",
+	shortName:       "",
+}, {
+	updateWithValue: nil,
+	updateNoValue:   nil,
+	effect: func(_ options, _ string) (f effect, err error) {
+		log.Info("warning: using --no-mem-optimization flag has no effect and is deprecated")
+
+		return nil, nil
+	},
+	serialize:   func(o options) (val string, ok bool) { return "", false },
+	description: "Deprecated.  Disable memory optimization.",
+	longName:    "no-mem-optimization",
+	shortName:   "",
+}, {
+	updateWithValue: nil,
+	updateNoValue:   func(o options) (options, error) { o.noEtcHosts = true; return o, nil },
+	effect: func(_ options, _ string) (f effect, err error) {
+		log.Info(
+			"warning: --no-etc-hosts flag is deprecated and will be removed in the future versions",
+		)
+
+		return nil, nil
+	},
+	serialize:   func(o options) (val string, ok bool) { return "", o.noEtcHosts },
+	description: "Deprecated.  Do not use the OS-provided hosts.",
+	longName:    "no-etc-hosts",
+	shortName:   "",
+}, {
+	updateWithValue: nil,
+	updateNoValue:   func(o options) (options, error) { o.localFrontend = true; return o, nil },
+	effect:          nil,
+	serialize:       func(o options) (val string, ok bool) { return "", o.localFrontend },
+	description:     "Use local frontend directories.",
+	longName:        "local-frontend",
+	shortName:       "",
+}, {
+	updateWithValue: nil,
+	updateNoValue:   func(o options) (options, error) { o.verbose = true; return o, nil },
+	effect:          nil,
+	serialize:       func(o options) (val string, ok bool) { return "", o.verbose },
+	description:     "Enable verbose output.",
+	longName:        "verbose",
+	shortName:       "v",
+}, {
+	updateWithValue: nil,
+	updateNoValue:   func(o options) (options, error) { o.glinetMode = true; return o, nil },
+	effect:          nil,
+	serialize:       func(o options) (val string, ok bool) { return "", o.glinetMode },
+	description:     "Run in GL-Inet compatibility mode.",
+	longName:        "glinet",
+	shortName:       "",
+}, {
 	updateWithValue: nil,
 	updateNoValue:   nil,
 	effect: func(o options, exec string) (effect, error) {
@@ -211,170 +292,178 @@ var versionArg = arg{
 			} else {
 				fmt.Println(version.Full())
 			}
+
 			os.Exit(0)
 
 			return nil
 		}, nil
 	},
-	serialize: func(o options) []string { return nil },
-}
+	serialize:   func(o options) (val string, ok bool) { return "", false },
+	description: "Show the version and exit.  Show more detailed version description with -v.",
+	longName:    "version",
+	shortName:   "",
+}}
 
-var helpArg = arg{
-	"Print this help.",
-	"help", "",
-	nil, nil, func(o options, exec string) (effect, error) {
-		return func() error { _ = printHelp(exec); os.Exit(64); return nil }, nil
-	},
-	func(o options) []string { return nil },
-}
+// printHelp prints the entire help message.  It exits with an error code if
+// there are any I/O errors.
+func printHelp(exec string) {
+	b := &strings.Builder{}
 
-var noEtcHostsArg = arg{
-	description:     "Do not use the OS-provided hosts.",
-	longName:        "no-etc-hosts",
-	shortName:       "",
-	updateWithValue: nil,
-	updateNoValue:   func(o options) (options, error) { o.noEtcHosts = true; return o, nil },
-	effect:          nil,
-	serialize:       func(o options) []string { return boolSliceOrNil(o.noEtcHosts) },
-}
+	stringutil.WriteToBuilder(
+		b,
+		"Usage:\n\n",
+		fmt.Sprintf("%s [options]\n\n", exec),
+		"Options:\n",
+	)
 
-var localFrontendArg = arg{
-	description:     "Use local frontend directories.",
-	longName:        "local-frontend",
-	shortName:       "",
-	updateWithValue: nil,
-	updateNoValue:   func(o options) (options, error) { o.localFrontend = true; return o, nil },
-	effect:          nil,
-	serialize:       func(o options) []string { return boolSliceOrNil(o.localFrontend) },
-}
-
-func init() {
-	args = []arg{
-		configArg,
-		workDirArg,
-		hostArg,
-		portArg,
-		serviceArg,
-		logfileArg,
-		pidfileArg,
-		checkConfigArg,
-		noCheckUpdateArg,
-		disableMemoryOptimizationArg,
-		noEtcHostsArg,
-		localFrontendArg,
-		verboseArg,
-		glinetArg,
-		versionArg,
-		helpArg,
-	}
-}
-
-func getUsageLines(exec string, args []arg) []string {
-	usage := []string{
-		"Usage:",
-		"",
-		fmt.Sprintf("%s [options]", exec),
-		"",
-		"Options:",
-	}
-	for _, arg := range args {
+	var err error
+	for _, opt := range cmdLineOpts {
 		val := ""
-		if arg.updateWithValue != nil {
+		if opt.updateWithValue != nil {
 			val = " VALUE"
 		}
-		if arg.shortName != "" {
-			usage = append(usage, fmt.Sprintf("  -%s, %-30s %s",
-				arg.shortName,
-				"--"+arg.longName+val,
-				arg.description))
+
+		longDesc := opt.longName + val
+		if opt.shortName != "" {
+			_, err = fmt.Fprintf(b, "  -%s, --%-28s %s\n", opt.shortName, longDesc, opt.description)
 		} else {
-			usage = append(usage, fmt.Sprintf("  %-34s %s",
-				"--"+arg.longName+val,
-				arg.description))
+			_, err = fmt.Fprintf(b, "  --%-32s %s\n", longDesc, opt.description)
+		}
+
+		if err != nil {
+			// The only error here can be from incorrect Fprintf usage, which is
+			// a programmer error.
+			panic(err)
 		}
 	}
-	return usage
+
+	_, err = fmt.Print(b)
+	if err != nil {
+		// Exit immediately, since not being able to print out a help message
+		// essentially means that the I/O is very broken at the moment.
+		exitWithError()
+	}
 }
 
-func printHelp(exec string) error {
-	for _, line := range getUsageLines(exec, args) {
-		_, err := fmt.Println(line)
+// parseCmdOpts parses the command-line arguments into options and effects.
+func parseCmdOpts(cmdName string, args []string) (o options, eff effect, err error) {
+	// Don't use range since the loop changes the loop variable.
+	argsLen := len(args)
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		isKnown := false
+		for _, opt := range cmdLineOpts {
+			isKnown = argMatches(opt, arg)
+			if !isKnown {
+				continue
+			}
+
+			if opt.updateWithValue != nil {
+				i++
+				if i >= argsLen {
+					return o, eff, fmt.Errorf("got %s without argument", arg)
+				}
+
+				o, err = opt.updateWithValue(o, args[i])
+			} else {
+				o, eff, err = updateOptsNoValue(o, eff, opt, cmdName)
+			}
+
+			if err != nil {
+				return o, eff, fmt.Errorf("applying option %s: %w", arg, err)
+			}
+
+			break
+		}
+
+		if !isKnown {
+			return o, eff, fmt.Errorf("unknown option %s", arg)
+		}
+	}
+
+	return o, eff, err
+}
+
+// argMatches returns true if arg matches command-line option opt.
+func argMatches(opt cmdLineOpt, arg string) (ok bool) {
+	if arg == "" || arg[0] != '-' {
+		return false
+	}
+
+	arg = arg[1:]
+	if arg == "" {
+		return false
+	}
+
+	return (opt.shortName != "" && arg == opt.shortName) ||
+		(arg[0] == '-' && arg[1:] == opt.longName)
+}
+
+// updateOptsNoValue sets values or effects from opt into o or prev.
+func updateOptsNoValue(
+	o options,
+	prev effect,
+	opt cmdLineOpt,
+	cmdName string,
+) (updated options, chained effect, err error) {
+	if opt.updateNoValue != nil {
+		o, err = opt.updateNoValue(o)
+		if err != nil {
+			return o, prev, err
+		}
+
+		return o, prev, nil
+	}
+
+	next, err := opt.effect(o, cmdName)
+	if err != nil {
+		return o, prev, err
+	}
+
+	chained = chainEffect(prev, next)
+
+	return o, chained, nil
+}
+
+// chainEffect chans the next effect after the prev one.  If prev is nil, eff
+// only calls next.  If next is nil, eff is prev; if prev is nil, eff is next.
+func chainEffect(prev, next effect) (eff effect) {
+	if prev == nil {
+		return next
+	} else if next == nil {
+		return prev
+	}
+
+	eff = func() (err error) {
+		err = prev()
 		if err != nil {
 			return err
 		}
+
+		return next()
 	}
-	return nil
+
+	return eff
 }
 
-func argMatches(a arg, v string) bool {
-	return v == "--"+a.longName || (a.shortName != "" && v == "-"+a.shortName)
-}
-
-func parse(exec string, ss []string) (o options, f effect, err error) {
-	for i := 0; i < len(ss); i++ {
-		v := ss[i]
-		knownParam := false
-		for _, arg := range args {
-			if argMatches(arg, v) {
-				if arg.updateWithValue != nil {
-					if i+1 >= len(ss) {
-						return o, f, fmt.Errorf("got %s without argument", v)
-					}
-					i++
-					o, err = arg.updateWithValue(o, ss[i])
-					if err != nil {
-						return
-					}
-				} else if arg.updateNoValue != nil {
-					o, err = arg.updateNoValue(o)
-					if err != nil {
-						return
-					}
-				} else if arg.effect != nil {
-					var eff effect
-					eff, err = arg.effect(o, exec)
-					if err != nil {
-						return
-					}
-					if eff != nil {
-						prevf := f
-						f = func() (ferr error) {
-							if prevf != nil {
-								ferr = prevf()
-							}
-							if ferr == nil {
-								ferr = eff()
-							}
-							return ferr
-						}
-					}
-				}
-				knownParam = true
-				break
-			}
+// optsToArgs converts command line options into a list of arguments.
+func optsToArgs(o options) (args []string) {
+	for _, opt := range cmdLineOpts {
+		val, ok := opt.serialize(o)
+		if !ok {
+			continue
 		}
-		if !knownParam {
-			return o, f, fmt.Errorf("unknown option %v", v)
+
+		if opt.shortName != "" {
+			args = append(args, "-"+opt.shortName)
+		} else {
+			args = append(args, "--"+opt.longName)
+		}
+
+		if val != "" {
+			args = append(args, val)
 		}
 	}
 
-	return
-}
-
-func shortestFlag(a arg) string {
-	if a.shortName != "" {
-		return "-" + a.shortName
-	}
-	return "--" + a.longName
-}
-
-func serialize(o options) []string {
-	ss := []string{}
-	for _, arg := range args {
-		s := arg.serialize(o)
-		if s != nil {
-			ss = append(ss, append([]string{shortestFlag(arg)}, s...)...)
-		}
-	}
-	return ss
+	return args
 }

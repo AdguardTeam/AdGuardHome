@@ -123,4 +123,14 @@ CGO_ENABLED="$cgo_enabled"
 GO111MODULE='on'
 export CGO_ENABLED GO111MODULE
 
-"$go" build --ldflags "$ldflags" "$race_flags" --trimpath "$o_flags" "$v_flags" "$x_flags"
+# Build the new binary if requested.
+if [ "${NEXTAPI:-0}" -eq '0' ]
+then
+	tags_flags='--tags='
+else
+	tags_flags='--tags=next'
+fi
+readonly tags_flags
+
+"$go" build --ldflags "$ldflags" "$race_flags" "$tags_flags" --trimpath "$o_flags" "$v_flags"\
+	"$x_flags"

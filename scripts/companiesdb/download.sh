@@ -10,5 +10,5 @@ adguard='https://raw.githubusercontent.com/AdguardTeam/companiesdb/main/dist/adg
 base_path='../../client/src/helpers/trackers'
 readonly whotracksme adguard base_path
 
-curl "$whotracksme" --output "${base_path}/whotracksme.json"
-curl "$adguard" --output "${base_path}/adguard.json"
+curl -o "${base_path}/whotracksme.json" -v "$whotracksme"
+curl -o "${base_path}/adguard.json"     -v "$adguard"

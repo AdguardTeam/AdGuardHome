@@ -1,5 +1,4 @@
-//go:build aix || darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris
-// +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
+//go:build darwin || freebsd || linux || openbsd
 
 package aghnet
 
@@ -7,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"time"
 
@@ -39,48 +39,44 @@ func checkOtherDHCP(ifaceName string) (ok4, ok6 bool, err4, err6 error) {
 }
 
 // ifaceIPv4Subnet returns the first suitable IPv4 subnetwork iface has.
-func ifaceIPv4Subnet(iface *net.Interface) (subnet *net.IPNet, err error) {
+func ifaceIPv4Subnet(iface *net.Interface) (subnet netip.Prefix, err error) {
 	var addrs []net.Addr
 	if addrs, err = iface.Addrs(); err != nil {
-		return nil, err
+		return netip.Prefix{}, err
 	}
 
 	for _, a := range addrs {
+		var ip net.IP
+		var maskLen int
 		switch a := a.(type) {
 		case *net.IPAddr:
-			subnet = &net.IPNet{
-				IP:   a.IP,
-				Mask: a.IP.DefaultMask(),
-			}
+			ip = a.IP
+			maskLen, _ = ip.DefaultMask().Size()
 		case *net.IPNet:
-			subnet = a
+			ip = a.IP
+			maskLen, _ = a.Mask.Size()
 		default:
 			continue
 		}
 
-		if ip4 := subnet.IP.To4(); ip4 != nil {
-			subnet.IP = ip4
-
-			return subnet, nil
+		if ip = ip.To4(); ip != nil {
+			return netip.PrefixFrom(netip.AddrFrom4(*(*[4]byte)(ip)), maskLen), nil
 		}
 	}
 
-	return nil, fmt.Errorf("interface %s has no ipv4 addresses", iface.Name)
+	return netip.Prefix{}, fmt.Errorf("interface %s has no ipv4 addresses", iface.Name)
 }
 
 // checkOtherDHCPv4 sends a DHCP request to the specified network interface, and
 // waits for a response for a period defined by defaultDiscoverTime.
 func checkOtherDHCPv4(iface *net.Interface) (ok bool, err error) {
-	var subnet *net.IPNet
+	var subnet netip.Prefix
 	if subnet, err = ifaceIPv4Subnet(iface); err != nil {
 		return false, err
 	}
 
 	// Resolve broadcast addr.
-	dst := netutil.IPPort{
-		IP:   BroadcastFromIPNet(subnet),
-		Port: 67,
-	}.String()
+	dst := netip.AddrPortFrom(BroadcastFromPref(subnet), 67).String()
 	var dstAddr *net.UDPAddr
 	if dstAddr, err = net.ResolveUDPAddr("udp4", dst); err != nil {
 		return false, fmt.Errorf("couldn't resolve UDP address %s: %w", dst, err)
@@ -156,7 +152,7 @@ func tryConn4(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface) (ok, n
 	b := make([]byte, 1500)
 	n, _, err := c.ReadFrom(b)
 	if err != nil {
-		if isTimeout(err) {
+		if errors.Is(err, os.ErrDeadlineExceeded) {
 			log.Debug("dhcpv4: didn't receive dhcp response")
 
 			return false, false, nil
@@ -176,20 +172,21 @@ func tryConn4(req *dhcpv4.DHCPv4, c net.PacketConn, iface *net.Interface) (ok, n
 
 	log.Debug("dhcpv4: received message from server: %s", response.Summary())
 
-	if !(response.OpCode == dhcpv4.OpcodeBootReply &&
-		response.HWType == iana.HWTypeEthernet &&
-		bytes.Equal(response.ClientHWAddr, iface.HardwareAddr) &&
-		bytes.Equal(response.TransactionID[:], req.TransactionID[:]) &&
-		response.Options.Has(dhcpv4.OptionDHCPMessageType)) {
-
-		log.Debug("dhcpv4: received message from server doesn't match our request")
+	switch {
+	case
+		response.OpCode != dhcpv4.OpcodeBootReply,
+		response.HWType != iana.HWTypeEthernet,
+		!bytes.Equal(response.ClientHWAddr, iface.HardwareAddr),
+		response.TransactionID != req.TransactionID,
+		!response.Options.Has(dhcpv4.OptionDHCPMessageType):
+		log.Debug("dhcpv4: received response doesn't match the request")
 
 		return false, true, nil
+	default:
+		log.Tracef("dhcpv4: the packet is from an active dhcp server")
+
+		return true, false, nil
 	}
-
-	log.Tracef("dhcpv4: the packet is from an active dhcp server")
-
-	return true, false, nil
 }
 
 // checkOtherDHCPv6 sends a DHCP request to the specified network interface, and
@@ -275,7 +272,7 @@ func tryConn6(req *dhcpv6.Message, c net.PacketConn) (ok, next bool, err error) 
 
 	n, _, err := c.ReadFrom(b)
 	if err != nil {
-		if isTimeout(err) {
+		if errors.Is(err, os.ErrDeadlineExceeded) {
 			log.Debug("dhcpv6: didn't receive dhcp response")
 
 			return false, false, nil
@@ -317,16 +314,4 @@ func tryConn6(req *dhcpv6.Message, c net.PacketConn) (ok, next bool, err error) 
 	log.Tracef("dhcpv6: the packet is from an active dhcp server")
 
 	return true, false, nil
-}
-
-// isTimeout returns true if err is an operation timeout error from net package.
-//
-// TODO(e.burkov):  Consider moving into netutil.
-func isTimeout(err error) (ok bool) {
-	var operr *net.OpError
-	if errors.As(err, &operr) {
-		return operr.Timeout()
-	}
-
-	return false
 }

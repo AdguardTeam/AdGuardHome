@@ -3,11 +3,10 @@ package home
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
+	"net/netip"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/golibs/log"
 )
 
 // clientJSON is a common structure used by several handlers to deal with
@@ -47,9 +46,9 @@ type clientJSON struct {
 type runtimeClientJSON struct {
 	WHOISInfo *RuntimeClientWHOISInfo `json:"whois_info"`
 
-	Name   string `json:"name"`
-	Source string `json:"source"`
-	IP     net.IP `json:"ip"`
+	Name   string       `json:"name"`
+	IP     netip.Addr   `json:"ip"`
+	Source clientSource `json:"source"`
 }
 
 type clientListJSON struct {
@@ -70,53 +69,21 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 		data.Clients = append(data.Clients, cj)
 	}
 
-	clients.ipToRC.Range(func(ip net.IP, v interface{}) (cont bool) {
-		rc, ok := v.(*RuntimeClient)
-		if !ok {
-			log.Error("dns: bad type %T in ipToRC for %s", v, ip)
-
-			return true
-		}
-
+	for ip, rc := range clients.ipToRC {
 		cj := runtimeClientJSON{
 			WHOISInfo: rc.WHOISInfo,
 
-			Name: rc.Host,
-			IP:   ip,
-		}
-
-		cj.Source = "etc/hosts"
-		switch rc.Source {
-		case ClientSourceDHCP:
-			cj.Source = "DHCP"
-		case ClientSourceRDNS:
-			cj.Source = "rDNS"
-		case ClientSourceARP:
-			cj.Source = "ARP"
-		case ClientSourceWHOIS:
-			cj.Source = "WHOIS"
+			Name:   rc.Host,
+			Source: rc.Source,
+			IP:     ip,
 		}
 
 		data.RuntimeClients = append(data.RuntimeClients, cj)
-
-		return true
-	})
+	}
 
 	data.Tags = clientTags
 
-	w.Header().Set("Content-Type", "application/json")
-	e := json.NewEncoder(w).Encode(data)
-	if e != nil {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusInternalServerError,
-			"Failed to encode to json: %v",
-			e,
-		)
-
-		return
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, data)
 }
 
 // Convert JSON object to Client object
@@ -202,6 +169,7 @@ func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.
 
 	if !clients.Del(cj.Name) {
 		aghhttp.Error(r, w, http.StatusBadRequest, "Client not found")
+
 		return
 	}
 
@@ -250,7 +218,7 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 			break
 		}
 
-		ip := net.ParseIP(idStr)
+		ip, _ := netip.ParseAddr(idStr)
 		c, ok := clients.Find(idStr)
 		var cj *clientJSON
 		if !ok {
@@ -266,22 +234,18 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 		})
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(data)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write response: %s", err)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, data)
 }
 
 // findRuntime looks up the IP in runtime and temporary storages, like
 // /etc/hosts tables, DHCP leases, or blocklists.  cj is guaranteed to be
 // non-nil.
-func (clients *clientsContainer) findRuntime(ip net.IP, idStr string) (cj *clientJSON) {
-	rc, ok := clients.FindRuntimeClient(ip)
+func (clients *clientsContainer) findRuntime(ip netip.Addr, idStr string) (cj *clientJSON) {
+	rc, ok := clients.findRuntimeClient(ip)
 	if !ok {
-		// It is still possible that the IP used to be in the runtime
-		// clients list, but then the server was reloaded.  So, check
-		// the DNS server's blocked IP list.
+		// It is still possible that the IP used to be in the runtime clients
+		// list, but then the server was reloaded.  So, check the DNS server's
+		// blocked IP list.
 		//
 		// See https://github.com/AdguardTeam/AdGuardHome/issues/2428.
 		disallowed, rule := clients.dnsServer.IsBlockedClient(ip, idStr)

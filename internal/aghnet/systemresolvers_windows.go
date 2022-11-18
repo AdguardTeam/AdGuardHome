@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package aghnet
 
@@ -62,9 +61,8 @@ func writeExit(w io.WriteCloser) {
 // scanAddrs scans the DNS addresses from nslookup's output.  The expected
 // output of nslookup looks like this:
 //
-//   Default Server:  192-168-1-1.qualified.domain.ru
-//   Address:  192.168.1.1
-//
+//	Default Server:  192-168-1-1.qualified.domain.ru
+//	Address:  192.168.1.1
 func scanAddrs(s *bufio.Scanner) (addrs []string) {
 	for s.Scan() {
 		line := strings.TrimSpace(s.Text())

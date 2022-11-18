@@ -63,18 +63,9 @@ func Version() (v string) {
 	return version
 }
 
-// Constants defining the format of module information string.
-const (
-	modInfoAtSep    = "@"
-	modInfoDevSep   = " "
-	modInfoSumLeft  = " (sum: "
-	modInfoSumRight = ")"
-)
-
 // fmtModule returns formatted information about module.  The result looks like:
 //
-//   github.com/Username/module@v1.2.3 (sum: someHASHSUM=)
-//
+//	github.com/Username/module@v1.2.3 (sum: someHASHSUM=)
 func fmtModule(m *debug.Module) (formatted string) {
 	if m == nil {
 		return ""
@@ -88,14 +79,16 @@ func fmtModule(m *debug.Module) (formatted string) {
 
 	stringutil.WriteToBuilder(b, m.Path)
 	if ver := m.Version; ver != "" {
-		sep := modInfoAtSep
+		sep := "@"
 		if ver == "(devel)" {
-			sep = modInfoDevSep
+			sep = " "
 		}
+
 		stringutil.WriteToBuilder(b, sep, ver)
 	}
+
 	if sum := m.Sum; sum != "" {
-		stringutil.WriteToBuilder(b, modInfoSumLeft, sum, modInfoSumRight)
+		stringutil.WriteToBuilder(b, "(sum: ", sum, ")")
 	}
 
 	return b.String()
@@ -118,18 +111,18 @@ const (
 
 // Verbose returns formatted build information.  Output example:
 //
-//   AdGuard Home
-//   Version: v0.105.3
-//   Channel: development
-//   Go version: go1.15.3
-//   Build time: 2021-03-30T16:26:08Z+0300
-//   GOOS: darwin
-//   GOARCH: amd64
-//   Race: false
-//   Main module:
-//           ...
-//   Dependencies:
-//           ...
+//	AdGuard Home
+//	Version: v0.105.3
+//	Channel: development
+//	Go version: go1.15.3
+//	Build time: 2021-03-30T16:26:08Z+0300
+//	GOOS: darwin
+//	GOARCH: amd64
+//	Race: false
+//	Main module:
+//	        ...
+//	Dependencies:
+//	        ...
 //
 // TODO(e.burkov): Make it write into passed io.Writer.
 func Verbose() (v string) {

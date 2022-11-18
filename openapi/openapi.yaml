@@ -413,6 +413,11 @@
       - 'dhcp'
       'operationId': 'checkActiveDhcp'
       'summary': 'Searches for an active DHCP server on the network'
+      'requestBody':
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/DhcpFindActiveReq'
       'responses':
         '200':
           'description': 'OK.'
@@ -596,11 +601,10 @@
       'summary': 'Set user-defined filter rules'
       'requestBody':
         'content':
-          'text/plain':
+          'application/json':
             'schema':
-              'type': 'string'
-              'example': '@@||yandex.ru^|'
-        'description': 'All filtering rules, one line per rule'
+              '$ref': '#/components/schemas/SetRulesRequest'
+        'description': 'Custom filtering rules.'
       'responses':
         '200':
           'description': 'OK.'
@@ -667,24 +671,6 @@
       - 'parental'
       'operationId': 'parentalEnable'
       'summary': 'Enable parental filtering'
-      'requestBody':
-        'content':
-          'text/plain':
-            'schema':
-              'type': 'string'
-              'enum':
-              - 'EARLY_CHILDHOOD'
-              - 'YOUNG'
-              - 'TEEN'
-              - 'MATURE'
-              'example': 'sensitivity=TEEN'
-        'description': |
-          Age sensitivity for parental filtering,
-          EARLY_CHILDHOOD is 3
-          YOUNG is 10
-          TEEN is 13
-          MATURE is 17
-        'required': true
       'responses':
         '200':
           'description': 'OK.'
@@ -874,6 +860,35 @@
       'summary': 'Set (dis)allowed clients, blocked hosts, etc.'
       'tags':
       - 'clients'
+  '/blocked_services/services':
+    'get':
+      'deprecated': true
+      'description': >
+        Deprecated: Use `GET /blocked_services/all` instead.
+      'tags':
+      - 'blocked_services'
+      'operationId': 'blockedServicesAvailableServices'
+      'summary': 'Get available services to use for blocking'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/BlockedServicesArray'
+  '/blocked_services/all':
+    'get':
+      'tags':
+      - 'blocked_services'
+      'operationId': 'blockedServicesAll'
+      'summary': 'Get available services to use for blocking'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/BlockedServicesAll'
   '/blocked_services/list':
     'get':
       'tags':
@@ -945,10 +960,9 @@
         Change current language.  Argument must be an ISO 639-1 two-letter code.
       'requestBody':
         'content':
-          'text/plain':
+          'application/json':
             'schema':
-              'type': 'string'
-              'example': 'en'
+              '$ref': '#/components/schemas/LanguageSettings'
         'description': >
           New language.  It must be known to the server and must be an ISO 639-1
           two-letter code.
@@ -967,10 +981,9 @@
         '200':
           'description': 'OK.'
           'content':
-            'text/plain':
-              'examples':
-                'response':
-                  'value': 'en'
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/LanguageSettings'
   '/install/get_addresses_beta':
     'get':
       'tags':
@@ -1396,7 +1409,6 @@
       'required':
       - 'enabled'
       - 'id'
-      - 'last_updated'
       - 'name'
       - 'rules_count'
       - 'url'
@@ -1434,6 +1446,10 @@
           'type': 'array'
           'items':
             '$ref': '#/components/schemas/Filter'
+        'whitelist_filters':
+          'type': 'array'
+          'items':
+            '$ref': '#/components/schemas/Filter'
         'user_rules':
           'type': 'array'
           'items':
@@ -1451,18 +1467,28 @@
       'description': 'Filtering URL settings'
       'properties':
         'data':
-          'properties':
-            'enabled':
-              'type': 'boolean'
-            'name':
-              'type': 'string'
-            'url':
-              'type': 'string'
-          'type': 'object'
+          '$ref': '#/components/schemas/FilterSetUrlData'
         'url':
           'type': 'string'
         'whitelist':
           'type': 'boolean'
+    'FilterSetUrlData':
+      'type': 'object'
+      'description': 'Filter update data'
+      'required':
+      - 'enabled'
+      - 'name'
+      - 'url'
+      'properties':
+        'enabled':
+          'type': 'boolean'
+        'name':
+          'example': 'AdGuard Simplified Domain Names filter'
+          'type': 'string'
+        'url':
+          'type': 'string'
+          'example': >
+            https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
     'FilterRefreshRequest':
       'type': 'object'
       'description': 'Refresh Filters request data'
@@ -1527,6 +1553,19 @@
       'properties':
         'updated':
           'type': 'integer'
+    'SetRulesRequest':
+      'description': 'Custom filtering rules setting request.'
+      'example':
+        'rules':
+        - '||example.com^'
+        - '# comment'
+        - '@@||www.example.com^'
+      'properties':
+        'rules':
+          'items':
+            'type': 'string'
+          'type': 'array'
+      'type': 'object'
     'GetVersionRequest':
       'type': 'object'
       'description': '/version.json request data'
@@ -1751,6 +1790,16 @@
       'additionalProperties':
         '$ref': '#/components/schemas/NetInterface'
 
+    'DhcpFindActiveReq':
+      'description': >
+        Request for checking for other DHCP servers in the network.
+      'properties':
+        'interface':
+          'description': 'The name of the network interface'
+          'example': 'eth0'
+          'type': 'string'
+      'type': 'object'
+
     'DhcpSearchResult':
       'type': 'object'
       'description': >
@@ -1860,6 +1909,8 @@
           'description': 'Previously added URL containing filtering rules'
           'type': 'string'
           'example': 'https://filters.adtidy.org/windows/filters/15.txt'
+        'whitelist':
+          'type': 'boolean'
     'QueryLogItem':
       'type': 'object'
       'description': 'Query log item'
@@ -2504,6 +2555,42 @@
       'type': 'array'
       'items':
         'type': 'string'
+    'BlockedServicesAll':
+      'properties':
+        'blocked_services':
+          'items':
+            '$ref': '#/components/schemas/BlockedService'
+          'type': 'array'
+      'required':
+      - 'blocked_services'
+      'type': 'object'
+    'BlockedService':
+      'properties':
+        'icon_svg':
+          'description': >
+            The SVG icon as a Base64-encoded string to make it easier to embed
+            it into a data URL.
+          'type': 'string'
+        'id':
+          'description': >
+            The ID of this service.
+          'type': 'string'
+        'name':
+          'description': >
+            The human-readable name of this service.
+          'type': 'string'
+        'rules':
+          'description': >
+            The array of the filtering rules.
+          'items':
+            'type': 'string'
+          'type': 'array'
+      'required':
+      - 'icon_svg'
+      - 'id'
+      - 'name'
+      - 'rules'
+      'type': 'object'
     'CheckConfigRequestBeta':
       'type': 'object'
       'description': 'Configuration to be checked'
@@ -2663,6 +2750,15 @@
         'message':
           'description': 'The error message, an opaque string.'
           'type': 'string'
+      'type': 'object'
+    'LanguageSettings':
+      'description': 'Language settings object.'
+      'properties':
+        'language':
+          'description': 'The current language or the language to set.'
+          'type': 'string'
+      'required':
+      - 'language'
       'type': 'object'
   'securitySchemes':
     'basicAuth':

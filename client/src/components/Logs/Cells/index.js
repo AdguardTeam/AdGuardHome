@@ -52,6 +52,7 @@ const Row = memo(({
     const autoClients = useSelector((state) => state.dashboard.autoClients, shallowEqual);
     const processingSet = useSelector((state) => state.access.processingSet);
     const allowedСlients = useSelector((state) => state.access.allowed_clients, shallowEqual);
+    const services = useSelector((store) => store?.services);
 
     const clients = useSelector((state) => state.dashboard.clients);
 
@@ -139,20 +140,32 @@ const Row = memo(({
             }
         };
 
-        const blockButton = <button
-                className={classNames('title--border text-center button-action--arrow-option', { 'bg--danger': !isBlocked })}
-                onClick={onToggleBlock}>
-            {t(buttonType)}
-        </button>;
+        const blockButton = (
+            <>
+                <div className="title--border" />
+                <button
+                    type="button"
+                    className={
+                        classNames(
+                            'button-action--arrow-option mb-1',
+                            { 'bg--danger': !isBlocked },
+                            { 'bg--green': isFiltered },
+                        )}
+                    onClick={onToggleBlock}
+                >
+                    {t(buttonType)}
+                </button>
+            </>
+        );
 
         const blockForClientButton = <button
-                className='text-center font-weight-bold py-2 button-action--arrow-option'
+                className='text-center font-weight-bold py-1 button-action--arrow-option'
                 onClick={onBlockingForClientClick}>
             {t(blockingForClientKey)}
         </button>;
 
         const blockClientButton = <button
-                className='text-center font-weight-bold py-2 button-action--arrow-option'
+                className='text-center font-weight-bold py-1 button-action--arrow-option'
                 onClick={onBlockingClientClick}
                 disabled={processingSet || lastRuleInAllowlist}>
             {t(blockingClientKey)}
@@ -163,8 +176,8 @@ const Row = memo(({
             date: formatDateTime(time, DEFAULT_SHORT_DATE_FORMAT_OPTIONS),
             encryption_status: isBlocked
                 ? <div className="bg--danger">{requestStatus}</div> : requestStatus,
-            ...(FILTERED_STATUS.FILTERED_BLOCKED_SERVICE && service_name
-                && { service_name: getServiceName(service_name) }),
+            ...(FILTERED_STATUS.FILTERED_BLOCKED_SERVICE && service_name && services.allServices
+                && { service_name: getServiceName(services.allServices, service_name) }),
             domain,
             type_table_header: type,
             protocol,

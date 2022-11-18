@@ -60,7 +60,7 @@ export const REPOSITORY = {
 export const CLIENT_ID_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/Clients#clientid';
 export const MANUAL_UPDATE_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#manual-update';
 export const PORT_53_FAQ_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/FAQ#bindinuse';
-export const PRIVACY_POLICY_LINK = 'https://adguard.com/privacy/home.html';
+export const PRIVACY_POLICY_LINK = 'https://link.adtidy.org/forward.html?action=privacy&from=ui&app=home';
 export const UPSTREAM_CONFIGURATION_WIKI_LINK = 'https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams';
 
 export const FILTERS_RELATIVE_LINK = '#filters';
@@ -81,7 +81,7 @@ export const STANDARD_DNS_PORT = 53;
 export const STANDARD_WEB_PORT = 80;
 export const STANDARD_HTTPS_PORT = 443;
 export const DNS_OVER_TLS_PORT = 853;
-export const DNS_OVER_QUIC_PORT = 784;
+export const DNS_OVER_QUIC_PORT = 853;
 export const MAX_PORT = 65535;
 
 export const EMPTY_DATE = '0001-01-01T00:00:00Z';
@@ -201,154 +201,6 @@ export const FILTERS_URLS = {
     custom_rules: '/custom_rules',
     blocked_services: '/blocked_services',
 };
-
-export const SERVICES = [
-    {
-        id: '9gag',
-        name: '9GAG',
-    },
-    {
-        id: 'amazon',
-        name: 'Amazon',
-    },
-    {
-        id: 'cloudflare',
-        name: 'CloudFlare',
-    },
-    {
-        id: 'dailymotion',
-        name: 'Dailymotion',
-    },
-    {
-        id: 'discord',
-        name: 'Discord',
-    },
-    {
-        id: 'disneyplus',
-        name: 'Disney+',
-    },
-    {
-        id: 'ebay',
-        name: 'EBay',
-    },
-    {
-        id: 'epic_games',
-        name: 'Epic Games',
-    },
-    {
-        id: 'facebook',
-        name: 'Facebook',
-    },
-    {
-        id: 'hulu',
-        name: 'Hulu',
-    },
-    {
-        id: 'imgur',
-        name: 'Imgur',
-    },
-    {
-        id: 'instagram',
-        name: 'Instagram',
-    },
-    {
-        id: 'mail_ru',
-        name: 'Mail.ru',
-    },
-    {
-        id: 'netflix',
-        name: 'Netflix',
-    },
-    {
-        id: 'ok',
-        name: 'OK.ru',
-    },
-    {
-        id: 'origin',
-        name: 'Origin',
-    },
-    {
-        id: 'pinterest',
-        name: 'Pinterest',
-    },
-    {
-        id: 'qq',
-        name: 'QQ',
-    },
-    {
-        id: 'reddit',
-        name: 'Reddit',
-    },
-    {
-        id: 'skype',
-        name: 'Skype',
-    },
-    {
-        id: 'snapchat',
-        name: 'Snapchat',
-    },
-    {
-        id: 'spotify',
-        name: 'Spotify',
-    },
-    {
-        id: 'steam',
-        name: 'Steam',
-    },
-    {
-        id: 'telegram',
-        name: 'Telegram',
-    },
-    {
-        id: 'tiktok',
-        name: 'TikTok',
-    },
-    {
-        id: 'tinder',
-        name: 'Tinder',
-    },
-    {
-        id: 'twitch',
-        name: 'Twitch',
-    },
-    {
-        id: 'twitter',
-        name: 'Twitter',
-    },
-    {
-        id: 'viber',
-        name: 'Viber',
-    },
-    {
-        id: 'vimeo',
-        name: 'Vimeo',
-    },
-    {
-        id: 'vk',
-        name: 'VK.com',
-    },
-    {
-        id: 'wechat',
-        name: 'WeChat',
-    },
-    {
-        id: 'weibo',
-        name: 'Weibo',
-    },
-    {
-        id: 'whatsapp',
-        name: 'WhatsApp',
-    },
-    {
-        id: 'youtube',
-        name: 'YouTube',
-    },
-];
-
-export const SERVICES_ID_NAME_MAP = SERVICES.reduce((acc, { id, name }) => {
-    acc[id] = name;
-    return acc;
-}, {});
 
 export const ENCRYPTION_SOURCE = {
     PATH: 'path',
@@ -522,8 +374,8 @@ export const DEFAULT_DATE_FORMAT_OPTIONS = {
     month: 'numeric',
     day: 'numeric',
     hour: 'numeric',
+    hourCycle: 'h23',
     minute: 'numeric',
-    hour12: false,
 };
 
 export const DETAILED_DATE_FORMAT_OPTIONS = {
@@ -588,7 +440,7 @@ export const FORM_NAME = {
 };
 
 export const SMALL_SCREEN_SIZE = 767;
-export const MEDIUM_SCREEN_SIZE = 1023;
+export const MEDIUM_SCREEN_SIZE = 1024;
 
 export const SECONDS_IN_DAY = 60 * 60 * 24;
 

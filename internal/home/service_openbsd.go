@@ -1,5 +1,4 @@
 //go:build openbsd
-// +build openbsd
 
 package home
 
@@ -160,7 +159,7 @@ rc_cmd $1
 
 // template returns the script template to put into rc.d.
 func (s *openbsdRunComService) template() (t *template.Template) {
-	tf := map[string]interface{}{
+	tf := map[string]any{
 		"args": func(sl []string) string {
 			return `"` + strings.Join(sl, " ") + `"`
 		},
@@ -314,12 +313,13 @@ func (s *openbsdRunComService) runCom(cmd string) (out string, err error) {
 	// TODO(e.burkov):  It's possible that os.ErrNotExist is caused by
 	// something different than the service script's non-existence.  Keep it
 	// in mind, when replace the aghos.RunCommand.
-	_, out, err = aghos.RunCommand(scriptPath, cmd)
+	var outData []byte
+	_, outData, err = aghos.RunCommand(scriptPath, cmd)
 	if errors.Is(err, os.ErrNotExist) {
 		return "", service.ErrNotInstalled
 	}
 
-	return out, err
+	return string(outData), err
 }
 
 // Status implements service.Service interface for *openbsdRunComService.
@@ -389,42 +389,42 @@ func newSysLogger(_ string, _ chan<- error) (service.Logger, error) {
 type sysLogger struct{}
 
 // Error implements service.Logger interface for sysLogger.
-func (sysLogger) Error(v ...interface{}) error {
+func (sysLogger) Error(v ...any) error {
 	log.Error(fmt.Sprint(v...))
 
 	return nil
 }
 
 // Warning implements service.Logger interface for sysLogger.
-func (sysLogger) Warning(v ...interface{}) error {
+func (sysLogger) Warning(v ...any) error {
 	log.Info("warning: %s", fmt.Sprint(v...))
 
 	return nil
 }
 
 // Info implements service.Logger interface for sysLogger.
-func (sysLogger) Info(v ...interface{}) error {
+func (sysLogger) Info(v ...any) error {
 	log.Info(fmt.Sprint(v...))
 
 	return nil
 }
 
 // Errorf implements service.Logger interface for sysLogger.
-func (sysLogger) Errorf(format string, a ...interface{}) error {
+func (sysLogger) Errorf(format string, a ...any) error {
 	log.Error(format, a...)
 
 	return nil
 }
 
 // Warningf implements service.Logger interface for sysLogger.
-func (sysLogger) Warningf(format string, a ...interface{}) error {
+func (sysLogger) Warningf(format string, a ...any) error {
 	log.Info("warning: %s", fmt.Sprintf(format, a...))
 
 	return nil
 }
 
 // Infof implements service.Logger interface for sysLogger.
-func (sysLogger) Infof(format string, a ...interface{}) error {
+func (sysLogger) Infof(format string, a ...any) error {
 	log.Info(format, a...)
 
 	return nil

@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -24,10 +23,11 @@ import (
 
 // Safe browsing and parental control methods.
 
+// TODO(a.garipov): Make configurable.
 const (
 	dnsTimeout                = 3 * time.Second
-	defaultSafebrowsingServer = `https://dns-family.adguard.com/dns-query`
-	defaultParentalServer     = `https://dns-family.adguard.com/dns-query`
+	defaultSafebrowsingServer = `https://family.adguard-dns.com/dns-query`
+	defaultParentalServer     = `https://family.adguard-dns.com/dns-query`
 	sbTXTSuffix               = `sb.dns.adguard.com.`
 	pcTXTSuffix               = `pc.dns.adguard.com.`
 )
@@ -313,7 +313,7 @@ func (d *DNSFilter) checkSafeBrowsing(
 
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
-		defer timer.LogElapsed("SafeBrowsing lookup for %s", host)
+		defer timer.LogElapsed("safebrowsing lookup for %q", host)
 	}
 
 	sctx := &sbCtx{
@@ -324,12 +324,12 @@ func (d *DNSFilter) checkSafeBrowsing(
 	}
 
 	res = Result{
-		IsFiltered: true,
-		Reason:     FilteredSafeBrowsing,
 		Rules: []*ResultRule{{
 			Text:         "adguard-malware-shavar",
 			FilterListID: SafeBrowsingListID,
 		}},
+		Reason:     FilteredSafeBrowsing,
+		IsFiltered: true,
 	}
 
 	return check(sctx, res, d.safeBrowsingUpstream)
@@ -347,7 +347,7 @@ func (d *DNSFilter) checkParental(
 
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
-		defer timer.LogElapsed("Parental lookup for %s", host)
+		defer timer.LogElapsed("parental lookup for %q", host)
 	}
 
 	sctx := &sbCtx{
@@ -358,12 +358,12 @@ func (d *DNSFilter) checkParental(
 	}
 
 	res = Result{
-		IsFiltered: true,
-		Reason:     FilteredParental,
 		Rules: []*ResultRule{{
 			Text:         "parental CATEGORY_BLACKLISTED",
 			FilterListID: ParentalListID,
 		}},
+		Reason:     FilteredParental,
+		IsFiltered: true,
 	}
 
 	return check(sctx, res, d.parentalUpstream)
@@ -380,17 +380,13 @@ func (d *DNSFilter) handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Req
 }
 
 func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(&struct {
+	resp := &struct {
 		Enabled bool `json:"enabled"`
 	}{
 		Enabled: d.Config.SafeBrowsingEnabled,
-	})
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-
-		return
 	}
+
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 func (d *DNSFilter) handleParentalEnable(w http.ResponseWriter, r *http.Request) {
@@ -404,27 +400,11 @@ func (d *DNSFilter) handleParentalDisable(w http.ResponseWriter, r *http.Request
 }
 
 func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(&struct {
+	resp := &struct {
 		Enabled bool `json:"enabled"`
 	}{
 		Enabled: d.Config.ParentalEnabled,
-	})
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
 	}
-}
 
-func (d *DNSFilter) registerSecurityHandlers() {
-	d.Config.HTTPRegister(http.MethodPost, "/control/safebrowsing/enable", d.handleSafeBrowsingEnable)
-	d.Config.HTTPRegister(http.MethodPost, "/control/safebrowsing/disable", d.handleSafeBrowsingDisable)
-	d.Config.HTTPRegister(http.MethodGet, "/control/safebrowsing/status", d.handleSafeBrowsingStatus)
-
-	d.Config.HTTPRegister(http.MethodPost, "/control/parental/enable", d.handleParentalEnable)
-	d.Config.HTTPRegister(http.MethodPost, "/control/parental/disable", d.handleParentalDisable)
-	d.Config.HTTPRegister(http.MethodGet, "/control/parental/status", d.handleParentalStatus)
-
-	d.Config.HTTPRegister(http.MethodPost, "/control/safesearch/enable", d.handleSafeSearchEnable)
-	d.Config.HTTPRegister(http.MethodPost, "/control/safesearch/disable", d.handleSafeSearchDisable)
-	d.Config.HTTPRegister(http.MethodGet, "/control/safesearch/status", d.handleSafeSearchStatus)
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }

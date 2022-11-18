@@ -23,16 +23,6 @@ func ValidateClientID(id string) (err error) {
 	return nil
 }
 
-// hasLabelSuffix returns true if s ends with suffix preceded by a dot.  It's
-// a helper function to prevent unnecessary allocations in code like:
-//
-// if strings.HasSuffix(s, "." + suffix) { /* … */ }
-//
-// s must be longer than suffix.
-func hasLabelSuffix(s, suffix string) (ok bool) {
-	return strings.HasSuffix(s, suffix) && s[len(s)-len(suffix)-1] == '.'
-}
-
 // clientIDFromClientServerName extracts and validates a ClientID.  hostSrvName
 // is the server name of the host.  cliSrvName is the server name as sent by the
 // client.  When strict is true, and client and host server name don't match,
@@ -46,7 +36,7 @@ func clientIDFromClientServerName(
 		return "", nil
 	}
 
-	if !hasLabelSuffix(cliSrvName, hostSrvName) {
+	if !netutil.IsImmediateSubdomain(cliSrvName, hostSrvName) {
 		if !strict {
 			return "", nil
 		}
@@ -65,7 +55,7 @@ func clientIDFromClientServerName(
 		return "", err
 	}
 
-	return clientID, nil
+	return strings.ToLower(clientID), nil
 }
 
 // clientIDFromDNSContextHTTPS extracts the client's ID from the path of the
@@ -104,7 +94,7 @@ func clientIDFromDNSContextHTTPS(pctx *proxy.DNSContext) (clientID string, err e
 		return "", fmt.Errorf("clientid check: %w", err)
 	}
 
-	return clientID, nil
+	return strings.ToLower(clientID), nil
 }
 
 // tlsConn is a narrow interface for *tls.Conn to simplify testing.
@@ -112,8 +102,8 @@ type tlsConn interface {
 	ConnectionState() (cs tls.ConnectionState)
 }
 
-// quicSession is a narrow interface for quic.Session to simplify testing.
-type quicSession interface {
+// quicConnection is a narrow interface for quic.Connection to simplify testing.
+type quicConnection interface {
 	ConnectionState() (cs quic.ConnectionState)
 }
 
@@ -123,7 +113,14 @@ type quicSession interface {
 func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string, err error) {
 	proto := pctx.Proto
 	if proto == proxy.ProtoHTTPS {
-		return clientIDFromDNSContextHTTPS(pctx)
+		clientID, err = clientIDFromDNSContextHTTPS(pctx)
+		if err != nil {
+			return "", fmt.Errorf("checking url: %w", err)
+		} else if clientID != "" {
+			return clientID, nil
+		}
+
+		// Go on and check the domain name as well.
 	} else if proto != proxy.ProtoTLS && proto != proxy.ProtoQUIC {
 		return "", nil
 	}
@@ -133,31 +130,9 @@ func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string
 		return "", nil
 	}
 
-	cliSrvName := ""
-	switch proto {
-	case proxy.ProtoTLS:
-		conn := pctx.Conn
-		tc, ok := conn.(tlsConn)
-		if !ok {
-			return "", fmt.Errorf(
-				"proxy ctx conn of proto %s is %T, want *tls.Conn",
-				proto,
-				conn,
-			)
-		}
-
-		cliSrvName = tc.ConnectionState().ServerName
-	case proxy.ProtoQUIC:
-		qs, ok := pctx.QUICSession.(quicSession)
-		if !ok {
-			return "", fmt.Errorf(
-				"proxy ctx quic session of proto %s is %T, want quic.Session",
-				proto,
-				pctx.QUICSession,
-			)
-		}
-
-		cliSrvName = qs.ConnectionState().TLS.ServerName
+	cliSrvName, err := clientServerName(pctx, proto)
+	if err != nil {
+		return "", err
 	}
 
 	clientID, err = clientIDFromClientServerName(
@@ -170,4 +145,48 @@ func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string
 	}
 
 	return clientID, nil
+}
+
+// clientServerName returns the TLS server name based on the protocol.
+func clientServerName(pctx *proxy.DNSContext, proto proxy.Proto) (srvName string, err error) {
+	switch proto {
+	case proxy.ProtoHTTPS:
+		// github.com/lucas-clemente/quic-go seems to not populate the TLS
+		// field.  So, if the request comes over HTTP/3, use the Host header
+		// value as the server name.
+		//
+		// See https://github.com/lucas-clemente/quic-go/issues/2879.
+		//
+		// TODO(a.garipov): Remove this crutch once they fix it.
+		r := pctx.HTTPRequest
+		if r.ProtoAtLeast(3, 0) {
+			var host string
+			host, err = netutil.SplitHost(r.Host)
+			if err != nil {
+				return "", fmt.Errorf("parsing host: %w", err)
+			}
+
+			srvName = host
+		} else if connState := r.TLS; connState != nil {
+			srvName = r.TLS.ServerName
+		}
+	case proxy.ProtoQUIC:
+		qConn := pctx.QUICConnection
+		conn, ok := qConn.(quicConnection)
+		if !ok {
+			return "", fmt.Errorf("pctx conn of proto %s is %T, want quic.Connection", proto, qConn)
+		}
+
+		srvName = conn.ConnectionState().TLS.ServerName
+	case proxy.ProtoTLS:
+		conn := pctx.Conn
+		tc, ok := conn.(tlsConn)
+		if !ok {
+			return "", fmt.Errorf("pctx conn of proto %s is %T, want *tls.Conn", proto, conn)
+		}
+
+		srvName = tc.ConnectionState().ServerName
+	}
+
+	return srvName, nil
 }

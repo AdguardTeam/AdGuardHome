@@ -1,5 +1,4 @@
 //go:build freebsd
-// +build freebsd
 
 package aghnet
 
@@ -13,16 +12,12 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 )
 
-func canBindPrivilegedPorts() (can bool, err error) {
-	return aghos.HaveAdminRights()
-}
-
 func ifaceHasStaticIP(ifaceName string) (ok bool, err error) {
 	const rcConfFilename = "etc/rc.conf"
 
 	walker := aghos.FileWalker(interfaceName(ifaceName).rcConfStaticConfig)
 
-	return walker.Walk(aghos.RootDirFS(), rcConfFilename)
+	return walker.Walk(rootDirFS, rcConfFilename)
 }
 
 // rcConfStaticConfig checks if the interface is configured by /etc/rc.conf to

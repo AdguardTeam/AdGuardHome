@@ -21,7 +21,6 @@ import {
     FILTERED,
     FILTERED_STATUS,
     R_CLIENT_ID,
-    SERVICES_ID_NAME_MAP,
     STANDARD_DNS_PORT,
     STANDARD_HTTPS_PORT,
     STANDARD_WEB_PORT,
@@ -693,8 +692,8 @@ export const replaceZeroWithEmptyString = (value) => (parseInt(value, 10) === 0 
  * @returns {string}
  */
 export const getLogsUrlParams = (search, response_status) => `?${queryString.stringify({
-    search,
-    response_status,
+    search: search || undefined,
+    response_status: response_status || undefined,
 })}`;
 
 export const processContent = (
@@ -991,7 +990,22 @@ export const filterOutComments = (lines) => lines
     .filter((line) => !line.startsWith(COMMENT_LINE_DEFAULT_TOKEN));
 
 /**
- * @param {string} serviceId
+ * @param {array} services
+ * @param {string} id
  * @returns {string}
  */
-export const getServiceName = (serviceId) => SERVICES_ID_NAME_MAP[serviceId] || serviceId;
+export const getService = (services, id) => services.find((s) => s.id === id);
+
+/**
+ * @param {array} services
+ * @param {string} id
+ * @returns {string}
+ */
+export const getServiceName = (services, id) => getService(services, id)?.name;
+
+/**
+ * @param {array} services
+ * @param {string} id
+ * @returns {string}
+ */
+export const getServiceIcon = (services, id) => getService(services, id)?.icon_svg;

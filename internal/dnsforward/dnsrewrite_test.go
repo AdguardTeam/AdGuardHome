@@ -22,7 +22,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		Preference: 32,
 	}
 	svcbVal := &rules.DNSSVCB{
-		Params:   map[string]string{"alpn": "h3"},
+		Params:   map[string]string{"alpn": "h3", "dohpath": "/dns-query"},
 		Target:   dns.Fqdn(domain),
 		Priority: 32,
 	}
@@ -42,11 +42,11 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 			}},
 		}
 	}
-	makeRes := func(rcode rules.RCode, rr rules.RRType, v rules.RRValue) (res filtering.Result) {
+	makeRes := func(rcode rules.RCode, rr rules.RRType, v rules.RRValue) (res *filtering.Result) {
 		resp := filtering.DNSRewriteResultResponse{
 			rr: []rules.RRValue{v},
 		}
-		return filtering.Result{
+		return &filtering.Result{
 			DNSRewriteResult: &filtering.DNSRewriteResult{
 				RCode:    rcode,
 				Response: resp,
@@ -164,10 +164,20 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 
 		require.Len(t, d.Res.Answer, 1)
 		ans, ok := d.Res.Answer[0].(*dns.SVCB)
-		require.True(t, ok)
 
-		assert.Equal(t, dns.SVCB_ALPN, ans.Value[0].Key())
-		assert.Equal(t, svcbVal.Params["alpn"], ans.Value[0].String())
+		require.True(t, ok)
+		require.Len(t, ans.Value, 2)
+
+		assert.ElementsMatch(
+			t,
+			[]dns.SVCBKey{dns.SVCB_ALPN, dns.SVCB_DOHPATH},
+			[]dns.SVCBKey{ans.Value[0].Key(), ans.Value[1].Key()},
+		)
+		assert.ElementsMatch(
+			t,
+			[]string{svcbVal.Params["alpn"], svcbVal.Params["dohpath"]},
+			[]string{ans.Value[0].String(), ans.Value[1].String()},
+		)
 		assert.Equal(t, svcbVal.Target, ans.Target)
 		assert.Equal(t, svcbVal.Priority, ans.Priority)
 	})
@@ -186,8 +196,18 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		ans, ok := d.Res.Answer[0].(*dns.HTTPS)
 
 		require.True(t, ok)
-		assert.Equal(t, dns.SVCB_ALPN, ans.Value[0].Key())
-		assert.Equal(t, svcbVal.Params["alpn"], ans.Value[0].String())
+		require.Len(t, ans.Value, 2)
+
+		assert.ElementsMatch(
+			t,
+			[]dns.SVCBKey{dns.SVCB_ALPN, dns.SVCB_DOHPATH},
+			[]dns.SVCBKey{ans.Value[0].Key(), ans.Value[1].Key()},
+		)
+		assert.ElementsMatch(
+			t,
+			[]string{svcbVal.Params["alpn"], svcbVal.Params["dohpath"]},
+			[]string{ans.Value[0].String(), ans.Value[1].String()},
+		)
 		assert.Equal(t, svcbVal.Target, ans.Target)
 		assert.Equal(t, svcbVal.Priority, ans.Priority)
 	})

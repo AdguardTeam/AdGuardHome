@@ -7,9 +7,15 @@
 # Make sure to sync any changes with the branch overrides below.
 'variables':
   'channel': 'edge'
-  'dockerGo': 'adguard/golang-ubuntu:4.2'
+  'dockerGo': 'adguard/golang-ubuntu:5.3'
 
 'stages':
+- 'Build frontend':
+    'manual': false
+    'final': false
+    'jobs':
+    - 'Build frontend'
+
 - 'Make release':
     'manual': false
     'final': false
@@ -22,11 +28,11 @@
     'jobs':
     - 'Make and publish docker'
 
-- 'Publish to static.adguard.com':
+- 'Publish to static storage':
     'manual': false
     'final': false
     'jobs':
-    - 'Publish to static.adguard.com'
+    - 'Publish to static storage'
 
 - 'Publish to Snapstore':
     'manual': false
@@ -40,11 +46,41 @@
     'jobs':
     - 'Publish to GitHub Releases'
 
-'Make release':
+'Build frontend':
   'docker':
     'image': '${bamboo.dockerGo}'
     'volumes':
       '${system.YARN_DIR}': '${bamboo.cacheYarn}'
+  'key': 'BF'
+  'other':
+    'clean-working-dir': true
+  'tasks':
+  - 'checkout':
+      'force-clean-build': true
+  - 'script':
+      'interpreter': 'SHELL'
+      'scripts':
+      - |
+        #!/bin/sh
+
+        set -e -f -u -x
+
+        # Explicitly checkout the revision that we need.
+        git checkout "${bamboo.repository.revision.number}"
+
+        make js-deps js-build
+  'artifacts':
+  - 'name': 'AdGuardHome frontend'
+    'pattern': 'build*/**'
+    'shared': true
+    'required': true
+  'requirements':
+  - 'adg-docker': 'true'
+
+'Make release':
+  'docker':
+    'image': '${bamboo.dockerGo}'
+    'volumes':
       '${system.GO_CACHE_DIR}': '${bamboo.cacheGo}'
       '${system.GO_PKG_CACHE_DIR}': '${bamboo.cacheGoPkg}'
   'key': 'MR'
@@ -65,13 +101,14 @@
         git checkout "${bamboo.repository.revision.number}"
 
         # Run the build with the specified channel.
-        echo "${bamboo.gpgSecretKey}"\
+        echo "${bamboo.gpgSecretKeyPart1}${bamboo.gpgSecretKeyPart2}"\
                 | awk '{ gsub(/\\n/, "\n"); print; }'\
                 | gpg --import --batch --yes
 
         make\
                 CHANNEL=${bamboo.channel}\
                 GPG_KEY_PASSPHRASE=${bamboo.gpgPassword}\
+                FRONTEND_PREBUILT=1\
                 VERBOSE=1\
                 build-release
   # TODO(a.garipov): Use more fine-grained artifact rules.
@@ -132,7 +169,7 @@
   'requirements':
   - 'adg-docker': 'true'
 
-'Publish to static.adguard.com':
+'Publish to static storage':
   'key': 'PUB'
   'other':
     'clean-working-dir': true
@@ -183,8 +220,27 @@
 
         cd ./dist/
 
+        channel="${bamboo.channel}"
+        readonly channel
+        case "$channel"
+        in
+        ('release')
+              snapchannel='candidate'
+              ;;
+        ('beta')
+              snapchannel='beta'
+              ;;
+        ('edge')
+              snapchannel='edge'
+              ;;
+        (*)
+              echo "invalid channel '$channel'"
+              exit 1
+              ;;
+        esac
+
         env\
-                SNAPCRAFT_CHANNEL=edge\
+                SNAPCRAFT_CHANNEL="$snapchannel"\
                 SNAPCRAFT_EMAIL="${bamboo.snapcraftEmail}"\
                 SNAPCRAFT_MACAROON="${bamboo.snapcraftMacaroonPassword}"\
                 SNAPCRAFT_UBUNTU_DISCHARGE="${bamboo.snapcraftUbuntuDischargePassword}"\
@@ -266,7 +322,7 @@
     # need to build a few of these.
     'variables':
       'channel': 'beta'
-      'dockerGo': 'adguard/golang-ubuntu:4.2'
+      'dockerGo': 'adguard/golang-ubuntu:5.3'
 # release-vX.Y.Z branches are the branches from which the actual final release
 # is built.
 - '^release-v[0-9]+\.[0-9]+\.[0-9]+':
@@ -281,4 +337,4 @@
     # are the ones that actually get released.
     'variables':
       'channel': 'release'
-      'dockerGo': 'adguard/golang-ubuntu:4.2'
+      'dockerGo': 'adguard/golang-ubuntu:5.3'

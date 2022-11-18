@@ -1,10 +1,8 @@
 package home
 
 import (
-	"fmt"
-	"io"
+	"encoding/json"
 	"net/http"
-	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
@@ -13,6 +11,7 @@ import (
 
 // TODO(a.garipov): Get rid of a global or generate from .twosky.json.
 var allowedLanguages = stringutil.NewSet(
+	"ar",
 	"be",
 	"bg",
 	"cs",
@@ -50,41 +49,35 @@ var allowedLanguages = stringutil.NewSet(
 	"zh-tw",
 )
 
+// languageJSON is the JSON structure for language requests and responses.
+type languageJSON struct {
+	Language string `json:"language"`
+}
+
 func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain")
-	log.Printf("config.Language is %s", config.Language)
-	_, err := fmt.Fprintf(w, "%s\n", config.Language)
-	if err != nil {
-		msg := fmt.Sprintf("Unable to write response json: %s", err)
-		log.Println(msg)
-		http.Error(w, msg, http.StatusInternalServerError)
-		return
-	}
+	log.Printf("home: language is %s", config.Language)
+
+	_ = aghhttp.WriteJSONResponse(w, r, &languageJSON{
+		Language: config.Language,
+	})
 }
 
 func handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
-	// This use of ReadAll is safe, because request's body is now limited.
-	body, err := io.ReadAll(r.Body)
+	if aghhttp.WriteTextPlainDeprecated(w, r) {
+		return
+	}
+
+	langReq := &languageJSON{}
+	err := json.NewDecoder(r.Body).Decode(langReq)
 	if err != nil {
-		msg := fmt.Sprintf("failed to read request body: %s", err)
-		log.Println(msg)
-		http.Error(w, msg, http.StatusBadRequest)
-		return
-	}
-
-	language := strings.TrimSpace(string(body))
-	if language == "" {
-		msg := "empty language specified"
-		log.Println(msg)
-		http.Error(w, msg, http.StatusBadRequest)
+		aghhttp.Error(r, w, http.StatusInternalServerError, "reading req: %s", err)
 
 		return
 	}
 
-	if !allowedLanguages.Has(language) {
-		msg := fmt.Sprintf("unknown language specified: %s", language)
-		log.Println(msg)
-		http.Error(w, msg, http.StatusBadRequest)
+	lang := langReq.Language
+	if !allowedLanguages.Has(lang) {
+		aghhttp.Error(r, w, http.StatusBadRequest, "unknown language: %q", lang)
 
 		return
 	}
@@ -93,7 +86,8 @@ func handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
 		config.Lock()
 		defer config.Unlock()
 
-		config.Language = language
+		config.Language = lang
+		log.Printf("home: language is set to %s", lang)
 	}()
 
 	onConfigModified()

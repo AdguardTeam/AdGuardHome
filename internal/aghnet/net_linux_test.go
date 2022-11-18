@@ -1,155 +1,126 @@
 //go:build linux
-// +build linux
 
 package aghnet
 
 import (
-	"bytes"
-	"net"
+	"io/fs"
 	"testing"
+	"testing/fstest"
 
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestDHCPCDStaticConfig(t *testing.T) {
-	const iface interfaceName = `wlan0`
+func TestHasStaticIP(t *testing.T) {
+	const ifaceName = "wlan0"
+
+	const (
+		dhcpcd    = "etc/dhcpcd.conf"
+		netifaces = "etc/network/interfaces"
+	)
 
 	testCases := []struct {
-		name     string
-		data     []byte
-		wantCont bool
-	}{{
-		name: "has_not",
-		data: []byte(`#comment` + nl +
-			`# comment` + nl +
-			`interface eth0` + nl +
-			`static ip_address=192.168.0.1/24` + nl +
-			`# interface ` + iface + nl +
-			`static ip_address=192.168.1.1/24` + nl +
-			`# comment` + nl,
-		),
-		wantCont: true,
-	}, {
-		name: "has",
-		data: []byte(`#comment` + nl +
-			`# comment` + nl +
-			`interface eth0` + nl +
-			`static ip_address=192.168.0.1/24` + nl +
-			`# interface ` + iface + nl +
-			`static ip_address=192.168.1.1/24` + nl +
-			`# comment` + nl +
-			`interface ` + iface + nl +
-			`# comment` + nl +
-			`static ip_address=192.168.2.1/24` + nl,
-		),
-		wantCont: false,
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			r := bytes.NewReader(tc.data)
-			_, cont, err := iface.dhcpcdStaticConfig(r)
-			require.NoError(t, err)
-
-			assert.Equal(t, tc.wantCont, cont)
-		})
-	}
-}
-
-func TestIfacesStaticConfig(t *testing.T) {
-	const iface interfaceName = `enp0s3`
-
-	testCases := []struct {
-		name         string
-		data         []byte
-		wantCont     bool
-		wantPatterns []string
-	}{{
-		name: "has_not",
-		data: []byte(`allow-hotplug ` + iface + nl +
-			`#iface enp0s3 inet static` + nl +
-			`#  address 192.168.0.200` + nl +
-			`#  netmask 255.255.255.0` + nl +
-			`#  gateway 192.168.0.1` + nl +
-			`iface ` + iface + ` inet dhcp` + nl,
-		),
-		wantCont:     true,
-		wantPatterns: []string{},
-	}, {
-		name: "has",
-		data: []byte(`allow-hotplug ` + iface + nl +
-			`iface ` + iface + ` inet static` + nl +
-			`  address 192.168.0.200` + nl +
-			`  netmask 255.255.255.0` + nl +
-			`  gateway 192.168.0.1` + nl +
-			`#iface ` + iface + ` inet dhcp` + nl,
-		),
-		wantCont:     false,
-		wantPatterns: []string{},
-	}, {
-		name: "return_patterns",
-		data: []byte(`source hello` + nl +
-			`source world` + nl +
-			`#iface ` + iface + ` inet static` + nl,
-		),
-		wantCont:     true,
-		wantPatterns: []string{"hello", "world"},
-	}, {
-		// This one tests if the first found valid interface prevents
-		// checking files under the `source` directive.
-		name: "ignore_patterns",
-		data: []byte(`source hello` + nl +
-			`source world` + nl +
-			`iface ` + iface + ` inet static` + nl,
-		),
-		wantCont:     false,
-		wantPatterns: []string{},
-	}}
-
-	for _, tc := range testCases {
-		r := bytes.NewReader(tc.data)
-		t.Run(tc.name, func(t *testing.T) {
-			patterns, has, err := iface.ifacesStaticConfig(r)
-			require.NoError(t, err)
-
-			assert.Equal(t, tc.wantCont, has)
-			assert.ElementsMatch(t, tc.wantPatterns, patterns)
-		})
-	}
-}
-
-func TestSetStaticIPdhcpcdConf(t *testing.T) {
-	testCases := []struct {
+		rootFsys   fs.FS
 		name       string
-		dhcpcdConf string
-		routers    net.IP
+		wantHas    assert.BoolAssertionFunc
+		wantErrMsg string
 	}{{
-		name: "with_gateway",
-		dhcpcdConf: nl + `# wlan0 added by AdGuard Home.` + nl +
-			`interface wlan0` + nl +
-			`static ip_address=192.168.0.2/24` + nl +
-			`static routers=192.168.0.1` + nl +
-			`static domain_name_servers=192.168.0.2` + nl + nl,
-		routers: net.IP{192, 168, 0, 1},
+		rootFsys: fstest.MapFS{
+			dhcpcd: &fstest.MapFile{
+				Data: []byte(`#comment` + nl +
+					`# comment` + nl +
+					`interface eth0` + nl +
+					`static ip_address=192.168.0.1/24` + nl +
+					`# interface ` + ifaceName + nl +
+					`static ip_address=192.168.1.1/24` + nl +
+					`# comment` + nl,
+				),
+			},
+		},
+		name:       "dhcpcd_has_not",
+		wantHas:    assert.False,
+		wantErrMsg: `no information about static ip`,
 	}, {
-		name: "without_gateway",
-		dhcpcdConf: nl + `# wlan0 added by AdGuard Home.` + nl +
-			`interface wlan0` + nl +
-			`static ip_address=192.168.0.2/24` + nl +
-			`static domain_name_servers=192.168.0.2` + nl + nl,
-		routers: nil,
+		rootFsys: fstest.MapFS{
+			dhcpcd: &fstest.MapFile{
+				Data: []byte(`#comment` + nl +
+					`# comment` + nl +
+					`interface ` + ifaceName + nl +
+					`static ip_address=192.168.0.1/24` + nl +
+					`# interface ` + ifaceName + nl +
+					`static ip_address=192.168.1.1/24` + nl +
+					`# comment` + nl,
+				),
+			},
+		},
+		name:       "dhcpcd_has",
+		wantHas:    assert.True,
+		wantErrMsg: ``,
+	}, {
+		rootFsys: fstest.MapFS{
+			netifaces: &fstest.MapFile{
+				Data: []byte(`allow-hotplug ` + ifaceName + nl +
+					`#iface enp0s3 inet static` + nl +
+					`#  address 192.168.0.200` + nl +
+					`#  netmask 255.255.255.0` + nl +
+					`#  gateway 192.168.0.1` + nl +
+					`iface ` + ifaceName + ` inet dhcp` + nl,
+				),
+			},
+		},
+		name:       "netifaces_has_not",
+		wantHas:    assert.False,
+		wantErrMsg: `no information about static ip`,
+	}, {
+		rootFsys: fstest.MapFS{
+			netifaces: &fstest.MapFile{
+				Data: []byte(`allow-hotplug ` + ifaceName + nl +
+					`iface ` + ifaceName + ` inet static` + nl +
+					`  address 192.168.0.200` + nl +
+					`  netmask 255.255.255.0` + nl +
+					`  gateway 192.168.0.1` + nl +
+					`#iface ` + ifaceName + ` inet dhcp` + nl,
+				),
+			},
+		},
+		name:       "netifaces_has",
+		wantHas:    assert.True,
+		wantErrMsg: ``,
+	}, {
+		rootFsys: fstest.MapFS{
+			netifaces: &fstest.MapFile{
+				Data: []byte(`source hello` + nl +
+					`#iface ` + ifaceName + ` inet static` + nl,
+				),
+			},
+			"hello": &fstest.MapFile{
+				Data: []byte(`iface ` + ifaceName + ` inet static` + nl),
+			},
+		},
+		name:       "netifaces_another_file",
+		wantHas:    assert.True,
+		wantErrMsg: ``,
+	}, {
+		rootFsys: fstest.MapFS{
+			netifaces: &fstest.MapFile{
+				Data: []byte(`source hello` + nl +
+					`iface ` + ifaceName + ` inet static` + nl,
+				),
+			},
+		},
+		name:       "netifaces_ignore_another",
+		wantHas:    assert.True,
+		wantErrMsg: ``,
 	}}
-
-	ipNet := &net.IPNet{
-		IP:   net.IP{192, 168, 0, 2},
-		Mask: net.IPMask{255, 255, 255, 0},
-	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := dhcpcdConfIface("wlan0", ipNet, tc.routers, net.IP{192, 168, 0, 2})
-			assert.Equal(t, tc.dhcpcdConf, s)
+			substRootDirFS(t, tc.rootFsys)
+
+			has, err := IfaceHasStaticIP(ifaceName)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
+
+			tc.wantHas(t, has)
 		})
 	}
 }

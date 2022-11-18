@@ -1,5 +1,4 @@
 //go:build amd64 || 386 || arm || arm64 || mipsle || mips64le || ppc64le
-// +build amd64 386 arm arm64 mipsle mips64le ppc64le
 
 // This file is an adapted version of github.com/josharian/native.
 
