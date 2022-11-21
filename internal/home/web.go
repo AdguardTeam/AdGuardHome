@@ -143,7 +143,7 @@ func webCheckPortAvailable(port int) (ok bool) {
 
 // TLSConfigChanged updates the TLS configuration and restarts the HTTPS server
 // if necessary.
-func (web *Web) TLSConfigChanged(ctx context.Context, tlsConf tlsConfigSettings) {
+func (web *Web) TLSConfigChanged(ctx context.Context, tlsConf *tlsConfiguration) {
 	log.Debug("web: applying new tls configuration")
 	web.conf.PortHTTPS = tlsConf.PortHTTPS
 	web.forceHTTPS = (tlsConf.ForceHTTPS && tlsConf.Enabled && tlsConf.PortHTTPS != 0)

@@ -512,7 +512,7 @@ func run(opts options, clientBuildFS fs.FS) {
 	}
 	config.Users = nil
 
-	Context.tls, err = newTLSManager(config.TLS)
+	Context.tls, err = newTLSManager(&config.TLS)
 	if err != nil {
 		log.Fatalf("initializing tls: %s", err)
 	}
@@ -817,7 +817,7 @@ func printWebAddrs(proto, addr string, port, betaPort int) {
 // printHTTPAddresses prints the IP addresses which user can use to access the
 // admin interface.  proto is either schemeHTTP or schemeHTTPS.
 func printHTTPAddresses(proto string) {
-	tlsConf := tlsConfigSettings{}
+	tlsConf := tlsConfiguration{}
 	if Context.tls != nil {
 		Context.tls.WriteDiskConfig(&tlsConf)
 	}

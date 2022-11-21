@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/renameio/maybe"
+	"golang.org/x/exp/slices"
 	yaml "gopkg.in/yaml.v3"
 )
 
@@ -113,8 +114,8 @@ type configuration struct {
 	// An active session is automatically refreshed once a day.
 	WebSessionTTLHours uint32 `yaml:"web_session_ttl"`
 
-	DNS dnsConfig         `yaml:"dns"`
-	TLS tlsConfigSettings `yaml:"tls"`
+	DNS dnsConfig        `yaml:"dns"`
+	TLS tlsConfiguration `yaml:"tls"`
 
 	// Filters reflects the filters from [filtering.Config].  It's cloned to the
 	// config used in the filtering module at the startup.  Afterwards it's
@@ -199,7 +200,8 @@ type dnsConfig struct {
 	UseHTTP3Upstreams bool `yaml:"use_http3_upstreams"`
 }
 
-type tlsConfigSettings struct {
+// tlsConfiguration is the on-disk TLS configuration.
+type tlsConfiguration struct {
 	Enabled         bool   `yaml:"enabled" json:"enabled"`                                 // Enabled is the encryption (DoT/DoH/HTTPS) status
 	ServerName      string `yaml:"server_name" json:"server_name,omitempty"`               // ServerName is the hostname of your HTTPS/TLS server
 	ForceHTTPS      bool   `yaml:"force_https" json:"force_https"`                         // ForceHTTPS: if true, forces HTTP->HTTPS redirect
@@ -221,6 +223,22 @@ type tlsConfigSettings struct {
 	AllowUnencryptedDoH bool `yaml:"allow_unencrypted_doh" json:"allow_unencrypted_doh"`
 
 	dnsforward.TLSConfig `yaml:",inline" json:",inline"`
+}
+
+// partialClone returns a clone of c with all top-level fields of c and all
+// exported and YAML-encoded fields of c.TLSConfig cloned.
+//
+// TODO(a.garipov): This is better than races, but still not good enough.
+func (c *tlsConfiguration) partialClone() (cloned *tlsConfiguration) {
+	if c == nil {
+		return nil
+	}
+
+	v := *c
+	cloned = &v
+	cloned.OverrideTLSCiphers = slices.Clone(c.OverrideTLSCiphers)
+
+	return cloned
 }
 
 // config is the global configuration structure.
@@ -273,7 +291,7 @@ var config = &configuration{
 		UpstreamTimeout: timeutil.Duration{Duration: dnsforward.DefaultTimeout},
 		UsePrivateRDNS:  true,
 	},
-	TLS: tlsConfigSettings{
+	TLS: tlsConfiguration{
 		PortHTTPS:       defaultPortHTTPS,
 		PortDNSOverTLS:  defaultPortTLS, // needs to be passed through to dnsproxy
 		PortDNSOverQUIC: defaultPortQUIC,
@@ -442,7 +460,7 @@ func (c *configuration) write() (err error) {
 	}
 
 	if Context.tls != nil {
-		tlsConf := tlsConfigSettings{}
+		tlsConf := tlsConfiguration{}
 		Context.tls.WriteDiskConfig(&tlsConf)
 		config.TLS = tlsConf
 	}

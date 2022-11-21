@@ -205,7 +205,7 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 		OnDNSRequest:    onDNSRequest,
 	}
 
-	tlsConf := tlsConfigSettings{}
+	tlsConf := tlsConfiguration{}
 	Context.tls.WriteDiskConfig(&tlsConf)
 	if tlsConf.Enabled {
 		newConf.TLSConfig = tlsConf.TLSConfig
@@ -250,7 +250,7 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	return newConf, nil
 }
 
-func newDNSCrypt(hosts []netip.Addr, tlsConf tlsConfigSettings) (dnscc dnsforward.DNSCryptConfig, err error) {
+func newDNSCrypt(hosts []netip.Addr, tlsConf tlsConfiguration) (dnscc dnsforward.DNSCryptConfig, err error) {
 	if tlsConf.DNSCryptConfigFile == "" {
 		return dnscc, errors.Error("no dnscrypt_config_file")
 	}
@@ -288,7 +288,7 @@ type dnsEncryption struct {
 }
 
 func getDNSEncryption() (de dnsEncryption) {
-	tlsConf := tlsConfigSettings{}
+	tlsConf := tlsConfiguration{}
 
 	Context.tls.WriteDiskConfig(&tlsConf)
 

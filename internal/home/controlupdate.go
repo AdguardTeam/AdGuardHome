@@ -154,7 +154,7 @@ func (vr *versionResponse) setAllowedToAutoUpdate() (err error) {
 		return nil
 	}
 
-	tlsConf := &tlsConfigSettings{}
+	tlsConf := &tlsConfiguration{}
 	Context.tls.WriteDiskConfig(tlsConf)
 
 	canUpdate := true
@@ -172,7 +172,7 @@ func (vr *versionResponse) setAllowedToAutoUpdate() (err error) {
 
 // tlsConfUsesPrivilegedPorts returns true if the provided TLS configuration
 // indicates that privileged ports are used.
-func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
+func tlsConfUsesPrivilegedPorts(c *tlsConfiguration) (ok bool) {
 	return c.Enabled && (c.PortHTTPS < 1024 || c.PortDNSOverTLS < 1024 || c.PortDNSOverQUIC < 1024)
 }
 
