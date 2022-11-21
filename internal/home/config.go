@@ -225,18 +225,25 @@ type tlsConfiguration struct {
 	dnsforward.TLSConfig `yaml:",inline" json:",inline"`
 }
 
-// partialClone returns a clone of c with all top-level fields of c and all
+// cloneForEncoding returns a clone of c with all top-level fields of c and all
 // exported and YAML-encoded fields of c.TLSConfig cloned.
 //
 // TODO(a.garipov): This is better than races, but still not good enough.
-func (c *tlsConfiguration) partialClone() (cloned *tlsConfiguration) {
+func (c *tlsConfiguration) cloneForEncoding() (cloned *tlsConfiguration) {
 	if c == nil {
 		return nil
 	}
 
 	v := *c
 	cloned = &v
-	cloned.OverrideTLSCiphers = slices.Clone(c.OverrideTLSCiphers)
+	cloned.TLSConfig = dnsforward.TLSConfig{
+		CertificateChain:   c.CertificateChain,
+		PrivateKey:         c.PrivateKey,
+		CertificatePath:    c.CertificatePath,
+		PrivateKeyPath:     c.PrivateKeyPath,
+		OverrideTLSCiphers: slices.Clone(c.OverrideTLSCiphers),
+		StrictSNICheck:     c.StrictSNICheck,
+	}
 
 	return cloned
 }

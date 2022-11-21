@@ -22,7 +22,6 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/ameshkov/dnscrypt/v2"
-	"golang.org/x/exp/slices"
 )
 
 // BlockingMode is an enum of all allowed blocking modes.
@@ -184,11 +183,6 @@ type TLSConfig struct {
 	// hasIPAddrs is set during the certificate parsing and is true if the
 	// configured certificate contains at least a single IP address.
 	hasIPAddrs bool
-}
-
-// CertDataClone returns a deep copy of certificate data.
-func (c TLSConfig) CertDataClone() (certData, keyData []byte) {
-	return slices.Clone(c.CertificateChainData), slices.Clone(c.PrivateKeyData)
 }
 
 // DNSCryptConfig is the DNSCrypt server configuration struct.

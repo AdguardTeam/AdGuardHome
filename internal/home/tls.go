@@ -23,14 +23,14 @@ import (
 // tlsManager contains the current configuration and state of AdGuard Home TLS
 // encryption.
 type tlsManager struct {
+	// mu protects all fields.
+	mu *sync.RWMutex
+
 	// certLastMod is the last modification time of the certificate file.
 	certLastMod time.Time
 
 	// status is the current status of the configuration.  It is never nil.
 	status *tlsConfigStatus
-
-	// confMu protects conf.
-	confMu *sync.RWMutex
 
 	// conf is the current TLS configuration.
 	conf *tlsConfiguration
@@ -40,7 +40,7 @@ type tlsManager struct {
 func newTLSManager(conf *tlsConfiguration) (m *tlsManager, err error) {
 	m = &tlsManager{
 		status: &tlsConfigStatus{},
-		confMu: &sync.RWMutex{},
+		mu:     &sync.RWMutex{},
 		conf:   conf,
 	}
 
@@ -56,17 +56,17 @@ func newTLSManager(conf *tlsConfiguration) (m *tlsManager, err error) {
 	return m, nil
 }
 
-// partialTLSConf returns a partial clone of the current TLS configuration.  It
+// confForEncoding returns a partial clone of the current TLS configuration.  It
 // is safe for concurrent use.
-func (m *tlsManager) partialTLSConf() (conf *tlsConfiguration) {
-	m.confMu.RLock()
-	defer m.confMu.RUnlock()
+func (m *tlsManager) confForEncoding() (conf *tlsConfiguration) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 
-	return m.conf.partialClone()
+	return m.conf.cloneForEncoding()
 }
 
 // load reloads the TLS configuration from files or data from the config file.
-// load assumes that m.confLock is locked for writing.
+// m.mu is expected to be locked for writing.
 func (m *tlsManager) load() (err error) {
 	err = loadTLSConf(m.conf, m.status)
 	if err != nil {
@@ -78,11 +78,11 @@ func (m *tlsManager) load() (err error) {
 
 // WriteDiskConfig - write config
 func (m *tlsManager) WriteDiskConfig(conf *tlsConfiguration) {
-	*conf = *m.partialTLSConf()
+	*conf = *m.confForEncoding()
 }
 
 // setCertFileTime sets t.certLastMod from the certificate.  If there are
-// errors, setCertFileTime logs them.
+// errors, setCertFileTime logs them.  mu is expected to be locked for writing.
 func (m *tlsManager) setCertFileTime() {
 	if len(m.conf.CertificatePath) == 0 {
 		return
@@ -105,13 +105,13 @@ func (m *tlsManager) start() {
 	// The background context is used because the TLSConfigChanged wraps context
 	// with timeout on its own and shuts down the server, which handles current
 	// request.
-	Context.web.TLSConfigChanged(context.Background(), m.partialTLSConf())
+	Context.web.TLSConfigChanged(context.Background(), m.confForEncoding())
 }
 
 // reload updates the configuration and restarts m.
 func (m *tlsManager) reload() {
-	m.confMu.Lock()
-	defer m.confMu.Unlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	if !m.conf.Enabled || len(m.conf.CertificatePath) == 0 {
 		return

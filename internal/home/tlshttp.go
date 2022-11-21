@@ -77,15 +77,23 @@ type tlsConfigReq struct {
 	PrivateKeySaved bool `yaml:"-" json:"private_key_saved"`
 }
 
+// handleTLSStatus is the handler for the GET /control/tls/status HTTP API.
 func (m *tlsManager) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
-	resp := &tlsConfigResp{
-		tlsConfigStatus:  m.status,
-		tlsConfiguration: m.partialTLSConf(),
-	}
+	var resp *tlsConfigResp
+	func() {
+		m.mu.RLock()
+		defer m.mu.RUnlock()
+
+		resp = &tlsConfigResp{
+			tlsConfigStatus:  m.status,
+			tlsConfiguration: m.conf.cloneForEncoding(),
+		}
+	}()
 
 	marshalTLS(w, r, resp)
 }
 
+// handleTLSValidate is the handler for the POST /control/tls/validate HTTP API.
 func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	req, err := unmarshalTLS(r)
 	if err != nil {
@@ -95,7 +103,7 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.PrivateKeySaved {
-		req.PrivateKey = m.conf.PrivateKey
+		req.PrivateKey = m.confForEncoding().PrivateKey
 	}
 
 	if req.Enabled {
@@ -127,12 +135,13 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Skip the error check, since we are only interested in the value of
-	// status.WarningValidation.
 	resp := &tlsConfigResp{
 		tlsConfigStatus:  &tlsConfigStatus{},
 		tlsConfiguration: &req.tlsConfiguration,
 	}
+
+	// Skip the error check, since we are only interested in the value of
+	// resl.tlsConfigStatus.WarningValidation.
 	_ = loadTLSConf(resp.tlsConfiguration, resp.tlsConfigStatus)
 
 	marshalTLS(w, r, resp)
@@ -170,6 +179,8 @@ func validatePorts(
 	return nil
 }
 
+// handleTLSConfigure is the handler for the POST /control/tls/configure HTTP
+// API.
 func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	req, err := unmarshalTLS(r)
 	if err != nil {
@@ -179,7 +190,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if req.PrivateKeySaved {
-		req.PrivateKey = m.partialTLSConf().PrivateKey
+		req.PrivateKey = m.confForEncoding().PrivateKey
 	}
 
 	if req.Enabled {
@@ -224,7 +235,6 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	}
 
 	restartRequired := m.setConf(resp)
-	m.setCertFileTime()
 	onConfigModified()
 
 	err = reconfigureDNSServer()
@@ -234,7 +244,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	resp.tlsConfiguration = m.partialTLSConf()
+	resp.tlsConfiguration = m.confForEncoding()
 	marshalTLS(w, r, resp)
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()
@@ -253,8 +263,8 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 
 // setConf sets the necessary values from the new configuration.
 func (m *tlsManager) setConf(newConf *tlsConfigResp) (restartRequired bool) {
-	m.confMu.Lock()
-	defer m.confMu.Unlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	// Reset the DNSCrypt data before comparing, since we currently do not
 	// accept these from the frontend.
@@ -284,6 +294,8 @@ func (m *tlsManager) setConf(newConf *tlsConfigResp) (restartRequired bool) {
 	m.conf.PrivateKey = newConf.PrivateKey
 	m.conf.PrivateKeyPath = newConf.PrivateKeyPath
 	m.conf.PrivateKeyData = newConf.PrivateKeyData
+
+	m.setCertFileTime()
 
 	m.status = newConf.tlsConfigStatus
 
