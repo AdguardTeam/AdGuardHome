@@ -252,6 +252,11 @@ func validateCertChain(certs []*x509.Certificate, srvName string) (err error) {
 	return nil
 }
 
+// errNoIPInCert is the error that is returned from [parseCertChain] if the leaf
+// certificate doesn't contain IPs.
+const errNoIPInCert errors.Error = `certificates has no IP addresses; ` +
+	`DNS-over-TLS won't be advertised via DDR`
+
 // parseCertChain parses the certificate chain from raw data, and returns it.
 // If ok is true, the returned error, if any, is not critical.
 func parseCertChain(chain []byte) (parsedCerts []*x509.Certificate, ok bool, err error) {
@@ -274,8 +279,7 @@ func parseCertChain(chain []byte) (parsedCerts []*x509.Certificate, ok bool, err
 	log.Info("tls: number of certs: %d", len(parsedCerts))
 
 	if !aghtls.CertificateHasIP(parsedCerts[0]) {
-		err = errors.Error(`certificate has no IP addresses` +
-			`, this may cause issues with DNS-over-TLS clients`)
+		err = errNoIPInCert
 	}
 
 	return parsedCerts, true, err
