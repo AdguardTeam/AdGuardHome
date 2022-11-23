@@ -392,6 +392,7 @@
     "encryption_issuer": "المصدر",
     "encryption_hostnames": "اسم المستضيف",
     "encryption_reset": "هل أنت متأكد أنك تريد إعادة تعيين إعدادات التشفير؟",
+    "encryption_warning": "تحذير",
     "topline_expiring_certificate": "شهادة SSL الخاصة بك على وشك الانتهاء. قم بتحديث <0>إعدادات التشفير</0>.",
     "topline_expired_certificate": "انتهت صلاحية شهادة SSL الخاصة بك. قم بتحديث <0>إعدادات التشفير</0>.",
     "form_error_port_range": "أدخل رقم المنفذ في النطاق 80-65535",

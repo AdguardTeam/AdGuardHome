@@ -393,6 +393,7 @@
     "encryption_issuer": "Zgłaszający",
     "encryption_hostnames": "Nazwy hostów",
     "encryption_reset": "Czy na pewno chcesz zresetować ustawienia szyfrowania?",
+    "encryption_warning": "Uwaga!",
     "topline_expiring_certificate": "Twój certyfikat SSL wkrótce wygaśnie. Zaktualizuj <0>Ustawienia szyfrowania</0>.",
     "topline_expired_certificate": "Twój certyfikat SSL wygasł. Zaktualizuj <0>Ustawienia szyfrowania</0>.",
     "form_error_port_range": "Wpisz numer portu z zakresu 80-65535",

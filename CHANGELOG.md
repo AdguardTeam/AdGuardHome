@@ -27,10 +27,18 @@ See also the [v0.107.19 GitHub milestone][ms-v0.107.19].
 
 ### Added
 
+- The ability to block popular Mastodon instances
+  ([AdguardTeam/HostlistsRegistry#100]).
 - The new `--update` command-line option, which allows updating AdGuard Home
   silently ([#4223]).
 
+### Changed
+
+- Minor UI changes.
+
 [#4223]: https://github.com/AdguardTeam/AdGuardHome/issues/4223
+
+[AdguardTeam/HostlistsRegistry#100]: https://github.com/AdguardTeam/HostlistsRegistry/pull/100
 
 
 

@@ -393,6 +393,7 @@
     "encryption_issuer": "颁发者",
     "encryption_hostnames": "主机名",
     "encryption_reset": "您确定想要重置加密设置？",
+    "encryption_warning": "警告",
     "topline_expiring_certificate": "您的 SSL 证书即将过期。请更新 <0>加密设置</0> 。",
     "topline_expired_certificate": "您的 SSL 证书已过期。请更新 <0>加密设置</0> 。",
     "form_error_port_range": "输入 80 - 65535 范围内的端口值",

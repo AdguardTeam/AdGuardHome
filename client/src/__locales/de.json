@@ -393,6 +393,7 @@
     "encryption_issuer": "Ausgestellt von",
     "encryption_hostnames": "Hostnamen",
     "encryption_reset": "Möchten Sie die Verschlüsselungseinstellungen wirklich zurücksetzen?",
+    "encryption_warning": "Warnhinweis",
     "topline_expiring_certificate": "Ihr SSL-Zertifikat läuft demnächst ab. Aktualisieren Sie Ihre <0>Verschlüsselungseinstellungen</0>.",
     "topline_expired_certificate": "Ihr SSL-Zertifikat ist abgelaufen. Aktualisieren Sie Ihre <0>Verschlüsselungseinstellungen</0>.",
     "form_error_port_range": "Geben Sie die Portnummer zwischen 80 und 65535 ein",

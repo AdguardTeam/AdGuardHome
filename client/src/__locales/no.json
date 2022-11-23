@@ -373,6 +373,7 @@
     "encryption_issuer": "Utsteder",
     "encryption_hostnames": "Vertsnavn",
     "encryption_reset": "Er du sikker på at du vil tilbakestille krypteringsinnstillingene?",
+    "encryption_warning": "Advarsel",
     "topline_expiring_certificate": "Ditt SSL-sertifikat er i ferd med å utløpe. Oppdater <0>Krypteringsinnstillinger</0>.",
     "topline_expired_certificate": "SSL-sertifikatet har utløpt. Oppdater <0>Krypteringsinnstillinger</0>.",
     "form_error_port_range": "Skriv inn et portnummer i området 80-65535",
