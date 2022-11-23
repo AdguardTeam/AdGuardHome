@@ -393,6 +393,7 @@
     "encryption_issuer": "Emitent",
     "encryption_hostnames": "Nume de host",
     "encryption_reset": "Sunteți sigur că doriți să resetați setările de criptare?",
+    "encryption_warning": "Avertisment",
     "topline_expiring_certificate": "Certificatul dvs. SSL este pe cale să expire. Actualizați <0>Setările de criptare</0>.",
     "topline_expired_certificate": "Certificatul dvs. SSL a expirat. Actualizați <0>Setările de criptare</0>.",
     "form_error_port_range": "Introduceți valoarea portului între 80-65535",

@@ -19,13 +19,13 @@ func (s *Server) beforeRequestHandler(
 	_ *proxy.Proxy,
 	pctx *proxy.DNSContext,
 ) (reply bool, err error) {
-	ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
 	clientID, err := s.clientIDFromDNSContext(pctx)
 	if err != nil {
 		return false, fmt.Errorf("getting clientid: %w", err)
 	}
 
-	blocked, _ := s.IsBlockedClient(ip, clientID)
+	addrPort := netutil.NetAddrToAddrPort(pctx.Addr)
+	blocked, _ := s.IsBlockedClient(addrPort.Addr(), clientID)
 	if blocked {
 		return s.preBlockedResponse(pctx)
 	}

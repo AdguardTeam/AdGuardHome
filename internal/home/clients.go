@@ -129,7 +129,7 @@ type RuntimeClientWHOISInfo struct {
 
 type clientsContainer struct {
 	// TODO(a.garipov): Perhaps use a number of separate indices for
-	// different types (string, net.IP, and so on).
+	// different types (string, netip.Addr, and so on).
 	list    map[string]*Client // name -> client
 	idIndex map[string]*Client // ID -> client
 
@@ -333,7 +333,7 @@ func (clients *clientsContainer) onDHCPLeaseChanged(flags int) {
 }
 
 // exists checks if client with this IP address already exists.
-func (clients *clientsContainer) exists(ip net.IP, source clientSource) (ok bool) {
+func (clients *clientsContainer) exists(ip netip.Addr, source clientSource) (ok bool) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -342,7 +342,7 @@ func (clients *clientsContainer) exists(ip net.IP, source clientSource) (ok bool
 		return true
 	}
 
-	rc, ok := clients.findRuntimeClientLocked(ip)
+	rc, ok := clients.ipToRC[ip]
 	if !ok {
 		return false
 	}
@@ -371,7 +371,8 @@ func (clients *clientsContainer) findMultiple(ids []string) (c *querylog.Client,
 	var artClient *querylog.Client
 	var art bool
 	for _, id := range ids {
-		c, art = clients.clientOrArtificial(net.ParseIP(id), id)
+		ip, _ := netip.ParseAddr(id)
+		c, art = clients.clientOrArtificial(ip, id)
 		if art {
 			artClient = c
 
@@ -389,7 +390,7 @@ func (clients *clientsContainer) findMultiple(ids []string) (c *querylog.Client,
 // records about this client besides maybe whether or not it is blocked.  c is
 // never nil.
 func (clients *clientsContainer) clientOrArtificial(
-	ip net.IP,
+	ip netip.Addr,
 	id string,
 ) (c *querylog.Client, art bool) {
 	defer func() {
@@ -404,13 +405,6 @@ func (clients *clientsContainer) clientOrArtificial(
 		return &querylog.Client{
 			Name: client.Name,
 		}, false
-	}
-
-	if ip == nil {
-		// Technically should never happen, but still.
-		return &querylog.Client{
-			Name: "",
-		}, true
 	}
 
 	var rc *RuntimeClient
@@ -492,19 +486,20 @@ func (clients *clientsContainer) findLocked(id string) (c *Client, ok bool) {
 		return c, true
 	}
 
-	ip := net.ParseIP(id)
-	if ip == nil {
+	ip, err := netip.ParseAddr(id)
+	if err != nil {
 		return nil, false
 	}
 
 	for _, c = range clients.list {
 		for _, id := range c.IDs {
-			_, ipnet, err := net.ParseCIDR(id)
+			var n netip.Prefix
+			n, err = netip.ParsePrefix(id)
 			if err != nil {
 				continue
 			}
 
-			if ipnet.Contains(ip) {
+			if n.Contains(ip) {
 				return c, true
 			}
 		}
@@ -514,19 +509,20 @@ func (clients *clientsContainer) findLocked(id string) (c *Client, ok bool) {
 		return nil, false
 	}
 
-	macFound := clients.dhcpServer.FindMACbyIP(ip)
+	macFound := clients.dhcpServer.FindMACbyIP(ip.AsSlice())
 	if macFound == nil {
 		return nil, false
 	}
 
 	for _, c = range clients.list {
 		for _, id := range c.IDs {
-			hwAddr, err := net.ParseMAC(id)
+			var mac net.HardwareAddr
+			mac, err = net.ParseMAC(id)
 			if err != nil {
 				continue
 			}
 
-			if bytes.Equal(hwAddr, macFound) {
+			if bytes.Equal(mac, macFound) {
 				return c, true
 			}
 		}
@@ -535,32 +531,18 @@ func (clients *clientsContainer) findLocked(id string) (c *Client, ok bool) {
 	return nil, false
 }
 
-// findRuntimeClientLocked finds a runtime client by their IP address.  For
-// internal use only.
-func (clients *clientsContainer) findRuntimeClientLocked(ip net.IP) (rc *RuntimeClient, ok bool) {
-	// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
-	ipAddr, err := netutil.IPToAddrNoMapped(ip)
-	if err != nil {
-		log.Error("clients: bad client ip %v: %s", ip, err)
-
-		return nil, false
-	}
-
-	rc, ok = clients.ipToRC[ipAddr]
-
-	return rc, ok
-}
-
 // findRuntimeClient finds a runtime client by their IP.
-func (clients *clientsContainer) findRuntimeClient(ip net.IP) (rc *RuntimeClient, ok bool) {
-	if ip == nil {
+func (clients *clientsContainer) findRuntimeClient(ip netip.Addr) (rc *RuntimeClient, ok bool) {
+	if ip == (netip.Addr{}) {
 		return nil, false
 	}
 
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	return clients.findRuntimeClientLocked(ip)
+	rc, ok = clients.ipToRC[ip]
+
+	return rc, ok
 }
 
 // check validates the client.
@@ -578,14 +560,16 @@ func (clients *clientsContainer) check(c *Client) (err error) {
 
 	for i, id := range c.IDs {
 		// Normalize structured data.
-		var ip net.IP
-		var ipnet *net.IPNet
-		var mac net.HardwareAddr
-		if ip = net.ParseIP(id); ip != nil {
+		var (
+			ip  netip.Addr
+			n   netip.Prefix
+			mac net.HardwareAddr
+		)
+
+		if ip, err = netip.ParseAddr(id); err == nil {
 			c.IDs[i] = ip.String()
-		} else if ip, ipnet, err = net.ParseCIDR(id); err == nil {
-			ipnet.IP = ip
-			c.IDs[i] = ipnet.String()
+		} else if n, err = netip.ParsePrefix(id); err == nil {
+			c.IDs[i] = n.String()
 		} else if mac, err = net.ParseMAC(id); err == nil {
 			c.IDs[i] = mac.String()
 		} else if err = dnsforward.ValidateClientID(id); err == nil {
@@ -750,7 +734,7 @@ func (clients *clientsContainer) Update(name string, c *Client) (err error) {
 }
 
 // setWHOISInfo sets the WHOIS information for a client.
-func (clients *clientsContainer) setWHOISInfo(ip net.IP, wi *RuntimeClientWHOISInfo) {
+func (clients *clientsContainer) setWHOISInfo(ip netip.Addr, wi *RuntimeClientWHOISInfo) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -760,7 +744,7 @@ func (clients *clientsContainer) setWHOISInfo(ip net.IP, wi *RuntimeClientWHOISI
 		return
 	}
 
-	rc, ok := clients.findRuntimeClientLocked(ip)
+	rc, ok := clients.ipToRC[ip]
 	if ok {
 		rc.WHOISInfo = wi
 		log.Debug("clients: set whois info for runtime client %s: %+v", rc.Host, wi)
@@ -776,32 +760,22 @@ func (clients *clientsContainer) setWHOISInfo(ip net.IP, wi *RuntimeClientWHOISI
 
 	rc.WHOISInfo = wi
 
-	// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
-	ipAddr, err := netutil.IPToAddrNoMapped(ip)
-	if err != nil {
-		log.Error("clients: bad client ip %v: %s", ip, err)
-
-		return
-	}
-
-	clients.ipToRC[ipAddr] = rc
+	clients.ipToRC[ip] = rc
 
 	log.Debug("clients: set whois info for runtime client with ip %s: %+v", ip, wi)
 }
 
 // AddHost adds a new IP-hostname pairing.  The priorities of the sources are
 // taken into account.  ok is true if the pairing was added.
-func (clients *clientsContainer) AddHost(ip net.IP, host string, src clientSource) (ok bool, err error) {
+func (clients *clientsContainer) AddHost(
+	ip netip.Addr,
+	host string,
+	src clientSource,
+) (ok bool) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
-	ipAddr, err := netutil.IPToAddrNoMapped(ip)
-	if err != nil {
-		return false, fmt.Errorf("adding host: %w", err)
-	}
-
-	return clients.addHostLocked(ipAddr, host, src), nil
+	return clients.addHostLocked(ip, host, src)
 }
 
 // addHostLocked adds a new IP-hostname pairing.  clients.lock is expected to be

@@ -47,6 +47,9 @@ type options struct {
 	// disableUpdate, if set, makes AdGuard Home not check for updates.
 	disableUpdate bool
 
+	// performUpdate, if set, updates AdGuard Home without GUI and exits.
+	performUpdate bool
+
 	// verbose shows if verbose logging is enabled.
 	verbose bool
 
@@ -220,6 +223,14 @@ var cmdLineOpts = []cmdLineOpt{{
 	serialize:       func(o options) (val string, ok bool) { return "", o.disableUpdate },
 	description:     "Don't check for updates.",
 	longName:        "no-check-update",
+	shortName:       "",
+}, {
+	updateWithValue: nil,
+	updateNoValue:   func(o options) (options, error) { o.performUpdate = true; return o, nil },
+	effect:          nil,
+	serialize:       func(o options) (val string, ok bool) { return "", o.performUpdate },
+	description:     "Update application and exit.",
+	longName:        "update",
 	shortName:       "",
 }, {
 	updateWithValue: nil,

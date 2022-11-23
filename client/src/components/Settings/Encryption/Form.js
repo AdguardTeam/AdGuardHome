@@ -56,6 +56,26 @@ const clearFields = (change, setTlsConfig, t) => {
     }
 };
 
+const validationMessage = (warningValidation, isWarning) => {
+    if (!warningValidation) {
+        return null;
+    }
+
+    if (isWarning) {
+        return (
+            <div className="col-12">
+                <p><Trans>encryption_warning</Trans>: {warningValidation}</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="col-12">
+            <p className="text-danger">{warningValidation}</p>
+        </div>
+    );
+};
+
 let Form = (props) => {
     const {
         t,
@@ -94,6 +114,8 @@ let Form = (props) => {
         || !valid_key
         || !valid_cert
         || !valid_pair;
+
+    const isWarning = valid_key && valid_cert && valid_pair;
 
     return (
         <form onSubmit={handleSubmit}>
@@ -382,11 +404,7 @@ let Form = (props) => {
                         )}
                     </div>
                 </div>
-                {warning_validation && (
-                    <div className="col-12">
-                        <p className="text-danger">{warning_validation}</p>
-                    </div>
-                )}
+                {validationMessage(warning_validation, isWarning)}
             </div>
 
             <div className="btn-list mt-2">

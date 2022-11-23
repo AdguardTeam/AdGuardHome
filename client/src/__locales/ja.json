@@ -393,6 +393,7 @@
     "encryption_issuer": "発行者",
     "encryption_hostnames": "ホスト名",
     "encryption_reset": "暗号化設定をリセットして良いですか？",
+    "encryption_warning": "警告",
     "topline_expiring_certificate": "SSL証明書は期限切れになります。<0>暗号化設定</0>を更新します。",
     "topline_expired_certificate": "SSL証明書は期限切れです。<0>暗号化設定</0>を更新します。",
     "form_error_port_range": "80〜65535 の範囲内でポート番号を入力してください",

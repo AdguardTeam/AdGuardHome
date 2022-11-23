@@ -393,6 +393,7 @@
     "encryption_issuer": "Izdajatelj",
     "encryption_hostnames": "Imena gostiteljev",
     "encryption_reset": "Ali ste prepričani, da želite ponastaviti nastavitve šifriranja?",
+    "encryption_warning": "Opozorilo",
     "topline_expiring_certificate": "Vaš e digitalno potrdilo SSL bo kmalu poteklol. Posodobite <0>Nastavitve šifriranja</0>.",
     "topline_expired_certificate": "Vaše digitalno potrdilo SSL je poteklo. Posodobi <0>Nastavitve šifriranja</0>.",
     "form_error_port_range": "Vnesite številko vrat v razponu med 80-65535",

@@ -3,8 +3,8 @@ package home
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
+	"net/netip"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 )
@@ -47,8 +47,8 @@ type runtimeClientJSON struct {
 	WHOISInfo *RuntimeClientWHOISInfo `json:"whois_info"`
 
 	Name   string       `json:"name"`
+	IP     netip.Addr   `json:"ip"`
 	Source clientSource `json:"source"`
-	IP     net.IP       `json:"ip"`
 }
 
 type clientListJSON struct {
@@ -75,7 +75,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 
 			Name:   rc.Host,
 			Source: rc.Source,
-			IP:     ip.AsSlice(),
+			IP:     ip,
 		}
 
 		data.RuntimeClients = append(data.RuntimeClients, cj)
@@ -218,7 +218,7 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 			break
 		}
 
-		ip := net.ParseIP(idStr)
+		ip, _ := netip.ParseAddr(idStr)
 		c, ok := clients.Find(idStr)
 		var cj *clientJSON
 		if !ok {
@@ -240,7 +240,7 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 // findRuntime looks up the IP in runtime and temporary storages, like
 // /etc/hosts tables, DHCP leases, or blocklists.  cj is guaranteed to be
 // non-nil.
-func (clients *clientsContainer) findRuntime(ip net.IP, idStr string) (cj *clientJSON) {
+func (clients *clientsContainer) findRuntime(ip netip.Addr, idStr string) (cj *clientJSON) {
 	rc, ok := clients.findRuntimeClient(ip)
 	if !ok {
 		// It is still possible that the IP used to be in the runtime clients

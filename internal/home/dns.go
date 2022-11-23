@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -150,8 +151,8 @@ func isRunning() bool {
 }
 
 func onDNSRequest(pctx *proxy.DNSContext) {
-	ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
-	if ip == nil {
+	ip := netutil.NetAddrToAddrPort(pctx.Addr).Addr()
+	if ip == (netip.Addr{}) {
 		// This would be quite weird if we get here.
 		return
 	}
@@ -160,7 +161,8 @@ func onDNSRequest(pctx *proxy.DNSContext) {
 	if srcs.RDNS && !ip.IsLoopback() {
 		Context.rdns.Begin(ip)
 	}
-	if srcs.WHOIS && !netutil.IsSpecialPurpose(ip) {
+
+	if srcs.WHOIS && !netutil.IsSpecialPurposeAddr(ip) {
 		Context.whois.Begin(ip)
 	}
 }
@@ -193,11 +195,7 @@ func ipsToUDPAddrs(ips []netip.Addr, port int) (udpAddrs []*net.UDPAddr) {
 
 func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	dnsConf := config.DNS
-	hosts := dnsConf.BindHosts
-	if len(hosts) == 0 {
-		hosts = []netip.Addr{aghnet.IPv4Localhost()}
-	}
-
+	hosts := aghalg.CoalesceSlice(dnsConf.BindHosts, []netip.Addr{netutil.IPv4Localhost()})
 	newConf = dnsforward.ServerConfig{
 		UDPListenAddrs:  ipsToUDPAddrs(hosts, dnsConf.Port),
 		TCPListenAddrs:  ipsToTCPAddrs(hosts, dnsConf.Port),
@@ -400,15 +398,12 @@ func startDNSServer() error {
 
 	const topClientsNumber = 100 // the number of clients to get
 	for _, ip := range Context.stats.TopClientsIP(topClientsNumber) {
-		if ip == nil {
-			continue
-		}
-
 		srcs := config.Clients.Sources
 		if srcs.RDNS && !ip.IsLoopback() {
 			Context.rdns.Begin(ip)
 		}
-		if srcs.WHOIS && !netutil.IsSpecialPurpose(ip) {
+
+		if srcs.WHOIS && !netutil.IsSpecialPurposeAddr(ip) {
 			Context.whois.Begin(ip)
 		}
 	}

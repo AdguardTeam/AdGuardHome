@@ -31,12 +31,6 @@ var (
 // the IP being static is available.
 const ErrNoStaticIPInfo errors.Error = "no information about static ip"
 
-// IPv4Localhost returns 127.0.0.1, which returns true for [netip.Addr.Is4].
-func IPv4Localhost() (ip netip.Addr) { return netip.AddrFrom4([4]byte{127, 0, 0, 1}) }
-
-// IPv6Localhost returns ::1, which returns true for [netip.Addr.Is6].
-func IPv6Localhost() (ip netip.Addr) { return netip.AddrFrom16([16]byte{15: 1}) }
-
 // IfaceHasStaticIP checks if interface is configured to have static IP address.
 // If it can't give a definitive answer, it returns false and an error for which
 // errors.Is(err, ErrNoStaticIPInfo) is true.

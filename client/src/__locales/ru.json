@@ -393,6 +393,7 @@
     "encryption_issuer": "Издатель",
     "encryption_hostnames": "Имена хостов",
     "encryption_reset": "Вы уверены, что хотите сбросить настройки шифрования?",
+    "encryption_warning": "Предупреждение",
     "topline_expiring_certificate": "Ваш SSL-сертификат скоро истекает. Обновите <0>Настройки шифрования</0>.",
     "topline_expired_certificate": "Ваш SSL-сертификат истёк. Обновите <0>Настройки шифрования</0>.",
     "form_error_port_range": "Введите номер порта из интервала 80-65535",

@@ -244,6 +244,7 @@
     "encryption_issuer": "Изпълнител",
     "encryption_hostnames": "Имена на хоста",
     "encryption_reset": "Сигурни ли сте че искате да изтриете настройките за криптиране?",
+    "encryption_warning": "Внимание",
     "topline_expiring_certificate": "Вашият SSL сертификат изтича. Обнови <0>Настройки за криптиране</0>.",
     "topline_expired_certificate": "Вашият SSL сертификат е изтекъл. Обнови <0>Настройки за криптиране</0>.",
     "form_error_port_range": "Въведете порт в диапазона 80-65535",
