@@ -25,6 +25,10 @@ See also the [v0.107.20 GitHub milestone][ms-v0.107.20].
 [ms-v0.107.20]: https://github.com/AdguardTeam/AdGuardHome/milestone/56?closed=1
 -->
 
+### Fixed
+
+- URLs of some vetter blocklists.
+
 
 
 ## [v0.107.19] - 2022-11-23

@@ -74,7 +74,11 @@ func main() {
 			Name:       f.Name,
 			CategoryID: cat,
 			Homepage:   f.Homepage,
-			Source:     f.SourceURL,
+			// NOTE: The source URL in filters.json is not guaranteed to contain
+			// the URL of the filtering rule list.  So, use our mirror for the
+			// vetted blocklists, which are mostly guaranteed to be valid and
+			// available lists.
+			Source: f.DownloadURL,
 		}
 	}
 
@@ -114,11 +118,11 @@ type hlFilters struct {
 
 // hlFiltersFilter is the JSON structure for a filter in the Hostlists Registry.
 type hlFiltersFilter struct {
-	FilterID  string   `json:"filterId"`
-	Name      string   `json:"name"`
-	Homepage  string   `json:"homepage"`
-	SourceURL string   `json:"sourceUrl"`
-	Tags      []string `json:"tags"`
+	DownloadURL string   `json:"downloadUrl"`
+	FilterID    string   `json:"filterId"`
+	Homepage    string   `json:"homepage"`
+	Name        string   `json:"name"`
+	Tags        []string `json:"tags"`
 }
 
 // category returns the AdGuard Home category for this filter.  If there is no
