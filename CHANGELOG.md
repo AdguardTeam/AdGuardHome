@@ -27,6 +27,9 @@ See also the [v0.107.20 GitHub milestone][ms-v0.107.20].
 
 ### Fixed
 
+- The TLS initialization errors preventing AdGuard Home from starting ([#5189]).
+  Instead, AdGuard Home disables encryption and shows an error message on the
+  encryption settings page in the UI, which was the intended previous behavior.
 - URLs of some vetter blocklists.
 
 

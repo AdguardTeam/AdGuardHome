@@ -514,7 +514,8 @@ func run(opts options, clientBuildFS fs.FS) {
 
 	Context.tls, err = newTLSManager(config.TLS)
 	if err != nil {
-		log.Fatalf("initializing tls: %s", err)
+		log.Error("initializing tls: %s", err)
+		onConfigModified()
 	}
 
 	Context.web, err = initWeb(opts, clientBuildFS)

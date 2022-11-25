@@ -40,7 +40,9 @@ type tlsManager struct {
 	conf     tlsConfigSettings
 }
 
-// newTLSManager initializes the TLS configuration.
+// newTLSManager initializes the manager of TLS configuration.  m is always
+// non-nil while any returned error indicates that the TLS configuration isn't
+// valid.  Thus TLS may be initialized later, e.g. via the web UI.
 func newTLSManager(conf tlsConfigSettings) (m *tlsManager, err error) {
 	m = &tlsManager{
 		status: &tlsConfigStatus{},
@@ -50,7 +52,9 @@ func newTLSManager(conf tlsConfigSettings) (m *tlsManager, err error) {
 	if m.conf.Enabled {
 		err = m.load()
 		if err != nil {
-			return nil, err
+			m.conf.Enabled = false
+
+			return m, err
 		}
 
 		m.setCertFileTime()
