@@ -219,8 +219,6 @@ var _ Interface = (*server)(nil)
 
 // Create initializes and returns the DHCP server handling both address
 // families.  It also registers the corresponding HTTP API endpoints.
-//
-// TODO(e.burkov):  Don't register handlers, see TODO on [aghhttp.RegisterFunc].
 func Create(conf *ServerConfig) (s *server, err error) {
 	s = &server{
 		conf: &ServerConfig{
@@ -237,6 +235,8 @@ func Create(conf *ServerConfig) (s *server, err error) {
 		},
 	}
 
+	// TODO(e.burkov):  Don't register handlers, see TODO on
+	// [aghhttp.RegisterFunc].
 	s.registerHandlers()
 
 	v4conf := conf.Conf4
@@ -250,7 +250,7 @@ func Create(conf *ServerConfig) (s *server, err error) {
 			return nil, fmt.Errorf("creating dhcpv4 srv: %w", err)
 		}
 
-		log.Error("creating dhcpv4 srv: %s", err)
+		log.Debug("dhcpd: warning: creating dhcpv4 srv: %s", err)
 	}
 
 	v6conf := conf.Conf6

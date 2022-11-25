@@ -25,12 +25,20 @@ See also the [v0.107.20 GitHub milestone][ms-v0.107.20].
 [ms-v0.107.20]: https://github.com/AdguardTeam/AdGuardHome/milestone/56?closed=1
 -->
 
+### Changed
+
+- DHCP server initialization errors are now logged at debug level if the server
+  itself disabled ([#4944]).
+
 ### Fixed
 
 - The TLS initialization errors preventing AdGuard Home from starting ([#5189]).
   Instead, AdGuard Home disables encryption and shows an error message on the
   encryption settings page in the UI, which was the intended previous behavior.
 - URLs of some vetter blocklists.
+
+[#4944]: https://github.com/AdguardTeam/AdGuardHome/issues/4944
+[#5189]: https://github.com/AdguardTeam/AdGuardHome/issues/5189
 
 
 
