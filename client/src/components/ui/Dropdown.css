@@ -6,3 +6,7 @@
 .dropdown-menu {
     cursor: default;
 }
+
+.dropdown > .nav-link {
+    background-color: transparent;
+}

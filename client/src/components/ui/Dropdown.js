@@ -11,6 +11,14 @@ class Dropdown extends Component {
         isOpen: false,
     };
 
+    componentDidMount() {
+        document.addEventListener('keydown', this.keydown, false);
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener('keydown', this.keydown, false);
+    }
+
     toggleDropdown = () => {
         this.setState((prevState) => ({ isOpen: !prevState.isOpen }));
     };
@@ -24,6 +32,13 @@ class Dropdown extends Component {
             this.hideDropdown();
         }
     };
+
+    keydown = (event) => {
+        if (event.key === 'Escape' && this.state.isOpen) {
+            this.hideDropdown();
+            document.querySelector(`#${this.props.label}-dropdown-button`).focus();
+        }
+    }
 
     render() {
         const {
@@ -51,10 +66,11 @@ class Dropdown extends Component {
 
         return (
             <div className={dropdownClass}>
-                <a
+                <button
                     className={controlClassName}
                     aria-expanded={ariaSettings}
                     onClick={this.toggleDropdown}
+                    id={`${label}-dropdown-button`}
                 >
                     {icon && (
                         <svg className="nav-icon">
@@ -62,7 +78,7 @@ class Dropdown extends Component {
                         </svg>
                     )}
                     {label}
-                </a>
+                </button>
                 <div className={dropdownMenuClass} onClick={this.hideDropdown}>
                     {children}
                 </div>

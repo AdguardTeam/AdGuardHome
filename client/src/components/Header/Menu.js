@@ -7,30 +7,23 @@ import { Trans, withTranslation } from 'react-i18next';
 import { SETTINGS_URLS, FILTERS_URLS, MENU_URLS } from '../../helpers/constants';
 import Dropdown from '../ui/Dropdown';
 
+const DASHBOARD = {
+    route: MENU_URLS.root,
+    exact: true,
+    icon: 'dashboard',
+    text: 'dashboard',
+};
+
 const MENU_ITEMS = [
-    {
-        route: MENU_URLS.root,
-        exact: true,
-        icon: 'dashboard',
-        text: 'dashboard',
-        order: 0,
-    },
-
-    // Settings dropdown should have visual order 1
-
-    // Filters dropdown should have visual order 2
-
     {
         route: MENU_URLS.logs,
         icon: 'log',
         text: 'query_log',
-        order: 3,
     },
     {
         route: MENU_URLS.guide,
         icon: 'setup',
         text: 'setup_guide',
-        order: 4,
     },
 ];
 
@@ -97,13 +90,13 @@ class Menu extends Component {
     };
 
     getNavLink = ({
-        route, exact, text, order, className, icon,
+        route, exact, text, className, icon,
     }) => (
         <NavLink
             to={route}
             key={route}
             exact={exact || false}
-            className={`order-${order} ${className}`}
+            className={className}
             onClick={this.closeMenu}
         >
             {icon && (
@@ -116,7 +109,7 @@ class Menu extends Component {
     );
 
     getDropdown = ({
-        label, order, URLS, icon, ITEMS,
+        label, URLS, icon, ITEMS,
     }) => (
         <Dropdown
             label={this.props.t(label)}
@@ -126,7 +119,6 @@ class Menu extends Component {
             {ITEMS.map((item) => (
                 this.getNavLink({
                     ...item,
-                    order,
                     className: 'dropdown-item',
                 })))}
         </Dropdown>
@@ -138,12 +130,37 @@ class Menu extends Component {
             'mobile-menu--active': this.props.isMenuOpen,
         });
         return (
-            <>
                 <div className={menuClass}>
                     <ul className="nav nav-tabs border-0 flex-column flex-lg-row flex-nowrap">
+                        <li
+                            className={'nav-item'}
+                            key={'dashboard'}
+                            onClick={this.closeMenu}
+                        >
+                            {this.getNavLink({
+                                ...DASHBOARD,
+                                className: 'nav-link',
+                            })}
+                        </li>
+                        <li className="nav-item">
+                            {this.getDropdown({
+                                label: 'settings',
+                                icon: 'settings',
+                                URLS: SETTINGS_URLS,
+                                ITEMS: SETTINGS_ITEMS,
+                            })}
+                        </li>
+                        <li className="nav-item">
+                            {this.getDropdown({
+                                label: 'filters',
+                                icon: 'filters',
+                                URLS: FILTERS_URLS,
+                                ITEMS: FILTERS_ITEMS,
+                            })}
+                        </li>
                         {MENU_ITEMS.map((item) => (
                             <li
-                                className={`nav-item order-${item.order}`}
+                                className={'nav-item'}
                                 key={item.text}
                                 onClick={this.closeMenu}
                             >
@@ -153,27 +170,8 @@ class Menu extends Component {
                                 })}
                             </li>
                         ))}
-                        <li className="nav-item order-1">
-                            {this.getDropdown({
-                                order: 1,
-                                label: 'settings',
-                                icon: 'settings',
-                                URLS: SETTINGS_URLS,
-                                ITEMS: SETTINGS_ITEMS,
-                            })}
-                        </li>
-                        <li className="nav-item order-2">
-                            {this.getDropdown({
-                                order: 2,
-                                label: 'filters',
-                                icon: 'filters',
-                                URLS: FILTERS_URLS,
-                                ITEMS: FILTERS_ITEMS,
-                            })}
-                        </li>
                     </ul>
                 </div>
-            </>
         );
     }
 }
