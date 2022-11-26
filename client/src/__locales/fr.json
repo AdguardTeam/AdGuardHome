@@ -393,6 +393,7 @@
     "encryption_issuer": "Émetteur",
     "encryption_hostnames": "Noms d'hôte",
     "encryption_reset": "Voulez-vous vraiment réinitialiser les paramètres de chiffrement ?",
+    "encryption_warning": "Attention",
     "topline_expiring_certificate": "Votre certificat SSL est sur le point d'expirer. Mettez à jour vos <0>Paramètres de chiffrement</0>.",
     "topline_expired_certificate": "Votre certificat SSL a expiré. Mettez à jour vos <0>Paramètres de chiffrement</0>.",
     "form_error_port_range": "Saisissez une valeur de port entre 80 et 65535",

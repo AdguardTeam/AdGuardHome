@@ -393,6 +393,7 @@
     "encryption_issuer": "Kibocsátó",
     "encryption_hostnames": "Hosztnevek",
     "encryption_reset": "Biztosan visszaállítja a titkosítási beállításokat?",
+    "encryption_warning": "Figyelmeztetés",
     "topline_expiring_certificate": "Az SSL-tanúsítványa hamarosan lejár. Frissítse a <0>Titkosítási beállításokat</0>.",
     "topline_expired_certificate": "Az SSL-tanúsítványa lejárt. Frissítse a <0>Titkosítási beállításokat</0>.",
     "form_error_port_range": "Adjon meg egy portszámot a 80-65535 tartományon belül",

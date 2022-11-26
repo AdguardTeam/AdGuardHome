@@ -40,7 +40,9 @@ type tlsManager struct {
 	conf     tlsConfigSettings
 }
 
-// newTLSManager initializes the TLS configuration.
+// newTLSManager initializes the manager of TLS configuration.  m is always
+// non-nil while any returned error indicates that the TLS configuration isn't
+// valid.  Thus TLS may be initialized later, e.g. via the web UI.
 func newTLSManager(conf tlsConfigSettings) (m *tlsManager, err error) {
 	m = &tlsManager{
 		status: &tlsConfigStatus{},
@@ -50,7 +52,9 @@ func newTLSManager(conf tlsConfigSettings) (m *tlsManager, err error) {
 	if m.conf.Enabled {
 		err = m.load()
 		if err != nil {
-			return nil, err
+			m.conf.Enabled = false
+
+			return m, err
 		}
 
 		m.setCertFileTime()
@@ -513,6 +517,11 @@ func validateCertChain(certs []*x509.Certificate, srvName string) (err error) {
 	return nil
 }
 
+// errNoIPInCert is the error that is returned from [parseCertChain] if the leaf
+// certificate doesn't contain IPs.
+const errNoIPInCert errors.Error = `certificates has no IP addresses; ` +
+	`DNS-over-TLS won't be advertised via DDR`
+
 // parseCertChain parses the certificate chain from raw data, and returns it.
 // If ok is true, the returned error, if any, is not critical.
 func parseCertChain(chain []byte) (parsedCerts []*x509.Certificate, ok bool, err error) {
@@ -535,8 +544,7 @@ func parseCertChain(chain []byte) (parsedCerts []*x509.Certificate, ok bool, err
 	log.Info("tls: number of certs: %d", len(parsedCerts))
 
 	if !aghtls.CertificateHasIP(parsedCerts[0]) {
-		err = errors.Error(`certificate has no IP addresses` +
-			`, this may cause issues with DNS-over-TLS clients`)
+		err = errNoIPInCert
 	}
 
 	return parsedCerts, true, err

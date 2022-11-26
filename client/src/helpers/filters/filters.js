@@ -26,37 +26,37 @@ export default {
             "name": "1Hosts (Lite)",
             "categoryId": "general",
             "homepage": "https://badmojr.github.io/1Hosts/",
-            "source": "https://badmojr.gitlab.io/1hosts/Lite/adblock.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_24.txt"
         },
         "CHN_adrules": {
             "name": "CHN: AdRules DNS List",
             "categoryId": "regional",
             "homepage": "https://github.com/Cats-Team/AdRules",
-            "source": "https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_29.txt"
         },
         "CHN_anti_ad": {
             "name": "CHN: anti-AD",
             "categoryId": "regional",
             "homepage": "https://anti-ad.net/",
-            "source": "https://anti-ad.net/easylist.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_21.txt"
         },
         "IDN_abpindo": {
             "name": "IDN: ABPindo",
             "categoryId": "regional",
             "homepage": "https://github.com/ABPindo/indonesianadblockrules",
-            "source": "https://raw.githubusercontent.com/ABPindo/indonesianadblockrules/master/subscriptions/aghome.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_22.txt"
         },
         "IRN_unwanted_iranian_domains": {
             "name": "IRN: PersianBlocker list",
             "categoryId": "regional",
             "homepage": "https://github.com/MasterKia/PersianBlocker",
-            "source": "https://raw.githubusercontent.com/MasterKia/PersianBlocker/main/PersianBlockerHosts.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_19.txt"
         },
         "ITA_filtri_dns": {
             "name": "ITA: Filtri-DNS",
             "categoryId": "regional",
             "homepage": "https://filtri-dns.ga/",
-            "source": "https://filtri-dns.ga/filtri.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_18.txt"
         },
         "KOR_list_kr": {
             "name": "KOR: List-KR DNS",
@@ -68,157 +68,157 @@ export default {
             "name": "KOR: YousList",
             "categoryId": "regional",
             "homepage": "https://github.com/yous/YousList",
-            "source": "https://raw.githubusercontent.com/yous/YousList/master/hosts.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_15.txt"
         },
         "MKD_macedonian_pi_hole_blocklist": {
             "name": "MKD: Macedonian Pi-hole Blocklist",
             "categoryId": "regional",
             "homepage": "https://github.com/cchevy/macedonian-pi-hole-blocklist",
-            "source": "https://raw.githubusercontent.com/cchevy/macedonian-pi-hole-blocklist/master/hosts.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_20.txt"
         },
         "NOR_dandelion_sprouts_anti_malware_list": {
             "name": "NOR: Dandelion Sprouts nordiske filtre",
             "categoryId": "regional",
             "homepage": "https://github.com/DandelionSprout/adfilt",
-            "source": "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/NorwegianExperimentalList%20alternate%20versions/NordicFiltersAdGuardHome.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_13.txt"
         },
         "POL_polish_filters_for_pi_hole": {
             "name": "POL: Polish filters for Pi hole",
             "categoryId": "regional",
             "homepage": "https://www.certyficate.it/",
-            "source": "https://raw.githubusercontent.com/MajkiIT/polish-ads-filter/master/polish-pihole-filters/hostfile.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_14.txt"
         },
         "SWE_frellwit_swedish_hosts_file": {
             "name": "SWE: Frellwit's Swedish Hosts File",
             "categoryId": "regional",
             "homepage": "https://github.com/lassekongo83/Frellwits-filter-lists/",
-            "source": "https://raw.githubusercontent.com/lassekongo83/Frellwits-filter-lists/master/Frellwits-Swedish-Hosts-File.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_17.txt"
         },
         "TUR_turk_adlist": {
             "name": "TUR: turk-adlist",
             "categoryId": "regional",
             "homepage": "https://github.com/bkrucarci/turk-adlist",
-            "source": "https://raw.githubusercontent.com/bkrucarci/turk-adlist/master/hosts"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_26.txt"
         },
         "VNM_abpvn": {
             "name": "VNM: ABPVN List",
             "categoryId": "regional",
             "homepage": "http://abpvn.com/",
-            "source": "https://abpvn.com/android/abpvn.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_16.txt"
         },
         "adguard_dns_filter": {
             "name": "AdGuard DNS filter",
             "categoryId": "general",
             "homepage": "https://github.com/AdguardTeam/AdGuardSDNSFilter",
-            "source": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt"
         },
         "adway_default_blocklist": {
             "name": "AdAway Default Blocklist",
             "categoryId": "general",
             "homepage": "https://github.com/AdAway/adaway.github.io/",
-            "source": "https://adaway.org/hosts.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt"
         },
         "curben_phishing_filter": {
             "name": "Phishing URL Blocklist (PhishTank and OpenPhish)",
             "categoryId": "security",
             "homepage": "https://gitlab.com/malware-filter/phishing-filter",
-            "source": "https://malware-filter.gitlab.io/malware-filter/phishing-filter-agh.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_30.txt"
         },
         "dan_pollocks_list": {
             "name": "Dan Pollock's List",
             "categoryId": "general",
             "homepage": "https://someonewhocares.org/",
-            "source": "https://someonewhocares.org/hosts/zero/hosts"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_4.txt"
         },
         "dandelion_sprouts_anti_malware_list": {
             "name": "Dandelion Sprout's Anti-Malware List",
             "categoryId": "security",
             "homepage": "https://github.com/DandelionSprout/adfilt",
-            "source": "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareAdGuardHome.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_12.txt"
         },
         "dandelion_sprouts_game_console_adblock_list": {
             "name": "Dandelion Sprout's Game Console Adblock List",
             "categoryId": "other",
             "homepage": "https://github.com/DandelionSprout/adfilt",
-            "source": "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/GameConsoleAdblockList.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_6.txt"
         },
         "energized_spark": {
             "name": "Energized Spark",
             "categoryId": "general",
             "homepage": "https://energized.pro/",
-            "source": "https://block.energized.pro/spark/formats/filter"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_28.txt"
         },
         "nocoin_filter_list": {
             "name": "NoCoin Filter List",
             "categoryId": "security",
             "homepage": "https://github.com/hoshsadiq/adblock-nocoin-list/",
-            "source": "https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/hosts.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_8.txt"
         },
         "notracking_hosts_blocklists": {
             "name": "The NoTracking blocklist",
             "categoryId": "general",
             "homepage": "https://github.com/notracking/hosts-blocklists",
-            "source": "https://raw.githubusercontent.com/notracking/hosts-blocklists/master/adblock/adblock.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_32.txt"
         },
         "oisd_basic": {
             "name": "OISD Blocklist Basic",
             "categoryId": "general",
             "homepage": "https://oisd.nl/",
-            "source": "https://abp.oisd.nl/basic/"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_5.txt"
         },
         "oisd_full": {
             "name": "OISD Blocklist Full",
             "categoryId": "general",
             "homepage": "https://oisd.nl/",
-            "source": "https://abp.oisd.nl/"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_27.txt"
         },
         "perflyst_dandelion_sprout_smart_tv_blocklist_for_adguard_home": {
             "name": "Perflyst and Dandelion Sprout's Smart-TV Blocklist",
             "categoryId": "other",
             "homepage": "https://github.com/Perflyst/PiHoleBlocklist",
-            "source": "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV-AGH.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_7.txt"
         },
         "peter_lowe_list": {
             "name": "Peter Lowe's Blocklist",
             "categoryId": "general",
             "homepage": "https://pgl.yoyo.org/adservers/",
-            "source": "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus\u0026showintro=1\u0026mimetype=plaintext"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_3.txt"
         },
         "scam_blocklist_by_durablenapkin": {
             "name": "Scam Blocklist by DurableNapkin",
             "categoryId": "security",
             "homepage": "https://github.com/durablenapkin/scamblocklist",
-            "source": "https://raw.githubusercontent.com/durablenapkin/scamblocklist/master/adguard.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_10.txt"
         },
         "staklerware_indicators_list": {
             "name": "Stalkerware Indicators List",
             "categoryId": "security",
             "homepage": "https://github.com/AssoEchap/stalkerware-indicators",
-            "source": "https://raw.githubusercontent.com/AssoEchap/stalkerware-indicators/master/generated/hosts"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_31.txt"
         },
         "steven_blacks_list": {
             "name": "Steven Black's List",
             "categoryId": "general",
             "homepage": "https://github.com/StevenBlack/hosts",
-            "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_33.txt"
         },
         "the_big_list_of_hacked_malware_web_sites": {
             "name": "The Big List of Hacked Malware Web Sites",
             "categoryId": "security",
             "homepage": "https://github.com/mitchellkrogza/The-Big-List-of-Hacked-Malware-Web-Sites",
-            "source": "https://raw.githubusercontent.com/mitchellkrogza/The-Big-List-of-Hacked-Malware-Web-Sites/master/hosts"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_9.txt"
         },
         "urlhaus_filter_online": {
             "name": "Malicious URL Blocklist (URLHaus)",
             "categoryId": "security",
             "homepage": "https://gitlab.com/malware-filter/urlhaus-filter",
-            "source": "https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-agh.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt"
         },
         "windowsspyblocker_hosts_spy_rules": {
             "name": "WindowsSpyBlocker - Hosts spy rules",
             "categoryId": "other",
             "homepage": "https://github.com/crazy-max/WindowsSpyBlocker",
-            "source": "https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt"
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_23.txt"
         }
     }
 }

@@ -393,6 +393,7 @@
     "encryption_issuer": "발행자",
     "encryption_hostnames": "호스트 이름",
     "encryption_reset": "암호화 설정을 재설정하시겠습니까?",
+    "encryption_warning": "경고",
     "topline_expiring_certificate": "SSL 인증서가 곧 만료됩니다. 업데이트<0> 암호화 설정</0>.",
     "topline_expired_certificate": "SSL 인증서가 만료되었습니다. 업데이트<0> 암호화 설정</0>.",
     "form_error_port_range": "80-65535 범위의 포트 번호를 입력하세요",

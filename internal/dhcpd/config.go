@@ -137,14 +137,14 @@ func (c *V4ServerConf) Validate() (err error) {
 
 	gatewayIP, err := ensureV4(c.GatewayIP, "address")
 	if err != nil {
-		// Don't wrap an errors since it's informative enough as is and there is
+		// Don't wrap the error since it's informative enough as is and there is
 		// an annotation deferred already.
 		return err
 	}
 
 	subnetMask, err := ensureV4(c.SubnetMask, "subnet mask")
 	if err != nil {
-		// Don't wrap an errors since it's informative enough as is and there is
+		// Don't wrap the error since it's informative enough as is and there is
 		// an annotation deferred already.
 		return err
 	}
@@ -155,20 +155,21 @@ func (c *V4ServerConf) Validate() (err error) {
 
 	rangeStart, err := ensureV4(c.RangeStart, "address")
 	if err != nil {
-		// Don't wrap an errors since it's informative enough as is and there is
+		// Don't wrap the error since it's informative enough as is and there is
 		// an annotation deferred already.
 		return err
 	}
+
 	rangeEnd, err := ensureV4(c.RangeEnd, "address")
 	if err != nil {
-		// Don't wrap an errors since it's informative enough as is and there is
+		// Don't wrap the error since it's informative enough as is and there is
 		// an annotation deferred already.
 		return err
 	}
 
 	c.ipRange, err = newIPRange(rangeStart.AsSlice(), rangeEnd.AsSlice())
 	if err != nil {
-		// Don't wrap an errors since it's informative enough as is and there is
+		// Don't wrap the error since it's informative enough as is and there is
 		// an annotation deferred already.
 		return err
 	}

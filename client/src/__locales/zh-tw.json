@@ -393,6 +393,7 @@
     "encryption_issuer": "簽發者",
     "encryption_hostnames": "主機名稱",
     "encryption_reset": "您確定您想要重置加密設定嗎？",
+    "encryption_warning": "警告",
     "topline_expiring_certificate": "您的安全通訊端層（SSL）憑證即將到期。更新<0>加密設定</0>。",
     "topline_expired_certificate": "您的安全通訊端層（SSL）憑證為已到期的。更新<0>加密設定</0>。",
     "form_error_port_range": "輸入在 80-65535 之範圍內的連接埠號碼",

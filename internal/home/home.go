@@ -514,7 +514,8 @@ func run(opts options, clientBuildFS fs.FS) {
 
 	Context.tls, err = newTLSManager(config.TLS)
 	if err != nil {
-		log.Fatalf("initializing tls: %s", err)
+		log.Error("initializing tls: %s", err)
+		onConfigModified()
 	}
 
 	Context.web, err = initWeb(opts, clientBuildFS)
@@ -541,6 +542,11 @@ func run(opts options, clientBuildFS fs.FS) {
 			}
 		}
 	}
+
+	// TODO(a.garipov): This could be made much earlier and could be done on
+	// the first run as well, but to achieve this we need to bypass requests
+	// over dnsforward resolver.
+	cmdlineUpdate(opts)
 
 	Context.web.Start()
 
@@ -926,4 +932,38 @@ func getHTTPProxy(_ *http.Request) (*url.URL, error) {
 type jsonError struct {
 	// Message is the error message, an opaque string.
 	Message string `json:"message"`
+}
+
+// cmdlineUpdate updates current application and exits.
+func cmdlineUpdate(opts options) {
+	if !opts.performUpdate {
+		return
+	}
+
+	log.Info("starting update")
+
+	if Context.firstRun {
+		log.Info("update not allowed on first run")
+
+		os.Exit(0)
+	}
+
+	_, err := Context.updater.VersionInfo(true)
+	if err != nil {
+		vcu := Context.updater.VersionCheckURL()
+		log.Error("getting version info from %s: %s", vcu, err)
+
+		os.Exit(0)
+	}
+
+	if Context.updater.NewVersion() == "" {
+		log.Info("no updates available")
+
+		os.Exit(0)
+	}
+
+	err = Context.updater.Update()
+	fatalOnError(err)
+
+	os.Exit(0)
 }
