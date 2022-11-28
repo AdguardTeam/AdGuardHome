@@ -2216,6 +2216,11 @@
           'example': true
           'description': >
             Set to true if both certificate and private key are correct.
+        'allow_unencrypted_doh':
+          'type': 'boolean'
+          'example': false
+          'description': >
+            Set to true for allow DoH queries via unencrypted HTTP.
     'NetInterface':
       'type': 'object'
       'description': 'Network interface info'

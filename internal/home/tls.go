@@ -369,6 +369,7 @@ func (m *tlsManager) setConfig(newConf tlsConfigSettings, status *tlsConfigStatu
 	m.conf.PrivateKey = newConf.PrivateKey
 	m.conf.PrivateKeyPath = newConf.PrivateKeyPath
 	m.conf.PrivateKeyData = newConf.PrivateKeyData
+	m.conf.AllowUnencryptedDoH = newConf.AllowUnencryptedDoH
 	m.status = status
 
 	return restartHTTPS
