@@ -17,6 +17,8 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// TODO(d.kolyshev): Rename this file to rewritehttp.go.
+
 // LegacyRewrite is a single legacy DNS rewrite record.
 //
 // Instances of *LegacyRewrite must never be nil.

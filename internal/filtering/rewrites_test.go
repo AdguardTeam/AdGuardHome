@@ -10,6 +10,7 @@ import (
 )
 
 // TODO(e.burkov): All the tests in this file may and should me merged together.
+// TODO(d.kolyshev): Move these tests to rewrite package.
 
 func TestRewrites(t *testing.T) {
 	d, _ := newForTest(t, nil, nil)
