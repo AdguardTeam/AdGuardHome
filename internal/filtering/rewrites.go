@@ -269,6 +269,15 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 	}
 
 	d.confLock.Lock()
+
+	for _, ent := range d.Config.Rewrites {
+		if ent.Domain == rw.Domain && ent.Answer == rw.Answer {
+			aghhttp.Error(r, w, http.StatusBadRequest, "duplicate rewrite")
+			d.confLock.Unlock()
+			return
+		}
+	}
+
 	d.Config.Rewrites = append(d.Config.Rewrites, rw)
 	d.confLock.Unlock()
 	log.Debug("rewrite: added element: %s -> %s [%d]", rw.Domain, rw.Answer, len(d.Config.Rewrites))
