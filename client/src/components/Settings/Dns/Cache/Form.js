@@ -2,10 +2,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
 import { Trans, useTranslation } from 'react-i18next';
-import { shallowEqual, useSelector } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+
 import { renderInputField, toNumber, CheckboxField } from '../../../../helpers/form';
 import { CACHE_CONFIG_FIELDS, FORM_NAME, UINT32_RANGE } from '../../../../helpers/constants';
 import { replaceZeroWithEmptyString } from '../../../../helpers/helpers';
+import { clearDnsCache } from '../../../../actions/dnsConfig';
 
 const INPUTS_FIELDS = [
     {
@@ -32,6 +34,7 @@ const Form = ({
     handleSubmit, submitting, invalid,
 }) => {
     const { t } = useTranslation();
+    const dispatch = useDispatch();
 
     const { processingSetConfig } = useSelector((state) => state.dnsConfig, shallowEqual);
     const {
@@ -39,6 +42,12 @@ const Form = ({
     } = useSelector((state) => state.form[FORM_NAME.CACHE].values, shallowEqual);
 
     const minExceedsMax = cache_ttl_min > cache_ttl_max;
+
+    const handleClearCache = () => {
+        if (window.confirm(t('confirm_dns_cache_clear'))) {
+            dispatch(clearDnsCache());
+        }
+    };
 
     return <form onSubmit={handleSubmit}>
         <div className="row">
@@ -96,6 +105,13 @@ const Form = ({
             disabled={submitting || invalid || processingSetConfig || minExceedsMax}
         >
             <Trans>save_btn</Trans>
+        </button>
+        <button
+            type="button"
+            className="btn btn-outline-secondary btn-standard form__button"
+            onClick={handleClearCache}
+        >
+            <Trans>clear_cache</Trans>
         </button>
     </form>;
 };

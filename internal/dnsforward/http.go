@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/netip"
@@ -669,6 +670,12 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	_ = aghhttp.WriteJSONResponse(w, r, result)
 }
 
+// handleCacheClear is the handler for the POST /control/cache_clear HTTP API.
+func (s *Server) handleCacheClear(w http.ResponseWriter, _ *http.Request) {
+	s.dnsProxy.ClearCache()
+	_, _ = io.WriteString(w, "OK")
+}
+
 // handleDoH is the DNS-over-HTTPs handler.
 //
 // Control flow:
@@ -702,6 +709,8 @@ func (s *Server) registerHandlers() {
 
 	s.conf.HTTPRegister(http.MethodGet, "/control/access/list", s.handleAccessList)
 	s.conf.HTTPRegister(http.MethodPost, "/control/access/set", s.handleAccessSet)
+
+	s.conf.HTTPRegister(http.MethodPost, "/control/cache_clear", s.handleCacheClear)
 
 	// Register both versions, with and without the trailing slash, to
 	// prevent a 301 Moved Permanently redirect when clients request the

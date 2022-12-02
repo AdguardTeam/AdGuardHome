@@ -25,6 +25,10 @@ See also the [v0.107.20 GitHub milestone][ms-v0.107.20].
 [ms-v0.107.20]: https://github.com/AdguardTeam/AdGuardHome/milestone/56?closed=1
 -->
 
+### Added
+
+- The ability to clear the DNS cache ([#5190]).
+
 ### Changed
 
 - DHCP server initialization errors are now logged at debug level if the server
@@ -39,6 +43,7 @@ See also the [v0.107.20 GitHub milestone][ms-v0.107.20].
 
 [#4944]: https://github.com/AdguardTeam/AdGuardHome/issues/4944
 [#5189]: https://github.com/AdguardTeam/AdGuardHome/issues/5189
+[#5190]: https://github.com/AdguardTeam/AdGuardHome/issues/5190
 
 
 
