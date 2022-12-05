@@ -2,7 +2,7 @@ package rewrite
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -26,11 +26,15 @@ func (rw *Item) equal(other *Item) (ok bool) {
 		return false
 	}
 
-	return rw.Domain == other.Domain && rw.Answer == other.Answer
+	return *rw == *other
 }
 
 // toRule converts rw to a filter rule.
 func (rw *Item) toRule() (res string) {
+	if rw == nil {
+		return ""
+	}
+
 	domain := strings.ToLower(rw.Domain)
 
 	dType, exception := rw.rewriteParams()
@@ -53,13 +57,13 @@ func (rw *Item) rewriteParams() (dType uint16, exception bool) {
 		// Go on.
 	}
 
-	ip := net.ParseIP(rw.Answer)
-	if ip == nil {
+	addr, err := netip.ParseAddr(rw.Answer)
+	if err != nil {
+		// TODO(d.kolyshev): Validate rw.Answer as a domain name.
 		return dns.TypeCNAME, false
 	}
 
-	ip4 := ip.To4()
-	if ip4 != nil {
+	if addr.Is4() {
 		dType = dns.TypeA
 	} else {
 		dType = dns.TypeAAAA
