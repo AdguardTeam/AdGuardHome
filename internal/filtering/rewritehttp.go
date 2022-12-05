@@ -5,89 +5,59 @@ import (
 	"net/http"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rewrite"
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// TODO(d.kolyshev): Use [rewrite.Item] instead.
-type rewriteEntryJSON struct {
-	Domain string `json:"domain"`
-	Answer string `json:"answer"`
-}
-
 func (d *DNSFilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
-	arr := []*rewriteEntryJSON{}
+	d.confLock.RLock()
+	defer d.confLock.RUnlock()
 
-	d.confLock.Lock()
-	for _, ent := range d.Config.Rewrites {
-		jsent := rewriteEntryJSON{
-			Domain: ent.Domain,
-			Answer: ent.Answer,
-		}
-		arr = append(arr, &jsent)
-	}
-	d.confLock.Unlock()
-
-	_ = aghhttp.WriteJSONResponse(w, r, arr)
+	_ = aghhttp.WriteJSONResponse(w, r, d.rewriteStorage.List())
 }
 
 func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
-	rwJSON := rewriteEntryJSON{}
-	err := json.NewDecoder(r.Body).Decode(&rwJSON)
+	rw := rewrite.Item{}
+	err := json.NewDecoder(r.Body).Decode(&rw)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
 
 		return
 	}
 
-	rw := &LegacyRewrite{
-		Domain: rwJSON.Domain,
-		Answer: rwJSON.Answer,
-	}
+	d.confLock.Lock()
+	defer d.confLock.Unlock()
 
-	err = rw.normalize()
+	err = d.rewriteStorage.Add(&rw)
 	if err != nil {
-		// Shouldn't happen currently, since normalize only returns a non-nil
-		// error when a rewrite is nil, but be change-proof.
-		aghhttp.Error(r, w, http.StatusBadRequest, "normalizing: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "add rewrite: %s", err)
 
 		return
 	}
 
-	d.confLock.Lock()
-	d.Config.Rewrites = append(d.Config.Rewrites, rw)
-	d.confLock.Unlock()
-	log.Debug("rewrite: added element: %s -> %s [%d]", rw.Domain, rw.Answer, len(d.Config.Rewrites))
+	log.Debug("rewrite: added element: %s -> %s", rw.Domain, rw.Answer)
 
 	d.Config.ConfigModified()
 }
 
 func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) {
-	jsent := rewriteEntryJSON{}
-	err := json.NewDecoder(r.Body).Decode(&jsent)
+	entDel := rewrite.Item{}
+	err := json.NewDecoder(r.Body).Decode(&entDel)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
 
 		return
 	}
 
-	entDel := &LegacyRewrite{
-		Domain: jsent.Domain,
-		Answer: jsent.Answer,
-	}
-	arr := []*LegacyRewrite{}
-
 	d.confLock.Lock()
-	for _, ent := range d.Config.Rewrites {
-		if ent.equal(entDel) {
-			log.Debug("rewrite: removed element: %s -> %s", ent.Domain, ent.Answer)
+	defer d.confLock.Unlock()
 
-			continue
-		}
+	err = d.rewriteStorage.Remove(&entDel)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "remove rewrite: %s", err)
 
-		arr = append(arr, ent)
+		return
 	}
-	d.Config.Rewrites = arr
-	d.confLock.Unlock()
 
 	d.Config.ConfigModified()
 }

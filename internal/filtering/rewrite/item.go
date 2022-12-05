@@ -11,11 +11,11 @@ import (
 // Item is a single DNS rewrite record.
 type Item struct {
 	// Domain is the domain pattern for which this rewrite should work.
-	Domain string `yaml:"domain"`
+	Domain string `yaml:"domain" json:"domain"`
 
 	// Answer is the IP address, canonical name, or one of the special
 	// values: "A" or "AAAA".
-	Answer string `yaml:"answer"`
+	Answer string `yaml:"answer" json:"answer"`
 }
 
 // equal returns true if rw is equal to other.
