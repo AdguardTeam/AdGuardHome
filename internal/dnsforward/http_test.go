@@ -7,16 +7,20 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -391,4 +395,142 @@ func TestValidateUpstreamsPrivate(t *testing.T) {
 			testutil.AssertErrorMsg(t, tc.wantErr, err)
 		})
 	}
+}
+
+func newLocalUpstreamListener(t *testing.T, port int, handler dns.Handler) (real net.Addr) {
+	startCh := make(chan struct{})
+	upsSrv := &dns.Server{
+		Addr:              netip.AddrPortFrom(netutil.IPv4Localhost(), uint16(port)).String(),
+		Net:               "tcp",
+		Handler:           handler,
+		NotifyStartedFunc: func() { close(startCh) },
+	}
+	go func() {
+		t := testutil.PanicT{}
+
+		err := upsSrv.ListenAndServe()
+		require.NoError(t, err)
+	}()
+	<-startCh
+	testutil.CleanupAndRequireSuccess(t, upsSrv.Shutdown)
+
+	return upsSrv.Listener.Addr()
+}
+
+func TestServer_handleTestUpstreaDNS(t *testing.T) {
+	goodHandler := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
+		err := w.WriteMsg(new(dns.Msg).SetReply(m))
+		require.NoError(testutil.PanicT{}, err)
+	})
+	badHandler := dns.HandlerFunc(func(w dns.ResponseWriter, _ *dns.Msg) {
+		err := w.WriteMsg(new(dns.Msg))
+		require.NoError(testutil.PanicT{}, err)
+	})
+
+	goodUps := (&url.URL{
+		Scheme: "tcp",
+		Host:   newLocalUpstreamListener(t, 0, goodHandler).String(),
+	}).String()
+	badUps := (&url.URL{
+		Scheme: "tcp",
+		Host:   newLocalUpstreamListener(t, 0, badHandler).String(),
+	}).String()
+
+	const upsTimeout = 100 * time.Millisecond
+
+	srv := createTestServer(t, &filtering.Config{}, ServerConfig{
+		UDPListenAddrs:  []*net.UDPAddr{{}},
+		TCPListenAddrs:  []*net.TCPAddr{{}},
+		UpstreamTimeout: upsTimeout,
+	}, nil)
+	startDeferStop(t, srv)
+
+	testCases := []struct {
+		body     map[string]any
+		wantResp map[string]any
+		name     string
+	}{{
+		body: map[string]any{
+			"upstream_dns": []string{goodUps},
+		},
+		wantResp: map[string]any{
+			goodUps: "OK",
+		},
+		name: "success",
+	}, {
+		body: map[string]any{
+			"upstream_dns": []string{badUps},
+		},
+		wantResp: map[string]any{
+			badUps: `upstream "` + badUps + `" fails to exchange: ` +
+				`couldn't communicate with upstream: dns: id mismatch`,
+		},
+		name: "broken",
+	}, {
+		body: map[string]any{
+			"upstream_dns": []string{goodUps, badUps},
+		},
+		wantResp: map[string]any{
+			goodUps: "OK",
+			badUps: `upstream "` + badUps + `" fails to exchange: ` +
+				`couldn't communicate with upstream: dns: id mismatch`,
+		},
+		name: "both",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			reqBody, err := json.Marshal(tc.body)
+			require.NoError(t, err)
+
+			w := httptest.NewRecorder()
+			r, err := http.NewRequest(http.MethodPost, "", bytes.NewReader(reqBody))
+			require.NoError(t, err)
+
+			srv.handleTestUpstreamDNS(w, r)
+			require.Equal(t, http.StatusOK, w.Code)
+
+			resp := map[string]any{}
+			err = json.NewDecoder(w.Body).Decode(&resp)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.wantResp, resp)
+		})
+	}
+
+	t.Run("timeout", func(t *testing.T) {
+		slowHandler := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
+			time.Sleep(upsTimeout * 2)
+			writeErr := w.WriteMsg(new(dns.Msg).SetReply(m))
+			require.NoError(testutil.PanicT{}, writeErr)
+		})
+		sleepyUps := (&url.URL{
+			Scheme: "tcp",
+			Host:   newLocalUpstreamListener(t, 0, slowHandler).String(),
+		}).String()
+
+		req := map[string]any{
+			"upstream_dns": []string{sleepyUps},
+		}
+		reqBody, err := json.Marshal(req)
+		require.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest(http.MethodPost, "", bytes.NewReader(reqBody))
+		require.NoError(t, err)
+
+		srv.handleTestUpstreamDNS(w, r)
+		require.Equal(t, http.StatusOK, w.Code)
+
+		resp := map[string]any{}
+		err = json.NewDecoder(w.Body).Decode(&resp)
+		require.NoError(t, err)
+
+		require.Contains(t, resp, sleepyUps)
+		require.IsType(t, "", resp[sleepyUps])
+		sleepyRes, _ := resp[sleepyUps].(string)
+
+		// TODO(e.burkov):  Improve the format of an error in dnsproxy.
+		assert.True(t, strings.HasSuffix(sleepyRes, "i/o timeout"))
+	})
 }

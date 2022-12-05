@@ -36,6 +36,7 @@ See also the [v0.107.20 GitHub milestone][ms-v0.107.20].
 
 ### Fixed
 
+- Slow upstream checks making the API unresponsive ([#5193]).
 - The TLS initialization errors preventing AdGuard Home from starting ([#5189]).
   Instead, AdGuard Home disables encryption and shows an error message on the
   encryption settings page in the UI, which was the intended previous behavior.
@@ -44,6 +45,7 @@ See also the [v0.107.20 GitHub milestone][ms-v0.107.20].
 [#4944]: https://github.com/AdguardTeam/AdGuardHome/issues/4944
 [#5189]: https://github.com/AdguardTeam/AdGuardHome/issues/5189
 [#5190]: https://github.com/AdguardTeam/AdGuardHome/issues/5190
+[#5193]: https://github.com/AdguardTeam/AdGuardHome/issues/5193
 
 
 
