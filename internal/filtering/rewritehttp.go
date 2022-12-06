@@ -9,16 +9,15 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
+// handleRewriteList is the handler for the GET /control/rewrite/list HTTP API.
 func (d *DNSFilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
-	d.confLock.RLock()
-	defer d.confLock.RUnlock()
-
 	_ = aghhttp.WriteJSONResponse(w, r, d.rewriteStorage.List())
 }
 
+// handleRewriteAdd is the handler for the POST /control/rewrite/add HTTP API.
 func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
-	rw := rewrite.Item{}
-	err := json.NewDecoder(r.Body).Decode(&rw)
+	rw := &rewrite.Item{}
+	err := json.NewDecoder(r.Body).Decode(rw)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
 
@@ -28,7 +27,7 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 	d.confLock.Lock()
 	defer d.confLock.Unlock()
 
-	err = d.rewriteStorage.Add(&rw)
+	err = d.rewriteStorage.Add(rw)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "add rewrite: %s", err)
 
@@ -40,6 +39,8 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 	d.Config.ConfigModified()
 }
 
+// handleRewriteDelete is the handler for the POST /control/rewrite/delete HTTP
+// API.
 func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) {
 	entDel := rewrite.Item{}
 	err := json.NewDecoder(r.Body).Decode(&entDel)

@@ -945,7 +945,7 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 
 	d.rewriteStorage, err = rewrite.NewDefaultStorage(RewritesListID, d.Rewrites)
 	if err != nil {
-		return nil, fmt.Errorf("rewrites: init: %s", err)
+		return nil, fmt.Errorf("rewrites: init: %w", err)
 	}
 
 	bsvcs := []string{}
