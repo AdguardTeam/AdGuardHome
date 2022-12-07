@@ -34,7 +34,7 @@ See also the [v0.107.20 GitHub milestone][ms-v0.107.20].
 ### Security
 
 - Go version has been updated to prevent the possibility of exploiting the
-  CVE-2022-41717 and CVE-2022-41720 Go vulnerability fixed in [Go
+  CVE-2022-41717 and CVE-2022-41720 Go vulnerabilities fixed in [Go
   1.18.9][go-1.18.9].
 
 ### Added
@@ -53,7 +53,7 @@ See also the [v0.107.20 GitHub milestone][ms-v0.107.20].
 - The TLS initialization errors preventing AdGuard Home from starting ([#5189]).
   Instead, AdGuard Home disables encryption and shows an error message on the
   encryption settings page in the UI, which was the intended previous behavior.
-- URLs of some vetter blocklists.
+- URLs of some vetted blocklists.
 
 [#4944]: https://github.com/AdguardTeam/AdGuardHome/issues/4944
 [#5189]: https://github.com/AdguardTeam/AdGuardHome/issues/5189
