@@ -393,7 +393,7 @@
     "encryption_issuer": "Видавець",
     "encryption_hostnames": "Назви вузлів",
     "encryption_reset": "Ви впевнені, що хочете скинути налаштування шифрування?",
-    "encryption_warning": "Увага",
+    "encryption_warning": "Попередження",
     "topline_expiring_certificate": "Ваш сертифікат SSL скоро закінчиться. Оновіть <0>Налаштування шифрування</0>.",
     "topline_expired_certificate": "Термін дії вашого сертифіката SSL закінчився. Оновіть <0>Налаштування шифрування</0>.",
     "form_error_port_range": "Введіть значення порту в діапазоні 80−65535",
@@ -638,5 +638,8 @@
     "safe_browsing": "Безпечний перегляд",
     "served_from_cache": "{{value}} <i>(отримано з кешу)</i>",
     "form_error_password_length": "Пароль мусить мати принаймні {{value}} символів",
-    "anonymizer_notification": "<0>Примітка:</0> IP-анонімізацію ввімкнено. Ви можете вимкнути його в <1>Загальні налаштування</1> ."
+    "anonymizer_notification": "<0>Примітка:</0> IP-анонімізацію ввімкнено. Ви можете вимкнути його в <1>Загальні налаштування</1> .",
+    "confirm_dns_cache_clear": "Ви впевнені, що бажаєте очистити кеш DNS?",
+    "cache_cleared": "Кеш DNS успішно очищено",
+    "clear_cache": "Очистити кеш"
 }

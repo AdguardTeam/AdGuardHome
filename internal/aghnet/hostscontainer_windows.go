@@ -15,7 +15,7 @@ import (
 func defaultHostsPaths() (paths []string) {
 	sysDir, err := windows.GetSystemDirectory()
 	if err != nil {
-		log.Error("getting system directory: %s", err)
+		log.Error("aghnet: getting system directory: %s", err)
 
 		return []string{}
 	}

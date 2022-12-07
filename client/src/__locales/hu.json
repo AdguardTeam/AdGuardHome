@@ -638,5 +638,8 @@
     "safe_browsing": "Biztonságos böngészés",
     "served_from_cache": "{{value}} <i>(gyorsítótárból kiszolgálva)</i>",
     "form_error_password_length": "A jelszó legalább {{value}} karakter hosszú kell, hogy legyen",
-    "anonymizer_notification": "<0>Megjegyzés:</0> Az IP anonimizálás engedélyezve van. Az <1>Általános beállításoknál letilthatja</1> ."
+    "anonymizer_notification": "<0>Megjegyzés:</0> Az IP anonimizálás engedélyezve van. Az <1>Általános beállításoknál letilthatja</1> .",
+    "confirm_dns_cache_clear": "Biztos benne, hogy törölni szeretné a DNS-gyorsítótárat?",
+    "cache_cleared": "A DNS gyorsítótár sikeresen törlődött",
+    "clear_cache": "Gyorsítótár törlése"
 }

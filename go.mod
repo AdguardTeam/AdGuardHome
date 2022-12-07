@@ -3,7 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.18
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.46.2
+	github.com/AdguardTeam/dnsproxy v0.46.4
 	github.com/AdguardTeam/golibs v0.11.3
 	github.com/AdguardTeam/urlfilter v0.16.0
 	github.com/NYTimes/gziphandler v1.1.1
@@ -18,7 +18,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/insomniacslk/dhcp v0.0.0-20221001123530-5308ebe5334c
 	github.com/kardianos/service v1.2.2
-	github.com/lucas-clemente/quic-go v0.29.2
+	github.com/lucas-clemente/quic-go v0.31.0
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/netlink v1.6.2
 	// TODO(a.garipov): This package is deprecated; find a new one or use
@@ -47,16 +47,14 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/golang/mock v1.6.0 // indirect
+	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
 	github.com/josharian/native v1.0.0 // indirect
 	github.com/marten-seemann/qpack v0.3.0 // indirect
 	github.com/marten-seemann/qtls-go1-18 v0.1.3 // indirect
 	github.com/marten-seemann/qtls-go1-19 v0.1.1 // indirect
 	github.com/mdlayher/packet v1.0.0 // indirect
 	github.com/mdlayher/socket v0.2.3 // indirect
-	github.com/nxadm/tail v1.4.8 // indirect
-	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/ginkgo/v2 v2.5.0 // indirect
-	github.com/onsi/gomega v1.24.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -65,5 +63,4 @@ require (
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/tools v0.2.0 // indirect
-	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 )

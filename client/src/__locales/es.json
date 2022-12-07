@@ -638,5 +638,8 @@
     "safe_browsing": "Navegación segura",
     "served_from_cache": "{{value}} <i>(servido desde la caché)</i>",
     "form_error_password_length": "La contraseña debe tener al menos {{value}} caracteres",
-    "anonymizer_notification": "<0>Nota:</0> La anonimización de IP está habilitada. Puedes deshabilitarla en <1>Configuración general</1>."
+    "anonymizer_notification": "<0>Nota:</0> La anonimización de IP está habilitada. Puedes deshabilitarla en <1>Configuración general</1>.",
+    "confirm_dns_cache_clear": "¿Estás seguro de que deseas borrar la caché de DNS?",
+    "cache_cleared": "Caché DNS borrado con éxito",
+    "clear_cache": "Borrar caché"
 }

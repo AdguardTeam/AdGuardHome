@@ -593,6 +593,14 @@ class Api {
         };
         return this.makeRequest(path, method, config);
     }
+
+    // Cache
+    CLEAR_CACHE = { path: 'cache_clear', method: 'POST' };
+
+    clearCache() {
+        const { path, method } = this.CLEAR_CACHE;
+        return this.makeRequest(path, method);
+    }
 }
 
 const apiClient = new Api();

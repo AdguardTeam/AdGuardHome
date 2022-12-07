@@ -638,5 +638,8 @@
     "safe_browsing": "Sigurno surfanje",
     "served_from_cache": "{{value}} <i>(dohvaćeno iz predmemorije)</i>",
     "form_error_password_length": "Lozinka mora imati najmanje {{value}} znakova",
-    "anonymizer_notification": "<0>Napomena:</0>IP anonimizacija je omogućena. Možete ju onemogućiti u <1>općim postavkama</1>."
+    "anonymizer_notification": "<0>Napomena:</0>IP anonimizacija je omogućena. Možete ju onemogućiti u <1>općim postavkama</1>.",
+    "confirm_dns_cache_clear": "Jeste li sigurni da želite očistiti DNS predmemoriju?",
+    "cache_cleared": "DNS predmemorija je uspješno izbrisana",
+    "clear_cache": "Očisti predmemoriju"
 }

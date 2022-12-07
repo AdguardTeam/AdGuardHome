@@ -638,5 +638,8 @@
     "safe_browsing": "세이프 브라우징",
     "served_from_cache": "{{value}} <i>(캐시에서 제공)</i>",
     "form_error_password_length": "비밀번호는 {{value}}자 이상이어야 합니다",
-    "anonymizer_notification": "<0>참고:</0> IP 익명화가 활성화되었습니다. <1>일반 설정</1>에서 비활성화할 수 있습니다."
+    "anonymizer_notification": "<0>참고:</0> IP 익명화가 활성화되었습니다. <1>일반 설정</1>에서 비활성화할 수 있습니다.",
+    "confirm_dns_cache_clear": "정말로 DNS 캐시를 지우시겠습니까?",
+    "cache_cleared": "DNS 캐시를 성공적으로 지웠습니다",
+    "clear_cache": "캐시 지우기"
 }

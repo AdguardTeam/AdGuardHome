@@ -638,5 +638,8 @@
     "safe_browsing": "安全瀏覽",
     "served_from_cache": "{{value}} <i>(由快取提供)</i>",
     "form_error_password_length": "密碼必須為至少長 {{value}} 個字元",
-    "anonymizer_notification": "<0>注意：</0>IP 匿名化被啟用。您可在<1>一般設定</1>中禁用它。"
+    "anonymizer_notification": "<0>注意：</0>IP 匿名化被啟用。您可在<1>一般設定</1>中禁用它。",
+    "confirm_dns_cache_clear": "您確定您想要清除 DNS 快取嗎？",
+    "cache_cleared": "DNS 快取被成功地清除",
+    "clear_cache": "清除快取"
 }

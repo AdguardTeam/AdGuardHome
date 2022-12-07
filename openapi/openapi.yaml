@@ -94,6 +94,15 @@
       'responses':
         '200':
           'description': 'OK'
+  '/cache_clear':
+    'post':
+      'tags':
+      - 'global'
+      'operationId': 'cacheClear'
+      'summary': 'Clear DNS cache'
+      'responses':
+        '200':
+          'description': 'OK'
   '/test_upstream_dns':
     'post':
       'tags':

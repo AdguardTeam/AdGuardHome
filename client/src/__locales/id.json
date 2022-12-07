@@ -638,5 +638,8 @@
     "safe_browsing": "Penjelajahan Aman",
     "served_from_cache": "{{value}} <i>(disajikan dari cache)</i>",
     "form_error_password_length": "Kata sandi harus minimal {{value}} karakter",
-    "anonymizer_notification": "<0>Catatan:</0> Anonimisasi IP diaktifkan. Anda dapat menonaktifkannya di <1>Pengaturan umum</1> ."
+    "anonymizer_notification": "<0>Catatan:</0> Anonimisasi IP diaktifkan. Anda dapat menonaktifkannya di <1>Pengaturan umum</1> .",
+    "confirm_dns_cache_clear": "Apakah Anda yakin ingin menghapus cache DNS?",
+    "cache_cleared": "Cache DNS berhasil dibersihkan",
+    "clear_cache": "Hapus cache"
 }

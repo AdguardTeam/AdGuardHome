@@ -6,6 +6,14 @@
 
 
 
+## v0.107.20: API Changes
+
+### `POST /control/cache_clear`
+
+* The new `POST /control/cache_clear` HTTP API allows clearing the DNS cache.
+
+
+
 ## v0.107.17: API Changes
 
 ### `GET /control/blocked_services/services` is deprecated

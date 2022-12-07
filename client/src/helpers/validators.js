@@ -77,11 +77,11 @@ export const validateNotInRange = (value, allValues) => {
     const { range_start, range_end } = allValues.v4;
 
     if (range_start && validateIpv4(range_start)) {
-        return 'form_error_ip4_range_start_format';
+        return undefined;
     }
 
     if (range_end && validateIpv4(range_end)) {
-        return 'form_error_ip4_range_end_format';
+        return undefined;
     }
 
     const isAboveMin = range_start && ip4ToInt(value) >= ip4ToInt(range_start);
@@ -92,14 +92,6 @@ export const validateNotInRange = (value, allValues) => {
             start: range_start,
             end: range_end,
         });
-    }
-
-    if (!range_end && isAboveMin) {
-        return 'lower_range_start_error';
-    }
-
-    if (!range_start && isBelowMax) {
-        return 'greater_range_end_error';
     }
 
     return undefined;
@@ -118,7 +110,7 @@ export const validateGatewaySubnetMask = (_, allValues) => {
     const { subnet_mask, gateway_ip } = allValues.v4;
 
     if (validateIpv4(gateway_ip)) {
-        return 'form_error_ip4_gateway_format';
+        return 'gateway_or_subnet_invalid';
     }
 
     return parseSubnetMask(subnet_mask) ? undefined : 'gateway_or_subnet_invalid';
@@ -137,6 +129,10 @@ export const validateIpForGatewaySubnetMask = (value, allValues) => {
     const {
         gateway_ip, subnet_mask,
     } = allValues.v4;
+
+    if ((gateway_ip && validateIpv4(gateway_ip)) || (subnet_mask && validateIpv4(subnet_mask))) {
+        return undefined;
+    }
 
     const subnetPrefix = parseSubnetMask(subnet_mask);
 

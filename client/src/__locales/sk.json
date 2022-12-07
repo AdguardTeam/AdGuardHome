@@ -638,5 +638,8 @@
     "safe_browsing": "Bezpečné prehliadanie",
     "served_from_cache": "{{value}} <i>(prevzatá z cache pamäte)</i>",
     "form_error_password_length": "Heslo musí mať dĺžku aspoň {{value}} znakov",
-    "anonymizer_notification": "<0>Poznámka:</0> Anonymizácia IP je zapnutá. Môžete ju vypnúť vo <1>Všeobecných nastaveniach</1>."
+    "anonymizer_notification": "<0>Poznámka:</0> Anonymizácia IP je zapnutá. Môžete ju vypnúť vo <1>Všeobecných nastaveniach</1>.",
+    "confirm_dns_cache_clear": "Naozaj chcete vymazať vyrovnávaciu pamäť DNS?",
+    "cache_cleared": "Vyrovnávacia pamäť DNS bola úspešne vymazaná",
+    "clear_cache": "Vymazať vyrovnávaciu pamäť"
 }
