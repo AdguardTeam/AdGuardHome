@@ -168,11 +168,11 @@ func IsOpenWrt() (ok bool) {
 	return isOpenWrt()
 }
 
-// RootDirFS returns the fs.FS rooted at the operating system's root.
+// RootDirFS returns the [fs.FS] rooted at the operating system's root.  On
+// Windows it returns the fs.FS rooted at the volume of the system directory
+// (usually, C:).
 func RootDirFS() (fsys fs.FS) {
-	// Use empty string since os.DirFS implicitly prepends a slash to it.  This
-	// behavior is undocumented but it currently works.
-	return os.DirFS("")
+	return rootDirFS()
 }
 
 // NotifyReconfigureSignal notifies c on receiving reconfigure signals.

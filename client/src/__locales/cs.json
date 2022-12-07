@@ -638,5 +638,8 @@
     "safe_browsing": "Bezpečné prohlížení",
     "served_from_cache": "{{value}} <i>(převzato z mezipaměti)</i>",
     "form_error_password_length": "Heslo musí být alespoň {{value}} znaků dlouhé",
-    "anonymizer_notification": "<0>Poznámka:</0> Anonymizace IP je zapnuta. Můžete ji vypnout v <1>Obecných nastaveních</1>."
+    "anonymizer_notification": "<0>Poznámka:</0> Anonymizace IP je zapnuta. Můžete ji vypnout v <1>Obecných nastaveních</1>.",
+    "confirm_dns_cache_clear": "Opravdu chcete vymazat mezipaměť DNS?",
+    "cache_cleared": "Mezipaměť DNS úspěšně vymazána",
+    "clear_cache": "Vymazat mezipaměť"
 }

@@ -638,5 +638,8 @@
     "safe_browsing": "Güvenli Gezinti",
     "served_from_cache": "{{value}} <i>(önbellekten kullanıldı)</i>",
     "form_error_password_length": "Parola en az {{value}} karakter uzunluğunda olmalıdır",
-    "anonymizer_notification": "<0>Not:</0> IP anonimleştirme etkinleştirildi. Bunu <1>Genel ayarlardan</1> devre dışı bırakabilirsiniz."
+    "anonymizer_notification": "<0>Not:</0> IP anonimleştirme etkinleştirildi. Bunu <1>Genel ayarlardan</1> devre dışı bırakabilirsiniz.",
+    "confirm_dns_cache_clear": "DNS önbelleğini temizlemek istediğinizden emin misiniz?",
+    "cache_cleared": "DNS önbelleği başarıyla temizlendi",
+    "clear_cache": "Önbelleği temizle"
 }

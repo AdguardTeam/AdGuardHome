@@ -393,7 +393,7 @@
     "encryption_issuer": "Выдавец",
     "encryption_hostnames": "Імёны хастоў",
     "encryption_reset": "Вы ўпэўнены, што хочаце скінуць налады шыфравання?",
-    "encryption_warning": "Увага",
+    "encryption_warning": "Папярэджанне",
     "topline_expiring_certificate": "Ваш SSL-сертыфікат хутка мінае. Абновіце <0>Налады шыфравання</0>.",
     "topline_expired_certificate": "Ваш SSL-сертыфікат мінуў. Абновіце <0>Налады шыфравання</0>.",
     "form_error_port_range": "Увядзіце нумар порта з інтэрвалу 80-65535",
@@ -638,5 +638,8 @@
     "safe_browsing": "Бяспечны інтэрнэт",
     "served_from_cache": "{{value}} <i>(атрымана з кэша)</i>",
     "form_error_password_length": "Пароль павінен быць не менш за {{value}} сімвалаў",
-    "anonymizer_notification": "<0>Заўвага:</0> Ананімізацыя IP уключана. Вы можаце адключыць яго ў <1>Агульных наладах</1> ."
+    "anonymizer_notification": "<0>Заўвага:</0> Ананімізацыя IP уключана. Вы можаце адключыць яго ў <1>Агульных наладах</1> .",
+    "confirm_dns_cache_clear": "Вы ўпэўнены, што хочаце ачысціць кэш DNS?",
+    "cache_cleared": "Кэш DNS паспяхова ачышчаны",
+    "clear_cache": "Ачысціць кэш"
 }

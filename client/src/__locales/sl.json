@@ -638,5 +638,8 @@
     "safe_browsing": "Varno brskanje",
     "served_from_cache": "{{value}} <i>(postreženo iz predpomnilnika)</i>",
     "form_error_password_length": "Geslo mora vsebovati najmanj {{value}} znakov",
-    "anonymizer_notification": "<0>Opomba:</0> Anonimizacija IP je omogočena. Onemogočite ga lahko v <1>Splošnih nastavitvah</1>."
+    "anonymizer_notification": "<0>Opomba:</0> Anonimizacija IP je omogočena. Onemogočite ga lahko v <1>Splošnih nastavitvah</1>.",
+    "confirm_dns_cache_clear": "Ali ste prepričani, da želite počistiti predpomnilnik DNS?",
+    "cache_cleared": "Predpomnilnik DNS je bil uspešno počiščen",
+    "clear_cache": "Počisti predpomnilnik"
 }

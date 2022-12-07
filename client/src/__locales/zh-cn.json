@@ -638,5 +638,8 @@
     "safe_browsing": "安全浏览",
     "served_from_cache": "{{value}}<i>(由缓存提供)</i>",
     "form_error_password_length": "密码必须至少有 {{value}} 个字符",
-    "anonymizer_notification": "<0>注意：</0> IP 匿名化已启用。您可以在<1>常规设置</1>中禁用它。"
+    "anonymizer_notification": "<0>注意：</0> IP 匿名化已启用。您可以在<1>常规设置</1>中禁用它。",
+    "confirm_dns_cache_clear": "您确定要清除 DNS 缓存吗？",
+    "cache_cleared": "已成功清除 DNS 缓存",
+    "clear_cache": "清除缓存"
 }

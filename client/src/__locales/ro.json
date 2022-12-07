@@ -638,5 +638,8 @@
     "safe_browsing": "Navigare în siguranță",
     "served_from_cache": "{{value}} <i>(furnizat din cache)</i>",
     "form_error_password_length": "Parola trebuie să aibă cel puțin {{value}} caractere",
-    "anonymizer_notification": "<0>Nota:</0> Anonimizarea IP este activată. Puteți să o dezactivați în <1>Setări generale</1>."
+    "anonymizer_notification": "<0>Nota:</0> Anonimizarea IP este activată. Puteți să o dezactivați în <1>Setări generale</1>.",
+    "confirm_dns_cache_clear": "Sunteți sigur că doriți să ștergeți memoria cache DNS?",
+    "cache_cleared": "Cache-ul DNS a fost golit cu succes",
+    "clear_cache": "Goliți memoria cache"
 }

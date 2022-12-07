@@ -25,6 +25,12 @@ See also the [v0.107.20 GitHub milestone][ms-v0.107.20].
 [ms-v0.107.20]: https://github.com/AdguardTeam/AdGuardHome/milestone/56?closed=1
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2022-41717 and CVE-2022-41720 Go vulnerability fixed in [Go
+  1.18.9][go-1.18.9].
+
 ### Added
 
 - The ability to clear the DNS cache ([#5190]).
@@ -48,6 +54,8 @@ See also the [v0.107.20 GitHub milestone][ms-v0.107.20].
 [#5190]: https://github.com/AdguardTeam/AdGuardHome/issues/5190
 [#5193]: https://github.com/AdguardTeam/AdGuardHome/issues/5193
 [#5208]: https://github.com/AdguardTeam/AdGuardHome/issues/5208
+
+[go-1.18.9]: https://groups.google.com/g/golang-announce/c/L_3rmdT0BMU
 
 
 

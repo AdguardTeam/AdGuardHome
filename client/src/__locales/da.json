@@ -638,5 +638,8 @@
     "safe_browsing": "Sikker Browsing",
     "served_from_cache": "{{value}} <i>(leveret fra cache)</i>",
     "form_error_password_length": "Adgangskoden skal udgøre mindst {{value}} tegn.",
-    "anonymizer_notification": "<0>Bemærk:</0> IP-anonymisering er aktiveret. Det kan deaktiveres via <1>Generelle indstillinger</1>."
+    "anonymizer_notification": "<0>Bemærk:</0> IP-anonymisering er aktiveret. Det kan deaktiveres via <1>Generelle indstillinger</1>.",
+    "confirm_dns_cache_clear": "Sikker på, at DNS-cache skal ryddes?",
+    "cache_cleared": "DNS-cache hermed ryddet",
+    "clear_cache": "Ryd cache"
 }
