@@ -25,6 +25,17 @@ See also the [v0.107.21 GitHub milestone][ms-v0.107.21].
 [ms-v0.107.21]: https://github.com/AdguardTeam/AdGuardHome/milestone/57?closed=1
 -->
 
+### Changed
+
+- The URLs of the default filters for new installations are synchrhonized to
+  those introduced in v0.107.20 ([#5238]).
+
+  **NOTE:** Some users may need to re-add the lists from the vetted filter lists
+  to update the URLs to the new ones.  Custom filters added by users themselves
+  do not require re-adding.
+
+[#5238]: https://github.com/AdguardTeam/AdGuardHome/issues/5238
+
 
 
 ## [v0.107.20] - 2022-12-07
