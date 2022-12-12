@@ -638,5 +638,8 @@
     "safe_browsing": "セーフブラウジング",
     "served_from_cache": "{{value}} <i>(キャッシュから応答)</i>",
     "form_error_password_length": "パスワードは{{value}}文字以上にしてください",
-    "anonymizer_notification": "【<0>注意</0>】IPの匿名化が有効になっています。 <1>一般設定</1>で無効にできます。"
+    "anonymizer_notification": "【<0>注意</0>】IPの匿名化が有効になっています。 <1>一般設定</1>で無効にできます。",
+    "confirm_dns_cache_clear": "DNS キャッシュをクリアしてもよろしいですか？",
+    "cache_cleared": "DNSキャッシュのクリア完了です。",
+    "clear_cache": "キャッシュをクリアする"
 }

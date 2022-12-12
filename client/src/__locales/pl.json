@@ -638,5 +638,8 @@
     "safe_browsing": "Bezpieczne przeglądanie",
     "served_from_cache": "{{value}} <i>(podawane z pamięci podręcznej)</i>",
     "form_error_password_length": "Hasło musi mieć co najmniej {{value}} znaków",
-    "anonymizer_notification": "<0>Uwaga:</0> Anonimizacja IP jest włączona. Możesz ją wyłączyć w <1>Ustawieniach ogólnych</1>."
+    "anonymizer_notification": "<0>Uwaga:</0> Anonimizacja IP jest włączona. Możesz ją wyłączyć w <1>Ustawieniach ogólnych</1>.",
+    "confirm_dns_cache_clear": "Czy na pewno chcesz wyczyścić pamięć podręczną DNS?",
+    "cache_cleared": "Pamięć podręczna DNS została pomyślnie wyczyszczona",
+    "clear_cache": "Wyczyść pamięć podręczną"
 }

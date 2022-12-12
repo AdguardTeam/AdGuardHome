@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/netip"
@@ -565,6 +566,11 @@ type domainSpecificTestError struct {
 	error
 }
 
+// Error implements the [error] interface for domainSpecificTestError.
+func (err domainSpecificTestError) Error() (msg string) {
+	return fmt.Sprintf("WARNING: %s", err.error)
+}
+
 // checkDNS checks the upstream server defined by upstreamConfigStr using
 // healthCheck for actually exchange messages.  It uses bootstrap to resolve the
 // upstream's address.
@@ -631,42 +637,52 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 
 	result := map[string]string{}
 	bootstraps := req.BootstrapDNS
-
 	timeout := s.conf.UpstreamTimeout
-	for _, host := range req.Upstreams {
-		err = checkDNS(host, bootstraps, timeout, checkDNSUpstreamExc)
-		if err != nil {
-			log.Info("%v", err)
-			result[host] = err.Error()
-			if _, ok := err.(domainSpecificTestError); ok {
-				result[host] = fmt.Sprintf("WARNING: %s", result[host])
-			}
 
-			continue
-		}
-
-		result[host] = "OK"
+	type upsCheckResult = struct {
+		res  string
+		host string
 	}
 
-	for _, host := range req.PrivateUpstreams {
-		err = checkDNS(host, bootstraps, timeout, checkPrivateUpstreamExc)
-		if err != nil {
-			log.Info("%v", err)
-			// TODO(e.burkov): If passed upstream have already written an error
-			// above, we rewriting the error for it.  These cases should be
-			// handled properly instead.
-			result[host] = err.Error()
-			if _, ok := err.(domainSpecificTestError); ok {
-				result[host] = fmt.Sprintf("WARNING: %s", result[host])
-			}
+	upsNum := len(req.Upstreams) + len(req.PrivateUpstreams)
+	resCh := make(chan upsCheckResult, upsNum)
 
-			continue
+	checkUps := func(ups string, healthCheck healthCheckFunc) {
+		res := upsCheckResult{
+			host: ups,
 		}
+		defer func() { resCh <- res }()
 
-		result[host] = "OK"
+		checkErr := checkDNS(ups, bootstraps, timeout, healthCheck)
+		if checkErr != nil {
+			res.res = checkErr.Error()
+		} else {
+			res.res = "OK"
+		}
 	}
+
+	for _, ups := range req.Upstreams {
+		go checkUps(ups, checkDNSUpstreamExc)
+	}
+	for _, ups := range req.PrivateUpstreams {
+		go checkUps(ups, checkPrivateUpstreamExc)
+	}
+
+	for i := 0; i < upsNum; i++ {
+		pair := <-resCh
+		// TODO(e.burkov):  The upstreams used for both common and private
+		// resolving should be reported separately.
+		result[pair.host] = pair.res
+	}
+	close(resCh)
 
 	_ = aghhttp.WriteJSONResponse(w, r, result)
+}
+
+// handleCacheClear is the handler for the POST /control/cache_clear HTTP API.
+func (s *Server) handleCacheClear(w http.ResponseWriter, _ *http.Request) {
+	s.dnsProxy.ClearCache()
+	_, _ = io.WriteString(w, "OK")
 }
 
 // handleDoH is the DNS-over-HTTPs handler.
@@ -702,6 +718,8 @@ func (s *Server) registerHandlers() {
 
 	s.conf.HTTPRegister(http.MethodGet, "/control/access/list", s.handleAccessList)
 	s.conf.HTTPRegister(http.MethodPost, "/control/access/set", s.handleAccessSet)
+
+	s.conf.HTTPRegister(http.MethodPost, "/control/cache_clear", s.handleCacheClear)
 
 	// Register both versions, with and without the trailing slash, to
 	// prevent a 301 Moved Permanently redirect when clients request the

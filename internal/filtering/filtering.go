@@ -33,6 +33,7 @@ import (
 // The IDs of built-in filter lists.
 //
 // Keep in sync with client/src/helpers/constants.js.
+// TODO(d.kolyshev): Add RewritesListID and don't forget to keep in sync.
 const (
 	CustomListID = -iota
 	SysHostsListID

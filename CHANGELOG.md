@@ -18,12 +18,39 @@ and this project adheres to
 
 
 <!--
-## [v0.107.20] - 2022-12-07 (APPROX.)
+## [v0.107.21] - 2122-12-28 (APPROX.)
+
+See also the [v0.107.21 GitHub milestone][ms-v0.107.21].
+
+[ms-v0.107.21]: https://github.com/AdguardTeam/AdGuardHome/milestone/57?closed=1
+-->
+
+### Changed
+
+- The URLs of the default filters for new installations are synchrhonized to
+  those introduced in v0.107.20 ([#5238]).
+
+  **NOTE:** Some users may need to re-add the lists from the vetted filter lists
+  to update the URLs to the new ones.  Custom filters added by users themselves
+  do not require re-adding.
+
+[#5238]: https://github.com/AdguardTeam/AdGuardHome/issues/5238
+
+
+
+## [v0.107.20] - 2022-12-07
 
 See also the [v0.107.20 GitHub milestone][ms-v0.107.20].
 
-[ms-v0.107.20]: https://github.com/AdguardTeam/AdGuardHome/milestone/56?closed=1
--->
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2022-41717 and CVE-2022-41720 Go vulnerabilities fixed in [Go
+  1.18.9][go-1.18.9].
+
+### Added
+
+- The ability to clear the DNS cache ([#5190]).
 
 ### Changed
 
@@ -32,13 +59,21 @@ See also the [v0.107.20 GitHub milestone][ms-v0.107.20].
 
 ### Fixed
 
+- Wrong validation error messages on the DHCP configuration page ([#5208]).
+- Slow upstream checks making the API unresponsive ([#5193]).
 - The TLS initialization errors preventing AdGuard Home from starting ([#5189]).
   Instead, AdGuard Home disables encryption and shows an error message on the
   encryption settings page in the UI, which was the intended previous behavior.
-- URLs of some vetter blocklists.
+- URLs of some vetted blocklists.
 
 [#4944]: https://github.com/AdguardTeam/AdGuardHome/issues/4944
 [#5189]: https://github.com/AdguardTeam/AdGuardHome/issues/5189
+[#5190]: https://github.com/AdguardTeam/AdGuardHome/issues/5190
+[#5193]: https://github.com/AdguardTeam/AdGuardHome/issues/5193
+[#5208]: https://github.com/AdguardTeam/AdGuardHome/issues/5208
+
+[go-1.18.9]:    https://groups.google.com/g/golang-announce/c/L_3rmdT0BMU
+[ms-v0.107.20]: https://github.com/AdguardTeam/AdGuardHome/milestone/56?closed=1
 
 
 
@@ -1458,11 +1493,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.20...HEAD
-[v0.107.20]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.19...v0.107.20
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.21...HEAD
+[v0.107.21]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.20...v0.107.21
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.19...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.20...HEAD
+[v0.107.20]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.19...v0.107.20
 [v0.107.19]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.18...v0.107.19
 [v0.107.18]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.17...v0.107.18
 [v0.107.17]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.16...v0.107.17

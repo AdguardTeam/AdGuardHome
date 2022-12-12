@@ -37,8 +37,6 @@
     "dhcp_ipv6_settings": "DHCP IPv6 Settings",
     "form_error_required": "Required field",
     "form_error_ip4_format": "Invalid IPv4 address",
-    "form_error_ip4_range_start_format": "Invalid IPv4 address of the range start",
-    "form_error_ip4_range_end_format": "Invalid IPv4 address of the range end",
     "form_error_ip4_gateway_format": "Invalid IPv4 address of the gateway",
     "form_error_ip6_format": "Invalid IPv6 address",
     "form_error_ip_format": "Invalid IP address",
@@ -51,9 +49,8 @@
     "out_of_range_error": "Must be out of range \"{{start}}\"-\"{{end}}\"",
     "lower_range_start_error": "Must be lower than range start",
     "greater_range_start_error": "Must be greater than range start",
-    "greater_range_end_error": "Must be greater than range end",
     "subnet_error": "Addresses must be in one subnet",
-    "gateway_or_subnet_invalid": "Subnet mask invalid",
+    "gateway_or_subnet_invalid": "Invalid subnet mask",
     "dhcp_form_gateway_input": "Gateway IP",
     "dhcp_form_subnet_input": "Subnet mask",
     "dhcp_form_range_title": "Range of IP addresses",
@@ -638,5 +635,8 @@
     "safe_browsing": "Safe Browsing",
     "served_from_cache": "{{value}} <i>(served from cache)</i>",
     "form_error_password_length": "Password must be at least {{value}} characters long",
-    "anonymizer_notification": "<0>Note:</0> IP anonymization is enabled. You can disable it in <1>General settings</1>."
+    "anonymizer_notification": "<0>Note:</0> IP anonymization is enabled. You can disable it in <1>General settings</1>.",
+    "confirm_dns_cache_clear": "Are you sure you want to clear DNS cache?",
+    "cache_cleared": "DNS cache successfully cleared",
+    "clear_cache": "Clear cache"
 }
