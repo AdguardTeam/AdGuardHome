@@ -24,9 +24,6 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	d.confLock.Lock()
-	defer d.confLock.Unlock()
-
 	err = d.rewriteStorage.Add(rw)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "add rewrite: %s", err)
@@ -49,9 +46,6 @@ func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) 
 
 		return
 	}
-
-	d.confLock.Lock()
-	defer d.confLock.Unlock()
 
 	err = d.rewriteStorage.Remove(&entDel)
 	if err != nil {
