@@ -278,15 +278,20 @@ var config = &configuration{
 		PortDNSOverTLS:  defaultPortTLS, // needs to be passed through to dnsproxy
 		PortDNSOverQUIC: defaultPortQUIC,
 	},
+	// NOTE: Keep these parameters in sync with the one put into
+	// client/src/helpers/filters/filters.js by scripts/vetted-filters.
+	//
+	// TODO(a.garipov): Think of a way to make scripts/vetted-filters update
+	// these as well if necessary.
 	Filters: []filtering.FilterYAML{{
 		Filter:  filtering.Filter{ID: 1},
 		Enabled: true,
-		URL:     "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+		URL:     "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt",
 		Name:    "AdGuard DNS filter",
 	}, {
 		Filter:  filtering.Filter{ID: 2},
 		Enabled: false,
-		URL:     "https://adaway.org/hosts.txt",
+		URL:     "https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt",
 		Name:    "AdAway Default Blocklist",
 	}},
 	DHCP: &dhcpd.ServerConfig{

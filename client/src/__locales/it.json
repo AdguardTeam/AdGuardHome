@@ -638,5 +638,8 @@
     "safe_browsing": "Navigazione Sicura",
     "served_from_cache": "{{value}} <i>(fornito dalla cache)</i>",
     "form_error_password_length": "La password deve contenere almeno {{value}} caratteri",
-    "anonymizer_notification": "<0>Attenzione:</0> L'anonimizzazione dell'IP è abilitata. Puoi disabilitarla in <1>Impostazioni generali</1>."
+    "anonymizer_notification": "<0>Attenzione:</0> L'anonimizzazione dell'IP è abilitata. Puoi disabilitarla in <1>Impostazioni generali</1>.",
+    "confirm_dns_cache_clear": "Sei sicuro di voler cancellare la cache DNS?",
+    "cache_cleared": "Cache DNS è stata cancellata correttamente",
+    "clear_cache": "Cancella cache"
 }

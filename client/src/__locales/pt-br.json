@@ -638,5 +638,8 @@
     "safe_browsing": "Navegação segura",
     "served_from_cache": "{{value}} <i>(servido do cache)</i>",
     "form_error_password_length": "A senha deve ter pelo menos {{value}} caracteres",
-    "anonymizer_notification": "<0>Observação:</0> A anonimização de IP está ativada. Você pode desativá-lo em <1>Configurações gerais</1>."
+    "anonymizer_notification": "<0>Observação:</0> A anonimização de IP está ativada. Você pode desativá-lo em <1>Configurações gerais</1>.",
+    "confirm_dns_cache_clear": "Tem certeza de que deseja limpar o cache DNS?",
+    "cache_cleared": "Cache DNS limpo com sucesso",
+    "clear_cache": "Limpar cache"
 }
