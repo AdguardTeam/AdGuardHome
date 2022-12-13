@@ -225,7 +225,7 @@ func (s *DefaultStorage) resetRules() (err error) {
 // matchesQType returns true if dnsrewrite matches the question type qt.
 func matchesQType(dnsrr *rules.DNSRewrite, qt uint16) (ok bool) {
 	// Add CNAMEs, since they match for all types requests.
-	if dnsrr.RRType == dns.TypeCNAME {
+	if dnsrr.RRType == dns.TypeCNAME || dnsrr.NewCNAME != "" {
 		return true
 	}
 
