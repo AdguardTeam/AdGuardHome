@@ -120,10 +120,12 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 			Hostname: rwAns,
 			DNSType:  dReq.DNSType,
 		})
-		if drules != nil {
-			rrules = drules
+
+		if drules == nil {
+			break
 		}
 
+		rrules = drules
 		host = rwAns
 	}
 
