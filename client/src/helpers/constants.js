@@ -390,6 +390,7 @@ export const SPECIAL_FILTER_ID = {
     PARENTAL: -3,
     SAFE_BROWSING: -4,
     SAFE_SEARCH: -5,
+    REWRITES: -6,
 };
 
 export const BLOCK_ACTIONS = {
