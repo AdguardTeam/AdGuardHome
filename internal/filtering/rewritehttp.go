@@ -33,6 +33,10 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 
 	log.Debug("rewrite: added element: %s -> %s", rw.Domain, rw.Answer)
 
+	d.confLock.Lock()
+	d.Config.Rewrites = d.rewriteStorage.List()
+	d.confLock.Unlock()
+
 	d.Config.ConfigModified()
 }
 
@@ -53,6 +57,10 @@ func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) 
 
 		return
 	}
+
+	d.confLock.Lock()
+	d.Config.Rewrites = d.rewriteStorage.List()
+	d.confLock.Unlock()
 
 	d.Config.ConfigModified()
 }
