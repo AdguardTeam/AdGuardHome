@@ -239,12 +239,18 @@
               ;;
         esac
 
+        # Ignore errors from the Snapstore upload script, because it seems to
+        # have a lot of issues recently.
+        #
+        # TODO(a.garipov): Stop ignoring those errors once they fix the issues.
+        #
+        # See https://forum.snapcraft.io/t/unable-to-upload-promote-snaps-to-edge/33120.
         env\
                 SNAPCRAFT_CHANNEL="$snapchannel"\
                 SNAPCRAFT_EMAIL="${bamboo.snapcraftEmail}"\
                 SNAPCRAFT_MACAROON="${bamboo.snapcraftMacaroonPassword}"\
                 SNAPCRAFT_UBUNTU_DISCHARGE="${bamboo.snapcraftUbuntuDischargePassword}"\
-                ../bamboo-deploy-publisher/deploy.sh adguard-home-snap
+                ../bamboo-deploy-publisher/deploy.sh adguard-home-snap || :
   'final-tasks':
   - 'clean'
   'requirements':

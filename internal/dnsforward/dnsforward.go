@@ -570,46 +570,32 @@ func (s *Server) Stop() error {
 
 // stopLocked stops the DNS server without locking.  For internal use only.
 func (s *Server) stopLocked() (err error) {
+	// TODO(e.burkov, a.garipov):  Return critical errors, not just log them.
+	// This will require filtering all the non-critical errors in
+	// [upstream.Upstream] implementations.
+
 	if s.dnsProxy != nil {
 		err = s.dnsProxy.Stop()
 		if err != nil {
-			return fmt.Errorf("closing primary resolvers: %w", err)
+			log.Error("dnsforward: closing primary resolvers: %s", err)
 		}
 	}
 
-	var errs []error
-
 	if upsConf := s.internalProxy.UpstreamConfig; upsConf != nil {
-		const action = "closing internal resolvers"
-
 		err = upsConf.Close()
 		if err != nil {
-			if errors.Is(err, net.ErrClosed) {
-				log.Debug("dnsforward: %s: %s", action, err)
-			} else {
-				errs = append(errs, fmt.Errorf("%s: %w", action, err))
-			}
+			log.Error("dnsforward: closing internal resolvers: %s", err)
 		}
 	}
 
 	if upsConf := s.localResolvers.UpstreamConfig; upsConf != nil {
-		const action = "closing local resolvers"
-
 		err = upsConf.Close()
 		if err != nil {
-			if errors.Is(err, net.ErrClosed) {
-				log.Debug("dnsforward: %s: %s", action, err)
-			} else {
-				errs = append(errs, fmt.Errorf("%s: %w", action, err))
-			}
+			log.Error("dnsforward: closing local resolvers: %s", err)
 		}
 	}
 
-	if len(errs) > 0 {
-		return errors.List("stopping dns server", errs...)
-	} else {
-		s.isRunning = false
-	}
+	s.isRunning = false
 
 	return nil
 }

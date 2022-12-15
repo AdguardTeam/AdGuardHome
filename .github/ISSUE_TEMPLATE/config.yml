@@ -7,9 +7,9 @@
     'name': 'AdGuard filters issues'
     'url': 'https://link.adtidy.org/forward.html?action=report&app=home&from=github'
   - 'about': >
-        Please send requests for addition to the vetted filtering lists to the
-        Hostlists Registry repository.
-    'name': 'AdGuard Hostlists Registry'
+        Please send requests for new blocked services and vetted filtering lists
+        to the Hostlists Registry repository
+    'name': 'Blocked services and vetted filtering rule lists: AdGuard Hostlists Registry'
     'url': 'https://github.com/AdguardTeam/HostlistsRegistry'
   - 'about': >
         Please use GitHub Discussions for questions

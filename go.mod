@@ -3,7 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.18
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.46.4
+	github.com/AdguardTeam/dnsproxy v0.46.5
 	github.com/AdguardTeam/golibs v0.11.3
 	github.com/AdguardTeam/urlfilter v0.16.0
 	github.com/NYTimes/gziphandler v1.1.1
@@ -30,8 +30,8 @@ require (
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/crypto v0.1.0
 	golang.org/x/exp v0.0.0-20221106115401-f9659909a136
-	golang.org/x/net v0.1.0
-	golang.org/x/sys v0.2.0
+	golang.org/x/net v0.4.0
+	golang.org/x/sys v0.3.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.0
@@ -61,6 +61,6 @@ require (
 	github.com/u-root/uio v0.0.0-20220204230159-dac05f7d2cb4 // indirect
 	golang.org/x/mod v0.6.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/tools v0.2.0 // indirect
 )
