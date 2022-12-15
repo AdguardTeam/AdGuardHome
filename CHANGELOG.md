@@ -34,7 +34,13 @@ See also the [v0.107.21 GitHub milestone][ms-v0.107.21].
   to update the URLs to the new ones.  Custom filters added by users themselves
   do not require re-adding.
 
+### Fixed
+
+- Errors popping up during updates of settings, which could sometimes cause the
+  server to stop responding ([#5251]).
+
 [#5238]: https://github.com/AdguardTeam/AdGuardHome/issues/5238
+[#5251]: https://github.com/AdguardTeam/AdGuardHome/issues/5251
 
 
 
