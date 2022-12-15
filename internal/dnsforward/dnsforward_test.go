@@ -947,12 +947,11 @@ func TestRewrite(t *testing.T) {
 		reply, eerr = dns.Exchange(req, addr.String())
 		require.NoError(t, eerr)
 
-		// TODO (d.kolyshev): Investigate
-		// require.Len(t, reply.Answer, 2)
+		require.Len(t, reply.Answer, 2)
 
-		// assert.Equal(t, "test.com.", reply.Answer[0].(*dns.CNAME).Target)
-		// assert.True(t, net.IP{1, 2, 3, 4}.Equal(reply.Answer[1].(*dns.A).A))
-		assert.True(t, net.IP{1, 2, 3, 4}.Equal(reply.Answer[0].(*dns.A).A))
+		assert.Equal(t, "test.com.", reply.Answer[0].(*dns.CNAME).Target)
+		assert.Equal(t, dns.TypeA, reply.Answer[1].Header().Rrtype)
+		assert.True(t, net.IP{1, 2, 3, 4}.Equal(reply.Answer[1].(*dns.A).A))
 
 		req = createTestMessageWithType("my.alias.example.org.", dns.TypeA)
 		reply, eerr = dns.Exchange(req, addr.String())
@@ -963,11 +962,10 @@ func TestRewrite(t *testing.T) {
 
 		assert.Equal(t, "my.alias.example.org.", reply.Question[0].Name)
 
-		// TODO (d.kolyshev): Investigate
-		//require.Len(t, reply.Answer, 2)
-		//
-		//assert.Equal(t, "example.org.", reply.Answer[0].(*dns.CNAME).Target)
-		//assert.Equal(t, dns.TypeA, reply.Answer[1].Header().Rrtype)
+		require.Len(t, reply.Answer, 2)
+
+		assert.Equal(t, "example.org.", reply.Answer[0].(*dns.CNAME).Target)
+		assert.Equal(t, dns.TypeA, reply.Answer[1].Header().Rrtype)
 	}
 
 	for _, protect := range []bool{true, false} {

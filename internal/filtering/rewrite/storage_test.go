@@ -123,6 +123,11 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		name: "rewritten_a",
 		host: "www.host.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
+			Value:    nil,
+			NewCNAME: "host.com",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeNone,
+		}, {
 			Value:    net.IP{1, 2, 3, 4}.To16(),
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
@@ -138,6 +143,11 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		name: "rewritten_aaaa",
 		host: "www.host.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
+			Value:    nil,
+			NewCNAME: "host.com",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeNone,
+		}, {
 			Value:    net.ParseIP("1:2:3::4"),
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
@@ -169,6 +179,11 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		name: "wildcard_cname_interaction",
 		host: "www.host2.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
+			Value:    nil,
+			NewCNAME: "host.com",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeNone,
+		}, {
 			Value:    net.IP{1, 2, 3, 4}.To16(),
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
@@ -184,6 +199,11 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		name: "two_cnames",
 		host: "b.host.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
+			Value:    nil,
+			NewCNAME: "somehost.com",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeNone,
+		}, {
 			Value:    net.IP{0, 0, 0, 0}.To16(),
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
@@ -194,6 +214,11 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		name: "two_cnames_and_wildcard",
 		host: "b.host3.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
+			Value:    nil,
+			NewCNAME: "x.host.com",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeNone,
+		}, {
 			Value:    net.IP{1, 2, 3, 5}.To16(),
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,

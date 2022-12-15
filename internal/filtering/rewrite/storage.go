@@ -87,25 +87,27 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 	// TODO(a.garipov): Check cnames for cycles on initialisation.
 	cnames := stringutil.NewSet()
 	host := dReq.Hostname
+	var lastCNAMERule *rules.NetworkRule
 	for len(rrules) > 0 && rrules[0].DNSRewrite != nil && rrules[0].DNSRewrite.NewCNAME != "" {
-		rule := rrules[0]
-		rwAns := rule.DNSRewrite.NewCNAME
+		lastCNAMERule = rrules[0]
+		lastDNSRewrite := lastCNAMERule.DNSRewrite
+		rwAns := lastDNSRewrite.NewCNAME
 
 		log.Debug("rewrite: cname for %s is %s", host, rwAns)
 
 		if dReq.Hostname == rwAns {
-			// A request for the hostname itself is an exception rule.
+			// A request for the hostname itself is an exception lastCNAMERule.
 			// TODO(d.kolyshev): Check rewrite of a pattern onto itself.
 
 			return nil
 		}
 
-		if host == rwAns && isWildcard(rule.RuleText) {
+		if host == rwAns && isWildcard(lastCNAMERule.RuleText) {
 			// An "*.example.com → sub.example.com" rewrite matching in a loop.
 			//
 			// See https://github.com/AdguardTeam/AdGuardHome/issues/4016.
 
-			return []*rules.DNSRewrite{rule.DNSRewrite}
+			return []*rules.DNSRewrite{lastDNSRewrite}
 		}
 
 		if cnames.Has(rwAns) {
@@ -129,14 +131,19 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 		host = rwAns
 	}
 
-	return s.collectDNSRewrites(rrules, dReq.DNSType)
+	return s.collectDNSRewrites(rrules, lastCNAMERule, dReq.DNSType)
 }
 
 // collectDNSRewrites filters DNSRewrite by question type.
 func (s *DefaultStorage) collectDNSRewrites(
 	rewrites []*rules.NetworkRule,
+	cnameRule *rules.NetworkRule,
 	qtyp uint16,
 ) (rws []*rules.DNSRewrite) {
+	if cnameRule != nil {
+		rewrites = append([]*rules.NetworkRule{cnameRule}, rewrites...)
+	}
+
 	for _, rewrite := range rewrites {
 		dnsRewrite := rewrite.DNSRewrite
 		if matchesQType(dnsRewrite, qtyp) {
@@ -224,14 +231,14 @@ func (s *DefaultStorage) resetRules() (err error) {
 
 // matchesQType returns true if dnsrewrite matches the question type qt.
 func matchesQType(dnsrr *rules.DNSRewrite, qt uint16) (ok bool) {
-	// Add CNAMEs, since they match for all types requests.
-	if dnsrr.RRType == dns.TypeCNAME || dnsrr.NewCNAME != "" {
-		return true
-	}
-
 	// Reject types other than A and AAAA.
 	if qt != dns.TypeA && qt != dns.TypeAAAA {
 		return false
+	}
+
+	// Add CNAMEs, since they match for all types requests.
+	if dnsrr.RRType == dns.TypeCNAME || dnsrr.NewCNAME != "" {
+		return true
 	}
 
 	return dnsrr.RRType == qt

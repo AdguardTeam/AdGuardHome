@@ -577,6 +577,8 @@ func setRewriteResult(res *Result, host string, dnsr []*rules.DNSRewrite, qtype 
 			res.IPList = append(res.IPList, ip)
 
 			log.Debug("rewrite: a/aaaa for %s is %s", host, ip)
+		} else if dnsRewrite.NewCNAME != "" {
+			res.CanonName = dnsRewrite.NewCNAME
 		}
 	}
 }
