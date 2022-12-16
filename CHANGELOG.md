@@ -18,16 +18,22 @@ and this project adheres to
 
 
 <!--
-## [v0.107.21] - 2122-12-28 (APPROX.)
+## [v0.107.22] - 2222-12-28 (APPROX.)
+
+See also the [v0.107.22 GitHub milestone][ms-v0.107.22].
+
+[ms-v0.107.22]: https://github.com/AdguardTeam/AdGuardHome/milestone/58?closed=1
+-->
+
+
+
+## [v0.107.21] - 2122-12-15
 
 See also the [v0.107.21 GitHub milestone][ms-v0.107.21].
 
-[ms-v0.107.21]: https://github.com/AdguardTeam/AdGuardHome/milestone/57?closed=1
--->
-
 ### Changed
 
-- The URLs of the default filters for new installations are synchrhonized to
+- The URLs of the default filters for new installations are synchronized to
   those introduced in v0.107.20 ([#5238]).
 
   **NOTE:** Some users may need to re-add the lists from the vetted filter lists
@@ -41,6 +47,8 @@ See also the [v0.107.21 GitHub milestone][ms-v0.107.21].
 
 [#5238]: https://github.com/AdguardTeam/AdGuardHome/issues/5238
 [#5251]: https://github.com/AdguardTeam/AdGuardHome/issues/5251
+
+[ms-v0.107.21]: https://github.com/AdguardTeam/AdGuardHome/milestone/57?closed=1
 
 
 
@@ -1499,11 +1507,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.21...HEAD
-[v0.107.21]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.20...v0.107.21
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.22...HEAD
+[v0.107.22]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.21...v0.107.22
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.20...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.21...HEAD
+[v0.107.21]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.20...v0.107.21
 [v0.107.20]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.19...v0.107.20
 [v0.107.19]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.18...v0.107.19
 [v0.107.18]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.17...v0.107.18
