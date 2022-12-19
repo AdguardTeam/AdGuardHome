@@ -84,7 +84,7 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 		return nil
 	}
 
-	// TODO(a.garipov): Check cnames for cycles on initialisation.
+	// TODO(a.garipov): Check cnames for cycles on initialization.
 	cnames := stringutil.NewSet()
 	host := dReq.Hostname
 	var lastCNAMERule *rules.NetworkRule
@@ -96,8 +96,9 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 		log.Debug("rewrite: cname for %s is %s", host, rwAns)
 
 		if dReq.Hostname == rwAns {
-			// A request for the hostname itself is an exception lastCNAMERule.
+			// A request for the hostname itself.
 			// TODO(d.kolyshev): Check rewrite of a pattern onto itself.
+			log.Debug("rewrite: request for hostname itself for %q", dReq.Hostname)
 
 			return nil
 		}
@@ -106,6 +107,7 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 			// An "*.example.com → sub.example.com" rewrite matching in a loop.
 			//
 			// See https://github.com/AdguardTeam/AdGuardHome/issues/4016.
+			log.Debug("rewrite: cname wildcard loop for %q on %q", dReq.Hostname, rwAns)
 
 			return []*rules.DNSRewrite{lastDNSRewrite}
 		}
