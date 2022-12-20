@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 	"time"
 
@@ -30,11 +29,7 @@ func TestDNSFilter_handleFilteringSetURL(t *testing.T) {
 		endpoint: &badRulesEndpoint,
 		content:  []byte(`<html></html>`),
 	}} {
-		ipp := serveFiltersLocally(t, rulesSource.content)
-		*rulesSource.endpoint = (&url.URL{
-			Scheme: "http",
-			Host:   ipp.String(),
-		}).String()
+		*rulesSource.endpoint = serveFiltersLocally(t, rulesSource.content)
 	}
 
 	testCases := []struct {
