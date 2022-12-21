@@ -172,10 +172,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
-    --size: 2.5rem;
-    width: var(--size);
-    height: var(--size);
+    width: 2.5rem;
+    height: 2.5rem;
     padding: 0;
     margin-left: 0.9375rem;
     background-color: transparent;
@@ -472,7 +470,7 @@
 
 .filteringRules__filter {
     font-style: italic;
-    font-weight: normal;
+    font-weight: 400;
     margin-bottom: 1rem;
 }
 
