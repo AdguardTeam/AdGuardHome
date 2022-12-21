@@ -103,14 +103,12 @@
 }
 
 .form-control--search {
-    box-shadow: 0 1px 0 #ddd;
     padding: 0 2.5rem;
     height: 2.25rem;
     flex-grow: 1;
 }
 
 .form-control--transparent {
-    border: 0 solid transparent !important;
     background-color: transparent !important;
 }
 
