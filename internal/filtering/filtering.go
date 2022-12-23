@@ -191,6 +191,8 @@ type DNSFilter struct {
 
 	// filterTitleRegexp is the regular expression to retrieve a name of a
 	// filter list.
+	//
+	// TODO(e.burkov):  Don't use regexp for such a simple text processing task.
 	filterTitleRegexp *regexp.Regexp
 
 	rewriteStorage *rewrite.DefaultStorage

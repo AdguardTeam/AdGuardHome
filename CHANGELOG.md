@@ -42,11 +42,14 @@ See also the [v0.107.21 GitHub milestone][ms-v0.107.21].
 
 ### Fixed
 
+- Filters updating strategy, which could sometimes lead to use of broken or
+  incompletely downloaded lists ([#5258]).
 - Errors popping up during updates of settings, which could sometimes cause the
   server to stop responding ([#5251]).
 
 [#5238]: https://github.com/AdguardTeam/AdGuardHome/issues/5238
 [#5251]: https://github.com/AdguardTeam/AdGuardHome/issues/5251
+[#5258]: https://github.com/AdguardTeam/AdGuardHome/issues/5258
 
 [ms-v0.107.21]: https://github.com/AdguardTeam/AdGuardHome/milestone/57?closed=1
 
