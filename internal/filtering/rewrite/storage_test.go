@@ -401,6 +401,74 @@ func TestDefaultStorage_MatchRequest_ExceptionCNAME(t *testing.T) {
 	}
 }
 
+func TestDefaultStorage_MatchRequest_CNAMEs(t *testing.T) {
+	// Two cname rules for one subdomain
+	items := []*Item{{
+		Domain: "cname.org",
+		Answer: "1.1.1.1",
+	}, {
+		Domain: "sub_cname.org",
+		Answer: "2.2.2.2",
+	}, {
+		Domain: "*.host.com",
+		Answer: "cname.org",
+	}, {
+		Domain: "*.sub.host.com",
+		Answer: "sub_cname.org",
+	}}
+
+	s, err := NewDefaultStorage(-1, items)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name            string
+		host            string
+		wantDNSRewrites []*rules.DNSRewrite
+		dtyp            uint16
+	}{{
+		name: "match_my_domain",
+		host: "my.host.com",
+		wantDNSRewrites: []*rules.DNSRewrite{{
+			Value:    nil,
+			NewCNAME: "cname.org",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeNone,
+		}, {
+			Value:    net.IP{1, 1, 1, 1}.To16(),
+			NewCNAME: "",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeA,
+		}},
+		dtyp: dns.TypeA,
+	}, {
+		name: "match_sub_my_domain",
+		host: "my.sub.host.com",
+		wantDNSRewrites: []*rules.DNSRewrite{{
+			Value:    nil,
+			NewCNAME: "cname.org",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeNone,
+		}, {
+			Value:    net.IP{1, 1, 1, 1}.To16(),
+			NewCNAME: "",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeA,
+		}},
+		dtyp: dns.TypeA,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			dnsRewrites := s.MatchRequest(&urlfilter.DNSRequest{
+				Hostname: tc.host,
+				DNSType:  tc.dtyp,
+			})
+
+			assert.Equal(t, tc.wantDNSRewrites, dnsRewrites)
+		})
+	}
+}
+
 func TestDefaultStorage_MatchRequest_ExceptionIP(t *testing.T) {
 	// Exception for AAAA record.
 	items := []*Item{{
