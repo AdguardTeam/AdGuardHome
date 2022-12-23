@@ -164,17 +164,21 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 			RRType:   dns.TypeA,
 		}},
 		dtyp: dns.TypeA,
-		//}, {
-		// TODO(d.kolyshev): This is about matching in urlfilter.
-		//	name: "wildcard_override",
-		//	host: "a.host.com",
-		//	wantDNSRewrites: []*rules.DNSRewrite{{
-		//		Value:    net.IP{1, 2, 3, 4}.To16(),
-		//		NewCNAME: "",
-		//		RCode:    dns.RcodeSuccess,
-		//		RRType:   dns.TypeA,
-		//	}},
-		//	dtyp: dns.TypeA,
+	}, {
+		name: "wildcard_override",
+		host: "a.host.com",
+		wantDNSRewrites: []*rules.DNSRewrite{{
+			Value:    net.IP{1, 2, 3, 4}.To16(),
+			NewCNAME: "",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeA,
+		}, {
+			Value:    net.IP{1, 2, 3, 5}.To16(),
+			NewCNAME: "",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeA,
+		}},
+		dtyp: dns.TypeA,
 	}, {
 		name: "wildcard_cname_interaction",
 		host: "www.host2.com",
@@ -320,17 +324,21 @@ func TestDefaultStorage_MatchRequest_Levels(t *testing.T) {
 			RRType:   dns.TypeA,
 		}},
 		dtyp: dns.TypeA,
-		//}, {
-		// TODO(d.kolyshev): This is about matching in urlfilter.
-		//	name: "l3_match",
-		//	host: "my.sub.host.com",
-		//	wantDNSRewrites: []*rules.DNSRewrite{{
-		//		Value:    net.IP{3, 3, 3, 3}.To16(),
-		//		NewCNAME: "",
-		//		RCode:    dns.RcodeSuccess,
-		//		RRType:   dns.TypeA,
-		//	}},
-		//	dtyp: dns.TypeA,
+	}, {
+		name: "l3_match",
+		host: "my.sub.host.com",
+		wantDNSRewrites: []*rules.DNSRewrite{{
+			Value:    net.IP{3, 3, 3, 3}.To16(),
+			NewCNAME: "",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeA,
+		}, {
+			Value:    net.IP{2, 2, 2, 2}.To16(),
+			NewCNAME: "",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeA,
+		}},
+		dtyp: dns.TypeA,
 	}}
 
 	for _, tc := range testCases {
@@ -355,7 +363,7 @@ func TestDefaultStorage_MatchRequest_ExceptionCNAME(t *testing.T) {
 		Answer: "sub.host.com",
 	}, {
 		Domain: "*.sub.host.com",
-		Answer: "*.sub.host.com",
+		Answer: "sub.host.com",
 	}}
 
 	s, err := NewDefaultStorage(-1, items)
@@ -381,12 +389,11 @@ func TestDefaultStorage_MatchRequest_ExceptionCNAME(t *testing.T) {
 		host:            "sub.host.com",
 		wantDNSRewrites: nil,
 		dtyp:            dns.TypeA,
-		//}, {
-		// TODO(d.kolyshev): This is about matching in urlfilter.
-		//	name:            "exception_wildcard",
-		//	host:            "my.sub.host.com",
-		//	wantDNSRewrites: nil,
-		//	dtyp:            dns.TypeA,
+	}, {
+		name:            "exception_wildcard",
+		host:            "my.sub.host.com",
+		wantDNSRewrites: nil,
+		dtyp:            dns.TypeA,
 	}}
 
 	for _, tc := range testCases {
