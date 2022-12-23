@@ -99,14 +99,15 @@ func (d *DNSFilter) filterSetProperties(
 		filt.URL,
 	)
 
-	defer func(oldURL, oldName string, oldEnabled bool, oldUpdated time.Time) {
+	defer func(oldURL, oldName string, oldEnabled bool, oldUpdated time.Time, oldRulesCount int) {
 		if err != nil {
 			filt.URL = oldURL
 			filt.Name = oldName
 			filt.Enabled = oldEnabled
 			filt.LastUpdated = oldUpdated
+			filt.RulesCount = oldRulesCount
 		}
-	}(filt.URL, filt.Name, filt.Enabled, filt.LastUpdated)
+	}(filt.URL, filt.Name, filt.Enabled, filt.LastUpdated, filt.RulesCount)
 
 	filt.Name = newList.Name
 
