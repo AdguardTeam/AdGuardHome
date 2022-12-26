@@ -42,12 +42,14 @@ See also the [v0.107.21 GitHub milestone][ms-v0.107.21].
 
 ### Fixed
 
+- Failing HTTPS redirection on saving the encryption settings ([#4898]).
 - Zeroing rules counter of erroneusly edited filtering rule lists ([#5290]).
 - Filters updating strategy, which could sometimes lead to use of broken or
   incompletely downloaded lists ([#5258]).
 - Errors popping up during updates of settings, which could sometimes cause the
   server to stop responding ([#5251]).
 
+[#4898]: https://github.com/AdguardTeam/AdGuardHome/issues/4898
 [#5238]: https://github.com/AdguardTeam/AdGuardHome/issues/5238
 [#5251]: https://github.com/AdguardTeam/AdGuardHome/issues/5251
 [#5258]: https://github.com/AdguardTeam/AdGuardHome/issues/5258

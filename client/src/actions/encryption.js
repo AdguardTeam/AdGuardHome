@@ -41,6 +41,10 @@ export const setTlsConfig = (config) => async (dispatch, getState) => {
         response.certificate_chain = atob(response.certificate_chain);
         response.private_key = atob(response.private_key);
 
+        if (values.enabled && values.force_https && window.location.protocol === 'http:') {
+            window.location.reload();
+            return;
+        }
         redirectToCurrentProtocol(response, httpPort);
 
         const dnsStatus = await apiClient.getGlobalStatus();
