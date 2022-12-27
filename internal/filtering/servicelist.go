@@ -473,6 +473,7 @@ var blockedServices = []blockedService{{
 		"||xn--yf1at58a.com^",
 		"||xxbay.com^",
 		"||yibei.org^",
+		"/^ebay-25-assets\.s3-us-west-1\.amazonaws\.com$/",
 	},
 }, {
 	ID:      "epic_games",
