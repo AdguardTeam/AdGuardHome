@@ -92,7 +92,11 @@ func (u *Updater) parseVersionResponse(data []byte) (VersionInfo, error) {
 	info.AnnouncementURL = versionJSON["announcement_url"]
 
 	packageURL, ok := u.downloadURL(versionJSON)
-	info.CanAutoUpdate = aghalg.BoolToNullBool(ok && info.NewVersion != u.version)
+	if !ok {
+		return info, fmt.Errorf("version.json: packageURL not found")
+	}
+
+	info.CanAutoUpdate = aghalg.BoolToNullBool(info.NewVersion != u.version)
 
 	u.newVersion = info.NewVersion
 	u.packageURL = packageURL

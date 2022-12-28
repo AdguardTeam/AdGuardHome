@@ -174,7 +174,7 @@ func (u *Updater) prepare(exePath string) (err error) {
 
 	_, pkgNameOnly := filepath.Split(u.packageURL)
 	if pkgNameOnly == "" {
-		return fmt.Errorf("invalid PackageURL")
+		return fmt.Errorf("invalid PackageURL: %q", u.packageURL)
 	}
 
 	u.packageName = filepath.Join(u.updateDir, pkgNameOnly)
