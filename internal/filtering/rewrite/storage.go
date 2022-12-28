@@ -60,9 +60,6 @@ func NewDefaultStorage(listID int, rewrites []*Item) (s *DefaultStorage, err err
 		rewrites:    rewrites,
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	err = s.resetRules()
 	if err != nil {
 		return nil, err
