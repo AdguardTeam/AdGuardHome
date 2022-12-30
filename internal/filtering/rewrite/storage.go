@@ -3,9 +3,11 @@ package rewrite
 
 import (
 	"fmt"
+	"net/netip"
 	"strings"
 	"sync"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
@@ -14,21 +16,6 @@ import (
 	"github.com/miekg/dns"
 	"golang.org/x/exp/slices"
 )
-
-// Storage is a storage for rewrite rules.
-type Storage interface {
-	// MatchRequest returns matching dnsrewrites for the specified request.
-	MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.DNSRewrite)
-
-	// Add adds item to the storage.
-	Add(item *Item) (err error)
-
-	// Remove deletes item from the storage.
-	Remove(item *Item) (err error)
-
-	// List returns all items from the storage.
-	List() (items []*Item)
-}
 
 // DefaultStorage is the default storage for rewrite rules.
 type DefaultStorage struct {
@@ -42,7 +29,7 @@ type DefaultStorage struct {
 	ruleList filterlist.RuleList
 
 	// rewrites stores the rewrite entries from configuration.
-	rewrites []*Item
+	rewrites []*filtering.RewriteItem
 
 	// urlFilterID is the synthetic integer identifier for the urlfilter engine.
 	//
@@ -53,10 +40,10 @@ type DefaultStorage struct {
 
 // NewDefaultStorage returns new rewrites storage.  listID is used as an
 // identifier of the underlying rules list.  rewrites must not be nil.
-func NewDefaultStorage(listID int, rewrites []*Item) (s *DefaultStorage, err error) {
+func NewDefaultStorage(rewrites []*filtering.RewriteItem) (s *DefaultStorage, err error) {
 	s = &DefaultStorage{
 		mu:          &sync.RWMutex{},
-		urlFilterID: listID,
+		urlFilterID: filtering.RewritesListID,
 		rewrites:    rewrites,
 	}
 
@@ -69,9 +56,9 @@ func NewDefaultStorage(listID int, rewrites []*Item) (s *DefaultStorage, err err
 }
 
 // type check
-var _ Storage = (*DefaultStorage)(nil)
+var _ filtering.RewriteStorage = (*DefaultStorage)(nil)
 
-// MatchRequest implements the [Storage] interface for *DefaultStorage.
+// MatchRequest implements the [RewriteStorage] interface for *DefaultStorage.
 func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.DNSRewrite) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -160,8 +147,8 @@ func (s *DefaultStorage) rewriteRulesForReq(dReq *urlfilter.DNSRequest) (rules [
 	return res.DNSRewrites()
 }
 
-// Add implements the [Storage] interface for *DefaultStorage.
-func (s *DefaultStorage) Add(item *Item) (err error) {
+// Add implements the [RewriteStorage] interface for *DefaultStorage.
+func (s *DefaultStorage) Add(item *filtering.RewriteItem) (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -171,16 +158,16 @@ func (s *DefaultStorage) Add(item *Item) (err error) {
 	return s.resetRules()
 }
 
-// Remove implements the [Storage] interface for *DefaultStorage.
-func (s *DefaultStorage) Remove(item *Item) (err error) {
+// Remove implements the [RewriteStorage] interface for *DefaultStorage.
+func (s *DefaultStorage) Remove(item *filtering.RewriteItem) (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	arr := []*Item{}
+	arr := []*filtering.RewriteItem{}
 
 	// TODO(d.kolyshev): Use slices.IndexFunc + slices.Delete?
 	for _, ent := range s.rewrites {
-		if ent.equal(item) {
+		if ent.Equal(item) {
 			log.Debug("rewrite: removed element: %s -> %s", ent.Domain, ent.Answer)
 
 			continue
@@ -193,8 +180,8 @@ func (s *DefaultStorage) Remove(item *Item) (err error) {
 	return s.resetRules()
 }
 
-// List implements the [Storage] interface for *DefaultStorage.
-func (s *DefaultStorage) List() (items []*Item) {
+// List implements the [RewriteStorage] interface for *DefaultStorage.
+func (s *DefaultStorage) List() (items []*filtering.RewriteItem) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -206,7 +193,7 @@ func (s *DefaultStorage) resetRules() (err error) {
 	// TODO(a.garipov): Use strings.Builder.
 	var rulesText []string
 	for _, rewrite := range s.rewrites {
-		rulesText = append(rulesText, rewrite.toRule())
+		rulesText = append(rulesText, toRule(rewrite))
 	}
 
 	strList := &filterlist.StringRuleList{
@@ -246,4 +233,47 @@ func matchesQType(dnsrr *rules.DNSRewrite, qt uint16) (ok bool) {
 // isWildcard returns true if pat is a wildcard domain pattern.
 func isWildcard(pat string) (res bool) {
 	return strings.HasPrefix(pat, "|*.")
+}
+
+// toRule converts rw to a filter rule.
+func toRule(rw *filtering.RewriteItem) (res string) {
+	if rw == nil {
+		return ""
+	}
+
+	domain := strings.ToLower(rw.Domain)
+
+	dType, exception := rewriteParams(rw)
+	dTypeKey := dns.TypeToString[dType]
+	if exception {
+		return fmt.Sprintf("@@||%s^$dnstype=%s,dnsrewrite", domain, dTypeKey)
+	}
+
+	return fmt.Sprintf("|%s^$dnsrewrite=NOERROR;%s;%s", domain, dTypeKey, rw.Answer)
+}
+
+// RewriteParams returns dns request type and exception flag for rw.
+func rewriteParams(rw *filtering.RewriteItem) (dType uint16, exception bool) {
+	switch rw.Answer {
+	case "AAAA":
+		return dns.TypeAAAA, true
+	case "A":
+		return dns.TypeA, true
+	default:
+		// Go on.
+	}
+
+	addr, err := netip.ParseAddr(rw.Answer)
+	if err != nil {
+		// TODO(d.kolyshev): Validate rw.Answer as a domain name.
+		return dns.TypeCNAME, false
+	}
+
+	if addr.Is4() {
+		dType = dns.TypeA
+	} else {
+		dType = dns.TypeAAAA
+	}
+
+	return dType, false
 }

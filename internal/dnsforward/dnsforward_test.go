@@ -68,7 +68,7 @@ func createTestServer(
 		ID: 0, Data: []byte(rules),
 	}}
 
-	f, err := filtering.New(filterConf, filters)
+	f, err := filtering.New(filterConf, filters, nil)
 	require.NoError(t, err)
 
 	f.SetEnabled(true)
@@ -761,7 +761,7 @@ func TestBlockedCustomIP(t *testing.T) {
 		Data: []byte(rules),
 	}}
 
-	f, err := filtering.New(&filtering.Config{}, filters)
+	f, err := filtering.New(&filtering.Config{}, filters, nil)
 	require.NoError(t, err)
 
 	s, err := NewServer(DNSCreateParams{
@@ -881,7 +881,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 
 func TestRewrite(t *testing.T) {
 	c := &filtering.Config{
-		Rewrites: []*rewrite.Item{{
+		Rewrites: []*filtering.RewriteItem{{
 			Domain: "test.com",
 			Answer: "1.2.3.4",
 		}, {
@@ -892,7 +892,11 @@ func TestRewrite(t *testing.T) {
 			Answer: "example.org",
 		}},
 	}
-	f, err := filtering.New(c, nil)
+
+	rewriteStorage, err := rewrite.NewDefaultStorage(c.Rewrites)
+	require.NoError(t, err)
+
+	f, err := filtering.New(c, nil, rewriteStorage)
 	require.NoError(t, err)
 
 	f.SetEnabled(true)
@@ -943,6 +947,12 @@ func TestRewrite(t *testing.T) {
 
 		assert.Empty(t, reply.Answer)
 
+		req = createTestMessageWithType("test.com.", dns.TypeTXT)
+		reply, eerr = dns.Exchange(req, addr.String())
+		require.NoError(t, eerr)
+
+		assert.Empty(t, reply.Answer)
+
 		req = createTestMessageWithType("alias.test.com.", dns.TypeA)
 		reply, eerr = dns.Exchange(req, addr.String())
 		require.NoError(t, eerr)
@@ -952,6 +962,12 @@ func TestRewrite(t *testing.T) {
 		assert.Equal(t, "test.com.", reply.Answer[0].(*dns.CNAME).Target)
 		assert.Equal(t, dns.TypeA, reply.Answer[1].Header().Rrtype)
 		assert.True(t, net.IP{1, 2, 3, 4}.Equal(reply.Answer[1].(*dns.A).A))
+
+		req = createTestMessageWithType("alias.test.com.", dns.TypeTXT)
+		reply, eerr = dns.Exchange(req, addr.String())
+		require.NoError(t, eerr)
+
+		assert.Empty(t, reply.Answer)
 
 		req = createTestMessageWithType("my.alias.example.org.", dns.TypeA)
 		reply, eerr = dns.Exchange(req, addr.String())
@@ -966,6 +982,12 @@ func TestRewrite(t *testing.T) {
 
 		assert.Equal(t, "example.org.", reply.Answer[0].(*dns.CNAME).Target)
 		assert.Equal(t, dns.TypeA, reply.Answer[1].Header().Rrtype)
+
+		req = createTestMessageWithType("my.alias.test.com.", dns.TypeTXT)
+		reply, eerr = dns.Exchange(req, addr.String())
+		require.NoError(t, eerr)
+
+		assert.Empty(t, reply.Answer)
 	}
 
 	for _, protect := range []bool{true, false} {
@@ -1010,7 +1032,7 @@ var testDHCP = &dhcpd.MockInterface{
 func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	const localDomain = "lan"
 
-	flt, err := filtering.New(&filtering.Config{}, nil)
+	flt, err := filtering.New(&filtering.Config{}, nil, nil)
 	require.NoError(t, err)
 
 	s, err := NewServer(DNSCreateParams{
@@ -1084,7 +1106,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 	flt, err := filtering.New(&filtering.Config{
 		EtcHosts: hc,
-	}, nil)
+	}, nil, nil)
 	require.NoError(t, err)
 
 	flt.SetEnabled(true)

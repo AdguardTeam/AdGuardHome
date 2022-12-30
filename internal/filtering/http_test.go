@@ -105,7 +105,7 @@ func TestDNSFilter_handleFilteringSetURL(t *testing.T) {
 				},
 				ConfigModified: func() { confModifiedCalled = true },
 				DataDir:        filtersDir,
-			}, nil)
+			}, nil, nil)
 			require.NoError(t, err)
 			t.Cleanup(d.Close)
 

@@ -68,7 +68,7 @@ func TestFilters(t *testing.T) {
 		HTTPClient: &http.Client{
 			Timeout: 5 * time.Second,
 		},
-	}, nil)
+	}, nil, nil)
 	require.NoError(t, err)
 
 	f := &FilterYAML{

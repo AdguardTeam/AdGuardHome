@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
-	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rewrite"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -47,6 +46,7 @@ func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts 
 		ProtectionEnabled: true,
 		FilteringEnabled:  true,
 	}
+
 	if c != nil {
 		c.SafeBrowsingCacheSize = 10000
 		c.ParentalCacheSize = 10000
@@ -59,7 +59,8 @@ func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts 
 		// It must not be nil.
 		c = &Config{}
 	}
-	f, err := New(c, filters)
+
+	f, err := New(c, filters, nil)
 	require.NoError(t, err)
 
 	purgeCaches(f)
@@ -691,96 +692,6 @@ func TestMatching(t *testing.T) {
 
 			assert.Equalf(t, tc.wantIsFiltered, res.IsFiltered, "Hostname %s has wrong result (%v must be %v)", tc.host, res.IsFiltered, tc.wantIsFiltered)
 			assert.Equalf(t, tc.wantReason, res.Reason, "Hostname %s has wrong reason (%v must be %v)", tc.host, res.Reason, tc.wantReason)
-		})
-	}
-}
-
-func TestRewrites(t *testing.T) {
-	rewrites := []*rewrite.Item{{
-		Domain: "example.org",
-		Answer: "1.1.1.1",
-	}, {
-		Domain: "example-v6.org",
-		Answer: "1:2:3::4",
-	}, {
-		Domain: "cname.org",
-		Answer: "cname-res.org",
-	}}
-
-	testCases := []struct {
-		name           string
-		host           string
-		wantReason     Reason
-		wantIsFiltered bool
-		qtype          uint16
-	}{{
-		name:           "not_found_a",
-		host:           "not-example.org",
-		wantIsFiltered: false,
-		wantReason:     NotFilteredNotFound,
-		qtype:          dns.TypeA,
-	}, {
-		name:           "not_found_aaaa",
-		host:           "not-example.org",
-		wantIsFiltered: false,
-		wantReason:     NotFilteredNotFound,
-		qtype:          dns.TypeAAAA,
-	}, {
-		name:           "not_found_txt",
-		host:           "not-example.org",
-		wantIsFiltered: false,
-		wantReason:     NotFilteredNotFound,
-		qtype:          dns.TypeTXT,
-	}, {
-		name:           "found_a",
-		host:           "example.org",
-		wantIsFiltered: false,
-		wantReason:     Rewritten,
-		qtype:          dns.TypeA,
-	}, {
-		name:           "found_aaaa",
-		host:           "example-v6.org",
-		wantIsFiltered: false,
-		wantReason:     Rewritten,
-		qtype:          dns.TypeAAAA,
-	}, {
-		name:           "found_txt",
-		host:           "example.org",
-		wantIsFiltered: false,
-		wantReason:     NotFilteredNotFound,
-		qtype:          dns.TypeTXT,
-	}, {
-		name:           "cname_a",
-		host:           "cname.org",
-		wantIsFiltered: false,
-		wantReason:     Rewritten,
-		qtype:          dns.TypeA,
-	}, {
-		name:           "cname_aaaa",
-		host:           "cname.org",
-		wantIsFiltered: false,
-		wantReason:     Rewritten,
-		qtype:          dns.TypeAAAA,
-	}, {
-		name:           "cname_txt",
-		host:           "cname.org",
-		wantIsFiltered: false,
-		wantReason:     NotFilteredNotFound,
-		qtype:          dns.TypeTXT,
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			d, setts := newForTest(t, &Config{
-				Rewrites: rewrites,
-			}, nil)
-			t.Cleanup(d.Close)
-
-			res, err := d.CheckHost(tc.host, tc.qtype, setts)
-			require.NoError(t, err)
-
-			assert.Equal(t, tc.wantIsFiltered, res.IsFiltered)
-			assert.Equal(t, tc.wantReason, res.Reason)
 		})
 	}
 }

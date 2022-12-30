@@ -35,7 +35,7 @@ func TestHandleDNSRequest_filterDNSResponse(t *testing.T) {
 		ID: 0, Data: []byte(rules),
 	}}
 
-	f, err := filtering.New(&filtering.Config{}, filters)
+	f, err := filtering.New(&filtering.Config{}, filters, nil)
 	require.NoError(t, err)
 	f.SetEnabled(true)
 

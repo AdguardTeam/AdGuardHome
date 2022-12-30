@@ -12,6 +12,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rewrite"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -76,30 +77,21 @@ func initDNSServer() (err error) {
 	}
 	Context.queryLog = querylog.New(conf)
 
-	Context.filters, err = filtering.New(config.DNS.DnsfilterConf, nil)
+	rewriteStorage, err := rewrite.NewDefaultStorage(config.DNS.DnsfilterConf.Rewrites)
+	if err != nil {
+		return fmt.Errorf("rewrites: init: %w", err)
+	}
+
+	Context.filters, err = filtering.New(config.DNS.DnsfilterConf, nil, rewriteStorage)
 	if err != nil {
 		// Don't wrap the error, since it's informative enough as is.
 		return err
 	}
 
-	var privateNets netutil.SubnetSet
-	switch len(config.DNS.PrivateNets) {
-	case 0:
-		// Use an optimized locally-served matcher.
-		privateNets = netutil.SubnetSetFunc(netutil.IsLocallyServed)
-	case 1:
-		privateNets, err = netutil.ParseSubnet(config.DNS.PrivateNets[0])
-		if err != nil {
-			return fmt.Errorf("preparing the set of private subnets: %w", err)
-		}
-	default:
-		var nets []*net.IPNet
-		nets, err = netutil.ParseSubnets(config.DNS.PrivateNets...)
-		if err != nil {
-			return fmt.Errorf("preparing the set of private subnets: %w", err)
-		}
-
-		privateNets = netutil.SliceSubnetSet(nets)
+	privateNets, err := initPrivateNets()
+	if err != nil {
+		// Don't wrap the error, since it's informative enough as is.
+		return err
 	}
 
 	p := dnsforward.DNSCreateParams{
@@ -144,6 +136,29 @@ func initDNSServer() (err error) {
 	}
 
 	return nil
+}
+
+func initPrivateNets() (privateNets netutil.SubnetSet, err error) {
+	switch len(config.DNS.PrivateNets) {
+	case 0:
+		// Use an optimized locally-served matcher.
+		privateNets = netutil.SubnetSetFunc(netutil.IsLocallyServed)
+	case 1:
+		privateNets, err = netutil.ParseSubnet(config.DNS.PrivateNets[0])
+		if err != nil {
+			return nil, fmt.Errorf("preparing the set of private subnets: %w", err)
+		}
+	default:
+		var nets []*net.IPNet
+		nets, err = netutil.ParseSubnets(config.DNS.PrivateNets...)
+		if err != nil {
+			return nil, fmt.Errorf("preparing the set of private subnets: %w", err)
+		}
+
+		privateNets = netutil.SliceSubnetSet(nets)
+	}
+
+	return privateNets, nil
 }
 
 func isRunning() bool {

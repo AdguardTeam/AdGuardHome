@@ -18,7 +18,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rewrite"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/errors"
@@ -91,7 +90,7 @@ type Config struct {
 	ParentalCacheSize     uint `yaml:"parental_cache_size"`     // (in bytes)
 	CacheTime             uint `yaml:"cache_time"`              // Element's TTL (in minutes)
 
-	Rewrites []*rewrite.Item `yaml:"rewrites"`
+	Rewrites []*RewriteItem `yaml:"rewrites"`
 
 	// Names of services to block (globally).
 	// Per-client settings can override this configuration.
@@ -195,7 +194,7 @@ type DNSFilter struct {
 	// TODO(e.burkov):  Don't use regexp for such a simple text processing task.
 	filterTitleRegexp *regexp.Regexp
 
-	rewriteStorage *rewrite.DefaultStorage
+	rewriteStorage RewriteStorage
 
 	hostCheckers []hostChecker
 }
@@ -543,6 +542,10 @@ func (d *DNSFilter) matchSysHosts(
 func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 	d.confLock.RLock()
 	defer d.confLock.RUnlock()
+
+	if d.rewriteStorage == nil {
+		return res
+	}
 
 	dnsr := d.rewriteStorage.MatchRequest(&urlfilter.DNSRequest{
 		Hostname: host,
@@ -893,7 +896,7 @@ func InitModule() {
 
 // New creates properly initialized DNS Filter that is ready to be used.  c must
 // be non-nil.
-func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
+func New(c *Config, blockFilters []Filter, rewriteStorage RewriteStorage) (d *DNSFilter, err error) {
 	d = &DNSFilter{
 		resolver:          net.DefaultResolver,
 		refreshLock:       &sync.Mutex{},
@@ -946,11 +949,7 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 
 	d.Config = *c
 	d.filtersMu = &sync.RWMutex{}
-
-	d.rewriteStorage, err = rewrite.NewDefaultStorage(RewritesListID, d.Rewrites)
-	if err != nil {
-		return nil, fmt.Errorf("rewrites: init: %w", err)
-	}
+	d.rewriteStorage = rewriteStorage
 
 	bsvcs := []string{}
 	for _, s := range d.BlockedServices {

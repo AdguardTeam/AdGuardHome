@@ -4,6 +4,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -12,32 +13,32 @@ import (
 )
 
 func TestNewDefaultStorage(t *testing.T) {
-	items := []*Item{{
+	items := []*filtering.RewriteItem{{
 		Domain: "example.com",
 		Answer: "answer.com",
 	}}
 
-	s, err := NewDefaultStorage(-1, items)
+	s, err := NewDefaultStorage(items)
 	require.NoError(t, err)
 
 	require.Len(t, s.List(), 1)
 }
 
 func TestDefaultStorage_CRUD(t *testing.T) {
-	var items []*Item
+	var items []*filtering.RewriteItem
 
-	s, err := NewDefaultStorage(-1, items)
+	s, err := NewDefaultStorage(items)
 	require.NoError(t, err)
 	require.Len(t, s.List(), 0)
 
-	item := &Item{Domain: "example.com", Answer: "answer.com"}
+	item := &filtering.RewriteItem{Domain: "example.com", Answer: "answer.com"}
 
 	err = s.Add(item)
 	require.NoError(t, err)
 
 	list := s.List()
 	require.Len(t, list, 1)
-	require.True(t, item.equal(list[0]))
+	require.True(t, item.Equal(list[0]))
 
 	err = s.Remove(item)
 	require.NoError(t, err)
@@ -45,7 +46,7 @@ func TestDefaultStorage_CRUD(t *testing.T) {
 }
 
 func TestDefaultStorage_MatchRequest(t *testing.T) {
-	items := []*Item{{
+	items := []*filtering.RewriteItem{{
 		// This one and below are about CNAME, A and AAAA.
 		Domain: "somecname",
 		Answer: "somehost.com",
@@ -101,7 +102,7 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		Answer: "sub.issue4016.com",
 	}}
 
-	s, err := NewDefaultStorage(-1, items)
+	s, err := NewDefaultStorage(items)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -285,7 +286,7 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 
 func TestDefaultStorage_MatchRequest_Levels(t *testing.T) {
 	// Exact host, wildcard L2, wildcard L3.
-	items := []*Item{{
+	items := []*filtering.RewriteItem{{
 		Domain: "host.com",
 		Answer: "1.1.1.1",
 	}, {
@@ -296,7 +297,7 @@ func TestDefaultStorage_MatchRequest_Levels(t *testing.T) {
 		Answer: "3.3.3.3",
 	}}
 
-	s, err := NewDefaultStorage(-1, items)
+	s, err := NewDefaultStorage(items)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -355,7 +356,7 @@ func TestDefaultStorage_MatchRequest_Levels(t *testing.T) {
 
 func TestDefaultStorage_MatchRequest_ExceptionCNAME(t *testing.T) {
 	// Wildcard and exception for a sub-domain.
-	items := []*Item{{
+	items := []*filtering.RewriteItem{{
 		Domain: "*.host.com",
 		Answer: "2.2.2.2",
 	}, {
@@ -366,7 +367,7 @@ func TestDefaultStorage_MatchRequest_ExceptionCNAME(t *testing.T) {
 		Answer: "sub.host.com",
 	}}
 
-	s, err := NewDefaultStorage(-1, items)
+	s, err := NewDefaultStorage(items)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -410,7 +411,7 @@ func TestDefaultStorage_MatchRequest_ExceptionCNAME(t *testing.T) {
 
 func TestDefaultStorage_MatchRequest_CNAMEs(t *testing.T) {
 	// Two cname rules for one subdomain
-	items := []*Item{{
+	items := []*filtering.RewriteItem{{
 		Domain: "cname.org",
 		Answer: "1.1.1.1",
 	}, {
@@ -424,7 +425,7 @@ func TestDefaultStorage_MatchRequest_CNAMEs(t *testing.T) {
 		Answer: "sub_cname.org",
 	}}
 
-	s, err := NewDefaultStorage(-1, items)
+	s, err := NewDefaultStorage(items)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -478,7 +479,7 @@ func TestDefaultStorage_MatchRequest_CNAMEs(t *testing.T) {
 
 func TestDefaultStorage_MatchRequest_ExceptionIP(t *testing.T) {
 	// Exception for AAAA record.
-	items := []*Item{{
+	items := []*filtering.RewriteItem{{
 		Domain: "host.com",
 		Answer: "1.2.3.4",
 	}, {
@@ -495,7 +496,7 @@ func TestDefaultStorage_MatchRequest_ExceptionIP(t *testing.T) {
 		Answer: "A",
 	}}
 
-	s, err := NewDefaultStorage(-1, items)
+	s, err := NewDefaultStorage(items)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -553,6 +554,69 @@ func TestDefaultStorage_MatchRequest_ExceptionIP(t *testing.T) {
 			})
 
 			assert.Equal(t, tc.wantDNSRewrites, dnsRewrites)
+		})
+	}
+}
+
+func TestToRule(t *testing.T) {
+	const testDomain = "example.org"
+
+	testCases := []struct {
+		name string
+		item *filtering.RewriteItem
+		want string
+	}{{
+		name: "nil",
+		item: nil,
+		want: "",
+	}, {
+		name: "a_rule",
+		item: &filtering.RewriteItem{
+			Domain: testDomain,
+			Answer: "1.1.1.1",
+		},
+		want: "|example.org^$dnsrewrite=NOERROR;A;1.1.1.1",
+	}, {
+		name: "aaaa_rule",
+		item: &filtering.RewriteItem{
+			Domain: testDomain,
+			Answer: "1:2:3::4",
+		},
+		want: "|example.org^$dnsrewrite=NOERROR;AAAA;1:2:3::4",
+	}, {
+		name: "cname_rule",
+		item: &filtering.RewriteItem{
+			Domain: testDomain,
+			Answer: "other.org",
+		},
+		want: "|example.org^$dnsrewrite=NOERROR;CNAME;other.org",
+	}, {
+		name: "wildcard_rule",
+		item: &filtering.RewriteItem{
+			Domain: "*.example.org",
+			Answer: "other.org",
+		},
+		want: "|*.example.org^$dnsrewrite=NOERROR;CNAME;other.org",
+	}, {
+		name: "aaaa_exception",
+		item: &filtering.RewriteItem{
+			Domain: testDomain,
+			Answer: "A",
+		},
+		want: "@@||example.org^$dnstype=A,dnsrewrite",
+	}, {
+		name: "aaaa_exception",
+		item: &filtering.RewriteItem{
+			Domain: testDomain,
+			Answer: "AAAA",
+		},
+		want: "@@||example.org^$dnstype=AAAA,dnsrewrite",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := toRule(tc.item)
+			assert.Equal(t, tc.want, res)
 		})
 	}
 }

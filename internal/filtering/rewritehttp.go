@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rewrite"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -16,7 +15,7 @@ func (d *DNSFilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
 
 // handleRewriteAdd is the handler for the POST /control/rewrite/add HTTP API.
 func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
-	rw := &rewrite.Item{}
+	rw := &RewriteItem{}
 	err := json.NewDecoder(r.Body).Decode(rw)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
@@ -43,7 +42,7 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 // handleRewriteDelete is the handler for the POST /control/rewrite/delete HTTP
 // API.
 func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) {
-	entDel := rewrite.Item{}
+	entDel := RewriteItem{}
 	err := json.NewDecoder(r.Body).Decode(&entDel)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
