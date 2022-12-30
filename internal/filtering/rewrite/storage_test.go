@@ -116,10 +116,30 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		wantDNSRewrites: nil,
 		dtyp:            dns.TypeA,
 	}, {
-		name:            "not_filtered_qtype",
-		host:            "www.host.com",
-		wantDNSRewrites: nil,
-		dtyp:            dns.TypeMX,
+		name: "other_qtype",
+		host: "www.host.com",
+		wantDNSRewrites: []*rules.DNSRewrite{{
+			Value:    nil,
+			NewCNAME: "host.com",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeNone,
+		}, {
+			Value:    net.IP{1, 2, 3, 4}.To16(),
+			NewCNAME: "",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeA,
+		}, {
+			Value:    net.IP{1, 2, 3, 5}.To16(),
+			NewCNAME: "",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeA,
+		}, {
+			Value:    net.ParseIP("1:2:3::4"),
+			NewCNAME: "",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeAAAA,
+		}},
+		dtyp: dns.TypeMX,
 	}, {
 		name: "rewritten_a",
 		host: "www.host.com",
@@ -251,10 +271,15 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		}},
 		dtyp: dns.TypeA,
 	}, {
-		name:            "issue4008",
-		host:            "somehost.com",
-		wantDNSRewrites: nil,
-		dtyp:            dns.TypeHTTPS,
+		name: "issue4008",
+		host: "somehost.com",
+		wantDNSRewrites: []*rules.DNSRewrite{{
+			Value:    net.IP{0, 0, 0, 0}.To16(),
+			NewCNAME: "",
+			RCode:    dns.RcodeSuccess,
+			RRType:   dns.TypeA,
+		}},
+		dtyp: dns.TypeHTTPS,
 	}, {
 		name: "issue4016",
 		host: "www.issue4016.com",
