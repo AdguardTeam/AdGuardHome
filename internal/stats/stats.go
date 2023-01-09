@@ -180,7 +180,7 @@ func withRecovered(orig *error) {
 // type check
 var _ Interface = (*StatsCtx)(nil)
 
-// Start implements the Interface interface for *StatsCtx.
+// Start implements the [Interface] interface for *StatsCtx.
 func (s *StatsCtx) Start() {
 	s.initWeb()
 

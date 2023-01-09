@@ -42,6 +42,9 @@ See also the [v0.107.21 GitHub milestone][ms-v0.107.21].
 
 ### Fixed
 
+- `AdGuardHome --update` freezing when another instance of AdGuard Home is
+  running ([#4223], [#5191]).
+- The `--update` flag performing an update even with the same version.
 - Failing HTTPS redirection on saving the encryption settings ([#4898]).
 - Zeroing rules counter of erroneusly edited filtering rule lists ([#5290]).
 - Filters updating strategy, which could sometimes lead to use of broken or
@@ -50,6 +53,7 @@ See also the [v0.107.21 GitHub milestone][ms-v0.107.21].
   server to stop responding ([#5251]).
 
 [#4898]: https://github.com/AdguardTeam/AdGuardHome/issues/4898
+[#5191]: https://github.com/AdguardTeam/AdGuardHome/issues/5191
 [#5238]: https://github.com/AdguardTeam/AdGuardHome/issues/5238
 [#5251]: https://github.com/AdguardTeam/AdGuardHome/issues/5251
 [#5258]: https://github.com/AdguardTeam/AdGuardHome/issues/5258

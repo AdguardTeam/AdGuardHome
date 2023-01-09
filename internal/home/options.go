@@ -229,7 +229,7 @@ var cmdLineOpts = []cmdLineOpt{{
 	updateNoValue:   func(o options) (options, error) { o.performUpdate = true; return o, nil },
 	effect:          nil,
 	serialize:       func(o options) (val string, ok bool) { return "", o.performUpdate },
-	description:     "Update application and exit.",
+	description:     "Update the current binary and restart the service in case it's installed.",
 	longName:        "update",
 	shortName:       "",
 }, {

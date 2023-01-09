@@ -61,7 +61,7 @@ func (u *Updater) VersionInfo(forceRecheck bool) (vi VersionInfo, err error) {
 		return VersionInfo{}, fmt.Errorf("updater: HTTP GET %s: %w", vcu, err)
 	}
 
-	u.prevCheckTime = time.Now()
+	u.prevCheckTime = now
 	u.prevCheckResult, u.prevCheckError = u.parseVersionResponse(body)
 
 	return u.prevCheckResult, u.prevCheckError
