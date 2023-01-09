@@ -136,10 +136,10 @@ func TestUpdate(t *testing.T) {
 	u.packageURL = fakeURL.String()
 
 	require.NoError(t, u.prepare(exePath))
-	require.NoError(t, u.downloadPackageFile(u.packageURL, u.packageName))
+	require.NoError(t, u.downloadPackageFile())
 	require.NoError(t, u.unpack())
 	// require.NoError(t, u.check())
-	require.NoError(t, u.backup())
+	require.NoError(t, u.backup(false))
 	require.NoError(t, u.replace())
 
 	u.clean()
@@ -215,10 +215,10 @@ func TestUpdateWindows(t *testing.T) {
 	u.packageURL = fakeURL.String()
 
 	require.NoError(t, u.prepare(exePath))
-	require.NoError(t, u.downloadPackageFile(u.packageURL, u.packageName))
+	require.NoError(t, u.downloadPackageFile())
 	require.NoError(t, u.unpack())
 	// assert.Nil(t, u.check())
-	require.NoError(t, u.backup())
+	require.NoError(t, u.backup(false))
 	require.NoError(t, u.replace())
 
 	u.clean()

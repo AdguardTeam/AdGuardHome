@@ -104,49 +104,58 @@ func NewUpdater(conf *Config) *Updater {
 	}
 }
 
-// Update performs the auto-update.
-func (u *Updater) Update() (err error) {
+// Update performs the auto-update.  It returns an error if the update failed.
+// If firstRun is true, it assumes the configuration file doesn't exist.
+func (u *Updater) Update(firstRun bool) (err error) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 
 	log.Info("updater: updating")
-	defer func() { log.Info("updater: finished; errors: %v", err) }()
+	defer func() {
+		if err != nil {
+			log.Error("updater: failed: %v", err)
+		} else {
+			log.Info("updater: finished")
+		}
+	}()
 
 	execPath, err := os.Executable()
 	if err != nil {
-		return err
+		return fmt.Errorf("getting executable path: %w", err)
 	}
 
 	err = u.prepare(execPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("preparing: %w", err)
 	}
 
 	defer u.clean()
 
-	err = u.downloadPackageFile(u.packageURL, u.packageName)
+	err = u.downloadPackageFile()
 	if err != nil {
-		return err
+		return fmt.Errorf("downloading package file: %w", err)
 	}
 
 	err = u.unpack()
 	if err != nil {
-		return err
+		return fmt.Errorf("unpacking: %w", err)
 	}
 
-	err = u.check()
-	if err != nil {
-		return err
+	if !firstRun {
+		err = u.check()
+		if err != nil {
+			return fmt.Errorf("checking config: %w", err)
+		}
 	}
 
-	err = u.backup()
+	err = u.backup(firstRun)
 	if err != nil {
-		return err
+		return fmt.Errorf("making backup: %w", err)
 	}
 
 	err = u.replace()
 	if err != nil {
-		return err
+		return fmt.Errorf("replacing: %w", err)
 	}
 
 	return nil
@@ -204,6 +213,7 @@ func (u *Updater) prepare(exePath string) (err error) {
 	return nil
 }
 
+// unpack extracts the files from the downloaded archive.
 func (u *Updater) unpack() error {
 	var err error
 	_, pkgNameOnly := filepath.Split(u.packageURL)
@@ -228,38 +238,48 @@ func (u *Updater) unpack() error {
 	return nil
 }
 
+// check returns an error if the configuration file couldn't be used with the
+// version of AdGuard Home just downloaded.
 func (u *Updater) check() error {
 	log.Debug("updater: checking configuration")
+
 	err := copyFile(u.confName, filepath.Join(u.updateDir, "AdGuardHome.yaml"))
 	if err != nil {
 		return fmt.Errorf("copyFile() failed: %w", err)
 	}
+
 	cmd := exec.Command(u.updateExeName, "--check-config")
 	err = cmd.Run()
 	if err != nil || cmd.ProcessState.ExitCode() != 0 {
 		return fmt.Errorf("exec.Command(): %s %d", err, cmd.ProcessState.ExitCode())
 	}
+
 	return nil
 }
 
-func (u *Updater) backup() error {
+// backup makes a backup of the current configuration and supporting files.  It
+// ignores the configuration file if firstRun is true.
+func (u *Updater) backup(firstRun bool) (err error) {
 	log.Debug("updater: backing up current configuration")
 	_ = os.Mkdir(u.backupDir, 0o755)
-	err := copyFile(u.confName, filepath.Join(u.backupDir, "AdGuardHome.yaml"))
-	if err != nil {
-		return fmt.Errorf("copyFile() failed: %w", err)
+	if !firstRun {
+		err = copyFile(u.confName, filepath.Join(u.backupDir, "AdGuardHome.yaml"))
+		if err != nil {
+			return fmt.Errorf("copyFile() failed: %w", err)
+		}
 	}
 
 	wd := u.workDir
 	err = copySupportingFiles(u.unpackedFiles, wd, u.backupDir)
 	if err != nil {
-		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %s",
-			wd, u.backupDir, err)
+		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %s", wd, u.backupDir, err)
 	}
 
 	return nil
 }
 
+// replace moves the current executable with the updated one and also copies the
+// supporting files.
 func (u *Updater) replace() error {
 	err := copySupportingFiles(u.unpackedFiles, u.updateDir, u.workDir)
 	if err != nil {
@@ -287,6 +307,7 @@ func (u *Updater) replace() error {
 	return nil
 }
 
+// clean removes the temporary directory itself and all it's contents.
 func (u *Updater) clean() {
 	_ = os.RemoveAll(u.updateDir)
 }
@@ -297,9 +318,9 @@ func (u *Updater) clean() {
 const MaxPackageFileSize = 32 * 1024 * 1024
 
 // Download package file and save it to disk
-func (u *Updater) downloadPackageFile(url, filename string) (err error) {
+func (u *Updater) downloadPackageFile() (err error) {
 	var resp *http.Response
-	resp, err = u.client.Get(url)
+	resp, err = u.client.Get(u.packageURL)
 	if err != nil {
 		return fmt.Errorf("http request failed: %w", err)
 	}
@@ -321,7 +342,7 @@ func (u *Updater) downloadPackageFile(url, filename string) (err error) {
 	_ = os.Mkdir(u.updateDir, 0o755)
 
 	log.Debug("updater: saving package to file")
-	err = os.WriteFile(filename, body, 0o644)
+	err = os.WriteFile(u.packageName, body, 0o644)
 	if err != nil {
 		return fmt.Errorf("os.WriteFile() failed: %w", err)
 	}

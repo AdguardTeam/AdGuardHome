@@ -30,6 +30,8 @@ import (
 // sysVersion is the version of local service.System interface implementation.
 const sysVersion = "openbsd-runcom"
 
+// chooseSystem checks the current system detected and substitutes it with local
+// implementation if needed.
 func chooseSystem() {
 	service.ChooseSystem(openbsdSystem{})
 }
