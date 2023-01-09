@@ -217,17 +217,14 @@ func (s *DefaultStorage) resetRules() (err error) {
 
 // matchesQType returns true if dnsrewrite matches the question type qt.
 func matchesQType(dnsrr *rules.DNSRewrite, qt uint16) (ok bool) {
-	// Accept types other than A and AAAA.
-	if qt != dns.TypeA && qt != dns.TypeAAAA {
+	switch qt {
+	case dns.TypeA:
+		return dnsrr.RRType != dns.TypeAAAA
+	case dns.TypeAAAA:
+		return dnsrr.RRType != dns.TypeA
+	default:
 		return true
 	}
-
-	// Add CNAMEs, since they match for all types requests.
-	if dnsrr.RRType == dns.TypeCNAME || dnsrr.NewCNAME != "" {
-		return true
-	}
-
-	return dnsrr.RRType == qt
 }
 
 // isWildcard returns true if pat is a wildcard domain pattern.
