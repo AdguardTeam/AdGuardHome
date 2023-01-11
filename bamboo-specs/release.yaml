@@ -109,7 +109,8 @@
                 CHANNEL=${bamboo.channel}\
                 GPG_KEY_PASSPHRASE=${bamboo.gpgPassword}\
                 FRONTEND_PREBUILT=1\
-                VERBOSE=1\
+                PARALLELISM=1\
+                VERBOSE=2\
                 build-release
   # TODO(a.garipov): Use more fine-grained artifact rules.
   'artifacts':

@@ -7,21 +7,17 @@
 # Experienced readers may find it overly verbose.
 
 # The default verbosity level is 0.  Show log messages if the caller requested
-# verbosity level greater than 0.  Show every command that is run if the
-# verbosity level is greater than 1.  Show the environment if the verbosity
-# level is greater than 2.  Otherwise, print nothing.
+# verbosity level greater than 0.  Show the environment and every command that
+# is run if the verbosity level is greater than 1.  Otherwise, print nothing.
 #
 # The level of verbosity for the build script is the same minus one level.  See
 # below in build().
 verbose="${VERBOSE:-0}"
 readonly verbose
 
-if [ "$verbose" -gt '2' ]
+if [ "$verbose" -gt '1' ]
 then
 	env
-	set -x
-elif [ "$verbose" -gt '1' ]
-then
 	set -x
 fi
 
@@ -188,9 +184,6 @@ build() {
 	#
 	# Set GOARM and GOMIPS to an empty string if $build_arm and $build_mips are
 	# the zero value by removing the hyphen as if it's a prefix.
-	#
-	# Don't use quotes with $build_par because we want an empty space if
-	# parallelism wasn't set.
 	env\
 		GOARCH="$build_arch"\
 		GOARM="${build_arm#-}"\
