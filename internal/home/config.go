@@ -106,6 +106,8 @@ type configuration struct {
 	ProxyURL string `yaml:"http_proxy"`
 	// Language is a two-letter ISO 639-1 language code.
 	Language string `yaml:"language"`
+	// Theme is a UI theme for current user.
+	Theme Theme `yaml:"theme"`
 	// DebugPProf defines if the profiling HTTP handler will listen on :6060.
 	DebugPProf bool `yaml:"debug_pprof"`
 
@@ -322,6 +324,7 @@ var config = &configuration{
 	},
 	OSConfig:      &osConfig{},
 	SchemaVersion: currentSchemaVersion,
+	Theme:         ThemeAuto,
 }
 
 // getConfigFilename returns path to the current config file

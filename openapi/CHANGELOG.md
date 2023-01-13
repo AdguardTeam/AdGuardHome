@@ -6,6 +6,33 @@
 
 
 
+## v0.107.22: API changes
+
+### `POST /control/i18n/change_language` is deprecated
+
+Use `PUT /control/profile/update`.
+
+### `GET /control/i18n/current_language` is deprecated
+
+Use `GET /control/profile`.
+
+* The `/control/profile` HTTP API has been changed.
+
+* The new `PUT /control/profile/update` HTTP API allows user info updates.
+
+These `control/profile/update` and `control/profile` APIs accept and return a
+JSON object with the following format:
+
+```json
+{
+  "name":"user name", 
+  "language": "en",
+  "theme": "auto"
+}
+```
+
+
+
 ## v0.107.20: API Changes
 
 ### `POST /control/cache_clear`

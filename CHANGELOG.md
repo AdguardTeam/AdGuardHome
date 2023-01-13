@@ -17,14 +17,29 @@ and this project adheres to
 
 
 
+### Added
+
+- The new HTTP API `PUT /control/profile/update`, that updates current user
+  language and UI theme.  The format of request body is described in 
+  `openapi/openapi.yaml`.
+
+### Changed
+
+- The HTTP API `GET /control/profile` now returns enhanced object with
+  current user's name, language and UI theme.  The format of response body is 
+  described in `openapi/openapi.yaml` and `openapi/CHANGELOG.md`.
+
+[#613]: https://github.com/AdguardTeam/AdGuardHome/issues/613
+
+
+
 <!--
-## [v0.107.22] - 2222-12-28 (APPROX.)
+## [v0.107.22] - 2222-01-18 (APPROX.)
 
 See also the [v0.107.22 GitHub milestone][ms-v0.107.22].
 
 [ms-v0.107.22]: https://github.com/AdguardTeam/AdGuardHome/milestone/58?closed=1
 -->
-
 
 
 ## [v0.107.21] - 2122-12-15

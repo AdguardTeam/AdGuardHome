@@ -54,6 +54,7 @@ type languageJSON struct {
 	Language string `json:"language"`
 }
 
+// TODO(d.kolyshev): Deprecated, remove it later.
 func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
 	log.Printf("home: language is %s", config.Language)
 
@@ -62,6 +63,7 @@ func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// TODO(d.kolyshev): Deprecated, remove it later.
 func handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
 	if aghhttp.WriteTextPlainDeprecated(w, r) {
 		return
