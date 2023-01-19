@@ -1,8 +1,25 @@
+.select.select--theme {
+    height: 45px;
+    padding: 0 32px 2px 11px;
+    outline: 0;
+    border-color: var(--ctrl-select-bgcolor);
+    background-image: url("./svg/chevron-down.svg");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    background-size: 17px 20px;
+    appearance: none;
+    cursor: pointer;
+}
+
+.select--theme::-ms-expand {
+    opacity: 0;
+}
+
 .select.select--language {
     height: 45px;
     padding: 0 32px 2px 33px;
     outline: 0;
-    border-color: rgba(69, 79, 94, 0.12);
+    border-color: var(--ctrl-select-bgcolor);
     background-image: url("./svg/globe.svg"), url("./svg/chevron-down.svg");
     background-repeat: no-repeat, no-repeat;
     background-position: left 11px center, right 9px center;
@@ -16,8 +33,9 @@
 }
 
 .basic-multi-select .select__control {
-    border: 1px solid rgba(0, 40, 100, 0.12);
+    border: 1px solid var(--card-border-color);;
     border-radius: 3px;
+    background-color: var(--ctrl-bgcolor);
 }
 
 .basic-multi-select .select__control:hover {
@@ -36,4 +54,16 @@
 
 .basic-multi-select .select__menu {
     z-index: 3;
+    background-color: var(--ctrl-bgcolor);
+}
+
+[data-theme=dark] .basic-multi-select .select__option:hover,
+[data-theme=dark] .basic-multi-select .select__option--is-focused,
+[data-theme=dark] .basic-multi-select .select__option--is-focused:hover {
+    background-color: var(--ctrl-select-bgcolor);
+    color: var(--ctrl-dropdown-color);
+}
+
+[data-theme=dark] .select__multi-value__remove svg {
+    filter: invert(1);
 }

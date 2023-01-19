@@ -530,14 +530,14 @@ func validateBlockingMode(mode BlockingMode, blockingIPv4, blockingIPv6 net.IP) 
 // prepareInternalProxy initializes the DNS proxy that is used for internal DNS
 // queries, such as public clients PTR resolving and updater hostname resolving.
 func (s *Server) prepareInternalProxy() (err error) {
+	srvConf := s.conf
 	conf := &proxy.Config{
 		CacheEnabled:   true,
 		CacheSizeBytes: 4096,
-		UpstreamConfig: s.conf.UpstreamConfig,
+		UpstreamConfig: srvConf.UpstreamConfig,
 		MaxGoroutines:  int(s.conf.MaxGoroutines),
 	}
 
-	srvConf := s.conf
 	setProxyUpstreamMode(
 		conf,
 		srvConf.AllServers,

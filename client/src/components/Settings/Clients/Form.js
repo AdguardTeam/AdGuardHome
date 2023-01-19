@@ -11,12 +11,13 @@ import Select from 'react-select';
 import i18n from '../../../i18n';
 import Tabs from '../../ui/Tabs';
 import Examples from '../Dns/Upstream/Examples';
-import { toggleAllServices } from '../../../helpers/helpers';
+import { toggleAllServices, trimLinesAndRemoveEmpty } from '../../../helpers/helpers';
 import {
     renderInputField,
     renderGroupField,
     CheckboxField,
     renderServiceField,
+    renderTextareaField,
 } from '../../../helpers/form';
 import { validateClientId, validateRequiredValue } from '../../../helpers/validators';
 import { CLIENT_ID_LINK, FORM_NAME } from '../../../helpers/constants';
@@ -230,10 +231,11 @@ let Form = (props) => {
                 <Field
                     id="upstreams"
                     name="upstreams"
-                    component="textarea"
+                    component={renderTextareaField}
                     type="text"
                     className="form-control form-control--textarea mb-5"
                     placeholder={t('upstream_dns')}
+                    normalizeOnBlur={trimLinesAndRemoveEmpty}
                 />
                 <Examples />
             </div>,

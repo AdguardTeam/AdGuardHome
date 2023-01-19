@@ -455,6 +455,10 @@ func run(opts options, clientBuildFS fs.FS) {
 	err = setupConfig(opts)
 	fatalOnError(err)
 
+	// TODO(e.burkov):  This could be made earlier, probably as the option's
+	// effect.
+	cmdlineUpdate(opts)
+
 	if !Context.firstRun {
 		// Save the updated config
 		err = config.write()
@@ -522,7 +526,7 @@ func run(opts options, clientBuildFS fs.FS) {
 	fatalOnError(err)
 
 	if !Context.firstRun {
-		err = initDNSServer()
+		err = initDNS()
 		fatalOnError(err)
 
 		Context.tls.start()
@@ -543,20 +547,24 @@ func run(opts options, clientBuildFS fs.FS) {
 		}
 	}
 
-	// TODO(a.garipov): This could be made much earlier and could be done on
-	// the first run as well, but to achieve this we need to bypass requests
-	// over dnsforward resolver.
-	cmdlineUpdate(opts)
-
 	Context.web.Start()
 
 	// wait indefinitely for other go-routines to complete their job
 	select {}
 }
 
+func (c *configuration) anonymizer() (ipmut *aghnet.IPMut) {
+	var anonFunc aghnet.IPMutFunc
+	if c.DNS.AnonymizeClientIP {
+		anonFunc = querylog.AnonymizeIP
+	}
+
+	return aghnet.NewIPMut(anonFunc)
+}
+
 // startMods initializes and starts the DNS server after installation.
-func startMods() error {
-	err := initDNSServer()
+func startMods() (err error) {
+	err = initDNS()
 	if err != nil {
 		return err
 	}
@@ -927,8 +935,8 @@ func getHTTPProxy(_ *http.Request) (*url.URL, error) {
 
 // jsonError is a generic JSON error response.
 //
-// TODO(a.garipov): Merge together with the implementations in .../dhcpd and
-// other packages after refactoring the web handler registering.
+// TODO(a.garipov): Merge together with the implementations in [dhcpd] and other
+// packages after refactoring the web handler registering.
 type jsonError struct {
 	// Message is the error message, an opaque string.
 	Message string `json:"message"`
@@ -940,30 +948,40 @@ func cmdlineUpdate(opts options) {
 		return
 	}
 
-	log.Info("starting update")
+	// Initialize the DNS server to use the internal resolver which the updater
+	// needs to be able to resolve the update source hostname.
+	//
+	// TODO(e.burkov):  We could probably initialize the internal resolver
+	// separately.
+	err := initDNSServer(nil, nil, nil, nil, nil, nil, &tlsConfigSettings{})
+	fatalOnError(err)
 
-	if Context.firstRun {
-		log.Info("update not allowed on first run")
+	log.Info("cmdline update: performing update")
 
-		os.Exit(0)
-	}
-
-	_, err := Context.updater.VersionInfo(true)
+	updater := Context.updater
+	info, err := updater.VersionInfo(true)
 	if err != nil {
-		vcu := Context.updater.VersionCheckURL()
+		vcu := updater.VersionCheckURL()
 		log.Error("getting version info from %s: %s", vcu, err)
 
-		os.Exit(0)
+		os.Exit(1)
 	}
 
-	if Context.updater.NewVersion() == "" {
+	if info.NewVersion == version.Version() {
 		log.Info("no updates available")
 
 		os.Exit(0)
 	}
 
-	err = Context.updater.Update()
+	err = updater.Update(Context.firstRun)
 	fatalOnError(err)
+
+	err = restartService()
+	if err != nil {
+		log.Debug("restarting service: %s", err)
+		log.Info("AdGuard Home was not installed as a service. " +
+			"Please restart running instances of AdGuardHome manually.")
+	}
 
 	os.Exit(0)
 }

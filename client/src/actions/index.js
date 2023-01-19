@@ -363,18 +363,18 @@ export const changeLanguage = (lang) => async (dispatch) => {
     }
 };
 
-export const getLanguageRequest = createAction('GET_LANGUAGE_REQUEST');
-export const getLanguageFailure = createAction('GET_LANGUAGE_FAILURE');
-export const getLanguageSuccess = createAction('GET_LANGUAGE_SUCCESS');
+export const changeThemeRequest = createAction('CHANGE_THEME_REQUEST');
+export const changeThemeFailure = createAction('CHANGE_THEME_FAILURE');
+export const changeThemeSuccess = createAction('CHANGE_THEME_SUCCESS');
 
-export const getLanguage = () => async (dispatch) => {
-    dispatch(getLanguageRequest());
+export const changeTheme = (theme) => async (dispatch) => {
+    dispatch(changeThemeRequest());
     try {
-        const langSettings = await apiClient.getCurrentLanguage();
-        dispatch(getLanguageSuccess(langSettings.language));
+        await apiClient.changeTheme({ theme });
+        dispatch(changeThemeSuccess({ theme }));
     } catch (error) {
         dispatch(addErrorToast({ error }));
-        dispatch(getLanguageFailure());
+        dispatch(changeThemeFailure());
     }
 };
 

@@ -149,19 +149,6 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
-type profileJSON struct {
-	Name string `json:"name"`
-}
-
-func handleGetProfile(w http.ResponseWriter, r *http.Request) {
-	u := Context.auth.getCurrentUser(r)
-	resp := &profileJSON{
-		Name: u.Name,
-	}
-
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
-}
-
 // ------------------------
 // registration of handlers
 // ------------------------
@@ -172,6 +159,7 @@ func registerControlHandlers() {
 	Context.mux.HandleFunc("/control/version.json", postInstall(optionalAuth(handleGetVersionJSON)))
 	httpRegister(http.MethodPost, "/control/update", handleUpdate)
 	httpRegister(http.MethodGet, "/control/profile", handleGetProfile)
+	httpRegister(http.MethodPut, "/control/profile/update", handlePutProfile)
 
 	// No auth is necessary for DoH/DoT configurations
 	Context.mux.HandleFunc("/apple/doh.mobileconfig", postInstall(handleMobileConfigDoH))

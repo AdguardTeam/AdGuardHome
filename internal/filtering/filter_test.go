@@ -4,32 +4,22 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
-	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// serveFiltersLocally is a helper that concurrently listens on a free port to
-// respond with fltContent.  It also gracefully closes the listener when the
-// test under t finishes.
-func serveFiltersLocally(t *testing.T, fltContent []byte) (ipp netip.AddrPort) {
+// serveHTTPLocally starts a new HTTP server, that handles its index with h.  It
+// also gracefully closes the listener when the test under t finishes.
+func serveHTTPLocally(t *testing.T, h http.Handler) (urlStr string) {
 	t.Helper()
-
-	h := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		pt := testutil.PanicT{}
-
-		n, werr := w.Write(fltContent)
-		require.NoError(pt, werr)
-		require.Equal(pt, len(fltContent), n)
-	})
 
 	l, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
@@ -38,9 +28,26 @@ func serveFiltersLocally(t *testing.T, fltContent []byte) (ipp netip.AddrPort) {
 	testutil.CleanupAndRequireSuccess(t, l.Close)
 
 	addr := l.Addr()
-	require.IsType(t, new(net.TCPAddr), addr)
+	require.IsType(t, (*net.TCPAddr)(nil), addr)
 
-	return netip.AddrPortFrom(netutil.IPv4Localhost(), uint16(addr.(*net.TCPAddr).Port))
+	return (&url.URL{
+		Scheme: aghhttp.SchemeHTTP,
+		Host:   addr.String(),
+	}).String()
+}
+
+// serveFiltersLocally is a helper that concurrently listens on a free port to
+// respond with fltContent.
+func serveFiltersLocally(t *testing.T, fltContent []byte) (urlStr string) {
+	t.Helper()
+
+	return serveHTTPLocally(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		pt := testutil.PanicT{}
+
+		n, werr := w.Write(fltContent)
+		require.NoError(pt, werr)
+		require.Equal(pt, len(fltContent), n)
+	}))
 }
 
 func TestFilters(t *testing.T) {
@@ -65,10 +72,7 @@ func TestFilters(t *testing.T) {
 	require.NoError(t, err)
 
 	f := &FilterYAML{
-		URL: (&url.URL{
-			Scheme: "http",
-			Host:   addr.String(),
-		}).String(),
+		URL: addr,
 	}
 
 	updateAndAssert := func(t *testing.T, want require.BoolAssertionFunc, wantRulesCount int) {
@@ -103,11 +107,7 @@ func TestFilters(t *testing.T) {
 		anotherContent := []byte(`||example.com^`)
 		oldURL := f.URL
 
-		ipp := serveFiltersLocally(t, anotherContent)
-		f.URL = (&url.URL{
-			Scheme: "http",
-			Host:   ipp.String(),
-		}).String()
+		f.URL = serveFiltersLocally(t, anotherContent)
 		t.Cleanup(func() { f.URL = oldURL })
 
 		updateAndAssert(t, require.True, 1)

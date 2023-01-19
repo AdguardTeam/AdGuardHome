@@ -962,6 +962,9 @@
           'description': 'OK.'
   '/i18n/change_language':
     'post':
+      'deprecated': true
+      'description': >
+        Deprecated: Use `PUT /control/profile` instead.
       'tags':
       - 'i18n'
       'operationId': 'changeLanguage'
@@ -980,6 +983,9 @@
           'description': 'OK.'
   '/i18n/current_language':
     'get':
+      'deprecated': true
+      'description': >
+        Deprecated: Use `GET /control/profile` instead.
       'tags':
       - 'i18n'
       'operationId': 'currentLanguage'
@@ -1145,6 +1151,20 @@
       'responses':
         '302':
           'description': 'OK.'
+  '/profile/update':
+    'put':
+      'tags':
+        - 'global'
+      'operationId': 'updateProfile'
+      'summary': 'Updates current user info'
+      'requestBody':
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/ProfileInfo'
+      'responses':
+        '200':
+          'description': 'OK'
   '/profile':
     'get':
       'tags':
@@ -2335,6 +2355,19 @@
       'properties':
         'name':
           'type': 'string'
+        'language':
+          'type': 'string'
+        'theme':
+          'type': 'string'
+          'description': 'Interface theme'
+          'enum':
+            - 'auto'
+            - 'dark'
+            - 'light'
+      'required':
+        - 'name'
+        - 'language'
+        - 'theme'
     'Client':
       'type': 'object'
       'description': 'Client information.'

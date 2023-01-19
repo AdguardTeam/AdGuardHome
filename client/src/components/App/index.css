@@ -1,4 +1,26 @@
 :root {
+    --bgcolor: #f5f7fb;
+    --mcolor: #495057;
+    --scolor: rgba(74, 74, 74, 0.7);
+    --border-color: rgba(0, 40, 100, 0.12);
+    --header-bgcolor: #fff;
+    --card-bgcolor: #fff;
+    --card-border-color: rgba(0, 40, 100, 0.12);
+    --ctrl-bgcolor: #fff;
+    --ctrl-select-bgcolor: rgba(69, 79, 94, 0.12);
+    --ctrl-dropdown-color: #212529;
+    --ctrl-dropdown-bgcolor-focus: #f8f9fa;
+    --ctrl-dropdown-color-focus: #16181b;
+    --btn-success-bgcolor: #5eba00;
+    --form-disabled-bgcolor: #f8f9fa;
+    --form-disabled-color: #495057;
+    --rt-nodata-bgcolor: rgba(255,255,255,0.8);
+    --rt-nodata-color: rgba(0,0,0,0.5);
+    --modal-overlay-bgcolor: rgba(255, 255, 255, 0.75);
+    --logs__table-bgcolor: #fff;
+    --logs__row--blue-bgcolor: #e5effd;
+    --logs__row--white-bgcolor: #fff;
+    --detailed-info-color: #888888;
     --yellow-pale: rgba(247, 181, 0, 0.1);
     --green79: #67b279;
     --gray-a5: #a5a5a5;
@@ -6,6 +28,32 @@
     --gray-f3: #f3f3f3;
     --font-family-monospace: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
     --font-size-disable-autozoom: 1rem;
+}
+
+[data-theme="dark"] {
+    --bgcolor: #131313;
+    --mcolor: #e6e6e6;
+    --scolor: #a5a5a5;
+    --header-bgcolor: #131313;
+    --border-color: #222;
+    --card-bgcolor: #1c1c1c;
+    --card-border-color: #3d3d3d;
+    --ctrl-bgcolor: #1c1c1c;
+    --ctrl-select-bgcolor: #3d3d3d;
+    --ctrl-dropdown-color: #fff;
+    --ctrl-dropdown-bgcolor-focus: #000;
+    --ctrl-dropdown-color-focus: #fff;
+    --btn-success-bgcolor: #67b279;
+    --form-disabled-bgcolor: #3d3d3d;
+    --form-disabled-color: #a5a5a5;
+    --logs__text-color: #f3f3f3;
+    --rt-nodata-bgcolor: #1c1c1c;
+    --rt-nodata-color: #fff;
+    --modal-overlay-bgcolor: #1c1c1c;
+    --logs__table-bgcolor: #3d3d3d;
+    --logs__row--blue-bgcolor: #467fcf;
+    --logs__row--white-bgcolor: #1c1c1c;
+    --detailed-info-color: #fff;
 }
 
 body {

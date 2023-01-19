@@ -47,7 +47,7 @@
     width: 250px;
     height: 100vh;
     transition: transform 0.3s ease;
-    background-color: #fff;
+    background-color: var(--header-bgcolor);
     overflow-y: auto;
 }
 

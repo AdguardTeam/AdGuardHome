@@ -85,9 +85,9 @@ body {
     font-size: 0.9375rem;
     font-weight: 400;
     line-height: 1.5;
-    color: #495057;
+    color: var(--mcolor);
     text-align: left;
-    background-color: #f5f7fb;
+    background-color: var(--bgcolor);
 }
 
 [tabindex="-1"]:focus {
@@ -1943,10 +1943,10 @@ pre code {
     padding: 0.375rem 0.75rem;
     font-size: 0.9375rem;
     line-height: 1.6;
-    color: #495057;
-    background-color: #fff;
+    color: var(--mcolor);
+    background-color: var(--card-bgcolor);
     background-clip: padding-box;
-    border: 1px solid rgba(0, 40, 100, 0.12);
+    border: 1px solid var(--card-border-color);
     border-radius: 3px;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
@@ -1957,8 +1957,8 @@ pre code {
 }
 
 .form-control:focus {
-    color: #495057;
-    background-color: #fff;
+    color: var(--mcolor);
+    background-color: var(--ctrl-bgcolor);
     border-color: #1991eb;
     outline: 0;
     box-shadow: 0 0 0 2px rgba(70, 127, 207, 0.25);
@@ -1991,7 +1991,8 @@ pre code {
 
 .form-control:disabled,
 .form-control[readonly] {
-    background-color: #f8f9fa;
+    background-color: var(--form-disabled-bgcolor);
+    color: var(--form-disabled-color);
     opacity: 1;
 }
 
@@ -2580,7 +2581,7 @@ fieldset:disabled a.btn {
 
 .btn-success {
     color: #fff;
-    background-color: #5eba00;
+    background-color: var(--btn-success-bgcolor);
     border-color: #5eba00;
 }
 
@@ -3244,7 +3245,7 @@ tbody.collapse.show {
     color: #495057;
     text-align: left;
     list-style: none;
-    background-color: #fff;
+    background-color: var(--ctrl-bgcolor);
     background-clip: padding-box;
     border: 1px solid rgba(0, 40, 100, 0.12);
     border-radius: 3px;
@@ -3348,7 +3349,7 @@ tbody.collapse.show {
     padding: 0.25rem 1.5rem;
     clear: both;
     font-weight: 400;
-    color: #212529;
+    color: var(--ctrl-dropdown-color);
     text-align: inherit;
     white-space: nowrap;
     background-color: transparent;
@@ -3357,9 +3358,9 @@ tbody.collapse.show {
 
 .dropdown-item:hover,
 .dropdown-item:focus {
-    color: #16181b;
+    color: var(--ctrl-dropdown-color-focus);
     text-decoration: none;
-    background-color: #f8f9fa;
+    background-color: var(--ctrl-dropdown-bgcolor-focus);
 }
 
 .dropdown-item.active,
@@ -3794,11 +3795,11 @@ tbody.collapse.show {
     height: 2.375rem;
     padding: 0.5rem 1.75rem 0.5rem 0.75rem;
     line-height: 1.5;
-    color: #495057;
+    color: var(--mcolor);
     vertical-align: middle;
-    background: #fff url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMCA1Jz48cGF0aCBmaWxsPScjOTk5JyBkPSdNMCAwTDEwIDBMNSA1TDAgMCcvPjwvc3ZnPg==") no-repeat right 0.75rem center;
+    background: var(--card-bgcolor) url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMCA1Jz48cGF0aCBmaWxsPScjOTk5JyBkPSdNMCAwTDEwIDBMNSA1TDAgMCcvPjwvc3ZnPg==") no-repeat right 0.75rem center;
     background-size: 8px 10px;
-    border: 1px solid rgba(0, 40, 100, 0.12);
+    border: 1px solid var(--card-border-color);
     border-radius: 3px;
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -4469,9 +4470,9 @@ tbody.collapse.show {
     flex-direction: column;
     min-width: 0;
     word-wrap: break-word;
-    background-color: #fff;
+    background-color: var(--card-bgcolor);
     background-clip: border-box;
-    border: 1px solid rgba(0, 40, 100, 0.12);
+    border: 1px solid var(--card-border-color);
     border-radius: 3px;
 }
 
@@ -5475,9 +5476,9 @@ button.close {
     flex-direction: column;
     width: 100%;
     pointer-events: auto;
-    background-color: #fff;
+    background-color: var(--card-bgcolor);
     background-clip: padding-box;
-    border: 1px solid rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--card-border-color);
     border-radius: 3px;
     outline: 0;
 }
@@ -10268,8 +10269,8 @@ body.fixed-header .page {
 .header {
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
-    background: #fff;
-    border-bottom: 1px solid rgba(0, 40, 100, 0.12);
+    background: var(--header-bgcolor);
+    border-bottom: 1px solid var(--border-color);
 }
 
 body.fixed-header .header {
@@ -10323,6 +10324,10 @@ body.fixed-header .header {
     vertical-align: bottom;
     margin-right: 0.5rem;
     width: auto;
+}
+
+[data-theme=dark] .header-brand-img {
+    filter:invert(1);
 }
 
 .header-avatar {
@@ -10382,8 +10387,8 @@ body.fixed-header .header {
 }
 
 .footer {
-    background: #fff;
-    border-top: 1px solid rgba(0, 40, 100, 0.12);
+    background: var(--card-bgcolor);
+    border-top: 1px solid var(--card-border-color);
     font-size: 0.875rem;
     padding: 1.25rem 0;
     color: #9aa0ac;
@@ -13686,13 +13691,17 @@ Card alert
     content: "";
 }
 
+[data-theme=dark] .dropdown-menu-arrow:before {
+    border-bottom-color: var(--ctrl-bgcolor);
+}
+
 .dropdown-menu-arrow:after {
     position: absolute;
     top: -5px;
     left: 12px;
     display: inline-block;
     border-right: 5px solid transparent;
-    border-bottom: 5px solid #fff;
+    border-bottom: 5px solid var(--ctrl-bgcolor);
     border-left: 5px solid transparent;
     content: "";
 }

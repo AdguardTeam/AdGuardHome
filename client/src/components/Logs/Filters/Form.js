@@ -155,7 +155,7 @@ const Form = (props) => {
                     name={FORM_NAMES.search}
                     component={renderFilterField}
                     type="text"
-                    className={classNames('form-control--search form-control--transparent', className)}
+                    className={classNames('form-control form-control--search form-control--transparent', className)}
                     placeholder={t('domain_or_client')}
                     tooltip={t('query_log_strict_search')}
                     onClearInputClick={onInputClear}

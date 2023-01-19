@@ -61,7 +61,7 @@ func (u *Updater) VersionInfo(forceRecheck bool) (vi VersionInfo, err error) {
 		return VersionInfo{}, fmt.Errorf("updater: HTTP GET %s: %w", vcu, err)
 	}
 
-	u.prevCheckTime = time.Now()
+	u.prevCheckTime = now
 	u.prevCheckResult, u.prevCheckError = u.parseVersionResponse(body)
 
 	return u.prevCheckResult, u.prevCheckError
@@ -92,7 +92,11 @@ func (u *Updater) parseVersionResponse(data []byte) (VersionInfo, error) {
 	info.AnnouncementURL = versionJSON["announcement_url"]
 
 	packageURL, ok := u.downloadURL(versionJSON)
-	info.CanAutoUpdate = aghalg.BoolToNullBool(ok && info.NewVersion != u.version)
+	if !ok {
+		return info, fmt.Errorf("version.json: packageURL not found")
+	}
+
+	info.CanAutoUpdate = aghalg.BoolToNullBool(info.NewVersion != u.version)
 
 	u.newVersion = info.NewVersion
 	u.packageURL = packageURL
