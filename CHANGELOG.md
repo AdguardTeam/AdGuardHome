@@ -29,8 +29,6 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 See also the [v0.107.22 GitHub milestone][ms-v0.107.22].
 
-[ms-v0.107.22]: https://github.com/AdguardTeam/AdGuardHome/milestone/58?closed=1
-
 ### Added
 
 - Experimental Dark UI theme ([#613]).
@@ -41,14 +39,14 @@ See also the [v0.107.22 GitHub milestone][ms-v0.107.22].
 ### Changed
 
 - The HTTP API `GET /control/profile` now returns enhanced object with
-  current user's name, language and UI theme.  The format of response body is
+  current user's name, language, and UI theme.  The format of response body is
   described in `openapi/openapi.yaml` and `openapi/CHANGELOG.md`.
 
 ### Fixed
 
 - `AdGuardHome --update` freezing when another instance of AdGuard Home is
   running ([#4223], [#5191]).
-- The `--update` flag performing an update even with the same version.
+- The `--update` flag performing an update even when there is no version change.
 - Failing HTTPS redirection on saving the encryption settings ([#4898]).
 - Zeroing rules counter of erroneusly edited filtering rule lists ([#5290]).
 - Filters updating strategy, which could sometimes lead to use of broken or
@@ -58,6 +56,8 @@ See also the [v0.107.22 GitHub milestone][ms-v0.107.22].
 [#5191]: https://github.com/AdguardTeam/AdGuardHome/issues/5191
 [#5290]: https://github.com/AdguardTeam/AdGuardHome/issues/5290
 [#5258]: https://github.com/AdguardTeam/AdGuardHome/issues/5258
+
+[ms-v0.107.22]: https://github.com/AdguardTeam/AdGuardHome/milestone/58?closed=1
 
 
 
