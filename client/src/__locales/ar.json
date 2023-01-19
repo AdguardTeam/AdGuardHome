@@ -300,6 +300,8 @@
     "blocking_mode_nxdomain": "NXDOMAIN: الرد باستخدام رمز NXDOMAIN",
     "blocking_mode_null_ip": "IP Null: الاستجابة بعنوان IP صفري (0.0.0.0 لـ A ؛ :: لـ AAAA)",
     "blocking_mode_custom_ip": "استجابة IP مخصصة بعنوان IP تم تعيينه يدويًا",
+    "theme_light": "فاتح",
+    "theme_dark": "ليلي",
     "upstream_dns_client_desc": "إذا احتفظت بهذا الحقل فارغًا ، فسيستخدم AdGuard Home الخوادم التي تم تكوينها في<0>DNS إعدادات</0>.",
     "tracker_source": "مصدر المتعقب",
     "source_label": "المصدر",
