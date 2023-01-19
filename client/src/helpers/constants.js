@@ -227,6 +227,14 @@ export const BLOCKING_MODES = {
     custom_ip: 'custom_ip',
 };
 
+// Note that translation strings contain these modes (theme_CONSTANT)
+// i.e. theme_auto, theme_light.
+export const THEMES = {
+    auto: 'auto',
+    dark: 'dark',
+    light: 'light',
+};
+
 export const WHOIS_ICONS = {
     location: 'location',
     orgname: 'network',

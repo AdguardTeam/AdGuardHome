@@ -19,6 +19,7 @@ and this project adheres to
 
 ### Added
 
+- Experimental Dark UI theme ([#613]).
 - The new HTTP API `PUT /control/profile/update`, that updates current user
   language and UI theme.  The format of request body is described in 
   `openapi/openapi.yaml`.

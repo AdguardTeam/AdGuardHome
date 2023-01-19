@@ -4,7 +4,8 @@
     box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
     border-radius: 4px !important;
     pointer-events: auto !important;
-    background-color: var(--white);
+    background-color: var(--ctrl-bgcolor);
+    color: var(--scolor);
     z-index: 102;
     overflow-y: auto;
     max-height: 100%;

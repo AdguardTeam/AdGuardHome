@@ -31,7 +31,7 @@
     overflow: hidden;
     font-size: 1rem;
     font-family: var(--font-family-sans-serif);
-    color: var(--gray-4d);
+    color: var(--logs__text-color);
     letter-spacing: 0;
     line-height: 1.5rem;
 }
@@ -48,7 +48,7 @@
 .detailed-info {
     font-size: 0.8rem;
     line-height: 1.4;
-    color: #888888;
+    color: var(--detailed-info-color);
 }
 
 .logs__text--link {
@@ -369,7 +369,7 @@
 
 /* QUERY_STATUS_COLORS */
 .logs__row--blue {
-    background-color: var(--blue);
+    background-color: var(--logs__row--blue-bgcolor);
 }
 
 .logs__row--green {
@@ -381,7 +381,7 @@
 }
 
 .logs__row--white {
-    background-color: var(--white);
+    background-color: var(--logs__row--white-bgcolor);
 }
 
 .logs__row--yellow {
@@ -389,8 +389,8 @@
 }
 
 .logs__no-data {
-    color: var(--gray-4d);
-    background-color: var(--white80);
+    color: var(--mcolor);
+    background-color: var(--logs__table-bgcolor);
     pointer-events: none;
     font-weight: 600;
     text-align: center;
@@ -403,7 +403,7 @@
 }
 
 .logs__table {
-    background-color: var(--white);
+    background-color: var(--logs__table-bgcolor);
     border: 0;
     border-radius: 8px;
     min-height: 43rem;

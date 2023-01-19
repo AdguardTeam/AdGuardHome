@@ -112,14 +112,6 @@ const dashboard = handleActions(
             return newState;
         },
 
-        [actions.getLanguageSuccess]: (state, { payload }) => {
-            const newState = {
-                ...state,
-                language: payload,
-            };
-            return newState;
-        },
-
         [actions.getClientsRequest]: (state) => ({
             ...state,
             processingClients: true,
@@ -148,7 +140,12 @@ const dashboard = handleActions(
         [actions.getProfileSuccess]: (state, { payload }) => ({
             ...state,
             name: payload.name,
+            theme: payload.theme,
             processingProfile: false,
+        }),
+        [actions.changeThemeSuccess]: (state, { payload }) => ({
+            ...state,
+            theme: payload.theme,
         }),
     },
     {
@@ -168,6 +165,7 @@ const dashboard = handleActions(
         autoClients: [],
         supportedTags: [],
         name: '',
+        theme: 'auto',
         checkUpdateFlag: false,
     },
 );

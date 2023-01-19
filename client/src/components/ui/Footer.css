@@ -18,6 +18,11 @@
     align-items: center;
 }
 
+.footer__column--theme {
+    min-width: 220px;
+    margin-bottom: 0;
+}
+
 .footer__column--language {
     min-width: 220px;
     margin-bottom: 0;
@@ -49,6 +54,11 @@
     }
 
     .footer__column--language {
+        min-width: initial;
+        margin-left: 20px;
+    }
+
+    .footer__column--theme {
         min-width: initial;
         margin-left: auto;
     }
