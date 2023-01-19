@@ -13,21 +13,56 @@ and this project adheres to
 
 <!--
 ## [v0.108.0] - TBA
+
+## [v0.107.23] - 2023-02-15 (APPROX.)
+
+See also the [v0.107.23 GitHub milestone][ms-v0.107.23].
+
+[ms-v0.107.23]: https://github.com/AdguardTeam/AdGuardHome/milestone/59?closed=1
+
+NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
 
 
-<!--
-## [v0.107.22] - 2222-12-28 (APPROX.)
+## [v0.107.22] - 2023-01-19
 
 See also the [v0.107.22 GitHub milestone][ms-v0.107.22].
 
 [ms-v0.107.22]: https://github.com/AdguardTeam/AdGuardHome/milestone/58?closed=1
--->
+
+### Added
+
+- Experimental Dark UI theme ([#613]).
+- The new HTTP API `PUT /control/profile/update`, that updates current user
+  language and UI theme.  The format of request body is described in
+  `openapi/openapi.yaml`.
+
+### Changed
+
+- The HTTP API `GET /control/profile` now returns enhanced object with
+  current user's name, language and UI theme.  The format of response body is
+  described in `openapi/openapi.yaml` and `openapi/CHANGELOG.md`.
+
+### Fixed
+
+- `AdGuardHome --update` freezing when another instance of AdGuard Home is
+  running ([#4223], [#5191]).
+- The `--update` flag performing an update even with the same version.
+- Failing HTTPS redirection on saving the encryption settings ([#4898]).
+- Zeroing rules counter of erroneusly edited filtering rule lists ([#5290]).
+- Filters updating strategy, which could sometimes lead to use of broken or
+  incompletely downloaded lists ([#5258]).
+
+[#613]:  https://github.com/AdguardTeam/AdGuardHome/issues/613
+[#5191]: https://github.com/AdguardTeam/AdGuardHome/issues/5191
+[#5290]: https://github.com/AdguardTeam/AdGuardHome/issues/5290
+[#5258]: https://github.com/AdguardTeam/AdGuardHome/issues/5258
 
 
 
-## [v0.107.21] - 2122-12-15
+
+## [v0.107.21] - 2022-12-15
 
 See also the [v0.107.21 GitHub milestone][ms-v0.107.21].
 
@@ -1507,11 +1542,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.22...HEAD
-[v0.107.22]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.21...v0.107.22
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.23...HEAD
+[v0.107.23]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.22...v0.107.23
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.21...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.22...HEAD
+[v0.107.22]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.21...v0.107.22
 [v0.107.21]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.20...v0.107.21
 [v0.107.20]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.19...v0.107.20
 [v0.107.19]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.18...v0.107.19
