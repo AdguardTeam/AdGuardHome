@@ -1,8 +1,8 @@
 'name': 'build'
 
 'env':
-  'GO_VERSION': '1.18.9'
-  'NODE_VERSION': '14'
+  'GO_VERSION': '1.19.5'
+  'NODE_VERSION': '18'
 
 'on':
   'push':
@@ -99,7 +99,7 @@
     - 'name': 'Set up QEMU'
       'uses': 'docker/setup-qemu-action@v2'
     - 'name': 'Set up Docker Buildx'
-      'uses': 'docker/setup-buildx-action@v1'
+      'uses': 'docker/setup-buildx-action@v2'
     - 'name': 'Run snapshot build'
       'run': 'make SIGN=0 VERBOSE=1 build-release build-docker'
 
