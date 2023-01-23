@@ -12,7 +12,6 @@
 /agh-backup/
 /bin/
 /build/*
-/build2/*
 /data/
 /dist/
 /filtering/tests/filtering.TestLotsOfRules*.pprof
@@ -26,4 +25,3 @@ leases.db
 node_modules/
 
 !/build/gitkeep
-!/build2/gitkeep

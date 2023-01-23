@@ -320,7 +320,7 @@ done
 log "packing frontend"
 
 build_archive="./${dist}/AdGuardHome_frontend.tar.gz"
-tar -c -f - ./build ./build2 | gzip -9 - > "$build_archive"
+tar -c -f - ./build | gzip -9 - > "$build_archive"
 log "$build_archive"
 
 log "calculating checksums"

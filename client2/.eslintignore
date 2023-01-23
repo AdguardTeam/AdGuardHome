@@ -1,6 +1,0 @@
-scripts
-node_modules
-postcss.config.js
-src/lib/entities
-src/lib/apis
-openApi

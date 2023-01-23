@@ -999,20 +999,6 @@
             'application/json':
               'schema':
                 '$ref': '#/components/schemas/LanguageSettings'
-  '/install/get_addresses_beta':
-    'get':
-      'tags':
-      - 'install'
-      'operationId': 'installGetAddressesBeta'
-      'summary': >
-        'UNSTABLE!: Gets the network interfaces information.'
-      'responses':
-        '200':
-          'description': 'OK.'
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/AddressesInfoBeta'
   '/install/get_addresses':
     'get':
       'tags':
@@ -1026,30 +1012,6 @@
             'application/json':
               'schema':
                 '$ref': '#/components/schemas/AddressesInfo'
-  '/install/check_config_beta':
-    'post':
-      'tags':
-      - 'install'
-      'operationId': 'installCheckConfigBeta'
-      'summary': >
-        'UNSTABLE!: Checks configuration'
-      'requestBody':
-        'content':
-          'application/json':
-            'schema':
-              '$ref': '#/components/schemas/CheckConfigRequestBeta'
-        'description': 'Configuration to be checked'
-        'required': true
-      'responses':
-        '200':
-          'description': 'OK.'
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/CheckConfigResponse'
-        '400':
-          'description': >
-            Failed to parse JSON or cannot listen on the specified address.
   '/install/check_config':
     'post':
       'tags':
@@ -1073,29 +1035,6 @@
         '400':
           'description': >
             Failed to parse JSON or cannot listen on the specified address.
-  '/install/configure_beta':
-    'post':
-      'tags':
-      - 'install'
-      'operationId': 'installConfigureBeta'
-      'summary': >
-        'UNSTABLE!: Applies the initial configuration.'
-      'requestBody':
-        'content':
-          'application/json':
-            'schema':
-              '$ref': '#/components/schemas/InitialConfigurationBeta'
-        'description': 'Initial configuration JSON'
-        'required': true
-      'responses':
-        '200':
-          'description': 'OK.'
-        '400':
-          'description': >
-            Failed to parse initial configuration or cannot listen to the
-            specified addresses.
-        '500':
-          'description': 'Cannot start the DNS server'
   '/install/configure':
     'post':
       'tags':
@@ -2273,24 +2212,6 @@
             'type': 'string'
         'mtu':
           'type': 'integer'
-    'AddressInfoBeta':
-      'type': 'object'
-      'description': 'Port information'
-      'required':
-      - 'ip'
-      - 'port'
-      'properties':
-        'ip':
-          'type': 'array'
-          'items':
-            'type': 'string'
-          'minItems': 1
-          'example':
-          - '127.0.0.1'
-        'port':
-          'type': 'integer'
-          'format': 'uint16'
-          'example': 53
     'AddressInfo':
       'type': 'object'
       'description': 'Port information'
@@ -2327,28 +2248,6 @@
           'type': 'integer'
           'format': 'uint16'
           'example': 80
-    'AddressesInfoBeta':
-      'type': 'object'
-      'description': 'AdGuard Home addresses configuration'
-      'required':
-      - 'dns_port'
-      - 'web_port'
-      - 'interfaces'
-      'properties':
-        'dns_port':
-          'type': 'integer'
-          'format': 'uint16'
-          'example': 53
-        'web_port':
-          'type': 'integer'
-          'format': 'uint16'
-          'example': 80
-        'interfaces':
-          'type': 'array'
-          'description': >
-            Network interfaces dictionary, keys are interface names.
-          'items':
-            '$ref': '#/components/schemas/NetInterface'
     'ProfileInfo':
       'type': 'object'
       'description': 'Information about the current user'
@@ -2633,17 +2532,6 @@
       - 'name'
       - 'rules'
       'type': 'object'
-    'CheckConfigRequestBeta':
-      'type': 'object'
-      'description': 'Configuration to be checked'
-      'properties':
-        'dns':
-          '$ref': '#/components/schemas/CheckConfigRequestInfoBeta'
-        'web':
-          '$ref': '#/components/schemas/CheckConfigRequestInfoBeta'
-        'set_static_ip':
-          'type': 'boolean'
-          'example': false
     'CheckConfigRequest':
       'type': 'object'
       'description': 'Configuration to be checked'
@@ -2653,23 +2541,6 @@
         'web':
           '$ref': '#/components/schemas/CheckConfigRequestInfo'
         'set_static_ip':
-          'type': 'boolean'
-          'example': false
-    'CheckConfigRequestInfoBeta':
-      'type': 'object'
-      'properties':
-        'ip':
-          'type': 'array'
-          'items':
-            'type': 'string'
-          'minItems': 1
-          'example':
-          - '127.0.0.1'
-        'port':
-          'type': 'integer'
-          'format': 'uint16'
-          'example': 53
-        'autofix':
           'type': 'boolean'
           'example': false
     'CheckConfigRequestInfo':
@@ -2732,28 +2603,6 @@
           'type': 'string'
           'default': ''
           'description': 'Error text. Set if static=error'
-    'InitialConfigurationBeta':
-      'type': 'object'
-      'description': >
-        AdGuard Home initial configuration for the first-install wizard.
-      'required':
-      - 'dns'
-      - 'web'
-      - 'username'
-      - 'password'
-      'properties':
-        'dns':
-          '$ref': '#/components/schemas/AddressInfoBeta'
-        'web':
-          '$ref': '#/components/schemas/AddressInfoBeta'
-        'username':
-          'type': 'string'
-          'description': 'Basic auth username'
-          'example': 'admin'
-        'password':
-          'type': 'string'
-          'description': 'Basic auth password'
-          'example': 'password'
     'InitialConfiguration':
       'type': 'object'
       'description': >

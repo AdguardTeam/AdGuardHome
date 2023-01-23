@@ -33,13 +33,11 @@ const (
 )
 
 type webConfig struct {
-	clientFS     fs.FS
-	clientBetaFS fs.FS
+	clientFS fs.FS
 
-	BindHost     netip.Addr
-	BindPort     int
-	BetaBindPort int
-	PortHTTPS    int
+	BindHost  netip.Addr
+	BindPort  int
+	PortHTTPS int
 
 	// ReadTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
@@ -81,15 +79,6 @@ type Web struct {
 	// TODO(a.garipov): Refactor all these servers.
 	httpServer *http.Server
 
-	// httpServerBeta is a server for new client.
-	httpServerBeta *http.Server
-
-	// handlerBeta is the handler for new client.
-	handlerBeta http.Handler
-
-	// installerBeta is the pre-install handler for new client.
-	installerBeta http.Handler
-
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
 	httpsServer httpsServer
@@ -106,20 +95,15 @@ func newWeb(conf *webConfig) (w *Web) {
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
-	betaClientFS := http.FileServer(http.FS(conf.clientBetaFS))
 
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
 	Context.mux.Handle("/", withMiddlewares(clientFS, gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler))
-	w.handlerBeta = withMiddlewares(betaClientFS, gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler)
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if conf.firstRun {
 		log.Info("This is the first launch of AdGuard Home, redirecting everything to /install.html ")
 		Context.mux.Handle("/install.html", preInstallHandler(clientFS))
-		w.installerBeta = preInstallHandler(betaClientFS)
 		w.registerInstallHandlers()
-		// This must be removed in API v1.
-		w.registerBetaInstallHandlers()
 	} else {
 		registerControlHandlers()
 	}
@@ -208,8 +192,6 @@ func (web *Web) Start() {
 			errs <- web.httpServer.ListenAndServe()
 		}()
 
-		web.startBetaServer(hostStr)
-
 		err := <-errs
 		if !errors.Is(err, http.ErrServerClosed) {
 			cleanupAlways()
@@ -219,36 +201,6 @@ func (web *Web) Start() {
 		// We use ErrServerClosed as a sign that we need to rebind on a new
 		// address, so go back to the start of the loop.
 	}
-}
-
-// startBetaServer starts the beta HTTP server if necessary.
-func (web *Web) startBetaServer(hostStr string) {
-	if web.conf.BetaBindPort == 0 {
-		return
-	}
-
-	// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
-	hdlr := h2c.NewHandler(
-		withMiddlewares(Context.mux, limitRequestBody, web.wrapIndexBeta),
-		&http2.Server{},
-	)
-
-	web.httpServerBeta = &http.Server{
-		ErrorLog:          log.StdLog("web: plain: beta", log.DEBUG),
-		Addr:              netutil.JoinHostPort(hostStr, web.conf.BetaBindPort),
-		Handler:           hdlr,
-		ReadTimeout:       web.conf.ReadTimeout,
-		ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
-		WriteTimeout:      web.conf.WriteTimeout,
-	}
-	go func() {
-		defer log.OnPanic("web: plain: beta")
-
-		betaErr := web.httpServerBeta.ListenAndServe()
-		if betaErr != nil && !errors.Is(betaErr, http.ErrServerClosed) {
-			log.Error("starting beta http server: %s", betaErr)
-		}
-	}()
 }
 
 // Close gracefully shuts down the HTTP servers.
@@ -266,7 +218,6 @@ func (web *Web) Close(ctx context.Context) {
 	shutdownSrv(ctx, web.httpsServer.server)
 	shutdownSrv3(web.httpsServer.server3)
 	shutdownSrv(ctx, web.httpServer)
-	shutdownSrv(ctx, web.httpServerBeta)
 
 	log.Info("stopped http server")
 }

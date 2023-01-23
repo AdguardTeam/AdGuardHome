@@ -23,6 +23,15 @@ See also the [v0.107.23 GitHub milestone][ms-v0.107.23].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Removed
+
+ *  The “beta frontend” and the corresponding APIs.  They never quite worked
+    properly, and the future new version of AdGuard Home API will probably be
+    different.
+
+    Correspondingly, the configuration parameter `beta_bind_port` has been
+    removed as well.
+
 
 
 ## [v0.107.22] - 2023-01-19
@@ -58,7 +67,6 @@ See also the [v0.107.22 GitHub milestone][ms-v0.107.22].
 [#5258]: https://github.com/AdguardTeam/AdGuardHome/issues/5258
 
 [ms-v0.107.22]: https://github.com/AdguardTeam/AdGuardHome/milestone/58?closed=1
-
 
 
 

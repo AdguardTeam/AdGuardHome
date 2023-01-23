@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -99,7 +98,7 @@ func (req *checkConfReq) validateWeb(tcpPorts aghalg.UniqChecker[tcpPort]) (err 
 
 	portInt := req.Web.Port
 	port := tcpPort(portInt)
-	addPorts(tcpPorts, tcpPort(config.BetaBindPort), port)
+	addPorts(tcpPorts, port)
 	if err = tcpPorts.Validate(); err != nil {
 		// Reset the value for the port to 1 to make sure that validateDNS
 		// doesn't throw the same error, unless the same TCP port is set there
@@ -321,7 +320,6 @@ type applyConfigReq struct {
 func copyInstallSettings(dst, src *configuration) {
 	dst.BindHost = src.BindHost
 	dst.BindPort = src.BindPort
-	dst.BetaBindPort = src.BetaBindPort
 	dst.DNS.BindHosts = src.DNS.BindHosts
 	dst.DNS.Port = src.DNS.Port
 }
@@ -472,7 +470,6 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 		defer cancel()
 
 		shutdownSrv(ctx, web.httpServer)
-		shutdownSrv(ctx, web.httpServerBeta)
 	}(shutdownTimeout)
 }
 
@@ -510,192 +507,4 @@ func (web *Web) registerInstallHandlers() {
 	Context.mux.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(web.handleInstallGetAddresses)))
 	Context.mux.HandleFunc("/control/install/check_config", preInstall(ensurePOST(web.handleInstallCheckConfig)))
 	Context.mux.HandleFunc("/control/install/configure", preInstall(ensurePOST(web.handleInstallConfigure)))
-}
-
-// checkConfigReqEntBeta is a struct representing new client's config check
-// request entry.  It supports multiple IP values unlike the checkConfigReqEnt.
-//
-// TODO(e.burkov): This should removed with the API v1 when the appropriate
-// functionality will appear in default checkConfigReqEnt.
-type checkConfigReqEntBeta struct {
-	IP      []netip.Addr `json:"ip"`
-	Port    int          `json:"port"`
-	Autofix bool         `json:"autofix"`
-}
-
-// checkConfigReqBeta is a struct representing new client's config check request
-// body.  It uses checkConfigReqEntBeta instead of checkConfigReqEnt.
-//
-// TODO(e.burkov): This should removed with the API v1 when the appropriate
-// functionality will appear in default checkConfigReq.
-type checkConfigReqBeta struct {
-	Web         checkConfigReqEntBeta `json:"web"`
-	DNS         checkConfigReqEntBeta `json:"dns"`
-	SetStaticIP bool                  `json:"set_static_ip"`
-}
-
-// handleInstallCheckConfigBeta is a substitution of /install/check_config
-// handler for new client.
-//
-// TODO(e.burkov): This should removed with the API v1 when the appropriate
-// functionality will appear in default handleInstallCheckConfig.
-func (web *Web) handleInstallCheckConfigBeta(w http.ResponseWriter, r *http.Request) {
-	reqData := checkConfigReqBeta{}
-	err := json.NewDecoder(r.Body).Decode(&reqData)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to parse 'check_config' JSON data: %s", err)
-
-		return
-	}
-
-	if len(reqData.DNS.IP) == 0 || len(reqData.Web.IP) == 0 {
-		aghhttp.Error(r, w, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
-
-		return
-	}
-
-	nonBetaReqData := checkConfReq{
-		Web: checkConfReqEnt{
-			IP:      reqData.Web.IP[0],
-			Port:    reqData.Web.Port,
-			Autofix: reqData.Web.Autofix,
-		},
-		DNS: checkConfReqEnt{
-			IP:      reqData.DNS.IP[0],
-			Port:    reqData.DNS.Port,
-			Autofix: reqData.DNS.Autofix,
-		},
-		SetStaticIP: reqData.SetStaticIP,
-	}
-
-	nonBetaReqBody := &strings.Builder{}
-
-	err = json.NewEncoder(nonBetaReqBody).Encode(nonBetaReqData)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "encoding check_config: %s", err)
-
-		return
-	}
-
-	body := nonBetaReqBody.String()
-	r.Body = io.NopCloser(strings.NewReader(body))
-	r.ContentLength = int64(len(body))
-
-	web.handleInstallCheckConfig(w, r)
-}
-
-// applyConfigReqEntBeta is a struct representing new client's config setting
-// request entry.  It supports multiple IP values unlike the applyConfigReqEnt.
-//
-// TODO(e.burkov): This should removed with the API v1 when the appropriate
-// functionality will appear in default applyConfigReqEnt.
-type applyConfigReqEntBeta struct {
-	IP   []netip.Addr `json:"ip"`
-	Port int          `json:"port"`
-}
-
-// applyConfigReqBeta is a struct representing new client's config setting
-// request body.  It uses applyConfigReqEntBeta instead of applyConfigReqEnt.
-//
-// TODO(e.burkov): This should removed with the API v1 when the appropriate
-// functionality will appear in default applyConfigReq.
-type applyConfigReqBeta struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-
-	Web applyConfigReqEntBeta `json:"web"`
-	DNS applyConfigReqEntBeta `json:"dns"`
-}
-
-// handleInstallConfigureBeta is a substitution of /install/configure handler
-// for new client.
-//
-// TODO(e.burkov): This should removed with the API v1 when the appropriate
-// functionality will appear in default handleInstallConfigure.
-func (web *Web) handleInstallConfigureBeta(w http.ResponseWriter, r *http.Request) {
-	reqData := applyConfigReqBeta{}
-	err := json.NewDecoder(r.Body).Decode(&reqData)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to parse 'check_config' JSON data: %s", err)
-
-		return
-	}
-
-	if len(reqData.DNS.IP) == 0 || len(reqData.Web.IP) == 0 {
-		aghhttp.Error(r, w, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
-
-		return
-	}
-
-	nonBetaReqData := applyConfigReq{
-		Web: applyConfigReqEnt{
-			IP:   reqData.Web.IP[0],
-			Port: reqData.Web.Port,
-		},
-		DNS: applyConfigReqEnt{
-			IP:   reqData.DNS.IP[0],
-			Port: reqData.DNS.Port,
-		},
-		Username: reqData.Username,
-		Password: reqData.Password,
-	}
-
-	nonBetaReqBody := &strings.Builder{}
-
-	err = json.NewEncoder(nonBetaReqBody).Encode(nonBetaReqData)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "encoding configure: %s", err)
-
-		return
-	}
-	body := nonBetaReqBody.String()
-	r.Body = io.NopCloser(strings.NewReader(body))
-	r.ContentLength = int64(len(body))
-
-	web.handleInstallConfigure(w, r)
-}
-
-// getAddrsResponseBeta is a struct representing new client's getting addresses
-// request body.  It uses array of structs instead of map.
-//
-// TODO(e.burkov): This should removed with the API v1 when the appropriate
-// functionality will appear in default firstRunData.
-type getAddrsResponseBeta struct {
-	Interfaces []*aghnet.NetInterface `json:"interfaces"`
-	WebPort    int                    `json:"web_port"`
-	DNSPort    int                    `json:"dns_port"`
-}
-
-// handleInstallConfigureBeta is a substitution of /install/get_addresses
-// handler for new client.
-//
-// TODO(e.burkov): This should removed with the API v1 when the appropriate
-// functionality will appear in default handleInstallGetAddresses.
-func (web *Web) handleInstallGetAddressesBeta(w http.ResponseWriter, r *http.Request) {
-	data := getAddrsResponseBeta{
-		WebPort: defaultPortHTTP,
-		DNSPort: defaultPortDNS,
-	}
-
-	ifaces, err := aghnet.GetValidNetInterfacesForWeb()
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't get interfaces: %s", err)
-
-		return
-	}
-
-	data.Interfaces = ifaces
-
-	_ = aghhttp.WriteJSONResponse(w, r, data)
-}
-
-// registerBetaInstallHandlers registers the install handlers for new client
-// with the structures it supports.
-//
-// TODO(e.burkov): This should removed with the API v1 when the appropriate
-// functionality will appear in default handlers.
-func (web *Web) registerBetaInstallHandlers() {
-	Context.mux.HandleFunc("/control/install/get_addresses_beta", preInstall(ensureGET(web.handleInstallGetAddressesBeta)))
-	Context.mux.HandleFunc("/control/install/check_config_beta", preInstall(ensurePOST(web.handleInstallCheckConfigBeta)))
-	Context.mux.HandleFunc("/control/install/configure_beta", preInstall(ensurePOST(web.handleInstallConfigureBeta)))
 }

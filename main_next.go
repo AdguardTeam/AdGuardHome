@@ -13,7 +13,7 @@ import (
 // internal directory and the embed package is unable to embed files located
 // outside of the same or underlying directory.
 
-//go:embed build2
+//go:embed build
 var clientBuildFS embed.FS
 
 func main() {

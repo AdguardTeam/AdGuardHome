@@ -5,7 +5,6 @@
 .POSIX:
 
 CHANNEL = development
-CLIENT_BETA_DIR = client2
 CLIENT_DIR = client
 COMMIT = $$( git rev-parse --short HEAD )
 DIST_DIR = dist
@@ -29,10 +28,6 @@ SIGN = 1
 VERBOSE = 0
 VERSION = v0.0.0
 YARN = yarn
-YARN_FLAGS = --cwd $(CLIENT_BETA_DIR)
-YARN_INSTALL_FLAGS = $(YARN_FLAGS) --network-timeout 120000 --silent\
-	--ignore-engines --ignore-optional --ignore-platform\
-	--ignore-scripts
 
 NEXTAPI = 0
 
@@ -93,17 +88,13 @@ init:  ; git config core.hooksPath ./scripts/hooks
 
 js-build:
 	$(NPM) $(NPM_FLAGS) run build-prod
-	$(YARN) $(YARN_FLAGS) build
 js-deps:
 	$(NPM) $(NPM_INSTALL_FLAGS) ci
-	$(YARN) $(YARN_INSTALL_FLAGS) install
 
 # TODO(a.garipov): Remove the legacy client tasks support once the new
 # client is done and the old one is removed.
 js-lint: ; $(NPM) $(NPM_FLAGS) run lint
 js-test: ; $(NPM) $(NPM_FLAGS) run test
-js-beta-lint: ; $(YARN) $(YARN_FLAGS) lint
-js-beta-test: ; # TODO(v.abdulmyanov): Add tests for the new client.
 
 go-build: ; $(ENV) "$(SHELL)" ./scripts/make/go-build.sh
 go-deps:  ; $(ENV) "$(SHELL)" ./scripts/make/go-deps.sh
