@@ -23,14 +23,23 @@ See also the [v0.107.23 GitHub milestone][ms-v0.107.23].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- DNS64 support ([#5117]).  The function may be enabled with new `use_dns64`
+  field under `dns` object in the configuration along with `dns64_prefixes`, the
+  set of exclusion prefixes to filter AAAA responses.  The Well-Known Prefix
+  (`64:ff9b::/96`) is used if no custom prefixes are specified.
+
 ### Removed
 
- *  The “beta frontend” and the corresponding APIs.  They never quite worked
-    properly, and the future new version of AdGuard Home API will probably be
-    different.
+- The “beta frontend” and the corresponding APIs.  They never quite worked
+  properly, and the future new version of AdGuard Home API will probably be
+  different.
 
-    Correspondingly, the configuration parameter `beta_bind_port` has been
-    removed as well.
+  Correspondingly, the configuration parameter `beta_bind_port` has been removed
+  as well.
+
+[#5117]: https://github.com/AdguardTeam/AdGuardHome/issues/5117
 
 
 

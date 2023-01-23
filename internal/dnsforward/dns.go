@@ -28,9 +28,10 @@ type dnsContext struct {
 	// response is modified by filters.
 	origResp *dns.Msg
 
-	// unreversedReqIP stores an IP address obtained from PTR request if it
-	// parsed successfully and belongs to one of locally-served IP ranges as per
-	// RFC 6303.
+	// unreversedReqIP stores an IP address obtained from a PTR request if it
+	// was parsed successfully and belongs to one of the locally served IP
+	// ranges.  It is also filled with unmapped version of the address if it's
+	// within DNS64 prefixes.
 	unreversedReqIP net.IP
 
 	// err is the error returned from a processing function.
@@ -57,7 +58,7 @@ type dnsContext struct {
 	// responseAD shows if the response had the AD bit set.
 	responseAD bool
 
-	// isLocalClient shows if client's IP address is from locally-served
+	// isLocalClient shows if client's IP address is from locally served
 	// network.
 	isLocalClient bool
 }
@@ -133,8 +134,8 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, pctx *proxy.DNSContext) error 
 	return nil
 }
 
-// processRecursion checks the incoming request and halts it's handling if s
-// have tried to resolve it recently.
+// processRecursion checks the incoming request and halts its handling by
+// answering NXDOMAIN if s has tried to resolve it recently.
 func (s *Server) processRecursion(dctx *dnsContext) (rc resultCode) {
 	pctx := dctx.proxyCtx
 
@@ -349,8 +350,8 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	return resp
 }
 
-// processDetermineLocal determines if the client's IP address is from
-// locally-served network and saves the result into the context.
+// processDetermineLocal determines if the client's IP address is from locally
+// served network and saves the result into the context.
 func (s *Server) processDetermineLocal(dctx *dnsContext) (rc resultCode) {
 	rc = resultCodeSuccess
 
@@ -377,7 +378,8 @@ func (s *Server) dhcpHostToIP(host string) (ip netip.Addr, ok bool) {
 }
 
 // processDHCPHosts respond to A requests if the target hostname is known to
-// the server.
+// the server.  It responds with a mapped IP address if the DNS64 is enabled and
+// the request is for AAAA.
 //
 // TODO(a.garipov): Adapt to AAAA as well.
 func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
@@ -409,20 +411,34 @@ func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
 	log.Debug("dnsforward: dhcp record for %q is %s", reqHost, ip)
 
 	resp := s.makeResponse(req)
-	if q.Qtype == dns.TypeA {
+	switch q.Qtype {
+	case dns.TypeA:
 		a := &dns.A{
 			Hdr: s.hdr(req, dns.TypeA),
 			A:   ip.AsSlice(),
 		}
 		resp.Answer = append(resp.Answer, a)
+	case dns.TypeAAAA:
+		if len(s.dns64Prefs) > 0 {
+			// Respond with DNS64-mapped address for IPv4 host if DNS64 is
+			// enabled.
+			aaaa := &dns.AAAA{
+				Hdr:  s.hdr(req, dns.TypeAAAA),
+				AAAA: s.mapDNS64(ip),
+			}
+			resp.Answer = append(resp.Answer, aaaa)
+		}
+	default:
+		// Go on.
 	}
+
 	dctx.proxyCtx.Res = resp
 
 	return resultCodeSuccess
 }
 
 // processRestrictLocal responds with NXDOMAIN to PTR requests for IP addresses
-// in locally-served network from external clients.
+// in locally served network from external clients.
 func (s *Server) processRestrictLocal(dctx *dnsContext) (rc resultCode) {
 	pctx := dctx.proxyCtx
 	req := pctx.Req
@@ -452,14 +468,23 @@ func (s *Server) processRestrictLocal(dctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	// Restrict an access to local addresses for external clients.  We also
-	// assume that all the DHCP leases we give are locally-served or at least
-	// don't need to be accessible externally.
-	if !s.privateNets.Contains(ip) {
-		log.Debug("dnsforward: addr %s is not from locally-served network", ip)
+	if s.shouldStripDNS64(ip) {
+		// Strip the prefix from the address to get the original IPv4.
+		ip = ip[nat64PrefixLen:]
 
+		// Treat a DNS64-prefixed address as a locally served one since those
+		// queries should never be sent to the global DNS.
+		dctx.unreversedReqIP = ip
+	}
+
+	// Restrict an access to local addresses for external clients.  We also
+	// assume that all the DHCP leases we give are locally served or at least
+	// shouldn't be accessible externally.
+	if !s.privateNets.Contains(ip) {
 		return resultCodeSuccess
 	}
+
+	log.Debug("dnsforward: addr %s is from locally served network", ip)
 
 	if !dctx.isLocalClient {
 		log.Debug("dnsforward: %q requests an internal ip", pctx.Addr)
@@ -473,7 +498,7 @@ func (s *Server) processRestrictLocal(dctx *dnsContext) (rc resultCode) {
 	dctx.unreversedReqIP = ip
 
 	// There is no need to filter request from external addresses since this
-	// code is only executed when the request is for locally-served ARPA
+	// code is only executed when the request is for locally served ARPA
 	// hostname so disable redundant filters.
 	dctx.setts.ParentalEnabled = false
 	dctx.setts.SafeBrowsingEnabled = false
@@ -508,7 +533,7 @@ func (s *Server) processDHCPAddrs(dctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
+	// TODO(a.garipov):  Remove once we switch to [netip.Addr] more fully.
 	ipAddr, err := netutil.IPToAddrNoMapped(ip)
 	if err != nil {
 		log.Debug("dnsforward: bad reverse ip %v from dhcp: %s", ip, err)
@@ -555,10 +580,6 @@ func (s *Server) processLocalPTR(dctx *dnsContext) (rc resultCode) {
 
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
-
-	if !s.privateNets.Contains(ip) {
-		return resultCodeSuccess
-	}
 
 	if s.conf.UsePrivateRDNS {
 		s.recDetector.add(*pctx.Req)
@@ -636,9 +657,8 @@ func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
 
 	origReqAD := false
 	if s.conf.EnableDNSSEC {
-		if req.AuthenticatedData {
-			origReqAD = true
-		} else {
+		origReqAD = req.AuthenticatedData
+		if !req.AuthenticatedData {
 			req.AuthenticatedData = true
 		}
 	}
@@ -652,6 +672,10 @@ func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
 	}
 
 	if dctx.err = prx.Resolve(pctx); dctx.err != nil {
+		return resultCodeError
+	}
+
+	if s.performDNS64(prx, dctx) == resultCodeError {
 		return resultCodeError
 	}
 

@@ -242,6 +242,8 @@ func generateServerConfig(
 		ConfigModified:  onConfigModified,
 		HTTPRegister:    httpReg,
 		OnDNSRequest:    onDNSRequest,
+		UseDNS64:        config.DNS.UseDNS64,
+		DNS64Prefixes:   config.DNS.DNS64Prefixes,
 	}
 
 	if tlsConf.Enabled {

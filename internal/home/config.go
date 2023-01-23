@@ -184,6 +184,12 @@ type dnsConfig struct {
 	// for PTR queries for locally-served networks.
 	LocalPTRResolvers []string `yaml:"local_ptr_upstreams"`
 
+	// UseDNS64 defines if DNS64 should be used for incoming requests.
+	UseDNS64 bool `yaml:"use_dns64"`
+
+	// DNS64Prefixes is the list of NAT64 prefixes to be used for DNS64.
+	DNS64Prefixes []string `yaml:"dns64_prefixes"`
+
 	// ServeHTTP3 defines if HTTP/3 is be allowed for incoming requests.
 	//
 	// TODO(a.garipov): Add to the UI when HTTP/3 support is no longer

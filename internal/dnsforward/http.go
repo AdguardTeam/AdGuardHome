@@ -712,6 +712,10 @@ func (s *Server) handleDoH(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) registerHandlers() {
+	if webRegistered || s.conf.HTTPRegister == nil {
+		return
+	}
+
 	s.conf.HTTPRegister(http.MethodGet, "/control/dns_info", s.handleGetConfig)
 	s.conf.HTTPRegister(http.MethodPost, "/control/dns_config", s.handleSetConfig)
 	s.conf.HTTPRegister(http.MethodPost, "/control/test_upstream_dns", s.handleTestUpstreamDNS)
@@ -730,4 +734,6 @@ func (s *Server) registerHandlers() {
 	// See also https://github.com/AdguardTeam/AdGuardHome/issues/2628.
 	s.conf.HTTPRegister("", "/dns-query", s.handleDoH)
 	s.conf.HTTPRegister("", "/dns-query/", s.handleDoH)
+
+	webRegistered = true
 }
