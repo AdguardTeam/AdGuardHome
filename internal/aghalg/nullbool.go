@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+
+	"github.com/AdguardTeam/golibs/mathutil"
 )
 
 // NullBool is a nullable boolean.  Use these in JSON requests and responses
@@ -33,11 +35,7 @@ func (nb NullBool) String() (s string) {
 
 // BoolToNullBool converts a bool into a NullBool.
 func BoolToNullBool(cond bool) (nb NullBool) {
-	if cond {
-		return NBTrue
-	}
-
-	return NBFalse
+	return NBFalse - mathutil.BoolToNumber[NullBool](cond)
 }
 
 // type check

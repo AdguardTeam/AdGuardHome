@@ -56,7 +56,7 @@ func (rm *requestMatcher) MatchRequest(
 ) (res *urlfilter.DNSResult, ok bool) {
 	switch req.DNSType {
 	case dns.TypeA, dns.TypeAAAA, dns.TypePTR:
-		log.Debug("%s: handling the request", hostsContainerPref)
+		log.Debug("%s: handling the request for %s", hostsContainerPref, req.Hostname)
 	default:
 		return nil, false
 	}
@@ -481,9 +481,6 @@ func (hc *HostsContainer) refresh() (err error) {
 	}
 
 	// hc.last is nil on the first refresh, so let that one through.
-	//
-	// TODO(a.garipov): Once https://github.com/golang/go/issues/56621 is
-	// resolved, remove the first condition.
 	if hc.last != nil && maps.EqualFunc(hp.table, hc.last, (*HostsRecord).equal) {
 		log.Debug("%s: no changes detected", hostsContainerPref)
 

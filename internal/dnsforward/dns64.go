@@ -7,6 +7,7 @@ import (
 
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/mathutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
 )
@@ -335,14 +336,9 @@ func (s *Server) synthRR(rr dns.RR, soaTTL uint32) (result dns.RR) {
 			Name:   aResp.Hdr.Name,
 			Rrtype: dns.TypeAAAA,
 			Class:  aResp.Hdr.Class,
+			Ttl:    mathutil.Min(aResp.Hdr.Ttl, soaTTL),
 		},
 		AAAA: s.mapDNS64(addr),
-	}
-
-	if rrTTL := aResp.Hdr.Ttl; rrTTL < soaTTL {
-		aaaa.Hdr.Ttl = rrTTL
-	} else {
-		aaaa.Hdr.Ttl = soaTTL
 	}
 
 	return aaaa
