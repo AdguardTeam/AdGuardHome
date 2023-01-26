@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/mathutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
@@ -287,12 +288,7 @@ func (r Reason) In(reasons ...Reason) (ok bool) { return slices.Contains(reasons
 
 // SetEnabled sets the status of the *DNSFilter.
 func (d *DNSFilter) SetEnabled(enabled bool) {
-	var i int32
-	if enabled {
-		i = 1
-	}
-
-	atomic.StoreUint32(&d.enabled, uint32(i))
+	atomic.StoreUint32(&d.enabled, mathutil.BoolToNumber[uint32](enabled))
 }
 
 // GetConfig - get configuration

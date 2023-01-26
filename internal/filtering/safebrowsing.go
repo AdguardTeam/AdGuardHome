@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -369,13 +370,35 @@ func (d *DNSFilter) checkParental(
 	return check(sctx, res, d.parentalUpstream)
 }
 
+// setProtectedBool sets the value of a boolean pointer under a lock.  l must
+// protect the value under ptr.
+//
+// TODO(e.burkov):  Make it generic?
+func setProtectedBool(mu *sync.RWMutex, ptr *bool, val bool) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	*ptr = val
+}
+
+// protectedBool gets the value of a boolean pointer under a read lock.  l must
+// protect the value under ptr.
+//
+// TODO(e.burkov):  Make it generic?
+func protectedBool(mu *sync.RWMutex, ptr *bool) (val bool) {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	return *ptr
+}
+
 func (d *DNSFilter) handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
-	d.Config.SafeBrowsingEnabled = true
+	setProtectedBool(&d.confLock, &d.Config.SafeBrowsingEnabled, true)
 	d.Config.ConfigModified()
 }
 
 func (d *DNSFilter) handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
-	d.Config.SafeBrowsingEnabled = false
+	setProtectedBool(&d.confLock, &d.Config.SafeBrowsingEnabled, false)
 	d.Config.ConfigModified()
 }
 
@@ -383,19 +406,19 @@ func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Requ
 	resp := &struct {
 		Enabled bool `json:"enabled"`
 	}{
-		Enabled: d.Config.SafeBrowsingEnabled,
+		Enabled: protectedBool(&d.confLock, &d.Config.SafeBrowsingEnabled),
 	}
 
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 func (d *DNSFilter) handleParentalEnable(w http.ResponseWriter, r *http.Request) {
-	d.Config.ParentalEnabled = true
+	setProtectedBool(&d.confLock, &d.Config.ParentalEnabled, true)
 	d.Config.ConfigModified()
 }
 
 func (d *DNSFilter) handleParentalDisable(w http.ResponseWriter, r *http.Request) {
-	d.Config.ParentalEnabled = false
+	setProtectedBool(&d.confLock, &d.Config.ParentalEnabled, false)
 	d.Config.ConfigModified()
 }
 
@@ -403,7 +426,7 @@ func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request)
 	resp := &struct {
 		Enabled bool `json:"enabled"`
 	}{
-		Enabled: d.Config.ParentalEnabled,
+		Enabled: protectedBool(&d.confLock, &d.Config.ParentalEnabled),
 	}
 
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
