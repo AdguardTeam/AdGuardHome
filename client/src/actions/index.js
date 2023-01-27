@@ -141,7 +141,7 @@ export const getVersion = (recheck = false) => async (dispatch, getState) => {
             }
         }
     } catch (error) {
-        dispatch(addErrorToast({ error }));
+        dispatch(addErrorToast({ error: 'version_request_error' }));
         dispatch(getVersionFailure());
     }
 };
