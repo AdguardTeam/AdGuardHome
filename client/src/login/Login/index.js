@@ -36,7 +36,7 @@ class Login extends Component {
             <div className="login">
                 <div className="login__form">
                     <div className="text-center mb-6">
-                        <img src={logo} className="h-6" alt="logo" />
+                        <img src={logo} className="h-6 login__logo" alt="logo" />
                     </div>
                     <Form onSubmit={this.handleSubmit} processing={processingLogin} />
                     <div className="login__info">

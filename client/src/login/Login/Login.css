@@ -13,6 +13,10 @@
     min-height: 100vh;
 }
 
+[data-theme=dark] .login__logo {
+    filter: invert(1);
+}
+
 .login__form {
     margin: auto;
     padding: 40px 15px 100px;

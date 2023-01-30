@@ -40,6 +40,10 @@
     opacity: 0.6;
 }
 
+[data-theme=dark] .tab__control {
+    filter: invert(1);
+}
+
 @media screen and (min-width: 768px) {
     .tab__control {
         white-space: normal;

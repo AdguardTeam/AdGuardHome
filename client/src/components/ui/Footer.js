@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames';
@@ -10,7 +10,7 @@ import i18n from '../../i18n';
 import Version from './Version';
 import './Footer.css';
 import './Select.css';
-import { setHtmlLangAttr } from '../../helpers/helpers';
+import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
 import { changeTheme } from '../../actions';
 
 const linksData = [
@@ -36,6 +36,13 @@ const Footer = () => {
     const currentTheme = useSelector((state) => (state.dashboard ? state.dashboard.theme : 'auto'));
     const profileName = useSelector((state) => (state.dashboard ? state.dashboard.name : ''));
     const isLoggedIn = profileName !== '';
+    const [currentThemeLocal, setCurrentThemeLocal] = useState('auto');
+
+    useEffect(() => {
+        if (!isLoggedIn) {
+            setUITheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? THEMES.dark : THEMES.light);
+        }
+    }, []);
 
     const getYear = () => {
         const today = new Date();
@@ -53,41 +60,58 @@ const Footer = () => {
         dispatch(changeTheme(value));
     };
 
+    const onThemeChangedLocal = (event) => {
+        const { value } = event.target;
+        setUITheme(value);
+        setCurrentThemeLocal(value);
+    };
+
     const renderCopyright = () => <div className="footer__column">
         <div className="footer__copyright">
             {t('copyright')} &copy; {getYear()}{' '}
-            <a target="_blank" rel="noopener noreferrer" href="https://link.adtidy.org/forward.html?action=home&from=ui&app=home">AdGuard</a>
+            <a target="_blank" rel="noopener noreferrer"
+               href="https://link.adtidy.org/forward.html?action=home&from=ui&app=home">AdGuard</a>
         </div>
     </div>;
 
     const renderLinks = (linksData) => linksData.map(({ name, href, className = '' }) => <a
-            key={name}
-            href={href}
-            className={classNames('footer__link', className)}
-            target="_blank"
-            rel="noopener noreferrer"
-        >
-            {t(name)}
-        </a>);
+        key={name}
+        href={href}
+        className={classNames('footer__link', className)}
+        target="_blank"
+        rel="noopener noreferrer"
+    >
+        {t(name)}
+    </a>);
 
-    const renderThemeSelect = (currentTheme, isLoggedIn) => {
-        if (!isLoggedIn) {
-            return '';
-        }
+    const themeSelectOptions = () => (
+        Object.values(THEMES)
+            .map((theme) => (
+                <option key={theme} value={theme}>
+                    {t(`theme_${theme}`)}
+                </option>
+            ))
+    );
 
-        return <select
+    const renderThemeSelect = () => (
+        <select
             className="form-control select select--theme"
             value={currentTheme}
             onChange={onThemeChanged}
         >
-            {Object.values(THEMES)
-                .map((theme) => (
-                    <option key={theme} value={theme}>
-                        {t(`theme_${theme}`)}
-                    </option>
-                ))}
-        </select>;
-    };
+            {themeSelectOptions()}
+        </select>
+    );
+
+    const renderThemeSelectLocal = () => (
+        <select
+            className="form-control select select--theme"
+            value={currentThemeLocal}
+            onChange={onThemeChangedLocal}
+        >
+            {themeSelectOptions()}
+        </select>
+    );
 
     return (
         <>
@@ -98,7 +122,7 @@ const Footer = () => {
                             {renderLinks(linksData)}
                         </div>
                         <div className="footer__column footer__column--theme">
-                            {renderThemeSelect(currentTheme, isLoggedIn)}
+                            {isLoggedIn ? renderThemeSelect() : renderThemeSelectLocal()}
                         </div>
                         <div className="footer__column footer__column--language">
                             <select

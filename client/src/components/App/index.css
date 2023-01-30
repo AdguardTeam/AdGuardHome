@@ -26,6 +26,7 @@
     --gray-a5: #a5a5a5;
     --gray-d8: #d8d8d8;
     --gray-f3: #f3f3f3;
+    --loading-bg: rgba(255, 255, 255, 0.48);
     --font-family-monospace: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
     --font-size-disable-autozoom: 1rem;
 }
@@ -44,16 +45,18 @@
     --ctrl-dropdown-bgcolor-focus: #000;
     --ctrl-dropdown-color-focus: #fff;
     --btn-success-bgcolor: #67b279;
-    --form-disabled-bgcolor: #3d3d3d;
+    --form-disabled-bgcolor: #2d2d2d;
     --form-disabled-color: #a5a5a5;
     --logs__text-color: #f3f3f3;
     --rt-nodata-bgcolor: #1c1c1c;
     --rt-nodata-color: #fff;
-    --modal-overlay-bgcolor: #1c1c1c;
+    --modal-overlay-bgcolor: rgba(19, 19, 19, 0.75);
     --logs__table-bgcolor: #3d3d3d;
     --logs__row--blue-bgcolor: #467fcf;
     --logs__row--white-bgcolor: #1c1c1c;
     --detailed-info-color: #fff;
+    --gray300: #f3f3f3;
+    --loading-bg: #131313;
 }
 
 body {

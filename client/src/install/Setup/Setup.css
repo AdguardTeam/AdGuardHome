@@ -21,9 +21,14 @@
     margin: 0 auto;
     padding: 30px 20px;
     line-height: 1.6;
-    background-color: #fff;
+    background-color: var(--card-bgcolor);
     box-shadow: 0 1px 4px rgba(74, 74, 74, 0.36);
     border-radius: 3px;
+}
+
+[data-theme=dark] .setup__container {
+    box-shadow: none;
+    border: 1px solid var(--card-border-color);
 }
 
 @media screen and (min-width: 768px) {
@@ -37,6 +42,10 @@
     display: block;
     margin: 0 auto 40px;
     max-width: 140px;
+}
+
+[data-theme=dark] .setup__logo {
+    filter: invert(1);
 }
 
 .setup__nav {

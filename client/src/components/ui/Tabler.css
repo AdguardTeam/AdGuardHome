@@ -3251,6 +3251,10 @@ tbody.collapse.show {
     border-radius: 3px;
 }
 
+[data-theme=dark] .dropdown-menu {
+    border: 1px solid var(--card-border-color);
+}
+
 .dropup .dropdown-menu {
     margin-top: 0;
     margin-bottom: 0.125rem;
@@ -13679,6 +13683,10 @@ Card alert
     color: #6e7687;
 }
 
+[data-theme=dark] .dropdown-item {
+    color: #d2d2d2;
+}
+
 .dropdown-menu-arrow:before {
     position: absolute;
     top: -6px;
@@ -13704,6 +13712,10 @@ Card alert
     border-bottom: 5px solid var(--ctrl-bgcolor);
     border-left: 5px solid transparent;
     content: "";
+}
+
+[data-theme=dark] .dropdown-menu-arrow:after {
+    border-bottom: 5px solid var(--card-border-color);
 }
 
 .dropdown-menu-arrow.dropdown-menu-right:before,
@@ -15471,6 +15483,10 @@ a.tag-addon:hover {
     vertical-align: bottom;
     border: 1px solid rgba(0, 40, 100, 0.12);
     transition: 0.3s border-color, 0.3s background-color;
+}
+
+[data-theme=dark] .custom-switch-indicator {
+    opacity: 0.75;
 }
 
 .custom-switch-indicator:before {
