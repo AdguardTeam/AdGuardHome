@@ -24,7 +24,7 @@ func TestLimitReader(t *testing.T) {
 		name:       "zero",
 		n:          0,
 	}, {
-		wantErrMsg: "aghio: invalid n in LimitReader: -1",
+		wantErrMsg: "limit must be non-negative",
 		name:       "negative",
 		n:          -1,
 	}}

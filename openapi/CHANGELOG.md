@@ -6,6 +6,21 @@
 
 
 
+## v0.107.23: API changes
+
+### Experimental “beta” APIs removed
+
+The following experimental beta APIs have been removed:
+
+ *  `GET  /control/install/get_addresses_beta`;
+ *  `POST /control/install/check_config_beta`;
+ *  `POST /control/install/configure_beta`.
+
+They never quite worked properly, and the future new version of AdGuard Home API
+will probably be different.
+
+
+
 ## v0.107.22: API changes
 
 ### `POST /control/i18n/change_language` is deprecated

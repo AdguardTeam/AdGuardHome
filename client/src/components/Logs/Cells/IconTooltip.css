@@ -5,7 +5,7 @@
     border-radius: 4px !important;
     pointer-events: auto !important;
     background-color: var(--ctrl-bgcolor);
-    color: var(--scolor);
+    color: var(--mcolor);
     z-index: 102;
     overflow-y: auto;
     max-height: 100%;

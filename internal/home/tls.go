@@ -301,7 +301,6 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	if setts.Enabled {
 		err = validatePorts(
 			tcpPort(config.BindPort),
-			tcpPort(config.BetaBindPort),
 			tcpPort(setts.PortHTTPS),
 			tcpPort(setts.PortDNSOverTLS),
 			tcpPort(setts.PortDNSCrypt),
@@ -389,7 +388,6 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	if req.Enabled {
 		err = validatePorts(
 			tcpPort(config.BindPort),
-			tcpPort(config.BetaBindPort),
 			tcpPort(req.PortHTTPS),
 			tcpPort(req.PortDNSOverTLS),
 			tcpPort(req.PortDNSCrypt),
@@ -464,14 +462,13 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 // validatePorts validates the uniqueness of TCP and UDP ports for AdGuard Home
 // DNS protocols.
 func validatePorts(
-	bindPort, betaBindPort, dohPort, dotPort, dnscryptTCPPort tcpPort,
+	bindPort, dohPort, dotPort, dnscryptTCPPort tcpPort,
 	dnsPort, doqPort udpPort,
 ) (err error) {
 	tcpPorts := aghalg.UniqChecker[tcpPort]{}
 	addPorts(
 		tcpPorts,
 		tcpPort(bindPort),
-		tcpPort(betaBindPort),
 		tcpPort(dohPort),
 		tcpPort(dotPort),
 		tcpPort(dnscryptTCPPort),

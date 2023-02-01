@@ -23,9 +23,7 @@ $sudo_cmd rm -f\
 $sudo_cmd rm -f -r\
 	./bin/\
 	./build/static/\
-	./build2/static/\
 	./client/node_modules/\
-	./client2/node_modules/\
 	./data/\
 	"./${dist_dir}/"\
 	;

@@ -148,13 +148,6 @@ func Main(clientBuildFS fs.FS) {
 func setupContext(opts options) {
 	setupContextFlags(opts)
 
-	switch version.Channel() {
-	case version.ChannelEdge, version.ChannelDevelopment:
-		config.BetaBindPort = 3001
-	default:
-		// Go on.
-	}
-
 	Context.tlsRoots = aghtls.SystemRootCAs()
 	Context.transport = &http.Transport{
 		DialContext: customDialContext,
@@ -339,7 +332,7 @@ func setupConfig(opts options) (err error) {
 
 	if opts.bindPort != 0 {
 		tcpPorts := aghalg.UniqChecker[tcpPort]{}
-		addPorts(tcpPorts, tcpPort(opts.bindPort), tcpPort(config.BetaBindPort))
+		addPorts(tcpPorts, tcpPort(opts.bindPort))
 
 		udpPorts := aghalg.UniqChecker[udpPort]{}
 		addPorts(udpPorts, udpPort(config.DNS.Port))
@@ -376,36 +369,28 @@ func setupConfig(opts options) (err error) {
 }
 
 func initWeb(opts options, clientBuildFS fs.FS) (web *Web, err error) {
-	var clientFS, clientBetaFS fs.FS
+	var clientFS fs.FS
 	if opts.localFrontend {
 		log.Info("warning: using local frontend files")
 
 		clientFS = os.DirFS("build/static")
-		clientBetaFS = os.DirFS("build2/static")
 	} else {
 		clientFS, err = fs.Sub(clientBuildFS, "build/static")
 		if err != nil {
 			return nil, fmt.Errorf("getting embedded client subdir: %w", err)
 		}
-
-		clientBetaFS, err = fs.Sub(clientBuildFS, "build2/static")
-		if err != nil {
-			return nil, fmt.Errorf("getting embedded beta client subdir: %w", err)
-		}
 	}
 
 	webConf := webConfig{
-		firstRun:     Context.firstRun,
-		BindHost:     config.BindHost,
-		BindPort:     config.BindPort,
-		BetaBindPort: config.BetaBindPort,
+		firstRun: Context.firstRun,
+		BindHost: config.BindHost,
+		BindPort: config.BindPort,
 
 		ReadTimeout:       readTimeout,
 		ReadHeaderTimeout: readHdrTimeout,
 		WriteTimeout:      writeTimeout,
 
-		clientFS:     clientFS,
-		clientBetaFS: clientBetaFS,
+		clientFS: clientFS,
 
 		serveHTTP3: config.DNS.ServeHTTP3,
 	}
@@ -804,23 +789,12 @@ func loadCmdLineOpts() (opts options) {
 }
 
 // printWebAddrs prints addresses built from proto, addr, and an appropriate
-// port.  At least one address is printed with the value of port.  If the value
-// of betaPort is 0, the second address is not printed.  Output example:
+// port.  At least one address is printed with the value of port.  Output
+// example:
 //
-//	Go to http://127.0.0.1:80
-//	Go to http://127.0.0.1:3000 (BETA)
-func printWebAddrs(proto, addr string, port, betaPort int) {
-	const (
-		hostMsg     = "Go to %s://%s"
-		hostBetaMsg = hostMsg + " (BETA)"
-	)
-
-	log.Printf(hostMsg, proto, netutil.JoinHostPort(addr, port))
-	if betaPort == 0 {
-		return
-	}
-
-	log.Printf(hostBetaMsg, proto, netutil.JoinHostPort(addr, config.BetaBindPort))
+//	go to http://127.0.0.1:80
+func printWebAddrs(proto, addr string, port int) {
+	log.Printf("go to %s://%s", proto, netutil.JoinHostPort(addr, port))
 }
 
 // printHTTPAddresses prints the IP addresses which user can use to access the
@@ -838,14 +812,14 @@ func printHTTPAddresses(proto string) {
 
 	// TODO(e.burkov): Inspect and perhaps merge with the previous condition.
 	if proto == aghhttp.SchemeHTTPS && tlsConf.ServerName != "" {
-		printWebAddrs(proto, tlsConf.ServerName, tlsConf.PortHTTPS, 0)
+		printWebAddrs(proto, tlsConf.ServerName, tlsConf.PortHTTPS)
 
 		return
 	}
 
 	bindhost := config.BindHost
 	if !bindhost.IsUnspecified() {
-		printWebAddrs(proto, bindhost.String(), port, config.BetaBindPort)
+		printWebAddrs(proto, bindhost.String(), port)
 
 		return
 	}
@@ -856,14 +830,14 @@ func printHTTPAddresses(proto string) {
 		// That's weird, but we'll ignore it.
 		//
 		// TODO(e.burkov): Find out when it happens.
-		printWebAddrs(proto, bindhost.String(), port, config.BetaBindPort)
+		printWebAddrs(proto, bindhost.String(), port)
 
 		return
 	}
 
 	for _, iface := range ifaces {
 		for _, addr := range iface.Addresses {
-			printWebAddrs(proto, addr.String(), config.BindPort, config.BetaBindPort)
+			printWebAddrs(proto, addr.String(), config.BindPort)
 		}
 	}
 }

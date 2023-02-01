@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -109,8 +110,8 @@ func (c *sbCtx) getCached() int {
 	now := time.Now().Unix()
 	hashesToRequest := map[[32]byte]string{}
 	for k, v := range c.hashToHost {
-		key := k[0:2]
-		val := c.cache.Get(key)
+		// nolint:looppointer // The subsilce is used for a safe cache lookup.
+		val := c.cache.Get(k[0:2])
 		if val == nil || now >= int64(binary.BigEndian.Uint32(val)) {
 			hashesToRequest[k] = v
 			continue
@@ -185,8 +186,7 @@ func (c *sbCtx) getQuestion() string {
 	b := &strings.Builder{}
 
 	for hash := range c.hashToHost {
-		// TODO(e.burkov, a.garipov): Find out and document why exactly
-		// this slice.
+		// nolint:looppointer // The subsilce is used for safe hex encoding.
 		stringutil.WriteToBuilder(b, hex.EncodeToString(hash[0:2]), ".")
 	}
 
@@ -248,8 +248,8 @@ func (c *sbCtx) storeCache(hashes [][]byte) {
 	var curData []byte
 	var prevPrefix []byte
 	for i, hash := range hashes {
-		prefix := hash[0:2]
-		if !bytes.Equal(prefix, prevPrefix) {
+		// nolint:looppointer // The subsilce is used for a safe comparison.
+		if !bytes.Equal(hash[0:2], prevPrefix) {
 			if i != 0 {
 				c.setCache(prevPrefix, curData)
 				curData = nil
@@ -264,6 +264,7 @@ func (c *sbCtx) storeCache(hashes [][]byte) {
 	}
 
 	for hash := range c.hashToHost {
+		// nolint:looppointer // The subsilce is used for a safe cache lookup.
 		prefix := hash[0:2]
 		val := c.cache.Get(prefix)
 		if val == nil {
@@ -369,13 +370,35 @@ func (d *DNSFilter) checkParental(
 	return check(sctx, res, d.parentalUpstream)
 }
 
+// setProtectedBool sets the value of a boolean pointer under a lock.  l must
+// protect the value under ptr.
+//
+// TODO(e.burkov):  Make it generic?
+func setProtectedBool(mu *sync.RWMutex, ptr *bool, val bool) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	*ptr = val
+}
+
+// protectedBool gets the value of a boolean pointer under a read lock.  l must
+// protect the value under ptr.
+//
+// TODO(e.burkov):  Make it generic?
+func protectedBool(mu *sync.RWMutex, ptr *bool) (val bool) {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	return *ptr
+}
+
 func (d *DNSFilter) handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
-	d.Config.SafeBrowsingEnabled = true
+	setProtectedBool(&d.confLock, &d.Config.SafeBrowsingEnabled, true)
 	d.Config.ConfigModified()
 }
 
 func (d *DNSFilter) handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
-	d.Config.SafeBrowsingEnabled = false
+	setProtectedBool(&d.confLock, &d.Config.SafeBrowsingEnabled, false)
 	d.Config.ConfigModified()
 }
 
@@ -383,19 +406,19 @@ func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Requ
 	resp := &struct {
 		Enabled bool `json:"enabled"`
 	}{
-		Enabled: d.Config.SafeBrowsingEnabled,
+		Enabled: protectedBool(&d.confLock, &d.Config.SafeBrowsingEnabled),
 	}
 
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 func (d *DNSFilter) handleParentalEnable(w http.ResponseWriter, r *http.Request) {
-	d.Config.ParentalEnabled = true
+	setProtectedBool(&d.confLock, &d.Config.ParentalEnabled, true)
 	d.Config.ConfigModified()
 }
 
 func (d *DNSFilter) handleParentalDisable(w http.ResponseWriter, r *http.Request) {
-	d.Config.ParentalEnabled = false
+	setProtectedBool(&d.confLock, &d.Config.ParentalEnabled, false)
 	d.Config.ConfigModified()
 }
 
@@ -403,7 +426,7 @@ func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request)
 	resp := &struct {
 		Enabled bool `json:"enabled"`
 	}{
-		Enabled: d.Config.ParentalEnabled,
+		Enabled: protectedBool(&d.confLock, &d.Config.ParentalEnabled),
 	}
 
 	_ = aghhttp.WriteJSONResponse(w, r, resp)

@@ -77,11 +77,6 @@ then
 	make VERBOSE="$verbose" js-lint js-test
 fi
 
-if [ "$( git diff --cached --name-only -- 'client2/*.js' 'client2/*.ts' 'client2/*.tsx' )" ]
-then
-	make VERBOSE="$verbose" js-beta-lint js-beta-test
-fi
-
 if [ "$( git diff --cached --name-only -- '*.go' '*.mod' '*.sh' 'Makefile' )" ]
 then
 	make VERBOSE="$verbose" go-os-check go-lint go-test

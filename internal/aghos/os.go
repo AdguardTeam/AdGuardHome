@@ -17,6 +17,8 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/mathutil"
+	"golang.org/x/exp/slices"
 )
 
 // UnsupportedError is returned by functions and methods when a particular
@@ -60,9 +62,8 @@ const MaxCmdOutputSize = 64 * 1024
 func RunCommand(command string, arguments ...string) (code int, output []byte, err error) {
 	cmd := exec.Command(command, arguments...)
 	out, err := cmd.Output()
-	if len(out) > MaxCmdOutputSize {
-		out = out[:MaxCmdOutputSize]
-	}
+
+	out = out[:mathutil.Min(len(out), MaxCmdOutputSize)]
 
 	if err != nil {
 		if eerr := new(exec.ExitError); errors.As(err, &eerr) {
@@ -136,31 +137,18 @@ func parsePSOutput(r io.Reader, cmdName string, ignore []int) (largest, instNum 
 		}
 
 		cur, aerr := strconv.Atoi(fields[0])
-		if aerr != nil || cur < 0 || intIn(cur, ignore) {
+		if aerr != nil || cur < 0 || slices.Contains(ignore, cur) {
 			continue
 		}
 
 		instNum++
-		if cur > largest {
-			largest = cur
-		}
+		largest = mathutil.Max(largest, cur)
 	}
 	if err = s.Err(); err != nil {
 		return 0, 0, fmt.Errorf("scanning stdout: %w", err)
 	}
 
 	return largest, instNum, nil
-}
-
-// intIn returns true if nums contains n.
-func intIn(n int, nums []int) (ok bool) {
-	for _, nn := range nums {
-		if n == nn {
-			return true
-		}
-	}
-
-	return false
 }
 
 // IsOpenWrt returns true if host OS is OpenWrt.

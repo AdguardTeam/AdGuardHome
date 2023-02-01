@@ -75,18 +75,3 @@ func limitRequestBody(h http.Handler) (limited http.Handler) {
 		h.ServeHTTP(w, rr)
 	})
 }
-
-// wrapIndexBeta returns handler that deals with new client.
-func (web *Web) wrapIndexBeta(http.Handler) (wrapped http.Handler) {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h, pattern := Context.mux.Handler(r)
-		switch pattern {
-		case "/":
-			web.handlerBeta.ServeHTTP(w, r)
-		case "/install.html":
-			web.installerBeta.ServeHTTP(w, r)
-		default:
-			h.ServeHTTP(w, r)
-		}
-	})
-}

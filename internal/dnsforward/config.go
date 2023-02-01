@@ -224,12 +224,18 @@ type ServerConfig struct {
 	// resolving PTR queries for local addresses.
 	LocalPTRResolvers []string
 
+	// DNS64Prefixes is a slice of NAT64 prefixes to be used for DNS64.
+	DNS64Prefixes []string
+
 	// ResolveClients signals if the RDNS should resolve clients' addresses.
 	ResolveClients bool
 
 	// UsePrivateRDNS defines if the PTR requests for unknown addresses from
 	// locally-served networks should be resolved via private PTR resolvers.
 	UsePrivateRDNS bool
+
+	// UseDNS64 defines if DNS64 is enabled for incoming requests.
+	UseDNS64 bool
 
 	// ServeHTTP3 defines if HTTP/3 is be allowed for incoming requests.
 	ServeHTTP3 bool

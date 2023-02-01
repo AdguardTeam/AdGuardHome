@@ -4,7 +4,7 @@
     align-items: center;
     margin-bottom: 15px;
     padding: 10px 15px;
-    border: 1px solid #eee;
+    border: 1px solid var(--card-border-color);
     border-radius: 4px;
     cursor: pointer;
 }

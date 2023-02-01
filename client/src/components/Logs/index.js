@@ -195,11 +195,11 @@ const Logs = () => {
             onRequestClose={closeModal}
             style={{
                 content: {
-                    width: '100%',
+                    width: 'calc(100% - 32px)',
                     height: 'fit-content',
                     left: '50%',
                     top: 47,
-                    padding: '1rem 1.5rem 1rem',
+                    padding: '0',
                     maxWidth: '720px',
                     transform: 'translateX(-50%)',
                 },

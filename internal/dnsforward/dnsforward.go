@@ -82,6 +82,9 @@ type Server struct {
 	sysResolvers   aghnet.SystemResolvers
 	recDetector    *recursionDetector
 
+	// dns64Prefix is the set of NAT64 prefixes used for DNS64 handling.
+	dns64Prefs []netip.Prefix
+
 	// anonymizer masks the client's IP addresses if needed.
 	anonymizer *aghnet.IPMut
 
@@ -488,9 +491,11 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 		return fmt.Errorf("preparing access: %w", err)
 	}
 
-	if !webRegistered && s.conf.HTTPRegister != nil {
-		webRegistered = true
-		s.registerHandlers()
+	s.registerHandlers()
+
+	err = s.setupDNS64()
+	if err != nil {
+		return fmt.Errorf("preparing DNS64: %w", err)
 	}
 
 	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}

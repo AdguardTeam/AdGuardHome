@@ -24,6 +24,12 @@
     --option-border-radius: 4px;
 }
 
+[data-theme="dark"] {
+    --red: rgba(223, 56, 18, 0.25);
+    --green-pale: rgba(103, 178, 121, 0.25);
+    --yellow: rgba(247, 181, 0, 0.2);
+}
+
 .logs__text {
     padding: 0 1px;
     text-overflow: ellipsis;
@@ -34,6 +40,14 @@
     color: var(--logs__text-color);
     letter-spacing: 0;
     line-height: 1.5rem;
+}
+
+[data-theme="dark"] .logs__text a {
+    color: var(--gray-f3);
+}
+
+[data-theme="dark"] .logs__text a:hover {
+    color: var(--gray-f3);
 }
 
 .logs__text--bold {
@@ -64,6 +78,10 @@
     background-color: var(--gray-f3);
     border: solid 1px var(--gray-d8);
     border-radius: 4px;
+}
+
+[data-theme=dark] .icon--selected {
+    opacity: 0.75;
 }
 
 .text-pre {
@@ -205,6 +223,12 @@
     position: relative;
 }
 
+@media screen and (min-width: 1025px) {
+    .logs__cell--client {
+        width: 13rem;
+    }
+}
+
 .logs__cell--header__container > .logs__cell--header__item {
     border-right: 0;
     font-size: 1rem;
@@ -338,6 +362,10 @@
 .tooltip-custom__container .button-action--arrow-option:not(:disabled):hover {
     background: var(--gray-f3);
     overflow: hidden;
+}
+
+[data-theme="dark"] .tooltip-custom__container .button-action--arrow-option:not(:disabled):hover {
+    background: var(--ctrl-dropdown-bgcolor-focus);
 }
 
 .button-action--arrow-option-container {
@@ -482,6 +510,10 @@
     color: var(--green79);
 }
 
+[data-theme="dark"] .logs__question.icon--lightgray {
+    color: var(--gray-f3);
+}
+
 @media (max-width: 1024px) {
     .logs__question {
         display: none;
@@ -490,4 +522,9 @@
 
 .logs__modal {
     max-width: 720px;
+}
+
+.logs__modal-wrap {
+    padding: 1rem 1.5rem;
+    background-color: var(--card-bgcolor);
 }

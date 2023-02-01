@@ -90,9 +90,6 @@ type configuration struct {
 	BindHost netip.Addr `yaml:"bind_host"`
 	// BindPort is the port for the web interface server to listen on.
 	BindPort int `yaml:"bind_port"`
-	// BetaBindPort is the port for the new client's web interface server to
-	// listen on.
-	BetaBindPort int `yaml:"beta_bind_port"`
 
 	// Users are the clients capable for accessing the web interface.
 	Users []webUser `yaml:"users"`
@@ -187,6 +184,12 @@ type dnsConfig struct {
 	// for PTR queries for locally-served networks.
 	LocalPTRResolvers []string `yaml:"local_ptr_upstreams"`
 
+	// UseDNS64 defines if DNS64 should be used for incoming requests.
+	UseDNS64 bool `yaml:"use_dns64"`
+
+	// DNS64Prefixes is the list of NAT64 prefixes to be used for DNS64.
+	DNS64Prefixes []string `yaml:"dns64_prefixes"`
+
 	// ServeHTTP3 defines if HTTP/3 is be allowed for incoming requests.
 	//
 	// TODO(a.garipov): Add to the UI when HTTP/3 support is no longer
@@ -230,7 +233,6 @@ type tlsConfigSettings struct {
 // TODO(a.garipov, e.burkov): This global is awful and must be removed.
 var config = &configuration{
 	BindPort:           3000,
-	BetaBindPort:       0,
 	BindHost:           netip.IPv4Unspecified(),
 	AuthAttempts:       5,
 	AuthBlockMin:       15,
@@ -372,7 +374,7 @@ func parseConfig() (err error) {
 	}
 
 	tcpPorts := aghalg.UniqChecker[tcpPort]{}
-	addPorts(tcpPorts, tcpPort(config.BindPort), tcpPort(config.BetaBindPort))
+	addPorts(tcpPorts, tcpPort(config.BindPort))
 
 	udpPorts := aghalg.UniqChecker[udpPort]{}
 	addPorts(udpPorts, udpPort(config.DNS.Port))

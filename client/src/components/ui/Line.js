@@ -25,9 +25,9 @@ const Line = ({
         theme={{
             crosshair: {
                 line: {
-                    stroke: 'black',
+                    stroke: 'currentColor',
                     strokeWidth: 1,
-                    strokeOpacity: 0.35,
+                    strokeOpacity: 0.5,
                 },
             },
         }}

@@ -4,6 +4,9 @@ package aghio
 import (
 	"fmt"
 	"io"
+
+	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/mathutil"
 )
 
 // LimitReachedError records the limit and the operation that caused it.
@@ -11,22 +14,22 @@ type LimitReachedError struct {
 	Limit int64
 }
 
-// Error implements the error interface for LimitReachedError.
+// Error implements the [error] interface for *LimitReachedError.
 //
 // TODO(a.garipov): Think about error string format.
 func (lre *LimitReachedError) Error() string {
 	return fmt.Sprintf("attempted to read more than %d bytes", lre.Limit)
 }
 
-// limitedReader is a wrapper for io.Reader with limited reader and dealing with
-// errors package.
+// limitedReader is a wrapper for [io.Reader] limiting the input and dealing
+// with errors package.
 type limitedReader struct {
 	r     io.Reader
 	limit int64
 	n     int64
 }
 
-// Read implements Reader interface.
+// Read implements the [io.Reader] interface.
 func (lr *limitedReader) Read(p []byte) (n int, err error) {
 	if lr.n == 0 {
 		return 0, &LimitReachedError{
@@ -34,9 +37,7 @@ func (lr *limitedReader) Read(p []byte) (n int, err error) {
 		}
 	}
 
-	if int64(len(p)) > lr.n {
-		p = p[:lr.n]
-	}
+	p = p[:mathutil.Min(lr.n, int64(len(p)))]
 
 	n, err = lr.r.Read(p)
 	lr.n -= int64(n)
@@ -48,7 +49,7 @@ func (lr *limitedReader) Read(p []byte) (n int, err error) {
 // n bytes read.
 func LimitReader(r io.Reader, n int64) (limited io.Reader, err error) {
 	if n < 0 {
-		return nil, fmt.Errorf("aghio: invalid n in LimitReader: %d", n)
+		return nil, errors.Error("limit must be non-negative")
 	}
 
 	return &limitedReader{

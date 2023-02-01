@@ -135,12 +135,12 @@ func (d *DNSFilter) checkSafeSearch(
 }
 
 func (d *DNSFilter) handleSafeSearchEnable(w http.ResponseWriter, r *http.Request) {
-	d.Config.SafeSearchEnabled = true
+	setProtectedBool(&d.confLock, &d.Config.SafeSearchEnabled, true)
 	d.Config.ConfigModified()
 }
 
 func (d *DNSFilter) handleSafeSearchDisable(w http.ResponseWriter, r *http.Request) {
-	d.Config.SafeSearchEnabled = false
+	setProtectedBool(&d.confLock, &d.Config.SafeSearchEnabled, false)
 	d.Config.ConfigModified()
 }
 
@@ -148,7 +148,7 @@ func (d *DNSFilter) handleSafeSearchStatus(w http.ResponseWriter, r *http.Reques
 	resp := &struct {
 		Enabled bool `json:"enabled"`
 	}{
-		Enabled: d.Config.SafeSearchEnabled,
+		Enabled: protectedBool(&d.confLock, &d.Config.SafeSearchEnabled),
 	}
 
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
