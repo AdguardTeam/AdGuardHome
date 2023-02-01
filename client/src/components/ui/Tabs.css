@@ -3,7 +3,7 @@
     justify-content: space-between;
     margin-bottom: 15px;
     padding: 10px 0;
-    border-bottom: 1px solid #e8e8e8;
+    border-bottom: 1px solid var(--card-border-color);
     overflow: auto;
 }
 
@@ -38,6 +38,10 @@
     color: #555555;
     cursor: pointer;
     opacity: 0.6;
+}
+
+[data-theme=dark] .tab__control {
+    filter: invert(1);
 }
 
 @media screen and (min-width: 768px) {

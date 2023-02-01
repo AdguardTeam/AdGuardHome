@@ -23,14 +23,29 @@
     background-color: var(--rt-nodata-bgcolor);
 }
 
+.ReactTable .-loading .-loading-inner {
+    color: var(--gray300);
+}
+
 .ReactTable .-pagination input, .ReactTable .-pagination select {
     color: var(--rt-nodata-color);
     background-color: var(--rt-nodata-bgcolor);
 }
 
+[data-theme=dark] .ReactTable .rt-table::-webkit-scrollbar-track {
+    background-color: var(--card-bgcolor);
+}
+
+[data-theme=dark] .ReactTable .rt-table::-webkit-scrollbar-thumb {
+    background-color: #888888;
+}
+
 [data-theme=dark] .ReactTable .-pagination .-btn {
-    color: var(--scolor);
-    background-color: var(--ctrl-bgcolor);
+    filter: invert(1);
+}
+
+[data-theme=dark] .ReactTable .-pagination .-btn:disabled {
+    opacity: 1;
 }
 
 .rt-tr-group.logs__row--red {

@@ -1,6 +1,6 @@
 .dropdown-item.active,
 .dropdown-item:active {
-    background-color: var(--green-74);
+    background-color: var(--btn-success-bgcolor);
 }
 
 .dropdown-menu {
