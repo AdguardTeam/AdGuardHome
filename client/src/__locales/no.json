@@ -433,6 +433,7 @@
     "updates_checked": "En ny versjon av AdGuard Home er tilgjengelig",
     "updates_version_equal": "AdGuard Home er fullt oppdatert",
     "check_updates_now": "Se etter oppdateringer nå",
+    "version_request_error": "Oppdateringssjekken mislyktes. Vennligst sjekk internettforbindelsen din.",
     "dns_privacy": "DNS-privatliv",
     "setup_dns_privacy_1": "<0>DNS-over-TLS:</0> Benytt <1>{{address}}</1>-strengen.",
     "setup_dns_privacy_2": "<0>DNS-over-HTTPS:</0> Benytt <1>{{address}}</1>-strengen.",

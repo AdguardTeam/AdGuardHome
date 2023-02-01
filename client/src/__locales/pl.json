@@ -454,6 +454,7 @@
     "updates_checked": "Dostępna jest nowa wersja programu AdGuard Home\n",
     "updates_version_equal": "AdGuard Home jest aktualny",
     "check_updates_now": "Sprawdź aktualizacje teraz",
+    "version_request_error": "Sprawdzanie aktualizacji zakończone niepowodzeniem. Sprawdź swoje połączenie z internetem.",
     "dns_privacy": "Prywatny DNS",
     "setup_dns_privacy_1": "<0>DNS-over-TLS:</0> Skorzystaj z adresu <1>{{address}}</1>.",
     "setup_dns_privacy_2": "<0>DNS-over-HTTPS:</0> Skorzystaj z adresu <1>{{address}}</1>.",

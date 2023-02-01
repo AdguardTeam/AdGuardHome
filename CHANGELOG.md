@@ -30,6 +30,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
   set of exclusion prefixes to filter AAAA responses.  The Well-Known Prefix
   (`64:ff9b::/96`) is used if no custom prefixes are specified.
 
+### Fixed
+
+- Filtering rules with `*` as the hostname not working properly ([#5245]).
+- Various dark theme bugs ([#5375]).
+
 ### Removed
 
 - The “beta frontend” and the corresponding APIs.  They never quite worked
@@ -40,6 +45,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
   as well.
 
 [#5117]: https://github.com/AdguardTeam/AdGuardHome/issues/5117
+[#5245]: https://github.com/AdguardTeam/AdGuardHome/issues/5245
+[#5375]: https://github.com/AdguardTeam/AdGuardHome/issues/5375
 
 
 

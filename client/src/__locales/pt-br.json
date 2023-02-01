@@ -454,6 +454,7 @@
     "updates_checked": "Uma nova versão do AdGuard Home está disponível\n",
     "updates_version_equal": "O AdGuard Home está atualizado.",
     "check_updates_now": "Verificar atualizações",
+    "version_request_error": "A verificação de atualização falhou. Por favor, verifique sua conexão com a internet.",
     "dns_privacy": "Privacidade de DNS",
     "setup_dns_privacy_1": "<0>DNS-sobre-TLS:</0> Use <1>{{address}}</1> string.",
     "setup_dns_privacy_2": "<0>DNS-sobre-HTTPS:</0> Use <1>{{address}}</1> string.",

@@ -454,6 +454,7 @@
     "updates_checked": "Na voljo je nova različica programa AdGuard Home\n",
     "updates_version_equal": "AdGuard Home je posodobljen",
     "check_updates_now": "Preveri obstoj posodobitev zdaj",
+    "version_request_error": "Posodobitev ni uspela. Preverite vašo internetno povezavo.",
     "dns_privacy": "Zasebnost DNS",
     "setup_dns_privacy_1": "<0>DNS-prek-TLS:</0> Uporabite niz <1>{{address}}</1>.",
     "setup_dns_privacy_2": "<0>DNS-prek-HTTPS:</0> Uporabite niz <1>{{address}}</1>.",

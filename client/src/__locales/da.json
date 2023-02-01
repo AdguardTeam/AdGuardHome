@@ -454,6 +454,7 @@
     "updates_checked": "En ny version af AdGuard Home er tilgængelig\n",
     "updates_version_equal": "AdGuard Home er opdateret",
     "check_updates_now": "Søg efter opdateringer nu",
+    "version_request_error": "Opdateringstjek mislykkedes. Tjek internetforbindelsen.",
     "dns_privacy": "DNS-fortrolighed",
     "setup_dns_privacy_1": "<0>DNS-over-TLS:</0> Brug <1>{{address}}</1> streng.",
     "setup_dns_privacy_2": "<0>DNS-over-HTTPS:</0> Brug <1>{{address}}</1> streng.",

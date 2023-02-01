@@ -454,6 +454,7 @@
     "updates_checked": "Phiên bản mới của AdGuard Home có sẵn",
     "updates_version_equal": "AdGuard Home đã được cập nhật",
     "check_updates_now": "Kiểm tra cập nhật ngay bây giờ",
+    "version_request_error": "Cập nhật không thành công. Hãy kiểm tra kết nối internet của bạn.",
     "dns_privacy": "DNS Riêng Tư",
     "setup_dns_privacy_1": "<0>DNS-over-TLS:</0> Sử dụng chuỗi <1>{{address}}</1>.",
     "setup_dns_privacy_2": "<0>DNS-over-HTTPS:</0> Sử dụng chuỗi <1>{{address}}</1>.",

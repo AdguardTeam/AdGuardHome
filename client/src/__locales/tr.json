@@ -454,6 +454,7 @@
     "updates_checked": "AdGuard Home'un yeni bir sürümü mevcut",
     "updates_version_equal": "AdGuard Home yazılımı güncel durumda",
     "check_updates_now": "Güncellemeleri şimdi denetle",
+    "version_request_error": "Güncelleme denetimi başarısız. Lütfen internet bağlantınızı kontrol edin.",
     "dns_privacy": "DNS Gizliliği",
     "setup_dns_privacy_1": "<0>DNS-over-TLS:</0> <1>{{address}}</1> dizesini kullan.",
     "setup_dns_privacy_2": "<0>DNS-over-HTTPS:</0> <1>{{address}}</1> dizesini kullan.",

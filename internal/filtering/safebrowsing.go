@@ -110,8 +110,8 @@ func (c *sbCtx) getCached() int {
 	now := time.Now().Unix()
 	hashesToRequest := map[[32]byte]string{}
 	for k, v := range c.hashToHost {
-		key := k[0:2]
-		val := c.cache.Get(key)
+		// nolint:looppointer // The subsilce is used for a safe cache lookup.
+		val := c.cache.Get(k[0:2])
 		if val == nil || now >= int64(binary.BigEndian.Uint32(val)) {
 			hashesToRequest[k] = v
 			continue
@@ -186,8 +186,7 @@ func (c *sbCtx) getQuestion() string {
 	b := &strings.Builder{}
 
 	for hash := range c.hashToHost {
-		// TODO(e.burkov, a.garipov): Find out and document why exactly
-		// this slice.
+		// nolint:looppointer // The subsilce is used for safe hex encoding.
 		stringutil.WriteToBuilder(b, hex.EncodeToString(hash[0:2]), ".")
 	}
 
@@ -249,8 +248,8 @@ func (c *sbCtx) storeCache(hashes [][]byte) {
 	var curData []byte
 	var prevPrefix []byte
 	for i, hash := range hashes {
-		prefix := hash[0:2]
-		if !bytes.Equal(prefix, prevPrefix) {
+		// nolint:looppointer // The subsilce is used for a safe comparison.
+		if !bytes.Equal(hash[0:2], prevPrefix) {
 			if i != 0 {
 				c.setCache(prevPrefix, curData)
 				curData = nil
@@ -265,6 +264,7 @@ func (c *sbCtx) storeCache(hashes [][]byte) {
 	}
 
 	for hash := range c.hashToHost {
+		// nolint:looppointer // The subsilce is used for a safe cache lookup.
 		prefix := hash[0:2]
 		val := c.cache.Get(prefix)
 		if val == nil {

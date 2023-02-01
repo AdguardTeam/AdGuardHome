@@ -454,6 +454,7 @@
     "updates_checked": "Elérhető az AdGuard Home új verziója",
     "updates_version_equal": "Az AdGuard Home naprakész",
     "check_updates_now": "Frissítések ellenőrzése most",
+    "version_request_error": "A frissítések ellenőrzése sikertelen. Ellenőrizze az internetkapcsolatot.",
     "dns_privacy": "DNS Adatvédelem",
     "setup_dns_privacy_1": "<0>DNS-over-TLS:</0> Használja a(z) <1>{{address}}</1> szöveget.",
     "setup_dns_privacy_2": "<0>DNS-over-HTTPS:</0> Használja a(z) <1>{{address}}</1> szöveget.",
