@@ -23,6 +23,12 @@ See also the [v0.107.24 GitHub milestone][ms-v0.107.24].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- The icon for League Of Legends on the Blocked services page ([#5433]).
+
+[#5433]: https://github.com/AdguardTeam/AdGuardHome/issues/5433
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
