@@ -89,9 +89,14 @@ func createTestServer(
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
+	// TODO(e.burkov):  Try to move it higher.
 	if localUps != nil {
-		s.localResolvers.UpstreamConfig.Upstreams = []upstream.Upstream{localUps}
+		ups := []upstream.Upstream{localUps}
+		s.localResolvers.UpstreamConfig.Upstreams = ups
 		s.conf.UsePrivateRDNS = true
+		s.dnsProxy.PrivateRDNSUpstreamConfig = &proxy.UpstreamConfig{
+			Upstreams: ups,
+		}
 	}
 
 	return s

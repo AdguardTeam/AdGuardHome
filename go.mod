@@ -3,8 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.18
 
 require (
-	// TODO(a.garipov): Return to a tagged version once DNS64 is in.
-	github.com/AdguardTeam/dnsproxy v0.46.6-0.20230125113741-98cb8a899e49
+	github.com/AdguardTeam/dnsproxy v0.47.0
 	github.com/AdguardTeam/golibs v0.11.4
 	github.com/AdguardTeam/urlfilter v0.16.1
 	github.com/NYTimes/gziphandler v1.1.1

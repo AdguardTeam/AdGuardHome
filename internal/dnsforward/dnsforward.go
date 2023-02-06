@@ -80,10 +80,17 @@ type Server struct {
 	privateNets    netutil.SubnetSet
 	localResolvers *proxy.Proxy
 	sysResolvers   aghnet.SystemResolvers
-	recDetector    *recursionDetector
 
-	// dns64Prefix is the set of NAT64 prefixes used for DNS64 handling.
-	dns64Prefs []netip.Prefix
+	// recDetector is a cache for recursive requests.  It is used to detect
+	// and prevent recursive requests only for private upstreams.
+	//
+	// See https://github.com/adguardTeam/adGuardHome/issues/3185#issuecomment-851048135.
+	recDetector *recursionDetector
+
+	// dns64Pref is the NAT64 prefix used for DNS64 response mapping.  The major
+	// part of DNS64 happens inside the [proxy] package, but there still are
+	// some places where response mapping is needed (e.g. DHCP).
+	dns64Pref netip.Prefix
 
 	// anonymizer masks the client's IP addresses if needed.
 	anonymizer *aghnet.IPMut
@@ -477,6 +484,8 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 		return fmt.Errorf("preparing proxy: %w", err)
 	}
 
+	s.setupDNS64()
+
 	err = s.prepareInternalProxy()
 	if err != nil {
 		return fmt.Errorf("preparing internal proxy: %w", err)
@@ -493,17 +502,17 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 
 	s.registerHandlers()
 
-	err = s.setupDNS64()
-	if err != nil {
-		return fmt.Errorf("preparing DNS64: %w", err)
-	}
-
-	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
-
+	// TODO(e.burkov):  Remove once the local resolvers logic moved to dnsproxy.
 	err = s.setupResolvers(s.conf.LocalPTRResolvers)
 	if err != nil {
 		return fmt.Errorf("setting up resolvers: %w", err)
 	}
+
+	if s.conf.UsePrivateRDNS {
+		proxyConfig.PrivateRDNSUpstreamConfig = s.localResolvers.UpstreamConfig
+	}
+
+	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
 
 	s.recDetector.clear()
 

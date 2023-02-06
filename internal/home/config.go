@@ -188,7 +188,7 @@ type dnsConfig struct {
 	UseDNS64 bool `yaml:"use_dns64"`
 
 	// DNS64Prefixes is the list of NAT64 prefixes to be used for DNS64.
-	DNS64Prefixes []string `yaml:"dns64_prefixes"`
+	DNS64Prefixes []netip.Prefix `yaml:"dns64_prefixes"`
 
 	// ServeHTTP3 defines if HTTP/3 is be allowed for incoming requests.
 	//
