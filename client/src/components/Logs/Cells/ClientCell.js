@@ -62,7 +62,7 @@ const ClientCell = ({
         'white-space--nowrap': isDetailed,
     });
 
-    const hintClass = classNames('icons mr-4 icon--24 icon--lightgray', {
+    const hintClass = classNames('icons mr-4 icon--24 logs__question icon--lightgray', {
         'my-3': isDetailed,
     });
 
@@ -121,7 +121,7 @@ const ClientCell = ({
                     {options.map(({ name, onClick, disabled }) => (
                         <button
                             key={name}
-                            className="button-action--arrow-option px-4 py-2"
+                            className="button-action--arrow-option px-4 py-1"
                             onClick={onClick}
                             disabled={disabled}
                         >

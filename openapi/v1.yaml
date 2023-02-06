@@ -144,6 +144,13 @@
   '/health-check':
     'get':
       'operationId': 'HealthCheck'
+      'responses':
+        '200':
+          'description': >
+            An OK response.
+          'content':
+            'text/plain':
+              'example': 'OK'
       'servers':
         - 'url': '/'
       'summary': 'Check if the server is up.'
@@ -874,6 +881,26 @@
       'tags':
       - 'settings'
 
+  '/settings/http':
+    'patch':
+      'operationId': 'PatchV1SettingsHttp'
+      'requestBody':
+        '$ref': '#/components/requestBodies/PatchV1SettingsHttpReq'
+      'responses':
+        '200':
+          '$ref': '#/components/responses/PatchV1SettingsHttpResp'
+        '400':
+          '$ref': '#/components/responses/BadRequestResp'
+        '401':
+          '$ref': '#/components/responses/UnauthorizedResp'
+        '422':
+          '$ref': '#/components/responses/UnprocessableEntityResp'
+        '500':
+          '$ref': '#/components/responses/InternalServerErrorResp'
+      'summary': 'Update web interface settings.'
+      'tags':
+      - 'settings'
+
   '/settings/log':
     'patch':
       'operationId': 'PatchV1SettingsLog'
@@ -1207,6 +1234,13 @@
         'application/json':
           'schema':
             '$ref': '#/components/schemas/PatchV1SettingsDnsReq'
+      'required': true
+
+    'PatchV1SettingsHttpReq':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1SettingsHttpReq'
       'required': true
 
     'PatchV1SettingsLogReq':
@@ -1603,6 +1637,14 @@
             '$ref': '#/components/schemas/PatchV1SettingsDnsResp'
       'description': >
         A successful response to a `PATCH /api/v1/settings/dns` request.
+
+    'PatchV1SettingsHttpResp':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/PatchV1SettingsHttpResp'
+      'description': >
+        A successful response to a `PATCH /api/v1/settings/http` request.
 
     'PatchV1SettingsLogResp':
       'content':
@@ -2229,6 +2271,9 @@
       - 'description': >
           DNS server settings.
         'example':
+          'addresses':
+          - '127.0.0.1:53'
+          - '192.168.1.1:53'
           'blocking_mode': 'default'
           'bootstrap_servers':
           - '9.9.9.10'
@@ -2244,7 +2289,9 @@
           'upstream_servers':
           - '1.1.1.1'
           - '8.8.8.8'
+          'upstream_timeout': 1000
         'required':
+        - 'addresses'
         - 'blocking_mode'
         - 'bootstrap_servers'
         - 'cache_size'
@@ -2256,6 +2303,7 @@
         - 'rate_limit'
         - 'upstream_mode'
         - 'upstream_servers'
+        - 'upstream_timeout'
 
     'DnsSettingsPatch':
       'description': >
@@ -2265,6 +2313,13 @@
         'upstream_servers':
         - '1.1.1.1'
       'properties':
+        'addresses':
+          'description': >
+            Addresses on which to serve plain DNS, in ip:port format.  Empty
+            array disables plain DNS.
+          'items':
+            'type': 'string'
+          'type': 'array'
         'blocking_ipv4':
           'description': >
             IPv4 address to respond with when `blocking_mode` is `custom_ip`.
@@ -2340,6 +2395,11 @@
           'items':
             '$ref': '#/components/schemas/UpstreamServerAddr'
           'type': 'array'
+        'upstream_timeout':
+          'description': >
+            Upstream request timeout, in milliseconds.
+          'format': 'double'
+          'type': 'number'
       'type': 'object'
 
     'DnsType':
@@ -3038,6 +3098,8 @@
           '$ref': '#/components/schemas/DhcpSettings'
         'dns':
           '$ref': '#/components/schemas/DnsSettings'
+        'http':
+          '$ref': '#/components/schemas/HttpSettings'
         'log':
           '$ref': '#/components/schemas/LogSettings'
         'protection':
@@ -3049,6 +3111,7 @@
       'required':
       - 'dhcp'
       - 'dns'
+      - 'http'
       - 'log'
       - 'protection'
       - 'stats'
@@ -3432,6 +3495,60 @@
       - 'version'
       'type': 'object'
 
+    'HttpSettings':
+      'allOf':
+      - '$ref': '#/components/schemas/HttpSettingsPatch'
+      - 'description': >
+          HTTP interface server settings.
+
+          **TODO(a.garipov): Finish, split from TLS settings.**
+        'example':
+          'addresses':
+          - '127.0.0.1:80'
+          - '192.168.1.1:80'
+          'force_https': true
+          'secure_addresses':
+          - '127.0.0.1:443'
+          - '192.168.1.1:443'
+          'timeout': 10000
+        'required':
+        - 'addresses'
+        - 'force_https'
+        - 'secure_addresses'
+        - 'timeout'
+
+    'HttpSettingsPatch':
+      'description': >
+        HTTP server settings update object.
+      'example':
+        'force_https': false
+      'properties':
+        'addresses':
+          'description': >
+            Addresses on which to serve the plain-HTTP web interface and API, in
+            ip:port format.  Empty array disables the web interface over plain
+            HTTP.
+          'items':
+            'type': 'string'
+          'type': 'array'
+        'force_https':
+          'description': >
+            If `true`, enabled the HTTP-to-HTTPS redirect.
+          'type': 'boolean'
+        'secure_addresses':
+          'description': >
+            Addresses on which to serve the HTTPS web interface and API, in
+            ip:port format.  Empty array disables the web interface over HTTPS.
+          'items':
+            'type': 'string'
+          'type': 'array'
+        'timeout':
+          'description': >
+            HTTP request timeout, in milliseconds.
+          'format': 'double'
+          'type': 'number'
+      'type': 'object'
+
     'InternalServerErrorResp':
       'example':
         'code': 'RNT000'
@@ -3724,6 +3841,12 @@
 
     'PatchV1SettingsDnsResp':
       '$ref': '#/components/schemas/DnsSettings'
+
+    'PatchV1SettingsHttpReq':
+      '$ref': '#/components/schemas/HttpSettingsPatch'
+
+    'PatchV1SettingsHttpResp':
+      '$ref': '#/components/schemas/HttpSettings'
 
     'PatchV1SettingsLogReq':
       '$ref': '#/components/schemas/LogSettingsPatch'
@@ -4290,7 +4413,7 @@
         Validatable TLS settings.
       'example':
         'certificate_path': '/etc/ssl/example.com.cert'
-        'port_dns_over_quic': 784
+        'port_dns_over_quic': 853
         'port_dns_over_tls': 853
         'port_https': 443
         'private_key_path': '/etc/ssl/example.com.key'
@@ -4312,7 +4435,7 @@
             sent.
           'type': 'string'
         'port_dns_over_quic':
-          'default': 784
+          'default': 853
           'description': >
             The DNS-over-QUIC port.  If `0`, DNS-over-QUIC is disabled.
           'format': 'int64'
@@ -4750,15 +4873,13 @@
         'example':
           'certificate_path': '/etc/ssl/example.com.cert'
           'enabled': true
-          'force_https': true
-          'port_dns_over_quic': 784
+          'port_dns_over_quic': 853
           'port_dns_over_tls': 853
           'port_https': 443
           'private_key_path': '/etc/ssl/example.com.key'
           'server_name': 'dns.example.com'
         'required':
         - 'enabled'
-        - 'force_https'
         - 'port_dns_over_quic'
         - 'port_dns_over_tls'
         - 'port_https'
@@ -4793,12 +4914,8 @@
             over HTTPS, and the DNS server will listen requests over
             DNS-over-TLS and other protocols.
           'type': 'boolean'
-        'force_https':
-          'description': >
-            If `true`, enabled the HTTP-to-HTTPS redirect.
-          'type': 'boolean'
         'port_dns_over_quic':
-          'default': 784
+          'default': 853
           'description': >
             The DNS-over-QUIC port.  If `0`, DNS-over-QUIC is disabled.
           'format': 'int64'
@@ -4888,13 +5005,12 @@
 
          *  `94.140.14.140`: plain DNS-over-UDP.
 
-         *  `tls://dns-unfiltered.adguard.com`: encrypted DNS-over-TLS.
+         *  `tls://unfiltered.adguard-dns.com`: encrypted DNS-over-TLS.
 
-         *  `https://dns-unfiltered.adguard.com/dns-query`: encrypted
+         *  `https://unfiltered.adguard-dns.com/dns-query`: encrypted
              DNS-over-HTTPS.
 
-         *  `quic://dns-unfiltered.adguard.com:784`: encrypted DNS-over-QUIC
-             (experimental).
+         *  `quic://unfiltered.adguard-dns.com`: encrypted DNS-over-QUIC.
 
          *  `tcp://94.140.14.140`: plain DNS-over-TCP.
 

@@ -3,7 +3,7 @@
     justify-content: space-between;
     margin-bottom: 15px;
     padding: 10px 0;
-    border-bottom: 1px solid #e8e8e8;
+    border-bottom: 1px solid var(--card-border-color);
     overflow: auto;
 }
 
@@ -40,6 +40,10 @@
     opacity: 0.6;
 }
 
+[data-theme=dark] .tab__control {
+    filter: invert(1);
+}
+
 @media screen and (min-width: 768px) {
     .tab__control {
         white-space: normal;
@@ -67,6 +71,7 @@
     height: 24px;
     margin-bottom: 6px;
     fill: #4a4a4a;
+    touch-action: initial;
 }
 
 .tab__text {

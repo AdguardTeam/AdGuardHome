@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"syscall"
 	"time"
@@ -29,8 +28,6 @@ type temporaryError interface {
 
 // Get the latest available version from the Internet
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	resp := &versionResponse{}
 	if Context.disableUpdate {
 		resp.Disabled = true
@@ -72,10 +69,7 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "writing body: %s", err)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 // requestVersionInfo sets the VersionInfo field of resp if it can reach the
@@ -118,7 +112,18 @@ func handleUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := Context.updater.Update()
+	// Retain the current absolute path of the executable, since the updater is
+	// likely to change the position current one to the backup directory.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/4735.
+	execPath, err := os.Executable()
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusInternalServerError, "getting path: %s", err)
+
+		return
+	}
+
+	err = Context.updater.Update(false)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 
@@ -130,13 +135,10 @@ func handleUpdate(w http.ResponseWriter, r *http.Request) {
 		f.Flush()
 	}
 
-	// The background context is used because the underlying functions wrap
-	// it with timeout and shut down the server, which handles current
-	// request. It also should be done in a separate goroutine due to the
-	// same reason.
-	go func() {
-		finishUpdate(context.Background())
-	}()
+	// The background context is used because the underlying functions wrap it
+	// with timeout and shut down the server, which handles current request.  It
+	// also should be done in a separate goroutine for the same reason.
+	go finishUpdate(context.Background(), execPath)
 }
 
 // versionResponse is the response for /control/version.json endpoint.
@@ -175,46 +177,46 @@ func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
 }
 
 // finishUpdate completes an update procedure.
-func finishUpdate(ctx context.Context) {
-	log.Info("Stopping all tasks")
+func finishUpdate(ctx context.Context, execPath string) {
+	var err error
+
+	log.Info("stopping all tasks")
+
 	cleanup(ctx)
 	cleanupAlways()
 
-	exeName := "AdGuardHome"
-	if runtime.GOOS == "windows" {
-		exeName = "AdGuardHome.exe"
-	}
-	curBinName := filepath.Join(Context.workDir, exeName)
-
 	if runtime.GOOS == "windows" {
 		if Context.runningAsService {
-			// Note:
-			// we can't restart the service via "kardianos/service" package - it kills the process first
-			// we can't start a new instance - Windows doesn't allow it
+			// NOTE: We can't restart the service via "kardianos/service"
+			// package, because it kills the process first we can't start a new
+			// instance, because Windows doesn't allow it.
+			//
+			// TODO(a.garipov): Recheck the claim above.
 			cmd := exec.Command("cmd", "/c", "net stop AdGuardHome & net start AdGuardHome")
-			err := cmd.Start()
+			err = cmd.Start()
 			if err != nil {
-				log.Fatalf("exec.Command() failed: %s", err)
+				log.Fatalf("restarting: stopping: %s", err)
 			}
+
 			os.Exit(0)
 		}
 
-		cmd := exec.Command(curBinName, os.Args[1:]...)
-		log.Info("Restarting: %v", cmd.Args)
+		cmd := exec.Command(execPath, os.Args[1:]...)
+		log.Info("restarting: %q %q", execPath, os.Args[1:])
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		err := cmd.Start()
+		err = cmd.Start()
 		if err != nil {
-			log.Fatalf("exec.Command() failed: %s", err)
+			log.Fatalf("restarting:: %s", err)
 		}
+
 		os.Exit(0)
-	} else {
-		log.Info("Restarting: %v", os.Args)
-		err := syscall.Exec(curBinName, os.Args, os.Environ())
-		if err != nil {
-			log.Fatalf("syscall.Exec() failed: %s", err)
-		}
-		// Unreachable code
+	}
+
+	log.Info("restarting: %q %q", execPath, os.Args[1:])
+	err = syscall.Exec(execPath, os.Args, os.Environ())
+	if err != nil {
+		log.Fatalf("restarting: %s", err)
 	}
 }

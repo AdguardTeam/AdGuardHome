@@ -52,7 +52,7 @@ trap not_found EXIT
 go_version="$( "${GO:-go}" version )"
 readonly go_version
 
-go_min_version='go1.17'
+go_min_version='go1.18'
 go_version_msg="
 warning: your go version (${go_version}) is different from the recommended minimal one (${go_min_version}).
 if you have the version installed, please set the GO environment variable.
@@ -136,11 +136,11 @@ underscores() {
 			-e '_freebsd.go'\
 			-e '_linux.go'\
 			-e '_little.go'\
+			-e '_next.go'\
 			-e '_openbsd.go'\
 			-e '_others.go'\
 			-e '_test.go'\
 			-e '_unix.go'\
-			-e '_v1.go'\
 			-e '_windows.go' \
 			-v\
 			| sed -e 's/./\t\0/'
@@ -154,7 +154,7 @@ underscores() {
 	fi
 }
 
-# TODO(a.garipov): Add an analyser to look for `fallthrough`, `goto`, and `new`?
+# TODO(a.garipov): Add an analyzer to look for `fallthrough`, `goto`, and `new`?
 
 
 
@@ -212,18 +212,25 @@ exit_on_output underscores
 
 exit_on_output gofumpt --extra -e -l .
 
-golint --set_exit_status ./...
+# TODO(a.garipov): golint is deprecated, and seems to cause more and more
+# issues with each release.  Find a suitable replacement.
+#
+#	golint --set_exit_status ./...
 
 "$GO" vet ./...
 
+govulncheck ./...
+
 # Apply more lax standards to the code we haven't properly refactored yet.
-gocyclo --over 17 ./internal/dhcpd/ ./internal/dnsforward/\
-	./internal/filtering/ ./internal/home/ ./internal/querylog/
+gocyclo --over 17 ./internal/querylog/
+gocyclo --over 13 ./internal/dhcpd ./internal/filtering/ ./internal/home/
 
 # Apply stricter standards to new or somewhat refactored code.
 gocyclo --over 10 ./internal/aghio/ ./internal/aghnet/ ./internal/aghos/\
-	./internal/aghtest/ ./internal/stats/ ./internal/tools/\
-	./internal/updater/ ./internal/v1/ ./internal/version/ ./main.go\
+	./internal/aghtest/ ./internal/dnsforward/ ./internal/filtering/rewrite/\
+	./internal/stats/ ./internal/tools/ ./internal/updater/ ./internal/next/\
+	./internal/version/ ./scripts/blocked-services/ ./scripts/vetted-filters/\
+	./main.go
 
 ineffassign ./...
 

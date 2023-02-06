@@ -1,3 +1,6 @@
+// TODO(a.garipov): Rewrite this in Go; add better concurrency controls; add
+// features for easier maintenance.
+
 const fs = require('fs');
 const path = require('path');
 const requestPromise = require('request-promise');
@@ -107,7 +110,8 @@ const download = async () => {
 
         // Don't request the Crowdin API too aggressively to prevent spurious
         // 400 errors.
-        await sleep(200);
+        const sleepTime = process.env.SLEEP_TIME || 250;
+        await sleep(sleepTime);
     }
 
     Promise

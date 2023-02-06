@@ -17,6 +17,8 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/mathutil"
+	"golang.org/x/exp/slices"
 )
 
 // UnsupportedError is returned by functions and methods when a particular
@@ -60,9 +62,8 @@ const MaxCmdOutputSize = 64 * 1024
 func RunCommand(command string, arguments ...string) (code int, output []byte, err error) {
 	cmd := exec.Command(command, arguments...)
 	out, err := cmd.Output()
-	if len(out) > MaxCmdOutputSize {
-		out = out[:MaxCmdOutputSize]
-	}
+
+	out = out[:mathutil.Min(len(out), MaxCmdOutputSize)]
 
 	if err != nil {
 		if eerr := new(exec.ExitError); errors.As(err, &eerr) {
@@ -121,13 +122,12 @@ func PIDByCommand(command string, except ...int) (pid int, err error) {
 }
 
 // parsePSOutput scans the output of ps searching the largest PID of the process
-// associated with cmdName ignoring PIDs from ignore.  A valid line from
-// r should look like these:
+// associated with cmdName ignoring PIDs from ignore.  A valid line from r
+// should look like these:
 //
-//    123 ./example-cmd
-//   1230 some/base/path/example-cmd
-//   3210 example-cmd
-//
+//	 123 ./example-cmd
+//	1230 some/base/path/example-cmd
+//	3210 example-cmd
 func parsePSOutput(r io.Reader, cmdName string, ignore []int) (largest, instNum int, err error) {
 	s := bufio.NewScanner(r)
 	for s.Scan() {
@@ -137,14 +137,12 @@ func parsePSOutput(r io.Reader, cmdName string, ignore []int) (largest, instNum 
 		}
 
 		cur, aerr := strconv.Atoi(fields[0])
-		if aerr != nil || cur < 0 || intIn(cur, ignore) {
+		if aerr != nil || cur < 0 || slices.Contains(ignore, cur) {
 			continue
 		}
 
 		instNum++
-		if cur > largest {
-			largest = cur
-		}
+		largest = mathutil.Max(largest, cur)
 	}
 	if err = s.Err(); err != nil {
 		return 0, 0, fmt.Errorf("scanning stdout: %w", err)
@@ -153,32 +151,31 @@ func parsePSOutput(r io.Reader, cmdName string, ignore []int) (largest, instNum 
 	return largest, instNum, nil
 }
 
-// intIn returns true if nums contains n.
-func intIn(n int, nums []int) (ok bool) {
-	for _, nn := range nums {
-		if n == nn {
-			return true
-		}
-	}
-
-	return false
-}
-
 // IsOpenWrt returns true if host OS is OpenWrt.
 func IsOpenWrt() (ok bool) {
 	return isOpenWrt()
 }
 
-// RootDirFS returns the fs.FS rooted at the operating system's root.
+// RootDirFS returns the [fs.FS] rooted at the operating system's root.  On
+// Windows it returns the fs.FS rooted at the volume of the system directory
+// (usually, C:).
 func RootDirFS() (fsys fs.FS) {
-	// Use empty string since os.DirFS implicitly prepends a slash to it.  This
-	// behavior is undocumented but it currently works.
-	return os.DirFS("")
+	return rootDirFS()
+}
+
+// NotifyReconfigureSignal notifies c on receiving reconfigure signals.
+func NotifyReconfigureSignal(c chan<- os.Signal) {
+	notifyReconfigureSignal(c)
 }
 
 // NotifyShutdownSignal notifies c on receiving shutdown signals.
 func NotifyShutdownSignal(c chan<- os.Signal) {
 	notifyShutdownSignal(c)
+}
+
+// IsReconfigureSignal returns true if sig is a reconfigure signal.
+func IsReconfigureSignal(sig os.Signal) (ok bool) {
+	return isReconfigureSignal(sig)
 }
 
 // IsShutdownSignal returns true if sig is a shutdown signal.

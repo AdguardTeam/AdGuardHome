@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxyutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +18,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	aghtest.DiscardLogOutput(m)
+	testutil.DiscardLogOutput(m)
 }
 
 // TestQueryLog tests adding and loading (with filtering) entries from disk and
@@ -271,13 +271,13 @@ func addEntry(l *queryLog, host string, answerStr, client net.IP) {
 	}
 
 	res := filtering.Result{
-		IsFiltered:  true,
-		Reason:      filtering.Rewritten,
 		ServiceName: "SomeService",
 		Rules: []*filtering.ResultRule{{
 			FilterListID: 1,
 			Text:         "SomeRule",
 		}},
+		Reason:     filtering.Rewritten,
+		IsFiltered: true,
 	}
 
 	params := &AddParams{

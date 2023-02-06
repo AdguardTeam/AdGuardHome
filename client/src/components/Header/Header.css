@@ -1,12 +1,12 @@
 .nav-tabs .nav-link.active {
-    border-color: var(--green-74);
-    color: var(--green-74);
+    border-color: var(--btn-success-bgcolor);
+    color: var(--btn-success-bgcolor);
     background: transparent;
 }
 
 .nav-tabs .nav-link.active:hover {
-    border-color: #58a273;
-    color: #58a273;
+    border-color: #4b9400;
+    color: #4b9400;
 }
 
 .nav-icon {
@@ -47,7 +47,7 @@
     width: 250px;
     height: 100vh;
     transition: transform 0.3s ease;
-    background-color: #fff;
+    background-color: var(--header-bgcolor);
     overflow-y: auto;
 }
 

@@ -2,7 +2,7 @@ package home
 
 import (
 	"encoding/binary"
-	"net"
+	"net/netip"
 	"sync/atomic"
 	"time"
 
@@ -21,7 +21,7 @@ type RDNS struct {
 	usePrivate uint32
 
 	// ipCh used to pass client's IP to rDNS workerLoop.
-	ipCh chan net.IP
+	ipCh chan netip.Addr
 
 	// ipCache caches the IP addresses to be resolved by rDNS.  The resolved
 	// address stays here while it's inside clients.  After leaving clients the
@@ -50,7 +50,7 @@ func NewRDNS(
 			EnableLRU: true,
 			MaxCount:  defaultRDNSCacheSize,
 		}),
-		ipCh: make(chan net.IP, defaultRDNSIPChSize),
+		ipCh: make(chan netip.Addr, defaultRDNSIPChSize),
 	}
 	if usePrivate {
 		rDNS.usePrivate = 1
@@ -80,9 +80,10 @@ func (r *RDNS) ensurePrivateCache() {
 
 // isCached returns true if ip is already cached and not expired yet.  It also
 // caches it otherwise.
-func (r *RDNS) isCached(ip net.IP) (ok bool) {
+func (r *RDNS) isCached(ip netip.Addr) (ok bool) {
+	ipBytes := ip.AsSlice()
 	now := uint64(time.Now().Unix())
-	if expire := r.ipCache.Get(ip); len(expire) != 0 {
+	if expire := r.ipCache.Get(ipBytes); len(expire) != 0 {
 		if binary.BigEndian.Uint64(expire) > now {
 			return true
 		}
@@ -91,25 +92,25 @@ func (r *RDNS) isCached(ip net.IP) (ok bool) {
 	// The cache entry either expired or doesn't exist.
 	ttl := make([]byte, 8)
 	binary.BigEndian.PutUint64(ttl, now+defaultRDNSCacheTTL)
-	r.ipCache.Set(ip, ttl)
+	r.ipCache.Set(ipBytes, ttl)
 
 	return false
 }
 
 // Begin adds the ip to the resolving queue if it is not cached or already
 // resolved.
-func (r *RDNS) Begin(ip net.IP) {
+func (r *RDNS) Begin(ip netip.Addr) {
 	r.ensurePrivateCache()
 
-	if r.isCached(ip) || r.clients.Exists(ip, ClientSourceRDNS) {
+	if r.isCached(ip) || r.clients.exists(ip, ClientSourceRDNS) {
 		return
 	}
 
 	select {
 	case r.ipCh <- ip:
-		log.Tracef("rdns: %q added to queue", ip)
+		log.Debug("rdns: %q added to queue", ip)
 	default:
-		log.Tracef("rdns: queue is full")
+		log.Debug("rdns: queue is full")
 	}
 }
 
@@ -119,7 +120,7 @@ func (r *RDNS) workerLoop() {
 	defer log.OnPanic("rdns")
 
 	for ip := range r.ipCh {
-		host, err := r.exchanger.Exchange(ip)
+		host, err := r.exchanger.Exchange(ip.AsSlice())
 		if err != nil {
 			log.Debug("rdns: resolving %q: %s", ip, err)
 
@@ -128,8 +129,6 @@ func (r *RDNS) workerLoop() {
 			continue
 		}
 
-		// Don't handle any errors since AddHost doesn't return non-nil errors
-		// for now.
-		_, _ = r.clients.AddHost(ip, host, ClientSourceRDNS)
+		_ = r.clients.AddHost(ip, host, ClientSourceRDNS)
 	}
 }

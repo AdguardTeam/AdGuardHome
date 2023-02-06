@@ -74,7 +74,6 @@ const FormDHCPv4 = ({
                         className="form-control"
                         placeholder={t(ipv4placeholders.subnet_mask)}
                         validate={[
-                            validateIpv4,
                             validateRequired,
                             validateGatewaySubnetMask,
                         ]}
@@ -97,7 +96,6 @@ const FormDHCPv4 = ({
                                 placeholder={t(ipv4placeholders.range_start)}
                                 validate={[
                                     validateIpv4,
-                                    validateGatewaySubnetMask,
                                     validateIpForGatewaySubnetMask,
                                 ]}
                                 disabled={!isInterfaceIncludesIpv4}
@@ -113,7 +111,6 @@ const FormDHCPv4 = ({
                                 validate={[
                                     validateIpv4,
                                     validateIpv4RangeEnd,
-                                    validateGatewaySubnetMask,
                                     validateIpForGatewaySubnetMask,
                                 ]}
                                 disabled={!isInterfaceIncludesIpv4}

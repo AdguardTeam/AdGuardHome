@@ -1,11 +1,11 @@
 //go:build openbsd
-// +build openbsd
 
 package aghnet
 
 import (
 	"bufio"
 	"net"
+	"net/netip"
 	"strings"
 	"sync"
 
@@ -32,9 +32,8 @@ func newARPDB() (arp *cmdARPDB) {
 // parseArpA parses the output of the "arp -a -n" command on OpenBSD.  The
 // expected input format:
 //
-//   Host        Ethernet Address  Netif Expire    Flags
-//   192.168.1.1 ab:cd:ef:ab:cd:ef   em0 19m59s
-//
+//	Host        Ethernet Address  Netif Expire    Flags
+//	192.168.1.1 ab:cd:ef:ab:cd:ef   em0 19m59s
 func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 	// Skip the header.
 	if !sc.Scan() {
@@ -52,14 +51,18 @@ func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 
 		n := Neighbor{}
 
-		if ip := net.ParseIP(fields[0]); ip == nil {
+		ip, err := netip.ParseAddr(fields[0])
+		if err != nil {
+			log.Debug("arpdb: parsing arp output: ip: %s", err)
+
 			continue
 		} else {
 			n.IP = ip
 		}
 
-		if mac, err := net.ParseMAC(fields[1]); err != nil {
-			log.Debug("parsing arp output: %s", err)
+		mac, err := net.ParseMAC(fields[1])
+		if err != nil {
+			log.Debug("arpdb: parsing arp output: mac: %s", err)
 
 			continue
 		} else {

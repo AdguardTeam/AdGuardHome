@@ -262,6 +262,7 @@
     "encryption_issuer": "ผู้ออกใบรับรอง:",
     "encryption_hostnames": "ชื่อโฮส",
     "encryption_reset": "คุณแน่ใจนะว่าจะล้างค่าการเข้ารหัส?",
+    "encryption_warning": "คำเตือน",
     "topline_expiring_certificate": "ใบรับรอง SSL ของคุณกำลังจะหมดอายุ กรุณาอัปเดท <0>การตั้งค่าเข้ารหัส</0>.",
     "topline_expired_certificate": "ใบรับรอง SSL ของคุณหมดอายุแล้ว กรุณาอัปเดท <0>การตั้งค่าเข้ารหัส</0>.",
     "form_error_port_unsafe": "เป็นพอร์ทที่ไม่ปลอดภัย",

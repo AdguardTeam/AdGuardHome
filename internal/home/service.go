@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
@@ -158,23 +159,57 @@ func sendSigReload() {
 	log.Debug("service: sent signal to pid %d", pid)
 }
 
+// restartService restarts the service.  It returns error if the service is not
+// running.
+func restartService() (err error) {
+	// Call chooseSystem explicitly to introduce OpenBSD support for service
+	// package.  It's a noop for other GOOS values.
+	chooseSystem()
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("getting current directory: %w", err)
+	}
+
+	svcConfig := &service.Config{
+		Name:             serviceName,
+		DisplayName:      serviceDisplayName,
+		Description:      serviceDescription,
+		WorkingDirectory: pwd,
+	}
+	configureService(svcConfig)
+
+	var s service.Service
+	if s, err = service.New(&program{}, svcConfig); err != nil {
+		return fmt.Errorf("initializing service: %w", err)
+	}
+
+	if err = svcAction(s, "restart"); err != nil {
+		return fmt.Errorf("restarting service: %w", err)
+	}
+
+	return nil
+}
+
 // handleServiceControlAction one of the possible control actions:
-// install -- installs a service/daemon
-// uninstall -- uninstalls it
-// status -- prints the service status
-// start -- starts the previously installed service
-// stop -- stops the previously installed service
-// restart - restarts the previously installed service
-// run - this is a special command that is not supposed to be used directly
-// it is specified when we register a service, and it indicates to the app
-// that it is being run as a service/daemon.
+//
+//   - install:  Installs a service/daemon.
+//   - uninstall:  Uninstalls it.
+//   - status:  Prints the service status.
+//   - start:  Starts the previously installed service.
+//   - stop:  Stops the previously installed service.
+//   - restart:  Restarts the previously installed service.
+//   - run:  This is a special command that is not supposed to be used directly
+//     it is specified when we register a service, and it indicates to the app
+//     that it is being run as a service/daemon.
 func handleServiceControlAction(opts options, clientBuildFS fs.FS) {
 	// Call chooseSystem explicitly to introduce OpenBSD support for service
 	// package.  It's a noop for other GOOS values.
 	chooseSystem()
 
 	action := opts.serviceControlAction
-	log.Printf("service: control action: %s", action)
+	log.Info(version.Full())
+	log.Info("service: control action: %s", action)
 
 	if action == "reload" {
 		sendSigReload()
@@ -194,7 +229,7 @@ func handleServiceControlAction(opts options, clientBuildFS fs.FS) {
 		DisplayName:      serviceDisplayName,
 		Description:      serviceDescription,
 		WorkingDirectory: pwd,
-		Arguments:        serialize(runOpts),
+		Arguments:        optsToArgs(runOpts),
 	}
 	configureService(svcConfig)
 
@@ -276,7 +311,7 @@ AdGuard Home is successfully installed and will automatically start on boot.
 There are a few more things that must be configured before you can use it.
 Click on the link below and follow the Installation Wizard steps to finish setup.
 AdGuard Home is now available at the following addresses:`)
-		printHTTPAddresses(schemeHTTP)
+		printHTTPAddresses(aghhttp.SchemeHTTP)
 	}
 }
 
@@ -397,12 +432,11 @@ var launchdConfig = `<?xml version='1.0' encoding='UTF-8'?>
 // the systemdScript constant in file service_systemd_linux.go in module
 // github.com/kardianos/service.  The following changes have been made:
 //
-// 1.  The RestartSec setting is set to a lower value of 10 to make sure we
+//  1. The RestartSec setting is set to a lower value of 10 to make sure we
 //     always restart quickly.
 //
-// 2.  The ExecStartPre setting is added to make sure that the log directory is
+//  2. The ExecStartPre setting is added to make sure that the log directory is
 //     always created to prevent the 209/STDOUT errors.
-//
 const systemdScript = `[Unit]
 Description={{.Description}}
 ConditionFileIsExecutable={{.Path|cmdEscape}}

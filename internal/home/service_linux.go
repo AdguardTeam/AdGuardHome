@@ -1,5 +1,4 @@
 //go:build linux
-// +build linux
 
 package home
 
@@ -8,6 +7,8 @@ import (
 	"github.com/kardianos/service"
 )
 
+// chooseSystem checks the current system detected and substitutes it with local
+// implementation if needed.
 func chooseSystem() {
 	sys := service.ChosenSystem()
 	// By default, package service uses the SysV system if it cannot detect

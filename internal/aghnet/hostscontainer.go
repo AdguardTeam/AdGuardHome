@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"net"
+	"net/netip"
 	"path"
 	"strings"
 	"sync"
@@ -19,6 +19,7 @@ import (
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
+	"golang.org/x/exp/maps"
 )
 
 // DefaultHostsPaths returns the slice of paths default for the operating system
@@ -55,7 +56,7 @@ func (rm *requestMatcher) MatchRequest(
 ) (res *urlfilter.DNSResult, ok bool) {
 	switch req.DNSType {
 	case dns.TypeA, dns.TypeAAAA, dns.TypePTR:
-		log.Debug("%s: handling the request", hostsContainerPref)
+		log.Debug("%s: handling the request for %s", hostsContainerPref, req.Hostname)
 	default:
 		return nil, false
 	}
@@ -70,8 +71,7 @@ func (rm *requestMatcher) MatchRequest(
 // rule or an empty string if the last doesn't exist.  The returned rules are in
 // a processed format like:
 //
-//   ip host1 host2 ...
-//
+//	ip host1 host2 ...
 func (rm *requestMatcher) Translate(rule string) (hostRule string) {
 	rm.stateLock.RLock()
 	defer rm.stateLock.RUnlock()
@@ -107,10 +107,10 @@ type HostsContainer struct {
 	done chan struct{}
 
 	// updates is the channel for receiving updated hosts.
-	updates chan *netutil.IPMap
+	updates chan HostsRecords
 
 	// last is the set of hosts that was cached within last detected change.
-	last *netutil.IPMap
+	last HostsRecords
 
 	// fsys is the working file system to read hosts files from.
 	fsys fs.FS
@@ -123,6 +123,27 @@ type HostsContainer struct {
 
 	// listID is the identifier for the list of generated rules.
 	listID int
+}
+
+// HostsRecords is a mapping of an IP address to its hosts data.
+type HostsRecords map[netip.Addr]*HostsRecord
+
+// HostsRecord represents a single hosts file record.
+type HostsRecord struct {
+	Aliases   *stringutil.Set
+	Canonical string
+}
+
+// equal returns true if all fields of rec are equal to field in other or they
+// both are nil.
+func (rec *HostsRecord) equal(other *HostsRecord) (ok bool) {
+	if rec == nil {
+		return other == nil
+	} else if other == nil {
+		return false
+	}
+
+	return rec.Canonical == other.Canonical && rec.Aliases.Equal(other.Aliases)
 }
 
 // ErrNoHostsPaths is returned when there are no valid paths to watch passed to
@@ -159,7 +180,7 @@ func NewHostsContainer(
 		},
 		listID:   listID,
 		done:     make(chan struct{}, 1),
-		updates:  make(chan *netutil.IPMap, 1),
+		updates:  make(chan HostsRecords, 1),
 		fsys:     fsys,
 		w:        w,
 		patterns: patterns,
@@ -197,9 +218,8 @@ func (hc *HostsContainer) Close() (err error) {
 	return nil
 }
 
-// Upd returns the channel into which the updates are sent.  The receivable
-// map's values are guaranteed to be of type of *stringutil.Set.
-func (hc *HostsContainer) Upd() (updates <-chan *netutil.IPMap) {
+// Upd returns the channel into which the updates are sent.
+func (hc *HostsContainer) Upd() (updates <-chan HostsRecords) {
 	return hc.updates
 }
 
@@ -265,7 +285,7 @@ type hostsParser struct {
 
 	// table stores only the unique IP-hostname pairs.  It's also sent to the
 	// updates channel afterwards.
-	table *netutil.IPMap
+	table HostsRecords
 }
 
 // newHostsParser creates a new *hostsParser with buffers of size taken from the
@@ -274,7 +294,7 @@ func (hc *HostsContainer) newHostsParser() (hp *hostsParser) {
 	return &hostsParser{
 		rulesBuilder: &strings.Builder{},
 		translations: map[string]string{},
-		table:        netutil.NewIPMap(hc.last.Len()),
+		table:        make(HostsRecords, len(hc.last)),
 	}
 }
 
@@ -286,25 +306,26 @@ func (hp *hostsParser) parseFile(r io.Reader) (patterns []string, cont bool, err
 	s := bufio.NewScanner(r)
 	for s.Scan() {
 		ip, hosts := hp.parseLine(s.Text())
-		if ip == nil || len(hosts) == 0 {
+		if ip == (netip.Addr{}) || len(hosts) == 0 {
 			continue
 		}
 
-		hp.addPairs(ip, hosts)
+		hp.addRecord(ip, hosts)
 	}
 
 	return nil, true, s.Err()
 }
 
 // parseLine parses the line having the hosts syntax ignoring invalid ones.
-func (hp *hostsParser) parseLine(line string) (ip net.IP, hosts []string) {
+func (hp *hostsParser) parseLine(line string) (ip netip.Addr, hosts []string) {
 	fields := strings.Fields(line)
 	if len(fields) < 2 {
-		return nil, nil
+		return netip.Addr{}, nil
 	}
 
-	if ip = net.ParseIP(fields[0]); ip == nil {
-		return nil, nil
+	ip, err := netip.ParseAddr(fields[0])
+	if err != nil {
+		return netip.Addr{}, nil
 	}
 
 	for _, f := range fields[1:] {
@@ -322,7 +343,7 @@ func (hp *hostsParser) parseLine(line string) (ip net.IP, hosts []string) {
 		// See https://github.com/AdguardTeam/AdGuardHome/issues/3946.
 		//
 		// TODO(e.burkov):  Investigate if hosts may contain DNS-SD domains.
-		err := netutil.ValidateDomainName(f)
+		err = netutil.ValidateDomainName(f)
 		if err != nil {
 			log.Error("%s: host %q is invalid, ignoring", hostsContainerPref, f)
 
@@ -335,43 +356,47 @@ func (hp *hostsParser) parseLine(line string) (ip net.IP, hosts []string) {
 	return ip, hosts
 }
 
-// addPair puts the pair of ip and host to the rules builder if needed.  For
-// each ip the first member of hosts will become the main one.
-func (hp *hostsParser) addPairs(ip net.IP, hosts []string) {
-	v, ok := hp.table.Get(ip)
+// addRecord puts the record for the IP address to the rules builder if needed.
+// The first host is considered to be the canonical name for the IP address.
+// hosts must have at least one name.
+func (hp *hostsParser) addRecord(ip netip.Addr, hosts []string) {
+	line := strings.Join(append([]string{ip.String()}, hosts...), " ")
+
+	rec, ok := hp.table[ip]
 	if !ok {
-		// This ip is added at the first time.
-		v = stringutil.NewSet()
-		hp.table.Set(ip, v)
+		rec = &HostsRecord{
+			Aliases: stringutil.NewSet(),
+		}
+
+		rec.Canonical, hosts = hosts[0], hosts[1:]
+		hp.addRules(ip, rec.Canonical, line)
+		hp.table[ip] = rec
 	}
 
-	var set *stringutil.Set
-	set, ok = v.(*stringutil.Set)
-	if !ok {
-		log.Debug("%s: adding pairs: unexpected value type %T", hostsContainerPref, v)
-
-		return
-	}
-
-	processed := strings.Join(append([]string{ip.String()}, hosts...), " ")
-	for _, h := range hosts {
-		if set.Has(h) {
+	for _, host := range hosts {
+		if rec.Canonical == host || rec.Aliases.Has(host) {
 			continue
 		}
 
-		set.Add(h)
+		rec.Aliases.Add(host)
 
-		rule, rulePtr := hp.writeRules(h, ip)
-		hp.translations[rule], hp.translations[rulePtr] = processed, processed
-
-		log.Debug("%s: added ip-host pair %q-%q", hostsContainerPref, ip, h)
+		hp.addRules(ip, host, line)
 	}
+}
+
+// addRules adds rules and rule translations for the line.
+func (hp *hostsParser) addRules(ip netip.Addr, host, line string) {
+	rule, rulePtr := hp.writeRules(host, ip)
+	hp.translations[rule], hp.translations[rulePtr] = line, line
+
+	log.Debug("%s: added ip-host pair %q-%q", hostsContainerPref, ip, host)
 }
 
 // writeRules writes the actual rule for the qtype and the PTR for the host-ip
 // pair into internal builders.
-func (hp *hostsParser) writeRules(host string, ip net.IP) (rule, rulePtr string) {
-	arpa, err := netutil.IPToReversedAddr(ip)
+func (hp *hostsParser) writeRules(host string, ip netip.Addr) (rule, rulePtr string) {
+	// TODO(a.garipov):  Add a netip.Addr version to netutil.
+	arpa, err := netutil.IPToReversedAddr(ip.AsSlice())
 	if err != nil {
 		return "", ""
 	}
@@ -389,7 +414,7 @@ func (hp *hostsParser) writeRules(host string, ip net.IP) (rule, rulePtr string)
 	var qtype string
 	// The validation of the IP address has been performed earlier so it is
 	// guaranteed to be either an IPv4 or an IPv6.
-	if ip.To4() != nil {
+	if ip.Is4() {
 		qtype = "A"
 	} else {
 		qtype = "AAAA"
@@ -416,37 +441,8 @@ func (hp *hostsParser) writeRules(host string, ip net.IP) (rule, rulePtr string)
 	return rule, rulePtr
 }
 
-// equalSet returns true if the internal hosts table just parsed equals target.
-func (hp *hostsParser) equalSet(target *netutil.IPMap) (ok bool) {
-	if target == nil {
-		// hp.table shouldn't appear nil since it's initialized on each refresh.
-		return target == hp.table
-	}
-
-	if hp.table.Len() != target.Len() {
-		return false
-	}
-
-	hp.table.Range(func(ip net.IP, b interface{}) (cont bool) {
-		// ok is set to true if the target doesn't contain ip or if the
-		// appropriate hosts set isn't equal to the checked one.
-		if a, hasIP := target.Get(ip); !hasIP {
-			ok = true
-		} else if hosts, aok := a.(*stringutil.Set); aok {
-			ok = !hosts.Equal(b.(*stringutil.Set))
-		}
-
-		// Continue only if maps has no discrepancies.
-		return !ok
-	})
-
-	// Return true if every value from the IP map has no discrepancies with the
-	// appropriate one from the target.
-	return !ok
-}
-
 // sendUpd tries to send the parsed data to the ch.
-func (hp *hostsParser) sendUpd(ch chan *netutil.IPMap) {
+func (hp *hostsParser) sendUpd(ch chan HostsRecords) {
 	log.Debug("%s: sending upd", hostsContainerPref)
 
 	upd := hp.table
@@ -484,14 +480,15 @@ func (hc *HostsContainer) refresh() (err error) {
 		return fmt.Errorf("refreshing : %w", err)
 	}
 
-	if hp.equalSet(hc.last) {
+	// hc.last is nil on the first refresh, so let that one through.
+	if hc.last != nil && maps.EqualFunc(hp.table, hc.last, (*HostsRecord).equal) {
 		log.Debug("%s: no changes detected", hostsContainerPref)
 
 		return nil
 	}
 	defer hp.sendUpd(hc.updates)
 
-	hc.last = hp.table.ShallowClone()
+	hc.last = maps.Clone(hp.table)
 
 	var rulesStrg *filterlist.RuleStorage
 	if rulesStrg, err = hp.newStrg(hc.listID); err != nil {

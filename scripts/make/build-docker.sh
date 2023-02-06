@@ -85,7 +85,7 @@ in
 esac
 readonly docker_image_full_name docker_tags
 
-# Copy the binaries into a new directory under new names, so that it's eaiser to
+# Copy the binaries into a new directory under new names, so that it's easier to
 # COPY them later.  DO NOT remove the trailing underscores.  See file
 # scripts/make/Dockerfile.
 dist_docker="${dist_dir}/docker"

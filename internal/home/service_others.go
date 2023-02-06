@@ -1,5 +1,4 @@
 //go:build !(openbsd || linux)
-// +build !openbsd,!linux
 
 package home
 

@@ -4,6 +4,163 @@
 
 ## v0.108.0: API changes
 
+
+
+## v0.107.23: API changes
+
+### Experimental “beta” APIs removed
+
+The following experimental beta APIs have been removed:
+
+ *  `GET  /control/install/get_addresses_beta`;
+ *  `POST /control/install/check_config_beta`;
+ *  `POST /control/install/configure_beta`.
+
+They never quite worked properly, and the future new version of AdGuard Home API
+will probably be different.
+
+
+
+## v0.107.22: API changes
+
+### `POST /control/i18n/change_language` is deprecated
+
+Use `PUT /control/profile/update`.
+
+### `GET /control/i18n/current_language` is deprecated
+
+Use `GET /control/profile`.
+
+* The `/control/profile` HTTP API has been changed.
+
+* The new `PUT /control/profile/update` HTTP API allows user info updates.
+
+These `control/profile/update` and `control/profile` APIs accept and return a
+JSON object with the following format:
+
+```json
+{
+  "name":"user name", 
+  "language": "en",
+  "theme": "auto"
+}
+```
+
+
+
+## v0.107.20: API Changes
+
+### `POST /control/cache_clear`
+
+* The new `POST /control/cache_clear` HTTP API allows clearing the DNS cache.
+
+
+
+## v0.107.17: API Changes
+
+### `GET /control/blocked_services/services` is deprecated
+
+Use `GET /control/blocked_services/all`.
+
+### `GET /control/blocked_services/all`
+
+* The new `GET /control/blocked_services/all` HTTP API allows inspecting all
+  available services and their data, such as SVG icons and human-readable names.
+
+
+
+## v0.107.15: `POST` Requests Without Bodies
+
+As an additional CSRF protection measure, AdGuard Home now ensures that requests
+that change its state but have no body do not have a `Content-Type` header set
+on them.
+
+This concerns the following APIs:
+
+* `POST /control/dhcp/reset_leases`;
+* `POST /control/dhcp/reset`;
+* `POST /control/parental/disable`;
+* `POST /control/parental/enable`;
+* `POST /control/querylog_clear`;
+* `POST /control/safebrowsing/disable`;
+* `POST /control/safebrowsing/enable`;
+* `POST /control/safesearch/disable`;
+* `POST /control/safesearch/enable`;
+* `POST /control/stats_reset`;
+* `POST /control/update`.
+
+
+
+## v0.107.14: BREAKING API CHANGES
+
+A Cross-Site Request Forgery (CSRF) vulnerability has been discovered.  We have
+implemented several measures to prevent such vulnerabilities in the future, but
+some of these measures break backwards compatibility for the sake of better
+protection.
+
+All JSON APIs that expect a body now check if the request actually has
+`Content-Type` set to `application/json`.
+
+All new formats for the request and response bodies are documented in
+`openapi.yaml`.
+
+### `POST /control/filtering/set_rules` And Other Plain-Text APIs
+
+The following APIs, which previously accepted or returned `text/plain` data,
+now accept or return data as JSON.
+
+#### `POST /control/filtering/set_rules`
+
+Previously, the API accepted a raw list of filters as a plain-text file.  Now,
+the filters must be presented in a JSON object with the following format:
+
+```json
+{
+  "rules":
+  [
+    "||example.com^",
+    "# comment",
+    "@@||www.example.com^"
+  ]
+}
+```
+
+#### `GET /control/i18n/current_language` And `POST /control/i18n/change_language`
+
+Previously, these APIs accepted and returned the language code in plain text.
+Now, they accept and return them in a JSON object with the following format:
+
+```json
+{
+  "language": "en"
+}
+```
+
+#### `POST /control/dhcp/find_active_dhcp`
+
+Previously, the API accepted the name of the network interface as a plain-text
+string.  Now, it must be contained within a JSON object with the following
+format:
+
+```json
+{
+  "interface": "eth0"
+}
+```
+
+
+
+## v0.107.12: API changes
+
+### `GET /control/blocked_services/services`
+
+* The new `GET /control/blocked_services/services` HTTP API allows inspecting
+  all available services.
+
+
+
+## v0.107.7: API changes
+
 ### The new optional field `"ecs"` in `QueryLogItem`
 
 * The new optional field `"ecs"` in `GET /control/querylog` contains the IP
@@ -15,12 +172,16 @@
   `POST /install/configure` which means that the specified password does not
   meet the strength requirements.
 
+
+
 ## v0.107.3: API changes
 
 ### The new field `"version"` in `AddressesInfo`
 
 * The new field `"version"` in `GET /install/get_addresses` is the version of
   the AdGuard Home instance.
+
+
 
 ## v0.107.0: API changes
 

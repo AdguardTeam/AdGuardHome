@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { connect } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 import {
     Field, FieldArray, reduxForm, formValueSelector,
@@ -11,15 +11,16 @@ import Select from 'react-select';
 import i18n from '../../../i18n';
 import Tabs from '../../ui/Tabs';
 import Examples from '../Dns/Upstream/Examples';
-import { toggleAllServices } from '../../../helpers/helpers';
+import { toggleAllServices, trimLinesAndRemoveEmpty } from '../../../helpers/helpers';
 import {
     renderInputField,
     renderGroupField,
     CheckboxField,
     renderServiceField,
+    renderTextareaField,
 } from '../../../helpers/form';
 import { validateClientId, validateRequiredValue } from '../../../helpers/validators';
-import { CLIENT_ID_LINK, FORM_NAME, SERVICES } from '../../../helpers/constants';
+import { CLIENT_ID_LINK, FORM_NAME } from '../../../helpers/constants';
 import './Service.css';
 
 const settingsCheckboxes = [
@@ -139,6 +140,7 @@ let Form = (props) => {
         invalid,
         tagsOptions,
     } = props;
+    const services = useSelector((store) => store?.services);
 
     const [activeTabLabel, setActiveTabLabel] = useState('settings');
 
@@ -180,7 +182,9 @@ let Form = (props) => {
                                 type="button"
                                 className="btn btn-secondary btn-block"
                                 disabled={useGlobalServices}
-                                onClick={() => toggleAllServices(SERVICES, change, true)}
+                                onClick={() => (
+                                    toggleAllServices(services.allServices, change, true)
+                                )}
                             >
                                 <Trans>block_all</Trans>
                             </button>
@@ -190,25 +194,29 @@ let Form = (props) => {
                                 type="button"
                                 className="btn btn-secondary btn-block"
                                 disabled={useGlobalServices}
-                                onClick={() => toggleAllServices(SERVICES, change, false)}
+                                onClick={() => (
+                                    toggleAllServices(services.allServices, change, false)
+                                )}
                             >
                                 <Trans>unblock_all</Trans>
                             </button>
                         </div>
                     </div>
-                    <div className="services">
-                        {SERVICES.map((service) => (
-                            <Field
-                                key={service.id}
-                                icon={`service_${service.id}`}
-                                name={`blocked_services.${service.id}`}
-                                type="checkbox"
-                                component={renderServiceField}
-                                placeholder={service.name}
-                                disabled={useGlobalServices}
-                            />
-                        ))}
-                    </div>
+                    {services.allServices.length > 0 && (
+                        <div className="services">
+                            {services.allServices.map((service) => (
+                                <Field
+                                    key={service.id}
+                                    icon={service.icon_svg}
+                                    name={`blocked_services.${service.id}`}
+                                    type="checkbox"
+                                    component={renderServiceField}
+                                    placeholder={service.name}
+                                    disabled={useGlobalServices}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>,
         },
@@ -223,10 +231,11 @@ let Form = (props) => {
                 <Field
                     id="upstreams"
                     name="upstreams"
-                    component="textarea"
+                    component={renderTextareaField}
                     type="text"
                     className="form-control form-control--textarea mb-5"
                     placeholder={t('upstream_dns')}
+                    normalizeOnBlur={trimLinesAndRemoveEmpty}
                 />
                 <Examples />
             </div>,

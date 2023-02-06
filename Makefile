@@ -5,7 +5,6 @@
 .POSIX:
 
 CHANNEL = development
-CLIENT_BETA_DIR = client2
 CLIENT_DIR = client
 COMMIT = $$( git rev-parse --short HEAD )
 DIST_DIR = dist
@@ -29,19 +28,15 @@ SIGN = 1
 VERBOSE = 0
 VERSION = v0.0.0
 YARN = yarn
-YARN_FLAGS = --cwd $(CLIENT_BETA_DIR)
-YARN_INSTALL_FLAGS = $(YARN_FLAGS) --network-timeout 120000 --silent\
-	--ignore-engines --ignore-optional --ignore-platform\
-	--ignore-scripts
 
-V1API = 0
+NEXTAPI = 0
 
 # Macros for the build-release target.  If FRONTEND_PREBUILT is 0, the
 # default, the macro $(BUILD_RELEASE_DEPS_$(FRONTEND_PREBUILT)) expands
 # into BUILD_RELEASE_DEPS_0, and so both frontend and backend
 # dependencies are fetched and the frontend is built.  Otherwise, if
 # FRONTEND_PREBUILT is 1, only backend dependencies are fetched and the
-# frontend isn't reuilt.
+# frontend isn't rebuilt.
 #
 # TODO(a.garipov): We could probably do that from .../build-release.sh,
 # but that would mean either calling make from inside make or
@@ -63,7 +58,7 @@ ENV = env\
 	PATH="$${PWD}/bin:$$( "$(GO.MACRO)" env GOPATH )/bin:$${PATH}"\
 	RACE='$(RACE)'\
 	SIGN='$(SIGN)'\
-	V1API='$(V1API)'\
+	NEXTAPI='$(NEXTAPI)'\
 	VERBOSE='$(VERBOSE)'\
 	VERSION='$(VERSION)'\
 
@@ -93,17 +88,13 @@ init:  ; git config core.hooksPath ./scripts/hooks
 
 js-build:
 	$(NPM) $(NPM_FLAGS) run build-prod
-	$(YARN) $(YARN_FLAGS) build
 js-deps:
 	$(NPM) $(NPM_INSTALL_FLAGS) ci
-	$(YARN) $(YARN_INSTALL_FLAGS) install
 
 # TODO(a.garipov): Remove the legacy client tasks support once the new
 # client is done and the old one is removed.
 js-lint: ; $(NPM) $(NPM_FLAGS) run lint
 js-test: ; $(NPM) $(NPM_FLAGS) run test
-js-beta-lint: ; $(YARN) $(YARN_FLAGS) lint
-js-beta-test: ; # TODO(v.abdulmyanov): Add tests for the new client.
 
 go-build: ; $(ENV) "$(SHELL)" ./scripts/make/go-build.sh
 go-deps:  ; $(ENV) "$(SHELL)" ./scripts/make/go-deps.sh

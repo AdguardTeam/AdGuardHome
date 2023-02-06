@@ -1,32 +1,64 @@
 // Package aghalg contains common generic algorithms and data structures.
 //
-// TODO(a.garipov): Update to use type parameters in Go 1.18.
+// TODO(a.garipov): Move parts of this into golibs.
 package aghalg
 
 import (
 	"fmt"
-	"sort"
+
+	"golang.org/x/exp/constraints"
+	"golang.org/x/exp/slices"
 )
 
-// comparable is an alias for interface{}.  Values passed as arguments of this
-// type alias must be comparable.
+// Coalesce returns the first non-zero value.  It is named after function
+// COALESCE in SQL.  If values or all its elements are empty, it returns a zero
+// value.
 //
-// TODO(a.garipov): Remove in Go 1.18.
-type comparable = interface{}
+// T is comparable, because Go currently doesn't have a comparableWithZeroValue
+// constraint.
+//
+// TODO(a.garipov): Think of ways to merge with [CoalesceSlice].
+func Coalesce[T comparable](values ...T) (res T) {
+	var zero T
+	for _, v := range values {
+		if v != zero {
+			return v
+		}
+	}
+
+	return zero
+}
+
+// CoalesceSlice returns the first non-zero value.  It is named after function
+// COALESCE in SQL.  If values or all its elements are empty, it returns nil.
+//
+// TODO(a.garipov): Think of ways to merge with [Coalesce].
+func CoalesceSlice[E any, S []E](values ...S) (res S) {
+	for _, v := range values {
+		if v != nil {
+			return v
+		}
+	}
+
+	return nil
+}
 
 // UniqChecker allows validating uniqueness of comparable items.
-type UniqChecker map[comparable]int64
+//
+// TODO(a.garipov): The Ordered constraint is only really necessary in Validate.
+// Consider ways of making this constraint comparable instead.
+type UniqChecker[T constraints.Ordered] map[T]int64
 
 // Add adds a value to the validator.  v must not be nil.
-func (uc UniqChecker) Add(elems ...comparable) {
+func (uc UniqChecker[T]) Add(elems ...T) {
 	for _, e := range elems {
 		uc[e]++
 	}
 }
 
 // Merge returns a checker containing data from both uc and other.
-func (uc UniqChecker) Merge(other UniqChecker) (merged UniqChecker) {
-	merged = make(UniqChecker, len(uc)+len(other))
+func (uc UniqChecker[T]) Merge(other UniqChecker[T]) (merged UniqChecker[T]) {
+	merged = make(UniqChecker[T], len(uc)+len(other))
 	for elem, num := range uc {
 		merged[elem] += num
 	}
@@ -39,10 +71,8 @@ func (uc UniqChecker) Merge(other UniqChecker) (merged UniqChecker) {
 }
 
 // Validate returns an error enumerating all elements that aren't unique.
-// isBefore is an optional sorting function to make the error message
-// deterministic.
-func (uc UniqChecker) Validate(isBefore func(a, b comparable) (less bool)) (err error) {
-	var dup []comparable
+func (uc UniqChecker[T]) Validate() (err error) {
+	var dup []T
 	for elem, num := range uc {
 		if num > 1 {
 			dup = append(dup, elem)
@@ -53,23 +83,7 @@ func (uc UniqChecker) Validate(isBefore func(a, b comparable) (less bool)) (err 
 		return nil
 	}
 
-	if isBefore != nil {
-		sort.Slice(dup, func(i, j int) (less bool) {
-			return isBefore(dup[i], dup[j])
-		})
-	}
+	slices.Sort(dup)
 
 	return fmt.Errorf("duplicated values: %v", dup)
-}
-
-// IntIsBefore is a helper sort function for UniqChecker.Validate.
-// a and b must be of type int.
-func IntIsBefore(a, b comparable) (less bool) {
-	return a.(int) < b.(int)
-}
-
-// StringIsBefore is a helper sort function for UniqChecker.Validate.
-// a and b must be of type string.
-func StringIsBefore(a, b comparable) (less bool) {
-	return a.(string) < b.(string)
 }

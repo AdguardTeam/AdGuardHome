@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/netip"
 	"strings"
 	"time"
 
@@ -26,7 +27,7 @@ const (
 // WHOIS - module context
 type WHOIS struct {
 	clients *clientsContainer
-	ipChan  chan net.IP
+	ipChan  chan netip.Addr
 
 	// dialContext specifies the dial function for creating unencrypted TCP
 	// connections.
@@ -51,7 +52,7 @@ func initWHOIS(clients *clientsContainer) *WHOIS {
 			MaxCount:  10000,
 		}),
 		dialContext: customDialContext,
-		ipChan:      make(chan net.IP, 255),
+		ipChan:      make(chan netip.Addr, 255),
 	}
 
 	go w.workerLoop()
@@ -192,7 +193,7 @@ func (w *WHOIS) queryAll(ctx context.Context, target string) (string, error) {
 }
 
 // Request WHOIS information
-func (w *WHOIS) process(ctx context.Context, ip net.IP) (wi *RuntimeClientWHOISInfo) {
+func (w *WHOIS) process(ctx context.Context, ip netip.Addr) (wi *RuntimeClientWHOISInfo) {
 	resp, err := w.queryAll(ctx, ip.String())
 	if err != nil {
 		log.Debug("whois: error: %s  IP:%s", err, ip)
@@ -220,24 +221,25 @@ func (w *WHOIS) process(ctx context.Context, ip net.IP) (wi *RuntimeClientWHOISI
 }
 
 // Begin - begin requesting WHOIS info
-func (w *WHOIS) Begin(ip net.IP) {
+func (w *WHOIS) Begin(ip netip.Addr) {
+	ipBytes := ip.AsSlice()
 	now := uint64(time.Now().Unix())
-	expire := w.ipAddrs.Get([]byte(ip))
+	expire := w.ipAddrs.Get(ipBytes)
 	if len(expire) != 0 {
 		exp := binary.BigEndian.Uint64(expire)
 		if exp > now {
 			return
 		}
-		// TTL expired
 	}
+
 	expire = make([]byte, 8)
 	binary.BigEndian.PutUint64(expire, now+whoisTTL)
-	_ = w.ipAddrs.Set([]byte(ip), expire)
+	_ = w.ipAddrs.Set(ipBytes, expire)
 
 	log.Debug("whois: adding %s", ip)
+
 	select {
 	case w.ipChan <- ip:
-		//
 	default:
 		log.Debug("whois: queue is full")
 	}
@@ -252,6 +254,6 @@ func (w *WHOIS) workerLoop() {
 			continue
 		}
 
-		w.clients.SetWHOISInfo(ip, info)
+		w.clients.setWHOISInfo(ip, info)
 	}
 }

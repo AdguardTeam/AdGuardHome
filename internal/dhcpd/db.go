@@ -32,7 +32,7 @@ func normalizeIP(ip net.IP) net.IP {
 }
 
 // Load lease table from DB
-func (s *Server) dbLoad() (err error) {
+func (s *server) dbLoad() (err error) {
 	dynLeases := []*Lease{}
 	staticLeases := []*Lease{}
 	v6StaticLeases := []*Lease{}
@@ -132,7 +132,7 @@ func normalizeLeases(staticLeases, dynLeases []*Lease) []*Lease {
 }
 
 // Store lease table in DB
-func (s *Server) dbStore() (err error) {
+func (s *server) dbStore() (err error) {
 	// Use an empty slice here as opposed to nil so that it doesn't write
 	// "null" into the database file if leases are empty.
 	leases := []leaseJSON{}

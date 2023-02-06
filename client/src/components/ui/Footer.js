@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames';
 
-import { REPOSITORY, PRIVACY_POLICY_LINK } from '../../helpers/constants';
+import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from '../../helpers/constants';
 import { LANGUAGES } from '../../helpers/twosky';
 import i18n from '../../i18n';
 
 import Version from './Version';
 import './Footer.css';
 import './Select.css';
-import { setHtmlLangAttr } from '../../helpers/helpers';
+import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
+import { changeTheme } from '../../actions';
 
 const linksData = [
     {
@@ -29,6 +31,18 @@ const linksData = [
 
 const Footer = () => {
     const { t } = useTranslation();
+    const dispatch = useDispatch();
+
+    const currentTheme = useSelector((state) => (state.dashboard ? state.dashboard.theme : 'auto'));
+    const profileName = useSelector((state) => (state.dashboard ? state.dashboard.name : ''));
+    const isLoggedIn = profileName !== '';
+    const [currentThemeLocal, setCurrentThemeLocal] = useState('auto');
+
+    useEffect(() => {
+        if (!isLoggedIn) {
+            setUITheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? THEMES.dark : THEMES.light);
+        }
+    }, []);
 
     const getYear = () => {
         const today = new Date();
@@ -41,10 +55,21 @@ const Footer = () => {
         setHtmlLangAttr(value);
     };
 
+    const onThemeChanged = (event) => {
+        const { value } = event.target;
+        dispatch(changeTheme(value));
+    };
+
+    const onThemeChangedLocal = (event) => {
+        const { value } = event.target;
+        setUITheme(value);
+        setCurrentThemeLocal(value);
+    };
+
     const renderCopyright = () => <div className="footer__column">
         <div className="footer__copyright">
             {t('copyright')} &copy; {getYear()}{' '}
-            <a target="_blank" rel="noopener noreferrer" href="https://adguard.com/">AdGuard</a>
+            <a target="_blank" rel="noopener noreferrer" href="https://link.adtidy.org/forward.html?action=home&from=ui&app=home">AdGuard</a>
         </div>
     </div>;
 
@@ -58,6 +83,35 @@ const Footer = () => {
             {t(name)}
         </a>);
 
+    const themeSelectOptions = () => (
+        Object.values(THEMES)
+            .map((theme) => (
+                <option key={theme} value={theme}>
+                    {t(`theme_${theme}`)}
+                </option>
+            ))
+    );
+
+    const renderThemeSelect = () => (
+        <select
+            className="form-control select select--theme"
+            value={currentTheme}
+            onChange={onThemeChanged}
+        >
+            {themeSelectOptions()}
+        </select>
+    );
+
+    const renderThemeSelectLocal = () => (
+        <select
+            className="form-control select select--theme"
+            value={currentThemeLocal}
+            onChange={onThemeChangedLocal}
+        >
+            {themeSelectOptions()}
+        </select>
+    );
+
     return (
         <>
             <footer className="footer">
@@ -65,6 +119,9 @@ const Footer = () => {
                     <div className="footer__row">
                         <div className="footer__column footer__column--links">
                             {renderLinks(linksData)}
+                        </div>
+                        <div className="footer__column footer__column--theme">
+                            {isLoggedIn ? renderThemeSelect() : renderThemeSelectLocal()}
                         </div>
                         <div className="footer__column footer__column--language">
                             <select

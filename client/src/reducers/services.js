@@ -12,6 +12,14 @@ const services = handleActions(
             processing: false,
         }),
 
+        [actions.getAllBlockedServicesRequest]: (state) => ({ ...state, processingAll: true }),
+        [actions.getAllBlockedServicesFailure]: (state) => ({ ...state, processingAll: false }),
+        [actions.getAllBlockedServicesSuccess]: (state, { payload }) => ({
+            ...state,
+            allServices: payload.blocked_services,
+            processingAll: false,
+        }),
+
         [actions.setBlockedServicesRequest]: (state) => ({ ...state, processingSet: true }),
         [actions.setBlockedServicesFailure]: (state) => ({ ...state, processingSet: false }),
         [actions.setBlockedServicesSuccess]: (state) => ({
@@ -21,8 +29,10 @@ const services = handleActions(
     },
     {
         processing: true,
+        processingAll: true,
         processingSet: false,
         list: [],
+        allServices: [],
     },
 );
 

@@ -141,7 +141,7 @@ export const getVersion = (recheck = false) => async (dispatch, getState) => {
             }
         }
     } catch (error) {
-        dispatch(addErrorToast({ error }));
+        dispatch(addErrorToast({ error: 'version_request_error' }));
         dispatch(getVersionFailure());
     }
 };
@@ -314,13 +314,15 @@ export const testUpstream = (
         const testMessages = Object.keys(upstreamResponse)
             .map((key) => {
                 const message = upstreamResponse[key];
-                if (message !== 'OK') {
+                if (message.startsWith('WARNING:')) {
+                    dispatch(addErrorToast({ error: i18next.t('dns_test_warning_toast', { key }) }));
+                } else if (message !== 'OK') {
                     dispatch(addErrorToast({ error: i18next.t('dns_test_not_ok_toast', { key }) }));
                 }
                 return message;
             });
 
-        if (testMessages.every((message) => message === 'OK')) {
+        if (testMessages.every((message) => message === 'OK' || message.startsWith('WARNING:'))) {
             dispatch(addSuccessToast('dns_test_ok_toast'));
         }
 
@@ -353,7 +355,7 @@ export const changeLanguageSuccess = createAction('CHANGE_LANGUAGE_SUCCESS');
 export const changeLanguage = (lang) => async (dispatch) => {
     dispatch(changeLanguageRequest());
     try {
-        await apiClient.changeLanguage(lang);
+        await apiClient.changeLanguage({ language: lang });
         dispatch(changeLanguageSuccess());
     } catch (error) {
         dispatch(addErrorToast({ error }));
@@ -361,18 +363,18 @@ export const changeLanguage = (lang) => async (dispatch) => {
     }
 };
 
-export const getLanguageRequest = createAction('GET_LANGUAGE_REQUEST');
-export const getLanguageFailure = createAction('GET_LANGUAGE_FAILURE');
-export const getLanguageSuccess = createAction('GET_LANGUAGE_SUCCESS');
+export const changeThemeRequest = createAction('CHANGE_THEME_REQUEST');
+export const changeThemeFailure = createAction('CHANGE_THEME_FAILURE');
+export const changeThemeSuccess = createAction('CHANGE_THEME_SUCCESS');
 
-export const getLanguage = () => async (dispatch) => {
-    dispatch(getLanguageRequest());
+export const changeTheme = (theme) => async (dispatch) => {
+    dispatch(changeThemeRequest());
     try {
-        const language = await apiClient.getCurrentLanguage();
-        dispatch(getLanguageSuccess(language));
+        await apiClient.changeTheme({ theme });
+        dispatch(changeThemeSuccess({ theme }));
     } catch (error) {
         dispatch(addErrorToast({ error }));
-        dispatch(getLanguageFailure());
+        dispatch(changeThemeFailure());
     }
 };
 
@@ -419,7 +421,10 @@ export const findActiveDhcpFailure = createAction('FIND_ACTIVE_DHCP_FAILURE');
 export const findActiveDhcp = (name) => async (dispatch, getState) => {
     dispatch(findActiveDhcpRequest());
     try {
-        const activeDhcp = await apiClient.findActiveDhcp(name);
+        const req = {
+            interface: name,
+        };
+        const activeDhcp = await apiClient.findActiveDhcp(req);
         dispatch(findActiveDhcpSuccess(activeDhcp));
         const { check, interface_name, interfaces } = getState().dhcp;
         const selectedInterface = getState().form[FORM_NAME.DHCP_INTERFACES].values.interface_name;

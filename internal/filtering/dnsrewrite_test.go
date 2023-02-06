@@ -49,7 +49,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 |1.2.3.5.in-addr.arpa^$dnsrewrite=NOERROR;PTR;new-ptr-with-dot.
 `
 
-	f := newForTest(t, nil, []Filter{{ID: 0, Data: []byte(text)}})
+	f, _ := newForTest(t, nil, []Filter{{ID: 0, Data: []byte(text)}})
 	setts := &Settings{
 		FilteringEnabled: true,
 	}
@@ -61,22 +61,22 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 
 	testCasesA := []struct {
 		name  string
-		want  []interface{}
+		want  []any
 		rcode int
 		dtyp  uint16
 	}{{
 		name:  "a-record",
 		rcode: dns.RcodeSuccess,
-		want:  []interface{}{ipv4p1},
+		want:  []any{ipv4p1},
 		dtyp:  dns.TypeA,
 	}, {
 		name:  "aaaa-record",
-		want:  []interface{}{ipv6p1},
+		want:  []any{ipv6p1},
 		rcode: dns.RcodeSuccess,
 		dtyp:  dns.TypeAAAA,
 	}, {
 		name:  "txt-record",
-		want:  []interface{}{"hello-world"},
+		want:  []any{"hello-world"},
 		rcode: dns.RcodeSuccess,
 		dtyp:  dns.TypeTXT,
 	}, {
@@ -86,22 +86,22 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		dtyp:  0,
 	}, {
 		name:  "a-records",
-		want:  []interface{}{ipv4p1, ipv4p2},
+		want:  []any{ipv4p1, ipv4p2},
 		rcode: dns.RcodeSuccess,
 		dtyp:  dns.TypeA,
 	}, {
 		name:  "aaaa-records",
-		want:  []interface{}{ipv6p1, ipv6p2},
+		want:  []any{ipv6p1, ipv6p2},
 		rcode: dns.RcodeSuccess,
 		dtyp:  dns.TypeAAAA,
 	}, {
 		name:  "disable-one",
-		want:  []interface{}{ipv4p2},
+		want:  []any{ipv4p2},
 		rcode: dns.RcodeSuccess,
 		dtyp:  dns.TypeA,
 	}, {
 		name:  "disable-cname",
-		want:  []interface{}{ipv4p1},
+		want:  []any{ipv4p1},
 		rcode: dns.RcodeSuccess,
 		dtyp:  dns.TypeA,
 	}}

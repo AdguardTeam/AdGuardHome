@@ -24,6 +24,12 @@
     --option-border-radius: 4px;
 }
 
+[data-theme="dark"] {
+    --red: rgba(223, 56, 18, 0.25);
+    --green-pale: rgba(103, 178, 121, 0.25);
+    --yellow: rgba(247, 181, 0, 0.2);
+}
+
 .logs__text {
     padding: 0 1px;
     text-overflow: ellipsis;
@@ -31,9 +37,17 @@
     overflow: hidden;
     font-size: 1rem;
     font-family: var(--font-family-sans-serif);
-    color: var(--gray-4d);
+    color: var(--logs__text-color);
     letter-spacing: 0;
     line-height: 1.5rem;
+}
+
+[data-theme="dark"] .logs__text a {
+    color: var(--gray-f3);
+}
+
+[data-theme="dark"] .logs__text a:hover {
+    color: var(--gray-f3);
 }
 
 .logs__text--bold {
@@ -48,7 +62,7 @@
 .detailed-info {
     font-size: 0.8rem;
     line-height: 1.4;
-    color: #888888;
+    color: var(--detailed-info-color);
 }
 
 .logs__text--link {
@@ -64,6 +78,10 @@
     background-color: var(--gray-f3);
     border: solid 1px var(--gray-d8);
     border-radius: 4px;
+}
+
+[data-theme=dark] .icon--selected {
+    opacity: 0.75;
 }
 
 .text-pre {
@@ -102,19 +120,13 @@
     padding: 0.5rem 0.75rem 0.5rem 2rem !important;
 }
 
-.bg--danger {
-    color: var(--danger) !important;
-}
-
 .form-control--search {
-    box-shadow: 0 1px 0 #ddd;
     padding: 0 2.5rem;
     height: 2.25rem;
     flex-grow: 1;
 }
 
 .form-control--transparent {
-    border: 0 solid transparent !important;
     background-color: transparent !important;
 }
 
@@ -178,10 +190,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
-    --size: 2.5rem;
-    width: var(--size);
-    height: var(--size);
+    width: 2.5rem;
+    height: 2.5rem;
     padding: 0;
     margin-left: 0.9375rem;
     background-color: transparent;
@@ -213,6 +223,12 @@
     position: relative;
 }
 
+@media screen and (min-width: 1025px) {
+    .logs__cell--client {
+        width: 13rem;
+    }
+}
+
 .logs__cell--header__container > .logs__cell--header__item {
     border-right: 0;
     font-size: 1rem;
@@ -228,6 +244,12 @@
     right: 0;
     bottom: 0.5rem;
     height: 1.6rem;
+}
+
+@media screen and (max-width: 1024px) {
+    .button-action__container {
+        display: none;
+    }
 }
 
 .button-action__container--detailed {
@@ -310,18 +332,40 @@
     border: 0;
     display: block;
     width: 100%;
-    text-align: left;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+    text-align: center;
+    font-weight: 700;
     color: inherit;
+    cursor: pointer;
+}
+
+.button-action--arrow-option:hover,
+.button-action--arrow-option:focus {
+    outline: none;
+}
+
+.button-action--arrow-option:focus-visible {
+    outline: 2px solid #295a9f;
 }
 
 .button-action--arrow-option:disabled {
     display: none;
 }
 
+.tooltip-custom__container .button-action--arrow-option {
+    padding-bottom: 0;
+    text-align: left;
+    font-weight: 400;
+}
+
 .tooltip-custom__container .button-action--arrow-option:not(:disabled):hover {
-    cursor: pointer;
     background: var(--gray-f3);
     overflow: hidden;
+}
+
+[data-theme="dark"] .tooltip-custom__container .button-action--arrow-option:not(:disabled):hover {
+    background: var(--ctrl-dropdown-bgcolor-focus);
 }
 
 .button-action--arrow-option-container {
@@ -353,7 +397,7 @@
 
 /* QUERY_STATUS_COLORS */
 .logs__row--blue {
-    background-color: var(--blue);
+    background-color: var(--logs__row--blue-bgcolor);
 }
 
 .logs__row--green {
@@ -365,7 +409,7 @@
 }
 
 .logs__row--white {
-    background-color: var(--white);
+    background-color: var(--logs__row--white-bgcolor);
 }
 
 .logs__row--yellow {
@@ -373,8 +417,8 @@
 }
 
 .logs__no-data {
-    color: var(--gray-4d);
-    background-color: var(--white80);
+    color: var(--mcolor);
+    background-color: var(--logs__table-bgcolor);
     pointer-events: none;
     font-weight: 600;
     text-align: center;
@@ -387,7 +431,7 @@
 }
 
 .logs__table {
-    background-color: var(--white);
+    background-color: var(--logs__table-bgcolor);
     border: 0;
     border-radius: 8px;
     min-height: 43rem;
@@ -454,6 +498,33 @@
 
 .filteringRules__filter {
     font-style: italic;
-    font-weight: normal;
+    font-weight: 400;
     margin-bottom: 1rem;
+}
+
+.bg--danger {
+    color: var(--danger);
+}
+
+.bg--green {
+    color: var(--green79);
+}
+
+[data-theme="dark"] .logs__question.icon--lightgray {
+    color: var(--gray-f3);
+}
+
+@media (max-width: 1024px) {
+    .logs__question {
+        display: none;
+    }
+}
+
+.logs__modal {
+    max-width: 720px;
+}
+
+.logs__modal-wrap {
+    padding: 1rem 1.5rem;
+    background-color: var(--card-bgcolor);
 }

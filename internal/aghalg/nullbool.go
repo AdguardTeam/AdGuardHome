@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+
+	"github.com/AdguardTeam/golibs/mathutil"
 )
 
 // NullBool is a nullable boolean.  Use these in JSON requests and responses
@@ -33,11 +35,15 @@ func (nb NullBool) String() (s string) {
 
 // BoolToNullBool converts a bool into a NullBool.
 func BoolToNullBool(cond bool) (nb NullBool) {
-	if cond {
-		return NBTrue
-	}
+	return NBFalse - mathutil.BoolToNumber[NullBool](cond)
+}
 
-	return NBFalse
+// type check
+var _ json.Marshaler = NBNull
+
+// MarshalJSON implements the json.Marshaler interface for NullBool.
+func (nb NullBool) MarshalJSON() (b []byte, err error) {
+	return []byte(nb.String()), nil
 }
 
 // type check

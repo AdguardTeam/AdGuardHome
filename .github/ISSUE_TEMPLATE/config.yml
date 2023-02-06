@@ -1,0 +1,22 @@
+'blank_issues_enabled': false
+'contact_links':
+  - 'about': >
+        Please report filtering issues, for example advertising filters
+        misfiring or safe browsing false positives, using the form on our
+        website
+    'name': 'AdGuard filters issues'
+    'url': 'https://link.adtidy.org/forward.html?action=report&app=home&from=github'
+  - 'about': >
+        Please send requests for new blocked services and vetted filtering lists
+        to the Hostlists Registry repository
+    'name': 'Blocked services and vetted filtering rule lists: AdGuard Hostlists Registry'
+    'url': 'https://github.com/AdguardTeam/HostlistsRegistry'
+  - 'about': >
+        Please use GitHub Discussions for questions
+    'name': 'Q&A Discussions'
+    'url': 'https://github.com/AdguardTeam/AdGuardHome/discussions'
+  - 'about': >
+        Please check our Wiki for configuration file description, frequently
+        asked questions, and other documentation
+    'name': 'Wiki'
+    'url': 'https://github.com/AdguardTeam/AdGuardHome/wiki'

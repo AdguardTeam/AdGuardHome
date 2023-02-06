@@ -7,21 +7,17 @@
 # Experienced readers may find it overly verbose.
 
 # The default verbosity level is 0.  Show log messages if the caller requested
-# verbosity level greater than 0.  Show every command that is run if the
-# verbosity level is greater than 1.  Show the environment if the verbosity
-# level is greater than 2.  Otherwise, print nothing.
+# verbosity level greater than 0.  Show the environment and every command that
+# is run if the verbosity level is greater than 1.  Otherwise, print nothing.
 #
 # The level of verbosity for the build script is the same minus one level.  See
 # below in build().
 verbose="${VERBOSE:-0}"
 readonly verbose
 
-if [ "$verbose" -gt '2' ]
+if [ "$verbose" -gt '1' ]
 then
 	env
-	set -x
-elif [ "$verbose" -gt '1' ]
-then
 	set -x
 fi
 
@@ -109,17 +105,17 @@ log "checking tools"
 
 # Make sure we fail gracefully if one of the tools we need is missing.  Use
 # alternatives when available.
-sha256sum_cmd='sha256sum'
-for tool in gpg gzip sed "$sha256sum_cmd" snapcraft tar zip
+use_shasum='0'
+for tool in gpg gzip sed sha256sum snapcraft tar zip
 do
 	if ! command -v "$tool" > /dev/null
 	then
-		if [ "$tool" = "$sha256sum_cmd" ] && command -v 'shasum' > /dev/null
+		if [ "$tool" = 'sha256sum' ] && command -v 'shasum' > /dev/null
 		then
-			# macOS doesn't have sha256sum installed by default, but
-			# it does have shasum.
+			# macOS doesn't have sha256sum installed by default, but it does
+			# have shasum.
 			log 'replacing sha256sum with shasum -a 256'
-			sha256sum_cmd='shasum -a 256'
+			use_shasum='1'
 		else
 			log "pieces don't fit, '$tool' not found"
 
@@ -127,7 +123,7 @@ do
 		fi
 	fi
 done
-readonly sha256sum_cmd
+readonly use_shasum
 
 # Data section.  Arrange data into space-separated tables for read -r to read.
 # Use a hyphen for missing values.
@@ -188,9 +184,6 @@ build() {
 	#
 	# Set GOARM and GOMIPS to an empty string if $build_arm and $build_mips are
 	# the zero value by removing the hyphen as if it's a prefix.
-	#
-	# Don't use quotes with $build_par because we want an empty space if
-	# parallelism wasn't set.
 	env\
 		GOARCH="$build_arch"\
 		GOARM="${build_arm#-}"\
@@ -327,20 +320,45 @@ done
 log "packing frontend"
 
 build_archive="./${dist}/AdGuardHome_frontend.tar.gz"
-tar -c -f - ./build ./build2 | gzip -9 - > "$build_archive"
+tar -c -f - ./build | gzip -9 - > "$build_archive"
 log "$build_archive"
 
 log "calculating checksums"
 
+# calculate_checksums uses the previously detected SHA-256 tool to calculate
+# checksums.  Do not use find with -exec, since shasum requires arguments.
+calculate_checksums() {
+	if [ "$use_shasum" -eq '0' ]
+	then
+		sha256sum "$@"
+	else
+		shasum -a 256 "$@"
+	fi
+}
+
 # Calculate the checksums of the files in a subshell with a different working
 # directory.  Don't use ls, because files matching one of the patterns may be
 # absent, which will make ls return with a non-zero status code.
+#
+# TODO(a.garipov): Consider calculating these as the build goes.
 (
+	set +f
+
 	cd "./${dist}"
 
-	find . ! -name . -prune \( -name '*.tar.gz' -o -name '*.zip' \)\
-		-exec "$sha256sum_cmd" {} +\
-		> ./checksums.txt
+	: > ./checksums.txt
+
+	for archive in ./*.zip ./*.tar.gz
+	do
+		# Make sure that we don't try to calculate a checksum for a glob pattern
+		# that matched no files.
+		if [ ! -f "$archive" ]
+		then
+			continue
+		fi
+
+		calculate_checksums "$archive" >> ./checksums.txt
+	done
 )
 
 log "writing versions"
@@ -349,7 +367,7 @@ echo "version=$version" > "./${dist}/version.txt"
 
 # Create the version.json file.
 
-version_download_url="https://static.adguard.com/adguardhome/${channel}"
+version_download_url="https://static.adtidy.org/adguardhome/${channel}"
 version_json="./${dist}/version.json"
 readonly version_download_url version_json
 

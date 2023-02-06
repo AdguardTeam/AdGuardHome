@@ -34,7 +34,7 @@ const DomainCell = ({
         'my-3': isDetailed,
     });
 
-    const privacyIconClass = classNames('icons mx-2 icon--24 d-none d-sm-block', {
+    const privacyIconClass = classNames('icons mx-2 icon--24 d-none d-sm-block logs__question', {
         'icon--green': hasTracker,
         'icon--disabled': !hasTracker,
         'my-3': isDetailed,
@@ -147,11 +147,11 @@ const DomainCell = ({
             />
             <div className={valueClass}>
                 {unicodeName ? (
-                    <div className="text-truncate" title={unicodeName}>
+                    <div className="text-truncate overflow-break-mobile" title={unicodeName}>
                         {unicodeName}
                     </div>
                 ) : (
-                    <div className="text-truncate" title={domain}>
+                    <div className="text-truncate overflow-break-mobile" title={domain}>
                         {domain}
                     </div>
                 )}

@@ -4,6 +4,7 @@ import langDetect from 'i18next-browser-languagedetector';
 
 import { LANGUAGES, BASE_LOCALE } from './helpers/twosky';
 
+import ar from './__locales/ar.json';
 import be from './__locales/be.json';
 import bg from './__locales/bg.json';
 import cs from './__locales/cs.json';
@@ -42,6 +43,7 @@ import zhTW from './__locales/zh-tw.json';
 import { setHtmlLangAttr } from './helpers/helpers';
 
 const resources = {
+    ar: { translation: ar },
     be: { translation: be },
     bg: { translation: bg },
     cs: { translation: cs },

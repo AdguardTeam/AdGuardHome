@@ -4,9 +4,15 @@
     align-items: center;
     margin-bottom: 15px;
     padding: 10px 15px;
-    border: 1px solid #eee;
+    border: 1px solid var(--card-border-color);
     border-radius: 4px;
     cursor: pointer;
+}
+
+.service__text {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 @media screen and (min-width: 768px) {
@@ -33,7 +39,7 @@
         margin-right: 30px;
         margin-left: 0;
     }
-    
+
     .service:nth-child(3n) {
         margin-right: 0;
         margin-left: auto;

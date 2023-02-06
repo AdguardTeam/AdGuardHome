@@ -13,6 +13,7 @@ const Modal = ({
     cidr,
     rangeStart,
     rangeEnd,
+    gatewayIp,
 }) => {
     const dispatch = useDispatch();
 
@@ -42,6 +43,7 @@ const Modal = ({
                         cidr,
                         rangeStart,
                         rangeEnd,
+                        gatewayIp,
                     }}
                     onSubmit={handleSubmit}
                     processingAdding={processingAdding}
@@ -61,6 +63,7 @@ Modal.propTypes = {
     cidr: PropTypes.string.isRequired,
     rangeStart: PropTypes.string,
     rangeEnd: PropTypes.string,
+    gatewayIp: PropTypes.string,
 };
 
 export default withTranslation()(Modal);

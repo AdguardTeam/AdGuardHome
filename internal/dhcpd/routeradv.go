@@ -65,39 +65,42 @@ func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
 }
 
 // Create an ICMPv6.RouterAdvertisement packet with all necessary options.
+// Data scheme:
 //
-// ICMPv6:
-// type[1]
-// code[1]
-// chksum[2]
-// body (RouterAdvertisement):
-//   Cur Hop Limit[1]
-//   Flags[1]: MO......
-//   Router Lifetime[2]
-//   Reachable Time[4]
-//   Retrans Timer[4]
-//   Option=Prefix Information(3):
-//     Type[1]
-//     Length * 8bytes[1]
-//     Prefix Length[1]
-//     Flags[1]: LA......
-//     Valid Lifetime[4]
-//     Preferred Lifetime[4]
-//     Reserved[4]
-//     Prefix[16]
-//   Option=MTU(5):
-//     Type[1]
-//     Length * 8bytes[1]
-//     Reserved[2]
-//     MTU[4]
-//   Option=Source link-layer address(1):
-//     Link-Layer Address[8/24]
-//   Option=Recursive DNS Server(25):
-//     Type[1]
-//     Length * 8bytes[1]
-//     Reserved[2]
-//     Lifetime[4]
-//     Addresses of IPv6 Recursive DNS Servers[16]
+//	ICMPv6:
+//	- type[1]
+//	- code[1]
+//	- chksum[2]
+//	- body (RouterAdvertisement):
+//	  - Cur Hop Limit[1]
+//	  - Flags[1]: MO......
+//	  - Router Lifetime[2]
+//	  - Reachable Time[4]
+//	  - Retrans Timer[4]
+//	  - Option=Prefix Information(3):
+//	    - Type[1]
+//	    - Length * 8bytes[1]
+//	    - Prefix Length[1]
+//	    - Flags[1]: LA......
+//	    - Valid Lifetime[4]
+//	    - Preferred Lifetime[4]
+//	    - Reserved[4]
+//	    - Prefix[16]
+//	  - Option=MTU(5):
+//	    - Type[1]
+//	    - Length * 8bytes[1]
+//	    - Reserved[2]
+//	    - MTU[4]
+//	  - Option=Source link-layer address(1):
+//	    - Link-Layer Address[8/24]
+//	  - Option=Recursive DNS Server(25):
+//	    - Type[1]
+//	    - Length * 8bytes[1]
+//	    - Reserved[2]
+//	    - Lifetime[4]
+//	    - Addresses of IPv6 Recursive DNS Servers[16]
+//
+// TODO(a.garipov): Replace with an existing implementation from a dependency.
 func createICMPv6RAPacket(params icmpv6RA) (data []byte, err error) {
 	var lla []byte
 	lla, err = hwAddrToLinkLayerAddr(params.sourceLinkLayerAddress)

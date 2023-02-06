@@ -1,5 +1,4 @@
-//go:build aix || darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris
-// +build aix darwin dragonfly freebsd linux netbsd openbsd solaris
+//go:build darwin || freebsd || linux || openbsd
 
 package dhcpd
 
@@ -16,6 +15,8 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 	"github.com/mdlayher/ethernet"
+
+	//lint:ignore SA1019 See the TODO in go.mod.
 	"github.com/mdlayher/raw"
 )
 
@@ -49,16 +50,15 @@ type dhcpConn struct {
 }
 
 // newDHCPConn creates the special connection for DHCP server.
-func (s *v4Server) newDHCPConn(ifi *net.Interface) (c net.PacketConn, err error) {
-	// Create the raw connection.
+func (s *v4Server) newDHCPConn(iface *net.Interface) (c net.PacketConn, err error) {
 	var ucast net.PacketConn
-	if ucast, err = raw.ListenPacket(ifi, uint16(ethernet.EtherTypeIPv4), nil); err != nil {
+	if ucast, err = raw.ListenPacket(iface, uint16(ethernet.EtherTypeIPv4), nil); err != nil {
 		return nil, fmt.Errorf("creating raw udp connection: %w", err)
 	}
 
 	// Create the UDP connection.
 	var bcast net.PacketConn
-	bcast, err = server4.NewIPv4UDPConn(ifi.Name, &net.UDPAddr{
+	bcast, err = server4.NewIPv4UDPConn(iface.Name, &net.UDPAddr{
 		// TODO(e.burkov):  Listening on zeroes makes the server handle
 		// requests from all the interfaces.  Inspect the ways to
 		// specify the interface-specific listening addresses.
@@ -73,16 +73,16 @@ func (s *v4Server) newDHCPConn(ifi *net.Interface) (c net.PacketConn, err error)
 
 	return &dhcpConn{
 		udpConn: bcast,
-		bcastIP: s.conf.broadcastIP,
+		bcastIP: s.conf.broadcastIP.AsSlice(),
 		rawConn: ucast,
-		srcMAC:  ifi.HardwareAddr,
-		srcIP:   s.conf.dnsIPAddrs[0],
+		srcMAC:  iface.HardwareAddr,
+		srcIP:   s.conf.dnsIPAddrs[0].AsSlice(),
 	}, nil
 }
 
 // wrapErrs is a helper to wrap the errors from two independent underlying
 // connections.
-func (c *dhcpConn) wrapErrs(action string, udpConnErr, rawConnErr error) (err error) {
+func (*dhcpConn) wrapErrs(action string, udpConnErr, rawConnErr error) (err error) {
 	switch {
 	case udpConnErr != nil && rawConnErr != nil:
 		return errors.List(fmt.Sprintf("%s both connections", action), udpConnErr, rawConnErr)
@@ -128,7 +128,7 @@ func (c *dhcpConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 		// connection.
 		return c.udpConn.WriteTo(p, addr)
 	default:
-		return 0, fmt.Errorf("peer is of unexpected type %T", addr)
+		return 0, fmt.Errorf("addr has an unexpected type %T", addr)
 	}
 }
 
@@ -187,32 +187,20 @@ func (c *dhcpConn) SetWriteDeadline(t time.Time) error {
 	)
 }
 
-// ipv4DefaultTTL is the default Time to Live value as recommended by
-// RFC-1700 (https://datatracker.ietf.org/doc/html/rfc1700) in seconds.
+// ipv4DefaultTTL is the default Time to Live value in seconds as recommended by
+// RFC-1700.
+//
+// See https://datatracker.ietf.org/doc/html/rfc1700.
 const ipv4DefaultTTL = 64
 
-// errInvalidPktDHCP is returned when the provided payload is not a valid DHCP
-// packet.
-const errInvalidPktDHCP errors.Error = "packet is not a valid dhcp packet"
-
-// buildEtherPkt wraps the payload with IPv4, UDP and Ethernet frames.  The
-// payload is expected to be an encoded DHCP packet.
+// buildEtherPkt wraps the payload with IPv4, UDP and Ethernet frames.
+// Validation of the payload is a caller's responsibility.
 func (c *dhcpConn) buildEtherPkt(payload []byte, peer *dhcpUnicastAddr) (pkt []byte, err error) {
-	dhcpLayer := gopacket.NewPacket(payload, layers.LayerTypeDHCPv4, gopacket.DecodeOptions{
-		NoCopy: true,
-	}).Layer(layers.LayerTypeDHCPv4)
-
-	// Check if the decoding succeeded and the resulting layer doesn't
-	// contain any errors.  It should guarantee panic-safe converting of the
-	// layer into gopacket.SerializableLayer.
-	if dhcpLayer == nil || dhcpLayer.LayerType() != layers.LayerTypeDHCPv4 {
-		return nil, errInvalidPktDHCP
-	}
-
 	udpLayer := &layers.UDP{
 		SrcPort: dhcpv4.ServerPort,
 		DstPort: dhcpv4.ClientPort,
 	}
+
 	ipv4Layer := &layers.IPv4{
 		Version:  uint8(layers.IPProtocolIPv4),
 		Flags:    layers.IPv4DontFragment,
@@ -225,6 +213,7 @@ func (c *dhcpConn) buildEtherPkt(payload []byte, peer *dhcpUnicastAddr) (pkt []b
 	// Ignore the error since it's only returned for invalid network layer's
 	// type.
 	_ = udpLayer.SetNetworkLayerForChecksum(ipv4Layer)
+
 	ethLayer := &layers.Ethernet{
 		SrcMAC:       c.srcMAC,
 		DstMAC:       peer.HardwareAddr,
@@ -232,10 +221,19 @@ func (c *dhcpConn) buildEtherPkt(payload []byte, peer *dhcpUnicastAddr) (pkt []b
 	}
 
 	buf := gopacket.NewSerializeBuffer()
-	err = gopacket.SerializeLayers(buf, gopacket.SerializeOptions{
+	setts := gopacket.SerializeOptions{
 		FixLengths:       true,
 		ComputeChecksums: true,
-	}, ethLayer, ipv4Layer, udpLayer, dhcpLayer.(gopacket.SerializableLayer))
+	}
+
+	err = gopacket.SerializeLayers(
+		buf,
+		setts,
+		ethLayer,
+		ipv4Layer,
+		udpLayer,
+		gopacket.Payload(payload),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("serializing layers: %w", err)
 	}

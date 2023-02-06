@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
@@ -160,7 +161,7 @@ func assertEqualExcept(t *testing.T, oldConf, newConf yobj, oldKeys, newKeys []s
 }
 
 func testDiskConf(schemaVersion int) (diskConf yobj) {
-	filters := []filter{{
+	filters := []filtering.FilterYAML{{
 		URL:        "https://filters.adtidy.org/android/filters/111_optimized.txt",
 		Name:       "Latvian filter",
 		RulesCount: 100,
@@ -190,7 +191,7 @@ func testDiskConf(schemaVersion int) (diskConf yobj) {
 	return diskConf
 }
 
-// testDNSConf creates a DNS config for test the way gopkg.in/yaml.v2 would
+// testDNSConf creates a DNS config for test the way gopkg.in/yaml.v3 would
 // unmarshal it.  In YAML, keys aren't guaranteed to always only be strings.
 func testDNSConf(schemaVersion int) (dnsConf yobj) {
 	dnsConf = yobj{
@@ -500,7 +501,7 @@ func TestUpgradeSchema11to12(t *testing.T) {
 		dnsVal, ok = dns.(yobj)
 		require.True(t, ok)
 
-		var ivl interface{}
+		var ivl any
 		ivl, ok = dnsVal["querylog_interval"]
 		require.True(t, ok)
 

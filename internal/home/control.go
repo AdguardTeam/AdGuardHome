@@ -1,13 +1,13 @@
 package home
 
 import (
-	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -20,11 +20,11 @@ import (
 
 // appendDNSAddrs is a convenient helper for appending a formatted form of DNS
 // addresses to a slice of strings.
-func appendDNSAddrs(dst []string, addrs ...net.IP) (res []string) {
+func appendDNSAddrs(dst []string, addrs ...netip.Addr) (res []string) {
 	for _, addr := range addrs {
 		var hostport string
 		if config.DNS.Port != defaultPortDNS {
-			hostport = netutil.JoinHostPort(addr.String(), config.DNS.Port)
+			hostport = netip.AddrPortFrom(addr, uint16(config.DNS.Port)).String()
 		} else {
 			hostport = addr.String()
 		}
@@ -38,7 +38,7 @@ func appendDNSAddrs(dst []string, addrs ...net.IP) (res []string) {
 // appendDNSAddrsWithIfaces formats and appends all DNS addresses from src to
 // dst.  It also adds the IP addresses of all network interfaces if src contains
 // an unspecified IP address.
-func appendDNSAddrsWithIfaces(dst []string, src []net.IP) (res []string, err error) {
+func appendDNSAddrsWithIfaces(dst []string, src []netip.Addr) (res []string, err error) {
 	ifacesAdded := false
 	for _, h := range src {
 		if !h.IsUnspecified() {
@@ -71,7 +71,7 @@ func appendDNSAddrsWithIfaces(dst []string, src []net.IP) (res []string, err err
 // on, including the addresses on all interfaces in cases of unspecified IPs.
 func collectDNSAddresses() (addrs []string, err error) {
 	if hosts := config.DNS.BindHosts; len(hosts) == 0 {
-		addrs = appendDNSAddrs(addrs, net.IP{127, 0, 0, 1})
+		addrs = appendDNSAddrs(addrs, netutil.IPv4Localhost())
 	} else {
 		addrs, err = appendDNSAddrsWithIfaces(addrs, hosts)
 		if err != nil {
@@ -97,16 +97,16 @@ func collectDNSAddresses() (addrs []string, err error) {
 
 // statusResponse is a response for /control/status endpoint.
 type statusResponse struct {
+	Version             string   `json:"version"`
+	Language            string   `json:"language"`
 	DNSAddrs            []string `json:"dns_addresses"`
 	DNSPort             int      `json:"dns_port"`
 	HTTPPort            int      `json:"http_port"`
 	IsProtectionEnabled bool     `json:"protection_enabled"`
 	// TODO(e.burkov): Inspect if front-end doesn't requires this field as
 	// openapi.yaml declares.
-	IsDHCPAvailable bool   `json:"dhcp_available"`
-	IsRunning       bool   `json:"running"`
-	Version         string `json:"version"`
-	Language        string `json:"language"`
+	IsDHCPAvailable bool `json:"dhcp_available"`
+	IsRunning       bool `json:"running"`
 }
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
@@ -125,12 +125,12 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		defer config.RUnlock()
 
 		resp = statusResponse{
+			Version:   version.Version(),
 			DNSAddrs:  dnsAddrs,
 			DNSPort:   config.DNS.Port,
 			HTTPPort:  config.BindPort,
-			IsRunning: isRunning(),
-			Version:   version.Version(),
 			Language:  config.Language,
+			IsRunning: isRunning(),
 		}
 	}()
 
@@ -146,30 +146,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		resp.IsDHCPAvailable = Context.dhcpServer != nil
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(resp)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Unable to write response json: %s", err)
-
-		return
-	}
-}
-
-type profileJSON struct {
-	Name string `json:"name"`
-}
-
-func handleGetProfile(w http.ResponseWriter, r *http.Request) {
-	pj := profileJSON{}
-	u := Context.auth.getCurrentUser(r)
-	pj.Name = u.Name
-
-	data, err := json.Marshal(pj)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "json.Marshal: %s", err)
-		return
-	}
-	_, _ = w.Write(data)
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 // ------------------------
@@ -182,6 +159,7 @@ func registerControlHandlers() {
 	Context.mux.HandleFunc("/control/version.json", postInstall(optionalAuth(handleGetVersionJSON)))
 	httpRegister(http.MethodPost, "/control/update", handleUpdate)
 	httpRegister(http.MethodGet, "/control/profile", handleGetProfile)
+	httpRegister(http.MethodPut, "/control/profile/update", handlePutProfile)
 
 	// No auth is necessary for DoH/DoT configurations
 	Context.mux.HandleFunc("/apple/doh.mobileconfig", postInstall(handleMobileConfigDoH))
@@ -189,7 +167,7 @@ func registerControlHandlers() {
 	RegisterAuthHandlers()
 }
 
-func httpRegister(method, url string, handler func(http.ResponseWriter, *http.Request)) {
+func httpRegister(method, url string, handler http.HandlerFunc) {
 	if method == "" {
 		// "/dns-query" handler doesn't need auth, gzip and isn't restricted by 1 HTTP method
 		Context.mux.HandleFunc(url, postInstall(handler))
@@ -199,25 +177,71 @@ func httpRegister(method, url string, handler func(http.ResponseWriter, *http.Re
 	Context.mux.Handle(url, postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(ensureHandler(method, handler)))))
 }
 
-// ----------------------------------
-// helper functions for HTTP handlers
-// ----------------------------------
-func ensure(method string, handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+// ensure returns a wrapped handler that makes sure that the request has the
+// correct method as well as additional method and header checks.
+func ensure(
+	method string,
+	handler func(http.ResponseWriter, *http.Request),
+) (wrapped func(http.ResponseWriter, *http.Request)) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Debug("%s %v", r.Method, r.URL)
+		start := time.Now()
+		m, u := r.Method, r.URL
+		log.Debug("started %s %s %s", m, r.Host, u)
+		defer func() { log.Debug("finished %s %s %s in %s", m, r.Host, u, time.Since(start)) }()
 
-		if r.Method != method {
-			http.Error(w, "This request must be "+method, http.StatusMethodNotAllowed)
+		if m != method {
+			aghhttp.Error(r, w, http.StatusMethodNotAllowed, "only method %s is allowed", method)
+
 			return
 		}
 
-		if method == http.MethodPost || method == http.MethodPut || method == http.MethodDelete {
+		if modifiesData(m) {
+			if !ensureContentType(w, r) {
+				return
+			}
+
 			Context.controlLock.Lock()
 			defer Context.controlLock.Unlock()
 		}
 
 		handler(w, r)
 	}
+}
+
+// modifiesData returns true if m is an HTTP method that can modify data.
+func modifiesData(m string) (ok bool) {
+	return m == http.MethodPost || m == http.MethodPut || m == http.MethodDelete
+}
+
+// ensureContentType makes sure that the content type of a data-modifying
+// request is set correctly.  If it is not, ensureContentType writes a response
+// to w, and ok is false.
+func ensureContentType(w http.ResponseWriter, r *http.Request) (ok bool) {
+	const statusUnsup = http.StatusUnsupportedMediaType
+
+	cType := r.Header.Get(aghhttp.HdrNameContentType)
+	if r.ContentLength == 0 {
+		if cType == "" {
+			return true
+		}
+
+		// Assume that browsers always send a content type when submitting HTML
+		// forms and require no content type for requests with no body to make
+		// sure that the request comes from JavaScript.
+		aghhttp.Error(r, w, statusUnsup, "empty body with content-type %q not allowed", cType)
+
+		return false
+
+	}
+
+	const wantCType = aghhttp.HdrValApplicationJSON
+	if cType == wantCType {
+		return true
+	}
+
+	aghhttp.Error(r, w, statusUnsup, "only content-type %s is allowed", wantCType)
+
+	return false
 }
 
 func ensurePOST(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
@@ -284,6 +308,28 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		return false
 	}
 
+	var serveHTTP3 bool
+	var portHTTPS int
+	func() {
+		config.RLock()
+		defer config.RUnlock()
+
+		serveHTTP3, portHTTPS = config.DNS.ServeHTTP3, config.TLS.PortHTTPS
+	}()
+
+	respHdr := w.Header()
+
+	// Let the browser know that server supports HTTP/3.
+	//
+	// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Alt-Svc.
+	//
+	// TODO(a.garipov): Consider adding a configurable max-age.  Currently, the
+	// default is 24 hours.
+	if serveHTTP3 {
+		altSvc := fmt.Sprintf(`h3=":%d"`, portHTTPS)
+		respHdr.Set(aghhttp.HdrNameAltSvc, altSvc)
+	}
+
 	if r.TLS == nil && web.forceHTTPS {
 		hostPort := host
 		if port := web.conf.PortHTTPS; port != defaultPortHTTPS {
@@ -291,7 +337,7 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		}
 
 		httpsURL := &url.URL{
-			Scheme:   schemeHTTPS,
+			Scheme:   aghhttp.SchemeHTTPS,
 			Host:     hostPort,
 			Path:     r.URL.Path,
 			RawQuery: r.URL.RawQuery,
@@ -307,11 +353,12 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 	//
 	// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin.
 	originURL := &url.URL{
-		Scheme: schemeHTTP,
+		Scheme: aghhttp.SchemeHTTP,
 		Host:   r.Host,
 	}
-	w.Header().Set("Access-Control-Allow-Origin", originURL.String())
-	w.Header().Set("Vary", "Origin")
+
+	respHdr.Set(aghhttp.HdrNameAccessControlAllowOrigin, originURL.String())
+	respHdr.Set(aghhttp.HdrNameVary, aghhttp.HdrNameOrigin)
 
 	return true
 }

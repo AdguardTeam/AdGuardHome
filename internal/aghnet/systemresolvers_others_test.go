@@ -1,5 +1,4 @@
 //go:build !windows
-// +build !windows
 
 package aghnet
 
@@ -7,6 +6,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,9 +18,8 @@ func createTestSystemResolversImpl(
 	t.Helper()
 
 	sr := createTestSystemResolvers(t, hostGenFunc)
-	require.IsType(t, (*systemResolvers)(nil), sr)
 
-	return sr.(*systemResolvers)
+	return testutil.RequireTypeAssert[*systemResolvers](t, sr)
 }
 
 func TestSystemResolvers_Refresh(t *testing.T) {

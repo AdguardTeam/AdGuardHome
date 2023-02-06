@@ -4,7 +4,8 @@
     box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
     border-radius: 4px !important;
     pointer-events: auto !important;
-    background-color: var(--white);
+    background-color: var(--ctrl-bgcolor);
+    color: var(--mcolor);
     z-index: 102;
     overflow-y: auto;
     max-height: 100%;
@@ -17,6 +18,13 @@
 .overflow-break {
     white-space: normal !important;
     overflow-wrap: break-word;
+}
+
+@media (max-width: 991.98px) {
+    .overflow-break-mobile {
+        white-space: normal !important;
+        overflow-wrap: break-word;
+    }
 }
 
 .grid {
@@ -42,6 +50,33 @@
     padding-top: 1rem;
 }
 
+@media (max-width: 1024px) {
+    .grid .title--border {
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+
+    .grid .key-colon {
+        margin-right: 4px;
+        color: var(--gray-8);
+    }
+
+    .grid__row {
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        margin-bottom: 2px;
+        font-size: 14px;
+        word-break: break-all;
+        overflow: hidden;
+    }
+
+    .grid__row .filteringRules__filter,
+    .grid__row .filteringRules {
+        margin-bottom: 0;
+    }
+}
+
 @media (max-width: 767.98px) {
     .grid {
         grid-template-columns: 35% 55%;
@@ -62,10 +97,6 @@
     .grid > .value__time_table_header, .grid > .value__data, .grid > .value__encryption_status, .grid > .value__elapsed {
         grid-column: 2 / span 1;
         margin: 0 !important;
-    }
-
-    .grid .key-colon, .grid .title--border {
-        font-weight: 600;
     }
 }
 
@@ -91,7 +122,7 @@
 }
 
 .title--border {
-    padding-top: 2rem;
+    padding-top: 1rem;
 }
 
 .title--border:before {
@@ -100,7 +131,7 @@
     left: 0;
     border-top: 0.5px solid var(--gray-d8) !important;
     width: 100%;
-    margin-top: -1rem;
+    margin-top: -0.5rem;
 }
 
 .icon-cross {
