@@ -570,14 +570,21 @@ func startMods() (err error) {
 func checkPermissions() {
 	log.Info("Checking if AdGuard Home has necessary permissions")
 
-	if ok, err := aghnet.CanBindPrivilegedPorts(); !ok || err != nil {
-		log.Fatal("This is the first launch of AdGuard Home. You must run it as Administrator.")
+	err := aghnet.AcquirePermissions()
+	if err != nil {
+		log.Debug("acquiring necessary permissions: %s", err)
+
+		var ok bool
+		if ok, err = aghnet.CanBindPrivilegedPorts(); !ok || err != nil {
+			log.Fatal("This is the first launch of AdGuard Home. You must run it as Administrator.")
+		}
 	}
 
 	// We should check if AdGuard Home is able to bind to port 53
-	err := aghnet.CheckPort("tcp", netip.AddrPortFrom(netutil.IPv4Localhost(), defaultPortDNS))
+	err = aghnet.CheckPort("tcp", netip.AddrPortFrom(netutil.IPv4Localhost(), defaultPortDNS))
 	if err != nil {
 		if errors.Is(err, os.ErrPermission) {
+			log.Debug("checking permissions via binding: %v", err)
 			log.Fatal(`Permission check failed.
 
 AdGuard Home is not allowed to bind to privileged ports (for instance, port 53).

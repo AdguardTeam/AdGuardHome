@@ -80,6 +80,11 @@ func CanBindPrivilegedPorts() (can bool, err error) {
 	return canBindPrivilegedPorts()
 }
 
+// AcquirePermissions tries to acquire permissions to bind to privileged ports.
+func AcquirePermissions() (err error) {
+	return acquirePermissions()
+}
+
 // NetInterface represents an entry of network interfaces map.
 type NetInterface struct {
 	// Addresses are the network interface addresses.

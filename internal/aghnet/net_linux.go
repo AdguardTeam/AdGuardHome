@@ -23,9 +23,9 @@ const dhcpcdConf = "etc/dhcpcd.conf"
 
 func canBindPrivilegedPorts() (can bool, err error) {
 	res, err := unix.PrctlRetInt(
-		unix.PR_CAP_AMBIENT,
-		unix.PR_CAP_AMBIENT_RAISE,
+		unix.PR_CAPBSET_READ,
 		unix.CAP_NET_BIND_SERVICE,
+		0,
 		0,
 		0,
 	)
@@ -33,7 +33,7 @@ func canBindPrivilegedPorts() (can bool, err error) {
 		if errors.Is(err, unix.EINVAL) {
 			// Older versions of Linux kernel do not support this.  Print a
 			// warning and check admin rights.
-			log.Info("warning: cannot check capability cap_net_bind_service: %s", err)
+			log.Info("warning: cannot check cap_net_bind_service: %s", err)
 		} else {
 			return false, err
 		}
@@ -43,6 +43,21 @@ func canBindPrivilegedPorts() (can bool, err error) {
 	adm, _ := aghos.HaveAdminRights()
 
 	return res == 1 || adm, nil
+}
+
+func acquirePermissions() (err error) {
+	_, err = unix.PrctlRetInt(
+		unix.PR_CAP_AMBIENT,
+		unix.PR_CAP_AMBIENT_RAISE,
+		unix.CAP_NET_BIND_SERVICE,
+		0,
+		0,
+	)
+	if err != nil {
+		return fmt.Errorf("raising cap_net_bind_service: %w", err)
+	}
+
+	return nil
 }
 
 // dhcpcdStaticConfig checks if interface is configured by /etc/dhcpcd.conf to

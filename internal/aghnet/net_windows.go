@@ -43,3 +43,7 @@ func closePortChecker(c io.Closer) (err error) {
 func isAddrInUse(err syscall.Errno) (ok bool) {
 	return errors.Is(err, windows.WSAEADDRINUSE)
 }
+
+func acquirePermissions() (err error) {
+	return nil
+}

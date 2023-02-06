@@ -7,3 +7,7 @@ import "github.com/AdguardTeam/AdGuardHome/internal/aghos"
 func canBindPrivilegedPorts() (can bool, err error) {
 	return aghos.HaveAdminRights()
 }
+
+func acquirePermissions() (err error) {
+	return nil
+}
