@@ -81,10 +81,22 @@ code.
 
    ###  <a href="#automated-install-linux-and-mac" id="automated-install-linux-and-mac" name="automated-install-linux-and-mac">Automated install (Unix)</a>
 
-Run the following command in your terminal:
+To install with `curl` run the following command:
 
 ```sh
 curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s -- -v
+```
+
+To install with `wget` run the following command:
+
+```sh
+wget --no-verbose -O - https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s -- -v
+```
+
+To install with `fetch` run the following command:
+
+```sh
+fetch -o - https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s -- -v
 ```
 
 The script also accepts some options:

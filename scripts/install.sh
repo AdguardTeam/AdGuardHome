@@ -338,6 +338,18 @@ download_wget() {
 	wget --no-verbose -O "$wget_output" "$1"
 }
 
+# download_fetch uses fetch(1) to download a file.  The first argument is the
+# URL.  The second argument is optional and is the output file.
+download_fetch() {
+	fetch_output="${2:-}"
+	if [ "$fetch_output" = '' ]
+	then
+		fetch -o '-' "$1"
+	else
+		fetch -o "$fetch_output" "$1"
+	fi
+}
+
 # Function set_download_func sets the appropriate function for downloading
 # files.
 set_download_func() {
@@ -348,6 +360,9 @@ set_download_func() {
 	elif is_command 'wget'
 	then
 		download_func='download_wget'
+	elif is_command 'fetch'
+	then
+		download_func='download_fetch'
 	else
 		error_exit "either curl or wget is required to install AdGuard Home via this script"
 	fi
