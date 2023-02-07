@@ -6,6 +6,7 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
@@ -112,8 +113,9 @@ type configuration struct {
 	// An active session is automatically refreshed once a day.
 	WebSessionTTLHours uint32 `yaml:"web_session_ttl"`
 
-	DNS dnsConfig         `yaml:"dns"`
-	TLS tlsConfigSettings `yaml:"tls"`
+	DNS      dnsConfig         `yaml:"dns"`
+	TLS      tlsConfigSettings `yaml:"tls"`
+	QueryLog queryLogConfig    `yaml:"querylog"`
 
 	// Filters reflects the filters from [filtering.Config].  It's cloned to the
 	// config used in the filtering module at the startup.  Afterwards it's
@@ -150,16 +152,6 @@ type dnsConfig struct {
 	// StatsInterval is the time interval for flushing statistics to the disk in
 	// days.
 	StatsInterval uint32 `yaml:"statistics_interval"`
-
-	// QueryLogEnabled defines if the query log is enabled.
-	QueryLogEnabled bool `yaml:"querylog_enabled"`
-	// QueryLogFileEnabled defines, if the query log is written to the file.
-	QueryLogFileEnabled bool `yaml:"querylog_file_enabled"`
-	// QueryLogInterval is the interval for query log's files rotation.
-	QueryLogInterval timeutil.Duration `yaml:"querylog_interval"`
-	// QueryLogMemSize is the number of entries kept in memory before they are
-	// flushed to disk.
-	QueryLogMemSize uint32 `yaml:"querylog_size_memory"`
 
 	// AnonymizeClientIP defines if clients' IP addresses should be anonymized
 	// in query log and statistics.
@@ -228,6 +220,25 @@ type tlsConfigSettings struct {
 	dnsforward.TLSConfig `yaml:",inline" json:",inline"`
 }
 
+type queryLogConfig struct {
+	// Enabled defines if the query log is enabled.
+	Enabled bool `yaml:"enabled"`
+
+	// FileEnabled defines, if the query log is written to the file.
+	FileEnabled bool `yaml:"file_enabled"`
+
+	// Interval is the interval for query log's files rotation.
+	Interval timeutil.Duration `yaml:"interval"`
+
+	// MemSize is the number of entries kept in memory before they are
+	// flushed to disk.
+	MemSize uint32 `yaml:"size_memory"`
+
+	// Ignored is the list of host names, which are should not be written
+	// to log.
+	Ignored []string `yaml:"ignored"`
+}
+
 // config is the global configuration structure.
 //
 // TODO(a.garipov, e.burkov): This global is awful and must be removed.
@@ -238,13 +249,9 @@ var config = &configuration{
 	AuthBlockMin:       15,
 	WebSessionTTLHours: 30 * 24,
 	DNS: dnsConfig{
-		BindHosts:           []netip.Addr{netip.IPv4Unspecified()},
-		Port:                defaultPortDNS,
-		StatsInterval:       1,
-		QueryLogEnabled:     true,
-		QueryLogFileEnabled: true,
-		QueryLogInterval:    timeutil.Duration{Duration: 90 * timeutil.Day},
-		QueryLogMemSize:     1000,
+		BindHosts:     []netip.Addr{netip.IPv4Unspecified()},
+		Port:          defaultPortDNS,
+		StatsInterval: 1,
 		FilteringConfig: dnsforward.FilteringConfig{
 			ProtectionEnabled:  true, // whether or not use any of filtering features
 			BlockingMode:       dnsforward.BlockingModeDefault,
@@ -281,6 +288,13 @@ var config = &configuration{
 		PortHTTPS:       defaultPortHTTPS,
 		PortDNSOverTLS:  defaultPortTLS, // needs to be passed through to dnsproxy
 		PortDNSOverQUIC: defaultPortQUIC,
+	},
+	QueryLog: queryLogConfig{
+		Enabled:     true,
+		FileEnabled: true,
+		Interval:    timeutil.Duration{Duration: 90 * timeutil.Day},
+		MemSize:     1000,
+		Ignored:     []string{},
 	},
 	// NOTE: Keep these parameters in sync with the one put into
 	// client/src/helpers/filters/filters.js by scripts/vetted-filters.
@@ -466,11 +480,13 @@ func (c *configuration) write() (err error) {
 	if Context.queryLog != nil {
 		dc := querylog.Config{}
 		Context.queryLog.WriteDiskConfig(&dc)
-		config.DNS.QueryLogEnabled = dc.Enabled
-		config.DNS.QueryLogFileEnabled = dc.FileEnabled
-		config.DNS.QueryLogInterval = timeutil.Duration{Duration: dc.RotationIvl}
-		config.DNS.QueryLogMemSize = dc.MemSize
 		config.DNS.AnonymizeClientIP = dc.AnonymizeClientIP
+		config.QueryLog.Enabled = dc.Enabled
+		config.QueryLog.FileEnabled = dc.FileEnabled
+		config.QueryLog.Interval = timeutil.Duration{Duration: dc.RotationIvl}
+		config.QueryLog.MemSize = dc.MemSize
+		config.QueryLog.Ignored = dc.Ignored.Values()
+		sort.Strings(config.QueryLog.Ignored)
 	}
 
 	if Context.filters != nil {

@@ -247,3 +247,13 @@ func (l *queryLog) Add(params *AddParams) {
 		}()
 	}
 }
+
+// ShouldLog returns true if request for the host should be logged.
+func (l *queryLog) ShouldLog(host string, _, _ uint16) bool {
+	return !l.isIgnored(host)
+}
+
+// isIgnored returns true if the host is in the Ignored list.
+func (l *queryLog) isIgnored(host string) bool {
+	return l.conf.Ignored.Has(host)
+}

@@ -16,18 +16,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// testQueryLog is a simple querylog.QueryLog implementation for tests.
+// testQueryLog is a simple [querylog.QueryLog] implementation for tests.
 type testQueryLog struct {
 	// QueryLog is embedded here simply to make testQueryLog
-	// a querylog.QueryLog without actually implementing all methods.
+	// a [querylog.QueryLog] without actually implementing all methods.
 	querylog.QueryLog
 
 	lastParams *querylog.AddParams
 }
 
-// Add implements the querylog.QueryLog interface for *testQueryLog.
+// Add implements the [querylog.QueryLog] interface for *testQueryLog.
 func (l *testQueryLog) Add(p *querylog.AddParams) {
 	l.lastParams = p
+}
+
+// ShouldLog implements the [querylog.QueryLog] interface for *testQueryLog.
+func (l *testQueryLog) ShouldLog(string, uint16, uint16) bool {
+	return true
 }
 
 // testStats is a simple stats.Stats implementation for tests.

@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -20,6 +21,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/ameshkov/dnscrypt/v2"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -66,11 +68,20 @@ func initDNS() (err error) {
 		HTTPRegister:      httpRegister,
 		FindClient:        Context.clients.findMultiple,
 		BaseDir:           baseDir,
-		RotationIvl:       config.DNS.QueryLogInterval.Duration,
-		MemSize:           config.DNS.QueryLogMemSize,
-		Enabled:           config.DNS.QueryLogEnabled,
-		FileEnabled:       config.DNS.QueryLogFileEnabled,
 		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
+		RotationIvl:       config.QueryLog.Interval.Duration,
+		MemSize:           config.QueryLog.MemSize,
+		Enabled:           config.QueryLog.Enabled,
+		FileEnabled:       config.QueryLog.FileEnabled,
+		Ignored:           stringutil.NewSet(),
+	}
+	for _, v := range config.QueryLog.Ignored {
+		host := strings.ToLower(strings.TrimSuffix(v, "."))
+		if conf.Ignored.Has(host) {
+			return fmt.Errorf("duplicate ignored host %s", host)
+		}
+
+		conf.Ignored.Add(host)
 	}
 	Context.queryLog = querylog.New(conf)
 

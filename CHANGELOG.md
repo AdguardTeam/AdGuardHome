@@ -23,10 +23,43 @@ See also the [v0.107.24 GitHub milestone][ms-v0.107.24].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- The ability to exclude domain names from the query log by using the new
+  `querylog.ignored` field ([#1717], [#4299].
+
+#### Configuration Changes
+
+In this release, the schema version has changed from 14 to 15.
+
+- The fields `dns.…` have been moved to the new `querylog` object.
+
+  ```yaml
+  # BEFORE:
+  'dns':
+    'querylog_enabled': true
+    'querylog_file_enabled': true
+    'querylog_interval': '2160h'
+    'querylog_size_memory': 1000
+
+  # AFTER:
+  'querylog':
+    'enabled': true
+    'file_enabled': true
+    'interval': '2160h'
+    'size_memory': 1000
+  ```
+
+  To rollback this change, rename and move properties back into the `dns`
+  object, remove `querylog` object and `querylog.ignored` property, and change
+  the `schema_version` back to `14`.
+
 ### Fixed
 
 - The icon for League Of Legends on the Blocked services page ([#5433]).
 
+[#1717]: https://github.com/AdguardTeam/AdGuardHome/issues/1717
+[#4299]: https://github.com/AdguardTeam/AdGuardHome/issues/4299
 [#5433]: https://github.com/AdguardTeam/AdGuardHome/issues/5433
 
 <!--
