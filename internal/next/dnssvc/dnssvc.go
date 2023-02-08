@@ -48,18 +48,11 @@ type Config struct {
 // Service is the AdGuard Home DNS service.  A nil *Service is a valid
 // [agh.Service] that does nothing.
 type Service struct {
-	// running is an atomic boolean value.  Keep it the first value in the
-	// struct to ensure atomic alignment.  0 means that the service is not
-	// running, 1 means that it is running.
-	//
-	// TODO(a.garipov): Use [atomic.Bool] in Go 1.19 or get rid of it
-	// completely.
-	running uint64
-
 	proxy      *proxy.Proxy
 	bootstraps []string
 	upstreams  []string
 	upsTimeout time.Duration
+	running    atomic.Bool
 }
 
 // New returns a new properly initialized *Service.  If c is nil, svc is a nil
@@ -173,11 +166,7 @@ func (svc *Service) Start() (err error) {
 		// TODO(a.garipov): [proxy.Proxy.Start] doesn't actually have any way to
 		// tell when all servers are actually up, so at best this is merely an
 		// assumption.
-		if err != nil {
-			atomic.StoreUint64(&svc.running, 0)
-		} else {
-			atomic.StoreUint64(&svc.running, 1)
-		}
+		svc.running.Store(err == nil)
 	}()
 
 	return svc.proxy.Start()
@@ -201,7 +190,7 @@ func (svc *Service) Config() (c *Config) {
 	// TODO(a.garipov): Do we need to get the TCP addresses separately?
 
 	var addrs []netip.AddrPort
-	if atomic.LoadUint64(&svc.running) == 1 {
+	if svc.running.Load() {
 		udpAddrs := svc.proxy.Addrs(proxy.ProtoUDP)
 		addrs = make([]netip.AddrPort, len(udpAddrs))
 		for i, a := range udpAddrs {

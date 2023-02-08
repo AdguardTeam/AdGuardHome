@@ -47,8 +47,6 @@ func TestStats_races(t *testing.T) {
 	startTime := time.Now()
 	testutil.CleanupAndRequireSuccess(t, s.Close)
 
-	type signal = struct{}
-
 	writeFunc := func(start, fin *sync.WaitGroup, waitCh <-chan unit, i int) {
 		e := Entry{
 			Domain: fmt.Sprintf("example-%d.org", i),

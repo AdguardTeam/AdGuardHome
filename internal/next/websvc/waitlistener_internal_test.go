@@ -12,11 +12,10 @@ import (
 )
 
 func TestWaitListener_Accept(t *testing.T) {
-	// TODO(a.garipov): use atomic.Bool in Go 1.19.
-	var numAcceptCalls uint32
+	var accepted atomic.Bool
 	var l net.Listener = &aghtest.Listener{
 		OnAccept: func() (conn net.Conn, err error) {
-			atomic.AddUint32(&numAcceptCalls, 1)
+			accepted.Store(true)
 
 			return nil, nil
 		},
@@ -42,5 +41,5 @@ func TestWaitListener_Accept(t *testing.T) {
 	wg.Wait()
 	close(done)
 
-	assert.Equal(t, uint32(1), atomic.LoadUint32(&numAcceptCalls))
+	assert.True(t, accepted.Load())
 }

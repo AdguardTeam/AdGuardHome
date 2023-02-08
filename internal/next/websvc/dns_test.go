@@ -26,13 +26,12 @@ func TestService_HandlePatchSettingsDNS(t *testing.T) {
 		UpstreamTimeout:  websvc.JSONDuration(2 * time.Second),
 	}
 
-	// TODO(a.garipov): Use [atomic.Bool] in Go 1.19.
-	var numStarted uint64
+	var started atomic.Bool
 	confMgr := newConfigManager()
 	confMgr.onDNS = func() (s agh.ServiceWithConfig[*dnssvc.Config]) {
 		return &aghtest.ServiceWithConfig[*dnssvc.Config]{
 			OnStart: func() (err error) {
-				atomic.AddUint64(&numStarted, 1)
+				started.Store(true)
 
 				return nil
 			},
@@ -63,7 +62,7 @@ func TestService_HandlePatchSettingsDNS(t *testing.T) {
 	err := json.Unmarshal(respBody, resp)
 	require.NoError(t, err)
 
-	assert.Equal(t, uint64(1), numStarted)
+	assert.True(t, started.Load())
 	assert.Equal(t, wantDNS, resp)
 	assert.Equal(t, wantDNS, resp)
 }

@@ -16,10 +16,6 @@ type RDNS struct {
 	exchanger dnsforward.RDNSExchanger
 	clients   *clientsContainer
 
-	// usePrivate is used to store the state of current private RDNS resolving
-	// settings and to react to it's changes.
-	usePrivate uint32
-
 	// ipCh used to pass client's IP to rDNS workerLoop.
 	ipCh chan netip.Addr
 
@@ -28,6 +24,10 @@ type RDNS struct {
 	// address will be resolved once again.  If the address couldn't be
 	// resolved, cache prevents further attempts to resolve it for some time.
 	ipCache cache.Cache
+
+	// usePrivate stores the state of current private reverse-DNS resolving
+	// settings.
+	usePrivate atomic.Bool
 }
 
 // Default rDNS values.
@@ -52,9 +52,8 @@ func NewRDNS(
 		}),
 		ipCh: make(chan netip.Addr, defaultRDNSIPChSize),
 	}
-	if usePrivate {
-		rDNS.usePrivate = 1
-	}
+
+	rDNS.usePrivate.Store(usePrivate)
 
 	go rDNS.workerLoop()
 
@@ -68,12 +67,8 @@ func NewRDNS(
 // approach since only unresolved locally-served addresses should be removed.
 // Implement when improving the cache.
 func (r *RDNS) ensurePrivateCache() {
-	var usePrivate uint32
-	if r.exchanger.ResolvesPrivatePTR() {
-		usePrivate = 1
-	}
-
-	if atomic.CompareAndSwapUint32(&r.usePrivate, 1-usePrivate, usePrivate) {
+	usePrivate := r.exchanger.ResolvesPrivatePTR()
+	if r.usePrivate.CompareAndSwap(!usePrivate, usePrivate) {
 		r.ipCache.Clear()
 	}
 }

@@ -26,7 +26,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Added
 
 - The ability to exclude domain names from the query log by using the new
-  `querylog.ignored` field ([#1717], [#4299].
+  `querylog.ignored` field ([#1717], [#4299]).
+
+### Changed
 
 #### Configuration Changes
 
@@ -54,9 +56,17 @@ In this release, the schema version has changed from 14 to 15.
   object, remove `querylog` object and `querylog.ignored` property, and change
   the `schema_version` back to `14`.
 
+### Deprecated
+
+- Go 1.19 support.  Future versions will require at least Go 1.20 to build.
+
 ### Fixed
 
 - The icon for League Of Legends on the Blocked services page ([#5433]).
+
+### Removed
+
+- Go 1.18 support, as it has reached end of life.
 
 [#1717]: https://github.com/AdguardTeam/AdGuardHome/issues/1717
 [#4299]: https://github.com/AdguardTeam/AdGuardHome/issues/4299

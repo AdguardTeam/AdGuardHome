@@ -73,8 +73,6 @@ type Interface interface {
 
 // StatsCtx collects the statistics and flushes it to the database.  Its default
 // flushing interval is one hour.
-//
-// TODO(e.burkov):  Use atomic.Pointer for accessing db in go1.19.
 type StatsCtx struct {
 	// limitHours is the maximum number of hours to collect statistics into the
 	// current unit.
@@ -88,10 +86,8 @@ type StatsCtx struct {
 	// curr is the actual statistics collection result.
 	curr *unit
 
-	// dbMu protects db.
-	dbMu *sync.Mutex
 	// db is the opened statistics database, if any.
-	db *bbolt.DB
+	db atomic.Pointer[bbolt.DB]
 
 	// unitIDGen is the function that generates an identifier for the current
 	// unit.  It's here for only testing purposes.
@@ -115,7 +111,6 @@ func New(conf Config) (s *StatsCtx, err error) {
 
 	s = &StatsCtx{
 		currMu:         &sync.RWMutex{},
-		dbMu:           &sync.Mutex{},
 		filename:       conf.Filename,
 		configModified: conf.ConfigModified,
 		httpRegister:   conf.HTTPRegister,
@@ -137,7 +132,7 @@ func New(conf Config) (s *StatsCtx, err error) {
 	var udb *unitDB
 	id := s.unitIDGen()
 
-	tx, err := s.db.Begin(true)
+	tx, err := s.db.Load().Begin(true)
 	if err != nil {
 		return nil, fmt.Errorf("stats: opening a transaction: %w", err)
 	}
@@ -191,7 +186,7 @@ func (s *StatsCtx) Start() {
 func (s *StatsCtx) Close() (err error) {
 	defer func() { err = errors.Annotate(err, "stats: closing: %w") }()
 
-	db := s.swapDatabase(nil)
+	db := s.db.Swap(nil)
 	if db == nil {
 		return nil
 	}
@@ -284,25 +279,6 @@ func (s *StatsCtx) TopClientsIP(maxCount uint) (ips []netip.Addr) {
 	return ips
 }
 
-// database returns the database if it's opened.  It's safe for concurrent use.
-func (s *StatsCtx) database() (db *bbolt.DB) {
-	s.dbMu.Lock()
-	defer s.dbMu.Unlock()
-
-	return s.db
-}
-
-// swapDatabase swaps the database with another one and returns it.  It's safe
-// for concurrent use.
-func (s *StatsCtx) swapDatabase(with *bbolt.DB) (old *bbolt.DB) {
-	s.dbMu.Lock()
-	defer s.dbMu.Unlock()
-
-	old, s.db = s.db, with
-
-	return old
-}
-
 // deleteOldUnits walks the buckets available to tx and deletes old units.  It
 // returns the number of deletions performed.
 func deleteOldUnits(tx *bbolt.Tx, firstID uint32) (deleted int) {
@@ -358,10 +334,7 @@ func (s *StatsCtx) openDB() (err error) {
 	// Use defer to unlock the mutex as soon as possible.
 	defer log.Debug("stats: database opened")
 
-	s.dbMu.Lock()
-	defer s.dbMu.Unlock()
-
-	s.db = db
+	s.db.Store(db)
 
 	return nil
 }
@@ -382,7 +355,7 @@ func (s *StatsCtx) flush() (cont bool, sleepFor time.Duration) {
 		return true, time.Second
 	}
 
-	db := s.database()
+	db := s.db.Load()
 	if db == nil {
 		return true, 0
 	}
@@ -451,7 +424,7 @@ func (s *StatsCtx) setLimit(limitDays int) {
 func (s *StatsCtx) clear() (err error) {
 	defer func() { err = errors.Annotate(err, "clearing: %w") }()
 
-	db := s.swapDatabase(nil)
+	db := s.db.Swap(nil)
 	if db != nil {
 		var tx *bbolt.Tx
 		tx, err = db.Begin(true)
@@ -495,7 +468,7 @@ func (s *StatsCtx) clear() (err error) {
 }
 
 func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, firstID uint32) {
-	db := s.database()
+	db := s.db.Load()
 	if db == nil {
 		return nil, 0
 	}
