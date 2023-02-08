@@ -223,6 +223,7 @@
 
         channel="${bamboo.channel}"
         readonly channel
+
         case "$channel"
         in
         ('release')
@@ -269,8 +270,10 @@
 
         set -e -f -u -x
 
-        export CHANNEL="${bamboo.channel}"
-        if [ "$CHANNEL" != 'release' ] && [ "${CHANNEL}" != 'beta' ]
+        channel="${bamboo.channel}"
+        readonly channel
+
+        if [ "$channel" != 'release' ] && [ "${channel}" != 'beta' ]
         then
               echo "don't publish to GitHub Releases for this channel"
 
