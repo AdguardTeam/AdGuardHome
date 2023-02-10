@@ -67,9 +67,9 @@ func TestClients(t *testing.T) {
 
 		assert.Equal(t, "client2", c.Name)
 
-		assert.False(t, clients.exists(cliNoneIP, ClientSourceHostsFile))
-		assert.True(t, clients.exists(cli1IP, ClientSourceHostsFile))
-		assert.True(t, clients.exists(cli2IP, ClientSourceHostsFile))
+		assert.Equal(t, clients.clientSource(cliNoneIP), ClientSourceNone)
+		assert.Equal(t, clients.clientSource(cli1IP), ClientSourcePersistent)
+		assert.Equal(t, clients.clientSource(cli2IP), ClientSourcePersistent)
 	})
 
 	t.Run("add_fail_name", func(t *testing.T) {
@@ -127,8 +127,8 @@ func TestClients(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		assert.False(t, clients.exists(cliOldIP, ClientSourceHostsFile))
-		assert.True(t, clients.exists(cliNewIP, ClientSourceHostsFile))
+		assert.Equal(t, clients.clientSource(cliOldIP), ClientSourceNone)
+		assert.Equal(t, clients.clientSource(cliNewIP), ClientSourcePersistent)
 
 		err = clients.Update("client1", &Client{
 			IDs:            []string{cliNew},
@@ -157,7 +157,7 @@ func TestClients(t *testing.T) {
 		ok := clients.Del("client1-renamed")
 		require.True(t, ok)
 
-		assert.False(t, clients.exists(netip.MustParseAddr("1.1.1.2"), ClientSourceHostsFile))
+		assert.Equal(t, clients.clientSource(netip.MustParseAddr("1.1.1.2")), ClientSourceNone)
 	})
 
 	t.Run("del_fail", func(t *testing.T) {
@@ -176,18 +176,18 @@ func TestClients(t *testing.T) {
 		ok = clients.AddHost(ip, "host3", ClientSourceHostsFile)
 		assert.True(t, ok)
 
-		assert.True(t, clients.exists(ip, ClientSourceHostsFile))
+		assert.Equal(t, clients.clientSource(ip), ClientSourceHostsFile)
 	})
 
 	t.Run("dhcp_replaces_arp", func(t *testing.T) {
 		ip := netip.MustParseAddr("1.2.3.4")
 		ok := clients.AddHost(ip, "from_arp", ClientSourceARP)
 		assert.True(t, ok)
-		assert.True(t, clients.exists(ip, ClientSourceARP))
+		assert.Equal(t, clients.clientSource(ip), ClientSourceARP)
 
 		ok = clients.AddHost(ip, "from_dhcp", ClientSourceDHCP)
 		assert.True(t, ok)
-		assert.True(t, clients.exists(ip, ClientSourceDHCP))
+		assert.Equal(t, clients.clientSource(ip), ClientSourceDHCP)
 	})
 
 	t.Run("addhost_fail", func(t *testing.T) {

@@ -1221,6 +1221,9 @@ func TestServer_Exchange(t *testing.T) {
 
 	errUpstream := aghtest.NewErrorUpstream()
 	nonPtrUpstream := aghtest.NewBlockUpstream("some-host", true)
+	refusingUpstream := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+		return new(dns.Msg).SetRcode(req, dns.RcodeRefused), nil
+	})
 
 	srv := &Server{
 		recDetector: newRecursionDetector(0, 1),
@@ -1265,14 +1268,20 @@ func TestServer_Exchange(t *testing.T) {
 	}, {
 		name:        "empty_answer_error",
 		want:        "",
-		wantErr:     rDNSEmptyAnswerErr,
+		wantErr:     ErrRDNSNoData,
 		locUpstream: locUpstream,
 		req:         net.IP{192, 168, 1, 2},
 	}, {
-		name:        "not_ptr_error",
+		name:        "invalid_answer",
 		want:        "",
-		wantErr:     rDNSNotPTRErr,
+		wantErr:     ErrRDNSNoData,
 		locUpstream: nonPtrUpstream,
+		req:         localIP,
+	}, {
+		name:        "refused",
+		want:        "",
+		wantErr:     ErrRDNSFailed,
+		locUpstream: refusingUpstream,
 		req:         localIP,
 	}}
 

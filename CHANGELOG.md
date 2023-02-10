@@ -62,6 +62,7 @@ In this release, the schema version has changed from 14 to 15.
 
 ### Fixed
 
+- Client names resolved via reverse DNS not being updated ([#4939]).
 - The icon for League Of Legends on the Blocked services page ([#5433]).
 
 ### Removed
@@ -70,6 +71,7 @@ In this release, the schema version has changed from 14 to 15.
 
 [#1717]: https://github.com/AdguardTeam/AdGuardHome/issues/1717
 [#4299]: https://github.com/AdguardTeam/AdGuardHome/issues/4299
+[#4939]: https://github.com/AdguardTeam/AdGuardHome/issues/4939
 [#5433]: https://github.com/AdguardTeam/AdGuardHome/issues/5433
 
 <!--

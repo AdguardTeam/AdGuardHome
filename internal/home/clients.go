@@ -67,15 +67,18 @@ func (c *Client) closeUpstreams() (err error) {
 
 type clientSource uint
 
-// Client sources.  The order determines the priority.
+// Clients information sources.  The order determines the priority.
 const (
-	ClientSourceWHOIS clientSource = iota
+	ClientSourceNone clientSource = iota
+	ClientSourceWHOIS
 	ClientSourceARP
 	ClientSourceRDNS
 	ClientSourceDHCP
 	ClientSourceHostsFile
+	ClientSourcePersistent
 )
 
+// type check
 var _ fmt.Stringer = clientSource(0)
 
 // String returns a human-readable name of cs.
@@ -96,6 +99,7 @@ func (cs clientSource) String() (s string) {
 	}
 }
 
+// type check
 var _ encoding.TextMarshaler = clientSource(0)
 
 // MarshalText implements encoding.TextMarshaler for the clientSource.
@@ -332,23 +336,24 @@ func (clients *clientsContainer) onDHCPLeaseChanged(flags int) {
 	}
 }
 
-// exists checks if client with this IP address already exists.
-func (clients *clientsContainer) exists(ip netip.Addr, source clientSource) (ok bool) {
+// clientSource checks if client with this IP address already exists and returns
+// the source which updated it last.  It returns [ClientSourceNone] if the
+// client doesn't exist.
+func (clients *clientsContainer) clientSource(ip netip.Addr) (src clientSource) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	_, ok = clients.findLocked(ip.String())
+	_, ok := clients.findLocked(ip.String())
 	if ok {
-		return true
+		return ClientSourcePersistent
 	}
 
 	rc, ok := clients.ipToRC[ip]
 	if !ok {
-		return false
+		return ClientSourceNone
 	}
 
-	// Return false if the new source has higher priority.
-	return source <= rc.Source
+	return rc.Source
 }
 
 func toQueryLogWHOIS(wi *RuntimeClientWHOISInfo) (cw *querylog.ClientWHOIS) {
