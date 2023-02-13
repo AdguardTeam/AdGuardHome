@@ -651,13 +651,7 @@ func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
 
 	s.setCustomUpstream(pctx, dctx.clientID)
 
-	origReqAD := false
-	if s.conf.EnableDNSSEC {
-		origReqAD = req.AuthenticatedData
-		if !req.AuthenticatedData {
-			req.AuthenticatedData = true
-		}
-	}
+	reqWantsDNSSEC := s.setReqAD(req)
 
 	// Process the request further since it wasn't filtered.
 	prx := s.proxy()
@@ -688,12 +682,52 @@ func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
 	dctx.responseFromUpstream = true
 	dctx.responseAD = pctx.Res.AuthenticatedData
 
-	if s.conf.EnableDNSSEC && !origReqAD {
+	s.setRespAD(pctx, reqWantsDNSSEC)
+
+	return resultCodeSuccess
+}
+
+// setReqAD changes the request based on the server settings.  wantsDNSSEC is
+// false if the response should be cleared of the AD bit.
+//
+// TODO(a.garipov, e.burkov): This should probably be done in module dnsproxy.
+func (s *Server) setReqAD(req *dns.Msg) (wantsDNSSEC bool) {
+	if !s.conf.EnableDNSSEC {
+		return false
+	}
+
+	origReqAD := req.AuthenticatedData
+	req.AuthenticatedData = true
+
+	// Per [RFC 6840] says, validating resolvers should only set the AD bit when
+	// the response has the AD bit set and the request contained either a set DO
+	// bit or a set AD bit.  So, if neither of these is true, clear the AD bits
+	// in [Server.setRespAD].
+	//
+	// [RFC 6840]: https://datatracker.ietf.org/doc/html/rfc6840#section-5.8
+	return origReqAD || hasDO(req)
+}
+
+// hasDO returns true if msg has EDNS(0) options and the DNSSEC OK flag is set
+// in there.
+//
+// TODO(a.garipov): Move to golibs/dnsmsg when it's there.
+func hasDO(msg *dns.Msg) (do bool) {
+	o := msg.IsEdns0()
+	if o == nil {
+		return false
+	}
+
+	return o.Do()
+}
+
+// setRespAD changes the request and response based on the server settings and
+// the original request data.
+func (s *Server) setRespAD(pctx *proxy.DNSContext, reqWantsDNSSEC bool) {
+	if s.conf.EnableDNSSEC && !reqWantsDNSSEC {
 		pctx.Req.AuthenticatedData = false
 		pctx.Res.AuthenticatedData = false
 	}
-
-	return resultCodeSuccess
 }
 
 // isDHCPClientHostQ returns true if q is from a request for a DHCP client

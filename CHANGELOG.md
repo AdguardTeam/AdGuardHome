@@ -84,6 +84,8 @@ In this release, the schema version has changed from 14 to 16.
 
 ### Fixed
 
+- Setting the AD (Authenticated Data) flag on responses that have the DO (DNSSEC
+  OK) flag set but not the AD flag ([#5479]).
 - Client names resolved via reverse DNS not being updated ([#4939]).
 - The icon for League Of Legends on the Blocked services page ([#5433]).
 
@@ -91,10 +93,12 @@ In this release, the schema version has changed from 14 to 16.
 
 - Go 1.18 support, as it has reached end of life.
 
+
 [#1717]: https://github.com/AdguardTeam/AdGuardHome/issues/1717
 [#4299]: https://github.com/AdguardTeam/AdGuardHome/issues/4299
 [#4939]: https://github.com/AdguardTeam/AdGuardHome/issues/4939
 [#5433]: https://github.com/AdguardTeam/AdGuardHome/issues/5433
+[#5479]: https://github.com/AdguardTeam/AdGuardHome/issues/5479
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
