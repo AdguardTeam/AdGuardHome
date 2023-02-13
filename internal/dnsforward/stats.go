@@ -48,10 +48,15 @@ func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
 		s.queryLog.ShouldLog(host, q.Qtype, q.Qclass) {
 		s.logQuery(dctx, pctx, elapsed, ip)
 	} else {
-		log.Debug("request for %s from %s ignored; not logging", host, ip)
+		log.Debug(
+			"dnsforward: request %s %s from %s ignored; not logging",
+			dns.Type(q.Qtype),
+			host,
+			ip,
+		)
 	}
 
-	if s.stats != nil {
+	if s.stats != nil && s.stats.ShouldCount(host, q.Qtype, q.Qclass) {
 		s.updateStats(dctx, elapsed, *dctx.result, ip)
 	}
 

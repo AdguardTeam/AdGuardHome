@@ -10,6 +10,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"go.etcd.io/bbolt"
 )
 
@@ -341,11 +342,13 @@ type pairsGetter func(u *unitDB) (pairs []countPair)
 
 // topsCollector collects statistics about highest values from the given *unitDB
 // slice using pg to retrieve data.
-func topsCollector(units []*unitDB, max int, pg pairsGetter) []map[string]uint64 {
+func topsCollector(units []*unitDB, max int, ignored *stringutil.Set, pg pairsGetter) []map[string]uint64 {
 	m := map[string]uint64{}
 	for _, u := range units {
 		for _, cp := range pg(u) {
-			m[cp.Name] += cp.Count
+			if !ignored.Has(cp.Name) {
+				m[cp.Name] += cp.Count
+			}
 		}
 	}
 	a2 := convertMapToSlice(m, max)
@@ -408,9 +411,9 @@ func (s *StatsCtx) getData(limit uint32) (StatsResp, bool) {
 		BlockedFiltering:     statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NResult[RFiltered] }),
 		ReplacedSafebrowsing: statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NResult[RSafeBrowsing] }),
 		ReplacedParental:     statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NResult[RParental] }),
-		TopQueried:           topsCollector(units, maxDomains, func(u *unitDB) (pairs []countPair) { return u.Domains }),
-		TopBlocked:           topsCollector(units, maxDomains, func(u *unitDB) (pairs []countPair) { return u.BlockedDomains }),
-		TopClients:           topsCollector(units, maxClients, func(u *unitDB) (pairs []countPair) { return u.Clients }),
+		TopQueried:           topsCollector(units, maxDomains, s.ignored, func(u *unitDB) (pairs []countPair) { return u.Domains }),
+		TopBlocked:           topsCollector(units, maxDomains, s.ignored, func(u *unitDB) (pairs []countPair) { return u.BlockedDomains }),
+		TopClients:           topsCollector(units, maxClients, nil, func(u *unitDB) (pairs []countPair) { return u.Clients }),
 	}
 
 	// Total counters:

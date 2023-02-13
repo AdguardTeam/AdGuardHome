@@ -688,3 +688,62 @@ func TestUpgradeSchema14to15(t *testing.T) {
 		})
 	}
 }
+
+func TestUpgradeSchema15to16(t *testing.T) {
+	const newSchemaVer = 16
+
+	defaultWantObj := yobj{
+		"statistics": map[string]any{
+			"enabled":  true,
+			"interval": 1,
+			"ignored":  []any{},
+		},
+		"dns":            map[string]any{},
+		"schema_version": newSchemaVer,
+	}
+
+	testCases := []struct {
+		in   yobj
+		want yobj
+		name string
+	}{{
+		in: yobj{
+			"dns": map[string]any{
+				"statistics_interval": 1,
+			},
+		},
+		want: defaultWantObj,
+		name: "basic",
+	}, {
+		in: yobj{
+			"dns": map[string]any{},
+		},
+		want: defaultWantObj,
+		name: "default_values",
+	}, {
+		in: yobj{
+			"dns": map[string]any{
+				"statistics_interval": 0,
+			},
+		},
+		want: yobj{
+			"statistics": map[string]any{
+				"enabled":  false,
+				"interval": 0,
+				"ignored":  []any{},
+			},
+			"dns":            map[string]any{},
+			"schema_version": newSchemaVer,
+		},
+		name: "stats_disabled",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema15to16(tc.in)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}

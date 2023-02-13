@@ -5,7 +5,6 @@ package stats
 import (
 	"encoding/json"
 	"net/http"
-	"sync/atomic"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -41,10 +40,11 @@ type StatsResp struct {
 
 // handleStats handles requests to the GET /control/stats endpoint.
 func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
-	limit := atomic.LoadUint32(&s.limitHours)
+	s.lock.Lock()
+	defer s.lock.Unlock()
 
 	start := time.Now()
-	resp, ok := s.getData(limit)
+	resp, ok := s.getData(s.limitHours)
 	log.Debug("stats: prepared data in %v", time.Since(start))
 
 	if !ok {
@@ -65,7 +65,13 @@ type configResp struct {
 
 // handleStatsInfo handles requests to the GET /control/stats_info endpoint.
 func (s *StatsCtx) handleStatsInfo(w http.ResponseWriter, r *http.Request) {
-	resp := configResp{IntervalDays: atomic.LoadUint32(&s.limitHours) / 24}
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	resp := configResp{IntervalDays: s.limitHours / 24}
+	if !s.enabled {
+		resp.IntervalDays = 0
+	}
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 

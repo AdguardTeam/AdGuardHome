@@ -76,8 +76,8 @@ type Config struct {
 	// addresses.
 	AnonymizeClientIP bool
 
-	// Ignored is the list of host names, which are should not be written
-	// to log.
+	// Ignored is the list of host names, which should not be written to
+	// log.
 	Ignored *stringutil.Set
 }
 

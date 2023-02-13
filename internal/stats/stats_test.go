@@ -53,6 +53,7 @@ func TestStats(t *testing.T) {
 	conf := stats.Config{
 		Filename:  filepath.Join(t.TempDir(), "stats.db"),
 		LimitDays: 1,
+		Enabled:   true,
 		UnitID:    constUnitID,
 		HTTPRegister: func(_, url string, handler http.HandlerFunc) {
 			handlers[url] = handler
@@ -158,6 +159,7 @@ func TestLargeNumbers(t *testing.T) {
 	conf := stats.Config{
 		Filename:     filepath.Join(t.TempDir(), "stats.db"),
 		LimitDays:    1,
+		Enabled:      true,
 		UnitID:       func() (id uint32) { return atomic.LoadUint32(&curHour) },
 		HTTPRegister: func(_, url string, handler http.HandlerFunc) { handlers[url] = handler },
 	}

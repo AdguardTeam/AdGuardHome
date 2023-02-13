@@ -35,18 +35,23 @@ func (l *testQueryLog) ShouldLog(string, uint16, uint16) bool {
 	return true
 }
 
-// testStats is a simple stats.Stats implementation for tests.
+// testStats is a simple [stats.Interface] implementation for tests.
 type testStats struct {
-	// Stats is embedded here simply to make testStats a stats.Stats without
-	// actually implementing all methods.
+	// Stats is embedded here simply to make testStats a [stats.Interface]
+	// without actually implementing all methods.
 	stats.Interface
 
 	lastEntry stats.Entry
 }
 
-// Update implements the stats.Stats interface for *testStats.
+// Update implements the [stats.Interface] interface for *testStats.
 func (l *testStats) Update(e stats.Entry) {
 	l.lastEntry = e
+}
+
+// ShouldCount implements the [stats.Interface] interface for *testStats.
+func (l *testStats) ShouldCount(string, uint16, uint16) bool {
+	return true
 }
 
 func TestProcessQueryLogsAndStats(t *testing.T) {
