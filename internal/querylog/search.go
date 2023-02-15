@@ -263,6 +263,10 @@ func (l *queryLog) readNextEntry(
 	e = &logEntry{}
 	decodeLogEntry(e, line)
 
+	if l.isIgnored(e.QHost) {
+		return nil, ts, nil
+	}
+
 	e.client, err = l.client(e.ClientID, e.IP.String(), cache)
 	if err != nil {
 		log.Error(

@@ -14,11 +14,11 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.24] - 2023-02-22 (APPROX.)
+## [v0.107.25] - 2023-03-09 (APPROX.)
 
-See also the [v0.107.24 GitHub milestone][ms-v0.107.24].
+See also the [v0.107.25 GitHub milestone][ms-v0.107.25].
 
-[ms-v0.107.24]: https://github.com/AdguardTeam/AdGuardHome/milestone/60?closed=1
+[ms-v0.107.25]: https://github.com/AdguardTeam/AdGuardHome/milestone/61?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -26,6 +26,98 @@ NOTE: Add new changes BELOW THIS COMMENT.
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.24] - 2023-02-15
+
+See also the [v0.107.24 GitHub milestone][ms-v0.107.24].
+
+### Security
+
+- Go version has been updated, both because Go 1.18 has reached end of life an
+  to prevent the possibility of exploiting the Go vulnerabilities fixed in [Go
+  1.19.6][go-1.19.6].
+
+### Added
+
+- The ability to disable statistics by using the new `statistics.enabled`
+  field.  Previously it was necessary to set the `statistics_interval` to 0,
+  losing the previous value ([#1717], [#4299]).
+- The ability to exclude domain names from the query log or statistics by using
+  the new `querylog.ignored` or `statistics.ignored` fields ([#1717], [#4299]).
+  The UI changes are coming in the upcoming releases.
+
+### Changed
+
+#### Configuration Changes
+
+In this release, the schema version has changed from 14 to 16.
+
+- Property `statistics_interval`, which in schema versions 15 and earlier used
+  to be a part of the `dns` object, is now a part of the `statistics` object:
+
+  ```yaml
+  # BEFORE:
+  'dns':
+    # …
+    'statistics_interval': 1
+
+  # AFTER:
+  'statistics':
+    # …
+    'interval': 1
+  ```
+
+  To rollback this change, move the property back into the `dns` object and
+  change the `schema_version` back to `15`.
+- The fields `dns.querylog_enabled`, `dns.querylog_file_enabled`,
+  `dns.querylog_interval`, and `dns.querylog_size_memory` have been moved to the
+  new `querylog` object.
+
+  ```yaml
+  # BEFORE:
+  'dns':
+    'querylog_enabled': true
+    'querylog_file_enabled': true
+    'querylog_interval': '2160h'
+    'querylog_size_memory': 1000
+
+  # AFTER:
+  'querylog':
+    'enabled': true
+    'file_enabled': true
+    'interval': '2160h'
+    'size_memory': 1000
+  ```
+
+  To rollback this change, rename and move properties back into the `dns`
+  object, remove `querylog` object and `querylog.ignored` property, and change
+  the `schema_version` back to `14`.
+
+### Deprecated
+
+- Go 1.19 support.  Future versions will require at least Go 1.20 to build.
+
+### Fixed
+
+- Setting the AD (Authenticated Data) flag on responses that have the DO (DNSSEC
+  OK) flag set but not the AD flag ([#5479]).
+- Client names resolved via reverse DNS not being updated ([#4939]).
+- The icon for League Of Legends on the Blocked services page ([#5433]).
+
+### Removed
+
+- Go 1.18 support, as it has reached end of life.
+
+[#1717]: https://github.com/AdguardTeam/AdGuardHome/issues/1717
+[#4299]: https://github.com/AdguardTeam/AdGuardHome/issues/4299
+[#4939]: https://github.com/AdguardTeam/AdGuardHome/issues/4939
+[#5433]: https://github.com/AdguardTeam/AdGuardHome/issues/5433
+[#5479]: https://github.com/AdguardTeam/AdGuardHome/issues/5479
+
+[go-1.19.6]:    https://groups.google.com/g/golang-announce/c/V0aBFqaFs_E
+[ms-v0.107.24]: https://github.com/AdguardTeam/AdGuardHome/milestone/60?closed=1
 
 
 
@@ -1031,7 +1123,6 @@ In this release, the schema version has changed from 10 to 12.
 
   To rollback this change, convert the property back into days and change the
   `schema_version` back to `11`.
-
 - Property `rlimit_nofile`, which in schema versions 10 and earlier used to be
   on the top level, is now moved to the new `os` object:
 
@@ -1578,11 +1669,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.24...HEAD
-[v0.107.24]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.23...v0.107.24
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.25...HEAD
+[v0.107.25]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.24...v0.107.25
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.23...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.24...HEAD
+[v0.107.24]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.23...v0.107.24
 [v0.107.23]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.22...v0.107.23
 [v0.107.22]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.21...v0.107.22
 [v0.107.21]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.20...v0.107.21

@@ -89,9 +89,14 @@ func createTestServer(
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
+	// TODO(e.burkov):  Try to move it higher.
 	if localUps != nil {
-		s.localResolvers.UpstreamConfig.Upstreams = []upstream.Upstream{localUps}
+		ups := []upstream.Upstream{localUps}
+		s.localResolvers.UpstreamConfig.Upstreams = ups
 		s.conf.UsePrivateRDNS = true
+		s.dnsProxy.PrivateRDNSUpstreamConfig = &proxy.UpstreamConfig{
+			Upstreams: ups,
+		}
 	}
 
 	return s
@@ -1216,6 +1221,9 @@ func TestServer_Exchange(t *testing.T) {
 
 	errUpstream := aghtest.NewErrorUpstream()
 	nonPtrUpstream := aghtest.NewBlockUpstream("some-host", true)
+	refusingUpstream := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+		return new(dns.Msg).SetRcode(req, dns.RcodeRefused), nil
+	})
 
 	srv := &Server{
 		recDetector: newRecursionDetector(0, 1),
@@ -1260,14 +1268,20 @@ func TestServer_Exchange(t *testing.T) {
 	}, {
 		name:        "empty_answer_error",
 		want:        "",
-		wantErr:     rDNSEmptyAnswerErr,
+		wantErr:     ErrRDNSNoData,
 		locUpstream: locUpstream,
 		req:         net.IP{192, 168, 1, 2},
 	}, {
-		name:        "not_ptr_error",
+		name:        "invalid_answer",
 		want:        "",
-		wantErr:     rDNSNotPTRErr,
+		wantErr:     ErrRDNSNoData,
 		locUpstream: nonPtrUpstream,
+		req:         localIP,
+	}, {
+		name:        "refused",
+		want:        "",
+		wantErr:     ErrRDNSFailed,
+		locUpstream: refusingUpstream,
 		req:         localIP,
 	}}
 

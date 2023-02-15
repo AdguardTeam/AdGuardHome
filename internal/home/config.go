@@ -6,6 +6,7 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
@@ -112,8 +113,10 @@ type configuration struct {
 	// An active session is automatically refreshed once a day.
 	WebSessionTTLHours uint32 `yaml:"web_session_ttl"`
 
-	DNS dnsConfig         `yaml:"dns"`
-	TLS tlsConfigSettings `yaml:"tls"`
+	DNS      dnsConfig         `yaml:"dns"`
+	TLS      tlsConfigSettings `yaml:"tls"`
+	QueryLog queryLogConfig    `yaml:"querylog"`
+	Stats    statsConfig       `yaml:"statistics"`
 
 	// Filters reflects the filters from [filtering.Config].  It's cloned to the
 	// config used in the filtering module at the startup.  Afterwards it's
@@ -147,20 +150,6 @@ type dnsConfig struct {
 	BindHosts []netip.Addr `yaml:"bind_hosts"`
 	Port      int          `yaml:"port"`
 
-	// StatsInterval is the time interval for flushing statistics to the disk in
-	// days.
-	StatsInterval uint32 `yaml:"statistics_interval"`
-
-	// QueryLogEnabled defines if the query log is enabled.
-	QueryLogEnabled bool `yaml:"querylog_enabled"`
-	// QueryLogFileEnabled defines, if the query log is written to the file.
-	QueryLogFileEnabled bool `yaml:"querylog_file_enabled"`
-	// QueryLogInterval is the interval for query log's files rotation.
-	QueryLogInterval timeutil.Duration `yaml:"querylog_interval"`
-	// QueryLogMemSize is the number of entries kept in memory before they are
-	// flushed to disk.
-	QueryLogMemSize uint32 `yaml:"querylog_size_memory"`
-
 	// AnonymizeClientIP defines if clients' IP addresses should be anonymized
 	// in query log and statistics.
 	AnonymizeClientIP bool `yaml:"anonymize_client_ip"`
@@ -188,7 +177,7 @@ type dnsConfig struct {
 	UseDNS64 bool `yaml:"use_dns64"`
 
 	// DNS64Prefixes is the list of NAT64 prefixes to be used for DNS64.
-	DNS64Prefixes []string `yaml:"dns64_prefixes"`
+	DNS64Prefixes []netip.Prefix `yaml:"dns64_prefixes"`
 
 	// ServeHTTP3 defines if HTTP/3 is be allowed for incoming requests.
 	//
@@ -228,6 +217,37 @@ type tlsConfigSettings struct {
 	dnsforward.TLSConfig `yaml:",inline" json:",inline"`
 }
 
+type queryLogConfig struct {
+	// Enabled defines if the query log is enabled.
+	Enabled bool `yaml:"enabled"`
+
+	// FileEnabled defines, if the query log is written to the file.
+	FileEnabled bool `yaml:"file_enabled"`
+
+	// Interval is the interval for query log's files rotation.
+	Interval timeutil.Duration `yaml:"interval"`
+
+	// MemSize is the number of entries kept in memory before they are
+	// flushed to disk.
+	MemSize uint32 `yaml:"size_memory"`
+
+	// Ignored is the list of host names, which should not be written to
+	// log.
+	Ignored []string `yaml:"ignored"`
+}
+
+type statsConfig struct {
+	// Enabled defines if the statistics are enabled.
+	Enabled bool `yaml:"enabled"`
+
+	// Interval is the time interval for flushing statistics to the disk in
+	// days.
+	Interval uint32 `yaml:"interval"`
+
+	// Ignored is the list of host names, which should not be counted.
+	Ignored []string `yaml:"ignored"`
+}
+
 // config is the global configuration structure.
 //
 // TODO(a.garipov, e.burkov): This global is awful and must be removed.
@@ -238,13 +258,8 @@ var config = &configuration{
 	AuthBlockMin:       15,
 	WebSessionTTLHours: 30 * 24,
 	DNS: dnsConfig{
-		BindHosts:           []netip.Addr{netip.IPv4Unspecified()},
-		Port:                defaultPortDNS,
-		StatsInterval:       1,
-		QueryLogEnabled:     true,
-		QueryLogFileEnabled: true,
-		QueryLogInterval:    timeutil.Duration{Duration: 90 * timeutil.Day},
-		QueryLogMemSize:     1000,
+		BindHosts: []netip.Addr{netip.IPv4Unspecified()},
+		Port:      defaultPortDNS,
 		FilteringConfig: dnsforward.FilteringConfig{
 			ProtectionEnabled:  true, // whether or not use any of filtering features
 			BlockingMode:       dnsforward.BlockingModeDefault,
@@ -281,6 +296,18 @@ var config = &configuration{
 		PortHTTPS:       defaultPortHTTPS,
 		PortDNSOverTLS:  defaultPortTLS, // needs to be passed through to dnsproxy
 		PortDNSOverQUIC: defaultPortQUIC,
+	},
+	QueryLog: queryLogConfig{
+		Enabled:     true,
+		FileEnabled: true,
+		Interval:    timeutil.Duration{Duration: 90 * timeutil.Day},
+		MemSize:     1000,
+		Ignored:     []string{},
+	},
+	Stats: statsConfig{
+		Enabled:  true,
+		Interval: 1,
+		Ignored:  []string{},
 	},
 	// NOTE: Keep these parameters in sync with the one put into
 	// client/src/helpers/filters/filters.js by scripts/vetted-filters.
@@ -458,19 +485,24 @@ func (c *configuration) write() (err error) {
 	}
 
 	if Context.stats != nil {
-		sdc := stats.DiskConfig{}
-		Context.stats.WriteDiskConfig(&sdc)
-		config.DNS.StatsInterval = sdc.Interval
+		statsConf := stats.Config{}
+		Context.stats.WriteDiskConfig(&statsConf)
+		config.Stats.Interval = statsConf.LimitDays
+		config.Stats.Enabled = statsConf.Enabled
+		config.Stats.Ignored = statsConf.Ignored.Values()
+		sort.Strings(config.Stats.Ignored)
 	}
 
 	if Context.queryLog != nil {
 		dc := querylog.Config{}
 		Context.queryLog.WriteDiskConfig(&dc)
-		config.DNS.QueryLogEnabled = dc.Enabled
-		config.DNS.QueryLogFileEnabled = dc.FileEnabled
-		config.DNS.QueryLogInterval = timeutil.Duration{Duration: dc.RotationIvl}
-		config.DNS.QueryLogMemSize = dc.MemSize
 		config.DNS.AnonymizeClientIP = dc.AnonymizeClientIP
+		config.QueryLog.Enabled = dc.Enabled
+		config.QueryLog.FileEnabled = dc.FileEnabled
+		config.QueryLog.Interval = timeutil.Duration{Duration: dc.RotationIvl}
+		config.QueryLog.MemSize = dc.MemSize
+		config.QueryLog.Ignored = dc.Ignored.Values()
+		sort.Strings(config.QueryLog.Ignored)
 	}
 
 	if Context.filters != nil {

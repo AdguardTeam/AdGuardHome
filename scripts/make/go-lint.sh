@@ -227,8 +227,9 @@ gocyclo --over 13 ./internal/dhcpd ./internal/filtering/ ./internal/home/
 # Apply stricter standards to new or somewhat refactored code.
 gocyclo --over 10 ./internal/aghio/ ./internal/aghnet/ ./internal/aghos/\
 	./internal/aghtest/ ./internal/dnsforward/ ./internal/filtering/rewrite/\
-	./internal/stats/ ./internal/tools/ ./internal/updater/ ./internal/version/\
-	./scripts/vetted-filters/ ./main.go
+	./internal/stats/ ./internal/tools/ ./internal/updater/\
+	./internal/version/ ./scripts/blocked-services/ ./scripts/vetted-filters/\
+	./main.go
 
 ineffassign ./...
 

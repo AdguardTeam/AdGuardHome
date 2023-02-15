@@ -640,3 +640,110 @@ func TestUpgradeSchema13to14(t *testing.T) {
 		})
 	}
 }
+
+func TestUpgradeSchema14to15(t *testing.T) {
+	const newSchemaVer = 15
+
+	defaultWantObj := yobj{
+		"querylog": map[string]any{
+			"enabled":      true,
+			"file_enabled": true,
+			"interval":     "2160h",
+			"size_memory":  1000,
+			"ignored":      []any{},
+		},
+		"dns":            map[string]any{},
+		"schema_version": newSchemaVer,
+	}
+
+	testCases := []struct {
+		in   yobj
+		want yobj
+		name string
+	}{{
+		in: yobj{
+			"dns": map[string]any{
+				"querylog_enabled":      true,
+				"querylog_file_enabled": true,
+				"querylog_interval":     "2160h",
+				"querylog_size_memory":  1000,
+			},
+		},
+		want: defaultWantObj,
+		name: "basic",
+	}, {
+		in: yobj{
+			"dns": map[string]any{},
+		},
+		want: defaultWantObj,
+		name: "default_values",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema14to15(tc.in)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}
+
+func TestUpgradeSchema15to16(t *testing.T) {
+	const newSchemaVer = 16
+
+	defaultWantObj := yobj{
+		"statistics": map[string]any{
+			"enabled":  true,
+			"interval": 1,
+			"ignored":  []any{},
+		},
+		"dns":            map[string]any{},
+		"schema_version": newSchemaVer,
+	}
+
+	testCases := []struct {
+		in   yobj
+		want yobj
+		name string
+	}{{
+		in: yobj{
+			"dns": map[string]any{
+				"statistics_interval": 1,
+			},
+		},
+		want: defaultWantObj,
+		name: "basic",
+	}, {
+		in: yobj{
+			"dns": map[string]any{},
+		},
+		want: defaultWantObj,
+		name: "default_values",
+	}, {
+		in: yobj{
+			"dns": map[string]any{
+				"statistics_interval": 0,
+			},
+		},
+		want: yobj{
+			"statistics": map[string]any{
+				"enabled":  false,
+				"interval": 0,
+				"ignored":  []any{},
+			},
+			"dns":            map[string]any{},
+			"schema_version": newSchemaVer,
+		},
+		name: "stats_disabled",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema15to16(tc.in)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}

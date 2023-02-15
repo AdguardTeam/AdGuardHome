@@ -10,6 +10,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
 )
@@ -26,6 +27,9 @@ type QueryLog interface {
 
 	// WriteDiskConfig - write configuration
 	WriteDiskConfig(c *Config)
+
+	// ShouldLog returns true if request for the host should be logged.
+	ShouldLog(host string, qType, qClass uint16) bool
 }
 
 // Config is the query log configuration structure.
@@ -71,6 +75,10 @@ type Config struct {
 	// AnonymizeClientIP tells if the query log should anonymize clients' IP
 	// addresses.
 	AnonymizeClientIP bool
+
+	// Ignored is the list of host names, which should not be written to
+	// log.
+	Ignored *stringutil.Set
 }
 
 // AddParams is the parameters for adding an entry.

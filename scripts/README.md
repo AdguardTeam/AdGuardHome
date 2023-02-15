@@ -205,7 +205,7 @@ code from [the repo][companiesrepo].
  ###  Usage
 
 ```sh
-( cd scripts/companiesdb && sh ./download.sh )
+sh ./scripts/companiesdb/download.sh
 ```
 
 [companiesrepo]: https://github.com/AdguardTeam/companiesdb

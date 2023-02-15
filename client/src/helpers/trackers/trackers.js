@@ -1,6 +1,5 @@
-import whotracksmeDb from './whotracksme.json';
 import whotracksmeWebsites from './whotracksme_web.json';
-import adguardDb from './adguard.json';
+import trackersDb from './trackers.json';
 import { REPOSITORY } from '../constants';
 
 /**
@@ -39,6 +38,7 @@ const getWhotracksmeUrl = (trackerId) => {
 
 /**
  * Gets the source metadata for the specified tracker
+ *
  * @param {TrackerData} trackerData tracker data
  * @returns {source} source metadata or null if no matching tracker found
  */
@@ -64,14 +64,26 @@ export const getSourceData = (trackerData) => {
 };
 
 /**
- * Gets tracker data in the specified database
+ * Converts the JSON string source into numeric source for AdGuard Home
+ *
+ * @param {TrackerData} trackerData tracker data
+ * @returns {number} source number
+ */
+const convertSource = (sourceStr) => {
+    if (!sourceStr || sourceStr !== 'AdGuard') {
+        return sources.WHOTRACKSME;
+    }
+
+    return sources.ADGUARD;
+};
+
+/**
+ * Gets tracker data from the trackers database
  *
  * @param {String} domainName domain name to check
- * @param {*} trackersDb trackers database
- * @param {number} source source ID
  * @returns {TrackerData} tracker data or null if no matching tracker found
  */
-const getTrackerDataFromDb = (domainName, trackersDb, source) => {
+export const getTrackerData = (domainName) => {
     if (!domainName) {
         return null;
     }
@@ -88,7 +100,7 @@ const getTrackerDataFromDb = (domainName, trackersDb, source) => {
         if (trackerId) {
             const trackerData = trackersDb.trackers[trackerId];
             const categoryName = trackersDb.categories[trackerData.categoryId];
-            trackerData.source = source;
+            const source = convertSource(trackerData.source);
             const sourceData = getSourceData(trackerData);
 
             return {
@@ -104,23 +116,4 @@ const getTrackerDataFromDb = (domainName, trackersDb, source) => {
 
     // No tracker found for the specified domain
     return null;
-};
-
-/**
- * Gets tracker data from the trackers database
- *
- * @param {String} domainName domain name to check
- * @returns {TrackerData} tracker data or null if no matching tracker found
- */
-export const getTrackerData = (domainName) => {
-    if (!domainName) {
-        return null;
-    }
-
-    let data = getTrackerDataFromDb(domainName, adguardDb, sources.ADGUARD);
-    if (!data) {
-        data = getTrackerDataFromDb(domainName, whotracksmeDb, sources.WHOTRACKSME);
-    }
-
-    return data;
 };

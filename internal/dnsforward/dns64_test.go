@@ -15,6 +15,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// maxDNS64SynTTL is the maximum TTL for synthesized DNS64 responses with no SOA
+// records in seconds.
+//
+// If the SOA RR was not delivered with the negative response to the AAAA query,
+// then the DNS64 SHOULD use the TTL of the original A RR or 600 seconds,
+// whichever is shorter.
+//
+// See https://datatracker.ietf.org/doc/html/rfc6147#section-5.1.7.
+const maxDNS64SynTTL uint32 = 600
+
 // newRR is a helper that creates a new dns.RR with the given name, qtype, ttl
 // and value.  It fails the test if the qtype is not supported or the type of
 // value doesn't match the qtype.

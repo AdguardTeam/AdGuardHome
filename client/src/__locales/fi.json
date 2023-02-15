@@ -24,7 +24,7 @@
     "unavailable_dhcp": "DHCP ei ole käytettävissä",
     "unavailable_dhcp_desc": "AdGuard Home ei voi suorittaa DHCP-palvelinta käyttöjärjestelmässäsi",
     "dhcp_title": "DHCP-palvelin (kokeellinen!)",
-    "dhcp_description": "Jos reitittimessäsi ei ole DHCP-asetuksia, voit käyttää AdGuard Homen omaa sisäänrakennettua DHCP-palvelinta.",
+    "dhcp_description": "Jollei reitittimesi tarjoa DHCP-asetuksia, voit käyttää AdGuard Homen omaa sisäänrakennettua DHCP-palvelinta.",
     "dhcp_enable": "Ota DHCP-palvelin käyttöön",
     "dhcp_disable": "Poista DHCP-palvelin käytöstä",
     "dhcp_not_found": "On turvallista ottaa sisäänrakennettu DHCP-palvelin käyttöön, koska AdGuard Home ei havainnut verkossa muita aktiivisia DHCP-palvelimia. Suosittelemme, että varmistat tämän vielä itse, koska automaattinen tunnistus ei ole 100% varma.",

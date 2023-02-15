@@ -10,6 +10,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxyutil"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
@@ -247,6 +248,48 @@ func TestQueryLogFileDisabled(t *testing.T) {
 	require.Len(t, ll, 2)
 	assert.Equal(t, "example3.org", ll[0].QHost)
 	assert.Equal(t, "example2.org", ll[1].QHost)
+}
+
+func TestQueryLogShouldLog(t *testing.T) {
+	const (
+		ignored1 = "ignor.ed"
+		ignored2 = "ignored.to"
+	)
+	set := stringutil.NewSet(ignored1, ignored2)
+
+	l := newQueryLog(Config{
+		Enabled:     true,
+		RotationIvl: timeutil.Day,
+		MemSize:     100,
+		BaseDir:     t.TempDir(),
+		Ignored:     set,
+	})
+
+	testCases := []struct {
+		name    string
+		host    string
+		wantLog bool
+	}{{
+		name:    "log",
+		host:    "example.com",
+		wantLog: true,
+	}, {
+		name:    "no_log_ignored_1",
+		host:    ignored1,
+		wantLog: false,
+	}, {
+		name:    "no_log_ignored_2",
+		host:    ignored2,
+		wantLog: false,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := l.ShouldLog(tc.host, dns.TypeA, dns.ClassINET)
+
+			assert.Equal(t, tc.wantLog, res)
+		})
+	}
 }
 
 func addEntry(l *queryLog, host string, answerStr, client net.IP) {

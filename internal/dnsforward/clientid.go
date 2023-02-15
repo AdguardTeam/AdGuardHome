@@ -9,7 +9,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/lucas-clemente/quic-go"
+	"github.com/quic-go/quic-go"
 )
 
 // ValidateClientID returns an error if id is not a valid ClientID.
@@ -151,25 +151,7 @@ func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string
 func clientServerName(pctx *proxy.DNSContext, proto proxy.Proto) (srvName string, err error) {
 	switch proto {
 	case proxy.ProtoHTTPS:
-		// github.com/lucas-clemente/quic-go seems to not populate the TLS
-		// field.  So, if the request comes over HTTP/3, use the Host header
-		// value as the server name.
-		//
-		// See https://github.com/lucas-clemente/quic-go/issues/2879.
-		//
-		// TODO(a.garipov): Remove this crutch once they fix it.
-		r := pctx.HTTPRequest
-		if r.ProtoAtLeast(3, 0) {
-			var host string
-			host, err = netutil.SplitHost(r.Host)
-			if err != nil {
-				return "", fmt.Errorf("parsing host: %w", err)
-			}
-
-			srvName = host
-		} else if connState := r.TLS; connState != nil {
-			srvName = r.TLS.ServerName
-		}
+		srvName = pctx.HTTPRequest.TLS.ServerName
 	case proxy.ProtoQUIC:
 		qConn := pctx.QUICConnection
 		conn, ok := qConn.(quicConnection)

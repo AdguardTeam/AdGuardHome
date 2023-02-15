@@ -76,7 +76,7 @@ func TestRDNS_Begin(t *testing.T) {
 
 		ipCache := cache.New(cache.Config{
 			EnableLRU: true,
-			MaxCount:  defaultRDNSCacheSize,
+			MaxCount:  revDNSCacheSize,
 		})
 		ttl := make([]byte, binary.Size(uint64(0)))
 		binary.BigEndian.PutUint64(ttl, uint64(time.Now().Add(100*time.Hour).Unix()))
@@ -153,7 +153,7 @@ func TestRDNS_ensurePrivateCache(t *testing.T) {
 
 	ipCache := cache.New(cache.Config{
 		EnableLRU: true,
-		MaxCount:  defaultRDNSCacheSize,
+		MaxCount:  revDNSCacheSize,
 	})
 
 	ex := &rDNSExchanger{
@@ -200,25 +200,29 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 	errUpstream := aghtest.NewErrorUpstream()
 
 	testCases := []struct {
-		ups     upstream.Upstream
-		cliIP   netip.Addr
-		wantLog string
-		name    string
+		ups              upstream.Upstream
+		cliIP            netip.Addr
+		wantLog          string
+		name             string
+		wantClientSource clientSource
 	}{{
-		ups:     locUpstream,
-		cliIP:   localIP,
-		wantLog: "",
-		name:    "all_good",
+		ups:              locUpstream,
+		cliIP:            localIP,
+		wantLog:          "",
+		name:             "all_good",
+		wantClientSource: ClientSourceRDNS,
 	}, {
-		ups:     errUpstream,
-		cliIP:   netip.MustParseAddr("192.168.1.2"),
-		wantLog: `rdns: resolving "192.168.1.2": test upstream error`,
-		name:    "resolve_error",
+		ups:              errUpstream,
+		cliIP:            netip.MustParseAddr("192.168.1.2"),
+		wantLog:          `rdns: resolving "192.168.1.2": test upstream error`,
+		name:             "resolve_error",
+		wantClientSource: ClientSourceNone,
 	}, {
-		ups:     locUpstream,
-		cliIP:   netip.MustParseAddr("2a00:1450:400c:c06::93"),
-		wantLog: "",
-		name:    "ipv6_good",
+		ups:              locUpstream,
+		cliIP:            netip.MustParseAddr("2a00:1450:400c:c06::93"),
+		wantLog:          "",
+		name:             "ipv6_good",
+		wantClientSource: ClientSourceRDNS,
 	}}
 
 	for _, tc := range testCases {
@@ -237,6 +241,10 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 			},
 			clients: cc,
 			ipCh:    ch,
+			ipCache: cache.New(cache.Config{
+				EnableLRU: true,
+				MaxCount:  revDNSCacheSize,
+			}),
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -253,11 +261,9 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 
 			if tc.wantLog != "" {
 				assert.Contains(t, w.String(), tc.wantLog)
-
-				return
 			}
 
-			assert.True(t, cc.exists(tc.cliIP, ClientSourceRDNS))
+			assert.Equal(t, tc.wantClientSource, cc.clientSource(tc.cliIP))
 		})
 	}
 }

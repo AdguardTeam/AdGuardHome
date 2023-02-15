@@ -454,7 +454,7 @@
     "updates_checked": "La nueva versión de AdGuard Home está disponible",
     "updates_version_equal": "AdGuard Home está actualizado",
     "check_updates_now": "Buscar actualizaciones ahora",
-    "version_request_error": "La búsqueda de actualizaciones falló. Por favor revisa tu conexión a Internet.",
+    "version_request_error": "Error buscar la actualización. Comprueba tu conexión a Internet.",
     "dns_privacy": "DNS cifrado",
     "setup_dns_privacy_1": "<0>DNS mediante TLS:</0> Utiliza la cadena <1>{{address}}</1>.",
     "setup_dns_privacy_2": "<0>DNS mediante HTTPS:</0> Utiliza la cadena <1>{{address}}</1>.",
@@ -640,7 +640,7 @@
     "served_from_cache": "{{value}} <i>(servido desde la caché)</i>",
     "form_error_password_length": "La contraseña debe tener al menos {{value}} caracteres",
     "anonymizer_notification": "<0>Nota:</0> La anonimización de IP está habilitada. Puedes deshabilitarla en <1>Configuración general</1>.",
-    "confirm_dns_cache_clear": "¿Estás seguro de que deseas borrar la caché de DNS?",
-    "cache_cleared": "Caché DNS borrado con éxito",
+    "confirm_dns_cache_clear": "¿Estás seguro de que deseas borrar la caché DNS?",
+    "cache_cleared": "Caché DNS borrado correctamente",
     "clear_cache": "Borrar caché"
 }

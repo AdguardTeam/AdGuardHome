@@ -22,7 +22,7 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 14
+const currentSchemaVersion = 16
 
 // These aliases are provided for convenience.
 type (
@@ -87,6 +87,8 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema11to12,
 		upgradeSchema12to13,
 		upgradeSchema13to14,
+		upgradeSchema14to15,
+		upgradeSchema15to16,
 	}
 
 	n := 0
@@ -798,6 +800,107 @@ func upgradeSchema13to14(diskConf yobj) (err error) {
 			HostsFile: true,
 		},
 	}
+
+	return nil
+}
+
+// upgradeSchema14to15 performs the following changes:
+//
+//	# BEFORE:
+//	'dns':
+//	  'querylog_enabled': true
+//	  'querylog_file_enabled': true
+//	  'querylog_interval': '2160h'
+//	  'querylog_size_memory': 1000
+//
+//	# AFTER:
+//	'querylog':
+//	  'enabled': true
+//	  'file_enabled': true
+//	  'interval': '2160h'
+//	  'size_memory': 1000
+//	  'ignored': []
+func upgradeSchema14to15(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 14 to 15")
+	diskConf["schema_version"] = 15
+
+	dnsVal, ok := diskConf["dns"]
+	if !ok {
+		return nil
+	}
+
+	dns, ok := dnsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of dns: %T", dnsVal)
+	}
+
+	type temp struct {
+		from string
+		to   string
+		val  any
+	}
+	replaces := []temp{
+		{from: "querylog_enabled", to: "enabled", val: true},
+		{from: "querylog_file_enabled", to: "file_enabled", val: true},
+		{from: "querylog_interval", to: "interval", val: "2160h"},
+		{from: "querylog_size_memory", to: "size_memory", val: 1000},
+	}
+	qlog := map[string]any{
+		"ignored": []any{},
+	}
+	for _, r := range replaces {
+		v, has := dns[r.from]
+		if !has {
+			v = r.val
+		}
+		delete(dns, r.from)
+		qlog[r.to] = v
+	}
+	diskConf["querylog"] = qlog
+
+	return nil
+}
+
+// upgradeSchema15to16 performs the following changes:
+//
+//	# BEFORE:
+//	'dns':
+//	  'statistics_interval': 1
+//
+//	# AFTER:
+//	'statistics':
+//	  'enabled': true
+//	  'interval': 1
+//	  'ignored': []
+func upgradeSchema15to16(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 15 to 16")
+	diskConf["schema_version"] = 16
+
+	dnsVal, ok := diskConf["dns"]
+	if !ok {
+		return nil
+	}
+
+	dns, ok := dnsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of dns: %T", dnsVal)
+	}
+
+	stats := map[string]any{
+		"enabled":  true,
+		"interval": 1,
+		"ignored":  []any{},
+	}
+
+	k := "statistics_interval"
+	v, has := dns[k]
+	if has {
+		stats["enabled"] = v != 0
+		stats["interval"] = v
+	}
+	delete(dns, k)
+
+	diskConf["statistics"] = stats
 
 	return nil
 }

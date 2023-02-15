@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -20,6 +21,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/ameshkov/dnscrypt/v2"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -51,10 +53,18 @@ func initDNS() (err error) {
 
 	statsConf := stats.Config{
 		Filename:       filepath.Join(baseDir, "stats.db"),
-		LimitDays:      config.DNS.StatsInterval,
+		LimitDays:      config.Stats.Interval,
 		ConfigModified: onConfigModified,
 		HTTPRegister:   httpRegister,
+		Enabled:        config.Stats.Enabled,
 	}
+
+	set, err := nonDupEmptyHostNames(config.Stats.Ignored)
+	if err != nil {
+		return fmt.Errorf("statistics: ignored list: %w", err)
+	}
+
+	statsConf.Ignored = set
 	Context.stats, err = stats.New(statsConf)
 	if err != nil {
 		return fmt.Errorf("init stats: %w", err)
@@ -66,12 +76,19 @@ func initDNS() (err error) {
 		HTTPRegister:      httpRegister,
 		FindClient:        Context.clients.findMultiple,
 		BaseDir:           baseDir,
-		RotationIvl:       config.DNS.QueryLogInterval.Duration,
-		MemSize:           config.DNS.QueryLogMemSize,
-		Enabled:           config.DNS.QueryLogEnabled,
-		FileEnabled:       config.DNS.QueryLogFileEnabled,
 		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
+		RotationIvl:       config.QueryLog.Interval.Duration,
+		MemSize:           config.QueryLog.MemSize,
+		Enabled:           config.QueryLog.Enabled,
+		FileEnabled:       config.QueryLog.FileEnabled,
 	}
+
+	set, err = nonDupEmptyHostNames(config.QueryLog.Ignored)
+	if err != nil {
+		return fmt.Errorf("querylog: ignored list: %w", err)
+	}
+
+	conf.Ignored = set
 	Context.queryLog = querylog.New(conf)
 
 	Context.filters, err = filtering.New(config.DNS.DnsfilterConf, nil)
@@ -514,4 +531,28 @@ func closeDNSServer() {
 	}
 
 	log.Debug("all dns modules are closed")
+}
+
+// nonDupEmptyHostNames returns nil and error, if list has duplicate or empty
+// host name.  Otherwise returns a set, which contains lowercase host names
+// without dot at the end, and nil error.
+func nonDupEmptyHostNames(list []string) (set *stringutil.Set, err error) {
+	set = stringutil.NewSet()
+
+	for _, v := range list {
+		host := strings.ToLower(strings.TrimSuffix(v, "."))
+		// TODO(a.garipov): Think about ignoring empty (".") names in
+		// the future.
+		if host == "" {
+			return nil, errors.Error("host name is empty")
+		}
+
+		if set.Has(host) {
+			return nil, fmt.Errorf("duplicate host name %q", host)
+		}
+
+		set.Add(host)
+	}
+
+	return set, nil
 }

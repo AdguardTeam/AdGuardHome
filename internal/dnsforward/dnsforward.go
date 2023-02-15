@@ -80,10 +80,17 @@ type Server struct {
 	privateNets    netutil.SubnetSet
 	localResolvers *proxy.Proxy
 	sysResolvers   aghnet.SystemResolvers
-	recDetector    *recursionDetector
 
-	// dns64Prefix is the set of NAT64 prefixes used for DNS64 handling.
-	dns64Prefs []netip.Prefix
+	// recDetector is a cache for recursive requests.  It is used to detect
+	// and prevent recursive requests only for private upstreams.
+	//
+	// See https://github.com/adguardTeam/adGuardHome/issues/3185#issuecomment-851048135.
+	recDetector *recursionDetector
+
+	// dns64Pref is the NAT64 prefix used for DNS64 response mapping.  The major
+	// part of DNS64 happens inside the [proxy] package, but there still are
+	// some places where response mapping is needed (e.g. DHCP).
+	dns64Pref netip.Prefix
 
 	// anonymizer masks the client's IP addresses if needed.
 	anonymizer *aghnet.IPMut
@@ -246,8 +253,8 @@ func (s *Server) Resolve(host string) ([]net.IPAddr, error) {
 
 // RDNSExchanger is a resolver for clients' addresses.
 type RDNSExchanger interface {
-	// Exchange tries to resolve the ip in a suitable way, e.g. either as
-	// local or as external.
+	// Exchange tries to resolve the ip in a suitable way, i.e. either as local
+	// or as external.
 	Exchange(ip net.IP) (host string, err error)
 
 	// ResolvesPrivatePTR returns true if the RDNSExchanger is able to
@@ -256,13 +263,13 @@ type RDNSExchanger interface {
 }
 
 const (
-	// rDNSEmptyAnswerErr is returned by Exchange method when the answer
-	// section of respond is empty.
-	rDNSEmptyAnswerErr errors.Error = "the answer section is empty"
+	// ErrRDNSNoData is returned by [RDNSExchanger.Exchange] when the answer
+	// section of response is either NODATA or has no PTR records.
+	ErrRDNSNoData errors.Error = "no ptr data in response"
 
-	// rDNSNotPTRErr is returned by Exchange method when the response is not
-	// of PTR type.
-	rDNSNotPTRErr errors.Error = "the response is not a ptr"
+	// ErrRDNSFailed is returned by [RDNSExchanger.Exchange] if the received
+	// response is not a NOERROR or NXDOMAIN.
+	ErrRDNSFailed errors.Error = "failed to resolve ptr"
 )
 
 // type check
@@ -317,17 +324,24 @@ func (s *Server) Exchange(ip net.IP) (host string, err error) {
 		return "", err
 	}
 
+	// Distinguish between NODATA response and a failed request.
 	resp := ctx.Res
-	if len(resp.Answer) == 0 {
-		return "", fmt.Errorf("lookup for %q: %w", arpa, rDNSEmptyAnswerErr)
+	if resp.Rcode != dns.RcodeSuccess && resp.Rcode != dns.RcodeNameError {
+		return "", fmt.Errorf(
+			"received %s response: %w",
+			dns.RcodeToString[resp.Rcode],
+			ErrRDNSFailed,
+		)
 	}
 
-	ptr, ok := resp.Answer[0].(*dns.PTR)
-	if !ok {
-		return "", fmt.Errorf("type checking: %w", rDNSNotPTRErr)
+	for _, ans := range resp.Answer {
+		ptr, ok := ans.(*dns.PTR)
+		if ok {
+			return strings.TrimSuffix(ptr.Ptr, "."), nil
+		}
 	}
 
-	return strings.TrimSuffix(ptr.Ptr, "."), nil
+	return "", ErrRDNSNoData
 }
 
 // ResolvesPrivatePTR implements the RDNSExchanger interface for *Server.
@@ -477,6 +491,8 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 		return fmt.Errorf("preparing proxy: %w", err)
 	}
 
+	s.setupDNS64()
+
 	err = s.prepareInternalProxy()
 	if err != nil {
 		return fmt.Errorf("preparing internal proxy: %w", err)
@@ -493,17 +509,17 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 
 	s.registerHandlers()
 
-	err = s.setupDNS64()
-	if err != nil {
-		return fmt.Errorf("preparing DNS64: %w", err)
-	}
-
-	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
-
+	// TODO(e.burkov):  Remove once the local resolvers logic moved to dnsproxy.
 	err = s.setupResolvers(s.conf.LocalPTRResolvers)
 	if err != nil {
 		return fmt.Errorf("setting up resolvers: %w", err)
 	}
+
+	if s.conf.UsePrivateRDNS {
+		proxyConfig.PrivateRDNSUpstreamConfig = s.localResolvers.UpstreamConfig
+	}
+
+	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
 
 	s.recDetector.clear()
 

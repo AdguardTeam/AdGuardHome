@@ -155,6 +155,9 @@ func (l *queryLog) periodicRotate() {
 // checkAndRotate rotates log files if those are older than the specified
 // rotation interval.
 func (l *queryLog) checkAndRotate() {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+
 	oldest, err := l.readFileFirstTimeValue()
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		log.Error("querylog: reading oldest record for rotation: %s", err)

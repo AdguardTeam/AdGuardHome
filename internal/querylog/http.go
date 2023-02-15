@@ -44,6 +44,9 @@ func (l *queryLog) initWeb() {
 }
 
 func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+
 	params, err := l.parseSearchParams(r)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "failed to parse params: %s", err)
