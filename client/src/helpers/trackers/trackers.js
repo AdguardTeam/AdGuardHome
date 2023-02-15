@@ -38,6 +38,7 @@ const getWhotracksmeUrl = (trackerId) => {
 
 /**
  * Gets the source metadata for the specified tracker
+ *
  * @param {TrackerData} trackerData tracker data
  * @returns {source} source metadata or null if no matching tracker found
  */
@@ -64,6 +65,7 @@ export const getSourceData = (trackerData) => {
 
 /**
  * Converts the JSON string source into numeric source for AdGuard Home
+ *
  * @param {TrackerData} trackerData tracker data
  * @returns {number} source number
  */

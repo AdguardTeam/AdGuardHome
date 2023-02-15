@@ -23,6 +23,12 @@ See also the [v0.107.24 GitHub milestone][ms-v0.107.24].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated, both because Go 1.18 has reached end of life an
+  to prevent the possibility of exploiting the Go vulnerabilities fixed in [Go
+  1.19.6][go-1.19.6].
+
 ### Added
 
 - The ability to disable statistics by using the new `statistics.enabled`
@@ -30,6 +36,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
   losing the previous value ([#1717], [#4299]).
 - The ability to exclude domain names from the query log or statistics by using
   the new `querylog.ignored` or `statistics.ignored` fields ([#1717], [#4299]).
+  The UI changes are coming in the upcoming releases.
 
 ### Changed
 
@@ -55,7 +62,7 @@ In this release, the schema version has changed from 14 to 16.
   To rollback this change, move the property back into the `dns` object and
   change the `schema_version` back to `15`.
 - The fields `dns.querylog_enabled`, `dns.querylog_file_enabled`,
-  `dns.querylog_interval`, `dns.querylog_size_memory` have been moved to the
+  `dns.querylog_interval`, and `dns.querylog_size_memory` have been moved to the
   new `querylog` object.
 
   ```yaml
@@ -93,12 +100,13 @@ In this release, the schema version has changed from 14 to 16.
 
 - Go 1.18 support, as it has reached end of life.
 
-
 [#1717]: https://github.com/AdguardTeam/AdGuardHome/issues/1717
 [#4299]: https://github.com/AdguardTeam/AdGuardHome/issues/4299
 [#4939]: https://github.com/AdguardTeam/AdGuardHome/issues/4939
 [#5433]: https://github.com/AdguardTeam/AdGuardHome/issues/5433
 [#5479]: https://github.com/AdguardTeam/AdGuardHome/issues/5479
+
+[go-1.19.6]: https://groups.google.com/g/golang-announce/c/V0aBFqaFs_E
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
@@ -1108,7 +1116,6 @@ In this release, the schema version has changed from 10 to 12.
 
   To rollback this change, convert the property back into days and change the
   `schema_version` back to `11`.
-
 - Property `rlimit_nofile`, which in schema versions 10 and earlier used to be
   on the top level, is now moved to the new `os` object:
 

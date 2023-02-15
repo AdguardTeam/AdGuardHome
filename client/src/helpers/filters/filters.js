@@ -160,12 +160,6 @@ export default {
             "homepage": "https://github.com/DandelionSprout/adfilt",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_6.txt"
         },
-        "energized_spark": {
-            "name": "Energized Spark",
-            "categoryId": "general",
-            "homepage": "https://energized.pro/",
-            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_28.txt"
-        },
         "hagezi_personal": {
             "name": "HaGeZi Personal Black \u0026 White",
             "categoryId": "general",
