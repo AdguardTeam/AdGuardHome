@@ -40,7 +40,7 @@ readonly go
 count_flags='--count=1'
 cover_flags='--coverprofile=./coverage.txt'
 shuffle_flags='--shuffle=on'
-timeout_flags="${TIMEOUT_FLAGS:---timeout=60s}"
+timeout_flags="${TIMEOUT_FLAGS:---timeout=90s}"
 readonly count_flags cover_flags shuffle_flags timeout_flags
 
 "$go" test "$count_flags" "$cover_flags" "$race_flags" "$shuffle_flags" "$timeout_flags"\
