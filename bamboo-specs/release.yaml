@@ -136,8 +136,12 @@
 
         set -e -f -u -x
 
+        COMMIT="${bamboo.repository.revision.number}"
+        export COMMIT
+        readonly COMMIT
+
         # Explicitly checkout the revision that we need.
-        git checkout "${bamboo.repository.revision.number}"
+        git checkout "$COMMIT"
 
         # Install Qemu, create builder.
         docker version -f '{{ .Server.Experimental }}'
@@ -157,12 +161,13 @@
         docker info
 
         # Prepare and push the build.
-        make\
+        env\
                 CHANNEL="${bamboo.channel}"\
+                DIST_DIR='dist'\
                 DOCKER_IMAGE_NAME='adguard/adguardhome'\
                 DOCKER_OUTPUT="type=image,name=adguard/adguardhome,push=true"\
                 VERBOSE='1'\
-                build-docker
+                sh ./scripts/make/build-docker.sh
       'environment':
         DOCKER_CLI_EXPERIMENTAL=enabled
   'final-tasks':
