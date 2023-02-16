@@ -33,6 +33,19 @@ usage() {
 	exit 2
 }
 
+# Function maybe_sudo runs passed command with root privileges if use_sudo isn't
+# equal to 0.
+#
+# TODO(e.burkov):  Use everywhere the sudo_cmd isn't quoted.
+maybe_sudo() {
+	if [ "$use_sudo" -eq 0 ]
+	then
+		"$@"
+	else
+		"$sudo_cmd" "$@"
+	fi
+}
+
 # Function is_command checks if the command exists on the machine.
 is_command() {
 	command -v "$1" >/dev/null 2>&1
@@ -554,7 +567,14 @@ handle_existing() {
 
 # Function install_service tries to install AGH as service.
 install_service() {
-	if ( cd "$agh_dir" && ./AdGuardHome -s install )
+	# Installing the service as root is required at least on FreeBSD.
+	use_sudo='0'
+	if [ "$os" = 'freebsd' ]
+	then
+		use_sudo='1'
+	fi
+
+	if ( cd "$agh_dir" && maybe_sudo ./AdGuardHome -s install )
 	then
 		return 0
 	fi

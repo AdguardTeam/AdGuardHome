@@ -23,6 +23,12 @@ See also the [v0.107.25 GitHub milestone][ms-v0.107.25].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Failing service installation via script on FreeBSD ([#5431]).
+
+[#5431]: https://github.com/AdguardTeam/AdGuardHome/issues/5431
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
