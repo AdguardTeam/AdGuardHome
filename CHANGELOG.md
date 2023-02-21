@@ -14,11 +14,11 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.25] - 2023-03-09 (APPROX.)
+## [v0.107.26] - 2023-03-09 (APPROX.)
 
-See also the [v0.107.25 GitHub milestone][ms-v0.107.25].
+See also the [v0.107.26 GitHub milestone][ms-v0.107.26].
 
-[ms-v0.107.25]: https://github.com/AdguardTeam/AdGuardHome/milestone/61?closed=1
+[ms-v0.107.26]: https://github.com/AdguardTeam/AdGuardHome/milestone/62?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -27,11 +27,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Requirements to domain names in domain-specific upstream configurations have
   been relaxed to meet those from [RFC 3696][rfc3696] ([#4884]).
-- Panic when using unencrypted DNS-over-HTTPS ([#5518]).
 - Failing service installation via script on FreeBSD ([#5431]).
 
 [#4884]: https://github.com/AdguardTeam/AdGuardHome/issues/4884
-[#5518]: https://github.com/AdguardTeam/AdGuardHome/issues/5518
 [#5431]: https://github.com/AdguardTeam/AdGuardHome/issues/5431
 
 [rfc3696]: https://datatracker.ietf.org/doc/html/rfc3696
@@ -39,6 +37,20 @@ NOTE: Add new changes BELOW THIS COMMENT.
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.25] - 2023-02-21
+
+See also the [v0.107.25 GitHub milestone][ms-v0.107.25].
+
+### Fixed
+
+- Panic when using unencrypted DNS-over-HTTPS ([#5518]).
+
+[#5518]: https://github.com/AdguardTeam/AdGuardHome/issues/5518
+
+[ms-v0.107.25]: https://github.com/AdguardTeam/AdGuardHome/milestone/61?closed=1
 
 
 
@@ -1682,11 +1694,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.25...HEAD
-[v0.107.25]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.24...v0.107.25
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.26...HEAD
+[v0.107.26]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.25...v0.107.26
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.24...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.25...HEAD
+[v0.107.25]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.24...v0.107.25
 [v0.107.24]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.23...v0.107.24
 [v0.107.23]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.22...v0.107.23
 [v0.107.22]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.21...v0.107.22
