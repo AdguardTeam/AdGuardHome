@@ -2,11 +2,8 @@ package querylog
 
 import (
 	"fmt"
-	"math/rand"
 	"net"
-	"sort"
 	"testing"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxyutil"
@@ -351,73 +348,4 @@ func assertLogEntry(t *testing.T, entry *logEntry, host string, answer, client n
 
 	ip := proxyutil.IPFromRR(msg.Answer[0]).To16()
 	assert.Equal(t, answer, ip)
-}
-
-func testEntries() (entries []*logEntry) {
-	rsrc := rand.NewSource(time.Now().UnixNano())
-	rgen := rand.New(rsrc)
-
-	entries = make([]*logEntry, 1000)
-	for i := range entries {
-		min := rgen.Intn(60)
-		sec := rgen.Intn(60)
-		entries[i] = &logEntry{
-			Time: time.Date(2020, 1, 1, 0, min, sec, 0, time.UTC),
-		}
-	}
-
-	return entries
-}
-
-// logEntriesByTimeDesc is a wrapper over []*logEntry for sorting.
-//
-// NOTE(a.garipov): Weirdly enough, on my machine this gets consistently
-// outperformed by sort.Slice, see the benchmark below.  I'm leaving this
-// implementation here, in tests, in case we want to make sure it outperforms on
-// most machines, but for now this is unused in the actual code.
-type logEntriesByTimeDesc []*logEntry
-
-// Len implements the sort.Interface interface for logEntriesByTimeDesc.
-func (les logEntriesByTimeDesc) Len() (n int) { return len(les) }
-
-// Less implements the sort.Interface interface for logEntriesByTimeDesc.
-func (les logEntriesByTimeDesc) Less(i, j int) (less bool) {
-	return les[i].Time.After(les[j].Time)
-}
-
-// Swap implements the sort.Interface interface for logEntriesByTimeDesc.
-func (les logEntriesByTimeDesc) Swap(i, j int) { les[i], les[j] = les[j], les[i] }
-
-func BenchmarkLogEntry_sort(b *testing.B) {
-	b.Run("methods", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			b.StopTimer()
-			entries := testEntries()
-			b.StartTimer()
-
-			sort.Stable(logEntriesByTimeDesc(entries))
-		}
-	})
-
-	b.Run("reflect", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			b.StopTimer()
-			entries := testEntries()
-			b.StartTimer()
-
-			sort.SliceStable(entries, func(i, j int) (less bool) {
-				return entries[i].Time.After(entries[j].Time)
-			})
-		}
-	})
-}
-
-func TestLogEntriesByTime_sort(t *testing.T) {
-	entries := testEntries()
-	sort.Sort(logEntriesByTimeDesc(entries))
-
-	for i := range entries[1:] {
-		assert.False(t, entries[i+1].Time.After(entries[i].Time),
-			"%s %s", entries[i+1].Time, entries[i].Time)
-	}
 }

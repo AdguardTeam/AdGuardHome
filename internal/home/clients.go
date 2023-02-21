@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -271,7 +270,7 @@ func (clients *clientsContainer) addFromConfig(objects []*clientObject) {
 			}
 		}
 
-		sort.Strings(cli.Tags)
+		slices.Sort(cli.Tags)
 
 		_, err := clients.Add(cli)
 		if err != nil {
@@ -311,7 +310,9 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 	// above loop can generate different orderings when writing to the config
 	// file: this produces lots of diffs in config files, so sort objects by
 	// name before writing.
-	sort.Slice(objs, func(i, j int) bool { return objs[i].Name < objs[j].Name })
+	slices.SortStableFunc(objs, func(a, b *clientObject) (sortsBefore bool) {
+		return a.Name < b.Name
+	})
 
 	return objs
 }
@@ -590,7 +591,7 @@ func (clients *clientsContainer) check(c *Client) (err error) {
 		}
 	}
 
-	sort.Strings(c.Tags)
+	slices.Sort(c.Tags)
 
 	err = dnsforward.ValidateUpstreams(c.Upstreams)
 	if err != nil {

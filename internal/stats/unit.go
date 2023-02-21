@@ -5,13 +5,13 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"go.etcd.io/bbolt"
+	"golang.org/x/exp/slices"
 )
 
 // TODO(a.garipov): Rewrite all of this.  Add proper error handling and
@@ -180,8 +180,8 @@ func convertMapToSlice(m map[string]uint64, max int) (s []countPair) {
 		s = append(s, countPair{Name: k, Count: v})
 	}
 
-	sort.Slice(s, func(i, j int) bool {
-		return s[j].Count < s[i].Count
+	slices.SortFunc(s, func(a, b countPair) (sortsBefore bool) {
+		return a.Count < b.Count
 	})
 	if max > len(s) {
 		max = len(s)

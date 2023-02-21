@@ -1,15 +1,15 @@
 package dnsforward
 
 import (
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/exp/slices"
 )
 
 func TestAnyNameMatches(t *testing.T) {
 	dnsNames := []string{"host1", "*.host2", "1.2.3.4"}
-	sort.Strings(dnsNames)
+	slices.Sort(dnsNames)
 
 	testCases := []struct {
 		name    string

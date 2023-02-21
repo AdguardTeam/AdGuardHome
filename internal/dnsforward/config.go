@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/netip"
 	"os"
-	"sort"
 	"strings"
 	"time"
 
@@ -23,6 +22,7 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/ameshkov/dnscrypt/v2"
+	"golang.org/x/exp/slices"
 )
 
 // BlockingMode is an enum of all allowed blocking modes.
@@ -510,7 +510,7 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
 		if len(cert.DNSNames) != 0 {
 			s.conf.dnsNames = cert.DNSNames
 			log.Debug("dnsforward: using certificate's SAN as DNS names: %v", cert.DNSNames)
-			sort.Strings(s.conf.dnsNames)
+			slices.Sort(s.conf.dnsNames)
 		} else {
 			s.conf.dnsNames = append(s.conf.dnsNames, cert.Subject.CommonName)
 			log.Debug("dnsforward: using certificate's CN as DNS name: %s", cert.Subject.CommonName)
@@ -524,16 +524,6 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
 	}
 
 	return nil
-}
-
-// isInSorted returns true if s is in the sorted slice strs.
-func isInSorted(strs []string, s string) (ok bool) {
-	i := sort.SearchStrings(strs, s)
-	if i == len(strs) || strs[i] != s {
-		return false
-	}
-
-	return true
 }
 
 // isWildcard returns true if host is a wildcard hostname.
@@ -554,7 +544,7 @@ func anyNameMatches(dnsNames []string, sni string) (ok bool) {
 		return false
 	}
 
-	if isInSorted(dnsNames, sni) {
+	if _, ok = slices.BinarySearch(dnsNames, sni); ok {
 		return true
 	}
 
