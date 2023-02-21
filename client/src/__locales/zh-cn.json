@@ -172,7 +172,7 @@
     "list_url_table_header": "清单网址",
     "rules_count_table_header": "规则数",
     "last_time_updated_table_header": "上次更新时间",
-    "actions_table_header": "活跃状态",
+    "actions_table_header": "操作",
     "request_table_header": "请求",
     "edit_table_action": "编辑",
     "delete_table_action": "删除",

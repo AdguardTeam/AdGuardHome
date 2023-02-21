@@ -101,7 +101,7 @@ export default {
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_13.txt"
         },
         "POL_polish_filters_for_pi_hole": {
-            "name": "POL: Polish filters for Pi hole",
+            "name": "POL: Polish filters for Pi-hole",
             "categoryId": "regional",
             "homepage": "https://www.certyficate.it/",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_14.txt"
