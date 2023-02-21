@@ -14,7 +14,7 @@ import (
 
 // ValidateClientID returns an error if id is not a valid ClientID.
 func ValidateClientID(id string) (err error) {
-	err = netutil.ValidateDomainNameLabel(id)
+	err = netutil.ValidateHostnameLabel(id)
 	if err != nil {
 		// Replace the domain name label wrapper with our own.
 		return fmt.Errorf("invalid clientid %q: %w", id, errors.Unwrap(err))

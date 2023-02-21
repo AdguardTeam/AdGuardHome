@@ -540,7 +540,8 @@ func matchesDomainWildcard(host, pat string) (ok bool) {
 // anyNameMatches returns true if sni, the client's SNI value, matches any of
 // the DNS names and patterns from certificate.  dnsNames must be sorted.
 func anyNameMatches(dnsNames []string, sni string) (ok bool) {
-	if netutil.ValidateDomainName(sni) != nil {
+	// Check sni is either a valid hostname or a valid IP address.
+	if netutil.ValidateHostname(sni) != nil && net.ParseIP(sni) == nil {
 		return false
 	}
 

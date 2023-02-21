@@ -230,7 +230,7 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 	for _, l := range ll {
 		// TODO(a.garipov): Remove this after we're finished with the client
 		// hostname validations in the DHCP server code.
-		err := netutil.ValidateDomainName(l.Hostname)
+		err := netutil.ValidateHostname(l.Hostname)
 		if err != nil {
 			log.Debug("dnsforward: skipping invalid hostname %q from dhcp: %s", l.Hostname, err)
 
@@ -468,7 +468,7 @@ func (s *Server) processRestrictLocal(dctx *dnsContext) (rc resultCode) {
 			return resultCodeError
 		}
 
-		log.Debug("dnsforward: request is for a service domain")
+		log.Debug("dnsforward: request is not for arpa domain")
 
 		return resultCodeSuccess
 	}

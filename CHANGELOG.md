@@ -25,11 +25,16 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Requirements to domain names in domain-specific upstream configurations have
+  been relaxed to meet those from [RFC 3696][rfc3696] ([#4884]).
 - Panic when using unencrypted DNS-over-HTTPS ([#5518]).
 - Failing service installation via script on FreeBSD ([#5431]).
 
+[#4884]: https://github.com/AdguardTeam/AdGuardHome/issues/4884
 [#5518]: https://github.com/AdguardTeam/AdGuardHome/issues/5518
 [#5431]: https://github.com/AdguardTeam/AdGuardHome/issues/5431
+
+[rfc3696]: https://datatracker.ietf.org/doc/html/rfc3696
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

@@ -108,7 +108,7 @@ func (s *v4Server) validHostnameForClient(cliHostname string, ip net.IP) (hostna
 		hostname = aghnet.GenerateHostname(ip)
 	}
 
-	err = netutil.ValidateDomainName(hostname)
+	err = netutil.ValidateHostname(hostname)
 	if err != nil {
 		log.Info("dhcpv4: %s", err)
 		hostname = ""
@@ -372,7 +372,7 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 			return err
 		}
 
-		err = netutil.ValidateDomainName(hostname)
+		err = netutil.ValidateHostname(hostname)
 		if err != nil {
 			return fmt.Errorf("validating hostname: %w", err)
 		}

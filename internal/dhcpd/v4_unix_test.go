@@ -251,8 +251,8 @@ func TestV4Server_AddRemove_static(t *testing.T) {
 		},
 		name: "bad_hostname",
 		wantErrMsg: `dhcpv4: adding static lease: validating hostname: ` +
-			`bad domain name "bad-lbl-.local": ` +
-			`bad domain name label "bad-lbl-": bad domain name label rune '-'`,
+			`bad hostname "bad-lbl-.local": ` +
+			`bad hostname label "bad-lbl-": bad hostname label rune '-'`,
 	}}
 
 	for _, tc := range testCases {

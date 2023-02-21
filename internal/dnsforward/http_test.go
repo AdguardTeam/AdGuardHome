@@ -337,7 +337,8 @@ func TestValidateUpstreams(t *testing.T) {
 	}, {
 		name: "bad_domain",
 		wantErr: `bad upstream for domain "[/!/]8.8.8.8": domain at index 0: ` +
-			`bad domain name "!": bad domain name label "!": bad domain name label rune '!'`,
+			`bad domain name "!": bad top-level domain name label "!": ` +
+			`bad top-level domain name label rune '!'`,
 		set: []string{"[/!/]8.8.8.8"},
 	}}
 

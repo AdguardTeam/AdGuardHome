@@ -4,8 +4,8 @@ go 1.19
 
 require (
 	// TODO(a.garipov): Use v0.48.0 when it's released.
-	github.com/AdguardTeam/dnsproxy v0.47.1-0.20230207130636-533058b17239
-	github.com/AdguardTeam/golibs v0.11.4
+	github.com/AdguardTeam/dnsproxy v0.48.0
+	github.com/AdguardTeam/golibs v0.12.0
 	github.com/AdguardTeam/urlfilter v0.16.1
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.2.5

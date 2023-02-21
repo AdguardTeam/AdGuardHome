@@ -1171,7 +1171,8 @@ func TestNewServer(t *testing.T) {
 			LocalDomain: "!!!",
 		},
 		wantErrMsg: `local domain: bad domain name "!!!": ` +
-			`bad domain name label "!!!": bad domain name label rune '!'`,
+			`bad top-level domain name label "!!!": ` +
+			`bad top-level domain name label rune '!'`,
 	}}
 
 	for _, tc := range testCases {
