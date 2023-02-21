@@ -50,136 +50,169 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 	testCases := []struct {
 		name         string
 		proto        proxy.Proto
-		hostSrvName  string
+		confSrvName  string
 		cliSrvName   string
 		wantClientID string
 		wantErrMsg   string
+		inclHTTPTLS  bool
 		strictSNI    bool
 	}{{
 		name:         "udp",
 		proto:        proxy.ProtoUDP,
-		hostSrvName:  "",
+		confSrvName:  "",
 		cliSrvName:   "",
 		wantClientID: "",
 		wantErrMsg:   "",
+		inclHTTPTLS:  false,
 		strictSNI:    false,
 	}, {
 		name:         "tls_no_clientid",
 		proto:        proxy.ProtoTLS,
-		hostSrvName:  "example.com",
+		confSrvName:  "example.com",
 		cliSrvName:   "example.com",
 		wantClientID: "",
 		wantErrMsg:   "",
+		inclHTTPTLS:  false,
 		strictSNI:    true,
 	}, {
 		name:         "tls_no_client_server_name",
 		proto:        proxy.ProtoTLS,
-		hostSrvName:  "example.com",
+		confSrvName:  "example.com",
 		cliSrvName:   "",
 		wantClientID: "",
 		wantErrMsg: `clientid check: client server name "" ` +
 			`doesn't match host server name "example.com"`,
-		strictSNI: true,
+		inclHTTPTLS: false,
+		strictSNI:   true,
 	}, {
 		name:         "tls_no_client_server_name_no_strict",
 		proto:        proxy.ProtoTLS,
-		hostSrvName:  "example.com",
+		confSrvName:  "example.com",
 		cliSrvName:   "",
 		wantClientID: "",
 		wantErrMsg:   "",
+		inclHTTPTLS:  false,
 		strictSNI:    false,
 	}, {
 		name:         "tls_clientid",
 		proto:        proxy.ProtoTLS,
-		hostSrvName:  "example.com",
+		confSrvName:  "example.com",
 		cliSrvName:   "cli.example.com",
 		wantClientID: "cli",
 		wantErrMsg:   "",
+		inclHTTPTLS:  false,
 		strictSNI:    true,
 	}, {
 		name:         "tls_clientid_hostname_error",
 		proto:        proxy.ProtoTLS,
-		hostSrvName:  "example.com",
+		confSrvName:  "example.com",
 		cliSrvName:   "cli.example.net",
 		wantClientID: "",
 		wantErrMsg: `clientid check: client server name "cli.example.net" ` +
 			`doesn't match host server name "example.com"`,
-		strictSNI: true,
+		inclHTTPTLS: false,
+		strictSNI:   true,
 	}, {
 		name:         "tls_invalid_clientid",
 		proto:        proxy.ProtoTLS,
-		hostSrvName:  "example.com",
+		confSrvName:  "example.com",
 		cliSrvName:   "!!!.example.com",
 		wantClientID: "",
 		wantErrMsg: `clientid check: invalid clientid "!!!": ` +
 			`bad domain name label rune '!'`,
-		strictSNI: true,
+		inclHTTPTLS: false,
+		strictSNI:   true,
 	}, {
 		name:        "tls_clientid_too_long",
 		proto:       proxy.ProtoTLS,
-		hostSrvName: "example.com",
+		confSrvName: "example.com",
 		cliSrvName: `abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmno` +
 			`pqrstuvwxyz0123456789.example.com`,
 		wantClientID: "",
 		wantErrMsg: `clientid check: invalid clientid "abcdefghijklmno` +
 			`pqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789": ` +
 			`domain name label is too long: got 72, max 63`,
-		strictSNI: true,
+		inclHTTPTLS: false,
+		strictSNI:   true,
 	}, {
 		name:         "quic_clientid",
 		proto:        proxy.ProtoQUIC,
-		hostSrvName:  "example.com",
+		confSrvName:  "example.com",
 		cliSrvName:   "cli.example.com",
 		wantClientID: "cli",
 		wantErrMsg:   "",
+		inclHTTPTLS:  false,
 		strictSNI:    true,
 	}, {
 		name:         "tls_clientid_issue3437",
 		proto:        proxy.ProtoTLS,
-		hostSrvName:  "example.com",
+		confSrvName:  "example.com",
 		cliSrvName:   "cli.myexample.com",
 		wantClientID: "",
 		wantErrMsg: `clientid check: client server name "cli.myexample.com" ` +
 			`doesn't match host server name "example.com"`,
-		strictSNI: true,
+		inclHTTPTLS: false,
+		strictSNI:   true,
 	}, {
 		name:         "tls_case",
 		proto:        proxy.ProtoTLS,
-		hostSrvName:  "example.com",
+		confSrvName:  "example.com",
 		cliSrvName:   "InSeNsItIvE.example.com",
 		wantClientID: "insensitive",
 		wantErrMsg:   ``,
+		inclHTTPTLS:  false,
 		strictSNI:    true,
 	}, {
 		name:         "quic_case",
 		proto:        proxy.ProtoQUIC,
-		hostSrvName:  "example.com",
+		confSrvName:  "example.com",
 		cliSrvName:   "InSeNsItIvE.example.com",
 		wantClientID: "insensitive",
 		wantErrMsg:   ``,
+		inclHTTPTLS:  false,
 		strictSNI:    true,
 	}, {
 		name:         "https_no_clientid",
 		proto:        proxy.ProtoHTTPS,
-		hostSrvName:  "example.com",
+		confSrvName:  "example.com",
 		cliSrvName:   "example.com",
 		wantClientID: "",
 		wantErrMsg:   "",
+		inclHTTPTLS:  true,
 		strictSNI:    true,
 	}, {
 		name:         "https_clientid",
 		proto:        proxy.ProtoHTTPS,
-		hostSrvName:  "example.com",
+		confSrvName:  "example.com",
 		cliSrvName:   "cli.example.com",
 		wantClientID: "cli",
 		wantErrMsg:   "",
+		inclHTTPTLS:  true,
+		strictSNI:    true,
+	}, {
+		name:         "https_issue5518",
+		proto:        proxy.ProtoHTTPS,
+		confSrvName:  "example.com",
+		cliSrvName:   "cli.example.com",
+		wantClientID: "cli",
+		wantErrMsg:   "",
+		inclHTTPTLS:  false,
+		strictSNI:    true,
+	}, {
+		name:         "https_no_host",
+		proto:        proxy.ProtoHTTPS,
+		confSrvName:  "example.com",
+		cliSrvName:   "example.com",
+		wantClientID: "",
+		wantErrMsg:   "",
+		inclHTTPTLS:  false,
 		strictSNI:    true,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			tlsConf := TLSConfig{
-				ServerName:     tc.hostSrvName,
+				ServerName:     tc.confSrvName,
 				StrictSNICheck: tc.strictSNI,
 			}
 
@@ -195,7 +228,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 
 			switch tc.proto {
 			case proxy.ProtoHTTPS:
-				httpReq = newHTTPReq(tc.cliSrvName)
+				httpReq = newHTTPReq(tc.cliSrvName, tc.inclHTTPTLS)
 			case proxy.ProtoQUIC:
 				qconn = testQUICConnection{
 					serverName: tc.cliSrvName,
@@ -222,20 +255,25 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 }
 
 // newHTTPReq is a helper to create HTTP requests for tests.
-func newHTTPReq(cliSrvName string) (r *http.Request) {
+func newHTTPReq(cliSrvName string, inclTLS bool) (r *http.Request) {
 	u := &url.URL{
 		Path: "/dns-query",
 	}
 
-	return &http.Request{
+	r = &http.Request{
 		ProtoMajor: 1,
 		ProtoMinor: 1,
 		URL:        u,
 		Host:       cliSrvName,
-		TLS: &tls.ConnectionState{
-			ServerName: cliSrvName,
-		},
 	}
+
+	if inclTLS {
+		r.TLS = &tls.ConnectionState{
+			ServerName: cliSrvName,
+		}
+	}
+
+	return r
 }
 
 func TestClientIDFromDNSContextHTTPS(t *testing.T) {

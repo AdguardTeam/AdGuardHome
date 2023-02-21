@@ -147,11 +147,24 @@ func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string
 	return clientID, nil
 }
 
-// clientServerName returns the TLS server name based on the protocol.
+// clientServerName returns the TLS server name based on the protocol.  For
+// DNS-over-HTTPS requests, it will return the hostname part of the Host header
+// if there is one.
 func clientServerName(pctx *proxy.DNSContext, proto proxy.Proto) (srvName string, err error) {
 	switch proto {
 	case proxy.ProtoHTTPS:
-		srvName = pctx.HTTPRequest.TLS.ServerName
+		r := pctx.HTTPRequest
+		if connState := r.TLS; connState != nil {
+			srvName = connState.ServerName
+		} else if r.Host != "" {
+			var host string
+			host, err = netutil.SplitHost(r.Host)
+			if err != nil {
+				return "", fmt.Errorf("parsing host: %w", err)
+			}
+
+			srvName = host
+		}
 	case proxy.ProtoQUIC:
 		qConn := pctx.QUICConnection
 		conn, ok := qConn.(quicConnection)
