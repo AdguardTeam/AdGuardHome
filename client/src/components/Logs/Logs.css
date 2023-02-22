@@ -130,6 +130,10 @@
     background-color: transparent !important;
 }
 
+[data-theme="dark"] .form-control--transparent option {
+    background-color: var(--card-bgcolor);
+}
+
 .input-group-search {
     background-color: transparent;
     position: relative;
@@ -398,6 +402,10 @@
 /* QUERY_STATUS_COLORS */
 .logs__row--blue {
     background-color: var(--logs__row--blue-bgcolor);
+}
+
+[data-theme="dark"] .logs__row--blue .logs__text--link {
+    color: var(--white);
 }
 
 .logs__row--green {
