@@ -181,7 +181,7 @@ func convertMapToSlice(m map[string]uint64, max int) (s []countPair) {
 	}
 
 	slices.SortFunc(s, func(a, b countPair) (sortsBefore bool) {
-		return a.Count < b.Count
+		return a.Count > b.Count
 	})
 	if max > len(s) {
 		max = len(s)
