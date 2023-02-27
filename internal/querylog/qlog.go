@@ -31,7 +31,8 @@ type queryLog struct {
 
 	// bufferLock protects buffer.
 	bufferLock sync.RWMutex
-	// buffer contains recent log entries.
+	// buffer contains recent log entries.  The entries in this buffer must not
+	// be modified.
 	buffer []*logEntry
 
 	fileFlushLock sync.Mutex // synchronize a file-flushing goroutine and main thread
@@ -98,6 +99,13 @@ type logEntry struct {
 
 	Cached            bool `json:",omitempty"`
 	AuthenticatedData bool `json:"AD,omitempty"`
+}
+
+// shallowClone returns a shallow clone of e.
+func (e *logEntry) shallowClone() (clone *logEntry) {
+	cloneVal := *e
+
+	return &cloneVal
 }
 
 func (l *queryLog) Start() {

@@ -52,7 +52,9 @@ func (l *queryLog) searchMemory(params *searchParams, cache clientCache) (entrie
 	// Go through the buffer in the reverse order, from newer to older.
 	var err error
 	for i := len(l.buffer) - 1; i >= 0; i-- {
-		e := l.buffer[i]
+		// A shallow clone is enough, since the only thing that this loop
+		// modifies is the client field.
+		e := l.buffer[i].shallowClone()
 
 		e.client, err = l.client(e.ClientID, e.IP.String(), cache)
 		if err != nil {
@@ -130,7 +132,7 @@ func (l *queryLog) search(params *searchParams) (entries []*logEntry, oldest tim
 // searchFiles looks up log records from all log files.  It optionally uses the
 // client cache, if provided.  searchFiles does not scan more than
 // maxFileScanEntries so callers may need to call it several times to get all
-// results.  oldset and total are the time of the oldest processed entry and the
+// results.  oldest and total are the time of the oldest processed entry and the
 // total number of processed entries, including discarded ones, correspondingly.
 func (l *queryLog) searchFiles(
 	params *searchParams,

@@ -161,7 +161,7 @@ run_linter "$GO" vet ./...
 run_linter govulncheck ./...
 
 # Apply more lax standards to the code we haven't properly refactored yet.
-run_linter gocyclo --over 17 ./internal/querylog/
+run_linter gocyclo --over 14 ./internal/querylog/
 run_linter gocyclo --over 13\
 	./internal/dhcpd\
 	./internal/filtering/\

@@ -54,10 +54,7 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// search for the log entries
 	entries, oldest := l.search(params)
-
-	// convert log entries to JSON
 	data := l.entriesToJSON(entries, oldest)
 
 	_ = aghhttp.WriteJSONResponse(w, r, data)

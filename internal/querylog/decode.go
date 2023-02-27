@@ -247,61 +247,50 @@ var resultHandlers = map[string]logEntryHandler{
 }
 
 func decodeResultRuleKey(key string, i int, dec *json.Decoder, ent *logEntry) {
+	var vToken json.Token
 	switch key {
 	case "FilterListID":
-		vToken, err := dec.Token()
-		if err != nil {
-			if err != io.EOF {
-				log.Debug("decodeResultRuleKey %s err: %s", key, err)
-			}
-
-			return
-		}
-
-		if len(ent.Result.Rules) < i+1 {
-			ent.Result.Rules = append(ent.Result.Rules, &filtering.ResultRule{})
-		}
-
+		ent.Result.Rules, vToken = decodeVTokenAndAddRule(key, i, dec, ent.Result.Rules)
 		if n, ok := vToken.(json.Number); ok {
 			ent.Result.Rules[i].FilterListID, _ = n.Int64()
 		}
 	case "IP":
-		vToken, err := dec.Token()
-		if err != nil {
-			if err != io.EOF {
-				log.Debug("decodeResultRuleKey %s err: %s", key, err)
-			}
-
-			return
-		}
-
-		if len(ent.Result.Rules) < i+1 {
-			ent.Result.Rules = append(ent.Result.Rules, &filtering.ResultRule{})
-		}
-
+		ent.Result.Rules, vToken = decodeVTokenAndAddRule(key, i, dec, ent.Result.Rules)
 		if ipStr, ok := vToken.(string); ok {
 			ent.Result.Rules[i].IP = net.ParseIP(ipStr)
 		}
 	case "Text":
-		vToken, err := dec.Token()
-		if err != nil {
-			if err != io.EOF {
-				log.Debug("decodeResultRuleKey %s err: %s", key, err)
-			}
-
-			return
-		}
-
-		if len(ent.Result.Rules) < i+1 {
-			ent.Result.Rules = append(ent.Result.Rules, &filtering.ResultRule{})
-		}
-
+		ent.Result.Rules, vToken = decodeVTokenAndAddRule(key, i, dec, ent.Result.Rules)
 		if s, ok := vToken.(string); ok {
 			ent.Result.Rules[i].Text = s
 		}
 	default:
 		// Go on.
 	}
+}
+
+func decodeVTokenAndAddRule(
+	key string,
+	i int,
+	dec *json.Decoder,
+	rules []*filtering.ResultRule,
+) (newRules []*filtering.ResultRule, vToken json.Token) {
+	newRules = rules
+
+	vToken, err := dec.Token()
+	if err != nil {
+		if err != io.EOF {
+			log.Debug("decodeResultRuleKey %s err: %s", key, err)
+		}
+
+		return newRules, nil
+	}
+
+	if len(rules) < i+1 {
+		newRules = append(newRules, &filtering.ResultRule{})
+	}
+
+	return newRules, vToken
 }
 
 func decodeResultRules(dec *json.Decoder, ent *logEntry) {
