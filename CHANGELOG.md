@@ -30,11 +30,15 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Automatic update on MIPS64 and little-endian 32-bit MIPS architectures
+  ([#5270], [#5373]).
 - Requirements to domain names in domain-specific upstream configurations have
   been relaxed to meet those from [RFC 3696][rfc3696] ([#4884]).
 - Failing service installation via script on FreeBSD ([#5431]).
 
 [#4884]: https://github.com/AdguardTeam/AdGuardHome/issues/4884
+[#5270]: https://github.com/AdguardTeam/AdGuardHome/issues/5270
+[#5373]: https://github.com/AdguardTeam/AdGuardHome/issues/5373
 [#5431]: https://github.com/AdguardTeam/AdGuardHome/issues/5431
 [#5468]: https://github.com/AdguardTeam/AdGuardHome/issues/5468
 

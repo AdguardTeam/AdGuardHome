@@ -10,6 +10,9 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/log"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 // TODO(a.garipov): Make configurable.
@@ -81,9 +84,9 @@ func (u *Updater) parseVersionResponse(data []byte) (VersionInfo, error) {
 		return info, fmt.Errorf("version.json: %w", err)
 	}
 
-	for _, v := range versionJSON {
+	for k, v := range versionJSON {
 		if v == "" {
-			return info, fmt.Errorf("version.json: invalid data")
+			return info, fmt.Errorf("version.json: bad data: value for key %q is empty", k)
 		}
 	}
 
@@ -91,9 +94,9 @@ func (u *Updater) parseVersionResponse(data []byte) (VersionInfo, error) {
 	info.Announcement = versionJSON["announcement"]
 	info.AnnouncementURL = versionJSON["announcement_url"]
 
-	packageURL, ok := u.downloadURL(versionJSON)
-	if !ok {
-		return info, fmt.Errorf("version.json: packageURL not found")
+	packageURL, key, found := u.downloadURL(versionJSON)
+	if !found {
+		return info, fmt.Errorf("version.json: no package URL: key %q not found in object", key)
 	}
 
 	info.CanAutoUpdate = aghalg.BoolToNullBool(info.NewVersion != u.version)
@@ -104,25 +107,40 @@ func (u *Updater) parseVersionResponse(data []byte) (VersionInfo, error) {
 	return info, nil
 }
 
-// downloadURL returns the download URL for current build.
-func (u *Updater) downloadURL(json map[string]string) (string, bool) {
-	var key string
-
+// downloadURL returns the download URL for current build as well as its key in
+// versionObj.  If the key is not found, it additionally prints an informative
+// log message.
+func (u *Updater) downloadURL(versionObj map[string]string) (dlURL, key string, ok bool) {
 	if u.goarch == "arm" && u.goarm != "" {
 		key = fmt.Sprintf("download_%s_%sv%s", u.goos, u.goarch, u.goarm)
-	} else if u.goarch == "mips" && u.gomips != "" {
+	} else if isMIPS(u.goarch) && u.gomips != "" {
 		key = fmt.Sprintf("download_%s_%s_%s", u.goos, u.goarch, u.gomips)
-	}
-
-	val, ok := json[key]
-	if !ok {
+	} else {
 		key = fmt.Sprintf("download_%s_%s", u.goos, u.goarch)
-		val, ok = json[key]
 	}
 
-	if !ok {
-		return "", false
+	dlURL, ok = versionObj[key]
+	if ok {
+		return dlURL, key, true
 	}
 
-	return val, true
+	keys := maps.Keys(versionObj)
+	slices.Sort(keys)
+	log.Error("updater: key %q not found; got keys %q", key, keys)
+
+	return "", key, false
+}
+
+// isMIPS returns true if arch is any MIPS architecture.
+func isMIPS(arch string) (ok bool) {
+	switch arch {
+	case
+		"mips",
+		"mips64",
+		"mips64le",
+		"mipsle":
+		return true
+	default:
+		return false
+	}
 }

@@ -98,7 +98,7 @@ func requestVersionInfo(resp *versionResponse, recheck bool) (err error) {
 	if err != nil {
 		vcu := Context.updater.VersionCheckURL()
 
-		return fmt.Errorf("getting version info from %s: %s", vcu, err)
+		return fmt.Errorf("getting version info from %s: %w", vcu, err)
 	}
 
 	return nil
