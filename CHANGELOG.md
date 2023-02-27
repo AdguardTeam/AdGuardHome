@@ -23,6 +23,11 @@ See also the [v0.107.26 GitHub milestone][ms-v0.107.26].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- The ability to use `dnstype` rules in the disallowed domains list ([#5468]).
+  This allows dropping requests based on their question types.
+
 ### Fixed
 
 - Requirements to domain names in domain-specific upstream configurations have
@@ -31,6 +36,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#4884]: https://github.com/AdguardTeam/AdGuardHome/issues/4884
 [#5431]: https://github.com/AdguardTeam/AdGuardHome/issues/5431
+[#5468]: https://github.com/AdguardTeam/AdGuardHome/issues/5468
 
 [rfc3696]: https://datatracker.ietf.org/doc/html/rfc3696
 
