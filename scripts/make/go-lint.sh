@@ -164,7 +164,6 @@ run_linter govulncheck ./...
 run_linter gocyclo --over 14 ./internal/querylog/
 run_linter gocyclo --over 13\
 	./internal/dhcpd\
-	./internal/filtering/\
 	./internal/home/\
 	;
 
@@ -175,7 +174,7 @@ run_linter gocyclo --over 10\
 	./internal/aghos/\
 	./internal/aghtest/\
 	./internal/dnsforward/\
-	./internal/filtering/rewrite/\
+	./internal/filtering/\
 	./internal/stats/\
 	./internal/tools/\
 	./internal/updater/\
