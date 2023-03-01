@@ -25,8 +25,42 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- The ability to set custom IP for EDNS Client Subnet by using the new
+  `dns.edns_client_subnet.use_custom` and `dns.edns_client_subnet.custom_ip`
+  fields ([#1472]).  The UI changes are coming in the upcoming releases.
 - The ability to use `dnstype` rules in the disallowed domains list ([#5468]).
   This allows dropping requests based on their question types.
+
+### Changed
+
+#### Configuration Changes
+
+In this release, the schema version has changed from 16 to 17.
+
+- Property `edns_client_subnet`, which in schema versions 16 and earlier used
+  to be a part of the `dns` object, is now part of the `dns.edns_client_subnet`
+  object:
+
+  ```yaml
+  # BEFORE:
+  'dns':
+    # …
+    'edns_client_subnet': false
+
+  # AFTER:
+  'dns':
+    # …
+    'edns_client_subnet':
+      'enabled': false
+      'use_custom': false
+      'custom_ip': ''
+  ```
+
+  To rollback this change, move the value of `dns.edns_client_subnet.enabled`
+  into the `dns.edns_client_subnet`, remove the fields
+  `dns.edns_client_subnet.enabled`, `dns.edns_client_subnet.use_custom`,
+  `dns.edns_client_subnet.custom_ip`, and change the `schema_version` back to
+  `16`.
 
 ### Fixed
 
@@ -37,6 +71,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
   been relaxed to meet those from [RFC 3696][rfc3696] ([#4884]).
 - Failing service installation via script on FreeBSD ([#5431]).
 
+[#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
 [#4884]: https://github.com/AdguardTeam/AdGuardHome/issues/4884
 [#5270]: https://github.com/AdguardTeam/AdGuardHome/issues/5270
 [#5373]: https://github.com/AdguardTeam/AdGuardHome/issues/5373
@@ -129,6 +164,7 @@ In this release, the schema version has changed from 14 to 16.
     'file_enabled': true
     'interval': '2160h'
     'size_memory': 1000
+    'ignored': []
   ```
 
   To rollback this change, rename and move properties back into the `dns`

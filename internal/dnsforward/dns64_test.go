@@ -287,6 +287,9 @@ func TestServer_HandleDNSRequest_dns64(t *testing.T) {
 			UDPListenAddrs: []*net.UDPAddr{{}},
 			TCPListenAddrs: []*net.TCPAddr{{}},
 			UseDNS64:       true,
+			FilteringConfig: FilteringConfig{
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			},
 		}, localUps)
 
 		t.Run(tc.name, func(t *testing.T) {

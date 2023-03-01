@@ -69,6 +69,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 			ProtectionEnabled: true,
 			BlockingMode:      BlockingModeDefault,
 			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
+			EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
 	}
@@ -144,6 +145,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			ProtectionEnabled: true,
 			BlockingMode:      BlockingModeDefault,
 			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
+			EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
 	}
@@ -227,7 +229,10 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		require.True(t, ok)
 
 		t.Run(tc.name, func(t *testing.T) {
-			t.Cleanup(func() { s.conf = defaultConf })
+			t.Cleanup(func() {
+				s.conf = defaultConf
+				s.conf.FilteringConfig.EDNSClientSubnet.Enabled = false
+			})
 
 			rBody := io.NopCloser(bytes.NewReader(caseData.Req))
 			var r *http.Request
@@ -443,6 +448,9 @@ func TestServer_handleTestUpstreaDNS(t *testing.T) {
 		UDPListenAddrs:  []*net.UDPAddr{{}},
 		TCPListenAddrs:  []*net.TCPAddr{{}},
 		UpstreamTimeout: upsTimeout,
+		FilteringConfig: FilteringConfig{
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+		},
 	}, nil)
 	startDeferStop(t, srv)
 

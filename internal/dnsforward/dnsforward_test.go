@@ -156,6 +156,9 @@ func createTestTLS(t *testing.T, tlsConf TLSConfig) (s *Server, certPem []byte) 
 	s = createTestServer(t, &filtering.Config{}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
+		FilteringConfig: FilteringConfig{
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+		},
 	}, nil)
 
 	tlsConf.CertificateChainData, tlsConf.PrivateKeyData = certPem, keyPem
@@ -267,6 +270,9 @@ func TestServer(t *testing.T) {
 	s := createTestServer(t, &filtering.Config{}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
+		FilteringConfig: FilteringConfig{
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+		},
 	}, nil)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 	startDeferStop(t, s)
@@ -305,7 +311,8 @@ func TestServer_timeout(t *testing.T) {
 		srvConf := &ServerConfig{
 			UpstreamTimeout: timeout,
 			FilteringConfig: FilteringConfig{
-				BlockingMode: BlockingModeDefault,
+				BlockingMode:     BlockingModeDefault,
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 			},
 		}
 
@@ -323,6 +330,9 @@ func TestServer_timeout(t *testing.T) {
 		require.NoError(t, err)
 
 		s.conf.FilteringConfig.BlockingMode = BlockingModeDefault
+		s.conf.FilteringConfig.EDNSClientSubnet = &EDNSClientSubnet{
+			Enabled: false,
+		}
 		err = s.Prepare(&s.conf)
 		require.NoError(t, err)
 
@@ -334,6 +344,9 @@ func TestServerWithProtectionDisabled(t *testing.T) {
 	s := createTestServer(t, &filtering.Config{}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
+		FilteringConfig: FilteringConfig{
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+		},
 	}, nil)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 	startDeferStop(t, s)
@@ -438,6 +451,9 @@ func TestSafeSearch(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
+			EDNSClientSubnet: &EDNSClientSubnet{
+				Enabled: false,
+			},
 		},
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
@@ -493,6 +509,11 @@ func TestInvalidRequest(t *testing.T) {
 	s := createTestServer(t, &filtering.Config{}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
+		FilteringConfig: FilteringConfig{
+			EDNSClientSubnet: &EDNSClientSubnet{
+				Enabled: false,
+			},
+		},
 	}, nil)
 	startDeferStop(t, s)
 
@@ -519,6 +540,9 @@ func TestBlockedRequest(t *testing.T) {
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			BlockingMode:      BlockingModeDefault,
+			EDNSClientSubnet: &EDNSClientSubnet{
+				Enabled: false,
+			},
 		},
 	}
 	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
@@ -544,6 +568,9 @@ func TestServerCustomClientUpstream(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
+			EDNSClientSubnet: &EDNSClientSubnet{
+				Enabled: false,
+			},
 		},
 	}
 	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
@@ -592,6 +619,11 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 	s := createTestServer(t, &filtering.Config{}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
+		FilteringConfig: FilteringConfig{
+			EDNSClientSubnet: &EDNSClientSubnet{
+				Enabled: false,
+			},
+		},
 	}, nil)
 	testUpstm := &aghtest.Upstream{
 		CName: testCNAMEs,
@@ -622,6 +654,9 @@ func TestBlockCNAME(t *testing.T) {
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			BlockingMode:      BlockingModeDefault,
+			EDNSClientSubnet: &EDNSClientSubnet{
+				Enabled: false,
+			},
 		},
 	}
 	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
@@ -691,6 +726,9 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 			FilterHandler: func(_ net.IP, _ string, settings *filtering.Settings) {
 				settings.FilteringEnabled = false
 			},
+			EDNSClientSubnet: &EDNSClientSubnet{
+				Enabled: false,
+			},
 		},
 	}
 	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
@@ -732,6 +770,9 @@ func TestNullBlockedRequest(t *testing.T) {
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			BlockingMode:      BlockingModeNullIP,
+			EDNSClientSubnet: &EDNSClientSubnet{
+				Enabled: false,
+			},
 		},
 	}
 	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
@@ -784,6 +825,9 @@ func TestBlockedCustomIP(t *testing.T) {
 			BlockingMode:      BlockingModeCustomIP,
 			BlockingIPv4:      nil,
 			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
+			EDNSClientSubnet: &EDNSClientSubnet{
+				Enabled: false,
+			},
 		},
 	}
 
@@ -832,6 +876,9 @@ func TestBlockedByHosts(t *testing.T) {
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			BlockingMode:      BlockingModeDefault,
+			EDNSClientSubnet: &EDNSClientSubnet{
+				Enabled: false,
+			},
 		},
 	}
 
@@ -865,6 +912,9 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 		FilteringConfig: FilteringConfig{
 			SafeBrowsingBlockHost: ans4.String(),
 			ProtectionEnabled:     true,
+			EDNSClientSubnet: &EDNSClientSubnet{
+				Enabled: false,
+			},
 		},
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
@@ -919,6 +969,9 @@ func TestRewrite(t *testing.T) {
 			ProtectionEnabled: true,
 			BlockingMode:      BlockingModeDefault,
 			UpstreamDNS:       []string{"8.8.8.8:53"},
+			EDNSClientSubnet: &EDNSClientSubnet{
+				Enabled: false,
+			},
 		},
 	}))
 
@@ -1033,6 +1086,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
 	s.conf.FilteringConfig.ProtectionEnabled = true
 	s.conf.FilteringConfig.BlockingMode = BlockingModeDefault
+	s.conf.FilteringConfig.EDNSClientSubnet = &EDNSClientSubnet{Enabled: false}
 
 	err = s.Prepare(&s.conf)
 	require.NoError(t, err)
@@ -1108,6 +1162,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
 	s.conf.FilteringConfig.BlockingMode = BlockingModeDefault
+	s.conf.FilteringConfig.EDNSClientSubnet = &EDNSClientSubnet{Enabled: false}
 
 	err = s.Prepare(&s.conf)
 	require.NoError(t, err)

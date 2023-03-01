@@ -747,3 +747,64 @@ func TestUpgradeSchema15to16(t *testing.T) {
 		})
 	}
 }
+
+func TestUpgradeSchema16to17(t *testing.T) {
+	const newSchemaVer = 17
+
+	defaultWantObj := yobj{
+		"dns": map[string]any{
+			"edns_client_subnet": map[string]any{
+				"enabled":    false,
+				"use_custom": false,
+				"custom_ip":  "",
+			},
+		},
+		"schema_version": newSchemaVer,
+	}
+
+	testCases := []struct {
+		in   yobj
+		want yobj
+		name string
+	}{{
+		in: yobj{
+			"dns": map[string]any{
+				"edns_client_subnet": false,
+			},
+		},
+		want: defaultWantObj,
+		name: "basic",
+	}, {
+		in: yobj{
+			"dns": map[string]any{},
+		},
+		want: defaultWantObj,
+		name: "default_values",
+	}, {
+		in: yobj{
+			"dns": map[string]any{
+				"edns_client_subnet": true,
+			},
+		},
+		want: yobj{
+			"dns": map[string]any{
+				"edns_client_subnet": map[string]any{
+					"enabled":    true,
+					"use_custom": false,
+					"custom_ip":  "",
+				},
+			},
+			"schema_version": newSchemaVer,
+		},
+		name: "is_true",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema16to17(tc.in)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}

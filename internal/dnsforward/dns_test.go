@@ -467,6 +467,11 @@ func TestServer_ProcessRestrictLocal(t *testing.T) {
 	s := createTestServer(t, &filtering.Config{}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
+		// TODO(s.chzhen):  Add tests where EDNSClientSubnet.Enabled is true.
+		// Improve FilteringConfig declaration for tests.
+		FilteringConfig: FilteringConfig{
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+		},
 	}, ups)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
 	startDeferStop(t, s)
@@ -539,6 +544,9 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 		ServerConfig{
 			UDPListenAddrs: []*net.UDPAddr{{}},
 			TCPListenAddrs: []*net.TCPAddr{{}},
+			FilteringConfig: FilteringConfig{
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			},
 		},
 		aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
 			return aghalg.Coalesce(
