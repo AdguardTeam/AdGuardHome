@@ -30,6 +30,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Various dark theme bugs ([#5439], [#5441], [#5442], [#5515]).
 - Automatic update on MIPS64 and little-endian 32-bit MIPS architectures
   ([#5270], [#5373]).
 - Requirements to domain names in domain-specific upstream configurations have
@@ -40,7 +41,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#5270]: https://github.com/AdguardTeam/AdGuardHome/issues/5270
 [#5373]: https://github.com/AdguardTeam/AdGuardHome/issues/5373
 [#5431]: https://github.com/AdguardTeam/AdGuardHome/issues/5431
+[#5439]: https://github.com/AdguardTeam/AdGuardHome/issues/5439
+[#5441]: https://github.com/AdguardTeam/AdGuardHome/issues/5441
+[#5442]: https://github.com/AdguardTeam/AdGuardHome/issues/5442
 [#5468]: https://github.com/AdguardTeam/AdGuardHome/issues/5468
+[#5515]: https://github.com/AdguardTeam/AdGuardHome/issues/5515
 
 [rfc3696]: https://datatracker.ietf.org/doc/html/rfc3696
 
