@@ -125,7 +125,7 @@ func Main(clientBuildFS fs.FS) {
 			log.Info("Received signal %q", sig)
 			switch sig {
 			case syscall.SIGHUP:
-				Context.clients.Reload()
+				Context.clients.reloadARP()
 				Context.tls.reload()
 			default:
 				cleanup(context.Background())

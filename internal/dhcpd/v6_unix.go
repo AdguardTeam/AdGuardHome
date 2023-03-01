@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"net/netip"
 	"sync"
 	"time"
 
@@ -107,21 +108,26 @@ func (s *v6Server) getLeasesRef() []*Lease {
 	return s.leases
 }
 
-// FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
-func (s *v6Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
-	now := time.Now().Unix()
+// FindMACbyIP implements the [Interface] for *v6Server.
+func (s *v6Server) FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr) {
+	now := time.Now()
 
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
+	if !ip.Is6() {
+		return nil
+	}
+
+	netIP := ip.AsSlice()
 	for _, l := range s.leases {
-		if l.IP.Equal(ip) {
-			unix := l.Expiry.Unix()
-			if unix > now || unix == leaseExpireStatic {
+		if l.IP.Equal(netIP) {
+			if l.Expiry.After(now) || l.IsStatic() {
 				return l.HWAddr
 			}
 		}
 	}
+
 	return nil
 }
 

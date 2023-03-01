@@ -792,7 +792,7 @@ func upgradeSchema13to14(diskConf yobj) (err error) {
 
 	diskConf["clients"] = yobj{
 		"persistent": clientsVal,
-		"runtime_sources": &clientSourcesConf{
+		"runtime_sources": &clientSourcesConfig{
 			WHOIS:     true,
 			ARP:       true,
 			RDNS:      rdnsSrc,

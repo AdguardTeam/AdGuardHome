@@ -579,7 +579,7 @@ func TestUpgradeSchema13to14(t *testing.T) {
 			// The clients field will be added anyway.
 			"clients": yobj{
 				"persistent": yarr{},
-				"runtime_sources": &clientSourcesConf{
+				"runtime_sources": &clientSourcesConfig{
 					WHOIS:     true,
 					ARP:       true,
 					RDNS:      false,
@@ -597,7 +597,7 @@ func TestUpgradeSchema13to14(t *testing.T) {
 			"schema_version": newSchemaVer,
 			"clients": yobj{
 				"persistent": []*clientObject{testClient},
-				"runtime_sources": &clientSourcesConf{
+				"runtime_sources": &clientSourcesConfig{
 					WHOIS:     true,
 					ARP:       true,
 					RDNS:      false,
@@ -618,7 +618,7 @@ func TestUpgradeSchema13to14(t *testing.T) {
 			"schema_version": newSchemaVer,
 			"clients": yobj{
 				"persistent": []*clientObject{testClient},
-				"runtime_sources": &clientSourcesConf{
+				"runtime_sources": &clientSourcesConfig{
 					WHOIS:     true,
 					ARP:       true,
 					RDNS:      true,

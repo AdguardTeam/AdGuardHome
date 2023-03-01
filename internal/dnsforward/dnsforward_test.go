@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"net/netip"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -1009,7 +1010,7 @@ var testDHCP = &dhcpd.MockInterface{
 		}}
 	},
 	OnSetOnLeaseChanged: func(olct dhcpd.OnLeaseChangedT) {},
-	OnFindMACbyIP:       func(ip net.IP) (mac net.HardwareAddr) { panic("not implemented") },
+	OnFindMACbyIP:       func(ip netip.Addr) (mac net.HardwareAddr) { panic("not implemented") },
 	OnWriteDiskConfig:   func(c *dhcpd.ServerConfig) { panic("not implemented") },
 }
 

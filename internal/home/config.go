@@ -75,9 +75,19 @@ type osConfig struct {
 
 type clientsConfig struct {
 	// Sources defines the set of sources to fetch the runtime clients from.
-	Sources *clientSourcesConf `yaml:"runtime_sources"`
+	Sources *clientSourcesConfig `yaml:"runtime_sources"`
 	// Persistent are the configured clients.
 	Persistent []*clientObject `yaml:"persistent"`
+}
+
+// clientSourceConfig is used to configure where the runtime clients will be
+// obtained from.
+type clientSourcesConfig struct {
+	WHOIS     bool `yaml:"whois"`
+	ARP       bool `yaml:"arp"`
+	RDNS      bool `yaml:"rdns"`
+	DHCP      bool `yaml:"dhcp"`
+	HostsFile bool `yaml:"hosts"`
 }
 
 // configuration is loaded from YAML
@@ -336,7 +346,7 @@ var config = &configuration{
 		},
 	},
 	Clients: &clientsConfig{
-		Sources: &clientSourcesConf{
+		Sources: &clientSourcesConfig{
 			WHOIS:     true,
 			ARP:       true,
 			RDNS:      true,
