@@ -315,7 +315,7 @@ func (u *Updater) clean() {
 // MaxPackageFileSize is a maximum package file length in bytes. The largest
 // package whose size is limited by this constant currently has the size of
 // approximately 9 MiB.
-const MaxPackageFileSize = 32 * 10 * 1024
+const MaxPackageFileSize = 32 * 1024 * 1024
 
 // Download package file and save it to disk
 func (u *Updater) downloadPackageFile() (err error) {
