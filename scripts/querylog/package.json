@@ -5,6 +5,6 @@
     "anonymize": "node anonymize.js"
   },
   "dependencies": {
-    "dns-packet": "^5.2.1"
+    "dns-packet": "^5.4.0"
   }
 }
