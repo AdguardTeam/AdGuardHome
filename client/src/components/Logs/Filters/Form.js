@@ -129,7 +129,6 @@ const Form = (props) => {
 
     const onInputClear = async () => {
         setIsLoading(true);
-        setDebouncedSearch(DEFAULT_LOGS_FILTER[FORM_NAMES.search]);
         change(FORM_NAMES.search, DEFAULT_LOGS_FILTER[FORM_NAMES.search]);
         setIsLoading(false);
     };
