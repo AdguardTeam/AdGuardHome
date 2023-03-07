@@ -1,0 +1,3 @@
+|duckduckgo.com^$dnsrewrite=NOERROR;CNAME;safe.duckduckgo.com
+|start.duckduckgo.com^$dnsrewrite=NOERROR;CNAME;safe.duckduckgo.com
+|www.duckduckgo.com^$dnsrewrite=NOERROR;CNAME;safe.duckduckgo.com
