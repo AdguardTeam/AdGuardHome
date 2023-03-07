@@ -64,6 +64,7 @@ In this release, the schema version has changed from 16 to 17.
 
 ### Fixed
 
+- Obsolete value of the Interface MTU DHCP option is now omitted ([#5281]).
 - Various dark theme bugs ([#5439], [#5441], [#5442], [#5515]).
 - Automatic update on MIPS64 and little-endian 32-bit MIPS architectures
   ([#5270], [#5373]).
@@ -74,6 +75,7 @@ In this release, the schema version has changed from 16 to 17.
 [#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
 [#4884]: https://github.com/AdguardTeam/AdGuardHome/issues/4884
 [#5270]: https://github.com/AdguardTeam/AdGuardHome/issues/5270
+[#5281]: https://github.com/AdguardTeam/AdGuardHome/issues/5281
 [#5373]: https://github.com/AdguardTeam/AdGuardHome/issues/5373
 [#5431]: https://github.com/AdguardTeam/AdGuardHome/issues/5431
 [#5439]: https://github.com/AdguardTeam/AdGuardHome/issues/5439

@@ -263,15 +263,12 @@ func (s *v4Server) prepareOptions() {
 
 		// IP-Layer Per Interface
 
-		// Since nearly all networks in the Internet currently support an MTU of
-		// 576 or greater, we strongly recommend the use of 576 for datagrams
-		// sent to non-local networks.
+		// Don't set the Interface MTU because client may choose the value on
+		// their own since it's listed in the [Host Requirements RFC].  It also
+		// seems the values listed there sometimes appear obsolete, see
+		// https://github.com/AdguardTeam/AdGuardHome/issues/5281.
 		//
-		// See https://datatracker.ietf.org/doc/html/rfc1122#section-3.3.3.
-		dhcpv4.Option{
-			Code:  dhcpv4.OptionInterfaceMTU,
-			Value: dhcpv4.Uint16(576),
-		},
+		// [Host Requirements RFC]: https://datatracker.ietf.org/doc/html/rfc1122#section-3.3.3.
 
 		// Set the All Subnets Are Local Option to false since commonly the
 		// connected hosts aren't expected to be multihomed.
