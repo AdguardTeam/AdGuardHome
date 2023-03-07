@@ -285,6 +285,12 @@ var config = &configuration{
 			TrustedProxies: []string{"127.0.0.0/8", "::1/128"},
 			CacheSize:      4 * 1024 * 1024,
 
+			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{
+				CustomIP:  "",
+				Enabled:   false,
+				UseCustom: false,
+			},
+
 			// set default maximum concurrent queries to 300
 			// we introduced a default limit due to this:
 			// https://github.com/AdguardTeam/AdGuardHome/issues/2015#issuecomment-674041912
