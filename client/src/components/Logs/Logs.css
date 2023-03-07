@@ -106,6 +106,16 @@
     max-height: 100% !important;
 }
 
+.icon24 {
+    width: 24px;
+    height: 24px;
+}
+
+.icon12 {
+    width: 12px;
+    height: 12px;
+}
+
 .cursor--pointer {
     cursor: pointer;
 }
@@ -311,7 +321,6 @@
     height: 100%;
     display: flex;
     justify-content: center;
-    align-items: center;
 }
 
 .button-action:active {
