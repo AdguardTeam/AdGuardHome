@@ -1370,6 +1370,7 @@ var blockedServices = []blockedService{{
 		"||mastodon.au^",
 		"||mastodon.bida.im^",
 		"||mastodon.com.tr^",
+		"||mastodon.eus^",
 		"||mastodon.green^",
 		"||mastodon.ie^",
 		"||mastodon.iriseden.eu^",
@@ -1397,7 +1398,6 @@ var blockedServices = []blockedService{{
 		"||mindly.social^",
 		"||mstdn.ca^",
 		"||mstdn.jp^",
-		"||mstdn.party^",
 		"||mstdn.social^",
 		"||muenchen.social^",
 		"||newsie.social^",
@@ -1435,11 +1435,11 @@ var blockedServices = []blockedService{{
 		"||toot.wales^",
 		"||troet.cafe^",
 		"||twingyeo.kr^",
-		"||uiuxdev.social^",
 		"||union.place^",
 		"||universeodon.com^",
 		"||urbanists.social^",
 		"||vocalodon.net^",
+		"||wien.rocks^",
 		"||wxw.moe^",
 	},
 }, {
@@ -1635,6 +1635,14 @@ var blockedServices = []blockedService{{
 		"||snapads.com^",
 		"||snapchat.com^",
 		"||snapkit.co",
+	},
+}, {
+	ID:      "soundcloud",
+	Name:    "SoundCloud",
+	IconSVG: []byte("<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"currentColor\" viewBox=\"0 0 24 24\" fill-rule=\"evenodd\" clip-rule=\"evenodd\"><path d=\"M19 17.75c2.07 0 3.75-1.68 3.75-3.75 0-2.07-1.68-3.75-3.75-3.75-.173 0-.344.012-.511.035-.73-2.337-2.913-4.035-5.489-4.035-.818 0-1.596.171-2.301.48-.273.119-.449.389-.449.687l0 9.583c0 .414.336.75.75.75l8 0zM7.25 8l0 9c0 .414.336.75.75.75.414 0 .75-.336.75-.75l0-9c0-.414-.336-.75-.75-.75-.414 0-.75.336-.75.75zM4.25 10l0 7c0 .414.336.75.75.75.414 0 .75-.336.75-.75l0-7c0-.414-.336-.75-.75-.75-.414 0-.75.336-.75.75zM1.25 12l0 5c0 .414.336.75.75.75.414 0 .75-.336.75-.75l0-5c0-.414-.336-.75-.75-.75-.414 0-.75.336-.75.75z\"/></svg>"),
+	Rules: []string{
+		"||sndcdn.com^",
+		"||soundcloud.com^",
 	},
 }, {
 	ID:      "spotify",

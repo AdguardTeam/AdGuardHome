@@ -23,6 +23,11 @@ See also the [v0.107.26 GitHub milestone][ms-v0.107.26].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2023-24532 Go vulnerability fixed in [Go 1.19.7][go-1.19.7].
+
 ### Added
 
 - The ability to set custom IP for EDNS Client Subnet by using the new
@@ -84,7 +89,8 @@ In this release, the schema version has changed from 16 to 17.
 [#5468]: https://github.com/AdguardTeam/AdGuardHome/issues/5468
 [#5515]: https://github.com/AdguardTeam/AdGuardHome/issues/5515
 
-[rfc3696]: https://datatracker.ietf.org/doc/html/rfc3696
+[go-1.19.7]: https://groups.google.com/g/golang-announce/c/3-TpUx48iQY
+[rfc3696]:   https://datatracker.ietf.org/doc/html/rfc3696
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

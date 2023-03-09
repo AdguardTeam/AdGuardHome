@@ -235,7 +235,7 @@ export default {
         "urlhaus_filter_online": {
             "name": "Malicious URL Blocklist (URLHaus)",
             "categoryId": "security",
-            "homepage": "https://gitlab.com/malware-filter/urlhaus-filter",
+            "homepage": "https://urlhaus.abuse.ch/",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt"
         },
         "windowsspyblocker_hosts_spy_rules": {
