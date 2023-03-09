@@ -9,9 +9,9 @@ require (
 	github.com/kisielk/errcheck v1.6.3
 	github.com/kyoh86/looppointer v0.2.1
 	github.com/securego/gosec/v2 v2.15.0
-	golang.org/x/tools v0.6.0
-	golang.org/x/vuln v0.0.0-20230213165600-1a019b0c7f30
-	honnef.co/go/tools v0.4.1
+	golang.org/x/tools v0.6.1-0.20230217175706-3102dad5faf9
+	golang.org/x/vuln v0.0.0-20230217204342-b91abcc5ae3c
+	honnef.co/go/tools v0.4.2
 	mvdan.cc/gofumpt v0.4.0
 	mvdan.cc/unparam v0.0.0-20230125043941-70a0ce6e7b95
 )

@@ -13,7 +13,36 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/urlfilter/rules"
 )
+
+// SafeSearch interface describes a service for search engines hosts rewrites.
+type SafeSearch interface {
+	// SearchHost returns a replacement address for the search engine host.
+	SearchHost(host string, qtype uint16) (res *rules.DNSRewrite)
+
+	// CheckHost checks host with safe search engine.
+	CheckHost(host string, qtype uint16) (res Result, err error)
+}
+
+// SafeSearchConfig is a struct with safe search related settings.
+type SafeSearchConfig struct {
+	// CustomResolver is the resolver used by safe search.
+	CustomResolver Resolver `yaml:"-"`
+
+	// Enabled indicates if safe search is enabled entirely.
+	Enabled bool `yaml:"enabled" json:"enabled"`
+
+	// Services flags.  Each flag indicates if the corresponding service is
+	// enabled or disabled.
+
+	Bing       bool `yaml:"bing" json:"bing"`
+	DuckDuckGo bool `yaml:"duckduckgo" json:"duckduckgo"`
+	Google     bool `yaml:"google" json:"google"`
+	Pixabay    bool `yaml:"pixabay" json:"pixabay"`
+	Yandex     bool `yaml:"yandex" json:"yandex"`
+	YouTube    bool `yaml:"youtube" json:"youtube"`
+}
 
 /*
 expire byte[4]

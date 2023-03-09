@@ -54,6 +54,12 @@
     color: #495057;
 }
 
+.service__icon svg {
+    width: 20px;
+    height: 20px;
+    fill: #495057;
+}
+
 .service--global .service__icon {
     display: none;
 }

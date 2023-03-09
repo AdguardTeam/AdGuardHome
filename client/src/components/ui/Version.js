@@ -39,7 +39,7 @@ const Version = () => {
                     disabled={processingVersion}
                     title={t('check_updates_now')}
                 >
-                    <svg className="icons">
+                    <svg className="icons icon12">
                         <use xlinkHref="#refresh" />
                     </svg>
                 </button>}

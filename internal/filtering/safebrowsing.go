@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -19,6 +18,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
+	"golang.org/x/exp/slices"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -241,8 +241,8 @@ func (c *sbCtx) processTXT(resp *dns.Msg) (bool, [][]byte) {
 }
 
 func (c *sbCtx) storeCache(hashes [][]byte) {
-	sort.Slice(hashes, func(a, b int) bool {
-		return bytes.Compare(hashes[a], hashes[b]) == -1
+	slices.SortFunc(hashes, func(a, b []byte) (sortsBefore bool) {
+		return bytes.Compare(a, b) == -1
 	})
 
 	var curData []byte

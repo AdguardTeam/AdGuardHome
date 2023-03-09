@@ -390,6 +390,16 @@ echo "{
   \"selfupdate_min_version\": \"0.0\",
 " >> "$version_json"
 
+# Add the MIPS* object keys without the "softfloat" part to mitigate the
+# consequences of #5373.
+#
+# TODO(a.garipov): Remove this around fall 2023.
+echo "
+  \"download_linux_mips64\": \"${version_download_url}/AdGuardHome_linux_mips64_softfloat.tar.gz\",
+  \"download_linux_mips64le\": \"${version_download_url}/AdGuardHome_linux_mips64le_softfloat.tar.gz\",
+  \"download_linux_mipsle\": \"${version_download_url}/AdGuardHome_linux_mipsle_softfloat.tar.gz\",
+" >> "$version_json"
+
 # Same as with checksums above, don't use ls, because files matching one of the
 # patterns may be absent.
 ar_files="$( find "./${dist}/" ! -name "${dist}" -prune \( -name '*.tar.gz' -o -name '*.zip' \) )"

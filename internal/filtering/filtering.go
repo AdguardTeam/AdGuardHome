@@ -420,11 +420,11 @@ type ResultRule struct {
 
 // Result contains the result of a request check.
 //
-// All fields transitively have omitempty tags so that the query log
-// doesn't become too large.
+// All fields transitively have omitempty tags so that the query log doesn't
+// become too large.
 //
-// TODO(a.garipov): Clarify relationships between fields.  Perhaps
-// replace with a sum type or an interface?
+// TODO(a.garipov): Clarify relationships between fields.  Perhaps replace with
+// a sum type or an interface?
 type Result struct {
 	// DNSRewriteResult is the $dnsrewrite filter rule result.
 	DNSRewriteResult *DNSRewriteResult `json:",omitempty"`
@@ -813,17 +813,18 @@ func (d *DNSFilter) matchHostProcessDNSResult(
 		return res
 	}
 
-	if dnsres.HostRulesV4 != nil || dnsres.HostRulesV6 != nil {
-		// Question type doesn't match the host rules.  Return the first matched
-		// host rule, but without an IP address.
-		var matchedRules []rules.Rule
-		if dnsres.HostRulesV4 != nil {
-			matchedRules = []rules.Rule{dnsres.HostRulesV4[0]}
-		} else if dnsres.HostRulesV6 != nil {
-			matchedRules = []rules.Rule{dnsres.HostRulesV6[0]}
-		}
+	return hostResultForOtherQType(dnsres)
+}
 
-		return makeResult(matchedRules, FilteredBlockList)
+// hostResultForOtherQType returns a result based on the host rules in dnsres,
+// if any.  dnsres.HostRulesV4 take precedence over dnsres.HostRulesV6.
+func hostResultForOtherQType(dnsres *urlfilter.DNSResult) (res Result) {
+	if len(dnsres.HostRulesV4) != 0 {
+		return makeResult([]rules.Rule{dnsres.HostRulesV4[0]}, FilteredBlockList)
+	}
+
+	if len(dnsres.HostRulesV6) != 0 {
+		return makeResult([]rules.Rule{dnsres.HostRulesV6[0]}, FilteredBlockList)
 	}
 
 	return Result{}
@@ -840,7 +841,7 @@ func (d *DNSFilter) matchHost(
 		return Result{}, nil
 	}
 
-	ureq := &urlfilter.DNSRequest{
+	ufReq := &urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
 		// TODO(e.burkov): Wait for urlfilter update to pass net.IP.
@@ -857,7 +858,7 @@ func (d *DNSFilter) matchHost(
 	defer d.engineLock.RUnlock()
 
 	if setts.ProtectionEnabled && d.filteringEngineAllow != nil {
-		dnsres, ok := d.filteringEngineAllow.MatchRequest(ureq)
+		dnsres, ok := d.filteringEngineAllow.MatchRequest(ufReq)
 		if ok {
 			return d.matchHostProcessAllowList(host, dnsres)
 		}
@@ -867,17 +868,13 @@ func (d *DNSFilter) matchHost(
 		return Result{}, nil
 	}
 
-	dnsres, ok := d.filteringEngine.MatchRequest(ureq)
+	dnsres, matchedEngine := d.filteringEngine.MatchRequest(ufReq)
+
 	// Check DNS rewrites first, because the API there is a bit awkward.
-	if dnsr := dnsres.DNSRewrites(); len(dnsr) > 0 {
-		res = d.processDNSRewrites(dnsr)
-		if res.Reason == RewrittenRule && res.CanonName == host {
-			// A rewrite of a host to itself.  Go on and try matching other
-			// things.
-		} else {
-			return res, nil
-		}
-	} else if !ok {
+	dnsRWRes := d.processDNSResultRewrites(dnsres, host)
+	if dnsRWRes.Reason != NotFilteredNotFound {
+		return dnsRWRes, nil
+	} else if !matchedEngine {
 		return Result{}, nil
 	}
 
@@ -897,6 +894,26 @@ func (d *DNSFilter) matchHost(
 	}
 
 	return res, nil
+}
+
+// processDNSResultRewrites returns an empty Result if there are no dnsrewrite
+// rules in dnsres.  Otherwise, it returns the processed Result.
+func (d *DNSFilter) processDNSResultRewrites(
+	dnsres *urlfilter.DNSResult,
+	host string,
+) (dnsRWRes Result) {
+	dnsr := dnsres.DNSRewrites()
+	if len(dnsr) == 0 {
+		return Result{}
+	}
+
+	res := d.processDNSRewrites(dnsr)
+	if res.Reason == RewrittenRule && res.CanonName == host {
+		// A rewrite of a host to itself.  Go on and try matching other things.
+		return Result{}
+	}
+
+	return res
 }
 
 // makeResult returns a properly constructed Result.

@@ -2,10 +2,18 @@
 
 set -e -f -u
 
-# Only show interactive prompts if there is a terminal attached.  This
-# should work on all of our supported Unix systems.
+# This comment is used to simplify checking local copies of the script.
+# Bump this number every time a significant change is made to this
+# script.
+#
+# AdGuard-Project-Version: 1
+
+# Only show interactive prompts if there a terminal is attached to
+# stdout.  While this technically doesn't guarantee that reading from
+# /dev/tty works, this should work reasonably well on all of our
+# supported development systems and in most terminal emulators.
 is_tty='0'
-if [ -e /dev/tty ]
+if [ -t '1' ]
 then
 	is_tty='1'
 fi

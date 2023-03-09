@@ -272,7 +272,7 @@ func (u *Updater) backup(firstRun bool) (err error) {
 	wd := u.workDir
 	err = copySupportingFiles(u.unpackedFiles, wd, u.backupDir)
 	if err != nil {
-		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %s", wd, u.backupDir, err)
+		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %w", wd, u.backupDir, err)
 	}
 
 	return nil
@@ -283,7 +283,7 @@ func (u *Updater) backup(firstRun bool) (err error) {
 func (u *Updater) replace() error {
 	err := copySupportingFiles(u.unpackedFiles, u.updateDir, u.workDir)
 	if err != nil {
-		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %s", u.updateDir, u.workDir, err)
+		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %w", u.updateDir, u.workDir, err)
 	}
 
 	log.Debug("updater: renaming: %s to %s", u.currentExeName, u.backupExeName)

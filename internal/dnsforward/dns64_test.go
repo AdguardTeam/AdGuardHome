@@ -273,18 +273,25 @@ func TestServer_HandleDNSRequest_dns64(t *testing.T) {
 		return resp, nil
 	})
 
-	s := createTestServer(t, &filtering.Config{}, ServerConfig{
-		UDPListenAddrs: []*net.UDPAddr{{}},
-		TCPListenAddrs: []*net.TCPAddr{{}},
-		UseDNS64:       true,
-	}, localUps)
-
 	client := &dns.Client{
 		Net:     "tcp",
 		Timeout: 1 * time.Second,
 	}
 
 	for _, tc := range testCases {
+		// TODO(e.burkov):  It seems [proxy.Proxy] isn't intended to be reused
+		// right after stop, due to a data race in [proxy.Proxy.Init] method
+		// when setting an OOB size.  As a temporary workaround, recreate the
+		// whole server for each test case.
+		s := createTestServer(t, &filtering.Config{}, ServerConfig{
+			UDPListenAddrs: []*net.UDPAddr{{}},
+			TCPListenAddrs: []*net.TCPAddr{{}},
+			UseDNS64:       true,
+			FilteringConfig: FilteringConfig{
+				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			},
+		}, localUps)
+
 		t.Run(tc.name, func(t *testing.T) {
 			s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newUps(tc.upsAns)}
 			startDeferStop(t, s)

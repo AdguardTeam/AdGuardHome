@@ -162,7 +162,7 @@ const ClientCell = ({
                 {content && (
                     <button className={buttonArrowClass} disabled={processingRules}>
                         <IconTooltip
-                            className="h-100"
+                            className="icon24"
                             tooltipClass="button-action--arrow-option-container"
                             xlinkHref="chevron-down"
                             triggerClass="button-action--icon"

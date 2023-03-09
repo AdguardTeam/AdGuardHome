@@ -100,7 +100,7 @@ class Table extends Component {
                             })
                             }
                         >
-                            <svg className="icons">
+                            <svg className="icons icon12">
                                 <use xlinkHref="#edit" />
                             </svg>
                         </button>
@@ -110,7 +110,7 @@ class Table extends Component {
                             onClick={() => handleDelete(url)}
                             title={t('delete_table_action')}
                         >
-                            <svg className="icons">
+                            <svg className="icons icon12">
                                 <use xlinkHref="#delete" />
                             </svg>
                         </button>

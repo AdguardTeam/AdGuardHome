@@ -119,7 +119,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		cliSrvName:   "!!!.example.com",
 		wantClientID: "",
 		wantErrMsg: `clientid check: invalid clientid "!!!": ` +
-			`bad domain name label rune '!'`,
+			`bad hostname label rune '!'`,
 		inclHTTPTLS: false,
 		strictSNI:   true,
 	}, {
@@ -131,7 +131,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 		wantClientID: "",
 		wantErrMsg: `clientid check: invalid clientid "abcdefghijklmno` +
 			`pqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789": ` +
-			`domain name label is too long: got 72, max 63`,
+			`hostname label is too long: got 72, max 63`,
 		inclHTTPTLS: false,
 		strictSNI:   true,
 	}, {
@@ -330,7 +330,7 @@ func TestClientIDFromDNSContextHTTPS(t *testing.T) {
 		path:         "/dns-query/!!!",
 		cliSrvName:   "example.com",
 		wantClientID: "",
-		wantErrMsg:   `clientid check: invalid clientid "!!!": bad domain name label rune '!'`,
+		wantErrMsg:   `clientid check: invalid clientid "!!!": bad hostname label rune '!'`,
 	}, {
 		name:         "both_ids",
 		path:         "/dns-query/right",

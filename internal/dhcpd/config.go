@@ -45,8 +45,10 @@ type DHCPServer interface {
 	AddStaticLease(l *Lease) (err error)
 	// RemoveStaticLease - remove a static lease
 	RemoveStaticLease(l *Lease) (err error)
-	// FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
-	FindMACbyIP(ip net.IP) net.HardwareAddr
+
+	// FindMACbyIP returns a MAC address by the IP address of its lease, if
+	// there is one.
+	FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr)
 
 	// WriteDiskConfig4 - copy disk configuration
 	WriteDiskConfig4(c *V4ServerConf)

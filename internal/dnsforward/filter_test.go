@@ -29,6 +29,9 @@ func TestHandleDNSRequest_filterDNSResponse(t *testing.T) {
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			BlockingMode:      BlockingModeDefault,
+			EDNSClientSubnet: &EDNSClientSubnet{
+				Enabled: false,
+			},
 		},
 	}
 	filters := []filtering.Filter{{

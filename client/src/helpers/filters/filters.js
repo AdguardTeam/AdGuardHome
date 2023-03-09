@@ -101,7 +101,7 @@ export default {
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_13.txt"
         },
         "POL_polish_filters_for_pi_hole": {
-            "name": "POL: Polish filters for Pi hole",
+            "name": "POL: Polish filters for Pi-hole",
             "categoryId": "regional",
             "homepage": "https://www.certyficate.it/",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_14.txt"
@@ -235,7 +235,7 @@ export default {
         "urlhaus_filter_online": {
             "name": "Malicious URL Blocklist (URLHaus)",
             "categoryId": "security",
-            "homepage": "https://gitlab.com/malware-filter/urlhaus-filter",
+            "homepage": "https://urlhaus.abuse.ch/",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt"
         },
         "windowsspyblocker_hosts_spy_rules": {

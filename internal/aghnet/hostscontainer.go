@@ -343,7 +343,7 @@ func (hp *hostsParser) parseLine(line string) (ip netip.Addr, hosts []string) {
 		// See https://github.com/AdguardTeam/AdGuardHome/issues/3946.
 		//
 		// TODO(e.burkov):  Investigate if hosts may contain DNS-SD domains.
-		err = netutil.ValidateDomainName(f)
+		err = netutil.ValidateHostname(f)
 		if err != nil {
 			log.Error("%s: host %q is invalid, ignoring", hostsContainerPref, f)
 

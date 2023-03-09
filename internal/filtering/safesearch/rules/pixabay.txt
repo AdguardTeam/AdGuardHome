@@ -1,0 +1,1 @@
+|pixabay.com^$dnsrewrite=NOERROR;CNAME;safesearch.pixabay.com

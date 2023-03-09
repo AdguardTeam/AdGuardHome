@@ -1,8 +1,13 @@
 #!/bin/sh
 
-verbose="${VERBOSE:-0}"
+# This comment is used to simplify checking local copies of the script.  Bump
+# this number every time a significant change is made to this script.
+#
+# AdGuard-Project-Version: 3
 
-# Set verbosity.
+verbose="${VERBOSE:-0}"
+readonly verbose
+
 if [ "$verbose" -gt '0' ]
 then
 	set -x
@@ -16,34 +21,12 @@ else
 	set -e
 fi
 
-# We don't need glob expansions and we want to see errors about unset variables.
 set -f -u
 
 
 
-# Deferred Helpers
-
-not_found_msg='
-looks like a binary not found error.
-make sure you have installed the linter binaries using:
-
-	$ make go-tools
-'
-readonly not_found_msg
-
-# TODO(a.garipov): Put it into a separate script and source it both here and in
-# txt-lint.sh?
-not_found() {
-	if [ "$?" -eq '127' ]
-	then
-		# Code 127 is the exit status a shell uses when a command or
-		# a file is not found, according to the Bash Hackers wiki.
-		#
-		# See https://wiki.bash-hackers.org/dict/terms/exit_status.
-		echo "$not_found_msg" 1>&2
-	fi
-}
-trap not_found EXIT
+# Source the common helpers, including not_found and run_linter.
+. ./scripts/make/helper.sh
 
 
 
@@ -52,7 +35,7 @@ trap not_found EXIT
 go_version="$( "${GO:-go}" version )"
 readonly go_version
 
-go_min_version='go1.19.6'
+go_min_version='go1.19.7'
 go_version_msg="
 warning: your go version (${go_version}) is different from the recommended minimal one (${go_min_version}).
 if you have the version installed, please set the GO environment variable.
@@ -74,7 +57,7 @@ esac
 
 
 
-# Simple Analyzers
+# Simple analyzers
 
 # blocklist_imports is a simple check against unwanted packages.  The following
 # packages are banned:
@@ -91,6 +74,8 @@ esac
 #
 #      See https://github.com/golang/go/issues/45200.
 #
+#   *  Package sort is replaced by golang.org/x/exp/slices.
+#
 #   *  Package unsafe is… unsafe.
 #
 #   *  Package golang.org/x/net/context has been moved into stdlib.
@@ -101,6 +86,7 @@ blocklist_imports() {
 		-e '[[:space:]]"io/ioutil"$'\
 		-e '[[:space:]]"log"$'\
 		-e '[[:space:]]"reflect"$'\
+		-e '[[:space:]]"sort"$'\
 		-e '[[:space:]]"unsafe"$'\
 		-e '[[:space:]]"golang.org/x/net/context"$'\
 		-n\
@@ -157,96 +143,65 @@ underscores() {
 
 
 
-# Helpers
-
-# exit_on_output exits with a nonzero exit code if there is anything in the
-# command's combined output.
-exit_on_output() (
-	set +e
-
-	if [ "$VERBOSE" -lt '2' ]
-	then
-		set +x
-	fi
-
-	cmd="$1"
-	shift
-
-	output="$( "$cmd" "$@" 2>&1 )"
-	exitcode="$?"
-	if [ "$exitcode" -ne '0' ]
-	then
-		echo "'$cmd' failed with code $exitcode"
-	fi
-
-	if [ "$output" != '' ]
-	then
-		if [ "$*" != '' ]
-		then
-			echo "combined output of linter '$cmd $*':"
-		else
-			echo "combined output of linter '$cmd':"
-		fi
-
-		echo "$output"
-
-		if [ "$exitcode" -eq '0' ]
-		then
-			exitcode='1'
-		fi
-	fi
-
-	return "$exitcode"
-)
-
-
-
 # Checks
 
-exit_on_output blocklist_imports
+run_linter -e blocklist_imports
 
-exit_on_output method_const
+run_linter -e method_const
 
-exit_on_output underscores
+run_linter -e underscores
 
-exit_on_output gofumpt --extra -e -l .
+run_linter -e gofumpt --extra -e -l .
 
-# TODO(a.garipov): golint is deprecated, and seems to cause more and more
-# issues with each release.  Find a suitable replacement.
-#
-#	golint --set_exit_status ./...
+# TODO(a.garipov): golint is deprecated, find a suitable replacement.
 
-"$GO" vet ./...
+run_linter "$GO" vet ./...
 
-govulncheck ./...
+run_linter govulncheck ./...
 
 # Apply more lax standards to the code we haven't properly refactored yet.
-gocyclo --over 17 ./internal/querylog/
-gocyclo --over 13 ./internal/dhcpd ./internal/filtering/ ./internal/home/
+run_linter gocyclo --over 14 ./internal/querylog/
+run_linter gocyclo --over 13\
+	./internal/dhcpd\
+	./internal/home/\
+	;
 
-# Apply stricter standards to new or somewhat refactored code.
-gocyclo --over 10 ./internal/aghio/ ./internal/aghnet/ ./internal/aghos/\
-	./internal/aghtest/ ./internal/dnsforward/ ./internal/filtering/rewrite/\
-	./internal/stats/ ./internal/tools/ ./internal/updater/\
-	./internal/version/ ./scripts/blocked-services/ ./scripts/vetted-filters/\
-	./main.go
+# Apply the normal standards to new or somewhat refactored code.
+run_linter gocyclo --over 10\
+	./internal/aghio/\
+	./internal/aghnet/\
+	./internal/aghos/\
+	./internal/aghtest/\
+	./internal/dnsforward/\
+	./internal/filtering/\
+	./internal/stats/\
+	./internal/tools/\
+	./internal/updater/\
+	./internal/version/\
+	./scripts/blocked-services/\
+	./scripts/vetted-filters/\
+	./main.go\
+	;
 
-ineffassign ./...
+run_linter ineffassign ./...
 
-unparam ./...
+run_linter unparam ./...
 
-git ls-files -- '*.go' '*.mod' '*.sh' 'Makefile' | xargs misspell --error
+git ls-files -- 'Makefile' '*.go' '*.mod' '*.sh' '*.yaml' '*.yml'\
+	| xargs misspell --error
 
-looppointer ./...
+run_linter looppointer ./...
 
-nilness ./...
+run_linter nilness ./...
 
-exit_on_output shadow --strict ./...
+# TODO(a.garipov): Add fieldalignment?
+
+run_linter -e shadow --strict ./...
 
 # TODO(a.garipov): Enable in v0.108.0.
-# gosec --quiet ./...
+# run_linter gosec --quiet ./...
 
 # TODO(a.garipov): Enable --blank?
-errcheck --asserts ./...
+run_linter errcheck --asserts ./...
 
-staticcheck ./...
+run_linter staticcheck ./...

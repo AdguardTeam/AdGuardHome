@@ -31,9 +31,11 @@ func (s *Server) beforeRequestHandler(
 	}
 
 	if len(pctx.Req.Question) == 1 {
-		host := strings.TrimSuffix(pctx.Req.Question[0].Name, ".")
-		if s.access.isBlockedHost(host) {
-			log.Debug("host %s is in access blocklist", host)
+		q := pctx.Req.Question[0]
+		qt := q.Qtype
+		host := strings.TrimSuffix(q.Name, ".")
+		if s.access.isBlockedHost(host, qt) {
+			log.Debug("request %s %s is in access blocklist", dns.Type(qt), host)
 
 			return s.preBlockedResponse(pctx)
 		}

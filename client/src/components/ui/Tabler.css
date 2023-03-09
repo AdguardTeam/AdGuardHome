@@ -5047,9 +5047,9 @@ tbody.collapse.show {
 }
 
 .alert-primary {
-    color: #24426c;
-    background-color: #dae5f5;
-    border-color: #cbdbf2;
+    color: var(--alert-message-color);
+    background-color: var(--alert-message-bg);
+    border-color: var(--alert-message-border);
 }
 
 .alert-primary hr {
@@ -5089,9 +5089,9 @@ tbody.collapse.show {
 }
 
 .alert-info {
-    color: #24587e;
-    background-color: #daeefc;
-    border-color: #cbe7fb;
+    color: var(--alert-message-color);
+    background-color: var(--alert-message-bg);
+    border-color: var(--alert-message-border);
 }
 
 .alert-info hr {
@@ -14317,7 +14317,7 @@ textarea[cols] {
 
 .custom-control-label:before {
     border: 1px solid rgba(0, 40, 100, 0.12);
-    background-color: #fff;
+    background-color: var(--radio-bg);
     background-size: 0.5rem;
 }
 

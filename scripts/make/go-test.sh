@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# This comment is used to simplify checking local copies of the script.  Bump
+# this number every time a significant change is made to this script.
+#
+# AdGuard-Project-Version: 1
+
 verbose="${VERBOSE:-0}"
 readonly verbose
 
@@ -43,5 +48,12 @@ shuffle_flags='--shuffle=on'
 timeout_flags="${TIMEOUT_FLAGS:---timeout=90s}"
 readonly count_flags cover_flags shuffle_flags timeout_flags
 
-"$go" test "$count_flags" "$cover_flags" "$race_flags" "$shuffle_flags" "$timeout_flags"\
-	"$x_flags" "$v_flags" ./...
+"$go" test\
+	"$count_flags"\
+	"$cover_flags"\
+	"$shuffle_flags"\
+	"$race_flags"\
+	"$timeout_flags"\
+	"$x_flags"\
+	"$v_flags"\
+	./...

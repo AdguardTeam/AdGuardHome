@@ -6,6 +6,11 @@
 # only has superficial knowledge of the POSIX shell language and alike.
 # Experienced readers may find it overly verbose.
 
+# This comment is used to simplify checking local copies of the script.  Bump
+# this number every time a significant change is made to this script.
+#
+# AdGuard-Project-Version: 1
+
 # The default verbosity level is 0.  Show every command that is run and every
 # package that is processed if the caller requested verbosity level greater than
 # 0.  Also show subcommands if the requested verbosity level is greater than 1.
@@ -111,16 +116,31 @@ readonly o_flags
 # must be enabled.
 if [ "${RACE:-0}" -eq '0' ]
 then
-	cgo_enabled='0'
+	CGO_ENABLED='0'
 	race_flags='--race=0'
 else
-	cgo_enabled='1'
+	CGO_ENABLED='1'
 	race_flags='--race=1'
 fi
-readonly cgo_enabled race_flags
+readonly CGO_ENABLED race_flags
+export CGO_ENABLED
 
-CGO_ENABLED="$cgo_enabled"
 GO111MODULE='on'
-export CGO_ENABLED GO111MODULE
+export GO111MODULE
 
-"$go" build --ldflags "$ldflags" "$race_flags" --trimpath "$o_flags" "$v_flags" "$x_flags"
+tags_flags='--tags='
+readonly tags_flags
+
+if [ "$verbose" -gt '0' ]
+then
+	"$go" env
+fi
+
+"$go" build\
+	--ldflags "$ldflags"\
+	"$race_flags"\
+	"$tags_flags"\
+	--trimpath\
+	"$o_flags"\
+	"$v_flags"\
+	"$x_flags"

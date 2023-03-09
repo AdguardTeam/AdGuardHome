@@ -57,7 +57,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	blockingIPv4 := s.conf.BlockingIPv4
 	blockingIPv6 := s.conf.BlockingIPv6
 	ratelimit := s.conf.Ratelimit
-	enableEDNSClientSubnet := s.conf.EnableEDNSClientSubnet
+	enableEDNSClientSubnet := s.conf.EDNSClientSubnet.Enabled
 	enableDNSSEC := s.conf.EnableDNSSEC
 	aaaaDisabled := s.conf.AAAADisabled
 	cacheSize := s.conf.CacheSize
@@ -280,7 +280,7 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 		setIfNotNil(&s.conf.LocalPTRResolvers, dc.LocalPTRUpstreams),
 		setIfNotNil(&s.conf.UpstreamDNSFileName, dc.UpstreamsFile),
 		setIfNotNil(&s.conf.BootstrapDNS, dc.Bootstraps),
-		setIfNotNil(&s.conf.EnableEDNSClientSubnet, dc.EDNSCSEnabled),
+		setIfNotNil(&s.conf.EDNSClientSubnet.Enabled, dc.EDNSCSEnabled),
 		setIfNotNil(&s.conf.CacheSize, dc.CacheSize),
 		setIfNotNil(&s.conf.CacheMinTTL, dc.CacheMinTTL),
 		setIfNotNil(&s.conf.CacheMaxTTL, dc.CacheMaxTTL),

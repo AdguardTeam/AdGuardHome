@@ -5,7 +5,7 @@
   'key': 'AHBRTSPECS'
   'name': 'AdGuard Home - Build and run tests'
 'variables':
-  'dockerGo': 'adguard/golang-ubuntu:6.1'
+  'dockerGo': 'adguard/golang-ubuntu:6.2'
 
 'stages':
 - 'Tests':

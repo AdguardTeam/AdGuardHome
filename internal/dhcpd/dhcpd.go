@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/netip"
 	"path/filepath"
 	"time"
 
@@ -42,7 +43,11 @@ type Lease struct {
 
 	Hostname string           `json:"hostname"`
 	HWAddr   net.HardwareAddr `json:"mac"`
-	IP       net.IP           `json:"ip"`
+
+	// IP is the IP address leased to the client.
+	//
+	// TODO(a.garipov): Migrate leases.db and use netip.Addr.
+	IP net.IP `json:"ip"`
 }
 
 // Clone returns a deep copy of l.
@@ -160,7 +165,7 @@ type Interface interface {
 
 	Leases(flags GetLeasesFlags) (leases []*Lease)
 	SetOnLeaseChanged(onLeaseChanged OnLeaseChangedT)
-	FindMACbyIP(ip net.IP) (mac net.HardwareAddr)
+	FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr)
 
 	WriteDiskConfig(c *ServerConfig)
 }
@@ -174,7 +179,7 @@ type MockInterface struct {
 	OnEnabled           func() (ok bool)
 	OnLeases            func(flags GetLeasesFlags) (leases []*Lease)
 	OnSetOnLeaseChanged func(f OnLeaseChangedT)
-	OnFindMACbyIP       func(ip net.IP) (mac net.HardwareAddr)
+	OnFindMACbyIP       func(ip netip.Addr) (mac net.HardwareAddr)
 	OnWriteDiskConfig   func(c *ServerConfig)
 }
 
@@ -195,8 +200,10 @@ func (s *MockInterface) Leases(flags GetLeasesFlags) (ls []*Lease) { return s.On
 // SetOnLeaseChanged implements the Interface for *MockInterface.
 func (s *MockInterface) SetOnLeaseChanged(f OnLeaseChangedT) { s.OnSetOnLeaseChanged(f) }
 
-// FindMACbyIP implements the Interface for *MockInterface.
-func (s *MockInterface) FindMACbyIP(ip net.IP) (mac net.HardwareAddr) { return s.OnFindMACbyIP(ip) }
+// FindMACbyIP implements the [Interface] for *MockInterface.
+func (s *MockInterface) FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr) {
+	return s.OnFindMACbyIP(ip)
+}
 
 // WriteDiskConfig implements the Interface for *MockInterface.
 func (s *MockInterface) WriteDiskConfig(c *ServerConfig) { s.OnWriteDiskConfig(c) }
@@ -375,11 +382,13 @@ func (s *server) Leases(flags GetLeasesFlags) (leases []*Lease) {
 	return append(s.srv4.GetLeases(flags), s.srv6.GetLeases(flags)...)
 }
 
-// FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
-func (s *server) FindMACbyIP(ip net.IP) net.HardwareAddr {
-	if ip.To4() != nil {
+// FindMACbyIP returns a MAC address by the IP address of its lease, if there is
+// one.
+func (s *server) FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr) {
+	if ip.Is4() {
 		return s.srv4.FindMACbyIP(ip)
 	}
+
 	return s.srv6.FindMACbyIP(ip)
 }
 

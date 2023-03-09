@@ -1,6 +1,7 @@
 package querylog
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -118,7 +119,7 @@ func (c *searchCriterion) match(entry *logEntry) bool {
 	case ctTerm:
 		return c.ctDomainOrClientCase(entry)
 	case ctFilteringStatus:
-		return c.ctFilteringStatusCase(entry.Result)
+		return c.ctFilteringStatusCase(entry.Result.Reason, entry.Result.IsFiltered)
 	}
 
 	return false
@@ -141,54 +142,70 @@ func (c *searchCriterion) ctDomainOrClientCase(e *logEntry) bool {
 	return ctDomainOrClientCaseNonStrict(c.value, c.asciiVal, clientID, name, host, ip)
 }
 
-func (c *searchCriterion) ctFilteringStatusCase(res filtering.Result) bool {
+// ctFilteringStatusCase returns true if the result matches the value.
+func (c *searchCriterion) ctFilteringStatusCase(
+	reason filtering.Reason,
+	isFiltered bool,
+) (matched bool) {
 	switch c.value {
 	case filteringStatusAll:
 		return true
-
-	case filteringStatusFiltered:
-		return res.IsFiltered ||
-			res.Reason.In(
-				filtering.NotFilteredAllowList,
-				filtering.Rewritten,
-				filtering.RewrittenAutoHosts,
-				filtering.RewrittenRule,
-			)
-
-	case filteringStatusBlocked:
-		return res.IsFiltered &&
-			res.Reason.In(filtering.FilteredBlockList, filtering.FilteredBlockedService)
-
-	case filteringStatusBlockedService:
-		return res.IsFiltered && res.Reason == filtering.FilteredBlockedService
-
-	case filteringStatusBlockedParental:
-		return res.IsFiltered && res.Reason == filtering.FilteredParental
-
-	case filteringStatusBlockedSafebrowsing:
-		return res.IsFiltered && res.Reason == filtering.FilteredSafeBrowsing
-
+	case
+		filteringStatusBlocked,
+		filteringStatusBlockedParental,
+		filteringStatusBlockedSafebrowsing,
+		filteringStatusBlockedService,
+		filteringStatusFiltered,
+		filteringStatusSafeSearch:
+		return isFiltered && c.isFilteredWithReason(reason)
 	case filteringStatusWhitelisted:
-		return res.Reason == filtering.NotFilteredAllowList
-
+		return reason == filtering.NotFilteredAllowList
 	case filteringStatusRewritten:
-		return res.Reason.In(
+		return reason.In(
 			filtering.Rewritten,
 			filtering.RewrittenAutoHosts,
 			filtering.RewrittenRule,
 		)
-
-	case filteringStatusSafeSearch:
-		return res.IsFiltered && res.Reason == filtering.FilteredSafeSearch
-
 	case filteringStatusProcessed:
-		return !res.Reason.In(
+		return !reason.In(
 			filtering.FilteredBlockList,
 			filtering.FilteredBlockedService,
 			filtering.NotFilteredAllowList,
 		)
-
 	default:
 		return false
+	}
+}
+
+// isFilteredWithReason returns true if reason matches the criterion value.
+// c.value must be one of:
+//
+//   - filteringStatusBlocked
+//   - filteringStatusBlockedParental
+//   - filteringStatusBlockedSafebrowsing
+//   - filteringStatusBlockedService
+//   - filteringStatusFiltered
+//   - filteringStatusSafeSearch
+func (c *searchCriterion) isFilteredWithReason(reason filtering.Reason) (matched bool) {
+	switch c.value {
+	case filteringStatusBlocked:
+		return reason.In(filtering.FilteredBlockList, filtering.FilteredBlockedService)
+	case filteringStatusBlockedParental:
+		return reason == filtering.FilteredParental
+	case filteringStatusBlockedSafebrowsing:
+		return reason == filtering.FilteredSafeBrowsing
+	case filteringStatusBlockedService:
+		return reason == filtering.FilteredBlockedService
+	case filteringStatusFiltered:
+		return reason.In(
+			filtering.NotFilteredAllowList,
+			filtering.Rewritten,
+			filtering.RewrittenAutoHosts,
+			filtering.RewrittenRule,
+		)
+	case filteringStatusSafeSearch:
+		return reason == filtering.FilteredSafeSearch
+	default:
+		panic(fmt.Errorf("unexpected value %q", c.value))
 	}
 }

@@ -108,7 +108,7 @@ func (s *v4Server) validHostnameForClient(cliHostname string, ip net.IP) (hostna
 		hostname = aghnet.GenerateHostname(ip)
 	}
 
-	err = netutil.ValidateDomainName(hostname)
+	err = netutil.ValidateHostname(hostname)
 	if err != nil {
 		log.Info("dhcpv4: %s", err)
 		hostname = ""
@@ -200,20 +200,20 @@ func (s *v4Server) GetLeases(flags GetLeasesFlags) (leases []*Lease) {
 	return leases
 }
 
-// FindMACbyIP - find a MAC address by IP address in the currently active DHCP leases
-func (s *v4Server) FindMACbyIP(ip net.IP) net.HardwareAddr {
+// FindMACbyIP implements the [Interface] for *v4Server.
+func (s *v4Server) FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr) {
 	now := time.Now()
 
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
-	ip4 := ip.To4()
-	if ip4 == nil {
+	if !ip.Is4() {
 		return nil
 	}
 
+	netIP := ip.AsSlice()
 	for _, l := range s.leases {
-		if l.IP.Equal(ip4) {
+		if l.IP.Equal(netIP) {
 			if l.Expiry.After(now) || l.IsStatic() {
 				return l.HWAddr
 			}
@@ -372,7 +372,7 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 			return err
 		}
 
-		err = netutil.ValidateDomainName(hostname)
+		err = netutil.ValidateHostname(hostname)
 		if err != nil {
 			return fmt.Errorf("validating hostname: %w", err)
 		}

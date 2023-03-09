@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/netip"
 	"os"
-	"sort"
 	"strings"
 	"time"
 
@@ -23,6 +22,7 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/ameshkov/dnscrypt/v2"
+	"golang.org/x/exp/slices"
 )
 
 // BlockingMode is an enum of all allowed blocking modes.
@@ -53,7 +53,6 @@ const (
 // The zero FilteringConfig is empty and ready for use.
 type FilteringConfig struct {
 	// Callbacks for other modules
-	// --
 
 	// FilterHandler is an optional additional filtering callback.
 	FilterHandler func(clientAddr net.IP, clientID string, settings *filtering.Settings) `yaml:"-"`
@@ -64,50 +63,82 @@ type FilteringConfig struct {
 	GetCustomUpstreamByClient func(id string) (conf *proxy.UpstreamConfig, err error) `yaml:"-"`
 
 	// Protection configuration
-	// --
 
-	ProtectionEnabled  bool         `yaml:"protection_enabled"`   // whether or not use any of filtering features
-	BlockingMode       BlockingMode `yaml:"blocking_mode"`        // mode how to answer filtered requests
-	BlockingIPv4       net.IP       `yaml:"blocking_ipv4"`        // IP address to be returned for a blocked A request
-	BlockingIPv6       net.IP       `yaml:"blocking_ipv6"`        // IP address to be returned for a blocked AAAA request
-	BlockedResponseTTL uint32       `yaml:"blocked_response_ttl"` // if 0, then default is used (3600)
+	// ProtectionEnabled defines whether or not use any of filtering features.
+	ProtectionEnabled bool `yaml:"protection_enabled"`
 
-	// IP (or domain name) which is used to respond to DNS requests blocked by parental control or safe-browsing
-	ParentalBlockHost     string `yaml:"parental_block_host"`
+	// BlockingMode defines the way how blocked responses are constructed.
+	BlockingMode BlockingMode `yaml:"blocking_mode"`
+
+	// BlockingIPv4 is the IP address to be returned for a blocked A request.
+	BlockingIPv4 net.IP `yaml:"blocking_ipv4"`
+
+	// BlockingIPv6 is the IP address to be returned for a blocked AAAA
+	// request.
+	BlockingIPv6 net.IP `yaml:"blocking_ipv6"`
+
+	// BlockedResponseTTL is the time-to-live value for blocked responses.  If
+	// 0, then default value is used (3600).
+	BlockedResponseTTL uint32 `yaml:"blocked_response_ttl"`
+
+	// ParentalBlockHost is the IP (or domain name) which is used to respond to
+	// DNS requests blocked by parental control.
+	ParentalBlockHost string `yaml:"parental_block_host"`
+
+	// SafeBrowsingBlockHost is the IP (or domain name) which is used to
+	// respond to DNS requests blocked by safe-browsing.
 	SafeBrowsingBlockHost string `yaml:"safebrowsing_block_host"`
 
 	// Anti-DNS amplification
-	// --
 
-	Ratelimit          uint32   `yaml:"ratelimit"`           // max number of requests per second from a given IP (0 to disable)
-	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"` // a list of whitelisted client IP addresses
-	RefuseAny          bool     `yaml:"refuse_any"`          // if true, refuse ANY requests
+	// Ratelimit is the maximum number of requests per second from a given IP
+	// (0 to disable).
+	Ratelimit uint32 `yaml:"ratelimit"`
+
+	// RatelimitWhitelist is the list of whitelisted client IP addresses.
+	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"`
+
+	// RefuseAny, if true, refuse ANY requests.
+	RefuseAny bool `yaml:"refuse_any"`
 
 	// Upstream DNS servers configuration
-	// --
 
-	UpstreamDNS         []string `yaml:"upstream_dns"`
-	UpstreamDNSFileName string   `yaml:"upstream_dns_file"`
-	BootstrapDNS        []string `yaml:"bootstrap_dns"` // a list of bootstrap DNS for DoH and DoT (plain DNS only)
-	AllServers          bool     `yaml:"all_servers"`   // if true, parallel queries to all configured upstream servers are enabled
-	FastestAddr         bool     `yaml:"fastest_addr"`  // use Fastest Address algorithm
+	// UpstreamDNS is the list of upstream DNS servers.
+	UpstreamDNS []string `yaml:"upstream_dns"`
+
+	// UpstreamDNSFileName, if set, points to the file which contains upstream
+	// DNS servers.
+	UpstreamDNSFileName string `yaml:"upstream_dns_file"`
+
+	// BootstrapDNS is the list of bootstrap DNS servers for DoH and DoT
+	// resolvers (plain DNS only).
+	BootstrapDNS []string `yaml:"bootstrap_dns"`
+
+	// AllServers, if true, parallel queries to all configured upstream servers
+	// are enabled.
+	AllServers bool `yaml:"all_servers"`
+
+	// FastestAddr, if true, use Fastest Address algorithm.
+	FastestAddr bool `yaml:"fastest_addr"`
+
 	// FastestTimeout replaces the default timeout for dialing IP addresses
 	// when FastestAddr is true.
 	FastestTimeout timeutil.Duration `yaml:"fastest_timeout"`
 
 	// Access settings
-	// --
 
-	// AllowedClients is the slice of IP addresses, CIDR networks, and ClientIDs
-	// of allowed clients.  If not empty, only these clients are allowed, and
-	// [FilteringConfig.DisallowedClients] are ignored.
+	// AllowedClients is the slice of IP addresses, CIDR networks, and
+	// ClientIDs of allowed clients.  If not empty, only these clients are
+	// allowed, and [FilteringConfig.DisallowedClients] are ignored.
 	AllowedClients []string `yaml:"allowed_clients"`
 
 	// DisallowedClients is the slice of IP addresses, CIDR networks, and
 	// ClientIDs of disallowed clients.
 	DisallowedClients []string `yaml:"disallowed_clients"`
 
-	BlockedHosts []string `yaml:"blocked_hosts"` // hosts that should be blocked
+	// BlockedHosts is the list of hosts that should be blocked.
+	BlockedHosts []string `yaml:"blocked_hosts"`
+
 	// TrustedProxies is the list of IP addresses and CIDR networks to detect
 	// proxy servers addresses the DoH requests from which should be handled.
 	// The value of nil or an empty slice for this field makes Proxy not trust
@@ -115,26 +146,46 @@ type FilteringConfig struct {
 	TrustedProxies []string `yaml:"trusted_proxies"`
 
 	// DNS cache settings
-	// --
 
-	CacheSize   uint32 `yaml:"cache_size"`    // DNS cache size (in bytes)
-	CacheMinTTL uint32 `yaml:"cache_ttl_min"` // override TTL value (minimum) received from upstream server
-	CacheMaxTTL uint32 `yaml:"cache_ttl_max"` // override TTL value (maximum) received from upstream server
+	// CacheSize is the DNS cache size (in bytes).
+	CacheSize uint32 `yaml:"cache_size"`
+
+	// CacheMinTTL is the override TTL value (minimum) received from upstream
+	// server.
+	CacheMinTTL uint32 `yaml:"cache_ttl_min"`
+
+	// CacheMaxTTL is the override TTL value (maximum) received from upstream
+	// server.
+	CacheMaxTTL uint32 `yaml:"cache_ttl_max"`
+
 	// CacheOptimistic defines if optimistic cache mechanism should be used.
 	CacheOptimistic bool `yaml:"cache_optimistic"`
 
 	// Other settings
-	// --
 
-	BogusNXDomain          []string `yaml:"bogus_nxdomain"`     // transform responses with these IP addresses to NXDOMAIN
-	AAAADisabled           bool     `yaml:"aaaa_disabled"`      // Respond with an empty answer to all AAAA requests
-	EnableDNSSEC           bool     `yaml:"enable_dnssec"`      // Set AD flag in outcoming DNS request
-	EnableEDNSClientSubnet bool     `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
-	MaxGoroutines          uint32   `yaml:"max_goroutines"`     // Max. number of parallel goroutines for processing incoming requests
-	HandleDDR              bool     `yaml:"handle_ddr"`         // Handle DDR requests
+	// BogusNXDomain is the list of IP addresses, responses with them will be
+	// transformed to NXDOMAIN.
+	BogusNXDomain []string `yaml:"bogus_nxdomain"`
 
-	// IpsetList is the ipset configuration that allows AdGuard Home to add
-	// IP addresses of the specified domain names to an ipset list.  Syntax:
+	// AAAADisabled, if true, respond with an empty answer to all AAAA
+	// requests.
+	AAAADisabled bool `yaml:"aaaa_disabled"`
+
+	// EnableDNSSEC, if true, set AD flag in outcoming DNS request.
+	EnableDNSSEC bool `yaml:"enable_dnssec"`
+
+	// EDNSClientSubnet is the settings list for EDNS Client Subnet.
+	EDNSClientSubnet *EDNSClientSubnet `yaml:"edns_client_subnet"`
+
+	// MaxGoroutines is the max number of parallel goroutines for processing
+	// incoming requests.
+	MaxGoroutines uint32 `yaml:"max_goroutines"`
+
+	// HandleDDR, if true, handle DDR requests
+	HandleDDR bool `yaml:"handle_ddr"`
+
+	// IpsetList is the ipset configuration that allows AdGuard Home to add IP
+	// addresses of the specified domain names to an ipset list.  Syntax:
 	//
 	//	DOMAIN[,DOMAIN].../IPSET_NAME
 	//
@@ -144,6 +195,18 @@ type FilteringConfig struct {
 	// IpsetListFileName, if set, points to the file with ipset configuration.
 	// The format is the same as in [IpsetList].
 	IpsetListFileName string `yaml:"ipset_file"`
+}
+
+// EDNSClientSubnet is the settings list for EDNS Client Subnet.
+type EDNSClientSubnet struct {
+	// CustomIP for EDNS Client Subnet.
+	CustomIP string `yaml:"custom_ip"`
+
+	// Enabled defines if EDNS Client Subnet is enabled.
+	Enabled bool `yaml:"enabled"`
+
+	// UseCustom defines if CustomIP should be used.
+	UseCustom bool `yaml:"use_custom"`
 }
 
 // TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
@@ -270,10 +333,22 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 		UpstreamConfig:         srvConf.UpstreamConfig,
 		BeforeRequestHandler:   s.beforeRequestHandler,
 		RequestHandler:         s.handleDNSRequest,
-		EnableEDNSClientSubnet: srvConf.EnableEDNSClientSubnet,
+		EnableEDNSClientSubnet: srvConf.EDNSClientSubnet.Enabled,
 		MaxGoroutines:          int(srvConf.MaxGoroutines),
 		UseDNS64:               srvConf.UseDNS64,
 		DNS64Prefs:             srvConf.DNS64Prefixes,
+	}
+
+	if srvConf.EDNSClientSubnet.UseCustom {
+		// TODO(s.chzhen):  Add wrapper around netip.Addr.
+		var ip net.IP
+		ip, err = netutil.ParseIP(srvConf.EDNSClientSubnet.CustomIP)
+		if err != nil {
+			return conf, fmt.Errorf("edns: %w", err)
+		}
+
+		// TODO(s.chzhen):  Use netip.Addr instead of net.IP inside dnsproxy.
+		conf.EDNSAddr = ip
 	}
 
 	if srvConf.CacheSize != 0 {
@@ -510,7 +585,7 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
 		if len(cert.DNSNames) != 0 {
 			s.conf.dnsNames = cert.DNSNames
 			log.Debug("dnsforward: using certificate's SAN as DNS names: %v", cert.DNSNames)
-			sort.Strings(s.conf.dnsNames)
+			slices.Sort(s.conf.dnsNames)
 		} else {
 			s.conf.dnsNames = append(s.conf.dnsNames, cert.Subject.CommonName)
 			log.Debug("dnsforward: using certificate's CN as DNS name: %s", cert.Subject.CommonName)
@@ -524,16 +599,6 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
 	}
 
 	return nil
-}
-
-// isInSorted returns true if s is in the sorted slice strs.
-func isInSorted(strs []string, s string) (ok bool) {
-	i := sort.SearchStrings(strs, s)
-	if i == len(strs) || strs[i] != s {
-		return false
-	}
-
-	return true
 }
 
 // isWildcard returns true if host is a wildcard hostname.
@@ -550,11 +615,12 @@ func matchesDomainWildcard(host, pat string) (ok bool) {
 // anyNameMatches returns true if sni, the client's SNI value, matches any of
 // the DNS names and patterns from certificate.  dnsNames must be sorted.
 func anyNameMatches(dnsNames []string, sni string) (ok bool) {
-	if netutil.ValidateDomainName(sni) != nil {
+	// Check sni is either a valid hostname or a valid IP address.
+	if netutil.ValidateHostname(sni) != nil && net.ParseIP(sni) == nil {
 		return false
 	}
 
-	if isInSorted(dnsNames, sni) {
+	if _, ok = slices.BinarySearch(dnsNames, sni); ok {
 		return true
 	}
 

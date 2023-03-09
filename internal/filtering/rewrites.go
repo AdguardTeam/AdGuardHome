@@ -1,11 +1,8 @@
-// DNS Rewrites
-
 package filtering
 
 import (
 	"fmt"
 	"net"
-	"sort"
 	"strings"
 
 	"github.com/AdguardTeam/golibs/errors"
@@ -13,6 +10,8 @@ import (
 	"github.com/miekg/dns"
 	"golang.org/x/exp/slices"
 )
+
+// Legacy DNS rewrites
 
 // LegacyRewrite is a single legacy DNS rewrite record.
 //
@@ -123,38 +122,24 @@ func matchDomainWildcard(host, wildcard string) (ok bool) {
 	return isWildcard(wildcard) && strings.HasSuffix(host, wildcard[1:])
 }
 
-// rewritesSorted is a slice of legacy rewrites for sorting.
+// legacyRewriteSortsBefore sorts rewirtes according to the following priority:
 //
-// The sorting priority:
-//
-//  1. A and AAAA > CNAME
-//  2. wildcard > exact
-//  3. lower level wildcard > higher level wildcard
-//
-// TODO(a.garipov):  Replace with slices.Sort.
-type rewritesSorted []*LegacyRewrite
-
-// Len implements the sort.Interface interface for rewritesSorted.
-func (a rewritesSorted) Len() (l int) { return len(a) }
-
-// Swap implements the sort.Interface interface for rewritesSorted.
-func (a rewritesSorted) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-
-// Less implements the sort.Interface interface for rewritesSorted.
-func (a rewritesSorted) Less(i, j int) (less bool) {
-	ith, jth := a[i], a[j]
-	if ith.Type == dns.TypeCNAME && jth.Type != dns.TypeCNAME {
+//  1. A and AAAA > CNAME;
+//  2. wildcard > exact;
+//  3. lower level wildcard > higher level wildcard;
+func legacyRewriteSortsBefore(a, b *LegacyRewrite) (sortsBefore bool) {
+	if a.Type == dns.TypeCNAME && b.Type != dns.TypeCNAME {
 		return true
-	} else if ith.Type != dns.TypeCNAME && jth.Type == dns.TypeCNAME {
+	} else if a.Type != dns.TypeCNAME && b.Type == dns.TypeCNAME {
 		return false
 	}
 
-	if iw, jw := isWildcard(ith.Domain), isWildcard(jth.Domain); iw != jw {
-		return jw
+	if aIsWld, bIsWld := isWildcard(a.Domain), isWildcard(b.Domain); aIsWld != bIsWld {
+		return bIsWld
 	}
 
-	// Both are either wildcards or not.
-	return len(ith.Domain) > len(jth.Domain)
+	// Both are either wildcards or both aren't.
+	return len(a.Domain) > len(b.Domain)
 }
 
 // prepareRewrites normalizes and validates all legacy DNS rewrites.
@@ -196,7 +181,7 @@ func findRewrites(
 		return nil, matched
 	}
 
-	sort.Sort(rewritesSorted(rewrites))
+	slices.SortFunc(rewrites, legacyRewriteSortsBefore)
 
 	for i, r := range rewrites {
 		if isWildcard(r.Domain) {

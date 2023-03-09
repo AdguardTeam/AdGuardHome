@@ -6,7 +6,6 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
-	"sort"
 	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
@@ -21,6 +20,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/renameio/maybe"
+	"golang.org/x/exp/slices"
 	yaml "gopkg.in/yaml.v3"
 )
 
@@ -75,9 +75,19 @@ type osConfig struct {
 
 type clientsConfig struct {
 	// Sources defines the set of sources to fetch the runtime clients from.
-	Sources *clientSourcesConf `yaml:"runtime_sources"`
+	Sources *clientSourcesConfig `yaml:"runtime_sources"`
 	// Persistent are the configured clients.
 	Persistent []*clientObject `yaml:"persistent"`
+}
+
+// clientSourceConfig is used to configure where the runtime clients will be
+// obtained from.
+type clientSourcesConfig struct {
+	WHOIS     bool `yaml:"whois"`
+	ARP       bool `yaml:"arp"`
+	RDNS      bool `yaml:"rdns"`
+	DHCP      bool `yaml:"dhcp"`
+	HostsFile bool `yaml:"hosts"`
 }
 
 // configuration is loaded from YAML
@@ -275,6 +285,12 @@ var config = &configuration{
 			TrustedProxies: []string{"127.0.0.0/8", "::1/128"},
 			CacheSize:      4 * 1024 * 1024,
 
+			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{
+				CustomIP:  "",
+				Enabled:   false,
+				UseCustom: false,
+			},
+
 			// set default maximum concurrent queries to 300
 			// we introduced a default limit due to this:
 			// https://github.com/AdguardTeam/AdGuardHome/issues/2015#issuecomment-674041912
@@ -336,7 +352,7 @@ var config = &configuration{
 		},
 	},
 	Clients: &clientsConfig{
-		Sources: &clientSourcesConf{
+		Sources: &clientSourcesConfig{
 			WHOIS:     true,
 			ARP:       true,
 			RDNS:      true,
@@ -490,7 +506,7 @@ func (c *configuration) write() (err error) {
 		config.Stats.Interval = statsConf.LimitDays
 		config.Stats.Enabled = statsConf.Enabled
 		config.Stats.Ignored = statsConf.Ignored.Values()
-		sort.Strings(config.Stats.Ignored)
+		slices.Sort(config.Stats.Ignored)
 	}
 
 	if Context.queryLog != nil {
@@ -502,7 +518,7 @@ func (c *configuration) write() (err error) {
 		config.QueryLog.Interval = timeutil.Duration{Duration: dc.RotationIvl}
 		config.QueryLog.MemSize = dc.MemSize
 		config.QueryLog.Ignored = dc.Ignored.Values()
-		sort.Strings(config.QueryLog.Ignored)
+		slices.Sort(config.Stats.Ignored)
 	}
 
 	if Context.filters != nil {

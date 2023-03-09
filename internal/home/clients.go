@@ -2,11 +2,9 @@ package home
 
 import (
 	"bytes"
-	"encoding"
 	"fmt"
 	"net"
 	"net/netip"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -26,121 +24,15 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-const clientsUpdatePeriod = 10 * time.Minute
-
-var webHandlersRegistered = false
-
-// Client contains information about persistent clients.
-type Client struct {
-	// upstreamConfig is the custom upstream config for this client.  If
-	// it's nil, it has not been initialized yet.  If it's non-nil and
-	// empty, there are no valid upstreams.  If it's non-nil and non-empty,
-	// these upstream must be used.
-	upstreamConfig *proxy.UpstreamConfig
-
-	Name string
-
-	IDs             []string
-	Tags            []string
-	BlockedServices []string
-	Upstreams       []string
-
-	UseOwnSettings        bool
-	FilteringEnabled      bool
-	SafeSearchEnabled     bool
-	SafeBrowsingEnabled   bool
-	ParentalEnabled       bool
-	UseOwnBlockedServices bool
-}
-
-// closeUpstreams closes the client-specific upstream config of c if any.
-func (c *Client) closeUpstreams() (err error) {
-	if c.upstreamConfig != nil {
-		err = c.upstreamConfig.Close()
-		if err != nil {
-			return fmt.Errorf("closing upstreams of client %q: %w", c.Name, err)
-		}
-	}
-
-	return nil
-}
-
-type clientSource uint
-
-// Clients information sources.  The order determines the priority.
-const (
-	ClientSourceNone clientSource = iota
-	ClientSourceWHOIS
-	ClientSourceARP
-	ClientSourceRDNS
-	ClientSourceDHCP
-	ClientSourceHostsFile
-	ClientSourcePersistent
-)
-
-// type check
-var _ fmt.Stringer = clientSource(0)
-
-// String returns a human-readable name of cs.
-func (cs clientSource) String() (s string) {
-	switch cs {
-	case ClientSourceWHOIS:
-		return "WHOIS"
-	case ClientSourceARP:
-		return "ARP"
-	case ClientSourceRDNS:
-		return "rDNS"
-	case ClientSourceDHCP:
-		return "DHCP"
-	case ClientSourceHostsFile:
-		return "etc/hosts"
-	default:
-		return ""
-	}
-}
-
-// type check
-var _ encoding.TextMarshaler = clientSource(0)
-
-// MarshalText implements encoding.TextMarshaler for the clientSource.
-func (cs clientSource) MarshalText() (text []byte, err error) {
-	return []byte(cs.String()), nil
-}
-
-// clientSourceConf is used to configure where the runtime clients will be
-// obtained from.
-type clientSourcesConf struct {
-	WHOIS     bool `yaml:"whois"`
-	ARP       bool `yaml:"arp"`
-	RDNS      bool `yaml:"rdns"`
-	DHCP      bool `yaml:"dhcp"`
-	HostsFile bool `yaml:"hosts"`
-}
-
-// RuntimeClient information
-type RuntimeClient struct {
-	WHOISInfo *RuntimeClientWHOISInfo
-	Host      string
-	Source    clientSource
-}
-
-// RuntimeClientWHOISInfo is the filtered WHOIS data for a runtime client.
-type RuntimeClientWHOISInfo struct {
-	City    string `json:"city,omitempty"`
-	Country string `json:"country,omitempty"`
-	Orgname string `json:"orgname,omitempty"`
-}
-
+// clientsContainer is the storage of all runtime and persistent clients.
 type clientsContainer struct {
-	// TODO(a.garipov): Perhaps use a number of separate indices for
-	// different types (string, netip.Addr, and so on).
+	// TODO(a.garipov): Perhaps use a number of separate indices for different
+	// types (string, netip.Addr, and so on).
 	list    map[string]*Client // name -> client
 	idIndex map[string]*Client // ID -> client
 
 	// ipToRC is the IP address to *RuntimeClient map.
 	ipToRC map[netip.Addr]*RuntimeClient
-
-	lock sync.Mutex
 
 	allTags *stringutil.Set
 
@@ -157,7 +49,16 @@ type clientsContainer struct {
 	// arpdb stores the neighbors retrieved from ARP.
 	arpdb aghnet.ARPDB
 
-	testing bool // if TRUE, this object is used for internal tests
+	// lock protects all fields.
+	//
+	// TODO(a.garipov): Use a pointer and describe which fields are protected in
+	// more detail.
+	lock sync.Mutex
+
+	// testing is a flag that disables some features for internal tests.
+	//
+	// TODO(a.garipov): Awful.  Remove.
+	testing bool
 }
 
 // Init initializes clients container
@@ -203,24 +104,34 @@ func (clients *clientsContainer) handleHostsUpdates() {
 	}
 }
 
-// Start - start the module
+// webHandlersRegistered prevents a [clientsContainer] from regisering its web
+// handlers more than once.
+//
+// TODO(a.garipov): Refactor HTTP handler registration logic.
+var webHandlersRegistered = false
+
+// Start starts the clients container.
 func (clients *clientsContainer) Start() {
-	if !clients.testing {
-		if !webHandlersRegistered {
-			webHandlersRegistered = true
-			clients.registerWebHandlers()
-		}
-		go clients.periodicUpdate()
+	if clients.testing {
+		return
 	}
+
+	if !webHandlersRegistered {
+		webHandlersRegistered = true
+		clients.registerWebHandlers()
+	}
+
+	go clients.periodicUpdate()
 }
 
-// Reload reloads runtime clients.
-func (clients *clientsContainer) Reload() {
+// reloadARP reloads runtime clients from ARP, if configured.
+func (clients *clientsContainer) reloadARP() {
 	if clients.arpdb != nil {
 		clients.addFromSystemARP()
 	}
 }
 
+// clientObject is the YAML representation of a persistent client.
 type clientObject struct {
 	Name string `yaml:"name"`
 
@@ -271,7 +182,7 @@ func (clients *clientsContainer) addFromConfig(objects []*clientObject) {
 			}
 		}
 
-		sort.Strings(cli.Tags)
+		slices.Sort(cli.Tags)
 
 		_, err := clients.Add(cli)
 		if err != nil {
@@ -311,17 +222,22 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 	// above loop can generate different orderings when writing to the config
 	// file: this produces lots of diffs in config files, so sort objects by
 	// name before writing.
-	sort.Slice(objs, func(i, j int) bool { return objs[i].Name < objs[j].Name })
+	slices.SortStableFunc(objs, func(a, b *clientObject) (sortsBefore bool) {
+		return a.Name < b.Name
+	})
 
 	return objs
 }
+
+// arpClientsUpdatePeriod defines how often ARP clients are updated.
+const arpClientsUpdatePeriod = 10 * time.Minute
 
 func (clients *clientsContainer) periodicUpdate() {
 	defer log.OnPanic("clients container")
 
 	for {
-		clients.Reload()
-		time.Sleep(clientsUpdatePeriod)
+		clients.reloadARP()
+		time.Sleep(arpClientsUpdatePeriod)
 	}
 }
 
@@ -484,7 +400,8 @@ func (clients *clientsContainer) findUpstreams(
 	return conf, nil
 }
 
-// findLocked searches for a client by its ID.  For internal use only.
+// findLocked searches for a client by its ID.  clients.lock is expected to be
+// locked.
 func (clients *clientsContainer) findLocked(id string) (c *Client, ok bool) {
 	c, ok = clients.idIndex[id]
 	if ok {
@@ -498,13 +415,13 @@ func (clients *clientsContainer) findLocked(id string) (c *Client, ok bool) {
 
 	for _, c = range clients.list {
 		for _, id := range c.IDs {
-			var n netip.Prefix
-			n, err = netip.ParsePrefix(id)
+			var subnet netip.Prefix
+			subnet, err = netip.ParsePrefix(id)
 			if err != nil {
 				continue
 			}
 
-			if n.Contains(ip) {
+			if subnet.Contains(ip) {
 				return c, true
 			}
 		}
@@ -514,20 +431,25 @@ func (clients *clientsContainer) findLocked(id string) (c *Client, ok bool) {
 		return nil, false
 	}
 
-	macFound := clients.dhcpServer.FindMACbyIP(ip.AsSlice())
-	if macFound == nil {
+	return clients.findDHCP(ip)
+}
+
+// findDHCP searches for a client by its MAC, if the DHCP server is active and
+// there is such client.  clients.lock is expected to be locked.
+func (clients *clientsContainer) findDHCP(ip netip.Addr) (c *Client, ok bool) {
+	foundMAC := clients.dhcpServer.FindMACbyIP(ip)
+	if foundMAC == nil {
 		return nil, false
 	}
 
 	for _, c = range clients.list {
 		for _, id := range c.IDs {
-			var mac net.HardwareAddr
-			mac, err = net.ParseMAC(id)
+			mac, err := net.ParseMAC(id)
 			if err != nil {
 				continue
 			}
 
-			if bytes.Equal(mac, macFound) {
+			if bytes.Equal(mac, foundMAC) {
 				return c, true
 			}
 		}
@@ -564,24 +486,13 @@ func (clients *clientsContainer) check(c *Client) (err error) {
 	}
 
 	for i, id := range c.IDs {
-		// Normalize structured data.
-		var (
-			ip  netip.Addr
-			n   netip.Prefix
-			mac net.HardwareAddr
-		)
-
-		if ip, err = netip.ParseAddr(id); err == nil {
-			c.IDs[i] = ip.String()
-		} else if n, err = netip.ParsePrefix(id); err == nil {
-			c.IDs[i] = n.String()
-		} else if mac, err = net.ParseMAC(id); err == nil {
-			c.IDs[i] = mac.String()
-		} else if err = dnsforward.ValidateClientID(id); err == nil {
-			c.IDs[i] = strings.ToLower(id)
-		} else {
-			return fmt.Errorf("invalid clientid at index %d: %q", i, id)
+		var norm string
+		norm, err = normalizeClientIdentifier(id)
+		if err != nil {
+			return fmt.Errorf("client at index %d: %w", i, err)
 		}
+
+		c.IDs[i] = norm
 	}
 
 	for _, t := range c.Tags {
@@ -590,7 +501,7 @@ func (clients *clientsContainer) check(c *Client) (err error) {
 		}
 	}
 
-	sort.Strings(c.Tags)
+	slices.Sort(c.Tags)
 
 	err = dnsforward.ValidateUpstreams(c.Upstreams)
 	if err != nil {
@@ -598,6 +509,35 @@ func (clients *clientsContainer) check(c *Client) (err error) {
 	}
 
 	return nil
+}
+
+// normalizeClientIdentifier returns a normalized version of idStr.  If idStr
+// cannot be normalized, it returns an error.
+func normalizeClientIdentifier(idStr string) (norm string, err error) {
+	if idStr == "" {
+		return "", errors.Error("clientid is empty")
+	}
+
+	var ip netip.Addr
+	if ip, err = netip.ParseAddr(idStr); err == nil {
+		return ip.String(), nil
+	}
+
+	var subnet netip.Prefix
+	if subnet, err = netip.ParsePrefix(idStr); err == nil {
+		return subnet.String(), nil
+	}
+
+	var mac net.HardwareAddr
+	if mac, err = net.ParseMAC(idStr); err == nil {
+		return mac.String(), nil
+	}
+
+	if err = dnsforward.ValidateClientID(idStr); err == nil {
+		return strings.ToLower(idStr), nil
+	}
+
+	return "", fmt.Errorf("bad client identifier %q", idStr)
 }
 
 // Add adds a new client object.  ok is false if such client already exists or
@@ -665,21 +605,6 @@ func (clients *clientsContainer) Del(name string) (ok bool) {
 	return true
 }
 
-// equalStringSlices returns true if the slices are equal.
-func equalStringSlices(a, b []string) (ok bool) {
-	if len(a) != len(b) {
-		return false
-	}
-
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-
-	return true
-}
-
 // Update updates a client by its name.
 func (clients *clientsContainer) Update(name string, c *Client) (err error) {
 	err = clients.check(c)
@@ -703,22 +628,11 @@ func (clients *clientsContainer) Update(name string, c *Client) (err error) {
 		}
 	}
 
-	// Second, check the IP index.
-	if !equalStringSlices(prev.IDs, c.IDs) {
-		for _, id := range c.IDs {
-			c2, ok2 := clients.idIndex[id]
-			if ok2 && c2 != prev {
-				return fmt.Errorf("another client uses the same id (%q): %q", id, c2.Name)
-			}
-		}
-
-		//  Update ID index.
-		for _, id := range prev.IDs {
-			delete(clients.idIndex, id)
-		}
-		for _, id := range c.IDs {
-			clients.idIndex[id] = prev
-		}
+	// Second, update the ID index.
+	err = clients.updateIDIndex(prev, c.IDs)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
 	}
 
 	// Update name index.
@@ -734,6 +648,32 @@ func (clients *clientsContainer) Update(name string, c *Client) (err error) {
 	}
 
 	*prev = *c
+
+	return nil
+}
+
+// updateIDIndex updates the ID index data for cli using the information from
+// newIDs.
+func (clients *clientsContainer) updateIDIndex(cli *Client, newIDs []string) (err error) {
+	if slices.Equal(cli.IDs, newIDs) {
+		return nil
+	}
+
+	for _, id := range newIDs {
+		existing, ok := clients.idIndex[id]
+		if ok && existing != cli {
+			return fmt.Errorf("id %q is used by client with name %q", id, existing.Name)
+		}
+	}
+
+	// Update the IDs in the index.
+	for _, id := range cli.IDs {
+		delete(clients.idIndex, id)
+	}
+
+	for _, id := range newIDs {
+		clients.idIndex[id] = cli
+	}
 
 	return nil
 }

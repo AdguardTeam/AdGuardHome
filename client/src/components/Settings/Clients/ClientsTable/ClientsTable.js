@@ -290,7 +290,7 @@ const ClientsTable = ({
                             disabled={processingUpdating}
                             title={t('edit_table_action')}
                         >
-                            <svg className="icons">
+                            <svg className="icons icon12">
                                 <use xlinkHref="#edit" />
                             </svg>
                         </button>
@@ -301,7 +301,7 @@ const ClientsTable = ({
                             disabled={processingDeleting}
                             title={t('delete_table_action')}
                         >
-                            <svg className="icons">
+                            <svg className="icons icon12">
                                 <use xlinkHref="#delete" />
                             </svg>
                         </button>

@@ -48,7 +48,7 @@
     height: 20px;
     min-width: 20px;
     margin-right: 10px;
-    background-color: #e2e2e2;
+    background-color: var(--checkbox-bg);
     background-repeat: no-repeat;
     background-position: center center;
     background-size: 12px 10px;

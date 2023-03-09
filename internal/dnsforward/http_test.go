@@ -69,6 +69,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 			ProtectionEnabled: true,
 			BlockingMode:      BlockingModeDefault,
 			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
+			EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
 	}
@@ -144,6 +145,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			ProtectionEnabled: true,
 			BlockingMode:      BlockingModeDefault,
 			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
+			EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
 	}
@@ -227,7 +229,10 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		require.True(t, ok)
 
 		t.Run(tc.name, func(t *testing.T) {
-			t.Cleanup(func() { s.conf = defaultConf })
+			t.Cleanup(func() {
+				s.conf = defaultConf
+				s.conf.FilteringConfig.EDNSClientSubnet.Enabled = false
+			})
 
 			rBody := io.NopCloser(bytes.NewReader(caseData.Req))
 			var r *http.Request
@@ -337,7 +342,8 @@ func TestValidateUpstreams(t *testing.T) {
 	}, {
 		name: "bad_domain",
 		wantErr: `bad upstream for domain "[/!/]8.8.8.8": domain at index 0: ` +
-			`bad domain name "!": bad domain name label "!": bad domain name label rune '!'`,
+			`bad domain name "!": bad top-level domain name label "!": ` +
+			`bad top-level domain name label rune '!'`,
 		set: []string{"[/!/]8.8.8.8"},
 	}}
 
@@ -442,6 +448,9 @@ func TestServer_handleTestUpstreaDNS(t *testing.T) {
 		UDPListenAddrs:  []*net.UDPAddr{{}},
 		TCPListenAddrs:  []*net.TCPAddr{{}},
 		UpstreamTimeout: upsTimeout,
+		FilteringConfig: FilteringConfig{
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+		},
 	}, nil)
 	startDeferStop(t, srv)
 

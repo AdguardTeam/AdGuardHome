@@ -297,7 +297,7 @@
     "blocking_mode_refused": "REFUSED: Vastaa REFUSED-koodilla",
     "blocking_mode_nxdomain": "NXDOMAIN: Vastaa NXDOMAIN-koodilla",
     "blocking_mode_null_ip": "Tyhjä IP: Vastaa IP-nollaosoitteella (0.0.0.0 korvaa A; :: korvaa AAAA)",
-    "blocking_mode_custom_ip": "Mukautettu IP: Vastaa itse määritetyllä IP-osoitteella",
+    "blocking_mode_custom_ip": "Mukautettu IP: Vastaa manuaalisesti määritetyllä IP-osoitteella",
     "theme_auto": "Automaattinen",
     "theme_light": "Vaalea",
     "theme_dark": "Tumma",

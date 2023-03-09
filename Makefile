@@ -4,17 +4,26 @@
 # See https://pubs.opengroup.org/onlinepubs/9699919799/utilities/make.html.
 .POSIX:
 
+# This comment is used to simplify checking local copies of the
+# Makefile.  Bump this number every time a significant change is made to
+# this Makefile.
+#
+# AdGuard-Project-Version: 2
+
+# Don't name these macros "GO" etc., because GNU Make apparently makes
+# them exported environment variables with the literal value of
+# "${GO:-go}" and so on, which is not what we need.  Use a dot in the
+# name to make sure that users don't have an environment variable with
+# the same name.
+#
+# See https://unix.stackexchange.com/q/646255/105635.
+GO.MACRO = $${GO:-go}
+VERBOSE.MACRO = $${VERBOSE:-0}
+
 CHANNEL = development
 CLIENT_DIR = client
 COMMIT = $$( git rev-parse --short HEAD )
 DIST_DIR = dist
-# Don't name this macro "GO", because GNU Make apparenly makes it an
-# exported environment variable with the literal value of "${GO:-go}",
-# which is not what we need.  Use a dot in the name to make sure that
-# users don't have an environment variable with the same name.
-#
-# See https://unix.stackexchange.com/q/646255/105635.
-GO.MACRO = $${GO:-go}
 GOPROXY = https://goproxy.cn|https://proxy.golang.org|direct
 GOSUMDB = sum.golang.google.cn
 GPG_KEY = devteam@adguard.com
@@ -25,7 +34,6 @@ NPM_INSTALL_FLAGS = $(NPM_FLAGS) --quiet --no-progress --ignore-engines\
 	--ignore-optional --ignore-platform --ignore-scripts
 RACE = 0
 SIGN = 1
-VERBOSE = 0
 VERSION = v0.0.0
 YARN = yarn
 
@@ -56,13 +64,13 @@ ENV = env\
 	PATH="$${PWD}/bin:$$( "$(GO.MACRO)" env GOPATH )/bin:$${PATH}"\
 	RACE='$(RACE)'\
 	SIGN='$(SIGN)'\
-	VERBOSE='$(VERBOSE)'\
+	VERBOSE="$(VERBOSE.MACRO)"\
 	VERSION='$(VERSION)'\
 
 # Keep the line above blank.
 
-# Keep this target first, so that a naked make invocation triggers
-# a full build.
+# Keep this target first, so that a naked make invocation triggers a
+# full build.
 build: deps quick-build
 
 quick-build: js-build go-build
@@ -116,4 +124,4 @@ go-os-check:
 openapi-lint: ; cd ./openapi/ && $(YARN) test
 openapi-show: ; cd ./openapi/ && $(YARN) start
 
-txt-lint:  ; $(ENV) "$(SHELL)" ./scripts/make/txt-lint.sh
+txt-lint: ; $(ENV) "$(SHELL)" ./scripts/make/txt-lint.sh

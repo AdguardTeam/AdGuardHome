@@ -13,6 +13,7 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
+	"github.com/AdguardTeam/urlfilter/rules"
 )
 
 // unit is a convenient alias for struct{}
@@ -127,8 +128,12 @@ func (a *accessManager) isBlockedClientID(id string) (ok bool) {
 }
 
 // isBlockedHost returns true if host should be blocked.
-func (a *accessManager) isBlockedHost(host string) (ok bool) {
-	_, ok = a.blockedHostsEng.Match(strings.ToLower(host))
+func (a *accessManager) isBlockedHost(host string, qt rules.RRType) (ok bool) {
+	_, ok = a.blockedHostsEng.MatchRequest(&urlfilter.DNSRequest{
+		Hostname: host,
+		ClientIP: "0.0.0.0",
+		DNSType:  qt,
+	})
 
 	return ok
 }

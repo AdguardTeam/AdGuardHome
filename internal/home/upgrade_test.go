@@ -579,7 +579,7 @@ func TestUpgradeSchema13to14(t *testing.T) {
 			// The clients field will be added anyway.
 			"clients": yobj{
 				"persistent": yarr{},
-				"runtime_sources": &clientSourcesConf{
+				"runtime_sources": &clientSourcesConfig{
 					WHOIS:     true,
 					ARP:       true,
 					RDNS:      false,
@@ -597,7 +597,7 @@ func TestUpgradeSchema13to14(t *testing.T) {
 			"schema_version": newSchemaVer,
 			"clients": yobj{
 				"persistent": []*clientObject{testClient},
-				"runtime_sources": &clientSourcesConf{
+				"runtime_sources": &clientSourcesConfig{
 					WHOIS:     true,
 					ARP:       true,
 					RDNS:      false,
@@ -618,7 +618,7 @@ func TestUpgradeSchema13to14(t *testing.T) {
 			"schema_version": newSchemaVer,
 			"clients": yobj{
 				"persistent": []*clientObject{testClient},
-				"runtime_sources": &clientSourcesConf{
+				"runtime_sources": &clientSourcesConfig{
 					WHOIS:     true,
 					ARP:       true,
 					RDNS:      true,
@@ -741,6 +741,67 @@ func TestUpgradeSchema15to16(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := upgradeSchema15to16(tc.in)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}
+
+func TestUpgradeSchema16to17(t *testing.T) {
+	const newSchemaVer = 17
+
+	defaultWantObj := yobj{
+		"dns": map[string]any{
+			"edns_client_subnet": map[string]any{
+				"enabled":    false,
+				"use_custom": false,
+				"custom_ip":  "",
+			},
+		},
+		"schema_version": newSchemaVer,
+	}
+
+	testCases := []struct {
+		in   yobj
+		want yobj
+		name string
+	}{{
+		in: yobj{
+			"dns": map[string]any{
+				"edns_client_subnet": false,
+			},
+		},
+		want: defaultWantObj,
+		name: "basic",
+	}, {
+		in: yobj{
+			"dns": map[string]any{},
+		},
+		want: defaultWantObj,
+		name: "default_values",
+	}, {
+		in: yobj{
+			"dns": map[string]any{
+				"edns_client_subnet": true,
+			},
+		},
+		want: yobj{
+			"dns": map[string]any{
+				"edns_client_subnet": map[string]any{
+					"enabled":    true,
+					"use_custom": false,
+					"custom_ip":  "",
+				},
+			},
+			"schema_version": newSchemaVer,
+		},
+		name: "is_true",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema16to17(tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)

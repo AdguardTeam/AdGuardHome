@@ -67,7 +67,7 @@ func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 		}
 
 		host := fields[0]
-		err = netutil.ValidateDomainName(host)
+		err = netutil.ValidateHostname(host)
 		if err != nil {
 			log.Debug("arpdb: parsing arp output: host: %s", err)
 		} else {
