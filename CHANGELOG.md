@@ -14,14 +14,20 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.26] - 2023-03-09 (APPROX.)
+## [v0.107.27] - 2023-03-29 (APPROX.)
 
-See also the [v0.107.26 GitHub milestone][ms-v0.107.26].
+See also the [v0.107.27 GitHub milestone][ms-v0.107.27].
 
-[ms-v0.107.26]: https://github.com/AdguardTeam/AdGuardHome/milestone/62?closed=1
+[ms-v0.107.27]: https://github.com/AdguardTeam/AdGuardHome/milestone/63?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+
+
+## [v0.107.26] - 2023-03-09
+
+See also the [v0.107.26 GitHub milestone][ms-v0.107.26].
 
 ### Security
 
@@ -89,8 +95,9 @@ In this release, the schema version has changed from 16 to 17.
 [#5468]: https://github.com/AdguardTeam/AdGuardHome/issues/5468
 [#5515]: https://github.com/AdguardTeam/AdGuardHome/issues/5515
 
-[go-1.19.7]: https://groups.google.com/g/golang-announce/c/3-TpUx48iQY
-[rfc3696]:   https://datatracker.ietf.org/doc/html/rfc3696
+[go-1.19.7]:    https://groups.google.com/g/golang-announce/c/3-TpUx48iQY
+[ms-v0.107.26]: https://github.com/AdguardTeam/AdGuardHome/milestone/62?closed=1
+[rfc3696]:      https://datatracker.ietf.org/doc/html/rfc3696
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
@@ -1753,11 +1760,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.26...HEAD
-[v0.107.26]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.25...v0.107.26
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.27...HEAD
+[v0.107.27]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.26...v0.107.27
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.25...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.26...HEAD
+[v0.107.26]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.25...v0.107.26
 [v0.107.25]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.24...v0.107.25
 [v0.107.24]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.23...v0.107.24
 [v0.107.23]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.22...v0.107.23
