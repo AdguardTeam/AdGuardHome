@@ -38,7 +38,7 @@ const defaultClientIDCacheCount = 1024
 var defaultDNS = []string{
 	"https://dns10.quad9.net/dns-query",
 }
-var defaultBootstrap = []string{"9.9.9.10", "149.112.112.10", "2620:fe::10", "2620:fe::fe:10"}
+var defaultBootstrap = []string{"9.9.9.10", "149.112.112.10", "https://9.9.9.10/dns-query", "2620:fe::10", "2620:fe::fe:10"}
 
 // Often requested by all kinds of DNS probes
 var defaultBlockedHosts = []string{"version.bind", "id.server", "hostname.bind"}
