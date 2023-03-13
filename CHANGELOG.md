@@ -23,6 +23,10 @@ See also the [v0.107.27 GitHub milestone][ms-v0.107.27].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
 
 
 ## [v0.107.26] - 2023-03-09
@@ -98,10 +102,6 @@ In this release, the schema version has changed from 16 to 17.
 [go-1.19.7]:    https://groups.google.com/g/golang-announce/c/3-TpUx48iQY
 [ms-v0.107.26]: https://github.com/AdguardTeam/AdGuardHome/milestone/62?closed=1
 [rfc3696]:      https://datatracker.ietf.org/doc/html/rfc3696
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
 
 
 
