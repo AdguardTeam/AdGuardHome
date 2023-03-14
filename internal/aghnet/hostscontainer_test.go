@@ -608,6 +608,11 @@ func TestUniqueRules_ParseLine(t *testing.T) {
 		line:      ``,
 		wantIP:    netip.Addr{},
 		wantHosts: nil,
+	}, {
+		name:      "bad_hosts",
+		line:      ipStr + ` bad..host bad._tld empty.tld. ok.host`,
+		wantIP:    ip,
+		wantHosts: []string{"ok.host"},
 	}}
 
 	for _, tc := range testCases {

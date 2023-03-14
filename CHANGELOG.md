@@ -23,6 +23,13 @@ See also the [v0.107.27 GitHub milestone][ms-v0.107.27].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Panic caused by empty top-level domain name label in `/etc/hosts` files
+  ([#5584]).
+
+[#5584]: https://github.com/AdguardTeam/AdGuardHome/issues/5584
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
