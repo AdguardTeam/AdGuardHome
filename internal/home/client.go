@@ -4,6 +4,7 @@ import (
 	"encoding"
 	"fmt"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 )
 
@@ -15,6 +16,9 @@ type Client struct {
 	// these upstream must be used.
 	upstreamConfig *proxy.UpstreamConfig
 
+	safeSearchConf filtering.SafeSearchConfig
+	SafeSearch     filtering.SafeSearch
+
 	Name string
 
 	IDs             []string
@@ -24,7 +28,6 @@ type Client struct {
 
 	UseOwnSettings        bool
 	FilteringEnabled      bool
-	SafeSearchEnabled     bool
 	SafeBrowsingEnabled   bool
 	ParentalEnabled       bool
 	UseOwnBlockedServices bool

@@ -28,6 +28,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
@@ -298,6 +299,16 @@ func setupConfig(opts options) (err error) {
 	config.DNS.DnsfilterConf.UserRules = slices.Clone(config.UserRules)
 	config.DNS.DnsfilterConf.HTTPClient = Context.client
 
+	config.DNS.DnsfilterConf.SafeSearchConf.CustomResolver = safeSearchResolver{}
+	config.DNS.DnsfilterConf.SafeSearch, err = safesearch.NewDefaultSafeSearch(
+		config.DNS.DnsfilterConf.SafeSearchConf,
+		config.DNS.DnsfilterConf.SafeSearchCacheSize,
+		time.Minute*time.Duration(config.DNS.DnsfilterConf.CacheTime),
+	)
+	if err != nil {
+		return fmt.Errorf("initializing safesearch: %w", err)
+	}
+
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified
@@ -328,33 +339,16 @@ func setupConfig(opts options) (err error) {
 		arpdb = aghnet.NewARPDB()
 	}
 
-	Context.clients.Init(config.Clients.Persistent, Context.dhcpServer, Context.etcHosts, arpdb)
+	Context.clients.Init(config.Clients.Persistent, Context.dhcpServer, Context.etcHosts, arpdb, config.DNS.DnsfilterConf)
 
 	if opts.bindPort != 0 {
-		tcpPorts := aghalg.UniqChecker[tcpPort]{}
-		addPorts(tcpPorts, tcpPort(opts.bindPort))
-
-		udpPorts := aghalg.UniqChecker[udpPort]{}
-		addPorts(udpPorts, udpPort(config.DNS.Port))
-
-		if config.TLS.Enabled {
-			addPorts(
-				tcpPorts,
-				tcpPort(config.TLS.PortHTTPS),
-				tcpPort(config.TLS.PortDNSOverTLS),
-				tcpPort(config.TLS.PortDNSCrypt),
-			)
-
-			addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
-		}
-
-		if err = tcpPorts.Validate(); err != nil {
-			return fmt.Errorf("validating tcp ports: %w", err)
-		} else if err = udpPorts.Validate(); err != nil {
-			return fmt.Errorf("validating udp ports: %w", err)
-		}
-
 		config.BindPort = opts.bindPort
+
+		err = checkPorts()
+		if err != nil {
+			// Don't wrap the error, because it's informative enough as is.
+			return err
+		}
 	}
 
 	// override bind host/port from the console
@@ -363,6 +357,34 @@ func setupConfig(opts options) (err error) {
 	}
 	if len(opts.pidFile) != 0 && writePIDFile(opts.pidFile) {
 		Context.pidFileName = opts.pidFile
+	}
+
+	return nil
+}
+
+// checkPorts is a helper for ports validation in config.
+func checkPorts() (err error) {
+	tcpPorts := aghalg.UniqChecker[tcpPort]{}
+	addPorts(tcpPorts, tcpPort(config.BindPort))
+
+	udpPorts := aghalg.UniqChecker[udpPort]{}
+	addPorts(udpPorts, udpPort(config.DNS.Port))
+
+	if config.TLS.Enabled {
+		addPorts(
+			tcpPorts,
+			tcpPort(config.TLS.PortHTTPS),
+			tcpPort(config.TLS.PortDNSOverTLS),
+			tcpPort(config.TLS.PortDNSCrypt),
+		)
+
+		addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
+	}
+
+	if err = tcpPorts.Validate(); err != nil {
+		return fmt.Errorf("validating tcp ports: %w", err)
+	} else if err = udpPorts.Validate(); err != nil {
+		return fmt.Errorf("validating udp ports: %w", err)
 	}
 
 	return nil

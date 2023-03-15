@@ -22,7 +22,7 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 17
+const currentSchemaVersion = 19
 
 // These aliases are provided for convenience.
 type (
@@ -90,6 +90,8 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema14to15,
 		upgradeSchema15to16,
 		upgradeSchema16to17,
+		upgradeSchema17to18,
+		upgradeSchema18to19,
 	}
 
 	n := 0
@@ -938,6 +940,125 @@ func upgradeSchema16to17(diskConf yobj) (err error) {
 		"enabled":    dns[field] == true,
 		"use_custom": false,
 		"custom_ip":  "",
+	}
+
+	return nil
+}
+
+// upgradeSchema17to18 performs the following changes:
+//
+//	# BEFORE:
+//	'dns':
+//	  'safesearch_enabled': true
+//
+//	# AFTER:
+//	'dns':
+//	  'safe_search':
+//	    'enabled': true
+//	    'bing': true
+//	    'duckduckgo': true
+//	    'google': true
+//	    'pixabay': true
+//	    'yandex': true
+//	    'youtube': true
+func upgradeSchema17to18(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 17 to 18")
+	diskConf["schema_version"] = 18
+
+	dnsVal, ok := diskConf["dns"]
+	if !ok {
+		return nil
+	}
+
+	dns, ok := dnsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of dns: %T", dnsVal)
+	}
+
+	safeSearch := yobj{
+		"enabled":    true,
+		"bing":       true,
+		"duckduckgo": true,
+		"google":     true,
+		"pixabay":    true,
+		"yandex":     true,
+		"youtube":    true,
+	}
+
+	const safeSearchKey = "safesearch_enabled"
+
+	v, has := dns[safeSearchKey]
+	if has {
+		safeSearch["enabled"] = v
+	}
+	delete(dns, safeSearchKey)
+
+	dns["safe_search"] = safeSearch
+
+	return nil
+}
+
+// upgradeSchema18to19 performs the following changes:
+//
+//	# BEFORE:
+//	'clients':
+//	  'persistent':
+//	  - 'name': 'client-name'
+//	    'safesearch_enabled': true
+//
+//	# AFTER:
+//	'clients':
+//	  'persistent':
+//	  - 'name': 'client-name'
+//	    'safe_search':
+//	      'enabled': true
+//		  'bing': true
+//		  'duckduckgo': true
+//		  'google': true
+//		  'pixabay': true
+//		  'yandex': true
+//		  'youtube': true
+func upgradeSchema18to19(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 18 to 19")
+	diskConf["schema_version"] = 19
+
+	clientsVal, ok := diskConf["clients"]
+	if !ok {
+		return nil
+	}
+
+	clients, ok := clientsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of clients: %T", clientsVal)
+	}
+
+	persistent, ok := clients["persistent"].([]yobj)
+	if !ok {
+		return nil
+	}
+
+	const safeSearchKey = "safesearch_enabled"
+
+	for i := range persistent {
+		c := persistent[i]
+
+		safeSearch := yobj{
+			"enabled":    true,
+			"bing":       true,
+			"duckduckgo": true,
+			"google":     true,
+			"pixabay":    true,
+			"yandex":     true,
+			"youtube":    true,
+		}
+
+		v, has := c[safeSearchKey]
+		if has {
+			safeSearch["enabled"] = v
+		}
+		delete(c, safeSearchKey)
+
+		c["safe_search"] = safeSearch
 	}
 
 	return nil

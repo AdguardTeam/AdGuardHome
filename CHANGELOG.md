@@ -23,11 +23,48 @@ See also the [v0.107.27 GitHub milestone][ms-v0.107.27].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- The ability to manage safesearch for each service by using the new
+  `safe_search` field ([#1163]).
+
+### Changed
+
+#### Configuration Changes
+
+In this release, the schema version has changed from 17 to 19.
+
+- The `dns.safesearch_enabled` field has been replaced with `safe_search`
+  object containing per-service settings.
+- The `clients.persistent.safesearch_enabled` field has been replaced with
+  `safe_search` object containing per-service settings.
+
+  ```yaml
+    # BEFORE:
+    'safesearch_enabled': true
+
+    # AFTER:
+    'safe_search':
+      'enabled': true
+      'bing': true
+      'duckduckgo': true
+      'google': true
+      'pixabay': true
+      'yandex': true
+      'youtube': true
+  ```
+
+  To rollback this change, move the value of `dns.safe_search.enabled` into the
+  `dns.safesearch_enabled`, then remove `dns.safe_search` field.  Do the same
+  client's specific `clients.persistent.safesearch` and then change the
+  `schema_version` back to `17`.
+
 ### Fixed
 
 - Panic caused by empty top-level domain name label in `/etc/hosts` files
   ([#5584]).
 
+[#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1163
 [#5584]: https://github.com/AdguardTeam/AdGuardHome/issues/5584
 
 <!--

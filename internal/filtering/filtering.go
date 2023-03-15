@@ -63,6 +63,9 @@ type Settings struct {
 	SafeSearchEnabled   bool
 	SafeBrowsingEnabled bool
 	ParentalEnabled     bool
+
+	// ClientSafeSearch is a client configured safe search.
+	ClientSafeSearch SafeSearch
 }
 
 // Resolver is the interface for net.Resolver to simplify testing.
@@ -83,13 +86,16 @@ type Config struct {
 	FiltersUpdateIntervalHours uint32 `yaml:"filters_update_interval"` // time period to update filters (in hours)
 
 	ParentalEnabled     bool `yaml:"parental_enabled"`
-	SafeSearchEnabled   bool `yaml:"safesearch_enabled"`
 	SafeBrowsingEnabled bool `yaml:"safebrowsing_enabled"`
 
 	SafeBrowsingCacheSize uint `yaml:"safebrowsing_cache_size"` // (in bytes)
 	SafeSearchCacheSize   uint `yaml:"safesearch_cache_size"`   // (in bytes)
 	ParentalCacheSize     uint `yaml:"parental_cache_size"`     // (in bytes)
-	CacheTime             uint `yaml:"cache_time"`              // Element's TTL (in minutes)
+	// TODO(a.garipov): Use timeutil.Duration
+	CacheTime uint `yaml:"cache_time"` // Element's TTL (in minutes)
+
+	SafeSearchConf SafeSearchConfig `yaml:"safe_search"`
+	SafeSearch     SafeSearch       `yaml:"-"`
 
 	Rewrites []*LegacyRewrite `yaml:"rewrites"`
 
@@ -106,9 +112,6 @@ type Config struct {
 
 	// Register an HTTP handler
 	HTTPRegister aghhttp.RegisterFunc `yaml:"-"`
-
-	// CustomResolver is the resolver used by DNSFilter.
-	CustomResolver Resolver `yaml:"-"`
 
 	// HTTPClient is the client to use for updating the remote filters.
 	HTTPClient *http.Client `yaml:"-"`
@@ -172,7 +175,6 @@ type DNSFilter struct {
 
 	safebrowsingCache cache.Cache
 	parentalCache     cache.Cache
-	safeSearchCache   cache.Cache
 
 	Config // for direct access by library users, even a = assignment
 	// confLock protects Config.
@@ -182,11 +184,6 @@ type DNSFilter struct {
 	filtersInitializerChan chan filtersInitializerParams
 	filtersInitializerLock sync.Mutex
 
-	// resolver only looks up the IP address of the host while safe search.
-	//
-	// TODO(e.burkov): Use upstream that configured in dnsforward instead.
-	resolver Resolver
-
 	refreshLock *sync.Mutex
 
 	// filterTitleRegexp is the regular expression to retrieve a name of a
@@ -195,6 +192,7 @@ type DNSFilter struct {
 	// TODO(e.burkov):  Don't use regexp for such a simple text processing task.
 	filterTitleRegexp *regexp.Regexp
 
+	safeSearch   SafeSearch
 	hostCheckers []hostChecker
 }
 
@@ -298,7 +296,7 @@ func (d *DNSFilter) GetConfig() (s Settings) {
 
 	return Settings{
 		FilteringEnabled:    atomic.LoadUint32(&d.Config.enabled) != 0,
-		SafeSearchEnabled:   d.Config.SafeSearchEnabled,
+		SafeSearchEnabled:   d.Config.SafeSearchConf.Enabled,
 		SafeBrowsingEnabled: d.Config.SafeBrowsingEnabled,
 		ParentalEnabled:     d.Config.ParentalEnabled,
 	}
@@ -942,7 +940,6 @@ func InitModule() {
 // be non-nil.
 func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	d = &DNSFilter{
-		resolver:          net.DefaultResolver,
 		refreshLock:       &sync.Mutex{},
 		filterTitleRegexp: regexp.MustCompile(`^! Title: +(.*)$`),
 	}
@@ -951,18 +948,12 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 		EnableLRU: true,
 		MaxSize:   c.SafeBrowsingCacheSize,
 	})
-	d.safeSearchCache = cache.New(cache.Config{
-		EnableLRU: true,
-		MaxSize:   c.SafeSearchCacheSize,
-	})
 	d.parentalCache = cache.New(cache.Config{
 		EnableLRU: true,
 		MaxSize:   c.ParentalCacheSize,
 	})
 
-	if r := c.CustomResolver; r != nil {
-		d.resolver = r
-	}
+	d.safeSearch = c.SafeSearch
 
 	d.hostCheckers = []hostChecker{{
 		check: d.matchSysHosts,

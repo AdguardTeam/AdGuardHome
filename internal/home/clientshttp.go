@@ -7,6 +7,7 @@ import (
 	"net/netip"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 )
 
 // clientJSON is a common structure used by several handlers to deal with
@@ -35,9 +36,10 @@ type clientJSON struct {
 	Tags            []string `json:"tags"`
 	Upstreams       []string `json:"upstreams"`
 
-	FilteringEnabled         bool `json:"filtering_enabled"`
-	ParentalEnabled          bool `json:"parental_enabled"`
-	SafeBrowsingEnabled      bool `json:"safebrowsing_enabled"`
+	FilteringEnabled    bool `json:"filtering_enabled"`
+	ParentalEnabled     bool `json:"parental_enabled"`
+	SafeBrowsingEnabled bool `json:"safebrowsing_enabled"`
+	// Deprecated: use safeSearchConf.
 	SafeSearchEnabled        bool `json:"safesearch_enabled"`
 	UseGlobalBlockedServices bool `json:"use_global_blocked_services"`
 	UseGlobalSettings        bool `json:"use_global_settings"`
@@ -88,6 +90,20 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 
 // Convert JSON object to Client object
 func jsonToClient(cj clientJSON) (c *Client) {
+	// TODO(d.kolyshev): Remove after cleaning the deprecated
+	// [clientJSON.SafeSearchEnabled] field.
+	safeSearchConf := filtering.SafeSearchConfig{Enabled: cj.SafeSearchEnabled}
+
+	// Set default service flags for enabled safesearch.
+	if safeSearchConf.Enabled {
+		safeSearchConf.Bing = true
+		safeSearchConf.DuckDuckGo = true
+		safeSearchConf.Google = true
+		safeSearchConf.Pixabay = true
+		safeSearchConf.Yandex = true
+		safeSearchConf.YouTube = true
+	}
+
 	return &Client{
 		Name:                cj.Name,
 		IDs:                 cj.IDs,
@@ -95,7 +111,7 @@ func jsonToClient(cj clientJSON) (c *Client) {
 		UseOwnSettings:      !cj.UseGlobalSettings,
 		FilteringEnabled:    cj.FilteringEnabled,
 		ParentalEnabled:     cj.ParentalEnabled,
-		SafeSearchEnabled:   cj.SafeSearchEnabled,
+		safeSearchConf:      safeSearchConf,
 		SafeBrowsingEnabled: cj.SafeBrowsingEnabled,
 
 		UseOwnBlockedServices: !cj.UseGlobalBlockedServices,
@@ -107,6 +123,11 @@ func jsonToClient(cj clientJSON) (c *Client) {
 
 // Convert Client object to JSON
 func clientToJSON(c *Client) (cj *clientJSON) {
+	// TODO(d.kolyshev): Remove after cleaning the deprecated
+	// [clientJSON.SafeSearchEnabled] field.
+	cloneVal := c.safeSearchConf
+	safeSearchConf := &cloneVal
+
 	return &clientJSON{
 		Name:                c.Name,
 		IDs:                 c.IDs,
@@ -114,7 +135,7 @@ func clientToJSON(c *Client) (cj *clientJSON) {
 		UseGlobalSettings:   !c.UseOwnSettings,
 		FilteringEnabled:    c.FilteringEnabled,
 		ParentalEnabled:     c.ParentalEnabled,
-		SafeSearchEnabled:   c.SafeSearchEnabled,
+		SafeSearchEnabled:   safeSearchConf.Enabled,
 		SafeBrowsingEnabled: c.SafeBrowsingEnabled,
 
 		UseGlobalBlockedServices: !c.UseOwnBlockedServices,

@@ -808,3 +808,146 @@ func TestUpgradeSchema16to17(t *testing.T) {
 		})
 	}
 }
+
+func TestUpgradeSchema17to18(t *testing.T) {
+	const newSchemaVer = 18
+
+	defaultWantObj := yobj{
+		"dns": yobj{
+			"safe_search": yobj{
+				"enabled":    true,
+				"bing":       true,
+				"duckduckgo": true,
+				"google":     true,
+				"pixabay":    true,
+				"yandex":     true,
+				"youtube":    true,
+			},
+		},
+		"schema_version": newSchemaVer,
+	}
+
+	testCases := []struct {
+		in   yobj
+		want yobj
+		name string
+	}{{
+		in:   yobj{"dns": yobj{}},
+		want: defaultWantObj,
+		name: "default_values",
+	}, {
+		in:   yobj{"dns": yobj{"safesearch_enabled": true}},
+		want: defaultWantObj,
+		name: "enabled",
+	}, {
+		in: yobj{"dns": yobj{"safesearch_enabled": false}},
+		want: yobj{
+			"dns": yobj{
+				"safe_search": map[string]any{
+					"enabled":    false,
+					"bing":       true,
+					"duckduckgo": true,
+					"google":     true,
+					"pixabay":    true,
+					"yandex":     true,
+					"youtube":    true,
+				},
+			},
+			"schema_version": newSchemaVer,
+		},
+		name: "disabled",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema17to18(tc.in)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}
+
+func TestUpgradeSchema18to19(t *testing.T) {
+	const newSchemaVer = 19
+
+	defaultWantObj := yobj{
+		"clients": yobj{
+			"persistent": []yobj{{
+				"name": "localhost",
+				"safe_search": yobj{
+					"enabled":    true,
+					"bing":       true,
+					"duckduckgo": true,
+					"google":     true,
+					"pixabay":    true,
+					"yandex":     true,
+					"youtube":    true,
+				},
+			}},
+		},
+		"schema_version": newSchemaVer,
+	}
+
+	testCases := []struct {
+		in   yobj
+		want yobj
+		name string
+	}{{
+		in: yobj{
+			"clients": yobj{},
+		},
+		want: yobj{
+			"clients":        yobj{},
+			"schema_version": newSchemaVer,
+		},
+		name: "no_clients",
+	}, {
+		in: yobj{
+			"clients": yobj{
+				"persistent": []yobj{{"name": "localhost"}},
+			},
+		},
+		want: defaultWantObj,
+		name: "default_values",
+	}, {
+		in: yobj{
+			"clients": yobj{
+				"persistent": []yobj{{"name": "localhost", "safesearch_enabled": true}},
+			},
+		},
+		want: defaultWantObj,
+		name: "enabled",
+	}, {
+		in: yobj{
+			"clients": yobj{
+				"persistent": []yobj{{"name": "localhost", "safesearch_enabled": false}},
+			},
+		},
+		want: yobj{
+			"clients": yobj{"persistent": []yobj{{
+				"name": "localhost",
+				"safe_search": yobj{
+					"enabled":    false,
+					"bing":       true,
+					"duckduckgo": true,
+					"google":     true,
+					"pixabay":    true,
+					"yandex":     true,
+					"youtube":    true,
+				},
+			}}},
+			"schema_version": newSchemaVer,
+		},
+		name: "disabled",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema18to19(tc.in)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}

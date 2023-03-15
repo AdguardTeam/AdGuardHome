@@ -1,6 +1,7 @@
 package home
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/netip"
@@ -426,7 +427,8 @@ func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering
 	}
 
 	setts.FilteringEnabled = c.FilteringEnabled
-	setts.SafeSearchEnabled = c.SafeSearchEnabled
+	setts.SafeSearchEnabled = c.safeSearchConf.Enabled
+	setts.ClientSafeSearch = c.SafeSearch
 	setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
 	setts.ParentalEnabled = c.ParentalEnabled
 }
@@ -555,4 +557,30 @@ func nonDupEmptyHostNames(list []string) (set *stringutil.Set, err error) {
 	}
 
 	return set, nil
+}
+
+// safeSearchResolver is a [filtering.Resolver] implementation used for safe
+// search.
+type safeSearchResolver struct{}
+
+// type check
+var _ filtering.Resolver = safeSearchResolver{}
+
+// LookupIP implements [filtering.Resolver] interface for safeSearchResolver.
+// It returns the slice of net.IP with IPv4 and IPv6 instances.
+func (r safeSearchResolver) LookupIP(_ context.Context, _, host string) (ips []net.IP, err error) {
+	addrs, err := Context.dnsServer.Resolve(host)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(addrs) == 0 {
+		return nil, fmt.Errorf("couldn't lookup host: %s", host)
+	}
+
+	for _, a := range addrs {
+		ips = append(ips, a.IP)
+	}
+
+	return ips, nil
 }

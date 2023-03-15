@@ -19,7 +19,7 @@ func TestClients(t *testing.T) {
 	clients := clientsContainer{}
 	clients.testing = true
 
-	clients.Init(nil, nil, nil, nil)
+	clients.Init(nil, nil, nil, nil, nil)
 
 	t.Run("add_success", func(t *testing.T) {
 		var (
@@ -201,7 +201,7 @@ func TestClientsWHOIS(t *testing.T) {
 	clients := clientsContainer{
 		testing: true,
 	}
-	clients.Init(nil, nil, nil, nil)
+	clients.Init(nil, nil, nil, nil, nil)
 	whois := &RuntimeClientWHOISInfo{
 		Country: "AU",
 		Orgname: "Example Org",
@@ -250,7 +250,7 @@ func TestClientsAddExisting(t *testing.T) {
 	clients := clientsContainer{
 		testing: true,
 	}
-	clients.Init(nil, nil, nil, nil)
+	clients.Init(nil, nil, nil, nil, nil)
 
 	t.Run("simple", func(t *testing.T) {
 		ip := netip.MustParseAddr("1.1.1.1")
@@ -328,7 +328,7 @@ func TestClientsCustomUpstream(t *testing.T) {
 	clients := clientsContainer{
 		testing: true,
 	}
-	clients.Init(nil, nil, nil, nil)
+	clients.Init(nil, nil, nil, nil, nil)
 
 	// Add client with upstreams.
 	ok, err := clients.Add(&Client{

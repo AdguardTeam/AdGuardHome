@@ -13,6 +13,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -69,6 +70,7 @@ func (clients *clientsContainer) Init(
 	dhcpServer dhcpd.Interface,
 	etcHosts *aghnet.HostsContainer,
 	arpdb aghnet.ARPDB,
+	filteringConf *filtering.Config,
 ) {
 	if clients.list != nil {
 		log.Fatal("clients.list != nil")
@@ -82,7 +84,7 @@ func (clients *clientsContainer) Init(
 	clients.dhcpServer = dhcpServer
 	clients.etcHosts = etcHosts
 	clients.arpdb = arpdb
-	clients.addFromConfig(objects)
+	clients.addFromConfig(objects, filteringConf)
 
 	if clients.testing {
 		return
@@ -133,6 +135,8 @@ func (clients *clientsContainer) reloadARP() {
 
 // clientObject is the YAML representation of a persistent client.
 type clientObject struct {
+	SafeSearchConf filtering.SafeSearchConfig `yaml:"safe_search"`
+
 	Name string `yaml:"name"`
 
 	Tags            []string `yaml:"tags"`
@@ -143,14 +147,13 @@ type clientObject struct {
 	UseGlobalSettings        bool `yaml:"use_global_settings"`
 	FilteringEnabled         bool `yaml:"filtering_enabled"`
 	ParentalEnabled          bool `yaml:"parental_enabled"`
-	SafeSearchEnabled        bool `yaml:"safesearch_enabled"`
 	SafeBrowsingEnabled      bool `yaml:"safebrowsing_enabled"`
 	UseGlobalBlockedServices bool `yaml:"use_global_blocked_services"`
 }
 
 // addFromConfig initializes the clients container with objects from the
 // configuration file.
-func (clients *clientsContainer) addFromConfig(objects []*clientObject) {
+func (clients *clientsContainer) addFromConfig(objects []*clientObject, filteringConf *filtering.Config) {
 	for _, o := range objects {
 		cli := &Client{
 			Name: o.Name,
@@ -161,9 +164,26 @@ func (clients *clientsContainer) addFromConfig(objects []*clientObject) {
 			UseOwnSettings:        !o.UseGlobalSettings,
 			FilteringEnabled:      o.FilteringEnabled,
 			ParentalEnabled:       o.ParentalEnabled,
-			SafeSearchEnabled:     o.SafeSearchEnabled,
+			safeSearchConf:        o.SafeSearchConf,
 			SafeBrowsingEnabled:   o.SafeBrowsingEnabled,
 			UseOwnBlockedServices: !o.UseGlobalBlockedServices,
+		}
+
+		if o.SafeSearchConf.Enabled {
+			o.SafeSearchConf.CustomResolver = safeSearchResolver{}
+
+			ss, err := safesearch.NewDefaultSafeSearch(
+				o.SafeSearchConf,
+				filteringConf.SafeSearchCacheSize,
+				time.Minute*time.Duration(filteringConf.CacheTime),
+			)
+			if err != nil {
+				log.Error("clients: init client safesearch %s: %s", cli.Name, err)
+
+				continue
+			}
+
+			cli.SafeSearch = ss
 		}
 
 		for _, s := range o.BlockedServices {
@@ -210,7 +230,7 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 			UseGlobalSettings:        !cli.UseOwnSettings,
 			FilteringEnabled:         cli.FilteringEnabled,
 			ParentalEnabled:          cli.ParentalEnabled,
-			SafeSearchEnabled:        cli.SafeSearchEnabled,
+			SafeSearchConf:           cli.safeSearchConf,
 			SafeBrowsingEnabled:      cli.SafeBrowsingEnabled,
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
 		}
