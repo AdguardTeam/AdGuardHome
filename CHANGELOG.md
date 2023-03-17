@@ -28,7 +28,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - The ability to manage safesearch for each service by using the new
   `safe_search` field ([#1163]).
 
-### Changed
+### Changed 
+
+- ARPA domain names containing a subnet within private networks now also
+  considered private, behaving closer to [RFC 6761][rfc6761] ([#5567]).
 
 #### Configuration Changes
 
@@ -65,7 +68,10 @@ In this release, the schema version has changed from 17 to 19.
   ([#5584]).
 
 [#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1163
+[#5567]: https://github.com/AdguardTeam/AdGuardHome/issues/5567
 [#5584]: https://github.com/AdguardTeam/AdGuardHome/issues/5584
+
+[rfc6761]: https://www.rfc-editor.org/rfc/rfc6761
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

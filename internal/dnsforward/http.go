@@ -388,15 +388,15 @@ func ValidateUpstreamsPrivate(upstreams []string, privateNets netutil.SubnetSet)
 
 	var errs []error
 	for _, domain := range keys {
-		var subnet *net.IPNet
-		subnet, err = netutil.SubnetFromReversedAddr(domain)
+		var subnet netip.Prefix
+		subnet, err = extractARPASubnet(domain)
 		if err != nil {
 			errs = append(errs, err)
 
 			continue
 		}
 
-		if !privateNets.Contains(subnet.IP) {
+		if !privateNets.Contains(subnet.Addr().AsSlice()) {
 			errs = append(
 				errs,
 				fmt.Errorf("arpa domain %q should point to a locally-served network", domain),

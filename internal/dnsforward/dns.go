@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"net"
 	"net/netip"
+	"strconv"
 	"strings"
 	"time"
 
@@ -37,6 +38,8 @@ type dnsContext struct {
 	// was parsed successfully and belongs to one of the locally served IP
 	// ranges.  It is also filled with unmapped version of the address if it's
 	// within DNS64 prefixes.
+	//
+	// TODO(e.burkov):  Use netip.Addr when we switch to netip more fully.
 	unreversedReqIP net.IP
 
 	// err is the error returned from a processing function.
@@ -442,6 +445,88 @@ func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
 	return resultCodeSuccess
 }
 
+// indexFirstV4Label returns the index at which the reversed IPv4 address
+// starts, assuiming the domain is pre-validated ARPA domain having in-addr and
+// arpa labels removed.
+func indexFirstV4Label(domain string) (idx int) {
+	idx = len(domain)
+	for labelsNum := 0; labelsNum < net.IPv4len && idx > 0; labelsNum++ {
+		curIdx := strings.LastIndexByte(domain[:idx-1], '.') + 1
+		_, parseErr := strconv.ParseUint(domain[curIdx:idx-1], 10, 8)
+		if parseErr != nil {
+			return idx
+		}
+
+		idx = curIdx
+	}
+
+	return idx
+}
+
+// indexFirstV6Label returns the index at which the reversed IPv6 address
+// starts, assuiming the domain is pre-validated ARPA domain having ip6 and arpa
+// labels removed.
+func indexFirstV6Label(domain string) (idx int) {
+	idx = len(domain)
+	for labelsNum := 0; labelsNum < net.IPv6len*2 && idx > 0; labelsNum++ {
+		curIdx := idx - len("a.")
+		if curIdx > 1 && domain[curIdx-1] != '.' {
+			return idx
+		}
+
+		nibble := domain[curIdx]
+		if (nibble < '0' || nibble > '9') && (nibble < 'a' || nibble > 'f') {
+			return idx
+		}
+
+		idx = curIdx
+	}
+
+	return idx
+}
+
+// extractARPASubnet tries to convert a reversed ARPA address being a part of
+// domain to an IP network.  domain must be an FQDN.
+//
+// TODO(e.burkov):  Move to golibs.
+func extractARPASubnet(domain string) (pref netip.Prefix, err error) {
+	err = netutil.ValidateDomainName(strings.TrimSuffix(domain, "."))
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return netip.Prefix{}, err
+	}
+
+	const (
+		v4Suffix = "in-addr.arpa."
+		v6Suffix = "ip6.arpa."
+	)
+
+	domain = strings.ToLower(domain)
+
+	var idx int
+	switch {
+	case strings.HasSuffix(domain, v4Suffix):
+		idx = indexFirstV4Label(domain[:len(domain)-len(v4Suffix)])
+	case strings.HasSuffix(domain, v6Suffix):
+		idx = indexFirstV6Label(domain[:len(domain)-len(v6Suffix)])
+	default:
+		return netip.Prefix{}, &netutil.AddrError{
+			Err:  netutil.ErrNotAReversedSubnet,
+			Kind: netutil.AddrKindARPA,
+			Addr: domain,
+		}
+	}
+
+	var subnet *net.IPNet
+	subnet, err = netutil.SubnetFromReversedAddr(domain[idx:])
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return netip.Prefix{}, err
+	}
+
+	return netutil.IPNetToPrefixNoMapped(subnet)
+}
+
 // processRestrictLocal responds with NXDOMAIN to PTR requests for IP addresses
 // in locally served network from external clients.
 func (s *Server) processRestrictLocal(dctx *dnsContext) (rc resultCode) {
@@ -453,34 +538,29 @@ func (s *Server) processRestrictLocal(dctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	ip, err := netutil.IPFromReversedAddr(q.Name)
+	subnet, err := extractARPASubnet(q.Name)
 	if err != nil {
-		log.Debug("dnsforward: parsing reversed addr: %s", err)
+		if errors.Is(err, netutil.ErrNotAReversedSubnet) {
+			log.Debug("dnsforward: request is not for arpa domain")
 
-		// DNS-Based Service Discovery uses PTR records having not an ARPA
-		// format of the domain name in question.  Those shouldn't be
-		// invalidated.  See http://www.dns-sd.org/ServerStaticSetup.html and
-		// RFC 2782.
-		name := strings.TrimSuffix(q.Name, ".")
-		if err = netutil.ValidateSRVDomainName(name); err != nil {
-			log.Debug("dnsforward: validating service domain: %s", err)
-
-			return resultCodeError
+			return resultCodeSuccess
 		}
 
-		log.Debug("dnsforward: request is not for arpa domain")
+		log.Debug("dnsforward: parsing reversed addr: %s", err)
 
-		return resultCodeSuccess
+		return resultCodeError
 	}
 
 	// Restrict an access to local addresses for external clients.  We also
 	// assume that all the DHCP leases we give are locally served or at least
 	// shouldn't be accessible externally.
-	if !s.privateNets.Contains(ip) {
+	subnetAddr := subnet.Addr()
+	addrData := subnetAddr.AsSlice()
+	if !s.privateNets.Contains(addrData) {
 		return resultCodeSuccess
 	}
 
-	log.Debug("dnsforward: addr %s is from locally served network", ip)
+	log.Debug("dnsforward: addr %s is from locally served network", subnetAddr)
 
 	if !dctx.isLocalClient {
 		log.Debug("dnsforward: %q requests an internal ip", pctx.Addr)
@@ -491,7 +571,7 @@ func (s *Server) processRestrictLocal(dctx *dnsContext) (rc resultCode) {
 	}
 
 	// Do not perform unreversing ever again.
-	dctx.unreversedReqIP = ip
+	dctx.unreversedReqIP = addrData
 
 	// There is no need to filter request from external addresses since this
 	// code is only executed when the request is for locally served ARPA

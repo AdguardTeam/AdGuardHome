@@ -212,7 +212,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	}, {
 		name: "local_ptr_upstreams_bad",
 		wantSet: `validating private upstream servers: checking domain-specific upstreams: ` +
-			`bad arpa domain name "non.arpa": not a reversed ip network`,
+			`bad arpa domain name "non.arpa.": not a reversed ip network`,
 	}, {
 		name:    "local_ptr_upstreams_null",
 		wantSet: "",
@@ -373,7 +373,7 @@ func TestValidateUpstreamsPrivate(t *testing.T) {
 	}, {
 		name: "not_arpa_subnet",
 		wantErr: `checking domain-specific upstreams: ` +
-			`bad arpa domain name "hello.world": not a reversed ip network`,
+			`bad arpa domain name "hello.world.": not a reversed ip network`,
 		u: "[/hello.world/]#",
 	}, {
 		name: "non-private_arpa_address",
@@ -389,8 +389,12 @@ func TestValidateUpstreamsPrivate(t *testing.T) {
 		name: "several_bad",
 		wantErr: `checking domain-specific upstreams: 2 errors: ` +
 			`"arpa domain \"1.2.3.4.in-addr.arpa.\" should point to a locally-served network", ` +
-			`"bad arpa domain name \"non.arpa\": not a reversed ip network"`,
+			`"bad arpa domain name \"non.arpa.\": not a reversed ip network"`,
 		u: "[/non.arpa/1.2.3.4.in-addr.arpa/127.in-addr.arpa/]#",
+	}, {
+		name:    "partial_good",
+		wantErr: "",
+		u:       "[/a.1.2.3.10.in-addr.arpa/a.10.in-addr.arpa/]#",
 	}}
 
 	for _, tc := range testCases {
