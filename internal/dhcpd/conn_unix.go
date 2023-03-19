@@ -15,18 +15,16 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 	"github.com/mdlayher/ethernet"
-
-	//lint:ignore SA1019 See the TODO in go.mod.
-	"github.com/mdlayher/raw"
+	"github.com/mdlayher/packet"
 )
 
 // dhcpUnicastAddr is the combination of MAC and IP addresses for responding to
 // the unconfigured host.
 type dhcpUnicastAddr struct {
-	// raw.Addr is embedded here to make *dhcpUcastAddr a net.Addr without
+	// packet.Addr is embedded here to make *dhcpUcastAddr a net.Addr without
 	// actually implementing all methods.  It also contains the client's
 	// hardware address.
-	raw.Addr
+	packet.Addr
 
 	// yiaddr is an IP address just allocated by server for the host.
 	yiaddr net.IP
@@ -52,7 +50,7 @@ type dhcpConn struct {
 // newDHCPConn creates the special connection for DHCP server.
 func (s *v4Server) newDHCPConn(iface *net.Interface) (c net.PacketConn, err error) {
 	var ucast net.PacketConn
-	if ucast, err = raw.ListenPacket(iface, uint16(ethernet.EtherTypeIPv4), nil); err != nil {
+	if ucast, err = packet.Listen(iface, packet.Raw, int(ethernet.EtherTypeIPv4), nil); err != nil {
 		return nil, fmt.Errorf("creating raw udp connection: %w", err)
 	}
 
