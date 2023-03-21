@@ -182,6 +182,7 @@ run_linter gocyclo --over 10\
 	./internal/version/\
 	./scripts/blocked-services/\
 	./scripts/vetted-filters/\
+	./scripts/translations/\
 	./main.go\
 	;
 
