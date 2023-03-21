@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Field, reduxForm } from 'redux-form';
 import { Trans, useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 
 import { renderInputField, normalizeMac } from '../../../../helpers/form';
 import {
@@ -25,6 +25,7 @@ const Form = ({
 }) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
+    const dynamicLease = useSelector((store) => store.dhcp.leaseModalConfig, shallowEqual);
 
     const onClick = () => {
         reset();
@@ -87,7 +88,7 @@ const Form = ({
                     <button
                         type="submit"
                         className="btn btn-success btn-standard"
-                        disabled={submitting || pristine || processingAdding}
+                        disabled={submitting || processingAdding || (pristine && !dynamicLease)}
                     >
                         <Trans>save_btn</Trans>
                     </button>

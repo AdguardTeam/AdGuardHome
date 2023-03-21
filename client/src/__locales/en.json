@@ -642,5 +642,6 @@
     "anonymizer_notification": "<0>Note:</0> IP anonymization is enabled. You can disable it in <1>General settings</1>.",
     "confirm_dns_cache_clear": "Are you sure you want to clear DNS cache?",
     "cache_cleared": "DNS cache successfully cleared",
-    "clear_cache": "Clear cache"
+    "clear_cache": "Clear cache",
+    "make_static": "Make static"
 }

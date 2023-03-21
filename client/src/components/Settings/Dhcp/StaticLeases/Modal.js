@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Trans, withTranslation } from 'react-i18next';
 import ReactModal from 'react-modal';
-import { useDispatch } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import Form from './Form';
 import { toggleLeaseModal } from '../../../../actions';
 
@@ -18,6 +18,9 @@ const Modal = ({
     const dispatch = useDispatch();
 
     const toggleModal = () => dispatch(toggleLeaseModal());
+    const leaseInitialData = useSelector(
+        (state) => state.dhcp.leaseModalConfig, shallowEqual,
+    ) || {};
 
     return (
         <ReactModal
@@ -37,9 +40,9 @@ const Modal = ({
                 </div>
                 <Form
                     initialValues={{
-                        mac: '',
-                        ip: '',
-                        hostname: '',
+                        mac: leaseInitialData.mac ?? '',
+                        ip: leaseInitialData.ip ?? '',
+                        hostname: leaseInitialData.hostname ?? '',
                         cidr,
                         rangeStart,
                         rangeEnd,

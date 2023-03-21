@@ -124,10 +124,11 @@ const dhcp = handleActions(
             staticLeases: [],
         }),
 
-        [actions.toggleLeaseModal]: (state) => {
+        [actions.toggleLeaseModal]: (state, { payload }) => {
             const newState = {
                 ...state,
                 isModalOpen: !state.isModalOpen,
+                leaseModalConfig: payload,
             };
             return newState;
         },
@@ -200,6 +201,7 @@ const dhcp = handleActions(
         leases: [],
         staticLeases: [],
         isModalOpen: false,
+        leaseModalConfig: undefined,
         dhcp_available: false,
     },
 );

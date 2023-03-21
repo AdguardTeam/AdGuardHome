@@ -54,7 +54,7 @@ const StaticLeases = ({
                     {
                         Header: 'MAC',
                         accessor: 'mac',
-                        minWidth: 160,
+                        minWidth: 180,
                         Cell: cellWrap,
                     },
                     {
