@@ -4,6 +4,18 @@
 
 ## v0.108.0: API changes
 
+## v0.107.27: API changes
+
+### The new optional fields `"edns_cs_use_custom"` and `"edns_cs_custom_ip"` in `DNSConfig`
+
+* The new optional fields `"edns_cs_use_custom"` and `"edns_cs_custom_ip"` in
+  `POST /control/dns_config` method makes AdGuard Home use or not use the
+  custom IP for EDNS Client Subnet.
+
+* The new optional fields `"edns_cs_use_custom"` and `"edns_cs_custom_ip"` in
+  `GET /control/dns_info` method are set if AdGuard Home uses custom IP for
+  EDNS Client Subnet.
+
 
 
 ## v0.107.23: API changes

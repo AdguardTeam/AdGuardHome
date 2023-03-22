@@ -26,7 +26,9 @@
     "cache_optimistic": false,
     "resolve_clients": false,
     "use_private_ptr_resolvers": false,
-    "local_ptr_upstreams": []
+    "local_ptr_upstreams": [],
+    "edns_cs_use_custom": false,
+    "edns_cs_custom_ip": ""
   },
   "fastest_addr": {
     "upstream_dns": [
@@ -55,7 +57,9 @@
     "cache_optimistic": false,
     "resolve_clients": false,
     "use_private_ptr_resolvers": false,
-    "local_ptr_upstreams": []
+    "local_ptr_upstreams": [],
+    "edns_cs_use_custom": false,
+    "edns_cs_custom_ip": ""
   },
   "parallel": {
     "upstream_dns": [
@@ -84,6 +88,8 @@
     "cache_optimistic": false,
     "resolve_clients": false,
     "use_private_ptr_resolvers": false,
-    "local_ptr_upstreams": []
+    "local_ptr_upstreams": [],
+    "edns_cs_use_custom": false,
+    "edns_cs_custom_ip": ""
   }
 }

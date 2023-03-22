@@ -286,7 +286,7 @@ var config = &configuration{
 			CacheSize:      4 * 1024 * 1024,
 
 			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{
-				CustomIP:  "",
+				CustomIP:  netip.Addr{},
 				Enabled:   false,
 				UseCustom: false,
 			},

@@ -25,6 +25,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- The ability to set custom IP for EDNS Client Subnet by using the DNS-server
+  configuration section on the DNS settings page in the UI ([#1472]).
 - The ability to manage safesearch for each service by using the new
   `safe_search` field ([#1163]).
 
@@ -68,6 +70,7 @@ In this release, the schema version has changed from 17 to 19.
   ([#5584]).
 
 [#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1163
+[#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
 [#5567]: https://github.com/AdguardTeam/AdGuardHome/issues/5567
 [#5584]: https://github.com/AdguardTeam/AdGuardHome/issues/5584
 

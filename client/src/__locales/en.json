@@ -290,6 +290,8 @@
     "rate_limit": "Rate limit",
     "edns_enable": "Enable EDNS client subnet",
     "edns_cs_desc": "Add the EDNS Client Subnet option (ECS) to upstream requests and log the values sent by the clients in the query log.",
+    "edns_use_custom_ip": "Use custom IP for EDNS",
+    "edns_use_custom_ip_desc": "Allow to use custom IP for EDNS",
     "rate_limit_desc": "The number of requests per second allowed per client. Setting it to 0 means no limit.",
     "blocking_ipv4_desc": "IP address to be returned for a blocked A request",
     "blocking_ipv6_desc": "IP address to be returned for a blocked AAAA request",
