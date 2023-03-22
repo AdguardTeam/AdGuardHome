@@ -29,8 +29,11 @@ const BlockedDomains = ({
     blockedFiltering,
     replacedSafebrowsing,
     replacedParental,
+    replacedSafesearch,
 }) => {
-    const totalBlocked = blockedFiltering + replacedSafebrowsing + replacedParental;
+    const totalBlocked = (
+        blockedFiltering + replacedSafebrowsing + replacedParental + replacedSafesearch
+    );
 
     return (
         <Card
@@ -71,6 +74,7 @@ BlockedDomains.propTypes = {
     topBlockedDomains: PropTypes.array.isRequired,
     blockedFiltering: PropTypes.number.isRequired,
     replacedSafebrowsing: PropTypes.number.isRequired,
+    replacedSafesearch: PropTypes.number.isRequired,
     replacedParental: PropTypes.number.isRequired,
     refreshButton: PropTypes.node.isRequired,
     subtitle: PropTypes.string.isRequired,

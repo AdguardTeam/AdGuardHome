@@ -151,6 +151,7 @@ const Dashboard = ({
                         topBlockedDomains={stats.topBlockedDomains}
                         blockedFiltering={stats.numBlockedFiltering}
                         replacedSafebrowsing={stats.numReplacedSafebrowsing}
+                        replacedSafesearch={stats.numReplacedSafesearch}
                         replacedParental={stats.numReplacedParental}
                         refreshButton={refreshButton}
                 />
