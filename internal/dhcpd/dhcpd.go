@@ -41,13 +41,16 @@ type Lease struct {
 	// of 1 means that this is a static lease.
 	Expiry time.Time `json:"expires"`
 
-	Hostname string           `json:"hostname"`
-	HWAddr   net.HardwareAddr `json:"mac"`
+	// Hostname of the client.
+	Hostname string `json:"hostname"`
+
+	// HWAddr is the physical hardware address (MAC address).
+	HWAddr net.HardwareAddr `json:"mac"`
 
 	// IP is the IP address leased to the client.
 	//
-	// TODO(a.garipov): Migrate leases.db and use netip.Addr.
-	IP net.IP `json:"ip"`
+	// TODO(a.garipov): Migrate leases.db.
+	IP netip.Addr `json:"ip"`
 }
 
 // Clone returns a deep copy of l.
@@ -60,7 +63,7 @@ func (l *Lease) Clone() (clone *Lease) {
 		Expiry:   l.Expiry,
 		Hostname: l.Hostname,
 		HWAddr:   slices.Clone(l.HWAddr),
-		IP:       slices.Clone(l.IP),
+		IP:       l.IP,
 	}
 }
 

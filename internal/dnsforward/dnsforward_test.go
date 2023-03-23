@@ -1073,7 +1073,7 @@ var testDHCP = &dhcpd.MockInterface{
 	OnEnabled: func() (ok bool) { return true },
 	OnLeases: func(flags dhcpd.GetLeasesFlags) (leases []*dhcpd.Lease) {
 		return []*dhcpd.Lease{{
-			IP:       net.IP{192, 168, 12, 34},
+			IP:       netip.MustParseAddr("192.168.12.34"),
 			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 			Hostname: "myhost",
 		}}

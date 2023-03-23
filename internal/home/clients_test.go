@@ -275,7 +275,7 @@ func TestClientsAddExisting(t *testing.T) {
 			t.Skip("skipping dhcp test on windows")
 		}
 
-		ip := net.IP{1, 2, 3, 4}
+		ip := netip.MustParseAddr("1.2.3.4")
 
 		// First, init a DHCP server with a single static lease.
 		config := &dhcpd.ServerConfig{
