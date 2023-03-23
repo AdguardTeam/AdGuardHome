@@ -19,7 +19,6 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
@@ -859,15 +858,7 @@ func (clients *clientsContainer) updateFromDHCP(add bool) {
 			continue
 		}
 
-		// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
-		ipAddr, err := netutil.IPToAddrNoMapped(l.IP)
-		if err != nil {
-			log.Error("clients: bad client ip %v from dhcp: %s", l.IP, err)
-
-			continue
-		}
-
-		ok := clients.addHostLocked(ipAddr, l.Hostname, ClientSourceDHCP)
+		ok := clients.addHostLocked(l.IP, l.Hostname, ClientSourceDHCP)
 		if ok {
 			n++
 		}

@@ -200,7 +200,7 @@ type FilteringConfig struct {
 // EDNSClientSubnet is the settings list for EDNS Client Subnet.
 type EDNSClientSubnet struct {
 	// CustomIP for EDNS Client Subnet.
-	CustomIP string `yaml:"custom_ip"`
+	CustomIP netip.Addr `yaml:"custom_ip"`
 
 	// Enabled defines if EDNS Client Subnet is enabled.
 	Enabled bool `yaml:"enabled"`
@@ -340,15 +340,8 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 	}
 
 	if srvConf.EDNSClientSubnet.UseCustom {
-		// TODO(s.chzhen):  Add wrapper around netip.Addr.
-		var ip net.IP
-		ip, err = netutil.ParseIP(srvConf.EDNSClientSubnet.CustomIP)
-		if err != nil {
-			return conf, fmt.Errorf("edns: %w", err)
-		}
-
 		// TODO(s.chzhen):  Use netip.Addr instead of net.IP inside dnsproxy.
-		conf.EDNSAddr = ip
+		conf.EDNSAddr = net.IP(srvConf.EDNSClientSubnet.CustomIP.AsSlice())
 	}
 
 	if srvConf.CacheSize != 0 {
@@ -377,7 +370,7 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 
 	err = s.prepareTLS(&conf)
 	if err != nil {
-		return conf, fmt.Errorf("validating tls: %w", err)
+		return proxy.Config{}, fmt.Errorf("validating tls: %w", err)
 	}
 
 	if c := srvConf.DNSCryptConfig; c.Enabled {
@@ -388,7 +381,7 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 	}
 
 	if conf.UpstreamConfig == nil || len(conf.UpstreamConfig.Upstreams) == 0 {
-		return conf, errors.Error("no default upstream servers configured")
+		return proxy.Config{}, errors.Error("no default upstream servers configured")
 	}
 
 	return conf, nil

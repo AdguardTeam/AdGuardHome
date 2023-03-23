@@ -60,7 +60,7 @@ func TestV4Server_leasing(t *testing.T) {
 		anotherName = "another-client"
 	)
 
-	staticIP := net.IP{192, 168, 10, 10}
+	staticIP := netip.MustParseAddr("192.168.10.10")
 	anotherIP := DefaultRangeStart
 	staticMAC := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
 	anotherMAC := net.HardwareAddr{0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB}
@@ -81,7 +81,7 @@ func TestV4Server_leasing(t *testing.T) {
 				Expiry:   time.Unix(leaseExpireStatic, 0),
 				Hostname: staticName,
 				HWAddr:   anotherMAC,
-				IP:       anotherIP.AsSlice(),
+				IP:       anotherIP,
 			})
 			assert.ErrorIs(t, err, ErrDupHostname)
 		})
@@ -95,7 +95,7 @@ func TestV4Server_leasing(t *testing.T) {
 				Expiry:   time.Unix(leaseExpireStatic, 0),
 				Hostname: anotherName,
 				HWAddr:   staticMAC,
-				IP:       anotherIP.AsSlice(),
+				IP:       anotherIP,
 			})
 			testutil.AssertErrorMsg(t, wantErrMsg, err)
 		})
@@ -122,13 +122,14 @@ func TestV4Server_leasing(t *testing.T) {
 		discoverAnOffer := func(
 			t *testing.T,
 			name string,
-			ip net.IP,
+			netIP netip.Addr,
 			mac net.HardwareAddr,
 		) (resp *dhcpv4.DHCPv4) {
 			testutil.CleanupAndRequireSuccess(t, func() (err error) {
 				return s.ResetLeases(s.GetLeases(LeasesStatic))
 			})
 
+			ip := net.IP(netIP.AsSlice())
 			req, err := dhcpv4.NewDiscovery(
 				mac,
 				dhcpv4.WithOption(dhcpv4.OptHostName(name)),
@@ -149,7 +150,7 @@ func TestV4Server_leasing(t *testing.T) {
 		}
 
 		t.Run("same_name", func(t *testing.T) {
-			resp := discoverAnOffer(t, staticName, anotherIP.AsSlice(), anotherMAC)
+			resp := discoverAnOffer(t, staticName, anotherIP, anotherMAC)
 
 			req, err := dhcpv4.NewRequestFromOffer(resp, dhcpv4.WithOption(
 				dhcpv4.OptHostName(staticName),
@@ -159,11 +160,15 @@ func TestV4Server_leasing(t *testing.T) {
 			res := s4.handle(req, resp)
 			require.Positive(t, res)
 
-			assert.Equal(t, aghnet.GenerateHostname(resp.YourIPAddr), resp.HostName())
+			var netIP netip.Addr
+			netIP, ok = netip.AddrFromSlice(resp.YourIPAddr)
+			require.True(t, ok)
+
+			assert.Equal(t, aghnet.GenerateHostname(netIP), resp.HostName())
 		})
 
 		t.Run("same_mac", func(t *testing.T) {
-			resp := discoverAnOffer(t, anotherName, anotherIP.AsSlice(), staticMAC)
+			resp := discoverAnOffer(t, anotherName, anotherIP, staticMAC)
 
 			req, err := dhcpv4.NewRequestFromOffer(resp, dhcpv4.WithOption(
 				dhcpv4.OptHostName(anotherName),
@@ -177,7 +182,8 @@ func TestV4Server_leasing(t *testing.T) {
 			require.Len(t, fqdnOptData, 3+len(staticName))
 			assert.Equal(t, []uint8(staticName), fqdnOptData[3:])
 
-			assert.Equal(t, staticIP, resp.YourIPAddr)
+			ip := net.IP(staticIP.AsSlice())
+			assert.Equal(t, ip, resp.YourIPAddr)
 		})
 
 		t.Run("same_ip", func(t *testing.T) {
@@ -210,7 +216,7 @@ func TestV4Server_AddRemove_static(t *testing.T) {
 		lease: &Lease{
 			Hostname: "success.local",
 			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-			IP:       net.IP{192, 168, 10, 150},
+			IP:       netip.MustParseAddr("192.168.10.150"),
 		},
 		name:       "success",
 		wantErrMsg: "",
@@ -218,7 +224,7 @@ func TestV4Server_AddRemove_static(t *testing.T) {
 		lease: &Lease{
 			Hostname: "probably-router.local",
 			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-			IP:       DefaultGatewayIP.AsSlice(),
+			IP:       DefaultGatewayIP,
 		},
 		name: "with_gateway_ip",
 		wantErrMsg: "dhcpv4: adding static lease: " +
@@ -227,7 +233,7 @@ func TestV4Server_AddRemove_static(t *testing.T) {
 		lease: &Lease{
 			Hostname: "ip6.local",
 			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-			IP:       net.ParseIP("ffff::1"),
+			IP:       netip.MustParseAddr("ffff::1"),
 		},
 		name: "ipv6",
 		wantErrMsg: `dhcpv4: adding static lease: ` +
@@ -236,7 +242,7 @@ func TestV4Server_AddRemove_static(t *testing.T) {
 		lease: &Lease{
 			Hostname: "bad-mac.local",
 			HWAddr:   net.HardwareAddr{0xAA, 0xAA},
-			IP:       net.IP{192, 168, 10, 150},
+			IP:       netip.MustParseAddr("192.168.10.150"),
 		},
 		name: "bad_mac",
 		wantErrMsg: `dhcpv4: adding static lease: bad mac address "aa:aa": ` +
@@ -245,7 +251,7 @@ func TestV4Server_AddRemove_static(t *testing.T) {
 		lease: &Lease{
 			Hostname: "bad-lbl-.local",
 			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-			IP:       net.IP{192, 168, 10, 150},
+			IP:       netip.MustParseAddr("192.168.10.150"),
 		},
 		name: "bad_hostname",
 		wantErrMsg: `dhcpv4: adding static lease: validating hostname: ` +
@@ -287,11 +293,11 @@ func TestV4_AddReplace(t *testing.T) {
 	dynLeases := []Lease{{
 		Hostname: "dynamic-1.local",
 		HWAddr:   net.HardwareAddr{0x11, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-		IP:       net.IP{192, 168, 10, 150},
+		IP:       netip.MustParseAddr("192.168.10.150"),
 	}, {
 		Hostname: "dynamic-2.local",
 		HWAddr:   net.HardwareAddr{0x22, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-		IP:       net.IP{192, 168, 10, 151},
+		IP:       netip.MustParseAddr("192.168.10.151"),
 	}}
 
 	for i := range dynLeases {
@@ -302,11 +308,11 @@ func TestV4_AddReplace(t *testing.T) {
 	stLeases := []*Lease{{
 		Hostname: "static-1.local",
 		HWAddr:   net.HardwareAddr{0x33, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-		IP:       net.IP{192, 168, 10, 150},
+		IP:       netip.MustParseAddr("192.168.10.150"),
 	}, {
 		Hostname: "static-2.local",
 		HWAddr:   net.HardwareAddr{0x22, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-		IP:       net.IP{192, 168, 10, 152},
+		IP:       netip.MustParseAddr("192.168.10.152"),
 	}}
 
 	for _, l := range stLeases {
@@ -318,7 +324,7 @@ func TestV4_AddReplace(t *testing.T) {
 	require.Len(t, ls, 2)
 
 	for i, l := range ls {
-		assert.True(t, stLeases[i].IP.Equal(l.IP))
+		assert.Equal(t, stLeases[i].IP, l.IP)
 		assert.Equal(t, stLeases[i].HWAddr, l.HWAddr)
 		assert.True(t, l.IsStatic())
 	}
@@ -511,7 +517,7 @@ func TestV4StaticLease_Get(t *testing.T) {
 	l := &Lease{
 		Hostname: "static-1.local",
 		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-		IP:       net.IP{192, 168, 10, 150},
+		IP:       netip.MustParseAddr("192.168.10.150"),
 	}
 	err := s.AddStaticLease(l)
 	require.NoError(t, err)
@@ -537,7 +543,9 @@ func TestV4StaticLease_Get(t *testing.T) {
 	t.Run("offer", func(t *testing.T) {
 		assert.Equal(t, dhcpv4.MessageTypeOffer, resp.MessageType())
 		assert.Equal(t, mac, resp.ClientHWAddr)
-		assert.True(t, l.IP.Equal(resp.YourIPAddr))
+
+		ip := net.IP(l.IP.AsSlice())
+		assert.True(t, ip.Equal(resp.YourIPAddr))
 
 		assert.True(t, resp.Router()[0].Equal(s.conf.GatewayIP.AsSlice()))
 		assert.True(t, resp.ServerIdentifier().Equal(s.conf.GatewayIP.AsSlice()))
@@ -562,7 +570,9 @@ func TestV4StaticLease_Get(t *testing.T) {
 	t.Run("ack", func(t *testing.T) {
 		assert.Equal(t, dhcpv4.MessageTypeAck, resp.MessageType())
 		assert.Equal(t, mac, resp.ClientHWAddr)
-		assert.True(t, l.IP.Equal(resp.YourIPAddr))
+
+		ip := net.IP(l.IP.AsSlice())
+		assert.True(t, ip.Equal(resp.YourIPAddr))
 
 		assert.True(t, resp.Router()[0].Equal(s.conf.GatewayIP.AsSlice()))
 		assert.True(t, resp.ServerIdentifier().Equal(s.conf.GatewayIP.AsSlice()))
@@ -581,7 +591,7 @@ func TestV4StaticLease_Get(t *testing.T) {
 		ls := s.GetLeases(LeasesStatic)
 		require.Len(t, ls, 1)
 
-		assert.True(t, l.IP.Equal(ls[0].IP))
+		assert.Equal(t, l.IP, ls[0].IP)
 		assert.Equal(t, mac, ls[0].HWAddr)
 	})
 }
@@ -679,7 +689,8 @@ func TestV4DynamicLease_Get(t *testing.T) {
 		ls := s.GetLeases(LeasesDynamic)
 		require.Len(t, ls, 1)
 
-		assert.True(t, net.IP{192, 168, 10, 100}.Equal(ls[0].IP))
+		ip := netip.MustParseAddr("192.168.10.100")
+		assert.Equal(t, ip, ls[0].IP)
 		assert.Equal(t, mac, ls[0].HWAddr)
 	})
 }
@@ -859,4 +870,144 @@ func TestV4Server_Send(t *testing.T) {
 		s.send(cloneUDPAddr(defaultPeer), conn, req, resp)
 		assert.True(t, resp.IsBroadcast())
 	})
+}
+
+func TestV4Server_FindMACbyIP(t *testing.T) {
+	const (
+		staticName  = "static-client"
+		anotherName = "another-client"
+	)
+
+	staticIP := netip.MustParseAddr("192.168.10.10")
+	staticMAC := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
+
+	anotherIP := netip.MustParseAddr("192.168.100.100")
+	anotherMAC := net.HardwareAddr{0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB}
+
+	s := &v4Server{
+		leases: []*Lease{{
+			Expiry:   time.Unix(leaseExpireStatic, 0),
+			Hostname: staticName,
+			HWAddr:   staticMAC,
+			IP:       staticIP,
+		}, {
+			Expiry:   time.Unix(10, 0),
+			Hostname: anotherName,
+			HWAddr:   anotherMAC,
+			IP:       anotherIP,
+		}},
+	}
+
+	testCases := []struct {
+		want net.HardwareAddr
+		ip   netip.Addr
+		name string
+	}{{
+		name: "basic",
+		ip:   staticIP,
+		want: staticMAC,
+	}, {
+		name: "not_found",
+		ip:   netip.MustParseAddr("1.2.3.4"),
+		want: nil,
+	}, {
+		name: "expired",
+		ip:   anotherIP,
+		want: nil,
+	}, {
+		name: "v6",
+		ip:   netip.MustParseAddr("ffff::1"),
+		want: nil,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mac := s.FindMACbyIP(tc.ip)
+
+			require.Equal(t, tc.want, mac)
+		})
+	}
+}
+
+func TestV4Server_handleDecline(t *testing.T) {
+	const (
+		dynamicName = "dynamic-client"
+		anotherName = "another-client"
+	)
+
+	dynamicIP := netip.MustParseAddr("192.168.10.200")
+	dynamicMAC := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
+
+	s := defaultSrv(t)
+
+	s4, ok := s.(*v4Server)
+	require.True(t, ok)
+
+	s4.leases = []*Lease{{
+		Hostname: dynamicName,
+		HWAddr:   dynamicMAC,
+		IP:       dynamicIP,
+	}}
+
+	req, err := dhcpv4.New(
+		dhcpv4.WithOption(dhcpv4.OptRequestedIPAddress(net.IP(dynamicIP.AsSlice()))),
+	)
+	require.NoError(t, err)
+
+	req.ClientIPAddr = net.IP(dynamicIP.AsSlice())
+	req.ClientHWAddr = dynamicMAC
+
+	resp := &dhcpv4.DHCPv4{}
+	err = s4.handleDecline(req, resp)
+	require.NoError(t, err)
+
+	wantResp := &dhcpv4.DHCPv4{
+		YourIPAddr: net.IP(s4.conf.RangeStart.AsSlice()),
+		Options: dhcpv4.OptionsFromList(
+			dhcpv4.OptMessageType(dhcpv4.MessageTypeAck),
+		),
+	}
+
+	require.Equal(t, wantResp, resp)
+}
+
+func TestV4Server_handleRelease(t *testing.T) {
+	const (
+		dynamicName = "dymamic-client"
+		anotherName = "another-client"
+	)
+
+	dynamicIP := netip.MustParseAddr("192.168.10.200")
+	dynamicMAC := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
+
+	s := defaultSrv(t)
+
+	s4, ok := s.(*v4Server)
+	require.True(t, ok)
+
+	s4.leases = []*Lease{{
+		Hostname: dynamicName,
+		HWAddr:   dynamicMAC,
+		IP:       dynamicIP,
+	}}
+
+	req, err := dhcpv4.New(
+		dhcpv4.WithOption(dhcpv4.OptRequestedIPAddress(net.IP(dynamicIP.AsSlice()))),
+	)
+	require.NoError(t, err)
+
+	req.ClientIPAddr = net.IP(dynamicIP.AsSlice())
+	req.ClientHWAddr = dynamicMAC
+
+	resp := &dhcpv4.DHCPv4{}
+	err = s4.handleRelease(req, resp)
+	require.NoError(t, err)
+
+	wantResp := &dhcpv4.DHCPv4{
+		Options: dhcpv4.OptionsFromList(
+			dhcpv4.OptMessageType(dhcpv4.MessageTypeAck),
+		),
+	}
+
+	require.Equal(t, wantResp, resp)
 }

@@ -22,7 +22,7 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 19
+const currentSchemaVersion = 20
 
 // These aliases are provided for convenience.
 type (
@@ -92,6 +92,7 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema16to17,
 		upgradeSchema17to18,
 		upgradeSchema18to19,
+		upgradeSchema19to20,
 	}
 
 	n := 0
@@ -1060,6 +1061,47 @@ func upgradeSchema18to19(diskConf yobj) (err error) {
 
 		c["safe_search"] = safeSearch
 	}
+
+	return nil
+}
+
+// upgradeSchema19to20 performs the following changes:
+//
+//	# BEFORE:
+//	'statistics':
+//	  'interval': 1
+//
+//	# AFTER:
+//	'statistics':
+//	  'interval': 24h
+func upgradeSchema19to20(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 19 to 20")
+	diskConf["schema_version"] = 20
+
+	statsVal, ok := diskConf["statistics"]
+	if !ok {
+		return nil
+	}
+
+	var stats yobj
+	stats, ok = statsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of stats: %T", statsVal)
+	}
+
+	const field = "interval"
+
+	// Set the initial value from the global configuration structure.
+	statsIvl := 1
+	statsIvlVal, ok := stats[field]
+	if ok {
+		statsIvl, ok = statsIvlVal.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type of %s: %T", field, statsIvlVal)
+		}
+	}
+
+	stats[field] = timeutil.Duration{Duration: time.Duration(statsIvl) * timeutil.Day}
 
 	return nil
 }

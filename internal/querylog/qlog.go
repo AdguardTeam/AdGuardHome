@@ -132,6 +132,20 @@ func checkInterval(ivl time.Duration) (ok bool) {
 	return ivl == quarterDay || ivl == day || ivl == week || ivl == month || ivl == threeMonths
 }
 
+// validateIvl returns an error if ivl is less than an hour or more than a
+// year.
+func validateIvl(ivl time.Duration) (err error) {
+	if ivl < time.Hour {
+		return errors.Error("less than an hour")
+	}
+
+	if ivl > timeutil.Day*365 {
+		return errors.Error("more than a year")
+	}
+
+	return nil
+}
+
 func (l *queryLog) WriteDiskConfig(c *Config) {
 	*c = *l.conf
 }
@@ -258,6 +272,9 @@ func (l *queryLog) Add(params *AddParams) {
 
 // ShouldLog returns true if request for the host should be logged.
 func (l *queryLog) ShouldLog(host string, _, _ uint16) bool {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+
 	return !l.isIgnored(host)
 }
 

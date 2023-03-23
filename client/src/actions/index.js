@@ -24,6 +24,12 @@ import { getFilteringStatus, setRules } from './filtering';
 export const toggleSettingStatus = createAction('SETTING_STATUS_TOGGLE');
 export const showSettingsFailure = createAction('SETTINGS_FAILURE_SHOW');
 
+/**
+ *
+ * @param {*} settingKey = SETTINGS_NAMES
+ * @param {*} status: boolean | SafeSearchConfig
+ * @returns
+ */
 export const toggleSetting = (settingKey, status) => async (dispatch) => {
     let successMessage = '';
     try {
@@ -49,14 +55,9 @@ export const toggleSetting = (settingKey, status) => async (dispatch) => {
                 dispatch(toggleSettingStatus({ settingKey }));
                 break;
             case SETTINGS_NAMES.safesearch:
-                if (status) {
-                    successMessage = 'disabled_safe_search_toast';
-                    await apiClient.disableSafesearch();
-                } else {
-                    successMessage = 'enabled_save_search_toast';
-                    await apiClient.enableSafesearch();
-                }
-                dispatch(toggleSettingStatus({ settingKey }));
+                successMessage = 'updated_save_search_toast';
+                await apiClient.updateSafesearch(status);
+                dispatch(toggleSettingStatus({ settingKey, value: status }));
                 break;
             default:
                 break;
@@ -71,7 +72,9 @@ export const initSettingsRequest = createAction('SETTINGS_INIT_REQUEST');
 export const initSettingsFailure = createAction('SETTINGS_INIT_FAILURE');
 export const initSettingsSuccess = createAction('SETTINGS_INIT_SUCCESS');
 
-export const initSettings = (settingsList) => async (dispatch) => {
+export const initSettings = (settingsList = {
+    safebrowsing: {}, parental: {},
+}) => async (dispatch) => {
     dispatch(initSettingsRequest());
     try {
         const safebrowsingStatus = await apiClient.getSafebrowsingStatus();
@@ -80,7 +83,6 @@ export const initSettings = (settingsList) => async (dispatch) => {
         const {
             safebrowsing,
             parental,
-            safesearch,
         } = settingsList;
         const newSettingsList = {
             safebrowsing: {
@@ -92,8 +94,7 @@ export const initSettings = (settingsList) => async (dispatch) => {
                 enabled: parentalStatus.enabled,
             },
             safesearch: {
-                ...safesearch,
-                enabled: safesearchStatus.enabled,
+                ...safesearchStatus,
             },
         };
         dispatch(initSettingsSuccess({ settingsList: newSettingsList }));

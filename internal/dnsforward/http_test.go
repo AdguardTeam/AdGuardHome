@@ -182,6 +182,12 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		name:    "edns_cs_enabled",
 		wantSet: "",
 	}, {
+		name:    "edns_cs_use_custom",
+		wantSet: "",
+	}, {
+		name:    "edns_cs_use_custom_bad_ip",
+		wantSet: "decoding request: ParseAddr(\"bad.ip\"): unexpected character (at \"bad.ip\")",
+	}, {
 		name:    "dnssec_enabled",
 		wantSet: "",
 	}, {
@@ -222,16 +228,20 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		Req  json.RawMessage `json:"req"`
 		Want json.RawMessage `json:"want"`
 	}
-	loadTestData(t, t.Name()+jsonExt, &data)
+
+	testData := t.Name() + jsonExt
+	loadTestData(t, testData, &data)
 
 	for _, tc := range testCases {
+		// NOTE:  Do not use require.Contains, because the size of the data
+		// prevents it from printing a meaningful error message.
 		caseData, ok := data[tc.name]
-		require.True(t, ok)
+		require.Truef(t, ok, "%q does not contain test data for test case %s", testData, tc.name)
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Cleanup(func() {
 				s.conf = defaultConf
-				s.conf.FilteringConfig.EDNSClientSubnet.Enabled = false
+				s.conf.FilteringConfig.EDNSClientSubnet = &EDNSClientSubnet{}
 			})
 
 			rBody := io.NopCloser(bytes.NewReader(caseData.Req))

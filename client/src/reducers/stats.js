@@ -25,7 +25,7 @@ const stats = handleActions(
         [actions.getStatsConfigFailure]: (state) => ({ ...state, processingGetConfig: false }),
         [actions.getStatsConfigSuccess]: (state, { payload }) => ({
             ...state,
-            interval: payload.interval,
+            ...payload,
             processingGetConfig: false,
         }),
 
@@ -33,7 +33,7 @@ const stats = handleActions(
         [actions.setStatsConfigFailure]: (state) => ({ ...state, processingSetConfig: false }),
         [actions.setStatsConfigSuccess]: (state, { payload }) => ({
             ...state,
-            interval: payload.interval,
+            ...payload,
             processingSetConfig: false,
         }),
 

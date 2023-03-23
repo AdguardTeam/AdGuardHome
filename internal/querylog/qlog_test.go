@@ -22,13 +22,14 @@ func TestMain(m *testing.M) {
 // TestQueryLog tests adding and loading (with filtering) entries from disk and
 // memory.
 func TestQueryLog(t *testing.T) {
-	l := newQueryLog(Config{
+	l, err := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: true,
 		RotationIvl: timeutil.Day,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 	})
+	require.NoError(t, err)
 
 	// Add disk entries.
 	addEntry(l, "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
@@ -125,12 +126,13 @@ func TestQueryLog(t *testing.T) {
 }
 
 func TestQueryLogOffsetLimit(t *testing.T) {
-	l := newQueryLog(Config{
+	l, err := newQueryLog(Config{
 		Enabled:     true,
 		RotationIvl: timeutil.Day,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 	})
+	require.NoError(t, err)
 
 	const (
 		entNum           = 10
@@ -199,13 +201,14 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 }
 
 func TestQueryLogMaxFileScanEntries(t *testing.T) {
-	l := newQueryLog(Config{
+	l, err := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: true,
 		RotationIvl: timeutil.Day,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 	})
+	require.NoError(t, err)
 
 	const entNum = 10
 	// Add entries to the log.
@@ -227,13 +230,14 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 }
 
 func TestQueryLogFileDisabled(t *testing.T) {
-	l := newQueryLog(Config{
+	l, err := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: false,
 		RotationIvl: timeutil.Day,
 		MemSize:     2,
 		BaseDir:     t.TempDir(),
 	})
+	require.NoError(t, err)
 
 	addEntry(l, "example1.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	addEntry(l, "example2.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
@@ -254,13 +258,14 @@ func TestQueryLogShouldLog(t *testing.T) {
 	)
 	set := stringutil.NewSet(ignored1, ignored2)
 
-	l := newQueryLog(Config{
+	l, err := newQueryLog(Config{
 		Enabled:     true,
 		RotationIvl: timeutil.Day,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 		Ignored:     set,
 	})
+	require.NoError(t, err)
 
 	testCases := []struct {
 		name    string

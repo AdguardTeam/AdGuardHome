@@ -4,6 +4,155 @@
 
 ## v0.108.0: API changes
 
+## v0.107.27: API changes
+
+### The new optional fields `"edns_cs_use_custom"` and `"edns_cs_custom_ip"` in `DNSConfig`
+
+* The new optional fields `"edns_cs_use_custom"` and `"edns_cs_custom_ip"` in
+  `POST /control/dns_config` method makes AdGuard Home use or not use the
+  custom IP for EDNS Client Subnet.
+
+* The new optional fields `"edns_cs_use_custom"` and `"edns_cs_custom_ip"` in
+  `GET /control/dns_info` method are set if AdGuard Home uses custom IP for
+  EDNS Client Subnet.
+
+
+
+## v0.107.27: API changes
+
+### Deprecated statistics APIs
+
+* The `GET /control/stats_info` HTTP API; use the new `GET
+  /control/stats/config` API instead.
+
+  **NOTE:** If `interval` was configured by editing configuration file or new
+  HTTP API call `PUT /control/stats/config/update` and it's not equal to
+  previous allowed enum values then it will be equal to `90` days for
+  compatibility reasons.
+
+* The `POST /control/stats_config` HTTP API; use the new `PUT
+  /control/stats/config/update` API instead.
+
+### New statistics APIs
+
+* The new `GET /control/stats/config` HTTP API.
+
+* The new `PUT /control/stats/config/update` HTTP API allows config updates.
+
+These `control/stats/config/update` and `control/stats/config` APIs accept and
+return a JSON object with the following format:
+
+```json
+{
+  "enabled": true,
+  "interval": 3600,
+  "ignored": ["example.com"],
+}
+```
+
+### Deprecated query log APIs
+
+* The `GET /control/querylog_info` HTTP API; use the new `GET
+  /control/querylog/config` API instead.
+
+  **NOTE:** If `interval` was configured by editing configuration file or new
+  HTTP API call `PUT /control/querylog/config/update` and it's not equal to
+  previous allowed enum values then it will be equal to `90` days for
+  compatibility reasons.
+
+* The `POST /control/querylog_config` HTTP API; use the new `PUT
+  /control/querylog/config/update` API instead.
+
+### New query log APIs
+
+* The new `GET /control/querylog/config` HTTP API.
+
+* The new `PUT /control/querylog/config/update` HTTP API allows config updates.
+
+These `control/querylog/config/update` and `control/querylog/config` APIs
+accept and return a JSON object with the following format:
+
+```json
+{
+  "enabled": true,
+  "anonymize_client_ip": false,
+  "interval": 3600,
+  "ignored": ["example.com"],
+}
+```
+
+
+
+## v0.107.27: API changes
+
+### Deprecated HTTP APIs
+
+The following HTTP APIs are deprecated:
+
+* `POST /control/safesearch/enable` is deprecated.  Use the new
+  `PUT /control/safesearch/settings`.
+
+* `POST /control/safesearch/disable` is deprecated.  Use the new
+  `PUT /control/safesearch/settings`.
+
+### New HTTP API `PUT /control/safesearch/settings`
+
+* The new `PUT /control/safesearch/settings` HTTP API allows safesearch
+  settings updates. It accepts a JSON object with the following format:
+
+```json
+{
+  "enabled": true,
+  "bing": false,
+  "duckduckgo": true,
+  "google": false,
+  "pixabay": false,
+  "yandex": true,
+  "youtube": false
+}
+```
+
+### `GET /control/safesearch/status`
+
+* The `control/safesearch/status` HTTP API has been changed.  It now returns a
+  JSON object with the following format:
+
+```json
+{
+  "enabled": true,
+  "bing": false,
+  "duckduckgo": true,
+  "google": false,
+  "pixabay": false,
+  "yandex": true,
+  "youtube": false
+}
+```
+
+### `/control/clients` HTTP APIs
+
+The following HTTP APIs have been changed:
+
+*  `GET /control/clients`;
+*  `GET /control/clients/find?ip0=...&ip1=...&ip2=...`;
+*  `POST /control/clients/add`;
+*  `POST /control/clients/update`;
+
+The `safesearch_enabled` field is deprecated.  The new field `safe_search` has
+been added to JSON objects.  It has the following format:
+
+```json
+{
+  "enabled": true,
+  "bing": false,
+  "duckduckgo": true,
+  "google": false,
+  "pixabay": false,
+  "yandex": true,
+  "youtube": false
+}
+```
+
 
 
 ## v0.107.23: API changes

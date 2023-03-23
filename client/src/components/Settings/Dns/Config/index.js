@@ -14,6 +14,8 @@ const Config = () => {
         blocking_ipv4,
         blocking_ipv6,
         edns_cs_enabled,
+        edns_cs_use_custom,
+        edns_cs_custom_ip,
         dnssec_enabled,
         disable_ipv6,
         processingSetConfig,
@@ -39,6 +41,8 @@ const Config = () => {
                         edns_cs_enabled,
                         disable_ipv6,
                         dnssec_enabled,
+                        edns_cs_use_custom,
+                        edns_cs_custom_ip,
                     }}
                     onSubmit={handleFormSubmit}
                     processing={processingSetConfig}

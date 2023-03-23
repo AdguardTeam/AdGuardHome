@@ -13,9 +13,11 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"golang.org/x/exp/slices"
 	"golang.org/x/net/idna"
 )
 
@@ -25,13 +27,33 @@ type configJSON struct {
 	// fractional numbers and not mess the API users by changing the units.
 	Interval float64 `json:"interval"`
 
-	// Enabled shows if the querylog is enabled.  It is an [aghalg.NullBool]
-	// to be able to tell when it's set without using pointers.
+	// Enabled shows if the querylog is enabled.  It is an aghalg.NullBool to
+	// be able to tell when it's set without using pointers.
 	Enabled aghalg.NullBool `json:"enabled"`
 
 	// AnonymizeClientIP shows if the clients' IP addresses must be anonymized.
 	// It is an [aghalg.NullBool] to be able to tell when it's set without using
 	// pointers.
+	AnonymizeClientIP aghalg.NullBool `json:"anonymize_client_ip"`
+}
+
+// getConfigResp is the JSON structure for the querylog configuration.
+type getConfigResp struct {
+	// Ignored is the list of host names, which should not be written to log.
+	Ignored []string `json:"ignored"`
+
+	// Interval is the querylog rotation interval in milliseconds.
+	Interval float64 `json:"interval"`
+
+	// Enabled shows if the querylog is enabled.  It is an aghalg.NullBool to
+	// be able to tell when it's set without using pointers.
+	Enabled aghalg.NullBool `json:"enabled"`
+
+	// AnonymizeClientIP shows if the clients' IP addresses must be anonymized.
+	// It is an aghalg.NullBool to be able to tell when it's set without using
+	// pointers.
+	//
+	// TODO(a.garipov): Consider using separate setting for statistics.
 	AnonymizeClientIP aghalg.NullBool `json:"anonymize_client_ip"`
 }
 
@@ -41,6 +63,13 @@ func (l *queryLog) initWeb() {
 	l.conf.HTTPRegister(http.MethodGet, "/control/querylog_info", l.handleQueryLogInfo)
 	l.conf.HTTPRegister(http.MethodPost, "/control/querylog_clear", l.handleQueryLogClear)
 	l.conf.HTTPRegister(http.MethodPost, "/control/querylog_config", l.handleQueryLogConfig)
+
+	l.conf.HTTPRegister(http.MethodGet, "/control/querylog/config", l.handleGetQueryLogConfig)
+	l.conf.HTTPRegister(
+		http.MethodPut,
+		"/control/querylog/config/update",
+		l.handlePutQueryLogConfig,
+	)
 }
 
 func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
@@ -64,11 +93,41 @@ func (l *queryLog) handleQueryLogClear(_ http.ResponseWriter, _ *http.Request) {
 	l.clear()
 }
 
-// Get configuration
+// handleQueryLogInfo handles requests to the GET /control/querylog_info
+// endpoint.
+//
+// Deprecated:  Remove it when migration to the new API is over.
 func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+
+	ivl := l.conf.RotationIvl
+
+	if !checkInterval(ivl) {
+		// NOTE: If interval is custom we set it to 90 days for compatibility
+		// with old API.
+		ivl = timeutil.Day * 90
+	}
+
 	_ = aghhttp.WriteJSONResponse(w, r, configJSON{
 		Enabled:           aghalg.BoolToNullBool(l.conf.Enabled),
-		Interval:          l.conf.RotationIvl.Hours() / 24,
+		Interval:          ivl.Hours() / 24,
+		AnonymizeClientIP: aghalg.BoolToNullBool(l.conf.AnonymizeClientIP),
+	})
+}
+
+// handleGetQueryLogConfig handles requests to the GET /control/querylog/config
+// endpoint.
+func (l *queryLog) handleGetQueryLogConfig(w http.ResponseWriter, r *http.Request) {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+
+	ignored := l.conf.Ignored.Values()
+	slices.Sort(ignored)
+	_ = aghhttp.WriteJSONResponse(w, r, getConfigResp{
+		Ignored:           ignored,
+		Interval:          float64(l.conf.RotationIvl.Milliseconds()),
+		Enabled:           aghalg.BoolToNullBool(l.conf.Enabled),
 		AnonymizeClientIP: aghalg.BoolToNullBool(l.conf.AnonymizeClientIP),
 	})
 }
@@ -88,6 +147,8 @@ func AnonymizeIP(ip net.IP) {
 }
 
 // handleQueryLogConfig handles the POST /control/querylog_config queries.
+//
+// Deprecated:  Remove it when migration to the new API is over.
 func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) {
 	// Set NaN as initial value to be able to know if it changed later by
 	// comparing it to NaN.
@@ -103,6 +164,7 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 	}
 
 	ivl := time.Duration(float64(timeutil.Day) * newConf.Interval)
+
 	hasIvl := !math.IsNaN(newConf.Interval)
 	if hasIvl && !checkInterval(ivl) {
 		aghhttp.Error(r, w, http.StatusBadRequest, "unsupported interval")
@@ -115,8 +177,6 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 	l.lock.Lock()
 	defer l.lock.Unlock()
 
-	// Copy data, modify it, then activate.  Other threads (readers) don't need
-	// to use this lock.
 	conf := *l.conf
 	if newConf.Enabled != aghalg.NBNull {
 		conf.Enabled = newConf.Enabled == aghalg.NBTrue
@@ -133,6 +193,65 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 		} else {
 			l.anonymizer.Store(nil)
 		}
+	}
+
+	l.conf = &conf
+}
+
+// handlePutQueryLogConfig handles the PUT /control/querylog/config/update
+// queries.
+func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Request) {
+	newConf := &getConfigResp{}
+	err := json.NewDecoder(r.Body).Decode(newConf)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+
+		return
+	}
+
+	set, err := aghnet.NewDomainNameSet(newConf.Ignored)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "ignored: %s", err)
+
+		return
+	}
+
+	ivl := time.Duration(newConf.Interval) * time.Millisecond
+	err = validateIvl(ivl)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "unsupported interval: %s", err)
+
+		return
+	}
+
+	if newConf.Enabled == aghalg.NBNull {
+		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "enabled is null")
+
+		return
+	}
+
+	if newConf.AnonymizeClientIP == aghalg.NBNull {
+		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "anonymize_client_ip is null")
+
+		return
+	}
+
+	defer l.conf.ConfigModified()
+
+	l.lock.Lock()
+	defer l.lock.Unlock()
+
+	conf := *l.conf
+
+	conf.Ignored = set
+	conf.RotationIvl = ivl
+	conf.Enabled = newConf.Enabled == aghalg.NBTrue
+
+	conf.AnonymizeClientIP = newConf.AnonymizeClientIP == aghalg.NBTrue
+	if conf.AnonymizeClientIP {
+		l.anonymizer.Store(AnonymizeIP)
+	} else {
+		l.anonymizer.Store(nil)
 	}
 
 	l.conf = &conf
