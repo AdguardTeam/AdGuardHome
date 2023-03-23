@@ -27,7 +27,8 @@ type clientJSON struct {
 	// the allowlist.
 	DisallowedRule *string `json:"disallowed_rule,omitempty"`
 
-	WHOISInfo *RuntimeClientWHOISInfo `json:"whois_info,omitempty"`
+	WHOISInfo      *RuntimeClientWHOISInfo     `json:"whois_info,omitempty"`
+	SafeSearchConf *filtering.SafeSearchConfig `json:"safe_search"`
 
 	Name string `json:"name"`
 
@@ -59,7 +60,7 @@ type clientListJSON struct {
 	Tags           []string            `json:"supported_tags"`
 }
 
-// respond with information about configured clients
+// handleGetClients is the handler for GET /control/clients HTTP API.
 func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http.Request) {
 	data := clientListJSON{}
 
@@ -88,32 +89,36 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 	_ = aghhttp.WriteJSONResponse(w, r, data)
 }
 
-// Convert JSON object to Client object
+// jsonToClient converts JSON object to Client object.
 func jsonToClient(cj clientJSON) (c *Client) {
-	// TODO(d.kolyshev): Remove after cleaning the deprecated
-	// [clientJSON.SafeSearchEnabled] field.
-	safeSearchConf := filtering.SafeSearchConfig{Enabled: cj.SafeSearchEnabled}
+	var safeSearchConf filtering.SafeSearchConfig
+	if cj.SafeSearchConf != nil {
+		safeSearchConf = *cj.SafeSearchConf
+	} else {
+		// TODO(d.kolyshev): Remove after cleaning the deprecated
+		// [clientJSON.SafeSearchEnabled] field.
+		safeSearchConf = filtering.SafeSearchConfig{Enabled: cj.SafeSearchEnabled}
 
-	// Set default service flags for enabled safesearch.
-	if safeSearchConf.Enabled {
-		safeSearchConf.Bing = true
-		safeSearchConf.DuckDuckGo = true
-		safeSearchConf.Google = true
-		safeSearchConf.Pixabay = true
-		safeSearchConf.Yandex = true
-		safeSearchConf.YouTube = true
+		// Set default service flags for enabled safesearch.
+		if safeSearchConf.Enabled {
+			safeSearchConf.Bing = true
+			safeSearchConf.DuckDuckGo = true
+			safeSearchConf.Google = true
+			safeSearchConf.Pixabay = true
+			safeSearchConf.Yandex = true
+			safeSearchConf.YouTube = true
+		}
 	}
 
 	return &Client{
-		Name:                cj.Name,
-		IDs:                 cj.IDs,
-		Tags:                cj.Tags,
-		UseOwnSettings:      !cj.UseGlobalSettings,
-		FilteringEnabled:    cj.FilteringEnabled,
-		ParentalEnabled:     cj.ParentalEnabled,
-		safeSearchConf:      safeSearchConf,
-		SafeBrowsingEnabled: cj.SafeBrowsingEnabled,
-
+		Name:                  cj.Name,
+		IDs:                   cj.IDs,
+		Tags:                  cj.Tags,
+		UseOwnSettings:        !cj.UseGlobalSettings,
+		FilteringEnabled:      cj.FilteringEnabled,
+		ParentalEnabled:       cj.ParentalEnabled,
+		SafeBrowsingEnabled:   cj.SafeBrowsingEnabled,
+		safeSearchConf:        safeSearchConf,
 		UseOwnBlockedServices: !cj.UseGlobalBlockedServices,
 		BlockedServices:       cj.BlockedServices,
 
@@ -121,7 +126,7 @@ func jsonToClient(cj clientJSON) (c *Client) {
 	}
 }
 
-// Convert Client object to JSON
+// clientToJSON converts Client object to JSON.
 func clientToJSON(c *Client) (cj *clientJSON) {
 	// TODO(d.kolyshev): Remove after cleaning the deprecated
 	// [clientJSON.SafeSearchEnabled] field.
@@ -136,6 +141,7 @@ func clientToJSON(c *Client) (cj *clientJSON) {
 		FilteringEnabled:    c.FilteringEnabled,
 		ParentalEnabled:     c.ParentalEnabled,
 		SafeSearchEnabled:   safeSearchConf.Enabled,
+		SafeSearchConf:      safeSearchConf,
 		SafeBrowsingEnabled: c.SafeBrowsingEnabled,
 
 		UseGlobalBlockedServices: !c.UseOwnBlockedServices,
@@ -145,7 +151,7 @@ func clientToJSON(c *Client) (cj *clientJSON) {
 	}
 }
 
-// Add a new client
+// handleAddClient is the handler for POST /control/clients/add HTTP API.
 func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.Request) {
 	cj := clientJSON{}
 	err := json.NewDecoder(r.Body).Decode(&cj)
@@ -172,7 +178,7 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 	onConfigModified()
 }
 
-// Remove client
+// handleDelClient is the handler for POST /control/clients/delete HTTP API.
 func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.Request) {
 	cj := clientJSON{}
 	err := json.NewDecoder(r.Body).Decode(&cj)
@@ -202,7 +208,7 @@ type updateJSON struct {
 	Data clientJSON `json:"data"`
 }
 
-// Update client's properties
+// handleUpdateClient is the handler for POST /control/clients/update HTTP API.
 func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *http.Request) {
 	dj := updateJSON{}
 	err := json.NewDecoder(r.Body).Decode(&dj)
@@ -229,7 +235,7 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 	onConfigModified()
 }
 
-// Get the list of clients by IP address list
+// handleFindClient is the handler for GET /control/clients/find HTTP API.
 func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	data := []map[string]*clientJSON{}

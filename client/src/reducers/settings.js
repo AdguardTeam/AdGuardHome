@@ -22,11 +22,11 @@ const settings = handleActions(
         },
         [actions.toggleSettingStatus]: (state, { payload }) => {
             const { settingsList } = state;
-            const { settingKey } = payload;
+            const { settingKey, value } = payload;
 
             const setting = settingsList[settingKey];
 
-            const newSetting = {
+            const newSetting = value || {
                 ...setting,
                 enabled: !setting.enabled,
             };

@@ -83,6 +83,78 @@ accept and return a JSON object with the following format:
 
 
 
+## v0.107.27: API changes
+
+### Deprecated HTTP APIs
+
+The following HTTP APIs are deprecated:
+
+* `POST /control/safesearch/enable` is deprecated.  Use the new
+  `PUT /control/safesearch/settings`.
+
+* `POST /control/safesearch/disable` is deprecated.  Use the new
+  `PUT /control/safesearch/settings`.
+
+### New HTTP API `PUT /control/safesearch/settings`
+
+* The new `PUT /control/safesearch/settings` HTTP API allows safesearch
+  settings updates. It accepts a JSON object with the following format:
+
+```json
+{
+  "enabled": true,
+  "bing": false,
+  "duckduckgo": true,
+  "google": false,
+  "pixabay": false,
+  "yandex": true,
+  "youtube": false
+}
+```
+
+### `GET /control/safesearch/status`
+
+* The `control/safesearch/status` HTTP API has been changed.  It now returns a
+  JSON object with the following format:
+
+```json
+{
+  "enabled": true,
+  "bing": false,
+  "duckduckgo": true,
+  "google": false,
+  "pixabay": false,
+  "yandex": true,
+  "youtube": false
+}
+```
+
+### `/control/clients` HTTP APIs
+
+The following HTTP APIs have been changed:
+
+*  `GET /control/clients`;
+*  `GET /control/clients/find?ip0=...&ip1=...&ip2=...`;
+*  `POST /control/clients/add`;
+*  `POST /control/clients/update`;
+
+The `safesearch_enabled` field is deprecated.  The new field `safe_search` has
+been added to JSON objects.  It has the following format:
+
+```json
+{
+  "enabled": true,
+  "bing": false,
+  "duckduckgo": true,
+  "google": false,
+  "pixabay": false,
+  "yandex": true,
+  "youtube": false
+}
+```
+
+
+
 ## v0.107.23: API changes
 
 ### Experimental “beta” APIs removed

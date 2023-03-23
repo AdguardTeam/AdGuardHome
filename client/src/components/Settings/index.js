@@ -10,7 +10,7 @@ import Checkbox from '../ui/Checkbox';
 import Loading from '../ui/Loading';
 import PageTitle from '../ui/PageTitle';
 import Card from '../ui/Card';
-import { getObjectKeysSorted } from '../../helpers/helpers';
+import { getObjectKeysSorted, captitalizeWords } from '../../helpers/helpers';
 import './Settings.css';
 
 const ORDER_KEY = 'order';
@@ -28,12 +28,6 @@ const SETTINGS = {
         subtitle: 'use_adguard_parental_hint',
         [ORDER_KEY]: 1,
     },
-    safesearch: {
-        enabled: false,
-        title: 'enforce_safe_search',
-        subtitle: 'enforce_save_search_hint',
-        [ORDER_KEY]: 2,
-    },
 };
 
 class Settings extends Component {
@@ -44,7 +38,7 @@ class Settings extends Component {
         this.props.getFilteringStatus();
     }
 
-    renderSettings = (settings) => getObjectKeysSorted(settings, ORDER_KEY)
+    renderSettings = (settings) => getObjectKeysSorted(SETTINGS, ORDER_KEY)
         .map((key) => {
             const setting = settings[key];
             const { enabled } = setting;
@@ -54,6 +48,35 @@ class Settings extends Component {
                 handleChange={() => this.props.toggleSetting(key, enabled)}
             />;
         });
+
+    renderSafeSearch = () => {
+        const { settings: { settingsList: { safesearch } } } = this.props;
+        const { enabled } = safesearch || {};
+        const searches = { ...(safesearch || {}) };
+        delete searches.enabled;
+        return (
+            <>
+                <Checkbox
+                    enabled={enabled}
+                    title='enforce_safe_search'
+                    subtitle='enforce_save_search_hint'
+                    handleChange={({ target: { checked: enabled } }) => this.props.toggleSetting('safesearch', { ...safesearch, enabled })}
+                />
+                <div className='form__group--inner'>
+                    {Object.keys(searches).map((searchKey) => (
+                        <Checkbox
+                            key={searchKey}
+                            enabled={searches[searchKey]}
+                            title={captitalizeWords(searchKey)}
+                            subtitle=''
+                            disabled={!safesearch.enabled}
+                            handleChange={({ target: { checked } }) => this.props.toggleSetting('safesearch', { ...safesearch, [searchKey]: checked })}
+                        />
+                    ))}
+                </div>
+            </>
+        );
+    };
 
     render() {
         const {
@@ -92,6 +115,7 @@ class Settings extends Component {
                                             setFiltersConfig={setFiltersConfig}
                                         />
                                         {this.renderSettings(settings.settingsList)}
+                                        {this.renderSafeSearch()}
                                     </div>
                                 </Card>
                             </div>

@@ -17,7 +17,7 @@ type SafeSearch interface {
 // SafeSearchConfig is a struct with safe search related settings.
 type SafeSearchConfig struct {
 	// CustomResolver is the resolver used by safe search.
-	CustomResolver Resolver `yaml:"-"`
+	CustomResolver Resolver `yaml:"-" json:"-"`
 
 	// Enabled indicates if safe search is enabled entirely.
 	Enabled bool `yaml:"enabled" json:"enabled"`

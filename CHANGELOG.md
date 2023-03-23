@@ -36,7 +36,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - The ability to manage safesearch for each service by using the new
   `safe_search` field ([#1163]).
 
-### Changed 
+### Changed
 
 - ARPA domain names containing a subnet within private networks now also
   considered private, behaving closer to [RFC 6761][rfc6761] ([#5567]).
@@ -90,6 +90,17 @@ In this release, the schema version has changed from 17 to 20.
 
 ### Deprecated
 
+- The `POST /control/safesearch/enable` HTTP API is deprecated.  Use the new
+  `PUT /control/safesearch/settings` API.
+- The `POST /control/safesearch/disable` HTTP API is deprecated.  Use the new
+  `PUT /control/safesearch/settings` API
+- The `safesearch_enabled` field is deprecated in the following HTTP APIs:
+  - `GET /control/clients`
+  - `POST /control/clients/add`
+  - `POST /control/clients/update`
+  - `GET /control/clients/find?ip0=...&ip1=...&ip2=...`
+
+  Check `openapi/openapi.yaml` for more details.
 - The `GET /control/stats_info` HTTP API; use the new `GET
   /control/stats/config` API instead.
 

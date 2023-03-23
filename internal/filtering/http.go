@@ -461,6 +461,7 @@ func (d *DNSFilter) RegisterFilteringHandlers() {
 	registerHTTP(http.MethodPost, "/control/safesearch/enable", d.handleSafeSearchEnable)
 	registerHTTP(http.MethodPost, "/control/safesearch/disable", d.handleSafeSearchDisable)
 	registerHTTP(http.MethodGet, "/control/safesearch/status", d.handleSafeSearchStatus)
+	registerHTTP(http.MethodPut, "/control/safesearch/settings", d.handleSafeSearchSettings)
 
 	registerHTTP(http.MethodGet, "/control/rewrite/list", d.handleRewriteList)
 	registerHTTP(http.MethodPost, "/control/rewrite/add", d.handleRewriteAdd)

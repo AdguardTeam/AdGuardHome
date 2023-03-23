@@ -167,6 +167,7 @@
     "enabled_parental_toast": "Enabled Parental Control",
     "disabled_safe_search_toast": "Disabled Safe Search",
     "enabled_save_search_toast": "Enabled Safe Search",
+    "updated_save_search_toast": "Safe Search settings updated",
     "enabled_table_header": "Enabled",
     "name_table_header": "Name",
     "list_url_table_header": "List URL",

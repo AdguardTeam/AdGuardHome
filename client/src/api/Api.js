@@ -208,24 +208,40 @@ class Api {
     // Safesearch
     SAFESEARCH_STATUS = { path: 'safesearch/status', method: 'GET' };
 
-    SAFESEARCH_ENABLE = { path: 'safesearch/enable', method: 'POST' };
-
-    SAFESEARCH_DISABLE = { path: 'safesearch/disable', method: 'POST' };
+    SAFESEARCH_UPDATE = { path: 'safesearch/settings', method: 'PUT' };
 
     getSafesearchStatus() {
         const { path, method } = this.SAFESEARCH_STATUS;
         return this.makeRequest(path, method);
     }
 
-    enableSafesearch() {
-        const { path, method } = this.SAFESEARCH_ENABLE;
-        return this.makeRequest(path, method);
+    /**
+     * interface SafeSearchConfig {
+        "enabled": boolean,
+        "bing": boolean,
+        "duckduckgo": boolean,
+        "google": boolean,
+        "pixabay": boolean,
+        "yandex": boolean,
+        "youtube": boolean
+     * }
+     * @param {*} data - SafeSearchConfig
+     * @returns 200 ok
+     */
+    updateSafesearch(data) {
+        const { path, method } = this.SAFESEARCH_UPDATE;
+        return this.makeRequest(path, method, { data });
     }
 
-    disableSafesearch() {
-        const { path, method } = this.SAFESEARCH_DISABLE;
-        return this.makeRequest(path, method);
-    }
+    // enableSafesearch() {
+    //     const { path, method } = this.SAFESEARCH_ENABLE;
+    //     return this.makeRequest(path, method);
+    // }
+
+    // disableSafesearch() {
+    //     const { path, method } = this.SAFESEARCH_DISABLE;
+    //     return this.makeRequest(path, method);
+    // }
 
     // Language
 
