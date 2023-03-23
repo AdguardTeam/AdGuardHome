@@ -21,9 +21,7 @@ require (
 	github.com/kardianos/service v1.2.2
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/netlink v1.7.1
-	// TODO(a.garipov): This package is deprecated; find a new one or use
-	// our own code for that.  Perhaps, use gopacket.
-	github.com/mdlayher/raw v0.1.0
+	github.com/mdlayher/packet v1.1.1
 	github.com/miekg/dns v1.1.50
 	github.com/quic-go/quic-go v0.32.0
 	github.com/stretchr/testify v1.8.2
@@ -49,7 +47,7 @@ require (
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/pprof v0.0.0-20230207041349-798e818bf904 // indirect
 	github.com/josharian/native v1.1.0 // indirect
-	github.com/mdlayher/packet v1.1.1 // indirect
+	github.com/mdlayher/raw v0.1.0 // indirect
 	github.com/mdlayher/socket v0.4.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.8.3 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
