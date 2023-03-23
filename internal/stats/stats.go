@@ -16,6 +16,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"go.etcd.io/bbolt"
 )
 
@@ -23,6 +24,20 @@ import (
 // retention interval.  The valid values are 0, 1, 7, 30 and 90.
 func checkInterval(days uint32) (ok bool) {
 	return days == 0 || days == 1 || days == 7 || days == 30 || days == 90
+}
+
+// validateIvl returns an error if ivl is less than an hour or more than a
+// year.
+func validateIvl(ivl time.Duration) (err error) {
+	if ivl < time.Hour {
+		return errors.Error("less than an hour")
+	}
+
+	if ivl > timeutil.Day*365 {
+		return errors.Error("more than a year")
+	}
+
+	return nil
 }
 
 // Config is the configuration structure for the statistics collecting.
@@ -42,9 +57,8 @@ type Config struct {
 	// Filename is the name of the database file.
 	Filename string
 
-	// LimitDays is the maximum number of days to collect statistics into the
-	// current unit.
-	LimitDays uint32
+	// Limit is an upper limit for collecting statistics.
+	Limit time.Duration
 
 	// Enabled tells if the statistics are enabled.
 	Enabled bool
@@ -105,11 +119,8 @@ type StatsCtx struct {
 	// enabled tells if the statistics are enabled.
 	enabled bool
 
-	// limitHours is the maximum number of hours to collect statistics into the
-	// current unit.
-	//
-	// TODO(s.chzhen):  Rewrite to use time.Duration.
-	limitHours uint32
+	// limit is an upper limit for collecting statistics.
+	limit time.Duration
 
 	// ignored is the list of host names, which should not be counted.
 	ignored *stringutil.Set
@@ -128,9 +139,14 @@ func New(conf Config) (s *StatsCtx, err error) {
 		httpRegister:   conf.HTTPRegister,
 		ignored:        conf.Ignored,
 	}
-	if s.limitHours = conf.LimitDays * 24; !checkInterval(conf.LimitDays) {
-		s.limitHours = 24
+
+	err = validateIvl(conf.Limit)
+	if err != nil {
+		return nil, fmt.Errorf("unsupported interval: %w", err)
 	}
+
+	s.limit = conf.Limit
+
 	if s.unitIDGen = newUnitID; conf.UnitID != nil {
 		s.unitIDGen = conf.UnitID
 	}
@@ -150,7 +166,7 @@ func New(conf Config) (s *StatsCtx, err error) {
 		return nil, fmt.Errorf("stats: opening a transaction: %w", err)
 	}
 
-	deleted := deleteOldUnits(tx, id-s.limitHours-1)
+	deleted := deleteOldUnits(tx, id-uint32(s.limit.Hours())-1)
 	udb = loadUnitFromDB(tx, id)
 
 	err = finishTxn(tx, deleted > 0)
@@ -231,7 +247,7 @@ func (s *StatsCtx) Update(e Entry) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if !s.enabled || s.limitHours == 0 {
+	if !s.enabled || s.limit == 0 {
 		return
 	}
 
@@ -263,7 +279,7 @@ func (s *StatsCtx) WriteDiskConfig(dc *Config) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	dc.LimitDays = s.limitHours / 24
+	dc.Limit = s.limit
 	dc.Enabled = s.enabled
 	dc.Ignored = s.ignored
 }
@@ -273,7 +289,7 @@ func (s *StatsCtx) TopClientsIP(maxCount uint) (ips []netip.Addr) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	limit := s.limitHours
+	limit := uint32(s.limit.Hours())
 	if !s.enabled || limit == 0 {
 		return nil
 	}
@@ -377,7 +393,7 @@ func (s *StatsCtx) flush() (cont bool, sleepFor time.Duration) {
 		return false, 0
 	}
 
-	limit := s.limitHours
+	limit := uint32(s.limit.Hours())
 	if limit == 0 || ptr.id == id {
 		return true, time.Second
 	}
@@ -436,14 +452,14 @@ func (s *StatsCtx) periodicFlush() {
 	log.Debug("periodic flushing finished")
 }
 
-func (s *StatsCtx) setLimit(limitDays int) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	if limitDays != 0 {
+// setLimit sets the limit.  s.lock is expected to be locked.
+//
+// TODO(s.chzhen):  Remove it when migration to the new API is over.
+func (s *StatsCtx) setLimit(limit time.Duration) {
+	if limit != 0 {
 		s.enabled = true
-		s.limitHours = uint32(24 * limitDays)
-		log.Debug("stats: set limit: %d days", limitDays)
+		s.limit = limit
+		log.Debug("stats: set limit: %d days", limit/timeutil.Day)
 
 		return
 	}

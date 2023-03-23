@@ -10,13 +10,15 @@ class LogsConfig extends Component {
         const { t, interval: prevInterval } = this.props;
         const { interval } = values;
 
+        const data = { ...values, ignored: values.ignored ? values.ignored.split('\n') : [] };
+
         if (interval !== prevInterval) {
             // eslint-disable-next-line no-alert
             if (window.confirm(t('query_log_retention_confirm'))) {
-                this.props.setLogsConfig(values);
+                this.props.setLogsConfig(data);
             }
         } else {
-            this.props.setLogsConfig(values);
+            this.props.setLogsConfig(data);
         }
     };
 
@@ -30,7 +32,7 @@ class LogsConfig extends Component {
 
     render() {
         const {
-            t, enabled, interval, processing, processingClear, anonymize_client_ip,
+            t, enabled, interval, processing, processingClear, anonymize_client_ip, ignored,
         } = this.props;
 
         return (
@@ -45,6 +47,7 @@ class LogsConfig extends Component {
                             enabled,
                             interval,
                             anonymize_client_ip,
+                            ignored: ignored.join('\n'),
                         }}
                         onSubmit={this.handleFormSubmit}
                         processing={processing}
@@ -62,6 +65,7 @@ LogsConfig.propTypes = {
     enabled: PropTypes.bool.isRequired,
     anonymize_client_ip: PropTypes.bool.isRequired,
     processing: PropTypes.bool.isRequired,
+    ignored: PropTypes.array.isRequired,
     processingClear: PropTypes.bool.isRequired,
     setLogsConfig: PropTypes.func.isRequired,
     clearLogs: PropTypes.func.isRequired,

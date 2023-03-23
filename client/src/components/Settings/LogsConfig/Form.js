@@ -4,18 +4,28 @@ import { Field, reduxForm } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
-import { CheckboxField, renderRadioField, toFloatNumber } from '../../../helpers/form';
-import { FORM_NAME, QUERY_LOG_INTERVALS_DAYS } from '../../../helpers/constants';
+import {
+    CheckboxField,
+    renderRadioField,
+    toFloatNumber,
+    renderTextareaField,
+} from '../../../helpers/form';
+import {
+    FORM_NAME,
+    QUERY_LOG_INTERVALS_DAYS,
+    HOUR,
+    DAY,
+} from '../../../helpers/constants';
 import '../FormButton.css';
 
 const getIntervalTitle = (interval, t) => {
     switch (interval) {
-        case 0.25:
+        case 6 * HOUR:
             return t('interval_6_hour');
-        case 1:
+        case DAY:
             return t('interval_24_hour');
         default:
-            return t('interval_days', { count: interval });
+            return t('interval_days', { count: interval / DAY });
     }
 };
 
@@ -65,6 +75,22 @@ const Form = (props) => {
                 <div className="custom-controls-stacked">
                     {getIntervalFields(processing, t, toFloatNumber)}
                 </div>
+            </div>
+            <label className="form__label form__label--with-desc">
+                <Trans>ignore_domains_title</Trans>
+            </label>
+            <div className="form__desc form__desc--top">
+                <Trans>ignore_domains_desc_query</Trans>
+            </div>
+            <div className="form__group form__group--settings">
+                <Field
+                    name="ignored"
+                    type="textarea"
+                    className="form-control form-control--textarea font-monospace text-input"
+                    component={renderTextareaField}
+                    placeholder={t('ignore_domains')}
+                    disabled={processing}
+                />
             </div>
             <div className="mt-5">
                 <button

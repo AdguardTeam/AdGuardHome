@@ -35,7 +35,7 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 		return nil, nil
 	}
 
-	l := newQueryLog(Config{
+	l, err := newQueryLog(Config{
 		FindClient:        findClient,
 		BaseDir:           t.TempDir(),
 		RotationIvl:       timeutil.Day,
@@ -44,6 +44,7 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 		FileEnabled:       true,
 		AnonymizeClientIP: false,
 	})
+	require.NoError(t, err)
 	t.Cleanup(l.Close)
 
 	q := &dns.Msg{

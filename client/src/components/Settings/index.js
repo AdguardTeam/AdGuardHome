@@ -98,6 +98,7 @@ class Settings extends Component {
                             <div className="col-md-12">
                                 <LogsConfig
                                     enabled={queryLogs.enabled}
+                                    ignored={queryLogs.ignored}
                                     interval={queryLogs.interval}
                                     anonymize_client_ip={queryLogs.anonymize_client_ip}
                                     processing={queryLogs.processingSetConfig}
@@ -109,6 +110,8 @@ class Settings extends Component {
                             <div className="col-md-12">
                                 <StatsConfig
                                     interval={stats.interval}
+                                    ignored={stats.ignored}
+                                    enabled={stats.enabled}
                                     processing={stats.processingSetConfig}
                                     processingReset={stats.processingReset}
                                     setStatsConfig={setStatsConfig}
@@ -139,6 +142,8 @@ Settings.propTypes = {
     stats: PropTypes.shape({
         processingGetConfig: PropTypes.bool,
         interval: PropTypes.number,
+        enabled: PropTypes.bool,
+        ignored: PropTypes.array,
         processingSetConfig: PropTypes.bool,
         processingReset: PropTypes.bool,
     }),
@@ -149,6 +154,7 @@ Settings.propTypes = {
         processingSetConfig: PropTypes.bool,
         processingClear: PropTypes.bool,
         processingGetConfig: PropTypes.bool,
+        ignored: PropTypes.array,
     }),
     filtering: PropTypes.shape({
         interval: PropTypes.number,

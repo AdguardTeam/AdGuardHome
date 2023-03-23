@@ -13,7 +13,7 @@ export const getStatsConfigSuccess = createAction('GET_STATS_CONFIG_SUCCESS');
 export const getStatsConfig = () => async (dispatch) => {
     dispatch(getStatsConfigRequest());
     try {
-        const data = await apiClient.getStatsInfo();
+        const data = await apiClient.getStatsConfig();
         dispatch(getStatsConfigSuccess(data));
     } catch (error) {
         dispatch(addErrorToast({ error }));

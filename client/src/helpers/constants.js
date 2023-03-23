@@ -211,9 +211,14 @@ export const FILTERED = 'Filtered';
 export const NOT_FILTERED = 'NotFiltered';
 
 export const DISABLED_STATS_INTERVAL = 0;
-export const STATS_INTERVALS_DAYS = [1, 7, 30, 90];
 
-export const QUERY_LOG_INTERVALS_DAYS = [0.25, 1, 7, 30, 90];
+export const HOUR = 60 * 60 * 1000;
+
+export const DAY = HOUR * 24;
+
+export const STATS_INTERVALS_DAYS = [DAY, DAY * 7, DAY * 30, DAY * 90];
+
+export const QUERY_LOG_INTERVALS_DAYS = [HOUR * 6, DAY, DAY * 7, DAY * 30, DAY * 90];
 
 export const FILTERS_INTERVALS_HOURS = [0, 1, 12, 24, 72, 168];
 

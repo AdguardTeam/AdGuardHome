@@ -226,6 +226,14 @@
                 '$ref': '#/components/schemas/QueryLog'
   '/querylog_info':
     'get':
+      'deprecated': true
+      'description': |
+        Deprecated: Use `GET /querylog/config` instead.
+
+        NOTE: If `interval` was configured by editing configuration file or new
+        HTTP API call `PUT /querylog/config/update` and it's not equal to
+        previous allowed enum values then it will be equal to `90` days for
+        compatibility reasons.
       'tags':
       - 'log'
       'operationId': 'queryLogInfo'
@@ -239,6 +247,9 @@
                 '$ref': '#/components/schemas/QueryLogConfig'
   '/querylog_config':
     'post':
+      'deprecated': true
+      'description': >
+        Deprecated: Use `PUT /querylog/config/update` instead.
       'tags':
       - 'log'
       'operationId': 'queryLogConfig'
@@ -257,6 +268,34 @@
       - 'log'
       'operationId': 'querylogClear'
       'summary': 'Clear query log'
+      'responses':
+        '200':
+          'description': 'OK.'
+  '/querylog/config':
+    'get':
+      'tags':
+      - 'log'
+      'operationId': 'getQueryLogConfig'
+      'summary': 'Get query log parameters'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/GetQueryLogConfigResponse'
+  '/querylog/config/update':
+    'put':
+      'tags':
+      - 'log'
+      'operationId': 'putQueryLogConfig'
+      'summary': 'Set query log parameters'
+      'requestBody':
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/PutQueryLogConfigUpdateRequest'
+        'required': true
       'responses':
         '200':
           'description': 'OK.'
@@ -284,6 +323,14 @@
           'description': 'OK.'
   '/stats_info':
     'get':
+      'deprecated': true
+      'description': |
+        Deprecated: Use `GET /stats/config` instead.
+
+        NOTE: If `interval` was configured by editing configuration file or new
+        HTTP API call `PUT /stats/config/update` and it's not equal to
+        previous allowed enum values then it will be equal to `90` days for
+        compatibility reasons.
       'tags':
       - 'stats'
       'operationId': 'statsInfo'
@@ -297,6 +344,9 @@
                 '$ref': '#/components/schemas/StatsConfig'
   '/stats_config':
     'post':
+      'deprecated': true
+      'description': >
+        Deprecated: Use `PUT /stats/config/update` instead.
       'tags':
       - 'stats'
       'operationId': 'statsConfig'
@@ -306,6 +356,34 @@
           'application/json':
             'schema':
               '$ref': '#/components/schemas/StatsConfig'
+      'responses':
+        '200':
+          'description': 'OK.'
+  '/stats/config':
+    'get':
+      'tags':
+      - 'stats'
+      'operationId': 'getStatsConfig'
+      'summary': 'Get statistics parameters'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/GetStatsConfigResponse'
+  '/stats/config/update':
+    'put':
+      'tags':
+      - 'stats'
+      'operationId': 'putStatsConfig'
+      'summary': 'Set statistics parameters'
+      'requestBody':
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/PutStatsConfigUpdateRequest'
+        'required': true
       'responses':
         '200':
           'description': 'OK.'
@@ -1656,6 +1734,27 @@
           - 30
           - 90
           'type': 'integer'
+    'GetStatsConfigResponse':
+      'type': 'object'
+      'description': 'Statistics configuration'
+      'required':
+      - 'enabled'
+      - 'interval'
+      - 'ignored'
+      'properties':
+        'enabled':
+          'description': 'Are statistics enabled'
+          'type': 'boolean'
+        'interval':
+          'description': 'Statistics rotation interval'
+          'type': 'number'
+        'ignored':
+          'description': 'List of host names, which should not be counted'
+          'type': 'array'
+          'items':
+            'type': 'string'
+    'PutStatsConfigUpdateRequest':
+      '$ref': '#/components/schemas/GetStatsConfigResponse'
     'DhcpConfig':
       'type': 'object'
       'properties':
@@ -2059,6 +2158,32 @@
         'anonymize_client_ip':
           'type': 'boolean'
           'description': "Anonymize clients' IP addresses"
+    'GetQueryLogConfigResponse':
+      'type': 'object'
+      'description': 'Query log configuration'
+      'required':
+      - 'enabled'
+      - 'interval'
+      - 'anonymize_client_ip'
+      - 'ignored'
+      'properties':
+        'enabled':
+          'type': 'boolean'
+          'description': 'Is query log enabled'
+        'interval':
+          'description': >
+            Time period for query log rotation.
+          'type': 'number'
+        'anonymize_client_ip':
+          'type': 'boolean'
+          'description': "Anonymize clients' IP addresses"
+        'ignored':
+          'description': 'List of host names, which should not be written to log'
+          'type': 'array'
+          'items':
+            'type': 'string'
+    'PutQueryLogConfigUpdateRequest':
+      '$ref': '#/components/schemas/GetQueryLogConfigResponse'
     'ResultRule':
       'description': 'Applied rule.'
       'properties':

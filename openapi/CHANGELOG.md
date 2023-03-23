@@ -18,6 +18,71 @@
 
 
 
+## v0.107.27: API changes
+
+### Deprecated statistics APIs
+
+* The `GET /control/stats_info` HTTP API; use the new `GET
+  /control/stats/config` API instead.
+
+  **NOTE:** If `interval` was configured by editing configuration file or new
+  HTTP API call `PUT /control/stats/config/update` and it's not equal to
+  previous allowed enum values then it will be equal to `90` days for
+  compatibility reasons.
+
+* The `POST /control/stats_config` HTTP API; use the new `PUT
+  /control/stats/config/update` API instead.
+
+### New statistics APIs
+
+* The new `GET /control/stats/config` HTTP API.
+
+* The new `PUT /control/stats/config/update` HTTP API allows config updates.
+
+These `control/stats/config/update` and `control/stats/config` APIs accept and
+return a JSON object with the following format:
+
+```json
+{
+  "enabled": true,
+  "interval": 3600,
+  "ignored": ["example.com"],
+}
+```
+
+### Deprecated query log APIs
+
+* The `GET /control/querylog_info` HTTP API; use the new `GET
+  /control/querylog/config` API instead.
+
+  **NOTE:** If `interval` was configured by editing configuration file or new
+  HTTP API call `PUT /control/querylog/config/update` and it's not equal to
+  previous allowed enum values then it will be equal to `90` days for
+  compatibility reasons.
+
+* The `POST /control/querylog_config` HTTP API; use the new `PUT
+  /control/querylog/config/update` API instead.
+
+### New query log APIs
+
+* The new `GET /control/querylog/config` HTTP API.
+
+* The new `PUT /control/querylog/config/update` HTTP API allows config updates.
+
+These `control/querylog/config/update` and `control/querylog/config` APIs
+accept and return a JSON object with the following format:
+
+```json
+{
+  "enabled": true,
+  "anonymize_client_ip": false,
+  "interval": 3600,
+  "ignored": ["example.com"],
+}
+```
+
+
+
 ## v0.107.23: API changes
 
 ### Experimental “beta” APIs removed
