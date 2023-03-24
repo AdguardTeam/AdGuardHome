@@ -16,10 +16,6 @@
   `GET /control/dns_info` method are set if AdGuard Home uses custom IP for
   EDNS Client Subnet.
 
-
-
-## v0.107.27: API changes
-
 ### Deprecated statistics APIs
 
 * The `GET /control/stats_info` HTTP API; use the new `GET
@@ -80,8 +76,6 @@ accept and return a JSON object with the following format:
   "ignored": ["example.com"],
 }
 ```
-
-
 
 ### New `"protection_disabled_until"` field in `GET /control/dns_info` response
 
