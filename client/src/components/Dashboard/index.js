@@ -9,18 +9,20 @@ import Counters from './Counters';
 import Clients from './Clients';
 import QueriedDomains from './QueriedDomains';
 import BlockedDomains from './BlockedDomains';
-import { SETTINGS_URLS } from '../../helpers/constants';
+import { DISABLE_PROTECTION_TIMINGS, ONE_SECOND_IN_MS, SETTINGS_URLS } from '../../helpers/constants';
+import { msToSeconds, msToMinutes, msToHours } from '../../helpers/helpers';
 
 import PageTitle from '../ui/PageTitle';
 import Loading from '../ui/Loading';
 import './Dashboard.css';
+import Dropdown from '../ui/Dropdown';
 
 const Dashboard = ({
     getAccessList,
     getStats,
     getStatsConfig,
     dashboard,
-    dashboard: { protectionEnabled, processingProtection },
+    dashboard: { protectionEnabled, processingProtection, protectionDisabledDuration },
     toggleProtection,
     stats,
     access,
@@ -36,7 +38,6 @@ const Dashboard = ({
     useEffect(() => {
         getAllStats();
     }, []);
-
     const getSubtitle = () => {
         if (stats.interval === 0) {
             return t('stats_disabled_short');
@@ -47,9 +48,7 @@ const Dashboard = ({
             : t('for_last_days', { count: stats.interval });
     };
 
-    const buttonText = protectionEnabled ? 'disable_protection' : 'enable_protection';
-
-    const buttonClass = classNames('btn btn-sm dashboard-title__button', {
+    const buttonClass = classNames('btn btn-sm dashboard-protection-button', {
         'btn-gray': protectionEnabled,
         'btn-success': !protectionEnabled,
     });
@@ -71,16 +70,87 @@ const Dashboard = ({
 
     const subtitle = getSubtitle();
 
+    const DISABLE_PROTECTION_ITEMS = [
+        {
+            text: t('disable_for_seconds', { count: msToSeconds(DISABLE_PROTECTION_TIMINGS.HALF_MINUTE) }),
+            disableTime: DISABLE_PROTECTION_TIMINGS.HALF_MINUTE,
+        },
+        {
+            text: t('disable_for_minutes', { count: msToMinutes(DISABLE_PROTECTION_TIMINGS.MINUTE) }),
+            disableTime: DISABLE_PROTECTION_TIMINGS.MINUTE,
+        },
+        {
+            text: t('disable_for_minutes', { count: msToMinutes(DISABLE_PROTECTION_TIMINGS.TEN_MINUTES) }),
+            disableTime: DISABLE_PROTECTION_TIMINGS.TEN_MINUTES,
+        },
+        {
+            text: t('disable_for_hours', { count: msToHours(DISABLE_PROTECTION_TIMINGS.HOUR) }),
+            disableTime: DISABLE_PROTECTION_TIMINGS.HOUR,
+        },
+        {
+            text: t('disable_until_tomorrow'),
+            disableTime: DISABLE_PROTECTION_TIMINGS.TOMORROW,
+        },
+    ];
+
+    const getDisableProtectionItems = () => (
+        Object.values(DISABLE_PROTECTION_ITEMS)
+            .map((item, index) => (
+                <div
+                    key={`disable_timings_${index}`}
+                    className="dropdown-item"
+                    onClick={() => {
+                        toggleProtection(protectionEnabled, item.disableTime - ONE_SECOND_IN_MS);
+                    }}
+                >
+                    {item.text}
+                </div>
+            ))
+    );
+
+    const getRemaningTimeText = (milliseconds) => {
+        if (!milliseconds) {
+            return '';
+        }
+
+        const date = new Date(milliseconds);
+        const hh = date.getUTCHours();
+        const mm = `0${date.getUTCMinutes()}`.slice(-2);
+        const ss = `0${date.getUTCSeconds()}`.slice(-2);
+        const formattedHH = `0${hh}`.slice(-2);
+
+        return hh ? `${formattedHH}:${mm}:${ss}` : `${mm}:${ss}`;
+    };
+
+    const getProtectionBtnText = (status) => (status ? t('disable_protection') : t('enable_protection'));
+
     return <>
         <PageTitle title={t('dashboard')} containerClass="page-title--dashboard">
-            <button
-                    type="button"
-                    className={buttonClass}
-                    onClick={() => toggleProtection(protectionEnabled)}
-                    disabled={processingProtection}
-            >
-                <Trans>{buttonText}</Trans>
-            </button>
+            <div className="page-title__protection">
+                <button
+                        type="button"
+                        className={buttonClass}
+                        onClick={() => {
+                            toggleProtection(protectionEnabled);
+                        }}
+                        disabled={processingProtection}
+                >
+                    {protectionDisabledDuration
+                        ? `${t('enable_protection_timer')} ${getRemaningTimeText(protectionDisabledDuration)}`
+                        : getProtectionBtnText(protectionEnabled)
+                    }
+                </button>
+
+                {protectionEnabled && <Dropdown
+                    label=""
+                    baseClassName="dropdown-protection"
+                    icon="arrow-down"
+                    controlClassName="dropdown-protection__toggle"
+                    menuClassName="dropdown-menu dropdown-menu-arrow dropdown-menu--protection"
+                >
+                    {getDisableProtectionItems()}
+                </Dropdown>}
+            </div>
             <button
                     type="button"
                     className="btn btn-outline-primary btn-sm"

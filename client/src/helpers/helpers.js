@@ -388,6 +388,12 @@ export const toggleAllServices = (services, change, isSelected) => {
     services.forEach((service) => change(`blocked_services.${service.id}`, isSelected));
 };
 
+export const msToSeconds = (milliseconds) => Math.floor(milliseconds / 1000);
+
+export const msToMinutes = (milliseconds) => Math.floor(milliseconds / 1000 / 60);
+
+export const msToHours = (milliseconds) => Math.floor(milliseconds / 1000 / 60 / 60);
+
 export const secondsToMilliseconds = (seconds) => {
     if (seconds) {
         return seconds * 1000;

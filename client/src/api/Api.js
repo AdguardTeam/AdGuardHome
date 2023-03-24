@@ -627,6 +627,15 @@ class Api {
         return this.makeRequest(path, method, config);
     }
 
+    SET_PROTECTION = { path: 'protection', method: 'POST' };
+
+    setProtection(data) {
+        const { enabled, duration } = data;
+        const { path, method } = this.SET_PROTECTION;
+
+        return this.makeRequest(path, method, { data: { enabled, duration } });
+    }
+
     // Cache
     CLEAR_CACHE = { path: 'cache_clear', method: 'POST' };
 

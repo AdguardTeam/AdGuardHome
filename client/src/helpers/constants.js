@@ -498,6 +498,8 @@ export const TOAST_TYPES = {
 };
 
 export const SUCCESS_TOAST_TIMEOUT = 5000;
+
+export const ONE_SECOND_IN_MS = 1000;
 export const FAILURE_TOAST_TIMEOUT = 30000;
 
 export const TOAST_TIMEOUTS = {
@@ -525,4 +527,13 @@ export const COMMENT_LINE_DEFAULT_TOKEN = '#';
 export const MOBILE_CONFIG_LINKS = {
     DOT: 'apple/dot.mobileconfig',
     DOH: 'apple/doh.mobileconfig',
+};
+
+// Timings for disable protection in milliseconds
+export const DISABLE_PROTECTION_TIMINGS = {
+    HALF_MINUTE: 30 * 1000,
+    MINUTE: 60 * 1000,
+    TEN_MINUTES: 10 * 60 * 1000,
+    HOUR: 60 * 60 * 1000,
+    TOMORROW: 24 * 60 * 60 * 1000,
 };

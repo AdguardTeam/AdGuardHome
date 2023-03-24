@@ -94,6 +94,20 @@
       'responses':
         '200':
           'description': 'OK'
+  '/protection':
+    'post':
+      'tags':
+        - 'global'
+      'operationId': 'setProtection'
+      'summary': 'Set protection state and duration'
+      'requestBody':
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/SetProtectionRequest'
+      'responses':
+        '200':
+          'description': 'OK'
   '/cache_clear':
     'post':
       'tags':
@@ -1306,6 +1320,7 @@
       - 'dns_port'
       - 'http_port'
       - 'protection_enabled'
+      - 'protection_disabled_until'
       - 'running'
       - 'version'
       - 'language'
@@ -1329,6 +1344,9 @@
           'maximum': 65535
         'protection_enabled':
           'type': 'boolean'
+        'protection_disabled_duration':
+          'type': 'integer'
+          'format': 'int64'
         'dhcp_available':
           'type': 'boolean'
         'running':
@@ -1381,6 +1399,10 @@
           'type': 'string'
         'blocking_ipv6':
           'type': 'string'
+        'protection_disabled_until':
+          'type': 'string'
+          'description': 'Protection is pause until this time.  Nullable.'
+          'example': '2018-11-26T00:02:41+03:00'
         'edns_cs_enabled':
           'type': 'boolean'
         'edns_cs_use_custom':
@@ -2384,6 +2406,18 @@
           'type': 'integer'
           'format': 'uint16'
           'example': 80
+    'SetProtectionRequest':
+      'type': 'object'
+      'description': 'Protection state configuration'
+      'properties':
+        'enabled':
+          'type': 'boolean'
+        'duration':
+          'type': 'integer'
+          'format': 'uint64'
+          'description': 'Duration of a pause, in milliseconds.  Enabled should be false.'
+      'required':
+        - 'enabled'
     'ProfileInfo':
       'type': 'object'
       'description': 'Information about the current user'

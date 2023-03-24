@@ -81,6 +81,10 @@ type FilteringConfig struct {
 	// 0, then default value is used (3600).
 	BlockedResponseTTL uint32 `yaml:"blocked_response_ttl"`
 
+	// ProtectionDisabledUntil is the timestamp until when the protection is
+	// disabled.
+	ProtectionDisabledUntil *time.Time `yaml:"protection_disabled_until"`
+
 	// ParentalBlockHost is the IP (or domain name) which is used to respond to
 	// DNS requests blocked by parental control.
 	ParentalBlockHost string `yaml:"parental_block_host"`
@@ -634,4 +638,34 @@ func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, er
 		return nil, fmt.Errorf("invalid SNI")
 	}
 	return &s.conf.cert, nil
+}
+
+// UpdatedProtectionStatus updates protection state, if the protection was
+// disabled temporarily.  Returns the updated state of protection.
+func (s *Server) UpdatedProtectionStatus() (enabled bool) {
+	changed := false
+	defer func() {
+		if changed {
+			log.Info("dns: protection is restarted after pause")
+			s.conf.ConfigModified()
+		}
+	}()
+
+	s.serverLock.Lock()
+	defer s.serverLock.Unlock()
+
+	disabledUntil := s.conf.ProtectionDisabledUntil
+	if disabledUntil == nil {
+		return s.conf.ProtectionEnabled
+	}
+
+	if time.Now().Before(*disabledUntil) {
+		return false
+	}
+
+	s.conf.ProtectionEnabled = true
+	s.conf.ProtectionDisabledUntil = nil
+	changed = true
+
+	return true
 }

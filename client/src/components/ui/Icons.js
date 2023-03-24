@@ -181,6 +181,12 @@ const Icons = () => (
             </svg>
         </symbol>
 
+        <symbol id="arrow-down" viewBox="0 0 24 24" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg">
+                <path fillRule="evenodd" d="M6.2 8.2a.64.64 0 0 1 .94 0L12 13.32l4.86-5.1a.64.64 0 0 1 .94 0c.27.27.27.71 0 .98l-5.33 5.6a.64.64 0 0 1-.94 0L6.2 9.2a.72.72 0 0 1 0-.98Z" clipRule="evenodd"/>
+            </svg>
+        </symbol>
+
         <symbol id="arrow-right" viewBox="0 0 24 24" stroke="currentColor"
                 strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
             <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg">

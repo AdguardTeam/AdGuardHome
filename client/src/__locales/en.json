@@ -650,5 +650,20 @@
     "confirm_dns_cache_clear": "Are you sure you want to clear DNS cache?",
     "cache_cleared": "DNS cache successfully cleared",
     "clear_cache": "Clear cache",
-    "make_static": "Make static"
+    "make_static": "Make static",
+    "disable_for_seconds": "For {{count}} second",
+    "disable_for_seconds_plural": "For {{count}} seconds",
+    "disable_for_minutes": "For {{count}} minute",
+    "disable_for_minutes_plural": "For {{count}} minutes",
+    "disable_for_hours": "For {{count}} hour",
+    "disable_for_hours_plural": "For {{count}} hours",
+    "disable_until_tomorrow": "Until tomorrow",
+    "disable_notify_for_seconds": "Disable protection for {{count}} second",
+    "disable_notify_for_seconds_plural": "Disable protection for {{count}} seconds",
+    "disable_notify_for_minutes": "Disable protection for {{count}} minute",
+    "disable_notify_for_minutes_plural": "Disable protection for {{count}} minutes",
+    "disable_notify_for_hours": "Disable protection for {{count}} hour",
+    "disable_notify_for_hours_plural": "Disable protection for {{count}} hours",
+    "disable_notify_until_tomorrow": "Disable protection until tomorrow",
+    "enable_protection_timer": "Protection will be enabled in {{time}}"
 }

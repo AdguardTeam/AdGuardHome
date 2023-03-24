@@ -88,6 +88,9 @@ type jsonDNSConfig struct {
 	// BlockingIPv6 is custom IPv6 address for blocked AAAA requests.
 	BlockingIPv6 net.IP `json:"blocking_ipv6"`
 
+	// DisabledUntil is a timestamp until when the protection is disabled.
+	DisabledUntil *time.Time `json:"protection_disabled_until"`
+
 	// EDNSCSCustomIP is custom IP for EDNS Client Subnet.
 	EDNSCSCustomIP netip.Addr `json:"edns_cs_custom_ip"`
 
@@ -98,13 +101,14 @@ type jsonDNSConfig struct {
 }
 
 func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
+	protectionEnabled := s.UpdatedProtectionStatus()
+
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
 	upstreams := stringutil.CloneSliceOrEmpty(s.conf.UpstreamDNS)
 	upstreamFile := s.conf.UpstreamDNSFileName
 	bootstraps := stringutil.CloneSliceOrEmpty(s.conf.BootstrapDNS)
-	protectionEnabled := s.conf.ProtectionEnabled
 	blockingMode := s.conf.BlockingMode
 	blockingIPv4 := s.conf.BlockingIPv4
 	blockingIPv6 := s.conf.BlockingIPv6
@@ -123,6 +127,13 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	resolveClients := s.conf.ResolveClients
 	usePrivateRDNS := s.conf.UsePrivateRDNS
 	localPTRUpstreams := stringutil.CloneSliceOrEmpty(s.conf.LocalPTRResolvers)
+
+	var disabledUntil *time.Time
+	if s.conf.ProtectionDisabledUntil != nil {
+		t := *s.conf.ProtectionDisabledUntil
+		disabledUntil = &t
+	}
+
 	var upstreamMode string
 	if s.conf.FastestAddr {
 		upstreamMode = "fastest_addr"
@@ -158,6 +169,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		UsePrivateRDNS:           &usePrivateRDNS,
 		LocalPTRUpstreams:        &localPTRUpstreams,
 		DefaultLocalPTRUpstreams: defLocalPTRUps,
+		DisabledUntil:            disabledUntil,
 	}
 }
 
@@ -741,6 +753,52 @@ func (s *Server) handleCacheClear(w http.ResponseWriter, _ *http.Request) {
 	_, _ = io.WriteString(w, "OK")
 }
 
+// protectionJSON is an object for /control/protection endpoint.
+type protectionJSON struct {
+	Enabled  bool `json:"enabled"`
+	Duration uint `json:"duration"`
+}
+
+// handleSetProtection is a handler for the POST /control/protection HTTP API.
+func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
+	protectionReq := &protectionJSON{}
+	err := json.NewDecoder(r.Body).Decode(protectionReq)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "reading req: %s", err)
+
+		return
+	}
+
+	var disabledUntil *time.Time
+	if protectionReq.Duration > 0 {
+		if protectionReq.Enabled {
+			aghhttp.Error(
+				r,
+				w,
+				http.StatusBadRequest,
+				"Setting a duration is only allowed with protection disabling",
+			)
+
+			return
+		}
+
+		calcTime := time.Now().Add(time.Duration(protectionReq.Duration) * time.Millisecond)
+		disabledUntil = &calcTime
+	}
+
+	func() {
+		s.serverLock.Lock()
+		defer s.serverLock.Unlock()
+
+		s.conf.ProtectionEnabled = protectionReq.Enabled
+		s.conf.ProtectionDisabledUntil = disabledUntil
+	}()
+
+	s.conf.ConfigModified()
+
+	aghhttp.OK(w)
+}
+
 // handleDoH is the DNS-over-HTTPs handler.
 //
 // Control flow:
@@ -775,6 +833,7 @@ func (s *Server) registerHandlers() {
 	s.conf.HTTPRegister(http.MethodGet, "/control/dns_info", s.handleGetConfig)
 	s.conf.HTTPRegister(http.MethodPost, "/control/dns_config", s.handleSetConfig)
 	s.conf.HTTPRegister(http.MethodPost, "/control/test_upstream_dns", s.handleTestUpstreamDNS)
+	s.conf.HTTPRegister(http.MethodPost, "/control/protection", s.handleSetProtection)
 
 	s.conf.HTTPRegister(http.MethodGet, "/control/access/list", s.handleAccessList)
 	s.conf.HTTPRegister(http.MethodPost, "/control/access/set", s.handleAccessSet)
