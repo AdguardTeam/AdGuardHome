@@ -7,7 +7,6 @@ import { useSelector } from 'react-redux';
 import { MOBILE_CONFIG_LINKS } from '../../../helpers/constants';
 
 import Tabs from '../Tabs';
-import Icons from '../Icons';
 import MobileConfigForm from './MobileConfigForm';
 
 const renderLi = ({ label, components }) => <li key={label}>
@@ -341,7 +340,6 @@ const Guide = ({ dnsAddresses }) => {
             >
                 {activeTab}
             </Tabs>
-            <Icons />
         </div>
     );
 };

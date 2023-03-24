@@ -22,6 +22,14 @@
     margin-bottom: 25px;
 }
 
+.form__group--inner .form__group--checkbox {
+    margin-bottom: 12px;
+}
+
+.form__group--inner .form__group--checkbox:last-child {
+    margin-bottom: 0;
+}
+
 .form__inline {
     display: flex;
     justify-content: flex-start;

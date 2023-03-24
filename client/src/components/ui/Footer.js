@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import classNames from 'classnames';
+import cn from 'classnames';
 
 import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from '../../helpers/constants';
 import { LANGUAGES } from '../../helpers/twosky';
@@ -55,15 +55,13 @@ const Footer = () => {
         setHtmlLangAttr(value);
     };
 
-    const onThemeChanged = (event) => {
-        const { value } = event.target;
-        dispatch(changeTheme(value));
-    };
-
-    const onThemeChangedLocal = (event) => {
-        const { value } = event.target;
-        setUITheme(value);
-        setCurrentThemeLocal(value);
+    const onThemeChange = (value) => {
+        if (isLoggedIn) {
+            dispatch(changeTheme(value));
+        } else {
+            setUITheme(value);
+            setCurrentThemeLocal(value);
+        }
     };
 
     const renderCopyright = () => <div className="footer__column">
@@ -76,41 +74,53 @@ const Footer = () => {
     const renderLinks = (linksData) => linksData.map(({ name, href, className = '' }) => <a
             key={name}
             href={href}
-            className={classNames('footer__link', className)}
+            className={cn('footer__link', className)}
             target="_blank"
             rel="noopener noreferrer"
         >
             {t(name)}
         </a>);
 
-    const themeSelectOptions = () => (
-        Object.values(THEMES)
-            .map((theme) => (
-                <option key={theme} value={theme}>
-                    {t(`theme_${theme}`)}
-                </option>
-            ))
-    );
+    const renderThemeButtons = () => {
+        const currentValue = isLoggedIn ? currentTheme : currentThemeLocal;
 
-    const renderThemeSelect = () => (
-        <select
-            className="form-control select select--theme"
-            value={currentTheme}
-            onChange={onThemeChanged}
-        >
-            {themeSelectOptions()}
-        </select>
-    );
+        const content = {
+            auto: {
+                desc: t('theme_auto_desc'),
+                icon: '#auto',
+            },
+            dark: {
+                desc: t('theme_dark_desc'),
+                icon: '#dark',
+            },
+            light: {
+                desc: t('theme_light_desc'),
+                icon: '#light',
+            },
+        };
 
-    const renderThemeSelectLocal = () => (
-        <select
-            className="form-control select select--theme"
-            value={currentThemeLocal}
-            onChange={onThemeChangedLocal}
-        >
-            {themeSelectOptions()}
-        </select>
-    );
+        return (
+            Object.values(THEMES)
+                .map((theme) => (
+                    <button
+                        key={theme}
+                        type="button"
+                        className="btn btn-sm btn-secondary footer__theme-button"
+                        onClick={() => onThemeChange(theme)}
+                        title={content[theme].desc}
+                    >
+                        <svg
+                            className={cn(
+                                'footer__theme-icon',
+                                { 'footer__theme-icon--active': currentValue === theme },
+                            )}
+                        >
+                            <use xlinkHref={content[theme].icon} />
+                        </svg>
+                    </button>
+                ))
+        );
+    };
 
     return (
         <>
@@ -121,7 +131,11 @@ const Footer = () => {
                             {renderLinks(linksData)}
                         </div>
                         <div className="footer__column footer__column--theme">
-                            {isLoggedIn ? renderThemeSelect() : renderThemeSelectLocal()}
+                            <div className="footer__themes">
+                                <div className="btn-group">
+                                    {renderThemeButtons()}
+                                </div>
+                            </div>
                         </div>
                         <div className="footer__column footer__column--language">
                             <select
