@@ -10,7 +10,12 @@ import Clients from './Clients';
 import QueriedDomains from './QueriedDomains';
 import BlockedDomains from './BlockedDomains';
 import { DISABLE_PROTECTION_TIMINGS, ONE_SECOND_IN_MS, SETTINGS_URLS } from '../../helpers/constants';
-import { msToSeconds, msToMinutes, msToHours } from '../../helpers/helpers';
+import {
+    msToSeconds,
+    msToMinutes,
+    msToHours,
+    msToDays,
+} from '../../helpers/helpers';
 
 import PageTitle from '../ui/PageTitle';
 import Loading from '../ui/Loading';
@@ -39,13 +44,16 @@ const Dashboard = ({
         getAllStats();
     }, []);
     const getSubtitle = () => {
-        if (stats.interval === 0) {
+        const ONE_DAY = 1;
+        const intervalInDays = msToDays(stats.interval);
+
+        if (intervalInDays < ONE_DAY) {
             return t('stats_disabled_short');
         }
 
-        return stats.interval === 1
+        return intervalInDays === ONE_DAY
             ? t('for_last_24_hours')
-            : t('for_last_days', { count: stats.interval });
+            : t('for_last_days', { count: msToDays(stats.interval) });
     };
 
     const buttonClass = classNames('btn btn-sm dashboard-protection-button', {

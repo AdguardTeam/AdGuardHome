@@ -1,5 +1,6 @@
 import { handleActions } from 'redux-actions';
 import { normalizeTopClients } from '../helpers/helpers';
+import { DAY } from '../helpers/constants';
 
 import * as actions from '../actions/stats';
 
@@ -91,7 +92,7 @@ const stats = handleActions(
         processingSetConfig: false,
         processingStats: true,
         processingReset: false,
-        interval: 1,
+        interval: DAY,
         ...defaultStats,
     },
 );

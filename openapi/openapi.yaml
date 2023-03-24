@@ -1777,7 +1777,7 @@
           'description': 'Are statistics enabled'
           'type': 'boolean'
         'interval':
-          'description': 'Statistics rotation interval'
+          'description': 'Statistics rotation interval in milliseconds'
           'type': 'number'
         'ignored':
           'description': 'List of host names, which should not be counted'
@@ -2203,7 +2203,7 @@
           'description': 'Is query log enabled'
         'interval':
           'description': >
-            Time period for query log rotation.
+            Time period for query log rotation in milliseconds.
           'type': 'number'
         'anonymize_client_ip':
           'type': 'boolean'

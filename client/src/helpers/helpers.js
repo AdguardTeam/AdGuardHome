@@ -402,6 +402,8 @@ export const secondsToMilliseconds = (seconds) => {
     return seconds;
 };
 
+export const msToDays = (milliseconds) => Math.floor(milliseconds / 1000 / 60 / 60 / 24);
+
 export const normalizeRulesTextarea = (text) => text?.replace(/^\n/g, '')
     .replace(/\n\s*\n/g, '\n');
 

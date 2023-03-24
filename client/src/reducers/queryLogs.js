@@ -1,7 +1,7 @@
 import { handleActions } from 'redux-actions';
 
 import * as actions from '../actions/queryLogs';
-import { DEFAULT_LOGS_FILTER } from '../helpers/constants';
+import { DEFAULT_LOGS_FILTER, DAY } from '../helpers/constants';
 
 const queryLogs = handleActions(
     {
@@ -86,7 +86,7 @@ const queryLogs = handleActions(
         processingGetConfig: false,
         processingSetConfig: false,
         processingAdditionalLogs: false,
-        interval: 1,
+        interval: DAY,
         logs: [],
         enabled: true,
         oldest: '',
