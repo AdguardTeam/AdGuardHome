@@ -839,9 +839,9 @@ func upgradeSchema14to15(diskConf yobj) (err error) {
 	}
 
 	type temp struct {
+		val  any
 		from string
 		to   string
-		val  any
 	}
 	replaces := []temp{
 		{from: "querylog_enabled", to: "enabled", val: true},
@@ -876,6 +876,18 @@ func upgradeSchema14to15(diskConf yobj) (err error) {
 //	  'enabled': true
 //	  'interval': 1
 //	  'ignored': []
+//
+// If statistics were disabled:
+//
+//	# BEFORE:
+//	'dns':
+//	  'statistics_interval': 0
+//
+//	# AFTER:
+//	'statistics':
+//	  'enabled': false
+//	  'interval': 1
+//	  'ignored': []
 func upgradeSchema15to16(diskConf yobj) (err error) {
 	log.Printf("Upgrade yaml: 15 to 16")
 	diskConf["schema_version"] = 16
@@ -897,10 +909,23 @@ func upgradeSchema15to16(diskConf yobj) (err error) {
 	}
 
 	const field = "statistics_interval"
-	v, has := dns[field]
+	statsIvlVal, has := dns[field]
 	if has {
-		stats["enabled"] = v != 0
-		stats["interval"] = v
+		var statsIvl int
+		statsIvl, ok = statsIvlVal.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type of dns.statistics_interval: %T", statsIvlVal)
+		}
+
+		if statsIvl == 0 {
+			// Set the interval to the default value of one day to make sure
+			// that it passes the validations.
+			stats["interval"] = 1
+			stats["enabled"] = false
+		} else {
+			stats["interval"] = statsIvl
+			stats["enabled"] = true
+		}
 	}
 	delete(dns, field)
 
@@ -1098,6 +1123,12 @@ func upgradeSchema19to20(diskConf yobj) (err error) {
 		statsIvl, ok = statsIvlVal.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type of %s: %T", field, statsIvlVal)
+		}
+
+		// The initial version of upgradeSchema16to17 did not set the zero
+		// interval to a non-zero one.  So, reset it now.
+		if statsIvl == 0 {
+			statsIvl = 1
 		}
 	}
 

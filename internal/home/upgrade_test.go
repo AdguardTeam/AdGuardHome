@@ -729,7 +729,7 @@ func TestUpgradeSchema15to16(t *testing.T) {
 		want: yobj{
 			"statistics": map[string]any{
 				"enabled":  false,
-				"interval": 0,
+				"interval": 1,
 				"ignored":  []any{},
 			},
 			"dns":            map[string]any{},
@@ -960,6 +960,11 @@ func TestUpgradeSchema19to20(t *testing.T) {
 		name    string
 	}{{
 		ivl:     1,
+		want:    timeutil.Duration{Duration: timeutil.Day},
+		wantErr: "",
+		name:    "success",
+	}, {
+		ivl:     0,
 		want:    timeutil.Duration{Duration: timeutil.Day},
 		wantErr: "",
 		name:    "success",
