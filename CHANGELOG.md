@@ -123,6 +123,7 @@ In this release, the schema version has changed from 17 to 20.
 
 ### Fixed
 
+- Panic in empty hostname in the filter's URL ([#5631]).
 - Panic caused by empty top-level domain name label in `/etc/hosts` files
   ([#5584]).
 
@@ -131,6 +132,7 @@ In this release, the schema version has changed from 17 to 20.
 [#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
 [#5567]: https://github.com/AdguardTeam/AdGuardHome/issues/5567
 [#5584]: https://github.com/AdguardTeam/AdGuardHome/issues/5584
+[#5631]: https://github.com/AdguardTeam/AdGuardHome/issues/5631
 
 [rfc6761]: https://www.rfc-editor.org/rfc/rfc6761
 

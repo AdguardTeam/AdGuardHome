@@ -4,11 +4,11 @@ go 1.19
 
 require (
 	// TODO(a.garipov): Use v0.48.0 when it's released.
-	github.com/AdguardTeam/dnsproxy v0.48.0
+	github.com/AdguardTeam/dnsproxy v0.48.2
 	github.com/AdguardTeam/golibs v0.13.0
 	github.com/AdguardTeam/urlfilter v0.16.1
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/ameshkov/dnscrypt/v2 v2.2.5
+	github.com/ameshkov/dnscrypt/v2 v2.2.6
 	github.com/digineo/go-ipset/v2 v2.2.1
 	github.com/dimfeld/httptreemux/v5 v5.5.0
 	github.com/fsnotify/fsnotify v1.6.0
@@ -23,7 +23,7 @@ require (
 	github.com/mdlayher/netlink v1.7.1
 	github.com/mdlayher/packet v1.1.1
 	github.com/miekg/dns v1.1.50
-	github.com/quic-go/quic-go v0.32.0
+	github.com/quic-go/quic-go v0.33.0
 	github.com/stretchr/testify v1.8.2
 	github.com/ti-mo/netfilter v0.5.0
 	go.etcd.io/bbolt v1.3.7
@@ -55,7 +55,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
-	github.com/quic-go/qtls-go1-18 v0.2.0 // indirect
 	github.com/quic-go/qtls-go1-19 v0.2.1 // indirect
 	github.com/quic-go/qtls-go1-20 v0.1.1 // indirect
 	github.com/u-root/uio v0.0.0-20230220225925-ffce2a382923 // indirect

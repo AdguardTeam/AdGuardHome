@@ -896,13 +896,14 @@ func customDialContext(ctx context.Context, network, addr string) (conn net.Conn
 	}
 
 	addrs, err := Context.dnsServer.Resolve(host)
-	log.Debug("dnsServer.Resolve: %s: %v", host, addrs)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("resolving %q: %w", host, err)
 	}
 
+	log.Debug("dnsServer.Resolve: %q: %v", host, addrs)
+
 	if len(addrs) == 0 {
-		return nil, fmt.Errorf("couldn't lookup host: %s", host)
+		return nil, fmt.Errorf("couldn't lookup host: %q", host)
 	}
 
 	var dialErrs []error
