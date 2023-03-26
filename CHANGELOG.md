@@ -25,6 +25,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- Docker container's healthcheck ([#3290]).
 - The new HTTP API `POST /control/protection`, that updates protection state
   and adds an optional pause duration ([#1333]).  The format of request body
   is described in `openapi/openapi.yaml`.  The duration of this pause could
@@ -132,6 +133,7 @@ In this release, the schema version has changed from 17 to 20.
 [#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1163
 [#1333]: https://github.com/AdguardTeam/AdGuardHome/issues/1333
 [#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
+[#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/3290
 [#5567]: https://github.com/AdguardTeam/AdGuardHome/issues/5567
 [#5584]: https://github.com/AdguardTeam/AdGuardHome/issues/5584
 [#5631]: https://github.com/AdguardTeam/AdGuardHome/issues/5631

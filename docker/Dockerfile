@@ -52,12 +52,19 @@ RUN setcap 'cap_net_bind_service=+eip' /opt/adguardhome/AdGuardHome
 # TODO(a.garipov): Remove the old, non-standard 784 and 8853 ports for
 # DNS-over-QUIC in a future release.
 EXPOSE 53/tcp 53/udp 67/udp 68/udp 80/tcp 443/tcp 443/udp 784/udp\
-	853/tcp 853/udp 3000/tcp 3000/udp 3001/tcp 3001/udp 5443/tcp\
+	853/tcp 853/udp 3000/tcp 3000/udp 5443/tcp\
 	5443/udp 6060/tcp 8853/udp
 
 WORKDIR /opt/adguardhome/work
 
+# Install helpers for healthcheck.
+COPY --chown=nobody:nogroup\
+	./${DIST_DIR}/docker/scripts\
+	/opt/adguardhome/scripts
+
 ENTRYPOINT ["/opt/adguardhome/AdGuardHome"]
+
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD [ "/opt/adguardhome/scripts/healthcheck.sh" ]
 
 CMD [ \
 	"--no-check-update", \

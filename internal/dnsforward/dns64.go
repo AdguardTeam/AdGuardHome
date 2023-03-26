@@ -36,8 +36,6 @@ func (s *Server) setupDNS64() {
 // valid IPv4.  It panics, if there are no configured DNS64 prefixes, because
 // synthesis should not be performed unless DNS64 function enabled.
 func (s *Server) mapDNS64(ip netip.Addr) (mapped net.IP) {
-	// Don't mask the address here since it should have already been masked on
-	// initialization stage.
 	pref := s.dns64Pref.Masked().Addr().As16()
 	ipData := ip.As4()
 

@@ -184,6 +184,21 @@ func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
 		return resultCodeFinish
 	}
 
+	// Handle a reserved domain healthcheck.adguardhome.test.
+	//
+	// [Section 6.2 of RFC 6761] states that DNS Registries/Registrars must not
+	// grant requests to register test names in the normal way to any person or
+	// entity, making domain names under test. TLD free to use in internal
+	// purposes.
+	//
+	// [Section 6.2 of RFC 6761]: https://www.rfc-editor.org/rfc/rfc6761.html#section-6.2
+	if q.Name == "healthcheck.adguardhome.test." {
+		// Generate a NODATA negative response to make nslookup exit with 0.
+		pctx.Res = s.makeResponse(pctx.Req)
+
+		return resultCodeFinish
+	}
+
 	// Get the ClientID, if any, before getting client-specific filtering
 	// settings.
 	var key [8]byte
