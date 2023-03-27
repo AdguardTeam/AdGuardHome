@@ -74,7 +74,13 @@ esac
 
 # Check
 
-wget "$web_url" -O /dev/null -q || exit 1
+# Skip SSL certificate validation since there is no guarantee the container
+# trusts the one used.  It should be safe to drop the SSL validation since the
+# current script intended to be used from inside the container and only checks
+# the endpoint availability, ignoring the content of the response.
+#
+# See https://github.com/AdguardTeam/AdGuardHome/issues/5642.
+wget --no-check-certificate "$web_url" -O /dev/null -q || exit 1
 
 echo "$dns_hosts" | while read -r host
 do
