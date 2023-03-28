@@ -80,7 +80,7 @@ func TestNewHostsContainer(t *testing.T) {
 			hc, err := NewHostsContainer(0, testFS, &aghtest.FSWatcher{
 				OnEvents: onEvents,
 				OnAdd:    onAdd,
-				OnClose:  func() (err error) { panic("not implemented") },
+				OnClose:  func() (err error) { return nil },
 			}, tc.paths...)
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
@@ -124,7 +124,7 @@ func TestNewHostsContainer(t *testing.T) {
 		errWatcher := &aghtest.FSWatcher{
 			OnEvents: func() (e <-chan struct{}) { panic("not implemented") },
 			OnAdd:    func(name string) (err error) { return errOnAdd },
-			OnClose:  func() (err error) { panic("not implemented") },
+			OnClose:  func() (err error) { return nil },
 		}
 
 		hc, err := NewHostsContainer(0, testFS, errWatcher, p)
@@ -155,7 +155,7 @@ func TestHostsContainer_refresh(t *testing.T) {
 
 			return nil
 		},
-		OnClose: func() (err error) { panic("not implemented") },
+		OnClose: func() (err error) { return nil },
 	}
 
 	hc, err := NewHostsContainer(0, testFS, w, "dir")
@@ -292,7 +292,7 @@ func TestHostsContainer_Translate(t *testing.T) {
 	stubWatcher := aghtest.FSWatcher{
 		OnEvents: func() (e <-chan struct{}) { return nil },
 		OnAdd:    func(name string) (err error) { return nil },
-		OnClose:  func() (err error) { panic("not implemented") },
+		OnClose:  func() (err error) { return nil },
 	}
 
 	require.NoError(t, fstest.TestFS(testdata, "etc_hosts"))
@@ -524,7 +524,7 @@ func TestHostsContainer(t *testing.T) {
 	stubWatcher := aghtest.FSWatcher{
 		OnEvents: func() (e <-chan struct{}) { return nil },
 		OnAdd:    func(name string) (err error) { return nil },
-		OnClose:  func() (err error) { panic("not implemented") },
+		OnClose:  func() (err error) { return nil },
 	}
 
 	hc, err := NewHostsContainer(listID, testdata, &stubWatcher, "etc_hosts")

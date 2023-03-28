@@ -61,11 +61,10 @@ type homeContext struct {
 	filters    *filtering.DNSFilter // DNS filtering module
 	web        *Web                 // Web (HTTP, HTTPS) module
 	tls        *tlsManager          // TLS module
-	// etcHosts is an IP-hostname pairs set taken from system configuration
-	// (e.g. /etc/hosts) files.
+
+	// etcHosts contains IP-hostname mappings taken from the OS-specific hosts
+	// configuration files, for example /etc/hosts.
 	etcHosts *aghnet.HostsContainer
-	// hostsWatcher is the watcher to detect changes in the hosts files.
-	hostsWatcher aghos.FSWatcher
 
 	updater *updater.Updater
 
@@ -80,7 +79,6 @@ type homeContext struct {
 	pidFileName      string // PID file name.  Empty if no PID file was created.
 	controlLock      sync.Mutex
 	tlsRoots         *x509.CertPool // list of root CAs for TLSv1.2
-	transport        *http.Transport
 	client           *http.Client
 	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
 
@@ -150,18 +148,17 @@ func setupContext(opts options) {
 	setupContextFlags(opts)
 
 	Context.tlsRoots = aghtls.SystemRootCAs()
-	Context.transport = &http.Transport{
-		DialContext: customDialContext,
-		Proxy:       getHTTPProxy,
-		TLSClientConfig: &tls.Config{
-			RootCAs:      Context.tlsRoots,
-			CipherSuites: Context.tlsCipherIDs,
-			MinVersion:   tls.VersionTLS12,
-		},
-	}
 	Context.client = &http.Client{
-		Timeout:   time.Minute * 5,
-		Transport: Context.transport,
+		Timeout: time.Minute * 5,
+		Transport: &http.Transport{
+			DialContext: customDialContext,
+			Proxy:       getHTTPProxy,
+			TLSClientConfig: &tls.Config{
+				RootCAs:      Context.tlsRoots,
+				CipherSuites: Context.tlsCipherIDs,
+				MinVersion:   tls.VersionTLS12,
+			},
+		},
 	}
 
 	if !Context.firstRun {
@@ -264,7 +261,7 @@ func configureOS(conf *configuration) (err error) {
 // setupHostsContainer initializes the structures to keep up-to-date the hosts
 // provided by the OS.
 func setupHostsContainer() (err error) {
-	Context.hostsWatcher, err = aghos.NewOSWritesWatcher()
+	hostsWatcher, err := aghos.NewOSWritesWatcher()
 	if err != nil {
 		return fmt.Errorf("initing hosts watcher: %w", err)
 	}
@@ -272,18 +269,18 @@ func setupHostsContainer() (err error) {
 	Context.etcHosts, err = aghnet.NewHostsContainer(
 		filtering.SysHostsListID,
 		aghos.RootDirFS(),
-		Context.hostsWatcher,
+		hostsWatcher,
 		aghnet.DefaultHostsPaths()...,
 	)
 	if err != nil {
-		cerr := Context.hostsWatcher.Close()
-		if errors.Is(err, aghnet.ErrNoHostsPaths) && cerr == nil {
+		closeErr := hostsWatcher.Close()
+		if errors.Is(err, aghnet.ErrNoHostsPaths) && closeErr == nil {
 			log.Info("warning: initing hosts container: %s", err)
 
 			return nil
 		}
 
-		return errors.WithDeferred(fmt.Errorf("initing hosts container: %w", err), cerr)
+		return errors.WithDeferred(fmt.Errorf("initing hosts container: %w", err), closeErr)
 	}
 
 	return nil
@@ -755,13 +752,6 @@ func cleanup(ctx context.Context) {
 	}
 
 	if Context.etcHosts != nil {
-		// Currently Context.hostsWatcher is only used in Context.etcHosts and
-		// needs closing only in case of the successful initialization of
-		// Context.etcHosts.
-		if err = Context.hostsWatcher.Close(); err != nil {
-			log.Error("closing hosts watcher: %s", err)
-		}
-
 		if err = Context.etcHosts.Close(); err != nil {
 			log.Error("closing hosts container: %s", err)
 		}
