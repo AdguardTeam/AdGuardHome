@@ -8,7 +8,9 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -426,6 +428,8 @@ func printUnused(loc locales) {
 // upload base translation.  uri is the base URL.  projectID is the name of the
 // project.  baseLang is the base language code.
 func upload(uri *url.URL, projectID string, baseLang langCode) (err error) {
+	defer func() { err = errors.Annotate(err, "upload: %w") }()
+
 	uploadURI := uri.JoinPath("upload")
 
 	lang := baseLang
@@ -436,20 +440,90 @@ func upload(uri *url.URL, projectID string, baseLang langCode) (err error) {
 	}
 
 	basePath := filepath.Join(localesDir, defaultBaseFile)
-	b, err := os.ReadFile(basePath)
-	if err != nil {
-		return fmt.Errorf("upload: %w", err)
+
+	formData := map[string]string{
+		"format":   "json",
+		"language": string(lang),
+		"filename": defaultBaseFile,
+		"project":  projectID,
 	}
 
-	var buf bytes.Buffer
-	buf.Write(b)
-
-	uri = translationURL(uploadURI, defaultBaseFile, projectID, lang)
-
-	var client http.Client
-	resp, err := client.Post(uri.String(), "application/json", &buf)
+	buf, cType, err := prepareMultipartMsg(formData, basePath)
 	if err != nil {
-		return fmt.Errorf("upload: client post: %w", err)
+		return fmt.Errorf("preparing multipart msg: %w", err)
+	}
+
+	err = send(uploadURI.String(), cType, buf)
+	if err != nil {
+		return fmt.Errorf("sending multipart msg: %w", err)
+	}
+
+	return nil
+}
+
+// prepareMultipartMsg prepares translation data for upload.
+func prepareMultipartMsg(
+	formData map[string]string,
+	basePath string,
+) (buf *bytes.Buffer, cType string, err error) {
+	buf = &bytes.Buffer{}
+	w := multipart.NewWriter(buf)
+	var fw io.Writer
+
+	for k, v := range formData {
+		err = w.WriteField(k, v)
+		if err != nil {
+			return nil, "", fmt.Errorf("writing field: %w", err)
+		}
+	}
+
+	file, err := os.Open(basePath)
+	if err != nil {
+		return nil, "", fmt.Errorf("opening file: %w", err)
+	}
+
+	defer func() {
+		err = errors.WithDeferred(err, file.Close())
+	}()
+
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Type", "application/json")
+
+	d := fmt.Sprintf("form-data; name=%q; filename=%q", "file", defaultBaseFile)
+	h.Set("Content-Disposition", d)
+
+	fw, err = w.CreatePart(h)
+	if err != nil {
+		return nil, "", fmt.Errorf("creating part: %w", err)
+	}
+
+	_, err = io.Copy(fw, file)
+	if err != nil {
+		return nil, "", fmt.Errorf("copying: %w", err)
+	}
+
+	err = w.Close()
+	if err != nil {
+		return nil, "", fmt.Errorf("closing writer: %w", err)
+	}
+
+	return buf, w.FormDataContentType(), nil
+}
+
+// send POST request to uriStr.
+func send(uriStr, cType string, buf *bytes.Buffer) (err error) {
+	var client http.Client
+
+	req, err := http.NewRequest(http.MethodPost, uriStr, buf)
+	if err != nil {
+		return fmt.Errorf("bad request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", cType)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("client post form: %w", err)
 	}
 
 	defer func() {
