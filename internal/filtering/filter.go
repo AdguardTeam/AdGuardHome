@@ -176,13 +176,16 @@ func (d *DNSFilter) filterExistsLocked(url string) (ok bool) {
 
 // Add a filter
 // Return FALSE if a filter with this URL exists
-func (d *DNSFilter) filterAdd(flt FilterYAML) bool {
+func (d *DNSFilter) filterAdd(flt FilterYAML) (err error) {
+	// Defer annotating to unlock sooner.
+	defer func() { err = errors.Annotate(err, "adding filter: %w") }()
+
 	d.filtersMu.Lock()
 	defer d.filtersMu.Unlock()
 
-	// Check for duplicates
+	// Check for duplicates.
 	if d.filterExistsLocked(flt.URL) {
-		return false
+		return errFilterExists
 	}
 
 	if flt.white {
@@ -190,7 +193,8 @@ func (d *DNSFilter) filterAdd(flt FilterYAML) bool {
 	} else {
 		d.Filters = append(d.Filters, flt)
 	}
-	return true
+
+	return nil
 }
 
 // Load filters from the disk
@@ -238,6 +242,7 @@ func updateUniqueFilterID(filters []FilterYAML) {
 	}
 }
 
+// TODO(e.burkov):  Improve this inexhaustible source of races.
 func assignUniqueFilterID() int64 {
 	value := nextFilterID
 	nextFilterID++
@@ -343,29 +348,31 @@ func (d *DNSFilter) refreshFiltersArray(filters *[]FilterYAML, force bool) (int,
 	}
 
 	updateCount := 0
+
+	d.filtersMu.Lock()
+	defer d.filtersMu.Unlock()
+
 	for i := range updateFilters {
 		uf := &updateFilters[i]
 		updated := updateFlags[i]
 
-		d.filtersMu.Lock()
 		for k := range *filters {
 			f := &(*filters)[k]
 			if f.ID != uf.ID || f.URL != uf.URL {
 				continue
 			}
+
 			f.LastUpdated = uf.LastUpdated
 			if !updated {
 				continue
 			}
 
-			log.Info("Updated filter #%d.  Rules: %d -> %d",
-				f.ID, f.RulesCount, uf.RulesCount)
+			log.Info("Updated filter #%d.  Rules: %d -> %d", f.ID, f.RulesCount, uf.RulesCount)
 			f.Name = uf.Name
 			f.RulesCount = uf.RulesCount
 			f.checksum = uf.checksum
 			updateCount++
 		}
-		d.filtersMu.Unlock()
 	}
 
 	return updateCount, updateFilters, updateFlags, false
@@ -421,11 +428,16 @@ func (d *DNSFilter) refreshFiltersIntl(block, allow, force bool) (int, bool) {
 			if !updated {
 				continue
 			}
-			_ = os.Remove(uf.Path(d.DataDir) + ".old")
+
+			p := uf.Path(d.DataDir)
+			err := os.Remove(p + ".old")
+			if err != nil {
+				log.Debug("filtering: removing old filter file %q: %s", p, err)
+			}
 		}
 	}
 
-	log.Debug("filtering: update finished")
+	log.Debug("filtering: update finished: %d lists updated", updNum)
 
 	return updNum, false
 }
@@ -467,8 +479,8 @@ func scanLinesWithBreak(data []byte, atEOF bool) (advance int, token []byte, err
 }
 
 // parseFilter copies filter's content from src to dst and returns the number of
-// rules, name, number of bytes written, checksum, and title of the parsed list.
-// dst must not be nil.
+// rules, number of bytes written, checksum, and title of the parsed list.  dst
+// must not be nil.
 func (d *DNSFilter) parseFilter(
 	src io.Reader,
 	dst io.Writer,
@@ -550,14 +562,18 @@ func isHTML(line string) (ok bool) {
 	return strings.HasPrefix(line, "<html") || strings.HasPrefix(line, "<!doctype")
 }
 
-// Perform upgrade on a filter and update LastUpdated value
-func (d *DNSFilter) update(filter *FilterYAML) (bool, error) {
-	b, err := d.updateIntl(filter)
+// update refreshes filter's content and a/mtimes of it's file.
+func (d *DNSFilter) update(filter *FilterYAML) (b bool, err error) {
+	b, err = d.updateIntl(filter)
 	filter.LastUpdated = time.Now()
 	if !b {
-		e := os.Chtimes(filter.Path(d.DataDir), filter.LastUpdated, filter.LastUpdated)
-		if e != nil {
-			log.Error("os.Chtimes(): %v", e)
+		chErr := os.Chtimes(
+			filter.Path(d.DataDir),
+			filter.LastUpdated,
+			filter.LastUpdated,
+		)
+		if chErr != nil {
+			log.Error("os.Chtimes(): %v", chErr)
 		}
 	}
 
@@ -591,11 +607,13 @@ func (d *DNSFilter) finalizeUpdate(
 		return os.Remove(tmpFileName)
 	}
 
-	log.Printf("saving filter %d contents to: %s", flt.ID, flt.Path(d.DataDir))
+	fltPath := flt.Path(d.DataDir)
+
+	log.Printf("saving contents of filter #%d into %s", flt.ID, fltPath)
 
 	// Don't use renamio or maybe packages, since those will require loading the
 	// whole filter content to the memory on Windows.
-	err = os.Rename(tmpFileName, flt.Path(d.DataDir))
+	err = os.Rename(tmpFileName, fltPath)
 	if err != nil {
 		return errors.WithDeferred(err, os.Remove(tmpFileName))
 	}
@@ -620,10 +638,14 @@ func (d *DNSFilter) updateIntl(flt *FilterYAML) (ok bool, err error) {
 		return false, err
 	}
 	defer func() {
-		err = errors.WithDeferred(err, d.finalizeUpdate(tmpFile, flt, ok, name, rnum, cs))
-		if ok && err == nil {
+		finErr := d.finalizeUpdate(tmpFile, flt, ok, name, rnum, cs)
+		if ok && finErr == nil {
 			log.Printf("updated filter %d: %d bytes, %d rules", flt.ID, n, rnum)
+
+			return
 		}
+
+		err = errors.WithDeferred(err, finErr)
 	}()
 
 	// Change the default 0o600 permission to something more acceptable by end
@@ -634,7 +656,7 @@ func (d *DNSFilter) updateIntl(flt *FilterYAML) (ok bool, err error) {
 		return false, fmt.Errorf("changing file mode: %w", err)
 	}
 
-	var rc io.ReadCloser
+	var r io.Reader
 	if !filepath.IsAbs(flt.URL) {
 		var resp *http.Response
 		resp, err = d.HTTPClient.Get(flt.URL)
@@ -651,16 +673,19 @@ func (d *DNSFilter) updateIntl(flt *FilterYAML) (ok bool, err error) {
 			return false, fmt.Errorf("got status code %d, want %d", resp.StatusCode, http.StatusOK)
 		}
 
-		rc = resp.Body
+		r = resp.Body
 	} else {
-		rc, err = os.Open(flt.URL)
+		var f *os.File
+		f, err = os.Open(flt.URL)
 		if err != nil {
 			return false, fmt.Errorf("open file: %w", err)
 		}
-		defer func() { err = errors.WithDeferred(err, rc.Close()) }()
+		defer func() { err = errors.WithDeferred(err, f.Close()) }()
+
+		r = f
 	}
 
-	rnum, n, cs, name, err = d.parseFilter(rc, tmpFile)
+	rnum, n, cs, name, err = d.parseFilter(r, tmpFile)
 
 	return cs != flt.checksum && err == nil, err
 }
@@ -705,10 +730,11 @@ func (d *DNSFilter) EnableFilters(async bool) {
 }
 
 func (d *DNSFilter) enableFiltersLocked(async bool) {
-	filters := []Filter{{
+	filters := make([]Filter, 1, len(d.Filters)+len(d.WhitelistFilters)+1)
+	filters[0] = Filter{
 		ID:   CustomListID,
 		Data: []byte(strings.Join(d.UserRules, "\n")),
-	}}
+	}
 
 	for _, filter := range d.Filters {
 		if !filter.Enabled {
