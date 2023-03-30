@@ -185,7 +185,7 @@ const Dashboard = ({
                     </div>
                 )}
                 <Statistics
-                        interval={stats.interval}
+                        interval={msToDays(stats.interval)}
                         dnsQueries={stats.dnsQueries}
                         blockedFiltering={stats.blockedFiltering}
                         replacedSafebrowsing={stats.replacedSafebrowsing}
