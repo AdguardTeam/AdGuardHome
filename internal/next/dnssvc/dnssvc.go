@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"net/url"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -73,7 +75,7 @@ func New(c *Config) (svc *Service, err error) {
 	if len(c.Upstreams) > 0 {
 		upstreams = c.Upstreams
 	} else {
-		upstreams, err = addressesToUpstreams(
+		upstreams, err = AddressesToUpstreams(
 			c.UpstreamServers,
 			c.BootstrapServers,
 			c.UpstreamTimeout,
@@ -101,20 +103,47 @@ func New(c *Config) (svc *Service, err error) {
 	return svc, nil
 }
 
-// addressesToUpstreams is a wrapper around [upstream.AddressToUpstream].  It
+// AddressesToUpstreams is a wrapper around [upstream.AddressToUpstream].  It
 // accepts a slice of addresses and other upstream parameters, and returns a
 // slice of upstreams.
-func addressesToUpstreams(
+func AddressesToUpstreams(
 	upsStrs []string,
 	bootstraps []string,
 	timeout time.Duration,
 ) (upstreams []upstream.Upstream, err error) {
 	upstreams = make([]upstream.Upstream, len(upsStrs))
 	for i, upsStr := range upsStrs {
-		upstreams[i], err = upstream.AddressToUpstream(upsStr, &upstream.Options{
+		// Here we pre-parse the url to find any magic params.
+		opts := upstream.Options{
 			Bootstrap: bootstraps,
 			Timeout:   timeout,
-		})
+		}
+		if strings.Contains(upsStr, "://") {
+			var uu *url.URL
+			uu, err = url.Parse(upsStr)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse %s: %w", upsStr, err)
+			}
+			queries := uu.Query()
+			if serverIPstrs, exists := queries["adguardhome_upstream_ip"]; exists {
+				serverIPs := make([]net.IP, len(serverIPstrs))
+				for i := range serverIPstrs {
+					if t := net.ParseIP(serverIPstrs[i]); t != nil {
+						serverIPs[i] = t
+					} else {
+						return nil, fmt.Errorf("failed to parse upstream_ip %s", serverIPstrs[i])
+					}
+				}
+				opts.ServerIPAddrs = serverIPs
+
+				// Remove the magic param to avoid interference with the real server
+				queries.Del("adguardhome_upstream_ip")
+				uu.RawQuery = queries.Encode()
+				upsStr = uu.String()
+			}
+		}
+
+		upstreams[i], err = upstream.AddressToUpstream(upsStr, &opts)
 		if err != nil {
 			return nil, fmt.Errorf("upstream at index %d: %w", i, err)
 		}

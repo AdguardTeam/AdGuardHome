@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
@@ -671,13 +672,11 @@ func checkDNS(
 
 	log.Debug("dnsforward: checking if upstream %q works", upstreamAddr)
 
-	u, err := upstream.AddressToUpstream(upstreamAddr, &upstream.Options{
-		Bootstrap: bootstrap,
-		Timeout:   timeout,
-	})
+	us, err := dnssvc.AddressesToUpstreams([]string{upstreamAddr}, bootstrap, timeout)
 	if err != nil {
 		return fmt.Errorf("failed to choose upstream for %q: %w", upstreamAddr, err)
 	}
+	u := us[0]
 	defer func() { err = errors.WithDeferred(err, u.Close()) }()
 
 	if err = healthCheck(u); err != nil {
