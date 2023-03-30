@@ -185,13 +185,13 @@ export default {
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_32.txt"
         },
         "oisd_basic": {
-            "name": "OISD Blocklist Basic",
+            "name": "OISD Blocklist Small",
             "categoryId": "general",
             "homepage": "https://oisd.nl/",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_5.txt"
         },
         "oisd_full": {
-            "name": "OISD Blocklist Full",
+            "name": "OISD Blocklist Big",
             "categoryId": "general",
             "homepage": "https://oisd.nl/",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_27.txt"

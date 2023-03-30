@@ -31,6 +31,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
   is described in `openapi/openapi.yaml`.  The duration of this pause could
   also be set with the config field `protection_disabled_until` in `dns`
   section of the YAML configuration file.
+- Ability to create a static DHCP lease from a dynamic one more easily
+  ([#3459]).
 - Two new HTTP APIs, `PUT /control/stats/config/update` and `GET
   control/stats/config`, which can be used to set and receive the query log
   configuration.  See openapi/openapi.yaml for the full description.
@@ -134,6 +136,7 @@ In this release, the schema version has changed from 17 to 20.
 [#1333]: https://github.com/AdguardTeam/AdGuardHome/issues/1333
 [#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
 [#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/3290
+[#3459]: https://github.com/AdguardTeam/AdGuardHome/issues/3459
 [#5567]: https://github.com/AdguardTeam/AdGuardHome/issues/5567
 [#5584]: https://github.com/AdguardTeam/AdGuardHome/issues/5584
 [#5631]: https://github.com/AdguardTeam/AdGuardHome/issues/5631
