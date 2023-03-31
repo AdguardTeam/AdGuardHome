@@ -19,12 +19,16 @@ import (
 type jobject = map[string]any
 
 // entriesToJSON converts query log entries to JSON.
-func (l *queryLog) entriesToJSON(entries []*logEntry, oldest time.Time) (res jobject) {
+func entriesToJSON(
+	entries []*logEntry,
+	oldest time.Time,
+	anonFunc aghnet.IPMutFunc,
+) (res jobject) {
 	data := make([]jobject, 0, len(entries))
 
 	// The elements order is already reversed to be from newer to older.
 	for _, entry := range entries {
-		jsonEntry := l.entryToJSON(entry, l.anonymizer.Load())
+		jsonEntry := entryToJSON(entry, anonFunc)
 		data = append(data, jsonEntry)
 	}
 
@@ -40,7 +44,7 @@ func (l *queryLog) entriesToJSON(entries []*logEntry, oldest time.Time) (res job
 }
 
 // entryToJSON converts a log entry's data into an entry for the JSON API.
-func (l *queryLog) entryToJSON(entry *logEntry, anonFunc aghnet.IPMutFunc) (jsonEntry jobject) {
+func entryToJSON(entry *logEntry, anonFunc aghnet.IPMutFunc) (jsonEntry jobject) {
 	hostname := entry.QHost
 	question := jobject{
 		"type":  entry.QType,
@@ -92,14 +96,14 @@ func (l *queryLog) entryToJSON(entry *logEntry, anonFunc aghnet.IPMutFunc) (json
 		jsonEntry["service_name"] = entry.Result.ServiceName
 	}
 
-	l.setMsgData(entry, jsonEntry)
-	l.setOrigAns(entry, jsonEntry)
+	setMsgData(entry, jsonEntry)
+	setOrigAns(entry, jsonEntry)
 
 	return jsonEntry
 }
 
 // setMsgData sets the message data in jsonEntry.
-func (l *queryLog) setMsgData(entry *logEntry, jsonEntry jobject) {
+func setMsgData(entry *logEntry, jsonEntry jobject) {
 	if len(entry.Answer) == 0 {
 		return
 	}
@@ -122,7 +126,7 @@ func (l *queryLog) setMsgData(entry *logEntry, jsonEntry jobject) {
 }
 
 // setOrigAns sets the original answer data in jsonEntry.
-func (l *queryLog) setOrigAns(entry *logEntry, jsonEntry jobject) {
+func setOrigAns(entry *logEntry, jsonEntry jobject) {
 	if len(entry.OrigAnswer) == 0 {
 		return
 	}

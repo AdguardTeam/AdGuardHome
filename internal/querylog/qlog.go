@@ -25,9 +25,12 @@ const (
 type queryLog struct {
 	findClient func(ids []string) (c *Client, err error)
 
-	conf    *Config
-	lock    sync.Mutex
-	logFile string // path to the log file
+	// confMu protects conf.
+	confMu *sync.RWMutex
+	conf   *Config
+
+	// logFile is the path to the log file.
+	logFile string
 
 	// bufferLock protects buffer.
 	bufferLock sync.RWMutex
@@ -279,8 +282,8 @@ func (l *queryLog) Add(params *AddParams) {
 
 // ShouldLog returns true if request for the host should be logged.
 func (l *queryLog) ShouldLog(host string, _, _ uint16) bool {
-	l.lock.Lock()
-	defer l.lock.Unlock()
+	l.confMu.RLock()
+	defer l.confMu.RUnlock()
 
 	return !l.isIgnored(host)
 }

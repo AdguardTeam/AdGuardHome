@@ -259,11 +259,11 @@ func TestQueryLogShouldLog(t *testing.T) {
 	set := stringutil.NewSet(ignored1, ignored2)
 
 	l, err := newQueryLog(Config{
+		Ignored:     set,
 		Enabled:     true,
 		RotationIvl: timeutil.Day,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
-		Ignored:     set,
 	})
 	require.NoError(t, err)
 

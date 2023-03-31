@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -33,11 +34,14 @@ type QueryLog interface {
 
 // Config is the query log configuration structure.
 type Config struct {
+	// Ignored is the list of host names, which should not be written to log.
+	Ignored *stringutil.Set
+
 	// Anonymizer processes the IP addresses to anonymize those if needed.
 	Anonymizer *aghnet.IPMut
 
-	// ConfigModified is called when the configuration is changed, for
-	// example by HTTP requests.
+	// ConfigModified is called when the configuration is changed, for example
+	// by HTTP requests.
 	ConfigModified func()
 
 	// HTTPRegister registers an HTTP handler.
@@ -49,20 +53,13 @@ type Config struct {
 	// BaseDir is the base directory for log files.
 	BaseDir string
 
-	// RotationIvl is the interval for log rotation.  After that period, the
-	// old log file will be renamed, NOT deleted, so the actual log
-	// retention time is twice the interval.  The value must be one of:
-	//
-	//    6 * time.Hour
-	//    1 * timeutil.Day
-	//    7 * timeutil.Day
-	//   30 * timeutil.Day
-	//   90 * timeutil.Day
-	//
+	// RotationIvl is the interval for log rotation.  After that period, the old
+	// log file will be renamed, NOT deleted, so the actual log retention time
+	// is twice the interval.
 	RotationIvl time.Duration
 
-	// MemSize is the number of entries kept in a memory buffer before they
-	// are flushed to disk.
+	// MemSize is the number of entries kept in a memory buffer before they are
+	// flushed to disk.
 	MemSize uint32
 
 	// Enabled tells if the query log is enabled.
@@ -74,10 +71,6 @@ type Config struct {
 	// AnonymizeClientIP tells if the query log should anonymize clients' IP
 	// addresses.
 	AnonymizeClientIP bool
-
-	// Ignored is the list of host names, which should not be written to
-	// log.
-	Ignored *stringutil.Set
 }
 
 // AddParams is the parameters for adding an entry.
@@ -150,11 +143,13 @@ func newQueryLog(conf Config) (l *queryLog, err error) {
 	l = &queryLog{
 		findClient: findClient,
 
-		logFile:    filepath.Join(conf.BaseDir, queryLogFileName),
+		conf:    &Config{},
+		confMu:  &sync.RWMutex{},
+		logFile: filepath.Join(conf.BaseDir, queryLogFileName),
+
 		anonymizer: conf.Anonymizer,
 	}
 
-	l.conf = &Config{}
 	*l.conf = conf
 
 	err = validateIvl(conf.RotationIvl)

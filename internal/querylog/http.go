@@ -82,14 +82,16 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var resp map[string]any
+	var entries []*logEntry
+	var oldest time.Time
 	func() {
-		l.lock.Lock()
-		defer l.lock.Unlock()
+		l.confMu.RLock()
+		defer l.confMu.RUnlock()
 
-		entries, oldest := l.search(params)
-		resp = l.entriesToJSON(entries, oldest)
+		entries, oldest = l.search(params)
 	}()
+
+	resp := entriesToJSON(entries, oldest, l.anonymizer.Load())
 
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
@@ -105,8 +107,8 @@ func (l *queryLog) handleQueryLogClear(_ http.ResponseWriter, _ *http.Request) {
 //
 // Deprecated:  Remove it when migration to the new API is over.
 func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
-	l.lock.Lock()
-	defer l.lock.Unlock()
+	l.confMu.RLock()
+	defer l.confMu.RUnlock()
 
 	ivl := l.conf.RotationIvl
 
@@ -128,8 +130,8 @@ func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 func (l *queryLog) handleGetQueryLogConfig(w http.ResponseWriter, r *http.Request) {
 	var resp *getConfigResp
 	func() {
-		l.lock.Lock()
-		defer l.lock.Unlock()
+		l.confMu.RLock()
+		defer l.confMu.RUnlock()
 
 		resp = &getConfigResp{
 			Interval:          float64(l.conf.RotationIvl.Milliseconds()),
@@ -137,9 +139,9 @@ func (l *queryLog) handleGetQueryLogConfig(w http.ResponseWriter, r *http.Reques
 			AnonymizeClientIP: aghalg.BoolToNullBool(l.conf.AnonymizeClientIP),
 			Ignored:           l.conf.Ignored.Values(),
 		}
-
-		slices.Sort(resp.Ignored)
 	}()
+
+	slices.Sort(resp.Ignored)
 
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
@@ -187,8 +189,8 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 
 	defer l.conf.ConfigModified()
 
-	l.lock.Lock()
-	defer l.lock.Unlock()
+	l.confMu.Lock()
+	defer l.confMu.Unlock()
 
 	conf := *l.conf
 	if newConf.Enabled != aghalg.NBNull {
@@ -251,8 +253,8 @@ func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Reques
 
 	defer l.conf.ConfigModified()
 
-	l.lock.Lock()
-	defer l.lock.Unlock()
+	l.confMu.Lock()
+	defer l.confMu.Unlock()
 
 	conf := *l.conf
 
