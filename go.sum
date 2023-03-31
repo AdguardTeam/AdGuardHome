@@ -15,8 +15,8 @@ github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da h1:KjTM2ks9d14ZYCvmH
 github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da/go.mod h1:eHEWzANqSiWQsof+nXEI9bUVUyV6F53Fp89EuCh2EAA=
 github.com/aead/poly1305 v0.0.0-20180717145839-3fee0db0b635 h1:52m0LGchQBBVqJRyYYufQuIbVqRawmubW3OFGqK1ekw=
 github.com/aead/poly1305 v0.0.0-20180717145839-3fee0db0b635/go.mod h1:lmLxL+FV291OopO93Bwf9fQLQeLyt33VJRUg5VJ30us=
-github.com/ainar-g/dnscrypt/v2 v2.0.1-0.20230315131826-cdb2bf61bda8 h1:jc3/aOQ01Yy3vxB/uqcuUi4F+6E/FKWaTCHq5J1ef2o=
-github.com/ainar-g/dnscrypt/v2 v2.0.1-0.20230315131826-cdb2bf61bda8/go.mod h1:qPWhwz6FdSmuK7W4sMyvogrez4MWdtzosdqlr0Rg3ow=
+github.com/ameshkov/dnscrypt/v2 v2.2.6 h1:rE7AFbPWebq7me7RVS66Cipd1m7ef1yf2+C8QzjQXXE=
+github.com/ameshkov/dnscrypt/v2 v2.2.6/go.mod h1:qPWhwz6FdSmuK7W4sMyvogrez4MWdtzosdqlr0Rg3ow=
 github.com/ameshkov/dnsstamps v1.0.3 h1:Srzik+J9mivH1alRACTbys2xOxs0lRH9qnTA7Y1OYVo=
 github.com/ameshkov/dnsstamps v1.0.3/go.mod h1:Ii3eUu73dx4Vw5O4wjzmT5+lkCwovjzaEZZ4gKyIH5A=
 github.com/beefsack/go-rate v0.0.0-20220214233405-116f4ca011a0 h1:0b2vaepXIfMsG++IsjHiI2p4bxALD1Y2nQKGMR5zDQM=

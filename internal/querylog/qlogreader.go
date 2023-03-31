@@ -106,6 +106,7 @@ func (r *QLogReader) SeekStart() error {
 
 	r.currentFile = len(r.qFiles) - 1
 	_, err := r.qFiles[r.currentFile].SeekStart()
+
 	return err
 }
 

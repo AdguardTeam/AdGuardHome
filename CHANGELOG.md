@@ -31,7 +31,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
   is described in `openapi/openapi.yaml`.  The duration of this pause could
   also be set with the config field `protection_disabled_until` in `dns`
   section of the YAML configuration file.
-- Ability to create a static DHCP lease from a dynamic one more easily
+- The ability to create a static DHCP lease from a dynamic one more easily
   ([#3459]).
 - Two new HTTP APIs, `PUT /control/stats/config/update` and `GET
   control/stats/config`, which can be used to set and receive the query log
@@ -103,10 +103,10 @@ In this release, the schema version has changed from 17 to 20.
 - The `POST /control/safesearch/disable` HTTP API is deprecated.  Use the new
   `PUT /control/safesearch/settings` API
 - The `safesearch_enabled` field is deprecated in the following HTTP APIs:
-  - `GET /control/clients`
-  - `POST /control/clients/add`
-  - `POST /control/clients/update`
-  - `GET /control/clients/find?ip0=...&ip1=...&ip2=...`
+  - `GET /control/clients`;
+  - `POST /control/clients/add`;
+  - `POST /control/clients/update`;
+  - `GET /control/clients/find?ip0=...&ip1=...&ip2=...`.
 
   Check `openapi/openapi.yaml` for more details.
 - The `GET /control/stats_info` HTTP API; use the new `GET

@@ -155,10 +155,13 @@ func (l *queryLog) clear() {
 	l.fileFlushLock.Lock()
 	defer l.fileFlushLock.Unlock()
 
-	l.bufferLock.Lock()
-	l.buffer = nil
-	l.flushPending = false
-	l.bufferLock.Unlock()
+	func() {
+		l.bufferLock.Lock()
+		defer l.bufferLock.Unlock()
+
+		l.buffer = nil
+		l.flushPending = false
+	}()
 
 	oldLogFile := l.logFile + ".1"
 	err := os.Remove(oldLogFile)
@@ -241,26 +244,30 @@ func (l *queryLog) Add(params *AddParams) {
 		entry.OrigAnswer = a
 	}
 
-	l.bufferLock.Lock()
-	l.buffer = append(l.buffer, &entry)
 	needFlush := false
+	func() {
+		l.bufferLock.Lock()
+		defer l.bufferLock.Unlock()
 
-	if !l.conf.FileEnabled {
-		if len(l.buffer) > int(l.conf.MemSize) {
-			// writing to file is disabled - just remove the oldest entry from array
-			//
-			// TODO(a.garipov): This should be replaced by a proper ring buffer,
-			// but it's currently difficult to do that.
-			l.buffer[0] = nil
-			l.buffer = l.buffer[1:]
+		l.buffer = append(l.buffer, &entry)
+
+		if !l.conf.FileEnabled {
+			if len(l.buffer) > int(l.conf.MemSize) {
+				// Writing to file is disabled, so just remove the oldest entry
+				// from the slices.
+				//
+				// TODO(a.garipov): This should be replaced by a proper ring
+				// buffer, but it's currently difficult to do that.
+				l.buffer[0] = nil
+				l.buffer = l.buffer[1:]
+			}
+		} else if !l.flushPending {
+			needFlush = len(l.buffer) >= int(l.conf.MemSize)
+			if needFlush {
+				l.flushPending = true
+			}
 		}
-	} else if !l.flushPending {
-		needFlush = len(l.buffer) >= int(l.conf.MemSize)
-		if needFlush {
-			l.flushPending = true
-		}
-	}
-	l.bufferLock.Unlock()
+	}()
 
 	// if buffer needs to be flushed to disk, do it now
 	if needFlush {

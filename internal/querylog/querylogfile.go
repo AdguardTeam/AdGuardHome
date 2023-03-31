@@ -11,8 +11,9 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// flushLogBuffer flushes the current buffer to file and resets the current buffer
-func (l *queryLog) flushLogBuffer(fullFlush bool) error {
+// flushLogBuffer flushes the current buffer to file and resets the current
+// buffer.
+func (l *queryLog) flushLogBuffer(fullFlush bool) (err error) {
 	if !l.conf.FileEnabled {
 		return nil
 	}
@@ -20,31 +21,42 @@ func (l *queryLog) flushLogBuffer(fullFlush bool) error {
 	l.fileFlushLock.Lock()
 	defer l.fileFlushLock.Unlock()
 
-	// flush remainder to file
-	l.bufferLock.Lock()
-	needFlush := len(l.buffer) >= int(l.conf.MemSize)
-	if !needFlush && !fullFlush {
-		l.bufferLock.Unlock()
+	// Flush the remainder to file.
+	var flushBuffer []*logEntry
+	needFlush := fullFlush
+	func() {
+		l.bufferLock.Lock()
+		defer l.bufferLock.Unlock()
+
+		needFlush = needFlush || len(l.buffer) >= int(l.conf.MemSize)
+		if needFlush {
+			flushBuffer = l.buffer
+			l.buffer = nil
+			l.flushPending = false
+		}
+	}()
+	if !needFlush {
 		return nil
 	}
-	flushBuffer := l.buffer
-	l.buffer = nil
-	l.flushPending = false
-	l.bufferLock.Unlock()
-	err := l.flushToFile(flushBuffer)
+
+	err = l.flushToFile(flushBuffer)
 	if err != nil {
-		log.Error("Saving querylog to file failed: %s", err)
+		log.Error("querylog: writing to file: %s", err)
+
 		return err
 	}
+
 	return nil
 }
 
 // flushToFile saves the specified log entries to the query log file
 func (l *queryLog) flushToFile(buffer []*logEntry) (err error) {
 	if len(buffer) == 0 {
-		log.Debug("querylog: there's nothing to write to a file")
+		log.Debug("querylog: nothing to write to a file")
+
 		return nil
 	}
+
 	start := time.Now()
 
 	var b bytes.Buffer

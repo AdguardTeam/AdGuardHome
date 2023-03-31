@@ -60,41 +60,48 @@ type getConfigResp struct {
 // Register web handlers
 func (l *queryLog) initWeb() {
 	l.conf.HTTPRegister(http.MethodGet, "/control/querylog", l.handleQueryLog)
-	l.conf.HTTPRegister(http.MethodGet, "/control/querylog_info", l.handleQueryLogInfo)
 	l.conf.HTTPRegister(http.MethodPost, "/control/querylog_clear", l.handleQueryLogClear)
-	l.conf.HTTPRegister(http.MethodPost, "/control/querylog_config", l.handleQueryLogConfig)
-
 	l.conf.HTTPRegister(http.MethodGet, "/control/querylog/config", l.handleGetQueryLogConfig)
 	l.conf.HTTPRegister(
 		http.MethodPut,
 		"/control/querylog/config/update",
 		l.handlePutQueryLogConfig,
 	)
+
+	// Deprecated handlers.
+	l.conf.HTTPRegister(http.MethodGet, "/control/querylog_info", l.handleQueryLogInfo)
+	l.conf.HTTPRegister(http.MethodPost, "/control/querylog_config", l.handleQueryLogConfig)
 }
 
+// handleQueryLog is the handler for the GET /control/querylog HTTP API.
 func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
-	l.lock.Lock()
-	defer l.lock.Unlock()
-
-	params, err := l.parseSearchParams(r)
+	params, err := parseSearchParams(r)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "failed to parse params: %s", err)
+		aghhttp.Error(r, w, http.StatusBadRequest, "parsing params: %s", err)
 
 		return
 	}
 
-	entries, oldest := l.search(params)
-	data := l.entriesToJSON(entries, oldest)
+	var resp map[string]any
+	func() {
+		l.lock.Lock()
+		defer l.lock.Unlock()
 
-	_ = aghhttp.WriteJSONResponse(w, r, data)
+		entries, oldest := l.search(params)
+		resp = l.entriesToJSON(entries, oldest)
+	}()
+
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
+// handleQueryLogClear is the handler for the POST /control/querylog/clear HTTP
+// API.
 func (l *queryLog) handleQueryLogClear(_ http.ResponseWriter, _ *http.Request) {
 	l.clear()
 }
 
-// handleQueryLogInfo handles requests to the GET /control/querylog_info
-// endpoint.
+// handleQueryLogInfo is the handler for the GET /control/querylog_info HTTP
+// API.
 //
 // Deprecated:  Remove it when migration to the new API is over.
 func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
@@ -116,20 +123,25 @@ func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// handleGetQueryLogConfig handles requests to the GET /control/querylog/config
-// endpoint.
+// handleGetQueryLogConfig is the handler for the GET /control/querylog/config
+// HTTP API.
 func (l *queryLog) handleGetQueryLogConfig(w http.ResponseWriter, r *http.Request) {
-	l.lock.Lock()
-	defer l.lock.Unlock()
+	var resp *getConfigResp
+	func() {
+		l.lock.Lock()
+		defer l.lock.Unlock()
 
-	ignored := l.conf.Ignored.Values()
-	slices.Sort(ignored)
-	_ = aghhttp.WriteJSONResponse(w, r, getConfigResp{
-		Ignored:           ignored,
-		Interval:          float64(l.conf.RotationIvl.Milliseconds()),
-		Enabled:           aghalg.BoolToNullBool(l.conf.Enabled),
-		AnonymizeClientIP: aghalg.BoolToNullBool(l.conf.AnonymizeClientIP),
-	})
+		resp = &getConfigResp{
+			Interval:          float64(l.conf.RotationIvl.Milliseconds()),
+			Enabled:           aghalg.BoolToNullBool(l.conf.Enabled),
+			AnonymizeClientIP: aghalg.BoolToNullBool(l.conf.AnonymizeClientIP),
+			Ignored:           l.conf.Ignored.Values(),
+		}
+
+		slices.Sort(resp.Ignored)
+	}()
+
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 // AnonymizeIP masks ip to anonymize the client if the ip is a valid one.
@@ -146,7 +158,8 @@ func AnonymizeIP(ip net.IP) {
 	}
 }
 
-// handleQueryLogConfig handles the POST /control/querylog_config queries.
+// handleQueryLogConfig is the handler for the POST /control/querylog_config
+// HTTP API.
 //
 // Deprecated:  Remove it when migration to the new API is over.
 func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) {
@@ -198,8 +211,8 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 	l.conf = &conf
 }
 
-// handlePutQueryLogConfig handles the PUT /control/querylog/config/update
-// queries.
+// handlePutQueryLogConfig is the handler for the PUT
+// /control/querylog/config/update HTTP API.
 func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Request) {
 	newConf := &getConfigResp{}
 	err := json.NewDecoder(r.Body).Decode(newConf)
@@ -268,7 +281,7 @@ func getDoubleQuotesEnclosedValue(s *string) bool {
 }
 
 // parseSearchCriterion parses a search criterion from the query parameter.
-func (l *queryLog) parseSearchCriterion(q url.Values, name string, ct criterionType) (
+func parseSearchCriterion(q url.Values, name string, ct criterionType) (
 	ok bool,
 	sc searchCriterion,
 	err error,
@@ -317,8 +330,9 @@ func (l *queryLog) parseSearchCriterion(q url.Values, name string, ct criterionT
 	return true, sc, nil
 }
 
-// parseSearchParams - parses "searchParams" from the HTTP request's query string
-func (l *queryLog) parseSearchParams(r *http.Request) (p *searchParams, err error) {
+// parseSearchParams parses search parameters from the HTTP request's query
+// string.
+func parseSearchParams(r *http.Request) (p *searchParams, err error) {
 	p = newSearchParams()
 
 	q := r.URL.Query()
@@ -356,7 +370,7 @@ func (l *queryLog) parseSearchParams(r *http.Request) (p *searchParams, err erro
 	}} {
 		var ok bool
 		var c searchCriterion
-		ok, c, err = l.parseSearchCriterion(q, v.urlField, v.ct)
+		ok, c, err = parseSearchCriterion(q, v.urlField, v.ct)
 		if err != nil {
 			return nil, err
 		}
