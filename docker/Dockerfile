@@ -25,6 +25,8 @@ RUN apk --no-cache add ca-certificates libcap tzdata && \
 	mkdir -p /opt/adguardhome/conf /opt/adguardhome/work && \
 	chown -R nobody: /opt/adguardhome
 
+RUN apk --no-cache add tini
+
 ARG DIST_DIR
 ARG TARGETARCH
 ARG TARGETOS
@@ -62,11 +64,22 @@ COPY --chown=nobody:nogroup\
 	./${DIST_DIR}/docker/scripts\
 	/opt/adguardhome/scripts
 
-ENTRYPOINT ["/opt/adguardhome/AdGuardHome"]
+HEALTHCHECK \
+	--interval=30s \
+	--timeout=10s \
+	--retries=3 \
+	CMD [ "/opt/adguardhome/scripts/healthcheck.sh" ]
 
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD [ "/opt/adguardhome/scripts/healthcheck.sh" ]
+# It seems that the healthckech script sometimes spawns zombie processes, so we
+# need a way to handle them, since AdGuard Home doesn't know how to keep track
+# of the processes delegated to it by the OS.  Use tini as entry point because
+# it needs the PID=1 to be the default parent for orphaned processes.
+#
+# See https://github.com/adguardTeam/adGuardHome/issues/3290.
+ENTRYPOINT [ "/sbin/tini", "--" ]
 
 CMD [ \
+	"/opt/adguardhome/AdGuardHome", \
 	"--no-check-update", \
 	"-c", "/opt/adguardhome/conf/AdGuardHome.yaml", \
 	"-h", "0.0.0.0", \
