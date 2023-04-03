@@ -189,6 +189,9 @@ manifest file templates, and helper scripts.
 
  *  `go run main.go unused`: show the list of unused strings.
 
+ *  `go run main.go auto-add`: add locales with additions to the git and
+    restore locales with deletions.
+
 After the download you'll find the output locales in the `client/src/__locales/`
 directory.
 

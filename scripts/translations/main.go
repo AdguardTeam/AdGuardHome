@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"flag"
@@ -13,12 +14,14 @@ import (
 	"net/textproto"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"golang.org/x/exp/maps"
@@ -76,19 +79,19 @@ func main() {
 	switch os.Args[1] {
 	case "summary":
 		err = summary(conf.Languages)
-		check(err)
 	case "download":
 		err = download(uri, projectID, conf.Languages)
-		check(err)
 	case "unused":
-		err = unused()
-		check(err)
+		err = unused(conf.LocalizableFiles[0])
 	case "upload":
 		err = upload(uri, projectID, conf.BaseLangcode)
-		check(err)
+	case "auto-add":
+		err = autoAdd(conf.LocalizableFiles[0])
 	default:
 		usage("unknown command")
 	}
+
+	check(err)
 }
 
 // check is a simple error-checking helper for scripts.
@@ -108,11 +111,14 @@ Commands:
   summary
         Print summary.
   download [-n <count>]
-        Download translations. count is a number of concurrent downloads.
+        Download translations.  count is a number of concurrent downloads.
   unused
         Print unused strings.
   upload
-        Upload translations.`
+        Upload translations.
+  auto-add
+		Add locales with additions to the git and restore locales with
+		deletions.`
 
 	if addStr != "" {
 		fmt.Printf("%s\n%s\n", addStr, usageStr)
@@ -135,6 +141,8 @@ type twoskyConf struct {
 
 // readTwoskyConf returns configuration.
 func readTwoskyConf() (t twoskyConf, err error) {
+	defer func() { err = errors.Annotate(err, "parsing twosky conf: %w") }()
+
 	b, err := os.ReadFile(twoskyConfFile)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
@@ -161,6 +169,10 @@ func readTwoskyConf() (t twoskyConf, err error) {
 		if lang == "" {
 			return twoskyConf{}, errors.Error("language is empty")
 		}
+	}
+
+	if len(conf.LocalizableFiles) == 0 {
+		return twoskyConf{}, errors.Error("no localizable files specified")
 	}
 
 	return conf, nil
@@ -232,7 +244,7 @@ func download(uri *url.URL, projectID string, langs languages) (err error) {
 
 	err = flagSet.Parse(os.Args[2:])
 	if err != nil {
-		// Don't wrap the error since there is exit on error.
+		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
 
@@ -246,12 +258,12 @@ func download(uri *url.URL, projectID string, langs languages) (err error) {
 		Timeout: 10 * time.Second,
 	}
 
-	var wg sync.WaitGroup
+	wg := &sync.WaitGroup{}
 	uriCh := make(chan *url.URL, len(langs))
 
 	for i := 0; i < numWorker; i++ {
 		wg.Add(1)
-		go downloadWorker(&wg, client, uriCh)
+		go downloadWorker(wg, client, uriCh)
 	}
 
 	for lang := range langs {
@@ -342,9 +354,7 @@ func translationURL(oldURL *url.URL, baseFile, projectID string, lang langCode) 
 }
 
 // unused prints unused text labels.
-func unused() (err error) {
-	fileNames := []string{}
-	basePath := filepath.Join(localesDir, defaultBaseFile)
+func unused(basePath string) (err error) {
 	baseLoc, err := readLocales(basePath)
 	if err != nil {
 		return fmt.Errorf("unused: %w", err)
@@ -352,9 +362,10 @@ func unused() (err error) {
 
 	locDir := filepath.Clean(localesDir)
 
+	fileNames := []string{}
 	err = filepath.Walk(srcDir, func(name string, info os.FileInfo, err error) error {
 		if err != nil {
-			log.Info("accessing a path %q: %s", name, err)
+			log.Info("warning: accessing a path %q: %s", name, err)
 
 			return nil
 		}
@@ -379,12 +390,11 @@ func unused() (err error) {
 		return fmt.Errorf("filepath walking %q: %w", srcDir, err)
 	}
 
-	err = removeUnused(fileNames, baseLoc)
-
-	return errors.Annotate(err, "removing unused: %w")
+	return findUnused(fileNames, baseLoc)
 }
 
-func removeUnused(fileNames []string, loc locales) (err error) {
+// findUnused prints unused text labels from fileNames.
+func findUnused(fileNames []string, loc locales) (err error) {
 	knownUsed := []textLabel{
 		"blocking_mode_refused",
 		"blocking_mode_nxdomain",
@@ -399,8 +409,7 @@ func removeUnused(fileNames []string, loc locales) (err error) {
 		var buf []byte
 		buf, err = os.ReadFile(fn)
 		if err != nil {
-			// Don't wrap the error since it's informative enough as is.
-			return err
+			return fmt.Errorf("finding unused: %w", err)
 		}
 
 		for k := range loc {
@@ -410,19 +419,14 @@ func removeUnused(fileNames []string, loc locales) (err error) {
 		}
 	}
 
-	printUnused(loc)
-
-	return nil
-}
-
-// printUnused text labels to stdout.
-func printUnused(loc locales) {
 	keys := maps.Keys(loc)
 	slices.Sort(keys)
 
 	for _, v := range keys {
 		fmt.Println(v)
 	}
+
+	return nil
 }
 
 // upload base translation.  uri is the base URL.  projectID is the name of the
@@ -535,4 +539,96 @@ func send(uriStr, cType string, buf *bytes.Buffer) (err error) {
 	}
 
 	return nil
+}
+
+// autoAdd adds locales with additions to the git and restores locales with
+// deletions.
+func autoAdd(basePath string) (err error) {
+	defer func() { err = errors.Annotate(err, "auto add: %w") }()
+
+	adds, dels, err := changedLocales()
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	if slices.Contains(dels, basePath) {
+		return errors.Error("base locale contains deletions")
+	}
+
+	var (
+		args []string
+		code int
+		out  []byte
+	)
+
+	if len(adds) > 0 {
+		args = append([]string{"add"}, adds...)
+		code, out, err = aghos.RunCommand("git", args...)
+
+		if err != nil || code != 0 {
+			return fmt.Errorf("git add exited with code %d output %q: %w", code, out, err)
+		}
+	}
+
+	if len(dels) > 0 {
+		args = append([]string{"restore"}, dels...)
+		code, out, err = aghos.RunCommand("git", args...)
+
+		if err != nil || code != 0 {
+			return fmt.Errorf("git restore exited with code %d output %q: %w", code, out, err)
+		}
+	}
+
+	return nil
+}
+
+// changedLocales returns cleaned paths of locales with changes or error.  adds
+// is the list of locales with only additions.  dels is the list of locales
+// with only deletions.
+func changedLocales() (adds, dels []string, err error) {
+	defer func() { err = errors.Annotate(err, "getting changes: %w") }()
+
+	cmd := exec.Command("git", "diff", "--numstat", localesDir)
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, nil, fmt.Errorf("piping: %w", err)
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		return nil, nil, fmt.Errorf("starting: %w", err)
+	}
+
+	scanner := bufio.NewScanner(stdout)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		fields := strings.Fields(line)
+		if len(fields) < 3 {
+			return nil, nil, fmt.Errorf("invalid input: %q", line)
+		}
+
+		path := fields[2]
+
+		if fields[0] == "0" {
+			dels = append(dels, path)
+		} else if fields[1] == "0" {
+			adds = append(adds, path)
+		}
+	}
+
+	err = scanner.Err()
+	if err != nil {
+		return nil, nil, fmt.Errorf("scanning: %w", err)
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		return nil, nil, fmt.Errorf("waiting: %w", err)
+	}
+
+	return adds, dels, nil
 }
