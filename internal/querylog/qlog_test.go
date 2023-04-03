@@ -34,13 +34,13 @@ func TestQueryLog(t *testing.T) {
 	// Add disk entries.
 	addEntry(l, "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	// Write to disk (first file).
-	require.NoError(t, l.flushLogBuffer(true))
+	require.NoError(t, l.flushLogBuffer())
 	// Start writing to the second file.
 	require.NoError(t, l.rotate())
 	// Add disk entries.
 	addEntry(l, "example.org", net.IPv4(1, 1, 1, 2), net.IPv4(2, 2, 2, 2))
 	// Write to disk.
-	require.NoError(t, l.flushLogBuffer(true))
+	require.NoError(t, l.flushLogBuffer())
 	// Add memory entries.
 	addEntry(l, "test.example.org", net.IPv4(1, 1, 1, 3), net.IPv4(2, 2, 2, 3))
 	addEntry(l, "example.com", net.IPv4(1, 1, 1, 4), net.IPv4(2, 2, 2, 4))
@@ -144,7 +144,7 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 		addEntry(l, secondPageDomain, net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	}
 	// Write them to the first file.
-	require.NoError(t, l.flushLogBuffer(true))
+	require.NoError(t, l.flushLogBuffer())
 	// Add more to the in-memory part of log.
 	for i := 0; i < entNum; i++ {
 		addEntry(l, firstPageDomain, net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
@@ -216,7 +216,7 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 		addEntry(l, "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	}
 	// Write them to disk.
-	require.NoError(t, l.flushLogBuffer(true))
+	require.NoError(t, l.flushLogBuffer())
 
 	params := newSearchParams()
 

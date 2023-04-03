@@ -13,40 +13,23 @@ import (
 
 // flushLogBuffer flushes the current buffer to file and resets the current
 // buffer.
-func (l *queryLog) flushLogBuffer(fullFlush bool) (err error) {
-	if !l.conf.FileEnabled {
-		return nil
-	}
-
+func (l *queryLog) flushLogBuffer() (err error) {
 	l.fileFlushLock.Lock()
 	defer l.fileFlushLock.Unlock()
 
-	// Flush the remainder to file.
 	var flushBuffer []*logEntry
-	needFlush := fullFlush
 	func() {
 		l.bufferLock.Lock()
 		defer l.bufferLock.Unlock()
 
-		needFlush = needFlush || len(l.buffer) >= int(l.conf.MemSize)
-		if needFlush {
-			flushBuffer = l.buffer
-			l.buffer = nil
-			l.flushPending = false
-		}
+		flushBuffer = l.buffer
+		l.buffer = nil
+		l.flushPending = false
 	}()
-	if !needFlush {
-		return nil
-	}
 
 	err = l.flushToFile(flushBuffer)
-	if err != nil {
-		log.Error("querylog: writing to file: %s", err)
 
-		return err
-	}
-
-	return nil
+	return errors.Annotate(err, "writing to file: %w")
 }
 
 // flushToFile saves the specified log entries to the query log file
@@ -167,8 +150,13 @@ func (l *queryLog) periodicRotate() {
 // checkAndRotate rotates log files if those are older than the specified
 // rotation interval.
 func (l *queryLog) checkAndRotate() {
-	l.confMu.RLock()
-	defer l.confMu.RUnlock()
+	var rotationIvl time.Duration
+	func() {
+		l.confMu.RLock()
+		defer l.confMu.RUnlock()
+
+		rotationIvl = l.conf.RotationIvl
+	}()
 
 	oldest, err := l.readFileFirstTimeValue()
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -177,11 +165,11 @@ func (l *queryLog) checkAndRotate() {
 		return
 	}
 
-	if rot, now := oldest.Add(l.conf.RotationIvl), time.Now(); rot.After(now) {
+	if rotTime, now := oldest.Add(rotationIvl), time.Now(); rotTime.After(now) {
 		log.Debug(
 			"querylog: %s <= %s, not rotating",
 			now.Format(time.RFC3339),
-			rot.Format(time.RFC3339),
+			rotTime.Format(time.RFC3339),
 		)
 
 		return

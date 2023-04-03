@@ -166,86 +166,6 @@ var logEntryHandlers = map[string]logEntryHandler{
 	},
 }
 
-var resultHandlers = map[string]logEntryHandler{
-	"IsFiltered": func(t json.Token, ent *logEntry) error {
-		v, ok := t.(bool)
-		if !ok {
-			return nil
-		}
-		ent.Result.IsFiltered = v
-		return nil
-	},
-	"Rule": func(t json.Token, ent *logEntry) error {
-		s, ok := t.(string)
-		if !ok {
-			return nil
-		}
-
-		l := len(ent.Result.Rules)
-		if l == 0 {
-			ent.Result.Rules = []*filtering.ResultRule{{}}
-			l++
-		}
-
-		ent.Result.Rules[l-1].Text = s
-
-		return nil
-	},
-	"FilterID": func(t json.Token, ent *logEntry) error {
-		n, ok := t.(json.Number)
-		if !ok {
-			return nil
-		}
-
-		i, err := n.Int64()
-		if err != nil {
-			return err
-		}
-
-		l := len(ent.Result.Rules)
-		if l == 0 {
-			ent.Result.Rules = []*filtering.ResultRule{{}}
-			l++
-		}
-
-		ent.Result.Rules[l-1].FilterListID = i
-
-		return nil
-	},
-	"Reason": func(t json.Token, ent *logEntry) error {
-		v, ok := t.(json.Number)
-		if !ok {
-			return nil
-		}
-		i, err := v.Int64()
-		if err != nil {
-			return err
-		}
-		ent.Result.Reason = filtering.Reason(i)
-		return nil
-	},
-	"ServiceName": func(t json.Token, ent *logEntry) error {
-		s, ok := t.(string)
-		if !ok {
-			return nil
-		}
-
-		ent.Result.ServiceName = s
-
-		return nil
-	},
-	"CanonName": func(t json.Token, ent *logEntry) error {
-		s, ok := t.(string)
-		if !ok {
-			return nil
-		}
-
-		ent.Result.CanonName = s
-
-		return nil
-	},
-}
-
 func decodeResultRuleKey(key string, i int, dec *json.Decoder, ent *logEntry) {
 	var vToken json.Token
 	switch key {
@@ -582,25 +502,11 @@ func decodeResult(dec *json.Decoder, ent *logEntry) {
 			return
 		}
 
-		switch key {
-		case "ReverseHosts":
-			decodeResultReverseHosts(dec, ent)
+		decHandler, ok := resultDecHandlers[key]
+		if ok {
+			decHandler(dec, ent)
 
 			continue
-		case "IPList":
-			decodeResultIPList(dec, ent)
-
-			continue
-		case "Rules":
-			decodeResultRules(dec, ent)
-
-			continue
-		case "DNSRewriteResult":
-			decodeResultDNSRewriteResult(dec, ent)
-
-			continue
-		default:
-			// Go on.
 		}
 
 		handler, ok := resultHandlers[key]
@@ -619,6 +525,93 @@ func decodeResult(dec *json.Decoder, ent *logEntry) {
 			return
 		}
 	}
+}
+
+var resultHandlers = map[string]logEntryHandler{
+	"IsFiltered": func(t json.Token, ent *logEntry) error {
+		v, ok := t.(bool)
+		if !ok {
+			return nil
+		}
+		ent.Result.IsFiltered = v
+		return nil
+	},
+	"Rule": func(t json.Token, ent *logEntry) error {
+		s, ok := t.(string)
+		if !ok {
+			return nil
+		}
+
+		l := len(ent.Result.Rules)
+		if l == 0 {
+			ent.Result.Rules = []*filtering.ResultRule{{}}
+			l++
+		}
+
+		ent.Result.Rules[l-1].Text = s
+
+		return nil
+	},
+	"FilterID": func(t json.Token, ent *logEntry) error {
+		n, ok := t.(json.Number)
+		if !ok {
+			return nil
+		}
+
+		i, err := n.Int64()
+		if err != nil {
+			return err
+		}
+
+		l := len(ent.Result.Rules)
+		if l == 0 {
+			ent.Result.Rules = []*filtering.ResultRule{{}}
+			l++
+		}
+
+		ent.Result.Rules[l-1].FilterListID = i
+
+		return nil
+	},
+	"Reason": func(t json.Token, ent *logEntry) error {
+		v, ok := t.(json.Number)
+		if !ok {
+			return nil
+		}
+		i, err := v.Int64()
+		if err != nil {
+			return err
+		}
+		ent.Result.Reason = filtering.Reason(i)
+		return nil
+	},
+	"ServiceName": func(t json.Token, ent *logEntry) error {
+		s, ok := t.(string)
+		if !ok {
+			return nil
+		}
+
+		ent.Result.ServiceName = s
+
+		return nil
+	},
+	"CanonName": func(t json.Token, ent *logEntry) error {
+		s, ok := t.(string)
+		if !ok {
+			return nil
+		}
+
+		ent.Result.CanonName = s
+
+		return nil
+	},
+}
+
+var resultDecHandlers = map[string]func(dec *json.Decoder, ent *logEntry){
+	"ReverseHosts":     decodeResultReverseHosts,
+	"IPList":           decodeResultIPList,
+	"Rules":            decodeResultRules,
+	"DNSRewriteResult": decodeResultDNSRewriteResult,
 }
 
 func decodeLogEntry(ent *logEntry, str string) {
