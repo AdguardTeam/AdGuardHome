@@ -447,6 +447,8 @@ func (s *Server) setupResolvers(localAddrs []string) (err error) {
 			Bootstrap: bootstraps,
 			Timeout:   defaultLocalTimeout,
 			// TODO(e.burkov): Should we verify server's certificates?
+
+			PreferIPv6: s.conf.BootstrapPreferIPv6,
 		},
 	)
 	if err != nil {

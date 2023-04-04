@@ -408,6 +408,7 @@ func (clients *clientsContainer) findUpstreams(
 			Bootstrap:    config.DNS.BootstrapDNS,
 			Timeout:      config.DNS.UpstreamTimeout.Duration,
 			HTTPVersions: dnsforward.UpstreamHTTPVersions(config.DNS.UseHTTP3Upstreams),
+			PreferIPv6:   config.DNS.BootstrapPreferIPv6,
 		},
 	)
 	if err != nil {

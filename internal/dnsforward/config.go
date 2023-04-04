@@ -199,6 +199,10 @@ type FilteringConfig struct {
 	// IpsetListFileName, if set, points to the file with ipset configuration.
 	// The format is the same as in [IpsetList].
 	IpsetListFileName string `yaml:"ipset_file"`
+
+	// BootstrapPreferIPv6, if true, instructs the bootstrapper to prefer IPv6
+	// addresses to IPv4 ones for DoH, DoQ, and DoT.
+	BootstrapPreferIPv6 bool `yaml:"bootstrap_prefer_ipv6"`
 }
 
 // EDNSClientSubnet is the settings list for EDNS Client Subnet.
@@ -479,6 +483,7 @@ func (s *Server) prepareUpstreamSettings() error {
 			Bootstrap:    s.conf.BootstrapDNS,
 			Timeout:      s.conf.UpstreamTimeout,
 			HTTPVersions: httpVersions,
+			PreferIPv6:   s.conf.BootstrapPreferIPv6,
 		},
 	)
 	if err != nil {
@@ -494,6 +499,7 @@ func (s *Server) prepareUpstreamSettings() error {
 				Bootstrap:    s.conf.BootstrapDNS,
 				Timeout:      s.conf.UpstreamTimeout,
 				HTTPVersions: httpVersions,
+				PreferIPv6:   s.conf.BootstrapPreferIPv6,
 			},
 		)
 		if err != nil {

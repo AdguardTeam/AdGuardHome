@@ -645,6 +645,7 @@ func (err domainSpecificTestError) Error() (msg string) {
 func checkDNS(
 	upstreamConfigStr string,
 	bootstrap []string,
+	bootstrapPrefIPv6 bool,
 	timeout time.Duration,
 	healthCheck healthCheckFunc,
 ) (err error) {
@@ -672,8 +673,9 @@ func checkDNS(
 	log.Debug("dnsforward: checking if upstream %q works", upstreamAddr)
 
 	u, err := upstream.AddressToUpstream(upstreamAddr, &upstream.Options{
-		Bootstrap: bootstrap,
-		Timeout:   timeout,
+		Bootstrap:  bootstrap,
+		Timeout:    timeout,
+		PreferIPv6: bootstrapPrefIPv6,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to choose upstream for %q: %w", upstreamAddr, err)
@@ -705,6 +707,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 
 	result := map[string]string{}
 	bootstraps := req.BootstrapDNS
+	bootstrapPrefIPv6 := s.conf.BootstrapPreferIPv6
 	timeout := s.conf.UpstreamTimeout
 
 	type upsCheckResult = struct {
@@ -721,7 +724,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		}
 		defer func() { resCh <- res }()
 
-		checkErr := checkDNS(ups, bootstraps, timeout, healthCheck)
+		checkErr := checkDNS(ups, bootstraps, bootstrapPrefIPv6, timeout, healthCheck)
 		if checkErr != nil {
 			res.res = checkErr.Error()
 		} else {

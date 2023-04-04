@@ -25,6 +25,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- The ability to make bootstrap DNS lookups prefer IPv6 addresses to IPv4 ones
+  using the new `dns.bootstrap_prefer_ipv6` configuration file property
+  ([#4262]).
 - Docker container's healthcheck ([#3290]).
 - The new HTTP API `POST /control/protection`, that updates protection state
   and adds an optional pause duration ([#1333]).  The format of request body
@@ -137,6 +140,7 @@ In this release, the schema version has changed from 17 to 20.
 [#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
 [#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/3290
 [#3459]: https://github.com/AdguardTeam/AdGuardHome/issues/3459
+[#4262]: https://github.com/AdguardTeam/AdGuardHome/issues/4262
 [#5567]: https://github.com/AdguardTeam/AdGuardHome/issues/5567
 [#5584]: https://github.com/AdguardTeam/AdGuardHome/issues/5584
 [#5631]: https://github.com/AdguardTeam/AdGuardHome/issues/5631
