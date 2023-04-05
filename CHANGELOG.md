@@ -14,20 +14,14 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.27] - 2023-03-29 (APPROX.)
+## [v0.107.28] - 2023-04-12 (APPROX.)
 
-See also the [v0.107.27 GitHub milestone][ms-v0.107.27].
+See also the [v0.107.28 GitHub milestone][ms-v0.107.28].
 
-[ms-v0.107.27]: https://github.com/AdguardTeam/AdGuardHome/milestone/63?closed=1
+[ms-v0.107.28]: https://github.com/AdguardTeam/AdGuardHome/milestone/64?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
-
-### Security
-
-- Go version has been updated to prevent the possibility of exploiting the
-  CVE-2023-24534, CVE-2023-24536, CVE-2023-24537, and CVE-2023-24538 Go
-  vulnerabilities fixed in [Go 1.19.8][go-1.19.8].
 
 ### Added
 
@@ -133,6 +127,32 @@ In this release, the schema version has changed from 17 to 20.
 - The `POST /control/querylog_config` HTTP API; use the new `PUT
   /control/querylog/config/update` API instead.
 
+[#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1163
+[#1333]: https://github.com/AdguardTeam/AdGuardHome/issues/1333
+[#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
+[#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/3290
+[#3459]: https://github.com/AdguardTeam/AdGuardHome/issues/3459
+[#4262]: https://github.com/AdguardTeam/AdGuardHome/issues/4262
+[#5567]: https://github.com/AdguardTeam/AdGuardHome/issues/5567
+
+[rfc6761]:   https://www.rfc-editor.org/rfc/rfc6761
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+
+
+## [v0.107.27] - 2023-04-05
+
+See also the [v0.107.27 GitHub milestone][ms-v0.107.27].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2023-24534, CVE-2023-24536, CVE-2023-24537, and CVE-2023-24538 Go
+  vulnerabilities fixed in [Go 1.19.8][go-1.19.8].
+
 ### Fixed
 
 - Query log not showing all filtered queries when the “Filtered” log filter is
@@ -141,23 +161,12 @@ In this release, the schema version has changed from 17 to 20.
 - Panic caused by empty top-level domain name label in `/etc/hosts` files
   ([#5584]).
 
-[#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1163
-[#1333]: https://github.com/AdguardTeam/AdGuardHome/issues/1333
-[#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
-[#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/3290
-[#3459]: https://github.com/AdguardTeam/AdGuardHome/issues/3459
-[#4262]: https://github.com/AdguardTeam/AdGuardHome/issues/4262
-[#5567]: https://github.com/AdguardTeam/AdGuardHome/issues/5567
 [#5584]: https://github.com/AdguardTeam/AdGuardHome/issues/5584
 [#5631]: https://github.com/AdguardTeam/AdGuardHome/issues/5631
 [#5639]: https://github.com/AdguardTeam/AdGuardHome/issues/5639
 
-[go-1.19.8]: https://groups.google.com/g/golang-announce/c/Xdv6JL9ENs8/m/OV40vnafAwAJ
-[rfc6761]:   https://www.rfc-editor.org/rfc/rfc6761
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[go-1.19.8]:    https://groups.google.com/g/golang-announce/c/Xdv6JL9ENs8/m/OV40vnafAwAJ
+[ms-v0.107.27]: https://github.com/AdguardTeam/AdGuardHome/milestone/63?closed=1
 
 
 
@@ -1890,11 +1899,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.27...HEAD
-[v0.107.27]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.26...v0.107.27
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.28...HEAD
+[v0.107.28]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.27...v0.107.28
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.26...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.27...HEAD
+[v0.107.27]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.26...v0.107.27
 [v0.107.26]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.25...v0.107.26
 [v0.107.25]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.24...v0.107.25
 [v0.107.24]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.23...v0.107.24
