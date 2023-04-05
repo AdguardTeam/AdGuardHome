@@ -21,7 +21,7 @@ LABEL\
 	org.opencontainers.image.version=$VERSION
 
 # Update certificates.
-RUN apk --no-cache add ca-certificates libcap tzdata && \
+RUN apk --no-cache add ca-certificates tzdata && \
 	mkdir -p /opt/adguardhome/conf /opt/adguardhome/work && \
 	chown -R nobody: /opt/adguardhome
 
@@ -35,8 +35,6 @@ ARG TARGETVARIANT
 COPY --chown=nobody:nogroup\
 	./${DIST_DIR}/docker/AdGuardHome_${TARGETOS}_${TARGETARCH}_${TARGETVARIANT}\
 	/opt/adguardhome/AdGuardHome
-
-RUN setcap 'cap_net_bind_service=+eip' /opt/adguardhome/AdGuardHome
 
 # 53     : TCP, UDP : DNS
 # 67     :      UDP : DHCP (server)
