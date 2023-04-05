@@ -23,6 +23,12 @@ See also the [v0.107.27 GitHub milestone][ms-v0.107.27].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2023-24534, CVE-2023-24536, CVE-2023-24537, and CVE-2023-24538 Go
+  vulnerabilities fixed in [Go 1.19.8][go-1.19.8].
+
 ### Added
 
 - The ability to make bootstrap DNS lookups prefer IPv6 addresses to IPv4 ones
@@ -146,7 +152,8 @@ In this release, the schema version has changed from 17 to 20.
 [#5631]: https://github.com/AdguardTeam/AdGuardHome/issues/5631
 [#5639]: https://github.com/AdguardTeam/AdGuardHome/issues/5639
 
-[rfc6761]: https://www.rfc-editor.org/rfc/rfc6761
+[go-1.19.8]: https://groups.google.com/g/golang-announce/c/Xdv6JL9ENs8/m/OV40vnafAwAJ
+[rfc6761]:   https://www.rfc-editor.org/rfc/rfc6761
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

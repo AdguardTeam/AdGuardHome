@@ -413,7 +413,7 @@
     "fix": "Düzelt",
     "dns_providers": "Aralarından seçim yapabileceğiniz, bilinen <0>DNS sağlayıcıların listesi</0>.",
     "update_now": "Şimdi güncelle",
-    "update_failed": "Otomatik güncelleme başarısız oldu. Elle güncellemek için lütfen <a>bu adımları izleyin</a>.",
+    "update_failed": "Otomatik güncellenemedi. Elle güncellemek için lütfen <a>bu adımları izleyin</a>.",
     "manual_update": "Elle güncellemek için lütfen <a>bu adımları uygulayın</a>.",
     "processing_update": "Lütfen bekleyin, AdGuard Home güncelleniyor",
     "clients_title": "Kalıcı istemciler",
