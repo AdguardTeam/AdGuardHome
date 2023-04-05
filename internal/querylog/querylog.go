@@ -33,6 +33,8 @@ type QueryLog interface {
 }
 
 // Config is the query log configuration structure.
+//
+// Do not alter any fields of this structure after using it.
 type Config struct {
 	// Ignored is the list of host names, which should not be written to log.
 	Ignored *stringutil.Set

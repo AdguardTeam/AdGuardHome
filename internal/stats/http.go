@@ -42,13 +42,21 @@ type StatsResp struct {
 	AvgProcessingTime float64 `json:"avg_processing_time"`
 }
 
-// handleStats handles requests to the GET /control/stats endpoint.
+// handleStats is the handler for the GET /control/stats HTTP API.
 func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
 	start := time.Now()
-	resp, ok := s.getData(uint32(s.limit.Hours()))
+
+	var (
+		resp StatsResp
+		ok   bool
+	)
+	func() {
+		s.confMu.RLock()
+		defer s.confMu.RUnlock()
+
+		resp, ok = s.getData(uint32(s.limit.Hours()))
+	}()
+
 	log.Debug("stats: prepared data in %v", time.Since(start))
 
 	if !ok {
@@ -80,47 +88,58 @@ type getConfigResp struct {
 	Enabled aghalg.NullBool `json:"enabled"`
 }
 
-// handleStatsInfo handles requests to the GET /control/stats_info endpoint.
+// handleStatsInfo is the handler for the GET /control/stats_info HTTP API.
 //
 // Deprecated:  Remove it when migration to the new API is over.
 func (s *StatsCtx) handleStatsInfo(w http.ResponseWriter, r *http.Request) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	var (
+		enabled bool
+		limit   time.Duration
+	)
+	func() {
+		s.confMu.RLock()
+		defer s.confMu.RUnlock()
 
-	days := uint32(s.limit / timeutil.Day)
+		enabled, limit = s.enabled, s.limit
+	}()
+
+	days := uint32(limit / timeutil.Day)
 	ok := checkInterval(days)
-	if !ok || (s.enabled && days == 0) {
+	if !ok || (enabled && days == 0) {
 		// NOTE: If interval is custom we set it to 90 days for compatibility
 		// with old API.
 		days = 90
 	}
 
 	resp := configResp{IntervalDays: days}
-	if !s.enabled {
+	if !enabled {
 		resp.IntervalDays = 0
 	}
+
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
-// handleGetStatsConfig handles requests to the GET /control/stats/config
-// endpoint.
+// handleGetStatsConfig is the handler for the GET /control/stats/config HTTP
+// API.
 func (s *StatsCtx) handleGetStatsConfig(w http.ResponseWriter, r *http.Request) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	var resp *getConfigResp
+	func() {
+		s.confMu.RLock()
+		defer s.confMu.RUnlock()
 
-	ignored := s.ignored.Values()
-	slices.Sort(ignored)
+		resp = &getConfigResp{
+			Ignored:  s.ignored.Values(),
+			Interval: float64(s.limit.Milliseconds()),
+			Enabled:  aghalg.BoolToNullBool(s.enabled),
+		}
+	}()
 
-	resp := getConfigResp{
-		Ignored:  ignored,
-		Interval: float64(s.limit.Milliseconds()),
-		Enabled:  aghalg.BoolToNullBool(s.enabled),
-	}
+	slices.Sort(resp.Ignored)
+
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
-// handleStatsConfig handles requests to the POST /control/stats_config
-// endpoint.
+// handleStatsConfig is the handler for the POST /control/stats_config HTTP API.
 //
 // Deprecated:  Remove it when migration to the new API is over.
 func (s *StatsCtx) handleStatsConfig(w http.ResponseWriter, r *http.Request) {
@@ -138,17 +157,18 @@ func (s *StatsCtx) handleStatsConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	limit := time.Duration(reqData.IntervalDays) * timeutil.Day
+
 	defer s.configModified()
 
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	s.confMu.Lock()
+	defer s.confMu.Unlock()
 
-	limit := time.Duration(reqData.IntervalDays) * timeutil.Day
 	s.setLimit(limit)
 }
 
-// handlePutStatsConfig handles requests to the PUT /control/stats/config/update
-// endpoint.
+// handlePutStatsConfig is the handler for the PUT /control/stats/config/update
+// HTTP API.
 func (s *StatsCtx) handlePutStatsConfig(w http.ResponseWriter, r *http.Request) {
 	reqData := getConfigResp{}
 	err := json.NewDecoder(r.Body).Decode(&reqData)
@@ -181,15 +201,15 @@ func (s *StatsCtx) handlePutStatsConfig(w http.ResponseWriter, r *http.Request) 
 
 	defer s.configModified()
 
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	s.confMu.Lock()
+	defer s.confMu.Unlock()
 
 	s.ignored = set
 	s.limit = ivl
 	s.enabled = reqData.Enabled == aghalg.NBTrue
 }
 
-// handleStatsReset handles requests to the POST /control/stats_reset endpoint.
+// handleStatsReset is the handler for the POST /control/stats_reset HTTP API.
 func (s *StatsCtx) handleStatsReset(w http.ResponseWriter, r *http.Request) {
 	err := s.clear()
 	if err != nil {
@@ -205,9 +225,10 @@ func (s *StatsCtx) initWeb() {
 
 	s.httpRegister(http.MethodGet, "/control/stats", s.handleStats)
 	s.httpRegister(http.MethodPost, "/control/stats_reset", s.handleStatsReset)
-	s.httpRegister(http.MethodPost, "/control/stats_config", s.handleStatsConfig)
-	s.httpRegister(http.MethodGet, "/control/stats_info", s.handleStatsInfo)
-
 	s.httpRegister(http.MethodGet, "/control/stats/config", s.handleGetStatsConfig)
 	s.httpRegister(http.MethodPut, "/control/stats/config/update", s.handlePutStatsConfig)
+
+	// Deprecated handlers.
+	s.httpRegister(http.MethodGet, "/control/stats_info", s.handleStatsInfo)
+	s.httpRegister(http.MethodPost, "/control/stats_config", s.handleStatsConfig)
 }

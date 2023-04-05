@@ -24,11 +24,11 @@ func TestHandleStatsConfig(t *testing.T) {
 	)
 
 	conf := Config{
+		UnitID:         func() (id uint32) { return 0 },
+		ConfigModified: func() {},
 		Filename:       filepath.Join(t.TempDir(), "stats.db"),
 		Limit:          time.Hour * 24,
 		Enabled:        true,
-		UnitID:         func() (id uint32) { return 0 },
-		ConfigModified: func() {},
 	}
 
 	testCases := []struct {

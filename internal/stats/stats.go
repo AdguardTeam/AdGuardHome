@@ -41,6 +41,8 @@ func validateIvl(ivl time.Duration) (err error) {
 }
 
 // Config is the configuration structure for the statistics collecting.
+//
+// Do not alter any fields of this structure after using it.
 type Config struct {
 	// UnitID is the function to generate the identifier for current unit.  If
 	// nil, the default function is used, see newUnitID.
@@ -54,6 +56,9 @@ type Config struct {
 	// endpoints.
 	HTTPRegister aghhttp.RegisterFunc
 
+	// Ignored is the list of host names, which should not be counted.
+	Ignored *stringutil.Set
+
 	// Filename is the name of the database file.
 	Filename string
 
@@ -62,9 +67,6 @@ type Config struct {
 
 	// Enabled tells if the statistics are enabled.
 	Enabled bool
-
-	// Ignored is the list of host names, which should not be counted.
-	Ignored *stringutil.Set
 }
 
 // Interface is the statistics interface to be used by other packages.
@@ -110,20 +112,20 @@ type StatsCtx struct {
 	// interface.
 	configModified func()
 
+	// confMu protects ignored, limit, and enabled.
+	confMu *sync.RWMutex
+
+	// ignored is the list of host names, which should not be counted.
+	ignored *stringutil.Set
+
 	// filename is the name of database file.
 	filename string
-
-	// lock protects all the fields below.
-	lock sync.Mutex
-
-	// enabled tells if the statistics are enabled.
-	enabled bool
 
 	// limit is an upper limit for collecting statistics.
 	limit time.Duration
 
-	// ignored is the list of host names, which should not be counted.
-	ignored *stringutil.Set
+	// enabled tells if the statistics are enabled.
+	enabled bool
 }
 
 // New creates s from conf and properly initializes it.  Don't use s before
@@ -131,21 +133,22 @@ type StatsCtx struct {
 func New(conf Config) (s *StatsCtx, err error) {
 	defer withRecovered(&err)
 
-	s = &StatsCtx{
-		enabled:        conf.Enabled,
-		currMu:         &sync.RWMutex{},
-		filename:       conf.Filename,
-		configModified: conf.ConfigModified,
-		httpRegister:   conf.HTTPRegister,
-		ignored:        conf.Ignored,
-	}
-
 	err = validateIvl(conf.Limit)
 	if err != nil {
 		return nil, fmt.Errorf("unsupported interval: %w", err)
 	}
 
-	s.limit = conf.Limit
+	s = &StatsCtx{
+		currMu:         &sync.RWMutex{},
+		httpRegister:   conf.HTTPRegister,
+		configModified: conf.ConfigModified,
+		filename:       conf.Filename,
+
+		confMu:  &sync.RWMutex{},
+		ignored: conf.Ignored,
+		limit:   conf.Limit,
+		enabled: conf.Enabled,
+	}
 
 	if s.unitIDGen = newUnitID; conf.UnitID != nil {
 		s.unitIDGen = conf.UnitID
@@ -244,8 +247,8 @@ func (s *StatsCtx) Close() (err error) {
 
 // Update implements the Interface interface for *StatsCtx.
 func (s *StatsCtx) Update(e Entry) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	s.confMu.Lock()
+	defer s.confMu.Unlock()
 
 	if !s.enabled || s.limit == 0 {
 		return
@@ -276,18 +279,18 @@ func (s *StatsCtx) Update(e Entry) {
 
 // WriteDiskConfig implements the Interface interface for *StatsCtx.
 func (s *StatsCtx) WriteDiskConfig(dc *Config) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	s.confMu.RLock()
+	defer s.confMu.RUnlock()
 
+	dc.Ignored = s.ignored.Clone()
 	dc.Limit = s.limit
 	dc.Enabled = s.enabled
-	dc.Ignored = s.ignored
 }
 
 // TopClientsIP implements the [Interface] interface for *StatsCtx.
 func (s *StatsCtx) TopClientsIP(maxCount uint) (ips []netip.Addr) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	s.confMu.RLock()
+	defer s.confMu.RUnlock()
 
 	limit := uint32(s.limit.Hours())
 	if !s.enabled || limit == 0 {
@@ -382,8 +385,8 @@ func (s *StatsCtx) openDB() (err error) {
 func (s *StatsCtx) flush() (cont bool, sleepFor time.Duration) {
 	id := s.unitIDGen()
 
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	s.confMu.Lock()
+	defer s.confMu.Unlock()
 
 	s.currMu.Lock()
 	defer s.currMu.Unlock()
@@ -575,10 +578,14 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, firstID uint32) {
 
 // ShouldCount returns true if request for the host should be counted.
 func (s *StatsCtx) ShouldCount(host string, _, _ uint16) bool {
+	s.confMu.RLock()
+	defer s.confMu.RUnlock()
+
 	return !s.isIgnored(host)
 }
 
-// isIgnored returns true if the host is in the Ignored list.
+// isIgnored returns true if the host is in the ignored domains list.  It
+// assumes that s.confMu is locked for reading.
 func (s *StatsCtx) isIgnored(host string) bool {
 	return s.ignored.Has(host)
 }

@@ -12,7 +12,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
 )
@@ -126,9 +125,7 @@ func (l *queryLog) WriteDiskConfig(c *Config) {
 	defer l.confMu.RUnlock()
 
 	*c = *l.conf
-
-	// TODO(a.garipov): Add stringutil.Set.Clone.
-	c.Ignored = stringutil.NewSet(l.conf.Ignored.Values()...)
+	c.Ignored = l.conf.Ignored.Clone()
 }
 
 // Clear memory buffer and remove log files
