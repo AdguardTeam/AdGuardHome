@@ -54,17 +54,20 @@ const StaticLeases = ({
                     {
                         Header: 'MAC',
                         accessor: 'mac',
+                        minWidth: 180,
                         Cell: cellWrap,
                     },
                     {
                         Header: 'IP',
                         accessor: 'ip',
+                        minWidth: 230,
                         sortMethod: sortIp,
                         Cell: cellWrap,
                     },
                     {
                         Header: <Trans>dhcp_table_hostname</Trans>,
                         accessor: 'hostname',
+                        minWidth: 230,
                         Cell: cellWrap,
                     },
                     {

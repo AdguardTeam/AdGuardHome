@@ -23,19 +23,23 @@ class Leases extends Component {
                     {
                         Header: 'MAC',
                         accessor: 'mac',
+                        minWidth: 180,
                         Cell: this.cellWrap,
                     }, {
                         Header: 'IP',
                         accessor: 'ip',
+                        minWidth: 230,
                         Cell: this.cellWrap,
                         sortMethod: sortIp,
                     }, {
                         Header: <Trans>dhcp_table_hostname</Trans>,
                         accessor: 'hostname',
+                        minWidth: 230,
                         Cell: this.cellWrap,
                     }, {
                         Header: <Trans>dhcp_table_expires</Trans>,
                         accessor: 'expires',
+                        minWidth: 130,
                         Cell: this.cellWrap,
                     },
                 ]}

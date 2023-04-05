@@ -150,12 +150,18 @@ func (c *searchCriterion) ctFilteringStatusCase(
 	switch c.value {
 	case filteringStatusAll:
 		return true
+	case filteringStatusFiltered:
+		return isFiltered || reason.In(
+			filtering.NotFilteredAllowList,
+			filtering.Rewritten,
+			filtering.RewrittenAutoHosts,
+			filtering.RewrittenRule,
+		)
 	case
 		filteringStatusBlocked,
 		filteringStatusBlockedParental,
 		filteringStatusBlockedSafebrowsing,
 		filteringStatusBlockedService,
-		filteringStatusFiltered,
 		filteringStatusSafeSearch:
 		return isFiltered && c.isFilteredWithReason(reason)
 	case filteringStatusWhitelisted:
@@ -184,7 +190,6 @@ func (c *searchCriterion) ctFilteringStatusCase(
 //   - filteringStatusBlockedParental
 //   - filteringStatusBlockedSafebrowsing
 //   - filteringStatusBlockedService
-//   - filteringStatusFiltered
 //   - filteringStatusSafeSearch
 func (c *searchCriterion) isFilteredWithReason(reason filtering.Reason) (matched bool) {
 	switch c.value {
@@ -196,13 +201,6 @@ func (c *searchCriterion) isFilteredWithReason(reason filtering.Reason) (matched
 		return reason == filtering.FilteredSafeBrowsing
 	case filteringStatusBlockedService:
 		return reason == filtering.FilteredBlockedService
-	case filteringStatusFiltered:
-		return reason.In(
-			filtering.NotFilteredAllowList,
-			filtering.Rewritten,
-			filtering.RewrittenAutoHosts,
-			filtering.RewrittenRule,
-		)
 	case filteringStatusSafeSearch:
 		return reason == filtering.FilteredSafeSearch
 	default:

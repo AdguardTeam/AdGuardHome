@@ -25,6 +25,33 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 
 
+## [v0.107.27] - 2023-04-05
+
+See also the [v0.107.27 GitHub milestone][ms-v0.107.27].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2023-24534, CVE-2023-24536, CVE-2023-24537, and CVE-2023-24538 Go
+  vulnerabilities fixed in [Go 1.19.8][go-1.19.8].
+
+### Fixed
+
+- Query log not showing all filtered queries when the “Filtered” log filter is
+  selected ([#5639]).
+- Panic in empty hostname in the filter's URL ([#5631]).
+- Panic caused by empty top-level domain name label in `/etc/hosts` files
+  ([#5584]).
+
+[#5584]: https://github.com/AdguardTeam/AdGuardHome/issues/5584
+[#5631]: https://github.com/AdguardTeam/AdGuardHome/issues/5631
+[#5639]: https://github.com/AdguardTeam/AdGuardHome/issues/5639
+
+[go-1.19.8]:    https://groups.google.com/g/golang-announce/c/Xdv6JL9ENs8/m/OV40vnafAwAJ
+[ms-v0.107.27]: https://github.com/AdguardTeam/AdGuardHome/milestone/63?closed=1
+
+
+
 ## [v0.107.26] - 2023-03-09
 
 See also the [v0.107.26 GitHub milestone][ms-v0.107.26].
