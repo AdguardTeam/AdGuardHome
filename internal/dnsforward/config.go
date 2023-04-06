@@ -587,11 +587,11 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
 	if s.conf.StrictSNICheck {
 		if len(cert.DNSNames) != 0 {
 			s.conf.dnsNames = cert.DNSNames
-			log.Debug("dnsforward: using certificate's SAN as DNS names: %v", cert.DNSNames)
+			log.Debug("dns: using certificate's SAN as DNS names: %v", cert.DNSNames)
 			slices.Sort(s.conf.dnsNames)
 		} else {
 			s.conf.dnsNames = append(s.conf.dnsNames, cert.Subject.CommonName)
-			log.Debug("dnsforward: using certificate's CN as DNS name: %s", cert.Subject.CommonName)
+			log.Debug("dns: using certificate's CN as DNS name: %s", cert.Subject.CommonName)
 		}
 	}
 
@@ -649,16 +649,8 @@ func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, er
 // UpdatedProtectionStatus updates protection state, if the protection was
 // disabled temporarily.  Returns the updated state of protection.
 func (s *Server) UpdatedProtectionStatus() (enabled bool) {
-	changed := false
-	defer func() {
-		if changed {
-			log.Info("dns: protection is restarted after pause")
-			s.conf.ConfigModified()
-		}
-	}()
-
-	s.serverLock.Lock()
-	defer s.serverLock.Unlock()
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
 
 	disabledUntil := s.conf.ProtectionDisabledUntil
 	if disabledUntil == nil {
@@ -669,9 +661,33 @@ func (s *Server) UpdatedProtectionStatus() (enabled bool) {
 		return false
 	}
 
-	s.conf.ProtectionEnabled = true
-	s.conf.ProtectionDisabledUntil = nil
-	changed = true
+	// Update the values in a separate goroutine, unless an update is already in
+	// progress.  Since this method is called very often, and this update is a
+	// relatively rare situation, do not lock s.serverLock for writing, as that
+	// can lead to freezes.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/5661.
+	if s.protectionUpdateInProgress.CompareAndSwap(false, true) {
+		go s.enableProtectionAfterPause()
+	}
 
 	return true
+}
+
+// enableProtectionAfterPause sets the protection configuration to enabled
+// values.  It is intended to be used as a goroutine.
+func (s *Server) enableProtectionAfterPause() {
+	defer log.OnPanic("dns: enabling protection after pause")
+
+	defer s.protectionUpdateInProgress.Store(false)
+
+	defer s.conf.ConfigModified()
+
+	s.serverLock.Lock()
+	defer s.serverLock.Unlock()
+
+	s.conf.ProtectionEnabled = true
+	s.conf.ProtectionDisabledUntil = nil
+
+	log.Info("dns: protection is restarted after pause")
 }
