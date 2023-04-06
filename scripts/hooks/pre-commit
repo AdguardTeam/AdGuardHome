@@ -90,7 +90,7 @@ then
 	make VERBOSE="$verbose" go-os-check go-lint go-test
 fi
 
-if [ "$( git diff --cached --name-only -- '*.md' '*.yaml' '*.yml' )" ]
+if [ "$( git diff --cached --name-only -- '*.md' '*.txt' '*.yaml' '*.yml' )" ]
 then
 	make VERBOSE="$verbose" txt-lint
 fi
