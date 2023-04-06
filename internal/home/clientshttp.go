@@ -49,8 +49,8 @@ type clientJSON struct {
 type runtimeClientJSON struct {
 	WHOISInfo *RuntimeClientWHOISInfo `json:"whois_info"`
 
-	Name   string       `json:"name"`
 	IP     netip.Addr   `json:"ip"`
+	Name   string       `json:"name"`
 	Source clientSource `json:"source"`
 }
 
@@ -90,14 +90,16 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 }
 
 // jsonToClient converts JSON object to Client object.
-func jsonToClient(cj clientJSON) (c *Client) {
+func (clients *clientsContainer) jsonToClient(cj clientJSON) (c *Client, err error) {
 	var safeSearchConf filtering.SafeSearchConfig
 	if cj.SafeSearchConf != nil {
 		safeSearchConf = *cj.SafeSearchConf
 	} else {
 		// TODO(d.kolyshev): Remove after cleaning the deprecated
 		// [clientJSON.SafeSearchEnabled] field.
-		safeSearchConf = filtering.SafeSearchConfig{Enabled: cj.SafeSearchEnabled}
+		safeSearchConf = filtering.SafeSearchConfig{
+			Enabled: cj.SafeSearchEnabled,
+		}
 
 		// Set default service flags for enabled safesearch.
 		if safeSearchConf.Enabled {
@@ -110,20 +112,35 @@ func jsonToClient(cj clientJSON) (c *Client) {
 		}
 	}
 
-	return &Client{
-		Name:                  cj.Name,
-		IDs:                   cj.IDs,
-		Tags:                  cj.Tags,
+	c = &Client{
+		safeSearchConf: safeSearchConf,
+
+		Name: cj.Name,
+
+		IDs:             cj.IDs,
+		Tags:            cj.Tags,
+		BlockedServices: cj.BlockedServices,
+		Upstreams:       cj.Upstreams,
+
 		UseOwnSettings:        !cj.UseGlobalSettings,
 		FilteringEnabled:      cj.FilteringEnabled,
 		ParentalEnabled:       cj.ParentalEnabled,
 		SafeBrowsingEnabled:   cj.SafeBrowsingEnabled,
-		safeSearchConf:        safeSearchConf,
 		UseOwnBlockedServices: !cj.UseGlobalBlockedServices,
-		BlockedServices:       cj.BlockedServices,
-
-		Upstreams: cj.Upstreams,
 	}
+
+	if safeSearchConf.Enabled {
+		err = c.setSafeSearch(
+			safeSearchConf,
+			clients.safeSearchCacheSize,
+			clients.safeSearchCacheTTL,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("creating safesearch for client %q: %w", c.Name, err)
+		}
+	}
+
+	return c, nil
 }
 
 // clientToJSON converts Client object to JSON.
@@ -161,7 +178,13 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	c := jsonToClient(cj)
+	c, err := clients.jsonToClient(cj)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+
+		return
+	}
+
 	ok, err := clients.Add(c)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
@@ -224,7 +247,13 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 		return
 	}
 
-	c := jsonToClient(dj.Data)
+	c, err := clients.jsonToClient(dj.Data)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+
+		return
+	}
+
 	err = clients.Update(dj.Name, c)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)

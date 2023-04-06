@@ -13,7 +13,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -55,6 +54,14 @@ type clientsContainer struct {
 	// more detail.
 	lock sync.Mutex
 
+	// safeSearchCacheSize is the size of the safe search cache to use for
+	// persistent clients.
+	safeSearchCacheSize uint
+
+	// safeSearchCacheTTL is the TTL of the safe search cache to use for
+	// persistent clients.
+	safeSearchCacheTTL time.Duration
+
 	// testing is a flag that disables some features for internal tests.
 	//
 	// TODO(a.garipov): Awful.  Remove.
@@ -74,6 +81,7 @@ func (clients *clientsContainer) Init(
 	if clients.list != nil {
 		log.Fatal("clients.list != nil")
 	}
+
 	clients.list = make(map[string]*Client)
 	clients.idIndex = make(map[string]*Client)
 	clients.ipToRC = map[netip.Addr]*RuntimeClient{}
@@ -84,6 +92,9 @@ func (clients *clientsContainer) Init(
 	clients.etcHosts = etcHosts
 	clients.arpdb = arpdb
 	clients.addFromConfig(objects, filteringConf)
+
+	clients.safeSearchCacheSize = filteringConf.SafeSearchCacheSize
+	clients.safeSearchCacheTTL = time.Minute * time.Duration(filteringConf.CacheTime)
 
 	if clients.testing {
 		return
@@ -171,18 +182,16 @@ func (clients *clientsContainer) addFromConfig(objects []*clientObject, filterin
 		if o.SafeSearchConf.Enabled {
 			o.SafeSearchConf.CustomResolver = safeSearchResolver{}
 
-			ss, err := safesearch.NewDefaultSafeSearch(
+			err := cli.setSafeSearch(
 				o.SafeSearchConf,
 				filteringConf.SafeSearchCacheSize,
 				time.Minute*time.Duration(filteringConf.CacheTime),
 			)
 			if err != nil {
-				log.Error("clients: init client safesearch %s: %s", cli.Name, err)
+				log.Error("clients: init client safesearch %q: %s", cli.Name, err)
 
 				continue
 			}
-
-			cli.SafeSearch = ss
 		}
 
 		for _, s := range o.BlockedServices {

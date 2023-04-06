@@ -1,17 +1,17 @@
 package filtering
 
-import (
-	"github.com/AdguardTeam/urlfilter/rules"
-	"github.com/miekg/dns"
-)
+import "github.com/miekg/dns"
 
 // SafeSearch interface describes a service for search engines hosts rewrites.
 type SafeSearch interface {
-	// SearchHost returns a replacement address for the search engine host.
-	SearchHost(host string, qtype uint16) (res *rules.DNSRewrite)
-
-	// CheckHost checks host with safe search engine.
+	// CheckHost checks host with safe search filter.  CheckHost must be safe
+	// for concurrent use.  qtype must be either [dns.TypeA] or [dns.TypeAAAA].
 	CheckHost(host string, qtype uint16) (res Result, err error)
+
+	// Update updates the configuration of the safe search filter.  Update must
+	// be safe for concurrent use.  An implementation of Update may ignore some
+	// fields, but it must document which.
+	Update(conf SafeSearchConfig) (err error)
 }
 
 // SafeSearchConfig is a struct with safe search related settings.
@@ -37,10 +37,12 @@ type SafeSearchConfig struct {
 // [hostChecker.check].
 func (d *DNSFilter) checkSafeSearch(
 	host string,
-	_ uint16,
+	qtype uint16,
 	setts *Settings,
 ) (res Result, err error) {
-	if !setts.ProtectionEnabled || !setts.SafeSearchEnabled {
+	if !setts.ProtectionEnabled ||
+		!setts.SafeSearchEnabled ||
+		(qtype != dns.TypeA && qtype != dns.TypeAAAA) {
 		return Result{}, nil
 	}
 
@@ -50,8 +52,8 @@ func (d *DNSFilter) checkSafeSearch(
 
 	clientSafeSearch := setts.ClientSafeSearch
 	if clientSafeSearch != nil {
-		return clientSafeSearch.CheckHost(host, dns.TypeA)
+		return clientSafeSearch.CheckHost(host, qtype)
 	}
 
-	return d.safeSearch.CheckHost(host, dns.TypeA)
+	return d.safeSearch.CheckHost(host, qtype)
 }

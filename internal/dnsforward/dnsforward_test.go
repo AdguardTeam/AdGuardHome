@@ -453,8 +453,9 @@ func TestSafeSearch(t *testing.T) {
 		SafeSearchCacheSize: 1000,
 		CacheTime:           30,
 	}
-	safeSearch, err := safesearch.NewDefaultSafeSearch(
+	safeSearch, err := safesearch.NewDefault(
 		safeSearchConf,
+		"",
 		filterConf.SafeSearchCacheSize,
 		time.Minute*time.Duration(filterConf.CacheTime),
 	)

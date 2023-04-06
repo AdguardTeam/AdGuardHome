@@ -545,6 +545,8 @@ var _ filtering.Resolver = safeSearchResolver{}
 
 // LookupIP implements [filtering.Resolver] interface for safeSearchResolver.
 // It returns the slice of net.IP with IPv4 and IPv6 instances.
+//
+// TODO(a.garipov): Support network.
 func (r safeSearchResolver) LookupIP(_ context.Context, _, host string) (ips []net.IP, err error) {
 	addrs, err := Context.dnsServer.Resolve(host)
 	if err != nil {

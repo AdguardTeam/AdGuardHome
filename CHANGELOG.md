@@ -25,6 +25,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- IPv6 support in Safe Search for some services.
 - The ability to make bootstrap DNS lookups prefer IPv6 addresses to IPv4 ones
   using the new `dns.bootstrap_prefer_ipv6` configuration file property
   ([#4262]).

@@ -297,8 +297,9 @@ func setupConfig(opts options) (err error) {
 	config.DNS.DnsfilterConf.HTTPClient = Context.client
 
 	config.DNS.DnsfilterConf.SafeSearchConf.CustomResolver = safeSearchResolver{}
-	config.DNS.DnsfilterConf.SafeSearch, err = safesearch.NewDefaultSafeSearch(
+	config.DNS.DnsfilterConf.SafeSearch, err = safesearch.NewDefault(
 		config.DNS.DnsfilterConf.SafeSearchConf,
+		"default",
 		config.DNS.DnsfilterConf.SafeSearchCacheSize,
 		time.Minute*time.Duration(config.DNS.DnsfilterConf.CacheTime),
 	)
@@ -869,8 +870,10 @@ func detectFirstRun() bool {
 // Connect to a remote server resolving hostname using our own DNS server.
 //
 // TODO(e.burkov): This messy logic should be decomposed and clarified.
+//
+// TODO(a.garipov): Support network.
 func customDialContext(ctx context.Context, network, addr string) (conn net.Conn, err error) {
-	log.Tracef("network:%v  addr:%v", network, addr)
+	log.Debug("home: customdial: dialing addr %q for network %s", addr, network)
 
 	host, port, err := net.SplitHostPort(addr)
 	if err != nil {

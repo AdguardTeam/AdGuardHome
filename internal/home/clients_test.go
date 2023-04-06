@@ -9,17 +9,27 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/testutil"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestClients(t *testing.T) {
-	clients := clientsContainer{}
-	clients.testing = true
+// newClientsContainer is a helper that creates a new clients container for
+// tests.
+func newClientsContainer() (c *clientsContainer) {
+	c = &clientsContainer{
+		testing: true,
+	}
 
-	clients.Init(nil, nil, nil, nil, nil)
+	c.Init(nil, nil, nil, nil, &filtering.Config{})
+
+	return c
+}
+
+func TestClients(t *testing.T) {
+	clients := newClientsContainer()
 
 	t.Run("add_success", func(t *testing.T) {
 		var (
@@ -198,10 +208,7 @@ func TestClients(t *testing.T) {
 }
 
 func TestClientsWHOIS(t *testing.T) {
-	clients := clientsContainer{
-		testing: true,
-	}
-	clients.Init(nil, nil, nil, nil, nil)
+	clients := newClientsContainer()
 	whois := &RuntimeClientWHOISInfo{
 		Country: "AU",
 		Orgname: "Example Org",
@@ -247,10 +254,7 @@ func TestClientsWHOIS(t *testing.T) {
 }
 
 func TestClientsAddExisting(t *testing.T) {
-	clients := clientsContainer{
-		testing: true,
-	}
-	clients.Init(nil, nil, nil, nil, nil)
+	clients := newClientsContainer()
 
 	t.Run("simple", func(t *testing.T) {
 		ip := netip.MustParseAddr("1.1.1.1")
@@ -325,10 +329,7 @@ func TestClientsAddExisting(t *testing.T) {
 }
 
 func TestClientsCustomUpstream(t *testing.T) {
-	clients := clientsContainer{
-		testing: true,
-	}
-	clients.Init(nil, nil, nil, nil, nil)
+	clients := newClientsContainer()
 
 	// Add client with upstreams.
 	ok, err := clients.Add(&Client{
