@@ -25,6 +25,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- Better profiling information when `debug_pprof` is set to `true`.
 - IPv6 support in Safe Search for some services.
 - The ability to make bootstrap DNS lookups prefer IPv6 addresses to IPv4 ones
   using the new `dns.bootstrap_prefer_ipv6` configuration file property

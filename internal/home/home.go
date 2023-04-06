@@ -9,7 +9,6 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
-	"net/http/pprof"
 	"net/netip"
 	"net/url"
 	"os"
@@ -470,26 +469,8 @@ func run(opts options, clientBuildFS fs.FS) {
 		fatalOnError(err)
 
 		if config.DebugPProf {
-			mux := http.NewServeMux()
-			mux.HandleFunc("/debug/pprof/", pprof.Index)
-			mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-			mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-			mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-			mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
-
-			// See profileSupportsDelta in src/net/http/pprof/pprof.go.
-			mux.Handle("/debug/pprof/allocs", pprof.Handler("allocs"))
-			mux.Handle("/debug/pprof/block", pprof.Handler("block"))
-			mux.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
-			mux.Handle("/debug/pprof/heap", pprof.Handler("heap"))
-			mux.Handle("/debug/pprof/mutex", pprof.Handler("mutex"))
-			mux.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
-
-			go func() {
-				log.Info("pprof: listening on localhost:6060")
-				lerr := http.ListenAndServe("localhost:6060", mux)
-				log.Error("Error while running the pprof server: %s", lerr)
-			}()
+			// TODO(a.garipov): Make the address configurable.
+			startPprof("localhost:6060")
 		}
 	}
 
