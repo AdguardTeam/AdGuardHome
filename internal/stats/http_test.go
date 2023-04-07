@@ -24,18 +24,19 @@ func TestHandleStatsConfig(t *testing.T) {
 	)
 
 	conf := Config{
-		UnitID:         func() (id uint32) { return 0 },
-		ConfigModified: func() {},
-		Filename:       filepath.Join(t.TempDir(), "stats.db"),
-		Limit:          time.Hour * 24,
-		Enabled:        true,
+		UnitID:            func() (id uint32) { return 0 },
+		ConfigModified:    func() {},
+		ShouldCountClient: func([]string) bool { return true },
+		Filename:          filepath.Join(t.TempDir(), "stats.db"),
+		Limit:             time.Hour * 24,
+		Enabled:           true,
 	}
 
 	testCases := []struct {
 		name     string
+		wantErr  string
 		body     getConfigResp
 		wantCode int
-		wantErr  string
 	}{{
 		name: "set_ivl_1_minIvl",
 		body: getConfigResp{

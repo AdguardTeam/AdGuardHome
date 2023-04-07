@@ -258,36 +258,52 @@ func TestQueryLogShouldLog(t *testing.T) {
 	)
 	set := stringutil.NewSet(ignored1, ignored2)
 
+	findClient := func(ids []string) (c *Client, err error) {
+		log := ids[0] == "no_log"
+
+		return &Client{IgnoreQueryLog: log}, nil
+	}
+
 	l, err := newQueryLog(Config{
 		Ignored:     set,
 		Enabled:     true,
 		RotationIvl: timeutil.Day,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
+		FindClient:  findClient,
 	})
 	require.NoError(t, err)
 
 	testCases := []struct {
 		name    string
 		host    string
+		ids     []string
 		wantLog bool
 	}{{
 		name:    "log",
 		host:    "example.com",
+		ids:     []string{"whatever"},
 		wantLog: true,
 	}, {
 		name:    "no_log_ignored_1",
 		host:    ignored1,
+		ids:     []string{"whatever"},
 		wantLog: false,
 	}, {
 		name:    "no_log_ignored_2",
 		host:    ignored2,
+		ids:     []string{"whatever"},
+		wantLog: false,
+	}, {
+		name:    "no_log_client_ignore",
+		host:    "example.com",
+		ids:     []string{"no_log"},
 		wantLog: false,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			res := l.ShouldLog(tc.host, dns.TypeA, dns.ClassINET)
+			res := l.ShouldLog(tc.host, dns.TypeA, dns.ClassINET, tc.ids)
 
 			assert.Equal(t, tc.wantLog, res)
 		})

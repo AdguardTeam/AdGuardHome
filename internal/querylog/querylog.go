@@ -29,7 +29,7 @@ type QueryLog interface {
 	WriteDiskConfig(c *Config)
 
 	// ShouldLog returns true if request for the host should be logged.
-	ShouldLog(host string, qType, qClass uint16) bool
+	ShouldLog(host string, qType, qClass uint16, ids []string) bool
 }
 
 // Config is the query log configuration structure.

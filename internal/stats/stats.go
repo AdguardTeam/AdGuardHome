@@ -52,6 +52,9 @@ type Config struct {
 	// interface.
 	ConfigModified func()
 
+	// ShouldCountClient returns client's ignore setting.
+	ShouldCountClient func([]string) bool
+
 	// HTTPRegister is the function that registers handlers for the stats
 	// endpoints.
 	HTTPRegister aghhttp.RegisterFunc
@@ -87,7 +90,7 @@ type Interface interface {
 	WriteDiskConfig(dc *Config)
 
 	// ShouldCount returns true if request for the host should be counted.
-	ShouldCount(host string, qType, qClass uint16) bool
+	ShouldCount(host string, qType, qClass uint16, ids []string) bool
 }
 
 // StatsCtx collects the statistics and flushes it to the database.  Its default
@@ -118,6 +121,9 @@ type StatsCtx struct {
 	// ignored is the list of host names, which should not be counted.
 	ignored *stringutil.Set
 
+	// shouldCountClient returns client's ignore setting.
+	shouldCountClient func([]string) bool
+
 	// filename is the name of database file.
 	filename string
 
@@ -138,16 +144,21 @@ func New(conf Config) (s *StatsCtx, err error) {
 		return nil, fmt.Errorf("unsupported interval: %w", err)
 	}
 
+	if conf.ShouldCountClient == nil {
+		return nil, errors.Error("should count client is unspecified")
+	}
+
 	s = &StatsCtx{
 		currMu:         &sync.RWMutex{},
 		httpRegister:   conf.HTTPRegister,
 		configModified: conf.ConfigModified,
 		filename:       conf.Filename,
 
-		confMu:  &sync.RWMutex{},
-		ignored: conf.Ignored,
-		limit:   conf.Limit,
-		enabled: conf.Enabled,
+		confMu:            &sync.RWMutex{},
+		ignored:           conf.Ignored,
+		shouldCountClient: conf.ShouldCountClient,
+		limit:             conf.Limit,
+		enabled:           conf.Enabled,
 	}
 
 	if s.unitIDGen = newUnitID; conf.UnitID != nil {
@@ -577,9 +588,13 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, firstID uint32) {
 }
 
 // ShouldCount returns true if request for the host should be counted.
-func (s *StatsCtx) ShouldCount(host string, _, _ uint16) bool {
+func (s *StatsCtx) ShouldCount(host string, _, _ uint16, ids []string) bool {
 	s.confMu.RLock()
 	defer s.confMu.RUnlock()
+
+	if !s.shouldCountClient(ids) {
+		return false
+	}
 
 	return !s.isIgnored(host)
 }

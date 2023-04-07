@@ -51,11 +51,12 @@ func initDNS() (err error) {
 	anonymizer := config.anonymizer()
 
 	statsConf := stats.Config{
-		Filename:       filepath.Join(baseDir, "stats.db"),
-		Limit:          config.Stats.Interval.Duration,
-		ConfigModified: onConfigModified,
-		HTTPRegister:   httpRegister,
-		Enabled:        config.Stats.Enabled,
+		Filename:          filepath.Join(baseDir, "stats.db"),
+		Limit:             config.Stats.Interval.Duration,
+		ConfigModified:    onConfigModified,
+		HTTPRegister:      httpRegister,
+		Enabled:           config.Stats.Enabled,
+		ShouldCountClient: Context.clients.shouldCountClient,
 	}
 
 	set, err := aghnet.NewDomainNameSet(config.Stats.Ignored)

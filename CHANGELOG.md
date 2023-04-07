@@ -25,6 +25,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- The ability to exclude client activity from the query log or statistics by
+  using the new properties `ignore_querylog` and `ignore_statistics` of the
+  items of the `clients.persistent` array ([#1717], [#4299]).  The UI changes
+  are coming in the upcoming releases.
 - Better profiling information when `debug_pprof` is set to `true`.
 - IPv6 support in Safe Search for some services.
 - The ability to make bootstrap DNS lookups prefer IPv6 addresses to IPv4 ones
@@ -131,10 +135,12 @@ In this release, the schema version has changed from 17 to 20.
 
 [#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1163
 [#1333]: https://github.com/AdguardTeam/AdGuardHome/issues/1333
+[#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1717
 [#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
 [#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/3290
 [#3459]: https://github.com/AdguardTeam/AdGuardHome/issues/3459
 [#4262]: https://github.com/AdguardTeam/AdGuardHome/issues/4262
+[#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/4299
 [#5567]: https://github.com/AdguardTeam/AdGuardHome/issues/5567
 
 [rfc6761]:   https://www.rfc-editor.org/rfc/rfc6761

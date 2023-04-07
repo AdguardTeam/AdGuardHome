@@ -22,7 +22,7 @@ import (
 // To transfer information between modules
 //
 // TODO(s.chzhen):  Add lowercased, non-FQDN version of the hostname from the
-// question of the request.
+// question of the request.  Add persistent client.
 type dnsContext struct {
 	proxyCtx *proxy.DNSContext
 

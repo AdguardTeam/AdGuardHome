@@ -247,9 +247,18 @@ func (l *queryLog) Add(params *AddParams) {
 }
 
 // ShouldLog returns true if request for the host should be logged.
-func (l *queryLog) ShouldLog(host string, _, _ uint16) bool {
+func (l *queryLog) ShouldLog(host string, _, _ uint16, ids []string) bool {
 	l.confMu.RLock()
 	defer l.confMu.RUnlock()
+
+	c, err := l.findClient(ids)
+	if err != nil {
+		log.Error("querylog: finding client: %s", err)
+	}
+
+	if c != nil && c.IgnoreQueryLog {
+		return false
+	}
 
 	return !l.isIgnored(host)
 }

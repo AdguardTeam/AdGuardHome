@@ -33,6 +33,8 @@ type Client struct {
 	SafeBrowsingEnabled   bool
 	ParentalEnabled       bool
 	UseOwnBlockedServices bool
+	IgnoreQueryLog        bool
+	IgnoreStatistics      bool
 }
 
 // closeUpstreams closes the client-specific upstream config of c if any.

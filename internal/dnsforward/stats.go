@@ -40,12 +40,17 @@ func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
 
 	log.Debug("client ip: %s", ip)
 
+	ipStr := ip.String()
+	ids := []string{ipStr, dctx.clientID}
+
 	// Synchronize access to s.queryLog and s.stats so they won't be suddenly
 	// uninitialized while in use.  This can happen after proxy server has been
 	// stopped, but its workers haven't yet exited.
 	if shouldLog &&
 		s.queryLog != nil &&
-		s.queryLog.ShouldLog(host, q.Qtype, q.Qclass) {
+		// TODO(s.chzhen):  Use dnsforward.dnsContext when it will start
+		// containing persistent client.
+		s.queryLog.ShouldLog(host, q.Qtype, q.Qclass, ids) {
 		s.logQuery(dctx, pctx, elapsed, ip)
 	} else {
 		log.Debug(
@@ -56,8 +61,11 @@ func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
 		)
 	}
 
-	if s.stats != nil && s.stats.ShouldCount(host, q.Qtype, q.Qclass) {
-		s.updateStats(dctx, elapsed, *dctx.result, ip)
+	if s.stats != nil &&
+		// TODO(s.chzhen):  Use dnsforward.dnsContext when it will start
+		// containing persistent client.
+		s.stats.ShouldCount(host, q.Qtype, q.Qclass, ids) {
+		s.updateStats(dctx, elapsed, *dctx.result, ipStr)
 	}
 
 	return resultCodeSuccess
@@ -110,7 +118,7 @@ func (s *Server) updateStats(
 	ctx *dnsContext,
 	elapsed time.Duration,
 	res filtering.Result,
-	clientIP net.IP,
+	clientIP string,
 ) {
 	pctx := ctx.proxyCtx
 	e := stats.Entry{}
@@ -119,8 +127,8 @@ func (s *Server) updateStats(
 
 	if clientID := ctx.clientID; clientID != "" {
 		e.Client = clientID
-	} else if clientIP != nil {
-		e.Client = clientIP.String()
+	} else {
+		e.Client = clientIP
 	}
 
 	e.Time = uint32(elapsed / 1000)

@@ -31,7 +31,7 @@ func (l *testQueryLog) Add(p *querylog.AddParams) {
 }
 
 // ShouldLog implements the [querylog.QueryLog] interface for *testQueryLog.
-func (l *testQueryLog) ShouldLog(string, uint16, uint16) bool {
+func (l *testQueryLog) ShouldLog(string, uint16, uint16, []string) bool {
 	return true
 }
 
@@ -50,7 +50,7 @@ func (l *testStats) Update(e stats.Entry) {
 }
 
 // ShouldCount implements the [stats.Interface] interface for *testStats.
-func (l *testStats) ShouldCount(string, uint16, uint16) bool {
+func (l *testStats) ShouldCount(string, uint16, uint16, []string) bool {
 	return true
 }
 

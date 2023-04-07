@@ -51,7 +51,7 @@ type clientsContainer struct {
 	// lock protects all fields.
 	//
 	// TODO(a.garipov): Use a pointer and describe which fields are protected in
-	// more detail.
+	// more detail.  Use sync.RWMutex.
 	lock sync.Mutex
 
 	// safeSearchCacheSize is the size of the safe search cache to use for
@@ -159,6 +159,9 @@ type clientObject struct {
 	ParentalEnabled          bool `yaml:"parental_enabled"`
 	SafeBrowsingEnabled      bool `yaml:"safebrowsing_enabled"`
 	UseGlobalBlockedServices bool `yaml:"use_global_blocked_services"`
+
+	IgnoreQueryLog   bool `yaml:"ignore_querylog"`
+	IgnoreStatistics bool `yaml:"ignore_statistics"`
 }
 
 // addFromConfig initializes the clients container with objects from the
@@ -177,6 +180,8 @@ func (clients *clientsContainer) addFromConfig(objects []*clientObject, filterin
 			safeSearchConf:        o.SafeSearchConf,
 			SafeBrowsingEnabled:   o.SafeBrowsingEnabled,
 			UseOwnBlockedServices: !o.UseGlobalBlockedServices,
+			IgnoreQueryLog:        o.IgnoreQueryLog,
+			IgnoreStatistics:      o.IgnoreStatistics,
 		}
 
 		if o.SafeSearchConf.Enabled {
@@ -241,6 +246,8 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 			SafeSearchConf:           cli.safeSearchConf,
 			SafeBrowsingEnabled:      cli.SafeBrowsingEnabled,
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
+			IgnoreQueryLog:           cli.IgnoreQueryLog,
+			IgnoreStatistics:         cli.IgnoreStatistics,
 		}
 
 		objs = append(objs, o)
@@ -352,7 +359,8 @@ func (clients *clientsContainer) clientOrArtificial(
 	client, ok := clients.Find(id)
 	if ok {
 		return &querylog.Client{
-			Name: client.Name,
+			Name:           client.Name,
+			IgnoreQueryLog: client.IgnoreQueryLog,
 		}, false
 	}
 
@@ -385,6 +393,20 @@ func (clients *clientsContainer) Find(id string) (c *Client, ok bool) {
 	c.Upstreams = stringutil.CloneSlice(c.Upstreams)
 
 	return c, true
+}
+
+// shouldCountClient is a wrapper around Find to make it a valid client
+// information finder for the statistics.  If no information about the client
+// is found, it returns true.
+func (clients *clientsContainer) shouldCountClient(ids []string) (y bool) {
+	for _, id := range ids {
+		client, ok := clients.Find(id)
+		if ok {
+			return !client.IgnoreStatistics
+		}
+	}
+
+	return true
 }
 
 // findUpstreams returns upstreams configured for the client, identified either
