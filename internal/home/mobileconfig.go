@@ -11,6 +11,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/google/uuid"
 	"howett.net/plist"
@@ -170,7 +171,7 @@ func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/xml")
+	w.Header().Set(httphdr.ContentType, "application/xml")
 
 	const (
 		dohContDisp = `attachment; filename=doh.mobileconfig`
@@ -182,7 +183,7 @@ func handleMobileConfig(w http.ResponseWriter, r *http.Request, dnsp string) {
 		contDisp = dotContDisp
 	}
 
-	w.Header().Set("Content-Disposition", contDisp)
+	w.Header().Set(httphdr.ContentDisposition, contDisp)
 
 	_, _ = w.Write(mobileconfig)
 }

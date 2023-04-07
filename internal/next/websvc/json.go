@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -99,8 +100,8 @@ func writeJSONOKResponse(w http.ResponseWriter, r *http.Request, v any) {
 func writeJSONResponse(w http.ResponseWriter, r *http.Request, v any, code int) {
 	// TODO(a.garipov): Put some of these to a middleware.
 	h := w.Header()
-	h.Set(aghhttp.HdrNameContentType, aghhttp.HdrValApplicationJSON)
-	h.Set(aghhttp.HdrNameServer, aghhttp.UserAgent())
+	h.Set(httphdr.ContentType, aghhttp.HdrValApplicationJSON)
+	h.Set(httphdr.Server, aghhttp.UserAgent())
 
 	w.WriteHeader(code)
 

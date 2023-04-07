@@ -13,6 +13,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/NYTimes/gziphandler"
@@ -229,7 +230,7 @@ func modifiesData(m string) (ok bool) {
 func ensureContentType(w http.ResponseWriter, r *http.Request) (ok bool) {
 	const statusUnsup = http.StatusUnsupportedMediaType
 
-	cType := r.Header.Get(aghhttp.HdrNameContentType)
+	cType := r.Header.Get(httphdr.ContentType)
 	if r.ContentLength == 0 {
 		if cType == "" {
 			return true
@@ -337,7 +338,7 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 	// default is 24 hours.
 	if serveHTTP3 {
 		altSvc := fmt.Sprintf(`h3=":%d"`, portHTTPS)
-		respHdr.Set(aghhttp.HdrNameAltSvc, altSvc)
+		respHdr.Set(httphdr.AltSvc, altSvc)
 	}
 
 	if r.TLS == nil && web.forceHTTPS {
@@ -367,8 +368,8 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		Host:   r.Host,
 	}
 
-	respHdr.Set(aghhttp.HdrNameAccessControlAllowOrigin, originURL.String())
-	respHdr.Set(aghhttp.HdrNameVary, aghhttp.HdrNameOrigin)
+	respHdr.Set(httphdr.AccessControlAllowOrigin, originURL.String())
+	respHdr.Set(httphdr.Vary, httphdr.Origin)
 
 	return true
 }

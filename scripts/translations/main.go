@@ -20,9 +20,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
@@ -491,10 +493,10 @@ func prepareMultipartMsg(
 	}()
 
 	h := make(textproto.MIMEHeader)
-	h.Set("Content-Type", "application/json")
+	h.Set(httphdr.ContentType, aghhttp.HdrValApplicationJSON)
 
 	d := fmt.Sprintf("form-data; name=%q; filename=%q", "file", defaultBaseFile)
-	h.Set("Content-Disposition", d)
+	h.Set(httphdr.ContentDisposition, d)
 
 	fw, err = w.CreatePart(h)
 	if err != nil {
@@ -523,7 +525,7 @@ func send(uriStr, cType string, buf *bytes.Buffer) (err error) {
 		return fmt.Errorf("bad request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", cType)
+	req.Header.Set(httphdr.ContentType, cType)
 
 	resp, err := client.Do(req)
 	if err != nil {

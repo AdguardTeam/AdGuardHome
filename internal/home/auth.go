@@ -16,6 +16,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -379,9 +380,9 @@ func (a *Auth) newCookie(req loginJSON, addr string) (c *http.Cookie, err error)
 // TODO(a.garipov): Support header Forwarded from RFC 7329.
 func realIP(r *http.Request) (ip net.IP, err error) {
 	proxyHeaders := []string{
-		"CF-Connecting-IP",
-		"True-Client-IP",
-		"X-Real-IP",
+		httphdr.CFConnectingIP,
+		httphdr.TrueClientIP,
+		httphdr.XRealIP,
 	}
 
 	for _, h := range proxyHeaders {
@@ -394,7 +395,7 @@ func realIP(r *http.Request) (ip net.IP, err error) {
 
 	// If none of the above yielded any results, get the leftmost IP address
 	// from the X-Forwarded-For header.
-	s := r.Header.Get("X-Forwarded-For")
+	s := r.Header.Get(httphdr.XForwardedFor)
 	ipStrs := strings.SplitN(s, ", ", 2)
 	ip = net.ParseIP(ipStrs[0])
 	if ip != nil {
@@ -435,7 +436,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	if rateLimiter := Context.auth.raleLimiter; rateLimiter != nil {
 		if left := rateLimiter.check(remoteAddr); left > 0 {
-			w.Header().Set("Retry-After", strconv.Itoa(int(left.Seconds())))
+			w.Header().Set(httphdr.RetryAfter, strconv.Itoa(int(left.Seconds())))
 			aghhttp.Error(r, w, http.StatusTooManyRequests, "auth: blocked for %s", left)
 
 			return
@@ -463,9 +464,9 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookie)
 
 	h := w.Header()
-	h.Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
-	h.Set("Pragma", "no-cache")
-	h.Set("Expires", "0")
+	h.Set(httphdr.CacheControl, "no-store, no-cache, must-revalidate, proxy-revalidate")
+	h.Set(httphdr.Pragma, "no-cache")
+	h.Set(httphdr.Expires, "0")
 
 	aghhttp.OK(w)
 }
@@ -476,7 +477,7 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// The only error that is returned from r.Cookie is [http.ErrNoCookie].
 		// The user is already logged out.
-		respHdr.Set("Location", "/login.html")
+		respHdr.Set(httphdr.Location, "/login.html")
 		w.WriteHeader(http.StatusFound)
 
 		return
@@ -494,8 +495,8 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	respHdr.Set("Location", "/login.html")
-	respHdr.Set("Set-Cookie", c.String())
+	respHdr.Set(httphdr.Location, "/login.html")
+	respHdr.Set(httphdr.SetCookie, c.String())
 	w.WriteHeader(http.StatusFound)
 }
 
@@ -543,7 +544,7 @@ func optionalAuthThird(w http.ResponseWriter, r *http.Request) (mustAuth bool) {
 			log.Debug("auth: redirected to login page by GL-Inet submodule")
 		} else {
 			log.Debug("auth: redirected to login page")
-			w.Header().Set("Location", "/login.html")
+			w.Header().Set(httphdr.Location, "/login.html")
 			w.WriteHeader(http.StatusFound)
 		}
 	} else {
@@ -569,7 +570,7 @@ func optionalAuth(
 				// Redirect to the dashboard if already authenticated.
 				res := Context.auth.checkSession(cookie.Value)
 				if res == checkSessionOK {
-					w.Header().Set("Location", "/")
+					w.Header().Set(httphdr.Location, "/")
 					w.WriteHeader(http.StatusFound)
 
 					return
