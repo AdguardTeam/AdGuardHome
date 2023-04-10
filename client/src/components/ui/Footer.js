@@ -33,14 +33,18 @@ const Footer = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
 
-    const currentTheme = useSelector((state) => (state.dashboard ? state.dashboard.theme : 'auto'));
-    const profileName = useSelector((state) => (state.dashboard ? state.dashboard.name : ''));
+    const currentTheme = useSelector((state) => (
+        state.dashboard ? state.dashboard.theme : THEMES.auto
+    ));
+    const profileName = useSelector((state) => (
+        state.dashboard ? state.dashboard.name : ''
+    ));
     const isLoggedIn = profileName !== '';
-    const [currentThemeLocal, setCurrentThemeLocal] = useState('auto');
+    const [currentThemeLocal, setCurrentThemeLocal] = useState(THEMES.auto);
 
     useEffect(() => {
         if (!isLoggedIn) {
-            setUITheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? THEMES.dark : THEMES.light);
+            setUITheme(currentThemeLocal);
         }
     }, []);
 

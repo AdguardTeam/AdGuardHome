@@ -25,6 +25,7 @@ import {
     STANDARD_HTTPS_PORT,
     STANDARD_WEB_PORT,
     SPECIAL_FILTER_ID,
+    THEMES,
 } from './constants';
 
 /**
@@ -684,7 +685,14 @@ export const setHtmlLangAttr = (language) => {
  * @param theme
  */
 export const setUITheme = (theme) => {
-    document.body.dataset.theme = theme;
+    let currentTheme = theme;
+
+    if (currentTheme === THEMES.auto) {
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        currentTheme = prefersDark ? THEMES.dark : THEMES.light;
+    }
+
+    document.body.dataset.theme = currentTheme;
 };
 
 /**
