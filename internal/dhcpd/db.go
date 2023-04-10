@@ -71,16 +71,17 @@ func (s *server) dbLoad() (err error) {
 			IP:       ip,
 			Hostname: obj[i].Hostname,
 			Expiry:   time.Unix(obj[i].Expiry, 0),
+			IsStatic: obj[i].Expiry == leaseExpireStatic,
 		}
 
 		if len(obj[i].IP) == 16 {
-			if obj[i].Expiry == leaseExpireStatic {
+			if lease.IsStatic {
 				v6StaticLeases = append(v6StaticLeases, &lease)
 			} else {
 				v6DynLeases = append(v6DynLeases, &lease)
 			}
 		} else {
-			if obj[i].Expiry == leaseExpireStatic {
+			if lease.IsStatic {
 				staticLeases = append(staticLeases, &lease)
 			} else {
 				dynLeases = append(dynLeases, &lease)

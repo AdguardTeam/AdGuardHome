@@ -331,6 +331,7 @@ func TestV6_FindMACbyIP(t *testing.T) {
 			Hostname: staticName,
 			HWAddr:   staticMAC,
 			IP:       staticIP,
+			IsStatic: true,
 		}, {
 			Expiry:   time.Unix(10, 0),
 			Hostname: anotherName,
@@ -344,6 +345,7 @@ func TestV6_FindMACbyIP(t *testing.T) {
 		Hostname: staticName,
 		HWAddr:   staticMAC,
 		IP:       staticIP,
+		IsStatic: true,
 	}, {
 		Expiry:   time.Unix(10, 0),
 		Hostname: anotherName,

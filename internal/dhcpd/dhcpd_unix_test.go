@@ -80,7 +80,7 @@ func TestDB(t *testing.T) {
 
 	assert.Equal(t, leases[1].HWAddr, ll[0].HWAddr)
 	assert.Equal(t, leases[1].IP, ll[0].IP)
-	assert.True(t, ll[0].IsStatic())
+	assert.True(t, ll[0].IsStatic)
 
 	assert.Equal(t, leases[0].HWAddr, ll[1].HWAddr)
 	assert.Equal(t, leases[0].IP, ll[1].IP)

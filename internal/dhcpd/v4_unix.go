@@ -128,7 +128,7 @@ func (s *v4Server) ResetLeases(leases []*Lease) (err error) {
 	s.leases = nil
 
 	for _, l := range leases {
-		if !l.IsStatic() {
+		if !l.IsStatic {
 			l.Hostname = s.validHostnameForClient(l.Hostname, l.IP)
 		}
 		err = s.addLease(l)
@@ -190,7 +190,7 @@ func (s *v4Server) GetLeases(flags GetLeasesFlags) (leases []*Lease) {
 			continue
 		}
 
-		if getStatic && l.IsStatic() {
+		if getStatic && l.IsStatic {
 			leases = append(leases, l.Clone())
 		}
 	}
@@ -211,7 +211,7 @@ func (s *v4Server) FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr) {
 
 	for _, l := range s.leases {
 		if l.IP == ip {
-			if l.Expiry.After(now) || l.IsStatic() {
+			if l.IsStatic || l.Expiry.After(now) {
 				return l.HWAddr
 			}
 		}
@@ -259,7 +259,7 @@ func (s *v4Server) rmLeaseByIndex(i int) {
 // Return error if a static lease is found
 func (s *v4Server) rmDynamicLease(lease *Lease) (err error) {
 	for i, l := range s.leases {
-		isStatic := l.IsStatic()
+		isStatic := l.IsStatic
 
 		if bytes.Equal(l.HWAddr, lease.HWAddr) || l.IP == lease.IP {
 			if isStatic {
@@ -292,7 +292,7 @@ func (s *v4Server) addLease(l *Lease) (err error) {
 	leaseIP := net.IP(l.IP.AsSlice())
 	offset, inOffset := r.offset(leaseIP)
 
-	if l.IsStatic() {
+	if l.IsStatic {
 		// TODO(a.garipov, d.seregin): Subnet can be nil when dhcp server is
 		// disabled.
 		if sn := s.conf.subnet; !sn.Contains(l.IP) {
@@ -359,6 +359,7 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 	}
 
 	l.Expiry = time.Unix(leaseExpireStatic, 0)
+	l.IsStatic = true
 
 	err = netutil.ValidateMAC(l.HWAddr)
 	if err != nil {
@@ -528,7 +529,7 @@ func (s *v4Server) nextIP() (ip net.IP) {
 func (s *v4Server) findExpiredLease() int {
 	now := time.Now()
 	for i, lease := range s.leases {
-		if !lease.IsStatic() && lease.Expiry.Before(now) {
+		if !lease.IsStatic && lease.Expiry.Before(now) {
 			return i
 		}
 	}
@@ -860,7 +861,7 @@ func (s *v4Server) handleRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needsR
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
-	if lease.IsStatic() {
+	if lease.IsStatic {
 		if lease.Hostname != "" {
 			// TODO(e.burkov):  This option is used to update the server's DNS
 			// mapping.  The option should only be answered when it has been

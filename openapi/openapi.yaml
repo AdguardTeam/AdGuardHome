@@ -1849,7 +1849,6 @@
       - 'mac'
       - 'ip'
       - 'hostname'
-      - 'expires'
       'properties':
         'mac':
           'type': 'string'

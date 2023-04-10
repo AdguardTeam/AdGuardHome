@@ -73,6 +73,7 @@ func TestV4Server_leasing(t *testing.T) {
 			Hostname: staticName,
 			HWAddr:   staticMAC,
 			IP:       staticIP,
+			IsStatic: true,
 		})
 		require.NoError(t, err)
 
@@ -82,6 +83,7 @@ func TestV4Server_leasing(t *testing.T) {
 				Hostname: staticName,
 				HWAddr:   anotherMAC,
 				IP:       anotherIP,
+				IsStatic: true,
 			})
 			assert.ErrorIs(t, err, ErrDupHostname)
 		})
@@ -96,6 +98,7 @@ func TestV4Server_leasing(t *testing.T) {
 				Hostname: anotherName,
 				HWAddr:   staticMAC,
 				IP:       anotherIP,
+				IsStatic: true,
 			})
 			testutil.AssertErrorMsg(t, wantErrMsg, err)
 		})
@@ -110,6 +113,7 @@ func TestV4Server_leasing(t *testing.T) {
 				Hostname: anotherName,
 				HWAddr:   anotherMAC,
 				IP:       staticIP,
+				IsStatic: true,
 			})
 			testutil.AssertErrorMsg(t, wantErrMsg, err)
 		})
@@ -326,7 +330,7 @@ func TestV4_AddReplace(t *testing.T) {
 	for i, l := range ls {
 		assert.Equal(t, stLeases[i].IP, l.IP)
 		assert.Equal(t, stLeases[i].HWAddr, l.HWAddr)
-		assert.True(t, l.IsStatic())
+		assert.True(t, l.IsStatic)
 	}
 }
 
@@ -890,6 +894,7 @@ func TestV4Server_FindMACbyIP(t *testing.T) {
 			Hostname: staticName,
 			HWAddr:   staticMAC,
 			IP:       staticIP,
+			IsStatic: true,
 		}, {
 			Expiry:   time.Unix(10, 0),
 			Hostname: anotherName,

@@ -5,28 +5,27 @@ package dhcpd
 import (
 	"bytes"
 	"encoding/json"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestServer_handleDHCPStatus(t *testing.T) {
-	const staticName = "static-client"
+	const (
+		staticName = "static-client"
+		staticMAC  = "aa:aa:aa:aa:aa:aa"
+	)
 
 	staticIP := netip.MustParseAddr("192.168.10.10")
-	staticMAC := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
 
-	staticLease := &Lease{
-		Expiry:   time.Unix(leaseExpireStatic, 0),
-		Hostname: staticName,
+	staticLease := &leaseStatic{
 		HWAddr:   staticMAC,
 		IP:       staticIP,
+		Hostname: staticName,
 	}
 
 	s, err := Create(&ServerConfig{
@@ -65,8 +64,8 @@ func TestServer_handleDHCPStatus(t *testing.T) {
 		resp := &dhcpStatusResponse{
 			V4:           *conf4,
 			V6:           V6ServerConf{},
-			Leases:       []*Lease{},
-			StaticLeases: []*Lease{},
+			Leases:       []*leaseDynamic{},
+			StaticLeases: []*leaseStatic{},
 			Enabled:      true,
 		}
 
@@ -95,7 +94,7 @@ func TestServer_handleDHCPStatus(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		resp := defaultResponse()
-		resp.StaticLeases = []*Lease{staticLease}
+		resp.StaticLeases = []*leaseStatic{staticLease}
 
 		checkStatus(t, resp)
 	})
@@ -106,7 +105,7 @@ func TestServer_handleDHCPStatus(t *testing.T) {
 
 		b := &bytes.Buffer{}
 
-		err = json.NewEncoder(b).Encode(&Lease{})
+		err = json.NewEncoder(b).Encode(&leaseStatic{})
 		require.NoError(t, err)
 
 		var r *http.Request

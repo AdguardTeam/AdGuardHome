@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/netip"
 	"os"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -57,12 +58,77 @@ func v6JSONToServerConf(j *v6ServerConfJSON) V6ServerConf {
 
 // dhcpStatusResponse is the response for /control/dhcp/status endpoint.
 type dhcpStatusResponse struct {
-	IfaceName    string       `json:"interface_name"`
-	V4           V4ServerConf `json:"v4"`
-	V6           V6ServerConf `json:"v6"`
-	Leases       []*Lease     `json:"leases"`
-	StaticLeases []*Lease     `json:"static_leases"`
-	Enabled      bool         `json:"enabled"`
+	IfaceName    string          `json:"interface_name"`
+	V4           V4ServerConf    `json:"v4"`
+	V6           V6ServerConf    `json:"v6"`
+	Leases       []*leaseDynamic `json:"leases"`
+	StaticLeases []*leaseStatic  `json:"static_leases"`
+	Enabled      bool            `json:"enabled"`
+}
+
+// leaseStatic is the JSON form of static DHCP lease.
+type leaseStatic struct {
+	HWAddr   string     `json:"mac"`
+	IP       netip.Addr `json:"ip"`
+	Hostname string     `json:"hostname"`
+}
+
+// leasesToStatic converts list of leases to their JSON form.
+func leasesToStatic(leases []*Lease) (static []*leaseStatic) {
+	static = make([]*leaseStatic, len(leases))
+
+	for i, l := range leases {
+		static[i] = &leaseStatic{
+			HWAddr:   l.HWAddr.String(),
+			IP:       l.IP,
+			Hostname: l.Hostname,
+		}
+	}
+
+	return static
+}
+
+// toLease converts leaseStatic to Lease or returns error.
+func (l *leaseStatic) toLease() (lease *Lease, err error) {
+	addr, err := net.ParseMAC(l.HWAddr)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't parse MAC address: %w", err)
+	}
+
+	return &Lease{
+		HWAddr:   addr,
+		IP:       l.IP,
+		Hostname: l.Hostname,
+		IsStatic: true,
+	}, nil
+}
+
+// leaseDynamic is the JSON form of dynamic DHCP lease.
+type leaseDynamic struct {
+	HWAddr   string     `json:"mac"`
+	IP       netip.Addr `json:"ip"`
+	Hostname string     `json:"hostname"`
+	Expiry   string     `json:"expires"`
+}
+
+// leasesToDynamic converts list of leases to their JSON form.
+func leasesToDynamic(leases []*Lease) (dynamic []*leaseDynamic) {
+	dynamic = make([]*leaseDynamic, len(leases))
+
+	for i, l := range leases {
+		dynamic[i] = &leaseDynamic{
+			HWAddr:   l.HWAddr.String(),
+			IP:       l.IP,
+			Hostname: l.Hostname,
+			// The front-end is waiting for RFC 3999 format of the time
+			// value.
+			//
+			// See https://github.com/AdguardTeam/AdGuardHome/issues/2692.
+			Expiry: l.Expiry.Format(time.RFC3339),
+		}
+	}
+
+	return dynamic
 }
 
 func (s *server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
@@ -76,8 +142,8 @@ func (s *server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	s.srv4.WriteDiskConfig4(&status.V4)
 	s.srv6.WriteDiskConfig6(&status.V6)
 
-	status.Leases = s.Leases(LeasesDynamic)
-	status.StaticLeases = s.Leases(LeasesStatic)
+	status.Leases = leasesToDynamic(s.Leases(LeasesDynamic))
+	status.StaticLeases = leasesToStatic(s.Leases(LeasesStatic))
 
 	_ = aghhttp.WriteJSONResponse(w, r, status)
 }
@@ -488,7 +554,7 @@ func setOtherDHCPResult(ifaceName string, result *dhcpSearchResult) {
 }
 
 func (s *server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
-	l := &Lease{}
+	l := &leaseStatic{}
 	err := json.NewDecoder(r.Body).Decode(l)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
@@ -511,7 +577,14 @@ func (s *server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 		srv = s.srv6
 	}
 
-	err = srv.AddStaticLease(l)
+	lease, err := l.toLease()
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "parsing: %s", err)
+
+		return
+	}
+
+	err = srv.AddStaticLease(lease)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
@@ -520,7 +593,7 @@ func (s *server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request
 }
 
 func (s *server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Request) {
-	l := &Lease{}
+	l := &leaseStatic{}
 	err := json.NewDecoder(r.Body).Decode(l)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
@@ -543,7 +616,14 @@ func (s *server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Requ
 		srv = s.srv6
 	}
 
-	err = srv.RemoveStaticLease(l)
+	lease, err := l.toLease()
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "parsing: %s", err)
+
+		return
+	}
+
+	err = srv.RemoveStaticLease(lease)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 

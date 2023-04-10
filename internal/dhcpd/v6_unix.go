@@ -121,7 +121,7 @@ func (s *v6Server) FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr) {
 
 	for _, l := range s.leases {
 		if l.IP == ip {
-			if l.Expiry.After(now) || l.IsStatic() {
+			if l.IsStatic || l.Expiry.After(now) {
 				return l.HWAddr
 			}
 		}
