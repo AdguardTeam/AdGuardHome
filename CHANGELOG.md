@@ -143,7 +143,7 @@ In this release, the schema version has changed from 17 to 20.
 [#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/4299
 [#5567]: https://github.com/AdguardTeam/AdGuardHome/issues/5567
 
-[rfc6761]:   https://www.rfc-editor.org/rfc/rfc6761
+[rfc6761]: https://www.rfc-editor.org/rfc/rfc6761
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
