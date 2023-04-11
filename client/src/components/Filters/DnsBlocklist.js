@@ -12,7 +12,6 @@ import { MODAL_TYPE } from '../../helpers/constants';
 
 import {
     getCurrentFilter,
-    getObjDiff,
 } from '../../helpers/helpers';
 
 import filtersCatalog from '../../helpers/filters/filters';
@@ -22,7 +21,7 @@ class DnsBlocklist extends Component {
         this.props.getFilteringStatus();
     }
 
-    handleSubmit = (values, _, { initialValues }) => {
+    handleSubmit = (values) => {
         const { modalFilterUrl, modalType } = this.props.filtering;
 
         switch (modalType) {
@@ -35,7 +34,12 @@ class DnsBlocklist extends Component {
                 break;
             }
             case MODAL_TYPE.CHOOSE_FILTERING_LIST: {
-                const changedValues = getObjDiff(initialValues, values);
+                const changedValues = Object.entries(values)?.reduce((acc, [key, value]) => {
+                    if (value && key in filtersCatalog.filters) {
+                        acc[key] = value;
+                    }
+                    return acc;
+                }, {});
 
                 Object.keys(changedValues)
                     .forEach((fieldName) => {
