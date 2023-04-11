@@ -133,6 +133,10 @@ In this release, the schema version has changed from 17 to 20.
 - The `POST /control/querylog_config` HTTP API; use the new `PUT
   /control/querylog/config/update` API instead.
 
+### Fixed
+
+- Logging of the client's IP address after failed login attempts ([#5701]).
+
 [#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1163
 [#1333]: https://github.com/AdguardTeam/AdGuardHome/issues/1333
 [#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1717
@@ -142,6 +146,7 @@ In this release, the schema version has changed from 17 to 20.
 [#4262]: https://github.com/AdguardTeam/AdGuardHome/issues/4262
 [#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/4299
 [#5567]: https://github.com/AdguardTeam/AdGuardHome/issues/5567
+[#5701]: https://github.com/AdguardTeam/AdGuardHome/issues/5701
 
 [rfc6761]: https://www.rfc-editor.org/rfc/rfc6761
 

@@ -399,7 +399,7 @@ func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.Res
 		path := r.URL.Path
 		if Context.firstRun && !strings.HasPrefix(path, "/install.") &&
 			!strings.HasPrefix(path, "/assets/") {
-			http.Redirect(w, r, "/install.html", http.StatusFound)
+			http.Redirect(w, r, "install.html", http.StatusFound)
 
 			return
 		}

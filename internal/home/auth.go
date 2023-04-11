@@ -412,6 +412,21 @@ func realIP(r *http.Request) (ip net.IP, err error) {
 	return net.ParseIP(ipStr), nil
 }
 
+// writeErrorWithIP is like [aghhttp.Error], but includes the remote IP address
+// when it writes to the log.
+func writeErrorWithIP(
+	r *http.Request,
+	w http.ResponseWriter,
+	code int,
+	remoteIP string,
+	format string,
+	args ...any,
+) {
+	text := fmt.Sprintf(format, args...)
+	log.Error("%s %s %s: from ip %s: %s", r.Method, r.Host, r.URL, remoteIP, text)
+	http.Error(w, text, code)
+}
+
 func handleLogin(w http.ResponseWriter, r *http.Request) {
 	req := loginJSON{}
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -421,31 +436,45 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var remoteAddr string
+	var remoteIP string
 	// realIP cannot be used here without taking TrustedProxies into account due
 	// to security issues.
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
 	//
 	// TODO(e.burkov): Use realIP when the issue will be fixed.
-	if remoteAddr, err = netutil.SplitHost(r.RemoteAddr); err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "auth: getting remote address: %s", err)
+	if remoteIP, err = netutil.SplitHost(r.RemoteAddr); err != nil {
+		writeErrorWithIP(
+			r,
+			w,
+			http.StatusBadRequest,
+			r.RemoteAddr,
+			"auth: getting remote address: %s",
+			err,
+		)
 
 		return
 	}
 
 	if rateLimiter := Context.auth.raleLimiter; rateLimiter != nil {
-		if left := rateLimiter.check(remoteAddr); left > 0 {
+		if left := rateLimiter.check(remoteIP); left > 0 {
 			w.Header().Set(httphdr.RetryAfter, strconv.Itoa(int(left.Seconds())))
-			aghhttp.Error(r, w, http.StatusTooManyRequests, "auth: blocked for %s", left)
+			writeErrorWithIP(
+				r,
+				w,
+				http.StatusTooManyRequests,
+				remoteIP,
+				"auth: blocked for %s",
+				left,
+			)
 
 			return
 		}
 	}
 
-	cookie, err := Context.auth.newCookie(req, remoteAddr)
+	cookie, err := Context.auth.newCookie(req, remoteIP)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusForbidden, "%s", err)
+		writeErrorWithIP(r, w, http.StatusForbidden, remoteIP, "%s", err)
 
 		return
 	}
@@ -453,10 +482,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	// Use realIP here, since this IP address is only used for logging.
 	ip, err := realIP(r)
 	if err != nil {
-		log.Error("auth: getting real ip from request: %s", err)
-	} else if ip == nil {
-		// Technically shouldn't happen.
-		log.Error("auth: unknown ip")
+		log.Error("auth: getting real ip from request with remote ip %s: %s", remoteIP, err)
 	}
 
 	log.Info("auth: user %q successfully logged in from ip %v", req.Name, ip)
@@ -544,8 +570,7 @@ func optionalAuthThird(w http.ResponseWriter, r *http.Request) (mustAuth bool) {
 			log.Debug("auth: redirected to login page by GL-Inet submodule")
 		} else {
 			log.Debug("auth: redirected to login page")
-			w.Header().Set(httphdr.Location, "/login.html")
-			w.WriteHeader(http.StatusFound)
+			http.Redirect(w, r, "login.html", http.StatusFound)
 		}
 	} else {
 		log.Debug("auth: responded with forbidden to %s %s", r.Method, p)
@@ -570,8 +595,7 @@ func optionalAuth(
 				// Redirect to the dashboard if already authenticated.
 				res := Context.auth.checkSession(cookie.Value)
 				if res == checkSessionOK {
-					w.Header().Set(httphdr.Location, "/")
-					w.WriteHeader(http.StatusFound)
+					http.Redirect(w, r, "", http.StatusFound)
 
 					return
 				}
