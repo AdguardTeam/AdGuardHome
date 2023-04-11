@@ -17,6 +17,7 @@ require (
 	github.com/google/renameio v1.0.1
 	github.com/google/uuid v1.3.0
 	github.com/insomniacslk/dhcp v0.0.0-20221215072855-de60144f33f8
+	github.com/josharian/native v1.1.1-0.20230202152459-5c7d0dd6ab86
 	github.com/kardianos/service v1.2.2
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/netlink v1.7.1
@@ -29,7 +30,7 @@ require (
 	golang.org/x/crypto v0.7.0
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 	golang.org/x/net v0.8.0
-	golang.org/x/sys v0.6.0
+	golang.org/x/sys v0.7.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.0
@@ -45,7 +46,6 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/pprof v0.0.0-20230323073829-e72429f035bd // indirect
-	github.com/josharian/native v1.1.0 // indirect
 	github.com/mdlayher/raw v0.1.0 // indirect
 	github.com/mdlayher/socket v0.4.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.9.2 // indirect
