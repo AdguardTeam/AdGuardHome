@@ -39,7 +39,7 @@ type getAddrsResponse struct {
 }
 
 // handleInstallGetAddresses is the handler for /install/get_addresses endpoint.
-func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
+func (web *webAPI) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request) {
 	data := getAddrsResponse{
 		Version: version.Version(),
 
@@ -167,7 +167,7 @@ func (req *checkConfReq) validateDNS(
 }
 
 // handleInstallCheckConfig handles the /check_config endpoint.
-func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
+func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request) {
 	req := &checkConfReq{}
 
 	err := json.NewDecoder(r.Body).Decode(req)
@@ -375,7 +375,7 @@ func shutdownSrv3(srv *http3.Server) {
 const PasswordMinRunes = 8
 
 // Apply new configuration, start DNS server, restart Web server
-func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
+func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	req, restartHTTP, err := decodeApplyConfigReq(r.Body)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
@@ -503,7 +503,7 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 	return req, restartHTTP, err
 }
 
-func (web *Web) registerInstallHandlers() {
+func (web *webAPI) registerInstallHandlers() {
 	Context.mux.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(web.handleInstallGetAddresses)))
 	Context.mux.HandleFunc("/control/install/check_config", preInstall(ensurePOST(web.handleInstallCheckConfig)))
 	Context.mux.HandleFunc("/control/install/configure", preInstall(ensurePOST(web.handleInstallConfigure)))

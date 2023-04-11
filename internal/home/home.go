@@ -58,7 +58,7 @@ type homeContext struct {
 	dhcpServer dhcpd.Interface      // DHCP module
 	auth       *Auth                // HTTP authentication module
 	filters    *filtering.DNSFilter // DNS filtering module
-	web        *Web                 // Web (HTTP, HTTPS) module
+	web        *webAPI              // Web (HTTP, HTTPS) module
 	tls        *tlsManager          // TLS module
 
 	// etcHosts contains IP-hostname mappings taken from the OS-specific hosts
@@ -387,7 +387,7 @@ func checkPorts() (err error) {
 	return nil
 }
 
-func initWeb(opts options, clientBuildFS fs.FS) (web *Web, err error) {
+func initWeb(opts options, clientBuildFS fs.FS) (web *webAPI, err error) {
 	var clientFS fs.FS
 	if opts.localFrontend {
 		log.Info("warning: using local frontend files")
@@ -414,7 +414,7 @@ func initWeb(opts options, clientBuildFS fs.FS) (web *Web, err error) {
 		serveHTTP3: config.DNS.ServeHTTP3,
 	}
 
-	web = newWeb(&webConf)
+	web = newWebAPI(&webConf)
 	if web == nil {
 		return nil, fmt.Errorf("initializing web: %w", err)
 	}
@@ -533,7 +533,7 @@ func run(opts options, clientBuildFS fs.FS) {
 		}
 	}
 
-	Context.web.Start()
+	Context.web.start()
 
 	// wait indefinitely for other go-routines to complete their job
 	select {}
@@ -713,7 +713,7 @@ func cleanup(ctx context.Context) {
 	log.Info("stopping AdGuard Home")
 
 	if Context.web != nil {
-		Context.web.Close(ctx)
+		Context.web.close(ctx)
 		Context.web = nil
 	}
 	if Context.auth != nil {

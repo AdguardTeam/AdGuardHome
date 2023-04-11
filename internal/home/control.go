@@ -332,13 +332,17 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		return false
 	}
 
-	var serveHTTP3 bool
-	var portHTTPS int
+	var (
+		forceHTTPS bool
+		serveHTTP3 bool
+		portHTTPS  int
+	)
 	func() {
 		config.RLock()
 		defer config.RUnlock()
 
 		serveHTTP3, portHTTPS = config.DNS.ServeHTTP3, config.TLS.PortHTTPS
+		forceHTTPS = config.TLS.ForceHTTPS && config.TLS.Enabled && config.TLS.PortHTTPS != 0
 	}()
 
 	respHdr := w.Header()
@@ -354,10 +358,10 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		respHdr.Set(httphdr.AltSvc, altSvc)
 	}
 
-	if r.TLS == nil && web.forceHTTPS {
+	if r.TLS == nil && forceHTTPS {
 		hostPort := host
-		if port := web.conf.PortHTTPS; port != defaultPortHTTPS {
-			hostPort = netutil.JoinHostPort(host, port)
+		if portHTTPS != defaultPortHTTPS {
+			hostPort = netutil.JoinHostPort(host, portHTTPS)
 		}
 
 		httpsURL := &url.URL{
