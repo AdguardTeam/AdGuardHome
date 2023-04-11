@@ -15,6 +15,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/mathutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/NYTimes/gziphandler"
 )
@@ -98,14 +99,17 @@ func collectDNSAddresses() (addrs []string, err error) {
 
 // statusResponse is a response for /control/status endpoint.
 type statusResponse struct {
-	Version             string   `json:"version"`
-	Language            string   `json:"language"`
-	DNSAddrs            []string `json:"dns_addresses"`
-	DNSPort             int      `json:"dns_port"`
-	HTTPPort            int      `json:"http_port"`
-	IsProtectionEnabled bool     `json:"protection_enabled"`
-	// ProtectionDisabledDuration is a pause duration in milliseconds.
+	Version  string   `json:"version"`
+	Language string   `json:"language"`
+	DNSAddrs []string `json:"dns_addresses"`
+	DNSPort  int      `json:"dns_port"`
+	HTTPPort int      `json:"http_port"`
+
+	// ProtectionDisabledDuration is the duration of the protection pause in
+	// milliseconds.
 	ProtectionDisabledDuration int64 `json:"protection_disabled_duration"`
+
+	ProtectionEnabled bool `json:"protection_enabled"`
 	// TODO(e.burkov): Inspect if front-end doesn't requires this field as
 	// openapi.yaml declares.
 	IsDHCPAvailable bool `json:"dhcp_available"`
@@ -122,12 +126,15 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isProtectionEnabled := false
-	var c *dnsforward.FilteringConfig
+	var (
+		fltConf                 *dnsforward.FilteringConfig
+		protectionDisabledUntil *time.Time
+		protectionEnabled       bool
+	)
 	if Context.dnsServer != nil {
-		c = &dnsforward.FilteringConfig{}
-		Context.dnsServer.WriteDiskConfig(c)
-		isProtectionEnabled = Context.dnsServer.UpdatedProtectionStatus()
+		fltConf = &dnsforward.FilteringConfig{}
+		Context.dnsServer.WriteDiskConfig(fltConf)
+		protectionEnabled, protectionDisabledUntil = Context.dnsServer.UpdatedProtectionStatus()
 	}
 
 	var resp statusResponse
@@ -135,20 +142,26 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		config.RLock()
 		defer config.RUnlock()
 
-		var pauseDuration int64
-		if until := config.DNS.ProtectionDisabledUntil; until != nil {
-			pauseDuration = time.Until(*until).Milliseconds()
+		var protectionDisabledDuration int64
+		if protectionDisabledUntil != nil {
+			// Make sure that we don't send negative numbers to the frontend,
+			// since enough time might have passed to make the difference less
+			// than zero.
+			protectionDisabledDuration = mathutil.Max(
+				0,
+				time.Until(*protectionDisabledUntil).Milliseconds(),
+			)
 		}
 
 		resp = statusResponse{
 			Version:                    version.Version(),
+			Language:                   config.Language,
 			DNSAddrs:                   dnsAddrs,
 			DNSPort:                    config.DNS.Port,
 			HTTPPort:                   config.BindPort,
-			Language:                   config.Language,
+			ProtectionDisabledDuration: protectionDisabledDuration,
+			ProtectionEnabled:          protectionEnabled,
 			IsRunning:                  isRunning(),
-			ProtectionDisabledDuration: pauseDuration,
-			IsProtectionEnabled:        isProtectionEnabled,
 		}
 	}()
 

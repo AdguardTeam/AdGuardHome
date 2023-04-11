@@ -101,7 +101,7 @@ type jsonDNSConfig struct {
 }
 
 func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
-	protectionEnabled := s.UpdatedProtectionStatus()
+	protectionEnabled, protectionDisabledUntil := s.UpdatedProtectionStatus()
 
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
@@ -127,12 +127,6 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	resolveClients := s.conf.ResolveClients
 	usePrivateRDNS := s.conf.UsePrivateRDNS
 	localPTRUpstreams := stringutil.CloneSliceOrEmpty(s.conf.LocalPTRResolvers)
-
-	var disabledUntil *time.Time
-	if s.conf.ProtectionDisabledUntil != nil {
-		t := *s.conf.ProtectionDisabledUntil
-		disabledUntil = &t
-	}
 
 	var upstreamMode string
 	if s.conf.FastestAddr {
@@ -169,7 +163,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		UsePrivateRDNS:           &usePrivateRDNS,
 		LocalPTRUpstreams:        &localPTRUpstreams,
 		DefaultLocalPTRUpstreams: defLocalPTRUps,
-		DisabledUntil:            disabledUntil,
+		DisabledUntil:            protectionDisabledUntil,
 	}
 }
 

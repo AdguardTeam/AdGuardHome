@@ -648,17 +648,17 @@ func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, er
 
 // UpdatedProtectionStatus updates protection state, if the protection was
 // disabled temporarily.  Returns the updated state of protection.
-func (s *Server) UpdatedProtectionStatus() (enabled bool) {
+func (s *Server) UpdatedProtectionStatus() (enabled bool, disabledUntil *time.Time) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	disabledUntil := s.conf.ProtectionDisabledUntil
+	disabledUntil = s.conf.ProtectionDisabledUntil
 	if disabledUntil == nil {
-		return s.conf.ProtectionEnabled
+		return s.conf.ProtectionEnabled, nil
 	}
 
 	if time.Now().Before(*disabledUntil) {
-		return false
+		return false, disabledUntil
 	}
 
 	// Update the values in a separate goroutine, unless an update is already in
@@ -671,7 +671,7 @@ func (s *Server) UpdatedProtectionStatus() (enabled bool) {
 		go s.enableProtectionAfterPause()
 	}
 
-	return true
+	return true, nil
 }
 
 // enableProtectionAfterPause sets the protection configuration to enabled

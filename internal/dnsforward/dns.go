@@ -206,7 +206,7 @@ func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
 	dctx.clientID = string(s.clientIDCache.Get(key[:]))
 
 	// Get the client-specific filtering settings.
-	dctx.protectionEnabled = s.UpdatedProtectionStatus()
+	dctx.protectionEnabled, _ = s.UpdatedProtectionStatus()
 	dctx.setts = s.getClientRequestFilteringSettings(dctx)
 
 	return resultCodeSuccess
@@ -460,7 +460,7 @@ func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
 }
 
 // indexFirstV4Label returns the index at which the reversed IPv4 address
-// starts, assuiming the domain is pre-validated ARPA domain having in-addr and
+// starts, assuming the domain is pre-validated ARPA domain having in-addr and
 // arpa labels removed.
 func indexFirstV4Label(domain string) (idx int) {
 	idx = len(domain)
@@ -478,7 +478,7 @@ func indexFirstV4Label(domain string) (idx int) {
 }
 
 // indexFirstV6Label returns the index at which the reversed IPv6 address
-// starts, assuiming the domain is pre-validated ARPA domain having ip6 and arpa
+// starts, assuming the domain is pre-validated ARPA domain having ip6 and arpa
 // labels removed.
 func indexFirstV6Label(domain string) (idx int) {
 	idx = len(domain)
