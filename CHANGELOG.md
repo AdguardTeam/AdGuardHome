@@ -48,20 +48,20 @@ See also the [v0.107.28 GitHub milestone][ms-v0.107.28].
 - The new HTTP API `POST /control/protection`, that updates protection state
   and adds an optional pause duration ([#1333]).  The format of request body
   is described in `openapi/openapi.yaml`.  The duration of this pause could
-  also be set with the config field `protection_disabled_until` in `dns`
-  section of the YAML configuration file.
+  also be set with the property `protection_disabled_until` in the `dns` object
+  of the YAML configuration file.
 - The ability to create a static DHCP lease from a dynamic one more easily
   ([#3459]).
 - Two new HTTP APIs, `PUT /control/stats/config/update` and `GET
   control/stats/config`, which can be used to set and receive the query log
-  configuration.  See openapi/openapi.yaml for the full description.
+  configuration.  See `openapi/openapi.yaml` for the full description.
 - Two new HTTP APIs, `PUT /control/querylog/config/update` and `GET
   control/querylog/config`, which can be used to set and receive the statistics
-  configuration.  See openapi/openapi.yaml for the full description.
+  configuration.  See `openapi/openapi.yaml` for the full description.
 - The ability to set custom IP for EDNS Client Subnet by using the DNS-server
   configuration section on the DNS settings page in the UI ([#1472]).
-- The ability to manage safesearch for each service by using the new
-  `safe_search` field ([#1163]).
+- The ability to manage Safe Search for each service by using the new
+  `safe_search` property ([#1163]).
 
 ### Changed
 
@@ -90,9 +90,9 @@ In this release, the schema version has changed from 17 to 20.
 
   To rollback this change, convert the property back into days and change the
   `schema_version` back to `19`.
-- The `dns.safesearch_enabled` field has been replaced with `safe_search`
+- The `dns.safesearch_enabled` property has been replaced with `safe_search`
   object containing per-service settings.
-- The `clients.persistent.safesearch_enabled` field has been replaced with
+- The `clients.persistent.safesearch_enabled` property has been replaced with
   `safe_search` object containing per-service settings.
 
   ```yaml
@@ -111,7 +111,7 @@ In this release, the schema version has changed from 17 to 20.
   ```
 
   To rollback this change, move the value of `dns.safe_search.enabled` into the
-  `dns.safesearch_enabled`, then remove `dns.safe_search` field.  Do the same
+  `dns.safesearch_enabled`, then remove `dns.safe_search` property.  Do the same
   client's specific `clients.persistent.safesearch` and then change the
   `schema_version` back to `17`.
 
@@ -121,7 +121,7 @@ In this release, the schema version has changed from 17 to 20.
   `PUT /control/safesearch/settings` API.
 - The `POST /control/safesearch/disable` HTTP API is deprecated.  Use the new
   `PUT /control/safesearch/settings` API
-- The `safesearch_enabled` field is deprecated in the following HTTP APIs:
+- The `safesearch_enabled` property is deprecated in the following HTTP APIs:
   - `GET /control/clients`;
   - `POST /control/clients/add`;
   - `POST /control/clients/update`;
@@ -132,14 +132,14 @@ In this release, the schema version has changed from 17 to 20.
   /control/stats/config` API instead.
 
   **NOTE:** If interval is custom then it will be equal to `90` days for
-  compatibility reasons.  See openapi/openapi.yaml and `openapi/CHANGELOG.md`.
+  compatibility reasons.  See `openapi/openapi.yaml` and `openapi/CHANGELOG.md`.
 - The `POST /control/stats_config` HTTP API; use the new `PUT
   /control/stats/config/update` API instead.
 - The `GET /control/querylog_info` HTTP API; use the new `GET
   /control/querylog/config` API instead.
 
   **NOTE:** If interval is custom then it will be equal to `90` days for
-  compatibility reasons.  See openapi/openapi.yaml and `openapi/CHANGELOG.md`.
+  compatibility reasons.  See `openapi/openapi.yaml` and `openapi/CHANGELOG.md`.
 - The `POST /control/querylog_config` HTTP API; use the new `PUT
   /control/querylog/config/update` API instead.
 
@@ -204,7 +204,7 @@ See also the [v0.107.26 GitHub milestone][ms-v0.107.26].
 
 - The ability to set custom IP for EDNS Client Subnet by using the new
   `dns.edns_client_subnet.use_custom` and `dns.edns_client_subnet.custom_ip`
-  fields ([#1472]).  The UI changes are coming in the upcoming releases.
+  properties ([#1472]).  The UI changes are coming in the upcoming releases.
 - The ability to use `dnstype` rules in the disallowed domains list ([#5468]).
   This allows dropping requests based on their question types.
 
@@ -232,7 +232,7 @@ See also the [v0.107.26 GitHub milestone][ms-v0.107.26].
   ```
 
   To rollback this change, move the value of `dns.edns_client_subnet.enabled`
-  into the `dns.edns_client_subnet`, remove the fields
+  into the `dns.edns_client_subnet`, remove the properties
   `dns.edns_client_subnet.enabled`, `dns.edns_client_subnet.use_custom`,
   `dns.edns_client_subnet.custom_ip`, and change the `schema_version` back to
   `16`.
@@ -292,11 +292,11 @@ See also the [v0.107.24 GitHub milestone][ms-v0.107.24].
 ### Added
 
 - The ability to disable statistics by using the new `statistics.enabled`
-  field.  Previously it was necessary to set the `statistics_interval` to 0,
+  property.  Previously it was necessary to set the `statistics_interval` to 0,
   losing the previous value ([#1717], [#4299]).
 - The ability to exclude domain names from the query log or statistics by using
-  the new `querylog.ignored` or `statistics.ignored` fields ([#1717], [#4299]).
-  The UI changes are coming in the upcoming releases.
+  the new `querylog.ignored` or `statistics.ignored` properties ([#1717],
+  [#4299]).  The UI changes are coming in the upcoming releases.
 
 ### Changed
 
@@ -321,7 +321,7 @@ In this release, the schema version has changed from 14 to 16.
 
   To rollback this change, move the property back into the `dns` object and
   change the `schema_version` back to `15`.
-- The fields `dns.querylog_enabled`, `dns.querylog_file_enabled`,
+- The properties `dns.querylog_enabled`, `dns.querylog_file_enabled`,
   `dns.querylog_interval`, and `dns.querylog_size_memory` have been moved to the
   new `querylog` object.
 
@@ -379,8 +379,8 @@ See also the [v0.107.23 GitHub milestone][ms-v0.107.23].
 ### Added
 
 - DNS64 support ([#5117]).  The function may be enabled with new `use_dns64`
-  field under `dns` object in the configuration along with `dns64_prefixes`, the
-  set of exclusion prefixes to filter AAAA responses.  The Well-Known Prefix
+  property under `dns` object in the configuration along with `dns64_prefixes`,
+  the set of exclusion prefixes to filter AAAA responses.  The Well-Known Prefix
   (`64:ff9b::/96`) is used if no custom prefixes are specified.
 
 ### Fixed
@@ -1038,7 +1038,7 @@ In this release, the schema version has changed from 12 to 14.
       hosts: true
   ```
 
-  The value for `clients.runtime_sources.rdns` field is taken from
+  The value for `clients.runtime_sources.rdns` property is taken from
   `dns.resolve_clients` property.  To rollback this change, remove the
   `runtime_sources` property, move the contents of `persistent` into the
   `clients` itself, the value of `clients.runtime_sources.rdns` into the
@@ -1288,7 +1288,7 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
   log entries concerning cached responses won't include that information.
 - Finnish and Ukrainian localizations.
 - Setting the timeout for IP address pinging in the "Fastest IP address" mode
-  through the new `fastest_timeout` field in the configuration file ([#1992]).
+  through the new `fastest_timeout` property in the configuration file ([#1992]).
 - Static IP address detection on FreeBSD ([#3289]).
 - Optimistic cache ([#2145]).
 - New possible value of `6h` for `querylog_interval` property ([#2504]).
@@ -1704,7 +1704,7 @@ See also the [v0.105.2 GitHub milestone][ms-v0.105.2].
 - Inconsistent responses for messages with EDNS0 and AD when DNS caching is
   enabled ([#2600]).
 - Incomplete OpenWrt detection ([#2757]).
-- DHCP lease's `expired` field incorrect time format ([#2692]).
+- DHCP lease's `expired` property incorrect time format ([#2692]).
 - Incomplete DNS upstreams validation ([#2674]).
 - Wrong parsing of DHCP options of the `ip` type ([#2688]).
 
@@ -1741,8 +1741,8 @@ See also the [v0.105.1 GitHub milestone][ms-v0.105.1].
   the machine has a static IP.
 - Optical issue on custom rules ([#2641]).
 - Occasional crashes during startup.
-- The field `"range_start"` in the `GET /control/dhcp/status` HTTP API response
-  is now correctly named again ([#2678]).
+- The property `"range_start"` in the `GET /control/dhcp/status` HTTP API
+  response is now correctly named again ([#2678]).
 - DHCPv6 server's `ra_slaac_only` and `ra_allow_slaac` properties aren't reset
   to `false` on update anymore ([#2653]).
 - The `Vary` header is now added along with `Access-Control-Allow-Origin` to
@@ -1812,7 +1812,7 @@ See also the [v0.105.0 GitHub milestone][ms-v0.105.0].
 
 - Go 1.14 support.  v0.106.0 will require at least Go 1.15 to build.
 - The `darwin/386` port.  It will be removed in v0.106.0.
-- The `"rule"` and `"filter_id"` fields in `GET /filtering/check_host` and
+- The `"rule"` and `"filter_id"` property in `GET /filtering/check_host` and
   `GET /querylog` responses.  They will be removed in v0.106.0 ([#2102]).
 
 ### Fixed
