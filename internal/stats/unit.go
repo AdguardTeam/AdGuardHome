@@ -72,6 +72,19 @@ type Entry struct {
 
 // unit collects the statistics data for a specific period of time.
 type unit struct {
+	// domains stores the number of requests for each domain.
+	domains map[string]uint64
+
+	// blockedDomains stores the number of requests for each domain that has
+	// been blocked.
+	blockedDomains map[string]uint64
+
+	// clients stores the number of requests from each client.
+	clients map[string]uint64
+
+	// nResult stores the number of requests grouped by it's result.
+	nResult []uint64
+
 	// id is the unique unit's identifier.  It's set to an absolute hour number
 	// since the beginning of UNIX time by the default ID generating function.
 	//
@@ -81,29 +94,20 @@ type unit struct {
 
 	// nTotal stores the total number of requests.
 	nTotal uint64
-	// nResult stores the number of requests grouped by it's result.
-	nResult []uint64
+
 	// timeSum stores the sum of processing time in milliseconds of each request
 	// written by the unit.
 	timeSum uint64
-
-	// domains stores the number of requests for each domain.
-	domains map[string]uint64
-	// blockedDomains stores the number of requests for each domain that has
-	// been blocked.
-	blockedDomains map[string]uint64
-	// clients stores the number of requests from each client.
-	clients map[string]uint64
 }
 
 // newUnit allocates the new *unit.
 func newUnit(id uint32) (u *unit) {
 	return &unit{
-		id:             id,
+		domains:        map[string]uint64{},
+		blockedDomains: map[string]uint64{},
+		clients:        map[string]uint64{},
 		nResult:        make([]uint64, resultLast),
-		domains:        make(map[string]uint64),
-		blockedDomains: make(map[string]uint64),
-		clients:        make(map[string]uint64),
+		id:             id,
 	}
 }
 
@@ -115,18 +119,24 @@ type countPair struct {
 }
 
 // unitDB is the structure for serializing statistics data into the database.
+//
+// NOTE: Do not change the names or types of fields, as this structure is used
+// for GOB encoding.
 type unitDB struct {
-	// NTotal is the total number of requests.
-	NTotal uint64
 	// NResult is the number of requests by the result's kind.
 	NResult []uint64
 
 	// Domains is the number of requests for each domain name.
 	Domains []countPair
+
 	// BlockedDomains is the number of requests blocked for each domain name.
 	BlockedDomains []countPair
+
 	// Clients is the number of requests from each client.
 	Clients []countPair
+
+	// NTotal is the total number of requests.
+	NTotal uint64
 
 	// TimeAvg is the average of processing times in milliseconds of all the
 	// requests in the unit.

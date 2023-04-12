@@ -12,7 +12,10 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,10 +54,11 @@ func TestStats(t *testing.T) {
 
 	handlers := map[string]http.Handler{}
 	conf := stats.Config{
-		Filename:  filepath.Join(t.TempDir(), "stats.db"),
-		LimitDays: 1,
-		Enabled:   true,
-		UnitID:    constUnitID,
+		ShouldCountClient: func([]string) bool { return true },
+		Filename:          filepath.Join(t.TempDir(), "stats.db"),
+		Limit:             timeutil.Day,
+		Enabled:           true,
+		UnitID:            constUnitID,
 		HTTPRegister: func(_, url string, handler http.HandlerFunc) {
 			handlers[url] = handler
 		},
@@ -157,11 +161,12 @@ func TestLargeNumbers(t *testing.T) {
 	handlers := map[string]http.Handler{}
 
 	conf := stats.Config{
-		Filename:     filepath.Join(t.TempDir(), "stats.db"),
-		LimitDays:    1,
-		Enabled:      true,
-		UnitID:       func() (id uint32) { return atomic.LoadUint32(&curHour) },
-		HTTPRegister: func(_, url string, handler http.HandlerFunc) { handlers[url] = handler },
+		ShouldCountClient: func([]string) bool { return true },
+		Filename:          filepath.Join(t.TempDir(), "stats.db"),
+		Limit:             timeutil.Day,
+		Enabled:           true,
+		UnitID:            func() (id uint32) { return atomic.LoadUint32(&curHour) },
+		HTTPRegister:      func(_, url string, handler http.HandlerFunc) { handlers[url] = handler },
 	}
 
 	s, err := stats.New(conf)
@@ -195,4 +200,61 @@ func TestLargeNumbers(t *testing.T) {
 	data := &stats.StatsResp{}
 	assertSuccessAndUnmarshal(t, data, handlers["/control/stats"], req)
 	assert.Equal(t, hoursNum*cliNumPerHour, int(data.NumDNSQueries))
+}
+
+func TestShouldCount(t *testing.T) {
+	const (
+		ignored1 = "ignor.ed"
+		ignored2 = "ignored.to"
+	)
+	set := stringutil.NewSet(ignored1, ignored2)
+
+	s, err := stats.New(stats.Config{
+		Enabled:  true,
+		Filename: filepath.Join(t.TempDir(), "stats.db"),
+		Limit:    timeutil.Day,
+		Ignored:  set,
+		ShouldCountClient: func(ids []string) (a bool) {
+			return ids[0] != "no_count"
+		},
+	})
+	require.NoError(t, err)
+
+	s.Start()
+	testutil.CleanupAndRequireSuccess(t, s.Close)
+
+	testCases := []struct {
+		wantCount assert.BoolAssertionFunc
+		name      string
+		host      string
+		ids       []string
+	}{{
+		name:      "count",
+		host:      "example.com",
+		ids:       []string{"whatever"},
+		wantCount: assert.True,
+	}, {
+		name:      "no_count_ignored_1",
+		host:      ignored1,
+		ids:       []string{"whatever"},
+		wantCount: assert.False,
+	}, {
+		name:      "no_count_ignored_2",
+		host:      ignored2,
+		ids:       []string{"whatever"},
+		wantCount: assert.False,
+	}, {
+		name:      "no_count_client_ignore",
+		host:      "example.com",
+		ids:       []string{"no_count"},
+		wantCount: assert.False,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := s.ShouldCount(tc.host, dns.TypeA, dns.ClassINET, tc.ids)
+
+			tc.wantCount(t, res)
+		})
+	}
 }

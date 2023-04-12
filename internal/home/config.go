@@ -228,34 +228,32 @@ type tlsConfigSettings struct {
 }
 
 type queryLogConfig struct {
+	// Ignored is the list of host names, which should not be written to log.
+	Ignored []string `yaml:"ignored"`
+
+	// Interval is the interval for query log's files rotation.
+	Interval timeutil.Duration `yaml:"interval"`
+
+	// MemSize is the number of entries kept in memory before they are flushed
+	// to disk.
+	MemSize uint32 `yaml:"size_memory"`
+
 	// Enabled defines if the query log is enabled.
 	Enabled bool `yaml:"enabled"`
 
 	// FileEnabled defines, if the query log is written to the file.
 	FileEnabled bool `yaml:"file_enabled"`
-
-	// Interval is the interval for query log's files rotation.
-	Interval timeutil.Duration `yaml:"interval"`
-
-	// MemSize is the number of entries kept in memory before they are
-	// flushed to disk.
-	MemSize uint32 `yaml:"size_memory"`
-
-	// Ignored is the list of host names, which should not be written to
-	// log.
-	Ignored []string `yaml:"ignored"`
 }
 
 type statsConfig struct {
-	// Enabled defines if the statistics are enabled.
-	Enabled bool `yaml:"enabled"`
-
-	// Interval is the time interval for flushing statistics to the disk in
-	// days.
-	Interval uint32 `yaml:"interval"`
-
 	// Ignored is the list of host names, which should not be counted.
 	Ignored []string `yaml:"ignored"`
+
+	// Interval is the retention interval for statistics.
+	Interval timeutil.Duration `yaml:"interval"`
+
+	// Enabled defines if the statistics are enabled.
+	Enabled bool `yaml:"enabled"`
 }
 
 // config is the global configuration structure.
@@ -286,7 +284,7 @@ var config = &configuration{
 			CacheSize:      4 * 1024 * 1024,
 
 			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{
-				CustomIP:  "",
+				CustomIP:  netip.Addr{},
 				Enabled:   false,
 				UseCustom: false,
 			},
@@ -322,7 +320,7 @@ var config = &configuration{
 	},
 	Stats: statsConfig{
 		Enabled:  true,
-		Interval: 1,
+		Interval: timeutil.Duration{Duration: 1 * timeutil.Day},
 		Ignored:  []string{},
 	},
 	// NOTE: Keep these parameters in sync with the one put into
@@ -503,7 +501,7 @@ func (c *configuration) write() (err error) {
 	if Context.stats != nil {
 		statsConf := stats.Config{}
 		Context.stats.WriteDiskConfig(&statsConf)
-		config.Stats.Interval = statsConf.LimitDays
+		config.Stats.Interval = timeutil.Duration{Duration: statsConf.Limit}
 		config.Stats.Enabled = statsConf.Enabled
 		config.Stats.Ignored = statsConf.Ignored.Values()
 		slices.Sort(config.Stats.Ignored)

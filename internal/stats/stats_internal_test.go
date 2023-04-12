@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,9 +36,10 @@ func TestStats_races(t *testing.T) {
 	var r uint32
 	idGen := func() (id uint32) { return atomic.LoadUint32(&r) }
 	conf := Config{
-		UnitID:    idGen,
-		Filename:  filepath.Join(t.TempDir(), "./stats.db"),
-		LimitDays: 1,
+		ShouldCountClient: func([]string) bool { return true },
+		UnitID:            idGen,
+		Filename:          filepath.Join(t.TempDir(), "./stats.db"),
+		Limit:             timeutil.Day,
 	}
 
 	s, err := New(conf)

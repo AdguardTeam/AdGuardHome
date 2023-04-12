@@ -208,24 +208,40 @@ class Api {
     // Safesearch
     SAFESEARCH_STATUS = { path: 'safesearch/status', method: 'GET' };
 
-    SAFESEARCH_ENABLE = { path: 'safesearch/enable', method: 'POST' };
-
-    SAFESEARCH_DISABLE = { path: 'safesearch/disable', method: 'POST' };
+    SAFESEARCH_UPDATE = { path: 'safesearch/settings', method: 'PUT' };
 
     getSafesearchStatus() {
         const { path, method } = this.SAFESEARCH_STATUS;
         return this.makeRequest(path, method);
     }
 
-    enableSafesearch() {
-        const { path, method } = this.SAFESEARCH_ENABLE;
-        return this.makeRequest(path, method);
+    /**
+     * interface SafeSearchConfig {
+        "enabled": boolean,
+        "bing": boolean,
+        "duckduckgo": boolean,
+        "google": boolean,
+        "pixabay": boolean,
+        "yandex": boolean,
+        "youtube": boolean
+     * }
+     * @param {*} data - SafeSearchConfig
+     * @returns 200 ok
+     */
+    updateSafesearch(data) {
+        const { path, method } = this.SAFESEARCH_UPDATE;
+        return this.makeRequest(path, method, { data });
     }
 
-    disableSafesearch() {
-        const { path, method } = this.SAFESEARCH_DISABLE;
-        return this.makeRequest(path, method);
-    }
+    // enableSafesearch() {
+    //     const { path, method } = this.SAFESEARCH_ENABLE;
+    //     return this.makeRequest(path, method);
+    // }
+
+    // disableSafesearch() {
+    //     const { path, method } = this.SAFESEARCH_DISABLE;
+    //     return this.makeRequest(path, method);
+    // }
 
     // Language
 
@@ -497,9 +513,9 @@ class Api {
     // Settings for statistics
     GET_STATS = { path: 'stats', method: 'GET' };
 
-    STATS_INFO = { path: 'stats_info', method: 'GET' };
+    GET_STATS_CONFIG = { path: 'stats/config', method: 'GET' };
 
-    STATS_CONFIG = { path: 'stats_config', method: 'POST' };
+    UPDATE_STATS_CONFIG = { path: 'stats/config/update', method: 'PUT' };
 
     STATS_RESET = { path: 'stats_reset', method: 'POST' };
 
@@ -508,13 +524,13 @@ class Api {
         return this.makeRequest(path, method);
     }
 
-    getStatsInfo() {
-        const { path, method } = this.STATS_INFO;
+    getStatsConfig() {
+        const { path, method } = this.GET_STATS_CONFIG;
         return this.makeRequest(path, method);
     }
 
     setStatsConfig(data) {
-        const { path, method } = this.STATS_CONFIG;
+        const { path, method } = this.UPDATE_STATS_CONFIG;
         const config = {
             data,
         };
@@ -529,9 +545,9 @@ class Api {
     // Query log
     GET_QUERY_LOG = { path: 'querylog', method: 'GET' };
 
-    QUERY_LOG_CONFIG = { path: 'querylog_config', method: 'POST' };
+    UPDATE_QUERY_LOG_CONFIG = { path: 'querylog/config/update', method: 'PUT' };
 
-    QUERY_LOG_INFO = { path: 'querylog_info', method: 'GET' };
+    GET_QUERY_LOG_CONFIG = { path: 'querylog/config', method: 'GET' };
 
     QUERY_LOG_CLEAR = { path: 'querylog_clear', method: 'POST' };
 
@@ -543,13 +559,13 @@ class Api {
         return this.makeRequest(url, method);
     }
 
-    getQueryLogInfo() {
-        const { path, method } = this.QUERY_LOG_INFO;
+    getQueryLogConfig() {
+        const { path, method } = this.GET_QUERY_LOG_CONFIG;
         return this.makeRequest(path, method);
     }
 
     setQueryLogConfig(data) {
-        const { path, method } = this.QUERY_LOG_CONFIG;
+        const { path, method } = this.UPDATE_QUERY_LOG_CONFIG;
         const config = {
             data,
         };
@@ -609,6 +625,15 @@ class Api {
             data,
         };
         return this.makeRequest(path, method, config);
+    }
+
+    SET_PROTECTION = { path: 'protection', method: 'POST' };
+
+    setProtection(data) {
+        const { enabled, duration } = data;
+        const { path, method } = this.SET_PROTECTION;
+
+        return this.makeRequest(path, method, { data: { enabled, duration } });
     }
 
     // Cache

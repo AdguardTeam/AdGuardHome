@@ -14,14 +14,153 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.27] - 2023-03-29 (APPROX.)
+## [v0.107.29] - 2023-04-26 (APPROX.)
 
-See also the [v0.107.27 GitHub milestone][ms-v0.107.27].
+See also the [v0.107.29 GitHub milestone][ms-v0.107.29].
 
-[ms-v0.107.27]: https://github.com/AdguardTeam/AdGuardHome/milestone/63?closed=1
+[ms-v0.107.29]: https://github.com/AdguardTeam/AdGuardHome/milestone/65?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+
+
+## [v0.107.28] - 2023-04-12
+
+See also the [v0.107.28 GitHub milestone][ms-v0.107.28].
+
+### Added
+
+- The ability to exclude client activity from the query log or statistics by
+  using the new properties `ignore_querylog` and `ignore_statistics` of the
+  items of the `clients.persistent` array ([#1717], [#4299]).  The UI changes
+  are coming in the upcoming releases.
+- Better profiling information when `debug_pprof` is set to `true`.
+- IPv6 support in Safe Search for some services.
+- The ability to make bootstrap DNS lookups prefer IPv6 addresses to IPv4 ones
+  using the new `dns.bootstrap_prefer_ipv6` configuration file property
+  ([#4262]).
+- Docker container's healthcheck ([#3290]).
+- The new HTTP API `POST /control/protection`, that updates protection state
+  and adds an optional pause duration ([#1333]).  The format of request body
+  is described in `openapi/openapi.yaml`.  The duration of this pause could
+  also be set with the config field `protection_disabled_until` in `dns`
+  section of the YAML configuration file.
+- The ability to create a static DHCP lease from a dynamic one more easily
+  ([#3459]).
+- Two new HTTP APIs, `PUT /control/stats/config/update` and `GET
+  control/stats/config`, which can be used to set and receive the query log
+  configuration.  See openapi/openapi.yaml for the full description.
+- Two new HTTP APIs, `PUT /control/querylog/config/update` and `GET
+  control/querylog/config`, which can be used to set and receive the statistics
+  configuration.  See openapi/openapi.yaml for the full description.
+- The ability to set custom IP for EDNS Client Subnet by using the DNS-server
+  configuration section on the DNS settings page in the UI ([#1472]).
+- The ability to manage safesearch for each service by using the new
+  `safe_search` field ([#1163]).
+
+### Changed
+
+- ARPA domain names containing a subnet within private networks now also
+  considered private, behaving closer to [RFC 6761][rfc6761] ([#5567]).
+
+#### Configuration Changes
+
+In this release, the schema version has changed from 17 to 20.
+
+- Property `statistics.interval`, which in schema versions 19 and earlier used
+  to be an integer number of days, is now a string with a human-readable
+  duration:
+
+  ```yaml
+  # BEFORE:
+  'statistics':
+    # …
+    'interval': 1
+
+  # AFTER:
+  'statistics':
+    # …
+    'interval': '24h'
+  ```
+
+  To rollback this change, convert the property back into days and change the
+  `schema_version` back to `19`.
+- The `dns.safesearch_enabled` field has been replaced with `safe_search`
+  object containing per-service settings.
+- The `clients.persistent.safesearch_enabled` field has been replaced with
+  `safe_search` object containing per-service settings.
+
+  ```yaml
+    # BEFORE:
+    'safesearch_enabled': true
+
+    # AFTER:
+    'safe_search':
+      'enabled': true
+      'bing': true
+      'duckduckgo': true
+      'google': true
+      'pixabay': true
+      'yandex': true
+      'youtube': true
+  ```
+
+  To rollback this change, move the value of `dns.safe_search.enabled` into the
+  `dns.safesearch_enabled`, then remove `dns.safe_search` field.  Do the same
+  client's specific `clients.persistent.safesearch` and then change the
+  `schema_version` back to `17`.
+
+### Deprecated
+
+- The `POST /control/safesearch/enable` HTTP API is deprecated.  Use the new
+  `PUT /control/safesearch/settings` API.
+- The `POST /control/safesearch/disable` HTTP API is deprecated.  Use the new
+  `PUT /control/safesearch/settings` API
+- The `safesearch_enabled` field is deprecated in the following HTTP APIs:
+  - `GET /control/clients`;
+  - `POST /control/clients/add`;
+  - `POST /control/clients/update`;
+  - `GET /control/clients/find?ip0=...&ip1=...&ip2=...`.
+
+  Check `openapi/openapi.yaml` for more details.
+- The `GET /control/stats_info` HTTP API; use the new `GET
+  /control/stats/config` API instead.
+
+  **NOTE:** If interval is custom then it will be equal to `90` days for
+  compatibility reasons.  See openapi/openapi.yaml and `openapi/CHANGELOG.md`.
+- The `POST /control/stats_config` HTTP API; use the new `PUT
+  /control/stats/config/update` API instead.
+- The `GET /control/querylog_info` HTTP API; use the new `GET
+  /control/querylog/config` API instead.
+
+  **NOTE:** If interval is custom then it will be equal to `90` days for
+  compatibility reasons.  See openapi/openapi.yaml and `openapi/CHANGELOG.md`.
+- The `POST /control/querylog_config` HTTP API; use the new `PUT
+  /control/querylog/config/update` API instead.
+
+### Fixed
+
+- Logging of the client's IP address after failed login attempts ([#5701]).
+
+[#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1163
+[#1333]: https://github.com/AdguardTeam/AdGuardHome/issues/1333
+[#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1717
+[#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
+[#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/3290
+[#3459]: https://github.com/AdguardTeam/AdGuardHome/issues/3459
+[#4262]: https://github.com/AdguardTeam/AdGuardHome/issues/4262
+[#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/4299
+[#5567]: https://github.com/AdguardTeam/AdGuardHome/issues/5567
+[#5701]: https://github.com/AdguardTeam/AdGuardHome/issues/5701
+
+[ms-v0.107.28]: https://github.com/AdguardTeam/AdGuardHome/milestone/64?closed=1
+[rfc6761]:      https://www.rfc-editor.org/rfc/rfc6761
+
 
 
 
@@ -73,8 +212,6 @@ See also the [v0.107.26 GitHub milestone][ms-v0.107.26].
 
 #### Configuration Changes
 
-In this release, the schema version has changed from 16 to 17.
-
 - Property `edns_client_subnet`, which in schema versions 16 and earlier used
   to be a part of the `dns` object, is now part of the `dns.edns_client_subnet`
   object:
@@ -125,10 +262,6 @@ In this release, the schema version has changed from 16 to 17.
 [go-1.19.7]:    https://groups.google.com/g/golang-announce/c/3-TpUx48iQY
 [ms-v0.107.26]: https://github.com/AdguardTeam/AdGuardHome/milestone/62?closed=1
 [rfc3696]:      https://datatracker.ietf.org/doc/html/rfc3696
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
 
 
 
@@ -1787,11 +1920,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.28...HEAD
-[v0.107.28]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.27...v0.107.28
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.29...HEAD
+[v0.107.29]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.28...v0.107.29
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.27...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.28...HEAD
+[v0.107.28]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.27...v0.107.28
 [v0.107.27]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.26...v0.107.27
 [v0.107.26]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.25...v0.107.26
 [v0.107.25]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.24...v0.107.25

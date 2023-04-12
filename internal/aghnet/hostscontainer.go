@@ -56,7 +56,7 @@ func (rm *requestMatcher) MatchRequest(
 ) (res *urlfilter.DNSResult, ok bool) {
 	switch req.DNSType {
 	case dns.TypeA, dns.TypeAAAA, dns.TypePTR:
-		log.Debug("%s: handling the request for %s", hostsContainerPref, req.Hostname)
+		log.Debug("%s: handling the request for %s", hostsContainerPrefix, req.Hostname)
 	default:
 		return nil, false
 	}
@@ -90,9 +90,9 @@ func (rm *requestMatcher) resetEng(rulesStrg *filterlist.RuleStorage, tr map[str
 	rm.translator = tr
 }
 
-// hostsContainerPref is a prefix for logging and wrapping errors in
+// hostsContainerPrefix is a prefix for logging and wrapping errors in
 // HostsContainer's methods.
-const hostsContainerPref = "hosts container"
+const hostsContainerPrefix = "hosts container"
 
 // HostsContainer stores the relevant hosts database provided by the OS and
 // processes both A/AAAA and PTR DNS requests for those.
@@ -115,8 +115,8 @@ type HostsContainer struct {
 	// fsys is the working file system to read hosts files from.
 	fsys fs.FS
 
-	// w tracks the changes in specified files and directories.
-	w aghos.FSWatcher
+	// watcher tracks the changes in specified files and directories.
+	watcher aghos.FSWatcher
 
 	// patterns stores specified paths in the fs.Glob-compatible form.
 	patterns []string
@@ -160,7 +160,7 @@ func NewHostsContainer(
 	w aghos.FSWatcher,
 	paths ...string,
 ) (hc *HostsContainer, err error) {
-	defer func() { err = errors.Annotate(err, "%s: %w", hostsContainerPref) }()
+	defer func() { err = errors.Annotate(err, "%s: %w", hostsContainerPrefix) }()
 
 	if len(paths) == 0 {
 		return nil, ErrNoHostsPaths
@@ -182,11 +182,11 @@ func NewHostsContainer(
 		done:     make(chan struct{}, 1),
 		updates:  make(chan HostsRecords, 1),
 		fsys:     fsys,
-		w:        w,
+		watcher:  w,
 		patterns: patterns,
 	}
 
-	log.Debug("%s: starting", hostsContainerPref)
+	log.Debug("%s: starting", hostsContainerPrefix)
 
 	// Load initially.
 	if err = hc.refresh(); err != nil {
@@ -199,7 +199,7 @@ func NewHostsContainer(
 				return nil, fmt.Errorf("adding path: %w", err)
 			}
 
-			log.Debug("%s: %s is expected to exist but doesn't", hostsContainerPref, p)
+			log.Debug("%s: %s is expected to exist but doesn't", hostsContainerPrefix, p)
 		}
 	}
 
@@ -208,14 +208,21 @@ func NewHostsContainer(
 	return hc, nil
 }
 
-// Close implements the io.Closer interface for *HostsContainer.  Close must
-// only be called once.  The returned err is always nil.
+// Close implements the [io.Closer] interface for *HostsContainer.  It closes
+// both itself and its [aghos.FSWatcher].  Close must only be called once.
 func (hc *HostsContainer) Close() (err error) {
-	log.Debug("%s: closing", hostsContainerPref)
+	log.Debug("%s: closing", hostsContainerPrefix)
+
+	err = hc.watcher.Close()
+	if err != nil {
+		err = fmt.Errorf("closing fs watcher: %w", err)
+
+		// Go on and close the container either way.
+	}
 
 	close(hc.done)
 
-	return nil
+	return err
 }
 
 // Upd returns the channel into which the updates are sent.
@@ -251,22 +258,22 @@ func pathsToPatterns(fsys fs.FS, paths []string) (patterns []string, err error) 
 // update channel of HostsContainer when finishes.  It's used to be called
 // within a separate goroutine.
 func (hc *HostsContainer) handleEvents() {
-	defer log.OnPanic(fmt.Sprintf("%s: handling events", hostsContainerPref))
+	defer log.OnPanic(fmt.Sprintf("%s: handling events", hostsContainerPrefix))
 
 	defer close(hc.updates)
 
-	ok, eventsCh := true, hc.w.Events()
+	ok, eventsCh := true, hc.watcher.Events()
 	for ok {
 		select {
 		case _, ok = <-eventsCh:
 			if !ok {
-				log.Debug("%s: watcher closed the events channel", hostsContainerPref)
+				log.Debug("%s: watcher closed the events channel", hostsContainerPrefix)
 
 				continue
 			}
 
 			if err := hc.refresh(); err != nil {
-				log.Error("%s: %s", hostsContainerPref, err)
+				log.Error("%s: %s", hostsContainerPrefix, err)
 			}
 		case _, ok = <-hc.done:
 			// Go on.
@@ -345,7 +352,7 @@ func (hp *hostsParser) parseLine(line string) (ip netip.Addr, hosts []string) {
 		// TODO(e.burkov):  Investigate if hosts may contain DNS-SD domains.
 		err = netutil.ValidateHostname(f)
 		if err != nil {
-			log.Error("%s: host %q is invalid, ignoring", hostsContainerPref, f)
+			log.Error("%s: host %q is invalid, ignoring", hostsContainerPrefix, f)
 
 			continue
 		}
@@ -389,7 +396,7 @@ func (hp *hostsParser) addRules(ip netip.Addr, host, line string) {
 	rule, rulePtr := hp.writeRules(host, ip)
 	hp.translations[rule], hp.translations[rulePtr] = line, line
 
-	log.Debug("%s: added ip-host pair %q-%q", hostsContainerPref, ip, host)
+	log.Debug("%s: added ip-host pair %q-%q", hostsContainerPrefix, ip, host)
 }
 
 // writeRules writes the actual rule for the qtype and the PTR for the host-ip
@@ -443,7 +450,7 @@ func (hp *hostsParser) writeRules(host string, ip netip.Addr) (rule, rulePtr str
 
 // sendUpd tries to send the parsed data to the ch.
 func (hp *hostsParser) sendUpd(ch chan HostsRecords) {
-	log.Debug("%s: sending upd", hostsContainerPref)
+	log.Debug("%s: sending upd", hostsContainerPrefix)
 
 	upd := hp.table
 	select {
@@ -451,11 +458,11 @@ func (hp *hostsParser) sendUpd(ch chan HostsRecords) {
 		// Updates are delivered.  Go on.
 	case <-ch:
 		ch <- upd
-		log.Debug("%s: replaced the last update", hostsContainerPref)
+		log.Debug("%s: replaced the last update", hostsContainerPrefix)
 	case ch <- upd:
 		// The previous update was just read and the next one pushed.  Go on.
 	default:
-		log.Error("%s: the updates channel is broken", hostsContainerPref)
+		log.Error("%s: the updates channel is broken", hostsContainerPrefix)
 	}
 }
 
@@ -473,7 +480,7 @@ func (hp *hostsParser) newStrg(id int) (s *filterlist.RuleStorage, err error) {
 //
 // TODO(e.burkov):  Accept a parameter to specify the files to refresh.
 func (hc *HostsContainer) refresh() (err error) {
-	log.Debug("%s: refreshing", hostsContainerPref)
+	log.Debug("%s: refreshing", hostsContainerPrefix)
 
 	hp := hc.newHostsParser()
 	if _, err = aghos.FileWalker(hp.parseFile).Walk(hc.fsys, hc.patterns...); err != nil {
@@ -482,7 +489,7 @@ func (hc *HostsContainer) refresh() (err error) {
 
 	// hc.last is nil on the first refresh, so let that one through.
 	if hc.last != nil && maps.EqualFunc(hp.table, hc.last, (*HostsRecord).equal) {
-		log.Debug("%s: no changes detected", hostsContainerPref)
+		log.Debug("%s: no changes detected", hostsContainerPrefix)
 
 		return nil
 	}

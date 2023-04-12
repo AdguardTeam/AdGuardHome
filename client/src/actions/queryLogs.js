@@ -177,7 +177,7 @@ export const getLogsConfigSuccess = createAction('GET_LOGS_CONFIG_SUCCESS');
 export const getLogsConfig = () => async (dispatch) => {
     dispatch(getLogsConfigRequest());
     try {
-        const data = await apiClient.getQueryLogInfo();
+        const data = await apiClient.getQueryLogConfig();
         dispatch(getLogsConfigSuccess(data));
     } catch (error) {
         dispatch(addErrorToast({ error }));

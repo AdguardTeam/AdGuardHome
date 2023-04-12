@@ -14,26 +14,33 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
+	"golang.org/x/exp/slices"
 )
 
 // validateFilterURL validates the filter list URL or file name.
 func validateFilterURL(urlStr string) (err error) {
+	defer func() { err = errors.Annotate(err, "checking filter: %w") }()
+
 	if filepath.IsAbs(urlStr) {
 		_, err = os.Stat(urlStr)
 		if err != nil {
-			return fmt.Errorf("checking filter file: %w", err)
+			// Don't wrap the error since it's informative enough as is.
+			return err
 		}
 
 		return nil
 	}
 
-	url, err := url.ParseRequestURI(urlStr)
+	u, err := url.ParseRequestURI(urlStr)
 	if err != nil {
-		return fmt.Errorf("checking filter url: %w", err)
-	}
-
-	if s := url.Scheme; s != aghhttp.SchemeHTTP && s != aghhttp.SchemeHTTPS {
-		return fmt.Errorf("checking filter url: invalid scheme %q", s)
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	} else if s := u.Scheme; s != aghhttp.SchemeHTTP && s != aghhttp.SchemeHTTPS {
+		return &url.Error{
+			Op:  "Check scheme",
+			URL: urlStr,
+			Err: fmt.Errorf("only %v allowed", []string{aghhttp.SchemeHTTP, aghhttp.SchemeHTTPS}),
+		}
 	}
 
 	return nil
@@ -63,7 +70,8 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 
 	// Check for duplicates
 	if d.filterExists(fj.URL) {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Filter URL already added -- %s", fj.URL)
+		err = errFilterExists
+		aghhttp.Error(r, w, http.StatusBadRequest, "Filter with URL %q: %s", fj.URL, err)
 
 		return
 	}
@@ -99,7 +107,7 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 			r,
 			w,
 			http.StatusBadRequest,
-			"Filter at the url %s is invalid (maybe it points to blank page?)",
+			"Filter with URL %q is invalid (maybe it points to blank page?)",
 			filt.URL,
 		)
 
@@ -108,8 +116,9 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 
 	// URL is assumed valid so append it to filters, update config, write new
 	// file and reload it to engines.
-	if !d.filterAdd(filt) {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Filter URL already added -- %s", filt.URL)
+	err = d.filterAdd(filt)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "Filter with URL %q: %s", filt.URL, err)
 
 		return
 	}
@@ -137,31 +146,38 @@ func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	d.filtersMu.Lock()
-	filters := &d.Filters
-	if req.Whitelist {
-		filters = &d.WhitelistFilters
-	}
-
 	var deleted FilterYAML
-	var newFilters []FilterYAML
-	for _, flt := range *filters {
-		if flt.URL != req.URL {
-			newFilters = append(newFilters, flt)
+	func() {
+		d.filtersMu.Lock()
+		defer d.filtersMu.Unlock()
 
-			continue
+		filters := &d.Filters
+		if req.Whitelist {
+			filters = &d.WhitelistFilters
 		}
 
-		deleted = flt
-		path := flt.Path(d.DataDir)
-		err = os.Rename(path, path+".old")
+		delIdx := slices.IndexFunc(*filters, func(flt FilterYAML) bool {
+			return flt.URL == req.URL
+		})
+		if delIdx == -1 {
+			log.Error("deleting filter with url %q: %s", req.URL, errFilterNotExist)
+
+			return
+		}
+
+		deleted = (*filters)[delIdx]
+		p := deleted.Path(d.DataDir)
+		err = os.Rename(p, p+".old")
 		if err != nil {
-			log.Error("deleting filter %q: %s", path, err)
-		}
-	}
+			log.Error("deleting filter %d: renaming file %q: %s", deleted.ID, p, err)
 
-	*filters = newFilters
-	d.filtersMu.Unlock()
+			return
+		}
+
+		*filters = slices.Delete(*filters, delIdx, delIdx+1)
+
+		log.Info("deleted filter %d", deleted.ID)
+	}()
 
 	d.ConfigModified()
 	d.EnableFilters(true)
@@ -258,10 +274,6 @@ func (d *DNSFilter) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 	type Req struct {
 		White bool `json:"whitelist"`
 	}
-	type Resp struct {
-		Updated int `json:"updated"`
-	}
-	resp := Resp{}
 	var err error
 
 	req := Req{}
@@ -273,6 +285,9 @@ func (d *DNSFilter) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 	}
 
 	var ok bool
+	resp := struct {
+		Updated int `json:"updated"`
+	}{}
 	resp.Updated, _, ok = d.tryRefreshFilters(!req.White, req.White, true)
 	if !ok {
 		aghhttp.Error(
@@ -461,6 +476,7 @@ func (d *DNSFilter) RegisterFilteringHandlers() {
 	registerHTTP(http.MethodPost, "/control/safesearch/enable", d.handleSafeSearchEnable)
 	registerHTTP(http.MethodPost, "/control/safesearch/disable", d.handleSafeSearchDisable)
 	registerHTTP(http.MethodGet, "/control/safesearch/status", d.handleSafeSearchStatus)
+	registerHTTP(http.MethodPut, "/control/safesearch/settings", d.handleSafeSearchSettings)
 
 	registerHTTP(http.MethodGet, "/control/rewrite/list", d.handleRewriteList)
 	registerHTTP(http.MethodPost, "/control/rewrite/add", d.handleRewriteAdd)

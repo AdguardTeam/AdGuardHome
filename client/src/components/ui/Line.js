@@ -9,11 +9,12 @@ import round from 'lodash/round';
 import { useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 import './Line.css';
+import { msToDays } from '../../helpers/helpers';
 
 const Line = ({
     data, color = 'black',
 }) => {
-    const interval = useSelector((state) => state.stats.interval);
+    const interval = msToDays(useSelector((state) => state.stats.interval));
 
     return <ResponsiveLine
         enableArea

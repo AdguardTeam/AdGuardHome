@@ -18,7 +18,6 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
@@ -52,8 +51,16 @@ type clientsContainer struct {
 	// lock protects all fields.
 	//
 	// TODO(a.garipov): Use a pointer and describe which fields are protected in
-	// more detail.
+	// more detail.  Use sync.RWMutex.
 	lock sync.Mutex
+
+	// safeSearchCacheSize is the size of the safe search cache to use for
+	// persistent clients.
+	safeSearchCacheSize uint
+
+	// safeSearchCacheTTL is the TTL of the safe search cache to use for
+	// persistent clients.
+	safeSearchCacheTTL time.Duration
 
 	// testing is a flag that disables some features for internal tests.
 	//
@@ -69,10 +76,12 @@ func (clients *clientsContainer) Init(
 	dhcpServer dhcpd.Interface,
 	etcHosts *aghnet.HostsContainer,
 	arpdb aghnet.ARPDB,
+	filteringConf *filtering.Config,
 ) {
 	if clients.list != nil {
 		log.Fatal("clients.list != nil")
 	}
+
 	clients.list = make(map[string]*Client)
 	clients.idIndex = make(map[string]*Client)
 	clients.ipToRC = map[netip.Addr]*RuntimeClient{}
@@ -82,7 +91,10 @@ func (clients *clientsContainer) Init(
 	clients.dhcpServer = dhcpServer
 	clients.etcHosts = etcHosts
 	clients.arpdb = arpdb
-	clients.addFromConfig(objects)
+	clients.addFromConfig(objects, filteringConf)
+
+	clients.safeSearchCacheSize = filteringConf.SafeSearchCacheSize
+	clients.safeSearchCacheTTL = time.Minute * time.Duration(filteringConf.CacheTime)
 
 	if clients.testing {
 		return
@@ -133,6 +145,8 @@ func (clients *clientsContainer) reloadARP() {
 
 // clientObject is the YAML representation of a persistent client.
 type clientObject struct {
+	SafeSearchConf filtering.SafeSearchConfig `yaml:"safe_search"`
+
 	Name string `yaml:"name"`
 
 	Tags            []string `yaml:"tags"`
@@ -143,14 +157,16 @@ type clientObject struct {
 	UseGlobalSettings        bool `yaml:"use_global_settings"`
 	FilteringEnabled         bool `yaml:"filtering_enabled"`
 	ParentalEnabled          bool `yaml:"parental_enabled"`
-	SafeSearchEnabled        bool `yaml:"safesearch_enabled"`
 	SafeBrowsingEnabled      bool `yaml:"safebrowsing_enabled"`
 	UseGlobalBlockedServices bool `yaml:"use_global_blocked_services"`
+
+	IgnoreQueryLog   bool `yaml:"ignore_querylog"`
+	IgnoreStatistics bool `yaml:"ignore_statistics"`
 }
 
 // addFromConfig initializes the clients container with objects from the
 // configuration file.
-func (clients *clientsContainer) addFromConfig(objects []*clientObject) {
+func (clients *clientsContainer) addFromConfig(objects []*clientObject, filteringConf *filtering.Config) {
 	for _, o := range objects {
 		cli := &Client{
 			Name: o.Name,
@@ -161,9 +177,26 @@ func (clients *clientsContainer) addFromConfig(objects []*clientObject) {
 			UseOwnSettings:        !o.UseGlobalSettings,
 			FilteringEnabled:      o.FilteringEnabled,
 			ParentalEnabled:       o.ParentalEnabled,
-			SafeSearchEnabled:     o.SafeSearchEnabled,
+			safeSearchConf:        o.SafeSearchConf,
 			SafeBrowsingEnabled:   o.SafeBrowsingEnabled,
 			UseOwnBlockedServices: !o.UseGlobalBlockedServices,
+			IgnoreQueryLog:        o.IgnoreQueryLog,
+			IgnoreStatistics:      o.IgnoreStatistics,
+		}
+
+		if o.SafeSearchConf.Enabled {
+			o.SafeSearchConf.CustomResolver = safeSearchResolver{}
+
+			err := cli.setSafeSearch(
+				o.SafeSearchConf,
+				filteringConf.SafeSearchCacheSize,
+				time.Minute*time.Duration(filteringConf.CacheTime),
+			)
+			if err != nil {
+				log.Error("clients: init client safesearch %q: %s", cli.Name, err)
+
+				continue
+			}
 		}
 
 		for _, s := range o.BlockedServices {
@@ -210,9 +243,11 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 			UseGlobalSettings:        !cli.UseOwnSettings,
 			FilteringEnabled:         cli.FilteringEnabled,
 			ParentalEnabled:          cli.ParentalEnabled,
-			SafeSearchEnabled:        cli.SafeSearchEnabled,
+			SafeSearchConf:           cli.safeSearchConf,
 			SafeBrowsingEnabled:      cli.SafeBrowsingEnabled,
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
+			IgnoreQueryLog:           cli.IgnoreQueryLog,
+			IgnoreStatistics:         cli.IgnoreStatistics,
 		}
 
 		objs = append(objs, o)
@@ -324,7 +359,8 @@ func (clients *clientsContainer) clientOrArtificial(
 	client, ok := clients.Find(id)
 	if ok {
 		return &querylog.Client{
-			Name: client.Name,
+			Name:           client.Name,
+			IgnoreQueryLog: client.IgnoreQueryLog,
 		}, false
 	}
 
@@ -359,6 +395,20 @@ func (clients *clientsContainer) Find(id string) (c *Client, ok bool) {
 	return c, true
 }
 
+// shouldCountClient is a wrapper around Find to make it a valid client
+// information finder for the statistics.  If no information about the client
+// is found, it returns true.
+func (clients *clientsContainer) shouldCountClient(ids []string) (y bool) {
+	for _, id := range ids {
+		client, ok := clients.Find(id)
+		if ok {
+			return !client.IgnoreStatistics
+		}
+	}
+
+	return true
+}
+
 // findUpstreams returns upstreams configured for the client, identified either
 // by its IP address or its ClientID.  upsConf is nil if the client isn't found
 // or if the client has no custom upstreams.
@@ -389,6 +439,7 @@ func (clients *clientsContainer) findUpstreams(
 			Bootstrap:    config.DNS.BootstrapDNS,
 			Timeout:      config.DNS.UpstreamTimeout.Duration,
 			HTTPVersions: dnsforward.UpstreamHTTPVersions(config.DNS.UseHTTP3Upstreams),
+			PreferIPv6:   config.DNS.BootstrapPreferIPv6,
 		},
 	)
 	if err != nil {
@@ -839,15 +890,7 @@ func (clients *clientsContainer) updateFromDHCP(add bool) {
 			continue
 		}
 
-		// TODO(a.garipov):  Remove once we switch to netip.Addr more fully.
-		ipAddr, err := netutil.IPToAddrNoMapped(l.IP)
-		if err != nil {
-			log.Error("clients: bad client ip %v from dhcp: %s", l.IP, err)
-
-			continue
-		}
-
-		ok := clients.addHostLocked(ipAddr, l.Hostname, ClientSourceDHCP)
+		ok := clients.addHostLocked(l.IP, l.Hostname, ClientSourceDHCP)
 		if ok {
 			n++
 		}

@@ -48,11 +48,11 @@ func TestDB(t *testing.T) {
 		Expiry:   time.Now().Add(time.Hour),
 		Hostname: "static-1.local",
 		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-		IP:       net.IP{192, 168, 10, 100},
+		IP:       netip.MustParseAddr("192.168.10.100"),
 	}, {
 		Hostname: "static-2.local",
 		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xBB},
-		IP:       net.IP{192, 168, 10, 101},
+		IP:       netip.MustParseAddr("192.168.10.101"),
 	}}
 
 	srv4, ok := s.srv4.(*v4Server)
@@ -80,7 +80,7 @@ func TestDB(t *testing.T) {
 
 	assert.Equal(t, leases[1].HWAddr, ll[0].HWAddr)
 	assert.Equal(t, leases[1].IP, ll[0].IP)
-	assert.True(t, ll[0].IsStatic())
+	assert.True(t, ll[0].IsStatic)
 
 	assert.Equal(t, leases[0].HWAddr, ll[1].HWAddr)
 	assert.Equal(t, leases[0].IP, ll[1].IP)
@@ -96,7 +96,7 @@ func TestNormalizeLeases(t *testing.T) {
 
 	staticLeases := []*Lease{{
 		HWAddr: net.HardwareAddr{1, 2, 3, 4},
-		IP:     net.IP{0, 2, 3, 4},
+		IP:     netip.MustParseAddr("0.2.3.4"),
 	}, {
 		HWAddr: net.HardwareAddr{2, 2, 3, 4},
 	}}

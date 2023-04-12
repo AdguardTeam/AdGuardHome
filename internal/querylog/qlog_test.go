@@ -22,24 +22,25 @@ func TestMain(m *testing.M) {
 // TestQueryLog tests adding and loading (with filtering) entries from disk and
 // memory.
 func TestQueryLog(t *testing.T) {
-	l := newQueryLog(Config{
+	l, err := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: true,
 		RotationIvl: timeutil.Day,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 	})
+	require.NoError(t, err)
 
 	// Add disk entries.
 	addEntry(l, "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	// Write to disk (first file).
-	require.NoError(t, l.flushLogBuffer(true))
+	require.NoError(t, l.flushLogBuffer())
 	// Start writing to the second file.
 	require.NoError(t, l.rotate())
 	// Add disk entries.
 	addEntry(l, "example.org", net.IPv4(1, 1, 1, 2), net.IPv4(2, 2, 2, 2))
 	// Write to disk.
-	require.NoError(t, l.flushLogBuffer(true))
+	require.NoError(t, l.flushLogBuffer())
 	// Add memory entries.
 	addEntry(l, "test.example.org", net.IPv4(1, 1, 1, 3), net.IPv4(2, 2, 2, 3))
 	addEntry(l, "example.com", net.IPv4(1, 1, 1, 4), net.IPv4(2, 2, 2, 4))
@@ -125,12 +126,13 @@ func TestQueryLog(t *testing.T) {
 }
 
 func TestQueryLogOffsetLimit(t *testing.T) {
-	l := newQueryLog(Config{
+	l, err := newQueryLog(Config{
 		Enabled:     true,
 		RotationIvl: timeutil.Day,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 	})
+	require.NoError(t, err)
 
 	const (
 		entNum           = 10
@@ -142,7 +144,7 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 		addEntry(l, secondPageDomain, net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	}
 	// Write them to the first file.
-	require.NoError(t, l.flushLogBuffer(true))
+	require.NoError(t, l.flushLogBuffer())
 	// Add more to the in-memory part of log.
 	for i := 0; i < entNum; i++ {
 		addEntry(l, firstPageDomain, net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
@@ -199,13 +201,14 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 }
 
 func TestQueryLogMaxFileScanEntries(t *testing.T) {
-	l := newQueryLog(Config{
+	l, err := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: true,
 		RotationIvl: timeutil.Day,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
 	})
+	require.NoError(t, err)
 
 	const entNum = 10
 	// Add entries to the log.
@@ -213,7 +216,7 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 		addEntry(l, "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	}
 	// Write them to disk.
-	require.NoError(t, l.flushLogBuffer(true))
+	require.NoError(t, l.flushLogBuffer())
 
 	params := newSearchParams()
 
@@ -227,13 +230,14 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 }
 
 func TestQueryLogFileDisabled(t *testing.T) {
-	l := newQueryLog(Config{
+	l, err := newQueryLog(Config{
 		Enabled:     true,
 		FileEnabled: false,
 		RotationIvl: timeutil.Day,
 		MemSize:     2,
 		BaseDir:     t.TempDir(),
 	})
+	require.NoError(t, err)
 
 	addEntry(l, "example1.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	addEntry(l, "example2.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
@@ -254,35 +258,52 @@ func TestQueryLogShouldLog(t *testing.T) {
 	)
 	set := stringutil.NewSet(ignored1, ignored2)
 
-	l := newQueryLog(Config{
+	findClient := func(ids []string) (c *Client, err error) {
+		log := ids[0] == "no_log"
+
+		return &Client{IgnoreQueryLog: log}, nil
+	}
+
+	l, err := newQueryLog(Config{
+		Ignored:     set,
 		Enabled:     true,
 		RotationIvl: timeutil.Day,
 		MemSize:     100,
 		BaseDir:     t.TempDir(),
-		Ignored:     set,
+		FindClient:  findClient,
 	})
+	require.NoError(t, err)
 
 	testCases := []struct {
 		name    string
 		host    string
+		ids     []string
 		wantLog bool
 	}{{
 		name:    "log",
 		host:    "example.com",
+		ids:     []string{"whatever"},
 		wantLog: true,
 	}, {
 		name:    "no_log_ignored_1",
 		host:    ignored1,
+		ids:     []string{"whatever"},
 		wantLog: false,
 	}, {
 		name:    "no_log_ignored_2",
 		host:    ignored2,
+		ids:     []string{"whatever"},
+		wantLog: false,
+	}, {
+		name:    "no_log_client_ignore",
+		host:    "example.com",
+		ids:     []string{"no_log"},
 		wantLog: false,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			res := l.ShouldLog(tc.host, dns.TypeA, dns.ClassINET)
+			res := l.ShouldLog(tc.host, dns.TypeA, dns.ClassINET, tc.ids)
 
 			assert.Equal(t, tc.wantLog, res)
 		})

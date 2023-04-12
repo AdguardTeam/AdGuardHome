@@ -178,22 +178,31 @@ manifest file templates, and helper scripts.
 
  ###  Usage
 
- *  `npm install`: install dependencies.  Run this first.
- *  `npm run locales:download`: download and save all translations.
- *  `npm run locales:upload`: upload the base `en` locale.
- *  `npm run locales:summary`: show the current locales summary.
- *  `npm run locales:unused`: show the list of unused strings.
+ *  `go run main.go help`: print usage.
+
+ *  `go run main.go download [-n <count>]`: download and save all translations.
+    `n` is optional flag where count is a number of concurrent downloads.
+
+ *  `go run main.go upload`: upload the base `en` locale.
+
+ *  `go run main.go summary`: show the current locales summary.
+
+ *  `go run main.go unused`: show the list of unused strings.
+
+ *  `go run main.go auto-add`: add locales with additions to the git and
+    restore locales with deletions.
 
 After the download you'll find the output locales in the `client/src/__locales/`
 directory.
 
 Optional environment:
 
- *  `SLEEP_TIME`: set the sleep time between downloads for `locales:download`,
-    in milliseconds.  The default is 250 ms.
+ *  `UPLOAD_LANGUAGE`: set an alternative language for `upload`.
 
- *  `UPLOAD_LANGUAGE`: set an alternative language for `locales:upload` to
-    upload.
+ *  `TWOSKY_URI`: set an alternative URL for `download` or `upload`.
+
+ *  `TWOSKY_PROJECT_ID`: set an alternative project ID for `download` or
+    `upload`.
 
 
 

@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -52,7 +53,7 @@ const textPlainDeprMsg = `using this api with the text/plain content-type is dep
 // deprecation and removal of a plain-text API if the request is made with the
 // "text/plain" content-type.
 func WriteTextPlainDeprecated(w http.ResponseWriter, r *http.Request) (isPlainText bool) {
-	if r.Header.Get(HdrNameContentType) != HdrValTextPlain {
+	if r.Header.Get(httphdr.ContentType) != HdrValTextPlain {
 		return false
 	}
 
@@ -72,7 +73,7 @@ func WriteJSONResponse(w http.ResponseWriter, r *http.Request, resp any) (err er
 // redefine the status code.
 func WriteJSONResponseCode(w http.ResponseWriter, r *http.Request, code int, resp any) (err error) {
 	w.WriteHeader(code)
-	w.Header().Set(HdrNameContentType, HdrValApplicationJSON)
+	w.Header().Set(httphdr.ContentType, HdrValApplicationJSON)
 	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		Error(r, w, http.StatusInternalServerError, "encoding resp: %s", err)

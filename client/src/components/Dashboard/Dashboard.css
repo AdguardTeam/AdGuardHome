@@ -1,3 +1,9 @@
+.dashboard-protection-button.btn-gray {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right-color: #a4a4a4;
+}
+
 .stats__table .popover__body {
     left: -10px;
     min-width: 270px;
@@ -34,19 +40,10 @@
     align-items: center;
 }
 
-.dashboard-title__button {
-    margin: 0 0.5rem;
-}
-
 @media (max-width: 767.98px) {
     .page-title--dashboard {
         flex-direction: column;
         align-items: flex-start;
-    }
-
-    .dashboard-title__button {
-        margin: 0.5rem 0;
-        display: block;
     }
 }
 

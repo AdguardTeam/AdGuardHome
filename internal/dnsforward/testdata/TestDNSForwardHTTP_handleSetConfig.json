@@ -19,6 +19,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -33,7 +34,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "bootstraps": {
@@ -52,6 +55,7 @@
         "9.9.9.10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -66,7 +70,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "blocking_mode_good": {
@@ -86,6 +92,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "refused",
       "blocking_ipv4": "",
@@ -100,7 +107,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "blocking_mode_bad": {
@@ -120,6 +129,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -134,7 +144,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "ratelimit": {
@@ -154,6 +166,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 6,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -168,7 +181,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "edns_cs_enabled": {
@@ -188,6 +203,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -202,7 +218,87 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
+    }
+  },
+  "edns_cs_use_custom": {
+    "req": {
+      "edns_cs_enabled": true,
+      "edns_cs_use_custom": true,
+      "edns_cs_custom_ip": "1.2.3.4"
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "protection_disabled_until": null,
+      "ratelimit": 0,
+      "blocking_mode": "default",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": true,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "cache_optimistic": false,
+      "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": true,
+      "edns_cs_custom_ip": "1.2.3.4"
+    }
+  },
+  "edns_cs_use_custom_bad_ip": {
+    "req": {
+      "edns_cs_enabled": true,
+      "edns_cs_use_custom": true,
+      "edns_cs_custom_ip": "bad.ip"
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "protection_enabled": true,
+      "protection_disabled_until": null,
+      "ratelimit": 0,
+      "blocking_mode": "default",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "cache_optimistic": false,
+      "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "dnssec_enabled": {
@@ -222,6 +318,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -236,7 +333,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "cache_size": {
@@ -256,6 +355,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -270,7 +370,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "upstream_mode_parallel": {
@@ -290,6 +392,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -304,7 +407,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "upstream_mode_fastest_addr": {
@@ -324,6 +429,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -338,7 +444,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "upstream_dns_bad": {
@@ -360,6 +468,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -374,7 +483,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "bootstraps_bad": {
@@ -396,6 +507,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -410,7 +522,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "cache_bad_ttl": {
@@ -431,6 +545,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -445,7 +560,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "upstream_mode_bad": {
@@ -465,6 +582,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -479,7 +597,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "local_ptr_upstreams_good": {
@@ -501,6 +621,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -517,7 +638,9 @@
       "use_private_ptr_resolvers": false,
       "local_ptr_upstreams": [
         "123.123.123.123"
-      ]
+      ],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "local_ptr_upstreams_bad": {
@@ -540,6 +663,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -554,7 +678,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   },
   "local_ptr_upstreams_null": {
@@ -574,6 +700,7 @@
         "2620:fe::fe:10"
       ],
       "protection_enabled": true,
+      "protection_disabled_until": null,
       "ratelimit": 0,
       "blocking_mode": "default",
       "blocking_ipv4": "",
@@ -588,7 +715,9 @@
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,
-      "local_ptr_upstreams": []
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
     }
   }
 }

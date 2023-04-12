@@ -54,6 +54,11 @@
     cursor: pointer;
 }
 
+.toast__dismiss:hover,
+.toast__dismiss:focus {
+    outline: none;
+}
+
 .toast-enter {
     opacity: 0.01;
 }

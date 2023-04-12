@@ -16,6 +16,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -379,9 +380,9 @@ func (a *Auth) newCookie(req loginJSON, addr string) (c *http.Cookie, err error)
 // TODO(a.garipov): Support header Forwarded from RFC 7329.
 func realIP(r *http.Request) (ip net.IP, err error) {
 	proxyHeaders := []string{
-		"CF-Connecting-IP",
-		"True-Client-IP",
-		"X-Real-IP",
+		httphdr.CFConnectingIP,
+		httphdr.TrueClientIP,
+		httphdr.XRealIP,
 	}
 
 	for _, h := range proxyHeaders {
@@ -394,7 +395,7 @@ func realIP(r *http.Request) (ip net.IP, err error) {
 
 	// If none of the above yielded any results, get the leftmost IP address
 	// from the X-Forwarded-For header.
-	s := r.Header.Get("X-Forwarded-For")
+	s := r.Header.Get(httphdr.XForwardedFor)
 	ipStrs := strings.SplitN(s, ", ", 2)
 	ip = net.ParseIP(ipStrs[0])
 	if ip != nil {
@@ -411,6 +412,21 @@ func realIP(r *http.Request) (ip net.IP, err error) {
 	return net.ParseIP(ipStr), nil
 }
 
+// writeErrorWithIP is like [aghhttp.Error], but includes the remote IP address
+// when it writes to the log.
+func writeErrorWithIP(
+	r *http.Request,
+	w http.ResponseWriter,
+	code int,
+	remoteIP string,
+	format string,
+	args ...any,
+) {
+	text := fmt.Sprintf(format, args...)
+	log.Error("%s %s %s: from ip %s: %s", r.Method, r.Host, r.URL, remoteIP, text)
+	http.Error(w, text, code)
+}
+
 func handleLogin(w http.ResponseWriter, r *http.Request) {
 	req := loginJSON{}
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -420,31 +436,45 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var remoteAddr string
+	var remoteIP string
 	// realIP cannot be used here without taking TrustedProxies into account due
 	// to security issues.
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
 	//
 	// TODO(e.burkov): Use realIP when the issue will be fixed.
-	if remoteAddr, err = netutil.SplitHost(r.RemoteAddr); err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "auth: getting remote address: %s", err)
+	if remoteIP, err = netutil.SplitHost(r.RemoteAddr); err != nil {
+		writeErrorWithIP(
+			r,
+			w,
+			http.StatusBadRequest,
+			r.RemoteAddr,
+			"auth: getting remote address: %s",
+			err,
+		)
 
 		return
 	}
 
 	if rateLimiter := Context.auth.raleLimiter; rateLimiter != nil {
-		if left := rateLimiter.check(remoteAddr); left > 0 {
-			w.Header().Set("Retry-After", strconv.Itoa(int(left.Seconds())))
-			aghhttp.Error(r, w, http.StatusTooManyRequests, "auth: blocked for %s", left)
+		if left := rateLimiter.check(remoteIP); left > 0 {
+			w.Header().Set(httphdr.RetryAfter, strconv.Itoa(int(left.Seconds())))
+			writeErrorWithIP(
+				r,
+				w,
+				http.StatusTooManyRequests,
+				remoteIP,
+				"auth: blocked for %s",
+				left,
+			)
 
 			return
 		}
 	}
 
-	cookie, err := Context.auth.newCookie(req, remoteAddr)
+	cookie, err := Context.auth.newCookie(req, remoteIP)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusForbidden, "%s", err)
+		writeErrorWithIP(r, w, http.StatusForbidden, remoteIP, "%s", err)
 
 		return
 	}
@@ -452,10 +482,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	// Use realIP here, since this IP address is only used for logging.
 	ip, err := realIP(r)
 	if err != nil {
-		log.Error("auth: getting real ip from request: %s", err)
-	} else if ip == nil {
-		// Technically shouldn't happen.
-		log.Error("auth: unknown ip")
+		log.Error("auth: getting real ip from request with remote ip %s: %s", remoteIP, err)
 	}
 
 	log.Info("auth: user %q successfully logged in from ip %v", req.Name, ip)
@@ -463,9 +490,9 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookie)
 
 	h := w.Header()
-	h.Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
-	h.Set("Pragma", "no-cache")
-	h.Set("Expires", "0")
+	h.Set(httphdr.CacheControl, "no-store, no-cache, must-revalidate, proxy-revalidate")
+	h.Set(httphdr.Pragma, "no-cache")
+	h.Set(httphdr.Expires, "0")
 
 	aghhttp.OK(w)
 }
@@ -476,7 +503,7 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// The only error that is returned from r.Cookie is [http.ErrNoCookie].
 		// The user is already logged out.
-		respHdr.Set("Location", "/login.html")
+		respHdr.Set(httphdr.Location, "/login.html")
 		w.WriteHeader(http.StatusFound)
 
 		return
@@ -494,8 +521,8 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	respHdr.Set("Location", "/login.html")
-	respHdr.Set("Set-Cookie", c.String())
+	respHdr.Set(httphdr.Location, "/login.html")
+	respHdr.Set(httphdr.SetCookie, c.String())
 	w.WriteHeader(http.StatusFound)
 }
 
@@ -543,8 +570,7 @@ func optionalAuthThird(w http.ResponseWriter, r *http.Request) (mustAuth bool) {
 			log.Debug("auth: redirected to login page by GL-Inet submodule")
 		} else {
 			log.Debug("auth: redirected to login page")
-			w.Header().Set("Location", "/login.html")
-			w.WriteHeader(http.StatusFound)
+			http.Redirect(w, r, "login.html", http.StatusFound)
 		}
 	} else {
 		log.Debug("auth: responded with forbidden to %s %s", r.Method, p)
@@ -569,8 +595,7 @@ func optionalAuth(
 				// Redirect to the dashboard if already authenticated.
 				res := Context.auth.checkSession(cookie.Value)
 				if res == checkSessionOK {
-					w.Header().Set("Location", "/")
-					w.WriteHeader(http.StatusFound)
+					http.Redirect(w, r, "", http.StatusFound)
 
 					return
 				}

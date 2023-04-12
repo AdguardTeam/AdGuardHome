@@ -3,7 +3,6 @@ package querylog
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"strings"
 	"sync"
@@ -25,9 +24,12 @@ const (
 type queryLog struct {
 	findClient func(ids []string) (c *Client, err error)
 
-	conf    *Config
-	lock    sync.Mutex
-	logFile string // path to the log file
+	// confMu protects conf.
+	confMu *sync.RWMutex
+	conf   *Config
+
+	// logFile is the path to the log file.
+	logFile string
 
 	// bufferLock protects buffer.
 	bufferLock sync.RWMutex
@@ -71,52 +73,24 @@ func NewClientProto(s string) (cp ClientProto, err error) {
 	}
 }
 
-// logEntry - represents a single log entry
-type logEntry struct {
-	// client is the found client information, if any.
-	client *Client
-
-	Time time.Time `json:"T"`
-
-	QHost  string `json:"QH"`
-	QType  string `json:"QT"`
-	QClass string `json:"QC"`
-
-	ReqECS string `json:"ECS,omitempty"`
-
-	ClientID    string      `json:"CID,omitempty"`
-	ClientProto ClientProto `json:"CP"`
-
-	Answer     []byte `json:",omitempty"` // sometimes empty answers happen like binerdunt.top or rev2.globalrootservers.net
-	OrigAnswer []byte `json:",omitempty"`
-
-	Result   filtering.Result
-	Upstream string `json:",omitempty"`
-
-	IP net.IP `json:"IP"`
-
-	Elapsed time.Duration
-
-	Cached            bool `json:",omitempty"`
-	AuthenticatedData bool `json:"AD,omitempty"`
-}
-
-// shallowClone returns a shallow clone of e.
-func (e *logEntry) shallowClone() (clone *logEntry) {
-	cloneVal := *e
-
-	return &cloneVal
-}
-
 func (l *queryLog) Start() {
 	if l.conf.HTTPRegister != nil {
 		l.initWeb()
 	}
+
 	go l.periodicRotate()
 }
 
 func (l *queryLog) Close() {
-	_ = l.flushLogBuffer(true)
+	l.confMu.RLock()
+	defer l.confMu.RUnlock()
+
+	if l.conf.FileEnabled {
+		err := l.flushLogBuffer()
+		if err != nil {
+			log.Error("querylog: closing: %s", err)
+		}
+	}
 }
 
 func checkInterval(ivl time.Duration) (ok bool) {
@@ -132,8 +106,26 @@ func checkInterval(ivl time.Duration) (ok bool) {
 	return ivl == quarterDay || ivl == day || ivl == week || ivl == month || ivl == threeMonths
 }
 
+// validateIvl returns an error if ivl is less than an hour or more than a
+// year.
+func validateIvl(ivl time.Duration) (err error) {
+	if ivl < time.Hour {
+		return errors.Error("less than an hour")
+	}
+
+	if ivl > timeutil.Day*365 {
+		return errors.Error("more than a year")
+	}
+
+	return nil
+}
+
 func (l *queryLog) WriteDiskConfig(c *Config) {
+	l.confMu.RLock()
+	defer l.confMu.RUnlock()
+
 	*c = *l.conf
+	c.Ignored = l.conf.Ignored.Clone()
 }
 
 // Clear memory buffer and remove log files
@@ -141,10 +133,13 @@ func (l *queryLog) clear() {
 	l.fileFlushLock.Lock()
 	defer l.fileFlushLock.Unlock()
 
-	l.bufferLock.Lock()
-	l.buffer = nil
-	l.flushPending = false
-	l.bufferLock.Unlock()
+	func() {
+		l.bufferLock.Lock()
+		defer l.bufferLock.Unlock()
+
+		l.buffer = nil
+		l.flushPending = false
+	}()
 
 	oldLogFile := l.logFile + ".1"
 	err := os.Remove(oldLogFile)
@@ -161,7 +156,17 @@ func (l *queryLog) clear() {
 }
 
 func (l *queryLog) Add(params *AddParams) {
-	if !l.conf.Enabled {
+	var isEnabled, fileIsEnabled bool
+	var memSize uint32
+	func() {
+		l.confMu.RLock()
+		defer l.confMu.RUnlock()
+
+		isEnabled, fileIsEnabled = l.conf.Enabled, l.conf.FileEnabled
+		memSize = l.conf.MemSize
+	}()
+
+	if !isEnabled {
 		return
 	}
 
@@ -178,7 +183,7 @@ func (l *queryLog) Add(params *AddParams) {
 
 	now := time.Now()
 	q := params.Question.Question[0]
-	entry := logEntry{
+	entry := &logEntry{
 		Time: now,
 
 		QHost:  strings.ToLower(q.Name[:len(q.Name)-1]),
@@ -203,65 +208,63 @@ func (l *queryLog) Add(params *AddParams) {
 		entry.ReqECS = params.ReqECS.String()
 	}
 
-	if params.Answer != nil {
-		var a []byte
-		a, err = params.Answer.Pack()
-		if err != nil {
-			log.Error("querylog: Answer.Pack(): %s", err)
+	entry.addResponse(params.Answer, false)
+	entry.addResponse(params.OrigAnswer, true)
 
-			return
-		}
-
-		entry.Answer = a
-	}
-
-	if params.OrigAnswer != nil {
-		var a []byte
-		a, err = params.OrigAnswer.Pack()
-		if err != nil {
-			log.Error("querylog: OrigAnswer.Pack(): %s", err)
-
-			return
-		}
-
-		entry.OrigAnswer = a
-	}
-
-	l.bufferLock.Lock()
-	l.buffer = append(l.buffer, &entry)
 	needFlush := false
+	func() {
+		l.bufferLock.Lock()
+		defer l.bufferLock.Unlock()
 
-	if !l.conf.FileEnabled {
-		if len(l.buffer) > int(l.conf.MemSize) {
-			// writing to file is disabled - just remove the oldest entry from array
-			//
-			// TODO(a.garipov): This should be replaced by a proper ring buffer,
-			// but it's currently difficult to do that.
-			l.buffer[0] = nil
-			l.buffer = l.buffer[1:]
-		}
-	} else if !l.flushPending {
-		needFlush = len(l.buffer) >= int(l.conf.MemSize)
-		if needFlush {
-			l.flushPending = true
-		}
-	}
-	l.bufferLock.Unlock()
+		l.buffer = append(l.buffer, entry)
 
-	// if buffer needs to be flushed to disk, do it now
+		if !fileIsEnabled {
+			if len(l.buffer) > int(memSize) {
+				// Writing to file is disabled, so just remove the oldest entry
+				// from the slices.
+				//
+				// TODO(a.garipov): This should be replaced by a proper ring
+				// buffer, but it's currently difficult to do that.
+				l.buffer[0] = nil
+				l.buffer = l.buffer[1:]
+			}
+		} else if !l.flushPending {
+			needFlush = len(l.buffer) >= int(memSize)
+			if needFlush {
+				l.flushPending = true
+			}
+		}
+	}()
+
 	if needFlush {
 		go func() {
-			_ = l.flushLogBuffer(false)
+			flushErr := l.flushLogBuffer()
+			if flushErr != nil {
+				log.Error("querylog: flushing after adding: %s", err)
+			}
 		}()
 	}
 }
 
 // ShouldLog returns true if request for the host should be logged.
-func (l *queryLog) ShouldLog(host string, _, _ uint16) bool {
+func (l *queryLog) ShouldLog(host string, _, _ uint16, ids []string) bool {
+	l.confMu.RLock()
+	defer l.confMu.RUnlock()
+
+	c, err := l.findClient(ids)
+	if err != nil {
+		log.Error("querylog: finding client: %s", err)
+	}
+
+	if c != nil && c.IgnoreQueryLog {
+		return false
+	}
+
 	return !l.isIgnored(host)
 }
 
-// isIgnored returns true if the host is in the Ignored list.
+// isIgnored returns true if the host is in the ignored domains list.  It
+// assumes that l.confMu is locked for reading.
 func (l *queryLog) isIgnored(host string) bool {
 	return l.conf.Ignored.Has(host)
 }

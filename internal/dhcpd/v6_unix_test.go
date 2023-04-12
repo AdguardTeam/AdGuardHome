@@ -4,7 +4,9 @@ package dhcpd
 
 import (
 	"net"
+	"net/netip"
 	"testing"
+	"time"
 
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/iana"
@@ -27,7 +29,7 @@ func TestV6_AddRemove_static(t *testing.T) {
 
 	// Add static lease.
 	l := &Lease{
-		IP:     net.ParseIP("2001::1"),
+		IP:     netip.MustParseAddr("2001::1"),
 		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}
 	err = s.AddStaticLease(l)
@@ -46,7 +48,7 @@ func TestV6_AddRemove_static(t *testing.T) {
 
 	// Try to remove non-existent static lease.
 	err = s.RemoveStaticLease(&Lease{
-		IP:     net.ParseIP("2001::2"),
+		IP:     netip.MustParseAddr("2001::2"),
 		HWAddr: l.HWAddr,
 	})
 	require.Error(t, err)
@@ -71,10 +73,10 @@ func TestV6_AddReplace(t *testing.T) {
 
 	// Add dynamic leases.
 	dynLeases := []*Lease{{
-		IP:     net.ParseIP("2001::1"),
+		IP:     netip.MustParseAddr("2001::1"),
 		HWAddr: net.HardwareAddr{0x11, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}, {
-		IP:     net.ParseIP("2001::2"),
+		IP:     netip.MustParseAddr("2001::2"),
 		HWAddr: net.HardwareAddr{0x22, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}}
 
@@ -83,10 +85,10 @@ func TestV6_AddReplace(t *testing.T) {
 	}
 
 	stLeases := []*Lease{{
-		IP:     net.ParseIP("2001::1"),
+		IP:     netip.MustParseAddr("2001::1"),
 		HWAddr: net.HardwareAddr{0x33, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}, {
-		IP:     net.ParseIP("2001::3"),
+		IP:     netip.MustParseAddr("2001::3"),
 		HWAddr: net.HardwareAddr{0x22, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}}
 
@@ -99,7 +101,7 @@ func TestV6_AddReplace(t *testing.T) {
 	require.Len(t, ls, 2)
 
 	for i, l := range ls {
-		assert.True(t, stLeases[i].IP.Equal(l.IP))
+		assert.Equal(t, stLeases[i].IP, l.IP)
 		assert.Equal(t, stLeases[i].HWAddr, l.HWAddr)
 		assert.EqualValues(t, leaseExpireStatic, l.Expiry.Unix())
 	}
@@ -126,7 +128,7 @@ func TestV6GetLease(t *testing.T) {
 	}
 
 	l := &Lease{
-		IP:     net.ParseIP("2001::1"),
+		IP:     netip.MustParseAddr("2001::1"),
 		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}
 	err = s.AddStaticLease(l)
@@ -158,7 +160,8 @@ func TestV6GetLease(t *testing.T) {
 		oia = resp.Options.OneIANA()
 		oiaAddr = oia.Options.OneAddress()
 
-		assert.Equal(t, l.IP, oiaAddr.IPv6Addr)
+		ip := net.IP(l.IP.AsSlice())
+		assert.Equal(t, ip, oiaAddr.IPv6Addr)
 		assert.Equal(t, s.conf.leaseTime.Seconds(), oiaAddr.ValidLifetime.Seconds())
 	})
 
@@ -182,7 +185,8 @@ func TestV6GetLease(t *testing.T) {
 		oia = resp.Options.OneIANA()
 		oiaAddr = oia.Options.OneAddress()
 
-		assert.Equal(t, l.IP, oiaAddr.IPv6Addr)
+		ip := net.IP(l.IP.AsSlice())
+		assert.Equal(t, ip, oiaAddr.IPv6Addr)
 		assert.Equal(t, s.conf.leaseTime.Seconds(), oiaAddr.ValidLifetime.Seconds())
 	})
 
@@ -305,6 +309,77 @@ func TestIP6InRange(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.ip.String(), func(t *testing.T) {
 			assert.Equal(t, tc.want, ip6InRange(start, tc.ip))
+		})
+	}
+}
+
+func TestV6_FindMACbyIP(t *testing.T) {
+	const (
+		staticName  = "static-client"
+		anotherName = "another-client"
+	)
+
+	staticIP := netip.MustParseAddr("2001::1")
+	staticMAC := net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}
+
+	anotherIP := netip.MustParseAddr("2001::100")
+	anotherMAC := net.HardwareAddr{0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB}
+
+	s := &v6Server{
+		leases: []*Lease{{
+			Expiry:   time.Unix(leaseExpireStatic, 0),
+			Hostname: staticName,
+			HWAddr:   staticMAC,
+			IP:       staticIP,
+			IsStatic: true,
+		}, {
+			Expiry:   time.Unix(10, 0),
+			Hostname: anotherName,
+			HWAddr:   anotherMAC,
+			IP:       anotherIP,
+		}},
+	}
+
+	s.leases = []*Lease{{
+		Expiry:   time.Unix(leaseExpireStatic, 0),
+		Hostname: staticName,
+		HWAddr:   staticMAC,
+		IP:       staticIP,
+		IsStatic: true,
+	}, {
+		Expiry:   time.Unix(10, 0),
+		Hostname: anotherName,
+		HWAddr:   anotherMAC,
+		IP:       anotherIP,
+	}}
+
+	testCases := []struct {
+		want net.HardwareAddr
+		ip   netip.Addr
+		name string
+	}{{
+		name: "basic",
+		ip:   staticIP,
+		want: staticMAC,
+	}, {
+		name: "not_found",
+		ip:   netip.MustParseAddr("ffff::1"),
+		want: nil,
+	}, {
+		name: "expired",
+		ip:   anotherIP,
+		want: nil,
+	}, {
+		name: "v4",
+		ip:   netip.MustParseAddr("1.2.3.4"),
+		want: nil,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mac := s.FindMACbyIP(tc.ip)
+
+			require.Equal(t, tc.want, mac)
 		})
 	}
 }

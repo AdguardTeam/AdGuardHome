@@ -605,3 +605,129 @@ func TestIPStringFromAddr(t *testing.T) {
 		assert.Empty(t, ipStringFromAddr(nil))
 	})
 }
+
+// TODO(e.burkov):  Add fuzzing when moving to golibs.
+func TestExtractARPASubnet(t *testing.T) {
+	const (
+		v4Suf   = `in-addr.arpa.`
+		v4Part  = `2.1.` + v4Suf
+		v4Whole = `4.3.` + v4Part
+
+		v6Suf   = `ip6.arpa.`
+		v6Part  = `4.3.2.1.0.0.0.0.0.0.0.0.0.0.0.0.` + v6Suf
+		v6Whole = `f.e.d.c.0.0.0.0.0.0.0.0.0.0.0.0.` + v6Part
+	)
+
+	v4Pref := netip.MustParsePrefix("1.2.3.4/32")
+	v4PrefPart := netip.MustParsePrefix("1.2.0.0/16")
+	v6Pref := netip.MustParsePrefix("::1234:0:0:0:cdef/128")
+	v6PrefPart := netip.MustParsePrefix("0:0:0:1234::/64")
+
+	testCases := []struct {
+		want    netip.Prefix
+		name    string
+		domain  string
+		wantErr string
+	}{{
+		want:   netip.Prefix{},
+		name:   "not_an_arpa",
+		domain: "some.domain.name.",
+		wantErr: `bad arpa domain name "some.domain.name.": ` +
+			`not a reversed ip network`,
+	}, {
+		want:   netip.Prefix{},
+		name:   "bad_domain_name",
+		domain: "abc.123.",
+		wantErr: `bad domain name "abc.123": ` +
+			`bad top-level domain name label "123": all octets are numeric`,
+	}, {
+		want:    v4Pref,
+		name:    "whole_v4",
+		domain:  v4Whole,
+		wantErr: "",
+	}, {
+		want:    v4PrefPart,
+		name:    "partial_v4",
+		domain:  v4Part,
+		wantErr: "",
+	}, {
+		want:    v4Pref,
+		name:    "whole_v4_within_domain",
+		domain:  "a." + v4Whole,
+		wantErr: "",
+	}, {
+		want:    v4Pref,
+		name:    "whole_v4_additional_label",
+		domain:  "5." + v4Whole,
+		wantErr: "",
+	}, {
+		want:    v4PrefPart,
+		name:    "partial_v4_within_domain",
+		domain:  "a." + v4Part,
+		wantErr: "",
+	}, {
+		want:    v4PrefPart,
+		name:    "overflow_v4",
+		domain:  "256." + v4Part,
+		wantErr: "",
+	}, {
+		want:    v4PrefPart,
+		name:    "overflow_v4_within_domain",
+		domain:  "a.256." + v4Part,
+		wantErr: "",
+	}, {
+		want:   netip.Prefix{},
+		name:   "empty_v4",
+		domain: v4Suf,
+		wantErr: `bad arpa domain name "in-addr.arpa": ` +
+			`not a reversed ip network`,
+	}, {
+		want:   netip.Prefix{},
+		name:   "empty_v4_within_domain",
+		domain: "a." + v4Suf,
+		wantErr: `bad arpa domain name "in-addr.arpa": ` +
+			`not a reversed ip network`,
+	}, {
+		want:    v6Pref,
+		name:    "whole_v6",
+		domain:  v6Whole,
+		wantErr: "",
+	}, {
+		want:   v6PrefPart,
+		name:   "partial_v6",
+		domain: v6Part,
+	}, {
+		want:    v6Pref,
+		name:    "whole_v6_within_domain",
+		domain:  "g." + v6Whole,
+		wantErr: "",
+	}, {
+		want:    v6Pref,
+		name:    "whole_v6_additional_label",
+		domain:  "1." + v6Whole,
+		wantErr: "",
+	}, {
+		want:    v6PrefPart,
+		name:    "partial_v6_within_domain",
+		domain:  "label." + v6Part,
+		wantErr: "",
+	}, {
+		want:    netip.Prefix{},
+		name:    "empty_v6",
+		domain:  v6Suf,
+		wantErr: `bad arpa domain name "ip6.arpa": not a reversed ip network`,
+	}, {
+		want:    netip.Prefix{},
+		name:    "empty_v6_within_domain",
+		domain:  "g." + v6Suf,
+		wantErr: `bad arpa domain name "ip6.arpa": not a reversed ip network`,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			subnet, err := extractARPASubnet(tc.domain)
+			testutil.AssertErrorMsg(t, tc.wantErr, err)
+			assert.Equal(t, tc.want, subnet)
+		})
+	}
+}

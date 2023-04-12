@@ -49,6 +49,9 @@ export const setTlsConfig = (config) => async (dispatch, getState) => {
 
         const dnsStatus = await apiClient.getGlobalStatus();
         if (dnsStatus) {
+            if (dnsStatus.protection_disabled_duration === 0) {
+                dnsStatus.protection_disabled_duration = null;
+            }
             dispatch(dnsStatusSuccess(dnsStatus));
         }
 

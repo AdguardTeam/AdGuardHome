@@ -20,10 +20,8 @@ import (
 	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
+	"github.com/mdlayher/packet"
 	"golang.org/x/exp/slices"
-
-	//lint:ignore SA1019 See the TODO in go.mod.
-	"github.com/mdlayher/raw"
 )
 
 // v4Server is a DHCPv4 server.
@@ -98,7 +96,7 @@ func normalizeHostname(hostname string) (norm string, err error) {
 // validHostnameForClient accepts the hostname sent by the client and its IP and
 // returns either a normalized version of that hostname, or a new hostname
 // generated from the IP address, or an empty string.
-func (s *v4Server) validHostnameForClient(cliHostname string, ip net.IP) (hostname string) {
+func (s *v4Server) validHostnameForClient(cliHostname string, ip netip.Addr) (hostname string) {
 	hostname, err := normalizeHostname(cliHostname)
 	if err != nil {
 		log.Info("dhcpv4: %s", err)
@@ -130,7 +128,7 @@ func (s *v4Server) ResetLeases(leases []*Lease) (err error) {
 	s.leases = nil
 
 	for _, l := range leases {
-		if !l.IsStatic() {
+		if !l.IsStatic {
 			l.Hostname = s.validHostnameForClient(l.Hostname, l.IP)
 		}
 		err = s.addLease(l)
@@ -192,7 +190,7 @@ func (s *v4Server) GetLeases(flags GetLeasesFlags) (leases []*Lease) {
 			continue
 		}
 
-		if getStatic && l.IsStatic() {
+		if getStatic && l.IsStatic {
 			leases = append(leases, l.Clone())
 		}
 	}
@@ -211,10 +209,9 @@ func (s *v4Server) FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr) {
 		return nil
 	}
 
-	netIP := ip.AsSlice()
 	for _, l := range s.leases {
-		if l.IP.Equal(netIP) {
-			if l.Expiry.After(now) || l.IsStatic() {
+		if l.IP == ip {
+			if l.IsStatic || l.Expiry.After(now) {
 				return l.HWAddr
 			}
 		}
@@ -247,7 +244,8 @@ func (s *v4Server) rmLeaseByIndex(i int) {
 	s.leases = append(s.leases[:i], s.leases[i+1:]...)
 
 	r := s.conf.ipRange
-	offset, ok := r.offset(l.IP)
+	leaseIP := net.IP(l.IP.AsSlice())
+	offset, ok := r.offset(leaseIP)
 	if ok {
 		s.leasedOffsets.set(offset, false)
 	}
@@ -261,9 +259,9 @@ func (s *v4Server) rmLeaseByIndex(i int) {
 // Return error if a static lease is found
 func (s *v4Server) rmDynamicLease(lease *Lease) (err error) {
 	for i, l := range s.leases {
-		isStatic := l.IsStatic()
+		isStatic := l.IsStatic
 
-		if bytes.Equal(l.HWAddr, lease.HWAddr) || l.IP.Equal(lease.IP) {
+		if bytes.Equal(l.HWAddr, lease.HWAddr) || l.IP == lease.IP {
 			if isStatic {
 				return errors.Error("static lease already exists")
 			}
@@ -291,13 +289,13 @@ const ErrDupHostname = errors.Error("hostname is not unique")
 // addLease adds a dynamic or static lease.
 func (s *v4Server) addLease(l *Lease) (err error) {
 	r := s.conf.ipRange
-	offset, inOffset := r.offset(l.IP)
+	leaseIP := net.IP(l.IP.AsSlice())
+	offset, inOffset := r.offset(leaseIP)
 
-	if l.IsStatic() {
+	if l.IsStatic {
 		// TODO(a.garipov, d.seregin): Subnet can be nil when dhcp server is
 		// disabled.
-		addr := netip.AddrFrom4(*(*[4]byte)(l.IP.To4()))
-		if sn := s.conf.subnet; !sn.Contains(addr) {
+		if sn := s.conf.subnet; !sn.Contains(l.IP) {
 			return fmt.Errorf("subnet %s does not contain the ip %q", sn, l.IP)
 		}
 	} else if !inOffset {
@@ -325,7 +323,7 @@ func (s *v4Server) rmLease(lease *Lease) (err error) {
 	}
 
 	for i, l := range s.leases {
-		if l.IP.Equal(lease.IP) {
+		if l.IP == lease.IP {
 			if !bytes.Equal(l.HWAddr, lease.HWAddr) || l.Hostname != lease.Hostname {
 				return fmt.Errorf("lease for ip %s is different: %+v", lease.IP, l)
 			}
@@ -352,14 +350,16 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 		return ErrUnconfigured
 	}
 
-	ip := l.IP.To4()
-	if ip == nil {
+	l.IP = l.IP.Unmap()
+
+	if !l.IP.Is4() {
 		return fmt.Errorf("invalid ip %q, only ipv4 is supported", l.IP)
-	} else if gwIP := s.conf.GatewayIP; gwIP == netip.AddrFrom4(*(*[4]byte)(ip)) {
+	} else if gwIP := s.conf.GatewayIP; gwIP == l.IP {
 		return fmt.Errorf("can't assign the gateway IP %s to the lease", gwIP)
 	}
 
 	l.Expiry = time.Unix(leaseExpireStatic, 0)
+	l.IsStatic = true
 
 	err = netutil.ValidateMAC(l.HWAddr)
 	if err != nil {
@@ -396,7 +396,7 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 		if err != nil {
 			err = fmt.Errorf(
 				"removing dynamic leases for %s (%s): %w",
-				ip,
+				l.IP,
 				l.HWAddr,
 				err,
 			)
@@ -406,7 +406,7 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 
 		err = s.addLease(l)
 		if err != nil {
-			err = fmt.Errorf("adding static lease for %s (%s): %w", ip, l.HWAddr, err)
+			err = fmt.Errorf("adding static lease for %s (%s): %w", l.IP, l.HWAddr, err)
 
 			return
 		}
@@ -429,7 +429,7 @@ func (s *v4Server) RemoveStaticLease(l *Lease) (err error) {
 		return ErrUnconfigured
 	}
 
-	if len(l.IP) != 4 {
+	if !l.IP.Is4() {
 		return fmt.Errorf("invalid IP")
 	}
 
@@ -529,7 +529,7 @@ func (s *v4Server) nextIP() (ip net.IP) {
 func (s *v4Server) findExpiredLease() int {
 	now := time.Now()
 	for i, lease := range s.leases {
-		if !lease.IsStatic() && lease.Expiry.Before(now) {
+		if !lease.IsStatic && lease.Expiry.Before(now) {
 			return i
 		}
 	}
@@ -542,8 +542,8 @@ func (s *v4Server) findExpiredLease() int {
 func (s *v4Server) reserveLease(mac net.HardwareAddr) (l *Lease, err error) {
 	l = &Lease{HWAddr: slices.Clone(mac)}
 
-	l.IP = s.nextIP()
-	if l.IP == nil {
+	nextIP := s.nextIP()
+	if nextIP == nil {
 		i := s.findExpiredLease()
 		if i < 0 {
 			return nil, nil
@@ -553,6 +553,13 @@ func (s *v4Server) reserveLease(mac net.HardwareAddr) (l *Lease, err error) {
 
 		return s.leases[i], nil
 	}
+
+	netIP, ok := netip.AddrFromSlice(nextIP)
+	if !ok {
+		return nil, errors.Error("invalid ip")
+	}
+
+	l.IP = netIP
 
 	err = s.addLease(l)
 	if err != nil {
@@ -603,7 +610,8 @@ func (s *v4Server) allocateLease(mac net.HardwareAddr) (l *Lease, err error) {
 			return nil, nil
 		}
 
-		if s.addrAvailable(l.IP) {
+		leaseIP := l.IP.AsSlice()
+		if s.addrAvailable(leaseIP) {
 			return l, nil
 		}
 
@@ -623,8 +631,9 @@ func (s *v4Server) handleDiscover(req, resp *dhcpv4.DHCPv4) (l *Lease, err error
 	l = s.findLease(mac)
 	if l != nil {
 		reqIP := req.RequestedIPAddress()
-		if len(reqIP) != 0 && !reqIP.Equal(l.IP) {
-			log.Debug("dhcpv4: different RequestedIP: %s != %s", reqIP, l.IP)
+		leaseIP := net.IP(l.IP.AsSlice())
+		if len(reqIP) != 0 && !reqIP.Equal(leaseIP) {
+			log.Debug("dhcpv4: different RequestedIP: %s != %s", reqIP, leaseIP)
 		}
 
 		resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeOffer))
@@ -674,12 +683,19 @@ func (s *v4Server) checkLease(mac net.HardwareAddr, ip net.IP) (lease *Lease, mi
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
+	netIP, ok := netip.AddrFromSlice(ip)
+	if !ok {
+		log.Info("check lease: invalid IP: %s", ip)
+
+		return nil, false
+	}
+
 	for _, l := range s.leases {
 		if !bytes.Equal(l.HWAddr, mac) {
 			continue
 		}
 
-		if l.IP.Equal(ip) {
+		if l.IP == netIP {
 			return l, false
 		}
 
@@ -845,7 +861,7 @@ func (s *v4Server) handleRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needsR
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
-	if lease.IsStatic() {
+	if lease.IsStatic {
 		if lease.Hostname != "" {
 			// TODO(e.burkov):  This option is used to update the server's DNS
 			// mapping.  The option should only be answered when it has been
@@ -878,9 +894,16 @@ func (s *v4Server) handleDecline(req, resp *dhcpv4.DHCPv4) (err error) {
 		reqIP = req.ClientIPAddr
 	}
 
+	netIP, ok := netip.AddrFromSlice(reqIP)
+	if !ok {
+		log.Info("dhcpv4: invalid IP: %s", reqIP)
+
+		return nil
+	}
+
 	var oldLease *Lease
 	for _, l := range s.leases {
-		if bytes.Equal(l.HWAddr, mac) && l.IP.Equal(reqIP) {
+		if bytes.Equal(l.HWAddr, mac) && l.IP == netIP {
 			oldLease = l
 
 			break
@@ -920,8 +943,7 @@ func (s *v4Server) handleDecline(req, resp *dhcpv4.DHCPv4) (err error) {
 
 	log.Info("dhcpv4: changed ip from %s to %s for %s", reqIP, newLease.IP, mac)
 
-	resp.YourIPAddr = make([]byte, 4)
-	copy(resp.YourIPAddr, newLease.IP)
+	resp.YourIPAddr = net.IP(newLease.IP.AsSlice())
 
 	resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeAck))
 
@@ -944,8 +966,15 @@ func (s *v4Server) handleRelease(req, resp *dhcpv4.DHCPv4) (err error) {
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
+	netIP, ok := netip.AddrFromSlice(reqIP)
+	if !ok {
+		log.Info("dhcpv4: invalid IP: %s", reqIP)
+
+		return nil
+	}
+
 	for _, l := range s.leases {
-		if !bytes.Equal(l.HWAddr, mac) || !l.IP.Equal(reqIP) {
+		if !bytes.Equal(l.HWAddr, mac) || l.IP != netIP {
 			continue
 		}
 
@@ -1018,7 +1047,7 @@ func (s *v4Server) handle(req, resp *dhcpv4.DHCPv4) int {
 	}
 
 	if l != nil {
-		resp.YourIPAddr = slices.Clone(l.IP)
+		resp.YourIPAddr = net.IP(l.IP.AsSlice())
 	}
 
 	s.updateOptions(req, resp)
@@ -1136,7 +1165,7 @@ func (s *v4Server) send(peer net.Addr, conn net.PacketConn, req, resp *dhcpv4.DH
 		// Unicast DHCPOFFER and DHCPACK messages to the client's
 		// hardware address and yiaddr.
 		peer = &dhcpUnicastAddr{
-			Addr:   raw.Addr{HardwareAddr: req.ClientHWAddr},
+			Addr:   packet.Addr{HardwareAddr: req.ClientHWAddr},
 			yiaddr: resp.YourIPAddr,
 		}
 	default:

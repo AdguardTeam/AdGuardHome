@@ -211,9 +211,14 @@ export const FILTERED = 'Filtered';
 export const NOT_FILTERED = 'NotFiltered';
 
 export const DISABLED_STATS_INTERVAL = 0;
-export const STATS_INTERVALS_DAYS = [1, 7, 30, 90];
 
-export const QUERY_LOG_INTERVALS_DAYS = [0.25, 1, 7, 30, 90];
+export const HOUR = 60 * 60 * 1000;
+
+export const DAY = HOUR * 24;
+
+export const STATS_INTERVALS_DAYS = [DAY, DAY * 7, DAY * 30, DAY * 90];
+
+export const QUERY_LOG_INTERVALS_DAYS = [HOUR * 6, DAY, DAY * 7, DAY * 30, DAY * 90];
 
 export const FILTERS_INTERVALS_HOURS = [0, 1, 12, 24, 72, 168];
 
@@ -493,6 +498,8 @@ export const TOAST_TYPES = {
 };
 
 export const SUCCESS_TOAST_TIMEOUT = 5000;
+
+export const ONE_SECOND_IN_MS = 1000;
 export const FAILURE_TOAST_TIMEOUT = 30000;
 
 export const TOAST_TIMEOUTS = {
@@ -520,4 +527,13 @@ export const COMMENT_LINE_DEFAULT_TOKEN = '#';
 export const MOBILE_CONFIG_LINKS = {
     DOT: 'apple/dot.mobileconfig',
     DOH: 'apple/doh.mobileconfig',
+};
+
+// Timings for disable protection in milliseconds
+export const DISABLE_PROTECTION_TIMINGS = {
+    HALF_MINUTE: 30 * 1000,
+    MINUTE: 60 * 1000,
+    TEN_MINUTES: 10 * 60 * 1000,
+    HOUR: 60 * 60 * 1000,
+    TOMORROW: 24 * 60 * 60 * 1000,
 };

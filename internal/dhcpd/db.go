@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"time"
 
@@ -32,6 +33,8 @@ func normalizeIP(ip net.IP) net.IP {
 }
 
 // Load lease table from DB
+//
+// TODO(s.chzhen):  Decrease complexity.
 func (s *server) dbLoad() (err error) {
 	dynLeases := []*Lease{}
 	staticLeases := []*Lease{}
@@ -57,26 +60,28 @@ func (s *server) dbLoad() (err error) {
 	for i := range obj {
 		obj[i].IP = normalizeIP(obj[i].IP)
 
-		if !(len(obj[i].IP) == 4 || len(obj[i].IP) == 16) {
+		ip, ok := netip.AddrFromSlice(obj[i].IP)
+		if !ok {
 			log.Info("dhcp: invalid IP: %s", obj[i].IP)
 			continue
 		}
 
 		lease := Lease{
 			HWAddr:   obj[i].HWAddr,
-			IP:       obj[i].IP,
+			IP:       ip,
 			Hostname: obj[i].Hostname,
 			Expiry:   time.Unix(obj[i].Expiry, 0),
+			IsStatic: obj[i].Expiry == leaseExpireStatic,
 		}
 
 		if len(obj[i].IP) == 16 {
-			if obj[i].Expiry == leaseExpireStatic {
+			if lease.IsStatic {
 				v6StaticLeases = append(v6StaticLeases, &lease)
 			} else {
 				v6DynLeases = append(v6DynLeases, &lease)
 			}
 		} else {
-			if obj[i].Expiry == leaseExpireStatic {
+			if lease.IsStatic {
 				staticLeases = append(staticLeases, &lease)
 			} else {
 				dynLeases = append(dynLeases, &lease)
@@ -145,7 +150,7 @@ func (s *server) dbStore() (err error) {
 
 		lease := leaseJSON{
 			HWAddr:   l.HWAddr,
-			IP:       l.IP,
+			IP:       l.IP.AsSlice(),
 			Hostname: l.Hostname,
 			Expiry:   l.Expiry.Unix(),
 		}
@@ -162,7 +167,7 @@ func (s *server) dbStore() (err error) {
 
 			lease := leaseJSON{
 				HWAddr:   l.HWAddr,
-				IP:       l.IP,
+				IP:       l.IP.AsSlice(),
 				Hostname: l.Hostname,
 				Expiry:   l.Expiry.Unix(),
 			}

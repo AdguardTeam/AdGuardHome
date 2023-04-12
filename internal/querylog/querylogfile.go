@@ -11,40 +11,35 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// flushLogBuffer flushes the current buffer to file and resets the current buffer
-func (l *queryLog) flushLogBuffer(fullFlush bool) error {
-	if !l.conf.FileEnabled {
-		return nil
-	}
-
+// flushLogBuffer flushes the current buffer to file and resets the current
+// buffer.
+func (l *queryLog) flushLogBuffer() (err error) {
 	l.fileFlushLock.Lock()
 	defer l.fileFlushLock.Unlock()
 
-	// flush remainder to file
-	l.bufferLock.Lock()
-	needFlush := len(l.buffer) >= int(l.conf.MemSize)
-	if !needFlush && !fullFlush {
-		l.bufferLock.Unlock()
-		return nil
-	}
-	flushBuffer := l.buffer
-	l.buffer = nil
-	l.flushPending = false
-	l.bufferLock.Unlock()
-	err := l.flushToFile(flushBuffer)
-	if err != nil {
-		log.Error("Saving querylog to file failed: %s", err)
-		return err
-	}
-	return nil
+	var flushBuffer []*logEntry
+	func() {
+		l.bufferLock.Lock()
+		defer l.bufferLock.Unlock()
+
+		flushBuffer = l.buffer
+		l.buffer = nil
+		l.flushPending = false
+	}()
+
+	err = l.flushToFile(flushBuffer)
+
+	return errors.Annotate(err, "writing to file: %w")
 }
 
 // flushToFile saves the specified log entries to the query log file
 func (l *queryLog) flushToFile(buffer []*logEntry) (err error) {
 	if len(buffer) == 0 {
-		log.Debug("querylog: there's nothing to write to a file")
+		log.Debug("querylog: nothing to write to a file")
+
 		return nil
 	}
+
 	start := time.Now()
 
 	var b bytes.Buffer
@@ -155,8 +150,13 @@ func (l *queryLog) periodicRotate() {
 // checkAndRotate rotates log files if those are older than the specified
 // rotation interval.
 func (l *queryLog) checkAndRotate() {
-	l.lock.Lock()
-	defer l.lock.Unlock()
+	var rotationIvl time.Duration
+	func() {
+		l.confMu.RLock()
+		defer l.confMu.RUnlock()
+
+		rotationIvl = l.conf.RotationIvl
+	}()
 
 	oldest, err := l.readFileFirstTimeValue()
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -165,11 +165,11 @@ func (l *queryLog) checkAndRotate() {
 		return
 	}
 
-	if rot, now := oldest.Add(l.conf.RotationIvl), time.Now(); rot.After(now) {
+	if rotTime, now := oldest.Add(rotationIvl), time.Now(); rotTime.After(now) {
 		log.Debug(
 			"querylog: %s <= %s, not rotating",
 			now.Format(time.RFC3339),
-			rot.Format(time.RFC3339),
+			rotTime.Format(time.RFC3339),
 		)
 
 		return

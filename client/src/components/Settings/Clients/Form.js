@@ -11,7 +11,7 @@ import Select from 'react-select';
 import i18n from '../../../i18n';
 import Tabs from '../../ui/Tabs';
 import Examples from '../Dns/Upstream/Examples';
-import { toggleAllServices, trimLinesAndRemoveEmpty } from '../../../helpers/helpers';
+import { toggleAllServices, trimLinesAndRemoveEmpty, captitalizeWords } from '../../../helpers/helpers';
 import {
     renderInputField,
     renderGroupField,
@@ -39,10 +39,6 @@ const settingsCheckboxes = [
     {
         name: 'parental_enabled',
         placeholder: 'use_adguard_parental',
-    },
-    {
-        name: 'safesearch_enabled',
-        placeholder: 'enforce_safe_search',
     },
 ];
 const validate = (values) => {
@@ -139,8 +135,12 @@ let Form = (props) => {
         processingUpdating,
         invalid,
         tagsOptions,
+        initialValues,
     } = props;
     const services = useSelector((store) => store?.services);
+    const { safe_search } = initialValues;
+    const safeSearchServices = { ...safe_search };
+    delete safeSearchServices.enabled;
 
     const [activeTabLabel, setActiveTabLabel] = useState('settings');
 
@@ -163,6 +163,28 @@ let Form = (props) => {
                         />
                     </div>
                 ))}
+                <div className="form__group">
+                    <Field
+                        name="safe_search.enabled"
+                        type="checkbox"
+                        component={CheckboxField}
+                        placeholder={t('enforce_safe_search')}
+                        disabled={useGlobalSettings}
+                    />
+                </div>
+                <div className='form__group--inner'>
+                    {Object.keys(safeSearchServices).map((searchKey) => (
+                        <div key={searchKey}>
+                            <Field
+                                name={`safe_search.${searchKey}`}
+                                type="checkbox"
+                                component={CheckboxField}
+                                placeholder={captitalizeWords(searchKey)}
+                                disabled={useGlobalSettings}
+                            />
+                        </div>
+                    ))}
+                </div>
             </div>,
         },
         block_services: {
@@ -358,6 +380,7 @@ Form.propTypes = {
     processingUpdating: PropTypes.bool.isRequired,
     invalid: PropTypes.bool.isRequired,
     tagsOptions: PropTypes.array.isRequired,
+    initialValues: PropTypes.object,
 };
 
 const selector = formValueSelector(FORM_NAME.CLIENT);

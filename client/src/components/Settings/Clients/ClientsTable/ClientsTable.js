@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import ReactTable from 'react-table';
 
 import { getAllBlockedServices } from '../../../../actions/services';
+import { initSettings } from '../../../../actions';
 import {
     splitByNewLine,
     countClientsStatistics,
@@ -38,9 +39,13 @@ const ClientsTable = ({
     const [t] = useTranslation();
     const dispatch = useDispatch();
     const services = useSelector((store) => store?.services);
+    const globalSettings = useSelector((store) => store?.settings.settingsList) || {};
+
+    const { safesearch } = globalSettings;
 
     useEffect(() => {
         dispatch(getAllBlockedServices());
+        dispatch(initSettings());
     }, []);
 
     const handleFormAdd = (values) => {
@@ -107,6 +112,7 @@ const ClientsTable = ({
             tags: [],
             use_global_settings: true,
             use_global_blocked_services: true,
+            safe_search: { ...(safesearch || {}) },
         };
     };
 

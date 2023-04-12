@@ -25,6 +25,8 @@ RUN apk --no-cache add ca-certificates libcap tzdata && \
 	mkdir -p /opt/adguardhome/conf /opt/adguardhome/work && \
 	chown -R nobody: /opt/adguardhome
 
+RUN apk --no-cache add tini
+
 ARG DIST_DIR
 ARG TARGETARCH
 ARG TARGETOS
@@ -52,14 +54,32 @@ RUN setcap 'cap_net_bind_service=+eip' /opt/adguardhome/AdGuardHome
 # TODO(a.garipov): Remove the old, non-standard 784 and 8853 ports for
 # DNS-over-QUIC in a future release.
 EXPOSE 53/tcp 53/udp 67/udp 68/udp 80/tcp 443/tcp 443/udp 784/udp\
-	853/tcp 853/udp 3000/tcp 3000/udp 3001/tcp 3001/udp 5443/tcp\
+	853/tcp 853/udp 3000/tcp 3000/udp 5443/tcp\
 	5443/udp 6060/tcp 8853/udp
 
 WORKDIR /opt/adguardhome/work
 
-ENTRYPOINT ["/opt/adguardhome/AdGuardHome"]
+# Install helpers for healthcheck.
+COPY --chown=nobody:nogroup\
+	./${DIST_DIR}/docker/scripts\
+	/opt/adguardhome/scripts
+
+HEALTHCHECK \
+	--interval=30s \
+	--timeout=10s \
+	--retries=3 \
+	CMD [ "/opt/adguardhome/scripts/healthcheck.sh" ]
+
+# It seems that the healthckech script sometimes spawns zombie processes, so we
+# need a way to handle them, since AdGuard Home doesn't know how to keep track
+# of the processes delegated to it by the OS.  Use tini as entry point because
+# it needs the PID=1 to be the default parent for orphaned processes.
+#
+# See https://github.com/adguardTeam/adGuardHome/issues/3290.
+ENTRYPOINT [ "/sbin/tini", "--" ]
 
 CMD [ \
+	"/opt/adguardhome/AdGuardHome", \
 	"--no-check-update", \
 	"-c", "/opt/adguardhome/conf/AdGuardHome.yaml", \
 	"-h", "0.0.0.0", \

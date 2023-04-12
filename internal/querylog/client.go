@@ -7,6 +7,7 @@ type Client struct {
 	Name           string       `json:"name"`
 	DisallowedRule string       `json:"disallowed_rule"`
 	Disallowed     bool         `json:"disallowed"`
+	IgnoreQueryLog bool         `json:"-"`
 }
 
 // ClientWHOIS is the filtered WHOIS data for the client.

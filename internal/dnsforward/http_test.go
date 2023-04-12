@@ -18,6 +18,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
@@ -57,7 +58,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
-		SafeSearchEnabled:     true,
+		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
 		SafeSearchCacheSize:   1000,
 		ParentalCacheSize:     1000,
 		CacheTime:             30,
@@ -122,7 +123,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 			s.conf = tc.conf()
 			s.handleGetConfig(w, nil)
 
-			cType := w.Header().Get(aghhttp.HdrNameContentType)
+			cType := w.Header().Get(httphdr.ContentType)
 			assert.Equal(t, aghhttp.HdrValApplicationJSON, cType)
 			assert.JSONEq(t, string(caseWant), w.Body.String())
 		})
@@ -133,7 +134,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
-		SafeSearchEnabled:     true,
+		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
 		SafeSearchCacheSize:   1000,
 		ParentalCacheSize:     1000,
 		CacheTime:             30,
@@ -182,6 +183,12 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		name:    "edns_cs_enabled",
 		wantSet: "",
 	}, {
+		name:    "edns_cs_use_custom",
+		wantSet: "",
+	}, {
+		name:    "edns_cs_use_custom_bad_ip",
+		wantSet: "decoding request: ParseAddr(\"bad.ip\"): unexpected character (at \"bad.ip\")",
+	}, {
 		name:    "dnssec_enabled",
 		wantSet: "",
 	}, {
@@ -212,7 +219,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	}, {
 		name: "local_ptr_upstreams_bad",
 		wantSet: `validating private upstream servers: checking domain-specific upstreams: ` +
-			`bad arpa domain name "non.arpa": not a reversed ip network`,
+			`bad arpa domain name "non.arpa.": not a reversed ip network`,
 	}, {
 		name:    "local_ptr_upstreams_null",
 		wantSet: "",
@@ -222,16 +229,20 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		Req  json.RawMessage `json:"req"`
 		Want json.RawMessage `json:"want"`
 	}
-	loadTestData(t, t.Name()+jsonExt, &data)
+
+	testData := t.Name() + jsonExt
+	loadTestData(t, testData, &data)
 
 	for _, tc := range testCases {
+		// NOTE:  Do not use require.Contains, because the size of the data
+		// prevents it from printing a meaningful error message.
 		caseData, ok := data[tc.name]
-		require.True(t, ok)
+		require.Truef(t, ok, "%q does not contain test data for test case %s", testData, tc.name)
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Cleanup(func() {
 				s.conf = defaultConf
-				s.conf.FilteringConfig.EDNSClientSubnet.Enabled = false
+				s.conf.FilteringConfig.EDNSClientSubnet = &EDNSClientSubnet{}
 			})
 
 			rBody := io.NopCloser(bytes.NewReader(caseData.Req))
@@ -373,7 +384,7 @@ func TestValidateUpstreamsPrivate(t *testing.T) {
 	}, {
 		name: "not_arpa_subnet",
 		wantErr: `checking domain-specific upstreams: ` +
-			`bad arpa domain name "hello.world": not a reversed ip network`,
+			`bad arpa domain name "hello.world.": not a reversed ip network`,
 		u: "[/hello.world/]#",
 	}, {
 		name: "non-private_arpa_address",
@@ -389,8 +400,12 @@ func TestValidateUpstreamsPrivate(t *testing.T) {
 		name: "several_bad",
 		wantErr: `checking domain-specific upstreams: 2 errors: ` +
 			`"arpa domain \"1.2.3.4.in-addr.arpa.\" should point to a locally-served network", ` +
-			`"bad arpa domain name \"non.arpa\": not a reversed ip network"`,
+			`"bad arpa domain name \"non.arpa.\": not a reversed ip network"`,
 		u: "[/non.arpa/1.2.3.4.in-addr.arpa/127.in-addr.arpa/]#",
+	}, {
+		name:    "partial_good",
+		wantErr: "",
+		u:       "[/a.1.2.3.10.in-addr.arpa/a.10.in-addr.arpa/]#",
 	}}
 
 	for _, tc := range testCases {

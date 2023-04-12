@@ -13,7 +13,9 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/mathutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/NYTimes/gziphandler"
 )
@@ -97,12 +99,17 @@ func collectDNSAddresses() (addrs []string, err error) {
 
 // statusResponse is a response for /control/status endpoint.
 type statusResponse struct {
-	Version             string   `json:"version"`
-	Language            string   `json:"language"`
-	DNSAddrs            []string `json:"dns_addresses"`
-	DNSPort             int      `json:"dns_port"`
-	HTTPPort            int      `json:"http_port"`
-	IsProtectionEnabled bool     `json:"protection_enabled"`
+	Version  string   `json:"version"`
+	Language string   `json:"language"`
+	DNSAddrs []string `json:"dns_addresses"`
+	DNSPort  int      `json:"dns_port"`
+	HTTPPort int      `json:"http_port"`
+
+	// ProtectionDisabledDuration is the duration of the protection pause in
+	// milliseconds.
+	ProtectionDisabledDuration int64 `json:"protection_disabled_duration"`
+
+	ProtectionEnabled bool `json:"protection_enabled"`
 	// TODO(e.burkov): Inspect if front-end doesn't requires this field as
 	// openapi.yaml declares.
 	IsDHCPAvailable bool `json:"dhcp_available"`
@@ -119,27 +126,44 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var (
+		fltConf                 *dnsforward.FilteringConfig
+		protectionDisabledUntil *time.Time
+		protectionEnabled       bool
+	)
+	if Context.dnsServer != nil {
+		fltConf = &dnsforward.FilteringConfig{}
+		Context.dnsServer.WriteDiskConfig(fltConf)
+		protectionEnabled, protectionDisabledUntil = Context.dnsServer.UpdatedProtectionStatus()
+	}
+
 	var resp statusResponse
 	func() {
 		config.RLock()
 		defer config.RUnlock()
 
+		var protectionDisabledDuration int64
+		if protectionDisabledUntil != nil {
+			// Make sure that we don't send negative numbers to the frontend,
+			// since enough time might have passed to make the difference less
+			// than zero.
+			protectionDisabledDuration = mathutil.Max(
+				0,
+				time.Until(*protectionDisabledUntil).Milliseconds(),
+			)
+		}
+
 		resp = statusResponse{
-			Version:   version.Version(),
-			DNSAddrs:  dnsAddrs,
-			DNSPort:   config.DNS.Port,
-			HTTPPort:  config.BindPort,
-			Language:  config.Language,
-			IsRunning: isRunning(),
+			Version:                    version.Version(),
+			Language:                   config.Language,
+			DNSAddrs:                   dnsAddrs,
+			DNSPort:                    config.DNS.Port,
+			HTTPPort:                   config.BindPort,
+			ProtectionDisabledDuration: protectionDisabledDuration,
+			ProtectionEnabled:          protectionEnabled,
+			IsRunning:                  isRunning(),
 		}
 	}()
-
-	var c *dnsforward.FilteringConfig
-	if Context.dnsServer != nil {
-		c = &dnsforward.FilteringConfig{}
-		Context.dnsServer.WriteDiskConfig(c)
-		resp.IsProtectionEnabled = c.ProtectionEnabled
-	}
 
 	// IsDHCPAvailable field is now false by default for Windows.
 	if runtime.GOOS != "windows" {
@@ -219,7 +243,7 @@ func modifiesData(m string) (ok bool) {
 func ensureContentType(w http.ResponseWriter, r *http.Request) (ok bool) {
 	const statusUnsup = http.StatusUnsupportedMediaType
 
-	cType := r.Header.Get(aghhttp.HdrNameContentType)
+	cType := r.Header.Get(httphdr.ContentType)
 	if r.ContentLength == 0 {
 		if cType == "" {
 			return true
@@ -308,13 +332,17 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		return false
 	}
 
-	var serveHTTP3 bool
-	var portHTTPS int
+	var (
+		forceHTTPS bool
+		serveHTTP3 bool
+		portHTTPS  int
+	)
 	func() {
 		config.RLock()
 		defer config.RUnlock()
 
 		serveHTTP3, portHTTPS = config.DNS.ServeHTTP3, config.TLS.PortHTTPS
+		forceHTTPS = config.TLS.ForceHTTPS && config.TLS.Enabled && config.TLS.PortHTTPS != 0
 	}()
 
 	respHdr := w.Header()
@@ -327,13 +355,13 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 	// default is 24 hours.
 	if serveHTTP3 {
 		altSvc := fmt.Sprintf(`h3=":%d"`, portHTTPS)
-		respHdr.Set(aghhttp.HdrNameAltSvc, altSvc)
+		respHdr.Set(httphdr.AltSvc, altSvc)
 	}
 
-	if r.TLS == nil && web.forceHTTPS {
+	if r.TLS == nil && forceHTTPS {
 		hostPort := host
-		if port := web.conf.PortHTTPS; port != defaultPortHTTPS {
-			hostPort = netutil.JoinHostPort(host, port)
+		if portHTTPS != defaultPortHTTPS {
+			hostPort = netutil.JoinHostPort(host, portHTTPS)
 		}
 
 		httpsURL := &url.URL{
@@ -357,8 +385,8 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		Host:   r.Host,
 	}
 
-	respHdr.Set(aghhttp.HdrNameAccessControlAllowOrigin, originURL.String())
-	respHdr.Set(aghhttp.HdrNameVary, aghhttp.HdrNameOrigin)
+	respHdr.Set(httphdr.AccessControlAllowOrigin, originURL.String())
+	respHdr.Set(httphdr.Vary, httphdr.Origin)
 
 	return true
 }
@@ -371,7 +399,7 @@ func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.Res
 		path := r.URL.Path
 		if Context.firstRun && !strings.HasPrefix(path, "/install.") &&
 			!strings.HasPrefix(path, "/assets/") {
-			http.Redirect(w, r, "/install.html", http.StatusFound)
+			http.Redirect(w, r, "install.html", http.StatusFound)
 
 			return
 		}

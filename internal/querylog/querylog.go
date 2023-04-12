@@ -1,17 +1,17 @@
 package querylog
 
 import (
+	"fmt"
 	"net"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
-	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
 )
 
@@ -29,16 +29,21 @@ type QueryLog interface {
 	WriteDiskConfig(c *Config)
 
 	// ShouldLog returns true if request for the host should be logged.
-	ShouldLog(host string, qType, qClass uint16) bool
+	ShouldLog(host string, qType, qClass uint16, ids []string) bool
 }
 
 // Config is the query log configuration structure.
+//
+// Do not alter any fields of this structure after using it.
 type Config struct {
+	// Ignored is the list of host names, which should not be written to log.
+	Ignored *stringutil.Set
+
 	// Anonymizer processes the IP addresses to anonymize those if needed.
 	Anonymizer *aghnet.IPMut
 
-	// ConfigModified is called when the configuration is changed, for
-	// example by HTTP requests.
+	// ConfigModified is called when the configuration is changed, for example
+	// by HTTP requests.
 	ConfigModified func()
 
 	// HTTPRegister registers an HTTP handler.
@@ -50,20 +55,13 @@ type Config struct {
 	// BaseDir is the base directory for log files.
 	BaseDir string
 
-	// RotationIvl is the interval for log rotation.  After that period, the
-	// old log file will be renamed, NOT deleted, so the actual log
-	// retention time is twice the interval.  The value must be one of:
-	//
-	//    6 * time.Hour
-	//    1 * timeutil.Day
-	//    7 * timeutil.Day
-	//   30 * timeutil.Day
-	//   90 * timeutil.Day
-	//
+	// RotationIvl is the interval for log rotation.  After that period, the old
+	// log file will be renamed, NOT deleted, so the actual log retention time
+	// is twice the interval.
 	RotationIvl time.Duration
 
-	// MemSize is the number of entries kept in a memory buffer before they
-	// are flushed to disk.
+	// MemSize is the number of entries kept in a memory buffer before they are
+	// flushed to disk.
 	MemSize uint32
 
 	// Enabled tells if the query log is enabled.
@@ -75,10 +73,6 @@ type Config struct {
 	// AnonymizeClientIP tells if the query log should anonymize clients' IP
 	// addresses.
 	AnonymizeClientIP bool
-
-	// Ignored is the list of host names, which should not be written to
-	// log.
-	Ignored *stringutil.Set
 }
 
 // AddParams is the parameters for adding an entry.
@@ -135,12 +129,12 @@ func (p *AddParams) validate() (err error) {
 }
 
 // New creates a new instance of the query log.
-func New(conf Config) (ql QueryLog) {
+func New(conf Config) (ql QueryLog, err error) {
 	return newQueryLog(conf)
 }
 
 // newQueryLog crates a new queryLog.
-func newQueryLog(conf Config) (l *queryLog) {
+func newQueryLog(conf Config) (l *queryLog, err error) {
 	findClient := conf.FindClient
 	if findClient == nil {
 		findClient = func(_ []string) (_ *Client, _ error) {
@@ -151,20 +145,19 @@ func newQueryLog(conf Config) (l *queryLog) {
 	l = &queryLog{
 		findClient: findClient,
 
-		logFile:    filepath.Join(conf.BaseDir, queryLogFileName),
+		conf:    &Config{},
+		confMu:  &sync.RWMutex{},
+		logFile: filepath.Join(conf.BaseDir, queryLogFileName),
+
 		anonymizer: conf.Anonymizer,
 	}
 
-	l.conf = &Config{}
 	*l.conf = conf
 
-	if !checkInterval(conf.RotationIvl) {
-		log.Info(
-			"querylog: warning: unsupported rotation interval %s, setting to 1 day",
-			conf.RotationIvl,
-		)
-		l.conf.RotationIvl = timeutil.Day
+	err = validateIvl(conf.RotationIvl)
+	if err != nil {
+		return nil, fmt.Errorf("unsupported interval: %w", err)
 	}
 
-	return l
+	return l, nil
 }

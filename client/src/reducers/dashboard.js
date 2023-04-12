@@ -25,6 +25,7 @@ const dashboard = handleActions(
                 dns_port: dnsPort,
                 dns_addresses: dnsAddresses,
                 protection_enabled: protectionEnabled,
+                protection_disabled_duration: protectionDisabledDuration,
                 http_port: httpPort,
                 language,
             } = payload;
@@ -36,9 +37,11 @@ const dashboard = handleActions(
                 dnsPort,
                 dnsAddresses,
                 protectionEnabled,
+                protectionDisabledDuration,
                 language,
                 httpPort,
             };
+
             return newState;
         },
 
@@ -103,14 +106,21 @@ const dashboard = handleActions(
             ...state,
             processingProtection: false,
         }),
-        [actions.toggleProtectionSuccess]: (state) => {
+        [actions.toggleProtectionSuccess]: (state, { payload }) => {
             const newState = {
                 ...state,
                 protectionEnabled: !state.protectionEnabled,
                 processingProtection: false,
+                protectionDisabledDuration: payload.disabledDuration,
             };
+
             return newState;
         },
+
+        [actions.setDisableDurationTime]: (state, { payload }) => ({
+            ...state,
+            protectionDisabledDuration: payload.timeToEnableProtection,
+        }),
 
         [actions.getClientsRequest]: (state) => ({
             ...state,
@@ -156,6 +166,8 @@ const dashboard = handleActions(
         processingUpdate: false,
         processingProfile: true,
         protectionEnabled: false,
+        protectionDisabledDuration: null,
+        protectionCountdownActive: false,
         processingProtection: false,
         httpPort: STANDARD_WEB_PORT,
         dnsPort: STANDARD_DNS_PORT,

@@ -22,7 +22,7 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 17
+const currentSchemaVersion = 20
 
 // These aliases are provided for convenience.
 type (
@@ -90,6 +90,9 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema14to15,
 		upgradeSchema15to16,
 		upgradeSchema16to17,
+		upgradeSchema17to18,
+		upgradeSchema18to19,
+		upgradeSchema19to20,
 	}
 
 	n := 0
@@ -836,9 +839,9 @@ func upgradeSchema14to15(diskConf yobj) (err error) {
 	}
 
 	type temp struct {
+		val  any
 		from string
 		to   string
-		val  any
 	}
 	replaces := []temp{
 		{from: "querylog_enabled", to: "enabled", val: true},
@@ -873,6 +876,18 @@ func upgradeSchema14to15(diskConf yobj) (err error) {
 //	  'enabled': true
 //	  'interval': 1
 //	  'ignored': []
+//
+// If statistics were disabled:
+//
+//	# BEFORE:
+//	'dns':
+//	  'statistics_interval': 0
+//
+//	# AFTER:
+//	'statistics':
+//	  'enabled': false
+//	  'interval': 1
+//	  'ignored': []
 func upgradeSchema15to16(diskConf yobj) (err error) {
 	log.Printf("Upgrade yaml: 15 to 16")
 	diskConf["schema_version"] = 16
@@ -894,10 +909,23 @@ func upgradeSchema15to16(diskConf yobj) (err error) {
 	}
 
 	const field = "statistics_interval"
-	v, has := dns[field]
+	statsIvlVal, has := dns[field]
 	if has {
-		stats["enabled"] = v != 0
-		stats["interval"] = v
+		var statsIvl int
+		statsIvl, ok = statsIvlVal.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type of dns.statistics_interval: %T", statsIvlVal)
+		}
+
+		if statsIvl == 0 {
+			// Set the interval to the default value of one day to make sure
+			// that it passes the validations.
+			stats["interval"] = 1
+			stats["enabled"] = false
+		} else {
+			stats["interval"] = statsIvl
+			stats["enabled"] = true
+		}
 	}
 	delete(dns, field)
 
@@ -939,6 +967,172 @@ func upgradeSchema16to17(diskConf yobj) (err error) {
 		"use_custom": false,
 		"custom_ip":  "",
 	}
+
+	return nil
+}
+
+// upgradeSchema17to18 performs the following changes:
+//
+//	# BEFORE:
+//	'dns':
+//	  'safesearch_enabled': true
+//
+//	# AFTER:
+//	'dns':
+//	  'safe_search':
+//	    'enabled': true
+//	    'bing': true
+//	    'duckduckgo': true
+//	    'google': true
+//	    'pixabay': true
+//	    'yandex': true
+//	    'youtube': true
+func upgradeSchema17to18(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 17 to 18")
+	diskConf["schema_version"] = 18
+
+	dnsVal, ok := diskConf["dns"]
+	if !ok {
+		return nil
+	}
+
+	dns, ok := dnsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of dns: %T", dnsVal)
+	}
+
+	safeSearch := yobj{
+		"enabled":    true,
+		"bing":       true,
+		"duckduckgo": true,
+		"google":     true,
+		"pixabay":    true,
+		"yandex":     true,
+		"youtube":    true,
+	}
+
+	const safeSearchKey = "safesearch_enabled"
+
+	v, has := dns[safeSearchKey]
+	if has {
+		safeSearch["enabled"] = v
+	}
+	delete(dns, safeSearchKey)
+
+	dns["safe_search"] = safeSearch
+
+	return nil
+}
+
+// upgradeSchema18to19 performs the following changes:
+//
+//	# BEFORE:
+//	'clients':
+//	  'persistent':
+//	  - 'name': 'client-name'
+//	    'safesearch_enabled': true
+//
+//	# AFTER:
+//	'clients':
+//	  'persistent':
+//	  - 'name': 'client-name'
+//	    'safe_search':
+//	      'enabled': true
+//		  'bing': true
+//		  'duckduckgo': true
+//		  'google': true
+//		  'pixabay': true
+//		  'yandex': true
+//		  'youtube': true
+func upgradeSchema18to19(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 18 to 19")
+	diskConf["schema_version"] = 19
+
+	clientsVal, ok := diskConf["clients"]
+	if !ok {
+		return nil
+	}
+
+	clients, ok := clientsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of clients: %T", clientsVal)
+	}
+
+	persistent, ok := clients["persistent"].([]yobj)
+	if !ok {
+		return nil
+	}
+
+	const safeSearchKey = "safesearch_enabled"
+
+	for i := range persistent {
+		c := persistent[i]
+
+		safeSearch := yobj{
+			"enabled":    true,
+			"bing":       true,
+			"duckduckgo": true,
+			"google":     true,
+			"pixabay":    true,
+			"yandex":     true,
+			"youtube":    true,
+		}
+
+		v, has := c[safeSearchKey]
+		if has {
+			safeSearch["enabled"] = v
+		}
+		delete(c, safeSearchKey)
+
+		c["safe_search"] = safeSearch
+	}
+
+	return nil
+}
+
+// upgradeSchema19to20 performs the following changes:
+//
+//	# BEFORE:
+//	'statistics':
+//	  'interval': 1
+//
+//	# AFTER:
+//	'statistics':
+//	  'interval': 24h
+func upgradeSchema19to20(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 19 to 20")
+	diskConf["schema_version"] = 20
+
+	statsVal, ok := diskConf["statistics"]
+	if !ok {
+		return nil
+	}
+
+	var stats yobj
+	stats, ok = statsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of stats: %T", statsVal)
+	}
+
+	const field = "interval"
+
+	// Set the initial value from the global configuration structure.
+	statsIvl := 1
+	statsIvlVal, ok := stats[field]
+	if ok {
+		statsIvl, ok = statsIvlVal.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type of %s: %T", field, statsIvlVal)
+		}
+
+		// The initial version of upgradeSchema16to17 did not set the zero
+		// interval to a non-zero one.  So, reset it now.
+		if statsIvl == 0 {
+			statsIvl = 1
+		}
+	}
+
+	stats[field] = timeutil.Duration{Duration: time.Duration(statsIvl) * timeutil.Day}
 
 	return nil
 }

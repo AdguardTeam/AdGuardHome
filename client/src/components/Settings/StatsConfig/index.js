@@ -6,9 +6,13 @@ import Card from '../../ui/Card';
 import Form from './Form';
 
 class StatsConfig extends Component {
-    handleFormSubmit = (values) => {
+    handleFormSubmit = ({ enabled, interval, ignored }) => {
         const { t, interval: prevInterval } = this.props;
-        const config = { interval: values.interval };
+        const config = {
+            enabled,
+            interval,
+            ignored: ignored ? ignored.split('\n') : [],
+        };
 
         if (config.interval < prevInterval) {
             if (window.confirm(t('statistics_retention_confirm'))) {
@@ -29,7 +33,7 @@ class StatsConfig extends Component {
 
     render() {
         const {
-            t, interval, processing, processingReset,
+            t, interval, processing, processingReset, ignored, enabled,
         } = this.props;
 
         return (
@@ -42,7 +46,8 @@ class StatsConfig extends Component {
                     <Form
                         initialValues={{
                             interval,
-                            enabled: !!interval,
+                            enabled,
+                            ignored: ignored.join('\n'),
                         }}
                         onSubmit={this.handleFormSubmit}
                         processing={processing}
@@ -57,6 +62,8 @@ class StatsConfig extends Component {
 
 StatsConfig.propTypes = {
     interval: PropTypes.number.isRequired,
+    ignored: PropTypes.array.isRequired,
+    enabled: PropTypes.bool.isRequired,
     processing: PropTypes.bool.isRequired,
     processingReset: PropTypes.bool.isRequired,
     setStatsConfig: PropTypes.func.isRequired,

@@ -160,10 +160,10 @@ run_linter "$GO" vet ./...
 run_linter govulncheck ./...
 
 # Apply more lax standards to the code we haven't properly refactored yet.
-run_linter gocyclo --over 14 ./internal/querylog/
 run_linter gocyclo --over 13\
 	./internal/dhcpd\
 	./internal/home/\
+	./internal/querylog/\
 	;
 
 # Apply the normal standards to new or somewhat refactored code.
@@ -180,6 +180,7 @@ run_linter gocyclo --over 10\
 	./internal/version/\
 	./scripts/blocked-services/\
 	./scripts/vetted-filters/\
+	./scripts/translations/\
 	./main.go\
 	;
 

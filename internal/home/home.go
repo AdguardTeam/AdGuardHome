@@ -9,7 +9,6 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
-	"net/http/pprof"
 	"net/netip"
 	"net/url"
 	"os"
@@ -28,6 +27,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
@@ -58,13 +58,12 @@ type homeContext struct {
 	dhcpServer dhcpd.Interface      // DHCP module
 	auth       *Auth                // HTTP authentication module
 	filters    *filtering.DNSFilter // DNS filtering module
-	web        *Web                 // Web (HTTP, HTTPS) module
+	web        *webAPI              // Web (HTTP, HTTPS) module
 	tls        *tlsManager          // TLS module
-	// etcHosts is an IP-hostname pairs set taken from system configuration
-	// (e.g. /etc/hosts) files.
+
+	// etcHosts contains IP-hostname mappings taken from the OS-specific hosts
+	// configuration files, for example /etc/hosts.
 	etcHosts *aghnet.HostsContainer
-	// hostsWatcher is the watcher to detect changes in the hosts files.
-	hostsWatcher aghos.FSWatcher
 
 	updater *updater.Updater
 
@@ -79,7 +78,6 @@ type homeContext struct {
 	pidFileName      string // PID file name.  Empty if no PID file was created.
 	controlLock      sync.Mutex
 	tlsRoots         *x509.CertPool // list of root CAs for TLSv1.2
-	transport        *http.Transport
 	client           *http.Client
 	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
 
@@ -149,18 +147,17 @@ func setupContext(opts options) {
 	setupContextFlags(opts)
 
 	Context.tlsRoots = aghtls.SystemRootCAs()
-	Context.transport = &http.Transport{
-		DialContext: customDialContext,
-		Proxy:       getHTTPProxy,
-		TLSClientConfig: &tls.Config{
-			RootCAs:      Context.tlsRoots,
-			CipherSuites: Context.tlsCipherIDs,
-			MinVersion:   tls.VersionTLS12,
-		},
-	}
 	Context.client = &http.Client{
-		Timeout:   time.Minute * 5,
-		Transport: Context.transport,
+		Timeout: time.Minute * 5,
+		Transport: &http.Transport{
+			DialContext: customDialContext,
+			Proxy:       getHTTPProxy,
+			TLSClientConfig: &tls.Config{
+				RootCAs:      Context.tlsRoots,
+				CipherSuites: Context.tlsCipherIDs,
+				MinVersion:   tls.VersionTLS12,
+			},
+		},
 	}
 
 	if !Context.firstRun {
@@ -263,7 +260,7 @@ func configureOS(conf *configuration) (err error) {
 // setupHostsContainer initializes the structures to keep up-to-date the hosts
 // provided by the OS.
 func setupHostsContainer() (err error) {
-	Context.hostsWatcher, err = aghos.NewOSWritesWatcher()
+	hostsWatcher, err := aghos.NewOSWritesWatcher()
 	if err != nil {
 		return fmt.Errorf("initing hosts watcher: %w", err)
 	}
@@ -271,18 +268,18 @@ func setupHostsContainer() (err error) {
 	Context.etcHosts, err = aghnet.NewHostsContainer(
 		filtering.SysHostsListID,
 		aghos.RootDirFS(),
-		Context.hostsWatcher,
+		hostsWatcher,
 		aghnet.DefaultHostsPaths()...,
 	)
 	if err != nil {
-		cerr := Context.hostsWatcher.Close()
-		if errors.Is(err, aghnet.ErrNoHostsPaths) && cerr == nil {
+		closeErr := hostsWatcher.Close()
+		if errors.Is(err, aghnet.ErrNoHostsPaths) && closeErr == nil {
 			log.Info("warning: initing hosts container: %s", err)
 
 			return nil
 		}
 
-		return errors.WithDeferred(fmt.Errorf("initing hosts container: %w", err), cerr)
+		return errors.WithDeferred(fmt.Errorf("initing hosts container: %w", err), closeErr)
 	}
 
 	return nil
@@ -297,6 +294,17 @@ func setupConfig(opts options) (err error) {
 	config.DNS.DnsfilterConf.WhitelistFilters = slices.Clone(config.WhitelistFilters)
 	config.DNS.DnsfilterConf.UserRules = slices.Clone(config.UserRules)
 	config.DNS.DnsfilterConf.HTTPClient = Context.client
+
+	config.DNS.DnsfilterConf.SafeSearchConf.CustomResolver = safeSearchResolver{}
+	config.DNS.DnsfilterConf.SafeSearch, err = safesearch.NewDefault(
+		config.DNS.DnsfilterConf.SafeSearchConf,
+		"default",
+		config.DNS.DnsfilterConf.SafeSearchCacheSize,
+		time.Minute*time.Duration(config.DNS.DnsfilterConf.CacheTime),
+	)
+	if err != nil {
+		return fmt.Errorf("initializing safesearch: %w", err)
+	}
 
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
@@ -328,33 +336,16 @@ func setupConfig(opts options) (err error) {
 		arpdb = aghnet.NewARPDB()
 	}
 
-	Context.clients.Init(config.Clients.Persistent, Context.dhcpServer, Context.etcHosts, arpdb)
+	Context.clients.Init(config.Clients.Persistent, Context.dhcpServer, Context.etcHosts, arpdb, config.DNS.DnsfilterConf)
 
 	if opts.bindPort != 0 {
-		tcpPorts := aghalg.UniqChecker[tcpPort]{}
-		addPorts(tcpPorts, tcpPort(opts.bindPort))
-
-		udpPorts := aghalg.UniqChecker[udpPort]{}
-		addPorts(udpPorts, udpPort(config.DNS.Port))
-
-		if config.TLS.Enabled {
-			addPorts(
-				tcpPorts,
-				tcpPort(config.TLS.PortHTTPS),
-				tcpPort(config.TLS.PortDNSOverTLS),
-				tcpPort(config.TLS.PortDNSCrypt),
-			)
-
-			addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
-		}
-
-		if err = tcpPorts.Validate(); err != nil {
-			return fmt.Errorf("validating tcp ports: %w", err)
-		} else if err = udpPorts.Validate(); err != nil {
-			return fmt.Errorf("validating udp ports: %w", err)
-		}
-
 		config.BindPort = opts.bindPort
+
+		err = checkPorts()
+		if err != nil {
+			// Don't wrap the error, because it's informative enough as is.
+			return err
+		}
 	}
 
 	// override bind host/port from the console
@@ -368,7 +359,35 @@ func setupConfig(opts options) (err error) {
 	return nil
 }
 
-func initWeb(opts options, clientBuildFS fs.FS) (web *Web, err error) {
+// checkPorts is a helper for ports validation in config.
+func checkPorts() (err error) {
+	tcpPorts := aghalg.UniqChecker[tcpPort]{}
+	addPorts(tcpPorts, tcpPort(config.BindPort))
+
+	udpPorts := aghalg.UniqChecker[udpPort]{}
+	addPorts(udpPorts, udpPort(config.DNS.Port))
+
+	if config.TLS.Enabled {
+		addPorts(
+			tcpPorts,
+			tcpPort(config.TLS.PortHTTPS),
+			tcpPort(config.TLS.PortDNSOverTLS),
+			tcpPort(config.TLS.PortDNSCrypt),
+		)
+
+		addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
+	}
+
+	if err = tcpPorts.Validate(); err != nil {
+		return fmt.Errorf("validating tcp ports: %w", err)
+	} else if err = udpPorts.Validate(); err != nil {
+		return fmt.Errorf("validating udp ports: %w", err)
+	}
+
+	return nil
+}
+
+func initWeb(opts options, clientBuildFS fs.FS) (web *webAPI, err error) {
 	var clientFS fs.FS
 	if opts.localFrontend {
 		log.Info("warning: using local frontend files")
@@ -395,7 +414,7 @@ func initWeb(opts options, clientBuildFS fs.FS) (web *Web, err error) {
 		serveHTTP3: config.DNS.ServeHTTP3,
 	}
 
-	web = newWeb(&webConf)
+	web = newWebAPI(&webConf)
 	if web == nil {
 		return nil, fmt.Errorf("initializing web: %w", err)
 	}
@@ -450,26 +469,8 @@ func run(opts options, clientBuildFS fs.FS) {
 		fatalOnError(err)
 
 		if config.DebugPProf {
-			mux := http.NewServeMux()
-			mux.HandleFunc("/debug/pprof/", pprof.Index)
-			mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-			mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-			mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-			mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
-
-			// See profileSupportsDelta in src/net/http/pprof/pprof.go.
-			mux.Handle("/debug/pprof/allocs", pprof.Handler("allocs"))
-			mux.Handle("/debug/pprof/block", pprof.Handler("block"))
-			mux.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
-			mux.Handle("/debug/pprof/heap", pprof.Handler("heap"))
-			mux.Handle("/debug/pprof/mutex", pprof.Handler("mutex"))
-			mux.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
-
-			go func() {
-				log.Info("pprof: listening on localhost:6060")
-				lerr := http.ListenAndServe("localhost:6060", mux)
-				log.Error("Error while running the pprof server: %s", lerr)
-			}()
+			// TODO(a.garipov): Make the address configurable.
+			startPprof("localhost:6060")
 		}
 	}
 
@@ -532,7 +533,7 @@ func run(opts options, clientBuildFS fs.FS) {
 		}
 	}
 
-	Context.web.Start()
+	Context.web.start()
 
 	// wait indefinitely for other go-routines to complete their job
 	select {}
@@ -712,7 +713,7 @@ func cleanup(ctx context.Context) {
 	log.Info("stopping AdGuard Home")
 
 	if Context.web != nil {
-		Context.web.Close(ctx)
+		Context.web.close(ctx)
 		Context.web = nil
 	}
 	if Context.auth != nil {
@@ -733,13 +734,6 @@ func cleanup(ctx context.Context) {
 	}
 
 	if Context.etcHosts != nil {
-		// Currently Context.hostsWatcher is only used in Context.etcHosts and
-		// needs closing only in case of the successful initialization of
-		// Context.etcHosts.
-		if err = Context.hostsWatcher.Close(); err != nil {
-			log.Error("closing hosts watcher: %s", err)
-		}
-
 		if err = Context.etcHosts.Close(); err != nil {
 			log.Error("closing hosts container: %s", err)
 		}
@@ -857,8 +851,10 @@ func detectFirstRun() bool {
 // Connect to a remote server resolving hostname using our own DNS server.
 //
 // TODO(e.burkov): This messy logic should be decomposed and clarified.
+//
+// TODO(a.garipov): Support network.
 func customDialContext(ctx context.Context, network, addr string) (conn net.Conn, err error) {
-	log.Tracef("network:%v  addr:%v", network, addr)
+	log.Debug("home: customdial: dialing addr %q for network %s", addr, network)
 
 	host, port, err := net.SplitHostPort(addr)
 	if err != nil {

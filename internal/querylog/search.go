@@ -76,15 +76,20 @@ func (l *queryLog) searchMemory(params *searchParams, cache clientCache) (entrie
 // search - searches log entries in the query log using specified parameters
 // returns the list of entries found + time of the oldest entry
 func (l *queryLog) search(params *searchParams) (entries []*logEntry, oldest time.Time) {
-	now := time.Now()
+	start := time.Now()
 
 	if params.limit == 0 {
 		return []*logEntry{}, time.Time{}
 	}
 
 	cache := clientCache{}
-	fileEntries, oldest, total := l.searchFiles(params, cache)
+
 	memoryEntries, bufLen := l.searchMemory(params, cache)
+	log.Debug("querylog: got %d entries from memory", len(memoryEntries))
+
+	fileEntries, oldest, total := l.searchFiles(params, cache)
+	log.Debug("querylog: got %d entries from files", len(fileEntries))
+
 	total += bufLen
 
 	totalLimit := params.offset + params.limit
@@ -123,7 +128,7 @@ func (l *queryLog) search(params *searchParams) (entries []*logEntry, oldest tim
 		len(entries),
 		total,
 		params.olderThan,
-		time.Since(now),
+		time.Since(start),
 	)
 
 	return entries, oldest
@@ -145,13 +150,14 @@ func (l *queryLog) searchFiles(
 
 	r, err := NewQLogReader(files)
 	if err != nil {
-		log.Error("querylog: failed to open qlog reader: %s", err)
+		log.Error("querylog: opening qlog reader: %s", err)
 
 		return entries, oldest, 0
 	}
+
 	defer func() {
-		derr := r.Close()
-		if derr != nil {
+		closeErr := r.Close()
+		if closeErr != nil {
 			log.Error("querylog: closing file: %s", err)
 		}
 	}()
@@ -161,8 +167,8 @@ func (l *queryLog) searchFiles(
 	} else {
 		err = r.seekTS(params.olderThan.UnixNano())
 		if err == nil {
-			// Read to the next record, because we only need the one
-			// that goes after it.
+			// Read to the next record, because we only need the one that goes
+			// after it.
 			_, err = r.ReadNext()
 		}
 	}
@@ -176,9 +182,9 @@ func (l *queryLog) searchFiles(
 	totalLimit := params.offset + params.limit
 	oldestNano := int64(0)
 
-	// By default, we do not scan more than maxFileScanEntries at once.
-	// The idea is to make search calls faster so that the UI could handle
-	// it and show something quicker.  This behavior can be overridden if
+	// By default, we do not scan more than maxFileScanEntries at once.  The
+	// idea is to make search calls faster so that the UI could handle it and
+	// show something quicker.  This behavior can be overridden if
 	// maxFileScanEntries is set to 0.
 	for total < params.maxFileScanEntries || params.maxFileScanEntries <= 0 {
 		var e *logEntry

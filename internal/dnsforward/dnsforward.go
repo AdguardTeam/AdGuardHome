@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
@@ -110,6 +111,10 @@ type Server struct {
 	internalProxy *proxy.Proxy
 
 	isRunning bool
+
+	// protectionUpdateInProgress is used to make sure that only one goroutine
+	// updating the protection configuration after a pause is running at a time.
+	protectionUpdateInProgress atomic.Bool
 
 	conf ServerConfig
 	// serverLock protects Server.
@@ -447,6 +452,8 @@ func (s *Server) setupResolvers(localAddrs []string) (err error) {
 			Bootstrap: bootstraps,
 			Timeout:   defaultLocalTimeout,
 			// TODO(e.burkov): Should we verify server's certificates?
+
+			PreferIPv6: s.conf.BootstrapPreferIPv6,
 		},
 	)
 	if err != nil {

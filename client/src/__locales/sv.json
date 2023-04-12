@@ -523,6 +523,7 @@
     "statistics_retention_confirm": "Är du säker på att du vill ändra retentionstiden för statistik? Om du minskar intervallet kommer viss data att gå förlorad",
     "statistics_cleared": "Statistiken har rensats",
     "statistics_enable": "Aktivera statistik",
+    "ignore_domains_title": "Ignorerade domäner",
     "interval_hours": "{{count}} timme",
     "interval_hours_plural": "{{count}} timmar",
     "filters_configuration": "Filterinställningar",
@@ -642,5 +643,14 @@
     "anonymizer_notification": "<0>Observera:</0> IP-anonymisering är aktiverad. Du kan inaktivera den i <1>Allmänna inställningar</1>.",
     "confirm_dns_cache_clear": "Är du säker på att du vill rensa DNS-cache?",
     "cache_cleared": "DNS-cacheminnet har rensats",
-    "clear_cache": "Rensa cache"
+    "clear_cache": "Rensa cache",
+    "theme_dark_desc": "Mörkt tema",
+    "theme_light_desc": "Ljust tema",
+    "disable_for_seconds": "I {{count}} sekund",
+    "disable_for_seconds_plural": "I {{count}} sekunder",
+    "disable_for_minutes": "I {{count}} minut",
+    "disable_for_minutes_plural": "I {{count}} minuter",
+    "disable_for_hours": "I {{count}} timme",
+    "disable_for_hours_plural": "I {{count}} timmar",
+    "disable_until_tomorrow": "Tills imorgon"
 }

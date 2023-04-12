@@ -23,41 +23,101 @@ import (
 )
 
 // jsonDNSConfig is the JSON representation of the DNS server configuration.
+//
+// TODO(s.chzhen):  Split it into smaller pieces.  Use aghalg.NullBool instead
+// of *bool.
 type jsonDNSConfig struct {
-	Upstreams         *[]string     `json:"upstream_dns"`
-	UpstreamsFile     *string       `json:"upstream_dns_file"`
-	Bootstraps        *[]string     `json:"bootstrap_dns"`
-	ProtectionEnabled *bool         `json:"protection_enabled"`
-	RateLimit         *uint32       `json:"ratelimit"`
-	BlockingMode      *BlockingMode `json:"blocking_mode"`
-	EDNSCSEnabled     *bool         `json:"edns_cs_enabled"`
-	DNSSECEnabled     *bool         `json:"dnssec_enabled"`
-	DisableIPv6       *bool         `json:"disable_ipv6"`
-	UpstreamMode      *string       `json:"upstream_mode"`
-	CacheSize         *uint32       `json:"cache_size"`
-	CacheMinTTL       *uint32       `json:"cache_ttl_min"`
-	CacheMaxTTL       *uint32       `json:"cache_ttl_max"`
-	CacheOptimistic   *bool         `json:"cache_optimistic"`
-	ResolveClients    *bool         `json:"resolve_clients"`
-	UsePrivateRDNS    *bool         `json:"use_private_ptr_resolvers"`
-	LocalPTRUpstreams *[]string     `json:"local_ptr_upstreams"`
-	BlockingIPv4      net.IP        `json:"blocking_ipv4"`
-	BlockingIPv6      net.IP        `json:"blocking_ipv6"`
+	// Upstreams is the list of upstream DNS servers.
+	Upstreams *[]string `json:"upstream_dns"`
+
+	// UpstreamsFile is the file containing upstream DNS servers.
+	UpstreamsFile *string `json:"upstream_dns_file"`
+
+	// Bootstraps is the list of DNS servers resolving IP addresses of the
+	// upstream DoH/DoT resolvers.
+	Bootstraps *[]string `json:"bootstrap_dns"`
+
+	// ProtectionEnabled defines if protection is enabled.
+	ProtectionEnabled *bool `json:"protection_enabled"`
+
+	// RateLimit is the number of requests per second allowed per client.
+	RateLimit *uint32 `json:"ratelimit"`
+
+	// BlockingMode defines the way blocked responses are constructed.
+	BlockingMode *BlockingMode `json:"blocking_mode"`
+
+	// EDNSCSEnabled defines if EDNS Client Subnet is enabled.
+	EDNSCSEnabled *bool `json:"edns_cs_enabled"`
+
+	// EDNSCSUseCustom defines if EDNSCSCustomIP should be used.
+	EDNSCSUseCustom *bool `json:"edns_cs_use_custom"`
+
+	// DNSSECEnabled defines if DNSSEC is enabled.
+	DNSSECEnabled *bool `json:"dnssec_enabled"`
+
+	// DisableIPv6 defines if IPv6 addresses should be dropped.
+	DisableIPv6 *bool `json:"disable_ipv6"`
+
+	// UpstreamMode defines the way DNS requests are constructed.
+	UpstreamMode *string `json:"upstream_mode"`
+
+	// CacheSize in bytes.
+	CacheSize *uint32 `json:"cache_size"`
+
+	// CacheMinTTL is custom minimum TTL for cached DNS responses.
+	CacheMinTTL *uint32 `json:"cache_ttl_min"`
+
+	// CacheMaxTTL is custom maximum TTL for cached DNS responses.
+	CacheMaxTTL *uint32 `json:"cache_ttl_max"`
+
+	// CacheOptimistic defines if expired entries should be served.
+	CacheOptimistic *bool `json:"cache_optimistic"`
+
+	// ResolveClients defines if clients IPs should be resolved into hostnames.
+	ResolveClients *bool `json:"resolve_clients"`
+
+	// UsePrivateRDNS defines if privates DNS resolvers should be used.
+	UsePrivateRDNS *bool `json:"use_private_ptr_resolvers"`
+
+	// LocalPTRUpstreams is the list of local private DNS resolvers.
+	LocalPTRUpstreams *[]string `json:"local_ptr_upstreams"`
+
+	// BlockingIPv4 is custom IPv4 address for blocked A requests.
+	BlockingIPv4 net.IP `json:"blocking_ipv4"`
+
+	// BlockingIPv6 is custom IPv6 address for blocked AAAA requests.
+	BlockingIPv6 net.IP `json:"blocking_ipv6"`
+
+	// DisabledUntil is a timestamp until when the protection is disabled.
+	DisabledUntil *time.Time `json:"protection_disabled_until"`
+
+	// EDNSCSCustomIP is custom IP for EDNS Client Subnet.
+	EDNSCSCustomIP netip.Addr `json:"edns_cs_custom_ip"`
+
+	// DefaultLocalPTRUpstreams is used to pass the addresses from
+	// systemResolvers to the front-end.  It's not a pointer to the slice since
+	// there is no need to omit it while decoding from JSON.
+	DefaultLocalPTRUpstreams []string `json:"default_local_ptr_upstreams,omitempty"`
 }
 
 func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
+	protectionEnabled, protectionDisabledUntil := s.UpdatedProtectionStatus()
+
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
 	upstreams := stringutil.CloneSliceOrEmpty(s.conf.UpstreamDNS)
 	upstreamFile := s.conf.UpstreamDNSFileName
 	bootstraps := stringutil.CloneSliceOrEmpty(s.conf.BootstrapDNS)
-	protectionEnabled := s.conf.ProtectionEnabled
 	blockingMode := s.conf.BlockingMode
 	blockingIPv4 := s.conf.BlockingIPv4
 	blockingIPv6 := s.conf.BlockingIPv6
 	ratelimit := s.conf.Ratelimit
+
+	customIP := s.conf.EDNSClientSubnet.CustomIP
 	enableEDNSClientSubnet := s.conf.EDNSClientSubnet.Enabled
+	useCustom := s.conf.EDNSClientSubnet.UseCustom
+
 	enableDNSSEC := s.conf.EnableDNSSEC
 	aaaaDisabled := s.conf.AAAADisabled
 	cacheSize := s.conf.CacheSize
@@ -67,6 +127,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	resolveClients := s.conf.ResolveClients
 	usePrivateRDNS := s.conf.UsePrivateRDNS
 	localPTRUpstreams := stringutil.CloneSliceOrEmpty(s.conf.LocalPTRResolvers)
+
 	var upstreamMode string
 	if s.conf.FastestAddr {
 		upstreamMode = "fastest_addr"
@@ -74,46 +135,41 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		upstreamMode = "parallel"
 	}
 
-	return &jsonDNSConfig{
-		Upstreams:         &upstreams,
-		UpstreamsFile:     &upstreamFile,
-		Bootstraps:        &bootstraps,
-		ProtectionEnabled: &protectionEnabled,
-		BlockingMode:      &blockingMode,
-		BlockingIPv4:      blockingIPv4,
-		BlockingIPv6:      blockingIPv6,
-		RateLimit:         &ratelimit,
-		EDNSCSEnabled:     &enableEDNSClientSubnet,
-		DNSSECEnabled:     &enableDNSSEC,
-		DisableIPv6:       &aaaaDisabled,
-		CacheSize:         &cacheSize,
-		CacheMinTTL:       &cacheMinTTL,
-		CacheMaxTTL:       &cacheMaxTTL,
-		CacheOptimistic:   &cacheOptimistic,
-		UpstreamMode:      &upstreamMode,
-		ResolveClients:    &resolveClients,
-		UsePrivateRDNS:    &usePrivateRDNS,
-		LocalPTRUpstreams: &localPTRUpstreams,
-	}
-}
-
-func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	defLocalPTRUps, err := s.filterOurDNSAddrs(s.sysResolvers.Get())
 	if err != nil {
 		log.Debug("getting dns configuration: %s", err)
 	}
 
-	resp := struct {
-		jsonDNSConfig
-		// DefautLocalPTRUpstreams is used to pass the addresses from
-		// systemResolvers to the front-end.  It's not a pointer to the slice
-		// since there is no need to omit it while decoding from JSON.
-		DefautLocalPTRUpstreams []string `json:"default_local_ptr_upstreams,omitempty"`
-	}{
-		jsonDNSConfig:           *s.getDNSConfig(),
-		DefautLocalPTRUpstreams: defLocalPTRUps,
+	return &jsonDNSConfig{
+		Upstreams:                &upstreams,
+		UpstreamsFile:            &upstreamFile,
+		Bootstraps:               &bootstraps,
+		ProtectionEnabled:        &protectionEnabled,
+		BlockingMode:             &blockingMode,
+		BlockingIPv4:             blockingIPv4,
+		BlockingIPv6:             blockingIPv6,
+		RateLimit:                &ratelimit,
+		EDNSCSCustomIP:           customIP,
+		EDNSCSEnabled:            &enableEDNSClientSubnet,
+		EDNSCSUseCustom:          &useCustom,
+		DNSSECEnabled:            &enableDNSSEC,
+		DisableIPv6:              &aaaaDisabled,
+		CacheSize:                &cacheSize,
+		CacheMinTTL:              &cacheMinTTL,
+		CacheMaxTTL:              &cacheMaxTTL,
+		CacheOptimistic:          &cacheOptimistic,
+		UpstreamMode:             &upstreamMode,
+		ResolveClients:           &resolveClients,
+		UsePrivateRDNS:           &usePrivateRDNS,
+		LocalPTRUpstreams:        &localPTRUpstreams,
+		DefaultLocalPTRUpstreams: defLocalPTRUps,
+		DisabledUntil:            protectionDisabledUntil,
 	}
+}
 
+// handleGetConfig handles requests to the GET /control/dns_info endpoint.
+func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
+	resp := s.getDNSConfig()
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
@@ -204,6 +260,7 @@ func (req *jsonDNSConfig) checkCacheTTL() bool {
 	return min <= max
 }
 
+// handleSetConfig handles requests to the POST /control/dns_config endpoint.
 func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	req := &jsonDNSConfig{}
 	err := json.NewDecoder(r.Body).Decode(req)
@@ -231,8 +288,8 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// setConfigRestartable sets the server parameters.  shouldRestart is true if
-// the server should be restarted to apply changes.
+// setConfig sets the server parameters.  shouldRestart is true if the server
+// should be restarted to apply changes.
 func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
@@ -248,6 +305,10 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 	if dc.UpstreamMode != nil {
 		s.conf.AllServers = *dc.UpstreamMode == "parallel"
 		s.conf.FastestAddr = *dc.UpstreamMode == "fastest_addr"
+	}
+
+	if dc.EDNSCSUseCustom != nil && *dc.EDNSCSUseCustom {
+		s.conf.EDNSClientSubnet.CustomIP = dc.EDNSCSCustomIP
 	}
 
 	setIfNotNil(&s.conf.ProtectionEnabled, dc.ProtectionEnabled)
@@ -281,6 +342,7 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 		setIfNotNil(&s.conf.UpstreamDNSFileName, dc.UpstreamsFile),
 		setIfNotNil(&s.conf.BootstrapDNS, dc.Bootstraps),
 		setIfNotNil(&s.conf.EDNSClientSubnet.Enabled, dc.EDNSCSEnabled),
+		setIfNotNil(&s.conf.EDNSClientSubnet.UseCustom, dc.EDNSCSUseCustom),
 		setIfNotNil(&s.conf.CacheSize, dc.CacheSize),
 		setIfNotNil(&s.conf.CacheMinTTL, dc.CacheMinTTL),
 		setIfNotNil(&s.conf.CacheMaxTTL, dc.CacheMaxTTL),
@@ -388,15 +450,15 @@ func ValidateUpstreamsPrivate(upstreams []string, privateNets netutil.SubnetSet)
 
 	var errs []error
 	for _, domain := range keys {
-		var subnet *net.IPNet
-		subnet, err = netutil.SubnetFromReversedAddr(domain)
+		var subnet netip.Prefix
+		subnet, err = extractARPASubnet(domain)
 		if err != nil {
 			errs = append(errs, err)
 
 			continue
 		}
 
-		if !privateNets.Contains(subnet.IP) {
+		if !privateNets.Contains(subnet.Addr().AsSlice()) {
 			errs = append(
 				errs,
 				fmt.Errorf("arpa domain %q should point to a locally-served network", domain),
@@ -577,6 +639,7 @@ func (err domainSpecificTestError) Error() (msg string) {
 func checkDNS(
 	upstreamConfigStr string,
 	bootstrap []string,
+	bootstrapPrefIPv6 bool,
 	timeout time.Duration,
 	healthCheck healthCheckFunc,
 ) (err error) {
@@ -604,8 +667,9 @@ func checkDNS(
 	log.Debug("dnsforward: checking if upstream %q works", upstreamAddr)
 
 	u, err := upstream.AddressToUpstream(upstreamAddr, &upstream.Options{
-		Bootstrap: bootstrap,
-		Timeout:   timeout,
+		Bootstrap:  bootstrap,
+		Timeout:    timeout,
+		PreferIPv6: bootstrapPrefIPv6,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to choose upstream for %q: %w", upstreamAddr, err)
@@ -637,6 +701,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 
 	result := map[string]string{}
 	bootstraps := req.BootstrapDNS
+	bootstrapPrefIPv6 := s.conf.BootstrapPreferIPv6
 	timeout := s.conf.UpstreamTimeout
 
 	type upsCheckResult = struct {
@@ -653,7 +718,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		}
 		defer func() { resCh <- res }()
 
-		checkErr := checkDNS(ups, bootstraps, timeout, healthCheck)
+		checkErr := checkDNS(ups, bootstraps, bootstrapPrefIPv6, timeout, healthCheck)
 		if checkErr != nil {
 			res.res = checkErr.Error()
 		} else {
@@ -683,6 +748,52 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleCacheClear(w http.ResponseWriter, _ *http.Request) {
 	s.dnsProxy.ClearCache()
 	_, _ = io.WriteString(w, "OK")
+}
+
+// protectionJSON is an object for /control/protection endpoint.
+type protectionJSON struct {
+	Enabled  bool `json:"enabled"`
+	Duration uint `json:"duration"`
+}
+
+// handleSetProtection is a handler for the POST /control/protection HTTP API.
+func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
+	protectionReq := &protectionJSON{}
+	err := json.NewDecoder(r.Body).Decode(protectionReq)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "reading req: %s", err)
+
+		return
+	}
+
+	var disabledUntil *time.Time
+	if protectionReq.Duration > 0 {
+		if protectionReq.Enabled {
+			aghhttp.Error(
+				r,
+				w,
+				http.StatusBadRequest,
+				"Setting a duration is only allowed with protection disabling",
+			)
+
+			return
+		}
+
+		calcTime := time.Now().Add(time.Duration(protectionReq.Duration) * time.Millisecond)
+		disabledUntil = &calcTime
+	}
+
+	func() {
+		s.serverLock.Lock()
+		defer s.serverLock.Unlock()
+
+		s.conf.ProtectionEnabled = protectionReq.Enabled
+		s.conf.ProtectionDisabledUntil = disabledUntil
+	}()
+
+	s.conf.ConfigModified()
+
+	aghhttp.OK(w)
 }
 
 // handleDoH is the DNS-over-HTTPs handler.
@@ -719,6 +830,7 @@ func (s *Server) registerHandlers() {
 	s.conf.HTTPRegister(http.MethodGet, "/control/dns_info", s.handleGetConfig)
 	s.conf.HTTPRegister(http.MethodPost, "/control/dns_config", s.handleSetConfig)
 	s.conf.HTTPRegister(http.MethodPost, "/control/test_upstream_dns", s.handleTestUpstreamDNS)
+	s.conf.HTTPRegister(http.MethodPost, "/control/protection", s.handleSetProtection)
 
 	s.conf.HTTPRegister(http.MethodGet, "/control/access/list", s.handleAccessList)
 	s.conf.HTTPRegister(http.MethodPost, "/control/access/set", s.handleAccessSet)

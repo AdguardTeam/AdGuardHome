@@ -2,10 +2,8 @@ package filtering
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"net"
-	"strings"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
@@ -33,7 +31,6 @@ func purgeCaches(d *DNSFilter) {
 	for _, c := range []cache.Cache{
 		d.safebrowsingCache,
 		d.parentalCache,
-		d.safeSearchCache,
 	} {
 		if c != nil {
 			c.Clear()
@@ -51,7 +48,7 @@ func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts 
 		c.ParentalCacheSize = 10000
 		c.SafeSearchCacheSize = 1000
 		c.CacheTime = 30
-		setts.SafeSearchEnabled = c.SafeSearchEnabled
+		setts.SafeSearchEnabled = c.SafeSearchConf.Enabled
 		setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
 		setts.ParentalEnabled = c.ParentalEnabled
 	} else {
@@ -214,164 +211,6 @@ func TestParallelSB(t *testing.T) {
 			})
 		}
 	})
-}
-
-// Safe Search.
-
-func TestSafeSearch(t *testing.T) {
-	d, _ := newForTest(t, &Config{SafeSearchEnabled: true}, nil)
-	t.Cleanup(d.Close)
-	val, ok := d.SafeSearchDomain("www.google.com")
-	require.True(t, ok)
-
-	assert.Equal(t, "forcesafesearch.google.com", val)
-}
-
-func TestCheckHostSafeSearchYandex(t *testing.T) {
-	d, setts := newForTest(t, &Config{
-		SafeSearchEnabled: true,
-	}, nil)
-	t.Cleanup(d.Close)
-
-	yandexIP := net.IPv4(213, 180, 193, 56)
-
-	// Check host for each domain.
-	for _, host := range []string{
-		"yAndeX.ru",
-		"YANdex.COM",
-		"yandex.ua",
-		"yandex.by",
-		"yandex.kz",
-		"www.yandex.com",
-	} {
-		t.Run(strings.ToLower(host), func(t *testing.T) {
-			res, err := d.CheckHost(host, dns.TypeA, setts)
-			require.NoError(t, err)
-
-			assert.True(t, res.IsFiltered)
-
-			require.Len(t, res.Rules, 1)
-
-			assert.Equal(t, yandexIP, res.Rules[0].IP)
-			assert.EqualValues(t, SafeSearchListID, res.Rules[0].FilterListID)
-		})
-	}
-}
-
-func TestCheckHostSafeSearchGoogle(t *testing.T) {
-	resolver := &aghtest.TestResolver{}
-	d, setts := newForTest(t, &Config{
-		SafeSearchEnabled: true,
-		CustomResolver:    resolver,
-	}, nil)
-	t.Cleanup(d.Close)
-
-	ip, _ := resolver.HostToIPs("forcesafesearch.google.com")
-
-	// Check host for each domain.
-	for _, host := range []string{
-		"www.google.com",
-		"www.google.im",
-		"www.google.co.in",
-		"www.google.iq",
-		"www.google.is",
-		"www.google.it",
-		"www.google.je",
-	} {
-		t.Run(host, func(t *testing.T) {
-			res, err := d.CheckHost(host, dns.TypeA, setts)
-			require.NoError(t, err)
-
-			assert.True(t, res.IsFiltered)
-
-			require.Len(t, res.Rules, 1)
-
-			assert.Equal(t, ip, res.Rules[0].IP)
-			assert.EqualValues(t, SafeSearchListID, res.Rules[0].FilterListID)
-		})
-	}
-}
-
-func TestSafeSearchCacheYandex(t *testing.T) {
-	d, setts := newForTest(t, nil, nil)
-	t.Cleanup(d.Close)
-	const domain = "yandex.ru"
-
-	// Check host with disabled safesearch.
-	res, err := d.CheckHost(domain, dns.TypeA, setts)
-	require.NoError(t, err)
-
-	assert.False(t, res.IsFiltered)
-
-	require.Empty(t, res.Rules)
-
-	yandexIP := net.IPv4(213, 180, 193, 56)
-
-	d, setts = newForTest(t, &Config{SafeSearchEnabled: true}, nil)
-	t.Cleanup(d.Close)
-
-	res, err = d.CheckHost(domain, dns.TypeA, setts)
-	require.NoError(t, err)
-
-	// For yandex we already know valid IP.
-	require.Len(t, res.Rules, 1)
-	assert.Equal(t, res.Rules[0].IP, yandexIP)
-
-	// Check cache.
-	cachedValue, isFound := getCachedResult(d.safeSearchCache, domain)
-	require.True(t, isFound)
-	require.Len(t, cachedValue.Rules, 1)
-
-	assert.Equal(t, cachedValue.Rules[0].IP, yandexIP)
-}
-
-func TestSafeSearchCacheGoogle(t *testing.T) {
-	resolver := &aghtest.TestResolver{}
-	d, setts := newForTest(t, &Config{
-		CustomResolver: resolver,
-	}, nil)
-	t.Cleanup(d.Close)
-
-	const domain = "www.google.ru"
-	res, err := d.CheckHost(domain, dns.TypeA, setts)
-	require.NoError(t, err)
-
-	assert.False(t, res.IsFiltered)
-
-	require.Empty(t, res.Rules)
-
-	d, setts = newForTest(t, &Config{SafeSearchEnabled: true}, nil)
-	t.Cleanup(d.Close)
-	d.resolver = resolver
-
-	// Lookup for safesearch domain.
-	safeDomain, ok := d.SafeSearchDomain(domain)
-	require.True(t, ok)
-
-	ips, err := resolver.LookupIP(context.Background(), "ip", safeDomain)
-	require.NoError(t, err)
-
-	var ip net.IP
-	for _, foundIP := range ips {
-		if foundIP.To4() != nil {
-			ip = foundIP
-
-			break
-		}
-	}
-
-	res, err = d.CheckHost(domain, dns.TypeA, setts)
-	require.NoError(t, err)
-	require.Len(t, res.Rules, 1)
-
-	assert.True(t, res.Rules[0].IP.Equal(ip))
-
-	// Check cache.
-	cachedValue, isFound := getCachedResult(d.safeSearchCache, domain)
-	require.True(t, isFound)
-	require.Len(t, cachedValue.Rules, 1)
-
-	assert.True(t, cachedValue.Rules[0].IP.Equal(ip))
 }
 
 // Parental.
@@ -851,30 +690,6 @@ func BenchmarkSafeBrowsingParallel(b *testing.B) {
 			require.NoError(b, err)
 
 			assert.Truef(b, res.IsFiltered, "expected hostname %q to match", sbBlocked)
-		}
-	})
-}
-
-func BenchmarkSafeSearch(b *testing.B) {
-	d, _ := newForTest(b, &Config{SafeSearchEnabled: true}, nil)
-	b.Cleanup(d.Close)
-	for n := 0; n < b.N; n++ {
-		val, ok := d.SafeSearchDomain("www.google.com")
-		require.True(b, ok)
-
-		assert.Equal(b, "forcesafesearch.google.com", val, "Expected safesearch for google.com to be forcesafesearch.google.com")
-	}
-}
-
-func BenchmarkSafeSearchParallel(b *testing.B) {
-	d, _ := newForTest(b, &Config{SafeSearchEnabled: true}, nil)
-	b.Cleanup(d.Close)
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			val, ok := d.SafeSearchDomain("www.google.com")
-			require.True(b, ok)
-
-			assert.Equal(b, "forcesafesearch.google.com", val, "Expected safesearch for google.com to be forcesafesearch.google.com")
 		}
 	})
 }

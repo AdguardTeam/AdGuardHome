@@ -61,13 +61,13 @@ func ip6InRange(start, ip net.IP) bool {
 
 // ResetLeases resets leases.
 func (s *v6Server) ResetLeases(leases []*Lease) (err error) {
-	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
+	defer func() { err = errors.Annotate(err, "dhcpv6: %w") }()
 
 	s.leases = nil
 	for _, l := range leases {
-
+		ip := net.IP(l.IP.AsSlice())
 		if l.Expiry.Unix() != leaseExpireStatic &&
-			!ip6InRange(s.conf.ipStart, l.IP) {
+			!ip6InRange(s.conf.ipStart, ip) {
 
 			log.Debug("dhcpv6: skipping a lease with IP %v: not within current IP range", l.IP)
 
@@ -119,10 +119,9 @@ func (s *v6Server) FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr) {
 		return nil
 	}
 
-	netIP := ip.AsSlice()
 	for _, l := range s.leases {
-		if l.IP.Equal(netIP) {
-			if l.Expiry.After(now) || l.IsStatic() {
+		if l.IP == ip {
+			if l.IsStatic || l.Expiry.After(now) {
 				return l.HWAddr
 			}
 		}
@@ -133,7 +132,8 @@ func (s *v6Server) FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr) {
 
 // Remove (swap) lease by index
 func (s *v6Server) leaseRemoveSwapByIndex(i int) {
-	s.ipAddrs[s.leases[i].IP[15]] = 0
+	leaseIP := s.leases[i].IP.As16()
+	s.ipAddrs[leaseIP[15]] = 0
 	log.Debug("dhcpv6: removed lease %s", s.leases[i].HWAddr)
 
 	n := len(s.leases)
@@ -162,7 +162,7 @@ func (s *v6Server) rmDynamicLease(lease *Lease) (err error) {
 			l = s.leases[i]
 		}
 
-		if net.IP.Equal(l.IP, lease.IP) {
+		if l.IP == lease.IP {
 			if l.Expiry.Unix() == leaseExpireStatic {
 				return fmt.Errorf("static lease already exists")
 			}
@@ -178,7 +178,7 @@ func (s *v6Server) rmDynamicLease(lease *Lease) (err error) {
 func (s *v6Server) AddStaticLease(l *Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv6: %w") }()
 
-	if len(l.IP) != net.IPv6len {
+	if !l.IP.Is6() {
 		return fmt.Errorf("invalid IP")
 	}
 
@@ -210,7 +210,7 @@ func (s *v6Server) AddStaticLease(l *Lease) (err error) {
 func (s *v6Server) RemoveStaticLease(l *Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv6: %w") }()
 
-	if len(l.IP) != 16 {
+	if !l.IP.Is6() {
 		return fmt.Errorf("invalid IP")
 	}
 
@@ -234,14 +234,15 @@ func (s *v6Server) RemoveStaticLease(l *Lease) (err error) {
 // Add a lease
 func (s *v6Server) addLease(l *Lease) {
 	s.leases = append(s.leases, l)
-	s.ipAddrs[l.IP[15]] = 1
+	ip := l.IP.As16()
+	s.ipAddrs[ip[15]] = 1
 	log.Debug("dhcpv6: added lease %s <-> %s", l.IP, l.HWAddr)
 }
 
 // Remove a lease with the same properties
 func (s *v6Server) rmLease(lease *Lease) (err error) {
 	for i, l := range s.leases {
-		if net.IP.Equal(l.IP, lease.IP) {
+		if l.IP == lease.IP {
 			if !bytes.Equal(l.HWAddr, lease.HWAddr) ||
 				l.Hostname != lease.Hostname {
 				return fmt.Errorf("lease not found")
@@ -308,18 +309,27 @@ func (s *v6Server) reserveLease(mac net.HardwareAddr) *Lease {
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
-	copy(l.IP, s.conf.ipStart)
-	l.IP = s.findFreeIP()
-	if l.IP == nil {
+	ip := s.findFreeIP()
+	if ip == nil {
 		i := s.findExpiredLease()
 		if i < 0 {
 			return nil
 		}
+
 		copy(s.leases[i].HWAddr, mac)
+
 		return s.leases[i]
 	}
 
+	netIP, ok := netip.AddrFromSlice(ip)
+	if !ok {
+		return nil
+	}
+
+	l.IP = netIP
+
 	s.addLease(&l)
+
 	return &l
 }
 
@@ -388,7 +398,8 @@ func (s *v6Server) checkIA(msg *dhcpv6.Message, lease *Lease) error {
 			return fmt.Errorf("no IANA.Addr option in %s", msg.Type().String())
 		}
 
-		if !oiaAddr.IPv6Addr.Equal(lease.IP) {
+		leaseIP := net.IP(lease.IP.AsSlice())
+		if !oiaAddr.IPv6Addr.Equal(leaseIP) {
 			return fmt.Errorf("invalid IANA.Addr option in %s", msg.Type().String())
 		}
 	}
@@ -475,7 +486,7 @@ func (s *v6Server) process(msg *dhcpv6.Message, req, resp dhcpv6.DHCPv6) bool {
 		copy(oia.IaId[:], []byte(valueIAID))
 	}
 	oiaAddr := &dhcpv6.OptIAAddress{
-		IPv6Addr:          lease.IP,
+		IPv6Addr:          net.IP(lease.IP.AsSlice()),
 		PreferredLifetime: lifetime,
 		ValidLifetime:     lifetime,
 	}

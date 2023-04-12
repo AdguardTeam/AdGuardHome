@@ -23,6 +23,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -412,7 +413,7 @@ func TestServerRace(t *testing.T) {
 	filterConf := &filtering.Config{
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
-		SafeSearchEnabled:     true,
+		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
 		SafeSearchCacheSize:   1000,
 		ParentalCacheSize:     1000,
 		CacheTime:             30,
@@ -440,12 +441,27 @@ func TestServerRace(t *testing.T) {
 
 func TestSafeSearch(t *testing.T) {
 	resolver := &aghtest.TestResolver{}
+	safeSearchConf := filtering.SafeSearchConfig{
+		Enabled:        true,
+		Google:         true,
+		Yandex:         true,
+		CustomResolver: resolver,
+	}
+
 	filterConf := &filtering.Config{
-		SafeSearchEnabled:   true,
+		SafeSearchConf:      safeSearchConf,
 		SafeSearchCacheSize: 1000,
 		CacheTime:           30,
-		CustomResolver:      resolver,
 	}
+	safeSearch, err := safesearch.NewDefault(
+		safeSearchConf,
+		"",
+		filterConf.SafeSearchCacheSize,
+		time.Minute*time.Duration(filterConf.CacheTime),
+	)
+	require.NoError(t, err)
+
+	filterConf.SafeSearch = safeSearch
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
@@ -498,7 +514,8 @@ func TestSafeSearch(t *testing.T) {
 		t.Run(tc.host, func(t *testing.T) {
 			req := createTestMessage(tc.host)
 
-			reply, _, err := client.Exchange(req, addr)
+			var reply *dns.Msg
+			reply, _, err = client.Exchange(req, addr)
 			require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
 			assertResponse(t, reply, tc.want)
 		})
@@ -1057,7 +1074,7 @@ var testDHCP = &dhcpd.MockInterface{
 	OnEnabled: func() (ok bool) { return true },
 	OnLeases: func(flags dhcpd.GetLeasesFlags) (leases []*dhcpd.Lease) {
 		return []*dhcpd.Lease{{
-			IP:       net.IP{192, 168, 12, 34},
+			IP:       netip.MustParseAddr("192.168.12.34"),
 			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 			Hostname: "myhost",
 		}}

@@ -8,6 +8,7 @@ import * as actionCreators from '../../actions/login';
 import logo from '../../components/ui/svg/logo.svg';
 import Toasts from '../../components/Toasts';
 import Footer from '../../components/ui/Footer';
+import Icons from '../../components/ui/Icons';
 import Form from './Form';
 
 import './Login.css';
@@ -69,6 +70,7 @@ class Login extends Component {
                 </div>
                 <Footer />
                 <Toasts />
+                <Icons />
             </div>
         );
     }

@@ -43,6 +43,7 @@ import DnsRewrites from '../../containers/DnsRewrites';
 import CustomRules from '../../containers/CustomRules';
 import Services from '../Filters/Services';
 import Logs from '../Logs';
+import ProtectionTimer from '../ProtectionTimer';
 
 const ROUTES = [
     {
@@ -164,8 +165,7 @@ const App = () => {
         }
 
         const colorSchemeMedia = window.matchMedia('(prefers-color-scheme: dark)');
-        const prefersDark = colorSchemeMedia.matches;
-        setUITheme(prefersDark ? THEMES.dark : THEMES.light);
+        setUITheme(theme);
 
         if (colorSchemeMedia.addEventListener !== undefined) {
             colorSchemeMedia.addEventListener('change', (e) => {
@@ -191,6 +191,7 @@ const App = () => {
         {!processingEncryption && <EncryptionTopline />}
         <LoadingBar className="loading-bar" updateTime={1000} />
         <Header />
+        <ProtectionTimer />
         <div className="container container--wrap pb-5">
             {processing && <Loading />}
             {!isCoreRunning && <div className="row row-cards">

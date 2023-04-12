@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2023-03-08T00:09:48.692Z",
+    "timeUpdated": "2023-04-06T10:46:09.881Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -19225,6 +19225,13 @@
             "url": "http://www.zypmedia.com/",
             "companyId": "zypmedia"
         },
+        "abc": {
+            "name": "Australian Broadcasting Corporation",
+            "categoryId": 8,
+            "url": "https://www.abc.net.au/",
+            "companyId": "abc",
+            "source": "AdGuard"
+        },
         "adguard_dns": {
             "name": "AdGuard DNS",
             "categoryId": 8,
@@ -19316,6 +19323,13 @@
             "companyId": null,
             "source": "AdGuard"
         },
+        "domainglass": {
+            "name": "Domain Glass",
+            "categoryId": 8,
+            "url": "https://domain.glass/",
+            "companyId": "domainglass",
+            "source": "AdGuard"
+        },
         "edgio": {
             "name": "Edgio",
             "categoryId": 9,
@@ -19344,6 +19358,13 @@
             "companyId": "google",
             "source": "AdGuard"
         },
+        "freeview": {
+            "name": "Freeview",
+            "categoryId": 0,
+            "url": "https://freeview.com.au/",
+            "companyId": "freeview",
+            "source": "AdGuard"
+        },
         "gmail": {
             "name": "Gmail",
             "categoryId": 13,
@@ -19358,11 +19379,25 @@
             "companyId": "google",
             "source": "AdGuard"
         },
+        "iqiyi": {
+            "name": "iQiyi",
+            "categoryId": 0,
+            "url": "https://www.iqiyi.com/",
+            "companyId": "iqiyi",
+            "source": "AdGuard"
+        },
         "hockeyapp": {
             "name": "HockeyApp",
             "categoryId": 101,
             "url": "https://hockeyapp.net/",
             "companyId": null,
+            "source": "AdGuard"
+        },
+        "karambasecurity": {
+            "name": "Karamba Security",
+            "categoryId": 8,
+            "url": "https://karambasecurity.com/",
+            "companyId": "karambasecurity",
             "source": "AdGuard"
         },
         "kik": {
@@ -19377,6 +19412,13 @@
             "categoryId": 5,
             "url": "https://letsencrypt.org/",
             "companyId": "lets_encrypt",
+            "source": "AdGuard"
+        },
+        "lgads": {
+            "name": "LG Ad Solutions",
+            "categoryId": 4,
+            "url": "https://lgads.tv/",
+            "companyId": "lgcorp",
             "source": "AdGuard"
         },
         "lgtv": {
@@ -19426,6 +19468,13 @@
             "categoryId": 8,
             "url": "https://www.nab.com.au/",
             "companyId": "nab",
+            "source": "AdGuard"
+        },
+        "netify": {
+            "name": "Netify",
+            "categoryId": 8,
+            "url": "https://www.netify.ai/",
+            "companyId": "netify",
             "source": "AdGuard"
         },
         "notion": {
@@ -19519,6 +19568,20 @@
             "companyId": "solaredge",
             "source": "AdGuard"
         },
+        "sonos": {
+            "name": "Sonos",
+            "categoryId": 8,
+            "url": "https://www.sonos.com/",
+            "companyId": "sonos",
+            "source": "AdGuard"
+        },
+        "switchtv": {
+            "name": "Switch Media",
+            "categoryId": 8,
+            "url": "https://www.switch.tv/",
+            "companyId": "switchtv",
+            "source": "AdGuard"
+        },
         "telstra": {
             "name": "Telstra",
             "categoryId": 8,
@@ -19580,6 +19643,13 @@
             "categoryId": 101,
             "url": "https://appmetrica.yandex.com/",
             "companyId": "yandex",
+            "source": "AdGuard"
+        },
+        "3gpp": {
+            "name": "3GPP Network",
+            "categoryId": 5,
+            "url": "https://www.3gpp.org/",
+            "companyId": "3gpp",
             "source": "AdGuard"
         }
     },
@@ -23911,6 +23981,16 @@
         "zwaar.net": "zwaar",
         "zwaar.org": "zwaar",
         "extend.tv": "zypmedia",
+        "abc.net.au": "abc",
+        "ab.co": "abc",
+        "abc-cdn.net.au": "abc",
+        "abc-host.net": "abc",
+        "abc-host.net.au": "abc",
+        "abc-prod.net.au": "abc",
+        "abc-stage.net.au": "abc",
+        "abc-test.net.au": "abc",
+        "abcaustralia.net.au": "abc",
+        "abcradio.net.au": "abc",
         "adtidy.org": "adguard",
         "agrd.io": "adguard",
         "adguard.app": "adguard",
@@ -23985,6 +24065,7 @@
         "cloudflare-dns.com": "cloudflare",
         "crashlytics.com": "crashlytics",
         "phicdn.net": "digicert_trust_seal",
+        "domain.glass": "domainglass",
         "alphacdn.net": "edgio",
         "edg.io": "edgio",
         "edgecast.com": "edgio",
@@ -23996,6 +24077,9 @@
         "app-measurement.com": "firebase",
         "flipboard.com": "flipboard",
         "flurry.com": "flurry",
+        "freeviewaustralia.tv": "freeview",
+        "freeview.com.au": "freeview",
+        "freeview.com": "freeview",
         "ghcr.io": "github",
         "github.dev": "github",
         "gmail.com": "gmail",
@@ -24005,12 +24089,18 @@
         "gvt3.com": "google_servers",
         "pki.goog": "google_trust_services",
         "hockeyapp.net": "hockeyapp",
+        "qy.net": "iqiyi",
+        "iqiyi.com": "iqiyi",
+        "iq.com": "iqiyi",
+        "karambasecurity.com": "karambasecurity",
         "kik.com": "kik",
         "apikik.com": "kik",
         "kik-live.com": "kik",
         "slatic.net": "lazada",
         "lencr.org": "lets_encrypt",
         "letsencrypt.org": "lets_encrypt",
+        "alphonso.tv": "lgads",
+        "lgads.tv": "lgads",
         "lgsmartad.com": "lgtv",
         "lgtvcommon.com": "lgtv",
         "lgtvsdp.com": "lgtv",
@@ -24032,6 +24122,7 @@
         "mozilla.net": "mozilla",
         "mozilla.org": "mozilla",
         "nflximg.com": "netflix",
+        "netify.ai": "netify",
         "nab.com": "nab",
         "nab.com.au": "nab",
         "nab.net": "nab",
@@ -24074,7 +24165,9 @@
         "snap-dev.net": "snap",
         "snapads.com": "snap",
         "snapkit.com": "snap",
+        "switch.tv": "switchtv",
         "solaredge.com": "solaredge",
+        "sonos.com": "sonos",
         "telstra.com.au": "telstra",
         "telstra.com": "telstra",
         "usertrust.com": "trustlogo",
@@ -24095,6 +24188,8 @@
         "yandex.com.tr": "yandex",
         "yandex.fr": "yandex",
         "yandex.kz": "yandex",
-        "appmetrica.yandex.com": "yandex_appmetrica"
+        "appmetrica.yandex.com": "yandex_appmetrica",
+        "3gppnetwork.org": "3gpp",
+        "3gpp.org": "3gpp"
     }
 }

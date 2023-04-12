@@ -22,6 +22,7 @@ import Progress from './Progress';
 
 import Toasts from '../../components/Toasts';
 import Footer from '../../components/ui/Footer';
+import Icons from '../../components/ui/Icons';
 import logo from '../../components/ui/svg/logo.svg';
 
 import './Setup.css';
@@ -123,6 +124,7 @@ class Setup extends Component {
                         </div>
                         <Footer />
                         <Toasts />
+                        <Icons />
                     </Fragment>
                 }
             </Fragment>

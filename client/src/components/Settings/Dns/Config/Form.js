@@ -13,15 +13,11 @@ import {
     validateIpv4,
     validateIpv6,
     validateRequiredValue,
+    validateIp,
 } from '../../../../helpers/validators';
 import { BLOCKING_MODES, FORM_NAME, UINT32_RANGE } from '../../../../helpers/constants';
 
 const checkboxes = [
-    {
-        name: 'edns_cs_enabled',
-        placeholder: 'edns_enable',
-        subtitle: 'edns_cs_desc',
-    },
     {
         name: 'dnssec_enabled',
         placeholder: 'dnssec_enable',
@@ -66,6 +62,8 @@ const Form = ({
     const { t } = useTranslation();
     const {
         blocking_mode,
+        edns_cs_enabled,
+        edns_cs_use_custom,
     } = useSelector((state) => state.form[FORM_NAME.BLOCKING_MODE].values ?? {}, shallowEqual);
 
     return <form onSubmit={handleSubmit}>
@@ -91,6 +89,39 @@ const Form = ({
                         max={UINT32_RANGE.MAX}
                     />
                 </div>
+            </div>
+            <div className="col-12">
+                <div className="form__group form__group--settings">
+                    <Field
+                        name="edns_cs_enabled"
+                        type="checkbox"
+                        component={CheckboxField}
+                        placeholder={t('edns_enable')}
+                        disabled={processing}
+                        subtitle={t('edns_cs_desc')}
+                    />
+                </div>
+            </div>
+            <div className="col-12 form__group form__group--inner">
+                <div className="form__group ">
+                    <Field
+                        name="edns_cs_use_custom"
+                        type="checkbox"
+                        component={CheckboxField}
+                        placeholder={t('edns_use_custom_ip')}
+                        disabled={processing || !edns_cs_enabled}
+                        subtitle={t('edns_use_custom_ip_desc')}
+                    />
+                </div>
+
+                {edns_cs_use_custom && (<Field
+                    name="edns_cs_custom_ip"
+                    component={renderInputField}
+                    className="form-control"
+                    placeholder={t('form_enter_ip')}
+                    validate={[validateIp, validateRequiredValue]}
+                />)}
+
             </div>
             {checkboxes.map(({ name, placeholder, subtitle }) => <div className="col-12" key={name}>
                 <div className="form__group form__group--settings">

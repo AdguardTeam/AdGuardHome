@@ -1,13 +1,13 @@
 package home
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -21,7 +21,6 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/ameshkov/dnscrypt/v2"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -52,14 +51,15 @@ func initDNS() (err error) {
 	anonymizer := config.anonymizer()
 
 	statsConf := stats.Config{
-		Filename:       filepath.Join(baseDir, "stats.db"),
-		LimitDays:      config.Stats.Interval,
-		ConfigModified: onConfigModified,
-		HTTPRegister:   httpRegister,
-		Enabled:        config.Stats.Enabled,
+		Filename:          filepath.Join(baseDir, "stats.db"),
+		Limit:             config.Stats.Interval.Duration,
+		ConfigModified:    onConfigModified,
+		HTTPRegister:      httpRegister,
+		Enabled:           config.Stats.Enabled,
+		ShouldCountClient: Context.clients.shouldCountClient,
 	}
 
-	set, err := nonDupEmptyHostNames(config.Stats.Ignored)
+	set, err := aghnet.NewDomainNameSet(config.Stats.Ignored)
 	if err != nil {
 		return fmt.Errorf("statistics: ignored list: %w", err)
 	}
@@ -83,13 +83,16 @@ func initDNS() (err error) {
 		FileEnabled:       config.QueryLog.FileEnabled,
 	}
 
-	set, err = nonDupEmptyHostNames(config.QueryLog.Ignored)
+	set, err = aghnet.NewDomainNameSet(config.QueryLog.Ignored)
 	if err != nil {
 		return fmt.Errorf("querylog: ignored list: %w", err)
 	}
 
 	conf.Ignored = set
-	Context.queryLog = querylog.New(conf)
+	Context.queryLog, err = querylog.New(conf)
+	if err != nil {
+		return fmt.Errorf("init querylog: %w", err)
+	}
 
 	Context.filters, err = filtering.New(config.DNS.DnsfilterConf, nil)
 	if err != nil {
@@ -426,7 +429,8 @@ func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering
 	}
 
 	setts.FilteringEnabled = c.FilteringEnabled
-	setts.SafeSearchEnabled = c.SafeSearchEnabled
+	setts.SafeSearchEnabled = c.safeSearchConf.Enabled
+	setts.ClientSafeSearch = c.SafeSearch
 	setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
 	setts.ParentalEnabled = c.ParentalEnabled
 }
@@ -533,26 +537,30 @@ func closeDNSServer() {
 	log.Debug("all dns modules are closed")
 }
 
-// nonDupEmptyHostNames returns nil and error, if list has duplicate or empty
-// host name.  Otherwise returns a set, which contains lowercase host names
-// without dot at the end, and nil error.
-func nonDupEmptyHostNames(list []string) (set *stringutil.Set, err error) {
-	set = stringutil.NewSet()
+// safeSearchResolver is a [filtering.Resolver] implementation used for safe
+// search.
+type safeSearchResolver struct{}
 
-	for _, v := range list {
-		host := strings.ToLower(strings.TrimSuffix(v, "."))
-		// TODO(a.garipov): Think about ignoring empty (".") names in
-		// the future.
-		if host == "" {
-			return nil, errors.Error("host name is empty")
-		}
+// type check
+var _ filtering.Resolver = safeSearchResolver{}
 
-		if set.Has(host) {
-			return nil, fmt.Errorf("duplicate host name %q", host)
-		}
-
-		set.Add(host)
+// LookupIP implements [filtering.Resolver] interface for safeSearchResolver.
+// It returns the slice of net.IP with IPv4 and IPv6 instances.
+//
+// TODO(a.garipov): Support network.
+func (r safeSearchResolver) LookupIP(_ context.Context, _, host string) (ips []net.IP, err error) {
+	addrs, err := Context.dnsServer.Resolve(host)
+	if err != nil {
+		return nil, err
 	}
 
-	return set, nil
+	if len(addrs) == 0 {
+		return nil, fmt.Errorf("couldn't lookup host: %s", host)
+	}
+
+	for _, a := range addrs {
+		ips = append(ips, a.IP)
+	}
+
+	return ips, nil
 }

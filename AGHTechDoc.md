@@ -399,6 +399,7 @@ Response:
 	"protection_enabled":true,
 	"running":true,
 	"dhcp_available":true,
+    "protection_disabled_duration":0
 	"version":"undefined"
 	}
 

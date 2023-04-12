@@ -108,7 +108,7 @@ func (m *tlsManager) start() {
 	// The background context is used because the TLSConfigChanged wraps context
 	// with timeout on its own and shuts down the server, which handles current
 	// request.
-	Context.web.TLSConfigChanged(context.Background(), tlsConf)
+	Context.web.tlsConfigChanged(context.Background(), tlsConf)
 }
 
 // reload updates the configuration and restarts t.
@@ -156,7 +156,7 @@ func (m *tlsManager) reload() {
 	// The background context is used because the TLSConfigChanged wraps context
 	// with timeout on its own and shuts down the server, which handles current
 	// request.
-	Context.web.TLSConfigChanged(context.Background(), tlsConf)
+	Context.web.tlsConfigChanged(context.Background(), tlsConf)
 }
 
 // loadTLSConf loads and validates the TLS configuration.  The returned error is
@@ -454,7 +454,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	// same reason.
 	if restartHTTPS {
 		go func() {
-			Context.web.TLSConfigChanged(context.Background(), req.tlsConfigSettings)
+			Context.web.tlsConfigChanged(context.Background(), req.tlsConfigSettings)
 		}()
 	}
 }

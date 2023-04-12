@@ -3,7 +3,10 @@ package home
 import (
 	"encoding"
 	"fmt"
+	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 )
 
@@ -15,6 +18,9 @@ type Client struct {
 	// these upstream must be used.
 	upstreamConfig *proxy.UpstreamConfig
 
+	safeSearchConf filtering.SafeSearchConfig
+	SafeSearch     filtering.SafeSearch
+
 	Name string
 
 	IDs             []string
@@ -24,10 +30,11 @@ type Client struct {
 
 	UseOwnSettings        bool
 	FilteringEnabled      bool
-	SafeSearchEnabled     bool
 	SafeBrowsingEnabled   bool
 	ParentalEnabled       bool
 	UseOwnBlockedServices bool
+	IgnoreQueryLog        bool
+	IgnoreStatistics      bool
 }
 
 // closeUpstreams closes the client-specific upstream config of c if any.
@@ -38,6 +45,23 @@ func (c *Client) closeUpstreams() (err error) {
 			return fmt.Errorf("closing upstreams of client %q: %w", c.Name, err)
 		}
 	}
+
+	return nil
+}
+
+// setSafeSearch initializes and sets the safe search filter for this client.
+func (c *Client) setSafeSearch(
+	conf filtering.SafeSearchConfig,
+	cacheSize uint,
+	cacheTTL time.Duration,
+) (err error) {
+	ss, err := safesearch.NewDefault(conf, fmt.Sprintf("client %q", c.Name), cacheSize, cacheTTL)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	}
+
+	c.SafeSearch = ss
 
 	return nil
 }

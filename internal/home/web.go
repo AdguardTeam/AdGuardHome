@@ -35,9 +35,8 @@ const (
 type webConfig struct {
 	clientFS fs.FS
 
-	BindHost  netip.Addr
-	BindPort  int
-	PortHTTPS int
+	BindHost netip.Addr
+	BindPort int
 
 	// ReadTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
@@ -72,8 +71,8 @@ type httpsServer struct {
 	enabled    bool
 }
 
-// Web is the web UI and API server.
-type Web struct {
+// webAPI is the web UI and API server.
+type webAPI struct {
 	conf *webConfig
 
 	// TODO(a.garipov): Refactor all these servers.
@@ -82,15 +81,13 @@ type Web struct {
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
 	httpsServer httpsServer
-
-	forceHTTPS bool
 }
 
-// newWeb creates a new instance of the web UI and API server.
-func newWeb(conf *webConfig) (w *Web) {
+// newWebAPI creates a new instance of the web UI and API server.
+func newWebAPI(conf *webConfig) (w *webAPI) {
 	log.Info("web: initializing")
 
-	w = &Web{
+	w = &webAPI{
 		conf: conf,
 	}
 
@@ -125,12 +122,10 @@ func webCheckPortAvailable(port int) (ok bool) {
 	return aghnet.CheckPort("tcp", netip.AddrPortFrom(config.BindHost, uint16(port))) == nil
 }
 
-// TLSConfigChanged updates the TLS configuration and restarts the HTTPS server
+// tlsConfigChanged updates the TLS configuration and restarts the HTTPS server
 // if necessary.
-func (web *Web) TLSConfigChanged(ctx context.Context, tlsConf tlsConfigSettings) {
+func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf tlsConfigSettings) {
 	log.Debug("web: applying new tls configuration")
-	web.conf.PortHTTPS = tlsConf.PortHTTPS
-	web.forceHTTPS = (tlsConf.ForceHTTPS && tlsConf.Enabled && tlsConf.PortHTTPS != 0)
 
 	enabled := tlsConf.Enabled &&
 		tlsConf.PortHTTPS != 0 &&
@@ -161,8 +156,8 @@ func (web *Web) TLSConfigChanged(ctx context.Context, tlsConf tlsConfigSettings)
 	web.httpsServer.cond.L.Unlock()
 }
 
-// Start - start serving HTTP requests
-func (web *Web) Start() {
+// start - start serving HTTP requests
+func (web *webAPI) start() {
 	log.Println("AdGuard Home is available at the following addresses:")
 
 	// for https, we have a separate goroutine loop
@@ -203,8 +198,8 @@ func (web *Web) Start() {
 	}
 }
 
-// Close gracefully shuts down the HTTP servers.
-func (web *Web) Close(ctx context.Context) {
+// close gracefully shuts down the HTTP servers.
+func (web *webAPI) close(ctx context.Context) {
 	log.Info("stopping http server...")
 
 	web.httpsServer.cond.L.Lock()
@@ -222,7 +217,7 @@ func (web *Web) Close(ctx context.Context) {
 	log.Info("stopped http server")
 }
 
-func (web *Web) tlsServerLoop() {
+func (web *webAPI) tlsServerLoop() {
 	for {
 		web.httpsServer.cond.L.Lock()
 		if web.httpsServer.inShutdown {
@@ -241,7 +236,15 @@ func (web *Web) tlsServerLoop() {
 
 		web.httpsServer.cond.L.Unlock()
 
-		addr := netutil.JoinHostPort(web.conf.BindHost.String(), web.conf.PortHTTPS)
+		var portHTTPS int
+		func() {
+			config.RLock()
+			defer config.RUnlock()
+
+			portHTTPS = config.TLS.PortHTTPS
+		}()
+
+		addr := netutil.JoinHostPort(web.conf.BindHost.String(), portHTTPS)
 		web.httpsServer.server = &http.Server{
 			ErrorLog: log.StdLog("web: https", log.DEBUG),
 			Addr:     addr,
@@ -272,7 +275,7 @@ func (web *Web) tlsServerLoop() {
 	}
 }
 
-func (web *Web) mustStartHTTP3(address string) {
+func (web *webAPI) mustStartHTTP3(address string) {
 	defer log.OnPanic("web: http3")
 
 	web.httpsServer.server3 = &http3.Server{

@@ -11,13 +11,14 @@ class Checkbox extends Component {
             subtitle,
             enabled,
             handleChange,
+            disabled,
             t,
         } = this.props;
         return (
             <div className="form__group form__group--checkbox">
                 <label className="checkbox checkbox--settings">
                 <span className="checkbox__marker"/>
-                <input type="checkbox" className="checkbox__input" onChange={handleChange} checked={enabled}/>
+                <input type="checkbox" className="checkbox__input" onChange={handleChange} checked={enabled} disabled={disabled}/>
                 <span className="checkbox__label">
                     <span className="checkbox__label-text">
                     <span className="checkbox__label-title">{ t(title) }</span>
@@ -35,6 +36,7 @@ Checkbox.propTypes = {
     subtitle: PropTypes.string.isRequired,
     enabled: PropTypes.bool.isRequired,
     handleChange: PropTypes.func.isRequired,
+    disabled: PropTypes.bool,
     t: PropTypes.func,
 };
 

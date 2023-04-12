@@ -81,6 +81,10 @@ type FilteringConfig struct {
 	// 0, then default value is used (3600).
 	BlockedResponseTTL uint32 `yaml:"blocked_response_ttl"`
 
+	// ProtectionDisabledUntil is the timestamp until when the protection is
+	// disabled.
+	ProtectionDisabledUntil *time.Time `yaml:"protection_disabled_until"`
+
 	// ParentalBlockHost is the IP (or domain name) which is used to respond to
 	// DNS requests blocked by parental control.
 	ParentalBlockHost string `yaml:"parental_block_host"`
@@ -195,12 +199,16 @@ type FilteringConfig struct {
 	// IpsetListFileName, if set, points to the file with ipset configuration.
 	// The format is the same as in [IpsetList].
 	IpsetListFileName string `yaml:"ipset_file"`
+
+	// BootstrapPreferIPv6, if true, instructs the bootstrapper to prefer IPv6
+	// addresses to IPv4 ones for DoH, DoQ, and DoT.
+	BootstrapPreferIPv6 bool `yaml:"bootstrap_prefer_ipv6"`
 }
 
 // EDNSClientSubnet is the settings list for EDNS Client Subnet.
 type EDNSClientSubnet struct {
 	// CustomIP for EDNS Client Subnet.
-	CustomIP string `yaml:"custom_ip"`
+	CustomIP netip.Addr `yaml:"custom_ip"`
 
 	// Enabled defines if EDNS Client Subnet is enabled.
 	Enabled bool `yaml:"enabled"`
@@ -340,15 +348,8 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 	}
 
 	if srvConf.EDNSClientSubnet.UseCustom {
-		// TODO(s.chzhen):  Add wrapper around netip.Addr.
-		var ip net.IP
-		ip, err = netutil.ParseIP(srvConf.EDNSClientSubnet.CustomIP)
-		if err != nil {
-			return conf, fmt.Errorf("edns: %w", err)
-		}
-
 		// TODO(s.chzhen):  Use netip.Addr instead of net.IP inside dnsproxy.
-		conf.EDNSAddr = ip
+		conf.EDNSAddr = net.IP(srvConf.EDNSClientSubnet.CustomIP.AsSlice())
 	}
 
 	if srvConf.CacheSize != 0 {
@@ -377,7 +378,7 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 
 	err = s.prepareTLS(&conf)
 	if err != nil {
-		return conf, fmt.Errorf("validating tls: %w", err)
+		return proxy.Config{}, fmt.Errorf("validating tls: %w", err)
 	}
 
 	if c := srvConf.DNSCryptConfig; c.Enabled {
@@ -388,7 +389,7 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 	}
 
 	if conf.UpstreamConfig == nil || len(conf.UpstreamConfig.Upstreams) == 0 {
-		return conf, errors.Error("no default upstream servers configured")
+		return proxy.Config{}, errors.Error("no default upstream servers configured")
 	}
 
 	return conf, nil
@@ -482,6 +483,7 @@ func (s *Server) prepareUpstreamSettings() error {
 			Bootstrap:    s.conf.BootstrapDNS,
 			Timeout:      s.conf.UpstreamTimeout,
 			HTTPVersions: httpVersions,
+			PreferIPv6:   s.conf.BootstrapPreferIPv6,
 		},
 	)
 	if err != nil {
@@ -497,6 +499,7 @@ func (s *Server) prepareUpstreamSettings() error {
 				Bootstrap:    s.conf.BootstrapDNS,
 				Timeout:      s.conf.UpstreamTimeout,
 				HTTPVersions: httpVersions,
+				PreferIPv6:   s.conf.BootstrapPreferIPv6,
 			},
 		)
 		if err != nil {
@@ -584,11 +587,11 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
 	if s.conf.StrictSNICheck {
 		if len(cert.DNSNames) != 0 {
 			s.conf.dnsNames = cert.DNSNames
-			log.Debug("dnsforward: using certificate's SAN as DNS names: %v", cert.DNSNames)
+			log.Debug("dns: using certificate's SAN as DNS names: %v", cert.DNSNames)
 			slices.Sort(s.conf.dnsNames)
 		} else {
 			s.conf.dnsNames = append(s.conf.dnsNames, cert.Subject.CommonName)
-			log.Debug("dnsforward: using certificate's CN as DNS name: %s", cert.Subject.CommonName)
+			log.Debug("dns: using certificate's CN as DNS name: %s", cert.Subject.CommonName)
 		}
 	}
 
@@ -641,4 +644,50 @@ func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, er
 		return nil, fmt.Errorf("invalid SNI")
 	}
 	return &s.conf.cert, nil
+}
+
+// UpdatedProtectionStatus updates protection state, if the protection was
+// disabled temporarily.  Returns the updated state of protection.
+func (s *Server) UpdatedProtectionStatus() (enabled bool, disabledUntil *time.Time) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	disabledUntil = s.conf.ProtectionDisabledUntil
+	if disabledUntil == nil {
+		return s.conf.ProtectionEnabled, nil
+	}
+
+	if time.Now().Before(*disabledUntil) {
+		return false, disabledUntil
+	}
+
+	// Update the values in a separate goroutine, unless an update is already in
+	// progress.  Since this method is called very often, and this update is a
+	// relatively rare situation, do not lock s.serverLock for writing, as that
+	// can lead to freezes.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/5661.
+	if s.protectionUpdateInProgress.CompareAndSwap(false, true) {
+		go s.enableProtectionAfterPause()
+	}
+
+	return true, nil
+}
+
+// enableProtectionAfterPause sets the protection configuration to enabled
+// values.  It is intended to be used as a goroutine.
+func (s *Server) enableProtectionAfterPause() {
+	defer log.OnPanic("dns: enabling protection after pause")
+
+	defer s.protectionUpdateInProgress.Store(false)
+
+	defer s.conf.ConfigModified()
+
+	s.serverLock.Lock()
+	defer s.serverLock.Unlock()
+
+	s.conf.ProtectionEnabled = true
+	s.conf.ProtectionDisabledUntil = nil
+
+	log.Info("dns: protection is restarted after pause")
 }
