@@ -149,12 +149,12 @@ In this release, the schema version has changed from 17 to 20.
 
 [#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1163
 [#1333]: https://github.com/AdguardTeam/AdGuardHome/issues/1333
-[#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1717
 [#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
+[#1717]: https://github.com/AdguardTeam/AdGuardHome/issues/1717
 [#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/3290
 [#3459]: https://github.com/AdguardTeam/AdGuardHome/issues/3459
 [#4262]: https://github.com/AdguardTeam/AdGuardHome/issues/4262
-[#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/4299
+[#4299]: https://github.com/AdguardTeam/AdGuardHome/issues/4299
 [#5567]: https://github.com/AdguardTeam/AdGuardHome/issues/5567
 [#5701]: https://github.com/AdguardTeam/AdGuardHome/issues/5701
 
