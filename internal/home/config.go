@@ -296,12 +296,26 @@ var config = &configuration{
 			MaxGoroutines: 300,
 		},
 		DnsfilterConf: &filtering.Config{
-			SafeBrowsingCacheSize:      1 * 1024 * 1024,
-			SafeSearchCacheSize:        1 * 1024 * 1024,
-			ParentalCacheSize:          1 * 1024 * 1024,
-			CacheTime:                  30,
 			FilteringEnabled:           true,
 			FiltersUpdateIntervalHours: 24,
+
+			ParentalEnabled:     false,
+			SafeBrowsingEnabled: false,
+
+			SafeBrowsingCacheSize: 1 * 1024 * 1024,
+			SafeSearchCacheSize:   1 * 1024 * 1024,
+			ParentalCacheSize:     1 * 1024 * 1024,
+			CacheTime:             30,
+
+			SafeSearchConf: filtering.SafeSearchConfig{
+				Enabled:    false,
+				Bing:       true,
+				DuckDuckGo: true,
+				Google:     true,
+				Pixabay:    true,
+				Yandex:     true,
+				YouTube:    true,
+			},
 		},
 		UpstreamTimeout: timeutil.Duration{Duration: dnsforward.DefaultTimeout},
 		UsePrivateRDNS:  true,

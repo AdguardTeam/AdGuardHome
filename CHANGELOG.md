@@ -25,6 +25,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- All Safe Search services being unchecked by default.
 - Panic when a DNSCrypt stamp is invalid ([#5721]).
 
 [#5721]: https://github.com/AdguardTeam/AdGuardHome/issues/5721
