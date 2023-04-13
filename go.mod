@@ -7,7 +7,7 @@ require (
 	github.com/AdguardTeam/golibs v0.13.2
 	github.com/AdguardTeam/urlfilter v0.16.1
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/ameshkov/dnscrypt/v2 v2.2.6
+	github.com/ameshkov/dnscrypt/v2 v2.2.7
 	github.com/digineo/go-ipset/v2 v2.2.1
 	github.com/dimfeld/httptreemux/v5 v5.5.0
 	github.com/fsnotify/fsnotify v1.6.0
@@ -62,7 +62,3 @@ require (
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.8.0 // indirect
 )
-
-// TODO(a.garipov): Remove the replace when @a.meshkov merges
-// https://github.com/ameshkov/dnscrypt/pull/21.
-replace github.com/ameshkov/dnscrypt/v2 => github.com/ainar-g/dnscrypt/v2 v2.0.1-0.20230413122657-d2ec675d1c59
