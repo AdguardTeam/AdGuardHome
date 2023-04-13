@@ -25,10 +25,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Incorrect recording of blocked results as “Blocked by CNAME or IP” in the
+  query log ([#5725]).
 - All Safe Search services being unchecked by default.
 - Panic when a DNSCrypt stamp is invalid ([#5721]).
 
 [#5721]: https://github.com/AdguardTeam/AdGuardHome/issues/5721
+[#5725]: https://github.com/AdguardTeam/AdGuardHome/issues/5725
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
