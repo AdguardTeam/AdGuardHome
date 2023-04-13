@@ -4,19 +4,27 @@
 
 /^[[:space:]]+- .+/ {
     if (FNR - prev_line == 1) {
-        addrs[addrsnum++] = $2
+        addrs[$2] = true
         prev_line = FNR
+
+        if ($2 == "0.0.0.0" || $2 == "::") {
+            delete addrs
+            addrs["localhost"] = true
+
+            # Drop all the other addresses.
+            prev_line = -1
+        }
     }
 }
 
 /^[[:space:]]+port:/ { if (is_dns) port = $2 }
 
 END {
-    for (i in addrs) {
-        if (match(addrs[i], ":")) {
-            print "[" addrs[i] "]:" port
+    for (addr in addrs) {
+        if (match(addr, ":")) {
+            print "[" addr "]:" port
         } else {
-            print addrs[i] ":" port
+            print addr ":" port
         }
     }
 }
