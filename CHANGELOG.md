@@ -23,6 +23,12 @@ See also the [v0.107.29 GitHub milestone][ms-v0.107.29].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Panic when a DNSCrypt stamp is invalid ([#5721]).
+
+[#5721]: https://github.com/AdguardTeam/AdGuardHome/issues/5721
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
