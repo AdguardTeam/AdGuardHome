@@ -15,7 +15,6 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/mdlayher/packet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -769,111 +768,6 @@ type fakePacketConn struct {
 // WriteTo implements net.PacketConn interface for *fakePacketConn.
 func (fc *fakePacketConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 	return fc.writeTo(p, addr)
-}
-
-func TestV4Server_Send(t *testing.T) {
-	s := &v4Server{}
-
-	var (
-		defaultIP = net.IP{99, 99, 99, 99}
-		knownIP   = net.IP{4, 2, 4, 2}
-		knownMAC  = net.HardwareAddr{6, 5, 4, 3, 2, 1}
-	)
-
-	defaultPeer := &net.UDPAddr{
-		IP: defaultIP,
-		// Use neither client nor server port to check it actually
-		// changed.
-		Port: dhcpv4.ClientPort + dhcpv4.ServerPort,
-	}
-	defaultResp := &dhcpv4.DHCPv4{}
-
-	testCases := []struct {
-		want net.Addr
-		req  *dhcpv4.DHCPv4
-		resp *dhcpv4.DHCPv4
-		name string
-	}{{
-		name: "giaddr",
-		req:  &dhcpv4.DHCPv4{GatewayIPAddr: knownIP},
-		resp: defaultResp,
-		want: &net.UDPAddr{
-			IP:   knownIP,
-			Port: dhcpv4.ServerPort,
-		},
-	}, {
-		name: "nak",
-		req:  &dhcpv4.DHCPv4{},
-		resp: &dhcpv4.DHCPv4{
-			Options: dhcpv4.OptionsFromList(
-				dhcpv4.OptMessageType(dhcpv4.MessageTypeNak),
-			),
-		},
-		want: defaultPeer,
-	}, {
-		name: "ciaddr",
-		req:  &dhcpv4.DHCPv4{ClientIPAddr: knownIP},
-		resp: &dhcpv4.DHCPv4{},
-		want: &net.UDPAddr{
-			IP:   knownIP,
-			Port: dhcpv4.ClientPort,
-		},
-	}, {
-		name: "chaddr",
-		req:  &dhcpv4.DHCPv4{ClientHWAddr: knownMAC},
-		resp: &dhcpv4.DHCPv4{YourIPAddr: knownIP},
-		want: &dhcpUnicastAddr{
-			Addr:   packet.Addr{HardwareAddr: knownMAC},
-			yiaddr: knownIP,
-		},
-	}, {
-		name: "who_are_you",
-		req:  &dhcpv4.DHCPv4{},
-		resp: &dhcpv4.DHCPv4{},
-		want: defaultPeer,
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			conn := &fakePacketConn{
-				writeTo: func(_ []byte, addr net.Addr) (_ int, _ error) {
-					assert.Equal(t, tc.want, addr)
-
-					return 0, nil
-				},
-			}
-
-			s.send(cloneUDPAddr(defaultPeer), conn, tc.req, tc.resp)
-		})
-	}
-
-	t.Run("giaddr_nak", func(t *testing.T) {
-		req := &dhcpv4.DHCPv4{
-			GatewayIPAddr: knownIP,
-		}
-		// Ensure the request is for unicast.
-		req.SetUnicast()
-		resp := &dhcpv4.DHCPv4{
-			Options: dhcpv4.OptionsFromList(
-				dhcpv4.OptMessageType(dhcpv4.MessageTypeNak),
-			),
-		}
-		want := &net.UDPAddr{
-			IP:   req.GatewayIPAddr,
-			Port: dhcpv4.ServerPort,
-		}
-
-		conn := &fakePacketConn{
-			writeTo: func(_ []byte, addr net.Addr) (n int, err error) {
-				assert.Equal(t, want, addr)
-
-				return 0, nil
-			},
-		}
-
-		s.send(cloneUDPAddr(defaultPeer), conn, req, resp)
-		assert.True(t, resp.IsBroadcast())
-	})
 }
 
 func TestV4Server_FindMACbyIP(t *testing.T) {

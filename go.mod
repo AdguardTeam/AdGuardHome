@@ -22,6 +22,9 @@ require (
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/netlink v1.7.1
 	github.com/mdlayher/packet v1.1.1
+	// TODO(a.garipov): This package is deprecated; find a new one or use our
+	// own code for that.  Perhaps, use gopacket.
+	github.com/mdlayher/raw v0.1.0
 	github.com/miekg/dns v1.1.53
 	github.com/quic-go/quic-go v0.33.0
 	github.com/stretchr/testify v1.8.2
@@ -46,7 +49,6 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/pprof v0.0.0-20230406165453-00490a63f317 // indirect
-	github.com/mdlayher/raw v0.1.0 // indirect
 	github.com/mdlayher/socket v0.4.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.9.2 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect

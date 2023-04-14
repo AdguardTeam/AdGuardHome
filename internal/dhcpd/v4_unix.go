@@ -20,7 +20,6 @@ import (
 	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
-	"github.com/mdlayher/packet"
 	"golang.org/x/exp/slices"
 )
 
@@ -1130,56 +1129,6 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 	}
 
 	s.send(peer, conn, req, resp)
-}
-
-// send writes resp for peer to conn considering the req's parameters according
-// to RFC-2131.
-//
-// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.1.
-func (s *v4Server) send(peer net.Addr, conn net.PacketConn, req, resp *dhcpv4.DHCPv4) {
-	switch giaddr, ciaddr, mtype := req.GatewayIPAddr, req.ClientIPAddr, resp.MessageType(); {
-	case giaddr != nil && !giaddr.IsUnspecified():
-		// Send any return messages to the server port on the BOOTP
-		// relay agent whose address appears in giaddr.
-		peer = &net.UDPAddr{
-			IP:   giaddr,
-			Port: dhcpv4.ServerPort,
-		}
-		if mtype == dhcpv4.MessageTypeNak {
-			// Set the broadcast bit in the DHCPNAK, so that the relay agent
-			// broadcasts it to the client, because the client may not have
-			// a correct network address or subnet mask, and the client may not
-			// be answering ARP requests.
-			resp.SetBroadcast()
-		}
-	case mtype == dhcpv4.MessageTypeNak:
-		// Broadcast any DHCPNAK messages to 0xffffffff.
-	case ciaddr != nil && !ciaddr.IsUnspecified():
-		// Unicast DHCPOFFER and DHCPACK messages to the address in
-		// ciaddr.
-		peer = &net.UDPAddr{
-			IP:   ciaddr,
-			Port: dhcpv4.ClientPort,
-		}
-	case !req.IsBroadcast() && req.ClientHWAddr != nil:
-		// Unicast DHCPOFFER and DHCPACK messages to the client's
-		// hardware address and yiaddr.
-		peer = &dhcpUnicastAddr{
-			Addr:   packet.Addr{HardwareAddr: req.ClientHWAddr},
-			yiaddr: resp.YourIPAddr,
-		}
-	default:
-		// Go on since peer is already set to broadcast.
-	}
-
-	pktData := resp.ToBytes()
-
-	log.Debug("dhcpv4: sending %d bytes to %s: %s", len(pktData), peer, resp.Summary())
-
-	_, err := conn.WriteTo(pktData, peer)
-	if err != nil {
-		log.Error("dhcpv4: conn.Write to %s failed: %s", peer, err)
-	}
 }
 
 // Start starts the IPv4 DHCP server.

@@ -31,6 +31,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The `github.com/mdlayher/raw` dependency has been temporarily returned to
+  support raw connections on Darwin ([#5712]).
 - Incorrect recording of blocked results as “Blocked by CNAME or IP” in the
   query log ([#5725]).
 - All Safe Search services being unchecked by default.
