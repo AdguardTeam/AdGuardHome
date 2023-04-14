@@ -288,6 +288,10 @@ func (l *queryLog) readNextEntry(
 		// Go on and try to match anyway.
 	}
 
+	if e.client != nil && e.client.IgnoreQueryLog {
+		return nil, ts, nil
+	}
+
 	ts = e.Time.UnixNano()
 	if !params.match(e) {
 		return nil, ts, nil

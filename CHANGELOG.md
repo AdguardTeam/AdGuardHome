@@ -23,6 +23,12 @@ See also the [v0.107.29 GitHub milestone][ms-v0.107.29].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- The ability to exclude client activity from the query log or statistics by
+  editing client's settings on the Clients settings page in the UI  ([#1717],
+  [#4299]).
+
 ### Fixed
 
 - Incorrect recording of blocked results as “Blocked by CNAME or IP” in the
@@ -30,6 +36,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - All Safe Search services being unchecked by default.
 - Panic when a DNSCrypt stamp is invalid ([#5721]).
 
+[#1717]: https://github.com/AdguardTeam/AdGuardHome/issues/1717
+[#4299]: https://github.com/AdguardTeam/AdGuardHome/issues/4299
 [#5721]: https://github.com/AdguardTeam/AdGuardHome/issues/5721
 [#5725]: https://github.com/AdguardTeam/AdGuardHome/issues/5725
 

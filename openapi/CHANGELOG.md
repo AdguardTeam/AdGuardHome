@@ -4,6 +4,18 @@
 
 ## v0.108.0: API changes
 
+## v0.107.29: API changes
+
+### `GET /control/clients` And `GET /control/clients/find`
+* The new optional fields `"ignore_querylog"` and `"ignore_statistics"` are set
+  if AdGuard Home excludes client activity from query log or statistics.
+
+### `POST /control/clients/add` And `POST /control/clients/update`
+* The new optional fields `"ignore_querylog"` and `"ignore_statistics"` make
+  AdGuard Home exclude client activity from query log or statistics.  If not
+  set AdGuard Home will use default value (false).  It can be changed in the
+  future versions.
+
 ## v0.107.27: API changes
 
 ### The new optional fields `"edns_cs_use_custom"` and `"edns_cs_custom_ip"` in `DNSConfig`

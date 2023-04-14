@@ -668,5 +668,9 @@
     "disable_notify_for_hours": "Disable protection for {{count}} hour",
     "disable_notify_for_hours_plural": "Disable protection for {{count}} hours",
     "disable_notify_until_tomorrow": "Disable protection until tomorrow",
-    "enable_protection_timer": "Protection will be enabled in {{time}}"
+    "enable_protection_timer": "Protection will be enabled in {{time}}",
+    "protection_section_label": "Protection",
+    "log_and_stats_section_label": "Query log and statistics",
+    "ignore_query_log": "Ignore this client in query log",
+    "ignore_statistics": "Ignore this client in statistics"
 }

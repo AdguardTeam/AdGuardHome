@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/netip"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 )
@@ -44,6 +45,9 @@ type clientJSON struct {
 	SafeSearchEnabled        bool `json:"safesearch_enabled"`
 	UseGlobalBlockedServices bool `json:"use_global_blocked_services"`
 	UseGlobalSettings        bool `json:"use_global_settings"`
+
+	IgnoreQueryLog   aghalg.NullBool `json:"ignore_querylog"`
+	IgnoreStatistics aghalg.NullBool `json:"ignore_statistics"`
 }
 
 type runtimeClientJSON struct {
@@ -90,7 +94,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 }
 
 // jsonToClient converts JSON object to Client object.
-func (clients *clientsContainer) jsonToClient(cj clientJSON) (c *Client, err error) {
+func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *Client, err error) {
 	var safeSearchConf filtering.SafeSearchConfig
 	if cj.SafeSearchConf != nil {
 		safeSearchConf = *cj.SafeSearchConf
@@ -129,6 +133,18 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON) (c *Client, err err
 		UseOwnBlockedServices: !cj.UseGlobalBlockedServices,
 	}
 
+	if cj.IgnoreQueryLog != aghalg.NBNull {
+		c.IgnoreQueryLog = cj.IgnoreQueryLog == aghalg.NBTrue
+	} else if prev != nil {
+		c.IgnoreQueryLog = prev.IgnoreQueryLog
+	}
+
+	if cj.IgnoreStatistics != aghalg.NBNull {
+		c.IgnoreStatistics = cj.IgnoreStatistics == aghalg.NBTrue
+	} else if prev != nil {
+		c.IgnoreStatistics = prev.IgnoreStatistics
+	}
+
 	if safeSearchConf.Enabled {
 		err = c.setSafeSearch(
 			safeSearchConf,
@@ -165,6 +181,9 @@ func clientToJSON(c *Client) (cj *clientJSON) {
 		BlockedServices:          c.BlockedServices,
 
 		Upstreams: c.Upstreams,
+
+		IgnoreQueryLog:   aghalg.BoolToNullBool(c.IgnoreQueryLog),
+		IgnoreStatistics: aghalg.BoolToNullBool(c.IgnoreStatistics),
 	}
 }
 
@@ -178,7 +197,7 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	c, err := clients.jsonToClient(cj)
+	c, err := clients.jsonToClient(cj, nil)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
@@ -232,6 +251,8 @@ type updateJSON struct {
 }
 
 // handleUpdateClient is the handler for POST /control/clients/update HTTP API.
+//
+// TODO(s.chzhen):  Accept updated parameters instead of whole structure.
 func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *http.Request) {
 	dj := updateJSON{}
 	err := json.NewDecoder(r.Body).Decode(&dj)
@@ -247,7 +268,21 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 		return
 	}
 
-	c, err := clients.jsonToClient(dj.Data)
+	var prev *Client
+	var ok bool
+
+	func() {
+		clients.lock.Lock()
+		defer clients.lock.Unlock()
+
+		prev, ok = clients.list[dj.Name]
+	}()
+
+	if !ok {
+		aghhttp.Error(r, w, http.StatusBadRequest, "client not found")
+	}
+
+	c, err := clients.jsonToClient(dj.Data, prev)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
