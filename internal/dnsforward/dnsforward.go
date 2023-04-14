@@ -563,6 +563,7 @@ func (s *Server) prepareInternalProxy() (err error) {
 		CacheEnabled:   true,
 		CacheSizeBytes: 4096,
 		UpstreamConfig: srvConf.UpstreamConfig,
+		Fallbacks:      srvConf.Fallbacks,
 		MaxGoroutines:  int(s.conf.MaxGoroutines),
 	}
 

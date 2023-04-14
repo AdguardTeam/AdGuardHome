@@ -110,6 +110,10 @@ type FilteringConfig struct {
 	// UpstreamDNS is the list of upstream DNS servers.
 	UpstreamDNS []string `yaml:"upstream_dns"`
 
+	// UpstreamFallbacks is a list of fallback resolvers.
+	// Those will be used if the general set fails responding.
+	UpstreamFallbacks []string `yaml:"upstream_fallbacks"`
+
 	// UpstreamDNSFileName, if set, points to the file which contains upstream
 	// DNS servers.
 	UpstreamDNSFileName string `yaml:"upstream_dns_file"`
@@ -271,6 +275,7 @@ type ServerConfig struct {
 	UDPListenAddrs []*net.UDPAddr        // UDP listen address
 	TCPListenAddrs []*net.TCPAddr        // TCP listen address
 	UpstreamConfig *proxy.UpstreamConfig // Upstream DNS servers config
+	Fallbacks      []upstream.Upstream   // Fallback Upstream resolvers
 	OnDNSRequest   func(d *proxy.DNSContext)
 
 	FilteringConfig
@@ -345,6 +350,7 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 		MaxGoroutines:          int(srvConf.MaxGoroutines),
 		UseDNS64:               srvConf.UseDNS64,
 		DNS64Prefs:             srvConf.DNS64Prefixes,
+		Fallbacks:              srvConf.Fallbacks,
 	}
 
 	if srvConf.EDNSClientSubnet.UseCustom {
@@ -511,6 +517,23 @@ func (s *Server) prepareUpstreamSettings() error {
 
 	s.conf.UpstreamConfig = upstreamConfig
 
+	fallbacks := []upstream.Upstream{}
+	for _, f := range s.conf.UpstreamFallbacks {
+		var fallback upstream.Upstream
+		fallback, err = upstream.AddressToUpstream(f, &upstream.Options{
+			Bootstrap:    s.conf.BootstrapDNS,
+			Timeout:      s.conf.UpstreamTimeout,
+			HTTPVersions: httpVersions,
+			PreferIPv6:   s.conf.BootstrapPreferIPv6,
+		})
+		if err != nil {
+			return fmt.Errorf("parsing upstream config: %w", err)
+		}
+
+		fallbacks = append(fallbacks, fallback)
+	}
+
+	s.conf.Fallbacks = fallbacks
 	return nil
 }
 
