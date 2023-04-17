@@ -1,32 +1,44 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Field, reduxForm } from 'redux-form';
+import {
+    change, Field, formValueSelector, reduxForm,
+} from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
+import { connect } from 'react-redux';
+
 
 import {
     renderRadioField,
     toNumber,
     CheckboxField,
     renderTextareaField,
+    toFloatNumber,
+    renderInputField,
 } from '../../../helpers/form';
 import {
     FORM_NAME,
     STATS_INTERVALS_DAYS,
     DAY,
+    RETENTION_CUSTOM,
+    RETENTION_CUSTOM_INPUT,
+    CUSTOM_INTERVAL,
+    RETENTION_RANGE,
 } from '../../../helpers/constants';
 import '../FormButton.css';
 
 const getIntervalTitle = (intervalMs, t) => {
-    switch (intervalMs / DAY) {
-        case 1:
+    switch (intervalMs) {
+        case RETENTION_CUSTOM:
+            return t('settings_custom');
+        case DAY:
             return t('interval_24_hour');
         default:
             return t('interval_days', { count: intervalMs / DAY });
     }
 };
 
-const Form = (props) => {
+let Form = (props) => {
     const {
         handleSubmit,
         processing,
@@ -35,7 +47,16 @@ const Form = (props) => {
         handleReset,
         processingReset,
         t,
+        interval,
+        customInterval,
+        dispatch,
     } = props;
+
+    useEffect(() => {
+        if (STATS_INTERVALS_DAYS.includes(interval)) {
+            dispatch(change(FORM_NAME.STATS_CONFIG, CUSTOM_INTERVAL, null));
+        }
+    }, [interval]);
 
     return (
         <form onSubmit={handleSubmit}>
@@ -56,6 +77,37 @@ const Form = (props) => {
             </div>
             <div className="form__group form__group--settings mt-2">
                 <div className="custom-controls-stacked">
+                    <Field
+                        key={RETENTION_CUSTOM}
+                        name="interval"
+                        type="radio"
+                        component={renderRadioField}
+                        value={STATS_INTERVALS_DAYS.includes(interval)
+                            ? RETENTION_CUSTOM
+                            : interval
+                        }
+                        placeholder={getIntervalTitle(RETENTION_CUSTOM, t)}
+                        normalize={toFloatNumber}
+                        disabled={processing}
+                    />
+                    {!STATS_INTERVALS_DAYS.includes(interval) && (
+                        <div className="form__group--input">
+                            <div className="form__desc form__desc--top">
+                                {t('custom_retention_input')}
+                            </div>
+                            <Field
+                                key={RETENTION_CUSTOM_INPUT}
+                                name={CUSTOM_INTERVAL}
+                                type="number"
+                                className="form-control"
+                                component={renderInputField}
+                                disabled={processing}
+                                normalize={toFloatNumber}
+                                min={RETENTION_RANGE.MIN}
+                                max={RETENTION_RANGE.MAX}
+                            />
+                        </div>
+                    )}
                     {STATS_INTERVALS_DAYS.map((interval) => (
                         <Field
                             key={interval}
@@ -90,7 +142,12 @@ const Form = (props) => {
                 <button
                     type="submit"
                     className="btn btn-success btn-standard btn-large"
-                    disabled={submitting || invalid || processing}
+                    disabled={
+                        submitting
+                        || invalid
+                        || processing
+                        || (!STATS_INTERVALS_DAYS.includes(interval) && !customInterval)
+                    }
                 >
                     <Trans>save_btn</Trans>
                 </button>
@@ -116,7 +173,21 @@ Form.propTypes = {
     processing: PropTypes.bool.isRequired,
     processingReset: PropTypes.bool.isRequired,
     t: PropTypes.func.isRequired,
+    interval: PropTypes.number,
+    customInterval: PropTypes.number,
+    dispatch: PropTypes.func.isRequired,
 };
+
+const selector = formValueSelector(FORM_NAME.STATS_CONFIG);
+
+Form = connect((state) => {
+    const interval = selector(state, 'interval');
+    const customInterval = selector(state, CUSTOM_INTERVAL);
+    return {
+        interval,
+        customInterval,
+    };
+})(Form);
 
 export default flow([
     withTranslation(),

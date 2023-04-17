@@ -18,6 +18,11 @@
     font-size: 14px;
 }
 
+.form__group--input {
+    max-width: 300px;
+    margin: 0 1.5rem 10px;
+}
+
 .form__group--checkbox {
     margin-bottom: 25px;
 }

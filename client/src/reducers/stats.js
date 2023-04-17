@@ -1,6 +1,6 @@
 import { handleActions } from 'redux-actions';
 import { normalizeTopClients } from '../helpers/helpers';
-import { DAY } from '../helpers/constants';
+import { DAY, HOUR, STATS_INTERVALS_DAYS } from '../helpers/constants';
 
 import * as actions from '../actions/stats';
 
@@ -27,6 +27,9 @@ const stats = handleActions(
         [actions.getStatsConfigSuccess]: (state, { payload }) => ({
             ...state,
             ...payload,
+            customInterval: !STATS_INTERVALS_DAYS.includes(payload.interval)
+                ? payload.interval / HOUR
+                : null,
             processingGetConfig: false,
         }),
 
@@ -93,6 +96,7 @@ const stats = handleActions(
         processingStats: true,
         processingReset: false,
         interval: DAY,
+        customInterval: null,
         ...defaultStats,
     },
 );
