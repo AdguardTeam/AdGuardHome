@@ -177,7 +177,7 @@ const dashboard = handleActions(
         autoClients: [],
         supportedTags: [],
         name: '',
-        theme: 'auto',
+        theme: undefined,
         checkUpdateFlag: false,
     },
 );

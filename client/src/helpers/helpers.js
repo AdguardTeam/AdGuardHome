@@ -26,6 +26,7 @@ import {
     STANDARD_WEB_PORT,
     SPECIAL_FILTER_ID,
     THEMES,
+    LOCAL_STORAGE_THEME_KEY,
 } from './constants';
 
 /**
@@ -680,18 +681,59 @@ export const setHtmlLangAttr = (language) => {
 };
 
 /**
+ * Set local storage field
+ *
+ * @param {string} key
+ * @param {string} value
+ */
+
+export const setStorageItem = (key, value) => {
+    if (window.localStorage) {
+        window.localStorage.setItem(key, value);
+    }
+};
+
+/**
+ * Get local storage field
+ *
+ * @param {string} key
+ */
+
+export const getStorageItem = (key) => (window.localStorage
+    ? window.localStorage.getItem(key)
+    : null);
+
+/**
+ * Set local storage theme field
+ *
+ * @param {string} theme
+ */
+
+export const setTheme = (theme) => {
+    setStorageItem(LOCAL_STORAGE_THEME_KEY, theme);
+};
+
+/**
+ * Get local storage theme field
+ *
+ * @returns {string}
+ */
+
+export const getTheme = () => getStorageItem(LOCAL_STORAGE_THEME_KEY) || THEMES.light;
+
+/**
  * Sets UI theme.
  *
  * @param theme
  */
 export const setUITheme = (theme) => {
-    let currentTheme = theme;
+    let currentTheme = theme || getTheme();
 
     if (currentTheme === THEMES.auto) {
         const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         currentTheme = prefersDark ? THEMES.dark : THEMES.light;
     }
-
+    setTheme(currentTheme);
     document.body.dataset.theme = currentTheme;
 };
 
