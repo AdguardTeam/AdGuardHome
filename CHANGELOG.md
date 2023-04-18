@@ -36,8 +36,7 @@ See also the [v0.107.29 GitHub milestone][ms-v0.107.29].
 ### Added
 
 - The ability to exclude client activity from the query log or statistics by
-  editing client's settings on the Clients settings page in the UI  ([#1717],
-  [#4299]).
+  editing client's settings on the respective page in the UI ([#1717], [#4299]).
 
 ### Changed
 
