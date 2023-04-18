@@ -3,14 +3,12 @@ package home
 import (
 	"net"
 	"net/netip"
-	"os"
 	"runtime"
 	"testing"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/golibs/testutil"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -283,8 +281,8 @@ func TestClientsAddExisting(t *testing.T) {
 
 		// First, init a DHCP server with a single static lease.
 		config := &dhcpd.ServerConfig{
-			Enabled:    true,
-			DBFilePath: "leases.db",
+			Enabled: true,
+			DataDir: t.TempDir(),
 			Conf4: dhcpd.V4ServerConf{
 				Enabled:    true,
 				GatewayIP:  netip.MustParseAddr("1.2.3.1"),
@@ -296,9 +294,6 @@ func TestClientsAddExisting(t *testing.T) {
 
 		dhcpServer, err := dhcpd.Create(config)
 		require.NoError(t, err)
-		testutil.CleanupAndRequireSuccess(t, func() (err error) {
-			return os.Remove("leases.db")
-		})
 
 		clients.dhcpServer = dhcpServer
 

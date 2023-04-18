@@ -306,7 +306,9 @@ func setupConfig(opts options) (err error) {
 		return fmt.Errorf("initializing safesearch: %w", err)
 	}
 
+	//lint:ignore SA1019  Migration is not over.
 	config.DHCP.WorkDir = Context.workDir
+	config.DHCP.DataDir = Context.getDataDir()
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified
 

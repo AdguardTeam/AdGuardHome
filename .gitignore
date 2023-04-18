@@ -21,7 +21,6 @@
 /snapcraft_login
 AdGuardHome*
 coverage.txt
-leases.db
 node_modules/
 
 !/build/gitkeep

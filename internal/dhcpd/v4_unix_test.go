@@ -68,7 +68,6 @@ func TestV4Server_leasing(t *testing.T) {
 
 	t.Run("add_static", func(t *testing.T) {
 		err := s.AddStaticLease(&Lease{
-			Expiry:   time.Unix(leaseExpireStatic, 0),
 			Hostname: staticName,
 			HWAddr:   staticMAC,
 			IP:       staticIP,
@@ -78,7 +77,6 @@ func TestV4Server_leasing(t *testing.T) {
 
 		t.Run("same_name", func(t *testing.T) {
 			err = s.AddStaticLease(&Lease{
-				Expiry:   time.Unix(leaseExpireStatic, 0),
 				Hostname: staticName,
 				HWAddr:   anotherMAC,
 				IP:       anotherIP,
@@ -93,7 +91,6 @@ func TestV4Server_leasing(t *testing.T) {
 				" (" + staticMAC.String() + "): static lease already exists"
 
 			err = s.AddStaticLease(&Lease{
-				Expiry:   time.Unix(leaseExpireStatic, 0),
 				Hostname: anotherName,
 				HWAddr:   staticMAC,
 				IP:       anotherIP,
@@ -108,7 +105,6 @@ func TestV4Server_leasing(t *testing.T) {
 				" (" + anotherMAC.String() + "): static lease already exists"
 
 			err = s.AddStaticLease(&Lease{
-				Expiry:   time.Unix(leaseExpireStatic, 0),
 				Hostname: anotherName,
 				HWAddr:   anotherMAC,
 				IP:       staticIP,
@@ -784,7 +780,6 @@ func TestV4Server_FindMACbyIP(t *testing.T) {
 
 	s := &v4Server{
 		leases: []*Lease{{
-			Expiry:   time.Unix(leaseExpireStatic, 0),
 			Hostname: staticName,
 			HWAddr:   staticMAC,
 			IP:       staticIP,

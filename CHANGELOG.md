@@ -85,6 +85,8 @@ See also the [v0.107.28 GitHub milestone][ms-v0.107.28].
 
 ### Changed
 
+- Stored DHCP leases moved from `leases.db` to `data/leases.json`.  The file
+  format has also been optimized.
 - ARPA domain names containing a subnet within private networks now also
   considered private, behaving closer to [RFC 6761][rfc6761] ([#5567]).
 

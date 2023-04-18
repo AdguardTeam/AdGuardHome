@@ -256,6 +256,8 @@ func (s *v4Server) rmLeaseByIndex(i int) {
 
 // Remove a dynamic lease with the same properties
 // Return error if a static lease is found
+//
+// TODO(s.chzhen):  Refactor the code.
 func (s *v4Server) rmDynamicLease(lease *Lease) (err error) {
 	for i, l := range s.leases {
 		isStatic := l.IsStatic
@@ -357,7 +359,6 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 		return fmt.Errorf("can't assign the gateway IP %s to the lease", gwIP)
 	}
 
-	l.Expiry = time.Unix(leaseExpireStatic, 0)
 	l.IsStatic = true
 
 	err = netutil.ValidateMAC(l.HWAddr)

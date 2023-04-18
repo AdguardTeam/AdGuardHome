@@ -31,8 +31,16 @@ type ServerConfig struct {
 	Conf4 V4ServerConf `yaml:"dhcpv4"`
 	Conf6 V6ServerConf `yaml:"dhcpv6"`
 
-	WorkDir    string `yaml:"-"`
-	DBFilePath string `yaml:"-"`
+	// WorkDir is used to store DHCP leases.
+	//
+	// Deprecated:  Remove it when migration of DHCP leases will not be needed.
+	WorkDir string `yaml:"-"`
+
+	// DataDir is used to store DHCP leases.
+	DataDir string `yaml:"-"`
+
+	// dbFilePath is the path to the file with stored DHCP leases.
+	dbFilePath string `yaml:"-"`
 }
 
 // DHCPServer - DHCP server interface
