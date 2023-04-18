@@ -23,6 +23,11 @@ See also the [v0.107.30 GitHub milestone][ms-v0.107.30].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Provided bootstrap servers are now used to resolve the hostnames of plain
+  UDP/TCP upstream servers.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

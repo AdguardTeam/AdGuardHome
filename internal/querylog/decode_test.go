@@ -182,8 +182,7 @@ func TestDecodeLogEntry(t *testing.T) {
 			if tc.want == "" {
 				assert.Empty(t, s)
 			} else {
-				assert.True(t, strings.HasSuffix(s, tc.want),
-					"got %q", s)
+				assert.True(t, strings.HasSuffix(s, tc.want), "got %q", s)
 			}
 
 			logOutput.Reset()
