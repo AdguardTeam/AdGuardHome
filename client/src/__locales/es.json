@@ -257,12 +257,12 @@
     "query_log_cleared": "El registro de consultas se ha borrado correctamente",
     "query_log_updated": "El registro de consultas se ha actualizado correctamente",
     "query_log_clear": "Borrar registros de consultas",
-    "query_log_retention": "Retención de registros de consultas",
+    "query_log_retention": "Rotanción de registros de consultas",
     "query_log_enable": "Habilitar registro",
     "query_log_configuration": "Configuración de registros",
     "query_log_disabled": "El registro de consultas está deshabilitado y se puede configurar en la <0>configuración</0>",
     "query_log_strict_search": "Usar comillas dobles para una búsqueda estricta",
-    "query_log_retention_confirm": "¿Estás seguro de que deseas cambiar la retención del registro de consultas? Si disminuye el valor del intervalo, se perderán algunos datos",
+    "query_log_retention_confirm": "¿Está seguro de que deseas cambiar la rotación del registro de consultas? Si reduces el valor del intervalo, se perderán algunos datos",
     "anonymize_client_ip": "Anonimizar IP del cliente",
     "anonymize_client_ip_desc": "No guarda la dirección IP completa del cliente en registros o estadísticas",
     "dns_config": "Configuración del servidor DNS",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "Desactivar la protección por {{count}} hora",
     "disable_notify_for_hours_plural": "Desactivar la protección por {{count}} horas",
     "disable_notify_until_tomorrow": "Desactivar la protección hasta mañana",
-    "enable_protection_timer": "La protección se activará en {{time}}"
+    "enable_protection_timer": "La protección se activará en {{time}}",
+    "custom_retention_input": "Ingresa la retención en horas",
+    "custom_rotation_input": "Ingresa la rotación en horas",
+    "protection_section_label": "Protección",
+    "log_and_stats_section_label": "Registro de consultas y estadísticas",
+    "ignore_query_log": "Ignorar este cliente en el registro de consultas",
+    "ignore_statistics": "Ignorar este cliente en las estadísticas"
 }

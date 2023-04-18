@@ -257,12 +257,12 @@
     "query_log_cleared": "查询日志已成功清除",
     "query_log_updated": "已成功更新查询日志",
     "query_log_clear": "清除查询日志",
-    "query_log_retention": "查询记录保留时间",
+    "query_log_retention": "查询日志保留时间",
     "query_log_enable": "启用日志",
     "query_log_configuration": "日志配置",
     "query_log_disabled": "查询日志已禁用，在<0>这些设置</0>中能配置它们",
     "query_log_strict_search": "使用双引号进行严谨搜索",
-    "query_log_retention_confirm": "您确定要更改查询记录保留时间吗？ 如果您减少间隔时间的值， 某些数据可能会丢失。",
+    "query_log_retention_confirm": "您确定要更改查询记录保留时间吗？如果减少时间间隔数值，某些数据可能会丢失",
     "anonymize_client_ip": "匿名化客户端IP",
     "anonymize_client_ip_desc": "不要在日志和统计信息中保存客户端的完整 IP 地址",
     "dns_config": "DNS 服务配置",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "禁用保护 {{count}} 小时",
     "disable_notify_for_hours_plural": "禁用保护 {{count}} 小时",
     "disable_notify_until_tomorrow": "禁用保护直到明天",
-    "enable_protection_timer": "保护将于 {{time}} 启用"
+    "enable_protection_timer": "保护将于 {{time}} 启用",
+    "custom_retention_input": "输入保留时间（小时）",
+    "custom_rotation_input": "输入旋转时间（小时）",
+    "protection_section_label": "防护",
+    "log_and_stats_section_label": "查询日志和统计数据",
+    "ignore_query_log": "在查询日志中忽略此客户端",
+    "ignore_statistics": "在统计数据中忽略此客户端"
 }

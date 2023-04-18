@@ -10,7 +10,7 @@ require (
 	github.com/kyoh86/looppointer v0.2.1
 	github.com/securego/gosec/v2 v2.15.0
 	golang.org/x/tools v0.8.0
-	golang.org/x/vuln v0.0.0-20230412133542-76c53851972b
+	golang.org/x/vuln v0.0.0-20230418010118-28ba02ac73db
 	honnef.co/go/tools v0.4.3
 	mvdan.cc/gofumpt v0.5.0
 	mvdan.cc/unparam v0.0.0-20230312165513-e84e2d14e3b8

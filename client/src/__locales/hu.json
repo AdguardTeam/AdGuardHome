@@ -642,5 +642,6 @@
     "anonymizer_notification": "<0>Megjegyzés:</0> Az IP anonimizálás engedélyezve van. Az <1>Általános beállításoknál letilthatja</1> .",
     "confirm_dns_cache_clear": "Biztos benne, hogy törölni szeretné a DNS-gyorsítótárat?",
     "cache_cleared": "A DNS gyorsítótár sikeresen törlődött",
-    "clear_cache": "Gyorsítótár törlése"
+    "clear_cache": "Gyorsítótár törlése",
+    "protection_section_label": "Védelem"
 }

@@ -257,12 +257,12 @@
     "query_log_cleared": "Das Abfrageprotokoll wurde erfolgreich gelöscht",
     "query_log_updated": "Das Abfrageprotokoll wurde erfolgreich aktualisiert",
     "query_log_clear": "Abfrageprotokolle leeren",
-    "query_log_retention": "Abfrageprotokolle aufbewahren",
+    "query_log_retention": "Rotation der Abfrageprotokolle",
     "query_log_enable": "Protokoll aktivieren",
     "query_log_configuration": "Konfiguration der Protokolle",
     "query_log_disabled": "Das Abfrageprotokoll ist deaktiviert und kann in den <0>Einstellungen</0> konfiguriert werden.",
     "query_log_strict_search": "Doppelte Anführungszeichen für die strikte Suche verwenden",
-    "query_log_retention_confirm": "Möchten Sie die Aufbewahrung des Abfrageprotokolls wirklich ändern? Wenn Sie den Zeitabstand verringern, gehen einige Daten verloren.",
+    "query_log_retention_confirm": "Möchten Sie die Abfrageprotokollrotation wirklich ändern? Wenn Sie den Intervallwert verringern, gehen einige Daten verloren",
     "anonymize_client_ip": "Client-IP anonymisieren",
     "anonymize_client_ip_desc": "Vollständige IP-Adresse des Clients nicht in Protokollen und Statistiken speichern",
     "dns_config": "DNS-Serverkonfiguration",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "Schutz für {{count}} Stunde deaktivieren",
     "disable_notify_for_hours_plural": "Schutz für {{count}} Stunden deaktivieren",
     "disable_notify_until_tomorrow": "Schutz bis morgen deaktivieren",
-    "enable_protection_timer": "Der Schutz wird in {{time}} wieder aktiviert"
+    "enable_protection_timer": "Der Schutz wird in {{time}} wieder aktiviert",
+    "custom_retention_input": "Rückhaltezeit in Stunden eingeben",
+    "custom_rotation_input": "Rotation in Stunden eingeben",
+    "protection_section_label": "Schutz",
+    "log_and_stats_section_label": "Abfrageprotokoll und Statistik",
+    "ignore_query_log": "Diesen Client im Abfrageprotokoll ignorieren",
+    "ignore_statistics": "Diesen Client in der Statistik ignorieren"
 }

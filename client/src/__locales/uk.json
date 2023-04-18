@@ -642,5 +642,6 @@
     "anonymizer_notification": "<0>Примітка:</0> IP-анонімізацію ввімкнено. Ви можете вимкнути його в <1>Загальні налаштування</1> .",
     "confirm_dns_cache_clear": "Ви впевнені, що бажаєте очистити кеш DNS?",
     "cache_cleared": "Кеш DNS успішно очищено",
-    "clear_cache": "Очистити кеш"
+    "clear_cache": "Очистити кеш",
+    "protection_section_label": "Захист"
 }

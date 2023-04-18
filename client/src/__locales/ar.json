@@ -635,5 +635,6 @@
     "parental_control": "الرقابة الابويه",
     "safe_browsing": "تصفح آمن",
     "served_from_cache": "{{value}} <i>(يتم تقديمه من ذاكرة التخزين المؤقت)</i>",
-    "form_error_password_length": "يجب أن تتكون كلمة المرور من {{value}} من الأحرف على الأقل"
+    "form_error_password_length": "يجب أن تتكون كلمة المرور من {{value}} من الأحرف على الأقل",
+    "protection_section_label": "الحماية"
 }

@@ -257,12 +257,12 @@
     "query_log_cleared": "Журнал запросов успешно очищен",
     "query_log_updated": "Журнал запросов успешно обновлён",
     "query_log_clear": "Очистить журнал запросов",
-    "query_log_retention": "Сохранение журнала запросов",
+    "query_log_retention": "Частота ротации журнала запросов",
     "query_log_enable": "Включить журнал",
     "query_log_configuration": "Настройка журнала",
     "query_log_disabled": "Журнал запросов выключен, его можно включить в <0>настройках</0>",
     "query_log_strict_search": "Используйте двойные кавычки для строгого поиска",
-    "query_log_retention_confirm": "Вы уверены, что хотите изменить срок хранения запросов? При сокращении интервала данные могут быть утеряны",
+    "query_log_retention_confirm": "Вы уверены, что хотите изменить частоту ротации журнала запросов? При сокращении срока данные могут быть утеряны",
     "anonymize_client_ip": "Анонимизировать IP-адрес клиента",
     "anonymize_client_ip_desc": "Не сохранять полный IP-адрес клиента в журналах и статистике",
     "dns_config": "Настройки DNS-сервера",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "Отключить защиту на {{count}} час",
     "disable_notify_for_hours_plural": "Отключить защиту на {{count}} часов",
     "disable_notify_until_tomorrow": "Отключить защиту до завтра",
-    "enable_protection_timer": "Защита будет включена в {{time}}"
+    "enable_protection_timer": "Защита будет включена в {{time}}",
+    "custom_retention_input": "Введите срок хранения в часах",
+    "custom_rotation_input": "Введите частоту ротации в часах",
+    "protection_section_label": "Защита",
+    "log_and_stats_section_label": "Журнал запросов и статистика",
+    "ignore_query_log": "Игнорировать этого клиента в журнале запросов",
+    "ignore_statistics": "Игнорировать этого клиента в статистике"
 }

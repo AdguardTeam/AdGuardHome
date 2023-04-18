@@ -257,12 +257,12 @@
     "query_log_cleared": "Denník dopytov bol úspešne vymazaný",
     "query_log_updated": "Denník dopytov bol úspešne aktualizovaný",
     "query_log_clear": "Vymazať denníky dopytov",
-    "query_log_retention": "Obdobie záznamu denníka dopytov",
+    "query_log_retention": "Rotácia denníkov dopytov",
     "query_log_enable": "Zapnúť denník",
     "query_log_configuration": "Konfigurácia denníka",
     "query_log_disabled": "Protokol dopytov je vypnutý a možno ho nakonfigurovať v <0>nastaveniach</0>",
     "query_log_strict_search": "Na prísne vyhľadávanie použite dvojité úvodzovky",
-    "query_log_retention_confirm": "Naozaj chcete zmeniť uchovávanie denníku dopytov? Ak znížite hodnotu intervalu, niektoré údaje sa stratia",
+    "query_log_retention_confirm": "Naozaj chcete zmeniť rotáciu denníka dopytov? Ak znížite hodnotu intervalu, niektoré údaje sa stratia",
     "anonymize_client_ip": "Anonymizujte IP klienta",
     "anonymize_client_ip_desc": "Neukladať úplnú IP adresu klienta do protokolov a štatistík",
     "dns_config": "Konfigurácia DNS servera",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "Vypnite ochranu na {{count}} hodinu",
     "disable_notify_for_hours_plural": "Vypnite ochranu na {{count}} hodín",
     "disable_notify_until_tomorrow": "Vypnúť ochranu do zajtra",
-    "enable_protection_timer": "Ochrana bude zapnutá o {{time}}"
+    "enable_protection_timer": "Ochrana bude zapnutá o {{time}}",
+    "custom_retention_input": "Zadajte retenciu v hodinách",
+    "custom_rotation_input": "Zadajte rotáciu v hodinách",
+    "protection_section_label": "Ochrana",
+    "log_and_stats_section_label": "Protokol dopytov a štatistiky",
+    "ignore_query_log": "Ignorovať tohto klienta v denníku dopytov",
+    "ignore_statistics": "Ignorovanie tohto klienta v štatistikách"
 }

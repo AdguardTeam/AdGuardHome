@@ -257,12 +257,12 @@
     "query_log_cleared": "Protokol dotazů byl úspěšně vymazán",
     "query_log_updated": "Protokol dotazů byl úspěšně aktualizován",
     "query_log_clear": "Vymazat protokoly dotazů",
-    "query_log_retention": "Uchování protokolů dotazů",
+    "query_log_retention": "Rotace protokolů dotazů",
     "query_log_enable": "Povolit protokol",
     "query_log_configuration": "Konfigurace protokolů",
     "query_log_disabled": "Protokol dotazu je zakázán a lze jej nakonfigurovat v <0>nastavení</0>",
     "query_log_strict_search": "Pro striktní vyhledávání použijte dvojité uvozovky",
-    "query_log_retention_confirm": "Opravdu chcete změnit uchovávání protokolu dotazů? Pokud snížíte hodnotu intervalu, některá data budou ztracena",
+    "query_log_retention_confirm": "Opravdu chcete změnit rotaci protokolu dotazů? Pokud snížíte hodnotu intervalu, některá data budou ztracena",
     "anonymize_client_ip": "Anonymizovat IP klienta",
     "anonymize_client_ip_desc": "Neukládat úplnou IP adresu klienta do protokolů a statistik",
     "dns_config": "Konfigurace DNS serveru",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "Vypnout ochranu na {{count}} hod.",
     "disable_notify_for_hours_plural": "Vypnout ochranu na {{count}} hod.",
     "disable_notify_until_tomorrow": "Vypnout ochranu do zítřka",
-    "enable_protection_timer": "Ochrana bude zapnuta za {{time}}"
+    "enable_protection_timer": "Ochrana bude zapnuta za {{time}}",
+    "custom_retention_input": "Zadejte retenci v hodinách",
+    "custom_rotation_input": "Zadejte rotaci v hodinách",
+    "protection_section_label": "Ochrana",
+    "log_and_stats_section_label": "Protokol dotazů a statistiky",
+    "ignore_query_log": "Ignorovat tohoto klienta v protokolu dotazů",
+    "ignore_statistics": "Ignorovat tohoto klienta ve statistikách"
 }

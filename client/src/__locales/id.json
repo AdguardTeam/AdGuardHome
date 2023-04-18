@@ -641,5 +641,6 @@
     "anonymizer_notification": "<0>Catatan:</0> Anonimisasi IP diaktifkan. Anda dapat menonaktifkannya di <1>Pengaturan umum</1> .",
     "confirm_dns_cache_clear": "Apakah Anda yakin ingin menghapus cache DNS?",
     "cache_cleared": "Cache DNS berhasil dibersihkan",
-    "clear_cache": "Hapus cache"
+    "clear_cache": "Hapus cache",
+    "protection_section_label": "Perlindungan"
 }

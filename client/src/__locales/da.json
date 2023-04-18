@@ -257,12 +257,12 @@
     "query_log_cleared": "Forespørgselsloggen er blevet ryddet",
     "query_log_updated": "Forespørgselsloggen er blevet opdateret",
     "query_log_clear": "Ryd forespørgselslogfiler",
-    "query_log_retention": "Opbevar forespørgselslogger i",
+    "query_log_retention": "Rotation af forespørgselslog",
     "query_log_enable": "Aktivér log",
     "query_log_configuration": "Opsætning af logger",
     "query_log_disabled": "Forespørgselsloggen er deaktiveret og kan opsættes i <0>indstillingerne</0>",
     "query_log_strict_search": "Brug dobbelt anførselstegn til stringent søgning",
-    "query_log_retention_confirm": "Sikker på, at du vil ændre forespørgselsloggens opbevaringperiode? Mindskes intervalværdien, mistes data",
+    "query_log_retention_confirm": "Sikker på, at forespørgselsloggens rotationstid skal ændres? Mindskes intervalværdien, mistes nogle data",
     "anonymize_client_ip": "Anonymisér klient-IP",
     "anonymize_client_ip_desc": "Gem ikke fuld klient IP-adresse i logfiler eller statistikker",
     "dns_config": "DNS-serveropsætning",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "Deaktivere beskyttelse i {{count}} time",
     "disable_notify_for_hours_plural": "Deaktivere beskyttelse i {{count}} timer",
     "disable_notify_until_tomorrow": "Deaktiver beskyttelse indtil i morgen",
-    "enable_protection_timer": "Beskyttelse deaktiveres om {{time}}"
+    "enable_protection_timer": "Beskyttelse deaktiveres om {{time}}",
+    "custom_retention_input": "Angiv opbevaringstid i timer",
+    "custom_rotation_input": "Angiv rotationstid i timer",
+    "protection_section_label": "Beskyttelse",
+    "log_and_stats_section_label": "Forespørgselslog og statistik",
+    "ignore_query_log": "Ignorér denne klient i forespørgselslog",
+    "ignore_statistics": "Ignorér denne klient i statistik"
 }
