@@ -639,7 +639,7 @@ func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = os.Remove(s.conf.DBFilePath)
+	err = os.Remove(s.conf.dbFilePath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		log.Error("dhcp: removing db: %s", err)
 	}
@@ -651,8 +651,8 @@ func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 
 		LocalDomainName: s.conf.LocalDomainName,
 
-		WorkDir:    s.conf.WorkDir,
-		DBFilePath: s.conf.DBFilePath,
+		DataDir:    s.conf.DataDir,
+		dbFilePath: s.conf.dbFilePath,
 	}
 
 	v4conf := &V4ServerConf{

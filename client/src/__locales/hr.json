@@ -257,12 +257,12 @@
     "query_log_cleared": "Zapisnik upita je uspješno uklonjen",
     "query_log_updated": "Zapisnik upita je uspješno ažuriran",
     "query_log_clear": "Očisti zapisnik upita",
-    "query_log_retention": "Spremanje zapisnika upita",
+    "query_log_retention": "Rotacija dnevnika upita",
     "query_log_enable": "Omogući zapise",
     "query_log_configuration": "Postavke zapisa",
     "query_log_disabled": "Zapisnik upita je onemogućen i može se postaviti u <0>postavkama</0>",
     "query_log_strict_search": "Koristite dvostruke navodnike za strogo pretraživanje",
-    "query_log_retention_confirm": "Jeste li sigurni da želite promijeniti zadržavanje zapisnika upita? Ako smanjite vrijednost intervala, neki će podaci biti izgubljeni",
+    "query_log_retention_confirm": "Jeste li sigurni da želite promijeniti rotaciju dnevnika upita? Ako smanjite vrijednost intervala, neki će se podaci izgubiti",
     "anonymize_client_ip": "Anonimiraj IP klijenta",
     "anonymize_client_ip_desc": "Ne spremajte cijelu IP adresu klijenta u zapisnike i statistike",
     "dns_config": "DNS postavke poslužitelja",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "Isključi zaštitu na {{count}} sati",
     "disable_notify_for_hours_plural": "Isključi zaštitu na {{count}} sati",
     "disable_notify_until_tomorrow": "Isključi zaštitu do sutra",
-    "enable_protection_timer": "Zaštita će biti omogućena u {{time}}"
+    "enable_protection_timer": "Zaštita će biti omogućena u {{time}}",
+    "custom_retention_input": "Unesite zadržavanje u satima",
+    "custom_rotation_input": "Unesite rotaciju u satima",
+    "protection_section_label": "Zaštita",
+    "log_and_stats_section_label": "Zapisnik upita i statistika",
+    "ignore_query_log": "Zanemari ovog klijenta u zapisniku upita",
+    "ignore_statistics": "Ignorirajte ovog klijenta u statistici"
 }

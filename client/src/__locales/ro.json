@@ -642,5 +642,6 @@
     "anonymizer_notification": "<0>Nota:</0> Anonimizarea IP este activată. Puteți să o dezactivați în <1>Setări generale</1>.",
     "confirm_dns_cache_clear": "Sunteți sigur că doriți să ștergeți memoria cache DNS?",
     "cache_cleared": "Cache-ul DNS a fost golit cu succes",
-    "clear_cache": "Goliți memoria cache"
+    "clear_cache": "Goliți memoria cache",
+    "protection_section_label": "Protecție"
 }

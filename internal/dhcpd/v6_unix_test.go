@@ -44,7 +44,7 @@ func TestV6_AddRemove_static(t *testing.T) {
 
 	assert.Equal(t, l.IP, ls[0].IP)
 	assert.Equal(t, l.HWAddr, ls[0].HWAddr)
-	assert.EqualValues(t, leaseExpireStatic, ls[0].Expiry.Unix())
+	assert.True(t, ls[0].IsStatic)
 
 	// Try to remove non-existent static lease.
 	err = s.RemoveStaticLease(&Lease{
@@ -103,7 +103,7 @@ func TestV6_AddReplace(t *testing.T) {
 	for i, l := range ls {
 		assert.Equal(t, stLeases[i].IP, l.IP)
 		assert.Equal(t, stLeases[i].HWAddr, l.HWAddr)
-		assert.EqualValues(t, leaseExpireStatic, l.Expiry.Unix())
+		assert.True(t, l.IsStatic)
 	}
 }
 
@@ -327,7 +327,6 @@ func TestV6_FindMACbyIP(t *testing.T) {
 
 	s := &v6Server{
 		leases: []*Lease{{
-			Expiry:   time.Unix(leaseExpireStatic, 0),
 			Hostname: staticName,
 			HWAddr:   staticMAC,
 			IP:       staticIP,
@@ -341,7 +340,6 @@ func TestV6_FindMACbyIP(t *testing.T) {
 	}
 
 	s.leases = []*Lease{{
-		Expiry:   time.Unix(leaseExpireStatic, 0),
 		Hostname: staticName,
 		HWAddr:   staticMAC,
 		IP:       staticIP,

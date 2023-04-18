@@ -14,11 +14,11 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.29] - 2023-04-26 (APPROX.)
+## [v0.107.30] - 2023-04-26 (APPROX.)
 
-See also the [v0.107.29 GitHub milestone][ms-v0.107.29].
+See also the [v0.107.30 GitHub milestone][ms-v0.107.30].
 
-[ms-v0.107.29]: https://github.com/AdguardTeam/AdGuardHome/milestone/65?closed=1
+[ms-v0.107.30]: https://github.com/AdguardTeam/AdGuardHome/milestone/66?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -26,6 +26,38 @@ NOTE: Add new changes BELOW THIS COMMENT.
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.29] - 2023-04-18
+
+See also the [v0.107.29 GitHub milestone][ms-v0.107.29].
+
+### Added
+
+- The ability to exclude client activity from the query log or statistics by
+  editing client's settings on the Clients settings page in the UI  ([#1717],
+  [#4299]).
+
+### Changed
+
+- Stored DHCP leases moved from `leases.db` to `data/leases.json`.  The file
+  format has also been optimized.
+
+### Fixed
+
+- The `github.com/mdlayher/raw` dependency has been temporarily returned to
+  support raw connections on Darwin ([#5712]).
+- Incorrect recording of blocked results as “Blocked by CNAME or IP” in the
+  query log ([#5725]).
+- All Safe Search services being unchecked by default.
+- Panic when a DNSCrypt stamp is invalid ([#5721]).
+
+[#5712]: https://github.com/AdguardTeam/AdGuardHome/issues/5712
+[#5721]: https://github.com/AdguardTeam/AdGuardHome/issues/5721
+[#5725]: https://github.com/AdguardTeam/AdGuardHome/issues/5725
+
+[ms-v0.107.29]: https://github.com/AdguardTeam/AdGuardHome/milestone/65?closed=1
 
 
 
@@ -149,12 +181,10 @@ In this release, the schema version has changed from 17 to 20.
 
 [#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1163
 [#1333]: https://github.com/AdguardTeam/AdGuardHome/issues/1333
-[#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1717
 [#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
 [#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/3290
 [#3459]: https://github.com/AdguardTeam/AdGuardHome/issues/3459
 [#4262]: https://github.com/AdguardTeam/AdGuardHome/issues/4262
-[#3290]: https://github.com/AdguardTeam/AdGuardHome/issues/4299
 [#5567]: https://github.com/AdguardTeam/AdGuardHome/issues/5567
 [#5701]: https://github.com/AdguardTeam/AdGuardHome/issues/5701
 
@@ -1920,11 +1950,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.29...HEAD
-[v0.107.29]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.28...v0.107.29
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.30...HEAD
+[v0.107.30]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.29...v0.107.30
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.28...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.29...HEAD
+[v0.107.29]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.28...v0.107.29
 [v0.107.28]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.27...v0.107.28
 [v0.107.27]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.26...v0.107.27
 [v0.107.26]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.25...v0.107.26

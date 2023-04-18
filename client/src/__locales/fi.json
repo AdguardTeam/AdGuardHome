@@ -257,12 +257,12 @@
     "query_log_cleared": "Pyyntöhistorian tyhjennys onnistui",
     "query_log_updated": "Pyyntöhistorian päivitys onnistui",
     "query_log_clear": "Tyhjennä pyyntöhistoria",
-    "query_log_retention": "Pyyntöhistorian säilytys",
+    "query_log_retention": "Kyselylokien kierto",
     "query_log_enable": "Käytä historiaa",
     "query_log_configuration": "Historian määritys",
     "query_log_disabled": "Pyyntöhistoria ei ole käytössä. Voit ottaa sen käyttöön <0>asetuksissa</0>",
     "query_log_strict_search": "Käytä tarkalle haulle lainausmerkkejä",
-    "query_log_retention_confirm": "Haluatko varmasti muuttaa pyyntöhistoriasi säilytysaikaa? Jos lyhennät aikaa, joitakin tietoja menetetään",
+    "query_log_retention_confirm": "Haluatko varmasti muuttaa kyselylokin kiertoa? Jos pienennät intervalliarvoa, osa tiedoista menetetään",
     "anonymize_client_ip": "Piilota päätelaitteen IP-osoite",
     "anonymize_client_ip_desc": "Älä tallenna päätelaitteen täydellistä IP-osoitetta historiaan ja tilastoihin.",
     "dns_config": "DNS-palvelimen määritys",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "Poista suojaus käytöstä {{count}} tunniksi",
     "disable_notify_for_hours_plural": "Poista suojaus käytöstä {{count}} tunniksi",
     "disable_notify_until_tomorrow": "Poista suojaus käytöstä huomiseen asti",
-    "enable_protection_timer": "Suojaus otetaan käyttöön {{time}} kuluttua"
+    "enable_protection_timer": "Suojaus otetaan käyttöön {{time}} kuluttua",
+    "custom_retention_input": "Syötä säilytysaika tunteina",
+    "custom_rotation_input": "Syötä uudistusaika tunteina",
+    "protection_section_label": "Suojaus",
+    "log_and_stats_section_label": "Kyselyhistoria ja tilastot",
+    "ignore_query_log": "Älä huomioi tätä päätettä kyselyhistoriassa",
+    "ignore_statistics": "Älä huomioi tätä päätettä tilastoissa"
 }

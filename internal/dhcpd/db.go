@@ -5,43 +5,34 @@ package dhcpd
 import (
 	"encoding/json"
 	"fmt"
-	"net"
-	"net/netip"
 	"os"
-	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/google/renameio/maybe"
+	"golang.org/x/exp/slices"
 )
 
-const dbFilename = "leases.db"
+const (
+	// dataFilename contains saved leases.
+	dataFilename = "leases.json"
 
-type leaseJSON struct {
-	HWAddr   []byte `json:"mac"`
-	IP       []byte `json:"ip"`
-	Hostname string `json:"host"`
-	Expiry   int64  `json:"exp"`
+	// dataVersion is the current version of the stored DHCP leases structure.
+	dataVersion = 1
+)
+
+// dataLeases is the structure of the stored DHCP leases.
+type dataLeases struct {
+	// Version is the current version of the structure.
+	Version int `json:"version"`
+
+	// Leases is the list containing stored DHCP leases.
+	Leases []*Lease `json:"leases"`
 }
 
-func normalizeIP(ip net.IP) net.IP {
-	ip4 := ip.To4()
-	if ip4 != nil {
-		return ip4
-	}
-	return ip
-}
-
-// Load lease table from DB
-//
-// TODO(s.chzhen):  Decrease complexity.
+// dbLoad loads stored leases.
 func (s *server) dbLoad() (err error) {
-	dynLeases := []*Lease{}
-	staticLeases := []*Lease{}
-	v6StaticLeases := []*Lease{}
-	v6DynLeases := []*Lease{}
-
-	data, err := os.ReadFile(s.conf.DBFilePath)
+	data, err := os.ReadFile(s.conf.dbFilePath)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("reading db: %w", err)
@@ -50,52 +41,30 @@ func (s *server) dbLoad() (err error) {
 		return nil
 	}
 
-	obj := []leaseJSON{}
-	err = json.Unmarshal(data, &obj)
+	dl := &dataLeases{}
+	err = json.Unmarshal(data, dl)
 	if err != nil {
 		return fmt.Errorf("decoding db: %w", err)
 	}
 
-	numLeases := len(obj)
-	for i := range obj {
-		obj[i].IP = normalizeIP(obj[i].IP)
+	leases := dl.Leases
 
-		ip, ok := netip.AddrFromSlice(obj[i].IP)
-		if !ok {
-			log.Info("dhcp: invalid IP: %s", obj[i].IP)
-			continue
-		}
+	leases4 := []*Lease{}
+	leases6 := []*Lease{}
 
-		lease := Lease{
-			HWAddr:   obj[i].HWAddr,
-			IP:       ip,
-			Hostname: obj[i].Hostname,
-			Expiry:   time.Unix(obj[i].Expiry, 0),
-			IsStatic: obj[i].Expiry == leaseExpireStatic,
-		}
-
-		if len(obj[i].IP) == 16 {
-			if lease.IsStatic {
-				v6StaticLeases = append(v6StaticLeases, &lease)
-			} else {
-				v6DynLeases = append(v6DynLeases, &lease)
-			}
+	for _, l := range leases {
+		if l.IP.Is4() {
+			leases4 = append(leases4, l)
 		} else {
-			if lease.IsStatic {
-				staticLeases = append(staticLeases, &lease)
-			} else {
-				dynLeases = append(dynLeases, &lease)
-			}
+			leases6 = append(leases6, l)
 		}
 	}
 
-	leases4 := normalizeLeases(staticLeases, dynLeases)
 	err = s.srv4.ResetLeases(leases4)
 	if err != nil {
 		return fmt.Errorf("resetting dhcpv4 leases: %w", err)
 	}
 
-	leases6 := normalizeLeases(v6StaticLeases, v6DynLeases)
 	if s.srv6 != nil {
 		err = s.srv6.ResetLeases(leases6)
 		if err != nil {
@@ -104,90 +73,54 @@ func (s *server) dbLoad() (err error) {
 	}
 
 	log.Info("dhcp: loaded leases v4:%d  v6:%d  total-read:%d from DB",
-		len(leases4), len(leases6), numLeases)
+		len(leases4), len(leases6), len(leases))
 
 	return nil
 }
 
-// Skip duplicate leases
-// Static leases have a priority over dynamic leases
-func normalizeLeases(staticLeases, dynLeases []*Lease) []*Lease {
-	leases := []*Lease{}
-	index := map[string]int{}
-
-	for i, lease := range staticLeases {
-		_, ok := index[lease.HWAddr.String()]
-		if ok {
-			continue // skip the lease with the same HW address
-		}
-		index[lease.HWAddr.String()] = i
-		leases = append(leases, lease)
-	}
-
-	for i, lease := range dynLeases {
-		_, ok := index[lease.HWAddr.String()]
-		if ok {
-			continue // skip the lease with the same HW address
-		}
-		index[lease.HWAddr.String()] = i
-		leases = append(leases, lease)
-	}
-
-	return leases
-}
-
-// Store lease table in DB
+// dbStore stores DHCP leases.
 func (s *server) dbStore() (err error) {
 	// Use an empty slice here as opposed to nil so that it doesn't write
 	// "null" into the database file if leases are empty.
-	leases := []leaseJSON{}
+	leases := []*Lease{}
 
 	leases4 := s.srv4.getLeasesRef()
-	for _, l := range leases4 {
-		if l.Expiry.Unix() == 0 {
-			continue
-		}
-
-		lease := leaseJSON{
-			HWAddr:   l.HWAddr,
-			IP:       l.IP.AsSlice(),
-			Hostname: l.Hostname,
-			Expiry:   l.Expiry.Unix(),
-		}
-
-		leases = append(leases, lease)
-	}
+	leases = append(leases, leases4...)
 
 	if s.srv6 != nil {
 		leases6 := s.srv6.getLeasesRef()
-		for _, l := range leases6 {
-			if l.Expiry.Unix() == 0 {
-				continue
-			}
-
-			lease := leaseJSON{
-				HWAddr:   l.HWAddr,
-				IP:       l.IP.AsSlice(),
-				Hostname: l.Hostname,
-				Expiry:   l.Expiry.Unix(),
-			}
-
-			leases = append(leases, lease)
-		}
+		leases = append(leases, leases6...)
 	}
 
-	var data []byte
-	data, err = json.Marshal(leases)
+	return writeDB(s.conf.dbFilePath, leases)
+}
+
+// writeDB writes leases to file at path.
+func writeDB(path string, leases []*Lease) (err error) {
+	defer func() { err = errors.Annotate(err, "writing db: %w") }()
+
+	slices.SortFunc(leases, func(a, b *Lease) bool {
+		return a.Hostname < b.Hostname
+	})
+
+	dl := &dataLeases{
+		Version: dataVersion,
+		Leases:  leases,
+	}
+
+	buf, err := json.Marshal(dl)
 	if err != nil {
-		return fmt.Errorf("encoding db: %w", err)
+		// Don't wrap the error since it's informative enough as is.
+		return err
 	}
 
-	err = maybe.WriteFile(s.conf.DBFilePath, data, 0o644)
+	err = maybe.WriteFile(path, buf, 0o644)
 	if err != nil {
-		return fmt.Errorf("writing db: %w", err)
+		// Don't wrap the error since it's informative enough as is.
+		return err
 	}
 
-	log.Info("dhcp: stored %d leases in db", len(leases))
+	log.Info("dhcp: stored %d leases in %q", len(leases), path)
 
 	return nil
 }

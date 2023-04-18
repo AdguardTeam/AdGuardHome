@@ -257,12 +257,12 @@
     "query_log_cleared": "クエリ・ログの消去に成功しました",
     "query_log_updated": "クエリ・ログの更新が成功しました",
     "query_log_clear": "クエリ・ログを消去する",
-    "query_log_retention": "クエリ・ログの保持",
+    "query_log_retention": "クエリ・ログのローテーション",
     "query_log_enable": "ログを有効にする",
     "query_log_configuration": "ログ設定",
     "query_log_disabled": "クエリ・ログは無効になっており、<0>設定</0>で構成できます",
     "query_log_strict_search": "完全一致検索には二重引用符を使用します",
-    "query_log_retention_confirm": "クエリ・ログの保持を変更してもよろしいですか？ 期間を短くすると、一部のデータが失われます",
+    "query_log_retention_confirm": "クエリ・ログのローテーションを変更してもよろしいですか？ 間隔の値を減らすと、一部のデータが失われます",
     "anonymize_client_ip": "クライアントIPを匿名化する",
     "anonymize_client_ip_desc": "ログと統計にクライアントのフルIPアドレスを保存しないようにします。",
     "dns_config": "DNSサーバ設定",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "保護を {{count}} 時間無効にする",
     "disable_notify_for_hours_plural": "保護を {{count}} 時間無効にする",
     "disable_notify_until_tomorrow": "明日まで保護を無効にする",
-    "enable_protection_timer": "保護は後 {{time}} で有効になります"
+    "enable_protection_timer": "保護は後 {{time}} で有効になります",
+    "custom_retention_input": "保持期間を入力してください（時間単位）",
+    "custom_rotation_input": "ローテーションを入力してください（時間単位）",
+    "protection_section_label": "AdGuardによる保護",
+    "log_and_stats_section_label": "クエリ・ログと統計情報",
+    "ignore_query_log": "クエリ・ログでこのクライアントを無視する",
+    "ignore_statistics": "統計でこのクライアントを無視する"
 }

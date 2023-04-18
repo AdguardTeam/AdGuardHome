@@ -257,12 +257,12 @@
     "query_log_cleared": "Dnevnik poizvedb je uspešno izbrisan",
     "query_log_updated": "Dnevnik poizvedb je bil uspešno posodobljen",
     "query_log_clear": "Počisti dnevnike poizvedb",
-    "query_log_retention": "Zadrževanje dnevnikov poizvedb",
+    "query_log_retention": "Rotacija dnevnikov poizvedb",
     "query_log_enable": "Omogoči dnevni",
     "query_log_configuration": "Konfiguracija dnevnikov",
     "query_log_disabled": "Dnevnik poizvedb je onemogočen in ga je mogoče konfigurirati v <0>nastavitvah</0>",
     "query_log_strict_search": "Za strogo iskanje uporabite dvojne narekovaje",
-    "query_log_retention_confirm": "Ali ste prepričani, da želite spremeniti zadrževanje dnevnika poizvedb? Če zmanjšate vrednost intervala, bodo nekateri podatki izgubljeni",
+    "query_log_retention_confirm": "Ali ste prepričani, da želite spremeniti rotacijo dnevnika poizvedb? Če zmanjšate vrednost intervala, bodo nekateri podatki izgubljeni",
     "anonymize_client_ip": "Anonimiziraj odjemalca IP",
     "anonymize_client_ip_desc": "Ne shrani celotnega naslova IP odjemalca v dnevnikih ali statistiki",
     "dns_config": "Konfiguracija strežnika DNS",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "Onemogoči zaščito za {{count}} uro",
     "disable_notify_for_hours_plural": "Onemogoči zaščito za {{count}} ur",
     "disable_notify_until_tomorrow": "Onemogoči zaščito do jutri",
-    "enable_protection_timer": "Zaščita bo omogočena ob {{time}}"
+    "enable_protection_timer": "Zaščita bo omogočena ob {{time}}",
+    "custom_retention_input": "Vnesite zadrževanje v urah",
+    "custom_rotation_input": "Vnesite rotacijo v urah",
+    "protection_section_label": "Zaščita",
+    "log_and_stats_section_label": "Dnevnik poizvedb in statistika",
+    "ignore_query_log": "Ignorirajte tega odjemalca v dnevniku poizvedb",
+    "ignore_statistics": "Ignoriranje tega odjemalca v statistiki"
 }

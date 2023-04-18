@@ -257,12 +257,12 @@
     "query_log_cleared": "Il registro richieste è stato correttamente cancellato",
     "query_log_updated": "Il registro richieste è stato correttamente aggiornato",
     "query_log_clear": "Cancella registri richieste",
-    "query_log_retention": "Conservazione dei registri richieste",
+    "query_log_retention": "Rotazione dei registri richieste",
     "query_log_enable": "Attiva registro",
     "query_log_configuration": "Configurazione registri",
     "query_log_disabled": "Il registro richieste è stato disattivato e può essere configurata dalle <0>impostazioni</0>",
     "query_log_strict_search": "Utilizzare le doppie virgolette per una ricerca precisa",
-    "query_log_retention_confirm": "Sei sicuro di voler modificare il registro delle richieste? Se il valore di intervallo dovesse diminuire, alcuni dati andranno persi",
+    "query_log_retention_confirm": "Sei sicuro di voler modificare il registro delle richieste? Se si riduce il valore dell'intervallo, alcuni dati andranno persi",
     "anonymize_client_ip": "Anonimizza client IP",
     "anonymize_client_ip_desc": "Non salvare l'indirizzo IP completo del client nel registro o nelle statistiche",
     "dns_config": "Configurazione server DNS",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "Disattiva la protezione per {{count}} ora",
     "disable_notify_for_hours_plural": "Disattiva la protezione per {{count}} ore",
     "disable_notify_until_tomorrow": "Disattiva la protezione fino a domani",
-    "enable_protection_timer": "La protezione verrà attivata in {{time}}"
+    "enable_protection_timer": "La protezione verrà attivata in {{time}}",
+    "custom_retention_input": "Inserisci la conservazione in ore",
+    "custom_rotation_input": "Inserisci la rotazione in ore",
+    "protection_section_label": "Protezione",
+    "log_and_stats_section_label": "Registro richieste e statistiche",
+    "ignore_query_log": "Ignora questo client nel registro delle richieste",
+    "ignore_statistics": "Ignora questo cliente nelle statistiche"
 }

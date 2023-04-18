@@ -41,6 +41,17 @@ const settingsCheckboxes = [
         placeholder: 'use_adguard_parental',
     },
 ];
+
+const logAndStatsCheckboxes = [
+    {
+        name: 'ignore_querylog',
+        placeholder: 'ignore_query_log',
+    },
+    {
+        name: 'ignore_statistics',
+        placeholder: 'ignore_statistics',
+    },
+];
 const validate = (values) => {
     const errors = {};
     const { name, ids } = values;
@@ -148,6 +159,9 @@ let Form = (props) => {
         settings: {
             title: 'settings',
             component: <div label="settings" title={props.t('main_settings')}>
+                <div className="form__label--bot form__label--bold">
+                    {t('protection_section_label')}
+                </div>
                 {settingsCheckboxes.map((setting) => (
                     <div className="form__group" key={setting.name}>
                         <Field
@@ -185,6 +199,19 @@ let Form = (props) => {
                         </div>
                     ))}
                 </div>
+                <div className="form__label--bold form__label--top form__label--bot">
+                    {t('log_and_stats_section_label')}
+                </div>
+                {logAndStatsCheckboxes.map((setting) => (
+                    <div className="form__group" key={setting.name}>
+                        <Field
+                            name={setting.name}
+                            type="checkbox"
+                            component={CheckboxField}
+                            placeholder={t(setting.placeholder)}
+                        />
+                    </div>
+                ))}
             </div>,
         },
         block_services: {

@@ -220,6 +220,12 @@ export const STATS_INTERVALS_DAYS = [DAY, DAY * 7, DAY * 30, DAY * 90];
 
 export const QUERY_LOG_INTERVALS_DAYS = [HOUR * 6, DAY, DAY * 7, DAY * 30, DAY * 90];
 
+export const RETENTION_CUSTOM = 1;
+
+export const RETENTION_CUSTOM_INPUT = 'custom_retention_input';
+
+export const CUSTOM_INTERVAL = 'customInterval';
+
 export const FILTERS_INTERVALS_HOURS = [0, 1, 12, 24, 72, 168];
 
 // Note that translation strings contain these modes (blocking_mode_CONSTANT)
@@ -462,6 +468,11 @@ export const UINT32_RANGE = {
     MAX: 4294967295,
 };
 
+export const RETENTION_RANGE = {
+    MIN: 1,
+    MAX: 365 * 24,
+};
+
 export const DHCP_VALUES_PLACEHOLDERS = {
     ipv4: {
         subnet_mask: '255.255.255.0',
@@ -537,3 +548,5 @@ export const DISABLE_PROTECTION_TIMINGS = {
     HOUR: 60 * 60 * 1000,
     TOMORROW: 24 * 60 * 60 * 1000,
 };
+
+export const LOCAL_STORAGE_THEME_KEY = 'account_theme';

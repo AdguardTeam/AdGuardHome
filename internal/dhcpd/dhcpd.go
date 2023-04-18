@@ -15,13 +15,6 @@ import (
 )
 
 const (
-	// leaseExpireStatic is used to define the Expiry field for static
-	// leases.
-	//
-	// TODO(e.burkov): Remove it when static leases determining mechanism
-	// will be improved.
-	leaseExpireStatic = 1
-
 	// DefaultDHCPLeaseTTL is the default time-to-live for leases.
 	DefaultDHCPLeaseTTL = uint32(timeutil.Day / time.Second)
 
@@ -35,10 +28,10 @@ const (
 	defaultBackoff     time.Duration = 500 * time.Millisecond
 )
 
-// Lease contains the necessary information about a DHCP lease
+// Lease contains the necessary information about a DHCP lease.  It's used in
+// various places.  So don't change it without good reason.
 type Lease struct {
-	// Expiry is the expiration time of the lease.  The unix timestamp value
-	// of 1 means that this is a static lease.
+	// Expiry is the expiration time of the lease.
 	Expiry time.Time `json:"expires"`
 
 	// Hostname of the client.
@@ -238,7 +231,7 @@ func Create(conf *ServerConfig) (s *server, err error) {
 
 			LocalDomainName: conf.LocalDomainName,
 
-			DBFilePath: filepath.Join(conf.WorkDir, dbFilename),
+			dbFilePath: filepath.Join(conf.DataDir, dataFilename),
 		},
 	}
 
@@ -277,6 +270,13 @@ func Create(conf *ServerConfig) (s *server, err error) {
 
 	if s.conf.Enabled && !v4conf.Enabled && !v6conf.Enabled {
 		return nil, fmt.Errorf("neither dhcpv4 nor dhcpv6 srv is configured")
+	}
+
+	// Migrate leases db if needed.
+	err = migrateDB(conf)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return nil, err
 	}
 
 	// Don't delay database loading until the DHCP server is started,

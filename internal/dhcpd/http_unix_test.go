@@ -31,8 +31,7 @@ func TestServer_handleDHCPStatus(t *testing.T) {
 	s, err := Create(&ServerConfig{
 		Enabled:        true,
 		Conf4:          *defaultV4ServerConf(),
-		WorkDir:        t.TempDir(),
-		DBFilePath:     dbFilename,
+		DataDir:        t.TempDir(),
 		ConfigModified: func() {},
 	})
 	require.NoError(t, err)

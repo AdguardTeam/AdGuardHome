@@ -614,5 +614,6 @@
     "use_saved_key": "Bruk den tidligere lagrede nøkkelen",
     "parental_control": "Foreldrekontroll",
     "safe_browsing": "Sikker surfing",
-    "served_from_cache": "{{value}} <i>(formidlet fra mellomlageret)</i>"
+    "served_from_cache": "{{value}} <i>(formidlet fra mellomlageret)</i>",
+    "protection_section_label": "Beskyttelse"
 }

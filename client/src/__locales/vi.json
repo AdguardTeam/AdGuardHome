@@ -642,5 +642,6 @@
     "anonymizer_notification": "<0> Lưu ý:</0> Tính năng ẩn danh IP được bật. Bạn có thể tắt nó trong <1> Cài đặt chung</1>.",
     "confirm_dns_cache_clear": "Bạn có chắc chắn muốn xóa bộ đệm ẩn DNS không?",
     "cache_cleared": "Đã xóa thành công bộ đệm DNS",
-    "clear_cache": "Xóa bộ nhớ cache"
+    "clear_cache": "Xóa bộ nhớ cache",
+    "protection_section_label": "Sự bảo vệ"
 }

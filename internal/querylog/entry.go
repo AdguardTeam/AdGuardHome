@@ -58,11 +58,11 @@ func (e *logEntry) addResponse(resp *dns.Msg, isOrig bool) {
 
 	var err error
 	if isOrig {
-		e.Answer, err = resp.Pack()
-		err = errors.Annotate(err, "packing answer: %w")
-	} else {
 		e.OrigAnswer, err = resp.Pack()
 		err = errors.Annotate(err, "packing orig answer: %w")
+	} else {
+		e.Answer, err = resp.Pack()
+		err = errors.Annotate(err, "packing answer: %w")
 	}
 	if err != nil {
 		log.Error("querylog: %s", err)

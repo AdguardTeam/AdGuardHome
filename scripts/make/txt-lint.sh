@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a remarkable change is made to this script.
 #
-# AdGuard-Project-Version: 2
+# AdGuard-Project-Version: 3
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -31,12 +31,11 @@ set -f -u
 
 # trailing_newlines is a simple check that makes sure that all plain-text files
 # have a trailing newlines to make sure that all tools work correctly with them.
-#
-# TODO(a.garipov): Add to the standard skeleton project.
 trailing_newlines() {
 	nl="$( printf "\n" )"
 	readonly nl
 
+	# NOTE: Adjust for your project.
 	git ls-files\
 		':!*.png'\
 		':!*.tar.gz'\

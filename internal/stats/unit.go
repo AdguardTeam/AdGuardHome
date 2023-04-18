@@ -423,7 +423,7 @@ func (s *StatsCtx) getData(limit uint32) (StatsResp, bool) {
 		ReplacedParental:     statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NResult[RParental] }),
 		TopQueried:           topsCollector(units, maxDomains, s.ignored, func(u *unitDB) (pairs []countPair) { return u.Domains }),
 		TopBlocked:           topsCollector(units, maxDomains, s.ignored, func(u *unitDB) (pairs []countPair) { return u.BlockedDomains }),
-		TopClients:           topsCollector(units, maxClients, nil, func(u *unitDB) (pairs []countPair) { return u.Clients }),
+		TopClients:           topsCollector(units, maxClients, nil, topClientPairs(s)),
 	}
 
 	// Total counters:
@@ -459,4 +459,18 @@ func (s *StatsCtx) getData(limit uint32) (StatsResp, bool) {
 	}
 
 	return data, true
+}
+
+func topClientPairs(s *StatsCtx) (pg pairsGetter) {
+	return func(u *unitDB) (clients []countPair) {
+		for _, c := range u.Clients {
+			if c.Name != "" && !s.shouldCountClient([]string{c.Name}) {
+				continue
+			}
+
+			clients = append(clients, c)
+		}
+
+		return clients
+	}
 }

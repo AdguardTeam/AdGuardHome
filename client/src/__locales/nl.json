@@ -257,12 +257,12 @@
     "query_log_cleared": "Het query logboek is succesvol geleegd",
     "query_log_updated": "Het query logboek is succesvol bijgewerkt",
     "query_log_clear": "Leeg query logs",
-    "query_log_retention": "Query logs bewaartermijn",
+    "query_log_retention": "Query logs rotatie",
     "query_log_enable": "Log bestanden inschakelen",
     "query_log_configuration": "Logbestanden instellingen",
     "query_log_disabled": "Het query logboek is uitgeschakeld en kan worden geconfigureerd in de <0>instellingen</0>",
     "query_log_strict_search": "Gebruik dubbele aanhalingstekens voor strikt zoeken",
-    "query_log_retention_confirm": "Weet u zeker dat u de bewaartermijn van het query logboek wilt wijzigen? Als u de intervalwaarde verlaagt, gaan sommige gegevens verloren",
+    "query_log_retention_confirm": "Weet u zeker dat u de rotatie van het querylogboek wilt wijzigen? Als u de intervalwaarde verlaagt, gaan sommige gegevens verloren",
     "anonymize_client_ip": "Cliënt IP anonimiseren",
     "anonymize_client_ip_desc": "Het volledige IP-adres van de cliënt niet opnemen in logboeken en statistiekbestanden",
     "dns_config": "DNS-server configuratie",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "Beveiliging uitschakelen voor {{count}} uur",
     "disable_notify_for_hours_plural": "Beveiliging uitschakelen voor {{count}} uren",
     "disable_notify_until_tomorrow": "Beveiliging uitschakelen tot morgen",
-    "enable_protection_timer": "Bescherming wordt ingeschakeld over {{time}}"
+    "enable_protection_timer": "Bescherming wordt ingeschakeld over {{time}}",
+    "custom_retention_input": "Voer retentie in uren in",
+    "custom_rotation_input": "Voer rotatie in uren in",
+    "protection_section_label": "Bescherming",
+    "log_and_stats_section_label": "Aanvragenlogboek en statistieken",
+    "ignore_query_log": "Deze client negeren in het aanvragenlogboek",
+    "ignore_statistics": "Deze client negeren in de statistieken"
 }

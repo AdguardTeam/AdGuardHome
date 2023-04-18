@@ -257,12 +257,12 @@
     "query_log_cleared": "Le journal des requêtes a été effacé",
     "query_log_updated": "Le journal des requêtes a été mis à jour",
     "query_log_clear": "Effacer journal des requêtes",
-    "query_log_retention": "Rétention du journal des requêtes",
+    "query_log_retention": "Rotation des journaux de requêtes",
     "query_log_enable": "Activer le journal",
     "query_log_configuration": "Configuration du journal",
     "query_log_disabled": "Le journal des requêtes est désactivé et peut être configuré dans les <0>paramètres</0>",
     "query_log_strict_search": "Utilisez les doubles guillemets pour une recherche stricte",
-    "query_log_retention_confirm": "Êtes-vous sûr de vouloir modifier la rétention des journaux de requêtes ? Si vous diminuez la valeur de l'intervalle, certaines données seront perdues",
+    "query_log_retention_confirm": "Êtes-vous sûr de souhaiter modifier la rotation des journaux de requêtes ? Si vous diminuez la valeur de l'intervalle, certaines données seront perdues",
     "anonymize_client_ip": "Anonymiser l’IP du client",
     "anonymize_client_ip_desc": "Ne pas enregistrer l’adresse IP complète du client dans les journaux et statistiques",
     "dns_config": "Configuration du serveur DNS",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "Désactiver la protection pendant {{count}} heure",
     "disable_notify_for_hours_plural": "Désactiver la protection pendant {{count}} heures",
     "disable_notify_until_tomorrow": "Désactiver la protection jusqu'à demain",
-    "enable_protection_timer": "La protection sera activée dans {{time}}"
+    "enable_protection_timer": "La protection sera activée dans {{time}}",
+    "custom_retention_input": "Saisir la rétention en heures",
+    "custom_rotation_input": "Saisir la rotation en heures",
+    "protection_section_label": "Protection",
+    "log_and_stats_section_label": "Journal des requêtes et statistiques",
+    "ignore_query_log": "Ignorer ce client dans le journal des requêtes",
+    "ignore_statistics": "Ignorer ce client dans les statistiques"
 }

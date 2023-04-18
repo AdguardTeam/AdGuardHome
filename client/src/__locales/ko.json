@@ -257,12 +257,12 @@
     "query_log_cleared": "쿼리 로그를 성공적으로 초기화했습니다",
     "query_log_updated": "질의 로그가 성공적으로 업데이트되었습니다",
     "query_log_clear": "쿼리 로그 비우기",
-    "query_log_retention": "쿼리 로그 저장 기간",
+    "query_log_retention": "쿼리 로그 로테이션",
     "query_log_enable": "로그 활성화",
     "query_log_configuration": "로그 구성",
     "query_log_disabled": "쿼리 로그가 비활성화되어 있으며 <0>설정</0>에서 설정할 수 있습니다",
     "query_log_strict_search": "검색을 제한하려면 쌍따옴표를 사용해주세요",
-    "query_log_retention_confirm": "정말로 쿼리 로그 저장 기간을 변경하시겠습니까? 저장 주기를 낮출 경우, 일부 데이터가 손실됩니다",
+    "query_log_retention_confirm": "쿼리 로그 로테이션을 변경하시겠습니까? 간격 값을 줄이면 일부 데이터가 손실됩니다.",
     "anonymize_client_ip": "클라이언트 IP 익명화",
     "anonymize_client_ip_desc": "클라이언트의 전체 IP 주소를 로그와 통계에 저장하저장하지 마세요",
     "dns_config": "DNS 서버 설정",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "{{count}}시간 동안 보호 기능 비활성화",
     "disable_notify_for_hours_plural": "{{count}}시간 동안 보호 기능 비활성화",
     "disable_notify_until_tomorrow": "내일까지 보호 기능 비활성화",
-    "enable_protection_timer": "{{time}}에 보호 기능이 활성화됩니다."
+    "enable_protection_timer": "{{time}}에 보호 기능이 활성화됩니다.",
+    "custom_retention_input": "시간 단위로 보존 기간 입력",
+    "custom_rotation_input": "시간 단위로 로테이션 입력",
+    "protection_section_label": "보호",
+    "log_and_stats_section_label": "쿼리 로그 및 통계",
+    "ignore_query_log": "쿼리 로그에서 이 클라이언트 무시",
+    "ignore_statistics": "통계에서 이 클라이언트 무시"
 }

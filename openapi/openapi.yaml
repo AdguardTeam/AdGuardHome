@@ -2494,6 +2494,26 @@
           'items':
             'type': 'string'
           'type': 'array'
+        'ignore_querylog':
+          'description': |
+            NOTE: If `ignore_querylog` is not set in HTTP API `GET /clients/add`
+            request then default value (false) will be used.
+
+            If `ignore_querylog` is not set in HTTP API `GET /clients/update`
+            request then the existing value will not be changed.
+
+            This behaviour can be changed in the future versions.
+          'type': 'boolean'
+        'ignore_statistics':
+          'description': |
+            NOTE: If `ignore_statistics` is not set in HTTP API `GET
+            /clients/add` request then default value (false) will be used.
+
+            If `ignore_statistics` is not set in HTTP API `GET /clients/update`
+            request then the existing value will not be changed.
+
+            This behaviour can be changed in the future versions.
+          'type': 'boolean'
     'ClientAuto':
       'type': 'object'
       'description': 'Auto-Client information'
@@ -2547,6 +2567,8 @@
         'whois_info': {}
         'disallowed': false
         'disallowed_rule': ''
+        'ignore_querylog': false
+        'ignore_statistics': false
       - '1.2.3.4':
         'name': 'Client 1-2-3-4'
         'ids': ['1.2.3.4']
@@ -2562,6 +2584,8 @@
         'whois_info': {}
         'disallowed': false
         'disallowed_rule': ''
+        'ignore_querylog': false
+        'ignore_statistics': false
     'AccessListResponse':
       '$ref': '#/components/schemas/AccessList'
     'AccessSetRequest':
@@ -2643,7 +2667,10 @@
             set to true, and this string is empty, then the client IP is
             disallowed by the "allowed IP list", that is it is not included in
             the allowed list.
-
+        'ignore_querylog':
+          'type': 'boolean'
+        'ignore_statistics':
+          'type': 'boolean'
     'WhoisInfo':
       'type': 'object'
       'additionalProperties':

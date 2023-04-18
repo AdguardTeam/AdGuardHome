@@ -257,12 +257,12 @@
     "query_log_cleared": "Sorgu günlüğü başarıyla temizlendi",
     "query_log_updated": "Sorgu günlüğü başarıyla güncellendi",
     "query_log_clear": "Sorgu günlüklerini temizle",
-    "query_log_retention": "Sorgu günlüklerini sakla",
+    "query_log_retention": "Sorgu günlükleri rotasyonu",
     "query_log_enable": "Günlüğü etkinleştir",
     "query_log_configuration": "Günlük yapılandırması",
     "query_log_disabled": "Sorgu günlüğü devre dışı bırakıldı, bunu <0>ayarlar</0> kısmından yapılandırılabilirsiniz",
     "query_log_strict_search": "Tam arama için çift tırnak işareti kullanın",
-    "query_log_retention_confirm": "Sorgu günlüğü saklama süresini değiştirmek istediğinize emin misiniz? Aralık değerini azaltırsanız, bazı veriler kaybolacaktır",
+    "query_log_retention_confirm": "Sorgu günlüğü rotasyonunu değiştirmek istediğinizden emin misiniz? Aralık değerini düşürürseniz, bazı veriler kaybolacaktır.",
     "anonymize_client_ip": "İstemcinin IP adresini gizle",
     "anonymize_client_ip_desc": "İstemcinin tam IP adresini günlüklere veya istatistiklere kaydetmeyin",
     "dns_config": "DNS sunucu yapılandırması",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "Korumayı {{count}} saatliğine devre dışı bırak",
     "disable_notify_for_hours_plural": "Korumayı {{count}} saatliğine devre dışı bırak",
     "disable_notify_until_tomorrow": "Korumayı yarına kadar devre dışı bırak",
-    "enable_protection_timer": "Koruma {{time}} içinde etkinleştirilecektir"
+    "enable_protection_timer": "Koruma {{time}} içinde etkinleştirilecektir",
+    "custom_retention_input": "Saklama süresini saat olarak girin",
+    "custom_rotation_input": "Rotasyonu saat cinsinden girin",
+    "protection_section_label": "Koruma",
+    "log_and_stats_section_label": "Sorgu günlüğü ve istatistikler",
+    "ignore_query_log": "Sorgu günlüğünde bu istemciyi yoksay",
+    "ignore_statistics": "İstatistiklerde bu istemciyi yoksay"
 }

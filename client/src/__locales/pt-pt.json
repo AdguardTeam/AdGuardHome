@@ -257,12 +257,12 @@
     "query_log_cleared": "O registo de consulta foi limpo com sucesso",
     "query_log_updated": "O registo da consulta foi atualizado com sucesso",
     "query_log_clear": "Limpar registos de consulta",
-    "query_log_retention": "Retenção de registos de consulta",
+    "query_log_retention": "Rotação de registros de consulta",
     "query_log_enable": "Ativar registo",
     "query_log_configuration": "Definições do registo",
     "query_log_disabled": "O registo de consulta está desativado e pode ser configurado em <0>definições</0>",
     "query_log_strict_search": "Usar aspas duplas para uma pesquisa rigorosa",
-    "query_log_retention_confirm": "Tem a certeza de que deseja alterar a retenção do registo de consulta? Se diminuir o valor do intervalo, alguns dados serão perdidos",
+    "query_log_retention_confirm": "Tem a certeza de que quer alterar a rotação do registo de consulta? Se diminuir o valor do intervalo, alguns dados serão perdidos",
     "anonymize_client_ip": "Tornar anónimo o IP do cliente",
     "anonymize_client_ip_desc": "Não gurda o endereço de IP completo do cliente em registo ou estatísticas",
     "dns_config": "Definição do servidor DNS",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "Desativar proteção por {{count}} hora",
     "disable_notify_for_hours_plural": "Desativar proteção por {{count}} horas",
     "disable_notify_until_tomorrow": "Desativar a proteção até amanhã",
-    "enable_protection_timer": "A proteção será habilitada em {{time}}"
+    "enable_protection_timer": "A proteção será habilitada em {{time}}",
+    "custom_retention_input": "Insira a retenção em horas",
+    "custom_rotation_input": "Insira a rotação em horas",
+    "protection_section_label": "Proteção",
+    "log_and_stats_section_label": "Log de consulta e estatísticas",
+    "ignore_query_log": "Ignorar este cliente no log de consulta",
+    "ignore_statistics": "Ignorar este cliente nas estatísticas"
 }

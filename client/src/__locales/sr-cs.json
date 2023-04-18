@@ -642,5 +642,6 @@
     "anonymizer_notification": "<0>Nota:</0> IP prepoznavanje je omogućeno. Možete ga onemogućiti u opštim <1>postavkama</1>.",
     "confirm_dns_cache_clear": "Želite li zaista da obrišite DNS keš?",
     "cache_cleared": "DNS keš je uspešno očišćen",
-    "clear_cache": "Obriši keš memoriju"
+    "clear_cache": "Obriši keš memoriju",
+    "protection_section_label": "Zaštita"
 }

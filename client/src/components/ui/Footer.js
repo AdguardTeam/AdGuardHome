@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import cn from 'classnames';
@@ -41,12 +41,6 @@ const Footer = () => {
     ));
     const isLoggedIn = profileName !== '';
     const [currentThemeLocal, setCurrentThemeLocal] = useState(THEMES.auto);
-
-    useEffect(() => {
-        if (!isLoggedIn) {
-            setUITheme(currentThemeLocal);
-        }
-    }, []);
 
     const getYear = () => {
         const today = new Date();

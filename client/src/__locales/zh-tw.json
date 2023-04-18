@@ -257,12 +257,12 @@
     "query_log_cleared": "該查詢記錄已被成功地清除",
     "query_log_updated": "該查詢記錄已被成功地更新",
     "query_log_clear": "清除查詢記錄",
-    "query_log_retention": "查詢記錄保留",
+    "query_log_retention": "查詢記錄保留時間",
     "query_log_enable": "啟用記錄",
     "query_log_configuration": "記錄配置",
     "query_log_disabled": "查詢記錄被禁用並可在<0>設定</0>中被配置",
     "query_log_strict_search": "使用雙引號於嚴謹的搜尋",
-    "query_log_retention_confirm": "您確定您想要更改查詢記錄保留嗎？如果您減少該間隔值，某些資料將被丟失",
+    "query_log_retention_confirm": "您確定要更改記錄檔保存期限嗎？如果您縮短期限部分資料可能將會遺失",
     "anonymize_client_ip": "將用戶端 IP 匿名",
     "anonymize_client_ip_desc": "不要儲存用戶端之完整的 IP 位址到記錄或統計資料裡",
     "dns_config": "DNS 伺服器配置",
@@ -668,5 +668,11 @@
     "disable_notify_for_hours": "計 {{count}} 小時禁用防護",
     "disable_notify_for_hours_plural": "計 {{count}} 小時禁用防護",
     "disable_notify_until_tomorrow": "禁用防護直到明天",
-    "enable_protection_timer": "防護將於 {{time}} 被啟用"
+    "enable_protection_timer": "防護將於 {{time}} 被啟用",
+    "custom_retention_input": "輸入保留時間（小時）",
+    "custom_rotation_input": "輸入旋轉時間（小時）",
+    "protection_section_label": "防護",
+    "log_and_stats_section_label": "查詢記錄和統計資料",
+    "ignore_query_log": "在查詢記錄中忽略此用戶端",
+    "ignore_statistics": "在統計資料中忽略此用戶端"
 }

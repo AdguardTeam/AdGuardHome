@@ -66,8 +66,7 @@ func (s *v6Server) ResetLeases(leases []*Lease) (err error) {
 	s.leases = nil
 	for _, l := range leases {
 		ip := net.IP(l.IP.AsSlice())
-		if l.Expiry.Unix() != leaseExpireStatic &&
-			!ip6InRange(s.conf.ipStart, ip) {
+		if !l.IsStatic && !ip6InRange(s.conf.ipStart, ip) {
 
 			log.Debug("dhcpv6: skipping a lease with IP %v: not within current IP range", l.IP)
 
@@ -89,7 +88,7 @@ func (s *v6Server) GetLeases(flags GetLeasesFlags) (leases []*Lease) {
 	leases = []*Lease{}
 	s.leasesLock.Lock()
 	for _, l := range s.leases {
-		if l.Expiry.Unix() == leaseExpireStatic {
+		if l.IsStatic {
 			if (flags & LeasesStatic) != 0 {
 				leases = append(leases, l.Clone())
 			}
@@ -150,7 +149,7 @@ func (s *v6Server) rmDynamicLease(lease *Lease) (err error) {
 		l := s.leases[i]
 
 		if bytes.Equal(l.HWAddr, lease.HWAddr) {
-			if l.Expiry.Unix() == leaseExpireStatic {
+			if l.IsStatic {
 				return fmt.Errorf("static lease already exists")
 			}
 
@@ -163,7 +162,7 @@ func (s *v6Server) rmDynamicLease(lease *Lease) (err error) {
 		}
 
 		if l.IP == lease.IP {
-			if l.Expiry.Unix() == leaseExpireStatic {
+			if l.IsStatic {
 				return fmt.Errorf("static lease already exists")
 			}
 
@@ -187,7 +186,7 @@ func (s *v6Server) AddStaticLease(l *Lease) (err error) {
 		return fmt.Errorf("validating lease: %w", err)
 	}
 
-	l.Expiry = time.Unix(leaseExpireStatic, 0)
+	l.IsStatic = true
 
 	s.leasesLock.Lock()
 	err = s.rmDynamicLease(l)
@@ -274,8 +273,7 @@ func (s *v6Server) findLease(mac net.HardwareAddr) *Lease {
 func (s *v6Server) findExpiredLease() int {
 	now := time.Now().Unix()
 	for i, lease := range s.leases {
-		if lease.Expiry.Unix() != leaseExpireStatic &&
-			lease.Expiry.Unix() <= now {
+		if !lease.IsStatic && lease.Expiry.Unix() <= now {
 			return i
 		}
 	}
@@ -421,7 +419,7 @@ func (s *v6Server) commitLease(msg *dhcpv6.Message, lease *Lease) time.Duration 
 		dhcpv6.MessageTypeRenew,
 		dhcpv6.MessageTypeRebind:
 
-		if lease.Expiry.Unix() != leaseExpireStatic {
+		if !lease.IsStatic {
 			s.commitDynamicLease(lease)
 		}
 	}

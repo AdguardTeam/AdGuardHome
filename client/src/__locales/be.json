@@ -642,5 +642,6 @@
     "anonymizer_notification": "<0>Заўвага:</0> Ананімізацыя IP уключана. Вы можаце адключыць яе ў <1>Агульных наладах</1>.",
     "confirm_dns_cache_clear": "Вы ўпэўнены, што хочаце ачысціць кэш DNS?",
     "cache_cleared": "Кэш DNS паспяхова ачышчаны",
-    "clear_cache": "Ачысціць кэш"
+    "clear_cache": "Ачысціць кэш",
+    "protection_section_label": "Ахова"
 }

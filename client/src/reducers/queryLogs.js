@@ -1,7 +1,9 @@
 import { handleActions } from 'redux-actions';
 
 import * as actions from '../actions/queryLogs';
-import { DEFAULT_LOGS_FILTER, DAY } from '../helpers/constants';
+import {
+    DEFAULT_LOGS_FILTER, DAY, QUERY_LOG_INTERVALS_DAYS, HOUR,
+} from '../helpers/constants';
 
 const queryLogs = handleActions(
     {
@@ -59,6 +61,9 @@ const queryLogs = handleActions(
         [actions.getLogsConfigSuccess]: (state, { payload }) => ({
             ...state,
             ...payload,
+            customInterval: !QUERY_LOG_INTERVALS_DAYS.includes(payload.interval)
+                ? payload.interval / HOUR
+                : null,
             processingGetConfig: false,
         }),
 
@@ -95,6 +100,7 @@ const queryLogs = handleActions(
         anonymize_client_ip: false,
         isDetailed: true,
         isEntireLog: false,
+        customInterval: null,
     },
 );
 
