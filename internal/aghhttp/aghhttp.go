@@ -72,8 +72,8 @@ func WriteJSONResponse(w http.ResponseWriter, r *http.Request, resp any) (err er
 // WriteJSONResponseCode is like [WriteJSONResponse] but adds the ability to
 // redefine the status code.
 func WriteJSONResponseCode(w http.ResponseWriter, r *http.Request, code int, resp any) (err error) {
-	w.WriteHeader(code)
 	w.Header().Set(httphdr.ContentType, HdrValApplicationJSON)
+	w.WriteHeader(code)
 	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		Error(r, w, http.StatusInternalServerError, "encoding resp: %s", err)
