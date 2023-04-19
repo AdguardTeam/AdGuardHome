@@ -180,7 +180,7 @@ func registerControlHandlers() {
 	httpRegister(http.MethodGet, "/control/status", handleStatus)
 	httpRegister(http.MethodPost, "/control/i18n/change_language", handleI18nChangeLanguage)
 	httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
-	Context.mux.HandleFunc("/control/version.json", postInstall(optionalAuth(handleGetVersionJSON)))
+	Context.mux.HandleFunc("/control/version.json", postInstall(optionalAuth(handleVersionJSON)))
 	httpRegister(http.MethodPost, "/control/update", handleUpdate)
 	httpRegister(http.MethodGet, "/control/profile", handleGetProfile)
 	httpRegister(http.MethodPut, "/control/profile/update", handlePutProfile)

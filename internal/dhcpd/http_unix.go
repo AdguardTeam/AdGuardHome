@@ -350,8 +350,10 @@ type netInterfaceJSON struct {
 	Addrs6       []netip.Addr `json:"ipv6_addresses"`
 }
 
+// handleDHCPInterfaces is the handler for the GET /control/dhcp/interfaces HTTP
+// API.
 func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
-	response := map[string]netInterfaceJSON{}
+	resp := map[string]netInterfaceJSON{}
 
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -424,20 +426,11 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 		}
 		if len(jsonIface.Addrs4)+len(jsonIface.Addrs6) != 0 {
 			jsonIface.GatewayIP = aghnet.GatewayIP(iface.Name)
-			response[iface.Name] = jsonIface
+			resp[iface.Name] = jsonIface
 		}
 	}
 
-	err = json.NewEncoder(w).Encode(response)
-	if err != nil {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusInternalServerError,
-			"Failed to marshal json with available interfaces: %s",
-			err,
-		)
-	}
+	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
 // dhcpSearchOtherResult contains information about other DHCP server for

@@ -4,6 +4,16 @@
 
 ## v0.108.0: API changes
 
+## v0.107.30: API changes
+
+### `POST /control/version.json` and `GET /control/dhcp/interfaces` content type
+
+* The value of the `Content-Type` header in the `POST /control/version.json` and
+  `GET /control/dhcp/interfaces` HTTP APIs is now correctly set to
+  `application/json` as opposed to `text/plain`.
+
+
+
 ## v0.107.29: API changes
 
 ### `GET /control/clients` And `GET /control/clients/find`
@@ -15,6 +25,8 @@
   AdGuard Home exclude client activity from query log or statistics.  If not
   set AdGuard Home will use default value (false).  It can be changed in the
   future versions.
+
+
 
 ## v0.107.27: API changes
 

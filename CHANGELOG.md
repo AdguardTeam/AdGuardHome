@@ -25,8 +25,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Incorrect `Content-Type` header value in `POST /control/version.json` and `GET
+  /control/dhcp/interfaces` HTTP APIs ([#5716]).
 - Provided bootstrap servers are now used to resolve the hostnames of plain
   UDP/TCP upstream servers.
+
+[#5716]: https://github.com/AdguardTeam/AdGuardHome/issues/5716
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
