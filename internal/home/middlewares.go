@@ -45,7 +45,8 @@ func expectsLargerRequests(r *http.Request) (ok bool) {
 
 	p := r.URL.Path
 	return p == "/control/access/set" ||
-		p == "/control/filtering/set_rules"
+		p == "/control/filtering/set_rules" ||
+		p == "/control/dns_config"
 }
 
 // limitRequestBody wraps underlying handler h, making it's request's body Read
