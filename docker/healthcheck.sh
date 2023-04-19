@@ -61,8 +61,11 @@ then
     error_exit "no DNS bindings could be retrieved from $filename"
 fi
 
+first_dns="$( echo "$dns_hosts" | head -n 1 )"
+readonly first_dns
+
 # TODO(e.burkov):  Deal with 0 port.
-case "$( echo "$dns_hosts" | head -n 1 )"
+case "$first_dns"
 in
 (*':0')
     error_exit '0 in DNS port is not supported by healthcheck'
@@ -82,8 +85,23 @@ esac
 # See https://github.com/AdguardTeam/AdGuardHome/issues/5642.
 wget --no-check-certificate "$web_url" -O /dev/null -q || exit 1
 
-echo "$dns_hosts" | while read -r host
-do
-    nslookup -type=a healthcheck.adguardhome.test. "$host" > /dev/null ||\
+test_fqdn="healthcheck.adguardhome.test."
+readonly test_fqdn
+
+# The awk script currently returns only port prefixed with colon in case of
+# unspecified address.
+case "$first_dns"
+in
+(':'*)
+    nslookup -type=a "$test_fqdn" "127.0.0.1${first_dns}" > /dev/null ||\
+    nslookup -type=a "$test_fqdn" "[::1]${first_dns}" > /dev/null ||\
         error_exit "nslookup failed for $host"
-done
+    ;;
+(*)
+    echo "$dns_hosts" | while read -r host
+    do
+        nslookup -type=a "$test_fqdn" "$host" > /dev/null ||\
+            error_exit "nslookup failed for $host"
+    done
+    ;;
+esac

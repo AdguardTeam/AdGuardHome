@@ -7,11 +7,10 @@
         addrs[$2] = true
         prev_line = FNR
 
-        if ($2 == "0.0.0.0" || $2 == "::") {
-            delete addrs
-            addrs["localhost"] = true
-
+        if ($2 == "0.0.0.0" || $2 == "\"\"" || $2 == "'::'") {
             # Drop all the other addresses.
+            delete addrs
+            addrs[""] = true
             prev_line = -1
         }
     }
