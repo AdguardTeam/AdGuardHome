@@ -414,6 +414,22 @@ func getLogSettings() logSettings {
 	return l
 }
 
+// validateBindHosts returns error if any of binding hosts from configuration is
+// not a valid IP address.
+func validateBindHosts(conf *configuration) (err error) {
+	if !conf.BindHost.IsValid() {
+		return errors.Error("bind_host is not a valid ip address")
+	}
+
+	for i, addr := range conf.DNS.BindHosts {
+		if !addr.IsValid() {
+			return fmt.Errorf("dns.bind_hosts at index %d is not a valid ip address", i)
+		}
+	}
+
+	return nil
+}
+
 // parseConfig loads configuration from the YAML file
 func parseConfig() (err error) {
 	var fileData []byte
@@ -425,6 +441,13 @@ func parseConfig() (err error) {
 	config.fileData = nil
 	err = yaml.Unmarshal(fileData, &config)
 	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	err = validateBindHosts(config)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
 

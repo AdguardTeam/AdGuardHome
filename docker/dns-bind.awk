@@ -7,7 +7,7 @@
         addrs[$2] = true
         prev_line = FNR
 
-        if ($2 == "0.0.0.0" || $2 == "\"\"" || $2 == "'::'") {
+        if ($2 == "0.0.0.0" || $2 == "'::'") {
             # Drop all the other addresses.
             delete addrs
             addrs[""] = true

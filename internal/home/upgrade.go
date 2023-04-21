@@ -41,7 +41,8 @@ func upgradeConfig() error {
 
 	err = yaml.Unmarshal(body, &diskConf)
 	if err != nil {
-		log.Printf("Couldn't parse config file: %s", err)
+		log.Printf("parsing config file for upgrade: %s", err)
+
 		return err
 	}
 

@@ -25,6 +25,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Unquoted IPv6 bind hosts with trailing colons erroneously considered
+  unspecified addresses are now properly validated ([#5752]).
+
+  **NOTE:** the Docker healthcheck script now also doesn't interpret the `""`
+  value as unspecified address.
 - Incorrect `Content-Type` header value in `POST /control/version.json` and `GET
   /control/dhcp/interfaces` HTTP APIs ([#5716]).
 - Provided bootstrap servers are now used to resolve the hostnames of plain
@@ -64,6 +69,7 @@ See also the [v0.107.29 GitHub milestone][ms-v0.107.29].
 [#5712]: https://github.com/AdguardTeam/AdGuardHome/issues/5712
 [#5721]: https://github.com/AdguardTeam/AdGuardHome/issues/5721
 [#5725]: https://github.com/AdguardTeam/AdGuardHome/issues/5725
+[#5752]: https://github.com/AdguardTeam/AdGuardHome/issues/5752
 
 [ms-v0.107.29]: https://github.com/AdguardTeam/AdGuardHome/milestone/65?closed=1
 
