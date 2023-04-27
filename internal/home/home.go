@@ -27,11 +27,13 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -294,6 +296,59 @@ func setupConfig(opts options) (err error) {
 	config.DNS.DnsfilterConf.WhitelistFilters = slices.Clone(config.WhitelistFilters)
 	config.DNS.DnsfilterConf.UserRules = slices.Clone(config.UserRules)
 	config.DNS.DnsfilterConf.HTTPClient = Context.client
+
+	const (
+		dnsTimeout = 3 * time.Second
+
+		sbService                 = "safe browsing"
+		defaultSafeBrowsingServer = `https://family.adguard-dns.com/dns-query`
+		sbTXTSuffix               = `sb.dns.adguard.com.`
+
+		pcService             = "parental control"
+		defaultParentalServer = `https://family.adguard-dns.com/dns-query`
+		pcTXTSuffix           = `pc.dns.adguard.com.`
+	)
+
+	cacheTime := time.Duration(config.DNS.DnsfilterConf.CacheTime) * time.Minute
+
+	upsOpts := &upstream.Options{
+		Timeout: dnsTimeout,
+		ServerIPAddrs: []net.IP{
+			{94, 140, 14, 15},
+			{94, 140, 15, 16},
+			net.ParseIP("2a10:50c0::bad1:ff"),
+			net.ParseIP("2a10:50c0::bad2:ff"),
+		},
+	}
+
+	sbUps, err := upstream.AddressToUpstream(defaultSafeBrowsingServer, upsOpts)
+	if err != nil {
+		return fmt.Errorf("converting safe browsing server: %w", err)
+	}
+
+	safeBrowsing := hashprefix.New(&hashprefix.Config{
+		Upstream:    sbUps,
+		ServiceName: sbService,
+		TXTSuffix:   sbTXTSuffix,
+		CacheTime:   cacheTime,
+		CacheSize:   config.DNS.DnsfilterConf.SafeBrowsingCacheSize,
+	})
+
+	parUps, err := upstream.AddressToUpstream(defaultParentalServer, upsOpts)
+	if err != nil {
+		return fmt.Errorf("converting parental server: %w", err)
+	}
+
+	parentalControl := hashprefix.New(&hashprefix.Config{
+		Upstream:    parUps,
+		ServiceName: pcService,
+		TXTSuffix:   pcTXTSuffix,
+		CacheTime:   cacheTime,
+		CacheSize:   config.DNS.DnsfilterConf.SafeBrowsingCacheSize,
+	})
+
+	config.DNS.DnsfilterConf.SafeBrowsingChecker = safeBrowsing
+	config.DNS.DnsfilterConf.ParentalControlChecker = parentalControl
 
 	config.DNS.DnsfilterConf.SafeSearchConf.CustomResolver = safeSearchResolver{}
 	config.DNS.DnsfilterConf.SafeSearch, err = safesearch.NewDefault(

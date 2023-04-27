@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
-	"github.com/AdguardTeam/golibs/cache"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -26,17 +26,6 @@ const (
 )
 
 // Helpers.
-
-func purgeCaches(d *DNSFilter) {
-	for _, c := range []cache.Cache{
-		d.safebrowsingCache,
-		d.parentalCache,
-	} {
-		if c != nil {
-			c.Clear()
-		}
-	}
-}
 
 func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts *Settings) {
 	setts = &Settings{
@@ -58,9 +47,15 @@ func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts 
 	f, err := New(c, filters)
 	require.NoError(t, err)
 
-	purgeCaches(f)
-
 	return f, setts
+}
+
+func newChecker(host string) Checker {
+	return hashprefix.New(&hashprefix.Config{
+		CacheTime: 10,
+		CacheSize: 100000,
+		Upstream:  aghtest.NewBlockUpstream(host, true),
+	})
 }
 
 func (d *DNSFilter) checkMatch(t *testing.T, hostname string, setts *Settings) {
@@ -175,10 +170,14 @@ func TestSafeBrowsing(t *testing.T) {
 	aghtest.ReplaceLogWriter(t, logOutput)
 	aghtest.ReplaceLogLevel(t, log.DEBUG)
 
-	d, setts := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
+	sbChecker := newChecker(sbBlocked)
+
+	d, setts := newForTest(t, &Config{
+		SafeBrowsingEnabled: true,
+		SafeBrowsingChecker: sbChecker,
+	}, nil)
 	t.Cleanup(d.Close)
 
-	d.SetSafeBrowsingUpstream(aghtest.NewBlockUpstream(sbBlocked, true))
 	d.checkMatch(t, sbBlocked, setts)
 
 	require.Contains(t, logOutput.String(), fmt.Sprintf("safebrowsing lookup for %q", sbBlocked))
@@ -188,17 +187,16 @@ func TestSafeBrowsing(t *testing.T) {
 	d.checkMatchEmpty(t, pcBlocked, setts)
 
 	// Cached result.
-	d.safeBrowsingServer = "127.0.0.1"
 	d.checkMatch(t, sbBlocked, setts)
 	d.checkMatchEmpty(t, pcBlocked, setts)
-	d.safeBrowsingServer = defaultSafebrowsingServer
 }
 
 func TestParallelSB(t *testing.T) {
-	d, setts := newForTest(t, &Config{SafeBrowsingEnabled: true}, nil)
+	d, setts := newForTest(t, &Config{
+		SafeBrowsingEnabled: true,
+		SafeBrowsingChecker: newChecker(sbBlocked),
+	}, nil)
 	t.Cleanup(d.Close)
-
-	d.SetSafeBrowsingUpstream(aghtest.NewBlockUpstream(sbBlocked, true))
 
 	t.Run("group", func(t *testing.T) {
 		for i := 0; i < 100; i++ {
@@ -220,10 +218,12 @@ func TestParentalControl(t *testing.T) {
 	aghtest.ReplaceLogWriter(t, logOutput)
 	aghtest.ReplaceLogLevel(t, log.DEBUG)
 
-	d, setts := newForTest(t, &Config{ParentalEnabled: true}, nil)
+	d, setts := newForTest(t, &Config{
+		ParentalEnabled:        true,
+		ParentalControlChecker: newChecker(pcBlocked),
+	}, nil)
 	t.Cleanup(d.Close)
 
-	d.SetParentalUpstream(aghtest.NewBlockUpstream(pcBlocked, true))
 	d.checkMatch(t, pcBlocked, setts)
 	require.Contains(t, logOutput.String(), fmt.Sprintf("parental lookup for %q", pcBlocked))
 
@@ -233,7 +233,6 @@ func TestParentalControl(t *testing.T) {
 	d.checkMatchEmpty(t, "api.jquery.com", setts)
 
 	// Test cached result.
-	d.parentalServer = "127.0.0.1"
 	d.checkMatch(t, pcBlocked, setts)
 	d.checkMatchEmpty(t, "yandex.ru", setts)
 }
@@ -593,17 +592,16 @@ func applyClientSettings(setts *Settings) {
 func TestClientSettings(t *testing.T) {
 	d, setts := newForTest(t,
 		&Config{
-			ParentalEnabled:     true,
-			SafeBrowsingEnabled: false,
+			ParentalEnabled:        true,
+			SafeBrowsingEnabled:    false,
+			SafeBrowsingChecker:    newChecker(sbBlocked),
+			ParentalControlChecker: newChecker(pcBlocked),
 		},
 		[]Filter{{
 			ID: 0, Data: []byte("||example.org^\n"),
 		}},
 	)
 	t.Cleanup(d.Close)
-
-	d.SetParentalUpstream(aghtest.NewBlockUpstream(pcBlocked, true))
-	d.SetSafeBrowsingUpstream(aghtest.NewBlockUpstream(sbBlocked, true))
 
 	type testCase struct {
 		name       string
@@ -665,10 +663,11 @@ func TestClientSettings(t *testing.T) {
 // Benchmarks.
 
 func BenchmarkSafeBrowsing(b *testing.B) {
-	d, setts := newForTest(b, &Config{SafeBrowsingEnabled: true}, nil)
+	d, setts := newForTest(b, &Config{
+		SafeBrowsingEnabled: true,
+		SafeBrowsingChecker: newChecker(sbBlocked),
+	}, nil)
 	b.Cleanup(d.Close)
-
-	d.SetSafeBrowsingUpstream(aghtest.NewBlockUpstream(sbBlocked, true))
 
 	for n := 0; n < b.N; n++ {
 		res, err := d.CheckHost(sbBlocked, dns.TypeA, setts)
@@ -679,10 +678,11 @@ func BenchmarkSafeBrowsing(b *testing.B) {
 }
 
 func BenchmarkSafeBrowsingParallel(b *testing.B) {
-	d, setts := newForTest(b, &Config{SafeBrowsingEnabled: true}, nil)
+	d, setts := newForTest(b, &Config{
+		SafeBrowsingEnabled: true,
+		SafeBrowsingChecker: newChecker(sbBlocked),
+	}, nil)
 	b.Cleanup(d.Close)
-
-	d.SetSafeBrowsingUpstream(aghtest.NewBlockUpstream(sbBlocked, true))
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {

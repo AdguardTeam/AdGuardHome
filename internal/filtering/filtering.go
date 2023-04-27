@@ -18,8 +18,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/mathutil"
@@ -75,6 +73,12 @@ type Resolver interface {
 
 // Config allows you to configure DNS filtering with New() or just change variables directly.
 type Config struct {
+	// SafeBrowsingChecker is the safe browsing hash-prefix checker.
+	SafeBrowsingChecker Checker `yaml:"-"`
+
+	// ParentControl is the parental control hash-prefix checker.
+	ParentalControlChecker Checker `yaml:"-"`
+
 	// enabled is used to be returned within Settings.
 	//
 	// It is of type uint32 to be accessed by atomic.
@@ -158,8 +162,22 @@ type hostChecker struct {
 	name  string
 }
 
+// Checker is used for safe browsing or parental control hash-prefix filtering.
+type Checker interface {
+	// Check returns true if request for the host should be blocked.
+	Check(host string) (block bool, err error)
+}
+
 // DNSFilter matches hostnames and DNS requests against filtering rules.
 type DNSFilter struct {
+	safeSearch SafeSearch
+
+	// safeBrowsingChecker is the safe browsing hash-prefix checker.
+	safeBrowsingChecker Checker
+
+	// parentalControl is the parental control hash-prefix checker.
+	parentalControlChecker Checker
+
 	rulesStorage    *filterlist.RuleStorage
 	filteringEngine *urlfilter.DNSEngine
 
@@ -167,14 +185,6 @@ type DNSFilter struct {
 	filteringEngineAllow *urlfilter.DNSEngine
 
 	engineLock sync.RWMutex
-
-	parentalServer       string // access via methods
-	safeBrowsingServer   string // access via methods
-	parentalUpstream     upstream.Upstream
-	safeBrowsingUpstream upstream.Upstream
-
-	safebrowsingCache cache.Cache
-	parentalCache     cache.Cache
 
 	Config // for direct access by library users, even a = assignment
 	// confLock protects Config.
@@ -192,7 +202,6 @@ type DNSFilter struct {
 	// TODO(e.burkov):  Don't use regexp for such a simple text processing task.
 	filterTitleRegexp *regexp.Regexp
 
-	safeSearch   SafeSearch
 	hostCheckers []hostChecker
 }
 
@@ -940,18 +949,11 @@ func InitModule() {
 // be non-nil.
 func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	d = &DNSFilter{
-		refreshLock:       &sync.Mutex{},
-		filterTitleRegexp: regexp.MustCompile(`^! Title: +(.*)$`),
+		refreshLock:            &sync.Mutex{},
+		filterTitleRegexp:      regexp.MustCompile(`^! Title: +(.*)$`),
+		safeBrowsingChecker:    c.SafeBrowsingChecker,
+		parentalControlChecker: c.ParentalControlChecker,
 	}
-
-	d.safebrowsingCache = cache.New(cache.Config{
-		EnableLRU: true,
-		MaxSize:   c.SafeBrowsingCacheSize,
-	})
-	d.parentalCache = cache.New(cache.Config{
-		EnableLRU: true,
-		MaxSize:   c.ParentalCacheSize,
-	})
 
 	d.safeSearch = c.SafeSearch
 
@@ -976,11 +978,6 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	}}
 
 	defer func() { err = errors.Annotate(err, "filtering: %w") }()
-
-	err = d.initSecurityServices()
-	if err != nil {
-		return nil, fmt.Errorf("initializing services: %s", err)
-	}
 
 	d.Config = *c
 	d.filtersMu = &sync.RWMutex{}
