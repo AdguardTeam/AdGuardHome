@@ -1035,3 +1035,69 @@ func (d *DNSFilter) Start() {
 	// So for now we just start this periodic task from here.
 	go d.periodicallyRefreshFilters()
 }
+
+// Safe browsing and parental control methods.
+
+// TODO(a.garipov): Unify with checkParental.
+func (d *DNSFilter) checkSafeBrowsing(
+	host string,
+	_ uint16,
+	setts *Settings,
+) (res Result, err error) {
+	if !setts.ProtectionEnabled || !setts.SafeBrowsingEnabled {
+		return Result{}, nil
+	}
+
+	if log.GetLevel() >= log.DEBUG {
+		timer := log.StartTimer()
+		defer timer.LogElapsed("safebrowsing lookup for %q", host)
+	}
+
+	res = Result{
+		Rules: []*ResultRule{{
+			Text:         "adguard-malware-shavar",
+			FilterListID: SafeBrowsingListID,
+		}},
+		Reason:     FilteredSafeBrowsing,
+		IsFiltered: true,
+	}
+
+	block, err := d.safeBrowsingChecker.Check(host)
+	if !block || err != nil {
+		return Result{}, err
+	}
+
+	return res, nil
+}
+
+// TODO(a.garipov): Unify with checkSafeBrowsing.
+func (d *DNSFilter) checkParental(
+	host string,
+	_ uint16,
+	setts *Settings,
+) (res Result, err error) {
+	if !setts.ProtectionEnabled || !setts.ParentalEnabled {
+		return Result{}, nil
+	}
+
+	if log.GetLevel() >= log.DEBUG {
+		timer := log.StartTimer()
+		defer timer.LogElapsed("parental lookup for %q", host)
+	}
+
+	res = Result{
+		Rules: []*ResultRule{{
+			Text:         "parental CATEGORY_BLACKLISTED",
+			FilterListID: ParentalListID,
+		}},
+		Reason:     FilteredParental,
+		IsFiltered: true,
+	}
+
+	block, err := d.parentalControlChecker.Check(host)
+	if !block || err != nil {
+		return Result{}, err
+	}
+
+	return res, nil
+}
