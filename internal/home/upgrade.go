@@ -726,7 +726,7 @@ func upgradeSchema12to13(diskConf yobj) (err error) {
 	var dns yobj
 	dns, ok = dnsVal.(yobj)
 	if !ok {
-		return fmt.Errorf("unexpected type of dns: %T", dnsVal)
+		return fmt.Errorf("unexpected type of dns: %T; want: %T", dnsVal, dns)
 	}
 
 	dhcpVal, ok := diskConf["dhcp"]
