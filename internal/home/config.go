@@ -399,19 +399,23 @@ func (c *configuration) getConfigFilename() string {
 	return configFile
 }
 
-// getLogSettings reads logging settings from the config file.
-// we do it in a separate method in order to configure logger before the actual configuration is parsed and applied.
-func getLogSettings() logSettings {
-	l := logSettings{}
+// readLogSettings reads logging settings from the config file.  We do it in a
+// separate method in order to configure logger before the actual configuration
+// is parsed and applied.
+func readLogSettings() (ls *logSettings) {
+	ls = &logSettings{}
+
 	yamlFile, err := readConfigFile()
 	if err != nil {
-		return l
+		return ls
 	}
-	err = yaml.Unmarshal(yamlFile, &l)
+
+	err = yaml.Unmarshal(yamlFile, ls)
 	if err != nil {
 		log.Error("Couldn't get logging settings from the configuration: %s", err)
 	}
-	return l
+
+	return ls
 }
 
 // validateBindHosts returns error if any of binding hosts from configuration is

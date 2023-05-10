@@ -294,71 +294,61 @@ func upgradeSchema4to5(diskConf yobj) error {
 	return nil
 }
 
-// clients:
-// ...
+// upgradeSchema5to6 performs the following changes:
 //
-//	ip: 127.0.0.1
-//	mac: ...
+//	# BEFORE:
+//	  'clients':
+//	    ...
+//	    'ip': 127.0.0.1
+//	    'mac': ...
 //
-// ->
-//
-// clients:
-// ...
-//
-//	ids:
-//	- 127.0.0.1
-//	- ...
+//	# AFTER:
+//	  'clients':
+//	    ...
+//	    'ids':
+//		  - 127.0.0.1
+//		  - ...
 func upgradeSchema5to6(diskConf yobj) error {
-	log.Printf("%s(): called", funcName())
-
+	log.Printf("Upgrade yaml: 5 to 6")
 	diskConf["schema_version"] = 6
 
-	clients, ok := diskConf["clients"]
+	clientsVal, ok := diskConf["clients"]
 	if !ok {
 		return nil
 	}
 
-	switch arr := clients.(type) {
-	case []any:
-		for i := range arr {
-			switch c := arr[i].(type) {
-			case map[any]any:
-				var ipVal any
-				ipVal, ok = c["ip"]
-				ids := []string{}
-				if ok {
-					var ip string
-					ip, ok = ipVal.(string)
-					if !ok {
-						log.Fatalf("client.ip is not a string: %v", ipVal)
-						return nil
-					}
-					if len(ip) != 0 {
-						ids = append(ids, ip)
-					}
-				}
+	clients, ok := clientsVal.([]yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of clients: %T", clientsVal)
+	}
 
-				var macVal any
-				macVal, ok = c["mac"]
-				if ok {
-					var mac string
-					mac, ok = macVal.(string)
-					if !ok {
-						log.Fatalf("client.mac is not a string: %v", macVal)
-						return nil
-					}
-					if len(mac) != 0 {
-						ids = append(ids, mac)
-					}
-				}
+	for i := range clients {
+		c := clients[i]
+		var ids []string
 
-				c["ids"] = ids
-			default:
-				continue
+		if ipVal, hasIP := c["ip"]; hasIP {
+			var ip string
+			if ip, ok = ipVal.(string); !ok {
+				return fmt.Errorf("client.ip is not a string: %v", ipVal)
+			}
+
+			if ip != "" {
+				ids = append(ids, ip)
 			}
 		}
-	default:
-		return nil
+
+		if macVal, hasMac := c["mac"]; hasMac {
+			var mac string
+			if mac, ok = macVal.(string); !ok {
+				return fmt.Errorf("client.mac is not a string: %v", macVal)
+			}
+
+			if mac != "" {
+				ids = append(ids, mac)
+			}
+		}
+
+		c["ids"] = ids
 	}
 
 	return nil

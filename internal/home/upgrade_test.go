@@ -68,6 +68,95 @@ func TestUpgradeSchema2to3(t *testing.T) {
 	assertEqualExcept(t, oldDiskConf, diskConf, excludedEntries, excludedEntries)
 }
 
+func TestUpgradeSchema5to6(t *testing.T) {
+	const newSchemaVer = 6
+
+	testCases := []struct {
+		in      yobj
+		want    yobj
+		wantErr string
+		name    string
+	}{{
+		in: yobj{
+			"clients": []yobj{},
+		},
+		want: yobj{
+			"clients":        []yobj{},
+			"schema_version": newSchemaVer,
+		},
+		wantErr: "",
+		name:    "no_clients",
+	}, {
+		in: yobj{
+			"clients": []yobj{{"ip": "127.0.0.1"}},
+		},
+		want: yobj{
+			"clients": []yobj{{
+				"ids": []string{"127.0.0.1"},
+				"ip":  "127.0.0.1",
+			}},
+			"schema_version": newSchemaVer,
+		},
+		wantErr: "",
+		name:    "client_ip",
+	}, {
+		in: yobj{
+			"clients": []yobj{{"mac": "mac"}},
+		},
+		want: yobj{
+			"clients": []yobj{{
+				"ids": []string{"mac"},
+				"mac": "mac",
+			}},
+			"schema_version": newSchemaVer,
+		},
+		wantErr: "",
+		name:    "client_mac",
+	}, {
+		in: yobj{
+			"clients": []yobj{{"ip": "127.0.0.1", "mac": "mac"}},
+		},
+		want: yobj{
+			"clients": []yobj{{
+				"ids": []string{"127.0.0.1", "mac"},
+				"ip":  "127.0.0.1",
+				"mac": "mac",
+			}},
+			"schema_version": newSchemaVer,
+		},
+		wantErr: "",
+		name:    "client_ip_mac",
+	}, {
+		in: yobj{
+			"clients": []yobj{{"ip": 1, "mac": "mac"}},
+		},
+		want: yobj{
+			"clients":        []yobj{{"ip": 1, "mac": "mac"}},
+			"schema_version": newSchemaVer,
+		},
+		wantErr: "client.ip is not a string: 1",
+		name:    "inv_client_ip",
+	}, {
+		in: yobj{
+			"clients": []yobj{{"ip": "127.0.0.1", "mac": 1}},
+		},
+		want: yobj{
+			"clients":        []yobj{{"ip": "127.0.0.1", "mac": 1}},
+			"schema_version": newSchemaVer,
+		},
+		wantErr: "client.mac is not a string: 1",
+		name:    "inv_client_mac",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema5to6(tc.in)
+			testutil.AssertErrorMsg(t, tc.wantErr, err)
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}
+
 func TestUpgradeSchema7to8(t *testing.T) {
 	const host = "1.2.3.4"
 	oldConf := yobj{
