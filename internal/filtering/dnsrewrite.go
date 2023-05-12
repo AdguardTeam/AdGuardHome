@@ -3,6 +3,7 @@ package filtering
 import (
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
+	"golang.org/x/exp/slices"
 )
 
 // DNSRewriteResult is the result of application of $dnsrewrite rules.
@@ -24,7 +25,13 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 		Response: DNSRewriteResultResponse{},
 	}
 
+	slices.SortFunc(dnsr, rewriteSortsBefore)
+
 	for _, nr := range dnsr {
+		if containsWildcard(nr) {
+			break
+		}
+
 		dr := nr.DNSRewrite
 		if dr.NewCNAME != "" {
 			// NewCNAME rules have a higher priority than other rules.
@@ -72,4 +79,20 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 		Rules:            rules,
 		Reason:           RewrittenRule,
 	}
+}
+
+func rewriteSortsBefore(a, b *rules.NetworkRule) (sortsBefore bool) {
+	return len(a.Shortcut) > len(b.Shortcut)
+}
+
+func containsWildcard(r *rules.NetworkRule) (ok bool) {
+	for _, c := range r.RuleText {
+		if c == '*' {
+			return true
+		} else if c == '^' {
+			break
+		}
+	}
+
+	return false
 }

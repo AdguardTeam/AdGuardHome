@@ -5,6 +5,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/AdguardTeam/urlfilter"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -201,4 +202,33 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 
 		assert.Equal(t, "new-ptr-with-dot.", ptr)
 	})
+}
+
+func TestDNSFilter_processDNSRewrites(t *testing.T) {
+	const text = `
+|www.example.com^$dnsrewrite=127.0.0.1
+|*.example.com^$dnsrewrite=127.0.0.2
+`
+
+	host := "www.example.com"
+	rrtype := dns.TypeA
+
+	f, _ := newForTest(t, nil, []Filter{{ID: 0, Data: []byte(text)}})
+	setts := &Settings{
+		FilteringEnabled: true,
+	}
+
+	ufReq := &urlfilter.DNSRequest{
+		Hostname:         host,
+		SortedClientTags: setts.ClientTags,
+		ClientIP:         setts.ClientIP.String(),
+		ClientName:       setts.ClientName,
+		DNSType:          rrtype,
+	}
+
+	dres, matched := f.filteringEngine.MatchRequest(ufReq)
+	require.False(t, matched)
+
+	res := f.processDNSResultRewrites(dres, host)
+	assert.Len(t, res.Rules, 1)
 }
