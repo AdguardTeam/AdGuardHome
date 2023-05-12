@@ -6,6 +6,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
+	"golang.org/x/exp/slices"
 )
 
 // TODO(d.kolyshev): Use [rewrite.Item] instead.
@@ -90,4 +91,63 @@ func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) 
 	d.confLock.Unlock()
 
 	d.Config.ConfigModified()
+}
+
+// rewriteUpdateJSON is a struct for JSON object with rewrite rule update info.
+type rewriteUpdateJSON struct {
+	Target rewriteEntryJSON `json:"target"`
+	Update rewriteEntryJSON `json:"update"`
+}
+
+// handleRewriteUpdate is the handler for the PUT /control/rewrite/update HTTP
+// API.
+func (d *DNSFilter) handleRewriteUpdate(w http.ResponseWriter, r *http.Request) {
+	updateJSON := rewriteUpdateJSON{}
+	err := json.NewDecoder(r.Body).Decode(&updateJSON)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+
+		return
+	}
+
+	rwDel := &LegacyRewrite{
+		Domain: updateJSON.Target.Domain,
+		Answer: updateJSON.Target.Answer,
+	}
+
+	rwAdd := &LegacyRewrite{
+		Domain: updateJSON.Update.Domain,
+		Answer: updateJSON.Update.Answer,
+	}
+
+	err = rwAdd.normalize()
+	if err != nil {
+		// Shouldn't happen currently, since normalize only returns a non-nil
+		// error when a rewrite is nil, but be change-proof.
+		aghhttp.Error(r, w, http.StatusBadRequest, "normalizing: %s", err)
+
+		return
+	}
+
+	index := -1
+	defer func() {
+		if index >= 0 {
+			d.Config.ConfigModified()
+		}
+	}()
+
+	d.confLock.Lock()
+	defer d.confLock.Unlock()
+
+	index = slices.IndexFunc(d.Config.Rewrites, rwDel.equal)
+	if index == -1 {
+		aghhttp.Error(r, w, http.StatusBadRequest, "target rule not found")
+
+		return
+	}
+
+	d.Config.Rewrites = slices.Replace(d.Config.Rewrites, index, index+1, rwAdd)
+
+	log.Debug("rewrite: removed element: %s -> %s", rwDel.Domain, rwDel.Answer)
+	log.Debug("rewrite: added element: %s -> %s", rwAdd.Domain, rwAdd.Answer)
 }

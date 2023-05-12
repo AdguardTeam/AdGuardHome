@@ -23,6 +23,11 @@ See also the [v0.107.30 GitHub milestone][ms-v0.107.30].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- The ability to edit rewrite rules via `PUT /control/rewrite/update` HTTP API
+  ([#1577]).
+
 ### Fixed
 
 - Unquoted IPv6 bind hosts with trailing colons erroneously considered
@@ -35,6 +40,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Provided bootstrap servers are now used to resolve the hostnames of plain
   UDP/TCP upstream servers.
 
+[#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
 [#5716]: https://github.com/AdguardTeam/AdGuardHome/issues/5716
 
 <!--

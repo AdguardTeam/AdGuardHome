@@ -12,6 +12,18 @@
   `GET /control/dhcp/interfaces` HTTP APIs is now correctly set to
   `application/json` as opposed to `text/plain`.
 
+### New HTTP API 'PUT /control/rewrite/update'
+
+* The new `PUT /control/rewrite/update` HTTP API allows rewrite rule updates.
+  It accepts a JSON object with the following format:
+
+```json
+{
+  "target": {"domain":"example.com","answer":"answer-to-update"},
+  "update": {"domain":"example.com","answer":"new-answer"}
+}
+```
+
 
 
 ## v0.107.29: API changes

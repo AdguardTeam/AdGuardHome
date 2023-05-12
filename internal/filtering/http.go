@@ -555,6 +555,7 @@ func (d *DNSFilter) RegisterFilteringHandlers() {
 
 	registerHTTP(http.MethodGet, "/control/rewrite/list", d.handleRewriteList)
 	registerHTTP(http.MethodPost, "/control/rewrite/add", d.handleRewriteAdd)
+	registerHTTP(http.MethodPut, "/control/rewrite/update", d.handleRewriteUpdate)
 	registerHTTP(http.MethodPost, "/control/rewrite/delete", d.handleRewriteDelete)
 
 	registerHTTP(http.MethodGet, "/control/blocked_services/services", d.handleBlockedServicesIDs)
