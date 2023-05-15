@@ -27,8 +27,8 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 
 	slices.SortFunc(dnsr, rewriteSortsBefore)
 
-	for _, nr := range dnsr {
-		if containsWildcard(nr) {
+	for i, nr := range dnsr {
+		if i > 0 && containsWildcard(nr) {
 			break
 		}
 

@@ -204,7 +204,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 	})
 }
 
-func TestDNSFilter_processDNSRewrites(t *testing.T) {
+func TestDNSFilter_ProcessDNSRewrites(t *testing.T) {
 	const text = `
 |www.example.com^$dnsrewrite=127.0.0.1
 |*.example.com^$dnsrewrite=127.0.0.2
