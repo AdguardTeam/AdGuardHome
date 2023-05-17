@@ -30,7 +30,7 @@ type v6Server struct {
 	leasesLock sync.Mutex
 	leases     []*Lease
 	ipAddrs    [256]byte
-	sid        dhcpv6.Duid
+	sid        dhcpv6.DUID
 
 	ra raCtx // RA module
 
@@ -659,9 +659,8 @@ func (s *v6Server) Start() (err error) {
 		return fmt.Errorf("validating interface %s: %w", iface.Name, err)
 	}
 
-	s.sid = dhcpv6.Duid{
-		Type:          dhcpv6.DUID_LLT,
-		HwType:        iana.HWTypeEthernet,
+	s.sid = &dhcpv6.DUIDLLT{
+		HWType:        iana.HWTypeEthernet,
 		LinkLayerAddr: iface.HardwareAddr,
 		Time:          dhcpv6.GetTime(),
 	}

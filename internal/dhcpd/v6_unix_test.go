@@ -121,9 +121,8 @@ func TestV6GetLease(t *testing.T) {
 
 	dnsAddr := net.ParseIP("2000::1")
 	s.conf.dnsIPAddrs = []net.IP{dnsAddr}
-	s.sid = dhcpv6.Duid{
-		Type:          dhcpv6.DUID_LLT,
-		HwType:        iana.HWTypeEthernet,
+	s.sid = &dhcpv6.DUIDLL{
+		HWType:        iana.HWTypeEthernet,
 		LinkLayerAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}
 
@@ -216,9 +215,8 @@ func TestV6GetDynamicLease(t *testing.T) {
 
 	dnsAddr := net.ParseIP("2000::1")
 	s.conf.dnsIPAddrs = []net.IP{dnsAddr}
-	s.sid = dhcpv6.Duid{
-		Type:          dhcpv6.DUID_LLT,
-		HwType:        iana.HWTypeEthernet,
+	s.sid = &dhcpv6.DUIDLL{
+		HWType:        iana.HWTypeEthernet,
 		LinkLayerAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}
 

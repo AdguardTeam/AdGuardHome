@@ -67,6 +67,8 @@ github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714 h1:/jC7qQFrv8
 github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714/go.mod h1:2Goc3h8EklBH5mspfHFxBnEoURQCGzQQH1ga9Myjvis=
 github.com/insomniacslk/dhcp v0.0.0-20221215072855-de60144f33f8 h1:Z72DOke2yOK0Ms4Z2LK1E1OrRJXOxSj5DllTz2FYTRg=
 github.com/insomniacslk/dhcp v0.0.0-20221215072855-de60144f33f8/go.mod h1:m5WMe03WCvWcXjRnhvaAbAAXdCnu20J5P+mmH44ZzpE=
+github.com/insomniacslk/dhcp v0.0.0-20230516061539-49801966e6cb h1:6fDKEAXwe3rsfS4khW3EZ8kEqmSiV9szhMPcDrD+Y7Q=
+github.com/insomniacslk/dhcp v0.0.0-20230516061539-49801966e6cb/go.mod h1:7474bZ1YNCvarT6WFKie4kEET6J0KYRDC4XJqqXzQW4=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/josharian/native v1.0.0/go.mod h1:7X/raswPFr05uY3HiLlYeyQntB6OO7E/d2Cu7qoaN2w=
 github.com/josharian/native v1.0.1-0.20221213033349-c1e37c09b531/go.mod h1:7X/raswPFr05uY3HiLlYeyQntB6OO7E/d2Cu7qoaN2w=
