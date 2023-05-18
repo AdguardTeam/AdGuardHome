@@ -509,6 +509,7 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 		s.conf.AllowedClients,
 		s.conf.DisallowedClients,
 		s.conf.BlockedHosts,
+		s.privateNets,
 	)
 	if err != nil {
 		return fmt.Errorf("preparing access: %w", err)

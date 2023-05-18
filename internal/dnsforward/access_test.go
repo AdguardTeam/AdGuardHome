@@ -4,6 +4,7 @@ import (
 	"net/netip"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -14,12 +15,12 @@ func TestIsBlockedClientID(t *testing.T) {
 	clientID := "client-1"
 	clients := []string{clientID}
 
-	a, err := newAccessCtx(clients, nil, nil)
+	a, err := newAccessCtx(clients, nil, nil, nil)
 	require.NoError(t, err)
 
 	assert.False(t, a.isBlockedClientID(clientID))
 
-	a, err = newAccessCtx(nil, clients, nil)
+	a, err = newAccessCtx(nil, clients, nil, nil)
 	require.NoError(t, err)
 
 	assert.True(t, a.isBlockedClientID(clientID))
@@ -31,7 +32,7 @@ func TestIsBlockedHost(t *testing.T) {
 		"*.host.com",
 		"||host3.com^",
 		"||*^$dnstype=HTTPS",
-	})
+	}, nil)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -109,7 +110,8 @@ func TestAccessManager_IsBlockedIP_allow(t *testing.T) {
 		"5.6.7.8/24",
 	}
 
-	allowCtx, err := newAccessCtx(clients, nil, nil)
+	privateNets := netutil.SubnetSetFunc(netutil.IsLocallyServed)
+	allowCtx, err := newAccessCtx(clients, nil, nil, privateNets)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -159,7 +161,8 @@ func TestAccessManager_IsBlockedIP_block(t *testing.T) {
 		"5.6.7.8/24",
 	}
 
-	blockCtx, err := newAccessCtx(nil, clients, nil)
+	privateNets := netutil.SubnetSetFunc(netutil.IsLocallyServed)
+	blockCtx, err := newAccessCtx(nil, clients, nil, privateNets)
 	require.NoError(t, err)
 
 	testCases := []struct {

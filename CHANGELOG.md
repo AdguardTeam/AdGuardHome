@@ -30,8 +30,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
-- Locally served address are now ignored from allowed/blocked clients access
-  lists.  These addresses are always allowed ([#5799]).
+- Private networks are now ignored from allowed/blocked clients access lists.
+  These addresses are always allowed ([#5799]).
 
 - Unquoted IPv6 bind hosts with trailing colons erroneously considered
   unspecified addresses are now properly validated ([#5752]).

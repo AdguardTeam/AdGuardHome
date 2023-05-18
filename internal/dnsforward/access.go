@@ -31,6 +31,9 @@ type accessManager struct {
 
 	blockedHostsEng *urlfilter.DNSEngine
 
+	// privateNets is the set of IP networks those are ignored by the manager.
+	privateNets netutil.SubnetSet
+
 	// TODO(a.garipov): Create a type for a set of IP networks.
 	allowedNets []netip.Prefix
 	blockedNets []netip.Prefix
@@ -65,13 +68,20 @@ func processAccessClients(
 }
 
 // newAccessCtx creates a new accessCtx.
-func newAccessCtx(allowed, blocked, blockedHosts []string) (a *accessManager, err error) {
+func newAccessCtx(
+	allowed []string,
+	blocked []string,
+	blockedHosts []string,
+	privateNets netutil.SubnetSet,
+) (a *accessManager, err error) {
 	a = &accessManager{
 		allowedIPs: map[netip.Addr]unit{},
 		blockedIPs: map[netip.Addr]unit{},
 
 		allowedClientIDs: stringutil.NewSet(),
 		blockedClientIDs: stringutil.NewSet(),
+
+		privateNets: privateNets,
 	}
 
 	err = processAccessClients(allowed, a.allowedIPs, &a.allowedNets, a.allowedClientIDs)
@@ -140,9 +150,9 @@ func (a *accessManager) isBlockedHost(host string, qt rules.RRType) (ok bool) {
 }
 
 // isBlockedIP returns the status of the IP address blocking as well as the
-// rule that blocked it.  Locally served addresses are always allowed.
+// rule that blocked it.  Addresses from private nets are always allowed.
 func (a *accessManager) isBlockedIP(ip netip.Addr) (blocked bool, rule string) {
-	if netutil.IsLocallyServedAddr(ip) {
+	if a.privateNets.Contains(ip.AsSlice()) {
 		return false, ""
 	}
 
@@ -246,7 +256,7 @@ func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var a *accessManager
-	a, err = newAccessCtx(list.AllowedClients, list.DisallowedClients, list.BlockedHosts)
+	a, err = newAccessCtx(list.AllowedClients, list.DisallowedClients, list.BlockedHosts, nil)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "creating access ctx: %s", err)
 
