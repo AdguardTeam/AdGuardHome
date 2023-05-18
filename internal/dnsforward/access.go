@@ -152,7 +152,7 @@ func (a *accessManager) isBlockedHost(host string, qt rules.RRType) (ok bool) {
 // isBlockedIP returns the status of the IP address blocking as well as the
 // rule that blocked it.  Addresses from private nets are always allowed.
 func (a *accessManager) isBlockedIP(ip netip.Addr) (blocked bool, rule string) {
-	if a.privateNets.Contains(ip.AsSlice()) {
+	if a.privateNets != nil && a.privateNets.Contains(ip.AsSlice()) {
 		return false, ""
 	}
 
