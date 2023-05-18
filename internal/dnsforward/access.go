@@ -10,6 +10,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
@@ -138,9 +139,13 @@ func (a *accessManager) isBlockedHost(host string, qt rules.RRType) (ok bool) {
 	return ok
 }
 
-// isBlockedIP returns the status of the IP address blocking as well as the rule
-// that blocked it.
+// isBlockedIP returns the status of the IP address blocking as well as the
+// rule that blocked it.  Locally served addresses are always allowed.
 func (a *accessManager) isBlockedIP(ip netip.Addr) (blocked bool, rule string) {
+	if netutil.IsLocallyServedAddr(ip) {
+		return false, ""
+	}
+
 	blocked = true
 	ips := a.blockedIPs
 	ipnets := a.blockedNets

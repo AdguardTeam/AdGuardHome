@@ -700,10 +700,12 @@ func (s *Server) IsBlockedClient(ip netip.Addr, clientID string) (blocked bool, 
 	blockedByIP := false
 	if ip != (netip.Addr{}) {
 		blockedByIP, rule = s.access.isBlockedIP(ip)
+		log.Debug("by ip %v", blockedByIP)
 	}
 
 	allowlistMode := s.access.allowlistMode()
 	blockedByClientID := s.access.isBlockedClientID(clientID)
+	log.Debug("by client id %v", blockedByClientID)
 
 	// Allow if at least one of the checks allows in allowlist mode, but block
 	// if at least one of the checks blocks in blocklist mode.

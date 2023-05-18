@@ -30,6 +30,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Locally served address are now ignored from allowed/blocked clients access
+  lists.  These addresses are always allowed ([#5799]).
+
 - Unquoted IPv6 bind hosts with trailing colons erroneously considered
   unspecified addresses are now properly validated ([#5752]).
 
@@ -42,6 +45,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
 [#5716]: https://github.com/AdguardTeam/AdGuardHome/issues/5716
+[#5799]: https://github.com/AdguardTeam/AdGuardHome/issues/5799
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

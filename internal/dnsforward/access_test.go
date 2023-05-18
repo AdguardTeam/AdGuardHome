@@ -103,7 +103,7 @@ func TestIsBlockedHost(t *testing.T) {
 	}
 }
 
-func TestIsBlockedIP(t *testing.T) {
+func TestAccessManager_IsBlockedIP_allow(t *testing.T) {
 	clients := []string{
 		"1.2.3.4",
 		"5.6.7.8/24",
@@ -112,49 +112,93 @@ func TestIsBlockedIP(t *testing.T) {
 	allowCtx, err := newAccessCtx(clients, nil, nil)
 	require.NoError(t, err)
 
+	testCases := []struct {
+		ip       netip.Addr
+		want     assert.BoolAssertionFunc
+		name     string
+		wantRule string
+	}{{
+		ip:       netip.MustParseAddr("1.2.3.4"),
+		name:     "match_ip",
+		wantRule: "1.2.3.4",
+		want:     assert.False,
+	}, {
+		ip:       netip.MustParseAddr("5.6.7.100"),
+		name:     "match_cidr",
+		wantRule: "5.6.7.8/24",
+		want:     assert.False,
+	}, {
+		ip:       netip.MustParseAddr("9.2.3.4"),
+		name:     "no_match_ip",
+		wantRule: "",
+		want:     assert.True,
+	}, {
+		ip:       netip.MustParseAddr("9.6.7.100"),
+		name:     "no_match_cidr",
+		wantRule: "",
+		want:     assert.True,
+	}, {
+		ip:       netip.MustParseAddr("127.0.0.1"),
+		name:     "locally_served_ip",
+		wantRule: "",
+		want:     assert.False,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			blocked, rule := allowCtx.isBlockedIP(tc.ip)
+			tc.want(t, blocked)
+			assert.Equal(t, tc.wantRule, rule)
+		})
+	}
+}
+
+func TestAccessManager_IsBlockedIP_block(t *testing.T) {
+	clients := []string{
+		"1.2.3.4",
+		"5.6.7.8/24",
+	}
+
 	blockCtx, err := newAccessCtx(nil, clients, nil)
 	require.NoError(t, err)
 
 	testCases := []struct {
-		ip          netip.Addr
-		name        string
-		wantRule    string
-		wantBlocked bool
+		ip       netip.Addr
+		want     assert.BoolAssertionFunc
+		name     string
+		wantRule string
 	}{{
-		ip:          netip.MustParseAddr("1.2.3.4"),
-		name:        "match_ip",
-		wantRule:    "1.2.3.4",
-		wantBlocked: true,
+		ip:       netip.MustParseAddr("1.2.3.4"),
+		name:     "match_ip",
+		wantRule: "1.2.3.4",
+		want:     assert.True,
 	}, {
-		ip:          netip.MustParseAddr("5.6.7.100"),
-		name:        "match_cidr",
-		wantRule:    "5.6.7.8/24",
-		wantBlocked: true,
+		ip:       netip.MustParseAddr("5.6.7.100"),
+		name:     "match_cidr",
+		wantRule: "5.6.7.8/24",
+		want:     assert.True,
 	}, {
-		ip:          netip.MustParseAddr("9.2.3.4"),
-		name:        "no_match_ip",
-		wantRule:    "",
-		wantBlocked: false,
+		ip:       netip.MustParseAddr("9.2.3.4"),
+		name:     "no_match_ip",
+		wantRule: "",
+		want:     assert.False,
 	}, {
-		ip:          netip.MustParseAddr("9.6.7.100"),
-		name:        "no_match_cidr",
-		wantRule:    "",
-		wantBlocked: false,
+		ip:       netip.MustParseAddr("9.6.7.100"),
+		name:     "no_match_cidr",
+		wantRule: "",
+		want:     assert.False,
+	}, {
+		ip:       netip.MustParseAddr("127.0.0.1"),
+		name:     "locally_served_ip",
+		wantRule: "",
+		want:     assert.False,
 	}}
 
-	t.Run("allow", func(t *testing.T) {
-		for _, tc := range testCases {
-			blocked, rule := allowCtx.isBlockedIP(tc.ip)
-			assert.Equal(t, !tc.wantBlocked, blocked)
-			assert.Equal(t, tc.wantRule, rule)
-		}
-	})
-
-	t.Run("block", func(t *testing.T) {
-		for _, tc := range testCases {
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
 			blocked, rule := blockCtx.isBlockedIP(tc.ip)
-			assert.Equal(t, tc.wantBlocked, blocked)
+			tc.want(t, blocked)
 			assert.Equal(t, tc.wantRule, rule)
-		}
-	})
+		})
+	}
 }
