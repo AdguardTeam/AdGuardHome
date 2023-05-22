@@ -49,18 +49,20 @@ func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
 		return nil, err
 	}
 
-	if len(hwa) == 6 || len(hwa) == 8 {
-		lla = make([]byte, 8)
-		copy(lla, hwa)
+	switch len(hwa) {
+	// EUI-48 are 6 bytes, so 6 + 2 prefix bytes is divisible by 8
+	case 6:
+		lla = make([]byte, 6)
 
-		return lla, nil
+	// EUI-64 are 8 bytes, so pad to 14 so that with the prefix, it's divisible by 8
+	case 8:
+		lla = make([]byte, 14)
+
+	// The last validated type by netutil.ValidateMAC is 20 byte InfiniBand link-layer address
+	default:
+		lla = make([]byte, 22)
 	}
-
-	// Assume that netutil.ValidateMAC prevents lengths other than 20 by
-	// now.
-	lla = make([]byte, 24)
 	copy(lla, hwa)
-
 	return lla, nil
 }
 
@@ -92,7 +94,9 @@ func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
 //	    - Reserved[2]
 //	    - MTU[4]
 //	  - Option=Source link-layer address(1):
-//	    - Link-Layer Address[8/24]
+//	    - Type[1]
+//	    - Length * 8bytes[1]
+//	    - Link-Layer Address[6/14/22]
 //	  - Option=Recursive DNS Server(25):
 //	    - Type[1]
 //	    - Length * 8bytes[1]
