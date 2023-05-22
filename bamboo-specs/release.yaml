@@ -232,25 +232,24 @@
         case "$channel"
         in
         ('release')
-              snapchannel='candidate'
-              ;;
+                snapchannel='candidate'
+                ;;
         ('beta')
-              snapchannel='beta'
-              ;;
+                snapchannel='beta'
+                ;;
         ('edge')
-              snapchannel='edge'
-              ;;
+                snapchannel='edge'
+                ;;
         (*)
-              echo "invalid channel '$channel'"
-              exit 1
-              ;;
+                echo "invalid channel '$channel'"
+                exit 1
+                ;;
         esac
 
         env\
                 SNAPCRAFT_CHANNEL="$snapchannel"\
                 SNAPCRAFT_EMAIL="${bamboo.snapcraftEmail}"\
-                SNAPCRAFT_MACAROON="${bamboo.snapcraftMacaroonPassword}"\
-                SNAPCRAFT_UBUNTU_DISCHARGE="${bamboo.snapcraftUbuntuDischargePassword}"\
+                SNAPCRAFT_STORE_CREDENTIALS="${bamboo.snapcraftMacaroonPassword}"\
                 ../bamboo-deploy-publisher/deploy.sh adguard-home-snap
   'final-tasks':
   - 'clean'
@@ -280,9 +279,9 @@
 
         if [ "$channel" != 'release' ] && [ "${channel}" != 'beta' ]
         then
-              echo "don't publish to GitHub Releases for this channel"
+                echo "don't publish to GitHub Releases for this channel"
 
-              exit 0
+                exit 0
         fi
 
         cd ./dist/
