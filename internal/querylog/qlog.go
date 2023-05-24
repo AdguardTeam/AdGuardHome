@@ -16,32 +16,35 @@ import (
 	"github.com/miekg/dns"
 )
 
-const (
-	queryLogFileName = "querylog.json" // .gz added during compression
-)
+// queryLogFileName is a name of the log file.  ".gz" extension is added later
+// during compression.
+const queryLogFileName = "querylog.json"
 
-// queryLog is a structure that writes and reads the DNS query log
+// queryLog is a structure that writes and reads the DNS query log.
 type queryLog struct {
-	findClient func(ids []string) (c *Client, err error)
-
 	// confMu protects conf.
 	confMu *sync.RWMutex
-	conf   *Config
+
+	conf       *Config
+	anonymizer *aghnet.IPMut
+
+	findClient func(ids []string) (c *Client, err error)
 
 	// logFile is the path to the log file.
 	logFile string
 
-	// bufferLock protects buffer.
-	bufferLock sync.RWMutex
 	// buffer contains recent log entries.  The entries in this buffer must not
 	// be modified.
 	buffer []*logEntry
 
-	fileFlushLock sync.Mutex // synchronize a file-flushing goroutine and main thread
-	flushPending  bool       // don't start another goroutine while the previous one is still running
+	// bufferLock protects buffer.
+	bufferLock sync.RWMutex
+
+	// fileFlushLock synchronizes a file-flushing goroutine and main thread.
+	fileFlushLock sync.Mutex
 	fileWriteLock sync.Mutex
 
-	anonymizer *aghnet.IPMut
+	flushPending bool
 }
 
 // ClientProto values are names of the client protocols.
@@ -155,6 +158,43 @@ func (l *queryLog) clear() {
 	log.Debug("querylog: cleared")
 }
 
+// newLogEntry creates an instance of logEntry from parameters.
+func newLogEntry(params *AddParams) (entry *logEntry) {
+	q := params.Question.Question[0]
+
+	entry = &logEntry{
+		// TODO(d.kolyshev): Export this timestamp to func params.
+		Time: time.Now(),
+
+		QHost:  strings.ToLower(q.Name[:len(q.Name)-1]),
+		QType:  dns.Type(q.Qtype).String(),
+		QClass: dns.Class(q.Qclass).String(),
+
+		ClientID:    params.ClientID,
+		ClientProto: params.ClientProto,
+
+		Result:   *params.Result,
+		Upstream: params.Upstream,
+
+		IP: params.ClientIP,
+
+		Elapsed: params.Elapsed,
+
+		Cached:            params.Cached,
+		AuthenticatedData: params.AuthenticatedData,
+	}
+
+	if params.ReqECS != nil {
+		entry.ReqECS = params.ReqECS.String()
+	}
+
+	entry.addResponse(params.Answer, false)
+	entry.addResponse(params.OrigAnswer, true)
+
+	return entry
+}
+
+// Add implements the [QueryLog] interface for *queryLog.
 func (l *queryLog) Add(params *AddParams) {
 	var isEnabled, fileIsEnabled bool
 	var memSize uint32
@@ -181,35 +221,7 @@ func (l *queryLog) Add(params *AddParams) {
 		params.Result = &filtering.Result{}
 	}
 
-	now := time.Now()
-	q := params.Question.Question[0]
-	entry := &logEntry{
-		Time: now,
-
-		QHost:  strings.ToLower(q.Name[:len(q.Name)-1]),
-		QType:  dns.Type(q.Qtype).String(),
-		QClass: dns.Class(q.Qclass).String(),
-
-		ClientID:    params.ClientID,
-		ClientProto: params.ClientProto,
-
-		Result:   *params.Result,
-		Upstream: params.Upstream,
-
-		IP: params.ClientIP,
-
-		Elapsed: params.Elapsed,
-
-		Cached:            params.Cached,
-		AuthenticatedData: params.AuthenticatedData,
-	}
-
-	if params.ReqECS != nil {
-		entry.ReqECS = params.ReqECS.String()
-	}
-
-	entry.addResponse(params.Answer, false)
-	entry.addResponse(params.OrigAnswer, true)
+	entry := newLogEntry(params)
 
 	needFlush := false
 	func() {

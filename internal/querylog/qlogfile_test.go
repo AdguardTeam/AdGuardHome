@@ -72,15 +72,15 @@ func prepareTestFiles(t *testing.T, filesNum, linesNum int) []string {
 	return files
 }
 
-// newTestQLogFile creates new *QLogFile for tests and registers the required
+// newTestQLogFile creates new *qLogFile for tests and registers the required
 // cleanup functions.
-func newTestQLogFile(t *testing.T, linesNum int) (file *QLogFile) {
+func newTestQLogFile(t *testing.T, linesNum int) (file *qLogFile) {
 	t.Helper()
 
 	testFile := prepareTestFiles(t, 1, linesNum)[0]
 
-	// Create the new QLogFile instance.
-	file, err := NewQLogFile(testFile)
+	// Create the new qLogFile instance.
+	file, err := newQLogFile(testFile)
 	require.NoError(t, err)
 
 	assert.NotNil(t, file)
@@ -240,7 +240,7 @@ func TestQLogFile_SeekTS_bad(t *testing.T) {
 	}
 }
 
-func getQLogFileLine(q *QLogFile, lineNumber int) (line string, err error) {
+func getQLogFileLine(q *qLogFile, lineNumber int) (line string, err error) {
 	if _, err = q.SeekStart(); err != nil {
 		return line, err
 	}
@@ -256,7 +256,7 @@ func getQLogFileLine(q *QLogFile, lineNumber int) (line string, err error) {
 
 // Check adding and loading (with filtering) entries from disk and memory.
 func TestQLogFile(t *testing.T) {
-	// Create the new QLogFile instance.
+	// Create the new qLogFile instance.
 	q := newTestQLogFile(t, 2)
 
 	// Seek to the start.
@@ -285,7 +285,7 @@ func TestQLogFile(t *testing.T) {
 	assert.Empty(t, line)
 }
 
-func NewTestQLogFileData(t *testing.T, data string) (file *QLogFile) {
+func newTestQLogFileData(t *testing.T, data string) (file *qLogFile) {
 	f, err := os.CreateTemp(t.TempDir(), "*.txt")
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, f.Close)
@@ -293,7 +293,7 @@ func NewTestQLogFileData(t *testing.T, data string) (file *QLogFile) {
 	_, err = f.WriteString(data)
 	require.NoError(t, err)
 
-	file, err = NewQLogFile(f.Name())
+	file, err = newQLogFile(f.Name())
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, file.Close)
 
@@ -309,9 +309,9 @@ func TestQLog_Seek(t *testing.T) {
 	timestamp, _ := time.Parse(time.RFC3339Nano, "2020-08-31T18:44:25.376690873+03:00")
 
 	testCases := []struct {
+		wantErr   error
 		name      string
 		delta     int
-		wantErr   error
 		wantDepth int
 	}{{
 		name:      "ok",
@@ -321,12 +321,12 @@ func TestQLog_Seek(t *testing.T) {
 	}, {
 		name:      "too_late",
 		delta:     2,
-		wantErr:   ErrTSTooLate,
+		wantErr:   errTSTooLate,
 		wantDepth: 2,
 	}, {
 		name:      "too_early",
 		delta:     -2,
-		wantErr:   ErrTSTooEarly,
+		wantErr:   errTSTooEarly,
 		wantDepth: 1,
 	}}
 
@@ -338,7 +338,7 @@ func TestQLog_Seek(t *testing.T) {
 				timestamp.Add(time.Second).Format(time.RFC3339Nano),
 			)
 
-			q := NewTestQLogFileData(t, data)
+			q := newTestQLogFileData(t, data)
 
 			_, depth, err := q.seekTS(timestamp.Add(time.Second * time.Duration(tc.delta)).UnixNano())
 			require.Truef(t, errors.Is(err, tc.wantErr), "%v", err)

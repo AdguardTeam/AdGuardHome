@@ -10,15 +10,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// newTestQLogReader creates new *QLogReader for tests and registers the
+// newTestQLogReader creates new *qLogReader for tests and registers the
 // required cleanup functions.
-func newTestQLogReader(t *testing.T, filesNum, linesNum int) (reader *QLogReader) {
+func newTestQLogReader(t *testing.T, filesNum, linesNum int) (reader *qLogReader) {
 	t.Helper()
 
 	testFiles := prepareTestFiles(t, filesNum, linesNum)
 
-	// Create the new QLogReader instance.
-	reader, err := NewQLogReader(testFiles)
+	// Create the new qLogReader instance.
+	reader, err := newQLogReader(testFiles)
 	require.NoError(t, err)
 
 	assert.NotNil(t, reader)
@@ -75,9 +75,9 @@ func TestQLogReader_Seek(t *testing.T) {
 	r := newTestQLogReader(t, 2, 10000)
 
 	testCases := []struct {
+		want error
 		name string
 		time string
-		want error
 	}{{
 		name: "not_too_old",
 		time: "2020-02-18T22:39:35.920973+03:00",
@@ -97,7 +97,7 @@ func TestQLogReader_Seek(t *testing.T) {
 	}, {
 		name: "non-existent_long_ago",
 		time: "2000-02-19T01:23:16.920973+03:00",
-		want: ErrTSNotFound,
+		want: errTSNotFound,
 	}, {
 		name: "non-existent_far_ahead",
 		time: "2100-02-19T01:23:16.920973+03:00",
@@ -105,7 +105,7 @@ func TestQLogReader_Seek(t *testing.T) {
 	}, {
 		name: "non-existent_but_could",
 		time: "2020-02-18T22:36:37.000000+03:00",
-		want: ErrTSNotFound,
+		want: errTSNotFound,
 	}}
 
 	for _, tc := range testCases {
@@ -125,9 +125,9 @@ func TestQLogReader_ReadNext(t *testing.T) {
 	r := newTestQLogReader(t, filesNum, linesNum)
 
 	testCases := []struct {
+		want  error
 		name  string
 		start int
-		want  error
 	}{{
 		name:  "ok",
 		start: 0,

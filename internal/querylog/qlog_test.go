@@ -45,9 +45,10 @@ func TestQueryLog(t *testing.T) {
 	addEntry(l, "example.com", net.IPv4(1, 1, 1, 4), net.IPv4(2, 2, 2, 4))
 
 	type tcAssertion struct {
-		num            int
-		host           string
-		answer, client net.IP
+		host   string
+		answer net.IP
+		client net.IP
+		num    int
 	}
 
 	testCases := []struct {
