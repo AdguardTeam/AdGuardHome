@@ -98,22 +98,8 @@ func TestClients(t *testing.T) {
 		assert.False(t, ok)
 	})
 
-	t.Run("update_fail_name", func(t *testing.T) {
-		err := clients.Update("client3", &Client{
-			IDs:  []string{"1.2.3.0"},
-			Name: "client3",
-		})
-		require.Error(t, err)
-
-		err = clients.Update("client3", &Client{
-			IDs:  []string{"1.2.3.0"},
-			Name: "client2",
-		})
-		assert.Error(t, err)
-	})
-
 	t.Run("update_fail_ip", func(t *testing.T) {
-		err := clients.Update("client1", &Client{
+		err := clients.Update(&Client{Name: "client1"}, &Client{
 			IDs:  []string{"2.2.2.2"},
 			Name: "client1",
 		})
@@ -129,7 +115,10 @@ func TestClients(t *testing.T) {
 			cliNewIP = netip.MustParseAddr(cliNew)
 		)
 
-		err := clients.Update("client1", &Client{
+		prev, ok := clients.list["client1"]
+		require.True(t, ok)
+
+		err := clients.Update(prev, &Client{
 			IDs:  []string{cliNew},
 			Name: "client1",
 		})
@@ -138,7 +127,10 @@ func TestClients(t *testing.T) {
 		assert.Equal(t, clients.clientSource(cliOldIP), ClientSourceNone)
 		assert.Equal(t, clients.clientSource(cliNewIP), ClientSourcePersistent)
 
-		err = clients.Update("client1", &Client{
+		prev, ok = clients.list["client1"]
+		require.True(t, ok)
+
+		err = clients.Update(prev, &Client{
 			IDs:            []string{cliNew},
 			Name:           "client1-renamed",
 			UseOwnSettings: true,
