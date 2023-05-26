@@ -16,6 +16,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 )
 
 type v4ServerConfJSON struct {
@@ -263,6 +264,28 @@ func (s *server) handleDHCPSetConfigV6(
 	return srv6, enabled, err
 }
 
+// createServers returns DHCPv4 and DHCPv6 servers created from the provided
+// configuration conf.
+func (s *server) createServers(conf *dhcpServerConfigJSON) (srv4, srv6 DHCPServer, err error) {
+	srv4, v4Enabled, err := s.handleDHCPSetConfigV4(conf)
+	if err != nil {
+		return nil, nil, fmt.Errorf("bad dhcpv4 configuration: %s", err)
+	}
+
+	srv6, v6Enabled, err := s.handleDHCPSetConfigV6(conf)
+	if err != nil {
+		return nil, nil, fmt.Errorf("bad dhcpv6 configuration: %s", err)
+	}
+
+	if conf.Enabled == aghalg.NBTrue && !v4Enabled && !v6Enabled {
+		return nil, nil, fmt.Errorf("dhcpv4 or dhcpv6 configuration must be complete")
+	}
+
+	return srv4, srv6, nil
+}
+
+// handleDHCPSetConfig is the handler for the POST /control/dhcp/set_config
+// HTTP API.
 func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	conf := &dhcpServerConfigJSON{}
 	conf.Enabled = aghalg.BoolToNullBool(s.conf.Enabled)
@@ -275,22 +298,9 @@ func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	srv4, v4Enabled, err := s.handleDHCPSetConfigV4(conf)
+	srv4, srv6, err := s.createServers(conf)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "bad dhcpv4 configuration: %s", err)
-
-		return
-	}
-
-	srv6, v6Enabled, err := s.handleDHCPSetConfigV6(conf)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "bad dhcpv6 configuration: %s", err)
-
-		return
-	}
-
-	if conf.Enabled == aghalg.NBTrue && !v4Enabled && !v6Enabled {
-		aghhttp.Error(r, w, http.StatusBadRequest, "dhcpv4 or dhcpv6 configuration must be complete")
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -350,10 +360,10 @@ type netInterfaceJSON struct {
 	Addrs6       []netip.Addr `json:"ipv6_addresses"`
 }
 
-// handleDHCPInterfaces is the handler for the GET /control/dhcp/interfaces HTTP
-// API.
+// handleDHCPInterfaces is the handler for the GET /control/dhcp/interfaces
+// HTTP API.
 func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
-	resp := map[string]netInterfaceJSON{}
+	resp := map[string]*netInterfaceJSON{}
 
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -364,73 +374,86 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 
 	for _, iface := range ifaces {
 		if iface.Flags&net.FlagLoopback != 0 {
-			// it's a loopback, skip it
-			continue
-		}
-		if iface.Flags&net.FlagBroadcast == 0 {
-			// this interface doesn't support broadcast, skip it
+			// It's a loopback, skip it.
 			continue
 		}
 
-		var addrs []net.Addr
-		addrs, err = iface.Addrs()
-		if err != nil {
-			aghhttp.Error(
-				r,
-				w,
-				http.StatusInternalServerError,
-				"Failed to get addresses for interface %s: %s",
-				iface.Name,
-				err,
-			)
+		if iface.Flags&net.FlagBroadcast == 0 {
+			// This interface doesn't support broadcast, skip it.
+			continue
+		}
+
+		jsonIface, iErr := newNetInterfaceJSON(iface)
+		if iErr != nil {
+			aghhttp.Error(r, w, http.StatusInternalServerError, "%s", iErr)
 
 			return
 		}
 
-		jsonIface := netInterfaceJSON{
-			Name:         iface.Name,
-			HardwareAddr: iface.HardwareAddr.String(),
-		}
-
-		if iface.Flags != 0 {
-			jsonIface.Flags = iface.Flags.String()
-		}
-		// we don't want link-local addresses in json, so skip them
-		for _, addr := range addrs {
-			ipnet, ok := addr.(*net.IPNet)
-			if !ok {
-				// not an IPNet, should not happen
-				aghhttp.Error(
-					r,
-					w,
-					http.StatusInternalServerError,
-					"got iface.Addrs() element %[1]s that is not net.IPNet, it is %[1]T",
-					addr)
-
-				return
-			}
-			// ignore link-local
-			//
-			// TODO(e.burkov):  Try to listen DHCP on LLA as well.
-			if ipnet.IP.IsLinkLocalUnicast() {
-				continue
-			}
-
-			if ip4 := ipnet.IP.To4(); ip4 != nil {
-				addr := netip.AddrFrom4(*(*[4]byte)(ip4))
-				jsonIface.Addrs4 = append(jsonIface.Addrs4, addr)
-			} else {
-				addr := netip.AddrFrom16(*(*[16]byte)(ipnet.IP))
-				jsonIface.Addrs6 = append(jsonIface.Addrs6, addr)
-			}
-		}
-		if len(jsonIface.Addrs4)+len(jsonIface.Addrs6) != 0 {
-			jsonIface.GatewayIP = aghnet.GatewayIP(iface.Name)
+		if jsonIface != nil {
 			resp[iface.Name] = jsonIface
 		}
 	}
 
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
+}
+
+// newNetInterfaceJSON creates a JSON object from a [net.Interface] iface.
+func newNetInterfaceJSON(iface net.Interface) (out *netInterfaceJSON, err error) {
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get addresses for interface %s: %s",
+			iface.Name,
+			err,
+		)
+	}
+
+	out = &netInterfaceJSON{
+		Name:         iface.Name,
+		HardwareAddr: iface.HardwareAddr.String(),
+	}
+
+	if iface.Flags != 0 {
+		out.Flags = iface.Flags.String()
+	}
+
+	// We don't want link-local addresses in JSON, so skip them.
+	for _, addr := range addrs {
+		ipNet, ok := addr.(*net.IPNet)
+		if !ok {
+			// Not an IPNet, should not happen.
+			return nil, fmt.Errorf("got iface.Addrs() element %[1]s that is not"+
+				" net.IPNet, it is %[1]T", addr)
+		}
+
+		// Ignore link-local.
+		//
+		// TODO(e.burkov):  Try to listen DHCP on LLA as well.
+		if ipNet.IP.IsLinkLocalUnicast() {
+			continue
+		}
+
+		vAddr, iErr := netutil.IPToAddrNoMapped(ipNet.IP)
+		if iErr != nil {
+			// Not an IPNet, should not happen.
+			return nil, fmt.Errorf("failed to convert IP address %[1]s: %w", addr, iErr)
+		}
+
+		if vAddr.Is4() {
+			out.Addrs4 = append(out.Addrs4, vAddr)
+		} else {
+			out.Addrs6 = append(out.Addrs6, vAddr)
+		}
+	}
+
+	if len(out.Addrs4)+len(out.Addrs6) == 0 {
+		return nil, nil
+	}
+
+	out.GatewayIP = aghnet.GatewayIP(iface.Name)
+
+	return out, nil
 }
 
 // dhcpSearchOtherResult contains information about other DHCP server for

@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"golang.org/x/net/icmp"
@@ -195,7 +196,7 @@ func createICMPv6RAPacket(params icmpv6RA) (data []byte, err error) {
 	return data, nil
 }
 
-// Init - initialize RA module
+// Init initializes RA module.
 func (ra *raCtx) Init() (err error) {
 	ra.stop.Store(0)
 	ra.conn = nil
@@ -203,8 +204,7 @@ func (ra *raCtx) Init() (err error) {
 		return nil
 	}
 
-	log.Debug("dhcpv6 ra: source IP address: %s  DNS IP address: %s",
-		ra.ipAddr, ra.dnsIPAddr)
+	log.Debug("dhcpv6 ra: source IP address: %s  DNS IP address: %s", ra.ipAddr, ra.dnsIPAddr)
 
 	params := icmpv6RA{
 		managedAddressConfiguration: !ra.raSLAACOnly,
@@ -223,18 +223,15 @@ func (ra *raCtx) Init() (err error) {
 		return fmt.Errorf("creating packet: %w", err)
 	}
 
-	success := false
 	ipAndScope := ra.ipAddr.String() + "%" + ra.ifaceName
 	ra.conn, err = icmp.ListenPacket("ip6:ipv6-icmp", ipAndScope)
 	if err != nil {
 		return fmt.Errorf("dhcpv6 ra: icmp.ListenPacket: %w", err)
 	}
+
 	defer func() {
-		if !success {
-			derr := ra.Close()
-			if derr != nil {
-				log.Error("closing context: %s", derr)
-			}
+		if err != nil {
+			err = errors.WithDeferred(err, ra.Close())
 		}
 	}()
 
@@ -269,7 +266,6 @@ func (ra *raCtx) Init() (err error) {
 		log.Debug("dhcpv6 ra: loop exit")
 	}()
 
-	success = true
 	return nil
 }
 

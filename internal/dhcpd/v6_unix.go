@@ -586,9 +586,31 @@ func (s *v6Server) packetHandler(conn net.PacketConn, peer net.Addr, req dhcpv6.
 	}
 }
 
-// initialize RA module
-func (s *v6Server) initRA(iface *net.Interface) error {
-	// choose the source IP address - should be link-local-unicast
+// configureDNSIPAddrs updates v6Server configuration with the slice of DNS IP
+// addresses of provided interface iface.  Initializes RA module.
+func (s *v6Server) configureDNSIPAddrs(iface *net.Interface) (ok bool, err error) {
+	dnsIPAddrs, err := aghnet.IfaceDNSIPAddrs(
+		iface,
+		aghnet.IPVersion6,
+		defaultMaxAttempts,
+		defaultBackoff,
+	)
+	if err != nil {
+		return false, fmt.Errorf("interface %s: %w", iface.Name, err)
+	}
+
+	if len(dnsIPAddrs) == 0 {
+		return false, nil
+	}
+
+	s.conf.dnsIPAddrs = dnsIPAddrs
+
+	return true, s.initRA(iface)
+}
+
+// initRA initializes RA module.
+func (s *v6Server) initRA(iface *net.Interface) (err error) {
+	// Choose the source IP address - should be link-local-unicast.
 	s.ra.ipAddr = s.conf.dnsIPAddrs[0]
 	for _, ip := range s.conf.dnsIPAddrs {
 		if ip.IsLinkLocalUnicast() {
@@ -604,6 +626,7 @@ func (s *v6Server) initRA(iface *net.Interface) error {
 	s.ra.ifaceName = s.conf.InterfaceName
 	s.ra.iface = iface
 	s.ra.packetSendPeriod = 1 * time.Second
+
 	return s.ra.Init()
 }
 
@@ -623,36 +646,23 @@ func (s *v6Server) Start() (err error) {
 
 	log.Debug("dhcpv6: starting...")
 
-	dnsIPAddrs, err := aghnet.IfaceDNSIPAddrs(
-		iface,
-		aghnet.IPVersion6,
-		defaultMaxAttempts,
-		defaultBackoff,
-	)
+	ok, err := s.configureDNSIPAddrs(iface)
 	if err != nil {
-		return fmt.Errorf("interface %s: %w", ifaceName, err)
+		// Don't wrap the error, because it's informative enough as is.
+		return err
 	}
 
-	if len(dnsIPAddrs) == 0 {
+	if !ok {
 		// No available IP addresses which may appear later.
 		return nil
 	}
 
-	s.conf.dnsIPAddrs = dnsIPAddrs
-
-	err = s.initRA(iface)
-	if err != nil {
-		return err
-	}
-
-	// don't initialize DHCPv6 server if we must force the clients to use SLAAC
+	// Don't initialize DHCPv6 server if we must force the clients to use SLAAC.
 	if s.conf.RASLAACOnly {
 		log.Debug("not starting dhcpv6 server due to ra_slaac_only=true")
 
 		return nil
 	}
-
-	log.Debug("dhcpv6: listening...")
 
 	err = netutil.ValidateMAC(iface.HardwareAddr)
 	if err != nil {
@@ -665,20 +675,18 @@ func (s *v6Server) Start() (err error) {
 		Time:          dhcpv6.GetTime(),
 	}
 
-	laddr := &net.UDPAddr{
-		IP:   net.ParseIP("::"),
-		Port: dhcpv6.DefaultServerPort,
-	}
-	s.srv, err = server6.NewServer(iface.Name, laddr, s.packetHandler, server6.WithDebugLogger())
+	s.srv, err = server6.NewServer(iface.Name, nil, s.packetHandler, server6.WithDebugLogger())
 	if err != nil {
 		return err
 	}
 
+	log.Debug("dhcpv6: listening...")
+
 	go func() {
-		if serr := s.srv.Serve(); errors.Is(serr, net.ErrClosed) {
+		if sErr := s.srv.Serve(); errors.Is(sErr, net.ErrClosed) {
 			log.Info("dhcpv6: server is closed")
-		} else if serr != nil {
-			log.Error("dhcpv6: srv.Serve: %s", serr)
+		} else if sErr != nil {
+			log.Error("dhcpv6: srv.Serve: %s", sErr)
 		}
 	}()
 

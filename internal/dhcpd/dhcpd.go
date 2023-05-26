@@ -239,36 +239,16 @@ func Create(conf *ServerConfig) (s *server, err error) {
 	// [aghhttp.RegisterFunc].
 	s.registerHandlers()
 
-	v4conf := conf.Conf4
-	v4conf.InterfaceName = s.conf.InterfaceName
-	v4conf.notify = s.onNotify
-	v4conf.Enabled = s.conf.Enabled && v4conf.RangeStart.IsValid()
-
-	s.srv4, err = v4Create(&v4conf)
+	v4Enabled, v6Enabled, err := s.setServers(conf)
 	if err != nil {
-		if v4conf.Enabled {
-			return nil, fmt.Errorf("creating dhcpv4 srv: %w", err)
-		}
-
-		log.Debug("dhcpd: warning: creating dhcpv4 srv: %s", err)
-	}
-
-	v6conf := conf.Conf6
-	v6conf.Enabled = s.conf.Enabled
-	if len(v6conf.RangeStart) == 0 {
-		v6conf.Enabled = false
-	}
-	v6conf.InterfaceName = s.conf.InterfaceName
-	v6conf.notify = s.onNotify
-	s.srv6, err = v6Create(v6conf)
-	if err != nil {
-		return nil, fmt.Errorf("creating dhcpv6 srv: %w", err)
+		// Don't wrap the error, because it's informative enough as is.
+		return nil, err
 	}
 
 	s.conf.Conf4 = conf.Conf4
 	s.conf.Conf6 = conf.Conf6
 
-	if s.conf.Enabled && !v4conf.Enabled && !v6conf.Enabled {
+	if s.conf.Enabled && !v4Enabled && !v6Enabled {
 		return nil, fmt.Errorf("neither dhcpv4 nor dhcpv6 srv is configured")
 	}
 
@@ -287,6 +267,39 @@ func Create(conf *ServerConfig) (s *server, err error) {
 	}
 
 	return s, nil
+}
+
+// setServers updates DHCPv4 and DHCPv6 servers created from the provided
+// configuration conf.
+func (s *server) setServers(conf *ServerConfig) (v4Enabled, v6Enabled bool, err error) {
+	v4conf := conf.Conf4
+	v4conf.InterfaceName = s.conf.InterfaceName
+	v4conf.notify = s.onNotify
+	v4conf.Enabled = s.conf.Enabled && v4conf.RangeStart.IsValid()
+
+	s.srv4, err = v4Create(&v4conf)
+	if err != nil {
+		if v4conf.Enabled {
+			return true, false, fmt.Errorf("creating dhcpv4 srv: %w", err)
+		}
+
+		log.Debug("dhcpd: warning: creating dhcpv4 srv: %s", err)
+	}
+
+	v6conf := conf.Conf6
+	v6conf.InterfaceName = s.conf.InterfaceName
+	v6conf.notify = s.onNotify
+	v6conf.Enabled = s.conf.Enabled
+	if len(v6conf.RangeStart) == 0 {
+		v6conf.Enabled = false
+	}
+
+	s.srv6, err = v6Create(v6conf)
+	if err != nil {
+		return v4conf.Enabled, v6conf.Enabled, fmt.Errorf("creating dhcpv6 srv: %w", err)
+	}
+
+	return v4conf.Enabled, v6conf.Enabled, nil
 }
 
 // Enabled returns true when the server is enabled.

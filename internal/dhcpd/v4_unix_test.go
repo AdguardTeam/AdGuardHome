@@ -227,7 +227,7 @@ func TestV4Server_AddRemove_static(t *testing.T) {
 		},
 		name: "with_gateway_ip",
 		wantErrMsg: "dhcpv4: adding static lease: " +
-			"can't assign the gateway IP 192.168.10.1 to the lease",
+			`can't assign the gateway IP "192.168.10.1" to the lease`,
 	}, {
 		lease: &Lease{
 			Hostname: "ip6.local",
@@ -236,7 +236,7 @@ func TestV4Server_AddRemove_static(t *testing.T) {
 		},
 		name: "ipv6",
 		wantErrMsg: `dhcpv4: adding static lease: ` +
-			`invalid ip "ffff::1", only ipv4 is supported`,
+			`invalid IP "ffff::1": only IPv4 is supported`,
 	}, {
 		lease: &Lease{
 			Hostname: "bad-mac.local",
