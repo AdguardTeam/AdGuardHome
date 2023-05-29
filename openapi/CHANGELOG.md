@@ -6,6 +6,11 @@
 
 ## v0.107.30: API changes
 
+### New HTTP API 'GET /control/querylog/export'
+
+* The new `GET /control/querylog/export` HTTP API allows an export of query log
+  items in the CSV file.
+
 ### `POST /control/version.json` and `GET /control/dhcp/interfaces` content type
 
 * The value of the `Content-Type` header in the `POST /control/version.json` and

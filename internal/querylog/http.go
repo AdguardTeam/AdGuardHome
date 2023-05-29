@@ -62,6 +62,7 @@ func (l *queryLog) initWeb() {
 	l.conf.HTTPRegister(http.MethodGet, "/control/querylog", l.handleQueryLog)
 	l.conf.HTTPRegister(http.MethodPost, "/control/querylog_clear", l.handleQueryLogClear)
 	l.conf.HTTPRegister(http.MethodGet, "/control/querylog/config", l.handleGetQueryLogConfig)
+	l.conf.HTTPRegister(http.MethodGet, "/control/querylog/export", l.handleQueryLogExport)
 	l.conf.HTTPRegister(
 		http.MethodPut,
 		"/control/querylog/config/update",
@@ -94,6 +95,14 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	resp := entriesToJSON(entries, oldest, l.anonymizer.Load())
 
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
+}
+
+// handleQueryLogExport is the handler for the GET /control/querylog/export
+// HTTP API.
+//
+// TODO(d.kolyshev): !! Implement handleQueryLogExport.
+func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) {
+	aghhttp.Error(r, w, http.StatusBadRequest, "not implemented")
 }
 
 // handleQueryLogClear is the handler for the POST /control/querylog/clear HTTP

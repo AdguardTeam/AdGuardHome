@@ -25,6 +25,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- The new HTTP API, `GET /control/querylog/export`, which can be used to
+  export query log items.  See `openapi/openapi.yaml` for the full description
+  ([#3389]).
 - The ability to edit rewrite rules via `PUT /control/rewrite/update` HTTP API
   ([#1577]).
 
@@ -41,6 +44,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
   UDP/TCP upstream servers.
 
 [#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
+[#3389]: https://github.com/AdguardTeam/AdGuardHome/issues/3389
 [#5716]: https://github.com/AdguardTeam/AdGuardHome/issues/5716
 
 <!--

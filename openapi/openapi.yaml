@@ -313,6 +313,47 @@
       'responses':
         '200':
           'description': 'OK.'
+  '/querylog/export':
+    'get':
+      'tags':
+        - 'log'
+      'description': >
+        Returns a CSV file stream with the following fields, sorted a-z:
+        ans_dnssec, ans_rcode, ans_type, ans_value, cached, client_ip,
+        clientid, ecs, elapsed, filter_id, filter_rule, proto, qclass, qname,
+        qtype, reason, time, upstream.  The fields list is a subject to change.
+        The content is UTF-8 encoded with quotation marks.
+
+      'operationId': 'getQueryLogExport'
+      'summary': 'Get DNS server query log items in a CSV stream.'
+      'parameters':
+        - 'name': 'search'
+          'in': 'query'
+          'description': 'Filter by domain name or client IP'
+          'schema':
+            'type': 'string'
+        - 'name': 'response_status'
+          'in': 'query'
+          'description': 'Filter by response status'
+          'schema':
+            'type': 'string'
+            'enum':
+              - 'all'
+              - 'filtered'
+              - 'blocked'
+              - 'blocked_safebrowsing'
+              - 'blocked_parental'
+              - 'whitelisted'
+              - 'rewritten'
+              - 'safe_search'
+              - 'processed'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'text/csv':
+              schema:
+                type: string
   '/stats':
     'get':
       'tags':
