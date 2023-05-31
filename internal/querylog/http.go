@@ -121,7 +121,7 @@ func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) 
 	csvWriter := csv.NewWriter(w)
 	defer func() {
 		if err = csvWriter.Error(); err != nil {
-			http.Error(w, "writing csv", http.StatusInternalServerError)
+			aghhttp.Error(r, w, http.StatusInternalServerError, "writing csv")
 		}
 	}()
 
