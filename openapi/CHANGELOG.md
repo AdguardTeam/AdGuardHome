@@ -9,7 +9,7 @@
 ### New HTTP API 'GET /control/querylog/export'
 
 * The new `GET /control/querylog/export` HTTP API allows an export of query log
-  items in the CSV file.  Example:
+  items in the CSV file.  It returns a CSV object with the following format:
 
 ```text
 ans_dnssec,ans_rcode,ans_type,ans_value,cached,client_ip,client_id,ecs,elapsed,filter_id,filter_rule,proto,qclass,qname,qtype,reason,time,upstream
