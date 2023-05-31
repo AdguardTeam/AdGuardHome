@@ -115,13 +115,14 @@ func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) 
 		searchCriteria: searchCriteria,
 	}
 
-	w.Header().Set(httphdr.ContentType, "text/csv")
+	w.Header().Set(httphdr.ContentType, "text/csv; charset=UTF-8; header=present")
 	w.Header().Set(httphdr.ContentDisposition, "attachment;filename=data.csv")
 
 	csvWriter := csv.NewWriter(w)
 	defer func() {
 		if err = csvWriter.Error(); err != nil {
-			aghhttp.Error(r, w, http.StatusInternalServerError, "writing csv")
+			// TODO(a.garipov): Set Trailer X-Error header.
+			log.Error("%s %s %s: %s", r.Method, r.Host, r.URL, "writing csv")
 		}
 	}()
 
@@ -150,7 +151,8 @@ func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) 
 
 		for _, entry := range entries {
 			if err = csvWriter.Write(entry.toCSV()); err != nil {
-				http.Error(w, "writing csv record", http.StatusInternalServerError)
+				// TODO(a.garipov): Set Trailer X-Error header.
+				log.Error("%s %s %s: %s", r.Method, r.Host, r.URL, "writing csv record")
 
 				return
 			}
