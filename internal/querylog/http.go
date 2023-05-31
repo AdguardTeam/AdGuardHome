@@ -1,6 +1,7 @@
 package querylog
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -14,6 +15,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -99,10 +101,63 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 
 // handleQueryLogExport is the handler for the GET /control/querylog/export
 // HTTP API.
-//
-// TODO(d.kolyshev): !! Implement handleQueryLogExport.
 func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) {
-	aghhttp.Error(r, w, http.StatusBadRequest, "not implemented")
+	searchCriteria, err := parseSearchCriteria(r.URL.Query())
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "parsing params: %s", err)
+
+		return
+	}
+
+	params := &searchParams{
+		// TODO(a.meshkov): Consider making configurable.
+		limit:          500,
+		searchCriteria: searchCriteria,
+	}
+
+	w.Header().Set(httphdr.ContentType, "text/csv")
+	w.Header().Set(httphdr.ContentDisposition, "attachment;filename=data.csv")
+
+	csvWriter := csv.NewWriter(w)
+	defer func() {
+		if err = csvWriter.Error(); err != nil {
+			http.Error(w, "writing csv", http.StatusInternalServerError)
+		}
+	}()
+
+	// Write header.
+	if err = csvWriter.Write(csvHeaderRow); err != nil {
+		http.Error(w, "writing csv header", http.StatusInternalServerError)
+
+		return
+	}
+	csvWriter.Flush()
+
+	var entries []*logEntry
+	for {
+		func() {
+			l.confMu.RLock()
+			defer l.confMu.RUnlock()
+
+			entries, _ = l.search(params)
+		}()
+
+		if len(entries) == 0 {
+			break
+		}
+
+		params.offset += params.limit
+
+		for _, entry := range entries {
+			if err = csvWriter.Write(entry.toCSV()); err != nil {
+				http.Error(w, "writing csv record", http.StatusInternalServerError)
+
+				return
+			}
+		}
+
+		csvWriter.Flush()
+	}
 }
 
 // handleQueryLogClear is the handler for the POST /control/querylog/clear HTTP
@@ -369,6 +424,17 @@ func parseSearchParams(r *http.Request) (p *searchParams, err error) {
 		p.maxFileScanEntries = 0
 	}
 
+	p.searchCriteria, err = parseSearchCriteria(q)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return nil, err
+	}
+
+	return p, nil
+}
+
+// parseSearchCriteria parses a list of search criteria from the query.
+func parseSearchCriteria(q url.Values) (searchCriteria []searchCriterion, err error) {
 	for _, v := range []struct {
 		urlField string
 		ct       criterionType
@@ -387,9 +453,9 @@ func parseSearchParams(r *http.Request) (p *searchParams, err error) {
 		}
 
 		if ok {
-			p.searchCriteria = append(p.searchCriteria, c)
+			searchCriteria = append(searchCriteria, c)
 		}
 	}
 
-	return p, nil
+	return searchCriteria, nil
 }
