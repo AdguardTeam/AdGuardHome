@@ -10,7 +10,7 @@ import (
 )
 
 // csvHeaderRow is a slice of strings with row names for CSV header.  This
-// const should correspond with [logEntry.toCSV] func.
+// slice should correspond with [logEntry.toCSV] func.
 var csvHeaderRow = []string{
 	"ans_dnssec",
 	"ans_rcode",
@@ -46,7 +46,7 @@ func (e *logEntry) toCSV() (out []string) {
 	aData := ansData(e)
 
 	return []string{
-		aData.dnsSec,
+		strconv.FormatBool(e.AuthenticatedData),
 		aData.rCode,
 		aData.typ,
 		aData.value,
@@ -69,10 +69,9 @@ func (e *logEntry) toCSV() (out []string) {
 
 // csvAnswer is a helper struct for csv row answer fields.
 type csvAnswer struct {
-	dnsSec string
-	rCode  string
-	typ    string
-	value  string
+	rCode string
+	typ   string
+	value string
 }
 
 // ansData returns a map with message answer data.
@@ -89,10 +88,6 @@ func ansData(entry *logEntry) (out csvAnswer) {
 	}
 
 	out.rCode = dns.RcodeToString[msg.Rcode]
-
-	// Old query logs may still keep AD flag value in the message.  Try to get
-	// it from there as well.
-	out.dnsSec = strconv.FormatBool(entry.AuthenticatedData || msg.AuthenticatedData)
 
 	if len(msg.Answer) == 0 {
 		return out

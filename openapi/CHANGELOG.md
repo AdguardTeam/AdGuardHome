@@ -11,7 +11,7 @@
 * The new `GET /control/querylog/export` HTTP API allows an export of query log
   items in the CSV file.  It returns a CSV object with the following format:
 
-```text
+```csv
 ans_dnssec,ans_rcode,ans_type,ans_value,cached,client_ip,client_id,ecs,elapsed,filter_id,filter_rule,proto,qclass,qname,qtype,reason,time,upstream
 false,NOERROR,A,192.168.1.1,false,127.0.0.1,,,0.097409,,,,IN,example.com,A,Rewrite,2023-01-30T12:21:13.947563+07:00,
 false,NOERROR,A,45.33.2.79,false,127.0.0.1,,,482.967871,,,,IN,test.com,A,NotFilteredNotFound,2022-12-13T12:18:04.964403+07:00,https://dns10.quad9.net:443/dns-query

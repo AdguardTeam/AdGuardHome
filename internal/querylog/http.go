@@ -99,6 +99,11 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
+// exportChunkSize is a size of one search-flush iteration for query log export.
+//
+// TODO(a.meshkov): Consider making configurable.
+const exportChunkSize = 500
+
 // handleQueryLogExport is the handler for the GET /control/querylog/export
 // HTTP API.
 func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) {
@@ -110,8 +115,7 @@ func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) 
 	}
 
 	params := &searchParams{
-		// TODO(a.meshkov): Consider making configurable.
-		limit:          500,
+		limit:          exportChunkSize,
 		searchCriteria: searchCriteria,
 	}
 
@@ -119,12 +123,6 @@ func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set(httphdr.ContentDisposition, "attachment;filename=data.csv")
 
 	csvWriter := csv.NewWriter(w)
-	defer func() {
-		if err = csvWriter.Error(); err != nil {
-			// TODO(a.garipov): Set Trailer X-Error header.
-			log.Error("%s %s %s: %s", r.Method, r.Host, r.URL, "writing csv")
-		}
-	}()
 
 	// Write header.
 	if err = csvWriter.Write(csvHeaderRow); err != nil {
@@ -159,6 +157,11 @@ func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) 
 		}
 
 		csvWriter.Flush()
+	}
+
+	if err = csvWriter.Error(); err != nil {
+		// TODO(a.garipov): Set Trailer X-Error header.
+		log.Error("%s %s %s: %s", r.Method, r.Host, r.URL, "writing csv")
 	}
 }
 
