@@ -9,8 +9,8 @@ import (
 	"github.com/miekg/dns"
 )
 
-// csvHeaderRow is a slice of strings with row names for CSV header.  This
-// slice should correspond with [logEntry.toCSV] func.
+// csvHeaderRow is a slice of strings with column names for CSV header row.
+// This slice should correspond with [logEntry.toCSV] func.
 var csvHeaderRow = []string{
 	"ans_dnssec",
 	"ans_rcode",
