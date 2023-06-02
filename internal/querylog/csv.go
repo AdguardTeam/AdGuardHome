@@ -9,9 +9,11 @@ import (
 	"github.com/miekg/dns"
 )
 
+// csvRow is an alias type for csv rows.
+type csvRow = [18]string
+
 // csvHeaderRow is a slice of strings with column names for CSV header row.
-// This slice should correspond with [logEntry.toCSV] func.
-var csvHeaderRow = []string{
+var csvHeaderRow = csvRow{
 	"ans_dnssec",
 	"ans_rcode",
 	"ans_type",
@@ -34,7 +36,7 @@ var csvHeaderRow = []string{
 
 // toCSV returns a slice of strings with entry fields according to the
 // csvHeaderRow slice.
-func (e *logEntry) toCSV() (out []string) {
+func (e *logEntry) toCSV() (out csvRow) {
 	var filterID, filterRule string
 
 	if e.Result.IsFiltered && len(e.Result.Rules) > 0 {
@@ -45,7 +47,7 @@ func (e *logEntry) toCSV() (out []string) {
 
 	aData := ansData(e)
 
-	return []string{
+	return csvRow{
 		strconv.FormatBool(e.AuthenticatedData),
 		aData.rCode,
 		aData.typ,

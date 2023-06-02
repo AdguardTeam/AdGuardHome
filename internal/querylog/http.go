@@ -125,7 +125,7 @@ func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) 
 	csvWriter := csv.NewWriter(w)
 
 	// Write header.
-	if err = csvWriter.Write(csvHeaderRow); err != nil {
+	if err = csvWriter.Write(csvHeaderRow[:]); err != nil {
 		http.Error(w, "writing csv header", http.StatusInternalServerError)
 
 		return
@@ -148,7 +148,8 @@ func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) 
 		params.offset += params.limit
 
 		for _, entry := range entries {
-			if err = csvWriter.Write(entry.toCSV()); err != nil {
+			row := entry.toCSV()
+			if err = csvWriter.Write(row[:]); err != nil {
 				// TODO(a.garipov): Set Trailer X-Error header.
 				log.Error("%s %s %s: %s", r.Method, r.Host, r.URL, "writing csv record")
 
