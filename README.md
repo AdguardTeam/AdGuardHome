@@ -466,6 +466,10 @@ bug or implementing the feature.
     Home](https://github.com/ebrianne/adguard-exporter) by
     [@ebrianne](https://github.com/ebrianne).
 
+ *  [Terminal-based, real-time traffic monitoring and statistics for your AdGuard Home
+    instance](https://github.com/Lissy93/AdGuardian-Term) by
+    [@Lissy93](https://github.com/Lissy93)
+
  *  [AdGuard Home on GLInet
     routers](https://forum.gl-inet.com/t/adguardhome-on-gl-routers/10664) by
     [Gl-Inet](https://gl-inet.com/).
