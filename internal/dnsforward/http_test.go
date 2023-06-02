@@ -487,7 +487,8 @@ func TestServer_handleTestUpstreaDNS(t *testing.T) {
 		},
 		wantResp: map[string]any{
 			badUps: `upstream "` + badUps + `" fails to exchange: ` +
-				`couldn't communicate with upstream: dns: id mismatch`,
+				`couldn't communicate with upstream: exchanging with ` +
+				badUps + ` over tcp: dns: id mismatch`,
 		},
 		name: "broken",
 	}, {
@@ -497,7 +498,8 @@ func TestServer_handleTestUpstreaDNS(t *testing.T) {
 		wantResp: map[string]any{
 			goodUps: "OK",
 			badUps: `upstream "` + badUps + `" fails to exchange: ` +
-				`couldn't communicate with upstream: dns: id mismatch`,
+				`couldn't communicate with upstream: exchanging with ` +
+				badUps + ` over tcp: dns: id mismatch`,
 		},
 		name: "both",
 	}}
