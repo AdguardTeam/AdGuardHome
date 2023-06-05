@@ -179,7 +179,7 @@ func createICMPv6RAPacket(params icmpv6RA) (data []byte, err error) {
 	// Option=Source link-layer address:
 
 	data[i] = 1   // Type
-	data[i+1] = 1 // Length
+	data[i+1] = byte((len(lla) + 2) / 8) // Length of this entire option in bytes
 	i += 2
 
 	copy(data[i:], lla) // Link-Layer Address[8/24]
