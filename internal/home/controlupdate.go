@@ -26,15 +26,14 @@ type temporaryError interface {
 	Temporary() (ok bool)
 }
 
-// Get the latest available version from the Internet
-func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
+// handleVersionJSON is the handler for the POST /control/version.json HTTP API.
+//
+// TODO(a.garipov): Find out if this API used with a GET method by anyone.
+func handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 	resp := &versionResponse{}
 	if Context.disableUpdate {
 		resp.Disabled = true
-		err := json.NewEncoder(w).Encode(resp)
-		if err != nil {
-			aghhttp.Error(r, w, http.StatusInternalServerError, "writing body: %s", err)
-		}
+		_ = aghhttp.WriteJSONResponse(w, r, resp)
 
 		return
 	}

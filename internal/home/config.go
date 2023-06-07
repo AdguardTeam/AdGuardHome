@@ -399,19 +399,39 @@ func (c *configuration) getConfigFilename() string {
 	return configFile
 }
 
-// getLogSettings reads logging settings from the config file.
-// we do it in a separate method in order to configure logger before the actual configuration is parsed and applied.
-func getLogSettings() logSettings {
-	l := logSettings{}
+// readLogSettings reads logging settings from the config file.  We do it in a
+// separate method in order to configure logger before the actual configuration
+// is parsed and applied.
+func readLogSettings() (ls *logSettings) {
+	ls = &logSettings{}
+
 	yamlFile, err := readConfigFile()
 	if err != nil {
-		return l
+		return ls
 	}
-	err = yaml.Unmarshal(yamlFile, &l)
+
+	err = yaml.Unmarshal(yamlFile, ls)
 	if err != nil {
 		log.Error("Couldn't get logging settings from the configuration: %s", err)
 	}
-	return l
+
+	return ls
+}
+
+// validateBindHosts returns error if any of binding hosts from configuration is
+// not a valid IP address.
+func validateBindHosts(conf *configuration) (err error) {
+	if !conf.BindHost.IsValid() {
+		return errors.Error("bind_host is not a valid ip address")
+	}
+
+	for i, addr := range conf.DNS.BindHosts {
+		if !addr.IsValid() {
+			return fmt.Errorf("dns.bind_hosts at index %d is not a valid ip address", i)
+		}
+	}
+
+	return nil
 }
 
 // parseConfig loads configuration from the YAML file
@@ -425,6 +445,13 @@ func parseConfig() (err error) {
 	config.fileData = nil
 	err = yaml.Unmarshal(fileData, &config)
 	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	err = validateBindHosts(config)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
 

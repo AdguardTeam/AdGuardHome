@@ -27,14 +27,17 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/stringutil"
 	"golang.org/x/exp/slices"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -143,7 +146,9 @@ func Main(clientBuildFS fs.FS) {
 	run(opts, clientBuildFS)
 }
 
-func setupContext(opts options) {
+// setupContext initializes [Context] fields.  It also reads and upgrades
+// config file if necessary.
+func setupContext(opts options) (err error) {
 	setupContextFlags(opts)
 
 	Context.tlsRoots = aghtls.SystemRootCAs()
@@ -160,10 +165,15 @@ func setupContext(opts options) {
 		},
 	}
 
+	Context.mux = http.NewServeMux()
+
 	if !Context.firstRun {
 		// Do the upgrade if necessary.
-		err := upgradeConfig()
-		fatalOnError(err)
+		err = upgradeConfig()
+		if err != nil {
+			// Don't wrap the error, because it's informative enough as is.
+			return err
+		}
 
 		if err = parseConfig(); err != nil {
 			log.Error("parsing configuration file: %s", err)
@@ -179,11 +189,14 @@ func setupContext(opts options) {
 
 		if !opts.noEtcHosts && config.Clients.Sources.HostsFile {
 			err = setupHostsContainer()
-			fatalOnError(err)
+			if err != nil {
+				// Don't wrap the error, because it's informative enough as is.
+				return err
+			}
 		}
 	}
 
-	Context.mux = http.NewServeMux()
+	return nil
 }
 
 // setupContextFlags sets global flags and prints their status to the log.
@@ -285,25 +298,27 @@ func setupHostsContainer() (err error) {
 	return nil
 }
 
-func setupConfig(opts options) (err error) {
-	config.DNS.DnsfilterConf.EtcHosts = Context.etcHosts
-	config.DNS.DnsfilterConf.ConfigModified = onConfigModified
-	config.DNS.DnsfilterConf.HTTPRegister = httpRegister
-	config.DNS.DnsfilterConf.DataDir = Context.getDataDir()
-	config.DNS.DnsfilterConf.Filters = slices.Clone(config.Filters)
-	config.DNS.DnsfilterConf.WhitelistFilters = slices.Clone(config.WhitelistFilters)
-	config.DNS.DnsfilterConf.UserRules = slices.Clone(config.UserRules)
-	config.DNS.DnsfilterConf.HTTPClient = Context.client
-
-	config.DNS.DnsfilterConf.SafeSearchConf.CustomResolver = safeSearchResolver{}
-	config.DNS.DnsfilterConf.SafeSearch, err = safesearch.NewDefault(
-		config.DNS.DnsfilterConf.SafeSearchConf,
-		"default",
-		config.DNS.DnsfilterConf.SafeSearchCacheSize,
-		time.Minute*time.Duration(config.DNS.DnsfilterConf.CacheTime),
-	)
+// setupOpts sets up command-line options.
+func setupOpts(opts options) (err error) {
+	err = setupBindOpts(opts)
 	if err != nil {
-		return fmt.Errorf("initializing safesearch: %w", err)
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	}
+
+	if len(opts.pidFile) != 0 && writePIDFile(opts.pidFile) {
+		Context.pidFileName = opts.pidFile
+	}
+
+	return nil
+}
+
+// initContextClients initializes Context clients and related fields.
+func initContextClients() (err error) {
+	err = setupDNSFilteringConf(config.DNS.DnsfilterConf)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
 	}
 
 	//lint:ignore SA1019  Migration is not over.
@@ -338,8 +353,19 @@ func setupConfig(opts options) (err error) {
 		arpdb = aghnet.NewARPDB()
 	}
 
-	Context.clients.Init(config.Clients.Persistent, Context.dhcpServer, Context.etcHosts, arpdb, config.DNS.DnsfilterConf)
+	Context.clients.Init(
+		config.Clients.Persistent,
+		Context.dhcpServer,
+		Context.etcHosts,
+		arpdb,
+		config.DNS.DnsfilterConf,
+	)
 
+	return nil
+}
+
+// setupBindOpts overrides bind host/port from the opts.
+func setupBindOpts(opts options) (err error) {
 	if opts.bindPort != 0 {
 		config.BindPort = opts.bindPort
 
@@ -350,12 +376,83 @@ func setupConfig(opts options) (err error) {
 		}
 	}
 
-	// override bind host/port from the console
 	if opts.bindHost.IsValid() {
 		config.BindHost = opts.bindHost
 	}
-	if len(opts.pidFile) != 0 && writePIDFile(opts.pidFile) {
-		Context.pidFileName = opts.pidFile
+
+	return nil
+}
+
+// setupDNSFilteringConf sets up DNS filtering configuration settings.
+func setupDNSFilteringConf(conf *filtering.Config) (err error) {
+	const (
+		dnsTimeout = 3 * time.Second
+
+		sbService                 = "safe browsing"
+		defaultSafeBrowsingServer = `https://family.adguard-dns.com/dns-query`
+		sbTXTSuffix               = `sb.dns.adguard.com.`
+
+		pcService             = "parental control"
+		defaultParentalServer = `https://family.adguard-dns.com/dns-query`
+		pcTXTSuffix           = `pc.dns.adguard.com.`
+	)
+
+	conf.EtcHosts = Context.etcHosts
+	conf.ConfigModified = onConfigModified
+	conf.HTTPRegister = httpRegister
+	conf.DataDir = Context.getDataDir()
+	conf.Filters = slices.Clone(config.Filters)
+	conf.WhitelistFilters = slices.Clone(config.WhitelistFilters)
+	conf.UserRules = slices.Clone(config.UserRules)
+	conf.HTTPClient = Context.client
+
+	cacheTime := time.Duration(conf.CacheTime) * time.Minute
+
+	upsOpts := &upstream.Options{
+		Timeout: dnsTimeout,
+		ServerIPAddrs: []net.IP{
+			{94, 140, 14, 15},
+			{94, 140, 15, 16},
+			net.ParseIP("2a10:50c0::bad1:ff"),
+			net.ParseIP("2a10:50c0::bad2:ff"),
+		},
+	}
+
+	sbUps, err := upstream.AddressToUpstream(defaultSafeBrowsingServer, upsOpts)
+	if err != nil {
+		return fmt.Errorf("converting safe browsing server: %w", err)
+	}
+
+	conf.SafeBrowsingChecker = hashprefix.New(&hashprefix.Config{
+		Upstream:    sbUps,
+		ServiceName: sbService,
+		TXTSuffix:   sbTXTSuffix,
+		CacheTime:   cacheTime,
+		CacheSize:   conf.SafeBrowsingCacheSize,
+	})
+
+	parUps, err := upstream.AddressToUpstream(defaultParentalServer, upsOpts)
+	if err != nil {
+		return fmt.Errorf("converting parental server: %w", err)
+	}
+
+	conf.ParentalControlChecker = hashprefix.New(&hashprefix.Config{
+		Upstream:    parUps,
+		ServiceName: pcService,
+		TXTSuffix:   pcTXTSuffix,
+		CacheTime:   cacheTime,
+		CacheSize:   conf.SafeBrowsingCacheSize,
+	})
+
+	conf.SafeSearchConf.CustomResolver = safeSearchResolver{}
+	conf.SafeSearch, err = safesearch.NewDefault(
+		conf.SafeSearchConf,
+		"default",
+		conf.SafeSearchCacheSize,
+		cacheTime,
+	)
+	if err != nil {
+		return fmt.Errorf("initializing safesearch: %w", err)
 	}
 
 	return nil
@@ -432,14 +529,16 @@ func fatalOnError(err error) {
 
 // run configures and starts AdGuard Home.
 func run(opts options, clientBuildFS fs.FS) {
-	// configure config filename
+	// Configure config filename.
 	initConfigFilename(opts)
 
-	// configure working dir and config path
-	initWorkingDir(opts)
+	// Configure working dir and config path.
+	err := initWorkingDir(opts)
+	fatalOnError(err)
 
-	// configure log level and output
-	configureLogger(opts)
+	// Configure log level and output.
+	err = configureLogger(opts)
+	fatalOnError(err)
 
 	// Print the first message after logger is configured.
 	log.Info(version.Full())
@@ -448,25 +547,29 @@ func run(opts options, clientBuildFS fs.FS) {
 		log.Info("AdGuard Home is running as a service")
 	}
 
-	setupContext(opts)
-
-	err := configureOS(config)
+	err = setupContext(opts)
 	fatalOnError(err)
 
-	// clients package uses filtering package's static data (filtering.BlockedSvcKnown()),
-	//  so we have to initialize filtering's static data first,
-	//  but also avoid relying on automatic Go init() function
+	err = configureOS(config)
+	fatalOnError(err)
+
+	// Clients package uses filtering package's static data
+	// (filtering.BlockedSvcKnown()), so we have to initialize filtering static
+	// data first, but also to avoid relying on automatic Go init() function.
 	filtering.InitModule()
 
-	err = setupConfig(opts)
+	err = initContextClients()
 	fatalOnError(err)
 
-	// TODO(e.burkov):  This could be made earlier, probably as the option's
+	err = setupOpts(opts)
+	fatalOnError(err)
+
+	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
 	cmdlineUpdate(opts)
 
 	if !Context.firstRun {
-		// Save the updated config
+		// Save the updated config.
 		err = config.write()
 		fatalOnError(err)
 
@@ -476,33 +579,15 @@ func run(opts options, clientBuildFS fs.FS) {
 		}
 	}
 
-	err = os.MkdirAll(Context.getDataDir(), 0o755)
-	if err != nil {
-		log.Fatalf("Cannot create DNS data dir at %s: %s", Context.getDataDir(), err)
-	}
+	dir := Context.getDataDir()
+	err = os.MkdirAll(dir, 0o755)
+	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dir))
 
-	sessFilename := filepath.Join(Context.getDataDir(), "sessions.db")
 	GLMode = opts.glinetMode
-	var rateLimiter *authRateLimiter
-	if config.AuthAttempts > 0 && config.AuthBlockMin > 0 {
-		rateLimiter = newAuthRateLimiter(
-			time.Duration(config.AuthBlockMin)*time.Minute,
-			config.AuthAttempts,
-		)
-	} else {
-		log.Info("authratelimiter is disabled")
-	}
 
-	Context.auth = InitAuth(
-		sessFilename,
-		config.Users,
-		config.WebSessionTTLHours*60*60,
-		rateLimiter,
-	)
-	if Context.auth == nil {
-		log.Fatalf("Couldn't initialize Auth module")
-	}
-	config.Users = nil
+	// Init auth module.
+	Context.auth, err = initUsers()
+	fatalOnError(err)
 
 	Context.tls, err = newTLSManager(config.TLS)
 	if err != nil {
@@ -520,10 +605,10 @@ func run(opts options, clientBuildFS fs.FS) {
 		Context.tls.start()
 
 		go func() {
-			serr := startDNSServer()
-			if serr != nil {
+			sErr := startDNSServer()
+			if sErr != nil {
 				closeDNSServer()
-				fatalOnError(serr)
+				fatalOnError(sErr)
 			}
 		}()
 
@@ -537,8 +622,31 @@ func run(opts options, clientBuildFS fs.FS) {
 
 	Context.web.start()
 
-	// wait indefinitely for other go-routines to complete their job
+	// Wait indefinitely for other goroutines to complete their job.
 	select {}
+}
+
+// initUsers initializes context auth module.  Clears config users field.
+func initUsers() (auth *Auth, err error) {
+	sessFilename := filepath.Join(Context.getDataDir(), "sessions.db")
+
+	var rateLimiter *authRateLimiter
+	if config.AuthAttempts > 0 && config.AuthBlockMin > 0 {
+		blockDur := time.Duration(config.AuthBlockMin) * time.Minute
+		rateLimiter = newAuthRateLimiter(blockDur, config.AuthAttempts)
+	} else {
+		log.Info("authratelimiter is disabled")
+	}
+
+	sessionTTL := config.WebSessionTTLHours * 60 * 60
+	auth = InitAuth(sessFilename, config.Users, sessionTTL, rateLimiter)
+	if auth == nil {
+		return nil, errors.Error("initializing auth module failed")
+	}
+
+	config.Users = nil
+
+	return auth, nil
 }
 
 func (c *configuration) anonymizer() (ipmut *aghnet.IPMut) {
@@ -613,22 +721,19 @@ func writePIDFile(fn string) bool {
 	return true
 }
 
+// initConfigFilename sets up context config file path.  This file path can be
+// overridden by command-line arguments, or is set to default.
 func initConfigFilename(opts options) {
-	// config file path can be overridden by command-line arguments:
-	if opts.confFilename != "" {
-		Context.configFilename = opts.confFilename
-	} else {
-		// Default config file name
-		Context.configFilename = "AdGuardHome.yaml"
-	}
+	Context.configFilename = stringutil.Coalesce(opts.confFilename, "AdGuardHome.yaml")
 }
 
-// initWorkingDir initializes the workDir
-// if no command-line arguments specified, we use the directory where our binary file is located
-func initWorkingDir(opts options) {
+// initWorkingDir initializes the workDir.  If no command-line arguments are
+// specified, the directory with the binary file is used.
+func initWorkingDir(opts options) (err error) {
 	execPath, err := os.Executable()
 	if err != nil {
-		panic(err)
+		// Don't wrap the error, because it's informative enough as is.
+		return err
 	}
 
 	if opts.workDir != "" {
@@ -640,34 +745,20 @@ func initWorkingDir(opts options) {
 
 	workDir, err := filepath.EvalSymlinks(Context.workDir)
 	if err != nil {
-		panic(err)
+		// Don't wrap the error, because it's informative enough as is.
+		return err
 	}
 
 	Context.workDir = workDir
+
+	return nil
 }
 
-// configureLogger configures logger level and output
-func configureLogger(opts options) {
-	ls := getLogSettings()
+// configureLogger configures logger level and output.
+func configureLogger(opts options) (err error) {
+	ls := getLogSettings(opts)
 
-	// command-line arguments can override config settings
-	if opts.verbose || config.Verbose {
-		ls.Verbose = true
-	}
-	if opts.logFile != "" {
-		ls.File = opts.logFile
-	} else if config.File != "" {
-		ls.File = config.File
-	}
-
-	// Handle default log settings overrides
-	ls.Compress = config.Compress
-	ls.LocalTime = config.LocalTime
-	ls.MaxBackups = config.MaxBackups
-	ls.MaxSize = config.MaxSize
-	ls.MaxAge = config.MaxAge
-
-	// log.SetLevel(log.INFO) - default
+	// Configure logger level.
 	if ls.Verbose {
 		log.SetLevel(log.DEBUG)
 	}
@@ -676,38 +767,63 @@ func configureLogger(opts options) {
 	// happen pretty quickly.
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 
-	if opts.runningAsService && ls.File == "" && runtime.GOOS == "windows" {
-		// When running as a Windows service, use eventlog by default if nothing
-		// else is configured.  Otherwise, we'll simply lose the log output.
-		ls.File = configSyslog
-	}
-
-	// logs are written to stdout (default)
+	// Write logs to stdout by default.
 	if ls.File == "" {
-		return
+		return nil
 	}
 
 	if ls.File == configSyslog {
-		// Use syslog where it is possible and eventlog on Windows
-		err := aghos.ConfigureSyslog(serviceName)
+		// Use syslog where it is possible and eventlog on Windows.
+		err = aghos.ConfigureSyslog(serviceName)
 		if err != nil {
-			log.Fatalf("cannot initialize syslog: %s", err)
-		}
-	} else {
-		logFilePath := ls.File
-		if !filepath.IsAbs(logFilePath) {
-			logFilePath = filepath.Join(Context.workDir, logFilePath)
+			return fmt.Errorf("cannot initialize syslog: %w", err)
 		}
 
-		log.SetOutput(&lumberjack.Logger{
-			Filename:   logFilePath,
-			Compress:   ls.Compress, // disabled by default
-			LocalTime:  ls.LocalTime,
-			MaxBackups: ls.MaxBackups,
-			MaxSize:    ls.MaxSize, // megabytes
-			MaxAge:     ls.MaxAge,  // days
-		})
+		return nil
 	}
+
+	logFilePath := ls.File
+	if !filepath.IsAbs(logFilePath) {
+		logFilePath = filepath.Join(Context.workDir, logFilePath)
+	}
+
+	log.SetOutput(&lumberjack.Logger{
+		Filename:   logFilePath,
+		Compress:   ls.Compress,
+		LocalTime:  ls.LocalTime,
+		MaxBackups: ls.MaxBackups,
+		MaxSize:    ls.MaxSize,
+		MaxAge:     ls.MaxAge,
+	})
+
+	return nil
+}
+
+// getLogSettings returns a log settings object properly initialized from opts.
+func getLogSettings(opts options) (ls *logSettings) {
+	ls = readLogSettings()
+
+	// Command-line arguments can override config settings.
+	if opts.verbose || config.Verbose {
+		ls.Verbose = true
+	}
+
+	ls.File = stringutil.Coalesce(opts.logFile, config.File, ls.File)
+
+	// Handle default log settings overrides.
+	ls.Compress = config.Compress
+	ls.LocalTime = config.LocalTime
+	ls.MaxBackups = config.MaxBackups
+	ls.MaxSize = config.MaxSize
+	ls.MaxAge = config.MaxAge
+
+	if opts.runningAsService && ls.File == "" && runtime.GOOS == "windows" {
+		// When running as a Windows service, use eventlog by default if
+		// nothing else is configured.  Otherwise, we'll lose the log output.
+		ls.File = configSyslog
+	}
+
+	return ls
 }
 
 // cleanup stops and resets all the modules.

@@ -205,8 +205,8 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		wantSet: `validating upstream servers: validating upstream "!!!": not an ip:port`,
 	}, {
 		name: "bootstraps_bad",
-		wantSet: `checking bootstrap a: invalid address: ` +
-			`Resolver a is not eligible to be a bootstrap DNS server`,
+		wantSet: `checking bootstrap a: invalid address: bootstrap a:53: ` +
+			`ParseAddr("a"): unable to parse IP`,
 	}, {
 		name:    "cache_bad_ttl",
 		wantSet: `cache_ttl_min must be less or equal than cache_ttl_max`,
@@ -487,7 +487,8 @@ func TestServer_handleTestUpstreaDNS(t *testing.T) {
 		},
 		wantResp: map[string]any{
 			badUps: `upstream "` + badUps + `" fails to exchange: ` +
-				`couldn't communicate with upstream: dns: id mismatch`,
+				`couldn't communicate with upstream: exchanging with ` +
+				badUps + ` over tcp: dns: id mismatch`,
 		},
 		name: "broken",
 	}, {
@@ -497,7 +498,8 @@ func TestServer_handleTestUpstreaDNS(t *testing.T) {
 		wantResp: map[string]any{
 			goodUps: "OK",
 			badUps: `upstream "` + badUps + `" fails to exchange: ` +
-				`couldn't communicate with upstream: dns: id mismatch`,
+				`couldn't communicate with upstream: exchanging with ` +
+				badUps + ` over tcp: dns: id mismatch`,
 		},
 		name: "both",
 	}}

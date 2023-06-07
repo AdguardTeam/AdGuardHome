@@ -2,18 +2,25 @@ package querylog
 
 import "time"
 
-// searchParams represent the search query sent by the client
+// searchParams represent the search query sent by the client.
 type searchParams struct {
-	// searchCriteria - list of search criteria that we use to get filter results
-	searchCriteria []searchCriterion
-
-	// olderThen - return entries that are older than this value
-	// if not set - disregard it and return any value
+	// olderThen represents a parameter for entries that are older than this
+	// parameter value.  If not set, disregard it and return any value.
 	olderThan time.Time
 
-	offset             int // offset for the search
-	limit              int // limit the number of records returned
-	maxFileScanEntries int // maximum log entries to scan in query log files. if 0 - no limit
+	// searchCriteria is a list of search criteria that we use to get filter
+	// results.
+	searchCriteria []searchCriterion
+
+	// offset for the search.
+	offset int
+
+	// limit the number of records returned.
+	limit int
+
+	// maxFileScanEntries is a maximum of log entries to scan in query log
+	// files.  If not set, then no limit.
+	maxFileScanEntries int
 }
 
 // newSearchParams - creates an empty instance of searchParams

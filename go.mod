@@ -3,7 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.19
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.48.3
+	github.com/AdguardTeam/dnsproxy v0.50.0
 	github.com/AdguardTeam/golibs v0.13.2
 	github.com/AdguardTeam/urlfilter v0.16.1
 	github.com/NYTimes/gziphandler v1.1.1
@@ -16,24 +16,24 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/google/renameio v1.0.1
 	github.com/google/uuid v1.3.0
-	github.com/insomniacslk/dhcp v0.0.0-20221215072855-de60144f33f8
+	github.com/insomniacslk/dhcp v0.0.0-20230516061539-49801966e6cb
 	github.com/josharian/native v1.1.1-0.20230202152459-5c7d0dd6ab86
 	github.com/kardianos/service v1.2.2
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
-	github.com/mdlayher/netlink v1.7.1
-	github.com/mdlayher/packet v1.1.1
+	github.com/mdlayher/netlink v1.7.2
+	github.com/mdlayher/packet v1.1.2
 	// TODO(a.garipov): This package is deprecated; find a new one or use our
 	// own code for that.  Perhaps, use gopacket.
 	github.com/mdlayher/raw v0.1.0
-	github.com/miekg/dns v1.1.53
-	github.com/quic-go/quic-go v0.33.0
+	github.com/miekg/dns v1.1.54
+	github.com/quic-go/quic-go v0.35.1
 	github.com/stretchr/testify v1.8.2
 	github.com/ti-mo/netfilter v0.5.0
 	go.etcd.io/bbolt v1.3.7
-	golang.org/x/crypto v0.8.0
-	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
-	golang.org/x/net v0.9.0
-	golang.org/x/sys v0.7.0
+	golang.org/x/crypto v0.9.0
+	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
+	golang.org/x/net v0.10.0
+	golang.org/x/sys v0.8.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.0
@@ -48,9 +48,9 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang/mock v1.6.0 // indirect
-	github.com/google/pprof v0.0.0-20230406165453-00490a63f317 // indirect
-	github.com/mdlayher/socket v0.4.0 // indirect
-	github.com/onsi/ginkgo/v2 v2.9.2 // indirect
+	github.com/google/pprof v0.0.0-20230602150820-91b7bce49751 // indirect
+	github.com/mdlayher/socket v0.4.1 // indirect
+	github.com/onsi/ginkgo/v2 v2.10.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -60,7 +60,7 @@ require (
 	github.com/quic-go/qtls-go1-20 v0.2.2 // indirect
 	github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63 // indirect
 	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/sync v0.1.0 // indirect
+	golang.org/x/sync v0.2.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
-	golang.org/x/tools v0.8.0 // indirect
+	golang.org/x/tools v0.9.3 // indirect
 )

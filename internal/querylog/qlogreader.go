@@ -9,36 +9,36 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// QLogReader allows reading from multiple query log files in the reverse order.
+// qLogReader allows reading from multiple query log files in the reverse
+// order.
 //
-// Please note that this is a stateful object.
-// Internally, it contains a pointer to a particular query log file, and
-// to a specific position in this file, and it reads lines in reverse order
-// starting from that position.
-type QLogReader struct {
-	// qFiles - array with the query log files
-	// The order is - from oldest to newest
-	qFiles []*QLogFile
+// Please note that this is a stateful object.  Internally, it contains a
+// pointer to a particular query log file, and to a specific position in this
+// file, and it reads lines in reverse order starting from that position.
+type qLogReader struct {
+	// qFiles is an array with the query log files.  The order is from oldest
+	// to newest.
+	qFiles []*qLogFile
 
-	currentFile int // Index of the current file
+	// currentFile is the index of the current file.
+	currentFile int
 }
 
-// NewQLogReader initializes a QLogReader instance
-// with the specified files
-func NewQLogReader(files []string) (*QLogReader, error) {
-	qFiles := make([]*QLogFile, 0)
+// newQLogReader initializes a qLogReader instance with the specified files.
+func newQLogReader(files []string) (*qLogReader, error) {
+	qFiles := make([]*qLogFile, 0)
 
 	for _, f := range files {
-		q, err := NewQLogFile(f)
+		q, err := newQLogFile(f)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				continue
 			}
 
 			// Close what we've already opened.
-			cerr := closeQFiles(qFiles)
-			if cerr != nil {
-				log.Debug("querylog: closing files: %s", cerr)
+			cErr := closeQFiles(qFiles)
+			if cErr != nil {
+				log.Debug("querylog: closing files: %s", cErr)
 			}
 
 			return nil, err
@@ -47,31 +47,28 @@ func NewQLogReader(files []string) (*QLogReader, error) {
 		qFiles = append(qFiles, q)
 	}
 
-	return &QLogReader{
-		qFiles:      qFiles,
-		currentFile: (len(qFiles) - 1),
-	}, nil
+	return &qLogReader{qFiles: qFiles, currentFile: len(qFiles) - 1}, nil
 }
 
 // seekTS performs binary search of a query log record with the specified
-// timestamp.  If the record is found, it sets QLogReader's position to point to
-// that line, so that the next ReadNext call returned this line.
-func (r *QLogReader) seekTS(timestamp int64) (err error) {
+// timestamp.  If the record is found, it sets qLogReader's position to point
+// to that line, so that the next ReadNext call returned this line.
+func (r *qLogReader) seekTS(timestamp int64) (err error) {
 	for i := len(r.qFiles) - 1; i >= 0; i-- {
 		q := r.qFiles[i]
 		_, _, err = q.seekTS(timestamp)
 		if err != nil {
-			if errors.Is(err, ErrTSTooEarly) {
+			if errors.Is(err, errTSTooEarly) {
 				// Look at the next file, since we've reached the end of this
 				// one.  If there is no next file, it's not found.
-				err = ErrTSNotFound
+				err = errTSNotFound
 
 				continue
-			} else if errors.Is(err, ErrTSTooLate) {
+			} else if errors.Is(err, errTSTooLate) {
 				// Just seek to the start then.  timestamp is probably between
 				// the end of the previous one and the start of this one.
 				return r.SeekStart()
-			} else if errors.Is(err, ErrTSNotFound) {
+			} else if errors.Is(err, errTSNotFound) {
 				return err
 			} else {
 				return fmt.Errorf("seekts: file at index %d: %w", i, err)
@@ -80,7 +77,7 @@ func (r *QLogReader) seekTS(timestamp int64) (err error) {
 
 		// The search is finished, and the searched element has been found.
 		// Update currentFile only, position is already set properly in
-		// QLogFile.
+		// qLogFile.
 		r.currentFile = i
 
 		return nil
@@ -93,13 +90,13 @@ func (r *QLogReader) seekTS(timestamp int64) (err error) {
 	return nil
 }
 
-// SeekStart changes the current position to the end of the newest file
-// Please note that we're reading query log in the reverse order
-// and that's why log start is actually the end of file
+// SeekStart changes the current position to the end of the newest file.
+// Please note that we're reading query log in the reverse order and that's why
+// the log starts actually at the end of file.
 //
-// Returns nil if we were able to change the current position.
-// Returns error in any other case.
-func (r *QLogReader) SeekStart() error {
+// Returns nil if we were able to change the current position.  Returns error
+// in any other cases.
+func (r *qLogReader) SeekStart() error {
 	if len(r.qFiles) == 0 {
 		return nil
 	}
@@ -110,10 +107,12 @@ func (r *QLogReader) SeekStart() error {
 	return err
 }
 
-// ReadNext reads the next line (in the reverse order) from the query log files.
-// and shifts the current position left to the next (actually prev) line (or the next file).
-// returns io.EOF if there's nothing to read more.
-func (r *QLogReader) ReadNext() (string, error) {
+// ReadNext reads the next line (in the reverse order) from the query log
+// files.  Then shifts the current position left to the next (actually prev)
+// line (or the next file).
+//
+// Returns io.EOF if there is nothing more to read.
+func (r *qLogReader) ReadNext() (string, error) {
 	if len(r.qFiles) == 0 {
 		return "", io.EOF
 	}
@@ -122,7 +121,7 @@ func (r *QLogReader) ReadNext() (string, error) {
 		q := r.qFiles[r.currentFile]
 		line, err := q.ReadNext()
 		if err != nil {
-			// Shift to the older file
+			// Shift to the older file.
 			r.currentFile--
 			if r.currentFile < 0 {
 				break
@@ -130,10 +129,10 @@ func (r *QLogReader) ReadNext() (string, error) {
 
 			q = r.qFiles[r.currentFile]
 
-			// Set it's position to the start right away
+			// Set its position to the start right away.
 			_, err = q.SeekStart()
 
-			// This is unexpected, return an error right away
+			// This is unexpected, return an error right away.
 			if err != nil {
 				return "", err
 			}
@@ -142,17 +141,17 @@ func (r *QLogReader) ReadNext() (string, error) {
 		}
 	}
 
-	// Nothing to read anymore
+	// Nothing to read anymore.
 	return "", io.EOF
 }
 
-// Close closes the QLogReader
-func (r *QLogReader) Close() error {
+// Close closes the qLogReader.
+func (r *qLogReader) Close() error {
 	return closeQFiles(r.qFiles)
 }
 
-// closeQFiles - helper method to close multiple QLogFile instances
-func closeQFiles(qFiles []*QLogFile) error {
+// closeQFiles is a helper method to close multiple qLogFile instances.
+func closeQFiles(qFiles []*qLogFile) error {
 	var errs []error
 
 	for _, q := range qFiles {
@@ -163,7 +162,7 @@ func closeQFiles(qFiles []*QLogFile) error {
 	}
 
 	if len(errs) > 0 {
-		return errors.List("error while closing QLogReader", errs...)
+		return errors.List("error while closing qLogReader", errs...)
 	}
 
 	return nil

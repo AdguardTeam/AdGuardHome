@@ -7,7 +7,7 @@
 # Make sure to sync any changes with the branch overrides below.
 'variables':
   'channel': 'edge'
-  'dockerGo': 'adguard/golang-ubuntu:6.3'
+  'dockerGo': 'adguard/golang-ubuntu:6.7'
 
 'stages':
 - 'Build frontend':
@@ -232,25 +232,24 @@
         case "$channel"
         in
         ('release')
-              snapchannel='candidate'
-              ;;
+                snapchannel='candidate'
+                ;;
         ('beta')
-              snapchannel='beta'
-              ;;
+                snapchannel='beta'
+                ;;
         ('edge')
-              snapchannel='edge'
-              ;;
+                snapchannel='edge'
+                ;;
         (*)
-              echo "invalid channel '$channel'"
-              exit 1
-              ;;
+                echo "invalid channel '$channel'"
+                exit 1
+                ;;
         esac
 
         env\
                 SNAPCRAFT_CHANNEL="$snapchannel"\
                 SNAPCRAFT_EMAIL="${bamboo.snapcraftEmail}"\
-                SNAPCRAFT_MACAROON="${bamboo.snapcraftMacaroonPassword}"\
-                SNAPCRAFT_UBUNTU_DISCHARGE="${bamboo.snapcraftUbuntuDischargePassword}"\
+                SNAPCRAFT_STORE_CREDENTIALS="${bamboo.snapcraftMacaroonPassword}"\
                 ../bamboo-deploy-publisher/deploy.sh adguard-home-snap
   'final-tasks':
   - 'clean'
@@ -280,9 +279,9 @@
 
         if [ "$channel" != 'release' ] && [ "${channel}" != 'beta' ]
         then
-              echo "don't publish to GitHub Releases for this channel"
+                echo "don't publish to GitHub Releases for this channel"
 
-              exit 0
+                exit 0
         fi
 
         cd ./dist/
@@ -331,7 +330,7 @@
     # need to build a few of these.
     'variables':
       'channel': 'beta'
-      'dockerGo': 'adguard/golang-ubuntu:6.3'
+      'dockerGo': 'adguard/golang-ubuntu:6.7'
 # release-vX.Y.Z branches are the branches from which the actual final release
 # is built.
 - '^release-v[0-9]+\.[0-9]+\.[0-9]+':
@@ -346,4 +345,4 @@
     # are the ones that actually get released.
     'variables':
       'channel': 'release'
-      'dockerGo': 'adguard/golang-ubuntu:6.3'
+      'dockerGo': 'adguard/golang-ubuntu:6.7'

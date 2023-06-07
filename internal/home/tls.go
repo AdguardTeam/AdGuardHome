@@ -172,9 +172,32 @@ func loadTLSConf(tlsConf *tlsConfigSettings, status *tlsConfigStatus) (err error
 		}
 	}()
 
-	tlsConf.CertificateChainData = []byte(tlsConf.CertificateChain)
-	tlsConf.PrivateKeyData = []byte(tlsConf.PrivateKey)
+	err = loadCertificateChainData(tlsConf, status)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	}
 
+	err = loadPrivateKeyData(tlsConf, status)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	}
+
+	err = validateCertificates(
+		status,
+		tlsConf.CertificateChainData,
+		tlsConf.PrivateKeyData,
+		tlsConf.ServerName,
+	)
+
+	return errors.Annotate(err, "validating certificate pair: %w")
+}
+
+// loadCertificateChainData loads PEM-encoded certificates chain data to the
+// TLS configuration.
+func loadCertificateChainData(tlsConf *tlsConfigSettings, status *tlsConfigStatus) (err error) {
+	tlsConf.CertificateChainData = []byte(tlsConf.CertificateChain)
 	if tlsConf.CertificatePath != "" {
 		if tlsConf.CertificateChain != "" {
 			return errors.Error("certificate data and file can't be set together")
@@ -190,6 +213,13 @@ func loadTLSConf(tlsConf *tlsConfigSettings, status *tlsConfigStatus) (err error
 		status.ValidCert = true
 	}
 
+	return nil
+}
+
+// loadPrivateKeyData loads PEM-encoded private key data to the TLS
+// configuration.
+func loadPrivateKeyData(tlsConf *tlsConfigSettings, status *tlsConfigStatus) (err error) {
+	tlsConf.PrivateKeyData = []byte(tlsConf.PrivateKey)
 	if tlsConf.PrivateKeyPath != "" {
 		if tlsConf.PrivateKey != "" {
 			return errors.Error("private key data and file can't be set together")
@@ -201,16 +231,6 @@ func loadTLSConf(tlsConf *tlsConfigSettings, status *tlsConfigStatus) (err error
 		}
 
 		status.ValidKey = true
-	}
-
-	err = validateCertificates(
-		status,
-		tlsConf.CertificateChainData,
-		tlsConf.PrivateKeyData,
-		tlsConf.ServerName,
-	)
-	if err != nil {
-		return fmt.Errorf("validating certificate pair: %w", err)
 	}
 
 	return nil

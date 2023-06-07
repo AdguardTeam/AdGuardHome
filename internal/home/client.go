@@ -8,6 +8,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/stringutil"
 )
 
 // Client contains information about persistent clients.
@@ -35,6 +36,19 @@ type Client struct {
 	UseOwnBlockedServices bool
 	IgnoreQueryLog        bool
 	IgnoreStatistics      bool
+}
+
+// ShallowClone returns a deep copy of the client, except upstreamConfig,
+// safeSearchConf, SafeSearch fields, because it's difficult to copy them.
+func (c *Client) ShallowClone() (sh *Client) {
+	clone := *c
+
+	clone.IDs = stringutil.CloneSlice(c.IDs)
+	clone.Tags = stringutil.CloneSlice(c.Tags)
+	clone.BlockedServices = stringutil.CloneSlice(c.BlockedServices)
+	clone.Upstreams = stringutil.CloneSlice(c.Upstreams)
+
+	return &clone
 }
 
 // closeUpstreams closes the client-specific upstream config of c if any.

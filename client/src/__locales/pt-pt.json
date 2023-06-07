@@ -529,7 +529,7 @@
     "ignore_domains": "Domínios ignorados (separados por nova linha)",
     "ignore_domains_title": "Domínios ignorados",
     "ignore_domains_desc_stats": "As consultas para estes domínios não aparecem nas estatísticas",
-    "ignore_domains_desc_query": "As consultas para estes domínios nãoaparecem no registo de consultas",
+    "ignore_domains_desc_query": "As consultas para estes domínios não aparecem no registo de consultas",
     "interval_hours": "{{count}} hora",
     "interval_hours_plural": "{{count}} horas",
     "filters_configuration": "Definição dos filtros",

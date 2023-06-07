@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/dnsproxy/proxyutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -46,9 +45,10 @@ func TestQueryLog(t *testing.T) {
 	addEntry(l, "example.com", net.IPv4(1, 1, 1, 4), net.IPv4(2, 2, 2, 4))
 
 	type tcAssertion struct {
-		num            int
-		host           string
-		answer, client net.IP
+		host   string
+		answer net.IP
+		client net.IP
+		num    int
 	}
 
 	testCases := []struct {
@@ -367,6 +367,6 @@ func assertLogEntry(t *testing.T, entry *logEntry, host string, answer, client n
 	require.NoError(t, msg.Unpack(entry.Answer))
 	require.Len(t, msg.Answer, 1)
 
-	ip := proxyutil.IPFromRR(msg.Answer[0]).To16()
-	assert.Equal(t, answer, ip)
+	a := testutil.RequireTypeAssert[*dns.A](t, msg.Answer[0])
+	assert.Equal(t, answer, a.A.To16())
 }

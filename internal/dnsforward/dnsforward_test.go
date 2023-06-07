@@ -23,6 +23,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -915,13 +916,23 @@ func TestBlockedByHosts(t *testing.T) {
 }
 
 func TestBlockedBySafeBrowsing(t *testing.T) {
-	const hostname = "wmconvirus.narod.ru"
+	const (
+		hostname  = "wmconvirus.narod.ru"
+		cacheTime = 10 * time.Minute
+		cacheSize = 10000
+	)
 
-	sbUps := aghtest.NewBlockUpstream(hostname, true)
+	sbChecker := hashprefix.New(&hashprefix.Config{
+		CacheTime: cacheTime,
+		CacheSize: cacheSize,
+		Upstream:  aghtest.NewBlockUpstream(hostname, true),
+	})
+
 	ans4, _ := (&aghtest.TestResolver{}).HostToIPs(hostname)
 
 	filterConf := &filtering.Config{
 		SafeBrowsingEnabled: true,
+		SafeBrowsingChecker: sbChecker,
 	}
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
@@ -935,7 +946,6 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 		},
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
-	s.dnsFilter.SetSafeBrowsingUpstream(sbUps)
 	startDeferStop(t, s)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 

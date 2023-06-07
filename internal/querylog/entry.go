@@ -68,3 +68,19 @@ func (e *logEntry) addResponse(resp *dns.Msg, isOrig bool) {
 		log.Error("querylog: %s", err)
 	}
 }
+
+// parseDNSRewriteResultIPs fills logEntry's DNSRewriteResult response records
+// with the IP addresses parsed from the raw strings.
+func (e *logEntry) parseDNSRewriteResultIPs() {
+	for rrType, rrValues := range e.Result.DNSRewriteResult.Response {
+		switch rrType {
+		case dns.TypeA, dns.TypeAAAA:
+			for i, v := range rrValues {
+				s, _ := v.(string)
+				rrValues[i] = net.ParseIP(s)
+			}
+		default:
+			// Go on.
+		}
+	}
+}

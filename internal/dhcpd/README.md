@@ -1,46 +1,60 @@
-# DHCP server
+ #  Testing DHCP Server
 
 Contents:
-* [Test setup with Virtual Box](#vbox)
+ *  [Test setup with Virtual Box](#vbox)
+ *  [Quick test with DHCPTest](#dhcptest)
 
-<a id="vbox"></a>
-## Test setup with Virtual Box
+##  <a href="#vbox" id="vbox" name="vbox">Test setup with Virtual Box</a>
 
-To set up a test environment for DHCP server you need:
+   ### Prerequisites
 
-* Linux host machine
-* Virtual Box
-* Virtual machine (guest OS doesn't matter)
+To set up a test environment for DHCP server you will need:
 
-### Configure client
+ *  Linux AG Home host machine (Virtual).
+ *  Virtual Box.
+ *  Virtual machine (guest OS doesn't matter).
 
-1. Install Virtual Box and run the following command to create a Host-Only network:
+   ### Configure Virtual Box
 
-        $ VBoxManage hostonlyif create
+ 1.  Install Virtual Box and run the following command to create a Host-Only 
+     network:
 
-    You can check its status by `ip a` command.
+     ```sh
+     $ VBoxManage hostonlyif create
+     ```
+     
+     You can check its status by `ip a` command.  
 
-    You can also set up Host-Only network using Virtual Box menu:
+     You can also set up Host-Only network using Virtual Box menu: 
+     
+     ```
+     File -> Host Network Manager...
+     ```
 
-        File -> Host Network Manager...
+ 2.  Create your virtual machine and set up its network:
 
-2. Create your virtual machine and set up its network:
+     ```
+     VM Settings -> Network -> Host-only Adapter
+     ```
 
-        VM Settings -> Network -> Host-only Adapter
+ 3.  Start your VM, install an OS.  Configure your network interface to use
+     DHCP and the OS should ask for a IP address from our DHCP server.
 
-3. Start your VM, install an OS.  Configure your network interface to use DHCP and the OS should ask for a IP address from our DHCP server.
+ 4.  To see the current IP addresses on client OS you can use `ip a` command on
+     Linux or `ipconfig` on Windows.
 
-4. To see the current IP address on client OS you can use `ip a` command on Linux or `ipconfig` on Windows.
+ 5.  To force the client OS to request an IP from DHCP server again, you can
+     use `dhclient` on Linux or `ipconfig /release` on Windows.
 
-5. To force the client OS to request an IP from DHCP server again, you can use `dhclient` on Linux or `ipconfig /release` on Windows.
+   ### Configure server
 
-### Configure server
+ 1.  Edit server configuration file `AdGuardHome.yaml`, for example:
 
-1. Edit server configuration file 'AdGuardHome.yaml', for example:
-
-        dhcp:
+     ```yaml
+     dhcp:
           enabled: true
           interface_name: vboxnet0
+          local_domain_name: lan
           dhcpv4:
             gateway_ip: 192.168.56.1
             subnet_mask: 255.255.255.0
@@ -54,11 +68,29 @@ To set up a test environment for DHCP server you need:
             lease_duration: 86400
             ra_slaac_only: false
             ra_allow_slaac: false
+     ```
 
-2. Start the server
+ 2.  Start the server
 
-        ./AdGuardHome
+     ```sh
+     ./AdGuardHome -v
+     ```
 
-    There should be a message in log which shows that DHCP server is ready:
+     There should be a message in log which shows that DHCP server is ready:
 
-        [info] DHCP: listening on 0.0.0.0:67
+     ```
+     [info] DHCP: listening on 0.0.0.0:67
+     ```
+
+##  <a href="#dhcptest" id="dhcptest" name="dhcptest">Quick test with DHCPTest utility</a>
+
+   ### Prerequisites
+
+ *  [DHCP test utility][dhcptest-gh].
+
+   ### Quick test
+
+The DHCP server could be tested for DISCOVER-OFFER packets with in
+interactive mode.
+
+[dhcptest-gh]: https://github.com/CyberShadow/dhcptest

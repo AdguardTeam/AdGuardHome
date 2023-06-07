@@ -304,7 +304,7 @@ func tryConn6(req *dhcpv6.Message, c net.PacketConn) (ok, next bool, err error) 
 	if !(response.Type() == dhcpv6.MessageTypeAdvertise &&
 		msg.TransactionID == req.TransactionID &&
 		rcid != nil &&
-		cid.Equal(*rcid)) {
+		cid.Equal(rcid)) {
 
 		log.Debug("dhcpv6: received message from server doesn't match our request")
 
