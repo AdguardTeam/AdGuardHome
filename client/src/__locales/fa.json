@@ -268,6 +268,8 @@
     "blocking_mode_nxdomain": "NXDOMAIN: پاسخ با کُد NXDOMAIN",
     "blocking_mode_null_ip": "Null IP: پاسخ با آدرس آی پی صفر(0.0.0.0 برای A; :: برای AAAA)",
     "blocking_mode_custom_ip": "آی پی دستی: پاسخ با آدرس آی پی دستی تنظیم شده",
+    "theme_light": "پوسته روشن",
+    "theme_dark": "پوسته تیره",
     "upstream_dns_client_desc": "اگر این فیلد را خالی نگه دارید، AdGuard Home از سرور پیکربندی شده در <0> تنظیماتDNS </0> استفاده می کند.",
     "tracker_source": "منبع ردیاب",
     "source_label": "منبع",
@@ -567,5 +569,6 @@
     "use_saved_key": "از کلید ذخیره شده قبلی استفاده کنید",
     "parental_control": "نظارت والدین",
     "safe_browsing": "وب گردی اَمن",
-    "form_error_password_length": "رمزعبور باید حداقل {{value}} کاراکتر باشد."
+    "form_error_password_length": "رمزعبور باید حداقل {{value}} کاراکتر باشد.",
+    "protection_section_label": "حفاظت"
 }
