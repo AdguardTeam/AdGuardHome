@@ -23,6 +23,12 @@ See also the [v0.107.30 GitHub milestone][ms-v0.107.30].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2023-29402, CVE-2023-29403, and CVE-2023-29404 Go vulnerabilities fixed in
+  [Go 1.19.10][go-1.19.10].
+
 ### Added
 
 - The ability to edit rewrite rules via `PUT /control/rewrite/update` HTTP API
@@ -42,6 +48,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
 [#5716]: https://github.com/AdguardTeam/AdGuardHome/issues/5716
+
+[go-1.19.10]: https://groups.google.com/g/golang-announce/c/q5135a9d924/m/j0ZoAJOHAwAJ
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
