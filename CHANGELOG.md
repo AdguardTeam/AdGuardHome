@@ -14,11 +14,11 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.31] - 2023-06-28 (APPROX.)
+## [v0.107.32] - 2023-06-28 (APPROX.)
 
-See also the [v0.107.31 GitHub milestone][ms-v0.107.31].
+See also the [v0.107.32 GitHub milestone][ms-v0.107.32].
 
-[ms-v0.107.31]: https://github.com/AdguardTeam/AdGuardHome/milestone/67?closed=1
+[ms-v0.107.32]: https://github.com/AdguardTeam/AdGuardHome/milestone/68?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -33,6 +33,24 @@ NOTE: Add new changes BELOW THIS COMMENT.
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.31] - 2023-06-08
+
+See also the [v0.107.31 GitHub milestone][ms-v0.107.31].
+
+### Fixed
+
+- Startup errors on OpenWrt ([#5872]).
+- Plain-UDP upstreams always falling back to TCP, causing outages and slowdowns
+  ([#5873], [#5874]).
+
+[#5872]: https://github.com/AdguardTeam/AdGuardHome/issues/5872
+[#5873]: https://github.com/AdguardTeam/AdGuardHome/issues/5873
+[#5874]: https://github.com/AdguardTeam/AdGuardHome/issues/5874
+
+[ms-v0.107.31]: https://github.com/AdguardTeam/AdGuardHome/milestone/67?closed=1
 
 
 
@@ -1986,11 +2004,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.31...HEAD
-[v0.107.31]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.30...v0.107.31
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.32...HEAD
+[v0.107.32]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.31...v0.107.32
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.30...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.31...HEAD
+[v0.107.31]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.30...v0.107.31
 [v0.107.30]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.29...v0.107.30
 [v0.107.29]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.28...v0.107.29
 [v0.107.28]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.27...v0.107.28

@@ -1,5 +1,5 @@
-github.com/AdguardTeam/dnsproxy v0.50.0 h1:gqImxUMBVS8VQmGdXw0U7MjJNVzXkYaZ9NM5TKl3JBU=
-github.com/AdguardTeam/dnsproxy v0.50.0/go.mod h1:CQhZTkqC8X0ID6glrtyaxgqRRdiYfn1gJulC1cZ5Dn8=
+github.com/AdguardTeam/dnsproxy v0.50.1 h1:A0HmAxb2izkOcuD50pRmR7ZnBL3/qF2DR2SlI6fN+6E=
+github.com/AdguardTeam/dnsproxy v0.50.1/go.mod h1:CQhZTkqC8X0ID6glrtyaxgqRRdiYfn1gJulC1cZ5Dn8=
 github.com/AdguardTeam/golibs v0.4.0/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
 github.com/AdguardTeam/golibs v0.10.4/go.mod h1:rSfQRGHIdgfxriDDNgNJ7HmE5zRoURq8R+VdR81Zuzw=
 github.com/AdguardTeam/golibs v0.13.2 h1:BPASsyQKmb+b8VnvsNOHp7bKfcZl9Z+Z2UhPjOiupSc=
@@ -29,8 +29,6 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/digineo/go-ipset/v2 v2.2.1 h1:k6skY+0fMqeUjjeWO/m5OuWPSZUAn7AucHMnQ1MX77g=
 github.com/digineo/go-ipset/v2 v2.2.1/go.mod h1:wBsNzJlZlABHUITkesrggFnZQtgW5wkqw1uo8Qxe0VU=
-github.com/dimfeld/httptreemux/v5 v5.5.0 h1:p8jkiMrCuZ0CmhwYLcbNbl7DDo21fozhKHQ2PccwOFQ=
-github.com/dimfeld/httptreemux/v5 v5.5.0/go.mod h1:QeEylH57C0v3VO0tkKraVz9oD3Uu93CKPnTLbsidvSw=
 github.com/fsnotify/fsnotify v1.6.0 h1:n+5WquG0fcWoWp6xPWfHdbskMCQaFnG6PfBrh1Ky4HY=
 github.com/fsnotify/fsnotify v1.6.0/go.mod h1:sl3t1tCWJFWoRz9R8WJCbQihKKwmorjAbSClcnxKAGw=
 github.com/go-logr/logr v1.2.4 h1:g01GSCwiDw2xSZfjJ2/T9M+S6pFdcNtFYsp+Y43HYDQ=
