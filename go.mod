@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	// TODO(a.garipov): Return to a release version once there is one.
-	github.com/AdguardTeam/dnsproxy v0.50.1-0.20230608093628-20fd4734e086
+	github.com/AdguardTeam/dnsproxy v0.50.1
 	github.com/AdguardTeam/golibs v0.13.2
 	github.com/AdguardTeam/urlfilter v0.16.1
 	github.com/NYTimes/gziphandler v1.1.1
