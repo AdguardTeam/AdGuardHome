@@ -28,6 +28,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - The ability to edit rewrite rules via `PUT /control/rewrite/update` HTTP API
   ([#1577]).
 
+### Fixed
+
+ - DNSCrypt upstream not resetting the client and resolver information on
+   dialing errors ([#5872]).
+
 [#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
 
 <!--
