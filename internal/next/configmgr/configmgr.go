@@ -5,6 +5,7 @@ package configmgr
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"sync"
 	"time"
@@ -42,7 +43,11 @@ type Manager struct {
 // New creates a new *Manager that persists changes to the file pointed to by
 // fileName.  It reads the configuration file and populates the service fields.
 // start is the startup time of AdGuard Home.
-func New(fileName string, start time.Time) (m *Manager, err error) {
+func New(
+	fileName string,
+	frontend fs.FS,
+	start time.Time,
+) (m *Manager, err error) {
 	defer func() { err = errors.Annotate(err, "reading config") }()
 
 	conf := &config{}
@@ -79,7 +84,7 @@ func New(fileName string, start time.Time) (m *Manager, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), assemblyTimeout)
 	defer cancel()
 
-	err = m.assemble(ctx, conf, start)
+	err = m.assemble(ctx, conf, frontend, start)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return nil, err
@@ -90,7 +95,12 @@ func New(fileName string, start time.Time) (m *Manager, err error) {
 
 // assemble creates all services and puts them into the corresponding fields.
 // The fields of conf must not be modified after calling assemble.
-func (m *Manager) assemble(ctx context.Context, conf *config, start time.Time) (err error) {
+func (m *Manager) assemble(
+	ctx context.Context,
+	conf *config,
+	frontend fs.FS,
+	start time.Time,
+) (err error) {
 	dnsConf := &dnssvc.Config{
 		Addresses:        conf.DNS.Addresses,
 		BootstrapServers: conf.DNS.BootstrapDNS,
@@ -104,6 +114,7 @@ func (m *Manager) assemble(ctx context.Context, conf *config, start time.Time) (
 
 	webSvcConf := &websvc.Config{
 		ConfigManager: m,
+		Frontend:      frontend,
 		// TODO(a.garipov): Fill from config file.
 		TLS:             nil,
 		Start:           start,
@@ -199,7 +210,10 @@ func (m *Manager) updateWeb(ctx context.Context, c *websvc.Config) (err error) {
 		}
 	}
 
-	m.web = websvc.New(c)
+	m.web, err = websvc.New(c)
+	if err != nil {
+		return fmt.Errorf("creating web svc: %w", err)
+	}
 
 	return nil
 }

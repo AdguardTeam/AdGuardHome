@@ -1,5 +1,5 @@
-// Package cmd is the AdGuard Home entry point.  It contains the on-disk
-// configuration file utilities, signal processing logic, and so on.
+// Package cmd is the AdGuard Home entry point.  It assembles the configuration
+// file manager, sets up signal processing logic, and so on.
 //
 // TODO(a.garipov): Move to the upper-level internal/.
 package cmd
@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"io/fs"
-	"math/rand"
 	"os"
 	"time"
 
@@ -16,12 +15,11 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// Main is the entry point of application.
-func Main(clientBuildFS fs.FS) {
+// Main is the entry point of AdGuard Home.
+func Main(frontend fs.FS) {
 	// Initial Configuration
 
 	start := time.Now()
-	rand.Seed(start.UnixNano())
 
 	// TODO(a.garipov): Set up logging.
 
@@ -29,38 +27,34 @@ func Main(clientBuildFS fs.FS) {
 
 	// Web Service
 
-	// TODO(a.garipov): Use in the Web service.
-	_ = clientBuildFS
-
 	// TODO(a.garipov): Set up configuration file name.
 	const confFile = "AdGuardHome.1.yaml"
 
-	confMgr, err := configmgr.New(confFile, start)
-	fatalOnError(err)
+	confMgr, err := configmgr.New(confFile, frontend, start)
+	check(err)
 
 	web := confMgr.Web()
 	err = web.Start()
-	fatalOnError(err)
+	check(err)
 
 	dns := confMgr.DNS()
 	err = dns.Start()
-	fatalOnError(err)
+	check(err)
 
 	sigHdlr := newSignalHandler(
 		confFile,
+		frontend,
 		start,
 		web,
 		dns,
 	)
 
-	go sigHdlr.handle()
-
-	select {}
+	sigHdlr.handle()
 }
 
 // defaultTimeout is the timeout used for some operations where another timeout
 // hasn't been defined yet.
-const defaultTimeout = 15 * time.Second
+const defaultTimeout = 5 * time.Second
 
 // ctxWithDefaultTimeout is a helper function that returns a context with
 // timeout set to defaultTimeout.
@@ -68,10 +62,9 @@ func ctxWithDefaultTimeout() (ctx context.Context, cancel context.CancelFunc) {
 	return context.WithTimeout(context.Background(), defaultTimeout)
 }
 
-// fatalOnError is a helper that exits the program with an error code if err is
-// not nil.  It must only be used within Main.
-func fatalOnError(err error) {
+// check is a simple error-checking helper.  It must only be used within Main.
+func check(err error) {
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }

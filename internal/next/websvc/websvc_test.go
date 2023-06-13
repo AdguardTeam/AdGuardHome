@@ -5,12 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/netip"
 	"net/url"
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
@@ -87,7 +89,10 @@ func newTestServer(
 	t.Helper()
 
 	c := &websvc.Config{
-		ConfigManager:   confMgr,
+		ConfigManager: confMgr,
+		Frontend: &aghtest.FS{
+			OnOpen: func(_ string) (_ fs.File, _ error) { return nil, fs.ErrNotExist },
+		},
 		TLS:             nil,
 		Addresses:       []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:0")},
 		SecureAddresses: nil,
@@ -96,9 +101,10 @@ func newTestServer(
 		ForceHTTPS:      false,
 	}
 
-	svc = websvc.New(c)
+	svc, err := websvc.New(c)
+	require.NoError(t, err)
 
-	err := svc.Start()
+	err = svc.Start()
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)

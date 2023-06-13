@@ -53,6 +53,7 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 
 	newConf := &Config{
 		ConfigManager:   svc.confMgr,
+		Frontend:        svc.frontend,
 		TLS:             svc.tls,
 		Addresses:       req.Addresses,
 		SecureAddresses: req.SecureAddresses,

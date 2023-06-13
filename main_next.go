@@ -13,8 +13,8 @@ import (
 // outside of the same or underlying directory.
 
 //go:embed build
-var clientBuildFS embed.FS
+var frontend embed.FS
 
 func main() {
-	cmd.Main(clientBuildFS)
+	cmd.Main(frontend)
 }

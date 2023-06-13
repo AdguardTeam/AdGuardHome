@@ -2,6 +2,9 @@ package websvc
 
 // Path constants
 const (
+	PathRoot     = "/"
+	PathFrontend = "/*filepath"
+
 	PathHealthCheck = "/health-check"
 
 	PathV1SettingsAll  = "/api/v1/settings/all"

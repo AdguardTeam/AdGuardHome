@@ -11,6 +11,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/netip"
@@ -38,6 +39,10 @@ type Config struct {
 	// ConfigManager is used to show information about services as well as
 	// dynamically reconfigure them.
 	ConfigManager ConfigManager
+
+	// Frontend is the filesystem with the frontend and other statically
+	// compiled files.
+	Frontend fs.FS
 
 	// TLS is the optional TLS configuration.  If TLS is not nil,
 	// SecureAddresses must not be empty.
@@ -67,6 +72,7 @@ type Config struct {
 // [agh.Service] that does nothing.
 type Service struct {
 	confMgr    ConfigManager
+	frontend   fs.FS
 	tls        *tls.Config
 	start      time.Time
 	servers    []*http.Server
@@ -77,13 +83,22 @@ type Service struct {
 // New returns a new properly initialized *Service.  If c is nil, svc is a nil
 // *Service that does nothing.  The fields of c must not be modified after
 // calling New.
-func New(c *Config) (svc *Service) {
+//
+// TODO(a.garipov): Get rid of this special handling of nil or explain it
+// better.
+func New(c *Config) (svc *Service, err error) {
 	if c == nil {
-		return nil
+		return nil, nil
+	}
+
+	frontend, err := fs.Sub(c.Frontend, "build/static")
+	if err != nil {
+		return nil, fmt.Errorf("frontend fs: %w", err)
 	}
 
 	svc = &Service{
 		confMgr:    c.ConfigManager,
+		frontend:   frontend,
 		tls:        c.TLS,
 		start:      c.Start,
 		timeout:    c.Timeout,
@@ -121,7 +136,7 @@ func New(c *Config) (svc *Service) {
 		})
 	}
 
-	return svc
+	return svc, nil
 }
 
 // newMux returns a new HTTP request multiplexor for the AdGuard Home web
@@ -132,41 +147,54 @@ func newMux(svc *Service) (mux *httptreemux.ContextMux) {
 	routes := []struct {
 		handler http.HandlerFunc
 		method  string
-		path    string
+		pattern string
 		isJSON  bool
 	}{{
 		handler: svc.handleGetHealthCheck,
 		method:  http.MethodGet,
-		path:    PathHealthCheck,
+		pattern: PathHealthCheck,
+		isJSON:  false,
+	}, {
+		handler: http.FileServer(http.FS(svc.frontend)).ServeHTTP,
+		method:  http.MethodGet,
+		pattern: PathFrontend,
+		isJSON:  false,
+	}, {
+		handler: http.FileServer(http.FS(svc.frontend)).ServeHTTP,
+		method:  http.MethodGet,
+		pattern: PathRoot,
 		isJSON:  false,
 	}, {
 		handler: svc.handleGetSettingsAll,
 		method:  http.MethodGet,
-		path:    PathV1SettingsAll,
+		pattern: PathV1SettingsAll,
 		isJSON:  true,
 	}, {
 		handler: svc.handlePatchSettingsDNS,
 		method:  http.MethodPatch,
-		path:    PathV1SettingsDNS,
+		pattern: PathV1SettingsDNS,
 		isJSON:  true,
 	}, {
 		handler: svc.handlePatchSettingsHTTP,
 		method:  http.MethodPatch,
-		path:    PathV1SettingsHTTP,
+		pattern: PathV1SettingsHTTP,
 		isJSON:  true,
 	}, {
 		handler: svc.handleGetV1SystemInfo,
 		method:  http.MethodGet,
-		path:    PathV1SystemInfo,
+		pattern: PathV1SystemInfo,
 		isJSON:  true,
 	}}
 
 	for _, r := range routes {
+		var hdlr http.Handler
 		if r.isJSON {
-			mux.Handle(r.method, r.path, jsonMw(r.handler))
+			hdlr = jsonMw(r.handler)
 		} else {
-			mux.Handle(r.method, r.path, r.handler)
+			hdlr = r.handler
 		}
+
+		mux.Handle(r.method, r.pattern, logMw(hdlr))
 	}
 
 	return mux
