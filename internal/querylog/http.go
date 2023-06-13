@@ -99,14 +99,33 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
-// exportChunkSize is a size of one search-flush iteration for query log export.
-//
-// TODO(a.meshkov): Consider making configurable.
-const exportChunkSize = 500
+const (
+	// exportChunkSize is a size of one search-flush iteration for query log
+	// export.
+	//
+	// TODO(a.meshkov): Consider making configurable.
+	exportChunkSize = 500
+
+	// exportLogTimeout is a write timeout for query log export request.
+	//
+	// TODO(a.meshkov): Consider making configurable.
+	exportLogTimeout = 2 * time.Minute
+)
 
 // handleQueryLogExport is the handler for the GET /control/querylog/export
 // HTTP API.
 func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) {
+	rc := http.NewResponseController(w)
+
+	// Set a deadline for this request.  Note that it could be more than server
+	// write timeout.
+	err := rc.SetWriteDeadline(time.Now().Add(exportLogTimeout))
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusInternalServerError, "set timeout: %s", err)
+
+		return
+	}
+
 	searchCriteria, err := parseSearchCriteria(r.URL.Query())
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "parsing params: %s", err)
@@ -151,7 +170,7 @@ func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) 
 			row := entry.toCSV()
 			if err = csvWriter.Write(row[:]); err != nil {
 				// TODO(a.garipov): Set Trailer X-Error header.
-				log.Error("%s %s %s: %s", r.Method, r.Host, r.URL, "writing csv record")
+				log.Error("%s %s %s: %s: %s", r.Method, r.Host, r.URL, "writing csv record", err)
 
 				return
 			}
@@ -162,7 +181,7 @@ func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) 
 
 	if err = csvWriter.Error(); err != nil {
 		// TODO(a.garipov): Set Trailer X-Error header.
-		log.Error("%s %s %s: %s", r.Method, r.Host, r.URL, "writing csv")
+		log.Error("%s %s %s: %s: %s", r.Method, r.Host, r.URL, "writing csv", err)
 	}
 }
 
