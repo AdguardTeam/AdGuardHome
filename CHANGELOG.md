@@ -28,16 +28,21 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - The ability to edit rewrite rules via `PUT /control/rewrite/update` HTTP API
   ([#1577]).
 
-### Fixed
-
- - DNSCrypt upstream not resetting the client and resolver information on
-   dialing errors ([#5872]).
-
 [#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.32] - 2023-06-13
+
+### Fixed
+
+ - DNSCrypt upstream not resetting the client and resolver information on
+   dialing errors ([#5872]).
+
 
 
 
@@ -2009,11 +2014,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.32...HEAD
-[v0.107.32]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.31...v0.107.32
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.33...HEAD
+[v0.107.33]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.32...v0.107.33
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.31...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.32...HEAD
+[v0.107.32]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.31...v0.107.32
 [v0.107.31]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.30...v0.107.31
 [v0.107.30]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.29...v0.107.30
 [v0.107.29]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.28...v0.107.29
