@@ -36,7 +36,7 @@ var csvHeaderRow = csvRow{
 
 // toCSV returns a slice of strings with entry fields according to the
 // csvHeaderRow slice.
-func (e *logEntry) toCSV() (out csvRow) {
+func (e *logEntry) toCSV() (out *csvRow) {
 	var filterID, filterRule string
 
 	if e.Result.IsFiltered && len(e.Result.Rules) > 0 {
@@ -47,7 +47,7 @@ func (e *logEntry) toCSV() (out csvRow) {
 
 	aData := ansData(e)
 
-	return csvRow{
+	return &csvRow{
 		strconv.FormatBool(e.AuthenticatedData),
 		aData.rCode,
 		aData.typ,
