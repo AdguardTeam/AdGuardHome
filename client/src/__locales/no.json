@@ -282,6 +282,8 @@
     "blocking_mode_null_ip": "Null IP: Svar med en 0-IP-adresse (0.0.0.0 for A; :: for AAAA)",
     "blocking_mode_custom_ip": "Tilpasset IP: Svar med en manuelt valgt IP-adresse",
     "theme_auto": "Auto",
+    "theme_light": "Lyst tema",
+    "theme_dark": "Mørkt tema",
     "upstream_dns_client_desc": "Hvis dette feltet holdes tomt, vil AdGuard Home bruke tjenerne som er satt opp i <0>DNS-innstillingene</0>.",
     "tracker_source": "Sporerkilde",
     "source_label": "Kilde",

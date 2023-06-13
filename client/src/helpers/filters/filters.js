@@ -100,6 +100,12 @@ export default {
             "homepage": "https://github.com/DandelionSprout/adfilt",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_13.txt"
         },
+        "POL_cert_polska_list_of_malicious_domains": {
+            "name": "POL: CERT Polska List of malicious domains",
+            "categoryId": "regional",
+            "homepage": "https://cert.pl/posts/2020/03/ostrzezenia_phishing/",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_41.txt"
+        },
         "POL_polish_filters_for_pi_hole": {
             "name": "POL: Polish filters for Pi-hole",
             "categoryId": "regional",
@@ -117,6 +123,12 @@ export default {
             "categoryId": "regional",
             "homepage": "https://github.com/bkrucarci/turk-adlist",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_26.txt"
+        },
+        "TUR_turkish_ad_hosts": {
+            "name": "TUR: Turkish Ad Hosts",
+            "categoryId": "regional",
+            "homepage": "https://github.com/symbuzzer/Turkish-Ad-Hosts",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_40.txt"
         },
         "VNM_abpvn": {
             "name": "VNM: ABPVN List",
@@ -213,6 +225,12 @@ export default {
             "categoryId": "security",
             "homepage": "https://github.com/durablenapkin/scamblocklist",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_10.txt"
+        },
+        "shadowwhisperers_malware_list": {
+            "name": "ShadowWhisperer's Malware List",
+            "categoryId": "security",
+            "homepage": "https://github.com/ShadowWhisperer/BlockLists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_42.txt"
         },
         "staklerware_indicators_list": {
             "name": "Stalkerware Indicators List",
