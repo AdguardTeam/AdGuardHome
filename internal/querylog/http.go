@@ -99,33 +99,14 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 	_ = aghhttp.WriteJSONResponse(w, r, resp)
 }
 
-const (
-	// exportChunkSize is a size of one search-flush iteration for query log
-	// export.
-	//
-	// TODO(a.meshkov): Consider making configurable.
-	exportChunkSize = 500
-
-	// exportLogTimeout is a write timeout for query log export request.
-	//
-	// TODO(a.meshkov): Consider making configurable.
-	exportLogTimeout = 2 * time.Minute
-)
+// exportChunkSize is a size of one search-flush iteration for query log export.
+//
+// TODO(a.meshkov): Consider making configurable.
+const exportChunkSize = 500
 
 // handleQueryLogExport is the handler for the GET /control/querylog/export
 // HTTP API.
 func (l *queryLog) handleQueryLogExport(w http.ResponseWriter, r *http.Request) {
-	rc := http.NewResponseController(w)
-
-	// Set a deadline for this request.  Note that it could be more than server
-	// write timeout.
-	err := rc.SetWriteDeadline(time.Now().Add(exportLogTimeout))
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "set timeout: %s", err)
-
-		return
-	}
-
 	searchCriteria, err := parseSearchCriteria(r.URL.Query())
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "parsing params: %s", err)
