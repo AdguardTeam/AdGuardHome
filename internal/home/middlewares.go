@@ -3,13 +3,13 @@ package home
 import (
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
-
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// middlerware is a wrapper function signature.
+// middleware is a wrapper function signature.
 type middleware func(http.Handler) http.Handler
 
 // withMiddlewares consequently wraps h with all the middlewares.
@@ -74,4 +74,49 @@ func limitRequestBody(h http.Handler) (limited http.Handler) {
 
 		h.ServeHTTP(w, rr)
 	})
+}
+
+const (
+	// defaultWriteTimeout is the maximum duration before timing out writes of
+	// the response.
+	defaultWriteTimeout = 60 * time.Second
+
+	// longerWriteTimeout is the maximum duration before timing out for APIs
+	// expecting longer response requests.
+	longerWriteTimeout = 5 * time.Minute
+)
+
+// expectsLongTimeoutRequests shows if this request should use a bigger write
+// timeout value.  These are exceptions for poorly designed current APIs as
+// well as APIs that are designed to expect large files and requests.  Remove
+// once the new, better APIs are up.
+//
+// TODO(d.kolyshev): This could be achieved with [http.NewResponseController]
+// with go v1.20.
+func expectsLongTimeoutRequests(r *http.Request) (ok bool) {
+	if r.Method != http.MethodGet {
+		return false
+	}
+
+	return r.URL.Path == "/control/querylog/export"
+}
+
+// addWriteTimeout wraps underlying handler h, adding a response write timeout.
+func addWriteTimeout(h http.Handler) (limited http.Handler) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var handler http.Handler
+		if expectsLongTimeoutRequests(r) {
+			handler = http.TimeoutHandler(h, longerWriteTimeout, "write timeout exceeded")
+		} else {
+			handler = http.TimeoutHandler(h, defaultWriteTimeout, "write timeout exceeded")
+		}
+
+		handler.ServeHTTP(w, r)
+	})
+}
+
+// limitHandler wraps underlying handler h with default limits, such as request
+// body limit and write timeout.
+func limitHandler(h http.Handler) (limited http.Handler) {
+	return limitRequestBody(addWriteTimeout(h))
 }

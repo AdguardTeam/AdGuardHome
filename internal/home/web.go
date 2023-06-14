@@ -25,11 +25,13 @@ const (
 	// readTimeout is the maximum duration for reading the entire request,
 	// including the body.
 	readTimeout = 60 * time.Second
+
 	// readHdrTimeout is the amount of time allowed to read request headers.
 	readHdrTimeout = 60 * time.Second
+
 	// writeTimeout is the maximum duration before timing out writes of the
-	// response.
-	writeTimeout = 60 * time.Second
+	// response.  This limit is overwritten by [addWriteTimeout] middleware.
+	writeTimeout = 10 * time.Minute
 )
 
 type webConfig struct {
@@ -169,7 +171,7 @@ func (web *webAPI) start() {
 		errs := make(chan error, 2)
 
 		// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
-		hdlr := h2c.NewHandler(withMiddlewares(Context.mux, limitRequestBody), &http2.Server{})
+		hdlr := h2c.NewHandler(withMiddlewares(Context.mux, limitHandler), &http2.Server{})
 
 		// Create a new instance, because the Web is not usable after Shutdown.
 		hostStr := web.conf.BindHost.String()
@@ -254,7 +256,7 @@ func (web *webAPI) tlsServerLoop() {
 				CipherSuites: Context.tlsCipherIDs,
 				MinVersion:   tls.VersionTLS12,
 			},
-			Handler:           withMiddlewares(Context.mux, limitRequestBody),
+			Handler:           withMiddlewares(Context.mux, limitHandler),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 			WriteTimeout:      web.conf.WriteTimeout,
@@ -288,7 +290,7 @@ func (web *webAPI) mustStartHTTP3(address string) {
 			CipherSuites: Context.tlsCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
-		Handler: withMiddlewares(Context.mux, limitRequestBody),
+		Handler: withMiddlewares(Context.mux, limitHandler),
 	}
 
 	log.Debug("web: starting http/3 server")
