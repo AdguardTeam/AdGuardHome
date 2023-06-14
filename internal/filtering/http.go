@@ -416,12 +416,12 @@ type checkHostResp struct {
 func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 	host := r.URL.Query().Get("name")
 
-	setts := d.GetConfig()
+	setts := d.Settings()
 	setts.FilteringEnabled = true
 	setts.ProtectionEnabled = true
 
-	d.ApplyBlockedServices(&setts, nil)
-	result, err := d.CheckHost(host, dns.TypeA, &setts)
+	d.ApplyBlockedServices(setts)
+	result, err := d.CheckHost(host, dns.TypeA, setts)
 	if err != nil {
 		aghhttp.Error(
 			r,

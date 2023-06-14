@@ -3,8 +3,10 @@ package filtering
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"golang.org/x/exp/slices"
@@ -44,6 +46,15 @@ func initBlockedServices() {
 	log.Debug("filtering: initialized %d services", l)
 }
 
+// BlockedServices is the configuration of blocked services.
+type BlockedServices struct {
+	// Schedule is blocked services schedule for every day of the week.
+	Schedule *schedule.Weekly `yaml:"schedule"`
+
+	// IDs is the names of blocked services.
+	IDs []string `yaml:"ids"`
+}
+
 // BlockedSvcKnown returns true if a blocked service ID is known.
 func BlockedSvcKnown(s string) (ok bool) {
 	_, ok = serviceRules[s]
@@ -52,15 +63,22 @@ func BlockedSvcKnown(s string) (ok bool) {
 }
 
 // ApplyBlockedServices - set blocked services settings for this DNS request
-func (d *DNSFilter) ApplyBlockedServices(setts *Settings, list []string) {
+func (d *DNSFilter) ApplyBlockedServices(setts *Settings) {
+	d.confLock.RLock()
+	defer d.confLock.RUnlock()
+
 	setts.ServicesRules = []ServiceEntry{}
-	if list == nil {
-		d.confLock.RLock()
-		defer d.confLock.RUnlock()
 
-		list = d.Config.BlockedServices
+	bsvc := d.BlockedServices
+
+	// TODO(s.chzhen):  Use startTime from [dnsforward.dnsContext].
+	if !bsvc.Schedule.Contains(time.Now()) {
+		d.ApplyBlockedServicesList(setts, bsvc.IDs)
 	}
+}
 
+// ApplyBlockedServicesList appends filtering rules to the settings.
+func (d *DNSFilter) ApplyBlockedServicesList(setts *Settings, list []string) {
 	for _, name := range list {
 		rules, ok := serviceRules[name]
 		if !ok {
@@ -90,7 +108,7 @@ func (d *DNSFilter) handleBlockedServicesAll(w http.ResponseWriter, r *http.Requ
 
 func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Request) {
 	d.confLock.RLock()
-	list := d.Config.BlockedServices
+	list := d.Config.BlockedServices.IDs
 	d.confLock.RUnlock()
 
 	_ = aghhttp.WriteJSONResponse(w, r, list)
@@ -106,7 +124,7 @@ func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 	}
 
 	d.confLock.Lock()
-	d.Config.BlockedServices = list
+	d.Config.BlockedServices.IDs = list
 	d.confLock.Unlock()
 
 	log.Debug("Updated blocked services list: %d", len(list))

@@ -14,6 +14,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
+	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/golibs/errors"
@@ -315,6 +316,11 @@ var config = &configuration{
 				Pixabay:    true,
 				Yandex:     true,
 				YouTube:    true,
+			},
+
+			BlockedServices: &filtering.BlockedServices{
+				Schedule: schedule.EmptyWeekly(),
+				IDs:      []string{},
 			},
 		},
 		UpstreamTimeout: timeutil.Duration{Duration: dnsforward.DefaultTimeout},
