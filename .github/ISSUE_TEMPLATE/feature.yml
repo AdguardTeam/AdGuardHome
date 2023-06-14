@@ -23,19 +23,32 @@
     'id': 'prerequisites'
     'type': 'checkboxes'
   - 'attributes':
-        'description': 'Please describe the request'
-        'label': 'Description'
-        'value': |
-            #### What problem are you trying to solve?
-
-            #### Proposed solution
-
-            #### Alternatives considered
-
-            #### Additional information
-    'id': 'description'
+        'description': 'Please describe the problem you are trying to solve'
+        'label': 'The problem'
+        'placeholder': >
+            Please describe the problem you are trying to solve
+    'id': 'problem'
     'type': 'textarea'
     'validations':
         'required': true
+  - 'attributes':
+        'description': 'What feature are you proposing to solve this problem?'
+        'label': 'Proposed solution'
+        'placeholder': >
+            What feature are you proposing to solve this problem?
+    'id': 'proposed_solution'
+    'type': 'textarea'
+    'validations':
+        'required': true
+  - 'attributes':
+        'label': 'Alternatives considered and additional information'
+        'placeholder': >
+            Are there any other ways to solve the problem?
+    'id': 'additional'
+    'type': 'textarea'
+    'validations':
+        'required': false
 'description': 'Suggest a feature or an enhancement for AdGuard Home'
+'labels':
+  - 'feature request'
 'name': 'Feature request or enhancement'
