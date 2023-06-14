@@ -46,16 +46,19 @@ func TestService_HandleGetSettingsAll(t *testing.T) {
 		return c
 	}
 
+	svc, err := websvc.New(&websvc.Config{
+		TLS: &tls.Config{
+			Certificates: []tls.Certificate{{}},
+		},
+		Addresses:       wantWeb.Addresses,
+		SecureAddresses: wantWeb.SecureAddresses,
+		Timeout:         time.Duration(wantWeb.Timeout),
+		ForceHTTPS:      true,
+	})
+	require.NoError(t, err)
+
 	confMgr.onWeb = func() (s agh.ServiceWithConfig[*websvc.Config]) {
-		return websvc.New(&websvc.Config{
-			TLS: &tls.Config{
-				Certificates: []tls.Certificate{{}},
-			},
-			Addresses:       wantWeb.Addresses,
-			SecureAddresses: wantWeb.SecureAddresses,
-			Timeout:         time.Duration(wantWeb.Timeout),
-			ForceHTTPS:      true,
-		})
+		return svc
 	}
 
 	_, addr := newTestServer(t, confMgr)
@@ -67,7 +70,7 @@ func TestService_HandleGetSettingsAll(t *testing.T) {
 
 	body := httpGet(t, u, http.StatusOK)
 	resp := &websvc.RespGetV1SettingsAll{}
-	err := json.Unmarshal(body, resp)
+	err = json.Unmarshal(body, resp)
 	require.NoError(t, err)
 
 	assert.Equal(t, wantDNS, resp.DNS)
