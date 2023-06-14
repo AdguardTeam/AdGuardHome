@@ -93,3 +93,55 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 
 	assert.Equal(t, knownClientName, gotClient.Name)
 }
+
+// BenchmarkQueryLog_Search compares the speed of search with limit-offset
+// parameters and the one with oldenThan timestamp specified.
+func BenchmarkQueryLog_Search(b *testing.B) {
+	l, err := newQueryLog(Config{
+		Enabled:     true,
+		RotationIvl: timeutil.Day,
+		MemSize:     100,
+		BaseDir:     b.TempDir(),
+	})
+	require.NoError(b, err)
+
+	const (
+		entNum           = 100000
+		firstPageDomain  = "first.example.org"
+		secondPageDomain = "second.example.org"
+	)
+	// Add entries to the log.
+	for i := 0; i < entNum; i++ {
+		addEntry(l, secondPageDomain, net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
+	}
+	// Write them to the first file.
+	require.NoError(b, l.flushLogBuffer())
+
+	// Add more to the in-memory part of log.
+	for i := 0; i < entNum; i++ {
+		addEntry(l, firstPageDomain, net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
+	}
+
+	b.Run("limit_offset", func(b *testing.B) {
+		params := newSearchParams()
+
+		b.ReportAllocs()
+
+		for i := 0; i < b.N; i++ {
+			params.offset += params.limit
+			_, _ = l.search(params)
+		}
+	})
+
+	b.Run("timestamp", func(b *testing.B) {
+		params := newSearchParams()
+		params.olderThan = time.Now().Add(-1 * time.Hour)
+
+		b.ReportAllocs()
+
+		for i := 0; i < b.N; i++ {
+			params.olderThan = params.olderThan.Add(1 * time.Minute)
+			_, _ = l.search(params)
+		}
+	})
+}
