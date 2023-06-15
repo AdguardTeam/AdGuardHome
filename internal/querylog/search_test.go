@@ -144,4 +144,16 @@ func BenchmarkQueryLog_Search(b *testing.B) {
 			_, _ = l.search(params)
 		}
 	})
+
+	// Most recent result, on a MBP15:
+	//
+	// goos: darwin
+	// goarch: amd64
+	// pkg: github.com/AdguardTeam/AdGuardHome/internal/querylog
+	// cpu: Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz
+	// BenchmarkQueryLog_Search
+	// BenchmarkQueryLog_Search/limit_offset
+	// BenchmarkQueryLog_Search/limit_offset-12         	     547	   2066079 ns/op	 2325019 B/op	   26633 allocs/op
+	// BenchmarkQueryLog_Search/timestamp
+	// BenchmarkQueryLog_Search/timestamp-12            	    1303	   2028888 ns/op	 2219337 B/op	   25194 allocs/op
 }
