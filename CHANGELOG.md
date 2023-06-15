@@ -28,9 +28,67 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - The new HTTP API, `GET /control/querylog/export`, which can be used to
   export query log items.  See `openapi/openapi.yaml` for the full description
   ([#3389]).
+- The ability to set inactivity periods for filtering blocked services in the
+  configuration file ([#951]).  The UI changes are coming in the upcoming
+  releases.
 - The ability to edit rewrite rules via `PUT /control/rewrite/update` HTTP API
   ([#1577]).
 
+### Changed
+
+#### Configuration Changes
+
+In this release, the schema version has changed from 20 to 21.
+
+- Property `dns.blocked_services`, which in schema versions 20 and earlier used
+  to be a list containing ids of blocked services, is now an object containing
+  ids and schedule for blocked services:
+
+  ```yaml
+  # BEFORE:
+  'blocked_services':
+  - id_1
+  - id_2
+
+  # AFTER:
+  'blocked_services':
+    'ids':
+    - id_1
+    - id_2
+    'schedule':
+      'time_zone': 'Local'
+      'sun':
+        'start': '0s'
+        'end': '24h'
+      'mon':
+        'start': '10m'
+        'end': '23h30m'
+      'tue':
+        'start': '20m'
+        'end': '23h'
+      'wed':
+        'start': '30m'
+        'end': '22h30m'
+      'thu':
+        'start': '40m'
+        'end': '22h'
+      'fri':
+        'start': '50m'
+        'end': '21h30m'
+      'sat':
+        'start': '1h'
+        'end': '21h'
+  ```
+
+  To rollback this change, replace `dns.blocked_services` object with the list
+  of ids of blocked services and change the `schema_version` back to `20`.
+
+### Fixed
+
+ - DNSCrypt upstream not resetting the client and resolver information on
+   dialing errors ([#5872]).
+
+[#951]:  https://github.com/AdguardTeam/AdGuardHome/issues/951
 [#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
 [#3389]: https://github.com/AdguardTeam/AdGuardHome/issues/3389
 

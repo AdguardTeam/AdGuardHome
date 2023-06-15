@@ -1140,3 +1140,46 @@ func TestUpgradeSchema19to20(t *testing.T) {
 		assert.Equal(t, 24*time.Hour, ivlVal.Duration)
 	})
 }
+
+func TestUpgradeSchema20to21(t *testing.T) {
+	const newSchemaVer = 21
+
+	testCases := []struct {
+		in   yobj
+		want yobj
+		name string
+	}{{
+		name: "nothing",
+		in:   yobj{},
+		want: yobj{
+			"schema_version": newSchemaVer,
+		},
+	}, {
+		name: "no_clients",
+		in: yobj{
+			"dns": yobj{
+				"blocked_services": yarr{"ok"},
+			},
+		},
+		want: yobj{
+			"dns": yobj{
+				"blocked_services": yobj{
+					"ids": yarr{"ok"},
+					"schedule": yobj{
+						"time_zone": "Local",
+					},
+				},
+			},
+			"schema_version": newSchemaVer,
+		},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema20to21(tc.in)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}

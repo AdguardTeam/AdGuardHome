@@ -22,7 +22,7 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 20
+const currentSchemaVersion = 21
 
 // These aliases are provided for convenience.
 type (
@@ -94,6 +94,7 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema17to18,
 		upgradeSchema18to19,
 		upgradeSchema19to20,
+		upgradeSchema20to21,
 	}
 
 	n := 0
@@ -1124,6 +1125,56 @@ func upgradeSchema19to20(diskConf yobj) (err error) {
 	}
 
 	stats[field] = timeutil.Duration{Duration: time.Duration(statsIvl) * timeutil.Day}
+
+	return nil
+}
+
+// upgradeSchema20to21 performs the following changes:
+//
+//	# BEFORE:
+//	'dns':
+//	  'blocked_services':
+//	  - 'svc_name'
+//
+//	# AFTER:
+//	'dns':
+//	  'blocked_services':
+//	    'ids':
+//	    - 'svc_name'
+//	    'schedule':
+//	      'time_zone': 'Local'
+func upgradeSchema20to21(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 20 to 21")
+	diskConf["schema_version"] = 21
+
+	const field = "blocked_services"
+
+	dnsVal, ok := diskConf["dns"]
+	if !ok {
+		return nil
+	}
+
+	dns, ok := dnsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of dns: %T", dnsVal)
+	}
+
+	blockedVal, ok := dns[field]
+	if !ok {
+		return nil
+	}
+
+	services, ok := blockedVal.(yarr)
+	if !ok {
+		return fmt.Errorf("unexpected type of blocked: %T", blockedVal)
+	}
+
+	dns[field] = yobj{
+		"ids": services,
+		"schedule": yobj{
+			"time_zone": "Local",
+		},
+	}
 
 	return nil
 }

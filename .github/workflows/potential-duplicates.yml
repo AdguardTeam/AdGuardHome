@@ -1,0 +1,18 @@
+'name': 'potential-duplicates'
+'on':
+    'issues':
+        'types':
+          - 'opened'
+'jobs':
+    'run':
+        'runs-on': 'ubuntu-latest'
+        'steps':
+          - 'uses': 'wow-actions/potential-duplicates@v1'
+            'with':
+                'GITHUB_TOKEN': '${{ secrets.GITHUB_TOKEN }}'
+                'state': 'all'
+                'threshold': 0.6
+                'comment': |
+                    Potential duplicates: {{#issues}}
+                     *  [#{{ number }}] {{ title }} ({{ accuracy }}%)
+                    {{/issues}}
