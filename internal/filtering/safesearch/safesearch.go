@@ -203,7 +203,7 @@ func (ss *Default) CheckHost(
 		return res, nil
 	}
 
-	return filtering.Result{}, fmt.Errorf("no ipv4 addresses for %q", host)
+	return filtering.Result{}, fmt.Errorf("no ip addresses for %q", host)
 }
 
 // searchHost looks up DNS rewrites in the internal DNS filtering engine.
@@ -255,7 +255,14 @@ func (ss *Default) newResult(
 
 	host := rewrite.NewCNAME
 	if host == "" {
-		return nil, nil
+		// If there is a rewrite, but it's neither a CNAME one nor one matching
+		// the IP version, then it's a service that only has one type of IP
+		// record but not the other.  Return the empty result to be converted
+		// into a NODATA response.
+		//
+		// TODO(a.garipov): Use the main rewrite result mechanism used in
+		// [dnsforward.Server.filterDNSRequest].
+		return res, nil
 	}
 
 	ss.log(log.DEBUG, "resolving %q", host)

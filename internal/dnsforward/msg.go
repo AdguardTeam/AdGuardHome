@@ -57,16 +57,13 @@ func (s *Server) genDNSFilterMessage(
 		return s.genBlockedHost(req, s.conf.SafeBrowsingBlockHost, dctx)
 	case filtering.FilteredParental:
 		return s.genBlockedHost(req, s.conf.ParentalBlockHost, dctx)
+	case filtering.FilteredSafeSearch:
+		// If Safe Search generated the necessary IP addresses, use them.
+		// Otherwise, if there were no errors, there are no addresses for the
+		// requested IP version, so produce a NODATA response.
+		return s.genResponseWithIPs(req, ipsFromRules(res.Rules))
 	default:
-		// If the query was filtered by Safe Search, filtering also must return
-		// the IP addresses that must be used in response.  Return them
-		// regardless of the filtering method.
-		ips := ipsFromRules(res.Rules)
-		if res.Reason == filtering.FilteredSafeSearch && len(ips) > 0 {
-			return s.genResponseWithIPs(req, ips)
-		}
-
-		return s.genForBlockingMode(req, ips)
+		return s.genForBlockingMode(req, ipsFromRules(res.Rules))
 	}
 }
 

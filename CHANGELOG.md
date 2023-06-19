@@ -82,11 +82,11 @@ In this release, the schema version has changed from 20 to 21.
 
 ### Fixed
 
- - DNSCrypt upstream not resetting the client and resolver information on
-   dialing errors ([#5872]).
+- Safe Search not working with `AAAA` queries for Yandex domains ([#5913]).
 
 [#951]:  https://github.com/AdguardTeam/AdGuardHome/issues/951
 [#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
+[#5913]: https://github.com/AdguardTeam/AdGuardHome/issues/5913
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
@@ -98,8 +98,8 @@ NOTE: Add new changes ABOVE THIS COMMENT.
 
 ### Fixed
 
- - DNSCrypt upstream not resetting the client and resolver information on
-   dialing errors ([#5872]).
+- DNSCrypt upstream not resetting the client and resolver information on
+  dialing errors ([#5872]).
 
 
 

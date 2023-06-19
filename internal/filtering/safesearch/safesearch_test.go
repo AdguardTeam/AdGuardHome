@@ -71,6 +71,17 @@ func TestDefault_CheckHost_yandex(t *testing.T) {
 	}
 }
 
+func TestDefault_CheckHost_yandexAAAA(t *testing.T) {
+	conf := testConf
+	ss, err := safesearch.NewDefault(conf, "", testCacheSize, testCacheTTL)
+	require.NoError(t, err)
+
+	res, err := ss.CheckHost("www.yandex.ru", dns.TypeAAAA)
+	require.NoError(t, err)
+
+	assert.True(t, res.IsFiltered)
+}
+
 func TestDefault_CheckHost_google(t *testing.T) {
 	resolver := &aghtest.TestResolver{}
 	ip, _ := resolver.HostToIPs("forcesafesearch.google.com")
