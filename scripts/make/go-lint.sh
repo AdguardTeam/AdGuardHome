@@ -170,6 +170,17 @@ run_linter govulncheck ./...
 
 run_linter gocyclo --over 10 .
 
+# TODO(a.garipov): Enable for all.
+run_linter gocognit --over 10\
+	./internal/aghalg/\
+	./internal/aghchan/\
+	./internal/aghhttp/\
+	./internal/aghio/\
+	./internal/tools/\
+	./internal/next/\
+	./internal/version/\
+	;
+
 run_linter ineffassign ./...
 
 run_linter unparam ./...

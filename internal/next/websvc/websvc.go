@@ -139,7 +139,7 @@ func New(c *Config) (svc *Service, err error) {
 	return svc, nil
 }
 
-// newMux returns a new HTTP request multiplexor for the AdGuard Home web
+// newMux returns a new HTTP request multiplexer for the AdGuard Home web
 // service.
 func newMux(svc *Service) (mux *httptreemux.ContextMux) {
 	mux = httptreemux.NewContextMux()

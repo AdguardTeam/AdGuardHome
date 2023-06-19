@@ -78,34 +78,41 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 
 	// Launch the new HTTP service in a separate goroutine to let this handler
 	// finish and thus, this server to shutdown.
-	go func() {
-		defer cancelUpd()
+	go svc.relaunch(updCtx, cancelUpd, newConf)
+}
 
-		updErr := svc.confMgr.UpdateWeb(updCtx, newConf)
-		if updErr != nil {
-			writeJSONErrorResponse(w, r, fmt.Errorf("updating: %w", updErr))
+// relaunch updates the web service in the configuration manager and starts it.
+// It is intended to be used as a goroutine.
+func (svc *Service) relaunch(ctx context.Context, cancel context.CancelFunc, newConf *Config) {
+	defer log.OnPanic("websvc: relaunching")
+
+	defer cancel()
+
+	err := svc.confMgr.UpdateWeb(ctx, newConf)
+	if err != nil {
+		log.Error("websvc: updating web: %s", err)
+
+		return
+	}
+
+	// TODO(a.garipov): Consider better ways to do this.
+	const maxUpdDur = 5 * time.Second
+	updStart := time.Now()
+	var newSvc agh.ServiceWithConfig[*Config]
+	for newSvc = svc.confMgr.Web(); newSvc == svc; {
+		if time.Since(updStart) >= maxUpdDur {
+			log.Error("websvc: failed to update svc after %s", maxUpdDur)
 
 			return
 		}
 
-		// TODO(a.garipov): Consider better ways to do this.
-		const maxUpdDur = 10 * time.Second
-		updStart := time.Now()
-		var newSvc agh.ServiceWithConfig[*Config]
-		for newSvc = svc.confMgr.Web(); newSvc == svc; {
-			if time.Since(updStart) >= maxUpdDur {
-				log.Error("websvc: failed to update svc after %s", maxUpdDur)
+		log.Debug("websvc: waiting for new websvc to be configured")
 
-				return
-			}
+		time.Sleep(100 * time.Millisecond)
+	}
 
-			log.Debug("websvc: waiting for new websvc to be configured")
-			time.Sleep(1 * time.Second)
-		}
-
-		updErr = newSvc.Start()
-		if updErr != nil {
-			log.Error("websvc: new svc failed to start with error: %s", updErr)
-		}
-	}()
+	err = newSvc.Start()
+	if err != nil {
+		log.Error("websvc: new svc failed to start with error: %s", err)
+	}
 }

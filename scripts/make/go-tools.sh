@@ -38,6 +38,7 @@ readonly go
 rm -f\
 	bin/errcheck\
 	bin/fieldalignment\
+	bin/gocognit\
 	bin/gocyclo\
 	bin/gofumpt\
 	bin/gosec\
@@ -69,6 +70,7 @@ env\
 	github.com/kisielk/errcheck\
 	github.com/kyoh86/looppointer/cmd/looppointer\
 	github.com/securego/gosec/v2/cmd/gosec\
+	github.com/uudashr/gocognit/cmd/gocognit\
 	golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment\
 	golang.org/x/tools/go/analysis/passes/nilness/cmd/nilness\
 	golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow\
