@@ -17,20 +17,31 @@ import (
 
 // Main is the entry point of AdGuard Home.
 func Main(frontend fs.FS) {
-	// Initial Configuration
-
 	start := time.Now()
 
-	// TODO(a.garipov): Set up logging.
+	// Initial Configuration
+
+	cmdName := os.Args[0]
+	opts, err := parseOptions(cmdName, os.Args[1:])
+	exitCode, needExit := processOptions(opts, cmdName, err)
+	if needExit {
+		os.Exit(exitCode)
+	}
+
+	err = setLog(opts)
+	check(err)
 
 	log.Info("starting adguard home, version %s, pid %d", version.Version(), os.Getpid())
 
+	if opts.workDir != "" {
+		log.Info("changing working directory to %q", opts.workDir)
+		err = os.Chdir(opts.workDir)
+		check(err)
+	}
+
 	// Web Service
 
-	// TODO(a.garipov): Set up configuration file name.
-	const confFile = "AdGuardHome.1.yaml"
-
-	confMgr, err := configmgr.New(confFile, frontend, start)
+	confMgr, err := configmgr.New(opts.confFile, frontend, start)
 	check(err)
 
 	web := confMgr.Web()
@@ -42,7 +53,7 @@ func Main(frontend fs.FS) {
 	check(err)
 
 	sigHdlr := newSignalHandler(
-		confFile,
+		opts.confFile,
 		frontend,
 		start,
 		web,
