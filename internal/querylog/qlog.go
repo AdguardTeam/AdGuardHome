@@ -161,12 +161,15 @@ func (l *queryLog) clear() {
 // newLogEntry creates an instance of logEntry from parameters.
 func newLogEntry(params *AddParams) (entry *logEntry) {
 	q := params.Question.Question[0]
+	qHost := q.Name
+	if qHost != "." {
+		qHost = strings.ToLower(q.Name[:len(q.Name)-1])
+	}
 
 	entry = &logEntry{
 		// TODO(d.kolyshev): Export this timestamp to func params.
-		Time: time.Now(),
-
-		QHost:  strings.ToLower(q.Name[:len(q.Name)-1]),
+		Time:   time.Now(),
+		QHost:  qHost,
 		QType:  dns.Type(q.Qtype).String(),
 		QClass: dns.Class(q.Qclass).String(),
 
