@@ -117,8 +117,6 @@
               env\
                       VERBOSE='1'\
                       sh ./scripts/snap/build.sh
-    'final-tasks':
-      - 'clean'
     'requirements':
       - 'adg-docker': 'true'
 
