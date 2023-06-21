@@ -5,11 +5,12 @@ verbose="${VERBOSE:-0}"
 if [ "$verbose" -gt '0' ]
 then
 	set -x
-	debug_flags='-D'
+	debug_flags='--debug=1'
 else
 	set +x
-	debug_flags=''
+	debug_flags='--debug=0'
 fi
+readonly debug_flags
 
 set -e -f -u
 
@@ -61,21 +62,16 @@ readonly docker_output
 case "$channel"
 in
 ('release')
-	docker_image_full_name="${docker_image_name}:${version}"
-	docker_tags="--tag ${docker_image_name}:latest"
+	docker_tags="--tag=${docker_image_name}:${version},${docker_image_name}:latest"
 	;;
 ('beta')
-	docker_image_full_name="${docker_image_name}:${version}"
-	docker_tags="--tag ${docker_image_name}:beta"
+	docker_tags="--tag=${docker_image_name}:${version},${docker_image_name}:beta"
 	;;
 ('edge')
-	# Don't set the version tag when pushing to the edge channel.
-	docker_image_full_name="${docker_image_name}:edge"
-	docker_tags=''
+	docker_tags="--tag=${docker_image_name}:edge"
 	;;
 ('development')
-	docker_image_full_name="${docker_image_name}"
-	docker_tags=''
+	docker_tags="--tag=${docker_image_name}"
 	;;
 (*)
 	echo "invalid channel '$channel', supported values are\
@@ -83,7 +79,7 @@ in
 	exit 1
 	;;
 esac
-readonly docker_image_full_name docker_tags
+readonly docker_tags
 
 # Copy the binaries into a new directory under new names, so that it's easier to
 # COPY them later.  DO NOT remove the trailing underscores.  See file
@@ -117,10 +113,8 @@ cp "./docker/web-bind.awk"\
 cp "./docker/healthcheck.sh"\
 	"${dist_docker_scripts}/healthcheck.sh"
 
-# Don't use quotes with $docker_tags and $debug_flags because we want word
-# splitting and or an empty space if tags are empty.
 $sudo_cmd docker\
-	$debug_flags\
+	"$debug_flags"\
 	buildx build\
 	--build-arg BUILD_DATE="$build_date"\
 	--build-arg DIST_DIR="$dist_dir"\
@@ -128,7 +122,6 @@ $sudo_cmd docker\
 	--build-arg VERSION="$version"\
 	--output "$docker_output"\
 	--platform "$docker_platforms"\
-	$docker_tags\
-	-t "$docker_image_full_name"\
+	"$docker_tags"\
 	-f ./docker/Dockerfile\
 	.

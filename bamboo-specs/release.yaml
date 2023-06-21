@@ -34,12 +34,6 @@
     'jobs':
     - 'Publish to static storage'
 
-- 'Publish to Snapstore':
-    'manual': false
-    'final': false
-    'jobs':
-    - 'Publish to Snapstore'
-
 - 'Publish to GitHub Releases':
     'manual': false
     'final': false
@@ -199,58 +193,6 @@
         export CHANNEL
 
         ../bamboo-deploy-publisher/deploy.sh adguard-home-"$CHANNEL"
-  'final-tasks':
-  - 'clean'
-  'requirements':
-  - 'adg-docker': 'true'
-
-'Publish to Snapstore':
-  'docker':
-    'image': '${bamboo.dockerGo}'
-  'key': 'PTS'
-  'other':
-    'clean-working-dir': true
-  'tasks':
-  - 'clean'
-  - 'checkout':
-      'repository': 'bamboo-deploy-publisher'
-      'path': 'bamboo-deploy-publisher'
-      'force-clean-build': true
-  - 'script':
-      'interpreter': 'SHELL'
-      'scripts':
-      - |
-        #!/bin/sh
-
-        set -e -f -u -x
-
-        cd ./dist/
-
-        channel="${bamboo.channel}"
-        readonly channel
-
-        case "$channel"
-        in
-        ('release')
-                snapchannel='candidate'
-                ;;
-        ('beta')
-                snapchannel='beta'
-                ;;
-        ('edge')
-                snapchannel='edge'
-                ;;
-        (*)
-                echo "invalid channel '$channel'"
-                exit 1
-                ;;
-        esac
-
-        env\
-                SNAPCRAFT_CHANNEL="$snapchannel"\
-                SNAPCRAFT_EMAIL="${bamboo.snapcraftEmail}"\
-                SNAPCRAFT_STORE_CREDENTIALS="${bamboo.snapcraftMacaroonPassword}"\
-                ../bamboo-deploy-publisher/deploy.sh adguard-home-snap
   'final-tasks':
   - 'clean'
   'requirements':
