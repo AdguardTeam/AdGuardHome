@@ -48,11 +48,32 @@ var webRegistered bool
 
 // hostToIPTable is a convenient type alias for tables of host names to an IP
 // address.
+//
+// TODO(e.burkov):  Use the [DHCP] interface instead.
 type hostToIPTable = map[string]netip.Addr
 
 // ipToHostTable is a convenient type alias for tables of IP addresses to their
 // host names.  For example, for use with PTR queries.
+//
+// TODO(e.burkov):  Use the [DHCP] interface instead.
 type ipToHostTable = map[netip.Addr]string
+
+// DHCP is an interface for accesing DHCP lease data needed in this package.
+type DHCP interface {
+	// HostByIP returns the hostname of the DHCP client with the given IP
+	// address.  The address will be netip.Addr{} if there is no such client,
+	// due to an assumption that a DHCP client must always have an IP address.
+	HostByIP(ip netip.Addr) (host string)
+
+	// IPByHost returns the IP address of the DHCP client with the given
+	// hostname.  The hostname will be an empty string if there is no such
+	// client, due to an assumption that a DHCP client must always have a
+	// hostname, either set by the client or assigned automatically.
+	IPByHost(host string) (ip netip.Addr)
+
+	// Enabled returns true if DHCP provides information about clients.
+	Enabled() (ok bool)
+}
 
 // Server is the main way to start a DNS server.
 //

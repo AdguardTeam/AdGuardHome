@@ -200,7 +200,7 @@ func createICMPv6RAPacket(params icmpv6RA) (data []byte, err error) {
 func (ra *raCtx) Init() (err error) {
 	ra.stop.Store(0)
 	ra.conn = nil
-	if !(ra.raAllowSLAAC || ra.raSLAACOnly) {
+	if !ra.raAllowSLAAC && !ra.raSLAACOnly {
 		return nil
 	}
 
