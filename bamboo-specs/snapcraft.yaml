@@ -1,0 +1,211 @@
+---
+# This part of the release build is separate from the one described in
+# release.yaml, because the Snapcraft infrastructure is brittle, and timeouts
+# during logins and uploads often lead to release blocking.
+'version': 2
+'plan':
+    'project-key': 'AGH'
+    'key': 'AGHSNAP'
+    'name': 'AdGuard Home - Build and publish Snapcraft release'
+# Make sure to sync any changes with the branch overrides below.
+'variables':
+    'channel': 'edge'
+    'dockerGo': 'adguard/golang-ubuntu:6.7'
+    'snapcraftChannel': 'edge'
+
+'stages':
+  - 'Download release':
+        'manual': false
+        'final': false
+        'jobs':
+          - 'Download release'
+
+  - 'Build packages':
+        'manual': false
+        'final': false
+        'jobs':
+          - 'Build packages'
+
+  - 'Publish to Snapstore':
+        'manual': false
+        'final': false
+        'jobs':
+          - 'Publish to Snapstore'
+
+# TODO(a.garipov): Consider using the Artifact Downloader Task if it ever learns
+# about plan branches.
+'Download release':
+    'artifacts':
+      - 'name': 'i386_binary'
+        'pattern': 'AdGuardHome_i386'
+        'shared': true
+        'required': true
+      - 'name': 'amd64_binary'
+        'pattern': 'AdGuardHome_amd64'
+        'shared': true
+        'required': true
+      - 'name': 'armhf_binary'
+        'pattern': 'AdGuardHome_armhf'
+        'shared': true
+        'required': true
+      - 'name': 'arm64_binary'
+        'pattern': 'AdGuardHome_arm64'
+        'shared': true
+        'required': true
+    'docker':
+        'image': '${bamboo.dockerGo}'
+    'key': 'DR'
+    'other':
+        'clean-working-dir': true
+    'tasks':
+      - 'checkout':
+            'force-clean-build': true
+      - 'script':
+            'interpreter': 'SHELL'
+            'scripts':
+            - |
+              #!/bin/sh
+
+              set -e -f -u -x
+
+              env\
+                      CHANNEL="${bamboo.channel}"\
+                      VERBOSE='1'\
+                      sh ./scripts/snap/download.sh
+    'requirements':
+      - 'adg-docker': 'true'
+
+'Build packages':
+    'artifact-subscriptions':
+      - 'artifact': 'i386_binary'
+      - 'artifact': 'amd64_binary'
+      - 'artifact': 'armhf_binary'
+      - 'artifact': 'arm64_binary'
+    'artifacts':
+      - 'name': 'i386_snap'
+        'pattern': 'AdGuardHome_i386.snap'
+        'shared': true
+        'required': true
+      - 'name': 'amd64_snap'
+        'pattern': 'AdGuardHome_amd64.snap'
+        'shared': true
+        'required': true
+      - 'name': 'armhf_snap'
+        'pattern': 'AdGuardHome_armhf.snap'
+        'shared': true
+        'required': true
+      - 'name': 'arm64_snap'
+        'pattern': 'AdGuardHome_arm64.snap'
+        'shared': true
+        'required': true
+    'docker':
+        'image': '${bamboo.dockerGo}'
+    'key': 'BP'
+    'other':
+        'clean-working-dir': true
+    'tasks':
+      - 'checkout':
+            'force-clean-build': true
+      - 'script':
+            'interpreter': 'SHELL'
+            'scripts':
+            - |
+              #!/bin/sh
+
+              set -e -f -u -x
+
+              env\
+                      VERBOSE='1'\
+                      sh ./scripts/snap/build.sh
+    'requirements':
+      - 'adg-docker': 'true'
+
+'Publish to Snapstore':
+    'artifact-subscriptions':
+      - 'artifact': 'i386_snap'
+      - 'artifact': 'amd64_snap'
+      - 'artifact': 'armhf_snap'
+      - 'artifact': 'arm64_snap'
+    'docker':
+        'image': '${bamboo.dockerGo}'
+    'key': 'PTS'
+    'other':
+        'clean-working-dir': true
+    'tasks':
+      - 'checkout':
+            'force-clean-build': true
+      - 'script':
+            'interpreter': 'SHELL'
+            'scripts':
+              - |
+                #!/bin/sh
+
+                set -e -f -u -x
+
+                env\
+                        SNAPCRAFT_CHANNEL="${bamboo.snapcraftChannel}"\
+                        SNAPCRAFT_STORE_CREDENTIALS="${bamboo.snapcraftMacaroonPassword}"\
+                        VERBOSE='1'\
+                        sh ./scripts/snap/upload.sh
+    'final-tasks':
+      - 'clean'
+    'requirements':
+      - 'adg-docker': 'true'
+
+'triggers':
+    # Don't use minute values that end with a zero or a five as these are often
+    # used in CI and so resources during these minutes can be quite busy.
+    #
+    # NOTE: The time is chosen to be exactly one hour after the main release
+    # build as defined as in release.yaml.
+  - 'cron': '0 42 14 ? * MON-FRI *'
+'branches':
+    'create': 'manually'
+    'delete':
+        'after-deleted-days': 1
+        'after-inactive-days': 30
+    'integration':
+        'push-on-success': false
+        'merge-from': 'AdGuard Home - Build and publish Snapcraft release'
+    'link-to-jira': true
+
+'notifications':
+  - 'events':
+      - 'plan-completed'
+    'recipients':
+      - 'webhook':
+            'name': 'Build webhook'
+            'url': 'http://prod.jirahub.service.eu.consul/v1/webhook/bamboo?channel=adguard-qa'
+
+'labels': []
+'other':
+    'concurrent-build-plugin': 'system-default'
+
+'branch-overrides':
+    # beta-vX.Y branches are the branches into which the commits that are needed
+    # to release a new patch version are initially cherry-picked.
+  - '^beta-v[0-9]+\.[0-9]+':
+        # Build betas on release branches manually.
+        'triggers': []
+        # Set the default release channel on the release branch to beta, as we may
+        # need to build a few of these.
+        'variables':
+            'channel': 'beta'
+            'dockerGo': 'adguard/golang-ubuntu:6.7'
+            'snapcraftChannel': 'beta'
+    # release-vX.Y.Z branches are the branches from which the actual final
+    # release is built.
+  - '^release-v[0-9]+\.[0-9]+\.[0-9]+':
+        # Disable integration branches for release branches.
+        'branch-config':
+            'integration':
+                'push-on-success': false
+                'merge-from': 'beta-v0.107'
+        # Build final releases on release branches manually.
+        'triggers': []
+        # Set the default release channel on the final branch to release, as these
+        # are the ones that actually get released.
+        'variables':
+            'channel': 'release'
+            'dockerGo': 'adguard/golang-ubuntu:6.7'
+            'snapcraftChannel': 'candidate'

@@ -54,7 +54,7 @@ func (h *signalHandler) reconfigure() {
 
 	status := h.shutdown()
 	if status != statusSuccess {
-		log.Info("sighdlr: reconfiruging: exiting with status %d", status)
+		log.Info("sighdlr: reconfiguring: exiting with status %d", status)
 
 		os.Exit(status)
 	}

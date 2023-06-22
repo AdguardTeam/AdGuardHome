@@ -123,7 +123,10 @@ func (s *Server) updateStats(
 	pctx := ctx.proxyCtx
 	e := stats.Entry{}
 	e.Domain = strings.ToLower(pctx.Req.Question[0].Name)
-	e.Domain = e.Domain[:len(e.Domain)-1] // remove last "."
+	if e.Domain != "." {
+		// Remove last ".", but save the domain as is for "." queries.
+		e.Domain = e.Domain[:len(e.Domain)-1]
+	}
 
 	if clientID := ctx.clientID; clientID != "" {
 		e.Client = clientID

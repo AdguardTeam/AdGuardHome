@@ -1,64 +1,64 @@
 ---
 'version': 2
 'plan':
-  'project-key': 'AGH'
-  'key': 'AHBRTSPECS'
-  'name': 'AdGuard Home - Build and run tests'
+    'project-key': 'AGH'
+    'key': 'AHBRTSPECS'
+    'name': 'AdGuard Home - Build and run tests'
 'variables':
-  'dockerGo': 'adguard/golang-ubuntu:6.7'
+    'dockerGo': 'adguard/golang-ubuntu:6.7'
 
 'stages':
-- 'Tests':
-    'manual': false
-    'final': false
-    'jobs':
-    - 'Test'
+  - 'Tests':
+        'manual': false
+        'final': false
+        'jobs':
+          - 'Test'
 
 'Test':
-  'docker':
-    'image': '${bamboo.dockerGo}'
-    'volumes':
-      '${system.YARN_DIR}': '${bamboo.cacheYarn}'
-      '${system.GO_CACHE_DIR}': '${bamboo.cacheGo}'
-      '${system.GO_PKG_CACHE_DIR}': '${bamboo.cacheGoPkg}'
-  'key': 'TEST'
-  'other':
-    'clean-working-dir': true
-  'tasks':
-  - 'checkout':
-      'force-clean-build': true
-  - 'script':
-      'interpreter': 'SHELL'
-      'scripts':
-      - |
-        #!/bin/sh
+    'docker':
+        'image': '${bamboo.dockerGo}'
+        'volumes':
+            '${system.YARN_DIR}': '${bamboo.cacheYarn}'
+            '${system.GO_CACHE_DIR}': '${bamboo.cacheGo}'
+            '${system.GO_PKG_CACHE_DIR}': '${bamboo.cacheGoPkg}'
+    'key': 'TEST'
+    'other':
+        'clean-working-dir': true
+    'tasks':
+      - 'checkout':
+            'force-clean-build': true
+      - 'script':
+            'interpreter': 'SHELL'
+            'scripts':
+              - |
+                #!/bin/sh
 
-        set -e -f -u -x
+                set -e -f -u -x
 
-        make VERBOSE=1 ci go-tools lint
-  'final-tasks':
-  - 'clean'
-  'requirements':
-  - 'adg-docker': 'true'
+                make VERBOSE=1 ci go-tools lint
+    'final-tasks':
+      - 'clean'
+    'requirements':
+      - 'adg-docker': 'true'
 
 'branches':
-  'create': 'for-pull-request'
-  'delete':
-    'after-deleted-days': 1
-    'after-inactive-days': 5
-  'integration':
-    'push-on-success': false
-    'merge-from': 'AdGuard Home - Build and run tests'
-  'link-to-jira': true
+    'create': 'for-pull-request'
+    'delete':
+        'after-deleted-days': 1
+        'after-inactive-days': 5
+    'integration':
+        'push-on-success': false
+        'merge-from': 'AdGuard Home - Build and run tests'
+    'link-to-jira': true
 
 'notifications':
-- 'events':
-  - 'plan-status-changed'
-  'recipients':
-  - 'webhook':
-      'name': 'Build webhook'
-      'url': 'http://prod.jirahub.service.eu.consul/v1/webhook/bamboo'
+  - 'events':
+      - 'plan-status-changed'
+    'recipients':
+      - 'webhook':
+            'name': 'Build webhook'
+            'url': 'http://prod.jirahub.service.eu.consul/v1/webhook/bamboo'
 
 'labels': []
 'other':
-  'concurrent-build-plugin': 'system-default'
+    'concurrent-build-plugin': 'system-default'

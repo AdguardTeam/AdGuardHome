@@ -1,5 +1,8 @@
 ---
-!include test.yaml
+!include release.yaml
 
 ---
-!include release.yaml
+!include snapcraft.yaml
+
+---
+!include test.yaml

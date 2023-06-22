@@ -9,7 +9,8 @@ require (
 	github.com/kisielk/errcheck v1.6.3
 	github.com/kyoh86/looppointer v0.2.1
 	github.com/securego/gosec/v2 v2.16.0
-	golang.org/x/tools v0.9.3
+	github.com/uudashr/gocognit v1.0.6
+	golang.org/x/tools v0.10.0
 	golang.org/x/vuln v0.1.0
 	honnef.co/go/tools v0.4.3
 	mvdan.cc/gofumpt v0.5.0
@@ -26,8 +27,8 @@ require (
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20230522175609-2e198f4a06a1 // indirect
-	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/sync v0.2.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/mod v0.11.0 // indirect
+	golang.org/x/sync v0.3.0 // indirect
+	golang.org/x/sys v0.9.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

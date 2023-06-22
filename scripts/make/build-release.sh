@@ -78,14 +78,6 @@ else
 fi
 readonly oses
 
-snap_enabled="${BUILD_SNAP:-1}"
-readonly snap_enabled
-
-if [ "$snap_enabled" -eq '0' ]
-then
-	log 'snap: disabled'
-fi
-
 # Require the gpg key and passphrase to be set if the signing is required.
 if [ "$sign" -eq '1' ]
 then
@@ -106,7 +98,7 @@ log "checking tools"
 # Make sure we fail gracefully if one of the tools we need is missing.  Use
 # alternatives when available.
 use_shasum='0'
-for tool in gpg gzip sed sha256sum snapcraft tar zip
+for tool in gpg gzip sed sha256sum tar zip
 do
 	if ! command -v "$tool" > /dev/null
 	then
@@ -128,36 +120,36 @@ readonly use_shasum
 # Data section.  Arrange data into space-separated tables for read -r to read.
 # Use a hyphen for missing values.
 
-#    os  arch      arm mips       snap
+#    os  arch      arm mips
 platforms="\
-darwin   amd64     -   -          -
-darwin   arm64     -   -          -
-freebsd  386       -   -          -
-freebsd  amd64     -   -          -
-freebsd  arm       5   -          -
-freebsd  arm       6   -          -
-freebsd  arm       7   -          -
-freebsd  arm64     -   -          -
-linux    386       -   -          i386
-linux    amd64     -   -          amd64
-linux    arm       5   -          -
-linux    arm       6   -          -
-linux    arm       7   -          armhf
-linux    arm64     -   -          arm64
-linux    mips      -   softfloat  -
-linux    mips64    -   softfloat  -
-linux    mips64le  -   softfloat  -
-linux    mipsle    -   softfloat  -
-linux    ppc64le   -   -          -
-openbsd  amd64     -   -          -
-openbsd  arm64     -   -          -
-windows  386       -   -          -
-windows  amd64     -   -          -
-windows  arm64     -   -          -"
+darwin   amd64     -   -
+darwin   arm64     -   -
+freebsd  386       -   -
+freebsd  amd64     -   -
+freebsd  arm       5   -
+freebsd  arm       6   -
+freebsd  arm       7   -
+freebsd  arm64     -   -
+linux    386       -   -
+linux    amd64     -   -
+linux    arm       5   -
+linux    arm       6   -
+linux    arm       7   -
+linux    arm64     -   -
+linux    mips      -   softfloat
+linux    mips64    -   softfloat
+linux    mips64le  -   softfloat
+linux    mipsle    -   softfloat
+linux    ppc64le   -   -
+openbsd  amd64     -   -
+openbsd  arm64     -   -
+windows  386       -   -
+windows  amd64     -   -
+windows  arm64     -   -"
 readonly platforms
 
-# Function build builds the release for one platform.  It builds a binary, an
-# archive and, if needed, a snap package.
+# Function build builds the release for one platform.  It builds a binary and an
+# archive.
 build() {
 	# Get the arguments.  Here and below, use the "build_" prefix for all
 	# variables local to function build.
@@ -167,7 +159,6 @@ build() {
 		build_arch="$4"\
 		build_arm="$5"\
 		build_mips="$6"\
-		build_snap="$7"\
 		;
 
 	# Use the ".exe" filename extension if we build a Windows release.
@@ -229,52 +220,13 @@ build() {
 	esac
 
 	log "$build_archive"
-
-	# Exit if we don't need to build the Snap package.
-	if [ "$build_snap" = '-' ] || [ "$snap_enabled" -eq '0' ]
-	then
-		return
-	fi
-
-	# Prepare the Snap build.
-	build_snap_output="./${dist}/AdGuardHome_${build_snap}.snap"
-	build_snap_dir="${build_snap_output}.dir"
-
-	# Create the meta subdirectory and copy files there.
-	mkdir -p "${build_snap_dir}/meta"
-	cp "$build_output" './scripts/snap/local/adguard-home-web.sh' "$build_snap_dir"
-	cp -r './scripts/snap/gui' "${build_snap_dir}/meta/"
-
-	# Create a snap.yaml file, setting the values.
-	sed -e 's/%VERSION%/'"$version"'/'\
-		-e 's/%ARCH%/'"$build_snap"'/'\
-		./scripts/snap/snap.tmpl.yaml\
-		>"${build_snap_dir}/meta/snap.yaml"
-
-	# TODO(a.garipov): The snapcraft tool will *always* write everything,
-	# including errors, to stdout.  And there doesn't seem to be a way to change
-	# that.  So, save the combined output, but only show it when snapcraft
-	# actually fails.
-	set +e
-	build_snapcraft_output="$(
-		snapcraft pack "$build_snap_dir" --output "$build_snap_output" 2>&1
-	)"
-	build_snapcraft_exit_code="$?"
-	set -e
-	if [ "$build_snapcraft_exit_code" -ne '0' ]
-	then
-		log "$build_snapcraft_output"
-		exit "$build_snapcraft_exit_code"
-	fi
-
-	log "$build_snap_output"
 }
 
 log "starting builds"
 
 # Go over all platforms defined in the space-separated table above, tweak the
 # values where necessary, and feed to build.
-echo "$platforms" | while read -r os arch arm mips snap
+echo "$platforms" | while read -r os arch arm mips
 do
 	# See if the architecture or the OS is in the allowlist.  To do so, try
 	# removing everything that matches the pattern (well, a prefix, but that
@@ -314,7 +266,7 @@ do
 		;;
 	esac
 
-	build "$dir" "$ar" "$os" "$arch" "$arm" "$mips" "$snap"
+	build "$dir" "$ar" "$os" "$arch" "$arm" "$mips"
 done
 
 log "packing frontend"
@@ -413,14 +365,14 @@ do
 	platform="$f"
 
 	# Remove the prefix.
-	platform="${platform#./${dist}/AdGuardHome_}"
+	platform="${platform#"./${dist}/AdGuardHome_"}"
 
 	# Remove the filename extensions.
 	platform="${platform%.zip}"
 	platform="${platform%.tar.gz}"
 
 	# Use the filename's base path.
-	filename="${f#./${dist}/}"
+	filename="${f#"./${dist}/"}"
 
 	if [ "$i" -eq "$ar_files_len" ]
 	then

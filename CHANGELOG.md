@@ -14,11 +14,11 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.32] - 2023-06-28 (APPROX.)
+## [v0.107.33] - 2023-06-28 (APPROX.)
 
-See also the [v0.107.32 GitHub milestone][ms-v0.107.32].
+See also the [v0.107.33 GitHub milestone][ms-v0.107.33].
 
-[ms-v0.107.32]: https://github.com/AdguardTeam/AdGuardHome/milestone/68?closed=1
+[ms-v0.107.33]: https://github.com/AdguardTeam/AdGuardHome/milestone/68?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -85,12 +85,16 @@ In this release, the schema version has changed from 20 to 21.
 
 ### Fixed
 
- - DNSCrypt upstream not resetting the client and resolver information on
-   dialing errors ([#5872]).
+- Queries with the question-section target `.`, for example `NS .`, are now
+  counted in the statistics and correctly shown in the query log ([#5910]).
+- Safe Search not working with `AAAA` queries for domains that don't have `AAAA`
+  records ([#5913]).
 
 [#951]:  https://github.com/AdguardTeam/AdGuardHome/issues/951
 [#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
 [#3389]: https://github.com/AdguardTeam/AdGuardHome/issues/3389
+[#5910]: https://github.com/AdguardTeam/AdGuardHome/issues/5910
+[#5913]: https://github.com/AdguardTeam/AdGuardHome/issues/5913
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
@@ -102,8 +106,8 @@ NOTE: Add new changes ABOVE THIS COMMENT.
 
 ### Fixed
 
- - DNSCrypt upstream not resetting the client and resolver information on
-   dialing errors ([#5872]).
+- DNSCrypt upstream not resetting the client and resolver information on
+  dialing errors ([#5872]).
 
 
 

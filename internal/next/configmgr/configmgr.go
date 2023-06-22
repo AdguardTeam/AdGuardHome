@@ -48,7 +48,7 @@ func New(
 	frontend fs.FS,
 	start time.Time,
 ) (m *Manager, err error) {
-	defer func() { err = errors.Annotate(err, "reading config") }()
+	defer func() { err = errors.Annotate(err, "reading config: %w") }()
 
 	conf := &config{}
 	f, err := os.Open(fileName)

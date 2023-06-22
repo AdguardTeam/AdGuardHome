@@ -9,6 +9,7 @@ import (
 	_ "github.com/kisielk/errcheck"
 	_ "github.com/kyoh86/looppointer"
 	_ "github.com/securego/gosec/v2/cmd/gosec"
+	_ "github.com/uudashr/gocognit/cmd/gocognit"
 	_ "golang.org/x/tools/go/analysis/passes/nilness/cmd/nilness"
 	_ "golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow"
 	_ "golang.org/x/vuln/cmd/govulncheck"
