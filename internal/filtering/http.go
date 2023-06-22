@@ -169,7 +169,7 @@ func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 		deleted = (*filters)[delIdx]
 		p := deleted.Path(d.DataDir)
 		err = os.Rename(p, p+".old")
-		if err != nil {
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			log.Error("deleting filter %d: renaming file %q: %s", deleted.ID, p, err)
 
 			return

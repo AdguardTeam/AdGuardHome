@@ -82,6 +82,7 @@ In this release, the schema version has changed from 20 to 21.
 
 ### Fixed
 
+- The blocklists can now be deleted properly ([#5700]).
 - Queries with the question-section target `.`, for example `NS .`, are now
   counted in the statistics and correctly shown in the query log ([#5910]).
 - Safe Search not working with `AAAA` queries for domains that don't have `AAAA`
@@ -89,6 +90,7 @@ In this release, the schema version has changed from 20 to 21.
 
 [#951]:  https://github.com/AdguardTeam/AdGuardHome/issues/951
 [#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
+[#5700]: https://github.com/AdguardTeam/AdGuardHome/issues/5700
 [#5910]: https://github.com/AdguardTeam/AdGuardHome/issues/5910
 [#5913]: https://github.com/AdguardTeam/AdGuardHome/issues/5913
 
