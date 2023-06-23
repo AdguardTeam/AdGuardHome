@@ -382,6 +382,19 @@ func setupBindOpts(opts options) (err error) {
 		config.BindHost = opts.bindHost
 	}
 
+	// Rewrite deprecated options.
+	bindAddr := opts.bindAddr
+	if bindAddr.IsValid() {
+		config.BindHost = bindAddr.Addr()
+		config.BindPort = int(bindAddr.Port())
+
+		err = checkPorts()
+		if err != nil {
+			// Don't wrap the error, because it's informative enough as is.
+			return err
+		}
+	}
+
 	return nil
 }
 

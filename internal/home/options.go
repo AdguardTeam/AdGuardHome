@@ -35,10 +35,17 @@ type options struct {
 	serviceControlAction string
 
 	// bindHost is the address on which to serve the HTTP UI.
+	//
+	// Deprecated: Use bindAddr.
 	bindHost netip.Addr
 
 	// bindPort is the port on which to serve the HTTP UI.
+	//
+	// Deprecated: Use bindAddr.
 	bindPort int
+
+	// bindAddr is the address to serve the web UI on.
+	bindAddr netip.AddrPort
 
 	// checkConfig is true if the current invocation is only required to check
 	// the configuration file and exit.
@@ -147,9 +154,10 @@ var cmdLineOpts = []cmdLineOpt{{
 
 		return o.bindHost.String(), true
 	},
-	description: "Host address to bind HTTP server on.",
-	longName:    "host",
-	shortName:   "h",
+	description: "Deprecated. Host address to bind HTTP server on. Use --web-addr. " +
+		"The short -h will work as --help in the future.",
+	longName:  "host",
+	shortName: "h",
 }, {
 	updateWithValue: func(o options, v string) (options, error) {
 		var err error
@@ -174,9 +182,23 @@ var cmdLineOpts = []cmdLineOpt{{
 
 		return strconv.Itoa(o.bindPort), true
 	},
-	description: "Port to serve HTTP pages on.",
+	description: "Deprecated. Port to serve HTTP pages on. Use --web-addr.",
 	longName:    "port",
 	shortName:   "p",
+}, {
+	updateWithValue: func(o options, v string) (oo options, err error) {
+		o.bindAddr, err = netip.ParseAddrPort(v)
+
+		return o, err
+	},
+	updateNoValue: nil,
+	effect:        nil,
+	serialize: func(o options) (val string, ok bool) {
+		return o.bindAddr.String(), o.bindAddr.IsValid()
+	},
+	description: "Address to serve the web UI on, in the host:port format.",
+	longName:    "web-addr",
+	shortName:   "",
 }, {
 	updateWithValue: func(o options, v string) (options, error) {
 		o.serviceControlAction = v

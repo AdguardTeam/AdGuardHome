@@ -25,6 +25,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- The new command-line flag `--web-addr` is the address to serve the web UI on,
+  in the host:port format.
 - The ability to set inactivity periods for filtering blocked services in the
   configuration file ([#951]).  The UI changes are coming in the upcoming
   releases.
@@ -80,8 +82,15 @@ In this release, the schema version has changed from 20 to 21.
   To rollback this change, replace `dns.blocked_services` object with the list
   of ids of blocked services and change the `schema_version` back to `20`.
 
+### Deprecated
+
+- Flags `-h`, `--host`, `-p`, `--port` have been deprecated.  The `-h` flag
+  will work as an alias for `--help`, instead of the deprecated `--host` in the
+  future releases.
+
 ### Fixed
 
+- Cannot set `bind_host` in AdGuardHome.yaml (docker version) ([#4231]).
 - The blocklists can now be deleted properly ([#5700]).
 - Queries with the question-section target `.`, for example `NS .`, are now
   counted in the statistics and correctly shown in the query log ([#5910]).
@@ -90,6 +99,7 @@ In this release, the schema version has changed from 20 to 21.
 
 [#951]:  https://github.com/AdguardTeam/AdGuardHome/issues/951
 [#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
+[#4231]: https://github.com/AdguardTeam/AdGuardHome/issues/4231
 [#5700]: https://github.com/AdguardTeam/AdGuardHome/issues/5700
 [#5910]: https://github.com/AdguardTeam/AdGuardHome/issues/5910
 [#5913]: https://github.com/AdguardTeam/AdGuardHome/issues/5913

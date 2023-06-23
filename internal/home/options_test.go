@@ -82,6 +82,23 @@ func TestParseBindPort(t *testing.T) {
 	testParseErr(t, "port too high", "-p", "18446744073709551617") // 2^64 + 1
 }
 
+func TestParseBindAddr(t *testing.T) {
+	wantAddrPort := netip.MustParseAddrPort("1.2.3.4:8089")
+
+	assert.Zero(t, testParseOK(t).bindAddr, "empty is not web-addr")
+
+	assert.Equal(t, wantAddrPort, testParseOK(t, "--web-addr", "1.2.3.4:8089").bindAddr)
+	assert.Equal(t, netip.MustParseAddrPort("1.2.3.4:0"), testParseOK(t, "--web-addr", "1.2.3.4:0").bindAddr)
+	testParseParamMissing(t, "-web-addr")
+
+	testParseErr(t, "not an int", "--web-addr", "1.2.3.4:x")
+	testParseErr(t, "hex not supported", "--web-addr", "1.2.3.4:0x100")
+	testParseErr(t, "port negative", "--web-addr", "1.2.3.4:-1")
+	testParseErr(t, "port too high", "--web-addr", "1.2.3.4:65536")
+	testParseErr(t, "port too high", "--web-addr", "1.2.3.4:4294967297")           // 2^32 + 1
+	testParseErr(t, "port too high", "--web-addr", "1.2.3.4:18446744073709551617") // 2^64 + 1
+}
+
 func TestParseLogfile(t *testing.T) {
 	assert.Equal(t, "", testParseOK(t).logFile, "empty is no log file")
 	assert.Equal(t, "path", testParseOK(t, "-l", "path").logFile, "-l is log file")
@@ -162,6 +179,10 @@ func TestOptsToArgs(t *testing.T) {
 		name: "bind_port",
 		args: []string{"-p", "666"},
 		opts: options{bindPort: 666},
+	}, {
+		name: "web-addr",
+		args: []string{"--web-addr", "1.2.3.4:8080"},
+		opts: options{bindAddr: netip.MustParseAddrPort("1.2.3.4:8080")},
 	}, {
 		name: "log_file",
 		args: []string{"-l", "path"},
