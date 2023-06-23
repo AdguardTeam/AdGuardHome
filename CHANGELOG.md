@@ -90,7 +90,7 @@ In this release, the schema version has changed from 20 to 21.
 
 ### Fixed
 
-- Cannot set `bind_host` in AdGuardHome.yaml (docker version) ([#4231]).
+- Cannot set `bind_host` in AdGuardHome.yaml (docker version)([#4231], [#4235]).
 - The blocklists can now be deleted properly ([#5700]).
 - Queries with the question-section target `.`, for example `NS .`, are now
   counted in the statistics and correctly shown in the query log ([#5910]).
@@ -100,6 +100,7 @@ In this release, the schema version has changed from 20 to 21.
 [#951]:  https://github.com/AdguardTeam/AdGuardHome/issues/951
 [#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
 [#4231]: https://github.com/AdguardTeam/AdGuardHome/issues/4231
+[#4235]: https://github.com/AdguardTeam/AdGuardHome/pull/4235
 [#5700]: https://github.com/AdguardTeam/AdGuardHome/issues/5700
 [#5910]: https://github.com/AdguardTeam/AdGuardHome/issues/5910
 [#5913]: https://github.com/AdguardTeam/AdGuardHome/issues/5913
