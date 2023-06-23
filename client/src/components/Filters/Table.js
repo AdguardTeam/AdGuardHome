@@ -48,6 +48,7 @@ class Table extends Component {
             Header: <Trans>list_url_table_header</Trans>,
             accessor: 'url',
             minWidth: 180,
+            // eslint-disable-next-line react/prop-types
             Cell: ({ value }) => (
                 <div className="logs__row">
                     {isValidAbsolutePath(value) ? value

@@ -31,7 +31,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
   configuration file ([#951]).  The UI changes are coming in the upcoming
   releases.
 - The ability to edit rewrite rules via `PUT /control/rewrite/update` HTTP API
-  ([#1577]).
+  and the Web UI ([#1577]).
 
 ### Changed
 

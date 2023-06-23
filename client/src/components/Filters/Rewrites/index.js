@@ -6,20 +6,30 @@ import Table from './Table';
 import Modal from './Modal';
 import Card from '../../ui/Card';
 import PageTitle from '../../ui/PageTitle';
+import { MODAL_TYPE } from '../../../helpers/constants';
 
 class Rewrites extends Component {
     componentDidMount() {
         this.props.getRewritesList();
     }
 
-    handleSubmit = (values) => {
-        this.props.addRewrite(values);
-    };
-
     handleDelete = (values) => {
         // eslint-disable-next-line no-alert
         if (window.confirm(this.props.t('rewrite_confirm_delete', { key: values.domain }))) {
             this.props.deleteRewrite(values);
+        }
+    };
+
+    handleSubmit = (values) => {
+        const { modalType, currentRewrite } = this.props.rewrites;
+
+        if (modalType === MODAL_TYPE.EDIT_REWRITE && currentRewrite) {
+            this.props.updateRewrite({
+                target: currentRewrite,
+                update: values,
+            });
+        } else {
+            this.props.addRewrite(values);
         }
     };
 
@@ -36,6 +46,9 @@ class Rewrites extends Component {
             processing,
             processingAdd,
             processingDelete,
+            processingUpdate,
+            modalType,
+            currentRewrite,
         } = rewrites;
 
         return (
@@ -54,13 +67,15 @@ class Rewrites extends Component {
                             processing={processing}
                             processingAdd={processingAdd}
                             processingDelete={processingDelete}
+                            processingUpdate={processingUpdate}
                             handleDelete={this.handleDelete}
+                            toggleRewritesModal={toggleRewritesModal}
                         />
 
                         <button
                             type="button"
                             className="btn btn-success btn-standard mt-3"
-                            onClick={() => toggleRewritesModal()}
+                            onClick={() => toggleRewritesModal({ type: MODAL_TYPE.ADD_REWRITE })}
                             disabled={processingAdd}
                         >
                             <Trans>rewrite_add</Trans>
@@ -68,10 +83,13 @@ class Rewrites extends Component {
 
                         <Modal
                             isModalOpen={isModalOpen}
+                            modalType={modalType}
                             toggleRewritesModal={toggleRewritesModal}
                             handleSubmit={this.handleSubmit}
                             processingAdd={processingAdd}
                             processingDelete={processingDelete}
+                            processingUpdate={processingUpdate}
+                            currentRewrite={currentRewrite}
                         />
                     </Fragment>
                 </Card>
@@ -86,6 +104,7 @@ Rewrites.propTypes = {
     toggleRewritesModal: PropTypes.func.isRequired,
     addRewrite: PropTypes.func.isRequired,
     deleteRewrite: PropTypes.func.isRequired,
+    updateRewrite: PropTypes.func.isRequired,
     rewrites: PropTypes.object.isRequired,
 };
 

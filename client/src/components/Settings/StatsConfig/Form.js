@@ -7,7 +7,6 @@ import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 import { connect } from 'react-redux';
 
-
 import {
     renderRadioField,
     toNumber,
