@@ -123,10 +123,14 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 
 		Name: cj.Name,
 
-		IDs:             cj.IDs,
-		Tags:            cj.Tags,
-		BlockedServices: cj.BlockedServices,
-		Upstreams:       cj.Upstreams,
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: prev.BlockedServices.Schedule.Clone(),
+			IDs:      cj.BlockedServices,
+		},
+
+		IDs:       cj.IDs,
+		Tags:      cj.Tags,
+		Upstreams: cj.Upstreams,
 
 		UseOwnSettings:        !cj.UseGlobalSettings,
 		FilteringEnabled:      cj.FilteringEnabled,
@@ -180,7 +184,8 @@ func clientToJSON(c *Client) (cj *clientJSON) {
 		SafeBrowsingEnabled: c.SafeBrowsingEnabled,
 
 		UseGlobalBlockedServices: !c.UseOwnBlockedServices,
-		BlockedServices:          c.BlockedServices,
+
+		BlockedServices: c.BlockedServices.IDs,
 
 		Upstreams: c.Upstreams,
 

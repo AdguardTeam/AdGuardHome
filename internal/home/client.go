@@ -23,12 +23,14 @@ type Client struct {
 	safeSearchConf filtering.SafeSearchConfig
 	SafeSearch     filtering.SafeSearch
 
+	// BlockedServices is the configuration of blocked services of a client.
+	BlockedServices *filtering.BlockedServices
+
 	Name string
 
-	IDs             []string
-	Tags            []string
-	BlockedServices []string
-	Upstreams       []string
+	IDs       []string
+	Tags      []string
+	Upstreams []string
 
 	UseOwnSettings        bool
 	FilteringEnabled      bool
@@ -44,9 +46,9 @@ type Client struct {
 func (c *Client) ShallowClone() (sh *Client) {
 	clone := *c
 
+	clone.BlockedServices = c.BlockedServices.Clone()
 	clone.IDs = stringutil.CloneSlice(c.IDs)
 	clone.Tags = stringutil.CloneSlice(c.Tags)
-	clone.BlockedServices = stringutil.CloneSlice(c.BlockedServices)
 	clone.Upstreams = stringutil.CloneSlice(c.Upstreams)
 
 	return &clone

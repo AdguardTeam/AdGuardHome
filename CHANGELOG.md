@@ -27,9 +27,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The new command-line flag `--web-addr` is the address to serve the web UI on,
   in the host:port format.
-- The ability to set inactivity periods for filtering blocked services in the
-  configuration file ([#951]).  The UI changes are coming in the upcoming
-  releases.
+- The ability to set inactivity periods for filtering blocked services, both
+  globally and per client, in the configuration file ([#951]).  The UI changes
+  are coming in the upcoming releases.
 - The ability to edit rewrite rules via `PUT /control/rewrite/update` HTTP API
   and the Web UI ([#1577]).
 
@@ -37,8 +37,42 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 #### Configuration Changes
 
-In this release, the schema version has changed from 20 to 21.
+In this release, the schema version has changed from 20 to 22.
 
+- Property `clients.persistent.blocked_services`, which in schema versions 21
+  and earlier used to be a list containing ids of blocked services, is now an
+  object containing ids and schedule for blocked services:
+
+  ```yaml
+  # BEFORE:
+  'clients':
+    'persistent':
+      - 'name': 'client-name'
+        'blocked_services':
+        - id_1
+        - id_2
+
+  # AFTER:
+  'clients':
+    'persistent':
+    - 'name': client-name
+      'blocked_services':
+        'ids':
+        - id_1
+        - id_2
+      'schedule':
+        'time_zone': 'Local'
+        'sun':
+          'start': '0s'
+          'end': '24h'
+        'mon':
+          'start': '1h'
+          'end': '23h'
+  ```
+
+  To rollback this change, replace `clients.persistent.blocked_services` object
+  with the list of ids of blocked services and change the `schema_version` back
+  to `21`.
 - Property `dns.blocked_services`, which in schema versions 20 and earlier used
   to be a list containing ids of blocked services, is now an object containing
   ids and schedule for blocked services:

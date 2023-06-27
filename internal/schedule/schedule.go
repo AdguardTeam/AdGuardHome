@@ -28,6 +28,36 @@ func EmptyWeekly() (w *Weekly) {
 	}
 }
 
+// FullWeekly creates full weekly schedule with local time zone.
+//
+// TODO(s.chzhen):  Consider moving into tests.
+func FullWeekly() (w *Weekly) {
+	fullDay := dayRange{start: 0, end: maxDayRange}
+
+	return &Weekly{
+		location: time.Local,
+		days: [7]dayRange{
+			time.Sunday:    fullDay,
+			time.Monday:    fullDay,
+			time.Tuesday:   fullDay,
+			time.Wednesday: fullDay,
+			time.Thursday:  fullDay,
+			time.Friday:    fullDay,
+			time.Saturday:  fullDay,
+		},
+	}
+}
+
+// Clone returns a deep copy of a weekly.
+func (w *Weekly) Clone() (c *Weekly) {
+	// NOTE:  Do not use time.LoadLocation, because the results will be
+	// different on time zone database update.
+	return &Weekly{
+		location: w.location,
+		days:     w.days,
+	}
+}
+
 // Contains returns true if t is within the corresponding day range of the
 // schedule in the schedule's time zone.
 func (w *Weekly) Contains(t time.Time) (ok bool) {

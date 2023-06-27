@@ -16,18 +16,19 @@ import (
 
 // newClientsContainer is a helper that creates a new clients container for
 // tests.
-func newClientsContainer() (c *clientsContainer) {
+func newClientsContainer(t *testing.T) (c *clientsContainer) {
 	c = &clientsContainer{
 		testing: true,
 	}
 
-	c.Init(nil, nil, nil, nil, &filtering.Config{})
+	err := c.Init(nil, nil, nil, nil, &filtering.Config{})
+	require.NoError(t, err)
 
 	return c
 }
 
 func TestClients(t *testing.T) {
-	clients := newClientsContainer()
+	clients := newClientsContainer(t)
 
 	t.Run("add_success", func(t *testing.T) {
 		var (
@@ -198,7 +199,7 @@ func TestClients(t *testing.T) {
 }
 
 func TestClientsWHOIS(t *testing.T) {
-	clients := newClientsContainer()
+	clients := newClientsContainer(t)
 	whois := &whois.Info{
 		Country: "AU",
 		Orgname: "Example Org",
@@ -244,7 +245,7 @@ func TestClientsWHOIS(t *testing.T) {
 }
 
 func TestClientsAddExisting(t *testing.T) {
-	clients := newClientsContainer()
+	clients := newClientsContainer(t)
 
 	t.Run("simple", func(t *testing.T) {
 		ip := netip.MustParseAddr("1.1.1.1")
@@ -316,7 +317,7 @@ func TestClientsAddExisting(t *testing.T) {
 }
 
 func TestClientsCustomUpstream(t *testing.T) {
-	clients := newClientsContainer()
+	clients := newClientsContainer(t)
 
 	// Add client with upstreams.
 	ok, err := clients.Add(&Client{

@@ -96,7 +96,7 @@ func (clients *clientsContainer) Init(
 	etcHosts *aghnet.HostsContainer,
 	arpdb aghnet.ARPDB,
 	filteringConf *filtering.Config,
-) {
+) (err error) {
 	if clients.list != nil {
 		log.Fatal("clients.list != nil")
 	}
@@ -110,13 +110,17 @@ func (clients *clientsContainer) Init(
 	clients.dhcpServer = dhcpServer
 	clients.etcHosts = etcHosts
 	clients.arpdb = arpdb
-	clients.addFromConfig(objects, filteringConf)
+	err = clients.addFromConfig(objects, filteringConf)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	}
 
 	clients.safeSearchCacheSize = filteringConf.SafeSearchCacheSize
 	clients.safeSearchCacheTTL = time.Minute * time.Duration(filteringConf.CacheTime)
 
 	if clients.testing {
-		return
+		return nil
 	}
 
 	if clients.dhcpServer != nil {
@@ -127,6 +131,8 @@ func (clients *clientsContainer) Init(
 	if clients.etcHosts != nil {
 		go clients.handleHostsUpdates()
 	}
+
+	return nil
 }
 
 func (clients *clientsContainer) handleHostsUpdates() {
@@ -166,12 +172,14 @@ func (clients *clientsContainer) reloadARP() {
 type clientObject struct {
 	SafeSearchConf filtering.SafeSearchConfig `yaml:"safe_search"`
 
+	// BlockedServices is the configuration of blocked services of a client.
+	BlockedServices *filtering.BlockedServices `yaml:"blocked_services"`
+
 	Name string `yaml:"name"`
 
-	Tags            []string `yaml:"tags"`
-	IDs             []string `yaml:"ids"`
-	BlockedServices []string `yaml:"blocked_services"`
-	Upstreams       []string `yaml:"upstreams"`
+	IDs       []string `yaml:"ids"`
+	Tags      []string `yaml:"tags"`
+	Upstreams []string `yaml:"upstreams"`
 
 	UseGlobalSettings        bool `yaml:"use_global_settings"`
 	FilteringEnabled         bool `yaml:"filtering_enabled"`
@@ -185,7 +193,10 @@ type clientObject struct {
 
 // addFromConfig initializes the clients container with objects from the
 // configuration file.
-func (clients *clientsContainer) addFromConfig(objects []*clientObject, filteringConf *filtering.Config) {
+func (clients *clientsContainer) addFromConfig(
+	objects []*clientObject,
+	filteringConf *filtering.Config,
+) (err error) {
 	for _, o := range objects {
 		cli := &Client{
 			Name: o.Name,
@@ -206,7 +217,7 @@ func (clients *clientsContainer) addFromConfig(objects []*clientObject, filterin
 		if o.SafeSearchConf.Enabled {
 			o.SafeSearchConf.CustomResolver = safeSearchResolver{}
 
-			err := cli.setSafeSearch(
+			err = cli.setSafeSearch(
 				o.SafeSearchConf,
 				filteringConf.SafeSearchCacheSize,
 				time.Minute*time.Duration(filteringConf.CacheTime),
@@ -218,13 +229,12 @@ func (clients *clientsContainer) addFromConfig(objects []*clientObject, filterin
 			}
 		}
 
-		for _, s := range o.BlockedServices {
-			if filtering.BlockedSvcKnown(s) {
-				cli.BlockedServices = append(cli.BlockedServices, s)
-			} else {
-				log.Info("clients: skipping unknown blocked service %q", s)
-			}
+		err = o.BlockedServices.Validate()
+		if err != nil {
+			return fmt.Errorf("clients: init client blocked services %q: %w", cli.Name, err)
 		}
+
+		cli.BlockedServices = o.BlockedServices.Clone()
 
 		for _, t := range o.Tags {
 			if clients.allTags.Has(t) {
@@ -236,11 +246,13 @@ func (clients *clientsContainer) addFromConfig(objects []*clientObject, filterin
 
 		slices.Sort(cli.Tags)
 
-		_, err := clients.Add(cli)
+		_, err = clients.Add(cli)
 		if err != nil {
 			log.Error("clients: adding clients %s: %s", cli.Name, err)
 		}
 	}
+
+	return nil
 }
 
 // forConfig returns all currently known persistent clients as objects for the
@@ -254,10 +266,11 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 		o := &clientObject{
 			Name: cli.Name,
 
-			Tags:            stringutil.CloneSlice(cli.Tags),
-			IDs:             stringutil.CloneSlice(cli.IDs),
-			BlockedServices: stringutil.CloneSlice(cli.BlockedServices),
-			Upstreams:       stringutil.CloneSlice(cli.Upstreams),
+			BlockedServices: cli.BlockedServices.Clone(),
+
+			IDs:       stringutil.CloneSlice(cli.IDs),
+			Tags:      stringutil.CloneSlice(cli.Tags),
+			Upstreams: stringutil.CloneSlice(cli.Upstreams),
 
 			UseGlobalSettings:        !cli.UseOwnSettings,
 			FilteringEnabled:         cli.FilteringEnabled,

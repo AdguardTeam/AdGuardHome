@@ -988,17 +988,11 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	}
 
 	if d.BlockedServices != nil {
-		bsvcs := []string{}
-		for _, s := range d.BlockedServices.IDs {
-			if !BlockedSvcKnown(s) {
-				log.Debug("skipping unknown blocked-service %q", s)
+		err = d.BlockedServices.Validate()
 
-				continue
-			}
-
-			bsvcs = append(bsvcs, s)
+		if err != nil {
+			return nil, fmt.Errorf("filtering: %w", err)
 		}
-		d.BlockedServices.IDs = bsvcs
 	}
 
 	if blockFilters != nil {

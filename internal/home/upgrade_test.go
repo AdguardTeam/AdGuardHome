@@ -1183,3 +1183,73 @@ func TestUpgradeSchema20to21(t *testing.T) {
 		})
 	}
 }
+
+func TestUpgradeSchema21to22(t *testing.T) {
+	const newSchemaVer = 22
+
+	testCases := []struct {
+		in   yobj
+		want yobj
+		name string
+	}{{
+		in: yobj{
+			"clients": yobj{},
+		},
+		want: yobj{
+			"clients":        yobj{},
+			"schema_version": newSchemaVer,
+		},
+		name: "nothing",
+	}, {
+		in: yobj{
+			"clients": yobj{
+				"persistent": []any{yobj{"name": "localhost", "blocked_services": yarr{}}},
+			},
+		},
+		want: yobj{
+			"clients": yobj{
+				"persistent": []any{yobj{
+					"name": "localhost",
+					"blocked_services": yobj{
+						"ids": yarr{},
+						"schedule": yobj{
+							"time_zone": "Local",
+						},
+					},
+				}},
+			},
+			"schema_version": newSchemaVer,
+		},
+		name: "no_services",
+	}, {
+		in: yobj{
+			"clients": yobj{
+				"persistent": []any{yobj{"name": "localhost", "blocked_services": yarr{"ok"}}},
+			},
+		},
+		want: yobj{
+			"clients": yobj{
+				"persistent": []any{yobj{
+					"name": "localhost",
+					"blocked_services": yobj{
+						"ids": yarr{"ok"},
+						"schedule": yobj{
+							"time_zone": "Local",
+						},
+					},
+				}},
+			},
+			"schema_version": newSchemaVer,
+		},
+		name: "services",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema21to22(tc.in)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}

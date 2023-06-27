@@ -355,13 +355,17 @@ func initContextClients() (err error) {
 		arpdb = aghnet.NewARPDB()
 	}
 
-	Context.clients.Init(
+	err = Context.clients.Init(
 		config.Clients.Persistent,
 		Context.dhcpServer,
 		Context.etcHosts,
 		arpdb,
 		config.DNS.DnsfilterConf,
 	)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	}
 
 	return nil
 }

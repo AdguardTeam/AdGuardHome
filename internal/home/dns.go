@@ -474,9 +474,11 @@ func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering
 	if c.UseOwnBlockedServices {
 		// TODO(e.burkov):  Get rid of this crutch.
 		setts.ServicesRules = nil
-		svcs := c.BlockedServices
-		Context.filters.ApplyBlockedServicesList(setts, svcs)
-		log.Debug("%s: services for client %q set: %s", pref, c.Name, svcs)
+		svcs := c.BlockedServices.IDs
+		if !c.BlockedServices.Schedule.Contains(time.Now()) {
+			Context.filters.ApplyBlockedServicesList(setts, svcs)
+			log.Debug("%s: services for client %q set: %s", pref, c.Name, svcs)
+		}
 	}
 
 	setts.ClientName = c.Name
