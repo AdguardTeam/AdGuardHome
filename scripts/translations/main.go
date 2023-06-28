@@ -288,12 +288,18 @@ func downloadWorker(wg *sync.WaitGroup, client *http.Client, uriCh <-chan *url.U
 		data, err := getTranslation(client, uri.String())
 		if err != nil {
 			log.Error("download worker: getting translation: %s", err)
+			log.Info("download worker: error response:\n%s", data)
 
 			continue
 		}
 
 		q := uri.Query()
 		code := q.Get("language")
+
+		// Fix some TwoSky weirdnesses.
+		//
+		// TODO(a.garipov): Remove when those are fixed.
+		code = strings.ToLower(code)
 
 		name := filepath.Join(localesDir, code+".json")
 		err = os.WriteFile(name, data, 0o664)
@@ -307,7 +313,8 @@ func downloadWorker(wg *sync.WaitGroup, client *http.Client, uriCh <-chan *url.U
 	}
 }
 
-// getTranslation returns received translation data or error.
+// getTranslation returns received translation data and error.  If err is not
+// nil, data may contain a response from server for inspection.
 func getTranslation(client *http.Client, url string) (data []byte, err error) {
 	resp, err := client.Get(url)
 	if err != nil {
@@ -319,30 +326,37 @@ func getTranslation(client *http.Client, url string) (data []byte, err error) {
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("url: %q; status code: %s", url, http.StatusText(resp.StatusCode))
 
-		return nil, err
+		// Go on and download the body for inspection.
 	}
 
-	limitReader, err := aghio.LimitReader(resp.Body, readLimit)
-	if err != nil {
-		err = fmt.Errorf("limit reading: %w", err)
-
-		return nil, err
+	limitReader, lrErr := aghio.LimitReader(resp.Body, readLimit)
+	if lrErr != nil {
+		// Generally shouldn't happen, since the only error returned by
+		// [aghio.LimitReader] is an argument error.
+		panic(fmt.Errorf("limit reading: %w", lrErr))
 	}
 
-	data, err = io.ReadAll(limitReader)
-	if err != nil {
-		err = fmt.Errorf("reading all: %w", err)
+	data, readErr := io.ReadAll(limitReader)
 
-		return nil, err
-	}
-
-	return data, nil
+	return data, errors.WithDeferred(err, readErr)
 }
 
 // translationURL returns a new url.URL with provided query parameters.
 func translationURL(oldURL *url.URL, baseFile, projectID string, lang langCode) (uri *url.URL) {
 	uri = &url.URL{}
 	*uri = *oldURL
+
+	// Fix some TwoSky weirdnesses.
+	//
+	// TODO(a.garipov): Remove when those are fixed.
+	switch lang {
+	case "si-lk":
+		lang = "si-LK"
+	case "zh-hk":
+		lang = "zh-HK"
+	default:
+		// Go on.
+	}
 
 	q := uri.Query()
 	q.Set("format", "json")

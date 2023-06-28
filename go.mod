@@ -18,7 +18,7 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/google/renameio v1.0.1
 	github.com/google/uuid v1.3.0
-	github.com/insomniacslk/dhcp v0.0.0-20230516061539-49801966e6cb
+	github.com/insomniacslk/dhcp v0.0.0-20230612134759-b20c9ba983df
 	github.com/josharian/native v1.1.1-0.20230202152459-5c7d0dd6ab86
 	github.com/kardianos/service v1.2.2
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
@@ -27,13 +27,13 @@ require (
 	// TODO(a.garipov): This package is deprecated; find a new one or use our
 	// own code for that.  Perhaps, use gopacket.
 	github.com/mdlayher/raw v0.1.0
-	github.com/miekg/dns v1.1.54
+	github.com/miekg/dns v1.1.55
 	github.com/quic-go/quic-go v0.35.1
 	github.com/stretchr/testify v1.8.4
 	github.com/ti-mo/netfilter v0.5.0
 	go.etcd.io/bbolt v1.3.7
 	golang.org/x/crypto v0.10.0
-	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
+	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
 	golang.org/x/net v0.11.0
 	golang.org/x/sys v0.9.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -51,17 +51,17 @@ require (
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/pprof v0.0.0-20230602150820-91b7bce49751 // indirect
 	github.com/mdlayher/socket v0.4.1 // indirect
-	github.com/onsi/ginkgo/v2 v2.10.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.11.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
-	github.com/pierrec/lz4/v4 v4.1.17 // indirect
+	github.com/pierrec/lz4/v4 v4.1.18 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
 	github.com/quic-go/qtls-go1-19 v0.3.2 // indirect
 	github.com/quic-go/qtls-go1-20 v0.2.2 // indirect
 	github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63 // indirect
-	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/sync v0.2.0 // indirect
+	golang.org/x/mod v0.11.0 // indirect
+	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/text v0.10.0 // indirect
-	golang.org/x/tools v0.9.3 // indirect
+	golang.org/x/tools v0.10.0 // indirect
 )

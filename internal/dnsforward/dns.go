@@ -901,8 +901,8 @@ func (s *Server) setCustomUpstream(pctx *proxy.DNSContext, clientID string) {
 
 // Apply filtering logic after we have received response from upstream servers
 func (s *Server) processFilteringAfterResponse(dctx *dnsContext) (rc resultCode) {
-	log.Debug("dnsforward: started processing filtering after req")
-	defer log.Debug("dnsforward: finished processing filtering after req")
+	log.Debug("dnsforward: started processing filtering after resp")
+	defer log.Debug("dnsforward: finished processing filtering after resp")
 
 	pctx := dctx.proxyCtx
 	switch res := dctx.result; res.Reason {
