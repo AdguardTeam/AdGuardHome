@@ -25,7 +25,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// DHCP is an interface for accesing DHCP lease data the [clientsContainer]
+// DHCP is an interface for accessing DHCP lease data the [clientsContainer]
 // needs.
 type DHCP interface {
 	// Leases returns all the DHCP leases.

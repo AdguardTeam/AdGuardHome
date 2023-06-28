@@ -110,6 +110,9 @@ func ipsFromAnswer(ans []dns.RR) (ip4s, ip6s []net.IP) {
 
 // process adds the resolved IP addresses to the domain's ipsets, if any.
 func (c *ipsetCtx) process(dctx *dnsContext) (rc resultCode) {
+	log.Debug("dnsforward: ipset: started processing")
+	defer log.Debug("dnsforward: ipset: finished processing")
+
 	if c.skipIpsetProcessing(dctx) {
 		return resultCodeSuccess
 	}
@@ -125,12 +128,12 @@ func (c *ipsetCtx) process(dctx *dnsContext) (rc resultCode) {
 	n, err := c.ipsetMgr.Add(host, ip4s, ip6s)
 	if err != nil {
 		// Consider ipset errors non-critical to the request.
-		log.Error("ipset: adding host ips: %s", err)
+		log.Error("dnsforward: ipset: adding host ips: %s", err)
 
 		return resultCodeSuccess
 	}
 
-	log.Debug("ipset: added %d new ipset entries", n)
+	log.Debug("dnsforward: ipset: added %d new ipset entries", n)
 
 	return resultCodeSuccess
 }
