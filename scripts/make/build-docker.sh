@@ -62,16 +62,21 @@ readonly docker_output
 case "$channel"
 in
 ('release')
-	docker_tags="--tag=${docker_image_name}:${version},${docker_image_name}:latest"
+	docker_version_tag="${docker_image_name}:${version}"
+	docker_channel_tag="${docker_image_name}:latest"
 	;;
 ('beta')
-	docker_tags="--tag=${docker_image_name}:${version},${docker_image_name}:beta"
+	docker_version_tag="${docker_image_name}:${version}"
+	docker_channel_tag="${docker_image_name}:beta"
 	;;
 ('edge')
-	docker_tags="--tag=${docker_image_name}:edge"
+	# Don't set the version tag when pushing to the edge channel.
+	docker_version_tag="${docker_image_name}:edge"
+	docker_channel_tag="${docker_image_name}"
 	;;
 ('development')
-	docker_tags="--tag=${docker_image_name}"
+	docker_version_tag="${docker_image_name}"
+	docker_channel_tag="${docker_image_name}"
 	;;
 (*)
 	echo "invalid channel '$channel', supported values are\
@@ -79,7 +84,7 @@ in
 	exit 1
 	;;
 esac
-readonly docker_tags
+readonly docker_version_tag docker_channel_tag
 
 # Copy the binaries into a new directory under new names, so that it's easier to
 # COPY them later.  DO NOT remove the trailing underscores.  See file
@@ -122,6 +127,7 @@ $sudo_cmd docker\
 	--build-arg VERSION="$version"\
 	--output "$docker_output"\
 	--platform "$docker_platforms"\
-	"$docker_tags"\
+	--tag="$docker_version_tag"\
+	--tag="$docker_channel_tag"\
 	-f ./docker/Dockerfile\
 	.
