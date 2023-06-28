@@ -23,10 +23,13 @@ type config struct {
 //
 // TODO(a.garipov): Validate.
 type dnsConfig struct {
-	Addresses       []netip.AddrPort  `yaml:"addresses"`
-	BootstrapDNS    []string          `yaml:"bootstrap_dns"`
-	UpstreamDNS     []string          `yaml:"upstream_dns"`
-	UpstreamTimeout timeutil.Duration `yaml:"upstream_timeout"`
+	Addresses           []netip.AddrPort  `yaml:"addresses"`
+	BootstrapDNS        []string          `yaml:"bootstrap_dns"`
+	UpstreamDNS         []string          `yaml:"upstream_dns"`
+	DNS64Prefixes       []netip.Prefix    `yaml:"dns64_prefixes"`
+	UpstreamTimeout     timeutil.Duration `yaml:"upstream_timeout"`
+	BootstrapPreferIPv6 bool              `yaml:"bootstrap_prefer_ipv6"`
+	UseDNS64            bool              `yaml:"use_dns64"`
 }
 
 // httpConfig is the on-disk web API configuration.

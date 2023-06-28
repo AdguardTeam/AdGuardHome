@@ -129,8 +129,8 @@ type commandLineOption struct {
 // AdGuard Home.
 var commandLineOptions = []*commandLineOption{
 	confFileIdx: {
-		// TODO(a.garipov): Remove the ".1" when the new code is ready.
-		defaultValue: "AdGuardHome.1.yaml",
+		// TODO(a.garipov): Remove the directory when the new code is ready.
+		defaultValue: "internal/next/AdGuardHome.yaml",
 		description:  "Path to the config file.",
 		long:         "config",
 		short:        "c",

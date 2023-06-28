@@ -20,10 +20,13 @@ import (
 
 func TestService_HandlePatchSettingsDNS(t *testing.T) {
 	wantDNS := &websvc.HTTPAPIDNSSettings{
-		Addresses:        []netip.AddrPort{netip.MustParseAddrPort("127.0.1.1:53")},
-		BootstrapServers: []string{"1.0.0.1"},
-		UpstreamServers:  []string{"1.1.1.1"},
-		UpstreamTimeout:  websvc.JSONDuration(2 * time.Second),
+		Addresses:           []netip.AddrPort{netip.MustParseAddrPort("127.0.1.1:53")},
+		BootstrapServers:    []string{"1.0.0.1"},
+		UpstreamServers:     []string{"1.1.1.1"},
+		DNS64Prefixes:       []netip.Prefix{netip.MustParsePrefix("1234::/64")},
+		UpstreamTimeout:     websvc.JSONDuration(2 * time.Second),
+		BootstrapPreferIPv6: true,
+		UseDNS64:            true,
 	}
 
 	var started atomic.Bool
@@ -51,10 +54,13 @@ func TestService_HandlePatchSettingsDNS(t *testing.T) {
 	}
 
 	req := jobj{
-		"addresses":         wantDNS.Addresses,
-		"bootstrap_servers": wantDNS.BootstrapServers,
-		"upstream_servers":  wantDNS.UpstreamServers,
-		"upstream_timeout":  wantDNS.UpstreamTimeout,
+		"addresses":             wantDNS.Addresses,
+		"bootstrap_servers":     wantDNS.BootstrapServers,
+		"upstream_servers":      wantDNS.UpstreamServers,
+		"dns64_prefixes":        wantDNS.DNS64Prefixes,
+		"upstream_timeout":      wantDNS.UpstreamTimeout,
+		"bootstrap_prefer_ipv6": wantDNS.BootstrapPreferIPv6,
+		"use_dns64":             wantDNS.UseDNS64,
 	}
 
 	respBody := httpPatch(t, u, req, http.StatusOK)

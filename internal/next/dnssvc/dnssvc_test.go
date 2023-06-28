@@ -6,10 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
-	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -21,36 +18,55 @@ func TestMain(m *testing.M) {
 }
 
 // testTimeout is the common timeout for tests.
-const testTimeout = 100 * time.Millisecond
+const testTimeout = 1 * time.Second
 
 func TestService(t *testing.T) {
 	const (
-		bootstrapAddr = "bootstrap.example"
+		listenAddr    = "127.0.0.1:0"
+		bootstrapAddr = "127.0.0.1:0"
 		upstreamAddr  = "upstream.example"
-
-		closeErr errors.Error = "closing failed"
 	)
 
-	ups := &aghtest.UpstreamMock{
-		OnAddress: func() (addr string) {
-			return upstreamAddr
-		},
-		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
-			resp = (&dns.Msg{}).SetReply(req)
+	upstreamErrCh := make(chan error, 1)
+	upstreamStartedCh := make(chan struct{})
+	upstreamSrv := &dns.Server{
+		Addr: bootstrapAddr,
+		Net:  "udp",
+		Handler: dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
+			pt := testutil.PanicT{}
 
-			return resp, nil
-		},
-		OnClose: func() (err error) {
-			return closeErr
-		},
+			resp := (&dns.Msg{}).SetReply(req)
+			resp.Answer = append(resp.Answer, &dns.A{
+				Hdr: dns.RR_Header{},
+				A:   netip.MustParseAddrPort(bootstrapAddr).Addr().AsSlice(),
+			})
+
+			writeErr := w.WriteMsg(resp)
+			require.NoError(pt, writeErr)
+		}),
+		NotifyStartedFunc: func() { close(upstreamStartedCh) },
 	}
 
+	go func() {
+		listenErr := upstreamSrv.ListenAndServe()
+		if listenErr != nil {
+			// Log these immediately to see what happens.
+			t.Logf("upstream listen error: %s", listenErr)
+		}
+
+		upstreamErrCh <- listenErr
+	}()
+
+	_, _ = testutil.RequireReceive(t, upstreamStartedCh, testTimeout)
+
 	c := &dnssvc.Config{
-		Addresses:        []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:0")},
-		Upstreams:        []upstream.Upstream{ups},
-		BootstrapServers: []string{bootstrapAddr},
-		UpstreamServers:  []string{upstreamAddr},
-		UpstreamTimeout:  testTimeout,
+		Addresses:           []netip.AddrPort{netip.MustParseAddrPort(listenAddr)},
+		BootstrapServers:    []string{upstreamSrv.PacketConn.LocalAddr().String()},
+		UpstreamServers:     []string{upstreamAddr},
+		DNS64Prefixes:       nil,
+		UpstreamTimeout:     testTimeout,
+		BootstrapPreferIPv6: false,
+		UseDNS64:            false,
 	}
 
 	svc, err := dnssvc.New(c)
@@ -82,8 +98,14 @@ func TestService(t *testing.T) {
 		defer cancel()
 
 		cli := &dns.Client{}
-		resp, _, excErr := cli.ExchangeContext(ctx, req, addr.String())
-		require.NoError(t, excErr)
+
+		var resp *dns.Msg
+		require.Eventually(t, func() (ok bool) {
+			var excErr error
+			resp, _, excErr = cli.ExchangeContext(ctx, req, addr.String())
+
+			return excErr == nil
+		}, testTimeout, testTimeout/10)
 
 		assert.NotNil(t, resp)
 	})
@@ -92,5 +114,12 @@ func TestService(t *testing.T) {
 	defer cancel()
 
 	err = svc.Shutdown(ctx)
-	require.ErrorIs(t, err, closeErr)
+	require.NoError(t, err)
+
+	err = upstreamSrv.Shutdown()
+	require.NoError(t, err)
+
+	err, ok := testutil.RequireReceive(t, upstreamErrCh, testTimeout)
+	require.True(t, ok)
+	require.NoError(t, err)
 }

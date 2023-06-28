@@ -6,7 +6,6 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghchan"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/stretchr/testify/assert"
 )
@@ -26,9 +25,6 @@ func TestWaitListener_Accept(t *testing.T) {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
-	done := make(chan struct{})
-	go aghchan.MustReceive(done, testTimeout)
-
 	go func() {
 		var wrapper net.Listener = &waitListener{
 			Listener:      l,
@@ -39,7 +35,6 @@ func TestWaitListener_Accept(t *testing.T) {
 	}()
 
 	wg.Wait()
-	close(done)
 
-	assert.True(t, accepted.Load())
+	assert.Eventually(t, accepted.Load, testTimeout, testTimeout/10)
 }

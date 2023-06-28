@@ -16,10 +16,13 @@
 /dist/
 /filtering/tests/filtering.TestLotsOfRules*.pprof
 /filtering/tests/top-1m.csv
+/internal/next/AdGuardHome.yaml
 /launchpad_credentials
 /querylog.json*
 /snapcraft_login
-AdGuardHome*
+AdGuardHome
+AdGuardHome.exe
+AdGuardHome.yaml*
 coverage.txt
 node_modules/
 

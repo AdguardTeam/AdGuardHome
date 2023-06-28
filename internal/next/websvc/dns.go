@@ -17,10 +17,13 @@ import (
 type ReqPatchSettingsDNS struct {
 	// TODO(a.garipov): Add more as we go.
 
-	Addresses        []netip.AddrPort `json:"addresses"`
-	BootstrapServers []string         `json:"bootstrap_servers"`
-	UpstreamServers  []string         `json:"upstream_servers"`
-	UpstreamTimeout  JSONDuration     `json:"upstream_timeout"`
+	Addresses           []netip.AddrPort `json:"addresses"`
+	BootstrapServers    []string         `json:"bootstrap_servers"`
+	UpstreamServers     []string         `json:"upstream_servers"`
+	DNS64Prefixes       []netip.Prefix   `json:"dns64_prefixes"`
+	UpstreamTimeout     JSONDuration     `json:"upstream_timeout"`
+	BootstrapPreferIPv6 bool             `json:"bootstrap_prefer_ipv6"`
+	UseDNS64            bool             `json:"use_dns64"`
 }
 
 // HTTPAPIDNSSettings are the DNS settings as used by the HTTP API.  See the
@@ -28,10 +31,13 @@ type ReqPatchSettingsDNS struct {
 type HTTPAPIDNSSettings struct {
 	// TODO(a.garipov): Add more as we go.
 
-	Addresses        []netip.AddrPort `json:"addresses"`
-	BootstrapServers []string         `json:"bootstrap_servers"`
-	UpstreamServers  []string         `json:"upstream_servers"`
-	UpstreamTimeout  JSONDuration     `json:"upstream_timeout"`
+	Addresses           []netip.AddrPort `json:"addresses"`
+	BootstrapServers    []string         `json:"bootstrap_servers"`
+	UpstreamServers     []string         `json:"upstream_servers"`
+	DNS64Prefixes       []netip.Prefix   `json:"dns64_prefixes"`
+	UpstreamTimeout     JSONDuration     `json:"upstream_timeout"`
+	BootstrapPreferIPv6 bool             `json:"bootstrap_prefer_ipv6"`
+	UseDNS64            bool             `json:"use_dns64"`
 }
 
 // handlePatchSettingsDNS is the handler for the PATCH /api/v1/settings/dns HTTP
@@ -53,10 +59,13 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 	}
 
 	newConf := &dnssvc.Config{
-		Addresses:        req.Addresses,
-		BootstrapServers: req.BootstrapServers,
-		UpstreamServers:  req.UpstreamServers,
-		UpstreamTimeout:  time.Duration(req.UpstreamTimeout),
+		Addresses:           req.Addresses,
+		BootstrapServers:    req.BootstrapServers,
+		UpstreamServers:     req.UpstreamServers,
+		DNS64Prefixes:       req.DNS64Prefixes,
+		UpstreamTimeout:     time.Duration(req.UpstreamTimeout),
+		BootstrapPreferIPv6: req.BootstrapPreferIPv6,
+		UseDNS64:            req.UseDNS64,
 	}
 
 	ctx := r.Context()
@@ -76,9 +85,12 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 	}
 
 	writeJSONOKResponse(w, r, &HTTPAPIDNSSettings{
-		Addresses:        newConf.Addresses,
-		BootstrapServers: newConf.BootstrapServers,
-		UpstreamServers:  newConf.UpstreamServers,
-		UpstreamTimeout:  JSONDuration(newConf.UpstreamTimeout),
+		Addresses:           newConf.Addresses,
+		BootstrapServers:    newConf.BootstrapServers,
+		UpstreamServers:     newConf.UpstreamServers,
+		DNS64Prefixes:       newConf.DNS64Prefixes,
+		UpstreamTimeout:     JSONDuration(newConf.UpstreamTimeout),
+		BootstrapPreferIPv6: newConf.BootstrapPreferIPv6,
+		UseDNS64:            newConf.UseDNS64,
 	})
 }

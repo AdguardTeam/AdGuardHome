@@ -27,10 +27,13 @@ func (svc *Service) handleGetSettingsAll(w http.ResponseWriter, r *http.Request)
 	// TODO(a.garipov): Add all currently supported parameters.
 	writeJSONOKResponse(w, r, &RespGetV1SettingsAll{
 		DNS: &HTTPAPIDNSSettings{
-			Addresses:        dnsConf.Addresses,
-			BootstrapServers: dnsConf.BootstrapServers,
-			UpstreamServers:  dnsConf.UpstreamServers,
-			UpstreamTimeout:  JSONDuration(dnsConf.UpstreamTimeout),
+			Addresses:           dnsConf.Addresses,
+			BootstrapServers:    dnsConf.BootstrapServers,
+			UpstreamServers:     dnsConf.UpstreamServers,
+			DNS64Prefixes:       dnsConf.DNS64Prefixes,
+			UpstreamTimeout:     JSONDuration(dnsConf.UpstreamTimeout),
+			BootstrapPreferIPv6: dnsConf.BootstrapPreferIPv6,
+			UseDNS64:            dnsConf.UseDNS64,
 		},
 		HTTP: &HTTPAPIHTTPSettings{
 			Addresses:       httpConf.Addresses,

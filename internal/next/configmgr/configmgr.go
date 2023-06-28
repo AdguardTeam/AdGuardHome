@@ -14,7 +14,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 	"gopkg.in/yaml.v3"
 )
 
@@ -64,12 +63,6 @@ func New(
 		return nil, err
 	}
 
-	// TODO(a.garipov): Move into a separate function and add other logging
-	// settings.
-	if conf.Verbose {
-		log.SetLevel(log.DEBUG)
-	}
-
 	// TODO(a.garipov): Validate the configuration structure.  Return an error
 	// if it's incorrect.
 
@@ -102,10 +95,13 @@ func (m *Manager) assemble(
 	start time.Time,
 ) (err error) {
 	dnsConf := &dnssvc.Config{
-		Addresses:        conf.DNS.Addresses,
-		BootstrapServers: conf.DNS.BootstrapDNS,
-		UpstreamServers:  conf.DNS.UpstreamDNS,
-		UpstreamTimeout:  conf.DNS.UpstreamTimeout.Duration,
+		Addresses:           conf.DNS.Addresses,
+		BootstrapServers:    conf.DNS.BootstrapDNS,
+		UpstreamServers:     conf.DNS.UpstreamDNS,
+		DNS64Prefixes:       conf.DNS.DNS64Prefixes,
+		UpstreamTimeout:     conf.DNS.UpstreamTimeout.Duration,
+		BootstrapPreferIPv6: conf.DNS.BootstrapPreferIPv6,
+		UseDNS64:            conf.DNS.UseDNS64,
 	}
 	err = m.updateDNS(ctx, dnsConf)
 	if err != nil {

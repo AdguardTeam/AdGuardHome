@@ -19,40 +19,20 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 )
 
-// Config is the AdGuard Home DNS service configuration structure.
-//
-// TODO(a.garipov): Add timeout for incoming requests.
-type Config struct {
-	// Addresses are the addresses on which to serve plain DNS queries.
-	Addresses []netip.AddrPort
-
-	// Upstreams are the DNS upstreams to use.  If not set, upstreams are
-	// created using data from BootstrapServers, UpstreamServers, and
-	// UpstreamTimeout.
-	//
-	// TODO(a.garipov): Think of a better scheme.  Those other three parameters
-	// are here only to make Config work properly.
-	Upstreams []upstream.Upstream
-
-	// BootstrapServers are the addresses for bootstrapping the upstream DNS
-	// server addresses.
-	BootstrapServers []string
-
-	// UpstreamServers are the upstream DNS server addresses to use.
-	UpstreamServers []string
-
-	// UpstreamTimeout is the timeout for upstream requests.
-	UpstreamTimeout time.Duration
-}
-
 // Service is the AdGuard Home DNS service.  A nil *Service is a valid
 // [agh.Service] that does nothing.
+//
+// TODO(a.garipov): Consider saving a [*proxy.Config] instance for those
+// fields that are only used in [New] and [Service.Config].
 type Service struct {
-	proxy      *proxy.Proxy
-	bootstraps []string
-	upstreams  []string
-	upsTimeout time.Duration
-	running    atomic.Bool
+	proxy               *proxy.Proxy
+	bootstraps          []string
+	upstreams           []string
+	dns64Prefixes       []netip.Prefix
+	upsTimeout          time.Duration
+	running             atomic.Bool
+	bootstrapPreferIPv6 bool
+	useDNS64            bool
 }
 
 // New returns a new properly initialized *Service.  If c is nil, svc is a nil
@@ -64,23 +44,22 @@ func New(c *Config) (svc *Service, err error) {
 	}
 
 	svc = &Service{
-		bootstraps: c.BootstrapServers,
-		upstreams:  c.UpstreamServers,
-		upsTimeout: c.UpstreamTimeout,
+		bootstraps:          c.BootstrapServers,
+		upstreams:           c.UpstreamServers,
+		dns64Prefixes:       c.DNS64Prefixes,
+		upsTimeout:          c.UpstreamTimeout,
+		bootstrapPreferIPv6: c.BootstrapPreferIPv6,
+		useDNS64:            c.UseDNS64,
 	}
 
-	var upstreams []upstream.Upstream
-	if len(c.Upstreams) > 0 {
-		upstreams = c.Upstreams
-	} else {
-		upstreams, err = addressesToUpstreams(
-			c.UpstreamServers,
-			c.BootstrapServers,
-			c.UpstreamTimeout,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("converting upstreams: %w", err)
-		}
+	upstreams, err := addressesToUpstreams(
+		c.UpstreamServers,
+		c.BootstrapServers,
+		c.UpstreamTimeout,
+		c.BootstrapPreferIPv6,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("converting upstreams: %w", err)
 	}
 
 	svc.proxy = &proxy.Proxy{
@@ -90,6 +69,8 @@ func New(c *Config) (svc *Service, err error) {
 			UpstreamConfig: &proxy.UpstreamConfig{
 				Upstreams: upstreams,
 			},
+			UseDNS64:   c.UseDNS64,
+			DNS64Prefs: c.DNS64Prefixes,
 		},
 	}
 
@@ -108,12 +89,14 @@ func addressesToUpstreams(
 	upsStrs []string,
 	bootstraps []string,
 	timeout time.Duration,
+	preferIPv6 bool,
 ) (upstreams []upstream.Upstream, err error) {
 	upstreams = make([]upstream.Upstream, len(upsStrs))
 	for i, upsStr := range upsStrs {
 		upstreams[i], err = upstream.AddressToUpstream(upsStr, &upstream.Options{
-			Bootstrap: bootstraps,
-			Timeout:   timeout,
+			Bootstrap:  bootstraps,
+			Timeout:    timeout,
+			PreferIPv6: preferIPv6,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("upstream at index %d: %w", i, err)
@@ -206,10 +189,13 @@ func (svc *Service) Config() (c *Config) {
 	}
 
 	c = &Config{
-		Addresses:        addrs,
-		BootstrapServers: svc.bootstraps,
-		UpstreamServers:  svc.upstreams,
-		UpstreamTimeout:  svc.upsTimeout,
+		Addresses:           addrs,
+		BootstrapServers:    svc.bootstraps,
+		UpstreamServers:     svc.upstreams,
+		DNS64Prefixes:       svc.dns64Prefixes,
+		UpstreamTimeout:     svc.upsTimeout,
+		BootstrapPreferIPv6: svc.bootstrapPreferIPv6,
+		UseDNS64:            svc.useDNS64,
 	}
 
 	return c

@@ -20,10 +20,11 @@ func TestService_HandleGetSettingsAll(t *testing.T) {
 	// TODO(a.garipov): Add all currently supported parameters.
 
 	wantDNS := &websvc.HTTPAPIDNSSettings{
-		Addresses:        []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:53")},
-		BootstrapServers: []string{"94.140.14.140", "94.140.14.141"},
-		UpstreamServers:  []string{"94.140.14.14", "1.1.1.1"},
-		UpstreamTimeout:  websvc.JSONDuration(1 * time.Second),
+		Addresses:           []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:53")},
+		BootstrapServers:    []string{"94.140.14.140", "94.140.14.141"},
+		UpstreamServers:     []string{"94.140.14.14", "1.1.1.1"},
+		UpstreamTimeout:     websvc.JSONDuration(1 * time.Second),
+		BootstrapPreferIPv6: true,
 	}
 
 	wantWeb := &websvc.HTTPAPIHTTPSettings{
@@ -36,10 +37,11 @@ func TestService_HandleGetSettingsAll(t *testing.T) {
 	confMgr := newConfigManager()
 	confMgr.onDNS = func() (s agh.ServiceWithConfig[*dnssvc.Config]) {
 		c, err := dnssvc.New(&dnssvc.Config{
-			Addresses:        wantDNS.Addresses,
-			UpstreamServers:  wantDNS.UpstreamServers,
-			BootstrapServers: wantDNS.BootstrapServers,
-			UpstreamTimeout:  time.Duration(wantDNS.UpstreamTimeout),
+			Addresses:           wantDNS.Addresses,
+			UpstreamServers:     wantDNS.UpstreamServers,
+			BootstrapServers:    wantDNS.BootstrapServers,
+			UpstreamTimeout:     time.Duration(wantDNS.UpstreamTimeout),
+			BootstrapPreferIPv6: true,
 		})
 		require.NoError(t, err)
 
