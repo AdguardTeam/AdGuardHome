@@ -23,4 +23,5 @@ http:
   secure_addresses: []
   timeout: 5s
   force_https: true
-verbose: true
+log:
+  verbose: true

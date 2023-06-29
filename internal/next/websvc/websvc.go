@@ -51,6 +51,10 @@ type Config struct {
 	// Start is the time of start of AdGuard Home.
 	Start time.Time
 
+	// OverrideAddress is the initial or override address for the HTTP API.  If
+	// set, it is used instead of [Addresses] and [SecureAddresses].
+	OverrideAddress netip.AddrPort
+
 	// Addresses are the addresses on which to serve the plain HTTP API.
 	Addresses []netip.AddrPort
 
@@ -71,13 +75,14 @@ type Config struct {
 // Service is the AdGuard Home web service.  A nil *Service is a valid
 // [agh.Service] that does nothing.
 type Service struct {
-	confMgr    ConfigManager
-	frontend   fs.FS
-	tls        *tls.Config
-	start      time.Time
-	servers    []*http.Server
-	timeout    time.Duration
-	forceHTTPS bool
+	confMgr      ConfigManager
+	frontend     fs.FS
+	tls          *tls.Config
+	start        time.Time
+	overrideAddr netip.AddrPort
+	servers      []*http.Server
+	timeout      time.Duration
+	forceHTTPS   bool
 }
 
 // New returns a new properly initialized *Service.  If c is nil, svc is a nil
@@ -91,52 +96,58 @@ func New(c *Config) (svc *Service, err error) {
 		return nil, nil
 	}
 
-	frontend, err := fs.Sub(c.Frontend, "build/static")
-	if err != nil {
-		return nil, fmt.Errorf("frontend fs: %w", err)
-	}
-
 	svc = &Service{
-		confMgr:    c.ConfigManager,
-		frontend:   frontend,
-		tls:        c.TLS,
-		start:      c.Start,
-		timeout:    c.Timeout,
-		forceHTTPS: c.ForceHTTPS,
+		confMgr:      c.ConfigManager,
+		frontend:     c.Frontend,
+		tls:          c.TLS,
+		start:        c.Start,
+		overrideAddr: c.OverrideAddress,
+		timeout:      c.Timeout,
+		forceHTTPS:   c.ForceHTTPS,
 	}
 
 	mux := newMux(svc)
 
-	for _, a := range c.Addresses {
-		addr := a.String()
-		errLog := log.StdLog("websvc: plain http: "+addr, log.ERROR)
-		svc.servers = append(svc.servers, &http.Server{
-			Addr:              addr,
-			Handler:           mux,
-			ErrorLog:          errLog,
-			ReadTimeout:       c.Timeout,
-			WriteTimeout:      c.Timeout,
-			IdleTimeout:       c.Timeout,
-			ReadHeaderTimeout: c.Timeout,
-		})
-	}
+	if svc.overrideAddr != (netip.AddrPort{}) {
+		svc.servers = []*http.Server{newSrv(svc.overrideAddr, nil, mux, c.Timeout)}
+	} else {
+		for _, a := range c.Addresses {
+			svc.servers = append(svc.servers, newSrv(a, nil, mux, c.Timeout))
+		}
 
-	for _, a := range c.SecureAddresses {
-		addr := a.String()
-		errLog := log.StdLog("websvc: https: "+addr, log.ERROR)
-		svc.servers = append(svc.servers, &http.Server{
-			Addr:              addr,
-			Handler:           mux,
-			TLSConfig:         c.TLS,
-			ErrorLog:          errLog,
-			ReadTimeout:       c.Timeout,
-			WriteTimeout:      c.Timeout,
-			IdleTimeout:       c.Timeout,
-			ReadHeaderTimeout: c.Timeout,
-		})
+		for _, a := range c.SecureAddresses {
+			svc.servers = append(svc.servers, newSrv(a, c.TLS, mux, c.Timeout))
+		}
 	}
 
 	return svc, nil
+}
+
+// newSrv returns a new *http.Server with the given parameters.
+func newSrv(
+	addr netip.AddrPort,
+	tlsConf *tls.Config,
+	h http.Handler,
+	timeout time.Duration,
+) (srv *http.Server) {
+	addrStr := addr.String()
+	srv = &http.Server{
+		Addr:              addrStr,
+		Handler:           h,
+		TLSConfig:         tlsConf,
+		ReadTimeout:       timeout,
+		WriteTimeout:      timeout,
+		IdleTimeout:       timeout,
+		ReadHeaderTimeout: timeout,
+	}
+
+	if tlsConf == nil {
+		srv.ErrorLog = log.StdLog("websvc: plain http: "+addrStr, log.ERROR)
+	} else {
+		srv.ErrorLog = log.StdLog("websvc: https: "+addrStr, log.ERROR)
+	}
+
+	return srv
 }
 
 // newMux returns a new HTTP request multiplexer for the AdGuard Home web
@@ -205,23 +216,23 @@ func newMux(svc *Service) (mux *httptreemux.ContextMux) {
 // ":0" addresses, addrs will not return the actual bound ports until Start is
 // finished.
 func (svc *Service) addrs() (addrs, secureAddrs []netip.AddrPort) {
-	for _, srv := range svc.servers {
-		addrPort, err := netip.ParseAddrPort(srv.Addr)
-		if err != nil {
-			// Technically shouldn't happen, since all servers must have a valid
-			// address.
-			panic(fmt.Errorf("websvc: server %q: bad address: %w", srv.Addr, err))
-		}
+	if svc.overrideAddr != (netip.AddrPort{}) {
+		return []netip.AddrPort{svc.overrideAddr}, nil
+	}
 
-		// srv.Serve will set TLSConfig to an almost empty value, so, instead of
-		// relying only on the nilness of TLSConfig, check the length of the
+	for _, srv := range svc.servers {
+		// Use MustParseAddrPort, since no errors should technically happen
+		// here, because all servers must have a valid address.
+		addrPort := netip.MustParseAddrPort(srv.Addr)
+
+		// [srv.Serve] will set TLSConfig to an almost empty value, so, instead
+		// of relying only on the nilness of TLSConfig, check the length of the
 		// certificates field as well.
 		if srv.TLSConfig == nil || len(srv.TLSConfig.Certificates) == 0 {
 			addrs = append(addrs, addrPort)
 		} else {
 			secureAddrs = append(secureAddrs, addrPort)
 		}
-
 	}
 
 	return addrs, secureAddrs

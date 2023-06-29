@@ -16,7 +16,7 @@ import (
 )
 
 // Main is the entry point of AdGuard Home.
-func Main(frontend fs.FS) {
+func Main(embeddedFrontend fs.FS) {
 	start := time.Now()
 
 	cmdName := os.Args[0]
@@ -37,7 +37,17 @@ func Main(frontend fs.FS) {
 		check(err)
 	}
 
-	confMgr, err := newConfigMgr(opts.confFile, frontend, start)
+	frontend, err := frontendFromOpts(opts, embeddedFrontend)
+	check(err)
+
+	confMgrConf := &configmgr.Config{
+		Frontend: frontend,
+		WebAddr:  opts.webAddr,
+		Start:    start,
+		FileName: opts.confFile,
+	}
+
+	confMgr, err := newConfigMgr(confMgrConf)
 	check(err)
 
 	web := confMgr.Web()
@@ -49,9 +59,8 @@ func Main(frontend fs.FS) {
 	check(err)
 
 	sigHdlr := newSignalHandler(
-		opts.confFile,
-		frontend,
-		start,
+		confMgrConf,
+		opts.pidFile,
 		web,
 		dns,
 	)
@@ -71,11 +80,11 @@ func ctxWithDefaultTimeout() (ctx context.Context, cancel context.CancelFunc) {
 
 // newConfigMgr returns a new configuration manager using defaultTimeout as the
 // context timeout.
-func newConfigMgr(confFile string, frontend fs.FS, start time.Time) (m *configmgr.Manager, err error) {
+func newConfigMgr(c *configmgr.Config) (m *configmgr.Manager, err error) {
 	ctx, cancel := ctxWithDefaultTimeout()
 	defer cancel()
 
-	return configmgr.New(ctx, confFile, frontend, start)
+	return configmgr.New(ctx, c)
 }
 
 // check is a simple error-checking helper.  It must only be used within Main.

@@ -14,11 +14,11 @@ import (
 type config struct {
 	DNS  *dnsConfig  `yaml:"dns"`
 	HTTP *httpConfig `yaml:"http"`
+	Log  *logConfig  `yaml:"log"`
 	// TODO(a.garipov): Use.
 	SchemaVersion int `yaml:"schema_version"`
 	// TODO(a.garipov): Use.
 	DebugPprof bool `yaml:"debug_pprof"`
-	Verbose    bool `yaml:"verbose"`
 }
 
 const errNoConf errors.Error = "configuration not found"
@@ -41,6 +41,9 @@ func (c *config) validate() (err error) {
 	}, {
 		validate: c.HTTP.validate,
 		name:     "http",
+	}, {
+		validate: c.Log.validate,
+		name:     "log",
 	}}
 
 	for _, v := range validators {
@@ -54,8 +57,6 @@ func (c *config) validate() (err error) {
 }
 
 // dnsConfig is the on-disk DNS configuration.
-//
-// TODO(a.garipov): Validate.
 type dnsConfig struct {
 	Addresses           []netip.AddrPort  `yaml:"addresses"`
 	BootstrapDNS        []string          `yaml:"bootstrap_dns"`
@@ -82,9 +83,8 @@ func (c *dnsConfig) validate() (err error) {
 }
 
 // httpConfig is the on-disk web API configuration.
-//
-// TODO(a.garipov): Validate.
 type httpConfig struct {
+	// TODO(a.garipov): Document the configuration change.
 	Addresses       []netip.AddrPort  `yaml:"addresses"`
 	SecureAddresses []netip.AddrPort  `yaml:"secure_addresses"`
 	Timeout         timeutil.Duration `yaml:"timeout"`
@@ -103,4 +103,21 @@ func (c *httpConfig) validate() (err error) {
 	default:
 		return nil
 	}
+}
+
+// logConfig is the on-disk web API configuration.
+type logConfig struct {
+	// TODO(a.garipov): Use.
+	Verbose bool `yaml:"verbose"`
+}
+
+// validate returns an error if the HTTP configuration structure is invalid.
+//
+// TODO(a.garipov): Add more validations.
+func (c *logConfig) validate() (err error) {
+	if c == nil {
+		return errNoConf
+	}
+
+	return nil
 }

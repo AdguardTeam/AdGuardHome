@@ -1,15 +1,18 @@
 package cmd
 
 import (
+	"encoding"
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/netip"
 	"os"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/next/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/golibs/log"
 	"golang.org/x/exp/slices"
 )
 
@@ -26,8 +29,6 @@ type options struct {
 	logFile string
 
 	// pidFile is the path to the file where to store the PID.
-	//
-	// TODO(a.garipov): Use.
 	pidFile string
 
 	// serviceAction is the service control action to perform:
@@ -50,10 +51,8 @@ type options struct {
 	// other configuration is read, so all relative paths are relative to it.
 	workDir string
 
-	// webAddrs contains the addresses on which to serve the web UI.
-	//
-	// TODO(a.garipov): Use.
-	webAddrs []netip.AddrPort
+	// webAddr contains the address on which to serve the web UI.
+	webAddr netip.AddrPort
 
 	// checkConfig, if true, instructs AdGuard Home to check the configuration
 	// file, optionally print an error message to stdout, and exit with a
@@ -103,7 +102,7 @@ const (
 	pidFileIdx
 	serviceActionIdx
 	workDirIdx
-	webAddrsIdx
+	webAddrIdx
 	checkConfigIdx
 	disableUpdateIdx
 	glinetModeIdx
@@ -172,13 +171,12 @@ var commandLineOptions = []*commandLineOption{
 		valueType: "path",
 	},
 
-	webAddrsIdx: {
-		defaultValue: []netip.AddrPort(nil),
-		description: `Address(es) to serve the web UI on, in the host:port format.  ` +
-			`Can be used multiple times.`,
-		long:      "web-addr",
-		short:     "",
-		valueType: "host:port",
+	webAddrIdx: {
+		defaultValue: netip.AddrPort{},
+		description:  `Address to serve the web UI on, in the host:port format.`,
+		long:         "web-addr",
+		short:        "",
+		valueType:    "host:port",
 	},
 
 	checkConfigIdx: {
@@ -258,7 +256,7 @@ func parseOptions(cmdName string, args []string) (opts *options, err error) {
 		pidFileIdx:       &opts.pidFile,
 		serviceActionIdx: &opts.serviceAction,
 		workDirIdx:       &opts.workDir,
-		webAddrsIdx:      &opts.webAddrs,
+		webAddrIdx:       &opts.webAddr,
 		checkConfigIdx:   &opts.checkConfig,
 		disableUpdateIdx: &opts.disableUpdate,
 		glinetModeIdx:    &opts.glinetMode,
@@ -291,22 +289,15 @@ func addOption(flags *flag.FlagSet, fieldPtr any, o *commandLineOption) {
 		if o.short != "" {
 			flags.StringVar(fieldPtr, o.short, o.defaultValue.(string), o.description)
 		}
-	case *[]netip.AddrPort:
-		flags.Func(o.long, o.description, func(s string) (err error) {
-			addr, err := netip.ParseAddrPort(s)
-			if err != nil {
-				// Don't wrap the error, because it's informative enough as is.
-				return err
-			}
-
-			*fieldPtr = append(*fieldPtr, addr)
-
-			return nil
-		})
 	case *bool:
 		flags.BoolVar(fieldPtr, o.long, o.defaultValue.(bool), o.description)
 		if o.short != "" {
 			flags.BoolVar(fieldPtr, o.short, o.defaultValue.(bool), o.description)
+		}
+	case encoding.TextUnmarshaler:
+		flags.TextVar(fieldPtr, o.long, o.defaultValue.(encoding.TextMarshaler), o.description)
+		if o.short != "" {
+			flags.TextVar(fieldPtr, o.short, o.defaultValue.(encoding.TextMarshaler), o.description)
 		}
 	default:
 		panic(fmt.Errorf("unexpected field pointer type %T", fieldPtr))
@@ -380,13 +371,13 @@ func processOptions(
 ) (exitCode int, needExit bool) {
 	if parseErr != nil {
 		// Assume that usage has already been printed.
-		return 2, true
+		return statusArgumentError, true
 	}
 
 	if opts.help {
 		usage(cmdName, os.Stdout)
 
-		return 0, true
+		return statusSuccess, true
 	}
 
 	if opts.version {
@@ -396,7 +387,7 @@ func processOptions(
 			fmt.Printf("AdGuard Home %s\n", version.Version())
 		}
 
-		return 0, true
+		return statusSuccess, true
 	}
 
 	if opts.checkConfig {
@@ -404,11 +395,24 @@ func processOptions(
 		if err != nil {
 			_, _ = io.WriteString(os.Stdout, err.Error()+"\n")
 
-			return 1, true
+			return statusError, true
 		}
 
-		return 0, true
+		return statusSuccess, true
 	}
 
 	return 0, false
+}
+
+// frontendFromOpts returns the frontend to use based on the options.
+func frontendFromOpts(opts *options, embeddedFrontend fs.FS) (frontend fs.FS, err error) {
+	const frontendSubdir = "build/static"
+
+	if opts.localFrontend {
+		log.Info("warning: using local frontend files")
+
+		return os.DirFS(frontendSubdir), nil
+	}
+
+	return fs.Sub(embeddedFrontend, frontendSubdir)
 }

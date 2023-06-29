@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"net/netip"
 	"os"
 	"sync"
 	"time"
@@ -27,6 +28,8 @@ import (
 
 // Manager handles full and partial changes in the configuration, persisting
 // them to disk if necessary.
+//
+// TODO(a.garipov): Support missing configs and default values.
 type Manager struct {
 	// updMu makes sure that at most one reconfiguration is performed at a time.
 	// updMu protects all fields below.
@@ -58,16 +61,27 @@ func Validate(fileName string) (err error) {
 	return conf.validate()
 }
 
+// Config contains the configuration parameters for the configuration manager.
+type Config struct {
+	// Frontend is the filesystem with the frontend files.
+	Frontend fs.FS
+
+	// WebAddr is the initial or override address for the Web UI.  It is not
+	// written to the configuration file.
+	WebAddr netip.AddrPort
+
+	// Start is the time of start of AdGuard Home.
+	Start time.Time
+
+	// FileName is the path to the configuration file.
+	FileName string
+}
+
 // New creates a new *Manager that persists changes to the file pointed to by
-// fileName.  It reads the configuration file and populates the service fields.
-// start is the startup time of AdGuard Home.
-func New(
-	ctx context.Context,
-	fileName string,
-	frontend fs.FS,
-	start time.Time,
-) (m *Manager, err error) {
-	conf, err := read(fileName)
+// c.FileName.  It reads the configuration file and populates the service
+// fields.  c must not be nil.
+func New(ctx context.Context, c *Config) (m *Manager, err error) {
+	conf, err := read(c.FileName)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return nil, err
@@ -81,10 +95,10 @@ func New(
 	m = &Manager{
 		updMu:    &sync.RWMutex{},
 		current:  conf,
-		fileName: fileName,
+		fileName: c.FileName,
 	}
 
-	err = m.assemble(ctx, conf, frontend, start)
+	err = m.assemble(ctx, conf, c.Frontend, c.WebAddr, c.Start)
 	if err != nil {
 		return nil, fmt.Errorf("creating config manager: %w", err)
 	}
@@ -119,6 +133,7 @@ func (m *Manager) assemble(
 	ctx context.Context,
 	conf *config,
 	frontend fs.FS,
+	webAddr netip.AddrPort,
 	start time.Time,
 ) (err error) {
 	dnsConf := &dnssvc.Config{
@@ -143,6 +158,7 @@ func (m *Manager) assemble(
 		Start:           start,
 		Addresses:       conf.HTTP.Addresses,
 		SecureAddresses: conf.HTTP.SecureAddresses,
+		OverrideAddress: webAddr,
 		Timeout:         conf.HTTP.Timeout.Duration,
 		ForceHTTPS:      conf.HTTP.ForceHTTPS,
 	}
@@ -162,7 +178,7 @@ func (m *Manager) write() (err error) {
 		return fmt.Errorf("encoding: %w", err)
 	}
 
-	err = maybe.WriteFile(m.fileName, b, 0o755)
+	err = maybe.WriteFile(m.fileName, b, 0o644)
 	if err != nil {
 		return fmt.Errorf("writing: %w", err)
 	}
