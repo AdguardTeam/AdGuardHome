@@ -157,7 +157,9 @@ func (vr *versionResponse) setAllowedToAutoUpdate() (err error) {
 	Context.tls.WriteDiskConfig(tlsConf)
 
 	canUpdate := true
-	if tlsConfUsesPrivilegedPorts(tlsConf) || config.BindPort < 1024 || config.DNS.Port < 1024 {
+	if tlsConfUsesPrivilegedPorts(tlsConf) ||
+		config.HTTPConfig.Address.Port() < 1024 ||
+		config.DNS.Port < 1024 {
 		canUpdate, err = aghnet.CanBindPrivilegedPorts()
 		if err != nil {
 			return fmt.Errorf("checking ability to bind privileged ports: %w", err)

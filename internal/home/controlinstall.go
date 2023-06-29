@@ -96,8 +96,9 @@ type checkConfResp struct {
 func (req *checkConfReq) validateWeb(tcpPorts aghalg.UniqChecker[tcpPort]) (err error) {
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
-	portInt := req.Web.Port
-	port := tcpPort(portInt)
+	// TODO(a.garipov): Declare all port variables anywhere as uint16.
+	reqPort := uint16(req.Web.Port)
+	port := tcpPort(reqPort)
 	addPorts(tcpPorts, port)
 	if err = tcpPorts.Validate(); err != nil {
 		// Reset the value for the port to 1 to make sure that validateDNS
@@ -108,15 +109,15 @@ func (req *checkConfReq) validateWeb(tcpPorts aghalg.UniqChecker[tcpPort]) (err 
 		return err
 	}
 
-	switch portInt {
-	case 0, config.BindPort:
+	switch reqPort {
+	case 0, config.HTTPConfig.Address.Port():
 		return nil
 	default:
 		// Go on and check the port binding only if it's not zero or won't be
 		// unbound after install.
 	}
 
-	return aghnet.CheckPort("tcp", netip.AddrPortFrom(req.Web.IP, uint16(portInt)))
+	return aghnet.CheckPort("tcp", netip.AddrPortFrom(req.Web.IP, reqPort))
 }
 
 // validateDNS returns error if the DNS part of the initial configuration can't
@@ -127,11 +128,11 @@ func (req *checkConfReq) validateDNS(
 ) (canAutofix bool, err error) {
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
-	port := req.DNS.Port
+	port := uint16(req.DNS.Port)
 	switch port {
 	case 0:
 		return false, nil
-	case config.BindPort:
+	case config.HTTPConfig.Address.Port():
 		// Go on and only check the UDP port since the TCP one is already bound
 		// by AdGuard Home for web interface.
 	default:
@@ -318,8 +319,7 @@ type applyConfigReq struct {
 // copyInstallSettings copies the installation parameters between two
 // configuration structures.
 func copyInstallSettings(dst, src *configuration) {
-	dst.BindHost = src.BindHost
-	dst.BindPort = src.BindPort
+	dst.HTTPConfig = src.HTTPConfig
 	dst.DNS.BindHosts = src.DNS.BindHosts
 	dst.DNS.Port = src.DNS.Port
 }
@@ -413,8 +413,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	copyInstallSettings(curConfig, config)
 
 	Context.firstRun = false
-	config.BindHost = req.Web.IP
-	config.BindPort = req.Web.Port
+	config.HTTPConfig.Address = netip.AddrPortFrom(req.Web.IP, uint16(req.Web.Port))
 	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
 
@@ -487,7 +486,8 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 		return nil, false, errors.Error("ports cannot be 0")
 	}
 
-	restartHTTP = config.BindHost != req.Web.IP || config.BindPort != req.Web.Port
+	addrPort := config.HTTPConfig.Address
+	restartHTTP = addrPort.Addr() != req.Web.IP || int(addrPort.Port()) != req.Web.Port
 	if restartHTTP {
 		err = aghnet.CheckPort("tcp", netip.AddrPortFrom(req.Web.IP, uint16(req.Web.Port)))
 		if err != nil {

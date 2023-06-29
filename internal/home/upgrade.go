@@ -3,6 +3,7 @@ package home
 import (
 	"bytes"
 	"fmt"
+	"net/netip"
 	"net/url"
 	"os"
 	"path"
@@ -22,7 +23,7 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 22
+const currentSchemaVersion = 23
 
 // These aliases are provided for convenience.
 type (
@@ -96,6 +97,7 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema19to20,
 		upgradeSchema20to21,
 		upgradeSchema21to22,
+		upgradeSchema22to23,
 	}
 
 	n := 0
@@ -1252,6 +1254,73 @@ func upgradeSchema21to22(diskConf yobj) (err error) {
 			},
 		}
 	}
+
+	return nil
+}
+
+// upgradeSchema22to23 performs the following changes:
+//
+//	# BEFORE:
+//	'bind_host': '1.2.3.4'
+//	'bind_port': 8080
+//	'web_session_ttl': 720
+//
+//	# AFTER:
+//	'http':
+//	  'address': '1.2.3.4:8080'
+//	  'session_ttl': '720h'
+func upgradeSchema22to23(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 22 to 23")
+	diskConf["schema_version"] = 23
+
+	bindHostVal, ok := diskConf["bind_host"]
+	if !ok {
+		return nil
+	}
+
+	bindHost, ok := bindHostVal.(string)
+	if !ok {
+		return fmt.Errorf("unexpected type of bind_host: %T", bindHostVal)
+	}
+
+	bindHostAddr, err := netip.ParseAddr(bindHost)
+	if err != nil {
+		return fmt.Errorf("invalid bind_host value: %s", bindHost)
+	}
+
+	bindPortVal, ok := diskConf["bind_port"]
+	if !ok {
+		return nil
+	}
+
+	bindPort, ok := bindPortVal.(int)
+	if !ok {
+		return fmt.Errorf("unexpected type of bind_port: %T", bindPortVal)
+	}
+
+	sessionTTLVal, ok := diskConf["web_session_ttl"]
+	if !ok {
+		return nil
+	}
+
+	sessionTTL, ok := sessionTTLVal.(int)
+	if !ok {
+		return fmt.Errorf("unexpected type of web_session_ttl: %T", sessionTTLVal)
+	}
+
+	addr := netip.AddrPortFrom(bindHostAddr, uint16(bindPort))
+	if !addr.IsValid() {
+		return fmt.Errorf("invalid address: %s", addr)
+	}
+
+	diskConf["http"] = yobj{
+		"address":     addr.String(),
+		"session_ttl": timeutil.Duration{Duration: time.Duration(sessionTTL) * time.Hour}.String(),
+	}
+
+	delete(diskConf, "bind_host")
+	delete(diskConf, "bind_port")
+	delete(diskConf, "web_session_ttl")
 
 	return nil
 }

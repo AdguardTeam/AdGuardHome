@@ -320,7 +320,7 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 
 	if setts.Enabled {
 		err = validatePorts(
-			tcpPort(config.BindPort),
+			tcpPort(config.HTTPConfig.Address.Port()),
 			tcpPort(setts.PortHTTPS),
 			tcpPort(setts.PortDNSOverTLS),
 			tcpPort(setts.PortDNSCrypt),
@@ -407,7 +407,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 
 	if req.Enabled {
 		err = validatePorts(
-			tcpPort(config.BindPort),
+			tcpPort(config.HTTPConfig.Address.Port()),
 			tcpPort(req.PortHTTPS),
 			tcpPort(req.PortDNSOverTLS),
 			tcpPort(req.PortDNSCrypt),

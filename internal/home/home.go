@@ -372,8 +372,26 @@ func initContextClients() (err error) {
 
 // setupBindOpts overrides bind host/port from the opts.
 func setupBindOpts(opts options) (err error) {
+	bindAddr := opts.bindAddr
+	if bindAddr != (netip.AddrPort{}) {
+		config.HTTPConfig.Address = bindAddr
+
+		if config.HTTPConfig.Address.Port() != 0 {
+			err = checkPorts()
+			if err != nil {
+				// Don't wrap the error, because it's informative enough as is.
+				return err
+			}
+		}
+
+		return nil
+	}
+
 	if opts.bindPort != 0 {
-		config.BindPort = opts.bindPort
+		config.HTTPConfig.Address = netip.AddrPortFrom(
+			config.HTTPConfig.Address.Addr(),
+			uint16(opts.bindPort),
+		)
 
 		err = checkPorts()
 		if err != nil {
@@ -383,20 +401,10 @@ func setupBindOpts(opts options) (err error) {
 	}
 
 	if opts.bindHost.IsValid() {
-		config.BindHost = opts.bindHost
-	}
-
-	// Rewrite deprecated options.
-	bindAddr := opts.bindAddr
-	if bindAddr.IsValid() {
-		config.BindHost = bindAddr.Addr()
-		config.BindPort = int(bindAddr.Port())
-
-		err = checkPorts()
-		if err != nil {
-			// Don't wrap the error, because it's informative enough as is.
-			return err
-		}
+		config.HTTPConfig.Address = netip.AddrPortFrom(
+			opts.bindHost,
+			config.HTTPConfig.Address.Port(),
+		)
 	}
 
 	return nil
@@ -480,7 +488,7 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 // checkPorts is a helper for ports validation in config.
 func checkPorts() (err error) {
 	tcpPorts := aghalg.UniqChecker[tcpPort]{}
-	addPorts(tcpPorts, tcpPort(config.BindPort))
+	addPorts(tcpPorts, tcpPort(config.HTTPConfig.Address.Port()))
 
 	udpPorts := aghalg.UniqChecker[udpPort]{}
 	addPorts(udpPorts, udpPort(config.DNS.Port))
@@ -520,8 +528,8 @@ func initWeb(opts options, clientBuildFS fs.FS) (web *webAPI, err error) {
 
 	webConf := webConfig{
 		firstRun: Context.firstRun,
-		BindHost: config.BindHost,
-		BindPort: config.BindPort,
+		BindHost: config.HTTPConfig.Address.Addr(),
+		BindPort: int(config.HTTPConfig.Address.Port()),
 
 		ReadTimeout:       readTimeout,
 		ReadHeaderTimeout: readHdrTimeout,
@@ -657,8 +665,8 @@ func initUsers() (auth *Auth, err error) {
 		log.Info("authratelimiter is disabled")
 	}
 
-	sessionTTL := config.WebSessionTTLHours * 60 * 60
-	auth = InitAuth(sessFilename, config.Users, sessionTTL, rateLimiter)
+	sessionTTL := config.HTTPConfig.SessionTTL.Seconds()
+	auth = InitAuth(sessFilename, config.Users, uint32(sessionTTL), rateLimiter)
 	if auth == nil {
 		return nil, errors.Error("initializing auth module failed")
 	}
@@ -936,7 +944,7 @@ func printHTTPAddresses(proto string) {
 		Context.tls.WriteDiskConfig(&tlsConf)
 	}
 
-	port := config.BindPort
+	port := int(config.HTTPConfig.Address.Port())
 	if proto == aghhttp.SchemeHTTPS {
 		port = tlsConf.PortHTTPS
 	}
@@ -948,9 +956,9 @@ func printHTTPAddresses(proto string) {
 		return
 	}
 
-	bindhost := config.BindHost
-	if !bindhost.IsUnspecified() {
-		printWebAddrs(proto, bindhost.String(), port)
+	bindHost := config.HTTPConfig.Address.Addr()
+	if !bindHost.IsUnspecified() {
+		printWebAddrs(proto, bindHost.String(), port)
 
 		return
 	}
@@ -961,14 +969,14 @@ func printHTTPAddresses(proto string) {
 		// That's weird, but we'll ignore it.
 		//
 		// TODO(e.burkov): Find out when it happens.
-		printWebAddrs(proto, bindhost.String(), port)
+		printWebAddrs(proto, bindHost.String(), port)
 
 		return
 	}
 
 	for _, iface := range ifaces {
 		for _, addr := range iface.Addresses {
-			printWebAddrs(proto, addr.String(), config.BindPort)
+			printWebAddrs(proto, addr.String(), port)
 		}
 	}
 }
