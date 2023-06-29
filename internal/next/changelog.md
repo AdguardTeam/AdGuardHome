@@ -24,6 +24,7 @@ enough.
 
 ### Fixed
 
+- `--check-config` breaking the configuration file ([#4067]).
 - Inconsistent application of `--work-dir/-w` ([#2598], [#2902]).
 - The order of `-v/--verbose` and `--version` being significant ([#2893]).
 
@@ -36,4 +37,5 @@ enough.
 [#2598]: https://github.com/AdguardTeam/AdGuardHome/issues/2598
 [#2893]: https://github.com/AdguardTeam/AdGuardHome/issues/2893
 [#2902]: https://github.com/AdguardTeam/AdGuardHome/issues/2902
+[#4067]: https://github.com/AdguardTeam/AdGuardHome/issues/4067
 [#5676]: https://github.com/AdguardTeam/AdGuardHome/issues/5676

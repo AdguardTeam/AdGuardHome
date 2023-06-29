@@ -19,8 +19,6 @@ import (
 func Main(frontend fs.FS) {
 	start := time.Now()
 
-	// Initial Configuration
-
 	cmdName := os.Args[0]
 	opts, err := parseOptions(cmdName, os.Args[1:])
 	exitCode, needExit := processOptions(opts, cmdName, err)
@@ -39,9 +37,7 @@ func Main(frontend fs.FS) {
 		check(err)
 	}
 
-	// Web Service
-
-	confMgr, err := configmgr.New(opts.confFile, frontend, start)
+	confMgr, err := newConfigMgr(opts.confFile, frontend, start)
 	check(err)
 
 	web := confMgr.Web()
@@ -71,6 +67,15 @@ const defaultTimeout = 5 * time.Second
 // timeout set to defaultTimeout.
 func ctxWithDefaultTimeout() (ctx context.Context, cancel context.CancelFunc) {
 	return context.WithTimeout(context.Background(), defaultTimeout)
+}
+
+// newConfigMgr returns a new configuration manager using defaultTimeout as the
+// context timeout.
+func newConfigMgr(confFile string, frontend fs.FS, start time.Time) (m *configmgr.Manager, err error) {
+	ctx, cancel := ctxWithDefaultTimeout()
+	defer cancel()
+
+	return configmgr.New(ctx, confFile, frontend, start)
 }
 
 // check is a simple error-checking helper.  It must only be used within Main.

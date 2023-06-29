@@ -540,6 +540,7 @@ func (s *Server) prepareIpsetListSettings() (err error) {
 		return s.ipset.init(s.conf.IpsetList)
 	}
 
+	// #nosec G304 -- Trust the path explicitly given by the user.
 	data, err := os.ReadFile(fn)
 	if err != nil {
 		return err

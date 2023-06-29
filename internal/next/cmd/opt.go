@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/next/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"golang.org/x/exp/slices"
 )
@@ -55,9 +56,8 @@ type options struct {
 	webAddrs []netip.AddrPort
 
 	// checkConfig, if true, instructs AdGuard Home to check the configuration
-	// file and exit with a corresponding exit code.
-	//
-	// TODO(a.garipov): Use.
+	// file, optionally print an error message to stdout, and exit with a
+	// corresponding exit code.
 	checkConfig bool
 
 	// disableUpdate, if true, prevents AdGuard Home from automatically checking
@@ -183,7 +183,7 @@ var commandLineOptions = []*commandLineOption{
 
 	checkConfigIdx: {
 		defaultValue: false,
-		description:  "Check configuration and quit.",
+		description:  "Check configuration, print errors to stdout, and quit.",
 		long:         "check-config",
 		short:        "",
 		valueType:    "",
@@ -394,6 +394,17 @@ func processOptions(
 			fmt.Println(version.Verbose())
 		} else {
 			fmt.Printf("AdGuard Home %s\n", version.Version())
+		}
+
+		return 0, true
+	}
+
+	if opts.checkConfig {
+		err := configmgr.Validate(opts.confFile)
+		if err != nil {
+			_, _ = io.WriteString(os.Stdout, err.Error()+"\n")
+
+			return 1, true
 		}
 
 		return 0, true

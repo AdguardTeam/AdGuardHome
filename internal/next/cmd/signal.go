@@ -7,7 +7,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
-	"github.com/AdguardTeam/AdGuardHome/internal/next/configmgr"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -63,7 +62,7 @@ func (h *signalHandler) reconfigure() {
 	// reconfigured without the full shutdown, and the error handling is
 	// currently not the best.
 
-	confMgr, err := configmgr.New(h.confFile, h.frontend, h.start)
+	confMgr, err := newConfigMgr(h.confFile, h.frontend, h.start)
 	check(err)
 
 	web := confMgr.Web()
