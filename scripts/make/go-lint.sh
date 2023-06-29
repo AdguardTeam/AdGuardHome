@@ -176,9 +176,10 @@ run_linter gocognit --over 10\
 	./internal/aghchan/\
 	./internal/aghhttp/\
 	./internal/aghio/\
-	./internal/tools/\
 	./internal/next/\
+	./internal/tools/\
 	./internal/version/\
+	./internal/whois/\
 	;
 
 run_linter ineffassign ./...

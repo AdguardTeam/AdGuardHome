@@ -288,6 +288,16 @@ func (w *Default) Process(ctx context.Context, ip netip.Addr) (wi *Info, changed
 		return wi, false
 	}
 
+	return w.requestInfo(ctx, ip, wi)
+}
+
+// requestInfo makes WHOIS request and returns WHOIS info.  changed is false if
+// received information is equal to cached.
+func (w *Default) requestInfo(
+	ctx context.Context,
+	ip netip.Addr,
+	cached *Info,
+) (wi *Info, changed bool) {
 	var info Info
 
 	defer func() {
@@ -311,12 +321,14 @@ func (w *Default) Process(ctx context.Context, ip netip.Addr) (wi *Info, changed
 		Orgname: kv["orgname"],
 	}
 
+	changed = cached == nil || info != *cached
+
 	// Don't return an empty struct so that the frontend doesn't get confused.
 	if (info == Info{}) {
-		return nil, true
+		return nil, changed
 	}
 
-	return &info, wi == nil || info != *wi
+	return &info, changed
 }
 
 // findInCache finds Info in the cache.  expired indicates that Info is valid.
