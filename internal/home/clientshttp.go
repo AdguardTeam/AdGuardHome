@@ -9,6 +9,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 )
 
@@ -118,13 +119,18 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 		}
 	}
 
+	weekly := schedule.EmptyWeekly()
+	if prev != nil {
+		weekly = prev.BlockedServices.Schedule.Clone()
+	}
+
 	c = &Client{
 		safeSearchConf: safeSearchConf,
 
 		Name: cj.Name,
 
 		BlockedServices: &filtering.BlockedServices{
-			Schedule: prev.BlockedServices.Schedule.Clone(),
+			Schedule: weekly,
 			IDs:      cj.BlockedServices,
 		},
 
