@@ -62,21 +62,22 @@ readonly docker_output
 case "$channel"
 in
 ('release')
-	docker_version_tag="${docker_image_name}:${version}"
-	docker_channel_tag="${docker_image_name}:latest"
+	docker_version_tag="--tag=${docker_image_name}:${version}"
+	docker_channel_tag="--tag=${docker_image_name}:latest"
 	;;
 ('beta')
-	docker_version_tag="${docker_image_name}:${version}"
-	docker_channel_tag="${docker_image_name}:beta"
+	docker_version_tag="--tag=${docker_image_name}:${version}"
+	docker_channel_tag="--tag=${docker_image_name}:beta"
 	;;
 ('edge')
-	# Don't set the version tag when pushing to the edge channel.
-	docker_version_tag="${docker_image_name}:edge"
-	docker_channel_tag="${docker_image_name}"
+	# Set the version tag to an empty string when pushing to the edge channel.
+	docker_version_tag=''
+	docker_channel_tag="--tag=${docker_image_name}:edge"
 	;;
 ('development')
-	docker_version_tag="${docker_image_name}"
-	docker_channel_tag="${docker_image_name}"
+	# Set both tags to an empty string for development builds.
+	docker_version_tag=''
+	docker_channel_tag=''
 	;;
 (*)
 	echo "invalid channel '$channel', supported values are\
@@ -118,6 +119,11 @@ cp "./docker/web-bind.awk"\
 cp "./docker/healthcheck.sh"\
 	"${dist_docker_scripts}/healthcheck.sh"
 
+# Don't use quotes with $docker_version_tag and $docker_channel_tag, because we
+# want word splitting and or an empty space if tags are empty.
+#
+# TODO(a.garipov): Once flag --tag of docker buildx build supports commas, use
+# them instead.
 $sudo_cmd docker\
 	"$debug_flags"\
 	buildx build\
@@ -127,7 +133,7 @@ $sudo_cmd docker\
 	--build-arg VERSION="$version"\
 	--output "$docker_output"\
 	--platform "$docker_platforms"\
-	--tag="$docker_version_tag"\
-	--tag="$docker_channel_tag"\
+	$docker_version_tag\
+	$docker_channel_tag\
 	-f ./docker/Dockerfile\
 	.
