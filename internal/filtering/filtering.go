@@ -519,7 +519,7 @@ func (d *DNSFilter) matchSysHosts(
 	dnsres, _ := d.EtcHosts.MatchRequest(&urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
-		// TODO(e.burkov):  Wait for urlfilter update to pass net.IP.
+		// TODO(e.burkov):  Wait for urlfilter update to pass netip.Addr.
 		ClientIP:   setts.ClientIP.String(),
 		ClientName: setts.ClientName,
 		DNSType:    qtype,

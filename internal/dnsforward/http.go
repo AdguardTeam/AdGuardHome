@@ -633,61 +633,70 @@ func (err domainSpecificTestError) Error() (msg string) {
 	return fmt.Sprintf("WARNING: %s", err.error)
 }
 
-// checkDNS checks the upstream server defined by upstreamConfigStr using
-// healthCheck for actually exchange messages.  It uses bootstrap to resolve the
-// upstream's address.
-func checkDNS(
-	upstreamConfigStr string,
-	bootstrap []string,
-	bootstrapPrefIPv6 bool,
-	timeout time.Duration,
-	healthCheck healthCheckFunc,
-) (err error) {
-	if IsCommentOrEmpty(upstreamConfigStr) {
-		return nil
+// parseUpstreamLine parses line and creates the [upstream.Upstream] using opts
+// and information from [s.dnsFilter.EtcHosts].  It returns an error if the line
+// is not a valid upstream line, see [upstream.AddressToUpstream].  It's a
+// caller's responsibility to close u.
+func (s *Server) parseUpstreamLine(
+	line string,
+	opts *upstream.Options,
+) (u upstream.Upstream, specific bool, err error) {
+	// Separate upstream from domains list.
+	upstreamAddr, domains, err := separateUpstream(line)
+	if err != nil {
+		return nil, false, fmt.Errorf("wrong upstream format: %w", err)
 	}
 
-	// Separate upstream from domains list.
-	upstreamAddr, domains, err := separateUpstream(upstreamConfigStr)
-	if err != nil {
-		return fmt.Errorf("wrong upstream format: %w", err)
-	}
+	specific = len(domains) > 0
 
 	useDefault, err := validateUpstream(upstreamAddr, domains)
 	if err != nil {
-		return fmt.Errorf("wrong upstream format: %w", err)
+		return nil, specific, fmt.Errorf("wrong upstream format: %w", err)
 	} else if useDefault {
-		return nil
-	}
-
-	if len(bootstrap) == 0 {
-		bootstrap = defaultBootstrap
+		return nil, specific, nil
 	}
 
 	log.Debug("dnsforward: checking if upstream %q works", upstreamAddr)
 
-	u, err := upstream.AddressToUpstream(upstreamAddr, &upstream.Options{
-		Bootstrap:  bootstrap,
-		Timeout:    timeout,
-		PreferIPv6: bootstrapPrefIPv6,
-	})
+	opts = &upstream.Options{
+		Bootstrap:  opts.Bootstrap,
+		Timeout:    opts.Timeout,
+		PreferIPv6: opts.PreferIPv6,
+	}
+
+	if s.dnsFilter != nil && s.dnsFilter.EtcHosts != nil {
+		resolved := s.resolveUpstreamHost(extractUpstreamHost(upstreamAddr))
+		sortNetIPAddrs(resolved, opts.PreferIPv6)
+		opts.ServerIPAddrs = resolved
+	}
+	u, err = upstream.AddressToUpstream(upstreamAddr, opts)
 	if err != nil {
-		return fmt.Errorf("failed to choose upstream for %q: %w", upstreamAddr, err)
+		return nil, specific, fmt.Errorf("creating upstream for %q: %w", upstreamAddr, err)
+	}
+
+	return u, specific, nil
+}
+
+func (s *Server) checkDNS(line string, opts *upstream.Options, check healthCheckFunc) (err error) {
+	if IsCommentOrEmpty(line) {
+		return nil
+	}
+
+	var u upstream.Upstream
+	var specific bool
+	defer func() {
+		if err != nil && specific {
+			err = domainSpecificTestError{error: err}
+		}
+	}()
+
+	u, specific, err = s.parseUpstreamLine(line, opts)
+	if err != nil || u == nil {
+		return err
 	}
 	defer func() { err = errors.WithDeferred(err, u.Close()) }()
 
-	if err = healthCheck(u); err != nil {
-		err = fmt.Errorf("upstream %q fails to exchange: %w", upstreamAddr, err)
-		if domains != nil {
-			return domainSpecificTestError{error: err}
-		}
-
-		return err
-	}
-
-	log.Debug("dnsforward: upstream %q is ok", upstreamAddr)
-
-	return nil
+	return check(u)
 }
 
 func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
@@ -699,47 +708,54 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := map[string]string{}
-	bootstraps := req.BootstrapDNS
-	bootstrapPrefIPv6 := s.conf.BootstrapPreferIPv6
-	timeout := s.conf.UpstreamTimeout
+	opts := &upstream.Options{
+		Bootstrap:  req.BootstrapDNS,
+		Timeout:    s.conf.UpstreamTimeout,
+		PreferIPv6: s.conf.BootstrapPreferIPv6,
+	}
+	if len(opts.Bootstrap) == 0 {
+		opts.Bootstrap = defaultBootstrap
+	}
 
 	type upsCheckResult = struct {
-		res  string
+		err  error
 		host string
 	}
 
+	req.Upstreams = stringutil.FilterOut(req.Upstreams, IsCommentOrEmpty)
+	req.PrivateUpstreams = stringutil.FilterOut(req.PrivateUpstreams, IsCommentOrEmpty)
+
 	upsNum := len(req.Upstreams) + len(req.PrivateUpstreams)
+	result := make(map[string]string, upsNum)
 	resCh := make(chan upsCheckResult, upsNum)
 
-	checkUps := func(ups string, healthCheck healthCheckFunc) {
-		res := upsCheckResult{
-			host: ups,
-		}
-		defer func() { resCh <- res }()
-
-		checkErr := checkDNS(ups, bootstraps, bootstrapPrefIPv6, timeout, healthCheck)
-		if checkErr != nil {
-			res.res = checkErr.Error()
-		} else {
-			res.res = "OK"
-		}
-	}
-
 	for _, ups := range req.Upstreams {
-		go checkUps(ups, checkDNSUpstreamExc)
+		go func(ups string) {
+			resCh <- upsCheckResult{
+				host: ups,
+				err:  s.checkDNS(ups, opts, checkDNSUpstreamExc),
+			}
+		}(ups)
 	}
 	for _, ups := range req.PrivateUpstreams {
-		go checkUps(ups, checkPrivateUpstreamExc)
+		go func(ups string) {
+			resCh <- upsCheckResult{
+				host: ups,
+				err:  s.checkDNS(ups, opts, checkPrivateUpstreamExc),
+			}
+		}(ups)
 	}
 
 	for i := 0; i < upsNum; i++ {
-		pair := <-resCh
 		// TODO(e.burkov):  The upstreams used for both common and private
 		// resolving should be reported separately.
-		result[pair.host] = pair.res
+		pair := <-resCh
+		if pair.err != nil {
+			result[pair.host] = pair.err.Error()
+		} else {
+			result[pair.host] = "OK"
+		}
 	}
-	close(resCh)
 
 	_ = aghhttp.WriteJSONResponse(w, r, result)
 }

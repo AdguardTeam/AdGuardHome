@@ -143,6 +143,8 @@ In this release, the schema version has changed from 20 to 23.
 
 ### Fixed
 
+- Using of `/etc/hosts` file to resolve the hostnames of upstream DNS servers
+  ([#5902]).
 - Excessive error logging when using DNS-over-QUIC ([#5285]).
 - Cannot set `bind_host` in AdGuardHome.yaml (docker version)([#4231], [#4235]).
 - The blocklists can now be deleted properly ([#5700]).
@@ -157,6 +159,7 @@ In this release, the schema version has changed from 20 to 23.
 [#4235]: https://github.com/AdguardTeam/AdGuardHome/pull/4235
 [#5285]: https://github.com/AdguardTeam/AdGuardHome/issues/5285
 [#5700]: https://github.com/AdguardTeam/AdGuardHome/issues/5700
+[#5902]: https://github.com/AdguardTeam/AdGuardHome/issues/5902
 [#5910]: https://github.com/AdguardTeam/AdGuardHome/issues/5910
 [#5913]: https://github.com/AdguardTeam/AdGuardHome/issues/5913
 

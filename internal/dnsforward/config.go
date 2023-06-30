@@ -15,7 +15,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
-	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -433,102 +432,6 @@ func (s *Server) initDefaultSettings() {
 
 	if s.conf.UpstreamTimeout == 0 {
 		s.conf.UpstreamTimeout = DefaultTimeout
-	}
-}
-
-// UpstreamHTTPVersions returns the HTTP versions for upstream configuration
-// depending on configuration.
-func UpstreamHTTPVersions(http3 bool) (v []upstream.HTTPVersion) {
-	if !http3 {
-		return upstream.DefaultHTTPVersions
-	}
-
-	return []upstream.HTTPVersion{
-		upstream.HTTPVersion3,
-		upstream.HTTPVersion2,
-		upstream.HTTPVersion11,
-	}
-}
-
-// prepareUpstreamSettings - prepares upstream DNS server settings
-func (s *Server) prepareUpstreamSettings() error {
-	// We're setting a customized set of RootCAs.  The reason is that Go default
-	// mechanism of loading TLS roots does not always work properly on some
-	// routers so we're loading roots manually and pass it here.
-	//
-	// See [aghtls.SystemRootCAs].
-	upstream.RootCAs = s.conf.TLSv12Roots
-	upstream.CipherSuites = s.conf.TLSCiphers
-
-	// Load upstreams either from the file, or from the settings
-	var upstreams []string
-	if s.conf.UpstreamDNSFileName != "" {
-		data, err := os.ReadFile(s.conf.UpstreamDNSFileName)
-		if err != nil {
-			return fmt.Errorf("reading upstream from file: %w", err)
-		}
-
-		upstreams = stringutil.SplitTrimmed(string(data), "\n")
-
-		log.Debug("dns: using %d upstream servers from file %s", len(upstreams), s.conf.UpstreamDNSFileName)
-	} else {
-		upstreams = s.conf.UpstreamDNS
-	}
-
-	httpVersions := UpstreamHTTPVersions(s.conf.UseHTTP3Upstreams)
-	upstreams = stringutil.FilterOut(upstreams, IsCommentOrEmpty)
-	upstreamConfig, err := proxy.ParseUpstreamsConfig(
-		upstreams,
-		&upstream.Options{
-			Bootstrap:    s.conf.BootstrapDNS,
-			Timeout:      s.conf.UpstreamTimeout,
-			HTTPVersions: httpVersions,
-			PreferIPv6:   s.conf.BootstrapPreferIPv6,
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("parsing upstream config: %w", err)
-	}
-
-	if len(upstreamConfig.Upstreams) == 0 {
-		log.Info("warning: no default upstream servers specified, using %v", defaultDNS)
-		var uc *proxy.UpstreamConfig
-		uc, err = proxy.ParseUpstreamsConfig(
-			defaultDNS,
-			&upstream.Options{
-				Bootstrap:    s.conf.BootstrapDNS,
-				Timeout:      s.conf.UpstreamTimeout,
-				HTTPVersions: httpVersions,
-				PreferIPv6:   s.conf.BootstrapPreferIPv6,
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("parsing default upstreams: %w", err)
-		}
-
-		upstreamConfig.Upstreams = uc.Upstreams
-	}
-
-	s.conf.UpstreamConfig = upstreamConfig
-
-	return nil
-}
-
-// setProxyUpstreamMode sets the upstream mode and related settings in conf
-// based on provided parameters.
-func setProxyUpstreamMode(
-	conf *proxy.Config,
-	allServers bool,
-	fastestAddr bool,
-	fastestTimeout time.Duration,
-) {
-	if allServers {
-		conf.UpstreamMode = proxy.UModeParallel
-	} else if fastestAddr {
-		conf.UpstreamMode = proxy.UModeFastestAddr
-		conf.FastestPingTimeout = fastestTimeout
-	} else {
-		conf.UpstreamMode = proxy.UModeLoadBalance
 	}
 }
 
