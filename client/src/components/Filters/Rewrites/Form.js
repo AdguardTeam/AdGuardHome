@@ -105,6 +105,7 @@ Form.propTypes = {
     submitting: PropTypes.bool.isRequired,
     processingAdd: PropTypes.bool.isRequired,
     t: PropTypes.func.isRequired,
+    initialValues: PropTypes.object,
 };
 
 export default flow([

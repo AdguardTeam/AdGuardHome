@@ -48,11 +48,32 @@ var webRegistered bool
 
 // hostToIPTable is a convenient type alias for tables of host names to an IP
 // address.
+//
+// TODO(e.burkov):  Use the [DHCP] interface instead.
 type hostToIPTable = map[string]netip.Addr
 
 // ipToHostTable is a convenient type alias for tables of IP addresses to their
 // host names.  For example, for use with PTR queries.
+//
+// TODO(e.burkov):  Use the [DHCP] interface instead.
 type ipToHostTable = map[netip.Addr]string
+
+// DHCP is an interface for accessing DHCP lease data needed in this package.
+type DHCP interface {
+	// HostByIP returns the hostname of the DHCP client with the given IP
+	// address.  The address will be netip.Addr{} if there is no such client,
+	// due to an assumption that a DHCP client must always have an IP address.
+	HostByIP(ip netip.Addr) (host string)
+
+	// IPByHost returns the IP address of the DHCP client with the given
+	// hostname.  The hostname will be an empty string if there is no such
+	// client, due to an assumption that a DHCP client must always have a
+	// hostname, either set by the client or assigned automatically.
+	IPByHost(host string) (ip netip.Addr)
+
+	// Enabled returns true if DHCP provides information about clients.
+	Enabled() (ok bool)
+}
 
 // Server is the main way to start a DNS server.
 //
@@ -215,7 +236,7 @@ func (s *Server) Close() {
 	s.dnsProxy = nil
 
 	if err := s.ipset.close(); err != nil {
-		log.Error("closing ipset: %s", err)
+		log.Error("dnsforward: closing ipset: %s", err)
 	}
 }
 
@@ -443,21 +464,17 @@ func (s *Server) setupResolvers(localAddrs []string) (err error) {
 		return err
 	}
 
-	log.Debug("upstreams to resolve PTR for local addresses: %v", localAddrs)
+	log.Debug("dnsforward: upstreams to resolve ptr for local addresses: %v", localAddrs)
 
-	var upsConfig *proxy.UpstreamConfig
-	upsConfig, err = proxy.ParseUpstreamsConfig(
-		localAddrs,
-		&upstream.Options{
-			Bootstrap: bootstraps,
-			Timeout:   defaultLocalTimeout,
-			// TODO(e.burkov): Should we verify server's certificates?
+	upsConfig, err := s.prepareUpstreamConfig(localAddrs, nil, &upstream.Options{
+		Bootstrap: bootstraps,
+		Timeout:   defaultLocalTimeout,
+		// TODO(e.burkov): Should we verify server's certificates?
 
-			PreferIPv6: s.conf.BootstrapPreferIPv6,
-		},
-	)
+		PreferIPv6: s.conf.BootstrapPreferIPv6,
+	})
 	if err != nil {
-		return fmt.Errorf("parsing upstreams: %w", err)
+		return fmt.Errorf("parsing private upstreams: %w", err)
 	}
 
 	s.localResolvers = &proxy.Proxy{
@@ -489,7 +506,8 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 
 	err = s.prepareUpstreamSettings()
 	if err != nil {
-		return fmt.Errorf("preparing upstream settings: %w", err)
+		// Don't wrap the error, because it's informative enough as is.
+		return err
 	}
 
 	var proxyConfig proxy.Config
@@ -656,7 +674,9 @@ func (s *Server) Reconfigure(conf *ServerConfig) error {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
-	log.Print("Start reconfiguring the server")
+	log.Info("dnsforward: starting reconfiguring server")
+	defer log.Info("dnsforward: finished reconfiguring server")
+
 	err := s.stopLocked()
 	if err != nil {
 		return fmt.Errorf("could not reconfigure the server: %w", err)
@@ -708,13 +728,13 @@ func (s *Server) IsBlockedClient(ip netip.Addr, clientID string) (blocked bool, 
 	// Allow if at least one of the checks allows in allowlist mode, but block
 	// if at least one of the checks blocks in blocklist mode.
 	if allowlistMode && blockedByIP && blockedByClientID {
-		log.Debug("client %v (id %q) is not in access allowlist", ip, clientID)
+		log.Debug("dnsforward: client %v (id %q) is not in access allowlist", ip, clientID)
 
 		// Return now without substituting the empty rule for the
 		// clientID because the rule can't be empty here.
 		return true, rule
 	} else if !allowlistMode && (blockedByIP || blockedByClientID) {
-		log.Debug("client %v (id %q) is in access blocklist", ip, clientID)
+		log.Debug("dnsforward: client %v (id %q) is in access blocklist", ip, clientID)
 
 		blocked = true
 	}

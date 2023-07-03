@@ -103,7 +103,7 @@ type statusResponse struct {
 	Language string   `json:"language"`
 	DNSAddrs []string `json:"dns_addresses"`
 	DNSPort  int      `json:"dns_port"`
-	HTTPPort int      `json:"http_port"`
+	HTTPPort uint16   `json:"http_port"`
 
 	// ProtectionDisabledDuration is the duration of the protection pause in
 	// milliseconds.
@@ -158,7 +158,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 			Language:                   config.Language,
 			DNSAddrs:                   dnsAddrs,
 			DNSPort:                    config.DNS.Port,
-			HTTPPort:                   config.BindPort,
+			HTTPPort:                   config.HTTPConfig.Address.Port(),
 			ProtectionDisabledDuration: protectionDisabledDuration,
 			ProtectionEnabled:          protectionEnabled,
 			IsRunning:                  isRunning(),

@@ -38,6 +38,29 @@ export const addRewrite = (config) => async (dispatch) => {
     }
 };
 
+export const updateRewriteRequest = createAction('UPDATE_REWRITE_REQUEST');
+export const updateRewriteFailure = createAction('UPDATE_REWRITE_FAILURE');
+export const updateRewriteSuccess = createAction('UPDATE_REWRITE_SUCCESS');
+
+/**
+ * @param {Object} config
+ * @param {string} config.target - current DNS rewrite value
+ * @param {string} config.update - updated DNS rewrite value
+ */
+export const updateRewrite = (config) => async (dispatch) => {
+    dispatch(updateRewriteRequest());
+    try {
+        await apiClient.updateRewrite(config);
+        dispatch(updateRewriteSuccess());
+        dispatch(toggleRewritesModal());
+        dispatch(getRewritesList());
+        dispatch(addSuccessToast(i18next.t('rewrite_updated', { key: config.domain })));
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(updateRewriteFailure());
+    }
+};
+
 export const deleteRewriteRequest = createAction('DELETE_REWRITE_REQUEST');
 export const deleteRewriteFailure = createAction('DELETE_REWRITE_FAILURE');
 export const deleteRewriteSuccess = createAction('DELETE_REWRITE_SUCCESS');

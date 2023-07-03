@@ -228,12 +228,7 @@ func TestRDNS_WorkerLoop(t *testing.T) {
 	for _, tc := range testCases {
 		w.Reset()
 
-		cc := &clientsContainer{
-			list:    map[string]*Client{},
-			idIndex: map[string]*Client{},
-			ipToRC:  map[netip.Addr]*RuntimeClient{},
-			allTags: stringutil.NewSet(),
-		}
+		cc := newClientsContainer(t)
 		ch := make(chan netip.Addr)
 		rdns := &RDNS{
 			exchanger: &rDNSExchanger{

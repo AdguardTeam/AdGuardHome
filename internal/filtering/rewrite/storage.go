@@ -84,7 +84,7 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 		return nil
 	}
 
-	// TODO(a.garipov): Check cnames for cycles on initialisation.
+	// TODO(a.garipov): Check cnames for cycles on initialization.
 	cnames := stringutil.NewSet()
 	host := dReq.Hostname
 	for len(rrules) > 0 && rrules[0].DNSRewrite != nil && rrules[0].DNSRewrite.NewCNAME != "" {

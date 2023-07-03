@@ -7,6 +7,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
+	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
@@ -22,12 +23,14 @@ type Client struct {
 	safeSearchConf filtering.SafeSearchConfig
 	SafeSearch     filtering.SafeSearch
 
+	// BlockedServices is the configuration of blocked services of a client.
+	BlockedServices *filtering.BlockedServices
+
 	Name string
 
-	IDs             []string
-	Tags            []string
-	BlockedServices []string
-	Upstreams       []string
+	IDs       []string
+	Tags      []string
+	Upstreams []string
 
 	UseOwnSettings        bool
 	FilteringEnabled      bool
@@ -43,9 +46,9 @@ type Client struct {
 func (c *Client) ShallowClone() (sh *Client) {
 	clone := *c
 
+	clone.BlockedServices = c.BlockedServices.Clone()
 	clone.IDs = stringutil.CloneSlice(c.IDs)
 	clone.Tags = stringutil.CloneSlice(c.Tags)
-	clone.BlockedServices = stringutil.CloneSlice(c.BlockedServices)
 	clone.Upstreams = stringutil.CloneSlice(c.Upstreams)
 
 	return &clone
@@ -127,14 +130,13 @@ func (cs clientSource) MarshalText() (text []byte, err error) {
 // RuntimeClient is a client information about which has been obtained using the
 // source described in the Source field.
 type RuntimeClient struct {
-	WHOISInfo *RuntimeClientWHOISInfo
-	Host      string
-	Source    clientSource
-}
+	// WHOIS is the filtered WHOIS data of a client.
+	WHOIS *whois.Info
 
-// RuntimeClientWHOISInfo is the filtered WHOIS data for a runtime client.
-type RuntimeClientWHOISInfo struct {
-	City    string `json:"city,omitempty"`
-	Country string `json:"country,omitempty"`
-	Orgname string `json:"orgname,omitempty"`
+	// Host is the host name of a client.
+	Host string
+
+	// Source is the source from which the information about the client has
+	// been obtained.
+	Source clientSource
 }

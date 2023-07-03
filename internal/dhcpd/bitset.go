@@ -25,11 +25,8 @@ func (s *bitSet) isSet(n uint64) (ok bool) {
 
 	var word uint64
 	word, ok = s.words[wordIdx]
-	if !ok {
-		return false
-	}
 
-	return word&(1<<bitIdx) != 0
+	return ok && word&(1<<bitIdx) != 0
 }
 
 // set sets or unsets a bit.

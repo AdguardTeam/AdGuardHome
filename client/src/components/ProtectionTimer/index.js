@@ -32,6 +32,8 @@ const ProtectionTimer = ({
 };
 
 ProtectionTimer.propTypes = {
+    protectionDisabledDuration: PropTypes.number,
+    toggleProtectionSuccess: PropTypes.func.isRequired,
     setProtectionTimerTime: PropTypes.func.isRequired,
 };
 

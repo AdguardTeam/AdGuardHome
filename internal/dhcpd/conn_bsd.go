@@ -249,31 +249,30 @@ func (c *dhcpConn) buildEtherPkt(payload []byte, peer *dhcpUnicastAddr) (pkt []b
 func (s *v4Server) send(peer net.Addr, conn net.PacketConn, req, resp *dhcpv4.DHCPv4) {
 	switch giaddr, ciaddr, mtype := req.GatewayIPAddr, req.ClientIPAddr, resp.MessageType(); {
 	case giaddr != nil && !giaddr.IsUnspecified():
-		// Send any return messages to the server port on the BOOTP
-		// relay agent whose address appears in giaddr.
+		// Send any return messages to the server port on the BOOTP relay agent
+		// whose address appears in giaddr.
 		peer = &net.UDPAddr{
 			IP:   giaddr,
 			Port: dhcpv4.ServerPort,
 		}
 		if mtype == dhcpv4.MessageTypeNak {
 			// Set the broadcast bit in the DHCPNAK, so that the relay agent
-			// broadcasts it to the client, because the client may not have
-			// a correct network address or subnet mask, and the client may not
-			// be answering ARP requests.
+			// broadcasts it to the client, because the client may not have a
+			// correct network address or subnet mask, and the client may not be
+			// answering ARP requests.
 			resp.SetBroadcast()
 		}
 	case mtype == dhcpv4.MessageTypeNak:
 		// Broadcast any DHCPNAK messages to 0xffffffff.
 	case ciaddr != nil && !ciaddr.IsUnspecified():
-		// Unicast DHCPOFFER and DHCPACK messages to the address in
-		// ciaddr.
+		// Unicast DHCPOFFER and DHCPACK messages to the address in ciaddr.
 		peer = &net.UDPAddr{
 			IP:   ciaddr,
 			Port: dhcpv4.ClientPort,
 		}
 	case !req.IsBroadcast() && req.ClientHWAddr != nil:
-		// Unicast DHCPOFFER and DHCPACK messages to the client's
-		// hardware address and yiaddr.
+		// Unicast DHCPOFFER and DHCPACK messages to the client's hardware
+		// address and yiaddr.
 		peer = &dhcpUnicastAddr{
 			Addr:   raw.Addr{HardwareAddr: req.ClientHWAddr},
 			yiaddr: resp.YourIPAddr,

@@ -51,6 +51,9 @@ func migrateDB(conf *ServerConfig) (err error) {
 	oldLeasesPath := filepath.Join(conf.WorkDir, dbFilename)
 	dataDirPath := filepath.Join(conf.DataDir, dataFilename)
 
+	// #nosec G304 -- Trust this path, since it's taken from the old file name
+	// relative to the working directory and should generally be considered
+	// safe.
 	file, err := os.Open(oldLeasesPath)
 	if errors.Is(err, os.ErrNotExist) {
 		// Nothing to migrate.

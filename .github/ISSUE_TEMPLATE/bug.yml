@@ -10,49 +10,55 @@
           - 'label': >
                 I have checked the
                 [Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki) and
-                [Discussions](https://github.com/AdguardTeam/AdGuardHome/discussions)
+                [Discussions](https://github.com/AdguardTeam/AdGuardHome/discussions/categories/q-a)
                 and found no answer
             'required': true
           - 'label': >
                 I have searched other issues and found no duplicates
             'required': true
           - 'label': >
-                I want to report a bug and not ask a question
+                I want to report a bug and not [ask a question or ask for
+                help](https://github.com/AdguardTeam/AdGuardHome/discussions/categories/q-a)
+            'required': true
+          - 'label': >
+                I have set up AdGuard Home correctly and [configured clients to
+                use it](https://github.com/AdguardTeam/AdGuardHome/wiki/Clients).
+                (Use the
+                [Discussions](https://github.com/AdguardTeam/AdGuardHome/discussions/categories/q-a)
+                for help with installing and configuring clients.)
             'required': true
     'id': 'prerequisites'
     'type': 'checkboxes'
   - 'attributes':
-        'description': 'On which operating system type does the issue occur?'
-        'label': 'Operating system type'
+        'description': 'On which Platform does the issue occur?'
+        'label': 'Platform (OS and CPU architecture)'
         'options':
-          - 'FreeBSD'
-          - 'Linux, OpenWrt'
-          - 'Linux, Other (please mention the version in the description)'
-          - 'macOS (aka Darwin)'
-          - 'OpenBSD'
-          - 'Windows'
-          - 'Other (please mention in the description)'
+          - 'Darwin (aka macOS)/AMD64 (aka x86_64)'
+          - 'Darwin (aka macOS)/ARM64'
+          - 'FreeBSD/386'
+          - 'FreeBSD/AMD64 (aka x86_64)'
+          - 'FreeBSD/ARM64'
+          - 'FreeBSD/ARMv5'
+          - 'FreeBSD/ARMv6'
+          - 'FreeBSD/ARMv7'
+          - 'Linux/386'
+          - 'Linux/AMD64 (aka x86_64)'
+          - 'Linux/ARM64'
+          - 'Linux/ARMv5'
+          - 'Linux/ARMv6'
+          - 'Linux/ARMv7'
+          - 'Linux/MIPS LE'
+          - 'Linux/MIPS'
+          - 'Linux/MIPS64 LE'
+          - 'Linux/MIPS64'
+          - 'Linux/PPC64 LE'
+          - 'OpenBSD/AMD64 (aka x86_64)'
+          - 'OpenBSD/ARM64'
+          - 'Windows/386'
+          - 'Windows/AMD64 (aka x86_64)'
+          - 'Windows/ARM64'
+          - 'Custom (please mention in the description)'
     'id': 'os'
-    'type': 'dropdown'
-    'validations':
-        'required': true
-  - 'attributes':
-        'description': 'On which CPU architecture does the issue occur?'
-        'label': 'CPU architecture'
-        'options':
-          - 'AMD64'
-          - 'x86'
-          - '64-bit ARM'
-          - 'ARMv5'
-          - 'ARMv6'
-          - 'ARMv7'
-          - '64-bit MIPS'
-          - '64-bit MIPS LE'
-          - '32-bit MIPS'
-          - '32-bit MIPS LE'
-          - '64-bit PowerPC LE'
-          - 'Other (please mention in the description)'
-    'id': 'arch'
     'type': 'dropdown'
     'validations':
         'required': true
@@ -63,7 +69,7 @@
           - 'GitHub releases or script from README'
           - 'Docker'
           - 'Snapcraft'
-          - 'Custom port'
+          - 'Custom package (OpenWrt, HomeAssistant, etc; please mention in the description)'
           - 'Other (please mention in the description)'
     'id': 'install'
     'type': 'dropdown'
@@ -89,21 +95,55 @@
     'validations':
         'required': true
   - 'attributes':
-        'description': 'Please describe the bug'
-        'label': 'Description'
+        'description': >
+            Please describe what you did.  An `nslookup` or a `dig` command is
+            the best way.  For crashes, please provide a full failure log.
+        'label': 'Action'
         'value': |
-            #### What did you do?
-
-            #### Expected result
-
-            #### Actual result
-
-            #### Screenshots (if applicable)
-
-            #### Additional information
-    'id': 'description'
+            ```sh
+            nslookup -debug -type=a 'www.example.com' '$YOUR_AGH_ADDRESS'
+            ```
+    'id': 'failing_action'
     'type': 'textarea'
     'validations':
         'required': true
-'description': 'File a bug report'
+  - 'attributes':
+        'description': >
+            What did you expect to see?  Please add a description and/or
+            screenshots, if applicable.
+        'label': 'Expected result'
+        'placeholder': >
+            What did you expect to see?
+    'id': 'expected'
+    'type': 'textarea'
+    'validations':
+        'required': true
+  - 'attributes':
+        'description': >
+            What happened instead?  Please add a description and/or screenshots,
+            if applicable.
+        'label': 'Actual result'
+        'placeholder': >
+            What did you see instead?
+    'id': 'result'
+    'type': 'textarea'
+    'validations':
+        'required': true
+  - 'attributes':
+        'description': >
+            Please add additional information, such as non-standard OS or port,
+            here.  You can also put screenshots here, if applicable.  For
+            example, it is better to copy and paste text from a terminal instead
+            of posting a screenshot of the terminal.
+        'label': 'Additional information and/or screenshots'
+        'placeholder': >
+            Additional OS information, screenshots of the UI, etc.
+    'id': 'additional'
+    'type': 'textarea'
+    'validations':
+        'required': false
+'description': >
+    Open a bug report.  Please do not open bug reports for questions or help
+    with configuring clients.  If you want to ask for help, use the Discussions
+    section.
 'name': 'Bug'

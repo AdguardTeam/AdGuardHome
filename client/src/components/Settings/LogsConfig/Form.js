@@ -27,7 +27,6 @@ import {
 } from '../../../helpers/constants';
 import '../FormButton.css';
 
-
 const getIntervalTitle = (interval, t) => {
     switch (interval) {
         case RETENTION_CUSTOM:

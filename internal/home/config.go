@@ -14,6 +14,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
+	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/golibs/errors"
@@ -90,18 +91,17 @@ type clientSourcesConfig struct {
 	HostsFile bool `yaml:"hosts"`
 }
 
-// configuration is loaded from YAML
-// field ordering is important -- yaml fields will mirror ordering from here
+// configuration is loaded from YAML.
+//
+// Field ordering is important, YAML fields better not to be reordered, if it's
+// not absolutely necessary.
 type configuration struct {
 	// Raw file data to avoid re-reading of configuration file
 	// It's reset after config is parsed
 	fileData []byte
 
-	// BindHost is the address for the web interface server to listen on.
-	BindHost netip.Addr `yaml:"bind_host"`
-	// BindPort is the port for the web interface server to listen on.
-	BindPort int `yaml:"bind_port"`
-
+	// HTTPConfig is the block with http conf.
+	HTTPConfig httpConfig `yaml:"http"`
 	// Users are the clients capable for accessing the web interface.
 	Users []webUser `yaml:"users"`
 	// AuthAttempts is the maximum number of failed login attempts a user
@@ -118,10 +118,6 @@ type configuration struct {
 	Theme Theme `yaml:"theme"`
 	// DebugPProf defines if the profiling HTTP handler will listen on :6060.
 	DebugPProf bool `yaml:"debug_pprof"`
-
-	// TTL for a web session (in hours)
-	// An active session is automatically refreshed once a day.
-	WebSessionTTLHours uint32 `yaml:"web_session_ttl"`
 
 	DNS      dnsConfig         `yaml:"dns"`
 	TLS      tlsConfigSettings `yaml:"tls"`
@@ -155,7 +151,23 @@ type configuration struct {
 	SchemaVersion int `yaml:"schema_version"` // keeping last so that users will be less tempted to change it -- used when upgrading between versions
 }
 
-// field ordering is important -- yaml fields will mirror ordering from here
+// httpConfig is a block with HTTP configuration params.
+//
+// Field ordering is important, YAML fields better not to be reordered, if it's
+// not absolutely necessary.
+type httpConfig struct {
+	// Address is the address to serve the web UI on.
+	Address netip.AddrPort
+
+	// SessionTTL for a web session.
+	// An active session is automatically refreshed once a day.
+	SessionTTL timeutil.Duration `yaml:"session_ttl"`
+}
+
+// dnsConfig is a block with DNS configuration params.
+//
+// Field ordering is important, YAML fields better not to be reordered, if it's
+// not absolutely necessary.
 type dnsConfig struct {
 	BindHosts []netip.Addr `yaml:"bind_hosts"`
 	Port      int          `yaml:"port"`
@@ -260,11 +272,12 @@ type statsConfig struct {
 //
 // TODO(a.garipov, e.burkov): This global is awful and must be removed.
 var config = &configuration{
-	BindPort:           3000,
-	BindHost:           netip.IPv4Unspecified(),
-	AuthAttempts:       5,
-	AuthBlockMin:       15,
-	WebSessionTTLHours: 30 * 24,
+	AuthAttempts: 5,
+	AuthBlockMin: 15,
+	HTTPConfig: httpConfig{
+		Address:    netip.AddrPortFrom(netip.IPv4Unspecified(), 3000),
+		SessionTTL: timeutil.Duration{Duration: 30 * timeutil.Day},
+	},
 	DNS: dnsConfig{
 		BindHosts: []netip.Addr{netip.IPv4Unspecified()},
 		Port:      defaultPortDNS,
@@ -315,6 +328,11 @@ var config = &configuration{
 				Pixabay:    true,
 				Yandex:     true,
 				YouTube:    true,
+			},
+
+			BlockedServices: &filtering.BlockedServices{
+				Schedule: schedule.EmptyWeekly(),
+				IDs:      []string{},
 			},
 		},
 		UpstreamTimeout: timeutil.Duration{Duration: dnsforward.DefaultTimeout},
@@ -421,8 +439,8 @@ func readLogSettings() (ls *logSettings) {
 // validateBindHosts returns error if any of binding hosts from configuration is
 // not a valid IP address.
 func validateBindHosts(conf *configuration) (err error) {
-	if !conf.BindHost.IsValid() {
-		return errors.Error("bind_host is not a valid ip address")
+	if !conf.HTTPConfig.Address.IsValid() {
+		return errors.Error("http.address is not a valid ip address")
 	}
 
 	for i, addr := range conf.DNS.BindHosts {
@@ -456,7 +474,7 @@ func parseConfig() (err error) {
 	}
 
 	tcpPorts := aghalg.UniqChecker[tcpPort]{}
-	addPorts(tcpPorts, tcpPort(config.BindPort))
+	addPorts(tcpPorts, tcpPort(config.HTTPConfig.Address.Port()))
 
 	udpPorts := aghalg.UniqChecker[udpPort]{}
 	addPorts(udpPorts, udpPort(config.DNS.Port))

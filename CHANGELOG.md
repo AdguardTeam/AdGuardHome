@@ -14,21 +14,14 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.32] - 2023-06-28 (APPROX.)
+## [v0.107.34] - 2023-07-26 (APPROX.)
 
-See also the [v0.107.32 GitHub milestone][ms-v0.107.32].
+See also the [v0.107.34 GitHub milestone][ms-v0.107.34].
 
-[ms-v0.107.32]: https://github.com/AdguardTeam/AdGuardHome/milestone/68?closed=1
+[ms-v0.107.34]: https://github.com/AdguardTeam/AdGuardHome/milestone/69?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
-
-### Added
-
-- The ability to edit rewrite rules via `PUT /control/rewrite/update` HTTP API
-  ([#1577]).
-
-[#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
@@ -36,12 +29,165 @@ NOTE: Add new changes ABOVE THIS COMMENT.
 
 
 
+## [v0.107.33] - 2023-07-03
+
+See also the [v0.107.33 GitHub milestone][ms-v0.107.33].
+
+### Added
+
+- The new command-line flag `--web-addr` is the address to serve the web UI on,
+  in the host:port format.
+- The ability to set inactivity periods for filtering blocked services, both
+  globally and per client, in the configuration file ([#951]).  The UI changes
+  are coming in the upcoming releases.
+- The ability to edit rewrite rules via `PUT /control/rewrite/update` HTTP API
+  and the Web UI ([#1577]).
+
+### Changed
+
+#### Configuration Changes
+
+In this release, the schema version has changed from 20 to 23.
+
+- Properties `bind_host`, `bind_port`, and `web_session_ttl` which used to setup
+  web UI binding configuration, are now moved to a new object `http` containing
+  new properties `address` and `session_ttl`:
+
+  ```yaml
+  # BEFORE:
+  'bind_host': '1.2.3.4'
+  'bind_port': 8080
+  'web_session_ttl': 720
+
+  # AFTER:
+  'http':
+    'address': '1.2.3.4:8080'
+    'session_ttl': '720h'
+  ```
+
+  Note that the new `http.session_ttl` property is now a duration string.  To
+  rollback this change, remove the new object `http`, set back `bind_host`,
+  `bind_port`, `web_session_ttl`,  and change the `schema_version` back to `22`.
+- Property `clients.persistent.blocked_services`, which in schema versions 21
+  and earlier used to be a list containing ids of blocked services, is now an
+  object containing ids and schedule for blocked services:
+
+  ```yaml
+  # BEFORE:
+  'clients':
+    'persistent':
+      - 'name': 'client-name'
+        'blocked_services':
+        - id_1
+        - id_2
+
+  # AFTER:
+  'clients':
+    'persistent':
+    - 'name': client-name
+      'blocked_services':
+        'ids':
+        - id_1
+        - id_2
+      'schedule':
+        'time_zone': 'Local'
+        'sun':
+          'start': '0s'
+          'end': '24h'
+        'mon':
+          'start': '1h'
+          'end': '23h'
+  ```
+
+  To rollback this change, replace `clients.persistent.blocked_services` object
+  with the list of ids of blocked services and change the `schema_version` back
+  to `21`.
+- Property `dns.blocked_services`, which in schema versions 20 and earlier used
+  to be a list containing ids of blocked services, is now an object containing
+  ids and schedule for blocked services:
+
+  ```yaml
+  # BEFORE:
+  'blocked_services':
+  - id_1
+  - id_2
+
+  # AFTER:
+  'blocked_services':
+    'ids':
+    - id_1
+    - id_2
+    'schedule':
+      'time_zone': 'Local'
+      'sun':
+        'start': '0s'
+        'end': '24h'
+      'mon':
+        'start': '10m'
+        'end': '23h30m'
+      'tue':
+        'start': '20m'
+        'end': '23h'
+      'wed':
+        'start': '30m'
+        'end': '22h30m'
+      'thu':
+        'start': '40m'
+        'end': '22h'
+      'fri':
+        'start': '50m'
+        'end': '21h30m'
+      'sat':
+        'start': '1h'
+        'end': '21h'
+  ```
+
+  To rollback this change, replace `dns.blocked_services` object with the list
+  of ids of blocked services and change the `schema_version` back to `20`.
+
+### Deprecated
+
+- `HEALTHCHECK` and `ENTRYPOINT` sections in `Dockerfile` ([#5939]).  They cause
+  a lot of issues, especially with tools like `docker-compose` and `podman`, and
+  will be removed in a future release.
+- Flags `-h`, `--host`, `-p`, `--port` have been deprecated.  The `-h` flag
+  will work as an alias for `--help`, instead of the deprecated `--host` in the
+  future releases.
+
+### Fixed
+
+- Ignoring of `/etc/hosts` file when resolving the hostnames of upstream DNS
+  servers ([#5902]).
+- Excessive error logging when using DNS-over-QUIC ([#5285]).
+- Inability to set `bind_host` in `AdGuardHome.yaml` in Docker ([#4231],
+  [#4235]).
+- The blocklists can now be deleted properly ([#5700]).
+- Queries with the question-section target `.`, for example `NS .`, are now
+  counted in the statistics and correctly shown in the query log ([#5910]).
+- Safe Search not working with `AAAA` queries for domains that don't have `AAAA`
+  records ([#5913]).
+
+[#951]:  https://github.com/AdguardTeam/AdGuardHome/issues/951
+[#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
+[#4231]: https://github.com/AdguardTeam/AdGuardHome/issues/4231
+[#4235]: https://github.com/AdguardTeam/AdGuardHome/pull/4235
+[#5285]: https://github.com/AdguardTeam/AdGuardHome/issues/5285
+[#5700]: https://github.com/AdguardTeam/AdGuardHome/issues/5700
+[#5902]: https://github.com/AdguardTeam/AdGuardHome/issues/5902
+[#5910]: https://github.com/AdguardTeam/AdGuardHome/issues/5910
+[#5913]: https://github.com/AdguardTeam/AdGuardHome/issues/5913
+[#5939]: https://github.com/AdguardTeam/AdGuardHome/discussions/5939
+
+[ms-v0.107.33]: https://github.com/AdguardTeam/AdGuardHome/milestone/68?closed=1
+
+
+
 ## [v0.107.32] - 2023-06-13
 
 ### Fixed
 
- - DNSCrypt upstream not resetting the client and resolver information on
-   dialing errors ([#5872]).
+- DNSCrypt upstream not resetting the client and resolver information on
+  dialing errors ([#5872]).
 
 
 
@@ -2014,11 +2160,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.33...HEAD
-[v0.107.33]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.32...v0.107.33
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.34...HEAD
+[v0.107.34]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.33...v0.107.34
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.32...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.33...HEAD
+[v0.107.33]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.32...v0.107.33
 [v0.107.32]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.31...v0.107.32
 [v0.107.31]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.30...v0.107.31
 [v0.107.30]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.29...v0.107.30

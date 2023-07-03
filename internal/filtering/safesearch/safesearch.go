@@ -161,12 +161,8 @@ func (ss *Default) resetEngine(
 // type check
 var _ filtering.SafeSearch = (*Default)(nil)
 
-// CheckHost implements the [filtering.SafeSearch] interface for
-// *DefaultSafeSearch.
-func (ss *Default) CheckHost(
-	host string,
-	qtype rules.RRType,
-) (res filtering.Result, err error) {
+// CheckHost implements the [filtering.SafeSearch] interface for *Default.
+func (ss *Default) CheckHost(host string, qtype rules.RRType) (res filtering.Result, err error) {
 	start := time.Now()
 	defer func() {
 		ss.log(log.DEBUG, "lookup for %q finished in %s", host, time.Since(start))
@@ -196,14 +192,10 @@ func (ss *Default) CheckHost(
 		return filtering.Result{}, err
 	}
 
-	if fltRes != nil {
-		res = *fltRes
-		ss.setCacheResult(host, qtype, res)
+	res = *fltRes
+	ss.setCacheResult(host, qtype, res)
 
-		return res, nil
-	}
-
-	return filtering.Result{}, fmt.Errorf("no ipv4 addresses for %q", host)
+	return res, nil
 }
 
 // searchHost looks up DNS rewrites in the internal DNS filtering engine.
@@ -229,7 +221,11 @@ func (ss *Default) searchHost(host string, qtype rules.RRType) (res *rules.DNSRe
 }
 
 // newResult creates Result object from rewrite rule.  qtype must be either
-// [dns.TypeA] or [dns.TypeAAAA].
+// [dns.TypeA] or [dns.TypeAAAA].  If err is nil, res is never nil, so that the
+// empty result is converted into a NODATA response.
+//
+// TODO(a.garipov): Use the main rewrite result mechanism used in
+// [dnsforward.Server.filterDNSRequest].
 func (ss *Default) newResult(
 	rewrite *rules.DNSRewrite,
 	qtype rules.RRType,
@@ -243,9 +239,10 @@ func (ss *Default) newResult(
 	}
 
 	if rewrite.RRType == qtype {
-		ip, ok := rewrite.Value.(net.IP)
+		v := rewrite.Value
+		ip, ok := v.(net.IP)
 		if !ok || ip == nil {
-			return nil, nil
+			return nil, fmt.Errorf("expected ip rewrite value, got %T(%[1]v)", v)
 		}
 
 		res.Rules[0].IP = ip
@@ -255,14 +252,14 @@ func (ss *Default) newResult(
 
 	host := rewrite.NewCNAME
 	if host == "" {
-		return nil, nil
+		return res, nil
 	}
 
 	ss.log(log.DEBUG, "resolving %q", host)
 
 	ips, err := ss.resolver.LookupIP(context.Background(), qtypeToProto(qtype), host)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("resolving cname: %w", err)
 	}
 
 	ss.log(log.DEBUG, "resolved %s", ips)
@@ -276,11 +273,9 @@ func (ss *Default) newResult(
 		}
 
 		res.Rules[0].IP = ip
-
-		return res, nil
 	}
 
-	return nil, nil
+	return res, nil
 }
 
 // qtypeToProto returns "ip4" for [dns.TypeA] and "ip6" for [dns.TypeAAAA].

@@ -11,9 +11,11 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
+	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
+	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
@@ -22,6 +24,23 @@ import (
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
+
+// DHCP is an interface for accessing DHCP lease data the [clientsContainer]
+// needs.
+type DHCP interface {
+	// Leases returns all the DHCP leases.
+	Leases() (leases []*dhcpsvc.Lease)
+
+	// HostByIP returns the hostname of the DHCP client with the given IP
+	// address.  The address will be netip.Addr{} if there is no such client,
+	// due to an assumption that a DHCP client must always have an IP address.
+	HostByIP(ip netip.Addr) (host string)
+
+	// MACByIP returns the MAC address for the given IP address leased.  It
+	// returns nil if there is no such client, due to an assumption that a DHCP
+	// client must always have a MAC address.
+	MACByIP(ip netip.Addr) (mac net.HardwareAddr)
+}
 
 // clientsContainer is the storage of all runtime and persistent clients.
 type clientsContainer struct {
@@ -77,7 +96,7 @@ func (clients *clientsContainer) Init(
 	etcHosts *aghnet.HostsContainer,
 	arpdb aghnet.ARPDB,
 	filteringConf *filtering.Config,
-) {
+) (err error) {
 	if clients.list != nil {
 		log.Fatal("clients.list != nil")
 	}
@@ -91,23 +110,29 @@ func (clients *clientsContainer) Init(
 	clients.dhcpServer = dhcpServer
 	clients.etcHosts = etcHosts
 	clients.arpdb = arpdb
-	clients.addFromConfig(objects, filteringConf)
+	err = clients.addFromConfig(objects, filteringConf)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	}
 
 	clients.safeSearchCacheSize = filteringConf.SafeSearchCacheSize
 	clients.safeSearchCacheTTL = time.Minute * time.Duration(filteringConf.CacheTime)
 
 	if clients.testing {
-		return
+		return nil
 	}
 
-	clients.updateFromDHCP(true)
 	if clients.dhcpServer != nil {
 		clients.dhcpServer.SetOnLeaseChanged(clients.onDHCPLeaseChanged)
+		clients.onDHCPLeaseChanged(dhcpd.LeaseChangedAdded)
 	}
 
 	if clients.etcHosts != nil {
 		go clients.handleHostsUpdates()
 	}
+
+	return nil
 }
 
 func (clients *clientsContainer) handleHostsUpdates() {
@@ -147,12 +172,14 @@ func (clients *clientsContainer) reloadARP() {
 type clientObject struct {
 	SafeSearchConf filtering.SafeSearchConfig `yaml:"safe_search"`
 
+	// BlockedServices is the configuration of blocked services of a client.
+	BlockedServices *filtering.BlockedServices `yaml:"blocked_services"`
+
 	Name string `yaml:"name"`
 
-	Tags            []string `yaml:"tags"`
-	IDs             []string `yaml:"ids"`
-	BlockedServices []string `yaml:"blocked_services"`
-	Upstreams       []string `yaml:"upstreams"`
+	IDs       []string `yaml:"ids"`
+	Tags      []string `yaml:"tags"`
+	Upstreams []string `yaml:"upstreams"`
 
 	UseGlobalSettings        bool `yaml:"use_global_settings"`
 	FilteringEnabled         bool `yaml:"filtering_enabled"`
@@ -166,7 +193,10 @@ type clientObject struct {
 
 // addFromConfig initializes the clients container with objects from the
 // configuration file.
-func (clients *clientsContainer) addFromConfig(objects []*clientObject, filteringConf *filtering.Config) {
+func (clients *clientsContainer) addFromConfig(
+	objects []*clientObject,
+	filteringConf *filtering.Config,
+) (err error) {
 	for _, o := range objects {
 		cli := &Client{
 			Name: o.Name,
@@ -187,7 +217,7 @@ func (clients *clientsContainer) addFromConfig(objects []*clientObject, filterin
 		if o.SafeSearchConf.Enabled {
 			o.SafeSearchConf.CustomResolver = safeSearchResolver{}
 
-			err := cli.setSafeSearch(
+			err = cli.setSafeSearch(
 				o.SafeSearchConf,
 				filteringConf.SafeSearchCacheSize,
 				time.Minute*time.Duration(filteringConf.CacheTime),
@@ -199,13 +229,12 @@ func (clients *clientsContainer) addFromConfig(objects []*clientObject, filterin
 			}
 		}
 
-		for _, s := range o.BlockedServices {
-			if filtering.BlockedSvcKnown(s) {
-				cli.BlockedServices = append(cli.BlockedServices, s)
-			} else {
-				log.Info("clients: skipping unknown blocked service %q", s)
-			}
+		err = o.BlockedServices.Validate()
+		if err != nil {
+			return fmt.Errorf("clients: init client blocked services %q: %w", cli.Name, err)
 		}
+
+		cli.BlockedServices = o.BlockedServices.Clone()
 
 		for _, t := range o.Tags {
 			if clients.allTags.Has(t) {
@@ -217,11 +246,13 @@ func (clients *clientsContainer) addFromConfig(objects []*clientObject, filterin
 
 		slices.Sort(cli.Tags)
 
-		_, err := clients.Add(cli)
+		_, err = clients.Add(cli)
 		if err != nil {
 			log.Error("clients: adding clients %s: %s", cli.Name, err)
 		}
 	}
+
+	return nil
 }
 
 // forConfig returns all currently known persistent clients as objects for the
@@ -235,10 +266,11 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 		o := &clientObject{
 			Name: cli.Name,
 
-			Tags:            stringutil.CloneSlice(cli.Tags),
-			IDs:             stringutil.CloneSlice(cli.IDs),
-			BlockedServices: stringutil.CloneSlice(cli.BlockedServices),
-			Upstreams:       stringutil.CloneSlice(cli.Upstreams),
+			BlockedServices: cli.BlockedServices.Clone(),
+
+			IDs:       stringutil.CloneSlice(cli.IDs),
+			Tags:      stringutil.CloneSlice(cli.Tags),
+			Upstreams: stringutil.CloneSlice(cli.Upstreams),
 
 			UseGlobalSettings:        !cli.UseOwnSettings,
 			FilteringEnabled:         cli.FilteringEnabled,
@@ -276,15 +308,38 @@ func (clients *clientsContainer) periodicUpdate() {
 	}
 }
 
+// onDHCPLeaseChanged is a callback for the DHCP server.  It updates the list of
+// runtime clients using the DHCP server's leases.
+//
+// TODO(e.burkov):  Remove when switched to dhcpsvc.
 func (clients *clientsContainer) onDHCPLeaseChanged(flags int) {
-	switch flags {
-	case dhcpd.LeaseChangedAdded,
-		dhcpd.LeaseChangedAddedStatic,
-		dhcpd.LeaseChangedRemovedStatic:
-		clients.updateFromDHCP(true)
-	case dhcpd.LeaseChangedRemovedAll:
-		clients.updateFromDHCP(false)
+	if clients.dhcpServer == nil || !config.Clients.Sources.DHCP {
+		return
 	}
+
+	clients.lock.Lock()
+	defer clients.lock.Unlock()
+
+	clients.rmHostsBySrc(ClientSourceDHCP)
+
+	if flags == dhcpd.LeaseChangedRemovedAll {
+		return
+	}
+
+	leases := clients.dhcpServer.Leases(dhcpd.LeasesAll)
+	n := 0
+	for _, l := range leases {
+		if l.Hostname == "" {
+			continue
+		}
+
+		ok := clients.addHostLocked(l.IP, l.Hostname, ClientSourceDHCP)
+		if ok {
+			n++
+		}
+	}
+
+	log.Debug("clients: added %d client aliases from dhcp", n)
 }
 
 // clientSource checks if client with this IP address already exists and returns
@@ -300,23 +355,11 @@ func (clients *clientsContainer) clientSource(ip netip.Addr) (src clientSource) 
 	}
 
 	rc, ok := clients.ipToRC[ip]
-	if !ok {
-		return ClientSourceNone
+	if ok {
+		return rc.Source
 	}
 
-	return rc.Source
-}
-
-func toQueryLogWHOIS(wi *RuntimeClientWHOISInfo) (cw *querylog.ClientWHOIS) {
-	if wi == nil {
-		return &querylog.ClientWHOIS{}
-	}
-
-	return &querylog.ClientWHOIS{
-		City:    wi.City,
-		Country: wi.Country,
-		Orgname: wi.Orgname,
-	}
+	return ClientSourceNone
 }
 
 // findMultiple is a wrapper around Find to make it a valid client finder for
@@ -352,7 +395,7 @@ func (clients *clientsContainer) clientOrArtificial(
 	defer func() {
 		c.Disallowed, c.DisallowedRule = clients.dnsServer.IsBlockedClient(ip, id)
 		if c.WHOIS == nil {
-			c.WHOIS = &querylog.ClientWHOIS{}
+			c.WHOIS = &whois.Info{}
 		}
 	}()
 
@@ -369,7 +412,7 @@ func (clients *clientsContainer) clientOrArtificial(
 	if ok {
 		return &querylog.Client{
 			Name:  rc.Host,
-			WHOIS: toQueryLogWHOIS(rc.WHOISInfo),
+			WHOIS: rc.WHOIS,
 		}, false
 	}
 
@@ -477,11 +520,11 @@ func (clients *clientsContainer) findLocked(id string) (c *Client, ok bool) {
 		}
 	}
 
-	if clients.dhcpServer == nil {
-		return nil, false
+	if clients.dhcpServer != nil {
+		return clients.findDHCP(ip)
 	}
 
-	return clients.findDHCP(ip)
+	return nil, false
 }
 
 // findDHCP searches for a client by its MAC, if the DHCP server is active and
@@ -701,35 +744,34 @@ func (clients *clientsContainer) Update(prev, c *Client) (err error) {
 }
 
 // setWHOISInfo sets the WHOIS information for a client.
-func (clients *clientsContainer) setWHOISInfo(ip netip.Addr, wi *RuntimeClientWHOISInfo) {
+func (clients *clientsContainer) setWHOISInfo(ip netip.Addr, wi *whois.Info) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
 	_, ok := clients.findLocked(ip.String())
 	if ok {
 		log.Debug("clients: client for %s is already created, ignore whois info", ip)
+
 		return
 	}
 
+	// TODO(e.burkov):  Consider storing WHOIS information separately and
+	// potentially get rid of [RuntimeClient].
 	rc, ok := clients.ipToRC[ip]
-	if ok {
-		rc.WHOISInfo = wi
+	if !ok {
+		// Create a RuntimeClient implicitly so that we don't do this check
+		// again.
+		rc = &RuntimeClient{
+			Source: ClientSourceWHOIS,
+		}
+		clients.ipToRC[ip] = rc
+
+		log.Debug("clients: set whois info for runtime client with ip %s: %+v", ip, wi)
+	} else {
 		log.Debug("clients: set whois info for runtime client %s: %+v", rc.Host, wi)
-
-		return
 	}
 
-	// Create a RuntimeClient implicitly so that we don't do this check
-	// again.
-	rc = &RuntimeClient{
-		Source: ClientSourceWHOIS,
-	}
-
-	rc.WHOISInfo = wi
-
-	clients.ipToRC[ip] = rc
-
-	log.Debug("clients: set whois info for runtime client with ip %s: %+v", ip, wi)
+	rc.WHOIS = wi
 }
 
 // AddHost adds a new IP-hostname pairing.  The priorities of the sources are
@@ -753,22 +795,18 @@ func (clients *clientsContainer) addHostLocked(
 	src clientSource,
 ) (ok bool) {
 	rc, ok := clients.ipToRC[ip]
-	if ok {
-		if rc.Source > src {
-			return false
-		}
-
-		rc.Host = host
-		rc.Source = src
-	} else {
+	if !ok {
 		rc = &RuntimeClient{
-			Host:      host,
-			Source:    src,
-			WHOISInfo: &RuntimeClientWHOISInfo{},
+			WHOIS: &whois.Info{},
 		}
 
 		clients.ipToRC[ip] = rc
+	} else if src < rc.Source {
+		return false
 	}
+
+	rc.Host = host
+	rc.Source = src
 
 	log.Debug("clients: added %s -> %q [%d]", ip, host, len(clients.ipToRC))
 
@@ -836,38 +874,6 @@ func (clients *clientsContainer) addFromSystemARP() {
 	}
 
 	log.Debug("clients: added %d client aliases from arp neighborhood", added)
-}
-
-// updateFromDHCP adds the clients that have a non-empty hostname from the DHCP
-// server.
-func (clients *clientsContainer) updateFromDHCP(add bool) {
-	if clients.dhcpServer == nil || !config.Clients.Sources.DHCP {
-		return
-	}
-
-	clients.lock.Lock()
-	defer clients.lock.Unlock()
-
-	clients.rmHostsBySrc(ClientSourceDHCP)
-
-	if !add {
-		return
-	}
-
-	leases := clients.dhcpServer.Leases(dhcpd.LeasesAll)
-	n := 0
-	for _, l := range leases {
-		if l.Hostname == "" {
-			continue
-		}
-
-		ok := clients.addHostLocked(l.IP, l.Hostname, ClientSourceDHCP)
-		if ok {
-			n++
-		}
-	}
-
-	log.Debug("clients: added %d client aliases from dhcp", n)
 }
 
 // close gracefully closes all the client-specific upstream configurations of

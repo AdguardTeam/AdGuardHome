@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -17,6 +18,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
+	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -25,7 +27,7 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
-// Default ports.
+// Default listening ports.
 const (
 	defaultPortDNS   = 53
 	defaultPortHTTP  = 80
@@ -169,11 +171,70 @@ func initDNSServer(
 		Context.rdns = NewRDNS(Context.dnsServer, &Context.clients, config.DNS.UsePrivateRDNS)
 	}
 
-	if config.Clients.Sources.WHOIS {
-		Context.whois = initWHOIS(&Context.clients)
-	}
+	initWHOIS()
 
 	return nil
+}
+
+// initWHOIS initializes the WHOIS.
+//
+// TODO(s.chzhen):  Consider making configurable.
+func initWHOIS() {
+	const (
+		// defaultQueueSize is the size of queue of IPs for WHOIS processing.
+		defaultQueueSize = 255
+
+		// defaultTimeout is the timeout for WHOIS requests.
+		defaultTimeout = 5 * time.Second
+
+		// defaultCacheSize is the maximum size of the cache.  If it's zero,
+		// cache size is unlimited.
+		defaultCacheSize = 10_000
+
+		// defaultMaxConnReadSize is an upper limit in bytes for reading from
+		// net.Conn.
+		defaultMaxConnReadSize = 64 * 1024
+
+		// defaultMaxRedirects is the maximum redirects count.
+		defaultMaxRedirects = 5
+
+		// defaultMaxInfoLen is the maximum length of whois.Info fields.
+		defaultMaxInfoLen = 250
+
+		// defaultIPTTL is the Time to Live duration for cached IP addresses.
+		defaultIPTTL = 1 * time.Hour
+	)
+
+	Context.whoisCh = make(chan netip.Addr, defaultQueueSize)
+
+	var w whois.Interface
+
+	if config.Clients.Sources.WHOIS {
+		w = whois.New(&whois.Config{
+			DialContext:     customDialContext,
+			ServerAddr:      whois.DefaultServer,
+			Port:            whois.DefaultPort,
+			Timeout:         defaultTimeout,
+			CacheSize:       defaultCacheSize,
+			MaxConnReadSize: defaultMaxConnReadSize,
+			MaxRedirects:    defaultMaxRedirects,
+			MaxInfoLen:      defaultMaxInfoLen,
+			CacheTTL:        defaultIPTTL,
+		})
+	} else {
+		w = whois.Empty{}
+	}
+
+	go func() {
+		defer log.OnPanic("whois")
+
+		for ip := range Context.whoisCh {
+			info, changed := w.Process(context.Background(), ip)
+			if info != nil && changed {
+				Context.clients.setWHOISInfo(ip, info)
+			}
+		}
+	}()
 }
 
 // parseSubnetSet parses a slice of subnets.  If the slice is empty, it returns
@@ -218,9 +279,7 @@ func onDNSRequest(pctx *proxy.DNSContext) {
 		Context.rdns.Begin(ip)
 	}
 
-	if srcs.WHOIS && !netutil.IsSpecialPurposeAddr(ip) {
-		Context.whois.Begin(ip)
-	}
+	Context.whoisCh <- ip
 }
 
 func ipsToTCPAddrs(ips []netip.Addr, port int) (tcpAddrs []*net.TCPAddr) {
@@ -390,7 +449,7 @@ func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering
 	// pref is a prefix for logging messages around the scope.
 	const pref = "applying filters"
 
-	Context.filters.ApplyBlockedServices(setts, nil)
+	Context.filters.ApplyBlockedServices(setts)
 
 	log.Debug("%s: looking for client with ip %s and clientid %q", pref, clientIP, clientID)
 
@@ -414,12 +473,12 @@ func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering
 
 	if c.UseOwnBlockedServices {
 		// TODO(e.burkov):  Get rid of this crutch.
-		svcs := c.BlockedServices
-		if svcs == nil {
-			svcs = []string{}
+		setts.ServicesRules = nil
+		svcs := c.BlockedServices.IDs
+		if !c.BlockedServices.Schedule.Contains(time.Now()) {
+			Context.filters.ApplyBlockedServicesList(setts, svcs)
+			log.Debug("%s: services for client %q set: %s", pref, c.Name, svcs)
 		}
-		Context.filters.ApplyBlockedServices(setts, svcs)
-		log.Debug("%s: services for client %q set: %s", pref, c.Name, svcs)
 	}
 
 	setts.ClientName = c.Name
@@ -463,9 +522,7 @@ func startDNSServer() error {
 			Context.rdns.Begin(ip)
 		}
 
-		if srcs.WHOIS && !netutil.IsSpecialPurposeAddr(ip) {
-			Context.whois.Begin(ip)
-		}
+		Context.whoisCh <- ip
 	}
 
 	return nil

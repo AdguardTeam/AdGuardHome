@@ -455,6 +455,8 @@ class Api {
 
     REWRITE_ADD = { path: 'rewrite/add', method: 'POST' };
 
+    REWRITE_UPDATE = { path: 'rewrite/update', method: 'PUT' };
+
     REWRITE_DELETE = { path: 'rewrite/delete', method: 'POST' };
 
     getRewritesList() {
@@ -464,6 +466,14 @@ class Api {
 
     addRewrite(config) {
         const { path, method } = this.REWRITE_ADD;
+        const parameters = {
+            data: config,
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
+    updateRewrite(config) {
+        const { path, method } = this.REWRITE_UPDATE;
         const parameters = {
             data: config,
         };

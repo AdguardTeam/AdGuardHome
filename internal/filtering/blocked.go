@@ -2,9 +2,12 @@ package filtering
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"golang.org/x/exp/slices"
@@ -44,23 +47,57 @@ func initBlockedServices() {
 	log.Debug("filtering: initialized %d services", l)
 }
 
-// BlockedSvcKnown returns true if a blocked service ID is known.
-func BlockedSvcKnown(s string) (ok bool) {
-	_, ok = serviceRules[s]
+// BlockedServices is the configuration of blocked services.
+type BlockedServices struct {
+	// Schedule is blocked services schedule for every day of the week.
+	Schedule *schedule.Weekly `yaml:"schedule"`
 
-	return ok
+	// IDs is the names of blocked services.
+	IDs []string `yaml:"ids"`
+}
+
+// Clone returns a deep copy of blocked services.
+func (s *BlockedServices) Clone() (c *BlockedServices) {
+	if s == nil {
+		return nil
+	}
+
+	return &BlockedServices{
+		Schedule: s.Schedule.Clone(),
+		IDs:      slices.Clone(s.IDs),
+	}
+}
+
+// Validate returns an error if blocked services contain unknown service ID.  s
+// must not be nil.
+func (s *BlockedServices) Validate() (err error) {
+	for _, id := range s.IDs {
+		_, ok := serviceRules[id]
+		if !ok {
+			return fmt.Errorf("unknown blocked-service %q", id)
+		}
+	}
+
+	return nil
 }
 
 // ApplyBlockedServices - set blocked services settings for this DNS request
-func (d *DNSFilter) ApplyBlockedServices(setts *Settings, list []string) {
+func (d *DNSFilter) ApplyBlockedServices(setts *Settings) {
+	d.confLock.RLock()
+	defer d.confLock.RUnlock()
+
 	setts.ServicesRules = []ServiceEntry{}
-	if list == nil {
-		d.confLock.RLock()
-		defer d.confLock.RUnlock()
 
-		list = d.Config.BlockedServices
+	bsvc := d.BlockedServices
+
+	// TODO(s.chzhen):  Use startTime from [dnsforward.dnsContext].
+	if !bsvc.Schedule.Contains(time.Now()) {
+		d.ApplyBlockedServicesList(setts, bsvc.IDs)
 	}
+}
 
+// ApplyBlockedServicesList appends filtering rules to the settings.
+func (d *DNSFilter) ApplyBlockedServicesList(setts *Settings, list []string) {
 	for _, name := range list {
 		rules, ok := serviceRules[name]
 		if !ok {
@@ -90,7 +127,7 @@ func (d *DNSFilter) handleBlockedServicesAll(w http.ResponseWriter, r *http.Requ
 
 func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Request) {
 	d.confLock.RLock()
-	list := d.Config.BlockedServices
+	list := d.Config.BlockedServices.IDs
 	d.confLock.RUnlock()
 
 	_ = aghhttp.WriteJSONResponse(w, r, list)
@@ -106,7 +143,7 @@ func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 	}
 
 	d.confLock.Lock()
-	d.Config.BlockedServices = list
+	d.Config.BlockedServices.IDs = list
 	d.confLock.Unlock()
 
 	log.Debug("Updated blocked services list: %d", len(list))

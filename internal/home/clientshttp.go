@@ -9,6 +9,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
+	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 )
 
 // clientJSON is a common structure used by several handlers to deal with
@@ -28,7 +30,8 @@ type clientJSON struct {
 	// the allowlist.
 	DisallowedRule *string `json:"disallowed_rule,omitempty"`
 
-	WHOISInfo      *RuntimeClientWHOISInfo     `json:"whois_info,omitempty"`
+	// WHOIS is the filtered WHOIS data of a client.
+	WHOIS          *whois.Info                 `json:"whois_info,omitempty"`
 	SafeSearchConf *filtering.SafeSearchConfig `json:"safe_search"`
 
 	Name string `json:"name"`
@@ -51,7 +54,7 @@ type clientJSON struct {
 }
 
 type runtimeClientJSON struct {
-	WHOISInfo *RuntimeClientWHOISInfo `json:"whois_info"`
+	WHOIS *whois.Info `json:"whois_info"`
 
 	IP     netip.Addr   `json:"ip"`
 	Name   string       `json:"name"`
@@ -78,7 +81,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 
 	for ip, rc := range clients.ipToRC {
 		cj := runtimeClientJSON{
-			WHOISInfo: rc.WHOISInfo,
+			WHOIS: rc.WHOIS,
 
 			Name:   rc.Host,
 			Source: rc.Source,
@@ -116,15 +119,24 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 		}
 	}
 
+	weekly := schedule.EmptyWeekly()
+	if prev != nil {
+		weekly = prev.BlockedServices.Schedule.Clone()
+	}
+
 	c = &Client{
 		safeSearchConf: safeSearchConf,
 
 		Name: cj.Name,
 
-		IDs:             cj.IDs,
-		Tags:            cj.Tags,
-		BlockedServices: cj.BlockedServices,
-		Upstreams:       cj.Upstreams,
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: weekly,
+			IDs:      cj.BlockedServices,
+		},
+
+		IDs:       cj.IDs,
+		Tags:      cj.Tags,
+		Upstreams: cj.Upstreams,
 
 		UseOwnSettings:        !cj.UseGlobalSettings,
 		FilteringEnabled:      cj.FilteringEnabled,
@@ -178,7 +190,8 @@ func clientToJSON(c *Client) (cj *clientJSON) {
 		SafeBrowsingEnabled: c.SafeBrowsingEnabled,
 
 		UseGlobalBlockedServices: !c.UseOwnBlockedServices,
-		BlockedServices:          c.BlockedServices,
+
+		BlockedServices: c.BlockedServices.IDs,
 
 		Upstreams: c.Upstreams,
 
@@ -344,16 +357,16 @@ func (clients *clientsContainer) findRuntime(ip netip.Addr, idStr string) (cj *c
 			IDs:            []string{idStr},
 			Disallowed:     &disallowed,
 			DisallowedRule: &rule,
-			WHOISInfo:      &RuntimeClientWHOISInfo{},
+			WHOIS:          &whois.Info{},
 		}
 
 		return cj
 	}
 
 	cj = &clientJSON{
-		Name:      rc.Host,
-		IDs:       []string{idStr},
-		WHOISInfo: rc.WHOISInfo,
+		Name:  rc.Host,
+		IDs:   []string{idStr},
+		WHOIS: rc.WHOIS,
 	}
 
 	disallowed, rule := clients.dnsServer.IsBlockedClient(ip, idStr)

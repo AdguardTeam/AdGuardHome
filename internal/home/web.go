@@ -119,7 +119,9 @@ func webCheckPortAvailable(port int) (ok bool) {
 		return true
 	}
 
-	return aghnet.CheckPort("tcp", netip.AddrPortFrom(config.BindHost, uint16(port))) == nil
+	addrPort := netip.AddrPortFrom(config.HTTPConfig.Address.Addr(), uint16(port))
+
+	return aghnet.CheckPort("tcp", addrPort) == nil
 }
 
 // tlsConfigChanged updates the TLS configuration and restarts the HTTPS server

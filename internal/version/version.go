@@ -143,14 +143,7 @@ func Verbose() (v string) {
 		runtime.Version(),
 	)
 
-	if committime != "" {
-		commitTimeUnix, err := strconv.ParseInt(committime, 10, 64)
-		if err != nil {
-			stringutil.WriteToBuilder(b, nl, vFmtTimeHdr, fmt.Sprintf("parse error: %s", err))
-		} else {
-			stringutil.WriteToBuilder(b, nl, vFmtTimeHdr, time.Unix(commitTimeUnix, 0).String())
-		}
-	}
+	writeCommitTime(b)
 
 	stringutil.WriteToBuilder(b, nl, vFmtGOOSHdr, nl, vFmtGOARCHHdr)
 	if goarm != "" {
@@ -178,4 +171,17 @@ func Verbose() (v string) {
 	}
 
 	return b.String()
+}
+
+func writeCommitTime(b *strings.Builder) {
+	if committime == "" {
+		return
+	}
+
+	commitTimeUnix, err := strconv.ParseInt(committime, 10, 64)
+	if err != nil {
+		stringutil.WriteToBuilder(b, "\n", vFmtTimeHdr, fmt.Sprintf("parse error: %s", err))
+	} else {
+		stringutil.WriteToBuilder(b, "\n", vFmtTimeHdr, time.Unix(commitTimeUnix, 0).String())
+	}
 }

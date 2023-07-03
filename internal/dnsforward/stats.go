@@ -17,58 +17,76 @@ import (
 
 // Write Stats data and logs
 func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
+	log.Debug("dnsforward: started processing querylog and stats")
+	defer log.Debug("dnsforward: finished processing querylog and stats")
+
 	elapsed := time.Since(dctx.startTime)
 	pctx := dctx.proxyCtx
 
-	shouldLog := true
-	msg := pctx.Req
-	q := msg.Question[0]
+	q := pctx.Req.Question[0]
 	host := strings.ToLower(strings.TrimSuffix(q.Name, "."))
-
-	// don't log ANY request if refuseAny is enabled
-	if q.Qtype == dns.TypeANY && s.conf.RefuseAny {
-		shouldLog = false
-	}
 
 	ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
 	ip = slices.Clone(ip)
-
-	s.serverLock.RLock()
-	defer s.serverLock.RUnlock()
-
 	s.anonymizer.Load()(ip)
 
-	log.Debug("client ip: %s", ip)
+	log.Debug("dnsforward: client ip for stats and querylog: %s", ip)
 
 	ipStr := ip.String()
 	ids := []string{ipStr, dctx.clientID}
+	qt, cl := q.Qtype, q.Qclass
 
 	// Synchronize access to s.queryLog and s.stats so they won't be suddenly
 	// uninitialized while in use.  This can happen after proxy server has been
 	// stopped, but its workers haven't yet exited.
-	if shouldLog &&
-		s.queryLog != nil &&
-		// TODO(s.chzhen):  Use dnsforward.dnsContext when it will start
-		// containing persistent client.
-		s.queryLog.ShouldLog(host, q.Qtype, q.Qclass, ids) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	if s.shouldLog(host, qt, cl, ids) {
 		s.logQuery(dctx, pctx, elapsed, ip)
 	} else {
 		log.Debug(
-			"dnsforward: request %s %s from %s ignored; not logging",
-			dns.Type(q.Qtype),
+			"dnsforward: request %s %s %q from %s ignored; not adding to querylog",
+			dns.Class(cl),
+			dns.Type(qt),
 			host,
 			ip,
 		)
 	}
 
-	if s.stats != nil &&
-		// TODO(s.chzhen):  Use dnsforward.dnsContext when it will start
-		// containing persistent client.
-		s.stats.ShouldCount(host, q.Qtype, q.Qclass, ids) {
+	if s.shouldCountStat(host, qt, cl, ids) {
 		s.updateStats(dctx, elapsed, *dctx.result, ipStr)
+	} else {
+		log.Debug(
+			"dnsforward: request %s %s %q from %s ignored; not counting in stats",
+			dns.Class(cl),
+			dns.Type(qt),
+			host,
+			ip,
+		)
 	}
 
 	return resultCodeSuccess
+}
+
+// shouldLog returns true if the query with the given data should be logged in
+// the query log.  s.serverLock is expected to be locked.
+func (s *Server) shouldLog(host string, qt, cl uint16, ids []string) (ok bool) {
+	if qt == dns.TypeANY && s.conf.RefuseAny {
+		return false
+	}
+
+	// TODO(s.chzhen):  Use dnsforward.dnsContext when it will start containing
+	// persistent client.
+	return s.queryLog != nil && s.queryLog.ShouldLog(host, qt, cl, ids)
+}
+
+// shouldCountStat returns true if the query with the given data should be
+// counted in the statistics.  s.serverLock is expected to be locked.
+func (s *Server) shouldCountStat(host string, qt, cl uint16, ids []string) (ok bool) {
+	// TODO(s.chzhen):  Use dnsforward.dnsContext when it will start containing
+	// persistent client.
+	return s.stats != nil && s.stats.ShouldCount(host, qt, cl, ids)
 }
 
 // logQuery pushes the request details into the query log.
@@ -123,7 +141,10 @@ func (s *Server) updateStats(
 	pctx := ctx.proxyCtx
 	e := stats.Entry{}
 	e.Domain = strings.ToLower(pctx.Req.Question[0].Name)
-	e.Domain = e.Domain[:len(e.Domain)-1] // remove last "."
+	if e.Domain != "." {
+		// Remove last ".", but save the domain as is for "." queries.
+		e.Domain = e.Domain[:len(e.Domain)-1]
+	}
 
 	if clientID := ctx.clientID; clientID != "" {
 		e.Client = clientID

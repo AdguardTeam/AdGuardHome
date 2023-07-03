@@ -2,7 +2,7 @@
 
 ##  `hooks/`: Git Hooks
 
- ###  Usage
+   ###  Usage
 
 Run `make init` from the project root.
 
@@ -10,7 +10,7 @@ Run `make init` from the project root.
 
 ##  `querylog/`: Query Log Helpers
 
- ###  Usage
+   ###  Usage
 
  *  `npm install`: install dependencies.  Run this first.
  *  `npm run anonymize <source> <dst>`: read the query log from the `<source>`
@@ -26,157 +26,215 @@ don't print anything, and `1`, be verbose.
 
 
 
- ###  `build-docker.sh`: Build A Multi-Architecture Docker Image
+   ###  `build-docker.sh`: Build A Multi-Architecture Docker Image
 
 Required environment:
 
  *  `CHANNEL`: release channel, see above.
+
  *  `COMMIT`: current Git revision.
+
  *  `DIST_DIR`: the directory where a release has previously been built.
+
  *  `VERSION`: release version.
 
 Optional environment:
 
  *  `DOCKER_IMAGE_NAME`: the name of the resulting Docker container.  By default
     it's `adguardhome-dev`.
+
  *  `DOCKER_OUTPUT`: the `--output` parameters.  By default they are
     `type=image,name=${DOCKER_IMAGE_NAME},push=false`.
+
  *  `SUDO`: allow users to use `sudo` or `doas` with `docker`.  By default none
     is used.
 
 
 
- ###  `build-release.sh`: Build A Release For All Platforms
+   ###  `build-release.sh`: Build A Release For All Platforms
 
 Required environment:
+
  *  `CHANNEL`: release channel, see above.
+
  *  `GPG_KEY` and `GPG_KEY_PASSPHRASE`: data for `gpg`.  Only required if `SIGN`
     is `1`.
 
 Optional environment:
+
  *  `ARCH` and `OS`: space-separated list of architectures and operating systems
     for which to build a release.  For example, to build only for 64-bit ARM and
     AMD on Linux and Darwin:
+
     ```sh
     make ARCH='amd64 arm64' OS='darwin linux' … build-release
     ```
     The default value is `''`, which means build everything.
- *  `BUILD_SNAP`: `0` to not build Snapcraft packages, `1` to build.  The
-    default value is `1`.
+
  *  `DIST_DIR`: the directory to build a release into.  The default value is
     `dist`.
+
  *  `GO`: set an alternative name for the Go compiler.
+
  *  `SIGN`: `0` to not sign the resulting packages, `1` to sign.  The default
     value is `1`.
+
  *  `VERBOSE`: `1` to be verbose, `2` to also print environment.  This script
     calls `go-build.sh` with the verbosity level one level lower, so to get
     verbosity level `2` in `go-build.sh`, set this to `3` when calling
     `build-release.sh`.
+
  *  `VERSION`: release version.  Will be set by `version.sh` if it is unset or
     if it has the default `Makefile` value of `v0.0.0`.
 
 
 
- ###  `clean.sh`: Cleanup
+   ###  `clean.sh`: Cleanup
 
 Optional environment:
+
  *  `GO`: set an alternative name for the Go compiler.
 
 Required environment:
+
  *  `DIST_DIR`: the directory where a release has previously been built.
 
 
 
- ###  `go-build.sh`: Build The Backend
+   ###  `go-build.sh`: Build The Backend
 
 Optional environment:
+
  *  `GOARM`: ARM processor options for the Go compiler.
+
  *  `GOMIPS`: ARM processor options for the Go compiler.
+
  *  `GO`: set an alternative name for the Go compiler.
+
  *  `OUT`: output binary name.
+
  *  `PARALLELISM`: set the maximum number of concurrently run build commands
     (that is, compiler, linker, etc.).
+
  *  `SOURCE_DATE_EPOCH`: the [standardized][repr] environment variable for the
     Unix epoch time of the latest commit in the repository.  If set, overrides
     the default obtained from Git.  Useful for reproducible builds.
+
  *  `VERBOSE`: verbosity level.  `1` shows every command that is run and every
     Go package that is processed.  `2` also shows subcommands and environment.
     The default value is `0`, don't be verbose.
+
  *  `VERSION`: release version.  Will be set by `version.sh` if it is unset or
     if it has the default `Makefile` value of `v0.0.0`.
 
 Required environment:
+
  *  `CHANNEL`: release channel, see above.
 
 [repr]: https://reproducible-builds.org/docs/source-date-epoch/
 
 
 
- ###  `go-deps.sh`: Install Backend Dependencies
+   ###  `go-deps.sh`: Install Backend Dependencies
 
 Optional environment:
+
  *  `GO`: set an alternative name for the Go compiler.
+
  *  `VERBOSE`: verbosity level.  `1` shows every command that is run and every
     Go package that is processed.  `2` also shows subcommands and environment.
     The default value is `0`, don't be verbose.
 
 
 
- ###  `go-lint.sh`: Run Backend Static Analyzers
+   ###  `go-lint.sh`: Run Backend Static Analyzers
 
 Don't forget to run `make go-tools` once first!
 
 Optional environment:
+
  *  `EXIT_ON_ERROR`: if set to `0`, don't exit the script after the first
     encountered error.  The default value is `1`.
+
  *  `GO`: set an alternative name for the Go compiler.
+
  *  `VERBOSE`: verbosity level.  `1` shows every command that is run.  `2` also
     shows subcommands.  The default value is `0`, don't be verbose.
 
 
 
- ###  `go-test.sh`: Run Backend Tests
+   ###  `go-test.sh`: Run Backend Tests
 
 Optional environment:
+
  *  `GO`: set an alternative name for the Go compiler.
+
  *  `RACE`: set to `0` to not use the Go race detector.  The default value is
     `1`, use the race detector.
+
  *  `TIMEOUT_FLAGS`: set timeout flags for tests.  The default value is
     `--timeout 30s`.
+
  *  `VERBOSE`: verbosity level.  `1` shows every command that is run and every
     Go package that is processed.  `2` also shows subcommands.  The default
     value is `0`, don't be verbose.
 
 
 
- ###  `go-tools.sh`: Install Backend Tooling
+   ###  `go-tools.sh`: Install Backend Tooling
 
 Installs the Go static analysis and other tools into `${PWD}/bin`.  Either add
 `${PWD}/bin` to your `$PATH` before all other entries, or use the commands
 directly, or use the commands through `make` (for example, `make go-lint`).
 
 Optional environment:
+
  *  `GO`: set an alternative name for the Go compiler.
 
 
 
- ###  `version.sh`: Generate And Print The Current Version
+   ###  `version.sh`: Generate And Print The Current Version
 
 Required environment:
+
  *  `CHANNEL`: release channel, see above.
 
 
 
-##  `snap/`: Snap GUI Files
+##  `snap/`: Snapcraft scripts
 
-App icons (see https://github.com/AdguardTeam/AdGuardHome/pull/1836), Snap
-manifest file templates, and helper scripts.
+   ###  `build.sh`
+
+Builds the Snapcraft packages from the binaries created by `download.sh`.
+
+   ###  `download.sh`
+
+Downloads the binaries to pack them into Snapcraft packages.
+
+Required environment:
+
+ *  `CHANNEL`: release channel, see above.
+
+   ###  `upload.sh`
+
+Uploads the Snapcraft packages created by `build.sh`.
+
+Required environment:
+
+ *  `SNAPCRAFT_CHANNEL`: Snapcraft release channel: `edge`, `beta`, or
+    `candidate`.
+
+ *  `SNAPCRAFT_STORE_CREDENTIALS`: Credentials for Snapcraft store.
+
+Optional environment:
+
+ *  `SNAPCRAFT_CMD`: Overrides the Snapcraft command.  Default: `snapcraft`.
 
 
 
 ##  `translations/`: Twosky Integration Script
 
- ###  Usage
+   ###  Usage
 
  *  `go run main.go help`: print usage.
 
@@ -211,7 +269,7 @@ Optional environment:
 A simple script that downloads and updates the companies DB in the `client`
 code from [the repo][companiesrepo].
 
- ###  Usage
+   ###  Usage
 
 ```sh
 sh ./scripts/companiesdb/download.sh
@@ -231,7 +289,7 @@ Optional environment:
  *  `URL`: the URL of the index file.  By default it's
     `https://adguardteam.github.io/HostlistsRegistry/assets/services.json`.
 
- ###  Usage
+   ###  Usage
 
 ```sh
 go run ./scripts/blocked-services/main.go
@@ -251,7 +309,7 @@ Optional environment:
  *  `URL`: the URL of the index file.  By default it's
     `https://adguardteam.github.io/HostlistsRegistry/assets/filters.json`.
 
- ###  Usage
+   ###  Usage
 
 ```sh
 go run ./scripts/vetted-filters/main.go

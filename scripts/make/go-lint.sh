@@ -130,6 +130,7 @@ underscores() {
 			-e '_freebsd.go'\
 			-e '_linux.go'\
 			-e '_little.go'\
+			-e '_next.go'\
 			-e '_openbsd.go'\
 			-e '_others.go'\
 			-e '_test.go'\
@@ -169,6 +170,18 @@ run_linter govulncheck ./...
 
 run_linter gocyclo --over 10 .
 
+# TODO(a.garipov): Enable for all.
+run_linter gocognit --over 10\
+	./internal/aghalg/\
+	./internal/aghchan/\
+	./internal/aghhttp/\
+	./internal/aghio/\
+	./internal/next/\
+	./internal/tools/\
+	./internal/version/\
+	./internal/whois/\
+	;
+
 run_linter ineffassign ./...
 
 run_linter unparam ./...
@@ -185,8 +198,25 @@ run_linter nilness ./...
 
 run_linter -e shadow --strict ./...
 
-# TODO(a.garipov): Enable in v0.108.0.
-# run_linter gosec --quiet ./...
+# TODO(a.garipov): Enable for all.
+run_linter gosec --quiet\
+	./internal/aghalg\
+	./internal/aghchan\
+	./internal/aghhttp\
+	./internal/aghio\
+	./internal/aghnet\
+	./internal/aghos\
+	./internal/aghtest\
+	./internal/dhcpd\
+	./internal/dhcpsvc\
+	./internal/dnsforward\
+	./internal/next\
+	./internal/schedule\
+	./internal/stats\
+	./internal/tools\
+	./internal/version\
+	./internal/whois\
+	;
 
 # TODO(a.garipov): Enable --blank?
 run_linter errcheck --asserts ./...

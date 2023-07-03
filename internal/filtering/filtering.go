@@ -103,9 +103,9 @@ type Config struct {
 
 	Rewrites []*LegacyRewrite `yaml:"rewrites"`
 
-	// Names of services to block (globally).
+	// BlockedServices is the configuration of blocked services.
 	// Per-client settings can override this configuration.
-	BlockedServices []string `yaml:"blocked_services"`
+	BlockedServices *BlockedServices `yaml:"blocked_services"`
 
 	// EtcHosts is a container of IP-hostname pairs taken from the operating
 	// system configuration files (e.g. /etc/hosts).
@@ -298,12 +298,12 @@ func (d *DNSFilter) SetEnabled(enabled bool) {
 	atomic.StoreUint32(&d.enabled, mathutil.BoolToNumber[uint32](enabled))
 }
 
-// GetConfig - get configuration
-func (d *DNSFilter) GetConfig() (s Settings) {
+// Settings returns filtering settings.
+func (d *DNSFilter) Settings() (s *Settings) {
 	d.confLock.RLock()
 	defer d.confLock.RUnlock()
 
-	return Settings{
+	return &Settings{
 		FilteringEnabled:    atomic.LoadUint32(&d.Config.enabled) != 0,
 		SafeSearchEnabled:   d.Config.SafeSearchConf.Enabled,
 		SafeBrowsingEnabled: d.Config.SafeBrowsingEnabled,
@@ -519,7 +519,7 @@ func (d *DNSFilter) matchSysHosts(
 	dnsres, _ := d.EtcHosts.MatchRequest(&urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
-		// TODO(e.burkov):  Wait for urlfilter update to pass net.IP.
+		// TODO(e.burkov):  Wait for urlfilter update to pass netip.Addr.
 		ClientIP:   setts.ClientIP.String(),
 		ClientName: setts.ClientName,
 		DNSType:    qtype,
@@ -987,16 +987,13 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 		return nil, fmt.Errorf("rewrites: preparing: %s", err)
 	}
 
-	bsvcs := []string{}
-	for _, s := range d.BlockedServices {
-		if !BlockedSvcKnown(s) {
-			log.Debug("skipping unknown blocked-service %q", s)
+	if d.BlockedServices != nil {
+		err = d.BlockedServices.Validate()
 
-			continue
+		if err != nil {
+			return nil, fmt.Errorf("filtering: %w", err)
 		}
-		bsvcs = append(bsvcs, s)
 	}
-	d.BlockedServices = bsvcs
 
 	if blockFilters != nil {
 		err = d.initFiltering(nil, blockFilters)

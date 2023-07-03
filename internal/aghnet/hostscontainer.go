@@ -56,15 +56,20 @@ func (rm *requestMatcher) MatchRequest(
 ) (res *urlfilter.DNSResult, ok bool) {
 	switch req.DNSType {
 	case dns.TypeA, dns.TypeAAAA, dns.TypePTR:
-		log.Debug("%s: handling the request for %s", hostsContainerPrefix, req.Hostname)
+		log.Debug(
+			"%s: handling %s request for %s",
+			hostsContainerPrefix,
+			dns.Type(req.DNSType),
+			req.Hostname,
+		)
+
+		rm.stateLock.RLock()
+		defer rm.stateLock.RUnlock()
+
+		return rm.engine.MatchRequest(req)
 	default:
 		return nil, false
 	}
-
-	rm.stateLock.RLock()
-	defer rm.stateLock.RUnlock()
-
-	return rm.engine.MatchRequest(req)
 }
 
 // Translate returns the source hosts-syntax rule for the generated dnsrewrite
@@ -96,6 +101,8 @@ const hostsContainerPrefix = "hosts container"
 
 // HostsContainer stores the relevant hosts database provided by the OS and
 // processes both A/AAAA and PTR DNS requests for those.
+//
+// TODO(e.burkov):  Improve API and move to golibs.
 type HostsContainer struct {
 	// requestMatcher matches the requests and translates the rules.  It's
 	// embedded to implement MatchRequest and Translate for *HostsContainer.

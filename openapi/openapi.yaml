@@ -1061,6 +1061,17 @@
       'responses':
         '200':
           'description': 'OK.'
+  '/rewrite/update':
+    'put':
+      'tags':
+        - 'rewrite'
+      'operationId': 'rewriteUpdate'
+      'summary': 'Update a Rewrite rule'
+      'requestBody':
+        '$ref': '#/components/requestBodies/RewriteUpdate'
+      'responses':
+        '200':
+          'description': 'OK.'
   '/i18n/change_language':
     'post':
       'deprecated': true
@@ -1310,6 +1321,12 @@
         'application/json':
           'schema':
             '$ref': '#/components/schemas/RewriteEntry'
+      'required': true
+    'RewriteUpdate':
+      'content':
+        'application/json':
+          'schema':
+            '$ref': '#/components/schemas/RewriteUpdate'
       'required': true
   'schemas':
     'ServerStatus':
@@ -2702,6 +2719,14 @@
       'items':
         '$ref': '#/components/schemas/RewriteEntry'
       'description': 'Rewrite rules array'
+    'RewriteUpdate':
+      'type': 'object'
+      'description': 'Rewrite rule update object'
+      'properties':
+        'target':
+          '$ref': '#/components/schemas/RewriteEntry'
+        'update':
+          '$ref': '#/components/schemas/RewriteEntry'
     'RewriteEntry':
       'type': 'object'
       'description': 'Rewrite rule'

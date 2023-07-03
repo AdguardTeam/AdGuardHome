@@ -3,6 +3,7 @@ import {
     getRewritesList,
     addRewrite,
     deleteRewrite,
+    updateRewrite,
     toggleRewritesModal,
 } from '../actions/rewrites';
 import Rewrites from '../components/Filters/Rewrites';
@@ -17,6 +18,7 @@ const mapDispatchToProps = {
     getRewritesList,
     addRewrite,
     deleteRewrite,
+    updateRewrite,
     toggleRewritesModal,
 };
 

@@ -53,14 +53,14 @@ func (s *Server) beforeRequestHandler(
 // getClientRequestFilteringSettings looks up client filtering settings using
 // the client's IP address and ID, if any, from dctx.
 func (s *Server) getClientRequestFilteringSettings(dctx *dnsContext) *filtering.Settings {
-	setts := s.dnsFilter.GetConfig()
+	setts := s.dnsFilter.Settings()
 	setts.ProtectionEnabled = dctx.protectionEnabled
 	if s.conf.FilterHandler != nil {
 		ip, _ := netutil.IPAndPortFromAddr(dctx.proxyCtx.Addr)
-		s.conf.FilterHandler(ip, dctx.clientID, &setts)
+		s.conf.FilterHandler(ip, dctx.clientID, setts)
 	}
 
-	return &setts
+	return setts
 }
 
 // filterDNSRequest applies the dnsFilter and sets dctx.proxyCtx.Res if the

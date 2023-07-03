@@ -169,7 +169,7 @@ func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 		deleted = (*filters)[delIdx]
 		p := deleted.Path(d.DataDir)
 		err = os.Rename(p, p+".old")
-		if err != nil {
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			log.Error("deleting filter %d: renaming file %q: %s", deleted.ID, p, err)
 
 			return
@@ -416,12 +416,12 @@ type checkHostResp struct {
 func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 	host := r.URL.Query().Get("name")
 
-	setts := d.GetConfig()
+	setts := d.Settings()
 	setts.FilteringEnabled = true
 	setts.ProtectionEnabled = true
 
-	d.ApplyBlockedServices(&setts, nil)
-	result, err := d.CheckHost(host, dns.TypeA, &setts)
+	d.ApplyBlockedServices(setts)
+	result, err := d.CheckHost(host, dns.TypeA, setts)
 	if err != nil {
 		aghhttp.Error(
 			r,
@@ -555,6 +555,7 @@ func (d *DNSFilter) RegisterFilteringHandlers() {
 
 	registerHTTP(http.MethodGet, "/control/rewrite/list", d.handleRewriteList)
 	registerHTTP(http.MethodPost, "/control/rewrite/add", d.handleRewriteAdd)
+	registerHTTP(http.MethodPut, "/control/rewrite/update", d.handleRewriteUpdate)
 	registerHTTP(http.MethodPost, "/control/rewrite/delete", d.handleRewriteDelete)
 
 	registerHTTP(http.MethodGet, "/control/blocked_services/services", d.handleBlockedServicesIDs)

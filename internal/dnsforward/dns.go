@@ -145,10 +145,13 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, pctx *proxy.DNSContext) error 
 // processRecursion checks the incoming request and halts its handling by
 // answering NXDOMAIN if s has tried to resolve it recently.
 func (s *Server) processRecursion(dctx *dnsContext) (rc resultCode) {
+	log.Debug("dnsforward: started processing recursion")
+	defer log.Debug("dnsforward: finished processing recursion")
+
 	pctx := dctx.proxyCtx
 
 	if msg := pctx.Req; msg != nil && s.recDetector.check(*msg) {
-		log.Debug("recursion detected resolving %q", msg.Question[0].Name)
+		log.Debug("dnsforward: recursion detected resolving %q", msg.Question[0].Name)
 		pctx.Res = s.genNXDomain(pctx.Req)
 
 		return resultCodeFinish
@@ -158,10 +161,13 @@ func (s *Server) processRecursion(dctx *dnsContext) (rc resultCode) {
 }
 
 // processInitial terminates the following processing for some requests if
-// needed and enriches the ctx with some client-specific information.
+// needed and enriches dctx with some client-specific information.
 //
 // TODO(e.burkov):  Decompose into less general processors.
 func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
+	log.Debug("dnsforward: started processing initial")
+	defer log.Debug("dnsforward: finished processing initial")
+
 	pctx := dctx.proxyCtx
 	q := pctx.Req.Question[0]
 	qt := q.Qtype
@@ -282,6 +288,9 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 //
 // See https://www.ietf.org/archive/id/draft-ietf-add-ddr-10.html.
 func (s *Server) processDDRQuery(dctx *dnsContext) (rc resultCode) {
+	log.Debug("dnsforward: started processing ddr")
+	defer log.Debug("dnsforward: finished processing ddr")
+
 	if !s.conf.HandleDDR {
 		return resultCodeSuccess
 	}
@@ -375,6 +384,9 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 // processDetermineLocal determines if the client's IP address is from locally
 // served network and saves the result into the context.
 func (s *Server) processDetermineLocal(dctx *dnsContext) (rc resultCode) {
+	log.Debug("dnsforward: started processing local detection")
+	defer log.Debug("dnsforward: finished processing local detection")
+
 	rc = resultCodeSuccess
 
 	var ip net.IP
@@ -405,6 +417,9 @@ func (s *Server) dhcpHostToIP(host string) (ip netip.Addr, ok bool) {
 //
 // TODO(a.garipov): Adapt to AAAA as well.
 func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
+	log.Debug("dnsforward: started processing dhcp hosts")
+	defer log.Debug("dnsforward: finished processing dhcp hosts")
+
 	pctx := dctx.proxyCtx
 	req := pctx.Req
 	q := req.Question[0]
@@ -544,6 +559,9 @@ func extractARPASubnet(domain string) (pref netip.Prefix, err error) {
 // processRestrictLocal responds with NXDOMAIN to PTR requests for IP addresses
 // in locally served network from external clients.
 func (s *Server) processRestrictLocal(dctx *dnsContext) (rc resultCode) {
+	log.Debug("dnsforward: started processing local restriction")
+	defer log.Debug("dnsforward: finished processing local restriction")
+
 	pctx := dctx.proxyCtx
 	req := pctx.Req
 	q := req.Question[0]
@@ -613,6 +631,9 @@ func (s *Server) ipToDHCPHost(ip netip.Addr) (host string, ok bool) {
 // processDHCPAddrs responds to PTR requests if the target IP is leased by the
 // DHCP server.
 func (s *Server) processDHCPAddrs(dctx *dnsContext) (rc resultCode) {
+	log.Debug("dnsforward: started processing dhcp addrs")
+	defer log.Debug("dnsforward: finished processing dhcp addrs")
+
 	pctx := dctx.proxyCtx
 	if pctx.Res != nil {
 		return resultCodeSuccess
@@ -658,6 +679,9 @@ func (s *Server) processDHCPAddrs(dctx *dnsContext) (rc resultCode) {
 // processLocalPTR responds to PTR requests if the target IP is detected to be
 // inside the local network and the query was not answered from DHCP.
 func (s *Server) processLocalPTR(dctx *dnsContext) (rc resultCode) {
+	log.Debug("dnsforward: started processing local ptr")
+	defer log.Debug("dnsforward: finished processing local ptr")
+
 	pctx := dctx.proxyCtx
 	if pctx.Res != nil {
 		return resultCodeSuccess
@@ -692,6 +716,9 @@ func (s *Server) processLocalPTR(dctx *dnsContext) (rc resultCode) {
 
 // Apply filtering logic
 func (s *Server) processFilteringBeforeRequest(ctx *dnsContext) (rc resultCode) {
+	log.Debug("dnsforward: started processing filtering before req")
+	defer log.Debug("dnsforward: finished processing filtering before req")
+
 	if ctx.proxyCtx.Res != nil {
 		// Go on since the response is already set.
 		return resultCodeSuccess
@@ -725,6 +752,9 @@ func ipStringFromAddr(addr net.Addr) (ipStr string) {
 
 // processUpstream passes request to upstream servers and handles the response.
 func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
+	log.Debug("dnsforward: started processing upstream")
+	defer log.Debug("dnsforward: finished processing upstream")
+
 	pctx := dctx.proxyCtx
 	req := pctx.Req
 	q := req.Question[0]
@@ -871,6 +901,9 @@ func (s *Server) setCustomUpstream(pctx *proxy.DNSContext, clientID string) {
 
 // Apply filtering logic after we have received response from upstream servers
 func (s *Server) processFilteringAfterResponse(dctx *dnsContext) (rc resultCode) {
+	log.Debug("dnsforward: started processing filtering after resp")
+	defer log.Debug("dnsforward: finished processing filtering after resp")
+
 	pctx := dctx.proxyCtx
 	switch res := dctx.result; res.Reason {
 	case filtering.NotFilteredAllowList:
