@@ -14,14 +14,24 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.33] - 2023-06-28 (APPROX.)
+## [v0.107.34] - 2023-07-26 (APPROX.)
 
-See also the [v0.107.33 GitHub milestone][ms-v0.107.33].
+See also the [v0.107.34 GitHub milestone][ms-v0.107.34].
 
-[ms-v0.107.33]: https://github.com/AdguardTeam/AdGuardHome/milestone/68?closed=1
+[ms-v0.107.34]: https://github.com/AdguardTeam/AdGuardHome/milestone/69?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+
+
+## [v0.107.33] - 2023-07-03
+
+See also the [v0.107.33 GitHub milestone][ms-v0.107.33].
 
 ### Added
 
@@ -146,10 +156,11 @@ In this release, the schema version has changed from 20 to 23.
 
 ### Fixed
 
-- Using of `/etc/hosts` file to resolve the hostnames of upstream DNS servers
-  ([#5902]).
+- Ignoring of `/etc/hosts` file when resolving the hostnames of upstream DNS
+  servers ([#5902]).
 - Excessive error logging when using DNS-over-QUIC ([#5285]).
-- Cannot set `bind_host` in AdGuardHome.yaml (docker version)([#4231], [#4235]).
+- Inability to set `bind_host` in `AdGuardHome.yaml` in Docker ([#4231],
+  [#4235]).
 - The blocklists can now be deleted properly ([#5700]).
 - Queries with the question-section target `.`, for example `NS .`, are now
   counted in the statistics and correctly shown in the query log ([#5910]).
@@ -165,11 +176,9 @@ In this release, the schema version has changed from 20 to 23.
 [#5902]: https://github.com/AdguardTeam/AdGuardHome/issues/5902
 [#5910]: https://github.com/AdguardTeam/AdGuardHome/issues/5910
 [#5913]: https://github.com/AdguardTeam/AdGuardHome/issues/5913
-[#5939]: https://github.com/AdguardTeam/AdGuardHome/issues/5939
+[#5939]: https://github.com/AdguardTeam/AdGuardHome/discussions/5939
 
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[ms-v0.107.33]: https://github.com/AdguardTeam/AdGuardHome/milestone/68?closed=1
 
 
 
@@ -2151,11 +2160,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.33...HEAD
-[v0.107.33]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.32...v0.107.33
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.34...HEAD
+[v0.107.34]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.33...v0.107.34
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.32...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.33...HEAD
+[v0.107.33]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.32...v0.107.33
 [v0.107.32]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.31...v0.107.32
 [v0.107.31]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.30...v0.107.31
 [v0.107.30]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.29...v0.107.30
