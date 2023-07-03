@@ -54,7 +54,7 @@ const Counters = ({ refreshButton, subtitle }) => {
         avgProcessingTime,
     } = useSelector((state) => state.stats, shallowEqual);
     const { t } = useTranslation();
-    const days = interval / (1000 * 60 * 60 * 24)
+    const days = interval / (1000 * 60 * 60 * 24);
     const rows = [
         {
             label: 'dns_query',
