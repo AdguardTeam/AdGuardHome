@@ -11,7 +11,7 @@ require (
 	github.com/securego/gosec/v2 v2.16.0
 	github.com/uudashr/gocognit v1.0.6
 	golang.org/x/tools v0.10.0
-	golang.org/x/vuln v0.1.0
+	golang.org/x/vuln v0.2.0
 	honnef.co/go/tools v0.4.3
 	mvdan.cc/gofumpt v0.5.0
 	mvdan.cc/unparam v0.0.0-20230610194454-9ea02bef9868

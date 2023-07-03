@@ -513,6 +513,7 @@
     "statistics_clear_confirm": "您確定要清除統計資料嗎？",
     "statistics_retention_confirm": "您確定要更改統計資料保存時間嗎？如果您縮短期限部分資料可能將會遺失",
     "statistics_cleared": "已清除統計資料",
+    "statistics_enable": "啟用統計數據",
     "interval_hours": "{{count}} 小時",
     "interval_hours_plural": "{{count}} 小時",
     "filters_configuration": "過濾器設定",

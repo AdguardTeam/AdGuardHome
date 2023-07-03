@@ -1,5 +1,5 @@
 {
-    "client_settings": "Cài đặt máy khách",
+    "client_settings": "Cài đặt thiết bị",
     "example_upstream_reserved": "ngược dòng <0>cho các miền cụ thể</0>;",
     "example_upstream_comment": "một lời bình luận.",
     "upstream_parallel": "Sử dụng truy vấn song song để tăng tốc độ giải quyết bằng cách truy vấn đồng thời tất cả các máy chủ ngược tuyến",

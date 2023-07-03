@@ -137,6 +137,9 @@ In this release, the schema version has changed from 20 to 23.
 
 ### Deprecated
 
+- `HEALTHCHECK` and `ENTRYPOINT` sections in `Dockerfile` ([#5939]).  They cause
+  a lot of issues, especially with tools like `docker-compose` and `podman`, and
+  will be removed in a future release.
 - Flags `-h`, `--host`, `-p`, `--port` have been deprecated.  The `-h` flag
   will work as an alias for `--help`, instead of the deprecated `--host` in the
   future releases.
@@ -162,6 +165,7 @@ In this release, the schema version has changed from 20 to 23.
 [#5902]: https://github.com/AdguardTeam/AdGuardHome/issues/5902
 [#5910]: https://github.com/AdguardTeam/AdGuardHome/issues/5910
 [#5913]: https://github.com/AdguardTeam/AdGuardHome/issues/5913
+[#5939]: https://github.com/AdguardTeam/AdGuardHome/issues/5939
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
