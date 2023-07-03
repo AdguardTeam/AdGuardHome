@@ -54,12 +54,12 @@ const Counters = ({ refreshButton, subtitle }) => {
         avgProcessingTime,
     } = useSelector((state) => state.stats, shallowEqual);
     const { t } = useTranslation();
-
+    const days = interval / (1000 * 60 * 60 * 24)
     const rows = [
         {
             label: 'dns_query',
             count: numDnsQueries,
-            tooltipTitle: interval === 1 ? 'number_of_dns_query_24_hours' : t('number_of_dns_query_days', { count: interval }),
+            tooltipTitle: days === 1 ? 'number_of_dns_query_24_hours' : t('number_of_dns_query_days', { count: days }),
             response_status: RESPONSE_FILTER.ALL.QUERY,
         },
         {
