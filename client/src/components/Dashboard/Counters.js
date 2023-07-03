@@ -6,7 +6,7 @@ import { shallowEqual, useSelector } from 'react-redux';
 import Card from '../ui/Card';
 import { formatNumber } from '../../helpers/helpers';
 import LogsSearchLink from '../ui/LogsSearchLink';
-import { RESPONSE_FILTER } from '../../helpers/constants';
+import { RESPONSE_FILTER, DAY } from '../../helpers/constants';
 import Tooltip from '../ui/Tooltip';
 
 const Row = ({
@@ -54,7 +54,7 @@ const Counters = ({ refreshButton, subtitle }) => {
         avgProcessingTime,
     } = useSelector((state) => state.stats, shallowEqual);
     const { t } = useTranslation();
-    const days = interval / (1000 * 60 * 60 * 24);
+    const days = interval / DAY;
     const rows = [
         {
             label: 'dns_query',
