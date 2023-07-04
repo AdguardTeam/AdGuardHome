@@ -25,7 +25,7 @@ func toCacheItem(data []byte) *cacheItem {
 	t := time.Unix(int64(binary.BigEndian.Uint64(data)), 0)
 
 	data = data[expirySize:]
-	hashes := make([]hostnameHash, len(data)/hashSize)
+	hashes := make([]hostnameHash, 0, len(data)/hashSize)
 
 	for i := 0; i < len(data); i += hashSize {
 		var hash hostnameHash
@@ -41,9 +41,10 @@ func toCacheItem(data []byte) *cacheItem {
 
 // fromCacheItem encodes cacheItem into data.
 func fromCacheItem(item *cacheItem) (data []byte) {
-	data = make([]byte, len(item.hashes)*hashSize+expirySize)
+	data = make([]byte, 0, len(item.hashes)*hashSize+expirySize)
+
 	expiry := item.expiry.Unix()
-	binary.BigEndian.PutUint64(data[:expirySize], uint64(expiry))
+	data = binary.BigEndian.AppendUint64(data, uint64(expiry))
 
 	for _, v := range item.hashes {
 		// nolint:looppointer // The subsilce is used for a copy.

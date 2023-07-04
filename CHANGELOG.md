@@ -23,6 +23,13 @@ See also the [v0.107.34 GitHub milestone][ms-v0.107.34].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Excessive RAM and CPU consumption by Safe Browsing and Parental Control
+  filters ([#5896]).
+
+[#5896]: https://github.com/AdguardTeam/AdGuardHome/issues/5896
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
