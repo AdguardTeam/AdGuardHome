@@ -177,6 +177,7 @@ run_linter gocognit --over 10\
 	./internal/aghhttp/\
 	./internal/aghio/\
 	./internal/next/\
+	./internal/rdns/\
 	./internal/tools/\
 	./internal/version/\
 	./internal/whois/\

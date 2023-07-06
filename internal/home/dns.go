@@ -17,6 +17,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
+	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -167,13 +168,67 @@ func initDNSServer(
 		return fmt.Errorf("dnsServer.Prepare: %w", err)
 	}
 
-	if config.Clients.Sources.RDNS {
-		Context.rdns = NewRDNS(Context.dnsServer, &Context.clients, config.DNS.UsePrivateRDNS)
-	}
-
+	initRDNS()
 	initWHOIS()
 
 	return nil
+}
+
+const (
+	// defaultQueueSize is the size of queue of IPs for rDNS and WHOIS
+	// processing.
+	defaultQueueSize = 255
+
+	// defaultCacheSize is the maximum size of the cache for rDNS and WHOIS
+	// processing.  It must be greater than zero.
+	defaultCacheSize = 10_000
+
+	// defaultIPTTL is the Time to Live duration for IP addresses cached by
+	// rDNS and WHOIS.
+	defaultIPTTL = 1 * time.Hour
+)
+
+// initRDNS initializes the rDNS.
+func initRDNS() {
+	Context.rdnsCh = make(chan netip.Addr, defaultQueueSize)
+
+	// TODO(s.chzhen):  Add ability to disable it on dns server configuration
+	// update in [dnsforward] package.
+	r := rdns.New(&rdns.Config{
+		Exchanger: Context.dnsServer,
+		CacheSize: defaultCacheSize,
+		CacheTTL:  defaultIPTTL,
+	})
+
+	go processRDNS(r)
+}
+
+// processRDNS processes reverse DNS lookup queries.  It is intended to be used
+// as a goroutine.
+func processRDNS(r rdns.Interface) {
+	defer log.OnPanic("rdns")
+
+	for ip := range Context.rdnsCh {
+		ok := Context.dnsServer.ShouldResolveClient(ip)
+		if !ok {
+			continue
+		}
+
+		host, changed := r.Process(ip)
+		if host == "" || !changed {
+			continue
+		}
+
+		ok = Context.clients.AddHost(ip, host, ClientSourceRDNS)
+		if ok {
+			continue
+		}
+
+		log.Debug(
+			"dns: can't set rdns info for client %q: already set with higher priority source",
+			ip,
+		)
+	}
 }
 
 // initWHOIS initializes the WHOIS.
@@ -181,15 +236,8 @@ func initDNSServer(
 // TODO(s.chzhen):  Consider making configurable.
 func initWHOIS() {
 	const (
-		// defaultQueueSize is the size of queue of IPs for WHOIS processing.
-		defaultQueueSize = 255
-
 		// defaultTimeout is the timeout for WHOIS requests.
 		defaultTimeout = 5 * time.Second
-
-		// defaultCacheSize is the maximum size of the cache.  If it's zero,
-		// cache size is unlimited.
-		defaultCacheSize = 10_000
 
 		// defaultMaxConnReadSize is an upper limit in bytes for reading from
 		// net.Conn.
@@ -200,9 +248,6 @@ func initWHOIS() {
 
 		// defaultMaxInfoLen is the maximum length of whois.Info fields.
 		defaultMaxInfoLen = 250
-
-		// defaultIPTTL is the Time to Live duration for cached IP addresses.
-		defaultIPTTL = 1 * time.Hour
 	)
 
 	Context.whoisCh = make(chan netip.Addr, defaultQueueSize)
@@ -274,11 +319,7 @@ func onDNSRequest(pctx *proxy.DNSContext) {
 		return
 	}
 
-	srcs := config.Clients.Sources
-	if srcs.RDNS && !ip.IsLoopback() {
-		Context.rdns.Begin(ip)
-	}
-
+	Context.rdnsCh <- ip
 	Context.whoisCh <- ip
 }
 
@@ -517,11 +558,7 @@ func startDNSServer() error {
 
 	const topClientsNumber = 100 // the number of clients to get
 	for _, ip := range Context.stats.TopClientsIP(topClientsNumber) {
-		srcs := config.Clients.Sources
-		if srcs.RDNS && !ip.IsLoopback() {
-			Context.rdns.Begin(ip)
-		}
-
+		Context.rdnsCh <- ip
 		Context.whoisCh <- ip
 	}
 

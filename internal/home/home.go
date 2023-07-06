@@ -56,7 +56,6 @@ type homeContext struct {
 	stats      stats.Interface      // statistics module
 	queryLog   querylog.QueryLog    // query log module
 	dnsServer  *dnsforward.Server   // DNS module
-	rdns       *RDNS                // rDNS module
 	dhcpServer dhcpd.Interface      // DHCP module
 	auth       *Auth                // HTTP authentication module
 	filters    *filtering.DNSFilter // DNS filtering module
@@ -82,6 +81,9 @@ type homeContext struct {
 	tlsRoots         *x509.CertPool // list of root CAs for TLSv1.2
 	client           *http.Client
 	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
+
+	// rdnsCh is the channel for receiving IPs for rDNS processing.
+	rdnsCh chan netip.Addr
 
 	// whoisCh is the channel for receiving IPs for WHOIS processing.
 	whoisCh chan netip.Addr

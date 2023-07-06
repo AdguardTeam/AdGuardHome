@@ -1273,11 +1273,11 @@ func TestServer_Exchange(t *testing.T) {
 	)
 
 	var (
-		onesIP  = net.IP{1, 1, 1, 1}
-		localIP = net.IP{192, 168, 1, 1}
+		onesIP  = netip.MustParseAddr("1.1.1.1")
+		localIP = netip.MustParseAddr("192.168.1.1")
 	)
 
-	revExtIPv4, err := netutil.IPToReversedAddr(onesIP)
+	revExtIPv4, err := netutil.IPToReversedAddr(onesIP.AsSlice())
 	require.NoError(t, err)
 
 	extUpstream := &aghtest.UpstreamMock{
@@ -1290,7 +1290,7 @@ func TestServer_Exchange(t *testing.T) {
 		},
 	}
 
-	revLocIPv4, err := netutil.IPToReversedAddr(localIP)
+	revLocIPv4, err := netutil.IPToReversedAddr(localIP.AsSlice())
 	require.NoError(t, err)
 
 	locUpstream := &aghtest.UpstreamMock{
@@ -1330,7 +1330,7 @@ func TestServer_Exchange(t *testing.T) {
 		want        string
 		wantErr     error
 		locUpstream upstream.Upstream
-		req         net.IP
+		req         netip.Addr
 	}{{
 		name:        "external_good",
 		want:        onesHost,
@@ -1354,7 +1354,7 @@ func TestServer_Exchange(t *testing.T) {
 		want:        "",
 		wantErr:     ErrRDNSNoData,
 		locUpstream: locUpstream,
-		req:         net.IP{192, 168, 1, 2},
+		req:         netip.MustParseAddr("192.168.1.2"),
 	}, {
 		name:        "invalid_answer",
 		want:        "",
@@ -1395,4 +1395,58 @@ func TestServer_Exchange(t *testing.T) {
 		require.NoError(t, eerr)
 		assert.Empty(t, host)
 	})
+}
+
+func TestServer_ShouldResolveClient(t *testing.T) {
+	srv := &Server{
+		privateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
+	}
+
+	testCases := []struct {
+		ip         netip.Addr
+		want       require.BoolAssertionFunc
+		name       string
+		resolve    bool
+		usePrivate bool
+	}{{
+		name:       "default",
+		ip:         netip.MustParseAddr("1.1.1.1"),
+		want:       require.True,
+		resolve:    true,
+		usePrivate: true,
+	}, {
+		name:       "no_rdns",
+		ip:         netip.MustParseAddr("1.1.1.1"),
+		want:       require.False,
+		resolve:    false,
+		usePrivate: true,
+	}, {
+		name:       "loopback",
+		ip:         netip.MustParseAddr("127.0.0.1"),
+		want:       require.False,
+		resolve:    true,
+		usePrivate: true,
+	}, {
+		name:       "private_resolve",
+		ip:         netip.MustParseAddr("192.168.0.1"),
+		want:       require.True,
+		resolve:    true,
+		usePrivate: true,
+	}, {
+		name:       "private_no_resolve",
+		ip:         netip.MustParseAddr("192.168.0.1"),
+		want:       require.False,
+		resolve:    true,
+		usePrivate: false,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			srv.conf.ResolveClients = tc.resolve
+			srv.conf.UsePrivateRDNS = tc.usePrivate
+
+			ok := srv.ShouldResolveClient(tc.ip)
+			tc.want(t, ok)
+		})
+	}
 }
