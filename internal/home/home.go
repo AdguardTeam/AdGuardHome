@@ -829,20 +829,21 @@ func configureLogger(opts options) (err error) {
 // getLogSettings returns a log settings object properly initialized from opts.
 func getLogSettings(opts options) (ls *logSettings) {
 	ls = readLogSettings()
+	configLogSettings := config.Log
 
 	// Command-line arguments can override config settings.
-	if opts.verbose || config.Verbose {
+	if opts.verbose || configLogSettings.Verbose {
 		ls.Verbose = true
 	}
 
-	ls.File = stringutil.Coalesce(opts.logFile, config.File, ls.File)
+	ls.File = stringutil.Coalesce(opts.logFile, configLogSettings.File, ls.File)
 
 	// Handle default log settings overrides.
-	ls.Compress = config.Compress
-	ls.LocalTime = config.LocalTime
-	ls.MaxBackups = config.MaxBackups
-	ls.MaxSize = config.MaxSize
-	ls.MaxAge = config.MaxAge
+	ls.Compress = configLogSettings.Compress
+	ls.LocalTime = configLogSettings.LocalTime
+	ls.MaxBackups = configLogSettings.MaxBackups
+	ls.MaxSize = configLogSettings.MaxSize
+	ls.MaxAge = configLogSettings.MaxAge
 
 	if opts.runningAsService && ls.File == "" && runtime.GOOS == "windows" {
 		// When running as a Windows service, use eventlog by default if

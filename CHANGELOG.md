@@ -23,6 +23,40 @@ See also the [v0.107.34 GitHub milestone][ms-v0.107.34].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Changed
+
+#### Configuration Changes
+
+In this release, the schema version has changed from 23 to 24.
+
+- Properties starting with `log_`, and `verbose` property, which used to set up
+  logging are now moved to the new object `log` containing new properties `file`,
+  `max_backups`, `max_size`, `max_age`, `compress`, `local_time`, and `verbose`:
+
+  ```yaml
+  # BEFORE:
+  'log_file': ""
+  'log_max_backups': 0
+  'log_max_size': 100
+  'log_max_age': 3
+  'log_compress': false
+  'log_localtime': false
+  'verbose': false
+
+  # AFTER:
+  'log':
+    'file': ""
+    'max_backups': 0
+    'max_size': 100
+    'max_age': 3
+    'compress': false
+    'local_time': false
+    'verbose': false
+  ```
+
+  To rollback this change, remove the new object `log`, set back `log_` and
+  `verbose` properties and change the `schema_version` back to `23`.
+
 ### Fixed
 
 - Excessive RAM and CPU consumption by Safe Browsing and Parental Control
