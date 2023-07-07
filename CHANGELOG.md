@@ -25,6 +25,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- Improved CPU and RAM consumption during updates of filtering-rule lists.
+
 #### Configuration Changes
 
 In this release, the schema version has changed from 23 to 24.

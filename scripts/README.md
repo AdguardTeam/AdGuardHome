@@ -18,7 +18,7 @@ Run `make init` from the project root.
 
 
 
-##  `make/`: Makefile Scripts
+##  `make/`: Makefile scripts
 
 The release channels are: `development` (the default), `edge`, `beta`, and
 `release`.  If verbosity levels aren't documented here, there are only two: `0`,
@@ -26,7 +26,7 @@ don't print anything, and `1`, be verbose.
 
 
 
-   ###  `build-docker.sh`: Build A Multi-Architecture Docker Image
+   ###  `build-docker.sh`: Build a multi-architecture Docker image
 
 Required environment:
 
@@ -51,7 +51,7 @@ Optional environment:
 
 
 
-   ###  `build-release.sh`: Build A Release For All Platforms
+   ###  `build-release.sh`: Build a release for all platforms
 
 Required environment:
 
@@ -101,7 +101,22 @@ Required environment:
 
 
 
-   ###  `go-build.sh`: Build The Backend
+   ###  `go-bench.sh`: Run backend benchmarks
+
+Optional environment:
+
+ *  `GO`: set an alternative name for the Go compiler.
+
+ *  `TIMEOUT_FLAGS`: set timeout flags for tests.  The default value is
+    `--timeout=30s`.
+
+ *  `VERBOSE`: verbosity level.  `1` shows every command that is run and every
+    Go package that is processed.  `2` also shows subcommands and environment.
+    The default value is `0`, don't be verbose.
+
+
+
+   ###  `go-build.sh`: Build the backend
 
 Optional environment:
 
@@ -135,7 +150,7 @@ Required environment:
 
 
 
-   ###  `go-deps.sh`: Install Backend Dependencies
+   ###  `go-deps.sh`: Install backend dependencies
 
 Optional environment:
 
@@ -147,7 +162,25 @@ Optional environment:
 
 
 
-   ###  `go-lint.sh`: Run Backend Static Analyzers
+   ###  `go-fuzz.sh`: Run backend fuzz tests
+
+Optional environment:
+
+ *  `GO`: set an alternative name for the Go compiler.
+
+ *  `FUZZTIME_FLAGS`: set fuss flags for tests.  The default value is
+    `--fuzztime=20s`.
+
+ *  `TIMEOUT_FLAGS`: set timeout flags for tests.  The default value is
+    `--timeout=30s`.
+
+ *  `VERBOSE`: verbosity level.  `1` shows every command that is run and every
+    Go package that is processed.  `2` also shows subcommands and environment.
+    The default value is `0`, don't be verbose.
+
+
+
+   ###  `go-lint.sh`: Run backend static analyzers
 
 Don't forget to run `make go-tools` once first!
 
@@ -163,7 +196,7 @@ Optional environment:
 
 
 
-   ###  `go-test.sh`: Run Backend Tests
+   ###  `go-test.sh`: Run backend tests
 
 Optional environment:
 
@@ -173,7 +206,7 @@ Optional environment:
     `1`, use the race detector.
 
  *  `TIMEOUT_FLAGS`: set timeout flags for tests.  The default value is
-    `--timeout 30s`.
+    `--timeout=30s`.
 
  *  `VERBOSE`: verbosity level.  `1` shows every command that is run and every
     Go package that is processed.  `2` also shows subcommands.  The default
@@ -181,7 +214,7 @@ Optional environment:
 
 
 
-   ###  `go-tools.sh`: Install Backend Tooling
+   ###  `go-tools.sh`: Install backend tooling
 
 Installs the Go static analysis and other tools into `${PWD}/bin`.  Either add
 `${PWD}/bin` to your `$PATH` before all other entries, or use the commands

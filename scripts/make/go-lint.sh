@@ -176,6 +176,8 @@ run_linter gocognit --over 10\
 	./internal/aghchan/\
 	./internal/aghhttp/\
 	./internal/aghio/\
+	./internal/filtering/hashprefix/\
+	./internal/filtering/rulelist/\
 	./internal/next/\
 	./internal/rdns/\
 	./internal/tools/\
@@ -211,6 +213,8 @@ run_linter gosec --quiet\
 	./internal/dhcpd\
 	./internal/dhcpsvc\
 	./internal/dnsforward\
+	./internal/filtering/hashprefix/\
+	./internal/filtering/rulelist/\
 	./internal/next\
 	./internal/schedule\
 	./internal/stats\
@@ -219,8 +223,7 @@ run_linter gosec --quiet\
 	./internal/whois\
 	;
 
-# TODO(a.garipov): Enable --blank?
-run_linter errcheck --asserts ./...
+run_linter errcheck ./...
 
 staticcheck_matrix='
 darwin:  GOOS=darwin

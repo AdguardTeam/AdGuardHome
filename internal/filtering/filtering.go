@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -18,6 +17,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/mathutil"
@@ -170,6 +170,15 @@ type Checker interface {
 
 // DNSFilter matches hostnames and DNS requests against filtering rules.
 type DNSFilter struct {
+	// bufPool is a pool of buffers used for filtering-rule list parsing.
+	bufPool *sync.Pool
+
+	rulesStorage    *filterlist.RuleStorage
+	filteringEngine *urlfilter.DNSEngine
+
+	rulesStorageAllow    *filterlist.RuleStorage
+	filteringEngineAllow *urlfilter.DNSEngine
+
 	safeSearch SafeSearch
 
 	// safeBrowsingChecker is the safe browsing hash-prefix checker.
@@ -177,12 +186,6 @@ type DNSFilter struct {
 
 	// parentalControl is the parental control hash-prefix checker.
 	parentalControlChecker Checker
-
-	rulesStorage    *filterlist.RuleStorage
-	filteringEngine *urlfilter.DNSEngine
-
-	rulesStorageAllow    *filterlist.RuleStorage
-	filteringEngineAllow *urlfilter.DNSEngine
 
 	engineLock sync.RWMutex
 
@@ -195,12 +198,6 @@ type DNSFilter struct {
 	filtersInitializerLock sync.Mutex
 
 	refreshLock *sync.Mutex
-
-	// filterTitleRegexp is the regular expression to retrieve a name of a
-	// filter list.
-	//
-	// TODO(e.burkov):  Don't use regexp for such a simple text processing task.
-	filterTitleRegexp *regexp.Regexp
 
 	hostCheckers []hostChecker
 }
@@ -339,12 +336,12 @@ func cloneRewrites(entries []*LegacyRewrite) (clone []*LegacyRewrite) {
 	return clone
 }
 
-// SetFilters sets new filters, synchronously or asynchronously.  When filters
+// setFilters sets new filters, synchronously or asynchronously.  When filters
 // are set asynchronously, the old filters continue working until the new
 // filters are ready.
 //
 // In this case the caller must ensure that the old filter files are intact.
-func (d *DNSFilter) SetFilters(blockFilters, allowFilters []Filter, async bool) error {
+func (d *DNSFilter) setFilters(blockFilters, allowFilters []Filter, async bool) error {
 	if async {
 		params := filtersInitializerParams{
 			allowFilters: allowFilters,
@@ -370,14 +367,7 @@ func (d *DNSFilter) SetFilters(blockFilters, allowFilters []Filter, async bool) 
 		return nil
 	}
 
-	err := d.initFiltering(allowFilters, blockFilters)
-	if err != nil {
-		log.Error("filtering: can't initialize filtering subsystem: %s", err)
-
-		return err
-	}
-
-	return nil
+	return d.initFiltering(allowFilters, blockFilters)
 }
 
 // Starts initializing new filters by signal from channel
@@ -386,7 +376,8 @@ func (d *DNSFilter) filtersInitializer() {
 		params := <-d.filtersInitializerChan
 		err := d.initFiltering(params.allowFilters, params.blockFilters)
 		if err != nil {
-			log.Error("Can't initialize filtering subsystem: %s", err)
+			log.Error("filtering: initializing: %s", err)
+
 			continue
 		}
 	}
@@ -718,7 +709,7 @@ func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
 }
 
 // Initialize urlfilter objects.
-func (d *DNSFilter) initFiltering(allowFilters, blockFilters []Filter) error {
+func (d *DNSFilter) initFiltering(allowFilters, blockFilters []Filter) (err error) {
 	rulesStorage, err := newRuleStorage(blockFilters)
 	if err != nil {
 		return err
@@ -745,7 +736,8 @@ func (d *DNSFilter) initFiltering(allowFilters, blockFilters []Filter) error {
 
 	// Make sure that the OS reclaims memory as soon as possible.
 	debug.FreeOSMemory()
-	log.Debug("initialized filtering engine")
+
+	log.Debug("filtering: initialized filtering engine")
 
 	return nil
 }
@@ -949,8 +941,14 @@ func InitModule() {
 // be non-nil.
 func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	d = &DNSFilter{
+		bufPool: &sync.Pool{
+			New: func() (buf any) {
+				bufVal := make([]byte, rulelist.MaxRuleLen)
+
+				return &bufVal
+			},
+		},
 		refreshLock:            &sync.Mutex{},
-		filterTitleRegexp:      regexp.MustCompile(`^! Title: +(.*)$`),
 		safeBrowsingChecker:    c.SafeBrowsingChecker,
 		parentalControlChecker: c.ParentalControlChecker,
 	}
@@ -1047,7 +1045,7 @@ func (d *DNSFilter) checkSafeBrowsing(
 
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
-		defer timer.LogElapsed("safebrowsing lookup for %q", host)
+		defer timer.LogElapsed("filtering: safebrowsing lookup for %q", host)
 	}
 
 	res = Result{
@@ -1079,7 +1077,7 @@ func (d *DNSFilter) checkParental(
 
 	if log.GetLevel() >= log.DEBUG {
 		timer := log.StartTimer()
-		defer timer.LogElapsed("parental lookup for %q", host)
+		defer timer.LogElapsed("filtering: parental lookup for %q", host)
 	}
 
 	res = Result{

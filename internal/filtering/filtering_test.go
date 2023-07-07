@@ -547,7 +547,7 @@ func TestWhitelist(t *testing.T) {
 	}}
 	d, setts := newForTest(t, nil, filters)
 
-	err := d.SetFilters(filters, whiteFilters, false)
+	err := d.setFilters(filters, whiteFilters, false)
 	require.NoError(t, err)
 
 	t.Cleanup(d.Close)

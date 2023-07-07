@@ -122,7 +122,7 @@ func matchDomainWildcard(host, wildcard string) (ok bool) {
 	return isWildcard(wildcard) && strings.HasSuffix(host, wildcard[1:])
 }
 
-// legacyRewriteSortsBefore sorts rewirtes according to the following priority:
+// legacyRewriteSortsBefore sorts rewrites according to the following priority:
 //
 //  1. A and AAAA > CNAME;
 //  2. wildcard > exact;

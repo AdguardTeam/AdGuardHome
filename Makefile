@@ -78,7 +78,7 @@ build: deps quick-build
 
 quick-build: js-build go-build
 
-ci: deps test
+ci: deps test go-bench go-fuzz
 
 deps: js-deps go-deps
 lint: js-lint go-lint
@@ -104,8 +104,10 @@ js-deps:
 js-lint: ; $(NPM) $(NPM_FLAGS) run lint
 js-test: ; $(NPM) $(NPM_FLAGS) run test
 
+go-bench: ; $(ENV) "$(SHELL)" ./scripts/make/go-bench.sh
 go-build: ; $(ENV) "$(SHELL)" ./scripts/make/go-build.sh
 go-deps:  ; $(ENV) "$(SHELL)" ./scripts/make/go-deps.sh
+go-fuzz:  ; $(ENV) "$(SHELL)" ./scripts/make/go-fuzz.sh
 go-lint:  ; $(ENV) "$(SHELL)" ./scripts/make/go-lint.sh
 go-tools: ; $(ENV) "$(SHELL)" ./scripts/make/go-tools.sh
 

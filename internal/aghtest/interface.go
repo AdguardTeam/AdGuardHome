@@ -2,8 +2,8 @@ package aghtest
 
 import (
 	"context"
+	"io"
 	"io/fs"
-	"net"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
@@ -19,13 +19,13 @@ import (
 
 // Package fs
 
-// type check
-var _ fs.FS = &FS{}
-
-// FS is a mock [fs.FS] implementation for tests.
+// FS is a fake [fs.FS] implementation for tests.
 type FS struct {
 	OnOpen func(name string) (fs.File, error)
 }
+
+// type check
+var _ fs.FS = (*FS)(nil)
 
 // Open implements the [fs.FS] interface for *FS.
 func (fsys *FS) Open(name string) (fs.File, error) {
@@ -33,9 +33,9 @@ func (fsys *FS) Open(name string) (fs.File, error) {
 }
 
 // type check
-var _ fs.GlobFS = &GlobFS{}
+var _ fs.GlobFS = (*GlobFS)(nil)
 
-// GlobFS is a mock [fs.GlobFS] implementation for tests.
+// GlobFS is a fake [fs.GlobFS] implementation for tests.
 type GlobFS struct {
 	// FS is embedded here to avoid implementing all it's methods.
 	FS
@@ -48,9 +48,9 @@ func (fsys *GlobFS) Glob(pattern string) ([]string, error) {
 }
 
 // type check
-var _ fs.StatFS = &StatFS{}
+var _ fs.StatFS = (*StatFS)(nil)
 
-// StatFS is a mock [fs.StatFS] implementation for tests.
+// StatFS is a fake [fs.StatFS] implementation for tests.
 type StatFS struct {
 	// FS is embedded here to avoid implementing all it's methods.
 	FS
@@ -62,46 +62,33 @@ func (fsys *StatFS) Stat(name string) (fs.FileInfo, error) {
 	return fsys.OnStat(name)
 }
 
-// Package net
+// Package io
 
-// type check
-var _ net.Listener = (*Listener)(nil)
-
-// Listener is a mock [net.Listener] implementation for tests.
-type Listener struct {
-	OnAccept func() (conn net.Conn, err error)
-	OnAddr   func() (addr net.Addr)
-	OnClose  func() (err error)
+// Writer is a fake [io.Writer] implementation for tests.
+type Writer struct {
+	OnWrite func(b []byte) (n int, err error)
 }
 
-// Accept implements the [net.Listener] interface for *Listener.
-func (l *Listener) Accept() (conn net.Conn, err error) {
-	return l.OnAccept()
-}
+var _ io.Writer = (*Writer)(nil)
 
-// Addr implements the [net.Listener] interface for *Listener.
-func (l *Listener) Addr() (addr net.Addr) {
-	return l.OnAddr()
-}
-
-// Close implements the [net.Listener] interface for *Listener.
-func (l *Listener) Close() (err error) {
-	return l.OnClose()
+// Write implements the [io.Writer] interface for *Writer.
+func (w *Writer) Write(b []byte) (n int, err error) {
+	return w.OnWrite(b)
 }
 
 // Module adguard-home
 
 // Package aghos
 
-// type check
-var _ aghos.FSWatcher = (*FSWatcher)(nil)
-
-// FSWatcher is a mock [aghos.FSWatcher] implementation for tests.
+// FSWatcher is a fake [aghos.FSWatcher] implementation for tests.
 type FSWatcher struct {
 	OnEvents func() (e <-chan struct{})
 	OnAdd    func(name string) (err error)
 	OnClose  func() (err error)
 }
+
+// type check
+var _ aghos.FSWatcher = (*FSWatcher)(nil)
 
 // Events implements the [aghos.FSWatcher] interface for *FSWatcher.
 func (w *FSWatcher) Events() (e <-chan struct{}) {
@@ -120,15 +107,15 @@ func (w *FSWatcher) Close() (err error) {
 
 // Package agh
 
-// type check
-var _ agh.ServiceWithConfig[struct{}] = (*ServiceWithConfig[struct{}])(nil)
-
-// ServiceWithConfig is a mock [agh.ServiceWithConfig] implementation for tests.
+// ServiceWithConfig is a fake [agh.ServiceWithConfig] implementation for tests.
 type ServiceWithConfig[ConfigType any] struct {
 	OnStart    func() (err error)
 	OnShutdown func(ctx context.Context) (err error)
 	OnConfig   func() (c ConfigType)
 }
+
+// type check
+var _ agh.ServiceWithConfig[struct{}] = (*ServiceWithConfig[struct{}])(nil)
 
 // Start implements the [agh.ServiceWithConfig] interface for
 // *ServiceWithConfig.
@@ -152,10 +139,7 @@ func (s *ServiceWithConfig[ConfigType]) Config() (c ConfigType) {
 
 // Package upstream
 
-// type check
-var _ upstream.Upstream = (*UpstreamMock)(nil)
-
-// UpstreamMock is a mock [upstream.Upstream] implementation for tests.
+// UpstreamMock is a fake [upstream.Upstream] implementation for tests.
 //
 // TODO(a.garipov): Replace with all uses of Upstream with UpstreamMock and
 // rename it to just Upstream.
@@ -164,6 +148,9 @@ type UpstreamMock struct {
 	OnExchange func(req *dns.Msg) (resp *dns.Msg, err error)
 	OnClose    func() (err error)
 }
+
+// type check
+var _ upstream.Upstream = (*UpstreamMock)(nil)
 
 // Address implements the [upstream.Upstream] interface for *UpstreamMock.
 func (u *UpstreamMock) Address() (addr string) {

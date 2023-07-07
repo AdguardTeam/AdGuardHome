@@ -95,7 +95,7 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 			r,
 			w,
 			http.StatusBadRequest,
-			"Couldn't fetch filter from url %s: %s",
+			"Couldn't fetch filter from URL %q: %s",
 			filt.URL,
 			err,
 		)
