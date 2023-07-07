@@ -1,6 +1,6 @@
 # A docker file for scripts/make/build-docker.sh.
 
-FROM alpine:3.17
+FROM alpine:3.18
 
 ARG BUILD_DATE
 ARG VERSION
@@ -25,8 +25,6 @@ RUN apk --no-cache add ca-certificates libcap tzdata && \
 	mkdir -p /opt/adguardhome/conf /opt/adguardhome/work && \
 	chown -R nobody: /opt/adguardhome
 
-RUN apk --no-cache add tini
-
 ARG DIST_DIR
 ARG TARGETARCH
 ARG TARGETOS
@@ -43,43 +41,24 @@ RUN setcap 'cap_net_bind_service=+eip' /opt/adguardhome/AdGuardHome
 # 68     :      UDP : DHCP (client)
 # 80     : TCP      : HTTP (main)
 # 443    : TCP, UDP : HTTPS, DNS-over-HTTPS (incl. HTTP/3), DNSCrypt (main)
-# 784    :      UDP : DNS-over-QUIC (experimental)
+# 784    :      UDP : DNS-over-QUIC (deprecated; use 853)
 # 853    : TCP, UDP : DNS-over-TLS, DNS-over-QUIC
 # 3000   : TCP, UDP : HTTP(S) (alt, incl. HTTP/3)
-# 3001   : TCP, UDP : HTTP(S) (beta, incl. HTTP/3)
 # 5443   : TCP, UDP : DNSCrypt (alt)
 # 6060   : TCP      : HTTP (pprof)
-# 8853   :      UDP : DNS-over-QUIC (experimental)
+# 8853   :      UDP : DNS-over-QUIC (deprecated; use 853)
 #
 # TODO(a.garipov): Remove the old, non-standard 784 and 8853 ports for
 # DNS-over-QUIC in a future release.
 EXPOSE 53/tcp 53/udp 67/udp 68/udp 80/tcp 443/tcp 443/udp 784/udp\
-	853/tcp 853/udp 3000/tcp 3000/udp 5443/tcp\
-	5443/udp 6060/tcp 8853/udp
+	853/tcp 853/udp 3000/tcp 3000/udp 5443/tcp 5443/udp 6060/tcp\
+	8853/udp
 
 WORKDIR /opt/adguardhome/work
 
-# Install helpers for healthcheck.
-COPY --chown=nobody:nogroup\
-	./${DIST_DIR}/docker/scripts\
-	/opt/adguardhome/scripts
-
-HEALTHCHECK \
-	--interval=30s \
-	--timeout=10s \
-	--retries=3 \
-	CMD [ "/opt/adguardhome/scripts/healthcheck.sh" ]
-
-# It seems that the healthckech script sometimes spawns zombie processes, so we
-# need a way to handle them, since AdGuard Home doesn't know how to keep track
-# of the processes delegated to it by the OS.  Use tini as entry point because
-# it needs the PID=1 to be the default parent for orphaned processes.
-#
-# See https://github.com/adguardTeam/adGuardHome/issues/3290.
-ENTRYPOINT [ "/sbin/tini", "--" ]
+ENTRYPOINT ["/opt/adguardhome/AdGuardHome"]
 
 CMD [ \
-	"/opt/adguardhome/AdGuardHome", \
 	"--no-check-update", \
 	"-c", "/opt/adguardhome/conf/AdGuardHome.yaml", \
 	"-w", "/opt/adguardhome/work" \

@@ -107,18 +107,6 @@ cp "${dist_dir}/AdGuardHome_linux_arm_7/AdGuardHome/AdGuardHome"\
 cp "${dist_dir}/AdGuardHome_linux_ppc64le/AdGuardHome/AdGuardHome"\
 	"${dist_docker}/AdGuardHome_linux_ppc64le_"
 
-# Copy the helper scripts.  See file docker/Dockerfile.
-dist_docker_scripts="${dist_docker}/scripts"
-readonly dist_docker_scripts
-
-mkdir -p "$dist_docker_scripts"
-cp "./docker/dns-bind.awk"\
-	"${dist_docker_scripts}/dns-bind.awk"
-cp "./docker/web-bind.awk"\
-	"${dist_docker_scripts}/web-bind.awk"
-cp "./docker/healthcheck.sh"\
-	"${dist_docker_scripts}/healthcheck.sh"
-
 # Don't use quotes with $docker_version_tag and $docker_channel_tag, because we
 # want word splitting and or an empty space if tags are empty.
 #

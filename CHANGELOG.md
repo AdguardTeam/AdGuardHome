@@ -57,10 +57,25 @@ In this release, the schema version has changed from 23 to 24.
   To rollback this change, remove the new object `log`, set back `log_` and
   `verbose` properties and change the `schema_version` back to `23`.
 
+### Deprecated
+
+- Default exposure of the non-standard ports 784 and 8853 for DNS-over-QUIC in
+  the `Dockerfile`.
+
 ### Fixed
 
 - Excessive RAM and CPU consumption by Safe Browsing and Parental Control
   filters ([#5896]).
+
+### Removed
+
+- The `HEALTHCHECK` section and the use of `tini` in the `ENTRYPOINT` section in
+  `Dockerfile` ([#5939]).  They caused a lot of issues, especially with tools
+  like `docker-compose` and `podman`.
+
+  **NOTE:** Some Docker tools may cache `ENTRYPOINT` sections, so some users may
+  be required to backup their configuration, stop the container, purge the old
+  image, and reload it from scratch.
 
 [#5896]: https://github.com/AdguardTeam/AdGuardHome/issues/5896
 
@@ -188,9 +203,9 @@ In this release, the schema version has changed from 20 to 23.
 
 ### Deprecated
 
-- `HEALTHCHECK` and `ENTRYPOINT` sections in `Dockerfile` ([#5939]).  They cause
-  a lot of issues, especially with tools like `docker-compose` and `podman`, and
-  will be removed in a future release.
+- The `HEALTHCHECK` section and the use of `tini` in the `ENTRYPOINT` section in
+  `Dockerfile` ([#5939]).  They cause a lot of issues, especially with tools
+  like `docker-compose` and `podman`, and will be removed in a future release.
 - Flags `-h`, `--host`, `-p`, `--port` have been deprecated.  The `-h` flag
   will work as an alias for `--help`, instead of the deprecated `--host` in the
   future releases.
