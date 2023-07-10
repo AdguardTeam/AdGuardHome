@@ -47,7 +47,7 @@ func fromCacheItem(item *cacheItem) (data []byte) {
 	data = binary.BigEndian.AppendUint64(data, uint64(expiry))
 
 	for _, v := range item.hashes {
-		// nolint:looppointer // The subsilce is used for a copy.
+		// nolint:looppointer // The subsilce of v is used for a copy.
 		data = append(data, v[:]...)
 	}
 
@@ -63,7 +63,7 @@ func (c *Checker) findInCache(
 
 	i := 0
 	for _, hash := range hashes {
-		// nolint:looppointer // The subsilce is used for a safe cache lookup.
+		// nolint:looppointer // The has subsilce is used for a cache lookup.
 		data := c.cache.Get(hash[:prefixLen])
 		if data == nil {
 			hashes[i] = hash
@@ -98,34 +98,36 @@ func (c *Checker) storeInCache(hashesToRequest, respHashes []hostnameHash) {
 
 	for _, hash := range respHashes {
 		var pref prefix
-		// nolint:looppointer // The subsilce is used for a copy.
+		// nolint:looppointer // The hash subsilce is used for a copy.
 		copy(pref[:], hash[:])
 
 		hashToStore[pref] = append(hashToStore[pref], hash)
 	}
 
 	for pref, hash := range hashToStore {
-		// nolint:looppointer // The subsilce is used for a safe cache lookup.
-		c.setCache(pref[:], hash)
+		c.setCache(pref, hash)
 	}
 
 	for _, hash := range hashesToRequest {
-		// nolint:looppointer // The subsilce is used for a safe cache lookup.
-		pref := hash[:prefixLen]
-		val := c.cache.Get(pref)
+		// nolint:looppointer // The hash subsilce is used for a cache lookup.
+		val := c.cache.Get(hash[:prefixLen])
 		if val == nil {
+			var pref prefix
+			// nolint:looppointer // The hash subsilce is used for a copy.
+			copy(pref[:], hash[:])
+
 			c.setCache(pref, nil)
 		}
 	}
 }
 
 // setCache stores hash in cache.
-func (c *Checker) setCache(pref []byte, hashes []hostnameHash) {
+func (c *Checker) setCache(pref prefix, hashes []hostnameHash) {
 	item := &cacheItem{
 		expiry: time.Now().Add(c.cacheTime),
 		hashes: hashes,
 	}
 
-	c.cache.Set(pref, fromCacheItem(item))
+	c.cache.Set(pref[:], fromCacheItem(item))
 	log.Debug("%s: stored in cache: %v", c.svc, pref)
 }
