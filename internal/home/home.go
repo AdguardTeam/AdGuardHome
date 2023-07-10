@@ -470,7 +470,7 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 		ServiceName: pcService,
 		TXTSuffix:   pcTXTSuffix,
 		CacheTime:   cacheTime,
-		CacheSize:   conf.SafeBrowsingCacheSize,
+		CacheSize:   conf.ParentalCacheSize,
 	})
 
 	conf.SafeSearchConf.CustomResolver = safeSearchResolver{}

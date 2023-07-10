@@ -66,6 +66,7 @@ In this release, the schema version has changed from 23 to 24.
 
 ### Fixed
 
+- Incorrect setting of Parental Control cache size.
 - Excessive RAM and CPU consumption by Safe Browsing and Parental Control
   filters ([#5896]).
 
