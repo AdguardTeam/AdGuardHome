@@ -43,7 +43,7 @@ func NewDomainNameSet(list []string) (set *stringutil.Set, err error) {
 
 	for i, v := range list {
 		if v != "." {
-		        host := strings.ToLower(strings.TrimSuffix(v, "."))
+		    host := strings.ToLower(strings.TrimSuffix(v, "."))
 		}
 		
 		if host == "" {
