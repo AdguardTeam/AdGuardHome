@@ -42,9 +42,10 @@ func NewDomainNameSet(list []string) (set *stringutil.Set, err error) {
 	set = stringutil.NewSet()
 
 	for i, v := range list {
-		host := strings.ToLower(strings.TrimSuffix(v, "."))
-		// TODO(a.garipov): Think about ignoring empty (".") names in the
-		// future.
+		if v != "." {
+		    host := strings.ToLower(strings.TrimSuffix(v, "."))
+		}
+		
 		if host == "" {
 			return nil, errors.Error("host name is empty")
 		}
