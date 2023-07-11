@@ -47,7 +47,7 @@ func fromCacheItem(item *cacheItem) (data []byte) {
 	data = binary.BigEndian.AppendUint64(data, uint64(expiry))
 
 	for _, v := range item.hashes {
-		// nolint:looppointer // The subsilce of v is used for a copy.
+		// nolint:looppointer // The subslice of v is used for a copy.
 		data = append(data, v[:]...)
 	}
 
@@ -63,7 +63,7 @@ func (c *Checker) findInCache(
 
 	i := 0
 	for _, hash := range hashes {
-		// nolint:looppointer // The has subsilce is used for a cache lookup.
+		// nolint:looppointer // The has subslice is used for a cache lookup.
 		data := c.cache.Get(hash[:prefixLen])
 		if data == nil {
 			hashes[i] = hash
@@ -98,7 +98,7 @@ func (c *Checker) storeInCache(hashesToRequest, respHashes []hostnameHash) {
 
 	for _, hash := range respHashes {
 		var pref prefix
-		// nolint:looppointer // The hash subsilce is used for a copy.
+		// nolint:looppointer // The hash subslice is used for a copy.
 		copy(pref[:], hash[:])
 
 		hashToStore[pref] = append(hashToStore[pref], hash)
@@ -109,11 +109,11 @@ func (c *Checker) storeInCache(hashesToRequest, respHashes []hostnameHash) {
 	}
 
 	for _, hash := range hashesToRequest {
-		// nolint:looppointer // The hash subsilce is used for a cache lookup.
+		// nolint:looppointer // The hash subslice is used for a cache lookup.
 		val := c.cache.Get(hash[:prefixLen])
 		if val == nil {
 			var pref prefix
-			// nolint:looppointer // The hash subsilce is used for a copy.
+			// nolint:looppointer // The hash subslice is used for a copy.
 			copy(pref[:], hash[:])
 
 			c.setCache(pref, nil)
