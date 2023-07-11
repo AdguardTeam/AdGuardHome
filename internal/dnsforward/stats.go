@@ -2,9 +2,9 @@ package dnsforward
 
 import (
 	"net"
-	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
@@ -24,7 +24,7 @@ func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
 	pctx := dctx.proxyCtx
 
 	q := pctx.Req.Question[0]
-	host := strings.ToLower(strings.TrimSuffix(q.Name, "."))
+	host := aghnet.NormalizeDomain(q.Name)
 
 	ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
 	ip = slices.Clone(ip)
@@ -139,11 +139,10 @@ func (s *Server) updateStats(
 	clientIP string,
 ) {
 	pctx := ctx.proxyCtx
-	e := stats.Entry{}
-	e.Domain = strings.ToLower(pctx.Req.Question[0].Name)
-	if e.Domain != "." {
-		// Remove last ".", but save the domain as is for "." queries.
-		e.Domain = e.Domain[:len(e.Domain)-1]
+	e := stats.Entry{
+		Domain: aghnet.NormalizeDomain(pctx.Req.Question[0].Name),
+		Result: stats.RNotFiltered,
+		Time:   uint32(elapsed / 1000),
 	}
 
 	if clientID := ctx.clientID; clientID != "" {
@@ -152,9 +151,6 @@ func (s *Server) updateStats(
 		e.Client = clientIP
 	}
 
-	e.Time = uint32(elapsed / 1000)
-	e.Result = stats.RNotFiltered
-
 	switch res.Reason {
 	case filtering.FilteredSafeBrowsing:
 		e.Result = stats.RSafeBrowsing
@@ -162,7 +158,8 @@ func (s *Server) updateStats(
 		e.Result = stats.RParental
 	case filtering.FilteredSafeSearch:
 		e.Result = stats.RSafeSearch
-	case filtering.FilteredBlockList,
+	case
+		filtering.FilteredBlockList,
 		filtering.FilteredInvalid,
 		filtering.FilteredBlockedService:
 		e.Result = stats.RFiltered

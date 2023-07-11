@@ -23,6 +23,11 @@ See also the [v0.107.34 GitHub milestone][ms-v0.107.34].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- Ability to ignore queries for the root domain, such as `NS .` queries
+  ([#5990]).
+
 ### Changed
 
 - Improved CPU and RAM consumption during updates of filtering-rule lists.
@@ -83,6 +88,7 @@ In this release, the schema version has changed from 23 to 24.
 
 [#5896]: https://github.com/AdguardTeam/AdGuardHome/issues/5896
 [#5972]: https://github.com/AdguardTeam/AdGuardHome/issues/5972
+[#5990]: https://github.com/AdguardTeam/AdGuardHome/issues/5990
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

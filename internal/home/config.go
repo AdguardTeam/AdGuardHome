@@ -240,6 +240,7 @@ type tlsConfigSettings struct {
 
 type queryLogConfig struct {
 	// Ignored is the list of host names, which should not be written to log.
+	// "." is considered to be the root domain.
 	Ignored []string `yaml:"ignored"`
 
 	// Interval is the interval for query log's files rotation.
