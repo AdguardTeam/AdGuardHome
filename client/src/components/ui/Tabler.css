@@ -13363,7 +13363,7 @@ a.icon:hover {
     padding: 0.5rem 1.5rem;
     display: -ms-flexbox;
     display: flex;
-    min-height: 3.5rem;
+    min-height: 60px;
     -ms-flex-align: center;
     align-items: center;
 }

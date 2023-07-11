@@ -1,7 +1,7 @@
 .card-header {
     align-items: center;
     justify-content: space-between;
-    padding: 0.6rem 1.5rem;
+    padding: 10px 24px;
 }
 
 .card-subtitle {
@@ -16,11 +16,11 @@
 
 .card-table-overflow--limited {
     overflow-y: auto;
-    max-height: 17.5rem;
+    max-height: 280px;
 }
 
 .dashboard .card-table-overflow--limited {
-    max-height: 18rem;
+    max-height: 288px;
 }
 
 .card-actions {
@@ -38,7 +38,7 @@
 }
 
 .card-body--status {
-    padding: 2.5rem 1.5rem;
+    padding: 40px 24px;
     text-align: center;
 }
 
@@ -81,14 +81,14 @@
     position: relative;
     flex: 1 1 auto;
     margin: 0;
-    padding: 1rem 1.5rem;
+    padding: 16px 24px;
 }
 
 .card-value-stats {
     display: block;
     font-size: 2.1rem;
     line-height: 2.7rem;
-    height: 2.7rem;
+    height: 44px;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
@@ -108,7 +108,7 @@
 }
 
 .card--full {
-    height: calc(100% - 1.5rem);
+    height: calc(100% - 22px);
 }
 
 .card-wrap {
@@ -125,7 +125,7 @@
 
 @media (min-width: 992px) {
     .dashboard .card:not(.card--full) {
-        height: 22rem;
+        height: 350px;
     }
 }
 
