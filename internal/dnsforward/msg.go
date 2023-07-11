@@ -26,11 +26,25 @@ func (s *Server) makeResponse(req *dns.Msg) (resp *dns.Msg) {
 	return resp
 }
 
-// ipsFromRules extracts non-IP addresses from the filtering result rules.
+// containsIP returns true if the IP is already in the list.
+func containsIP(ips []net.IP, ip net.IP) bool {
+	for _, a := range ips {
+		if a.Equal(ip) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// ipsFromRules extracts unique non-IP addresses from the filtering result
+// rules.
 func ipsFromRules(resRules []*filtering.ResultRule) (ips []net.IP) {
 	for _, r := range resRules {
-		if r.IP != nil {
-			ips = append(ips, r.IP)
+		// len(resRules) and len(ips) are actually small enough for O(n^2) to do
+		// not raise performance questions.
+		if ip := r.IP; ip != nil && !containsIP(ips, ip) {
+			ips = append(ips, ip)
 		}
 	}
 

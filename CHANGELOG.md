@@ -66,6 +66,7 @@ In this release, the schema version has changed from 23 to 24.
 
 ### Fixed
 
+- Two unspecified IPs when a host is blocked in two filter lists ([#5972]).
 - Incorrect setting of Parental Control cache size.
 - Excessive RAM and CPU consumption by Safe Browsing and Parental Control
   filters ([#5896]).
@@ -81,6 +82,7 @@ In this release, the schema version has changed from 23 to 24.
   image, and reload it from scratch.
 
 [#5896]: https://github.com/AdguardTeam/AdGuardHome/issues/5896
+[#5972]: https://github.com/AdguardTeam/AdGuardHome/issues/5972
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
