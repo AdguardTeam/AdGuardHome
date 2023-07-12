@@ -14,14 +14,24 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.34] - 2023-07-26 (APPROX.)
+## [v0.107.35] - 2023-08-02 (APPROX.)
 
-See also the [v0.107.34 GitHub milestone][ms-v0.107.34].
+See also the [v0.107.35 GitHub milestone][ms-v0.107.35].
 
-[ms-v0.107.34]: https://github.com/AdguardTeam/AdGuardHome/milestone/69?closed=1
+[ms-v0.107.35]: https://github.com/AdguardTeam/AdGuardHome/milestone/70?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+
+
+## [v0.107.34] - 2023-07-12
+
+See also the [v0.107.34 GitHub milestone][ms-v0.107.34].
 
 ### Security
 
@@ -42,8 +52,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 In this release, the schema version has changed from 23 to 24.
 
 - Properties starting with `log_`, and `verbose` property, which used to set up
-  logging are now moved to the new object `log` containing new properties `file`,
-  `max_backups`, `max_size`, `max_age`, `compress`, `local_time`, and `verbose`:
+  logging are now moved to the new object `log` containing new properties
+  `file`, `max_backups`, `max_size`, `max_age`, `compress`, `local_time`, and
+  `verbose`:
 
   ```yaml
   # BEFORE:
@@ -57,13 +68,13 @@ In this release, the schema version has changed from 23 to 24.
 
   # AFTER:
   'log':
-    'file': ""
-    'max_backups': 0
-    'max_size': 100
-    'max_age': 3
-    'compress': false
-    'local_time': false
-    'verbose': false
+      'file': ""
+      'max_backups': 0
+      'max_size': 100
+      'max_age': 3
+      'compress': false
+      'local_time': false
+      'verbose': false
   ```
 
   To rollback this change, remove the new object `log`, set back `log_` and
@@ -95,11 +106,8 @@ In this release, the schema version has changed from 23 to 24.
 [#5972]: https://github.com/AdguardTeam/AdGuardHome/issues/5972
 [#5990]: https://github.com/AdguardTeam/AdGuardHome/issues/5990
 
-[go-1.19.11]: https://groups.google.com/g/golang-announce/c/2q13H6LEEx0/m/sduSepLLBwAJ
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[go-1.19.11]:   https://groups.google.com/g/golang-announce/c/2q13H6LEEx0/m/sduSepLLBwAJ
+[ms-v0.107.34]: https://github.com/AdguardTeam/AdGuardHome/milestone/69?closed=1
 
 
 
@@ -2234,11 +2242,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.34...HEAD
-[v0.107.34]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.33...v0.107.34
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.35...HEAD
+[v0.107.35]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.34...v0.107.35
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.33...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.34...HEAD
+[v0.107.34]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.33...v0.107.34
 [v0.107.33]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.32...v0.107.33
 [v0.107.32]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.31...v0.107.32
 [v0.107.31]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.30...v0.107.31
