@@ -30,32 +30,30 @@ import (
 const dataDir = "data"
 
 // logSettings are the logging settings part of the configuration file.
-//
-// TODO(a.garipov): Put them into a separate object.
 type logSettings struct {
 	// File is the path to the log file.  If empty, logs are written to stdout.
 	// If "syslog", logs are written to syslog.
-	File string `yaml:"log_file"`
+	File string `yaml:"file"`
 
 	// MaxBackups is the maximum number of old log files to retain.
 	//
 	// NOTE: MaxAge may still cause them to get deleted.
-	MaxBackups int `yaml:"log_max_backups"`
+	MaxBackups int `yaml:"max_backups"`
 
 	// MaxSize is the maximum size of the log file before it gets rotated, in
 	// megabytes.  The default value is 100 MB.
-	MaxSize int `yaml:"log_max_size"`
+	MaxSize int `yaml:"max_size"`
 
 	// MaxAge is the maximum duration for retaining old log files, in days.
-	MaxAge int `yaml:"log_max_age"`
+	MaxAge int `yaml:"max_age"`
 
 	// Compress determines, if the rotated log files should be compressed using
 	// gzip.
-	Compress bool `yaml:"log_compress"`
+	Compress bool `yaml:"compress"`
 
 	// LocalTime determines, if the time used for formatting the timestamps in
 	// is the computer's local time.
-	LocalTime bool `yaml:"log_localtime"`
+	LocalTime bool `yaml:"local_time"`
 
 	// Verbose determines, if verbose (aka debug) logging is enabled.
 	Verbose bool `yaml:"verbose"`
@@ -142,7 +140,8 @@ type configuration struct {
 	// Keep this field sorted to ensure consistent ordering.
 	Clients *clientsConfig `yaml:"clients"`
 
-	logSettings `yaml:",inline"`
+	// Log is a block with log configuration settings.
+	Log logSettings `yaml:"log"`
 
 	OSConfig *osConfig `yaml:"os"`
 
@@ -241,6 +240,7 @@ type tlsConfigSettings struct {
 
 type queryLogConfig struct {
 	// Ignored is the list of host names, which should not be written to log.
+	// "." is considered to be the root domain.
 	Ignored []string `yaml:"ignored"`
 
 	// Interval is the interval for query log's files rotation.
@@ -390,7 +390,7 @@ var config = &configuration{
 			HostsFile: true,
 		},
 	},
-	logSettings: logSettings{
+	Log: logSettings{
 		Compress:   false,
 		LocalTime:  false,
 		MaxBackups: 0,
@@ -421,19 +421,19 @@ func (c *configuration) getConfigFilename() string {
 // separate method in order to configure logger before the actual configuration
 // is parsed and applied.
 func readLogSettings() (ls *logSettings) {
-	ls = &logSettings{}
+	conf := &configuration{}
 
 	yamlFile, err := readConfigFile()
 	if err != nil {
-		return ls
+		return &logSettings{}
 	}
 
-	err = yaml.Unmarshal(yamlFile, ls)
+	err = yaml.Unmarshal(yamlFile, conf)
 	if err != nil {
 		log.Error("Couldn't get logging settings from the configuration: %s", err)
 	}
 
-	return ls
+	return &conf.Log
 }
 
 // validateBindHosts returns error if any of binding hosts from configuration is

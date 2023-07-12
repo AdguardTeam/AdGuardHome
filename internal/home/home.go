@@ -56,7 +56,6 @@ type homeContext struct {
 	stats      stats.Interface      // statistics module
 	queryLog   querylog.QueryLog    // query log module
 	dnsServer  *dnsforward.Server   // DNS module
-	rdns       *RDNS                // rDNS module
 	dhcpServer dhcpd.Interface      // DHCP module
 	auth       *Auth                // HTTP authentication module
 	filters    *filtering.DNSFilter // DNS filtering module
@@ -82,6 +81,9 @@ type homeContext struct {
 	tlsRoots         *x509.CertPool // list of root CAs for TLSv1.2
 	client           *http.Client
 	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
+
+	// rdnsCh is the channel for receiving IPs for rDNS processing.
+	rdnsCh chan netip.Addr
 
 	// whoisCh is the channel for receiving IPs for WHOIS processing.
 	whoisCh chan netip.Addr
@@ -468,7 +470,7 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 		ServiceName: pcService,
 		TXTSuffix:   pcTXTSuffix,
 		CacheTime:   cacheTime,
-		CacheSize:   conf.SafeBrowsingCacheSize,
+		CacheSize:   conf.ParentalCacheSize,
 	})
 
 	conf.SafeSearchConf.CustomResolver = safeSearchResolver{}
@@ -829,20 +831,21 @@ func configureLogger(opts options) (err error) {
 // getLogSettings returns a log settings object properly initialized from opts.
 func getLogSettings(opts options) (ls *logSettings) {
 	ls = readLogSettings()
+	configLogSettings := config.Log
 
 	// Command-line arguments can override config settings.
-	if opts.verbose || config.Verbose {
+	if opts.verbose || configLogSettings.Verbose {
 		ls.Verbose = true
 	}
 
-	ls.File = stringutil.Coalesce(opts.logFile, config.File, ls.File)
+	ls.File = stringutil.Coalesce(opts.logFile, configLogSettings.File, ls.File)
 
 	// Handle default log settings overrides.
-	ls.Compress = config.Compress
-	ls.LocalTime = config.LocalTime
-	ls.MaxBackups = config.MaxBackups
-	ls.MaxSize = config.MaxSize
-	ls.MaxAge = config.MaxAge
+	ls.Compress = configLogSettings.Compress
+	ls.LocalTime = configLogSettings.LocalTime
+	ls.MaxBackups = configLogSettings.MaxBackups
+	ls.MaxSize = configLogSettings.MaxSize
+	ls.MaxAge = configLogSettings.MaxAge
 
 	if opts.runningAsService && ls.File == "" && runtime.GOOS == "windows" {
 		// When running as a Windows service, use eventlog by default if

@@ -35,7 +35,7 @@ set -f -u
 go_version="$( "${GO:-go}" version )"
 readonly go_version
 
-go_min_version='go1.19.10'
+go_min_version='go1.19.11'
 go_version_msg="
 warning: your go version (${go_version}) is different from the recommended minimal one (${go_min_version}).
 if you have the version installed, please set the GO environment variable.
@@ -176,7 +176,10 @@ run_linter gocognit --over 10\
 	./internal/aghchan/\
 	./internal/aghhttp/\
 	./internal/aghio/\
+	./internal/filtering/hashprefix/\
+	./internal/filtering/rulelist/\
 	./internal/next/\
+	./internal/rdns/\
 	./internal/tools/\
 	./internal/version/\
 	./internal/whois/\
@@ -210,6 +213,8 @@ run_linter gosec --quiet\
 	./internal/dhcpd\
 	./internal/dhcpsvc\
 	./internal/dnsforward\
+	./internal/filtering/hashprefix/\
+	./internal/filtering/rulelist/\
 	./internal/next\
 	./internal/schedule\
 	./internal/stats\
@@ -218,8 +223,7 @@ run_linter gosec --quiet\
 	./internal/whois\
 	;
 
-# TODO(a.garipov): Enable --blank?
-run_linter errcheck --asserts ./...
+run_linter errcheck ./...
 
 staticcheck_matrix='
 darwin:  GOOS=darwin

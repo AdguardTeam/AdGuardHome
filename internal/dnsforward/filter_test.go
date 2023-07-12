@@ -21,6 +21,8 @@ func TestHandleDNSRequest_filterDNSResponse(t *testing.T) {
 ||cname.specific^$dnstype=~CNAME
 ||0.0.0.1^$dnstype=~A
 ||::1^$dnstype=~AAAA
+0.0.0.0 duplicate.domain
+0.0.0.0 duplicate.domain
 `
 
 	forwardConf := ServerConfig{
@@ -132,6 +134,17 @@ func TestHandleDNSRequest_filterDNSResponse(t *testing.T) {
 		wantAns: []dns.RR{&dns.A{
 			Hdr: dns.RR_Header{
 				Name:   "blocked.first.",
+				Rrtype: dns.TypeA,
+				Class:  dns.ClassINET,
+			},
+			A: netutil.IPv4Zero(),
+		}},
+	}, {
+		req:  createTestMessage("duplicate.domain."),
+		name: "duplicate_domain",
+		wantAns: []dns.RR{&dns.A{
+			Hdr: dns.RR_Header{
+				Name:   "duplicate.domain.",
 				Rrtype: dns.TypeA,
 				Class:  dns.ClassINET,
 			},

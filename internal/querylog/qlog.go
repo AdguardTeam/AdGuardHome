@@ -4,7 +4,6 @@ package querylog
 import (
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -161,10 +160,7 @@ func (l *queryLog) clear() {
 // newLogEntry creates an instance of logEntry from parameters.
 func newLogEntry(params *AddParams) (entry *logEntry) {
 	q := params.Question.Question[0]
-	qHost := q.Name
-	if qHost != "." {
-		qHost = strings.ToLower(q.Name[:len(q.Name)-1])
-	}
+	qHost := aghnet.NormalizeDomain(q.Name)
 
 	entry = &logEntry{
 		// TODO(d.kolyshev): Export this timestamp to func params.

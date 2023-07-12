@@ -173,7 +173,7 @@ func (c *Checker) getQuestion(hashes []hostnameHash) (q string) {
 	b := &strings.Builder{}
 
 	for _, hash := range hashes {
-		// nolint:looppointer // The subsilce is used for safe hex encoding.
+		// nolint:looppointer // The hash subslice is used for hex encoding.
 		stringutil.WriteToBuilder(b, hex.EncodeToString(hash[:prefixLen]), ".")
 	}
 

@@ -23,7 +23,7 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 23
+const currentSchemaVersion = 24
 
 // These aliases are provided for convenience.
 type (
@@ -98,6 +98,7 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema20to21,
 		upgradeSchema21to22,
 		upgradeSchema22to23,
+		upgradeSchema23to24,
 	}
 
 	n := 0
@@ -1321,6 +1322,110 @@ func upgradeSchema22to23(diskConf yobj) (err error) {
 	delete(diskConf, "bind_host")
 	delete(diskConf, "bind_port")
 	delete(diskConf, "web_session_ttl")
+
+	return nil
+}
+
+// upgradeSchema23to24 performs the following changes:
+//
+//	# BEFORE:
+//	'log_file': ""
+//	'log_max_backups': 0
+//	'log_max_size': 100
+//	'log_max_age': 3
+//	'log_compress': false
+//	'log_localtime': false
+//	'verbose': false
+//
+//	# AFTER:
+//	'log':
+//	  'file': ""
+//	  'max_backups': 0
+//	  'max_size': 100
+//	  'max_age': 3
+//	  'compress': false
+//	  'local_time': false
+//	  'verbose': false
+func upgradeSchema23to24(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 23 to 24")
+	diskConf["schema_version"] = 24
+
+	logObj := yobj{}
+	err = coalesceError(
+		moveField[string](diskConf, logObj, "log_file", "file"),
+		moveField[int](diskConf, logObj, "log_max_backups", "max_backups"),
+		moveField[int](diskConf, logObj, "log_max_size", "max_size"),
+		moveField[int](diskConf, logObj, "log_max_age", "max_age"),
+		moveField[bool](diskConf, logObj, "log_compress", "compress"),
+		moveField[bool](diskConf, logObj, "log_localtime", "local_time"),
+		moveField[bool](diskConf, logObj, "verbose", "verbose"),
+	)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	}
+
+	if len(logObj) != 0 {
+		diskConf["log"] = logObj
+	}
+
+	delete(diskConf, "log_file")
+	delete(diskConf, "log_max_backups")
+	delete(diskConf, "log_max_size")
+	delete(diskConf, "log_max_age")
+	delete(diskConf, "log_compress")
+	delete(diskConf, "log_localtime")
+	delete(diskConf, "verbose")
+
+	return nil
+}
+
+// moveField gets field value for key from diskConf, and then set this value
+// in newConf for newKey.
+func moveField[T any](diskConf, newConf yobj, key, newKey string) (err error) {
+	ok, newVal, err := fieldValue[T](diskConf, key)
+	if !ok {
+		return err
+	}
+
+	switch v := newVal.(type) {
+	case int, bool, string:
+		newConf[newKey] = v
+	default:
+		return fmt.Errorf("invalid type of %s: %T", key, newVal)
+	}
+
+	return nil
+}
+
+// fieldValue returns the value of type T for key in diskConf object.
+func fieldValue[T any](diskConf yobj, key string) (ok bool, field any, err error) {
+	fieldVal, ok := diskConf[key]
+	if !ok {
+		return false, new(T), nil
+	}
+
+	f, ok := fieldVal.(T)
+	if !ok {
+		return false, nil, fmt.Errorf("unexpected type of %s: %T", key, fieldVal)
+	}
+
+	return true, f, nil
+}
+
+// coalesceError returns the first non-nil error.  It is named after function
+// COALESCE in SQL.  If all errors are nil, it returns nil.
+//
+// TODO(a.garipov): Consider a similar helper to group errors together to show
+// as many errors as possible.
+//
+// TODO(a.garipov): Think of ways to merge with [aghalg.Coalesce].
+func coalesceError(errors ...error) (res error) {
+	for _, err := range errors {
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

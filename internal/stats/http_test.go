@@ -86,7 +86,7 @@ func TestHandleStatsConfig(t *testing.T) {
 			},
 		},
 		wantCode: http.StatusUnprocessableEntity,
-		wantErr:  "ignored: duplicate host name \"ignor.ed\" at index 1\n",
+		wantErr:  "ignored: duplicate hostname \"ignor.ed\" at index 1\n",
 	}, {
 		name: "ignored_empty",
 		body: getConfigResp{
@@ -97,7 +97,7 @@ func TestHandleStatsConfig(t *testing.T) {
 			},
 		},
 		wantCode: http.StatusUnprocessableEntity,
-		wantErr:  "ignored: host name is empty\n",
+		wantErr:  "ignored: at index 0: hostname is empty\n",
 	}, {
 		name: "enabled_is_null",
 		body: getConfigResp{

@@ -1,12 +1,8 @@
 package aghnet
 
 import (
-	"fmt"
 	"net/netip"
 	"strings"
-
-	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/stringutil"
 )
 
 // GenerateHostname generates the hostname from ip.  In case of using IPv4 the
@@ -29,32 +25,8 @@ func GenerateHostname(ip netip.Addr) (hostname string) {
 	hostname = ip.StringExpanded()
 
 	if ip.Is4() {
-		return strings.Replace(hostname, ".", "-", -1)
+		return strings.ReplaceAll(hostname, ".", "-")
 	}
 
-	return strings.Replace(hostname, ":", "-", -1)
-}
-
-// NewDomainNameSet returns nil and error, if list has duplicate or empty
-// domain name.  Otherwise returns a set, which contains non-FQDN domain names,
-// and nil error.
-func NewDomainNameSet(list []string) (set *stringutil.Set, err error) {
-	set = stringutil.NewSet()
-
-	for i, v := range list {
-		host := strings.ToLower(strings.TrimSuffix(v, "."))
-		// TODO(a.garipov): Think about ignoring empty (".") names in the
-		// future.
-		if host == "" {
-			return nil, errors.Error("host name is empty")
-		}
-
-		if set.Has(host) {
-			return nil, fmt.Errorf("duplicate host name %q at index %d", host, i)
-		}
-
-		set.Add(host)
-	}
-
-	return set, nil
+	return strings.ReplaceAll(hostname, ":", "-")
 }
