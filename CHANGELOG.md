@@ -23,6 +23,11 @@ See also the [v0.107.34 GitHub milestone][ms-v0.107.34].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2023-29406 Go vulnerability fixed in [Go 1.19.11][go-1.19.11].
+
 ### Added
 
 - Ability to ignore queries for the root domain, such as `NS .` queries
@@ -89,6 +94,8 @@ In this release, the schema version has changed from 23 to 24.
 [#5896]: https://github.com/AdguardTeam/AdGuardHome/issues/5896
 [#5972]: https://github.com/AdguardTeam/AdGuardHome/issues/5972
 [#5990]: https://github.com/AdguardTeam/AdGuardHome/issues/5990
+
+[go-1.19.11]: https://groups.google.com/g/golang-announce/c/2q13H6LEEx0/m/sduSepLLBwAJ
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
