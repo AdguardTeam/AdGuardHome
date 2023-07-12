@@ -269,24 +269,28 @@ Optional environment:
 
    ###  Usage
 
- *  `go run main.go help`: print usage.
+ *  `go run ./scripts/translations help`: print usage.
 
- *  `go run main.go download [-n <count>]`: download and save all translations.
-    `n` is optional flag where count is a number of concurrent downloads.
+ *  `go run ./scripts/translations download [-n <count>]`: download and save
+    all translations.  `n` is optional flag where count is a number of
+    concurrent downloads.
 
- *  `go run main.go upload`: upload the base `en` locale.
+ *  `go run ./scripts/translations upload`: upload the base `en` locale.
 
- *  `go run main.go summary`: show the current locales summary.
+ *  `go run ./scripts/translations summary`: show the current locales summary.
 
- *  `go run main.go unused`: show the list of unused strings.
+ *  `go run ./scripts/translations unused`: show the list of unused strings.
 
- *  `go run main.go auto-add`: add locales with additions to the git and
-    restore locales with deletions.
+ *  `go run ./scripts/translations auto-add`: add locales with additions to the
+    git and restore locales with deletions.
 
 After the download you'll find the output locales in the `client/src/__locales/`
 directory.
 
 Optional environment:
+
+ *  `DOWNLOAD_LANGUAGES`: set a list of specific languages to `download`.  For
+    example `ar be bg`.
 
  *  `UPLOAD_LANGUAGE`: set an alternative language for `upload`.
 

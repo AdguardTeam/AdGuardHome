@@ -183,6 +183,7 @@ run_linter gocognit --over 10\
 	./internal/tools/\
 	./internal/version/\
 	./internal/whois/\
+	./scripts/\
 	;
 
 run_linter ineffassign ./...
