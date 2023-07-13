@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"golang.org/x/exp/slices"
 )
 
 // Parser is a filtering-rule parser that collects data, such as the checksum
@@ -105,13 +104,11 @@ func (p *Parser) processLine(dst io.Writer, line []byte, lineNum int) (n int, er
 		badIdx, isRule = p.parseLineTitle(trimmed)
 	}
 	if badIdx != -1 {
-		badRune, _ := utf8.DecodeRune(trimmed[badIdx:])
-
 		return 0, fmt.Errorf(
-			"line %d: character %d: non-printable character %q",
+			"line %d: character %d: likely binary character %q",
 			lineNum,
 			badIdx+bytes.Index(line, trimmed)+1,
-			badRune,
+			trimmed[badIdx],
 		)
 	}
 
@@ -144,41 +141,37 @@ func hasPrefixFold(b, prefix []byte) (ok bool) {
 }
 
 // parseLine returns true if the parsed line is a filtering rule.  line is
-// assumed to be trimmed of whitespace characters.  nonPrintIdx is the index of
-// the first non-printable character, if any; if there are none, nonPrintIdx is
-// -1.
+// assumed to be trimmed of whitespace characters.  badIdx is the index of the
+// first character that may indicate that this is a binary file, or -1 if none.
 //
 // A line is considered a rule if it's not empty, not a comment, and contains
 // only printable characters.
-func parseLine(line []byte) (nonPrintIdx int, isRule bool) {
+func parseLine(line []byte) (badIdx int, isRule bool) {
 	if len(line) == 0 || line[0] == '#' || line[0] == '!' {
 		return -1, false
 	}
 
-	nonPrintIdx = bytes.IndexFunc(line, isNotPrintable)
+	badIdx = slices.IndexFunc(line, likelyBinary)
 
-	return nonPrintIdx, nonPrintIdx == -1
+	return badIdx, badIdx == -1
 }
 
-// isNotPrintable returns true if r is not a printable character that can be
-// contained in a filtering rule.
-func isNotPrintable(r rune) (ok bool) {
-	// Tab isn't included into Unicode's graphic symbols, so include it here
-	// explicitly.
-	return r != '\t' && !unicode.IsGraphic(r)
+// likelyBinary returns true if b is likely to be a byte from a binary file.
+func likelyBinary(b byte) (ok bool) {
+	return (b < ' ' || b == 0x7f) && b != '\n' && b != '\r' && b != '\t'
 }
 
 // parseLineTitle is like [parseLine] but additionally looks for a title.  line
 // is assumed to be trimmed of whitespace characters.
-func (p *Parser) parseLineTitle(line []byte) (nonPrintIdx int, isRule bool) {
+func (p *Parser) parseLineTitle(line []byte) (badIdx int, isRule bool) {
 	if len(line) == 0 || line[0] == '#' {
 		return -1, false
 	}
 
 	if line[0] != '!' {
-		nonPrintIdx = bytes.IndexFunc(line, isNotPrintable)
+		badIdx = slices.IndexFunc(line, likelyBinary)
 
-		return nonPrintIdx, nonPrintIdx == -1
+		return badIdx, badIdx == -1
 	}
 
 	const titlePattern = "! Title: "

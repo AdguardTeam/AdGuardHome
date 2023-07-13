@@ -78,6 +78,14 @@ func TestParser_Parse(t *testing.T) {
 		wantRulesNum: 1,
 		wantWritten:  len(testRuleTextBlocked),
 	}, {
+		name:         "cosmetic_with_zwnj",
+		in:           testRuleTextCosmetic,
+		wantDst:      testRuleTextCosmetic,
+		wantErrMsg:   "",
+		wantTitle:    "",
+		wantRulesNum: 1,
+		wantWritten:  len(testRuleTextCosmetic),
+	}, {
 		name: "bad_char",
 		in: "! Title:  Test Title \n" +
 			testRuleTextBlocked +
@@ -85,7 +93,7 @@ func TestParser_Parse(t *testing.T) {
 		wantDst: testRuleTextBlocked,
 		wantErrMsg: "line 3: " +
 			"character 4: " +
-			"non-printable character '\\x7f'",
+			"likely binary character '\\x7f'",
 		wantTitle:    "Test Title",
 		wantRulesNum: 1,
 		wantWritten:  len(testRuleTextBlocked),
@@ -215,6 +223,14 @@ func BenchmarkParser_Parse(b *testing.B) {
 
 	require.NoError(b, errSink)
 	require.NotNil(b, resSink)
+
+	// Most recent result, on a ThinkPad X13 with a Ryzen Pro 7 CPU:
+	//
+	//	goos: linux
+	//	goarch: amd64
+	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist
+	//	cpu: AMD Ryzen 7 PRO 4750U with Radeon Graphics
+	//	BenchmarkParser_Parse-16        100000000              128.0 ns/op            48 B/op          1 allocs/op
 }
 
 func FuzzParser_Parse(f *testing.F) {
@@ -226,15 +242,17 @@ func FuzzParser_Parse(f *testing.F) {
 		"! Comment",
 		"! Title ",
 		"! Title XXX",
+		testRuleTextBadTab,
+		testRuleTextBlocked,
+		testRuleTextCosmetic,
 		testRuleTextEtcHostsTab,
 		testRuleTextHTML,
-		testRuleTextBlocked,
-		testRuleTextBadTab,
 		"1.2.3.4",
 		"1.2.3.4 etc-hosts.example",
 		">>>\x00<<<",
 		">>>\x7F<<<",
-		strings.Repeat("a", n+1),
+		strings.Repeat("a", rulelist.DefaultRuleBufSize+1),
+		strings.Repeat("a", bufio.MaxScanTokenSize+1),
 	}
 
 	for _, tc := range testCases {
