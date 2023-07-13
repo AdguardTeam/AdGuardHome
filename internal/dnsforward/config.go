@@ -270,7 +270,10 @@ type ServerConfig struct {
 	UDPListenAddrs []*net.UDPAddr        // UDP listen address
 	TCPListenAddrs []*net.TCPAddr        // TCP listen address
 	UpstreamConfig *proxy.UpstreamConfig // Upstream DNS servers config
-	OnDNSRequest   func(d *proxy.DNSContext)
+
+	// ClientIPs, if not nil, is used to send clients' IP addresses to other
+	// parts of AdGuard Home that may use it for resolving rDNS, WHOIS, etc.
+	ClientIPs chan netip.Addr
 
 	FilteringConfig
 	TLSConfig

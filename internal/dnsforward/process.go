@@ -30,6 +30,7 @@ type dnsContext struct {
 	setts *filtering.Settings
 
 	result *filtering.Result
+
 	// origResp is the response received from upstream.  It is set when the
 	// response is modified by filters.
 	origResp *dns.Msg
@@ -48,12 +49,12 @@ type dnsContext struct {
 	// clientID is the ClientID from DoH, DoQ, or DoT, if provided.
 	clientID string
 
+	// startTime is the time at which the processing of the request has started.
+	startTime time.Time
+
 	// origQuestion is the question received from the client.  It is set
 	// when the request is modified by rewrites.
 	origQuestion dns.Question
-
-	// startTime is the time at which the processing of the request has started.
-	startTime time.Time
 
 	// protectionEnabled shows if the filtering is enabled, and if the
 	// server's DNS filter is ready.
@@ -177,9 +178,7 @@ func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
 		return resultCodeFinish
 	}
 
-	if s.conf.OnDNSRequest != nil {
-		s.conf.OnDNSRequest(pctx)
-	}
+	s.processClientIP(pctx.Addr)
 
 	// Disable Mozilla DoH.
 	//
@@ -216,6 +215,28 @@ func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
 	dctx.setts = s.getClientRequestFilteringSettings(dctx)
 
 	return resultCodeSuccess
+}
+
+// processClientIP sends the client IP address to s.clientIPs, if needed.
+func (s *Server) processClientIP(addr net.Addr) {
+	clientIP := netutil.NetAddrToAddrPort(addr).Addr()
+	if clientIP == (netip.Addr{}) {
+		log.Info("dnsforward: warning: bad client addr %q", addr)
+
+		return
+	}
+
+	// Do not assign s.clientIPs to a local variable to then use, since this
+	// lock also serializes the closure of s.clientIPs.
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	select {
+	case s.clientIPs <- clientIP:
+		// Go on.
+	default:
+		log.Debug("dnsforward: client ip channel is nil or full; len: %d", len(s.clientIPs))
+	}
 }
 
 func (s *Server) setTableHostToIP(t hostToIPTable) {

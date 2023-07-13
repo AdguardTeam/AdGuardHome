@@ -99,6 +99,10 @@ type Server struct {
 	// must be a valid domain name plus dots on each side.
 	localDomainSuffix string
 
+	// ClientIPs, if not nil, is used to send clients' IP addresses to other
+	// parts of AdGuard Home that may use it for resolving rDNS, WHOIS, etc.
+	clientIPs chan<- netip.Addr
+
 	ipset          ipsetCtx
 	privateNets    netutil.SubnetSet
 	localResolvers *proxy.Proxy
@@ -318,7 +322,8 @@ func (s *Server) Exchange(ip netip.Addr) (host string, err error) {
 			Qclass: dns.ClassINET,
 		}},
 	}
-	ctx := &proxy.DNSContext{
+
+	dctx := &proxy.DNSContext{
 		Proto:     "udp",
 		Req:       req,
 		StartTime: time.Now(),
@@ -336,11 +341,11 @@ func (s *Server) Exchange(ip netip.Addr) (host string, err error) {
 		resolver = s.internalProxy
 	}
 
-	if err = resolver.Resolve(ctx); err != nil {
+	if err = resolver.Resolve(dctx); err != nil {
 		return "", err
 	}
 
-	return hostFromPTR(ctx.Res)
+	return hostFromPTR(dctx.Res)
 }
 
 // hostFromPTR returns domain name from the PTR response or error.
@@ -555,6 +560,8 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 
 	s.recDetector.clear()
 
+	s.clientIPs = s.conf.ClientIPs
+
 	return nil
 }
 
@@ -696,6 +703,9 @@ func (s *Server) Reconfigure(conf *ServerConfig) error {
 	// TODO(a.garipov): This whole piece of API is weird and needs to be remade.
 	if conf == nil {
 		conf = &s.conf
+	} else if s.clientIPs != nil {
+		close(s.clientIPs)
+		s.clientIPs = nil
 	}
 
 	err = s.Prepare(conf)

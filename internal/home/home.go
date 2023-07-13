@@ -82,12 +82,6 @@ type homeContext struct {
 	client           *http.Client
 	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
 
-	// rdnsCh is the channel for receiving IPs for rDNS processing.
-	rdnsCh chan netip.Addr
-
-	// whoisCh is the channel for receiving IPs for WHOIS processing.
-	whoisCh chan netip.Addr
-
 	// tlsCipherIDs are the ID of the cipher suites that AdGuard Home must use.
 	tlsCipherIDs []uint16
 
@@ -634,10 +628,10 @@ func run(opts options, clientBuildFS fs.FS) {
 		Context.tls.start()
 
 		go func() {
-			sErr := startDNSServer()
-			if sErr != nil {
+			startErr := startDNSServer()
+			if startErr != nil {
 				closeDNSServer()
-				fatalOnError(sErr)
+				fatalOnError(startErr)
 			}
 		}()
 

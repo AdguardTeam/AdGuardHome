@@ -141,7 +141,7 @@ func (clients *clientsContainer) handleHostsUpdates() {
 	}
 }
 
-// webHandlersRegistered prevents a [clientsContainer] from regisering its web
+// webHandlersRegistered prevents a [clientsContainer] from registering its web
 // handlers more than once.
 //
 // TODO(a.garipov): Refactor HTTP handler registration logic.
