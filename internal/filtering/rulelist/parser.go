@@ -7,6 +7,7 @@ import (
 	"hash/crc32"
 	"io"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/AdguardTeam/golibs/errors"
 )
@@ -48,19 +49,29 @@ type ParseResult struct {
 // nil.
 func (p *Parser) Parse(dst io.Writer, src io.Reader, buf []byte) (r *ParseResult, err error) {
 	s := bufio.NewScanner(src)
-	s.Buffer(buf, MaxRuleLen)
 
-	lineIdx := 0
+	// Don't use [DefaultRuleBufSize] as the maximum size, since some
+	// filtering-rule lists compressed by e.g. HostlistsCompiler can have very
+	// large lines.  The buffer optimization still works for the more common
+	// case of reasonably-sized lines.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/6003.
+	s.Buffer(buf, bufio.MaxScanTokenSize)
+
+	// Use a one-based index for lines and columns, since these errors end up in
+	// the frontend, and users are more familiar with one-based line and column
+	// indexes.
+	lineNum := 1
 	for s.Scan() {
 		var n int
-		n, err = p.processLine(dst, s.Bytes(), lineIdx)
+		n, err = p.processLine(dst, s.Bytes(), lineNum)
 		p.written += n
 		if err != nil {
 			// Don't wrap the error, because it's informative enough as is.
 			return p.result(), err
 		}
 
-		lineIdx++
+		lineNum++
 	}
 
 	r = p.result()
@@ -81,7 +92,7 @@ func (p *Parser) result() (r *ParseResult) {
 
 // processLine processes a single line.  It may write to dst, and if it does, n
 // is the number of bytes written.
-func (p *Parser) processLine(dst io.Writer, line []byte, lineIdx int) (n int, err error) {
+func (p *Parser) processLine(dst io.Writer, line []byte, lineNum int) (n int, err error) {
 	trimmed := bytes.TrimSpace(line)
 	if p.written == 0 && isHTMLLine(trimmed) {
 		return 0, ErrHTML
@@ -94,10 +105,13 @@ func (p *Parser) processLine(dst io.Writer, line []byte, lineIdx int) (n int, er
 		badIdx, isRule = p.parseLineTitle(trimmed)
 	}
 	if badIdx != -1 {
+		badRune, _ := utf8.DecodeRune(trimmed[badIdx:])
+
 		return 0, fmt.Errorf(
-			"line at index %d: character at index %d: non-printable character",
-			lineIdx,
-			badIdx+bytes.Index(line, trimmed),
+			"line %d: character %d: non-printable character %q",
+			lineNum,
+			badIdx+bytes.Index(line, trimmed)+1,
+			badRune,
 		)
 	}
 

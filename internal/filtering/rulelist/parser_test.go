@@ -17,6 +17,9 @@ import (
 func TestParser_Parse(t *testing.T) {
 	t.Parallel()
 
+	longRule := strings.Repeat("a", rulelist.DefaultRuleBufSize+1) + "\n"
+	tooLongRule := strings.Repeat("a", bufio.MaxScanTokenSize+1) + "\n"
+
 	testCases := []struct {
 		name         string
 		in           string
@@ -80,20 +83,28 @@ func TestParser_Parse(t *testing.T) {
 			testRuleTextBlocked +
 			">>>\x7F<<<",
 		wantDst: testRuleTextBlocked,
-		wantErrMsg: "line at index 2: " +
-			"character at index 3: " +
-			"non-printable character",
+		wantErrMsg: "line 3: " +
+			"character 4: " +
+			"non-printable character '\\x7f'",
 		wantTitle:    "Test Title",
 		wantRulesNum: 1,
 		wantWritten:  len(testRuleTextBlocked),
 	}, {
 		name:         "too_long",
-		in:           strings.Repeat("a", rulelist.MaxRuleLen+1),
+		in:           tooLongRule,
 		wantDst:      "",
-		wantErrMsg:   "scanning filter contents: " + bufio.ErrTooLong.Error(),
+		wantErrMsg:   "scanning filter contents: bufio.Scanner: token too long",
 		wantTitle:    "",
 		wantRulesNum: 0,
 		wantWritten:  0,
+	}, {
+		name:         "longer_than_default",
+		in:           longRule,
+		wantDst:      longRule,
+		wantErrMsg:   "",
+		wantTitle:    "",
+		wantRulesNum: 1,
+		wantWritten:  len(longRule),
 	}, {
 		name:         "bad_tab_and_comment",
 		in:           testRuleTextBadTab,
@@ -118,7 +129,7 @@ func TestParser_Parse(t *testing.T) {
 			t.Parallel()
 
 			dst := &bytes.Buffer{}
-			buf := make([]byte, rulelist.MaxRuleLen)
+			buf := make([]byte, rulelist.DefaultRuleBufSize)
 
 			p := rulelist.NewParser()
 			r, err := p.Parse(dst, strings.NewReader(tc.in), buf)
@@ -145,7 +156,7 @@ func TestParser_Parse_writeError(t *testing.T) {
 			return 1, errors.Error("test error")
 		},
 	}
-	buf := make([]byte, rulelist.MaxRuleLen)
+	buf := make([]byte, rulelist.DefaultRuleBufSize)
 
 	p := rulelist.NewParser()
 	r, err := p.Parse(dst, strings.NewReader(testRuleTextBlocked), buf)
@@ -165,7 +176,7 @@ func TestParser_Parse_checksums(t *testing.T) {
 			"# Another comment.\n"
 	)
 
-	buf := make([]byte, rulelist.MaxRuleLen)
+	buf := make([]byte, rulelist.DefaultRuleBufSize)
 
 	p := rulelist.NewParser()
 	r, err := p.Parse(&bytes.Buffer{}, strings.NewReader(withoutComments), buf)
@@ -192,7 +203,7 @@ var (
 func BenchmarkParser_Parse(b *testing.B) {
 	dst := &bytes.Buffer{}
 	src := strings.NewReader(strings.Repeat(testRuleTextBlocked, 1000))
-	buf := make([]byte, rulelist.MaxRuleLen)
+	buf := make([]byte, rulelist.DefaultRuleBufSize)
 	p := rulelist.NewParser()
 
 	b.ReportAllocs()

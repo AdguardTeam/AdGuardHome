@@ -23,10 +23,17 @@ See also the [v0.107.35 GitHub milestone][ms-v0.107.35].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- `bufio.Scanner: token too long` errors when trying to add filtering-rule lists
+  with lines over 1024 bytes long ([#6003]).
+
 ### Removed
 
 - Default exposure of the non-standard ports 784 and 8853 for DNS-over-QUIC in
   the `Dockerfile`.
+
+[#6003]: https://github.com/AdguardTeam/AdGuardHome/issues/6003
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
