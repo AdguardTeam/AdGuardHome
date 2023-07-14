@@ -38,7 +38,10 @@ const (
 // newClientAddrProcessor returns a new client address processor.  c must not be
 // nil.
 func newClientAddrProcessor(c *clientSourcesConfig) (p *clientAddrProcessor) {
-	p = &clientAddrProcessor{}
+	p = &clientAddrProcessor{
+		rdns:  &rdns.Empty{},
+		whois: &whois.Empty{},
+	}
 
 	if c.RDNS {
 		p.rdns = rdns.New(&rdns.Config{
@@ -46,8 +49,6 @@ func newClientAddrProcessor(c *clientSourcesConfig) (p *clientAddrProcessor) {
 			CacheSize: defaultCacheSize,
 			CacheTTL:  defaultIPTTL,
 		})
-	} else {
-		p.rdns = rdns.Empty{}
 	}
 
 	if c.WHOIS {
@@ -78,15 +79,13 @@ func newClientAddrProcessor(c *clientSourcesConfig) (p *clientAddrProcessor) {
 			MaxInfoLen:      defaultMaxInfoLen,
 			CacheTTL:        defaultIPTTL,
 		})
-	} else {
-		p.whois = whois.Empty{}
 	}
 
 	return p
 }
 
 // process processes the incoming client IP-address information.  It is intended
-// to be used as a goroutine.
+// to be used as a goroutine.  Once clientIPs is closed, process exits.
 func (p *clientAddrProcessor) process(clientIPs <-chan netip.Addr) {
 	defer log.OnPanic("clientAddrProcessor.process")
 

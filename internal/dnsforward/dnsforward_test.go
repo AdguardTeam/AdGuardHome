@@ -39,10 +39,28 @@ func TestMain(m *testing.M) {
 	testutil.DiscardLogOutput(m)
 }
 
+// testTimeout is the common timeout for tests.
+//
+// TODO(a.garipov): Use more.
+const testTimeout = 1 * time.Second
+
+// testQuestionTarget is the common question target for tests.
+//
+// TODO(a.garipov): Use more.
+const testQuestionTarget = "target.example"
+
 const (
 	tlsServerName     = "testdns.adguard.com"
 	testMessagesCount = 10
 )
+
+// testClientAddr is the common net.Addr for tests.
+//
+// TODO(a.garipov): Use more.
+var testClientAddr net.Addr = &net.TCPAddr{
+	IP:   net.IP{1, 2, 3, 4},
+	Port: 12345,
+}
 
 func startDeferStop(t *testing.T, s *Server) {
 	t.Helper()
@@ -53,6 +71,13 @@ func startDeferStop(t *testing.T, s *Server) {
 	testutil.CleanupAndRequireSuccess(t, s.Stop)
 }
 
+// packageUpstreamVariableMu is used to serialize access to the package-level
+// variables of package upstream.
+//
+// TODO(s.chzhen): Move these parameters to upstream options and remove this
+// crutch.
+var packageUpstreamVariableMu = &sync.Mutex{}
+
 func createTestServer(
 	t *testing.T,
 	filterConf *filtering.Config,
@@ -60,6 +85,9 @@ func createTestServer(
 	localUps upstream.Upstream,
 ) (s *Server) {
 	t.Helper()
+
+	packageUpstreamVariableMu.Lock()
+	defer packageUpstreamVariableMu.Unlock()
 
 	rules := `||nxdomain.example.org
 ||NULL.example.org^
@@ -307,11 +335,9 @@ func TestServer(t *testing.T) {
 }
 
 func TestServer_timeout(t *testing.T) {
-	const timeout time.Duration = time.Second
-
 	t.Run("custom", func(t *testing.T) {
 		srvConf := &ServerConfig{
-			UpstreamTimeout: timeout,
+			UpstreamTimeout: testTimeout,
 			FilteringConfig: FilteringConfig{
 				BlockingMode:     BlockingModeDefault,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
@@ -324,7 +350,7 @@ func TestServer_timeout(t *testing.T) {
 		err = s.Prepare(srvConf)
 		require.NoError(t, err)
 
-		assert.Equal(t, timeout, s.conf.UpstreamTimeout)
+		assert.Equal(t, testTimeout, s.conf.UpstreamTimeout)
 	})
 
 	t.Run("default", func(t *testing.T) {
@@ -545,7 +571,7 @@ func TestInvalidRequest(t *testing.T) {
 
 	// Send a DNS request without question.
 	_, _, err := (&dns.Client{
-		Timeout: 500 * time.Millisecond,
+		Timeout: testTimeout,
 	}).Exchange(&req, addr)
 
 	assert.NoErrorf(t, err, "got a response to an invalid query")

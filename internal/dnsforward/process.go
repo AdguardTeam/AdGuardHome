@@ -161,6 +161,22 @@ func (s *Server) processRecursion(dctx *dnsContext) (rc resultCode) {
 	return resultCodeSuccess
 }
 
+// mozillaFQDN is the domain used to signal the Firefox browser to not use its
+// own DoH server.
+//
+// See https://support.mozilla.org/en-US/kb/canary-domain-use-application-dnsnet.
+const mozillaFQDN = "use-application-dns.net."
+
+// healthcheckFQDN is a reserved domain-name used for healthchecking.
+//
+// [Section 6.2 of RFC 6761] states that DNS Registries/Registrars must not
+// grant requests to register test names in the normal way to any person or
+// entity, making domain names under the test. TLD free to use in internal
+// purposes.
+//
+// [Section 6.2 of RFC 6761]: https://www.rfc-editor.org/rfc/rfc6761.html#section-6.2
+const healthcheckFQDN = "healthcheck.adguardhome.test."
+
 // processInitial terminates the following processing for some requests if
 // needed and enriches dctx with some client-specific information.
 //
@@ -170,6 +186,8 @@ func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
 	defer log.Debug("dnsforward: finished processing initial")
 
 	pctx := dctx.proxyCtx
+	s.processClientIP(pctx.Addr)
+
 	q := pctx.Req.Question[0]
 	qt := q.Qtype
 	if s.conf.AAAADisabled && qt == dns.TypeAAAA {
@@ -178,26 +196,13 @@ func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
 		return resultCodeFinish
 	}
 
-	s.processClientIP(pctx.Addr)
-
-	// Disable Mozilla DoH.
-	//
-	// See https://support.mozilla.org/en-US/kb/canary-domain-use-application-dnsnet.
-	if (qt == dns.TypeA || qt == dns.TypeAAAA) && q.Name == "use-application-dns.net." {
+	if (qt == dns.TypeA || qt == dns.TypeAAAA) && q.Name == mozillaFQDN {
 		pctx.Res = s.genNXDomain(pctx.Req)
 
 		return resultCodeFinish
 	}
 
-	// Handle a reserved domain healthcheck.adguardhome.test.
-	//
-	// [Section 6.2 of RFC 6761] states that DNS Registries/Registrars must not
-	// grant requests to register test names in the normal way to any person or
-	// entity, making domain names under test. TLD free to use in internal
-	// purposes.
-	//
-	// [Section 6.2 of RFC 6761]: https://www.rfc-editor.org/rfc/rfc6761.html#section-6.2
-	if q.Name == "healthcheck.adguardhome.test." {
+	if q.Name == healthcheckFQDN {
 		// Generate a NODATA negative response to make nslookup exit with 0.
 		pctx.Res = s.makeResponse(pctx.Req)
 
@@ -212,7 +217,7 @@ func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
 
 	// Get the client-specific filtering settings.
 	dctx.protectionEnabled, _ = s.UpdatedProtectionStatus()
-	dctx.setts = s.getClientRequestFilteringSettings(dctx)
+	dctx.setts = s.clientRequestFilteringSettings(dctx)
 
 	return resultCodeSuccess
 }

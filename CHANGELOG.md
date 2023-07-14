@@ -25,8 +25,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
-- Occasional client information lookup failures leading to DNS resolving getting
-  stuck ([#6006]).
+- Occasional client information lookup failures that could lead to the DNS
+  server getting stuck ([#6006]).
 - `bufio.Scanner: token too long` errors when trying to add filtering-rule lists
   with lines over 1024 bytes long ([#6003]).
 
