@@ -48,7 +48,10 @@
     'type': 'textarea'
     'validations':
         'required': false
-'description': 'Suggest a feature or an enhancement for AdGuard Home'
+# NOTE: GitHub limits the description length to 200 characters.
+'description': >
+    Write the **title in English** to make it easier for other people to search
+    for duplicates.  (Any language is fine in the body.)
 'labels':
   - 'feature request'
 'name': 'Feature request or enhancement'
