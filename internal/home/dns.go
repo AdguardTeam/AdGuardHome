@@ -240,14 +240,20 @@ func newServerConfig(
 		DNS64Prefixes:   config.DNS.DNS64Prefixes,
 	}
 
-	const initialClientsNum = 100
+	var initialAddresses []netip.Addr
+	// Context.stats may be nil here if initDNSServer is called from
+	// [cmdlineUpdate].
+	if sts := Context.stats; sts != nil {
+		const initialClientsNum = 100
+		initialAddresses = Context.stats.TopClientsIP(initialClientsNum)
+	}
 
 	// Do not set DialContext, PrivateSubnets, and UsePrivateRDNS, because they
 	// are set by [dnsforward.Server.Prepare].
 	newConf.AddrProcConf = &client.DefaultAddrProcConfig{
 		Exchanger:        Context.dnsServer,
 		AddressUpdater:   &Context.clients,
-		InitialAddresses: Context.stats.TopClientsIP(initialClientsNum),
+		InitialAddresses: initialAddresses,
 		UseRDNS:          config.Clients.Sources.RDNS,
 		UseWHOIS:         config.Clients.Sources.WHOIS,
 	}
