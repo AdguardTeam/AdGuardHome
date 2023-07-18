@@ -144,10 +144,10 @@
     'type': 'textarea'
     'validations':
         'required': false
-# NOTE: GitHub limits the description length to 200 characters.
+# NOTE: GitHub limits the description length to 200 characters.  Also, Markdown
+# doesn't work here.
 'description': |
-    For help, use the **Discussions** section instead.
-
-    Write the **title in English** to make it easier for other people to search
-    for duplicates.  (Any language is fine in the body.)
+    For help, use the Discussions section instead.  Write the title in English
+    to make it easier for other people to search for duplicates.  (Any language
+    is fine in the body.)
 'name': 'Bug'
