@@ -1,5 +1,5 @@
-github.com/AdguardTeam/dnsproxy v0.50.3-0.20230628054307-31e374065768 h1:5Ia6wA+tqAlTyzuaOVGSlHmb0osLWXeJUs3NxCuC4gA=
-github.com/AdguardTeam/dnsproxy v0.50.3-0.20230628054307-31e374065768/go.mod h1:CQhZTkqC8X0ID6glrtyaxgqRRdiYfn1gJulC1cZ5Dn8=
+github.com/AdguardTeam/dnsproxy v0.52.0 h1:uZxCXflHSAwtJ7uTYXP6qgWcxaBsH0pJvldpwTqIDJk=
+github.com/AdguardTeam/dnsproxy v0.52.0/go.mod h1:Jo2zeRe97Rxt3yikXc+fn0LdLtqCj0Xlyh1PNBj6bpM=
 github.com/AdguardTeam/golibs v0.4.0/go.mod h1:skKsDKIBB7kkFflLJBpfGX+G8QFTx0WKUzB6TIgtUj4=
 github.com/AdguardTeam/golibs v0.10.4/go.mod h1:rSfQRGHIdgfxriDDNgNJ7HmE5zRoURq8R+VdR81Zuzw=
 github.com/AdguardTeam/golibs v0.13.4 h1:ACTwIR1pEENBijHcEWtiMbSh4wWQOlIHRxmUB8oBHf8=
@@ -108,8 +108,8 @@ github.com/quic-go/qtls-go1-19 v0.3.2 h1:tFxjCFcTQzK+oMxG6Zcvp4Dq8dx4yD3dDiIiyc8
 github.com/quic-go/qtls-go1-19 v0.3.2/go.mod h1:ySOI96ew8lnoKPtSqx2BlI5wCpUVPT05RMAlajtnyOI=
 github.com/quic-go/qtls-go1-20 v0.2.2 h1:WLOPx6OY/hxtTxKV1Zrq20FtXtDEkeY00CGQm8GEa3E=
 github.com/quic-go/qtls-go1-20 v0.2.2/go.mod h1:JKtK6mjbAVcUTN/9jZpvLbGxvdWIKS8uT7EiStoU1SM=
-github.com/quic-go/quic-go v0.35.1 h1:b0kzj6b/cQAf05cT0CkQubHM31wiA+xH3IBkxP62poo=
-github.com/quic-go/quic-go v0.35.1/go.mod h1:+4CVgVppm0FNjpG3UcX8Joi/frKOH7/ciD5yGcwOO1g=
+github.com/quic-go/quic-go v0.36.1 h1:WsG73nVtnDy1TiACxFxhQ3TqaW+DipmqzLEtNlAwZyY=
+github.com/quic-go/quic-go v0.36.1/go.mod h1:zPetvwDlILVxt15n3hr3Gf/I3mDf7LpLKPhR4Ez0AZQ=
 github.com/shirou/gopsutil/v3 v3.21.8 h1:nKct+uP0TV8DjjNiHanKf8SAuub+GNsbrOtM9Nl9biA=
 github.com/shirou/gopsutil/v3 v3.21.8/go.mod h1:YWp/H8Qs5fVmf17v7JNZzA0mPJ+mS2e9JdiUF9LlKzQ=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

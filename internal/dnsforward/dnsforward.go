@@ -100,12 +100,17 @@ type Server struct {
 	// must be a valid domain name plus dots on each side.
 	localDomainSuffix string
 
+	ipset       ipsetCtx
+	privateNets netutil.SubnetSet
+
 	// addrProc, if not nil, is used to process clients' IP addresses with rDNS,
 	// WHOIS, etc.
 	addrProc client.AddressProcessor
 
-	ipset          ipsetCtx
-	privateNets    netutil.SubnetSet
+	// localResolvers is a DNS proxy instance used to resolve PTR records for
+	// addresses considered private as per the [privateNets].
+	//
+	// TODO(e.burkov):  Remove once the local resolvers logic moved to dnsproxy.
 	localResolvers *proxy.Proxy
 	sysResolvers   aghnet.SystemResolvers
 
@@ -452,23 +457,27 @@ func (s *Server) filterOurDNSAddrs(addrs []string) (filtered []string, err error
 	return stringutil.FilterOut(addrs, ourAddrsSet.Has), nil
 }
 
-// setupResolvers initializes the resolvers for local addresses.  For internal
-// use only.
-func (s *Server) setupResolvers(localAddrs []string) (err error) {
+// setupLocalResolvers initializes the resolvers for local addresses.  For
+// internal use only.
+func (s *Server) setupLocalResolvers() (err error) {
 	bootstraps := s.conf.BootstrapDNS
-	if len(localAddrs) == 0 {
-		localAddrs = s.sysResolvers.Get()
+	resolvers := s.conf.LocalPTRResolvers
+
+	if len(resolvers) == 0 {
+		resolvers = s.sysResolvers.Get()
 		bootstraps = nil
+	} else {
+		resolvers = stringutil.FilterOut(resolvers, IsCommentOrEmpty)
 	}
 
-	localAddrs, err = s.filterOurDNSAddrs(localAddrs)
+	resolvers, err = s.filterOurDNSAddrs(resolvers)
 	if err != nil {
 		return err
 	}
 
-	log.Debug("dnsforward: upstreams to resolve ptr for local addresses: %v", localAddrs)
+	log.Debug("dnsforward: upstreams to resolve ptr for local addresses: %v", resolvers)
 
-	upsConfig, err := s.prepareUpstreamConfig(localAddrs, nil, &upstream.Options{
+	uc, err := s.prepareUpstreamConfig(resolvers, nil, &upstream.Options{
 		Bootstrap: bootstraps,
 		Timeout:   defaultLocalTimeout,
 		// TODO(e.burkov): Should we verify server's certificates?
@@ -481,8 +490,15 @@ func (s *Server) setupResolvers(localAddrs []string) (err error) {
 
 	s.localResolvers = &proxy.Proxy{
 		Config: proxy.Config{
-			UpstreamConfig: upsConfig,
+			UpstreamConfig: uc,
 		},
+	}
+
+	if s.conf.UsePrivateRDNS &&
+		// Only set the upstream config if there are any upstreams.  It's safe
+		// to put nil into [proxy.Config.PrivateRDNSUpstreamConfig].
+		len(uc.Upstreams)+len(uc.DomainReservedUpstreams)+len(uc.SpecifiedDomainUpstreams) > 0 {
+		s.dnsProxy.PrivateRDNSUpstreamConfig = uc
 	}
 
 	return nil
@@ -534,19 +550,15 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 		return fmt.Errorf("preparing access: %w", err)
 	}
 
-	s.registerHandlers()
-
+	// Set the proxy here because [setupLocalResolvers] sets its values.
+	//
 	// TODO(e.burkov):  Remove once the local resolvers logic moved to dnsproxy.
-	err = s.setupResolvers(s.conf.LocalPTRResolvers)
+	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
+
+	err = s.setupLocalResolvers()
 	if err != nil {
 		return fmt.Errorf("setting up resolvers: %w", err)
 	}
-
-	if s.conf.UsePrivateRDNS {
-		proxyConfig.PrivateRDNSUpstreamConfig = s.localResolvers.UpstreamConfig
-	}
-
-	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
 
 	s.recDetector.clear()
 
@@ -567,6 +579,8 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 		// logic is moved to package client.
 		c.InitialAddresses = nil
 	}
+
+	s.registerHandlers()
 
 	return nil
 }

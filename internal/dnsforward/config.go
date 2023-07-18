@@ -344,6 +344,7 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 		UpstreamConfig:         srvConf.UpstreamConfig,
 		BeforeRequestHandler:   s.beforeRequestHandler,
 		RequestHandler:         s.handleDNSRequest,
+		HTTPSServerName:        aghhttp.UserAgent(),
 		EnableEDNSClientSubnet: srvConf.EDNSClientSubnet.Enabled,
 		MaxGoroutines:          int(srvConf.MaxGoroutines),
 		UseDNS64:               srvConf.UseDNS64,

@@ -15,7 +15,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/NYTimes/gziphandler"
-	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -295,7 +294,7 @@ func (web *webAPI) mustStartHTTP3(address string) {
 
 	log.Debug("web: starting http/3 server")
 	err := web.httpsServer.server3.ListenAndServe()
-	if !errors.Is(err, quic.ErrServerClosed) {
+	if !errors.Is(err, http.ErrServerClosed) {
 		cleanupAlways()
 		log.Fatalf("web: http3: %s", err)
 	}

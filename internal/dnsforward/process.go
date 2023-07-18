@@ -719,6 +719,18 @@ func (s *Server) processLocalPTR(dctx *dnsContext) (rc resultCode) {
 	if s.conf.UsePrivateRDNS {
 		s.recDetector.add(*pctx.Req)
 		if err := s.localResolvers.Resolve(pctx); err != nil {
+			// Generate the server failure if the private upstream configuration
+			// is empty.
+			//
+			// TODO(e.burkov):  Get rid of this crutch once the local resolvers
+			// logic is moved to the dnsproxy completely.
+			if errors.Is(err, upstream.ErrNoUpstreams) {
+				pctx.Res = s.genServerFailure(pctx.Req)
+
+				// Do not even put into query log.
+				return resultCodeFinish
+			}
+
 			dctx.err = err
 
 			return resultCodeError
