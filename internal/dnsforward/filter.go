@@ -50,10 +50,10 @@ func (s *Server) beforeRequestHandler(
 	return true, nil
 }
 
-// getClientRequestFilteringSettings looks up client filtering settings using
-// the client's IP address and ID, if any, from dctx.
-func (s *Server) getClientRequestFilteringSettings(dctx *dnsContext) *filtering.Settings {
-	setts := s.dnsFilter.Settings()
+// clientRequestFilteringSettings looks up client filtering settings using the
+// client's IP address and ID, if any, from dctx.
+func (s *Server) clientRequestFilteringSettings(dctx *dnsContext) (setts *filtering.Settings) {
+	setts = s.dnsFilter.Settings()
 	setts.ProtectionEnabled = dctx.protectionEnabled
 	if s.conf.FilterHandler != nil {
 		ip, _ := netutil.IPAndPortFromAddr(dctx.proxyCtx.Addr)

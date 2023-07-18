@@ -25,6 +25,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Occasional client information lookup failures that could lead to the DNS
+  server getting stuck ([#6006]).
 - `bufio.Scanner: token too long` and other errors when trying to add
   filtering-rule lists with lines over 1024 bytes long or containing cosmetic
   rules ([#6003]).
@@ -35,6 +37,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
   the `Dockerfile`.
 
 [#6003]: https://github.com/AdguardTeam/AdGuardHome/issues/6003
+[#6006]: https://github.com/AdguardTeam/AdGuardHome/issues/6006
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

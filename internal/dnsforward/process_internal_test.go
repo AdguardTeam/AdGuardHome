@@ -12,6 +12,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,6 +22,96 @@ const (
 	ddrTestDomainName = "dns.example.net"
 	ddrTestFQDN       = ddrTestDomainName + "."
 )
+
+func TestServer_ProcessInitial(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name         string
+		target       string
+		wantRCode    rules.RCode
+		qType        rules.RRType
+		aaaaDisabled bool
+		wantRC       resultCode
+	}{{
+		name:         "success",
+		target:       testQuestionTarget,
+		wantRCode:    -1,
+		qType:        dns.TypeA,
+		aaaaDisabled: false,
+		wantRC:       resultCodeSuccess,
+	}, {
+		name:         "aaaa_disabled",
+		target:       testQuestionTarget,
+		wantRCode:    dns.RcodeSuccess,
+		qType:        dns.TypeAAAA,
+		aaaaDisabled: true,
+		wantRC:       resultCodeFinish,
+	}, {
+		name:         "aaaa_disabled_a",
+		target:       testQuestionTarget,
+		wantRCode:    -1,
+		qType:        dns.TypeA,
+		aaaaDisabled: true,
+		wantRC:       resultCodeSuccess,
+	}, {
+		name:         "mozilla_canary",
+		target:       mozillaFQDN,
+		wantRCode:    dns.RcodeNameError,
+		qType:        dns.TypeA,
+		aaaaDisabled: false,
+		wantRC:       resultCodeFinish,
+	}, {
+		name:         "adguardhome_healthcheck",
+		target:       healthcheckFQDN,
+		wantRCode:    dns.RcodeSuccess,
+		qType:        dns.TypeA,
+		aaaaDisabled: false,
+		wantRC:       resultCodeFinish,
+	}}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			c := ServerConfig{
+				FilteringConfig: FilteringConfig{
+					AAAADisabled:     tc.aaaaDisabled,
+					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				},
+			}
+
+			s := createTestServer(t, &filtering.Config{}, c, nil)
+
+			var gotAddr netip.Addr
+			s.addrProc = &aghtest.AddressProcessor{
+				OnProcess: func(ip netip.Addr) { gotAddr = ip },
+				OnClose:   func() (err error) { panic("not implemented") },
+			}
+
+			dctx := &dnsContext{
+				proxyCtx: &proxy.DNSContext{
+					Req:       createTestMessageWithType(tc.target, tc.qType),
+					Addr:      testClientAddr,
+					RequestID: 1234,
+				},
+			}
+
+			gotRC := s.processInitial(dctx)
+			assert.Equal(t, tc.wantRC, gotRC)
+			assert.Equal(t, netutil.NetAddrToAddrPort(testClientAddr).Addr(), gotAddr)
+
+			if tc.wantRCode > 0 {
+				gotResp := dctx.proxyCtx.Res
+				require.NotNil(t, gotResp)
+
+				assert.Equal(t, tc.wantRCode, gotResp.Rcode)
+			}
+		})
+	}
+}
 
 func TestServer_ProcessDDRQuery(t *testing.T) {
 	dohSVCB := &dns.SVCB{
@@ -64,7 +155,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}{{
 		name:       "pass_host",
 		wantRes:    resultCodeSuccess,
-		host:       "example.net.",
+		host:       testQuestionTarget,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
 		portDoH:    8043,
@@ -234,33 +325,33 @@ func TestServer_ProcessDetermineLocal(t *testing.T) {
 func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 	knownIP := netip.MustParseAddr("1.2.3.4")
 	testCases := []struct {
+		wantIP     netip.Addr
 		name       string
 		host       string
-		wantIP     netip.Addr
 		wantRes    resultCode
 		isLocalCli bool
 	}{{
+		wantIP:     knownIP,
 		name:       "local_client_success",
 		host:       "example.lan",
-		wantIP:     knownIP,
 		wantRes:    resultCodeSuccess,
 		isLocalCli: true,
 	}, {
+		wantIP:     netip.Addr{},
 		name:       "local_client_unknown_host",
 		host:       "wronghost.lan",
-		wantIP:     netip.Addr{},
 		wantRes:    resultCodeSuccess,
 		isLocalCli: true,
 	}, {
+		wantIP:     netip.Addr{},
 		name:       "external_client_known_host",
 		host:       "example.lan",
-		wantIP:     netip.Addr{},
 		wantRes:    resultCodeFinish,
 		isLocalCli: false,
 	}, {
+		wantIP:     netip.Addr{},
 		name:       "external_client_unknown_host",
 		host:       "wronghost.lan",
-		wantIP:     netip.Addr{},
 		wantRes:    resultCodeFinish,
 		isLocalCli: false,
 	}}
@@ -332,52 +423,52 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 
 	knownIP := netip.MustParseAddr("1.2.3.4")
 	testCases := []struct {
+		wantIP  netip.Addr
 		name    string
 		host    string
 		suffix  string
-		wantIP  netip.Addr
 		wantRes resultCode
 		qtyp    uint16
 	}{{
+		wantIP:  netip.Addr{},
 		name:    "success_external",
 		host:    examplecom,
 		suffix:  defaultLocalDomainSuffix,
-		wantIP:  netip.Addr{},
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}, {
+		wantIP:  netip.Addr{},
 		name:    "success_external_non_a",
 		host:    examplecom,
 		suffix:  defaultLocalDomainSuffix,
-		wantIP:  netip.Addr{},
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeCNAME,
 	}, {
+		wantIP:  knownIP,
 		name:    "success_internal",
 		host:    examplelan,
 		suffix:  defaultLocalDomainSuffix,
-		wantIP:  knownIP,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}, {
+		wantIP:  netip.Addr{},
 		name:    "success_internal_unknown",
 		host:    "example-new.lan",
 		suffix:  defaultLocalDomainSuffix,
-		wantIP:  netip.Addr{},
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}, {
+		wantIP:  netip.Addr{},
 		name:    "success_internal_aaaa",
 		host:    examplelan,
 		suffix:  defaultLocalDomainSuffix,
-		wantIP:  netip.Addr{},
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeAAAA,
 	}, {
+		wantIP:  knownIP,
 		name:    "success_custom_suffix",
 		host:    "example.custom",
 		suffix:  "custom",
-		wantIP:  knownIP,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}}
@@ -560,10 +651,8 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 	var dnsCtx *dnsContext
 	setup := func(use bool) {
 		proxyCtx = &proxy.DNSContext{
-			Addr: &net.TCPAddr{
-				IP: net.IP{127, 0, 0, 1},
-			},
-			Req: createTestMessageWithType(reqAddr, dns.TypePTR),
+			Addr: testClientAddr,
+			Req:  createTestMessageWithType(reqAddr, dns.TypePTR),
 		}
 		dnsCtx = &dnsContext{
 			proxyCtx:        proxyCtx,

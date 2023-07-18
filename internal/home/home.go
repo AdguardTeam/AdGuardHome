@@ -3,14 +3,12 @@ package home
 
 import (
 	"context"
-	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"io/fs"
 	"net"
 	"net/http"
 	"net/netip"
-	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -79,14 +77,7 @@ type homeContext struct {
 	pidFileName      string // PID file name.  Empty if no PID file was created.
 	controlLock      sync.Mutex
 	tlsRoots         *x509.CertPool // list of root CAs for TLSv1.2
-	client           *http.Client
 	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
-
-	// rdnsCh is the channel for receiving IPs for rDNS processing.
-	rdnsCh chan netip.Addr
-
-	// whoisCh is the channel for receiving IPs for WHOIS processing.
-	whoisCh chan netip.Addr
 
 	// tlsCipherIDs are the ID of the cipher suites that AdGuard Home must use.
 	tlsCipherIDs []uint16
@@ -156,19 +147,6 @@ func setupContext(opts options) (err error) {
 	setupContextFlags(opts)
 
 	Context.tlsRoots = aghtls.SystemRootCAs()
-	Context.client = &http.Client{
-		Timeout: time.Minute * 5,
-		Transport: &http.Transport{
-			DialContext: customDialContext,
-			Proxy:       getHTTPProxy,
-			TLSClientConfig: &tls.Config{
-				RootCAs:      Context.tlsRoots,
-				CipherSuites: Context.tlsCipherIDs,
-				MinVersion:   tls.VersionTLS12,
-			},
-		},
-	}
-
 	Context.mux = http.NewServeMux()
 
 	if !Context.firstRun {
@@ -341,7 +319,7 @@ func initContextClients() (err error) {
 	}
 
 	Context.updater = updater.NewUpdater(&updater.Config{
-		Client:   Context.client,
+		Client:   config.DNS.DnsfilterConf.HTTPClient,
 		Version:  version.Version(),
 		Channel:  version.Channel(),
 		GOARCH:   runtime.GOARCH,
@@ -433,7 +411,7 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 	conf.Filters = slices.Clone(config.Filters)
 	conf.WhitelistFilters = slices.Clone(config.WhitelistFilters)
 	conf.UserRules = slices.Clone(config.UserRules)
-	conf.HTTPClient = Context.client
+	conf.HTTPClient = httpClient()
 
 	cacheTime := time.Duration(conf.CacheTime) * time.Minute
 
@@ -634,10 +612,10 @@ func run(opts options, clientBuildFS fs.FS) {
 		Context.tls.start()
 
 		go func() {
-			sErr := startDNSServer()
-			if sErr != nil {
+			startErr := startDNSServer()
+			if startErr != nil {
 				closeDNSServer()
-				fatalOnError(sErr)
+				fatalOnError(startErr)
 			}
 		}()
 
@@ -994,62 +972,6 @@ func detectFirstRun() bool {
 	}
 	_, err := os.Stat(configfile)
 	return errors.Is(err, os.ErrNotExist)
-}
-
-// Connect to a remote server resolving hostname using our own DNS server.
-//
-// TODO(e.burkov): This messy logic should be decomposed and clarified.
-//
-// TODO(a.garipov): Support network.
-func customDialContext(ctx context.Context, network, addr string) (conn net.Conn, err error) {
-	log.Debug("home: customdial: dialing addr %q for network %s", addr, network)
-
-	host, port, err := net.SplitHostPort(addr)
-	if err != nil {
-		return nil, err
-	}
-
-	dialer := &net.Dialer{
-		Timeout: time.Minute * 5,
-	}
-
-	if net.ParseIP(host) != nil || config.DNS.Port == 0 {
-		return dialer.DialContext(ctx, network, addr)
-	}
-
-	addrs, err := Context.dnsServer.Resolve(host)
-	if err != nil {
-		return nil, fmt.Errorf("resolving %q: %w", host, err)
-	}
-
-	log.Debug("dnsServer.Resolve: %q: %v", host, addrs)
-
-	if len(addrs) == 0 {
-		return nil, fmt.Errorf("couldn't lookup host: %q", host)
-	}
-
-	var dialErrs []error
-	for _, a := range addrs {
-		addr = net.JoinHostPort(a.String(), port)
-		conn, err = dialer.DialContext(ctx, network, addr)
-		if err != nil {
-			dialErrs = append(dialErrs, err)
-
-			continue
-		}
-
-		return conn, err
-	}
-
-	return nil, errors.List(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
-}
-
-func getHTTPProxy(_ *http.Request) (*url.URL, error) {
-	if config.ProxyURL == "" {
-		return nil, nil
-	}
-
-	return url.Parse(config.ProxyURL)
 }
 
 // jsonError is a generic JSON error response.

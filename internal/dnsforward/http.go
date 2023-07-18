@@ -124,7 +124,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	cacheMinTTL := s.conf.CacheMinTTL
 	cacheMaxTTL := s.conf.CacheMaxTTL
 	cacheOptimistic := s.conf.CacheOptimistic
-	resolveClients := s.conf.ResolveClients
+	resolveClients := s.conf.AddrProcConf.UseRDNS
 	usePrivateRDNS := s.conf.UsePrivateRDNS
 	localPTRUpstreams := stringutil.CloneSliceOrEmpty(s.conf.LocalPTRResolvers)
 
@@ -314,8 +314,6 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 	setIfNotNil(&s.conf.ProtectionEnabled, dc.ProtectionEnabled)
 	setIfNotNil(&s.conf.EnableDNSSEC, dc.DNSSECEnabled)
 	setIfNotNil(&s.conf.AAAADisabled, dc.DisableIPv6)
-	setIfNotNil(&s.conf.ResolveClients, dc.ResolveClients)
-	setIfNotNil(&s.conf.UsePrivateRDNS, dc.UsePrivateRDNS)
 
 	return s.setConfigRestartable(dc)
 }
@@ -335,6 +333,9 @@ func setIfNotNil[T any](currentPtr, newPtr *T) (hasSet bool) {
 // setConfigRestartable sets the parameters which trigger a restart.
 // shouldRestart is true if the server should be restarted to apply changes.
 // s.serverLock is expected to be locked.
+//
+// TODO(a.garipov): Some of these could probably be updated without a restart.
+// Inspect and consider refactoring.
 func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 	for _, hasSet := range []bool{
 		setIfNotNil(&s.conf.UpstreamDNS, dc.Upstreams),
@@ -347,6 +348,8 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 		setIfNotNil(&s.conf.CacheMinTTL, dc.CacheMinTTL),
 		setIfNotNil(&s.conf.CacheMaxTTL, dc.CacheMaxTTL),
 		setIfNotNil(&s.conf.CacheOptimistic, dc.CacheOptimistic),
+		setIfNotNil(&s.conf.AddrProcConf.UseRDNS, dc.ResolveClients),
+		setIfNotNil(&s.conf.UsePrivateRDNS, dc.UsePrivateRDNS),
 	} {
 		shouldRestart = shouldRestart || hasSet
 		if shouldRestart {

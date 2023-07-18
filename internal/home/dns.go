@@ -13,14 +13,12 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
-	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
-	"github.com/AdguardTeam/AdGuardHome/internal/whois"
-	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -135,7 +133,7 @@ func initDNSServer(
 		return fmt.Errorf("preparing set of private subnets: %w", err)
 	}
 
-	p := dnsforward.DNSCreateParams{
+	Context.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
 		DNSFilter:   filters,
 		Stats:       sts,
 		QueryLog:    qlog,
@@ -143,9 +141,7 @@ func initDNSServer(
 		Anonymizer:  anonymizer,
 		LocalDomain: config.DHCP.LocalDomainName,
 		DHCPServer:  dhcpSrv,
-	}
-
-	Context.dnsServer, err = dnsforward.NewServer(p)
+	})
 	if err != nil {
 		closeDNSServer()
 
@@ -154,132 +150,21 @@ func initDNSServer(
 
 	Context.clients.dnsServer = Context.dnsServer
 
-	dnsConf, err := generateServerConfig(tlsConf, httpReg)
+	dnsConf, err := newServerConfig(tlsConf, httpReg)
 	if err != nil {
 		closeDNSServer()
 
-		return fmt.Errorf("generateServerConfig: %w", err)
+		return fmt.Errorf("newServerConfig: %w", err)
 	}
 
-	err = Context.dnsServer.Prepare(&dnsConf)
+	err = Context.dnsServer.Prepare(dnsConf)
 	if err != nil {
 		closeDNSServer()
 
 		return fmt.Errorf("dnsServer.Prepare: %w", err)
 	}
 
-	initRDNS()
-	initWHOIS()
-
 	return nil
-}
-
-const (
-	// defaultQueueSize is the size of queue of IPs for rDNS and WHOIS
-	// processing.
-	defaultQueueSize = 255
-
-	// defaultCacheSize is the maximum size of the cache for rDNS and WHOIS
-	// processing.  It must be greater than zero.
-	defaultCacheSize = 10_000
-
-	// defaultIPTTL is the Time to Live duration for IP addresses cached by
-	// rDNS and WHOIS.
-	defaultIPTTL = 1 * time.Hour
-)
-
-// initRDNS initializes the rDNS.
-func initRDNS() {
-	Context.rdnsCh = make(chan netip.Addr, defaultQueueSize)
-
-	// TODO(s.chzhen):  Add ability to disable it on dns server configuration
-	// update in [dnsforward] package.
-	r := rdns.New(&rdns.Config{
-		Exchanger: Context.dnsServer,
-		CacheSize: defaultCacheSize,
-		CacheTTL:  defaultIPTTL,
-	})
-
-	go processRDNS(r)
-}
-
-// processRDNS processes reverse DNS lookup queries.  It is intended to be used
-// as a goroutine.
-func processRDNS(r rdns.Interface) {
-	defer log.OnPanic("rdns")
-
-	for ip := range Context.rdnsCh {
-		ok := Context.dnsServer.ShouldResolveClient(ip)
-		if !ok {
-			continue
-		}
-
-		host, changed := r.Process(ip)
-		if host == "" || !changed {
-			continue
-		}
-
-		ok = Context.clients.AddHost(ip, host, ClientSourceRDNS)
-		if ok {
-			continue
-		}
-
-		log.Debug(
-			"dns: can't set rdns info for client %q: already set with higher priority source",
-			ip,
-		)
-	}
-}
-
-// initWHOIS initializes the WHOIS.
-//
-// TODO(s.chzhen):  Consider making configurable.
-func initWHOIS() {
-	const (
-		// defaultTimeout is the timeout for WHOIS requests.
-		defaultTimeout = 5 * time.Second
-
-		// defaultMaxConnReadSize is an upper limit in bytes for reading from
-		// net.Conn.
-		defaultMaxConnReadSize = 64 * 1024
-
-		// defaultMaxRedirects is the maximum redirects count.
-		defaultMaxRedirects = 5
-
-		// defaultMaxInfoLen is the maximum length of whois.Info fields.
-		defaultMaxInfoLen = 250
-	)
-
-	Context.whoisCh = make(chan netip.Addr, defaultQueueSize)
-
-	var w whois.Interface
-
-	if config.Clients.Sources.WHOIS {
-		w = whois.New(&whois.Config{
-			DialContext:     customDialContext,
-			ServerAddr:      whois.DefaultServer,
-			Port:            whois.DefaultPort,
-			Timeout:         defaultTimeout,
-			CacheSize:       defaultCacheSize,
-			MaxConnReadSize: defaultMaxConnReadSize,
-			MaxRedirects:    defaultMaxRedirects,
-			MaxInfoLen:      defaultMaxInfoLen,
-			CacheTTL:        defaultIPTTL,
-		})
-	} else {
-		w = whois.Empty{}
-	}
-
-	go func() {
-		defer log.OnPanic("whois")
-
-		for ip := range Context.whoisCh {
-			info, changed := w.Process(context.Background(), ip)
-			if info != nil && changed {
-				Context.clients.setWHOISInfo(ip, info)
-			}
-		}
-	}()
 }
 
 // parseSubnetSet parses a slice of subnets.  If the slice is empty, it returns
@@ -312,17 +197,6 @@ func isRunning() bool {
 	return Context.dnsServer != nil && Context.dnsServer.IsRunning()
 }
 
-func onDNSRequest(pctx *proxy.DNSContext) {
-	ip := netutil.NetAddrToAddrPort(pctx.Addr).Addr()
-	if ip == (netip.Addr{}) {
-		// This would be quite weird if we get here.
-		return
-	}
-
-	Context.rdnsCh <- ip
-	Context.whoisCh <- ip
-}
-
 func ipsToTCPAddrs(ips []netip.Addr, port int) (tcpAddrs []*net.TCPAddr) {
 	if ips == nil {
 		return nil
@@ -349,21 +223,33 @@ func ipsToUDPAddrs(ips []netip.Addr, port int) (udpAddrs []*net.UDPAddr) {
 	return udpAddrs
 }
 
-func generateServerConfig(
+func newServerConfig(
 	tlsConf *tlsConfigSettings,
 	httpReg aghhttp.RegisterFunc,
-) (newConf dnsforward.ServerConfig, err error) {
+) (newConf *dnsforward.ServerConfig, err error) {
 	dnsConf := config.DNS
 	hosts := aghalg.CoalesceSlice(dnsConf.BindHosts, []netip.Addr{netutil.IPv4Localhost()})
-	newConf = dnsforward.ServerConfig{
+
+	newConf = &dnsforward.ServerConfig{
 		UDPListenAddrs:  ipsToUDPAddrs(hosts, dnsConf.Port),
 		TCPListenAddrs:  ipsToTCPAddrs(hosts, dnsConf.Port),
 		FilteringConfig: dnsConf.FilteringConfig,
 		ConfigModified:  onConfigModified,
 		HTTPRegister:    httpReg,
-		OnDNSRequest:    onDNSRequest,
 		UseDNS64:        config.DNS.UseDNS64,
 		DNS64Prefixes:   config.DNS.DNS64Prefixes,
+	}
+
+	const initialClientsNum = 100
+
+	// Do not set DialContext, PrivateSubnets, and UsePrivateRDNS, because they
+	// are set by [dnsforward.Server.Prepare].
+	newConf.AddrProcConf = &client.DefaultAddrProcConfig{
+		Exchanger:        Context.dnsServer,
+		AddressUpdater:   &Context.clients,
+		InitialAddresses: Context.stats.TopClientsIP(initialClientsNum),
+		UseRDNS:          config.Clients.Sources.RDNS,
+		UseWHOIS:         config.Clients.Sources.WHOIS,
 	}
 
 	if tlsConf.Enabled {
@@ -385,9 +271,9 @@ func generateServerConfig(
 		if tlsConf.PortDNSCrypt != 0 {
 			newConf.DNSCryptConfig, err = newDNSCrypt(hosts, *tlsConf)
 			if err != nil {
-				// Don't wrap the error, because it's already
-				// wrapped by newDNSCrypt.
-				return dnsforward.ServerConfig{}, err
+				// Don't wrap the error, because it's already wrapped by
+				// newDNSCrypt.
+				return nil, err
 			}
 		}
 	}
@@ -401,7 +287,6 @@ func generateServerConfig(
 	newConf.LocalPTRResolvers = dnsConf.LocalPTRResolvers
 	newConf.UpstreamTimeout = dnsConf.UpstreamTimeout.Duration
 
-	newConf.ResolveClients = config.Clients.Sources.RDNS
 	newConf.UsePrivateRDNS = dnsConf.UsePrivateRDNS
 	newConf.ServeHTTP3 = dnsConf.ServeHTTP3
 	newConf.UseHTTP3Upstreams = dnsConf.UseHTTP3Upstreams
@@ -556,27 +441,19 @@ func startDNSServer() error {
 	Context.stats.Start()
 	Context.queryLog.Start()
 
-	const topClientsNumber = 100 // the number of clients to get
-	for _, ip := range Context.stats.TopClientsIP(topClientsNumber) {
-		Context.rdnsCh <- ip
-		Context.whoisCh <- ip
-	}
-
 	return nil
 }
 
 func reconfigureDNSServer() (err error) {
-	var newConf dnsforward.ServerConfig
-
 	tlsConf := &tlsConfigSettings{}
 	Context.tls.WriteDiskConfig(tlsConf)
 
-	newConf, err = generateServerConfig(tlsConf, httpRegister)
+	newConf, err := newServerConfig(tlsConf, httpRegister)
 	if err != nil {
 		return fmt.Errorf("generating forwarding dns server config: %w", err)
 	}
 
-	err = Context.dnsServer.Reconfigure(&newConf)
+	err = Context.dnsServer.Reconfigure(newConf)
 	if err != nil {
 		return fmt.Errorf("starting forwarding dns server: %w", err)
 	}

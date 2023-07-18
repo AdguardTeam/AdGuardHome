@@ -168,13 +168,13 @@ func TestClients(t *testing.T) {
 
 	t.Run("addhost_success", func(t *testing.T) {
 		ip := netip.MustParseAddr("1.1.1.1")
-		ok := clients.AddHost(ip, "host", ClientSourceARP)
+		ok := clients.addHost(ip, "host", ClientSourceARP)
 		assert.True(t, ok)
 
-		ok = clients.AddHost(ip, "host2", ClientSourceARP)
+		ok = clients.addHost(ip, "host2", ClientSourceARP)
 		assert.True(t, ok)
 
-		ok = clients.AddHost(ip, "host3", ClientSourceHostsFile)
+		ok = clients.addHost(ip, "host3", ClientSourceHostsFile)
 		assert.True(t, ok)
 
 		assert.Equal(t, clients.clientSource(ip), ClientSourceHostsFile)
@@ -182,18 +182,18 @@ func TestClients(t *testing.T) {
 
 	t.Run("dhcp_replaces_arp", func(t *testing.T) {
 		ip := netip.MustParseAddr("1.2.3.4")
-		ok := clients.AddHost(ip, "from_arp", ClientSourceARP)
+		ok := clients.addHost(ip, "from_arp", ClientSourceARP)
 		assert.True(t, ok)
 		assert.Equal(t, clients.clientSource(ip), ClientSourceARP)
 
-		ok = clients.AddHost(ip, "from_dhcp", ClientSourceDHCP)
+		ok = clients.addHost(ip, "from_dhcp", ClientSourceDHCP)
 		assert.True(t, ok)
 		assert.Equal(t, clients.clientSource(ip), ClientSourceDHCP)
 	})
 
 	t.Run("addhost_fail", func(t *testing.T) {
 		ip := netip.MustParseAddr("1.1.1.1")
-		ok := clients.AddHost(ip, "host1", ClientSourceRDNS)
+		ok := clients.addHost(ip, "host1", ClientSourceRDNS)
 		assert.False(t, ok)
 	})
 }
@@ -216,7 +216,7 @@ func TestClientsWHOIS(t *testing.T) {
 
 	t.Run("existing_auto-client", func(t *testing.T) {
 		ip := netip.MustParseAddr("1.1.1.1")
-		ok := clients.AddHost(ip, "host", ClientSourceRDNS)
+		ok := clients.addHost(ip, "host", ClientSourceRDNS)
 		assert.True(t, ok)
 
 		clients.setWHOISInfo(ip, whois)
@@ -259,7 +259,7 @@ func TestClientsAddExisting(t *testing.T) {
 		assert.True(t, ok)
 
 		// Now add an auto-client with the same IP.
-		ok = clients.AddHost(ip, "test", ClientSourceRDNS)
+		ok = clients.addHost(ip, "test", ClientSourceRDNS)
 		assert.True(t, ok)
 	})
 

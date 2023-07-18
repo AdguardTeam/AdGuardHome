@@ -590,7 +590,13 @@ func (c *configuration) write() (err error) {
 		s.WriteDiskConfig(&c)
 		dns := &config.DNS
 		dns.FilteringConfig = c
-		dns.LocalPTRResolvers, config.Clients.Sources.RDNS, dns.UsePrivateRDNS = s.RDNSSettings()
+
+		dns.LocalPTRResolvers = s.LocalPTRResolvers()
+
+		addrProcConf := s.AddrProcConfig()
+		config.Clients.Sources.RDNS = addrProcConf.UseRDNS
+		config.Clients.Sources.WHOIS = addrProcConf.UseWHOIS
+		dns.UsePrivateRDNS = addrProcConf.UsePrivateRDNS
 	}
 
 	if Context.dhcpServer != nil {
