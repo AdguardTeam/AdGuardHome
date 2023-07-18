@@ -17,7 +17,7 @@ type Interface interface {
 	Process(ip netip.Addr) (host string, changed bool)
 }
 
-// Empty is an empty [Inteface] implementation which does nothing.
+// Empty is an empty [Interface] implementation which does nothing.
 type Empty struct{}
 
 // type check

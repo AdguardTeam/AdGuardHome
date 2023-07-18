@@ -176,10 +176,13 @@ run_linter gocognit --over 10\
 	./internal/aghchan/\
 	./internal/aghhttp/\
 	./internal/aghio/\
+	./internal/client/\
+	./internal/dhcpsvc\
 	./internal/filtering/hashprefix/\
 	./internal/filtering/rulelist/\
 	./internal/next/\
 	./internal/rdns/\
+	./internal/schedule/\
 	./internal/tools/\
 	./internal/version/\
 	./internal/whois/\
@@ -211,12 +214,14 @@ run_linter gosec --quiet\
 	./internal/aghnet\
 	./internal/aghos\
 	./internal/aghtest\
+	./internal/client\
 	./internal/dhcpd\
 	./internal/dhcpsvc\
 	./internal/dnsforward\
 	./internal/filtering/hashprefix/\
 	./internal/filtering/rulelist/\
 	./internal/next\
+	./internal/rdns\
 	./internal/schedule\
 	./internal/stats\
 	./internal/tools\

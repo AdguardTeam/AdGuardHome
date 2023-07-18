@@ -4,9 +4,13 @@ import (
 	"context"
 	"io"
 	"io/fs"
+	"net/netip"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
+	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
 )
@@ -133,6 +137,59 @@ func (s *ServiceWithConfig[_]) Shutdown(ctx context.Context) (err error) {
 // *ServiceWithConfig.
 func (s *ServiceWithConfig[ConfigType]) Config() (c ConfigType) {
 	return s.OnConfig()
+}
+
+// Package client
+
+// AddressProcessor is a fake [client.AddressProcessor] implementation for
+// tests.
+type AddressProcessor struct {
+	OnProcess func(ip netip.Addr)
+	OnClose   func() (err error)
+}
+
+// type check
+var _ client.AddressProcessor = (*AddressProcessor)(nil)
+
+// Process implements the [client.AddressProcessor] interface for
+// *AddressProcessor.
+func (p *AddressProcessor) Process(ip netip.Addr) {
+	p.OnProcess(ip)
+}
+
+// Close implements the [client.AddressProcessor] interface for
+// *AddressProcessor.
+func (p *AddressProcessor) Close() (err error) {
+	return p.OnClose()
+}
+
+// AddressUpdater is a fake [client.AddressUpdater] implementation for tests.
+type AddressUpdater struct {
+	OnUpdateAddress func(ip netip.Addr, host string, info *whois.Info)
+}
+
+// type check
+var _ client.AddressUpdater = (*AddressUpdater)(nil)
+
+// UpdateAddress implements the [client.AddressUpdater] interface for
+// *AddressUpdater.
+func (p *AddressUpdater) UpdateAddress(ip netip.Addr, host string, info *whois.Info) {
+	p.OnUpdateAddress(ip, host, info)
+}
+
+// Package rdns
+
+// Exchanger is a fake [rdns.Exchanger] implementation for tests.
+type Exchanger struct {
+	OnExchange func(ip netip.Addr) (host string, err error)
+}
+
+// type check
+var _ rdns.Exchanger = (*Exchanger)(nil)
+
+// Exchange implements [rdns.Exchanger] interface for *Exchanger.
+func (e *Exchanger) Exchange(ip netip.Addr) (host string, err error) {
+	return e.OnExchange(ip)
 }
 
 // Module dnsproxy
