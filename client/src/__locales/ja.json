@@ -444,7 +444,7 @@
     "client_confirm_delete": "クライアント \"{{key}}\" を削除してもよろしいですか？",
     "list_confirm_delete": "このリストを削除してもよろしいですか？",
     "auto_clients_title": "ランタイムクライアント",
-    "auto_clients_desc": "永続的クライアントのリストに未登録で、AdGuard Homeを使用する場合があるデバイスのリスト。",
+    "auto_clients_desc": "AdGuard Home を使用している、または使用する可能性のあるデバイスの IP アドレスに関する情報です。この情報は、hosts ファイル、リバース DNS など、複数の情報源から収集されます。",
     "access_title": "アクセス設定",
     "access_desc": "こちらでは、AdGuard Home DNSサーバーのアクセスルールを設定できます。",
     "access_allowed_title": "許可されたクライアント",

@@ -444,7 +444,7 @@
     "client_confirm_delete": "Sikker på, at du vil slette klient \"{{key}}\"?",
     "list_confirm_delete": "Sikker på, at du vil slette denne liste?",
     "auto_clients_title": "Klienter (runtime)",
-    "auto_clients_desc": "Enheder, som ikke er på listen over Permanente klienter, kan stadig bruge AdGuard Home",
+    "auto_clients_desc": "Oplysninger om IP-adresser på enheder, som (måske) bruger AdGuard Home. Disse oplysninger indsamles fra flere kilder, herunder hosts-filer, reverse DNS mv.",
     "access_title": "Adgangsindstillinger",
     "access_desc": "Her kan adgangsregler for AdGuard Home DNS-serveren opsættes",
     "access_allowed_title": "Tilladte klienter",

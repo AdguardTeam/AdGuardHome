@@ -444,7 +444,7 @@
     "client_confirm_delete": "Opravdu chcete odstranit klienta \"{{key}}\"?",
     "list_confirm_delete": "Opravdu chcete smazat tento seznam?",
     "auto_clients_title": "Spuštění klienti",
-    "auto_clients_desc": "Zařízení, která nejsou na seznamu stálých klientů, a mohou nadále používat AdGuard Home",
+    "auto_clients_desc": "Informace o IP adresách zařízení, která používají nebo mohou používat AdGuard Home. Tyto informace se získávají z několika zdrojů, včetně souborů hosts, reverzního DNS atd.",
     "access_title": "Nastavení přístupu",
     "access_desc": "Zde můžete konfigurovat pravidla přístupu pro server DNS AdGuard Home",
     "access_allowed_title": "Povolení klienti",

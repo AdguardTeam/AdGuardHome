@@ -444,7 +444,7 @@
     "client_confirm_delete": "Ali ste prepričani, da želite izbrisati odjemalca \"{{key}}\"?",
     "list_confirm_delete": "Ali ste prepričani, da želite izbrisati ta seznam?",
     "auto_clients_title": "Odjemalci izvajanja",
-    "auto_clients_desc": "Naprave, ki niso na seznamu trajnih odjemalcev, ki morda še vedno uporabljajo AdGuard Home",
+    "auto_clients_desc": "Informacije o naslovih IP naprav, ki uporabljajo ali bi lahko uporabljale AdGuard Home. Te informacije so zbrane iz več virov, vključno z datotekami gostiteljev, povratnim DNS-jem itd.",
     "access_title": "Nastavitve dostopa",
     "access_desc": "Tukaj lahko nastavite pravila dostopa strežnika DNS AdGuard Home",
     "access_allowed_title": "Dovoljeni odjemalci",

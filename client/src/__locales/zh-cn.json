@@ -444,7 +444,7 @@
     "client_confirm_delete": "您确定要删除客户端 \"{{key}}\"？",
     "list_confirm_delete": "您确定要删除此列表吗？",
     "auto_clients_title": "客户端（运行时间）",
-    "auto_clients_desc": "不在可继续使用 AdGuard Home 的持久客户端列表中的设备。",
+    "auto_clients_desc": "有关正在使用或可能使用 AdGuard Home 的设备的 IP 地址的信息。此信息是从多个来源收集的，包括 hosts 文件、反向 DNS 等。",
     "access_title": "访问设置",
     "access_desc": "您可以在此处配置 AdGuard Home 的 DNS 服务器的访问规则",
     "access_allowed_title": "允许的客户端",

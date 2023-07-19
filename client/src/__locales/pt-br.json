@@ -444,7 +444,7 @@
     "client_confirm_delete": "Você tem certeza de que deseja excluir o cliente \"{{key}}\"?",
     "list_confirm_delete": "Você tem certeza de que deseja excluir essa lista?",
     "auto_clients_title": "Clientes ativos",
-    "auto_clients_desc": "Dispositivo não está na lista de dispositivos persistentes que podem ser utilizados no AdGuard Home",
+    "auto_clients_desc": "Informações sobre endereços IP de dispositivos que usam ou podem usar o AdGuard Home. Essas informações são coletadas de várias fontes, incluindo arquivos de hosts, DNS reverso, etc.",
     "access_title": "Configurações de acessos",
     "access_desc": "Aqui você pode configurar as regras de acesso para o servidores de DNS do AdGuard Home",
     "access_allowed_title": "Clientes permitidos",

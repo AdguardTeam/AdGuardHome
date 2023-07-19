@@ -444,7 +444,7 @@
     "client_confirm_delete": "\"{{key}}\" istemcisini silmek istediğinizden emin misiniz?",
     "list_confirm_delete": "Bu listeyi silmek istediğinizden emin misiniz?",
     "auto_clients_title": "Çalışma zamanı istemcileri",
-    "auto_clients_desc": "Henüz AdGuard Home'u kullanabilecek Kalıcı istemciler listesinde olmayan cihazlar",
+    "auto_clients_desc": "AdGuard Home'u kullanan veya kullanabilecek cihazların IP adresleri hakkında bilgiler. Bu bilgiler, hosts dosyaları, ters DNS, vb. dahil olmak üzere çeşitli kaynaklardan toplanır.",
     "access_title": "Erişim ayarları",
     "access_desc": "AdGuard Home DNS sunucusu için erişim kurallarını buradan yapılandırabilirsiniz",
     "access_allowed_title": "İzin verilen istemciler",

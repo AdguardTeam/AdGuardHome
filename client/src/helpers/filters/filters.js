@@ -64,12 +64,6 @@ export default {
             "homepage": "https://github.com/MasterKia/PersianBlocker",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_19.txt"
         },
-        "ITA_filtri_dns": {
-            "name": "ITA: Filtri-DNS",
-            "categoryId": "regional",
-            "homepage": "https://filtri-dns.ga/",
-            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_18.txt"
-        },
         "KOR_list_kr": {
             "name": "KOR: List-KR DNS",
             "categoryId": "regional",
@@ -166,14 +160,20 @@ export default {
             "homepage": "https://github.com/DandelionSprout/adfilt",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_12.txt"
         },
+        "dandelion_sprouts_anti_push_notifications": {
+            "name": "Dandelion Sprout's Anti Push Notifications",
+            "categoryId": "other",
+            "homepage": "https://github.com/DandelionSprout/adfilt",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_39.txt"
+        },
         "dandelion_sprouts_game_console_adblock_list": {
             "name": "Dandelion Sprout's Game Console Adblock List",
             "categoryId": "other",
             "homepage": "https://github.com/DandelionSprout/adfilt",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_6.txt"
         },
-        "hagezi_personal": {
-            "name": "HaGeZi Personal Black \u0026 White",
+        "hagezi_multinormal": {
+            "name": "HaGeZi Multi NORMAL",
             "categoryId": "general",
             "homepage": "https://github.com/hagezi/dns-blocklists",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_34.txt"

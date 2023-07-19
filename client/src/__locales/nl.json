@@ -444,7 +444,7 @@
     "client_confirm_delete": "Ben je zeker dat je deze gebruiker \"{{key}}\" wilt verwijderen?",
     "list_confirm_delete": "Ben je zeker om deze lijst te verwijderen?",
     "auto_clients_title": "Runtime-clients",
-    "auto_clients_desc": "Apparaten die niet op de lijst van permanente clients staan die mogelijk nog steeds AdGuard Home gebruiken",
+    "auto_clients_desc": "Informatie over IP-adressen van apparaten die AdGuard Home gebruiken of kunnen gebruiken. Deze informatie wordt verzameld uit verschillende bronnen, waaronder hosts-bestanden, reverse DNS, enz.",
     "access_title": "Toegangs instellingen",
     "access_desc": "Hier kan je toegangsregels voor de AdGuard Home DNS-server instellen",
     "access_allowed_title": "Toegestane gebruikers",

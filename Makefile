@@ -130,3 +130,10 @@ openapi-lint: ; cd ./openapi/ && $(YARN) test
 openapi-show: ; cd ./openapi/ && $(YARN) start
 
 txt-lint: ; $(ENV) "$(SHELL)" ./scripts/make/txt-lint.sh
+
+# TODO(a.garipov): Consider adding to scripts/ and the common project
+# structure.
+go-upd-tools:
+	cd ./internal/tools/ &&\
+		"$(GO.MACRO)" get -u &&\
+		"$(GO.MACRO)" mod tidy
