@@ -33,8 +33,12 @@ const (
 // daemon.
 type program struct {
 	clientBuildFS fs.FS
+	signals       chan os.Signal
 	opts          options
 }
+
+// type check
+var _ service.Interface = (*program)(nil)
 
 // Start implements service.Interface interface for *program.
 func (p *program) Start(_ service.Service) (err error) {
@@ -48,13 +52,13 @@ func (p *program) Start(_ service.Service) (err error) {
 }
 
 // Stop implements service.Interface interface for *program.
-func (p *program) Stop(_ service.Service) error {
-	// Stop should not block.  Return with a few seconds.
-	if Context.appSignalChannel == nil {
-		os.Exit(0)
+func (p *program) Stop(_ service.Service) (err error) {
+	select {
+	case p.signals <- syscall.SIGINT:
+		// Go on.
+	default:
+		// Stop should not block.
 	}
-
-	Context.appSignalChannel <- syscall.SIGINT
 
 	return nil
 }
@@ -194,7 +198,7 @@ func restartService() (err error) {
 //   - run:  This is a special command that is not supposed to be used directly
 //     it is specified when we register a service, and it indicates to the app
 //     that it is being run as a service/daemon.
-func handleServiceControlAction(opts options, clientBuildFS fs.FS) {
+func handleServiceControlAction(opts options, clientBuildFS fs.FS, signals chan os.Signal) {
 	// Call chooseSystem explicitly to introduce OpenBSD support for service
 	// package.  It's a noop for other GOOS values.
 	chooseSystem()
@@ -226,7 +230,11 @@ func handleServiceControlAction(opts options, clientBuildFS fs.FS) {
 	}
 	configureService(svcConfig)
 
-	s, err := service.New(&program{clientBuildFS: clientBuildFS, opts: runOpts}, svcConfig)
+	s, err := service.New(&program{
+		clientBuildFS: clientBuildFS,
+		signals:       signals,
+		opts:          runOpts,
+	}, svcConfig)
 	if err != nil {
 		log.Fatalf("service: initializing service: %s", err)
 	}

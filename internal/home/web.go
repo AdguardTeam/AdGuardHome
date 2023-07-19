@@ -11,6 +11,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -32,6 +33,8 @@ const (
 )
 
 type webConfig struct {
+	updater *updater.Updater
+
 	clientFS fs.FS
 
 	BindHost netip.Addr
@@ -50,6 +53,13 @@ type webConfig struct {
 	WriteTimeout time.Duration
 
 	firstRun bool
+
+	// disableUpdate, if true, tells AdGuard Home to not check for updates.
+	disableUpdate bool
+
+	// runningAsService flag is set to true when options are passed from the
+	// service runner.
+	runningAsService bool
 
 	serveHTTP3 bool
 }
@@ -101,7 +111,7 @@ func newWebAPI(conf *webConfig) (w *webAPI) {
 		Context.mux.Handle("/install.html", preInstallHandler(clientFS))
 		w.registerInstallHandlers()
 	} else {
-		registerControlHandlers()
+		registerControlHandlers(w)
 	}
 
 	w.httpsServer.cond = sync.NewCond(&w.httpsServer.condLock)
