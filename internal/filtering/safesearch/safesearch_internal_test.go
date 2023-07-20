@@ -89,37 +89,34 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 	assert.False(t, res.IsFiltered)
 	assert.Empty(t, res.Rules)
 
-	resolver := &aghtest.TestResolver{}
+	resolver := &aghtest.Resolver{
+		OnLookupIP: func(_ context.Context, _, host string) (ips []net.IP, err error) {
+			ip4, ip6 := aghtest.HostToIPs(host)
+
+			return []net.IP{ip4, ip6}, nil
+		},
+	}
+
 	ss = newForTest(t, defaultSafeSearchConf)
 	ss.resolver = resolver
 
 	// Lookup for safesearch domain.
 	rewrite := ss.searchHost(domain, testQType)
 
-	ips, err := resolver.LookupIP(context.Background(), "ip", rewrite.NewCNAME)
-	require.NoError(t, err)
-
-	var foundIP net.IP
-	for _, ip := range ips {
-		if ip.To4() != nil {
-			foundIP = ip
-
-			break
-		}
-	}
+	wantIP, _ := aghtest.HostToIPs(rewrite.NewCNAME)
 
 	res, err = ss.CheckHost(domain, testQType)
 	require.NoError(t, err)
 	require.Len(t, res.Rules, 1)
 
-	assert.True(t, res.Rules[0].IP.Equal(foundIP))
+	assert.True(t, res.Rules[0].IP.Equal(wantIP))
 
 	// Check cache.
 	cachedValue, isFound := ss.getCachedResult(domain, testQType)
 	require.True(t, isFound)
 	require.Len(t, cachedValue.Rules, 1)
 
-	assert.True(t, cachedValue.Rules[0].IP.Equal(foundIP))
+	assert.True(t, cachedValue.Rules[0].IP.Equal(wantIP))
 }
 
 const googleHost = "www.google.com"

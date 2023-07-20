@@ -1,9 +1,7 @@
-package aghnet
+package aghnet_test
 
 import (
-	"io/fs"
 	"net"
-	"net/netip"
 	"path"
 	"strings"
 	"sync/atomic"
@@ -12,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghchan"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -24,10 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	nl = "\n"
-	sp = " "
-)
+const nl = "\n"
 
 func TestNewHostsContainer(t *testing.T) {
 	const dirname = "dir"
@@ -48,11 +44,11 @@ func TestNewHostsContainer(t *testing.T) {
 		name:    "one_file",
 		paths:   []string{p},
 	}, {
-		wantErr: ErrNoHostsPaths,
+		wantErr: aghnet.ErrNoHostsPaths,
 		name:    "no_files",
 		paths:   []string{},
 	}, {
-		wantErr: ErrNoHostsPaths,
+		wantErr: aghnet.ErrNoHostsPaths,
 		name:    "non-existent_file",
 		paths:   []string{path.Join(dirname, filename+"2")},
 	}, {
@@ -77,7 +73,7 @@ func TestNewHostsContainer(t *testing.T) {
 				return eventsCh
 			}
 
-			hc, err := NewHostsContainer(0, testFS, &aghtest.FSWatcher{
+			hc, err := aghnet.NewHostsContainer(0, testFS, &aghtest.FSWatcher{
 				OnEvents: onEvents,
 				OnAdd:    onAdd,
 				OnClose:  func() (err error) { return nil },
@@ -103,7 +99,7 @@ func TestNewHostsContainer(t *testing.T) {
 
 	t.Run("nil_fs", func(t *testing.T) {
 		require.Panics(t, func() {
-			_, _ = NewHostsContainer(0, nil, &aghtest.FSWatcher{
+			_, _ = aghnet.NewHostsContainer(0, nil, &aghtest.FSWatcher{
 				// Those shouldn't panic.
 				OnEvents: func() (e <-chan struct{}) { return nil },
 				OnAdd:    func(name string) (err error) { return nil },
@@ -114,7 +110,7 @@ func TestNewHostsContainer(t *testing.T) {
 
 	t.Run("nil_watcher", func(t *testing.T) {
 		require.Panics(t, func() {
-			_, _ = NewHostsContainer(0, testFS, nil, p)
+			_, _ = aghnet.NewHostsContainer(0, testFS, nil, p)
 		})
 	})
 
@@ -127,7 +123,7 @@ func TestNewHostsContainer(t *testing.T) {
 			OnClose:  func() (err error) { return nil },
 		}
 
-		hc, err := NewHostsContainer(0, testFS, errWatcher, p)
+		hc, err := aghnet.NewHostsContainer(0, testFS, errWatcher, p)
 		require.ErrorIs(t, err, errOnAdd)
 
 		assert.Nil(t, hc)
@@ -158,11 +154,11 @@ func TestHostsContainer_refresh(t *testing.T) {
 		OnClose: func() (err error) { return nil },
 	}
 
-	hc, err := NewHostsContainer(0, testFS, w, "dir")
+	hc, err := aghnet.NewHostsContainer(0, testFS, w, "dir")
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, hc.Close)
 
-	checkRefresh := func(t *testing.T, want *HostsRecord) {
+	checkRefresh := func(t *testing.T, want *aghnet.HostsRecord) {
 		t.Helper()
 
 		upd, ok := aghchan.MustReceive(hc.Upd(), 1*time.Second)
@@ -175,11 +171,11 @@ func TestHostsContainer_refresh(t *testing.T) {
 		require.True(t, ok)
 		require.NotNil(t, rec)
 
-		assert.Truef(t, rec.equal(want), "%+v != %+v", rec, want)
+		assert.Truef(t, rec.Equal(want), "%+v != %+v", rec, want)
 	}
 
 	t.Run("initial_refresh", func(t *testing.T) {
-		checkRefresh(t, &HostsRecord{
+		checkRefresh(t, &aghnet.HostsRecord{
 			Aliases:   stringutil.NewSet(),
 			Canonical: "hostname",
 		})
@@ -189,7 +185,7 @@ func TestHostsContainer_refresh(t *testing.T) {
 		testFS["dir/file2"] = &fstest.MapFile{Data: []byte(ipStr + ` alias` + nl)}
 		eventsCh <- event{}
 
-		checkRefresh(t, &HostsRecord{
+		checkRefresh(t, &aghnet.HostsRecord{
 			Aliases:   stringutil.NewSet("alias"),
 			Canonical: "hostname",
 		})
@@ -228,66 +224,6 @@ func TestHostsContainer_refresh(t *testing.T) {
 	})
 }
 
-func TestHostsContainer_PathsToPatterns(t *testing.T) {
-	gsfs := fstest.MapFS{
-		"dir_0/file_1":       &fstest.MapFile{Data: []byte{1}},
-		"dir_0/file_2":       &fstest.MapFile{Data: []byte{2}},
-		"dir_0/dir_1/file_3": &fstest.MapFile{Data: []byte{3}},
-	}
-
-	testCases := []struct {
-		name  string
-		paths []string
-		want  []string
-	}{{
-		name:  "no_paths",
-		paths: nil,
-		want:  nil,
-	}, {
-		name:  "single_file",
-		paths: []string{"dir_0/file_1"},
-		want:  []string{"dir_0/file_1"},
-	}, {
-		name:  "several_files",
-		paths: []string{"dir_0/file_1", "dir_0/file_2"},
-		want:  []string{"dir_0/file_1", "dir_0/file_2"},
-	}, {
-		name:  "whole_dir",
-		paths: []string{"dir_0"},
-		want:  []string{"dir_0/*"},
-	}, {
-		name:  "file_and_dir",
-		paths: []string{"dir_0/file_1", "dir_0/dir_1"},
-		want:  []string{"dir_0/file_1", "dir_0/dir_1/*"},
-	}, {
-		name:  "non-existing",
-		paths: []string{path.Join("dir_0", "file_3")},
-		want:  nil,
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			patterns, err := pathsToPatterns(gsfs, tc.paths)
-			require.NoError(t, err)
-
-			assert.Equal(t, tc.want, patterns)
-		})
-	}
-
-	t.Run("bad_file", func(t *testing.T) {
-		const errStat errors.Error = "bad file"
-
-		badFS := &aghtest.StatFS{
-			OnStat: func(name string) (fs.FileInfo, error) {
-				return nil, errStat
-			},
-		}
-
-		_, err := pathsToPatterns(badFS, []string{""})
-		assert.ErrorIs(t, err, errStat)
-	})
-}
-
 func TestHostsContainer_Translate(t *testing.T) {
 	stubWatcher := aghtest.FSWatcher{
 		OnEvents: func() (e <-chan struct{}) { return nil },
@@ -297,7 +233,7 @@ func TestHostsContainer_Translate(t *testing.T) {
 
 	require.NoError(t, fstest.TestFS(testdata, "etc_hosts"))
 
-	hc, err := NewHostsContainer(0, testdata, &stubWatcher, "etc_hosts")
+	hc, err := aghnet.NewHostsContainer(0, testdata, &stubWatcher, "etc_hosts")
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, hc.Close)
 
@@ -527,7 +463,7 @@ func TestHostsContainer(t *testing.T) {
 		OnClose:  func() (err error) { return nil },
 	}
 
-	hc, err := NewHostsContainer(listID, testdata, &stubWatcher, "etc_hosts")
+	hc, err := aghnet.NewHostsContainer(listID, testdata, &stubWatcher, "etc_hosts")
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, hc.Close)
 
@@ -555,72 +491,6 @@ func TestHostsContainer(t *testing.T) {
 
 				assert.Equal(t, tc.want[i], rw)
 			}
-		})
-	}
-}
-
-func TestUniqueRules_ParseLine(t *testing.T) {
-	ip := netutil.IPv4Localhost()
-	ipStr := ip.String()
-
-	testCases := []struct {
-		name      string
-		line      string
-		wantIP    netip.Addr
-		wantHosts []string
-	}{{
-		name:      "simple",
-		line:      ipStr + ` hostname`,
-		wantIP:    ip,
-		wantHosts: []string{"hostname"},
-	}, {
-		name:      "aliases",
-		line:      ipStr + ` hostname alias`,
-		wantIP:    ip,
-		wantHosts: []string{"hostname", "alias"},
-	}, {
-		name:      "invalid_line",
-		line:      ipStr,
-		wantIP:    netip.Addr{},
-		wantHosts: nil,
-	}, {
-		name:      "invalid_line_hostname",
-		line:      ipStr + ` # hostname`,
-		wantIP:    ip,
-		wantHosts: nil,
-	}, {
-		name:      "commented_aliases",
-		line:      ipStr + ` hostname # alias`,
-		wantIP:    ip,
-		wantHosts: []string{"hostname"},
-	}, {
-		name:      "whole_comment",
-		line:      `# ` + ipStr + ` hostname`,
-		wantIP:    netip.Addr{},
-		wantHosts: nil,
-	}, {
-		name:      "partial_comment",
-		line:      ipStr + ` host#name`,
-		wantIP:    ip,
-		wantHosts: []string{"host"},
-	}, {
-		name:      "empty",
-		line:      ``,
-		wantIP:    netip.Addr{},
-		wantHosts: nil,
-	}, {
-		name:      "bad_hosts",
-		line:      ipStr + ` bad..host bad._tld empty.tld. ok.host`,
-		wantIP:    ip,
-		wantHosts: []string{"ok.host"},
-	}}
-
-	for _, tc := range testCases {
-		hp := hostsParser{}
-		t.Run(tc.name, func(t *testing.T) {
-			got, hosts := hp.parseLine(tc.line)
-			assert.Equal(t, tc.wantIP, got)
-			assert.Equal(t, tc.wantHosts, hosts)
 		})
 	}
 }

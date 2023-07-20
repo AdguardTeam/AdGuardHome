@@ -10,7 +10,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// DialContext is a [whois.DialContextFunc] that uses s to resolve hostnames.
+// DialContext is an [aghnet.DialContextFunc] that uses s to resolve hostnames.
 func (s *Server) DialContext(ctx context.Context, network, addr string) (conn net.Conn, err error) {
 	log.Debug("dnsforward: dialing %q for network %q", addr, network)
 

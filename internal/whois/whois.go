@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -49,7 +50,7 @@ func (Empty) Process(_ context.Context, _ netip.Addr) (info *Info, changed bool)
 // Config is the configuration structure for Default.
 type Config struct {
 	// DialContext is used to create TCP connections to WHOIS servers.
-	DialContext DialContextFunc
+	DialContext aghnet.DialContextFunc
 
 	// ServerAddr is the address of the WHOIS server.
 	ServerAddr string
@@ -77,13 +78,6 @@ type Config struct {
 	Port uint16
 }
 
-// DialContextFunc is the semantic alias for dialing functions, such as
-// [http.Transport.DialContext].
-//
-// TODO(a.garipov): Move to aghnet once it stops importing aghtest, because
-// otherwise there is an import cycle.
-type DialContextFunc = func(ctx context.Context, network, addr string) (conn net.Conn, err error)
-
 // Default is the default WHOIS information processor.
 type Default struct {
 	// cache is the cache containing IP addresses of clients.  An active IP
@@ -93,7 +87,7 @@ type Default struct {
 	cache gcache.Cache
 
 	// dialContext is used to create TCP connections to WHOIS servers.
-	dialContext DialContextFunc
+	dialContext aghnet.DialContextFunc
 
 	// serverAddr is the address of the WHOIS server.
 	serverAddr string

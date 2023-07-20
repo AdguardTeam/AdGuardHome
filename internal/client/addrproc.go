@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/errors"
@@ -39,7 +40,7 @@ func (EmptyAddrProc) Close() (_ error) { return nil }
 type DefaultAddrProcConfig struct {
 	// DialContext is used to create TCP connections to WHOIS servers.
 	// DialContext must not be nil if [DefaultAddrProcConfig.UseWHOIS] is true.
-	DialContext whois.DialContextFunc
+	DialContext aghnet.DialContextFunc
 
 	// Exchanger is used to perform rDNS queries.  Exchanger must not be nil if
 	// [DefaultAddrProcConfig.UseRDNS] is true.
@@ -161,7 +162,7 @@ func NewDefaultAddrProc(c *DefaultAddrProcConfig) (p *DefaultAddrProc) {
 
 // newWHOIS returns a whois.Interface instance using the given function for
 // dialing.
-func newWHOIS(dialFunc whois.DialContextFunc) (w whois.Interface) {
+func newWHOIS(dialFunc aghnet.DialContextFunc) (w whois.Interface) {
 	// TODO(s.chzhen):  Consider making configurable.
 	const (
 		// defaultTimeout is the timeout for WHOIS requests.

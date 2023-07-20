@@ -5,9 +5,9 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/testutil/fakefs"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -118,7 +118,7 @@ func TestIfaceSetStaticIP(t *testing.T) {
 			Data: []byte(`nameserver 1.1.1.1`),
 		},
 	}
-	panicFsys := &aghtest.FS{
+	panicFsys := &fakefs.FS{
 		OnOpen: func(name string) (fs.File, error) { panic("not implemented") },
 	}
 

@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/testutil/fakeio"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -159,7 +159,7 @@ func TestParser_Parse(t *testing.T) {
 func TestParser_Parse_writeError(t *testing.T) {
 	t.Parallel()
 
-	dst := &aghtest.Writer{
+	dst := &fakeio.Writer{
 		OnWrite: func(b []byte) (n int, err error) {
 			return 1, errors.Error("test error")
 		},

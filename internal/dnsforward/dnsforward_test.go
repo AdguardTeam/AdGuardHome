@@ -1,6 +1,7 @@
 package dnsforward
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
@@ -467,7 +468,14 @@ func TestServerRace(t *testing.T) {
 }
 
 func TestSafeSearch(t *testing.T) {
-	resolver := &aghtest.TestResolver{}
+	resolver := &aghtest.Resolver{
+		OnLookupIP: func(_ context.Context, _, host string) (ips []net.IP, err error) {
+			ip4, ip6 := aghtest.HostToIPs(host)
+
+			return []net.IP{ip4, ip6}, nil
+		},
+	}
+
 	safeSearchConf := filtering.SafeSearchConfig{
 		Enabled:        true,
 		Google:         true,
@@ -506,7 +514,7 @@ func TestSafeSearch(t *testing.T) {
 	client := &dns.Client{}
 
 	yandexIP := net.IP{213, 180, 193, 56}
-	googleIP, _ := resolver.HostToIPs("forcesafesearch.google.com")
+	googleIP, _ := aghtest.HostToIPs("forcesafesearch.google.com")
 
 	testCases := []struct {
 		host string
@@ -954,7 +962,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 		Upstream:  aghtest.NewBlockUpstream(hostname, true),
 	})
 
-	ans4, _ := (&aghtest.TestResolver{}).HostToIPs(hostname)
+	ans4, _ := aghtest.HostToIPs(hostname)
 
 	filterConf := &filtering.Config{
 		SafeBrowsingEnabled: true,
