@@ -53,7 +53,7 @@ func (c *twoskyClient) download() (err error) {
 		go downloadWorker(wg, failed, client, uriCh)
 	}
 
-	for lang := range c.langs {
+	for _, lang := range c.langs {
 		uri := translationURL(downloadURI, defaultBaseFile, c.projectID, lang)
 
 		uriCh <- uri

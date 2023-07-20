@@ -33,6 +33,22 @@ const (
 	uploadTimeout = 10 * time.Second
 )
 
+// blockerLangCodes is the codes of languages which need to be fully translated.
+var blockerLangCodes = []langCode{
+	"de",
+	"en",
+	"es",
+	"fr",
+	"it",
+	"ja",
+	"ko",
+	"pt-br",
+	"pt-pt",
+	"ru",
+	"zh-cn",
+	"zh-tw",
+}
+
 // langCode is a language code.
 type langCode string
 
@@ -173,14 +189,14 @@ type twoskyClient struct {
 	// uri is the base URL.
 	uri *url.URL
 
-	// langs is the map of languages to download.
-	langs languages
-
 	// projectID is the name of the project.
 	projectID string
 
 	// baseLang is the base language code.
 	baseLang langCode
+
+	// langs is the list of codes of languages to download.
+	langs []langCode
 }
 
 // toClient reads values from environment variables or defaults, validates
@@ -208,11 +224,13 @@ func (t *twoskyConfig) toClient() (cli *twoskyClient, err error) {
 		baseLang = langCode(uLangStr)
 	}
 
-	langs := t.Languages
+	langs := maps.Keys(t.Languages)
 	dlLangStr := os.Getenv("DOWNLOAD_LANGUAGES")
-	if dlLangStr != "" {
-		var dlLangs languages
-		dlLangs, err = validateLanguageStr(dlLangStr, langs)
+	if dlLangStr == "blocker" {
+		langs = blockerLangCodes
+	} else if dlLangStr != "" {
+		var dlLangs []langCode
+		dlLangs, err = validateLanguageStr(dlLangStr, t.Languages)
 		if err != nil {
 			return nil, err
 		}
@@ -229,19 +247,19 @@ func (t *twoskyConfig) toClient() (cli *twoskyClient, err error) {
 }
 
 // validateLanguageStr validates languages codes that contain in the str and
-// returns language map, where key is language code and value is display name.
-func validateLanguageStr(str string, all languages) (langs languages, err error) {
-	langs = make(languages)
+// returns them or error.
+func validateLanguageStr(str string, all languages) (langs []langCode, err error) {
 	codes := strings.Fields(str)
+	langs = make([]langCode, 0, len(codes))
 
 	for _, k := range codes {
 		lc := langCode(k)
-		name, ok := all[lc]
+		_, ok := all[lc]
 		if !ok {
 			return nil, fmt.Errorf("validating languages: unexpected language code %q", k)
 		}
 
-		langs[lc] = name
+		langs = append(langs, lc)
 	}
 
 	return langs, nil
@@ -294,7 +312,15 @@ func summary(langs languages) (err error) {
 
 		f := float64(len(loc)) * 100 / size
 
-		fmt.Printf("%s\t %6.2f %%\n", lang, f)
+		blocker := ""
+
+		// N is small enough to not raise performance questions.
+		ok := slices.Contains(blockerLangCodes, lang)
+		if ok {
+			blocker = " (blocker)"
+		}
+
+		fmt.Printf("%s\t %6.2f %%%s\n", lang, f, blocker)
 	}
 
 	return nil

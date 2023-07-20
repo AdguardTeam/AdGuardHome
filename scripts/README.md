@@ -290,7 +290,9 @@ directory.
 Optional environment:
 
  *  `DOWNLOAD_LANGUAGES`: set a list of specific languages to `download`.  For
-    example `ar be bg`.
+    example `ar be bg`.  If it set to `blocker` then script will download only
+    those languages, which need to be fully translated (`de en es fr it ja ko
+    pt-br pt-pt ru zh-cn zh-tw`).
 
  *  `UPLOAD_LANGUAGE`: set an alternative language for `upload`.
 
