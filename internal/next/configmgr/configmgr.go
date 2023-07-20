@@ -151,6 +151,10 @@ func (m *Manager) assemble(
 	}
 
 	webSvcConf := &websvc.Config{
+		Pprof: &websvc.PprofConfig{
+			Port:    conf.HTTP.Pprof.Port,
+			Enabled: conf.HTTP.Pprof.Enabled,
+		},
 		ConfigManager: m,
 		Frontend:      frontend,
 		// TODO(a.garipov): Fill from config file.
@@ -259,9 +263,6 @@ func (m *Manager) UpdateWeb(ctx context.Context, c *websvc.Config) (err error) {
 	m.updMu.Lock()
 	defer m.updMu.Unlock()
 
-	// TODO(a.garipov): Update and write the configuration file.  Return an
-	// error if something went wrong.
-
 	err = m.updateWeb(ctx, c)
 	if err != nil {
 		return fmt.Errorf("reassembling websvc: %w", err)
@@ -291,6 +292,8 @@ func (m *Manager) updateWeb(ctx context.Context, c *websvc.Config) (err error) {
 
 // updateCurrentWeb updates the web configuration in the current config.
 func (m *Manager) updateCurrentWeb(c *websvc.Config) {
+	// TODO(a.garipov): Update pprof from API?
+
 	m.current.HTTP.Addresses = slices.Clone(c.Addresses)
 	m.current.HTTP.SecureAddresses = slices.Clone(c.SecureAddresses)
 	m.current.HTTP.Timeout = timeutil.Duration{Duration: c.Timeout}

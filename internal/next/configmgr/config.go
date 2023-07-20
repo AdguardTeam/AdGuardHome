@@ -17,8 +17,6 @@ type config struct {
 	Log  *logConfig  `yaml:"log"`
 	// TODO(a.garipov): Use.
 	SchemaVersion int `yaml:"schema_version"`
-	// TODO(a.garipov): Use.
-	DebugPprof bool `yaml:"debug_pprof"`
 }
 
 const errNoConf errors.Error = "configuration not found"
@@ -84,6 +82,8 @@ func (c *dnsConfig) validate() (err error) {
 
 // httpConfig is the on-disk web API configuration.
 type httpConfig struct {
+	Pprof *httpPprofConfig `yaml:"pprof"`
+
 	// TODO(a.garipov): Document the configuration change.
 	Addresses       []netip.AddrPort  `yaml:"addresses"`
 	SecureAddresses []netip.AddrPort  `yaml:"secure_addresses"`
@@ -101,8 +101,23 @@ func (c *httpConfig) validate() (err error) {
 	case c.Timeout.Duration <= 0:
 		return newMustBePositiveError("timeout", c.Timeout)
 	default:
-		return nil
+		return c.Pprof.validate()
 	}
+}
+
+// httpPprofConfig is the on-disk pprof configuration.
+type httpPprofConfig struct {
+	Port    uint16 `yaml:"port"`
+	Enabled bool   `yaml:"enabled"`
+}
+
+// validate returns an error if the pprof configuration structure is invalid.
+func (c *httpPprofConfig) validate() (err error) {
+	if c == nil {
+		return errNoConf
+	}
+
+	return nil
 }
 
 // logConfig is the on-disk web API configuration.

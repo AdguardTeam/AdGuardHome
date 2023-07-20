@@ -18,6 +18,9 @@ dns:
   bootstrap_prefer_ipv6: true
   use_dns64: true
 http:
+  pprof:
+    enabled: true
+    port: 6060
   addresses:
   - '0.0.0.0:3000'
   secure_addresses: []

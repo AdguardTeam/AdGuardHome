@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"net/http"
 	"net/netip"
+	"runtime"
 	"sync"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/pprofutil"
 	"github.com/NYTimes/gziphandler"
 	"github.com/quic-go/quic-go/http3"
 	"golang.org/x/net/http2"
@@ -308,4 +310,23 @@ func (web *webAPI) mustStartHTTP3(address string) {
 		cleanupAlways()
 		log.Fatalf("web: http3: %s", err)
 	}
+}
+
+// startPprof launches the debug and profiling server on addr.
+func startPprof(addr string) {
+	runtime.SetBlockProfileRate(1)
+	runtime.SetMutexProfileFraction(1)
+
+	mux := http.NewServeMux()
+	pprofutil.RoutePprof(mux)
+
+	go func() {
+		defer log.OnPanic("pprof server")
+
+		log.Info("pprof: listening on %q", addr)
+		err := http.ListenAndServe(addr, mux)
+		if !errors.Is(err, http.ErrServerClosed) {
+			log.Error("pprof: shutting down: %s", err)
+		}
+	}()
 }

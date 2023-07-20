@@ -7,6 +7,7 @@ enough.
 
 ### Added
 
+- The ability to change the port of the pprof debug API.
 - The ability to log to stderr using `--logFile=stderr`.
 - The new `--web-addr` flag to set the Web UI address in a `host:port` form.
 - `SIGHUP` now reloads all configuration from the configuration file ([#5676]).

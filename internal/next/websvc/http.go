@@ -52,6 +52,10 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	newConf := &Config{
+		Pprof: &PprofConfig{
+			Port:    svc.pprofPort,
+			Enabled: svc.pprof != nil,
+		},
 		ConfigManager:   svc.confMgr,
 		Frontend:        svc.frontend,
 		TLS:             svc.tls,

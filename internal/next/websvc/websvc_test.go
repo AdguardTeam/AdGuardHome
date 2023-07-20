@@ -89,6 +89,9 @@ func newTestServer(
 	t.Helper()
 
 	c := &websvc.Config{
+		Pprof: &websvc.PprofConfig{
+			Enabled: false,
+		},
 		ConfigManager: confMgr,
 		Frontend: &fakefs.FS{
 			OnOpen: func(_ string) (_ fs.File, _ error) { return nil, fs.ErrNotExist },

@@ -25,6 +25,9 @@ func TestService_HandlePatchSettingsHTTP(t *testing.T) {
 	}
 
 	svc, err := websvc.New(&websvc.Config{
+		Pprof: &websvc.PprofConfig{
+			Enabled: false,
+		},
 		TLS: &tls.Config{
 			Certificates: []tls.Certificate{{}},
 		},

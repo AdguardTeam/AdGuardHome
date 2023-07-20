@@ -15,6 +15,7 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"runtime"
 	"sync"
 	"time"
 
@@ -22,6 +23,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/mathutil"
+	"github.com/AdguardTeam/golibs/pprofutil"
 	httptreemux "github.com/dimfeld/httptreemux/v5"
 )
 
@@ -34,54 +37,18 @@ type ConfigManager interface {
 	UpdateWeb(ctx context.Context, c *Config) (err error)
 }
 
-// Config is the AdGuard Home web service configuration structure.
-type Config struct {
-	// ConfigManager is used to show information about services as well as
-	// dynamically reconfigure them.
-	ConfigManager ConfigManager
-
-	// Frontend is the filesystem with the frontend and other statically
-	// compiled files.
-	Frontend fs.FS
-
-	// TLS is the optional TLS configuration.  If TLS is not nil,
-	// SecureAddresses must not be empty.
-	TLS *tls.Config
-
-	// Start is the time of start of AdGuard Home.
-	Start time.Time
-
-	// OverrideAddress is the initial or override address for the HTTP API.  If
-	// set, it is used instead of [Addresses] and [SecureAddresses].
-	OverrideAddress netip.AddrPort
-
-	// Addresses are the addresses on which to serve the plain HTTP API.
-	Addresses []netip.AddrPort
-
-	// SecureAddresses are the addresses on which to serve the HTTPS API.  If
-	// SecureAddresses is not empty, TLS must not be nil.
-	SecureAddresses []netip.AddrPort
-
-	// Timeout is the timeout for all server operations.
-	Timeout time.Duration
-
-	// ForceHTTPS tells if all requests to Addresses should be redirected to a
-	// secure address instead.
-	//
-	// TODO(a.garipov): Use; define rules, which address to redirect to.
-	ForceHTTPS bool
-}
-
 // Service is the AdGuard Home web service.  A nil *Service is a valid
 // [agh.Service] that does nothing.
 type Service struct {
 	confMgr      ConfigManager
 	frontend     fs.FS
 	tls          *tls.Config
+	pprof        *http.Server
 	start        time.Time
 	overrideAddr netip.AddrPort
 	servers      []*http.Server
 	timeout      time.Duration
+	pprofPort    uint16
 	forceHTTPS   bool
 }
 
@@ -120,7 +87,33 @@ func New(c *Config) (svc *Service, err error) {
 		}
 	}
 
+	svc.setupPprof(c.Pprof)
+
 	return svc, nil
+}
+
+// setupPprof sets the pprof properties of svc.
+func (svc *Service) setupPprof(c *PprofConfig) {
+	if !c.Enabled {
+		// Set to zero explicitly in case pprof used to be enabled before a
+		// reconfiguration took place.
+		runtime.SetBlockProfileRate(0)
+		runtime.SetMutexProfileFraction(0)
+
+		return
+	}
+
+	runtime.SetBlockProfileRate(1)
+	runtime.SetMutexProfileFraction(1)
+
+	pprofMux := http.NewServeMux()
+	pprofutil.RoutePprof(pprofMux)
+
+	svc.pprofPort = c.Port
+	addr := netip.AddrPortFrom(netip.AddrFrom4([4]byte{127, 0, 0, 1}), c.Port)
+
+	// TODO(a.garipov): Consider making pprof timeout configurable.
+	svc.pprof = newSrv(addr, nil, pprofMux, 10*time.Minute)
 }
 
 // newSrv returns a new *http.Server with the given parameters.
@@ -254,10 +247,17 @@ func (svc *Service) Start() (err error) {
 		return nil
 	}
 
+	pprofEnabled := svc.pprof != nil
+	srvNum := len(svc.servers) + mathutil.BoolToNumber[int](pprofEnabled)
+
 	wg := &sync.WaitGroup{}
-	wg.Add(len(svc.servers))
+	wg.Add(srvNum)
 	for _, srv := range svc.servers {
 		go serve(srv, wg)
+	}
+
+	if pprofEnabled {
+		go serve(svc.pprof, wg)
 	}
 
 	wg.Wait()
@@ -310,9 +310,20 @@ func (svc *Service) Shutdown(ctx context.Context) (err error) {
 
 	var errs []error
 	for _, srv := range svc.servers {
-		serr := srv.Shutdown(ctx)
-		if serr != nil {
-			errs = append(errs, fmt.Errorf("shutting down srv %s: %w", srv.Addr, serr))
+		shutdownErr := srv.Shutdown(ctx)
+		if shutdownErr != nil {
+			errs = append(errs, fmt.Errorf("shutting down srv %s: %w", srv.Addr, shutdownErr))
+		}
+	}
+
+	if svc.pprof != nil {
+		shutdownErr := svc.pprof.Shutdown(ctx)
+		if shutdownErr != nil {
+			errs = append(errs, fmt.Errorf(
+				"shutting down pprof srv %s: %w",
+				svc.pprof.Addr,
+				shutdownErr,
+			))
 		}
 	}
 
@@ -321,24 +332,4 @@ func (svc *Service) Shutdown(ctx context.Context) (err error) {
 	}
 
 	return nil
-}
-
-// Config returns the current configuration of the web service.  Config must not
-// be called simultaneously with Start.  If svc was initialized with ":0"
-// addresses, addrs will not return the actual bound ports until Start is
-// finished.
-func (svc *Service) Config() (c *Config) {
-	c = &Config{
-		ConfigManager: svc.confMgr,
-		TLS:           svc.tls,
-		// Leave Addresses and SecureAddresses empty and get the actual
-		// addresses that include the :0 ones later.
-		Start:      svc.start,
-		Timeout:    svc.timeout,
-		ForceHTTPS: svc.forceHTTPS,
-	}
-
-	c.Addresses, c.SecureAddresses = svc.addrs()
-
-	return c
 }
