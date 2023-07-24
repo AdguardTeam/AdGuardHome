@@ -562,9 +562,20 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 
 	s.recDetector.clear()
 
+	s.setupAddrProc()
+
+	s.registerHandlers()
+
+	return nil
+}
+
+// setupAddrProc initializes the address processor.  For internal use only.
+func (s *Server) setupAddrProc() {
+	// TODO(a.garipov): This is a crutch for tests; remove.
 	if s.conf.AddrProcConf == nil {
-		// TODO(a.garipov): This is a crutch for tests; remove.
 		s.conf.AddrProcConf = &client.DefaultAddrProcConfig{}
+	}
+	if s.conf.AddrProcConf.AddressUpdater == nil {
 		s.addrProc = client.EmptyAddrProc{}
 	} else {
 		c := s.conf.AddrProcConf
@@ -579,10 +590,6 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 		// logic is moved to package client.
 		c.InitialAddresses = nil
 	}
-
-	s.registerHandlers()
-
-	return nil
 }
 
 // validateBlockingMode returns an error if the blocking mode data aren't valid.
