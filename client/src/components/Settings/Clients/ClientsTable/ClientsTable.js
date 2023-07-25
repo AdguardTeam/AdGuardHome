@@ -57,7 +57,7 @@ const ClientsTable = ({
     };
 
     const handleSubmit = (values) => {
-        const config = values;
+        const config = { ...values };
 
         if (values) {
             if (values.blocked_services) {
