@@ -104,8 +104,8 @@ func TestDefaultAddrProc_Process_rDNS(t *testing.T) {
 					panic("not implemented")
 				},
 				Exchanger: &aghtest.Exchanger{
-					OnExchange: func(ip netip.Addr) (host string, err error) {
-						return tc.host, tc.rdnsErr
+					OnExchange: func(ip netip.Addr) (host string, ttl time.Duration, err error) {
+						return tc.host, 0, tc.rdnsErr
 					},
 				},
 				PrivateSubnets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
@@ -214,7 +214,7 @@ func TestDefaultAddrProc_Process_WHOIS(t *testing.T) {
 					return whoisConn, nil
 				},
 				Exchanger: &aghtest.Exchanger{
-					OnExchange: func(_ netip.Addr) (host string, err error) {
+					OnExchange: func(_ netip.Addr) (_ string, _ time.Duration, _ error) {
 						panic("not implemented")
 					},
 				},

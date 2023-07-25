@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/netip"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
@@ -131,14 +132,14 @@ func (r *Resolver) LookupIP(ctx context.Context, network, host string) (ips []ne
 
 // Exchanger is a fake [rdns.Exchanger] implementation for tests.
 type Exchanger struct {
-	OnExchange func(ip netip.Addr) (host string, err error)
+	OnExchange func(ip netip.Addr) (host string, ttl time.Duration, err error)
 }
 
 // type check
 var _ rdns.Exchanger = (*Exchanger)(nil)
 
 // Exchange implements [rdns.Exchanger] interface for *Exchanger.
-func (e *Exchanger) Exchange(ip netip.Addr) (host string, err error) {
+func (e *Exchanger) Exchange(ip netip.Addr) (host string, ttl time.Duration, err error) {
 	return e.OnExchange(ip)
 }
 

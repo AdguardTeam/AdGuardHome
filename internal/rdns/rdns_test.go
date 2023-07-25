@@ -55,18 +55,18 @@ func TestDefault_Process(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			hit := 0
-			onExchange := func(ip netip.Addr) (host string, err error) {
+			onExchange := func(ip netip.Addr) (host string, ttl time.Duration, err error) {
 				hit++
 
 				switch ip {
 				case ip1:
-					return revAddr1, nil
+					return revAddr1, 0, nil
 				case ip2:
-					return revAddr2, nil
+					return revAddr2, 0, nil
 				case localIP:
-					return localRevAddr1, nil
+					return localRevAddr1, 0, nil
 				default:
-					return "", nil
+					return "", 0, nil
 				}
 			}
 			exchanger := &aghtest.Exchanger{

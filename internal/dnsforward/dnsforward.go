@@ -316,13 +316,13 @@ const (
 var _ rdns.Exchanger = (*Server)(nil)
 
 // Exchange implements the [rdns.Exchanger] interface for *Server.
-func (s *Server) Exchange(ip netip.Addr) (host string, err error) {
+func (s *Server) Exchange(ip netip.Addr) (host string, ttl time.Duration, err error) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
 	arpa, err := netutil.IPToReversedAddr(ip.AsSlice())
 	if err != nil {
-		return "", fmt.Errorf("reversing ip: %w", err)
+		return "", 0, fmt.Errorf("reversing ip: %w", err)
 	}
 
 	arpa = dns.Fqdn(arpa)
@@ -348,7 +348,7 @@ func (s *Server) Exchange(ip netip.Addr) (host string, err error) {
 	var resolver *proxy.Proxy
 	if s.privateNets.Contains(ip.AsSlice()) {
 		if !s.conf.UsePrivateRDNS {
-			return "", nil
+			return "", 0, nil
 		}
 
 		resolver = s.localResolvers
@@ -358,31 +358,47 @@ func (s *Server) Exchange(ip netip.Addr) (host string, err error) {
 	}
 
 	if err = resolver.Resolve(dctx); err != nil {
-		return "", err
+		return "", 0, err
 	}
 
 	return hostFromPTR(dctx.Res)
 }
 
 // hostFromPTR returns domain name from the PTR response or error.
-func hostFromPTR(resp *dns.Msg) (host string, err error) {
+func hostFromPTR(resp *dns.Msg) (host string, ttl time.Duration, err error) {
 	// Distinguish between NODATA response and a failed request.
 	if resp.Rcode != dns.RcodeSuccess && resp.Rcode != dns.RcodeNameError {
-		return "", fmt.Errorf(
+		return "", 0, fmt.Errorf(
 			"received %s response: %w",
 			dns.RcodeToString[resp.Rcode],
 			ErrRDNSFailed,
 		)
 	}
 
+	var ttlSec uint32
+
 	for _, ans := range resp.Answer {
 		ptr, ok := ans.(*dns.PTR)
-		if ok {
-			return strings.TrimSuffix(ptr.Ptr, "."), nil
+		if !ok {
+			continue
+		}
+
+		if ptr.Hdr.Ttl > ttlSec {
+			host = ptr.Ptr
+			ttlSec = ptr.Hdr.Ttl
 		}
 	}
 
-	return "", ErrRDNSNoData
+	if host != "" {
+		// NOTE:  Don't use [aghnet.NormalizeDomain] to retain original letter
+		// case.
+		host = strings.TrimSuffix(host, ".")
+		ttl = time.Duration(ttlSec) * time.Second
+
+		return host, ttl, nil
+	}
+
+	return "", 0, ErrRDNSNoData
 }
 
 // Start starts the DNS server.

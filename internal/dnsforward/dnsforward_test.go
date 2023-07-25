@@ -1300,25 +1300,57 @@ func TestNewServer(t *testing.T) {
 	}
 }
 
+// doubleTTL is a helper function that returns a clone of DNS PTR with appended
+// copy of first answer record with doubled TTL.
+func doubleTTL(msg *dns.Msg) (resp *dns.Msg) {
+	if msg == nil {
+		return nil
+	}
+
+	if len(msg.Answer) == 0 {
+		return msg
+	}
+
+	rec := msg.Answer[0]
+	ptr, ok := rec.(*dns.PTR)
+	if !ok {
+		return msg
+	}
+
+	clone := *ptr
+	clone.Hdr.Ttl *= 2
+	msg.Answer = append(msg.Answer, &clone)
+
+	return msg
+}
+
 func TestServer_Exchange(t *testing.T) {
 	const (
 		onesHost        = "one.one.one.one"
+		twosHost        = "two.two.two.two"
 		localDomainHost = "local.domain"
+
+		defaultTTL = time.Second * 60
 	)
 
 	var (
 		onesIP  = netip.MustParseAddr("1.1.1.1")
+		twosIP  = netip.MustParseAddr("2.2.2.2")
 		localIP = netip.MustParseAddr("192.168.1.1")
 	)
 
-	revExtIPv4, err := netutil.IPToReversedAddr(onesIP.AsSlice())
+	onesRevExtIPv4, err := netutil.IPToReversedAddr(onesIP.AsSlice())
+	require.NoError(t, err)
+
+	twosRevExtIPv4, err := netutil.IPToReversedAddr(twosIP.AsSlice())
 	require.NoError(t, err)
 
 	extUpstream := &aghtest.UpstreamMock{
 		OnAddress: func() (addr string) { return "external.upstream.example" },
 		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
 			return aghalg.Coalesce(
-				aghtest.MatchedResponse(req, dns.TypePTR, revExtIPv4, onesHost),
+				aghtest.MatchedResponse(req, dns.TypePTR, onesRevExtIPv4, onesHost),
+				doubleTTL(aghtest.MatchedResponse(req, dns.TypePTR, twosRevExtIPv4, twosHost)),
 				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
 			), nil
 		},
@@ -1358,47 +1390,61 @@ func TestServer_Exchange(t *testing.T) {
 	srv.privateNets = netutil.SubnetSetFunc(netutil.IsLocallyServed)
 
 	testCases := []struct {
-		name        string
-		want        string
+		req         netip.Addr
 		wantErr     error
 		locUpstream upstream.Upstream
-		req         netip.Addr
+		name        string
+		want        string
+		wantTTL     time.Duration
 	}{{
 		name:        "external_good",
 		want:        onesHost,
 		wantErr:     nil,
 		locUpstream: nil,
 		req:         onesIP,
+		wantTTL:     defaultTTL,
 	}, {
 		name:        "local_good",
 		want:        localDomainHost,
 		wantErr:     nil,
 		locUpstream: locUpstream,
 		req:         localIP,
+		wantTTL:     defaultTTL,
 	}, {
 		name:        "upstream_error",
 		want:        "",
 		wantErr:     aghtest.ErrUpstream,
 		locUpstream: errUpstream,
 		req:         localIP,
+		wantTTL:     0,
 	}, {
 		name:        "empty_answer_error",
 		want:        "",
 		wantErr:     ErrRDNSNoData,
 		locUpstream: locUpstream,
 		req:         netip.MustParseAddr("192.168.1.2"),
+		wantTTL:     0,
 	}, {
 		name:        "invalid_answer",
 		want:        "",
 		wantErr:     ErrRDNSNoData,
 		locUpstream: nonPtrUpstream,
 		req:         localIP,
+		wantTTL:     0,
 	}, {
 		name:        "refused",
 		want:        "",
 		wantErr:     ErrRDNSFailed,
 		locUpstream: refusingUpstream,
 		req:         localIP,
+		wantTTL:     0,
+	}, {
+		name:        "longest_ttl",
+		want:        twosHost,
+		wantErr:     nil,
+		locUpstream: nil,
+		req:         twosIP,
+		wantTTL:     defaultTTL * 2,
 	}}
 
 	for _, tc := range testCases {
@@ -1412,17 +1458,18 @@ func TestServer_Exchange(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			host, eerr := srv.Exchange(tc.req)
+			host, ttl, eerr := srv.Exchange(tc.req)
 
 			require.ErrorIs(t, eerr, tc.wantErr)
 			assert.Equal(t, tc.want, host)
+			assert.Equal(t, tc.wantTTL, ttl)
 		})
 	}
 
 	t.Run("resolving_disabled", func(t *testing.T) {
 		srv.conf.UsePrivateRDNS = false
 
-		host, eerr := srv.Exchange(localIP)
+		host, _, eerr := srv.Exchange(localIP)
 
 		require.NoError(t, eerr)
 		assert.Empty(t, host)
