@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghrenameio"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -83,53 +84,53 @@ func (d *DNSFilter) filterSetProperties(
 		filters = d.WhitelistFilters
 	}
 
-	i := slices.IndexFunc(filters, func(filt FilterYAML) bool { return filt.URL == listURL })
+	i := slices.IndexFunc(filters, func(flt FilterYAML) bool { return flt.URL == listURL })
 	if i == -1 {
 		return false, errFilterNotExist
 	}
 
-	filt := &filters[i]
+	flt := &filters[i]
 	log.Debug(
 		"filtering: set name to %q, url to %s, enabled to %t for filter %s",
 		newList.Name,
 		newList.URL,
 		newList.Enabled,
-		filt.URL,
+		flt.URL,
 	)
 
 	defer func(oldURL, oldName string, oldEnabled bool, oldUpdated time.Time, oldRulesCount int) {
 		if err != nil {
-			filt.URL = oldURL
-			filt.Name = oldName
-			filt.Enabled = oldEnabled
-			filt.LastUpdated = oldUpdated
-			filt.RulesCount = oldRulesCount
+			flt.URL = oldURL
+			flt.Name = oldName
+			flt.Enabled = oldEnabled
+			flt.LastUpdated = oldUpdated
+			flt.RulesCount = oldRulesCount
 		}
-	}(filt.URL, filt.Name, filt.Enabled, filt.LastUpdated, filt.RulesCount)
+	}(flt.URL, flt.Name, flt.Enabled, flt.LastUpdated, flt.RulesCount)
 
-	filt.Name = newList.Name
+	flt.Name = newList.Name
 
-	if filt.URL != newList.URL {
+	if flt.URL != newList.URL {
 		if d.filterExistsLocked(newList.URL) {
 			return false, errFilterExists
 		}
 
 		shouldRestart = true
 
-		filt.URL = newList.URL
-		filt.LastUpdated = time.Time{}
-		filt.unload()
+		flt.URL = newList.URL
+		flt.LastUpdated = time.Time{}
+		flt.unload()
 	}
 
-	if filt.Enabled != newList.Enabled {
-		filt.Enabled = newList.Enabled
+	if flt.Enabled != newList.Enabled {
+		flt.Enabled = newList.Enabled
 		shouldRestart = true
 	}
 
-	if filt.Enabled {
+	if flt.Enabled {
 		if shouldRestart {
 			// Download the filter contents.
-			shouldRestart, err = d.update(filt)
+			shouldRestart, err = d.update(flt)
 		}
 	} else {
 		// TODO(e.burkov):  The validation of the contents of the new URL is
@@ -137,7 +138,7 @@ func (d *DNSFilter) filterSetProperties(
 		// possible to set a bad rules source, but the validation should still
 		// kick in when the filter is enabled.  Consider changing this behavior
 		// to be stricter.
-		filt.unload()
+		flt.unload()
 	}
 
 	return shouldRestart, err
@@ -250,24 +251,24 @@ func assignUniqueFilterID() int64 {
 // Sets up a timer that will be checking for filters updates periodically
 func (d *DNSFilter) periodicallyRefreshFilters() {
 	const maxInterval = 1 * 60 * 60
-	intval := 5 // use a dynamically increasing time interval
+	ivl := 5 // use a dynamically increasing time interval
 	for {
 		isNetErr, ok := false, false
 		if d.FiltersUpdateIntervalHours != 0 {
 			_, isNetErr, ok = d.tryRefreshFilters(true, true, false)
 			if ok && !isNetErr {
-				intval = maxInterval
+				ivl = maxInterval
 			}
 		}
 
 		if isNetErr {
-			intval *= 2
-			if intval > maxInterval {
-				intval = maxInterval
+			ivl *= 2
+			if ivl > maxInterval {
+				ivl = maxInterval
 			}
 		}
 
-		time.Sleep(time.Duration(intval) * time.Second)
+		time.Sleep(time.Duration(ivl) * time.Second)
 	}
 }
 
@@ -329,20 +330,20 @@ func (d *DNSFilter) refreshFiltersArray(filters *[]FilterYAML, force bool) (int,
 		return 0, nil, nil, false
 	}
 
-	nfail := 0
+	failNum := 0
 	for i := range updateFilters {
 		uf := &updateFilters[i]
 		updated, err := d.update(uf)
 		updateFlags = append(updateFlags, updated)
 		if err != nil {
-			nfail++
-			log.Info("filtering: updating filter from url %q: %s\n", uf.URL, err)
+			failNum++
+			log.Error("filtering: updating filter from url %q: %s\n", uf.URL, err)
 
 			continue
 		}
 	}
 
-	if nfail == len(updateFilters) {
+	if failNum == len(updateFilters) {
 		return 0, nil, nil, true
 	}
 
@@ -464,48 +465,6 @@ func (d *DNSFilter) update(filter *FilterYAML) (b bool, err error) {
 	return b, err
 }
 
-// finalizeUpdate closes and gets rid of temporary file f with filter's content
-// according to updated.  It also saves new values of flt's name, rules number
-// and checksum if succeeded.
-func (d *DNSFilter) finalizeUpdate(
-	file *os.File,
-	flt *FilterYAML,
-	updated bool,
-	res *rulelist.ParseResult,
-) (err error) {
-	tmpFileName := file.Name()
-
-	// Close the file before renaming it because it's required on Windows.
-	//
-	// See https://github.com/adguardTeam/adGuardHome/issues/1553.
-	err = file.Close()
-	if err != nil {
-		return fmt.Errorf("closing temporary file: %w", err)
-	}
-
-	if !updated {
-		log.Debug("filtering: filter %d from url %q has no changes, skipping", flt.ID, flt.URL)
-
-		return os.Remove(tmpFileName)
-	}
-
-	fltPath := flt.Path(d.DataDir)
-
-	log.Info("filtering: saving contents of filter %d into %q", flt.ID, fltPath)
-
-	// Don't use renameio or maybe packages, since those will require loading
-	// the whole filter content to the memory on Windows.
-	err = os.Rename(tmpFileName, fltPath)
-	if err != nil {
-		return errors.WithDeferred(err, os.Remove(tmpFileName))
-	}
-
-	flt.Name = aghalg.Coalesce(flt.Name, res.Title)
-	flt.checksum, flt.RulesCount = res.Checksum, res.RulesCount
-
-	return nil
-}
-
 // updateIntl updates the flt rewriting it's actual file.  It returns true if
 // the actual update has been performed.
 func (d *DNSFilter) updateIntl(flt *FilterYAML) (ok bool, err error) {
@@ -513,63 +472,22 @@ func (d *DNSFilter) updateIntl(flt *FilterYAML) (ok bool, err error) {
 
 	var res *rulelist.ParseResult
 
-	var tmpFile *os.File
-	tmpFile, err = os.CreateTemp(filepath.Join(d.DataDir, filterDir), "")
-	if err != nil {
-		return false, err
-	}
-	defer func() {
-		finErr := d.finalizeUpdate(tmpFile, flt, ok, res)
-		if ok && finErr == nil {
-			log.Info(
-				"filtering: updated filter %d: %d bytes, %d rules",
-				flt.ID,
-				res.BytesWritten,
-				res.RulesCount,
-			)
-
-			return
-		}
-
-		err = errors.WithDeferred(err, finErr)
-	}()
-
 	// Change the default 0o600 permission to something more acceptable by end
 	// users.
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/3198.
-	if err = tmpFile.Chmod(0o644); err != nil {
-		return false, fmt.Errorf("changing file mode: %w", err)
+	tmpFile, err := aghrenameio.NewPendingFile(flt.Path(d.DataDir), 0o644)
+	if err != nil {
+		return false, err
 	}
+	defer func() { err = d.finalizeUpdate(tmpFile, flt, res, err, ok) }()
 
-	var r io.Reader
-	if !filepath.IsAbs(flt.URL) {
-		var resp *http.Response
-		resp, err = d.HTTPClient.Get(flt.URL)
-		if err != nil {
-			log.Info("filtering: requesting filter from %q: %s, skipping", flt.URL, err)
-
-			return false, err
-		}
-		defer func() { err = errors.WithDeferred(err, resp.Body.Close()) }()
-
-		if resp.StatusCode != http.StatusOK {
-			log.Info("filtering got status code %d from %q, skipping", resp.StatusCode, flt.URL)
-
-			return false, fmt.Errorf("got status code %d, want %d", resp.StatusCode, http.StatusOK)
-		}
-
-		r = resp.Body
-	} else {
-		var f *os.File
-		f, err = os.Open(flt.URL)
-		if err != nil {
-			return false, fmt.Errorf("open file: %w", err)
-		}
-		defer func() { err = errors.WithDeferred(err, f.Close()) }()
-
-		r = f
+	r, err := d.reader(flt.URL)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return false, err
 	}
+	defer func() { err = errors.WithDeferred(err, r.Close()) }()
 
 	bufPtr := d.bufPool.Get().(*[]byte)
 	defer d.bufPool.Put(bufPtr)
@@ -578,6 +496,78 @@ func (d *DNSFilter) updateIntl(flt *FilterYAML) (ok bool, err error) {
 	res, err = p.Parse(tmpFile, r, *bufPtr)
 
 	return res.Checksum != flt.checksum && err == nil, err
+}
+
+// finalizeUpdate closes and gets rid of temporary file f with filter's content
+// according to updated.  It also saves new values of flt's name, rules number
+// and checksum if succeeded.
+func (d *DNSFilter) finalizeUpdate(
+	file aghrenameio.PendingFile,
+	flt *FilterYAML,
+	res *rulelist.ParseResult,
+	returned error,
+	updated bool,
+) (err error) {
+	id := flt.ID
+	if !updated {
+		if returned == nil {
+			log.Debug("filtering: filter %d from url %q has no changes, skipping", id, flt.URL)
+		}
+
+		return errors.WithDeferred(returned, file.Cleanup())
+	}
+
+	log.Info("filtering: saving contents of filter %d into %q", id, flt.Path(d.DataDir))
+
+	err = file.CloseReplace()
+	if err != nil {
+		return fmt.Errorf("finalizing update: %w", err)
+	}
+
+	rulesCount := res.RulesCount
+	log.Info("filtering: updated filter %d: %d bytes, %d rules", id, res.BytesWritten, rulesCount)
+
+	flt.Name = aghalg.Coalesce(flt.Name, res.Title)
+	flt.checksum = res.Checksum
+	flt.RulesCount = rulesCount
+
+	return nil
+}
+
+// reader returns an io.ReadCloser reading filtering-rule list data form either
+// a file on the filesystem or the filter's HTTP URL.
+func (d *DNSFilter) reader(fltURL string) (r io.ReadCloser, err error) {
+	if !filepath.IsAbs(fltURL) {
+		r, err = d.readerFromURL(fltURL)
+		if err != nil {
+			return nil, fmt.Errorf("reading from url: %w", err)
+		}
+
+		return r, nil
+	}
+
+	r, err = os.Open(fltURL)
+	if err != nil {
+		return nil, fmt.Errorf("opening file: %w", err)
+	}
+
+	return r, nil
+}
+
+// readerFromURL returns an io.ReadCloser reading filtering-rule list data form
+// the filter's URL.
+func (d *DNSFilter) readerFromURL(fltURL string) (r io.ReadCloser, err error) {
+	resp, err := d.HTTPClient.Get(fltURL)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("got status code %d, want %d", resp.StatusCode, http.StatusOK)
+	}
+
+	return resp.Body, nil
 }
 
 // loads filter contents from the file in dataDir

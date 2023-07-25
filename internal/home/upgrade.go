@@ -17,7 +17,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
-	"github.com/google/renameio/maybe"
+	"github.com/google/renameio/v2/maybe"
 	"golang.org/x/crypto/bcrypt"
 	yaml "gopkg.in/yaml.v3"
 )

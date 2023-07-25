@@ -8,7 +8,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/configmgr"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/google/renameio/maybe"
+	"github.com/google/renameio/v2/maybe"
 )
 
 // signalHandler processes incoming signals and shuts services down.

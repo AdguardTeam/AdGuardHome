@@ -23,6 +23,10 @@ See also the [v0.107.35 GitHub milestone][ms-v0.107.35].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Changed
+
+- Improved reliability filtering-rule list updates on Unix systems.
+
 ### Fixed
 
 - Occasional client information lookup failures that could lead to the DNS

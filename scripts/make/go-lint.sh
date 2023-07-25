@@ -176,6 +176,7 @@ run_linter gocognit --over 10\
 	./internal/aghchan/\
 	./internal/aghhttp/\
 	./internal/aghio/\
+	./internal/aghrenameio/\
 	./internal/client/\
 	./internal/dhcpsvc\
 	./internal/filtering/hashprefix/\
@@ -223,6 +224,7 @@ run_linter gosec --quiet\
 	./internal/aghio\
 	./internal/aghnet\
 	./internal/aghos\
+	./internal/aghrenameio/\
 	./internal/aghtest\
 	./internal/client\
 	./internal/dhcpd\

@@ -15,7 +15,7 @@ require (
 	github.com/go-ping/ping v1.1.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/gopacket v1.1.19
-	github.com/google/renameio v1.0.1
+	github.com/google/renameio/v2 v2.0.0
 	github.com/google/uuid v1.3.0
 	github.com/insomniacslk/dhcp v0.0.0-20230612134759-b20c9ba983df
 	github.com/josharian/native v1.1.1-0.20230202152459-5c7d0dd6ab86
