@@ -14,11 +14,11 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.35] - 2023-08-02 (APPROX.)
+## [v0.107.36] - 2023-08-09 (APPROX.)
 
-See also the [v0.107.35 GitHub milestone][ms-v0.107.35].
+See also the [v0.107.36 GitHub milestone][ms-v0.107.36].
 
-[ms-v0.107.35]: https://github.com/AdguardTeam/AdGuardHome/milestone/70?closed=1
+[ms-v0.107.36]: https://github.com/AdguardTeam/AdGuardHome/milestone/71?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -26,6 +26,34 @@ NOTE: Add new changes BELOW THIS COMMENT.
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.35] - 2023-07-26
+
+See also the [v0.107.35 GitHub milestone][ms-v0.107.35].
+
+### Changed
+
+- Improved reliability filtering-rule list updates on Unix systems.
+
+### Fixed
+
+- Occasional client information lookup failures that could lead to the DNS
+  server getting stuck ([#6006]).
+- `bufio.Scanner: token too long` and other errors when trying to add
+  filtering-rule lists with lines over 1024 bytes long or containing cosmetic
+  rules ([#6003]).
+
+### Removed
+
+- Default exposure of the non-standard ports 784 and 8853 for DNS-over-QUIC in
+  the `Dockerfile`.
+
+[#6003]: https://github.com/AdguardTeam/AdGuardHome/issues/6003
+[#6006]: https://github.com/AdguardTeam/AdGuardHome/issues/6006
+
+[ms-v0.107.35]: https://github.com/AdguardTeam/AdGuardHome/milestone/70?closed=1
 
 
 
@@ -2242,11 +2270,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.35...HEAD
-[v0.107.35]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.34...v0.107.35
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.36...HEAD
+[v0.107.36]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.35...v0.107.36
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.34...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.35...HEAD
+[v0.107.35]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.34...v0.107.35
 [v0.107.34]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.33...v0.107.34
 [v0.107.33]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.32...v0.107.33
 [v0.107.32]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.31...v0.107.32

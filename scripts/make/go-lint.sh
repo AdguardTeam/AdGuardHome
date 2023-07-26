@@ -176,14 +176,29 @@ run_linter gocognit --over 10\
 	./internal/aghchan/\
 	./internal/aghhttp/\
 	./internal/aghio/\
+	./internal/aghrenameio/\
+	./internal/client/\
+	./internal/dhcpsvc\
 	./internal/filtering/hashprefix/\
 	./internal/filtering/rulelist/\
 	./internal/next/\
 	./internal/rdns/\
+	./internal/schedule/\
 	./internal/tools/\
 	./internal/version/\
 	./internal/whois/\
+	./scripts/\
 	;
+
+# TODO(a.garipov): move these to the group above.
+run_linter gocognit --over 20 ./internal/aghnet/ ./internal/querylog/
+run_linter gocognit --over 19 ./internal/dnsforward/ ./internal/home/
+run_linter gocognit --over 18 ./internal/aghtls/
+run_linter gocognit --over 17 ./internal/filtering ./internal/filtering/rewrite/
+run_linter gocognit --over 15 ./internal/aghos/ ./internal/dhcpd/
+run_linter gocognit --over 14 ./internal/stats/
+run_linter gocognit --over 12 ./internal/updater/
+run_linter gocognit --over 11 ./internal/aghtest/
 
 run_linter ineffassign ./...
 
@@ -209,13 +224,16 @@ run_linter gosec --quiet\
 	./internal/aghio\
 	./internal/aghnet\
 	./internal/aghos\
+	./internal/aghrenameio/\
 	./internal/aghtest\
+	./internal/client\
 	./internal/dhcpd\
 	./internal/dhcpsvc\
 	./internal/dnsforward\
 	./internal/filtering/hashprefix/\
 	./internal/filtering/rulelist/\
 	./internal/next\
+	./internal/rdns\
 	./internal/schedule\
 	./internal/stats\
 	./internal/tools\

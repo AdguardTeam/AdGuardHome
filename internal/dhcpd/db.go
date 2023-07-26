@@ -9,7 +9,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/google/renameio/maybe"
+	"github.com/google/renameio/v2/maybe"
 	"golang.org/x/exp/slices"
 )
 

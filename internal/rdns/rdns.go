@@ -7,6 +7,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/mathutil"
 	"github.com/bluele/gcache"
 )
 
@@ -17,7 +18,7 @@ type Interface interface {
 	Process(ip netip.Addr) (host string, changed bool)
 }
 
-// Empty is an empty [Inteface] implementation which does nothing.
+// Empty is an empty [Interface] implementation which does nothing.
 type Empty struct{}
 
 // type check
@@ -32,7 +33,7 @@ func (Empty) Process(_ netip.Addr) (host string, changed bool) {
 type Exchanger interface {
 	// Exchange tries to resolve the ip in a suitable way, i.e. either as local
 	// or as external.
-	Exchange(ip netip.Addr) (host string, err error)
+	Exchange(ip netip.Addr) (host string, ttl time.Duration, err error)
 }
 
 // Config is the configuration structure for Default.
@@ -82,13 +83,16 @@ func (r *Default) Process(ip netip.Addr) (host string, changed bool) {
 		return fromCache, false
 	}
 
-	host, err := r.exchanger.Exchange(ip)
+	host, ttl, err := r.exchanger.Exchange(ip)
 	if err != nil {
 		log.Debug("rdns: resolving %q: %s", ip, err)
 	}
 
+	// TODO(s.chzhen):  Use built-in function max in Go 1.21.
+	ttl = mathutil.Max(ttl, r.cacheTTL)
+
 	item := &cacheItem{
-		expiry: time.Now().Add(r.cacheTTL),
+		expiry: time.Now().Add(ttl),
 		host:   host,
 	}
 

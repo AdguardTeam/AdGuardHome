@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -141,7 +142,7 @@ func (clients *clientsContainer) handleHostsUpdates() {
 	}
 }
 
-// webHandlersRegistered prevents a [clientsContainer] from regisering its web
+// webHandlersRegistered prevents a [clientsContainer] from registering its web
 // handlers more than once.
 //
 // TODO(a.garipov): Refactor HTTP handler registration logic.
@@ -743,11 +744,9 @@ func (clients *clientsContainer) Update(prev, c *Client) (err error) {
 	return nil
 }
 
-// setWHOISInfo sets the WHOIS information for a client.
+// setWHOISInfo sets the WHOIS information for a client.  clients.lock is
+// expected to be locked.
 func (clients *clientsContainer) setWHOISInfo(ip netip.Addr, wi *whois.Info) {
-	clients.lock.Lock()
-	defer clients.lock.Unlock()
-
 	_, ok := clients.findLocked(ip.String())
 	if ok {
 		log.Debug("clients: client for %s is already created, ignore whois info", ip)
@@ -774,9 +773,11 @@ func (clients *clientsContainer) setWHOISInfo(ip netip.Addr, wi *whois.Info) {
 	rc.WHOIS = wi
 }
 
-// AddHost adds a new IP-hostname pairing.  The priorities of the sources are
+// addHost adds a new IP-hostname pairing.  The priorities of the sources are
 // taken into account.  ok is true if the pairing was added.
-func (clients *clientsContainer) AddHost(
+//
+// TODO(a.garipov): Only used in internal tests.  Consider removing.
+func (clients *clientsContainer) addHost(
 	ip netip.Addr,
 	host string,
 	src clientSource,
@@ -785,6 +786,32 @@ func (clients *clientsContainer) AddHost(
 	defer clients.lock.Unlock()
 
 	return clients.addHostLocked(ip, host, src)
+}
+
+// type check
+var _ client.AddressUpdater = (*clientsContainer)(nil)
+
+// UpdateAddress implements the [client.AddressUpdater] interface for
+// *clientsContainer
+func (clients *clientsContainer) UpdateAddress(ip netip.Addr, host string, info *whois.Info) {
+	// Common fast path optimization.
+	if host == "" && info == nil {
+		return
+	}
+
+	clients.lock.Lock()
+	defer clients.lock.Unlock()
+
+	if host != "" {
+		ok := clients.addHostLocked(ip, host, ClientSourceRDNS)
+		if !ok {
+			log.Debug("clients: host for client %q already set with higher priority source", ip)
+		}
+	}
+
+	if info != nil {
+		clients.setWHOISInfo(ip, info)
+	}
 }
 
 // addHostLocked adds a new IP-hostname pairing.  clients.lock is expected to be

@@ -3,14 +3,12 @@ package home
 
 import (
 	"context"
-	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"io/fs"
 	"net"
 	"net/http"
 	"net/netip"
-	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -66,40 +64,24 @@ type homeContext struct {
 	// configuration files, for example /etc/hosts.
 	etcHosts *aghnet.HostsContainer
 
-	updater *updater.Updater
-
 	// mux is our custom http.ServeMux.
 	mux *http.ServeMux
 
 	// Runtime properties
 	// --
 
-	configFilename   string // Config filename (can be overridden via the command line arguments)
-	workDir          string // Location of our directory, used to protect against CWD being somewhere else
-	pidFileName      string // PID file name.  Empty if no PID file was created.
-	controlLock      sync.Mutex
-	tlsRoots         *x509.CertPool // list of root CAs for TLSv1.2
-	client           *http.Client
-	appSignalChannel chan os.Signal // Channel for receiving OS signals by the console app
-
-	// rdnsCh is the channel for receiving IPs for rDNS processing.
-	rdnsCh chan netip.Addr
-
-	// whoisCh is the channel for receiving IPs for WHOIS processing.
-	whoisCh chan netip.Addr
+	configFilename string // Config filename (can be overridden via the command line arguments)
+	workDir        string // Location of our directory, used to protect against CWD being somewhere else
+	pidFileName    string // PID file name.  Empty if no PID file was created.
+	controlLock    sync.Mutex
+	tlsRoots       *x509.CertPool // list of root CAs for TLSv1.2
 
 	// tlsCipherIDs are the ID of the cipher suites that AdGuard Home must use.
 	tlsCipherIDs []uint16
 
-	// disableUpdate, if true, tells AdGuard Home to not check for updates.
-	disableUpdate bool
-
 	// firstRun, if true, tells AdGuard Home to only start the web interface
 	// service, and only serve the first-run APIs.
 	firstRun bool
-
-	// runningAsService flag is set to true when options are passed from the service runner
-	runningAsService bool
 }
 
 // getDataDir returns path to the directory where we store databases and filters
@@ -122,11 +104,11 @@ func Main(clientBuildFS fs.FS) {
 	// package flag.
 	opts := loadCmdLineOpts()
 
-	Context.appSignalChannel = make(chan os.Signal)
-	signal.Notify(Context.appSignalChannel, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 	go func() {
 		for {
-			sig := <-Context.appSignalChannel
+			sig := <-signals
 			log.Info("Received signal %q", sig)
 			switch sig {
 			case syscall.SIGHUP:
@@ -141,7 +123,7 @@ func Main(clientBuildFS fs.FS) {
 	}()
 
 	if opts.serviceControlAction != "" {
-		handleServiceControlAction(opts, clientBuildFS)
+		handleServiceControlAction(opts, clientBuildFS, signals)
 
 		return
 	}
@@ -153,72 +135,46 @@ func Main(clientBuildFS fs.FS) {
 // setupContext initializes [Context] fields.  It also reads and upgrades
 // config file if necessary.
 func setupContext(opts options) (err error) {
-	setupContextFlags(opts)
+	Context.firstRun = detectFirstRun()
 
 	Context.tlsRoots = aghtls.SystemRootCAs()
-	Context.client = &http.Client{
-		Timeout: time.Minute * 5,
-		Transport: &http.Transport{
-			DialContext: customDialContext,
-			Proxy:       getHTTPProxy,
-			TLSClientConfig: &tls.Config{
-				RootCAs:      Context.tlsRoots,
-				CipherSuites: Context.tlsCipherIDs,
-				MinVersion:   tls.VersionTLS12,
-			},
-		},
-	}
-
 	Context.mux = http.NewServeMux()
 
-	if !Context.firstRun {
-		// Do the upgrade if necessary.
-		err = upgradeConfig()
+	if Context.firstRun {
+		log.Info("This is the first time AdGuard Home is launched")
+		checkPermissions()
+
+		return nil
+	}
+
+	// Do the upgrade if necessary.
+	err = upgradeConfig()
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	}
+
+	if err = parseConfig(); err != nil {
+		log.Error("parsing configuration file: %s", err)
+
+		os.Exit(1)
+	}
+
+	if opts.checkConfig {
+		log.Info("configuration file is ok")
+
+		os.Exit(0)
+	}
+
+	if !opts.noEtcHosts && config.Clients.Sources.HostsFile {
+		err = setupHostsContainer()
 		if err != nil {
 			// Don't wrap the error, because it's informative enough as is.
 			return err
 		}
-
-		if err = parseConfig(); err != nil {
-			log.Error("parsing configuration file: %s", err)
-
-			os.Exit(1)
-		}
-
-		if opts.checkConfig {
-			log.Info("configuration file is ok")
-
-			os.Exit(0)
-		}
-
-		if !opts.noEtcHosts && config.Clients.Sources.HostsFile {
-			err = setupHostsContainer()
-			if err != nil {
-				// Don't wrap the error, because it's informative enough as is.
-				return err
-			}
-		}
 	}
 
 	return nil
-}
-
-// setupContextFlags sets global flags and prints their status to the log.
-func setupContextFlags(opts options) {
-	Context.firstRun = detectFirstRun()
-	if Context.firstRun {
-		log.Info("This is the first time AdGuard Home is launched")
-		checkPermissions()
-	}
-
-	Context.runningAsService = opts.runningAsService
-	// Don't print the runningAsService flag, since that has already been done
-	// in [run].
-
-	Context.disableUpdate = opts.disableUpdate || version.Channel() == version.ChannelDevelopment
-	if Context.disableUpdate {
-		log.Info("AdGuard Home updates are disabled")
-	}
 }
 
 // logIfUnsupported logs a formatted warning if the error is one of the
@@ -325,7 +281,7 @@ func initContextClients() (err error) {
 		return err
 	}
 
-	//lint:ignore SA1019  Migration is not over.
+	//lint:ignore SA1019 Migration is not over.
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.DataDir = Context.getDataDir()
 	config.DHCP.HTTPRegister = httpRegister
@@ -339,18 +295,6 @@ func initContextClients() (err error) {
 		// Enabled() instead.
 		return fmt.Errorf("initing dhcp: %w", err)
 	}
-
-	Context.updater = updater.NewUpdater(&updater.Config{
-		Client:   Context.client,
-		Version:  version.Version(),
-		Channel:  version.Channel(),
-		GOARCH:   runtime.GOARCH,
-		GOOS:     runtime.GOOS,
-		GOARM:    version.GOARM(),
-		GOMIPS:   version.GOMIPS(),
-		WorkDir:  Context.workDir,
-		ConfName: config.getConfigFilename(),
-	})
 
 	var arpdb aghnet.ARPDB
 	if config.Clients.Sources.ARP {
@@ -433,7 +377,7 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 	conf.Filters = slices.Clone(config.Filters)
 	conf.WhitelistFilters = slices.Clone(config.WhitelistFilters)
 	conf.UserRules = slices.Clone(config.UserRules)
-	conf.HTTPClient = Context.client
+	conf.HTTPClient = httpClient()
 
 	cacheTime := time.Duration(conf.CacheTime) * time.Minute
 
@@ -515,7 +459,7 @@ func checkPorts() (err error) {
 	return nil
 }
 
-func initWeb(opts options, clientBuildFS fs.FS) (web *webAPI, err error) {
+func initWeb(opts options, clientBuildFS fs.FS, upd *updater.Updater) (web *webAPI, err error) {
 	var clientFS fs.FS
 	if opts.localFrontend {
 		log.Info("warning: using local frontend files")
@@ -528,8 +472,16 @@ func initWeb(opts options, clientBuildFS fs.FS) (web *webAPI, err error) {
 		}
 	}
 
-	webConf := webConfig{
-		firstRun: Context.firstRun,
+	disableUpdate := opts.disableUpdate || version.Channel() == version.ChannelDevelopment
+	if disableUpdate {
+		log.Info("AdGuard Home updates are disabled")
+	}
+
+	webConf := &webConfig{
+		updater: upd,
+
+		clientFS: clientFS,
+
 		BindHost: config.HTTPConfig.Address.Addr(),
 		BindPort: int(config.HTTPConfig.Address.Port()),
 
@@ -537,12 +489,13 @@ func initWeb(opts options, clientBuildFS fs.FS) (web *webAPI, err error) {
 		ReadHeaderTimeout: readHdrTimeout,
 		WriteTimeout:      writeTimeout,
 
-		clientFS: clientFS,
-
-		serveHTTP3: config.DNS.ServeHTTP3,
+		firstRun:         Context.firstRun,
+		disableUpdate:    disableUpdate,
+		runningAsService: opts.runningAsService,
+		serveHTTP3:       config.DNS.ServeHTTP3,
 	}
 
-	web = newWebAPI(&webConf)
+	web = newWebAPI(webConf)
 	if web == nil {
 		return nil, fmt.Errorf("initializing web: %w", err)
 	}
@@ -593,9 +546,21 @@ func run(opts options, clientBuildFS fs.FS) {
 	err = setupOpts(opts)
 	fatalOnError(err)
 
+	upd := updater.NewUpdater(&updater.Config{
+		Client:   config.DNS.DnsfilterConf.HTTPClient,
+		Version:  version.Version(),
+		Channel:  version.Channel(),
+		GOARCH:   runtime.GOARCH,
+		GOOS:     runtime.GOOS,
+		GOARM:    version.GOARM(),
+		GOMIPS:   version.GOMIPS(),
+		WorkDir:  Context.workDir,
+		ConfName: config.getConfigFilename(),
+	})
+
 	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
-	cmdlineUpdate(opts)
+	cmdlineUpdate(opts, upd)
 
 	if !Context.firstRun {
 		// Save the updated config.
@@ -624,7 +589,7 @@ func run(opts options, clientBuildFS fs.FS) {
 		onConfigModified()
 	}
 
-	Context.web, err = initWeb(opts, clientBuildFS)
+	Context.web, err = initWeb(opts, clientBuildFS, upd)
 	fatalOnError(err)
 
 	if !Context.firstRun {
@@ -634,10 +599,10 @@ func run(opts options, clientBuildFS fs.FS) {
 		Context.tls.start()
 
 		go func() {
-			sErr := startDNSServer()
-			if sErr != nil {
+			startErr := startDNSServer()
+			if startErr != nil {
 				closeDNSServer()
-				fatalOnError(sErr)
+				fatalOnError(startErr)
 			}
 		}()
 
@@ -996,62 +961,6 @@ func detectFirstRun() bool {
 	return errors.Is(err, os.ErrNotExist)
 }
 
-// Connect to a remote server resolving hostname using our own DNS server.
-//
-// TODO(e.burkov): This messy logic should be decomposed and clarified.
-//
-// TODO(a.garipov): Support network.
-func customDialContext(ctx context.Context, network, addr string) (conn net.Conn, err error) {
-	log.Debug("home: customdial: dialing addr %q for network %s", addr, network)
-
-	host, port, err := net.SplitHostPort(addr)
-	if err != nil {
-		return nil, err
-	}
-
-	dialer := &net.Dialer{
-		Timeout: time.Minute * 5,
-	}
-
-	if net.ParseIP(host) != nil || config.DNS.Port == 0 {
-		return dialer.DialContext(ctx, network, addr)
-	}
-
-	addrs, err := Context.dnsServer.Resolve(host)
-	if err != nil {
-		return nil, fmt.Errorf("resolving %q: %w", host, err)
-	}
-
-	log.Debug("dnsServer.Resolve: %q: %v", host, addrs)
-
-	if len(addrs) == 0 {
-		return nil, fmt.Errorf("couldn't lookup host: %q", host)
-	}
-
-	var dialErrs []error
-	for _, a := range addrs {
-		addr = net.JoinHostPort(a.String(), port)
-		conn, err = dialer.DialContext(ctx, network, addr)
-		if err != nil {
-			dialErrs = append(dialErrs, err)
-
-			continue
-		}
-
-		return conn, err
-	}
-
-	return nil, errors.List(fmt.Sprintf("couldn't dial to %s", addr), dialErrs...)
-}
-
-func getHTTPProxy(_ *http.Request) (*url.URL, error) {
-	if config.ProxyURL == "" {
-		return nil, nil
-	}
-
-	return url.Parse(config.ProxyURL)
-}
-
 // jsonError is a generic JSON error response.
 //
 // TODO(a.garipov): Merge together with the implementations in [dhcpd] and other
@@ -1062,7 +971,7 @@ type jsonError struct {
 }
 
 // cmdlineUpdate updates current application and exits.
-func cmdlineUpdate(opts options) {
+func cmdlineUpdate(opts options, upd *updater.Updater) {
 	if !opts.performUpdate {
 		return
 	}
@@ -1077,10 +986,9 @@ func cmdlineUpdate(opts options) {
 
 	log.Info("cmdline update: performing update")
 
-	updater := Context.updater
-	info, err := updater.VersionInfo(true)
+	info, err := upd.VersionInfo(true)
 	if err != nil {
-		vcu := updater.VersionCheckURL()
+		vcu := upd.VersionCheckURL()
 		log.Error("getting version info from %s: %s", vcu, err)
 
 		os.Exit(1)
@@ -1092,7 +1000,7 @@ func cmdlineUpdate(opts options) {
 		os.Exit(0)
 	}
 
-	err = updater.Update(Context.firstRun)
+	err = upd.Update(Context.firstRun)
 	fatalOnError(err)
 
 	err = restartService()

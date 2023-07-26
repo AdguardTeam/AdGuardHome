@@ -6,16 +6,19 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/testutil/fakeio"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestParser_Parse(t *testing.T) {
 	t.Parallel()
+
+	longRule := strings.Repeat("a", rulelist.DefaultRuleBufSize+1) + "\n"
+	tooLongRule := strings.Repeat("a", bufio.MaxScanTokenSize+1) + "\n"
 
 	testCases := []struct {
 		name         string
@@ -75,25 +78,41 @@ func TestParser_Parse(t *testing.T) {
 		wantRulesNum: 1,
 		wantWritten:  len(testRuleTextBlocked),
 	}, {
+		name:         "cosmetic_with_zwnj",
+		in:           testRuleTextCosmetic,
+		wantDst:      testRuleTextCosmetic,
+		wantErrMsg:   "",
+		wantTitle:    "",
+		wantRulesNum: 1,
+		wantWritten:  len(testRuleTextCosmetic),
+	}, {
 		name: "bad_char",
 		in: "! Title:  Test Title \n" +
 			testRuleTextBlocked +
 			">>>\x7F<<<",
 		wantDst: testRuleTextBlocked,
-		wantErrMsg: "line at index 2: " +
-			"character at index 3: " +
-			"non-printable character",
+		wantErrMsg: "line 3: " +
+			"character 4: " +
+			"likely binary character '\\x7f'",
 		wantTitle:    "Test Title",
 		wantRulesNum: 1,
 		wantWritten:  len(testRuleTextBlocked),
 	}, {
 		name:         "too_long",
-		in:           strings.Repeat("a", rulelist.MaxRuleLen+1),
+		in:           tooLongRule,
 		wantDst:      "",
-		wantErrMsg:   "scanning filter contents: " + bufio.ErrTooLong.Error(),
+		wantErrMsg:   "scanning filter contents: bufio.Scanner: token too long",
 		wantTitle:    "",
 		wantRulesNum: 0,
 		wantWritten:  0,
+	}, {
+		name:         "longer_than_default",
+		in:           longRule,
+		wantDst:      longRule,
+		wantErrMsg:   "",
+		wantTitle:    "",
+		wantRulesNum: 1,
+		wantWritten:  len(longRule),
 	}, {
 		name:         "bad_tab_and_comment",
 		in:           testRuleTextBadTab,
@@ -118,7 +137,7 @@ func TestParser_Parse(t *testing.T) {
 			t.Parallel()
 
 			dst := &bytes.Buffer{}
-			buf := make([]byte, rulelist.MaxRuleLen)
+			buf := make([]byte, rulelist.DefaultRuleBufSize)
 
 			p := rulelist.NewParser()
 			r, err := p.Parse(dst, strings.NewReader(tc.in), buf)
@@ -140,12 +159,12 @@ func TestParser_Parse(t *testing.T) {
 func TestParser_Parse_writeError(t *testing.T) {
 	t.Parallel()
 
-	dst := &aghtest.Writer{
+	dst := &fakeio.Writer{
 		OnWrite: func(b []byte) (n int, err error) {
 			return 1, errors.Error("test error")
 		},
 	}
-	buf := make([]byte, rulelist.MaxRuleLen)
+	buf := make([]byte, rulelist.DefaultRuleBufSize)
 
 	p := rulelist.NewParser()
 	r, err := p.Parse(dst, strings.NewReader(testRuleTextBlocked), buf)
@@ -165,7 +184,7 @@ func TestParser_Parse_checksums(t *testing.T) {
 			"# Another comment.\n"
 	)
 
-	buf := make([]byte, rulelist.MaxRuleLen)
+	buf := make([]byte, rulelist.DefaultRuleBufSize)
 
 	p := rulelist.NewParser()
 	r, err := p.Parse(&bytes.Buffer{}, strings.NewReader(withoutComments), buf)
@@ -192,7 +211,7 @@ var (
 func BenchmarkParser_Parse(b *testing.B) {
 	dst := &bytes.Buffer{}
 	src := strings.NewReader(strings.Repeat(testRuleTextBlocked, 1000))
-	buf := make([]byte, rulelist.MaxRuleLen)
+	buf := make([]byte, rulelist.DefaultRuleBufSize)
 	p := rulelist.NewParser()
 
 	b.ReportAllocs()
@@ -204,6 +223,14 @@ func BenchmarkParser_Parse(b *testing.B) {
 
 	require.NoError(b, errSink)
 	require.NotNil(b, resSink)
+
+	// Most recent result, on a ThinkPad X13 with a Ryzen Pro 7 CPU:
+	//
+	//	goos: linux
+	//	goarch: amd64
+	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist
+	//	cpu: AMD Ryzen 7 PRO 4750U with Radeon Graphics
+	//	BenchmarkParser_Parse-16        100000000              128.0 ns/op            48 B/op          1 allocs/op
 }
 
 func FuzzParser_Parse(f *testing.F) {
@@ -215,15 +242,17 @@ func FuzzParser_Parse(f *testing.F) {
 		"! Comment",
 		"! Title ",
 		"! Title XXX",
+		testRuleTextBadTab,
+		testRuleTextBlocked,
+		testRuleTextCosmetic,
 		testRuleTextEtcHostsTab,
 		testRuleTextHTML,
-		testRuleTextBlocked,
-		testRuleTextBadTab,
 		"1.2.3.4",
 		"1.2.3.4 etc-hosts.example",
 		">>>\x00<<<",
 		">>>\x7F<<<",
-		strings.Repeat("a", n+1),
+		strings.Repeat("a", rulelist.DefaultRuleBufSize+1),
+		strings.Repeat("a", bufio.MaxScanTokenSize+1),
 	}
 
 	for _, tc := range testCases {

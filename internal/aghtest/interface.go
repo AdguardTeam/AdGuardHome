@@ -2,11 +2,15 @@ package aghtest
 
 import (
 	"context"
-	"io"
-	"io/fs"
+	"net"
+	"net/netip"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
+	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
 )
@@ -14,67 +18,6 @@ import (
 // Interface Mocks
 //
 // Keep entities in this file in alphabetic order.
-
-// Standard Library
-
-// Package fs
-
-// FS is a fake [fs.FS] implementation for tests.
-type FS struct {
-	OnOpen func(name string) (fs.File, error)
-}
-
-// type check
-var _ fs.FS = (*FS)(nil)
-
-// Open implements the [fs.FS] interface for *FS.
-func (fsys *FS) Open(name string) (fs.File, error) {
-	return fsys.OnOpen(name)
-}
-
-// type check
-var _ fs.GlobFS = (*GlobFS)(nil)
-
-// GlobFS is a fake [fs.GlobFS] implementation for tests.
-type GlobFS struct {
-	// FS is embedded here to avoid implementing all it's methods.
-	FS
-	OnGlob func(pattern string) ([]string, error)
-}
-
-// Glob implements the [fs.GlobFS] interface for *GlobFS.
-func (fsys *GlobFS) Glob(pattern string) ([]string, error) {
-	return fsys.OnGlob(pattern)
-}
-
-// type check
-var _ fs.StatFS = (*StatFS)(nil)
-
-// StatFS is a fake [fs.StatFS] implementation for tests.
-type StatFS struct {
-	// FS is embedded here to avoid implementing all it's methods.
-	FS
-	OnStat func(name string) (fs.FileInfo, error)
-}
-
-// Stat implements the [fs.StatFS] interface for *StatFS.
-func (fsys *StatFS) Stat(name string) (fs.FileInfo, error) {
-	return fsys.OnStat(name)
-}
-
-// Package io
-
-// Writer is a fake [io.Writer] implementation for tests.
-type Writer struct {
-	OnWrite func(b []byte) (n int, err error)
-}
-
-var _ io.Writer = (*Writer)(nil)
-
-// Write implements the [io.Writer] interface for *Writer.
-func (w *Writer) Write(b []byte) (n int, err error) {
-	return w.OnWrite(b)
-}
 
 // Module adguard-home
 
@@ -133,6 +76,71 @@ func (s *ServiceWithConfig[_]) Shutdown(ctx context.Context) (err error) {
 // *ServiceWithConfig.
 func (s *ServiceWithConfig[ConfigType]) Config() (c ConfigType) {
 	return s.OnConfig()
+}
+
+// Package client
+
+// AddressProcessor is a fake [client.AddressProcessor] implementation for
+// tests.
+type AddressProcessor struct {
+	OnProcess func(ip netip.Addr)
+	OnClose   func() (err error)
+}
+
+// type check
+var _ client.AddressProcessor = (*AddressProcessor)(nil)
+
+// Process implements the [client.AddressProcessor] interface for
+// *AddressProcessor.
+func (p *AddressProcessor) Process(ip netip.Addr) {
+	p.OnProcess(ip)
+}
+
+// Close implements the [client.AddressProcessor] interface for
+// *AddressProcessor.
+func (p *AddressProcessor) Close() (err error) {
+	return p.OnClose()
+}
+
+// AddressUpdater is a fake [client.AddressUpdater] implementation for tests.
+type AddressUpdater struct {
+	OnUpdateAddress func(ip netip.Addr, host string, info *whois.Info)
+}
+
+// type check
+var _ client.AddressUpdater = (*AddressUpdater)(nil)
+
+// UpdateAddress implements the [client.AddressUpdater] interface for
+// *AddressUpdater.
+func (p *AddressUpdater) UpdateAddress(ip netip.Addr, host string, info *whois.Info) {
+	p.OnUpdateAddress(ip, host, info)
+}
+
+// Package filtering
+
+// Resolver is a fake [filtering.Resolver] implementation for tests.
+type Resolver struct {
+	OnLookupIP func(ctx context.Context, network, host string) (ips []net.IP, err error)
+}
+
+// LookupIP implements the [filtering.Resolver] interface for *Resolver.
+func (r *Resolver) LookupIP(ctx context.Context, network, host string) (ips []net.IP, err error) {
+	return r.OnLookupIP(ctx, network, host)
+}
+
+// Package rdns
+
+// Exchanger is a fake [rdns.Exchanger] implementation for tests.
+type Exchanger struct {
+	OnExchange func(ip netip.Addr) (host string, ttl time.Duration, err error)
+}
+
+// type check
+var _ rdns.Exchanger = (*Exchanger)(nil)
+
+// Exchange implements [rdns.Exchanger] interface for *Exchanger.
+func (e *Exchanger) Exchange(ip netip.Addr) (host string, ttl time.Duration, err error) {
+	return e.OnExchange(ip)
 }
 
 // Module dnsproxy

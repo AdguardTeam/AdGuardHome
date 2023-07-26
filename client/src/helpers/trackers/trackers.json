@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2023-07-01T00:11:37.465Z",
+    "timeUpdated": "2023-07-15T00:10:47.501Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -14088,10 +14088,11 @@
             "companyId": "qihoo_360_technology"
         },
         "qq.com": {
-            "name": "qq.com",
-            "categoryId": 8,
-            "url": "http://www.qq.com/",
-            "companyId": "qq.com"
+            "name": "QQ International",
+            "categoryId": 2,
+            "url": "https://www.qq.com/",
+            "companyId": "tencent",
+            "source": "AdGuard"
         },
         "qrius": {
             "name": "Qrius",
@@ -20508,6 +20509,7 @@
         "amazon.com.au": "amazon",
         "amazon-corp.com": "amazon",
         "a2z.com": "amazon",
+        "firetvcaptiveportal.com": "amazon",
         "amazon-adsystem.com": "amazon_adsystem",
         "serving-sys.com": "amazon_adsystem",
         "sizmek.com": "amazon_adsystem",
@@ -22997,6 +22999,7 @@
         "mrskincash.com": "mrskincash",
         "e-msedge.net": "msedge",
         "l-msedge.net": "msedge",
+        "s-msedge.net": "msedge",
         "msn.com": "msn",
         "s-msn.com": "msn",
         "musculahq.appspot.com": "muscula",

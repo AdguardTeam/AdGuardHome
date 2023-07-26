@@ -444,7 +444,7 @@
     "client_confirm_delete": "Are you sure you want to delete client \"{{key}}\"?",
     "list_confirm_delete": "Are you sure you want to delete this list?",
     "auto_clients_title": "Runtime clients",
-    "auto_clients_desc": "Devices not on the list of Persistent clients that may still use AdGuard Home",
+    "auto_clients_desc": "Information about IP addresses of devices that are using or may use AdGuard Home. This information is gathered from several sources, including hosts files, reverse DNS, etc.",
     "access_title": "Access settings",
     "access_desc": "Here you can configure access rules for the AdGuard Home DNS server",
     "access_allowed_title": "Allowed clients",

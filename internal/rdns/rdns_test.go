@@ -5,24 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// fakeRDNSExchanger is a mock [rdns.Exchanger] implementation for tests.
-type fakeRDNSExchanger struct {
-	OnExchange func(ip netip.Addr) (host string, err error)
-}
-
-// type check
-var _ rdns.Exchanger = (*fakeRDNSExchanger)(nil)
-
-// Exchange implements [rdns.Exchanger] interface for *fakeRDNSExchanger.
-func (e *fakeRDNSExchanger) Exchange(ip netip.Addr) (host string, err error) {
-	return e.OnExchange(ip)
-}
 
 func TestDefault_Process(t *testing.T) {
 	ip1 := netip.MustParseAddr("1.2.3.4")
@@ -67,21 +55,21 @@ func TestDefault_Process(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			hit := 0
-			onExchange := func(ip netip.Addr) (host string, err error) {
+			onExchange := func(ip netip.Addr) (host string, ttl time.Duration, err error) {
 				hit++
 
 				switch ip {
 				case ip1:
-					return revAddr1, nil
+					return revAddr1, 0, nil
 				case ip2:
-					return revAddr2, nil
+					return revAddr2, 0, nil
 				case localIP:
-					return localRevAddr1, nil
+					return localRevAddr1, 0, nil
 				default:
-					return "", nil
+					return "", 0, nil
 				}
 			}
-			exchanger := &fakeRDNSExchanger{
+			exchanger := &aghtest.Exchanger{
 				OnExchange: onExchange,
 			}
 

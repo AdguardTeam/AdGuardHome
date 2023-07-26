@@ -141,9 +141,9 @@ type HostsRecord struct {
 	Canonical string
 }
 
-// equal returns true if all fields of rec are equal to field in other or they
+// Equal returns true if all fields of rec are equal to field in other or they
 // both are nil.
-func (rec *HostsRecord) equal(other *HostsRecord) (ok bool) {
+func (rec *HostsRecord) Equal(other *HostsRecord) (ok bool) {
 	if rec == nil {
 		return other == nil
 	} else if other == nil {
@@ -495,7 +495,7 @@ func (hc *HostsContainer) refresh() (err error) {
 	}
 
 	// hc.last is nil on the first refresh, so let that one through.
-	if hc.last != nil && maps.EqualFunc(hp.table, hc.last, (*HostsRecord).equal) {
+	if hc.last != nil && maps.EqualFunc(hp.table, hc.last, (*HostsRecord).Equal) {
 		log.Debug("%s: no changes detected", hostsContainerPrefix)
 
 		return nil

@@ -32,31 +32,33 @@
   - 'attributes':
         'description': 'On which Platform does the issue occur?'
         'label': 'Platform (OS and CPU architecture)'
+        # NOTE: Keep the 386 at the bottom for each OS, because a lot of people
+        # Seem to confuse them with AMD64, which is what they actually need.
         'options':
-          - 'Darwin (aka macOS)/AMD64 (aka x86_64)'
-          - 'Darwin (aka macOS)/ARM64'
-          - 'FreeBSD/386'
-          - 'FreeBSD/AMD64 (aka x86_64)'
-          - 'FreeBSD/ARM64'
-          - 'FreeBSD/ARMv5'
-          - 'FreeBSD/ARMv6'
-          - 'FreeBSD/ARMv7'
-          - 'Linux/386'
-          - 'Linux/AMD64 (aka x86_64)'
-          - 'Linux/ARM64'
-          - 'Linux/ARMv5'
-          - 'Linux/ARMv6'
-          - 'Linux/ARMv7'
-          - 'Linux/MIPS LE'
-          - 'Linux/MIPS'
-          - 'Linux/MIPS64 LE'
-          - 'Linux/MIPS64'
-          - 'Linux/PPC64 LE'
-          - 'OpenBSD/AMD64 (aka x86_64)'
-          - 'OpenBSD/ARM64'
-          - 'Windows/386'
-          - 'Windows/AMD64 (aka x86_64)'
-          - 'Windows/ARM64'
+          - 'Darwin (aka macOS), AMD64 (aka x86_64)'
+          - 'Darwin (aka macOS), ARM64'
+          - 'FreeBSD, AMD64 (aka x86_64)'
+          - 'FreeBSD, ARM64'
+          - 'FreeBSD, ARMv5'
+          - 'FreeBSD, ARMv6'
+          - 'FreeBSD, ARMv7'
+          - 'FreeBSD, 32-bit Intel (aka 386)'
+          - 'Linux, AMD64 (aka x86_64)'
+          - 'Linux, ARM64'
+          - 'Linux, ARMv5'
+          - 'Linux, ARMv6'
+          - 'Linux, ARMv7'
+          - 'Linux, MIPS LE'
+          - 'Linux, MIPS'
+          - 'Linux, MIPS64 LE'
+          - 'Linux, MIPS64'
+          - 'Linux, PPC64 LE'
+          - 'Linux, 32-bit Intel (aka 386)'
+          - 'OpenBSD, AMD64 (aka x86_64)'
+          - 'OpenBSD, ARM64'
+          - 'Windows, AMD64 (aka x86_64)'
+          - 'Windows, ARM64'
+          - 'Windows, 32-bit Intel (aka 386)'
           - 'Custom (please mention in the description)'
     'id': 'os'
     'type': 'dropdown'
@@ -142,8 +144,10 @@
     'type': 'textarea'
     'validations':
         'required': false
-'description': >
-    Open a bug report.  Please do not open bug reports for questions or help
-    with configuring clients.  If you want to ask for help, use the Discussions
-    section.
+# NOTE: GitHub limits the description length to 200 characters.  Also, Markdown
+# doesn't work here.
+'description': |
+    For help, use the Discussions section instead.  Write the title in English
+    to make it easier for other people to search for duplicates.  (Any language
+    is fine in the body.)
 'name': 'Bug'

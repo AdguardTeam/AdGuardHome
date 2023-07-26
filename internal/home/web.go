@@ -6,16 +6,18 @@ import (
 	"io/fs"
 	"net/http"
 	"net/netip"
+	"runtime"
 	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/pprofutil"
 	"github.com/NYTimes/gziphandler"
-	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -33,6 +35,8 @@ const (
 )
 
 type webConfig struct {
+	updater *updater.Updater
+
 	clientFS fs.FS
 
 	BindHost netip.Addr
@@ -51,6 +55,13 @@ type webConfig struct {
 	WriteTimeout time.Duration
 
 	firstRun bool
+
+	// disableUpdate, if true, tells AdGuard Home to not check for updates.
+	disableUpdate bool
+
+	// runningAsService flag is set to true when options are passed from the
+	// service runner.
+	runningAsService bool
 
 	serveHTTP3 bool
 }
@@ -102,7 +113,7 @@ func newWebAPI(conf *webConfig) (w *webAPI) {
 		Context.mux.Handle("/install.html", preInstallHandler(clientFS))
 		w.registerInstallHandlers()
 	} else {
-		registerControlHandlers()
+		registerControlHandlers(w)
 	}
 
 	w.httpsServer.cond = sync.NewCond(&w.httpsServer.condLock)
@@ -295,8 +306,27 @@ func (web *webAPI) mustStartHTTP3(address string) {
 
 	log.Debug("web: starting http/3 server")
 	err := web.httpsServer.server3.ListenAndServe()
-	if !errors.Is(err, quic.ErrServerClosed) {
+	if !errors.Is(err, http.ErrServerClosed) {
 		cleanupAlways()
 		log.Fatalf("web: http3: %s", err)
 	}
+}
+
+// startPprof launches the debug and profiling server on addr.
+func startPprof(addr string) {
+	runtime.SetBlockProfileRate(1)
+	runtime.SetMutexProfileFraction(1)
+
+	mux := http.NewServeMux()
+	pprofutil.RoutePprof(mux)
+
+	go func() {
+		defer log.OnPanic("pprof server")
+
+		log.Info("pprof: listening on %q", addr)
+		err := http.ListenAndServe(addr, mux)
+		if !errors.Is(err, http.ErrServerClosed) {
+			log.Error("pprof: shutting down: %s", err)
+		}
+	}()
 }

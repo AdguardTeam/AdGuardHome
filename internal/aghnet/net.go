@@ -3,6 +3,7 @@ package aghnet
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,6 +15,10 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
+
+// DialContextFunc is the semantic alias for dialing functions, such as
+// [http.Transport.DialContext].
+type DialContextFunc = func(ctx context.Context, network, addr string) (conn net.Conn, err error)
 
 // Variables and functions to substitute in tests.
 var (

@@ -13,6 +13,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
@@ -270,7 +271,13 @@ type ServerConfig struct {
 	UDPListenAddrs []*net.UDPAddr        // UDP listen address
 	TCPListenAddrs []*net.TCPAddr        // TCP listen address
 	UpstreamConfig *proxy.UpstreamConfig // Upstream DNS servers config
-	OnDNSRequest   func(d *proxy.DNSContext)
+
+	// AddrProcConf defines the configuration for the client IP processor.
+	// If nil, [client.EmptyAddrProc] is used.
+	//
+	// TODO(a.garipov): The use of [client.EmptyAddrProc] is a crutch for tests.
+	// Remove that.
+	AddrProcConf *client.DefaultAddrProcConfig
 
 	FilteringConfig
 	TLSConfig
@@ -297,9 +304,6 @@ type ServerConfig struct {
 
 	// DNS64Prefixes is a slice of NAT64 prefixes to be used for DNS64.
 	DNS64Prefixes []netip.Prefix
-
-	// ResolveClients signals if the RDNS should resolve clients' addresses.
-	ResolveClients bool
 
 	// UsePrivateRDNS defines if the PTR requests for unknown addresses from
 	// locally-served networks should be resolved via private PTR resolvers.
@@ -340,6 +344,7 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 		UpstreamConfig:         srvConf.UpstreamConfig,
 		BeforeRequestHandler:   s.beforeRequestHandler,
 		RequestHandler:         s.handleDNSRequest,
+		HTTPSServerName:        aghhttp.UserAgent(),
 		EnableEDNSClientSubnet: srvConf.EDNSClientSubnet.Enabled,
 		MaxGoroutines:          int(srvConf.MaxGoroutines),
 		UseDNS64:               srvConf.UseDNS64,

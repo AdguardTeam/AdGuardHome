@@ -416,7 +416,8 @@ There are three options how you can install an unstable version:
    ###  <a href="#reporting-issues" id="reporting-issues" name="reporting-issues">Report issues</a>
 
 If you run into any problem or have a suggestion, head to [this page][iss] and
-click on the “New issue” button.
+click on the “New issue” button.  Please follow the instructions in the issue
+form carefully and don't forget to start by searching for duplicates.
 
 [iss]: https://github.com/AdguardTeam/AdGuardHome/issues
 

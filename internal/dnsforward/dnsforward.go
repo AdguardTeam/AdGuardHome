@@ -14,6 +14,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -99,8 +100,17 @@ type Server struct {
 	// must be a valid domain name plus dots on each side.
 	localDomainSuffix string
 
-	ipset          ipsetCtx
-	privateNets    netutil.SubnetSet
+	ipset       ipsetCtx
+	privateNets netutil.SubnetSet
+
+	// addrProc, if not nil, is used to process clients' IP addresses with rDNS,
+	// WHOIS, etc.
+	addrProc client.AddressProcessor
+
+	// localResolvers is a DNS proxy instance used to resolve PTR records for
+	// addresses considered private as per the [privateNets].
+	//
+	// TODO(e.burkov):  Remove once the local resolvers logic moved to dnsproxy.
 	localResolvers *proxy.Proxy
 	sysResolvers   aghnet.SystemResolvers
 
@@ -170,6 +180,9 @@ const (
 
 // NewServer creates a new instance of the dnsforward.Server
 // Note: this function must be called only once
+//
+// TODO(a.garipov): How many constructors and initializers does this thing have?
+// Refactor!
 func NewServer(p DNSCreateParams) (s *Server, err error) {
 	var localDomainSuffix string
 	if p.LocalDomain == "" {
@@ -257,14 +270,25 @@ func (s *Server) WriteDiskConfig(c *FilteringConfig) {
 	c.UpstreamDNS = stringutil.CloneSlice(sc.UpstreamDNS)
 }
 
-// RDNSSettings returns the copy of actual RDNS configuration.
-func (s *Server) RDNSSettings() (localPTRResolvers []string, resolveClients, resolvePTR bool) {
+// LocalPTRResolvers returns the current local PTR resolver configuration.
+func (s *Server) LocalPTRResolvers() (localPTRResolvers []string) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	return stringutil.CloneSlice(s.conf.LocalPTRResolvers),
-		s.conf.ResolveClients,
-		s.conf.UsePrivateRDNS
+	return stringutil.CloneSlice(s.conf.LocalPTRResolvers)
+}
+
+// AddrProcConfig returns the current address processing configuration.  Only
+// fields c.UsePrivateRDNS, c.UseRDNS, and c.UseWHOIS are filled.
+func (s *Server) AddrProcConfig() (c *client.DefaultAddrProcConfig) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	return &client.DefaultAddrProcConfig{
+		UsePrivateRDNS: s.conf.UsePrivateRDNS,
+		UseRDNS:        s.conf.AddrProcConf.UseRDNS,
+		UseWHOIS:       s.conf.AddrProcConf.UseWHOIS,
+	}
 }
 
 // Resolve - get IP addresses by host name from an upstream server.
@@ -292,17 +316,13 @@ const (
 var _ rdns.Exchanger = (*Server)(nil)
 
 // Exchange implements the [rdns.Exchanger] interface for *Server.
-func (s *Server) Exchange(ip netip.Addr) (host string, err error) {
+func (s *Server) Exchange(ip netip.Addr) (host string, ttl time.Duration, err error) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	if !s.conf.ResolveClients {
-		return "", nil
-	}
-
 	arpa, err := netutil.IPToReversedAddr(ip.AsSlice())
 	if err != nil {
-		return "", fmt.Errorf("reversing ip: %w", err)
+		return "", 0, fmt.Errorf("reversing ip: %w", err)
 	}
 
 	arpa = dns.Fqdn(arpa)
@@ -318,16 +338,17 @@ func (s *Server) Exchange(ip netip.Addr) (host string, err error) {
 			Qclass: dns.ClassINET,
 		}},
 	}
-	ctx := &proxy.DNSContext{
+
+	dctx := &proxy.DNSContext{
 		Proto:     "udp",
 		Req:       req,
 		StartTime: time.Now(),
 	}
 
 	var resolver *proxy.Proxy
-	if s.isPrivateIP(ip) {
+	if s.privateNets.Contains(ip.AsSlice()) {
 		if !s.conf.UsePrivateRDNS {
-			return "", nil
+			return "", 0, nil
 		}
 
 		resolver = s.localResolvers
@@ -336,53 +357,48 @@ func (s *Server) Exchange(ip netip.Addr) (host string, err error) {
 		resolver = s.internalProxy
 	}
 
-	if err = resolver.Resolve(ctx); err != nil {
-		return "", err
+	if err = resolver.Resolve(dctx); err != nil {
+		return "", 0, err
 	}
 
-	return hostFromPTR(ctx.Res)
+	return hostFromPTR(dctx.Res)
 }
 
 // hostFromPTR returns domain name from the PTR response or error.
-func hostFromPTR(resp *dns.Msg) (host string, err error) {
+func hostFromPTR(resp *dns.Msg) (host string, ttl time.Duration, err error) {
 	// Distinguish between NODATA response and a failed request.
 	if resp.Rcode != dns.RcodeSuccess && resp.Rcode != dns.RcodeNameError {
-		return "", fmt.Errorf(
+		return "", 0, fmt.Errorf(
 			"received %s response: %w",
 			dns.RcodeToString[resp.Rcode],
 			ErrRDNSFailed,
 		)
 	}
 
+	var ttlSec uint32
+
 	for _, ans := range resp.Answer {
 		ptr, ok := ans.(*dns.PTR)
-		if ok {
-			return strings.TrimSuffix(ptr.Ptr, "."), nil
+		if !ok {
+			continue
+		}
+
+		if ptr.Hdr.Ttl > ttlSec {
+			host = ptr.Ptr
+			ttlSec = ptr.Hdr.Ttl
 		}
 	}
 
-	return "", ErrRDNSNoData
-}
+	if host != "" {
+		// NOTE:  Don't use [aghnet.NormalizeDomain] to retain original letter
+		// case.
+		host = strings.TrimSuffix(host, ".")
+		ttl = time.Duration(ttlSec) * time.Second
 
-// isPrivateIP returns true if the ip is private.
-func (s *Server) isPrivateIP(ip netip.Addr) (ok bool) {
-	return s.privateNets.Contains(ip.AsSlice())
-}
-
-// ShouldResolveClient returns false if ip is a loopback address, or ip is
-// private and resolving of private addresses is disabled.
-func (s *Server) ShouldResolveClient(ip netip.Addr) (ok bool) {
-	if ip.IsLoopback() {
-		return false
+		return host, ttl, nil
 	}
 
-	isPrivate := s.isPrivateIP(ip)
-
-	s.serverLock.RLock()
-	defer s.serverLock.RUnlock()
-
-	return s.conf.ResolveClients &&
-		(s.conf.UsePrivateRDNS || !isPrivate)
+	return "", 0, ErrRDNSNoData
 }
 
 // Start starts the DNS server.
@@ -457,23 +473,27 @@ func (s *Server) filterOurDNSAddrs(addrs []string) (filtered []string, err error
 	return stringutil.FilterOut(addrs, ourAddrsSet.Has), nil
 }
 
-// setupResolvers initializes the resolvers for local addresses.  For internal
-// use only.
-func (s *Server) setupResolvers(localAddrs []string) (err error) {
+// setupLocalResolvers initializes the resolvers for local addresses.  For
+// internal use only.
+func (s *Server) setupLocalResolvers() (err error) {
 	bootstraps := s.conf.BootstrapDNS
-	if len(localAddrs) == 0 {
-		localAddrs = s.sysResolvers.Get()
+	resolvers := s.conf.LocalPTRResolvers
+
+	if len(resolvers) == 0 {
+		resolvers = s.sysResolvers.Get()
 		bootstraps = nil
+	} else {
+		resolvers = stringutil.FilterOut(resolvers, IsCommentOrEmpty)
 	}
 
-	localAddrs, err = s.filterOurDNSAddrs(localAddrs)
+	resolvers, err = s.filterOurDNSAddrs(resolvers)
 	if err != nil {
 		return err
 	}
 
-	log.Debug("dnsforward: upstreams to resolve ptr for local addresses: %v", localAddrs)
+	log.Debug("dnsforward: upstreams to resolve ptr for local addresses: %v", resolvers)
 
-	upsConfig, err := s.prepareUpstreamConfig(localAddrs, nil, &upstream.Options{
+	uc, err := s.prepareUpstreamConfig(resolvers, nil, &upstream.Options{
 		Bootstrap: bootstraps,
 		Timeout:   defaultLocalTimeout,
 		// TODO(e.burkov): Should we verify server's certificates?
@@ -486,8 +506,15 @@ func (s *Server) setupResolvers(localAddrs []string) (err error) {
 
 	s.localResolvers = &proxy.Proxy{
 		Config: proxy.Config{
-			UpstreamConfig: upsConfig,
+			UpstreamConfig: uc,
 		},
+	}
+
+	if s.conf.UsePrivateRDNS &&
+		// Only set the upstream config if there are any upstreams.  It's safe
+		// to put nil into [proxy.Config.PrivateRDNSUpstreamConfig].
+		len(uc.Upstreams)+len(uc.DomainReservedUpstreams)+len(uc.SpecifiedDomainUpstreams) > 0 {
+		s.dnsProxy.PrivateRDNSUpstreamConfig = uc
 	}
 
 	return nil
@@ -539,23 +566,46 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 		return fmt.Errorf("preparing access: %w", err)
 	}
 
-	s.registerHandlers()
-
+	// Set the proxy here because [setupLocalResolvers] sets its values.
+	//
 	// TODO(e.burkov):  Remove once the local resolvers logic moved to dnsproxy.
-	err = s.setupResolvers(s.conf.LocalPTRResolvers)
+	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
+
+	err = s.setupLocalResolvers()
 	if err != nil {
 		return fmt.Errorf("setting up resolvers: %w", err)
 	}
 
-	if s.conf.UsePrivateRDNS {
-		proxyConfig.PrivateRDNSUpstreamConfig = s.localResolvers.UpstreamConfig
-	}
-
-	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
-
 	s.recDetector.clear()
 
+	s.setupAddrProc()
+
+	s.registerHandlers()
+
 	return nil
+}
+
+// setupAddrProc initializes the address processor.  For internal use only.
+func (s *Server) setupAddrProc() {
+	// TODO(a.garipov): This is a crutch for tests; remove.
+	if s.conf.AddrProcConf == nil {
+		s.conf.AddrProcConf = &client.DefaultAddrProcConfig{}
+	}
+	if s.conf.AddrProcConf.AddressUpdater == nil {
+		s.addrProc = client.EmptyAddrProc{}
+	} else {
+		c := s.conf.AddrProcConf
+		c.DialContext = s.DialContext
+		c.PrivateSubnets = s.privateNets
+		c.UsePrivateRDNS = s.conf.UsePrivateRDNS
+		s.addrProc = client.NewDefaultAddrProc(s.conf.AddrProcConf)
+
+		// Clear the initial addresses to not resolve them again.
+		//
+		// TODO(a.garipov): Consider ways of removing this once more client
+		// logic is moved to package client.
+		c.InitialAddresses = nil
+	}
 }
 
 // validateBlockingMode returns an error if the blocking mode data aren't valid.
@@ -696,6 +746,11 @@ func (s *Server) Reconfigure(conf *ServerConfig) error {
 	// TODO(a.garipov): This whole piece of API is weird and needs to be remade.
 	if conf == nil {
 		conf = &s.conf
+	} else {
+		closeErr := s.addrProc.Close()
+		if closeErr != nil {
+			log.Error("dnsforward: closing address processor: %s", closeErr)
+		}
 	}
 
 	err = s.Prepare(conf)

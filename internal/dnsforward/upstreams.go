@@ -42,11 +42,13 @@ func (s *Server) loadUpstreams() (upstreams []string, err error) {
 
 // prepareUpstreamSettings sets upstream DNS server settings.
 func (s *Server) prepareUpstreamSettings() (err error) {
-	// We're setting a customized set of RootCAs.  The reason is that Go default
-	// mechanism of loading TLS roots does not always work properly on some
-	// routers so we're loading roots manually and pass it here.
+	// Use a customized set of RootCAs, because Go's default mechanism of
+	// loading TLS roots does not always work properly on some routers so we're
+	// loading roots manually and pass it here.
 	//
 	// See [aghtls.SystemRootCAs].
+	//
+	// TODO(a.garipov): Investigate if that's true.
 	upstream.RootCAs = s.conf.TLSv12Roots
 	upstream.CipherSuites = s.conf.TLSCiphers
 
@@ -190,7 +192,7 @@ func (s *Server) resolveUpstreamsWithHosts(
 
 // extractUpstreamHost returns the hostname of addr without port with an
 // assumption that any address passed here has already been successfully parsed
-// by [upstream.AddressToUpstream].  This function eesentially mirrors the logic
+// by [upstream.AddressToUpstream].  This function essentially mirrors the logic
 // of [upstream.AddressToUpstream], see TODO on [replaceUpstreamsWithHosts].
 func extractUpstreamHost(addr string) (host string) {
 	var err error

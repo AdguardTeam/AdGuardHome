@@ -30,6 +30,7 @@ type dnsContext struct {
 	setts *filtering.Settings
 
 	result *filtering.Result
+
 	// origResp is the response received from upstream.  It is set when the
 	// response is modified by filters.
 	origResp *dns.Msg
@@ -48,12 +49,12 @@ type dnsContext struct {
 	// clientID is the ClientID from DoH, DoQ, or DoT, if provided.
 	clientID string
 
+	// startTime is the time at which the processing of the request has started.
+	startTime time.Time
+
 	// origQuestion is the question received from the client.  It is set
 	// when the request is modified by rewrites.
 	origQuestion dns.Question
-
-	// startTime is the time at which the processing of the request has started.
-	startTime time.Time
 
 	// protectionEnabled shows if the filtering is enabled, and if the
 	// server's DNS filter is ready.
@@ -160,6 +161,22 @@ func (s *Server) processRecursion(dctx *dnsContext) (rc resultCode) {
 	return resultCodeSuccess
 }
 
+// mozillaFQDN is the domain used to signal the Firefox browser to not use its
+// own DoH server.
+//
+// See https://support.mozilla.org/en-US/kb/canary-domain-use-application-dnsnet.
+const mozillaFQDN = "use-application-dns.net."
+
+// healthcheckFQDN is a reserved domain-name used for healthchecking.
+//
+// [Section 6.2 of RFC 6761] states that DNS Registries/Registrars must not
+// grant requests to register test names in the normal way to any person or
+// entity, making domain names under the .test TLD free to use in internal
+// purposes.
+//
+// [Section 6.2 of RFC 6761]: https://www.rfc-editor.org/rfc/rfc6761.html#section-6.2
+const healthcheckFQDN = "healthcheck.adguardhome.test."
+
 // processInitial terminates the following processing for some requests if
 // needed and enriches dctx with some client-specific information.
 //
@@ -169,6 +186,8 @@ func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
 	defer log.Debug("dnsforward: finished processing initial")
 
 	pctx := dctx.proxyCtx
+	s.processClientIP(pctx.Addr)
+
 	q := pctx.Req.Question[0]
 	qt := q.Qtype
 	if s.conf.AAAADisabled && qt == dns.TypeAAAA {
@@ -177,28 +196,13 @@ func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
 		return resultCodeFinish
 	}
 
-	if s.conf.OnDNSRequest != nil {
-		s.conf.OnDNSRequest(pctx)
-	}
-
-	// Disable Mozilla DoH.
-	//
-	// See https://support.mozilla.org/en-US/kb/canary-domain-use-application-dnsnet.
-	if (qt == dns.TypeA || qt == dns.TypeAAAA) && q.Name == "use-application-dns.net." {
+	if (qt == dns.TypeA || qt == dns.TypeAAAA) && q.Name == mozillaFQDN {
 		pctx.Res = s.genNXDomain(pctx.Req)
 
 		return resultCodeFinish
 	}
 
-	// Handle a reserved domain healthcheck.adguardhome.test.
-	//
-	// [Section 6.2 of RFC 6761] states that DNS Registries/Registrars must not
-	// grant requests to register test names in the normal way to any person or
-	// entity, making domain names under test. TLD free to use in internal
-	// purposes.
-	//
-	// [Section 6.2 of RFC 6761]: https://www.rfc-editor.org/rfc/rfc6761.html#section-6.2
-	if q.Name == "healthcheck.adguardhome.test." {
+	if q.Name == healthcheckFQDN {
 		// Generate a NODATA negative response to make nslookup exit with 0.
 		pctx.Res = s.makeResponse(pctx.Req)
 
@@ -213,9 +217,26 @@ func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
 
 	// Get the client-specific filtering settings.
 	dctx.protectionEnabled, _ = s.UpdatedProtectionStatus()
-	dctx.setts = s.getClientRequestFilteringSettings(dctx)
+	dctx.setts = s.clientRequestFilteringSettings(dctx)
 
 	return resultCodeSuccess
+}
+
+// processClientIP sends the client IP address to s.addrProc, if needed.
+func (s *Server) processClientIP(addr net.Addr) {
+	clientIP := netutil.NetAddrToAddrPort(addr).Addr()
+	if clientIP == (netip.Addr{}) {
+		log.Info("dnsforward: warning: bad client addr %q", addr)
+
+		return
+	}
+
+	// Do not assign s.addrProc to a local variable to then use, since this lock
+	// also serializes the closure of s.addrProc.
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	s.addrProc.Process(clientIP)
 }
 
 func (s *Server) setTableHostToIP(t hostToIPTable) {
@@ -698,6 +719,18 @@ func (s *Server) processLocalPTR(dctx *dnsContext) (rc resultCode) {
 	if s.conf.UsePrivateRDNS {
 		s.recDetector.add(*pctx.Req)
 		if err := s.localResolvers.Resolve(pctx); err != nil {
+			// Generate the server failure if the private upstream configuration
+			// is empty.
+			//
+			// TODO(e.burkov):  Get rid of this crutch once the local resolvers
+			// logic is moved to the dnsproxy completely.
+			if errors.Is(err, upstream.ErrNoUpstreams) {
+				pctx.Res = s.genServerFailure(pctx.Req)
+
+				// Do not even put into query log.
+				return resultCodeFinish
+			}
+
 			dctx.err = err
 
 			return resultCodeError

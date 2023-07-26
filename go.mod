@@ -3,9 +3,8 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.19
 
 require (
-	// TODO(a.garipov): Update to a tagged version when it's released.
-	github.com/AdguardTeam/dnsproxy v0.50.3-0.20230628054307-31e374065768
-	github.com/AdguardTeam/golibs v0.13.3
+	github.com/AdguardTeam/dnsproxy v0.52.0
+	github.com/AdguardTeam/golibs v0.13.6
 	github.com/AdguardTeam/urlfilter v0.16.1
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.2.7
@@ -16,7 +15,7 @@ require (
 	github.com/go-ping/ping v1.1.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/gopacket v1.1.19
-	github.com/google/renameio v1.0.1
+	github.com/google/renameio/v2 v2.0.0
 	github.com/google/uuid v1.3.0
 	github.com/insomniacslk/dhcp v0.0.0-20230612134759-b20c9ba983df
 	github.com/josharian/native v1.1.1-0.20230202152459-5c7d0dd6ab86
@@ -28,14 +27,14 @@ require (
 	// own code for that.  Perhaps, use gopacket.
 	github.com/mdlayher/raw v0.1.0
 	github.com/miekg/dns v1.1.55
-	github.com/quic-go/quic-go v0.35.1
+	github.com/quic-go/quic-go v0.36.1
 	github.com/stretchr/testify v1.8.4
 	github.com/ti-mo/netfilter v0.5.0
 	go.etcd.io/bbolt v1.3.7
-	golang.org/x/crypto v0.10.0
-	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
-	golang.org/x/net v0.11.0
-	golang.org/x/sys v0.9.0
+	golang.org/x/crypto v0.11.0
+	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
+	golang.org/x/net v0.12.0
+	golang.org/x/sys v0.10.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.0
@@ -62,6 +61,6 @@ require (
 	github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63 // indirect
 	golang.org/x/mod v0.11.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/text v0.10.0 // indirect
+	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/tools v0.10.0 // indirect
 )

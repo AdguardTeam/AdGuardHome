@@ -448,7 +448,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	web.conf.BindHost = req.Web.IP
 	web.conf.BindPort = req.Web.Port
 
-	registerControlHandlers()
+	registerControlHandlers(web)
 
 	aghhttp.OK(w)
 	if f, ok := w.(http.Flusher); ok {

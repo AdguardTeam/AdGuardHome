@@ -943,7 +943,7 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	d = &DNSFilter{
 		bufPool: &sync.Pool{
 			New: func() (buf any) {
-				bufVal := make([]byte, rulelist.MaxRuleLen)
+				bufVal := make([]byte, rulelist.DefaultRuleBufSize)
 
 				return &bufVal
 			},

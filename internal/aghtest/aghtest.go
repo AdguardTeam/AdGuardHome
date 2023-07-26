@@ -2,7 +2,9 @@
 package aghtest
 
 import (
+	"crypto/sha256"
 	"io"
+	"net"
 	"testing"
 
 	"github.com/AdguardTeam/golibs/log"
@@ -33,4 +35,11 @@ func ReplaceLogLevel(t testing.TB, l log.Level) {
 	prev := log.GetLevel()
 	t.Cleanup(func() { log.SetLevel(prev) })
 	log.SetLevel(l)
+}
+
+// HostToIPs is a helper that generates one IPv4 and one IPv6 address from host.
+func HostToIPs(host string) (ipv4, ipv6 net.IP) {
+	hash := sha256.Sum256([]byte(host))
+
+	return net.IP(hash[:4]), net.IP(hash[4:20])
 }

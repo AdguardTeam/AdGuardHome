@@ -92,8 +92,15 @@ func TestDefault_CheckHost_yandexAAAA(t *testing.T) {
 }
 
 func TestDefault_CheckHost_google(t *testing.T) {
-	resolver := &aghtest.TestResolver{}
-	ip, _ := resolver.HostToIPs("forcesafesearch.google.com")
+	resolver := &aghtest.Resolver{
+		OnLookupIP: func(_ context.Context, _, host string) (ips []net.IP, err error) {
+			ip4, ip6 := aghtest.HostToIPs(host)
+
+			return []net.IP{ip4, ip6}, nil
+		},
+	}
+
+	wantIP, _ := aghtest.HostToIPs("forcesafesearch.google.com")
 
 	conf := testConf
 	conf.CustomResolver = resolver
@@ -119,7 +126,7 @@ func TestDefault_CheckHost_google(t *testing.T) {
 
 			require.Len(t, res.Rules, 1)
 
-			assert.Equal(t, ip, res.Rules[0].IP)
+			assert.Equal(t, wantIP, res.Rules[0].IP)
 			assert.EqualValues(t, filtering.SafeSearchListID, res.Rules[0].FilterListID)
 		})
 	}

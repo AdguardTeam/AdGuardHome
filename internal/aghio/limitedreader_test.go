@@ -1,10 +1,11 @@
-package aghio
+package aghio_test
 
 import (
 	"io"
 	"strings"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,7 +32,7 @@ func TestLimitReader(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := LimitReader(nil, tc.n)
+			_, err := aghio.LimitReader(nil, tc.n)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
@@ -57,7 +58,7 @@ func TestLimitedReader_Read(t *testing.T) {
 		limit: 3,
 		want:  0,
 	}, {
-		err: &LimitReachedError{
+		err: &aghio.LimitReachedError{
 			Limit: 0,
 		},
 		name:  "limit_reached",
@@ -74,7 +75,7 @@ func TestLimitedReader_Read(t *testing.T) {
 
 	for _, tc := range testCases {
 		readCloser := io.NopCloser(strings.NewReader(tc.rStr))
-		lreader, err := LimitReader(readCloser, tc.limit)
+		lreader, err := aghio.LimitReader(readCloser, tc.limit)
 		require.NoError(t, err)
 		require.NotNil(t, lreader)
 
@@ -89,7 +90,7 @@ func TestLimitedReader_Read(t *testing.T) {
 }
 
 func TestLimitedReader_LimitReachedError(t *testing.T) {
-	testutil.AssertErrorMsg(t, "attempted to read more than 0 bytes", &LimitReachedError{
+	testutil.AssertErrorMsg(t, "attempted to read more than 0 bytes", &aghio.LimitReachedError{
 		Limit: 0,
 	})
 }

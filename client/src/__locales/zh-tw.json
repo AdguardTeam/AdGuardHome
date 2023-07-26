@@ -444,7 +444,7 @@
     "client_confirm_delete": "您確定您想要刪除用戶端 \"{{key}}\" 嗎？",
     "list_confirm_delete": "您確定您想要刪除該清單嗎？",
     "auto_clients_title": "執行時期用戶端",
-    "auto_clients_desc": "未於可能仍然使用 AdGuard Home 的持續性用戶端之清單上的裝置",
+    "auto_clients_desc": "AdGuard Home 使用或可能使用的裝置的 IP 地址資訊。這些資訊來自多個來源，包括主機檔案、反向 DNS 等。",
     "access_title": "存取設定",
     "access_desc": "於此您可配置用於 AdGuard Home DNS 伺服器之存取規則",
     "access_allowed_title": "已允許的用戶端",

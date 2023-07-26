@@ -113,20 +113,14 @@ func TestDefault_Process(t *testing.T) {
 
 					return copy(b, tc.data), io.EOF
 				},
-				OnWrite: func(b []byte) (n int, err error) {
-					return len(b), nil
-				},
-				OnClose: func() (err error) {
-					return nil
-				},
-				OnSetReadDeadline: func(t time.Time) (err error) {
-					return nil
-				},
+				OnWrite:       func(b []byte) (n int, err error) { return len(b), nil },
+				OnClose:       func() (err error) { return nil },
+				OnSetDeadline: func(t time.Time) (err error) { return nil },
 			}
 
 			w := whois.New(&whois.Config{
 				Timeout: 5 * time.Second,
-				DialContext: func(_ context.Context, _, addr string) (_ net.Conn, _ error) {
+				DialContext: func(_ context.Context, _, _ string) (_ net.Conn, _ error) {
 					hit = 0
 
 					return fakeConn, nil
