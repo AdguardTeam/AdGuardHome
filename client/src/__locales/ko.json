@@ -444,7 +444,7 @@
     "client_confirm_delete": "정말 클라이언트 '{{key}}'을(를) 삭제하시겠습니까?",
     "list_confirm_delete": "정말로 이 목록을 제거하시겠습니까?",
     "auto_clients_title": "런타임 클라이언트",
-    "auto_clients_desc": "AdGuard Home을 계속 사용할 수 있는 영구 클라이언트 목록에 없는 디바이스입니다",
+    "auto_clients_desc": "AdGuard Home을 사용 중이거나 사용할 수 있는 기기의 IP 주소에 대한 정보가 표시됩니다. 이 정보는 호스트 파일, 역방향 DNS 등 여러 소스에서 수집됩니다.",
     "access_title": "접근 설정",
     "access_desc": "여기에서 AdGuard Home DNS 서버에 대한 액세스 규칙을 설정할 수 있습니다",
     "access_allowed_title": "허용된 클라이언트",
