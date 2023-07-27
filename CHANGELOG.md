@@ -25,10 +25,15 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Inability to block queries for the root domain, such as `NS .` queries, using
+  the *Disallowed domains* feature on the *DNS settings* page ([#6049]).  Users
+  who want to block `.` queries should use the `|.^` AdBlock rule or a similar
+  regular expression.
 - Client hostnames not resolving when upstream server responds with zero-TTL
   records ([#6046]).
 
 [#6046]: https://github.com/AdguardTeam/AdGuardHome/issues/6046
+[#6049]: https://github.com/AdguardTeam/AdGuardHome/issues/6049
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

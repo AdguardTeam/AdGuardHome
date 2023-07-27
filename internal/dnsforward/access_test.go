@@ -31,6 +31,7 @@ func TestIsBlockedHost(t *testing.T) {
 		"*.host.com",
 		"||host3.com^",
 		"||*^$dnstype=HTTPS",
+		"|.^",
 	})
 	require.NoError(t, err)
 
@@ -94,6 +95,11 @@ func TestIsBlockedHost(t *testing.T) {
 		name: "by_qtype_other",
 		host: "site-with-https-record.example",
 		qt:   dns.TypeA,
+	}, {
+		want: assert.True,
+		name: "ns_root",
+		host: ".",
+		qt:   dns.TypeNS,
 	}}
 
 	for _, tc := range testCases {

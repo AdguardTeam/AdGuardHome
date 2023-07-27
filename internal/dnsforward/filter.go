@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
@@ -33,9 +34,9 @@ func (s *Server) beforeRequestHandler(
 	if len(pctx.Req.Question) == 1 {
 		q := pctx.Req.Question[0]
 		qt := q.Qtype
-		host := strings.TrimSuffix(q.Name, ".")
+		host := aghnet.NormalizeDomain(q.Name)
 		if s.access.isBlockedHost(host, qt) {
-			log.Debug("request %s %s is in access blocklist", dns.Type(qt), host)
+			log.Debug("access: request %s %s is in access blocklist", dns.Type(qt), host)
 
 			return s.preBlockedResponse(pctx)
 		}
@@ -79,7 +80,12 @@ func (s *Server) filterDNSRequest(dctx *dnsContext) (res *filtering.Result, err 
 	res = &resVal
 	switch {
 	case res.IsFiltered:
-		log.Tracef("host %q is filtered, reason %q, rule: %q", host, res.Reason, res.Rules[0].Text)
+		log.Debug(
+			"dnsforward: host %q is filtered, reason: %q; rule: %q",
+			host,
+			res.Reason,
+			res.Rules[0].Text,
+		)
 		pctx.Res = s.genDNSFilterMessage(pctx, res)
 	case res.Reason.In(filtering.Rewritten, filtering.RewrittenRule) &&
 		res.CanonName != "" &&
@@ -189,7 +195,7 @@ func (s *Server) filterDNSResponse(
 			continue
 		} else if res.IsFiltered {
 			pctx.Res = s.genDNSFilterMessage(pctx, res)
-			log.Debug("DNSFwd: Matched %s by response: %s", pctx.Req.Question[0].Name, host)
+			log.Debug("dnsforward: matched %q by response: %q", pctx.Req.Question[0].Name, host)
 
 			return res, nil
 		}

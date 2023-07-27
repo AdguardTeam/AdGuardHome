@@ -90,7 +90,7 @@ func newAccessCtx(allowed, blocked, blockedHosts []string) (a *accessManager, er
 
 	lists := []filterlist.RuleList{
 		&filterlist.StringRuleList{
-			ID:             int(0),
+			ID:             0,
 			RulesText:      b.String(),
 			IgnoreCosmetic: true,
 		},
