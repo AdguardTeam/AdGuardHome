@@ -23,6 +23,13 @@ See also the [v0.107.36 GitHub milestone][ms-v0.107.36].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Client hostnames not resolving when upstream server responds with zero-TTL
+  records ([#6046]).
+
+[#6046]: https://github.com/AdguardTeam/AdGuardHome/issues/6046
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

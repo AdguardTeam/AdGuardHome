@@ -346,19 +346,21 @@ func (s *Server) Exchange(ip netip.Addr) (host string, ttl time.Duration, err er
 	}
 
 	var resolver *proxy.Proxy
+	var errMsg string
 	if s.privateNets.Contains(ip.AsSlice()) {
 		if !s.conf.UsePrivateRDNS {
 			return "", 0, nil
 		}
 
 		resolver = s.localResolvers
+		errMsg = "resolving a private address: %w"
 		s.recDetector.add(*req)
 	} else {
 		resolver = s.internalProxy
+		errMsg = "resolving an address: %w"
 	}
-
 	if err = resolver.Resolve(dctx); err != nil {
-		return "", 0, err
+		return "", 0, fmt.Errorf(errMsg, err)
 	}
 
 	return hostFromPTR(dctx.Res)
@@ -377,13 +379,18 @@ func hostFromPTR(resp *dns.Msg) (host string, ttl time.Duration, err error) {
 
 	var ttlSec uint32
 
+	log.Debug("dnsforward: resolving ptr, received %d answers", len(resp.Answer))
 	for _, ans := range resp.Answer {
 		ptr, ok := ans.(*dns.PTR)
 		if !ok {
 			continue
 		}
 
-		if ptr.Hdr.Ttl > ttlSec {
+		// Respect zero TTL records since some DNS servers use it to
+		// locally-resolved addresses.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/6046.
+		if ptr.Hdr.Ttl >= ttlSec {
 			host = ptr.Ptr
 			ttlSec = ptr.Hdr.Ttl
 		}
@@ -465,6 +472,7 @@ func (s *Server) filterOurDNSAddrs(addrs []string) (filtered []string, err error
 	}
 
 	ourAddrsSet := stringutil.NewSet(ourAddrs...)
+	log.Debug("dnsforward: filtering out %s", ourAddrsSet.String())
 
 	// TODO(e.burkov): The approach of subtracting sets of strings is not
 	// really applicable here since in case of listening on all network
@@ -501,7 +509,7 @@ func (s *Server) setupLocalResolvers() (err error) {
 		PreferIPv6: s.conf.BootstrapPreferIPv6,
 	})
 	if err != nil {
-		return fmt.Errorf("parsing private upstreams: %w", err)
+		return fmt.Errorf("preparing private upstreams: %w", err)
 	}
 
 	s.localResolvers = &proxy.Proxy{
