@@ -42,16 +42,6 @@ func (s *Server) loadUpstreams() (upstreams []string, err error) {
 
 // prepareUpstreamSettings sets upstream DNS server settings.
 func (s *Server) prepareUpstreamSettings() (err error) {
-	// Use a customized set of RootCAs, because Go's default mechanism of
-	// loading TLS roots does not always work properly on some routers so we're
-	// loading roots manually and pass it here.
-	//
-	// See [aghtls.SystemRootCAs].
-	//
-	// TODO(a.garipov): Investigate if that's true.
-	upstream.RootCAs = s.conf.TLSv12Roots
-	upstream.CipherSuites = s.conf.TLSCiphers
-
 	// Load upstreams either from the file, or from the settings
 	var upstreams []string
 	upstreams, err = s.loadUpstreams()
@@ -64,6 +54,15 @@ func (s *Server) prepareUpstreamSettings() (err error) {
 		Timeout:      s.conf.UpstreamTimeout,
 		HTTPVersions: UpstreamHTTPVersions(s.conf.UseHTTP3Upstreams),
 		PreferIPv6:   s.conf.BootstrapPreferIPv6,
+		// Use a customized set of RootCAs, because Go's default mechanism of
+		// loading TLS roots does not always work properly on some routers so we're
+		// loading roots manually and pass it here.
+		//
+		// See [aghtls.SystemRootCAs].
+		//
+		// TODO(a.garipov): Investigate if that's true.
+		RootCAs:      s.conf.TLSv12Roots,
+		CipherSuites: s.conf.TLSCiphers,
 	})
 	if err != nil {
 		return fmt.Errorf("preparing upstream config: %w", err)
