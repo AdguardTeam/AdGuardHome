@@ -54,7 +54,7 @@ code.
 
 
  *  [Getting Started](#getting-started)
-     *  [Automated install (Unix)](#automated-install-linux-and-mac)
+     *  [Automated install (Linux/Unix/MacOS/FreeBSD/OpenBSD)](#automated-install-linux-and-mac)
      *  [Alternative methods](#alternative-methods)
      *  [Guides](#guides)
      *  [API](#api)
@@ -79,7 +79,7 @@ code.
 
 ##  <a href="#getting-started" id="getting-started" name="getting-started">Getting Started</a>
 
-   ###  <a href="#automated-install-linux-and-mac" id="automated-install-linux-and-mac" name="automated-install-linux-and-mac">Automated install (Unix)</a>
+   ###  <a href="#automated-install-linux-and-mac" id="automated-install-linux-and-mac" name="automated-install-linux-and-mac">Automated install (Linux/Unix/MacOS/FreeBSD/OpenBSD)</a>
 
 To install with `curl` run the following command:
 
