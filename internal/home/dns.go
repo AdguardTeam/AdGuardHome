@@ -254,6 +254,7 @@ func newServerConfig(
 		Exchanger:        Context.dnsServer,
 		AddressUpdater:   &Context.clients,
 		InitialAddresses: initialAddresses,
+		CatchPanics:      true,
 		UseRDNS:          config.Clients.Sources.RDNS,
 		UseWHOIS:         config.Clients.Sources.WHOIS,
 	}

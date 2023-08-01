@@ -72,13 +72,6 @@ func startDeferStop(t *testing.T, s *Server) {
 	testutil.CleanupAndRequireSuccess(t, s.Stop)
 }
 
-// packageUpstreamVariableMu is used to serialize access to the package-level
-// variables of package upstream.
-//
-// TODO(s.chzhen): Move these parameters to upstream options and remove this
-// crutch.
-var packageUpstreamVariableMu = &sync.Mutex{}
-
 func createTestServer(
 	t *testing.T,
 	filterConf *filtering.Config,
@@ -86,9 +79,6 @@ func createTestServer(
 	localUps upstream.Upstream,
 ) (s *Server) {
 	t.Helper()
-
-	packageUpstreamVariableMu.Lock()
-	defer packageUpstreamVariableMu.Unlock()
 
 	rules := `||nxdomain.example.org
 ||NULL.example.org^
