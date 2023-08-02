@@ -444,7 +444,7 @@
     "client_confirm_delete": "Biztosan törölni szeretné a(z) \"{{key}}\" klienst?",
     "list_confirm_delete": "Biztosan törölni kívánja ezt a listát?",
     "auto_clients_title": "Futási idejű kliensek",
-    "auto_clients_desc": "Ezek az eszközök nem szerepelnek a fenntartott kliensek listáján, de használják az AdGuard Home-ot",
+    "auto_clients_desc": "Az AdGuard Home-ot használó vagy esetleg használó eszközök IP-címeire vonatkozó információk. Ezeket az információkat több forrásból gyűjtik, beleértve a hosts fájlokat, a fordított DNS-t stb.",
     "access_title": "Hozzáférési beállítások",
     "access_desc": "Itt konfigurálhatja az AdGuard Home DNS-kiszolgáló hozzáférési szabályait",
     "access_allowed_title": "Engedélyezett kliensek",

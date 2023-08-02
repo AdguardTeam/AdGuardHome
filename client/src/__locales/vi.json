@@ -444,7 +444,7 @@
     "client_confirm_delete": "Bạn có chắc chắn muốn xóa máy khách \"{{key}}\" không?",
     "list_confirm_delete": "Bạn có muốn xóa bộ lọc này?",
     "auto_clients_title": "Máy khách (thời gian chạy)",
-    "auto_clients_desc": "Các thiết bị không có trong danh sách khách hàng ổn định vẫn có thể sử dụng AdGuard Home",
+    "auto_clients_desc": "Thông tin về địa chỉ IP của thiết bị đang sử dụng hoặc có thể sử dụng AdGuard Home. Thông tin này được thu thập từ nhiều nguồn, bao gồm tệp máy chủ, DNS ngược, v.v.",
     "access_title": "Cài đặt truy cập",
     "access_desc": "Tại đây bạn có thể định cấu hình quy tắc truy cập cho máy chủ AdGuard Home DNS",
     "access_allowed_title": "Máy chủ được phép",

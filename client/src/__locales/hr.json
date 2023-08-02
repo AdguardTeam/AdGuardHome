@@ -444,7 +444,7 @@
     "client_confirm_delete": "Jeste li sigurni da želite ukloniti \"{{key}}\" klijenta?",
     "list_confirm_delete": "Jeste li sigurni da želite ukloniti ovaj popis?",
     "auto_clients_title": "Runtime klijenti",
-    "auto_clients_desc": "Podaci na klijentu koji koriste AdGuard Home, ali se ne mijenjaju u postavkama",
+    "auto_clients_desc": "Informacije o IP adresama uređaja koji koriste ili bi mogli koristiti AdGuard Home. Ove informacije prikupljaju se iz nekoliko izvora, uključujući datoteke hostova, obrnuti DNS itd.",
     "access_title": "Postavke pristupa",
     "access_desc": "Ovdje možete konfigurirati pravila pristupa za AdGuard Home DNS poslužitelj",
     "access_allowed_title": "Dopušteni klijenti",
