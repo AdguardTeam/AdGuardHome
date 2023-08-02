@@ -1,6 +1,6 @@
 module github.com/AdguardTeam/AdGuardHome
 
-go 1.19
+go 1.20
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.52.1-0.20230726165924-30c459b0cdef

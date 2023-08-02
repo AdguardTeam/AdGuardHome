@@ -23,6 +23,15 @@ See also the [v0.107.36 GitHub milestone][ms-v0.107.36].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2023-29409 Go vulnerability fixed in [Go 1.20.7][go-1.20.7].
+
+### Deprecated
+
+- Go 1.20 support.  Future versions will require at least Go 1.21 to build.
+
 ### Fixed
 
 - Inability to block queries for the root domain, such as `NS .` queries, using
@@ -34,6 +43,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#6046]: https://github.com/AdguardTeam/AdGuardHome/issues/6046
 [#6049]: https://github.com/AdguardTeam/AdGuardHome/issues/6049
+
+[go-1.20.7]: https://groups.google.com/g/golang-announce/c/X0b6CsSAaYI/m/Efv5DbZ9AwAJ
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
