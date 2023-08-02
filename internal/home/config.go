@@ -114,8 +114,6 @@ type configuration struct {
 	Language string `yaml:"language"`
 	// Theme is a UI theme for current user.
 	Theme Theme `yaml:"theme"`
-	// DebugPProf defines if the profiling HTTP handler will listen on :6060.
-	DebugPProf bool `yaml:"debug_pprof"`
 
 	DNS      dnsConfig         `yaml:"dns"`
 	TLS      tlsConfigSettings `yaml:"tls"`
@@ -155,12 +153,24 @@ type configuration struct {
 // Field ordering is important, YAML fields better not to be reordered, if it's
 // not absolutely necessary.
 type httpConfig struct {
+	// Pprof defines the profiling HTTP handler.
+	Pprof *httpPprofConfig `yaml:"pprof"`
+
 	// Address is the address to serve the web UI on.
 	Address netip.AddrPort
 
 	// SessionTTL for a web session.
 	// An active session is automatically refreshed once a day.
 	SessionTTL timeutil.Duration `yaml:"session_ttl"`
+}
+
+// httpPprofConfig is the block with pprof HTTP configuration.
+type httpPprofConfig struct {
+	// Port for the profiling handler.
+	Port uint16 `yaml:"port"`
+
+	// Enabled defines if the profiling handler is enabled.
+	Enabled bool `yaml:"enabled"`
 }
 
 // dnsConfig is a block with DNS configuration params.
@@ -277,6 +287,10 @@ var config = &configuration{
 	HTTPConfig: httpConfig{
 		Address:    netip.AddrPortFrom(netip.IPv4Unspecified(), 3000),
 		SessionTTL: timeutil.Duration{Duration: 30 * timeutil.Day},
+		Pprof: &httpPprofConfig{
+			Enabled: false,
+			Port:    6060,
+		},
 	},
 	DNS: dnsConfig{
 		BindHosts: []netip.Addr{netip.IPv4Unspecified()},

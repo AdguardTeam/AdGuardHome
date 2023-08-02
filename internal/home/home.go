@@ -567,9 +567,8 @@ func run(opts options, clientBuildFS fs.FS) {
 		err = config.write()
 		fatalOnError(err)
 
-		if config.DebugPProf {
-			// TODO(a.garipov): Make the address configurable.
-			startPprof("localhost:6060")
+		if config.HTTPConfig.Pprof.Enabled {
+			startPprof(config.HTTPConfig.Pprof.Port)
 		}
 	}
 

@@ -23,7 +23,7 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 24
+const currentSchemaVersion = 25
 
 // These aliases are provided for convenience.
 type (
@@ -99,6 +99,7 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema21to22,
 		upgradeSchema22to23,
 		upgradeSchema23to24,
+		upgradeSchema24to25,
 	}
 
 	n := 0
@@ -1376,6 +1377,50 @@ func upgradeSchema23to24(diskConf yobj) (err error) {
 	delete(diskConf, "log_compress")
 	delete(diskConf, "log_localtime")
 	delete(diskConf, "verbose")
+
+	return nil
+}
+
+// upgradeSchema24to25 performs the following changes:
+//
+//	# BEFORE:
+//	'debug_pprof': true
+//
+//	# AFTER:
+//	'http':
+//	  'pprof':
+//	    'enabled': true
+//	    'port': 6060
+func upgradeSchema24to25(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 24 to 25")
+	diskConf["schema_version"] = 25
+
+	debugPprofVal, ok := diskConf["debug_pprof"]
+	if !ok {
+		return nil
+	}
+
+	debugPprofEnabled, ok := debugPprofVal.(bool)
+	if !ok {
+		return fmt.Errorf("unexpected type of debug_pprof: %T", debugPprofVal)
+	}
+
+	httpVal, ok := diskConf["http"]
+	if !ok {
+		return nil
+	}
+
+	httpObj, ok := httpVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of dns: %T", httpVal)
+	}
+
+	httpObj["pprof"] = yobj{
+		"enabled": debugPprofEnabled,
+		"port":    6060,
+	}
+
+	delete(diskConf, "debug_pprof")
 
 	return nil
 }

@@ -23,6 +23,36 @@ See also the [v0.107.37 GitHub milestone][ms-v0.107.37].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- The ability to set the port for the `pprof` debug API, see configuration
+  changes below.
+
+### Changed
+
+#### Configuration Changes
+
+In this release, the schema version has changed from 24 to 25.
+
+- Property `debug_pprof` which used to setup profiling HTTP handler, is now
+  moved to the new `pprof` object under `http` section.  The new object contains
+  properties `enabled` and `port`:
+
+  ```yaml
+  # BEFORE:
+  'debug_pprof': true
+
+  # AFTER:
+  'http':
+    'pprof':
+      'enabled': true
+      'port': 6060
+  ```
+
+  Note that the new default `6060` is used as default.  To rollback this change,
+  remove the new object `pprof`, set back `debug_pprof`, and change the
+  `schema_version` back to `24`.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

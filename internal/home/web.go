@@ -312,8 +312,10 @@ func (web *webAPI) mustStartHTTP3(address string) {
 	}
 }
 
-// startPprof launches the debug and profiling server on addr.
-func startPprof(addr string) {
+// startPprof launches the debug and profiling server on the provided port.
+func startPprof(port uint16) {
+	addr := netip.AddrPortFrom(netutil.IPv4Localhost(), port)
+
 	runtime.SetBlockProfileRate(1)
 	runtime.SetMutexProfileFraction(1)
 
@@ -324,7 +326,7 @@ func startPprof(addr string) {
 		defer log.OnPanic("pprof server")
 
 		log.Info("pprof: listening on %q", addr)
-		err := http.ListenAndServe(addr, mux)
+		err := http.ListenAndServe(addr.String(), mux)
 		if !errors.Is(err, http.ErrServerClosed) {
 			log.Error("pprof: shutting down: %s", err)
 		}

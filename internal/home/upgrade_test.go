@@ -1379,3 +1379,90 @@ func TestUpgradeSchema23to24(t *testing.T) {
 		})
 	}
 }
+
+func TestUpgradeSchema24to25(t *testing.T) {
+	const newSchemaVer = 25
+
+	testCases := []struct {
+		in         yobj
+		want       yobj
+		name       string
+		wantErrMsg string
+	}{{
+		name: "empty",
+		in:   yobj{},
+		want: yobj{
+			"schema_version": newSchemaVer,
+		},
+		wantErrMsg: "",
+	}, {
+		name: "ok",
+		in: yobj{
+			"http": yobj{
+				"address":     "0.0.0.0:3000",
+				"session_ttl": "720h",
+			},
+			"debug_pprof": true,
+		},
+		want: yobj{
+			"http": yobj{
+				"address":     "0.0.0.0:3000",
+				"session_ttl": "720h",
+				"pprof": yobj{
+					"enabled": true,
+					"port":    6060,
+				},
+			},
+			"schema_version": newSchemaVer,
+		},
+		wantErrMsg: "",
+	}, {
+		name: "ok_disabled",
+		in: yobj{
+			"http": yobj{
+				"address":     "0.0.0.0:3000",
+				"session_ttl": "720h",
+			},
+			"debug_pprof": false,
+		},
+		want: yobj{
+			"http": yobj{
+				"address":     "0.0.0.0:3000",
+				"session_ttl": "720h",
+				"pprof": yobj{
+					"enabled": false,
+					"port":    6060,
+				},
+			},
+			"schema_version": newSchemaVer,
+		},
+		wantErrMsg: "",
+	}, {
+		name: "invalid",
+		in: yobj{
+			"http": yobj{
+				"address":     "0.0.0.0:3000",
+				"session_ttl": "720h",
+			},
+			"debug_pprof": 1,
+		},
+		want: yobj{
+			"http": yobj{
+				"address":     "0.0.0.0:3000",
+				"session_ttl": "720h",
+			},
+			"debug_pprof":    1,
+			"schema_version": newSchemaVer,
+		},
+		wantErrMsg: "unexpected type of debug_pprof: int",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema24to25(tc.in)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
+
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}
