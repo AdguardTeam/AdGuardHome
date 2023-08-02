@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2023-07-15T00:10:47.501Z",
+    "timeUpdated": "2023-08-01T00:10:42.759Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -42,7 +42,8 @@
             "name": "1822direkt.de",
             "categoryId": 8,
             "url": "https://www.1822direkt.de/",
-            "companyId": null
+            "companyId": "1822direkt",
+            "source": "AdGuard"
         },
         "1dmp.io": {
             "name": "1DMP",
@@ -69,16 +70,18 @@
             "companyId": "dentsu_aegis_network"
         },
         "1und1": {
-            "name": "1&1 Internet",
+            "name": "1&1 IONOS",
             "categoryId": 8,
-            "url": null,
-            "companyId": null
+            "url": "http://www.ionos.com/",
+            "companyId": "1und1",
+            "source": "AdGuard"
         },
         "24-ads.com": {
-            "name": "24-ADS GmbH",
+            "name": "24-ADS",
             "categoryId": 4,
             "url": "http://www.24-ads.com/",
-            "companyId": null
+            "companyId": "24-ads.com",
+            "source": "AdGuard"
         },
         "24_7": {
             "name": "[24]7",
@@ -93,10 +96,11 @@
             "companyId": "24log"
         },
         "24smi": {
-            "name": "24СМИ",
+            "name": "24SMI",
             "categoryId": 8,
             "url": "https://24smi.org/",
-            "companyId": null
+            "companyId": "24smi",
+            "source": "AdGuard"
         },
         "2leep": {
             "name": "2leep",
@@ -127,13 +131,15 @@
             "name": "4Chan",
             "categoryId": 8,
             "url": "https://www.4chan.org/",
-            "companyId": null
+            "companyId": "4chan",
+            "source": "AdGuard"
         },
         "4finance_com": {
-            "name": "4finance.com",
+            "name": "4finance",
             "categoryId": 2,
-            "url": "http://4finance.com/",
-            "companyId": null
+            "url": "https://4finance.com/",
+            "companyId": "4finance",
+            "source": "AdGuard"
         },
         "4w_marketplace": {
             "name": "4w Marketplace",
@@ -179,10 +185,11 @@
             "source": "AdGuard"
         },
         "7tv.de": {
-            "name": "7tv.de",
+            "name": "7tv.app",
             "categoryId": 0,
-            "url": "https://www.7tv.de/",
-            "companyId": null
+            "url": "https://www.7tv.app/",
+            "companyId": "7tv",
+            "source": "AdGuard"
         },
         "888media": {
             "name": "888media",
@@ -2554,7 +2561,7 @@
             "name": "Microsoft App Center",
             "categoryId": 5,
             "url": "https://appcenter.ms/",
-            "companyId": null,
+            "companyId": "microsoft",
             "source": "AdGuard"
         },
         "appcues": {
@@ -3925,7 +3932,7 @@
             "name": "Button",
             "categoryId": 4,
             "url": "https://www.usebutton.com/",
-            "companyId": null,
+            "companyId": "button",
             "source": "AdGuard"
         },
         "buysellads": {
@@ -5276,7 +5283,7 @@
             "name": "Crashlytics",
             "categoryId": 101,
             "url": "https://crashlytics.com/",
-            "companyId": null,
+            "companyId": "google",
             "source": "AdGuard"
         },
         "crazy_egg": {
@@ -6427,6 +6434,13 @@
             "url": "http://www.amazon.com/",
             "companyId": "amazon_associates"
         },
+        "electronic_arts": {
+            "name": "Electronic Arts",
+            "categoryId": 2,
+            "url": "https://www.ea.com/",
+            "companyId": "electronic_arts",
+            "source": "AdGuard"
+        },
         "element": {
             "name": "Element",
             "categoryId": 7,
@@ -7013,6 +7027,13 @@
             "categoryId": 8,
             "url": null,
             "companyId": null
+        },
+        "farlight_pte_ltd": {
+            "name": "Farlight Pte Ltd.",
+            "categoryId": 8,
+            "url": "https://farlightgames.com/",
+            "companyId": "farlight",
+            "source": "AdGuard"
         },
         "fastly_insights": {
             "name": "Fastly Insights",
@@ -8655,7 +8676,7 @@
             "name": "HockeyApp",
             "categoryId": 101,
             "url": "https://hockeyapp.net/",
-            "companyId": null,
+            "companyId": "microsoft",
             "source": "AdGuard"
         },
         "hoholikik.club": {
@@ -16729,6 +16750,13 @@
             "url": "http://www.sundaysky.com/",
             "companyId": "sundaysky"
         },
+        "supercell": {
+            "name": "Supercell",
+            "categoryId": 2,
+            "url": "https://supercell.com/",
+            "companyId": "supercell",
+            "source": "AdGuard"
+        },
         "supercounters": {
             "name": "SuperCounters",
             "categoryId": 6,
@@ -19318,10 +19346,11 @@
             "companyId": "xapads"
         },
         "xen-media.com": {
-            "name": "xen-media.com",
+            "name": "Xen Media",
             "categoryId": 11,
-            "url": null,
-            "companyId": null
+            "url": "https://www.xenmedia.net/",
+            "companyId": "xenmedia",
+            "source": "AdGuard"
         },
         "xfreeservice.com": {
             "name": "xfreeservice.com",
@@ -19332,8 +19361,9 @@
         "xhamster": {
             "name": "xHamster",
             "categoryId": 3,
-            "url": null,
-            "companyId": null
+            "url": "https://xhamster.com/",
+            "companyId": "xhamster",
+            "source": "AdGuard"
         },
         "xing": {
             "name": "Xing",
@@ -19348,10 +19378,11 @@
             "companyId": "exoclick"
         },
         "xnxx_cdn": {
-            "name": "xnxx CDN",
+            "name": "XNXX",
             "categoryId": 9,
             "url": "https://www.xnxx.com",
-            "companyId": null
+            "companyId": "xnxx",
+            "source": "AdGuard"
         },
         "xplosion": {
             "name": "xplosion",
@@ -19366,16 +19397,18 @@
             "companyId": "matomy_media"
         },
         "xvideos_com": {
-            "name": "xvideos.com",
+            "name": "Xvideos",
             "categoryId": 8,
-            "url": null,
-            "companyId": null
+            "url": "https://www.xvideos.com",
+            "companyId": "xvideos",
+            "source": "AdGuard"
         },
         "xxxlshop.de": {
-            "name": "xxxlshop.de",
+            "name": "XXXLutz",
             "categoryId": 8,
-            "url": "https://www.xxxlshop.de/",
-            "companyId": null
+            "url": "https://www.xxxlutz.de/",
+            "companyId": "xxxlutz",
+            "source": "AdGuard"
         },
         "xxxlutz": {
             "name": "XXXLutz",
@@ -19387,7 +19420,8 @@
             "name": "Yabbi",
             "categoryId": 4,
             "url": "https://yabbi.me/",
-            "companyId": null
+            "companyId": "yabbi",
+            "source": "AdGuard"
         },
         "yabuka": {
             "name": "Yabuka",
@@ -19649,10 +19683,11 @@
             "companyId": "yomedia"
         },
         "yoochoose.net": {
-            "name": "YOOCHOOSE",
+            "name": "Ibexa Personalizaton Software",
             "categoryId": 4,
-            "url": "https://yoochoose.com/",
-            "companyId": null
+            "url": "https://yoochoose.net/",
+            "companyId": "ibexa",
+            "source": "AdGuard"
         },
         "yotpo": {
             "name": "Yotpo",
@@ -19687,8 +19722,9 @@
         "youporn": {
             "name": "YouPorn",
             "categoryId": 3,
-            "url": null,
-            "companyId": null
+            "url": "https://www.youporn.com/",
+            "companyId": "youporn",
+            "source": "AdGuard"
         },
         "youtube": {
             "name": "YouTube",
@@ -19826,7 +19862,8 @@
             "name": "ZeusClicks",
             "categoryId": 4,
             "url": "http://zeusclicks.com/",
-            "companyId": null
+            "companyId": "zeusclicks",
+            "source": "AdGuard"
         },
         "ziff_davis": {
             "name": "Ziff Davis",
@@ -19844,7 +19881,8 @@
             "name": "Zimbio",
             "categoryId": 8,
             "url": "http://www.zimbio.com/",
-            "companyId": null
+            "companyId": "livinglymedia",
+            "source": "AdGuard"
         },
         "zippyshare_widget": {
             "name": "Zippyshare Widget",
@@ -21450,6 +21488,9 @@
         "ekomi.de": "ekomi",
         "elasticad.net": "elastic_ad",
         "elasticbeanstalk.com": "elastic_beanstalk",
+        "cloudcell.com": "electronic_arts",
+        "ea.com": "electronic_arts",
+        "eamobile.com": "electronic_arts",
         "element.io": "element",
         "riot.im": "element",
         "elicitapp.com": "elicit",
@@ -21570,6 +21611,7 @@
         "thefancy.com": "fancy_widget",
         "d1q7pknmpq2wkm.cloudfront.net": "fanplayr",
         "fap.to": "fap.to",
+        "farlightgames.com": "farlight_pte_ltd",
         "fastly-insights.com": "fastly_insights",
         "fastly.net": "fastlylb.net",
         "fastlylb.net": "fastlylb.net",
@@ -24146,6 +24188,8 @@
         "sumo.com": "sumome",
         "sumome.com": "sumome",
         "sundaysky.com": "sundaysky",
+        "supercell.com": "supercell",
+        "supercellsupport.com": "supercell",
         "supercounters.com": "supercounters",
         "superfastcdn.com": "superfastcdn.com",
         "socdm.com": "supership",

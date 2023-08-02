@@ -444,7 +444,7 @@
     "client_confirm_delete": "Sunteți sigur că doriți să ștergeți clientul \"{{key}}\"?",
     "list_confirm_delete": "Sigur doriți să ștergeți această listă?",
     "auto_clients_title": "Clienți runtime",
-    "auto_clients_desc": "Dispozitivele care nu se află pe lista de clienți Persistent care pot utiliza în continuare AdGuard Home",
+    "auto_clients_desc": "Informații despre adresele IP ale dispozitivelor care utilizează sau pot utiliza AdGuard Home. Aceste informații sunt colectate din mai multe surse, inclusiv din fișiere hosts, DNS inversat etc.",
     "access_title": "Setări de acces",
     "access_desc": "Aici puteți configura regulile de acces pentru serverul DNS AdGuard Home",
     "access_allowed_title": "Clienți autorizați",

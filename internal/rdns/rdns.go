@@ -101,6 +101,8 @@ func (r *Default) Process(ip netip.Addr) (host string, changed bool) {
 		log.Debug("rdns: cache: adding item %q: %s", ip, err)
 	}
 
+	// TODO(e.burkov):  The name doesn't change if it's neither stored in cache
+	// nor resolved successfully.  Is it correct?
 	return host, fromCache == "" || host != fromCache
 }
 

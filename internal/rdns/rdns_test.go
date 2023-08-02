@@ -25,11 +25,6 @@ func TestDefault_Process(t *testing.T) {
 	localRevAddr1, err := netutil.IPToReversedAddr(localIP.AsSlice())
 	require.NoError(t, err)
 
-	config := &rdns.Config{
-		CacheSize: 100,
-		CacheTTL:  time.Hour,
-	}
-
 	testCases := []struct {
 		name string
 		addr netip.Addr
@@ -60,21 +55,21 @@ func TestDefault_Process(t *testing.T) {
 
 				switch ip {
 				case ip1:
-					return revAddr1, 0, nil
+					return revAddr1, time.Hour, nil
 				case ip2:
-					return revAddr2, 0, nil
+					return revAddr2, time.Hour, nil
 				case localIP:
-					return localRevAddr1, 0, nil
+					return localRevAddr1, time.Hour, nil
 				default:
-					return "", 0, nil
+					return "", time.Hour, nil
 				}
 			}
-			exchanger := &aghtest.Exchanger{
-				OnExchange: onExchange,
-			}
 
-			config.Exchanger = exchanger
-			r := rdns.New(config)
+			r := rdns.New(&rdns.Config{
+				CacheSize: 100,
+				CacheTTL:  time.Hour,
+				Exchanger: &aghtest.Exchanger{OnExchange: onExchange},
+			})
 
 			got, changed := r.Process(tc.addr)
 			require.True(t, changed)
@@ -90,4 +85,40 @@ func TestDefault_Process(t *testing.T) {
 			assert.Equal(t, 1, hit)
 		})
 	}
+
+	t.Run("zero_ttl", func(t *testing.T) {
+		const cacheTTL = time.Second / 2
+
+		zeroTTLExchanger := &aghtest.Exchanger{
+			OnExchange: func(ip netip.Addr) (host string, ttl time.Duration, err error) {
+				return revAddr1, 0, nil
+			},
+		}
+
+		r := rdns.New(&rdns.Config{
+			CacheSize: 1,
+			CacheTTL:  cacheTTL,
+			Exchanger: zeroTTLExchanger,
+		})
+
+		got, changed := r.Process(ip1)
+		require.True(t, changed)
+		assert.Equal(t, revAddr1, got)
+
+		zeroTTLExchanger.OnExchange = func(ip netip.Addr) (host string, ttl time.Duration, err error) {
+			return revAddr2, time.Hour, nil
+		}
+
+		require.EventuallyWithT(t, func(t *assert.CollectT) {
+			got, changed = r.Process(ip1)
+			assert.True(t, changed)
+			assert.Equal(t, revAddr2, got)
+		}, 2*cacheTTL, time.Millisecond*100)
+
+		assert.Never(t, func() (changed bool) {
+			_, changed = r.Process(ip1)
+
+			return changed
+		}, 2*cacheTTL, time.Millisecond*100)
+	})
 }

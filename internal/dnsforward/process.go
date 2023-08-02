@@ -719,6 +719,8 @@ func (s *Server) processLocalPTR(dctx *dnsContext) (rc resultCode) {
 	if s.conf.UsePrivateRDNS {
 		s.recDetector.add(*pctx.Req)
 		if err := s.localResolvers.Resolve(pctx); err != nil {
+			log.Debug("dnsforward: resolving private address: %s", err)
+
 			// Generate the server failure if the private upstream configuration
 			// is empty.
 			//

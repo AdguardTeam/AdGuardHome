@@ -172,6 +172,7 @@
     "dnscrypt": "DNSCrypt",
     "dns_over_https": "DNS-over-HTTPS",
     "dns_over_tls": "DNS-over-TLS",
+    "dns_over_quic": "DNS-over-QUIC",
     "form_enter_rate_limit": "ป้อนขีดจำกัดอัตรา",
     "rate_limit": "จำกัดอัตรา",
     "edns_enable": "เปิดใช้งานซับเน็ตไคลเอ็นต์ EDNS",
@@ -392,6 +393,7 @@
     "show_processed_responses": "การประมวลผล",
     "blocked_adult_websites": "ถูกปิดกั้นโดยการควบคุมของผู้ปกครอง",
     "safe_search": "ค้นหาอย่างปลอดภัย",
+    "blocklist": "บัญชีดำ",
     "filter_category_other": "อื่น ๆ",
     "parental_control": "ควบคุมโดยผู้ปกครอง"
 }

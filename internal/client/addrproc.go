@@ -58,6 +58,12 @@ type DefaultAddrProcConfig struct {
 	// immediately by [NewDefaultAddrProc].
 	InitialAddresses []netip.Addr
 
+	// CatchPanics, if true, makes the address processor catch and log panics.
+	//
+	// TODO(a.garipov): Consider better ways to do this or apply this method to
+	// other parts of the codebase.
+	CatchPanics bool
+
 	// UseRDNS, if true, enables resolving of client IP addresses using reverse
 	// DNS.
 	UseRDNS bool
@@ -151,7 +157,7 @@ func NewDefaultAddrProc(c *DefaultAddrProcConfig) (p *DefaultAddrProc) {
 		p.whois = newWHOIS(c.DialContext)
 	}
 
-	go p.process()
+	go p.process(c.CatchPanics)
 
 	for _, ip := range c.InitialAddresses {
 		p.Process(ip)
@@ -214,8 +220,10 @@ func (p *DefaultAddrProc) Process(ip netip.Addr) {
 
 // process processes the incoming client IP-address information.  It is intended
 // to be used as a goroutine.  Once clientIPs is closed, process exits.
-func (p *DefaultAddrProc) process() {
-	defer log.OnPanic("addrProcessor.process")
+func (p *DefaultAddrProc) process(catchPanics bool) {
+	if catchPanics {
+		defer log.OnPanic("addrProcessor.process")
+	}
 
 	log.Info("clients: processing addresses")
 

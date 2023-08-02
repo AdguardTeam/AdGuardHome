@@ -72,13 +72,6 @@ func startDeferStop(t *testing.T, s *Server) {
 	testutil.CleanupAndRequireSuccess(t, s.Stop)
 }
 
-// packageUpstreamVariableMu is used to serialize access to the package-level
-// variables of package upstream.
-//
-// TODO(s.chzhen): Move these parameters to upstream options and remove this
-// crutch.
-var packageUpstreamVariableMu = &sync.Mutex{}
-
 func createTestServer(
 	t *testing.T,
 	filterConf *filtering.Config,
@@ -86,9 +79,6 @@ func createTestServer(
 	localUps upstream.Upstream,
 ) (s *Server) {
 	t.Helper()
-
-	packageUpstreamVariableMu.Lock()
-	defer packageUpstreamVariableMu.Unlock()
 
 	rules := `||nxdomain.example.org
 ||NULL.example.org^
@@ -1374,6 +1364,24 @@ func TestServer_Exchange(t *testing.T) {
 	refusingUpstream := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
 		return new(dns.Msg).SetRcode(req, dns.RcodeRefused), nil
 	})
+	zeroTTLUps := &aghtest.UpstreamMock{
+		OnAddress: func() (addr string) { return "zero.ttl.example" },
+		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
+			resp = new(dns.Msg).SetReply(req)
+			hdr := dns.RR_Header{
+				Name:   req.Question[0].Name,
+				Rrtype: dns.TypePTR,
+				Class:  dns.ClassINET,
+				Ttl:    0,
+			}
+			resp.Answer = []dns.RR{&dns.PTR{
+				Hdr: hdr,
+				Ptr: localDomainHost,
+			}}
+
+			return resp, nil
+		},
+	}
 
 	srv := &Server{
 		recDetector: newRecursionDetector(0, 1),
@@ -1445,6 +1453,13 @@ func TestServer_Exchange(t *testing.T) {
 		locUpstream: nil,
 		req:         twosIP,
 		wantTTL:     defaultTTL * 2,
+	}, {
+		name:        "zero_ttl",
+		want:        localDomainHost,
+		wantErr:     nil,
+		locUpstream: zeroTTLUps,
+		req:         localIP,
+		wantTTL:     0,
 	}}
 
 	for _, tc := range testCases {
@@ -1468,6 +1483,7 @@ func TestServer_Exchange(t *testing.T) {
 
 	t.Run("resolving_disabled", func(t *testing.T) {
 		srv.conf.UsePrivateRDNS = false
+		t.Cleanup(func() { srv.conf.UsePrivateRDNS = true })
 
 		host, _, eerr := srv.Exchange(localIP)
 

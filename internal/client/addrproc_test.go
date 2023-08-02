@@ -2,6 +2,7 @@ package client_test
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/netip"
@@ -112,6 +113,7 @@ func TestDefaultAddrProc_Process_rDNS(t *testing.T) {
 				AddressUpdater: &aghtest.AddressUpdater{
 					OnUpdateAddress: newOnUpdateAddress(tc.wantUpd, updIPCh, updHostCh, updInfoCh),
 				},
+				CatchPanics:    false,
 				UseRDNS:        true,
 				UsePrivateRDNS: tc.usePrivate,
 				UseWHOIS:       false,
@@ -146,8 +148,8 @@ func newOnUpdateAddress(
 	infos chan<- *whois.Info,
 ) (f func(ip netip.Addr, host string, info *whois.Info)) {
 	return func(ip netip.Addr, host string, info *whois.Info) {
-		if !want {
-			panic("got unexpected update")
+		if !want && (host != "" || info != nil) {
+			panic(fmt.Errorf("got unexpected update for %v with %q and %v", ip, host, info))
 		}
 
 		ips <- ip
@@ -222,6 +224,7 @@ func TestDefaultAddrProc_Process_WHOIS(t *testing.T) {
 				AddressUpdater: &aghtest.AddressUpdater{
 					OnUpdateAddress: newOnUpdateAddress(tc.wantUpd, updIPCh, updHostCh, updInfoCh),
 				},
+				CatchPanics:    false,
 				UseRDNS:        false,
 				UsePrivateRDNS: false,
 				UseWHOIS:       true,
