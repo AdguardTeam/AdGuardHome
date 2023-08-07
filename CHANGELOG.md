@@ -55,6 +55,7 @@ In this release, the schema version has changed from 24 to 25.
 
 ### Fixed
 
+- Panic on using a single-slash filtering rule.
 - Panic on shutting down while DNS requests are in process of filtering
   ([#5948]).
 
