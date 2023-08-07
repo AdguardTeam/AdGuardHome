@@ -53,6 +53,13 @@ In this release, the schema version has changed from 24 to 25.
   remove the new object `pprof`, set back `debug_pprof`, and change the
   `schema_version` back to `24`.
 
+### Fixed
+
+- Panic on shutting down while DNS requests are in process of filtering
+  ([#5948]).
+
+[#5948]: https://github.com/AdguardTeam/AdGuardHome/issues/5948
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

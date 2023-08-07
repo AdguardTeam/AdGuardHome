@@ -335,7 +335,7 @@ func TestServer_timeout(t *testing.T) {
 			},
 		}
 
-		s, err := NewServer(DNSCreateParams{})
+		s, err := NewServer(DNSCreateParams{DNSFilter: &filtering.DNSFilter{}})
 		require.NoError(t, err)
 
 		err = s.Prepare(srvConf)
@@ -345,7 +345,7 @@ func TestServer_timeout(t *testing.T) {
 	})
 
 	t.Run("default", func(t *testing.T) {
-		s, err := NewServer(DNSCreateParams{})
+		s, err := NewServer(DNSCreateParams{DNSFilter: &filtering.DNSFilter{}})
 		require.NoError(t, err)
 
 		s.conf.FilteringConfig.BlockingMode = BlockingModeDefault

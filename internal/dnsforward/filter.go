@@ -145,10 +145,6 @@ func (s *Server) checkHostRules(host string, rrtype uint16, setts *filtering.Set
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	if s.dnsFilter == nil {
-		return nil, nil
-	}
-
 	var res filtering.Result
 	res, err = s.dnsFilter.CheckHostRules(host, rrtype, setts)
 	if err != nil {

@@ -244,7 +244,7 @@ func (s *Server) Close() {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
-	s.dnsFilter = nil
+	// TODO(s.chzhen):  Remove it.
 	s.stats = nil
 	s.queryLog = nil
 	s.dnsProxy = nil

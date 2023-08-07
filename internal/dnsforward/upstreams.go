@@ -94,7 +94,7 @@ func (s *Server) prepareUpstreamConfig(
 		uc.Upstreams = defaultUpstreamConfig.Upstreams
 	}
 
-	if s.dnsFilter != nil && s.dnsFilter.EtcHosts != nil {
+	if s.dnsFilter.EtcHosts != nil {
 		err = s.replaceUpstreamsWithHosts(uc, opts)
 		if err != nil {
 			return nil, fmt.Errorf("resolving upstreams with hosts: %w", err)

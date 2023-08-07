@@ -762,10 +762,6 @@ func (s *Server) processFilteringBeforeRequest(ctx *dnsContext) (rc resultCode) 
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	if s.dnsFilter == nil {
-		return resultCodeSuccess
-	}
-
 	var err error
 	if ctx.result, err = s.filterDNSRequest(ctx); err != nil {
 		ctx.err = err
@@ -972,7 +968,7 @@ func (s *Server) filterAfterResponse(dctx *dnsContext, pctx *proxy.DNSContext) (
 	// Check the response only if it's from an upstream.  Don't check the
 	// response if the protection is disabled since dnsrewrite rules aren't
 	// applied to it anyway.
-	if !dctx.protectionEnabled || !dctx.responseFromUpstream || s.dnsFilter == nil {
+	if !dctx.protectionEnabled || !dctx.responseFromUpstream {
 		return resultCodeSuccess
 	}
 
