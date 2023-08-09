@@ -58,12 +58,13 @@ func (s *Server) genDNSFilterMessage(
 	res *filtering.Result,
 ) (resp *dns.Msg) {
 	req := dctx.Req
-	if qt := req.Question[0].Qtype; qt != dns.TypeA && qt != dns.TypeAAAA {
+	qt := req.Question[0].Qtype
+	if qt != dns.TypeA && qt != dns.TypeAAAA {
 		if s.conf.BlockingMode == BlockingModeNullIP {
 			return s.makeResponse(req)
 		}
 
-		return s.genNXDomain(req)
+		return s.newMsgNODATA(req)
 	}
 
 	switch res.Reason {
@@ -312,6 +313,17 @@ func (s *Server) makeResponseREFUSED(request *dns.Msg) *dns.Msg {
 	resp.SetRcode(request, dns.RcodeRefused)
 	resp.RecursionAvailable = true
 	return &resp
+}
+
+// newMsgNODATA returns a properly initialized NODATA response.
+//
+// See https://www.rfc-editor.org/rfc/rfc2308#section-2.2.
+func (s *Server) newMsgNODATA(req *dns.Msg) (resp *dns.Msg) {
+	resp = (&dns.Msg{}).SetRcode(req, dns.RcodeSuccess)
+	resp.RecursionAvailable = true
+	resp.Ns = s.genSOA(req)
+
+	return resp
 }
 
 func (s *Server) genNXDomain(request *dns.Msg) *dns.Msg {

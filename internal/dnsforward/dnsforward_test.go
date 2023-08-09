@@ -231,6 +231,17 @@ func createTestMessageWithType(host string, qtype uint16) *dns.Msg {
 	return req
 }
 
+// newResp returns the new DNS response with response code set to rcode, req
+// used as request, and rrs added.
+func newResp(rcode int, req *dns.Msg, ans []dns.RR) (resp *dns.Msg) {
+	resp = (&dns.Msg{}).SetRcode(req, rcode)
+	resp.RecursionAvailable = true
+	resp.Compress = true
+	resp.Answer = ans
+
+	return resp
+}
+
 func assertGoogleAResponse(t *testing.T, reply *dns.Msg) {
 	assertResponse(t, reply, net.IP{8, 8, 8, 8})
 }
