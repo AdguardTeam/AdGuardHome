@@ -239,7 +239,6 @@ const Dashboard = ({
             <div className="col-lg-6">
                 <UpstreamResponses
                     subtitle={subtitle}
-                    dnsQueries={stats.numDnsQueries}
                     topUpstreamsResponses={stats.topUpstreamsResponses}
                     refreshButton={refreshButton}
                 />

@@ -25,11 +25,17 @@ const CountCell = (totalBlocked) => (
     }
 );
 
+const getTotalUpstreamRequests = (stats) => {
+    let total = 0;
+    stats.forEach(({ count }) => { total += count; });
+
+    return total;
+};
+
 const UpstreamResponses = ({
     t,
     refreshButton,
     topUpstreamsResponses,
-    dnsQueries,
     subtitle,
 }) => (
     <Card
@@ -53,7 +59,7 @@ const UpstreamResponses = ({
                     Header: <Trans>requests_count</Trans>,
                     accessor: 'count',
                     maxWidth: 190,
-                    Cell: CountCell(dnsQueries),
+                    Cell: CountCell(getTotalUpstreamRequests(topUpstreamsResponses)),
                 },
             ]}
             showPagination={false}
@@ -67,7 +73,6 @@ const UpstreamResponses = ({
 
 UpstreamResponses.propTypes = {
     topUpstreamsResponses: PropTypes.array.isRequired,
-    dnsQueries: PropTypes.number.isRequired,
     refreshButton: PropTypes.node.isRequired,
     subtitle: PropTypes.string.isRequired,
     t: PropTypes.func.isRequired,
