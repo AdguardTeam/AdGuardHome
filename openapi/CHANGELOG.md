@@ -4,6 +4,16 @@
 
 ## v0.108.0: API changes
 
+## v0.107.36: API changes
+
+### The new fields `"top_upstreams_responses"` and `"top_upstreams_avg_time"` in `Stats` object
+
+* The new field `"top_upstreams_responses"` in `GET /control/stats` method
+  shows the total number of responses from each upstream.
+
+* The new field `"top_upstrems_avg_time"` in `GET /control/stats` method shows
+  the average processing time in seconds of requests from each upstream.
+
 ## v0.107.30: API changes
 
 ### `POST /control/version.json` and `GET /control/dhcp/interfaces` content type

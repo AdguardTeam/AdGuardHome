@@ -50,11 +50,11 @@ func TestStats_races(t *testing.T) {
 	testutil.CleanupAndRequireSuccess(t, s.Close)
 
 	writeFunc := func(start, fin *sync.WaitGroup, waitCh <-chan unit, i int) {
-		e := Entry{
+		e := &Entry{
 			Domain: fmt.Sprintf("example-%d.org", i),
 			Client: fmt.Sprintf("client_%d", i),
 			Result: Result(i)%(resultLast-1) + 1,
-			Time:   uint32(time.Since(startTime).Milliseconds()),
+			Time:   time.Since(startTime),
 		}
 
 		start.Done()

@@ -184,6 +184,7 @@ run_linter gocognit --over 10\
 	./internal/next/\
 	./internal/rdns/\
 	./internal/schedule/\
+	./internal/stats/\
 	./internal/tools/\
 	./internal/version/\
 	./internal/whois/\
@@ -196,7 +197,6 @@ run_linter gocognit --over 19 ./internal/dnsforward/ ./internal/home/
 run_linter gocognit --over 18 ./internal/aghtls/
 run_linter gocognit --over 17 ./internal/filtering ./internal/filtering/rewrite/
 run_linter gocognit --over 15 ./internal/aghos/ ./internal/dhcpd/
-run_linter gocognit --over 14 ./internal/stats/
 run_linter gocognit --over 12 ./internal/updater/
 run_linter gocognit --over 11 ./internal/aghtest/
 

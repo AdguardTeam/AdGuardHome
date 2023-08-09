@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -72,24 +73,29 @@ func TestStats(t *testing.T) {
 
 	t.Run("data", func(t *testing.T) {
 		const reqDomain = "domain"
+		const respUpstream = "upstream"
 
-		entries := []stats.Entry{{
-			Domain: reqDomain,
-			Client: cliIPStr,
-			Result: stats.RFiltered,
-			Time:   123456,
+		entries := []*stats.Entry{{
+			Domain:   reqDomain,
+			Client:   cliIPStr,
+			Result:   stats.RFiltered,
+			Time:     time.Microsecond * 123456,
+			Upstream: respUpstream,
 		}, {
-			Domain: reqDomain,
-			Client: cliIPStr,
-			Result: stats.RNotFiltered,
-			Time:   123456,
+			Domain:   reqDomain,
+			Client:   cliIPStr,
+			Result:   stats.RNotFiltered,
+			Time:     time.Microsecond * 123456,
+			Upstream: respUpstream,
 		}}
 
 		wantData := &stats.StatsResp{
-			TimeUnits:  "hours",
-			TopQueried: []map[string]uint64{0: {reqDomain: 1}},
-			TopClients: []map[string]uint64{0: {cliIPStr: 2}},
-			TopBlocked: []map[string]uint64{0: {reqDomain: 1}},
+			TimeUnits:             "hours",
+			TopQueried:            []map[string]uint64{0: {reqDomain: 1}},
+			TopClients:            []map[string]uint64{0: {cliIPStr: 2}},
+			TopBlocked:            []map[string]uint64{0: {reqDomain: 1}},
+			TopUpstreamsResponses: []map[string]uint64{0: {respUpstream: 2}},
+			TopUpstreamsAvgTime:   []map[string]float64{0: {respUpstream: 0.123456}},
 			DNSQueries: []uint64{
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
@@ -138,14 +144,16 @@ func TestStats(t *testing.T) {
 
 		_24zeroes := [24]uint64{}
 		emptyData := &stats.StatsResp{
-			TimeUnits:            "hours",
-			TopQueried:           []map[string]uint64{},
-			TopClients:           []map[string]uint64{},
-			TopBlocked:           []map[string]uint64{},
-			DNSQueries:           _24zeroes[:],
-			BlockedFiltering:     _24zeroes[:],
-			ReplacedSafebrowsing: _24zeroes[:],
-			ReplacedParental:     _24zeroes[:],
+			TimeUnits:             "hours",
+			TopQueried:            []map[string]uint64{},
+			TopClients:            []map[string]uint64{},
+			TopBlocked:            []map[string]uint64{},
+			TopUpstreamsResponses: []map[string]uint64{},
+			TopUpstreamsAvgTime:   []map[string]float64{},
+			DNSQueries:            _24zeroes[:],
+			BlockedFiltering:      _24zeroes[:],
+			ReplacedSafebrowsing:  _24zeroes[:],
+			ReplacedParental:      _24zeroes[:],
 		}
 
 		req = httptest.NewRequest(http.MethodGet, "/control/stats", nil)
@@ -187,7 +195,7 @@ func TestLargeNumbers(t *testing.T) {
 
 		for i := 0; i < cliNumPerHour; i++ {
 			ip := net.IP{127, 0, byte((i & 0xff00) >> 8), byte(i & 0xff)}
-			e := stats.Entry{
+			e := &stats.Entry{
 				Domain: fmt.Sprintf("domain%d.hour%d", i, h),
 				Client: ip.String(),
 				Result: stats.RNotFiltered,

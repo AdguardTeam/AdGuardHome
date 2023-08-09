@@ -19,6 +19,9 @@ import (
 // The key is either a client's address or a requested address.
 type topAddrs = map[string]uint64
 
+// topAddrsFloat is like [topAddrs] but the value is float64 number.
+type topAddrsFloat = map[string]float64
+
 // StatsResp is a response to the GET /control/stats.
 type StatsResp struct {
 	TimeUnits string `json:"time_units"`
@@ -26,6 +29,9 @@ type StatsResp struct {
 	TopQueried []topAddrs `json:"top_queried_domains"`
 	TopClients []topAddrs `json:"top_clients"`
 	TopBlocked []topAddrs `json:"top_blocked_domains"`
+
+	TopUpstreamsResponses []topAddrs      `json:"top_upstreams_responses"`
+	TopUpstreamsAvgTime   []topAddrsFloat `json:"top_upstreams_avg_time"`
 
 	DNSQueries []uint64 `json:"dns_queries"`
 

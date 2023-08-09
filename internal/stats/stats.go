@@ -5,7 +5,6 @@ package stats
 import (
 	"fmt"
 	"io"
-	"net"
 	"net/netip"
 	"os"
 	"sync"
@@ -80,7 +79,7 @@ type Interface interface {
 	io.Closer
 
 	// Update collects the incoming statistics data.
-	Update(e Entry)
+	Update(e *Entry)
 
 	// GetTopClientIP returns at most limit IP addresses corresponding to the
 	// clients with the most number of requests.
@@ -225,7 +224,7 @@ func (s *StatsCtx) Start() {
 	go s.periodicFlush()
 }
 
-// Close implements the io.Closer interface for *StatsCtx.
+// Close implements the [io.Closer] interface for *StatsCtx.
 func (s *StatsCtx) Close() (err error) {
 	defer func() { err = errors.Annotate(err, "stats: closing: %w") }()
 
@@ -256,8 +255,9 @@ func (s *StatsCtx) Close() (err error) {
 	return udb.flushUnitToDB(tx, s.curr.id)
 }
 
-// Update implements the Interface interface for *StatsCtx.
-func (s *StatsCtx) Update(e Entry) {
+// Update implements the [Interface] interface for *StatsCtx.  e must not be
+// nil.
+func (s *StatsCtx) Update(e *Entry) {
 	s.confMu.Lock()
 	defer s.confMu.Unlock()
 
@@ -265,8 +265,9 @@ func (s *StatsCtx) Update(e Entry) {
 		return
 	}
 
-	if e.Result == 0 || e.Result >= resultLast || e.Domain == "" || e.Client == "" {
-		log.Debug("stats: malformed entry")
+	err := e.validate()
+	if err != nil {
+		log.Debug("stats: updating: validating entry: %s", err)
 
 		return
 	}
@@ -280,15 +281,10 @@ func (s *StatsCtx) Update(e Entry) {
 		return
 	}
 
-	clientID := e.Client
-	if ip := net.ParseIP(clientID); ip != nil {
-		clientID = ip.String()
-	}
-
-	s.curr.add(e.Result, e.Domain, clientID, uint64(e.Time))
+	s.curr.add(e)
 }
 
-// WriteDiskConfig implements the Interface interface for *StatsCtx.
+// WriteDiskConfig implements the [Interface] interface for *StatsCtx.
 func (s *StatsCtx) WriteDiskConfig(dc *Config) {
 	s.confMu.RLock()
 	defer s.confMu.RUnlock()
@@ -412,6 +408,12 @@ func (s *StatsCtx) flush() (cont bool, sleepFor time.Duration) {
 		return true, time.Second
 	}
 
+	return s.flushDB(id, limit, ptr)
+}
+
+// flushDB flushes the unit to the database.  confMu and currMu are expected to
+// be locked.
+func (s *StatsCtx) flushDB(id, limit uint32, ptr *unit) (cont bool, sleepFor time.Duration) {
 	db := s.db.Load()
 	if db == nil {
 		return true, 0

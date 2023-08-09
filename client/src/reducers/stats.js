@@ -58,6 +58,8 @@ const stats = handleActions(
                 num_replaced_safebrowsing: numReplacedSafebrowsing,
                 num_replaced_safesearch: numReplacedSafesearch,
                 avg_processing_time: avgProcessingTime,
+                top_upstreams_responses: topUpstreamsResponses,
+                top_upstrems_avg_time: topUpstreamsAvgTime,
             } = payload;
 
             const newState = {
@@ -77,6 +79,8 @@ const stats = handleActions(
                 numReplacedSafebrowsing,
                 numReplacedSafesearch,
                 avgProcessingTime,
+                topUpstreamsResponses,
+                topUpstreamsAvgTime,
             };
 
             return newState;

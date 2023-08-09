@@ -25,6 +25,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- Two new metrics showing total number of responses from each upstream DNS
+  server and their average processing time in the Web UI ([#1453]).
 - The ability to set the port for the `pprof` debug API, see configuration
   changes below.
 
@@ -59,6 +61,7 @@ In this release, the schema version has changed from 24 to 25.
 - Panic on shutting down while DNS requests are in process of filtering
   ([#5948]).
 
+[#1453]: https://github.com/AdguardTeam/AdGuardHome/issues/1453
 [#5948]: https://github.com/AdguardTeam/AdGuardHome/issues/5948
 
 <!--
