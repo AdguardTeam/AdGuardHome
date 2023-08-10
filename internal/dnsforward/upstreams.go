@@ -254,28 +254,38 @@ func sortNetIPAddrs(addrs []net.IP, preferIPv6 bool) {
 		return
 	}
 
-	slices.SortStableFunc(addrs, func(addrA, addrB net.IP) (sortsBefore bool) {
+	slices.SortStableFunc(addrs, func(addrA, addrB net.IP) (res int) {
 		switch len(addrA) {
 		case net.IPv4len, net.IPv6len:
 			switch len(addrB) {
 			case net.IPv4len, net.IPv6len:
 				// Go on.
 			default:
-				return true
+				return -1
 			}
 		default:
-			return false
+			return 1
 		}
 
-		if aIs4, bIs4 := addrA.To4() != nil, addrB.To4() != nil; aIs4 != bIs4 {
-			if aIs4 {
-				return !preferIPv6
+		// Treat IPv6-mapped IPv4 addresses as IPv6 addresses.
+		aIs4, bIs4 := addrA.To4() != nil, addrB.To4() != nil
+		if aIs4 == bIs4 {
+			return bytes.Compare(addrA, addrB)
+		}
+
+		if aIs4 {
+			if preferIPv6 {
+				return 1
 			}
 
-			return preferIPv6
+			return -1
 		}
 
-		return bytes.Compare(addrA, addrB) < 0
+		if preferIPv6 {
+			return -1
+		}
+
+		return 1
 	})
 }
 

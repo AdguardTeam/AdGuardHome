@@ -221,15 +221,25 @@ func unitNameToID(name []byte) (id uint32, ok bool) {
 	return uint32(binary.BigEndian.Uint64(name)), true
 }
 
+// compareCount used to sort countPair by Count in descending order.
+func (a countPair) compareCount(b countPair) (res int) {
+	switch x, y := a.Count, b.Count; {
+	case x > y:
+		return -1
+	case x < y:
+		return +1
+	default:
+		return 0
+	}
+}
+
 func convertMapToSlice(m map[string]uint64, max int) (s []countPair) {
 	s = make([]countPair, 0, len(m))
 	for k, v := range m {
 		s = append(s, countPair{Name: k, Count: v})
 	}
 
-	slices.SortFunc(s, func(a, b countPair) (sortsBefore bool) {
-		return a.Count > b.Count
-	})
+	slices.SortFunc(s, countPair.compareCount)
 	if max > len(s) {
 		max = len(s)
 	}
@@ -589,8 +599,15 @@ func prepareTopUpstreamsAvgTime(
 ) (topUpstreamsAvgTime []topAddrsFloat) {
 	keys := maps.Keys(upstreamsAvgTime)
 
-	slices.SortFunc(keys, func(a, b string) (sortsBefore bool) {
-		return upstreamsAvgTime[a] > upstreamsAvgTime[b]
+	slices.SortFunc(keys, func(a, b string) (res int) {
+		switch x, y := upstreamsAvgTime[a], upstreamsAvgTime[b]; {
+		case x > y:
+			return -1
+		case x < y:
+			return +1
+		default:
+			return 0
+		}
 	})
 
 	topUpstreamsAvgTime = make([]topAddrsFloat, 0, len(upstreamsAvgTime))

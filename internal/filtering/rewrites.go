@@ -122,24 +122,29 @@ func matchDomainWildcard(host, wildcard string) (ok bool) {
 	return isWildcard(wildcard) && strings.HasSuffix(host, wildcard[1:])
 }
 
-// legacyRewriteSortsBefore sorts rewrites according to the following priority:
+// Compare is used to sort rewrites according to the following priority:
 //
 //  1. A and AAAA > CNAME;
 //  2. wildcard > exact;
 //  3. lower level wildcard > higher level wildcard;
-func legacyRewriteSortsBefore(a, b *LegacyRewrite) (sortsBefore bool) {
-	if a.Type == dns.TypeCNAME && b.Type != dns.TypeCNAME {
-		return true
-	} else if a.Type != dns.TypeCNAME && b.Type == dns.TypeCNAME {
-		return false
+func (rw *LegacyRewrite) Compare(b *LegacyRewrite) (res int) {
+	if rw.Type == dns.TypeCNAME && b.Type != dns.TypeCNAME {
+		return -1
+	} else if rw.Type != dns.TypeCNAME && b.Type == dns.TypeCNAME {
+		return 1
 	}
 
-	if aIsWld, bIsWld := isWildcard(a.Domain), isWildcard(b.Domain); aIsWld != bIsWld {
-		return bIsWld
+	aIsWld, bIsWld := isWildcard(rw.Domain), isWildcard(b.Domain)
+	if aIsWld == bIsWld {
+		// Both are either wildcards or both aren't.
+		return len(rw.Domain) - len(b.Domain)
 	}
 
-	// Both are either wildcards or both aren't.
-	return len(a.Domain) > len(b.Domain)
+	if aIsWld {
+		return 1
+	}
+
+	return -1
 }
 
 // prepareRewrites normalizes and validates all legacy DNS rewrites.
@@ -181,7 +186,7 @@ func findRewrites(
 		return nil, matched
 	}
 
-	slices.SortFunc(rewrites, legacyRewriteSortsBefore)
+	slices.SortFunc(rewrites, (*LegacyRewrite).Compare)
 
 	for i, r := range rewrites {
 		if isWildcard(r.Domain) {

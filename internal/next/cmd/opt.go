@@ -309,8 +309,8 @@ func addOption(flags *flag.FlagSet, fieldPtr any, o *commandLineOption) {
 // value hints.
 func usage(cmdName string, output io.Writer) {
 	options := slices.Clone(commandLineOptions)
-	slices.SortStableFunc(options, func(a, b *commandLineOption) (sortsBefore bool) {
-		return a.long < b.long
+	slices.SortStableFunc(options, func(a, b *commandLineOption) (res int) {
+		return strings.Compare(a.long, b.long)
 	})
 
 	b := &strings.Builder{}

@@ -3,8 +3,8 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.20
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.52.1-0.20230726165924-30c459b0cdef
-	github.com/AdguardTeam/golibs v0.13.6
+	github.com/AdguardTeam/dnsproxy v0.53.1
+	github.com/AdguardTeam/golibs v0.14.0
 	github.com/AdguardTeam/urlfilter v0.16.2
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.2.7
@@ -27,15 +27,12 @@ require (
 	// own code for that.  Perhaps, use gopacket.
 	github.com/mdlayher/raw v0.1.0
 	github.com/miekg/dns v1.1.55
-	// TODO(a.garipov): Update to ≥ v0.37.0 once we update to Go 1.20.
-	github.com/quic-go/quic-go v0.36.2
+	github.com/quic-go/quic-go v0.37.4
 	github.com/stretchr/testify v1.8.4
 	github.com/ti-mo/netfilter v0.5.0
 	go.etcd.io/bbolt v1.3.7
 	golang.org/x/crypto v0.11.0
-	// TODO(a.garipov): Update after updating slices.Sort and friends to
-	// stdlib versions in dnsproxy and golibs in Go 1.20.
-	golang.org/x/exp v0.0.0-20230724220655-d98519c11495
+	golang.org/x/exp v0.0.0-20230807204917-050eac23e9de
 	golang.org/x/net v0.12.0
 	golang.org/x/sys v0.10.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -59,8 +56,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
-	github.com/quic-go/qtls-go1-19 v0.3.2 // indirect
-	github.com/quic-go/qtls-go1-20 v0.2.2 // indirect
+	github.com/quic-go/qtls-go1-20 v0.3.1 // indirect
 	github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect

@@ -290,8 +290,8 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 	// above loop can generate different orderings when writing to the config
 	// file: this produces lots of diffs in config files, so sort objects by
 	// name before writing.
-	slices.SortStableFunc(objs, func(a, b *clientObject) (sortsBefore bool) {
-		return a.Name < b.Name
+	slices.SortStableFunc(objs, func(a, b *clientObject) (res int) {
+		return strings.Compare(a.Name, b.Name)
 	})
 
 	return objs
@@ -907,7 +907,9 @@ func (clients *clientsContainer) addFromSystemARP() {
 // the persistent clients.
 func (clients *clientsContainer) close() (err error) {
 	persistent := maps.Values(clients.list)
-	slices.SortFunc(persistent, func(a, b *Client) (less bool) { return a.Name < b.Name })
+	slices.SortFunc(persistent, func(a, b *Client) (res int) {
+		return strings.Compare(a.Name, b.Name)
+	})
 
 	var errs []error
 
