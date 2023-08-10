@@ -14,6 +14,12 @@
         'jobs':
           - 'Test'
 
+  - 'Artifact':
+        manual: false
+        final: false
+        jobs:
+          - 'Artifact'
+
 'Test':
     'docker':
         'image': '${bamboo.dockerGo}'
@@ -38,6 +44,53 @@
                 make VERBOSE=1 ci go-tools lint
     'final-tasks':
       - 'clean'
+    'requirements':
+      - 'adg-docker': 'true'
+
+'Artifact':
+    'docker':
+        'image': '${bamboo.dockerGo}'
+        'volumes':
+         '${system.GO_CACHE_DIR}': '${bamboo.cacheGo}'
+         '${system.GO_PKG_CACHE_DIR}': '${bamboo.cacheGoPkg}'
+    'key': 'ART'
+    'other':
+         'clean-working-dir': true
+    'tasks':
+      - 'checkout':
+            'force-clean-build': true
+      - 'script':
+            'interpreter': 'SHELL'
+            'scripts':
+              - |-
+                #!/bin/sh
+
+                set -e -f -u -x
+
+                # Explicitly checkout the revision that we need.
+                git checkout "${bamboo.repository.revision.number}"
+
+                make\
+                        ARCH="amd64"\
+                        OS="windows darwin linux"\
+                        CHANNEL="development"\
+                        SIGN=0\
+                        PARALLELISM=1\
+                        VERBOSE=2\
+                        build-release
+    'artifacts':
+      - 'name': 'AdGuardHome_windows_amd64'
+        'pattern': 'dist/AdGuardHome_windows_amd64.zip'
+        'shared': true
+        'required': true
+      - 'name': 'AdGuardHome_darwin_amd64'
+        'pattern': 'dist/AdGuardHome_darwin_amd64.zip'
+        'shared': true
+        'required': true
+      - 'name': 'AdGuardHome_linux_amd64'
+        'pattern': 'dist/AdGuardHome_linux_amd64.tar.gz'
+        'shared': true
+        'required': true
     'requirements':
       - 'adg-docker': 'true'
 
