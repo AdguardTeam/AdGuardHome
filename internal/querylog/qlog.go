@@ -4,6 +4,7 @@ package querylog
 import (
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -274,8 +275,26 @@ func (l *queryLog) ShouldLog(host string, _, _ uint16, ids []string) bool {
 	return !l.isIgnored(host)
 }
 
-// isIgnored returns true if the host is in the ignored domains list.  It
-// assumes that l.confMu is locked for reading.
+// isIgnored returns true if the host wildcard matches any of the ignored domains
+// in list. It assumes that l.confMu is locked for reading.
 func (l *queryLog) isIgnored(host string) bool {
-	return l.conf.Ignored.Has(host)
+	if l.conf.Ignored.Has(host) {
+		return true
+	}
+
+	ignored := false
+	l.conf.Ignored.Range(func(pat string) bool {
+		if isWildcard(pat) && strings.HasSuffix(host, pat[1:]) {
+			ignored = true
+			return false
+		}
+		return true
+	})
+
+	return ignored
+}
+
+// isWildcard returns true if host is a wildcard hostname.
+func isWildcard(host string) (ok bool) {
+	return len(host) >= 2 && host[0] == '*' && host[1] == '.'
 }
