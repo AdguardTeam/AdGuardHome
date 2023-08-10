@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/netip"
 	"os"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -601,8 +602,26 @@ func (s *StatsCtx) ShouldCount(host string, _, _ uint16, ids []string) bool {
 	return !s.isIgnored(host)
 }
 
-// isIgnored returns true if the host is in the ignored domains list.  It
-// assumes that s.confMu is locked for reading.
+// isIgnored returns true if the host wildcard matches any of the ignored domains
+// in list. It assumes that s.confMu is locked for reading.
 func (s *StatsCtx) isIgnored(host string) bool {
-	return s.ignored.Has(host)
+	if s.ignored.Has(host) {
+		return true
+	}
+
+	ignored := false
+	s.ignored.Range(func(pat string) bool {
+		if isWildcard(pat) && strings.HasSuffix(host, pat[1:]) {
+			ignored = true
+			return false
+		}
+		return true
+	})
+
+	return ignored
+}
+
+// isWildcard returns true if host is a wildcard hostname.
+func isWildcard(host string) (ok bool) {
+	return len(host) >= 2 && host[0] == '*' && host[1] == '.'
 }
