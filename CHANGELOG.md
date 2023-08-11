@@ -25,7 +25,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
-- The ability to filter DNS HTTPS records including IPv4/v6 hints. ([#6053]).
+- While adding or updating blocklists, the title can now be parsed from
+  `! Title:` definition of the blocklist's source ([#6020]).
+- The ability to filter DNS HTTPS records including IPv4/v6 hints ([#6053]).
 - Two new metrics showing total number of responses from each upstream DNS
   server and their average processing time in the Web UI ([#1453]).
 - The ability to set the port for the `pprof` debug API, see configuration
@@ -35,7 +37,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - For non-A and non-AAAA requests, which has been filtered, the NODATA response
   is returned if the blocking mode isn't set to `Null IP`.  In previous versions
-  it returned NXDOMAIN response in such cases. 
+  it returned NXDOMAIN response in such cases.
 
 #### Configuration Changes
 
@@ -68,6 +70,7 @@ In this release, the schema version has changed from 24 to 25.
 
 [#1453]: https://github.com/AdguardTeam/AdGuardHome/issues/1453
 [#5948]: https://github.com/AdguardTeam/AdGuardHome/issues/5948
+[#6020]: https://github.com/AdguardTeam/AdGuardHome/issues/6020
 [#6053]: https://github.com/AdguardTeam/AdGuardHome/issues/6053
 
 <!--

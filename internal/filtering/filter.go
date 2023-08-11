@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghrenameio"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/errors"
@@ -52,6 +51,22 @@ func (filter *FilterYAML) unload() {
 // Path to the filter contents
 func (filter *FilterYAML) Path(dataDir string) string {
 	return filepath.Join(dataDir, filterDir, strconv.FormatInt(filter.ID, 10)+".txt")
+}
+
+// ensureName sets provided title or default name for the filter if it doesn't
+// have name already.
+func (filter *FilterYAML) ensureName(title string) {
+	if filter.Name != "" {
+		return
+	}
+
+	if title != "" {
+		filter.Name = title
+
+		return
+	}
+
+	filter.Name = fmt.Sprintf("List %d", filter.ID)
 }
 
 const (
@@ -527,7 +542,7 @@ func (d *DNSFilter) finalizeUpdate(
 	rulesCount := res.RulesCount
 	log.Info("filtering: updated filter %d: %d bytes, %d rules", id, res.BytesWritten, rulesCount)
 
-	flt.Name = aghalg.Coalesce(flt.Name, res.Title)
+	flt.ensureName(res.Title)
 	flt.checksum = res.Checksum
 	flt.RulesCount = rulesCount
 
@@ -601,6 +616,7 @@ func (d *DNSFilter) load(flt *FilterYAML) (err error) {
 		return fmt.Errorf("parsing filter file: %w", err)
 	}
 
+	flt.ensureName(res.Title)
 	flt.RulesCount, flt.checksum, flt.LastUpdated = res.RulesCount, res.Checksum, st.ModTime()
 
 	return nil
