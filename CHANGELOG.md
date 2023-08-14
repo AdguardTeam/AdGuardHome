@@ -62,6 +62,7 @@ In this release, the schema version has changed from 24 to 25.
 
 ### Fixed
 
+- Address already in use when trying to install on port 3000 ([#6099]).
 - Panic on using a single-slash filtering rule.
 - Panic on shutting down while DNS requests are in process of filtering
   ([#5948]).
@@ -69,6 +70,7 @@ In this release, the schema version has changed from 24 to 25.
 [#1453]: https://github.com/AdguardTeam/AdGuardHome/issues/1453
 [#5948]: https://github.com/AdguardTeam/AdGuardHome/issues/5948
 [#6053]: https://github.com/AdguardTeam/AdGuardHome/issues/6053
+[#6099]: https://github.com/AdguardTeam/AdGuardHome/issues/6099
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
