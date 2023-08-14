@@ -431,25 +431,6 @@ func (c *configuration) getConfigFilename() string {
 	return configFile
 }
 
-// readLogSettings reads logging settings from the config file.  We do it in a
-// separate method in order to configure logger before the actual configuration
-// is parsed and applied.
-func readLogSettings() (ls *logSettings) {
-	conf := &configuration{}
-
-	yamlFile, err := readConfigFile()
-	if err != nil {
-		return &logSettings{}
-	}
-
-	err = yaml.Unmarshal(yamlFile, conf)
-	if err != nil {
-		log.Error("Couldn't get logging settings from the configuration: %s", err)
-	}
-
-	return &conf.Log
-}
-
 // validateBindHosts returns error if any of binding hosts from configuration is
 // not a valid IP address.
 func validateBindHosts(conf *configuration) (err error) {

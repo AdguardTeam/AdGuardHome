@@ -37,12 +37,6 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"golang.org/x/exp/slices"
-	"gopkg.in/natefinch/lumberjack.v2"
-)
-
-const (
-	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
-	configSyslog = "syslog"
 )
 
 // Global context
@@ -745,79 +739,6 @@ func initWorkingDir(opts options) (err error) {
 	Context.workDir = workDir
 
 	return nil
-}
-
-// configureLogger configures logger level and output.
-func configureLogger(opts options) (err error) {
-	ls := getLogSettings(opts)
-
-	// Configure logger level.
-	if ls.Verbose {
-		log.SetLevel(log.DEBUG)
-	}
-
-	// Make sure that we see the microseconds in logs, as networking stuff can
-	// happen pretty quickly.
-	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
-
-	// Write logs to stdout by default.
-	if ls.File == "" {
-		return nil
-	}
-
-	if ls.File == configSyslog {
-		// Use syslog where it is possible and eventlog on Windows.
-		err = aghos.ConfigureSyslog(serviceName)
-		if err != nil {
-			return fmt.Errorf("cannot initialize syslog: %w", err)
-		}
-
-		return nil
-	}
-
-	logFilePath := ls.File
-	if !filepath.IsAbs(logFilePath) {
-		logFilePath = filepath.Join(Context.workDir, logFilePath)
-	}
-
-	log.SetOutput(&lumberjack.Logger{
-		Filename:   logFilePath,
-		Compress:   ls.Compress,
-		LocalTime:  ls.LocalTime,
-		MaxBackups: ls.MaxBackups,
-		MaxSize:    ls.MaxSize,
-		MaxAge:     ls.MaxAge,
-	})
-
-	return nil
-}
-
-// getLogSettings returns a log settings object properly initialized from opts.
-func getLogSettings(opts options) (ls *logSettings) {
-	ls = readLogSettings()
-	configLogSettings := config.Log
-
-	// Command-line arguments can override config settings.
-	if opts.verbose || configLogSettings.Verbose {
-		ls.Verbose = true
-	}
-
-	ls.File = stringutil.Coalesce(opts.logFile, configLogSettings.File, ls.File)
-
-	// Handle default log settings overrides.
-	ls.Compress = configLogSettings.Compress
-	ls.LocalTime = configLogSettings.LocalTime
-	ls.MaxBackups = configLogSettings.MaxBackups
-	ls.MaxSize = configLogSettings.MaxSize
-	ls.MaxAge = configLogSettings.MaxAge
-
-	if opts.runningAsService && ls.File == "" && runtime.GOOS == "windows" {
-		// When running as a Windows service, use eventlog by default if
-		// nothing else is configured.  Otherwise, we'll lose the log output.
-		ls.File = configSyslog
-	}
-
-	return ls
 }
 
 // cleanup stops and resets all the modules.
