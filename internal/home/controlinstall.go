@@ -402,13 +402,6 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = aghnet.CheckPort("tcp", netip.AddrPortFrom(req.DNS.IP, uint16(req.DNS.Port)))
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
-
-		return
-	}
-
 	curConfig := &configuration{}
 	copyInstallSettings(curConfig, config)
 
