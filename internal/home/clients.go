@@ -919,9 +919,5 @@ func (clients *clientsContainer) close() (err error) {
 		}
 	}
 
-	if len(errs) > 0 {
-		return errors.List("closing client specific upstreams", errs...)
-	}
-
-	return nil
+	return errors.Join(errs...)
 }

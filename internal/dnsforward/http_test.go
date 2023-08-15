@@ -405,9 +405,9 @@ func TestValidateUpstreamsPrivate(t *testing.T) {
 		u: "[/128.in-addr.arpa/]#",
 	}, {
 		name: "several_bad",
-		wantErr: `checking domain-specific upstreams: 2 errors: ` +
-			`"arpa domain \"1.2.3.4.in-addr.arpa.\" should point to a locally-served network", ` +
-			`"bad arpa domain name \"non.arpa.\": not a reversed ip network"`,
+		wantErr: `checking domain-specific upstreams: ` +
+			`arpa domain "1.2.3.4.in-addr.arpa." should point to a locally-served network` + "\n" +
+			`bad arpa domain name "non.arpa.": not a reversed ip network`,
 		u: "[/non.arpa/1.2.3.4.in-addr.arpa/127.in-addr.arpa/]#",
 	}, {
 		name:    "partial_good",

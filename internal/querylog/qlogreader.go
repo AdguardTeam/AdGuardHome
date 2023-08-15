@@ -151,19 +151,15 @@ func (r *qLogReader) Close() error {
 }
 
 // closeQFiles is a helper method to close multiple qLogFile instances.
-func closeQFiles(qFiles []*qLogFile) error {
+func closeQFiles(qFiles []*qLogFile) (err error) {
 	var errs []error
 
 	for _, q := range qFiles {
-		err := q.Close()
+		err = q.Close()
 		if err != nil {
 			errs = append(errs, err)
 		}
 	}
 
-	if len(errs) > 0 {
-		return errors.List("error while closing qLogReader", errs...)
-	}
-
-	return nil
+	return errors.Annotate(errors.Join(errs...), "closing qLogReader: %w")
 }

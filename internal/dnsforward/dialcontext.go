@@ -49,9 +49,8 @@ func (s *Server) DialContext(ctx context.Context, network, addr string) (conn ne
 			continue
 		}
 
-		return conn, err
+		return conn, nil
 	}
 
-	// TODO(a.garipov): Use errors.Join in Go 1.20.
-	return nil, errors.List(fmt.Sprintf("dialing %q", addr), dialErrs...)
+	return nil, errors.Join(dialErrs...)
 }

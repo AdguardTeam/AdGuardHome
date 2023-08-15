@@ -197,11 +197,7 @@ func (arp *arpdbs) Refresh() (err error) {
 		return nil
 	}
 
-	if len(errs) > 0 {
-		err = errors.List("each arpdb failed", errs...)
-	}
-
-	return err
+	return errors.Annotate(errors.Join(errs...), "each arpdb failed: %w")
 }
 
 // Neighbors implements the ARPDB interface for *arpdbs.

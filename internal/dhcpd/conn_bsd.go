@@ -81,21 +81,6 @@ func (s *v4Server) newDHCPConn(iface *net.Interface) (c net.PacketConn, err erro
 	}, nil
 }
 
-// wrapErrs is a helper to wrap the errors from two independent underlying
-// connections.
-func (*dhcpConn) wrapErrs(action string, udpConnErr, rawConnErr error) (err error) {
-	switch {
-	case udpConnErr != nil && rawConnErr != nil:
-		return errors.List(fmt.Sprintf("%s both connections", action), udpConnErr, rawConnErr)
-	case udpConnErr != nil:
-		return fmt.Errorf("%s udp connection: %w", action, udpConnErr)
-	case rawConnErr != nil:
-		return fmt.Errorf("%s raw connection: %w", action, rawConnErr)
-	default:
-		return nil
-	}
-}
-
 // WriteTo implements net.PacketConn for *dhcpConn.  It selects the underlying
 // connection to write to based on the type of addr.
 func (c *dhcpConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
@@ -117,7 +102,7 @@ func (c *dhcpConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 			Port: dhcpv4.ClientPort,
 		})
 
-		return n, c.wrapErrs("writing to", uerr, rerr)
+		return n, wrapErrs("writing to", uerr, rerr)
 	case *net.UDPAddr:
 		if addr.IP.Equal(net.IPv4bcast) {
 			// Broadcast the message for the client which supports
@@ -157,7 +142,7 @@ func (c *dhcpConn) Close() (err error) {
 		rerr = nil
 	}
 
-	return c.wrapErrs("closing", c.udpConn.Close(), rerr)
+	return wrapErrs("closing", c.udpConn.Close(), rerr)
 }
 
 // LocalAddr implements net.PacketConn for *dhcpConn.
@@ -167,12 +152,12 @@ func (c *dhcpConn) LocalAddr() (a net.Addr) {
 
 // SetDeadline implements net.PacketConn for *dhcpConn.
 func (c *dhcpConn) SetDeadline(t time.Time) (err error) {
-	return c.wrapErrs("setting deadline on", c.udpConn.SetDeadline(t), c.rawConn.SetDeadline(t))
+	return wrapErrs("setting deadline on", c.udpConn.SetDeadline(t), c.rawConn.SetDeadline(t))
 }
 
 // SetReadDeadline implements net.PacketConn for *dhcpConn.
 func (c *dhcpConn) SetReadDeadline(t time.Time) error {
-	return c.wrapErrs(
+	return wrapErrs(
 		"setting reading deadline on",
 		c.udpConn.SetReadDeadline(t),
 		c.rawConn.SetReadDeadline(t),
@@ -181,7 +166,7 @@ func (c *dhcpConn) SetReadDeadline(t time.Time) error {
 
 // SetWriteDeadline implements net.PacketConn for *dhcpConn.
 func (c *dhcpConn) SetWriteDeadline(t time.Time) error {
-	return c.wrapErrs(
+	return wrapErrs(
 		"setting writing deadline on",
 		c.udpConn.SetWriteDeadline(t),
 		c.rawConn.SetWriteDeadline(t),

@@ -441,7 +441,7 @@ func ValidateUpstreams(upstreams []string) (err error) {
 func ValidateUpstreamsPrivate(upstreams []string, privateNets netutil.SubnetSet) (err error) {
 	conf, err := newUpstreamConfig(upstreams)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating config: %w", err)
 	}
 
 	if conf == nil {
@@ -469,11 +469,7 @@ func ValidateUpstreamsPrivate(upstreams []string, privateNets netutil.SubnetSet)
 		}
 	}
 
-	if len(errs) > 0 {
-		return errors.List("checking domain-specific upstreams", errs...)
-	}
-
-	return nil
+	return errors.Annotate(errors.Join(errs...), "checking domain-specific upstreams: %w")
 }
 
 var protocols = []string{

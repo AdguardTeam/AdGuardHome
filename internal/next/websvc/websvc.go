@@ -308,28 +308,22 @@ func (svc *Service) Shutdown(ctx context.Context) (err error) {
 		return nil
 	}
 
+	defer func() { err = errors.Annotate(err, "shutting down: %w") }()
+
 	var errs []error
 	for _, srv := range svc.servers {
 		shutdownErr := srv.Shutdown(ctx)
 		if shutdownErr != nil {
-			errs = append(errs, fmt.Errorf("shutting down srv %s: %w", srv.Addr, shutdownErr))
+			errs = append(errs, fmt.Errorf("srv %s: %w", srv.Addr, shutdownErr))
 		}
 	}
 
 	if svc.pprof != nil {
 		shutdownErr := svc.pprof.Shutdown(ctx)
 		if shutdownErr != nil {
-			errs = append(errs, fmt.Errorf(
-				"shutting down pprof srv %s: %w",
-				svc.pprof.Addr,
-				shutdownErr,
-			))
+			errs = append(errs, fmt.Errorf("pprof srv %s: %w", svc.pprof.Addr, shutdownErr))
 		}
 	}
 
-	if len(errs) > 0 {
-		return errors.List("shutting down", errs...)
-	}
-
-	return nil
+	return errors.Join(errs...)
 }

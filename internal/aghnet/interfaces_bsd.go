@@ -4,7 +4,6 @@ package aghnet
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"os"
 	"syscall"
@@ -24,20 +23,9 @@ func reuseAddrCtrl(_, _ string, c syscall.RawConn) (err error) {
 		}
 	})
 
-	const (
-		errMsg    = "setting control options"
-		errMsgFmt = errMsg + ": %w"
-	)
+	err = errors.Join(err, cerr)
 
-	if err != nil && cerr != nil {
-		err = errors.List(errMsg, err, cerr)
-	} else if err != nil {
-		err = fmt.Errorf(errMsgFmt, err)
-	} else if cerr != nil {
-		err = fmt.Errorf(errMsgFmt, cerr)
-	}
-
-	return err
+	return errors.Annotate(err, "setting control options: %w")
 }
 
 // listenPacketReusable announces on the local network address additionally

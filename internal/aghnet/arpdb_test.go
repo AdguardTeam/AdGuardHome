@@ -82,7 +82,7 @@ func TestARPDBS(t *testing.T) {
 	t.Run("fail_only", func(t *testing.T) {
 		t.Cleanup(clnp)
 
-		wantMsg := `each arpdb failed: 2 errors: "refresh failed", "refresh failed"`
+		wantMsg := "each arpdb failed: refresh failed\nrefresh failed"
 
 		a := newARPDBs(failDB, failDB)
 		err := a.Refresh()

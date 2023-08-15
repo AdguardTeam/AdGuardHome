@@ -765,7 +765,7 @@ func (s *v4Server) handleInitReboot(req *dhcpv4.DHCPv4, reqIP net.IP) (l *Lease,
 		return nil, false
 	}
 
-	if !s.conf.subnet.Contains(netip.AddrFrom4(*(*[4]byte)(ip4))) {
+	if !s.conf.subnet.Contains(netip.AddrFrom4([4]byte(ip4))) {
 		// If the DHCP server detects that the client is on the wrong net then
 		// the server SHOULD send a DHCPNAK message to the client.
 		log.Debug("dhcpv4: wrong subnet in init-reboot req msg for %s: %s", mac, reqIP)
