@@ -667,7 +667,8 @@ func (s *Server) parseUpstreamLine(
 		PreferIPv6: opts.PreferIPv6,
 	}
 
-	if s.dnsFilter.EtcHosts != nil {
+	// dnsFilter can be nil during application update.
+	if s.dnsFilter != nil && s.dnsFilter.EtcHosts != nil {
 		resolved := s.resolveUpstreamHost(extractUpstreamHost(upstreamAddr))
 		sortNetIPAddrs(resolved, opts.PreferIPv6)
 		opts.ServerIPAddrs = resolved
