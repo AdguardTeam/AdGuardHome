@@ -170,35 +170,47 @@ run_linter govulncheck ./...
 
 run_linter gocyclo --over 10 .
 
-# TODO(a.garipov): Enable for all.
-run_linter gocognit --over 10\
-	./internal/aghalg/\
-	./internal/aghchan/\
-	./internal/aghhttp/\
-	./internal/aghio/\
-	./internal/aghrenameio/\
-	./internal/client/\
-	./internal/dhcpsvc\
-	./internal/filtering/hashprefix/\
-	./internal/filtering/rulelist/\
-	./internal/next/\
-	./internal/rdns/\
-	./internal/schedule/\
-	./internal/stats/\
-	./internal/tools/\
-	./internal/version/\
-	./internal/whois/\
-	./scripts/\
-	;
+# TODO(a.garipov): Enable 10 for all.
+#
+# TODO(a.garipov): Redo once https://github.com/uudashr/gocognit/issues/22 is
+# fixed.
+gocognit_paths="\
+./internal/aghnet/   20
+./internal/querylog/ 20
+./internal/dnsforward/ 19
+./internal/home/       19
+./internal/aghtls/ 18
+./internal/filtering          17
+./internal/filtering/rewrite/ 17
+./internal/aghos/ 15
+./internal/dhcpd/ 15
+./internal/updater/ 12
+./internal/aghtest/ 11
+./internal/aghalg/               10
+./internal/aghchan/              10
+./internal/aghhttp/              10
+./internal/aghio/                10
+./internal/aghrenameio/          10
+./internal/client/               10
+./internal/dhcpsvc               10
+./internal/filtering/hashprefix/ 10
+./internal/filtering/rulelist/   10
+./internal/filtering/safesearch/ 10
+./internal/next/                 10
+./internal/rdns/                 10
+./internal/schedule/             10
+./internal/stats/                10
+./internal/tools/                10
+./internal/version/              10
+./internal/whois/                10
+./scripts/                       10"
 
-# TODO(a.garipov): move these to the group above.
-run_linter gocognit --over 20 ./internal/aghnet/ ./internal/querylog/
-run_linter gocognit --over 19 ./internal/dnsforward/ ./internal/home/
-run_linter gocognit --over 18 ./internal/aghtls/
-run_linter gocognit --over 17 ./internal/filtering ./internal/filtering/rewrite/
-run_linter gocognit --over 15 ./internal/aghos/ ./internal/dhcpd/
-run_linter gocognit --over 12 ./internal/updater/
-run_linter gocognit --over 11 ./internal/aghtest/
+readonly gocognit_paths
+
+echo "$gocognit_paths" | while read -r path max
+do
+	run_linter gocognit --over="$max" "$path"
+done
 
 run_linter ineffassign ./...
 
