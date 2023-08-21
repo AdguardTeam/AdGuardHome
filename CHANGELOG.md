@@ -25,6 +25,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- The ability to set fallback DNS servers in the configuration file ([#3701]).
 - While adding or updating blocklists, the title can now be parsed from
   `! Title:` definition of the blocklist's source ([#6020]).
 - The ability to filter DNS HTTPS records including IPv4/v6 hints ([#6053]).
@@ -70,6 +71,7 @@ In this release, the schema version has changed from 24 to 25.
   ([#5948]).
 
 [#1453]: https://github.com/AdguardTeam/AdGuardHome/issues/1453
+[#3701]: https://github.com/AdguardTeam/AdGuardHome/issues/3701
 [#5948]: https://github.com/AdguardTeam/AdGuardHome/issues/5948
 [#6020]: https://github.com/AdguardTeam/AdGuardHome/issues/6020
 [#6053]: https://github.com/AdguardTeam/AdGuardHome/issues/6053

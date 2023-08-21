@@ -263,6 +263,7 @@ func (s *Server) WriteDiskConfig(c *FilteringConfig) {
 	*c = sc
 	c.RatelimitWhitelist = stringutil.CloneSlice(sc.RatelimitWhitelist)
 	c.BootstrapDNS = stringutil.CloneSlice(sc.BootstrapDNS)
+	c.FallbackDNS = stringutil.CloneSlice(sc.FallbackDNS)
 	c.AllowedClients = stringutil.CloneSlice(sc.AllowedClients)
 	c.DisallowedClients = stringutil.CloneSlice(sc.DisallowedClients)
 	c.BlockedHosts = stringutil.CloneSlice(sc.BlockedHosts)
@@ -584,11 +585,38 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 		return fmt.Errorf("setting up resolvers: %w", err)
 	}
 
+	err = s.setupFallbackDNS()
+	if err != nil {
+		return fmt.Errorf("setting up fallback dns servers: %w", err)
+	}
+
 	s.recDetector.clear()
 
 	s.setupAddrProc()
 
 	s.registerHandlers()
+
+	return nil
+}
+
+// setupFallbackDNS initializes the fallback DNS servers.
+func (s *Server) setupFallbackDNS() (err error) {
+	fallbacks := s.conf.FallbackDNS
+	if len(fallbacks) == 0 {
+		return nil
+	}
+
+	uc, err := proxy.ParseUpstreamsConfig(fallbacks, &upstream.Options{
+		// TODO(s.chzhen):  Investigate if other options are needed.
+		Timeout:    s.conf.UpstreamTimeout,
+		PreferIPv6: s.conf.BootstrapPreferIPv6,
+	})
+	if err != nil {
+		// Do not wrap the error because it's informative enough as is.
+		return err
+	}
+
+	s.dnsProxy.Fallbacks = uc
 
 	return nil
 }
