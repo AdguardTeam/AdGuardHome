@@ -3,6 +3,7 @@ package aghnet_test
 import (
 	"net/netip"
 	"path"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"testing/fstest"
@@ -42,109 +43,111 @@ var (
 	addr13 = netip.MustParseAddr("::13")
 	addr31 = netip.MustParseAddr("::31")
 
+	hostsSrc = "./" + filepath.Join("./testdata", "etc_hosts")
+
 	testHosts = map[netip.Addr][]*hostsfile.Record{
 		addr1000: {{
 			Addr:   addr1000,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"hello", "hello.world"},
 		}, {
 			Addr:   addr1000,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"hello.world.again"},
 		}, {
 			Addr:   addr1000,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"hello.world"},
 		}},
 		addr1001: {{
 			Addr:   addr1001,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"simplehost"},
 		}, {
 			Addr:   addr1001,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"simplehost"},
 		}},
 		addr1002: {{
 			Addr:   addr1002,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"a.whole", "lot.of", "aliases", "for.testing"},
 		}},
 		addr1003: {{
 			Addr:   addr1003,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"*"},
 		}},
 		addr1004: {{
 			Addr:   addr1004,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"*.com"},
 		}},
 		addr1357: {{
 			Addr:   addr1357,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"domain4", "domain4.alias"},
 		}},
 		addr7531: {{
 			Addr:   addr7531,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"domain4.alias", "domain4"},
 		}},
 		addr4216: {{
 			Addr:   addr4216,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"domain", "domain.alias"},
 		}},
 		addr0: {{
 			Addr:   addr0,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"hello", "hello.world"},
 		}, {
 			Addr:   addr0,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"hello.world.again"},
 		}, {
 			Addr:   addr0,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"hello.world"},
 		}},
 		addr1: {{
 			Addr:   addr1,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"simplehost"},
 		}, {
 			Addr:   addr1,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"simplehost"},
 		}},
 		addr2: {{
 			Addr:   addr2,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"a.whole", "lot.of", "aliases", "for.testing"},
 		}},
 		addr3: {{
 			Addr:   addr3,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"*"},
 		}},
 		addr4: {{
 			Addr:   addr4,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"*.com"},
 		}},
 		addr42: {{
 			Addr:   addr42,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"domain.alias", "domain"},
 		}},
 		addr13: {{
 			Addr:   addr13,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"domain6", "domain6.alias"},
 		}},
 		addr31: {{
 			Addr:   addr31,
-			Source: "./testdata/etc_hosts",
+			Source: hostsSrc,
 			Names:  []string{"domain6.alias", "domain6"},
 		}},
 	}
