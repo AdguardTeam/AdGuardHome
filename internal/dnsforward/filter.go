@@ -12,6 +12,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
+	"golang.org/x/exp/slices"
 )
 
 // beforeRequestHandler is the handler that is called before any other
@@ -208,12 +209,23 @@ func (s *Server) filterDNSResponse(
 	return nil, nil
 }
 
+// removeIPv6Hints deletes IPv6 hints from RR values.
+func removeIPv6Hints(rr *dns.HTTPS) {
+	rr.Value = slices.DeleteFunc(rr.Value, func(kv dns.SVCBKeyValue) (del bool) {
+		_, ok := kv.(*dns.SVCBIPv6Hint)
+
+		return ok
+	})
+}
+
 // filterHTTPSRecords filters HTTPS answers information through all rule list
-// filters of the server filters.
-func (s *Server) filterHTTPSRecords(
-	rr *dns.HTTPS,
-	setts *filtering.Settings,
-) (r *filtering.Result, err error) {
+// filters of the server filters.  Removes IPv6 hints if IPv6 resolving is
+// disabled.
+func (s *Server) filterHTTPSRecords(rr *dns.HTTPS, setts *filtering.Settings) (r *filtering.Result, err error) {
+	if s.conf.AAAADisabled {
+		removeIPv6Hints(rr)
+	}
+
 	for _, kv := range rr.Value {
 		var ips []net.IP
 		switch hint := kv.(type) {

@@ -113,6 +113,99 @@ func TestServer_ProcessInitial(t *testing.T) {
 	}
 }
 
+func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
+	t.Parallel()
+
+	var (
+		testIPv4 net.IP = netip.MustParseAddr("1.1.1.1").AsSlice()
+		testIPv6 net.IP = netip.MustParseAddr("1234::cdef").AsSlice()
+	)
+
+	testCases := []struct {
+		name         string
+		req          *dns.Msg
+		aaaaDisabled bool
+		respAns      []dns.RR
+		wantRC       resultCode
+		wantRespAns  []dns.RR
+	}{{
+		name:         "pass",
+		req:          createTestMessageWithType(aghtest.ReqFQDN, dns.TypeHTTPS),
+		aaaaDisabled: false,
+		respAns: newSVCBHintsAnswer(
+			aghtest.ReqFQDN,
+			[]dns.SVCBKeyValue{
+				&dns.SVCBIPv4Hint{Hint: []net.IP{testIPv4}},
+				&dns.SVCBIPv6Hint{Hint: []net.IP{testIPv6}},
+			},
+		),
+		wantRespAns: newSVCBHintsAnswer(
+			aghtest.ReqFQDN,
+			[]dns.SVCBKeyValue{
+				&dns.SVCBIPv4Hint{Hint: []net.IP{testIPv4}},
+				&dns.SVCBIPv6Hint{Hint: []net.IP{testIPv6}},
+			},
+		),
+		wantRC: resultCodeSuccess,
+	}, {
+		name:         "filter",
+		req:          createTestMessageWithType(aghtest.ReqFQDN, dns.TypeHTTPS),
+		aaaaDisabled: true,
+		respAns: newSVCBHintsAnswer(
+			aghtest.ReqFQDN,
+			[]dns.SVCBKeyValue{
+				&dns.SVCBIPv4Hint{Hint: []net.IP{testIPv4}},
+				&dns.SVCBIPv6Hint{Hint: []net.IP{testIPv6}},
+			},
+		),
+		wantRespAns: newSVCBHintsAnswer(
+			aghtest.ReqFQDN,
+			[]dns.SVCBKeyValue{
+				&dns.SVCBIPv4Hint{Hint: []net.IP{testIPv4}},
+			},
+		),
+		wantRC: resultCodeSuccess,
+	}}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			c := ServerConfig{
+				FilteringConfig: FilteringConfig{
+					AAAADisabled:     tc.aaaaDisabled,
+					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				},
+			}
+
+			s := createTestServer(t, &filtering.Config{}, c, nil)
+
+			resp := newResp(dns.RcodeSuccess, tc.req, tc.respAns)
+			dctx := &dnsContext{
+				setts: &filtering.Settings{
+					FilteringEnabled:  true,
+					ProtectionEnabled: true,
+				},
+				protectionEnabled:    true,
+				responseFromUpstream: true,
+				result:               &filtering.Result{},
+				proxyCtx: &proxy.DNSContext{
+					Proto: proxy.ProtoUDP,
+					Req:   tc.req,
+					Res:   resp,
+					Addr:  testClientAddr,
+				},
+			}
+
+			gotRC := s.processFilteringAfterResponse(dctx)
+			assert.Equal(t, tc.wantRC, gotRC)
+			assert.Equal(t, newResp(dns.RcodeSuccess, tc.req, tc.wantRespAns), dctx.proxyCtx.Res)
+		})
+	}
+}
+
 func TestServer_ProcessDDRQuery(t *testing.T) {
 	dohSVCB := &dns.SVCB{
 		Priority: 1,

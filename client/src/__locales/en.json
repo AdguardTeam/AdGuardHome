@@ -568,7 +568,7 @@
     "rewrite_A": "<0>A</0>: special value, keep <0>A</0> records from the upstream",
     "rewrite_AAAA": "<0>AAAA</0>: special value, keep <0>AAAA</0> records from the upstream",
     "disable_ipv6": "Disable resolving of IPv6 addresses",
-    "disable_ipv6_desc": "Drop all DNS queries for IPv6 addresses (type AAAA).",
+    "disable_ipv6_desc": "Drop all DNS queries for IPv6 addresses (type AAAA) and remove IPv6 hints from HTTPS responses.",
     "fastest_addr": "Fastest IP address",
     "fastest_addr_desc": "Query all DNS servers and return the fastest IP address among all responses. This slows down DNS queries as AdGuard Home has to wait for responses from all DNS servers, but improves the overall connectivity.",
     "autofix_warning_text": "If you click \"Fix\", AdGuard Home will configure your system to use AdGuard Home DNS server.",
