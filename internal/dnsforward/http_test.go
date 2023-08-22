@@ -479,7 +479,6 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 	}).String()
 
 	hc, err := aghnet.NewHostsContainer(
-		filtering.SysHostsListID,
 		fstest.MapFS{
 			hostsFileName: &fstest.MapFile{
 				Data: []byte(hostsListener.Addr().String() + " " + upstreamHost),

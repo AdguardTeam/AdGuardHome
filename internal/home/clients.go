@@ -855,15 +855,19 @@ func (clients *clientsContainer) rmHostsBySrc(src clientSource) {
 
 // addFromHostsFile fills the client-hostname pairing index from the system's
 // hosts files.
-func (clients *clientsContainer) addFromHostsFile(hosts aghnet.HostsRecords) {
+func (clients *clientsContainer) addFromHostsFile(hosts aghnet.Hosts) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
 	clients.rmHostsBySrc(ClientSourceHostsFile)
 
 	n := 0
-	for ip, rec := range hosts {
-		clients.addHostLocked(ip, rec.Canonical, ClientSourceHostsFile)
+	for addr, rec := range hosts {
+		// Only the first name of the first record is considered a canonical
+		// hostname for the IP address.
+		//
+		// TODO(e.burkov):  Consider using all the names from all the records.
+		clients.addHostLocked(addr, rec[0].Names[0], ClientSourceHostsFile)
 		n++
 	}
 

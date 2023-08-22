@@ -665,9 +665,11 @@ func (s *Server) parseUpstreamLine(
 
 	// dnsFilter can be nil during application update.
 	if s.dnsFilter != nil && s.dnsFilter.EtcHosts != nil {
-		resolved := s.resolveUpstreamHost(extractUpstreamHost(upstreamAddr))
-		sortNetIPAddrs(resolved, opts.PreferIPv6)
-		opts.ServerIPAddrs = resolved
+		recs := s.dnsFilter.EtcHosts.MatchName(extractUpstreamHost(upstreamAddr))
+		for _, rec := range recs {
+			opts.ServerIPAddrs = append(opts.ServerIPAddrs, rec.Addr.AsSlice())
+		}
+		sortNetIPAddrs(opts.ServerIPAddrs, opts.PreferIPv6)
 	}
 	u, err = upstream.AddressToUpstream(upstreamAddr, opts)
 	if err != nil {

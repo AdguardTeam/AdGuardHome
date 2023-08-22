@@ -14,8 +14,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
-	"github.com/AdguardTeam/urlfilter"
-	"github.com/miekg/dns"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -159,17 +157,20 @@ func (s *Server) resolveUpstreamsWithHosts(
 
 		withIPs, ok := resolved[host]
 		if !ok {
-			ips := s.resolveUpstreamHost(host)
-			if len(ips) == 0 {
+			recs := s.dnsFilter.EtcHosts.MatchName(host)
+			if len(recs) == 0 {
 				resolved[host] = nil
 
 				return nil
 			}
 
-			sortNetIPAddrs(ips, opts.PreferIPv6)
-
 			withIPs = opts.Clone()
-			withIPs.ServerIPAddrs = ips
+			withIPs.ServerIPAddrs = make([]net.IP, 0, len(recs))
+			for _, rec := range recs {
+				withIPs.ServerIPAddrs = append(withIPs.ServerIPAddrs, rec.Addr.AsSlice())
+			}
+
+			sortNetIPAddrs(withIPs.ServerIPAddrs, opts.PreferIPv6)
 			resolved[host] = withIPs
 		} else if withIPs == nil {
 			continue
@@ -215,33 +216,6 @@ func extractUpstreamHost(addr string) (host string) {
 	}
 
 	return host
-}
-
-// resolveUpstreamHost returns the version of ups with IP addresses from the
-// system hosts file placed into its options.
-func (s *Server) resolveUpstreamHost(host string) (addrs []net.IP) {
-	req := &urlfilter.DNSRequest{
-		Hostname: host,
-		DNSType:  dns.TypeA,
-	}
-	aRes, _ := s.dnsFilter.EtcHosts.MatchRequest(req)
-
-	req.DNSType = dns.TypeAAAA
-	aaaaRes, _ := s.dnsFilter.EtcHosts.MatchRequest(req)
-
-	var ips []net.IP
-	for _, rw := range append(aRes.DNSRewrites(), aaaaRes.DNSRewrites()...) {
-		dr := rw.DNSRewrite
-		if dr == nil || dr.Value == nil {
-			continue
-		}
-
-		if ip, ok := dr.Value.(net.IP); ok {
-			ips = append(ips, ip)
-		}
-	}
-
-	return ips
 }
 
 // sortNetIPAddrs sorts addrs in accordance with the protocol preferences.

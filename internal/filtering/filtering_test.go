@@ -91,7 +91,7 @@ func (d *DNSFilter) checkMatchEmpty(t *testing.T, hostname string, setts *Settin
 	assert.Falsef(t, res.IsFiltered, "host %q", hostname)
 }
 
-func TestEtcHostsMatching(t *testing.T) {
+func TestDNSFilter_CheckHost_hostRules(t *testing.T) {
 	addr := "216.239.38.120"
 	addr6 := "::1"
 	text := fmt.Sprintf(`  %s  google.com www.google.com   # enforce google's safesearch

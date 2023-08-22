@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -19,8 +20,10 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/mathutil"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
@@ -326,16 +329,6 @@ func (d *DNSFilter) WriteDiskConfig(c *Config) {
 	c.UserRules = slices.Clone(d.UserRules)
 }
 
-// cloneRewrites returns a deep copy of entries.
-func cloneRewrites(entries []*LegacyRewrite) (clone []*LegacyRewrite) {
-	clone = make([]*LegacyRewrite, len(entries))
-	for i, rw := range entries {
-		clone[i] = rw.clone()
-	}
-
-	return clone
-}
-
 // setFilters sets new filters, synchronously or asynchronously.  When filters
 // are set asynchronously, the old filters continue working until the new
 // filters are ready.
@@ -503,31 +496,50 @@ func (d *DNSFilter) matchSysHosts(
 	qtype uint16,
 	setts *Settings,
 ) (res Result, err error) {
+	// TODO(e.burkov):  Where else is this checked?
 	if !setts.FilteringEnabled || d.EtcHosts == nil {
 		return res, nil
 	}
 
-	dnsres, _ := d.EtcHosts.MatchRequest(&urlfilter.DNSRequest{
-		Hostname:         host,
-		SortedClientTags: setts.ClientTags,
-		// TODO(e.burkov):  Wait for urlfilter update to pass netip.Addr.
-		ClientIP:   setts.ClientIP.String(),
-		ClientName: setts.ClientName,
-		DNSType:    qtype,
-	})
-	if dnsres == nil {
-		return res, nil
+	var recs []*hostsfile.Record
+	switch qtype {
+	case dns.TypeA, dns.TypeAAAA:
+		recs = d.EtcHosts.MatchName(host)
+	case dns.TypePTR:
+		var ip net.IP
+		ip, err = netutil.IPFromReversedAddr(host)
+		if err != nil {
+			log.Debug("filtering: failed to parse PTR record %q: %s", host, err)
+
+			return res, nil
+		}
+
+		addr, _ := netip.AddrFromSlice(ip)
+		recs = d.EtcHosts.MatchAddr(addr)
+	default:
+		log.Debug("filtering: unsupported query type %s", dns.Type(qtype))
 	}
 
-	dnsr := dnsres.DNSRewrites()
-	if len(dnsr) == 0 {
-		return res, nil
+	var vals []rules.RRValue
+	var resRules []*ResultRule
+	resRulesLen := 0
+	for _, rec := range recs {
+		vals, resRules = appendRewriteResultFromHost(vals, resRules, rec, qtype)
+		if len(resRules) > resRulesLen {
+			resRulesLen = len(resRules)
+			log.Debug("filtering: matched %s in %q", host, rec.Source)
+		}
 	}
 
-	res = d.processDNSRewrites(dnsr)
-	res.Reason = RewrittenAutoHosts
-	for _, r := range res.Rules {
-		r.Text = stringutil.Coalesce(d.EtcHosts.Translate(r.Text), r.Text)
+	if len(vals) > 0 {
+		res.DNSRewriteResult = &DNSRewriteResult{
+			Response: DNSRewriteResultResponse{
+				qtype: vals,
+			},
+			RCode: dns.RcodeSuccess,
+		}
+		res.Rules = resRules
+		res.Reason = RewrittenRule
 	}
 
 	return res, nil
@@ -592,25 +604,6 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 	setRewriteResult(&res, host, rewrites, qtype)
 
 	return res
-}
-
-// setRewriteResult sets the Reason or IPList of res if necessary.  res must not
-// be nil.
-func setRewriteResult(res *Result, host string, rewrites []*LegacyRewrite, qtype uint16) {
-	for _, rw := range rewrites {
-		if rw.Type == qtype && (qtype == dns.TypeA || qtype == dns.TypeAAAA) {
-			if rw.IP == nil {
-				// "A"/"AAAA" exception: allow getting from upstream.
-				res.Reason = NotFilteredNotFound
-
-				return
-			}
-
-			res.IPList = append(res.IPList, rw.IP)
-
-			log.Debug("rewrite: a/aaaa for %s is %s", host, rw.IP)
-		}
-	}
 }
 
 // matchBlockedServicesRules checks the host against the blocked services rules
@@ -895,26 +888,6 @@ func (d *DNSFilter) matchHost(
 	return res, nil
 }
 
-// processDNSResultRewrites returns an empty Result if there are no dnsrewrite
-// rules in dnsres.  Otherwise, it returns the processed Result.
-func (d *DNSFilter) processDNSResultRewrites(
-	dnsres *urlfilter.DNSResult,
-	host string,
-) (dnsRWRes Result) {
-	dnsr := dnsres.DNSRewrites()
-	if len(dnsr) == 0 {
-		return Result{}
-	}
-
-	res := d.processDNSRewrites(dnsr)
-	if res.Reason == RewrittenRule && res.CanonName == host {
-		// A rewrite of a host to itself.  Go on and try matching other things.
-		return Result{}
-	}
-
-	return res
-}
-
 // makeResult returns a properly constructed Result.
 func makeResult(matchedRules []rules.Rule, reason Reason) (res Result) {
 	resRules := make([]*ResultRule, len(matchedRules))
@@ -987,7 +960,6 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 
 	if d.BlockedServices != nil {
 		err = d.BlockedServices.Validate()
-
 		if err != nil {
 			return nil, fmt.Errorf("filtering: %w", err)
 		}

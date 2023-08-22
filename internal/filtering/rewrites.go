@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/mathutil"
 	"github.com/miekg/dns"
 	"golang.org/x/exp/slices"
@@ -199,4 +200,33 @@ func findRewrites(
 	}
 
 	return rewrites, matched
+}
+
+// setRewriteResult sets the Reason or IPList of res if necessary.  res must not
+// be nil.
+func setRewriteResult(res *Result, host string, rewrites []*LegacyRewrite, qtype uint16) {
+	for _, rw := range rewrites {
+		if rw.Type == qtype && (qtype == dns.TypeA || qtype == dns.TypeAAAA) {
+			if rw.IP == nil {
+				// "A"/"AAAA" exception: allow getting from upstream.
+				res.Reason = NotFilteredNotFound
+
+				return
+			}
+
+			res.IPList = append(res.IPList, rw.IP)
+
+			log.Debug("rewrite: a/aaaa for %s is %s", host, rw.IP)
+		}
+	}
+}
+
+// cloneRewrites returns a deep copy of entries.
+func cloneRewrites(entries []*LegacyRewrite) (clone []*LegacyRewrite) {
+	clone = make([]*LegacyRewrite, len(entries))
+	for i, rw := range entries {
+		clone[i] = rw.clone()
+	}
+
+	return clone
 }

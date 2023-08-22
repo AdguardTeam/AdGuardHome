@@ -1187,7 +1187,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	}
 
 	var eventsCalledCounter uint32
-	hc, err := aghnet.NewHostsContainer(0, testFS, &aghtest.FSWatcher{
+	hc, err := aghnet.NewHostsContainer(testFS, &aghtest.FSWatcher{
 		OnEvents: func() (e <-chan struct{}) {
 			assert.Equal(t, uint32(1), atomic.AddUint32(&eventsCalledCounter, 1))
 

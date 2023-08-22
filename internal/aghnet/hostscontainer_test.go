@@ -1,9 +1,8 @@
 package aghnet_test
 
 import (
-	"net"
+	"net/netip"
 	"path"
-	"strings"
 	"sync/atomic"
 	"testing"
 	"testing/fstest"
@@ -13,17 +12,143 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
-	"github.com/AdguardTeam/urlfilter"
-	"github.com/AdguardTeam/urlfilter/rules"
-	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+// nl is a newline character.
 const nl = "\n"
+
+// Variables mirroring the etc_hosts file from testdata.
+var (
+	addr1000 = netip.MustParseAddr("1.0.0.0")
+	addr1001 = netip.MustParseAddr("1.0.0.1")
+	addr1002 = netip.MustParseAddr("1.0.0.2")
+	addr1003 = netip.MustParseAddr("1.0.0.3")
+	addr1004 = netip.MustParseAddr("1.0.0.4")
+	addr1357 = netip.MustParseAddr("1.3.5.7")
+	addr4216 = netip.MustParseAddr("4.2.1.6")
+	addr7531 = netip.MustParseAddr("7.5.3.1")
+
+	addr0  = netip.MustParseAddr("::")
+	addr1  = netip.MustParseAddr("::1")
+	addr2  = netip.MustParseAddr("::2")
+	addr3  = netip.MustParseAddr("::3")
+	addr4  = netip.MustParseAddr("::4")
+	addr42 = netip.MustParseAddr("::42")
+	addr13 = netip.MustParseAddr("::13")
+	addr31 = netip.MustParseAddr("::31")
+
+	testHosts = map[netip.Addr][]*hostsfile.Record{
+		addr1000: {{
+			Addr:   addr1000,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"hello", "hello.world"},
+		}, {
+			Addr:   addr1000,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"hello.world.again"},
+		}, {
+			Addr:   addr1000,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"hello.world"},
+		}},
+		addr1001: {{
+			Addr:   addr1001,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"simplehost"},
+		}, {
+			Addr:   addr1001,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"simplehost"},
+		}},
+		addr1002: {{
+			Addr:   addr1002,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"a.whole", "lot.of", "aliases", "for.testing"},
+		}},
+		addr1003: {{
+			Addr:   addr1003,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"*"},
+		}},
+		addr1004: {{
+			Addr:   addr1004,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"*.com"},
+		}},
+		addr1357: {{
+			Addr:   addr1357,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"domain4", "domain4.alias"},
+		}},
+		addr7531: {{
+			Addr:   addr7531,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"domain4.alias", "domain4"},
+		}},
+		addr4216: {{
+			Addr:   addr4216,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"domain", "domain.alias"},
+		}},
+		addr0: {{
+			Addr:   addr0,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"hello", "hello.world"},
+		}, {
+			Addr:   addr0,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"hello.world.again"},
+		}, {
+			Addr:   addr0,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"hello.world"},
+		}},
+		addr1: {{
+			Addr:   addr1,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"simplehost"},
+		}, {
+			Addr:   addr1,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"simplehost"},
+		}},
+		addr2: {{
+			Addr:   addr2,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"a.whole", "lot.of", "aliases", "for.testing"},
+		}},
+		addr3: {{
+			Addr:   addr3,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"*"},
+		}},
+		addr4: {{
+			Addr:   addr4,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"*.com"},
+		}},
+		addr42: {{
+			Addr:   addr42,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"domain.alias", "domain"},
+		}},
+		addr13: {{
+			Addr:   addr13,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"domain6", "domain6.alias"},
+		}},
+		addr31: {{
+			Addr:   addr31,
+			Source: "./testdata/etc_hosts",
+			Names:  []string{"domain6.alias", "domain6"},
+		}},
+	}
+)
 
 func TestNewHostsContainer(t *testing.T) {
 	const dirname = "dir"
@@ -73,7 +198,7 @@ func TestNewHostsContainer(t *testing.T) {
 				return eventsCh
 			}
 
-			hc, err := aghnet.NewHostsContainer(0, testFS, &aghtest.FSWatcher{
+			hc, err := aghnet.NewHostsContainer(testFS, &aghtest.FSWatcher{
 				OnEvents: onEvents,
 				OnAdd:    onAdd,
 				OnClose:  func() (err error) { return nil },
@@ -99,7 +224,7 @@ func TestNewHostsContainer(t *testing.T) {
 
 	t.Run("nil_fs", func(t *testing.T) {
 		require.Panics(t, func() {
-			_, _ = aghnet.NewHostsContainer(0, nil, &aghtest.FSWatcher{
+			_, _ = aghnet.NewHostsContainer(nil, &aghtest.FSWatcher{
 				// Those shouldn't panic.
 				OnEvents: func() (e <-chan struct{}) { return nil },
 				OnAdd:    func(name string) (err error) { return nil },
@@ -110,7 +235,7 @@ func TestNewHostsContainer(t *testing.T) {
 
 	t.Run("nil_watcher", func(t *testing.T) {
 		require.Panics(t, func() {
-			_, _ = aghnet.NewHostsContainer(0, testFS, nil, p)
+			_, _ = aghnet.NewHostsContainer(testFS, nil, p)
 		})
 	})
 
@@ -123,7 +248,7 @@ func TestNewHostsContainer(t *testing.T) {
 			OnClose:  func() (err error) { return nil },
 		}
 
-		hc, err := aghnet.NewHostsContainer(0, testFS, errWatcher, p)
+		hc, err := aghnet.NewHostsContainer(testFS, errWatcher, p)
 		require.ErrorIs(t, err, errOnAdd)
 
 		assert.Nil(t, hc)
@@ -135,6 +260,9 @@ func TestHostsContainer_refresh(t *testing.T) {
 
 	ip := netutil.IPv4Localhost()
 	ipStr := ip.String()
+
+	anotherIPStr := "1.2.3.4"
+	anotherIP := netip.MustParseAddr(anotherIPStr)
 
 	testFS := fstest.MapFS{"dir/file1": &fstest.MapFile{Data: []byte(ipStr + ` hostname` + nl)}}
 
@@ -154,40 +282,44 @@ func TestHostsContainer_refresh(t *testing.T) {
 		OnClose: func() (err error) { return nil },
 	}
 
-	hc, err := aghnet.NewHostsContainer(0, testFS, w, "dir")
+	hc, err := aghnet.NewHostsContainer(testFS, w, "dir")
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, hc.Close)
 
-	checkRefresh := func(t *testing.T, want *aghnet.HostsRecord) {
+	checkRefresh := func(t *testing.T, want aghnet.Hosts) {
 		t.Helper()
 
 		upd, ok := aghchan.MustReceive(hc.Upd(), 1*time.Second)
 		require.True(t, ok)
-		require.NotNil(t, upd)
 
-		assert.Len(t, upd, 1)
-
-		rec, ok := upd[ip]
-		require.True(t, ok)
-		require.NotNil(t, rec)
-
-		assert.Truef(t, rec.Equal(want), "%+v != %+v", rec, want)
+		assert.Equal(t, want, upd)
 	}
 
 	t.Run("initial_refresh", func(t *testing.T) {
-		checkRefresh(t, &aghnet.HostsRecord{
-			Aliases:   stringutil.NewSet(),
-			Canonical: "hostname",
+		checkRefresh(t, aghnet.Hosts{
+			ip: {{
+				Addr:   ip,
+				Source: "file1",
+				Names:  []string{"hostname"},
+			}},
 		})
 	})
 
 	t.Run("second_refresh", func(t *testing.T) {
-		testFS["dir/file2"] = &fstest.MapFile{Data: []byte(ipStr + ` alias` + nl)}
+		testFS["dir/file2"] = &fstest.MapFile{Data: []byte(anotherIPStr + ` alias` + nl)}
 		eventsCh <- event{}
 
-		checkRefresh(t, &aghnet.HostsRecord{
-			Aliases:   stringutil.NewSet("alias"),
-			Canonical: "hostname",
+		checkRefresh(t, aghnet.Hosts{
+			ip: {{
+				Addr:   ip,
+				Source: "file1",
+				Names:  []string{"hostname"},
+			}},
+			anotherIP: {{
+				Addr:   anotherIP,
+				Source: "file2",
+				Names:  []string{"alias"},
+			}},
 		})
 	})
 
@@ -198,12 +330,9 @@ func TestHostsContainer_refresh(t *testing.T) {
 
 		// Require the changes are written.
 		require.Eventually(t, func() bool {
-			res, ok := hc.MatchRequest(&urlfilter.DNSRequest{
-				Hostname: "hostname",
-				DNSType:  dns.TypeA,
-			})
+			ips := hc.MatchName("hostname")
 
-			return !ok && res.DNSRewrites() == nil
+			return len(ips) == 0
 		}, 5*time.Second, time.Second/2)
 
 		// Make a change again.
@@ -212,250 +341,92 @@ func TestHostsContainer_refresh(t *testing.T) {
 
 		// Require the changes are written.
 		require.Eventually(t, func() bool {
-			res, ok := hc.MatchRequest(&urlfilter.DNSRequest{
-				Hostname: "hostname",
-				DNSType:  dns.TypeA,
-			})
+			ips := hc.MatchName("hostname")
 
-			return !ok && res.DNSRewrites() != nil
+			return len(ips) > 0
 		}, 5*time.Second, time.Second/2)
 
 		assert.Len(t, hc.Upd(), 1)
 	})
 }
 
-func TestHostsContainer_Translate(t *testing.T) {
+func TestHostsContainer_MatchName(t *testing.T) {
+	require.NoError(t, fstest.TestFS(testdata, "etc_hosts"))
+
 	stubWatcher := aghtest.FSWatcher{
 		OnEvents: func() (e <-chan struct{}) { return nil },
 		OnAdd:    func(name string) (err error) { return nil },
 		OnClose:  func() (err error) { return nil },
 	}
 
-	require.NoError(t, fstest.TestFS(testdata, "etc_hosts"))
+	testCases := []struct {
+		req  string
+		name string
+		want []*hostsfile.Record
+	}{{
+		req:  "simplehost",
+		name: "simple",
+		want: append(testHosts[addr1001], testHosts[addr1]...),
+	}, {
+		req:  "hello.world",
+		name: "hello_alias",
+		want: []*hostsfile.Record{
+			testHosts[addr1000][0],
+			testHosts[addr1000][2],
+			testHosts[addr0][0],
+			testHosts[addr0][2],
+		},
+	}, {
+		req:  "hello.world.again",
+		name: "other_line_alias",
+		want: []*hostsfile.Record{
+			testHosts[addr1000][1],
+			testHosts[addr0][1],
+		},
+	}, {
+		req:  "say.hello",
+		name: "hello_subdomain",
+		want: nil,
+	}, {
+		req:  "say.hello.world",
+		name: "hello_alias_subdomain",
+		want: nil,
+	}, {
+		req:  "for.testing",
+		name: "lots_of_aliases",
+		want: append(testHosts[addr1002], testHosts[addr2]...),
+	}, {
+		req:  "nonexistent.example",
+		name: "non-existing",
+		want: nil,
+	}, {
+		req:  "domain",
+		name: "issue_4216_4_6",
+		want: append(testHosts[addr4216], testHosts[addr42]...),
+	}, {
+		req:  "domain4",
+		name: "issue_4216_4",
+		want: append(testHosts[addr1357], testHosts[addr7531]...),
+	}, {
+		req:  "domain6",
+		name: "issue_4216_6",
+		want: append(testHosts[addr13], testHosts[addr31]...),
+	}}
 
-	hc, err := aghnet.NewHostsContainer(0, testdata, &stubWatcher, "etc_hosts")
+	hc, err := aghnet.NewHostsContainer(testdata, &stubWatcher, "etc_hosts")
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, hc.Close)
 
-	testCases := []struct {
-		name      string
-		rule      string
-		wantTrans []string
-	}{{
-		name:      "simplehost",
-		rule:      "|simplehost^$dnsrewrite=NOERROR;A;1.0.0.1",
-		wantTrans: []string{"1.0.0.1", "simplehost"},
-	}, {
-		name:      "hello",
-		rule:      "|hello^$dnsrewrite=NOERROR;A;1.0.0.0",
-		wantTrans: []string{"1.0.0.0", "hello", "hello.world"},
-	}, {
-		name:      "hello-alias",
-		rule:      "|hello.world.again^$dnsrewrite=NOERROR;A;1.0.0.0",
-		wantTrans: []string{"1.0.0.0", "hello.world.again"},
-	}, {
-		name:      "simplehost_v6",
-		rule:      "|simplehost^$dnsrewrite=NOERROR;AAAA;::1",
-		wantTrans: []string{"::1", "simplehost"},
-	}, {
-		name:      "hello_v6",
-		rule:      "|hello^$dnsrewrite=NOERROR;AAAA;::",
-		wantTrans: []string{"::", "hello", "hello.world"},
-	}, {
-		name:      "hello_v6-alias",
-		rule:      "|hello.world.again^$dnsrewrite=NOERROR;AAAA;::",
-		wantTrans: []string{"::", "hello.world.again"},
-	}, {
-		name:      "simplehost_ptr",
-		rule:      "|1.0.0.1.in-addr.arpa^$dnsrewrite=NOERROR;PTR;simplehost.",
-		wantTrans: []string{"1.0.0.1", "simplehost"},
-	}, {
-		name:      "hello_ptr",
-		rule:      "|0.0.0.1.in-addr.arpa^$dnsrewrite=NOERROR;PTR;hello.",
-		wantTrans: []string{"1.0.0.0", "hello", "hello.world"},
-	}, {
-		name:      "hello_ptr-alias",
-		rule:      "|0.0.0.1.in-addr.arpa^$dnsrewrite=NOERROR;PTR;hello.world.again.",
-		wantTrans: []string{"1.0.0.0", "hello.world.again"},
-	}, {
-		name: "simplehost_ptr_v6",
-		rule: "|1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa" +
-			"^$dnsrewrite=NOERROR;PTR;simplehost.",
-		wantTrans: []string{"::1", "simplehost"},
-	}, {
-		name: "hello_ptr_v6",
-		rule: "|0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa" +
-			"^$dnsrewrite=NOERROR;PTR;hello.",
-		wantTrans: []string{"::", "hello", "hello.world"},
-	}, {
-		name: "hello_ptr_v6-alias",
-		rule: "|0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa" +
-			"^$dnsrewrite=NOERROR;PTR;hello.world.again.",
-		wantTrans: []string{"::", "hello.world.again"},
-	}}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := stringutil.NewSet(strings.Fields(hc.Translate(tc.rule))...)
-			assert.True(t, stringutil.NewSet(tc.wantTrans...).Equal(got))
+			recs := hc.MatchName(tc.req)
+			assert.Equal(t, tc.want, recs)
 		})
 	}
 }
 
-func TestHostsContainer(t *testing.T) {
-	const listID = 1234
-
+func TestHostsContainer_MatchAddr(t *testing.T) {
 	require.NoError(t, fstest.TestFS(testdata, "etc_hosts"))
-
-	testCases := []struct {
-		req  *urlfilter.DNSRequest
-		name string
-		want []*rules.DNSRewrite
-	}{{
-		req: &urlfilter.DNSRequest{
-			Hostname: "simplehost",
-			DNSType:  dns.TypeA,
-		},
-		name: "simple",
-		want: []*rules.DNSRewrite{{
-			RCode:  dns.RcodeSuccess,
-			Value:  net.IPv4(1, 0, 0, 1),
-			RRType: dns.TypeA,
-		}, {
-			RCode:  dns.RcodeSuccess,
-			Value:  net.ParseIP("::1"),
-			RRType: dns.TypeAAAA,
-		}},
-	}, {
-		req: &urlfilter.DNSRequest{
-			Hostname: "hello.world",
-			DNSType:  dns.TypeA,
-		},
-		name: "hello_alias",
-		want: []*rules.DNSRewrite{{
-			RCode:  dns.RcodeSuccess,
-			Value:  net.IPv4(1, 0, 0, 0),
-			RRType: dns.TypeA,
-		}, {
-			RCode:  dns.RcodeSuccess,
-			Value:  net.ParseIP("::"),
-			RRType: dns.TypeAAAA,
-		}},
-	}, {
-		req: &urlfilter.DNSRequest{
-			Hostname: "hello.world.again",
-			DNSType:  dns.TypeA,
-		},
-		name: "other_line_alias",
-		want: []*rules.DNSRewrite{{
-			RCode:  dns.RcodeSuccess,
-			Value:  net.IPv4(1, 0, 0, 0),
-			RRType: dns.TypeA,
-		}, {
-			RCode:  dns.RcodeSuccess,
-			Value:  net.ParseIP("::"),
-			RRType: dns.TypeAAAA,
-		}},
-	}, {
-		req: &urlfilter.DNSRequest{
-			Hostname: "say.hello",
-			DNSType:  dns.TypeA,
-		},
-		name: "hello_subdomain",
-		want: []*rules.DNSRewrite{},
-	}, {
-		req: &urlfilter.DNSRequest{
-			Hostname: "say.hello.world",
-			DNSType:  dns.TypeA,
-		},
-		name: "hello_alias_subdomain",
-		want: []*rules.DNSRewrite{},
-	}, {
-		req: &urlfilter.DNSRequest{
-			Hostname: "for.testing",
-			DNSType:  dns.TypeA,
-		},
-		name: "lots_of_aliases",
-		want: []*rules.DNSRewrite{{
-			RCode:  dns.RcodeSuccess,
-			RRType: dns.TypeA,
-			Value:  net.IPv4(1, 0, 0, 2),
-		}, {
-			RCode:  dns.RcodeSuccess,
-			RRType: dns.TypeAAAA,
-			Value:  net.ParseIP("::2"),
-		}},
-	}, {
-		req: &urlfilter.DNSRequest{
-			Hostname: "1.0.0.1.in-addr.arpa",
-			DNSType:  dns.TypePTR,
-		},
-		name: "reverse",
-		want: []*rules.DNSRewrite{{
-			RCode:  dns.RcodeSuccess,
-			RRType: dns.TypePTR,
-			Value:  "simplehost.",
-		}},
-	}, {
-		req: &urlfilter.DNSRequest{
-			Hostname: "nonexistent.example",
-			DNSType:  dns.TypeA,
-		},
-		name: "non-existing",
-		want: []*rules.DNSRewrite{},
-	}, {
-		req: &urlfilter.DNSRequest{
-			Hostname: "1.0.0.1.in-addr.arpa",
-			DNSType:  dns.TypeSRV,
-		},
-		name: "bad_type",
-		want: nil,
-	}, {
-		req: &urlfilter.DNSRequest{
-			Hostname: "domain",
-			DNSType:  dns.TypeA,
-		},
-		name: "issue_4216_4_6",
-		want: []*rules.DNSRewrite{{
-			RCode:  dns.RcodeSuccess,
-			RRType: dns.TypeA,
-			Value:  net.IPv4(4, 2, 1, 6),
-		}, {
-			RCode:  dns.RcodeSuccess,
-			RRType: dns.TypeAAAA,
-			Value:  net.ParseIP("::42"),
-		}},
-	}, {
-		req: &urlfilter.DNSRequest{
-			Hostname: "domain4",
-			DNSType:  dns.TypeA,
-		},
-		name: "issue_4216_4",
-		want: []*rules.DNSRewrite{{
-			RCode:  dns.RcodeSuccess,
-			RRType: dns.TypeA,
-			Value:  net.IPv4(7, 5, 3, 1),
-		}, {
-			RCode:  dns.RcodeSuccess,
-			RRType: dns.TypeA,
-			Value:  net.IPv4(1, 3, 5, 7),
-		}},
-	}, {
-		req: &urlfilter.DNSRequest{
-			Hostname: "domain6",
-			DNSType:  dns.TypeAAAA,
-		},
-		name: "issue_4216_6",
-		want: []*rules.DNSRewrite{{
-			RCode:  dns.RcodeSuccess,
-			RRType: dns.TypeAAAA,
-			Value:  net.ParseIP("::13"),
-		}, {
-			RCode:  dns.RcodeSuccess,
-			RRType: dns.TypeAAAA,
-			Value:  net.ParseIP("::31"),
-		}},
-	}}
 
 	stubWatcher := aghtest.FSWatcher{
 		OnEvents: func() (e <-chan struct{}) { return nil },
@@ -463,34 +434,24 @@ func TestHostsContainer(t *testing.T) {
 		OnClose:  func() (err error) { return nil },
 	}
 
-	hc, err := aghnet.NewHostsContainer(listID, testdata, &stubWatcher, "etc_hosts")
+	hc, err := aghnet.NewHostsContainer(testdata, &stubWatcher, "etc_hosts")
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, hc.Close)
 
+	testCases := []struct {
+		req  netip.Addr
+		name string
+		want []*hostsfile.Record
+	}{{
+		req:  netip.AddrFrom4([4]byte{1, 0, 0, 1}),
+		name: "reverse",
+		want: testHosts[addr1001],
+	}}
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			res, ok := hc.MatchRequest(tc.req)
-			require.False(t, ok)
-
-			if tc.want == nil {
-				assert.Nil(t, res)
-
-				return
-			}
-
-			require.NotNil(t, res)
-
-			rewrites := res.DNSRewrites()
-			require.Len(t, rewrites, len(tc.want))
-
-			for i, rewrite := range rewrites {
-				require.Equal(t, listID, rewrite.FilterListID)
-
-				rw := rewrite.DNSRewrite
-				require.NotNil(t, rw)
-
-				assert.Equal(t, tc.want[i], rw)
-			}
+			recs := hc.MatchAddr(tc.req)
+			assert.Equal(t, tc.want, recs)
 		})
 	}
 }

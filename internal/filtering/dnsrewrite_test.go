@@ -1,10 +1,17 @@
 package filtering
 
 import (
+	"fmt"
 	"net"
+	"net/netip"
 	"path"
 	"testing"
+	"testing/fstest"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -201,4 +208,155 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 
 		assert.Equal(t, "new-ptr-with-dot.", ptr)
 	})
+}
+
+func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
+	addrv4 := netip.MustParseAddr("1.2.3.4")
+	addrv6 := netip.MustParseAddr("::1")
+	addrMapped := netip.MustParseAddr("::ffff:1.2.3.4")
+
+	data := fmt.Sprintf(
+		""+
+			"%s v4.host.example\n"+
+			"%s v6.host.example\n"+
+			"%s mapped.host.example\n",
+		addrv4,
+		addrv6,
+		addrMapped,
+	)
+
+	files := fstest.MapFS{
+		"hosts": &fstest.MapFile{
+			Data: []byte(data),
+		},
+	}
+	watcher := &aghtest.FSWatcher{
+		OnEvents: func() (e <-chan struct{}) { return nil },
+		OnAdd:    func(name string) (err error) { return nil },
+		OnClose:  func() (err error) { return nil },
+	}
+	hc, err := aghnet.NewHostsContainer(files, watcher, "hosts")
+	require.NoError(t, err)
+	testutil.CleanupAndRequireSuccess(t, hc.Close)
+
+	f, _ := newForTest(t, &Config{EtcHosts: hc}, nil)
+	setts := &Settings{
+		FilteringEnabled: true,
+	}
+
+	testCases := []struct {
+		name      string
+		host      string
+		wantRules []*ResultRule
+		wantResps []rules.RRValue
+		dtyp      uint16
+	}{{
+		name: "v4",
+		host: "v4.host.example",
+		dtyp: dns.TypeA,
+		wantRules: []*ResultRule{{
+			Text:         "1.2.3.4 v4.host.example",
+			FilterListID: SysHostsListID,
+		}},
+		wantResps: []rules.RRValue{net.IP(addrv4.AsSlice())},
+	}, {
+		name: "v6",
+		host: "v6.host.example",
+		dtyp: dns.TypeAAAA,
+		wantRules: []*ResultRule{{
+			Text:         "::1 v6.host.example",
+			FilterListID: SysHostsListID,
+		}},
+		wantResps: []rules.RRValue{net.IP(addrv6.AsSlice())},
+	}, {
+		name: "mapped",
+		host: "mapped.host.example",
+		dtyp: dns.TypeAAAA,
+		wantRules: []*ResultRule{{
+			Text:         "::ffff:1.2.3.4 mapped.host.example",
+			FilterListID: SysHostsListID,
+		}},
+		wantResps: []rules.RRValue{net.IP(addrMapped.AsSlice())},
+	}, {
+		name: "ptr",
+		host: "4.3.2.1.in-addr.arpa",
+		dtyp: dns.TypePTR,
+		wantRules: []*ResultRule{{
+			Text:         "1.2.3.4 v4.host.example",
+			FilterListID: SysHostsListID,
+		}},
+		wantResps: []rules.RRValue{"v4.host.example"},
+	}, {
+		name: "ptr-mapped",
+		host: "4.0.3.0.2.0.1.0.f.f.f.f.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa",
+		dtyp: dns.TypePTR,
+		wantRules: []*ResultRule{{
+			Text:         "::ffff:1.2.3.4 mapped.host.example",
+			FilterListID: SysHostsListID,
+		}},
+		wantResps: []rules.RRValue{"mapped.host.example"},
+	}, {
+		name:      "not_found_v4",
+		host:      "non.existent.example",
+		dtyp:      dns.TypeA,
+		wantRules: nil,
+		wantResps: nil,
+	}, {
+		name:      "not_found_v6",
+		host:      "non.existent.example",
+		dtyp:      dns.TypeAAAA,
+		wantRules: nil,
+		wantResps: nil,
+	}, {
+		name:      "not_found_ptr",
+		host:      "4.3.2.2.in-addr.arpa",
+		dtyp:      dns.TypePTR,
+		wantRules: nil,
+		wantResps: nil,
+	}, {
+		name:      "v4_mismatch",
+		host:      "v4.host.example",
+		dtyp:      dns.TypeAAAA,
+		wantRules: nil,
+		wantResps: nil,
+	}, {
+		name:      "v6_mismatch",
+		host:      "v6.host.example",
+		dtyp:      dns.TypeA,
+		wantRules: nil,
+		wantResps: nil,
+	}, {
+		name:      "wrong_ptr",
+		host:      "4.3.2.1.ip6.arpa",
+		dtyp:      dns.TypePTR,
+		wantRules: nil,
+		wantResps: nil,
+	}, {
+		name:      "unsupported_type",
+		host:      "v4.host.example",
+		dtyp:      dns.TypeCNAME,
+		wantRules: nil,
+		wantResps: nil,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var res Result
+			res, err = f.CheckHost(tc.host, tc.dtyp, setts)
+			require.NoError(t, err)
+
+			if len(tc.wantRules) == 0 {
+				assert.Empty(t, res.Rules)
+				assert.Nil(t, res.DNSRewriteResult)
+
+				return
+			}
+
+			require.NotNil(t, res.DNSRewriteResult)
+			require.Contains(t, res.DNSRewriteResult.Response, tc.dtyp)
+
+			assert.Equal(t, tc.wantResps, res.DNSRewriteResult.Response[tc.dtyp])
+			assert.Equal(t, tc.wantRules, res.Rules)
+		})
+	}
 }

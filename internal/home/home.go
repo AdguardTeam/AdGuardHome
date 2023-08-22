@@ -233,7 +233,6 @@ func setupHostsContainer() (err error) {
 	}
 
 	Context.etcHosts, err = aghnet.NewHostsContainer(
-		filtering.SysHostsListID,
 		aghos.RootDirFS(),
 		hostsWatcher,
 		aghnet.DefaultHostsPaths()...,
