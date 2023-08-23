@@ -69,9 +69,10 @@ In this release, the schema version has changed from 24 to 25.
 
 ### Fixed
 
+- Occasional DNS-over-QUIC and DNS-over-HTTP/3 errors ([#6133]).
 - Legacy DNS rewrites containing IPv4-mapped IPv6 addresses are now matching the
   `AAAA` requests, not `A` ([#6050]).
-- File log configuration, such as `max_size`, being ignored ([#6093]). 
+- File log configuration, such as `max_size`, being ignored ([#6093]).
 - Panic on using a single-slash filtering rule.
 - Panic on shutting down while DNS requests are in process of filtering
   ([#5948]).
@@ -84,6 +85,7 @@ In this release, the schema version has changed from 24 to 25.
 [#6053]: https://github.com/AdguardTeam/AdGuardHome/issues/6053
 [#6093]: https://github.com/AdguardTeam/AdGuardHome/issues/6093
 [#6122]: https://github.com/AdguardTeam/AdGuardHome/issues/6122
+[#6133]: https://github.com/AdguardTeam/AdGuardHome/issues/6133
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

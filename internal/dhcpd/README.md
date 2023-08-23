@@ -16,17 +16,17 @@ To set up a test environment for DHCP server you will need:
 
    ### Configure Virtual Box
 
- 1.  Install Virtual Box and run the following command to create a Host-Only 
+ 1.  Install Virtual Box and run the following command to create a Host-Only
      network:
 
      ```sh
      $ VBoxManage hostonlyif create
      ```
-     
-     You can check its status by `ip a` command.  
 
-     You can also set up Host-Only network using Virtual Box menu: 
-     
+     You can check its status by `ip a` command.
+
+     You can also set up Host-Only network using Virtual Box menu:
+
      ```
      File -> Host Network Manager...
      ```

@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a remarkable change is made to this script.
 #
-# AdGuard-Project-Version: 3
+# AdGuard-Project-Version: 4
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -49,8 +49,31 @@ trailing_newlines() {
 		done
 }
 
+# trailing_whitespace is a simple check that makes sure that there are no
+# trailing whitespace in plain-text files.
+trailing_whitespace() {
+	# NOTE: Adjust for your project.
+	git ls-files\
+		':!*.bmp'\
+		':!*.jpg'\
+		':!*.mmdb'\
+		':!*.png'\
+		':!*.svg'\
+		':!*.tar.gz'\
+		':!*.webp'\
+		':!*.zip'\
+		| while read -r f
+		do
+			grep -e '[[:space:]]$' -n -- "$f"\
+				| sed -e "s:^:${f}\::" -e 's/ \+$/>>>&<<</'
+		done
+}
+
 run_linter -e trailing_newlines
 
-git ls-files -- '*.md' '*.txt' '*.yaml' '*.yml' 'client/src/__locales/en.json'\
+run_linter -e trailing_whitespace
+
+git ls-files -- '*.conf' '*.md' '*.txt' '*.yaml' '*.yml'\
+	'client/src/__locales/en.json'\
 	| xargs misspell --error\
 	| sed -e 's/^/misspell: /'

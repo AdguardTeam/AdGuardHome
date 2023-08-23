@@ -29,8 +29,14 @@
 
 ```json
 {
-  "target": {"domain":"example.com","answer":"answer-to-update"},
-  "update": {"domain":"example.com","answer":"new-answer"}
+  "target": {
+    "domain": "example.com",
+    "answer": "answer-to-update"
+  },
+  "update": {
+    "domain": "example.com",
+    "answer": "new-answer"
+  }
 }
 ```
 
@@ -88,7 +94,9 @@ return a JSON object with the following format:
 {
   "enabled": true,
   "interval": 3600,
-  "ignored": ["example.com"],
+  "ignored": [
+    "example.com"
+  ]
 }
 ```
 
@@ -119,7 +127,9 @@ accept and return a JSON object with the following format:
   "enabled": true,
   "anonymize_client_ip": false,
   "interval": 3600,
-  "ignored": ["example.com"],
+  "ignored": [
+    "example.com"
+  ]
 }
 ```
 
@@ -251,7 +261,7 @@ JSON object with the following format:
 
 ```json
 {
-  "name":"user name", 
+  "name": "user name",
   "language": "en",
   "theme": "auto"
 }
@@ -327,8 +337,7 @@ the filters must be presented in a JSON object with the following format:
 
 ```json
 {
-  "rules":
-  [
+  "rules": [
     "||example.com^",
     "# comment",
     "@@||www.example.com^"
