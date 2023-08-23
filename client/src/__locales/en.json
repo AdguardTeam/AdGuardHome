@@ -7,7 +7,7 @@
     "load_balancing": "Load-balancing",
     "load_balancing_desc": "Query one upstream server at a time. AdGuard Home uses its weighted random algorithm to pick the server so that the fastest server is used more often.",
     "bootstrap_dns": "Bootstrap DNS servers",
-    "bootstrap_dns_desc": "Bootstrap DNS servers are used to resolve IP addresses of the DoH/DoT resolvers you specify as upstreams.",
+    "bootstrap_dns_desc": "IP addresses of DNS servers used to resolve IP addresses of the DoH/DoT resolvers you specify as upstreams. Comments are not permitted.",
     "local_ptr_title": "Private reverse DNS servers",
     "local_ptr_desc": "The DNS servers that AdGuard Home uses for local PTR queries. These servers are used to resolve PTR requests for addresses in private IP ranges, for example \"192.168.12.34\", using reverse DNS. If not set, AdGuard Home uses the addresses of the default DNS resolvers of your OS except for the addresses of AdGuard Home itself.",
     "local_ptr_default_resolver": "By default, AdGuard Home uses the following reverse DNS resolvers: {{ip}}.",
