@@ -2,7 +2,6 @@ package filtering
 
 import (
 	"fmt"
-	"net"
 	"net/netip"
 	"path"
 	"testing"
@@ -265,7 +264,7 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 			Text:         "1.2.3.4 v4.host.example",
 			FilterListID: SysHostsListID,
 		}},
-		wantResps: []rules.RRValue{net.IP(addrv4.AsSlice())},
+		wantResps: []rules.RRValue{addrv4},
 	}, {
 		name: "v6",
 		host: "v6.host.example",
@@ -274,7 +273,7 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 			Text:         "::1 v6.host.example",
 			FilterListID: SysHostsListID,
 		}},
-		wantResps: []rules.RRValue{net.IP(addrv6.AsSlice())},
+		wantResps: []rules.RRValue{addrv6},
 	}, {
 		name: "mapped",
 		host: "mapped.host.example",
@@ -283,7 +282,7 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 			Text:         "::ffff:1.2.3.4 mapped.host.example",
 			FilterListID: SysHostsListID,
 		}},
-		wantResps: []rules.RRValue{net.IP(addrMapped.AsSlice())},
+		wantResps: []rules.RRValue{addrMapped},
 	}, {
 		name: "ptr",
 		host: "4.3.2.1.in-addr.arpa",

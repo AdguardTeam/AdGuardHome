@@ -1,8 +1,6 @@
 package filtering
 
 import (
-	"net"
-
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -112,13 +110,13 @@ func appendRewriteResultFromHost(
 			return vals, resRules
 		}
 
-		vals = append(vals, net.IP(rec.Addr.AsSlice()))
+		vals = append(vals, rec.Addr)
 	case dns.TypeAAAA:
 		if !rec.Addr.Is6() {
 			return vals, resRules
 		}
 
-		vals = append(vals, net.IP(rec.Addr.AsSlice()))
+		vals = append(vals, rec.Addr)
 	case dns.TypePTR:
 		for _, name := range rec.Names {
 			vals = append(vals, name)

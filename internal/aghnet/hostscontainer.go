@@ -201,7 +201,7 @@ func (hc *HostsContainer) handleEvents() {
 			}
 
 			if err := hc.refresh(); err != nil {
-				log.Error("%s: %s", hostsContainerPrefix, err)
+				log.Error("%s: warning: refreshing: %s", hostsContainerPrefix, err)
 			}
 		case _, ok = <-hc.done:
 			// Go on.
@@ -244,14 +244,29 @@ func (idx *hostsIndex) walk(r io.Reader) (patterns []string, cont bool, err erro
 // type check
 var _ hostsfile.Set = (*hostsIndex)(nil)
 
-// Add puts the record for the IP address to the rules builder if needed.
-// The first host is considered to be the canonical name for the IP address.
-// hosts must have at least one name.
+// Add implements the [hostsfile.Set] interface for *hostsIndex.
 func (idx *hostsIndex) Add(rec *hostsfile.Record) {
 	idx.addrs[rec.Addr] = append(idx.addrs[rec.Addr], rec)
 	for _, name := range rec.Names {
 		idx.names[name] = append(idx.names[name], rec)
 	}
+}
+
+// type check
+var _ hostsfile.HandleSet = (*hostsIndex)(nil)
+
+// HandleInvalid implements the [hostsfile.HandleSet] interface for *hostsIndex.
+func (idx *hostsIndex) HandleInvalid(src string, _ []byte, err error) {
+	lineErr := &hostsfile.LineError{}
+	if !errors.As(err, &lineErr) {
+		// Must not happen if idx passed to [hostsfile.Parse].
+		return
+	} else if errors.Is(lineErr, hostsfile.ErrEmptyLine) {
+		// Ignore empty lines.
+		return
+	}
+
+	log.Info("%s: warning: parsing %q: %s", hostsContainerPrefix, src, lineErr)
 }
 
 // equalRecs is an equality function for [*hostsfile.Record].
@@ -291,13 +306,9 @@ func (hc *HostsContainer) refresh() (err error) {
 	}
 
 	_, err = aghos.FileWalker(idx.walk).Walk(hc.fsys, hc.patterns...)
-
 	if err != nil {
-		if len(idx.addrs) == 0 {
-			return fmt.Errorf("refreshing : %w", err)
-		} else {
-			log.Debug("%s: refreshing: %s", hostsContainerPrefix, err)
-		}
+		// Don't wrap the error since it's informative enough as is.
+		return err
 	}
 
 	// TODO(e.burkov):  Serialize updates using time.
