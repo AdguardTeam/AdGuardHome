@@ -30,13 +30,10 @@ const (
 // the statistics unit.
 type UnitIDGenFunc func() (id uint32)
 
-// TimeUnit is the unit of measuring time while aggregating the statistics.
-type TimeUnit int
-
-// Supported TimeUnit values.
+// Supported values of [StatsResp.TimeUnits].
 const (
-	Hours TimeUnit = iota
-	Days
+	timeUnitsHours = "hours"
+	timeUnitsDays  = "days"
 )
 
 // Result is the resulting code of processing the DNS request.
@@ -368,42 +365,6 @@ func convertTopSlice(a []countPair) (m []map[string]uint64) {
 	return m
 }
 
-// numsGetter is a signature for statsCollector argument.
-type numsGetter func(u *unitDB) (num uint64)
-
-// statsCollector collects statisctics for the given *unitDB slice by specified
-// timeUnit using ng to retrieve data.
-func statsCollector(units []*unitDB, firstID uint32, timeUnit TimeUnit, ng numsGetter) (nums []uint64) {
-	if timeUnit == Hours {
-		nums = make([]uint64, 0, len(units))
-		for _, u := range units {
-			nums = append(nums, ng(u))
-		}
-	} else {
-		// Per time unit counters: 720 hours may span 31 days, so we
-		// skip data for the first day in this case.
-		// align_ceil(24)
-		firstDayID := (firstID + 24 - 1) / 24 * 24
-
-		var sum uint64
-		id := firstDayID
-		nextDayID := firstDayID + 24
-		for i := int(firstDayID - firstID); i != len(units); i++ {
-			sum += ng(units[i])
-			if id == nextDayID {
-				nums = append(nums, sum)
-				sum = 0
-				nextDayID += 24
-			}
-			id++
-		}
-		if id <= nextDayID {
-			nums = append(nums, sum)
-		}
-	}
-	return nums
-}
-
 // pairsGetter is a signature for topsCollector argument.
 type pairsGetter func(u *unitDB) (pairs []countPair)
 
@@ -442,9 +403,9 @@ func topsCollector(units []*unitDB, max int, ignored *stringutil.Set, pg pairsGe
 //
 //     The total counters (DNS queries, blocked, etc.) are just the sum of data
 //     for all units.
-func (s *StatsCtx) getData(limit uint32) (StatsResp, bool) {
+func (s *StatsCtx) getData(limit uint32) (resp *StatsResp, ok bool) {
 	if limit == 0 {
-		return StatsResp{
+		return &StatsResp{
 			TimeUnits: "days",
 
 			TopBlocked:            []topAddrs{},
@@ -460,44 +421,27 @@ func (s *StatsCtx) getData(limit uint32) (StatsResp, bool) {
 		}, true
 	}
 
-	timeUnit := Hours
-	if limit/24 > 7 {
-		timeUnit = Days
-	}
-
-	units, firstID := s.loadUnits(limit)
+	units, curID := s.loadUnits(limit)
 	if units == nil {
-		return StatsResp{}, false
+		return &StatsResp{}, false
 	}
 
-	dnsQueries := statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NTotal })
-	if timeUnit != Hours && len(dnsQueries) != int(limit/24) {
-		log.Fatalf("len(dnsQueries) != limit: %d %d", len(dnsQueries), limit)
-	}
-
-	return s.dataFromUnits(units, dnsQueries, firstID, timeUnit), true
+	return s.dataFromUnits(units, curID), true
 }
 
 // dataFromUnits collects and returns the statistics data.
-func (s *StatsCtx) dataFromUnits(
-	units []*unitDB,
-	dnsQueries []uint64,
-	firstID uint32,
-	timeUnit TimeUnit,
-) (resp StatsResp) {
+func (s *StatsCtx) dataFromUnits(units []*unitDB, curID uint32) (resp *StatsResp) {
 	topUpstreamsResponses, topUpstreamsAvgTime := topUpstreamsPairs(units)
 
-	data := StatsResp{
-		DNSQueries:            dnsQueries,
-		BlockedFiltering:      statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NResult[RFiltered] }),
-		ReplacedSafebrowsing:  statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NResult[RSafeBrowsing] }),
-		ReplacedParental:      statsCollector(units, firstID, timeUnit, func(u *unitDB) (num uint64) { return u.NResult[RParental] }),
+	resp = &StatsResp{
 		TopQueried:            topsCollector(units, maxDomains, s.ignored, func(u *unitDB) (pairs []countPair) { return u.Domains }),
 		TopBlocked:            topsCollector(units, maxDomains, s.ignored, func(u *unitDB) (pairs []countPair) { return u.BlockedDomains }),
 		TopUpstreamsResponses: topUpstreamsResponses,
 		TopUpstreamsAvgTime:   topUpstreamsAvgTime,
 		TopClients:            topsCollector(units, maxClients, nil, topClientPairs(s)),
 	}
+
+	s.fillCollectedStats(resp, units, curID)
 
 	// Total counters:
 	sum := unitDB{
@@ -516,22 +460,83 @@ func (s *StatsCtx) dataFromUnits(
 		sum.NResult[RParental] += u.NResult[RParental]
 	}
 
-	data.NumDNSQueries = sum.NTotal
-	data.NumBlockedFiltering = sum.NResult[RFiltered]
-	data.NumReplacedSafebrowsing = sum.NResult[RSafeBrowsing]
-	data.NumReplacedSafesearch = sum.NResult[RSafeSearch]
-	data.NumReplacedParental = sum.NResult[RParental]
+	resp.NumDNSQueries = sum.NTotal
+	resp.NumBlockedFiltering = sum.NResult[RFiltered]
+	resp.NumReplacedSafebrowsing = sum.NResult[RSafeBrowsing]
+	resp.NumReplacedSafesearch = sum.NResult[RSafeSearch]
+	resp.NumReplacedParental = sum.NResult[RParental]
 
 	if timeN != 0 {
-		data.AvgProcessingTime = microsecondsToSeconds(float64(sum.TimeAvg / timeN))
+		resp.AvgProcessingTime = microsecondsToSeconds(float64(sum.TimeAvg / timeN))
 	}
 
-	data.TimeUnits = "hours"
-	if timeUnit == Days {
-		data.TimeUnits = "days"
+	return resp
+}
+
+// fillCollectedStats fills data with collected statistics.
+func (s *StatsCtx) fillCollectedStats(data *StatsResp, units []*unitDB, curID uint32) {
+	size := len(units)
+	data.TimeUnits = timeUnitsHours
+
+	daysCount := size / 24
+	if daysCount > 7 {
+		size = daysCount
+		data.TimeUnits = timeUnitsDays
 	}
 
-	return data
+	data.DNSQueries = make([]uint64, size)
+	data.BlockedFiltering = make([]uint64, size)
+	data.ReplacedSafebrowsing = make([]uint64, size)
+	data.ReplacedParental = make([]uint64, size)
+
+	if data.TimeUnits == timeUnitsDays {
+		s.fillCollectedStatsDaily(data, units, curID, size)
+
+		return
+	}
+
+	for i, u := range units {
+		data.DNSQueries[i] += u.NTotal
+		data.BlockedFiltering[i] += u.NResult[RFiltered]
+		data.ReplacedSafebrowsing[i] += u.NResult[RSafeBrowsing]
+		data.ReplacedParental[i] += u.NResult[RParental]
+	}
+}
+
+// fillCollectedStatsDaily fills data with collected daily statistics.  units
+// must contain data for the count of days.
+func (s *StatsCtx) fillCollectedStatsDaily(
+	data *StatsResp,
+	units []*unitDB,
+	curHour uint32,
+	days int,
+) {
+	// Per time unit counters: 720 hours may span 31 days, so we skip data for
+	// the first hours in this case.  align_ceil(24)
+	hours := countHours(curHour, days)
+	units = units[len(units)-hours:]
+
+	for i := 0; i < len(units); i++ {
+		day := i / 24
+		u := units[i]
+
+		data.DNSQueries[day] += u.NTotal
+		data.BlockedFiltering[day] += u.NResult[RFiltered]
+		data.ReplacedSafebrowsing[day] += u.NResult[RSafeBrowsing]
+		data.ReplacedParental[day] += u.NResult[RParental]
+	}
+}
+
+// countHours returns the number of hours in the last days.
+func countHours(curHour uint32, days int) (n int) {
+	hoursInCurDay := int(curHour % 24)
+	if hoursInCurDay == 0 {
+		hoursInCurDay = 24
+	}
+
+	hoursInRestDays := (days - 1) * 24
+
+	return hoursInRestDays + hoursInCurDay
 }
 
 func topClientPairs(s *StatsCtx) (pg pairsGetter) {

@@ -53,7 +53,7 @@ func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	var (
-		resp StatsResp
+		resp *StatsResp
 		ok   bool
 	)
 	func() {

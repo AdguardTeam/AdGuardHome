@@ -14,24 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO(e.burkov):  Use more realistic data.
-func TestStatsCollector(t *testing.T) {
-	ng := func(_ *unitDB) uint64 { return 0 }
-	units := make([]*unitDB, 720)
-
-	t.Run("hours", func(t *testing.T) {
-		statsData := statsCollector(units, 0, Hours, ng)
-		assert.Len(t, statsData, 720)
-	})
-
-	t.Run("days", func(t *testing.T) {
-		for i := 0; i != 25; i++ {
-			statsData := statsCollector(units, uint32(i), Days, ng)
-			require.Lenf(t, statsData, 30, "i=%d", i)
-		}
-	})
-}
-
 func TestStats_races(t *testing.T) {
 	var r uint32
 	idGen := func() (id uint32) { return atomic.LoadUint32(&r) }
@@ -101,5 +83,88 @@ func TestStats_races(t *testing.T) {
 		startWG.Wait()
 		close(waitCh)
 		finWG.Wait()
+	}
+}
+
+func TestStatsCtx_FillCollectedStats_daily(t *testing.T) {
+	const (
+		daysCount = 10
+
+		timeUnits = "days"
+	)
+
+	s, err := New(Config{
+		ShouldCountClient: func([]string) bool { return true },
+		Filename:          filepath.Join(t.TempDir(), "./stats.db"),
+		Limit:             time.Hour,
+	})
+	require.NoError(t, err)
+
+	testutil.CleanupAndRequireSuccess(t, s.Close)
+
+	sum := make([][]uint64, resultLast)
+	sum[RFiltered] = make([]uint64, daysCount)
+	sum[RSafeBrowsing] = make([]uint64, daysCount)
+	sum[RParental] = make([]uint64, daysCount)
+
+	total := make([]uint64, daysCount)
+
+	dailyData := []*unitDB{}
+
+	for i := 0; i < daysCount*24; i++ {
+		n := uint64(i)
+		nResult := make([]uint64, resultLast)
+		nResult[RFiltered] = n
+		nResult[RSafeBrowsing] = n
+		nResult[RParental] = n
+
+		day := i / 24
+		sum[RFiltered][day] += n
+		sum[RSafeBrowsing][day] += n
+		sum[RParental][day] += n
+
+		t := n * 3
+
+		total[day] += t
+
+		dailyData = append(dailyData, &unitDB{
+			NTotal:  t,
+			NResult: nResult,
+		})
+	}
+
+	data := &StatsResp{}
+
+	// In this way we will not skip first hours.
+	curID := uint32(daysCount * 24)
+
+	s.fillCollectedStats(data, dailyData, curID)
+
+	assert.Equal(t, timeUnits, data.TimeUnits)
+	assert.Equal(t, sum[RFiltered], data.BlockedFiltering)
+	assert.Equal(t, sum[RSafeBrowsing], data.ReplacedSafebrowsing)
+	assert.Equal(t, sum[RParental], data.ReplacedParental)
+	assert.Equal(t, total, data.DNSQueries)
+}
+
+func TestStatsCtx_DataFromUnits_month(t *testing.T) {
+	const hoursInMonth = 720
+
+	s, err := New(Config{
+		ShouldCountClient: func([]string) bool { return true },
+		Filename:          filepath.Join(t.TempDir(), "./stats.db"),
+		Limit:             time.Hour,
+	})
+	require.NoError(t, err)
+
+	testutil.CleanupAndRequireSuccess(t, s.Close)
+
+	units, curID := s.loadUnits(hoursInMonth)
+	require.Len(t, units, hoursInMonth)
+
+	var h uint32
+	for h = 1; h <= hoursInMonth; h++ {
+		data := s.dataFromUnits(units[:h], curID)
+		require.NotNil(t, data)
 	}
 }

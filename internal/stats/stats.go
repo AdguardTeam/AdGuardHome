@@ -535,7 +535,8 @@ func (s *StatsCtx) clear() (err error) {
 	return nil
 }
 
-func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, firstID uint32) {
+// loadUnits returns stored units from the database and current unit ID.
+func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, curID uint32) {
 	db := s.db.Load()
 	if db == nil {
 		return nil, 0
@@ -555,7 +556,6 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, firstID uint32) {
 
 	cur := s.curr
 
-	var curID uint32
 	if cur != nil {
 		curID = cur.id
 	} else {
@@ -564,7 +564,7 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, firstID uint32) {
 
 	// Per-hour units.
 	units = make([]*unitDB, 0, limit)
-	firstID = curID - limit + 1
+	firstID := curID - limit + 1
 	for i := firstID; i != curID; i++ {
 		u := loadUnitFromDB(tx, i)
 		if u == nil {
@@ -586,7 +586,7 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, firstID uint32) {
 		log.Fatalf("loaded %d units whilst the desired number is %d", unitsLen, limit)
 	}
 
-	return units, firstID
+	return units, curID
 }
 
 // ShouldCount returns true if request for the host should be counted.
