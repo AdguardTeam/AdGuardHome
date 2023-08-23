@@ -3,8 +3,8 @@ package filtering
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -404,8 +404,8 @@ type checkHostResp struct {
 	SvcName string `json:"service_name"`
 
 	// for Rewrite:
-	CanonName string   `json:"cname"`    // CNAME value
-	IPList    []net.IP `json:"ip_addrs"` // list of IP addresses
+	CanonName string       `json:"cname"`    // CNAME value
+	IPList    []netip.Addr `json:"ip_addrs"` // list of IP addresses
 
 	// FilterID is the ID of the rule's filter list.
 	//

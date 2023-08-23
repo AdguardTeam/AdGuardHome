@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/netip"
 	"strings"
@@ -83,10 +82,10 @@ type jsonDNSConfig struct {
 	LocalPTRUpstreams *[]string `json:"local_ptr_upstreams"`
 
 	// BlockingIPv4 is custom IPv4 address for blocked A requests.
-	BlockingIPv4 net.IP `json:"blocking_ipv4"`
+	BlockingIPv4 netip.Addr `json:"blocking_ipv4"`
 
 	// BlockingIPv6 is custom IPv6 address for blocked AAAA requests.
-	BlockingIPv6 net.IP `json:"blocking_ipv6"`
+	BlockingIPv6 netip.Addr `json:"blocking_ipv6"`
 
 	// DisabledUntil is a timestamp until when the protection is disabled.
 	DisabledUntil *time.Time `json:"protection_disabled_until"`
@@ -297,8 +296,8 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 	if dc.BlockingMode != nil {
 		s.conf.BlockingMode = *dc.BlockingMode
 		if *dc.BlockingMode == BlockingModeCustomIP {
-			s.conf.BlockingIPv4 = dc.BlockingIPv4.To4()
-			s.conf.BlockingIPv6 = dc.BlockingIPv6.To16()
+			s.conf.BlockingIPv4 = dc.BlockingIPv4
+			s.conf.BlockingIPv6 = dc.BlockingIPv6
 		}
 	}
 

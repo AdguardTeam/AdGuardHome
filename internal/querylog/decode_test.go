@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"net"
+	"net/netip"
 	"strings"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -71,15 +73,15 @@ func TestDecodeLogEntry(t *testing.T) {
 				},
 				CanonName:   "example.com",
 				ServiceName: "example.org",
-				IPList:      []net.IP{net.IPv4(127, 0, 0, 2)},
+				IPList:      []netip.Addr{netip.AddrFrom4([4]byte{127, 0, 0, 2})},
 				Rules: []*filtering.ResultRule{{
 					FilterListID: 42,
 					Text:         "||an.yandex.ru",
-					IP:           net.IPv4(127, 0, 0, 2),
+					IP:           netip.AddrFrom4([4]byte{127, 0, 0, 2}),
 				}, {
 					FilterListID: 43,
 					Text:         "||an2.yandex.ru",
-					IP:           net.IPv4(127, 0, 0, 3),
+					IP:           netip.AddrFrom4([4]byte{127, 0, 0, 3}),
 				}},
 				Reason:     filtering.FilteredBlockList,
 				IsFiltered: true,
@@ -192,8 +194,10 @@ func TestDecodeLogEntry(t *testing.T) {
 
 func TestDecodeLogEntry_backwardCompatability(t *testing.T) {
 	var (
-		a1, a2       = net.IP{127, 0, 0, 1}.To16(), net.IP{127, 0, 0, 2}.To16()
-		aaaa1, aaaa2 = net.ParseIP("::1"), net.ParseIP("::2")
+		a1    = netutil.IPv4Localhost()
+		a2    = a1.Next()
+		aaaa1 = netutil.IPv6Localhost()
+		aaaa2 = aaaa1.Next()
 	)
 
 	testCases := []struct {
@@ -230,7 +234,7 @@ func TestDecodeLogEntry_backwardCompatability(t *testing.T) {
 		entry: `{"Result":{"IPList":["127.0.0.1","127.0.0.2","::1","::2"],"Reason":9}}`,
 		want: &logEntry{
 			Result: filtering.Result{
-				IPList: []net.IP{
+				IPList: []netip.Addr{
 					a1,
 					a2,
 					aaaa1,

@@ -38,6 +38,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- `$dnsrewrite` rules containing IPv4-mapped IPv6 addresses are now working
+  consistently with legacy DNS rewrites and match the `AAAA` requests.
 - For non-A and non-AAAA requests, which has been filtered, the NODATA response
   is returned if the blocking mode isn't set to `Null IP`.  In previous versions
   it returned NXDOMAIN response in such cases.
@@ -67,6 +69,8 @@ In this release, the schema version has changed from 24 to 25.
 
 ### Fixed
 
+- Legacy DNS rewrites containing IPv4-mapped IPv6 addresses are now matching the
+  `AAAA` requests, not `A` ([#6050]).
 - File log configuration, such as `max_size`, being ignored ([#6093]). 
 - Panic on using a single-slash filtering rule.
 - Panic on shutting down while DNS requests are in process of filtering
@@ -76,6 +80,7 @@ In this release, the schema version has changed from 24 to 25.
 [#3701]: https://github.com/AdguardTeam/AdGuardHome/issues/3701
 [#5948]: https://github.com/AdguardTeam/AdGuardHome/issues/5948
 [#6020]: https://github.com/AdguardTeam/AdGuardHome/issues/6020
+[#6050]: https://github.com/AdguardTeam/AdGuardHome/issues/6050
 [#6053]: https://github.com/AdguardTeam/AdGuardHome/issues/6053
 [#6093]: https://github.com/AdguardTeam/AdGuardHome/issues/6093
 [#6122]: https://github.com/AdguardTeam/AdGuardHome/issues/6122

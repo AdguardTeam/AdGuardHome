@@ -378,7 +378,7 @@ func getDNSEncryption() (de dnsEncryption) {
 
 // applyAdditionalFiltering adds additional client information and settings if
 // the client has them.
-func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering.Settings) {
+func applyAdditionalFiltering(clientIP netip.Addr, clientID string, setts *filtering.Settings) {
 	// pref is a prefix for logging messages around the scope.
 	const pref = "applying filters"
 
@@ -386,7 +386,7 @@ func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering
 
 	log.Debug("%s: looking for client with ip %s and clientid %q", pref, clientIP, clientID)
 
-	if clientIP == nil {
+	if !clientIP.IsValid() {
 		return
 	}
 

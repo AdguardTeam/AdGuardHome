@@ -131,7 +131,6 @@ func (a *accessManager) isBlockedClientID(id string) (ok bool) {
 func (a *accessManager) isBlockedHost(host string, qt rules.RRType) (ok bool) {
 	_, ok = a.blockedHostsEng.MatchRequest(&urlfilter.DNSRequest{
 		Hostname: host,
-		ClientIP: "0.0.0.0",
 		DNSType:  qt,
 	})
 

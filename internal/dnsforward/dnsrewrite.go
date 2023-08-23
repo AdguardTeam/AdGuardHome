@@ -2,7 +2,7 @@ package dnsforward
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -44,13 +44,13 @@ func (s *Server) ansFromDNSRewriteIP(
 	rr rules.RRType,
 	req *dns.Msg,
 ) (ans dns.RR, err error) {
-	ip, ok := v.(net.IP)
+	ip, ok := v.(netip.Addr)
 	if !ok {
-		return nil, fmt.Errorf("value for rr type %s has type %T, not net.IP", dns.Type(rr), v)
+		return nil, fmt.Errorf("value for rr type %s has type %T, not netip.Addr", dns.Type(rr), v)
 	}
 
 	if rr == dns.TypeA {
-		return s.genAnswerA(req, ip.To4()), nil
+		return s.genAnswerA(req, ip), nil
 	}
 
 	return s.genAnswerAAAA(req, ip), nil
@@ -160,13 +160,13 @@ func (s *Server) filterDNSRewrite(
 		return errors.Error("no dns rewrite rule responses")
 	}
 
-	rr := req.Question[0].Qtype
-	values := dnsrr.Response[rr]
+	qtype := req.Question[0].Qtype
+	values := dnsrr.Response[qtype]
 	for i, v := range values {
 		var ans dns.RR
-		ans, err = s.filterDNSRewriteResponse(req, rr, v)
+		ans, err = s.filterDNSRewriteResponse(req, qtype, v)
 		if err != nil {
-			return fmt.Errorf("dns rewrite response for %d[%d]: %w", rr, i, err)
+			return fmt.Errorf("dns rewrite response for %s[%d]: %w", dns.Type(qtype), i, err)
 		}
 
 		resp.Answer = append(resp.Answer, ans)

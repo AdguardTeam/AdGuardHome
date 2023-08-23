@@ -243,17 +243,17 @@ func newResp(rcode int, req *dns.Msg, ans []dns.RR) (resp *dns.Msg) {
 }
 
 func assertGoogleAResponse(t *testing.T, reply *dns.Msg) {
-	assertResponse(t, reply, net.IP{8, 8, 8, 8})
+	assertResponse(t, reply, netip.AddrFrom4([4]byte{8, 8, 8, 8}))
 }
 
-func assertResponse(t *testing.T, reply *dns.Msg, ip net.IP) {
+func assertResponse(t *testing.T, reply *dns.Msg, ip netip.Addr) {
 	t.Helper()
 
 	require.Lenf(t, reply.Answer, 1, "dns server returned reply with wrong number of answers - %d", len(reply.Answer))
 
 	a, ok := reply.Answer[0].(*dns.A)
 	require.Truef(t, ok, "dns server returned wrong answer type instead of A: %v", reply.Answer[0])
-	assert.Truef(t, a.A.Equal(ip), "dns server returned wrong answer instead of %s: %s", ip, a.A)
+	assert.Equal(t, net.IP(ip.AsSlice()), a.A)
 }
 
 // sendTestMessagesAsync sends messages in parallel to check for race issues.
@@ -473,7 +473,7 @@ func TestSafeSearch(t *testing.T) {
 		OnLookupIP: func(_ context.Context, _, host string) (ips []net.IP, err error) {
 			ip4, ip6 := aghtest.HostToIPs(host)
 
-			return []net.IP{ip4, ip6}, nil
+			return []net.IP{ip4.AsSlice(), ip6.AsSlice()}, nil
 		},
 	}
 
@@ -514,12 +514,12 @@ func TestSafeSearch(t *testing.T) {
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
 	client := &dns.Client{}
 
-	yandexIP := net.IP{213, 180, 193, 56}
+	yandexIP := netip.AddrFrom4([4]byte{213, 180, 193, 56})
 	googleIP, _ := aghtest.HostToIPs("forcesafesearch.google.com")
 
 	testCases := []struct {
 		host string
-		want net.IP
+		want netip.Addr
 	}{{
 		host: "yandex.com.",
 		want: yandexIP,
@@ -776,7 +776,7 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
-			FilterHandler: func(_ net.IP, _ string, settings *filtering.Settings) {
+			FilterHandler: func(_ netip.Addr, _ string, settings *filtering.Settings) {
 				settings.FilteringEnabled = false
 			},
 			EDNSClientSubnet: &EDNSClientSubnet{
@@ -876,7 +876,8 @@ func TestBlockedCustomIP(t *testing.T) {
 		FilteringConfig: FilteringConfig{
 			ProtectionEnabled: true,
 			BlockingMode:      BlockingModeCustomIP,
-			BlockingIPv4:      nil,
+			BlockingIPv4:      netip.Addr{},
+			BlockingIPv6:      netip.Addr{},
 			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
@@ -888,8 +889,8 @@ func TestBlockedCustomIP(t *testing.T) {
 	err = s.Prepare(conf)
 	assert.Error(t, err)
 
-	conf.BlockingIPv4 = net.IP{0, 0, 0, 1}
-	conf.BlockingIPv6 = net.ParseIP("::1")
+	conf.BlockingIPv4 = netip.AddrFrom4([4]byte{0, 0, 0, 1})
+	conf.BlockingIPv6 = netip.MustParseAddr("::1")
 
 	err = s.Prepare(conf)
 	require.NoError(t, err)
@@ -991,9 +992,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 	require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
 	require.Lenf(t, reply.Answer, 1, "dns server %s returned reply with wrong number of answers - %d", addr, len(reply.Answer))
 
-	a, ok := reply.Answer[0].(*dns.A)
-	require.Truef(t, ok, "dns server %s returned wrong answer type instead of A: %v", addr, reply.Answer[0])
-	assert.Equal(t, ans4, a.A, "dns server %s returned wrong answer: %v", addr, a.A)
+	assertResponse(t, reply, ans4)
 }
 
 func TestRewrite(t *testing.T) {

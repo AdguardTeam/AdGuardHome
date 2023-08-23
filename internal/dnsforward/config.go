@@ -55,7 +55,7 @@ type FilteringConfig struct {
 	// Callbacks for other modules
 
 	// FilterHandler is an optional additional filtering callback.
-	FilterHandler func(clientAddr net.IP, clientID string, settings *filtering.Settings) `yaml:"-"`
+	FilterHandler func(cliAddr netip.Addr, clientID string, settings *filtering.Settings) `yaml:"-"`
 
 	// GetCustomUpstreamByClient is a callback that returns upstreams
 	// configuration based on the client IP address or ClientID.  It returns
@@ -71,11 +71,11 @@ type FilteringConfig struct {
 	BlockingMode BlockingMode `yaml:"blocking_mode"`
 
 	// BlockingIPv4 is the IP address to be returned for a blocked A request.
-	BlockingIPv4 net.IP `yaml:"blocking_ipv4"`
+	BlockingIPv4 netip.Addr `yaml:"blocking_ipv4"`
 
 	// BlockingIPv6 is the IP address to be returned for a blocked AAAA
 	// request.
-	BlockingIPv6 net.IP `yaml:"blocking_ipv6"`
+	BlockingIPv6 netip.Addr `yaml:"blocking_ipv6"`
 
 	// BlockedResponseTTL is the time-to-live value for blocked responses.  If
 	// 0, then default value is used (3600).

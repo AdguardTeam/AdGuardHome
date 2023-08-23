@@ -54,7 +54,7 @@ type ServiceEntry struct {
 // Settings are custom filtering settings for a client.
 type Settings struct {
 	ClientName string
-	ClientIP   net.IP
+	ClientIP   netip.Addr
 	ClientTags []string
 
 	ServicesRules []ServiceEntry
@@ -404,7 +404,7 @@ type ResultRule struct {
 	Text string `json:",omitempty"`
 	// IP is the host IP.  It is nil unless the rule uses the
 	// /etc/hosts syntax or the reason is FilteredSafeSearch.
-	IP net.IP `json:",omitempty"`
+	IP netip.Addr `json:",omitempty"`
 	// FilterListID is the ID of the rule's filter list.
 	FilterListID int64 `json:",omitempty"`
 }
@@ -430,7 +430,7 @@ type Result struct {
 
 	// IPList is the lookup rewrite result.  It is empty unless Reason is set to
 	// Rewritten.
-	IPList []net.IP `json:",omitempty"`
+	IPList []netip.Addr `json:",omitempty"`
 
 	// Rules are applied rules.  If Rules are not empty, each rule is not nil.
 	Rules []*ResultRule `json:",omitempty"`
@@ -787,22 +787,27 @@ func (d *DNSFilter) matchHostProcessDNSResult(
 		return makeResult([]rules.Rule{dnsres.NetworkRule}, reason)
 	}
 
-	if qtype == dns.TypeA && dnsres.HostRulesV4 != nil {
-		res = makeResult(hostRulesToRules(dnsres.HostRulesV4), FilteredBlockList)
-		for i, hr := range dnsres.HostRulesV4 {
-			res.Rules[i].IP = hr.IP.To4()
+	switch qtype {
+	case dns.TypeA:
+		if dnsres.HostRulesV4 != nil {
+			res = makeResult(hostRulesToRules(dnsres.HostRulesV4), FilteredBlockList)
+			for i, hr := range dnsres.HostRulesV4 {
+				res.Rules[i].IP = hr.IP
+			}
+
+			return res
 		}
+	case dns.TypeAAAA:
+		if dnsres.HostRulesV6 != nil {
+			res = makeResult(hostRulesToRules(dnsres.HostRulesV6), FilteredBlockList)
+			for i, hr := range dnsres.HostRulesV6 {
+				res.Rules[i].IP = hr.IP
+			}
 
-		return res
-	}
-
-	if qtype == dns.TypeAAAA && dnsres.HostRulesV6 != nil {
-		res = makeResult(hostRulesToRules(dnsres.HostRulesV6), FilteredBlockList)
-		for i, hr := range dnsres.HostRulesV6 {
-			res.Rules[i].IP = hr.IP.To16()
+			return res
 		}
-
-		return res
+	default:
+		// Go on.
 	}
 
 	return hostResultForOtherQType(dnsres)
@@ -837,7 +842,7 @@ func (d *DNSFilter) matchHost(
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
 		// TODO(e.burkov): Wait for urlfilter update to pass net.IP.
-		ClientIP:   setts.ClientIP.String(),
+		ClientIP:   setts.ClientIP,
 		ClientName: setts.ClientName,
 		DNSType:    rrtype,
 	}

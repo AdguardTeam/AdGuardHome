@@ -645,7 +645,7 @@ func (s *Server) setupAddrProc() {
 }
 
 // validateBlockingMode returns an error if the blocking mode data aren't valid.
-func validateBlockingMode(mode BlockingMode, blockingIPv4, blockingIPv6 net.IP) (err error) {
+func validateBlockingMode(mode BlockingMode, blockingIPv4, blockingIPv6 netip.Addr) (err error) {
 	switch mode {
 	case
 		BlockingModeDefault,
@@ -654,10 +654,10 @@ func validateBlockingMode(mode BlockingMode, blockingIPv4, blockingIPv6 net.IP) 
 		BlockingModeNullIP:
 		return nil
 	case BlockingModeCustomIP:
-		if blockingIPv4 == nil {
-			return fmt.Errorf("blocking_ipv4 must be set when blocking_mode is custom_ip")
-		} else if blockingIPv6 == nil {
-			return fmt.Errorf("blocking_ipv6 must be set when blocking_mode is custom_ip")
+		if !blockingIPv4.Is4() {
+			return fmt.Errorf("blocking_ipv4 must be valid ipv4 on custom_ip blocking_mode")
+		} else if !blockingIPv6.Is6() {
+			return fmt.Errorf("blocking_ipv6 must be valid ipv6 on custom_ip blocking_mode")
 		}
 
 		return nil

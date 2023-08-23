@@ -3,12 +3,13 @@ package filtering
 import (
 	"bytes"
 	"fmt"
-	"net"
+	"net/netip"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -149,8 +150,8 @@ func TestDNSFilter_CheckHost_hostRules(t *testing.T) {
 
 	require.Len(t, res.Rules, 2)
 
-	assert.Equal(t, res.Rules[0].IP, net.IP{0, 0, 0, 1})
-	assert.Equal(t, res.Rules[1].IP, net.IP{0, 0, 0, 2})
+	assert.Equal(t, res.Rules[0].IP, netip.AddrFrom4([4]byte{0, 0, 0, 1}))
+	assert.Equal(t, res.Rules[1].IP, netip.AddrFrom4([4]byte{0, 0, 0, 2}))
 
 	// One IPv6 address.
 	res, err = d.CheckHost("host2", dns.TypeAAAA, setts)
@@ -160,7 +161,7 @@ func TestDNSFilter_CheckHost_hostRules(t *testing.T) {
 
 	require.Len(t, res.Rules, 1)
 
-	assert.Equal(t, res.Rules[0].IP, net.IPv6loopback)
+	assert.Equal(t, res.Rules[0].IP, netutil.IPv6Localhost())
 }
 
 // Safe Browsing.

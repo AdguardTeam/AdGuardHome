@@ -1,7 +1,7 @@
 package home
 
 import (
-	"net"
+	"net/netip"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var testIPv4 = netip.AddrFrom4([4]byte{1, 2, 3, 4})
 
 func TestApplyAdditionalFiltering(t *testing.T) {
 	var err error
@@ -78,7 +80,7 @@ func TestApplyAdditionalFiltering(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			setts := &filtering.Settings{}
 
-			applyAdditionalFiltering(net.IP{1, 2, 3, 4}, tc.id, setts)
+			applyAdditionalFiltering(testIPv4, tc.id, setts)
 			tc.FilteringEnabled(t, setts.FilteringEnabled)
 			tc.SafeSearchEnabled(t, setts.SafeSearchEnabled)
 			tc.SafeBrowsingEnabled(t, setts.SafeBrowsingEnabled)
@@ -169,7 +171,7 @@ func TestApplyAdditionalFiltering_blockedServices(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			setts := &filtering.Settings{}
 
-			applyAdditionalFiltering(net.IP{1, 2, 3, 4}, tc.id, setts)
+			applyAdditionalFiltering(testIPv4, tc.id, setts)
 			require.Len(t, setts.ServicesRules, tc.wantLen)
 		})
 	}

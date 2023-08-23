@@ -59,8 +59,8 @@ func (s *Server) clientRequestFilteringSettings(dctx *dnsContext) (setts *filter
 	setts = s.dnsFilter.Settings()
 	setts.ProtectionEnabled = dctx.protectionEnabled
 	if s.conf.FilterHandler != nil {
-		ip, _ := netutil.IPAndPortFromAddr(dctx.proxyCtx.Addr)
-		s.conf.FilterHandler(ip, dctx.clientID, setts)
+		addrPort := netutil.NetAddrToAddrPort(dctx.proxyCtx.Addr)
+		s.conf.FilterHandler(addrPort.Addr(), dctx.clientID, setts)
 	}
 
 	return setts
@@ -125,7 +125,7 @@ func (s *Server) filterRewritten(
 	for _, ip := range res.IPList {
 		switch qt {
 		case dns.TypeA:
-			a := s.genAnswerA(req, ip.To4())
+			a := s.genAnswerA(req, ip)
 			a.Hdr.Name = dns.Fqdn(name)
 			resp.Answer = append(resp.Answer, a)
 		case dns.TypeAAAA:

@@ -10,6 +10,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -22,12 +23,12 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 |cname^$dnsrewrite=new-cname
 
 |a-record^$dnsrewrite=127.0.0.1
-
 |aaaa-record^$dnsrewrite=::1
 
 |txt-record^$dnsrewrite=NOERROR;TXT;hello-world
-
 |refused^$dnsrewrite=REFUSED
+
+|mapped^$dnsrewrite=NOERROR;AAAA;::ffff:127.0.0.1
 
 |a-records^$dnsrewrite=127.0.0.1
 |a-records^$dnsrewrite=127.0.0.2
@@ -61,10 +62,11 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		FilteringEnabled: true,
 	}
 
-	ipv4p1 := net.IPv4(127, 0, 0, 1)
-	ipv4p2 := net.IPv4(127, 0, 0, 2)
-	ipv6p1 := net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
-	ipv6p2 := net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
+	ipv4p1 := netutil.IPv4Localhost()
+	ipv4p2 := ipv4p1.Next()
+	ipv6p1 := netutil.IPv6Localhost()
+	ipv6p2 := ipv6p1.Next()
+	mapped := netip.AddrFrom16(ipv4p1.As16())
 
 	testCasesA := []struct {
 		name  string
@@ -111,6 +113,11 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		want:  []any{ipv4p1},
 		rcode: dns.RcodeSuccess,
 		dtyp:  dns.TypeA,
+	}, {
+		name:  "mapped",
+		want:  []any{mapped},
+		rcode: dns.RcodeSuccess,
+		dtyp:  dns.TypeAAAA,
 	}}
 
 	for _, tc := range testCasesA {

@@ -177,7 +177,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		wantSet: "",
 	}, {
 		name:    "blocking_mode_bad",
-		wantSet: "blocking_ipv4 must be set when blocking_mode is custom_ip",
+		wantSet: "blocking_ipv4 must be valid ipv4 on custom_ip blocking_mode",
 	}, {
 		name:    "ratelimit",
 		wantSet: "",

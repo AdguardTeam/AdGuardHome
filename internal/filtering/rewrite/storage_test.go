@@ -1,9 +1,10 @@
 package rewrite
 
 import (
-	"net"
+	"net/netip"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -45,33 +46,43 @@ func TestDefaultStorage_CRUD(t *testing.T) {
 }
 
 func TestDefaultStorage_MatchRequest(t *testing.T) {
+	var (
+		addr1v4 = netip.AddrFrom4([4]byte{1, 2, 3, 4})
+		addr2v4 = netip.AddrFrom4([4]byte{1, 2, 3, 5})
+		addr3v4 = netip.AddrFrom4([4]byte{1, 2, 3, 6})
+		addr4v4 = netip.AddrFrom4([4]byte{1, 2, 3, 7})
+
+		addr1v6 = netip.MustParseAddr("1:2:3::4")
+		addr2v6 = netip.MustParseAddr("1234::5678")
+	)
+
 	items := []*Item{{
 		// This one and below are about CNAME, A and AAAA.
 		Domain: "somecname",
 		Answer: "somehost.com",
 	}, {
 		Domain: "somehost.com",
-		Answer: "0.0.0.0",
+		Answer: netip.IPv4Unspecified().String(),
 	}, {
 		Domain: "host.com",
-		Answer: "1.2.3.4",
+		Answer: addr1v4.String(),
 	}, {
 		Domain: "host.com",
-		Answer: "1.2.3.5",
+		Answer: addr2v4.String(),
 	}, {
 		Domain: "host.com",
-		Answer: "1:2:3::4",
+		Answer: addr1v6.String(),
 	}, {
 		Domain: "www.host.com",
 		Answer: "host.com",
 	}, {
 		// This one is a wildcard.
 		Domain: "*.host.com",
-		Answer: "1.2.3.5",
+		Answer: addr2v4.String(),
 	}, {
 		// This one and below are about wildcard overriding.
 		Domain: "a.host.com",
-		Answer: "1.2.3.4",
+		Answer: addr1v4.String(),
 	}, {
 		// This one is about CNAME and wildcard interacting.
 		Domain: "*.host2.com",
@@ -89,13 +100,13 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		Answer: "x.host.com",
 	}, {
 		Domain: "*.hostboth.com",
-		Answer: "1.2.3.6",
+		Answer: addr3v4.String(),
 	}, {
 		Domain: "*.hostboth.com",
-		Answer: "1234::5678",
+		Answer: addr2v6.String(),
 	}, {
 		Domain: "BIGHOST.COM",
-		Answer: "1.2.3.7",
+		Answer: addr4v4.String(),
 	}, {
 		Domain: "*.issue4016.com",
 		Answer: "sub.issue4016.com",
@@ -123,12 +134,12 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		name: "rewritten_a",
 		host: "www.host.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
-			Value:    net.IP{1, 2, 3, 4}.To16(),
+			Value:    addr1v4,
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeA,
 		}, {
-			Value:    net.IP{1, 2, 3, 5}.To16(),
+			Value:    addr2v4,
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeA,
@@ -138,7 +149,7 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		name: "rewritten_aaaa",
 		host: "www.host.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
-			Value:    net.ParseIP("1:2:3::4"),
+			Value:    addr1v6,
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeAAAA,
@@ -148,7 +159,7 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		name: "wildcard_match",
 		host: "abc.host.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
-			Value:    net.IP{1, 2, 3, 5}.To16(),
+			Value:    addr2v4,
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeA,
@@ -169,12 +180,12 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		name: "wildcard_cname_interaction",
 		host: "www.host2.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
-			Value:    net.IP{1, 2, 3, 4}.To16(),
+			Value:    addr1v4,
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeA,
 		}, {
-			Value:    net.IP{1, 2, 3, 5}.To16(),
+			Value:    addr2v4,
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeA,
@@ -184,7 +195,7 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		name: "two_cnames",
 		host: "b.host.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
-			Value:    net.IP{0, 0, 0, 0}.To16(),
+			Value:    netip.IPv4Unspecified(),
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeA,
@@ -194,7 +205,7 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		name: "two_cnames_and_wildcard",
 		host: "b.host3.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
-			Value:    net.IP{1, 2, 3, 5}.To16(),
+			Value:    addr2v4,
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeA,
@@ -204,7 +215,7 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		name: "issue3343",
 		host: "www.hostboth.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
-			Value:    net.ParseIP("1234::5678"),
+			Value:    addr2v6,
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeAAAA,
@@ -214,7 +225,7 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 		name: "issue3351",
 		host: "bighost.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
-			Value:    net.IP{1, 2, 3, 7}.To16(),
+			Value:    addr4v4,
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeA,
@@ -255,16 +266,22 @@ func TestDefaultStorage_MatchRequest(t *testing.T) {
 }
 
 func TestDefaultStorage_MatchRequest_Levels(t *testing.T) {
+	var (
+		addr1 = netip.AddrFrom4([4]byte{1, 1, 1, 1})
+		addr2 = netip.AddrFrom4([4]byte{2, 2, 2, 2})
+		addr3 = netip.AddrFrom4([4]byte{3, 3, 3, 3})
+	)
+
 	// Exact host, wildcard L2, wildcard L3.
 	items := []*Item{{
 		Domain: "host.com",
-		Answer: "1.1.1.1",
+		Answer: addr1.String(),
 	}, {
 		Domain: "*.host.com",
-		Answer: "2.2.2.2",
+		Answer: addr2.String(),
 	}, {
 		Domain: "*.sub.host.com",
-		Answer: "3.3.3.3",
+		Answer: addr3.String(),
 	}}
 
 	s, err := NewDefaultStorage(-1, items)
@@ -279,7 +296,7 @@ func TestDefaultStorage_MatchRequest_Levels(t *testing.T) {
 		name: "exact_match",
 		host: "host.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
-			Value:    net.IP{1, 1, 1, 1}.To16(),
+			Value:    addr1,
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeA,
@@ -289,7 +306,7 @@ func TestDefaultStorage_MatchRequest_Levels(t *testing.T) {
 		name: "l2_match",
 		host: "sub.host.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
-			Value:    net.IP{2, 2, 2, 2}.To16(),
+			Value:    addr2,
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeA,
@@ -300,7 +317,7 @@ func TestDefaultStorage_MatchRequest_Levels(t *testing.T) {
 		//	name: "l3_match",
 		//	host: "my.sub.host.com",
 		//	wantDNSRewrites: []*rules.DNSRewrite{{
-		//		Value:    net.IP{3, 3, 3, 3}.To16(),
+		//		Value:    addr3,
 		//		NewCNAME: "",
 		//		RCode:    dns.RcodeSuccess,
 		//		RRType:   dns.TypeA,
@@ -321,10 +338,12 @@ func TestDefaultStorage_MatchRequest_Levels(t *testing.T) {
 }
 
 func TestDefaultStorage_MatchRequest_ExceptionCNAME(t *testing.T) {
+	addr := netip.AddrFrom4([4]byte{2, 2, 2, 2})
+
 	// Wildcard and exception for a sub-domain.
 	items := []*Item{{
 		Domain: "*.host.com",
-		Answer: "2.2.2.2",
+		Answer: addr.String(),
 	}, {
 		Domain: "sub.host.com",
 		Answer: "sub.host.com",
@@ -345,7 +364,7 @@ func TestDefaultStorage_MatchRequest_ExceptionCNAME(t *testing.T) {
 		name: "match_subdomain",
 		host: "my.host.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
-			Value:    net.IP{2, 2, 2, 2}.To16(),
+			Value:    addr,
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeA,
@@ -377,16 +396,18 @@ func TestDefaultStorage_MatchRequest_ExceptionCNAME(t *testing.T) {
 }
 
 func TestDefaultStorage_MatchRequest_ExceptionIP(t *testing.T) {
+	addr := netip.AddrFrom4([4]byte{1, 2, 3, 4})
+
 	// Exception for AAAA record.
 	items := []*Item{{
 		Domain: "host.com",
-		Answer: "1.2.3.4",
+		Answer: addr.String(),
 	}, {
 		Domain: "host.com",
 		Answer: "AAAA",
 	}, {
 		Domain: "host2.com",
-		Answer: "::1",
+		Answer: netutil.IPv6Localhost().String(),
 	}, {
 		Domain: "host2.com",
 		Answer: "A",
@@ -407,7 +428,7 @@ func TestDefaultStorage_MatchRequest_ExceptionIP(t *testing.T) {
 		name: "match_A",
 		host: "host.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
-			Value:    net.IP{1, 2, 3, 4}.To16(),
+			Value:    addr,
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeA,
@@ -427,7 +448,7 @@ func TestDefaultStorage_MatchRequest_ExceptionIP(t *testing.T) {
 		name: "match_AAAA_host2.com",
 		host: "host2.com",
 		wantDNSRewrites: []*rules.DNSRewrite{{
-			Value:    net.ParseIP("::1"),
+			Value:    netutil.IPv6Localhost(),
 			NewCNAME: "",
 			RCode:    dns.RcodeSuccess,
 			RRType:   dns.TypeAAAA,
