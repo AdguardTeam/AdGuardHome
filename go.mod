@@ -16,8 +16,8 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/google/gopacket v1.1.19
 	github.com/google/renameio/v2 v2.0.0
-	github.com/google/uuid v1.3.0
-	github.com/insomniacslk/dhcp v0.0.0-20230731140434-0f9eb93a696c
+	github.com/google/uuid v1.3.1
+	github.com/insomniacslk/dhcp v0.0.0-20230816195147-b3ca2534940d
 	github.com/josharian/native v1.1.1-0.20230202152459-5c7d0dd6ab86
 	github.com/kardianos/service v1.2.2
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
@@ -50,7 +50,7 @@ require (
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/pprof v0.0.0-20230821062121-407c9e7a662f // indirect
 	github.com/mdlayher/socket v0.4.1 // indirect
-	github.com/onsi/ginkgo/v2 v2.11.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.12.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

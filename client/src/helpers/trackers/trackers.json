@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2023-08-01T00:10:42.759Z",
+    "timeUpdated": "2023-08-22T14:37:56.630Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -181,7 +181,7 @@
             "name": "7plus",
             "categoryId": 0,
             "url": "https://7plus.com.au/",
-            "companyId": "7plus",
+            "companyId": "seven_group_holdings",
             "source": "AdGuard"
         },
         "7tv.de": {
@@ -15298,7 +15298,7 @@
         "sectigo": {
             "name": "Sectigo Limited",
             "categoryId": 5,
-            "url": "https://www.solaredge.com/",
+            "url": "https://www.sectigo.com",
             "companyId": "sectigo",
             "source": "AdGuard"
         },
@@ -17762,10 +17762,11 @@
             "companyId": "amazon_associates"
         },
         "twitter": {
-            "name": "Twitter",
+            "name": "X (formerly Twitter)",
             "categoryId": 7,
             "url": "https://twitter.com",
-            "companyId": "twitter"
+            "companyId": "twitter",
+            "source": "AdGuard"
         },
         "twitter_ads": {
             "name": "Twitter Advertising",
@@ -18745,6 +18746,13 @@
             "categoryId": 11,
             "url": null,
             "companyId": null
+        },
+        "vungle": {
+            "name": "Vungle",
+            "categoryId": 4,
+            "url": "https://vungle.com/",
+            "companyId": "blackstone",
+            "source": "AdGuard"
         },
         "vuukle": {
             "name": "Vuukle",
@@ -24349,6 +24357,9 @@
         "trafmag.com": "trafmag.com",
         "api.transcend.io": "transcend",
         "cdn.transcend.io": "transcend",
+        "sync-transcend-cdn.com": "transcend",
+        "transcend-cdn.com": "transcend",
+        "transcend.io": "transcend",
         "telemetry.transcend.io": "transcend_telemetry",
         "backoffice.transmatico.com": "transmatic",
         "travelaudience.com": "travel_audience",
@@ -24636,6 +24647,8 @@
         "v0cdn.net": "vscode",
         "vscode-cdn.net": "vscode",
         "vtracy.de": "vtracy.de",
+        "liftoff.io": "vungle",
+        "vungle.com": "vungle",
         "vuukle.com": "vuukle",
         "view.vzaar.com": "vzaar",
         "w3counter.com": "w3counter",
