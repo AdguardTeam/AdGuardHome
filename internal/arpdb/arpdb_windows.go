@@ -1,6 +1,6 @@
-//go:build openbsd
+//go:build windows
 
-package aghnet
+package arpdb
 
 import (
 	"bufio"
@@ -19,45 +19,36 @@ func newARPDB() (arp *cmdARPDB) {
 			mu: &sync.RWMutex{},
 			ns: make([]Neighbor, 0),
 		},
-		cmd: "arp",
-		// Use -n flag to avoid resolving the hostnames of the neighbors.  By
-		// default ARP attempts to resolve the hostnames via DNS.  See man 8
-		// arp.
-		//
-		// See also https://github.com/AdguardTeam/AdGuardHome/issues/3157.
-		args: []string{"-a", "-n"},
+		cmd:  "arp",
+		args: []string{"/a"},
 	}
 }
 
-// parseArpA parses the output of the "arp -a -n" command on OpenBSD.  The
-// expected input format:
+// parseArpA parses the output of the "arp /a" command on Windows.  The expected
+// input format (the first line is empty):
 //
-//	Host        Ethernet Address  Netif Expire    Flags
-//	192.168.1.1 ab:cd:ef:ab:cd:ef   em0 19m59s
+//	Interface: 192.168.56.16 --- 0x7
+//	  Internet Address      Physical Address      Type
+//	  192.168.56.1          0a-00-27-00-00-00     dynamic
+//	  192.168.56.255        ff-ff-ff-ff-ff-ff     static
 func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
-	// Skip the header.
-	if !sc.Scan() {
-		return nil
-	}
-
 	ns = make([]Neighbor, 0, lenHint)
 	for sc.Scan() {
 		ln := sc.Text()
-
-		fields := strings.Fields(ln)
-		if len(fields) < 2 {
+		if ln == "" {
 			continue
 		}
 
-		n := Neighbor{}
+		fields := strings.Fields(ln)
+		if len(fields) != 3 {
+			continue
+		}
 
 		ip, err := netip.ParseAddr(fields[0])
 		if err != nil {
 			log.Debug("arpdb: parsing arp output: ip: %s", err)
 
 			continue
-		} else {
-			n.IP = ip
 		}
 
 		mac, err := net.ParseMAC(fields[1])
@@ -65,11 +56,12 @@ func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 			log.Debug("arpdb: parsing arp output: mac: %s", err)
 
 			continue
-		} else {
-			n.MAC = mac
 		}
 
-		ns = append(ns, n)
+		ns = append(ns, Neighbor{
+			IP:  ip,
+			MAC: mac,
+		})
 	}
 
 	return ns

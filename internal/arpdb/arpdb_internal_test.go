@@ -1,8 +1,12 @@
-package aghnet
+package arpdb
 
 import (
+	"fmt"
+	"io/fs"
 	"net"
 	"net/netip"
+	"os"
+	"strings"
 	"sync"
 	"testing"
 
@@ -12,30 +16,78 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewARPDB(t *testing.T) {
-	var a ARPDB
-	require.NotPanics(t, func() { a = NewARPDB() })
+// testdata is the filesystem containing data for testing the package.
+var testdata fs.FS = os.DirFS("./testdata")
+
+// RunCmdFunc is the signature of aghos.RunCommand function.
+type RunCmdFunc func(cmd string, args ...string) (code int, out []byte, err error)
+
+// substShell replaces the the aghos.RunCommand function used throughout the
+// package with rc for tests ran under t.
+func substShell(t testing.TB, rc RunCmdFunc) {
+	t.Helper()
+
+	prev := aghosRunCommand
+	t.Cleanup(func() { aghosRunCommand = prev })
+	aghosRunCommand = rc
+}
+
+// mapShell is a substitution of aghos.RunCommand that maps the command to it's
+// execution result.  It's only needed to simplify testing.
+//
+// TODO(e.burkov):  Perhaps put all the shell interactions behind an interface.
+type mapShell map[string]struct {
+	err  error
+	out  string
+	code int
+}
+
+// theOnlyCmd returns mapShell that only handles a single command and arguments
+// combination from cmd.
+func theOnlyCmd(cmd string, code int, out string, err error) (s mapShell) {
+	return mapShell{cmd: {code: code, out: out, err: err}}
+}
+
+// RunCmd is a RunCmdFunc handled by s.
+func (s mapShell) RunCmd(cmd string, args ...string) (code int, out []byte, err error) {
+	key := strings.Join(append([]string{cmd}, args...), " ")
+	ret, ok := s[key]
+	if !ok {
+		return 0, nil, fmt.Errorf("unexpected shell command %q", key)
+	}
+
+	return ret.code, []byte(ret.out), ret.err
+}
+
+func Test_New(t *testing.T) {
+	var a Interface
+	require.NotPanics(t, func() { a = New() })
 
 	assert.NotNil(t, a)
 }
 
-// TestARPDB is the mock implementation of ARPDB to use in tests.
+// TODO(s.chzhen):  Consider moving mocks into aghtest.
+
+// TestARPDB is the mock implementation of [Interface] to use in tests.
 type TestARPDB struct {
 	OnRefresh   func() (err error)
 	OnNeighbors func() (ns []Neighbor)
 }
 
-// Refresh implements the ARPDB interface for *TestARPDB.
+// type check
+var _ Interface = (*TestARPDB)(nil)
+
+// Refresh implements the [Interface] interface for *TestARPDB.
 func (arp *TestARPDB) Refresh() (err error) {
 	return arp.OnRefresh()
 }
 
-// Neighbors implements the ARPDB interface for *TestARPDB.
+// Neighbors implements the [Interface] interface for *TestARPDB.
 func (arp *TestARPDB) Neighbors() (ns []Neighbor) {
 	return arp.OnNeighbors()
 }
 
-func TestARPDBS(t *testing.T) {
+func Test_NewARPDBs(t *testing.T) {
 	knownIP := netip.MustParseAddr("1.2.3.4")
 	knownMAC := net.HardwareAddr{0xAB, 0xCD, 0xEF, 0xAB, 0xCD, 0xEF}
 
@@ -195,7 +247,7 @@ func TestCmdARPDB_arpa(t *testing.T) {
 }
 
 func TestEmptyARPDB(t *testing.T) {
-	a := EmptyARPDB{}
+	a := Empty{}
 
 	t.Run("refresh", func(t *testing.T) {
 		var err error

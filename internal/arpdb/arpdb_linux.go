@@ -1,6 +1,6 @@
 //go:build linux
 
-package aghnet
+package arpdb
 
 import (
 	"bufio"
@@ -13,7 +13,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
 
@@ -68,9 +67,9 @@ type fsysARPDB struct {
 }
 
 // type check
-var _ ARPDB = (*fsysARPDB)(nil)
+var _ Interface = (*fsysARPDB)(nil)
 
-// Refresh implements the ARPDB interface for *fsysARPDB.
+// Refresh implements the [Interface] interface for *fsysARPDB.
 func (arp *fsysARPDB) Refresh() (err error) {
 	var f fs.File
 	f, err = arp.fsys.Open(arp.filename)
@@ -88,21 +87,10 @@ func (arp *fsysARPDB) Refresh() (err error) {
 
 	ns := make([]Neighbor, 0, arp.ns.len())
 	for sc.Scan() {
-		ln := sc.Text()
-		fields := stringutil.SplitTrimmed(ln, " ")
-		if len(fields) != 6 {
-			continue
+		n := parseNeighbor(sc.Text())
+		if n != nil {
+			ns = append(ns, *n)
 		}
-
-		n := Neighbor{}
-		n.IP, err = netip.ParseAddr(fields[0])
-		if err != nil || n.IP.IsUnspecified() {
-			continue
-		} else if n.MAC, err = net.ParseMAC(fields[3]); err != nil {
-			continue
-		}
-
-		ns = append(ns, n)
 	}
 
 	arp.ns.reset(ns)
@@ -110,7 +98,30 @@ func (arp *fsysARPDB) Refresh() (err error) {
 	return nil
 }
 
-// Neighbors implements the ARPDB interface for *fsysARPDB.
+// parseNeighbor parses line into *Neighbor.
+func parseNeighbor(line string) (n *Neighbor) {
+	fields := stringutil.SplitTrimmed(line, " ")
+	if len(fields) != 6 {
+		return nil
+	}
+
+	ip, err := netip.ParseAddr(fields[0])
+	if err != nil || ip.IsUnspecified() {
+		return nil
+	}
+
+	mac, err := net.ParseMAC(fields[3])
+	if err != nil {
+		return nil
+	}
+
+	return &Neighbor{
+		IP:  ip,
+		MAC: mac,
+	}
+}
+
+// Neighbors implements the [Interface] interface for *fsysARPDB.
 func (arp *fsysARPDB) Neighbors() (ns []Neighbor) {
 	return arp.ns.clone()
 }
@@ -135,15 +146,11 @@ func parseArpAWrt(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 			continue
 		}
 
-		n := Neighbor{}
-
 		ip, err := netip.ParseAddr(fields[0])
-		if err != nil || n.IP.IsUnspecified() {
+		if err != nil {
 			log.Debug("arpdb: parsing arp output: ip: %s", err)
 
 			continue
-		} else {
-			n.IP = ip
 		}
 
 		hwStr := fields[3]
@@ -152,11 +159,12 @@ func parseArpAWrt(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 			log.Debug("arpdb: parsing arp output: mac: %s", err)
 
 			continue
-		} else {
-			n.MAC = mac
 		}
 
-		ns = append(ns, n)
+		ns = append(ns, Neighbor{
+			IP:  ip,
+			MAC: mac,
+		})
 	}
 
 	return ns
@@ -176,35 +184,31 @@ func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 			continue
 		}
 
-		n := Neighbor{}
-
-		if ipStr := fields[1]; len(ipStr) < 2 {
+		ipStr := fields[1]
+		if len(ipStr) < 2 {
 			continue
-		} else if ip, err := netip.ParseAddr(ipStr[1 : len(ipStr)-1]); err != nil {
+		}
+
+		ip, err := netip.ParseAddr(ipStr[1 : len(ipStr)-1])
+		if err != nil {
 			log.Debug("arpdb: parsing arp output: ip: %s", err)
 
 			continue
-		} else {
-			n.IP = ip
 		}
 
 		hwStr := fields[3]
-		if mac, err := net.ParseMAC(hwStr); err != nil {
+		mac, err := net.ParseMAC(hwStr)
+		if err != nil {
 			log.Debug("arpdb: parsing arp output: mac: %s", err)
 
 			continue
-		} else {
-			n.MAC = mac
 		}
 
-		host := fields[0]
-		if verr := netutil.ValidateHostname(host); verr != nil {
-			log.Debug("arpdb: parsing arp output: host: %s", verr)
-		} else {
-			n.Name = host
-		}
-
-		ns = append(ns, n)
+		ns = append(ns, Neighbor{
+			IP:   ip,
+			MAC:  mac,
+			Name: validatedHostname(fields[0]),
+		})
 	}
 
 	return ns

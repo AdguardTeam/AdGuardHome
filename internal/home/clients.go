@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
@@ -65,8 +66,8 @@ type clientsContainer struct {
 	// hosts database.
 	etcHosts *aghnet.HostsContainer
 
-	// arpdb stores the neighbors retrieved from ARP.
-	arpdb aghnet.ARPDB
+	// arpDB stores the neighbors retrieved from ARP.
+	arpDB arpdb.Interface
 
 	// lock protects all fields.
 	//
@@ -95,7 +96,7 @@ func (clients *clientsContainer) Init(
 	objects []*clientObject,
 	dhcpServer dhcpd.Interface,
 	etcHosts *aghnet.HostsContainer,
-	arpdb aghnet.ARPDB,
+	arpDB arpdb.Interface,
 	filteringConf *filtering.Config,
 ) (err error) {
 	if clients.list != nil {
@@ -110,7 +111,7 @@ func (clients *clientsContainer) Init(
 
 	clients.dhcpServer = dhcpServer
 	clients.etcHosts = etcHosts
-	clients.arpdb = arpdb
+	clients.arpDB = arpDB
 	err = clients.addFromConfig(objects, filteringConf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
@@ -164,7 +165,7 @@ func (clients *clientsContainer) Start() {
 
 // reloadARP reloads runtime clients from ARP, if configured.
 func (clients *clientsContainer) reloadARP() {
-	if clients.arpdb != nil {
+	if clients.arpDB != nil {
 		clients.addFromSystemARP()
 	}
 }
@@ -877,15 +878,15 @@ func (clients *clientsContainer) addFromHostsFile(hosts aghnet.Hosts) {
 // addFromSystemARP adds the IP-hostname pairings from the output of the arp -a
 // command.
 func (clients *clientsContainer) addFromSystemARP() {
-	if err := clients.arpdb.Refresh(); err != nil {
+	if err := clients.arpDB.Refresh(); err != nil {
 		log.Error("refreshing arp container: %s", err)
 
-		clients.arpdb = aghnet.EmptyARPDB{}
+		clients.arpDB = arpdb.Empty{}
 
 		return
 	}
 
-	ns := clients.arpdb.Neighbors()
+	ns := clients.arpDB.Neighbors()
 	if len(ns) == 0 {
 		log.Debug("refreshing arp container: the update is empty")
 

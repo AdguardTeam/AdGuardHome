@@ -1,4 +1,5 @@
-package aghnet
+// Package arpdb implements the Network Neighborhood Database.
+package arpdb
 
 import (
 	"bufio"
@@ -8,15 +9,25 @@ import (
 	"net/netip"
 	"sync"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"golang.org/x/exp/slices"
 )
 
-// ARPDB: The Network Neighborhood Database
+// Variables and functions to substitute in tests.
+var (
+	// aghosRunCommand is the function to run shell commands.
+	aghosRunCommand = aghos.RunCommand
 
-// ARPDB stores and refreshes the network neighborhood reported by ARP (Address
-// Resolution Protocol).
-type ARPDB interface {
+	// rootDirFS is the filesystem pointing to the root directory.
+	rootDirFS = aghos.RootDirFS()
+)
+
+// Interface stores and refreshes the network neighborhood reported by ARP
+// (Address Resolution Protocol).
+type Interface interface {
 	// Refresh updates the stored data.  It must be safe for concurrent use.
 	Refresh() (err error)
 
@@ -25,28 +36,24 @@ type ARPDB interface {
 	Neighbors() (ns []Neighbor)
 }
 
-// NewARPDB returns the ARPDB properly initialized for the OS.
-func NewARPDB() (arp ARPDB) {
+// New returns the [Interface] properly initialized for the OS.
+func New() (arp Interface) {
 	return newARPDB()
 }
 
-// Empty ARPDB implementation
-
-// EmptyARPDB is the ARPDB implementation that does nothing.
-type EmptyARPDB struct{}
+// Empty is the [Interface] implementation that does nothing.
+type Empty struct{}
 
 // type check
-var _ ARPDB = EmptyARPDB{}
+var _ Interface = Empty{}
 
-// Refresh implements the ARPDB interface for EmptyARPContainer.  It does
+// Refresh implements the [Interface] interface for EmptyARPContainer.  It does
 // nothing and always returns nil error.
-func (EmptyARPDB) Refresh() (err error) { return nil }
+func (Empty) Refresh() (err error) { return nil }
 
-// Neighbors implements the ARPDB interface for EmptyARPContainer.  It always
-// returns nil.
-func (EmptyARPDB) Neighbors() (ns []Neighbor) { return nil }
-
-// ARPDB Helper Types
+// Neighbors implements the [Interface] interface for EmptyARPContainer.  It
+// always returns nil.
+func (Empty) Neighbors() (ns []Neighbor) { return nil }
 
 // Neighbor is the pair of IP address and MAC address reported by ARP.
 type Neighbor struct {
@@ -70,8 +77,21 @@ func (n Neighbor) Clone() (clone Neighbor) {
 	}
 }
 
+// validatedHostname returns valid hostname.  Otherwise returns empty string and
+// logs the error if hostname is not valid.
+func validatedHostname(h string) (host string) {
+	err := netutil.ValidateHostname(h)
+	if err != nil {
+		log.Debug("arpdb: parsing arp output: host: %s", err)
+
+		return ""
+	}
+
+	return h
+}
+
 // neighs is the helper type that stores neighbors to avoid copying its methods
-// among all the ARPDB implementations.
+// among all the [Interface] implementations.
 type neighs struct {
 	mu *sync.RWMutex
 	ns []Neighbor
@@ -108,14 +128,12 @@ func (ns *neighs) reset(with []Neighbor) {
 	ns.ns = with
 }
 
-// Command ARPDB
-
 // parseNeighsFunc parses the text from sc as if it'd be an output of some
 // ARP-related command.  lenHint is a hint for the size of the allocated slice
 // of Neighbors.
 type parseNeighsFunc func(sc *bufio.Scanner, lenHint int) (ns []Neighbor)
 
-// cmdARPDB is the implementation of the ARPDB that uses command line to
+// cmdARPDB is the implementation of the [Interface] that uses command line to
 // retrieve data.
 type cmdARPDB struct {
 	parse parseNeighsFunc
@@ -125,9 +143,9 @@ type cmdARPDB struct {
 }
 
 // type check
-var _ ARPDB = (*cmdARPDB)(nil)
+var _ Interface = (*cmdARPDB)(nil)
 
-// Refresh implements the ARPDB interface for *cmdARPDB.
+// Refresh implements the [Interface] interface for *cmdARPDB.
 func (arp *cmdARPDB) Refresh() (err error) {
 	defer func() { err = errors.Annotate(err, "cmd arpdb: %w") }()
 
@@ -150,24 +168,22 @@ func (arp *cmdARPDB) Refresh() (err error) {
 	return nil
 }
 
-// Neighbors implements the ARPDB interface for *cmdARPDB.
+// Neighbors implements the [Interface] interface for *cmdARPDB.
 func (arp *cmdARPDB) Neighbors() (ns []Neighbor) {
 	return arp.ns.clone()
 }
 
-// Composite ARPDB
-
-// arpdbs is the ARPDB that combines several ARPDB implementations and
-// consequently switches between those.
+// arpdbs is the [Interface] that combines several [Interface] implementations
+// and consequently switches between those.
 type arpdbs struct {
-	// arps is the set of ARPDB implementations to range through.
-	arps []ARPDB
+	// arps is the set of [Interface] implementations to range through.
+	arps []Interface
 	neighs
 }
 
 // newARPDBs returns a properly initialized *arpdbs.  It begins refreshing from
 // the first of arps.
-func newARPDBs(arps ...ARPDB) (arp *arpdbs) {
+func newARPDBs(arps ...Interface) (arp *arpdbs) {
 	return &arpdbs{
 		arps: arps,
 		neighs: neighs{
@@ -178,9 +194,9 @@ func newARPDBs(arps ...ARPDB) (arp *arpdbs) {
 }
 
 // type check
-var _ ARPDB = (*arpdbs)(nil)
+var _ Interface = (*arpdbs)(nil)
 
-// Refresh implements the ARPDB interface for *arpdbs.
+// Refresh implements the [Interface] interface for *arpdbs.
 func (arp *arpdbs) Refresh() (err error) {
 	var errs []error
 
@@ -200,7 +216,7 @@ func (arp *arpdbs) Refresh() (err error) {
 	return errors.Annotate(errors.Join(errs...), "each arpdb failed: %w")
 }
 
-// Neighbors implements the ARPDB interface for *arpdbs.
+// Neighbors implements the [Interface] interface for *arpdbs.
 //
 // TODO(e.burkov):  Think of a way to avoid cloning the slice twice.
 func (arp *arpdbs) Neighbors() (ns []Neighbor) {

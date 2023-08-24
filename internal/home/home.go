@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
+	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -289,16 +290,16 @@ func initContextClients() (err error) {
 		return fmt.Errorf("initing dhcp: %w", err)
 	}
 
-	var arpdb aghnet.ARPDB
+	var arpDB arpdb.Interface
 	if config.Clients.Sources.ARP {
-		arpdb = aghnet.NewARPDB()
+		arpDB = arpdb.New()
 	}
 
 	err = Context.clients.Init(
 		config.Clients.Persistent,
 		Context.dhcpServer,
 		Context.etcHosts,
-		arpdb,
+		arpDB,
 		config.DNS.DnsfilterConf,
 	)
 	if err != nil {

@@ -191,6 +191,7 @@ gocognit_paths="\
 ./internal/aghhttp/              10
 ./internal/aghio/                10
 ./internal/aghrenameio/          10
+./internal/arpdb/                10
 ./internal/client/               10
 ./internal/dhcpsvc               10
 ./internal/filtering/hashprefix/ 10

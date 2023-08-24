@@ -1,6 +1,6 @@
 //go:build linux
 
-package aghnet
+package arpdb
 
 import (
 	"net"

@@ -1,6 +1,6 @@
 //go:build darwin || freebsd
 
-package aghnet
+package arpdb
 
 import (
 	"net"
