@@ -99,8 +99,11 @@ func Main(clientBuildFS fs.FS) {
 	// package flag.
 	opts := loadCmdLineOpts()
 
+	done := make(chan struct{})
+
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
+
 	go func() {
 		for {
 			sig := <-signals
@@ -112,19 +115,19 @@ func Main(clientBuildFS fs.FS) {
 			default:
 				cleanup(context.Background())
 				cleanupAlways()
-				os.Exit(0)
+				close(done)
 			}
 		}
 	}()
 
 	if opts.serviceControlAction != "" {
-		handleServiceControlAction(opts, clientBuildFS, signals)
+		handleServiceControlAction(opts, clientBuildFS, done)
 
 		return
 	}
 
 	// run the protection
-	run(opts, clientBuildFS)
+	run(opts, clientBuildFS, done)
 }
 
 // setupContext initializes [Context] fields.  It also reads and upgrades
@@ -504,7 +507,7 @@ func fatalOnError(err error) {
 }
 
 // run configures and starts AdGuard Home.
-func run(opts options, clientBuildFS fs.FS) {
+func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	// Configure config filename.
 	initConfigFilename(opts)
 
@@ -609,8 +612,8 @@ func run(opts options, clientBuildFS fs.FS) {
 
 	Context.web.start()
 
-	// Wait indefinitely for other goroutines to complete their job.
-	select {}
+	// Wait for other goroutines to complete their job.
+	<-done
 }
 
 // initUsers initializes context auth module.  Clears config users field.

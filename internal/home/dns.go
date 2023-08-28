@@ -502,14 +502,10 @@ func closeDNSServer() {
 		if err != nil {
 			log.Debug("closing stats: %s", err)
 		}
-
-		// TODO(e.burkov):  Find out if it's safe.
-		Context.stats = nil
 	}
 
 	if Context.queryLog != nil {
 		Context.queryLog.Close()
-		Context.queryLog = nil
 	}
 
 	log.Debug("all dns modules are closed")

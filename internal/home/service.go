@@ -33,7 +33,7 @@ const (
 // daemon.
 type program struct {
 	clientBuildFS fs.FS
-	signals       chan os.Signal
+	done          chan struct{}
 	opts          options
 }
 
@@ -46,19 +46,16 @@ func (p *program) Start(_ service.Service) (err error) {
 	args := p.opts
 	args.runningAsService = true
 
-	go run(args, p.clientBuildFS)
+	go run(args, p.clientBuildFS, p.done)
 
 	return nil
 }
 
 // Stop implements service.Interface interface for *program.
 func (p *program) Stop(_ service.Service) (err error) {
-	select {
-	case p.signals <- syscall.SIGINT:
-		// Go on.
-	default:
-		// Stop should not block.
-	}
+	log.Info("service: stopping: waiting for cleanup")
+
+	<-p.done
 
 	return nil
 }
@@ -198,7 +195,7 @@ func restartService() (err error) {
 //   - run:  This is a special command that is not supposed to be used directly
 //     it is specified when we register a service, and it indicates to the app
 //     that it is being run as a service/daemon.
-func handleServiceControlAction(opts options, clientBuildFS fs.FS, signals chan os.Signal) {
+func handleServiceControlAction(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	// Call chooseSystem explicitly to introduce OpenBSD support for service
 	// package.  It's a noop for other GOOS values.
 	chooseSystem()
@@ -232,7 +229,7 @@ func handleServiceControlAction(opts options, clientBuildFS fs.FS, signals chan 
 
 	s, err := service.New(&program{
 		clientBuildFS: clientBuildFS,
-		signals:       signals,
+		done:          done,
 		opts:          runOpts,
 	}, svcConfig)
 	if err != nil {

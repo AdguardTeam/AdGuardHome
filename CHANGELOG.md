@@ -69,6 +69,7 @@ In this release, the schema version has changed from 24 to 25.
 
 ### Fixed
 
+- Missing query log entries and statistics on service restart ([#6100]).
 - Occasional DNS-over-QUIC and DNS-over-HTTP/3 errors ([#6133]).
 - Legacy DNS rewrites containing IPv4-mapped IPv6 addresses are now matching the
   `AAAA` requests, not `A` ([#6050]).
@@ -84,6 +85,7 @@ In this release, the schema version has changed from 24 to 25.
 [#6050]: https://github.com/AdguardTeam/AdGuardHome/issues/6050
 [#6053]: https://github.com/AdguardTeam/AdGuardHome/issues/6053
 [#6093]: https://github.com/AdguardTeam/AdGuardHome/issues/6093
+[#6100]: https://github.com/AdguardTeam/AdGuardHome/issues/6100
 [#6122]: https://github.com/AdguardTeam/AdGuardHome/issues/6122
 [#6133]: https://github.com/AdguardTeam/AdGuardHome/issues/6133
 
