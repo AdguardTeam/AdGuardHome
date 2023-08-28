@@ -6,13 +6,14 @@
 }
 
 .setup {
-    min-height: calc(100vh - 71px);
+    min-height: calc(100vh - 345px);
     line-height: 1.48;
 }
 
 @media screen and (min-width: 768px) {
     .setup {
         padding: 50px 0;
+        min-height: calc(100vh - 141px);
     }
 }
 

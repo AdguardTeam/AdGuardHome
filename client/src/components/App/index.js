@@ -192,7 +192,7 @@ const App = () => {
         <LoadingBar className="loading-bar" updateTime={1000} />
         <Header />
         <ProtectionTimer />
-        <div className="container container--wrap pb-5">
+        <div className="container container--wrap pb-5 pt-5">
             {processing && <Loading />}
             {!isCoreRunning && <div className="row row-cards">
                 <div className="col-lg-12">
