@@ -301,7 +301,7 @@ func (d *DNSFilter) handleFilteringRefresh(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 type filterJSON struct {
@@ -354,7 +354,7 @@ func (d *DNSFilter) handleFilteringStatus(w http.ResponseWriter, r *http.Request
 	resp.UserRules = d.UserRules
 	d.filtersMu.RUnlock()
 
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // Set filtering configuration
@@ -456,7 +456,7 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // setProtectedBool sets the value of a boolean pointer under a lock.  l must
@@ -504,7 +504,7 @@ func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Requ
 		Enabled: protectedBool(&d.confLock, &d.Config.SafeBrowsingEnabled),
 	}
 
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // handleParentalEnable is the handler for the POST /control/parental/enable
@@ -530,7 +530,7 @@ func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request)
 		Enabled: protectedBool(&d.confLock, &d.Config.ParentalEnabled),
 	}
 
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // RegisterFilteringHandlers - register handlers
@@ -560,8 +560,13 @@ func (d *DNSFilter) RegisterFilteringHandlers() {
 
 	registerHTTP(http.MethodGet, "/control/blocked_services/services", d.handleBlockedServicesIDs)
 	registerHTTP(http.MethodGet, "/control/blocked_services/all", d.handleBlockedServicesAll)
+
+	// Deprecated handlers.
 	registerHTTP(http.MethodGet, "/control/blocked_services/list", d.handleBlockedServicesList)
 	registerHTTP(http.MethodPost, "/control/blocked_services/set", d.handleBlockedServicesSet)
+
+	registerHTTP(http.MethodGet, "/control/blocked_services/get", d.handleBlockedServicesGet)
+	registerHTTP(http.MethodPut, "/control/blocked_services/update", d.handleBlockedServicesUpdate)
 
 	registerHTTP(http.MethodGet, "/control/filtering/status", d.handleFilteringStatus)
 	registerHTTP(http.MethodPost, "/control/filtering/config", d.handleFilteringConfig)

@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -122,7 +123,7 @@ func TestWeekly_Contains(t *testing.T) {
 	}
 }
 
-const brusselsSunday = `
+const brusselsSundayYAML = `
 sun:
     start: 12h
     end: 14h
@@ -179,7 +180,7 @@ yaml: "bad"
 	}, {
 		name:       "brussels_sunday",
 		wantErrMsg: "",
-		data:       []byte(brusselsSunday),
+		data:       []byte(brusselsSundayYAML),
 		want:       brusselsWeekly,
 	}, {
 		name:       "start_equal_end",
@@ -240,7 +241,7 @@ func TestWeekly_MarshalYAML(t *testing.T) {
 		want: &Weekly{},
 	}, {
 		name: "brussels_sunday",
-		data: []byte(brusselsSunday),
+		data: []byte(brusselsSundayYAML),
 		want: brusselsWeekly,
 	}}
 
@@ -366,6 +367,145 @@ func TestDayRange_Validate(t *testing.T) {
 			err := tc.in.validate()
 
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
+		})
+	}
+}
+
+const brusselsSundayJSON = `{
+  "sun": {
+    "end": 50400000,
+    "start": 43200000
+  },
+  "time_zone": "Europe/Brussels"
+}`
+
+func TestWeekly_UnmarshalJSON(t *testing.T) {
+	const (
+		sameTime = `{
+  "sun": {
+    "end": 32400000,
+    "start": 32400000
+  }
+}`
+		negativeStart = `{
+  "sun": {
+    "end": 3600000,
+    "start": -3600000
+  }
+}`
+		badTZ = `{
+  "time_zone": "bad_timezone"
+}`
+		badJSON = `{
+  "bad": "json",
+}`
+	)
+
+	brusseltsTZ, err := time.LoadLocation("Europe/Brussels")
+	require.NoError(t, err)
+
+	brusselsWeekly := &Weekly{
+		days: [7]dayRange{{
+			start: time.Hour * 12,
+			end:   time.Hour * 14,
+		}},
+		location: brusseltsTZ,
+	}
+
+	testCases := []struct {
+		name       string
+		wantErrMsg string
+		data       []byte
+		want       *Weekly
+	}{{
+		name:       "empty",
+		wantErrMsg: "unexpected end of JSON input",
+		data:       []byte(""),
+		want:       &Weekly{},
+	}, {
+		name:       "null",
+		wantErrMsg: "",
+		data:       []byte("null"),
+		want:       &Weekly{location: time.UTC},
+	}, {
+		name:       "brussels_sunday",
+		wantErrMsg: "",
+		data:       []byte(brusselsSundayJSON),
+		want:       brusselsWeekly,
+	}, {
+		name:       "start_equal_end",
+		wantErrMsg: "weekday Sunday: bad day range: start 9h0m0s is greater or equal to end 9h0m0s",
+		data:       []byte(sameTime),
+		want:       &Weekly{},
+	}, {
+		name:       "start_negative",
+		wantErrMsg: "weekday Sunday: bad day range: start -1h0m0s is negative",
+		data:       []byte(negativeStart),
+		want:       &Weekly{},
+	}, {
+		name:       "bad_time_zone",
+		wantErrMsg: "unknown time zone bad_timezone",
+		data:       []byte(badTZ),
+		want:       &Weekly{},
+	}, {
+		name:       "bad_json",
+		wantErrMsg: "invalid character '}' looking for beginning of object key string",
+		data:       []byte(badJSON),
+		want:       &Weekly{},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			w := &Weekly{}
+			err = json.Unmarshal(tc.data, w)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
+
+			assert.Equal(t, tc.want, w)
+		})
+	}
+}
+
+func TestWeekly_MarshalJSON(t *testing.T) {
+	brusselsTZ, err := time.LoadLocation("Europe/Brussels")
+	require.NoError(t, err)
+
+	brusselsWeekly := &Weekly{
+		days: [7]dayRange{time.Sunday: {
+			start: time.Hour * 12,
+			end:   time.Hour * 14,
+		}},
+		location: brusselsTZ,
+	}
+
+	testCases := []struct {
+		name string
+		data []byte
+		want *Weekly
+	}{{
+		name: "empty",
+		data: []byte(""),
+		want: &Weekly{},
+	}, {
+		name: "null",
+		data: []byte("null"),
+		want: &Weekly{},
+	}, {
+		name: "brussels_sunday",
+		data: []byte(brusselsSundayJSON),
+		want: brusselsWeekly,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var data []byte
+			data, err = json.Marshal(brusselsWeekly)
+			require.NoError(t, err)
+
+			w := &Weekly{}
+			err = json.Unmarshal(data, w)
+			require.NoError(t, err)
+
+			assert.Equal(t, brusselsWeekly, w)
 		})
 	}
 }

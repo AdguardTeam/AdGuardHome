@@ -2,6 +2,8 @@ package websvc
 
 import (
 	"net/http"
+
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 )
 
 // All Settings Handlers
@@ -25,20 +27,20 @@ func (svc *Service) handleGetSettingsAll(w http.ResponseWriter, r *http.Request)
 	httpConf := webSvc.Config()
 
 	// TODO(a.garipov): Add all currently supported parameters.
-	writeJSONOKResponse(w, r, &RespGetV1SettingsAll{
+	aghhttp.WriteJSONResponseOK(w, r, &RespGetV1SettingsAll{
 		DNS: &HTTPAPIDNSSettings{
 			Addresses:           dnsConf.Addresses,
 			BootstrapServers:    dnsConf.BootstrapServers,
 			UpstreamServers:     dnsConf.UpstreamServers,
 			DNS64Prefixes:       dnsConf.DNS64Prefixes,
-			UpstreamTimeout:     JSONDuration(dnsConf.UpstreamTimeout),
+			UpstreamTimeout:     aghhttp.JSONDuration(dnsConf.UpstreamTimeout),
 			BootstrapPreferIPv6: dnsConf.BootstrapPreferIPv6,
 			UseDNS64:            dnsConf.UseDNS64,
 		},
 		HTTP: &HTTPAPIHTTPSettings{
 			Addresses:       httpConf.Addresses,
 			SecureAddresses: httpConf.SecureAddresses,
-			Timeout:         JSONDuration(httpConf.Timeout),
+			Timeout:         aghhttp.JSONDuration(httpConf.Timeout),
 			ForceHTTPS:      httpConf.ForceHTTPS,
 		},
 	})

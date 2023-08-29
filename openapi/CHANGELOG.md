@@ -4,6 +4,86 @@
 
 ## v0.108.0: API changes
 
+## v0.107.37: API changes
+
+### Deprecated blocked services APIs
+
+* The `GET /control/blocked_services/list` HTTP API; use the new `GET
+  /control/blocked_services/get` API instead.
+
+* The `POST /control/blocked_services/set` HTTP API; use the new `PUT
+  /control/blocked_services/update` API instead.
+
+### New blocked services APIs
+
+* The new `GET /control/blocked_services/get` HTTP API.
+
+* The new `PUT /control/blocked_services/update` HTTP API allows config
+  updates.
+
+These APIs accept and return a JSON object with the following format:
+
+```json
+{
+  "schedule": {
+    "time_zone": "Local",
+    "sun": {
+      "start": 46800000,
+      "end": 82800000
+    }
+  },
+  "ids": [
+    "vk"
+  ]
+}
+```
+
+### `/control/clients` HTTP APIs
+
+The following HTTP APIs have been changed:
+
+*  `GET /control/clients`;
+*  `GET /control/clients/find?ip0=...&ip1=...&ip2=...`;
+*  `POST /control/clients/add`;
+*  `POST /control/clients/update`;
+
+The new field `blocked_services_schedule` has been added to JSON objects.  It
+has the following format:
+
+```json
+{
+  "time_zone": "Local",
+  "sun": {
+    "start": 0,
+    "end": 86400000
+  },
+  "mon": {
+    "start": 60000,
+    "end": 82800000
+  },
+  "thu": {
+    "start": 120000,
+    "end": 79200000
+  },
+  "tue": {
+    "start": 180000,
+    "end": 75600000
+  },
+  "wed": {
+    "start": 240000,
+    "end": 72000000
+  },
+  "fri": {
+    "start": 300000,
+    "end": 68400000
+  },
+  "sat": {
+    "start": 360000,
+    "end": 64800000
+  }
+}
+```
+
 ## v0.107.36: API changes
 
 ### The new fields `"top_upstreams_responses"` and `"top_upstreams_avg_time"` in `Stats` object

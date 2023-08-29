@@ -36,7 +36,7 @@ func (d *DNSFilter) handleSafeSearchStatus(w http.ResponseWriter, r *http.Reques
 		resp = d.Config.SafeSearchConf
 	}()
 
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // handleSafeSearchSettings is the handler for PUT /control/safesearch/settings

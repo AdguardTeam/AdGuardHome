@@ -1,6 +1,6 @@
 {
     "extends": ".eslintrc",
     "rules": {
-        "no-debugger":"warn",
+        "no-debugger":"warn"
     }
 }

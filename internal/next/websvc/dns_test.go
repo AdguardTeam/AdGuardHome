@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
@@ -24,7 +25,7 @@ func TestService_HandlePatchSettingsDNS(t *testing.T) {
 		BootstrapServers:    []string{"1.0.0.1"},
 		UpstreamServers:     []string{"1.1.1.1"},
 		DNS64Prefixes:       []netip.Prefix{netip.MustParsePrefix("1234::/64")},
-		UpstreamTimeout:     websvc.JSONDuration(2 * time.Second),
+		UpstreamTimeout:     aghhttp.JSONDuration(2 * time.Second),
 		BootstrapPreferIPv6: true,
 		UseDNS64:            true,
 	}

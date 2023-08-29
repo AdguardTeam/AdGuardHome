@@ -146,7 +146,7 @@ func (s *server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	status.Leases = leasesToDynamic(s.Leases(LeasesDynamic))
 	status.StaticLeases = leasesToStatic(s.Leases(LeasesStatic))
 
-	_ = aghhttp.WriteJSONResponse(w, r, status)
+	aghhttp.WriteJSONResponseOK(w, r, status)
 }
 
 func (s *server) enableDHCP(ifaceName string) (code int, err error) {
@@ -395,7 +395,7 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // newNetInterfaceJSON creates a JSON object from a [net.Interface] iface.
@@ -547,7 +547,7 @@ func (s *server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 
 	setOtherDHCPResult(ifaceName, result)
 
-	_ = aghhttp.WriteJSONResponse(w, r, result)
+	aghhttp.WriteJSONResponseOK(w, r, result)
 }
 
 // setOtherDHCPResult sets the results of the check for another DHCP server in

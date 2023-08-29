@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,7 @@ func TestService_HandlePatchSettingsHTTP(t *testing.T) {
 	wantWeb := &websvc.HTTPAPIHTTPSettings{
 		Addresses:       []netip.AddrPort{netip.MustParseAddrPort("127.0.1.1:80")},
 		SecureAddresses: []netip.AddrPort{netip.MustParseAddrPort("127.0.1.1:443")},
-		Timeout:         websvc.JSONDuration(10 * time.Second),
+		Timeout:         aghhttp.JSONDuration(10 * time.Second),
 		ForceHTTPS:      false,
 	}
 

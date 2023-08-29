@@ -1,18 +1,18 @@
-package websvc_test
+package aghhttp_test
 
 import (
 	"encoding/json"
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // testJSONTime is the JSON time for tests.
-var testJSONTime = websvc.JSONTime(time.Unix(1_234_567_890, 123_456_000).UTC())
+var testJSONTime = aghhttp.JSONTime(time.Unix(1_234_567_890, 123_456_000).UTC())
 
 // testJSONTimeStr is the string with the JSON encoding of testJSONTime.
 const testJSONTimeStr = "1234567890123.456"
@@ -21,17 +21,17 @@ func TestJSONTime_MarshalJSON(t *testing.T) {
 	testCases := []struct {
 		name       string
 		wantErrMsg string
-		in         websvc.JSONTime
+		in         aghhttp.JSONTime
 		want       []byte
 	}{{
 		name:       "unix_zero",
 		wantErrMsg: "",
-		in:         websvc.JSONTime(time.Unix(0, 0)),
+		in:         aghhttp.JSONTime(time.Unix(0, 0)),
 		want:       []byte("0"),
 	}, {
 		name:       "empty",
 		wantErrMsg: "",
-		in:         websvc.JSONTime{},
+		in:         aghhttp.JSONTime{},
 		want:       []byte("-6795364578871.345"),
 	}, {
 		name:       "time",
@@ -51,7 +51,7 @@ func TestJSONTime_MarshalJSON(t *testing.T) {
 
 	t.Run("json", func(t *testing.T) {
 		in := &struct {
-			A websvc.JSONTime
+			A aghhttp.JSONTime
 		}{
 			A: testJSONTime,
 		}
@@ -67,7 +67,7 @@ func TestJSONTime_UnmarshalJSON(t *testing.T) {
 	testCases := []struct {
 		name       string
 		wantErrMsg string
-		want       websvc.JSONTime
+		want       aghhttp.JSONTime
 		data       []byte
 	}{{
 		name:       "time",
@@ -78,13 +78,13 @@ func TestJSONTime_UnmarshalJSON(t *testing.T) {
 		name: "bad",
 		wantErrMsg: `parsing json time: strconv.ParseFloat: parsing "{}": ` +
 			`invalid syntax`,
-		want: websvc.JSONTime{},
+		want: aghhttp.JSONTime{},
 		data: []byte(`{}`),
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var got websvc.JSONTime
+			var got aghhttp.JSONTime
 			err := got.UnmarshalJSON(tc.data)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 
@@ -93,7 +93,7 @@ func TestJSONTime_UnmarshalJSON(t *testing.T) {
 	}
 
 	t.Run("nil", func(t *testing.T) {
-		err := (*websvc.JSONTime)(nil).UnmarshalJSON([]byte("0"))
+		err := (*aghhttp.JSONTime)(nil).UnmarshalJSON([]byte("0"))
 		require.Error(t, err)
 
 		msg := err.Error()
@@ -103,7 +103,7 @@ func TestJSONTime_UnmarshalJSON(t *testing.T) {
 	t.Run("json", func(t *testing.T) {
 		want := testJSONTime
 		var got struct {
-			A websvc.JSONTime
+			A aghhttp.JSONTime
 		}
 
 		err := json.Unmarshal([]byte(`{"A":`+testJSONTimeStr+`}`), &got)

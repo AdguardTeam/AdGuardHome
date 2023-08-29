@@ -28,7 +28,7 @@ func (d *DNSFilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
 	}
 	d.confLock.Unlock()
 
-	_ = aghhttp.WriteJSONResponse(w, r, arr)
+	aghhttp.WriteJSONResponseOK(w, r, arr)
 }
 
 func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {

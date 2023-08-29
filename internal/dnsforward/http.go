@@ -169,7 +169,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 // handleGetConfig handles requests to the GET /control/dns_info endpoint.
 func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	resp := s.getDNSConfig()
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 func (req *jsonDNSConfig) checkBlockingMode() (err error) {
@@ -758,7 +758,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	_ = aghhttp.WriteJSONResponse(w, r, result)
+	aghhttp.WriteJSONResponseOK(w, r, result)
 }
 
 // handleCacheClear is the handler for the POST /control/cache_clear HTTP API.

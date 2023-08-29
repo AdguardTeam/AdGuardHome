@@ -8,6 +8,7 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -21,9 +22,9 @@ type ReqPatchSettingsHTTP struct {
 	//
 	// TODO(a.garipov): Add wait time.
 
-	Addresses       []netip.AddrPort `json:"addresses"`
-	SecureAddresses []netip.AddrPort `json:"secure_addresses"`
-	Timeout         JSONDuration     `json:"timeout"`
+	Addresses       []netip.AddrPort     `json:"addresses"`
+	SecureAddresses []netip.AddrPort     `json:"secure_addresses"`
+	Timeout         aghhttp.JSONDuration `json:"timeout"`
 }
 
 // HTTPAPIHTTPSettings are the HTTP settings as used by the HTTP API.  See the
@@ -31,10 +32,10 @@ type ReqPatchSettingsHTTP struct {
 type HTTPAPIHTTPSettings struct {
 	// TODO(a.garipov): Add more as we go.
 
-	Addresses       []netip.AddrPort `json:"addresses"`
-	SecureAddresses []netip.AddrPort `json:"secure_addresses"`
-	Timeout         JSONDuration     `json:"timeout"`
-	ForceHTTPS      bool             `json:"force_https"`
+	Addresses       []netip.AddrPort     `json:"addresses"`
+	SecureAddresses []netip.AddrPort     `json:"secure_addresses"`
+	Timeout         aghhttp.JSONDuration `json:"timeout"`
+	ForceHTTPS      bool                 `json:"force_https"`
 }
 
 // handlePatchSettingsHTTP is the handler for the PATCH /api/v1/settings/http
@@ -46,7 +47,7 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		writeJSONErrorResponse(w, r, fmt.Errorf("decoding: %w", err))
+		aghhttp.WriteJSONResponseError(w, r, fmt.Errorf("decoding: %w", err))
 
 		return
 	}
@@ -65,10 +66,10 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 		ForceHTTPS:      svc.forceHTTPS,
 	}
 
-	writeJSONOKResponse(w, r, &HTTPAPIHTTPSettings{
+	aghhttp.WriteJSONResponseOK(w, r, &HTTPAPIHTTPSettings{
 		Addresses:       newConf.Addresses,
 		SecureAddresses: newConf.SecureAddresses,
-		Timeout:         JSONDuration(newConf.Timeout),
+		Timeout:         aghhttp.JSONDuration(newConf.Timeout),
 		ForceHTTPS:      newConf.ForceHTTPS,
 	})
 

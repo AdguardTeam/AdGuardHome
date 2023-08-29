@@ -470,6 +470,10 @@ hr {
     border-top: 1px solid rgba(0, 40, 100, 0.12);
 }
 
+[data-theme=dark] hr {
+    border-color: var(--card-border-color);
+}
+
 small,
 .small {
     font-size: 87.5%;

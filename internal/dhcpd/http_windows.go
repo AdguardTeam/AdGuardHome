@@ -24,7 +24,7 @@ type jsonError struct {
 // TODO(a.garipov): Either take the logger from the server after we've
 // refactored logging or make this not a method of *Server.
 func (s *server) notImplemented(w http.ResponseWriter, r *http.Request) {
-	_ = aghhttp.WriteJSONResponseCode(w, r, http.StatusNotImplemented, &jsonError{
+	aghhttp.WriteJSONResponse(w, r, http.StatusNotImplemented, &jsonError{
 		Message: aghos.Unsupported("dhcp").Error(),
 	})
 }

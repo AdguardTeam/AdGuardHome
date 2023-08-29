@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import Form from './Form';
 import Card from '../../ui/Card';
-import { getBlockedServices, getAllBlockedServices, setBlockedServices } from '../../../actions/services';
+import { getBlockedServices, getAllBlockedServices, updateBlockedServices } from '../../../actions/services';
 import PageTitle from '../../ui/PageTitle';
+
+import { ScheduleForm } from './ScheduleForm';
 
 const getInitialDataForServices = (initial) => (initial ? initial.reduce(
     (acc, service) => {
@@ -33,10 +35,24 @@ const Services = () => {
             .keys(values.blocked_services)
             .filter((service) => values.blocked_services[service]);
 
-        dispatch(setBlockedServices(blocked_services));
+        dispatch(updateBlockedServices({
+            ids: blocked_services,
+            schedule: services.list.schedule,
+        }));
     };
 
-    const initialValues = getInitialDataForServices(services.list);
+    const handleScheduleSubmit = (values) => {
+        dispatch(updateBlockedServices({
+            ids: services.list.ids,
+            schedule: values,
+        }));
+    };
+
+    const initialValues = getInitialDataForServices(services.list.ids);
+
+    if (!initialValues) {
+        return null;
+    }
 
     return (
         <>
@@ -56,6 +72,17 @@ const Services = () => {
                         onSubmit={handleSubmit}
                     />
                 </div>
+            </Card>
+
+            <Card
+                title={t('schedule_services')}
+                subtitle={t('schedule_services_desc')}
+                bodyType="card-body box-body--settings"
+            >
+                <ScheduleForm
+                    schedule={services.list.schedule}
+                    onScheduleSubmit={handleScheduleSubmit}
+                />
             </Card>
         </>
     );

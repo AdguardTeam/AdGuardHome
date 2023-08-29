@@ -2,9 +2,11 @@
 package schedule
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"gopkg.in/yaml.v3"
@@ -50,6 +52,10 @@ func FullWeekly() (w *Weekly) {
 
 // Clone returns a deep copy of a weekly.
 func (w *Weekly) Clone() (c *Weekly) {
+	if w == nil {
+		return nil
+	}
+
 	// NOTE:  Do not use time.LoadLocation, because the results will be
 	// different on time zone database update.
 	return &Weekly{
@@ -76,11 +82,61 @@ func (w *Weekly) Contains(t time.Time) (ok bool) {
 }
 
 // type check
+var _ json.Unmarshaler = (*Weekly)(nil)
+
+// UnmarshalJSON implements the [json.Unmarshaler] interface for *Weekly.
+func (w *Weekly) UnmarshalJSON(data []byte) (err error) {
+	conf := &weeklyConfigJSON{}
+	err = json.Unmarshal(data, conf)
+	if err != nil {
+		return err
+	}
+
+	weekly := Weekly{}
+
+	weekly.location, err = time.LoadLocation(conf.TimeZone)
+	if err != nil {
+		return err
+	}
+
+	days := []*dayConfigJSON{
+		time.Sunday:    conf.Sunday,
+		time.Monday:    conf.Monday,
+		time.Tuesday:   conf.Tuesday,
+		time.Wednesday: conf.Wednesday,
+		time.Thursday:  conf.Thursday,
+		time.Friday:    conf.Friday,
+		time.Saturday:  conf.Saturday,
+	}
+	for i, d := range days {
+		var r dayRange
+
+		if d != nil {
+			r = dayRange{
+				start: time.Duration(d.Start),
+				end:   time.Duration(d.End),
+			}
+		}
+
+		err = w.validate(r)
+		if err != nil {
+			return fmt.Errorf("weekday %s: %w", time.Weekday(i), err)
+		}
+
+		weekly.days[i] = r
+	}
+
+	*w = weekly
+
+	return nil
+}
+
+// type check
 var _ yaml.Unmarshaler = (*Weekly)(nil)
 
 // UnmarshalYAML implements the [yaml.Unmarshaler] interface for *Weekly.
 func (w *Weekly) UnmarshalYAML(value *yaml.Node) (err error) {
-	conf := &weeklyConfig{}
+	conf := &weeklyConfigYAML{}
 
 	err = value.Decode(conf)
 	if err != nil {
@@ -96,7 +152,7 @@ func (w *Weekly) UnmarshalYAML(value *yaml.Node) (err error) {
 		return err
 	}
 
-	days := []dayConfig{
+	days := []dayConfigYAML{
 		time.Sunday:    conf.Sunday,
 		time.Monday:    conf.Monday,
 		time.Tuesday:   conf.Tuesday,
@@ -124,24 +180,24 @@ func (w *Weekly) UnmarshalYAML(value *yaml.Node) (err error) {
 	return nil
 }
 
-// weeklyConfig is the YAML configuration structure of Weekly.
-type weeklyConfig struct {
+// weeklyConfigYAML is the YAML configuration structure of Weekly.
+type weeklyConfigYAML struct {
 	// TimeZone is the local time zone.
 	TimeZone string `yaml:"time_zone"`
 
 	// Days of the week.
 
-	Sunday    dayConfig `yaml:"sun,omitempty"`
-	Monday    dayConfig `yaml:"mon,omitempty"`
-	Tuesday   dayConfig `yaml:"tue,omitempty"`
-	Wednesday dayConfig `yaml:"wed,omitempty"`
-	Thursday  dayConfig `yaml:"thu,omitempty"`
-	Friday    dayConfig `yaml:"fri,omitempty"`
-	Saturday  dayConfig `yaml:"sat,omitempty"`
+	Sunday    dayConfigYAML `yaml:"sun,omitempty"`
+	Monday    dayConfigYAML `yaml:"mon,omitempty"`
+	Tuesday   dayConfigYAML `yaml:"tue,omitempty"`
+	Wednesday dayConfigYAML `yaml:"wed,omitempty"`
+	Thursday  dayConfigYAML `yaml:"thu,omitempty"`
+	Friday    dayConfigYAML `yaml:"fri,omitempty"`
+	Saturday  dayConfigYAML `yaml:"sat,omitempty"`
 }
 
-// dayConfig is the YAML configuration structure of dayRange.
-type dayConfig struct {
+// dayConfigYAML is the YAML configuration structure of dayRange.
+type dayConfigYAML struct {
 	Start timeutil.Duration `yaml:"start"`
 	End   timeutil.Duration `yaml:"end"`
 }
@@ -173,37 +229,56 @@ func (w *Weekly) validate(r dayRange) (err error) {
 }
 
 // type check
+var _ json.Marshaler = (*Weekly)(nil)
+
+// MarshalJSON implements the [json.Marshaler] interface for *Weekly.
+func (w *Weekly) MarshalJSON() (data []byte, err error) {
+	c := &weeklyConfigJSON{
+		TimeZone:  w.location.String(),
+		Sunday:    w.days[time.Sunday].toDayConfigJSON(),
+		Monday:    w.days[time.Monday].toDayConfigJSON(),
+		Tuesday:   w.days[time.Tuesday].toDayConfigJSON(),
+		Wednesday: w.days[time.Wednesday].toDayConfigJSON(),
+		Thursday:  w.days[time.Thursday].toDayConfigJSON(),
+		Friday:    w.days[time.Friday].toDayConfigJSON(),
+		Saturday:  w.days[time.Saturday].toDayConfigJSON(),
+	}
+
+	return json.Marshal(c)
+}
+
+// type check
 var _ yaml.Marshaler = (*Weekly)(nil)
 
 // MarshalYAML implements the [yaml.Marshaler] interface for *Weekly.
 func (w *Weekly) MarshalYAML() (v any, err error) {
-	return weeklyConfig{
+	return weeklyConfigYAML{
 		TimeZone: w.location.String(),
-		Sunday: dayConfig{
+		Sunday: dayConfigYAML{
 			Start: timeutil.Duration{Duration: w.days[time.Sunday].start},
 			End:   timeutil.Duration{Duration: w.days[time.Sunday].end},
 		},
-		Monday: dayConfig{
+		Monday: dayConfigYAML{
 			Start: timeutil.Duration{Duration: w.days[time.Monday].start},
 			End:   timeutil.Duration{Duration: w.days[time.Monday].end},
 		},
-		Tuesday: dayConfig{
+		Tuesday: dayConfigYAML{
 			Start: timeutil.Duration{Duration: w.days[time.Tuesday].start},
 			End:   timeutil.Duration{Duration: w.days[time.Tuesday].end},
 		},
-		Wednesday: dayConfig{
+		Wednesday: dayConfigYAML{
 			Start: timeutil.Duration{Duration: w.days[time.Wednesday].start},
 			End:   timeutil.Duration{Duration: w.days[time.Wednesday].end},
 		},
-		Thursday: dayConfig{
+		Thursday: dayConfigYAML{
 			Start: timeutil.Duration{Duration: w.days[time.Thursday].start},
 			End:   timeutil.Duration{Duration: w.days[time.Thursday].end},
 		},
-		Friday: dayConfig{
+		Friday: dayConfigYAML{
 			Start: timeutil.Duration{Duration: w.days[time.Friday].start},
 			End:   timeutil.Duration{Duration: w.days[time.Friday].end},
 		},
-		Saturday: dayConfig{
+		Saturday: dayConfigYAML{
 			Start: timeutil.Duration{Duration: w.days[time.Saturday].start},
 			End:   timeutil.Duration{Duration: w.days[time.Saturday].end},
 		},
@@ -247,4 +322,39 @@ func (r dayRange) validate() (err error) {
 // duration from the beginning of the day.
 func (r *dayRange) contains(offset time.Duration) (ok bool) {
 	return r.start <= offset && offset < r.end
+}
+
+// toDayConfigJSON returns nil if the day range is empty, otherwise returns
+// initialized JSON configuration of the day range.
+func (r dayRange) toDayConfigJSON() (j *dayConfigJSON) {
+	if (r == dayRange{}) {
+		return nil
+	}
+
+	return &dayConfigJSON{
+		Start: aghhttp.JSONDuration(r.start),
+		End:   aghhttp.JSONDuration(r.end),
+	}
+}
+
+// weeklyConfigJSON is the JSON configuration structure of Weekly.
+type weeklyConfigJSON struct {
+	// TimeZone is the local time zone.
+	TimeZone string `json:"time_zone"`
+
+	// Days of the week.
+
+	Sunday    *dayConfigJSON `json:"sun,omitempty"`
+	Monday    *dayConfigJSON `json:"mon,omitempty"`
+	Tuesday   *dayConfigJSON `json:"tue,omitempty"`
+	Wednesday *dayConfigJSON `json:"wed,omitempty"`
+	Thursday  *dayConfigJSON `json:"thu,omitempty"`
+	Friday    *dayConfigJSON `json:"fri,omitempty"`
+	Saturday  *dayConfigJSON `json:"sat,omitempty"`
+}
+
+// dayConfigJSON is the JSON configuration structure of dayRange.
+type dayConfigJSON struct {
+	Start aghhttp.JSONDuration `json:"start"`
+	End   aghhttp.JSONDuration `json:"end"`
 }

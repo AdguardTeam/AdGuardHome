@@ -170,7 +170,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		resp.IsDHCPAvailable = Context.dhcpServer != nil
 	}
 
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // ------------------------

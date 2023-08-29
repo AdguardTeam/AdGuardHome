@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
@@ -23,14 +24,14 @@ func TestService_HandleGetSettingsAll(t *testing.T) {
 		Addresses:           []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:53")},
 		BootstrapServers:    []string{"94.140.14.140", "94.140.14.141"},
 		UpstreamServers:     []string{"94.140.14.14", "1.1.1.1"},
-		UpstreamTimeout:     websvc.JSONDuration(1 * time.Second),
+		UpstreamTimeout:     aghhttp.JSONDuration(1 * time.Second),
 		BootstrapPreferIPv6: true,
 	}
 
 	wantWeb := &websvc.HTTPAPIHTTPSettings{
 		Addresses:       []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:80")},
 		SecureAddresses: []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:443")},
-		Timeout:         websvc.JSONDuration(5 * time.Second),
+		Timeout:         aghhttp.JSONDuration(5 * time.Second),
 		ForceHTTPS:      true,
 	}
 

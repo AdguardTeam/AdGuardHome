@@ -43,6 +43,7 @@
         "redux-form": "^8.3.5",
         "redux-thunk": "^2.3.0",
         "string-length": "^5.0.1",
+        "timezones-list": "^3.0.2",
         "url-polyfill": "^1.1.9"
     },
     "devDependencies": {
