@@ -36,6 +36,10 @@ type jsonDNSConfig struct {
 	// upstream DoH/DoT resolvers.
 	Bootstraps *[]string `json:"bootstrap_dns"`
 
+	// Fallbacks is the list of fallback DNS servers used when upstream DNS
+	// servers are not responding.
+	Fallbacks *[]string `json:"fallback_dns"`
+
 	// ProtectionEnabled defines if protection is enabled.
 	ProtectionEnabled *bool `json:"protection_enabled"`
 
@@ -108,6 +112,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	upstreams := stringutil.CloneSliceOrEmpty(s.conf.UpstreamDNS)
 	upstreamFile := s.conf.UpstreamDNSFileName
 	bootstraps := stringutil.CloneSliceOrEmpty(s.conf.BootstrapDNS)
+	fallbacks := stringutil.CloneSliceOrEmpty(s.conf.FallbackDNS)
 	blockingMode := s.conf.BlockingMode
 	blockingIPv4 := s.conf.BlockingIPv4
 	blockingIPv6 := s.conf.BlockingIPv6
@@ -143,6 +148,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		Upstreams:                &upstreams,
 		UpstreamsFile:            &upstreamFile,
 		Bootstraps:               &bootstraps,
+		Fallbacks:                &fallbacks,
 		ProtectionEnabled:        &protectionEnabled,
 		BlockingMode:             &blockingMode,
 		BlockingIPv4:             blockingIPv4,
@@ -207,6 +213,20 @@ func (req *jsonDNSConfig) checkBootstrap() (err error) {
 	return nil
 }
 
+// checkFallbacks returns an error if any fallback address is invalid.
+func (req *jsonDNSConfig) checkFallbacks() (err error) {
+	if req.Fallbacks == nil {
+		return nil
+	}
+
+	err = ValidateUpstreams(*req.Fallbacks)
+	if err != nil {
+		return fmt.Errorf("validating fallback servers: %w", err)
+	}
+
+	return nil
+}
+
 // validate returns an error if any field of req is invalid.
 func (req *jsonDNSConfig) validate(privateNets netutil.SubnetSet) (err error) {
 	if req.Upstreams != nil {
@@ -224,6 +244,11 @@ func (req *jsonDNSConfig) validate(privateNets netutil.SubnetSet) (err error) {
 	}
 
 	err = req.checkBootstrap()
+	if err != nil {
+		return err
+	}
+
+	err = req.checkFallbacks()
 	if err != nil {
 		return err
 	}
@@ -341,6 +366,7 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 		setIfNotNil(&s.conf.LocalPTRResolvers, dc.LocalPTRUpstreams),
 		setIfNotNil(&s.conf.UpstreamDNSFileName, dc.UpstreamsFile),
 		setIfNotNil(&s.conf.BootstrapDNS, dc.Bootstraps),
+		setIfNotNil(&s.conf.FallbackDNS, dc.Fallbacks),
 		setIfNotNil(&s.conf.EDNSClientSubnet.Enabled, dc.EDNSCSEnabled),
 		setIfNotNil(&s.conf.EDNSClientSubnet.UseCustom, dc.EDNSCSUseCustom),
 		setIfNotNil(&s.conf.CacheSize, dc.CacheSize),
@@ -730,6 +756,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	result := make(map[string]string, upsNum)
 	resCh := make(chan upsCheckResult, upsNum)
 
+	// TODO(s.chzhen):  Check fallback DNS servers.
 	for _, ups := range req.Upstreams {
 		go func(ups string) {
 			resCh <- upsCheckResult{

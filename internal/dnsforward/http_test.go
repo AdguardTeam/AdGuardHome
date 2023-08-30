@@ -72,6 +72,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 			ProtectionEnabled: true,
 			BlockingMode:      BlockingModeDefault,
 			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
+			FallbackDNS:       []string{"9.9.9.10"},
 			EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
@@ -224,6 +225,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			`bad arpa domain name "non.arpa.": not a reversed ip network`,
 	}, {
 		name:    "local_ptr_upstreams_null",
+		wantSet: "",
+	}, {
+		name:    "fallbacks",
 		wantSet: "",
 	}}
 

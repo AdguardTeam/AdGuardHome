@@ -118,7 +118,8 @@ type FilteringConfig struct {
 	// resolvers (plain DNS only).
 	BootstrapDNS []string `yaml:"bootstrap_dns"`
 
-	// FallbackDNS is the list of fallback DNS servers.
+	// FallbackDNS is the list of fallback DNS servers used when upstream DNS
+	// servers are not responding.
 	FallbackDNS []string `yaml:"fallback_dns"`
 
 	// AllServers, if true, parallel queries to all configured upstream servers

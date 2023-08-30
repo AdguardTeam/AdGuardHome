@@ -6,6 +6,12 @@
 
 ## v0.107.37: API changes
 
+### The new field `"fallback_dns"` in `DNSConfig` object
+
+* The new field `"fallback_dns"` in `GET /control/dns_info` and `POST
+  /control/dns_config` is the list of fallback DNS servers used when upstream
+  DNS servers are not responding.
+
 ### Deprecated blocked services APIs
 
 * The `GET /control/blocked_services/list` HTTP API; use the new `GET

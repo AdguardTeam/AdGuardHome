@@ -1432,6 +1432,16 @@
           'example':
           - 'tls://1.1.1.1'
           - 'tls://1.0.0.1'
+        'fallback_dns':
+          'type': 'array'
+          'description': >
+            List of fallback DNS servers used when upstream DNS servers are not
+            responding.  Empty value will clear the list.
+          'items':
+            'type': 'string'
+          'example':
+          - '8.8.8.8'
+          - '1.1.1.1:53'
         'upstream_dns_file':
           'type': 'string'
         'protection_enabled':
