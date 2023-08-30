@@ -15,7 +15,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
-	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
@@ -48,19 +47,7 @@ var defaultBlockedHosts = []string{"version.bind", "id.server", "hostname.bind"}
 
 var webRegistered bool
 
-// hostToIPTable is a convenient type alias for tables of host names to an IP
-// address.
-//
-// TODO(e.burkov):  Use the [DHCP] interface instead.
-type hostToIPTable = map[string]netip.Addr
-
-// ipToHostTable is a convenient type alias for tables of IP addresses to their
-// host names.  For example, for use with PTR queries.
-//
-// TODO(e.burkov):  Use the [DHCP] interface instead.
-type ipToHostTable = map[netip.Addr]string
-
-// DHCP is an interface for accessing DHCP lease data needed in this package.
+// DHCP is an interface for accesing DHCP lease data needed in this package.
 type DHCP interface {
 	// HostByIP returns the hostname of the DHCP client with the given IP
 	// address.  The address will be netip.Addr{} if there is no such client,
@@ -89,18 +76,34 @@ type DHCP interface {
 //
 // The zero Server is empty and ready for use.
 type Server struct {
-	dnsProxy   *proxy.Proxy         // DNS proxy instance
-	dnsFilter  *filtering.DNSFilter // DNS filter instance
-	dhcpServer dhcpd.Interface      // DHCP server instance (optional)
-	queryLog   querylog.QueryLog    // Query log instance
-	stats      stats.Interface
-	access     *accessManager
+	// dnsProxy is the DNS proxy for forwarding client's DNS requests.
+	dnsProxy *proxy.Proxy
+
+	// dnsFilter is the DNS filter for filtering client's DNS requests and
+	// responses.
+	dnsFilter *filtering.DNSFilter
+
+	// dhcpServer is the DHCP server for accessing lease data.
+	dhcpServer DHCP
+
+	// queryLog is the query log for client's DNS requests, responses and
+	// filtering results.
+	queryLog querylog.QueryLog
+
+	// stats is the statistics collector for client's DNS usage data.
+	stats stats.Interface
+
+	// access drops unallowed clients.
+	access *accessManager
 
 	// localDomainSuffix is the suffix used to detect internal hosts.  It
 	// must be a valid domain name plus dots on each side.
 	localDomainSuffix string
 
-	ipset       ipsetCtx
+	// ipset processes DNS requests using ipset data.
+	ipset ipsetCtx
+
+	// privateNets is the configured set of IP networks considered private.
 	privateNets netutil.SubnetSet
 
 	// addrProc, if not nil, is used to process clients' IP addresses with rDNS,
@@ -112,7 +115,10 @@ type Server struct {
 	//
 	// TODO(e.burkov):  Remove once the local resolvers logic moved to dnsproxy.
 	localResolvers *proxy.Proxy
-	sysResolvers   aghnet.SystemResolvers
+
+	// sysResolvers used to fetch system resolvers to use by default for private
+	// PTR resolving.
+	sysResolvers aghnet.SystemResolvers
 
 	// recDetector is a cache for recursive requests.  It is used to detect
 	// and prevent recursive requests only for private upstreams.
@@ -128,12 +134,6 @@ type Server struct {
 	// anonymizer masks the client's IP addresses if needed.
 	anonymizer *aghnet.IPMut
 
-	tableHostToIP     hostToIPTable
-	tableHostToIPLock sync.Mutex
-
-	tableIPToHost     ipToHostTable
-	tableIPToHostLock sync.Mutex
-
 	// clientIDCache is a temporary storage for ClientIDs that were extracted
 	// during the BeforeRequestHandler stage.
 	clientIDCache cache.Cache
@@ -142,13 +142,16 @@ type Server struct {
 	// We don't Start() it and so no listen port is required.
 	internalProxy *proxy.Proxy
 
+	// isRunning is true if the DNS server is running.
 	isRunning bool
 
 	// protectionUpdateInProgress is used to make sure that only one goroutine
 	// updating the protection configuration after a pause is running at a time.
 	protectionUpdateInProgress atomic.Bool
 
+	// conf is the current configuration of the server.
 	conf ServerConfig
+
 	// serverLock protects Server.
 	serverLock sync.RWMutex
 }
@@ -164,7 +167,7 @@ type DNSCreateParams struct {
 	DNSFilter   *filtering.DNSFilter
 	Stats       stats.Interface
 	QueryLog    querylog.QueryLog
-	DHCPServer  dhcpd.Interface
+	DHCPServer  DHCP
 	PrivateNets netutil.SubnetSet
 	Anonymizer  *aghnet.IPMut
 	LocalDomain string
@@ -200,11 +203,12 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		p.Anonymizer = aghnet.NewIPMut(nil)
 	}
 	s = &Server{
-		dnsFilter:         p.DNSFilter,
-		stats:             p.Stats,
-		queryLog:          p.QueryLog,
-		privateNets:       p.PrivateNets,
-		localDomainSuffix: localDomainSuffix,
+		dnsFilter:   p.DNSFilter,
+		stats:       p.Stats,
+		queryLog:    p.QueryLog,
+		privateNets: p.PrivateNets,
+		// TODO(e.burkov):  Use some case-insensitive string comparison.
+		localDomainSuffix: strings.ToLower(localDomainSuffix),
 		recDetector:       newRecursionDetector(recursionTTL, cachedRecurrentReqNum),
 		clientIDCache: cache.New(cache.Config{
 			EnableLRU: true,
@@ -220,11 +224,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		return nil, fmt.Errorf("initializing system resolvers: %w", err)
 	}
 
-	if p.DHCPServer != nil {
-		s.dhcpServer = p.DHCPServer
-		s.dhcpServer.SetOnLeaseChanged(s.onDHCPLeaseChanged)
-		s.onDHCPLeaseChanged(dhcpd.LeaseChangedAdded)
-	}
+	s.dhcpServer = p.DHCPServer
 
 	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
 		// Use plain DNS on MIPS, encryption is too slow

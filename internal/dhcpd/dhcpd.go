@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"golang.org/x/exp/slices"
@@ -31,6 +32,8 @@ const (
 // Lease contains the necessary information about a DHCP lease.  It's used as is
 // in the database, so don't change it until it's absolutely necessary, see
 // [dataVersion].
+//
+// TODO(e.burkov):  Unexport it and use [dhcpsvc.Lease].
 type Lease struct {
 	// Expiry is the expiration time of the lease.
 	Expiry time.Time `json:"expires"`
@@ -153,52 +156,36 @@ const (
 type Interface interface {
 	Start() (err error)
 	Stop() (err error)
+
+	// Enabled returns true if the DHCP server is running.
+	//
+	// TODO(e.burkov):  Currently, we need this method to determine whether the
+	// local domain suffix should be considered while resolving A/AAAA requests.
+	// This is because other parts of the code aren't aware of the DNS suffixes
+	// in DHCP clients names and caller is responsible for trimming it.  This
+	// behavior should be changed in the future.
 	Enabled() (ok bool)
 
-	Leases(flags GetLeasesFlags) (leases []*Lease)
-	SetOnLeaseChanged(onLeaseChanged OnLeaseChangedT)
-	FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr)
+	// Leases returns all the leases in the database.
+	Leases() (leases []*dhcpsvc.Lease)
+
+	// MacByIP returns the MAC address of a client with ip.  It returns nil if
+	// there is no such client, due to an assumption that a DHCP client must
+	// always have a HardwareAddr.
+	MACByIP(ip netip.Addr) (mac net.HardwareAddr)
+
+	// HostByIP returns the hostname of the DHCP client with the given IP
+	// address.  The address will be netip.Addr{} if there is no such client,
+	// due to an assumption that a DHCP client must always have an IP address.
+	HostByIP(ip netip.Addr) (host string)
+
+	// IPByHost returns the IP address of the DHCP client with the given
+	// hostname.  The address will be netip.Addr{} if there is no such client,
+	// due to an assumption that a DHCP client must always have an IP address.
+	IPByHost(host string) (ip netip.Addr)
 
 	WriteDiskConfig(c *ServerConfig)
 }
-
-// MockInterface is a mock Interface implementation.
-//
-// TODO(e.burkov):  Move to aghtest when the API stabilized.
-type MockInterface struct {
-	OnStart             func() (err error)
-	OnStop              func() (err error)
-	OnEnabled           func() (ok bool)
-	OnLeases            func(flags GetLeasesFlags) (leases []*Lease)
-	OnSetOnLeaseChanged func(f OnLeaseChangedT)
-	OnFindMACbyIP       func(ip netip.Addr) (mac net.HardwareAddr)
-	OnWriteDiskConfig   func(c *ServerConfig)
-}
-
-var _ Interface = (*MockInterface)(nil)
-
-// Start implements the Interface for *MockInterface.
-func (s *MockInterface) Start() (err error) { return s.OnStart() }
-
-// Stop implements the Interface for *MockInterface.
-func (s *MockInterface) Stop() (err error) { return s.OnStop() }
-
-// Enabled implements the Interface for *MockInterface.
-func (s *MockInterface) Enabled() (ok bool) { return s.OnEnabled() }
-
-// Leases implements the Interface for *MockInterface.
-func (s *MockInterface) Leases(flags GetLeasesFlags) (ls []*Lease) { return s.OnLeases(flags) }
-
-// SetOnLeaseChanged implements the Interface for *MockInterface.
-func (s *MockInterface) SetOnLeaseChanged(f OnLeaseChangedT) { s.OnSetOnLeaseChanged(f) }
-
-// FindMACbyIP implements the [Interface] for *MockInterface.
-func (s *MockInterface) FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr) {
-	return s.OnFindMACbyIP(ip)
-}
-
-// WriteDiskConfig implements the Interface for *MockInterface.
-func (s *MockInterface) WriteDiskConfig(c *ServerConfig) { s.OnWriteDiskConfig(c) }
 
 // server is the DHCP service that handles DHCPv4, DHCPv6, and HTTP API.
 type server struct {
@@ -269,7 +256,8 @@ func Create(conf *ServerConfig) (s *server, err error) {
 }
 
 // setServers updates DHCPv4 and DHCPv6 servers created from the provided
-// configuration conf.
+// configuration conf.  It returns the status of both the DHCPv4 and the DHCPv6
+// servers, which is always false for corresponding server on any error.
 func (s *server) setServers(conf *ServerConfig) (v4Enabled, v6Enabled bool, err error) {
 	v4conf := conf.Conf4
 	v4conf.InterfaceName = s.conf.InterfaceName
@@ -279,7 +267,7 @@ func (s *server) setServers(conf *ServerConfig) (v4Enabled, v6Enabled bool, err 
 	s.srv4, err = v4Create(&v4conf)
 	if err != nil {
 		if v4conf.Enabled {
-			return true, false, fmt.Errorf("creating dhcpv4 srv: %w", err)
+			return false, false, fmt.Errorf("creating dhcpv4 srv: %w", err)
 		}
 
 		log.Debug("dhcpd: warning: creating dhcpv4 srv: %s", err)
@@ -288,14 +276,11 @@ func (s *server) setServers(conf *ServerConfig) (v4Enabled, v6Enabled bool, err 
 	v6conf := conf.Conf6
 	v6conf.InterfaceName = s.conf.InterfaceName
 	v6conf.notify = s.onNotify
-	v6conf.Enabled = s.conf.Enabled
-	if len(v6conf.RangeStart) == 0 {
-		v6conf.Enabled = false
-	}
+	v6conf.Enabled = s.conf.Enabled && len(v6conf.RangeStart) != 0
 
 	s.srv6, err = v6Create(v6conf)
 	if err != nil {
-		return v4conf.Enabled, v6conf.Enabled, fmt.Errorf("creating dhcpv6 srv: %w", err)
+		return v4conf.Enabled, false, fmt.Errorf("creating dhcpv6 srv: %w", err)
 	}
 
 	return v4conf.Enabled, v6conf.Enabled, nil
@@ -335,11 +320,6 @@ func (s *server) onNotify(flags uint32) {
 	}
 
 	s.notify(int(flags))
-}
-
-// SetOnLeaseChanged - set callback
-func (s *server) SetOnLeaseChanged(onLeaseChanged OnLeaseChangedT) {
-	s.onLeaseChanged = append(s.onLeaseChanged, onLeaseChanged)
 }
 
 func (s *server) notify(flags int) {
@@ -388,20 +368,49 @@ func (s *server) Stop() (err error) {
 	return nil
 }
 
-// Leases returns the list of active IPv4 and IPv6 DHCP leases.  It's safe for
-// concurrent use.
-func (s *server) Leases(flags GetLeasesFlags) (leases []*Lease) {
-	return append(s.srv4.GetLeases(flags), s.srv6.GetLeases(flags)...)
+// Leases returns the list of active DHCP leases.
+func (s *server) Leases() (leases []*dhcpsvc.Lease) {
+	ls := append(s.srv4.GetLeases(LeasesAll), s.srv6.GetLeases(LeasesAll)...)
+	leases = make([]*dhcpsvc.Lease, len(ls))
+	for i, l := range ls {
+		leases[i] = &dhcpsvc.Lease{
+			Expiry:   l.Expiry,
+			Hostname: l.Hostname,
+			HWAddr:   l.HWAddr,
+			IP:       l.IP,
+			IsStatic: l.IsStatic,
+		}
+	}
+
+	return leases
 }
 
-// FindMACbyIP returns a MAC address by the IP address of its lease, if there is
+// MACByIP returns a MAC address by the IP address of its lease, if there is
 // one.
-func (s *server) FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr) {
+func (s *server) MACByIP(ip netip.Addr) (mac net.HardwareAddr) {
 	if ip.Is4() {
 		return s.srv4.FindMACbyIP(ip)
 	}
 
 	return s.srv6.FindMACbyIP(ip)
+}
+
+// HostByIP implements the [Interface] interface for *server.
+//
+// TODO(e.burkov):  Implement this method for DHCPv6.
+func (s *server) HostByIP(ip netip.Addr) (host string) {
+	if ip.Is4() {
+		return s.srv4.HostByIP(ip)
+	}
+
+	return ""
+}
+
+// IPByHost implements the [Interface] interface for *server.
+//
+// TODO(e.burkov):  Implement this method for DHCPv6.
+func (s *server) IPByHost(host string) (ip netip.Addr) {
+	return s.srv4.IPByHost(host)
 }
 
 // AddStaticLease - add static v4 lease

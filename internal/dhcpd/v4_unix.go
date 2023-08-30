@@ -15,7 +15,6 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
@@ -46,11 +45,14 @@ type v4Server struct {
 	// leased.
 	leasedOffsets *bitSet
 
-	// leaseHosts is the set of all hostnames of all known DHCP clients.
-	leaseHosts *stringutil.Set
-
 	// leases contains all dynamic and static leases.
 	leases []*Lease
+
+	// hostsIndex is the set of all hostnames of all known DHCP clients.
+	hostsIndex map[string]*Lease
+
+	// ipIndex is an index of leases by their IP addresses.
+	ipIndex map[netip.Addr]*Lease
 }
 
 func (s *v4Server) enabled() (ok bool) {
@@ -114,6 +116,30 @@ func (s *v4Server) validHostnameForClient(cliHostname string, ip netip.Addr) (ho
 	return hostname
 }
 
+// HostByIP implements the [Interface] interface for *v4Server.
+func (s *v4Server) HostByIP(ip netip.Addr) (host string) {
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	if l, ok := s.ipIndex[ip]; ok {
+		return l.Hostname
+	}
+
+	return ""
+}
+
+// IPByHost implements the [Interface] interface for *v4Server.
+func (s *v4Server) IPByHost(host string) (ip netip.Addr) {
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	if l, ok := s.hostsIndex[host]; ok {
+		return l.IP
+	}
+
+	return netip.Addr{}
+}
+
 // ResetLeases resets leases.
 func (s *v4Server) ResetLeases(leases []*Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
@@ -123,7 +149,8 @@ func (s *v4Server) ResetLeases(leases []*Lease) (err error) {
 	}
 
 	s.leasedOffsets = newBitSet()
-	s.leaseHosts = stringutil.NewSet()
+	s.hostsIndex = make(map[string]*Lease, len(leases))
+	s.ipIndex = make(map[netip.Addr]*Lease, len(leases))
 	s.leases = nil
 
 	for _, l := range leases {
@@ -199,20 +226,18 @@ func (s *v4Server) GetLeases(flags GetLeasesFlags) (leases []*Lease) {
 
 // FindMACbyIP implements the [Interface] for *v4Server.
 func (s *v4Server) FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr) {
+	if !ip.Is4() {
+		return nil
+	}
+
 	now := time.Now()
 
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
-	if !ip.Is4() {
-		return nil
-	}
-
-	for _, l := range s.leases {
-		if l.IP == ip {
-			if l.IsStatic || l.Expiry.After(now) {
-				return l.HWAddr
-			}
+	if l, ok := s.ipIndex[ip]; ok {
+		if l.IsStatic || l.Expiry.After(now) {
+			return l.HWAddr
 		}
 	}
 
@@ -249,7 +274,8 @@ func (s *v4Server) rmLeaseByIndex(i int) {
 		s.leasedOffsets.set(offset, false)
 	}
 
-	s.leaseHosts.Del(l.Hostname)
+	delete(s.hostsIndex, l.Hostname)
+	delete(s.ipIndex, l.IP)
 
 	log.Debug("dhcpv4: removed lease %s (%s)", l.IP, l.HWAddr)
 }
@@ -303,13 +329,15 @@ func (s *v4Server) addLease(l *Lease) (err error) {
 		return fmt.Errorf("lease %s (%s) out of range, not adding", l.IP, l.HWAddr)
 	}
 
+	// TODO(e.burkov):  l must have a valid hostname here, investigate.
 	if l.Hostname != "" {
-		if s.leaseHosts.Has(l.Hostname) {
+		if _, ok := s.hostsIndex[l.Hostname]; ok {
 			return ErrDupHostname
 		}
 
-		s.leaseHosts.Add(l.Hostname)
+		s.hostsIndex[l.Hostname] = l
 	}
+	s.ipIndex[l.IP] = l
 
 	s.leases = append(s.leases, l)
 	s.leasedOffsets.set(offset, true)
@@ -574,7 +602,7 @@ func (s *v4Server) commitLease(l *Lease, hostname string) {
 	prev := l.Hostname
 	hostname = s.validHostnameForClient(hostname, l.IP)
 
-	if s.leaseHosts.Has(hostname) {
+	if _, ok := s.hostsIndex[hostname]; ok {
 		log.Info("dhcpv4: hostname %q already exists", hostname)
 
 		if prev == "" {
@@ -590,11 +618,12 @@ func (s *v4Server) commitLease(l *Lease, hostname string) {
 
 	l.Expiry = time.Now().Add(s.conf.leaseTime)
 	if prev != "" && prev != l.Hostname {
-		s.leaseHosts.Del(prev)
+		delete(s.hostsIndex, prev)
 	}
 	if l.Hostname != "" {
-		s.leaseHosts.Add(l.Hostname)
+		s.hostsIndex[l.Hostname] = l
 	}
+	s.ipIndex[l.IP] = l
 }
 
 // allocateLease allocates a new lease for the MAC address.  If there are no IP
@@ -1292,7 +1321,8 @@ func (s *v4Server) Stop() (err error) {
 // Create DHCPv4 server
 func v4Create(conf *V4ServerConf) (srv *v4Server, err error) {
 	s := &v4Server{
-		leaseHosts: stringutil.NewSet(),
+		hostsIndex: map[string]*Lease{},
+		ipIndex:    map[netip.Addr]*Lease{},
 	}
 
 	err = conf.Validate()

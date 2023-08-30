@@ -791,6 +791,14 @@ func TestV4Server_FindMACbyIP(t *testing.T) {
 			IP:       anotherIP,
 		}},
 	}
+	s.ipIndex = map[netip.Addr]*Lease{
+		staticIP:  s.leases[0],
+		anotherIP: s.leases[1],
+	}
+	s.hostsIndex = map[string]*Lease{
+		staticName:  s.leases[0],
+		anotherName: s.leases[1],
+	}
 
 	testCases := []struct {
 		want net.HardwareAddr

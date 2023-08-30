@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -70,20 +69,26 @@ type dnsContext struct {
 	// isLocalClient shows if client's IP address is from locally served
 	// network.
 	isLocalClient bool
+
+	// isDHCPHost is true if the request for a local domain name and the DHCP is
+	// available for this request.
+	isDHCPHost bool
 }
 
 // resultCode is the result of a request processing function.
 type resultCode int
 
 const (
-	// resultCodeSuccess is returned when a handler performed successfully,
-	// and the next handler must be called.
+	// resultCodeSuccess is returned when a handler performed successfully, and
+	// the next handler must be called.
 	resultCodeSuccess resultCode = iota
-	// resultCodeFinish is returned when a handler performed successfully,
-	// and the processing of the request must be stopped.
+
+	// resultCodeFinish is returned when a handler performed successfully, and
+	// the processing of the request must be stopped.
 	resultCodeFinish
-	// resultCodeError is returned when a handler failed, and the processing
-	// of the request must be stopped.
+
+	// resultCodeError is returned when a handler failed, and the processing of
+	// the request must be stopped.
 	resultCodeError
 )
 
@@ -239,70 +244,6 @@ func (s *Server) processClientIP(addr net.Addr) {
 	s.addrProc.Process(clientIP)
 }
 
-func (s *Server) setTableHostToIP(t hostToIPTable) {
-	s.tableHostToIPLock.Lock()
-	defer s.tableHostToIPLock.Unlock()
-
-	s.tableHostToIP = t
-}
-
-func (s *Server) setTableIPToHost(t ipToHostTable) {
-	s.tableIPToHostLock.Lock()
-	defer s.tableIPToHostLock.Unlock()
-
-	s.tableIPToHost = t
-}
-
-func (s *Server) onDHCPLeaseChanged(flags int) {
-	switch flags {
-	case dhcpd.LeaseChangedAdded,
-		dhcpd.LeaseChangedAddedStatic,
-		dhcpd.LeaseChangedRemovedStatic:
-		// Go on.
-	case dhcpd.LeaseChangedRemovedAll:
-		s.setTableHostToIP(nil)
-		s.setTableIPToHost(nil)
-
-		return
-	default:
-		return
-	}
-
-	ll := s.dhcpServer.Leases(dhcpd.LeasesAll)
-	hostToIP := make(hostToIPTable, len(ll))
-	ipToHost := make(ipToHostTable, len(ll))
-
-	for _, l := range ll {
-		// TODO(a.garipov): Remove this after we're finished with the client
-		// hostname validations in the DHCP server code.
-		err := netutil.ValidateHostname(l.Hostname)
-		if err != nil {
-			log.Debug("dnsforward: skipping invalid hostname %q from dhcp: %s", l.Hostname, err)
-
-			continue
-		}
-
-		lowhost := strings.ToLower(l.Hostname + "." + s.localDomainSuffix)
-
-		// Assume that we only process IPv4 now.
-		if !l.IP.Is4() {
-			log.Debug("dnsforward: skipping invalid ip from dhcp: bad ipv4 net.IP %v", l.IP)
-
-			continue
-		}
-
-		leaseIP := l.IP
-
-		ipToHost[leaseIP] = lowhost
-		hostToIP[lowhost] = leaseIP
-	}
-
-	s.setTableHostToIP(hostToIP)
-	s.setTableIPToHost(ipToHost)
-
-	log.Debug("dnsforward: added %d a and ptr entries from dhcp", len(ipToHost))
-}
-
 // processDDRQuery responds to Discovery of Designated Resolvers (DDR) SVCB
 // queries.  The response contains different types of encryption supported by
 // current user configuration.
@@ -420,18 +361,6 @@ func (s *Server) processDetermineLocal(dctx *dnsContext) (rc resultCode) {
 	return rc
 }
 
-// dhcpHostToIP tries to get an IP leased by DHCP and returns the copy of
-// address since the data inside the internal table may be changed while request
-// processing.  It's safe for concurrent use.
-func (s *Server) dhcpHostToIP(host string) (ip netip.Addr, ok bool) {
-	s.tableHostToIPLock.Lock()
-	defer s.tableHostToIPLock.Unlock()
-
-	ip, ok = s.tableHostToIP[host]
-
-	return ip, ok
-}
-
 // processDHCPHosts respond to A requests if the target hostname is known to
 // the server.  It responds with a mapped IP address if the DNS64 is enabled and
 // the request is for AAAA.
@@ -443,30 +372,31 @@ func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
 
 	pctx := dctx.proxyCtx
 	req := pctx.Req
-	q := req.Question[0]
-	reqHost, ok := s.isDHCPClientHostQ(q)
-	if !ok {
+
+	q := &req.Question[0]
+	dhcpHost := s.dhcpHostFromRequest(q)
+	if dctx.isDHCPHost = dhcpHost != ""; !dctx.isDHCPHost {
 		return resultCodeSuccess
 	}
 
 	if !dctx.isLocalClient {
-		log.Debug("dnsforward: %q requests for dhcp host %q", pctx.Addr, reqHost)
+		log.Debug("dnsforward: %q requests for dhcp host %q", pctx.Addr, dhcpHost)
 		pctx.Res = s.genNXDomain(req)
 
 		// Do not even put into query log.
 		return resultCodeFinish
 	}
 
-	ip, ok := s.dhcpHostToIP(reqHost)
-	if !ok {
+	ip := s.dhcpServer.IPByHost(dhcpHost)
+	if ip == (netip.Addr{}) {
 		// Go on and process them with filters, including dnsrewrite ones, and
 		// possibly route them to a domain-specific upstream.
-		log.Debug("dnsforward: no dhcp record for %q", reqHost)
+		log.Debug("dnsforward: no dhcp record for %q", dhcpHost)
 
 		return resultCodeSuccess
 	}
 
-	log.Debug("dnsforward: dhcp record for %q is %s", reqHost, ip)
+	log.Debug("dnsforward: dhcp record for %q is %s", dhcpHost, ip)
 
 	resp := s.makeResponse(req)
 	switch q.Qtype {
@@ -638,17 +568,6 @@ func (s *Server) processRestrictLocal(dctx *dnsContext) (rc resultCode) {
 	return resultCodeSuccess
 }
 
-// ipToDHCPHost tries to get a hostname leased by DHCP.  It's safe for
-// concurrent use.
-func (s *Server) ipToDHCPHost(ip netip.Addr) (host string, ok bool) {
-	s.tableIPToHostLock.Lock()
-	defer s.tableIPToHostLock.Unlock()
-
-	host, ok = s.tableIPToHost[ip]
-
-	return host, ok
-}
-
 // processDHCPAddrs responds to PTR requests if the target IP is leased by the
 // DHCP server.
 func (s *Server) processDHCPAddrs(dctx *dnsContext) (rc resultCode) {
@@ -673,12 +592,12 @@ func (s *Server) processDHCPAddrs(dctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	host, ok := s.ipToDHCPHost(ipAddr)
-	if !ok {
+	host := s.dhcpServer.HostByIP(ipAddr)
+	if host == "" {
 		return resultCodeSuccess
 	}
 
-	log.Debug("dnsforward: dhcp reverse record for %s is %q", ip, host)
+	log.Debug("dnsforward: dhcp client %s is %q", ip, host)
 
 	req := pctx.Req
 	resp := s.makeResponse(req)
@@ -686,10 +605,12 @@ func (s *Server) processDHCPAddrs(dctx *dnsContext) (rc resultCode) {
 		Hdr: dns.RR_Header{
 			Name:   req.Question[0].Name,
 			Rrtype: dns.TypePTR,
-			Ttl:    s.conf.BlockedResponseTTL,
-			Class:  dns.ClassINET,
+			// TODO(e.burkov):  Use [dhcpsvc.Lease.Expiry].  See
+			// https://github.com/AdguardTeam/AdGuardHome/issues/3932.
+			Ttl:   s.conf.BlockedResponseTTL,
+			Class: dns.ClassINET,
 		},
-		Ptr: dns.Fqdn(host),
+		Ptr: dns.Fqdn(strings.Join([]string{host, s.localDomainSuffix}, ".")),
 	}
 	resp.Answer = append(resp.Answer, ptr)
 	pctx.Res = resp
@@ -788,17 +709,18 @@ func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
 
 	pctx := dctx.proxyCtx
 	req := pctx.Req
-	q := req.Question[0]
+
 	if pctx.Res != nil {
 		// The response has already been set.
 		return resultCodeSuccess
-	} else if reqHost, ok := s.isDHCPClientHostQ(q); ok {
+	} else if dctx.isDHCPHost {
 		// A DHCP client hostname query that hasn't been handled or filtered.
 		// Respond with an NXDOMAIN.
 		//
 		// TODO(a.garipov): Route such queries to a custom upstream for the
 		// local domain name if there is one.
-		log.Debug("dnsforward: dhcp client hostname %q was not filtered", reqHost)
+		name := req.Question[0].Name
+		log.Debug("dnsforward: dhcp client hostname %q was not filtered", name[:len(name)-1])
 		pctx.Res = s.genNXDomain(req)
 
 		return resultCodeFinish
@@ -885,26 +807,26 @@ func (s *Server) setRespAD(pctx *proxy.DNSContext, reqWantsDNSSEC bool) {
 	}
 }
 
-// isDHCPClientHostQ returns true if q is from a request for a DHCP client
-// hostname.  If ok is true, reqHost contains the requested hostname.
-func (s *Server) isDHCPClientHostQ(q dns.Question) (reqHost string, ok bool) {
+// dhcpHostFromRequest returns a hostname from question, if the request is for a
+// DHCP client's hostname when DHCP is enabled, and an empty string otherwise.
+func (s *Server) dhcpHostFromRequest(q *dns.Question) (reqHost string) {
 	if !s.dhcpServer.Enabled() {
-		return "", false
+		return ""
 	}
 
 	// Include AAAA here, because despite the fact that we don't support it yet,
 	// the expected behavior here is to respond with an empty answer and not
 	// NXDOMAIN.
 	if qt := q.Qtype; qt != dns.TypeA && qt != dns.TypeAAAA {
-		return "", false
+		return ""
 	}
 
 	reqHost = strings.ToLower(q.Name[:len(q.Name)-1])
-	if strings.HasSuffix(reqHost, s.localDomainSuffix) {
-		return reqHost, true
+	if !netutil.IsImmediateSubdomain(reqHost, s.localDomainSuffix) {
+		return ""
 	}
 
-	return "", false
+	return reqHost[:len(reqHost)-len(s.localDomainSuffix)-1]
 }
 
 // setCustomUpstream sets custom upstream settings in pctx, if necessary.

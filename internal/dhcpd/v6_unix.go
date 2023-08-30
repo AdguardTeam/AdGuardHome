@@ -26,15 +26,14 @@ const valueIAID = "ADGH" // value for IANA.ID
 //
 // TODO(a.garipov): Think about unifying this and v4Server.
 type v6Server struct {
-	srv        *server6.Server
-	leasesLock sync.Mutex
-	leases     []*Lease
-	ipAddrs    [256]byte
-	sid        dhcpv6.DUID
-
-	ra raCtx // RA module
-
+	ra   raCtx
 	conf V6ServerConf
+	sid  dhcpv6.DUID
+	srv  *server6.Server
+
+	leases     []*Lease
+	leasesLock sync.Mutex
+	ipAddrs    [256]byte
 }
 
 // WriteDiskConfig4 - write configuration
@@ -57,6 +56,34 @@ func ip6InRange(start, ip net.IP) bool {
 		return false
 	}
 	return start[15] <= ip[15]
+}
+
+// HostByIP implements the [Interface] interface for *v6Server.
+func (s *v6Server) HostByIP(ip netip.Addr) (host string) {
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	for _, l := range s.leases {
+		if l.IP == ip {
+			return l.Hostname
+		}
+	}
+
+	return ""
+}
+
+// IPByHost implements the [Interface] interface for *v6Server.
+func (s *v6Server) IPByHost(host string) (ip netip.Addr) {
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	for _, l := range s.leases {
+		if l.Hostname == host {
+			return l.IP
+		}
+	}
+
+	return netip.Addr{}
 }
 
 // ResetLeases resets leases.
