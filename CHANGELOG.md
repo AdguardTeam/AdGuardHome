@@ -25,9 +25,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- [`Strict-Transport-Security`][hsts] header in the HTTP API and DNS-over-HTTPS
+  responses when HTTPS is forced ([#2998]).  See [RFC 6979][rfc6797].
+- UI for the schedule of the service-blocking pause ([#951]).
 - IPv6 hints are now filtered in case IPv6 addresses resolving is disabled
   ([#6122]).
-- The ability to set fallback DNS servers in the configuration file ([#3701]).
+- The ability to set fallback DNS servers in the configuration file and the UI
+  ([#3701]).
 - While adding or updating blocklists, the title can now be parsed from
   `! Title:` definition of the blocklist's source ([#6020]).
 - The ability to filter DNS HTTPS records including IPv4/v6 hints ([#6053]).
@@ -149,6 +153,7 @@ In this release, the schema version has changed from 24 to 26.
   ([#5948]).
 
 [#1453]: https://github.com/AdguardTeam/AdGuardHome/issues/1453
+[#2998]: https://github.com/AdguardTeam/AdGuardHome/issues/2998
 [#3701]: https://github.com/AdguardTeam/AdGuardHome/issues/3701
 [#5948]: https://github.com/AdguardTeam/AdGuardHome/issues/5948
 [#6020]: https://github.com/AdguardTeam/AdGuardHome/issues/6020
@@ -158,6 +163,9 @@ In this release, the schema version has changed from 24 to 26.
 [#6100]: https://github.com/AdguardTeam/AdGuardHome/issues/6100
 [#6122]: https://github.com/AdguardTeam/AdGuardHome/issues/6122
 [#6133]: https://github.com/AdguardTeam/AdGuardHome/issues/6133
+
+[hsts]:    https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+[rfc6797]: https://datatracker.ietf.org/doc/html/rfc6797
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
@@ -675,7 +683,7 @@ In this release, the schema version has changed from 17 to 20.
 [#5701]: https://github.com/AdguardTeam/AdGuardHome/issues/5701
 
 [ms-v0.107.28]: https://github.com/AdguardTeam/AdGuardHome/milestone/64?closed=1
-[rfc6761]:      https://www.rfc-editor.org/rfc/rfc6761
+[rfc6761]:      https://datatracker.ietf.org/doc/html/rfc6761
 
 
 

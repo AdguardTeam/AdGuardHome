@@ -4,6 +4,7 @@ package aghhttp
 
 // HTTP header value constants.
 const (
-	HdrValApplicationJSON = "application/json"
-	HdrValTextPlain       = "text/plain"
+	HdrValApplicationJSON         = "application/json"
+	HdrValStrictTransportSecurity = "max-age=31536000; includeSubDomains"
+	HdrValTextPlain               = "text/plain"
 )
