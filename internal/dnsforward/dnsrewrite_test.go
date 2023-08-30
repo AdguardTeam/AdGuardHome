@@ -34,7 +34,9 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 	}
 
 	// Helper functions and entities.
-	srv := &Server{}
+	srv := &Server{
+		dnsFilter: &filtering.DNSFilter{},
+	}
 	makeQ := func(qtype rules.RRType) (req *dns.Msg) {
 		return &dns.Msg{
 			Question: []dns.Question{{

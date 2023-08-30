@@ -607,7 +607,7 @@ func (s *Server) processDHCPAddrs(dctx *dnsContext) (rc resultCode) {
 			Rrtype: dns.TypePTR,
 			// TODO(e.burkov):  Use [dhcpsvc.Lease.Expiry].  See
 			// https://github.com/AdguardTeam/AdGuardHome/issues/3932.
-			Ttl:   s.conf.BlockedResponseTTL,
+			Ttl:   s.dnsFilter.BlockedResponseTTL,
 			Class: dns.ClassINET,
 		},
 		Ptr: dns.Fqdn(strings.Join([]string{host, s.localDomainSuffix}, ".")),

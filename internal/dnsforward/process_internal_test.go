@@ -77,7 +77,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 			t.Parallel()
 
 			c := ServerConfig{
-				FilteringConfig: FilteringConfig{
+				Config: Config{
 					AAAADisabled:     tc.aaaaDisabled,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				},
@@ -174,7 +174,7 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 			t.Parallel()
 
 			c := ServerConfig{
-				FilteringConfig: FilteringConfig{
+				Config: Config{
 					AAAADisabled:     tc.aaaaDisabled,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				},
@@ -342,11 +342,12 @@ func prepareTestServer(t *testing.T, portDoH, portDoT, portDoQ int, ddrEnabled b
 	t.Helper()
 
 	s = &Server{
+		dnsFilter: &filtering.DNSFilter{},
 		dnsProxy: &proxy.Proxy{
 			Config: proxy.Config{},
 		},
 		conf: ServerConfig{
-			FilteringConfig: FilteringConfig{
+			Config: Config{
 				HandleDDR: ddrEnabled,
 			},
 			TLSConfig: TLSConfig{
@@ -466,6 +467,7 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := &Server{
+				dnsFilter:         &filtering.DNSFilter{},
 				dhcpServer:        dhcp,
 				localDomainSuffix: localDomainSuffix,
 			}
@@ -600,6 +602,7 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 		}
 
 		s := &Server{
+			dnsFilter:         &filtering.DNSFilter{},
 			dhcpServer:        testDHCP,
 			localDomainSuffix: tc.suffix,
 		}
@@ -674,8 +677,8 @@ func TestServer_ProcessRestrictLocal(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		// TODO(s.chzhen):  Add tests where EDNSClientSubnet.Enabled is true.
-		// Improve FilteringConfig declaration for tests.
-		FilteringConfig: FilteringConfig{
+		// Improve Config declaration for tests.
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 	}, ups)
@@ -750,7 +753,7 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 		ServerConfig{
 			UDPListenAddrs: []*net.UDPAddr{{}},
 			TCPListenAddrs: []*net.TCPAddr{{}},
-			FilteringConfig: FilteringConfig{
+			Config: Config{
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 			},
 		},

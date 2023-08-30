@@ -94,7 +94,7 @@ func initDNS() (err error) {
 		return fmt.Errorf("init querylog: %w", err)
 	}
 
-	Context.filters, err = filtering.New(config.DNS.DnsfilterConf, nil)
+	Context.filters, err = filtering.New(config.Filtering, nil)
 	if err != nil {
 		// Don't wrap the error, since it's informative enough as is.
 		return err
@@ -230,13 +230,13 @@ func newServerConfig(
 	hosts := aghalg.CoalesceSlice(dnsConf.BindHosts, []netip.Addr{netutil.IPv4Localhost()})
 
 	newConf = &dnsforward.ServerConfig{
-		UDPListenAddrs:  ipsToUDPAddrs(hosts, dnsConf.Port),
-		TCPListenAddrs:  ipsToTCPAddrs(hosts, dnsConf.Port),
-		FilteringConfig: dnsConf.FilteringConfig,
-		ConfigModified:  onConfigModified,
-		HTTPRegister:    httpReg,
-		UseDNS64:        config.DNS.UseDNS64,
-		DNS64Prefixes:   config.DNS.DNS64Prefixes,
+		UDPListenAddrs: ipsToUDPAddrs(hosts, dnsConf.Port),
+		TCPListenAddrs: ipsToTCPAddrs(hosts, dnsConf.Port),
+		Config:         dnsConf.Config,
+		ConfigModified: onConfigModified,
+		HTTPRegister:   httpReg,
+		UseDNS64:       config.DNS.UseDNS64,
+		DNS64Prefixes:  config.DNS.DNS64Prefixes,
 	}
 
 	var initialAddresses []netip.Addr

@@ -1466,3 +1466,102 @@ func TestUpgradeSchema24to25(t *testing.T) {
 		})
 	}
 }
+
+func TestUpgradeSchema25to26(t *testing.T) {
+	const newSchemaVer = 26
+
+	testCases := []struct {
+		in   yobj
+		want yobj
+		name string
+	}{{
+		name: "empty",
+		in:   yobj{},
+		want: yobj{
+			"schema_version": newSchemaVer,
+		},
+	}, {
+		name: "ok",
+		in: yobj{
+			"dns": yobj{
+				"filtering_enabled":       true,
+				"filters_update_interval": 24,
+				"parental_enabled":        false,
+				"safebrowsing_enabled":    false,
+				"safebrowsing_cache_size": 1048576,
+				"safesearch_cache_size":   1048576,
+				"parental_cache_size":     1048576,
+				"safe_search": yobj{
+					"enabled":    false,
+					"bing":       true,
+					"duckduckgo": true,
+					"google":     true,
+					"pixabay":    true,
+					"yandex":     true,
+					"youtube":    true,
+				},
+				"rewrites": yarr{},
+				"blocked_services": yobj{
+					"schedule": yobj{
+						"time_zone": "Local",
+					},
+					"ids": yarr{},
+				},
+				"protection_enabled":        true,
+				"blocking_mode":             "custom_ip",
+				"blocking_ipv4":             "1.2.3.4",
+				"blocking_ipv6":             "1:2:3::4",
+				"blocked_response_ttl":      10,
+				"protection_disabled_until": nil,
+				"parental_block_host":       "p.dns.adguard.com",
+				"safebrowsing_block_host":   "s.dns.adguard.com",
+			},
+		},
+		want: yobj{
+			"dns": yobj{},
+			"filtering": yobj{
+				"filtering_enabled":       true,
+				"filters_update_interval": 24,
+				"parental_enabled":        false,
+				"safebrowsing_enabled":    false,
+				"safebrowsing_cache_size": 1048576,
+				"safesearch_cache_size":   1048576,
+				"parental_cache_size":     1048576,
+				"safe_search": yobj{
+					"enabled":    false,
+					"bing":       true,
+					"duckduckgo": true,
+					"google":     true,
+					"pixabay":    true,
+					"yandex":     true,
+					"youtube":    true,
+				},
+				"rewrites": yarr{},
+				"blocked_services": yobj{
+					"schedule": yobj{
+						"time_zone": "Local",
+					},
+					"ids": yarr{},
+				},
+				"protection_enabled":        true,
+				"blocking_mode":             "custom_ip",
+				"blocking_ipv4":             "1.2.3.4",
+				"blocking_ipv6":             "1:2:3::4",
+				"blocked_response_ttl":      10,
+				"protection_disabled_until": nil,
+				"parental_block_host":       "p.dns.adguard.com",
+				"safebrowsing_block_host":   "s.dns.adguard.com",
+			},
+			"schema_version": newSchemaVer,
+		},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := upgradeSchema25to26(tc.in)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}

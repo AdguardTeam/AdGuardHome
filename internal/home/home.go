@@ -272,7 +272,7 @@ func setupOpts(opts options) (err error) {
 
 // initContextClients initializes Context clients and related fields.
 func initContextClients() (err error) {
-	err = setupDNSFilteringConf(config.DNS.DnsfilterConf)
+	err = setupDNSFilteringConf(config.Filtering)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
@@ -303,7 +303,7 @@ func initContextClients() (err error) {
 		Context.dhcpServer,
 		Context.etcHosts,
 		arpDB,
-		config.DNS.DnsfilterConf,
+		config.Filtering,
 	)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
@@ -365,6 +365,9 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 		pcService             = "parental control"
 		defaultParentalServer = `https://family.adguard-dns.com/dns-query`
 		pcTXTSuffix           = `pc.dns.adguard.com.`
+
+		defaultSafeBrowsingBlockHost = "standard-block.dns.adguard.com"
+		defaultParentalBlockHost     = "family-block.dns.adguard.com"
 	)
 
 	conf.EtcHosts = Context.etcHosts
@@ -401,6 +404,10 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 		CacheSize:   conf.SafeBrowsingCacheSize,
 	})
 
+	if conf.SafeBrowsingBlockHost != "" {
+		conf.SafeBrowsingBlockHost = defaultSafeBrowsingBlockHost
+	}
+
 	parUps, err := upstream.AddressToUpstream(defaultParentalServer, upsOpts)
 	if err != nil {
 		return fmt.Errorf("converting parental server: %w", err)
@@ -413,6 +420,10 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 		CacheTime:   cacheTime,
 		CacheSize:   conf.ParentalCacheSize,
 	})
+
+	if conf.ParentalBlockHost != "" {
+		conf.ParentalBlockHost = defaultParentalBlockHost
+	}
 
 	conf.SafeSearchConf.CustomResolver = safeSearchResolver{}
 	conf.SafeSearch, err = safesearch.NewDefault(
@@ -544,7 +555,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	fatalOnError(err)
 
 	upd := updater.NewUpdater(&updater.Config{
-		Client:   config.DNS.DnsfilterConf.HTTPClient,
+		Client:   config.Filtering.HTTPClient,
 		Version:  version.Version(),
 		Channel:  version.Channel(),
 		GOARCH:   runtime.GOARCH,

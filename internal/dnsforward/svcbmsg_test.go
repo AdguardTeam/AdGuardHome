@@ -4,6 +4,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -13,11 +14,7 @@ func TestGenAnswerHTTPS_andSVCB(t *testing.T) {
 	// Preconditions.
 
 	s := &Server{
-		conf: ServerConfig{
-			FilteringConfig: FilteringConfig{
-				BlockedResponseTTL: 3600,
-			},
-		},
+		dnsFilter: &filtering.DNSFilter{},
 	}
 
 	req := &dns.Msg{

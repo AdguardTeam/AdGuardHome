@@ -131,7 +131,8 @@ type configuration struct {
 	WhitelistFilters []filtering.FilterYAML `yaml:"whitelist_filters"`
 	UserRules        []string               `yaml:"user_rules"`
 
-	DHCP *dhcpd.ServerConfig `yaml:"dhcp"`
+	DHCP      *dhcpd.ServerConfig `yaml:"dhcp"`
+	Filtering *filtering.Config   `yaml:"filtering"`
 
 	// Clients contains the YAML representations of the persistent clients.
 	// This field is only used for reading and writing persistent client data.
@@ -185,9 +186,10 @@ type dnsConfig struct {
 	// in query log and statistics.
 	AnonymizeClientIP bool `yaml:"anonymize_client_ip"`
 
-	dnsforward.FilteringConfig `yaml:",inline"`
-
-	DnsfilterConf *filtering.Config `yaml:",inline"`
+	// Config is the embed configuration with DNS params.
+	//
+	// TODO(a.garipov): Remove embed.
+	dnsforward.Config `yaml:",inline"`
 
 	// UpstreamTimeout is the timeout for querying upstream servers.
 	UpstreamTimeout timeutil.Duration `yaml:"upstream_timeout"`
@@ -295,14 +297,11 @@ var config = &configuration{
 	DNS: dnsConfig{
 		BindHosts: []netip.Addr{netip.IPv4Unspecified()},
 		Port:      defaultPortDNS,
-		FilteringConfig: dnsforward.FilteringConfig{
-			ProtectionEnabled:  true, // whether or not use any of filtering features
-			BlockingMode:       dnsforward.BlockingModeDefault,
-			BlockedResponseTTL: 10, // in seconds
-			Ratelimit:          20,
-			RefuseAny:          true,
-			AllServers:         false,
-			HandleDDR:          true,
+		Config: dnsforward.Config{
+			Ratelimit:  20,
+			RefuseAny:  true,
+			AllServers: false,
+			HandleDDR:  true,
 			FastestTimeout: timeutil.Duration{
 				Duration: fastip.DefaultPingWaitTimeout,
 			},
@@ -321,33 +320,6 @@ var config = &configuration{
 			// https://github.com/AdguardTeam/AdGuardHome/issues/2015#issuecomment-674041912
 			// was later increased to 300 due to https://github.com/AdguardTeam/AdGuardHome/issues/2257
 			MaxGoroutines: 300,
-		},
-		DnsfilterConf: &filtering.Config{
-			FilteringEnabled:           true,
-			FiltersUpdateIntervalHours: 24,
-
-			ParentalEnabled:     false,
-			SafeBrowsingEnabled: false,
-
-			SafeBrowsingCacheSize: 1 * 1024 * 1024,
-			SafeSearchCacheSize:   1 * 1024 * 1024,
-			ParentalCacheSize:     1 * 1024 * 1024,
-			CacheTime:             30,
-
-			SafeSearchConf: filtering.SafeSearchConfig{
-				Enabled:    false,
-				Bing:       true,
-				DuckDuckGo: true,
-				Google:     true,
-				Pixabay:    true,
-				Yandex:     true,
-				YouTube:    true,
-			},
-
-			BlockedServices: &filtering.BlockedServices{
-				Schedule: schedule.EmptyWeekly(),
-				IDs:      []string{},
-			},
 		},
 		UpstreamTimeout: timeutil.Duration{Duration: dnsforward.DefaultTimeout},
 		UsePrivateRDNS:  true,
@@ -385,6 +357,37 @@ var config = &configuration{
 		URL:     "https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt",
 		Name:    "AdAway Default Blocklist",
 	}},
+	Filtering: &filtering.Config{
+		ProtectionEnabled:  true,
+		BlockingMode:       filtering.BlockingModeDefault,
+		BlockedResponseTTL: 10, // in seconds
+
+		FilteringEnabled:           true,
+		FiltersUpdateIntervalHours: 24,
+
+		ParentalEnabled:     false,
+		SafeBrowsingEnabled: false,
+
+		SafeBrowsingCacheSize: 1 * 1024 * 1024,
+		SafeSearchCacheSize:   1 * 1024 * 1024,
+		ParentalCacheSize:     1 * 1024 * 1024,
+		CacheTime:             30,
+
+		SafeSearchConf: filtering.SafeSearchConfig{
+			Enabled:    false,
+			Bing:       true,
+			DuckDuckGo: true,
+			Google:     true,
+			Pixabay:    true,
+			Yandex:     true,
+			YouTube:    true,
+		},
+
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
+			IDs:      []string{},
+		},
+	},
 	DHCP: &dhcpd.ServerConfig{
 		LocalDomainName: "lan",
 		Conf4: dhcpd.V4ServerConf{
@@ -493,8 +496,8 @@ func parseConfig() (err error) {
 		return fmt.Errorf("validating udp ports: %w", err)
 	}
 
-	if !filtering.ValidateUpdateIvl(config.DNS.DnsfilterConf.FiltersUpdateIntervalHours) {
-		config.DNS.DnsfilterConf.FiltersUpdateIntervalHours = 24
+	if !filtering.ValidateUpdateIvl(config.Filtering.FiltersUpdateIntervalHours) {
+		config.Filtering.FiltersUpdateIntervalHours = 24
 	}
 
 	if config.DNS.UpstreamTimeout.Duration == 0 {
@@ -574,17 +577,17 @@ func (c *configuration) write() (err error) {
 	}
 
 	if Context.filters != nil {
-		Context.filters.WriteDiskConfig(config.DNS.DnsfilterConf)
-		config.Filters = config.DNS.DnsfilterConf.Filters
-		config.WhitelistFilters = config.DNS.DnsfilterConf.WhitelistFilters
-		config.UserRules = config.DNS.DnsfilterConf.UserRules
+		Context.filters.WriteDiskConfig(config.Filtering)
+		config.Filters = config.Filtering.Filters
+		config.WhitelistFilters = config.Filtering.WhitelistFilters
+		config.UserRules = config.Filtering.UserRules
 	}
 
 	if s := Context.dnsServer; s != nil {
-		c := dnsforward.FilteringConfig{}
+		c := dnsforward.Config{}
 		s.WriteDiskConfig(&c)
 		dns := &config.DNS
-		dns.FilteringConfig = c
+		dns.Config = c
 
 		dns.LocalPTRResolvers = s.LocalPTRResolvers()
 

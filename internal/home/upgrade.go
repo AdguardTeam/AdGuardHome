@@ -23,7 +23,7 @@ import (
 )
 
 // currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 25
+const currentSchemaVersion = 26
 
 // These aliases are provided for convenience.
 type (
@@ -100,6 +100,7 @@ func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
 		upgradeSchema22to23,
 		upgradeSchema23to24,
 		upgradeSchema24to25,
+		upgradeSchema25to26,
 	}
 
 	n := 0
@@ -1425,34 +1426,172 @@ func upgradeSchema24to25(diskConf yobj) (err error) {
 	return nil
 }
 
-// moveField gets field value for key from diskConf, and then set this value
-// in newConf for newKey.
-func moveField[T any](diskConf, newConf yobj, key, newKey string) (err error) {
-	ok, newVal, err := fieldValue[T](diskConf, key)
+// upgradeSchema25to26 performs the following changes:
+//
+//	# BEFORE:
+//	'dns':
+//	  'filtering_enabled': true
+//	  'filters_update_interval': 24
+//	  'parental_enabled': false
+//	  'safebrowsing_enabled': false
+//	  'safebrowsing_cache_size': 1048576
+//	  'safesearch_cache_size': 1048576
+//	  'parental_cache_size': 1048576
+//	  'safe_search':
+//	    'enabled': false
+//	    'bing': true
+//	    'duckduckgo': true
+//	    'google': true
+//	    'pixabay': true
+//	    'yandex': true
+//	    'youtube': true
+//	  'rewrites': []
+//	  'blocked_services':
+//	    'schedule':
+//	      'time_zone': 'Local'
+//	    'ids': []
+//	  'protection_enabled':        true,
+//	  'blocking_mode':             'custom_ip',
+//	  'blocking_ipv4':             '1.2.3.4',
+//	  'blocking_ipv6':             '1:2:3::4',
+//	  'blocked_response_ttl':      10,
+//	  'protection_disabled_until': 'null',
+//	  'parental_block_host':       'p.dns.adguard.com',
+//	  'safebrowsing_block_host':   's.dns.adguard.com',
+//	...
+//
+//	# AFTER:
+//	'filtering':
+//	  'filtering_enabled': true
+//	  'filters_update_interval': 24
+//	  'parental_enabled': false
+//	  'safebrowsing_enabled': false
+//	  'safebrowsing_cache_size': 1048576
+//	  'safesearch_cache_size': 1048576
+//	  'parental_cache_size': 1048576
+//	  'safe_search':
+//	    'enabled': false
+//	    'bing': true
+//	    'duckduckgo': true
+//	    'google': true
+//	    'pixabay': true
+//	    'yandex': true
+//	    'youtube': true
+//	  'rewrites': []
+//	  'blocked_services':
+//	    'schedule':
+//	      'time_zone': 'Local'
+//	    'ids': []
+//	  'protection_enabled':        true,
+//	  'blocking_mode':             'custom_ip',
+//	  'blocking_ipv4':             '1.2.3.4',
+//	  'blocking_ipv6':             '1:2:3::4',
+//	  'blocked_response_ttl':      10,
+//	  'protection_disabled_until': 'null',
+//	  'parental_block_host':       'p.dns.adguard.com',
+//	  'safebrowsing_block_host':   's.dns.adguard.com',
+//	'dns'
+//	...
+func upgradeSchema25to26(diskConf yobj) (err error) {
+	log.Printf("Upgrade yaml: 25 to 26")
+	diskConf["schema_version"] = 26
+
+	dnsVal, ok := diskConf["dns"]
 	if !ok {
+		return nil
+	}
+
+	dnsObj, ok := dnsVal.(yobj)
+	if !ok {
+		return fmt.Errorf("unexpected type of dns: %T", dnsVal)
+	}
+
+	filteringObj := yobj{}
+	err = coalesceError(
+		moveFieldValue[bool](dnsObj, filteringObj, "filtering_enabled"),
+		moveFieldValue[int](dnsObj, filteringObj, "filters_update_interval"),
+		moveFieldValue[bool](dnsObj, filteringObj, "parental_enabled"),
+		moveFieldValue[bool](dnsObj, filteringObj, "safebrowsing_enabled"),
+		moveFieldValue[int](dnsObj, filteringObj, "safebrowsing_cache_size"),
+		moveFieldValue[int](dnsObj, filteringObj, "safesearch_cache_size"),
+		moveFieldValue[int](dnsObj, filteringObj, "parental_cache_size"),
+		moveFieldValue[yobj](dnsObj, filteringObj, "safe_search"),
+		moveFieldValue[yarr](dnsObj, filteringObj, "rewrites"),
+		moveFieldValue[yobj](dnsObj, filteringObj, "blocked_services"),
+		moveFieldValue[bool](dnsObj, filteringObj, "protection_enabled"),
+		moveFieldValue[string](dnsObj, filteringObj, "blocking_mode"),
+		moveFieldValue[string](dnsObj, filteringObj, "blocking_ipv4"),
+		moveFieldValue[string](dnsObj, filteringObj, "blocking_ipv6"),
+		moveFieldValue[int](dnsObj, filteringObj, "blocked_response_ttl"),
+		moveFieldValue[any](dnsObj, filteringObj, "protection_disabled_until"),
+		moveFieldValue[string](dnsObj, filteringObj, "parental_block_host"),
+		moveFieldValue[string](dnsObj, filteringObj, "safebrowsing_block_host"),
+	)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	switch v := newVal.(type) {
-	case int, bool, string:
-		newConf[newKey] = v
-	default:
-		return fmt.Errorf("invalid type of %s: %T", key, newVal)
+	if len(filteringObj) != 0 {
+		diskConf["filtering"] = filteringObj
 	}
+
+	delete(dnsObj, "filtering_enabled")
+	delete(dnsObj, "filters_update_interval")
+	delete(dnsObj, "parental_enabled")
+	delete(dnsObj, "safebrowsing_enabled")
+	delete(dnsObj, "safebrowsing_cache_size")
+	delete(dnsObj, "safesearch_cache_size")
+	delete(dnsObj, "parental_cache_size")
+	delete(dnsObj, "safe_search")
+	delete(dnsObj, "rewrites")
+	delete(dnsObj, "blocked_services")
+	delete(dnsObj, "protection_enabled")
+	delete(dnsObj, "blocking_mode")
+	delete(dnsObj, "blocking_ipv4")
+	delete(dnsObj, "blocking_ipv6")
+	delete(dnsObj, "blocked_response_ttl")
+	delete(dnsObj, "protection_disabled_until")
+	delete(dnsObj, "parental_block_host")
+	delete(dnsObj, "safebrowsing_block_host")
 
 	return nil
 }
 
-// fieldValue returns the value of type T for key in diskConf object.
-func fieldValue[T any](diskConf yobj, key string) (ok bool, field any, err error) {
-	fieldVal, ok := diskConf[key]
+// moveField gets field value for key from fromObj, and then sets this value in
+// newConf for newKey.
+func moveField[T any](fromObj, newConf yobj, key, newKey string) (err error) {
+	ok, newVal, err := fieldValue[T](fromObj, key)
 	if !ok {
-		return false, new(T), nil
+		return err
+	}
+
+	newConf[newKey] = newVal
+
+	return nil
+}
+
+// moveFieldValue gets field value for key from fromObj, and then sets this
+// value in newConf with the same key.
+func moveFieldValue[T any](fromObj, newConf yobj, key string) (err error) {
+	return moveField[T](fromObj, newConf, key, key)
+}
+
+// fieldValue returns the value of type T for key in confObj object.  Returns
+// nil for fields with nil values.
+func fieldValue[T any](confObj yobj, key string) (ok bool, field T, err error) {
+	fieldVal, ok := confObj[key]
+	if !ok {
+		return false, field, nil
+	}
+
+	if fieldVal == nil {
+		return true, field, nil
 	}
 
 	f, ok := fieldVal.(T)
 	if !ok {
-		return false, nil, fmt.Errorf("unexpected type of %s: %T", key, fieldVal)
+		return false, field, fmt.Errorf("unexpected type of %s: %T", key, fieldVal)
 	}
 
 	return true, f, nil

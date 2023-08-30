@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
@@ -47,7 +48,7 @@ type jsonDNSConfig struct {
 	RateLimit *uint32 `json:"ratelimit"`
 
 	// BlockingMode defines the way blocked responses are constructed.
-	BlockingMode *BlockingMode `json:"blocking_mode"`
+	BlockingMode *filtering.BlockingMode `json:"blocking_mode"`
 
 	// EDNSCSEnabled defines if EDNS Client Subnet is enabled.
 	EDNSCSEnabled *bool `json:"edns_cs_enabled"`
@@ -113,9 +114,9 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	upstreamFile := s.conf.UpstreamDNSFileName
 	bootstraps := stringutil.CloneSliceOrEmpty(s.conf.BootstrapDNS)
 	fallbacks := stringutil.CloneSliceOrEmpty(s.conf.FallbackDNS)
-	blockingMode := s.conf.BlockingMode
-	blockingIPv4 := s.conf.BlockingIPv4
-	blockingIPv6 := s.conf.BlockingIPv6
+	blockingMode := s.dnsFilter.BlockingMode
+	blockingIPv4 := s.dnsFilter.BlockingIPv4
+	blockingIPv6 := s.dnsFilter.BlockingIPv6
 	ratelimit := s.conf.Ratelimit
 
 	customIP := s.conf.EDNSClientSubnet.CustomIP
@@ -319,10 +320,10 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 	defer s.serverLock.Unlock()
 
 	if dc.BlockingMode != nil {
-		s.conf.BlockingMode = *dc.BlockingMode
-		if *dc.BlockingMode == BlockingModeCustomIP {
-			s.conf.BlockingIPv4 = dc.BlockingIPv4
-			s.conf.BlockingIPv6 = dc.BlockingIPv6
+		s.dnsFilter.BlockingMode = *dc.BlockingMode
+		if *dc.BlockingMode == filtering.BlockingModeCustomIP {
+			s.dnsFilter.BlockingIPv4 = dc.BlockingIPv4
+			s.dnsFilter.BlockingIPv6 = dc.BlockingIPv6
 		}
 	}
 
@@ -335,7 +336,7 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 		s.conf.EDNSClientSubnet.CustomIP = dc.EDNSCSCustomIP
 	}
 
-	setIfNotNil(&s.conf.ProtectionEnabled, dc.ProtectionEnabled)
+	setIfNotNil(&s.dnsFilter.ProtectionEnabled, dc.ProtectionEnabled)
 	setIfNotNil(&s.conf.EnableDNSSEC, dc.DNSSECEnabled)
 	setIfNotNil(&s.conf.AAAADisabled, dc.DisableIPv6)
 
@@ -831,8 +832,8 @@ func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
 		s.serverLock.Lock()
 		defer s.serverLock.Unlock()
 
-		s.conf.ProtectionEnabled = protectionReq.Enabled
-		s.conf.ProtectionDisabledUntil = disabledUntil
+		s.dnsFilter.ProtectionEnabled = protectionReq.Enabled
+		s.dnsFilter.ProtectionDisabledUntil = disabledUntil
 	}()
 
 	s.conf.ConfigModified()

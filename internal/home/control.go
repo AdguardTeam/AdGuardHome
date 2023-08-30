@@ -127,12 +127,12 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		fltConf                 *dnsforward.FilteringConfig
+		fltConf                 *dnsforward.Config
 		protectionDisabledUntil *time.Time
 		protectionEnabled       bool
 	)
 	if Context.dnsServer != nil {
-		fltConf = &dnsforward.FilteringConfig{}
+		fltConf = &dnsforward.Config{}
 		Context.dnsServer.WriteDiskConfig(fltConf)
 		protectionEnabled, protectionDisabledUntil = Context.dnsServer.UpdatedProtectionStatus()
 	}

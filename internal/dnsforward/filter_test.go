@@ -30,9 +30,7 @@ func TestHandleDNSRequest_handleDNSRequest(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
-			BlockingMode:      BlockingModeDefault,
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -42,7 +40,10 @@ func TestHandleDNSRequest_handleDNSRequest(t *testing.T) {
 		ID: 0, Data: []byte(rules),
 	}}
 
-	f, err := filtering.New(&filtering.Config{}, filters)
+	f, err := filtering.New(&filtering.Config{
+		ProtectionEnabled: true,
+		BlockingMode:      filtering.BlockingModeDefault,
+	}, filters)
 	require.NoError(t, err)
 	f.SetEnabled(true)
 

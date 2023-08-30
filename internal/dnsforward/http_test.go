@@ -58,6 +58,8 @@ const jsonExt = ".json"
 
 func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
+		ProtectionEnabled:     true,
+		BlockingMode:          filtering.BlockingModeDefault,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
 		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
@@ -68,12 +70,10 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{},
 		TCPListenAddrs: []*net.TCPAddr{},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
-			BlockingMode:      BlockingModeDefault,
-			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
-			FallbackDNS:       []string{"9.9.9.10"},
-			EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
+		Config: Config{
+			UpstreamDNS:      []string{"8.8.8.8:53", "8.8.4.4:53"},
+			FallbackDNS:      []string{"9.9.9.10"},
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
 	}
@@ -135,6 +135,8 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 
 func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
+		ProtectionEnabled:     true,
+		BlockingMode:          filtering.BlockingModeDefault,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
 		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
@@ -145,11 +147,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{},
 		TCPListenAddrs: []*net.TCPAddr{},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
-			BlockingMode:      BlockingModeDefault,
-			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
-			EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
+		Config: Config{
+			UpstreamDNS:      []string{"8.8.8.8:53", "8.8.4.4:53"},
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
 	}
@@ -157,6 +157,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	s.sysResolvers = &fakeSystemResolvers{}
 
 	defaultConf := s.conf
+	defaultFilterConf := filterConf
 
 	err := s.Start()
 	assert.NoError(t, err)
@@ -247,8 +248,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Cleanup(func() {
+				s.dnsFilter.Config = *defaultFilterConf
 				s.conf = defaultConf
-				s.conf.FilteringConfig.EDNSClientSubnet = &EDNSClientSubnet{}
+				s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{}
 			})
 
 			rBody := io.NopCloser(bytes.NewReader(caseData.Req))
@@ -503,7 +505,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		UDPListenAddrs:  []*net.UDPAddr{{}},
 		TCPListenAddrs:  []*net.TCPAddr{{}},
 		UpstreamTimeout: upsTimeout,
-		FilteringConfig: FilteringConfig{
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 	}, nil)

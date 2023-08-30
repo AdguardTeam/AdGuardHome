@@ -15,6 +15,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -76,35 +77,19 @@ type Resolver interface {
 
 // Config allows you to configure DNS filtering with New() or just change variables directly.
 type Config struct {
+	// BlockingIPv4 is the IP address to be returned for a blocked A request.
+	BlockingIPv4 netip.Addr `yaml:"blocking_ipv4"`
+
+	// BlockingIPv6 is the IP address to be returned for a blocked AAAA request.
+	BlockingIPv6 netip.Addr `yaml:"blocking_ipv6"`
+
 	// SafeBrowsingChecker is the safe browsing hash-prefix checker.
 	SafeBrowsingChecker Checker `yaml:"-"`
 
 	// ParentControl is the parental control hash-prefix checker.
 	ParentalControlChecker Checker `yaml:"-"`
 
-	// enabled is used to be returned within Settings.
-	//
-	// It is of type uint32 to be accessed by atomic.
-	//
-	// TODO(e.burkov):  Use atomic.Bool in Go 1.19.
-	enabled uint32
-
-	FilteringEnabled           bool   `yaml:"filtering_enabled"`       // whether or not use filter lists
-	FiltersUpdateIntervalHours uint32 `yaml:"filters_update_interval"` // time period to update filters (in hours)
-
-	ParentalEnabled     bool `yaml:"parental_enabled"`
-	SafeBrowsingEnabled bool `yaml:"safebrowsing_enabled"`
-
-	SafeBrowsingCacheSize uint `yaml:"safebrowsing_cache_size"` // (in bytes)
-	SafeSearchCacheSize   uint `yaml:"safesearch_cache_size"`   // (in bytes)
-	ParentalCacheSize     uint `yaml:"parental_cache_size"`     // (in bytes)
-	// TODO(a.garipov): Use timeutil.Duration
-	CacheTime uint `yaml:"cache_time"` // Element's TTL (in minutes)
-
-	SafeSearchConf SafeSearchConfig `yaml:"safe_search"`
-	SafeSearch     SafeSearch       `yaml:"-"`
-
-	Rewrites []*LegacyRewrite `yaml:"rewrites"`
+	SafeSearch SafeSearch `yaml:"-"`
 
 	// BlockedServices is the configuration of blocked services.
 	// Per-client settings can override this configuration.
@@ -123,11 +108,30 @@ type Config struct {
 	// HTTPClient is the client to use for updating the remote filters.
 	HTTPClient *http.Client `yaml:"-"`
 
+	// filtersMu protects filter lists.
+	filtersMu *sync.RWMutex
+
+	// ProtectionDisabledUntil is the timestamp until when the protection is
+	// disabled.
+	ProtectionDisabledUntil *time.Time `yaml:"protection_disabled_until"`
+
+	SafeSearchConf SafeSearchConfig `yaml:"safe_search"`
+
 	// DataDir is used to store filters' contents.
 	DataDir string `yaml:"-"`
 
-	// filtersMu protects filter lists.
-	filtersMu *sync.RWMutex
+	// BlockingMode defines the way how blocked responses are constructed.
+	BlockingMode BlockingMode `yaml:"blocking_mode"`
+
+	// ParentalBlockHost is the IP (or domain name) which is used to respond to
+	// DNS requests blocked by parental control.
+	ParentalBlockHost string `yaml:"parental_block_host"`
+
+	// SafeBrowsingBlockHost is the IP (or domain name) which is used to respond
+	// to DNS requests blocked by safe-browsing.
+	SafeBrowsingBlockHost string `yaml:"safebrowsing_block_host"`
+
+	Rewrites []*LegacyRewrite `yaml:"rewrites"`
 
 	// Filters are the blocking filter lists.
 	Filters []FilterYAML `yaml:"-"`
@@ -137,7 +141,61 @@ type Config struct {
 
 	// UserRules is the global list of custom rules.
 	UserRules []string `yaml:"-"`
+
+	SafeBrowsingCacheSize uint `yaml:"safebrowsing_cache_size"` // (in bytes)
+	SafeSearchCacheSize   uint `yaml:"safesearch_cache_size"`   // (in bytes)
+	ParentalCacheSize     uint `yaml:"parental_cache_size"`     // (in bytes)
+	// TODO(a.garipov): Use timeutil.Duration
+	CacheTime uint `yaml:"cache_time"` // Element's TTL (in minutes)
+
+	// enabled is used to be returned within Settings.
+	//
+	// It is of type uint32 to be accessed by atomic.
+	//
+	// TODO(e.burkov):  Use atomic.Bool in Go 1.19.
+	enabled uint32
+
+	// FiltersUpdateIntervalHours is the time period to update filters
+	// (in hours).
+	FiltersUpdateIntervalHours uint32 `yaml:"filters_update_interval"`
+
+	// BlockedResponseTTL is the time-to-live value for blocked responses.  If
+	// 0, then default value is used (3600).
+	BlockedResponseTTL uint32 `yaml:"blocked_response_ttl"`
+
+	// FilteringEnabled indicates whether or not use filter lists.
+	FilteringEnabled bool `yaml:"filtering_enabled"`
+
+	ParentalEnabled     bool `yaml:"parental_enabled"`
+	SafeBrowsingEnabled bool `yaml:"safebrowsing_enabled"`
+
+	// ProtectionEnabled defines whether or not use any of filtering features.
+	ProtectionEnabled bool `yaml:"protection_enabled"`
 }
+
+// BlockingMode is an enum of all allowed blocking modes.
+type BlockingMode string
+
+// Allowed blocking modes.
+const (
+	// BlockingModeCustomIP means respond with a custom IP address.
+	BlockingModeCustomIP BlockingMode = "custom_ip"
+
+	// BlockingModeDefault is the same as BlockingModeNullIP for
+	// Adblock-style rules, but responds with the IP address specified in
+	// the rule when blocked by an `/etc/hosts`-style rule.
+	BlockingModeDefault BlockingMode = "default"
+
+	// BlockingModeNullIP means respond with a zero IP address: "0.0.0.0"
+	// for A requests and "::" for AAAA ones.
+	BlockingModeNullIP BlockingMode = "null_ip"
+
+	// BlockingModeNXDOMAIN means respond with the NXDOMAIN code.
+	BlockingModeNXDOMAIN BlockingMode = "nxdomain"
+
+	// BlockingModeREFUSED means respond with the REFUSED code.
+	BlockingModeREFUSED BlockingMode = "refused"
+)
 
 // LookupStats store stats collected during safebrowsing or parental checks
 type LookupStats struct {
@@ -182,6 +240,15 @@ type DNSFilter struct {
 	rulesStorageAllow    *filterlist.RuleStorage
 	filteringEngineAllow *urlfilter.DNSEngine
 
+	// Config contains filtering parameters.  For direct access by library
+	// users, even a = assignment.
+	//
+	// TODO(d.kolyshev): Remove this embed.
+	Config
+
+	// confLock protects Config.
+	confLock sync.RWMutex
+
 	safeSearch SafeSearch
 
 	// safeBrowsingChecker is the safe browsing hash-prefix checker.
@@ -191,10 +258,6 @@ type DNSFilter struct {
 	parentalControlChecker Checker
 
 	engineLock sync.RWMutex
-
-	Config // for direct access by library users, even a = assignment
-	// confLock protects Config.
-	confLock sync.RWMutex
 
 	// Channel for passing data to filters-initializer goroutine
 	filtersInitializerChan chan filtersInitializerParams

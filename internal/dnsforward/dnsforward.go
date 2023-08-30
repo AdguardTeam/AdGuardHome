@@ -45,6 +45,14 @@ var defaultBootstrap = []string{"9.9.9.10", "149.112.112.10", "2620:fe::10", "26
 // Often requested by all kinds of DNS probes
 var defaultBlockedHosts = []string{"version.bind", "id.server", "hostname.bind"}
 
+var (
+	// defaultUDPListenAddrs are the default UDP addresses for the server.
+	defaultUDPListenAddrs = []*net.UDPAddr{{Port: 53}}
+
+	// defaultTCPListenAddrs are the default TCP addresses for the server.
+	defaultTCPListenAddrs = []*net.TCPAddr{{Port: 53}}
+)
+
 var webRegistered bool
 
 // DHCP is an interface for accesing DHCP lease data needed in this package.
@@ -255,11 +263,11 @@ func (s *Server) Close() {
 }
 
 // WriteDiskConfig - write configuration
-func (s *Server) WriteDiskConfig(c *FilteringConfig) {
+func (s *Server) WriteDiskConfig(c *Config) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	sc := s.conf.FilteringConfig
+	sc := s.conf.Config
 	*c = sc
 	c.RatelimitWhitelist = stringutil.CloneSlice(sc.RatelimitWhitelist)
 	c.BootstrapDNS = stringutil.CloneSlice(sc.BootstrapDNS)
@@ -534,7 +542,11 @@ func (s *Server) setupLocalResolvers() (err error) {
 func (s *Server) Prepare(conf *ServerConfig) (err error) {
 	s.conf = *conf
 
-	err = validateBlockingMode(s.conf.BlockingMode, s.conf.BlockingIPv4, s.conf.BlockingIPv6)
+	err = validateBlockingMode(
+		s.dnsFilter.BlockingMode,
+		s.dnsFilter.BlockingIPv4,
+		s.dnsFilter.BlockingIPv6,
+	)
 	if err != nil {
 		return fmt.Errorf("checking blocking mode: %w", err)
 	}
@@ -645,15 +657,18 @@ func (s *Server) setupAddrProc() {
 }
 
 // validateBlockingMode returns an error if the blocking mode data aren't valid.
-func validateBlockingMode(mode BlockingMode, blockingIPv4, blockingIPv6 netip.Addr) (err error) {
+func validateBlockingMode(
+	mode filtering.BlockingMode,
+	blockingIPv4, blockingIPv6 netip.Addr,
+) (err error) {
 	switch mode {
 	case
-		BlockingModeDefault,
-		BlockingModeNXDOMAIN,
-		BlockingModeREFUSED,
-		BlockingModeNullIP:
+		filtering.BlockingModeDefault,
+		filtering.BlockingModeNXDOMAIN,
+		filtering.BlockingModeREFUSED,
+		filtering.BlockingModeNullIP:
 		return nil
-	case BlockingModeCustomIP:
+	case filtering.BlockingModeCustomIP:
 		if !blockingIPv4.Is4() {
 			return fmt.Errorf("blocking_ipv4 must be valid ipv4 on custom_ip blocking_mode")
 		} else if !blockingIPv6.Is6() {
