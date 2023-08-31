@@ -1,4 +1,4 @@
-package home
+package confmigrate
 
 import (
 	"testing"
@@ -11,12 +11,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO(a.garipov): Cover all migrations, use a testdata/ dir.
+// TODO(e.burkov): Cover all migrations, use a testdata/ dir.
 
 func TestUpgradeSchema1to2(t *testing.T) {
 	diskConf := testDiskConf(1)
 
-	err := upgradeSchema1to2(diskConf)
+	m := New(&Config{
+		WorkingDir: "",
+	})
+
+	err := m.upgradeSchema1to2(diskConf)
 	require.NoError(t, err)
 
 	require.Equal(t, diskConf["schema_version"], 2)
@@ -651,10 +655,10 @@ func TestUpgradeSchema12to13(t *testing.T) {
 func TestUpgradeSchema13to14(t *testing.T) {
 	const newSchemaVer = 14
 
-	testClient := &clientObject{
-		Name:              "agh-client",
-		IDs:               []string{"id1"},
-		UseGlobalSettings: true,
+	testClient := yobj{
+		"name":                "agh-client",
+		"ids":                 []string{"id1"},
+		"use_global_settings": true,
 	}
 
 	testCases := []struct {
@@ -668,37 +672,37 @@ func TestUpgradeSchema13to14(t *testing.T) {
 			// The clients field will be added anyway.
 			"clients": yobj{
 				"persistent": yarr{},
-				"runtime_sources": &clientSourcesConfig{
-					WHOIS:     true,
-					ARP:       true,
-					RDNS:      false,
-					DHCP:      true,
-					HostsFile: true,
+				"runtime_sources": yobj{
+					"whois": true,
+					"arp":   true,
+					"rdns":  false,
+					"dhcp":  true,
+					"hosts": true,
 				},
 			},
 		},
 		name: "no_clients",
 	}, {
 		in: yobj{
-			"clients": []*clientObject{testClient},
+			"clients": yarr{testClient},
 		},
 		want: yobj{
 			"schema_version": newSchemaVer,
 			"clients": yobj{
-				"persistent": []*clientObject{testClient},
-				"runtime_sources": &clientSourcesConfig{
-					WHOIS:     true,
-					ARP:       true,
-					RDNS:      false,
-					DHCP:      true,
-					HostsFile: true,
+				"persistent": yarr{testClient},
+				"runtime_sources": yobj{
+					"whois": true,
+					"arp":   true,
+					"rdns":  false,
+					"dhcp":  true,
+					"hosts": true,
 				},
 			},
 		},
 		name: "no_dns",
 	}, {
 		in: yobj{
-			"clients": []*clientObject{testClient},
+			"clients": yarr{testClient},
 			"dns": yobj{
 				"resolve_clients": true,
 			},
@@ -706,13 +710,13 @@ func TestUpgradeSchema13to14(t *testing.T) {
 		want: yobj{
 			"schema_version": newSchemaVer,
 			"clients": yobj{
-				"persistent": []*clientObject{testClient},
-				"runtime_sources": &clientSourcesConfig{
-					WHOIS:     true,
-					ARP:       true,
-					RDNS:      true,
-					DHCP:      true,
-					HostsFile: true,
+				"persistent": yarr{testClient},
+				"runtime_sources": yobj{
+					"whois": true,
+					"arp":   true,
+					"rdns":  true,
+					"dhcp":  true,
+					"hosts": true,
 				},
 			},
 			"dns": yobj{},

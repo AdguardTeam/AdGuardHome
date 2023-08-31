@@ -10,6 +10,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
+	"github.com/AdguardTeam/AdGuardHome/internal/confmigrate"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -415,7 +416,7 @@ var config = &configuration{
 		MaxAge:     3,
 	},
 	OSConfig:      &osConfig{},
-	SchemaVersion: currentSchemaVersion,
+	SchemaVersion: confmigrate.CurrentSchemaVersion,
 	Theme:         ThemeAuto,
 }
 
@@ -431,6 +432,7 @@ func (c *configuration) getConfigFilename() string {
 	if !filepath.IsAbs(configFile) {
 		configFile = filepath.Join(Context.workDir, configFile)
 	}
+
 	return configFile
 }
 
@@ -450,21 +452,56 @@ func validateBindHosts(conf *configuration) (err error) {
 	return nil
 }
 
-// parseConfig loads configuration from the YAML file
+// parseConfig loads configuration from the YAML file, upgrading it if
+// necessary.
 func parseConfig() (err error) {
-	var fileData []byte
-	fileData, err = readConfigFile()
+	// Do the upgrade if necessary.
+	config.fileData, err = readConfigFile()
 	if err != nil {
 		return err
 	}
 
-	config.fileData = nil
-	err = yaml.Unmarshal(fileData, &config)
+	migrator := confmigrate.New(&confmigrate.Config{
+		WorkingDir: Context.workDir,
+	})
+
+	var upgraded bool
+	config.fileData, upgraded, err = migrator.Migrate(config.fileData)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	} else if upgraded {
+		err = maybe.WriteFile(config.getConfigFilename(), config.fileData, 0o644)
+		if err != nil {
+			return fmt.Errorf("writing new config: %w", err)
+		}
+	}
+
+	err = yaml.Unmarshal(config.fileData, &config)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
 
+	err = validateConfig()
+	if err != nil {
+		return err
+	}
+
+	if config.DNS.UpstreamTimeout.Duration == 0 {
+		config.DNS.UpstreamTimeout = timeutil.Duration{Duration: dnsforward.DefaultTimeout}
+	}
+
+	err = setContextTLSCipherIDs()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateConfig returns error if the configuration is invalid.
+func validateConfig() (err error) {
 	err = validateBindHosts(config)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
@@ -498,15 +535,6 @@ func parseConfig() (err error) {
 
 	if !filtering.ValidateUpdateIvl(config.Filtering.FiltersUpdateIntervalHours) {
 		config.Filtering.FiltersUpdateIntervalHours = 24
-	}
-
-	if config.DNS.UpstreamTimeout.Duration == 0 {
-		config.DNS.UpstreamTimeout = timeutil.Duration{Duration: dnsforward.DefaultTimeout}
-	}
-
-	err = setContextTLSCipherIDs()
-	if err != nil {
-		return err
 	}
 
 	return nil

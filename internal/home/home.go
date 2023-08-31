@@ -145,14 +145,8 @@ func setupContext(opts options) (err error) {
 		return nil
 	}
 
-	// Do the upgrade if necessary.
-	err = upgradeConfig()
+	err = parseConfig()
 	if err != nil {
-		// Don't wrap the error, because it's informative enough as is.
-		return err
-	}
-
-	if err = parseConfig(); err != nil {
 		log.Error("parsing configuration file: %s", err)
 
 		os.Exit(1)

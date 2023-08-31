@@ -1,7 +1,6 @@
-package home
+package confmigrate
 
 import (
-	"bytes"
 	"fmt"
 	"net/netip"
 	"net/url"
@@ -17,133 +16,15 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
-	"github.com/google/renameio/v2/maybe"
 	"golang.org/x/crypto/bcrypt"
-	yaml "gopkg.in/yaml.v3"
 )
 
-// currentSchemaVersion is the current schema version.
-const currentSchemaVersion = 26
-
-// These aliases are provided for convenience.
-type (
-	yarr = []any
-	yobj = map[string]any
-)
-
-// Performs necessary upgrade operations if needed
-func upgradeConfig() error {
-	// read a config file into an interface map, so we can manipulate values without losing any
-	diskConf := yobj{}
-	body, err := readConfigFile()
-	if err != nil {
-		return err
-	}
-
-	err = yaml.Unmarshal(body, &diskConf)
-	if err != nil {
-		log.Printf("parsing config file for upgrade: %s", err)
-
-		return err
-	}
-
-	schemaVersionInterface, ok := diskConf["schema_version"]
-	log.Tracef("got schema version %v", schemaVersionInterface)
-	if !ok {
-		// no schema version, set it to 0
-		schemaVersionInterface = 0
-	}
-
-	schemaVersion, ok := schemaVersionInterface.(int)
-	if !ok {
-		err = fmt.Errorf("configuration file contains non-integer schema_version, abort")
-		log.Println(err)
-		return err
-	}
-
-	if schemaVersion == currentSchemaVersion {
-		// do nothing
-		return nil
-	}
-
-	return upgradeConfigSchema(schemaVersion, diskConf)
-}
-
-// upgradeFunc is a function that upgrades a config and returns an error.
-type upgradeFunc = func(diskConf yobj) (err error)
-
-// Upgrade from oldVersion to newVersion
-func upgradeConfigSchema(oldVersion int, diskConf yobj) (err error) {
-	upgrades := []upgradeFunc{
-		upgradeSchema0to1,
-		upgradeSchema1to2,
-		upgradeSchema2to3,
-		upgradeSchema3to4,
-		upgradeSchema4to5,
-		upgradeSchema5to6,
-		upgradeSchema6to7,
-		upgradeSchema7to8,
-		upgradeSchema8to9,
-		upgradeSchema9to10,
-		upgradeSchema10to11,
-		upgradeSchema11to12,
-		upgradeSchema12to13,
-		upgradeSchema13to14,
-		upgradeSchema14to15,
-		upgradeSchema15to16,
-		upgradeSchema16to17,
-		upgradeSchema17to18,
-		upgradeSchema18to19,
-		upgradeSchema19to20,
-		upgradeSchema20to21,
-		upgradeSchema21to22,
-		upgradeSchema22to23,
-		upgradeSchema23to24,
-		upgradeSchema24to25,
-		upgradeSchema25to26,
-	}
-
-	n := 0
-	for i, u := range upgrades {
-		if i >= oldVersion {
-			err = u(diskConf)
-			if err != nil {
-				return err
-			}
-
-			n++
-		}
-	}
-
-	if n == 0 {
-		return fmt.Errorf("unknown configuration schema version %d", oldVersion)
-	}
-
-	buf := &bytes.Buffer{}
-	enc := yaml.NewEncoder(buf)
-	enc.SetIndent(2)
-
-	err = enc.Encode(diskConf)
-	if err != nil {
-		return fmt.Errorf("generating new config: %w", err)
-	}
-
-	config.fileData = buf.Bytes()
-	confFile := config.getConfigFilename()
-	err = maybe.WriteFile(confFile, config.fileData, 0o644)
-	if err != nil {
-		return fmt.Errorf("writing new config: %w", err)
-	}
-
-	return nil
-}
-
-// The first schema upgrade:
-// No more "dnsfilter.txt", filters are now kept in data/filters/
-func upgradeSchema0to1(diskConf yobj) (err error) {
+// upgradeSchema0to1 deletes the unused dnsfilter.txt file, since the following
+// versions store filters in data/filters/.
+func (m *Migrator) upgradeSchema0to1(diskConf yobj) (err error) {
 	log.Printf("%s(): called", funcName())
 
-	dnsFilterPath := filepath.Join(Context.workDir, "dnsfilter.txt")
+	dnsFilterPath := filepath.Join(m.workingDir, "dnsfilter.txt")
 	log.Printf("deleting %s as we don't need it anymore", dnsFilterPath)
 	err = os.Remove(dnsFilterPath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -157,13 +38,20 @@ func upgradeSchema0to1(diskConf yobj) (err error) {
 	return nil
 }
 
-// Second schema upgrade:
-// coredns is now dns in config
-// delete 'Corefile', since we don't use that anymore
-func upgradeSchema1to2(diskConf yobj) (err error) {
+// upgradeSchema1to2 performs the following changes:
+//
+//	# BEFORE:
+//	'dns':
+//	  # …
+//
+//	# AFTER:
+//	# …
+//
+// It also deletes the Corefile file, since it isn't used anymore.
+func (m *Migrator) upgradeSchema1to2(diskConf yobj) (err error) {
 	log.Printf("%s(): called", funcName())
 
-	coreFilePath := filepath.Join(Context.workDir, "Corefile")
+	coreFilePath := filepath.Join(m.workingDir, "Corefile")
 	log.Printf("deleting %s as we don't need it anymore", coreFilePath)
 	err = os.Remove(coreFilePath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -292,12 +180,12 @@ func upgradeSchema4to5(diskConf yobj) error {
 		log.Fatalf("Can't use password \"%s\": bcrypt.GenerateFromPassword: %s", passStr, err)
 		return nil
 	}
-	u := webUser{
-		Name:         nameStr,
-		PasswordHash: string(hash),
+	u := yobj{
+		"name":     nameStr,
+		"password": string(hash),
 	}
-	users := []webUser{u}
-	diskConf["users"] = users
+	diskConf["users"] = yarr{u}
+
 	return nil
 }
 
@@ -794,12 +682,12 @@ func upgradeSchema13to14(diskConf yobj) (err error) {
 
 	diskConf["clients"] = yobj{
 		"persistent": clientsVal,
-		"runtime_sources": &clientSourcesConfig{
-			WHOIS:     true,
-			ARP:       true,
-			RDNS:      rdnsSrc,
-			DHCP:      true,
-			HostsFile: true,
+		"runtime_sources": yobj{
+			"whois": true,
+			"arp":   true,
+			"rdns":  rdnsSrc,
+			"dhcp":  true,
+			"hosts": true,
 		},
 	}
 

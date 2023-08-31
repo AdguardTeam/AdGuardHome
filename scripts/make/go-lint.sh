@@ -177,8 +177,9 @@ run_linter gocyclo --over 10 .
 gocognit_paths="\
 ./internal/aghnet/   20
 ./internal/querylog/ 20
-./internal/dnsforward/ 19
-./internal/home/       19
+./internal/confmigrate/ 19
+./internal/dnsforward/  19
+./internal/home/        19
 ./internal/aghtls/ 18
 ./internal/filtering          17
 ./internal/filtering/rewrite/ 17
@@ -240,6 +241,7 @@ run_linter gosec --quiet\
 	./internal/aghrenameio/\
 	./internal/aghtest\
 	./internal/client\
+	./internal/confmigrate\
 	./internal/dhcpd\
 	./internal/dhcpsvc\
 	./internal/dnsforward\
