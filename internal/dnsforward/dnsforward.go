@@ -542,13 +542,16 @@ func (s *Server) setupLocalResolvers() (err error) {
 func (s *Server) Prepare(conf *ServerConfig) (err error) {
 	s.conf = *conf
 
-	err = validateBlockingMode(
-		s.dnsFilter.BlockingMode,
-		s.dnsFilter.BlockingIPv4,
-		s.dnsFilter.BlockingIPv6,
-	)
-	if err != nil {
-		return fmt.Errorf("checking blocking mode: %w", err)
+	// dnsFilter can be nil during application update.
+	if s.dnsFilter != nil {
+		err = validateBlockingMode(
+			s.dnsFilter.BlockingMode,
+			s.dnsFilter.BlockingIPv4,
+			s.dnsFilter.BlockingIPv6,
+		)
+		if err != nil {
+			return fmt.Errorf("checking blocking mode: %w", err)
+		}
 	}
 
 	s.initDefaultSettings()
