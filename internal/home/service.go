@@ -33,6 +33,7 @@ const (
 // daemon.
 type program struct {
 	clientBuildFS fs.FS
+	signals       chan os.Signal
 	done          chan struct{}
 	opts          options
 }
@@ -55,6 +56,9 @@ func (p *program) Start(_ service.Service) (err error) {
 func (p *program) Stop(_ service.Service) (err error) {
 	log.Info("service: stopping: waiting for cleanup")
 
+	aghos.SendShutdownSignal(p.signals)
+
+	// Wait for other goroutines to complete their job.
 	<-p.done
 
 	return nil
@@ -195,7 +199,12 @@ func restartService() (err error) {
 //   - run:  This is a special command that is not supposed to be used directly
 //     it is specified when we register a service, and it indicates to the app
 //     that it is being run as a service/daemon.
-func handleServiceControlAction(opts options, clientBuildFS fs.FS, done chan struct{}) {
+func handleServiceControlAction(
+	opts options,
+	clientBuildFS fs.FS,
+	signals chan os.Signal,
+	done chan struct{},
+) {
 	// Call chooseSystem explicitly to introduce OpenBSD support for service
 	// package.  It's a noop for other GOOS values.
 	chooseSystem()
@@ -229,6 +238,7 @@ func handleServiceControlAction(opts options, clientBuildFS fs.FS, done chan str
 
 	s, err := service.New(&program{
 		clientBuildFS: clientBuildFS,
+		signals:       signals,
 		done:          done,
 		opts:          runOpts,
 	}, svcConfig)

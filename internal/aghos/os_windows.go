@@ -77,3 +77,7 @@ func isShutdownSignal(sig os.Signal) (ok bool) {
 		return false
 	}
 }
+
+func sendShutdownSignal(c chan<- os.Signal) {
+	c <- os.Interrupt
+}

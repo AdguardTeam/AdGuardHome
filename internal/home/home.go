@@ -121,7 +121,7 @@ func Main(clientBuildFS fs.FS) {
 	}()
 
 	if opts.serviceControlAction != "" {
-		handleServiceControlAction(opts, clientBuildFS, done)
+		handleServiceControlAction(opts, clientBuildFS, signals, done)
 
 		return
 	}

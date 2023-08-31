@@ -182,3 +182,8 @@ func IsReconfigureSignal(sig os.Signal) (ok bool) {
 func IsShutdownSignal(sig os.Signal) (ok bool) {
 	return isShutdownSignal(sig)
 }
+
+// SendShutdownSignal sends the shutdown signal to the channel.
+func SendShutdownSignal(c chan<- os.Signal) {
+	sendShutdownSignal(c)
+}
