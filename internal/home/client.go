@@ -1,10 +1,10 @@
 package home
 
 import (
-	"encoding"
 	"fmt"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
@@ -83,50 +83,6 @@ func (c *Client) setSafeSearch(
 	return nil
 }
 
-// clientSource represents the source from which the information about the
-// client has been obtained.
-type clientSource uint
-
-// Clients information sources.  The order determines the priority.
-const (
-	ClientSourceNone clientSource = iota
-	ClientSourceWHOIS
-	ClientSourceARP
-	ClientSourceRDNS
-	ClientSourceDHCP
-	ClientSourceHostsFile
-	ClientSourcePersistent
-)
-
-// type check
-var _ fmt.Stringer = clientSource(0)
-
-// String returns a human-readable name of cs.
-func (cs clientSource) String() (s string) {
-	switch cs {
-	case ClientSourceWHOIS:
-		return "WHOIS"
-	case ClientSourceARP:
-		return "ARP"
-	case ClientSourceRDNS:
-		return "rDNS"
-	case ClientSourceDHCP:
-		return "DHCP"
-	case ClientSourceHostsFile:
-		return "etc/hosts"
-	default:
-		return ""
-	}
-}
-
-// type check
-var _ encoding.TextMarshaler = clientSource(0)
-
-// MarshalText implements encoding.TextMarshaler for the clientSource.
-func (cs clientSource) MarshalText() (text []byte, err error) {
-	return []byte(cs.String()), nil
-}
-
 // RuntimeClient is a client information about which has been obtained using the
 // source described in the Source field.
 type RuntimeClient struct {
@@ -138,5 +94,5 @@ type RuntimeClient struct {
 
 	// Source is the source from which the information about the client has
 	// been obtained.
-	Source clientSource
+	Source client.Source
 }

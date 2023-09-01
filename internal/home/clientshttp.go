@@ -8,6 +8,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
@@ -88,9 +89,9 @@ func (j *clientJSON) copySettings(
 type runtimeClientJSON struct {
 	WHOIS *whois.Info `json:"whois_info"`
 
-	IP     netip.Addr   `json:"ip"`
-	Name   string       `json:"name"`
-	Source clientSource `json:"source"`
+	IP     netip.Addr    `json:"ip"`
+	Name   string        `json:"name"`
+	Source client.Source `json:"source"`
 }
 
 type clientListJSON struct {
@@ -126,7 +127,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 	for _, l := range clients.dhcp.Leases() {
 		cj := runtimeClientJSON{
 			Name:   l.Hostname,
-			Source: ClientSourceDHCP,
+			Source: client.SourceDHCP,
 			IP:     l.IP,
 			WHOIS:  &whois.Info{},
 		}

@@ -307,15 +307,15 @@ func (clients *clientsContainer) periodicUpdate() {
 }
 
 // clientSource checks if client with this IP address already exists and returns
-// the source which updated it last.  It returns [ClientSourceNone] if the
+// the source which updated it last.  It returns [client.SourceNone] if the
 // client doesn't exist.
-func (clients *clientsContainer) clientSource(ip netip.Addr) (src clientSource) {
+func (clients *clientsContainer) clientSource(ip netip.Addr) (src client.Source) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
 	_, ok := clients.findLocked(ip.String())
 	if ok {
-		return ClientSourcePersistent
+		return client.SourcePersistent
 	}
 
 	rc, ok := clients.ipToRC[ip]
@@ -323,8 +323,8 @@ func (clients *clientsContainer) clientSource(ip netip.Addr) (src clientSource) 
 		src = rc.Source
 	}
 
-	if src < ClientSourceDHCP && clients.dhcp.HostByIP(ip) != "" {
-		src = ClientSourceDHCP
+	if src < client.SourceDHCP && clients.dhcp.HostByIP(ip) != "" {
+		src = client.SourceDHCP
 	}
 
 	return src
@@ -533,7 +533,7 @@ func (clients *clientsContainer) runtimeClient(ip netip.Addr) (rc *RuntimeClient
 
 // findRuntimeClient finds a runtime client by their IP.
 func (clients *clientsContainer) findRuntimeClient(ip netip.Addr) (rc *RuntimeClient, ok bool) {
-	if rc, ok = clients.runtimeClient(ip); ok && rc.Source > ClientSourceDHCP {
+	if rc, ok = clients.runtimeClient(ip); ok && rc.Source > client.SourceDHCP {
 		return rc, ok
 	}
 
@@ -544,7 +544,7 @@ func (clients *clientsContainer) findRuntimeClient(ip netip.Addr) (rc *RuntimeCl
 
 	return &RuntimeClient{
 		Host:   host,
-		Source: ClientSourceDHCP,
+		Source: client.SourceDHCP,
 		WHOIS:  &whois.Info{},
 	}, true
 }
@@ -744,7 +744,7 @@ func (clients *clientsContainer) setWHOISInfo(ip netip.Addr, wi *whois.Info) {
 		// Create a RuntimeClient implicitly so that we don't do this check
 		// again.
 		rc = &RuntimeClient{
-			Source: ClientSourceWHOIS,
+			Source: client.SourceWHOIS,
 		}
 		clients.ipToRC[ip] = rc
 
@@ -763,7 +763,7 @@ func (clients *clientsContainer) setWHOISInfo(ip netip.Addr, wi *whois.Info) {
 func (clients *clientsContainer) addHost(
 	ip netip.Addr,
 	host string,
-	src clientSource,
+	src client.Source,
 ) (ok bool) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
@@ -786,7 +786,7 @@ func (clients *clientsContainer) UpdateAddress(ip netip.Addr, host string, info 
 	defer clients.lock.Unlock()
 
 	if host != "" {
-		ok := clients.addHostLocked(ip, host, ClientSourceRDNS)
+		ok := clients.addHostLocked(ip, host, client.SourceRDNS)
 		if !ok {
 			log.Debug("clients: host for client %q already set with higher priority source", ip)
 		}
@@ -802,11 +802,11 @@ func (clients *clientsContainer) UpdateAddress(ip netip.Addr, host string, info 
 func (clients *clientsContainer) addHostLocked(
 	ip netip.Addr,
 	host string,
-	src clientSource,
+	src client.Source,
 ) (ok bool) {
 	rc, ok := clients.ipToRC[ip]
 	if !ok {
-		if src < ClientSourceDHCP {
+		if src < client.SourceDHCP {
 			if clients.dhcp.HostByIP(ip) != "" {
 				return false
 			}
@@ -829,7 +829,7 @@ func (clients *clientsContainer) addHostLocked(
 }
 
 // rmHostsBySrc removes all entries that match the specified source.
-func (clients *clientsContainer) rmHostsBySrc(src clientSource) {
+func (clients *clientsContainer) rmHostsBySrc(src client.Source) {
 	n := 0
 	for ip, rc := range clients.ipToRC {
 		if rc.Source == src {
@@ -847,7 +847,7 @@ func (clients *clientsContainer) addFromHostsFile(hosts aghnet.Hosts) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	clients.rmHostsBySrc(ClientSourceHostsFile)
+	clients.rmHostsBySrc(client.SourceHostsFile)
 
 	n := 0
 	for addr, rec := range hosts {
@@ -855,7 +855,7 @@ func (clients *clientsContainer) addFromHostsFile(hosts aghnet.Hosts) {
 		// hostname for the IP address.
 		//
 		// TODO(e.burkov):  Consider using all the names from all the records.
-		clients.addHostLocked(addr, rec[0].Names[0], ClientSourceHostsFile)
+		clients.addHostLocked(addr, rec[0].Names[0], client.SourceHostsFile)
 		n++
 	}
 
@@ -883,11 +883,11 @@ func (clients *clientsContainer) addFromSystemARP() {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	clients.rmHostsBySrc(ClientSourceARP)
+	clients.rmHostsBySrc(client.SourceARP)
 
 	added := 0
 	for _, n := range ns {
-		if clients.addHostLocked(n.IP, n.Name, ClientSourceARP) {
+		if clients.addHostLocked(n.IP, n.Name, client.SourceARP) {
 			added++
 		}
 	}

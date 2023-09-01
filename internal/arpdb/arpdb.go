@@ -77,8 +77,8 @@ func (n Neighbor) Clone() (clone Neighbor) {
 	}
 }
 
-// validatedHostname returns valid hostname.  Otherwise returns empty string and
-// logs the error if hostname is not valid.
+// validatedHostname returns h if it's a valid hostname, or an empty string
+// otherwise, logging the validation error.
 func validatedHostname(h string) (host string) {
 	err := netutil.ValidateHostname(h)
 	if err != nil {
