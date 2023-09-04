@@ -143,6 +143,7 @@ In this release, the schema version has changed from 24 to 26.
 
 ### Fixed
 
+- Incorrect display date on statistics graph ([#5793]).
 - Missing query log entries and statistics on service restart ([#6100]).
 - Occasional DNS-over-QUIC and DNS-over-HTTP/3 errors ([#6133]).
 - Legacy DNS rewrites containing IPv4-mapped IPv6 addresses are now matching the
@@ -155,6 +156,7 @@ In this release, the schema version has changed from 24 to 26.
 [#1453]: https://github.com/AdguardTeam/AdGuardHome/issues/1453
 [#2998]: https://github.com/AdguardTeam/AdGuardHome/issues/2998
 [#3701]: https://github.com/AdguardTeam/AdGuardHome/issues/3701
+[#5793]: https://github.com/AdguardTeam/AdGuardHome/issues/5793
 [#5948]: https://github.com/AdguardTeam/AdGuardHome/issues/5948
 [#6020]: https://github.com/AdguardTeam/AdGuardHome/issues/6020
 [#6050]: https://github.com/AdguardTeam/AdGuardHome/issues/6050
