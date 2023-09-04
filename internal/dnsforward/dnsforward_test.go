@@ -105,10 +105,6 @@ func createTestServer(
 	})
 	require.NoError(t, err)
 
-	if s.dnsFilter.BlockingMode == "" {
-		s.dnsFilter.BlockingMode = filtering.BlockingModeDefault
-	}
-
 	err = s.Prepare(&forwardConf)
 	require.NoError(t, err)
 
@@ -178,7 +174,9 @@ func createTestTLS(t *testing.T, tlsConf TLSConfig) (s *Server, certPem []byte) 
 	var keyPem []byte
 	_, certPem, keyPem = createServerTLSConfig(t)
 
-	s = createTestServer(t, &filtering.Config{}, ServerConfig{
+	s = createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
@@ -351,9 +349,8 @@ func TestServer_timeout(t *testing.T) {
 			},
 		}
 
-		s, err := NewServer(DNSCreateParams{DNSFilter: &filtering.DNSFilter{}})
+		s, err := NewServer(DNSCreateParams{DNSFilter: createTestDNSFilter(t)})
 		require.NoError(t, err)
-		s.dnsFilter.BlockingMode = filtering.BlockingModeDefault
 
 		err = s.Prepare(srvConf)
 		require.NoError(t, err)
@@ -362,10 +359,9 @@ func TestServer_timeout(t *testing.T) {
 	})
 
 	t.Run("default", func(t *testing.T) {
-		s, err := NewServer(DNSCreateParams{DNSFilter: &filtering.DNSFilter{}})
+		s, err := NewServer(DNSCreateParams{DNSFilter: createTestDNSFilter(t)})
 		require.NoError(t, err)
 
-		s.dnsFilter.BlockingMode = filtering.BlockingModeDefault
 		s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{
 			Enabled: false,
 		}
@@ -377,7 +373,9 @@ func TestServer_timeout(t *testing.T) {
 }
 
 func TestServerWithProtectionDisabled(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{}, ServerConfig{
+	s := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
@@ -490,6 +488,7 @@ func TestSafeSearch(t *testing.T) {
 	}
 
 	filterConf := &filtering.Config{
+		BlockingMode:        filtering.BlockingModeDefault,
 		ProtectionEnabled:   true,
 		SafeSearchConf:      safeSearchConf,
 		SafeSearchCacheSize: 1000,
@@ -564,7 +563,9 @@ func TestSafeSearch(t *testing.T) {
 }
 
 func TestInvalidRequest(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{}, ServerConfig{
+	s := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
@@ -631,7 +632,9 @@ func TestServerCustomClientUpstream(t *testing.T) {
 			},
 		},
 	}
-	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
+	s := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, forwardConf, nil)
 	s.conf.GetCustomUpstreamByClient = func(_ string) (conf *proxy.UpstreamConfig, err error) {
 		ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
 			return aghalg.Coalesce(
@@ -674,7 +677,9 @@ var testIPv4 = map[string][]net.IP{
 }
 
 func TestBlockCNAMEProtectionEnabled(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{}, ServerConfig{
+	s := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
@@ -789,7 +794,9 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 			},
 		},
 	}
-	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
+	s := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, forwardConf, nil)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.Upstream{
 			CName: testCNAMEs,
@@ -901,8 +908,10 @@ func TestBlockedCustomIP(t *testing.T) {
 	err = s.Prepare(conf)
 	assert.Error(t, err)
 
-	s.dnsFilter.BlockingIPv4 = netip.AddrFrom4([4]byte{0, 0, 0, 1})
-	s.dnsFilter.BlockingIPv6 = netip.MustParseAddr("::1")
+	s.dnsFilter.SetBlockingMode(
+		filtering.BlockingModeCustomIP,
+		netip.AddrFrom4([4]byte{0, 0, 0, 1}),
+		netip.MustParseAddr("::1"))
 
 	err = s.Prepare(conf)
 	require.NoError(t, err)
@@ -980,6 +989,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 	ans4, _ := aghtest.HostToIPs(hostname)
 
 	filterConf := &filtering.Config{
+		BlockingMode:          filtering.BlockingModeDefault,
 		ProtectionEnabled:     true,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingChecker:   sbChecker,

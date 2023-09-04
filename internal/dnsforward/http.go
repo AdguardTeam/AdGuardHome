@@ -114,9 +114,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	upstreamFile := s.conf.UpstreamDNSFileName
 	bootstraps := stringutil.CloneSliceOrEmpty(s.conf.BootstrapDNS)
 	fallbacks := stringutil.CloneSliceOrEmpty(s.conf.FallbackDNS)
-	blockingMode := s.dnsFilter.BlockingMode
-	blockingIPv4 := s.dnsFilter.BlockingIPv4
-	blockingIPv6 := s.dnsFilter.BlockingIPv6
+	blockingMode, blockingIPv4, blockingIPv6 := s.dnsFilter.BlockingMode()
 	ratelimit := s.conf.Ratelimit
 
 	customIP := s.conf.EDNSClientSubnet.CustomIP
@@ -320,11 +318,11 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 	defer s.serverLock.Unlock()
 
 	if dc.BlockingMode != nil {
-		s.dnsFilter.BlockingMode = *dc.BlockingMode
-		if *dc.BlockingMode == filtering.BlockingModeCustomIP {
-			s.dnsFilter.BlockingIPv4 = dc.BlockingIPv4
-			s.dnsFilter.BlockingIPv6 = dc.BlockingIPv6
-		}
+		s.dnsFilter.SetBlockingMode(*dc.BlockingMode, dc.BlockingIPv4, dc.BlockingIPv6)
+	}
+
+	if dc.ProtectionEnabled != nil {
+		s.dnsFilter.SetProtectionEnabled(*dc.ProtectionEnabled)
 	}
 
 	if dc.UpstreamMode != nil {
@@ -336,7 +334,6 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 		s.conf.EDNSClientSubnet.CustomIP = dc.EDNSCSCustomIP
 	}
 
-	setIfNotNil(&s.dnsFilter.ProtectionEnabled, dc.ProtectionEnabled)
 	setIfNotNil(&s.conf.EnableDNSSEC, dc.DNSSECEnabled)
 	setIfNotNil(&s.conf.AAAADisabled, dc.DisableIPv6)
 
@@ -690,8 +687,8 @@ func (s *Server) parseUpstreamLine(
 	}
 
 	// dnsFilter can be nil during application update.
-	if s.dnsFilter != nil && s.dnsFilter.EtcHosts != nil {
-		recs := s.dnsFilter.EtcHosts.MatchName(extractUpstreamHost(upstreamAddr))
+	if s.dnsFilter != nil {
+		recs := s.dnsFilter.EtcHostsRecords(extractUpstreamHost(upstreamAddr))
 		for _, rec := range recs {
 			opts.ServerIPAddrs = append(opts.ServerIPAddrs, rec.Addr.AsSlice())
 		}
@@ -832,8 +829,7 @@ func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
 		s.serverLock.Lock()
 		defer s.serverLock.Unlock()
 
-		s.dnsFilter.ProtectionEnabled = protectionReq.Enabled
-		s.dnsFilter.ProtectionDisabledUntil = disabledUntil
+		s.dnsFilter.SetProtectionStatus(protectionReq.Enabled, disabledUntil)
 	}()
 
 	s.conf.ConfigModified()

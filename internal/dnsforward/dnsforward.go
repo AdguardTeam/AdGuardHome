@@ -544,11 +544,8 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 
 	// dnsFilter can be nil during application update.
 	if s.dnsFilter != nil {
-		err = validateBlockingMode(
-			s.dnsFilter.BlockingMode,
-			s.dnsFilter.BlockingIPv4,
-			s.dnsFilter.BlockingIPv6,
-		)
+		mode, bIPv4, bIPv6 := s.dnsFilter.BlockingMode()
+		err = validateBlockingMode(mode, bIPv4, bIPv6)
 		if err != nil {
 			return fmt.Errorf("checking blocking mode: %w", err)
 		}

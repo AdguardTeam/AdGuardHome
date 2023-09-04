@@ -492,9 +492,9 @@ func (s *Server) UpdatedProtectionStatus() (enabled bool, disabledUntil *time.Ti
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	disabledUntil = s.dnsFilter.ProtectionDisabledUntil
+	enabled, disabledUntil = s.dnsFilter.ProtectionStatus()
 	if disabledUntil == nil {
-		return s.dnsFilter.ProtectionEnabled, nil
+		return enabled, nil
 	}
 
 	if time.Now().Before(*disabledUntil) {
@@ -526,8 +526,7 @@ func (s *Server) enableProtectionAfterPause() {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
-	s.dnsFilter.ProtectionEnabled = true
-	s.dnsFilter.ProtectionDisabledUntil = nil
+	s.dnsFilter.SetProtectionStatus(true, nil)
 
 	log.Info("dns: protection is restarted after pause")
 }

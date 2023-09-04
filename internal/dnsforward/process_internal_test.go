@@ -83,7 +83,9 @@ func TestServer_ProcessInitial(t *testing.T) {
 				},
 			}
 
-			s := createTestServer(t, &filtering.Config{}, c, nil)
+			s := createTestServer(t, &filtering.Config{
+				BlockingMode: filtering.BlockingModeDefault,
+			}, c, nil)
 
 			var gotAddr netip.Addr
 			s.addrProc = &aghtest.AddressProcessor{
@@ -180,7 +182,9 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 				},
 			}
 
-			s := createTestServer(t, &filtering.Config{}, c, nil)
+			s := createTestServer(t, &filtering.Config{
+				BlockingMode: filtering.BlockingModeDefault,
+			}, c, nil)
 
 			resp := newResp(dns.RcodeSuccess, tc.req, tc.respAns)
 			dctx := &dnsContext{
@@ -338,11 +342,23 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}
 }
 
+// createTestDNSFilter returns the minimum valid DNSFilter.
+func createTestDNSFilter(t *testing.T) (f *filtering.DNSFilter) {
+	t.Helper()
+
+	f, err := filtering.New(&filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, []filtering.Filter{})
+	require.NoError(t, err)
+
+	return f
+}
+
 func prepareTestServer(t *testing.T, portDoH, portDoT, portDoQ int, ddrEnabled bool) (s *Server) {
 	t.Helper()
 
 	s = &Server{
-		dnsFilter: &filtering.DNSFilter{},
+		dnsFilter: createTestDNSFilter(t),
 		dnsProxy: &proxy.Proxy{
 			Config: proxy.Config{},
 		},
@@ -467,7 +483,7 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := &Server{
-				dnsFilter:         &filtering.DNSFilter{},
+				dnsFilter:         createTestDNSFilter(t),
 				dhcpServer:        dhcp,
 				localDomainSuffix: localDomainSuffix,
 			}
@@ -602,7 +618,7 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 		}
 
 		s := &Server{
-			dnsFilter:         &filtering.DNSFilter{},
+			dnsFilter:         createTestDNSFilter(t),
 			dhcpServer:        testDHCP,
 			localDomainSuffix: tc.suffix,
 		}
@@ -673,7 +689,9 @@ func TestServer_ProcessRestrictLocal(t *testing.T) {
 		), nil
 	})
 
-	s := createTestServer(t, &filtering.Config{}, ServerConfig{
+	s := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		// TODO(s.chzhen):  Add tests where EDNSClientSubnet.Enabled is true.
@@ -749,7 +767,9 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 
 	s := createTestServer(
 		t,
-		&filtering.Config{},
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
+		},
 		ServerConfig{
 			UDPListenAddrs: []*net.UDPAddr{{}},
 			TCPListenAddrs: []*net.TCPAddr{{}},

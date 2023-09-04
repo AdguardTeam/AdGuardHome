@@ -50,7 +50,8 @@ func (s *Server) genDNSFilterMessage(
 	req := dctx.Req
 	qt := req.Question[0].Qtype
 	if qt != dns.TypeA && qt != dns.TypeAAAA {
-		if s.dnsFilter.BlockingMode == filtering.BlockingModeNullIP {
+		m, _, _ := s.dnsFilter.BlockingMode()
+		if m == filtering.BlockingModeNullIP {
 			return s.makeResponse(req)
 		}
 
@@ -59,9 +60,9 @@ func (s *Server) genDNSFilterMessage(
 
 	switch res.Reason {
 	case filtering.FilteredSafeBrowsing:
-		return s.genBlockedHost(req, s.dnsFilter.SafeBrowsingBlockHost, dctx)
+		return s.genBlockedHost(req, s.dnsFilter.SafeBrowsingBlockHost(), dctx)
 	case filtering.FilteredParental:
-		return s.genBlockedHost(req, s.dnsFilter.ParentalBlockHost, dctx)
+		return s.genBlockedHost(req, s.dnsFilter.ParentalBlockHost(), dctx)
 	case filtering.FilteredSafeSearch:
 		// If Safe Search generated the necessary IP addresses, use them.
 		// Otherwise, if there were no errors, there are no addresses for the
@@ -75,21 +76,9 @@ func (s *Server) genDNSFilterMessage(
 // genForBlockingMode generates a filtered response to req based on the server's
 // blocking mode.
 func (s *Server) genForBlockingMode(req *dns.Msg, ips []netip.Addr) (resp *dns.Msg) {
-	qt := req.Question[0].Qtype
-	switch m := s.dnsFilter.BlockingMode; m {
+	switch mode, bIPv4, bIPv6 := s.dnsFilter.BlockingMode(); mode {
 	case filtering.BlockingModeCustomIP:
-		switch qt {
-		case dns.TypeA:
-			return s.genARecord(req, s.dnsFilter.BlockingIPv4)
-		case dns.TypeAAAA:
-			return s.genAAAARecord(req, s.dnsFilter.BlockingIPv6)
-		default:
-			// Generally shouldn't happen, since the types are checked in
-			// genDNSFilterMessage.
-			log.Error("dns: invalid msg type %s for blocking mode %s", dns.Type(qt), m)
-
-			return s.makeResponse(req)
-		}
+		return s.makeResponseCustomIP(req, bIPv4, bIPv6)
 	case filtering.BlockingModeDefault:
 		if len(ips) > 0 {
 			return s.genResponseWithIPs(req, ips)
@@ -103,7 +92,28 @@ func (s *Server) genForBlockingMode(req *dns.Msg, ips []netip.Addr) (resp *dns.M
 	case filtering.BlockingModeREFUSED:
 		return s.makeResponseREFUSED(req)
 	default:
-		log.Error("dns: invalid blocking mode %q", s.dnsFilter.BlockingMode)
+		log.Error("dns: invalid blocking mode %q", mode)
+
+		return s.makeResponse(req)
+	}
+}
+
+// makeResponseCustomIP generates a DNS response message for Custom IP blocking
+// mode with the provided IP addresses and an appropriate resource record type.
+func (s *Server) makeResponseCustomIP(
+	req *dns.Msg,
+	bIPv4 netip.Addr,
+	bIPv6 netip.Addr,
+) (resp *dns.Msg) {
+	switch qt := req.Question[0].Qtype; qt {
+	case dns.TypeA:
+		return s.genARecord(req, bIPv4)
+	case dns.TypeAAAA:
+		return s.genAAAARecord(req, bIPv6)
+	default:
+		// Generally shouldn't happen, since the types are checked in
+		// genDNSFilterMessage.
+		log.Error("dns: invalid msg type %s for custom IP blocking mode", dns.Type(qt))
 
 		return s.makeResponse(req)
 	}
@@ -132,7 +142,7 @@ func (s *Server) hdr(req *dns.Msg, rrType rules.RRType) (h dns.RR_Header) {
 	return dns.RR_Header{
 		Name:   req.Question[0].Name,
 		Rrtype: rrType,
-		Ttl:    s.dnsFilter.BlockedResponseTTL,
+		Ttl:    s.dnsFilter.BlockedResponseTTL(),
 		Class:  dns.ClassINET,
 	}
 }
@@ -352,7 +362,7 @@ func (s *Server) genSOA(request *dns.Msg) []dns.RR {
 		Hdr: dns.RR_Header{
 			Name:   zone,
 			Rrtype: dns.TypeSOA,
-			Ttl:    s.dnsFilter.BlockedResponseTTL,
+			Ttl:    s.dnsFilter.BlockedResponseTTL(),
 			Class:  dns.ClassINET,
 		},
 		Mbox: "hostmaster.", // zone will be appended later if it's not empty or "."

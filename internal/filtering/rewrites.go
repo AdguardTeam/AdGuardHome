@@ -139,7 +139,7 @@ func (rw *LegacyRewrite) Compare(b *LegacyRewrite) (res int) {
 
 // prepareRewrites normalizes and validates all legacy DNS rewrites.
 func (d *DNSFilter) prepareRewrites() (err error) {
-	for i, r := range d.Rewrites {
+	for i, r := range d.conf.Rewrites {
 		err = r.normalize()
 		if err != nil {
 			return fmt.Errorf("at index %d: %w", i, err)

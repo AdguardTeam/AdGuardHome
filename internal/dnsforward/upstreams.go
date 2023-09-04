@@ -93,7 +93,7 @@ func (s *Server) prepareUpstreamConfig(
 	}
 
 	// dnsFilter can be nil during application update.
-	if s.dnsFilter != nil && s.dnsFilter.EtcHosts != nil {
+	if s.dnsFilter != nil {
 		err = s.replaceUpstreamsWithHosts(uc, opts)
 		if err != nil {
 			return nil, fmt.Errorf("resolving upstreams with hosts: %w", err)
@@ -157,7 +157,7 @@ func (s *Server) resolveUpstreamsWithHosts(
 
 		withIPs, ok := resolved[host]
 		if !ok {
-			recs := s.dnsFilter.EtcHosts.MatchName(host)
+			recs := s.dnsFilter.EtcHostsRecords(host)
 			if len(recs) == 0 {
 				resolved[host] = nil
 

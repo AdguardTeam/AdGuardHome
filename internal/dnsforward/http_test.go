@@ -157,7 +157,6 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	s.sysResolvers = &fakeSystemResolvers{}
 
 	defaultConf := s.conf
-	defaultFilterConf := filterConf
 
 	err := s.Start()
 	assert.NoError(t, err)
@@ -248,7 +247,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Cleanup(func() {
-				s.dnsFilter.Config = *defaultFilterConf
+				s.dnsFilter.SetBlockingMode(filtering.BlockingModeDefault, netip.Addr{}, netip.Addr{})
 				s.conf = defaultConf
 				s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{}
 			})
@@ -500,7 +499,8 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 	require.NoError(t, err)
 
 	srv := createTestServer(t, &filtering.Config{
-		EtcHosts: hc,
+		BlockingMode: filtering.BlockingModeDefault,
+		EtcHosts:     hc,
 	}, ServerConfig{
 		UDPListenAddrs:  []*net.UDPAddr{{}},
 		TCPListenAddrs:  []*net.TCPAddr{{}},

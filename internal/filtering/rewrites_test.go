@@ -26,7 +26,7 @@ func TestRewrites(t *testing.T) {
 		addr2v6 = netip.MustParseAddr("1234::5678")
 	)
 
-	d.Rewrites = []*LegacyRewrite{{
+	d.conf.Rewrites = []*LegacyRewrite{{
 		// This one and below are about CNAME, A and AAAA.
 		Domain: "somecname",
 		Answer: "somehost.com",
@@ -202,7 +202,7 @@ func TestRewritesLevels(t *testing.T) {
 	d, _ := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 	// Exact host, wildcard L2, wildcard L3.
-	d.Rewrites = []*LegacyRewrite{{
+	d.conf.Rewrites = []*LegacyRewrite{{
 		Domain: "host.com",
 		Answer: "1.1.1.1",
 		Type:   dns.TypeA,
@@ -249,7 +249,7 @@ func TestRewritesExceptionCNAME(t *testing.T) {
 	d, _ := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 	// Wildcard and exception for a sub-domain.
-	d.Rewrites = []*LegacyRewrite{{
+	d.conf.Rewrites = []*LegacyRewrite{{
 		Domain: "*.host.com",
 		Answer: "2.2.2.2",
 	}, {
@@ -300,7 +300,7 @@ func TestRewritesExceptionIP(t *testing.T) {
 	d, _ := newForTest(t, nil, nil)
 	t.Cleanup(d.Close)
 	// Exception for AAAA record.
-	d.Rewrites = []*LegacyRewrite{{
+	d.conf.Rewrites = []*LegacyRewrite{{
 		Domain: "host.com",
 		Answer: "1.2.3.4",
 		Type:   dns.TypeA,

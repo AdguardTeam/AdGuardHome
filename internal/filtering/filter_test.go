@@ -69,9 +69,9 @@ func updateAndAssert(
 
 	assert.Equal(t, wantRulesCount, f.RulesCount)
 
-	dir, err := os.ReadDir(filepath.Join(dnsFilter.DataDir, filterDir))
+	dir, err := os.ReadDir(filepath.Join(dnsFilter.conf.DataDir, filterDir))
 	require.NoError(t, err)
-	require.FileExists(t, f.Path(dnsFilter.DataDir))
+	require.FileExists(t, f.Path(dnsFilter.conf.DataDir))
 
 	assert.Len(t, dir, 1)
 

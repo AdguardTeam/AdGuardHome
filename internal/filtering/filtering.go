@@ -240,15 +240,6 @@ type DNSFilter struct {
 	rulesStorageAllow    *filterlist.RuleStorage
 	filteringEngineAllow *urlfilter.DNSEngine
 
-	// Config contains filtering parameters.  For direct access by library
-	// users, even a = assignment.
-	//
-	// TODO(d.kolyshev): Remove this embed.
-	Config
-
-	// confLock protects Config.
-	confLock sync.RWMutex
-
 	safeSearch SafeSearch
 
 	// safeBrowsingChecker is the safe browsing hash-prefix checker.
@@ -258,6 +249,12 @@ type DNSFilter struct {
 	parentalControlChecker Checker
 
 	engineLock sync.RWMutex
+
+	// confMu protects conf.
+	confMu *sync.RWMutex
+
+	// conf contains filtering parameters.
+	conf *Config
 
 	// Channel for passing data to filters-initializer goroutine
 	filtersInitializerChan chan filtersInitializerParams
@@ -358,38 +355,38 @@ func (r Reason) In(reasons ...Reason) (ok bool) { return slices.Contains(reasons
 
 // SetEnabled sets the status of the *DNSFilter.
 func (d *DNSFilter) SetEnabled(enabled bool) {
-	atomic.StoreUint32(&d.enabled, mathutil.BoolToNumber[uint32](enabled))
+	atomic.StoreUint32(&d.conf.enabled, mathutil.BoolToNumber[uint32](enabled))
 }
 
 // Settings returns filtering settings.
 func (d *DNSFilter) Settings() (s *Settings) {
-	d.confLock.RLock()
-	defer d.confLock.RUnlock()
+	d.confMu.RLock()
+	defer d.confMu.RUnlock()
 
 	return &Settings{
-		FilteringEnabled:    atomic.LoadUint32(&d.Config.enabled) != 0,
-		SafeSearchEnabled:   d.Config.SafeSearchConf.Enabled,
-		SafeBrowsingEnabled: d.Config.SafeBrowsingEnabled,
-		ParentalEnabled:     d.Config.ParentalEnabled,
+		FilteringEnabled:    atomic.LoadUint32(&d.conf.enabled) != 0,
+		SafeSearchEnabled:   d.conf.SafeSearchConf.Enabled,
+		SafeBrowsingEnabled: d.conf.SafeBrowsingEnabled,
+		ParentalEnabled:     d.conf.ParentalEnabled,
 	}
 }
 
 // WriteDiskConfig - write configuration
 func (d *DNSFilter) WriteDiskConfig(c *Config) {
 	func() {
-		d.confLock.Lock()
-		defer d.confLock.Unlock()
+		d.confMu.Lock()
+		defer d.confMu.Unlock()
 
-		*c = d.Config
+		*c = *d.conf
 		c.Rewrites = cloneRewrites(c.Rewrites)
 	}()
 
-	d.filtersMu.RLock()
-	defer d.filtersMu.RUnlock()
+	d.conf.filtersMu.RLock()
+	defer d.conf.filtersMu.RUnlock()
 
-	c.Filters = slices.Clone(d.Filters)
-	c.WhitelistFilters = slices.Clone(d.WhitelistFilters)
-	c.UserRules = slices.Clone(d.UserRules)
+	c.Filters = slices.Clone(d.conf.Filters)
+	c.WhitelistFilters = slices.Clone(d.conf.WhitelistFilters)
+	c.UserRules = slices.Clone(d.conf.UserRules)
 }
 
 // setFilters sets new filters, synchronously or asynchronously.  When filters
@@ -459,6 +456,77 @@ func (d *DNSFilter) reset() {
 			log.Error("filtering: rulesStorageAllow.Close: %s", err)
 		}
 	}
+}
+
+// ProtectionStatus returns the status of protection and time until it's
+// disabled if so.
+func (d *DNSFilter) ProtectionStatus() (status bool, disabledUntil *time.Time) {
+	d.confMu.RLock()
+	defer d.confMu.RUnlock()
+
+	return d.conf.ProtectionEnabled, d.conf.ProtectionDisabledUntil
+}
+
+// SetProtectionStatus updates the status of protection and time until it's
+// disabled.
+func (d *DNSFilter) SetProtectionStatus(status bool, disabledUntil *time.Time) {
+	d.confMu.Lock()
+	defer d.confMu.Unlock()
+
+	d.conf.ProtectionEnabled = status
+	d.conf.ProtectionDisabledUntil = disabledUntil
+}
+
+// SetProtectionEnabled updates the status of protection.
+func (d *DNSFilter) SetProtectionEnabled(status bool) {
+	d.confMu.Lock()
+	defer d.confMu.Unlock()
+
+	d.conf.ProtectionEnabled = status
+}
+
+// EtcHostsRecords returns the hosts records for the hostname.
+func (d *DNSFilter) EtcHostsRecords(hostname string) (recs []*hostsfile.Record) {
+	if d.conf.EtcHosts != nil {
+		return d.conf.EtcHosts.MatchName(hostname)
+	}
+
+	return recs
+}
+
+// SetBlockingMode sets blocking mode properties.
+func (d *DNSFilter) SetBlockingMode(mode BlockingMode, bIPv4, bIPv6 netip.Addr) {
+	d.confMu.Lock()
+	defer d.confMu.Unlock()
+
+	d.conf.BlockingMode = mode
+	if mode == BlockingModeCustomIP {
+		d.conf.BlockingIPv4 = bIPv4
+		d.conf.BlockingIPv6 = bIPv6
+	}
+}
+
+// BlockingMode returns blocking mode properties.
+func (d *DNSFilter) BlockingMode() (mode BlockingMode, bIPv4, bIPv6 netip.Addr) {
+	d.confMu.RLock()
+	defer d.confMu.RUnlock()
+
+	return d.conf.BlockingMode, d.conf.BlockingIPv4, d.conf.BlockingIPv6
+}
+
+// BlockedResponseTTL returns TTL for blocked responses.
+func (d *DNSFilter) BlockedResponseTTL() (ttl uint32) {
+	return d.conf.BlockedResponseTTL
+}
+
+// SafeBrowsingBlockHost returns a host for safe browsing blocked responses.
+func (d *DNSFilter) SafeBrowsingBlockHost() (host string) {
+	return d.conf.SafeBrowsingBlockHost
+}
+
+// ParentalBlockHost returns a host for parental protection blocked responses.
+func (d *DNSFilter) ParentalBlockHost() (host string) {
+	return d.conf.ParentalBlockHost
 }
 
 // ResultRule contains information about applied rules.
@@ -560,14 +628,14 @@ func (d *DNSFilter) matchSysHosts(
 	setts *Settings,
 ) (res Result, err error) {
 	// TODO(e.burkov):  Where else is this checked?
-	if !setts.FilteringEnabled || d.EtcHosts == nil {
+	if !setts.FilteringEnabled || d.conf.EtcHosts == nil {
 		return res, nil
 	}
 
 	var recs []*hostsfile.Record
 	switch qtype {
 	case dns.TypeA, dns.TypeAAAA:
-		recs = d.EtcHosts.MatchName(host)
+		recs = d.conf.EtcHosts.MatchName(host)
 	case dns.TypePTR:
 		var ip net.IP
 		ip, err = netutil.IPFromReversedAddr(host)
@@ -578,7 +646,7 @@ func (d *DNSFilter) matchSysHosts(
 		}
 
 		addr, _ := netip.AddrFromSlice(ip)
-		recs = d.EtcHosts.MatchAddr(addr)
+		recs = d.conf.EtcHosts.MatchAddr(addr)
 	default:
 		log.Debug("filtering: unsupported query type %s", dns.Type(qtype))
 	}
@@ -618,10 +686,10 @@ func (d *DNSFilter) matchSysHosts(
 // accordingly.  If the found rewrite has a special value of "A" or "AAAA", the
 // result is an exception.
 func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
-	d.confLock.RLock()
-	defer d.confLock.RUnlock()
+	d.confMu.RLock()
+	defer d.confMu.RUnlock()
 
-	rewrites, matched := findRewrites(d.Rewrites, host, qtype)
+	rewrites, matched := findRewrites(d.conf.Rewrites, host, qtype)
 	if !matched {
 		return Result{}
 	}
@@ -661,7 +729,7 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 
 		cnames.Add(host)
 		res.CanonName = host
-		rewrites, matched = findRewrites(d.Rewrites, host, qtype)
+		rewrites, matched = findRewrites(d.conf.Rewrites, host, qtype)
 	}
 
 	setRewriteResult(&res, host, rewrites, qtype)
@@ -992,6 +1060,7 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 		refreshLock:            &sync.Mutex{},
 		safeBrowsingChecker:    c.SafeBrowsingChecker,
 		parentalControlChecker: c.ParentalControlChecker,
+		confMu:                 &sync.RWMutex{},
 	}
 
 	d.safeSearch = c.SafeSearch
@@ -1018,16 +1087,16 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 
 	defer func() { err = errors.Annotate(err, "filtering: %w") }()
 
-	d.Config = *c
-	d.filtersMu = &sync.RWMutex{}
+	d.conf = c
+	d.conf.filtersMu = &sync.RWMutex{}
 
 	err = d.prepareRewrites()
 	if err != nil {
 		return nil, fmt.Errorf("rewrites: preparing: %s", err)
 	}
 
-	if d.BlockedServices != nil {
-		err = d.BlockedServices.Validate()
+	if d.conf.BlockedServices != nil {
+		err = d.conf.BlockedServices.Validate()
 		if err != nil {
 			return nil, fmt.Errorf("filtering: %w", err)
 		}
@@ -1042,16 +1111,16 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 		}
 	}
 
-	_ = os.MkdirAll(filepath.Join(d.DataDir, filterDir), 0o755)
+	_ = os.MkdirAll(filepath.Join(d.conf.DataDir, filterDir), 0o755)
 
-	d.loadFilters(d.Filters)
-	d.loadFilters(d.WhitelistFilters)
+	d.loadFilters(d.conf.Filters)
+	d.loadFilters(d.conf.WhitelistFilters)
 
-	d.Filters = deduplicateFilters(d.Filters)
-	d.WhitelistFilters = deduplicateFilters(d.WhitelistFilters)
+	d.conf.Filters = deduplicateFilters(d.conf.Filters)
+	d.conf.WhitelistFilters = deduplicateFilters(d.conf.WhitelistFilters)
 
-	updateUniqueFilterID(d.Filters)
-	updateUniqueFilterID(d.WhitelistFilters)
+	updateUniqueFilterID(d.conf.Filters)
+	updateUniqueFilterID(d.conf.WhitelistFilters)
 
 	return d, nil
 }
