@@ -1,0 +1,34 @@
+bind_host: 127.0.0.1
+bind_port: 3000
+auth_name: testuser
+auth_pass: testpassword
+dns:
+  bind_host: 127.0.0.1
+  port: 53
+  protection_enabled: true
+  filtering_enabled: true
+  safebrowsing_enabled: false
+  safesearch_enabled: false
+  parental_enabled: false
+  parental_sensitivity: 0
+  blocked_response_ttl: 10
+  querylog_enabled: true
+  upstream_dns:
+  - tls://1.1.1.1
+  - tls://1.0.0.1
+  bootstrap_dns: 8.8.8.8:53
+filters:
+- url: https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
+  name: ""
+  enabled: true
+- url: https://adaway.org/hosts.txt
+  name: AdAway
+  enabled: false
+- url: https://hosts-file.net/ad_servers.txt
+  name: hpHosts - Ad and Tracking servers only
+  enabled: false
+- url: http://www.malwaredomainlist.com/hostslist/hosts.txt
+  name: MalwareDomainList.com Hosts List
+  enabled: false
+schema_version: 2
+user_rules: []

@@ -147,7 +147,9 @@ type configuration struct {
 
 	sync.RWMutex `yaml:"-"`
 
-	SchemaVersion int `yaml:"schema_version"` // keeping last so that users will be less tempted to change it -- used when upgrading between versions
+	// SchemaVersion is the version of the configuration schema.  See
+	// [confmigrate.LastSchemaVersion].
+	SchemaVersion uint `yaml:"schema_version"`
 }
 
 // httpConfig is a block with HTTP configuration params.
@@ -416,7 +418,7 @@ var config = &configuration{
 		MaxAge:     3,
 	},
 	OSConfig:      &osConfig{},
-	SchemaVersion: confmigrate.CurrentSchemaVersion,
+	SchemaVersion: confmigrate.LastSchemaVersion,
 	Theme:         ThemeAuto,
 }
 
@@ -466,7 +468,10 @@ func parseConfig() (err error) {
 	})
 
 	var upgraded bool
-	config.fileData, upgraded, err = migrator.Migrate(config.fileData)
+	config.fileData, upgraded, err = migrator.Migrate(
+		config.fileData,
+		confmigrate.LastSchemaVersion,
+	)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err

@@ -20,7 +20,7 @@ func TestUpgradeSchema1to2(t *testing.T) {
 		WorkingDir: "",
 	})
 
-	err := m.upgradeSchema1to2(diskConf)
+	err := m.migrateTo2(diskConf)
 	require.NoError(t, err)
 
 	require.Equal(t, diskConf["schema_version"], 2)
@@ -43,7 +43,7 @@ func TestUpgradeSchema1to2(t *testing.T) {
 func TestUpgradeSchema2to3(t *testing.T) {
 	diskConf := testDiskConf(2)
 
-	err := upgradeSchema2to3(diskConf)
+	err := migrateTo3(diskConf)
 	require.NoError(t, err)
 
 	require.Equal(t, diskConf["schema_version"], 3)
@@ -56,7 +56,7 @@ func TestUpgradeSchema2to3(t *testing.T) {
 
 	bootstrapDNS := newDNSConf["bootstrap_dns"]
 	switch v := bootstrapDNS.(type) {
-	case []string:
+	case yarr:
 		require.Len(t, v, 1)
 		require.Equal(t, "8.8.8.8:53", v[0])
 	default:
@@ -82,20 +82,20 @@ func TestUpgradeSchema5to6(t *testing.T) {
 		name    string
 	}{{
 		in: yobj{
-			"clients": []yobj{},
+			"clients": yarr{},
 		},
 		want: yobj{
-			"clients":        []yobj{},
+			"clients":        yarr{},
 			"schema_version": newSchemaVer,
 		},
 		wantErr: "",
 		name:    "no_clients",
 	}, {
 		in: yobj{
-			"clients": []yobj{{"ip": "127.0.0.1"}},
+			"clients": yarr{yobj{"ip": "127.0.0.1"}},
 		},
 		want: yobj{
-			"clients": []yobj{{
+			"clients": yarr{yobj{
 				"ids": []string{"127.0.0.1"},
 				"ip":  "127.0.0.1",
 			}},
@@ -105,10 +105,10 @@ func TestUpgradeSchema5to6(t *testing.T) {
 		name:    "client_ip",
 	}, {
 		in: yobj{
-			"clients": []yobj{{"mac": "mac"}},
+			"clients": yarr{yobj{"mac": "mac"}},
 		},
 		want: yobj{
-			"clients": []yobj{{
+			"clients": yarr{yobj{
 				"ids": []string{"mac"},
 				"mac": "mac",
 			}},
@@ -118,10 +118,10 @@ func TestUpgradeSchema5to6(t *testing.T) {
 		name:    "client_mac",
 	}, {
 		in: yobj{
-			"clients": []yobj{{"ip": "127.0.0.1", "mac": "mac"}},
+			"clients": yarr{yobj{"ip": "127.0.0.1", "mac": "mac"}},
 		},
 		want: yobj{
-			"clients": []yobj{{
+			"clients": yarr{yobj{
 				"ids": []string{"127.0.0.1", "mac"},
 				"ip":  "127.0.0.1",
 				"mac": "mac",
@@ -132,29 +132,29 @@ func TestUpgradeSchema5to6(t *testing.T) {
 		name:    "client_ip_mac",
 	}, {
 		in: yobj{
-			"clients": []yobj{{"ip": 1, "mac": "mac"}},
+			"clients": yarr{yobj{"ip": 1, "mac": "mac"}},
 		},
 		want: yobj{
-			"clients":        []yobj{{"ip": 1, "mac": "mac"}},
+			"clients":        yarr{yobj{"ip": 1, "mac": "mac"}},
 			"schema_version": newSchemaVer,
 		},
-		wantErr: "client.ip is not a string: 1",
+		wantErr: `client at index 0: unexpected type of "ip": int`,
 		name:    "inv_client_ip",
 	}, {
 		in: yobj{
-			"clients": []yobj{{"ip": "127.0.0.1", "mac": 1}},
+			"clients": yarr{yobj{"ip": "127.0.0.1", "mac": 1}},
 		},
 		want: yobj{
-			"clients":        []yobj{{"ip": "127.0.0.1", "mac": 1}},
+			"clients":        yarr{yobj{"ip": "127.0.0.1", "mac": 1}},
 			"schema_version": newSchemaVer,
 		},
-		wantErr: "client.mac is not a string: 1",
+		wantErr: `client at index 0: unexpected type of "mac": int`,
 		name:    "inv_client_mac",
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema5to6(tc.in)
+			err := migrateTo6(tc.in)
 			testutil.AssertErrorMsg(t, tc.wantErr, err)
 			assert.Equal(t, tc.want, tc.in)
 		})
@@ -170,7 +170,7 @@ func TestUpgradeSchema7to8(t *testing.T) {
 		"schema_version": 7,
 	}
 
-	err := upgradeSchema7to8(oldConf)
+	err := migrateTo8(oldConf)
 	require.NoError(t, err)
 
 	require.Equal(t, oldConf["schema_version"], 8)
@@ -198,7 +198,7 @@ func TestUpgradeSchema8to9(t *testing.T) {
 			"schema_version": 8,
 		}
 
-		err := upgradeSchema8to9(oldConf)
+		err := migrateTo9(oldConf)
 		require.NoError(t, err)
 
 		require.Equal(t, oldConf["schema_version"], 9)
@@ -221,7 +221,7 @@ func TestUpgradeSchema8to9(t *testing.T) {
 			"schema_version": 8,
 		}
 
-		err := upgradeSchema8to9(oldConf)
+		err := migrateTo9(oldConf)
 		require.NoError(t, err)
 
 		require.Equal(t, oldConf["schema_version"], 9)
@@ -408,12 +408,12 @@ func TestUpgradeSchema9to10(t *testing.T) {
 	}, {
 		ups:     ultimateAns,
 		want:    nil,
-		wantErr: "unexpected type of dns.upstream_dns: int",
+		wantErr: `unexpected type of "upstream_dns": int`,
 		name:    "bad_yarr_type",
 	}, {
 		ups:     yarr{ultimateAns},
 		want:    nil,
-		wantErr: "unexpected type of upstream field: int",
+		wantErr: `unexpected type of upstream field: int`,
 		name:    "bad_upstream_type",
 	}}
 
@@ -425,7 +425,7 @@ func TestUpgradeSchema9to10(t *testing.T) {
 			"schema_version": 9,
 		}
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema9to10(conf)
+			err := migrateTo10(conf)
 
 			if tc.wantErr != "" {
 				testutil.AssertErrorMsg(t, tc.wantErr, err)
@@ -450,17 +450,17 @@ func TestUpgradeSchema9to10(t *testing.T) {
 	}
 
 	t.Run("no_dns", func(t *testing.T) {
-		err := upgradeSchema9to10(yobj{})
+		err := migrateTo10(yobj{})
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("bad_dns", func(t *testing.T) {
-		err := upgradeSchema9to10(yobj{
+		err := migrateTo10(yobj{
 			"dns": ultimateAns,
 		})
 
-		testutil.AssertErrorMsg(t, "unexpected type of dns: int", err)
+		testutil.AssertErrorMsg(t, `unexpected type of "dns": int`, err)
 	})
 }
 
@@ -468,7 +468,7 @@ func TestUpgradeSchema10to11(t *testing.T) {
 	check := func(t *testing.T, conf yobj) {
 		rlimit, _ := conf["rlimit_nofile"].(int)
 
-		err := upgradeSchema10to11(conf)
+		err := migrateTo11(conf)
 		require.NoError(t, err)
 
 		require.Equal(t, conf["schema_version"], 11)
@@ -525,7 +525,7 @@ func TestUpgradeSchema11to12(t *testing.T) {
 	}, {
 		ivl:     0.25,
 		want:    0,
-		wantErr: "unexpected type of querylog_interval: float64",
+		wantErr: `unexpected type of "querylog_interval": float64`,
 		name:    "fail",
 	}}
 
@@ -537,7 +537,7 @@ func TestUpgradeSchema11to12(t *testing.T) {
 			"schema_version": 11,
 		}
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema11to12(conf)
+			err := migrateTo12(conf)
 
 			if tc.wantErr != "" {
 				require.Error(t, err)
@@ -566,17 +566,17 @@ func TestUpgradeSchema11to12(t *testing.T) {
 	}
 
 	t.Run("no_dns", func(t *testing.T) {
-		err := upgradeSchema11to12(yobj{})
+		err := migrateTo12(yobj{})
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("bad_dns", func(t *testing.T) {
-		err := upgradeSchema11to12(yobj{
+		err := migrateTo12(yobj{
 			"dns": 0,
 		})
 
-		testutil.AssertErrorMsg(t, "unexpected type of dns: int", err)
+		testutil.AssertErrorMsg(t, `unexpected type of "dns": int`, err)
 	})
 
 	t.Run("no_field", func(t *testing.T) {
@@ -584,7 +584,7 @@ func TestUpgradeSchema11to12(t *testing.T) {
 			"dns": yobj{},
 		}
 
-		err := upgradeSchema11to12(conf)
+		err := migrateTo12(conf)
 		require.NoError(t, err)
 
 		dns, ok := conf["dns"]
@@ -644,7 +644,7 @@ func TestUpgradeSchema12to13(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema12to13(tc.in)
+			err := migrateTo13(tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -726,7 +726,7 @@ func TestUpgradeSchema13to14(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema13to14(tc.in)
+			err := migrateTo14(tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -774,7 +774,7 @@ func TestUpgradeSchema14to15(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema14to15(tc.in)
+			err := migrateTo15(tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -833,7 +833,7 @@ func TestUpgradeSchema15to16(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema15to16(tc.in)
+			err := migrateTo16(tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -894,7 +894,7 @@ func TestUpgradeSchema16to17(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema16to17(tc.in)
+			err := migrateTo17(tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -953,7 +953,7 @@ func TestUpgradeSchema17to18(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema17to18(tc.in)
+			err := migrateTo18(tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -966,7 +966,7 @@ func TestUpgradeSchema18to19(t *testing.T) {
 
 	defaultWantObj := yobj{
 		"clients": yobj{
-			"persistent": []yobj{{
+			"persistent": yarr{yobj{
 				"name": "localhost",
 				"safe_search": yobj{
 					"enabled":    true,
@@ -998,7 +998,7 @@ func TestUpgradeSchema18to19(t *testing.T) {
 	}, {
 		in: yobj{
 			"clients": yobj{
-				"persistent": []yobj{{"name": "localhost"}},
+				"persistent": yarr{yobj{"name": "localhost"}},
 			},
 		},
 		want: defaultWantObj,
@@ -1006,7 +1006,7 @@ func TestUpgradeSchema18to19(t *testing.T) {
 	}, {
 		in: yobj{
 			"clients": yobj{
-				"persistent": []yobj{{"name": "localhost", "safesearch_enabled": true}},
+				"persistent": yarr{yobj{"name": "localhost", "safesearch_enabled": true}},
 			},
 		},
 		want: defaultWantObj,
@@ -1014,11 +1014,11 @@ func TestUpgradeSchema18to19(t *testing.T) {
 	}, {
 		in: yobj{
 			"clients": yobj{
-				"persistent": []yobj{{"name": "localhost", "safesearch_enabled": false}},
+				"persistent": yarr{yobj{"name": "localhost", "safesearch_enabled": false}},
 			},
 		},
 		want: yobj{
-			"clients": yobj{"persistent": []yobj{{
+			"clients": yobj{"persistent": yarr{yobj{
 				"name": "localhost",
 				"safe_search": yobj{
 					"enabled":    false,
@@ -1037,7 +1037,7 @@ func TestUpgradeSchema18to19(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema18to19(tc.in)
+			err := migrateTo19(tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -1064,7 +1064,7 @@ func TestUpgradeSchema19to20(t *testing.T) {
 	}, {
 		ivl:     0.25,
 		want:    0,
-		wantErr: "unexpected type of interval: float64",
+		wantErr: `unexpected type of "interval": float64`,
 		name:    "fail",
 	}}
 
@@ -1076,7 +1076,7 @@ func TestUpgradeSchema19to20(t *testing.T) {
 			"schema_version": 19,
 		}
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema19to20(conf)
+			err := migrateTo20(conf)
 
 			if tc.wantErr != "" {
 				require.Error(t, err)
@@ -1105,17 +1105,17 @@ func TestUpgradeSchema19to20(t *testing.T) {
 	}
 
 	t.Run("no_stats", func(t *testing.T) {
-		err := upgradeSchema19to20(yobj{})
+		err := migrateTo20(yobj{})
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("bad_stats", func(t *testing.T) {
-		err := upgradeSchema19to20(yobj{
+		err := migrateTo20(yobj{
 			"statistics": 0,
 		})
 
-		testutil.AssertErrorMsg(t, "unexpected type of stats: int", err)
+		testutil.AssertErrorMsg(t, `unexpected type of "statistics": int`, err)
 	})
 
 	t.Run("no_field", func(t *testing.T) {
@@ -1123,7 +1123,7 @@ func TestUpgradeSchema19to20(t *testing.T) {
 			"statistics": yobj{},
 		}
 
-		err := upgradeSchema19to20(conf)
+		err := migrateTo20(conf)
 		require.NoError(t, err)
 
 		statsVal, ok := conf["statistics"]
@@ -1180,7 +1180,7 @@ func TestUpgradeSchema20to21(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema20to21(tc.in)
+			err := migrateTo21(tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -1250,7 +1250,7 @@ func TestUpgradeSchema21to22(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema21to22(tc.in)
+			err := migrateTo22(tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -1303,7 +1303,7 @@ func TestUpgradeSchema22to23(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema22to23(tc.in)
+			err := migrateTo23(tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -1362,21 +1362,15 @@ func TestUpgradeSchema23to24(t *testing.T) {
 			"verbose":         true,
 		},
 		want: yobj{
-			"log_file":        "/test/path.log",
-			"log_max_backups": 1,
-			"log_max_size":    2,
-			"log_max_age":     3,
-			"log_compress":    "",
-			"log_localtime":   true,
-			"verbose":         true,
-			"schema_version":  newSchemaVer,
+			"log_compress":   "",
+			"schema_version": newSchemaVer,
 		},
-		wantErrMsg: "unexpected type of log_compress: string",
+		wantErrMsg: `unexpected type of "log_compress": string`,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema23to24(tc.in)
+			err := migrateTo24(tc.in)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -1458,12 +1452,12 @@ func TestUpgradeSchema24to25(t *testing.T) {
 			"debug_pprof":    1,
 			"schema_version": newSchemaVer,
 		},
-		wantErrMsg: "unexpected type of debug_pprof: int",
+		wantErrMsg: `unexpected type of "debug_pprof": int`,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema24to25(tc.in)
+			err := migrateTo25(tc.in)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 
 			assert.Equal(t, tc.want, tc.in)
@@ -1562,7 +1556,7 @@ func TestUpgradeSchema25to26(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := upgradeSchema25to26(tc.in)
+			err := migrateTo26(tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)
