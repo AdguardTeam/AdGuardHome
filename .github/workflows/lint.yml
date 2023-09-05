@@ -2,8 +2,6 @@
 
 'env':
   'GO_VERSION': '1.20.7'
-  # TODO(a.garipov, ik): Update to the latest ESR.
-  'NODE_VERSION': '14'
 
 'on':
   'push':
@@ -30,10 +28,6 @@
     'runs-on': 'ubuntu-latest'
     'steps':
     - 'uses': 'actions/checkout@v2'
-    - 'name': 'Set up Node'
-      'uses': 'actions/setup-node@v1'
-      'with':
-        'node-version': '${{ env.NODE_VERSION }}'
     - 'name': 'Install modules'
       'run': 'npm --prefix="./client" ci'
     - 'name': 'Run ESLint'
