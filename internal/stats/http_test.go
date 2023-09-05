@@ -76,29 +76,6 @@ func TestHandleStatsConfig(t *testing.T) {
 		wantCode: http.StatusOK,
 		wantErr:  "",
 	}, {
-		name: "ignored_duplicate",
-		body: getConfigResp{
-			Enabled:  aghalg.NBTrue,
-			Interval: float64(minIvl.Milliseconds()),
-			Ignored: []string{
-				"ignor.ed",
-				"ignor.ed",
-			},
-		},
-		wantCode: http.StatusUnprocessableEntity,
-		wantErr:  "ignored: duplicate hostname \"ignor.ed\" at index 1\n",
-	}, {
-		name: "ignored_empty",
-		body: getConfigResp{
-			Enabled:  aghalg.NBTrue,
-			Interval: float64(minIvl.Milliseconds()),
-			Ignored: []string{
-				"",
-			},
-		},
-		wantCode: http.StatusUnprocessableEntity,
-		wantErr:  "ignored: at index 0: hostname is empty\n",
-	}, {
 		name: "enabled_is_null",
 		body: getConfigResp{
 			Enabled:  aghalg.NBNull,

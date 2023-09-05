@@ -25,6 +25,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- AdBlock-style syntax support for ignored domains in logs and statistics
+  ([#5720]).
 - [`Strict-Transport-Security`][hsts] header in the HTTP API and DNS-over-HTTPS
   responses when HTTPS is forced ([#2998]).  See [RFC 6979][rfc6797].
 - UI for the schedule of the service-blocking pause ([#951]).
@@ -50,7 +52,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 #### Configuration Changes
 
-In this release, the schema version has changed from 24 to 26.
+In this release, the schema version has changed from 24 to 27.
+
+- Ignore rules blocking `.` in `querylog.…` and `stats.…` have been migrated to
+  AdBlock syntax (`|.^`).  To rollback this change, restore the rules  and
+  change the `schema_version` back to `26`.
 
 - Filtering-related settings have been moved from `dns` section of the YAML
   configuration file to the new section `filtering`:
@@ -156,6 +162,7 @@ In this release, the schema version has changed from 24 to 26.
 [#1453]: https://github.com/AdguardTeam/AdGuardHome/issues/1453
 [#2998]: https://github.com/AdguardTeam/AdGuardHome/issues/2998
 [#3701]: https://github.com/AdguardTeam/AdGuardHome/issues/3701
+[#5720]: https://github.com/AdguardTeam/AdGuardHome/issues/5720
 [#5793]: https://github.com/AdguardTeam/AdGuardHome/issues/5793
 [#5948]: https://github.com/AdguardTeam/AdGuardHome/issues/5948
 [#6020]: https://github.com/AdguardTeam/AdGuardHome/issues/6020

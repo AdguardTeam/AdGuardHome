@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"go.etcd.io/bbolt"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
@@ -370,7 +370,7 @@ type pairsGetter func(u *unitDB) (pairs []countPair)
 
 // topsCollector collects statistics about highest values from the given *unitDB
 // slice using pg to retrieve data.
-func topsCollector(units []*unitDB, max int, ignored *stringutil.Set, pg pairsGetter) []map[string]uint64 {
+func topsCollector(units []*unitDB, max int, ignored *aghnet.IgnoreEngine, pg pairsGetter) []map[string]uint64 {
 	m := map[string]uint64{}
 	for _, u := range units {
 		for _, cp := range pg(u) {

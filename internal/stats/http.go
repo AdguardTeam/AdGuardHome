@@ -12,7 +12,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/timeutil"
-	"golang.org/x/exp/slices"
 )
 
 // topAddrs is an alias for the types of the TopFoo fields of statsResponse.
@@ -140,8 +139,6 @@ func (s *StatsCtx) handleGetStatsConfig(w http.ResponseWriter, r *http.Request) 
 		}
 	}()
 
-	slices.Sort(resp.Ignored)
-
 	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
@@ -184,7 +181,7 @@ func (s *StatsCtx) handlePutStatsConfig(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	set, err := aghnet.NewDomainNameSet(reqData.Ignored)
+	engine, err := aghnet.NewIgnoreEngine(reqData.Ignored)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "ignored: %s", err)
 
@@ -210,7 +207,7 @@ func (s *StatsCtx) handlePutStatsConfig(w http.ResponseWriter, r *http.Request) 
 	s.confMu.Lock()
 	defer s.confMu.Unlock()
 
-	s.ignored = set
+	s.ignored = engine
 	s.limit = ivl
 	s.enabled = reqData.Enabled == aghalg.NBTrue
 }

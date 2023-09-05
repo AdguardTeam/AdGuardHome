@@ -1563,3 +1563,86 @@ func TestUpgradeSchema25to26(t *testing.T) {
 		})
 	}
 }
+
+func TestUpgradeSchema26to27(t *testing.T) {
+	const newSchemaVer = 27
+
+	testCases := []struct {
+		in   yobj
+		want yobj
+		name string
+	}{{
+		name: "empty",
+		in:   yobj{},
+		want: yobj{
+			"schema_version": newSchemaVer,
+		},
+	}, {
+		name: "single_dot",
+		in: yobj{
+			"querylog": yobj{
+				"ignored": yarr{
+					".",
+				},
+			},
+			"statistics": yobj{
+				"ignored": yarr{
+					".",
+				},
+			},
+		},
+		want: yobj{
+			"querylog": yobj{
+				"ignored": yarr{
+					"|.^",
+				},
+			},
+			"statistics": yobj{
+				"ignored": yarr{
+					"|.^",
+				},
+			},
+			"schema_version": newSchemaVer,
+		},
+	}, {
+		name: "mixed",
+		in: yobj{
+			"querylog": yobj{
+				"ignored": yarr{
+					".",
+					"example.com",
+				},
+			},
+			"statistics": yobj{
+				"ignored": yarr{
+					".",
+					"example.org",
+				},
+			},
+		},
+		want: yobj{
+			"querylog": yobj{
+				"ignored": yarr{
+					"|.^",
+					"example.com",
+				},
+			},
+			"statistics": yobj{
+				"ignored": yarr{
+					"|.^",
+					"example.org",
+				},
+			},
+			"schema_version": newSchemaVer,
+		},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := migrateTo27(tc.in)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}

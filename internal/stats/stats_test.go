@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
@@ -215,13 +215,15 @@ func TestShouldCount(t *testing.T) {
 		ignored1 = "ignor.ed"
 		ignored2 = "ignored.to"
 	)
-	set := stringutil.NewSet(ignored1, ignored2)
+	ignored := []string{ignored1, ignored2}
+	engine, err := aghnet.NewIgnoreEngine(ignored)
+	require.NoError(t, err)
 
 	s, err := stats.New(stats.Config{
 		Enabled:  true,
 		Filename: filepath.Join(t.TempDir(), "stats.db"),
 		Limit:    timeutil.Day,
-		Ignored:  set,
+		Ignored:  engine,
 		ShouldCountClient: func(ids []string) (a bool) {
 			return ids[0] != "no_count"
 		},

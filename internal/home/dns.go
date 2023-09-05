@@ -59,12 +59,12 @@ func initDNS() (err error) {
 		ShouldCountClient: Context.clients.shouldCountClient,
 	}
 
-	set, err := aghnet.NewDomainNameSet(config.Stats.Ignored)
+	engine, err := aghnet.NewIgnoreEngine(config.Stats.Ignored)
 	if err != nil {
 		return fmt.Errorf("statistics: ignored list: %w", err)
 	}
 
-	statsConf.Ignored = set
+	statsConf.Ignored = engine
 	Context.stats, err = stats.New(statsConf)
 	if err != nil {
 		return fmt.Errorf("init stats: %w", err)
@@ -83,12 +83,12 @@ func initDNS() (err error) {
 		FileEnabled:       config.QueryLog.FileEnabled,
 	}
 
-	set, err = aghnet.NewDomainNameSet(config.QueryLog.Ignored)
+	engine, err = aghnet.NewIgnoreEngine(config.QueryLog.Ignored)
 	if err != nil {
 		return fmt.Errorf("querylog: ignored list: %w", err)
 	}
 
-	conf.Ignored = set
+	conf.Ignored = engine
 	Context.queryLog, err = querylog.New(conf)
 	if err != nil {
 		return fmt.Errorf("init querylog: %w", err)

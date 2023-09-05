@@ -28,6 +28,7 @@ type accessManager struct {
 	allowedClientIDs *stringutil.Set
 	blockedClientIDs *stringutil.Set
 
+	// TODO(s.chzhen):  Use [aghnet.IgnoreEngine].
 	blockedHostsEng *urlfilter.DNSEngine
 
 	// TODO(a.garipov): Create a type for a set of IP networks.

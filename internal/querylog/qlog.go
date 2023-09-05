@@ -127,7 +127,6 @@ func (l *queryLog) WriteDiskConfig(c *Config) {
 	defer l.confMu.RUnlock()
 
 	*c = *l.conf
-	c.Ignored = l.conf.Ignored.Clone()
 }
 
 // Clear memory buffer and remove log files

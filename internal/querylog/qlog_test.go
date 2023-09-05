@@ -5,8 +5,8 @@ import (
 	"net"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
@@ -256,10 +256,21 @@ func TestQueryLogFileDisabled(t *testing.T) {
 
 func TestQueryLogShouldLog(t *testing.T) {
 	const (
-		ignored1 = "ignor.ed"
-		ignored2 = "ignored.to"
+		ignored1        = "ignor.ed"
+		ignored2        = "ignored.to"
+		ignoredWildcard = "*.ignored.com"
+		ignoredRoot     = "|.^"
 	)
-	set := stringutil.NewSet(ignored1, ignored2)
+
+	ignored := []string{
+		ignored1,
+		ignored2,
+		ignoredWildcard,
+		ignoredRoot,
+	}
+
+	engine, err := aghnet.NewIgnoreEngine(ignored)
+	require.NoError(t, err)
 
 	findClient := func(ids []string) (c *Client, err error) {
 		log := ids[0] == "no_log"
@@ -268,7 +279,7 @@ func TestQueryLogShouldLog(t *testing.T) {
 	}
 
 	l, err := newQueryLog(Config{
-		Ignored:     set,
+		Ignored:     engine,
 		Enabled:     true,
 		RotationIvl: timeutil.Day,
 		MemSize:     100,
@@ -295,6 +306,16 @@ func TestQueryLogShouldLog(t *testing.T) {
 	}, {
 		name:    "no_log_ignored_2",
 		host:    ignored2,
+		ids:     []string{"whatever"},
+		wantLog: false,
+	}, {
+		name:    "no_log_ignored_wildcard",
+		host:    "www.ignored.com",
+		ids:     []string{"whatever"},
+		wantLog: false,
+	}, {
+		name:    "no_log_ignored_root",
+		host:    ".",
 		ids:     []string{"whatever"},
 		wantLog: false,
 	}, {

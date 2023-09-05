@@ -10,7 +10,7 @@ import (
 )
 
 // LastSchemaVersion is the most recent schema version.
-const LastSchemaVersion uint = 26
+const LastSchemaVersion uint = 27
 
 // Config is a the configuration for initializing a [Migrator].
 type Config struct {
@@ -122,6 +122,7 @@ func (m *Migrator) upgradeConfigSchema(current, target uint, diskConf yobj) (err
 		23: migrateTo24,
 		24: migrateTo25,
 		25: migrateTo26,
+		26: migrateTo27,
 	}
 
 	for i, migrate := range upgrades[current:target] {

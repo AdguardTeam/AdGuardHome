@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"go.etcd.io/bbolt"
 )
@@ -58,8 +58,9 @@ type Config struct {
 	// endpoints.
 	HTTPRegister aghhttp.RegisterFunc
 
-	// Ignored is the list of host names, which should not be counted.
-	Ignored *stringutil.Set
+	// Ignored contains the list of host names, which should not be counted,
+	// and matches them.
+	Ignored *aghnet.IgnoreEngine
 
 	// Filename is the name of the database file.
 	Filename string
@@ -117,8 +118,9 @@ type StatsCtx struct {
 	// confMu protects ignored, limit, and enabled.
 	confMu *sync.RWMutex
 
-	// ignored is the list of host names, which should not be counted.
-	ignored *stringutil.Set
+	// ignored contains the list of host names, which should not be counted,
+	// and matches them.
+	ignored *aghnet.IgnoreEngine
 
 	// shouldCountClient returns client's ignore setting.
 	shouldCountClient func([]string) bool
@@ -289,7 +291,7 @@ func (s *StatsCtx) WriteDiskConfig(dc *Config) {
 	s.confMu.RLock()
 	defer s.confMu.RUnlock()
 
-	dc.Ignored = s.ignored.Clone()
+	dc.Ignored = s.ignored
 	dc.Limit = s.limit
 	dc.Enabled = s.enabled
 }

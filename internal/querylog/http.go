@@ -17,7 +17,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
-	"golang.org/x/exp/slices"
 	"golang.org/x/net/idna"
 )
 
@@ -141,8 +140,6 @@ func (l *queryLog) handleGetQueryLogConfig(w http.ResponseWriter, r *http.Reques
 		}
 	}()
 
-	slices.Sort(resp.Ignored)
-
 	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
@@ -224,7 +221,7 @@ func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	set, err := aghnet.NewDomainNameSet(newConf.Ignored)
+	engine, err := aghnet.NewIgnoreEngine(newConf.Ignored)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "ignored: %s", err)
 
@@ -258,7 +255,7 @@ func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Reques
 
 	conf := *l.conf
 
-	conf.Ignored = set
+	conf.Ignored = engine
 	conf.RotationIvl = ivl
 	conf.Enabled = newConf.Enabled == aghalg.NBTrue
 
