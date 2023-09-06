@@ -28,10 +28,8 @@ func migrateTo21(diskConf yobj) (err error) {
 	const field = "blocked_services"
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	svcs := yobj{

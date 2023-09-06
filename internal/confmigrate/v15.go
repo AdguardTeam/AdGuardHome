@@ -30,10 +30,8 @@ func migrateTo15(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 15
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	qlog := map[string]any{
@@ -43,17 +41,12 @@ func migrateTo15(diskConf yobj) (err error) {
 		"interval":     "2160h",
 		"size_memory":  1000,
 	}
-	err = coalesceError(
-		moveVal[bool](dns, qlog, "querylog_enabled", "enabled"),
-		moveVal[bool](dns, qlog, "querylog_file_enabled", "file_enabled"),
-		moveVal[string](dns, qlog, "querylog_interval", "interval"),
-		moveVal[int](dns, qlog, "querylog_size_memory", "size_memory"),
-	)
-	if err != nil {
-		return err
-	}
-
 	diskConf["querylog"] = qlog
 
-	return nil
+	return coalesceError(
+		moveVal[bool](dns, qlog, "querylog_enabled", "enabled"),
+		moveVal[bool](dns, qlog, "querylog_file_enabled", "file_enabled"),
+		moveVal[any](dns, qlog, "querylog_interval", "interval"),
+		moveVal[int](dns, qlog, "querylog_size_memory", "size_memory"),
+	)
 }

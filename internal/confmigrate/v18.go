@@ -26,10 +26,8 @@ func migrateTo18(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 18
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	safeSearch := yobj{
@@ -41,7 +39,6 @@ func migrateTo18(diskConf yobj) (err error) {
 		"yandex":     true,
 		"youtube":    true,
 	}
-
 	dns["safe_search"] = safeSearch
 
 	return moveVal[bool](dns, safeSearch, "safesearch_enabled", "enabled")

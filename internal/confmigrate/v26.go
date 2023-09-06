@@ -73,10 +73,8 @@ func migrateTo26(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 26
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	filteringObj := yobj{}

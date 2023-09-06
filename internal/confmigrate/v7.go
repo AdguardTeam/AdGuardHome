@@ -28,11 +28,11 @@ package confmigrate
 //	    'lease_duration': 86400
 //	    'icmp_timeout_msec': 1000
 //	# …
-func migrateTo7(diskConf yobj) error {
+func migrateTo7(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 7
 
-	dhcp, ok, err := fieldVal[yobj](diskConf, "dhcp")
-	if err != nil || !ok {
+	dhcp, ok, _ := fieldVal[yobj](diskConf, "dhcp")
+	if !ok {
 		return nil
 	}
 

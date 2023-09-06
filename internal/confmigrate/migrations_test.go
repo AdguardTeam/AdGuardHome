@@ -96,7 +96,7 @@ func TestUpgradeSchema5to6(t *testing.T) {
 		},
 		want: yobj{
 			"clients": yarr{yobj{
-				"ids": []string{"127.0.0.1"},
+				"ids": yarr{"127.0.0.1"},
 				"ip":  "127.0.0.1",
 			}},
 			"schema_version": newSchemaVer,
@@ -109,7 +109,7 @@ func TestUpgradeSchema5to6(t *testing.T) {
 		},
 		want: yobj{
 			"clients": yarr{yobj{
-				"ids": []string{"mac"},
+				"ids": yarr{"mac"},
 				"mac": "mac",
 			}},
 			"schema_version": newSchemaVer,
@@ -122,7 +122,7 @@ func TestUpgradeSchema5to6(t *testing.T) {
 		},
 		want: yobj{
 			"clients": yarr{yobj{
-				"ids": []string{"127.0.0.1", "mac"},
+				"ids": yarr{"127.0.0.1", "mac"},
 				"ip":  "127.0.0.1",
 				"mac": "mac",
 			}},

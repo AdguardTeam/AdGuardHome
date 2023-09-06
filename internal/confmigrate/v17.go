@@ -22,10 +22,8 @@ func migrateTo17(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 17
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	const field = "edns_client_subnet"

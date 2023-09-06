@@ -27,10 +27,8 @@ func migrateTo23(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 23
 
 	bindHost, ok, err := fieldVal[string](diskConf, "bind_host")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	bindHostAddr, err := netip.ParseAddr(bindHost)

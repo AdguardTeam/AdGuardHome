@@ -14,24 +14,18 @@ package confmigrate
 //	  'bootstrap_dns':
 //	  - '1.1.1.1'
 //	  # …
-func migrateTo3(diskConf yobj) error {
+func migrateTo3(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 3
 
 	dnsConfig, ok, err := fieldVal[yobj](diskConf, "dns")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	bootstrapDNS, ok, err := fieldVal[any](dnsConfig, "bootstrap_dns")
-	if err != nil {
-		return err
-	} else if !ok {
-		return nil
+	if ok {
+		dnsConfig["bootstrap_dns"] = yarr{bootstrapDNS}
 	}
 
-	dnsConfig["bootstrap_dns"] = yarr{bootstrapDNS}
-
-	return nil
+	return err
 }

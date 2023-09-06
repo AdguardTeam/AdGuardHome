@@ -25,10 +25,8 @@ func migrateTo20(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 20
 
 	stats, ok, err := fieldVal[yobj](diskConf, "statistics")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	const field = "interval"

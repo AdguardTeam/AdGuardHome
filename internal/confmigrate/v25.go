@@ -18,14 +18,13 @@ func migrateTo25(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 25
 
 	httpObj, ok, err := fieldVal[yobj](diskConf, "http")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	pprofObj := yobj{
-		"port": 6060,
+		"enabled": false,
+		"port":    6060,
 	}
 
 	err = moveVal[bool](diskConf, pprofObj, "debug_pprof", "enabled")

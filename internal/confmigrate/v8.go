@@ -20,17 +20,13 @@ func migrateTo8(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 8
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	bindHost, ok, err := fieldVal[string](dns, "bind_host")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	delete(dns, "bind_host")

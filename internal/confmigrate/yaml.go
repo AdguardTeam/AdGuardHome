@@ -1,6 +1,8 @@
 package confmigrate
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type (
 	// yarr is the convenience alias for YAML array.

@@ -21,18 +21,18 @@ func migrateTo12(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 12
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	const field = "querylog_interval"
 
 	qlogIvl, ok, err := fieldVal[int](dns, field)
-	if err != nil {
-		return err
-	} else if !ok {
+	if !ok {
+		if err != nil {
+			return err
+		}
+
 		// Set the initial value from home.initConfig function.
 		qlogIvl = 90
 	}

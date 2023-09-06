@@ -47,10 +47,8 @@ func migrateTo16(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 16
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	stats := yobj{
@@ -58,24 +56,23 @@ func migrateTo16(diskConf yobj) (err error) {
 		"interval": 1,
 		"ignored":  yarr{},
 	}
+	diskConf["statistics"] = stats
 
 	const field = "statistics_interval"
 
 	statsIvl, ok, err := fieldVal[int](dns, field)
-	if err != nil {
+	if !ok {
 		return err
-	} else if ok {
-		if statsIvl == 0 {
-			// Set the interval to the default value of one day to make sure
-			// that it passes the validations.
-			stats["enabled"] = false
-		} else {
-			stats["interval"] = statsIvl
-		}
-		delete(dns, field)
 	}
 
-	diskConf["statistics"] = stats
+	if statsIvl == 0 {
+		// Set the interval to the default value of one day to make sure
+		// that it passes the validations.
+		stats["enabled"] = false
+	} else {
+		stats["interval"] = statsIvl
+	}
+	delete(dns, field)
 
 	return nil
 }

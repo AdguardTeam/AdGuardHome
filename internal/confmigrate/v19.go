@@ -34,10 +34,8 @@ func migrateTo19(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 19
 
 	clients, ok, err := fieldVal[yobj](diskConf, "clients")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	persistent, ok, _ := fieldVal[yarr](clients, "persistent")

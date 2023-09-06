@@ -30,10 +30,8 @@ func migrateTo5(diskConf yobj) (err error) {
 	}
 
 	pass, ok, err := fieldVal[string](diskConf, "auth_pass")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 	delete(diskConf, "auth_pass")
 

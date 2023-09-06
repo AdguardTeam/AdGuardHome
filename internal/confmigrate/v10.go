@@ -34,36 +34,47 @@ func migrateTo10(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 10
 
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	const quicPort = 784
 
-	for _, upsField := range []string{
-		"upstream_dns",
-		"local_ptr_upstreams",
-	} {
-		var ups yarr
-		ups, ok, err = fieldVal[yarr](dns, upsField)
-		if err != nil {
+	ups, ok, err := fieldVal[yarr](dns, "upstream_dns")
+	if err != nil {
+		return err
+	} else if ok {
+		if err = addQUICPorts(ups, quicPort); err != nil {
 			return err
-		} else if !ok {
-			continue
 		}
 
-		var u string
-		for i, uVal := range ups {
-			u, ok = uVal.(string)
-			if !ok {
-				return fmt.Errorf("unexpected type of upstream field: %T", uVal)
-			}
+		dns["upstream_dns"] = ups
+	}
 
-			ups[i] = addQUICPort(u, quicPort)
+	ups, ok, err = fieldVal[yarr](dns, "local_ptr_upstreams")
+	if err != nil {
+		return err
+	} else if ok {
+		if err = addQUICPorts(ups, quicPort); err != nil {
+			return err
 		}
-		dns[upsField] = ups
+
+		dns["local_ptr_upstreams"] = ups
+	}
+
+	return nil
+}
+
+// addQUICPorts inserts a port into each QUIC upstream's hostname in ups if
+// those are missing.
+func addQUICPorts(ups yarr, port int) (err error) {
+	for i, uVal := range ups {
+		u, ok := uVal.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type of upstream field: %T", uVal)
+		}
+
+		ups[i] = addQUICPort(u, port)
 	}
 
 	return nil

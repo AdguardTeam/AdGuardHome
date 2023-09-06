@@ -36,17 +36,13 @@ func migrateTo22(diskConf yobj) (err error) {
 	const field = "blocked_services"
 
 	clients, ok, err := fieldVal[yobj](diskConf, "clients")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	persistent, ok, err := fieldVal[yarr](clients, "persistent")
-	if err != nil {
+	if !ok {
 		return err
-	} else if !ok {
-		return nil
 	}
 
 	for i, p := range persistent {

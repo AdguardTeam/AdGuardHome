@@ -177,7 +177,6 @@ run_linter gocyclo --over 10 .
 gocognit_paths="\
 ./internal/aghnet/   20
 ./internal/querylog/ 20
-./internal/confmigrate/ 19
 ./internal/dnsforward/  19
 ./internal/home/        19
 ./internal/aghtls/ 18
@@ -194,6 +193,7 @@ gocognit_paths="\
 ./internal/aghrenameio/          10
 ./internal/arpdb/                10
 ./internal/client/               10
+./internal/confmigrate/          10
 ./internal/dhcpsvc               10
 ./internal/filtering/hashprefix/ 10
 ./internal/filtering/rulelist/   10

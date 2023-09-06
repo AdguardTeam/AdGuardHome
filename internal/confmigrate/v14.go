@@ -31,35 +31,32 @@ func migrateTo14(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 14
 
 	persistent, ok, err := fieldVal[yarr](diskConf, "clients")
-	if err != nil {
-		return err
-	} else if !ok {
+	if !ok {
+		if err != nil {
+			return err
+		}
+
 		persistent = yarr{}
 	}
 
-	var rdnsSrc bool
+	runtimeClients := yobj{
+		"whois": true,
+		"arp":   true,
+		"rdns":  false,
+		"dhcp":  true,
+		"hosts": true,
+	}
+	diskConf["clients"] = yobj{
+		"persistent":      persistent,
+		"runtime_sources": runtimeClients,
+	}
+
 	dns, ok, err := fieldVal[yobj](diskConf, "dns")
 	if err != nil {
 		return err
-	} else if ok {
-		rdnsSrc, ok, err = fieldVal[bool](dns, "resolve_clients")
-		if err != nil {
-			return err
-		} else if ok {
-			delete(dns, "resolve_clients")
-		}
+	} else if !ok {
+		return nil
 	}
 
-	diskConf["clients"] = yobj{
-		"persistent": persistent,
-		"runtime_sources": yobj{
-			"whois": true,
-			"arp":   true,
-			"rdns":  rdnsSrc,
-			"dhcp":  true,
-			"hosts": true,
-		},
-	}
-
-	return nil
+	return moveVal[bool](dns, runtimeClients, "resolve_clients", "rdns")
 }
