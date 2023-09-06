@@ -392,6 +392,7 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 type upstreamJSON struct {
 	Upstreams        []string `json:"upstream_dns"`
 	BootstrapDNS     []string `json:"bootstrap_dns"`
+	FallbackDNS      []string `json:"fallback_dns"`
 	PrivateUpstreams []string `json:"private_upstream"`
 }
 
@@ -750,12 +751,19 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	req.Upstreams = stringutil.FilterOut(req.Upstreams, IsCommentOrEmpty)
 	req.PrivateUpstreams = stringutil.FilterOut(req.PrivateUpstreams, IsCommentOrEmpty)
 
-	upsNum := len(req.Upstreams) + len(req.PrivateUpstreams)
+	upsNum := len(req.Upstreams) + len(req.FallbackDNS) + len(req.PrivateUpstreams)
 	result := make(map[string]string, upsNum)
 	resCh := make(chan upsCheckResult, upsNum)
 
-	// TODO(s.chzhen):  Check fallback DNS servers.
 	for _, ups := range req.Upstreams {
+		go func(ups string) {
+			resCh <- upsCheckResult{
+				host: ups,
+				err:  s.checkDNS(ups, opts, checkDNSUpstreamExc),
+			}
+		}(ups)
+	}
+	for _, ups := range req.FallbackDNS {
 		go func(ups string) {
 			resCh <- upsCheckResult{
 				host: ups,

@@ -343,7 +343,12 @@ export const testUpstreamFailure = createAction('TEST_UPSTREAM_FAILURE');
 export const testUpstreamSuccess = createAction('TEST_UPSTREAM_SUCCESS');
 
 export const testUpstream = (
-    { bootstrap_dns, upstream_dns, local_ptr_upstreams }, upstream_dns_file,
+    {
+        bootstrap_dns,
+        upstream_dns,
+        local_ptr_upstreams,
+        fallback_dns,
+    }, upstream_dns_file,
 ) => async (dispatch) => {
     dispatch(testUpstreamRequest());
     try {
@@ -352,6 +357,7 @@ export const testUpstream = (
         const config = {
             bootstrap_dns: splitByNewLine(bootstrap_dns),
             private_upstream: splitByNewLine(local_ptr_upstreams),
+            fallback_dns: splitByNewLine(fallback_dns),
             ...(upstream_dns_file ? null : {
                 upstream_dns: removeComments(upstream_dns),
             }),
@@ -386,12 +392,14 @@ export const testUpstreamWithFormValues = () => async (dispatch, getState) => {
         bootstrap_dns,
         upstream_dns,
         local_ptr_upstreams,
+        fallback_dns,
     } = getState().form[FORM_NAME.UPSTREAM].values;
 
     return dispatch(testUpstream({
         bootstrap_dns,
         upstream_dns,
         local_ptr_upstreams,
+        fallback_dns,
     }, upstream_dns_file));
 };
 

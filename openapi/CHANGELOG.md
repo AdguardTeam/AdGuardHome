@@ -6,6 +6,11 @@
 
 ## v0.107.37: API changes
 
+### The new field `"fallback_dns"` in `UpstreamsConfig` object
+
+* The new field `"fallback_dns"` in `POST /control/test_upstream_dns` is the
+  list of fallback DNS servers to test.
+
 ### The new field `"fallback_dns"` in `DNSConfig` object
 
 * The new field `"fallback_dns"` in `GET /control/dns_info` and `POST

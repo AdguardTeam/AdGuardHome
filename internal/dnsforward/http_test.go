@@ -560,6 +560,23 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 			hostsUps: "OK",
 		},
 		name: "etc_hosts",
+	}, {
+		body: map[string]any{
+			"fallback_dns": []string{goodUps},
+		},
+		wantResp: map[string]any{
+			goodUps: "OK",
+		},
+		name: "fallback_success",
+	}, {
+		body: map[string]any{
+			"fallback_dns": []string{badUps},
+		},
+		wantResp: map[string]any{
+			badUps: `couldn't communicate with upstream: exchanging with ` +
+				badUps + ` over tcp: dns: id mismatch`,
+		},
+		name: "fallback_broken",
 	}}
 
 	for _, tc := range testCases {

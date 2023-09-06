@@ -1503,7 +1503,7 @@
           - 'tls://1.0.0.1'
     'UpstreamsConfig':
       'type': 'object'
-      'description': 'Upstreams configuration'
+      'description': 'Upstream configuration to be tested'
       'required':
       - 'bootstrap_dns'
       - 'upstream_dns'
@@ -1511,8 +1511,7 @@
         'bootstrap_dns':
           'type': 'array'
           'description': >
-            Bootstrap servers, port is optional after colon.  Empty value will
-            reset it to default values.
+            Bootstrap DNS servers, port is optional after colon.
           'items':
             'type': 'string'
           'example':
@@ -1521,18 +1520,25 @@
         'upstream_dns':
           'type': 'array'
           'description': >
-            Upstream servers, port is optional after colon.  Empty value will
-            reset it to default values.
+            Upstream DNS servers, port is optional after colon.
           'items':
             'type': 'string'
           'example':
           - 'tls://1.1.1.1'
           - 'tls://1.0.0.1'
+        'fallback_dns':
+          'type': 'array'
+          'description': >
+            Fallback DNS servers, port is optional after colon.
+          'items':
+            'type': 'string'
+          'example':
+          - '8.8.8.8'
+          - '1.1.1.1:53'
         'private_upstream':
           'type': 'array'
           'description': >
-            Local PTR resolvers, port is optional after colon.  Empty value will
-            reset it to default values.
+            Local PTR resolvers, port is optional after colon.
           'items':
             'type': 'string'
           'example':
