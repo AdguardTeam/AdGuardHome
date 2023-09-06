@@ -875,7 +875,7 @@ func TestV4Server_handleDecline(t *testing.T) {
 
 func TestV4Server_handleRelease(t *testing.T) {
 	const (
-		dynamicName = "dymamic-client"
+		dynamicName = "dynamic-client"
 		anotherName = "another-client"
 	)
 

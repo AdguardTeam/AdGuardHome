@@ -55,7 +55,7 @@ var (
 
 var webRegistered bool
 
-// DHCP is an interface for accesing DHCP lease data needed in this package.
+// DHCP is an interface for accessing DHCP lease data needed in this package.
 type DHCP interface {
 	// HostByIP returns the hostname of the DHCP client with the given IP
 	// address.  The address will be netip.Addr{} if there is no such client,

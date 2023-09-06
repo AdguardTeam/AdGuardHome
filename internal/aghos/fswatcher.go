@@ -113,7 +113,7 @@ func (w *osWatcher) handleEvents() {
 		}
 
 		// Skip the following events assuming that sometimes the same event
-		// occurrs several times.
+		// occurs several times.
 		for ok := true; ok; {
 			select {
 			case _, ok = <-ch:
