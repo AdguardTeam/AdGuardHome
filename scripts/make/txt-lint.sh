@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a remarkable change is made to this script.
 #
-# AdGuard-Project-Version: 4
+# AdGuard-Project-Version: 5
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -31,7 +31,7 @@ set -f -u
 
 # trailing_newlines is a simple check that makes sure that all plain-text files
 # have a trailing newlines to make sure that all tools work correctly with them.
-trailing_newlines() {
+trailing_newlines() (
 	nl="$( printf "\n" )"
 	readonly nl
 
@@ -42,12 +42,13 @@ trailing_newlines() {
 		':!*.zip'\
 		| while read -r f
 		do
-			if [ "$( tail -c -1 "$f" )" != "$nl" ]
+			final_byte="$( tail -c -1 "$f" )"
+			if [ "$final_byte" != "$nl" ]
 			then
 				printf '%s: must have a trailing newline\n' "$f"
 			fi
 		done
-}
+)
 
 # trailing_whitespace is a simple check that makes sure that there are no
 # trailing whitespace in plain-text files.

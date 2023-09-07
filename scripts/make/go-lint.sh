@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 4
+# AdGuard-Project-Version: 5
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -238,7 +238,32 @@ run_linter looppointer ./...
 
 run_linter nilness ./...
 
-# TODO(a.garipov): Add fieldalignment?
+# TODO(a.garipov): Enable for all.
+run_linter fieldalignment \
+	./internal/aghalg/\
+	./internal/aghchan/\
+	./internal/aghhttp/\
+	./internal/aghio/\
+	./internal/aghos/\
+	./internal/aghrenameio/\
+	./internal/aghtest/\
+	./internal/aghtls/\
+	./internal/arpdb/\
+	./internal/client/\
+	./internal/confmigrate/\
+	./internal/dhcpsvc/\
+	./internal/filtering/hashprefix/\
+	./internal/filtering/rewrite/\
+	./internal/filtering/rulelist/\
+	./internal/filtering/safesearch/\
+	./internal/next/...\
+	./internal/querylog/\
+	./internal/rdns/\
+	./internal/stats/\
+	./internal/updater/\
+	./internal/version/\
+	./internal/whois/\
+	;
 
 run_linter -e shadow --strict ./...
 

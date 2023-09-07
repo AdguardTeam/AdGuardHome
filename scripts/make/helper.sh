@@ -8,7 +8,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a remarkable change is made to this script.
 #
-# AdGuard-Project-Version: 2
+# AdGuard-Project-Version: 3
 
 
 
@@ -47,7 +47,7 @@ trap not_found EXIT
 run_linter() (
 	set +e
 
-	if [ "$VERBOSE" -lt '2' ]
+	if [ "${VERBOSE:-0}" -lt '2' ]
 	then
 		set +x
 	fi
