@@ -3,7 +3,7 @@ package confmigrate_test
 import (
 	"io/fs"
 	"os"
-	"path/filepath"
+	"path"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/confmigrate"
@@ -11,6 +11,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	yaml "gopkg.in/yaml.v3"
 )
+
+// testdata is a virtual filesystem containing test data.
+var testdata = os.DirFS("testdata")
 
 // getField returns the value located at the given indexes in the given object.
 // It fails the test if the value is not found or of the expected type.  The
@@ -41,9 +44,6 @@ func getField[T any](t require.TestingT, obj any, indexes ...any) (val T) {
 
 	return obj.(T)
 }
-
-// testdata is a virtual filesystem containing test data.
-var testdata = os.DirFS("testdata")
 
 func TestMigrateConfig_Migrate(t *testing.T) {
 	const (
@@ -189,10 +189,10 @@ func TestMigrateConfig_Migrate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			body, err := fs.ReadFile(testdata, filepath.Join(t.Name(), inputFileName))
+			body, err := fs.ReadFile(testdata, path.Join(t.Name(), inputFileName))
 			require.NoError(t, err)
 
-			wantBody, err := fs.ReadFile(testdata, filepath.Join(t.Name(), outputFileName))
+			wantBody, err := fs.ReadFile(testdata, path.Join(t.Name(), outputFileName))
 			require.NoError(t, err)
 
 			migrator := confmigrate.New(&confmigrate.Config{
