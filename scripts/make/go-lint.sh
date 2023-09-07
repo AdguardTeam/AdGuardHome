@@ -35,7 +35,7 @@ set -f -u
 go_version="$( "${GO:-go}" version )"
 readonly go_version
 
-go_min_version='go1.20.7'
+go_min_version='go1.20.8'
 go_version_msg="
 warning: your go version (${go_version}) is different from the recommended minimal one (${go_min_version}).
 if you have the version installed, please set the GO environment variable.
@@ -171,48 +171,60 @@ run_linter govulncheck ./...
 run_linter gocyclo --over 10 .
 
 # TODO(a.garipov): Enable 10 for all.
-#
-# TODO(a.garipov): Redo once https://github.com/uudashr/gocognit/issues/22 is
-# fixed.
-gocognit_paths="\
-./internal/aghnet/   20
-./internal/querylog/ 20
-./internal/dnsforward/  19
-./internal/home/        19
-./internal/aghtls/ 18
-./internal/filtering          17
-./internal/filtering/rewrite/ 17
-./internal/aghos/ 15
-./internal/dhcpd/ 15
-./internal/updater/ 12
-./internal/aghtest/ 11
-./internal/aghalg/               10
-./internal/aghchan/              10
-./internal/aghhttp/              10
-./internal/aghio/                10
-./internal/aghrenameio/          10
-./internal/arpdb/                10
-./internal/client/               10
-./internal/confmigrate/          10
-./internal/dhcpsvc               10
-./internal/filtering/hashprefix/ 10
-./internal/filtering/rulelist/   10
-./internal/filtering/safesearch/ 10
-./internal/next/                 10
-./internal/rdns/                 10
-./internal/schedule/             10
-./internal/stats/                10
-./internal/tools/                10
-./internal/version/              10
-./internal/whois/                10
-./scripts/                       10"
+run_linter gocognit --over='20'\
+	./internal/querylog/\
+	;
 
-readonly gocognit_paths
+run_linter gocognit --over='19'\
+	./internal/home/\
+	;
 
-echo "$gocognit_paths" | while read -r path max
-do
-	run_linter gocognit --over="$max" "$path"
-done
+run_linter gocognit --over='18'\
+	./internal/aghtls/\
+	;
+
+run_linter gocognit --over='15'\
+	./internal/aghos/\
+	./internal/dnsforward/\
+	./internal/filtering/\
+	;
+
+run_linter gocognit --over='14'\
+	./internal/dhcpd\
+	;
+
+run_linter gocognit --over='13'\
+	./internal/aghnet/\
+	;
+
+run_linter gocognit --over='12'\
+	./internal/updater/\
+	./internal/filtering/rewrite/\
+	;
+
+run_linter gocognit --over='10'\
+	./internal/aghalg/\
+	./internal/aghchan/\
+	./internal/aghhttp/\
+	./internal/aghio/\
+	./internal/aghrenameio/\
+	./internal/aghtest/\
+	./internal/arpdb/\
+	./internal/client/\
+	./internal/confmigrate/\
+	./internal/dhcpsvc\
+	./internal/filtering/hashprefix/\
+	./internal/filtering/rulelist/\
+	./internal/filtering/safesearch/\
+	./internal/next/\
+	./internal/rdns/\
+	./internal/schedule/\
+	./internal/stats/\
+	./internal/tools/\
+	./internal/version/\
+	./internal/whois/\
+	./scripts/\
+	;
 
 run_linter ineffassign ./...
 
@@ -232,28 +244,31 @@ run_linter -e shadow --strict ./...
 
 # TODO(a.garipov): Enable for all.
 run_linter gosec --quiet\
-	./internal/aghalg\
-	./internal/aghchan\
-	./internal/aghhttp\
-	./internal/aghio\
-	./internal/aghnet\
-	./internal/aghos\
+	./internal/aghalg/\
+	./internal/aghchan/\
+	./internal/aghhttp/\
+	./internal/aghio/\
+	./internal/aghnet/\
+	./internal/aghos/\
 	./internal/aghrenameio/\
-	./internal/aghtest\
-	./internal/client\
-	./internal/confmigrate\
-	./internal/dhcpd\
-	./internal/dhcpsvc\
-	./internal/dnsforward\
+	./internal/aghtest/\
+	./internal/arpdb/\
+	./internal/client/\
+	./internal/confmigrate/\
+	./internal/dhcpd/\
+	./internal/dhcpsvc/\
+	./internal/dnsforward/\
 	./internal/filtering/hashprefix/\
+	./internal/filtering/rewrite/\
 	./internal/filtering/rulelist/\
-	./internal/next\
-	./internal/rdns\
-	./internal/schedule\
-	./internal/stats\
-	./internal/tools\
-	./internal/version\
-	./internal/whois\
+	./internal/filtering/safesearch/\
+	./internal/next/\
+	./internal/rdns/\
+	./internal/schedule/\
+	./internal/stats/\
+	./internal/tools/\
+	./internal/version/\
+	./internal/whois/\
 	;
 
 run_linter errcheck ./...

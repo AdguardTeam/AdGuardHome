@@ -23,12 +23,18 @@ See also the [v0.107.37 GitHub milestone][ms-v0.107.37].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2023-39318, CVE-2023-39319, and CVE-2023-39320 Go vulnerabilities fixed in
+  [Go 1.20.8][go-1.20.8].
+
 ### Added
 
 - AdBlock-style syntax support for ignored domains in logs and statistics
   ([#5720]).
 - [`Strict-Transport-Security`][hsts] header in the HTTP API and DNS-over-HTTPS
-  responses when HTTPS is forced ([#2998]).  See [RFC 6979][rfc6797].
+  responses when HTTPS is forced ([#2998]).  See [RFC 6797][rfc6797].
 - UI for the schedule of the service-blocking pause ([#951]).
 - IPv6 hints are now filtered in case IPv6 addresses resolving is disabled
   ([#6122]).
@@ -36,7 +42,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
   ([#3701]).
 - While adding or updating blocklists, the title can now be parsed from
   `! Title:` definition of the blocklist's source ([#6020]).
-- The ability to filter DNS HTTPS records including IPv4/v6 hints ([#6053]).
+- The ability to filter DNS HTTPS records including IPv4 and IPv6 hints
+  ([#6053]).
 - Two new metrics showing total number of responses from each upstream DNS
   server and their average processing time in the Web UI ([#1453]).
 - The ability to set the port for the `pprof` debug API, see configuration
@@ -54,9 +61,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 In this release, the schema version has changed from 24 to 27.
 
-- Ignore rules blocking `.` in `querylog.…` and `stats.…` have been migrated to
-  AdBlock syntax (`|.^`).  To rollback this change, restore the rules  and
-  change the `schema_version` back to `26`.
+- Ignore rules blocking `.` in `querylog.ignored` and `statistics.ignored` have
+  been migrated to AdBlock syntax (`|.^`).  To rollback this change, restore the
+  rules and change the `schema_version` back to `26`.
 
 - Filtering-related settings have been moved from `dns` section of the YAML
   configuration file to the new section `filtering`:
@@ -173,8 +180,9 @@ In this release, the schema version has changed from 24 to 27.
 [#6122]: https://github.com/AdguardTeam/AdGuardHome/issues/6122
 [#6133]: https://github.com/AdguardTeam/AdGuardHome/issues/6133
 
-[hsts]:    https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
-[rfc6797]: https://datatracker.ietf.org/doc/html/rfc6797
+[go-1.20.8]: https://groups.google.com/g/golang-announce/c/Fm51GRLNRvM/m/F5bwBlXMAQAJ
+[hsts]:      https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+[rfc6797]:   https://datatracker.ietf.org/doc/html/rfc6797
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
@@ -780,7 +788,6 @@ See also the [v0.107.26 GitHub milestone][ms-v0.107.26].
   been relaxed to meet those from [RFC 3696][rfc3696] ([#4884]).
 - Failing service installation via script on FreeBSD ([#5431]).
 
-[#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
 [#4884]: https://github.com/AdguardTeam/AdGuardHome/issues/4884
 [#5270]: https://github.com/AdguardTeam/AdGuardHome/issues/5270
 [#5281]: https://github.com/AdguardTeam/AdGuardHome/issues/5281
@@ -1399,7 +1406,6 @@ See also the [v0.107.10 GitHub milestone][ms-v0.107.10].
 [#4342]: https://github.com/AdguardTeam/AdGuardHome/issues/4342
 [#4358]: https://github.com/AdguardTeam/AdGuardHome/issues/4358
 [#4670]: https://github.com/AdguardTeam/AdGuardHome/issues/4670
-[#4836]: https://github.com/AdguardTeam/AdGuardHome/issues/4836
 [#4843]: https://github.com/AdguardTeam/AdGuardHome/issues/4843
 
 [ddr-draft]:    https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
@@ -2033,9 +2039,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3558]: https://github.com/AdguardTeam/AdGuardHome/issues/3558
 [#3564]: https://github.com/AdguardTeam/AdGuardHome/issues/3564
 [#3567]: https://github.com/AdguardTeam/AdGuardHome/issues/3567
-[#3568]: https://github.com/AdguardTeam/AdGuardHome/issues/3568
 [#3579]: https://github.com/AdguardTeam/AdGuardHome/issues/3579
-[#3607]: https://github.com/AdguardTeam/AdGuardHome/issues/3607
 [#3638]: https://github.com/AdguardTeam/AdGuardHome/issues/3638
 [#3655]: https://github.com/AdguardTeam/AdGuardHome/issues/3655
 [#3707]: https://github.com/AdguardTeam/AdGuardHome/issues/3707
