@@ -14,14 +14,24 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.37] - 2023-08-16 (APPROX.)
+## [v0.107.38] - 2023-09-20 (APPROX.)
 
-See also the [v0.107.37 GitHub milestone][ms-v0.107.37].
+See also the [v0.107.38 GitHub milestone][ms-v0.107.38].
 
-[ms-v0.107.37]: https://github.com/AdguardTeam/AdGuardHome/milestone/72?closed=1
+[ms-v0.107.38]: https://github.com/AdguardTeam/AdGuardHome/milestone/73?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+
+
+## [v0.107.37] - 2023-09-07
+
+See also the [v0.107.37 GitHub milestone][ms-v0.107.37].
 
 ### Security
 
@@ -180,13 +190,10 @@ In this release, the schema version has changed from 24 to 27.
 [#6122]: https://github.com/AdguardTeam/AdGuardHome/issues/6122
 [#6133]: https://github.com/AdguardTeam/AdGuardHome/issues/6133
 
-[go-1.20.8]: https://groups.google.com/g/golang-announce/c/Fm51GRLNRvM/m/F5bwBlXMAQAJ
-[hsts]:      https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
-[rfc6797]:   https://datatracker.ietf.org/doc/html/rfc6797
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[go-1.20.8]:    https://groups.google.com/g/golang-announce/c/Fm51GRLNRvM/m/F5bwBlXMAQAJ
+[hsts]:         https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+[ms-v0.107.37]: https://github.com/AdguardTeam/AdGuardHome/milestone/72?closed=1
+[rfc6797]:      https://datatracker.ietf.org/doc/html/rfc6797
 
 
 
@@ -2457,11 +2464,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.37...HEAD
-[v0.107.37]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.36...v0.107.37
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.38...HEAD
+[v0.107.38]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.37...v0.107.38
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.36...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.37...HEAD
+[v0.107.37]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.36...v0.107.37
 [v0.107.36]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.35...v0.107.36
 [v0.107.35]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.34...v0.107.35
 [v0.107.34]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.33...v0.107.34
