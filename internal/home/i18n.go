@@ -58,7 +58,7 @@ type languageJSON struct {
 func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
 	log.Printf("home: language is %s", config.Language)
 
-	_ = aghhttp.WriteJSONResponse(w, r, &languageJSON{
+	aghhttp.WriteJSONResponseOK(w, r, &languageJSON{
 		Language: config.Language,
 	})
 }

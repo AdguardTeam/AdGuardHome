@@ -3,6 +3,7 @@ package safesearch
 import (
 	"context"
 	"net"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -33,7 +34,7 @@ var defaultSafeSearchConf = filtering.SafeSearchConfig{
 	YouTube:    true,
 }
 
-var yandexIP = net.IPv4(213, 180, 193, 56)
+var yandexIP = netip.AddrFrom4([4]byte{213, 180, 193, 56})
 
 func newForTest(t testing.TB, ssConf filtering.SafeSearchConfig) (ss *Default) {
 	ss, err := NewDefault(ssConf, "", testCacheSize, testCacheTTL)
@@ -93,7 +94,7 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 		OnLookupIP: func(_ context.Context, _, host string) (ips []net.IP, err error) {
 			ip4, ip6 := aghtest.HostToIPs(host)
 
-			return []net.IP{ip4, ip6}, nil
+			return []net.IP{ip4.AsSlice(), ip6.AsSlice()}, nil
 		},
 	}
 
@@ -109,14 +110,14 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, res.Rules, 1)
 
-	assert.True(t, res.Rules[0].IP.Equal(wantIP))
+	assert.Equal(t, wantIP, res.Rules[0].IP)
 
 	// Check cache.
 	cachedValue, isFound := ss.getCachedResult(domain, testQType)
 	require.True(t, isFound)
 	require.Len(t, cachedValue.Rules, 1)
 
-	assert.True(t, cachedValue.Rules[0].IP.Equal(wantIP))
+	assert.Equal(t, wantIP, cachedValue.Rules[0].IP)
 }
 
 const googleHost = "www.google.com"

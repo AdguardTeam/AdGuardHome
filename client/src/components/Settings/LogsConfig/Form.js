@@ -13,8 +13,11 @@ import flow from 'lodash/flow';
 import {
     CheckboxField,
     toFloatNumber,
-    renderTextareaField, renderInputField, renderRadioField,
+    renderTextareaField,
+    renderInputField,
+    renderRadioField,
 } from '../../../helpers/form';
+import { trimLinesAndRemoveEmpty } from '../../../helpers/helpers';
 import {
     FORM_NAME,
     QUERY_LOG_INTERVALS_DAYS,
@@ -147,6 +150,7 @@ let Form = (props) => {
                     component={renderTextareaField}
                     placeholder={t('ignore_domains')}
                     disabled={processing}
+                    normalizeOnBlur={trimLinesAndRemoveEmpty}
                 />
             </div>
             <div className="mt-5">

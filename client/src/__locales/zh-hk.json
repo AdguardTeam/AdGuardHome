@@ -648,5 +648,12 @@
     "disable_notify_for_seconds_plural": "暫停防護 {{count}} 秒",
     "disable_notify_for_minutes": "暫停防護 {{count}} 分鐘",
     "disable_notify_for_minutes_plural": "暫停防護 {{count}} 分鐘",
-    "disable_notify_for_hours": "暫停防護 {{count}} 小時"
+    "disable_notify_for_hours": "暫停防護 {{count}} 小時",
+    "sunday_short": "週日",
+    "monday_short": "週一",
+    "tuesday_short": "週二",
+    "wednesday_short": "週三",
+    "thursday_short": "週四",
+    "friday_short": "週五",
+    "saturday_short": "週六"
 }

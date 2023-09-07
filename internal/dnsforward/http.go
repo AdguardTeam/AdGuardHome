@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/netip"
 	"strings"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
@@ -37,6 +37,10 @@ type jsonDNSConfig struct {
 	// upstream DoH/DoT resolvers.
 	Bootstraps *[]string `json:"bootstrap_dns"`
 
+	// Fallbacks is the list of fallback DNS servers used when upstream DNS
+	// servers are not responding.
+	Fallbacks *[]string `json:"fallback_dns"`
+
 	// ProtectionEnabled defines if protection is enabled.
 	ProtectionEnabled *bool `json:"protection_enabled"`
 
@@ -44,7 +48,7 @@ type jsonDNSConfig struct {
 	RateLimit *uint32 `json:"ratelimit"`
 
 	// BlockingMode defines the way blocked responses are constructed.
-	BlockingMode *BlockingMode `json:"blocking_mode"`
+	BlockingMode *filtering.BlockingMode `json:"blocking_mode"`
 
 	// EDNSCSEnabled defines if EDNS Client Subnet is enabled.
 	EDNSCSEnabled *bool `json:"edns_cs_enabled"`
@@ -83,10 +87,10 @@ type jsonDNSConfig struct {
 	LocalPTRUpstreams *[]string `json:"local_ptr_upstreams"`
 
 	// BlockingIPv4 is custom IPv4 address for blocked A requests.
-	BlockingIPv4 net.IP `json:"blocking_ipv4"`
+	BlockingIPv4 netip.Addr `json:"blocking_ipv4"`
 
 	// BlockingIPv6 is custom IPv6 address for blocked AAAA requests.
-	BlockingIPv6 net.IP `json:"blocking_ipv6"`
+	BlockingIPv6 netip.Addr `json:"blocking_ipv6"`
 
 	// DisabledUntil is a timestamp until when the protection is disabled.
 	DisabledUntil *time.Time `json:"protection_disabled_until"`
@@ -109,9 +113,8 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	upstreams := stringutil.CloneSliceOrEmpty(s.conf.UpstreamDNS)
 	upstreamFile := s.conf.UpstreamDNSFileName
 	bootstraps := stringutil.CloneSliceOrEmpty(s.conf.BootstrapDNS)
-	blockingMode := s.conf.BlockingMode
-	blockingIPv4 := s.conf.BlockingIPv4
-	blockingIPv6 := s.conf.BlockingIPv6
+	fallbacks := stringutil.CloneSliceOrEmpty(s.conf.FallbackDNS)
+	blockingMode, blockingIPv4, blockingIPv6 := s.dnsFilter.BlockingMode()
 	ratelimit := s.conf.Ratelimit
 
 	customIP := s.conf.EDNSClientSubnet.CustomIP
@@ -144,6 +147,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		Upstreams:                &upstreams,
 		UpstreamsFile:            &upstreamFile,
 		Bootstraps:               &bootstraps,
+		Fallbacks:                &fallbacks,
 		ProtectionEnabled:        &protectionEnabled,
 		BlockingMode:             &blockingMode,
 		BlockingIPv4:             blockingIPv4,
@@ -170,7 +174,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 // handleGetConfig handles requests to the GET /control/dns_info endpoint.
 func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	resp := s.getDNSConfig()
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 func (req *jsonDNSConfig) checkBlockingMode() (err error) {
@@ -208,6 +212,20 @@ func (req *jsonDNSConfig) checkBootstrap() (err error) {
 	return nil
 }
 
+// checkFallbacks returns an error if any fallback address is invalid.
+func (req *jsonDNSConfig) checkFallbacks() (err error) {
+	if req.Fallbacks == nil {
+		return nil
+	}
+
+	err = ValidateUpstreams(*req.Fallbacks)
+	if err != nil {
+		return fmt.Errorf("validating fallback servers: %w", err)
+	}
+
+	return nil
+}
+
 // validate returns an error if any field of req is invalid.
 func (req *jsonDNSConfig) validate(privateNets netutil.SubnetSet) (err error) {
 	if req.Upstreams != nil {
@@ -225,6 +243,11 @@ func (req *jsonDNSConfig) validate(privateNets netutil.SubnetSet) (err error) {
 	}
 
 	err = req.checkBootstrap()
+	if err != nil {
+		return err
+	}
+
+	err = req.checkFallbacks()
 	if err != nil {
 		return err
 	}
@@ -295,11 +318,11 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 	defer s.serverLock.Unlock()
 
 	if dc.BlockingMode != nil {
-		s.conf.BlockingMode = *dc.BlockingMode
-		if *dc.BlockingMode == BlockingModeCustomIP {
-			s.conf.BlockingIPv4 = dc.BlockingIPv4.To4()
-			s.conf.BlockingIPv6 = dc.BlockingIPv6.To16()
-		}
+		s.dnsFilter.SetBlockingMode(*dc.BlockingMode, dc.BlockingIPv4, dc.BlockingIPv6)
+	}
+
+	if dc.ProtectionEnabled != nil {
+		s.dnsFilter.SetProtectionEnabled(*dc.ProtectionEnabled)
 	}
 
 	if dc.UpstreamMode != nil {
@@ -311,7 +334,6 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 		s.conf.EDNSClientSubnet.CustomIP = dc.EDNSCSCustomIP
 	}
 
-	setIfNotNil(&s.conf.ProtectionEnabled, dc.ProtectionEnabled)
 	setIfNotNil(&s.conf.EnableDNSSEC, dc.DNSSECEnabled)
 	setIfNotNil(&s.conf.AAAADisabled, dc.DisableIPv6)
 
@@ -342,6 +364,7 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 		setIfNotNil(&s.conf.LocalPTRResolvers, dc.LocalPTRUpstreams),
 		setIfNotNil(&s.conf.UpstreamDNSFileName, dc.UpstreamsFile),
 		setIfNotNil(&s.conf.BootstrapDNS, dc.Bootstraps),
+		setIfNotNil(&s.conf.FallbackDNS, dc.Fallbacks),
 		setIfNotNil(&s.conf.EDNSClientSubnet.Enabled, dc.EDNSCSEnabled),
 		setIfNotNil(&s.conf.EDNSClientSubnet.UseCustom, dc.EDNSCSUseCustom),
 		setIfNotNil(&s.conf.CacheSize, dc.CacheSize),
@@ -369,6 +392,7 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 type upstreamJSON struct {
 	Upstreams        []string `json:"upstream_dns"`
 	BootstrapDNS     []string `json:"bootstrap_dns"`
+	FallbackDNS      []string `json:"fallback_dns"`
 	PrivateUpstreams []string `json:"private_upstream"`
 }
 
@@ -441,7 +465,7 @@ func ValidateUpstreams(upstreams []string) (err error) {
 func ValidateUpstreamsPrivate(upstreams []string, privateNets netutil.SubnetSet) (err error) {
 	conf, err := newUpstreamConfig(upstreams)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating config: %w", err)
 	}
 
 	if conf == nil {
@@ -469,11 +493,7 @@ func ValidateUpstreamsPrivate(upstreams []string, privateNets netutil.SubnetSet)
 		}
 	}
 
-	if len(errs) > 0 {
-		return errors.List("checking domain-specific upstreams", errs...)
-	}
-
-	return nil
+	return errors.Annotate(errors.Join(errs...), "checking domain-specific upstreams: %w")
 }
 
 var protocols = []string{
@@ -667,10 +687,13 @@ func (s *Server) parseUpstreamLine(
 		PreferIPv6: opts.PreferIPv6,
 	}
 
-	if s.dnsFilter != nil && s.dnsFilter.EtcHosts != nil {
-		resolved := s.resolveUpstreamHost(extractUpstreamHost(upstreamAddr))
-		sortNetIPAddrs(resolved, opts.PreferIPv6)
-		opts.ServerIPAddrs = resolved
+	// dnsFilter can be nil during application update.
+	if s.dnsFilter != nil {
+		recs := s.dnsFilter.EtcHostsRecords(extractUpstreamHost(upstreamAddr))
+		for _, rec := range recs {
+			opts.ServerIPAddrs = append(opts.ServerIPAddrs, rec.Addr.AsSlice())
+		}
+		sortNetIPAddrs(opts.ServerIPAddrs, opts.PreferIPv6)
 	}
 	u, err = upstream.AddressToUpstream(upstreamAddr, opts)
 	if err != nil {
@@ -728,11 +751,19 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	req.Upstreams = stringutil.FilterOut(req.Upstreams, IsCommentOrEmpty)
 	req.PrivateUpstreams = stringutil.FilterOut(req.PrivateUpstreams, IsCommentOrEmpty)
 
-	upsNum := len(req.Upstreams) + len(req.PrivateUpstreams)
+	upsNum := len(req.Upstreams) + len(req.FallbackDNS) + len(req.PrivateUpstreams)
 	result := make(map[string]string, upsNum)
 	resCh := make(chan upsCheckResult, upsNum)
 
 	for _, ups := range req.Upstreams {
+		go func(ups string) {
+			resCh <- upsCheckResult{
+				host: ups,
+				err:  s.checkDNS(ups, opts, checkDNSUpstreamExc),
+			}
+		}(ups)
+	}
+	for _, ups := range req.FallbackDNS {
 		go func(ups string) {
 			resCh <- upsCheckResult{
 				host: ups,
@@ -760,7 +791,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	_ = aghhttp.WriteJSONResponse(w, r, result)
+	aghhttp.WriteJSONResponseOK(w, r, result)
 }
 
 // handleCacheClear is the handler for the POST /control/cache_clear HTTP API.
@@ -806,8 +837,7 @@ func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
 		s.serverLock.Lock()
 		defer s.serverLock.Unlock()
 
-		s.conf.ProtectionEnabled = protectionReq.Enabled
-		s.conf.ProtectionDisabledUntil = disabledUntil
+		s.dnsFilter.SetProtectionStatus(protectionReq.Enabled, disabledUntil)
 	}()
 
 	s.conf.ConfigModified()

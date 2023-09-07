@@ -8,6 +8,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
@@ -34,8 +35,12 @@ type clientJSON struct {
 	WHOIS          *whois.Info                 `json:"whois_info,omitempty"`
 	SafeSearchConf *filtering.SafeSearchConfig `json:"safe_search"`
 
+	// Schedule is blocked services schedule for every day of the week.
+	Schedule *schedule.Weekly `json:"blocked_services_schedule"`
+
 	Name string `json:"name"`
 
+	// BlockedServices is the names of blocked services.
 	BlockedServices []string `json:"blocked_services"`
 	IDs             []string `json:"ids"`
 	Tags            []string `json:"tags"`
@@ -53,12 +58,40 @@ type clientJSON struct {
 	IgnoreStatistics aghalg.NullBool `json:"ignore_statistics"`
 }
 
+// copySettings returns a copy of specific settings from JSON or a previous
+// client.
+func (j *clientJSON) copySettings(
+	prev *Client,
+) (weekly *schedule.Weekly, ignoreQueryLog, ignoreStatistics bool) {
+	if j.Schedule != nil {
+		weekly = j.Schedule.Clone()
+	} else if prev != nil && prev.BlockedServices != nil {
+		weekly = prev.BlockedServices.Schedule.Clone()
+	} else {
+		weekly = schedule.EmptyWeekly()
+	}
+
+	if j.IgnoreQueryLog != aghalg.NBNull {
+		ignoreQueryLog = j.IgnoreQueryLog == aghalg.NBTrue
+	} else if prev != nil {
+		ignoreQueryLog = prev.IgnoreQueryLog
+	}
+
+	if j.IgnoreStatistics != aghalg.NBNull {
+		ignoreStatistics = j.IgnoreStatistics == aghalg.NBTrue
+	} else if prev != nil {
+		ignoreStatistics = prev.IgnoreStatistics
+	}
+
+	return weekly, ignoreQueryLog, ignoreStatistics
+}
+
 type runtimeClientJSON struct {
 	WHOIS *whois.Info `json:"whois_info"`
 
-	IP     netip.Addr   `json:"ip"`
-	Name   string       `json:"name"`
-	Source clientSource `json:"source"`
+	IP     netip.Addr    `json:"ip"`
+	Name   string        `json:"name"`
+	Source client.Source `json:"source"`
 }
 
 type clientListJSON struct {
@@ -91,9 +124,20 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 		data.RuntimeClients = append(data.RuntimeClients, cj)
 	}
 
+	for _, l := range clients.dhcp.Leases() {
+		cj := runtimeClientJSON{
+			Name:   l.Hostname,
+			Source: client.SourceDHCP,
+			IP:     l.IP,
+			WHOIS:  &whois.Info{},
+		}
+
+		data.RuntimeClients = append(data.RuntimeClients, cj)
+	}
+
 	data.Tags = clientTags
 
-	_ = aghhttp.WriteJSONResponse(w, r, data)
+	aghhttp.WriteJSONResponseOK(w, r, data)
 }
 
 // jsonToClient converts JSON object to Client object.
@@ -119,9 +163,15 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 		}
 	}
 
-	weekly := schedule.EmptyWeekly()
-	if prev != nil {
-		weekly = prev.BlockedServices.Schedule.Clone()
+	weekly, ignoreQueryLog, ignoreStatistics := cj.copySettings(prev)
+
+	bs := &filtering.BlockedServices{
+		Schedule: weekly,
+		IDs:      cj.BlockedServices,
+	}
+	err = bs.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("validating blocked services: %w", err)
 	}
 
 	c = &Client{
@@ -129,10 +179,7 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 
 		Name: cj.Name,
 
-		BlockedServices: &filtering.BlockedServices{
-			Schedule: weekly,
-			IDs:      cj.BlockedServices,
-		},
+		BlockedServices: bs,
 
 		IDs:       cj.IDs,
 		Tags:      cj.Tags,
@@ -143,18 +190,8 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 		ParentalEnabled:       cj.ParentalEnabled,
 		SafeBrowsingEnabled:   cj.SafeBrowsingEnabled,
 		UseOwnBlockedServices: !cj.UseGlobalBlockedServices,
-	}
-
-	if cj.IgnoreQueryLog != aghalg.NBNull {
-		c.IgnoreQueryLog = cj.IgnoreQueryLog == aghalg.NBTrue
-	} else if prev != nil {
-		c.IgnoreQueryLog = prev.IgnoreQueryLog
-	}
-
-	if cj.IgnoreStatistics != aghalg.NBNull {
-		c.IgnoreStatistics = cj.IgnoreStatistics == aghalg.NBTrue
-	} else if prev != nil {
-		c.IgnoreStatistics = prev.IgnoreStatistics
+		IgnoreQueryLog:        ignoreQueryLog,
+		IgnoreStatistics:      ignoreStatistics,
 	}
 
 	if safeSearchConf.Enabled {
@@ -191,6 +228,7 @@ func clientToJSON(c *Client) (cj *clientJSON) {
 
 		UseGlobalBlockedServices: !c.UseOwnBlockedServices,
 
+		Schedule:        c.BlockedServices.Schedule,
 		BlockedServices: c.BlockedServices.IDs,
 
 		Upstreams: c.Upstreams,
@@ -338,7 +376,7 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 		})
 	}
 
-	_ = aghhttp.WriteJSONResponse(w, r, data)
+	aghhttp.WriteJSONResponseOK(w, r, data)
 }
 
 // findRuntime looks up the IP in runtime and temporary storages, like

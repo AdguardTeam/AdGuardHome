@@ -283,11 +283,13 @@ func TestServer_HandleDNSRequest_dns64(t *testing.T) {
 		// right after stop, due to a data race in [proxy.Proxy.Init] method
 		// when setting an OOB size.  As a temporary workaround, recreate the
 		// whole server for each test case.
-		s := createTestServer(t, &filtering.Config{}, ServerConfig{
+		s := createTestServer(t, &filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
+		}, ServerConfig{
 			UDPListenAddrs: []*net.UDPAddr{{}},
 			TCPListenAddrs: []*net.TCPAddr{{}},
 			UseDNS64:       true,
-			FilteringConfig: FilteringConfig{
+			Config: Config{
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 			},
 		}, localUps)

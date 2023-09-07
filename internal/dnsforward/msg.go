@@ -1,7 +1,7 @@
 package dnsforward
 
 import (
-	"net"
+	"net/netip"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -9,6 +9,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
+	"golang.org/x/exp/slices"
 )
 
 // makeResponse creates a DNS response by req and sets necessary flags.  It also
@@ -26,24 +27,13 @@ func (s *Server) makeResponse(req *dns.Msg) (resp *dns.Msg) {
 	return resp
 }
 
-// containsIP returns true if the IP is already in the list.
-func containsIP(ips []net.IP, ip net.IP) bool {
-	for _, a := range ips {
-		if a.Equal(ip) {
-			return true
-		}
-	}
-
-	return false
-}
-
 // ipsFromRules extracts unique non-IP addresses from the filtering result
 // rules.
-func ipsFromRules(resRules []*filtering.ResultRule) (ips []net.IP) {
+func ipsFromRules(resRules []*filtering.ResultRule) (ips []netip.Addr) {
 	for _, r := range resRules {
 		// len(resRules) and len(ips) are actually small enough for O(n^2) to do
 		// not raise performance questions.
-		if ip := r.IP; ip != nil && !containsIP(ips, ip) {
+		if ip := r.IP; ip != (netip.Addr{}) && !slices.Contains(ips, ip) {
 			ips = append(ips, ip)
 		}
 	}
@@ -58,19 +48,21 @@ func (s *Server) genDNSFilterMessage(
 	res *filtering.Result,
 ) (resp *dns.Msg) {
 	req := dctx.Req
-	if qt := req.Question[0].Qtype; qt != dns.TypeA && qt != dns.TypeAAAA {
-		if s.conf.BlockingMode == BlockingModeNullIP {
+	qt := req.Question[0].Qtype
+	if qt != dns.TypeA && qt != dns.TypeAAAA {
+		m, _, _ := s.dnsFilter.BlockingMode()
+		if m == filtering.BlockingModeNullIP {
 			return s.makeResponse(req)
 		}
 
-		return s.genNXDomain(req)
+		return s.newMsgNODATA(req)
 	}
 
 	switch res.Reason {
 	case filtering.FilteredSafeBrowsing:
-		return s.genBlockedHost(req, s.conf.SafeBrowsingBlockHost, dctx)
+		return s.genBlockedHost(req, s.dnsFilter.SafeBrowsingBlockHost(), dctx)
 	case filtering.FilteredParental:
-		return s.genBlockedHost(req, s.conf.ParentalBlockHost, dctx)
+		return s.genBlockedHost(req, s.dnsFilter.ParentalBlockHost(), dctx)
 	case filtering.FilteredSafeSearch:
 		// If Safe Search generated the necessary IP addresses, use them.
 		// Otherwise, if there were no errors, there are no addresses for the
@@ -83,36 +75,45 @@ func (s *Server) genDNSFilterMessage(
 
 // genForBlockingMode generates a filtered response to req based on the server's
 // blocking mode.
-func (s *Server) genForBlockingMode(req *dns.Msg, ips []net.IP) (resp *dns.Msg) {
-	qt := req.Question[0].Qtype
-	switch m := s.conf.BlockingMode; m {
-	case BlockingModeCustomIP:
-		switch qt {
-		case dns.TypeA:
-			return s.genARecord(req, s.conf.BlockingIPv4)
-		case dns.TypeAAAA:
-			return s.genAAAARecord(req, s.conf.BlockingIPv6)
-		default:
-			// Generally shouldn't happen, since the types are checked in
-			// genDNSFilterMessage.
-			log.Error("dns: invalid msg type %s for blocking mode %s", dns.Type(qt), m)
-
-			return s.makeResponse(req)
-		}
-	case BlockingModeDefault:
+func (s *Server) genForBlockingMode(req *dns.Msg, ips []netip.Addr) (resp *dns.Msg) {
+	switch mode, bIPv4, bIPv6 := s.dnsFilter.BlockingMode(); mode {
+	case filtering.BlockingModeCustomIP:
+		return s.makeResponseCustomIP(req, bIPv4, bIPv6)
+	case filtering.BlockingModeDefault:
 		if len(ips) > 0 {
 			return s.genResponseWithIPs(req, ips)
 		}
 
 		return s.makeResponseNullIP(req)
-	case BlockingModeNullIP:
+	case filtering.BlockingModeNullIP:
 		return s.makeResponseNullIP(req)
-	case BlockingModeNXDOMAIN:
+	case filtering.BlockingModeNXDOMAIN:
 		return s.genNXDomain(req)
-	case BlockingModeREFUSED:
+	case filtering.BlockingModeREFUSED:
 		return s.makeResponseREFUSED(req)
 	default:
-		log.Error("dns: invalid blocking mode %q", s.conf.BlockingMode)
+		log.Error("dns: invalid blocking mode %q", mode)
+
+		return s.makeResponse(req)
+	}
+}
+
+// makeResponseCustomIP generates a DNS response message for Custom IP blocking
+// mode with the provided IP addresses and an appropriate resource record type.
+func (s *Server) makeResponseCustomIP(
+	req *dns.Msg,
+	bIPv4 netip.Addr,
+	bIPv6 netip.Addr,
+) (resp *dns.Msg) {
+	switch qt := req.Question[0].Qtype; qt {
+	case dns.TypeA:
+		return s.genARecord(req, bIPv4)
+	case dns.TypeAAAA:
+		return s.genAAAARecord(req, bIPv6)
+	default:
+		// Generally shouldn't happen, since the types are checked in
+		// genDNSFilterMessage.
+		log.Error("dns: invalid msg type %s for custom IP blocking mode", dns.Type(qt))
 
 		return s.makeResponse(req)
 	}
@@ -125,13 +126,13 @@ func (s *Server) genServerFailure(request *dns.Msg) *dns.Msg {
 	return &resp
 }
 
-func (s *Server) genARecord(request *dns.Msg, ip net.IP) *dns.Msg {
+func (s *Server) genARecord(request *dns.Msg, ip netip.Addr) *dns.Msg {
 	resp := s.makeResponse(request)
 	resp.Answer = append(resp.Answer, s.genAnswerA(request, ip))
 	return resp
 }
 
-func (s *Server) genAAAARecord(request *dns.Msg, ip net.IP) *dns.Msg {
+func (s *Server) genAAAARecord(request *dns.Msg, ip netip.Addr) *dns.Msg {
 	resp := s.makeResponse(request)
 	resp.Answer = append(resp.Answer, s.genAnswerAAAA(request, ip))
 	return resp
@@ -141,22 +142,22 @@ func (s *Server) hdr(req *dns.Msg, rrType rules.RRType) (h dns.RR_Header) {
 	return dns.RR_Header{
 		Name:   req.Question[0].Name,
 		Rrtype: rrType,
-		Ttl:    s.conf.BlockedResponseTTL,
+		Ttl:    s.dnsFilter.BlockedResponseTTL(),
 		Class:  dns.ClassINET,
 	}
 }
 
-func (s *Server) genAnswerA(req *dns.Msg, ip net.IP) (ans *dns.A) {
+func (s *Server) genAnswerA(req *dns.Msg, ip netip.Addr) (ans *dns.A) {
 	return &dns.A{
 		Hdr: s.hdr(req, dns.TypeA),
-		A:   ip,
+		A:   ip.AsSlice(),
 	}
 }
 
-func (s *Server) genAnswerAAAA(req *dns.Msg, ip net.IP) (ans *dns.AAAA) {
+func (s *Server) genAnswerAAAA(req *dns.Msg, ip netip.Addr) (ans *dns.AAAA) {
 	return &dns.AAAA{
 		Hdr:  s.hdr(req, dns.TypeAAAA),
-		AAAA: ip,
+		AAAA: ip.AsSlice(),
 	}
 }
 
@@ -203,22 +204,24 @@ func (s *Server) genAnswerTXT(req *dns.Msg, strs []string) (ans *dns.TXT) {
 // addresses and an appropriate resource record type.  If any of the IPs cannot
 // be converted to the correct protocol, genResponseWithIPs returns an empty
 // response.
-func (s *Server) genResponseWithIPs(req *dns.Msg, ips []net.IP) (resp *dns.Msg) {
+func (s *Server) genResponseWithIPs(req *dns.Msg, ips []netip.Addr) (resp *dns.Msg) {
 	var ans []dns.RR
 	switch req.Question[0].Qtype {
 	case dns.TypeA:
 		for _, ip := range ips {
-			if ip4 := ip.To4(); ip4 == nil {
+			if ip.Is4() {
+				ans = append(ans, s.genAnswerA(req, ip))
+			} else {
 				ans = nil
 
 				break
 			}
-
-			ans = append(ans, s.genAnswerA(req, ip))
 		}
 	case dns.TypeAAAA:
 		for _, ip := range ips {
-			ans = append(ans, s.genAnswerAAAA(req, ip.To16()))
+			if ip.Is6() {
+				ans = append(ans, s.genAnswerAAAA(req, ip))
+			}
 		}
 	default:
 		// Go on and return an empty response.
@@ -239,9 +242,9 @@ func (s *Server) makeResponseNullIP(req *dns.Msg) (resp *dns.Msg) {
 	// converted into an empty slice instead of the zero IPv4.
 	switch req.Question[0].Qtype {
 	case dns.TypeA:
-		resp = s.genResponseWithIPs(req, []net.IP{{0, 0, 0, 0}})
+		resp = s.genResponseWithIPs(req, []netip.Addr{netip.IPv4Unspecified()})
 	case dns.TypeAAAA:
-		resp = s.genResponseWithIPs(req, []net.IP{net.IPv6zero})
+		resp = s.genResponseWithIPs(req, []netip.Addr{netip.IPv6Unspecified()})
 	default:
 		resp = s.makeResponse(req)
 	}
@@ -250,9 +253,15 @@ func (s *Server) makeResponseNullIP(req *dns.Msg) (resp *dns.Msg) {
 }
 
 func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSContext) *dns.Msg {
-	ip := net.ParseIP(newAddr)
-	if ip != nil {
-		return s.genResponseWithIPs(request, []net.IP{ip})
+	if newAddr == "" {
+		log.Printf("block host is not specified.")
+
+		return s.genServerFailure(request)
+	}
+
+	ip, err := netip.ParseAddr(newAddr)
+	if err == nil {
+		return s.genResponseWithIPs(request, []netip.Addr{ip})
 	}
 
 	// look up the hostname, TODO: cache
@@ -274,7 +283,7 @@ func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSCo
 		return s.genServerFailure(request)
 	}
 
-	err := prx.Resolve(newContext)
+	err = prx.Resolve(newContext)
 	if err != nil {
 		log.Printf("couldn't look up replacement host %q: %s", newAddr, err)
 
@@ -314,6 +323,17 @@ func (s *Server) makeResponseREFUSED(request *dns.Msg) *dns.Msg {
 	return &resp
 }
 
+// newMsgNODATA returns a properly initialized NODATA response.
+//
+// See https://www.rfc-editor.org/rfc/rfc2308#section-2.2.
+func (s *Server) newMsgNODATA(req *dns.Msg) (resp *dns.Msg) {
+	resp = (&dns.Msg{}).SetRcode(req, dns.RcodeSuccess)
+	resp.RecursionAvailable = true
+	resp.Ns = s.genSOA(req)
+
+	return resp
+}
+
 func (s *Server) genNXDomain(request *dns.Msg) *dns.Msg {
 	resp := dns.Msg{}
 	resp.SetRcode(request, dns.RcodeNameError)
@@ -342,13 +362,13 @@ func (s *Server) genSOA(request *dns.Msg) []dns.RR {
 		Hdr: dns.RR_Header{
 			Name:   zone,
 			Rrtype: dns.TypeSOA,
-			Ttl:    s.conf.BlockedResponseTTL,
+			Ttl:    s.dnsFilter.BlockedResponseTTL(),
 			Class:  dns.ClassINET,
 		},
 		Mbox: "hostmaster.", // zone will be appended later if it's not empty or "."
 	}
 	if soa.Hdr.Ttl == 0 {
-		soa.Hdr.Ttl = defaultValues.BlockedResponseTTL
+		soa.Hdr.Ttl = defaultBlockedResponseTTL
 	}
 	if len(zone) > 0 && zone[0] != '.' {
 		soa.Mbox += zone

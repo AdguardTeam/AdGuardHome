@@ -6,6 +6,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -15,8 +16,7 @@ import (
 func TestServer_FilterDNSRewrite(t *testing.T) {
 	// Helper data.
 	const domain = "example.com"
-	ip4 := net.IP{127, 0, 0, 1}
-	ip6 := net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
+	ip4, ip6 := netutil.IPv4Localhost(), netutil.IPv6Localhost()
 	mxVal := &rules.DNSMX{
 		Exchange:   "mail.example.com",
 		Preference: 32,
@@ -34,7 +34,14 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 	}
 
 	// Helper functions and entities.
-	srv := &Server{}
+	srv := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, ServerConfig{
+		Config: Config{
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+		},
+	}, nil)
+
 	makeQ := func(qtype rules.RRType) (req *dns.Msg) {
 		return &dns.Msg{
 			Question: []dns.Question{{
@@ -89,7 +96,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 
 		require.Len(t, d.Res.Answer, 1)
-		assert.Equal(t, ip4, d.Res.Answer[0].(*dns.A).A)
+		assert.Equal(t, net.IP(ip4.AsSlice()), d.Res.Answer[0].(*dns.A).A)
 	})
 
 	t.Run("noerror_aaaa", func(t *testing.T) {
@@ -103,7 +110,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
 
 		require.Len(t, d.Res.Answer, 1)
-		assert.Equal(t, ip6, d.Res.Answer[0].(*dns.AAAA).AAAA)
+		assert.Equal(t, net.IP(ip6.AsSlice()), d.Res.Answer[0].(*dns.AAAA).AAAA)
 	})
 
 	t.Run("noerror_ptr", func(t *testing.T) {

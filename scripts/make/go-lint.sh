@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 4
+# AdGuard-Project-Version: 5
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -35,7 +35,7 @@ set -f -u
 go_version="$( "${GO:-go}" version )"
 readonly go_version
 
-go_min_version='go1.20.7'
+go_min_version='go1.20.8'
 go_version_msg="
 warning: your go version (${go_version}) is different from the recommended minimal one (${go_min_version}).
 if you have the version installed, please set the GO environment variable.
@@ -170,35 +170,61 @@ run_linter govulncheck ./...
 
 run_linter gocyclo --over 10 .
 
-# TODO(a.garipov): Enable for all.
-run_linter gocognit --over 10\
+# TODO(a.garipov): Enable 10 for all.
+run_linter gocognit --over='20'\
+	./internal/querylog/\
+	;
+
+run_linter gocognit --over='19'\
+	./internal/home/\
+	;
+
+run_linter gocognit --over='18'\
+	./internal/aghtls/\
+	;
+
+run_linter gocognit --over='15'\
+	./internal/aghos/\
+	./internal/dnsforward/\
+	./internal/filtering/\
+	;
+
+run_linter gocognit --over='14'\
+	./internal/dhcpd\
+	;
+
+run_linter gocognit --over='13'\
+	./internal/aghnet/\
+	;
+
+run_linter gocognit --over='12'\
+	./internal/updater/\
+	./internal/filtering/rewrite/\
+	;
+
+run_linter gocognit --over='10'\
 	./internal/aghalg/\
 	./internal/aghchan/\
 	./internal/aghhttp/\
 	./internal/aghio/\
 	./internal/aghrenameio/\
+	./internal/aghtest/\
+	./internal/arpdb/\
 	./internal/client/\
+	./internal/confmigrate/\
 	./internal/dhcpsvc\
 	./internal/filtering/hashprefix/\
 	./internal/filtering/rulelist/\
+	./internal/filtering/safesearch/\
 	./internal/next/\
 	./internal/rdns/\
 	./internal/schedule/\
+	./internal/stats/\
 	./internal/tools/\
 	./internal/version/\
 	./internal/whois/\
 	./scripts/\
 	;
-
-# TODO(a.garipov): move these to the group above.
-run_linter gocognit --over 20 ./internal/aghnet/ ./internal/querylog/
-run_linter gocognit --over 19 ./internal/dnsforward/ ./internal/home/
-run_linter gocognit --over 18 ./internal/aghtls/
-run_linter gocognit --over 17 ./internal/filtering ./internal/filtering/rewrite/
-run_linter gocognit --over 15 ./internal/aghos/ ./internal/dhcpd/
-run_linter gocognit --over 14 ./internal/stats/
-run_linter gocognit --over 12 ./internal/updater/
-run_linter gocognit --over 11 ./internal/aghtest/
 
 run_linter ineffassign ./...
 
@@ -212,33 +238,62 @@ run_linter looppointer ./...
 
 run_linter nilness ./...
 
-# TODO(a.garipov): Add fieldalignment?
+# TODO(a.garipov): Enable for all.
+run_linter fieldalignment \
+	./internal/aghalg/\
+	./internal/aghchan/\
+	./internal/aghhttp/\
+	./internal/aghio/\
+	./internal/aghos/\
+	./internal/aghrenameio/\
+	./internal/aghtest/\
+	./internal/aghtls/\
+	./internal/arpdb/\
+	./internal/client/\
+	./internal/confmigrate/\
+	./internal/dhcpsvc/\
+	./internal/filtering/hashprefix/\
+	./internal/filtering/rewrite/\
+	./internal/filtering/rulelist/\
+	./internal/filtering/safesearch/\
+	./internal/next/...\
+	./internal/querylog/\
+	./internal/rdns/\
+	./internal/stats/\
+	./internal/updater/\
+	./internal/version/\
+	./internal/whois/\
+	;
 
 run_linter -e shadow --strict ./...
 
 # TODO(a.garipov): Enable for all.
 run_linter gosec --quiet\
-	./internal/aghalg\
-	./internal/aghchan\
-	./internal/aghhttp\
-	./internal/aghio\
-	./internal/aghnet\
-	./internal/aghos\
+	./internal/aghalg/\
+	./internal/aghchan/\
+	./internal/aghhttp/\
+	./internal/aghio/\
+	./internal/aghnet/\
+	./internal/aghos/\
 	./internal/aghrenameio/\
-	./internal/aghtest\
-	./internal/client\
-	./internal/dhcpd\
-	./internal/dhcpsvc\
-	./internal/dnsforward\
+	./internal/aghtest/\
+	./internal/arpdb/\
+	./internal/client/\
+	./internal/confmigrate/\
+	./internal/dhcpd/\
+	./internal/dhcpsvc/\
+	./internal/dnsforward/\
 	./internal/filtering/hashprefix/\
+	./internal/filtering/rewrite/\
 	./internal/filtering/rulelist/\
-	./internal/next\
-	./internal/rdns\
-	./internal/schedule\
-	./internal/stats\
-	./internal/tools\
-	./internal/version\
-	./internal/whois\
+	./internal/filtering/safesearch/\
+	./internal/next/\
+	./internal/rdns/\
+	./internal/schedule/\
+	./internal/stats/\
+	./internal/tools/\
+	./internal/version/\
+	./internal/whois/\
 	;
 
 run_linter errcheck ./...

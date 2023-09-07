@@ -5,7 +5,6 @@ package stats
 import (
 	"fmt"
 	"io"
-	"net"
 	"net/netip"
 	"os"
 	"sync"
@@ -13,9 +12,9 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"go.etcd.io/bbolt"
 )
@@ -59,8 +58,9 @@ type Config struct {
 	// endpoints.
 	HTTPRegister aghhttp.RegisterFunc
 
-	// Ignored is the list of host names, which should not be counted.
-	Ignored *stringutil.Set
+	// Ignored contains the list of host names, which should not be counted,
+	// and matches them.
+	Ignored *aghnet.IgnoreEngine
 
 	// Filename is the name of the database file.
 	Filename string
@@ -80,7 +80,7 @@ type Interface interface {
 	io.Closer
 
 	// Update collects the incoming statistics data.
-	Update(e Entry)
+	Update(e *Entry)
 
 	// GetTopClientIP returns at most limit IP addresses corresponding to the
 	// clients with the most number of requests.
@@ -118,8 +118,9 @@ type StatsCtx struct {
 	// confMu protects ignored, limit, and enabled.
 	confMu *sync.RWMutex
 
-	// ignored is the list of host names, which should not be counted.
-	ignored *stringutil.Set
+	// ignored contains the list of host names, which should not be counted,
+	// and matches them.
+	ignored *aghnet.IgnoreEngine
 
 	// shouldCountClient returns client's ignore setting.
 	shouldCountClient func([]string) bool
@@ -225,7 +226,7 @@ func (s *StatsCtx) Start() {
 	go s.periodicFlush()
 }
 
-// Close implements the io.Closer interface for *StatsCtx.
+// Close implements the [io.Closer] interface for *StatsCtx.
 func (s *StatsCtx) Close() (err error) {
 	defer func() { err = errors.Annotate(err, "stats: closing: %w") }()
 
@@ -256,8 +257,9 @@ func (s *StatsCtx) Close() (err error) {
 	return udb.flushUnitToDB(tx, s.curr.id)
 }
 
-// Update implements the Interface interface for *StatsCtx.
-func (s *StatsCtx) Update(e Entry) {
+// Update implements the [Interface] interface for *StatsCtx.  e must not be
+// nil.
+func (s *StatsCtx) Update(e *Entry) {
 	s.confMu.Lock()
 	defer s.confMu.Unlock()
 
@@ -265,8 +267,9 @@ func (s *StatsCtx) Update(e Entry) {
 		return
 	}
 
-	if e.Result == 0 || e.Result >= resultLast || e.Domain == "" || e.Client == "" {
-		log.Debug("stats: malformed entry")
+	err := e.validate()
+	if err != nil {
+		log.Debug("stats: updating: validating entry: %s", err)
 
 		return
 	}
@@ -280,20 +283,15 @@ func (s *StatsCtx) Update(e Entry) {
 		return
 	}
 
-	clientID := e.Client
-	if ip := net.ParseIP(clientID); ip != nil {
-		clientID = ip.String()
-	}
-
-	s.curr.add(e.Result, e.Domain, clientID, uint64(e.Time))
+	s.curr.add(e)
 }
 
-// WriteDiskConfig implements the Interface interface for *StatsCtx.
+// WriteDiskConfig implements the [Interface] interface for *StatsCtx.
 func (s *StatsCtx) WriteDiskConfig(dc *Config) {
 	s.confMu.RLock()
 	defer s.confMu.RUnlock()
 
-	dc.Ignored = s.ignored.Clone()
+	dc.Ignored = s.ignored
 	dc.Limit = s.limit
 	dc.Enabled = s.enabled
 }
@@ -412,6 +410,12 @@ func (s *StatsCtx) flush() (cont bool, sleepFor time.Duration) {
 		return true, time.Second
 	}
 
+	return s.flushDB(id, limit, ptr)
+}
+
+// flushDB flushes the unit to the database.  confMu and currMu are expected to
+// be locked.
+func (s *StatsCtx) flushDB(id, limit uint32, ptr *unit) (cont bool, sleepFor time.Duration) {
 	db := s.db.Load()
 	if db == nil {
 		return true, 0
@@ -533,7 +537,8 @@ func (s *StatsCtx) clear() (err error) {
 	return nil
 }
 
-func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, firstID uint32) {
+// loadUnits returns stored units from the database and current unit ID.
+func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, curID uint32) {
 	db := s.db.Load()
 	if db == nil {
 		return nil, 0
@@ -553,7 +558,6 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, firstID uint32) {
 
 	cur := s.curr
 
-	var curID uint32
 	if cur != nil {
 		curID = cur.id
 	} else {
@@ -562,7 +566,7 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, firstID uint32) {
 
 	// Per-hour units.
 	units = make([]*unitDB, 0, limit)
-	firstID = curID - limit + 1
+	firstID := curID - limit + 1
 	for i := firstID; i != curID; i++ {
 		u := loadUnitFromDB(tx, i)
 		if u == nil {
@@ -584,7 +588,7 @@ func (s *StatsCtx) loadUnits(limit uint32) (units []*unitDB, firstID uint32) {
 		log.Fatalf("loaded %d units whilst the desired number is %d", unitsLen, limit)
 	}
 
-	return units, firstID
+	return units, curID
 }
 
 // ShouldCount returns true if request for the host should be counted.

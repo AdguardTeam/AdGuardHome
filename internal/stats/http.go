@@ -12,12 +12,14 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/timeutil"
-	"golang.org/x/exp/slices"
 )
 
 // topAddrs is an alias for the types of the TopFoo fields of statsResponse.
 // The key is either a client's address or a requested address.
 type topAddrs = map[string]uint64
+
+// topAddrsFloat is like [topAddrs] but the value is float64 number.
+type topAddrsFloat = map[string]float64
 
 // StatsResp is a response to the GET /control/stats.
 type StatsResp struct {
@@ -26,6 +28,9 @@ type StatsResp struct {
 	TopQueried []topAddrs `json:"top_queried_domains"`
 	TopClients []topAddrs `json:"top_clients"`
 	TopBlocked []topAddrs `json:"top_blocked_domains"`
+
+	TopUpstreamsResponses []topAddrs      `json:"top_upstreams_responses"`
+	TopUpstreamsAvgTime   []topAddrsFloat `json:"top_upstreams_avg_time"`
 
 	DNSQueries []uint64 `json:"dns_queries"`
 
@@ -47,7 +52,7 @@ func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	var (
-		resp StatsResp
+		resp *StatsResp
 		ok   bool
 	)
 	func() {
@@ -67,7 +72,7 @@ func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // configResp is the response to the GET /control/stats_info.
@@ -116,7 +121,7 @@ func (s *StatsCtx) handleStatsInfo(w http.ResponseWriter, r *http.Request) {
 		resp.IntervalDays = 0
 	}
 
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // handleGetStatsConfig is the handler for the GET /control/stats/config HTTP
@@ -134,9 +139,7 @@ func (s *StatsCtx) handleGetStatsConfig(w http.ResponseWriter, r *http.Request) 
 		}
 	}()
 
-	slices.Sort(resp.Ignored)
-
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // handleStatsConfig is the handler for the POST /control/stats_config HTTP API.
@@ -178,7 +181,7 @@ func (s *StatsCtx) handlePutStatsConfig(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	set, err := aghnet.NewDomainNameSet(reqData.Ignored)
+	engine, err := aghnet.NewIgnoreEngine(reqData.Ignored)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "ignored: %s", err)
 
@@ -204,7 +207,7 @@ func (s *StatsCtx) handlePutStatsConfig(w http.ResponseWriter, r *http.Request) 
 	s.confMu.Lock()
 	defer s.confMu.Unlock()
 
-	s.ignored = set
+	s.ignored = engine
 	s.limit = ivl
 	s.enabled = reqData.Enabled == aghalg.NBTrue
 }

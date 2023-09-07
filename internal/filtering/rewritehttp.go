@@ -15,22 +15,27 @@ type rewriteEntryJSON struct {
 	Answer string `json:"answer"`
 }
 
+// handleRewriteList is the handler for the GET /control/rewrite/list HTTP API.
 func (d *DNSFilter) handleRewriteList(w http.ResponseWriter, r *http.Request) {
 	arr := []*rewriteEntryJSON{}
 
-	d.confLock.Lock()
-	for _, ent := range d.Config.Rewrites {
-		jsent := rewriteEntryJSON{
-			Domain: ent.Domain,
-			Answer: ent.Answer,
-		}
-		arr = append(arr, &jsent)
-	}
-	d.confLock.Unlock()
+	func() {
+		d.confMu.RLock()
+		defer d.confMu.RUnlock()
 
-	_ = aghhttp.WriteJSONResponse(w, r, arr)
+		for _, ent := range d.conf.Rewrites {
+			jsonEnt := rewriteEntryJSON{
+				Domain: ent.Domain,
+				Answer: ent.Answer,
+			}
+			arr = append(arr, &jsonEnt)
+		}
+	}()
+
+	aghhttp.WriteJSONResponseOK(w, r, arr)
 }
 
+// handleRewriteAdd is the handler for the POST /control/rewrite/add HTTP API.
 func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 	rwJSON := rewriteEntryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&rwJSON)
@@ -54,14 +59,24 @@ func (d *DNSFilter) handleRewriteAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	d.confLock.Lock()
-	d.Config.Rewrites = append(d.Config.Rewrites, rw)
-	d.confLock.Unlock()
-	log.Debug("rewrite: added element: %s -> %s [%d]", rw.Domain, rw.Answer, len(d.Config.Rewrites))
+	func() {
+		d.confMu.Lock()
+		defer d.confMu.Unlock()
 
-	d.Config.ConfigModified()
+		d.conf.Rewrites = append(d.conf.Rewrites, rw)
+		log.Debug(
+			"rewrite: added element: %s -> %s [%d]",
+			rw.Domain,
+			rw.Answer,
+			len(d.conf.Rewrites),
+		)
+	}()
+
+	d.conf.ConfigModified()
 }
 
+// handleRewriteDelete is the handler for the POST /control/rewrite/delete HTTP
+// API.
 func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) {
 	jsent := rewriteEntryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&jsent)
@@ -77,20 +92,23 @@ func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) 
 	}
 	arr := []*LegacyRewrite{}
 
-	d.confLock.Lock()
-	for _, ent := range d.Config.Rewrites {
-		if ent.equal(entDel) {
-			log.Debug("rewrite: removed element: %s -> %s", ent.Domain, ent.Answer)
+	func() {
+		d.confMu.Lock()
+		defer d.confMu.Unlock()
 
-			continue
+		for _, ent := range d.conf.Rewrites {
+			if ent.equal(entDel) {
+				log.Debug("rewrite: removed element: %s -> %s", ent.Domain, ent.Answer)
+
+				continue
+			}
+
+			arr = append(arr, ent)
 		}
+		d.conf.Rewrites = arr
+	}()
 
-		arr = append(arr, ent)
-	}
-	d.Config.Rewrites = arr
-	d.confLock.Unlock()
-
-	d.Config.ConfigModified()
+	d.conf.ConfigModified()
 }
 
 // rewriteUpdateJSON is a struct for JSON object with rewrite rule update info.
@@ -132,21 +150,21 @@ func (d *DNSFilter) handleRewriteUpdate(w http.ResponseWriter, r *http.Request) 
 	index := -1
 	defer func() {
 		if index >= 0 {
-			d.Config.ConfigModified()
+			d.conf.ConfigModified()
 		}
 	}()
 
-	d.confLock.Lock()
-	defer d.confLock.Unlock()
+	d.confMu.Lock()
+	defer d.confMu.Unlock()
 
-	index = slices.IndexFunc(d.Config.Rewrites, rwDel.equal)
+	index = slices.IndexFunc(d.conf.Rewrites, rwDel.equal)
 	if index == -1 {
 		aghhttp.Error(r, w, http.StatusBadRequest, "target rule not found")
 
 		return
 	}
 
-	d.Config.Rewrites = slices.Replace(d.Config.Rewrites, index, index+1, rwAdd)
+	d.conf.Rewrites = slices.Replace(d.conf.Rewrites, index, index+1, rwAdd)
 
 	log.Debug("rewrite: removed element: %s -> %s", rwDel.Domain, rwDel.Answer)
 	log.Debug("rewrite: added element: %s -> %s", rwAdd.Domain, rwAdd.Answer)

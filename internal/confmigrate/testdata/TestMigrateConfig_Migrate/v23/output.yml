@@ -1,0 +1,109 @@
+http:
+  address: 127.0.0.1:3000
+  session_ttl: 3h
+users:
+- name: testuser
+  password: testpassword
+dns:
+  bind_hosts:
+  - 127.0.0.1
+  port: 53
+  protection_enabled: true
+  filtering_enabled: true
+  safebrowsing_enabled: false
+  safe_search:
+    enabled:    false
+    bing:       true
+    duckduckgo: true
+    google:     true
+    pixabay:    true
+    yandex:     true
+    youtube:    true
+  parental_enabled: false
+  parental_sensitivity: 0
+  blocked_response_ttl: 10
+  upstream_dns:
+  - tls://1.1.1.1
+  - tls://1.0.0.1
+  - quic://8.8.8.8:784
+  bootstrap_dns:
+  - 8.8.8.8:53
+  edns_client_subnet:
+    enabled:    true
+    use_custom: false
+    custom_ip:  ""
+  blocked_services:
+    schedule:
+      time_zone: Local
+    ids:
+    - 500px
+filters:
+- url: https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
+  name: ""
+  enabled: true
+- url: https://adaway.org/hosts.txt
+  name: AdAway
+  enabled: false
+- url: https://hosts-file.net/ad_servers.txt
+  name: hpHosts - Ad and Tracking servers only
+  enabled: false
+- url: http://www.malwaredomainlist.com/hostslist/hosts.txt
+  name: MalwareDomainList.com Hosts List
+  enabled: false
+clients:
+  persistent:
+  - name: localhost
+    ids:
+    - 127.0.0.1
+    - aa:aa:aa:aa:aa:aa
+    use_global_settings: true
+    use_global_blocked_services: true
+    filtering_enabled: false
+    parental_enabled: false
+    safebrowsing_enabled: false
+    safe_search:
+      enabled:    true
+      bing:       true
+      duckduckgo: true
+      google:     true
+      pixabay:    true
+      yandex:     true
+      youtube:    true
+    blocked_services:
+      schedule:
+        time_zone: Local
+      ids:
+      - 500px
+  runtime_sources:
+    whois: true
+    arp:   true
+    rdns:  true
+    dhcp:  true
+    hosts: true
+dhcp:
+  enabled: false
+  interface_name: vboxnet0
+  local_domain_name: local
+  dhcpv4:
+    gateway_ip: 192.168.0.1
+    subnet_mask: 255.255.255.0
+    range_start: 192.168.0.10
+    range_end: 192.168.0.250
+    lease_duration: 1234
+    icmp_timeout_msec: 10
+schema_version: 23
+user_rules: []
+querylog:
+  enabled: true
+  file_enabled: true
+  interval: 720h
+  size_memory: 1000
+  ignored: []
+statistics:
+  enabled: true
+  interval: 240h
+  ignored: []
+os:
+  group: ''
+  rlimit_nofile: 123
+  user: ''

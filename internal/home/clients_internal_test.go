@@ -7,22 +7,46 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
+	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+type testDHCP struct {
+	OnLeases func() (leases []*dhcpsvc.Lease)
+	OnHostBy func(ip netip.Addr) (host string)
+	OnMACBy  func(ip netip.Addr) (mac net.HardwareAddr)
+}
+
+// Lease implements the [DHCP] interface for testDHCP.
+func (t *testDHCP) Leases() (leases []*dhcpsvc.Lease) { return t.OnLeases() }
+
+// HostByIP implements the [DHCP] interface for testDHCP.
+func (t *testDHCP) HostByIP(ip netip.Addr) (host string) { return t.OnHostBy(ip) }
+
+// MACByIP implements the [DHCP] interface for testDHCP.
+func (t *testDHCP) MACByIP(ip netip.Addr) (mac net.HardwareAddr) { return t.OnMACBy(ip) }
+
 // newClientsContainer is a helper that creates a new clients container for
 // tests.
 func newClientsContainer(t *testing.T) (c *clientsContainer) {
+	t.Helper()
+
 	c = &clientsContainer{
 		testing: true,
 	}
 
-	err := c.Init(nil, nil, nil, nil, &filtering.Config{})
-	require.NoError(t, err)
+	dhcp := &testDHCP{
+		OnLeases: func() (leases []*dhcpsvc.Lease) { panic("not implemented") },
+		OnHostBy: func(ip netip.Addr) (host string) { return "" },
+		OnMACBy:  func(ip netip.Addr) (mac net.HardwareAddr) { return nil },
+	}
+
+	require.NoError(t, c.Init(nil, dhcp, nil, nil, &filtering.Config{}))
 
 	return c
 }
@@ -76,9 +100,9 @@ func TestClients(t *testing.T) {
 
 		assert.Equal(t, "client2", c.Name)
 
-		assert.Equal(t, clients.clientSource(cliNoneIP), ClientSourceNone)
-		assert.Equal(t, clients.clientSource(cli1IP), ClientSourcePersistent)
-		assert.Equal(t, clients.clientSource(cli2IP), ClientSourcePersistent)
+		assert.Equal(t, clients.clientSource(cliNoneIP), client.SourceNone)
+		assert.Equal(t, clients.clientSource(cli1IP), client.SourcePersistent)
+		assert.Equal(t, clients.clientSource(cli2IP), client.SourcePersistent)
 	})
 
 	t.Run("add_fail_name", func(t *testing.T) {
@@ -125,8 +149,8 @@ func TestClients(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, clients.clientSource(cliOldIP), ClientSourceNone)
-		assert.Equal(t, clients.clientSource(cliNewIP), ClientSourcePersistent)
+		assert.Equal(t, clients.clientSource(cliOldIP), client.SourceNone)
+		assert.Equal(t, clients.clientSource(cliNewIP), client.SourcePersistent)
 
 		prev, ok = clients.list["client1"]
 		require.True(t, ok)
@@ -158,7 +182,7 @@ func TestClients(t *testing.T) {
 		ok := clients.Del("client1-renamed")
 		require.True(t, ok)
 
-		assert.Equal(t, clients.clientSource(netip.MustParseAddr("1.1.1.2")), ClientSourceNone)
+		assert.Equal(t, clients.clientSource(netip.MustParseAddr("1.1.1.2")), client.SourceNone)
 	})
 
 	t.Run("del_fail", func(t *testing.T) {
@@ -168,32 +192,32 @@ func TestClients(t *testing.T) {
 
 	t.Run("addhost_success", func(t *testing.T) {
 		ip := netip.MustParseAddr("1.1.1.1")
-		ok := clients.addHost(ip, "host", ClientSourceARP)
+		ok := clients.addHost(ip, "host", client.SourceARP)
 		assert.True(t, ok)
 
-		ok = clients.addHost(ip, "host2", ClientSourceARP)
+		ok = clients.addHost(ip, "host2", client.SourceARP)
 		assert.True(t, ok)
 
-		ok = clients.addHost(ip, "host3", ClientSourceHostsFile)
+		ok = clients.addHost(ip, "host3", client.SourceHostsFile)
 		assert.True(t, ok)
 
-		assert.Equal(t, clients.clientSource(ip), ClientSourceHostsFile)
+		assert.Equal(t, clients.clientSource(ip), client.SourceHostsFile)
 	})
 
 	t.Run("dhcp_replaces_arp", func(t *testing.T) {
 		ip := netip.MustParseAddr("1.2.3.4")
-		ok := clients.addHost(ip, "from_arp", ClientSourceARP)
+		ok := clients.addHost(ip, "from_arp", client.SourceARP)
 		assert.True(t, ok)
-		assert.Equal(t, clients.clientSource(ip), ClientSourceARP)
+		assert.Equal(t, clients.clientSource(ip), client.SourceARP)
 
-		ok = clients.addHost(ip, "from_dhcp", ClientSourceDHCP)
+		ok = clients.addHost(ip, "from_dhcp", client.SourceDHCP)
 		assert.True(t, ok)
-		assert.Equal(t, clients.clientSource(ip), ClientSourceDHCP)
+		assert.Equal(t, clients.clientSource(ip), client.SourceDHCP)
 	})
 
 	t.Run("addhost_fail", func(t *testing.T) {
 		ip := netip.MustParseAddr("1.1.1.1")
-		ok := clients.addHost(ip, "host1", ClientSourceRDNS)
+		ok := clients.addHost(ip, "host1", client.SourceRDNS)
 		assert.False(t, ok)
 	})
 }
@@ -216,7 +240,7 @@ func TestClientsWHOIS(t *testing.T) {
 
 	t.Run("existing_auto-client", func(t *testing.T) {
 		ip := netip.MustParseAddr("1.1.1.1")
-		ok := clients.addHost(ip, "host", ClientSourceRDNS)
+		ok := clients.addHost(ip, "host", client.SourceRDNS)
 		assert.True(t, ok)
 
 		clients.setWHOISInfo(ip, whois)
@@ -259,7 +283,7 @@ func TestClientsAddExisting(t *testing.T) {
 		assert.True(t, ok)
 
 		// Now add an auto-client with the same IP.
-		ok = clients.addHost(ip, "test", ClientSourceRDNS)
+		ok = clients.addHost(ip, "test", client.SourceRDNS)
 		assert.True(t, ok)
 	})
 
@@ -288,7 +312,7 @@ func TestClientsAddExisting(t *testing.T) {
 		dhcpServer, err := dhcpd.Create(config)
 		require.NoError(t, err)
 
-		clients.dhcpServer = dhcpServer
+		clients.dhcp = dhcpServer
 
 		err = dhcpServer.AddStaticLease(&dhcpd.Lease{
 			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},

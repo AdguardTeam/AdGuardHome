@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -99,8 +100,8 @@ func (s *server) dbStore() (err error) {
 func writeDB(path string, leases []*Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "writing db: %w") }()
 
-	slices.SortFunc(leases, func(a, b *Lease) bool {
-		return a.Hostname < b.Hostname
+	slices.SortFunc(leases, func(a, b *Lease) (res int) {
+		return strings.Compare(a.Hostname, b.Hostname)
 	})
 
 	dl := &dataLeases{

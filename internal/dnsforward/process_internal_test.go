@@ -77,13 +77,15 @@ func TestServer_ProcessInitial(t *testing.T) {
 			t.Parallel()
 
 			c := ServerConfig{
-				FilteringConfig: FilteringConfig{
+				Config: Config{
 					AAAADisabled:     tc.aaaaDisabled,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				},
 			}
 
-			s := createTestServer(t, &filtering.Config{}, c, nil)
+			s := createTestServer(t, &filtering.Config{
+				BlockingMode: filtering.BlockingModeDefault,
+			}, c, nil)
 
 			var gotAddr netip.Addr
 			s.addrProc = &aghtest.AddressProcessor{
@@ -109,6 +111,101 @@ func TestServer_ProcessInitial(t *testing.T) {
 
 				assert.Equal(t, tc.wantRCode, gotResp.Rcode)
 			}
+		})
+	}
+}
+
+func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
+	t.Parallel()
+
+	var (
+		testIPv4 net.IP = netip.MustParseAddr("1.1.1.1").AsSlice()
+		testIPv6 net.IP = netip.MustParseAddr("1234::cdef").AsSlice()
+	)
+
+	testCases := []struct {
+		name         string
+		req          *dns.Msg
+		aaaaDisabled bool
+		respAns      []dns.RR
+		wantRC       resultCode
+		wantRespAns  []dns.RR
+	}{{
+		name:         "pass",
+		req:          createTestMessageWithType(aghtest.ReqFQDN, dns.TypeHTTPS),
+		aaaaDisabled: false,
+		respAns: newSVCBHintsAnswer(
+			aghtest.ReqFQDN,
+			[]dns.SVCBKeyValue{
+				&dns.SVCBIPv4Hint{Hint: []net.IP{testIPv4}},
+				&dns.SVCBIPv6Hint{Hint: []net.IP{testIPv6}},
+			},
+		),
+		wantRespAns: newSVCBHintsAnswer(
+			aghtest.ReqFQDN,
+			[]dns.SVCBKeyValue{
+				&dns.SVCBIPv4Hint{Hint: []net.IP{testIPv4}},
+				&dns.SVCBIPv6Hint{Hint: []net.IP{testIPv6}},
+			},
+		),
+		wantRC: resultCodeSuccess,
+	}, {
+		name:         "filter",
+		req:          createTestMessageWithType(aghtest.ReqFQDN, dns.TypeHTTPS),
+		aaaaDisabled: true,
+		respAns: newSVCBHintsAnswer(
+			aghtest.ReqFQDN,
+			[]dns.SVCBKeyValue{
+				&dns.SVCBIPv4Hint{Hint: []net.IP{testIPv4}},
+				&dns.SVCBIPv6Hint{Hint: []net.IP{testIPv6}},
+			},
+		),
+		wantRespAns: newSVCBHintsAnswer(
+			aghtest.ReqFQDN,
+			[]dns.SVCBKeyValue{
+				&dns.SVCBIPv4Hint{Hint: []net.IP{testIPv4}},
+			},
+		),
+		wantRC: resultCodeSuccess,
+	}}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			c := ServerConfig{
+				Config: Config{
+					AAAADisabled:     tc.aaaaDisabled,
+					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				},
+			}
+
+			s := createTestServer(t, &filtering.Config{
+				BlockingMode: filtering.BlockingModeDefault,
+			}, c, nil)
+
+			resp := newResp(dns.RcodeSuccess, tc.req, tc.respAns)
+			dctx := &dnsContext{
+				setts: &filtering.Settings{
+					FilteringEnabled:  true,
+					ProtectionEnabled: true,
+				},
+				protectionEnabled:    true,
+				responseFromUpstream: true,
+				result:               &filtering.Result{},
+				proxyCtx: &proxy.DNSContext{
+					Proto: proxy.ProtoUDP,
+					Req:   tc.req,
+					Res:   resp,
+					Addr:  testClientAddr,
+				},
+			}
+
+			gotRC := s.processFilteringAfterResponse(dctx)
+			assert.Equal(t, tc.wantRC, gotRC)
+			assert.Equal(t, newResp(dns.RcodeSuccess, tc.req, tc.wantRespAns), dctx.proxyCtx.Res)
 		})
 	}
 }
@@ -245,15 +342,28 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}
 }
 
+// createTestDNSFilter returns the minimum valid DNSFilter.
+func createTestDNSFilter(t *testing.T) (f *filtering.DNSFilter) {
+	t.Helper()
+
+	f, err := filtering.New(&filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, []filtering.Filter{})
+	require.NoError(t, err)
+
+	return f
+}
+
 func prepareTestServer(t *testing.T, portDoH, portDoT, portDoQ int, ddrEnabled bool) (s *Server) {
 	t.Helper()
 
 	s = &Server{
+		dnsFilter: createTestDNSFilter(t),
 		dnsProxy: &proxy.Proxy{
 			Config: proxy.Config{},
 		},
 		conf: ServerConfig{
-			FilteringConfig: FilteringConfig{
+			Config: Config{
 				HandleDDR: ddrEnabled,
 			},
 			TLSConfig: TLSConfig{
@@ -323,47 +433,59 @@ func TestServer_ProcessDetermineLocal(t *testing.T) {
 }
 
 func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
+	const (
+		localDomainSuffix = "lan"
+		dhcpClient        = "example"
+
+		knownHost   = dhcpClient + "." + localDomainSuffix
+		unknownHost = "wronghost." + localDomainSuffix
+	)
+
 	knownIP := netip.MustParseAddr("1.2.3.4")
+	dhcp := &testDHCP{
+		OnEnabled: func() (_ bool) { return true },
+		OnIPByHost: func(host string) (ip netip.Addr) {
+			if host == dhcpClient {
+				ip = knownIP
+			}
+
+			return ip
+		},
+	}
+
 	testCases := []struct {
 		wantIP     netip.Addr
 		name       string
 		host       string
-		wantRes    resultCode
 		isLocalCli bool
 	}{{
 		wantIP:     knownIP,
 		name:       "local_client_success",
-		host:       "example.lan",
-		wantRes:    resultCodeSuccess,
+		host:       knownHost,
 		isLocalCli: true,
 	}, {
 		wantIP:     netip.Addr{},
 		name:       "local_client_unknown_host",
-		host:       "wronghost.lan",
-		wantRes:    resultCodeSuccess,
+		host:       unknownHost,
 		isLocalCli: true,
 	}, {
 		wantIP:     netip.Addr{},
 		name:       "external_client_known_host",
-		host:       "example.lan",
-		wantRes:    resultCodeFinish,
+		host:       knownHost,
 		isLocalCli: false,
 	}, {
 		wantIP:     netip.Addr{},
 		name:       "external_client_unknown_host",
-		host:       "wronghost.lan",
-		wantRes:    resultCodeFinish,
+		host:       unknownHost,
 		isLocalCli: false,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := &Server{
-				dhcpServer:        testDHCP,
-				localDomainSuffix: defaultLocalDomainSuffix,
-				tableHostToIP: hostToIPTable{
-					"example." + defaultLocalDomainSuffix: knownIP,
-				},
+				dnsFilter:         createTestDNSFilter(t),
+				dhcpServer:        dhcp,
+				localDomainSuffix: localDomainSuffix,
 			}
 
 			req := &dns.Msg{
@@ -385,43 +507,52 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 			}
 
 			res := s.processDHCPHosts(dctx)
-			require.Equal(t, tc.wantRes, res)
+
 			pctx := dctx.proxyCtx
-			if tc.wantRes == resultCodeFinish {
+			if !tc.isLocalCli {
+				require.Equal(t, resultCodeFinish, res)
 				require.NotNil(t, pctx.Res)
 
 				assert.Equal(t, dns.RcodeNameError, pctx.Res.Rcode)
-				assert.Len(t, pctx.Res.Answer, 0)
+				assert.Empty(t, pctx.Res.Answer)
 
 				return
 			}
 
+			require.Equal(t, resultCodeSuccess, res)
+
 			if tc.wantIP == (netip.Addr{}) {
 				assert.Nil(t, pctx.Res)
-			} else {
-				require.NotNil(t, pctx.Res)
 
-				ans := pctx.Res.Answer
-				require.Len(t, ans, 1)
-
-				a := testutil.RequireTypeAssert[*dns.A](t, ans[0])
-
-				ip, err := netutil.IPToAddr(a.A, netutil.AddrFamilyIPv4)
-				require.NoError(t, err)
-
-				assert.Equal(t, tc.wantIP, ip)
+				return
 			}
+
+			require.NotNil(t, pctx.Res)
+
+			ans := pctx.Res.Answer
+			require.Len(t, ans, 1)
+
+			a := testutil.RequireTypeAssert[*dns.A](t, ans[0])
+
+			ip, err := netutil.IPToAddr(a.A, netutil.AddrFamilyIPv4)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.wantIP, ip)
 		})
 	}
 }
 
 func TestServer_ProcessDHCPHosts(t *testing.T) {
 	const (
-		examplecom = "example.com"
-		examplelan = "example." + defaultLocalDomainSuffix
+		localTLD = "lan"
+
+		knownClient  = "example"
+		externalHost = knownClient + ".com"
+		clientHost   = knownClient + "." + localTLD
 	)
 
 	knownIP := netip.MustParseAddr("1.2.3.4")
+
 	testCases := []struct {
 		wantIP  netip.Addr
 		name    string
@@ -431,55 +562,65 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 		qtyp    uint16
 	}{{
 		wantIP:  netip.Addr{},
-		name:    "success_external",
-		host:    examplecom,
-		suffix:  defaultLocalDomainSuffix,
+		name:    "external",
+		host:    externalHost,
+		suffix:  localTLD,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}, {
 		wantIP:  netip.Addr{},
-		name:    "success_external_non_a",
-		host:    examplecom,
-		suffix:  defaultLocalDomainSuffix,
+		name:    "external_non_a",
+		host:    externalHost,
+		suffix:  localTLD,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeCNAME,
 	}, {
 		wantIP:  knownIP,
-		name:    "success_internal",
-		host:    examplelan,
-		suffix:  defaultLocalDomainSuffix,
+		name:    "internal",
+		host:    clientHost,
+		suffix:  localTLD,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}, {
 		wantIP:  netip.Addr{},
-		name:    "success_internal_unknown",
+		name:    "internal_unknown",
 		host:    "example-new.lan",
-		suffix:  defaultLocalDomainSuffix,
+		suffix:  localTLD,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}, {
 		wantIP:  netip.Addr{},
-		name:    "success_internal_aaaa",
-		host:    examplelan,
-		suffix:  defaultLocalDomainSuffix,
+		name:    "internal_aaaa",
+		host:    clientHost,
+		suffix:  localTLD,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeAAAA,
 	}, {
 		wantIP:  knownIP,
-		name:    "success_custom_suffix",
-		host:    "example.custom",
+		name:    "custom_suffix",
+		host:    knownClient + ".custom",
 		suffix:  "custom",
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}}
 
 	for _, tc := range testCases {
+		testDHCP := &testDHCP{
+			OnEnabled: func() (_ bool) { return true },
+			OnIPByHost: func(host string) (ip netip.Addr) {
+				if host == knownClient {
+					ip = knownIP
+				}
+
+				return ip
+			},
+			OnHostByIP: func(ip netip.Addr) (host string) { panic("not implemented") },
+		}
+
 		s := &Server{
+			dnsFilter:         createTestDNSFilter(t),
 			dhcpServer:        testDHCP,
 			localDomainSuffix: tc.suffix,
-			tableHostToIP: hostToIPTable{
-				"example." + tc.suffix: knownIP,
-			},
 		}
 
 		req := &dns.Msg{
@@ -504,13 +645,6 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 			res := s.processDHCPHosts(dctx)
 			pctx := dctx.proxyCtx
 			assert.Equal(t, tc.wantRes, res)
-			if tc.wantRes == resultCodeFinish {
-				require.NotNil(t, pctx.Res)
-				assert.Equal(t, dns.RcodeNameError, pctx.Res.Rcode)
-
-				return
-			}
-
 			require.NoError(t, dctx.err)
 
 			if tc.qtyp == dns.TypeAAAA {
@@ -555,12 +689,14 @@ func TestServer_ProcessRestrictLocal(t *testing.T) {
 		), nil
 	})
 
-	s := createTestServer(t, &filtering.Config{}, ServerConfig{
+	s := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		// TODO(s.chzhen):  Add tests where EDNSClientSubnet.Enabled is true.
-		// Improve FilteringConfig declaration for tests.
-		FilteringConfig: FilteringConfig{
+		// Improve Config declaration for tests.
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 	}, ups)
@@ -631,11 +767,13 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 
 	s := createTestServer(
 		t,
-		&filtering.Config{},
+		&filtering.Config{
+			BlockingMode: filtering.BlockingModeDefault,
+		},
 		ServerConfig{
 			UDPListenAddrs: []*net.UDPAddr{{}},
 			TCPListenAddrs: []*net.TCPAddr{{}},
-			FilteringConfig: FilteringConfig{
+			Config: Config{
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 			},
 		},

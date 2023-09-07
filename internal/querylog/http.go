@@ -17,7 +17,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
-	"golang.org/x/exp/slices"
 	"golang.org/x/net/idna"
 )
 
@@ -93,7 +92,7 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 
 	resp := entriesToJSON(entries, oldest, l.anonymizer.Load())
 
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // handleQueryLogClear is the handler for the POST /control/querylog/clear HTTP
@@ -118,7 +117,7 @@ func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 		ivl = timeutil.Day * 90
 	}
 
-	_ = aghhttp.WriteJSONResponse(w, r, configJSON{
+	aghhttp.WriteJSONResponseOK(w, r, configJSON{
 		Enabled:           aghalg.BoolToNullBool(l.conf.Enabled),
 		Interval:          ivl.Hours() / 24,
 		AnonymizeClientIP: aghalg.BoolToNullBool(l.conf.AnonymizeClientIP),
@@ -141,9 +140,7 @@ func (l *queryLog) handleGetQueryLogConfig(w http.ResponseWriter, r *http.Reques
 		}
 	}()
 
-	slices.Sort(resp.Ignored)
-
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // AnonymizeIP masks ip to anonymize the client if the ip is a valid one.
@@ -224,7 +221,7 @@ func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	set, err := aghnet.NewDomainNameSet(newConf.Ignored)
+	engine, err := aghnet.NewIgnoreEngine(newConf.Ignored)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "ignored: %s", err)
 
@@ -258,7 +255,7 @@ func (l *queryLog) handlePutQueryLogConfig(w http.ResponseWriter, r *http.Reques
 
 	conf := *l.conf
 
-	conf.Ignored = set
+	conf.Ignored = engine
 	conf.RotationIvl = ivl
 	conf.Enabled = newConf.Enabled == aghalg.NBTrue
 

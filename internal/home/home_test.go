@@ -7,6 +7,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
 	initCmdLineOpts()
+	testutil.DiscardLogOutput(m)
 }

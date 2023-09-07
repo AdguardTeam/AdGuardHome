@@ -10,6 +10,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
+	"github.com/AdguardTeam/AdGuardHome/internal/confmigrate"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -21,7 +22,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/renameio/v2/maybe"
-	"golang.org/x/exp/slices"
 	yaml "gopkg.in/yaml.v3"
 )
 
@@ -114,8 +114,6 @@ type configuration struct {
 	Language string `yaml:"language"`
 	// Theme is a UI theme for current user.
 	Theme Theme `yaml:"theme"`
-	// DebugPProf defines if the profiling HTTP handler will listen on :6060.
-	DebugPProf bool `yaml:"debug_pprof"`
 
 	DNS      dnsConfig         `yaml:"dns"`
 	TLS      tlsConfigSettings `yaml:"tls"`
@@ -133,7 +131,8 @@ type configuration struct {
 	WhitelistFilters []filtering.FilterYAML `yaml:"whitelist_filters"`
 	UserRules        []string               `yaml:"user_rules"`
 
-	DHCP *dhcpd.ServerConfig `yaml:"dhcp"`
+	DHCP      *dhcpd.ServerConfig `yaml:"dhcp"`
+	Filtering *filtering.Config   `yaml:"filtering"`
 
 	// Clients contains the YAML representations of the persistent clients.
 	// This field is only used for reading and writing persistent client data.
@@ -147,7 +146,9 @@ type configuration struct {
 
 	sync.RWMutex `yaml:"-"`
 
-	SchemaVersion int `yaml:"schema_version"` // keeping last so that users will be less tempted to change it -- used when upgrading between versions
+	// SchemaVersion is the version of the configuration schema.  See
+	// [confmigrate.LastSchemaVersion].
+	SchemaVersion uint `yaml:"schema_version"`
 }
 
 // httpConfig is a block with HTTP configuration params.
@@ -155,12 +156,24 @@ type configuration struct {
 // Field ordering is important, YAML fields better not to be reordered, if it's
 // not absolutely necessary.
 type httpConfig struct {
+	// Pprof defines the profiling HTTP handler.
+	Pprof *httpPprofConfig `yaml:"pprof"`
+
 	// Address is the address to serve the web UI on.
 	Address netip.AddrPort
 
 	// SessionTTL for a web session.
 	// An active session is automatically refreshed once a day.
 	SessionTTL timeutil.Duration `yaml:"session_ttl"`
+}
+
+// httpPprofConfig is the block with pprof HTTP configuration.
+type httpPprofConfig struct {
+	// Port for the profiling handler.
+	Port uint16 `yaml:"port"`
+
+	// Enabled defines if the profiling handler is enabled.
+	Enabled bool `yaml:"enabled"`
 }
 
 // dnsConfig is a block with DNS configuration params.
@@ -175,9 +188,10 @@ type dnsConfig struct {
 	// in query log and statistics.
 	AnonymizeClientIP bool `yaml:"anonymize_client_ip"`
 
-	dnsforward.FilteringConfig `yaml:",inline"`
-
-	DnsfilterConf *filtering.Config `yaml:",inline"`
+	// Config is the embed configuration with DNS params.
+	//
+	// TODO(a.garipov): Remove embed.
+	dnsforward.Config `yaml:",inline"`
 
 	// UpstreamTimeout is the timeout for querying upstream servers.
 	UpstreamTimeout timeutil.Duration `yaml:"upstream_timeout"`
@@ -277,18 +291,19 @@ var config = &configuration{
 	HTTPConfig: httpConfig{
 		Address:    netip.AddrPortFrom(netip.IPv4Unspecified(), 3000),
 		SessionTTL: timeutil.Duration{Duration: 30 * timeutil.Day},
+		Pprof: &httpPprofConfig{
+			Enabled: false,
+			Port:    6060,
+		},
 	},
 	DNS: dnsConfig{
 		BindHosts: []netip.Addr{netip.IPv4Unspecified()},
 		Port:      defaultPortDNS,
-		FilteringConfig: dnsforward.FilteringConfig{
-			ProtectionEnabled:  true, // whether or not use any of filtering features
-			BlockingMode:       dnsforward.BlockingModeDefault,
-			BlockedResponseTTL: 10, // in seconds
-			Ratelimit:          20,
-			RefuseAny:          true,
-			AllServers:         false,
-			HandleDDR:          true,
+		Config: dnsforward.Config{
+			Ratelimit:  20,
+			RefuseAny:  true,
+			AllServers: false,
+			HandleDDR:  true,
 			FastestTimeout: timeutil.Duration{
 				Duration: fastip.DefaultPingWaitTimeout,
 			},
@@ -307,33 +322,6 @@ var config = &configuration{
 			// https://github.com/AdguardTeam/AdGuardHome/issues/2015#issuecomment-674041912
 			// was later increased to 300 due to https://github.com/AdguardTeam/AdGuardHome/issues/2257
 			MaxGoroutines: 300,
-		},
-		DnsfilterConf: &filtering.Config{
-			FilteringEnabled:           true,
-			FiltersUpdateIntervalHours: 24,
-
-			ParentalEnabled:     false,
-			SafeBrowsingEnabled: false,
-
-			SafeBrowsingCacheSize: 1 * 1024 * 1024,
-			SafeSearchCacheSize:   1 * 1024 * 1024,
-			ParentalCacheSize:     1 * 1024 * 1024,
-			CacheTime:             30,
-
-			SafeSearchConf: filtering.SafeSearchConfig{
-				Enabled:    false,
-				Bing:       true,
-				DuckDuckGo: true,
-				Google:     true,
-				Pixabay:    true,
-				Yandex:     true,
-				YouTube:    true,
-			},
-
-			BlockedServices: &filtering.BlockedServices{
-				Schedule: schedule.EmptyWeekly(),
-				IDs:      []string{},
-			},
 		},
 		UpstreamTimeout: timeutil.Duration{Duration: dnsforward.DefaultTimeout},
 		UsePrivateRDNS:  true,
@@ -371,6 +359,37 @@ var config = &configuration{
 		URL:     "https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt",
 		Name:    "AdAway Default Blocklist",
 	}},
+	Filtering: &filtering.Config{
+		ProtectionEnabled:  true,
+		BlockingMode:       filtering.BlockingModeDefault,
+		BlockedResponseTTL: 10, // in seconds
+
+		FilteringEnabled:           true,
+		FiltersUpdateIntervalHours: 24,
+
+		ParentalEnabled:     false,
+		SafeBrowsingEnabled: false,
+
+		SafeBrowsingCacheSize: 1 * 1024 * 1024,
+		SafeSearchCacheSize:   1 * 1024 * 1024,
+		ParentalCacheSize:     1 * 1024 * 1024,
+		CacheTime:             30,
+
+		SafeSearchConf: filtering.SafeSearchConfig{
+			Enabled:    false,
+			Bing:       true,
+			DuckDuckGo: true,
+			Google:     true,
+			Pixabay:    true,
+			Yandex:     true,
+			YouTube:    true,
+		},
+
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
+			IDs:      []string{},
+		},
+	},
 	DHCP: &dhcpd.ServerConfig{
 		LocalDomainName: "lan",
 		Conf4: dhcpd.V4ServerConf{
@@ -398,7 +417,7 @@ var config = &configuration{
 		MaxAge:     3,
 	},
 	OSConfig:      &osConfig{},
-	SchemaVersion: currentSchemaVersion,
+	SchemaVersion: confmigrate.LastSchemaVersion,
 	Theme:         ThemeAuto,
 }
 
@@ -414,26 +433,8 @@ func (c *configuration) getConfigFilename() string {
 	if !filepath.IsAbs(configFile) {
 		configFile = filepath.Join(Context.workDir, configFile)
 	}
+
 	return configFile
-}
-
-// readLogSettings reads logging settings from the config file.  We do it in a
-// separate method in order to configure logger before the actual configuration
-// is parsed and applied.
-func readLogSettings() (ls *logSettings) {
-	conf := &configuration{}
-
-	yamlFile, err := readConfigFile()
-	if err != nil {
-		return &logSettings{}
-	}
-
-	err = yaml.Unmarshal(yamlFile, conf)
-	if err != nil {
-		log.Error("Couldn't get logging settings from the configuration: %s", err)
-	}
-
-	return &conf.Log
 }
 
 // validateBindHosts returns error if any of binding hosts from configuration is
@@ -452,21 +453,59 @@ func validateBindHosts(conf *configuration) (err error) {
 	return nil
 }
 
-// parseConfig loads configuration from the YAML file
+// parseConfig loads configuration from the YAML file, upgrading it if
+// necessary.
 func parseConfig() (err error) {
-	var fileData []byte
-	fileData, err = readConfigFile()
+	// Do the upgrade if necessary.
+	config.fileData, err = readConfigFile()
 	if err != nil {
 		return err
 	}
 
-	config.fileData = nil
-	err = yaml.Unmarshal(fileData, &config)
+	migrator := confmigrate.New(&confmigrate.Config{
+		WorkingDir: Context.workDir,
+	})
+
+	var upgraded bool
+	config.fileData, upgraded, err = migrator.Migrate(
+		config.fileData,
+		confmigrate.LastSchemaVersion,
+	)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	} else if upgraded {
+		err = maybe.WriteFile(config.getConfigFilename(), config.fileData, 0o644)
+		if err != nil {
+			return fmt.Errorf("writing new config: %w", err)
+		}
+	}
+
+	err = yaml.Unmarshal(config.fileData, &config)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
 
+	err = validateConfig()
+	if err != nil {
+		return err
+	}
+
+	if config.DNS.UpstreamTimeout.Duration == 0 {
+		config.DNS.UpstreamTimeout = timeutil.Duration{Duration: dnsforward.DefaultTimeout}
+	}
+
+	err = setContextTLSCipherIDs()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateConfig returns error if the configuration is invalid.
+func validateConfig() (err error) {
 	err = validateBindHosts(config)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
@@ -498,17 +537,8 @@ func parseConfig() (err error) {
 		return fmt.Errorf("validating udp ports: %w", err)
 	}
 
-	if !filtering.ValidateUpdateIvl(config.DNS.DnsfilterConf.FiltersUpdateIntervalHours) {
-		config.DNS.DnsfilterConf.FiltersUpdateIntervalHours = 24
-	}
-
-	if config.DNS.UpstreamTimeout.Duration == 0 {
-		config.DNS.UpstreamTimeout = timeutil.Duration{Duration: dnsforward.DefaultTimeout}
-	}
-
-	err = setContextTLSCipherIDs()
-	if err != nil {
-		return err
+	if !filtering.ValidateUpdateIvl(config.Filtering.FiltersUpdateIntervalHours) {
+		config.Filtering.FiltersUpdateIntervalHours = 24
 	}
 
 	return nil
@@ -563,7 +593,6 @@ func (c *configuration) write() (err error) {
 		config.Stats.Interval = timeutil.Duration{Duration: statsConf.Limit}
 		config.Stats.Enabled = statsConf.Enabled
 		config.Stats.Ignored = statsConf.Ignored.Values()
-		slices.Sort(config.Stats.Ignored)
 	}
 
 	if Context.queryLog != nil {
@@ -575,21 +604,20 @@ func (c *configuration) write() (err error) {
 		config.QueryLog.Interval = timeutil.Duration{Duration: dc.RotationIvl}
 		config.QueryLog.MemSize = dc.MemSize
 		config.QueryLog.Ignored = dc.Ignored.Values()
-		slices.Sort(config.Stats.Ignored)
 	}
 
 	if Context.filters != nil {
-		Context.filters.WriteDiskConfig(config.DNS.DnsfilterConf)
-		config.Filters = config.DNS.DnsfilterConf.Filters
-		config.WhitelistFilters = config.DNS.DnsfilterConf.WhitelistFilters
-		config.UserRules = config.DNS.DnsfilterConf.UserRules
+		Context.filters.WriteDiskConfig(config.Filtering)
+		config.Filters = config.Filtering.Filters
+		config.WhitelistFilters = config.Filtering.WhitelistFilters
+		config.UserRules = config.Filtering.UserRules
 	}
 
 	if s := Context.dnsServer; s != nil {
-		c := dnsforward.FilteringConfig{}
+		c := dnsforward.Config{}
 		s.WriteDiskConfig(&c)
 		dns := &config.DNS
-		dns.FilteringConfig = c
+		dns.Config = c
 
 		dns.LocalPTRResolvers = s.LocalPTRResolvers()
 

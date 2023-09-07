@@ -58,6 +58,8 @@ const jsonExt = ".json"
 
 func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
+		ProtectionEnabled:     true,
+		BlockingMode:          filtering.BlockingModeDefault,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
 		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
@@ -68,11 +70,10 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{},
 		TCPListenAddrs: []*net.TCPAddr{},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
-			BlockingMode:      BlockingModeDefault,
-			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
-			EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
+		Config: Config{
+			UpstreamDNS:      []string{"8.8.8.8:53", "8.8.4.4:53"},
+			FallbackDNS:      []string{"9.9.9.10"},
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
 	}
@@ -134,6 +135,8 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 
 func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
+		ProtectionEnabled:     true,
+		BlockingMode:          filtering.BlockingModeDefault,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
 		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
@@ -144,11 +147,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{},
 		TCPListenAddrs: []*net.TCPAddr{},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
-			BlockingMode:      BlockingModeDefault,
-			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
-			EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
+		Config: Config{
+			UpstreamDNS:      []string{"8.8.8.8:53", "8.8.4.4:53"},
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
 	}
@@ -177,7 +178,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		wantSet: "",
 	}, {
 		name:    "blocking_mode_bad",
-		wantSet: "blocking_ipv4 must be set when blocking_mode is custom_ip",
+		wantSet: "blocking_ipv4 must be valid ipv4 on custom_ip blocking_mode",
 	}, {
 		name:    "ratelimit",
 		wantSet: "",
@@ -225,6 +226,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	}, {
 		name:    "local_ptr_upstreams_null",
 		wantSet: "",
+	}, {
+		name:    "fallbacks",
+		wantSet: "",
 	}}
 
 	var data map[string]struct {
@@ -243,8 +247,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Cleanup(func() {
+				s.dnsFilter.SetBlockingMode(filtering.BlockingModeDefault, netip.Addr{}, netip.Addr{})
 				s.conf = defaultConf
-				s.conf.FilteringConfig.EDNSClientSubnet = &EDNSClientSubnet{}
+				s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{}
 			})
 
 			rBody := io.NopCloser(bytes.NewReader(caseData.Req))
@@ -405,9 +410,9 @@ func TestValidateUpstreamsPrivate(t *testing.T) {
 		u: "[/128.in-addr.arpa/]#",
 	}, {
 		name: "several_bad",
-		wantErr: `checking domain-specific upstreams: 2 errors: ` +
-			`"arpa domain \"1.2.3.4.in-addr.arpa.\" should point to a locally-served network", ` +
-			`"bad arpa domain name \"non.arpa.\": not a reversed ip network"`,
+		wantErr: `checking domain-specific upstreams: ` +
+			`arpa domain "1.2.3.4.in-addr.arpa." should point to a locally-served network` + "\n" +
+			`bad arpa domain name "non.arpa.": not a reversed ip network`,
 		u: "[/non.arpa/1.2.3.4.in-addr.arpa/127.in-addr.arpa/]#",
 	}, {
 		name:    "partial_good",
@@ -479,7 +484,6 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 	}).String()
 
 	hc, err := aghnet.NewHostsContainer(
-		filtering.SysHostsListID,
 		fstest.MapFS{
 			hostsFileName: &fstest.MapFile{
 				Data: []byte(hostsListener.Addr().String() + " " + upstreamHost),
@@ -495,12 +499,13 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 	require.NoError(t, err)
 
 	srv := createTestServer(t, &filtering.Config{
-		EtcHosts: hc,
+		BlockingMode: filtering.BlockingModeDefault,
+		EtcHosts:     hc,
 	}, ServerConfig{
 		UDPListenAddrs:  []*net.UDPAddr{{}},
 		TCPListenAddrs:  []*net.TCPAddr{{}},
 		UpstreamTimeout: upsTimeout,
-		FilteringConfig: FilteringConfig{
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 	}, nil)
@@ -555,6 +560,23 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 			hostsUps: "OK",
 		},
 		name: "etc_hosts",
+	}, {
+		body: map[string]any{
+			"fallback_dns": []string{goodUps},
+		},
+		wantResp: map[string]any{
+			goodUps: "OK",
+		},
+		name: "fallback_success",
+	}, {
+		body: map[string]any{
+			"fallback_dns": []string{badUps},
+		},
+		wantResp: map[string]any{
+			badUps: `couldn't communicate with upstream: exchanging with ` +
+				badUps + ` over tcp: dns: id mismatch`,
+		},
+		name: "fallback_broken",
 	}}
 
 	for _, tc := range testCases {

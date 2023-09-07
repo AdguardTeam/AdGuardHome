@@ -27,7 +27,7 @@ func TestChcker_getQuestion(t *testing.T) {
 	hashes := hostnameToHashes("1.2.3.sub.host.com")
 	assert.Len(t, hashes, 3)
 
-	hash := sha256.Sum256([]byte("3.sub.host.com"))
+	hash := hostnameHash(sha256.Sum256([]byte("3.sub.host.com")))
 	hexPref1 := hex.EncodeToString(hash[:prefixLen])
 	assert.True(t, slices.Contains(hashes, hash))
 
@@ -105,7 +105,7 @@ func TestChecker_storeInCache(t *testing.T) {
 	// store in cache hashes for "3.sub.host.com" and "host.com"
 	//  and empty data for hash-prefix for "sub.host.com"
 	hashes := []hostnameHash{}
-	hash := sha256.Sum256([]byte("sub.host.com"))
+	hash := hostnameHash(sha256.Sum256([]byte("sub.host.com")))
 	hashes = append(hashes, hash)
 	var hashesArray []hostnameHash
 	hash4 := sha256.Sum256([]byte("3.sub.host.com"))

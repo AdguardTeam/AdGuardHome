@@ -11,6 +11,7 @@ import Select from 'react-select';
 import i18n from '../../../i18n';
 import Tabs from '../../ui/Tabs';
 import Examples from '../Dns/Upstream/Examples';
+import { ScheduleForm } from '../../Filters/Services/ScheduleForm';
 import { toggleAllServices, trimLinesAndRemoveEmpty, captitalizeWords } from '../../../helpers/helpers';
 import {
     renderInputField,
@@ -137,10 +138,10 @@ let Form = (props) => {
         handleSubmit,
         reset,
         change,
-        pristine,
         submitting,
         useGlobalSettings,
         useGlobalServices,
+        blockedServicesSchedule,
         toggleClientModal,
         processingAdding,
         processingUpdating,
@@ -154,6 +155,10 @@ let Form = (props) => {
     delete safeSearchServices.enabled;
 
     const [activeTabLabel, setActiveTabLabel] = useState('settings');
+
+    const handleScheduleSubmit = (values) => {
+        change('blocked_services_schedule', values);
+    };
 
     const tabs = {
         settings: {
@@ -269,6 +274,21 @@ let Form = (props) => {
                 </div>
             </div>,
         },
+        schedule_services: {
+            title: 'schedule_services',
+            component: (
+                <>
+                    <div className="form__desc mb-4">
+                        <Trans>schedule_services_desc_client</Trans>
+                    </div>
+                    <ScheduleForm
+                        schedule={blockedServicesSchedule}
+                        onScheduleSubmit={handleScheduleSubmit}
+                        clientForm
+                    />
+                </>
+            ),
+        },
         upstream_dns: {
             title: 'upstream_dns',
             component: <div label="upstream" title={props.t('upstream_dns')}>
@@ -355,8 +375,12 @@ let Form = (props) => {
                     </div>
                 </div>
 
-                <Tabs controlClass="form" tabs={tabs} activeTabLabel={activeTabLabel}
-                      setActiveTabLabel={setActiveTabLabel}>
+                <Tabs
+                    controlClass="form"
+                    tabs={tabs}
+                    activeTabLabel={activeTabLabel}
+                    setActiveTabLabel={setActiveTabLabel}
+                >
                     {activeTab}
                 </Tabs>
             </div>
@@ -380,7 +404,6 @@ let Form = (props) => {
                         disabled={
                             submitting
                             || invalid
-                            || pristine
                             || processingAdding
                             || processingUpdating
                         }
@@ -402,6 +425,7 @@ Form.propTypes = {
     toggleClientModal: PropTypes.func.isRequired,
     useGlobalSettings: PropTypes.bool,
     useGlobalServices: PropTypes.bool,
+    blockedServicesSchedule: PropTypes.object,
     t: PropTypes.func.isRequired,
     processingAdding: PropTypes.bool.isRequired,
     processingUpdating: PropTypes.bool.isRequired,
@@ -415,9 +439,11 @@ const selector = formValueSelector(FORM_NAME.CLIENT);
 Form = connect((state) => {
     const useGlobalSettings = selector(state, 'use_global_settings');
     const useGlobalServices = selector(state, 'use_global_blocked_services');
+    const blockedServicesSchedule = selector(state, 'blocked_services_schedule');
     return {
         useGlobalSettings,
         useGlobalServices,
+        blockedServicesSchedule,
     };
 })(Form);
 

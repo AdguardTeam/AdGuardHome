@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
+	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -37,12 +38,6 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"golang.org/x/exp/slices"
-	"gopkg.in/natefinch/lumberjack.v2"
-)
-
-const (
-	// Used in config to indicate that syslog or eventlog (win) should be used for logger output
-	configSyslog = "syslog"
 )
 
 // Global context
@@ -104,8 +99,11 @@ func Main(clientBuildFS fs.FS) {
 	// package flag.
 	opts := loadCmdLineOpts()
 
+	done := make(chan struct{})
+
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
+
 	go func() {
 		for {
 			sig := <-signals
@@ -117,19 +115,19 @@ func Main(clientBuildFS fs.FS) {
 			default:
 				cleanup(context.Background())
 				cleanupAlways()
-				os.Exit(0)
+				close(done)
 			}
 		}
 	}()
 
 	if opts.serviceControlAction != "" {
-		handleServiceControlAction(opts, clientBuildFS, signals)
+		handleServiceControlAction(opts, clientBuildFS, signals, done)
 
 		return
 	}
 
 	// run the protection
-	run(opts, clientBuildFS)
+	run(opts, clientBuildFS, done)
 }
 
 // setupContext initializes [Context] fields.  It also reads and upgrades
@@ -147,14 +145,8 @@ func setupContext(opts options) (err error) {
 		return nil
 	}
 
-	// Do the upgrade if necessary.
-	err = upgradeConfig()
+	err = parseConfig()
 	if err != nil {
-		// Don't wrap the error, because it's informative enough as is.
-		return err
-	}
-
-	if err = parseConfig(); err != nil {
 		log.Error("parsing configuration file: %s", err)
 
 		os.Exit(1)
@@ -239,7 +231,6 @@ func setupHostsContainer() (err error) {
 	}
 
 	Context.etcHosts, err = aghnet.NewHostsContainer(
-		filtering.SysHostsListID,
 		aghos.RootDirFS(),
 		hostsWatcher,
 		aghnet.DefaultHostsPaths()...,
@@ -275,7 +266,7 @@ func setupOpts(opts options) (err error) {
 
 // initContextClients initializes Context clients and related fields.
 func initContextClients() (err error) {
-	err = setupDNSFilteringConf(config.DNS.DnsfilterConf)
+	err = setupDNSFilteringConf(config.Filtering)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
@@ -296,17 +287,17 @@ func initContextClients() (err error) {
 		return fmt.Errorf("initing dhcp: %w", err)
 	}
 
-	var arpdb aghnet.ARPDB
+	var arpDB arpdb.Interface
 	if config.Clients.Sources.ARP {
-		arpdb = aghnet.NewARPDB()
+		arpDB = arpdb.New()
 	}
 
 	err = Context.clients.Init(
 		config.Clients.Persistent,
 		Context.dhcpServer,
 		Context.etcHosts,
-		arpdb,
-		config.DNS.DnsfilterConf,
+		arpDB,
+		config.Filtering,
 	)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
@@ -368,6 +359,9 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 		pcService             = "parental control"
 		defaultParentalServer = `https://family.adguard-dns.com/dns-query`
 		pcTXTSuffix           = `pc.dns.adguard.com.`
+
+		defaultSafeBrowsingBlockHost = "standard-block.dns.adguard.com"
+		defaultParentalBlockHost     = "family-block.dns.adguard.com"
 	)
 
 	conf.EtcHosts = Context.etcHosts
@@ -404,6 +398,10 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 		CacheSize:   conf.SafeBrowsingCacheSize,
 	})
 
+	if conf.SafeBrowsingBlockHost != "" {
+		conf.SafeBrowsingBlockHost = defaultSafeBrowsingBlockHost
+	}
+
 	parUps, err := upstream.AddressToUpstream(defaultParentalServer, upsOpts)
 	if err != nil {
 		return fmt.Errorf("converting parental server: %w", err)
@@ -416,6 +414,10 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 		CacheTime:   cacheTime,
 		CacheSize:   conf.ParentalCacheSize,
 	})
+
+	if conf.ParentalBlockHost != "" {
+		conf.ParentalBlockHost = defaultParentalBlockHost
+	}
 
 	conf.SafeSearchConf.CustomResolver = safeSearchResolver{}
 	conf.SafeSearch, err = safesearch.NewDefault(
@@ -510,7 +512,7 @@ func fatalOnError(err error) {
 }
 
 // run configures and starts AdGuard Home.
-func run(opts options, clientBuildFS fs.FS) {
+func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	// Configure config filename.
 	initConfigFilename(opts)
 
@@ -547,7 +549,7 @@ func run(opts options, clientBuildFS fs.FS) {
 	fatalOnError(err)
 
 	upd := updater.NewUpdater(&updater.Config{
-		Client:   config.DNS.DnsfilterConf.HTTPClient,
+		Client:   config.Filtering.HTTPClient,
 		Version:  version.Version(),
 		Channel:  version.Channel(),
 		GOARCH:   runtime.GOARCH,
@@ -567,9 +569,8 @@ func run(opts options, clientBuildFS fs.FS) {
 		err = config.write()
 		fatalOnError(err)
 
-		if config.DebugPProf {
-			// TODO(a.garipov): Make the address configurable.
-			startPprof("localhost:6060")
+		if config.HTTPConfig.Pprof.Enabled {
+			startPprof(config.HTTPConfig.Pprof.Port)
 		}
 	}
 
@@ -616,8 +617,8 @@ func run(opts options, clientBuildFS fs.FS) {
 
 	Context.web.start()
 
-	// Wait indefinitely for other goroutines to complete their job.
-	select {}
+	// Wait for other goroutines to complete their job.
+	<-done
 }
 
 // initUsers initializes context auth module.  Clears config users field.
@@ -746,79 +747,6 @@ func initWorkingDir(opts options) (err error) {
 	Context.workDir = workDir
 
 	return nil
-}
-
-// configureLogger configures logger level and output.
-func configureLogger(opts options) (err error) {
-	ls := getLogSettings(opts)
-
-	// Configure logger level.
-	if ls.Verbose {
-		log.SetLevel(log.DEBUG)
-	}
-
-	// Make sure that we see the microseconds in logs, as networking stuff can
-	// happen pretty quickly.
-	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
-
-	// Write logs to stdout by default.
-	if ls.File == "" {
-		return nil
-	}
-
-	if ls.File == configSyslog {
-		// Use syslog where it is possible and eventlog on Windows.
-		err = aghos.ConfigureSyslog(serviceName)
-		if err != nil {
-			return fmt.Errorf("cannot initialize syslog: %w", err)
-		}
-
-		return nil
-	}
-
-	logFilePath := ls.File
-	if !filepath.IsAbs(logFilePath) {
-		logFilePath = filepath.Join(Context.workDir, logFilePath)
-	}
-
-	log.SetOutput(&lumberjack.Logger{
-		Filename:   logFilePath,
-		Compress:   ls.Compress,
-		LocalTime:  ls.LocalTime,
-		MaxBackups: ls.MaxBackups,
-		MaxSize:    ls.MaxSize,
-		MaxAge:     ls.MaxAge,
-	})
-
-	return nil
-}
-
-// getLogSettings returns a log settings object properly initialized from opts.
-func getLogSettings(opts options) (ls *logSettings) {
-	ls = readLogSettings()
-	configLogSettings := config.Log
-
-	// Command-line arguments can override config settings.
-	if opts.verbose || configLogSettings.Verbose {
-		ls.Verbose = true
-	}
-
-	ls.File = stringutil.Coalesce(opts.logFile, configLogSettings.File, ls.File)
-
-	// Handle default log settings overrides.
-	ls.Compress = configLogSettings.Compress
-	ls.LocalTime = configLogSettings.LocalTime
-	ls.MaxBackups = configLogSettings.MaxBackups
-	ls.MaxSize = configLogSettings.MaxSize
-	ls.MaxAge = configLogSettings.MaxAge
-
-	if opts.runningAsService && ls.File == "" && runtime.GOOS == "windows" {
-		// When running as a Windows service, use eventlog by default if
-		// nothing else is configured.  Otherwise, we'll lose the log output.
-		ls.File = configSyslog
-	}
-
-	return ls
 }
 
 // cleanup stops and resets all the modules.

@@ -14,11 +14,11 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.37] - 2023-08-16 (APPROX.)
+## [v0.107.38] - 2023-09-20 (APPROX.)
 
-See also the [v0.107.37 GitHub milestone][ms-v0.107.37].
+See also the [v0.107.38 GitHub milestone][ms-v0.107.38].
 
-[ms-v0.107.37]: https://github.com/AdguardTeam/AdGuardHome/milestone/72?closed=1
+[ms-v0.107.38]: https://github.com/AdguardTeam/AdGuardHome/milestone/73?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -26,6 +26,174 @@ NOTE: Add new changes BELOW THIS COMMENT.
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.37] - 2023-09-07
+
+See also the [v0.107.37 GitHub milestone][ms-v0.107.37].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2023-39318, CVE-2023-39319, and CVE-2023-39320 Go vulnerabilities fixed in
+  [Go 1.20.8][go-1.20.8].
+
+### Added
+
+- AdBlock-style syntax support for ignored domains in logs and statistics
+  ([#5720]).
+- [`Strict-Transport-Security`][hsts] header in the HTTP API and DNS-over-HTTPS
+  responses when HTTPS is forced ([#2998]).  See [RFC 6797][rfc6797].
+- UI for the schedule of the service-blocking pause ([#951]).
+- IPv6 hints are now filtered in case IPv6 addresses resolving is disabled
+  ([#6122]).
+- The ability to set fallback DNS servers in the configuration file and the UI
+  ([#3701]).
+- While adding or updating blocklists, the title can now be parsed from
+  `! Title:` definition of the blocklist's source ([#6020]).
+- The ability to filter DNS HTTPS records including IPv4 and IPv6 hints
+  ([#6053]).
+- Two new metrics showing total number of responses from each upstream DNS
+  server and their average processing time in the Web UI ([#1453]).
+- The ability to set the port for the `pprof` debug API, see configuration
+  changes below.
+
+### Changed
+
+- `$dnsrewrite` rules containing IPv4-mapped IPv6 addresses are now working
+  consistently with legacy DNS rewrites and match the `AAAA` requests.
+- For non-A and non-AAAA requests, which has been filtered, the NODATA response
+  is returned if the blocking mode isn't set to `Null IP`.  In previous versions
+  it returned NXDOMAIN response in such cases.
+
+#### Configuration Changes
+
+In this release, the schema version has changed from 24 to 27.
+
+- Ignore rules blocking `.` in `querylog.ignored` and `statistics.ignored` have
+  been migrated to AdBlock syntax (`|.^`).  To rollback this change, restore the
+  rules and change the `schema_version` back to `26`.
+
+- Filtering-related settings have been moved from `dns` section of the YAML
+  configuration file to the new section `filtering`:
+
+  ```yaml
+  # BEFORE:
+  'dns':
+    'filtering_enabled': true
+    'filters_update_interval': 24
+    'parental_enabled': false
+    'safebrowsing_enabled': false
+    'safebrowsing_cache_size': 1048576
+    'safesearch_cache_size': 1048576
+    'parental_cache_size': 1048576
+    'safe_search':
+      'enabled': false
+      'bing': true
+      'duckduckgo': true
+      'google': true
+      'pixabay': true
+      'yandex': true
+      'youtube': true
+    'rewrites': []
+    'blocked_services':
+      'schedule':
+        'time_zone': 'Local'
+      'ids': []
+    'protection_enabled':        true,
+    'blocking_mode':             'custom_ip',
+    'blocking_ipv4':             '1.2.3.4',
+    'blocking_ipv6':             '1:2:3::4',
+    'blocked_response_ttl':      10,
+    'protection_disabled_until': 'null',
+    'parental_block_host':       'p.dns.adguard.com',
+    'safebrowsing_block_host':   's.dns.adguard.com'
+
+  # AFTER:
+  'filtering':
+    'filtering_enabled': true
+    'filters_update_interval': 24
+    'parental_enabled': false
+    'safebrowsing_enabled': false
+    'safebrowsing_cache_size': 1048576
+    'safesearch_cache_size': 1048576
+    'parental_cache_size': 1048576
+    'safe_search':
+      'enabled': false
+      'bing': true
+      'duckduckgo': true
+      'google': true
+      'pixabay': true
+      'yandex': true
+      'youtube': true
+    'rewrites': []
+    'blocked_services':
+      'schedule':
+        'time_zone': 'Local'
+      'ids': []
+    'protection_enabled':        true,
+    'blocking_mode':             'custom_ip',
+    'blocking_ipv4':             '1.2.3.4',
+    'blocking_ipv6':             '1:2:3::4',
+    'blocked_response_ttl':      10,
+    'protection_disabled_until': 'null',
+    'parental_block_host':       'p.dns.adguard.com',
+    'safebrowsing_block_host':   's.dns.adguard.com',
+  ```
+
+  To rollback this change, remove the new object `filtering`, set back filtering
+  properties in `dns` section, and change the `schema_version` back to `25`.
+
+- Property `debug_pprof` which used to setup profiling HTTP handler, is now
+  moved to the new `pprof` object under `http` section.  The new object contains
+  properties `enabled` and `port`:
+
+  ```yaml
+  # BEFORE:
+  'debug_pprof': true
+
+  # AFTER:
+  'http':
+    'pprof':
+      'enabled': true
+      'port': 6060
+  ```
+
+  Note that the new default `6060` is used as default.  To rollback this change,
+  remove the new object `pprof`, set back `debug_pprof`, and change the
+  `schema_version` back to `24`.
+
+### Fixed
+
+- Incorrect display date on statistics graph ([#5793]).
+- Missing query log entries and statistics on service restart ([#6100]).
+- Occasional DNS-over-QUIC and DNS-over-HTTP/3 errors ([#6133]).
+- Legacy DNS rewrites containing IPv4-mapped IPv6 addresses are now matching the
+  `AAAA` requests, not `A` ([#6050]).
+- File log configuration, such as `max_size`, being ignored ([#6093]).
+- Panic on using a single-slash filtering rule.
+- Panic on shutting down while DNS requests are in process of filtering
+  ([#5948]).
+
+[#1453]: https://github.com/AdguardTeam/AdGuardHome/issues/1453
+[#2998]: https://github.com/AdguardTeam/AdGuardHome/issues/2998
+[#3701]: https://github.com/AdguardTeam/AdGuardHome/issues/3701
+[#5720]: https://github.com/AdguardTeam/AdGuardHome/issues/5720
+[#5793]: https://github.com/AdguardTeam/AdGuardHome/issues/5793
+[#5948]: https://github.com/AdguardTeam/AdGuardHome/issues/5948
+[#6020]: https://github.com/AdguardTeam/AdGuardHome/issues/6020
+[#6050]: https://github.com/AdguardTeam/AdGuardHome/issues/6050
+[#6053]: https://github.com/AdguardTeam/AdGuardHome/issues/6053
+[#6093]: https://github.com/AdguardTeam/AdGuardHome/issues/6093
+[#6100]: https://github.com/AdguardTeam/AdGuardHome/issues/6100
+[#6122]: https://github.com/AdguardTeam/AdGuardHome/issues/6122
+[#6133]: https://github.com/AdguardTeam/AdGuardHome/issues/6133
+
+[go-1.20.8]:    https://groups.google.com/g/golang-announce/c/Fm51GRLNRvM/m/F5bwBlXMAQAJ
+[hsts]:         https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+[ms-v0.107.37]: https://github.com/AdguardTeam/AdGuardHome/milestone/72?closed=1
+[rfc6797]:      https://datatracker.ietf.org/doc/html/rfc6797
 
 
 
@@ -539,7 +707,7 @@ In this release, the schema version has changed from 17 to 20.
 [#5701]: https://github.com/AdguardTeam/AdGuardHome/issues/5701
 
 [ms-v0.107.28]: https://github.com/AdguardTeam/AdGuardHome/milestone/64?closed=1
-[rfc6761]:      https://www.rfc-editor.org/rfc/rfc6761
+[rfc6761]:      https://datatracker.ietf.org/doc/html/rfc6761
 
 
 
@@ -627,7 +795,6 @@ See also the [v0.107.26 GitHub milestone][ms-v0.107.26].
   been relaxed to meet those from [RFC 3696][rfc3696] ([#4884]).
 - Failing service installation via script on FreeBSD ([#5431]).
 
-[#1472]: https://github.com/AdguardTeam/AdGuardHome/issues/1472
 [#4884]: https://github.com/AdguardTeam/AdGuardHome/issues/4884
 [#5270]: https://github.com/AdguardTeam/AdGuardHome/issues/5270
 [#5281]: https://github.com/AdguardTeam/AdGuardHome/issues/5281
@@ -1246,7 +1413,6 @@ See also the [v0.107.10 GitHub milestone][ms-v0.107.10].
 [#4342]: https://github.com/AdguardTeam/AdGuardHome/issues/4342
 [#4358]: https://github.com/AdguardTeam/AdGuardHome/issues/4358
 [#4670]: https://github.com/AdguardTeam/AdGuardHome/issues/4670
-[#4836]: https://github.com/AdguardTeam/AdGuardHome/issues/4836
 [#4843]: https://github.com/AdguardTeam/AdGuardHome/issues/4843
 
 [ddr-draft]:    https://datatracker.ietf.org/doc/html/draft-ietf-add-ddr-08
@@ -1880,9 +2046,7 @@ In this release, the schema version has changed from 10 to 12.
 [#3558]: https://github.com/AdguardTeam/AdGuardHome/issues/3558
 [#3564]: https://github.com/AdguardTeam/AdGuardHome/issues/3564
 [#3567]: https://github.com/AdguardTeam/AdGuardHome/issues/3567
-[#3568]: https://github.com/AdguardTeam/AdGuardHome/issues/3568
 [#3579]: https://github.com/AdguardTeam/AdGuardHome/issues/3579
-[#3607]: https://github.com/AdguardTeam/AdGuardHome/issues/3607
 [#3638]: https://github.com/AdguardTeam/AdGuardHome/issues/3638
 [#3655]: https://github.com/AdguardTeam/AdGuardHome/issues/3655
 [#3707]: https://github.com/AdguardTeam/AdGuardHome/issues/3707
@@ -2300,11 +2464,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.37...HEAD
-[v0.107.37]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.36...v0.107.37
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.38...HEAD
+[v0.107.38]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.37...v0.107.38
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.36...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.37...HEAD
+[v0.107.37]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.36...v0.107.37
 [v0.107.36]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.35...v0.107.36
 [v0.107.35]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.34...v0.107.35
 [v0.107.34]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.33...v0.107.34

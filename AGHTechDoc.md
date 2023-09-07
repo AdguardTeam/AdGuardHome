@@ -835,7 +835,7 @@ Request:
 Response:
 
 	200 OK
-	
+
 ### API: Validate TLS configuration
 
 Request:
@@ -2008,7 +2008,7 @@ Request:
 Response:
 
 	200 OK
-	
+
     DOH plist file
 
 ## API: Get DNS over TLS .mobileconfig

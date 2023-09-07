@@ -89,18 +89,18 @@ body {
 }
 
 .container--wrap {
-    min-height: calc(100vh - 160px);
+    min-height: calc(100vh - 372px);
+}
+
+@media screen and (min-width: 768px) {
+    .container--wrap {
+        min-height: calc(100vh - 168px);
+    }
 }
 
 @media screen and (min-width: 992px) {
     .container--wrap {
-        min-height: calc(100vh - 117px);
-    }
-}
-
-@media screen and (max-width: 992px) {
-    .container--wrap {
-        min-height: calc(100vh);
+        min-height: calc(100vh - 187px);
     }
 }
 

@@ -8,6 +8,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"net"
+	"net/netip"
 	"strings"
 	"sync"
 	"time"
@@ -239,10 +240,9 @@ func (ss *Default) newResult(
 	}
 
 	if rewrite.RRType == qtype {
-		v := rewrite.Value
-		ip, ok := v.(net.IP)
-		if !ok || ip == nil {
-			return nil, fmt.Errorf("expected ip rewrite value, got %T(%[1]v)", v)
+		ip, ok := rewrite.Value.(netip.Addr)
+		if !ok || ip == (netip.Addr{}) {
+			return nil, fmt.Errorf("expected ip rewrite value, got %T(%[1]v)", rewrite.Value)
 		}
 
 		res.Rules[0].IP = ip
@@ -267,12 +267,13 @@ func (ss *Default) newResult(
 	for _, ip := range ips {
 		// TODO(a.garipov): Remove this filtering once the resolver we use
 		// actually learns about network.
-		ip = fitToProto(ip, qtype)
-		if ip == nil {
+		addr := fitToProto(ip, qtype)
+		if addr == (netip.Addr{}) {
 			continue
 		}
 
-		res.Rules[0].IP = ip
+		// TODO(e.burkov):  Rules[0]?
+		res.Rules[0].IP = addr
 	}
 
 	return res, nil
@@ -293,17 +294,16 @@ func qtypeToProto(qtype rules.RRType) (proto string) {
 
 // fitToProto returns a non-nil IP address if ip is the correct protocol version
 // for qtype.  qtype is expected to be either [dns.TypeA] or [dns.TypeAAAA].
-func fitToProto(ip net.IP, qtype rules.RRType) (res net.IP) {
-	ip4 := ip.To4()
-	if qtype == dns.TypeA {
-		return ip4
+func fitToProto(ip net.IP, qtype rules.RRType) (res netip.Addr) {
+	if ip4 := ip.To4(); qtype == dns.TypeA {
+		if ip4 != nil {
+			return netip.AddrFrom4([4]byte(ip4))
+		}
+	} else if ip = ip.To16(); ip != nil && qtype == dns.TypeAAAA {
+		return netip.AddrFrom16([16]byte(ip))
 	}
 
-	if ip4 == nil {
-		return ip
-	}
-
-	return nil
+	return netip.Addr{}
 }
 
 // setCacheResult stores data in cache for host.  qtype is expected to be either

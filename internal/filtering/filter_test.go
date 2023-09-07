@@ -1,7 +1,6 @@
 package filtering
 
 import (
-	"io/fs"
 	"net"
 	"net/http"
 	"net/url"
@@ -15,6 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// testTimeout is the common timeout for tests.
+const testTimeout = 5 * time.Second
 
 // serveHTTPLocally starts a new HTTP server, that handles its index with h.  It
 // also gracefully closes the listener when the test under t finishes.
@@ -50,7 +52,49 @@ func serveFiltersLocally(t *testing.T, fltContent []byte) (urlStr string) {
 	}))
 }
 
-func TestFilters(t *testing.T) {
+// updateAndAssert loads filter content from its URL and then asserts rules
+// count.
+func updateAndAssert(
+	t *testing.T,
+	dnsFilter *DNSFilter,
+	f *FilterYAML,
+	wantUpd require.BoolAssertionFunc,
+	wantRulesCount int,
+) {
+	t.Helper()
+
+	ok, err := dnsFilter.update(f)
+	require.NoError(t, err)
+	wantUpd(t, ok)
+
+	assert.Equal(t, wantRulesCount, f.RulesCount)
+
+	dir, err := os.ReadDir(filepath.Join(dnsFilter.conf.DataDir, filterDir))
+	require.NoError(t, err)
+	require.FileExists(t, f.Path(dnsFilter.conf.DataDir))
+
+	assert.Len(t, dir, 1)
+
+	err = dnsFilter.load(f)
+	require.NoError(t, err)
+}
+
+// newDNSFilter returns a new properly initialized DNS filter instance.
+func newDNSFilter(t *testing.T) (d *DNSFilter) {
+	t.Helper()
+
+	dnsFilter, err := New(&Config{
+		DataDir: t.TempDir(),
+		HTTPClient: &http.Client{
+			Timeout: testTimeout,
+		},
+	}, nil)
+	require.NoError(t, err)
+
+	return dnsFilter
+}
+
+func TestDNSFilter_Update(t *testing.T) {
 	const content = `||example.org^$third-party
 	# Inline comment example
 	||example.com^$third-party
@@ -58,49 +102,20 @@ func TestFilters(t *testing.T) {
 	`
 
 	fltContent := []byte(content)
-
 	addr := serveFiltersLocally(t, fltContent)
-
-	tempDir := t.TempDir()
-
-	filters, err := New(&Config{
-		DataDir: tempDir,
-		HTTPClient: &http.Client{
-			Timeout: 5 * time.Second,
-		},
-	}, nil)
-	require.NoError(t, err)
-
 	f := &FilterYAML{
-		URL: addr,
+		URL:  addr,
+		Name: "test-filter",
 	}
 
-	updateAndAssert := func(t *testing.T, want require.BoolAssertionFunc, wantRulesCount int) {
-		var ok bool
-		ok, err = filters.update(f)
-		require.NoError(t, err)
-		want(t, ok)
-
-		assert.Equal(t, wantRulesCount, f.RulesCount)
-
-		var dir []fs.DirEntry
-		dir, err = os.ReadDir(filepath.Join(tempDir, filterDir))
-		require.NoError(t, err)
-
-		assert.Len(t, dir, 1)
-
-		require.FileExists(t, f.Path(tempDir))
-
-		err = filters.load(f)
-		require.NoError(t, err)
-	}
+	dnsFilter := newDNSFilter(t)
 
 	t.Run("download", func(t *testing.T) {
-		updateAndAssert(t, require.True, 3)
+		updateAndAssert(t, dnsFilter, f, require.True, 3)
 	})
 
 	t.Run("refresh_idle", func(t *testing.T) {
-		updateAndAssert(t, require.False, 3)
+		updateAndAssert(t, dnsFilter, f, require.False, 3)
 	})
 
 	t.Run("refresh_actually", func(t *testing.T) {
@@ -110,13 +125,51 @@ func TestFilters(t *testing.T) {
 		f.URL = serveFiltersLocally(t, anotherContent)
 		t.Cleanup(func() { f.URL = oldURL })
 
-		updateAndAssert(t, require.True, 1)
+		updateAndAssert(t, dnsFilter, f, require.True, 1)
 	})
 
 	t.Run("load_unload", func(t *testing.T) {
-		err = filters.load(f)
+		err := dnsFilter.load(f)
 		require.NoError(t, err)
 
 		f.unload()
+	})
+}
+
+func TestFilterYAML_EnsureName(t *testing.T) {
+	dnsFilter := newDNSFilter(t)
+
+	t.Run("title_custom", func(t *testing.T) {
+		content := []byte("! Title: src-title\n||example.com^")
+
+		f := &FilterYAML{
+			URL:  serveFiltersLocally(t, content),
+			Name: "user-custom",
+		}
+
+		updateAndAssert(t, dnsFilter, f, require.True, 1)
+		assert.Equal(t, "user-custom", f.Name)
+	})
+
+	t.Run("title_from_src", func(t *testing.T) {
+		content := []byte("! Title: src-title\n||example.com^")
+
+		f := &FilterYAML{
+			URL: serveFiltersLocally(t, content),
+		}
+
+		updateAndAssert(t, dnsFilter, f, require.True, 1)
+		assert.Equal(t, "src-title", f.Name)
+	})
+
+	t.Run("title_default", func(t *testing.T) {
+		content := []byte("||example.com^")
+
+		f := &FilterYAML{
+			URL: serveFiltersLocally(t, content),
+		}
+
+		updateAndAssert(t, dnsFilter, f, require.True, 1)
+		assert.Equal(t, "List 0", f.Name)
 	})
 }

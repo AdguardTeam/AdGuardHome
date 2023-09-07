@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/netip"
 	"strings"
 	"time"
 
@@ -183,7 +184,11 @@ func decodeResultRuleKey(key string, i int, dec *json.Decoder, ent *logEntry) {
 	case "IP":
 		ent.Result.Rules, vToken = decodeVTokenAndAddRule(key, i, dec, ent.Result.Rules)
 		if ipStr, ok := vToken.(string); ok {
-			ent.Result.Rules[i].IP = net.ParseIP(ipStr)
+			if ip, err := netip.ParseAddr(ipStr); err == nil {
+				ent.Result.Rules[i].IP = ip
+			} else {
+				log.Debug("querylog: decoding ipStr value: %s", err)
+			}
 		}
 	case "Text":
 		ent.Result.Rules, vToken = decodeVTokenAndAddRule(key, i, dec, ent.Result.Rules)
@@ -362,8 +367,9 @@ func decodeResultIPList(dec *json.Decoder, ent *logEntry) {
 
 			return
 		case string:
-			ip := net.ParseIP(v)
-			if ip != nil {
+			var ip netip.Addr
+			ip, err = netip.ParseAddr(v)
+			if err == nil {
 				ent.Result.IPList = append(ent.Result.IPList, ip)
 			}
 		default:
@@ -462,7 +468,7 @@ func translateResult(ent *logEntry) {
 	resp := res.DNSRewriteResult.Response
 	for _, ip := range res.IPList {
 		qType := dns.TypeAAAA
-		if ip.To4() != nil {
+		if ip.Is4() {
 			qType = dns.TypeA
 		}
 

@@ -60,7 +60,7 @@ func ifaceIPv4Subnet(iface *net.Interface) (subnet netip.Prefix, err error) {
 		}
 
 		if ip = ip.To4(); ip != nil {
-			return netip.PrefixFrom(netip.AddrFrom4(*(*[4]byte)(ip)), maskLen), nil
+			return netip.PrefixFrom(netip.AddrFrom4([4]byte(ip)), maskLen), nil
 		}
 	}
 

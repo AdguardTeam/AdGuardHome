@@ -50,6 +50,10 @@ export const setDnsConfig = (config) => async (dispatch) => {
             data.bootstrap_dns = splitByNewLine(config.bootstrap_dns);
             hasDnsSettings = true;
         }
+        if (Object.prototype.hasOwnProperty.call(data, 'fallback_dns')) {
+            data.fallback_dns = splitByNewLine(config.fallback_dns);
+            hasDnsSettings = true;
+        }
         if (Object.prototype.hasOwnProperty.call(data, 'local_ptr_upstreams')) {
             data.local_ptr_upstreams = splitByNewLine(config.local_ptr_upstreams);
             hasDnsSettings = true;

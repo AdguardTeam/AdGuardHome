@@ -265,7 +265,7 @@
     "domain": "Домейн",
     "ecs": "ECS",
     "statistics_clear": "Нулирай статистиката",
-    "disabled": "Деактивиран",
+    "disabled": "Изключен",
     "username_label": "Потребител",
     "username_placeholder": "Въведете потребител",
     "password_label": "Парола",

@@ -14,8 +14,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
-	"github.com/AdguardTeam/urlfilter"
-	"github.com/miekg/dns"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -94,7 +92,8 @@ func (s *Server) prepareUpstreamConfig(
 		uc.Upstreams = defaultUpstreamConfig.Upstreams
 	}
 
-	if s.dnsFilter != nil && s.dnsFilter.EtcHosts != nil {
+	// dnsFilter can be nil during application update.
+	if s.dnsFilter != nil {
 		err = s.replaceUpstreamsWithHosts(uc, opts)
 		if err != nil {
 			return nil, fmt.Errorf("resolving upstreams with hosts: %w", err)
@@ -158,17 +157,20 @@ func (s *Server) resolveUpstreamsWithHosts(
 
 		withIPs, ok := resolved[host]
 		if !ok {
-			ips := s.resolveUpstreamHost(host)
-			if len(ips) == 0 {
+			recs := s.dnsFilter.EtcHostsRecords(host)
+			if len(recs) == 0 {
 				resolved[host] = nil
 
 				return nil
 			}
 
-			sortNetIPAddrs(ips, opts.PreferIPv6)
-
 			withIPs = opts.Clone()
-			withIPs.ServerIPAddrs = ips
+			withIPs.ServerIPAddrs = make([]net.IP, 0, len(recs))
+			for _, rec := range recs {
+				withIPs.ServerIPAddrs = append(withIPs.ServerIPAddrs, rec.Addr.AsSlice())
+			}
+
+			sortNetIPAddrs(withIPs.ServerIPAddrs, opts.PreferIPv6)
 			resolved[host] = withIPs
 		} else if withIPs == nil {
 			continue
@@ -216,33 +218,6 @@ func extractUpstreamHost(addr string) (host string) {
 	return host
 }
 
-// resolveUpstreamHost returns the version of ups with IP addresses from the
-// system hosts file placed into its options.
-func (s *Server) resolveUpstreamHost(host string) (addrs []net.IP) {
-	req := &urlfilter.DNSRequest{
-		Hostname: host,
-		DNSType:  dns.TypeA,
-	}
-	aRes, _ := s.dnsFilter.EtcHosts.MatchRequest(req)
-
-	req.DNSType = dns.TypeAAAA
-	aaaaRes, _ := s.dnsFilter.EtcHosts.MatchRequest(req)
-
-	var ips []net.IP
-	for _, rw := range append(aRes.DNSRewrites(), aaaaRes.DNSRewrites()...) {
-		dr := rw.DNSRewrite
-		if dr == nil || dr.Value == nil {
-			continue
-		}
-
-		if ip, ok := dr.Value.(net.IP); ok {
-			ips = append(ips, ip)
-		}
-	}
-
-	return ips
-}
-
 // sortNetIPAddrs sorts addrs in accordance with the protocol preferences.
 // Invalid addresses are sorted near the end.
 //
@@ -254,28 +229,38 @@ func sortNetIPAddrs(addrs []net.IP, preferIPv6 bool) {
 		return
 	}
 
-	slices.SortStableFunc(addrs, func(addrA, addrB net.IP) (sortsBefore bool) {
+	slices.SortStableFunc(addrs, func(addrA, addrB net.IP) (res int) {
 		switch len(addrA) {
 		case net.IPv4len, net.IPv6len:
 			switch len(addrB) {
 			case net.IPv4len, net.IPv6len:
 				// Go on.
 			default:
-				return true
+				return -1
 			}
 		default:
-			return false
+			return 1
 		}
 
-		if aIs4, bIs4 := addrA.To4() != nil, addrB.To4() != nil; aIs4 != bIs4 {
-			if aIs4 {
-				return !preferIPv6
+		// Treat IPv6-mapped IPv4 addresses as IPv6 addresses.
+		aIs4, bIs4 := addrA.To4() != nil, addrB.To4() != nil
+		if aIs4 == bIs4 {
+			return bytes.Compare(addrA, addrB)
+		}
+
+		if aIs4 {
+			if preferIPv6 {
+				return 1
 			}
 
-			return preferIPv6
+			return -1
 		}
 
-		return bytes.Compare(addrA, addrB) < 0
+		if preferIPv6 {
+			return -1
+		}
+
+		return 1
 	})
 }
 

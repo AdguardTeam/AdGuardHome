@@ -53,7 +53,7 @@ type Interface interface {
 	// IPByHost returns the IP address of the DHCP client with the given
 	// hostname.  The hostname will be an empty string if there is no such
 	// client, due to an assumption that a DHCP client must always have a
-	// hostname, either set by the client or assigned automatically.
+	// hostname, either set or generated.
 	IPByHost(host string) (ip netip.Addr)
 
 	// Leases returns all the DHCP leases.
@@ -103,6 +103,9 @@ func (Empty) MACByIP(_ netip.Addr) (mac net.HardwareAddr) { return nil }
 
 // IPByHost implements the [Interface] interface for Empty.
 func (Empty) IPByHost(_ string) (ip netip.Addr) { return netip.Addr{} }
+
+// type check
+var _ Interface = Empty{}
 
 // Leases implements the [Interface] interface for Empty.
 func (Empty) Leases() (leases []*Lease) { return nil }

@@ -14,9 +14,11 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"golang.org/x/exp/slices"
 )
 
 type v4ServerConfJSON struct {
@@ -75,7 +77,7 @@ type leaseStatic struct {
 }
 
 // leasesToStatic converts list of leases to their JSON form.
-func leasesToStatic(leases []*Lease) (static []*leaseStatic) {
+func leasesToStatic(leases []*dhcpsvc.Lease) (static []*leaseStatic) {
 	static = make([]*leaseStatic, len(leases))
 
 	for i, l := range leases {
@@ -113,7 +115,7 @@ type leaseDynamic struct {
 }
 
 // leasesToDynamic converts list of leases to their JSON form.
-func leasesToDynamic(leases []*Lease) (dynamic []*leaseDynamic) {
+func leasesToDynamic(leases []*dhcpsvc.Lease) (dynamic []*leaseDynamic) {
 	dynamic = make([]*leaseDynamic, len(leases))
 
 	for i, l := range leases {
@@ -143,10 +145,29 @@ func (s *server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	s.srv4.WriteDiskConfig4(&status.V4)
 	s.srv6.WriteDiskConfig6(&status.V6)
 
-	status.Leases = leasesToDynamic(s.Leases(LeasesDynamic))
-	status.StaticLeases = leasesToStatic(s.Leases(LeasesStatic))
+	leases := s.Leases()
+	slices.SortFunc(leases, func(a, b *dhcpsvc.Lease) (res int) {
+		if a.IsStatic == b.IsStatic {
+			return 0
+		} else if a.IsStatic {
+			return -1
+		} else {
+			return 1
+		}
+	})
 
-	_ = aghhttp.WriteJSONResponse(w, r, status)
+	dynamicIdx := slices.IndexFunc(leases, func(l *dhcpsvc.Lease) (ok bool) {
+		return !l.IsStatic
+	})
+
+	if dynamicIdx == -1 {
+		dynamicIdx = len(leases)
+	}
+
+	status.Leases = leasesToDynamic(leases[dynamicIdx:])
+	status.StaticLeases = leasesToStatic(leases[:dynamicIdx])
+
+	aghhttp.WriteJSONResponseOK(w, r, status)
 }
 
 func (s *server) enableDHCP(ifaceName string) (code int, err error) {
@@ -395,7 +416,7 @@ func (s *server) handleDHCPInterfaces(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // newNetInterfaceJSON creates a JSON object from a [net.Interface] iface.
@@ -547,7 +568,7 @@ func (s *server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 
 	setOtherDHCPResult(ifaceName, result)
 
-	_ = aghhttp.WriteJSONResponse(w, r, result)
+	aghhttp.WriteJSONResponseOK(w, r, result)
 }
 
 // setOtherDHCPResult sets the results of the check for another DHCP server in

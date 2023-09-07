@@ -107,8 +107,8 @@ func (l *queryLog) search(params *searchParams) (entries []*logEntry, oldest tim
 	// weird on the frontend.
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2293.
-	slices.SortStableFunc(entries, func(a, b *logEntry) (sortsBefore bool) {
-		return a.Time.After(b.Time)
+	slices.SortStableFunc(entries, func(a, b *logEntry) (res int) {
+		return -a.Time.Compare(b.Time)
 	})
 
 	if params.offset > 0 {

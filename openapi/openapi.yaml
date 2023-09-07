@@ -1001,6 +1001,9 @@
                 '$ref': '#/components/schemas/BlockedServicesAll'
   '/blocked_services/list':
     'get':
+      'deprecated': true
+      'description': >
+        Deprecated: Use `GET /blocked_services/get` instead.
       'tags':
       - 'blocked_services'
       'operationId': 'blockedServicesList'
@@ -1014,6 +1017,9 @@
                 '$ref': '#/components/schemas/BlockedServicesArray'
   '/blocked_services/set':
     'post':
+      'deprecated': true
+      'description': >
+        Deprecated: Use `PUT /blocked_services/update` instead.
       'tags':
       - 'blocked_services'
       'operationId': 'blockedServicesSet'
@@ -1023,6 +1029,34 @@
           'application/json':
             'schema':
               '$ref': '#/components/schemas/BlockedServicesArray'
+      'responses':
+        '200':
+          'description': 'OK.'
+  '/blocked_services/get':
+    'get':
+      'tags':
+      - 'blocked_services'
+      'operationId': 'blockedServicesSchedule'
+      'summary': 'Get blocked services'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/BlockedServicesSchedule'
+  '/blocked_services/update':
+    'put':
+      'tags':
+      - 'blocked_services'
+      'operationId': 'blockedServicesScheduleUpdate'
+      'summary': 'Update blocked services'
+      'requestBody':
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/BlockedServicesSchedule'
+        'required': true
       'responses':
         '200':
           'description': 'OK.'
@@ -1398,6 +1432,16 @@
           'example':
           - 'tls://1.1.1.1'
           - 'tls://1.0.0.1'
+        'fallback_dns':
+          'type': 'array'
+          'description': >
+            List of fallback DNS servers used when upstream DNS servers are not
+            responding.  Empty value will clear the list.
+          'items':
+            'type': 'string'
+          'example':
+          - '8.8.8.8'
+          - '1.1.1.1:53'
         'upstream_dns_file':
           'type': 'string'
         'protection_enabled':
@@ -1459,7 +1503,7 @@
           - 'tls://1.0.0.1'
     'UpstreamsConfig':
       'type': 'object'
-      'description': 'Upstreams configuration'
+      'description': 'Upstream configuration to be tested'
       'required':
       - 'bootstrap_dns'
       - 'upstream_dns'
@@ -1467,8 +1511,7 @@
         'bootstrap_dns':
           'type': 'array'
           'description': >
-            Bootstrap servers, port is optional after colon.  Empty value will
-            reset it to default values.
+            Bootstrap DNS servers, port is optional after colon.
           'items':
             'type': 'string'
           'example':
@@ -1477,18 +1520,25 @@
         'upstream_dns':
           'type': 'array'
           'description': >
-            Upstream servers, port is optional after colon.  Empty value will
-            reset it to default values.
+            Upstream DNS servers, port is optional after colon.
           'items':
             'type': 'string'
           'example':
           - 'tls://1.1.1.1'
           - 'tls://1.0.0.1'
+        'fallback_dns':
+          'type': 'array'
+          'description': >
+            Fallback DNS servers, port is optional after colon.
+          'items':
+            'type': 'string'
+          'example':
+          - '8.8.8.8'
+          - '1.1.1.1:53'
         'private_upstream':
           'type': 'array'
           'description': >
-            Local PTR resolvers, port is optional after colon.  Empty value will
-            reset it to default values.
+            Local PTR resolvers, port is optional after colon.
           'items':
             'type': 'string'
           'example':
@@ -1728,7 +1778,7 @@
         'avg_processing_time':
           'type': 'number'
           'format': 'float'
-          'description': 'Average time in milliseconds on processing a DNS'
+          'description': 'Average time in seconds on processing a DNS request'
           'example': 0.34
         'top_queried_domains':
           'type': 'array'
@@ -1742,6 +1792,19 @@
           'type': 'array'
           'items':
             '$ref': '#/components/schemas/TopArrayEntry'
+        'top_upstreams_responses':
+          'type': 'array'
+          'description': 'Total number of responses from each upstream.'
+          'items':
+            '$ref': '#/components/schemas/TopArrayEntry'
+          'maxItems': 100
+        'top_upstreams_avg_time':
+          'type': 'array'
+          'description': >
+            Average processing time in seconds of requests from each upstream.
+          'items':
+            '$ref': '#/components/schemas/TopArrayEntry'
+          'maxItems': 100
         'dns_queries':
           'type': 'array'
           'items':
@@ -1761,12 +1824,13 @@
     'TopArrayEntry':
       'type': 'object'
       'description': >
-        Represent the number of hits per key (domain or client IP).
+        Represent the number of hits or time duration per key (url, domain, or
+        client IP).
       'properties':
         'domain_or_ip':
-          'type': 'integer'
+          'type': 'number'
       'additionalProperties':
-          'type': 'integer'
+          'type': 'number'
     'StatsConfig':
       'type': 'object'
       'description': 'Statistics configuration'
@@ -2471,6 +2535,54 @@
           'type': 'boolean'
         'youtube':
           'type': 'boolean'
+    'Schedule':
+      'type': 'object'
+      'description': >
+        Sets periods of inactivity for filtering blocked services.  The
+        schedule contains 7 days (Sunday to Saturday) and a time zone.
+      'properties':
+        'time_zone':
+          'description': >
+            Time zone name according to IANA time zone database.  For example
+            `Europe/Brussels`.  `Local` represents the system's local time
+            zone.
+          'type': 'string'
+        'sun':
+          '$ref': '#/components/schemas/DayRange'
+        'mon':
+          '$ref': '#/components/schemas/DayRange'
+        'tue':
+          '$ref': '#/components/schemas/DayRange'
+        'wed':
+          '$ref': '#/components/schemas/DayRange'
+        'thu':
+          '$ref': '#/components/schemas/DayRange'
+        'fri':
+          '$ref': '#/components/schemas/DayRange'
+        'sat':
+          '$ref': '#/components/schemas/DayRange'
+    'DayRange':
+      'type': 'object'
+      'description': >
+        The single interval within a day.  It begins at the `start` and ends
+        before the `end`.
+      'properties':
+        'start':
+          'type': 'number'
+          'description': >
+            The number of milliseconds elapsed from the start of a day.  It
+            must be less than `end` and is expected to be rounded to minutes.
+            So the maximum value is `86340000` (23 hours and 59 minutes).
+          'minimum': 0
+          'maximum': 86340000
+        'end':
+          'type': 'number'
+          'description': >
+            The number of milliseconds elapsed from the start of a day.  It is
+            expected to be rounded to minutes.  The maximum value is `86400000`
+            (24 hours).
+          'minimum': 0
+          'maximum': 86400000
     'Client':
       'type': 'object'
       'description': 'Client information.'
@@ -2499,6 +2611,8 @@
           '$ref': '#/components/schemas/SafeSearchConfig'
         'use_global_blocked_services':
           'type': 'boolean'
+        'blocked_services_schedule':
+          '$ref': '#/components/schemas/Schedule'
         'blocked_services':
           'type': 'array'
           'items':
@@ -2779,6 +2893,17 @@
       - 'name'
       - 'rules'
       'type': 'object'
+    'BlockedServicesSchedule':
+      'type': 'object'
+      'properties':
+        'schedule':
+          '$ref': '#/components/schemas/Schedule'
+        'ids':
+          'description': >
+            The names of the blocked services.
+          'type': 'array'
+          'items':
+            'type': 'string'
     'CheckConfigRequest':
       'type': 'object'
       'description': 'Configuration to be checked'

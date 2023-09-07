@@ -61,7 +61,7 @@ func handleGetProfile(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // handlePutProfile is the handler for PUT /control/profile/update endpoint.

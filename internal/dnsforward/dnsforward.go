@@ -15,7 +15,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
-	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
@@ -46,19 +45,15 @@ var defaultBootstrap = []string{"9.9.9.10", "149.112.112.10", "2620:fe::10", "26
 // Often requested by all kinds of DNS probes
 var defaultBlockedHosts = []string{"version.bind", "id.server", "hostname.bind"}
 
+var (
+	// defaultUDPListenAddrs are the default UDP addresses for the server.
+	defaultUDPListenAddrs = []*net.UDPAddr{{Port: 53}}
+
+	// defaultTCPListenAddrs are the default TCP addresses for the server.
+	defaultTCPListenAddrs = []*net.TCPAddr{{Port: 53}}
+)
+
 var webRegistered bool
-
-// hostToIPTable is a convenient type alias for tables of host names to an IP
-// address.
-//
-// TODO(e.burkov):  Use the [DHCP] interface instead.
-type hostToIPTable = map[string]netip.Addr
-
-// ipToHostTable is a convenient type alias for tables of IP addresses to their
-// host names.  For example, for use with PTR queries.
-//
-// TODO(e.burkov):  Use the [DHCP] interface instead.
-type ipToHostTable = map[netip.Addr]string
 
 // DHCP is an interface for accessing DHCP lease data needed in this package.
 type DHCP interface {
@@ -89,18 +84,34 @@ type DHCP interface {
 //
 // The zero Server is empty and ready for use.
 type Server struct {
-	dnsProxy   *proxy.Proxy         // DNS proxy instance
-	dnsFilter  *filtering.DNSFilter // DNS filter instance
-	dhcpServer dhcpd.Interface      // DHCP server instance (optional)
-	queryLog   querylog.QueryLog    // Query log instance
-	stats      stats.Interface
-	access     *accessManager
+	// dnsProxy is the DNS proxy for forwarding client's DNS requests.
+	dnsProxy *proxy.Proxy
+
+	// dnsFilter is the DNS filter for filtering client's DNS requests and
+	// responses.
+	dnsFilter *filtering.DNSFilter
+
+	// dhcpServer is the DHCP server for accessing lease data.
+	dhcpServer DHCP
+
+	// queryLog is the query log for client's DNS requests, responses and
+	// filtering results.
+	queryLog querylog.QueryLog
+
+	// stats is the statistics collector for client's DNS usage data.
+	stats stats.Interface
+
+	// access drops unallowed clients.
+	access *accessManager
 
 	// localDomainSuffix is the suffix used to detect internal hosts.  It
 	// must be a valid domain name plus dots on each side.
 	localDomainSuffix string
 
-	ipset       ipsetCtx
+	// ipset processes DNS requests using ipset data.
+	ipset ipsetCtx
+
+	// privateNets is the configured set of IP networks considered private.
 	privateNets netutil.SubnetSet
 
 	// addrProc, if not nil, is used to process clients' IP addresses with rDNS,
@@ -112,7 +123,10 @@ type Server struct {
 	//
 	// TODO(e.burkov):  Remove once the local resolvers logic moved to dnsproxy.
 	localResolvers *proxy.Proxy
-	sysResolvers   aghnet.SystemResolvers
+
+	// sysResolvers used to fetch system resolvers to use by default for private
+	// PTR resolving.
+	sysResolvers aghnet.SystemResolvers
 
 	// recDetector is a cache for recursive requests.  It is used to detect
 	// and prevent recursive requests only for private upstreams.
@@ -128,12 +142,6 @@ type Server struct {
 	// anonymizer masks the client's IP addresses if needed.
 	anonymizer *aghnet.IPMut
 
-	tableHostToIP     hostToIPTable
-	tableHostToIPLock sync.Mutex
-
-	tableIPToHost     ipToHostTable
-	tableIPToHostLock sync.Mutex
-
 	// clientIDCache is a temporary storage for ClientIDs that were extracted
 	// during the BeforeRequestHandler stage.
 	clientIDCache cache.Cache
@@ -142,13 +150,16 @@ type Server struct {
 	// We don't Start() it and so no listen port is required.
 	internalProxy *proxy.Proxy
 
+	// isRunning is true if the DNS server is running.
 	isRunning bool
 
 	// protectionUpdateInProgress is used to make sure that only one goroutine
 	// updating the protection configuration after a pause is running at a time.
 	protectionUpdateInProgress atomic.Bool
 
+	// conf is the current configuration of the server.
 	conf ServerConfig
+
 	// serverLock protects Server.
 	serverLock sync.RWMutex
 }
@@ -164,7 +175,7 @@ type DNSCreateParams struct {
 	DNSFilter   *filtering.DNSFilter
 	Stats       stats.Interface
 	QueryLog    querylog.QueryLog
-	DHCPServer  dhcpd.Interface
+	DHCPServer  DHCP
 	PrivateNets netutil.SubnetSet
 	Anonymizer  *aghnet.IPMut
 	LocalDomain string
@@ -200,11 +211,12 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		p.Anonymizer = aghnet.NewIPMut(nil)
 	}
 	s = &Server{
-		dnsFilter:         p.DNSFilter,
-		stats:             p.Stats,
-		queryLog:          p.QueryLog,
-		privateNets:       p.PrivateNets,
-		localDomainSuffix: localDomainSuffix,
+		dnsFilter:   p.DNSFilter,
+		stats:       p.Stats,
+		queryLog:    p.QueryLog,
+		privateNets: p.PrivateNets,
+		// TODO(e.burkov):  Use some case-insensitive string comparison.
+		localDomainSuffix: strings.ToLower(localDomainSuffix),
 		recDetector:       newRecursionDetector(recursionTTL, cachedRecurrentReqNum),
 		clientIDCache: cache.New(cache.Config{
 			EnableLRU: true,
@@ -220,11 +232,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		return nil, fmt.Errorf("initializing system resolvers: %w", err)
 	}
 
-	if p.DHCPServer != nil {
-		s.dhcpServer = p.DHCPServer
-		s.dhcpServer.SetOnLeaseChanged(s.onDHCPLeaseChanged)
-		s.onDHCPLeaseChanged(dhcpd.LeaseChangedAdded)
-	}
+	s.dhcpServer = p.DHCPServer
 
 	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
 		// Use plain DNS on MIPS, encryption is too slow
@@ -244,7 +252,7 @@ func (s *Server) Close() {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
-	s.dnsFilter = nil
+	// TODO(s.chzhen):  Remove it.
 	s.stats = nil
 	s.queryLog = nil
 	s.dnsProxy = nil
@@ -255,14 +263,15 @@ func (s *Server) Close() {
 }
 
 // WriteDiskConfig - write configuration
-func (s *Server) WriteDiskConfig(c *FilteringConfig) {
+func (s *Server) WriteDiskConfig(c *Config) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	sc := s.conf.FilteringConfig
+	sc := s.conf.Config
 	*c = sc
 	c.RatelimitWhitelist = stringutil.CloneSlice(sc.RatelimitWhitelist)
 	c.BootstrapDNS = stringutil.CloneSlice(sc.BootstrapDNS)
+	c.FallbackDNS = stringutil.CloneSlice(sc.FallbackDNS)
 	c.AllowedClients = stringutil.CloneSlice(sc.AllowedClients)
 	c.DisallowedClients = stringutil.CloneSlice(sc.DisallowedClients)
 	c.BlockedHosts = stringutil.CloneSlice(sc.BlockedHosts)
@@ -533,9 +542,13 @@ func (s *Server) setupLocalResolvers() (err error) {
 func (s *Server) Prepare(conf *ServerConfig) (err error) {
 	s.conf = *conf
 
-	err = validateBlockingMode(s.conf.BlockingMode, s.conf.BlockingIPv4, s.conf.BlockingIPv6)
-	if err != nil {
-		return fmt.Errorf("checking blocking mode: %w", err)
+	// dnsFilter can be nil during application update.
+	if s.dnsFilter != nil {
+		mode, bIPv4, bIPv6 := s.dnsFilter.BlockingMode()
+		err = validateBlockingMode(mode, bIPv4, bIPv6)
+		if err != nil {
+			return fmt.Errorf("checking blocking mode: %w", err)
+		}
 	}
 
 	s.initDefaultSettings()
@@ -584,11 +597,38 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 		return fmt.Errorf("setting up resolvers: %w", err)
 	}
 
+	err = s.setupFallbackDNS()
+	if err != nil {
+		return fmt.Errorf("setting up fallback dns servers: %w", err)
+	}
+
 	s.recDetector.clear()
 
 	s.setupAddrProc()
 
 	s.registerHandlers()
+
+	return nil
+}
+
+// setupFallbackDNS initializes the fallback DNS servers.
+func (s *Server) setupFallbackDNS() (err error) {
+	fallbacks := s.conf.FallbackDNS
+	if len(fallbacks) == 0 {
+		return nil
+	}
+
+	uc, err := proxy.ParseUpstreamsConfig(fallbacks, &upstream.Options{
+		// TODO(s.chzhen):  Investigate if other options are needed.
+		Timeout:    s.conf.UpstreamTimeout,
+		PreferIPv6: s.conf.BootstrapPreferIPv6,
+	})
+	if err != nil {
+		// Do not wrap the error because it's informative enough as is.
+		return err
+	}
+
+	s.dnsProxy.Fallbacks = uc
 
 	return nil
 }
@@ -617,19 +657,22 @@ func (s *Server) setupAddrProc() {
 }
 
 // validateBlockingMode returns an error if the blocking mode data aren't valid.
-func validateBlockingMode(mode BlockingMode, blockingIPv4, blockingIPv6 net.IP) (err error) {
+func validateBlockingMode(
+	mode filtering.BlockingMode,
+	blockingIPv4, blockingIPv6 netip.Addr,
+) (err error) {
 	switch mode {
 	case
-		BlockingModeDefault,
-		BlockingModeNXDOMAIN,
-		BlockingModeREFUSED,
-		BlockingModeNullIP:
+		filtering.BlockingModeDefault,
+		filtering.BlockingModeNXDOMAIN,
+		filtering.BlockingModeREFUSED,
+		filtering.BlockingModeNullIP:
 		return nil
-	case BlockingModeCustomIP:
-		if blockingIPv4 == nil {
-			return fmt.Errorf("blocking_ipv4 must be set when blocking_mode is custom_ip")
-		} else if blockingIPv6 == nil {
-			return fmt.Errorf("blocking_ipv6 must be set when blocking_mode is custom_ip")
+	case filtering.BlockingModeCustomIP:
+		if !blockingIPv4.Is4() {
+			return fmt.Errorf("blocking_ipv4 must be valid ipv4 on custom_ip blocking_mode")
+		} else if !blockingIPv6.Is6() {
+			return fmt.Errorf("blocking_ipv6 must be valid ipv6 on custom_ip blocking_mode")
 		}
 
 		return nil

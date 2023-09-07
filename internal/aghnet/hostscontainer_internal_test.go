@@ -2,13 +2,11 @@ package aghnet
 
 import (
 	"io/fs"
-	"net/netip"
 	"path"
 	"testing"
 	"testing/fstest"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil/fakefs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -75,70 +73,4 @@ func TestHostsContainer_PathsToPatterns(t *testing.T) {
 		_, err := pathsToPatterns(badFS, []string{""})
 		assert.ErrorIs(t, err, errStat)
 	})
-}
-
-func TestUniqueRules_ParseLine(t *testing.T) {
-	ip := netutil.IPv4Localhost()
-	ipStr := ip.String()
-
-	testCases := []struct {
-		name      string
-		line      string
-		wantIP    netip.Addr
-		wantHosts []string
-	}{{
-		name:      "simple",
-		line:      ipStr + ` hostname`,
-		wantIP:    ip,
-		wantHosts: []string{"hostname"},
-	}, {
-		name:      "aliases",
-		line:      ipStr + ` hostname alias`,
-		wantIP:    ip,
-		wantHosts: []string{"hostname", "alias"},
-	}, {
-		name:      "invalid_line",
-		line:      ipStr,
-		wantIP:    netip.Addr{},
-		wantHosts: nil,
-	}, {
-		name:      "invalid_line_hostname",
-		line:      ipStr + ` # hostname`,
-		wantIP:    ip,
-		wantHosts: nil,
-	}, {
-		name:      "commented_aliases",
-		line:      ipStr + ` hostname # alias`,
-		wantIP:    ip,
-		wantHosts: []string{"hostname"},
-	}, {
-		name:      "whole_comment",
-		line:      `# ` + ipStr + ` hostname`,
-		wantIP:    netip.Addr{},
-		wantHosts: nil,
-	}, {
-		name:      "partial_comment",
-		line:      ipStr + ` host#name`,
-		wantIP:    ip,
-		wantHosts: []string{"host"},
-	}, {
-		name:      "empty",
-		line:      ``,
-		wantIP:    netip.Addr{},
-		wantHosts: nil,
-	}, {
-		name:      "bad_hosts",
-		line:      ipStr + ` bad..host bad._tld empty.tld. ok.host`,
-		wantIP:    ip,
-		wantHosts: []string{"ok.host"},
-	}}
-
-	for _, tc := range testCases {
-		hp := hostsParser{}
-		t.Run(tc.name, func(t *testing.T) {
-			got, hosts := hp.parseLine(tc.line)
-			assert.Equal(t, tc.wantIP, got)
-			assert.Equal(t, tc.wantHosts, hosts)
-		})
-	}
 }

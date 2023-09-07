@@ -6,7 +6,7 @@
 .page-header--logs {
     flex-direction: row;
     align-items: flex-end;
-    margin: 2rem 0 2.8rem;
+    margin: 0.5rem 0 2.8rem;
 }
 
 .page-header--logs .page-title {
@@ -18,7 +18,7 @@
     .page-header--logs {
         flex-direction: column;
         align-items: center;
-        margin: 1.1rem 0;
+        margin-bottom: 0 0 1.1rem;
     }
 
     .page-header--logs .page-title {

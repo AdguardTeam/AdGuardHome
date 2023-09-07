@@ -44,7 +44,7 @@ const Line = ({
         enableGridY={false}
         enablePoints={false}
         xFormat={(x) => {
-            if (interval === 1 || interval === 7) {
+            if (interval >= 0 && interval <= 7) {
                 const hoursAgo = subHours(Date.now(), 24 * interval);
                 return dateFormat(addHours(hoursAgo, x), 'D MMM HH:00');
             }

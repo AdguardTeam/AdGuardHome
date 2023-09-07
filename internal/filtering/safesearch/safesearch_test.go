@@ -3,6 +3,7 @@ package safesearch_test
 import (
 	"context"
 	"net"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -43,7 +44,7 @@ var testConf = filtering.SafeSearchConfig{
 
 // yandexIP is the expected IP address of Yandex safe search results.  Keep in
 // sync with the rules data.
-var yandexIP = net.IPv4(213, 180, 193, 56)
+var yandexIP = netip.AddrFrom4([4]byte{213, 180, 193, 56})
 
 func TestDefault_CheckHost_yandex(t *testing.T) {
 	conf := testConf
@@ -87,7 +88,7 @@ func TestDefault_CheckHost_yandexAAAA(t *testing.T) {
 	// once the TODO in [safesearch.Default.newResult] is resolved.
 	require.Len(t, res.Rules, 1)
 
-	assert.Nil(t, res.Rules[0].IP)
+	assert.Empty(t, res.Rules[0].IP)
 	assert.EqualValues(t, filtering.SafeSearchListID, res.Rules[0].FilterListID)
 }
 
@@ -96,7 +97,7 @@ func TestDefault_CheckHost_google(t *testing.T) {
 		OnLookupIP: func(_ context.Context, _, host string) (ips []net.IP, err error) {
 			ip4, ip6 := aghtest.HostToIPs(host)
 
-			return []net.IP{ip4, ip6}, nil
+			return []net.IP{ip4.AsSlice(), ip6.AsSlice()}, nil
 		},
 	}
 
@@ -178,7 +179,7 @@ func TestDefault_CheckHost_duckduckgoAAAA(t *testing.T) {
 	// once the TODO in [safesearch.Default.newResult] is resolved.
 	require.Len(t, res.Rules, 1)
 
-	assert.Nil(t, res.Rules[0].IP)
+	assert.Empty(t, res.Rules[0].IP)
 	assert.EqualValues(t, filtering.SafeSearchListID, res.Rules[0].FilterListID)
 }
 

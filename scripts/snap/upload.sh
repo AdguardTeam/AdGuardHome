@@ -76,8 +76,8 @@ do
 	# Skip the ones that were failed by a duplicate upload error.
 	case "$snapcraft_output"
 	in
-	(*'A file with this exact same content has already been uploaded'|\
-		'Error checking upload uniqueness'*)
+	(*'A file with this exact same content has already been uploaded'*|\
+		*'Error checking upload uniqueness'*)
 
 		log "warning: duplicate upload, skipping"
 		log "snapcraft upload error: ${snapcraft_output}"

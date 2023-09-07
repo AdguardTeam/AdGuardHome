@@ -179,6 +179,30 @@ const Form = ({
                 <Examples />
                 <hr />
             </div>
+            <div className="col-12">
+                <label
+                    className="form__label form__label--with-desc"
+                    htmlFor="fallback_dns"
+                >
+                    <Trans>fallback_dns_title</Trans>
+                </label>
+                <div className="form__desc form__desc--top">
+                    <Trans>fallback_dns_desc</Trans>
+                </div>
+                <Field
+                    id="fallback_dns"
+                    name="fallback_dns"
+                    component={renderTextareaField}
+                    type="text"
+                    className="form-control form-control--textarea form-control--textarea-small font-monospace"
+                    placeholder={t('fallback_dns_placeholder')}
+                    disabled={processingSetConfig}
+                    normalizeOnBlur={removeEmptyLines}
+                />
+            </div>
+            <div className="col-12">
+                <hr />
+            </div>
             <div className="col-12 mb-2">
                 <label
                     className="form__label form__label--with-desc"
@@ -286,6 +310,7 @@ Form.propTypes = {
     invalid: PropTypes.bool,
     initialValues: PropTypes.object,
     upstream_dns: PropTypes.string,
+    fallback_dns: PropTypes.string,
     bootstrap_dns: PropTypes.string,
 };
 

@@ -25,73 +25,18 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// BlockingMode is an enum of all allowed blocking modes.
-type BlockingMode string
-
-// Allowed blocking modes.
-const (
-	// BlockingModeCustomIP means respond with a custom IP address.
-	BlockingModeCustomIP BlockingMode = "custom_ip"
-
-	// BlockingModeDefault is the same as BlockingModeNullIP for
-	// Adblock-style rules, but responds with the IP address specified in
-	// the rule when blocked by an `/etc/hosts`-style rule.
-	BlockingModeDefault BlockingMode = "default"
-
-	// BlockingModeNullIP means respond with a zero IP address: "0.0.0.0"
-	// for A requests and "::" for AAAA ones.
-	BlockingModeNullIP BlockingMode = "null_ip"
-
-	// BlockingModeNXDOMAIN means respond with the NXDOMAIN code.
-	BlockingModeNXDOMAIN BlockingMode = "nxdomain"
-
-	// BlockingModeREFUSED means respond with the REFUSED code.
-	BlockingModeREFUSED BlockingMode = "refused"
-)
-
-// FilteringConfig represents the DNS filtering configuration of AdGuard Home
-// The zero FilteringConfig is empty and ready for use.
-type FilteringConfig struct {
+// Config represents the DNS filtering configuration of AdGuard Home. The zero
+// Config is empty and ready for use.
+type Config struct {
 	// Callbacks for other modules
 
 	// FilterHandler is an optional additional filtering callback.
-	FilterHandler func(clientAddr net.IP, clientID string, settings *filtering.Settings) `yaml:"-"`
+	FilterHandler func(cliAddr netip.Addr, clientID string, settings *filtering.Settings) `yaml:"-"`
 
 	// GetCustomUpstreamByClient is a callback that returns upstreams
 	// configuration based on the client IP address or ClientID.  It returns
 	// nil if there are no custom upstreams for the client.
 	GetCustomUpstreamByClient func(id string) (conf *proxy.UpstreamConfig, err error) `yaml:"-"`
-
-	// Protection configuration
-
-	// ProtectionEnabled defines whether or not use any of filtering features.
-	ProtectionEnabled bool `yaml:"protection_enabled"`
-
-	// BlockingMode defines the way how blocked responses are constructed.
-	BlockingMode BlockingMode `yaml:"blocking_mode"`
-
-	// BlockingIPv4 is the IP address to be returned for a blocked A request.
-	BlockingIPv4 net.IP `yaml:"blocking_ipv4"`
-
-	// BlockingIPv6 is the IP address to be returned for a blocked AAAA
-	// request.
-	BlockingIPv6 net.IP `yaml:"blocking_ipv6"`
-
-	// BlockedResponseTTL is the time-to-live value for blocked responses.  If
-	// 0, then default value is used (3600).
-	BlockedResponseTTL uint32 `yaml:"blocked_response_ttl"`
-
-	// ProtectionDisabledUntil is the timestamp until when the protection is
-	// disabled.
-	ProtectionDisabledUntil *time.Time `yaml:"protection_disabled_until"`
-
-	// ParentalBlockHost is the IP (or domain name) which is used to respond to
-	// DNS requests blocked by parental control.
-	ParentalBlockHost string `yaml:"parental_block_host"`
-
-	// SafeBrowsingBlockHost is the IP (or domain name) which is used to
-	// respond to DNS requests blocked by safe-browsing.
-	SafeBrowsingBlockHost string `yaml:"safebrowsing_block_host"`
 
 	// Anti-DNS amplification
 
@@ -118,6 +63,10 @@ type FilteringConfig struct {
 	// resolvers (plain DNS only).
 	BootstrapDNS []string `yaml:"bootstrap_dns"`
 
+	// FallbackDNS is the list of fallback DNS servers used when upstream DNS
+	// servers are not responding.
+	FallbackDNS []string `yaml:"fallback_dns"`
+
 	// AllServers, if true, parallel queries to all configured upstream servers
 	// are enabled.
 	AllServers bool `yaml:"all_servers"`
@@ -133,7 +82,7 @@ type FilteringConfig struct {
 
 	// AllowedClients is the slice of IP addresses, CIDR networks, and
 	// ClientIDs of allowed clients.  If not empty, only these clients are
-	// allowed, and [FilteringConfig.DisallowedClients] are ignored.
+	// allowed, and [Config.DisallowedClients] are ignored.
 	AllowedClients []string `yaml:"allowed_clients"`
 
 	// DisallowedClients is the slice of IP addresses, CIDR networks, and
@@ -279,7 +228,7 @@ type ServerConfig struct {
 	// Remove that.
 	AddrProcConf *client.DefaultAddrProcConfig
 
-	FilteringConfig
+	Config
 	TLSConfig
 	DNSCryptConfig
 	TLSAllowUnencryptedDoH bool
@@ -318,13 +267,6 @@ type ServerConfig struct {
 	// UseHTTP3Upstreams defines if HTTP/3 is be allowed for DNS-over-HTTPS
 	// upstreams.
 	UseHTTP3Upstreams bool
-}
-
-// if any of ServerConfig values are zero, then default values from below are used
-var defaultValues = ServerConfig{
-	UDPListenAddrs:  []*net.UDPAddr{{Port: 53}},
-	TCPListenAddrs:  []*net.TCPAddr{{Port: 53}},
-	FilteringConfig: FilteringConfig{BlockedResponseTTL: 3600},
 }
 
 // createProxyConfig creates and validates configuration for the main proxy.
@@ -399,10 +341,7 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 	return conf, nil
 }
 
-const (
-	defaultSafeBrowsingBlockHost = "standard-block.dns.adguard.com"
-	defaultParentalBlockHost     = "family-block.dns.adguard.com"
-)
+const defaultBlockedResponseTTL = 3600
 
 // initDefaultSettings initializes default settings if nothing
 // is configured
@@ -415,20 +354,12 @@ func (s *Server) initDefaultSettings() {
 		s.conf.BootstrapDNS = defaultBootstrap
 	}
 
-	if s.conf.ParentalBlockHost == "" {
-		s.conf.ParentalBlockHost = defaultParentalBlockHost
-	}
-
-	if s.conf.SafeBrowsingBlockHost == "" {
-		s.conf.SafeBrowsingBlockHost = defaultSafeBrowsingBlockHost
-	}
-
 	if s.conf.UDPListenAddrs == nil {
-		s.conf.UDPListenAddrs = defaultValues.UDPListenAddrs
+		s.conf.UDPListenAddrs = defaultUDPListenAddrs
 	}
 
 	if s.conf.TCPListenAddrs == nil {
-		s.conf.TCPListenAddrs = defaultValues.TCPListenAddrs
+		s.conf.TCPListenAddrs = defaultTCPListenAddrs
 	}
 
 	if len(s.conf.BlockedHosts) == 0 {
@@ -561,9 +492,9 @@ func (s *Server) UpdatedProtectionStatus() (enabled bool, disabledUntil *time.Ti
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	disabledUntil = s.conf.ProtectionDisabledUntil
+	enabled, disabledUntil = s.dnsFilter.ProtectionStatus()
 	if disabledUntil == nil {
-		return s.conf.ProtectionEnabled, nil
+		return enabled, nil
 	}
 
 	if time.Now().Before(*disabledUntil) {
@@ -595,8 +526,7 @@ func (s *Server) enableProtectionAfterPause() {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
-	s.conf.ProtectionEnabled = true
-	s.conf.ProtectionDisabledUntil = nil
+	s.dnsFilter.SetProtectionStatus(true, nil)
 
 	log.Info("dns: protection is restarted after pause")
 }

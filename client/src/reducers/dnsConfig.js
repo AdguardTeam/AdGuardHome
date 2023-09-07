@@ -15,6 +15,7 @@ const dnsConfig = handleActions(
                 blocking_ipv4,
                 blocking_ipv6,
                 upstream_dns,
+                fallback_dns,
                 bootstrap_dns,
                 local_ptr_upstreams,
                 ...values
@@ -26,6 +27,7 @@ const dnsConfig = handleActions(
                 blocking_ipv4: blocking_ipv4 || DEFAULT_BLOCKING_IPV4,
                 blocking_ipv6: blocking_ipv6 || DEFAULT_BLOCKING_IPV6,
                 upstream_dns: (upstream_dns && upstream_dns.join('\n')) || '',
+                fallback_dns: (fallback_dns && fallback_dns.join('\n')) || '',
                 bootstrap_dns: (bootstrap_dns && bootstrap_dns.join('\n')) || '',
                 local_ptr_upstreams: (local_ptr_upstreams && local_ptr_upstreams.join('\n')) || '',
                 processingGetConfig: false,

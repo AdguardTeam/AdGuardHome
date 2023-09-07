@@ -6,7 +6,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import ReactTable from 'react-table';
 
-import { getAllBlockedServices } from '../../../../actions/services';
+import { getAllBlockedServices, getBlockedServices } from '../../../../actions/services';
 import { initSettings } from '../../../../actions';
 import {
     splitByNewLine,
@@ -14,7 +14,7 @@ import {
     sortIp,
     getService,
 } from '../../../../helpers/helpers';
-import { MODAL_TYPE } from '../../../../helpers/constants';
+import { MODAL_TYPE, LOCAL_TIMEZONE_VALUE } from '../../../../helpers/constants';
 import Card from '../../../ui/Card';
 import CellWrap from '../../../ui/CellWrap';
 import LogsSearchLink from '../../../ui/LogsSearchLink';
@@ -45,6 +45,7 @@ const ClientsTable = ({
 
     useEffect(() => {
         dispatch(getAllBlockedServices());
+        dispatch(getBlockedServices());
         dispatch(initSettings());
     }, []);
 
@@ -112,6 +113,9 @@ const ClientsTable = ({
             tags: [],
             use_global_settings: true,
             use_global_blocked_services: true,
+            blocked_services_schedule: {
+                time_zone: LOCAL_TIMEZONE_VALUE,
+            },
             safe_search: { ...(safesearch || {}) },
         };
     };

@@ -74,6 +74,12 @@
     color: #295a9f;
 }
 
+[data-theme="dark"] .logs__text--link,
+[data-theme="dark"] .logs__text--link:hover,
+[data-theme="dark"] .logs__text--link:focus {
+    color: var(--gray-f3);
+}
+
 .icon--selected {
     background-color: var(--gray-f3);
     border: solid 1px var(--gray-d8);

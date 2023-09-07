@@ -552,3 +552,5 @@ export const DISABLE_PROTECTION_TIMINGS = {
 };
 
 export const LOCAL_STORAGE_THEME_KEY = 'account_theme';
+
+export const LOCAL_TIMEZONE_VALUE = 'Local';

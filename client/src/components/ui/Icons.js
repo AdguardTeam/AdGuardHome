@@ -225,6 +225,20 @@ const Icons = () => (
                 <path stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" d="M8.036 10.93l3.93 4.07 4.068-3.93" />
             </g>
         </symbol>
+
+        <symbol id="calendar" fill="none" height="24" viewBox="0 0 24 24" width="24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="4" y="5.5" width="16" height="14" rx="3" />
+            <path d="M12 4V7" />
+            <path d="M8 4L8 7" />
+            <path d="M16 4V7" />
+            <path d="M9.7397 15.5V11L8 13" />
+            <path d="M14.7397 15.5V11L13 13" />
+        </symbol>
+
+        <symbol id="watch" fill="none" height="24" viewBox="0 0 24 24" width="24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M16.1215 12.1213H11.8789V7.87866" />
+        </symbol>
     </svg>
 );
 

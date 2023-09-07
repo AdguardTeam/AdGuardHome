@@ -64,6 +64,12 @@ export default {
             "homepage": "https://github.com/MasterKia/PersianBlocker",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_19.txt"
         },
+        "ISR_easyList_hebrew": {
+            "name": "ISR: EasyList Hebrew",
+            "categoryId": "regional",
+            "homepage": "https://github.com/easylist/EasyListHebrew",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_43.txt"
+        },
         "KOR_list_kr": {
             "name": "KOR: List-KR DNS",
             "categoryId": "regional",
@@ -172,11 +178,35 @@ export default {
             "homepage": "https://github.com/DandelionSprout/adfilt",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_6.txt"
         },
+        "hagezi_allowlist_referral": {
+            "name": "HaGeZi's Allowlist Referral",
+            "categoryId": "other",
+            "homepage": "https://github.com/hagezi/dns-blocklists#referral",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_45.txt"
+        },
+        "hagezi_antipiracy_blocklist": {
+            "name": "HaGeZi's Anti-Piracy Blocklist",
+            "categoryId": "other",
+            "homepage": "https://github.com/hagezi/dns-blocklists#piracy",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_46.txt"
+        },
+        "hagezi_gambling_blocklist": {
+            "name": "HaGeZi's Gambling Blocklist",
+            "categoryId": "other",
+            "homepage": "https://github.com/hagezi/dns-blocklists#gambling",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_47.txt"
+        },
         "hagezi_multinormal": {
             "name": "HaGeZi Multi NORMAL",
             "categoryId": "general",
             "homepage": "https://github.com/hagezi/dns-blocklists",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_34.txt"
+        },
+        "hagezi_threat_intelligence_feeds": {
+            "name": "HaGeZi's Threat Intelligence Feeds",
+            "categoryId": "security",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_44.txt"
         },
         "no_google": {
             "name": "No Google",
@@ -219,6 +249,12 @@ export default {
             "categoryId": "general",
             "homepage": "https://pgl.yoyo.org/adservers/",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_3.txt"
+        },
+        "phishing_army": {
+            "name": "Phishing Army",
+            "categoryId": "security",
+            "homepage": "https://gitlab.com/malware-filter/phishing-filter",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_18.txt"
         },
         "scam_blocklist_by_durablenapkin": {
             "name": "Scam Blocklist by DurableNapkin",

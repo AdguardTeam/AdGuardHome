@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"encoding/binary"
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -11,6 +12,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
+	"golang.org/x/exp/slices"
 )
 
 // beforeRequestHandler is the handler that is called before any other
@@ -57,8 +59,8 @@ func (s *Server) clientRequestFilteringSettings(dctx *dnsContext) (setts *filter
 	setts = s.dnsFilter.Settings()
 	setts.ProtectionEnabled = dctx.protectionEnabled
 	if s.conf.FilterHandler != nil {
-		ip, _ := netutil.IPAndPortFromAddr(dctx.proxyCtx.Addr)
-		s.conf.FilterHandler(ip, dctx.clientID, setts)
+		addrPort := netutil.NetAddrToAddrPort(dctx.proxyCtx.Addr)
+		s.conf.FilterHandler(addrPort.Addr(), dctx.clientID, setts)
 	}
 
 	return setts
@@ -123,7 +125,7 @@ func (s *Server) filterRewritten(
 	for _, ip := range res.IPList {
 		switch qt {
 		case dns.TypeA:
-			a := s.genAnswerA(req, ip.To4())
+			a := s.genAnswerA(req, ip)
 			a.Hdr.Name = dns.Fqdn(name)
 			resp.Answer = append(resp.Answer, a)
 		case dns.TypeAAAA:
@@ -144,10 +146,6 @@ func (s *Server) checkHostRules(host string, rrtype uint16, setts *filtering.Set
 ) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
-
-	if s.dnsFilter == nil {
-		return nil, nil
-	}
 
 	var res filtering.Result
 	res, err = s.dnsFilter.CheckHostRules(host, rrtype, setts)
@@ -176,19 +174,26 @@ func (s *Server) filterDNSResponse(
 		case *dns.CNAME:
 			host = strings.TrimSuffix(a.Target, ".")
 			rrtype = dns.TypeCNAME
+
+			res, err = s.checkHostRules(host, rrtype, setts)
 		case *dns.A:
 			host = a.A.String()
 			rrtype = dns.TypeA
+
+			res, err = s.checkHostRules(host, rrtype, setts)
 		case *dns.AAAA:
 			host = a.AAAA.String()
 			rrtype = dns.TypeAAAA
+
+			res, err = s.checkHostRules(host, rrtype, setts)
+		case *dns.HTTPS:
+			res, err = s.filterHTTPSRecords(a, setts)
 		default:
 			continue
 		}
 
-		log.Debug("dnsforward: checking %s %s for %s", dns.Type(rrtype), host, a.Header().Name)
+		log.Debug("dnsforward: checked %s %s for %s", dns.Type(rrtype), host, a.Header().Name)
 
-		res, err = s.checkHostRules(host, rrtype, setts)
 		if err != nil {
 			return nil, err
 		} else if res == nil {
@@ -197,6 +202,70 @@ func (s *Server) filterDNSResponse(
 			pctx.Res = s.genDNSFilterMessage(pctx, res)
 			log.Debug("dnsforward: matched %q by response: %q", pctx.Req.Question[0].Name, host)
 
+			return res, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// removeIPv6Hints deletes IPv6 hints from RR values.
+func removeIPv6Hints(rr *dns.HTTPS) {
+	rr.Value = slices.DeleteFunc(rr.Value, func(kv dns.SVCBKeyValue) (del bool) {
+		_, ok := kv.(*dns.SVCBIPv6Hint)
+
+		return ok
+	})
+}
+
+// filterHTTPSRecords filters HTTPS answers information through all rule list
+// filters of the server filters.  Removes IPv6 hints if IPv6 resolving is
+// disabled.
+func (s *Server) filterHTTPSRecords(rr *dns.HTTPS, setts *filtering.Settings) (r *filtering.Result, err error) {
+	if s.conf.AAAADisabled {
+		removeIPv6Hints(rr)
+	}
+
+	for _, kv := range rr.Value {
+		var ips []net.IP
+		switch hint := kv.(type) {
+		case *dns.SVCBIPv4Hint:
+			ips = hint.Hint
+		case *dns.SVCBIPv6Hint:
+			ips = hint.Hint
+		default:
+			// Go on.
+		}
+
+		if len(ips) == 0 {
+			continue
+		}
+
+		r, err = s.filterSVCBHint(ips, setts)
+		if err != nil {
+			return nil, fmt.Errorf("filtering svcb hints: %w", err)
+		}
+
+		if r != nil {
+			return r, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// filterSVCBHint filters SVCB hint information.
+func (s *Server) filterSVCBHint(
+	hint []net.IP,
+	setts *filtering.Settings,
+) (res *filtering.Result, err error) {
+	for _, h := range hint {
+		res, err = s.checkHostRules(h.String(), dns.TypeHTTPS, setts)
+		if err != nil {
+			return nil, fmt.Errorf("checking rules for %s: %w", h, err)
+		}
+
+		if res != nil && res.IsFiltered {
 			return res, nil
 		}
 	}

@@ -134,7 +134,6 @@ const Form = (props) => {
                         component={renderInputField}
                         className="form-control"
                         placeholder={t('enter_name_hint')}
-                        validate={[validateRequiredValue]}
                         normalizeOnBlur={(data) => data.trim()}
                     />
                 </div>

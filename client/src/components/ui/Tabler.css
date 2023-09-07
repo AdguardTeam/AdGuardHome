@@ -470,6 +470,10 @@ hr {
     border-top: 1px solid rgba(0, 40, 100, 0.12);
 }
 
+[data-theme=dark] hr {
+    border-color: var(--card-border-color);
+}
+
 small,
 .small {
     font-size: 87.5%;
@@ -10204,7 +10208,7 @@ body.fixed-header .page {
     -ms-flex-align: center;
     align-items: center;
     flex-direction: column;
-    margin: 1.5rem 0 1.5rem;
+    margin: 0 0 1.5rem;
     -ms-flex-wrap: wrap;
     flex-wrap: wrap;
 }

@@ -22,7 +22,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
-	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
@@ -94,16 +93,17 @@ func createTestServer(
 
 	f.SetEnabled(true)
 
+	dhcp := &testDHCP{
+		OnEnabled:  func() (ok bool) { return false },
+		OnHostByIP: func(ip netip.Addr) (host string) { return "" },
+		OnIPByHost: func(host string) (ip netip.Addr) { panic("not implemented") },
+	}
 	s, err = NewServer(DNSCreateParams{
-		DHCPServer:  testDHCP,
+		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
 	require.NoError(t, err)
-
-	if forwardConf.BlockingMode == "" {
-		forwardConf.BlockingMode = BlockingModeDefault
-	}
 
 	err = s.Prepare(&forwardConf)
 	require.NoError(t, err)
@@ -174,10 +174,12 @@ func createTestTLS(t *testing.T, tlsConf TLSConfig) (s *Server, certPem []byte) 
 	var keyPem []byte
 	_, certPem, keyPem = createServerTLSConfig(t)
 
-	s = createTestServer(t, &filtering.Config{}, ServerConfig{
+	s = createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 	}, nil)
@@ -231,18 +233,29 @@ func createTestMessageWithType(host string, qtype uint16) *dns.Msg {
 	return req
 }
 
-func assertGoogleAResponse(t *testing.T, reply *dns.Msg) {
-	assertResponse(t, reply, net.IP{8, 8, 8, 8})
+// newResp returns the new DNS response with response code set to rcode, req
+// used as request, and rrs added.
+func newResp(rcode int, req *dns.Msg, ans []dns.RR) (resp *dns.Msg) {
+	resp = (&dns.Msg{}).SetRcode(req, rcode)
+	resp.RecursionAvailable = true
+	resp.Compress = true
+	resp.Answer = ans
+
+	return resp
 }
 
-func assertResponse(t *testing.T, reply *dns.Msg, ip net.IP) {
+func assertGoogleAResponse(t *testing.T, reply *dns.Msg) {
+	assertResponse(t, reply, netip.AddrFrom4([4]byte{8, 8, 8, 8}))
+}
+
+func assertResponse(t *testing.T, reply *dns.Msg, ip netip.Addr) {
 	t.Helper()
 
 	require.Lenf(t, reply.Answer, 1, "dns server returned reply with wrong number of answers - %d", len(reply.Answer))
 
 	a, ok := reply.Answer[0].(*dns.A)
 	require.Truef(t, ok, "dns server returned wrong answer type instead of A: %v", reply.Answer[0])
-	assert.Truef(t, a.A.Equal(ip), "dns server returned wrong answer instead of %s: %s", ip, a.A)
+	assert.Equal(t, net.IP(ip.AsSlice()), a.A)
 }
 
 // sendTestMessagesAsync sends messages in parallel to check for race issues.
@@ -288,10 +301,12 @@ func sendTestMessages(t *testing.T, conn *dns.Conn) {
 }
 
 func TestServer(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{}, ServerConfig{
+	s := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 	}, nil)
@@ -329,13 +344,12 @@ func TestServer_timeout(t *testing.T) {
 	t.Run("custom", func(t *testing.T) {
 		srvConf := &ServerConfig{
 			UpstreamTimeout: testTimeout,
-			FilteringConfig: FilteringConfig{
-				BlockingMode:     BlockingModeDefault,
+			Config: Config{
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 			},
 		}
 
-		s, err := NewServer(DNSCreateParams{})
+		s, err := NewServer(DNSCreateParams{DNSFilter: createTestDNSFilter(t)})
 		require.NoError(t, err)
 
 		err = s.Prepare(srvConf)
@@ -345,11 +359,10 @@ func TestServer_timeout(t *testing.T) {
 	})
 
 	t.Run("default", func(t *testing.T) {
-		s, err := NewServer(DNSCreateParams{})
+		s, err := NewServer(DNSCreateParams{DNSFilter: createTestDNSFilter(t)})
 		require.NoError(t, err)
 
-		s.conf.FilteringConfig.BlockingMode = BlockingModeDefault
-		s.conf.FilteringConfig.EDNSClientSubnet = &EDNSClientSubnet{
+		s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{
 			Enabled: false,
 		}
 		err = s.Prepare(&s.conf)
@@ -360,10 +373,12 @@ func TestServer_timeout(t *testing.T) {
 }
 
 func TestServerWithProtectionDisabled(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{}, ServerConfig{
+	s := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 	}, nil)
@@ -439,9 +454,8 @@ func TestServerRace(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
-			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
+		Config: Config{
+			UpstreamDNS: []string{"8.8.8.8:53", "8.8.4.4:53"},
 		},
 		ConfigModified: func() {},
 	}
@@ -462,7 +476,7 @@ func TestSafeSearch(t *testing.T) {
 		OnLookupIP: func(_ context.Context, _, host string) (ips []net.IP, err error) {
 			ip4, ip6 := aghtest.HostToIPs(host)
 
-			return []net.IP{ip4, ip6}, nil
+			return []net.IP{ip4.AsSlice(), ip6.AsSlice()}, nil
 		},
 	}
 
@@ -474,6 +488,8 @@ func TestSafeSearch(t *testing.T) {
 	}
 
 	filterConf := &filtering.Config{
+		BlockingMode:        filtering.BlockingModeDefault,
+		ProtectionEnabled:   true,
 		SafeSearchConf:      safeSearchConf,
 		SafeSearchCacheSize: 1000,
 		CacheTime:           30,
@@ -490,8 +506,7 @@ func TestSafeSearch(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -503,12 +518,12 @@ func TestSafeSearch(t *testing.T) {
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
 	client := &dns.Client{}
 
-	yandexIP := net.IP{213, 180, 193, 56}
+	yandexIP := netip.AddrFrom4([4]byte{213, 180, 193, 56})
 	googleIP, _ := aghtest.HostToIPs("forcesafesearch.google.com")
 
 	testCases := []struct {
 		host string
-		want net.IP
+		want netip.Addr
 	}{{
 		host: "yandex.com.",
 		want: yandexIP,
@@ -548,10 +563,12 @@ func TestSafeSearch(t *testing.T) {
 }
 
 func TestInvalidRequest(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{}, ServerConfig{
+	s := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -579,15 +596,16 @@ func TestBlockedRequest(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
-			BlockingMode:      BlockingModeDefault,
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
 		},
 	}
-	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
+	s := createTestServer(t, &filtering.Config{
+		ProtectionEnabled: true,
+		BlockingMode:      filtering.BlockingModeDefault,
+	}, forwardConf, nil)
 	startDeferStop(t, s)
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
@@ -608,14 +626,15 @@ func TestServerCustomClientUpstream(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
 		},
 	}
-	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
+	s := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, forwardConf, nil)
 	s.conf.GetCustomUpstreamByClient = func(_ string) (conf *proxy.UpstreamConfig, err error) {
 		ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
 			return aghalg.Coalesce(
@@ -658,10 +677,12 @@ var testIPv4 = map[string][]net.IP{
 }
 
 func TestBlockCNAMEProtectionEnabled(t *testing.T) {
-	s := createTestServer(t, &filtering.Config{}, ServerConfig{
+	s := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -671,7 +692,7 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 		CName: testCNAMEs,
 		IPv4:  testIPv4,
 	}
-	s.conf.ProtectionEnabled = false
+
 	s.dnsProxy.UpstreamConfig = &proxy.UpstreamConfig{
 		Upstreams: []upstream.Upstream{testUpstm},
 	}
@@ -693,15 +714,16 @@ func TestBlockCNAME(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
-			BlockingMode:      BlockingModeDefault,
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
 		},
 	}
-	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
+	s := createTestServer(t, &filtering.Config{
+		ProtectionEnabled: true,
+		BlockingMode:      filtering.BlockingModeDefault,
+	}, forwardConf, nil)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.Upstream{
 			CName: testCNAMEs,
@@ -763,9 +785,8 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
-			FilterHandler: func(_ net.IP, _ string, settings *filtering.Settings) {
+		Config: Config{
+			FilterHandler: func(_ netip.Addr, _ string, settings *filtering.Settings) {
 				settings.FilteringEnabled = false
 			},
 			EDNSClientSubnet: &EDNSClientSubnet{
@@ -773,7 +794,9 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 			},
 		},
 	}
-	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
+	s := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, forwardConf, nil)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{
 		&aghtest.Upstream{
 			CName: testCNAMEs,
@@ -809,15 +832,16 @@ func TestNullBlockedRequest(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
-			BlockingMode:      BlockingModeNullIP,
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
 		},
 	}
-	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
+	s := createTestServer(t, &filtering.Config{
+		ProtectionEnabled: true,
+		BlockingMode:      filtering.BlockingModeNullIP,
+	}, forwardConf, nil)
 	startDeferStop(t, s)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
@@ -849,11 +873,21 @@ func TestBlockedCustomIP(t *testing.T) {
 		Data: []byte(rules),
 	}}
 
-	f, err := filtering.New(&filtering.Config{}, filters)
+	f, err := filtering.New(&filtering.Config{
+		ProtectionEnabled: true,
+		BlockingMode:      filtering.BlockingModeCustomIP,
+		BlockingIPv4:      netip.Addr{},
+		BlockingIPv6:      netip.Addr{},
+	}, filters)
 	require.NoError(t, err)
 
+	dhcp := &testDHCP{
+		OnEnabled:  func() (ok bool) { return false },
+		OnHostByIP: func(_ netip.Addr) (host string) { panic("not implemented") },
+		OnIPByHost: func(_ string) (ip netip.Addr) { panic("not implemented") },
+	}
 	s, err := NewServer(DNSCreateParams{
-		DHCPServer:  testDHCP,
+		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
@@ -862,11 +896,8 @@ func TestBlockedCustomIP(t *testing.T) {
 	conf := &ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
-			BlockingMode:      BlockingModeCustomIP,
-			BlockingIPv4:      nil,
-			UpstreamDNS:       []string{"8.8.8.8:53", "8.8.4.4:53"},
+		Config: Config{
+			UpstreamDNS: []string{"8.8.8.8:53", "8.8.4.4:53"},
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -877,8 +908,10 @@ func TestBlockedCustomIP(t *testing.T) {
 	err = s.Prepare(conf)
 	assert.Error(t, err)
 
-	conf.BlockingIPv4 = net.IP{0, 0, 0, 1}
-	conf.BlockingIPv6 = net.ParseIP("::1")
+	s.dnsFilter.SetBlockingMode(
+		filtering.BlockingModeCustomIP,
+		netip.AddrFrom4([4]byte{0, 0, 0, 1}),
+		netip.MustParseAddr("::1"))
 
 	err = s.Prepare(conf)
 	require.NoError(t, err)
@@ -915,16 +948,17 @@ func TestBlockedByHosts(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
-			BlockingMode:      BlockingModeDefault,
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
 		},
 	}
 
-	s := createTestServer(t, &filtering.Config{}, forwardConf, nil)
+	s := createTestServer(t, &filtering.Config{
+		ProtectionEnabled: true,
+		BlockingMode:      filtering.BlockingModeDefault,
+	}, forwardConf, nil)
 	startDeferStop(t, s)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 
@@ -955,15 +989,16 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 	ans4, _ := aghtest.HostToIPs(hostname)
 
 	filterConf := &filtering.Config{
-		SafeBrowsingEnabled: true,
-		SafeBrowsingChecker: sbChecker,
+		BlockingMode:          filtering.BlockingModeDefault,
+		ProtectionEnabled:     true,
+		SafeBrowsingEnabled:   true,
+		SafeBrowsingChecker:   sbChecker,
+		SafeBrowsingBlockHost: ans4.String(),
 	}
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
-			SafeBrowsingBlockHost: ans4.String(),
-			ProtectionEnabled:     true,
+		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -980,13 +1015,12 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 	require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
 	require.Lenf(t, reply.Answer, 1, "dns server %s returned reply with wrong number of answers - %d", addr, len(reply.Answer))
 
-	a, ok := reply.Answer[0].(*dns.A)
-	require.Truef(t, ok, "dns server %s returned wrong answer type instead of A: %v", addr, reply.Answer[0])
-	assert.Equal(t, ans4, a.A, "dns server %s returned wrong answer: %v", addr, a.A)
+	assertResponse(t, reply, ans4)
 }
 
 func TestRewrite(t *testing.T) {
 	c := &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
 		Rewrites: []*filtering.LegacyRewrite{{
 			Domain: "test.com",
 			Answer: "1.2.3.4",
@@ -1006,8 +1040,13 @@ func TestRewrite(t *testing.T) {
 
 	f.SetEnabled(true)
 
+	dhcp := &testDHCP{
+		OnEnabled:  func() (ok bool) { return false },
+		OnHostByIP: func(ip netip.Addr) (host string) { panic("not implemented") },
+		OnIPByHost: func(host string) (ip netip.Addr) { panic("not implemented") },
+	}
 	s, err := NewServer(DNSCreateParams{
-		DHCPServer:  testDHCP,
+		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
@@ -1016,10 +1055,8 @@ func TestRewrite(t *testing.T) {
 	assert.NoError(t, s.Prepare(&ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		FilteringConfig: FilteringConfig{
-			ProtectionEnabled: true,
-			BlockingMode:      BlockingModeDefault,
-			UpstreamDNS:       []string{"8.8.8.8:53"},
+		Config: Config{
+			UpstreamDNS: []string{"8.8.8.8:53"},
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -1102,31 +1139,42 @@ func publicKey(priv any) any {
 	}
 }
 
-var testDHCP = &dhcpd.MockInterface{
-	OnStart:   func() (err error) { panic("not implemented") },
-	OnStop:    func() (err error) { panic("not implemented") },
-	OnEnabled: func() (ok bool) { return true },
-	OnLeases: func(flags dhcpd.GetLeasesFlags) (leases []*dhcpd.Lease) {
-		return []*dhcpd.Lease{{
-			IP:       netip.MustParseAddr("192.168.12.34"),
-			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-			Hostname: "myhost",
-		}}
-	},
-	OnSetOnLeaseChanged: func(olct dhcpd.OnLeaseChangedT) {},
-	OnFindMACbyIP:       func(ip netip.Addr) (mac net.HardwareAddr) { panic("not implemented") },
-	OnWriteDiskConfig:   func(c *dhcpd.ServerConfig) { panic("not implemented") },
+// testDHCP is a mock implementation of the [DHCP] interface.
+type testDHCP struct {
+	OnHostByIP func(ip netip.Addr) (host string)
+	OnIPByHost func(host string) (ip netip.Addr)
+	OnEnabled  func() (ok bool)
 }
+
+// type check
+var _ DHCP = (*testDHCP)(nil)
+
+// HostByIP implements the [DHCP] interface for *testDHCP.
+func (d *testDHCP) HostByIP(ip netip.Addr) (host string) { return d.OnHostByIP(ip) }
+
+// IPByHost implements the [DHCP] interface for *testDHCP.
+func (d *testDHCP) IPByHost(host string) (ip netip.Addr) { return d.OnIPByHost(host) }
+
+// IsClientHost implements the [DHCP] interface for *testDHCP.
+func (d *testDHCP) Enabled() (ok bool) { return d.OnEnabled() }
 
 func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	const localDomain = "lan"
 
-	flt, err := filtering.New(&filtering.Config{}, nil)
+	flt, err := filtering.New(&filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, nil)
 	require.NoError(t, err)
 
 	s, err := NewServer(DNSCreateParams{
-		DNSFilter:   flt,
-		DHCPServer:  testDHCP,
+		DNSFilter: flt,
+		DHCPServer: &testDHCP{
+			OnEnabled:  func() (ok bool) { return true },
+			OnIPByHost: func(host string) (ip netip.Addr) { panic("not implemented") },
+			OnHostByIP: func(ip netip.Addr) (host string) {
+				return "myhost"
+			},
+		},
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 		LocalDomain: localDomain,
 	})
@@ -1135,9 +1183,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	s.conf.UDPListenAddrs = []*net.UDPAddr{{}}
 	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
-	s.conf.FilteringConfig.ProtectionEnabled = true
-	s.conf.FilteringConfig.BlockingMode = BlockingModeDefault
-	s.conf.FilteringConfig.EDNSClientSubnet = &EDNSClientSubnet{Enabled: false}
+	s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{Enabled: false}
 
 	err = s.Prepare(&s.conf)
 	require.NoError(t, err)
@@ -1175,8 +1221,14 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	`)},
 	}
 
+	dhcp := &testDHCP{
+		OnEnabled:  func() (ok bool) { return false },
+		OnIPByHost: func(host string) (ip netip.Addr) { panic("not implemented") },
+		OnHostByIP: func(ip netip.Addr) (host string) { return "" },
+	}
+
 	var eventsCalledCounter uint32
-	hc, err := aghnet.NewHostsContainer(0, testFS, &aghtest.FSWatcher{
+	hc, err := aghnet.NewHostsContainer(testFS, &aghtest.FSWatcher{
 		OnEvents: func() (e <-chan struct{}) {
 			assert.Equal(t, uint32(1), atomic.AddUint32(&eventsCalledCounter, 1))
 
@@ -1195,7 +1247,8 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	})
 
 	flt, err := filtering.New(&filtering.Config{
-		EtcHosts: hc,
+		BlockingMode: filtering.BlockingModeDefault,
+		EtcHosts:     hc,
 	}, nil)
 	require.NoError(t, err)
 
@@ -1203,7 +1256,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 	var s *Server
 	s, err = NewServer(DNSCreateParams{
-		DHCPServer:  testDHCP,
+		DHCPServer:  dhcp,
 		DNSFilter:   flt,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 	})
@@ -1212,8 +1265,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	s.conf.UDPListenAddrs = []*net.UDPAddr{{}}
 	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
-	s.conf.FilteringConfig.BlockingMode = BlockingModeDefault
-	s.conf.FilteringConfig.EDNSClientSubnet = &EDNSClientSubnet{Enabled: false}
+	s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{Enabled: false}
 
 	err = s.Prepare(&s.conf)
 	require.NoError(t, err)

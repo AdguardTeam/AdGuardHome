@@ -14,7 +14,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
-	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -60,12 +59,12 @@ func initDNS() (err error) {
 		ShouldCountClient: Context.clients.shouldCountClient,
 	}
 
-	set, err := aghnet.NewDomainNameSet(config.Stats.Ignored)
+	engine, err := aghnet.NewIgnoreEngine(config.Stats.Ignored)
 	if err != nil {
 		return fmt.Errorf("statistics: ignored list: %w", err)
 	}
 
-	statsConf.Ignored = set
+	statsConf.Ignored = engine
 	Context.stats, err = stats.New(statsConf)
 	if err != nil {
 		return fmt.Errorf("init stats: %w", err)
@@ -84,18 +83,18 @@ func initDNS() (err error) {
 		FileEnabled:       config.QueryLog.FileEnabled,
 	}
 
-	set, err = aghnet.NewDomainNameSet(config.QueryLog.Ignored)
+	engine, err = aghnet.NewIgnoreEngine(config.QueryLog.Ignored)
 	if err != nil {
 		return fmt.Errorf("querylog: ignored list: %w", err)
 	}
 
-	conf.Ignored = set
+	conf.Ignored = engine
 	Context.queryLog, err = querylog.New(conf)
 	if err != nil {
 		return fmt.Errorf("init querylog: %w", err)
 	}
 
-	Context.filters, err = filtering.New(config.DNS.DnsfilterConf, nil)
+	Context.filters, err = filtering.New(config.Filtering, nil)
 	if err != nil {
 		// Don't wrap the error, since it's informative enough as is.
 		return err
@@ -123,7 +122,7 @@ func initDNSServer(
 	filters *filtering.DNSFilter,
 	sts stats.Interface,
 	qlog querylog.QueryLog,
-	dhcpSrv dhcpd.Interface,
+	dhcpSrv dnsforward.DHCP,
 	anonymizer *aghnet.IPMut,
 	httpReg aghhttp.RegisterFunc,
 	tlsConf *tlsConfigSettings,
@@ -231,13 +230,13 @@ func newServerConfig(
 	hosts := aghalg.CoalesceSlice(dnsConf.BindHosts, []netip.Addr{netutil.IPv4Localhost()})
 
 	newConf = &dnsforward.ServerConfig{
-		UDPListenAddrs:  ipsToUDPAddrs(hosts, dnsConf.Port),
-		TCPListenAddrs:  ipsToTCPAddrs(hosts, dnsConf.Port),
-		FilteringConfig: dnsConf.FilteringConfig,
-		ConfigModified:  onConfigModified,
-		HTTPRegister:    httpReg,
-		UseDNS64:        config.DNS.UseDNS64,
-		DNS64Prefixes:   config.DNS.DNS64Prefixes,
+		UDPListenAddrs: ipsToUDPAddrs(hosts, dnsConf.Port),
+		TCPListenAddrs: ipsToTCPAddrs(hosts, dnsConf.Port),
+		Config:         dnsConf.Config,
+		ConfigModified: onConfigModified,
+		HTTPRegister:   httpReg,
+		UseDNS64:       config.DNS.UseDNS64,
+		DNS64Prefixes:  config.DNS.DNS64Prefixes,
 	}
 
 	var initialAddresses []netip.Addr
@@ -378,7 +377,7 @@ func getDNSEncryption() (de dnsEncryption) {
 
 // applyAdditionalFiltering adds additional client information and settings if
 // the client has them.
-func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering.Settings) {
+func applyAdditionalFiltering(clientIP netip.Addr, clientID string, setts *filtering.Settings) {
 	// pref is a prefix for logging messages around the scope.
 	const pref = "applying filters"
 
@@ -386,7 +385,7 @@ func applyAdditionalFiltering(clientIP net.IP, clientID string, setts *filtering
 
 	log.Debug("%s: looking for client with ip %s and clientid %q", pref, clientIP, clientID)
 
-	if clientIP == nil {
+	if !clientIP.IsValid() {
 		return
 	}
 
@@ -502,14 +501,10 @@ func closeDNSServer() {
 		if err != nil {
 			log.Debug("closing stats: %s", err)
 		}
-
-		// TODO(e.burkov):  Find out if it's safe.
-		Context.stats = nil
 	}
 
 	if Context.queryLog != nil {
 		Context.queryLog.Close()
-		Context.queryLog = nil
 	}
 
 	log.Debug("all dns modules are closed")

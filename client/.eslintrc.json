@@ -81,6 +81,19 @@
             }
         ],
         "import/prefer-default-export": "off",
-        "no-alert": "off"
+        "no-alert": "off",
+        "arrow-body-style": "off",
+        "max-len": [
+            "error",
+            120,
+            2,
+            {
+                "ignoreUrls": true,
+                "ignoreComments": false,
+                "ignoreRegExpLiterals": true,
+                "ignoreStrings": true,
+                "ignoreTemplateLiterals": true
+            }
+        ]
     }
 }

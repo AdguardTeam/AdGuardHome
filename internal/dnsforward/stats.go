@@ -139,10 +139,14 @@ func (s *Server) updateStats(
 	clientIP string,
 ) {
 	pctx := ctx.proxyCtx
-	e := stats.Entry{
+	e := &stats.Entry{
 		Domain: aghnet.NormalizeDomain(pctx.Req.Question[0].Name),
 		Result: stats.RNotFiltered,
-		Time:   uint32(elapsed / 1000),
+		Time:   elapsed,
+	}
+
+	if pctx.Upstream != nil {
+		e.Upstream = pctx.Upstream.Address()
 	}
 
 	if clientID := ctx.clientID; clientID != "" {

@@ -11,7 +11,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
 )
 
@@ -36,8 +35,9 @@ type QueryLog interface {
 //
 // Do not alter any fields of this structure after using it.
 type Config struct {
-	// Ignored is the list of host names, which should not be written to log.
-	Ignored *stringutil.Set
+	// Ignored contains the list of host names, which should not be written to
+	// log, and matches them.
+	Ignored *aghnet.IgnoreEngine
 
 	// Anonymizer processes the IP addresses to anonymize those if needed.
 	Anonymizer *aghnet.IPMut

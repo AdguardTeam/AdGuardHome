@@ -41,11 +41,11 @@ type testStats struct {
 	// without actually implementing all methods.
 	stats.Interface
 
-	lastEntry stats.Entry
+	lastEntry *stats.Entry
 }
 
 // Update implements the [stats.Interface] interface for *testStats.
-func (l *testStats) Update(e stats.Entry) {
+func (l *testStats) Update(e *stats.Entry) {
 	if e.Domain == "" {
 		return
 	}

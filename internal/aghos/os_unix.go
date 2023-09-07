@@ -37,3 +37,7 @@ func isShutdownSignal(sig os.Signal) (ok bool) {
 		return false
 	}
 }
+
+func sendShutdownSignal(_ chan<- os.Signal) {
+	// On Unix we are already notified by the system.
+}

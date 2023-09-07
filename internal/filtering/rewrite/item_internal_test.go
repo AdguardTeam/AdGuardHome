@@ -18,9 +18,9 @@ func TestItem_equal(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name  string
 		left  *Item
 		right *Item
+		name  string
 		want  bool
 	}{{
 		name:  "nil_left",

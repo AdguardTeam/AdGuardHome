@@ -7,7 +7,6 @@ import (
 	"io/fs"
 	"net"
 	"net/netip"
-	"os"
 	"strings"
 	"testing"
 
@@ -17,9 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// testdata is the filesystem containing data for testing the package.
-var testdata fs.FS = os.DirFS("./testdata")
 
 // substRootDirFS replaces the aghos.RootDirFS function used throughout the
 // package with fsys for tests ran under t.

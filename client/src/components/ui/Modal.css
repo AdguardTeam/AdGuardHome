@@ -41,7 +41,8 @@
 }
 
 @media (min-width: 576px) {
-    .modal-dialog--clients {
+    .modal-dialog--clients,
+    .modal-dialog--schedule {
         max-width: 650px;
     }
 }

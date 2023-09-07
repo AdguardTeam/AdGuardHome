@@ -395,5 +395,12 @@
     "safe_search": "ค้นหาอย่างปลอดภัย",
     "blocklist": "บัญชีดำ",
     "filter_category_other": "อื่น ๆ",
-    "parental_control": "ควบคุมโดยผู้ปกครอง"
+    "parental_control": "ควบคุมโดยผู้ปกครอง",
+    "sunday_short": "อาทิตย์",
+    "monday_short": "จันทร์",
+    "tuesday_short": "อังคาร",
+    "wednesday_short": "พุธ",
+    "thursday_short": "พฤหัส",
+    "friday_short": "ศุกร์",
+    "saturday_short": "เสาร์"
 }

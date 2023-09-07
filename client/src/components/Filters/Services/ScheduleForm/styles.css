@@ -1,0 +1,134 @@
+.schedule__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.schedule__row:last-child {
+    margin-bottom: 0;
+}
+
+.schedule__rows {
+    margin-bottom: 24px;
+}
+
+.schedule__day {
+    display: none;
+    min-width: 110px;
+}
+
+.schedule__day--mobile {
+    display: block;
+    min-width: 50px;
+}
+
+@media screen and (min-width: 767px) {
+    .schedule__row {
+        justify-content: flex-start;
+    }
+
+    .schedule__day {
+        display: block;
+    }
+
+    .schedule__day--mobile {
+        display: none;
+    }
+
+    .schedule__actions {
+        margin-left: 32px;
+        white-space: nowrap;
+    }
+}
+
+.schedule__time {
+    min-width: 110px;
+}
+
+.schedule__button {
+    border: 0;
+}
+
+.schedule__days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.schedule__button-day {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 60px;
+    height: 32px;
+    font-size: 14px;
+    line-height: 14px;
+    color: #495057;
+    background-color: transparent;
+    border: 1px solid var(--card-border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    outline: 0;
+}
+
+.schedule__button-day[data-active="true"] {
+    color: var(--btn-success-bgcolor);
+    border-color: var(--btn-success-bgcolor);
+}
+
+.schedule__time-wrap {
+    margin-bottom: 24px;
+}
+
+.schedule__time-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.schedule__time-select {
+    display: flex;
+    align-items: center;
+}
+
+.schedule__error {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #cd201f;
+}
+
+.schedule__timezone {
+    margin-bottom: 24px;
+}
+
+.schedule__current-timezone {
+    margin-bottom: 16px;
+}
+
+.schedule__info {
+    margin-bottom: 24px;
+}
+
+.schedule__notice {
+    font-size: 13px;
+}
+
+.schedule__info-title {
+    margin-bottom: 8px;
+}
+
+.schedule__info-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.schedule__info-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    color: #495057;
+    flex-shrink: 0;
+}

@@ -390,9 +390,5 @@ func (m *ipsetMgr) Close() (err error) {
 		errs = append(errs, err)
 	}
 
-	if len(errs) != 0 {
-		return errors.List("closing ipsets", errs...)
-	}
-
-	return nil
+	return errors.Annotate(errors.Join(errs...), "closing ipsets: %w")
 }

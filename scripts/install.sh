@@ -468,7 +468,7 @@ rerun_with_root() {
 	readonly r u v
 
 	log 'restarting with root privileges'
-	
+
 	# Group curl/wget together with an echo, so that if the former fails before
 	# producing any output, the latter prints an exit command for the following
 	# shell to execute to prevent it from getting an empty input and exiting

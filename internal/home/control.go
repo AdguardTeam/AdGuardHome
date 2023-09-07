@@ -127,12 +127,12 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		fltConf                 *dnsforward.FilteringConfig
+		fltConf                 *dnsforward.Config
 		protectionDisabledUntil *time.Time
 		protectionEnabled       bool
 	)
 	if Context.dnsServer != nil {
-		fltConf = &dnsforward.FilteringConfig{}
+		fltConf = &dnsforward.Config{}
 		Context.dnsServer.WriteDiskConfig(fltConf)
 		protectionEnabled, protectionDisabledUntil = Context.dnsServer.UpdatedProtectionStatus()
 	}
@@ -170,7 +170,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		resp.IsDHCPAvailable = Context.dhcpServer != nil
 	}
 
-	_ = aghhttp.WriteJSONResponse(w, r, resp)
+	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // ------------------------
@@ -321,9 +321,10 @@ func preInstallHandler(handler http.Handler) http.Handler {
 	return &preInstallHandlerStruct{handler}
 }
 
-// handleHTTPSRedirect redirects the request to HTTPS, if needed.  If ok is
-// true, the middleware must continue handling the request.
-func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
+// handleHTTPSRedirect redirects the request to HTTPS, if needed, and adds some
+// HTTPS-related headers.  If proceed is true, the middleware must continue
+// handling the request.
+func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (proceed bool) {
 	web := Context.web
 	if web.httpsServer.server == nil {
 		return true
@@ -362,21 +363,17 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 		respHdr.Set(httphdr.AltSvc, altSvc)
 	}
 
-	if r.TLS == nil && forceHTTPS {
-		hostPort := host
-		if portHTTPS != defaultPortHTTPS {
-			hostPort = netutil.JoinHostPort(host, portHTTPS)
+	if forceHTTPS {
+		if r.TLS == nil {
+			u := httpsURL(r.URL, host, portHTTPS)
+			http.Redirect(w, r, u.String(), http.StatusTemporaryRedirect)
+
+			return false
 		}
 
-		httpsURL := &url.URL{
-			Scheme:   aghhttp.SchemeHTTPS,
-			Host:     hostPort,
-			Path:     r.URL.Path,
-			RawQuery: r.URL.RawQuery,
-		}
-		http.Redirect(w, r, httpsURL.String(), http.StatusTemporaryRedirect)
-
-		return false
+		// TODO(a.garipov): Consider adding a configurable max-age.  Currently,
+		// the default is 365 days.
+		respHdr.Set(httphdr.StrictTransportSecurity, aghhttp.HdrValStrictTransportSecurity)
 	}
 
 	// Allow the frontend from the HTTP origin to send requests to the HTTPS
@@ -395,6 +392,22 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (ok bool) {
 	return true
 }
 
+// httpsURL returns a copy of u for redirection to the HTTPS version, taking the
+// hostname and the HTTPS port into account.
+func httpsURL(u *url.URL, host string, portHTTPS int) (redirectURL *url.URL) {
+	hostPort := host
+	if portHTTPS != defaultPortHTTPS {
+		hostPort = netutil.JoinHostPort(host, portHTTPS)
+	}
+
+	return &url.URL{
+		Scheme:   aghhttp.SchemeHTTPS,
+		Host:     hostPort,
+		Path:     u.Path,
+		RawQuery: u.RawQuery,
+	}
+}
+
 // postInstall lets the handler to run only if firstRun is false.  Otherwise, it
 // redirects to /install.html.  It also enforces HTTPS if it is enabled and
 // configured and sets appropriate access control headers.
@@ -408,11 +421,10 @@ func postInstall(handler func(http.ResponseWriter, *http.Request)) func(http.Res
 			return
 		}
 
-		if !handleHTTPSRedirect(w, r) {
-			return
+		proceed := handleHTTPSRedirect(w, r)
+		if proceed {
+			handler(w, r)
 		}
-
-		handler(w, r)
 	}
 }
 
