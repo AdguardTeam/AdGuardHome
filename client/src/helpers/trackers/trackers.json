@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2023-08-22T14:37:56.630Z",
+    "timeUpdated": "2023-09-01T00:09:16.088Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -994,10 +994,10 @@
             "companyId": "adjug"
         },
         "adjust": {
-            "name": "Adjust",
+            "name": "Adjust GmbH",
             "categoryId": 101,
             "url": "https://www.adjust.com/",
-            "companyId": "adjust",
+            "companyId": "applovin",
             "source": "AdGuard"
         },
         "adk2": {
@@ -2234,8 +2234,9 @@
         "alenty": {
             "name": "Alenty",
             "categoryId": 4,
-            "url": "http://www.alenty.com/",
-            "companyId": "appnexus"
+            "url": "https://about.ads.microsoft.com/en-us/solutions/xandr/xandr-premium-programmatic-advertising",
+            "companyId": "microsoft",
+            "source": "AdGuard"
         },
         "alephd.com": {
             "name": "alephd",
@@ -2617,8 +2618,9 @@
         "appnexus": {
             "name": "AppNexus",
             "categoryId": 4,
-            "url": "http://www.appnexus.com/",
-            "companyId": "appnexus"
+            "url": "https://about.ads.microsoft.com/en-us/solutions/xandr/xandr-premium-programmatic-advertising",
+            "companyId": "microsoft",
+            "source": "AdGuard"
         },
         "appsflyer": {
             "name": "AppsFlyer",
@@ -3359,7 +3361,7 @@
             "name": "Binge",
             "categoryId": 0,
             "url": "https://binge.com.au/",
-            "companyId": "foxtel",
+            "companyId": "news_corp",
             "source": "AdGuard"
         },
         "binlayer": {
@@ -7196,7 +7198,7 @@
             "name": "Flash",
             "categoryId": 0,
             "url": "https://flashnews.com.au/",
-            "companyId": "foxtel",
+            "companyId": "news_corp",
             "source": "AdGuard"
         },
         "flashtalking": {
@@ -7408,7 +7410,7 @@
             "name": "Fox Sports",
             "categoryId": 0,
             "url": "https://foxsports.com.au/",
-            "companyId": "foxtel",
+            "companyId": "news_corp",
             "source": "AdGuard"
         },
         "foxnews_static": {
@@ -7427,7 +7429,7 @@
             "name": "Foxtel",
             "categoryId": 0,
             "url": "https://foxtel.com.au/",
-            "companyId": "foxtel",
+            "companyId": "news_corp",
             "source": "AdGuard"
         },
         "foxydeal_com": {
@@ -7834,10 +7836,11 @@
             "companyId": null
         },
         "github": {
-            "name": "GitHub",
+            "name": "GitHub, Inc.",
             "categoryId": 2,
             "url": "https://github.com/",
-            "companyId": "github"
+            "companyId": "microsoft",
+            "source": "AdGuard"
         },
         "github_apps": {
             "name": "GitHub Apps",
@@ -9529,10 +9532,11 @@
             "source": "AdGuard"
         },
         "ironsource": {
-            "name": "ironSource",
+            "name": "ironSource Ltd.",
             "categoryId": 4,
-            "url": "https://www.ironsrc.com/",
-            "companyId": "ironsource"
+            "url": "https://www.is.com",
+            "companyId": "unity",
+            "source": "AdGuard"
         },
         "isocket": {
             "name": "isocket",
@@ -9924,7 +9928,7 @@
             "name": "Kayo Sports",
             "categoryId": 0,
             "url": "https://kayosports.com.au/",
-            "companyId": "foxtel",
+            "companyId": "news_corp",
             "source": "AdGuard"
         },
         "keen_io": {
@@ -11251,10 +11255,11 @@
             "companyId": "mediaad"
         },
         "mediaglu": {
-            "name": "Mediaglu",
+            "name": "MediaGlu",
             "categoryId": 4,
-            "url": "http://mlnadvertising.com/",
-            "companyId": "appnexus"
+            "url": "https://www.mediaglu.com/",
+            "companyId": "microsoft",
+            "source": "AdGuard"
         },
         "mediahub": {
             "name": "MediaHub",
@@ -12762,8 +12767,9 @@
         "open_adstream": {
             "name": "Open Adstream",
             "categoryId": 4,
-            "url": "https://www.appnexus.com/en",
-            "companyId": "appnexus"
+            "url": "https://about.ads.microsoft.com/en-us/solutions/xandr/xandr-premium-programmatic-advertising",
+            "companyId": "microsoft",
+            "source": "AdGuard"
         },
         "open_share_count": {
             "name": "Open Share Count",
@@ -14345,6 +14351,13 @@
             "url": "http://www.rdstation.com/en/",
             "companyId": "rd_station"
         },
+        "rea_group": {
+            "name": "REA Group Ltd.",
+            "categoryId": 4,
+            "url": "https://www.rea-group.com/",
+            "companyId": "news_corp",
+            "source": "AdGuard"
+        },
         "reachforce": {
             "name": "ReachForce",
             "categoryId": 6,
@@ -14404,6 +14417,13 @@
             "categoryId": 4,
             "url": "http://www.realclick.co.kr/",
             "companyId": "realclick"
+        },
+        "realestate.com.au": {
+            "name": "realestate.com.au Pty Limited",
+            "categoryId": 4,
+            "url": "https://www.realestate.com.au/",
+            "companyId": "news_corp",
+            "source": "AdGuard"
         },
         "realperson.de": {
             "name": "Realperson Chat",
@@ -16657,7 +16677,7 @@
             "name": "Streamotion",
             "categoryId": 0,
             "url": "https://streamotion.com.au/",
-            "companyId": "foxtel",
+            "companyId": "news_corp",
             "source": "AdGuard"
         },
         "streamrail.com": {
@@ -22465,7 +22485,10 @@
         "delivery47.com": "ironsource",
         "ironsrc.com": "ironsource",
         "ironsrc.net": "ironsource",
+        "is.com": "ironsource",
+        "soom.la": "ironsource",
         "supersonicads.com": "ironsource",
+        "tapjoy.com": "ironsource",
         "adsbyisocket.com": "isocket",
         "isocket.com": "isocket",
         "isolarcloud.com": "isolarcloud",
@@ -23579,6 +23602,7 @@
         "rcs.it": "rcs.it",
         "rcsmediagroup.it": "rcs.it",
         "d335luupugsy2.cloudfront.net": "rd_station",
+        "rea-group.com": "rea_group",
         "d12ulf131zb0yj.cloudfront.net": "reachforce",
         "reachforce.com": "reachforce",
         "reachjunction.com": "reachjunction",
@@ -23594,6 +23618,7 @@
         "readme.io": "readme",
         "readspeaker.com": "readspeaker.com",
         "realclick.co.kr": "realclick",
+        "realestate.com.au": "realestate.com.au",
         "realperson.de": "realperson.de",
         "powermarketing.com": "realtime",
         "realtime.co": "realtime",

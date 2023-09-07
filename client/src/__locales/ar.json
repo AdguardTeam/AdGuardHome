@@ -7,7 +7,7 @@
     "load_balancing": "توزيع الحمل",
     "load_balancing_desc": "الاستعلام عن خادم واحد في كل مرة سيستخدم AdGuard  الرئيسية الخوارزمية العشوائية الموزونة لاختيار الخادم بحيث يتم استخدام أسرع خادم في كثير من الأحيان",
     "bootstrap_dns": "خوادم Bootstrap DNS",
-    "bootstrap_dns_desc": "يتم استخدام خوادم Bootstrap DNS لحل عناوين IP الخاصة بمحللات DoH / DoT التي تحددها على هيئة تدفقات.",
+    "bootstrap_dns_desc": "عناوين IP لخوادم DNS المستخدمة لحل عناوين IP الخاصة بمحللات DoH/DoT التي تحددها كمصدرين رئيسيين. التعليقات غير مسموح بها.",
     "local_ptr_title": "خوادم DNS العكسية الخاصة",
     "local_ptr_desc": "خوادم DNS التي يستخدمها AdGuard Home لاستعلامات PTR المحلية. تُستخدم هذه الخوادم لحل أسماء المضيفين للعملاء بعناوين IP خاصة ، على سبيل المثال \"192.168.12.34\" ، باستخدام DNS العكسي. في حالة عدم التعيين ، يستخدم AdGuard Home عناوين محللات DNS الافتراضية لنظام التشغيل الخاص بك باستثناء عناوين AdGuard Home نفسها.",
     "local_ptr_default_resolver": "بشكل افتراضي ، يستخدم AdGuard Home محللات DNS العكسية التالية: {{ip}}.",
@@ -556,7 +556,7 @@
     "rewrite_A": "<0> A </0>: قيمة خاصة ، احتفظ بسجلات <0> A </0> من upstream",
     "rewrite_AAAA": "<0> AAAA </0>: قيمة خاصة ، احتفظ بسجلات <0> AAAA </0> من upstream",
     "disable_ipv6": "قم بتعطيل تحليل عناوين IPv6",
-    "disable_ipv6_desc": "قم بإسقاط جميع استعلامات DNS لعناوين IPv6 (اكتب AAAA).",
+    "disable_ipv6_desc": "قم بإسقاط كافة استعلامات DNS لعناوين IPv6 (اكتب AAAA) وقم بإزالة تلميحات IPv6 من استجابات HTTPS.",
     "fastest_addr": "أسرع عنوان IP",
     "fastest_addr_desc": "استعلم عن جميع خوادم DNS وأعد عنوان IP الأسرع بين جميع الاستجابات. يؤدي هذا إلى إبطاء استعلامات DNS حيث يتعين على AdGuard Home انتظار الاستجابات من جميع خوادم DNS ، ولكنه يحسن الاتصال الكلي.",
     "autofix_warning_text": "إذا قمت بالنقر فوق \"إصلاح\" ، فسيقوم AdGuard Home بتهيئة نظامك لاستخدام خادم AdGuard Home DNS.",
@@ -640,5 +640,12 @@
     "safe_browsing": "تصفح آمن",
     "served_from_cache": "{{value}} <i>(يتم تقديمه من ذاكرة التخزين المؤقت)</i>",
     "form_error_password_length": "يجب أن تتكون كلمة المرور من {{value}} من الأحرف على الأقل",
-    "protection_section_label": "الحماية"
+    "protection_section_label": "الحماية",
+    "sunday_short": "الاحد",
+    "monday_short": "الإثنين",
+    "tuesday_short": "الثلاثاء",
+    "wednesday_short": "الاربعاء",
+    "thursday_short": "الخميس",
+    "friday_short": "الجمعة",
+    "saturday_short": "السبت"
 }
