@@ -54,7 +54,7 @@ func TestServer_handleDHCPStatus(t *testing.T) {
 		assert.JSONEq(t, b.String(), w.Body.String())
 	}
 
-	// defaultResponse is a helper that returs the response with default
+	// defaultResponse is a helper that returns the response with default
 	// configuration.
 	defaultResponse := func() *dhcpStatusResponse {
 		conf4 := defaultV4ServerConf()
