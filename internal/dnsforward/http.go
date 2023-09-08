@@ -749,6 +749,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req.Upstreams = stringutil.FilterOut(req.Upstreams, IsCommentOrEmpty)
+	req.FallbackDNS = stringutil.FilterOut(req.FallbackDNS, IsCommentOrEmpty)
 	req.PrivateUpstreams = stringutil.FilterOut(req.PrivateUpstreams, IsCommentOrEmpty)
 
 	upsNum := len(req.Upstreams) + len(req.FallbackDNS) + len(req.PrivateUpstreams)

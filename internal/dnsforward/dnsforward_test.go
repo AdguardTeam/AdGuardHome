@@ -372,6 +372,27 @@ func TestServer_timeout(t *testing.T) {
 	})
 }
 
+func TestServer_Prepare_fallbacks(t *testing.T) {
+	srvConf := &ServerConfig{
+		Config: Config{
+			FallbackDNS: []string{
+				"#tls://1.1.1.1",
+				"8.8.8.8",
+			},
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+		},
+	}
+
+	s, err := NewServer(DNSCreateParams{})
+	require.NoError(t, err)
+
+	err = s.Prepare(srvConf)
+	require.NoError(t, err)
+	require.NotNil(t, s.dnsProxy.Fallbacks)
+
+	assert.Len(t, s.dnsProxy.Fallbacks.Upstreams, 1)
+}
+
 func TestServerWithProtectionDisabled(t *testing.T) {
 	s := createTestServer(t, &filtering.Config{
 		BlockingMode: filtering.BlockingModeDefault,

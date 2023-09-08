@@ -614,6 +614,7 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 // setupFallbackDNS initializes the fallback DNS servers.
 func (s *Server) setupFallbackDNS() (err error) {
 	fallbacks := s.conf.FallbackDNS
+	fallbacks = stringutil.FilterOut(fallbacks, IsCommentOrEmpty)
 	if len(fallbacks) == 0 {
 		return nil
 	}
