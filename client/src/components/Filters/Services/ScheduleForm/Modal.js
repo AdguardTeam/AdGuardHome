@@ -72,31 +72,16 @@ export const Modal = ({
     const onFormSubmit = (e) => {
         e.preventDefault();
 
-        if (currentDay) {
-            const newSchedule = schedule;
+        const newSchedule = schedule;
 
-            Array.from(days).forEach((day) => {
-                newSchedule[day] = {
-                    start: startTime,
-                    end: endTime,
-                };
-            });
-
-            onSubmit(newSchedule);
-        } else {
-            const newSchedule = {
-                time_zone: timezone,
+        Array.from(days).forEach((day) => {
+            newSchedule[day] = {
+                start: startTime,
+                end: endTime,
             };
+        });
 
-            Array.from(days).forEach((day) => {
-                newSchedule[day] = {
-                    start: startTime,
-                    end: endTime,
-                };
-            });
-
-            onSubmit(newSchedule);
-        }
+        onSubmit(newSchedule);
     };
 
     return (
@@ -133,7 +118,7 @@ export const Modal = ({
                                 >
                                     {getShortDayName(t, day)}
                                 </button>
-                            )) }
+                            ))}
                         </div>
 
                         <div className="schedule__time-wrap">
