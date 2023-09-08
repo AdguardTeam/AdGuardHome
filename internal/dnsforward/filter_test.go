@@ -328,26 +328,34 @@ func TestHandleDNSRequest_filterDNSResponse(t *testing.T) {
 				Addr:  &net.UDPAddr{IP: net.IP{127, 0, 0, 1}, Port: 1},
 			}
 
-			res, rErr := s.filterDNSResponse(pctx, &filtering.Settings{
-				ProtectionEnabled: true,
-				FilteringEnabled:  true,
-			})
-			require.NoError(t, rErr)
+			dctx := &dnsContext{
+				proxyCtx: pctx,
+				setts: &filtering.Settings{
+					ProtectionEnabled: true,
+					FilteringEnabled:  true,
+				},
+			}
 
+			fltErr := s.filterDNSResponse(dctx)
+			require.NoError(t, fltErr)
+
+			res := dctx.result
 			if tc.wantRule == "" {
 				assert.Nil(t, res)
 
 				return
 			}
 
-			want := &filtering.Result{
+			wantResult := &filtering.Result{
 				IsFiltered: true,
 				Reason:     filtering.FilteredBlockList,
 				Rules: []*filtering.ResultRule{{
 					Text: tc.wantRule,
 				}},
 			}
-			assert.Equal(t, want, res)
+
+			assert.Equal(t, wantResult, res)
+			assert.Equal(t, resp, dctx.origResp)
 		})
 	}
 }

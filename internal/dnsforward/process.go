@@ -671,11 +671,11 @@ func (s *Server) processLocalPTR(dctx *dnsContext) (rc resultCode) {
 }
 
 // Apply filtering logic
-func (s *Server) processFilteringBeforeRequest(ctx *dnsContext) (rc resultCode) {
+func (s *Server) processFilteringBeforeRequest(dctx *dnsContext) (rc resultCode) {
 	log.Debug("dnsforward: started processing filtering before req")
 	defer log.Debug("dnsforward: finished processing filtering before req")
 
-	if ctx.proxyCtx.Res != nil {
+	if dctx.proxyCtx.Res != nil {
 		// Go on since the response is already set.
 		return resultCodeSuccess
 	}
@@ -684,8 +684,8 @@ func (s *Server) processFilteringBeforeRequest(ctx *dnsContext) (rc resultCode) 
 	defer s.serverLock.RUnlock()
 
 	var err error
-	if ctx.result, err = s.filterDNSRequest(ctx); err != nil {
-		ctx.err = err
+	if dctx.result, err = s.filterDNSRequest(dctx); err != nil {
+		dctx.err = err
 
 		return resultCodeError
 	}
@@ -857,7 +857,6 @@ func (s *Server) processFilteringAfterResponse(dctx *dnsContext) (rc resultCode)
 	log.Debug("dnsforward: started processing filtering after resp")
 	defer log.Debug("dnsforward: finished processing filtering after resp")
 
-	pctx := dctx.proxyCtx
 	switch res := dctx.result; res.Reason {
 	case filtering.NotFilteredAllowList:
 		return resultCodeSuccess
@@ -871,6 +870,7 @@ func (s *Server) processFilteringAfterResponse(dctx *dnsContext) (rc resultCode)
 			return resultCodeSuccess
 		}
 
+		pctx := dctx.proxyCtx
 		pctx.Req.Question[0], pctx.Res.Question[0] = dctx.origQuestion, dctx.origQuestion
 		if len(pctx.Res.Answer) > 0 {
 			rr := s.genAnswerCNAME(pctx.Req, res.CanonName)
@@ -880,13 +880,13 @@ func (s *Server) processFilteringAfterResponse(dctx *dnsContext) (rc resultCode)
 
 		return resultCodeSuccess
 	default:
-		return s.filterAfterResponse(dctx, pctx)
+		return s.filterAfterResponse(dctx)
 	}
 }
 
 // filterAfterResponse returns the result of filtering the response that wasn't
 // explicitly allowed or rewritten.
-func (s *Server) filterAfterResponse(dctx *dnsContext, pctx *proxy.DNSContext) (res resultCode) {
+func (s *Server) filterAfterResponse(dctx *dnsContext) (res resultCode) {
 	// Check the response only if it's from an upstream.  Don't check the
 	// response if the protection is disabled since dnsrewrite rules aren't
 	// applied to it anyway.
@@ -894,16 +894,11 @@ func (s *Server) filterAfterResponse(dctx *dnsContext, pctx *proxy.DNSContext) (
 		return resultCodeSuccess
 	}
 
-	result, err := s.filterDNSResponse(pctx, dctx.setts)
+	err := s.filterDNSResponse(dctx)
 	if err != nil {
 		dctx.err = err
 
 		return resultCodeError
-	}
-
-	if result != nil {
-		dctx.result = result
-		dctx.origResp = pctx.Res
 	}
 
 	return resultCodeSuccess
