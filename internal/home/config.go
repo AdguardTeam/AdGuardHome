@@ -282,6 +282,12 @@ type statsConfig struct {
 	Enabled bool `yaml:"enabled"`
 }
 
+// Default block host constants.
+const (
+	defaultSafeBrowsingBlockHost = "standard-block.dns.adguard.com"
+	defaultParentalBlockHost     = "family-block.dns.adguard.com"
+)
+
 // config is the global configuration structure.
 //
 // TODO(a.garipov, e.burkov): This global is awful and must be removed.
@@ -389,6 +395,9 @@ var config = &configuration{
 			Schedule: schedule.EmptyWeekly(),
 			IDs:      []string{},
 		},
+
+		ParentalBlockHost:     defaultParentalBlockHost,
+		SafeBrowsingBlockHost: defaultSafeBrowsingBlockHost,
 	},
 	DHCP: &dhcpd.ServerConfig{
 		LocalDomainName: "lan",

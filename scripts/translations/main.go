@@ -30,7 +30,7 @@ const (
 	twoskyURI        = "https://twosky.int.agrd.dev/api/v1"
 
 	readLimit     = 1 * 1024 * 1024
-	uploadTimeout = 10 * time.Second
+	uploadTimeout = 20 * time.Second
 )
 
 // blockerLangCodes is the codes of languages which need to be fully translated.

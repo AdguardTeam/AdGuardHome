@@ -23,6 +23,13 @@ See also the [v0.107.38 GitHub milestone][ms-v0.107.38].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Empty or default Safe Browsing and Parental Control settings ([#6181]).
+- Various UI issues.
+
+[#6181]: https://github.com/AdguardTeam/AdGuardHome/issues/6181
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

@@ -359,9 +359,6 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 		pcService             = "parental control"
 		defaultParentalServer = `https://family.adguard-dns.com/dns-query`
 		pcTXTSuffix           = `pc.dns.adguard.com.`
-
-		defaultSafeBrowsingBlockHost = "standard-block.dns.adguard.com"
-		defaultParentalBlockHost     = "family-block.dns.adguard.com"
 	)
 
 	conf.EtcHosts = Context.etcHosts
@@ -398,8 +395,15 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 		CacheSize:   conf.SafeBrowsingCacheSize,
 	})
 
-	if conf.SafeBrowsingBlockHost != "" {
-		conf.SafeBrowsingBlockHost = defaultSafeBrowsingBlockHost
+	// Protect against invalid configuration, see #6181.
+	//
+	// TODO(a.garipov): Validate against an empty host instead of setting it to
+	// default.
+	if conf.SafeBrowsingBlockHost == "" {
+		host := defaultSafeBrowsingBlockHost
+		log.Info("%s: warning: empty blocking host; using default: %q", sbService, host)
+
+		conf.SafeBrowsingBlockHost = host
 	}
 
 	parUps, err := upstream.AddressToUpstream(defaultParentalServer, upsOpts)
@@ -415,8 +419,15 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 		CacheSize:   conf.ParentalCacheSize,
 	})
 
-	if conf.ParentalBlockHost != "" {
-		conf.ParentalBlockHost = defaultParentalBlockHost
+	// Protect against invalid configuration, see #6181.
+	//
+	// TODO(a.garipov): Validate against an empty host instead of setting it to
+	// default.
+	if conf.ParentalBlockHost == "" {
+		host := defaultParentalBlockHost
+		log.Info("%s: warning: empty blocking host; using default: %q", pcService, host)
+
+		conf.ParentalBlockHost = host
 	}
 
 	conf.SafeSearchConf.CustomResolver = safeSearchResolver{}
