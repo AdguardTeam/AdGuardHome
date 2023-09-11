@@ -230,6 +230,10 @@ See also the [v0.107.36 GitHub milestone][ms-v0.107.36].
 - Client hostnames not resolving when upstream server responds with zero-TTL
   records ([#6046]).
 
+### Removed
+
+- Go 1.19 support, as it has reached end of life.
+
 [#6046]: https://github.com/AdguardTeam/AdGuardHome/issues/6046
 [#6049]: https://github.com/AdguardTeam/AdGuardHome/issues/6049
 
