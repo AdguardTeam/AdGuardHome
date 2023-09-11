@@ -11,6 +11,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"golang.org/x/exp/slices"
 )
@@ -140,15 +141,15 @@ func (s *Server) filterRewritten(
 
 // checkHostRules checks the host against filters.  It is safe for concurrent
 // use.
-func (s *Server) checkHostRules(host string, rrtype uint16, setts *filtering.Settings) (
-	r *filtering.Result,
-	err error,
-) {
+func (s *Server) checkHostRules(
+	host string,
+	rrtype rules.RRType,
+	setts *filtering.Settings,
+) (r *filtering.Result, err error) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	var res filtering.Result
-	res, err = s.dnsFilter.CheckHostRules(host, rrtype, setts)
+	res, err := s.dnsFilter.CheckHostRules(host, rrtype, setts)
 	if err != nil {
 		return nil, err
 	}
@@ -156,20 +157,21 @@ func (s *Server) checkHostRules(host string, rrtype uint16, setts *filtering.Set
 	return &res, err
 }
 
-// filterDNSResponse checks each resource record of the response's answer
-// section from pctx and returns a non-nil res if at least one of canonical
-// names or IP addresses in it matches the filtering rules.
-func (s *Server) filterDNSResponse(
-	pctx *proxy.DNSContext,
-	setts *filtering.Settings,
-) (res *filtering.Result, err error) {
+// filterDNSResponse checks each resource record of answer section of
+// dctx.proxyCtx.Res.  It sets dctx.result and dctx.origResp if at least one of
+// canonical names, IP addresses, or HTTPS RR hints in it matches the filtering
+// rules, as well as sets dctx.proxyCtx.Res to the filtered response.
+func (s *Server) filterDNSResponse(dctx *dnsContext) (err error) {
+	setts := dctx.setts
 	if !setts.FilteringEnabled {
-		return nil, nil
+		return nil
 	}
 
-	for _, a := range pctx.Res.Answer {
+	var res *filtering.Result
+	pctx := dctx.proxyCtx
+	for i, a := range pctx.Res.Answer {
 		host := ""
-		var rrtype uint16
+		var rrtype rules.RRType
 		switch a := a.(type) {
 		case *dns.CNAME:
 			host = strings.TrimSuffix(a.Target, ".")
@@ -195,18 +197,19 @@ func (s *Server) filterDNSResponse(
 		log.Debug("dnsforward: checked %s %s for %s", dns.Type(rrtype), host, a.Header().Name)
 
 		if err != nil {
-			return nil, err
-		} else if res == nil {
-			continue
-		} else if res.IsFiltered {
+			return fmt.Errorf("filtering answer at index %d: %w", i, err)
+		} else if res != nil && res.IsFiltered {
+			dctx.result = res
+			dctx.origResp = pctx.Res
 			pctx.Res = s.genDNSFilterMessage(pctx, res)
+
 			log.Debug("dnsforward: matched %q by response: %q", pctx.Req.Question[0].Name, host)
 
-			return res, nil
+			break
 		}
 	}
 
-	return nil, nil
+	return nil
 }
 
 // removeIPv6Hints deletes IPv6 hints from RR values.

@@ -527,6 +527,8 @@
     "statistics_retention_confirm": "Apakah Anda yakin ingin mengubah retensi statistik? Jika Anda menurunkan nilai interval, beberapa data akan hilang",
     "statistics_cleared": "Statistik berhasil dihapus",
     "statistics_enable": "Aktifkan statistik",
+    "ignore_domains_desc_stats": "Kueri yang cocok dengan aturan ini tidak ditulis ke statistik",
+    "ignore_domains_desc_query": "Kueri yang cocok dengan aturan ini tidak ditulis ke log kueri",
     "interval_hours": "{{count}} jam",
     "interval_hours_plural": "{{count}} jam",
     "filters_configuration": "Konfigurasi filter",

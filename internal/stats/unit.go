@@ -72,7 +72,7 @@ type Entry struct {
 	Time time.Duration
 }
 
-// validate returs an error if entry is not valid.
+// validate returns an error if entry is not valid.
 func (e *Entry) validate() (err error) {
 	switch {
 	case e.Result == 0:
@@ -295,7 +295,7 @@ func loadUnitFromDB(tx *bbolt.Tx, id uint32) (udb *unitDB) {
 	return udb
 }
 
-// deserealize assigns the appropriate values from udb to u.  u must not be nil.
+// deserialize assigns the appropriate values from udb to u.  u must not be nil.
 // It's safe for concurrent use.
 func (u *unit) deserialize(udb *unitDB) {
 	if udb == nil {

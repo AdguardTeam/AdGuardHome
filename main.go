@@ -1,3 +1,5 @@
+//go:build !next
+
 package main
 
 import (

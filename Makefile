@@ -37,6 +37,8 @@ SIGN = 1
 VERSION = v0.0.0
 YARN = yarn
 
+NEXTAPI = 0
+
 # Macros for the build-release target.  If FRONTEND_PREBUILT is 0, the
 # default, the macro $(BUILD_RELEASE_DEPS_$(FRONTEND_PREBUILT)) expands
 # into BUILD_RELEASE_DEPS_0, and so both frontend and backend
@@ -64,6 +66,7 @@ ENV = env\
 	PATH="$${PWD}/bin:$$( "$(GO.MACRO)" env GOPATH )/bin:$${PATH}"\
 	RACE='$(RACE)'\
 	SIGN='$(SIGN)'\
+	NEXTAPI='$(NEXTAPI)'\
 	VERBOSE="$(VERBOSE.MACRO)"\
 	VERSION='$(VERSION)'\
 
