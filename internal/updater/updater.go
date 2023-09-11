@@ -113,9 +113,9 @@ func (u *Updater) Update(firstRun bool) (err error) {
 	log.Info("updater: updating")
 	defer func() {
 		if err != nil {
-			log.Error("updater: failed: %v", err)
+			log.Info("updater: failed")
 		} else {
-			log.Info("updater: finished")
+			log.Info("updater: finished successfully")
 		}
 	}()
 
@@ -240,18 +240,24 @@ func (u *Updater) unpack() error {
 
 // check returns an error if the configuration file couldn't be used with the
 // version of AdGuard Home just downloaded.
-func (u *Updater) check() error {
+func (u *Updater) check() (err error) {
 	log.Debug("updater: checking configuration")
 
-	err := copyFile(u.confName, filepath.Join(u.updateDir, "AdGuardHome.yaml"))
+	err = copyFile(u.confName, filepath.Join(u.updateDir, "AdGuardHome.yaml"))
 	if err != nil {
 		return fmt.Errorf("copyFile() failed: %w", err)
 	}
 
+	const format = "executing configuration check command: %w %d:\n" +
+		"below is the output of configuration check:\n" +
+		"%s" +
+		"end of the output"
+
 	cmd := exec.Command(u.updateExeName, "--check-config")
-	err = cmd.Run()
-	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		return fmt.Errorf("exec.Command(): %s %d", err, cmd.ProcessState.ExitCode())
+	out, err := cmd.CombinedOutput()
+	code := cmd.ProcessState.ExitCode()
+	if err != nil || code != 0 {
+		return fmt.Errorf(format, err, code, out)
 	}
 
 	return nil
