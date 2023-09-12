@@ -494,7 +494,9 @@ func closeDNSServer() {
 		Context.dnsServer = nil
 	}
 
-	Context.filters.Close()
+	if Context.filters != nil {
+		Context.filters.Close()
+	}
 
 	if Context.stats != nil {
 		err := Context.stats.Close()
