@@ -60,6 +60,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
 		ProtectionEnabled:     true,
 		BlockingMode:          filtering.BlockingModeDefault,
+		BlockedResponseTTL:    10,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
 		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
@@ -137,6 +138,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
 		ProtectionEnabled:     true,
 		BlockingMode:          filtering.BlockingModeDefault,
+		BlockedResponseTTL:    10,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
 		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
@@ -228,6 +230,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		wantSet: "",
 	}, {
 		name:    "fallbacks",
+		wantSet: "",
+	}, {
+		name:    "blocked_response_ttl",
 		wantSet: "",
 	}}
 

@@ -65,6 +65,9 @@ type jsonDNSConfig struct {
 	// UpstreamMode defines the way DNS requests are constructed.
 	UpstreamMode *string `json:"upstream_mode"`
 
+	// BlockedResponseTTL is the TTL for blocked responses.
+	BlockedResponseTTL *uint32 `json:"blocked_response_ttl"`
+
 	// CacheSize in bytes.
 	CacheSize *uint32 `json:"cache_size"`
 
@@ -115,6 +118,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	bootstraps := stringutil.CloneSliceOrEmpty(s.conf.BootstrapDNS)
 	fallbacks := stringutil.CloneSliceOrEmpty(s.conf.FallbackDNS)
 	blockingMode, blockingIPv4, blockingIPv6 := s.dnsFilter.BlockingMode()
+	blockedResponseTTL := s.dnsFilter.BlockedResponseTTL()
 	ratelimit := s.conf.Ratelimit
 
 	customIP := s.conf.EDNSClientSubnet.CustomIP
@@ -158,6 +162,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		EDNSCSUseCustom:          &useCustom,
 		DNSSECEnabled:            &enableDNSSEC,
 		DisableIPv6:              &aaaaDisabled,
+		BlockedResponseTTL:       &blockedResponseTTL,
 		CacheSize:                &cacheSize,
 		CacheMinTTL:              &cacheMinTTL,
 		CacheMaxTTL:              &cacheMaxTTL,
@@ -319,6 +324,10 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 
 	if dc.BlockingMode != nil {
 		s.dnsFilter.SetBlockingMode(*dc.BlockingMode, dc.BlockingIPv4, dc.BlockingIPv6)
+	}
+
+	if dc.BlockedResponseTTL != nil {
+		s.dnsFilter.SetBlockedResponseTTL(*dc.BlockedResponseTTL)
 	}
 
 	if dc.ProtectionEnabled != nil {

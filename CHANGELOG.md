@@ -23,6 +23,13 @@ See also the [v0.107.39 GitHub milestone][ms-v0.107.39].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- Ability to specify for how long clients should cache a filtered response,
+  using the *Blocked response TTL* field on the *DNS settings* page ([#4569]).
+
+[#4569]: https://github.com/AdguardTeam/AdGuardHome/issues/4569
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

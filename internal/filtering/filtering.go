@@ -514,8 +514,19 @@ func (d *DNSFilter) BlockingMode() (mode BlockingMode, bIPv4, bIPv6 netip.Addr) 
 	return d.conf.BlockingMode, d.conf.BlockingIPv4, d.conf.BlockingIPv6
 }
 
+// SetBlockedResponseTTL sets TTL for blocked responses.
+func (d *DNSFilter) SetBlockedResponseTTL(ttl uint32) {
+	d.confMu.Lock()
+	defer d.confMu.Unlock()
+
+	d.conf.BlockedResponseTTL = ttl
+}
+
 // BlockedResponseTTL returns TTL for blocked responses.
 func (d *DNSFilter) BlockedResponseTTL() (ttl uint32) {
+	d.confMu.Lock()
+	defer d.confMu.Unlock()
+
 	return d.conf.BlockedResponseTTL
 }
 

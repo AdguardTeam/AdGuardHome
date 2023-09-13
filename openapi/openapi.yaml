@@ -1460,6 +1460,10 @@
           'type': 'string'
         'blocking_ipv6':
           'type': 'string'
+        'blocked_response_ttl':
+          'type': 'integer'
+          'minimum': 0
+          'description': 'TTL for blocked responses.'
         'protection_disabled_until':
           'type': 'string'
           'description': 'Protection is pause until this time.  Nullable.'
