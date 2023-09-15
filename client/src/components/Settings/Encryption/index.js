@@ -116,6 +116,7 @@ class Encryption extends Component {
                             onSubmit={this.handleFormSubmit}
                             onChange={this.handleFormChange}
                             setTlsConfig={this.props.setTlsConfig}
+                            validateTlsConfig={this.props.validateTlsConfig}
                             {...this.props.encryption}
                         />
                     </Card>

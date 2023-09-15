@@ -34,7 +34,7 @@ const validate = (values) => {
     return errors;
 };
 
-const clearFields = (change, setTlsConfig, t) => {
+const clearFields = (change, setTlsConfig, validateTlsConfig, t) => {
     const fields = {
         private_key: '',
         certificate_chain: '',
@@ -53,6 +53,7 @@ const clearFields = (change, setTlsConfig, t) => {
         Object.keys(fields)
             .forEach((field) => change(field, fields[field]));
         setTlsConfig(fields);
+        validateTlsConfig(fields);
     }
 };
 
@@ -102,6 +103,7 @@ let Form = (props) => {
         subject,
         warning_validation,
         setTlsConfig,
+        validateTlsConfig,
         certificateSource,
         privateKeySource,
         privateKeySaved,
@@ -419,7 +421,7 @@ let Form = (props) => {
                     type="button"
                     className="btn btn-secondary btn-standart"
                     disabled={submitting || processingConfig}
-                    onClick={() => clearFields(change, setTlsConfig, t)}
+                    onClick={() => clearFields(change, setTlsConfig, validateTlsConfig, t)}
                 >
                     <Trans>reset_settings</Trans>
                 </button>
@@ -455,6 +457,7 @@ Form.propTypes = {
     subject: PropTypes.string,
     t: PropTypes.func.isRequired,
     setTlsConfig: PropTypes.func.isRequired,
+    validateTlsConfig: PropTypes.func.isRequired,
     certificateSource: PropTypes.string,
     privateKeySource: PropTypes.string,
     privateKeySaved: PropTypes.bool,
