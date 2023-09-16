@@ -293,7 +293,7 @@
     "download_mobileconfig_doh": "下载适用于 DNS-over-HTTPS 的 .mobileconfig",
     "download_mobileconfig_dot": "下载适用于 DNS-over-TLS 的 .mobileconfig",
     "download_mobileconfig": "下载配置文件",
-    "plain_dns": "无加密DNS",
+    "plain_dns": "无加密 DNS",
     "form_enter_rate_limit": "输入限制速率",
     "rate_limit": "速度限制",
     "edns_enable": "启用 EDNS 客户端子网",
