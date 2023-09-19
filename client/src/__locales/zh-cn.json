@@ -154,7 +154,7 @@
     "dns_settings": "DNS 设置",
     "dns_blocklists": "DNS 黑名单",
     "dns_allowlists": "DNS 白名单",
-    "dns_blocklists_desc": "AdGuard Home 将阻止匹配 DNS 拦截清单的域名",
+    "dns_blocklists_desc": "AdGuard Home 将拦截在 DNS 黑名单的域名",
     "dns_allowlists_desc": "在 DNS 白名单的域名不会被拦截，即便是它在任意 DNS 黑名单之中。",
     "custom_filtering_rules": "自定义过滤规则",
     "encryption_settings": "加密设置",
