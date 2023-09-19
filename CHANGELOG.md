@@ -30,6 +30,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#4569]: https://github.com/AdguardTeam/AdGuardHome/issues/4569
 
+### Fixed
+
+- An accidental change in DNS rewrite priority ([#6226]).
+
+[#6226]: https://github.com/AdguardTeam/AdGuardHome/issues/6226
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
