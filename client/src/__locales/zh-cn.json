@@ -2,7 +2,7 @@
     "client_settings": "客户端设置",
     "example_upstream_reserved": "指定为<0>特定域名</0>的上游服务器；",
     "example_upstream_comment": "注释。",
-    "upstream_parallel": "使用并行的查询策略。同时查询所有上游服务器，AdGuard Home 将会使用最快地上游服务器的查询结果",
+    "upstream_parallel": "使用并行的查询策略。同时查询所有上游服务器，AdGuard Home 将会使用最快的上游服务器的查询结果",
     "parallel_requests": "并行查询",
     "load_balancing": "负载均衡",
     "load_balancing_desc": "一次查询一台服务器。AdGuard Home 将使用加权随机算法来选择服务器，以便更常使用最快的上游服务器。",
