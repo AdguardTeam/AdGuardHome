@@ -9,7 +9,7 @@
     "bootstrap_dns": "Bootstrap DNS 服务器",
     "bootstrap_dns_desc": "DNS 服务器的 IP 地址，用于解析指定为上游的 DoH/DoT 解析器的 IP 地址。不允许添加注释。",
     "fallback_dns_title": "备用 DNS 服务器",
-    "fallback_dns_desc": "当上游 DNS 服务器没有响应时使用的备用 DNS 服务器列表。语法与上面的相同。",
+    "fallback_dns_desc": "当上游 DNS 服务器没有响应时使用的备用 DNS 服务器列表。语法与上游 DNS 服务器相同。",
     "fallback_dns_placeholder": "每行输入一个备用 DNS 服务器",
     "local_ptr_title": "私人反向 DNS 服务器",
     "local_ptr_desc": "AdGuard Home 用于本地 PTR 查询的 DNS 服务器。这些服务器将使用反向 DNS 解析具有私人 IP 地址的客户机的主机名，比如 \"192.168.12.34\"。如果没有设置，除非是 AdGuard Home 里设置的地址，AdGuard Home 都将自动使用您的操作系统的默认 DNS 解析器。",
