@@ -9,8 +9,10 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"net/url"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -559,16 +561,28 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	err = setupOpts(opts)
 	fatalOnError(err)
 
+	execPath, err := os.Executable()
+	fatalOnError(errors.Annotate(err, "getting executable path: %w"))
+
+	u := &url.URL{
+		Scheme: "https",
+		// TODO(a.garipov): Make configurable.
+		Host: "static.adtidy.org",
+		Path: path.Join("adguardhome", version.Channel(), "version.json"),
+	}
+
 	upd := updater.NewUpdater(&updater.Config{
-		Client:   config.Filtering.HTTPClient,
-		Version:  version.Version(),
-		Channel:  version.Channel(),
-		GOARCH:   runtime.GOARCH,
-		GOOS:     runtime.GOOS,
-		GOARM:    version.GOARM(),
-		GOMIPS:   version.GOMIPS(),
-		WorkDir:  Context.workDir,
-		ConfName: config.getConfigFilename(),
+		Client:          config.Filtering.HTTPClient,
+		Version:         version.Version(),
+		Channel:         version.Channel(),
+		GOARCH:          runtime.GOARCH,
+		GOOS:            runtime.GOOS,
+		GOARM:           version.GOARM(),
+		GOMIPS:          version.GOMIPS(),
+		WorkDir:         Context.workDir,
+		ConfName:        config.getConfigFilename(),
+		ExecPath:        execPath,
+		VersionCheckURL: u.String(),
 	})
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
