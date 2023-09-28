@@ -439,57 +439,6 @@ func (s *Server) startLocked() error {
 // faster than ordinary upstreams.
 const defaultLocalTimeout = 1 * time.Second
 
-// collectDNSIPAddrs returns IP addresses the server is listening on without
-// port numbers.  For internal use only.
-func (s *Server) collectDNSIPAddrs() (addrs []string, err error) {
-	addrs = make([]string, len(s.conf.TCPListenAddrs)+len(s.conf.UDPListenAddrs))
-	var i int
-	var ip net.IP
-	for _, addr := range s.conf.TCPListenAddrs {
-		if addr == nil {
-			continue
-		}
-
-		if ip = addr.IP; ip.IsUnspecified() {
-			return aghnet.CollectAllIfacesAddrs()
-		}
-
-		addrs[i] = ip.String()
-		i++
-	}
-	for _, addr := range s.conf.UDPListenAddrs {
-		if addr == nil {
-			continue
-		}
-
-		if ip = addr.IP; ip.IsUnspecified() {
-			return aghnet.CollectAllIfacesAddrs()
-		}
-
-		addrs[i] = ip.String()
-		i++
-	}
-
-	return addrs[:i], nil
-}
-
-func (s *Server) filterOurDNSAddrs(addrs []string) (filtered []string, err error) {
-	var ourAddrs []string
-	ourAddrs, err = s.collectDNSIPAddrs()
-	if err != nil {
-		return nil, err
-	}
-
-	ourAddrsSet := stringutil.NewSet(ourAddrs...)
-	log.Debug("dnsforward: filtering out %s", ourAddrsSet.String())
-
-	// TODO(e.burkov): The approach of subtracting sets of strings is not
-	// really applicable here since in case of listening on all network
-	// interfaces we should check the whole interface's network to cut off
-	// all the loopback addresses as well.
-	return stringutil.FilterOut(addrs, ourAddrsSet.Has), nil
-}
-
 // setupLocalResolvers initializes the resolvers for local addresses.  For
 // internal use only.
 func (s *Server) setupLocalResolvers() (err error) {
@@ -503,18 +452,12 @@ func (s *Server) setupLocalResolvers() (err error) {
 		resolvers = stringutil.FilterOut(resolvers, IsCommentOrEmpty)
 	}
 
-	resolvers, err = s.filterOurDNSAddrs(resolvers)
-	if err != nil {
-		return err
-	}
-
 	log.Debug("dnsforward: upstreams to resolve ptr for local addresses: %v", resolvers)
 
-	uc, err := s.prepareUpstreamConfig(resolvers, nil, &upstream.Options{
+	uc, err := s.prepareLocalUpstreamConfig(resolvers, nil, &upstream.Options{
 		Bootstrap: bootstraps,
 		Timeout:   defaultLocalTimeout,
 		// TODO(e.burkov): Should we verify server's certificates?
-
 		PreferIPv6: s.conf.BootstrapPreferIPv6,
 	})
 	if err != nil {

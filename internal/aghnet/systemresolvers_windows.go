@@ -138,7 +138,7 @@ func (sr *systemResolvers) getAddrs() (addrs []string, err error) {
 
 	// Don't close StdoutPipe since Wait do it for us in ¿most? cases.
 	//
-	// See go doc os/exec.Cmd.StdoutPipe.
+	// See [exec.Cmd.StdoutPipe].
 
 	return addrs, nil
 }

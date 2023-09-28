@@ -142,9 +142,9 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		upstreamMode = "parallel"
 	}
 
-	defLocalPTRUps, err := s.filterOurDNSAddrs(s.sysResolvers.Get())
+	defPTRUps, err := s.defaultLocalPTRUpstreams()
 	if err != nil {
-		log.Debug("getting dns configuration: %s", err)
+		log.Error("dnsforward: %s", err)
 	}
 
 	return &jsonDNSConfig{
@@ -171,9 +171,28 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		ResolveClients:           &resolveClients,
 		UsePrivateRDNS:           &usePrivateRDNS,
 		LocalPTRUpstreams:        &localPTRUpstreams,
-		DefaultLocalPTRUpstreams: defLocalPTRUps,
+		DefaultLocalPTRUpstreams: defPTRUps,
 		DisabledUntil:            protectionDisabledUntil,
 	}
+}
+
+// defaultLocalPTRUpstreams returns the list of default local PTR resolvers
+// filtered of AdGuard Home's own DNS server addresses.  It may appear empty.
+func (s *Server) defaultLocalPTRUpstreams() (ups []string, err error) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	uc, err := s.prepareLocalUpstreamConfig(s.sysResolvers.Get(), nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("getting system upstream config: %w", err)
+	}
+	defer func() { err = errors.Join(err, uc.Close()) }()
+
+	for _, u := range uc.Upstreams {
+		ups = append(ups, u.Address())
+	}
+
+	return ups, nil
 }
 
 // handleGetConfig handles requests to the GET /control/dns_info endpoint.

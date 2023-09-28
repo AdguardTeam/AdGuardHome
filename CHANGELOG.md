@@ -32,9 +32,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Wrong algorithm for filtering self addresses from the list of private upstream
+  DNS servers ([#6231]).
 - An accidental change in DNS rewrite priority ([#6226]).
 
 [#6226]: https://github.com/AdguardTeam/AdGuardHome/issues/6226
+[#6231]: https://github.com/AdguardTeam/AdGuardHome/issues/6231
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
