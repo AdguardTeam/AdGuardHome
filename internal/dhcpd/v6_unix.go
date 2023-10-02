@@ -90,6 +90,9 @@ func (s *v6Server) IPByHost(host string) (ip netip.Addr) {
 func (s *v6Server) ResetLeases(leases []*Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv6: %w") }()
 
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
 	s.leases = nil
 	for _, l := range leases {
 		ip := net.IP(l.IP.AsSlice())

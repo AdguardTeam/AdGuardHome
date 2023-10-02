@@ -148,6 +148,9 @@ func (s *v4Server) ResetLeases(leases []*Lease) (err error) {
 		return nil
 	}
 
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
 	s.leasedOffsets = newBitSet()
 	s.hostsIndex = make(map[string]*Lease, len(leases))
 	s.ipIndex = make(map[netip.Addr]*Lease, len(leases))
@@ -182,16 +185,13 @@ func (s *v4Server) isBlocklisted(l *Lease) (ok bool) {
 		return false
 	}
 
-	ok = true
 	for _, b := range l.HWAddr {
 		if b != 0 {
-			ok = false
-
-			break
+			return false
 		}
 	}
 
-	return ok
+	return true
 }
 
 // GetLeases returns the list of current DHCP leases.  It is safe for concurrent

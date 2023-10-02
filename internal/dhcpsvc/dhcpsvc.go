@@ -56,16 +56,17 @@ type Interface interface {
 	// hostname, either set or generated.
 	IPByHost(host string) (ip netip.Addr)
 
-	// Leases returns all the DHCP leases.
-	Leases() (leases []*Lease)
+	// Leases returns all the active DHCP leases.
+	Leases() (ls []*Lease)
 
 	// AddLease adds a new DHCP lease.  It returns an error if the lease is
 	// invalid or already exists.
 	AddLease(l *Lease) (err error)
 
-	// EditLease changes an existing DHCP lease.  It returns an error if there
-	// is no lease equal to old or if new is invalid or already exists.
-	EditLease(old, new *Lease) (err error)
+	// UpdateStaticLease changes an existing DHCP lease.  It returns an error if
+	// there is no lease with such hardware addressor if new values are invalid
+	// or already exist.
+	UpdateStaticLease(l *Lease) (err error)
 
 	// RemoveLease removes an existing DHCP lease.  It returns an error if there
 	// is no lease equal to l.
@@ -79,15 +80,13 @@ type Interface interface {
 type Empty struct{}
 
 // type check
-var _ Interface = Empty{}
+var _ agh.ServiceWithConfig[*Config] = Empty{}
 
 // Start implements the [Service] interface for Empty.
 func (Empty) Start() (err error) { return nil }
 
 // Shutdown implements the [Service] interface for Empty.
 func (Empty) Shutdown(_ context.Context) (err error) { return nil }
-
-var _ agh.ServiceWithConfig[*Config] = Empty{}
 
 // Config implements the [ServiceWithConfig] interface for Empty.
 func (Empty) Config() (conf *Config) { return nil }
@@ -113,8 +112,8 @@ func (Empty) Leases() (leases []*Lease) { return nil }
 // AddLease implements the [Interface] interface for Empty.
 func (Empty) AddLease(_ *Lease) (err error) { return nil }
 
-// EditLease implements the [Interface] interface for Empty.
-func (Empty) EditLease(_, _ *Lease) (err error) { return nil }
+// UpdateStaticLease implements the [Interface] interface for Empty.
+func (Empty) UpdateStaticLease(_ *Lease) (err error) { return nil }
 
 // RemoveLease implements the [Interface] interface for Empty.
 func (Empty) RemoveLease(_ *Lease) (err error) { return nil }
