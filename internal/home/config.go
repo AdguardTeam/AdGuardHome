@@ -262,7 +262,7 @@ type queryLogConfig struct {
 
 	// MemSize is the number of entries kept in memory before they are flushed
 	// to disk.
-	MemSize uint32 `yaml:"size_memory"`
+	MemSize int `yaml:"size_memory"`
 
 	// Enabled defines if the query log is enabled.
 	Enabled bool `yaml:"enabled"`
