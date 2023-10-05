@@ -2,6 +2,7 @@ package aghnet_test
 
 import (
 	"io/fs"
+	"net"
 	"net/netip"
 	"net/url"
 	"os"
@@ -64,7 +65,7 @@ ParseAddr("256.256.256.256"): IPv4 field has value >255`,
 		want: netip.AddrPort{},
 	}, {
 		name:  "error_invalid_port",
-		input: netutil.JoinHostPort(v4addr.String(), -5),
+		input: net.JoinHostPort(v4addr.String(), "-5"),
 		wantErrMsg: `invalid port "-5" parsing "1.2.3.4:-5"
 ParseAddr("1.2.3.4:-5"): unexpected character (at ":-5")`,
 		want: netip.AddrPort{},

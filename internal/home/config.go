@@ -182,7 +182,7 @@ type httpPprofConfig struct {
 // not absolutely necessary.
 type dnsConfig struct {
 	BindHosts []netip.Addr `yaml:"bind_hosts"`
-	Port      int          `yaml:"port"`
+	Port      uint16       `yaml:"port"`
 
 	// AnonymizeClientIP defines if clients' IP addresses should be anonymized
 	// in query log and statistics.
@@ -232,13 +232,13 @@ type tlsConfigSettings struct {
 	Enabled         bool   `yaml:"enabled" json:"enabled"`                                 // Enabled is the encryption (DoT/DoH/HTTPS) status
 	ServerName      string `yaml:"server_name" json:"server_name,omitempty"`               // ServerName is the hostname of your HTTPS/TLS server
 	ForceHTTPS      bool   `yaml:"force_https" json:"force_https"`                         // ForceHTTPS: if true, forces HTTP->HTTPS redirect
-	PortHTTPS       int    `yaml:"port_https" json:"port_https,omitempty"`                 // HTTPS port. If 0, HTTPS will be disabled
-	PortDNSOverTLS  int    `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"`   // DNS-over-TLS port. If 0, DoT will be disabled
-	PortDNSOverQUIC int    `yaml:"port_dns_over_quic" json:"port_dns_over_quic,omitempty"` // DNS-over-QUIC port. If 0, DoQ will be disabled
+	PortHTTPS       uint16 `yaml:"port_https" json:"port_https,omitempty"`                 // HTTPS port. If 0, HTTPS will be disabled
+	PortDNSOverTLS  uint16 `yaml:"port_dns_over_tls" json:"port_dns_over_tls,omitempty"`   // DNS-over-TLS port. If 0, DoT will be disabled
+	PortDNSOverQUIC uint16 `yaml:"port_dns_over_quic" json:"port_dns_over_quic,omitempty"` // DNS-over-QUIC port. If 0, DoQ will be disabled
 
 	// PortDNSCrypt is the port for DNSCrypt requests.  If it's zero,
 	// DNSCrypt is disabled.
-	PortDNSCrypt int `yaml:"port_dnscrypt" json:"port_dnscrypt"`
+	PortDNSCrypt uint16 `yaml:"port_dnscrypt" json:"port_dnscrypt"`
 	// DNSCryptConfigFile is the path to the DNSCrypt config file.  Must be
 	// set if PortDNSCrypt is not zero.
 	//
@@ -554,10 +554,10 @@ func validateConfig() (err error) {
 }
 
 // udpPort is the port number for UDP protocol.
-type udpPort int
+type udpPort uint16
 
 // tcpPort is the port number for TCP protocol.
-type tcpPort int
+type tcpPort uint16
 
 // addPorts is a helper for ports validation that skips zero ports.
 func addPorts[T tcpPort | udpPort](uc aghalg.UniqChecker[T], ports ...T) {

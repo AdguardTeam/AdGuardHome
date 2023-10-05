@@ -103,27 +103,6 @@ func (s *Server) prepareUpstreamConfig(
 	return uc, nil
 }
 
-// prepareLocalUpstreamConfig returns the upstream configuration for private
-// upstreams based on upstreams and configuration of s.  It also filters out
-// the own listening addresses from the upstreams, so it may appear empty.
-func (s *Server) prepareLocalUpstreamConfig(
-	upstreams []string,
-	defaultUpstreams []string,
-	opts *upstream.Options,
-) (uc *proxy.UpstreamConfig, err error) {
-	uc, err = s.prepareUpstreamConfig(upstreams, defaultUpstreams, opts)
-	if err != nil {
-		return nil, fmt.Errorf("preparing private upstreams: %w", err)
-	}
-
-	err = s.conf.filterOurAddrs(uc)
-	if err != nil {
-		return nil, fmt.Errorf("filtering private upstreams: %w", err)
-	}
-
-	return uc, nil
-}
-
 // replaceUpstreamsWithHosts replaces unique upstreams with their resolved
 // versions based on the system hosts file.
 //

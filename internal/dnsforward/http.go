@@ -179,17 +179,16 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 // defaultLocalPTRUpstreams returns the list of default local PTR resolvers
 // filtered of AdGuard Home's own DNS server addresses.  It may appear empty.
 func (s *Server) defaultLocalPTRUpstreams() (ups []string, err error) {
-	s.serverLock.RLock()
-	defer s.serverLock.RUnlock()
-
-	uc, err := s.prepareLocalUpstreamConfig(s.sysResolvers.Get(), nil, nil)
+	matcher, err := s.conf.ourAddrsMatcher()
 	if err != nil {
-		return nil, fmt.Errorf("getting system upstream config: %w", err)
+		// Don't wrap the error because it's informative enough as is.
+		return nil, err
 	}
-	defer func() { err = errors.Join(err, uc.Close()) }()
 
-	for _, u := range uc.Upstreams {
-		ups = append(ups, u.Address())
+	sysResolvers := slices.DeleteFunc(s.sysResolvers.Addrs(), matcher)
+	ups = make([]string, 0, len(sysResolvers))
+	for _, r := range sysResolvers {
+		ups = append(ups, r.String())
 	}
 
 	return ups, nil
@@ -228,7 +227,7 @@ func (req *jsonDNSConfig) checkBootstrap() (err error) {
 			return errors.Error("empty")
 		}
 
-		if _, err = upstream.NewResolver(b, nil); err != nil {
+		if _, err = upstream.NewUpstreamResolver(b, nil); err != nil {
 			return err
 		}
 	}

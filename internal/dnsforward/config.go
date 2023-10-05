@@ -436,18 +436,18 @@ func (conf *ServerConfig) collectDNSAddrs() (
 // defaultPlainDNSPort is the default port for plain DNS.
 const defaultPlainDNSPort uint16 = 53
 
-// upstreamMatcher is a function that matches address of an upstream.
-type upstreamMatcher func(addr netip.AddrPort) (ok bool)
+// addrPortMatcher is a function that matches an IP address with port.
+type addrPortMatcher func(addr netip.AddrPort) (ok bool)
 
 // filterOut filters out all the upstreams that match um.  It returns all the
 // closing errors joined.
-func (um upstreamMatcher) filterOut(upsConf *proxy.UpstreamConfig) (err error) {
+func (m addrPortMatcher) filterOut(upsConf *proxy.UpstreamConfig) (err error) {
 	var errs []error
 	delFunc := func(u upstream.Upstream) (ok bool) {
 		// TODO(e.burkov):  We should probably consider the protocol of u to
 		// only filter out the listening addresses of the same protocol.
 		addr, parseErr := aghnet.ParseAddrPort(u.Address(), defaultPlainDNSPort)
-		if parseErr != nil || !um(addr) {
+		if parseErr != nil || !m(addr) {
 			// Don't filter out the upstream if it either cannot be parsed, or
 			// does not match um.
 			return false
@@ -469,23 +469,21 @@ func (um upstreamMatcher) filterOut(upsConf *proxy.UpstreamConfig) (err error) {
 	return errors.Join(errs...)
 }
 
-// filterOurAddrs filters out all the upstreams that pointing to the local
-// listening addresses to avoid recursive queries.  upsConf may appear empty
-// after the filtering.  All the filtered upstreams are closed and these
-// closings errors are joined.
-func (conf *ServerConfig) filterOurAddrs(upsConf *proxy.UpstreamConfig) (err error) {
+// ourAddrsMatcher returns a matcher that matches all the configured listening
+// addresses.
+func (conf *ServerConfig) ourAddrsMatcher() (m addrPortMatcher, err error) {
 	addrs, unspecPorts := conf.collectDNSAddrs()
 	if len(addrs) == 0 {
 		log.Debug("dnsforward: no listen addresses")
 
-		return nil
+		// Match no addresses.
+		return func(_ netip.AddrPort) (ok bool) { return false }, nil
 	}
 
-	var matcher upstreamMatcher
 	if len(unspecPorts) == 0 {
 		log.Debug("dnsforward: filtering out addresses %s", addrs)
 
-		matcher = func(a netip.AddrPort) (ok bool) {
+		m = func(a netip.AddrPort) (ok bool) {
 			_, ok = addrs[a]
 
 			return ok
@@ -495,12 +493,12 @@ func (conf *ServerConfig) filterOurAddrs(upsConf *proxy.UpstreamConfig) (err err
 		ifaceAddrs, err = aghnet.CollectAllIfacesAddrs()
 		if err != nil {
 			// Don't wrap the error since it's informative enough as is.
-			return err
+			return nil, err
 		}
 
 		log.Debug("dnsforward: filtering out addresses %s on ports %d", ifaceAddrs, unspecPorts)
 
-		matcher = func(a netip.AddrPort) (ok bool) {
+		m = func(a netip.AddrPort) (ok bool) {
 			if _, ok = unspecPorts[a.Port()]; ok {
 				return slices.Contains(ifaceAddrs, a.Addr())
 			}
@@ -509,7 +507,7 @@ func (conf *ServerConfig) filterOurAddrs(upsConf *proxy.UpstreamConfig) (err err
 		}
 	}
 
-	return matcher.filterOut(upsConf)
+	return m, nil
 }
 
 // prepareTLS - prepares TLS configuration for the DNS proxy

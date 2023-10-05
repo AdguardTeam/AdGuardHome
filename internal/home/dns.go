@@ -27,11 +27,11 @@ import (
 
 // Default listening ports.
 const (
-	defaultPortDNS   = 53
-	defaultPortHTTP  = 80
-	defaultPortHTTPS = 443
-	defaultPortQUIC  = 853
-	defaultPortTLS   = 853
+	defaultPortDNS   uint16 = 53
+	defaultPortHTTP  uint16 = 80
+	defaultPortHTTPS uint16 = 443
+	defaultPortQUIC  uint16 = 853
+	defaultPortTLS   uint16 = 853
 )
 
 // Called by other modules when configuration is changed
@@ -196,27 +196,27 @@ func isRunning() bool {
 	return Context.dnsServer != nil && Context.dnsServer.IsRunning()
 }
 
-func ipsToTCPAddrs(ips []netip.Addr, port int) (tcpAddrs []*net.TCPAddr) {
+func ipsToTCPAddrs(ips []netip.Addr, port uint16) (tcpAddrs []*net.TCPAddr) {
 	if ips == nil {
 		return nil
 	}
 
 	tcpAddrs = make([]*net.TCPAddr, 0, len(ips))
 	for _, ip := range ips {
-		tcpAddrs = append(tcpAddrs, net.TCPAddrFromAddrPort(netip.AddrPortFrom(ip, uint16(port))))
+		tcpAddrs = append(tcpAddrs, net.TCPAddrFromAddrPort(netip.AddrPortFrom(ip, port)))
 	}
 
 	return tcpAddrs
 }
 
-func ipsToUDPAddrs(ips []netip.Addr, port int) (udpAddrs []*net.UDPAddr) {
+func ipsToUDPAddrs(ips []netip.Addr, port uint16) (udpAddrs []*net.UDPAddr) {
 	if ips == nil {
 		return nil
 	}
 
 	udpAddrs = make([]*net.UDPAddr, 0, len(ips))
 	for _, ip := range ips {
-		udpAddrs = append(udpAddrs, net.UDPAddrFromAddrPort(netip.AddrPortFrom(ip, uint16(port))))
+		udpAddrs = append(udpAddrs, net.UDPAddrFromAddrPort(netip.AddrPortFrom(ip, port)))
 	}
 
 	return udpAddrs
@@ -346,8 +346,8 @@ func getDNSEncryption() (de dnsEncryption) {
 		hostname := tlsConf.ServerName
 		if tlsConf.PortHTTPS != 0 {
 			addr := hostname
-			if tlsConf.PortHTTPS != defaultPortHTTPS {
-				addr = netutil.JoinHostPort(addr, tlsConf.PortHTTPS)
+			if p := tlsConf.PortHTTPS; p != defaultPortHTTPS {
+				addr = netutil.JoinHostPort(addr, p)
 			}
 
 			de.https = (&url.URL{
@@ -357,17 +357,17 @@ func getDNSEncryption() (de dnsEncryption) {
 			}).String()
 		}
 
-		if tlsConf.PortDNSOverTLS != 0 {
+		if p := tlsConf.PortDNSOverTLS; p != 0 {
 			de.tls = (&url.URL{
 				Scheme: "tls",
-				Host:   netutil.JoinHostPort(hostname, tlsConf.PortDNSOverTLS),
+				Host:   netutil.JoinHostPort(hostname, p),
 			}).String()
 		}
 
-		if tlsConf.PortDNSOverQUIC != 0 {
+		if p := tlsConf.PortDNSOverQUIC; p != 0 {
 			de.quic = (&url.URL{
 				Scheme: "quic",
-				Host:   netutil.JoinHostPort(hostname, tlsConf.PortDNSOverQUIC),
+				Host:   netutil.JoinHostPort(hostname, p),
 			}).String()
 		}
 	}
