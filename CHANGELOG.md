@@ -25,9 +25,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- Ability to edit static leases on *DHCP settings* page ([#1700]).
 - Ability to specify for how long clients should cache a filtered response,
   using the *Blocked response TTL* field on the *DNS settings* page ([#4569]).
 
+[#1700]: https://github.com/AdguardTeam/AdGuardHome/issues/1700
 [#4569]: https://github.com/AdguardTeam/AdGuardHome/issues/4569
 
 ### Fixed

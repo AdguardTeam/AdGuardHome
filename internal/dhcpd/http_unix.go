@@ -5,6 +5,7 @@ package dhcpd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/netip"
@@ -290,12 +291,12 @@ func (s *server) handleDHCPSetConfigV6(
 func (s *server) createServers(conf *dhcpServerConfigJSON) (srv4, srv6 DHCPServer, err error) {
 	srv4, v4Enabled, err := s.handleDHCPSetConfigV4(conf)
 	if err != nil {
-		return nil, nil, fmt.Errorf("bad dhcpv4 configuration: %s", err)
+		return nil, nil, fmt.Errorf("bad dhcpv4 configuration: %w", err)
 	}
 
 	srv6, v6Enabled, err := s.handleDHCPSetConfigV6(conf)
 	if err != nil {
-		return nil, nil, fmt.Errorf("bad dhcpv6 configuration: %s", err)
+		return nil, nil, fmt.Errorf("bad dhcpv6 configuration: %w", err)
 	}
 
 	if conf.Enabled == aghalg.NBTrue && !v4Enabled && !v6Enabled {
@@ -424,7 +425,7 @@ func newNetInterfaceJSON(iface net.Interface) (out *netInterfaceJSON, err error)
 	addrs, err := iface.Addrs()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to get addresses for interface %s: %s",
+			"failed to get addresses for interface %s: %w",
 			iface.Name,
 			err,
 		)
@@ -590,81 +591,77 @@ func setOtherDHCPResult(ifaceName string, result *dhcpSearchResult) {
 	}
 }
 
-func (s *server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
+// parseLease parses a lease from r.  If there is no error returns DHCPServer
+// and *Lease. r must be non-nil.
+func (s *server) parseLease(r io.Reader) (srv DHCPServer, lease *Lease, err error) {
 	l := &leaseStatic{}
-	err := json.NewDecoder(r.Body).Decode(l)
+	err = json.NewDecoder(r).Decode(l)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
-
-		return
+		return nil, nil, fmt.Errorf("decoding json: %w", err)
 	}
 
 	if !l.IP.IsValid() {
-		aghhttp.Error(r, w, http.StatusBadRequest, "invalid IP")
-
-		return
+		return nil, nil, errors.Error("invalid ip")
 	}
 
 	l.IP = l.IP.Unmap()
 
-	var srv DHCPServer
-	if l.IP.Is4() {
+	lease, err = l.toLease()
+	if err != nil {
+		return nil, nil, fmt.Errorf("parsing: %w", err)
+	}
+
+	if lease.IP.Is4() {
 		srv = s.srv4
 	} else {
 		srv = s.srv6
 	}
 
-	lease, err := l.toLease()
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "parsing: %s", err)
+	return srv, lease, nil
+}
 
-		return
-	}
-
-	err = srv.AddStaticLease(lease)
+// handleDHCPAddStaticLease is the handler for the POST
+// /control/dhcp/add_static_lease HTTP API.
+func (s *server) handleDHCPAddStaticLease(w http.ResponseWriter, r *http.Request) {
+	srv, lease, err := s.parseLease(r.Body)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
+	}
+
+	if err = srv.AddStaticLease(lease); err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 	}
 }
 
+// handleDHCPRemoveStaticLease is the handler for the POST
+// /control/dhcp/remove_static_lease HTTP API.
 func (s *server) handleDHCPRemoveStaticLease(w http.ResponseWriter, r *http.Request) {
-	l := &leaseStatic{}
-	err := json.NewDecoder(r.Body).Decode(l)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
-
-		return
-	}
-
-	if !l.IP.IsValid() {
-		aghhttp.Error(r, w, http.StatusBadRequest, "invalid IP")
-
-		return
-	}
-
-	l.IP = l.IP.Unmap()
-
-	var srv DHCPServer
-	if l.IP.Is4() {
-		srv = s.srv4
-	} else {
-		srv = s.srv6
-	}
-
-	lease, err := l.toLease()
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "parsing: %s", err)
-
-		return
-	}
-
-	err = srv.RemoveStaticLease(lease)
+	srv, lease, err := s.parseLease(r.Body)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
+	}
+
+	if err = srv.RemoveStaticLease(lease); err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+	}
+}
+
+// handleDHCPUpdateStaticLease is the handler for the POST
+// /control/dhcp/update_static_lease HTTP API.
+func (s *server) handleDHCPUpdateStaticLease(w http.ResponseWriter, r *http.Request) {
+	srv, lease, err := s.parseLease(r.Body)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
+
+		return
+	}
+
+	if err = srv.UpdateStaticLease(lease); err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 	}
 }
 
@@ -729,6 +726,7 @@ func (s *server) registerHandlers() {
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/find_active_dhcp", s.handleDHCPFindActiveServer)
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/add_static_lease", s.handleDHCPAddStaticLease)
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/remove_static_lease", s.handleDHCPRemoveStaticLease)
+	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/update_static_lease", s.handleDHCPUpdateStaticLease)
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset", s.handleReset)
 	s.conf.HTTPRegister(http.MethodPost, "/control/dhcp/reset_leases", s.handleResetLeases)
 }

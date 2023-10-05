@@ -57,6 +57,9 @@ type DHCPServer interface {
 	// RemoveStaticLease - remove a static lease
 	RemoveStaticLease(l *Lease) (err error)
 
+	// UpdateStaticLease updates IP, hostname of the lease.
+	UpdateStaticLease(l *Lease) (err error)
+
 	// FindMACbyIP returns a MAC address by the IP address of its lease, if
 	// there is one.
 	FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr)

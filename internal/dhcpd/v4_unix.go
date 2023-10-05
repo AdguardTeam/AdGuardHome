@@ -309,9 +309,15 @@ func (s *v4Server) rmDynamicLease(lease *Lease) (err error) {
 	return nil
 }
 
-// ErrDupHostname is returned by addLease when the added lease has a not empty
-// non-unique hostname.
-const ErrDupHostname = errors.Error("hostname is not unique")
+const (
+	// ErrDupHostname is returned by addLease, validateStaticLease when the
+	// modified lease has a not empty non-unique hostname.
+	ErrDupHostname = errors.Error("hostname is not unique")
+
+	// ErrDupIP is returned by addLease, validateStaticLease when the modified
+	// lease has a non-unique IP address.
+	ErrDupIP = errors.Error("ip address is not unique")
+)
 
 // addLease adds a dynamic or static lease.
 func (s *v4Server) addLease(l *Lease) (err error) {
@@ -424,6 +430,81 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 
 	s.conf.notify(LeaseChangedDBStore)
 	s.conf.notify(LeaseChangedAddedStatic)
+
+	return nil
+}
+
+// UpdateStaticLease updates IP, hostname of the static lease.
+func (s *v4Server) UpdateStaticLease(l *Lease) (err error) {
+	defer func() {
+		if err != nil {
+			err = errors.Annotate(err, "dhcpv4: updating static lease: %w")
+
+			return
+		}
+
+		s.conf.notify(LeaseChangedDBStore)
+		s.conf.notify(LeaseChangedRemovedStatic)
+	}()
+
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	found := s.findLease(l.HWAddr)
+	if found == nil {
+		return fmt.Errorf("can't find lease %s", l.HWAddr)
+	}
+
+	err = s.validateStaticLease(l)
+	if err != nil {
+		return err
+	}
+
+	err = s.rmLease(found)
+	if err != nil {
+		return fmt.Errorf("removing previous lease for %s (%s): %w", l.IP, l.HWAddr, err)
+	}
+
+	err = s.addLease(l)
+	if err != nil {
+		return fmt.Errorf("adding updated static lease for %s (%s): %w", l.IP, l.HWAddr, err)
+	}
+
+	return nil
+}
+
+// validateStaticLease returns an error if the static lease is invalid.
+func (s *v4Server) validateStaticLease(l *Lease) (err error) {
+	hostname, err := normalizeHostname(l.Hostname)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
+	}
+
+	err = netutil.ValidateHostname(hostname)
+	if err != nil {
+		return fmt.Errorf("validating hostname: %w", err)
+	}
+
+	dup, ok := s.hostsIndex[hostname]
+	if ok && !bytes.Equal(dup.HWAddr, l.HWAddr) {
+		return ErrDupHostname
+	}
+
+	dup, ok = s.ipIndex[l.IP]
+	if ok && !bytes.Equal(dup.HWAddr, l.HWAddr) {
+		return ErrDupIP
+	}
+
+	l.Hostname = hostname
+
+	if gwIP := s.conf.GatewayIP; gwIP == l.IP {
+		return fmt.Errorf("can't assign the gateway IP %q to the lease", gwIP)
+	}
+
+	if sn := s.conf.subnet; !sn.Contains(l.IP) {
+		return fmt.Errorf("subnet %s does not contain the ip %q", sn, l.IP)
+	}
 
 	return nil
 }

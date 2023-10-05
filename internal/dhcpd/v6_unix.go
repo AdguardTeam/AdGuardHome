@@ -235,6 +235,37 @@ func (s *v6Server) AddStaticLease(l *Lease) (err error) {
 	return nil
 }
 
+// UpdateStaticLease updates IP, hostname of the static lease.
+func (s *v6Server) UpdateStaticLease(l *Lease) (err error) {
+	defer func() {
+		if err != nil {
+			err = errors.Annotate(err, "dhcpv6: updating static lease: %w")
+
+			return
+		}
+
+		s.conf.notify(LeaseChangedDBStore)
+		s.conf.notify(LeaseChangedRemovedStatic)
+	}()
+
+	s.leasesLock.Lock()
+	defer s.leasesLock.Unlock()
+
+	found := s.findLease(l.HWAddr)
+	if found == nil {
+		return fmt.Errorf("can't find lease %s", l.HWAddr)
+	}
+
+	err = s.rmLease(found)
+	if err != nil {
+		return fmt.Errorf("removing previous lease for %s (%s): %w", l.IP, l.HWAddr, err)
+	}
+
+	s.addLease(l)
+
+	return nil
+}
+
 // RemoveStaticLease removes a static lease.  It is safe for concurrent use.
 func (s *v6Server) RemoveStaticLease(l *Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv6: %w") }()
@@ -286,16 +317,14 @@ func (s *v6Server) rmLease(lease *Lease) (err error) {
 	return fmt.Errorf("lease not found")
 }
 
-// Find lease by MAC
-func (s *v6Server) findLease(mac net.HardwareAddr) *Lease {
-	s.leasesLock.Lock()
-	defer s.leasesLock.Unlock()
-
+// Find lease by MAC.
+func (s *v6Server) findLease(mac net.HardwareAddr) (lease *Lease) {
 	for i := range s.leases {
 		if bytes.Equal(mac, s.leases[i].HWAddr) {
 			return s.leases[i]
 		}
 	}
+
 	return nil
 }
 
@@ -477,7 +506,14 @@ func (s *v6Server) process(msg *dhcpv6.Message, req, resp dhcpv6.DHCPv6) bool {
 		return false
 	}
 
-	lease := s.findLease(mac)
+	var lease *Lease
+	func() {
+		s.leasesLock.Lock()
+		defer s.leasesLock.Unlock()
+
+		lease = s.findLease(mac)
+	}()
+
 	if lease == nil {
 		log.Debug("dhcpv6: no lease for: %s", mac)
 
