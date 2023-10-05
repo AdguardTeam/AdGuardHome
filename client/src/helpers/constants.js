@@ -27,6 +27,7 @@ export const R_WIN_ABSOLUTE_PATH = /^([a-zA-Z]:)?(\\|\/)(?:[^\\/:*?"<>|\x00]+\\)
 export const R_CLIENT_ID = /^[a-z0-9-]{1,63}$/;
 
 export const MIN_PASSWORD_LENGTH = 8;
+export const MAX_PASSWORD_LENGTH = 72;
 
 export const HTML_PAGES = {
     INSTALL: '/install.html',

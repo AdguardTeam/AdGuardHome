@@ -47,7 +47,8 @@ func TestAuth(t *testing.T) {
 	s := session{}
 
 	user := webUser{Name: "name"}
-	a.UserAdd(&user, "password")
+	err := a.Add(&user, "password")
+	require.NoError(t, err)
 
 	assert.Equal(t, checkSessionNotFound, a.checkSession("notfound"))
 	a.RemoveSession("notfound")

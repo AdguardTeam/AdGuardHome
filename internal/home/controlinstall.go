@@ -417,6 +417,18 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
 
+	u := &webUser{
+		Name: req.Username,
+	}
+	err = Context.auth.Add(u, req.Password)
+	if err != nil {
+		Context.firstRun = true
+		copyInstallSettings(config, curConfig)
+		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "%s", err)
+
+		return
+	}
+
 	// TODO(e.burkov): StartMods() should be put in a separate goroutine at the
 	// moment we'll allow setting up TLS in the initial configuration or the
 	// configuration itself will use HTTPS protocol, because the underlying
@@ -429,11 +441,6 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 
 		return
 	}
-
-	u := &webUser{
-		Name: req.Username,
-	}
-	Context.auth.UserAdd(u, req.Password)
 
 	err = config.write()
 	if err != nil {

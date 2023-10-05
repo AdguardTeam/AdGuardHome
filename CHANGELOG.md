@@ -29,17 +29,18 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Ability to specify for how long clients should cache a filtered response,
   using the *Blocked response TTL* field on the *DNS settings* page ([#4569]).
 
-[#1700]: https://github.com/AdguardTeam/AdGuardHome/issues/1700
-[#4569]: https://github.com/AdguardTeam/AdGuardHome/issues/4569
-
 ### Fixed
 
+- Improper validation of password length ([#6280]).
 - Wrong algorithm for filtering self addresses from the list of private upstream
   DNS servers ([#6231]).
 - An accidental change in DNS rewrite priority ([#6226]).
 
+[#1700]: https://github.com/AdguardTeam/AdGuardHome/issues/1700
+[#4569]: https://github.com/AdguardTeam/AdGuardHome/issues/4569
 [#6226]: https://github.com/AdguardTeam/AdGuardHome/issues/6226
 [#6231]: https://github.com/AdguardTeam/AdGuardHome/issues/6231
+[#6280]: https://github.com/AdguardTeam/AdGuardHome/issues/6280
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
