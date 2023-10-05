@@ -29,6 +29,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Ability to specify for how long clients should cache a filtered response,
   using the *Blocked response TTL* field on the *DNS settings* page ([#4569]).
 
+### Changed
+
+- Node 16 is now required to build the frontend.
+
 ### Fixed
 
 - Improper validation of password length ([#6280]).
