@@ -1,11 +1,11 @@
 //go:build !linux
 
-package aghnet
+package ipset
 
 import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 )
 
-func newIpsetMgr(_ []string) (mgr IpsetManager, err error) {
+func newManager(_ []string) (mgr Manager, err error) {
 	return nil, aghos.Unsupported("ipset")
 }
