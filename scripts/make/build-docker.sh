@@ -62,17 +62,17 @@ readonly docker_output
 case "$channel"
 in
 ('release')
-	docker_version_tag="--tag=${docker_image_name}:${version}"
-	docker_channel_tag="--tag=${docker_image_name}:latest"
+	docker_version_tag="--tag=${docker_image_name}:${version} --tag=ghcr.io/${docker_image_name}:${version}"
+	docker_channel_tag="--tag=${docker_image_name}:latest --tag=ghcr.io/${docker_image_name}:latest"
 	;;
 ('beta')
-	docker_version_tag="--tag=${docker_image_name}:${version}"
-	docker_channel_tag="--tag=${docker_image_name}:beta"
+	docker_version_tag="--tag=${docker_image_name}:${version} --tag=ghcr.io/${docker_image_name}:${version}"
+	docker_channel_tag="--tag=${docker_image_name}:beta --tag=ghcr.io/${docker_image_name}:beta"
 	;;
 ('edge')
 	# Set the version tag to an empty string when pushing to the edge channel.
 	docker_version_tag=''
-	docker_channel_tag="--tag=${docker_image_name}:edge"
+	docker_channel_tag="--tag=${docker_image_name}:edge --tag=ghcr.io/${docker_image_name}:edge"
 	;;
 ('development')
 	# Set both tags to an empty string for development builds.
