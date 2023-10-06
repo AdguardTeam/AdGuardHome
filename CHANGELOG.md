@@ -31,7 +31,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
-- Node 16 is now required to build the frontend.
+- Node.JS 16 is now required to build the frontend.
 
 ### Fixed
 
