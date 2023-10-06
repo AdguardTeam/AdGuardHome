@@ -26,6 +26,7 @@ import (
 	"github.com/AdguardTeam/golibs/mathutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/golibs/syncutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -232,7 +233,7 @@ type Checker interface {
 // DNSFilter matches hostnames and DNS requests against filtering rules.
 type DNSFilter struct {
 	// bufPool is a pool of buffers used for filtering-rule list parsing.
-	bufPool *sync.Pool
+	bufPool *syncutil.Pool[[]byte]
 
 	rulesStorage    *filterlist.RuleStorage
 	filteringEngine *urlfilter.DNSEngine
@@ -1061,13 +1062,7 @@ func InitModule() {
 // be non-nil.
 func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	d = &DNSFilter{
-		bufPool: &sync.Pool{
-			New: func() (buf any) {
-				bufVal := make([]byte, rulelist.DefaultRuleBufSize)
-
-				return &bufVal
-			},
-		},
+		bufPool:                syncutil.NewSlicePool[byte](rulelist.DefaultRuleBufSize),
 		refreshLock:            &sync.Mutex{},
 		safeBrowsingChecker:    c.SafeBrowsingChecker,
 		parentalControlChecker: c.ParentalControlChecker,

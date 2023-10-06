@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/log"
 	"golang.org/x/exp/slices"
 )
@@ -148,12 +148,7 @@ func getTranslation(client *http.Client, url string) (data []byte, err error) {
 		// Go on and download the body for inspection.
 	}
 
-	limitReader, lrErr := aghio.LimitReader(resp.Body, readLimit)
-	if lrErr != nil {
-		// Generally shouldn't happen, since the only error returned by
-		// [aghio.LimitReader] is an argument error.
-		panic(fmt.Errorf("limit reading: %w", lrErr))
-	}
+	limitReader := ioutil.LimitReader(resp.Body, readLimit)
 
 	data, readErr := io.ReadAll(limitReader)
 
