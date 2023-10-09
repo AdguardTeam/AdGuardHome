@@ -14,7 +14,7 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.39] - 2023-09-27 (APPROX.)
+## [v0.107.39] - 2023-10-09 (APPROX.)
 
 See also the [v0.107.39 GitHub milestone][ms-v0.107.39].
 
@@ -22,6 +22,11 @@ See also the [v0.107.39 GitHub milestone][ms-v0.107.39].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2023-39325 Go vulnerability fixed in [Go 1.20.9][go-1.20.9].
 
 ### Added
 
@@ -47,6 +52,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6231]: https://github.com/AdguardTeam/AdGuardHome/issues/6231
 [#6233]: https://github.com/AdguardTeam/AdGuardHome/issues/6233
 [#6280]: https://github.com/AdguardTeam/AdGuardHome/issues/6280
+
+[go-1.20.9]: https://groups.google.com/g/golang-announce/c/XBa1oHDevAo/m/desYyx3qAgAJ
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

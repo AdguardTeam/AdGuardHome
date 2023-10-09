@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2023-09-01T00:09:16.088Z",
+    "timeUpdated": "2023-10-08T00:09:45.691Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -4069,6 +4069,13 @@
             "url": "https://www.canddi.com/",
             "companyId": "canddi"
         },
+        "canonical": {
+            "name": "Canonical",
+            "categoryId": 8,
+            "url": "https://canonical.com/",
+            "companyId": "canonical",
+            "source": "AdGuard"
+        },
         "canvas": {
             "name": "Canvas",
             "categoryId": 2,
@@ -7583,6 +7590,13 @@
             "url": "http://www.game-advertising-online.com/",
             "companyId": "game_advertising_online"
         },
+        "gameanalytics": {
+            "name": "GameAnalytics",
+            "categoryId": 101,
+            "url": "https://gameanalytics.com/",
+            "companyId": "mobvista",
+            "source": "AdGuard"
+        },
         "gamedistribution.com": {
             "name": "Gamedistribution.com",
             "categoryId": 8,
@@ -9065,7 +9079,8 @@
             "name": "Imgur",
             "categoryId": 8,
             "url": "https://imgur.com/",
-            "companyId": "imgur"
+            "companyId": "medialab",
+            "source": "AdGuard"
         },
         "imho_vi": {
             "name": "imho vi",
@@ -10001,7 +10016,7 @@
             "name": "Kik",
             "categoryId": 7,
             "url": "https://kik.com/",
-            "companyId": "kik",
+            "companyId": "medialab",
             "source": "AdGuard"
         },
         "king.com": {
@@ -10183,6 +10198,13 @@
             "categoryId": 4,
             "url": "https://www.launchbit.com/",
             "companyId": "launchbit"
+        },
+        "launchpad": {
+            "name": "Launchpad",
+            "categoryId": 8,
+            "url": "https://launchpad.net/",
+            "companyId": "canonical",
+            "source": "AdGuard"
         },
         "layer-ad.org": {
             "name": "Layer-ADS.net",
@@ -12835,7 +12857,7 @@
             "name": "OPPO",
             "categoryId": 101,
             "url": "https://www.oppo.com/",
-            "companyId": "oppo",
+            "companyId": "bbk",
             "source": "AdGuard"
         },
         "opta.net": {
@@ -12933,6 +12955,13 @@
             "categoryId": 4,
             "url": "http://www.ora.tv/",
             "companyId": "ora.tv"
+        },
+        "oracle_infinity": {
+            "name": "Oracle Infinity Behavioral Intelligence",
+            "categoryId": 6,
+            "url": "https://www.oracle.com/au/cx/marketing/digital-intelligence/",
+            "companyId": "oracle",
+            "source": "AdGuard"
         },
         "oracle_live_help": {
             "name": "Oracle Live Help",
@@ -14501,8 +14530,9 @@
         "reddit": {
             "name": "Reddit",
             "categoryId": 7,
-            "url": "http://reddit.com",
-            "companyId": "reddit"
+            "url": "https://www.reddit.com",
+            "companyId": "advance",
+            "source": "AdGuard"
         },
         "redhelper": {
             "name": "RedHelper",
@@ -16112,6 +16142,13 @@
             "categoryId": 4,
             "url": "https://www.snapchat.com/",
             "companyId": "snap_technologies"
+        },
+        "snapcraft": {
+            "name": "Snapcraft",
+            "categoryId": 8,
+            "url": "https://snapcraft.io",
+            "companyId": "canonical",
+            "source": "AdGuard"
         },
         "snigelweb": {
             "name": "SnigelWeb, Inc.",
@@ -17894,7 +17931,7 @@
             "name": "Ubuntu",
             "categoryId": 8,
             "url": "https://ubuntu.com/",
-            "companyId": "ubuntu",
+            "companyId": "canonical",
             "source": "AdGuard"
         },
         "ucfunnel": {
@@ -18754,6 +18791,13 @@
             "url": "http://vpscash.nl/home",
             "companyId": "vps_cash"
         },
+        "vs": {
+            "name": "Visual Studio",
+            "categoryId": 8,
+            "url": "https://visualstudio.microsoft.com",
+            "companyId": "microsoft",
+            "source": "AdGuard"
+        },
         "vscode": {
             "name": "Visual Studio Code",
             "categoryId": 8,
@@ -19079,6 +19123,13 @@
             "categoryId": 8,
             "url": "https://www.whatsapp.com/",
             "companyId": "meta",
+            "source": "AdGuard"
+        },
+        "whisper": {
+            "name": "Whisper",
+            "categoryId": 7,
+            "url": "https://whisper.sh/",
+            "companyId": "medialab",
             "source": "AdGuard"
         },
         "whos.amung.us": {
@@ -20190,6 +20241,7 @@
         "adtidy.org": "adguard",
         "agrd.io": "adguard",
         "adguard.app": "adguard",
+        "adguard.info": "adguard",
         "adguard.io": "adguard",
         "adguard.org": "adguard",
         "adguard-dns.com": "adguard_dns",
@@ -20969,6 +21021,7 @@
         "camakaroda.com": "camakaroda.com",
         "s.edkay.com": "campus_explorer",
         "canddi.com": "canddi",
+        "canonical.com": "canonical",
         "canvas.net": "canvas",
         "canvasnetwork.com": "canvas",
         "du11hjcvx0uqb.cloudfront.net": "canvas",
@@ -21784,6 +21837,7 @@
         "angsrvr.com": "fyber",
         "fyber.com": "fyber",
         "game-advertising-online.com": "game_advertising_online",
+        "gameanalytics.com": "gameanalytics",
         "gamedistribution.com": "gamedistribution.com",
         "gamerdna.com": "gamerdna",
         "gannett-cdn.com": "gannett",
@@ -22589,9 +22643,11 @@
         "sa-as.com": "kickfire",
         "sniff.visistat.com": "kickfire",
         "stats.visistat.com": "kickfire",
-        "kik.com": "kik",
         "apikik.com": "kik",
+        "kik-gateway-use1.meetme.com": "kik",
         "kik-live.com": "kik",
+        "kik-stream.meetme.com": "kik",
+        "kik.com": "kik",
         "king.com": "king.com",
         "midasplayer.com": "king_com",
         "kinja-img.com": "kinja.com",
@@ -22633,6 +22689,8 @@
         "events.launchdarkly.com": "launch_darkly",
         "launchdarkly.com": "launch_darkly",
         "launchbit.com": "launchbit",
+        "launchpad.net": "launchpad",
+        "launchpadcontent.net": "launchpad",
         "layer-ad.org": "layer-ad.org",
         "ph-live.slatic.net": "lazada",
         "slatic.net": "lazada",
@@ -23073,6 +23131,7 @@
         "e-msedge.net": "msedge",
         "l-msedge.net": "msedge",
         "s-msedge.net": "msedge",
+        "t-msedge.net": "msedge",
         "msn.com": "msn",
         "s-msn.com": "msn",
         "musculahq.appspot.com": "muscula",
@@ -23171,6 +23230,7 @@
         "d1ros97qkrwjf5.cloudfront.net": "new_relic",
         "newrelic.com": "new_relic",
         "nr-data.net": "new_relic",
+        "codestream.com": "new_relic",
         "newscgp.com": "newscgp.com",
         "nmcdn.us": "newsmax",
         "newstogram.com": "newstogram",
@@ -23315,6 +23375,7 @@
         "optincollect.com": "optinproject.com",
         "volvelle.tech": "optomaton",
         "ora.tv": "ora.tv",
+        "oracleinfinity.io": "oracle_infinity",
         "instantservice.com": "oracle_live_help",
         "ts.istrack.com": "oracle_live_help",
         "rightnowtech.com": "oracle_rightnow",
@@ -23603,6 +23664,7 @@
         "rcsmediagroup.it": "rcs.it",
         "d335luupugsy2.cloudfront.net": "rd_station",
         "rea-group.com": "rea_group",
+        "reastatic.net": "rea_group",
         "d12ulf131zb0yj.cloudfront.net": "reachforce",
         "reachforce.com": "reachforce",
         "reachjunction.com": "reachjunction",
@@ -24079,6 +24141,8 @@
         "snapengage.com": "snap_engage",
         "sc-static.net": "snapchat",
         "snapchat.com": "snapchat",
+        "snapcraft.io": "snapcraft",
+        "snapcraftcontent.com": "snapcraft",
         "h-bid.com": "snigelweb",
         "eu2.snoobi.eu": "snoobi",
         "snoobi.com": "snoobi_analytics",
@@ -24482,11 +24546,6 @@
         "tyroodr.com": "tyroo",
         "tzetze.it": "tzetze",
         "ubersetzung-app.com": "ubersetzung-app.com",
-        "canonical.com": "ubuntu",
-        "launchpad.net": "ubuntu",
-        "launchpadcontent.net": "ubuntu",
-        "snapcraft.io": "ubuntu",
-        "snapcraftcontent.com": "ubuntu",
         "ubuntu.com": "ubuntu",
         "ubuntucompanyservices.co.za": "ubuntu",
         "aralego.net": "ucfunnel",
@@ -24667,6 +24726,7 @@
         "voxus-targeting-voxusmidia.netdna-ssl.com": "voxus",
         "c-dsp.vpadn.com": "vpon",
         "tools.vpscash.nl": "vpscash",
+        "vsassets.io": "vs",
         "exp-tas.com": "vscode",
         "vscode-unpkg.net": "vscode",
         "v0cdn.net": "vscode",
@@ -24745,6 +24805,8 @@
         "whatsbroadcast.com": "whatbroadcast",
         "whatsapp.net": "whatsapp",
         "whatsapp.com": "whatsapp",
+        "whisper.onelink.me": "whisper",
+        "whisper.sh": "whisper",
         "amung.us": "whos.amung.us",
         "whoson.com": "whoson",
         "api.wibbitz.com": "wibbitz",
