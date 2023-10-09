@@ -120,6 +120,9 @@ Optional environment:
 
 Optional environment:
 
+ *  `GOAMD64`: architectural level for [AMD64][amd64].  The default value is
+    `v1`.
+
  *  `GOARM`: ARM processor options for the Go compiler.
 
  *  `GOMIPS`: ARM processor options for the Go compiler.
@@ -146,7 +149,8 @@ Required environment:
 
  *  `CHANNEL`: release channel, see above.
 
-[repr]: https://reproducible-builds.org/docs/source-date-epoch/
+[amd64]: https://github.com/golang/go/wiki/MinimumRequirements#amd64
+[repr]:  https://reproducible-builds.org/docs/source-date-epoch/
 
 
 
