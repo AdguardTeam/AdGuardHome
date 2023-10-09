@@ -31,6 +31,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- ipset entries are updated more often ([6233]).
 - Node.JS 16 is now required to build the frontend.
 
 ### Fixed
@@ -44,6 +45,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#4569]: https://github.com/AdguardTeam/AdGuardHome/issues/4569
 [#6226]: https://github.com/AdguardTeam/AdGuardHome/issues/6226
 [#6231]: https://github.com/AdguardTeam/AdGuardHome/issues/6231
+[#6233]: https://github.com/AdguardTeam/AdGuardHome/issues/6233
 [#6280]: https://github.com/AdguardTeam/AdGuardHome/issues/6280
 
 <!--

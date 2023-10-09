@@ -114,6 +114,7 @@ func TestManager_Add(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// ipsetPropsSink is the typed sink for benchmark results.
 var ipsetPropsSink []props
 
 func BenchmarkManager_LookupHost(b *testing.B) {

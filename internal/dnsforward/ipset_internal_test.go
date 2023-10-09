@@ -114,3 +114,74 @@ func TestIpsetCtx_process(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
+
+func TestIpsetCtx_SkipIpsetProcessing(t *testing.T) {
+	req4 := createTestMessage("example.com")
+	resp4 := &dns.Msg{
+		Answer: []dns.RR{&dns.A{
+			A: net.IP{1, 2, 3, 4},
+		}},
+	}
+
+	m := &fakeIpsetMgr{}
+	ictx := &ipsetCtx{
+		ipsetMgr: m,
+	}
+
+	testCases := []struct {
+		dctx *dnsContext
+		name string
+		want bool
+	}{{
+		name: "basic",
+		want: false,
+		dctx: &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: req4,
+				Res: resp4,
+			},
+
+			responseFromUpstream: true,
+		},
+	}, {
+		name: "rewrite",
+		want: true,
+		dctx: &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: req4,
+				Res: resp4,
+			},
+
+			responseFromUpstream: false,
+		},
+	}, {
+		name: "empty_req",
+		want: true,
+		dctx: &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: nil,
+				Res: resp4,
+			},
+
+			responseFromUpstream: true,
+		},
+	}, {
+		name: "empty_res",
+		want: true,
+		dctx: &dnsContext{
+			proxyCtx: &proxy.DNSContext{
+				Req: req4,
+				Res: nil,
+			},
+
+			responseFromUpstream: true,
+		},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := ictx.skipIpsetProcessing(tc.dctx)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}

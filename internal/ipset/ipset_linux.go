@@ -62,18 +62,6 @@ type props struct {
 	family netfilter.ProtoFamily
 }
 
-// unit is a convenient alias for struct{}.
-type unit = struct{}
-
-// ipsInIpset is the type of a set of IP-address-to-ipset mappings.
-type ipsInIpset map[ipInIpsetEntry]unit
-
-// ipInIpsetEntry is the type for entries in an ipsInIpset set.
-type ipInIpsetEntry struct {
-	ipsetName string
-	ipArr     [net.IPv6len]byte
-}
-
 // manager is the Linux Netfilter ipset manager.
 type manager struct {
 	nameToIpset    map[string]props
@@ -83,13 +71,6 @@ type manager struct {
 
 	// mu protects all properties below.
 	mu *sync.Mutex
-
-	// TODO(a.garipov): Currently, the ipset list is static, and we don't
-	// read the IPs already in sets, so we can assume that all incoming IPs
-	// are either added to all corresponding ipsets or not.  When that stops
-	// being the case, for example if we add dynamic reconfiguration of
-	// ipsets, this map will need to become a per-ipset-name one.
-	addedIPs ipsInIpset
 
 	ipv4Conn ipsetConn
 	ipv6Conn ipsetConn
@@ -205,8 +186,6 @@ func newManagerWithDialer(ipsetConf []string, dial dialer) (mgr Manager, err err
 		domainToIpsets: make(map[string][]props),
 
 		dial: dial,
-
-		addedIPs: make(ipsInIpset),
 	}
 
 	err = m.dialNetfilter(&netlink.Config{})
@@ -280,19 +259,8 @@ func (m *manager) addIPs(host string, set props, ips []net.IP) (n int, err error
 	}
 
 	var entries []*ipset.Entry
-	var newAddedEntries []ipInIpsetEntry
 	for _, ip := range ips {
-		e := ipInIpsetEntry{
-			ipsetName: set.name,
-		}
-		copy(e.ipArr[:], ip.To16())
-
-		if _, added := m.addedIPs[e]; added {
-			continue
-		}
-
 		entries = append(entries, ipset.NewEntry(ipset.EntryIP(ip)))
-		newAddedEntries = append(newAddedEntries, e)
 	}
 
 	n = len(entries)
@@ -313,12 +281,6 @@ func (m *manager) addIPs(host string, set props, ips []net.IP) (n int, err error
 	err = conn.Add(set.name, entries...)
 	if err != nil {
 		return 0, fmt.Errorf("adding %q%s to ipset %q: %w", host, ips, set.name, err)
-	}
-
-	// Only add these to the cache once we're sure that all of them were
-	// actually sent to the ipset.
-	for _, e := range newAddedEntries {
-		m.addedIPs[e] = unit{}
 	}
 
 	return n, nil
