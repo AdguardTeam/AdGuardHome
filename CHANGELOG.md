@@ -41,6 +41,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Incorrect domain-specific upstream matching for `DS` queries ([#6156]).
 - Improper validation of password length ([#6280]).
 - Wrong algorithm for filtering self addresses from the list of private upstream
   DNS servers ([#6231]).
@@ -48,6 +49,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#1700]: https://github.com/AdguardTeam/AdGuardHome/issues/1700
 [#4569]: https://github.com/AdguardTeam/AdGuardHome/issues/4569
+[#6156]: https://github.com/AdguardTeam/AdGuardHome/issues/6156
 [#6226]: https://github.com/AdguardTeam/AdGuardHome/issues/6226
 [#6231]: https://github.com/AdguardTeam/AdGuardHome/issues/6231
 [#6233]: https://github.com/AdguardTeam/AdGuardHome/issues/6233
