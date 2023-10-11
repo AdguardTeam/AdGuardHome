@@ -80,6 +80,12 @@ func TestRewrites(t *testing.T) {
 	}, {
 		Domain: "*.issue4016.com",
 		Answer: "sub.issue4016.com",
+	}, {
+		Domain: "*.sub.issue6226.com",
+		Answer: addr2v4.String(),
+	}, {
+		Domain: "*.issue6226.com",
+		Answer: addr1v4.String(),
 	}}
 
 	require.NoError(t, d.prepareRewrites())
@@ -181,6 +187,20 @@ func TestRewrites(t *testing.T) {
 		wantCName:  "",
 		wantIPs:    nil,
 		wantReason: NotFilteredNotFound,
+		dtyp:       dns.TypeA,
+	}, {
+		name:       "issue6226",
+		host:       "www.issue6226.com",
+		wantCName:  "",
+		wantIPs:    []netip.Addr{addr1v4},
+		wantReason: Rewritten,
+		dtyp:       dns.TypeA,
+	}, {
+		name:       "issue6226_sub",
+		host:       "www.sub.issue6226.com",
+		wantCName:  "",
+		wantIPs:    []netip.Addr{addr2v4},
+		wantReason: Rewritten,
 		dtyp:       dns.TypeA,
 	}}
 

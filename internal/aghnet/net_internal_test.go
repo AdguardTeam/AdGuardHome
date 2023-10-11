@@ -230,7 +230,7 @@ func TestCollectAllIfacesAddrs(t *testing.T) {
 		name       string
 		wantErrMsg string
 		addrs      []net.Addr
-		wantAddrs  []string
+		wantAddrs  []netip.Addr
 	}{{
 		name:       "success",
 		wantErrMsg: ``,
@@ -241,10 +241,13 @@ func TestCollectAllIfacesAddrs(t *testing.T) {
 			IP:   net.IP{4, 3, 2, 1},
 			Mask: net.CIDRMask(16, netutil.IPv4BitLen),
 		}},
-		wantAddrs: []string{"1.2.3.4", "4.3.2.1"},
+		wantAddrs: []netip.Addr{
+			netip.MustParseAddr("1.2.3.4"),
+			netip.MustParseAddr("4.3.2.1"),
+		},
 	}, {
 		name:       "not_cidr",
-		wantErrMsg: `parsing cidr: invalid CIDR address: 1.2.3.4`,
+		wantErrMsg: `netip.ParsePrefix("1.2.3.4"): no '/'`,
 		addrs: []net.Addr{&net.IPAddr{
 			IP: net.IP{1, 2, 3, 4},
 		}},
@@ -269,12 +272,11 @@ func TestCollectAllIfacesAddrs(t *testing.T) {
 
 	t.Run("internal_error", func(t *testing.T) {
 		const errAddrs errors.Error = "can't get addresses"
-		const wantErrMsg string = `getting interfaces addresses: ` + string(errAddrs)
 
 		substNetInterfaceAddrs(t, func() ([]net.Addr, error) { return nil, errAddrs })
 
 		_, err := CollectAllIfacesAddrs()
-		testutil.AssertErrorMsg(t, wantErrMsg, err)
+		assert.ErrorIs(t, err, errAddrs)
 	})
 }
 

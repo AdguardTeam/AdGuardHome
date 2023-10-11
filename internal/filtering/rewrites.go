@@ -118,23 +118,22 @@ func matchDomainWildcard(host, wildcard string) (ok bool) {
 //  2. wildcard > exact;
 //  3. lower level wildcard > higher level wildcard;
 func (rw *LegacyRewrite) Compare(b *LegacyRewrite) (res int) {
-	if rw.Type == dns.TypeCNAME && b.Type != dns.TypeCNAME {
-		return -1
-	} else if rw.Type != dns.TypeCNAME && b.Type == dns.TypeCNAME {
+	if rw.Type == dns.TypeCNAME {
+		if b.Type != dns.TypeCNAME {
+			return -1
+		}
+	} else if b.Type == dns.TypeCNAME {
 		return 1
 	}
 
-	aIsWld, bIsWld := isWildcard(rw.Domain), isWildcard(b.Domain)
-	if aIsWld == bIsWld {
+	if aIsWld, bIsWld := isWildcard(rw.Domain), isWildcard(b.Domain); aIsWld == bIsWld {
 		// Both are either wildcards or both aren't.
-		return len(rw.Domain) - len(b.Domain)
-	}
-
-	if aIsWld {
+		return len(b.Domain) - len(rw.Domain)
+	} else if aIsWld {
 		return 1
+	} else {
+		return -1
 	}
-
-	return -1
 }
 
 // prepareRewrites normalizes and validates all legacy DNS rewrites.

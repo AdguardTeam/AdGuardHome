@@ -19,6 +19,7 @@ func (winServer) GetLeases(_ GetLeasesFlags) (leases []*Lease)    { return nil }
 func (winServer) getLeasesRef() []*Lease                          { return nil }
 func (winServer) AddStaticLease(_ *Lease) (err error)             { return nil }
 func (winServer) RemoveStaticLease(_ *Lease) (err error)          { return nil }
+func (winServer) UpdateStaticLease(_ *Lease) (err error)          { return nil }
 func (winServer) FindMACbyIP(_ netip.Addr) (mac net.HardwareAddr) { return nil }
 func (winServer) WriteDiskConfig4(_ *V4ServerConf)                {}
 func (winServer) WriteDiskConfig6(_ *V6ServerConf)                {}

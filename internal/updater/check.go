@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/log"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
@@ -51,11 +51,7 @@ func (u *Updater) VersionInfo(forceRecheck bool) (vi VersionInfo, err error) {
 	}
 	defer func() { err = errors.WithDeferred(err, resp.Body.Close()) }()
 
-	var r io.Reader
-	r, err = aghio.LimitReader(resp.Body, MaxResponseSize)
-	if err != nil {
-		return VersionInfo{}, fmt.Errorf("updater: LimitReadCloser: %w", err)
-	}
+	r := ioutil.LimitReader(resp.Body, MaxResponseSize)
 
 	// This use of ReadAll is safe, because we just limited the appropriate
 	// ReadCloser.

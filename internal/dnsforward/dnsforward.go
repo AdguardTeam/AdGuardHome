@@ -25,8 +25,10 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/netutil/sysresolv"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
+	"golang.org/x/exp/slices"
 )
 
 // DefaultTimeout is the default upstream timeout
@@ -70,6 +72,11 @@ type DHCP interface {
 
 	// Enabled returns true if DHCP provides information about clients.
 	Enabled() (ok bool)
+}
+
+type SystemResolvers interface {
+	// Addrs returns the list of system resolvers' addresses.
+	Addrs() (addrs []netip.AddrPort)
 }
 
 // Server is the main way to start a DNS server.
@@ -126,7 +133,7 @@ type Server struct {
 
 	// sysResolvers used to fetch system resolvers to use by default for private
 	// PTR resolving.
-	sysResolvers aghnet.SystemResolvers
+	sysResolvers SystemResolvers
 
 	// recDetector is a cache for recursive requests.  It is used to detect
 	// and prevent recursive requests only for private upstreams.
@@ -225,9 +232,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		anonymizer: p.Anonymizer,
 	}
 
-	// TODO(e.burkov): Enable the refresher after the actual implementation
-	// passes the public testing.
-	s.sysResolvers, err = aghnet.NewSystemResolvers(nil)
+	s.sysResolvers, err = sysresolv.NewSystemResolvers(nil, defaultPlainDNSPort)
 	if err != nil {
 		return nil, fmt.Errorf("initializing system resolvers: %w", err)
 	}
@@ -439,73 +444,28 @@ func (s *Server) startLocked() error {
 // faster than ordinary upstreams.
 const defaultLocalTimeout = 1 * time.Second
 
-// collectDNSIPAddrs returns IP addresses the server is listening on without
-// port numbers.  For internal use only.
-func (s *Server) collectDNSIPAddrs() (addrs []string, err error) {
-	addrs = make([]string, len(s.conf.TCPListenAddrs)+len(s.conf.UDPListenAddrs))
-	var i int
-	var ip net.IP
-	for _, addr := range s.conf.TCPListenAddrs {
-		if addr == nil {
-			continue
-		}
-
-		if ip = addr.IP; ip.IsUnspecified() {
-			return aghnet.CollectAllIfacesAddrs()
-		}
-
-		addrs[i] = ip.String()
-		i++
-	}
-	for _, addr := range s.conf.UDPListenAddrs {
-		if addr == nil {
-			continue
-		}
-
-		if ip = addr.IP; ip.IsUnspecified() {
-			return aghnet.CollectAllIfacesAddrs()
-		}
-
-		addrs[i] = ip.String()
-		i++
-	}
-
-	return addrs[:i], nil
-}
-
-func (s *Server) filterOurDNSAddrs(addrs []string) (filtered []string, err error) {
-	var ourAddrs []string
-	ourAddrs, err = s.collectDNSIPAddrs()
-	if err != nil {
-		return nil, err
-	}
-
-	ourAddrsSet := stringutil.NewSet(ourAddrs...)
-	log.Debug("dnsforward: filtering out %s", ourAddrsSet.String())
-
-	// TODO(e.burkov): The approach of subtracting sets of strings is not
-	// really applicable here since in case of listening on all network
-	// interfaces we should check the whole interface's network to cut off
-	// all the loopback addresses as well.
-	return stringutil.FilterOut(addrs, ourAddrsSet.Has), nil
-}
-
 // setupLocalResolvers initializes the resolvers for local addresses.  For
 // internal use only.
 func (s *Server) setupLocalResolvers() (err error) {
-	bootstraps := s.conf.BootstrapDNS
-	resolvers := s.conf.LocalPTRResolvers
-
-	if len(resolvers) == 0 {
-		resolvers = s.sysResolvers.Get()
-		bootstraps = nil
-	} else {
-		resolvers = stringutil.FilterOut(resolvers, IsCommentOrEmpty)
+	matcher, err := s.conf.ourAddrsMatcher()
+	if err != nil {
+		// Don't wrap the error because it's informative enough as is.
+		return err
 	}
 
-	resolvers, err = s.filterOurDNSAddrs(resolvers)
-	if err != nil {
-		return err
+	bootstraps := s.conf.BootstrapDNS
+	resolvers := s.conf.LocalPTRResolvers
+	filterConfig := false
+
+	if len(resolvers) == 0 {
+		sysResolvers := slices.DeleteFunc(s.sysResolvers.Addrs(), matcher)
+		resolvers = make([]string, 0, len(sysResolvers))
+		for _, r := range sysResolvers {
+			resolvers = append(resolvers, r.String())
+		}
+	} else {
+		resolvers = stringutil.FilterOut(resolvers, IsCommentOrEmpty)
+		filterConfig = true
 	}
 
 	log.Debug("dnsforward: upstreams to resolve ptr for local addresses: %v", resolvers)
@@ -514,11 +474,16 @@ func (s *Server) setupLocalResolvers() (err error) {
 		Bootstrap: bootstraps,
 		Timeout:   defaultLocalTimeout,
 		// TODO(e.burkov): Should we verify server's certificates?
-
 		PreferIPv6: s.conf.BootstrapPreferIPv6,
 	})
 	if err != nil {
 		return fmt.Errorf("preparing private upstreams: %w", err)
+	}
+
+	if filterConfig {
+		if err = matcher.filterOut(uc); err != nil {
+			return fmt.Errorf("filtering private upstreams: %w", err)
+		}
 	}
 
 	s.localResolvers = &proxy.Proxy{

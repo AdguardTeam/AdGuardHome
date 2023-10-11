@@ -19,6 +19,7 @@ import Card from '../../../ui/Card';
 import CellWrap from '../../../ui/CellWrap';
 import LogsSearchLink from '../../../ui/LogsSearchLink';
 import Modal from '../Modal';
+import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from '../../../../helpers/localStorageHelper';
 
 const ClientsTable = ({
     clients,
@@ -342,7 +343,10 @@ const ClientsTable = ({
                     ]}
                     className="-striped -highlight card-table-overflow"
                     showPagination
-                    defaultPageSize={10}
+                    defaultPageSize={LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.CLIENTS_PAGE_SIZE) || 10}
+                    onPageSizeChange={(size) => (
+                        LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.CLIENTS_PAGE_SIZE, size)
+                    )}
                     minRows={5}
                     ofText="/"
                     previousText={t('previous_btn')}

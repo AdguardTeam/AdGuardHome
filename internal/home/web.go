@@ -39,8 +39,8 @@ type webConfig struct {
 
 	clientFS fs.FS
 
-	BindHost netip.Addr
-	BindPort int
+	// BindAddr is the binding address with port for plain HTTP web interface.
+	BindAddr netip.AddrPort
 
 	// ReadTimeout is an option to pass to http.Server for setting an
 	// appropriate field.
@@ -125,12 +125,12 @@ func newWebAPI(conf *webConfig) (w *webAPI) {
 // available, unless the HTTPS server isn't active.
 //
 // TODO(a.garipov): Adapt for HTTP/3.
-func webCheckPortAvailable(port int) (ok bool) {
+func webCheckPortAvailable(port uint16) (ok bool) {
 	if Context.web.httpsServer.server != nil {
 		return true
 	}
 
-	addrPort := netip.AddrPortFrom(config.HTTPConfig.Address.Addr(), uint16(port))
+	addrPort := netip.AddrPortFrom(config.HTTPConfig.Address.Addr(), port)
 
 	return aghnet.CheckPort("tcp", addrPort) == nil
 }
@@ -185,10 +185,9 @@ func (web *webAPI) start() {
 		hdlr := h2c.NewHandler(withMiddlewares(Context.mux, limitRequestBody), &http2.Server{})
 
 		// Create a new instance, because the Web is not usable after Shutdown.
-		hostStr := web.conf.BindHost.String()
 		web.httpServer = &http.Server{
 			ErrorLog:          log.StdLog("web: plain", log.DEBUG),
-			Addr:              netutil.JoinHostPort(hostStr, web.conf.BindPort),
+			Addr:              web.conf.BindAddr.String(),
 			Handler:           hdlr,
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
@@ -249,7 +248,7 @@ func (web *webAPI) tlsServerLoop() {
 
 		web.httpsServer.cond.L.Unlock()
 
-		var portHTTPS int
+		var portHTTPS uint16
 		func() {
 			config.RLock()
 			defer config.RUnlock()
@@ -257,7 +256,7 @@ func (web *webAPI) tlsServerLoop() {
 			portHTTPS = config.TLS.PortHTTPS
 		}()
 
-		addr := netutil.JoinHostPort(web.conf.BindHost.String(), portHTTPS)
+		addr := netip.AddrPortFrom(web.conf.BindAddr.Addr(), portHTTPS).String()
 		web.httpsServer.server = &http.Server{
 			ErrorLog: log.StdLog("web: https", log.DEBUG),
 			Addr:     addr,

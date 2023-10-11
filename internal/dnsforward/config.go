@@ -12,10 +12,12 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -390,6 +392,122 @@ func (s *Server) prepareIpsetListSettings() (err error) {
 	log.Debug("dns: using %d ipset rules from file %q", len(ipsets), fn)
 
 	return s.ipset.init(ipsets)
+}
+
+// collectListenAddr adds addrPort to addrs.  It also adds its port to
+// unspecPorts if its address is unspecified.
+func collectListenAddr(
+	addrPort netip.AddrPort,
+	addrs map[netip.AddrPort]unit,
+	unspecPorts map[uint16]unit,
+) {
+	if addrPort == (netip.AddrPort{}) {
+		return
+	}
+
+	addrs[addrPort] = unit{}
+	if addrPort.Addr().IsUnspecified() {
+		unspecPorts[addrPort.Port()] = unit{}
+	}
+}
+
+// collectDNSAddrs returns configured set of listening addresses.  It also
+// returns a set of ports of each unspecified listening address.
+func (conf *ServerConfig) collectDNSAddrs() (
+	addrs map[netip.AddrPort]unit,
+	unspecPorts map[uint16]unit,
+) {
+	// TODO(e.burkov):  Perhaps, we shouldn't allocate as much memory, since the
+	// TCP and UDP listening addresses are currently the same.
+	addrs = make(map[netip.AddrPort]unit, len(conf.TCPListenAddrs)+len(conf.UDPListenAddrs))
+	unspecPorts = map[uint16]unit{}
+
+	for _, laddr := range conf.TCPListenAddrs {
+		collectListenAddr(laddr.AddrPort(), addrs, unspecPorts)
+	}
+
+	for _, laddr := range conf.UDPListenAddrs {
+		collectListenAddr(laddr.AddrPort(), addrs, unspecPorts)
+	}
+
+	return addrs, unspecPorts
+}
+
+// defaultPlainDNSPort is the default port for plain DNS.
+const defaultPlainDNSPort uint16 = 53
+
+// addrPortMatcher is a function that matches an IP address with port.
+type addrPortMatcher func(addr netip.AddrPort) (ok bool)
+
+// filterOut filters out all the upstreams that match um.  It returns all the
+// closing errors joined.
+func (m addrPortMatcher) filterOut(upsConf *proxy.UpstreamConfig) (err error) {
+	var errs []error
+	delFunc := func(u upstream.Upstream) (ok bool) {
+		// TODO(e.burkov):  We should probably consider the protocol of u to
+		// only filter out the listening addresses of the same protocol.
+		addr, parseErr := aghnet.ParseAddrPort(u.Address(), defaultPlainDNSPort)
+		if parseErr != nil || !m(addr) {
+			// Don't filter out the upstream if it either cannot be parsed, or
+			// does not match um.
+			return false
+		}
+
+		errs = append(errs, u.Close())
+
+		return true
+	}
+
+	upsConf.Upstreams = slices.DeleteFunc(upsConf.Upstreams, delFunc)
+	for d, ups := range upsConf.DomainReservedUpstreams {
+		upsConf.DomainReservedUpstreams[d] = slices.DeleteFunc(ups, delFunc)
+	}
+	for d, ups := range upsConf.SpecifiedDomainUpstreams {
+		upsConf.SpecifiedDomainUpstreams[d] = slices.DeleteFunc(ups, delFunc)
+	}
+
+	return errors.Join(errs...)
+}
+
+// ourAddrsMatcher returns a matcher that matches all the configured listening
+// addresses.
+func (conf *ServerConfig) ourAddrsMatcher() (m addrPortMatcher, err error) {
+	addrs, unspecPorts := conf.collectDNSAddrs()
+	if len(addrs) == 0 {
+		log.Debug("dnsforward: no listen addresses")
+
+		// Match no addresses.
+		return func(_ netip.AddrPort) (ok bool) { return false }, nil
+	}
+
+	if len(unspecPorts) == 0 {
+		log.Debug("dnsforward: filtering out addresses %s", addrs)
+
+		m = func(a netip.AddrPort) (ok bool) {
+			_, ok = addrs[a]
+
+			return ok
+		}
+	} else {
+		var ifaceAddrs []netip.Addr
+		ifaceAddrs, err = aghnet.CollectAllIfacesAddrs()
+		if err != nil {
+			// Don't wrap the error since it's informative enough as is.
+			return nil, err
+		}
+
+		log.Debug("dnsforward: filtering out addresses %s on ports %d", ifaceAddrs, unspecPorts)
+
+		m = func(a netip.AddrPort) (ok bool) {
+			if _, ok = unspecPorts[a.Port()]; ok {
+				return slices.Contains(ifaceAddrs, a.Addr())
+			}
+
+			return false
+		}
+	}
+
+	return m, nil
 }
 
 // prepareTLS - prepares TLS configuration for the DNS proxy

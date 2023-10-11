@@ -42,7 +42,7 @@ type options struct {
 	// bindPort is the port on which to serve the HTTP UI.
 	//
 	// Deprecated: Use bindAddr.
-	bindPort int
+	bindPort uint16
 
 	// bindAddr is the address to serve the web UI on.
 	bindAddr netip.AddrPort
@@ -160,15 +160,11 @@ var cmdLineOpts = []cmdLineOpt{{
 	shortName: "h",
 }, {
 	updateWithValue: func(o options, v string) (options, error) {
-		var err error
-		var p int
-		minPort, maxPort := 0, 1<<16-1
-		if p, err = strconv.Atoi(v); err != nil {
-			err = fmt.Errorf("port %q is not a number", v)
-		} else if p < minPort || p > maxPort {
-			err = fmt.Errorf("port %d not in range %d - %d", p, minPort, maxPort)
+		p, err := strconv.ParseUint(v, 10, 16)
+		if err != nil {
+			err = fmt.Errorf("parsing port: %w", err)
 		} else {
-			o.bindPort = p
+			o.bindPort = uint16(p)
 		}
 
 		return o, err
@@ -180,7 +176,7 @@ var cmdLineOpts = []cmdLineOpt{{
 			return "", false
 		}
 
-		return strconv.Itoa(o.bindPort), true
+		return strconv.Itoa(int(o.bindPort)), true
 	},
 	description: "Deprecated. Port to serve HTTP pages on. Use --web-addr.",
 	longName:    "port",

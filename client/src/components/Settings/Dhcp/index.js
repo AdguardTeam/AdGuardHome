@@ -49,6 +49,7 @@ const Dhcp = () => {
         isModalOpen,
         processingAdding,
         processingDeleting,
+        processingUpdating,
         processingDhcp,
         v4,
         v6,
@@ -56,6 +57,7 @@ const Dhcp = () => {
         enabled,
         dhcp_available,
         interfaces,
+        modalType,
     } = useSelector((state) => state.dhcp, shallowEqual);
 
     const interface_name = useSelector(
@@ -273,8 +275,11 @@ const Dhcp = () => {
                         <StaticLeases
                             staticLeases={staticLeases}
                             isModalOpen={isModalOpen}
+                            toggleModal={toggleModal}
+                            modalType={modalType}
                             processingAdding={processingAdding}
                             processingDeleting={processingDeleting}
+                            processingUpdating={processingUpdating}
                             cidr={cidr}
                             rangeStart={dhcp?.values?.v4?.range_start}
                             rangeEnd={dhcp?.values?.v4?.range_end}

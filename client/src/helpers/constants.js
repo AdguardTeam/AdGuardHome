@@ -27,6 +27,7 @@ export const R_WIN_ABSOLUTE_PATH = /^([a-zA-Z]:)?(\\|\/)(?:[^\\/:*?"<>|\x00]+\\)
 export const R_CLIENT_ID = /^[a-z0-9-]{1,63}$/;
 
 export const MIN_PASSWORD_LENGTH = 8;
+export const MAX_PASSWORD_LENGTH = 72;
 
 export const HTML_PAGES = {
     INSTALL: '/install.html',
@@ -175,6 +176,7 @@ export const MODAL_TYPE = {
     CHOOSE_FILTERING_LIST: 'CHOOSE_FILTERING_LIST',
     ADD_REWRITE: 'ADD_REWRITE',
     EDIT_REWRITE: 'EDIT_REWRITE',
+    EDIT_LEASE: 'EDIT_LEASE',
 };
 
 export const CLIENT_ID = {
@@ -550,7 +552,5 @@ export const DISABLE_PROTECTION_TIMINGS = {
     HOUR: 60 * 60 * 1000,
     TOMORROW: 24 * 60 * 60 * 1000,
 };
-
-export const LOCAL_STORAGE_THEME_KEY = 'account_theme';
 
 export const LOCAL_TIMEZONE_VALUE = 'Local';

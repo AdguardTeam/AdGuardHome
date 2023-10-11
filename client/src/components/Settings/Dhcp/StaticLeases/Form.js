@@ -22,6 +22,7 @@ const Form = ({
     submitting,
     processingAdding,
     cidr,
+    isEdit,
 }) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -45,6 +46,7 @@ const Form = ({
                         placeholder={t('form_enter_mac')}
                         normalize={normalizeMac}
                         validate={[validateRequiredValue, validateMac]}
+                        disabled={isEdit}
                     />
                 </div>
                 <div className="form__group">
@@ -112,6 +114,7 @@ Form.propTypes = {
     submitting: PropTypes.bool.isRequired,
     processingAdding: PropTypes.bool.isRequired,
     cidr: PropTypes.string.isRequired,
+    isEdit: PropTypes.bool,
 };
 
 export default reduxForm({ form: FORM_NAME.LEASE })(Form);

@@ -504,7 +504,7 @@ func (d *DNSFilter) updateIntl(flt *FilterYAML) (ok bool, err error) {
 	}
 	defer func() { err = errors.WithDeferred(err, r.Close()) }()
 
-	bufPtr := d.bufPool.Get().(*[]byte)
+	bufPtr := d.bufPool.Get()
 	defer d.bufPool.Put(bufPtr)
 
 	p := rulelist.NewParser()
@@ -607,7 +607,7 @@ func (d *DNSFilter) load(flt *FilterYAML) (err error) {
 
 	log.Debug("filtering: file %q, id %d, length %d", fileName, flt.ID, st.Size())
 
-	bufPtr := d.bufPool.Get().(*[]byte)
+	bufPtr := d.bufPool.Get()
 	defer d.bufPool.Put(bufPtr)
 
 	p := rulelist.NewParser()

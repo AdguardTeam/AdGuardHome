@@ -1,8 +1,8 @@
 'name': 'build'
 
 'env':
-  'GO_VERSION': '1.20.8'
-  'NODE_VERSION': '14'
+  'GO_VERSION': '1.20.10'
+  'NODE_VERSION': '16'
 
 'on':
   'push':

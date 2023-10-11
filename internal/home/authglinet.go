@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
+	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/josharian/native"
 )
@@ -83,12 +83,7 @@ func glGetTokenDate(file string) uint32 {
 		}
 	}()
 
-	fileReader, err := aghio.LimitReader(f, MaxFileSize)
-	if err != nil {
-		log.Error("creating limited reader: %s", err)
-
-		return 0
-	}
+	fileReader := ioutil.LimitReader(f, MaxFileSize)
 
 	var dateToken uint32
 

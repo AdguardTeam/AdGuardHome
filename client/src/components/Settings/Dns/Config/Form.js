@@ -68,10 +68,10 @@ const Form = ({
 
     return <form onSubmit={handleSubmit}>
         <div className="row">
-            <div className="col-12 col-sm-6">
+            <div className="col-12 col-md-7">
                 <div className="form__group form__group--settings">
                     <label htmlFor="ratelimit"
-                           className="form__label form__label--with-desc">
+                        className="form__label form__label--with-desc">
                         <Trans>rate_limit</Trans>
                     </label>
                     <div className="form__desc form__desc--top">
@@ -160,24 +160,46 @@ const Form = ({
                         name,
                         validateIp,
                     }) => <div className="col-12 col-sm-6" key={name}>
-                        <div className="form__group form__group--settings">
-                            <label className="form__label form__label--with-desc"
-                                   htmlFor={name}><Trans>{name}</Trans>
-                            </label>
-                            <div className="form__desc form__desc--top">
-                                <Trans>{description}</Trans>
+                            <div className="form__group form__group--settings">
+                                <label className="form__label form__label--with-desc"
+                                    htmlFor={name}><Trans>{name}</Trans>
+                                </label>
+                                <div className="form__desc form__desc--top">
+                                    <Trans>{description}</Trans>
+                                </div>
+                                <Field
+                                    name={name}
+                                    component={renderInputField}
+                                    className="form-control"
+                                    placeholder={t('form_enter_ip')}
+                                    validate={[validateIp, validateRequiredValue]}
+                                />
                             </div>
-                            <Field
-                                name={name}
-                                component={renderInputField}
-                                className="form-control"
-                                placeholder={t('form_enter_ip')}
-                                validate={[validateIp, validateRequiredValue]}
-                            />
-                        </div>
-                    </div>)}
+                        </div>)}
                 </>
             )}
+            <div className="col-12 col-md-7">
+                <div className="form__group form__group--settings">
+                    <label htmlFor="blocked_response_ttl"
+                        className="form__label form__label--with-desc">
+                        <Trans>blocked_response_ttl</Trans>
+                    </label>
+                    <div className="form__desc form__desc--top">
+                        <Trans>blocked_response_ttl_desc</Trans>
+                    </div>
+                    <Field
+                        name="blocked_response_ttl"
+                        type="number"
+                        component={renderInputField}
+                        className="form-control"
+                        placeholder={t('form_enter_blocked_response_ttl')}
+                        normalize={toNumber}
+                        validate={validateRequiredValue}
+                        min={UINT32_RANGE.MIN}
+                        max={UINT32_RANGE.MAX}
+                    />
+                </div>
+            </div>
         </div>
         <button
             type="submit"

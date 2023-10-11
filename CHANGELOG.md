@@ -14,11 +14,11 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.39] - 2023-09-27 (APPROX.)
+## [v0.107.40] - 2023-10-09 (APPROX.)
 
-See also the [v0.107.39 GitHub milestone][ms-v0.107.39].
+See also the [v0.107.40 GitHub milestone][ms-v0.107.40].
 
-[ms-v0.107.39]: https://github.com/AdguardTeam/AdGuardHome/milestone/74?closed=1
+[ms-v0.107.40]: https://github.com/AdguardTeam/AdGuardHome/milestone/75?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -26,6 +26,50 @@ NOTE: Add new changes BELOW THIS COMMENT.
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.39] - 2023-10-11
+
+See also the [v0.107.39 GitHub milestone][ms-v0.107.39].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2023-39323 and CVE-2023-39325 Go vulnerabilities fixed in
+  [Go 1.20.9][go-1.20.9] and [Go 1.20.10][go-1.20.10].
+
+### Added
+
+- Ability to edit static leases on *DHCP settings* page ([#1700]).
+- Ability to specify for how long clients should cache a filtered response,
+  using the *Blocked response TTL* field on the *DNS settings* page ([#4569]).
+
+### Changed
+
+- ipset entries are updated more often ([#6233]).
+- Node.JS 16 is now required to build the frontend.
+
+### Fixed
+
+- Incorrect domain-specific upstream matching for `DS` queries ([#6156]).
+- Improper validation of password length ([#6280]).
+- Wrong algorithm for filtering self addresses from the list of private upstream
+  DNS servers ([#6231]).
+- An accidental change in DNS rewrite priority ([#6226]).
+
+[#1700]: https://github.com/AdguardTeam/AdGuardHome/issues/1700
+[#4569]: https://github.com/AdguardTeam/AdGuardHome/issues/4569
+[#6156]: https://github.com/AdguardTeam/AdGuardHome/issues/6156
+[#6226]: https://github.com/AdguardTeam/AdGuardHome/issues/6226
+[#6231]: https://github.com/AdguardTeam/AdGuardHome/issues/6231
+[#6233]: https://github.com/AdguardTeam/AdGuardHome/issues/6233
+[#6280]: https://github.com/AdguardTeam/AdGuardHome/issues/6280
+
+[go-1.20.9]:  https://groups.google.com/g/golang-announce/c/XBa1oHDevAo/m/desYyx3qAgAJ
+[go-1.20.10]: https://groups.google.com/g/golang-announce/c/iNNxDTCjZvo/m/UDd7VKQuAAAJ
+
+[ms-v0.107.39]: https://github.com/AdguardTeam/AdGuardHome/milestone/74?closed=1
 
 
 
@@ -2487,11 +2531,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.39...HEAD
-[v0.107.39]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.38...v0.107.39
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.40...HEAD
+[v0.107.40]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.39...v0.107.40
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.38...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.39...HEAD
+[v0.107.39]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.38...v0.107.39
 [v0.107.38]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.37...v0.107.38
 [v0.107.37]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.36...v0.107.37
 [v0.107.36]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.35...v0.107.36

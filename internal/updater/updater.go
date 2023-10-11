@@ -8,18 +8,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -36,6 +34,7 @@ type Updater struct {
 
 	workDir         string
 	confName        string
+	execPath        string
 	versionCheckURL string
 
 	// mu protects all fields below.
@@ -74,18 +73,19 @@ type Config struct {
 	// ConfName is the name of the current configuration file.  Typically,
 	// "AdGuardHome.yaml".
 	ConfName string
+
 	// WorkDir is the working directory that is used for temporary files.
 	WorkDir string
+
+	// ExecPath is path to the executable file.
+	ExecPath string
+
+	// VersionCheckURL is url to the latest version announcement.
+	VersionCheckURL string
 }
 
 // NewUpdater creates a new Updater.
 func NewUpdater(conf *Config) *Updater {
-	u := &url.URL{
-		Scheme: "https",
-		// TODO(a.garipov): Make configurable.
-		Host: "static.adtidy.org",
-		Path: path.Join("adguardhome", conf.Channel, "version.json"),
-	}
 	return &Updater{
 		client: conf.Client,
 
@@ -98,7 +98,8 @@ func NewUpdater(conf *Config) *Updater {
 
 		confName:        conf.ConfName,
 		workDir:         conf.WorkDir,
-		versionCheckURL: u.String(),
+		execPath:        conf.ExecPath,
+		versionCheckURL: conf.VersionCheckURL,
 
 		mu: &sync.RWMutex{},
 	}
@@ -119,12 +120,7 @@ func (u *Updater) Update(firstRun bool) (err error) {
 		}
 	}()
 
-	execPath, err := os.Executable()
-	if err != nil {
-		return fmt.Errorf("getting executable path: %w", err)
-	}
-
-	err = u.prepare(execPath)
+	err = u.prepare()
 	if err != nil {
 		return fmt.Errorf("preparing: %w", err)
 	}
@@ -178,7 +174,7 @@ func (u *Updater) VersionCheckURL() (vcu string) {
 }
 
 // prepare fills all necessary fields in Updater object.
-func (u *Updater) prepare(exePath string) (err error) {
+func (u *Updater) prepare() (err error) {
 	u.updateDir = filepath.Join(u.workDir, fmt.Sprintf("agh-update-%s", u.newVersion))
 
 	_, pkgNameOnly := filepath.Split(u.packageURL)
@@ -194,7 +190,7 @@ func (u *Updater) prepare(exePath string) (err error) {
 		updateExeName = "AdGuardHome.exe"
 	}
 
-	u.backupExeName = filepath.Join(u.backupDir, filepath.Base(exePath))
+	u.backupExeName = filepath.Join(u.backupDir, filepath.Base(u.execPath))
 	u.updateExeName = filepath.Join(u.updateDir, updateExeName)
 
 	log.Debug(
@@ -204,7 +200,7 @@ func (u *Updater) prepare(exePath string) (err error) {
 		u.packageURL,
 	)
 
-	u.currentExeName = exePath
+	u.currentExeName = u.execPath
 	_, err = os.Stat(u.currentExeName)
 	if err != nil {
 		return fmt.Errorf("checking %q: %w", u.currentExeName, err)
@@ -332,11 +328,7 @@ func (u *Updater) downloadPackageFile() (err error) {
 	}
 	defer func() { err = errors.WithDeferred(err, resp.Body.Close()) }()
 
-	var r io.Reader
-	r, err = aghio.LimitReader(resp.Body, MaxPackageFileSize)
-	if err != nil {
-		return fmt.Errorf("http request failed: %w", err)
-	}
+	r := ioutil.LimitReader(resp.Body, MaxPackageFileSize)
 
 	log.Debug("updater: reading http body")
 	// This use of ReadAll is now safe, because we limited body's Reader.

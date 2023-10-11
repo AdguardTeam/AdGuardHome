@@ -28,17 +28,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// fakeSystemResolvers is a mock aghnet.SystemResolvers implementation for
-// tests.
-type fakeSystemResolvers struct {
-	// SystemResolvers is embedded here simply to make *fakeSystemResolvers
-	// an aghnet.SystemResolvers without actually implementing all methods.
-	aghnet.SystemResolvers
-}
+// emptySysResolvers is an empty [SystemResolvers] implementation that always
+// returns nil.
+type emptySysResolvers struct{}
 
-// Get implements the aghnet.SystemResolvers interface for *fakeSystemResolvers.
-// It always returns nil.
-func (fsr *fakeSystemResolvers) Get() (rs []string) {
+// Addrs implements the aghnet.SystemResolvers interface for emptySysResolvers.
+func (emptySysResolvers) Addrs() (addrs []netip.AddrPort) {
 	return nil
 }
 
@@ -60,6 +55,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
 		ProtectionEnabled:     true,
 		BlockingMode:          filtering.BlockingModeDefault,
+		BlockedResponseTTL:    10,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
 		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
@@ -78,7 +74,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 		ConfigModified: func() {},
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
-	s.sysResolvers = &fakeSystemResolvers{}
+	s.sysResolvers = &emptySysResolvers{}
 
 	require.NoError(t, s.Start())
 	testutil.CleanupAndRequireSuccess(t, s.Stop)
@@ -137,6 +133,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
 		ProtectionEnabled:     true,
 		BlockingMode:          filtering.BlockingModeDefault,
+		BlockedResponseTTL:    10,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
 		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
@@ -154,7 +151,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		ConfigModified: func() {},
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
-	s.sysResolvers = &fakeSystemResolvers{}
+	s.sysResolvers = &emptySysResolvers{}
 
 	defaultConf := s.conf
 
@@ -228,6 +225,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		wantSet: "",
 	}, {
 		name:    "fallbacks",
+		wantSet: "",
+	}, {
+		name:    "blocked_response_ttl",
 		wantSet: "",
 	}}
 
@@ -480,7 +480,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 	hostsListener := newLocalUpstreamListener(t, 0, goodHandler)
 	hostsUps := (&url.URL{
 		Scheme: "tcp",
-		Host:   netutil.JoinHostPort(upstreamHost, int(hostsListener.Port())),
+		Host:   netutil.JoinHostPort(upstreamHost, hostsListener.Port()),
 	}).String()
 
 	hc, err := aghnet.NewHostsContainer(

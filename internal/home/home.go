@@ -9,8 +9,10 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"net/url"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -327,7 +329,7 @@ func setupBindOpts(opts options) (err error) {
 	if opts.bindPort != 0 {
 		config.HTTPConfig.Address = netip.AddrPortFrom(
 			config.HTTPConfig.Address.Addr(),
-			uint16(opts.bindPort),
+			opts.bindPort,
 		)
 
 		err = checkPorts()
@@ -495,8 +497,7 @@ func initWeb(opts options, clientBuildFS fs.FS, upd *updater.Updater) (web *webA
 
 		clientFS: clientFS,
 
-		BindHost: config.HTTPConfig.Address.Addr(),
-		BindPort: int(config.HTTPConfig.Address.Port()),
+		BindAddr: config.HTTPConfig.Address,
 
 		ReadTimeout:       readTimeout,
 		ReadHeaderTimeout: readHdrTimeout,
@@ -559,16 +560,28 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	err = setupOpts(opts)
 	fatalOnError(err)
 
+	execPath, err := os.Executable()
+	fatalOnError(errors.Annotate(err, "getting executable path: %w"))
+
+	u := &url.URL{
+		Scheme: "https",
+		// TODO(a.garipov): Make configurable.
+		Host: "static.adtidy.org",
+		Path: path.Join("adguardhome", version.Channel(), "version.json"),
+	}
+
 	upd := updater.NewUpdater(&updater.Config{
-		Client:   config.Filtering.HTTPClient,
-		Version:  version.Version(),
-		Channel:  version.Channel(),
-		GOARCH:   runtime.GOARCH,
-		GOOS:     runtime.GOOS,
-		GOARM:    version.GOARM(),
-		GOMIPS:   version.GOMIPS(),
-		WorkDir:  Context.workDir,
-		ConfName: config.getConfigFilename(),
+		Client:          config.Filtering.HTTPClient,
+		Version:         version.Version(),
+		Channel:         version.Channel(),
+		GOARCH:          runtime.GOARCH,
+		GOOS:            runtime.GOOS,
+		GOARM:           version.GOARM(),
+		GOMIPS:          version.GOMIPS(),
+		WorkDir:         Context.workDir,
+		ConfName:        config.getConfigFilename(),
+		ExecPath:        execPath,
+		VersionCheckURL: u.String(),
 	})
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
@@ -839,7 +852,7 @@ func loadCmdLineOpts() (opts options) {
 // example:
 //
 //	go to http://127.0.0.1:80
-func printWebAddrs(proto, addr string, port int) {
+func printWebAddrs(proto, addr string, port uint16) {
 	log.Printf("go to %s://%s", proto, netutil.JoinHostPort(addr, port))
 }
 
@@ -851,7 +864,7 @@ func printHTTPAddresses(proto string) {
 		Context.tls.WriteDiskConfig(&tlsConf)
 	}
 
-	port := int(config.HTTPConfig.Address.Port())
+	port := config.HTTPConfig.Address.Port()
 	if proto == aghhttp.SchemeHTTPS {
 		port = tlsConf.PortHTTPS
 	}

@@ -4,9 +4,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
-
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/ioutil"
 )
 
 // middlerware is a wrapper function signature.
@@ -23,12 +21,14 @@ func withMiddlewares(h http.Handler, middlewares ...middleware) (wrapped http.Ha
 	return wrapped
 }
 
-// defaultReqBodySzLim is the default maximum request body size.
-const defaultReqBodySzLim = 64 * 1024
+const (
+	// defaultReqBodySzLim is the default maximum request body size.
+	defaultReqBodySzLim = 64 * 1024
 
-// largerReqBodySzLim is the maximum request body size for APIs expecting larger
-// requests.
-const largerReqBodySzLim = 4 * 1024 * 1024
+	// largerReqBodySzLim is the maximum request body size for APIs expecting
+	// larger requests.
+	largerReqBodySzLim = 4 * 1024 * 1024
+)
 
 // expectsLargerRequests shows if this request should use a larger body size
 // limit.  These are exceptions for poorly designed current APIs as well as APIs
@@ -52,20 +52,12 @@ func expectsLargerRequests(r *http.Request) (ok bool) {
 // method limited.
 func limitRequestBody(h http.Handler) (limited http.Handler) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var err error
-
-		var szLim int64 = defaultReqBodySzLim
+		var szLim uint64 = defaultReqBodySzLim
 		if expectsLargerRequests(r) {
 			szLim = largerReqBodySzLim
 		}
 
-		var reader io.Reader
-		reader, err = aghio.LimitReader(r.Body, szLim)
-		if err != nil {
-			log.Error("limitRequestBody: %s", err)
-
-			return
-		}
+		reader := ioutil.LimitReader(r.Body, szLim)
 
 		// HTTP handlers aren't supposed to call r.Body.Close(), so just
 		// replace the body in a clone.

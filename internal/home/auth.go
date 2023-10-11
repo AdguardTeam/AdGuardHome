@@ -644,24 +644,27 @@ func optionalAuthHandler(handler http.Handler) http.Handler {
 	return &authHandler{handler}
 }
 
-// UserAdd - add new user
-func (a *Auth) UserAdd(u *webUser, password string) {
+// Add adds a new user with the given password.
+func (a *Auth) Add(u *webUser, password string) (err error) {
 	if len(password) == 0 {
-		return
+		return errors.Error("empty password")
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Error("bcrypt.GenerateFromPassword: %s", err)
-		return
+		return fmt.Errorf("generating hash: %w", err)
 	}
+
 	u.PasswordHash = string(hash)
 
 	a.lock.Lock()
-	a.users = append(a.users, *u)
-	a.lock.Unlock()
+	defer a.lock.Unlock()
 
-	log.Debug("auth: added user: %s", u.Name)
+	a.users = append(a.users, *u)
+
+	log.Debug("auth: added user with login %q", u.Name)
+
+	return nil
 }
 
 // findUser returns a user if there is one.

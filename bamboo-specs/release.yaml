@@ -7,7 +7,7 @@
 # Make sure to sync any changes with the branch overrides below.
 'variables':
     'channel': 'edge'
-    'dockerGo': 'adguard/golang-ubuntu:7.1'
+    'dockerGo': 'adguard/golang-ubuntu:7.4'
 
 'stages':
   - 'Build frontend':
@@ -272,7 +272,7 @@
         # need to build a few of these.
         'variables':
             'channel': 'beta'
-            'dockerGo': 'adguard/golang-ubuntu:7.1'
+            'dockerGo': 'adguard/golang-ubuntu:7.4'
     # release-vX.Y.Z branches are the branches from which the actual final
     # release is built.
   - '^release-v[0-9]+\.[0-9]+\.[0-9]+':
@@ -287,4 +287,4 @@
         # are the ones that actually get released.
         'variables':
             'channel': 'release'
-            'dockerGo': 'adguard/golang-ubuntu:7.1'
+            'dockerGo': 'adguard/golang-ubuntu:7.4'

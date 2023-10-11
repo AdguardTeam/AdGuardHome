@@ -660,6 +660,24 @@ export const removeStaticLease = (config) => async (dispatch) => {
     }
 };
 
+export const updateStaticLeaseRequest = createAction('UPDATE_STATIC_LEASE_REQUEST');
+export const updateStaticLeaseFailure = createAction('UPDATE_STATIC_LEASE_FAILURE');
+export const updateStaticLeaseSuccess = createAction('UPDATE_STATIC_LEASE_SUCCESS');
+
+export const updateStaticLease = (config) => async (dispatch) => {
+    dispatch(updateStaticLeaseRequest());
+    try {
+        await apiClient.updateStaticLease(config);
+        dispatch(updateStaticLeaseSuccess(config));
+        dispatch(addSuccessToast(i18next.t('dhcp_lease_updated', { key: config.hostname || config.ip })));
+        dispatch(toggleLeaseModal());
+        dispatch(getDhcpStatus());
+    } catch (error) {
+        dispatch(addErrorToast({ error }));
+        dispatch(updateStaticLeaseFailure());
+    }
+};
+
 export const removeToast = createAction('REMOVE_TOAST');
 
 export const toggleBlocking = (

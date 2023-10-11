@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
+	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -72,11 +72,10 @@ func TestLargestLabeled(t *testing.T) {
 	}
 
 	t.Run("scanner_fail", func(t *testing.T) {
-		lr, err := aghio.LimitReader(bytes.NewReader([]byte{1, 2, 3}), 0)
-		require.NoError(t, err)
+		lr := ioutil.LimitReader(bytes.NewReader([]byte{1, 2, 3}), 0)
 
-		target := &aghio.LimitReachedError{}
-		_, _, err = parsePSOutput(lr, "", nil)
+		target := &ioutil.LimitError{}
+		_, _, err := parsePSOutput(lr, "", nil)
 		require.ErrorAs(t, err, &target)
 
 		assert.EqualValues(t, 0, target.Limit)

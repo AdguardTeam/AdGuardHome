@@ -3,10 +3,15 @@ import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
 import { Trans, useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
-import { LEASES_TABLE_DEFAULT_PAGE_SIZE } from '../../../../helpers/constants';
+import { LEASES_TABLE_DEFAULT_PAGE_SIZE, MODAL_TYPE } from '../../../../helpers/constants';
 import { sortIp } from '../../../../helpers/helpers';
 import Modal from './Modal';
-import { addStaticLease, removeStaticLease } from '../../../../actions';
+import {
+    addStaticLease,
+    removeStaticLease,
+    toggleLeaseModal,
+    updateStaticLease,
+} from '../../../../actions';
 
 const cellWrap = ({ value }) => (
     <div className="logs__row o-hidden">
@@ -18,8 +23,10 @@ const cellWrap = ({ value }) => (
 
 const StaticLeases = ({
     isModalOpen,
+    modalType,
     processingAdding,
     processingDeleting,
+    processingUpdating,
     staticLeases,
     cidr,
     rangeStart,
@@ -31,7 +38,12 @@ const StaticLeases = ({
 
     const handleSubmit = (data) => {
         const { mac, ip, hostname } = data;
-        dispatch(addStaticLease({ mac, ip, hostname }));
+
+        if (modalType === MODAL_TYPE.EDIT_LEASE) {
+            dispatch(updateStaticLease({ mac, ip, hostname }));
+        } else {
+            dispatch(addStaticLease({ mac, ip, hostname }));
+        }
     };
 
     const handleDelete = (ip, mac, hostname = '') => {
@@ -80,19 +92,35 @@ const StaticLeases = ({
                         Cell: (row) => {
                             const { ip, mac, hostname } = row.original;
 
-                            return <div className="logs__row logs__row--center">
-                                <button
+                            return (
+                                <div className="logs__row logs__row--center">
+                                    <button
                                         type="button"
-                                        className="btn btn-icon btn-icon--green btn-outline-secondary btn-sm"
-                                        title={t('delete_table_action')}
-                                        disabled={processingDeleting}
+                                        className="btn btn-icon btn-outline-primary btn-sm mr-2"
+                                        onClick={() => dispatch(toggleLeaseModal({
+                                            type: MODAL_TYPE.EDIT_LEASE,
+                                            config: { ip, mac, hostname },
+                                        }))}
+                                        disabled={processingUpdating}
+                                        title={t('edit_table_action')}
+                                    >
+                                        <svg className="icons icon12">
+                                            <use xlinkHref="#edit" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-icon btn-outline-secondary btn-sm"
                                         onClick={() => handleDelete(ip, mac, hostname)}
-                                        >
-                                            <svg className="icons">
-                                                <use xlinkHref="#delete"/>
-                                            </svg>
-                                        </button>
-                                    </div>;
+                                        disabled={processingDeleting}
+                                        title={t('delete_table_action')}
+                                    >
+                                        <svg className="icons icon12">
+                                            <use xlinkHref="#delete" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            );
                         },
                     },
                 ]}
@@ -105,6 +133,7 @@ const StaticLeases = ({
             />
             <Modal
                 isModalOpen={isModalOpen}
+                modalType={modalType}
                 handleSubmit={handleSubmit}
                 processingAdding={processingAdding}
                 cidr={cidr}
@@ -119,8 +148,10 @@ const StaticLeases = ({
 StaticLeases.propTypes = {
     staticLeases: PropTypes.array.isRequired,
     isModalOpen: PropTypes.bool.isRequired,
+    modalType: PropTypes.string.isRequired,
     processingAdding: PropTypes.bool.isRequired,
     processingDeleting: PropTypes.bool.isRequired,
+    processingUpdating: PropTypes.bool.isRequired,
     cidr: PropTypes.string.isRequired,
     rangeStart: PropTypes.string,
     rangeEnd: PropTypes.string,

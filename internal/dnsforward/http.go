@@ -65,6 +65,9 @@ type jsonDNSConfig struct {
 	// UpstreamMode defines the way DNS requests are constructed.
 	UpstreamMode *string `json:"upstream_mode"`
 
+	// BlockedResponseTTL is the TTL for blocked responses.
+	BlockedResponseTTL *uint32 `json:"blocked_response_ttl"`
+
 	// CacheSize in bytes.
 	CacheSize *uint32 `json:"cache_size"`
 
@@ -115,6 +118,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	bootstraps := stringutil.CloneSliceOrEmpty(s.conf.BootstrapDNS)
 	fallbacks := stringutil.CloneSliceOrEmpty(s.conf.FallbackDNS)
 	blockingMode, blockingIPv4, blockingIPv6 := s.dnsFilter.BlockingMode()
+	blockedResponseTTL := s.dnsFilter.BlockedResponseTTL()
 	ratelimit := s.conf.Ratelimit
 
 	customIP := s.conf.EDNSClientSubnet.CustomIP
@@ -138,9 +142,9 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		upstreamMode = "parallel"
 	}
 
-	defLocalPTRUps, err := s.filterOurDNSAddrs(s.sysResolvers.Get())
+	defPTRUps, err := s.defaultLocalPTRUpstreams()
 	if err != nil {
-		log.Debug("getting dns configuration: %s", err)
+		log.Error("dnsforward: %s", err)
 	}
 
 	return &jsonDNSConfig{
@@ -158,6 +162,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		EDNSCSUseCustom:          &useCustom,
 		DNSSECEnabled:            &enableDNSSEC,
 		DisableIPv6:              &aaaaDisabled,
+		BlockedResponseTTL:       &blockedResponseTTL,
 		CacheSize:                &cacheSize,
 		CacheMinTTL:              &cacheMinTTL,
 		CacheMaxTTL:              &cacheMaxTTL,
@@ -166,9 +171,27 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		ResolveClients:           &resolveClients,
 		UsePrivateRDNS:           &usePrivateRDNS,
 		LocalPTRUpstreams:        &localPTRUpstreams,
-		DefaultLocalPTRUpstreams: defLocalPTRUps,
+		DefaultLocalPTRUpstreams: defPTRUps,
 		DisabledUntil:            protectionDisabledUntil,
 	}
+}
+
+// defaultLocalPTRUpstreams returns the list of default local PTR resolvers
+// filtered of AdGuard Home's own DNS server addresses.  It may appear empty.
+func (s *Server) defaultLocalPTRUpstreams() (ups []string, err error) {
+	matcher, err := s.conf.ourAddrsMatcher()
+	if err != nil {
+		// Don't wrap the error because it's informative enough as is.
+		return nil, err
+	}
+
+	sysResolvers := slices.DeleteFunc(s.sysResolvers.Addrs(), matcher)
+	ups = make([]string, 0, len(sysResolvers))
+	for _, r := range sysResolvers {
+		ups = append(ups, r.String())
+	}
+
+	return ups, nil
 }
 
 // handleGetConfig handles requests to the GET /control/dns_info endpoint.
@@ -204,7 +227,7 @@ func (req *jsonDNSConfig) checkBootstrap() (err error) {
 			return errors.Error("empty")
 		}
 
-		if _, err = upstream.NewResolver(b, nil); err != nil {
+		if _, err = upstream.NewUpstreamResolver(b, nil); err != nil {
 			return err
 		}
 	}
@@ -319,6 +342,10 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 
 	if dc.BlockingMode != nil {
 		s.dnsFilter.SetBlockingMode(*dc.BlockingMode, dc.BlockingIPv4, dc.BlockingIPv6)
+	}
+
+	if dc.BlockedResponseTTL != nil {
+		s.dnsFilter.SetBlockedResponseTTL(*dc.BlockedResponseTTL)
 	}
 
 	if dc.ProtectionEnabled != nil {

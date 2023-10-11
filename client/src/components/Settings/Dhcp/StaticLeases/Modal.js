@@ -5,9 +5,11 @@ import ReactModal from 'react-modal';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import Form from './Form';
 import { toggleLeaseModal } from '../../../../actions';
+import { MODAL_TYPE } from '../../../../helpers/constants';
 
 const Modal = ({
     isModalOpen,
+    modalType,
     handleSubmit,
     processingAdding,
     cidr,
@@ -32,7 +34,11 @@ const Modal = ({
             <div className="modal-content">
                 <div className="modal-header">
                     <h4 className="modal-title">
-                        <Trans>dhcp_new_static_lease</Trans>
+                        {modalType === MODAL_TYPE.EDIT_LEASE ? (
+                            <Trans>dhcp_edit_static_lease</Trans>
+                        ) : (
+                            <Trans>dhcp_new_static_lease</Trans>
+                        )}
                     </h4>
                     <button type="button" className="close" onClick={toggleModal}>
                         <span className="sr-only">Close</span>
@@ -53,6 +59,7 @@ const Modal = ({
                     cidr={cidr}
                     rangeStart={rangeStart}
                     rangeEnd={rangeEnd}
+                    isEdit={modalType === MODAL_TYPE.EDIT_LEASE}
                 />
             </div>
         </ReactModal>
@@ -61,6 +68,7 @@ const Modal = ({
 
 Modal.propTypes = {
     isModalOpen: PropTypes.bool.isRequired,
+    modalType: PropTypes.string.isRequired,
     handleSubmit: PropTypes.func.isRequired,
     processingAdding: PropTypes.bool.isRequired,
     cidr: PropTypes.string.isRequired,

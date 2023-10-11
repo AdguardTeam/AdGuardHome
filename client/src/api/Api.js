@@ -274,6 +274,8 @@ class Api {
 
     DHCP_REMOVE_STATIC_LEASE = { path: 'dhcp/remove_static_lease', method: 'POST' };
 
+    DHCP_UPDATE_STATIC_LEASE = { path: 'dhcp/update_static_lease', method: 'POST' };
+
     DHCP_RESET = { path: 'dhcp/reset', method: 'POST' };
 
     DHCP_LEASES_RESET = { path: 'dhcp/reset_leases', method: 'POST' };
@@ -314,6 +316,14 @@ class Api {
 
     removeStaticLease(config) {
         const { path, method } = this.DHCP_REMOVE_STATIC_LEASE;
+        const parameters = {
+            data: config,
+        };
+        return this.makeRequest(path, method, parameters);
+    }
+
+    updateStaticLease(config) {
+        const { path, method } = this.DHCP_UPDATE_STATIC_LEASE;
         const parameters = {
             data: config,
         };

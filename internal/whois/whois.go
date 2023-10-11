@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
@@ -62,7 +62,7 @@ type Config struct {
 	CacheTTL time.Duration
 
 	// MaxConnReadSize is an upper limit in bytes for reading from net.Conn.
-	MaxConnReadSize int64
+	MaxConnReadSize uint64
 
 	// MaxRedirects is the maximum redirects count.
 	MaxRedirects int
@@ -102,7 +102,7 @@ type Default struct {
 	cacheTTL time.Duration
 
 	// maxConnReadSize is an upper limit in bytes for reading from net.Conn.
-	maxConnReadSize int64
+	maxConnReadSize uint64
 
 	// maxRedirects is the maximum redirects count.
 	maxRedirects int
@@ -208,11 +208,7 @@ func (w *Default) query(ctx context.Context, target, serverAddr string) (data []
 	}
 	defer func() { err = errors.WithDeferred(err, conn.Close()) }()
 
-	r, err := aghio.LimitReader(conn, w.maxConnReadSize)
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return nil, err
-	}
+	r := ioutil.LimitReader(conn, w.maxConnReadSize)
 
 	_ = conn.SetDeadline(time.Now().Add(w.timeout))
 	_, err = io.WriteString(conn, target+"\r\n")

@@ -69,8 +69,8 @@ func (s *Server) prepareUpstreamSettings() (err error) {
 	return nil
 }
 
-// prepareUpstreamConfig sets upstream configuration based on upstreams and
-// configuration of s.
+// prepareUpstreamConfig returns the upstream configuration based on upstreams
+// and configuration of s.
 func (s *Server) prepareUpstreamConfig(
 	upstreams []string,
 	defaultUpstreams []string,

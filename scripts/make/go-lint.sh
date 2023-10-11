@@ -35,7 +35,7 @@ set -f -u
 go_version="$( "${GO:-go}" version )"
 readonly go_version
 
-go_min_version='go1.20.8'
+go_min_version='go1.20.10'
 go_version_msg="
 warning: your go version (${go_version}) is different from the recommended minimal one (${go_min_version}).
 if you have the version installed, please set the GO environment variable.
@@ -206,7 +206,6 @@ run_linter gocognit --over='10'\
 	./internal/aghalg/\
 	./internal/aghchan/\
 	./internal/aghhttp/\
-	./internal/aghio/\
 	./internal/aghrenameio/\
 	./internal/aghtest/\
 	./internal/arpdb/\
@@ -243,7 +242,6 @@ run_linter fieldalignment \
 	./internal/aghalg/\
 	./internal/aghchan/\
 	./internal/aghhttp/\
-	./internal/aghio/\
 	./internal/aghos/\
 	./internal/aghrenameio/\
 	./internal/aghtest/\
@@ -272,7 +270,6 @@ run_linter gosec --quiet\
 	./internal/aghalg/\
 	./internal/aghchan/\
 	./internal/aghhttp/\
-	./internal/aghio/\
 	./internal/aghnet/\
 	./internal/aghos/\
 	./internal/aghrenameio/\
