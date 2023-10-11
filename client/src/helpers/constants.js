@@ -553,6 +553,4 @@ export const DISABLE_PROTECTION_TIMINGS = {
     TOMORROW: 24 * 60 * 60 * 1000,
 };
 
-export const LOCAL_STORAGE_THEME_KEY = 'account_theme';
-
 export const LOCAL_TIMEZONE_VALUE = 'Local';

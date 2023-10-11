@@ -4,6 +4,7 @@ import ReactTable from 'react-table';
 import { withTranslation } from 'react-i18next';
 import { sortIp } from '../../../helpers/helpers';
 import { MODAL_TYPE } from '../../../helpers/constants';
+import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from '../../../helpers/localStorageHelper';
 
 class Table extends Component {
     cellWrap = ({ value }) => (
@@ -85,7 +86,8 @@ class Table extends Component {
                 loading={processing || processingAdd || processingDelete}
                 className="-striped -highlight card-table-overflow"
                 showPagination
-                defaultPageSize={10}
+                defaultPageSize={LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.REWRITES_PAGE_SIZE) || 10}
+                onPageSizeChange={(size) => LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.REWRITES_PAGE_SIZE, size)}
                 minRows={5}
                 ofText="/"
                 previousText={t('previous_btn')}
