@@ -62,7 +62,7 @@ class LogsConfig extends Component {
                             interval,
                             customInterval,
                             anonymize_client_ip,
-                            ignored: ignored?.join('\n'),
+                            ignored: ignored.join('\n'),
                         }}
                         onSubmit={this.handleFormSubmit}
                         processing={processing}
