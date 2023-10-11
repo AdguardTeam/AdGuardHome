@@ -26,7 +26,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Security
 
 - Go version has been updated to prevent the possibility of exploiting the
-  CVE-2023-39325 Go vulnerability fixed in [Go 1.20.9][go-1.20.9].
+  CVE-2023-39323 and CVE-2023-39325 Go vulnerabilities fixed in
+  [Go 1.20.9][go-1.20.9] and [Go 1.20.10][go-1.20.10].
 
 ### Added
 
@@ -55,7 +56,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6233]: https://github.com/AdguardTeam/AdGuardHome/issues/6233
 [#6280]: https://github.com/AdguardTeam/AdGuardHome/issues/6280
 
-[go-1.20.9]: https://groups.google.com/g/golang-announce/c/XBa1oHDevAo/m/desYyx3qAgAJ
+[go-1.20.9]:  https://groups.google.com/g/golang-announce/c/XBa1oHDevAo/m/desYyx3qAgAJ
+[go-1.20.10]: https://groups.google.com/g/golang-announce/c/iNNxDTCjZvo/m/UDd7VKQuAAAJ
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
