@@ -59,7 +59,7 @@ class StatsConfig extends Component {
                             interval,
                             customInterval,
                             enabled,
-                            ignored: ignored?.join('\n'),
+                            ignored: ignored.join('\n'),
                         }}
                         onSubmit={this.handleFormSubmit}
                         processing={processing}
