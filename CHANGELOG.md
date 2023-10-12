@@ -25,8 +25,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Issues with QUIC and HTTP/3 upstreams on FreeBSD ([#6301]).
 - Panic on clearing query log ([#6304]).
 
+[#6301]: https://github.com/AdguardTeam/AdGuardHome/issues/6301
 [#6304]: https://github.com/AdguardTeam/AdGuardHome/issues/6304
 
 <!--
@@ -72,9 +74,8 @@ See also the [v0.107.39 GitHub milestone][ms-v0.107.39].
 [#6233]: https://github.com/AdguardTeam/AdGuardHome/issues/6233
 [#6280]: https://github.com/AdguardTeam/AdGuardHome/issues/6280
 
-[go-1.20.9]:  https://groups.google.com/g/golang-announce/c/XBa1oHDevAo/m/desYyx3qAgAJ
-[go-1.20.10]: https://groups.google.com/g/golang-announce/c/iNNxDTCjZvo/m/UDd7VKQuAAAJ
-
+[go-1.20.10]:   https://groups.google.com/g/golang-announce/c/iNNxDTCjZvo/m/UDd7VKQuAAAJ
+[go-1.20.9]:    https://groups.google.com/g/golang-announce/c/XBa1oHDevAo/m/desYyx3qAgAJ
 [ms-v0.107.39]: https://github.com/AdguardTeam/AdGuardHome/milestone/74?closed=1
 
 
