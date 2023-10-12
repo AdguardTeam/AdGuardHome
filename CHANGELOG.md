@@ -23,6 +23,12 @@ See also the [v0.107.40 GitHub milestone][ms-v0.107.40].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Panic on clearing query log ([#6304]).
+
+[#6304]: https://github.com/AdguardTeam/AdGuardHome/issues/6304
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
