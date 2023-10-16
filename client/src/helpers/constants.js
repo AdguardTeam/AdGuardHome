@@ -554,3 +554,8 @@ export const DISABLE_PROTECTION_TIMINGS = {
 };
 
 export const LOCAL_TIMEZONE_VALUE = 'Local';
+
+export const TIME_UNITS = {
+    HOURS: 'hours',
+    DAYS: 'days',
+};
