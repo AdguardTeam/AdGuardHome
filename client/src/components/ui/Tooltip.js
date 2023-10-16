@@ -21,6 +21,7 @@ const Tooltip = ({
     delayShow = SHOW_TOOLTIP_DELAY,
     delayHide = HIDE_TOOLTIP_DELAY,
     onVisibilityChange,
+    defaultTooltipShown,
 }) => {
     const { t } = useTranslation();
     const touchEventsAvailable = 'ontouchstart' in window;
@@ -75,6 +76,7 @@ const Tooltip = ({
             delayShow={delayShowValue}
             tooltip={renderTooltip}
             onVisibilityChange={onVisibilityChange}
+            defaultTooltipShown={defaultTooltipShown}
         >
             {renderTrigger}
         </TooltipTrigger>
@@ -97,6 +99,7 @@ Tooltip.propTypes = {
     className: propTypes.string,
     triggerClass: propTypes.string,
     onVisibilityChange: propTypes.func,
+    defaultTooltipShown: propTypes.bool,
 };
 
 export default Tooltip;

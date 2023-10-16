@@ -23,12 +23,17 @@ See also the [v0.107.40 GitHub milestone][ms-v0.107.40].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Changed
+
+- "Block" and "Unblock" buttons of the query log moved to the tooltip menu ([#684]).
+
 ### Fixed
 
 - The time shown in the statistics is one hour less than the current time ([#6296]).
 - Issues with QUIC and HTTP/3 upstreams on FreeBSD ([#6301]).
 - Panic on clearing query log ([#6304]).
 
+[#684]: https://github.com/AdguardTeam/AdGuardHome/issues/684
 [#6296]: https://github.com/AdguardTeam/AdGuardHome/issues/6296
 [#6301]: https://github.com/AdguardTeam/AdGuardHome/issues/6301
 [#6304]: https://github.com/AdguardTeam/AdGuardHome/issues/6304

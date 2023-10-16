@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ReactTable from 'react-table';
 import PropTypes from 'prop-types';
 import { Trans, useTranslation } from 'react-i18next';
@@ -13,6 +13,7 @@ import { BLOCK_ACTIONS, STATUS_COLORS } from '../../helpers/constants';
 import { toggleClientBlock } from '../../actions/access';
 import { renderFormattedClientCell } from '../../helpers/renderFormattedClientCell';
 import { getStats } from '../../actions/stats';
+import IconTooltip from '../Logs/Cells/IconTooltip';
 
 const getClientsPercentColor = (percent) => {
     if (percent > 50) {
@@ -40,9 +41,7 @@ const renderBlockingButton = (ip, disallowed, disallowed_rule) => {
     const processingSet = useSelector((state) => state.access.processingSet);
     const allowedСlients = useSelector((state) => state.access.allowed_clients, shallowEqual);
 
-    const buttonClass = classNames('button-action button-action--main', {
-        'button-action--unblock': disallowed,
-    });
+    const [isOptionsOpened, setOptionsOpened] = useState(false);
 
     const toggleClientStatus = async (ip, disallowed, disallowed_rule) => {
         let confirmMessage;
@@ -62,23 +61,49 @@ const renderBlockingButton = (ip, disallowed, disallowed_rule) => {
         }
     };
 
-    const onClick = () => toggleClientStatus(ip, disallowed, disallowed_rule);
+    const onClick = () => {
+        toggleClientStatus(ip, disallowed, disallowed_rule);
+        setOptionsOpened(false);
+    };
 
     const text = disallowed ? BLOCK_ACTIONS.UNBLOCK : BLOCK_ACTIONS.BLOCK;
 
     const lastRuleInAllowlist = !disallowed && allowedСlients === disallowed_rule;
     const disabled = processingSet || lastRuleInAllowlist;
     return (
-        <div className="table__action pl-4">
+        <div className="table__action">
             <button
                 type="button"
-                className={buttonClass}
-                onClick={onClick}
-                disabled={disabled}
-                title={lastRuleInAllowlist ? t('last_rule_in_allowlist', { disallowed_rule }) : ''}
+                className="btn btn-icon btn-sm px-0"
+                onClick={() => setOptionsOpened(true)}
             >
-                <Trans>{text}</Trans>
+                <svg className="icon24 icon--lightgray button-action__icon">
+                    <use xlinkHref="#bullets" />
+                </svg>
             </button>
+            {isOptionsOpened && (
+                <IconTooltip
+                    className="icon24"
+                    tooltipClass="button-action--arrow-option-container"
+                    xlinkHref="bullets"
+                    triggerClass="btn btn-icon btn-sm px-0 button-action__hidden-trigger"
+                    content={(
+                        <button
+                            className={classNames('button-action--arrow-option px-4 py-1', disallowed ? 'bg--green' : 'bg--danger')}
+                            onClick={onClick}
+                            disabled={disabled}
+                            title={lastRuleInAllowlist ? t('last_rule_in_allowlist', { disallowed_rule }) : ''}
+                        >
+                            <Trans>{text}</Trans>
+                        </button>
+                    )}
+                    placement="bottom-end"
+                    trigger="click"
+                    onVisibilityChange={setOptionsOpened}
+                    defaultTooltipShown={true}
+                    delayHide={0}
+                />
+            )}
         </div>
     );
 };
