@@ -3,8 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.20
 
 require (
-	// TODO(a.garipov): Update when quic-go/quic-go#4105 is resolved.
-	github.com/AdguardTeam/dnsproxy v0.56.2-0.20231012183737-8d670c7e1eff
+	github.com/AdguardTeam/dnsproxy v0.56.2
 	github.com/AdguardTeam/golibs v0.17.1
 	github.com/AdguardTeam/urlfilter v0.17.0
 	github.com/NYTimes/gziphandler v1.1.1
@@ -28,7 +27,7 @@ require (
 	// own code for that.  Perhaps, use gopacket.
 	github.com/mdlayher/raw v0.1.0
 	github.com/miekg/dns v1.1.56
-	github.com/quic-go/quic-go v0.38.1
+	github.com/quic-go/quic-go v0.39.1
 	github.com/stretchr/testify v1.8.4
 	github.com/ti-mo/netfilter v0.5.0
 	go.etcd.io/bbolt v1.3.7
@@ -48,7 +47,6 @@ require (
 	github.com/beefsack/go-rate v0.0.0-20220214233405-116f4ca011a0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
-	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/pprof v0.0.0-20230926050212-f7f687d19a98 // indirect
 	github.com/mdlayher/socket v0.5.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.13.0 // indirect
@@ -59,6 +57,7 @@ require (
 	github.com/quic-go/qpack v0.4.0 // indirect
 	github.com/quic-go/qtls-go1-20 v0.3.4 // indirect
 	github.com/u-root/uio v0.0.0-20230305220412-3e8cd9d6bf63 // indirect
+	go.uber.org/mock v0.3.0 // indirect
 	golang.org/x/mod v0.13.0 // indirect
 	golang.org/x/sync v0.4.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
