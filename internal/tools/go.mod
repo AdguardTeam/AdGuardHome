@@ -8,10 +8,8 @@ require (
 	github.com/gordonklaus/ineffassign v0.0.0-20230610083614-0e73809eb601
 	github.com/kisielk/errcheck v1.6.3
 	github.com/kyoh86/looppointer v0.2.1
-	github.com/securego/gosec/v2 v2.18.0
-	// TODO(a.garipov): Return to latest once the release is tagged
-	// correctly.  See uudashr/gocognit#31.
-	github.com/uudashr/gocognit v1.0.8-0.20230906062305-bc9ca12659bf
+	github.com/securego/gosec/v2 v2.18.1
+	github.com/uudashr/gocognit v1.1.1
 	golang.org/x/tools v0.14.0
 	golang.org/x/vuln v1.0.1
 	honnef.co/go/tools v0.4.6
