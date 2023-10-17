@@ -10,6 +10,7 @@ import whoisCell from './whoisCell';
 import LogsSearchLink from '../../ui/LogsSearchLink';
 import { sortIp } from '../../../helpers/helpers';
 import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from '../../../helpers/localStorageHelper';
+import { TABLES_MIN_ROWS } from '../../../helpers/constants';
 
 const COLUMN_MIN_WIDTH = 200;
 
@@ -90,7 +91,7 @@ class AutoClients extends Component {
                     onPageSizeChange={(size) => (
                         LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.AUTO_CLIENTS_PAGE_SIZE, size)
                     )}
-                    minRows={5}
+                    minRows={TABLES_MIN_ROWS}
                     ofText="/"
                     previousText={t('previous_btn')}
                     nextText={t('next_btn')}

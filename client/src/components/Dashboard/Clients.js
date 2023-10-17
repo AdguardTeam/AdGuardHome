@@ -9,7 +9,12 @@ import Card from '../ui/Card';
 import Cell from '../ui/Cell';
 
 import { getPercent, sortIp } from '../../helpers/helpers';
-import { BLOCK_ACTIONS, STATUS_COLORS } from '../../helpers/constants';
+import {
+    BLOCK_ACTIONS,
+    DASHBOARD_TABLES_DEFAULT_PAGE_SIZE,
+    STATUS_COLORS,
+    TABLES_MIN_ROWS,
+} from '../../helpers/constants';
 import { toggleClientBlock } from '../../actions/access';
 import { renderFormattedClientCell } from '../../helpers/renderFormattedClientCell';
 import { getStats } from '../../actions/stats';
@@ -159,8 +164,8 @@ const Clients = ({
                 ]}
                 showPagination={false}
                 noDataText={t('no_clients_found')}
-                minRows={6}
-                defaultPageSize={100}
+                minRows={TABLES_MIN_ROWS}
+                defaultPageSize={DASHBOARD_TABLES_DEFAULT_PAGE_SIZE}
                 className="-highlight card-table-overflow--limited clients__table"
                 getTrProps={(_state, rowInfo) => {
                     if (!rowInfo) {

@@ -34,7 +34,8 @@
 }
 
 .table__action .btn-icon {
-    margin: 2px;
+    outline: 0;
+    box-shadow: none;
 }
 
 .page-title--dashboard {
