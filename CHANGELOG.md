@@ -14,14 +14,24 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.40] - 2023-10-25 (APPROX.)
+## [v0.107.41] - 2023-11-01 (APPROX.)
 
-See also the [v0.107.40 GitHub milestone][ms-v0.107.40].
+See also the [v0.107.41 GitHub milestone][ms-v0.107.41].
 
-[ms-v0.107.40]: https://github.com/AdguardTeam/AdGuardHome/milestone/75?closed=1
+[ms-v0.107.41]: https://github.com/AdguardTeam/AdGuardHome/milestone/76?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+
+
+## [v0.107.40] - 2023-10-18
+
+See also the [v0.107.40 GitHub milestone][ms-v0.107.40].
 
 ### Changed
 
@@ -42,9 +52,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6301]: https://github.com/AdguardTeam/AdGuardHome/issues/6301
 [#6304]: https://github.com/AdguardTeam/AdGuardHome/issues/6304
 
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[ms-v0.107.40]: https://github.com/AdguardTeam/AdGuardHome/milestone/75?closed=1
 
 
 
@@ -2549,11 +2557,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.40...HEAD
-[v0.107.40]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.39...v0.107.40
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.41...HEAD
+[v0.107.41]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.40...v0.107.41
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.39...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.40...HEAD
+[v0.107.40]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.39...v0.107.40
 [v0.107.39]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.38...v0.107.39
 [v0.107.38]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.37...v0.107.38
 [v0.107.37]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.36...v0.107.37

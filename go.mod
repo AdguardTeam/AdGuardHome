@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.56.2
-	github.com/AdguardTeam/golibs v0.17.1
+	github.com/AdguardTeam/golibs v0.17.2
 	github.com/AdguardTeam/urlfilter v0.17.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.2.7
@@ -17,7 +17,7 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/google/renameio/v2 v2.0.0
 	github.com/google/uuid v1.3.1
-	github.com/insomniacslk/dhcp v0.0.0-20230908212754-65c27093e38a
+	github.com/insomniacslk/dhcp v0.0.0-20231016090811-6a2c8fbdcc1c
 	github.com/josharian/native v1.1.1-0.20230202152459-5c7d0dd6ab86
 	github.com/kardianos/service v1.2.2
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
@@ -29,7 +29,7 @@ require (
 	github.com/miekg/dns v1.1.56
 	github.com/quic-go/quic-go v0.39.1
 	github.com/stretchr/testify v1.8.4
-	github.com/ti-mo/netfilter v0.5.0
+	github.com/ti-mo/netfilter v0.5.1
 	go.etcd.io/bbolt v1.3.7
 	golang.org/x/crypto v0.14.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
