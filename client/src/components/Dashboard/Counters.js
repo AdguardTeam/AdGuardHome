@@ -4,9 +4,9 @@ import { Trans, useTranslation } from 'react-i18next';
 import round from 'lodash/round';
 import { shallowEqual, useSelector } from 'react-redux';
 import Card from '../ui/Card';
-import { formatNumber } from '../../helpers/helpers';
+import { formatNumber, msToDays, msToHours } from '../../helpers/helpers';
 import LogsSearchLink from '../ui/LogsSearchLink';
-import { RESPONSE_FILTER, DAY } from '../../helpers/constants';
+import { RESPONSE_FILTER, TIME_UNITS } from '../../helpers/constants';
 import Tooltip from '../ui/Tooltip';
 
 const Row = ({
@@ -52,14 +52,19 @@ const Counters = ({ refreshButton, subtitle }) => {
         numReplacedParental,
         numReplacedSafesearch,
         avgProcessingTime,
+        timeUnits,
     } = useSelector((state) => state.stats, shallowEqual);
     const { t } = useTranslation();
-    const days = interval / DAY;
+
+    const dnsQueryTooltip = timeUnits === TIME_UNITS.HOURS
+        ? t('number_of_dns_query_hours', { count: msToHours(interval) })
+        : t('number_of_dns_query_days', { count: msToDays(interval) });
+
     const rows = [
         {
             label: 'dns_query',
             count: numDnsQueries,
-            tooltipTitle: days === 1 ? 'number_of_dns_query_24_hours' : t('number_of_dns_query_days', { count: days }),
+            tooltipTitle: dnsQueryTooltip,
             response_status: RESPONSE_FILTER.ALL.QUERY,
         },
         {

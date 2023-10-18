@@ -139,7 +139,7 @@ func (l *queryLog) clear() {
 		l.bufferLock.Lock()
 		defer l.bufferLock.Unlock()
 
-		l.buffer = nil
+		l.buffer.Clear()
 		l.flushPending = false
 	}()
 

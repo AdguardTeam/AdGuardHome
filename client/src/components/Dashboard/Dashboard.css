@@ -28,11 +28,14 @@
     border-bottom: 6px solid #585965;
 }
 
-@media (max-width: 1279.98px) {
-    .table__action {
-        position: absolute;
-        right: 0;
-    }
+.table__action {
+    position: relative;
+    margin-left: auto;
+}
+
+.table__action .btn-icon {
+    outline: 0;
+    box-shadow: none;
 }
 
 .page-title--dashboard {

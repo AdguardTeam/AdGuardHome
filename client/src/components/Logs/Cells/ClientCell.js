@@ -26,9 +26,7 @@ const ClientCell = ({
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const autoClients = useSelector((state) => state.dashboard.autoClients, shallowEqual);
-    const processingRules = useSelector((state) => state.filtering.processingRules);
     const isDetailed = useSelector((state) => state.queryLogs.isDetailed);
-    const processingSet = useSelector((state) => state.access.processingSet);
     const allowedСlients = useSelector((state) => state.access.allowed_clients, shallowEqual);
     const [isOptionsOpened, setOptionsOpened] = useState(false);
 
@@ -84,11 +82,23 @@ const ClientCell = ({
         const blockingForClientKey = isFiltered ? 'unblock_for_this_client_only' : 'block_for_this_client_only';
         const clientNameBlockingFor = getBlockingClientName(clients, client);
 
+        const onClick = async () => {
+            await dispatch(toggleBlocking(buttonType, domain));
+            await dispatch(getStats());
+            setOptionsOpened(false);
+        };
+
         const BUTTON_OPTIONS = [
+            {
+                name: buttonType,
+                onClick,
+                className: isFiltered ? 'bg--green' : 'bg--danger',
+            },
             {
                 name: blockingForClientKey,
                 onClick: () => {
                     dispatch(toggleBlockingForClient(buttonType, domain, clientNameBlockingFor));
+                    setOptionsOpened(false);
                 },
             },
             {
@@ -101,16 +111,12 @@ const ClientCell = ({
                             client_info?.disallowed_rule || '',
                         ));
                         await dispatch(updateLogs());
+                        setOptionsOpened(false);
                     }
                 },
-                disabled: processingSet || lastRuleInAllowlist,
+                disabled: lastRuleInAllowlist,
             },
         ];
-
-        const onClick = async () => {
-            await dispatch(toggleBlocking(buttonType, domain));
-            await dispatch(getStats());
-        };
 
         const getOptions = (options) => {
             if (options.length === 0) {
@@ -118,10 +124,12 @@ const ClientCell = ({
             }
             return (
                 <>
-                    {options.map(({ name, onClick, disabled }) => (
+                    {options.map(({
+                        name, onClick, disabled, className,
+                    }) => (
                         <button
                             key={name}
-                            className="button-action--arrow-option px-4 py-1"
+                            className={classNames('button-action--arrow-option px-4 py-1', className)}
                             onClick={onClick}
                             disabled={disabled}
                         >
@@ -134,17 +142,6 @@ const ClientCell = ({
 
         const content = getOptions(BUTTON_OPTIONS);
 
-        const buttonClass = classNames('button-action button-action--main', {
-            'button-action--unblock': isFiltered,
-            'button-action--with-options': content,
-            'button-action--active': isOptionsOpened,
-        });
-
-        const buttonArrowClass = classNames('button-action button-action--arrow', {
-            'button-action--unblock': isFiltered,
-            'button-action--active': isOptionsOpened,
-        });
-
         const containerClass = classNames('button-action__container', {
             'button-action__container--detailed': isDetailed,
         });
@@ -153,25 +150,26 @@ const ClientCell = ({
             <div className={containerClass}>
                 <button
                     type="button"
-                    className={buttonClass}
-                    onClick={onClick}
-                    disabled={processingRules}
+                    className="btn btn-icon btn-sm px-0"
+                    onClick={() => setOptionsOpened(true)}
                 >
-                    {t(buttonType)}
+                    <svg className="icon24 icon--lightgray button-action__icon">
+                        <use xlinkHref="#bullets" />
+                    </svg>
                 </button>
-                {content && (
-                    <button className={buttonArrowClass} disabled={processingRules}>
-                        <IconTooltip
-                            className="icon24"
-                            tooltipClass="button-action--arrow-option-container"
-                            xlinkHref="chevron-down"
-                            triggerClass="button-action--icon"
-                            content={content}
-                            placement="bottom-end"
-                            trigger="click"
-                            onVisibilityChange={setOptionsOpened}
-                        />
-                    </button>
+                {isOptionsOpened && (
+                    <IconTooltip
+                        className="icon24"
+                        tooltipClass="button-action--arrow-option-container"
+                        xlinkHref="bullets"
+                        triggerClass="btn btn-icon btn-sm px-0 button-action__hidden-trigger"
+                        content={content}
+                        placement="bottom-end"
+                        trigger="click"
+                        onVisibilityChange={setOptionsOpened}
+                        defaultTooltipShown={true}
+                        delayHide={0}
+                    />
                 )}
             </div>
         );
@@ -198,7 +196,7 @@ const ClientCell = ({
                 </div>
                 {isDetailed && clientName && !whoisAvailable && (
                     <Link
-                        className="detailed-info d-none d-sm-block logs__text logs__text--link"
+                        className="detailed-info d-none d-sm-block logs__text logs__text--link logs__text--client"
                         to={`logs?search="${encodeURIComponent(clientName)}"`}
                         title={clientName}
                     >

@@ -14,11 +14,11 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.40] - 2023-10-09 (APPROX.)
+## [v0.107.41] - 2023-11-01 (APPROX.)
 
-See also the [v0.107.40 GitHub milestone][ms-v0.107.40].
+See also the [v0.107.41 GitHub milestone][ms-v0.107.41].
 
-[ms-v0.107.40]: https://github.com/AdguardTeam/AdGuardHome/milestone/75?closed=1
+[ms-v0.107.41]: https://github.com/AdguardTeam/AdGuardHome/milestone/76?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -26,6 +26,33 @@ NOTE: Add new changes BELOW THIS COMMENT.
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.40] - 2023-10-18
+
+See also the [v0.107.40 GitHub milestone][ms-v0.107.40].
+
+### Changed
+
+- *Block* and *Unblock* buttons of the query log moved to the tooltip menu
+  ([#684]).
+
+### Fixed
+
+- Dashboard tables scroll issue ([#6180]).
+- The time shown in the statistics is one hour less than the current time
+  ([#6296]).
+- Issues with QUIC and HTTP/3 upstreams on FreeBSD ([#6301]).
+- Panic on clearing the query log ([#6304]).
+
+[#684]:  https://github.com/AdguardTeam/AdGuardHome/issues/684
+[#6180]: https://github.com/AdguardTeam/AdGuardHome/issues/6180
+[#6296]: https://github.com/AdguardTeam/AdGuardHome/issues/6296
+[#6301]: https://github.com/AdguardTeam/AdGuardHome/issues/6301
+[#6304]: https://github.com/AdguardTeam/AdGuardHome/issues/6304
+
+[ms-v0.107.40]: https://github.com/AdguardTeam/AdGuardHome/milestone/75?closed=1
 
 
 
@@ -47,7 +74,7 @@ See also the [v0.107.39 GitHub milestone][ms-v0.107.39].
 
 ### Changed
 
-- ipset entries are updated more often ([#6233]).
+- `ipset` entries are updated more frequently ([#6233]).
 - Node.JS 16 is now required to build the frontend.
 
 ### Fixed
@@ -66,9 +93,8 @@ See also the [v0.107.39 GitHub milestone][ms-v0.107.39].
 [#6233]: https://github.com/AdguardTeam/AdGuardHome/issues/6233
 [#6280]: https://github.com/AdguardTeam/AdGuardHome/issues/6280
 
-[go-1.20.9]:  https://groups.google.com/g/golang-announce/c/XBa1oHDevAo/m/desYyx3qAgAJ
-[go-1.20.10]: https://groups.google.com/g/golang-announce/c/iNNxDTCjZvo/m/UDd7VKQuAAAJ
-
+[go-1.20.10]:   https://groups.google.com/g/golang-announce/c/iNNxDTCjZvo/m/UDd7VKQuAAAJ
+[go-1.20.9]:    https://groups.google.com/g/golang-announce/c/XBa1oHDevAo/m/desYyx3qAgAJ
 [ms-v0.107.39]: https://github.com/AdguardTeam/AdGuardHome/milestone/74?closed=1
 
 
@@ -2531,11 +2557,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.40...HEAD
-[v0.107.40]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.39...v0.107.40
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.41...HEAD
+[v0.107.41]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.40...v0.107.41
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.39...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.40...HEAD
+[v0.107.40]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.39...v0.107.40
 [v0.107.39]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.38...v0.107.39
 [v0.107.38]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.37...v0.107.38
 [v0.107.37]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.36...v0.107.37

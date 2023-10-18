@@ -554,3 +554,12 @@ export const DISABLE_PROTECTION_TIMINGS = {
 };
 
 export const LOCAL_TIMEZONE_VALUE = 'Local';
+
+export const TABLES_MIN_ROWS = 5;
+
+export const DASHBOARD_TABLES_DEFAULT_PAGE_SIZE = 100;
+
+export const TIME_UNITS = {
+    HOURS: 'hours',
+    DAYS: 'days',
+};

@@ -9,7 +9,12 @@ import Counters from './Counters';
 import Clients from './Clients';
 import QueriedDomains from './QueriedDomains';
 import BlockedDomains from './BlockedDomains';
-import { DISABLE_PROTECTION_TIMINGS, ONE_SECOND_IN_MS, SETTINGS_URLS } from '../../helpers/constants';
+import {
+    DISABLE_PROTECTION_TIMINGS,
+    ONE_SECOND_IN_MS,
+    SETTINGS_URLS,
+    TIME_UNITS,
+} from '../../helpers/constants';
 import {
     msToSeconds,
     msToMinutes,
@@ -46,15 +51,12 @@ const Dashboard = ({
         getAllStats();
     }, []);
     const getSubtitle = () => {
-        const ONE_DAY = 1;
-        const intervalInDays = msToDays(stats.interval);
-
-        if (intervalInDays < ONE_DAY) {
+        if (!stats.enabled) {
             return t('stats_disabled_short');
         }
 
-        return intervalInDays === ONE_DAY
-            ? t('for_last_24_hours')
+        return stats.timeUnits === TIME_UNITS.HOURS
+            ? t('for_last_hours', { count: msToHours(stats.interval) })
             : t('for_last_days', { count: msToDays(stats.interval) });
     };
 

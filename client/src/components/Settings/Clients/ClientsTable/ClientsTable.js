@@ -14,7 +14,7 @@ import {
     sortIp,
     getService,
 } from '../../../../helpers/helpers';
-import { MODAL_TYPE, LOCAL_TIMEZONE_VALUE } from '../../../../helpers/constants';
+import { MODAL_TYPE, LOCAL_TIMEZONE_VALUE, TABLES_MIN_ROWS } from '../../../../helpers/constants';
 import Card from '../../../ui/Card';
 import CellWrap from '../../../ui/CellWrap';
 import LogsSearchLink from '../../../ui/LogsSearchLink';
@@ -347,7 +347,7 @@ const ClientsTable = ({
                     onPageSizeChange={(size) => (
                         LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.CLIENTS_PAGE_SIZE, size)
                     )}
-                    minRows={5}
+                    minRows={TABLES_MIN_ROWS}
                     ofText="/"
                     previousText={t('previous_btn')}
                     nextText={t('next_btn')}

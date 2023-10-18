@@ -8,7 +8,7 @@ import Cell from '../ui/Cell';
 import DomainCell from './DomainCell';
 
 import { getPercent } from '../../helpers/helpers';
-import { STATUS_COLORS } from '../../helpers/constants';
+import { DASHBOARD_TABLES_DEFAULT_PAGE_SIZE, STATUS_COLORS, TABLES_MIN_ROWS } from '../../helpers/constants';
 
 const CountCell = (totalBlocked) => (
     function cell(row) {
@@ -64,8 +64,8 @@ const UpstreamResponses = ({
             ]}
             showPagination={false}
             noDataText={t('no_upstreams_data_found')}
-            minRows={6}
-            defaultPageSize={100}
+            minRows={TABLES_MIN_ROWS}
+            defaultPageSize={DASHBOARD_TABLES_DEFAULT_PAGE_SIZE}
             className="-highlight card-table-overflow--limited stats__table"
         />
     </Card>

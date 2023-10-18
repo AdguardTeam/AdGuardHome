@@ -80,6 +80,10 @@
     color: var(--gray-f3);
 }
 
+.logs__text--client {
+    padding-right: 32px;
+}
+
 .icon--selected {
     background-color: var(--gray-f3);
     border: solid 1px var(--gray-d8);
@@ -261,9 +265,8 @@
 .button-action__container {
     display: flex;
     position: absolute;
-    right: 0;
+    right: 2px;
     bottom: 0.5rem;
-    height: 1.6rem;
 }
 
 @media screen and (max-width: 1024px) {
@@ -307,43 +310,8 @@
     border-bottom-right-radius: 0;
 }
 
-.button-action--arrow {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-left: 1px solid var(--white);
-    width: 1.5625rem;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 .button-action:hover {
     cursor: pointer;
-}
-
-.button-action--arrow .button-action--icon {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-}
-
-.button-action:active {
-    background: var(--btn-block-active);
-}
-
-.button-action--unblock:active {
-    background: var(--btn-unblock-active);
-}
-
-.button-action:disabled {
-    background: var(--btn-block-disabled);
-    cursor: default;
-}
-
-.button-action--unblock:disabled {
-    background: var(--btn-unblock-disabled);
 }
 
 .button-action--arrow-option {
@@ -550,4 +518,21 @@
 .logs__modal-wrap {
     padding: 1rem 1.5rem;
     background-color: var(--card-bgcolor);
+}
+
+.button-action__hidden-trigger {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 1px;
+    height: 33px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    clip: rect(0 0 0 0);
+}
+
+[data-theme="dark"] .button-action__icon {
+    color: var(--gray-f3);
 }
