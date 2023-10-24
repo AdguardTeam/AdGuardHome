@@ -23,6 +23,12 @@ See also the [v0.107.41 GitHub milestone][ms-v0.107.41].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Issues with QUIC and HTTP/3 upstreams on Linux ([#6335]).
+
+[#6335]: https://github.com/AdguardTeam/AdGuardHome/issues/6335
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

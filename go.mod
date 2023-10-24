@@ -63,3 +63,6 @@ require (
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.14.0 // indirect
 )
+
+// TODO(a.garipov): Remove once a patched version is released.
+replace github.com/quic-go/quic-go => github.com/quic-go/quic-go v0.39.1-0.20231024111439-6dbe30ababfe
