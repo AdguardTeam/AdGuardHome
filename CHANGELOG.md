@@ -25,8 +25,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Dark mode DNS rewrite background ([#6329]).
 - Issues with QUIC and HTTP/3 upstreams on Linux ([#6335]).
 
+[#6329]: https://github.com/AdguardTeam/AdGuardHome/issues/6329
 [#6335]: https://github.com/AdguardTeam/AdGuardHome/issues/6335
 
 <!--
