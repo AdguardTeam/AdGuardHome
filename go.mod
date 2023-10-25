@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/AdguardTeam/dnsproxy v0.56.2
 	github.com/AdguardTeam/golibs v0.17.2
-	github.com/AdguardTeam/urlfilter v0.17.0
+	github.com/AdguardTeam/urlfilter v0.17.3
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.2.7
 	github.com/bluele/gcache v0.0.2
@@ -27,7 +27,7 @@ require (
 	// own code for that.  Perhaps, use gopacket.
 	github.com/mdlayher/raw v0.1.0
 	github.com/miekg/dns v1.1.56
-	github.com/quic-go/quic-go v0.39.1
+	github.com/quic-go/quic-go v0.39.2
 	github.com/stretchr/testify v1.8.4
 	github.com/ti-mo/netfilter v0.5.1
 	go.etcd.io/bbolt v1.3.7
@@ -63,6 +63,3 @@ require (
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.14.0 // indirect
 )
-
-// TODO(a.garipov): Remove once a patched version is released.
-replace github.com/quic-go/quic-go => github.com/quic-go/quic-go v0.39.1-0.20231024111439-6dbe30ababfe

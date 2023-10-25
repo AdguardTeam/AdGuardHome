@@ -25,9 +25,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- `$important,dnsrewrite` rules do not take precedence over allowlist rules
+  ([#6204]).
 - Dark mode DNS rewrite background ([#6329]).
 - Issues with QUIC and HTTP/3 upstreams on Linux ([#6335]).
 
+[#6204]: https://github.com/AdguardTeam/AdGuardHome/issues/6204
 [#6329]: https://github.com/AdguardTeam/AdGuardHome/issues/6329
 [#6335]: https://github.com/AdguardTeam/AdGuardHome/issues/6335
 
