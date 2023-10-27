@@ -839,5 +839,47 @@
       "edns_cs_use_custom": false,
       "edns_cs_custom_ip": ""
     }
+  },
+  "multiple_domain_specific_upstreams": {
+    "req": {
+      "upstream_dns": [
+        "8.8.8.8:77",
+        "[/example.com/]8.8.4.4:77 9.9.9.10 https://1.1.1.1"
+      ]
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:77",
+        "[/example.com/]8.8.4.4:77 9.9.9.10 https://1.1.1.1"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "fallback_dns": [],
+      "protection_enabled": true,
+      "protection_disabled_until": null,
+      "ratelimit": 0,
+      "blocking_mode": "default",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "blocked_response_ttl": 10,
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 0,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "cache_optimistic": false,
+      "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
+    }
   }
 }

@@ -1,6 +1,7 @@
 {
     "client_settings": "Client settings",
     "example_upstream_reserved": "an upstream <0>for specific domains</0>;",
+    "example_multiple_upstreams_reserved": "multiple upstreams <0>for specific domains</0>;",
     "example_upstream_comment": "a comment.",
     "upstream_parallel": "Use parallel queries to speed up resolving by querying all upstream servers simultaneously.",
     "parallel_requests": "Parallel requests",

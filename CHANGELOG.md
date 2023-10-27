@@ -23,6 +23,11 @@ See also the [v0.107.41 GitHub milestone][ms-v0.107.41].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- Ability to specify multiple domain specific upstreams per line, e.g.
+  `[/domain1/../domain2/]upstream1 upstream2 .. upstreamN` ([#4977]).
+
 ### Fixed
 
 - `$important,dnsrewrite` rules do not take precedence over allowlist rules
@@ -30,6 +35,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Dark mode DNS rewrite background ([#6329]).
 - Issues with QUIC and HTTP/3 upstreams on Linux ([#6335]).
 
+[#4977]: https://github.com/AdguardTeam/AdGuardHome/issues/4977
 [#6204]: https://github.com/AdguardTeam/AdGuardHome/issues/6204
 [#6329]: https://github.com/AdguardTeam/AdGuardHome/issues/6329
 [#6335]: https://github.com/AdguardTeam/AdGuardHome/issues/6335
