@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -62,7 +63,7 @@ type Config struct {
 
 	// MemSize is the number of entries kept in a memory buffer before they are
 	// flushed to disk.
-	MemSize uint32
+	MemSize int
 
 	// Enabled tells if the query log is enabled.
 	Enabled bool
@@ -142,8 +143,14 @@ func newQueryLog(conf Config) (l *queryLog, err error) {
 		}
 	}
 
+	if conf.MemSize < 0 {
+		return nil, errors.Error("memory size must be greater or equal to zero")
+	}
+
 	l = &queryLog{
 		findClient: findClient,
+
+		buffer: aghalg.NewRingBuffer[*logEntry](conf.MemSize),
 
 		conf:    &Config{},
 		confMu:  &sync.RWMutex{},

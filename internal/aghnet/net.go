@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/netip"
+	"net/url"
 	"syscall"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
@@ -263,7 +264,7 @@ func IsAddrInUse(err error) (ok bool) {
 
 // CollectAllIfacesAddrs returns the slice of all network interfaces IP
 // addresses without port number.
-func CollectAllIfacesAddrs() (addrs []string, err error) {
+func CollectAllIfacesAddrs() (addrs []netip.Addr, err error) {
 	var ifaceAddrs []net.Addr
 	ifaceAddrs, err = netInterfaceAddrs()
 	if err != nil {
@@ -271,17 +272,39 @@ func CollectAllIfacesAddrs() (addrs []string, err error) {
 	}
 
 	for _, addr := range ifaceAddrs {
-		cidr := addr.String()
-		var ip net.IP
-		ip, _, err = net.ParseCIDR(cidr)
+		var p netip.Prefix
+		p, err = netip.ParsePrefix(addr.String())
 		if err != nil {
-			return nil, fmt.Errorf("parsing cidr: %w", err)
+			// Don't wrap the error since it's informative enough as is.
+			return nil, err
 		}
 
-		addrs = append(addrs, ip.String())
+		addrs = append(addrs, p.Addr())
 	}
 
 	return addrs, nil
+}
+
+// ParseAddrPort parses an [netip.AddrPort] from s, which should be either a
+// valid IP, optionally with port, or a valid URL with plain IP address.  The
+// defaultPort is used if s doesn't contain port number.
+func ParseAddrPort(s string, defaultPort uint16) (ipp netip.AddrPort, err error) {
+	u, err := url.Parse(s)
+	if err == nil && u.Host != "" {
+		s = u.Host
+	}
+
+	ipp, err = netip.ParseAddrPort(s)
+	if err != nil {
+		ip, parseErr := netip.ParseAddr(s)
+		if parseErr != nil {
+			return ipp, errors.Join(err, parseErr)
+		}
+
+		return netip.AddrPortFrom(ip, defaultPort), nil
+	}
+
+	return ipp, nil
 }
 
 // BroadcastFromPref calculates the broadcast IP address for p.

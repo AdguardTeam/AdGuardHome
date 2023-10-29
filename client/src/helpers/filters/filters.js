@@ -220,12 +220,6 @@ export default {
             "homepage": "https://github.com/hoshsadiq/adblock-nocoin-list/",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_8.txt"
         },
-        "notracking_hosts_blocklists": {
-            "name": "The NoTracking blocklist",
-            "categoryId": "general",
-            "homepage": "https://github.com/notracking/hosts-blocklists",
-            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_32.txt"
-        },
         "oisd_basic": {
             "name": "OISD Blocklist Small",
             "categoryId": "general",
@@ -285,6 +279,12 @@ export default {
             "categoryId": "security",
             "homepage": "https://github.com/mitchellkrogza/The-Big-List-of-Hacked-Malware-Web-Sites",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_9.txt"
+        },
+        "ublock_badware_risks": {
+            "name": "uBlock₀ filters – Badware risks",
+            "categoryId": "security",
+            "homepage": "https://github.com/uBlockOrigin/uAssets",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_50.txt"
         },
         "urlhaus_filter_online": {
             "name": "Malicious URL Blocklist (URLHaus)",

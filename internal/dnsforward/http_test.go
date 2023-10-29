@@ -28,17 +28,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// fakeSystemResolvers is a mock aghnet.SystemResolvers implementation for
-// tests.
-type fakeSystemResolvers struct {
-	// SystemResolvers is embedded here simply to make *fakeSystemResolvers
-	// an aghnet.SystemResolvers without actually implementing all methods.
-	aghnet.SystemResolvers
-}
+// emptySysResolvers is an empty [SystemResolvers] implementation that always
+// returns nil.
+type emptySysResolvers struct{}
 
-// Get implements the aghnet.SystemResolvers interface for *fakeSystemResolvers.
-// It always returns nil.
-func (fsr *fakeSystemResolvers) Get() (rs []string) {
+// Addrs implements the aghnet.SystemResolvers interface for emptySysResolvers.
+func (emptySysResolvers) Addrs() (addrs []netip.AddrPort) {
 	return nil
 }
 
@@ -54,13 +49,18 @@ func loadTestData(t *testing.T, casesFileName string, cases any) {
 	require.NoError(t, err)
 }
 
-const jsonExt = ".json"
+const (
+	jsonExt = ".json"
+
+	// testBlockedRespTTL is the TTL for blocked responses to use in tests.
+	testBlockedRespTTL = 10
+)
 
 func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
 		ProtectionEnabled:     true,
 		BlockingMode:          filtering.BlockingModeDefault,
-		BlockedResponseTTL:    10,
+		BlockedResponseTTL:    testBlockedRespTTL,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
 		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
@@ -79,7 +79,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 		ConfigModified: func() {},
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
-	s.sysResolvers = &fakeSystemResolvers{}
+	s.sysResolvers = &emptySysResolvers{}
 
 	require.NoError(t, s.Start())
 	testutil.CleanupAndRequireSuccess(t, s.Stop)
@@ -138,7 +138,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
 		ProtectionEnabled:     true,
 		BlockingMode:          filtering.BlockingModeDefault,
-		BlockedResponseTTL:    10,
+		BlockedResponseTTL:    testBlockedRespTTL,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
 		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
@@ -156,7 +156,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		ConfigModified: func() {},
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
-	s.sysResolvers = &fakeSystemResolvers{}
+	s.sysResolvers = &emptySysResolvers{}
 
 	defaultConf := s.conf
 
@@ -234,6 +234,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	}, {
 		name:    "blocked_response_ttl",
 		wantSet: "",
+	}, {
+		name:    "multiple_domain_specific_upstreams",
+		wantSet: "",
 	}}
 
 	var data map[string]struct {
@@ -255,6 +258,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 				s.dnsFilter.SetBlockingMode(filtering.BlockingModeDefault, netip.Addr{}, netip.Addr{})
 				s.conf = defaultConf
 				s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{}
+				s.dnsFilter.SetBlockedResponseTTL(testBlockedRespTTL)
 			})
 
 			rBody := io.NopCloser(bytes.NewReader(caseData.Req))
@@ -485,7 +489,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 	hostsListener := newLocalUpstreamListener(t, 0, goodHandler)
 	hostsUps := (&url.URL{
 		Scheme: "tcp",
-		Host:   netutil.JoinHostPort(upstreamHost, int(hostsListener.Port())),
+		Host:   netutil.JoinHostPort(upstreamHost, hostsListener.Port()),
 	}).String()
 
 	hc, err := aghnet.NewHostsContainer(
@@ -552,7 +556,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 			"upstream_dns": []string{"[/domain.example/]" + badUps},
 		},
 		wantResp: map[string]any{
-			"[/domain.example/]" + badUps: `WARNING: couldn't communicate ` +
+			badUps: `WARNING: couldn't communicate ` +
 				`with upstream: exchanging with ` + badUps + ` over tcp: ` +
 				`dns: id mismatch`,
 		},
@@ -590,6 +594,17 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 			goodUps: "OK",
 		},
 		name: "fallback_comment_mix",
+	}, {
+		body: map[string]any{
+			"upstream_dns": []string{"[/domain.example/]" + goodUps + " " + badUps},
+		},
+		wantResp: map[string]any{
+			goodUps: "OK",
+			badUps: `WARNING: couldn't communicate ` +
+				`with upstream: exchanging with ` + badUps + ` over tcp: ` +
+				`dns: id mismatch`,
+		},
+		name: "multiple_domain_specific_upstreams",
 	}}
 
 	for _, tc := range testCases {

@@ -26,6 +26,7 @@ import (
 	"github.com/AdguardTeam/golibs/mathutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/golibs/syncutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -232,7 +233,7 @@ type Checker interface {
 // DNSFilter matches hostnames and DNS requests against filtering rules.
 type DNSFilter struct {
 	// bufPool is a pool of buffers used for filtering-rule list parsing.
-	bufPool *sync.Pool
+	bufPool *syncutil.Pool[[]byte]
 
 	rulesStorage    *filterlist.RuleStorage
 	filteringEngine *urlfilter.DNSEngine
@@ -255,6 +256,9 @@ type DNSFilter struct {
 
 	// conf contains filtering parameters.
 	conf *Config
+
+	// done is the channel to signal to stop running filters updates loop.
+	done chan struct{}
 
 	// Channel for passing data to filters-initializer goroutine
 	filtersInitializerChan chan filtersInitializerParams
@@ -423,23 +427,14 @@ func (d *DNSFilter) setFilters(blockFilters, allowFilters []Filter, async bool) 
 	return d.initFiltering(allowFilters, blockFilters)
 }
 
-// Starts initializing new filters by signal from channel
-func (d *DNSFilter) filtersInitializer() {
-	for {
-		params := <-d.filtersInitializerChan
-		err := d.initFiltering(params.allowFilters, params.blockFilters)
-		if err != nil {
-			log.Error("filtering: initializing: %s", err)
-
-			continue
-		}
-	}
-}
-
 // Close - close the object
 func (d *DNSFilter) Close() {
 	d.engineLock.Lock()
 	defer d.engineLock.Unlock()
+
+	if d.done != nil {
+		d.done <- struct{}{}
+	}
 
 	d.reset()
 }
@@ -1061,13 +1056,7 @@ func InitModule() {
 // be non-nil.
 func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	d = &DNSFilter{
-		bufPool: &sync.Pool{
-			New: func() (buf any) {
-				bufVal := make([]byte, rulelist.DefaultRuleBufSize)
-
-				return &bufVal
-			},
-		},
+		bufPool:                syncutil.NewSlicePool[byte](rulelist.DefaultRuleBufSize),
 		refreshLock:            &sync.Mutex{},
 		safeBrowsingChecker:    c.SafeBrowsingChecker,
 		parentalControlChecker: c.ParentalControlChecker,
@@ -1136,19 +1125,64 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	return d, nil
 }
 
-// Start - start the module:
-// . start async filtering initializer goroutine
-// . register web handlers
+// Start registers web handlers and starts filters updates loop.
 func (d *DNSFilter) Start() {
 	d.filtersInitializerChan = make(chan filtersInitializerParams, 1)
-	go d.filtersInitializer()
+	d.done = make(chan struct{}, 1)
 
 	d.RegisterFilteringHandlers()
 
-	// Here we should start updating filters,
-	//  but currently we can't wake up the periodic task to do so.
-	// So for now we just start this periodic task from here.
-	go d.periodicallyRefreshFilters()
+	go d.updatesLoop()
+}
+
+// updatesLoop initializes new filters and checks for filters updates in a loop.
+func (d *DNSFilter) updatesLoop() {
+	defer log.OnPanic("filtering: updates loop")
+
+	ivl := time.Second * 5
+	t := time.NewTimer(ivl)
+
+	for {
+		select {
+		case params := <-d.filtersInitializerChan:
+			err := d.initFiltering(params.allowFilters, params.blockFilters)
+			if err != nil {
+				log.Error("filtering: initializing: %s", err)
+
+				continue
+			}
+		case <-t.C:
+			ivl = d.periodicallyRefreshFilters(ivl)
+			t.Reset(ivl)
+		case <-d.done:
+			t.Stop()
+
+			return
+		}
+	}
+}
+
+// periodicallyRefreshFilters checks for filters updates and returns time
+// interval for the next update.
+func (d *DNSFilter) periodicallyRefreshFilters(ivl time.Duration) (nextIvl time.Duration) {
+	const maxInterval = time.Hour
+
+	if d.conf.FiltersUpdateIntervalHours == 0 {
+		return ivl
+	}
+
+	isNetErr, ok := false, false
+	_, isNetErr, ok = d.tryRefreshFilters(true, true, false)
+
+	if ok && !isNetErr {
+		ivl = maxInterval
+	} else if isNetErr {
+		ivl *= 2
+		// TODO(s.chzhen):  Use built-in function max in Go 1.21.
+		ivl = mathutil.Max(ivl, maxInterval)
+	}
+
+	return ivl
 }
 
 // Safe browsing and parental control methods.

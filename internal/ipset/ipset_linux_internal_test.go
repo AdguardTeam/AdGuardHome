@@ -1,6 +1,6 @@
 //go:build linux
 
-package aghnet
+package ipset
 
 import (
 	"net"
@@ -15,16 +15,20 @@ import (
 	"github.com/ti-mo/netfilter"
 )
 
-// fakeIpsetConn is a fake ipsetConn for tests.
-type fakeIpsetConn struct {
+// fakeConn is a fake ipsetConn for tests.
+type fakeConn struct {
 	ipv4Header  *ipset.HeaderPolicy
 	ipv4Entries *[]*ipset.Entry
 	ipv6Header  *ipset.HeaderPolicy
 	ipv6Entries *[]*ipset.Entry
+	sets        []props
 }
 
-// Add implements the ipsetConn interface for *fakeIpsetConn.
-func (c *fakeIpsetConn) Add(name string, entries ...*ipset.Entry) (err error) {
+// type check
+var _ ipsetConn = (*fakeConn)(nil)
+
+// Add implements the [ipsetConn] interface for *fakeConn.
+func (c *fakeConn) Add(name string, entries ...*ipset.Entry) (err error) {
 	if strings.Contains(name, "ipv4") {
 		*c.ipv4Entries = append(*c.ipv4Entries, entries...)
 
@@ -38,23 +42,17 @@ func (c *fakeIpsetConn) Add(name string, entries ...*ipset.Entry) (err error) {
 	return errors.Error("test: ipset not found")
 }
 
-// Close implements the ipsetConn interface for *fakeIpsetConn.
-func (c *fakeIpsetConn) Close() (err error) {
+// Close implements the [ipsetConn] interface for *fakeConn.
+func (c *fakeConn) Close() (err error) {
 	return nil
 }
 
-// Header implements the ipsetConn interface for *fakeIpsetConn.
-func (c *fakeIpsetConn) Header(name string) (p *ipset.HeaderPolicy, err error) {
-	if strings.Contains(name, "ipv4") {
-		return c.ipv4Header, nil
-	} else if strings.Contains(name, "ipv6") {
-		return c.ipv6Header, nil
-	}
-
-	return nil, errors.Error("test: ipset not found")
+// listAll implements the [ipsetConn] interface for *fakeConn.
+func (c *fakeConn) listAll() (sets []props, err error) {
+	return c.sets, nil
 }
 
-func TestIpsetMgr_Add(t *testing.T) {
+func TestManager_Add(t *testing.T) {
 	ipsetConf := []string{
 		"example.com,example.net/ipv4set",
 		"example.org,example.biz/ipv6set",
@@ -67,7 +65,7 @@ func TestIpsetMgr_Add(t *testing.T) {
 		pf netfilter.ProtoFamily,
 		conf *netlink.Config,
 	) (conn ipsetConn, err error) {
-		return &fakeIpsetConn{
+		return &fakeConn{
 			ipv4Header: &ipset.HeaderPolicy{
 				Family: ipset.NewUInt8Box(uint8(netfilter.ProtoIPv4)),
 			},
@@ -76,10 +74,17 @@ func TestIpsetMgr_Add(t *testing.T) {
 				Family: ipset.NewUInt8Box(uint8(netfilter.ProtoIPv6)),
 			},
 			ipv6Entries: &ipv6Entries,
+			sets: []props{{
+				name:   "ipv4set",
+				family: netfilter.ProtoIPv4,
+			}, {
+				name:   "ipv6set",
+				family: netfilter.ProtoIPv6,
+			}},
 		}, nil
 	}
 
-	m, err := newIpsetMgrWithDialer(ipsetConf, fakeDial)
+	m, err := newManagerWithDialer(ipsetConf, fakeDial)
 	require.NoError(t, err)
 
 	ip4 := net.IP{1, 2, 3, 4}
@@ -114,21 +119,22 @@ func TestIpsetMgr_Add(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-var ipsetPropsSink []ipsetProps
+// ipsetPropsSink is the typed sink for benchmark results.
+var ipsetPropsSink []props
 
-func BenchmarkIpsetMgr_lookupHost(b *testing.B) {
-	propsLong := []ipsetProps{{
+func BenchmarkManager_LookupHost(b *testing.B) {
+	propsLong := []props{{
 		name:   "example.com",
 		family: netfilter.ProtoIPv4,
 	}}
 
-	propsShort := []ipsetProps{{
+	propsShort := []props{{
 		name:   "example.net",
 		family: netfilter.ProtoIPv4,
 	}}
 
-	m := &ipsetMgr{
-		domainToIpsets: map[string][]ipsetProps{
+	m := &manager{
+		domainToIpsets: map[string][]props{
 			"":            propsLong,
 			"example.net": propsShort,
 		},

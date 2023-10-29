@@ -14,31 +14,105 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.39] - 2023-09-27 (APPROX.)
+## [v0.107.41] - 2023-11-01 (APPROX.)
 
-See also the [v0.107.39 GitHub milestone][ms-v0.107.39].
+See also the [v0.107.41 GitHub milestone][ms-v0.107.41].
 
-[ms-v0.107.39]: https://github.com/AdguardTeam/AdGuardHome/milestone/74?closed=1
+[ms-v0.107.41]: https://github.com/AdguardTeam/AdGuardHome/milestone/76?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
 ### Added
 
-- Ability to specify for how long clients should cache a filtered response,
-  using the *Blocked response TTL* field on the *DNS settings* page ([#4569]).
-
-[#4569]: https://github.com/AdguardTeam/AdGuardHome/issues/4569
+- Ability to specify multiple domain specific upstreams per line, e.g.
+  `[/domain1/../domain2/]upstream1 upstream2 .. upstreamN` ([#4977]).
 
 ### Fixed
 
-- An accidental change in DNS rewrite priority ([#6226]).
+- `$important,dnsrewrite` rules do not take precedence over allowlist rules
+  ([#6204]).
+- Dark mode DNS rewrite background ([#6329]).
+- Issues with QUIC and HTTP/3 upstreams on Linux ([#6335]).
 
-[#6226]: https://github.com/AdguardTeam/AdGuardHome/issues/6226
+[#4977]: https://github.com/AdguardTeam/AdGuardHome/issues/4977
+[#6204]: https://github.com/AdguardTeam/AdGuardHome/issues/6204
+[#6329]: https://github.com/AdguardTeam/AdGuardHome/issues/6329
+[#6335]: https://github.com/AdguardTeam/AdGuardHome/issues/6335
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.40] - 2023-10-18
+
+See also the [v0.107.40 GitHub milestone][ms-v0.107.40].
+
+### Changed
+
+- *Block* and *Unblock* buttons of the query log moved to the tooltip menu
+  ([#684]).
+
+### Fixed
+
+- Dashboard tables scroll issue ([#6180]).
+- The time shown in the statistics is one hour less than the current time
+  ([#6296]).
+- Issues with QUIC and HTTP/3 upstreams on FreeBSD ([#6301]).
+- Panic on clearing the query log ([#6304]).
+
+[#684]:  https://github.com/AdguardTeam/AdGuardHome/issues/684
+[#6180]: https://github.com/AdguardTeam/AdGuardHome/issues/6180
+[#6296]: https://github.com/AdguardTeam/AdGuardHome/issues/6296
+[#6301]: https://github.com/AdguardTeam/AdGuardHome/issues/6301
+[#6304]: https://github.com/AdguardTeam/AdGuardHome/issues/6304
+
+[ms-v0.107.40]: https://github.com/AdguardTeam/AdGuardHome/milestone/75?closed=1
+
+
+
+## [v0.107.39] - 2023-10-11
+
+See also the [v0.107.39 GitHub milestone][ms-v0.107.39].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2023-39323 and CVE-2023-39325 Go vulnerabilities fixed in
+  [Go 1.20.9][go-1.20.9] and [Go 1.20.10][go-1.20.10].
+
+### Added
+
+- Ability to edit static leases on *DHCP settings* page ([#1700]).
+- Ability to specify for how long clients should cache a filtered response,
+  using the *Blocked response TTL* field on the *DNS settings* page ([#4569]).
+
+### Changed
+
+- `ipset` entries are updated more frequently ([#6233]).
+- Node.JS 16 is now required to build the frontend.
+
+### Fixed
+
+- Incorrect domain-specific upstream matching for `DS` queries ([#6156]).
+- Improper validation of password length ([#6280]).
+- Wrong algorithm for filtering self addresses from the list of private upstream
+  DNS servers ([#6231]).
+- An accidental change in DNS rewrite priority ([#6226]).
+
+[#1700]: https://github.com/AdguardTeam/AdGuardHome/issues/1700
+[#4569]: https://github.com/AdguardTeam/AdGuardHome/issues/4569
+[#6156]: https://github.com/AdguardTeam/AdGuardHome/issues/6156
+[#6226]: https://github.com/AdguardTeam/AdGuardHome/issues/6226
+[#6231]: https://github.com/AdguardTeam/AdGuardHome/issues/6231
+[#6233]: https://github.com/AdguardTeam/AdGuardHome/issues/6233
+[#6280]: https://github.com/AdguardTeam/AdGuardHome/issues/6280
+
+[go-1.20.10]:   https://groups.google.com/g/golang-announce/c/iNNxDTCjZvo/m/UDd7VKQuAAAJ
+[go-1.20.9]:    https://groups.google.com/g/golang-announce/c/XBa1oHDevAo/m/desYyx3qAgAJ
+[ms-v0.107.39]: https://github.com/AdguardTeam/AdGuardHome/milestone/74?closed=1
 
 
 
@@ -2500,11 +2574,13 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.39...HEAD
-[v0.107.39]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.38...v0.107.39
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.41...HEAD
+[v0.107.41]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.40...v0.107.41
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.38...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.40...HEAD
+[v0.107.40]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.39...v0.107.40
+[v0.107.39]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.38...v0.107.39
 [v0.107.38]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.37...v0.107.38
 [v0.107.37]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.36...v0.107.37
 [v0.107.36]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.35...v0.107.36

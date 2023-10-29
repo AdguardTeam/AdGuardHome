@@ -2,6 +2,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.6rem 1.5rem;
+    flex-shrink: 0;
 }
 
 .card-subtitle {
@@ -19,8 +20,16 @@
     max-height: 17.5rem;
 }
 
+.dashboard .card-table {
+    overflow: hidden;
+}
+
 .dashboard .card-table-overflow--limited {
-    max-height: 18rem;
+    max-height: 292px;
+}
+
+.dashboard .ReactTable .rt-tr-group {
+    min-height: 52px;
 }
 
 .card-actions {
@@ -125,7 +134,7 @@
 
 @media (min-width: 992px) {
     .dashboard .card:not(.card--full) {
-        height: 22rem;
+        height: 360px;
     }
 }
 
@@ -139,4 +148,8 @@
 
 .card .logs__row--blue {
     background-color: #ecf7ff;
+}
+
+[data-theme="dark"] .card .logs__row--blue {
+    background-color: var(--logs__row--blue-bgcolor);
 }

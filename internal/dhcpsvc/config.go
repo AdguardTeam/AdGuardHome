@@ -1,10 +1,12 @@
 package dhcpsvc
 
 import (
-	"net/netip"
+	"fmt"
 	"time"
 
-	"github.com/google/gopacket/layers"
+	"github.com/AdguardTeam/golibs/netutil"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 // Config is the configuration for the DHCP service.
@@ -33,54 +35,58 @@ type InterfaceConfig struct {
 	IPv6 *IPv6Config
 }
 
-// IPv4Config is the interface-specific configuration for DHCPv4.
-type IPv4Config struct {
-	// GatewayIP is the IPv4 address of the network's gateway.  It is used as
-	// the default gateway for DHCP clients and also used in calculating the
-	// network-specific broadcast address.
-	GatewayIP netip.Addr
+// Validate returns an error in conf if any.
+func (conf *Config) Validate() (err error) {
+	switch {
+	case conf == nil:
+		return errNilConfig
+	case !conf.Enabled:
+		return nil
+	case conf.ICMPTimeout < 0:
+		return fmt.Errorf("icmp timeout %s must be non-negative", conf.ICMPTimeout)
+	}
 
-	// SubnetMask is the IPv4 subnet mask of the network.  It should be a valid
-	// IPv4 subnet mask (i.e. all 1s followed by all 0s).
-	SubnetMask netip.Addr
+	err = netutil.ValidateDomainName(conf.LocalDomainName)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
 
-	// RangeStart is the first address in the range to assign to DHCP clients.
-	RangeStart netip.Addr
+	if len(conf.Interfaces) == 0 {
+		return errNoInterfaces
+	}
 
-	// RangeEnd is the last address in the range to assign to DHCP clients.
-	RangeEnd netip.Addr
+	ifaces := maps.Keys(conf.Interfaces)
+	slices.Sort(ifaces)
 
-	// Options is the list of DHCP options to send to DHCP clients.
-	Options layers.DHCPOptions
+	for _, iface := range ifaces {
+		if err = conf.Interfaces[iface].validate(); err != nil {
+			return fmt.Errorf("interface %q: %w", iface, err)
+		}
+	}
 
-	// LeaseDuration is the TTL of a DHCP lease.
-	LeaseDuration time.Duration
-
-	// Enabled is the state of the DHCPv4 service, whether it is enabled or not
-	// on the specific interface.
-	Enabled bool
+	return nil
 }
 
-// IPv6Config is the interface-specific configuration for DHCPv6.
-type IPv6Config struct {
-	// RangeStart is the first address in the range to assign to DHCP clients.
-	RangeStart netip.Addr
+// mustBeErr returns an error that indicates that valName must be as must
+// describes.
+func mustBeErr(valName, must string, val fmt.Stringer) (err error) {
+	return fmt.Errorf("%s %s must %s", valName, val, must)
+}
 
-	// Options is the list of DHCP options to send to DHCP clients.
-	Options layers.DHCPOptions
+// validate returns an error in ic, if any.
+func (ic *InterfaceConfig) validate() (err error) {
+	if ic == nil {
+		return errNilConfig
+	}
 
-	// LeaseDuration is the TTL of a DHCP lease.
-	LeaseDuration time.Duration
+	if err = ic.IPv4.validate(); err != nil {
+		return fmt.Errorf("ipv4: %w", err)
+	}
 
-	// RASlaacOnly defines whether the DHCP clients should only use SLAAC for
-	// address assignment.
-	RASLAACOnly bool
+	if err = ic.IPv6.validate(); err != nil {
+		return fmt.Errorf("ipv6: %w", err)
+	}
 
-	// RAAllowSlaac defines whether the DHCP clients may use SLAAC for address
-	// assignment.
-	RAAllowSLAAC bool
-
-	// Enabled is the state of the DHCPv6 service, whether it is enabled or not
-	// on the specific interface.
-	Enabled bool
+	return nil
 }

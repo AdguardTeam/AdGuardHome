@@ -67,11 +67,11 @@ func TestParseBindHost(t *testing.T) {
 }
 
 func TestParseBindPort(t *testing.T) {
-	assert.Equal(t, 0, testParseOK(t).bindPort, "empty is port 0")
-	assert.Equal(t, 65535, testParseOK(t, "-p", "65535").bindPort, "-p is port")
+	assert.Equal(t, uint16(0), testParseOK(t).bindPort, "empty is port 0")
+	assert.Equal(t, uint16(65535), testParseOK(t, "-p", "65535").bindPort, "-p is port")
 	testParseParamMissing(t, "-p")
 
-	assert.Equal(t, 65535, testParseOK(t, "--port", "65535").bindPort, "--port is port")
+	assert.Equal(t, uint16(65535), testParseOK(t, "--port", "65535").bindPort, "--port is port")
 	testParseParamMissing(t, "--port")
 
 	testParseErr(t, "not an int", "-p", "x")

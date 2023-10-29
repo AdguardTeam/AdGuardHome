@@ -134,15 +134,6 @@ body {
     cursor: not-allowed;
 }
 
-.button-action {
-    visibility: hidden;
-}
-
-.logs__row:hover .button-action,
-.button-action--active {
-    visibility: visible;
-}
-
 .ReactModal__Body--open {
     overflow: hidden;
 }

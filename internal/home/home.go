@@ -329,7 +329,7 @@ func setupBindOpts(opts options) (err error) {
 	if opts.bindPort != 0 {
 		config.HTTPConfig.Address = netip.AddrPortFrom(
 			config.HTTPConfig.Address.Addr(),
-			uint16(opts.bindPort),
+			opts.bindPort,
 		)
 
 		err = checkPorts()
@@ -497,8 +497,7 @@ func initWeb(opts options, clientBuildFS fs.FS, upd *updater.Updater) (web *webA
 
 		clientFS: clientFS,
 
-		BindHost: config.HTTPConfig.Address.Addr(),
-		BindPort: int(config.HTTPConfig.Address.Port()),
+		BindAddr: config.HTTPConfig.Address,
 
 		ReadTimeout:       readTimeout,
 		ReadHeaderTimeout: readHdrTimeout,
@@ -853,7 +852,7 @@ func loadCmdLineOpts() (opts options) {
 // example:
 //
 //	go to http://127.0.0.1:80
-func printWebAddrs(proto, addr string, port int) {
+func printWebAddrs(proto, addr string, port uint16) {
 	log.Printf("go to %s://%s", proto, netutil.JoinHostPort(addr, port))
 }
 
@@ -865,7 +864,7 @@ func printHTTPAddresses(proto string) {
 		Context.tls.WriteDiskConfig(&tlsConf)
 	}
 
-	port := int(config.HTTPConfig.Address.Port())
+	port := config.HTTPConfig.Address.Port()
 	if proto == aghhttp.SchemeHTTPS {
 		port = tlsConf.PortHTTPS
 	}

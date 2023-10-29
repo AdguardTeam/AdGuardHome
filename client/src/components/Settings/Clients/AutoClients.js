@@ -9,6 +9,8 @@ import CellWrap from '../../ui/CellWrap';
 import whoisCell from './whoisCell';
 import LogsSearchLink from '../../ui/LogsSearchLink';
 import { sortIp } from '../../../helpers/helpers';
+import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from '../../../helpers/localStorageHelper';
+import { TABLES_MIN_ROWS } from '../../../helpers/constants';
 
 const COLUMN_MIN_WIDTH = 200;
 
@@ -85,8 +87,11 @@ class AutoClients extends Component {
                     ]}
                     className="-striped -highlight card-table-overflow"
                     showPagination
-                    defaultPageSize={10}
-                    minRows={5}
+                    defaultPageSize={LocalStorageHelper.getItem(LOCAL_STORAGE_KEYS.AUTO_CLIENTS_PAGE_SIZE) || 10}
+                    onPageSizeChange={(size) => (
+                        LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.AUTO_CLIENTS_PAGE_SIZE, size)
+                    )}
+                    minRows={TABLES_MIN_ROWS}
                     ofText="/"
                     previousText={t('previous_btn')}
                     nextText={t('next_btn')}

@@ -43,8 +43,8 @@ func (web *webAPI) handleInstallGetAddresses(w http.ResponseWriter, r *http.Requ
 	data := getAddrsResponse{
 		Version: version.Version(),
 
-		WebPort: defaultPortHTTP,
-		DNSPort: defaultPortDNS,
+		WebPort: int(defaultPortHTTP),
+		DNSPort: int(defaultPortDNS),
 	}
 
 	ifaces, err := aghnet.GetValidNetInterfacesForWeb()
@@ -64,7 +64,7 @@ func (web *webAPI) handleInstallGetAddresses(w http.ResponseWriter, r *http.Requ
 
 type checkConfReqEnt struct {
 	IP      netip.Addr `json:"ip"`
-	Port    int        `json:"port"`
+	Port    uint16     `json:"port"`
 	Autofix bool       `json:"autofix"`
 }
 
@@ -97,7 +97,7 @@ func (req *checkConfReq) validateWeb(tcpPorts aghalg.UniqChecker[tcpPort]) (err 
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
 	// TODO(a.garipov): Declare all port variables anywhere as uint16.
-	reqPort := uint16(req.Web.Port)
+	reqPort := req.Web.Port
 	port := tcpPort(reqPort)
 	addPorts(tcpPorts, port)
 	if err = tcpPorts.Validate(); err != nil {
@@ -128,7 +128,7 @@ func (req *checkConfReq) validateDNS(
 ) (canAutofix bool, err error) {
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
 
-	port := uint16(req.DNS.Port)
+	port := req.DNS.Port
 	switch port {
 	case 0:
 		return false, nil
@@ -142,13 +142,13 @@ func (req *checkConfReq) validateDNS(
 			return false, err
 		}
 
-		err = aghnet.CheckPort("tcp", netip.AddrPortFrom(req.DNS.IP, uint16(port)))
+		err = aghnet.CheckPort("tcp", netip.AddrPortFrom(req.DNS.IP, port))
 		if err != nil {
 			return false, err
 		}
 	}
 
-	err = aghnet.CheckPort("udp", netip.AddrPortFrom(req.DNS.IP, uint16(port)))
+	err = aghnet.CheckPort("udp", netip.AddrPortFrom(req.DNS.IP, port))
 	if !aghnet.IsAddrInUse(err) {
 		return false, err
 	}
@@ -160,7 +160,7 @@ func (req *checkConfReq) validateDNS(
 			log.Error("disabling DNSStubListener: %s", err)
 		}
 
-		err = aghnet.CheckPort("udp", netip.AddrPortFrom(req.DNS.IP, uint16(port)))
+		err = aghnet.CheckPort("udp", netip.AddrPortFrom(req.DNS.IP, port))
 		canAutofix = false
 	}
 
@@ -305,7 +305,7 @@ func disableDNSStubListener() error {
 
 type applyConfigReqEnt struct {
 	IP   netip.Addr `json:"ip"`
-	Port int        `json:"port"`
+	Port uint16     `json:"port"`
 }
 
 type applyConfigReq struct {
@@ -395,14 +395,14 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = aghnet.CheckPort("udp", netip.AddrPortFrom(req.DNS.IP, uint16(req.DNS.Port)))
+	err = aghnet.CheckPort("udp", netip.AddrPortFrom(req.DNS.IP, req.DNS.Port))
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
-	err = aghnet.CheckPort("tcp", netip.AddrPortFrom(req.DNS.IP, uint16(req.DNS.Port)))
+	err = aghnet.CheckPort("tcp", netip.AddrPortFrom(req.DNS.IP, req.DNS.Port))
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
@@ -413,9 +413,21 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	copyInstallSettings(curConfig, config)
 
 	Context.firstRun = false
-	config.HTTPConfig.Address = netip.AddrPortFrom(req.Web.IP, uint16(req.Web.Port))
+	config.HTTPConfig.Address = netip.AddrPortFrom(req.Web.IP, req.Web.Port)
 	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
+
+	u := &webUser{
+		Name: req.Username,
+	}
+	err = Context.auth.Add(u, req.Password)
+	if err != nil {
+		Context.firstRun = true
+		copyInstallSettings(config, curConfig)
+		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "%s", err)
+
+		return
+	}
 
 	// TODO(e.burkov): StartMods() should be put in a separate goroutine at the
 	// moment we'll allow setting up TLS in the initial configuration or the
@@ -430,11 +442,6 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	u := &webUser{
-		Name: req.Username,
-	}
-	Context.auth.UserAdd(u, req.Password)
-
 	err = config.write()
 	if err != nil {
 		Context.firstRun = true
@@ -445,8 +452,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	}
 
 	web.conf.firstRun = false
-	web.conf.BindHost = req.Web.IP
-	web.conf.BindPort = req.Web.Port
+	web.conf.BindAddr = netip.AddrPortFrom(req.Web.IP, req.Web.Port)
 
 	registerControlHandlers(web)
 
@@ -487,9 +493,9 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 	}
 
 	addrPort := config.HTTPConfig.Address
-	restartHTTP = addrPort.Addr() != req.Web.IP || int(addrPort.Port()) != req.Web.Port
+	restartHTTP = addrPort.Addr() != req.Web.IP || addrPort.Port() != req.Web.Port
 	if restartHTTP {
-		err = aghnet.CheckPort("tcp", netip.AddrPortFrom(req.Web.IP, uint16(req.Web.Port)))
+		err = aghnet.CheckPort("tcp", netip.AddrPortFrom(req.Web.IP, req.Web.Port))
 		if err != nil {
 			return nil, false, fmt.Errorf(
 				"checking address %s:%d: %w",

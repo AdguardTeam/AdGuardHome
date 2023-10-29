@@ -263,30 +263,6 @@ func assignUniqueFilterID() int64 {
 	return value
 }
 
-// Sets up a timer that will be checking for filters updates periodically
-func (d *DNSFilter) periodicallyRefreshFilters() {
-	const maxInterval = 1 * 60 * 60
-	ivl := 5 // use a dynamically increasing time interval
-	for {
-		isNetErr, ok := false, false
-		if d.conf.FiltersUpdateIntervalHours != 0 {
-			_, isNetErr, ok = d.tryRefreshFilters(true, true, false)
-			if ok && !isNetErr {
-				ivl = maxInterval
-			}
-		}
-
-		if isNetErr {
-			ivl *= 2
-			if ivl > maxInterval {
-				ivl = maxInterval
-			}
-		}
-
-		time.Sleep(time.Duration(ivl) * time.Second)
-	}
-}
-
 // tryRefreshFilters is like [refreshFilters], but backs down if the update is
 // already going on.
 //
@@ -504,7 +480,7 @@ func (d *DNSFilter) updateIntl(flt *FilterYAML) (ok bool, err error) {
 	}
 	defer func() { err = errors.WithDeferred(err, r.Close()) }()
 
-	bufPtr := d.bufPool.Get().(*[]byte)
+	bufPtr := d.bufPool.Get()
 	defer d.bufPool.Put(bufPtr)
 
 	p := rulelist.NewParser()
@@ -607,7 +583,7 @@ func (d *DNSFilter) load(flt *FilterYAML) (err error) {
 
 	log.Debug("filtering: file %q, id %d, length %d", fileName, flt.ID, st.Size())
 
-	bufPtr := d.bufPool.Get().(*[]byte)
+	bufPtr := d.bufPool.Get()
 	defer d.bufPool.Put(bufPtr)
 
 	p := rulelist.NewParser()

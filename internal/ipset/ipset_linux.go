@@ -1,8 +1,9 @@
 //go:build linux
 
-package aghnet
+package ipset
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"strings"
@@ -31,35 +32,140 @@ import (
 //  6. Run "sudo ipset list example_set".  The Members field should contain the
 //     resolved IP addresses.
 
-// newIpsetMgr returns a new Linux ipset manager.
-func newIpsetMgr(ipsetConf []string) (set IpsetManager, err error) {
-	return newIpsetMgrWithDialer(ipsetConf, defaultDial)
+// newManager returns a new Linux ipset manager.
+func newManager(ipsetConf []string) (set Manager, err error) {
+	return newManagerWithDialer(ipsetConf, defaultDial)
 }
 
 // defaultDial is the default netfilter dialing function.
 func defaultDial(pf netfilter.ProtoFamily, conf *netlink.Config) (conn ipsetConn, err error) {
-	conn, err = ipset.Dial(pf, conf)
+	c, err := ipset.Dial(pf, conf)
 	if err != nil {
 		return nil, err
 	}
 
-	return conn, nil
+	return &queryConn{c}, nil
+}
+
+// queryConn is the [ipsetConn] implementation with listAll method, which
+// returns the list of properties of all available ipsets.
+type queryConn struct {
+	*ipset.Conn
+}
+
+// type check
+var _ ipsetConn = (*queryConn)(nil)
+
+// listAll returns the list of properties of all available ipsets.
+//
+// TODO(s.chzhen):  Use https://github.com/vishvananda/netlink.
+func (qc *queryConn) listAll() (sets []props, err error) {
+	msg, err := netfilter.MarshalNetlink(
+		netfilter.Header{
+			// The family doesn't seem to matter.  See TODO on parseIpsetConfig.
+			Family:      qc.Conn.Family,
+			SubsystemID: netfilter.NFSubsysIPSet,
+			MessageType: netfilter.MessageType(ipset.CmdList),
+			Flags:       netlink.Request | netlink.Dump,
+		},
+		[]netfilter.Attribute{{
+			Type: uint16(ipset.AttrProtocol),
+			Data: []byte{ipset.Protocol},
+		}},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling netlink msg: %w", err)
+	}
+
+	// We assume it's OK to call a method of an unexported type
+	// [ipset.connector], since there is no negative effects.
+	ms, err := qc.Conn.Conn.Query(msg)
+	if err != nil {
+		return nil, fmt.Errorf("querying netlink msg: %w", err)
+	}
+
+	for i, s := range ms {
+		p := props{}
+		err = p.unmarshalMessage(s)
+		if err != nil {
+			return nil, fmt.Errorf("unmarshaling netlink msg at index %d: %w", i, err)
+		}
+
+		sets = append(sets, p)
+	}
+
+	return sets, nil
 }
 
 // ipsetConn is the ipset conn interface.
 type ipsetConn interface {
 	Add(name string, entries ...*ipset.Entry) (err error)
 	Close() (err error)
-	Header(name string) (p *ipset.HeaderPolicy, err error)
+	listAll() (sets []props, err error)
 }
 
-// ipsetDialer creates an ipsetConn.
-type ipsetDialer func(pf netfilter.ProtoFamily, conf *netlink.Config) (conn ipsetConn, err error)
+// dialer creates an ipsetConn.
+type dialer func(pf netfilter.ProtoFamily, conf *netlink.Config) (conn ipsetConn, err error)
 
-// ipsetProps contains one Linux Netfilter ipset properties.
-type ipsetProps struct {
-	name   string
+// props contains one Linux Netfilter ipset properties.
+type props struct {
+	// name of the ipset.
+	name string
+
+	// family of the IP addresses in the ipset.
 	family netfilter.ProtoFamily
+
+	// isPersistent indicates that ipset has no timeout parameter and all
+	// entries are added permanently.
+	isPersistent bool
+}
+
+// unmarshalMessage unmarshals netlink message and sets the properties of the
+// ipset.
+func (p *props) unmarshalMessage(msg netlink.Message) (err error) {
+	_, attrs, err := netfilter.UnmarshalNetlink(msg)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	// By default ipset has no timeout parameter.
+	p.isPersistent = true
+
+	for _, a := range attrs {
+		p.parseAttribute(a)
+	}
+
+	return nil
+}
+
+// parseAttribute parses netfilter attribute and sets the name and family of
+// the ipset.
+func (p *props) parseAttribute(a netfilter.Attribute) {
+	switch ipset.AttributeType(a.Type) {
+	case ipset.AttrData:
+		p.parseAttrData(a)
+	case ipset.AttrSetName:
+		// Trim the null character.
+		p.name = string(bytes.Trim(a.Data, "\x00"))
+	case ipset.AttrFamily:
+		p.family = netfilter.ProtoFamily(a.Data[0])
+	default:
+		// Go on.
+	}
+}
+
+// parseAttrData parses attribute data and sets the timeout of the ipset.
+func (p *props) parseAttrData(a netfilter.Attribute) {
+	for _, a := range a.Children {
+		switch ipset.AttributeType(a.Type) {
+		case ipset.AttrTimeout:
+			timeout := a.Uint32()
+			p.isPersistent = timeout == 0
+		default:
+			// Go on.
+		}
+	}
 }
 
 // unit is a convenient alias for struct{}.
@@ -74,12 +180,12 @@ type ipInIpsetEntry struct {
 	ipArr     [net.IPv6len]byte
 }
 
-// ipsetMgr is the Linux Netfilter ipset manager.
-type ipsetMgr struct {
-	nameToIpset    map[string]ipsetProps
-	domainToIpsets map[string][]ipsetProps
+// manager is the Linux Netfilter ipset manager.
+type manager struct {
+	nameToIpset    map[string]props
+	domainToIpsets map[string][]props
 
-	dial ipsetDialer
+	dial dialer
 
 	// mu protects all properties below.
 	mu *sync.Mutex
@@ -96,7 +202,7 @@ type ipsetMgr struct {
 }
 
 // dialNetfilter establishes connections to Linux's netfilter module.
-func (m *ipsetMgr) dialNetfilter(conf *netlink.Config) (err error) {
+func (m *manager) dialNetfilter(conf *netlink.Config) (err error) {
 	// The kernel API does not actually require two sockets but package
 	// github.com/digineo/go-ipset does.
 	//
@@ -115,8 +221,8 @@ func (m *ipsetMgr) dialNetfilter(conf *netlink.Config) (err error) {
 	return nil
 }
 
-// parseIpsetConfig parses one ipset configuration string.
-func parseIpsetConfig(confStr string) (hosts, ipsetNames []string, err error) {
+// parseIpsetConfigLine parses one ipset configuration line.
+func parseIpsetConfigLine(confStr string) (hosts, ipsetNames []string, err error) {
 	confStr = strings.TrimSpace(confStr)
 	hostsAndNames := strings.Split(confStr, "/")
 	if len(hostsAndNames) != 2 {
@@ -144,65 +250,68 @@ func parseIpsetConfig(confStr string) (hosts, ipsetNames []string, err error) {
 	return hosts, ipsetNames, nil
 }
 
-// ipsetProps returns the properties of an ipset with the given name.
-func (m *ipsetMgr) ipsetProps(name string) (set ipsetProps, err error) {
-	// The family doesn't seem to matter when we use a header query, so
-	// query only the IPv4 one.
+// parseIpsetConfig parses the ipset configuration and stores ipsets.  It
+// returns an error if the configuration can't be used.
+func (m *manager) parseIpsetConfig(ipsetConf []string) (err error) {
+	// The family doesn't seem to matter when we use a header query, so query
+	// only the IPv4 one.
 	//
 	// TODO(a.garipov): Find out if this is a bug or a feature.
-	var res *ipset.HeaderPolicy
-	res, err = m.ipv4Conn.Header(name)
+	all, err := m.ipv4Conn.listAll()
 	if err != nil {
-		return set, err
+		// Don't wrap the error since it's informative enough as is.
+		return err
 	}
 
-	if res == nil || res.Family == nil {
-		return set, errors.Error("empty response or no family data")
+	for _, p := range all {
+		m.nameToIpset[p.name] = p
 	}
 
-	family := netfilter.ProtoFamily(res.Family.Value)
-	if family != netfilter.ProtoIPv4 && family != netfilter.ProtoIPv6 {
-		return set, fmt.Errorf("unexpected ipset family %d", family)
+	for i, confStr := range ipsetConf {
+		var hosts, ipsetNames []string
+		hosts, ipsetNames, err = parseIpsetConfigLine(confStr)
+		if err != nil {
+			return fmt.Errorf("config line at idx %d: %w", i, err)
+		}
+
+		var ipsets []props
+		ipsets, err = m.ipsets(ipsetNames)
+		if err != nil {
+			return fmt.Errorf("getting ipsets from config line at idx %d: %w", i, err)
+		}
+
+		for _, host := range hosts {
+			m.domainToIpsets[host] = append(m.domainToIpsets[host], ipsets...)
+		}
 	}
 
-	return ipsetProps{
-		name:   name,
-		family: family,
-	}, nil
+	return nil
 }
 
 // ipsets returns currently known ipsets.
-func (m *ipsetMgr) ipsets(names []string) (sets []ipsetProps, err error) {
-	for _, name := range names {
-		set, ok := m.nameToIpset[name]
-		if ok {
-			sets = append(sets, set)
-
-			continue
+func (m *manager) ipsets(names []string) (sets []props, err error) {
+	for _, n := range names {
+		p, ok := m.nameToIpset[n]
+		if !ok {
+			return nil, fmt.Errorf("unknown ipset %q", n)
 		}
 
-		set, err = m.ipsetProps(name)
-		if err != nil {
-			return nil, fmt.Errorf("querying ipset %q: %w", name, err)
-		}
-
-		m.nameToIpset[name] = set
-		sets = append(sets, set)
+		sets = append(sets, p)
 	}
 
 	return sets, nil
 }
 
-// newIpsetMgrWithDialer returns a new Linux ipset manager using the provided
+// newManagerWithDialer returns a new Linux ipset manager using the provided
 // dialer.
-func newIpsetMgrWithDialer(ipsetConf []string, dial ipsetDialer) (mgr IpsetManager, err error) {
+func newManagerWithDialer(ipsetConf []string, dial dialer) (mgr Manager, err error) {
 	defer func() { err = errors.Annotate(err, "ipset: %w") }()
 
-	m := &ipsetMgr{
+	m := &manager{
 		mu: &sync.Mutex{},
 
-		nameToIpset:    make(map[string]ipsetProps),
-		domainToIpsets: make(map[string][]ipsetProps),
+		nameToIpset:    make(map[string]props),
+		domainToIpsets: make(map[string][]props),
 
 		dial: dial,
 
@@ -222,26 +331,9 @@ func newIpsetMgrWithDialer(ipsetConf []string, dial ipsetDialer) (mgr IpsetManag
 		return nil, fmt.Errorf("dialing netfilter: %w", err)
 	}
 
-	for i, confStr := range ipsetConf {
-		var hosts, ipsetNames []string
-		hosts, ipsetNames, err = parseIpsetConfig(confStr)
-		if err != nil {
-			return nil, fmt.Errorf("config line at idx %d: %w", i, err)
-		}
-
-		var ipsets []ipsetProps
-		ipsets, err = m.ipsets(ipsetNames)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"getting ipsets from config line at idx %d: %w",
-				i,
-				err,
-			)
-		}
-
-		for _, host := range hosts {
-			m.domainToIpsets[host] = append(m.domainToIpsets[host], ipsets...)
-		}
+	err = m.parseIpsetConfig(ipsetConf)
+	if err != nil {
+		return nil, fmt.Errorf("getting ipsets: %w", err)
 	}
 
 	return m, nil
@@ -249,7 +341,7 @@ func newIpsetMgrWithDialer(ipsetConf []string, dial ipsetDialer) (mgr IpsetManag
 
 // lookupHost find the ipsets for the host, taking subdomain wildcards into
 // account.
-func (m *ipsetMgr) lookupHost(host string) (sets []ipsetProps) {
+func (m *manager) lookupHost(host string) (sets []props) {
 	// Search for matching ipset hosts starting with most specific domain.
 	// We could use a trie here but the simple, inefficient solution isn't
 	// that expensive: ~10 ns for TLD + SLD vs. ~140 ns for 10 subdomains on
@@ -274,7 +366,7 @@ func (m *ipsetMgr) lookupHost(host string) (sets []ipsetProps) {
 
 // addIPs adds the IP addresses for the host to the ipset.  set must be same
 // family as set's family.
-func (m *ipsetMgr) addIPs(host string, set ipsetProps, ips []net.IP) (n int, err error) {
+func (m *manager) addIPs(host string, set props, ips []net.IP) (n int, err error) {
 	if len(ips) == 0 {
 		return 0, nil
 	}
@@ -318,18 +410,21 @@ func (m *ipsetMgr) addIPs(host string, set ipsetProps, ips []net.IP) (n int, err
 	// Only add these to the cache once we're sure that all of them were
 	// actually sent to the ipset.
 	for _, e := range newAddedEntries {
-		m.addedIPs[e] = unit{}
+		s := m.nameToIpset[e.ipsetName]
+		if s.isPersistent {
+			m.addedIPs[e] = unit{}
+		}
 	}
 
 	return n, nil
 }
 
 // addToSets adds the IP addresses to the corresponding ipset.
-func (m *ipsetMgr) addToSets(
+func (m *manager) addToSets(
 	host string,
 	ip4s []net.IP,
 	ip6s []net.IP,
-	sets []ipsetProps,
+	sets []props,
 ) (n int, err error) {
 	for _, set := range sets {
 		var nn int
@@ -356,8 +451,8 @@ func (m *ipsetMgr) addToSets(
 	return n, nil
 }
 
-// Add implements the IpsetManager interface for *ipsetMgr
-func (m *ipsetMgr) Add(host string, ip4s, ip6s []net.IP) (n int, err error) {
+// Add implements the [Manager] interface for *manager.
+func (m *manager) Add(host string, ip4s, ip6s []net.IP) (n int, err error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -371,8 +466,8 @@ func (m *ipsetMgr) Add(host string, ip4s, ip6s []net.IP) (n int, err error) {
 	return m.addToSets(host, ip4s, ip6s, sets)
 }
 
-// Close implements the IpsetManager interface for *ipsetMgr.
-func (m *ipsetMgr) Close() (err error) {
+// Close implements the [Manager] interface for *manager.
+func (m *manager) Close() (err error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

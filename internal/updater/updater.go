@@ -15,9 +15,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -328,11 +328,7 @@ func (u *Updater) downloadPackageFile() (err error) {
 	}
 	defer func() { err = errors.WithDeferred(err, resp.Body.Close()) }()
 
-	var r io.Reader
-	r, err = aghio.LimitReader(resp.Body, MaxPackageFileSize)
-	if err != nil {
-		return fmt.Errorf("http request failed: %w", err)
-	}
+	r := ioutil.LimitReader(resp.Body, MaxPackageFileSize)
 
 	log.Debug("updater: reading http body")
 	// This use of ReadAll is now safe, because we limited body's Reader.

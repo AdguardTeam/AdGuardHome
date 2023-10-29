@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/AdGuardHome/internal/ipset"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
@@ -15,14 +15,14 @@ import (
 
 // ipsetCtx is the ipset context.  ipsetMgr can be nil.
 type ipsetCtx struct {
-	ipsetMgr aghnet.IpsetManager
+	ipsetMgr ipset.Manager
 }
 
 // init initializes the ipset context.  It is not safe for concurrent use.
 //
 // TODO(a.garipov): Rewrite into a simple constructor?
 func (c *ipsetCtx) init(ipsetConf []string) (err error) {
-	c.ipsetMgr, err = aghnet.NewIpsetManager(ipsetConf)
+	c.ipsetMgr, err = ipset.NewManager(ipsetConf)
 	if errors.Is(err, os.ErrInvalid) || errors.Is(err, os.ErrPermission) {
 		// ipset cannot currently be initialized if the server was installed
 		// from Snap or when the user or the binary doesn't have the required

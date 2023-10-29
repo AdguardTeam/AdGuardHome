@@ -51,13 +51,12 @@ func (l *queryLog) searchMemory(params *searchParams, cache clientCache) (entrie
 	l.bufferLock.Lock()
 	defer l.bufferLock.Unlock()
 
-	// Go through the buffer in the reverse order, from newer to older.
-	var err error
-	for i := len(l.buffer) - 1; i >= 0; i-- {
+	l.buffer.ReverseRange(func(entry *logEntry) (cont bool) {
 		// A shallow clone is enough, since the only thing that this loop
 		// modifies is the client field.
-		e := l.buffer[i].shallowClone()
+		e := entry.shallowClone()
 
+		var err error
 		e.client, err = l.client(e.ClientID, e.IP.String(), cache)
 		if err != nil {
 			msg := "querylog: enriching memory record at time %s" +
@@ -70,9 +69,11 @@ func (l *queryLog) searchMemory(params *searchParams, cache clientCache) (entrie
 		if params.match(e) {
 			entries = append(entries, e)
 		}
-	}
 
-	return entries, len(l.buffer)
+		return true
+	})
+
+	return entries, l.buffer.Len()
 }
 
 // search - searches log entries in the query log using specified parameters

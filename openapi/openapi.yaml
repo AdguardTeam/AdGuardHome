@@ -566,6 +566,26 @@
               'schema':
                 '$ref': '#/components/schemas/Error'
           'description': 'Not implemented (for example, on Windows).'
+  '/dhcp/update_static_lease':
+    'post':
+      'tags':
+      - 'dhcp'
+      'operationId': 'dhcpUpdateStaticLease'
+      'description': >
+        Updates IP address, hostname of the static lease.  IP version must be
+        the same as previous.
+      'summary': 'Updates a static lease'
+      'requestBody':
+        '$ref': '#/components/requestBodies/DhcpStaticLease'
+      'responses':
+        '200':
+          'description': 'OK.'
+        '501':
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/Error'
+          'description': 'Not implemented (for example, on Windows).'
   '/dhcp/reset':
     'post':
       'tags':

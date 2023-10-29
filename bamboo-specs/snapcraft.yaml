@@ -10,7 +10,7 @@
 # Make sure to sync any changes with the branch overrides below.
 'variables':
     'channel': 'edge'
-    'dockerGo': 'adguard/golang-ubuntu:7.1'
+    'dockerGo': 'adguard/golang-ubuntu:7.4'
     'snapcraftChannel': 'edge'
 
 'stages':
@@ -191,7 +191,7 @@
         # need to build a few of these.
         'variables':
             'channel': 'beta'
-            'dockerGo': 'adguard/golang-ubuntu:7.1'
+            'dockerGo': 'adguard/golang-ubuntu:7.4'
             'snapcraftChannel': 'beta'
     # release-vX.Y.Z branches are the branches from which the actual final
     # release is built.
@@ -207,5 +207,5 @@
         # are the ones that actually get released.
         'variables':
             'channel': 'release'
-            'dockerGo': 'adguard/golang-ubuntu:7.1'
+            'dockerGo': 'adguard/golang-ubuntu:7.4'
             'snapcraftChannel': 'candidate'

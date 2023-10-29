@@ -21,6 +21,8 @@ const IconTooltip = ({
     content,
     trigger,
     onVisibilityChange,
+    defaultTooltipShown,
+    delayHide,
     renderContent = content ? React.Children.map(
         processContent(content),
         (item, idx) => <div key={idx} className={contentItemClass}>
@@ -44,6 +46,8 @@ const IconTooltip = ({
         trigger={trigger}
         onVisibilityChange={onVisibilityChange}
         delayShow={trigger === 'click' ? 0 : SHOW_TOOLTIP_DELAY}
+        delayHide={delayHide}
+        defaultTooltipShown={defaultTooltipShown}
     >
         {xlinkHref && <svg className={className}>
             <use xlinkHref={`#${xlinkHref}`} />
@@ -65,6 +69,8 @@ IconTooltip.propTypes = {
     content: PropTypes.node,
     renderContent: PropTypes.arrayOf(PropTypes.element),
     onVisibilityChange: PropTypes.func,
+    defaultTooltipShown: PropTypes.bool,
+    delayHide: PropTypes.number,
 };
 
 export default IconTooltip;

@@ -6,6 +6,12 @@
 
 ## v0.107.39: API changes
 
+### New HTTP API 'POST /control/dhcp/update_static_lease'
+
+* The new `POST /control/dhcp/update_static_lease` HTTP API allows modifying IP
+  address, hostname of the static DHCP lease.  IP version must be the same as
+  previous.
+
 ### The new field `"blocked_response_ttl"` in `DNSConfig` object
 
 * The new field `"blocked_response_ttl"` in `GET /control/dns_info` and `POST

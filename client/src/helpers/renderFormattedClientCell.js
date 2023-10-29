@@ -43,7 +43,7 @@ export const renderFormattedClientCell = (value, info, isDetailed = false, isLog
         const whoisAvailable = whois_info && Object.keys(whois_info).length > 0;
 
         if (name) {
-            const nameValue = <div className="logs__text logs__text--link logs__text--nowrap" title={`${name} (${value})`}>
+            const nameValue = <div className="logs__text logs__text--link logs__text--nowrap logs__text--client" title={`${name} (${value})`}>
                 {name}&nbsp;<small>{`(${value})`}</small>
             </div>;
 

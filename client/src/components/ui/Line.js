@@ -1,7 +1,6 @@
 import React from 'react';
 import { ResponsiveLine } from '@nivo/line';
 import addDays from 'date-fns/add_days';
-import addHours from 'date-fns/add_hours';
 import subDays from 'date-fns/sub_days';
 import subHours from 'date-fns/sub_hours';
 import dateFormat from 'date-fns/format';
@@ -9,12 +8,14 @@ import round from 'lodash/round';
 import { useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 import './Line.css';
-import { msToDays } from '../../helpers/helpers';
+import { msToDays, msToHours } from '../../helpers/helpers';
+import { TIME_UNITS } from '../../helpers/constants';
 
 const Line = ({
     data, color = 'black',
 }) => {
-    const interval = msToDays(useSelector((state) => state.stats.interval));
+    const interval = useSelector((state) => state.stats.interval);
+    const timeUnits = useSelector((state) => state.stats.timeUnits);
 
     return <ResponsiveLine
         enableArea
@@ -44,12 +45,12 @@ const Line = ({
         enableGridY={false}
         enablePoints={false}
         xFormat={(x) => {
-            if (interval >= 0 && interval <= 7) {
-                const hoursAgo = subHours(Date.now(), 24 * interval);
-                return dateFormat(addHours(hoursAgo, x), 'D MMM HH:00');
+            if (timeUnits === TIME_UNITS.HOURS) {
+                const hoursAgo = msToHours(interval) - x - 1;
+                return dateFormat(subHours(Date.now(), hoursAgo), 'D MMM HH:00');
             }
 
-            const daysAgo = subDays(Date.now(), interval - 1);
+            const daysAgo = subDays(Date.now(), msToDays(interval) - 1);
             return dateFormat(addDays(daysAgo, x), 'D MMM YYYY');
         }}
         yFormat={(y) => round(y, 2)}

@@ -7,13 +7,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghio"
+	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestLimitRequestBody(t *testing.T) {
-	errReqLimitReached := &aghio.LimitReachedError{
+	errReqLimitReached := &ioutil.LimitError{
 		Limit: defaultReqBodySzLim,
 	}
 

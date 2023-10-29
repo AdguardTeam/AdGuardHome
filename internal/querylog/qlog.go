@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
@@ -29,12 +30,12 @@ type queryLog struct {
 
 	findClient func(ids []string) (c *Client, err error)
 
-	// logFile is the path to the log file.
-	logFile string
-
 	// buffer contains recent log entries.  The entries in this buffer must not
 	// be modified.
-	buffer []*logEntry
+	buffer *aghalg.RingBuffer[*logEntry]
+
+	// logFile is the path to the log file.
+	logFile string
 
 	// bufferLock protects buffer.
 	bufferLock sync.RWMutex
@@ -138,7 +139,7 @@ func (l *queryLog) clear() {
 		l.bufferLock.Lock()
 		defer l.bufferLock.Unlock()
 
-		l.buffer = nil
+		l.buffer.Clear()
 		l.flushPending = false
 	}()
 
@@ -195,7 +196,7 @@ func newLogEntry(params *AddParams) (entry *logEntry) {
 // Add implements the [QueryLog] interface for *queryLog.
 func (l *queryLog) Add(params *AddParams) {
 	var isEnabled, fileIsEnabled bool
-	var memSize uint32
+	var memSize int
 	func() {
 		l.confMu.RLock()
 		defer l.confMu.RUnlock()
@@ -204,7 +205,7 @@ func (l *queryLog) Add(params *AddParams) {
 		memSize = l.conf.MemSize
 	}()
 
-	if !isEnabled {
+	if !isEnabled || memSize == 0 {
 		return
 	}
 
@@ -221,36 +222,18 @@ func (l *queryLog) Add(params *AddParams) {
 
 	entry := newLogEntry(params)
 
-	needFlush := false
-	func() {
-		l.bufferLock.Lock()
-		defer l.bufferLock.Unlock()
+	l.bufferLock.Lock()
+	defer l.bufferLock.Unlock()
 
-		l.buffer = append(l.buffer, entry)
+	l.buffer.Append(entry)
 
-		if !fileIsEnabled {
-			if len(l.buffer) > int(memSize) {
-				// Writing to file is disabled, so just remove the oldest entry
-				// from the slices.
-				//
-				// TODO(a.garipov): This should be replaced by a proper ring
-				// buffer, but it's currently difficult to do that.
-				l.buffer[0] = nil
-				l.buffer = l.buffer[1:]
-			}
-		} else if !l.flushPending {
-			needFlush = len(l.buffer) >= int(memSize)
-			if needFlush {
-				l.flushPending = true
-			}
-		}
-	}()
+	if !l.flushPending && fileIsEnabled && l.buffer.Len() >= memSize {
+		l.flushPending = true
 
-	if needFlush {
 		go func() {
 			flushErr := l.flushLogBuffer()
 			if flushErr != nil {
-				log.Error("querylog: flushing after adding: %s", err)
+				log.Error("querylog: flushing after adding: %s", flushErr)
 			}
 		}()
 	}
