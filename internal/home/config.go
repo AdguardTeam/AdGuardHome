@@ -587,7 +587,7 @@ func (c *configuration) write() (err error) {
 	defer c.Unlock()
 
 	if Context.auth != nil {
-		config.Users = Context.auth.GetUsers()
+		config.Users = Context.auth.usersList()
 	}
 
 	if Context.tls != nil {

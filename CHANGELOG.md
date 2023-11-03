@@ -28,6 +28,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Ability to specify multiple domain specific upstreams per line, e.g.
   `[/domain1/../domain2/]upstream1 upstream2 .. upstreamN` ([#4977]).
 
+### Changed
+
+- Improved authentication failure logging ([#6357]).
+
 ### Fixed
 
 - `$important,dnsrewrite` rules do not take precedence over allowlist rules
@@ -39,6 +43,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6204]: https://github.com/AdguardTeam/AdGuardHome/issues/6204
 [#6329]: https://github.com/AdguardTeam/AdGuardHome/issues/6329
 [#6335]: https://github.com/AdguardTeam/AdGuardHome/issues/6335
+[#6357]: https://github.com/AdguardTeam/AdGuardHome/issues/6357
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
