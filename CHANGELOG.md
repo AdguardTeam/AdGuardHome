@@ -34,6 +34,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Scrolling column headers in the tables ([#6337]).
 - `$important,dnsrewrite` rules do not take precedence over allowlist rules
   ([#6204]).
 - Dark mode DNS rewrite background ([#6329]).
@@ -43,6 +44,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6204]: https://github.com/AdguardTeam/AdGuardHome/issues/6204
 [#6329]: https://github.com/AdguardTeam/AdGuardHome/issues/6329
 [#6335]: https://github.com/AdguardTeam/AdGuardHome/issues/6335
+[#6337]: https://github.com/AdguardTeam/AdGuardHome/issues/6337
 [#6357]: https://github.com/AdguardTeam/AdGuardHome/issues/6357
 
 <!--

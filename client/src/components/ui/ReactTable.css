@@ -9,10 +9,6 @@
     overflow: visible;
 }
 
-.ReactTable .rt-tbody {
-    overflow: visible;
-}
-
 .ReactTable .rt-noData {
     color: var(--rt-nodata-color);
     background-color: var(--rt-nodata-bgcolor);
