@@ -35,6 +35,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Redundant shortening long client names in the Top Clients table ([#6338]).
 - Scrolling column headers in the tables ([#6337]).
 - `$important,dnsrewrite` rules do not take precedence over allowlist rules
   ([#6204]).
@@ -46,6 +47,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6329]: https://github.com/AdguardTeam/AdGuardHome/issues/6329
 [#6335]: https://github.com/AdguardTeam/AdGuardHome/issues/6335
 [#6337]: https://github.com/AdguardTeam/AdGuardHome/issues/6337
+[#6338]: https://github.com/AdguardTeam/AdGuardHome/issues/6338
 [#6357]: https://github.com/AdguardTeam/AdGuardHome/issues/6357
 [#6358]: https://github.com/AdguardTeam/AdGuardHome/issues/6358
 
