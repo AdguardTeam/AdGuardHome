@@ -24,6 +24,13 @@
     height: var(--size);
 }
 
+.icon--15 {
+    --size: 0.95rem;
+
+    width: var(--size);
+    height: var(--size);
+}
+
 .icon--gray {
     color: var(--gray-a5);
 }

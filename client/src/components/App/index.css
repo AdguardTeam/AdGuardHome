@@ -118,6 +118,11 @@ body {
     overflow-y: auto;
 }
 
+.modal-body--filters {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
 .modal-body__item:not(:first-child) {
     padding-top: 1.5rem;
 }

@@ -30,6 +30,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- The height of ready-to-use filter lists has been increased ([#6358]).
 - Improved authentication failure logging ([#6357]).
 
 ### Fixed
@@ -46,6 +47,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6335]: https://github.com/AdguardTeam/AdGuardHome/issues/6335
 [#6337]: https://github.com/AdguardTeam/AdGuardHome/issues/6337
 [#6357]: https://github.com/AdguardTeam/AdGuardHome/issues/6357
+[#6358]: https://github.com/AdguardTeam/AdGuardHome/issues/6358
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
