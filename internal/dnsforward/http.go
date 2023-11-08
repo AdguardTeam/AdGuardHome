@@ -708,7 +708,7 @@ func (err domainSpecificTestError) Error() (msg string) {
 func (s *Server) checkUpstreamAddr(
 	addr string,
 	specific bool,
-	opts *upstream.Options,
+	basicOpts *upstream.Options,
 	check healthCheckFunc,
 ) (err error) {
 	useDefault, err := validateUpstream(addr, specific)
@@ -726,6 +726,12 @@ func (s *Server) checkUpstreamAddr(
 		}
 	}()
 
+	opts := &upstream.Options{
+		Bootstrap:  basicOpts.Bootstrap,
+		Timeout:    basicOpts.Timeout,
+		PreferIPv6: basicOpts.PreferIPv6,
+	}
+
 	// dnsFilter can be nil during application update.
 	if s.dnsFilter != nil {
 		recs := s.dnsFilter.EtcHostsRecords(extractUpstreamHost(addr))
@@ -735,11 +741,7 @@ func (s *Server) checkUpstreamAddr(
 		sortNetIPAddrs(opts.ServerIPAddrs, opts.PreferIPv6)
 	}
 
-	u, err := upstream.AddressToUpstream(addr, &upstream.Options{
-		Bootstrap:  opts.Bootstrap,
-		Timeout:    opts.Timeout,
-		PreferIPv6: opts.PreferIPv6,
-	})
+	u, err := upstream.AddressToUpstream(addr, opts)
 	if err != nil {
 		return fmt.Errorf("creating upstream for %q: %w", addr, err)
 	}
@@ -750,7 +752,8 @@ func (s *Server) checkUpstreamAddr(
 
 // checkResult is a result of checking an upstream server.
 type checkResult = struct {
-	// status is an error message if the upstream server is not working.
+	// status is an error message if the upstream server is not working.  It's
+	// nil for working upstreams.
 	status error
 
 	// ups is the upstream server address as given in the request.  It may
@@ -825,17 +828,16 @@ func (s *Server) check(req *upstreamJSON, opts *upstream.Options) (result map[st
 	// addWG is used to wait for all goroutines to count the expected number of
 	// results and to add it to resWG.
 	addWG := &sync.WaitGroup{}
+	addWG.Add(len(req.Upstreams) + len(req.FallbackDNS) + len(req.PrivateUpstreams))
+
 	for _, ups := range req.Upstreams {
 		go s.checkDNS(ups, opts, checkDNSUpstreamExc, addWG, resWG, resCh)
-		addWG.Add(1)
 	}
 	for _, ups := range req.FallbackDNS {
 		go s.checkDNS(ups, opts, checkDNSUpstreamExc, addWG, resWG, resCh)
-		addWG.Add(1)
 	}
 	for _, ups := range req.PrivateUpstreams {
 		go s.checkDNS(ups, opts, checkPrivateUpstreamExc, addWG, resWG, resCh)
-		addWG.Add(1)
 	}
 
 	addWG.Wait()
