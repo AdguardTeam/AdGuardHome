@@ -201,7 +201,7 @@ opinion, this cannot be legitimately counted as a Pi-Hole's feature.
 | Cross-platform                                                          | ✅                | ❌ (not natively, only via Docker)                        |
 | Running as a DNS-over-HTTPS or DNS-over-TLS server                      | ✅                | ❌ (requires additional software)                         |
 | Blocking phishing and malware domains                                   | ✅                | ❌ (requires non-default blocklists)                      |
-| Parental control (blocking adult domains)                               | ✅                | ❌                                                        |
+| Parental control (blocking adult domains)                               | ✅                | ❌ (requires non-default blocklists)                      |
 | Force Safe search on search engines                                     | ✅                | ❌                                                        |
 | Per-client (device) configuration                                       | ✅                | ✅                                                        |
 | Access settings (choose who can use AGH DNS)                            | ✅                | ❌                                                        |
