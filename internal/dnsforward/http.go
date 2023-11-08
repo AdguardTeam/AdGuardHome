@@ -811,6 +811,8 @@ func (s *Server) check(req *upstreamJSON, opts *upstream.Options) (result map[st
 	resWG := &sync.WaitGroup{}
 	go func() {
 		for res := range resCh {
+			// TODO(e.burkov): The servers used for at least two of common,
+			// private and fallback resolving should be reported separately.
 			if res.status != nil {
 				result[res.ups] = res.status.Error()
 			} else {

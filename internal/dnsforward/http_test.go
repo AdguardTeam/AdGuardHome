@@ -479,6 +479,8 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		Host:   newLocalUpstreamListener(t, 0, badHandler).String(),
 	}).String()
 
+	goodAndBadUps := strings.Join([]string{goodUps, badUps}, " ")
+
 	const (
 		upsTimeout = 100 * time.Millisecond
 
@@ -605,6 +607,29 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 				`dns: id mismatch`,
 		},
 		name: "multiple_domain_specific_upstreams",
+	}, {
+		body: map[string]any{
+			"upstream_dns": []string{"[/domain.example/]/]1.2.3.4"},
+		},
+		wantResp: map[string]any{
+			"[/domain.example/]/]1.2.3.4": `wrong upstream format: ` +
+				`bad upstream for domain "[/domain.example/]/]1.2.3.4": ` +
+				`duplicated separator`,
+		},
+		name: "bad_specification",
+	}, {
+		body: map[string]any{
+			"upstream_dns":     []string{"[/domain.example/]" + goodAndBadUps},
+			"fallback_dns":     []string{"[/domain.example/]" + goodAndBadUps},
+			"private_upstream": []string{"[/domain.example/]" + goodAndBadUps},
+		},
+		wantResp: map[string]any{
+			goodUps: "OK",
+			badUps: `WARNING: couldn't communicate ` +
+				`with upstream: exchanging with ` + badUps + ` over tcp: ` +
+				`dns: id mismatch`,
+		},
+		name: "all_different",
 	}}
 
 	for _, tc := range testCases {
