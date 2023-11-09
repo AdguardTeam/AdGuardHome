@@ -143,7 +143,6 @@
     "enforced_save_search": "Omogućeno sigurno pretraživanje",
     "number_of_dns_query_to_safe_search": "Broj DNS zahtjeva prema pretraživačima za koje je omogućeno Sigurno pretraživanje",
     "average_processing_time": "Prosječno vrijeme obrade",
-    "processing_time": "Vrijeme obrade",
     "average_processing_time_hint": "Prosječno vrijeme u milisekundama za obradu DNS zahtjeva",
     "block_domain_use_filters_and_hosts": "Blokiraj domene koristeći filtre ili hosts datoteke",
     "filters_block_toggle_hint": "Pravila blokiranja možete postaviti u postavkama <a>filtara</a>.",

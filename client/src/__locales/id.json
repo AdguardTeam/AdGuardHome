@@ -143,7 +143,6 @@
     "enforced_save_search": "Paksa pencarian aman",
     "number_of_dns_query_to_safe_search": "Jumlah perminataan DNS ke mesin pencari yang dipaksa Pencarian Aman",
     "average_processing_time": "Rata-rata waktu pemrosesan",
-    "processing_time": "Waktu pemrosesan",
     "average_processing_time_hint": "Rata-rata waktu dalam milidetik untuk pemrosesan sebuah permintaan DNS",
     "block_domain_use_filters_and_hosts": "Blokir domain menggunakan filter dan file hosts",
     "filters_block_toggle_hint": "Anda dapat menyiapkan aturan pemblokiran di pengaturan <a>Penyaringan</a>.",

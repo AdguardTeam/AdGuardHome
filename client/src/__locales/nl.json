@@ -143,7 +143,6 @@
     "enforced_save_search": "Geforceerd veilig zoeken",
     "number_of_dns_query_to_safe_search": "Aantal DNS aanvragen in zoekmachines dmv geforceerd veilig zoeken",
     "average_processing_time": "Gemiddelde procestijd",
-    "processing_time": "Verwerkingstijd",
     "average_processing_time_hint": "Gemiddelde verwerkingstijd in milliseconden van een DNS aanvraag",
     "block_domain_use_filters_and_hosts": "Domeinen blokkeren d.m.v. filters en host-bestanden",
     "filters_block_toggle_hint": "Je kan blokkeringsregels toevoegen in de <a>Filters</a> instellingen.",

@@ -143,7 +143,6 @@
     "enforced_save_search": "Aktivering av Säker surf",
     "number_of_dns_query_to_safe_search": "Antalet DNS-förfrågningar mot sökmotorer där Säker surf tvingats",
     "average_processing_time": "Genomsnittlig processtid",
-    "processing_time": "Bearbetningstid",
     "average_processing_time_hint": "Genomsnittlig processtid i millisekunder för DNS-förfrågning",
     "block_domain_use_filters_and_hosts": "Blockera domäner med filter- och värdfiler",
     "filters_block_toggle_hint": "Du kan ställa in egna blockerings regler i <a>Filterinställningar</a>.",

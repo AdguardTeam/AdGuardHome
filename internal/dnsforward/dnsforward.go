@@ -354,9 +354,8 @@ func (s *Server) Exchange(ip netip.Addr) (host string, ttl time.Duration, err er
 	}
 
 	dctx := &proxy.DNSContext{
-		Proto:     "udp",
-		Req:       req,
-		StartTime: time.Now(),
+		Proto: "udp",
+		Req:   req,
 	}
 
 	var resolver *proxy.Proxy

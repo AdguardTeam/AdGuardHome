@@ -143,7 +143,6 @@
     "enforced_save_search": "已強制執行的安全搜尋",
     "number_of_dns_query_to_safe_search": "安全搜尋已被強制執行之屬於搜尋引擎的 DNS 請求之數量",
     "average_processing_time": "平均的處理時間",
-    "processing_time": "處理時間",
     "average_processing_time_hint": "在處理一項 DNS 請求時以毫秒（ms）計的平均時間",
     "block_domain_use_filters_and_hosts": "透過過濾器和主機檔案封鎖網域",
     "filters_block_toggle_hint": "您可在<a>過濾器</a>設定中設置封鎖規則。",

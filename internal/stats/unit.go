@@ -68,8 +68,12 @@ type Entry struct {
 	// Result is the result of processing the request.
 	Result Result
 
-	// Time is the duration of the request processing.
-	Time time.Duration
+	// ProcessingTime is the duration of the request processing from the start
+	// of the request including timeouts.
+	ProcessingTime time.Duration
+
+	// UpstreamTime is the duration of the successful request to the upstream.
+	UpstreamTime time.Duration
 }
 
 // validate returns an error if entry is not valid.
@@ -103,8 +107,8 @@ type unit struct {
 	// upstreamsResponses stores the number of responses from each upstream.
 	upstreamsResponses map[string]uint64
 
-	// upstreamsTimeSum stores the sum of processing time in microseconds of
-	// responses from each upstream.
+	// upstreamsTimeSum stores the sum of durations of successful queries in
+	// microseconds to each upstream.
 	upstreamsTimeSum map[string]uint64
 
 	// nResult stores the number of requests grouped by it's result.
@@ -323,13 +327,14 @@ func (u *unit) add(e *Entry) {
 	}
 
 	u.clients[e.Client]++
-	t := uint64(e.Time.Microseconds())
-	u.timeSum += t
+	pt := uint64(e.ProcessingTime.Microseconds())
+	u.timeSum += pt
 	u.nTotal++
 
 	if e.Upstream != "" {
 		u.upstreamsResponses[e.Upstream]++
-		u.upstreamsTimeSum[e.Upstream] += t
+		ut := uint64(e.UpstreamTime.Microseconds())
+		u.upstreamsTimeSum[e.Upstream] += ut
 	}
 }
 

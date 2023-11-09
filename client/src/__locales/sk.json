@@ -143,7 +143,6 @@
     "enforced_save_search": "Vynútené bezpečné vyhľadávanie",
     "number_of_dns_query_to_safe_search": "Počet DNS dopytov na vyhľadávače, pri ktorých bolo vynútené bezpečné vyhľadávanie",
     "average_processing_time": "Priemerný čas spracovania",
-    "processing_time": "Doba spracovania",
     "average_processing_time_hint": "Priemerný čas spracovania DNS dopytu v milisekundách",
     "block_domain_use_filters_and_hosts": "Blokovať domény pomocou filtrov a zoznamov adries",
     "filters_block_toggle_hint": "Pravidlá blokovania môžete nastaviť v nastaveniach <a>Filtre</a>.",

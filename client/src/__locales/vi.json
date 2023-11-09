@@ -143,7 +143,6 @@
     "enforced_save_search": "Bắt buộc tìm kiếm an toàn",
     "number_of_dns_query_to_safe_search": "Số yêu cầu DNS tới công cụ tìm kiếm đã chuyển thành tìm kiếm an toàn",
     "average_processing_time": "Thời gian xử lý trung bình",
-    "processing_time": "Thời gian xử lý",
     "average_processing_time_hint": "Thời gian trung bình cho một yêu cầu DNS tính bằng mili giây",
     "block_domain_use_filters_and_hosts": "Chặn tên miền sử dụng các bộ lọc và file hosts",
     "filters_block_toggle_hint": "Bạn có thể thiết lập quy tắc chặn tại cài đặt <a>Bộ lọc</a>.",

@@ -143,7 +143,6 @@
     "enforced_save_search": "세이프서치 강제",
     "number_of_dns_query_to_safe_search": "세이프서치가 적용된 검색 엔진에 대해 DNS 요청 수",
     "average_processing_time": "평균처리 시간",
-    "processing_time": "처리 시간",
     "average_processing_time_hint": "DNS 요청 처리시 평균 시간(밀리초)",
     "block_domain_use_filters_and_hosts": "필터 및 호스트 파일을 사용하여 도메인 차단",
     "filters_block_toggle_hint": "차단규칙<a>필터</a>을 설정할 수 있습니다.",

@@ -143,7 +143,6 @@
     "enforced_save_search": "Prisilno varno iskanje",
     "number_of_dns_query_to_safe_search": "Število zahtev DNS za iskalnike, za katere je bilo uveljavljeno varno iskanje",
     "average_processing_time": "Povprečni čas obdelave",
-    "processing_time": "Čas obdelave",
     "average_processing_time_hint": "Povprečni čas v milisekundah pri obdelavi zahteve DNS",
     "block_domain_use_filters_and_hosts": "Onemogoči domene s filtri in gostiteljskimi datotekami",
     "filters_block_toggle_hint": "Pravila zaviranja lahko nastavite v nastavitvah <a>Filtri</a>.",

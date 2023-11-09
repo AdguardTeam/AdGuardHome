@@ -143,7 +143,6 @@
     "enforced_save_search": "Sichere Suche erzwungen",
     "number_of_dns_query_to_safe_search": "Anzahl der DNS-Anfragen bei denen Sichere Suche für Suchanfragen erzwungen wurde",
     "average_processing_time": "Durchschnittliche Bearbeitungsdauer",
-    "processing_time": "Verarbeitungszeit",
     "average_processing_time_hint": "Durchschnittliche Zeit in Millisekunden zur Bearbeitung von DNS-Anfragen",
     "block_domain_use_filters_and_hosts": "Domains durch Filter und Host-Dateien sperren",
     "filters_block_toggle_hint": "Sie können Blockierregeln in den <a>Filter</a>einstellungen erstellen.",

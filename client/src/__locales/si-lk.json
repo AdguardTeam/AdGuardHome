@@ -122,7 +122,6 @@
     "enforced_save_search": "ආරක්‍ෂිත සෙවීම බලාත්මක කළ",
     "number_of_dns_query_to_safe_search": "ආරක්‍ෂිත සෙවීම බලාත්මක කළ සෙවුම් යන්ත්‍ර සඳහා ව.නා.ප. ඉල්ලීම් ගණන",
     "average_processing_time": "සාමාන්‍ය සැකසුම් කාලය",
-    "processing_time": "සැකසුම් කාලය",
     "average_processing_time_hint": "ව.නා.ප. ඉල්ලීමක් සැකසීමේ සාමාන්‍ය කාලය මිලි තත්පර වලින්",
     "block_domain_use_filters_and_hosts": "පෙරහන් හා සත්කාරක ගොනු භාවිතයෙන් වසම් අවහිර කරන්න",
     "filters_block_toggle_hint": "ඔබට අවහිර කිරීමේ නීති <a>පෙරහන්</a> තුළ පිහිටුවිය හැකිය.",

@@ -35,6 +35,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Average request processing time calculation ([#6220]).
 - Redundant shortening long client names in the Top Clients table ([#6338]).
 - Scrolling column headers in the tables ([#6337]).
 - `$important,dnsrewrite` rules do not take precedence over allowlist rules
@@ -44,6 +45,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#4977]: https://github.com/AdguardTeam/AdGuardHome/issues/4977
 [#6204]: https://github.com/AdguardTeam/AdGuardHome/issues/6204
+[#6220]: https://github.com/AdguardTeam/AdGuardHome/issues/6220
 [#6329]: https://github.com/AdguardTeam/AdGuardHome/issues/6329
 [#6335]: https://github.com/AdguardTeam/AdGuardHome/issues/6335
 [#6337]: https://github.com/AdguardTeam/AdGuardHome/issues/6337

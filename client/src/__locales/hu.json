@@ -143,7 +143,6 @@
     "enforced_save_search": "Kényszerített biztonságos keresés",
     "number_of_dns_query_to_safe_search": "A biztonságos keresésre kényszerített DNS lekérdezések száma",
     "average_processing_time": "Átlagos feldolgozási idő",
-    "processing_time": "Feldolgozási idő",
     "average_processing_time_hint": "A DNS lekérdezések feldolgozásához szükséges átlagos idő milliszekundumban",
     "block_domain_use_filters_and_hosts": "Domainek blokkolása szűrők és hosztfájlok használatával",
     "filters_block_toggle_hint": "A <a> szűrőbeállításoknál</a> megadhatja a blokkolási szabályokat.",

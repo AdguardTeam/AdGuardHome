@@ -7,7 +7,7 @@
 # Make sure to sync any changes with the branch overrides below.
 'variables':
     'channel': 'edge'
-    'dockerGo': 'adguard/golang-ubuntu:7.4'
+    'dockerGo': 'adguard/golang-ubuntu:7.5'
 
 'stages':
   - 'Build frontend':

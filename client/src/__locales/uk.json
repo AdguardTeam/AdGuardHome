@@ -143,7 +143,6 @@
     "enforced_save_search": "Примусовий безпечний пошук",
     "number_of_dns_query_to_safe_search": "Кількість DNS-запитів до пошукових систем, для яких примусово застосований безпечний пошук",
     "average_processing_time": "Середній час обробки",
-    "processing_time": "Час обробки",
     "average_processing_time_hint": "Середній час обробки DNS запиту в мілісекундах",
     "block_domain_use_filters_and_hosts": "Блокування доменів за допомогою фільтрів та hosts-файлів",
     "filters_block_toggle_hint": "Ви можете налаштувати правила блокування в розділі <a>Фільтри</a>.",

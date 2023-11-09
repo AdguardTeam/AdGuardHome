@@ -143,7 +143,6 @@
     "enforced_save_search": "Uygulanan güvenli arama",
     "number_of_dns_query_to_safe_search": "Güvenli Aramanın uygulandığı arama motorlarına gönderilen DNS isteklerinin sayısı",
     "average_processing_time": "Ortalama işlem süresi",
-    "processing_time": "İşlem süresi",
     "average_processing_time_hint": "Bir DNS isteğinin milisaniye cinsinden ortalama işlem süresi",
     "block_domain_use_filters_and_hosts": "Filtre ve hosts dosyalarını kullanarak alan adlarını engelle",
     "filters_block_toggle_hint": "<a>Filtreler</a> ayarlarında engelleme kuralları oluşturabilirsiniz.",

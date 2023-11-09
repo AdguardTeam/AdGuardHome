@@ -139,7 +139,6 @@
     "enforced_save_search": "جستجوی اَمن اجبار شده",
     "number_of_dns_query_to_safe_search": "تعداد درخواست های DNS برای موتور جستجو که جستجوی اَمن اجبار شده",
     "average_processing_time": "میانگین زمان پردازش",
-    "processing_time": "زمان پردازش",
     "average_processing_time_hint": "زمان میانگین بر هزارم ثانیه در پردازش درخواست DNS",
     "block_domain_use_filters_and_hosts": "مسدودسازی دامنه ها توسط فیلترها و فایل های میزبان",
     "filters_block_toggle_hint": "میتوانید دستورات مسدودسازی را در تنظیمات <a>فیلترها</a> راه اندازی کنید.",

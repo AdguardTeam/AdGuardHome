@@ -143,7 +143,6 @@
     "enforced_save_search": "Håndhævet sikker søgning",
     "number_of_dns_query_to_safe_search": "Antallet af DNS-forespørgsler til søgemaskiner, hvor Sikker Søgning blev håndhævet",
     "average_processing_time": "Gennemsnitlig behandlingstid",
-    "processing_time": "Behandlingstid",
     "average_processing_time_hint": "Gennemsnitlig behandlingstid i millisekunder af DNS-forespørgsel",
     "block_domain_use_filters_and_hosts": "Blokér domæner vha. filtre og værtsfiler",
     "filters_block_toggle_hint": "Du kan opsætte blokeringsregler i <a>Filterindstillingerne</a>.",

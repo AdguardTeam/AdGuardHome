@@ -143,7 +143,6 @@
     "enforced_save_search": "强制安全搜索",
     "number_of_dns_query_to_safe_search": "启用强制安全搜索后对搜索引擎的 DNS 请求总数",
     "average_processing_time": "平均处理时间",
-    "processing_time": "处理时间",
     "average_processing_time_hint": "处理 DNS 请求的平均时间（毫秒）",
     "block_domain_use_filters_and_hosts": "使用过滤器和 Hosts 文件以拦截指定域名",
     "filters_block_toggle_hint": "你可以在 <a>过滤器</a> 设置中添加过滤规则。",

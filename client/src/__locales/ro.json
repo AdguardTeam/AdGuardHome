@@ -143,7 +143,6 @@
     "enforced_save_search": "Căutare protejată întărită",
     "number_of_dns_query_to_safe_search": "Numărul de interogări DNS pe motoarele de căutare pentru care a fost impusă Căutarea Sigură",
     "average_processing_time": "Timpul mediu de procesare",
-    "processing_time": "Timp de procesare",
     "average_processing_time_hint": "Timp mediu în milisecunde la procesarea unei cereri DNS",
     "block_domain_use_filters_and_hosts": "Blocați domenii folosind filtre și fișiere hosts",
     "filters_block_toggle_hint": "Puteți configura regulile de blocare în setările <a>Filtre</a>.",

@@ -143,7 +143,6 @@
     "enforced_save_search": "強制されたセーフサーチ",
     "number_of_dns_query_to_safe_search": "セーフサーチが強制適用された検索エンジンへのDNSリクエストの数",
     "average_processing_time": "平均処理時間",
-    "processing_time": "処理時間",
     "average_processing_time_hint": "DNSリクエストの処理にかかる平均時間（ミリ秒単位）",
     "block_domain_use_filters_and_hosts": "フィルタとhostsファイルを使用してドメインをブロックする",
     "filters_block_toggle_hint": "<a>フィルタ</a>の設定でブロックするルールを設定することができます。",

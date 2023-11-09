@@ -143,7 +143,6 @@
     "enforced_save_search": "Turvallinen haku pakotettiin",
     "number_of_dns_query_to_safe_search": "DNS-pyyntöjen määrä, joille turvallinen haku pakotettiin käyttöön",
     "average_processing_time": "Keskimääräinen käsittelyaika",
-    "processing_time": "Käsittelyaika",
     "average_processing_time_hint": "Keskimääräinen DNS-pyynnön käsittelyyn kulutettu aika millisekunteina",
     "block_domain_use_filters_and_hosts": "Estä verkkotunnuksia suodattimilla ja hosts-tiedostoilla",
     "filters_block_toggle_hint": "Voit määrittää estosääntöjä <a>suodatinasetuksissa</a>.",
