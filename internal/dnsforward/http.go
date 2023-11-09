@@ -626,7 +626,8 @@ func separateUpstream(upstreamStr string) (upstreams, domains []string, err erro
 // properly.
 type healthCheckFunc func(u upstream.Upstream) (err error)
 
-// checkExchange checks if the DNS upstream exchanges correctly.
+// checkExchange is a [healthCheckFunc] that checks if the DNS upstream
+// exchanges correctly.
 func checkExchange(u upstream.Upstream) (err error) {
 	// testTLD is the special-use fully-qualified domain name for testing the
 	// DNS server reachability.
@@ -657,8 +658,8 @@ func checkExchange(u upstream.Upstream) (err error) {
 	return nil
 }
 
-// checkPrivateExchange checks if the upstream for resolving private addresses
-// exchanges correctly.
+// checkPrivateExchange is a [healthCheckFunc] that checks if the upstream for
+// resolving private addresses exchanges correctly.
 //
 // TODO(e.burkov):  Think about testing the ip6.arpa. as well.
 func checkPrivateExchange(u upstream.Upstream) (err error) {
@@ -702,9 +703,9 @@ func (err domainSpecificTestError) Error() (msg string) {
 	return fmt.Sprintf("WARNING: %s", err.error)
 }
 
-// checkUpstreamAddr creates the DNS upstream using opts and information from
-// system hosts files.  Checks if the DNS upstream exchanges correctly.  It
-// returns an error if addr is not valid DNS upstream address or the upstream
+// checkUpstreamAddr creates the upstream using opts and, possibly, information
+// from system hosts files, then checks if the DNS upstream exchanges correctly.
+// It returns an error if addr is not valid DNS upstream address or the upstream
 // is not exchanging correctly.
 //
 // TODO(e.burkov):  Remove the receiver.
@@ -767,8 +768,8 @@ type checkResult = struct {
 }
 
 // checkDNS parses an upstream configuration line using opts and checks if the
-// specified upstreams are working using check.  addWG is decremented when the
-// expected number of results is added to resWG, then results are sent to resCh.
+// specified upstreams are working using check.  countWG is decremented when the
+// expected number of results added to resNum, then results are sent to resCh.
 //
 // TODO(e.burkov):  Remove the receiver.
 func (s *Server) checkDNS(
