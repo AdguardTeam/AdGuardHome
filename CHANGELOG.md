@@ -25,6 +25,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- Ability to specify subnet lengths for IPv4 and IPv6 addresses, used for rate
+  limiting requests, in the configuration file ([#6368]).
 - Ability to specify multiple domain specific upstreams per line, e.g.
   `[/domain1/../domain2/]upstream1 upstream2 .. upstreamN` ([#4977]).
 
@@ -32,6 +34,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The height of ready-to-use filter lists has been increased ([#6358]).
 - Improved authentication failure logging ([#6357]).
+
+#### Configuration Changes
+
+- New properties `dns.ratelimit_subnet_len_ipv4` and
+  `dns.ratelimit_subnet_len_ipv6` in the configuration file ([#6368]).
 
 ### Fixed
 
@@ -52,6 +59,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6338]: https://github.com/AdguardTeam/AdGuardHome/issues/6338
 [#6357]: https://github.com/AdguardTeam/AdGuardHome/issues/6357
 [#6358]: https://github.com/AdguardTeam/AdGuardHome/issues/6358
+[#6368]: https://github.com/AdguardTeam/AdGuardHome/issues/6368
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

@@ -7,10 +7,15 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/confmigrate"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 	yaml "gopkg.in/yaml.v3"
 )
+
+func TestMain(m *testing.M) {
+	testutil.DiscardLogOutput(m)
+}
 
 // testdata is a virtual filesystem containing test data.
 var testdata = os.DirFS("testdata")

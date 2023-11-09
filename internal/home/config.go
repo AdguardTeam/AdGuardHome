@@ -306,10 +306,12 @@ var config = &configuration{
 		BindHosts: []netip.Addr{netip.IPv4Unspecified()},
 		Port:      defaultPortDNS,
 		Config: dnsforward.Config{
-			Ratelimit:  20,
-			RefuseAny:  true,
-			AllServers: false,
-			HandleDDR:  true,
+			Ratelimit:              20,
+			RatelimitSubnetLenIPv4: 24,
+			RatelimitSubnetLenIPv6: 56,
+			RefuseAny:              true,
+			AllServers:             false,
+			HandleDDR:              true,
 			FastestTimeout: timeutil.Duration{
 				Duration: fastip.DefaultPingWaitTimeout,
 			},
