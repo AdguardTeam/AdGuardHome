@@ -3,6 +3,12 @@
 
 version: 2
 updates:
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
   # Upgrade for go packages, minor and patch versions only
   - package-ecosystem: "gomod"
     directory: "/"
