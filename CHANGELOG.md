@@ -42,6 +42,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Missing timezone on schedule form submission ([#6401]).
 - Average request processing time calculation ([#6220]).
 - Redundant shortening long client names in the Top Clients table ([#6338]).
 - Scrolling column headers in the tables ([#6337]).
@@ -60,6 +61,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6357]: https://github.com/AdguardTeam/AdGuardHome/issues/6357
 [#6358]: https://github.com/AdguardTeam/AdGuardHome/issues/6358
 [#6368]: https://github.com/AdguardTeam/AdGuardHome/issues/6368
+[#6401]: https://github.com/AdguardTeam/AdGuardHome/issues/6401
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

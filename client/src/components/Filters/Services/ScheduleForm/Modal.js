@@ -81,6 +81,10 @@ export const Modal = ({
             };
         });
 
+        if (timezone !== intialTimezone) {
+            newSchedule.time_zone = timezone;
+        }
+
         onSubmit(newSchedule);
     };
 
