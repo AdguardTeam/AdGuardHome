@@ -702,18 +702,28 @@ func (err domainSpecificTestError) Error() (msg string) {
 }
 
 // checkDNS parses line, creates DNS upstreams using opts, and checks if the
-// upstreams are exchanging correctly.  It returns a map where key is an
-// upstream address and value is "OK", if the upstream exchanges correctly, or
-// text of the error.
+// upstreams are exchanging correctly.  It saves the result into a sync.Map
+// where key is an upstream address and value is "OK", if the upstream
+// exchanges correctly, or text of the error.  It is intended to be used as a
+// goroutine.
+//
+// TODO(s.chzhen):  Separate to a different structure/file.
 func (s *Server) checkDNS(
 	line string,
 	opts *upstream.Options,
 	check healthCheckFunc,
-) (result map[string]string) {
-	result = map[string]string{}
+	wg *sync.WaitGroup,
+	m *sync.Map,
+) {
+	defer wg.Done()
+	defer log.OnPanic("dnsforward: checking upstreams")
+
 	upstreams, domains, err := separateUpstream(line)
 	if err != nil {
-		return nil
+		err = fmt.Errorf("wrong upstream format: %w", err)
+		m.Store(line, err.Error())
+
+		return
 	}
 
 	specific := len(domains) > 0
@@ -723,7 +733,7 @@ func (s *Server) checkDNS(
 		useDefault, err = validateUpstream(upstreamAddr, domains)
 		if err != nil {
 			err = fmt.Errorf("wrong upstream format: %w", err)
-			result[upstreamAddr] = err.Error()
+			m.Store(upstreamAddr, err.Error())
 
 			continue
 		}
@@ -736,13 +746,11 @@ func (s *Server) checkDNS(
 
 		err = s.checkUpstreamAddr(upstreamAddr, specific, opts, check)
 		if err != nil {
-			result[upstreamAddr] = err.Error()
+			m.Store(upstreamAddr, err.Error())
 		} else {
-			result[upstreamAddr] = "OK"
+			m.Store(upstreamAddr, "OK")
 		}
 	}
-
-	return result
 }
 
 // checkUpstreamAddr creates the DNS upstream using opts and information from
@@ -813,34 +821,24 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	wg := &sync.WaitGroup{}
 	m := &sync.Map{}
 
-	// TODO(s.chzhen):  Separate to a different structure/file.
-	worker := func(upstreamLine string, check healthCheckFunc) {
-		defer log.OnPanic("dnsforward: checking upstreams")
-
-		res := s.checkDNS(upstreamLine, opts, check)
-		for ups, status := range res {
-			m.Store(ups, status)
-		}
-
-		wg.Done()
-	}
-
 	wg.Add(len(req.Upstreams) + len(req.FallbackDNS) + len(req.PrivateUpstreams))
 
 	for _, ups := range req.Upstreams {
-		go worker(ups, checkDNSUpstreamExc)
+		go s.checkDNS(ups, opts, checkDNSUpstreamExc, wg, m)
 	}
 	for _, ups := range req.FallbackDNS {
-		go worker(ups, checkDNSUpstreamExc)
+		go s.checkDNS(ups, opts, checkDNSUpstreamExc, wg, m)
 	}
 	for _, ups := range req.PrivateUpstreams {
-		go worker(ups, checkPrivateUpstreamExc)
+		go s.checkDNS(ups, opts, checkPrivateUpstreamExc, wg, m)
 	}
 
 	wg.Wait()
 
 	result := map[string]string{}
 	m.Range(func(k, v any) bool {
+		// TODO(e.burkov):  The upstreams used for both common and private
+		// resolving should be reported separately.
 		ups := k.(string)
 		status := v.(string)
 
