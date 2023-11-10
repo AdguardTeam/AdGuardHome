@@ -24,7 +24,7 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
   # Upgrade for npm packages, minor and patch versions only
-  - package-ecosystem: "gomod"
+  - package-ecosystem: "npm"
     directory: "/client"
     schedule:
       interval: "weekly"
