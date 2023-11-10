@@ -14,14 +14,28 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     groups:
-      production_dependencies:
+      go_dependencies:
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+  # Upgrade for npm packages, minor and patch versions only
+  - package-ecosystem: "gomod"
+    directory: "/client"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      client_production_dependencies:
         dependency-type: "production"
         update-types:
           - "minor"
           - "patch"
-      development_dependencies:
+      client_development_dependencies:
         dependency-type: "development"
         update-types:
           - "minor"
