@@ -2,7 +2,6 @@ package dnsforward
 
 import (
 	"net/netip"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -270,10 +269,9 @@ func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSCo
 	replReq.RecursionDesired = true
 
 	newContext := &proxy.DNSContext{
-		Proto:     d.Proto,
-		Addr:      d.Addr,
-		StartTime: time.Now(),
-		Req:       &replReq,
+		Proto: d.Proto,
+		Addr:  d.Addr,
+		Req:   &replReq,
 	}
 
 	prx := s.proxy()

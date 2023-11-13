@@ -49,13 +49,18 @@ func loadTestData(t *testing.T, casesFileName string, cases any) {
 	require.NoError(t, err)
 }
 
-const jsonExt = ".json"
+const (
+	jsonExt = ".json"
+
+	// testBlockedRespTTL is the TTL for blocked responses to use in tests.
+	testBlockedRespTTL = 10
+)
 
 func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
 		ProtectionEnabled:     true,
 		BlockingMode:          filtering.BlockingModeDefault,
-		BlockedResponseTTL:    10,
+		BlockedResponseTTL:    testBlockedRespTTL,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
 		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
@@ -133,7 +138,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	filterConf := &filtering.Config{
 		ProtectionEnabled:     true,
 		BlockingMode:          filtering.BlockingModeDefault,
-		BlockedResponseTTL:    10,
+		BlockedResponseTTL:    testBlockedRespTTL,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
 		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
@@ -229,6 +234,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	}, {
 		name:    "blocked_response_ttl",
 		wantSet: "",
+	}, {
+		name:    "multiple_domain_specific_upstreams",
+		wantSet: "",
 	}}
 
 	var data map[string]struct {
@@ -250,6 +258,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 				s.dnsFilter.SetBlockingMode(filtering.BlockingModeDefault, netip.Addr{}, netip.Addr{})
 				s.conf = defaultConf
 				s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{}
+				s.dnsFilter.SetBlockedResponseTTL(testBlockedRespTTL)
 			})
 
 			rBody := io.NopCloser(bytes.NewReader(caseData.Req))
@@ -470,6 +479,8 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		Host:   newLocalUpstreamListener(t, 0, badHandler).String(),
 	}).String()
 
+	goodAndBadUps := strings.Join([]string{goodUps, badUps}, " ")
+
 	const (
 		upsTimeout = 100 * time.Millisecond
 
@@ -547,7 +558,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 			"upstream_dns": []string{"[/domain.example/]" + badUps},
 		},
 		wantResp: map[string]any{
-			"[/domain.example/]" + badUps: `WARNING: couldn't communicate ` +
+			badUps: `WARNING: couldn't communicate ` +
 				`with upstream: exchanging with ` + badUps + ` over tcp: ` +
 				`dns: id mismatch`,
 		},
@@ -585,6 +596,40 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 			goodUps: "OK",
 		},
 		name: "fallback_comment_mix",
+	}, {
+		body: map[string]any{
+			"upstream_dns": []string{"[/domain.example/]" + goodUps + " " + badUps},
+		},
+		wantResp: map[string]any{
+			goodUps: "OK",
+			badUps: `WARNING: couldn't communicate ` +
+				`with upstream: exchanging with ` + badUps + ` over tcp: ` +
+				`dns: id mismatch`,
+		},
+		name: "multiple_domain_specific_upstreams",
+	}, {
+		body: map[string]any{
+			"upstream_dns": []string{"[/domain.example/]/]1.2.3.4"},
+		},
+		wantResp: map[string]any{
+			"[/domain.example/]/]1.2.3.4": `wrong upstream format: ` +
+				`bad upstream for domain "[/domain.example/]/]1.2.3.4": ` +
+				`duplicated separator`,
+		},
+		name: "bad_specification",
+	}, {
+		body: map[string]any{
+			"upstream_dns":     []string{"[/domain.example/]" + goodAndBadUps},
+			"fallback_dns":     []string{"[/domain.example/]" + goodAndBadUps},
+			"private_upstream": []string{"[/domain.example/]" + goodAndBadUps},
+		},
+		wantResp: map[string]any{
+			goodUps: "OK",
+			badUps: `WARNING: couldn't communicate ` +
+				`with upstream: exchanging with ` + badUps + ` over tcp: ` +
+				`dns: id mismatch`,
+		},
+		name: "all_different",
 	}}
 
 	for _, tc := range testCases {

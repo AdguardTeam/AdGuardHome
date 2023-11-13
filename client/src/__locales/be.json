@@ -143,7 +143,6 @@
     "enforced_save_search": "Ужыты бяспечны пошук",
     "number_of_dns_query_to_safe_search": "Колькасць запытаў DNS для пошукавых сістэм, для якіх быў ужыты Бяспечны пошук",
     "average_processing_time": "Сярэдні час апрацоўкі запыту",
-    "processing_time": "Час апрацоўкі",
     "average_processing_time_hint": "Сярэдні час для апрацоўкі запыту DNS  у мілісекундах",
     "block_domain_use_filters_and_hosts": "Блакаваць дамены з выкарыстаннем фільтраў і файлаў хастоў",
     "filters_block_toggle_hint": "Вы можаце наладзіць правілы блакавання ў «<a>Фільтрах</a>».",

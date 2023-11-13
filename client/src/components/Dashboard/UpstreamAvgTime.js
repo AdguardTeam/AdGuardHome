@@ -38,7 +38,7 @@ const UpstreamAvgTime = ({
     subtitle,
 }) => (
     <Card
-        title={t('average_processing_time')}
+        title={t('average_upstream_response_time')}
         subtitle={subtitle}
         bodyType="card-table"
         refresh={refreshButton}
@@ -55,7 +55,7 @@ const UpstreamAvgTime = ({
                     Cell: DomainCell,
                 },
                 {
-                    Header: <Trans>processing_time</Trans>,
+                    Header: <Trans>response_time</Trans>,
                     accessor: 'count',
                     maxWidth: 190,
                     Cell: TimeCell,

@@ -21,7 +21,11 @@ type fakeConn struct {
 	ipv4Entries *[]*ipset.Entry
 	ipv6Header  *ipset.HeaderPolicy
 	ipv6Entries *[]*ipset.Entry
+	sets        []props
 }
+
+// type check
+var _ ipsetConn = (*fakeConn)(nil)
 
 // Add implements the [ipsetConn] interface for *fakeConn.
 func (c *fakeConn) Add(name string, entries ...*ipset.Entry) (err error) {
@@ -43,15 +47,9 @@ func (c *fakeConn) Close() (err error) {
 	return nil
 }
 
-// Header implements the [ipsetConn] interface for *fakeConn.
-func (c *fakeConn) Header(name string) (p *ipset.HeaderPolicy, err error) {
-	if strings.Contains(name, "ipv4") {
-		return c.ipv4Header, nil
-	} else if strings.Contains(name, "ipv6") {
-		return c.ipv6Header, nil
-	}
-
-	return nil, errors.Error("test: ipset not found")
+// listAll implements the [ipsetConn] interface for *fakeConn.
+func (c *fakeConn) listAll() (sets []props, err error) {
+	return c.sets, nil
 }
 
 func TestManager_Add(t *testing.T) {
@@ -76,6 +74,13 @@ func TestManager_Add(t *testing.T) {
 				Family: ipset.NewUInt8Box(uint8(netfilter.ProtoIPv6)),
 			},
 			ipv6Entries: &ipv6Entries,
+			sets: []props{{
+				name:   "ipv4set",
+				family: netfilter.ProtoIPv4,
+			}, {
+				name:   "ipv6set",
+				family: netfilter.ProtoIPv6,
+			}},
 		}, nil
 	}
 

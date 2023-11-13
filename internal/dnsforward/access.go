@@ -182,6 +182,7 @@ func (s *Server) accessListJSON() (j accessListJSON) {
 	}
 }
 
+// handleAccessList handles requests to the GET /control/access/list endpoint.
 func (s *Server) handleAccessList(w http.ResponseWriter, r *http.Request) {
 	aghhttp.WriteJSONResponseOK(w, r, s.accessListJSON())
 }
@@ -224,6 +225,7 @@ func validateStrUniq(clients []string) (uc aghalg.UniqChecker[string], err error
 	return uc, uc.Validate()
 }
 
+// handleAccessSet handles requests to the POST /control/access/set endpoint.
 func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 	list := &accessListJSON{}
 	err := json.NewDecoder(r.Body).Decode(&list)

@@ -1,6 +1,7 @@
 {
     "client_settings": "Настройки клиентов",
     "example_upstream_reserved": "DNS-сервер <0>для конкретных доменов</0>;",
+    "example_multiple_upstreams_reserved": "несколько DNS-серверов <0>для конкретных доменов</0>;",
     "example_upstream_comment": "комментарий.",
     "upstream_parallel": "Использовать параллельные запросы ко всем серверам одновременно для ускорения обработки запроса.",
     "parallel_requests": "Параллельные запросы",
@@ -143,7 +144,8 @@
     "enforced_save_search": "Применён безопасный поиск",
     "number_of_dns_query_to_safe_search": "Количество запросов DNS для поисковых систем, для которых был применён Безопасный поиск",
     "average_processing_time": "Среднее время обработки запроса",
-    "processing_time": "Время обработки",
+    "average_upstream_response_time": "Среднее время ответа upstream-сервера",
+    "response_time": "Время ответа",
     "average_processing_time_hint": "Среднее время для обработки запроса DNS  в миллисекундах",
     "block_domain_use_filters_and_hosts": "Блокировать домены с использованием фильтров и файлов hosts",
     "filters_block_toggle_hint": "Вы можете настроить правила блокировки в <a>«Фильтрах»</a>.",

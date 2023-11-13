@@ -80,7 +80,7 @@
     color: var(--gray-f3);
 }
 
-.logs__text--client {
+.logs__table .logs__text--client {
     padding-right: 32px;
 }
 

@@ -1,6 +1,7 @@
 {
     "client_settings": "Paramètres du client",
     "example_upstream_reserved": "un amont <0>pour des domaines spécifiques</0> ;",
+    "example_multiple_upstreams_reserved": "plusieurs amonts <0>pour des domaines spécifiques</0> ;",
     "example_upstream_comment": " un commentaire.",
     "upstream_parallel": "Utilisez des requêtes parallèles pour accélérer la résolution en requêtant simultanément tous les serveurs en amont.",
     "parallel_requests": "Requêtes en parallèle",
@@ -143,7 +144,8 @@
     "enforced_save_search": "Recherche sécurisée forcée",
     "number_of_dns_query_to_safe_search": "Le nombre de requêtes DNS faites avec la Recherche securisée",
     "average_processing_time": "Temps moyen de traitement",
-    "processing_time": "Délai de traitement",
+    "average_upstream_response_time": "Temps de réponse moyen en amont",
+    "response_time": "Temps de réponse",
     "average_processing_time_hint": "Temps moyen (en millisecondes) de traitement d'une requête DNS",
     "block_domain_use_filters_and_hosts": "Bloquez les domaines à l'aide des filtres et fichiers hosts",
     "filters_block_toggle_hint": "Vous pouvez configurer les règles de filtrage dans les paramètres des <a>Filtres</a>.",

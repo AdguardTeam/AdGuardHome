@@ -138,6 +138,22 @@ const Examples = (props) => (
                 </Trans>
             </li>
             <li>
+                <code>[/example.local/]94.140.14.140 2a10:50c0::1:ff</code>: <Trans
+                    components={[
+                        <a
+                            href="https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#upstreams-for-domains"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            key="0"
+                        >
+                            Link
+                        </a>,
+                    ]}
+                >
+                    example_multiple_upstreams_reserved
+                </Trans>
+            </li>
+            <li>
                 <code>{COMMENT_LINE_DEFAULT_TOKEN} comment</code>: <Trans>
                     example_upstream_comment
                 </Trans>

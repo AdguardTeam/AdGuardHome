@@ -46,6 +46,14 @@ type Config struct {
 	// (0 to disable).
 	Ratelimit uint32 `yaml:"ratelimit"`
 
+	// RatelimitSubnetLenIPv4 is a subnet length for IPv4 addresses used for
+	// rate limiting requests.
+	RatelimitSubnetLenIPv4 int `yaml:"ratelimit_subnet_len_ipv4"`
+
+	// RatelimitSubnetLenIPv6 is a subnet length for IPv6 addresses used for
+	// rate limiting requests.
+	RatelimitSubnetLenIPv6 int `yaml:"ratelimit_subnet_len_ipv6"`
+
 	// RatelimitWhitelist is the list of whitelisted client IP addresses.
 	RatelimitWhitelist []string `yaml:"ratelimit_whitelist"`
 
@@ -275,24 +283,26 @@ type ServerConfig struct {
 func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 	srvConf := s.conf
 	conf = proxy.Config{
-		UDPListenAddr:          srvConf.UDPListenAddrs,
-		TCPListenAddr:          srvConf.TCPListenAddrs,
-		HTTP3:                  srvConf.ServeHTTP3,
-		Ratelimit:              int(srvConf.Ratelimit),
-		RatelimitWhitelist:     srvConf.RatelimitWhitelist,
-		RefuseAny:              srvConf.RefuseAny,
-		TrustedProxies:         srvConf.TrustedProxies,
-		CacheMinTTL:            srvConf.CacheMinTTL,
-		CacheMaxTTL:            srvConf.CacheMaxTTL,
-		CacheOptimistic:        srvConf.CacheOptimistic,
-		UpstreamConfig:         srvConf.UpstreamConfig,
-		BeforeRequestHandler:   s.beforeRequestHandler,
-		RequestHandler:         s.handleDNSRequest,
-		HTTPSServerName:        aghhttp.UserAgent(),
-		EnableEDNSClientSubnet: srvConf.EDNSClientSubnet.Enabled,
-		MaxGoroutines:          int(srvConf.MaxGoroutines),
-		UseDNS64:               srvConf.UseDNS64,
-		DNS64Prefs:             srvConf.DNS64Prefixes,
+		UDPListenAddr:           srvConf.UDPListenAddrs,
+		TCPListenAddr:           srvConf.TCPListenAddrs,
+		HTTP3:                   srvConf.ServeHTTP3,
+		Ratelimit:               int(srvConf.Ratelimit),
+		RatelimitSubnetMaskIPv4: net.CIDRMask(srvConf.RatelimitSubnetLenIPv4, netutil.IPv4BitLen),
+		RatelimitSubnetMaskIPv6: net.CIDRMask(srvConf.RatelimitSubnetLenIPv6, netutil.IPv6BitLen),
+		RatelimitWhitelist:      srvConf.RatelimitWhitelist,
+		RefuseAny:               srvConf.RefuseAny,
+		TrustedProxies:          srvConf.TrustedProxies,
+		CacheMinTTL:             srvConf.CacheMinTTL,
+		CacheMaxTTL:             srvConf.CacheMaxTTL,
+		CacheOptimistic:         srvConf.CacheOptimistic,
+		UpstreamConfig:          srvConf.UpstreamConfig,
+		BeforeRequestHandler:    s.beforeRequestHandler,
+		RequestHandler:          s.handleDNSRequest,
+		HTTPSServerName:         aghhttp.UserAgent(),
+		EnableEDNSClientSubnet:  srvConf.EDNSClientSubnet.Enabled,
+		MaxGoroutines:           int(srvConf.MaxGoroutines),
+		UseDNS64:                srvConf.UseDNS64,
+		DNS64Prefs:              srvConf.DNS64Prefixes,
 	}
 
 	if srvConf.EDNSClientSubnet.UseCustom {

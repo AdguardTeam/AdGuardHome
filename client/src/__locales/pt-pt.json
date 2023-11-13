@@ -1,6 +1,7 @@
 {
     "client_settings": "Definições do cliente",
     "example_upstream_reserved": "Podes especificar o DNS primário <0>para domínio(s) especifico(s)</0>",
+    "example_multiple_upstreams_reserved": "múltiplos upstreams <0>para domínios específicos</0>;",
     "example_upstream_comment": "um comentário.",
     "upstream_parallel": "Usar consultas paralelas para acelerar a resolução consultando simultaneamente todos os servidores DNS",
     "parallel_requests": "Solicitações paralelas",
@@ -143,7 +144,8 @@
     "enforced_save_search": "Forçar pesquisa segura",
     "number_of_dns_query_to_safe_search": "O número de solicitações de DNS para motores de busca para os quais a pesquisa segura foi aplicada",
     "average_processing_time": "Tempo médio de processamento",
-    "processing_time": "Tempo de processamento",
+    "average_upstream_response_time": "Tempo médio de resposta upstream",
+    "response_time": "Tempo de resposta",
     "average_processing_time_hint": "Tempo médio em milissegundos no processamento de uma solicitação DNS",
     "block_domain_use_filters_and_hosts": "Bloquear domínios usando ficheiros de filtros e hosts",
     "filters_block_toggle_hint": "Pode configurar as regras de bloqueio nas configurações de <a>Filtros</a>.",

@@ -420,7 +420,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	u := &webUser{
 		Name: req.Username,
 	}
-	err = Context.auth.Add(u, req.Password)
+	err = Context.auth.addUser(u, req.Password)
 	if err != nil {
 		Context.firstRun = true
 		copyInstallSettings(config, curConfig)

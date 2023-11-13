@@ -28,7 +28,7 @@ const renderIcons = (iconsData) => iconsData.map(({
 }) => <a key={iconName} href={href} target="_blank" rel="noopener noreferrer"
          className={classNames('d-flex align-items-center', className)}
 >
-    <svg className="nav-icon nav-icon--gray">
+    <svg className="icon icon--15 mr-1 icon--gray">
         <use xlinkHref={`#${iconName}`} />
     </svg>
 </a>);
@@ -110,7 +110,7 @@ const Form = (props) => {
     const openAddFiltersModal = () => openModal(MODAL_TYPE.ADD_FILTERS);
 
     return <form onSubmit={handleSubmit}>
-        <div className="modal-body modal-body--medium">
+        <div className="modal-body modal-body--filters">
             {modalType === MODAL_TYPE.SELECT_MODAL_TYPE
             && <div className="d-flex justify-content-around">
                 <button onClick={openFilteringListModal}

@@ -14,11 +14,11 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.41] - 2023-11-01 (APPROX.)
+## [v0.107.42] - 2023-12-06 (APPROX.)
 
-See also the [v0.107.41 GitHub milestone][ms-v0.107.41].
+See also the [v0.107.42 GitHub milestone][ms-v0.107.42].
 
-[ms-v0.107.41]: https://github.com/AdguardTeam/AdGuardHome/milestone/76?closed=1
+[ms-v0.107.42]: https://github.com/AdguardTeam/AdGuardHome/milestone/76?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -26,6 +26,62 @@ NOTE: Add new changes BELOW THIS COMMENT.
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.41] - 2023-11-13
+
+See also the [v0.107.41 GitHub milestone][ms-v0.107.41].
+
+[ms-v0.107.41]: https://github.com/AdguardTeam/AdGuardHome/milestone/76?closed=1
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2023-45283 and CVE-2023-45284 Go vulnerabilities fixed in
+  [Go 1.20.11][go-1.20.11].
+
+### Added
+
+- Ability to specify subnet lengths for IPv4 and IPv6 addresses, used for rate
+  limiting requests, in the configuration file ([#6368]).
+- Ability to specify multiple domain specific upstreams per line, e.g.
+  `[/domain1/../domain2/]upstream1 upstream2 .. upstreamN` ([#4977]).
+
+### Changed
+
+- The height of ready-to-use filter lists has been increased ([#6358]).
+- Improved authentication failure logging ([#6357]).
+
+#### Configuration Changes
+
+- New properties `dns.ratelimit_subnet_len_ipv4` and
+  `dns.ratelimit_subnet_len_ipv6` in the configuration file ([#6368]).
+
+### Fixed
+
+- Missing timezone on schedule form submission ([#6401]).
+- Average request processing time calculation ([#6220]).
+- Redundant shortening long client names in the Top Clients table ([#6338]).
+- Scrolling column headers in the tables ([#6337]).
+- `$important,dnsrewrite` rules do not take precedence over allowlist rules
+  ([#6204]).
+- Dark mode DNS rewrite background ([#6329]).
+- Issues with QUIC and HTTP/3 upstreams on Linux ([#6335]).
+
+[#4977]: https://github.com/AdguardTeam/AdGuardHome/issues/4977
+[#6204]: https://github.com/AdguardTeam/AdGuardHome/issues/6204
+[#6220]: https://github.com/AdguardTeam/AdGuardHome/issues/6220
+[#6329]: https://github.com/AdguardTeam/AdGuardHome/issues/6329
+[#6335]: https://github.com/AdguardTeam/AdGuardHome/issues/6335
+[#6337]: https://github.com/AdguardTeam/AdGuardHome/issues/6337
+[#6338]: https://github.com/AdguardTeam/AdGuardHome/issues/6338
+[#6357]: https://github.com/AdguardTeam/AdGuardHome/issues/6357
+[#6358]: https://github.com/AdguardTeam/AdGuardHome/issues/6358
+[#6368]: https://github.com/AdguardTeam/AdGuardHome/issues/6368
+[#6401]: https://github.com/AdguardTeam/AdGuardHome/issues/6401
+
+[go-1.20.11]: https://groups.google.com/g/golang-announce/c/4tU8LZfBFkY/m/d-jSKR_jBwAJ
 
 
 
@@ -2557,11 +2613,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.41...HEAD
-[v0.107.41]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.40...v0.107.41
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.42...HEAD
+[v0.107.42]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.41...v0.107.42
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.40...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.41...HEAD
+[v0.107.41]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.40...v0.107.41
 [v0.107.40]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.39...v0.107.40
 [v0.107.39]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.38...v0.107.39
 [v0.107.38]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.37...v0.107.38

@@ -149,3 +149,7 @@
 .card .logs__row--blue {
     background-color: #ecf7ff;
 }
+
+[data-theme="dark"] .card .logs__row--blue {
+    background-color: var(--logs__row--blue-bgcolor);
+}
