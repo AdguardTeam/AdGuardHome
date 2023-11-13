@@ -1,7 +1,8 @@
 {
     "client_settings": "Klientinställningar",
     "example_upstream_reserved": "uppström <0>för en specifik domän</0>;",
-    "example_upstream_comment": "du kan ange en kommentar.",
+    "example_multiple_upstreams_reserved": "flera uppströmsservrar <0>för specifika domäner</0>;",
+    "example_upstream_comment": "en kommentar.",
     "upstream_parallel": "Använd parallella förfrågningar för att snabba upp dessa genom att fråga alla uppströmsservrar samtidigt.",
     "parallel_requests": "Parallella förfrågningar",
     "load_balancing": "Lastbalansering",
@@ -143,6 +144,8 @@
     "enforced_save_search": "Aktivering av Säker surf",
     "number_of_dns_query_to_safe_search": "Antalet DNS-förfrågningar mot sökmotorer där Säker surf tvingats",
     "average_processing_time": "Genomsnittlig processtid",
+    "average_upstream_response_time": "Genomsnittlig svarstid uppströmsserver",
+    "response_time": "Svarstid",
     "average_processing_time_hint": "Genomsnittlig processtid i millisekunder för DNS-förfrågning",
     "block_domain_use_filters_and_hosts": "Blockera domäner med filter- och värdfiler",
     "filters_block_toggle_hint": "Du kan ställa in egna blockerings regler i <a>Filterinställningar</a>.",

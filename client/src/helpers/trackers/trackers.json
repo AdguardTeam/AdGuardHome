@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2023-10-15T12:13:01.838Z",
+    "timeUpdated": "2023-11-10T12:55:56.663Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -681,8 +681,9 @@
         "adcolony": {
             "name": "AdColony",
             "categoryId": 4,
-            "url": "thttp://www.admarvel.com/",
-            "companyId": "adcolony"
+            "url": "https://www.adcolony.com/history-of-adcolony/",
+            "companyId": "digital_turbine",
+            "source": "AdGuard"
         },
         "adconion": {
             "name": "Adconion",
@@ -1294,6 +1295,13 @@
             "url": "http://www.demdex.com/",
             "companyId": "adobe"
         },
+        "adobe_developer": {
+            "name": "Adobe Developer",
+            "categoryId": 8,
+            "url": "https://developer.adobe.com/",
+            "companyId": "adobe",
+            "source": "AdGuard"
+        },
         "adobe_dynamic_media": {
             "name": "Adobe Dynamic Media",
             "categoryId": 4,
@@ -1309,8 +1317,9 @@
         "adobe_experience_cloud": {
             "name": "Adobe Experience Cloud",
             "categoryId": 6,
-            "url": "https://www.adobe.com/experience-cloud.html",
-            "companyId": "adobe"
+            "url": "https://business.adobe.com/",
+            "companyId": "adobe",
+            "source": "AdGuard"
         },
         "adobe_login": {
             "name": "Adobe Login",
@@ -4353,6 +4362,13 @@
             "url": "http://chartbeat.com/",
             "companyId": "chartbeat"
         },
+        "chartboost": {
+            "name": "Chartboost",
+            "categoryId": 4,
+            "url": "http://chartboost.com/",
+            "companyId": "take-two",
+            "source": "AdGuard"
+        },
         "chaser": {
             "name": "Chaser",
             "categoryId": 2,
@@ -7330,7 +7346,7 @@
             "name": "Flurry",
             "categoryId": 101,
             "url": "http://www.flurry.com/",
-            "companyId": "verizon",
+            "companyId": "apollo_global_management",
             "source": "AdGuard"
         },
         "flxone": {
@@ -12385,6 +12401,13 @@
             "categoryId": 4,
             "url": "http://www.nimblecommerce.com/",
             "companyId": "nimblecommerce"
+        },
+        "nine_direct_digital": {
+            "name": "Nine Digital Direct",
+            "categoryId": 4,
+            "url": "https://ninedigitaldirect.com.au/",
+            "companyId": "nine_entertainment",
+            "source": "AdGuard"
         },
         "ninja_access_analysis": {
             "name": "Ninja Access Analysis",
@@ -19546,8 +19569,9 @@
         "yahoo": {
             "name": "Yahoo!",
             "categoryId": 6,
-            "url": "https://yahoo.com",
-            "companyId": "verizon"
+            "url": "https://yahoo.com/",
+            "companyId": "apollo_global_management",
+            "source": "AdGuard"
         },
         "yahoo_ad_exchange": {
             "name": "Yahoo! Ad Exchange",
@@ -19560,6 +19584,13 @@
             "categoryId": 4,
             "url": "https://developer.yahoo.com/analytics/",
             "companyId": "verizon"
+        },
+        "yahoo_advertising": {
+            "name": "Yahoo! Advertising",
+            "categoryId": 4,
+            "url": "https://www.advertising.yahooinc.com/",
+            "companyId": "apollo_global_management",
+            "source": "AdGuard"
         },
         "yahoo_analytics": {
             "name": "Yahoo! Analytics",
@@ -19590,6 +19621,13 @@
             "categoryId": 4,
             "url": "http://searchmarketing.yahoo.com",
             "companyId": "verizon"
+        },
+        "yahoo_search": {
+            "name": "Yahoo! Search",
+            "categoryId": 4,
+            "url": "https://search.yahooinc.com/",
+            "companyId": "apollo_global_management",
+            "source": "AdGuard"
         },
         "yahoo_small_business": {
             "name": "Yahoo! Small Business",
@@ -20228,6 +20266,7 @@
         "ad-cloud.jp": "adcloud",
         "admarvel.s3.amazonaws.com": "adcolony",
         "ads.admarvel.com": "adcolony",
+        "adcolony.com": "adcolony",
         "adrdgt.com": "adconion",
         "amgdgt.com": "adconion",
         "adcrowd.com": "adcrowd",
@@ -20382,6 +20421,7 @@
         "demdex.net": "adobe_audience_manager",
         "everestjs.net": "adobe_audience_manager",
         "everesttech.net": "adobe_audience_manager",
+        "adobe.io": "adobe_developer",
         "scene7.com": "adobe_dynamic_media",
         "adobedtm.com": "adobe_dynamic_tag_management",
         "2o7.net": "adobe_experience_cloud",
@@ -20654,8 +20694,10 @@
         "a2z.com": "amazon",
         "aamazoncognito.com": "amazon",
         "amazon-corp.com": "amazon",
+        "amazon-dss.com": "amazon",
         "amazon.com.au": "amazon",
         "amazon.com.mx": "amazon",
+        "amazon.dev": "amazon",
         "amazon.in": "amazon",
         "amazon.nl": "amazon",
         "amazon.sa": "amazon",
@@ -20663,6 +20705,7 @@
         "amazonbrowserapp.es": "amazon",
         "amazoncrl.com": "amazon",
         "firetvcaptiveportal.com": "amazon",
+        "ntp-fireos.com": "amazon",
         "amazon-adsystem.com": "amazon_adsystem",
         "serving-sys.com": "amazon_adsystem",
         "sizmek.com": "amazon_adsystem",
@@ -20678,12 +20721,16 @@
         "amazontrust.com": "amazon_cdn",
         "associates-amazon.com": "amazon_cdn",
         "cloudfront.net": "amazon_cloudfront",
+        "ota-cloudfront.net": "amazon_cloudfront",
         "axx-eu.amazon-adsystem.com": "amazon_mobile_ads",
         "amazonpay.com": "amazon_payments",
         "payments-amazon.com": "amazon_payments",
         "amazonpay.in": "amazon_payments",
         "aiv-cdn.net": "amazon_video",
+        "aiv-delivery.net": "amazon_video",
         "amazonvideo.com": "amazon_video",
+        "pv-cdn.net": "amazon_video",
+        "primevideo.com": "amazon_video",
         "amazonaws.com": "amazon_web_services",
         "amazonwebservices.com": "amazon_web_services",
         "awsstatic.com": "amazon_web_services",
@@ -20830,6 +20877,8 @@
         "ad.globe7.com": "axill",
         "azadify.com": "azadify",
         "azure.com": "azure",
+        "azure.net": "azure",
+        "azurefd.net": "azure",
         "trafficmanager.net": "azure",
         "blob.core.windows.net": "azure_blob_storage",
         "azureedge.net": "azureedge.net",
@@ -21120,6 +21169,7 @@
         "chaordicsystems.com": "chaordic",
         "chartbeat.com": "chartbeat",
         "chartbeat.net": "chartbeat",
+        "chartboost.com": "chartboost",
         "chaser.ru": "chaser",
         "cloud.chatbeacon.io": "chat_beacon",
         "chatango.com": "chatango",
@@ -21929,7 +21979,9 @@
         "githubassets.com": "github",
         "githubusercontent.com": "github",
         "ghcr.io": "github",
+        "github.blog": "github",
         "github.dev": "github",
+        "octocaptcha.com": "github",
         "githubapp.com": "github_apps",
         "github.io": "github_pages",
         "aff3.gittigidiyor.com": "gittigidiyor_affiliate_program",
@@ -23088,7 +23140,13 @@
         "s-microsoft.com": "microsoft",
         "trouter.io": "microsoft",
         "windows.net": "microsoft",
+        "bingapis.com": "microsoft",
+        "msauth.net": "microsoft",
+        "msftauth.net": "microsoft",
+        "msftstatic.com": "microsoft",
         "msidentity.com": "microsoft",
+        "nelreports.net": "microsoft",
+        "windowscentral.com": "microsoft",
         "analytics.live.com": "microsoft_analytics",
         "a.clarity.ms": "microsoft_clarity",
         "b.clarity.ms": "microsoft_clarity",
@@ -23173,6 +23231,7 @@
         "mrpdata.com": "mrpdata",
         "mrpdata.net": "mrpdata",
         "mrskincash.com": "mrskincash",
+        "a-msedge.net": "msedge",
         "e-msedge.net": "msedge",
         "l-msedge.net": "msedge",
         "s-msedge.net": "msedge",
@@ -23294,6 +23353,7 @@
         "ads.ngageinc.com": "ngage_inc.",
         "nice264.com": "nice264.com",
         "nimblecommerce.com": "nimblecommerce",
+        "nineanalytics.io": "nine_direct_digital",
         "cho-chin.com": "ninja_access_analysis",
         "donburako.com": "ninja_access_analysis",
         "hishaku.com": "ninja_access_analysis",
@@ -24947,10 +25007,15 @@
         "yahoo.com": "yahoo",
         "yahooapis.com": "yahoo",
         "yimg.com": "yahoo",
-        "ads.yahoo.com": "yahoo_ad_exchange",
+        "oath.cloud": "yahoo",
+        "yahoo.net": "yahoo",
+        "yahooinc.com": "yahoo",
+        "yahoodns.net": "yahoo",
         "yads.yahoo.com": "yahoo_ad_exchange",
         "yieldmanager.com": "yahoo_ad_exchange",
         "pr-bh.ybp.yahoo.com": "yahoo_ad_manager",
+        "ads.yahoo.com": "yahoo_advertising",
+        "adtech.yahooinc.com": "yahoo_advertising",
         "analytics.yahoo.com": "yahoo_analytics",
         "np.lexity.com": "yahoo_commerce_central",
         "storage-yahoo.jp": "yahoo_japan_retargeting",
@@ -24960,6 +25025,7 @@
         "yjtag.jp": "yahoo_japan_retargeting",
         "ov.yahoo.co.jp": "yahoo_overture",
         "overture.com": "yahoo_overture",
+        "search.yahooinc.com": "yahoo_search",
         "luminate.com": "yahoo_small_business",
         "pixazza.com": "yahoo_small_business",
         "awaps.yandex.ru": "yandex",

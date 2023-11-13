@@ -1,6 +1,7 @@
 {
     "client_settings": "Klientindstillinger",
     "example_upstream_reserved": "en upstream <0>for bestemte domæner</0>;",
+    "example_multiple_upstreams_reserved": "flere upstreams <0>til bestemte domæner</0>;",
     "example_upstream_comment": "en kommentaren.",
     "upstream_parallel": "Brug parallelforespørgsler til at accelerere fortolkningen ved at forespørge alle upstream-servere samtidigt.",
     "parallel_requests": "Parallelle forespørgsler",
@@ -143,6 +144,8 @@
     "enforced_save_search": "Håndhævet sikker søgning",
     "number_of_dns_query_to_safe_search": "Antallet af DNS-forespørgsler til søgemaskiner, hvor Sikker Søgning blev håndhævet",
     "average_processing_time": "Gennemsnitlig behandlingstid",
+    "average_upstream_response_time": "Gennemsnitlig upstream-responstid",
+    "response_time": "Responstid",
     "average_processing_time_hint": "Gennemsnitlig behandlingstid i millisekunder af DNS-forespørgsel",
     "block_domain_use_filters_and_hosts": "Blokér domæner vha. filtre og værtsfiler",
     "filters_block_toggle_hint": "Du kan opsætte blokeringsregler i <a>Filterindstillingerne</a>.",

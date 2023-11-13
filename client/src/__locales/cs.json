@@ -1,6 +1,7 @@
 {
     "client_settings": "Nastavení klienta",
     "example_upstream_reserved": "odchozí DNS připojení <0>pro konkrétní doménu(y)</0>;",
+    "example_multiple_upstreams_reserved": "více odchozích připojení <0>pro konkrétní domény</0>;",
     "example_upstream_comment": "komentář.",
     "upstream_parallel": "Použijte paralelní požadavky na urychlení řešení simultánním dotazováním na všechny navazující servery.",
     "parallel_requests": "Paralelní požadavky",
@@ -143,6 +144,8 @@
     "enforced_save_search": "Vynucené bezpečné vyhledávání",
     "number_of_dns_query_to_safe_search": "Počet požadavků DNS na vyhledávače, při kterých bylo vynucené bezpečné vyhledávání",
     "average_processing_time": "Průměrný čas zpracování",
+    "average_upstream_response_time": "Průměrná doba odezvy odchozích připojení",
+    "response_time": "Čas odezvy",
     "average_processing_time_hint": "Průměrný čas zpracování požadavků DNS v milisekundách",
     "block_domain_use_filters_and_hosts": "Blokovat domény pomocí filtrů a seznamů adres",
     "filters_block_toggle_hint": "Pravidla blokování můžete nastavit v nastavení <a>Filtry</a>.",

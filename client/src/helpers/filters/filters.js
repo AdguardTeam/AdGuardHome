@@ -202,11 +202,29 @@ export default {
             "homepage": "https://github.com/hagezi/dns-blocklists",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_34.txt"
         },
+        "hagezi_pro": {
+            "name": "HaGeZi's Pro Blocklist",
+            "categoryId": "general",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_48.txt"
+        },
+        "hagezi_pro++": {
+            "name": "HaGeZi's Pro++ Blocklist",
+            "categoryId": "general",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_51.txt"
+        },
         "hagezi_threat_intelligence_feeds": {
             "name": "HaGeZi's Threat Intelligence Feeds",
             "categoryId": "security",
             "homepage": "https://github.com/hagezi/dns-blocklists",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_44.txt"
+        },
+        "hagezi_ultimate": {
+            "name": "HaGeZi's Ultimate Blocklist",
+            "categoryId": "general",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_49.txt"
         },
         "no_google": {
             "name": "No Google",
