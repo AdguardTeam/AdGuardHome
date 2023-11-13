@@ -48,22 +48,22 @@ See also the [v0.107.41 GitHub milestone][ms-v0.107.41].
 
 ### Changed
 
-- The height of ready-to-use filter lists has been increased ([#6358]).
-- Improved authentication failure logging ([#6357]).
+- Increased the height of the ready-to-use filter lists dialog ([#6358]).
+- Improved logging of authentication failures ([#6357]).
 
-#### Configuration Changes
+#### Configuration changes
 
 - New properties `dns.ratelimit_subnet_len_ipv4` and
-  `dns.ratelimit_subnet_len_ipv6` in the configuration file ([#6368]).
+  `dns.ratelimit_subnet_len_ipv6` have been added to the configuration file
+  ([#6368]).
 
 ### Fixed
 
-- Missing timezone on schedule form submission ([#6401]).
+- Schedule timezone not being sent ([#6401]).
 - Average request processing time calculation ([#6220]).
-- Redundant shortening long client names in the Top Clients table ([#6338]).
+- Redundant truncation of long client names in the Top Clients table ([#6338]).
 - Scrolling column headers in the tables ([#6337]).
-- `$important,dnsrewrite` rules do not take precedence over allowlist rules
-  ([#6204]).
+- `$important,dnsrewrite` rules not overriding allowlist rules ([#6204]).
 - Dark mode DNS rewrite background ([#6329]).
 - Issues with QUIC and HTTP/3 upstreams on Linux ([#6335]).
 
@@ -211,7 +211,7 @@ See also the [v0.107.37 GitHub milestone][ms-v0.107.37].
   is returned if the blocking mode isn't set to `Null IP`.  In previous versions
   it returned NXDOMAIN response in such cases.
 
-#### Configuration Changes
+#### Configuration changes
 
 In this release, the schema version has changed from 24 to 27.
 
@@ -421,7 +421,7 @@ See also the [v0.107.34 GitHub milestone][ms-v0.107.34].
 
 - Improved CPU and RAM consumption during updates of filtering-rule lists.
 
-#### Configuration Changes
+#### Configuration changes
 
 In this release, the schema version has changed from 23 to 24.
 
@@ -501,7 +501,7 @@ See also the [v0.107.33 GitHub milestone][ms-v0.107.33].
 
 ### Changed
 
-#### Configuration Changes
+#### Configuration changes
 
 In this release, the schema version has changed from 20 to 23.
 
@@ -766,7 +766,7 @@ See also the [v0.107.28 GitHub milestone][ms-v0.107.28].
 - ARPA domain names containing a subnet within private networks now also
   considered private, behaving closer to [RFC 6761][rfc6761] ([#5567]).
 
-#### Configuration Changes
+#### Configuration changes
 
 In this release, the schema version has changed from 17 to 20.
 
@@ -906,7 +906,7 @@ See also the [v0.107.26 GitHub milestone][ms-v0.107.26].
 
 ### Changed
 
-#### Configuration Changes
+#### Configuration changes
 
 - Property `edns_client_subnet`, which in schema versions 16 and earlier used
   to be a part of the `dns` object, is now part of the `dns.edns_client_subnet`
@@ -995,7 +995,7 @@ See also the [v0.107.24 GitHub milestone][ms-v0.107.24].
 
 ### Changed
 
-#### Configuration Changes
+#### Configuration changes
 
 In this release, the schema version has changed from 14 to 16.
 
@@ -1705,7 +1705,7 @@ See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
 - The `dns.bogus_nxdomain` property in the configuration file now supports CIDR
   notation alongside IP addresses ([#1730]).
 
-#### Configuration Changes
+#### Configuration changes
 
 In this release, the schema version has changed from 12 to 14.
 
@@ -2046,7 +2046,7 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
   file, together with the new `group` and `user` properties ([#2763]).
 - Permissions on filter files are now `0o644` instead of `0o600` ([#3198]).
 
-#### Configuration Changes
+#### Configuration changes
 
 In this release, the schema version has changed from 10 to 12.
 
