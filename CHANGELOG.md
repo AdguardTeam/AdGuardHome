@@ -33,8 +33,6 @@ NOTE: Add new changes ABOVE THIS COMMENT.
 
 See also the [v0.107.41 GitHub milestone][ms-v0.107.41].
 
-[ms-v0.107.41]: https://github.com/AdguardTeam/AdGuardHome/milestone/76?closed=1
-
 ### Security
 
 - Go version has been updated to prevent the possibility of exploiting the
@@ -81,7 +79,8 @@ See also the [v0.107.41 GitHub milestone][ms-v0.107.41].
 [#6368]: https://github.com/AdguardTeam/AdGuardHome/issues/6368
 [#6401]: https://github.com/AdguardTeam/AdGuardHome/issues/6401
 
-[go-1.20.11]: https://groups.google.com/g/golang-announce/c/4tU8LZfBFkY/m/d-jSKR_jBwAJ
+[go-1.20.11]:   https://groups.google.com/g/golang-announce/c/4tU8LZfBFkY/m/d-jSKR_jBwAJ
+[ms-v0.107.41]: https://github.com/AdguardTeam/AdGuardHome/milestone/76?closed=1
 
 
 
