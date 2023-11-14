@@ -23,6 +23,12 @@ See also the [v0.107.42 GitHub milestone][ms-v0.107.42].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Protection pause timer synchronization ([#5759]).
+
+[#5759]: https://github.com/AdguardTeam/AdGuardHome/issues/5759
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

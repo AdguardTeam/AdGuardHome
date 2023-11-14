@@ -28,7 +28,7 @@ import {
 } from '../../helpers/constants';
 import { getLogsUrlParams, setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
 import Header from '../Header';
-import { changeLanguage, getDnsStatus } from '../../actions';
+import { changeLanguage, getDnsStatus, getTimerStatus } from '../../actions';
 
 import Dashboard from '../../containers/Dashboard';
 import SetupGuide from '../../containers/SetupGuide';
@@ -126,6 +126,18 @@ const App = () => {
 
     useEffect(() => {
         dispatch(getDnsStatus());
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                dispatch(getTimerStatus());
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, []);
 
     const setLanguage = () => {
