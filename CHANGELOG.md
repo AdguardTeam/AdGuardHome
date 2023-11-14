@@ -25,9 +25,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Pre-filling the New static lease window with data ([#6402]).
 - Protection pause timer synchronization ([#5759]).
 
 [#5759]: https://github.com/AdguardTeam/AdGuardHome/issues/5759
+[#6402]: https://github.com/AdguardTeam/AdGuardHome/issues/6402
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
