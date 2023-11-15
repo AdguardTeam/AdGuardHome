@@ -1468,6 +1468,23 @@
           'type': 'boolean'
         'ratelimit':
           'type': 'integer'
+        'ratelimit_subnet_subnet_len_ipv4':
+          'description': 'Length of the subnet mask for IPv4 addresses.'
+          'type': 'integer'
+          'default': 24
+          'minimum': 0
+          'maximum': 32
+        'ratelimit_subnet_subnet_len_ipv6':
+          'description': 'Length of the subnet mask for IPv6 addresses.'
+          'type': 'integer'
+          'default': 56
+          'minimum': 0
+          'maximum': 128
+        'ratelimit_whitelist':
+          'type': 'array'
+          'description': 'List of IP addresses excluded from rate limiting.'
+          'items':
+            'type': 'string'
         'blocking_mode':
           'type': 'string'
           'enum':

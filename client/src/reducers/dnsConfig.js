@@ -18,6 +18,7 @@ const dnsConfig = handleActions(
                 fallback_dns,
                 bootstrap_dns,
                 local_ptr_upstreams,
+                ratelimit_whitelist,
                 ...values
             } = payload;
 
@@ -30,6 +31,7 @@ const dnsConfig = handleActions(
                 fallback_dns: (fallback_dns && fallback_dns.join('\n')) || '',
                 bootstrap_dns: (bootstrap_dns && bootstrap_dns.join('\n')) || '',
                 local_ptr_upstreams: (local_ptr_upstreams && local_ptr_upstreams.join('\n')) || '',
+                ratelimit_whitelist: (ratelimit_whitelist && ratelimit_whitelist.join('\n')) || '',
                 processingGetConfig: false,
             };
         },

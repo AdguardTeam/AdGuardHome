@@ -72,9 +72,11 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{},
 		TCPListenAddrs: []*net.TCPAddr{},
 		Config: Config{
-			UpstreamDNS:      []string{"8.8.8.8:53", "8.8.4.4:53"},
-			FallbackDNS:      []string{"9.9.9.10"},
-			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			UpstreamDNS:            []string{"8.8.8.8:53", "8.8.4.4:53"},
+			FallbackDNS:            []string{"9.9.9.10"},
+			RatelimitSubnetLenIPv4: 24,
+			RatelimitSubnetLenIPv6: 56,
+			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
 	}
@@ -150,8 +152,10 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{},
 		TCPListenAddrs: []*net.TCPAddr{},
 		Config: Config{
-			UpstreamDNS:      []string{"8.8.8.8:53", "8.8.4.4:53"},
-			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			UpstreamDNS:            []string{"8.8.8.8:53", "8.8.4.4:53"},
+			RatelimitSubnetLenIPv4: 24,
+			RatelimitSubnetLenIPv6: 56,
+			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
 	}
@@ -179,11 +183,19 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		name:    "blocking_mode_good",
 		wantSet: "",
 	}, {
-		name:    "blocking_mode_bad",
-		wantSet: "blocking_ipv4 must be valid ipv4 on custom_ip blocking_mode",
+		name: "blocking_mode_bad",
+		wantSet: "validating dns config: " +
+			"blocking_ipv4 must be valid ipv4 on custom_ip blocking_mode",
 	}, {
 		name:    "ratelimit",
 		wantSet: "",
+	}, {
+		name:    "ratelimit_subnet_len",
+		wantSet: "",
+	}, {
+		name: "ratelimit_whitelist_not_ip",
+		wantSet: `validating dns config: ratelimit whitelist: at index 1: ParseAddr("not.ip"): ` +
+			`unexpected character (at "not.ip")`,
 	}, {
 		name:    "edns_cs_enabled",
 		wantSet: "",
@@ -206,24 +218,26 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		name:    "upstream_mode_fastest_addr",
 		wantSet: "",
 	}, {
-		name:    "upstream_dns_bad",
-		wantSet: `validating upstream servers: validating upstream "!!!": not an ip:port`,
+		name: "upstream_dns_bad",
+		wantSet: `validating dns config: ` +
+			`upstream servers: validating upstream "!!!": not an ip:port`,
 	}, {
 		name: "bootstraps_bad",
-		wantSet: `checking bootstrap a: invalid address: bootstrap a:53: ` +
+		wantSet: `validating dns config: checking bootstrap a: invalid address: bootstrap a:53: ` +
 			`ParseAddr("a"): unable to parse IP`,
 	}, {
 		name:    "cache_bad_ttl",
-		wantSet: `cache_ttl_min must be less or equal than cache_ttl_max`,
+		wantSet: `validating dns config: cache_ttl_min must be less or equal than cache_ttl_max`,
 	}, {
 		name:    "upstream_mode_bad",
-		wantSet: `upstream_mode: incorrect value`,
+		wantSet: `validating dns config: upstream_mode: incorrect value "somethingelse"`,
 	}, {
 		name:    "local_ptr_upstreams_good",
 		wantSet: "",
 	}, {
 		name: "local_ptr_upstreams_bad",
-		wantSet: `validating private upstream servers: checking domain-specific upstreams: ` +
+		wantSet: `validating dns config: ` +
+			`private upstream servers: checking domain-specific upstreams: ` +
 			`bad arpa domain name "non.arpa.": not a reversed ip network`,
 	}, {
 		name:    "local_ptr_upstreams_null",

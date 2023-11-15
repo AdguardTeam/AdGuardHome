@@ -45,8 +45,19 @@ type jsonDNSConfig struct {
 	// ProtectionEnabled defines if protection is enabled.
 	ProtectionEnabled *bool `json:"protection_enabled"`
 
-	// RateLimit is the number of requests per second allowed per client.
-	RateLimit *uint32 `json:"ratelimit"`
+	// Ratelimit is the number of requests per second allowed per client.
+	Ratelimit *uint32 `json:"ratelimit"`
+
+	// RatelimitSubnetLenIPv4 is a subnet length for IPv4 addresses used for
+	// rate limiting requests.
+	RatelimitSubnetLenIPv4 *int `json:"ratelimit_subnet_len_ipv4"`
+
+	// RatelimitSubnetLenIPv6 is a subnet length for IPv6 addresses used for
+	// rate limiting requests.
+	RatelimitSubnetLenIPv6 *int `json:"ratelimit_subnet_len_ipv6"`
+
+	// RatelimitWhitelist is a list of IP addresses excluded from rate limiting.
+	RatelimitWhitelist *[]string `json:"ratelimit_whitelist"`
 
 	// BlockingMode defines the way blocked responses are constructed.
 	BlockingMode *filtering.BlockingMode `json:"blocking_mode"`
@@ -121,6 +132,9 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	blockingMode, blockingIPv4, blockingIPv6 := s.dnsFilter.BlockingMode()
 	blockedResponseTTL := s.dnsFilter.BlockedResponseTTL()
 	ratelimit := s.conf.Ratelimit
+	ratelimitSubnetLenIPv4 := s.conf.RatelimitSubnetLenIPv4
+	ratelimitSubnetLenIPv6 := s.conf.RatelimitSubnetLenIPv6
+	ratelimitWhitelist := stringutil.CloneSliceOrEmpty(s.conf.RatelimitWhitelist)
 
 	customIP := s.conf.EDNSClientSubnet.CustomIP
 	enableEDNSClientSubnet := s.conf.EDNSClientSubnet.Enabled
@@ -157,7 +171,10 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		BlockingMode:             &blockingMode,
 		BlockingIPv4:             blockingIPv4,
 		BlockingIPv6:             blockingIPv6,
-		RateLimit:                &ratelimit,
+		Ratelimit:                &ratelimit,
+		RatelimitSubnetLenIPv4:   &ratelimitSubnetLenIPv4,
+		RatelimitSubnetLenIPv6:   &ratelimitSubnetLenIPv6,
+		RatelimitWhitelist:       &ratelimitWhitelist,
 		EDNSCSCustomIP:           customIP,
 		EDNSCSEnabled:            &enableEDNSClientSubnet,
 		EDNSCSUseCustom:          &useCustom,
@@ -201,6 +218,7 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
+// checkBlockingMode returns an error if blocking mode is invalid.
 func (req *jsonDNSConfig) checkBlockingMode() (err error) {
 	if req.BlockingMode == nil {
 		return nil
@@ -209,12 +227,21 @@ func (req *jsonDNSConfig) checkBlockingMode() (err error) {
 	return validateBlockingMode(*req.BlockingMode, req.BlockingIPv4, req.BlockingIPv6)
 }
 
-func (req *jsonDNSConfig) checkUpstreamsMode() bool {
-	valid := []string{"", "fastest_addr", "parallel"}
+// checkUpstreamsMode returns an error if the upstream mode is invalid.
+func (req *jsonDNSConfig) checkUpstreamsMode() (err error) {
+	if req.UpstreamMode == nil {
+		return nil
+	}
 
-	return req.UpstreamMode == nil || stringutil.InSlice(valid, *req.UpstreamMode)
+	mode := *req.UpstreamMode
+	if ok := slices.Contains([]string{"", "fastest_addr", "parallel"}, mode); !ok {
+		return fmt.Errorf("upstream_mode: incorrect value %q", mode)
+	}
+
+	return nil
 }
 
+// checkBootstrap returns an error if any bootstrap address is invalid.
 func (req *jsonDNSConfig) checkBootstrap() (err error) {
 	if req.Bootstraps == nil {
 		return nil
@@ -229,6 +256,7 @@ func (req *jsonDNSConfig) checkBootstrap() (err error) {
 		}
 
 		if _, err = upstream.NewUpstreamResolver(b, nil); err != nil {
+			// Don't wrap the error because it's informative enough as is.
 			return err
 		}
 	}
@@ -244,67 +272,157 @@ func (req *jsonDNSConfig) checkFallbacks() (err error) {
 
 	err = ValidateUpstreams(*req.Fallbacks)
 	if err != nil {
-		return fmt.Errorf("validating fallback servers: %w", err)
+		return fmt.Errorf("fallback servers: %w", err)
 	}
 
 	return nil
 }
 
 // validate returns an error if any field of req is invalid.
+//
+// TODO(s.chzhen):  Parse, don't validate.
 func (req *jsonDNSConfig) validate(privateNets netutil.SubnetSet) (err error) {
+	defer func() { err = errors.Annotate(err, "validating dns config: %w") }()
+
+	err = req.validateUpstreamDNSServers(privateNets)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	err = req.checkRatelimitSubnetMaskLen()
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	err = req.checkRatelimitWhitelist()
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	err = req.checkBlockingMode()
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	err = req.checkUpstreamsMode()
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	err = req.checkCacheTTL()
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	return nil
+}
+
+// validateUpstreamDNSServers returns an error if any field of req is invalid.
+func (req *jsonDNSConfig) validateUpstreamDNSServers(privateNets netutil.SubnetSet) (err error) {
 	if req.Upstreams != nil {
 		err = ValidateUpstreams(*req.Upstreams)
 		if err != nil {
-			return fmt.Errorf("validating upstream servers: %w", err)
+			return fmt.Errorf("upstream servers: %w", err)
 		}
 	}
 
 	if req.LocalPTRUpstreams != nil {
 		err = ValidateUpstreamsPrivate(*req.LocalPTRUpstreams, privateNets)
 		if err != nil {
-			return fmt.Errorf("validating private upstream servers: %w", err)
+			return fmt.Errorf("private upstream servers: %w", err)
 		}
 	}
 
 	err = req.checkBootstrap()
 	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
 
 	err = req.checkFallbacks()
 	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
 
-	err = req.checkBlockingMode()
-	if err != nil {
-		return err
-	}
-
-	switch {
-	case !req.checkUpstreamsMode():
-		return errors.Error("upstream_mode: incorrect value")
-	case !req.checkCacheTTL():
-		return errors.Error("cache_ttl_min must be less or equal than cache_ttl_max")
-	default:
-		return nil
-	}
+	return nil
 }
 
-func (req *jsonDNSConfig) checkCacheTTL() bool {
+// checkCacheTTL returns an error if the configuration of the cache TTL is
+// invalid.
+func (req *jsonDNSConfig) checkCacheTTL() (err error) {
 	if req.CacheMinTTL == nil && req.CacheMaxTTL == nil {
-		return true
+		return nil
 	}
 
-	var min, max uint32
+	var minTTL, maxTTL uint32
 	if req.CacheMinTTL != nil {
-		min = *req.CacheMinTTL
+		minTTL = *req.CacheMinTTL
 	}
 	if req.CacheMaxTTL != nil {
-		max = *req.CacheMaxTTL
+		maxTTL = *req.CacheMaxTTL
 	}
 
-	return min <= max
+	if minTTL <= maxTTL {
+		return nil
+	}
+
+	return errors.Error("cache_ttl_min must be less or equal than cache_ttl_max")
+}
+
+// checkRatelimitSubnetMaskLen returns an error if the length of the subnet mask
+// for IPv4 or IPv6 addresses is invalid.
+func (req *jsonDNSConfig) checkRatelimitSubnetMaskLen() (err error) {
+	err = checkInclusion(req.RatelimitSubnetLenIPv4, 0, netutil.IPv4BitLen)
+	if err != nil {
+		return fmt.Errorf("ratelimit_subnet_len_ipv4 is invalid: %w", err)
+	}
+
+	err = checkInclusion(req.RatelimitSubnetLenIPv6, 0, netutil.IPv6BitLen)
+	if err != nil {
+		return fmt.Errorf("ratelimit_subnet_len_ipv6 is invalid: %w", err)
+	}
+
+	return nil
+}
+
+// checkInclusion returns an error if a ptr is not nil and points to value,
+// that not in the inclusive range between minN and maxN.
+func checkInclusion(ptr *int, minN, maxN int) (err error) {
+	if ptr == nil {
+		return nil
+	}
+
+	n := *ptr
+	switch {
+	case n < minN:
+		return fmt.Errorf("value %d less than min %d", n, minN)
+	case n > maxN:
+		return fmt.Errorf("value %d greater than max %d", n, maxN)
+	}
+
+	return nil
+}
+
+// checkRatelimitWhitelist returns an error if any of IP addresses is invalid.
+func (req *jsonDNSConfig) checkRatelimitWhitelist() (err error) {
+	if req.RatelimitWhitelist == nil {
+		return nil
+	}
+
+	for i, ipStr := range *req.RatelimitWhitelist {
+		if _, err = netip.ParseAddr(ipStr); err != nil {
+			return fmt.Errorf("ratelimit whitelist: at index %d: %w", i, err)
+		}
+	}
+
+	return nil
 }
 
 // handleSetConfig handles requests to the POST /control/dns_config endpoint.
@@ -401,6 +519,9 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 		setIfNotNil(&s.conf.CacheOptimistic, dc.CacheOptimistic),
 		setIfNotNil(&s.conf.AddrProcConf.UseRDNS, dc.ResolveClients),
 		setIfNotNil(&s.conf.UsePrivateRDNS, dc.UsePrivateRDNS),
+		setIfNotNil(&s.conf.RatelimitSubnetLenIPv4, dc.RatelimitSubnetLenIPv4),
+		setIfNotNil(&s.conf.RatelimitSubnetLenIPv6, dc.RatelimitSubnetLenIPv6),
+		setIfNotNil(&s.conf.RatelimitWhitelist, dc.RatelimitWhitelist),
 	} {
 		shouldRestart = shouldRestart || hasSet
 		if shouldRestart {
@@ -408,8 +529,8 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 		}
 	}
 
-	if dc.RateLimit != nil && s.conf.Ratelimit != *dc.RateLimit {
-		s.conf.Ratelimit = *dc.RateLimit
+	if dc.Ratelimit != nil && s.conf.Ratelimit != *dc.Ratelimit {
+		s.conf.Ratelimit = *dc.Ratelimit
 		shouldRestart = true
 	}
 

@@ -6,6 +6,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import {
     renderInputField,
     renderRadioField,
+    renderTextareaField,
     CheckboxField,
     toNumber,
 } from '../../../../helpers/form';
@@ -14,7 +15,10 @@ import {
     validateIpv6,
     validateRequiredValue,
     validateIp,
+    validateIPv4Subnet,
+    validateIPv6Subnet,
 } from '../../../../helpers/validators';
+import { removeEmptyLines } from '../../../../helpers/helpers';
 import { BLOCKING_MODES, FORM_NAME, UINT32_RANGE } from '../../../../helpers/constants';
 
 const checkboxes = [
@@ -87,6 +91,69 @@ const Form = ({
                         validate={validateRequiredValue}
                         min={UINT32_RANGE.MIN}
                         max={UINT32_RANGE.MAX}
+                    />
+                </div>
+            </div>
+            <div className="col-12 col-md-7">
+                <div className="form__group form__group--settings">
+                    <label htmlFor="ratelimit_subnet_len_ipv4"
+                        className="form__label form__label--with-desc">
+                        <Trans>rate_limit_subnet_len_ipv4</Trans>
+                    </label>
+                    <div className="form__desc form__desc--top">
+                        <Trans>rate_limit_subnet_len_ipv4_desc</Trans>
+                    </div>
+                    <Field
+                        name="ratelimit_subnet_len_ipv4"
+                        type="number"
+                        component={renderInputField}
+                        className="form-control"
+                        placeholder={t('form_enter_rate_limit_subnet_len')}
+                        normalize={toNumber}
+                        validate={[validateRequiredValue, validateIPv4Subnet]}
+                        min={0}
+                        max={32}
+                    />
+                </div>
+            </div>
+            <div className="col-12 col-md-7">
+                <div className="form__group form__group--settings">
+                    <label htmlFor="ratelimit_subnet_len_ipv6"
+                        className="form__label form__label--with-desc">
+                        <Trans>rate_limit_subnet_len_ipv6</Trans>
+                    </label>
+                    <div className="form__desc form__desc--top">
+                        <Trans>rate_limit_subnet_len_ipv6_desc</Trans>
+                    </div>
+                    <Field
+                        name="ratelimit_subnet_len_ipv6"
+                        type="number"
+                        component={renderInputField}
+                        className="form-control"
+                        placeholder={t('form_enter_rate_limit_subnet_len')}
+                        normalize={toNumber}
+                        validate={[validateRequiredValue, validateIPv6Subnet]}
+                        min={0}
+                        max={128}
+                    />
+                </div>
+            </div>
+            <div className="col-12 col-md-7">
+                <div className="form__group form__group--settings">
+                    <label htmlFor="ratelimit_whitelist"
+                        className="form__label form__label--with-desc">
+                        <Trans>rate_limit_whitelist</Trans>
+                    </label>
+                    <div className="form__desc form__desc--top">
+                        <Trans>rate_limit_whitelist_desc</Trans>
+                    </div>
+                    <Field
+                        name="ratelimit_whitelist"
+                        component={renderTextareaField}
+                        type="text"
+                        className="form-control"
+                        placeholder={t('rate_limit_whitelist_placeholder')}
+                        normalizeOnBlur={removeEmptyLines}
                     />
                 </div>
             </div>

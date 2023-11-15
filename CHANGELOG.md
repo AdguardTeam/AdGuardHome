@@ -23,12 +23,17 @@ See also the [v0.107.42 GitHub milestone][ms-v0.107.42].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- Ability to specify rate limiting settings in the Web UI ([#6369]).
+
 ### Fixed
 
 - Pre-filling the New static lease window with data ([#6402]).
 - Protection pause timer synchronization ([#5759]).
 
 [#5759]: https://github.com/AdguardTeam/AdGuardHome/issues/5759
+[#6369]: https://github.com/AdguardTeam/AdGuardHome/issues/6369
 [#6402]: https://github.com/AdguardTeam/AdGuardHome/issues/6402
 
 <!--

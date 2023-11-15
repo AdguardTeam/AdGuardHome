@@ -4,6 +4,25 @@
 
 ## v0.108.0: API changes
 
+## v0.107.42: API changes
+
+### The new field `"ratelimit_subnet_len_ipv4"` in `DNSConfig` object
+
+* The new field `"ratelimit_subnet_len_ipv4"` in `GET /control/dns_info` and
+  `POST /control/dns_config` is the length of the subnet mask for IPv4
+  addresses.
+
+### The new field `"ratelimit_subnet_len_ipv6"` in `DNSConfig` object
+
+* The new field `"ratelimit_subnet_len_ipv6"` in `GET /control/dns_info` and
+  `POST /control/dns_config` is the length of the subnet mask for IPv6
+  addresses.
+
+### The new field `"ratelimit_whitelist"` in `DNSConfig` object
+
+* The new field `"blocked_response_ttl"` in `GET /control/dns_info` and `POST
+  /control/dns_config` is the list of IP addresses excluded from rate limiting.
+
 ## v0.107.39: API changes
 
 ### New HTTP API 'POST /control/dhcp/update_static_lease'
