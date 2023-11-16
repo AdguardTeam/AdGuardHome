@@ -98,6 +98,8 @@ type Config struct {
 
 	// EtcHosts is a container of IP-hostname pairs taken from the operating
 	// system configuration files (e.g. /etc/hosts).
+	//
+	// TODO(e.burkov):  Move it to dnsforward entirely.
 	EtcHosts *aghnet.HostsContainer `yaml:"-"`
 
 	// Called when the configuration is changed by HTTP request

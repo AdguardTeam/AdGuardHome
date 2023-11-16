@@ -831,14 +831,13 @@ func (s *Server) dhcpHostFromRequest(q *dns.Question) (reqHost string) {
 
 // setCustomUpstream sets custom upstream settings in pctx, if necessary.
 func (s *Server) setCustomUpstream(pctx *proxy.DNSContext, clientID string) {
-	customUpsByClient := s.conf.GetCustomUpstreamByClient
-	if pctx.Addr == nil || customUpsByClient == nil {
+	if pctx.Addr == nil || s.conf.ClientsContainer == nil {
 		return
 	}
 
 	// Use the ClientID first, since it has a higher priority.
 	id := stringutil.Coalesce(clientID, ipStringFromAddr(pctx.Addr))
-	upsConf, err := customUpsByClient(id)
+	upsConf, err := s.conf.ClientsContainer.UpstreamConfigByID(id, s.bootstrap)
 	if err != nil {
 		log.Error("dnsforward: getting custom upstreams for client %s: %s", id, err)
 
@@ -847,9 +846,9 @@ func (s *Server) setCustomUpstream(pctx *proxy.DNSContext, clientID string) {
 
 	if upsConf != nil {
 		log.Debug("dnsforward: using custom upstreams for client %s", id)
-	}
 
-	pctx.CustomUpstreamConfig = upsConf
+		pctx.CustomUpstreamConfig = upsConf
+	}
 }
 
 // Apply filtering logic after we have received response from upstream servers

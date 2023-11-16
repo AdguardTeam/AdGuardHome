@@ -12,11 +12,14 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
+
 	// TODO(a.garipov): Add a “dnsproxy proxy” package to shield us from changes
 	// and replacement of module dnsproxy.
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/errors"
 )
 
 // Service is the AdGuard Home DNS service.  A nil *Service is a valid
@@ -27,6 +30,7 @@ import (
 type Service struct {
 	proxy               *proxy.Proxy
 	bootstraps          []string
+	bootstrapResolvers  []*upstream.UpstreamResolver
 	upstreams           []string
 	dns64Prefixes       []netip.Prefix
 	upsTimeout          time.Duration
@@ -52,7 +56,7 @@ func New(c *Config) (svc *Service, err error) {
 		useDNS64:            c.UseDNS64,
 	}
 
-	upstreams, err := addressesToUpstreams(
+	upstreams, resolvers, err := addressesToUpstreams(
 		c.UpstreamServers,
 		c.BootstrapServers,
 		c.UpstreamTimeout,
@@ -62,6 +66,7 @@ func New(c *Config) (svc *Service, err error) {
 		return nil, fmt.Errorf("converting upstreams: %w", err)
 	}
 
+	svc.bootstrapResolvers = resolvers
 	svc.proxy = &proxy.Proxy{
 		Config: proxy.Config{
 			UDPListenAddr: udpAddrs(c.Addresses),
@@ -90,20 +95,37 @@ func addressesToUpstreams(
 	bootstraps []string,
 	timeout time.Duration,
 	preferIPv6 bool,
-) (upstreams []upstream.Upstream, err error) {
+) (upstreams []upstream.Upstream, boots []*upstream.UpstreamResolver, err error) {
+	opts := &upstream.Options{
+		Timeout:    timeout,
+		PreferIPv6: preferIPv6,
+	}
+
+	boots, err = aghnet.ParseBootstraps(bootstraps, opts)
+	if err != nil {
+		// Don't wrap the error, since it's informative enough as is.
+		return nil, nil, err
+	}
+
+	// TODO(e.burkov):  Add system hosts resolver here.
+	var bootstrap upstream.ParallelResolver
+	for _, r := range boots {
+		bootstrap = append(bootstrap, r)
+	}
+
 	upstreams = make([]upstream.Upstream, len(upsStrs))
 	for i, upsStr := range upsStrs {
 		upstreams[i], err = upstream.AddressToUpstream(upsStr, &upstream.Options{
-			Bootstrap:  bootstraps,
+			Bootstrap:  bootstrap,
 			Timeout:    timeout,
 			PreferIPv6: preferIPv6,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("upstream at index %d: %w", i, err)
+			return nil, boots, fmt.Errorf("upstream at index %d: %w", i, err)
 		}
 	}
 
-	return upstreams, nil
+	return upstreams, boots, nil
 }
 
 // tcpAddrs converts []netip.AddrPort into []*net.TCPAddr.
@@ -162,7 +184,15 @@ func (svc *Service) Shutdown(ctx context.Context) (err error) {
 		return nil
 	}
 
-	return svc.proxy.Stop()
+	errs := []error{
+		svc.proxy.Stop(),
+	}
+
+	for _, b := range svc.bootstrapResolvers {
+		errs = append(errs, errors.Annotate(b.Close(), "closing bootstrap %s: %w", b.Address()))
+	}
+
+	return errors.Join(errs...)
 }
 
 // Config returns the current configuration of the web service.  Config must not

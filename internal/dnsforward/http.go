@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/netip"
 	"strings"
@@ -197,13 +198,13 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 // defaultLocalPTRUpstreams returns the list of default local PTR resolvers
 // filtered of AdGuard Home's own DNS server addresses.  It may appear empty.
 func (s *Server) defaultLocalPTRUpstreams() (ups []string, err error) {
-	matcher, err := s.conf.ourAddrsMatcher()
+	matcher, err := s.conf.ourAddrsSet()
 	if err != nil {
 		// Don't wrap the error because it's informative enough as is.
 		return nil, err
 	}
 
-	sysResolvers := slices.DeleteFunc(s.sysResolvers.Addrs(), matcher)
+	sysResolvers := slices.DeleteFunc(s.sysResolvers.Addrs(), matcher.Has)
 	ups = make([]string, 0, len(sysResolvers))
 	for _, r := range sysResolvers {
 		ups = append(ups, r.String())
@@ -575,7 +576,7 @@ func newUpstreamConfig(upstreams []string) (conf *proxy.UpstreamConfig, err erro
 	conf, err = proxy.ParseUpstreamsConfig(
 		upstreams,
 		&upstream.Options{
-			Bootstrap: []string{},
+			Bootstrap: net.DefaultResolver,
 			Timeout:   DefaultTimeout,
 		},
 	)
@@ -890,22 +891,11 @@ func (s *Server) checkUpstreamAddr(
 		}
 	}()
 
-	opts = &upstream.Options{
+	u, err := upstream.AddressToUpstream(addr, &upstream.Options{
 		Bootstrap:  opts.Bootstrap,
 		Timeout:    opts.Timeout,
 		PreferIPv6: opts.PreferIPv6,
-	}
-
-	// dnsFilter can be nil during application update.
-	if s.dnsFilter != nil {
-		recs := s.dnsFilter.EtcHostsRecords(extractUpstreamHost(addr))
-		for _, rec := range recs {
-			opts.ServerIPAddrs = append(opts.ServerIPAddrs, rec.Addr.AsSlice())
-		}
-		sortNetIPAddrs(opts.ServerIPAddrs, opts.PreferIPv6)
-	}
-
-	u, err := upstream.AddressToUpstream(addr, opts)
+	})
 	if err != nil {
 		return fmt.Errorf("creating upstream for %q: %w", addr, err)
 	}
@@ -913,6 +903,13 @@ func (s *Server) checkUpstreamAddr(
 	defer func() { err = errors.WithDeferred(err, u.Close()) }()
 
 	return check(u)
+}
+
+// closeBoots closes all the provided bootstrap servers and logs errors if any.
+func closeBoots(boots []*upstream.UpstreamResolver) {
+	for _, c := range boots {
+		logCloserErr(c, "dnsforward: closing bootstrap %s: %s", c.Address())
+	}
 }
 
 // handleTestUpstreamDNS handles requests to the POST /control/test_upstream_dns
@@ -929,15 +926,21 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	req.Upstreams = stringutil.FilterOut(req.Upstreams, IsCommentOrEmpty)
 	req.FallbackDNS = stringutil.FilterOut(req.FallbackDNS, IsCommentOrEmpty)
 	req.PrivateUpstreams = stringutil.FilterOut(req.PrivateUpstreams, IsCommentOrEmpty)
+	req.BootstrapDNS = stringutil.FilterOut(req.BootstrapDNS, IsCommentOrEmpty)
 
 	opts := &upstream.Options{
-		Bootstrap:  req.BootstrapDNS,
 		Timeout:    s.conf.UpstreamTimeout,
 		PreferIPv6: s.conf.BootstrapPreferIPv6,
 	}
-	if len(opts.Bootstrap) == 0 {
-		opts.Bootstrap = defaultBootstrap
+
+	var boots []*upstream.UpstreamResolver
+	opts.Bootstrap, boots, err = s.createBootstrap(req.BootstrapDNS, opts)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to parse bootstrap servers: %s", err)
+
+		return
 	}
+	defer closeBoots(boots)
 
 	wg := &sync.WaitGroup{}
 	m := &sync.Map{}

@@ -126,7 +126,13 @@ func (clients *clientsContainer) Init(
 		return nil
 	}
 
-	if clients.etcHosts != nil {
+	// The clients.etcHosts may be nil even if config.Clients.Sources.HostsFile
+	// is true, because of the deprecated option --no-etc-hosts.
+	//
+	// TODO(e.burkov):  The option should probably be returned, since hosts file
+	// currently used not only for clients' information enrichment, but also in
+	// the filtering module and upstream addresses resolution.
+	if config.Clients.Sources.HostsFile && clients.etcHosts != nil {
 		go clients.handleHostsUpdates()
 	}
 
@@ -419,11 +425,14 @@ func (clients *clientsContainer) shouldCountClient(ids []string) (y bool) {
 	return true
 }
 
-// findUpstreams returns upstreams configured for the client, identified either
-// by its IP address or its ClientID.  upsConf is nil if the client isn't found
-// or if the client has no custom upstreams.
-func (clients *clientsContainer) findUpstreams(
+// type check
+var _ dnsforward.ClientsContainer = (*clientsContainer)(nil)
+
+// UpstreamConfigByID implements the [dnsforward.ClientsContainer] interface for
+// *clientsContainer.
+func (clients *clientsContainer) UpstreamConfigByID(
 	id string,
+	bootstrap upstream.Resolver,
 ) (upsConf *proxy.UpstreamConfig, err error) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
@@ -431,6 +440,8 @@ func (clients *clientsContainer) findUpstreams(
 	c, ok := clients.findLocked(id)
 	if !ok {
 		return nil, nil
+	} else if c.upstreamConfig != nil {
+		return c.upstreamConfig, nil
 	}
 
 	upstreams := stringutil.FilterOut(c.Upstreams, dnsforward.IsCommentOrEmpty)
@@ -438,21 +449,18 @@ func (clients *clientsContainer) findUpstreams(
 		return nil, nil
 	}
 
-	if c.upstreamConfig != nil {
-		return c.upstreamConfig, nil
-	}
-
 	var conf *proxy.UpstreamConfig
 	conf, err = proxy.ParseUpstreamsConfig(
 		upstreams,
 		&upstream.Options{
-			Bootstrap:    config.DNS.BootstrapDNS,
+			Bootstrap:    bootstrap,
 			Timeout:      config.DNS.UpstreamTimeout.Duration,
 			HTTPVersions: dnsforward.UpstreamHTTPVersions(config.DNS.UseHTTP3Upstreams),
 			PreferIPv6:   config.DNS.BootstrapPreferIPv6,
 		},
 	)
 	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
 		return nil, err
 	}
 
@@ -672,10 +680,6 @@ func (clients *clientsContainer) Del(name string) (ok bool) {
 		return false
 	}
 
-	if err := c.closeUpstreams(); err != nil {
-		log.Error("client container: removing client %s: %s", name, err)
-	}
-
 	clients.del(c)
 
 	return true
@@ -683,10 +687,14 @@ func (clients *clientsContainer) Del(name string) (ok bool) {
 
 // del removes c from the indexes. clients.lock is expected to be locked.
 func (clients *clientsContainer) del(c *Client) {
-	// update Name index
+	if err := c.closeUpstreams(); err != nil {
+		log.Error("client container: removing client %s: %s", c.Name, err)
+	}
+
+	// Update the name index.
 	delete(clients.list, c.Name)
 
-	// update ID index
+	// Update the ID index.
 	for _, id := range c.IDs {
 		delete(clients.idIndex, id)
 	}

@@ -223,7 +223,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			`upstream servers: validating upstream "!!!": not an ip:port`,
 	}, {
 		name: "bootstraps_bad",
-		wantSet: `validating dns config: checking bootstrap a: invalid address: bootstrap a:53: ` +
+		wantSet: `validating dns config: checking bootstrap a: invalid address: not a bootstrap: ` +
 			`ParseAddr("a"): unable to parse IP`,
 	}, {
 		name:    "cache_bad_ttl",
@@ -534,6 +534,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 	}, nil)
+	srv.etcHosts = hc
 	startDeferStop(t, srv)
 
 	testCases := []struct {

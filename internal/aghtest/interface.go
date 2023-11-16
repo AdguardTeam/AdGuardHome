@@ -11,6 +11,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/miekg/dns"
 )
@@ -114,6 +115,26 @@ var _ client.AddressUpdater = (*AddressUpdater)(nil)
 // *AddressUpdater.
 func (p *AddressUpdater) UpdateAddress(ip netip.Addr, host string, info *whois.Info) {
 	p.OnUpdateAddress(ip, host, info)
+}
+
+// Package dnsforward
+
+// ClientsContainer is a fake [dnsforward.ClientsContainer] implementation for
+// tests.
+type ClientsContainer struct {
+	OnUpstreamConfigByID func(
+		id string,
+		boot upstream.Resolver,
+	) (conf *proxy.UpstreamConfig, err error)
+}
+
+// UpstreamConfigByID implements the [dnsforward.ClientsContainer] interface
+// for *ClientsContainer.
+func (c *ClientsContainer) UpstreamConfigByID(
+	id string,
+	boot upstream.Resolver,
+) (conf *proxy.UpstreamConfig, err error) {
+	return c.OnUpstreamConfigByID(id, boot)
 }
 
 // Package filtering

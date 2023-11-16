@@ -656,17 +656,20 @@ func TestServerCustomClientUpstream(t *testing.T) {
 	s := createTestServer(t, &filtering.Config{
 		BlockingMode: filtering.BlockingModeDefault,
 	}, forwardConf, nil)
-	s.conf.GetCustomUpstreamByClient = func(_ string) (conf *proxy.UpstreamConfig, err error) {
-		ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
-			return aghalg.Coalesce(
-				aghtest.MatchedResponse(req, dns.TypeA, "host", "192.168.0.1"),
-				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
-			), nil
-		})
 
-		return &proxy.UpstreamConfig{
-			Upstreams: []upstream.Upstream{ups},
-		}, nil
+	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+		return aghalg.Coalesce(
+			aghtest.MatchedResponse(req, dns.TypeA, "host", "192.168.0.1"),
+			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+		), nil
+	})
+	s.conf.ClientsContainer = &aghtest.ClientsContainer{
+		OnUpstreamConfigByID: func(
+			_ string,
+			_ upstream.Resolver,
+		) (conf *proxy.UpstreamConfig, err error) {
+			return &proxy.UpstreamConfig{Upstreams: []upstream.Upstream{ups}}, nil
+		},
 	}
 	startDeferStop(t, s)
 

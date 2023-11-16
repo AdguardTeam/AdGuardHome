@@ -1,14 +1,17 @@
 package aghnet
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
 	"net/netip"
 	"path"
+	"strings"
 	"sync/atomic"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/log"
@@ -141,13 +144,9 @@ func NewHostsContainer(
 func (hc *HostsContainer) Close() (err error) {
 	log.Debug("%s: closing", hostsContainerPrefix)
 
-	err = hc.watcher.Close()
-	if err != nil {
-		err = fmt.Errorf("closing fs watcher: %w", err)
+	err = errors.Annotate(hc.watcher.Close(), "closing fs watcher: %w")
 
-		// Go on and close the container either way.
-	}
-
+	// Go on and close the container either way.
 	close(hc.done)
 
 	return err
@@ -318,4 +317,40 @@ func (hc *HostsContainer) refresh() (err error) {
 	}
 
 	return nil
+}
+
+// type check
+var _ upstream.Resolver = (*HostsContainer)(nil)
+
+// LookupNetIP implements the [upstream.Resolver] interface for *HostsContainer.
+func (hc *HostsContainer) LookupNetIP(
+	ctx context.Context,
+	network string,
+	hostname string,
+) (addrs []netip.Addr, err error) {
+	// TODO(e.burkov):  Think of extracting this logic to a golibs function if
+	// needed anywhere else.
+	var isDesiredProto func(ip netip.Addr) (ok bool)
+	switch network {
+	case "ip4":
+		isDesiredProto = (netip.Addr).Is4
+	case "ip6":
+		isDesiredProto = (netip.Addr).Is6
+	case "ip":
+		isDesiredProto = func(ip netip.Addr) (ok bool) { return true }
+	default:
+		return nil, fmt.Errorf("unsupported network: %q", network)
+	}
+
+	idx := hc.current.Load()
+	recs := idx.names[strings.ToLower(hostname)]
+
+	addrs = make([]netip.Addr, 0, len(recs))
+	for _, rec := range recs {
+		if isDesiredProto(rec.Addr) {
+			addrs = append(addrs, rec.Addr)
+		}
+	}
+
+	return slices.Clip(addrs), nil
 }

@@ -138,8 +138,9 @@ func initDNSServer(
 		QueryLog:    qlog,
 		PrivateNets: privateNets,
 		Anonymizer:  anonymizer,
-		LocalDomain: config.DHCP.LocalDomainName,
 		DHCPServer:  dhcpSrv,
+		EtcHosts:    Context.etcHosts,
+		LocalDomain: config.DHCP.LocalDomainName,
 	})
 	if err != nil {
 		closeDNSServer()
@@ -288,7 +289,7 @@ func newServerConfig(
 	newConf.TLSAllowUnencryptedDoH = tlsConf.AllowUnencryptedDoH
 
 	newConf.FilterHandler = applyAdditionalFiltering
-	newConf.GetCustomUpstreamByClient = Context.clients.findUpstreams
+	newConf.ClientsContainer = &Context.clients
 
 	newConf.LocalPTRResolvers = dnsConf.LocalPTRResolvers
 	newConf.UpstreamTimeout = dnsConf.UpstreamTimeout.Duration

@@ -355,11 +355,11 @@ func TestClientsCustomUpstream(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, ok)
 
-	config, err := clients.findUpstreams("1.2.3.4")
+	config, err := clients.UpstreamConfigByID("1.2.3.4", net.DefaultResolver)
 	assert.Nil(t, config)
 	assert.NoError(t, err)
 
-	config, err = clients.findUpstreams("1.1.1.1")
+	config, err = clients.UpstreamConfigByID("1.1.1.1", net.DefaultResolver)
 	require.NotNil(t, config)
 	assert.NoError(t, err)
 	assert.Len(t, config.Upstreams, 1)
