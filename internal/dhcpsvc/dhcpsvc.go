@@ -10,13 +10,13 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
+	"golang.org/x/exp/slices"
 )
 
 // Lease is a DHCP lease.
 //
-// TODO(e.burkov):  Consider it to [agh], since it also may be needed in
-// [websvc].  Also think of implementing iterating methods with appropriate
-// signatures.
+// TODO(e.burkov):  Consider moving it to [agh], since it also may be needed in
+// [websvc].
 type Lease struct {
 	// IP is the IP address leased to the client.
 	IP netip.Addr
@@ -32,6 +32,21 @@ type Lease struct {
 
 	// IsStatic defines if the lease is static.
 	IsStatic bool
+}
+
+// Clone returns a deep copy of l.
+func (l *Lease) Clone() (clone *Lease) {
+	if l == nil {
+		return nil
+	}
+
+	return &Lease{
+		Expiry:   l.Expiry,
+		Hostname: l.Hostname,
+		HWAddr:   slices.Clone(l.HWAddr),
+		IP:       l.IP,
+		IsStatic: l.IsStatic,
+	}
 }
 
 type Interface interface {
@@ -57,6 +72,9 @@ type Interface interface {
 	IPByHost(host string) (ip netip.Addr)
 
 	// Leases returns all the active DHCP leases.
+	//
+	// TODO(e.burkov):  Consider implementing iterating methods with appropriate
+	// signatures instead of cloning the whole list.
 	Leases() (ls []*Lease)
 
 	// AddLease adds a new DHCP lease.  It returns an error if the lease is
@@ -91,6 +109,9 @@ func (Empty) Shutdown(_ context.Context) (err error) { return nil }
 // Config implements the [ServiceWithConfig] interface for Empty.
 func (Empty) Config() (conf *Config) { return nil }
 
+// type check
+var _ Interface = Empty{}
+
 // Enabled implements the [Interface] interface for Empty.
 func (Empty) Enabled() (ok bool) { return false }
 
@@ -102,9 +123,6 @@ func (Empty) MACByIP(_ netip.Addr) (mac net.HardwareAddr) { return nil }
 
 // IPByHost implements the [Interface] interface for Empty.
 func (Empty) IPByHost(_ string) (ip netip.Addr) { return netip.Addr{} }
-
-// type check
-var _ Interface = Empty{}
 
 // Leases implements the [Interface] interface for Empty.
 func (Empty) Leases() (leases []*Lease) { return nil }

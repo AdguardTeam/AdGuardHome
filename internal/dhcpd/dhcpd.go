@@ -2,7 +2,6 @@
 package dhcpd
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/netip"
@@ -12,7 +11,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/timeutil"
-	"golang.org/x/exp/slices"
 )
 
 const (
@@ -28,105 +26,6 @@ const (
 	defaultMaxAttempts int           = 10
 	defaultBackoff     time.Duration = 500 * time.Millisecond
 )
-
-// Lease contains the necessary information about a DHCP lease.  It's used as is
-// in the database, so don't change it until it's absolutely necessary, see
-// [dataVersion].
-//
-// TODO(e.burkov):  Unexport it and use [dhcpsvc.Lease].
-type Lease struct {
-	// Expiry is the expiration time of the lease.
-	Expiry time.Time `json:"expires"`
-
-	// Hostname of the client.
-	Hostname string `json:"hostname"`
-
-	// HWAddr is the physical hardware address (MAC address).
-	HWAddr net.HardwareAddr `json:"mac"`
-
-	// IP is the IP address leased to the client.
-	IP netip.Addr `json:"ip"`
-
-	// IsStatic defines if the lease is static.
-	IsStatic bool `json:"static"`
-}
-
-// Clone returns a deep copy of l.
-func (l *Lease) Clone() (clone *Lease) {
-	if l == nil {
-		return nil
-	}
-
-	return &Lease{
-		Expiry:   l.Expiry,
-		Hostname: l.Hostname,
-		HWAddr:   slices.Clone(l.HWAddr),
-		IP:       l.IP,
-		IsStatic: l.IsStatic,
-	}
-}
-
-// IsBlocklisted returns true if the lease is blocklisted.
-//
-// TODO(a.garipov): Just make it a boolean field.
-func (l *Lease) IsBlocklisted() (ok bool) {
-	if len(l.HWAddr) == 0 {
-		return false
-	}
-
-	for _, b := range l.HWAddr {
-		if b != 0 {
-			return false
-		}
-	}
-
-	return true
-}
-
-// MarshalJSON implements the json.Marshaler interface for Lease.
-func (l Lease) MarshalJSON() ([]byte, error) {
-	var expiryStr string
-	if !l.IsStatic {
-		// The front-end is waiting for RFC 3999 format of the time
-		// value.  It also shouldn't got an Expiry field for static
-		// leases.
-		//
-		// See https://github.com/AdguardTeam/AdGuardHome/issues/2692.
-		expiryStr = l.Expiry.Format(time.RFC3339)
-	}
-
-	type lease Lease
-	return json.Marshal(&struct {
-		HWAddr string `json:"mac"`
-		Expiry string `json:"expires,omitempty"`
-		lease
-	}{
-		HWAddr: l.HWAddr.String(),
-		Expiry: expiryStr,
-		lease:  lease(l),
-	})
-}
-
-// UnmarshalJSON implements the json.Unmarshaler interface for *Lease.
-func (l *Lease) UnmarshalJSON(data []byte) (err error) {
-	type lease Lease
-	aux := struct {
-		*lease
-		HWAddr string `json:"mac"`
-	}{
-		lease: (*lease)(l),
-	}
-	if err = json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	l.HWAddr, err = net.ParseMAC(aux.HWAddr)
-	if err != nil {
-		return fmt.Errorf("couldn't parse MAC address: %w", err)
-	}
-
-	return nil
-}
 
 // OnLeaseChangedT is a callback for lease changes.
 type OnLeaseChangedT func(flags int)
@@ -370,19 +269,7 @@ func (s *server) Stop() (err error) {
 
 // Leases returns the list of active DHCP leases.
 func (s *server) Leases() (leases []*dhcpsvc.Lease) {
-	ls := append(s.srv4.GetLeases(LeasesAll), s.srv6.GetLeases(LeasesAll)...)
-	leases = make([]*dhcpsvc.Lease, len(ls))
-	for i, l := range ls {
-		leases[i] = &dhcpsvc.Lease{
-			Expiry:   l.Expiry,
-			Hostname: l.Hostname,
-			HWAddr:   l.HWAddr,
-			IP:       l.IP,
-			IsStatic: l.IsStatic,
-		}
-	}
-
-	return leases
+	return append(s.srv4.GetLeases(LeasesAll), s.srv6.GetLeases(LeasesAll)...)
 }
 
 // MACByIP returns a MAC address by the IP address of its lease, if there is
@@ -414,6 +301,6 @@ func (s *server) IPByHost(host string) (ip netip.Addr) {
 }
 
 // AddStaticLease - add static v4 lease
-func (s *server) AddStaticLease(l *Lease) error {
+func (s *server) AddStaticLease(l *dhcpsvc.Lease) error {
 	return s.srv4.AddStaticLease(l)
 }

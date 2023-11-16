@@ -45,15 +45,15 @@ func (conf *IPv4Config) validate() (err error) {
 	case !conf.Enabled:
 		return nil
 	case !conf.GatewayIP.Is4():
-		return mustBeErr("gateway ip", "be a valid ipv4", conf.GatewayIP)
+		return newMustErr("gateway ip", "be a valid ipv4", conf.GatewayIP)
 	case !conf.SubnetMask.Is4():
-		return mustBeErr("subnet mask", "be a valid ipv4 cidr mask", conf.SubnetMask)
+		return newMustErr("subnet mask", "be a valid ipv4 cidr mask", conf.SubnetMask)
 	case !conf.RangeStart.Is4():
-		return mustBeErr("range start", "be a valid ipv4", conf.RangeStart)
+		return newMustErr("range start", "be a valid ipv4", conf.RangeStart)
 	case !conf.RangeEnd.Is4():
-		return mustBeErr("range end", "be a valid ipv4", conf.RangeEnd)
+		return newMustErr("range end", "be a valid ipv4", conf.RangeEnd)
 	case conf.LeaseDuration <= 0:
-		return mustBeErr("lease duration", "be less than %d", conf.LeaseDuration)
+		return newMustErr("lease duration", "be less than %d", conf.LeaseDuration)
 	default:
 		return nil
 	}

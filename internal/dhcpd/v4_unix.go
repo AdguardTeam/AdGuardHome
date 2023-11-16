@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -38,7 +39,7 @@ type v4Server struct {
 	// have intersections with [implicitOpts].
 	explicitOpts dhcpv4.Options
 
-	// leasesLock protects leases, leaseHosts, and leasedOffsets.
+	// leasesLock protects leases, hostsIndex, ipIndex, and leasedOffsets.
 	leasesLock sync.Mutex
 
 	// leasedOffsets contains offsets from conf.ipRange.start that have been
@@ -46,13 +47,13 @@ type v4Server struct {
 	leasedOffsets *bitSet
 
 	// leases contains all dynamic and static leases.
-	leases []*Lease
+	leases []*dhcpsvc.Lease
 
 	// hostsIndex is the set of all hostnames of all known DHCP clients.
-	hostsIndex map[string]*Lease
+	hostsIndex map[string]*dhcpsvc.Lease
 
 	// ipIndex is an index of leases by their IP addresses.
-	ipIndex map[netip.Addr]*Lease
+	ipIndex map[netip.Addr]*dhcpsvc.Lease
 }
 
 func (s *v4Server) enabled() (ok bool) {
@@ -141,7 +142,7 @@ func (s *v4Server) IPByHost(host string) (ip netip.Addr) {
 }
 
 // ResetLeases resets leases.
-func (s *v4Server) ResetLeases(leases []*Lease) (err error) {
+func (s *v4Server) ResetLeases(leases []*dhcpsvc.Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
 
 	if s.conf == nil {
@@ -152,8 +153,8 @@ func (s *v4Server) ResetLeases(leases []*Lease) (err error) {
 	defer s.leasesLock.Unlock()
 
 	s.leasedOffsets = newBitSet()
-	s.hostsIndex = make(map[string]*Lease, len(leases))
-	s.ipIndex = make(map[netip.Addr]*Lease, len(leases))
+	s.hostsIndex = make(map[string]*dhcpsvc.Lease, len(leases))
+	s.ipIndex = make(map[netip.Addr]*dhcpsvc.Lease, len(leases))
 	s.leases = nil
 
 	for _, l := range leases {
@@ -173,14 +174,14 @@ func (s *v4Server) ResetLeases(leases []*Lease) (err error) {
 }
 
 // getLeasesRef returns the actual leases slice.  For internal use only.
-func (s *v4Server) getLeasesRef() []*Lease {
+func (s *v4Server) getLeasesRef() []*dhcpsvc.Lease {
 	return s.leases
 }
 
 // isBlocklisted returns true if this lease holds a blocklisted IP.
 //
 // TODO(a.garipov): Make a method of *Lease?
-func (s *v4Server) isBlocklisted(l *Lease) (ok bool) {
+func (s *v4Server) isBlocklisted(l *dhcpsvc.Lease) (ok bool) {
 	if len(l.HWAddr) == 0 {
 		return false
 	}
@@ -196,11 +197,11 @@ func (s *v4Server) isBlocklisted(l *Lease) (ok bool) {
 
 // GetLeases returns the list of current DHCP leases.  It is safe for concurrent
 // use.
-func (s *v4Server) GetLeases(flags GetLeasesFlags) (leases []*Lease) {
+func (s *v4Server) GetLeases(flags GetLeasesFlags) (leases []*dhcpsvc.Lease) {
 	// The function shouldn't return nil, because zero-length slice behaves
 	// differently in cases like marshalling.  Our front-end also requires
 	// a non-nil value in the response.
-	leases = []*Lease{}
+	leases = []*dhcpsvc.Lease{}
 
 	getDynamic := flags&LeasesDynamic != 0
 	getStatic := flags&LeasesStatic != 0
@@ -248,7 +249,7 @@ func (s *v4Server) FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr) {
 const defaultHwAddrLen = 6
 
 // Add the specified IP to the black list for a time period
-func (s *v4Server) blocklistLease(l *Lease) {
+func (s *v4Server) blocklistLease(l *dhcpsvc.Lease) {
 	l.HWAddr = make(net.HardwareAddr, defaultHwAddrLen)
 	l.Hostname = ""
 	l.Expiry = time.Now().Add(s.conf.leaseTime)
@@ -284,7 +285,7 @@ func (s *v4Server) rmLeaseByIndex(i int) {
 // Return error if a static lease is found
 //
 // TODO(s.chzhen):  Refactor the code.
-func (s *v4Server) rmDynamicLease(lease *Lease) (err error) {
+func (s *v4Server) rmDynamicLease(lease *dhcpsvc.Lease) (err error) {
 	for i, l := range s.leases {
 		isStatic := l.IsStatic
 
@@ -320,7 +321,7 @@ const (
 )
 
 // addLease adds a dynamic or static lease.
-func (s *v4Server) addLease(l *Lease) (err error) {
+func (s *v4Server) addLease(l *dhcpsvc.Lease) (err error) {
 	r := s.conf.ipRange
 	leaseIP := net.IP(l.IP.AsSlice())
 	offset, inOffset := r.offset(leaseIP)
@@ -352,7 +353,7 @@ func (s *v4Server) addLease(l *Lease) (err error) {
 }
 
 // rmLease removes a lease with the same properties.
-func (s *v4Server) rmLease(lease *Lease) (err error) {
+func (s *v4Server) rmLease(lease *dhcpsvc.Lease) (err error) {
 	if len(s.leases) == 0 {
 		return nil
 	}
@@ -378,7 +379,7 @@ const ErrUnconfigured errors.Error = "server is unconfigured"
 
 // AddStaticLease implements the DHCPServer interface for *v4Server.  It is
 // safe for concurrent use.
-func (s *v4Server) AddStaticLease(l *Lease) (err error) {
+func (s *v4Server) AddStaticLease(l *dhcpsvc.Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv4: adding static lease: %w") }()
 
 	if s.conf == nil {
@@ -435,7 +436,7 @@ func (s *v4Server) AddStaticLease(l *Lease) (err error) {
 }
 
 // UpdateStaticLease updates IP, hostname of the static lease.
-func (s *v4Server) UpdateStaticLease(l *Lease) (err error) {
+func (s *v4Server) UpdateStaticLease(l *dhcpsvc.Lease) (err error) {
 	defer func() {
 		if err != nil {
 			err = errors.Annotate(err, "dhcpv4: updating static lease: %w")
@@ -474,7 +475,7 @@ func (s *v4Server) UpdateStaticLease(l *Lease) (err error) {
 }
 
 // validateStaticLease returns an error if the static lease is invalid.
-func (s *v4Server) validateStaticLease(l *Lease) (err error) {
+func (s *v4Server) validateStaticLease(l *dhcpsvc.Lease) (err error) {
 	hostname, err := normalizeHostname(l.Hostname)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
@@ -511,7 +512,7 @@ func (s *v4Server) validateStaticLease(l *Lease) (err error) {
 
 // updateStaticLease safe removes dynamic lease with the same properties and
 // then adds a static lease l.
-func (s *v4Server) updateStaticLease(l *Lease) (err error) {
+func (s *v4Server) updateStaticLease(l *dhcpsvc.Lease) (err error) {
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
@@ -529,7 +530,7 @@ func (s *v4Server) updateStaticLease(l *Lease) (err error) {
 }
 
 // RemoveStaticLease removes a static lease.  It is safe for concurrent use.
-func (s *v4Server) RemoveStaticLease(l *Lease) (err error) {
+func (s *v4Server) RemoveStaticLease(l *dhcpsvc.Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "dhcpv4: %w") }()
 
 	if s.conf == nil {
@@ -606,7 +607,7 @@ func (s *v4Server) addrAvailable(target net.IP) (avail bool) {
 }
 
 // findLease finds a lease by its MAC-address.
-func (s *v4Server) findLease(mac net.HardwareAddr) (l *Lease) {
+func (s *v4Server) findLease(mac net.HardwareAddr) (l *dhcpsvc.Lease) {
 	for _, l = range s.leases {
 		if bytes.Equal(mac, l.HWAddr) {
 			return l
@@ -646,8 +647,8 @@ func (s *v4Server) findExpiredLease() int {
 
 // reserveLease reserves a lease for a client by its MAC-address.  It returns
 // nil if it couldn't allocate a new lease.
-func (s *v4Server) reserveLease(mac net.HardwareAddr) (l *Lease, err error) {
-	l = &Lease{HWAddr: slices.Clone(mac)}
+func (s *v4Server) reserveLease(mac net.HardwareAddr) (l *dhcpsvc.Lease, err error) {
+	l = &dhcpsvc.Lease{HWAddr: slices.Clone(mac)}
 
 	nextIP := s.nextIP()
 	if nextIP == nil {
@@ -679,7 +680,7 @@ func (s *v4Server) reserveLease(mac net.HardwareAddr) (l *Lease, err error) {
 // commitLease refreshes l's values.  It takes the desired hostname into account
 // when setting it into the lease, but generates a unique one if the provided
 // can't be used.
-func (s *v4Server) commitLease(l *Lease, hostname string) {
+func (s *v4Server) commitLease(l *dhcpsvc.Lease, hostname string) {
 	prev := l.Hostname
 	hostname = s.validHostnameForClient(hostname, l.IP)
 
@@ -709,7 +710,7 @@ func (s *v4Server) commitLease(l *Lease, hostname string) {
 
 // allocateLease allocates a new lease for the MAC address.  If there are no IP
 // addresses left, both l and err are nil.
-func (s *v4Server) allocateLease(mac net.HardwareAddr) (l *Lease, err error) {
+func (s *v4Server) allocateLease(mac net.HardwareAddr) (l *dhcpsvc.Lease, err error) {
 	for {
 		l, err = s.reserveLease(mac)
 		if err != nil {
@@ -728,7 +729,7 @@ func (s *v4Server) allocateLease(mac net.HardwareAddr) (l *Lease, err error) {
 }
 
 // handleDiscover is the handler for the DHCP Discover request.
-func (s *v4Server) handleDiscover(req, resp *dhcpv4.DHCPv4) (l *Lease, err error) {
+func (s *v4Server) handleDiscover(req, resp *dhcpv4.DHCPv4) (l *dhcpsvc.Lease, err error) {
 	mac := req.ClientHWAddr
 
 	defer s.conf.notify(LeaseChangedDBStore)
@@ -787,7 +788,7 @@ func OptionFQDN(fqdn string) (opt dhcpv4.Option) {
 // checkLease checks if the pair of mac and ip is already leased.  The mismatch
 // is true when the existing lease has the same hardware address but differs in
 // its IP address.
-func (s *v4Server) checkLease(mac net.HardwareAddr, ip net.IP) (lease *Lease, mismatch bool) {
+func (s *v4Server) checkLease(mac net.HardwareAddr, ip net.IP) (l *dhcpsvc.Lease, mismatch bool) {
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
@@ -798,7 +799,7 @@ func (s *v4Server) checkLease(mac net.HardwareAddr, ip net.IP) (lease *Lease, mi
 		return nil, false
 	}
 
-	for _, l := range s.leases {
+	for _, l = range s.leases {
 		if !bytes.Equal(l.HWAddr, mac) {
 			continue
 		}
@@ -823,7 +824,7 @@ func (s *v4Server) handleSelecting(
 	req *dhcpv4.DHCPv4,
 	reqIP net.IP,
 	sid net.IP,
-) (l *Lease, needsReply bool) {
+) (l *dhcpsvc.Lease, needsReply bool) {
 	// Client inserts the address of the selected server in server identifier,
 	// ciaddr MUST be zero.
 	mac := req.ClientHWAddr
@@ -857,7 +858,10 @@ func (s *v4Server) handleSelecting(
 }
 
 // handleInitReboot handles the DHCPREQUEST generated during INIT-REBOOT state.
-func (s *v4Server) handleInitReboot(req *dhcpv4.DHCPv4, reqIP net.IP) (l *Lease, needsReply bool) {
+func (s *v4Server) handleInitReboot(
+	req *dhcpv4.DHCPv4,
+	reqIP net.IP,
+) (l *dhcpsvc.Lease, needsReply bool) {
 	mac := req.ClientHWAddr
 
 	ip4 := reqIP.To4()
@@ -899,7 +903,7 @@ func (s *v4Server) handleInitReboot(req *dhcpv4.DHCPv4, reqIP net.IP) (l *Lease,
 
 // handleRenew handles the DHCPREQUEST generated during RENEWING or REBINDING
 // state.
-func (s *v4Server) handleRenew(req *dhcpv4.DHCPv4) (l *Lease, needsReply bool) {
+func (s *v4Server) handleRenew(req *dhcpv4.DHCPv4) (l *dhcpsvc.Lease, needsReply bool) {
 	mac := req.ClientHWAddr
 
 	// ciaddr MUST be filled in with client's IP address.
@@ -926,7 +930,7 @@ func (s *v4Server) handleRenew(req *dhcpv4.DHCPv4) (l *Lease, needsReply bool) {
 
 // handleByRequestType handles the DHCPREQUEST according to the state during
 // which it's generated by client.
-func (s *v4Server) handleByRequestType(req *dhcpv4.DHCPv4) (lease *Lease, needsReply bool) {
+func (s *v4Server) handleByRequestType(req *dhcpv4.DHCPv4) (lease *dhcpsvc.Lease, needsReply bool) {
 	reqIP, sid := req.RequestedIPAddress(), req.ServerIdentifier()
 
 	if sid != nil && !sid.IsUnspecified() {
@@ -950,7 +954,7 @@ func (s *v4Server) handleByRequestType(req *dhcpv4.DHCPv4) (lease *Lease, needsR
 // handleRequest is the handler for a DHCPREQUEST message.
 //
 // See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.2.
-func (s *v4Server) handleRequest(req, resp *dhcpv4.DHCPv4) (lease *Lease, needsReply bool) {
+func (s *v4Server) handleRequest(req, resp *dhcpv4.DHCPv4) (lease *dhcpsvc.Lease, needsReply bool) {
 	lease, needsReply = s.handleByRequestType(req)
 	if lease == nil {
 		return nil, needsReply
@@ -1043,7 +1047,7 @@ func (s *v4Server) handleDecline(req, resp *dhcpv4.DHCPv4) (err error) {
 }
 
 // findLeaseForIP returns a lease for provided ip and mac.
-func (s *v4Server) findLeaseForIP(ip net.IP, mac net.HardwareAddr) (l *Lease) {
+func (s *v4Server) findLeaseForIP(ip net.IP, mac net.HardwareAddr) (l *dhcpsvc.Lease) {
 	netIP, ok := netip.AddrFromSlice(ip)
 	if !ok {
 		log.Info("dhcpv4: invalid IP: %s", ip)
@@ -1106,7 +1110,11 @@ func (s *v4Server) handleRelease(req, resp *dhcpv4.DHCPv4) (err error) {
 }
 
 // messageHandler describes a DHCPv4 message handler function.
-type messageHandler func(s *v4Server, req, resp *dhcpv4.DHCPv4) (rCode int, l *Lease, err error)
+type messageHandler func(
+	s *v4Server,
+	req *dhcpv4.DHCPv4,
+	resp *dhcpv4.DHCPv4,
+) (rCode int, l *dhcpsvc.Lease, err error)
 
 // messageHandlers is a map of handlers for various messages with message types
 // keys.
@@ -1115,7 +1123,7 @@ var messageHandlers = map[dhcpv4.MessageType]messageHandler{
 		s *v4Server,
 		req *dhcpv4.DHCPv4,
 		resp *dhcpv4.DHCPv4,
-	) (rCode int, l *Lease, err error) {
+	) (rCode int, l *dhcpsvc.Lease, err error) {
 		l, err = s.handleDiscover(req, resp)
 		if err != nil {
 			return 0, nil, fmt.Errorf("handling discover: %s", err)
@@ -1131,7 +1139,7 @@ var messageHandlers = map[dhcpv4.MessageType]messageHandler{
 		s *v4Server,
 		req *dhcpv4.DHCPv4,
 		resp *dhcpv4.DHCPv4,
-	) (rCode int, l *Lease, err error) {
+	) (rCode int, l *dhcpsvc.Lease, err error) {
 		var toReply bool
 		l, toReply = s.handleRequest(req, resp)
 		if l == nil {
@@ -1149,7 +1157,7 @@ var messageHandlers = map[dhcpv4.MessageType]messageHandler{
 		s *v4Server,
 		req *dhcpv4.DHCPv4,
 		resp *dhcpv4.DHCPv4,
-	) (rCode int, l *Lease, err error) {
+	) (rCode int, l *dhcpsvc.Lease, err error) {
 		err = s.handleDecline(req, resp)
 		if err != nil {
 			return 0, nil, fmt.Errorf("handling decline: %s", err)
@@ -1161,7 +1169,7 @@ var messageHandlers = map[dhcpv4.MessageType]messageHandler{
 		s *v4Server,
 		req *dhcpv4.DHCPv4,
 		resp *dhcpv4.DHCPv4,
-	) (rCode int, l *Lease, err error) {
+	) (rCode int, l *dhcpsvc.Lease, err error) {
 		err = s.handleRelease(req, resp)
 		if err != nil {
 			return 0, nil, fmt.Errorf("handling release: %s", err)
@@ -1402,8 +1410,8 @@ func (s *v4Server) Stop() (err error) {
 // Create DHCPv4 server
 func v4Create(conf *V4ServerConf) (srv *v4Server, err error) {
 	s := &v4Server{
-		hostsIndex: map[string]*Lease{},
-		ipIndex:    map[netip.Addr]*Lease{},
+		hostsIndex: map[string]*dhcpsvc.Lease{},
+		ipIndex:    map[netip.Addr]*dhcpsvc.Lease{},
 	}
 
 	err = conf.Validate()

@@ -314,7 +314,7 @@ func TestClientsAddExisting(t *testing.T) {
 
 		clients.dhcp = dhcpServer
 
-		err = dhcpServer.AddStaticLease(&dhcpd.Lease{
+		err = dhcpServer.AddStaticLease(&dhcpsvc.Lease{
 			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 			IP:       ip,
 			Hostname: "testhost",

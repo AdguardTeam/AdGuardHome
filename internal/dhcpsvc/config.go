@@ -43,7 +43,7 @@ func (conf *Config) Validate() (err error) {
 	case !conf.Enabled:
 		return nil
 	case conf.ICMPTimeout < 0:
-		return fmt.Errorf("icmp timeout %s must be non-negative", conf.ICMPTimeout)
+		return newMustErr("icmp timeout", "be non-negative", conf.ICMPTimeout)
 	}
 
 	err = netutil.ValidateDomainName(conf.LocalDomainName)
@@ -68,9 +68,9 @@ func (conf *Config) Validate() (err error) {
 	return nil
 }
 
-// mustBeErr returns an error that indicates that valName must be as must
+// newMustErr returns an error that indicates that valName must be as must
 // describes.
-func mustBeErr(valName, must string, val fmt.Stringer) (err error) {
+func newMustErr(valName, must string, val fmt.Stringer) (err error) {
 	return fmt.Errorf("%s %s must %s", valName, val, must)
 }
 

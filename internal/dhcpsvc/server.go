@@ -25,6 +25,9 @@ type DHCPServer struct {
 	// interfaces6 is the set of IPv6 interfaces sorted by interface name.
 	interfaces6 []*iface6
 
+	// leases is the set of active DHCP leases.
+	leases []*Lease
+
 	// icmpTimeout is the timeout for checking another DHCP server's presence.
 	icmpTimeout time.Duration
 }
@@ -74,4 +77,24 @@ func New(conf *Config) (srv *DHCPServer, err error) {
 		localTLD:    conf.LocalDomainName,
 		icmpTimeout: conf.ICMPTimeout,
 	}, nil
+}
+
+// type check
+//
+// TODO(e.burkov):  Uncomment when the [Interface] interface is implemented.
+// var _ Interface = (*DHCPServer)(nil)
+
+// Enabled implements the [Interface] interface for *DHCPServer.
+func (srv *DHCPServer) Enabled() (ok bool) {
+	return srv.enabled.Load()
+}
+
+// Leases implements the [Interface] interface for *DHCPServer.
+func (srv *DHCPServer) Leases() (leases []*Lease) {
+	leases = make([]*Lease, 0, len(srv.leases))
+	for _, lease := range srv.leases {
+		leases = append(leases, lease.Clone())
+	}
+
+	return leases
 }
