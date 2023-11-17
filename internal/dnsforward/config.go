@@ -334,16 +334,9 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 		srvConf.FastestTimeout.Duration,
 	)
 
-	for i, s := range srvConf.BogusNXDomain {
-		var subnet netip.Prefix
-		subnet, err = aghnet.ParseSubnet(s)
-		if err != nil {
-			log.Error("subnet at index %d: %s", i, err)
-
-			continue
-		}
-
-		conf.BogusNXDomain = append(conf.BogusNXDomain, subnet)
+	conf.BogusNXDomain, err = parseBogusNXDOMAIN(srvConf.BogusNXDomain)
+	if err != nil {
+		return proxy.Config{}, fmt.Errorf("bogus_nxdomain: %w", err)
 	}
 
 	err = s.prepareTLS(&conf)
@@ -363,6 +356,21 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 	}
 
 	return conf, nil
+}
+
+// parseBogusNXDOMAIN parses the bogus NXDOMAIN strings into valid subnets.
+func parseBogusNXDOMAIN(confBogusNXDOMAIN []string) (subnets []netip.Prefix, err error) {
+	for i, s := range confBogusNXDOMAIN {
+		var subnet netip.Prefix
+		subnet, err = aghnet.ParseSubnet(s)
+		if err != nil {
+			return nil, fmt.Errorf("subnet at index %d: %w", i, err)
+		}
+
+		subnets = append(subnets, subnet)
+	}
+
+	return subnets, nil
 }
 
 const defaultBlockedResponseTTL = 3600

@@ -115,6 +115,8 @@ type configuration struct {
 	// Theme is a UI theme for current user.
 	Theme Theme `yaml:"theme"`
 
+	// TODO(a.garipov): Make DNS and the fields below pointers and validate
+	// and/or reset on explicit nulling.
 	DNS      dnsConfig         `yaml:"dns"`
 	TLS      tlsConfigSettings `yaml:"tls"`
 	QueryLog queryLogConfig    `yaml:"querylog"`
@@ -214,13 +216,13 @@ type dnsConfig struct {
 	// DNS64Prefixes is the list of NAT64 prefixes to be used for DNS64.
 	DNS64Prefixes []netip.Prefix `yaml:"dns64_prefixes"`
 
-	// ServeHTTP3 defines if HTTP/3 is be allowed for incoming requests.
+	// ServeHTTP3 defines if HTTP/3 is allowed for incoming requests.
 	//
 	// TODO(a.garipov): Add to the UI when HTTP/3 support is no longer
 	// experimental.
 	ServeHTTP3 bool `yaml:"serve_http3"`
 
-	// UseHTTP3Upstreams defines if HTTP/3 is be allowed for DNS-over-HTTPS
+	// UseHTTP3Upstreams defines if HTTP/3 is allowed for DNS-over-HTTPS
 	// upstreams.
 	//
 	// TODO(a.garipov): Add to the UI when HTTP/3 support is no longer

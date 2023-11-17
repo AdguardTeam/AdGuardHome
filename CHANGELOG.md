@@ -29,9 +29,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 #### Configuration changes
 
-- Added new properties `clients.persistent.upstreams_cache_enabled` and
-  `clients.persistent.upstreams_cache_size` which describe cache configuration
-  for each client custom upstream configuration.
+- The property `dns.bogus_nxdomain` is now validated more strictly.
+- Added new properties `clients.persistent.*.upstreams_cache_enabled` and
+  `clients.persistent.*.upstreams_cache_size` that describe cache configuration
+  for each client's custom upstream configuration.
 
 ### Fixed
 
