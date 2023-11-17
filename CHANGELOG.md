@@ -27,6 +27,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Ability to specify rate limiting settings in the Web UI ([#6369]).
 
+#### Configuration changes
+
+- Added new properties `clients.persistent.upstreams_cache_enabled` and
+  `clients.persistent.upstreams_cache_size` which describe cache configuration
+  for each client custom upstream configuration.
+
 ### Fixed
 
 - Pre-filling the New static lease window with data ([#6402]).

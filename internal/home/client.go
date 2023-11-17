@@ -14,11 +14,11 @@ import (
 
 // Client contains information about persistent clients.
 type Client struct {
-	// upstreamConfig is the custom upstream config for this client.  If
-	// it's nil, it has not been initialized yet.  If it's non-nil and
-	// empty, there are no valid upstreams.  If it's non-nil and non-empty,
-	// these upstream must be used.
-	upstreamConfig *proxy.UpstreamConfig
+	// upstreamConfig is the custom upstream configuration for this client.  If
+	// it's nil, it has not been initialized yet.  If it's non-nil and empty,
+	// there are no valid upstreams.  If it's non-nil and non-empty, these
+	// upstream must be used.
+	upstreamConfig *proxy.CustomUpstreamConfig
 
 	safeSearchConf filtering.SafeSearchConfig
 	SafeSearch     filtering.SafeSearch
@@ -31,6 +31,9 @@ type Client struct {
 	IDs       []string
 	Tags      []string
 	Upstreams []string
+
+	UpstreamsCacheSize    uint32
+	UpstreamsCacheEnabled bool
 
 	UseOwnSettings        bool
 	FilteringEnabled      bool
@@ -57,8 +60,7 @@ func (c *Client) ShallowClone() (sh *Client) {
 // closeUpstreams closes the client-specific upstream config of c if any.
 func (c *Client) closeUpstreams() (err error) {
 	if c.upstreamConfig != nil {
-		err = c.upstreamConfig.Close()
-		if err != nil {
+		if err = c.upstreamConfig.Close(); err != nil {
 			return fmt.Errorf("closing upstreams of client %q: %w", c.Name, err)
 		}
 	}

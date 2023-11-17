@@ -125,7 +125,7 @@ type ClientsContainer struct {
 	OnUpstreamConfigByID func(
 		id string,
 		boot upstream.Resolver,
-	) (conf *proxy.UpstreamConfig, err error)
+	) (conf *proxy.CustomUpstreamConfig, err error)
 }
 
 // UpstreamConfigByID implements the [dnsforward.ClientsContainer] interface
@@ -133,7 +133,7 @@ type ClientsContainer struct {
 func (c *ClientsContainer) UpstreamConfigByID(
 	id string,
 	boot upstream.Resolver,
-) (conf *proxy.UpstreamConfig, err error) {
+) (conf *proxy.CustomUpstreamConfig, err error) {
 	return c.OnUpstreamConfigByID(id, boot)
 }
 

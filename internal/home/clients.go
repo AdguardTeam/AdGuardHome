@@ -185,6 +185,14 @@ type clientObject struct {
 	Tags      []string `yaml:"tags"`
 	Upstreams []string `yaml:"upstreams"`
 
+	// UpstreamsCacheSize is the DNS cache size (in bytes).
+	//
+	// TODO(d.kolyshev): Use [datasize.Bytesize].
+	UpstreamsCacheSize uint32 `yaml:"upstreams_cache_size"`
+
+	// UpstreamsCacheEnabled indicates if the DNS cache is enabled.
+	UpstreamsCacheEnabled bool `yaml:"upstreams_cache_enabled"`
+
 	UseGlobalSettings        bool `yaml:"use_global_settings"`
 	FilteringEnabled         bool `yaml:"filtering_enabled"`
 	ParentalEnabled          bool `yaml:"parental_enabled"`
@@ -216,6 +224,8 @@ func (clients *clientsContainer) addFromConfig(
 			UseOwnBlockedServices: !o.UseGlobalBlockedServices,
 			IgnoreQueryLog:        o.IgnoreQueryLog,
 			IgnoreStatistics:      o.IgnoreStatistics,
+			UpstreamsCacheEnabled: o.UpstreamsCacheEnabled,
+			UpstreamsCacheSize:    o.UpstreamsCacheSize,
 		}
 
 		if o.SafeSearchConf.Enabled {
@@ -429,11 +439,12 @@ func (clients *clientsContainer) shouldCountClient(ids []string) (y bool) {
 var _ dnsforward.ClientsContainer = (*clientsContainer)(nil)
 
 // UpstreamConfigByID implements the [dnsforward.ClientsContainer] interface for
-// *clientsContainer.
+// *clientsContainer.  upsConf is nil if the client isn't found or if the client
+// has no custom upstreams.
 func (clients *clientsContainer) UpstreamConfigByID(
 	id string,
 	bootstrap upstream.Resolver,
-) (upsConf *proxy.UpstreamConfig, err error) {
+) (conf *proxy.CustomUpstreamConfig, err error) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
@@ -449,8 +460,8 @@ func (clients *clientsContainer) UpstreamConfigByID(
 		return nil, nil
 	}
 
-	var conf *proxy.UpstreamConfig
-	conf, err = proxy.ParseUpstreamsConfig(
+	var upsConf *proxy.UpstreamConfig
+	upsConf, err = proxy.ParseUpstreamsConfig(
 		upstreams,
 		&upstream.Options{
 			Bootstrap:    bootstrap,
@@ -464,6 +475,12 @@ func (clients *clientsContainer) UpstreamConfigByID(
 		return nil, err
 	}
 
+	conf = proxy.NewCustomUpstreamConfig(
+		upsConf,
+		c.UpstreamsCacheEnabled,
+		int(c.UpstreamsCacheSize),
+		config.DNS.EDNSClientSubnet.Enabled,
+	)
 	c.upstreamConfig = conf
 
 	return conf, nil

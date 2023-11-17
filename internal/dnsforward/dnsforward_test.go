@@ -644,10 +644,15 @@ func TestBlockedRequest(t *testing.T) {
 }
 
 func TestServerCustomClientUpstream(t *testing.T) {
+	const defaultCacheSize = 1024 * 1024
+
+	var upsCalledCounter uint32
+
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
+			CacheSize: defaultCacheSize,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -658,34 +663,51 @@ func TestServerCustomClientUpstream(t *testing.T) {
 	}, forwardConf, nil)
 
 	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+		atomic.AddUint32(&upsCalledCounter, 1)
+
 		return aghalg.Coalesce(
 			aghtest.MatchedResponse(req, dns.TypeA, "host", "192.168.0.1"),
 			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
 		), nil
 	})
+
+	customUpsConf := proxy.NewCustomUpstreamConfig(
+		&proxy.UpstreamConfig{
+			Upstreams: []upstream.Upstream{ups},
+		},
+		true,
+		defaultCacheSize,
+		forwardConf.EDNSClientSubnet.Enabled,
+	)
+
 	s.conf.ClientsContainer = &aghtest.ClientsContainer{
 		OnUpstreamConfigByID: func(
 			_ string,
 			_ upstream.Resolver,
-		) (conf *proxy.UpstreamConfig, err error) {
-			return &proxy.UpstreamConfig{Upstreams: []upstream.Upstream{ups}}, nil
+		) (conf *proxy.CustomUpstreamConfig, err error) {
+			return customUpsConf, nil
 		},
 	}
+
 	startDeferStop(t, s)
 
-	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
+	addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
 
 	// Send test request.
 	req := createTestMessage("host.")
 
-	reply, err := dns.Exchange(req, addr.String())
+	reply, err := dns.Exchange(req, addr)
 	require.NoError(t, err)
+	require.NotEmpty(t, reply.Answer)
+	require.Len(t, reply.Answer, 1)
 
 	assert.Equal(t, dns.RcodeSuccess, reply.Rcode)
-	require.NotEmpty(t, reply.Answer)
-
-	require.Len(t, reply.Answer, 1)
 	assert.Equal(t, net.IP{192, 168, 0, 1}, reply.Answer[0].(*dns.A).A)
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&upsCalledCounter))
+
+	_, err = dns.Exchange(req, addr)
+	require.NoError(t, err)
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&upsCalledCounter))
 }
 
 // testCNAMEs is a map of names and CNAMEs necessary for the TestUpstream work.
