@@ -25,6 +25,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- Ability to set client's custom DNS cache ([#6362], [dnsproxy#169]).
 - Ability to specify rate limiting settings in the Web UI ([#6369]).
 
 #### Configuration changes
@@ -40,8 +41,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Protection pause timer synchronization ([#5759]).
 
 [#5759]: https://github.com/AdguardTeam/AdGuardHome/issues/5759
+[#6362]: https://github.com/AdguardTeam/AdGuardHome/issues/6362
 [#6369]: https://github.com/AdguardTeam/AdGuardHome/issues/6369
 [#6402]: https://github.com/AdguardTeam/AdGuardHome/issues/6402
+
+[dnsproxy#169] https://github.com/AdguardTeam/dnsproxy/issues/169
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

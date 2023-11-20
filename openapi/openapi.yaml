@@ -2686,6 +2686,25 @@
 
             This behaviour can be changed in the future versions.
           'type': 'boolean'
+        'upstreams_cache_enabled':
+          'description': |
+            NOTE: If `upstreams_cache_enabled` is not set in HTTP API
+            `GET /clients/add` request then default value (false) will be used.
+
+            If `upstreams_cache_enabled` is not set in HTTP API
+            `GET /clients/update` request then the existing value will not be
+            changed.
+
+            This behaviour can be changed in the future versions.
+          'type': 'boolean'
+        'upstreams_cache_size':
+          'description': |
+            NOTE: If `upstreams_cache_enabled` is not set in HTTP API
+            `GET /clients/update` request then the existing value will not be
+            changed.
+
+            This behaviour can be changed in the future versions.
+          'type': 'boolean'
     'ClientAuto':
       'type': 'object'
       'description': 'Auto-Client information'

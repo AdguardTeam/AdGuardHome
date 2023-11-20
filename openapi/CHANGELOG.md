@@ -6,6 +6,18 @@
 
 ## v0.107.42: API changes
 
+### The new fields `"upstreams_cache_enabled"` and `"upstreams_cache_size"` in `Client` object
+
+* The new field `"upstreams_cache_enabled"` in `GET /control/clients`,
+  `GET /control/clients/find`, `POST /control/clients/add`, and
+  `POST /control/clients/update` methods shows if client's DNS cache is enabled
+  for the client.  If not set AdGuard Home will use default value (false).
+
+* The new field `"upstreams_cache_size"` in `GET /control/clients`,
+  `GET /control/clients/find`, `POST /control/clients/add`, and
+  `POST /control/clients/update` methods is the size of client's DNS cache in
+  bytes.
+
 ### The new field `"ratelimit_subnet_len_ipv4"` in `DNSConfig` object
 
 * The new field `"ratelimit_subnet_len_ipv4"` in `GET /control/dns_info` and
