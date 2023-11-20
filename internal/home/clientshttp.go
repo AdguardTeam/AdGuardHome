@@ -174,6 +174,12 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 		return nil, fmt.Errorf("validating blocked services: %w", err)
 	}
 
+	var upsCacheEnabled bool
+	var upsCacheSize uint32
+	if prev != nil {
+		upsCacheEnabled, upsCacheSize = prev.UpstreamsCacheEnabled, prev.UpstreamsCacheSize
+	}
+
 	c = &Client{
 		safeSearchConf: safeSearchConf,
 
@@ -192,6 +198,8 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 		UseOwnBlockedServices: !cj.UseGlobalBlockedServices,
 		IgnoreQueryLog:        ignoreQueryLog,
 		IgnoreStatistics:      ignoreStatistics,
+		UpstreamsCacheEnabled: upsCacheEnabled,
+		UpstreamsCacheSize:    upsCacheSize,
 	}
 
 	if safeSearchConf.Enabled {
