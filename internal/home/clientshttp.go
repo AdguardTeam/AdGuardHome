@@ -56,13 +56,21 @@ type clientJSON struct {
 
 	IgnoreQueryLog   aghalg.NullBool `json:"ignore_querylog"`
 	IgnoreStatistics aghalg.NullBool `json:"ignore_statistics"`
+
+	UpstreamsCacheSize    uint32          `json:"upstreams_cache_size"`
+	UpstreamsCacheEnabled aghalg.NullBool `json:"upstreams_cache_enabled"`
 }
 
 // copySettings returns a copy of specific settings from JSON or a previous
 // client.
 func (j *clientJSON) copySettings(
 	prev *Client,
-) (weekly *schedule.Weekly, ignoreQueryLog, ignoreStatistics bool) {
+) (weekly *schedule.Weekly,
+	ignoreQueryLog,
+	ignoreStatistics,
+	upsCacheEnabled bool,
+	upsCacheSize uint32,
+) {
 	if j.Schedule != nil {
 		weekly = j.Schedule.Clone()
 	} else if prev != nil && prev.BlockedServices != nil {
@@ -83,7 +91,15 @@ func (j *clientJSON) copySettings(
 		ignoreStatistics = prev.IgnoreStatistics
 	}
 
-	return weekly, ignoreQueryLog, ignoreStatistics
+	if j.UpstreamsCacheEnabled != aghalg.NBNull {
+		upsCacheEnabled = j.UpstreamsCacheEnabled == aghalg.NBTrue
+		upsCacheSize = j.UpstreamsCacheSize
+	} else if prev != nil {
+		upsCacheEnabled = prev.UpstreamsCacheEnabled
+		upsCacheSize = prev.UpstreamsCacheSize
+	}
+
+	return weekly, ignoreQueryLog, ignoreStatistics, upsCacheEnabled, upsCacheSize
 }
 
 type runtimeClientJSON struct {
@@ -163,7 +179,7 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 		}
 	}
 
-	weekly, ignoreQueryLog, ignoreStatistics := cj.copySettings(prev)
+	weekly, ignoreQueryLog, ignoreStatistics, upsCacheEnabled, upsCacheSize := cj.copySettings(prev)
 
 	bs := &filtering.BlockedServices{
 		Schedule: weekly,
@@ -172,12 +188,6 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 	err = bs.Validate()
 	if err != nil {
 		return nil, fmt.Errorf("validating blocked services: %w", err)
-	}
-
-	var upsCacheEnabled bool
-	var upsCacheSize uint32
-	if prev != nil {
-		upsCacheEnabled, upsCacheSize = prev.UpstreamsCacheEnabled, prev.UpstreamsCacheSize
 	}
 
 	c = &Client{
@@ -243,6 +253,9 @@ func clientToJSON(c *Client) (cj *clientJSON) {
 
 		IgnoreQueryLog:   aghalg.BoolToNullBool(c.IgnoreQueryLog),
 		IgnoreStatistics: aghalg.BoolToNullBool(c.IgnoreStatistics),
+
+		UpstreamsCacheSize:    c.UpstreamsCacheSize,
+		UpstreamsCacheEnabled: aghalg.BoolToNullBool(c.UpstreamsCacheEnabled),
 	}
 }
 
