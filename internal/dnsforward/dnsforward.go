@@ -471,17 +471,15 @@ func (s *Server) setupLocalResolvers(boot upstream.Resolver) (err error) {
 	}
 
 	resolvers := s.conf.LocalPTRResolvers
-	filterConfig := false
-
-	if len(resolvers) == 0 {
+	confNeedsFiltering := len(resolvers) > 0
+	if confNeedsFiltering {
+		resolvers = stringutil.FilterOut(resolvers, IsCommentOrEmpty)
+	} else {
 		sysResolvers := slices.DeleteFunc(slices.Clone(s.sysResolvers.Addrs()), set.Has)
 		resolvers = make([]string, 0, len(sysResolvers))
 		for _, r := range sysResolvers {
 			resolvers = append(resolvers, r.String())
 		}
-	} else {
-		resolvers = stringutil.FilterOut(resolvers, IsCommentOrEmpty)
-		filterConfig = true
 	}
 
 	log.Debug("dnsforward: upstreams to resolve ptr for local addresses: %v", resolvers)
@@ -496,8 +494,9 @@ func (s *Server) setupLocalResolvers(boot upstream.Resolver) (err error) {
 		return fmt.Errorf("preparing private upstreams: %w", err)
 	}
 
-	if filterConfig {
-		if err = filterOutAddrs(uc, set); err != nil {
+	if confNeedsFiltering {
+		err = filterOutAddrs(uc, set)
+		if err != nil {
 			return fmt.Errorf("filtering private upstreams: %w", err)
 		}
 	}

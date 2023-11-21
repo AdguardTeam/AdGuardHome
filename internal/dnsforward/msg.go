@@ -91,7 +91,7 @@ func (s *Server) genForBlockingMode(req *dns.Msg, ips []netip.Addr) (resp *dns.M
 	case filtering.BlockingModeREFUSED:
 		return s.makeResponseREFUSED(req)
 	default:
-		log.Error("dns: invalid blocking mode %q", mode)
+		log.Error("dnsforward: invalid blocking mode %q", mode)
 
 		return s.makeResponse(req)
 	}
@@ -112,7 +112,7 @@ func (s *Server) makeResponseCustomIP(
 	default:
 		// Generally shouldn't happen, since the types are checked in
 		// genDNSFilterMessage.
-		log.Error("dns: invalid msg type %s for custom IP blocking mode", dns.Type(qt))
+		log.Error("dnsforward: invalid msg type %s for custom IP blocking mode", dns.Type(qt))
 
 		return s.makeResponse(req)
 	}
@@ -207,15 +207,7 @@ func (s *Server) genResponseWithIPs(req *dns.Msg, ips []netip.Addr) (resp *dns.M
 	var ans []dns.RR
 	switch req.Question[0].Qtype {
 	case dns.TypeA:
-		for _, ip := range ips {
-			if ip.Is4() {
-				ans = append(ans, s.genAnswerA(req, ip))
-			} else {
-				ans = nil
-
-				break
-			}
-		}
+		ans = s.genAnswersWithIPv4s(req, ips)
 	case dns.TypeAAAA:
 		for _, ip := range ips {
 			if ip.Is6() {
@@ -230,6 +222,23 @@ func (s *Server) genResponseWithIPs(req *dns.Msg, ips []netip.Addr) (resp *dns.M
 	resp.Answer = ans
 
 	return resp
+}
+
+// genAnswersWithIPv4s generates DNS A answers provided IPv4 addresses.  If any
+// of the IPs isn't an IPv4 address, genAnswersWithIPv4s logs a warning and
+// returns nil,
+func (s *Server) genAnswersWithIPv4s(req *dns.Msg, ips []netip.Addr) (ans []dns.RR) {
+	for _, ip := range ips {
+		if !ip.Is4() {
+			log.Info("dnsforward: warning: ip %s is not ipv4 address", ip)
+
+			return nil
+		}
+
+		ans = append(ans, s.genAnswerA(req, ip))
+	}
+
+	return ans
 }
 
 // makeResponseNullIP creates a response with 0.0.0.0 for A requests, :: for
@@ -253,7 +262,7 @@ func (s *Server) makeResponseNullIP(req *dns.Msg) (resp *dns.Msg) {
 
 func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSContext) *dns.Msg {
 	if newAddr == "" {
-		log.Printf("block host is not specified.")
+		log.Info("dnsforward: block host is not specified")
 
 		return s.genServerFailure(request)
 	}
@@ -276,14 +285,14 @@ func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSCo
 
 	prx := s.proxy()
 	if prx == nil {
-		log.Debug("dns: %s", srvClosedErr)
+		log.Debug("dnsforward: %s", srvClosedErr)
 
 		return s.genServerFailure(request)
 	}
 
 	err = prx.Resolve(newContext)
 	if err != nil {
-		log.Printf("couldn't look up replacement host %q: %s", newAddr, err)
+		log.Info("dnsforward: looking up replacement host %q: %s", newAddr, err)
 
 		return s.genServerFailure(request)
 	}
