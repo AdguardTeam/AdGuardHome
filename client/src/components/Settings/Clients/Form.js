@@ -222,35 +222,6 @@ let Form = (props) => {
                         />
                     </div>
                 ))}
-                <div className="form__label--bold form__label--top form__label--bot">
-                    {t('upstream_dns_cache_configuration')}
-                </div>
-                <div className="form__group mb-2">
-                    <Field
-                        name="upstreams_cache_enabled"
-                        type="checkbox"
-                        component={CheckboxField}
-                        placeholder={t('enable_upstream_dns_cache')}
-                    />
-                </div>
-                <div className="form__group form__group--settings">
-                    <label
-                        htmlFor="upstreams_cache_size"
-                        className="form__label"
-                    >
-                        {t('cache_size')}
-                    </label>
-                    <Field
-                        name="upstreams_cache_size"
-                        type="number"
-                        component={renderInputField}
-                        placeholder={t('enter_cache_size')}
-                        className="form-control"
-                        normalize={toNumber}
-                        min={0}
-                        max={UINT32_RANGE.MAX}
-                    />
-                </div>
             </div>,
         },
         block_services: {
@@ -341,6 +312,35 @@ let Form = (props) => {
                     normalizeOnBlur={trimLinesAndRemoveEmpty}
                 />
                 <Examples />
+                <div className="form__label--bold mt-5 mb-3">
+                    {t('upstream_dns_cache_configuration')}
+                </div>
+                <div className="form__group mb-2">
+                    <Field
+                        name="upstreams_cache_enabled"
+                        type="checkbox"
+                        component={CheckboxField}
+                        placeholder={t('enable_upstream_dns_cache')}
+                    />
+                </div>
+                <div className="form__group form__group--settings">
+                    <label
+                        htmlFor="upstreams_cache_size"
+                        className="form__label"
+                    >
+                        {t('dns_cache_size')}
+                    </label>
+                    <Field
+                        name="upstreams_cache_size"
+                        type="number"
+                        component={renderInputField}
+                        placeholder={t('enter_cache_size')}
+                        className="form-control"
+                        normalize={toNumber}
+                        min={0}
+                        max={UINT32_RANGE.MAX}
+                    />
+                </div>
             </div>,
         },
     };
