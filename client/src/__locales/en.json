@@ -734,5 +734,7 @@
     "wednesday_short": "Wed",
     "thursday_short": "Thu",
     "friday_short": "Fri",
-    "saturday_short": "Sat"
+    "saturday_short": "Sat",
+    "upstream_dns_cache_configuration": "Upstream DNS cache configuration",
+    "enable_upstream_dns_cache": "Enable upstream DNS cache"
 }
