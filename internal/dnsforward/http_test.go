@@ -79,6 +79,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
+		ServePlainDNS:  true,
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
 	s.sysResolvers = &emptySysResolvers{}
@@ -158,6 +159,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
+		ServePlainDNS:  true,
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
 	s.sysResolvers = &emptySysResolvers{}
@@ -533,6 +535,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
+		ServePlainDNS: true,
 	}, nil)
 	srv.etcHosts = hc
 	startDeferStop(t, srv)

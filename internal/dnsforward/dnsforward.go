@@ -109,7 +109,7 @@ type Server struct {
 	// stats is the statistics collector for client's DNS usage data.
 	stats stats.Interface
 
-	// access drops unallowed clients.
+	// access drops disallowed clients.
 	access *accessManager
 
 	// localDomainSuffix is the suffix used to detect internal hosts.  It
@@ -232,8 +232,10 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 	if p.Anonymizer == nil {
 		p.Anonymizer = aghnet.NewIPMut(nil)
 	}
+
 	s = &Server{
 		dnsFilter:   p.DNSFilter,
+		dhcpServer:  p.DHCPServer,
 		stats:       p.Stats,
 		queryLog:    p.QueryLog,
 		privateNets: p.PrivateNets,
@@ -246,14 +248,15 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 			MaxCount:  defaultClientIDCacheCount,
 		}),
 		anonymizer: p.Anonymizer,
+		conf: ServerConfig{
+			ServePlainDNS: true,
+		},
 	}
 
 	s.sysResolvers, err = sysresolv.NewSystemResolvers(nil, defaultPlainDNSPort)
 	if err != nil {
 		return nil, fmt.Errorf("initializing system resolvers: %w", err)
 	}
-
-	s.dhcpServer = p.DHCPServer
 
 	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
 		// Use plain DNS on MIPS, encryption is too slow
@@ -540,7 +543,7 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 		return err
 	}
 
-	proxyConfig, err := s.createProxyConfig()
+	proxyConfig, err := s.newProxyConfig()
 	if err != nil {
 		return fmt.Errorf("preparing proxy: %w", err)
 	}
@@ -559,7 +562,7 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 	// Set the proxy here because [setupLocalResolvers] sets its values.
 	//
 	// TODO(e.burkov):  Remove once the local resolvers logic moved to dnsproxy.
-	s.dnsProxy = &proxy.Proxy{Config: proxyConfig}
+	s.dnsProxy = &proxy.Proxy{Config: *proxyConfig}
 
 	err = s.setupLocalResolvers(boot)
 	if err != nil {

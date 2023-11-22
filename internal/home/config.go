@@ -228,6 +228,9 @@ type dnsConfig struct {
 	// TODO(a.garipov): Add to the UI when HTTP/3 support is no longer
 	// experimental.
 	UseHTTP3Upstreams bool `yaml:"use_http3_upstreams"`
+
+	// ServePlainDNS defines if plain DNS is allowed for incoming requests.
+	ServePlainDNS bool `yaml:"serve_plain_dns"`
 }
 
 type tlsConfigSettings struct {
@@ -335,6 +338,7 @@ var config = &configuration{
 		},
 		UpstreamTimeout: timeutil.Duration{Duration: dnsforward.DefaultTimeout},
 		UsePrivateRDNS:  true,
+		ServePlainDNS:   true,
 	},
 	TLS: tlsConfigSettings{
 		PortHTTPS:       defaultPortHTTPS,

@@ -35,6 +35,7 @@ func TestHandleDNSRequest_handleDNSRequest(t *testing.T) {
 				Enabled: false,
 			},
 		},
+		ServePlainDNS: true,
 	}
 	filters := []filtering.Filter{{
 		ID: 0, Data: []byte(rules),
