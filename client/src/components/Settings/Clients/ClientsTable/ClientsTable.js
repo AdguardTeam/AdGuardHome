@@ -79,6 +79,10 @@ const ClientsTable = ({
             } else {
                 config.tags = [];
             }
+
+            if (typeof values.upstreams_cache_size === 'string') {
+                config.upstreams_cache_size = 0;
+            }
         }
 
         if (modalType === MODAL_TYPE.EDIT_FILTERS) {
