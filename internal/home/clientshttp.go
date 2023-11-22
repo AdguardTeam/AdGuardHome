@@ -143,7 +143,7 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 		upsCacheSize = prev.UpstreamsCacheSize
 	}
 
-	bs, err := copyBlockedServices(cj.Schedule, cj.BlockedServices, prev)
+	svcs, err := copyBlockedServices(cj.Schedule, cj.BlockedServices, prev)
 	if err != nil {
 		return nil, fmt.Errorf("invalid blocked services: %w", err)
 	}
@@ -153,7 +153,7 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 
 		Name: cj.Name,
 
-		BlockedServices: bs,
+		BlockedServices: svcs,
 
 		IDs:       cj.IDs,
 		Tags:      cj.Tags,
@@ -184,41 +184,41 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 	return c, nil
 }
 
-// copySafeSearch returns safe search config copied from provided parameters.
+// copySafeSearch returns safe search config created from provided parameters.
 func copySafeSearch(
-	conf *filtering.SafeSearchConfig,
+	jsonConf *filtering.SafeSearchConfig,
 	enabled bool,
-) (safeSearchConf filtering.SafeSearchConfig) {
-	if conf != nil {
-		safeSearchConf = *conf
-	} else {
-		// TODO(d.kolyshev): Remove after cleaning the deprecated
-		// [clientJSON.SafeSearchEnabled] field.
-		safeSearchConf = filtering.SafeSearchConfig{
-			Enabled: enabled,
-		}
-
-		// Set default service flags for enabled safesearch.
-		if safeSearchConf.Enabled {
-			safeSearchConf.Bing = true
-			safeSearchConf.DuckDuckGo = true
-			safeSearchConf.Google = true
-			safeSearchConf.Pixabay = true
-			safeSearchConf.Yandex = true
-			safeSearchConf.YouTube = true
-		}
+) (conf filtering.SafeSearchConfig) {
+	if jsonConf != nil {
+		return *jsonConf
 	}
 
-	return safeSearchConf
+	// TODO(d.kolyshev): Remove after cleaning the deprecated
+	// [clientJSON.SafeSearchEnabled] field.
+	conf = filtering.SafeSearchConfig{
+		Enabled: enabled,
+	}
+
+	// Set default service flags for enabled safesearch.
+	if conf.Enabled {
+		conf.Bing = true
+		conf.DuckDuckGo = true
+		conf.Google = true
+		conf.Pixabay = true
+		conf.Yandex = true
+		conf.YouTube = true
+	}
+
+	return conf
 }
 
 // copyBlockedServices converts a json blocked services to an internal blocked
 // services.
 func copyBlockedServices(
 	sch *schedule.Weekly,
-	blockedSvc []string,
+	svcStrs []string,
 	prev *Client,
-) (bs *filtering.BlockedServices, err error) {
+) (svcs *filtering.BlockedServices, err error) {
 	var weekly *schedule.Weekly
 	if sch != nil {
 		weekly = sch.Clone()
@@ -228,17 +228,17 @@ func copyBlockedServices(
 		weekly = schedule.EmptyWeekly()
 	}
 
-	bs = &filtering.BlockedServices{
+	svcs = &filtering.BlockedServices{
 		Schedule: weekly,
-		IDs:      blockedSvc,
+		IDs:      svcStrs,
 	}
 
-	err = bs.Validate()
+	err = svcs.Validate()
 	if err != nil {
 		return nil, fmt.Errorf("validating blocked services: %w", err)
 	}
 
-	return bs, nil
+	return svcs, nil
 }
 
 // clientToJSON converts Client object to JSON.

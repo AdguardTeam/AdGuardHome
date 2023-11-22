@@ -20,6 +20,7 @@ type Client struct {
 	// upstream must be used.
 	upstreamConfig *proxy.CustomUpstreamConfig
 
+	// TODO(d.kolyshev): Make safeSearchConf a pointer.
 	safeSearchConf filtering.SafeSearchConfig
 	SafeSearch     filtering.SafeSearch
 
