@@ -310,6 +310,7 @@
     "edns_use_custom_ip": "Använd anpassad IP för EDNS",
     "edns_use_custom_ip_desc": "Tillåt att använda anpassad IP för EDNS",
     "rate_limit_desc": "Antalet förfrågningar per sekund som tillåts per klient. Att sätta den till 0 innebär ingen gräns.",
+    "rate_limit_whitelist_placeholder": "Ange en IP-adress per rad",
     "blocking_ipv4_desc": "IP adress som ska returneras för en blockerad A förfrågan",
     "blocking_ipv6_desc": "IP adress som ska returneras för en blockerad AAAA förfrågan",
     "blocking_mode_default": "Standard: Svara med noll IP-adress (0.0.0.0 för A; :: för AAAA) när det blockeras av regel i Adblock-stil; svara med IP-adressen som anges i regeln när den blockeras av regel i /etc/hosts-stil",
