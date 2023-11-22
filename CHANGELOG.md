@@ -29,6 +29,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
   encrypted protocol is already used ([#1660]).
 - Ability to specify rate limiting settings in the Web UI ([#6369]).
 
+### Changed
+
 #### Configuration changes
 
 - The new property `dns.serve_plain_dns` has been added to the configuration
@@ -41,7 +43,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Fixed
 
 - `ipset` entries family validation ([#6420]).
-- Pre-filling the New static lease window with data ([#6402]).
+- Pre-filling the *New static lease* window with data ([#6402]).
 - Protection pause timer synchronization ([#5759]).
 
 [#1660]: https://github.com/AdguardTeam/AdGuardHome/issues/1660
