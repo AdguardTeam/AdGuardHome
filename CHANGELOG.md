@@ -37,6 +37,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- `ipset` entries family validation ([#6420]).
 - Pre-filling the New static lease window with data ([#6402]).
 - Protection pause timer synchronization ([#5759]).
 
@@ -44,6 +45,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6362]: https://github.com/AdguardTeam/AdGuardHome/issues/6362
 [#6369]: https://github.com/AdguardTeam/AdGuardHome/issues/6369
 [#6402]: https://github.com/AdguardTeam/AdGuardHome/issues/6402
+[#6420]: https://github.com/AdguardTeam/AdGuardHome/issues/6420
 
 [dnsproxy#169] https://github.com/AdguardTeam/dnsproxy/issues/169
 

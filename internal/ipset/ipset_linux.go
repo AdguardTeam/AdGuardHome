@@ -296,6 +296,10 @@ func (m *manager) ipsets(names []string) (sets []props, err error) {
 			return nil, fmt.Errorf("unknown ipset %q", n)
 		}
 
+		if p.family != netfilter.ProtoIPv4 && p.family != netfilter.ProtoIPv6 {
+			return nil, fmt.Errorf("%q unexpected ipset family %q", p.name, p.family)
+		}
+
 		sets = append(sets, p)
 	}
 
