@@ -289,14 +289,15 @@ type ServerConfig struct {
 	// UseHTTP3Upstreams defines if HTTP/3 is be allowed for DNS-over-HTTPS
 	// upstreams.
 	UseHTTP3Upstreams bool
+
+	// ServePlainDNS defines if plain DNS is allowed for incoming requests.
+	ServePlainDNS bool
 }
 
-// createProxyConfig creates and validates configuration for the main proxy.
-func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
+// newProxyConfig creates and validates configuration for the main proxy.
+func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 	srvConf := s.conf
-	conf = proxy.Config{
-		UDPListenAddr:           srvConf.UDPListenAddrs,
-		TCPListenAddr:           srvConf.TCPListenAddrs,
+	conf = &proxy.Config{
 		HTTP3:                   srvConf.ServeHTTP3,
 		Ratelimit:               int(srvConf.Ratelimit),
 		RatelimitSubnetMaskIPv4: net.CIDRMask(srvConf.RatelimitSubnetLenIPv4, netutil.IPv4BitLen),
@@ -328,7 +329,7 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 	}
 
 	setProxyUpstreamMode(
-		&conf,
+		conf,
 		srvConf.AllServers,
 		srvConf.FastestAddr,
 		srvConf.FastestTimeout.Duration,
@@ -336,12 +337,17 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 
 	conf.BogusNXDomain, err = parseBogusNXDOMAIN(srvConf.BogusNXDomain)
 	if err != nil {
-		return proxy.Config{}, fmt.Errorf("bogus_nxdomain: %w", err)
+		return nil, fmt.Errorf("bogus_nxdomain: %w", err)
 	}
 
-	err = s.prepareTLS(&conf)
+	err = s.prepareTLS(conf)
 	if err != nil {
-		return proxy.Config{}, fmt.Errorf("validating tls: %w", err)
+		return nil, fmt.Errorf("validating tls: %w", err)
+	}
+
+	err = s.preparePlain(conf)
+	if err != nil {
+		return nil, fmt.Errorf("validating plain: %w", err)
 	}
 
 	if c := srvConf.DNSCryptConfig; c.Enabled {
@@ -352,7 +358,7 @@ func (s *Server) createProxyConfig() (conf proxy.Config, err error) {
 	}
 
 	if conf.UpstreamConfig == nil || len(conf.UpstreamConfig.Upstreams) == 0 {
-		return proxy.Config{}, errors.Error("no default upstream servers configured")
+		return nil, errors.Error("no default upstream servers configured")
 	}
 
 	return conf, nil
@@ -662,6 +668,31 @@ func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, er
 		return nil, fmt.Errorf("invalid SNI")
 	}
 	return &s.conf.cert, nil
+}
+
+// preparePlain prepares the plain-DNS configuration for the DNS proxy.
+// preparePlain assumes that prepareTLS has already been called.
+func (s *Server) preparePlain(proxyConf *proxy.Config) (err error) {
+	if s.conf.ServePlainDNS {
+		proxyConf.UDPListenAddr = s.conf.UDPListenAddrs
+		proxyConf.TCPListenAddr = s.conf.TCPListenAddrs
+
+		return nil
+	}
+
+	lenEncrypted := len(proxyConf.DNSCryptTCPListenAddr) +
+		len(proxyConf.DNSCryptUDPListenAddr) +
+		len(proxyConf.HTTPSListenAddr) +
+		len(proxyConf.QUICListenAddr) +
+		len(proxyConf.TLSListenAddr)
+	if lenEncrypted == 0 {
+		// TODO(a.garipov): Support full disabling of all DNS.
+		return errors.Error("disabling plain dns requires at least one encrypted protocol")
+	}
+
+	log.Info("dnsforward: warning: plain dns is disabled")
+
+	return nil
 }
 
 // UpdatedProtectionStatus updates protection state, if the protection was

@@ -142,9 +142,12 @@ func initDNSServer(
 		EtcHosts:    Context.etcHosts,
 		LocalDomain: config.DHCP.LocalDomainName,
 	})
+	defer func() {
+		if err != nil {
+			closeDNSServer()
+		}
+	}()
 	if err != nil {
-		closeDNSServer()
-
 		return fmt.Errorf("dnsforward.NewServer: %w", err)
 	}
 
@@ -152,15 +155,11 @@ func initDNSServer(
 
 	dnsConf, err := newServerConfig(&config.DNS, config.Clients.Sources, tlsConf, httpReg)
 	if err != nil {
-		closeDNSServer()
-
 		return fmt.Errorf("newServerConfig: %w", err)
 	}
 
 	err = Context.dnsServer.Prepare(dnsConf)
 	if err != nil {
-		closeDNSServer()
-
 		return fmt.Errorf("dnsServer.Prepare: %w", err)
 	}
 
@@ -253,6 +252,7 @@ func newServerConfig(
 		UsePrivateRDNS:         dnsConf.UsePrivateRDNS,
 		ServeHTTP3:             dnsConf.ServeHTTP3,
 		UseHTTP3Upstreams:      dnsConf.UseHTTP3Upstreams,
+		ServePlainDNS:          dnsConf.ServePlainDNS,
 	}
 
 	var initialAddresses []netip.Addr

@@ -182,6 +182,7 @@ func createTestTLS(t *testing.T, tlsConf TLSConfig) (s *Server, certPem []byte) 
 		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
+		ServePlainDNS: true,
 	}, nil)
 
 	tlsConf.CertificateChainData, tlsConf.PrivateKeyData = certPem, keyPem
@@ -309,6 +310,7 @@ func TestServer(t *testing.T) {
 		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
+		ServePlainDNS: true,
 	}, nil)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 	startDeferStop(t, s)
@@ -347,6 +349,7 @@ func TestServer_timeout(t *testing.T) {
 			Config: Config{
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 			},
+			ServePlainDNS: true,
 		}
 
 		s, err := NewServer(DNSCreateParams{DNSFilter: createTestDNSFilter(t)})
@@ -381,6 +384,7 @@ func TestServer_Prepare_fallbacks(t *testing.T) {
 			},
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
+		ServePlainDNS: true,
 	}
 
 	s, err := NewServer(DNSCreateParams{})
@@ -402,6 +406,7 @@ func TestServerWithProtectionDisabled(t *testing.T) {
 		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
+		ServePlainDNS: true,
 	}, nil)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
 	startDeferStop(t, s)
@@ -479,6 +484,7 @@ func TestServerRace(t *testing.T) {
 			UpstreamDNS: []string{"8.8.8.8:53", "8.8.4.4:53"},
 		},
 		ConfigModified: func() {},
+		ServePlainDNS:  true,
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
@@ -532,6 +538,7 @@ func TestSafeSearch(t *testing.T) {
 				Enabled: false,
 			},
 		},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
 	startDeferStop(t, s)
@@ -594,6 +601,7 @@ func TestInvalidRequest(t *testing.T) {
 				Enabled: false,
 			},
 		},
+		ServePlainDNS: true,
 	}, nil)
 	startDeferStop(t, s)
 
@@ -622,6 +630,7 @@ func TestBlockedRequest(t *testing.T) {
 				Enabled: false,
 			},
 		},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, &filtering.Config{
 		ProtectionEnabled: true,
@@ -657,6 +666,7 @@ func TestServerCustomClientUpstream(t *testing.T) {
 				Enabled: false,
 			},
 		},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, &filtering.Config{
 		BlockingMode: filtering.BlockingModeDefault,
@@ -733,6 +743,7 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 				Enabled: false,
 			},
 		},
+		ServePlainDNS: true,
 	}, nil)
 	testUpstm := &aghtest.Upstream{
 		CName: testCNAMEs,
@@ -765,6 +776,7 @@ func TestBlockCNAME(t *testing.T) {
 				Enabled: false,
 			},
 		},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, &filtering.Config{
 		ProtectionEnabled: true,
@@ -839,6 +851,7 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 				Enabled: false,
 			},
 		},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, &filtering.Config{
 		BlockingMode: filtering.BlockingModeDefault,
@@ -883,6 +896,7 @@ func TestNullBlockedRequest(t *testing.T) {
 				Enabled: false,
 			},
 		},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, &filtering.Config{
 		ProtectionEnabled: true,
@@ -948,6 +962,7 @@ func TestBlockedCustomIP(t *testing.T) {
 				Enabled: false,
 			},
 		},
+		ServePlainDNS: true,
 	}
 
 	// Invalid BlockingIPv4.
@@ -999,6 +1014,7 @@ func TestBlockedByHosts(t *testing.T) {
 				Enabled: false,
 			},
 		},
+		ServePlainDNS: true,
 	}
 
 	s := createTestServer(t, &filtering.Config{
@@ -1049,6 +1065,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 				Enabled: false,
 			},
 		},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
 	startDeferStop(t, s)
@@ -1107,6 +1124,7 @@ func TestRewrite(t *testing.T) {
 				Enabled: false,
 			},
 		},
+		ServePlainDNS: true,
 	}))
 
 	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
