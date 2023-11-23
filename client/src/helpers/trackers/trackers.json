@@ -13714,6 +13714,13 @@
             "url": "https://www.pornhub.com/",
             "companyId": "pornhub"
         },
+        "porntube": {
+            "name": "PornTube",
+            "categoryId": 3,
+            "url": "https://www.porntube.com/",
+            "companyId": "porntube",
+            "source": "AdGuard"
+        },
         "pornwave": {
             "name": "Pornwave",
             "categoryId": 3,
@@ -14605,9 +14612,10 @@
         },
         "redtube.com": {
             "name": "redtube.com",
-            "categoryId": 9,
-            "url": null,
-            "companyId": null
+            "categoryId": 3,
+            "url": "https://www.redtube.com/",
+            "companyId": null,
+            "source": "AdGuard"
         },
         "redux_media": {
             "name": "Redux Media",
@@ -19535,7 +19543,7 @@
         },
         "xvideos_com": {
             "name": "Xvideos",
-            "categoryId": 8,
+            "categoryId": 3,
             "url": "https://www.xvideos.com",
             "companyId": "xvideos",
             "source": "AdGuard"
