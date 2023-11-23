@@ -463,7 +463,7 @@ func validateBindHosts(conf *configuration) (err error) {
 
 	for i, addr := range conf.DNS.BindHosts {
 		if !addr.IsValid() {
-			return fmt.Errorf("dns.bind_hosts at index %d is not a valid ip address", i)
+			return fmt.Errorf("dns.bind_hosts at index %d with value '%s' is not a valid ip address. try quoting the value", i, addr)
 		}
 	}
 
