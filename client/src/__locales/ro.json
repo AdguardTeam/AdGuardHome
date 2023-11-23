@@ -310,6 +310,7 @@
     "edns_use_custom_ip": "Utilizați IP personalizat pentru EDNS",
     "edns_use_custom_ip_desc": "Permiteți utilizarea IP-ului personalizat pentru EDNS",
     "rate_limit_desc": "Numărul de interogări pe secundă permise pe client. Setarea la 0 înseamnă că nu există limită.",
+    "rate_limit_whitelist_placeholder": "Introduceți o adresă IP per linie",
     "blocking_ipv4_desc": "Adresa IP de returnat pentru o cerere A de blocare",
     "blocking_ipv6_desc": "Adresa IP de returnat pentru o cerere AAAA de blocare",
     "blocking_mode_default": "Implicit: Răspunde cu adresa IP (0.0.0.0 for A; :: pentru AAAA) când sunt blocate de regulă tip Adblock; răspunde cu adresa IP specificată în regulă când sunt blocate de regula tip /etc/hosts",

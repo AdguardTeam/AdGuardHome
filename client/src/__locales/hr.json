@@ -310,6 +310,7 @@
     "edns_use_custom_ip": "Koristi prilagođeni IP za EDNS",
     "edns_use_custom_ip_desc": "Dopusti korištenje prilagođenog IP-a za EDNS",
     "rate_limit_desc": "Broj zahtjeva u sekundi koji su dopušteni po jednom klijentu. Postavljanje na 0 znači neograničeno.",
+    "rate_limit_whitelist_placeholder": "Unesite jednu adresu poslužitelja po retku",
     "blocking_ipv4_desc": "Povratna IP adresa za blokirane A zahtjeve",
     "blocking_ipv6_desc": "Povratna IP adresa za blokirane AAAA zahtjeve",
     "blocking_mode_default": "Zadano: Odgovori s nultom IP adresom (0.0.0.0 za A; :: za AAAA) kada ga blokira Adblock slično pravilo; odgovorite s IP adresom definiranom u pravilu kada je blokirano od /etc/hosts sličnog pravila",

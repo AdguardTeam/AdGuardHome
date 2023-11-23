@@ -310,6 +310,7 @@
     "edns_use_custom_ip": "Utiliser une IP personnalisée pour EDNS",
     "edns_use_custom_ip_desc": "Autoriser l'utilisation d'une adresse IP personnalisée pour EDNS",
     "rate_limit_desc": "Le nombre de requêtes par seconde qu’un seul client est autorisé à faire. Le réglage 0 fait illimité.",
+    "rate_limit_whitelist_placeholder": "Saisissez une adresse IP par ligne",
     "blocking_ipv4_desc": "Adresse IP à renvoyer pour une demande A bloquée",
     "blocking_ipv6_desc": "Adresse IP à renvoyer pour une demande AAAA bloquée",
     "blocking_mode_default": "Par défaut : Répondre avec adresse IP zéro (0.0.0.0 pour A ; :: pour AAAA) lorsque bloqué par la règle de style Adblock ; répondre avec l’adresse IP spécifiée dans la règle lorsque bloquée par la règle du style /etc/hosts",

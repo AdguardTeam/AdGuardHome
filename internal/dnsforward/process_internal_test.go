@@ -81,6 +81,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 					AAAADisabled:     tc.aaaaDisabled,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				},
+				ServePlainDNS: true,
 			}
 
 			s := createTestServer(t, &filtering.Config{
@@ -180,6 +181,7 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 					AAAADisabled:     tc.aaaaDisabled,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				},
+				ServePlainDNS: true,
 			}
 
 			s := createTestServer(t, &filtering.Config{
@@ -369,6 +371,7 @@ func prepareTestServer(t *testing.T, portDoH, portDoT, portDoQ int, ddrEnabled b
 			TLSConfig: TLSConfig{
 				ServerName: ddrTestDomainName,
 			},
+			ServePlainDNS: true,
 		},
 	}
 
@@ -699,6 +702,7 @@ func TestServer_ProcessRestrictLocal(t *testing.T) {
 		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
+		ServePlainDNS: true,
 	}, ups)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
 	startDeferStop(t, s)
@@ -776,6 +780,7 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 			Config: Config{
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 			},
+			ServePlainDNS: true,
 		},
 		aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
 			return aghalg.Coalesce(

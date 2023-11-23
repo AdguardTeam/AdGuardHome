@@ -310,6 +310,7 @@
     "edns_use_custom_ip": "EDNS에 사용자 지정 IP 사용",
     "edns_use_custom_ip_desc": "EDNS에 사용자 지정 IP 사용하도록 허용합니다.",
     "rate_limit_desc": "단일 클라이언트에서 허용 가능한 초 당 요청 생성 숫자 (0: 무제한)",
+    "rate_limit_whitelist_placeholder": "한 줄에 하나씩 IP 주소를 입력하세요.",
     "blocking_ipv4_desc": "차단된 A 요청에 대해서 반환할 IP 주소",
     "blocking_ipv6_desc": "차단된 AAAA 요청에 대해서 반환할 IP 주소",
     "blocking_mode_default": "기본: Adblock 스타일 규칙에 의해 차단되면 제로 IP 주소(A는 0.0.0.0; AAAA는 ::)로 응답합니다; /etc/hosts 스타일 규칙에 의해 차단되면 규칙에 정의된 IP 주소로 응답합니다",

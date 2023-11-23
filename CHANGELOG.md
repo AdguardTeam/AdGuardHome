@@ -26,10 +26,16 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Added
 
 - Ability to set client's custom DNS cache ([#6362], [dnsproxy#169]).
+- Ability to disable plain-DNS serving through configuration file if an
+  encrypted protocol is already used ([#1660]).
 - Ability to specify rate limiting settings in the Web UI ([#6369]).
+
+### Changed
 
 #### Configuration changes
 
+- The new property `dns.serve_plain_dns` has been added to the configuration
+  file ([#1660]).
 - The property `dns.bogus_nxdomain` is now validated more strictly.
 - Added new properties `clients.persistent.*.upstreams_cache_enabled` and
   `clients.persistent.*.upstreams_cache_size` that describe cache configuration
@@ -38,9 +44,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Fixed
 
 - `ipset` entries family validation ([#6420]).
-- Pre-filling the New static lease window with data ([#6402]).
+- Pre-filling the *New static lease* window with data ([#6402]).
 - Protection pause timer synchronization ([#5759]).
 
+[#1660]: https://github.com/AdguardTeam/AdGuardHome/issues/1660
 [#5759]: https://github.com/AdguardTeam/AdGuardHome/issues/5759
 [#6362]: https://github.com/AdguardTeam/AdGuardHome/issues/6362
 [#6369]: https://github.com/AdguardTeam/AdGuardHome/issues/6369
