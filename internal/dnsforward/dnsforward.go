@@ -35,6 +35,11 @@ import (
 // DefaultTimeout is the default upstream timeout
 const DefaultTimeout = 10 * time.Second
 
+// defaultLocalTimeout is the default timeout for resolving addresses from
+// locally-served networks.  It is assumed that local resolvers should work much
+// faster than ordinary upstreams.
+const defaultLocalTimeout = 1 * time.Second
+
 // defaultClientIDCacheCount is the default count of items in the LRU ClientID
 // cache.  The assumption here is that there won't be more than this many
 // requests between the BeforeRequestHandler stage and the actual processing.
@@ -458,11 +463,6 @@ func (s *Server) startLocked() error {
 
 	return err
 }
-
-// defaultLocalTimeout is the default timeout for resolving addresses from
-// locally-served networks.  It is assumed that local resolvers should work much
-// faster than ordinary upstreams.
-const defaultLocalTimeout = 1 * time.Second
 
 // setupLocalResolvers initializes the resolvers for local addresses.  It
 // assumes s.serverLock is locked or the Server not running.
