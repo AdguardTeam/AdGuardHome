@@ -601,7 +601,7 @@ func (s *Server) prepareInternalDNS() (boot upstream.Resolver, err error) {
 		return nil, err
 	}
 
-	err = s.prepareUpstreamSettings(boot)
+	err = s.prepareUpstreamSettings(s.bootstrap)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return s.bootstrap, err
