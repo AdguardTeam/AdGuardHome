@@ -2,6 +2,7 @@
 package dnsforward
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -329,15 +330,14 @@ func (s *Server) AddrProcConfig() (c *client.DefaultAddrProcConfig) {
 	}
 }
 
-// Resolve - get IP addresses by host name from an upstream server.
-// No request/response filtering is performed.
-// Query log and Stats are not updated.
-// This method may be called before Start().
-func (s *Server) Resolve(host string) ([]net.IPAddr, error) {
+// Resolve gets IP addresses by host name from an upstream server.  No
+// request/response filtering is performed.  Query log and Stats are not
+// updated.  This method may be called before [Server.Start].
+func (s *Server) Resolve(ctx context.Context, net, host string) (addr []netip.Addr, err error) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	return s.internalProxy.LookupIPAddr(host)
+	return s.internalProxy.LookupNetIP(ctx, net, host)
 }
 
 const (
