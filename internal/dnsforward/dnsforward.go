@@ -299,7 +299,7 @@ func (s *Server) WriteDiskConfig(c *Config) {
 
 	sc := s.conf.Config
 	*c = sc
-	c.RatelimitWhitelist = stringutil.CloneSlice(sc.RatelimitWhitelist)
+	c.RatelimitWhitelist = slices.Clone(sc.RatelimitWhitelist)
 	c.BootstrapDNS = stringutil.CloneSlice(sc.BootstrapDNS)
 	c.FallbackDNS = stringutil.CloneSlice(sc.FallbackDNS)
 	c.AllowedClients = stringutil.CloneSlice(sc.AllowedClients)

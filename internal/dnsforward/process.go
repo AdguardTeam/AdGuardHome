@@ -191,7 +191,7 @@ func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
 	defer log.Debug("dnsforward: finished processing initial")
 
 	pctx := dctx.proxyCtx
-	s.processClientIP(pctx.Addr)
+	s.processClientIP(pctx.Addr.Addr())
 
 	q := pctx.Req.Question[0]
 	qt := q.Qtype
@@ -228,9 +228,8 @@ func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
 }
 
 // processClientIP sends the client IP address to s.addrProc, if needed.
-func (s *Server) processClientIP(addr net.Addr) {
-	clientIP := netutil.NetAddrToAddrPort(addr).Addr()
-	if clientIP == (netip.Addr{}) {
+func (s *Server) processClientIP(addr netip.Addr) {
+	if !addr.IsValid() {
 		log.Info("dnsforward: warning: bad client addr %q", addr)
 
 		return
@@ -241,7 +240,7 @@ func (s *Server) processClientIP(addr net.Addr) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	s.addrProc.Process(clientIP)
+	s.addrProc.Process(addr)
 }
 
 // processDDRQuery responds to Discovery of Designated Resolvers (DDR) SVCB
@@ -351,12 +350,7 @@ func (s *Server) processDetermineLocal(dctx *dnsContext) (rc resultCode) {
 
 	rc = resultCodeSuccess
 
-	var ip net.IP
-	if ip, _ = netutil.IPAndPortFromAddr(dctx.proxyCtx.Addr); ip == nil {
-		return rc
-	}
-
-	dctx.isLocalClient = s.privateNets.Contains(ip)
+	dctx.isLocalClient = s.privateNets.Contains(dctx.proxyCtx.Addr.Addr().AsSlice())
 
 	return rc
 }
@@ -831,12 +825,12 @@ func (s *Server) dhcpHostFromRequest(q *dns.Question) (reqHost string) {
 
 // setCustomUpstream sets custom upstream settings in pctx, if necessary.
 func (s *Server) setCustomUpstream(pctx *proxy.DNSContext, clientID string) {
-	if pctx.Addr == nil || s.conf.ClientsContainer == nil {
+	if !pctx.Addr.IsValid() || s.conf.ClientsContainer == nil {
 		return
 	}
 
 	// Use the ClientID first, since it has a higher priority.
-	id := stringutil.Coalesce(clientID, ipStringFromAddr(pctx.Addr))
+	id := stringutil.Coalesce(clientID, pctx.Addr.Addr().String())
 	upsConf, err := s.conf.ClientsContainer.UpstreamConfigByID(id, s.bootstrap)
 	if err != nil {
 		log.Error("dnsforward: getting custom upstreams for client %s: %s", id, err)

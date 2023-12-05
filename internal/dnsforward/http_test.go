@@ -195,9 +195,8 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		name:    "ratelimit_subnet_len",
 		wantSet: "",
 	}, {
-		name: "ratelimit_whitelist_not_ip",
-		wantSet: `validating dns config: ratelimit whitelist: at index 1: ParseAddr("not.ip"): ` +
-			`unexpected character (at "not.ip")`,
+		name:    "ratelimit_whitelist_not_ip",
+		wantSet: `decoding request: ParseAddr("not.ip"): unexpected character (at "not.ip")`,
 	}, {
 		name:    "edns_cs_enabled",
 		wantSet: "",

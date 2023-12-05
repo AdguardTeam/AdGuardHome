@@ -97,14 +97,14 @@ func TestServer_ProcessInitial(t *testing.T) {
 			dctx := &dnsContext{
 				proxyCtx: &proxy.DNSContext{
 					Req:       createTestMessageWithType(tc.target, tc.qType),
-					Addr:      testClientAddr,
+					Addr:      testClientAddrPort,
 					RequestID: 1234,
 				},
 			}
 
 			gotRC := s.processInitial(dctx)
 			assert.Equal(t, tc.wantRC, gotRC)
-			assert.Equal(t, netutil.NetAddrToAddrPort(testClientAddr).Addr(), gotAddr)
+			assert.Equal(t, testClientAddrPort.Addr(), gotAddr)
 
 			if tc.wantRCode > 0 {
 				gotResp := dctx.proxyCtx.Res
@@ -201,7 +201,7 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 					Proto: proxy.ProtoUDP,
 					Req:   tc.req,
 					Res:   resp,
-					Addr:  testClientAddr,
+					Addr:  testClientAddrPort,
 				},
 			}
 
@@ -397,33 +397,27 @@ func TestServer_ProcessDetermineLocal(t *testing.T) {
 	}
 
 	testCases := []struct {
-		want  assert.BoolAssertionFunc
-		name  string
-		cliIP net.IP
+		want    assert.BoolAssertionFunc
+		name    string
+		cliAddr netip.AddrPort
 	}{{
-		want:  assert.True,
-		name:  "local",
-		cliIP: net.IP{192, 168, 0, 1},
+		want:    assert.True,
+		name:    "local",
+		cliAddr: netip.MustParseAddrPort("192.168.0.1:1"),
 	}, {
-		want:  assert.False,
-		name:  "external",
-		cliIP: net.IP{250, 249, 0, 1},
+		want:    assert.False,
+		name:    "external",
+		cliAddr: netip.MustParseAddrPort("250.249.0.1:1"),
 	}, {
-		want:  assert.False,
-		name:  "invalid",
-		cliIP: net.IP{1, 2, 3, 4, 5},
-	}, {
-		want:  assert.False,
-		name:  "nil",
-		cliIP: nil,
+		want:    assert.False,
+		name:    "invalid",
+		cliAddr: netip.AddrPort{},
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			proxyCtx := &proxy.DNSContext{
-				Addr: &net.TCPAddr{
-					IP: tc.cliIP,
-				},
+				Addr: tc.cliAddr,
 			}
 			dctx := &dnsContext{
 				proxyCtx: proxyCtx,
@@ -711,31 +705,31 @@ func TestServer_ProcessRestrictLocal(t *testing.T) {
 		name     string
 		want     string
 		question net.IP
-		cliIP    net.IP
+		cliAddr  netip.AddrPort
 		wantLen  int
 	}{{
 		name:     "from_local_to_external",
 		want:     "host1.example.net.",
 		question: net.IP{254, 253, 252, 251},
-		cliIP:    net.IP{192, 168, 10, 10},
+		cliAddr:  netip.MustParseAddrPort("192.168.10.10:1"),
 		wantLen:  1,
 	}, {
 		name:     "from_external_for_local",
 		want:     "",
 		question: net.IP{192, 168, 1, 1},
-		cliIP:    net.IP{254, 253, 252, 251},
+		cliAddr:  netip.MustParseAddrPort("254.253.252.251:1"),
 		wantLen:  0,
 	}, {
 		name:     "from_local_for_local",
 		want:     "some.local-client.",
 		question: net.IP{192, 168, 1, 1},
-		cliIP:    net.IP{192, 168, 1, 2},
+		cliAddr:  netip.MustParseAddrPort("192.168.1.2:1"),
 		wantLen:  1,
 	}, {
 		name:     "from_external_for_external",
 		want:     "host1.example.net.",
 		question: net.IP{254, 253, 252, 251},
-		cliIP:    net.IP{254, 253, 252, 255},
+		cliAddr:  netip.MustParseAddrPort("254.253.252.255:1"),
 		wantLen:  1,
 	}}
 
@@ -747,9 +741,7 @@ func TestServer_ProcessRestrictLocal(t *testing.T) {
 		pctx := &proxy.DNSContext{
 			Proto: proxy.ProtoTCP,
 			Req:   req,
-			Addr: &net.TCPAddr{
-				IP: tc.cliIP,
-			},
+			Addr:  tc.cliAddr,
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -794,7 +786,7 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 	var dnsCtx *dnsContext
 	setup := func(use bool) {
 		proxyCtx = &proxy.DNSContext{
-			Addr: testClientAddr,
+			Addr: testClientAddrPort,
 			Req:  createTestMessageWithType(reqAddr, dns.TypePTR),
 		}
 		dnsCtx = &dnsContext{

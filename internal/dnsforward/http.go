@@ -52,7 +52,7 @@ type jsonDNSConfig struct {
 	RatelimitSubnetLenIPv6 *int `json:"ratelimit_subnet_len_ipv6"`
 
 	// RatelimitWhitelist is a list of IP addresses excluded from rate limiting.
-	RatelimitWhitelist *[]string `json:"ratelimit_whitelist"`
+	RatelimitWhitelist *[]netip.Addr `json:"ratelimit_whitelist"`
 
 	// BlockingMode defines the way blocked responses are constructed.
 	BlockingMode *filtering.BlockingMode `json:"blocking_mode"`
@@ -129,7 +129,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	ratelimit := s.conf.Ratelimit
 	ratelimitSubnetLenIPv4 := s.conf.RatelimitSubnetLenIPv4
 	ratelimitSubnetLenIPv6 := s.conf.RatelimitSubnetLenIPv6
-	ratelimitWhitelist := stringutil.CloneSliceOrEmpty(s.conf.RatelimitWhitelist)
+	ratelimitWhitelist := append([]netip.Addr{}, s.conf.RatelimitWhitelist...)
 
 	customIP := s.conf.EDNSClientSubnet.CustomIP
 	enableEDNSClientSubnet := s.conf.EDNSClientSubnet.Enabled
@@ -291,12 +291,6 @@ func (req *jsonDNSConfig) validate(privateNets netutil.SubnetSet) (err error) {
 		return err
 	}
 
-	err = req.checkRatelimitWhitelist()
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return err
-	}
-
 	err = req.checkBlockingMode()
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
@@ -400,21 +394,6 @@ func checkInclusion(ptr *int, minN, maxN int) (err error) {
 		return fmt.Errorf("value %d less than min %d", n, minN)
 	case n > maxN:
 		return fmt.Errorf("value %d greater than max %d", n, maxN)
-	}
-
-	return nil
-}
-
-// checkRatelimitWhitelist returns an error if any of IP addresses is invalid.
-func (req *jsonDNSConfig) checkRatelimitWhitelist() (err error) {
-	if req.RatelimitWhitelist == nil {
-		return nil
-	}
-
-	for i, ipStr := range *req.RatelimitWhitelist {
-		if _, err = netip.ParseAddr(ipStr); err != nil {
-			return fmt.Errorf("ratelimit whitelist: at index %d: %w", i, err)
-		}
 	}
 
 	return nil

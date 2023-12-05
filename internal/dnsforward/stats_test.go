@@ -1,7 +1,7 @@
 package dnsforward
 
 import (
-	"net"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -65,7 +65,7 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		name           string
 		domain         string
 		proto          proxy.Proto
-		addr           net.Addr
+		addr           netip.AddrPort
 		clientID       string
 		wantLogProto   querylog.ClientProto
 		wantStatClient string
@@ -76,7 +76,7 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		name:           "success_udp",
 		domain:         domain,
 		proto:          proxy.ProtoUDP,
-		addr:           &net.UDPAddr{IP: net.IP{1, 2, 3, 4}, Port: 1234},
+		addr:           testClientAddrPort,
 		clientID:       "",
 		wantLogProto:   "",
 		wantStatClient: "1.2.3.4",
@@ -87,7 +87,7 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		name:           "success_tls_clientid",
 		domain:         domain,
 		proto:          proxy.ProtoTLS,
-		addr:           &net.TCPAddr{IP: net.IP{1, 2, 3, 4}, Port: 1234},
+		addr:           testClientAddrPort,
 		clientID:       "cli42",
 		wantLogProto:   querylog.ClientProtoDoT,
 		wantStatClient: "cli42",
@@ -98,7 +98,7 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		name:           "success_tls",
 		domain:         domain,
 		proto:          proxy.ProtoTLS,
-		addr:           &net.TCPAddr{IP: net.IP{1, 2, 3, 4}, Port: 1234},
+		addr:           testClientAddrPort,
 		clientID:       "",
 		wantLogProto:   querylog.ClientProtoDoT,
 		wantStatClient: "1.2.3.4",
@@ -109,7 +109,7 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		name:           "success_quic",
 		domain:         domain,
 		proto:          proxy.ProtoQUIC,
-		addr:           &net.UDPAddr{IP: net.IP{1, 2, 3, 4}, Port: 1234},
+		addr:           testClientAddrPort,
 		clientID:       "",
 		wantLogProto:   querylog.ClientProtoDoQ,
 		wantStatClient: "1.2.3.4",
@@ -120,7 +120,7 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		name:           "success_https",
 		domain:         domain,
 		proto:          proxy.ProtoHTTPS,
-		addr:           &net.TCPAddr{IP: net.IP{1, 2, 3, 4}, Port: 1234},
+		addr:           testClientAddrPort,
 		clientID:       "",
 		wantLogProto:   querylog.ClientProtoDoH,
 		wantStatClient: "1.2.3.4",
@@ -131,7 +131,7 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		name:           "success_dnscrypt",
 		domain:         domain,
 		proto:          proxy.ProtoDNSCrypt,
-		addr:           &net.TCPAddr{IP: net.IP{1, 2, 3, 4}, Port: 1234},
+		addr:           testClientAddrPort,
 		clientID:       "",
 		wantLogProto:   querylog.ClientProtoDNSCrypt,
 		wantStatClient: "1.2.3.4",
@@ -142,7 +142,7 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		name:           "success_udp_filtered",
 		domain:         domain,
 		proto:          proxy.ProtoUDP,
-		addr:           &net.UDPAddr{IP: net.IP{1, 2, 3, 4}, Port: 1234},
+		addr:           testClientAddrPort,
 		clientID:       "",
 		wantLogProto:   "",
 		wantStatClient: "1.2.3.4",
@@ -153,7 +153,7 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		name:           "success_udp_sb",
 		domain:         domain,
 		proto:          proxy.ProtoUDP,
-		addr:           &net.UDPAddr{IP: net.IP{1, 2, 3, 4}, Port: 1234},
+		addr:           testClientAddrPort,
 		clientID:       "",
 		wantLogProto:   "",
 		wantStatClient: "1.2.3.4",
@@ -164,7 +164,7 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		name:           "success_udp_ss",
 		domain:         domain,
 		proto:          proxy.ProtoUDP,
-		addr:           &net.UDPAddr{IP: net.IP{1, 2, 3, 4}, Port: 1234},
+		addr:           testClientAddrPort,
 		clientID:       "",
 		wantLogProto:   "",
 		wantStatClient: "1.2.3.4",
@@ -175,7 +175,7 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		name:           "success_udp_pc",
 		domain:         domain,
 		proto:          proxy.ProtoUDP,
-		addr:           &net.UDPAddr{IP: net.IP{1, 2, 3, 4}, Port: 1234},
+		addr:           testClientAddrPort,
 		clientID:       "",
 		wantLogProto:   "",
 		wantStatClient: "1.2.3.4",
@@ -186,10 +186,10 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		name:           "success_udp_pc_empty_fqdn",
 		domain:         ".",
 		proto:          proxy.ProtoUDP,
-		addr:           &net.UDPAddr{IP: net.IP{1, 2, 3, 5}, Port: 1234},
+		addr:           netip.MustParseAddrPort("4.3.2.1:1234"),
 		clientID:       "",
 		wantLogProto:   "",
-		wantStatClient: "1.2.3.5",
+		wantStatClient: "4.3.2.1",
 		wantCode:       resultCodeSuccess,
 		reason:         filtering.FilteredParental,
 		wantStatResult: stats.RParental,

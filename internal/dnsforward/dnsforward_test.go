@@ -54,13 +54,10 @@ const (
 	testMessagesCount = 10
 )
 
-// testClientAddr is the common net.Addr for tests.
+// testClientAddrPort is the common net.Addr for tests.
 //
 // TODO(a.garipov): Use more.
-var testClientAddr net.Addr = &net.TCPAddr{
-	IP:   net.IP{1, 2, 3, 4},
-	Port: 12345,
-}
+var testClientAddrPort = netip.MustParseAddrPort("1.2.3.4:12345")
 
 func startDeferStop(t *testing.T, s *Server) {
 	t.Helper()
