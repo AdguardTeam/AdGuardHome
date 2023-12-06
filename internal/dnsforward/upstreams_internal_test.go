@@ -4,7 +4,6 @@ import (
 	"net"
 	"net/url"
 	"strings"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -164,13 +163,16 @@ func TestUpstreamConfigValidator(t *testing.T) {
 }
 
 func TestUpstreamConfigValidator_Check_once(t *testing.T) {
-	reqs := atomic.Int32{}
-	reset := func() { reqs.Store(0) }
+	type signal = struct{}
 
+	reqCh := make(chan signal)
 	hdlr := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
+		pt := testutil.PanicT{}
+
 		err := w.WriteMsg(new(dns.Msg).SetReply(m))
-		require.NoError(testutil.PanicT{}, err)
-		reqs.Add(1)
+		require.NoError(pt, err)
+
+		testutil.RequireSend(pt, reqCh, signal{}, testTimeout)
 	})
 
 	addr := (&url.URL{
@@ -178,6 +180,10 @@ func TestUpstreamConfigValidator_Check_once(t *testing.T) {
 		Host:   newLocalUpstreamListener(t, 0, hdlr).String(),
 	}).String()
 	twoAddrs := strings.Join([]string{addr, addr}, " ")
+
+	wantStatus := map[string]string{
+		addr: "OK",
+	}
 
 	testCases := []struct {
 		name string
@@ -195,15 +201,23 @@ func TestUpstreamConfigValidator_Check_once(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Cleanup(reset)
-
 			cv := newUpstreamConfigValidator(tc.ups, nil, nil, &upstream.Options{
-				Timeout: 100 * time.Millisecond,
+				Timeout: testTimeout,
 			})
-			cv.check()
-			cv.close()
 
-			assert.Equal(t, int32(1), reqs.Load())
+			go func() {
+				cv.check()
+				testutil.RequireSend(testutil.PanicT{}, reqCh, signal{}, testTimeout)
+			}()
+
+			// Wait for the only request to be sent.
+			testutil.RequireReceive(t, reqCh, testTimeout)
+
+			// Wait for the check to finish.
+			testutil.RequireReceive(t, reqCh, testTimeout)
+
+			cv.close()
+			require.Equal(t, wantStatus, cv.status())
 		})
 	}
 }
