@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2023-11-10T12:55:56.663Z",
+    "timeUpdated": "2023-12-01T15:24:07.522Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -640,7 +640,8 @@
             "name": "AdChina",
             "categoryId": 4,
             "url": "http://www.adchina.com/",
-            "companyId": "alibaba"
+            "companyId": null,
+            "source": "AdGuard"
         },
         "adcito": {
             "name": "Adcito",
@@ -1318,6 +1319,13 @@
             "name": "Adobe Experience Cloud",
             "categoryId": 6,
             "url": "https://business.adobe.com/",
+            "companyId": "adobe",
+            "source": "AdGuard"
+        },
+        "adobe_experience_league": {
+            "name": "Adobe Experience League",
+            "categoryId": 6,
+            "url": "https://experienceleague.adobe.com/",
             "companyId": "adobe",
             "source": "AdGuard"
         },
@@ -2281,27 +2289,29 @@
             "name": "Alibaba",
             "categoryId": 8,
             "url": "http://www.alibaba.com/",
-            "companyId": "alibaba"
+            "companyId": "softbank",
+            "source": "AdGuard"
         },
         "alibaba_cloud": {
             "name": "Alibaba Cloud",
             "categoryId": 10,
             "url": "https://www.alibabacloud.com/",
-            "companyId": "alibaba",
+            "companyId": "softbank",
             "source": "AdGuard"
         },
         "alibaba_ucbrowser": {
             "name": "UC Browser",
             "categoryId": 8,
             "url": "https://ucweb.com/",
-            "companyId": "alibaba",
+            "companyId": "softbank",
             "source": "AdGuard"
         },
         "alipay.com": {
             "name": "Alipay",
             "categoryId": 2,
-            "url": "https://www.alipay.com/",
-            "companyId": "alibaba"
+            "url": "https://global.alipay.com/",
+            "companyId": "softbank",
+            "source": "AdGuard"
         },
         "alivechat": {
             "name": "AliveChat",
@@ -3767,10 +3777,11 @@
             "companyId": "branica"
         },
         "braze": {
-            "name": "Braze",
+            "name": "Braze, Inc.",
             "categoryId": 6,
             "url": "https://www.braze.com/",
-            "companyId": "braze_inc"
+            "companyId": "braze",
+            "source": "AdGuard"
         },
         "brealtime": {
             "name": "EMX Digital",
@@ -12534,7 +12545,7 @@
             "name": "Network Time Protocol",
             "categoryId": 5,
             "url": "https://ntp.org/",
-            "companyId": "ntppool",
+            "companyId": "network_time_foundation",
             "source": "AdGuard"
         },
         "nttcom_online_marketing_solutions": {
@@ -17062,7 +17073,8 @@
             "name": "Taobao",
             "categoryId": 4,
             "url": "https://world.taobao.com/",
-            "companyId": "alibaba"
+            "companyId": "softbank",
+            "source": "AdGuard"
         },
         "tapad": {
             "name": "Tapad",
@@ -20431,6 +20443,7 @@
         "nedstat.com": "adobe_experience_cloud",
         "omtrdc.net": "adobe_experience_cloud",
         "sitestat.com": "adobe_experience_cloud",
+        "adobedc.net": "adobe_experience_league",
         "adobelogin.com": "adobe_login",
         "adobetag.com": "adobe_tagmanager",
         "typekit.com": "adobe_typekit",
@@ -21046,6 +21059,7 @@
         "brandwire.tv": "brandwire.tv",
         "branica.com": "branica",
         "appboycdn.com": "braze",
+        "braze.com": "braze",
         "brealtime.com": "brealtime",
         "bridgetrack.com": "bridgetrack",
         "brightcove.com": "brightcove",
@@ -23140,8 +23154,11 @@
         "s-microsoft.com": "microsoft",
         "trouter.io": "microsoft",
         "windows.net": "microsoft",
+        "aka.ms": "microsoft",
+        "microsoftazuread-sso.com": "microsoft",
         "bingapis.com": "microsoft",
         "msauth.net": "microsoft",
+        "msauthimages.net": "microsoft",
         "msftauth.net": "microsoft",
         "msftstatic.com": "microsoft",
         "msidentity.com": "microsoft",
@@ -23232,10 +23249,13 @@
         "mrpdata.net": "mrpdata",
         "mrskincash.com": "mrskincash",
         "a-msedge.net": "msedge",
+        "b-msedge.net": "msedge",
         "e-msedge.net": "msedge",
+        "k-msedge.net": "msedge",
         "l-msedge.net": "msedge",
         "s-msedge.net": "msedge",
         "t-msedge.net": "msedge",
+        "wac-msedge.net": "msedge",
         "msn.com": "msn",
         "s-msn.com": "msn",
         "musculahq.appspot.com": "muscula",

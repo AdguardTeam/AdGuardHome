@@ -734,5 +734,8 @@
     "wednesday_short": "Str",
     "thursday_short": "Štr",
     "friday_short": "Pia",
-    "saturday_short": "Sob"
+    "saturday_short": "Sob",
+    "upstream_dns_cache_configuration": "Konfigurácia cache pamäte DNS pre upstream",
+    "enable_upstream_dns_cache": "Zapnúť ukladanie DNS do cache pamäte pre vlastnú konfiguráciu odosielania tohto klienta",
+    "dns_cache_size": "Veľkosť cache pamäte DNS v bajtoch"
 }

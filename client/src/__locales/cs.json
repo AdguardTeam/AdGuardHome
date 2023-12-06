@@ -734,5 +734,8 @@
     "wednesday_short": "Středa",
     "thursday_short": "Čtvrtek",
     "friday_short": "Pátek",
-    "saturday_short": "Sobota"
+    "saturday_short": "Sobota",
+    "upstream_dns_cache_configuration": "Konfigurace mezipaměti odchozího DNS",
+    "enable_upstream_dns_cache": "Povolit ukládání do mezipaměti DNS pro vlastní konfiguraci odchozího připojení tohoto klienta",
+    "dns_cache_size": "Velikost mezipaměti DNS v bajtech"
 }

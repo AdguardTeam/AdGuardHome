@@ -734,5 +734,8 @@
     "wednesday_short": "Ons",
     "thursday_short": "Tors",
     "friday_short": "Fre",
-    "saturday_short": "Lør"
+    "saturday_short": "Lør",
+    "upstream_dns_cache_configuration": "Upstream DNS-cacheopsætning",
+    "enable_upstream_dns_cache": "Aktivér DNS-cachelagring for denne klients tilpassede upstream-opsætning",
+    "dns_cache_size": "DNS-cachestørrelse i bytes"
 }

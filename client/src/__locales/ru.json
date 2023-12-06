@@ -734,5 +734,8 @@
     "wednesday_short": "Ср",
     "thursday_short": "Чт",
     "friday_short": "Пт",
-    "saturday_short": "Сб"
+    "saturday_short": "Сб",
+    "upstream_dns_cache_configuration": "Конфигурация кеша upstream DNS-серверов",
+    "enable_upstream_dns_cache": "Включить кеширование для пользовательской конфигурации upstream-серверов этого клиента",
+    "dns_cache_size": "Размер DNS-кеша в байтах"
 }

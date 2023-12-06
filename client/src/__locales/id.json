@@ -734,5 +734,8 @@
     "wednesday_short": "Rab",
     "thursday_short": "Kam",
     "friday_short": "Jum",
-    "saturday_short": "Sab"
+    "saturday_short": "Sab",
+    "upstream_dns_cache_configuration": "Konfigurasi cache DNS upstream",
+    "enable_upstream_dns_cache": "Aktifkan cache DNS untuk konfigurasi upstream kustom klien ini",
+    "dns_cache_size": "Ukuran cache DNS, dalam byte"
 }

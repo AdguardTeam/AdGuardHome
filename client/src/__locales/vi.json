@@ -734,5 +734,8 @@
     "wednesday_short": "Thứ 4",
     "thursday_short": "Thứ 5",
     "friday_short": "Thứ 6",
-    "saturday_short": "Thứ 7"
+    "saturday_short": "Thứ 7",
+    "upstream_dns_cache_configuration": "Cấu hình bộ nhớ đệm upstream của các máy chủ DNS",
+    "enable_upstream_dns_cache": "Bật bộ nhớ cache cho cấu hình ngược dòng của máy chủ upstream của khách hàng này",
+    "dns_cache_size": "Kích thước bộ nhớ cache DNS, tính bằng byte"
 }

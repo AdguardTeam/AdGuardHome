@@ -734,5 +734,8 @@
     "wednesday_short": "wo",
     "thursday_short": "do",
     "friday_short": "vr",
-    "saturday_short": "za"
+    "saturday_short": "za",
+    "upstream_dns_cache_configuration": "Upstream DNS-cacheconfiguratie",
+    "enable_upstream_dns_cache": "DNS-caching inschakelen voor de aangepaste upstream-configuratie van deze client",
+    "dns_cache_size": "DNS-cachegrootte, in bytes"
 }

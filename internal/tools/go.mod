@@ -10,7 +10,7 @@ require (
 	github.com/kyoh86/looppointer v0.2.1
 	github.com/securego/gosec/v2 v2.18.2
 	github.com/uudashr/gocognit v1.1.2
-	golang.org/x/tools v0.15.0
+	golang.org/x/tools v0.16.0
 	golang.org/x/vuln v1.0.1
 	honnef.co/go/tools v0.4.6
 	mvdan.cc/gofumpt v0.5.0
@@ -26,9 +26,9 @@ require (
 	github.com/kyoh86/nolint v0.0.1 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20231110203233-9a3e6036ecaa // indirect
+	golang.org/x/exp/typeparams v0.0.0-20231127185646-65229373498e // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

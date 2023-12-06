@@ -734,5 +734,8 @@
     "wednesday_short": "水",
     "thursday_short": "木",
     "friday_short": "金",
-    "saturday_short": "土"
+    "saturday_short": "土",
+    "upstream_dns_cache_configuration": "Upstream DNS cache configuration（アップストリームDNSキャッシュの構成）",
+    "enable_upstream_dns_cache": "このクライアントのカスタムアップストリーム構成に対してDNSキャッシュを有効にする",
+    "dns_cache_size": "DNSキャッシュサイズ（バイト単位）"
 }

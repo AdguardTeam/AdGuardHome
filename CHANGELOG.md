@@ -23,6 +23,12 @@ See also the [v0.107.42 GitHub milestone][ms-v0.107.42].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the
+  CVE-2023-39326, CVE-2023-45283, and CVE-2023-45285 Go vulnerabilities fixed in
+  [Go 1.20.12][go-1.20.12].
+
 ### Added
 
 - Ability to set client's custom DNS cache ([#6362]).
@@ -53,6 +59,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6369]: https://github.com/AdguardTeam/AdGuardHome/issues/6369
 [#6402]: https://github.com/AdguardTeam/AdGuardHome/issues/6402
 [#6420]: https://github.com/AdguardTeam/AdGuardHome/issues/6420
+
+[go-1.20.12]: https://groups.google.com/g/golang-announce/c/iLGK3x6yuNo/m/z6MJ-eB0AQAJ
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

@@ -734,5 +734,8 @@
     "wednesday_short": "週三",
     "thursday_short": "週四",
     "friday_short": "週五",
-    "saturday_short": "週六"
+    "saturday_short": "週六",
+    "upstream_dns_cache_configuration": "上游 DNS 快取設定",
+    "enable_upstream_dns_cache": "啟用本用戶端自訂上游配置的 DNS 快取",
+    "dns_cache_size": "DNS 快取大小，單位：位元"
 }

@@ -734,5 +734,8 @@
     "wednesday_short": "Sre",
     "thursday_short": "Čet",
     "friday_short": "Pet",
-    "saturday_short": "Sob"
+    "saturday_short": "Sob",
+    "upstream_dns_cache_configuration": "Nastavitve predpomnilnika gorvodnega DNS",
+    "enable_upstream_dns_cache": "Omogoči predpomnjenje nastavitev gorvodnega DNS po meri tega odjemalca",
+    "dns_cache_size": "Velikost predpomnilnika DNS, v bajtih"
 }

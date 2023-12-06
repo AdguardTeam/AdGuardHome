@@ -734,5 +734,8 @@
     "wednesday_short": "Szer",
     "thursday_short": "Csüt",
     "friday_short": "Pén",
-    "saturday_short": "Szom"
+    "saturday_short": "Szom",
+    "upstream_dns_cache_configuration": "Upstream DNS gyorsítótár konfigurációja",
+    "enable_upstream_dns_cache": "A DNS gyorsítótárazásának engedélyezése az ügyfél egyéni upstream konfigurációjához",
+    "dns_cache_size": "DNS gyorsítótár mérete, bájtokban"
 }

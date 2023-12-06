@@ -734,5 +734,8 @@
     "wednesday_short": "Mié.",
     "thursday_short": "Jue.",
     "friday_short": "Vie.",
-    "saturday_short": "Sáb."
+    "saturday_short": "Sáb.",
+    "upstream_dns_cache_configuration": "Configuración de la caché DNS upstream",
+    "enable_upstream_dns_cache": "Habilitar el almacenamiento en caché de DNS para la configuración personalizada de este cliente",
+    "dns_cache_size": "Tamaño de la caché DNS, en bytes"
 }

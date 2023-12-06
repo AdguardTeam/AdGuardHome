@@ -734,5 +734,8 @@
     "wednesday_short": "Ke",
     "thursday_short": "To",
     "friday_short": "Pe",
-    "saturday_short": "La"
+    "saturday_short": "La",
+    "upstream_dns_cache_configuration": "Ylävirran DNS-välimuistin määritykset",
+    "enable_upstream_dns_cache": "Käytä DNS-välimuistia tämän päätelaitteen mukautetuissa ylävirtamäärityksissä",
+    "dns_cache_size": "DNS-välimuistin koko tavuina"
 }

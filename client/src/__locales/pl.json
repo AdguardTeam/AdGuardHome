@@ -734,5 +734,8 @@
     "wednesday_short": "Śro",
     "thursday_short": "Czw",
     "friday_short": "Pt",
-    "saturday_short": "Sob"
+    "saturday_short": "Sob",
+    "upstream_dns_cache_configuration": "Konfiguracja pamięci podręcznej upstream serwerów DNS",
+    "enable_upstream_dns_cache": "Włącz pamięć podręczną dla niestandardowej konfiguracji serwera upstream tego klienta",
+    "dns_cache_size": "Rozmiar pamięci podręcznej DNS, w bajtach"
 }

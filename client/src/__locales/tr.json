@@ -322,7 +322,7 @@
     "rate_limit_whitelist_placeholder": "Her satıra bir IP adresi girin",
     "blocking_ipv4_desc": "Engellenen bir A isteği için geri döndürülecek IP adresi",
     "blocking_ipv6_desc": "Engellenen bir AAAA isteği için geri döndürülecek IP adresi",
-    "blocking_mode_default": "Varsayılan: Reklam engelleme tarzı kural tarafından engellendiğinde sıfır IP adresiyle (A için 0.0.0.0; :: AAAA için) yanıt verin; /etc/hosts-tarzı kural tarafından engellendiğinde, kuralda belirtilen IP adresiyle yanıt verin",
+    "blocking_mode_default": "Varsayılan: Reklam engelleme stili kuralı tarafından engellendiğinde sıfır IP adresiyle (A için 0.0.0.0; :: AAAA için) yanıt verin; /etc/hosts-tarzı kural tarafından engellendiğinde, kuralda belirtilen IP adresiyle yanıt verin",
     "blocking_mode_refused": "REFUSED: REFUSED koduyla yanıt verin",
     "blocking_mode_nxdomain": "NXDOMAIN: NXDOMAIN koduyla yanıt verin",
     "blocking_mode_null_ip": "Boş IP: Sıfır IP adresiyle yanıt verin (A için 0.0.0.0; :: AAAA için)",
@@ -734,5 +734,8 @@
     "wednesday_short": "Çar",
     "thursday_short": "Per",
     "friday_short": "Cum",
-    "saturday_short": "Cmt"
+    "saturday_short": "Cmt",
+    "upstream_dns_cache_configuration": "Üst kaynak DNS önbellek yapılandırması",
+    "enable_upstream_dns_cache": "Bu istemcinin özel üst kaynak yapılandırması için DNS önbelleğe almayı etkinleştir",
+    "dns_cache_size": "DNS önbellek boyutu, bayt cinsinden"
 }
