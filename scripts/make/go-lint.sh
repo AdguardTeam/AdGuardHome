@@ -218,6 +218,7 @@ run_linter gocognit --over='10'\
 	./internal/filtering/hashprefix/\
 	./internal/filtering/rulelist/\
 	./internal/filtering/safesearch/\
+	./internal/ipset\
 	./internal/next/\
 	./internal/rdns/\
 	./internal/schedule/\
@@ -257,9 +258,11 @@ run_linter fieldalignment \
 	./internal/filtering/rewrite/\
 	./internal/filtering/rulelist/\
 	./internal/filtering/safesearch/\
+	./internal/ipset/\
 	./internal/next/...\
 	./internal/querylog/\
 	./internal/rdns/\
+	./internal/schedule/\
 	./internal/stats/\
 	./internal/updater/\
 	./internal/version/\
@@ -287,6 +290,7 @@ run_linter gosec --quiet\
 	./internal/filtering/rewrite/\
 	./internal/filtering/rulelist/\
 	./internal/filtering/safesearch/\
+	./internal/ipset/\
 	./internal/next/\
 	./internal/rdns/\
 	./internal/schedule/\

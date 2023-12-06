@@ -269,8 +269,9 @@ func (m *manager) parseIpsetConfig(ipsetConf []string) (err error) {
 		return err
 	}
 
+	currentlyKnown := map[string]props{}
 	for _, p := range all {
-		m.nameToIpset[p.name] = p
+		currentlyKnown[p.name] = p
 	}
 
 	for i, confStr := range ipsetConf {
@@ -281,7 +282,7 @@ func (m *manager) parseIpsetConfig(ipsetConf []string) (err error) {
 		}
 
 		var ipsets []props
-		ipsets, err = m.ipsets(ipsetNames)
+		ipsets, err = m.ipsets(ipsetNames, currentlyKnown)
 		if err != nil {
 			return fmt.Errorf("getting ipsets from config line at idx %d: %w", i, err)
 		}
@@ -297,35 +298,43 @@ func (m *manager) parseIpsetConfig(ipsetConf []string) (err error) {
 // ipsetProps returns the properties of an ipset with the given name.
 //
 // Additional header data query.  See https://github.com/AdguardTeam/AdGuardHome/issues/6420.
-func (m *manager) ipsetProps(p props) (err error) {
+//
+// TODO(s.chzhen):  Use *props.
+func (m *manager) ipsetProps(name string) (p props, err error) {
 	// The family doesn't seem to matter when we use a header query, so
 	// query only the IPv4 one.
 	//
 	// TODO(a.garipov): Find out if this is a bug or a feature.
 	var res *ipset.HeaderPolicy
-	res, err = m.ipv4Conn.Header(p.name)
+	res, err = m.ipv4Conn.Header(name)
 	if err != nil {
-		return err
+		return props{}, err
 	}
 
 	if res == nil || res.Family == nil {
-		return errors.Error("empty response or no family data")
+		return props{}, errors.Error("empty response or no family data")
 	}
 
 	family := netfilter.ProtoFamily(res.Family.Value)
 	if family != netfilter.ProtoIPv4 && family != netfilter.ProtoIPv6 {
-		return fmt.Errorf("unexpected ipset family %q", family)
+		return props{}, fmt.Errorf("unexpected ipset family %q", family)
 	}
 
-	p.family = family
+	typeName := res.TypeName.Get()
 
-	return nil
+	return props{
+		name:         name,
+		typeName:     typeName,
+		family:       family,
+		isPersistent: false,
+	}, nil
 }
 
-// ipsets returns currently known ipsets.
-func (m *manager) ipsets(names []string) (sets []props, err error) {
+// ipsets returns ipset properties of currently known ipsets.  It also makes an
+// additional ipset header data query if needed.
+func (m *manager) ipsets(names []string, currentlyKnown map[string]props) (sets []props, err error) {
 	for _, n := range names {
-		p, ok := m.nameToIpset[n]
+		p, ok := currentlyKnown[n]
 		if !ok {
 			return nil, fmt.Errorf("unknown ipset %q", n)
 		}
@@ -337,12 +346,13 @@ func (m *manager) ipsets(names []string) (sets []props, err error) {
 				p.family,
 			)
 
-			err = m.ipsetProps(p)
+			p, err = m.ipsetProps(n)
 			if err != nil {
 				return nil, fmt.Errorf("%q %q making header query: %w", p.name, p.typeName, err)
 			}
 		}
 
+		m.nameToIpset[n] = p
 		sets = append(sets, p)
 	}
 

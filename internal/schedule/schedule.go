@@ -339,9 +339,6 @@ func (r dayRange) toDayConfigJSON() (j *dayConfigJSON) {
 
 // weeklyConfigJSON is the JSON configuration structure of Weekly.
 type weeklyConfigJSON struct {
-	// TimeZone is the local time zone.
-	TimeZone string `json:"time_zone"`
-
 	// Days of the week.
 
 	Sunday    *dayConfigJSON `json:"sun,omitempty"`
@@ -351,6 +348,9 @@ type weeklyConfigJSON struct {
 	Thursday  *dayConfigJSON `json:"thu,omitempty"`
 	Friday    *dayConfigJSON `json:"fri,omitempty"`
 	Saturday  *dayConfigJSON `json:"sat,omitempty"`
+
+	// TimeZone is the local time zone.
+	TimeZone string `json:"time_zone"`
 }
 
 // dayConfigJSON is the JSON configuration structure of dayRange.
