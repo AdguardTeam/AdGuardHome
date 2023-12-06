@@ -247,7 +247,6 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		privateNets: p.PrivateNets,
 		// TODO(e.burkov):  Use some case-insensitive string comparison.
 		localDomainSuffix: strings.ToLower(localDomainSuffix),
-		etcHosts:          p.EtcHosts,
 		recDetector:       newRecursionDetector(recursionTTL, cachedRecurrentReqNum),
 		clientIDCache: cache.New(cache.Config{
 			EnableLRU: true,
@@ -257,6 +256,9 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		conf: ServerConfig{
 			ServePlainDNS: true,
 		},
+	}
+	if p.EtcHosts != nil {
+		s.etcHosts = p.EtcHosts
 	}
 
 	s.sysResolvers, err = sysresolv.NewSystemResolvers(nil, defaultPlainDNSPort)
