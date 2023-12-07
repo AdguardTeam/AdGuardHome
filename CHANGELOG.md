@@ -14,14 +14,24 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.42] - 2023-12-06 (APPROX.)
+## [v0.107.43] - 2023-12-20 (APPROX.)
 
-See also the [v0.107.42 GitHub milestone][ms-v0.107.42].
+See also the [v0.107.43 GitHub milestone][ms-v0.107.43].
 
-[ms-v0.107.42]: https://github.com/AdguardTeam/AdGuardHome/milestone/77?closed=1
+[ms-v0.107.43]: https://github.com/AdguardTeam/AdGuardHome/milestone/78?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+
+
+## [v0.107.42] - 2023-12-07
+
+See also the [v0.107.42 GitHub milestone][ms-v0.107.42].
 
 ### Security
 
@@ -31,9 +41,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
-- Ability to set client's custom DNS cache ([#6362]).
+- Ability to set client's custom DNS cache ([#6263]).
 - Ability to disable plain-DNS serving through configuration file if an
-  encrypted protocol is already used ([#1660]).
+  encrypted protocol is already enabled ([#1660]).
 - Ability to specify rate limiting settings in the Web UI ([#6369]).
 
 ### Changed
@@ -55,16 +65,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#1660]: https://github.com/AdguardTeam/AdGuardHome/issues/1660
 [#5759]: https://github.com/AdguardTeam/AdGuardHome/issues/5759
-[#6362]: https://github.com/AdguardTeam/AdGuardHome/issues/6362
+[#6263]: https://github.com/AdguardTeam/AdGuardHome/issues/6263
 [#6369]: https://github.com/AdguardTeam/AdGuardHome/issues/6369
 [#6402]: https://github.com/AdguardTeam/AdGuardHome/issues/6402
 [#6420]: https://github.com/AdguardTeam/AdGuardHome/issues/6420
 
-[go-1.20.12]: https://groups.google.com/g/golang-announce/c/iLGK3x6yuNo/m/z6MJ-eB0AQAJ
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[go-1.20.12]:   https://groups.google.com/g/golang-announce/c/iLGK3x6yuNo/m/z6MJ-eB0AQAJ
+[ms-v0.107.42]: https://github.com/AdguardTeam/AdGuardHome/milestone/77?closed=1
 
 
 
@@ -2651,11 +2658,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.42...HEAD
-[v0.107.42]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.41...v0.107.42
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.43...HEAD
+[v0.107.43]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.42...v0.107.43
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.41...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.42...HEAD
+[v0.107.42]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.41...v0.107.42
 [v0.107.41]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.40...v0.107.41
 [v0.107.40]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.39...v0.107.40
 [v0.107.39]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.38...v0.107.39
