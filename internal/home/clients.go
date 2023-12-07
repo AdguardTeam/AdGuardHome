@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"golang.org/x/exp/maps"
@@ -139,6 +140,9 @@ func (clients *clientsContainer) Init(
 	return nil
 }
 
+// handleHostsUpdates receives the updates from the hosts container and adds
+// them to the clients container.  It's used to be called in a separate
+// goroutine.
 func (clients *clientsContainer) handleHostsUpdates() {
 	for upd := range clients.etcHosts.Upd() {
 		clients.addFromHostsFile(upd)
@@ -870,21 +874,24 @@ func (clients *clientsContainer) rmHostsBySrc(src client.Source) {
 
 // addFromHostsFile fills the client-hostname pairing index from the system's
 // hosts files.
-func (clients *clientsContainer) addFromHostsFile(hosts aghnet.Hosts) {
+func (clients *clientsContainer) addFromHostsFile(hosts *hostsfile.DefaultStorage) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
 	clients.rmHostsBySrc(client.SourceHostsFile)
 
 	n := 0
-	for addr, rec := range hosts {
+	hosts.RangeNames(func(addr netip.Addr, names []string) (cont bool) {
 		// Only the first name of the first record is considered a canonical
 		// hostname for the IP address.
 		//
 		// TODO(e.burkov):  Consider using all the names from all the records.
-		clients.addHostLocked(addr, rec[0].Names[0], client.SourceHostsFile)
-		n++
-	}
+		if clients.addHostLocked(addr, names[0], client.SourceHostsFile) {
+			n++
+		}
+
+		return true
+	})
 
 	log.Debug("clients: added %d client aliases from system hosts file", n)
 }

@@ -220,15 +220,19 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 	addrv4 := netip.MustParseAddr("1.2.3.4")
 	addrv6 := netip.MustParseAddr("::1")
 	addrMapped := netip.MustParseAddr("::ffff:1.2.3.4")
+	addrv4Dup := netip.MustParseAddr("4.3.2.1")
 
 	data := fmt.Sprintf(
 		""+
-			"%s v4.host.example\n"+
-			"%s v6.host.example\n"+
-			"%s mapped.host.example\n",
+			"%[1]s v4.host.example\n"+
+			"%[2]s v6.host.example\n"+
+			"%[3]s mapped.host.example\n"+
+			"%[4]s v4.host.with-dup\n"+
+			"%[4]s v4.host.with-dup\n",
 		addrv4,
 		addrv6,
 		addrMapped,
+		addrv4Dup,
 	)
 
 	files := fstest.MapFS{
@@ -343,6 +347,15 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 		dtyp:      dns.TypeCNAME,
 		wantRules: nil,
 		wantResps: nil,
+	}, {
+		name: "v4_dup",
+		host: "v4.host.with-dup",
+		dtyp: dns.TypeA,
+		wantRules: []*ResultRule{{
+			Text:         "4.3.2.1 v4.host.with-dup",
+			FilterListID: SysHostsListID,
+		}},
+		wantResps: []rules.RRValue{addrv4Dup},
 	}}
 
 	for _, tc := range testCases {

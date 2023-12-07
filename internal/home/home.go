@@ -35,8 +35,10 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"golang.org/x/exp/slices"
 )
@@ -231,11 +233,12 @@ func setupHostsContainer() (err error) {
 		return fmt.Errorf("initing hosts watcher: %w", err)
 	}
 
-	Context.etcHosts, err = aghnet.NewHostsContainer(
-		aghos.RootDirFS(),
-		hostsWatcher,
-		aghnet.DefaultHostsPaths()...,
-	)
+	paths, err := hostsfile.DefaultHostsPaths()
+	if err != nil {
+		return fmt.Errorf("getting default system hosts paths: %w", err)
+	}
+
+	Context.etcHosts, err = aghnet.NewHostsContainer(osutil.RootDirFS(), hostsWatcher, paths...)
 	if err != nil {
 		closeErr := hostsWatcher.Close()
 		if errors.Is(err, aghnet.ErrNoHostsPaths) {

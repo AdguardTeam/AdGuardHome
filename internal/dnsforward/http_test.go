@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -526,7 +527,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		},
 		ServePlainDNS: true,
 	}, nil)
-	srv.etcHosts = hc
+	srv.etcHosts = upstream.NewHostsResolver(hc)
 	startDeferStop(t, srv)
 
 	testCases := []struct {

@@ -3,13 +3,11 @@ package aghnet_test
 import (
 	"net/netip"
 	"path"
-	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"testing/fstest"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghchan"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/errors"
@@ -18,139 +16,6 @@ import (
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-)
-
-// nl is a newline character.
-const nl = "\n"
-
-// Variables mirroring the etc_hosts file from testdata.
-var (
-	addr1000 = netip.MustParseAddr("1.0.0.0")
-	addr1001 = netip.MustParseAddr("1.0.0.1")
-	addr1002 = netip.MustParseAddr("1.0.0.2")
-	addr1003 = netip.MustParseAddr("1.0.0.3")
-	addr1004 = netip.MustParseAddr("1.0.0.4")
-	addr1357 = netip.MustParseAddr("1.3.5.7")
-	addr4216 = netip.MustParseAddr("4.2.1.6")
-	addr7531 = netip.MustParseAddr("7.5.3.1")
-
-	addr0  = netip.MustParseAddr("::")
-	addr1  = netip.MustParseAddr("::1")
-	addr2  = netip.MustParseAddr("::2")
-	addr3  = netip.MustParseAddr("::3")
-	addr4  = netip.MustParseAddr("::4")
-	addr42 = netip.MustParseAddr("::42")
-	addr13 = netip.MustParseAddr("::13")
-	addr31 = netip.MustParseAddr("::31")
-
-	hostsSrc = "./" + filepath.Join("./testdata", "etc_hosts")
-
-	testHosts = map[netip.Addr][]*hostsfile.Record{
-		addr1000: {{
-			Addr:   addr1000,
-			Source: hostsSrc,
-			Names:  []string{"hello", "hello.world"},
-		}, {
-			Addr:   addr1000,
-			Source: hostsSrc,
-			Names:  []string{"hello.world.again"},
-		}, {
-			Addr:   addr1000,
-			Source: hostsSrc,
-			Names:  []string{"hello.world"},
-		}},
-		addr1001: {{
-			Addr:   addr1001,
-			Source: hostsSrc,
-			Names:  []string{"simplehost"},
-		}, {
-			Addr:   addr1001,
-			Source: hostsSrc,
-			Names:  []string{"simplehost"},
-		}},
-		addr1002: {{
-			Addr:   addr1002,
-			Source: hostsSrc,
-			Names:  []string{"a.whole", "lot.of", "aliases", "for.testing"},
-		}},
-		addr1003: {{
-			Addr:   addr1003,
-			Source: hostsSrc,
-			Names:  []string{"*"},
-		}},
-		addr1004: {{
-			Addr:   addr1004,
-			Source: hostsSrc,
-			Names:  []string{"*.com"},
-		}},
-		addr1357: {{
-			Addr:   addr1357,
-			Source: hostsSrc,
-			Names:  []string{"domain4", "domain4.alias"},
-		}},
-		addr7531: {{
-			Addr:   addr7531,
-			Source: hostsSrc,
-			Names:  []string{"domain4.alias", "domain4"},
-		}},
-		addr4216: {{
-			Addr:   addr4216,
-			Source: hostsSrc,
-			Names:  []string{"domain", "domain.alias"},
-		}},
-		addr0: {{
-			Addr:   addr0,
-			Source: hostsSrc,
-			Names:  []string{"hello", "hello.world"},
-		}, {
-			Addr:   addr0,
-			Source: hostsSrc,
-			Names:  []string{"hello.world.again"},
-		}, {
-			Addr:   addr0,
-			Source: hostsSrc,
-			Names:  []string{"hello.world"},
-		}},
-		addr1: {{
-			Addr:   addr1,
-			Source: hostsSrc,
-			Names:  []string{"simplehost"},
-		}, {
-			Addr:   addr1,
-			Source: hostsSrc,
-			Names:  []string{"simplehost"},
-		}},
-		addr2: {{
-			Addr:   addr2,
-			Source: hostsSrc,
-			Names:  []string{"a.whole", "lot.of", "aliases", "for.testing"},
-		}},
-		addr3: {{
-			Addr:   addr3,
-			Source: hostsSrc,
-			Names:  []string{"*"},
-		}},
-		addr4: {{
-			Addr:   addr4,
-			Source: hostsSrc,
-			Names:  []string{"*.com"},
-		}},
-		addr42: {{
-			Addr:   addr42,
-			Source: hostsSrc,
-			Names:  []string{"domain.alias", "domain"},
-		}},
-		addr13: {{
-			Addr:   addr13,
-			Source: hostsSrc,
-			Names:  []string{"domain6", "domain6.alias"},
-		}},
-		addr31: {{
-			Addr:   addr31,
-			Source: hostsSrc,
-			Names:  []string{"domain6.alias", "domain6"},
-		}},
-	}
 )
 
 func TestNewHostsContainer(t *testing.T) {
@@ -267,7 +132,21 @@ func TestHostsContainer_refresh(t *testing.T) {
 	anotherIPStr := "1.2.3.4"
 	anotherIP := netip.MustParseAddr(anotherIPStr)
 
-	testFS := fstest.MapFS{"dir/file1": &fstest.MapFile{Data: []byte(ipStr + ` hostname` + nl)}}
+	r1 := &hostsfile.Record{
+		Addr:   ip,
+		Source: "file1",
+		Names:  []string{"hostname"},
+	}
+	r2 := &hostsfile.Record{
+		Addr:   anotherIP,
+		Source: "file2",
+		Names:  []string{"alias"},
+	}
+
+	r1Data, _ := r1.MarshalText()
+	r2Data, _ := r2.MarshalText()
+
+	testFS := fstest.MapFS{"dir/file1": &fstest.MapFile{Data: r1Data}}
 
 	// event is a convenient alias for an empty struct{} to emit test events.
 	type event = struct{}
@@ -289,172 +168,47 @@ func TestHostsContainer_refresh(t *testing.T) {
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, hc.Close)
 
-	checkRefresh := func(t *testing.T, want aghnet.Hosts) {
-		t.Helper()
-
-		upd, ok := aghchan.MustReceive(hc.Upd(), 1*time.Second)
-		require.True(t, ok)
-
-		assert.Equal(t, want, upd)
-	}
+	strg, _ := hostsfile.NewDefaultStorage()
+	strg.Add(r1)
 
 	t.Run("initial_refresh", func(t *testing.T) {
-		checkRefresh(t, aghnet.Hosts{
-			ip: {{
-				Addr:   ip,
-				Source: "file1",
-				Names:  []string{"hostname"},
-			}},
-		})
+		upd, ok := testutil.RequireReceive(t, hc.Upd(), 1*time.Second)
+		require.True(t, ok)
+
+		assert.True(t, strg.Equal(upd))
 	})
 
+	strg.Add(r2)
+
 	t.Run("second_refresh", func(t *testing.T) {
-		testFS["dir/file2"] = &fstest.MapFile{Data: []byte(anotherIPStr + ` alias` + nl)}
+		testFS["dir/file2"] = &fstest.MapFile{Data: r2Data}
 		eventsCh <- event{}
 
-		checkRefresh(t, aghnet.Hosts{
-			ip: {{
-				Addr:   ip,
-				Source: "file1",
-				Names:  []string{"hostname"},
-			}},
-			anotherIP: {{
-				Addr:   anotherIP,
-				Source: "file2",
-				Names:  []string{"alias"},
-			}},
-		})
+		upd, ok := testutil.RequireReceive(t, hc.Upd(), 1*time.Second)
+		require.True(t, ok)
+
+		assert.True(t, strg.Equal(upd))
 	})
 
 	t.Run("double_refresh", func(t *testing.T) {
 		// Make a change once.
-		testFS["dir/file1"] = &fstest.MapFile{Data: []byte(ipStr + ` alias` + nl)}
+		testFS["dir/file1"] = &fstest.MapFile{Data: []byte(ipStr + " alias\n")}
 		eventsCh <- event{}
 
 		// Require the changes are written.
-		require.Eventually(t, func() bool {
-			ips := hc.MatchName("hostname")
+		current, ok := testutil.RequireReceive(t, hc.Upd(), 1*time.Second)
+		require.True(t, ok)
 
-			return len(ips) == 0
-		}, 5*time.Second, time.Second/2)
+		require.Empty(t, current.ByName("hostname"))
 
 		// Make a change again.
-		testFS["dir/file2"] = &fstest.MapFile{Data: []byte(ipStr + ` hostname` + nl)}
+		testFS["dir/file2"] = &fstest.MapFile{Data: []byte(ipStr + " hostname\n")}
 		eventsCh <- event{}
 
 		// Require the changes are written.
-		require.Eventually(t, func() bool {
-			ips := hc.MatchName("hostname")
+		current, ok = testutil.RequireReceive(t, hc.Upd(), 1*time.Second)
+		require.True(t, ok)
 
-			return len(ips) > 0
-		}, 5*time.Second, time.Second/2)
-
-		assert.Len(t, hc.Upd(), 1)
+		require.NotEmpty(t, current.ByName("hostname"))
 	})
-}
-
-func TestHostsContainer_MatchName(t *testing.T) {
-	require.NoError(t, fstest.TestFS(testdata, "etc_hosts"))
-
-	stubWatcher := aghtest.FSWatcher{
-		OnEvents: func() (e <-chan struct{}) { return nil },
-		OnAdd:    func(name string) (err error) { return nil },
-		OnClose:  func() (err error) { return nil },
-	}
-
-	testCases := []struct {
-		req  string
-		name string
-		want []*hostsfile.Record
-	}{{
-		req:  "simplehost",
-		name: "simple",
-		want: append(testHosts[addr1001], testHosts[addr1]...),
-	}, {
-		req:  "hello.world",
-		name: "hello_alias",
-		want: []*hostsfile.Record{
-			testHosts[addr1000][0],
-			testHosts[addr1000][2],
-			testHosts[addr0][0],
-			testHosts[addr0][2],
-		},
-	}, {
-		req:  "hello.world.again",
-		name: "other_line_alias",
-		want: []*hostsfile.Record{
-			testHosts[addr1000][1],
-			testHosts[addr0][1],
-		},
-	}, {
-		req:  "say.hello",
-		name: "hello_subdomain",
-		want: nil,
-	}, {
-		req:  "say.hello.world",
-		name: "hello_alias_subdomain",
-		want: nil,
-	}, {
-		req:  "for.testing",
-		name: "lots_of_aliases",
-		want: append(testHosts[addr1002], testHosts[addr2]...),
-	}, {
-		req:  "nonexistent.example",
-		name: "non-existing",
-		want: nil,
-	}, {
-		req:  "domain",
-		name: "issue_4216_4_6",
-		want: append(testHosts[addr4216], testHosts[addr42]...),
-	}, {
-		req:  "domain4",
-		name: "issue_4216_4",
-		want: append(testHosts[addr1357], testHosts[addr7531]...),
-	}, {
-		req:  "domain6",
-		name: "issue_4216_6",
-		want: append(testHosts[addr13], testHosts[addr31]...),
-	}}
-
-	hc, err := aghnet.NewHostsContainer(testdata, &stubWatcher, "etc_hosts")
-	require.NoError(t, err)
-	testutil.CleanupAndRequireSuccess(t, hc.Close)
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			recs := hc.MatchName(tc.req)
-			assert.Equal(t, tc.want, recs)
-		})
-	}
-}
-
-func TestHostsContainer_MatchAddr(t *testing.T) {
-	require.NoError(t, fstest.TestFS(testdata, "etc_hosts"))
-
-	stubWatcher := aghtest.FSWatcher{
-		OnEvents: func() (e <-chan struct{}) { return nil },
-		OnAdd:    func(name string) (err error) { return nil },
-		OnClose:  func() (err error) { return nil },
-	}
-
-	hc, err := aghnet.NewHostsContainer(testdata, &stubWatcher, "etc_hosts")
-	require.NoError(t, err)
-	testutil.CleanupAndRequireSuccess(t, hc.Close)
-
-	testCases := []struct {
-		req  netip.Addr
-		name string
-		want []*hostsfile.Record
-	}{{
-		req:  netip.AddrFrom4([4]byte{1, 0, 0, 1}),
-		name: "reverse",
-		want: testHosts[addr1001],
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			recs := hc.MatchAddr(tc.req)
-			assert.Equal(t, tc.want, recs)
-		})
-	}
 }

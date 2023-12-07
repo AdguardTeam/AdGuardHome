@@ -206,7 +206,6 @@ run_linter gocognit --over='11'\
 
 run_linter gocognit --over='10'\
 	./internal/aghalg/\
-	./internal/aghchan/\
 	./internal/aghhttp/\
 	./internal/aghrenameio/\
 	./internal/aghtest/\
@@ -244,7 +243,6 @@ run_linter nilness ./...
 # TODO(a.garipov): Enable for all.
 run_linter fieldalignment \
 	./internal/aghalg/\
-	./internal/aghchan/\
 	./internal/aghhttp/\
 	./internal/aghos/\
 	./internal/aghrenameio/\

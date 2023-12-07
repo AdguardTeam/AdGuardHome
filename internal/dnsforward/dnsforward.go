@@ -142,7 +142,7 @@ type Server struct {
 	// PTR resolving.
 	sysResolvers SystemResolvers
 
-	// etcHosts contains the data from the system's hosts files.
+	// etcHosts contains the current data from the system's hosts files.
 	etcHosts upstream.Resolver
 
 	// bootstrap is the resolver for upstreams' hostnames.
@@ -239,6 +239,11 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		p.Anonymizer = aghnet.NewIPMut(nil)
 	}
 
+	var etcHosts upstream.Resolver
+	if p.EtcHosts != nil {
+		etcHosts = upstream.NewHostsResolver(p.EtcHosts)
+	}
+
 	s = &Server{
 		dnsFilter:   p.DNSFilter,
 		dhcpServer:  p.DHCPServer,
@@ -247,6 +252,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		privateNets: p.PrivateNets,
 		// TODO(e.burkov):  Use some case-insensitive string comparison.
 		localDomainSuffix: strings.ToLower(localDomainSuffix),
+		etcHosts:          etcHosts,
 		recDetector:       newRecursionDetector(recursionTTL, cachedRecurrentReqNum),
 		clientIDCache: cache.New(cache.Config{
 			EnableLRU: true,
@@ -256,9 +262,6 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		conf: ServerConfig{
 			ServePlainDNS: true,
 		},
-	}
-	if p.EtcHosts != nil {
-		s.etcHosts = p.EtcHosts
 	}
 
 	s.sysResolvers, err = sysresolv.NewSystemResolvers(nil, defaultPlainDNSPort)

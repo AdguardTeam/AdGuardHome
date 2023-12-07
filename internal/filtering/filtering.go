@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
@@ -100,7 +99,7 @@ type Config struct {
 	// system configuration files (e.g. /etc/hosts).
 	//
 	// TODO(e.burkov):  Move it to dnsforward entirely.
-	EtcHosts *aghnet.HostsContainer `yaml:"-"`
+	EtcHosts hostsfile.Storage `yaml:"-"`
 
 	// Called when the configuration is changed by HTTP request
 	ConfigModified func() `yaml:"-"`
@@ -482,15 +481,6 @@ func (d *DNSFilter) SetProtectionEnabled(status bool) {
 	d.conf.ProtectionEnabled = status
 }
 
-// EtcHostsRecords returns the hosts records for the hostname.
-func (d *DNSFilter) EtcHostsRecords(hostname string) (recs []*hostsfile.Record) {
-	if d.conf.EtcHosts != nil {
-		return d.conf.EtcHosts.MatchName(hostname)
-	}
-
-	return recs
-}
-
 // SetBlockingMode sets blocking mode properties.
 func (d *DNSFilter) SetBlockingMode(mode BlockingMode, bIPv4, bIPv6 netip.Addr) {
 	d.confMu.Lock()
@@ -637,39 +627,10 @@ func (d *DNSFilter) matchSysHosts(
 ) (res Result, err error) {
 	// TODO(e.burkov):  Where else is this checked?
 	if !setts.FilteringEnabled || d.conf.EtcHosts == nil {
-		return res, nil
+		return Result{}, nil
 	}
 
-	var recs []*hostsfile.Record
-	switch qtype {
-	case dns.TypeA, dns.TypeAAAA:
-		recs = d.conf.EtcHosts.MatchName(host)
-	case dns.TypePTR:
-		var ip net.IP
-		ip, err = netutil.IPFromReversedAddr(host)
-		if err != nil {
-			log.Debug("filtering: failed to parse PTR record %q: %s", host, err)
-
-			return res, nil
-		}
-
-		addr, _ := netip.AddrFromSlice(ip)
-		recs = d.conf.EtcHosts.MatchAddr(addr)
-	default:
-		log.Debug("filtering: unsupported query type %s", dns.Type(qtype))
-	}
-
-	var vals []rules.RRValue
-	var resRules []*ResultRule
-	resRulesLen := 0
-	for _, rec := range recs {
-		vals, resRules = appendRewriteResultFromHost(vals, resRules, rec, qtype)
-		if len(resRules) > resRulesLen {
-			resRulesLen = len(resRules)
-			log.Debug("filtering: matched %s in %q", host, rec.Source)
-		}
-	}
-
+	vals, rs := hostsRewrites(qtype, host, d.conf.EtcHosts)
 	if len(vals) > 0 {
 		res.DNSRewriteResult = &DNSRewriteResult{
 			Response: DNSRewriteResultResponse{
@@ -677,11 +638,62 @@ func (d *DNSFilter) matchSysHosts(
 			},
 			RCode: dns.RcodeSuccess,
 		}
-		res.Rules = resRules
-		res.Reason = RewrittenRule
+		res.Rules = rs
+		res.Reason = RewrittenAutoHosts
 	}
 
 	return res, nil
+}
+
+// hostsRewrites returns values and rules matched by qt and host within hs.
+func hostsRewrites(
+	qtype uint16,
+	host string,
+	hs hostsfile.Storage,
+) (vals []rules.RRValue, rs []*ResultRule) {
+	var isValidProto func(netip.Addr) (ok bool)
+	switch qtype {
+	case dns.TypeA:
+		isValidProto = netip.Addr.Is4
+	case dns.TypeAAAA:
+		isValidProto = netip.Addr.Is6
+	case dns.TypePTR:
+		// TODO(e.burkov):  Add some [netip]-aware alternative to [netutil].
+		ip, err := netutil.IPFromReversedAddr(host)
+		if err != nil {
+			log.Debug("filtering: failed to parse PTR record %q: %s", host, err)
+
+			return nil, nil
+		}
+
+		addr, _ := netip.AddrFromSlice(ip)
+
+		for _, name := range hs.ByAddr(addr) {
+			vals = append(vals, name)
+			rs = append(rs, &ResultRule{
+				Text:         fmt.Sprintf("%s %s", addr, name),
+				FilterListID: SysHostsListID,
+			})
+		}
+
+		return vals, rs
+	default:
+		log.Debug("filtering: unsupported qtype %d", qtype)
+
+		return nil, nil
+	}
+
+	for _, addr := range hs.ByName(host) {
+		if isValidProto(addr) {
+			vals = append(vals, addr)
+			rs = append(rs, &ResultRule{
+				Text:         fmt.Sprintf("%s %s", addr, host),
+				FilterListID: SysHostsListID,
+			})
+		}
+	}
+
+	return vals, rs
 }
 
 // processRewrites performs filtering based on the legacy rewrite records.
