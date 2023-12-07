@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/fs"
-	"net"
 	"net/http"
 	"net/netip"
 	"net/url"
@@ -160,7 +159,7 @@ func setupContext(opts options) (err error) {
 		os.Exit(0)
 	}
 
-	if !opts.noEtcHosts && config.Clients.Sources.HostsFile {
+	if !opts.noEtcHosts {
 		err = setupHostsContainer()
 		if err != nil {
 			// Don't wrap the error, because it's informative enough as is.
@@ -239,13 +238,13 @@ func setupHostsContainer() (err error) {
 	)
 	if err != nil {
 		closeErr := hostsWatcher.Close()
-		if errors.Is(err, aghnet.ErrNoHostsPaths) && closeErr == nil {
+		if errors.Is(err, aghnet.ErrNoHostsPaths) {
 			log.Info("warning: initing hosts container: %s", err)
 
-			return nil
+			return closeErr
 		}
 
-		return errors.WithDeferred(fmt.Errorf("initing hosts container: %w", err), closeErr)
+		return errors.Join(fmt.Errorf("initializing hosts container: %w", err), closeErr)
 	}
 
 	return nil
@@ -294,19 +293,13 @@ func initContextClients() (err error) {
 		arpDB = arpdb.New()
 	}
 
-	err = Context.clients.Init(
+	return Context.clients.Init(
 		config.Clients.Persistent,
 		Context.dhcpServer,
 		Context.etcHosts,
 		arpDB,
 		config.Filtering,
 	)
-	if err != nil {
-		// Don't wrap the error, because it's informative enough as is.
-		return err
-	}
-
-	return nil
 }
 
 // setupBindOpts overrides bind host/port from the opts.
@@ -376,11 +369,15 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 
 	upsOpts := &upstream.Options{
 		Timeout: dnsTimeout,
-		ServerIPAddrs: []net.IP{
-			{94, 140, 14, 15},
-			{94, 140, 15, 16},
-			net.ParseIP("2a10:50c0::bad1:ff"),
-			net.ParseIP("2a10:50c0::bad2:ff"),
+		Bootstrap: upstream.StaticResolver{
+			// 94.140.14.15.
+			netip.AddrFrom4([4]byte{94, 140, 14, 15}),
+			// 94.140.14.16.
+			netip.AddrFrom4([4]byte{94, 140, 14, 16}),
+			// 2a10:50c0::bad1:ff.
+			netip.AddrFrom16([16]byte{42, 16, 80, 192, 12: 186, 209, 0, 255}),
+			// 2a10:50c0::bad2:ff.
+			netip.AddrFrom16([16]byte{42, 16, 80, 192, 12: 186, 210, 0, 255}),
 		},
 	}
 

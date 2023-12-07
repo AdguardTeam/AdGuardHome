@@ -2,6 +2,7 @@ package dhcpd
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/netip"
 	"os"
@@ -25,9 +26,9 @@ const (
 	dbFilename = "leases.db"
 )
 
-// leaseJSON is the structure of stored lease.
+// leaseJSON is the structure of stored lease in a legacy database.
 //
-// Deprecated:  Use [Lease].
+// Deprecated:  Use [dbLease].
 type leaseJSON struct {
 	HWAddr   []byte `json:"mac"`
 	IP       []byte `json:"ip"`
@@ -35,13 +36,28 @@ type leaseJSON struct {
 	Expiry   int64  `json:"exp"`
 }
 
-func normalizeIP(ip net.IP) net.IP {
-	ip4 := ip.To4()
-	if ip4 != nil {
-		return ip4
+// readOldDB reads the old database from the given path.
+func readOldDB(path string) (leases []*leaseJSON, err error) {
+	// #nosec G304 -- Trust this path, since it's taken from the old file name
+	// relative to the working directory and should generally be considered
+	// safe.
+	file, err := os.Open(path)
+	if errors.Is(err, os.ErrNotExist) {
+		// Nothing to migrate.
+		return nil, nil
+	} else if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return nil, err
+	}
+	defer func() { err = errors.WithDeferred(err, file.Close()) }()
+
+	leases = []*leaseJSON{}
+	err = json.NewDecoder(file).Decode(&leases)
+	if err != nil {
+		return nil, fmt.Errorf("decoding old db: %w", err)
 	}
 
-	return ip
+	return leases, nil
 }
 
 // migrateDB migrates stored leases if necessary.
@@ -51,59 +67,50 @@ func migrateDB(conf *ServerConfig) (err error) {
 	oldLeasesPath := filepath.Join(conf.WorkDir, dbFilename)
 	dataDirPath := filepath.Join(conf.DataDir, dataFilename)
 
-	// #nosec G304 -- Trust this path, since it's taken from the old file name
-	// relative to the working directory and should generally be considered
-	// safe.
-	file, err := os.Open(oldLeasesPath)
-	if errors.Is(err, os.ErrNotExist) {
+	oldLeases, err := readOldDB(oldLeasesPath)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	} else if oldLeases == nil {
 		// Nothing to migrate.
 		return nil
-	} else if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return err
 	}
 
-	ljs := []leaseJSON{}
-	err = json.NewDecoder(file).Decode(&ljs)
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return err
-	}
-
-	err = file.Close()
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return err
-	}
-
-	leases := []*Lease{}
-
-	for _, lj := range ljs {
-		lj.IP = normalizeIP(lj.IP)
-
-		ip, ok := netip.AddrFromSlice(lj.IP)
+	leases := make([]*dbLease, 0, len(oldLeases))
+	for _, l := range oldLeases {
+		l.IP = normalizeIP(l.IP)
+		ip, ok := netip.AddrFromSlice(l.IP)
 		if !ok {
-			log.Info("dhcp: invalid IP: %s", lj.IP)
+			log.Info("dhcp: invalid IP: %s", l.IP)
 
 			continue
 		}
 
-		lease := &Lease{
-			Expiry:   time.Unix(lj.Expiry, 0),
-			Hostname: lj.Hostname,
-			HWAddr:   lj.HWAddr,
+		leases = append(leases, &dbLease{
+			Expiry:   time.Unix(l.Expiry, 0).Format(time.RFC3339),
+			Hostname: l.Hostname,
+			HWAddr:   net.HardwareAddr(l.HWAddr).String(),
 			IP:       ip,
-			IsStatic: lj.Expiry == leaseExpireStatic,
-		}
-
-		leases = append(leases, lease)
+			IsStatic: l.Expiry == leaseExpireStatic,
+		})
 	}
 
 	err = writeDB(dataDirPath, leases)
 	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
+		// Don't wrap the error since an annotation deferred already.
 		return err
 	}
 
 	return os.Remove(oldLeasesPath)
+}
+
+// normalizeIP converts the given IP address to IPv4 if it's IPv4-mapped IPv6,
+// or leaves it as is otherwise.
+func normalizeIP(ip net.IP) (normalized net.IP) {
+	normalized = ip.To4()
+	if normalized != nil {
+		return normalized
+	}
+
+	return ip
 }

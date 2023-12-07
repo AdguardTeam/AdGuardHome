@@ -47,6 +47,11 @@ func (c *fakeConn) Close() (err error) {
 	return nil
 }
 
+// Header implements the [ipsetConn] interface for *fakeConn.
+func (c *fakeConn) Header(_ string) (_ *ipset.HeaderPolicy, _ error) {
+	return nil, nil
+}
+
 // listAll implements the [ipsetConn] interface for *fakeConn.
 func (c *fakeConn) listAll() (sets []props, err error) {
 	return c.sets, nil

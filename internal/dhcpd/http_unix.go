@@ -93,13 +93,13 @@ func leasesToStatic(leases []*dhcpsvc.Lease) (static []*leaseStatic) {
 }
 
 // toLease converts leaseStatic to Lease or returns error.
-func (l *leaseStatic) toLease() (lease *Lease, err error) {
+func (l *leaseStatic) toLease() (lease *dhcpsvc.Lease, err error) {
 	addr, err := net.ParseMAC(l.HWAddr)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't parse MAC address: %w", err)
 	}
 
-	return &Lease{
+	return &dhcpsvc.Lease{
 		HWAddr:   addr,
 		IP:       l.IP,
 		Hostname: l.Hostname,
@@ -593,7 +593,7 @@ func setOtherDHCPResult(ifaceName string, result *dhcpSearchResult) {
 
 // parseLease parses a lease from r.  If there is no error returns DHCPServer
 // and *Lease. r must be non-nil.
-func (s *server) parseLease(r io.Reader) (srv DHCPServer, lease *Lease, err error) {
+func (s *server) parseLease(r io.Reader) (srv DHCPServer, lease *dhcpsvc.Lease, err error) {
 	l := &leaseStatic{}
 	err = json.NewDecoder(r).Decode(l)
 	if err != nil {

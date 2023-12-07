@@ -310,6 +310,16 @@
     "edns_use_custom_ip": "Használjon egyéni IP-címet az EDNS-hez",
     "edns_use_custom_ip_desc": "Engedélyezze az egyéni IP-cím használatát az EDNS-hez",
     "rate_limit_desc": "Maximálisan hány kérést küldhet egy kliens másodpercenkén. Ha 0-ra állítja, akkor nincs korlátozás.",
+    "rate_limit_subnet_len_ipv4": "Az IPv4-címek alhálózati előtagjának hossza",
+    "rate_limit_subnet_len_ipv4_desc": "A sebességkorlátozáshoz használt IPv4-címek alhálózati előtagjának hossza. Az alapértelmezett érték 24",
+    "rate_limit_subnet_len_ipv4_error": "Az IPv4 alhálózati előtag hosszának 0 és 32 között kell lennie",
+    "rate_limit_subnet_len_ipv6": "Az IPv6-címek alhálózati előtagjának hossza",
+    "rate_limit_subnet_len_ipv6_desc": "A sebességkorlátozáshoz használt IPv6-címek alhálózati előtagjának hossza. Az alapértelmezett érték 56",
+    "rate_limit_subnet_len_ipv6_error": "Az IPv6 alhálózati előtag hosszának 0 és 128 között kell lennie",
+    "form_enter_rate_limit_subnet_len": "Adja meg az alhálózati előtag hosszát a sebességkorlátozáshoz",
+    "rate_limit_whitelist": "Sebességkorlátozó engedélyezési lista",
+    "rate_limit_whitelist_desc": "A sebességkorlátozásból kizárt IP-címek",
+    "rate_limit_whitelist_placeholder": "Adjon meg egy IP-címet soronként",
     "blocking_ipv4_desc": "A blokkolt A kéréshez visszaadandó IP-cím",
     "blocking_ipv6_desc": "A blokkolt AAAA kéréshez visszaadandó IP-cím",
     "blocking_mode_default": "Alapértelmezés: Válaszoljon nulla IP-címmel (vagyis 0.0.0.0 az A-hoz, :: pedig az AAAA-hoz), amikor a blokkolás egy adblock-stílusú szabállyal történik; illetve válaszoljon egy, a szabály által meghatározott IP címmel, amikor a blokkolás egy /etc/hosts stílusú szabállyal történik",
@@ -724,5 +734,8 @@
     "wednesday_short": "Szer",
     "thursday_short": "Csüt",
     "friday_short": "Pén",
-    "saturday_short": "Szom"
+    "saturday_short": "Szom",
+    "upstream_dns_cache_configuration": "Upstream DNS gyorsítótár konfigurációja",
+    "enable_upstream_dns_cache": "A DNS gyorsítótárazásának engedélyezése az ügyfél egyéni upstream konfigurációjához",
+    "dns_cache_size": "DNS gyorsítótár mérete, bájtokban"
 }

@@ -163,10 +163,10 @@ yaml: "bad"
 	}
 
 	testCases := []struct {
+		want       *Weekly
 		name       string
 		wantErrMsg string
 		data       []byte
-		want       *Weekly
 	}{{
 		name:       "empty",
 		wantErrMsg: "",
@@ -228,9 +228,9 @@ func TestWeekly_MarshalYAML(t *testing.T) {
 	}
 
 	testCases := []struct {
+		want *Weekly
 		name string
 		data []byte
-		want *Weekly
 	}{{
 		name: "empty",
 		data: []byte(""),
@@ -263,8 +263,8 @@ func TestWeekly_MarshalYAML(t *testing.T) {
 func TestWeekly_Validate(t *testing.T) {
 	testCases := []struct {
 		name       string
-		in         dayRange
 		wantErrMsg string
+		in         dayRange
 	}{{
 		name:       "empty",
 		wantErrMsg: "",
@@ -298,8 +298,8 @@ func TestWeekly_Validate(t *testing.T) {
 func TestDayRange_Validate(t *testing.T) {
 	testCases := []struct {
 		name       string
-		in         dayRange
 		wantErrMsg string
+		in         dayRange
 	}{{
 		name:       "empty",
 		wantErrMsg: "",
@@ -413,10 +413,10 @@ func TestWeekly_UnmarshalJSON(t *testing.T) {
 	}
 
 	testCases := []struct {
+		want       *Weekly
 		name       string
 		wantErrMsg string
 		data       []byte
-		want       *Weekly
 	}{{
 		name:       "empty",
 		wantErrMsg: "unexpected end of JSON input",
@@ -478,9 +478,9 @@ func TestWeekly_MarshalJSON(t *testing.T) {
 	}
 
 	testCases := []struct {
+		want *Weekly
 		name string
 		data []byte
-		want *Weekly
 	}{{
 		name: "empty",
 		data: []byte(""),

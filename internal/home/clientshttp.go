@@ -56,34 +56,9 @@ type clientJSON struct {
 
 	IgnoreQueryLog   aghalg.NullBool `json:"ignore_querylog"`
 	IgnoreStatistics aghalg.NullBool `json:"ignore_statistics"`
-}
 
-// copySettings returns a copy of specific settings from JSON or a previous
-// client.
-func (j *clientJSON) copySettings(
-	prev *Client,
-) (weekly *schedule.Weekly, ignoreQueryLog, ignoreStatistics bool) {
-	if j.Schedule != nil {
-		weekly = j.Schedule.Clone()
-	} else if prev != nil && prev.BlockedServices != nil {
-		weekly = prev.BlockedServices.Schedule.Clone()
-	} else {
-		weekly = schedule.EmptyWeekly()
-	}
-
-	if j.IgnoreQueryLog != aghalg.NBNull {
-		ignoreQueryLog = j.IgnoreQueryLog == aghalg.NBTrue
-	} else if prev != nil {
-		ignoreQueryLog = prev.IgnoreQueryLog
-	}
-
-	if j.IgnoreStatistics != aghalg.NBNull {
-		ignoreStatistics = j.IgnoreStatistics == aghalg.NBTrue
-	} else if prev != nil {
-		ignoreStatistics = prev.IgnoreStatistics
-	}
-
-	return weekly, ignoreQueryLog, ignoreStatistics
+	UpstreamsCacheSize    uint32          `json:"upstreams_cache_size"`
+	UpstreamsCacheEnabled aghalg.NullBool `json:"upstreams_cache_enabled"`
 }
 
 type runtimeClientJSON struct {
@@ -142,36 +117,35 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 
 // jsonToClient converts JSON object to Client object.
 func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *Client, err error) {
-	var safeSearchConf filtering.SafeSearchConfig
-	if cj.SafeSearchConf != nil {
-		safeSearchConf = *cj.SafeSearchConf
-	} else {
-		// TODO(d.kolyshev): Remove after cleaning the deprecated
-		// [clientJSON.SafeSearchEnabled] field.
-		safeSearchConf = filtering.SafeSearchConfig{
-			Enabled: cj.SafeSearchEnabled,
-		}
+	safeSearchConf := copySafeSearch(cj.SafeSearchConf, cj.SafeSearchEnabled)
 
-		// Set default service flags for enabled safesearch.
-		if safeSearchConf.Enabled {
-			safeSearchConf.Bing = true
-			safeSearchConf.DuckDuckGo = true
-			safeSearchConf.Google = true
-			safeSearchConf.Pixabay = true
-			safeSearchConf.Yandex = true
-			safeSearchConf.YouTube = true
-		}
+	var ignoreQueryLog bool
+	if cj.IgnoreQueryLog != aghalg.NBNull {
+		ignoreQueryLog = cj.IgnoreQueryLog == aghalg.NBTrue
+	} else if prev != nil {
+		ignoreQueryLog = prev.IgnoreQueryLog
 	}
 
-	weekly, ignoreQueryLog, ignoreStatistics := cj.copySettings(prev)
-
-	bs := &filtering.BlockedServices{
-		Schedule: weekly,
-		IDs:      cj.BlockedServices,
+	var ignoreStatistics bool
+	if cj.IgnoreStatistics != aghalg.NBNull {
+		ignoreStatistics = cj.IgnoreStatistics == aghalg.NBTrue
+	} else if prev != nil {
+		ignoreStatistics = prev.IgnoreStatistics
 	}
-	err = bs.Validate()
+
+	var upsCacheEnabled bool
+	var upsCacheSize uint32
+	if cj.UpstreamsCacheEnabled != aghalg.NBNull {
+		upsCacheEnabled = cj.UpstreamsCacheEnabled == aghalg.NBTrue
+		upsCacheSize = cj.UpstreamsCacheSize
+	} else if prev != nil {
+		upsCacheEnabled = prev.UpstreamsCacheEnabled
+		upsCacheSize = prev.UpstreamsCacheSize
+	}
+
+	svcs, err := copyBlockedServices(cj.Schedule, cj.BlockedServices, prev)
 	if err != nil {
-		return nil, fmt.Errorf("validating blocked services: %w", err)
+		return nil, fmt.Errorf("invalid blocked services: %w", err)
 	}
 
 	c = &Client{
@@ -179,7 +153,7 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 
 		Name: cj.Name,
 
-		BlockedServices: bs,
+		BlockedServices: svcs,
 
 		IDs:       cj.IDs,
 		Tags:      cj.Tags,
@@ -192,6 +166,8 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 		UseOwnBlockedServices: !cj.UseGlobalBlockedServices,
 		IgnoreQueryLog:        ignoreQueryLog,
 		IgnoreStatistics:      ignoreStatistics,
+		UpstreamsCacheEnabled: upsCacheEnabled,
+		UpstreamsCacheSize:    upsCacheSize,
 	}
 
 	if safeSearchConf.Enabled {
@@ -206,6 +182,63 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 	}
 
 	return c, nil
+}
+
+// copySafeSearch returns safe search config created from provided parameters.
+func copySafeSearch(
+	jsonConf *filtering.SafeSearchConfig,
+	enabled bool,
+) (conf filtering.SafeSearchConfig) {
+	if jsonConf != nil {
+		return *jsonConf
+	}
+
+	// TODO(d.kolyshev): Remove after cleaning the deprecated
+	// [clientJSON.SafeSearchEnabled] field.
+	conf = filtering.SafeSearchConfig{
+		Enabled: enabled,
+	}
+
+	// Set default service flags for enabled safesearch.
+	if conf.Enabled {
+		conf.Bing = true
+		conf.DuckDuckGo = true
+		conf.Google = true
+		conf.Pixabay = true
+		conf.Yandex = true
+		conf.YouTube = true
+	}
+
+	return conf
+}
+
+// copyBlockedServices converts a json blocked services to an internal blocked
+// services.
+func copyBlockedServices(
+	sch *schedule.Weekly,
+	svcStrs []string,
+	prev *Client,
+) (svcs *filtering.BlockedServices, err error) {
+	var weekly *schedule.Weekly
+	if sch != nil {
+		weekly = sch.Clone()
+	} else if prev != nil && prev.BlockedServices != nil {
+		weekly = prev.BlockedServices.Schedule.Clone()
+	} else {
+		weekly = schedule.EmptyWeekly()
+	}
+
+	svcs = &filtering.BlockedServices{
+		Schedule: weekly,
+		IDs:      svcStrs,
+	}
+
+	err = svcs.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("validating blocked services: %w", err)
+	}
+
+	return svcs, nil
 }
 
 // clientToJSON converts Client object to JSON.
@@ -235,6 +268,9 @@ func clientToJSON(c *Client) (cj *clientJSON) {
 
 		IgnoreQueryLog:   aghalg.BoolToNullBool(c.IgnoreQueryLog),
 		IgnoreStatistics: aghalg.BoolToNullBool(c.IgnoreStatistics),
+
+		UpstreamsCacheSize:    c.UpstreamsCacheSize,
+		UpstreamsCacheEnabled: aghalg.BoolToNullBool(c.UpstreamsCacheEnabled),
 	}
 }
 

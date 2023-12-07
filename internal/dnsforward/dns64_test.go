@@ -292,6 +292,7 @@ func TestServer_HandleDNSRequest_dns64(t *testing.T) {
 			Config: Config{
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 			},
+			ServePlainDNS: true,
 		}, localUps)
 
 		t.Run(tc.name, func(t *testing.T) {

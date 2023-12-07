@@ -338,6 +338,40 @@ export const getDnsStatus = () => async (dispatch) => {
     }
 };
 
+export const timerStatusRequest = createAction('TIMER_STATUS_REQUEST');
+export const timerStatusFailure = createAction('TIMER_STATUS_FAILURE');
+export const timerStatusSuccess = createAction('TIMER_STATUS_SUCCESS');
+
+export const getTimerStatus = () => async (dispatch) => {
+    dispatch(timerStatusRequest());
+
+    const handleRequestError = () => {
+        dispatch(addErrorToast({ error: 'dns_status_error' }));
+        dispatch(dnsStatusFailure());
+        window.location.reload(true);
+    };
+
+    const handleRequestSuccess = (response) => {
+        const dnsStatus = response.data;
+        if (dnsStatus.protection_disabled_duration === 0) {
+            dnsStatus.protection_disabled_duration = null;
+        }
+        const { running } = dnsStatus;
+        const runningStatus = dnsStatus && running;
+        if (runningStatus === true) {
+            dispatch(timerStatusSuccess(dnsStatus));
+        } else {
+            dispatch(setDnsRunningStatus(running));
+        }
+    };
+
+    try {
+        checkStatus(handleRequestSuccess, handleRequestError);
+    } catch (error) {
+        handleRequestError();
+    }
+};
+
 export const testUpstreamRequest = createAction('TEST_UPSTREAM_REQUEST');
 export const testUpstreamFailure = createAction('TEST_UPSTREAM_FAILURE');
 export const testUpstreamSuccess = createAction('TEST_UPSTREAM_SUCCESS');

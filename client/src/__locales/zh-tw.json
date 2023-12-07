@@ -310,6 +310,16 @@
     "edns_use_custom_ip": "為 EDNS 使用自訂的 IP",
     "edns_use_custom_ip_desc": "允許為 EDNS 使用自訂的 IP",
     "rate_limit_desc": "每個用戶端被允許的每秒請求之數量。設定它為 0 表示無限制。",
+    "rate_limit_subnet_len_ipv4": "IPv4 位址的子網路前綴長度",
+    "rate_limit_subnet_len_ipv4_desc": "用於速率限制的 IPv4 位址的子網路前綴長度。預設值為 24",
+    "rate_limit_subnet_len_ipv4_error": "IPv4 子網路前綴長度應在 0 至 32 之間",
+    "rate_limit_subnet_len_ipv6": "IPv6 位址的子網路前綴長度",
+    "rate_limit_subnet_len_ipv6_desc": "用於速率限制的 IPv6 位址的子網路前綴長度。預設值為 56",
+    "rate_limit_subnet_len_ipv6_error": "IPv6 子網路前綴長度應在 0 至 128 之間",
+    "form_enter_rate_limit_subnet_len": "輸入用於速率限制的子網路前綴長度",
+    "rate_limit_whitelist": "速率限制允許清單",
+    "rate_limit_whitelist_desc": "從速率限制中排除的 IP 位址",
+    "rate_limit_whitelist_placeholder": "每行輸入一個 IP 位址",
     "blocking_ipv4_desc": "要被返回給已封鎖的 A 請求之 IP 位址",
     "blocking_ipv6_desc": "要被返回給已封鎖的 AAAA 請求之 IP 位址",
     "blocking_mode_default": "預設：當被 AdBlock 樣式的規則封鎖時，以零值 IP 位址（0.0.0.0 供 A；:: 供 AAAA）回覆；當被 /etc/hosts 樣式的規則封鎖時，以在該規則中之已明確指定的 IP 位址回覆",
@@ -724,5 +734,8 @@
     "wednesday_short": "週三",
     "thursday_short": "週四",
     "friday_short": "週五",
-    "saturday_short": "週六"
+    "saturday_short": "週六",
+    "upstream_dns_cache_configuration": "上游 DNS 快取設定",
+    "enable_upstream_dns_cache": "啟用本用戶端自訂上游配置的 DNS 快取",
+    "dns_cache_size": "DNS 快取大小，單位：位元"
 }

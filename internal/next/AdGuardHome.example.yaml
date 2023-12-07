@@ -1,0 +1,30 @@
+# This is a file showing example configuration for AdGuard Home.
+#
+# TODO(a.garipov): Move to the top level once the rewrite is over.
+
+dns:
+  addresses:
+  - '0.0.0.0:53'
+  bootstrap_dns:
+  - '9.9.9.10'
+  - '149.112.112.10'
+  - '2620:fe::10'
+  - '2620:fe::fe:10'
+  upstream_dns:
+  - '8.8.8.8'
+  dns64_prefixes:
+  - '1234::/64'
+  upstream_timeout: 1s
+  bootstrap_prefer_ipv6: true
+  use_dns64: true
+http:
+  pprof:
+    enabled: true
+    port: 6060
+  addresses:
+  - '0.0.0.0:3000'
+  secure_addresses: []
+  timeout: 5s
+  force_https: true
+log:
+  verbose: true

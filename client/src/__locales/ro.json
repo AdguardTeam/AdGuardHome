@@ -310,6 +310,16 @@
     "edns_use_custom_ip": "Utilizați IP personalizat pentru EDNS",
     "edns_use_custom_ip_desc": "Permiteți utilizarea IP-ului personalizat pentru EDNS",
     "rate_limit_desc": "Numărul de interogări pe secundă permise pe client. Setarea la 0 înseamnă că nu există limită.",
+    "rate_limit_subnet_len_ipv4": "Lungimea prefixului de subrețea pentru adrese IPv4",
+    "rate_limit_subnet_len_ipv4_desc": "Lungimea prefixului de subrețea pentru adresele IPv4 utilizate pentru limitarea ratei. Valoarea implicită este 24",
+    "rate_limit_subnet_len_ipv4_error": "Lungimea prefixului de subrețea IPv4 ar trebui să fie între 0 și 32",
+    "rate_limit_subnet_len_ipv6": "Lungimea prefixului de subrețea pentru adrese IPv6",
+    "rate_limit_subnet_len_ipv6_desc": "Lungimea prefixului de subrețea pentru adresele IPv6 utilizate pentru limitarea ratei. Valoarea implicită este 56",
+    "rate_limit_subnet_len_ipv6_error": "Lungimea prefixului de subrețea IPv6 ar trebui să fie între 0 și 128",
+    "form_enter_rate_limit_subnet_len": "Introduceți lungimea prefixului de subrețea pentru limitarea ratei",
+    "rate_limit_whitelist": "Lista permisă pentru limitarea ratei",
+    "rate_limit_whitelist_desc": "Adresele IP excluse de la limitarea ratei",
+    "rate_limit_whitelist_placeholder": "Introduceți o adresă IP per linie",
     "blocking_ipv4_desc": "Adresa IP de returnat pentru o cerere A de blocare",
     "blocking_ipv6_desc": "Adresa IP de returnat pentru o cerere AAAA de blocare",
     "blocking_mode_default": "Implicit: Răspunde cu adresa IP (0.0.0.0 for A; :: pentru AAAA) când sunt blocate de regulă tip Adblock; răspunde cu adresa IP specificată în regulă când sunt blocate de regula tip /etc/hosts",
@@ -724,5 +734,8 @@
     "wednesday_short": "mi",
     "thursday_short": "jo",
     "friday_short": "vi",
-    "saturday_short": "sa"
+    "saturday_short": "sa",
+    "upstream_dns_cache_configuration": "Configurarea cache-ului DNS în amonte",
+    "enable_upstream_dns_cache": "Activați memoria cache DNS pentru configurația personalizată în amonte a acestui client",
+    "dns_cache_size": "Dimensiunea cache-ului DNS, în octeți"
 }

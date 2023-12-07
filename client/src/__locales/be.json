@@ -1,6 +1,7 @@
 {
     "client_settings": "Налады кліентаў",
     "example_upstream_reserved": "upstream <0>для канкрэтных даменаў</0>;",
+    "example_multiple_upstreams_reserved": "некалькі DNS-сервераў <0>для канкрэтных даменаў</0>;",
     "example_upstream_comment": "каментар.",
     "upstream_parallel": "Ужыць адначасныя запыты да ўсіх сервераў для паскарэння апрацоўкі запыту",
     "parallel_requests": "Паралельныя запыты",
@@ -143,6 +144,8 @@
     "enforced_save_search": "Ужыты бяспечны пошук",
     "number_of_dns_query_to_safe_search": "Колькасць запытаў DNS для пошукавых сістэм, для якіх быў ужыты Бяспечны пошук",
     "average_processing_time": "Сярэдні час апрацоўкі запыту",
+    "average_upstream_response_time": "Сярэдні час водгуку upstream-сервера",
+    "response_time": "Час водгуку",
     "average_processing_time_hint": "Сярэдні час для апрацоўкі запыту DNS  у мілісекундах",
     "block_domain_use_filters_and_hosts": "Блакаваць дамены з выкарыстаннем фільтраў і файлаў хастоў",
     "filters_block_toggle_hint": "Вы можаце наладзіць правілы блакавання ў «<a>Фільтрах</a>».",
@@ -307,6 +310,16 @@
     "edns_use_custom_ip": "Выкарыстоўваць указаны IP для DNS",
     "edns_use_custom_ip_desc": "Дазволіць выкарыстоўваць уласны IP для DNS",
     "rate_limit_desc": "Абмежаванне на колькасць запытаў у секунду для кожнага кліента (0 — неабмежавана)",
+    "rate_limit_subnet_len_ipv4": "Даўжыня прэфікса падсеткі для адрасоў IPv4",
+    "rate_limit_subnet_len_ipv4_desc": "Даўжыня прэфікса падсеткі для адрасоў IPv4, якія выкарыстоўваюцца для абмежавання хуткасці. Значэнне па змаўчанні 24",
+    "rate_limit_subnet_len_ipv4_error": "Даўжыня прэфікса падсеткі IPv4 павінна быць ад 0 да 32",
+    "rate_limit_subnet_len_ipv6": "Даўжыня прэфікса падсеткі для адрасоў IPv6",
+    "rate_limit_subnet_len_ipv6_desc": "Даўжыня прэфікса падсеткі для адрасоў IPv6, якія выкарыстоўваюцца для абмежавання хуткасці. Значэнне па змаўчанні 56",
+    "rate_limit_subnet_len_ipv6_error": "Даўжыня прэфікса падсеткі IPv6 павінна быць ад 0 да 128",
+    "form_enter_rate_limit_subnet_len": "Увядзіце даўжыню прэфікса падсеткі для абмежавання хуткасці",
+    "rate_limit_whitelist": "Белы спіс з абмежаваннем хуткасці",
+    "rate_limit_whitelist_desc": "IP-адрасы выключаны з абмежавання хуткасці",
+    "rate_limit_whitelist_placeholder": "Увядзіце па адным адрасе на радок",
     "blocking_ipv4_desc": "IP-адрас, што вяртаецца пры блакаванню A-запыту",
     "blocking_ipv6_desc": "IP-адрас, што вяртаецца пры блакаванню AAAA-запыту",
     "blocking_mode_default": "Стандартны: Адказвае з нулёвым IP-адрасам (0.0.0.0 для A; :: для AAAA), калі заблакавана правілам у стылі Adblock; адказвае з IP-адрасам, паказаным у правіле, калі заблакавана правілам у стылі /etc/hosts-style",
@@ -721,5 +734,8 @@
     "wednesday_short": "Ср.",
     "thursday_short": "Чц.",
     "friday_short": "Пт.",
-    "saturday_short": "Сб."
+    "saturday_short": "Сб.",
+    "upstream_dns_cache_configuration": "Канфігурацыя кэша upstream DNS-сервераў",
+    "enable_upstream_dns_cache": "Ўключыць кэшаванне для карыстацкай канфігурацыі upstream-сервераў гэтага кліента",
+    "dns_cache_size": "Памер кэша DNS, у байтах"
 }

@@ -72,11 +72,14 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{},
 		TCPListenAddrs: []*net.TCPAddr{},
 		Config: Config{
-			UpstreamDNS:      []string{"8.8.8.8:53", "8.8.4.4:53"},
-			FallbackDNS:      []string{"9.9.9.10"},
-			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			UpstreamDNS:            []string{"8.8.8.8:53", "8.8.4.4:53"},
+			FallbackDNS:            []string{"9.9.9.10"},
+			RatelimitSubnetLenIPv4: 24,
+			RatelimitSubnetLenIPv6: 56,
+			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
+		ServePlainDNS:  true,
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
 	s.sysResolvers = &emptySysResolvers{}
@@ -150,10 +153,13 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{},
 		TCPListenAddrs: []*net.TCPAddr{},
 		Config: Config{
-			UpstreamDNS:      []string{"8.8.8.8:53", "8.8.4.4:53"},
-			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			UpstreamDNS:            []string{"8.8.8.8:53", "8.8.4.4:53"},
+			RatelimitSubnetLenIPv4: 24,
+			RatelimitSubnetLenIPv6: 56,
+			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
+		ServePlainDNS:  true,
 	}
 	s := createTestServer(t, filterConf, forwardConf, nil)
 	s.sysResolvers = &emptySysResolvers{}
@@ -179,11 +185,18 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		name:    "blocking_mode_good",
 		wantSet: "",
 	}, {
-		name:    "blocking_mode_bad",
-		wantSet: "blocking_ipv4 must be valid ipv4 on custom_ip blocking_mode",
+		name: "blocking_mode_bad",
+		wantSet: "validating dns config: " +
+			"blocking_ipv4 must be valid ipv4 on custom_ip blocking_mode",
 	}, {
 		name:    "ratelimit",
 		wantSet: "",
+	}, {
+		name:    "ratelimit_subnet_len",
+		wantSet: "",
+	}, {
+		name:    "ratelimit_whitelist_not_ip",
+		wantSet: `decoding request: ParseAddr("not.ip"): unexpected character (at "not.ip")`,
 	}, {
 		name:    "edns_cs_enabled",
 		wantSet: "",
@@ -206,24 +219,26 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		name:    "upstream_mode_fastest_addr",
 		wantSet: "",
 	}, {
-		name:    "upstream_dns_bad",
-		wantSet: `validating upstream servers: validating upstream "!!!": not an ip:port`,
+		name: "upstream_dns_bad",
+		wantSet: `validating dns config: ` +
+			`upstream servers: validating upstream "!!!": not an ip:port`,
 	}, {
 		name: "bootstraps_bad",
-		wantSet: `checking bootstrap a: invalid address: bootstrap a:53: ` +
+		wantSet: `validating dns config: checking bootstrap a: invalid address: not a bootstrap: ` +
 			`ParseAddr("a"): unable to parse IP`,
 	}, {
 		name:    "cache_bad_ttl",
-		wantSet: `cache_ttl_min must be less or equal than cache_ttl_max`,
+		wantSet: `validating dns config: cache_ttl_min must be less or equal than cache_ttl_max`,
 	}, {
 		name:    "upstream_mode_bad",
-		wantSet: `upstream_mode: incorrect value`,
+		wantSet: `validating dns config: upstream_mode: incorrect value "somethingelse"`,
 	}, {
 		name:    "local_ptr_upstreams_good",
 		wantSet: "",
 	}, {
 		name: "local_ptr_upstreams_bad",
-		wantSet: `validating private upstream servers: checking domain-specific upstreams: ` +
+		wantSet: `validating dns config: ` +
+			`private upstream servers: checking domain-specific upstreams: ` +
 			`bad arpa domain name "non.arpa.": not a reversed ip network`,
 	}, {
 		name:    "local_ptr_upstreams_null",
@@ -347,7 +362,7 @@ func TestValidateUpstreams(t *testing.T) {
 		set:     []string{"123.3.7m"},
 	}, {
 		name: "invalid",
-		wantErr: `bad upstream for domain "[/host.com]tls://dns.adguard.com": ` +
+		wantErr: `splitting upstream line "[/host.com]tls://dns.adguard.com": ` +
 			`missing separator`,
 		set: []string{"[/host.com]tls://dns.adguard.com"},
 	}, {
@@ -373,7 +388,7 @@ func TestValidateUpstreams(t *testing.T) {
 		},
 	}, {
 		name: "bad_domain",
-		wantErr: `bad upstream for domain "[/!/]8.8.8.8": domain at index 0: ` +
+		wantErr: `splitting upstream line "[/!/]8.8.8.8": domain at index 0: ` +
 			`bad domain name "!": bad top-level domain name label "!": ` +
 			`bad top-level domain name label rune '!'`,
 		set: []string{"[/!/]8.8.8.8"},
@@ -461,25 +476,15 @@ func newLocalUpstreamListener(t *testing.T, port uint16, handler dns.Handler) (r
 }
 
 func TestServer_HandleTestUpstreamDNS(t *testing.T) {
-	goodHandler := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
+	hdlr := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
 		err := w.WriteMsg(new(dns.Msg).SetReply(m))
 		require.NoError(testutil.PanicT{}, err)
 	})
-	badHandler := dns.HandlerFunc(func(w dns.ResponseWriter, _ *dns.Msg) {
-		err := w.WriteMsg(new(dns.Msg))
-		require.NoError(testutil.PanicT{}, err)
-	})
 
-	goodUps := (&url.URL{
+	ups := (&url.URL{
 		Scheme: "tcp",
-		Host:   newLocalUpstreamListener(t, 0, goodHandler).String(),
+		Host:   newLocalUpstreamListener(t, 0, hdlr).String(),
 	}).String()
-	badUps := (&url.URL{
-		Scheme: "tcp",
-		Host:   newLocalUpstreamListener(t, 0, badHandler).String(),
-	}).String()
-
-	goodAndBadUps := strings.Join([]string{goodUps, badUps}, " ")
 
 	const (
 		upsTimeout = 100 * time.Millisecond
@@ -488,7 +493,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		upstreamHost  = "custom.localhost"
 	)
 
-	hostsListener := newLocalUpstreamListener(t, 0, goodHandler)
+	hostsListener := newLocalUpstreamListener(t, 0, hdlr)
 	hostsUps := (&url.URL{
 		Scheme: "tcp",
 		Host:   netutil.JoinHostPort(upstreamHost, hostsListener.Port()),
@@ -519,7 +524,9 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		Config: Config{
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
+		ServePlainDNS: true,
 	}, nil)
+	srv.etcHosts = hc
 	startDeferStop(t, srv)
 
 	testCases := []struct {
@@ -527,43 +534,6 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		wantResp map[string]any
 		name     string
 	}{{
-		body: map[string]any{
-			"upstream_dns": []string{goodUps},
-		},
-		wantResp: map[string]any{
-			goodUps: "OK",
-		},
-		name: "success",
-	}, {
-		body: map[string]any{
-			"upstream_dns": []string{badUps},
-		},
-		wantResp: map[string]any{
-			badUps: `couldn't communicate with upstream: exchanging with ` +
-				badUps + ` over tcp: dns: id mismatch`,
-		},
-		name: "broken",
-	}, {
-		body: map[string]any{
-			"upstream_dns": []string{goodUps, badUps},
-		},
-		wantResp: map[string]any{
-			goodUps: "OK",
-			badUps: `couldn't communicate with upstream: exchanging with ` +
-				badUps + ` over tcp: dns: id mismatch`,
-		},
-		name: "both",
-	}, {
-		body: map[string]any{
-			"upstream_dns": []string{"[/domain.example/]" + badUps},
-		},
-		wantResp: map[string]any{
-			badUps: `WARNING: couldn't communicate ` +
-				`with upstream: exchanging with ` + badUps + ` over tcp: ` +
-				`dns: id mismatch`,
-		},
-		name: "domain_specific_error",
-	}, {
 		body: map[string]any{
 			"upstream_dns": []string{hostsUps},
 		},
@@ -573,63 +543,12 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		name: "etc_hosts",
 	}, {
 		body: map[string]any{
-			"fallback_dns": []string{goodUps},
+			"upstream_dns": []string{ups, "#this.is.comment"},
 		},
 		wantResp: map[string]any{
-			goodUps: "OK",
+			ups: "OK",
 		},
-		name: "fallback_success",
-	}, {
-		body: map[string]any{
-			"fallback_dns": []string{badUps},
-		},
-		wantResp: map[string]any{
-			badUps: `couldn't communicate with upstream: exchanging with ` +
-				badUps + ` over tcp: dns: id mismatch`,
-		},
-		name: "fallback_broken",
-	}, {
-		body: map[string]any{
-			"fallback_dns": []string{goodUps, "#this.is.comment"},
-		},
-		wantResp: map[string]any{
-			goodUps: "OK",
-		},
-		name: "fallback_comment_mix",
-	}, {
-		body: map[string]any{
-			"upstream_dns": []string{"[/domain.example/]" + goodUps + " " + badUps},
-		},
-		wantResp: map[string]any{
-			goodUps: "OK",
-			badUps: `WARNING: couldn't communicate ` +
-				`with upstream: exchanging with ` + badUps + ` over tcp: ` +
-				`dns: id mismatch`,
-		},
-		name: "multiple_domain_specific_upstreams",
-	}, {
-		body: map[string]any{
-			"upstream_dns": []string{"[/domain.example/]/]1.2.3.4"},
-		},
-		wantResp: map[string]any{
-			"[/domain.example/]/]1.2.3.4": `wrong upstream format: ` +
-				`bad upstream for domain "[/domain.example/]/]1.2.3.4": ` +
-				`duplicated separator`,
-		},
-		name: "bad_specification",
-	}, {
-		body: map[string]any{
-			"upstream_dns":     []string{"[/domain.example/]" + goodAndBadUps},
-			"fallback_dns":     []string{"[/domain.example/]" + goodAndBadUps},
-			"private_upstream": []string{"[/domain.example/]" + goodAndBadUps},
-		},
-		wantResp: map[string]any{
-			goodUps: "OK",
-			badUps: `WARNING: couldn't communicate ` +
-				`with upstream: exchanging with ` + badUps + ` over tcp: ` +
-				`dns: id mismatch`,
-		},
-		name: "all_different",
+		name: "comment_mix",
 	}}
 
 	for _, tc := range testCases {

@@ -310,6 +310,16 @@
     "edns_use_custom_ip": "Utiliser une IP personnalisée pour EDNS",
     "edns_use_custom_ip_desc": "Autoriser l'utilisation d'une adresse IP personnalisée pour EDNS",
     "rate_limit_desc": "Le nombre de requêtes par seconde qu’un seul client est autorisé à faire. Le réglage 0 fait illimité.",
+    "rate_limit_subnet_len_ipv4": "Longueur du préfixe de sous-réseau pour les adresses IPv4",
+    "rate_limit_subnet_len_ipv4_desc": "Longueur du préfixe de sous-réseau pour les adresses IPv4 utilisé pour la limitation de vitesse. La valeur par défaut est 24",
+    "rate_limit_subnet_len_ipv4_error": "La longueur du préfixe du sous-réseau IPv4 doit être entre 0 et 32",
+    "rate_limit_subnet_len_ipv6": "Longueur du préfixe de sous-réseau pour les adresses IPv6",
+    "rate_limit_subnet_len_ipv6_desc": "Longueur du préfixe de sous-réseau pour les adresses IPv6 utilisé pour la limitation de débit. La valeur par défaut est 56",
+    "rate_limit_subnet_len_ipv6_error": "La longueur du préfixe du sous-réseau IPv6 doit être entre 0 et 128",
+    "form_enter_rate_limit_subnet_len": "Saisissez la longueur du préfixe de sous-réseau pour la limitation de débit",
+    "rate_limit_whitelist": "Liste d'autorisation de limitation de débit",
+    "rate_limit_whitelist_desc": "Adresses IP exclues de la limitation du débit",
+    "rate_limit_whitelist_placeholder": "Saisissez une adresse IP par ligne",
     "blocking_ipv4_desc": "Adresse IP à renvoyer pour une demande A bloquée",
     "blocking_ipv6_desc": "Adresse IP à renvoyer pour une demande AAAA bloquée",
     "blocking_mode_default": "Par défaut : Répondre avec adresse IP zéro (0.0.0.0 pour A ; :: pour AAAA) lorsque bloqué par la règle de style Adblock ; répondre avec l’adresse IP spécifiée dans la règle lorsque bloquée par la règle du style /etc/hosts",
@@ -724,5 +734,8 @@
     "wednesday_short": "Mer.",
     "thursday_short": "Jeu.",
     "friday_short": "Ven.",
-    "saturday_short": "Sam."
+    "saturday_short": "Sam.",
+    "upstream_dns_cache_configuration": "Configuration du cache DNS en amont",
+    "enable_upstream_dns_cache": "Activer la mise en cache pour la configuration personnalisée du serveur en amont de ce client",
+    "dns_cache_size": "Taille du cache DNS, en bytes"
 }

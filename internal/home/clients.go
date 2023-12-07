@@ -126,7 +126,13 @@ func (clients *clientsContainer) Init(
 		return nil
 	}
 
-	if clients.etcHosts != nil {
+	// The clients.etcHosts may be nil even if config.Clients.Sources.HostsFile
+	// is true, because of the deprecated option --no-etc-hosts.
+	//
+	// TODO(e.burkov):  The option should probably be returned, since hosts file
+	// currently used not only for clients' information enrichment, but also in
+	// the filtering module and upstream addresses resolution.
+	if config.Clients.Sources.HostsFile && clients.etcHosts != nil {
 		go clients.handleHostsUpdates()
 	}
 
@@ -179,6 +185,14 @@ type clientObject struct {
 	Tags      []string `yaml:"tags"`
 	Upstreams []string `yaml:"upstreams"`
 
+	// UpstreamsCacheSize is the DNS cache size (in bytes).
+	//
+	// TODO(d.kolyshev): Use [datasize.Bytesize].
+	UpstreamsCacheSize uint32 `yaml:"upstreams_cache_size"`
+
+	// UpstreamsCacheEnabled indicates if the DNS cache is enabled.
+	UpstreamsCacheEnabled bool `yaml:"upstreams_cache_enabled"`
+
 	UseGlobalSettings        bool `yaml:"use_global_settings"`
 	FilteringEnabled         bool `yaml:"filtering_enabled"`
 	ParentalEnabled          bool `yaml:"parental_enabled"`
@@ -210,6 +224,8 @@ func (clients *clientsContainer) addFromConfig(
 			UseOwnBlockedServices: !o.UseGlobalBlockedServices,
 			IgnoreQueryLog:        o.IgnoreQueryLog,
 			IgnoreStatistics:      o.IgnoreStatistics,
+			UpstreamsCacheEnabled: o.UpstreamsCacheEnabled,
+			UpstreamsCacheSize:    o.UpstreamsCacheSize,
 		}
 
 		if o.SafeSearchConf.Enabled {
@@ -278,6 +294,8 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
 			IgnoreQueryLog:           cli.IgnoreQueryLog,
 			IgnoreStatistics:         cli.IgnoreStatistics,
+			UpstreamsCacheEnabled:    cli.UpstreamsCacheEnabled,
+			UpstreamsCacheSize:       cli.UpstreamsCacheSize,
 		}
 
 		objs = append(objs, o)
@@ -419,18 +437,24 @@ func (clients *clientsContainer) shouldCountClient(ids []string) (y bool) {
 	return true
 }
 
-// findUpstreams returns upstreams configured for the client, identified either
-// by its IP address or its ClientID.  upsConf is nil if the client isn't found
-// or if the client has no custom upstreams.
-func (clients *clientsContainer) findUpstreams(
+// type check
+var _ dnsforward.ClientsContainer = (*clientsContainer)(nil)
+
+// UpstreamConfigByID implements the [dnsforward.ClientsContainer] interface for
+// *clientsContainer.  upsConf is nil if the client isn't found or if the client
+// has no custom upstreams.
+func (clients *clientsContainer) UpstreamConfigByID(
 	id string,
-) (upsConf *proxy.UpstreamConfig, err error) {
+	bootstrap upstream.Resolver,
+) (conf *proxy.CustomUpstreamConfig, err error) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
 	c, ok := clients.findLocked(id)
 	if !ok {
 		return nil, nil
+	} else if c.upstreamConfig != nil {
+		return c.upstreamConfig, nil
 	}
 
 	upstreams := stringutil.FilterOut(c.Upstreams, dnsforward.IsCommentOrEmpty)
@@ -438,24 +462,27 @@ func (clients *clientsContainer) findUpstreams(
 		return nil, nil
 	}
 
-	if c.upstreamConfig != nil {
-		return c.upstreamConfig, nil
-	}
-
-	var conf *proxy.UpstreamConfig
-	conf, err = proxy.ParseUpstreamsConfig(
+	var upsConf *proxy.UpstreamConfig
+	upsConf, err = proxy.ParseUpstreamsConfig(
 		upstreams,
 		&upstream.Options{
-			Bootstrap:    config.DNS.BootstrapDNS,
+			Bootstrap:    bootstrap,
 			Timeout:      config.DNS.UpstreamTimeout.Duration,
 			HTTPVersions: dnsforward.UpstreamHTTPVersions(config.DNS.UseHTTP3Upstreams),
 			PreferIPv6:   config.DNS.BootstrapPreferIPv6,
 		},
 	)
 	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
 		return nil, err
 	}
 
+	conf = proxy.NewCustomUpstreamConfig(
+		upsConf,
+		c.UpstreamsCacheEnabled,
+		int(c.UpstreamsCacheSize),
+		config.DNS.EDNSClientSubnet.Enabled,
+	)
 	c.upstreamConfig = conf
 
 	return conf, nil
@@ -672,10 +699,6 @@ func (clients *clientsContainer) Del(name string) (ok bool) {
 		return false
 	}
 
-	if err := c.closeUpstreams(); err != nil {
-		log.Error("client container: removing client %s: %s", name, err)
-	}
-
 	clients.del(c)
 
 	return true
@@ -683,10 +706,14 @@ func (clients *clientsContainer) Del(name string) (ok bool) {
 
 // del removes c from the indexes. clients.lock is expected to be locked.
 func (clients *clientsContainer) del(c *Client) {
-	// update Name index
+	if err := c.closeUpstreams(); err != nil {
+		log.Error("client container: removing client %s: %s", c.Name, err)
+	}
+
+	// Update the name index.
 	delete(clients.list, c.Name)
 
-	// update ID index
+	// Update the ID index.
 	for _, id := range c.IDs {
 		delete(clients.idIndex, id)
 	}

@@ -190,6 +190,12 @@ export default {
             "homepage": "https://github.com/hagezi/dns-blocklists#piracy",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_46.txt"
         },
+        "hagezi_encrypted_dns_vpn_tor_proxy_bypass": {
+            "name": "HaGeZi's Encrypted DNS/VPN/TOR/Proxy Bypass",
+            "categoryId": "security",
+            "homepage": "https://github.com/hagezi/dns-blocklists#bypass",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_52.txt"
+        },
         "hagezi_gambling_blocklist": {
             "name": "HaGeZi's Gambling Blocklist",
             "categoryId": "other",

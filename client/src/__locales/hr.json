@@ -310,6 +310,16 @@
     "edns_use_custom_ip": "Koristi prilagođeni IP za EDNS",
     "edns_use_custom_ip_desc": "Dopusti korištenje prilagođenog IP-a za EDNS",
     "rate_limit_desc": "Broj zahtjeva u sekundi koji su dopušteni po jednom klijentu. Postavljanje na 0 znači neograničeno.",
+    "rate_limit_subnet_len_ipv4": "Duljina prefiksa podmreže za IPv4 adrese",
+    "rate_limit_subnet_len_ipv4_desc": "Duljina prefiksa podmreže za IPv4 adrese koje se koriste za ograničavanje brzine. Zadana vrijednost je 24",
+    "rate_limit_subnet_len_ipv4_error": "Dužina IPv4 prefiksa podmreže trebala bi biti između 0 i 32",
+    "rate_limit_subnet_len_ipv6": "Duljina prefiksa podmreže za IPv6 adrese",
+    "rate_limit_subnet_len_ipv6_desc": "Duljina prefiksa podmreže za IPv6 adrese koje se koriste za ograničavanje brzine. Zadana vrijednost je 56",
+    "rate_limit_subnet_len_ipv6_error": "Dužina IPv6 prefiksa podmreže trebala bi biti između 0 i 128",
+    "form_enter_rate_limit_subnet_len": "Unesite duljinu prefiksa podmreže za ograničenje brzine",
+    "rate_limit_whitelist": "Popis dopuštenih za ograničavanje brzine",
+    "rate_limit_whitelist_desc": "IP adrese isključene iz ograničenja brzine",
+    "rate_limit_whitelist_placeholder": "Unesite jednu adresu poslužitelja po retku",
     "blocking_ipv4_desc": "Povratna IP adresa za blokirane A zahtjeve",
     "blocking_ipv6_desc": "Povratna IP adresa za blokirane AAAA zahtjeve",
     "blocking_mode_default": "Zadano: Odgovori s nultom IP adresom (0.0.0.0 za A; :: za AAAA) kada ga blokira Adblock slično pravilo; odgovorite s IP adresom definiranom u pravilu kada je blokirano od /etc/hosts sličnog pravila",
@@ -724,5 +734,8 @@
     "wednesday_short": "Sri",
     "thursday_short": "Čet",
     "friday_short": "Pet",
-    "saturday_short": "Sub"
+    "saturday_short": "Sub",
+    "upstream_dns_cache_configuration": "Konfiguracija predmemoriranja upstream DNS poslužitelja",
+    "enable_upstream_dns_cache": "Uključite keširanje za korisničku konfiguraciju upstream servera ovog klijenta",
+    "dns_cache_size": "Veličina DNS predmemorije, u bajtovima"
 }

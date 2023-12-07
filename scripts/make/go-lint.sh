@@ -35,7 +35,7 @@ set -f -u
 go_version="$( "${GO:-go}" version )"
 readonly go_version
 
-go_min_version='go1.20.11'
+go_min_version='go1.20.12'
 go_version_msg="
 warning: your go version (${go_version}) is different from the recommended minimal one (${go_min_version}).
 if you have the version installed, please set the GO environment variable.
@@ -185,7 +185,6 @@ run_linter gocognit --over='18'\
 
 run_linter gocognit --over='15'\
 	./internal/aghos/\
-	./internal/dnsforward/\
 	./internal/filtering/\
 	;
 
@@ -198,8 +197,11 @@ run_linter gocognit --over='13'\
 	;
 
 run_linter gocognit --over='12'\
-	./internal/updater/\
 	./internal/filtering/rewrite/\
+	;
+
+run_linter gocognit --over='11'\
+	./internal/updater/\
 	;
 
 run_linter gocognit --over='10'\
@@ -212,6 +214,7 @@ run_linter gocognit --over='10'\
 	./internal/client/\
 	./internal/confmigrate/\
 	./internal/dhcpsvc\
+	./internal/dnsforward/\
 	./internal/filtering/hashprefix/\
 	./internal/filtering/rulelist/\
 	./internal/filtering/safesearch/\

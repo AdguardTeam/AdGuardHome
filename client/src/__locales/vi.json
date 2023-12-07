@@ -310,6 +310,16 @@
     "edns_use_custom_ip": "Sử dụng địa chỉ IP tùy chỉnh cho EDNS",
     "edns_use_custom_ip_desc": "Cho phép sử dụng địa chỉ IP tùy chỉnh cho EDNS",
     "rate_limit_desc": "Số lượng yêu cầu mỗi giây mà một khách hàng được phép thực hiện (0: không giới hạn)",
+    "rate_limit_subnet_len_ipv4": "Độ dài tiền tố mạng con cho địa chỉ IPv4",
+    "rate_limit_subnet_len_ipv4_desc": "Độ dài tiền tố mạng con cho các địa chỉ IPv4 được sử dụng để giới hạn tốc độ. Mặc định là 24",
+    "rate_limit_subnet_len_ipv4_error": "Độ dài tiền tố mạng con IPv4 phải nằm trong khoảng từ 0 đến 32",
+    "rate_limit_subnet_len_ipv6": "Độ dài tiền tố mạng con cho địa chỉ IPv6",
+    "rate_limit_subnet_len_ipv6_desc": "Độ dài tiền tố mạng con cho các địa chỉ IPv6 được sử dụng để giới hạn tốc độ. Mặc định là 56",
+    "rate_limit_subnet_len_ipv6_error": "Độ dài tiền tố mạng con IPv6 phải nằm trong khoảng từ 0 đến 128",
+    "form_enter_rate_limit_subnet_len": "Nhập độ dài tiền tố mạng con để giới hạn tốc độ",
+    "rate_limit_whitelist": "Danh sách cho phép giới hạn tỷ lệ",
+    "rate_limit_whitelist_desc": "Địa chỉ IP bị loại trừ khỏi giới hạn tốc độ",
+    "rate_limit_whitelist_placeholder": "Nhập một địa chỉ IP trên mỗi dòng",
     "blocking_ipv4_desc": "Địa chỉ IP được trả lại cho một yêu cầu A bị chặn",
     "blocking_ipv6_desc": "Địa chỉ IP được trả lại cho một yêu cầu AAA bị chặn",
     "blocking_mode_default": "Mặc định: Trả lời với NXDOMAIN khi bị chặn bởi quy tắc kiểu Adblock; phản hồi với địa chỉ IP được chỉ định trong quy tắc khi bị chặn bởi quy tắc / etc / hosts-style",
@@ -724,5 +734,8 @@
     "wednesday_short": "Thứ 4",
     "thursday_short": "Thứ 5",
     "friday_short": "Thứ 6",
-    "saturday_short": "Thứ 7"
+    "saturday_short": "Thứ 7",
+    "upstream_dns_cache_configuration": "Cấu hình bộ nhớ đệm upstream của các máy chủ DNS",
+    "enable_upstream_dns_cache": "Bật bộ nhớ cache cho cấu hình ngược dòng của máy chủ upstream của khách hàng này",
+    "dns_cache_size": "Kích thước bộ nhớ cache DNS, tính bằng byte"
 }

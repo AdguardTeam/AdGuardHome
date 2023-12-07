@@ -26,6 +26,10 @@ export const R_WIN_ABSOLUTE_PATH = /^([a-zA-Z]:)?(\\|\/)(?:[^\\/:*?"<>|\x00]+\\)
 
 export const R_CLIENT_ID = /^[a-z0-9-]{1,63}$/;
 
+export const R_IPV4_SUBNET = /^([0-9]|[1-2][0-9]|3[0-2])?$/;
+
+export const R_IPV6_SUBNET = /^([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])?$/;
+
 export const MIN_PASSWORD_LENGTH = 8;
 export const MAX_PASSWORD_LENGTH = 72;
 

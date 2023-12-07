@@ -310,6 +310,16 @@
     "edns_use_custom_ip": "Usa IP personalizzato per EDNS",
     "edns_use_custom_ip_desc": "Consentire l'uso di un IP personalizzato per EDNS",
     "rate_limit_desc": "Il numero di richieste al secondo consentite da un singolo client. Impostare questo valore a 0 rimuove le limitazioni.",
+    "rate_limit_subnet_len_ipv4": "Lunghezza prefisso di sottorete per indirizzi IPv4",
+    "rate_limit_subnet_len_ipv4_desc": "Lunghezza prefisso sottorete per indirizzi IPv4 usati per la limitazione della velocità. Valore predefinito 24",
+    "rate_limit_subnet_len_ipv4_error": "La lunghezza del prefisso di sottorete IPv4 deve essere compresa tra 0 e 32",
+    "rate_limit_subnet_len_ipv6": "Lunghezza prefisso di sottorete per indirizzi IPv6",
+    "rate_limit_subnet_len_ipv6_desc": "Lunghezza prefisso di sottorete per indirizzi IPv6 usati per la limitazione della velocità. Valore predefinito 56",
+    "rate_limit_subnet_len_ipv6_error": "La lunghezza del prefisso di sottorete IPv6 deve essere compresa tra 0 e 128",
+    "form_enter_rate_limit_subnet_len": "Inserisci lunghezza prefisso di sottorete per limitazione velocità",
+    "rate_limit_whitelist": "Lista consentita per limitazione velocità",
+    "rate_limit_whitelist_desc": "Indirizzi IP esclusi dalla limitazione della velocità",
+    "rate_limit_whitelist_placeholder": "Inserisci un indirizzo IP per riga",
     "blocking_ipv4_desc": "Indirizzo IP per una richiesta DNS IPv4 bloccata",
     "blocking_ipv6_desc": "Indirizzo IP restituito per una richiesta DNS IPv6 bloccata",
     "blocking_mode_default": "Risponde con un indirizzo IP pari a zero (0.0.0.0 per A; :: per AAAA) quando bloccato da una regola in stile Blocca-annunci; risponde con l'indirizzo IP specificato nella regola quando bloccato da una regola in stile /etc/hosts",
@@ -724,5 +734,8 @@
     "wednesday_short": "Mer",
     "thursday_short": "Gio",
     "friday_short": "Ven",
-    "saturday_short": "Sab"
+    "saturday_short": "Sab",
+    "upstream_dns_cache_configuration": "Configurazione cache DNS upstream",
+    "enable_upstream_dns_cache": "Abilita cache DNS per la configurazione upstream personalizzata del client",
+    "dns_cache_size": "Dimensioni cache DNS (in byte)"
 }

@@ -310,6 +310,16 @@
     "edns_use_custom_ip": "EDNS에 사용자 지정 IP 사용",
     "edns_use_custom_ip_desc": "EDNS에 사용자 지정 IP 사용하도록 허용합니다.",
     "rate_limit_desc": "단일 클라이언트에서 허용 가능한 초 당 요청 생성 숫자 (0: 무제한)",
+    "rate_limit_subnet_len_ipv4": "IPv4 주소의 서브넷 접두사 길이",
+    "rate_limit_subnet_len_ipv4_desc": "속도 제한에 사용되는 IPv4 주소의 서브넷 접두사 길이입니다. 기본값은 24입니다.",
+    "rate_limit_subnet_len_ipv4_error": "IPv4 서브넷 접두사 길이는 0에서 32 사이여야 합니다.",
+    "rate_limit_subnet_len_ipv6": "IPv6 주소의 서브넷 접두사 길이",
+    "rate_limit_subnet_len_ipv6_desc": "속도 제한에 사용되는 IPv6 주소의 서브넷 접두사 길이입니다. 기본값은 56입니다.",
+    "rate_limit_subnet_len_ipv6_error": "IPv6 서브넷 접두사 길이는 0에서 128 사이여야 합니다.",
+    "form_enter_rate_limit_subnet_len": "속도 제한을 위한 서브넷 접두사 길이를 입력하세요",
+    "rate_limit_whitelist": "속도 제한 허용 목록",
+    "rate_limit_whitelist_desc": "속도 제한에서 제외되는 IP 주소",
+    "rate_limit_whitelist_placeholder": "한 줄에 하나씩 IP 주소를 입력하세요.",
     "blocking_ipv4_desc": "차단된 A 요청에 대해서 반환할 IP 주소",
     "blocking_ipv6_desc": "차단된 AAAA 요청에 대해서 반환할 IP 주소",
     "blocking_mode_default": "기본: Adblock 스타일 규칙에 의해 차단되면 제로 IP 주소(A는 0.0.0.0; AAAA는 ::)로 응답합니다; /etc/hosts 스타일 규칙에 의해 차단되면 규칙에 정의된 IP 주소로 응답합니다",
@@ -724,5 +734,8 @@
     "wednesday_short": "수",
     "thursday_short": "목",
     "friday_short": "금",
-    "saturday_short": "토"
+    "saturday_short": "토",
+    "upstream_dns_cache_configuration": "업스트림 DNS 캐시 설정",
+    "enable_upstream_dns_cache": "이 클라이언트의 사용자 지정 업스트림 설정에서 DNS 캐싱 사용",
+    "dns_cache_size": "DNS 캐시 크기(바이트)"
 }

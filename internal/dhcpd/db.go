@@ -5,9 +5,13 @@ package dhcpd
 import (
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/netip"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/google/renameio/v2/maybe"
@@ -28,7 +32,60 @@ type dataLeases struct {
 	Version int `json:"version"`
 
 	// Leases is the list containing stored DHCP leases.
-	Leases []*Lease `json:"leases"`
+	Leases []*dbLease `json:"leases"`
+}
+
+// dbLease is the structure of stored lease.
+type dbLease struct {
+	Expiry   string     `json:"expires"`
+	IP       netip.Addr `json:"ip"`
+	Hostname string     `json:"hostname"`
+	HWAddr   string     `json:"mac"`
+	IsStatic bool       `json:"static"`
+}
+
+// fromLease converts *dhcpsvc.Lease to *dbLease.
+func fromLease(l *dhcpsvc.Lease) (dl *dbLease) {
+	var expiryStr string
+	if !l.IsStatic {
+		// The front-end is waiting for RFC 3999 format of the time value.  It
+		// also shouldn't got an Expiry field for static leases.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/2692.
+		expiryStr = l.Expiry.Format(time.RFC3339)
+	}
+
+	return &dbLease{
+		Expiry:   expiryStr,
+		Hostname: l.Hostname,
+		HWAddr:   l.HWAddr.String(),
+		IP:       l.IP,
+		IsStatic: l.IsStatic,
+	}
+}
+
+// toLease converts *dbLease to *dhcpsvc.Lease.
+func (dl *dbLease) toLease() (l *dhcpsvc.Lease, err error) {
+	mac, err := net.ParseMAC(dl.HWAddr)
+	if err != nil {
+		return nil, fmt.Errorf("parsing hardware address: %w", err)
+	}
+
+	expiry := time.Time{}
+	if !dl.IsStatic {
+		expiry, err = time.Parse(time.RFC3339, dl.Expiry)
+		if err != nil {
+			return nil, fmt.Errorf("parsing expiry time: %w", err)
+		}
+	}
+
+	return &dhcpsvc.Lease{
+		Expiry:   expiry,
+		IP:       dl.IP,
+		Hostname: dl.Hostname,
+		HWAddr:   mac,
+		IsStatic: dl.IsStatic,
+	}, nil
 }
 
 // dbLoad loads stored leases.
@@ -49,15 +106,22 @@ func (s *server) dbLoad() (err error) {
 	}
 
 	leases := dl.Leases
-
-	leases4 := []*Lease{}
-	leases6 := []*Lease{}
+	leases4 := []*dhcpsvc.Lease{}
+	leases6 := []*dhcpsvc.Lease{}
 
 	for _, l := range leases {
-		if l.IP.Is4() {
-			leases4 = append(leases4, l)
+		var lease *dhcpsvc.Lease
+		lease, err = l.toLease()
+		if err != nil {
+			log.Info("dhcp: invalid lease: %s", err)
+
+			continue
+		}
+
+		if lease.IP.Is4() {
+			leases4 = append(leases4, lease)
 		} else {
-			leases6 = append(leases6, l)
+			leases6 = append(leases6, lease)
 		}
 	}
 
@@ -73,8 +137,12 @@ func (s *server) dbLoad() (err error) {
 		}
 	}
 
-	log.Info("dhcp: loaded leases v4:%d  v6:%d  total-read:%d from DB",
-		len(leases4), len(leases6), len(leases))
+	log.Info(
+		"dhcp: loaded leases v4:%d  v6:%d  total-read:%d from DB",
+		len(leases4),
+		len(leases6),
+		len(leases),
+	)
 
 	return nil
 }
@@ -83,24 +151,26 @@ func (s *server) dbLoad() (err error) {
 func (s *server) dbStore() (err error) {
 	// Use an empty slice here as opposed to nil so that it doesn't write
 	// "null" into the database file if leases are empty.
-	leases := []*Lease{}
+	leases := []*dbLease{}
 
-	leases4 := s.srv4.getLeasesRef()
-	leases = append(leases, leases4...)
+	for _, l := range s.srv4.getLeasesRef() {
+		leases = append(leases, fromLease(l))
+	}
 
 	if s.srv6 != nil {
-		leases6 := s.srv6.getLeasesRef()
-		leases = append(leases, leases6...)
+		for _, l := range s.srv6.getLeasesRef() {
+			leases = append(leases, fromLease(l))
+		}
 	}
 
 	return writeDB(s.conf.dbFilePath, leases)
 }
 
 // writeDB writes leases to file at path.
-func writeDB(path string, leases []*Lease) (err error) {
+func writeDB(path string, leases []*dbLease) (err error) {
 	defer func() { err = errors.Annotate(err, "writing db: %w") }()
 
-	slices.SortFunc(leases, func(a, b *Lease) (res int) {
+	slices.SortFunc(leases, func(a, b *dbLease) (res int) {
 		return strings.Compare(a.Hostname, b.Hostname)
 	})
 

@@ -310,6 +310,15 @@
     "edns_use_custom_ip": "Använd anpassad IP för EDNS",
     "edns_use_custom_ip_desc": "Tillåt att använda anpassad IP för EDNS",
     "rate_limit_desc": "Antalet förfrågningar per sekund som tillåts per klient. Att sätta den till 0 innebär ingen gräns.",
+    "rate_limit_subnet_len_ipv4": "Prefixlängd för subnät för IPv4-adresser",
+    "rate_limit_subnet_len_ipv4_desc": "Subnätprefixlängd för IPv4-adresser som används för hastighetsbegränsning. Standard är 24",
+    "rate_limit_subnet_len_ipv4_error": "IPv4-subnätets prefixlängd ska vara mellan 0 och 32",
+    "rate_limit_subnet_len_ipv6": "Prefixlängd för subnät för IPv6-adresser",
+    "rate_limit_subnet_len_ipv6_desc": "Subnätprefixlängd för IPv6-adresser som används för hastighetsbegränsning. Standard är 56",
+    "rate_limit_subnet_len_ipv6_error": "IPv6-subnätets prefixlängd ska vara mellan 0 och 128",
+    "form_enter_rate_limit_subnet_len": "Ange subnätprefixlängd för hastighetsbegränsning",
+    "rate_limit_whitelist_desc": "IP-adresser uteslutna från hastighetsbegränsning",
+    "rate_limit_whitelist_placeholder": "Ange en IP-adress per rad",
     "blocking_ipv4_desc": "IP adress som ska returneras för en blockerad A förfrågan",
     "blocking_ipv6_desc": "IP adress som ska returneras för en blockerad AAAA förfrågan",
     "blocking_mode_default": "Standard: Svara med noll IP-adress (0.0.0.0 för A; :: för AAAA) när det blockeras av regel i Adblock-stil; svara med IP-adressen som anges i regeln när den blockeras av regel i /etc/hosts-stil",
@@ -724,5 +733,8 @@
     "wednesday_short": "Ons",
     "thursday_short": "Tor",
     "friday_short": "Fre",
-    "saturday_short": "Lör"
+    "saturday_short": "Lör",
+    "upstream_dns_cache_configuration": "Konfiguration av uppströms DNS-cache",
+    "enable_upstream_dns_cache": "Aktivera DNS-cachelagring för den här klientens anpassade uppströmskonfiguration",
+    "dns_cache_size": "DNS-cachestorlek, i byte"
 }

@@ -35,6 +35,7 @@ func TestHandleDNSRequest_handleDNSRequest(t *testing.T) {
 				Enabled: false,
 			},
 		},
+		ServePlainDNS: true,
 	}
 	filters := []filtering.Filter{{
 		ID: 0, Data: []byte(rules),
@@ -186,7 +187,7 @@ func TestHandleDNSRequest_handleDNSRequest(t *testing.T) {
 		dctx := &proxy.DNSContext{
 			Proto: proxy.ProtoUDP,
 			Req:   tc.req,
-			Addr:  &net.UDPAddr{IP: net.IP{127, 0, 0, 1}, Port: 1},
+			Addr:  testClientAddrPort,
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -325,7 +326,7 @@ func TestHandleDNSRequest_filterDNSResponse(t *testing.T) {
 				Proto: proxy.ProtoUDP,
 				Req:   tc.req,
 				Res:   resp,
-				Addr:  &net.UDPAddr{IP: net.IP{127, 0, 0, 1}, Port: 1},
+				Addr:  testClientAddrPort,
 			}
 
 			dctx := &dnsContext{

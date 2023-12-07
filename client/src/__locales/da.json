@@ -310,6 +310,16 @@
     "edns_use_custom_ip": "Brug tilpasset IP til EDNS",
     "edns_use_custom_ip_desc": "Tillad brug af tilpasset IP til EDNS",
     "rate_limit_desc": "Antallet af forespørgsler pr. sekund tilladt pr. klient (værdien 0 = ubegrænset)",
+    "rate_limit_subnet_len_ipv4": "Længde på undernetpræfiks for IPv4-adresser",
+    "rate_limit_subnet_len_ipv4_desc": "Længde på undernetpræfiks for IPv4-adresser til hastighedsbegrænsning. Standard er 24",
+    "rate_limit_subnet_len_ipv4_error": "Længden på IPv4-undernetpræfiks skal være mellem 0 og 32",
+    "rate_limit_subnet_len_ipv6": "Længde på undernetpræfiks for IPv6-adresser",
+    "rate_limit_subnet_len_ipv6_desc": "Længde på undernetpræfiks for IPv6-adresser til hastighedsbegrænsning. Standard er 56",
+    "rate_limit_subnet_len_ipv6_error": "Længden på IPv6-undernetpræfiks skal være mellem 0 og 128",
+    "form_enter_rate_limit_subnet_len": "Angiv længden på undernetpræfiks til hastighedsbegrænsning",
+    "rate_limit_whitelist": "Hvidliste til hastighedsbegrænsning",
+    "rate_limit_whitelist_desc": "IP-adresser undtaget fra hastighedsbegrænsning",
+    "rate_limit_whitelist_placeholder": "Angiv én IP-adresse pr. linje",
     "blocking_ipv4_desc": "Returneret IP-adresse for en blokeret A-forespørgsel",
     "blocking_ipv6_desc": "Returneret IP-adresse for en blokeret AAAA-forespørgsel",
     "blocking_mode_default": "Standard: Svar med nul IP-adresse (0.0.0.0 for A; :: for AAAA), når blokeret af Adblock-lignende regel. Svar med IP-adressen angivet i reglen, når blokeret af /etc/hosts-lignende regel",
@@ -724,5 +734,8 @@
     "wednesday_short": "Ons",
     "thursday_short": "Tors",
     "friday_short": "Fre",
-    "saturday_short": "Lør"
+    "saturday_short": "Lør",
+    "upstream_dns_cache_configuration": "Upstream DNS-cacheopsætning",
+    "enable_upstream_dns_cache": "Aktivér DNS-cachelagring for denne klients tilpassede upstream-opsætning",
+    "dns_cache_size": "DNS-cachestørrelse i bytes"
 }

@@ -10,9 +10,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
-	"golang.org/x/exp/slices"
 )
 
 // Write Stats data and logs
@@ -25,13 +23,12 @@ func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
 	host := aghnet.NormalizeDomain(q.Name)
 	processingTime := time.Since(dctx.startTime)
 
-	ip, _ := netutil.IPAndPortFromAddr(pctx.Addr)
-	ip = slices.Clone(ip)
+	ip := pctx.Addr.Addr().AsSlice()
 	s.anonymizer.Load()(ip)
 
 	log.Debug("dnsforward: client ip for stats and querylog: %s", ip)
 
-	ipStr := ip.String()
+	ipStr := pctx.Addr.Addr().String()
 	ids := []string{ipStr, dctx.clientID}
 	qt, cl := q.Qtype, q.Qclass
 

@@ -8,6 +8,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/errors"
 )
 
@@ -49,16 +50,16 @@ type ServerConfig struct {
 // DHCPServer - DHCP server interface
 type DHCPServer interface {
 	// ResetLeases resets leases.
-	ResetLeases(leases []*Lease) (err error)
+	ResetLeases(leases []*dhcpsvc.Lease) (err error)
 	// GetLeases returns deep clones of the current leases.
-	GetLeases(flags GetLeasesFlags) (leases []*Lease)
+	GetLeases(flags GetLeasesFlags) (leases []*dhcpsvc.Lease)
 	// AddStaticLease - add a static lease
-	AddStaticLease(l *Lease) (err error)
+	AddStaticLease(l *dhcpsvc.Lease) (err error)
 	// RemoveStaticLease - remove a static lease
-	RemoveStaticLease(l *Lease) (err error)
+	RemoveStaticLease(l *dhcpsvc.Lease) (err error)
 
 	// UpdateStaticLease updates IP, hostname of the lease.
-	UpdateStaticLease(l *Lease) (err error)
+	UpdateStaticLease(l *dhcpsvc.Lease) (err error)
 
 	// FindMACbyIP returns a MAC address by the IP address of its lease, if
 	// there is one.
@@ -81,7 +82,7 @@ type DHCPServer interface {
 	Start() (err error)
 	// Stop - stop server
 	Stop() (err error)
-	getLeasesRef() []*Lease
+	getLeasesRef() []*dhcpsvc.Lease
 }
 
 // V4ServerConf - server configuration

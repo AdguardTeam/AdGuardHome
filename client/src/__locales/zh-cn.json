@@ -310,6 +310,16 @@
     "edns_use_custom_ip": "为 EDNS 使用自定义 IP",
     "edns_use_custom_ip_desc": "允许为 EDNS 使用自定义 IP",
     "rate_limit_desc": "每个客户端每秒钟查询次数的限制。设置为 0 意味着不限制。",
+    "rate_limit_subnet_len_ipv4": "IPv4 地址子网前缀长度",
+    "rate_limit_subnet_len_ipv4_desc": "用于速率限制的 IPv4 地址子网前缀长度。默认为 24",
+    "rate_limit_subnet_len_ipv4_error": "IPv4 子网前缀长度应介于 0 到 32 之间",
+    "rate_limit_subnet_len_ipv6": "IPv6 地址子网前缀长度",
+    "rate_limit_subnet_len_ipv6_desc": "用于速率限制的 IPv6 地址子网前缀长度。默认为 56",
+    "rate_limit_subnet_len_ipv6_error": "IPv6 子网前缀长度应介于 0 到 128 之间",
+    "form_enter_rate_limit_subnet_len": "输入用于速率限制的子网前缀长度",
+    "rate_limit_whitelist": "速率限制白名单",
+    "rate_limit_whitelist_desc": "排除在速率限制之外的 IP 地址",
+    "rate_limit_whitelist_placeholder": "每行输入一个 IP 地址",
     "blocking_ipv4_desc": "拦截 A 记录请求返回的 IP 地址",
     "blocking_ipv6_desc": "拦截 AAAA 记录请求返回的 IP 地址",
     "blocking_mode_default": "默认：被 Adblock 规则拦截时反应为零 IP 地址（A记录：0.0.0.0；AAAA记录：::）；被 /etc/hosts 规则拦截时反应为规则中指定 IP 地址",
@@ -724,5 +734,8 @@
     "wednesday_short": "周三",
     "thursday_short": "周四",
     "friday_short": "周五",
-    "saturday_short": "周六"
+    "saturday_short": "周六",
+    "upstream_dns_cache_configuration": "上游 DNS 缓存配置",
+    "enable_upstream_dns_cache": "为该客户端的自定义上游配置启用 DNS 缓存",
+    "dns_cache_size": "DNS 缓存大小，单位：字节"
 }

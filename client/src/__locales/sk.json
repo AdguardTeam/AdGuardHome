@@ -310,6 +310,16 @@
     "edns_use_custom_ip": "Použiť vlastnú IP adresu pre EDNS",
     "edns_use_custom_ip_desc": "Povoliť používanie vlastnej IP adresy pre EDNS",
     "rate_limit_desc": "Počet požiadaviek za sekundu, ktoré môže jeden klient vykonať. Nastavenie na hodnotu 0 znamená neobmedzene.",
+    "rate_limit_subnet_len_ipv4": "Dĺžka prefixu podsiete pre adresy IPv4",
+    "rate_limit_subnet_len_ipv4_desc": "Dĺžka prefixu podsiete pre adresy IPv4 používané na obmedzenie rýchlosti. Predvolená hodnota je 24",
+    "rate_limit_subnet_len_ipv4_error": "Dĺžka prefixu podsiete IPv4 musí byť od 0 do 32",
+    "rate_limit_subnet_len_ipv6": "Dĺžka prefixu podsiete pre adresy IPv6",
+    "rate_limit_subnet_len_ipv6_desc": "Dĺžka prefixu podsiete pre adresy IPv6 používané na obmedzenie rýchlosti. Predvolená hodnota je 56",
+    "rate_limit_subnet_len_ipv6_error": "Dĺžka prefixu podsiete IPv6 musí byť od 0 do 128",
+    "form_enter_rate_limit_subnet_len": "Zadajte dĺžku prefixu podsiete pre obmedzenie rýchlosti",
+    "rate_limit_whitelist": "Zoznam povolení obmedzujúcich rýchlosť",
+    "rate_limit_whitelist_desc": "IP adresy vylúčené z obmedzenia rýchlosti",
+    "rate_limit_whitelist_placeholder": "Na každý riadok zadajte IP adresu jedného servera",
     "blocking_ipv4_desc": "IP adresa, ktorá sa má vrátiť v prípade blokovanej žiadosti A",
     "blocking_ipv6_desc": "IP adresa, ktorá sa má vrátiť v prípade blokovanej žiadosti AAAA",
     "blocking_mode_default": "Predvolené: Odpovedať nulovou adresou IP (0,0.0.0 pre A; :: pre AAAA), keď je blokovaná pravidlom v štýle Adblock; odpovedať IP adresou uvedenou v pravidle, keď je blokovaná pravidlom v štýle /etc/hosts",
@@ -724,5 +734,8 @@
     "wednesday_short": "Str",
     "thursday_short": "Štr",
     "friday_short": "Pia",
-    "saturday_short": "Sob"
+    "saturday_short": "Sob",
+    "upstream_dns_cache_configuration": "Konfigurácia cache pamäte DNS pre upstream",
+    "enable_upstream_dns_cache": "Zapnúť ukladanie DNS do cache pamäte pre vlastnú konfiguráciu odosielania tohto klienta",
+    "dns_cache_size": "Veľkosť cache pamäte DNS v bajtoch"
 }

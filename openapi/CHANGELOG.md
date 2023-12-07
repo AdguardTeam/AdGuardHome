@@ -4,6 +4,37 @@
 
 ## v0.108.0: API changes
 
+## v0.107.42: API changes
+
+### The new fields `"upstreams_cache_enabled"` and `"upstreams_cache_size"` in `Client` object
+
+* The new field `"upstreams_cache_enabled"` in `GET /control/clients`,
+  `GET /control/clients/find`, `POST /control/clients/add`, and
+  `POST /control/clients/update` methods shows if client's DNS cache is enabled
+  for the client.  If not set AdGuard Home will use default value (false).
+
+* The new field `"upstreams_cache_size"` in `GET /control/clients`,
+  `GET /control/clients/find`, `POST /control/clients/add`, and
+  `POST /control/clients/update` methods is the size of client's DNS cache in
+  bytes.
+
+### The new field `"ratelimit_subnet_len_ipv4"` in `DNSConfig` object
+
+* The new field `"ratelimit_subnet_len_ipv4"` in `GET /control/dns_info` and
+  `POST /control/dns_config` is the length of the subnet mask for IPv4
+  addresses.
+
+### The new field `"ratelimit_subnet_len_ipv6"` in `DNSConfig` object
+
+* The new field `"ratelimit_subnet_len_ipv6"` in `GET /control/dns_info` and
+  `POST /control/dns_config` is the length of the subnet mask for IPv6
+  addresses.
+
+### The new field `"ratelimit_whitelist"` in `DNSConfig` object
+
+* The new field `"blocked_response_ttl"` in `GET /control/dns_info` and `POST
+  /control/dns_config` is the list of IP addresses excluded from rate limiting.
+
 ## v0.107.39: API changes
 
 ### New HTTP API 'POST /control/dhcp/update_static_lease'

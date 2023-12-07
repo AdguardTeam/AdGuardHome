@@ -11,6 +11,9 @@ const Config = () => {
     const {
         blocking_mode,
         ratelimit,
+        ratelimit_subnet_len_ipv4,
+        ratelimit_subnet_len_ipv6,
+        ratelimit_whitelist,
         blocking_ipv4,
         blocking_ipv6,
         blocked_response_ttl,
@@ -36,6 +39,9 @@ const Config = () => {
                 <Form
                     initialValues={{
                         ratelimit,
+                        ratelimit_subnet_len_ipv4,
+                        ratelimit_subnet_len_ipv6,
+                        ratelimit_whitelist,
                         blocking_mode,
                         blocking_ipv4,
                         blocking_ipv6,

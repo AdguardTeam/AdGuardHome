@@ -1,7 +1,8 @@
 Before submitting a PR please make sure that:
 
 1.  You have discussed your solution in an issue and have got an
-    approval from a maintainer.
+    approval from a maintainer.  See our
+    [contribution guide](https://github.com/AdguardTeam/AdGuardHome/blob/master/CONTRIBUTING.md).
 
 2.  This isn't a localization fix; please send those to our
     [CrowdIn](https://crowdin.com/project/adguard-applications/en#/adguard-home)
@@ -13,8 +14,8 @@ Before submitting a PR please make sure that:
 Add a short description here.  The description should include:
 
 1.  Which issue this PR closes (`Closes #NNNN.`) or updates (`Updates
-    #NNNN.`).
+    #NNNN.`).  Please do not open PRs without filing an issue first.
 
 2.  A short description of how the change achieves that.
 
-Do not forget to remove these instructions.
+Do not forget to remove these instructions!

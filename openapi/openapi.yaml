@@ -1468,6 +1468,23 @@
           'type': 'boolean'
         'ratelimit':
           'type': 'integer'
+        'ratelimit_subnet_subnet_len_ipv4':
+          'description': 'Length of the subnet mask for IPv4 addresses.'
+          'type': 'integer'
+          'default': 24
+          'minimum': 0
+          'maximum': 32
+        'ratelimit_subnet_subnet_len_ipv6':
+          'description': 'Length of the subnet mask for IPv6 addresses.'
+          'type': 'integer'
+          'default': 56
+          'minimum': 0
+          'maximum': 128
+        'ratelimit_whitelist':
+          'type': 'array'
+          'description': 'List of IP addresses excluded from rate limiting.'
+          'items':
+            'type': 'string'
         'blocking_mode':
           'type': 'string'
           'enum':
@@ -2666,6 +2683,25 @@
 
             If `ignore_statistics` is not set in HTTP API `GET /clients/update`
             request then the existing value will not be changed.
+
+            This behaviour can be changed in the future versions.
+          'type': 'boolean'
+        'upstreams_cache_enabled':
+          'description': |
+            NOTE: If `upstreams_cache_enabled` is not set in HTTP API
+            `GET /clients/add` request then default value (false) will be used.
+
+            If `upstreams_cache_enabled` is not set in HTTP API
+            `GET /clients/update` request then the existing value will not be
+            changed.
+
+            This behaviour can be changed in the future versions.
+          'type': 'boolean'
+        'upstreams_cache_size':
+          'description': |
+            NOTE: If `upstreams_cache_enabled` is not set in HTTP API
+            `GET /clients/update` request then the existing value will not be
+            changed.
 
             This behaviour can be changed in the future versions.
           'type': 'boolean'

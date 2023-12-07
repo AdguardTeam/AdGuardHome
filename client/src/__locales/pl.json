@@ -310,6 +310,16 @@
     "edns_use_custom_ip": "Użyj niestandardowego adresu IP dla EDNS",
     "edns_use_custom_ip_desc": "Zezwól na użycie niestandardowego adresu IP dla EDNS",
     "rate_limit_desc": "Liczba żądań na sekundę dozwolona na klienta. Ustawienie wartości 0 oznacza brak ograniczeń.",
+    "rate_limit_subnet_len_ipv4": "Długość maski podsieci dla adresów IPv4",
+    "rate_limit_subnet_len_ipv4_desc": "Długość maski podsieci dla adresów IPv4 używanych do ograniczania prędkości. Domyślnie jest to 24",
+    "rate_limit_subnet_len_ipv4_error": "Długość maski podsieci IPv4 powinna wynosić od 0 do 32",
+    "rate_limit_subnet_len_ipv6": "Długość prefiksu podsieci dla adresów IPv6",
+    "rate_limit_subnet_len_ipv6_desc": "Długość prefiksu podsieci dla adresów IPv6 używanych do ograniczania szybkości. Domyślnie jest to 56",
+    "rate_limit_subnet_len_ipv6_error": "Długość prefiksu podsieci IPv6 powinna wynosić od 0 do 128",
+    "form_enter_rate_limit_subnet_len": "Wprowadź długość prefiksu podsieci dla ograniczenia prędkości",
+    "rate_limit_whitelist": "Lista zezwoleń ograniczających prędkość",
+    "rate_limit_whitelist_desc": "Adresy IP wykluczone z ograniczania prędkości",
+    "rate_limit_whitelist_placeholder": "Wprowadź po jednym adresie IP w każdym wierszu",
     "blocking_ipv4_desc": "Adres IP, który ma zostać zwrócony w przypadku zablokowanego żądania A",
     "blocking_ipv6_desc": "Adres IP, który ma zostać zwrócony w przypadku zablokowanego żądania AAAA",
     "blocking_mode_default": "Domyślna: Odpowiedz z zerowym adresem IP (0.0.0.0 dla A; :: dla AAAA) po zablokowaniu przez regułę Adblock; odpowiedź adresem IP wpisanym w regule, jeśli jest blokowany przez regułę w stylu /etc/hosts",
@@ -724,5 +734,8 @@
     "wednesday_short": "Śro",
     "thursday_short": "Czw",
     "friday_short": "Pt",
-    "saturday_short": "Sob"
+    "saturday_short": "Sob",
+    "upstream_dns_cache_configuration": "Konfiguracja pamięci podręcznej upstream serwerów DNS",
+    "enable_upstream_dns_cache": "Włącz pamięć podręczną dla niestandardowej konfiguracji serwera upstream tego klienta",
+    "dns_cache_size": "Rozmiar pamięci podręcznej DNS, w bajtach"
 }

@@ -101,6 +101,7 @@ func (qc *queryConn) listAll() (sets []props, err error) {
 type ipsetConn interface {
 	Add(name string, entries ...*ipset.Entry) (err error)
 	Close() (err error)
+	Header(name string) (p *ipset.HeaderPolicy, err error)
 	listAll() (sets []props, err error)
 }
 
@@ -111,6 +112,9 @@ type dialer func(pf netfilter.ProtoFamily, conf *netlink.Config) (conn ipsetConn
 type props struct {
 	// name of the ipset.
 	name string
+
+	// typeName of the ipset.
+	typeName string
 
 	// family of the IP addresses in the ipset.
 	family netfilter.ProtoFamily
@@ -148,6 +152,8 @@ func (p *props) parseAttribute(a netfilter.Attribute) {
 	case ipset.AttrSetName:
 		// Trim the null character.
 		p.name = string(bytes.Trim(a.Data, "\x00"))
+	case ipset.AttrTypeName:
+		p.typeName = string(bytes.Trim(a.Data, "\x00"))
 	case ipset.AttrFamily:
 		p.family = netfilter.ProtoFamily(a.Data[0])
 	default:
@@ -263,8 +269,9 @@ func (m *manager) parseIpsetConfig(ipsetConf []string) (err error) {
 		return err
 	}
 
+	currentlyKnown := map[string]props{}
 	for _, p := range all {
-		m.nameToIpset[p.name] = p
+		currentlyKnown[p.name] = p
 	}
 
 	for i, confStr := range ipsetConf {
@@ -275,7 +282,7 @@ func (m *manager) parseIpsetConfig(ipsetConf []string) (err error) {
 		}
 
 		var ipsets []props
-		ipsets, err = m.ipsets(ipsetNames)
+		ipsets, err = m.ipsets(ipsetNames, currentlyKnown)
 		if err != nil {
 			return fmt.Errorf("getting ipsets from config line at idx %d: %w", i, err)
 		}
@@ -288,14 +295,64 @@ func (m *manager) parseIpsetConfig(ipsetConf []string) (err error) {
 	return nil
 }
 
-// ipsets returns currently known ipsets.
-func (m *manager) ipsets(names []string) (sets []props, err error) {
+// ipsetProps returns the properties of an ipset with the given name.
+//
+// Additional header data query.  See https://github.com/AdguardTeam/AdGuardHome/issues/6420.
+//
+// TODO(s.chzhen):  Use *props.
+func (m *manager) ipsetProps(name string) (p props, err error) {
+	// The family doesn't seem to matter when we use a header query, so
+	// query only the IPv4 one.
+	//
+	// TODO(a.garipov): Find out if this is a bug or a feature.
+	var res *ipset.HeaderPolicy
+	res, err = m.ipv4Conn.Header(name)
+	if err != nil {
+		return props{}, err
+	}
+
+	if res == nil || res.Family == nil {
+		return props{}, errors.Error("empty response or no family data")
+	}
+
+	family := netfilter.ProtoFamily(res.Family.Value)
+	if family != netfilter.ProtoIPv4 && family != netfilter.ProtoIPv6 {
+		return props{}, fmt.Errorf("unexpected ipset family %q", family)
+	}
+
+	typeName := res.TypeName.Get()
+
+	return props{
+		name:         name,
+		typeName:     typeName,
+		family:       family,
+		isPersistent: false,
+	}, nil
+}
+
+// ipsets returns ipset properties of currently known ipsets.  It also makes an
+// additional ipset header data query if needed.
+func (m *manager) ipsets(names []string, currentlyKnown map[string]props) (sets []props, err error) {
 	for _, n := range names {
-		p, ok := m.nameToIpset[n]
+		p, ok := currentlyKnown[n]
 		if !ok {
 			return nil, fmt.Errorf("unknown ipset %q", n)
 		}
 
+		if p.family != netfilter.ProtoIPv4 && p.family != netfilter.ProtoIPv6 {
+			log.Debug("ipset: getting properties: %q %q unexpected ipset family %q",
+				p.name,
+				p.typeName,
+				p.family,
+			)
+
+			p, err = m.ipsetProps(n)
+			if err != nil {
+				return nil, fmt.Errorf("%q %q making header query: %w", p.name, p.typeName, err)
+			}
+		}
+
+		m.nameToIpset[n] = p
 		sets = append(sets, p)
 	}
 
@@ -335,6 +392,8 @@ func newManagerWithDialer(ipsetConf []string, dial dialer) (mgr Manager, err err
 	if err != nil {
 		return nil, fmt.Errorf("getting ipsets: %w", err)
 	}
+
+	log.Debug("ipset: initialized")
 
 	return m, nil
 }
@@ -404,7 +463,7 @@ func (m *manager) addIPs(host string, set props, ips []net.IP) (n int, err error
 
 	err = conn.Add(set.name, entries...)
 	if err != nil {
-		return 0, fmt.Errorf("adding %q%s to ipset %q: %w", host, ips, set.name, err)
+		return 0, fmt.Errorf("adding %q%s to %q %q: %w", host, ips, set.name, set.typeName, err)
 	}
 
 	// Only add these to the cache once we're sure that all of them were
@@ -440,10 +499,10 @@ func (m *manager) addToSets(
 				return n, err
 			}
 		default:
-			return n, fmt.Errorf("unexpected family %s for ipset %q", set.family, set.name)
+			return n, fmt.Errorf("%q %q unexpected family %q", set.name, set.typeName, set.family)
 		}
 
-		log.Debug("ipset: added %d ips to set %s", nn, set.name)
+		log.Debug("ipset: added %d ips to set %q %q", nn, set.name, set.typeName)
 
 		n += nn
 	}

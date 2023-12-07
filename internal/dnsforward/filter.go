@@ -10,7 +10,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"golang.org/x/exp/slices"
@@ -28,8 +27,7 @@ func (s *Server) beforeRequestHandler(
 		return false, fmt.Errorf("getting clientid: %w", err)
 	}
 
-	addrPort := netutil.NetAddrToAddrPort(pctx.Addr)
-	blocked, _ := s.IsBlockedClient(addrPort.Addr(), clientID)
+	blocked, _ := s.IsBlockedClient(pctx.Addr.Addr(), clientID)
 	if blocked {
 		return s.preBlockedResponse(pctx)
 	}
@@ -60,8 +58,7 @@ func (s *Server) clientRequestFilteringSettings(dctx *dnsContext) (setts *filter
 	setts = s.dnsFilter.Settings()
 	setts.ProtectionEnabled = dctx.protectionEnabled
 	if s.conf.FilterHandler != nil {
-		addrPort := netutil.NetAddrToAddrPort(dctx.proxyCtx.Addr)
-		s.conf.FilterHandler(addrPort.Addr(), dctx.clientID, setts)
+		s.conf.FilterHandler(dctx.proxyCtx.Addr.Addr(), dctx.clientID, setts)
 	}
 
 	return setts

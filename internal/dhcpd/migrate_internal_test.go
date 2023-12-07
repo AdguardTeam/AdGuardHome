@@ -2,7 +2,6 @@ package dhcpd
 
 import (
 	"encoding/json"
-	"net"
 	"net/netip"
 	"os"
 	"path/filepath"
@@ -27,16 +26,16 @@ func TestMigrateDB(t *testing.T) {
 	err := os.WriteFile(oldLeasesPath, []byte(testData), 0o644)
 	require.NoError(t, err)
 
-	wantLeases := []*Lease{{
-		Expiry:   time.Time{},
+	wantLeases := []*dbLease{{
+		Expiry:   time.Unix(1, 0).Format(time.RFC3339),
 		Hostname: "test1",
-		HWAddr:   net.HardwareAddr{0x11, 0x22, 0x33, 0x44, 0x55, 0x66},
+		HWAddr:   "11:22:33:44:55:66",
 		IP:       netip.MustParseAddr("1.2.3.4"),
 		IsStatic: true,
 	}, {
-		Expiry:   time.Unix(1231231231, 0),
+		Expiry:   time.Unix(1231231231, 0).Format(time.RFC3339),
 		Hostname: "test2",
-		HWAddr:   net.HardwareAddr{0x66, 0x55, 0x44, 0x33, 0x22, 0x11},
+		HWAddr:   "66:55:44:33:22:11",
 		IP:       netip.MustParseAddr("4.3.2.1"),
 		IsStatic: false,
 	}}
@@ -62,12 +61,12 @@ func TestMigrateDB(t *testing.T) {
 
 	leases := dl.Leases
 
-	for i, wl := range wantLeases {
-		assert.Equal(t, wl.Hostname, leases[i].Hostname)
-		assert.Equal(t, wl.HWAddr, leases[i].HWAddr)
-		assert.Equal(t, wl.IP, leases[i].IP)
-		assert.Equal(t, wl.IsStatic, leases[i].IsStatic)
+	for i, wantLease := range wantLeases {
+		assert.Equal(t, wantLease.Hostname, leases[i].Hostname)
+		assert.Equal(t, wantLease.HWAddr, leases[i].HWAddr)
+		assert.Equal(t, wantLease.IP, leases[i].IP)
+		assert.Equal(t, wantLease.IsStatic, leases[i].IsStatic)
 
-		require.True(t, wl.Expiry.Equal(leases[i].Expiry))
+		require.Equal(t, wantLease.Expiry, leases[i].Expiry)
 	}
 }

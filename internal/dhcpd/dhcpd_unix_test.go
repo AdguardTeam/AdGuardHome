@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -44,7 +45,7 @@ func TestDB(t *testing.T) {
 	s.srv6, err = v6Create(V6ServerConf{})
 	require.NoError(t, err)
 
-	leases := []*Lease{{
+	leases := []*dhcpsvc.Lease{{
 		Expiry:   time.Now().Add(time.Hour),
 		Hostname: "static-1.local",
 		HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},

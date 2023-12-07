@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/iana"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +29,7 @@ func TestV6_AddRemove_static(t *testing.T) {
 	require.Empty(t, s.GetLeases(LeasesStatic))
 
 	// Add static lease.
-	l := &Lease{
+	l := &dhcpsvc.Lease{
 		IP:     netip.MustParseAddr("2001::1"),
 		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}
@@ -47,7 +48,7 @@ func TestV6_AddRemove_static(t *testing.T) {
 	assert.True(t, ls[0].IsStatic)
 
 	// Try to remove non-existent static lease.
-	err = s.RemoveStaticLease(&Lease{
+	err = s.RemoveStaticLease(&dhcpsvc.Lease{
 		IP:     netip.MustParseAddr("2001::2"),
 		HWAddr: l.HWAddr,
 	})
@@ -72,7 +73,7 @@ func TestV6_AddReplace(t *testing.T) {
 	require.True(t, ok)
 
 	// Add dynamic leases.
-	dynLeases := []*Lease{{
+	dynLeases := []*dhcpsvc.Lease{{
 		IP:     netip.MustParseAddr("2001::1"),
 		HWAddr: net.HardwareAddr{0x11, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}, {
@@ -84,7 +85,7 @@ func TestV6_AddReplace(t *testing.T) {
 		s.addLease(l)
 	}
 
-	stLeases := []*Lease{{
+	stLeases := []*dhcpsvc.Lease{{
 		IP:     netip.MustParseAddr("2001::1"),
 		HWAddr: net.HardwareAddr{0x33, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}, {
@@ -126,7 +127,7 @@ func TestV6GetLease(t *testing.T) {
 		LinkLayerAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}
 
-	l := &Lease{
+	l := &dhcpsvc.Lease{
 		IP:     netip.MustParseAddr("2001::1"),
 		HWAddr: net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
 	}
@@ -324,7 +325,7 @@ func TestV6_FindMACbyIP(t *testing.T) {
 	anotherMAC := net.HardwareAddr{0xBB, 0xBB, 0xBB, 0xBB, 0xBB, 0xBB}
 
 	s := &v6Server{
-		leases: []*Lease{{
+		leases: []*dhcpsvc.Lease{{
 			Hostname: staticName,
 			HWAddr:   staticMAC,
 			IP:       staticIP,
@@ -337,7 +338,7 @@ func TestV6_FindMACbyIP(t *testing.T) {
 		}},
 	}
 
-	s.leases = []*Lease{{
+	s.leases = []*dhcpsvc.Lease{{
 		Hostname: staticName,
 		HWAddr:   staticMAC,
 		IP:       staticIP,
