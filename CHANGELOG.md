@@ -41,7 +41,7 @@ See also the [v0.107.42 GitHub milestone][ms-v0.107.42].
 
 ### Added
 
-- Ability to set client's custom DNS cache ([#6362]).
+- Ability to set client's custom DNS cache ([#6263]).
 - Ability to disable plain-DNS serving through configuration file if an
   encrypted protocol is already enabled ([#1660]).
 - Ability to specify rate limiting settings in the Web UI ([#6369]).
@@ -65,7 +65,7 @@ See also the [v0.107.42 GitHub milestone][ms-v0.107.42].
 
 [#1660]: https://github.com/AdguardTeam/AdGuardHome/issues/1660
 [#5759]: https://github.com/AdguardTeam/AdGuardHome/issues/5759
-[#6362]: https://github.com/AdguardTeam/AdGuardHome/issues/6362
+[#6263]: https://github.com/AdguardTeam/AdGuardHome/issues/6263
 [#6369]: https://github.com/AdguardTeam/AdGuardHome/issues/6369
 [#6402]: https://github.com/AdguardTeam/AdGuardHome/issues/6402
 [#6420]: https://github.com/AdguardTeam/AdGuardHome/issues/6420
