@@ -3,8 +3,7 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.20
 
 require (
-	// TODO(a.garipov): Update to a tag when released.
-	github.com/AdguardTeam/dnsproxy v0.60.1-0.20231208162350-afd2d3e77dd2
+	github.com/AdguardTeam/dnsproxy v0.60.1
 	github.com/AdguardTeam/golibs v0.18.0
 	github.com/AdguardTeam/urlfilter v0.17.3
 	github.com/NYTimes/gziphandler v1.1.1
