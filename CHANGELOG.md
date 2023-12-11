@@ -27,6 +27,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
 
+
+
 ## [v0.107.43] - 2023-12-11
 
 See also the [v0.107.43 GitHub milestone][ms-v0.107.43].
@@ -2671,8 +2673,8 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.43...HEAD
-[v0.107.43]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.42...v0.107.43
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.44...HEAD
+[v0.107.44]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.43...v0.107.44
 -->
 
 [Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.43...HEAD
