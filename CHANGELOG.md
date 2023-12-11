@@ -23,6 +23,13 @@ See also the [v0.107.43 GitHub milestone][ms-v0.107.43].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Incorrect handling of IPv4-in-IPv6 addresses when binding to an unspecified
+  address on some machines ([#6510]).
+
+[#6510]: https://github.com/AdguardTeam/AdGuardHome/issues/6510
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
