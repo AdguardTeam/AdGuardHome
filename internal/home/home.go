@@ -608,7 +608,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	Context.auth, err = initUsers()
 	fatalOnError(err)
 
-	Context.tls, err = newTLSManager(config.TLS)
+	Context.tls, err = newTLSManager(config.TLS, config.DNS.ServePlainDNS)
 	if err != nil {
 		log.Error("initializing tls: %s", err)
 		onConfigModified()

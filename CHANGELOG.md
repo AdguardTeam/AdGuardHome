@@ -23,6 +23,11 @@ See also the [v0.107.44 GitHub milestone][ms-v0.107.44].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- Ability to disable plain-DNS serving via UI if an encrypted protocol is
+  already used ([#1660]).
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

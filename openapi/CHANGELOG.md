@@ -6,6 +6,12 @@
 
 ## v0.107.42: API changes
 
+### The new field `"serve_plain_dns"` in `TlsConfig`
+
+* The new field `"serve_plain_dns"` in `POST /control/tls/configure`,
+  `POST /control/tls/validate` and `GET /control/tls/status` is true if plain
+  DNS is allowed for incoming requests.
+
 ### The new fields `"upstreams_cache_enabled"` and `"upstreams_cache_size"` in `Client` object
 
 * The new field `"upstreams_cache_enabled"` in `GET /control/clients`,

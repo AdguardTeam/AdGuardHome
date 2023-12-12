@@ -25,7 +25,8 @@ class Encryption extends Component {
 
     handleFormChange = debounce((values) => {
         const submitValues = this.getSubmitValues(values);
-        if (submitValues.enabled) {
+
+        if (submitValues.enabled || submitValues.serve_plain_dns) {
             this.props.validateTlsConfig(submitValues);
         }
     }, DEBOUNCE_TIMEOUT);
@@ -85,6 +86,7 @@ class Encryption extends Component {
             certificate_path,
             private_key_path,
             private_key_saved,
+            serve_plain_dns,
         } = encryption;
 
         const initialValues = this.getInitialValues({
@@ -99,6 +101,7 @@ class Encryption extends Component {
             certificate_path,
             private_key_path,
             private_key_saved,
+            serve_plain_dns,
         });
 
         return (

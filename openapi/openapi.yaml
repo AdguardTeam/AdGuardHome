@@ -2463,6 +2463,11 @@
           'example': true
           'description': >
             Set to true if both certificate and private key are correct.
+        'serve_plain_dns':
+          'type': 'boolean'
+          'example': true
+          'description': >
+            Set to true if plain DNS is allowed for incoming requests.
     'NetInterface':
       'type': 'object'
       'description': 'Network interface info'

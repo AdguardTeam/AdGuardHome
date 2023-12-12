@@ -180,7 +180,7 @@ export const CheckboxField = ({
     {!disabled
     && touched
     && error
-    && <span className="form__message form__message--error"><Trans>{error}</Trans></span>}
+    && <div className="form__message form__message--error mt-1"><Trans>{error}</Trans></div>}
 </>;
 
 CheckboxField.propTypes = {
