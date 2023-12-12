@@ -28,6 +28,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Ability to disable plain-DNS serving via UI if an encrypted protocol is
   already used ([#1660]).
 
+### Fixed
+
+- Omitted CNAME records in safe search results, which can cause YouTube to not
+  work on iOS ([#6352]).
+
+[#6352]: https://github.com/AdguardTeam/AdGuardHome/issues/6352
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

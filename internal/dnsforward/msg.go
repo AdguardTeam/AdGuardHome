@@ -66,10 +66,44 @@ func (s *Server) genDNSFilterMessage(
 		// If Safe Search generated the necessary IP addresses, use them.
 		// Otherwise, if there were no errors, there are no addresses for the
 		// requested IP version, so produce a NODATA response.
-		return s.genResponseWithIPs(req, ipsFromRules(res.Rules))
+		return s.getCNAMEWithIPs(req, ipsFromRules(res.Rules), res.CanonName)
 	default:
 		return s.genForBlockingMode(req, ipsFromRules(res.Rules))
 	}
+}
+
+// getCNAMEWithIPs generates a filtered response to req for with CNAME record
+// and provided ips.
+func (s *Server) getCNAMEWithIPs(req *dns.Msg, ips []netip.Addr, cname string) (resp *dns.Msg) {
+	resp = s.makeResponse(req)
+
+	originalName := req.Question[0].Name
+
+	var ans []dns.RR
+	if cname != "" {
+		ans = append(ans, s.genAnswerCNAME(req, cname))
+
+		// The given IPs actually are resolved for this cname.
+		req.Question[0].Name = dns.Fqdn(cname)
+		defer func() { req.Question[0].Name = originalName }()
+	}
+
+	switch req.Question[0].Qtype {
+	case dns.TypeA:
+		ans = append(ans, s.genAnswersWithIPv4s(req, ips)...)
+	case dns.TypeAAAA:
+		for _, ip := range ips {
+			if ip.Is6() {
+				ans = append(ans, s.genAnswerAAAA(req, ip))
+			}
+		}
+	default:
+		// Go on and return an empty response.
+	}
+
+	resp.Answer = ans
+
+	return resp
 }
 
 // genForBlockingMode generates a filtered response to req based on the server's

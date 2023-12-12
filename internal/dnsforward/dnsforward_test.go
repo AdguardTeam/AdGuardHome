@@ -547,32 +547,41 @@ func TestSafeSearch(t *testing.T) {
 	googleIP, _ := aghtest.HostToIPs("forcesafesearch.google.com")
 
 	testCases := []struct {
-		host string
-		want netip.Addr
+		host      string
+		want      netip.Addr
+		wantCNAME string
 	}{{
-		host: "yandex.com.",
-		want: yandexIP,
+		host:      "yandex.com.",
+		want:      yandexIP,
+		wantCNAME: "",
 	}, {
-		host: "yandex.by.",
-		want: yandexIP,
+		host:      "yandex.by.",
+		want:      yandexIP,
+		wantCNAME: "",
 	}, {
-		host: "yandex.kz.",
-		want: yandexIP,
+		host:      "yandex.kz.",
+		want:      yandexIP,
+		wantCNAME: "",
 	}, {
-		host: "yandex.ru.",
-		want: yandexIP,
+		host:      "yandex.ru.",
+		want:      yandexIP,
+		wantCNAME: "",
 	}, {
-		host: "www.google.com.",
-		want: googleIP,
+		host:      "www.google.com.",
+		want:      googleIP,
+		wantCNAME: "forcesafesearch.google.com.",
 	}, {
-		host: "www.google.com.af.",
-		want: googleIP,
+		host:      "www.google.com.af.",
+		want:      googleIP,
+		wantCNAME: "forcesafesearch.google.com.",
 	}, {
-		host: "www.google.be.",
-		want: googleIP,
+		host:      "www.google.be.",
+		want:      googleIP,
+		wantCNAME: "forcesafesearch.google.com.",
 	}, {
-		host: "www.google.by.",
-		want: googleIP,
+		host:      "www.google.by.",
+		want:      googleIP,
+		wantCNAME: "forcesafesearch.google.com.",
 	}}
 
 	for _, tc := range testCases {
@@ -582,7 +591,18 @@ func TestSafeSearch(t *testing.T) {
 			var reply *dns.Msg
 			reply, _, err = client.Exchange(req, addr)
 			require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
-			assertResponse(t, reply, tc.want)
+
+			if tc.wantCNAME != "" {
+				require.Len(t, reply.Answer, 2)
+
+				cname := testutil.RequireTypeAssert[*dns.CNAME](t, reply.Answer[0])
+				assert.Equal(t, tc.wantCNAME, cname.Target)
+			} else {
+				require.Len(t, reply.Answer, 1)
+			}
+
+			a := testutil.RequireTypeAssert[*dns.A](t, reply.Answer[len(reply.Answer)-1])
+			assert.Equal(t, net.IP(tc.want.AsSlice()), a.A)
 		})
 	}
 }

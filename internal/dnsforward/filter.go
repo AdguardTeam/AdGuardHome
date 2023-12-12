@@ -95,7 +95,7 @@ func (s *Server) filterDNSRequest(dctx *dnsContext) (res *filtering.Result, err 
 		dctx.origQuestion = q
 		req.Question[0].Name = dns.Fqdn(res.CanonName)
 	case res.Reason == filtering.Rewritten:
-		pctx.Res = s.filterRewritten(req, host, res, q.Qtype)
+		pctx.Res = s.getCNAMEWithIPs(req, res.IPList, res.CanonName)
 	case res.Reason.In(filtering.RewrittenRule, filtering.RewrittenAutoHosts):
 		if err = s.filterDNSRewrite(req, res, pctx); err != nil {
 			return nil, err
@@ -103,37 +103,6 @@ func (s *Server) filterDNSRequest(dctx *dnsContext) (res *filtering.Result, err 
 	}
 
 	return res, err
-}
-
-// filterRewritten handles DNS rewrite filters.  It returns a DNS response with
-// the data from the filtering result.  All parameters must not be nil.
-func (s *Server) filterRewritten(
-	req *dns.Msg,
-	host string,
-	res *filtering.Result,
-	qt uint16,
-) (resp *dns.Msg) {
-	resp = s.makeResponse(req)
-	name := host
-	if len(res.CanonName) != 0 {
-		resp.Answer = append(resp.Answer, s.genAnswerCNAME(req, res.CanonName))
-		name = res.CanonName
-	}
-
-	for _, ip := range res.IPList {
-		switch qt {
-		case dns.TypeA:
-			a := s.genAnswerA(req, ip)
-			a.Hdr.Name = dns.Fqdn(name)
-			resp.Answer = append(resp.Answer, a)
-		case dns.TypeAAAA:
-			a := s.genAnswerAAAA(req, ip)
-			a.Hdr.Name = dns.Fqdn(name)
-			resp.Answer = append(resp.Answer, a)
-		}
-	}
-
-	return resp
 }
 
 // checkHostRules checks the host against filters.  It is safe for concurrent
