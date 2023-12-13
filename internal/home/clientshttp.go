@@ -75,6 +75,17 @@ type clientListJSON struct {
 	Tags           []string            `json:"supported_tags"`
 }
 
+// whoisOrEmpty returns a WHOIS client information or a pointer to an empty
+// struct.  Frontend expects a non-nil value.
+func whoisOrEmpty(r *client.Runtime) (info *whois.Info) {
+	info = r.WHOIS()
+	if info != nil {
+		return info
+	}
+
+	return &whois.Info{}
+}
+
 // handleGetClients is the handler for GET /control/clients HTTP API.
 func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http.Request) {
 	data := clientListJSON{}
@@ -88,11 +99,11 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 	}
 
 	for ip, rc := range clients.ipToRC {
+		src, host := rc.Info()
 		cj := runtimeClientJSON{
-			WHOIS: rc.WHOIS,
-
-			Name:   rc.Host,
-			Source: rc.Source,
+			WHOIS:  whoisOrEmpty(rc),
+			Name:   host,
+			Source: src,
 			IP:     ip,
 		}
 
@@ -437,10 +448,11 @@ func (clients *clientsContainer) findRuntime(ip netip.Addr, idStr string) (cj *c
 		return cj
 	}
 
+	_, host := rc.Info()
 	cj = &clientJSON{
-		Name:  rc.Host,
+		Name:  host,
 		IDs:   []string{idStr},
-		WHOIS: rc.WHOIS,
+		WHOIS: whoisOrEmpty(rc),
 	}
 
 	disallowed, rule := clients.dnsServer.IsBlockedClient(ip, idStr)

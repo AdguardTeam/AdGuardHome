@@ -60,9 +60,8 @@ func TestClients(t *testing.T) {
 			cli1    = "1.1.1.1"
 			cli2    = "2.2.2.2"
 
-			cliNoneIP = netip.MustParseAddr(cliNone)
-			cli1IP    = netip.MustParseAddr(cli1)
-			cli2IP    = netip.MustParseAddr(cli2)
+			cli1IP = netip.MustParseAddr(cli1)
+			cli2IP = netip.MustParseAddr(cli2)
 		)
 
 		c := &Client{
@@ -100,7 +99,9 @@ func TestClients(t *testing.T) {
 
 		assert.Equal(t, "client2", c.Name)
 
-		assert.Equal(t, clients.clientSource(cliNoneIP), client.SourceNone)
+		_, ok = clients.Find(cliNone)
+		assert.False(t, ok)
+
 		assert.Equal(t, clients.clientSource(cli1IP), client.SourcePersistent)
 		assert.Equal(t, clients.clientSource(cli2IP), client.SourcePersistent)
 	})
@@ -136,7 +137,6 @@ func TestClients(t *testing.T) {
 			cliOld = "1.1.1.1"
 			cliNew = "1.1.1.2"
 
-			cliOldIP = netip.MustParseAddr(cliOld)
 			cliNewIP = netip.MustParseAddr(cliNew)
 		)
 
@@ -149,7 +149,9 @@ func TestClients(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, clients.clientSource(cliOldIP), client.SourceNone)
+		_, ok = clients.Find(cliOld)
+		assert.False(t, ok)
+
 		assert.Equal(t, clients.clientSource(cliNewIP), client.SourcePersistent)
 
 		prev, ok = clients.list["client1"]
@@ -182,7 +184,8 @@ func TestClients(t *testing.T) {
 		ok := clients.Del("client1-renamed")
 		require.True(t, ok)
 
-		assert.Equal(t, clients.clientSource(netip.MustParseAddr("1.1.1.2")), client.SourceNone)
+		_, ok = clients.Find("1.1.1.2")
+		assert.False(t, ok)
 	})
 
 	t.Run("del_fail", func(t *testing.T) {
@@ -215,10 +218,12 @@ func TestClients(t *testing.T) {
 		assert.Equal(t, clients.clientSource(ip), client.SourceDHCP)
 	})
 
-	t.Run("addhost_fail", func(t *testing.T) {
+	t.Run("addhost_priority", func(t *testing.T) {
 		ip := netip.MustParseAddr("1.1.1.1")
 		ok := clients.addHost(ip, "host1", client.SourceRDNS)
-		assert.False(t, ok)
+		assert.True(t, ok)
+
+		assert.Equal(t, client.SourceHostsFile, clients.clientSource(ip))
 	})
 }
 
@@ -235,7 +240,7 @@ func TestClientsWHOIS(t *testing.T) {
 		rc := clients.ipToRC[ip]
 		require.NotNil(t, rc)
 
-		assert.Equal(t, rc.WHOIS, whois)
+		assert.Equal(t, whois, rc.WHOIS())
 	})
 
 	t.Run("existing_auto-client", func(t *testing.T) {
@@ -247,7 +252,7 @@ func TestClientsWHOIS(t *testing.T) {
 		rc := clients.ipToRC[ip]
 		require.NotNil(t, rc)
 
-		assert.Equal(t, rc.WHOIS, whois)
+		assert.Equal(t, whois, rc.WHOIS())
 	})
 
 	t.Run("can't_set_manually-added", func(t *testing.T) {

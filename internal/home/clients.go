@@ -51,8 +51,8 @@ type clientsContainer struct {
 	list    map[string]*Client // name -> client
 	idIndex map[string]*Client // ID -> client
 
-	// ipToRC is the IP address to *RuntimeClient map.
-	ipToRC map[netip.Addr]*RuntimeClient
+	// ipToRC maps IP addresses to runtime client information.
+	ipToRC map[netip.Addr]*client.Runtime
 
 	allTags *stringutil.Set
 
@@ -103,9 +103,9 @@ func (clients *clientsContainer) Init(
 		log.Fatal("clients.list != nil")
 	}
 
-	clients.list = make(map[string]*Client)
-	clients.idIndex = make(map[string]*Client)
-	clients.ipToRC = map[netip.Addr]*RuntimeClient{}
+	clients.list = map[string]*Client{}
+	clients.idIndex = map[string]*Client{}
+	clients.ipToRC = map[netip.Addr]*client.Runtime{}
 
 	clients.allTags = stringutil.NewSet(clientTags...)
 
@@ -342,7 +342,7 @@ func (clients *clientsContainer) clientSource(ip netip.Addr) (src client.Source)
 
 	rc, ok := clients.ipToRC[ip]
 	if ok {
-		src = rc.Source
+		src, _ = rc.Info()
 	}
 
 	if src < client.SourceDHCP && clients.dhcp.HostByIP(ip) != "" {
@@ -389,20 +389,22 @@ func (clients *clientsContainer) clientOrArtificial(
 		}
 	}()
 
-	client, ok := clients.Find(id)
+	cli, ok := clients.Find(id)
 	if ok {
 		return &querylog.Client{
-			Name:           client.Name,
-			IgnoreQueryLog: client.IgnoreQueryLog,
+			Name:           cli.Name,
+			IgnoreQueryLog: cli.IgnoreQueryLog,
 		}, false
 	}
 
-	var rc *RuntimeClient
+	var rc *client.Runtime
 	rc, ok = clients.findRuntimeClient(ip)
 	if ok {
+		_, host := rc.Info()
+
 		return &querylog.Client{
-			Name:  rc.Host,
-			WHOIS: rc.WHOIS,
+			Name:  host,
+			WHOIS: rc.WHOIS(),
 		}, false
 	}
 
@@ -549,7 +551,7 @@ func (clients *clientsContainer) findDHCP(ip netip.Addr) (c *Client, ok bool) {
 
 // runtimeClient returns a runtime client from internal index.  Note that it
 // doesn't include DHCP clients.
-func (clients *clientsContainer) runtimeClient(ip netip.Addr) (rc *RuntimeClient, ok bool) {
+func (clients *clientsContainer) runtimeClient(ip netip.Addr) (rc *client.Runtime, ok bool) {
 	if ip == (netip.Addr{}) {
 		return nil, false
 	}
@@ -563,21 +565,21 @@ func (clients *clientsContainer) runtimeClient(ip netip.Addr) (rc *RuntimeClient
 }
 
 // findRuntimeClient finds a runtime client by their IP.
-func (clients *clientsContainer) findRuntimeClient(ip netip.Addr) (rc *RuntimeClient, ok bool) {
-	if rc, ok = clients.runtimeClient(ip); ok && rc.Source > client.SourceDHCP {
-		return rc, ok
-	}
-
+func (clients *clientsContainer) findRuntimeClient(ip netip.Addr) (rc *client.Runtime, ok bool) {
+	rc, ok = clients.runtimeClient(ip)
 	host := clients.dhcp.HostByIP(ip)
-	if host == "" {
-		return rc, ok
+
+	if host != "" {
+		if !ok {
+			rc = &client.Runtime{}
+		}
+
+		rc.SetInfo(client.SourceDHCP, []string{host})
+
+		return rc, true
 	}
 
-	return &RuntimeClient{
-		Host:   host,
-		Source: client.SourceDHCP,
-		WHOIS:  &whois.Info{},
-	}, true
+	return rc, ok
 }
 
 // check validates the client.
@@ -768,23 +770,20 @@ func (clients *clientsContainer) setWHOISInfo(ip netip.Addr, wi *whois.Info) {
 		return
 	}
 
-	// TODO(e.burkov):  Consider storing WHOIS information separately and
-	// potentially get rid of [RuntimeClient].
 	rc, ok := clients.ipToRC[ip]
 	if !ok {
 		// Create a RuntimeClient implicitly so that we don't do this check
 		// again.
-		rc = &RuntimeClient{
-			Source: client.SourceWHOIS,
-		}
+		rc = &client.Runtime{}
 		clients.ipToRC[ip] = rc
 
 		log.Debug("clients: set whois info for runtime client with ip %s: %+v", ip, wi)
 	} else {
-		log.Debug("clients: set whois info for runtime client %s: %+v", rc.Host, wi)
+		host, _ := rc.Info()
+		log.Debug("clients: set whois info for runtime client %s: %+v", host, wi)
 	}
 
-	rc.WHOIS = wi
+	rc.SetWHOIS(wi)
 }
 
 // addHost adds a new IP-hostname pairing.  The priorities of the sources are
@@ -843,18 +842,13 @@ func (clients *clientsContainer) addHostLocked(
 			}
 		}
 
-		rc = &RuntimeClient{
-			WHOIS: &whois.Info{},
-		}
+		rc = &client.Runtime{}
 		clients.ipToRC[ip] = rc
-	} else if src < rc.Source {
-		return false
 	}
 
-	rc.Host = host
-	rc.Source = src
+	rc.SetInfo(src, []string{host})
 
-	log.Debug("clients: added %s -> %q [%d]", ip, host, len(clients.ipToRC))
+	log.Debug("clients: adding client info %s -> %q %q [%d]", ip, src, host, len(clients.ipToRC))
 
 	return true
 }
@@ -863,7 +857,8 @@ func (clients *clientsContainer) addHostLocked(
 func (clients *clientsContainer) rmHostsBySrc(src client.Source) {
 	n := 0
 	for ip, rc := range clients.ipToRC {
-		if rc.Source == src {
+		rc.Unset(src)
+		if rc.IsEmpty() {
 			delete(clients.ipToRC, ip)
 			n++
 		}

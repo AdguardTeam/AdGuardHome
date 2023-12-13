@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
-	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
@@ -84,18 +82,4 @@ func (c *Client) setSafeSearch(
 	c.SafeSearch = ss
 
 	return nil
-}
-
-// RuntimeClient is a client information about which has been obtained using the
-// source described in the Source field.
-type RuntimeClient struct {
-	// WHOIS is the filtered WHOIS data of a client.
-	WHOIS *whois.Info
-
-	// Host is the host name of a client.
-	Host string
-
-	// Source is the source from which the information about the client has
-	// been obtained.
-	Source client.Source
 }
