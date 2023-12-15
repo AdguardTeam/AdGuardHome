@@ -211,7 +211,7 @@ run_linter gocognit --over='10'\
 	./internal/aghtest/\
 	./internal/arpdb/\
 	./internal/client/\
-	./internal/confmigrate/\
+	./internal/configmigrate/\
 	./internal/dhcpsvc\
 	./internal/dnsforward/\
 	./internal/filtering/hashprefix/\
@@ -250,7 +250,7 @@ run_linter fieldalignment \
 	./internal/aghtls/\
 	./internal/arpdb/\
 	./internal/client/\
-	./internal/confmigrate/\
+	./internal/configmigrate/\
 	./internal/dhcpsvc/\
 	./internal/filtering/hashprefix/\
 	./internal/filtering/rewrite/\
@@ -280,7 +280,7 @@ run_linter gosec --quiet\
 	./internal/aghtest/\
 	./internal/arpdb/\
 	./internal/client/\
-	./internal/confmigrate/\
+	./internal/configmigrate/\
 	./internal/dhcpd/\
 	./internal/dhcpsvc/\
 	./internal/dnsforward/\

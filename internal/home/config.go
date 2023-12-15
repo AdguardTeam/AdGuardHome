@@ -10,7 +10,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
-	"github.com/AdguardTeam/AdGuardHome/internal/confmigrate"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -149,7 +149,7 @@ type configuration struct {
 	sync.RWMutex `yaml:"-"`
 
 	// SchemaVersion is the version of the configuration schema.  See
-	// [confmigrate.LastSchemaVersion].
+	// [configmigrate.LastSchemaVersion].
 	SchemaVersion uint `yaml:"schema_version"`
 }
 
@@ -434,7 +434,7 @@ var config = &configuration{
 		MaxAge:     3,
 	},
 	OSConfig:      &osConfig{},
-	SchemaVersion: confmigrate.LastSchemaVersion,
+	SchemaVersion: configmigrate.LastSchemaVersion,
 	Theme:         ThemeAuto,
 }
 
@@ -479,14 +479,14 @@ func parseConfig() (err error) {
 		return err
 	}
 
-	migrator := confmigrate.New(&confmigrate.Config{
+	migrator := configmigrate.New(&configmigrate.Config{
 		WorkingDir: Context.workDir,
 	})
 
 	var upgraded bool
 	config.fileData, upgraded, err = migrator.Migrate(
 		config.fileData,
-		confmigrate.LastSchemaVersion,
+		configmigrate.LastSchemaVersion,
 	)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.

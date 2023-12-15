@@ -25,6 +25,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- The schema version of the configuration file to the output of running
+  `AdGuardHome` (or `AdGuardHome.exe) with `-v --version` command-line options
+  ([#6545]).
 - Ability to disable plain-DNS serving via UI if an encrypted protocol is
   already used ([#1660]).
 
@@ -34,6 +37,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
   work on iOS ([#6352]).
 
 [#6352]: https://github.com/AdguardTeam/AdGuardHome/issues/6352
+[#6545]: https://github.com/AdguardTeam/AdGuardHome/issues/6545
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

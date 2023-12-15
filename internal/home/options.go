@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
@@ -308,7 +309,7 @@ var cmdLineOpts = []cmdLineOpt{{
 	effect: func(o options, exec string) (effect, error) {
 		return func() error {
 			if o.verbose {
-				fmt.Println(version.Verbose())
+				fmt.Print(version.Verbose(configmigrate.LastSchemaVersion))
 			} else {
 				fmt.Println(version.Full())
 			}
