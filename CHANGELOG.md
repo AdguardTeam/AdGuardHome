@@ -33,10 +33,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Names defined in the `/etc/hosts` for a single address family wrongly
+  considered undefined for another family ([#6541]).
 - Omitted CNAME records in safe search results, which can cause YouTube to not
   work on iOS ([#6352]).
 
 [#6352]: https://github.com/AdguardTeam/AdGuardHome/issues/6352
+[#6541]: https://github.com/AdguardTeam/AdGuardHome/issues/6541
 [#6545]: https://github.com/AdguardTeam/AdGuardHome/issues/6545
 
 <!--
