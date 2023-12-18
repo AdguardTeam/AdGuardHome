@@ -26,7 +26,7 @@ import {
     renderTextareaField,
 } from '../../../helpers/form';
 import { validateClientId, validateRequiredValue } from '../../../helpers/validators';
-import { CLIENT_ID_LINK, FORM_NAME, UINT32_RANGE } from '../../../helpers/constants';
+import { IDENTIFYING_CLIENTS_LINK, FORM_NAME, UINT32_RANGE } from '../../../helpers/constants';
 import './Service.css';
 
 const settingsCheckboxes = [
@@ -98,12 +98,12 @@ const renderFieldsWrapper = (placeholder, buttonTitle) => function cell(row) {
             ))}
             <button
                 type="button"
-                className="btn btn-link btn-block btn-sm"
+                className="btn btn- btn-block btn-sm"
                 onClick={() => fields.push()}
                 title={buttonTitle}
             >
                 <svg className="icon icon--24">
-                    <use xlinkHref="#plus" />
+                    <use xHref="#plus" />
                 </svg>
             </button>
         </div>
@@ -298,7 +298,7 @@ let Form = (props) => {
             title: 'upstream_dns',
             component: <div label="upstream" title={props.t('upstream_dns')}>
                 <div className="form__desc mb-3">
-                    <Trans components={[<a href="#dns" key="0">link</a>]}>
+                    <Trans components={[<a href="#dns" key="0"></a>]}>
                         upstream_dns_client_desc
                     </Trans>
                 </div>
@@ -372,7 +372,7 @@ let Form = (props) => {
                         <div className="form__desc mt-0 mb-2">
                             <Trans components={[
                                 <a target="_blank" rel="noopener noreferrer" href="https://github.com/AdguardTeam/AdGuardHome/wiki/Hosts-Blocklists#ctag"
-                                   key="0">link</a>,
+                                   key="0"></a>,
                             ]}>
                                 tags_desc
                             </Trans>
@@ -393,7 +393,7 @@ let Form = (props) => {
                         </div>
                         <div className="form__desc mt-0">
                             <Trans components={[
-                                <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer"
+                                <a href={IDENTIFYING_CLIENTS_LINK} target="_blank" rel="noopener noreferrer"
                                     key="0">text</a>,
                             ]}>
                                 client_identifier_desc
