@@ -31,7 +31,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/ti-mo/netfilter v0.5.1
 	go.etcd.io/bbolt v1.3.8
-	golang.org/x/crypto v0.16.0
+	golang.org/x/crypto v0.17.0
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
 	golang.org/x/net v0.19.0
 	golang.org/x/sys v0.15.0
