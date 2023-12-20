@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
 import { Trans, withTranslation } from 'react-i18next';
-import { LEASES_TABLE_DEFAULT_PAGE_SIZE } from '../../../helpers/constants';
+import { LEASES_TABLE_DEFAULT_PAGE_SIZE, MODAL_TYPE } from '../../../helpers/constants';
 import { sortIp } from '../../../helpers/helpers';
 import { toggleLeaseModal } from '../../../actions';
 
@@ -18,7 +18,10 @@ class Leases extends Component {
 
     convertToStatic = (data) => () => {
         const { dispatch } = this.props;
-        dispatch(toggleLeaseModal(data));
+        dispatch(toggleLeaseModal({
+            type: MODAL_TYPE.ADD_LEASE,
+            config: data,
+        }));
     }
 
     makeStatic = ({ row }) => {
