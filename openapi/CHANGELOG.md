@@ -4,6 +4,13 @@
 
 ## v0.108.0: API changes
 
+## v0.107.44: API changes
+
+### Type correction in `Client`
+
+* Field `upstreams_cache_size` of object `Client` now correctly has type
+  `integer` instead of the previous incorrect type `boolean`.
+
 ## v0.107.42: API changes
 
 ### The new field `"serve_plain_dns"` in `TlsConfig`
@@ -152,7 +159,7 @@ has the following format:
 * The new field `"top_upstreams_responses"` in `GET /control/stats` method
   shows the total number of responses from each upstream.
 
-* The new field `"top_upstrems_avg_time"` in `GET /control/stats` method shows
+* The new field `"top_upstreams_avg_time"` in `GET /control/stats` method shows
   the average processing time in seconds of requests from each upstream.
 
 ## v0.107.30: API changes
