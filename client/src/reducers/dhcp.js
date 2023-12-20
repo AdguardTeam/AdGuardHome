@@ -128,7 +128,8 @@ const dhcp = handleActions(
             const newState = {
                 ...state,
                 isModalOpen: !state.isModalOpen,
-                leaseModalConfig: payload,
+                modalType: payload?.type || '',
+                leaseModalConfig: payload?.config,
             };
             return newState;
         },

@@ -181,6 +181,7 @@ export const MODAL_TYPE = {
     ADD_REWRITE: 'ADD_REWRITE',
     EDIT_REWRITE: 'EDIT_REWRITE',
     EDIT_LEASE: 'EDIT_LEASE',
+    ADD_LEASE: 'ADD_LEASE',
 };
 
 export const CLIENT_ID = {
