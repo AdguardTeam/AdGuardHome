@@ -484,7 +484,7 @@ func (s *StatsCtx) fillCollectedStats(data *StatsResp, units []*unitDB, curID ui
 	data.TimeUnits = timeUnitsHours
 
 	daysCount := size / 24
-	if daysCount > 7 {
+	if daysCount >= 7 {
 		size = daysCount
 		data.TimeUnits = timeUnitsDays
 	}
@@ -510,6 +510,10 @@ func (s *StatsCtx) fillCollectedStats(data *StatsResp, units []*unitDB, curID ui
 
 // fillCollectedStatsDaily fills data with collected daily statistics.  units
 // must contain data for the count of days.
+//
+// TODO(s.chzhen):  Improve collection of statistics for frontend.  Dashboard
+// cards should contain statistics for the whole interval without rounding to
+// days.
 func (s *StatsCtx) fillCollectedStatsDaily(
 	data *StatsResp,
 	units []*unitDB,
