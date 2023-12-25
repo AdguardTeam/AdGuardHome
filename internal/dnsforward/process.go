@@ -639,8 +639,7 @@ func (s *Server) processLocalPTR(dctx *dnsContext) (rc resultCode) {
 			// Generate the server failure if the private upstream configuration
 			// is empty.
 			//
-			// TODO(e.burkov):  Get rid of this crutch once the local resolvers
-			// logic is moved to the dnsproxy completely.
+			// This is a crutch, see TODO at [Server.localResolvers].
 			if errors.Is(err, upstream.ErrNoUpstreams) {
 				pctx.Res = s.genServerFailure(pctx.Req)
 

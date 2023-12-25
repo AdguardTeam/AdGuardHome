@@ -58,6 +58,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Load balancing algorithm stuck on a single server ([#6480]).
 - Statistics for 7 days displayed as 168 hours on the dashboard.
 - Pre-filling the Edit static lease window with data ([#6534]).
 - Names defined in the `/etc/hosts` for a single address family wrongly
@@ -66,6 +67,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
   work on iOS ([#6352]).
 
 [#6352]: https://github.com/AdguardTeam/AdGuardHome/issues/6352
+[#6480]: https://github.com/AdguardTeam/AdGuardHome/issues/6480
 [#6534]: https://github.com/AdguardTeam/AdGuardHome/issues/6534
 [#6541]: https://github.com/AdguardTeam/AdGuardHome/issues/6541
 [#6545]: https://github.com/AdguardTeam/AdGuardHome/issues/6545

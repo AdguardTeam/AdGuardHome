@@ -150,7 +150,7 @@ type Config struct {
 
 	// MaxGoroutines is the max number of parallel goroutines for processing
 	// incoming requests.
-	MaxGoroutines uint32 `yaml:"max_goroutines"`
+	MaxGoroutines uint `yaml:"max_goroutines"`
 
 	// HandleDDR, if true, handle DDR requests
 	HandleDDR bool `yaml:"handle_ddr"`
@@ -319,7 +319,7 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 		RequestHandler:         s.handleDNSRequest,
 		HTTPSServerName:        aghhttp.UserAgent(),
 		EnableEDNSClientSubnet: srvConf.EDNSClientSubnet.Enabled,
-		MaxGoroutines:          int(srvConf.MaxGoroutines),
+		MaxGoroutines:          srvConf.MaxGoroutines,
 		UseDNS64:               srvConf.UseDNS64,
 		DNS64Prefs:             srvConf.DNS64Prefixes,
 	}

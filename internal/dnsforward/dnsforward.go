@@ -81,6 +81,7 @@ type DHCP interface {
 	Enabled() (ok bool)
 }
 
+// SystemResolvers is an interface for accessing the OS-provided resolvers.
 type SystemResolvers interface {
 	// Addrs returns the list of system resolvers' addresses.
 	Addrs() (addrs []netip.AddrPort)
@@ -469,13 +470,15 @@ func (s *Server) startLocked() error {
 	return err
 }
 
-// setupLocalResolvers initializes the resolvers for local addresses.  It
-// assumes s.serverLock is locked or the Server not running.
-func (s *Server) setupLocalResolvers(boot upstream.Resolver) (err error) {
+// prepareLocalResolvers initializes the local upstreams configuration using
+// boot as bootstrap.  It assumes that s.serverLock is locked or s not running.
+func (s *Server) prepareLocalResolvers(
+	boot upstream.Resolver,
+) (uc *proxy.UpstreamConfig, err error) {
 	set, err := s.conf.ourAddrsSet()
 	if err != nil {
 		// Don't wrap the error because it's informative enough as is.
-		return err
+		return nil, err
 	}
 
 	resolvers := s.conf.LocalPTRResolvers
@@ -492,27 +495,44 @@ func (s *Server) setupLocalResolvers(boot upstream.Resolver) (err error) {
 
 	log.Debug("dnsforward: upstreams to resolve ptr for local addresses: %v", resolvers)
 
-	uc, err := s.prepareUpstreamConfig(resolvers, nil, &upstream.Options{
+	uc, err = s.prepareUpstreamConfig(resolvers, nil, &upstream.Options{
 		Bootstrap: boot,
 		Timeout:   defaultLocalTimeout,
 		// TODO(e.burkov): Should we verify server's certificates?
 		PreferIPv6: s.conf.BootstrapPreferIPv6,
 	})
 	if err != nil {
-		return fmt.Errorf("preparing private upstreams: %w", err)
+		return nil, fmt.Errorf("preparing private upstreams: %w", err)
 	}
 
 	if confNeedsFiltering {
 		err = filterOutAddrs(uc, set)
 		if err != nil {
-			return fmt.Errorf("filtering private upstreams: %w", err)
+			return nil, fmt.Errorf("filtering private upstreams: %w", err)
 		}
+	}
+
+	return uc, nil
+}
+
+// setupLocalResolvers initializes and sets the resolvers for local addresses.
+// It assumes s.serverLock is locked or s not running.
+func (s *Server) setupLocalResolvers(boot upstream.Resolver) (err error) {
+	uc, err := s.prepareLocalResolvers(boot)
+	if err != nil {
+		// Don't wrap the error because it's informative enough as is.
+		return err
 	}
 
 	s.localResolvers = &proxy.Proxy{
 		Config: proxy.Config{
 			UpstreamConfig: uc,
 		},
+	}
+
+	err = s.localResolvers.Init()
+	if err != nil {
+		return fmt.Errorf("initializing proxy: %w", err)
 	}
 
 	// TODO(e.burkov):  Should we also consider the DNS64 usage?
@@ -700,7 +720,7 @@ func (s *Server) prepareInternalProxy() (err error) {
 		CacheEnabled:   true,
 		CacheSizeBytes: 4096,
 		UpstreamConfig: srvConf.UpstreamConfig,
-		MaxGoroutines:  int(s.conf.MaxGoroutines),
+		MaxGoroutines:  s.conf.MaxGoroutines,
 	}
 
 	err = setProxyUpstreamMode(conf, srvConf.UpstreamMode, srvConf.FastestTimeout.Duration)

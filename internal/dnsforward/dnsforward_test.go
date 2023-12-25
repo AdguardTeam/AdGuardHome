@@ -1547,9 +1547,9 @@ func TestServer_Exchange(t *testing.T) {
 			},
 		},
 	}
-
 	srv.conf.UsePrivateRDNS = true
 	srv.privateNets = netutil.SubnetSetFunc(netutil.IsLocallyServed)
+	require.NoError(t, srv.internalProxy.Init())
 
 	testCases := []struct {
 		req         netip.Addr
@@ -1625,6 +1625,7 @@ func TestServer_Exchange(t *testing.T) {
 		srv.localResolvers = &proxy.Proxy{
 			Config: pcfg,
 		}
+		require.NoError(t, srv.localResolvers.Init())
 
 		t.Run(tc.name, func(t *testing.T) {
 			host, ttl, eerr := srv.Exchange(tc.req)
