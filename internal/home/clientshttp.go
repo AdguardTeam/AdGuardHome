@@ -378,6 +378,8 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 
 	if !ok {
 		aghhttp.Error(r, w, http.StatusBadRequest, "client not found")
+
+		return
 	}
 
 	c, err := clients.jsonToClient(dj.Data, prev)
