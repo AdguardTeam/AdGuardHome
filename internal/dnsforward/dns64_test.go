@@ -290,6 +290,7 @@ func TestServer_HandleDNSRequest_dns64(t *testing.T) {
 			TCPListenAddrs: []*net.TCPAddr{{}},
 			UseDNS64:       true,
 			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 			},
 			ServePlainDNS: true,

@@ -38,6 +38,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		BlockingMode: filtering.BlockingModeDefault,
 	}, ServerConfig{
 		Config: Config{
+			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 		ServePlainDNS: true,

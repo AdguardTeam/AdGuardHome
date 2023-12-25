@@ -177,6 +177,7 @@ func createTestTLS(t *testing.T, tlsConf TLSConfig) (s *Server, certPem []byte) 
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
+			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 		ServePlainDNS: true,
@@ -305,6 +306,7 @@ func TestServer(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
+			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 		ServePlainDNS: true,
@@ -344,6 +346,7 @@ func TestServer_timeout(t *testing.T) {
 		srvConf := &ServerConfig{
 			UpstreamTimeout: testTimeout,
 			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 			},
 			ServePlainDNS: true,
@@ -362,6 +365,7 @@ func TestServer_timeout(t *testing.T) {
 		s, err := NewServer(DNSCreateParams{DNSFilter: createTestDNSFilter(t)})
 		require.NoError(t, err)
 
+		s.conf.Config.UpstreamMode = UpstreamModeLoadBalance
 		s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{
 			Enabled: false,
 		}
@@ -379,6 +383,7 @@ func TestServer_Prepare_fallbacks(t *testing.T) {
 				"#tls://1.1.1.1",
 				"8.8.8.8",
 			},
+			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 		ServePlainDNS: true,
@@ -401,6 +406,7 @@ func TestServerWithProtectionDisabled(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
+			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 		ServePlainDNS: true,
@@ -478,7 +484,8 @@ func TestServerRace(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
-			UpstreamDNS: []string{"8.8.8.8:53", "8.8.4.4:53"},
+			UpstreamMode: UpstreamModeLoadBalance,
+			UpstreamDNS:  []string{"8.8.8.8:53", "8.8.4.4:53"},
 		},
 		ConfigModified: func() {},
 		ServePlainDNS:  true,
@@ -531,6 +538,7 @@ func TestSafeSearch(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
+			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -614,6 +622,7 @@ func TestInvalidRequest(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
+			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -643,6 +652,7 @@ func TestBlockedRequest(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
+			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -678,7 +688,8 @@ func TestServerCustomClientUpstream(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
-			CacheSize: defaultCacheSize,
+			CacheSize:    defaultCacheSize,
+			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -756,6 +767,7 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
+			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -789,6 +801,7 @@ func TestBlockCNAME(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
+			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -864,6 +877,7 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 			FilterHandler: func(_ netip.Addr, _ string, settings *filtering.Settings) {
 				settings.FilteringEnabled = false
 			},
+			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -909,6 +923,7 @@ func TestNullBlockedRequest(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
+			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -974,7 +989,8 @@ func TestBlockedCustomIP(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
-			UpstreamDNS: []string{"8.8.8.8:53", "8.8.4.4:53"},
+			UpstreamDNS:  []string{"8.8.8.8:53", "8.8.4.4:53"},
+			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -1027,6 +1043,7 @@ func TestBlockedByHosts(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
+			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -1078,6 +1095,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
+			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -1136,7 +1154,8 @@ func TestRewrite(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
-			UpstreamDNS: []string{"8.8.8.8:53"},
+			UpstreamDNS:  []string{"8.8.8.8:53"},
+			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
@@ -1265,6 +1284,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
 	s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{Enabled: false}
+	s.conf.Config.UpstreamMode = UpstreamModeLoadBalance
 
 	err = s.Prepare(&s.conf)
 	require.NoError(t, err)
@@ -1347,6 +1367,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
 	s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{Enabled: false}
+	s.conf.Config.UpstreamMode = UpstreamModeLoadBalance
 
 	err = s.Prepare(&s.conf)
 	require.NoError(t, err)

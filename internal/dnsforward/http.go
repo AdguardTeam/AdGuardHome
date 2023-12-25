@@ -70,7 +70,7 @@ type jsonDNSConfig struct {
 	DisableIPv6 *bool `json:"disable_ipv6"`
 
 	// UpstreamMode defines the way DNS requests are constructed.
-	UpstreamMode *string `json:"upstream_mode"`
+	UpstreamMode *jsonUpstreamMode `json:"upstream_mode"`
 
 	// BlockedResponseTTL is the TTL for blocked responses.
 	BlockedResponseTTL *uint32 `json:"blocked_response_ttl"`
@@ -114,6 +114,21 @@ type jsonDNSConfig struct {
 	DefaultLocalPTRUpstreams []string `json:"default_local_ptr_upstreams,omitempty"`
 }
 
+// jsonUpstreamMode is a enumeration of upstream modes.
+type jsonUpstreamMode string
+
+const (
+	// jsonUpstreamModeEmpty is the default value on frontend, it is used as
+	// jsonUpstreamModeLoadBalance mode.
+	//
+	// Deprecated: Use jsonUpstreamModeLoadBalance instead.
+	jsonUpstreamModeEmpty jsonUpstreamMode = ""
+
+	jsonUpstreamModeLoadBalance jsonUpstreamMode = "load_balance"
+	jsonUpstreamModeParallel    jsonUpstreamMode = "parallel"
+	jsonUpstreamModeFastestAddr jsonUpstreamMode = "fastest_addr"
+)
+
 func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	protectionEnabled, protectionDisabledUntil := s.UpdatedProtectionStatus()
 
@@ -145,11 +160,16 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	usePrivateRDNS := s.conf.UsePrivateRDNS
 	localPTRUpstreams := stringutil.CloneSliceOrEmpty(s.conf.LocalPTRResolvers)
 
-	var upstreamMode string
-	if s.conf.FastestAddr {
-		upstreamMode = "fastest_addr"
-	} else if s.conf.AllServers {
-		upstreamMode = "parallel"
+	var upstreamMode jsonUpstreamMode
+	switch s.conf.UpstreamMode {
+	case UpstreamModeLoadBalance:
+		// TODO(d.kolyshev): Support jsonUpstreamModeLoadBalance on frontend instead
+		// of jsonUpstreamModeEmpty.
+		upstreamMode = jsonUpstreamModeEmpty
+	case UpstreamModeParallel:
+		upstreamMode = jsonUpstreamModeParallel
+	case UpstreamModeFastestAddr:
+		upstreamMode = jsonUpstreamModeFastestAddr
 	}
 
 	defPTRUps, err := s.defaultLocalPTRUpstreams()
@@ -222,18 +242,22 @@ func (req *jsonDNSConfig) checkBlockingMode() (err error) {
 	return validateBlockingMode(*req.BlockingMode, req.BlockingIPv4, req.BlockingIPv6)
 }
 
-// checkUpstreamsMode returns an error if the upstream mode is invalid.
-func (req *jsonDNSConfig) checkUpstreamsMode() (err error) {
+// checkUpstreamMode returns an error if the upstream mode is invalid.
+func (req *jsonDNSConfig) checkUpstreamMode() (err error) {
 	if req.UpstreamMode == nil {
 		return nil
 	}
 
-	mode := *req.UpstreamMode
-	if ok := slices.Contains([]string{"", "fastest_addr", "parallel"}, mode); !ok {
-		return fmt.Errorf("upstream_mode: incorrect value %q", mode)
+	switch um := *req.UpstreamMode; um {
+	case
+		jsonUpstreamModeEmpty,
+		jsonUpstreamModeLoadBalance,
+		jsonUpstreamModeParallel,
+		jsonUpstreamModeFastestAddr:
+		return nil
+	default:
+		return fmt.Errorf("upstream_mode: incorrect value %q", um)
 	}
-
-	return nil
 }
 
 // checkBootstrap returns an error if any bootstrap address is invalid.
@@ -297,7 +321,7 @@ func (req *jsonDNSConfig) validate(privateNets netutil.SubnetSet) (err error) {
 		return err
 	}
 
-	err = req.checkUpstreamsMode()
+	err = req.checkUpstreamMode()
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
@@ -446,8 +470,9 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 	}
 
 	if dc.UpstreamMode != nil {
-		s.conf.AllServers = *dc.UpstreamMode == "parallel"
-		s.conf.FastestAddr = *dc.UpstreamMode == "fastest_addr"
+		s.conf.UpstreamMode = mustParseUpstreamMode(*dc.UpstreamMode)
+	} else {
+		s.conf.UpstreamMode = UpstreamModeLoadBalance
 	}
 
 	if dc.EDNSCSUseCustom != nil && *dc.EDNSCSUseCustom {
@@ -458,6 +483,22 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 	setIfNotNil(&s.conf.AAAADisabled, dc.DisableIPv6)
 
 	return s.setConfigRestartable(dc)
+}
+
+// mustParseUpstreamMode returns an upstream mode parsed from jsonUpstreamMode.
+// Panics in case of invalid value.
+func mustParseUpstreamMode(mode jsonUpstreamMode) (um UpstreamMode) {
+	switch mode {
+	case jsonUpstreamModeEmpty, jsonUpstreamModeLoadBalance:
+		return UpstreamModeLoadBalance
+	case jsonUpstreamModeParallel:
+		return UpstreamModeParallel
+	case jsonUpstreamModeFastestAddr:
+		return UpstreamModeFastestAddr
+	default:
+		// Should never happen, since the value should be validated.
+		panic(fmt.Errorf("unexpected upstream mode: %q", mode))
+	}
 }
 
 // setIfNotNil sets the value pointed at by currentPtr to the value pointed at

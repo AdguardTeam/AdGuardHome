@@ -31,6 +31,7 @@ func TestHandleDNSRequest_handleDNSRequest(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
+			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},

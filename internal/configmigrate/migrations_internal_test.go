@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -1640,6 +1641,87 @@ func TestUpgradeSchema26to27(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := migrateTo27(tc.in)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, tc.in)
+		})
+	}
+}
+
+func TestUpgradeSchema27to28(t *testing.T) {
+	const newSchemaVer = 28
+
+	testCases := []struct {
+		in   yobj
+		want yobj
+		name string
+	}{{
+		name: "empty",
+		in:   yobj{},
+		want: yobj{
+			"schema_version": newSchemaVer,
+		},
+	}, {
+		name: "load_balance",
+		in: yobj{
+			"dns": yobj{
+				"all_servers":  false,
+				"fastest_addr": false,
+			},
+		},
+		want: yobj{
+			"dns": yobj{
+				"upstream_mode": dnsforward.UpstreamModeLoadBalance,
+			},
+			"schema_version": newSchemaVer,
+		},
+	}, {
+		name: "parallel",
+		in: yobj{
+			"dns": yobj{
+				"all_servers":  true,
+				"fastest_addr": false,
+			},
+		},
+		want: yobj{
+			"dns": yobj{
+				"upstream_mode": dnsforward.UpstreamModeParallel,
+			},
+			"schema_version": newSchemaVer,
+		},
+	}, {
+		name: "parallel_fastest",
+		in: yobj{
+			"dns": yobj{
+				"all_servers":  true,
+				"fastest_addr": true,
+			},
+		},
+		want: yobj{
+			"dns": yobj{
+				"upstream_mode": dnsforward.UpstreamModeParallel,
+			},
+			"schema_version": newSchemaVer,
+		},
+	}, {
+		name: "load_balance",
+		in: yobj{
+			"dns": yobj{
+				"all_servers":  false,
+				"fastest_addr": true,
+			},
+		},
+		want: yobj{
+			"dns": yobj{
+				"upstream_mode": dnsforward.UpstreamModeFastestAddr,
+			},
+			"schema_version": newSchemaVer,
+		},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := migrateTo28(tc.in)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.want, tc.in)

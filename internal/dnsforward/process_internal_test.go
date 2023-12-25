@@ -79,6 +79,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 			c := ServerConfig{
 				Config: Config{
 					AAAADisabled:     tc.aaaaDisabled,
+					UpstreamMode:     UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				},
 				ServePlainDNS: true,
@@ -179,6 +180,7 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 			c := ServerConfig{
 				Config: Config{
 					AAAADisabled:     tc.aaaaDisabled,
+					UpstreamMode:     UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 				},
 				ServePlainDNS: true,
@@ -694,6 +696,7 @@ func TestServer_ProcessRestrictLocal(t *testing.T) {
 		// TODO(s.chzhen):  Add tests where EDNSClientSubnet.Enabled is true.
 		// Improve Config declaration for tests.
 		Config: Config{
+			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 		ServePlainDNS: true,
@@ -770,6 +773,7 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 			UDPListenAddrs: []*net.UDPAddr{{}},
 			TCPListenAddrs: []*net.TCPAddr{{}},
 			Config: Config{
+				UpstreamMode:     UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 			},
 			ServePlainDNS: true,

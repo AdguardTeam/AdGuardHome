@@ -31,6 +31,31 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Ability to disable plain-DNS serving via UI if an encrypted protocol is
   already used ([#1660]).
 
+### Changed
+
+- The field `"upstream_mode"` in `POST /control/dns_config` and
+  `GET /control/dns_info` HTTP APIs now accepts `load_balance` value. Check
+  `openapi/CHANGELOG.md` for more details.
+
+#### Configuration changes
+
+- The properties `dns.'all_servers` and `dns.fastest_addr` were removed, their
+  values migrated to newly added field `dns.upstream_mode` that describes the
+  logic through which upstreams will be used.
+
+  ```yaml
+  # BEFORE:
+  'dns':
+      # …
+      'all_servers': true
+      'fastest_addr': true
+
+  # AFTER:
+  'dns':
+      # …
+      'upstream_mode': 'parallel'
+  ```
+
 ### Fixed
 
 - Statistics for 7 days displayed as 168 hours on the dashboard.

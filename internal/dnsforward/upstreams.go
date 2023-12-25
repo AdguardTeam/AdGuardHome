@@ -136,18 +136,22 @@ func UpstreamHTTPVersions(http3 bool) (v []upstream.HTTPVersion) {
 // based on provided parameters.
 func setProxyUpstreamMode(
 	conf *proxy.Config,
-	allServers bool,
-	fastestAddr bool,
+	upstreamMode UpstreamMode,
 	fastestTimeout time.Duration,
-) {
-	if allServers {
+) (err error) {
+	switch upstreamMode {
+	case UpstreamModeParallel:
 		conf.UpstreamMode = proxy.UModeParallel
-	} else if fastestAddr {
+	case UpstreamModeFastestAddr:
 		conf.UpstreamMode = proxy.UModeFastestAddr
 		conf.FastestPingTimeout = fastestTimeout
-	} else {
+	case UpstreamModeLoadBalance:
 		conf.UpstreamMode = proxy.UModeLoadBalance
+	default:
+		return fmt.Errorf("unexpected value %q", upstreamMode)
 	}
+
+	return nil
 }
 
 // createBootstrap returns a bootstrap resolver based on the configuration of s.

@@ -89,12 +89,8 @@ type Config struct {
 	// servers are not responding.
 	FallbackDNS []string `yaml:"fallback_dns"`
 
-	// AllServers, if true, parallel queries to all configured upstream servers
-	// are enabled.
-	AllServers bool `yaml:"all_servers"`
-
-	// FastestAddr, if true, use Fastest Address algorithm.
-	FastestAddr bool `yaml:"fastest_addr"`
+	// UpstreamMode determines the logic through which upstreams will be used.
+	UpstreamMode UpstreamMode `yaml:"upstream_mode"`
 
 	// FastestTimeout replaces the default timeout for dialing IP addresses
 	// when FastestAddr is true.
@@ -294,6 +290,16 @@ type ServerConfig struct {
 	ServePlainDNS bool
 }
 
+// UpstreamMode is a enumeration of upstream mode representations.  See
+// [proxy.UpstreamModeType].
+type UpstreamMode string
+
+const (
+	UpstreamModeLoadBalance UpstreamMode = "load_balance"
+	UpstreamModeParallel    UpstreamMode = "parallel"
+	UpstreamModeFastestAddr UpstreamMode = "fastest_addr"
+)
+
 // newProxyConfig creates and validates configuration for the main proxy.
 func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 	srvConf := s.conf
@@ -328,12 +334,10 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 		conf.CacheSizeBytes = int(srvConf.CacheSize)
 	}
 
-	setProxyUpstreamMode(
-		conf,
-		srvConf.AllServers,
-		srvConf.FastestAddr,
-		srvConf.FastestTimeout.Duration,
-	)
+	err = setProxyUpstreamMode(conf, srvConf.UpstreamMode, srvConf.FastestTimeout.Duration)
+	if err != nil {
+		return nil, fmt.Errorf("upstream mode: %w", err)
+	}
 
 	conf.BogusNXDomain, err = parseBogusNXDOMAIN(srvConf.BogusNXDomain)
 	if err != nil {

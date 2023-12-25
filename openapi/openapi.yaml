@@ -1524,10 +1524,15 @@
         'cache_optimistic':
           'type': 'boolean'
         'upstream_mode':
+          'type': 'string'
           'enum':
-          - ''
-          - 'parallel'
-          - 'fastest_addr'
+          - const: ''
+            deprecated: true
+            description: Use `load_balance` instead.
+          - const: 'fastest_addr'
+          - const: 'load_balance'
+          - const: 'parallel'
+          'description': Upstream modes enumeration.
         'use_private_ptr_resolvers':
           'type': 'boolean'
         'resolve_clients':

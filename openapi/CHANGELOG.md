@@ -6,6 +6,13 @@
 
 ## v0.107.44: API changes
 
+### The field `"upstream_mode"` in `DNSConfig`
+
+* The field `"upstream_mode"` in `POST /control/dns_config` and
+  `GET /control/dns_info` now accepts `load_balance` value. Note that, the usage
+  of an empty string or field absence is considered to as deprecated and is not
+  recommended. Use `load_balance` instead.
+
 ### Type correction in `Client`
 
 * Field `upstreams_cache_size` of object `Client` now correctly has type

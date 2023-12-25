@@ -703,12 +703,10 @@ func (s *Server) prepareInternalProxy() (err error) {
 		MaxGoroutines:  int(s.conf.MaxGoroutines),
 	}
 
-	setProxyUpstreamMode(
-		conf,
-		srvConf.AllServers,
-		srvConf.FastestAddr,
-		srvConf.FastestTimeout.Duration,
-	)
+	err = setProxyUpstreamMode(conf, srvConf.UpstreamMode, srvConf.FastestTimeout.Duration)
+	if err != nil {
+		return fmt.Errorf("invalid upstream mode: %w", err)
+	}
 
 	// TODO(a.garipov): Make a proper constructor for proxy.Proxy.
 	p := &proxy.Proxy{

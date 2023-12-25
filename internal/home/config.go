@@ -315,7 +315,7 @@ var config = &configuration{
 			RatelimitSubnetLenIPv4: 24,
 			RatelimitSubnetLenIPv6: 56,
 			RefuseAny:              true,
-			AllServers:             false,
+			UpstreamMode:           dnsforward.UpstreamModeLoadBalance,
 			HandleDDR:              true,
 			FastestTimeout: timeutil.Duration{
 				Duration: fastip.DefaultPingWaitTimeout,
