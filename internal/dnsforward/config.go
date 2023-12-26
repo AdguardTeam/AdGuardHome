@@ -329,11 +329,6 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 		conf.EDNSAddr = net.IP(srvConf.EDNSClientSubnet.CustomIP.AsSlice())
 	}
 
-	if srvConf.CacheSize != 0 {
-		conf.CacheEnabled = true
-		conf.CacheSizeBytes = int(srvConf.CacheSize)
-	}
-
 	err = setProxyUpstreamMode(conf, srvConf.UpstreamMode, srvConf.FastestTimeout.Duration)
 	if err != nil {
 		return nil, fmt.Errorf("upstream mode: %w", err)
@@ -363,6 +358,37 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 
 	if conf.UpstreamConfig == nil || len(conf.UpstreamConfig.Upstreams) == 0 {
 		return nil, errors.Error("no default upstream servers configured")
+	}
+
+	conf, err = prepareCacheConfig(conf,
+		srvConf.CacheSize,
+		srvConf.CacheMinTTL,
+		srvConf.CacheMaxTTL,
+	)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return nil, err
+	}
+
+	return conf, nil
+}
+
+// prepareCacheConfig prepares the cache configuration and returns an error if
+// there is one.
+func prepareCacheConfig(
+	conf *proxy.Config,
+	size uint32,
+	minTTL uint32,
+	maxTTL uint32,
+) (prepared *proxy.Config, err error) {
+	if size != 0 {
+		conf.CacheEnabled = true
+		conf.CacheSizeBytes = int(size)
+	}
+
+	err = validateCacheTTL(minTTL, maxTTL)
+	if err != nil {
+		return nil, fmt.Errorf("validating cache ttl: %w", err)
 	}
 
 	return conf, nil
@@ -742,4 +768,20 @@ func (s *Server) enableProtectionAfterPause() {
 	s.dnsFilter.SetProtectionStatus(true, nil)
 
 	log.Info("dns: protection is restarted after pause")
+}
+
+// validateCacheTTL returns an error if the configuration of the cache TTL
+// invalid.
+//
+// TODO(s.chzhen):  Move to dnsproxy.
+func validateCacheTTL(minTTL, maxTTL uint32) (err error) {
+	if minTTL == 0 && maxTTL == 0 {
+		return nil
+	}
+
+	if maxTTL > 0 && minTTL > maxTTL {
+		return errors.Error("cache_ttl_min must be less than or equal to cache_ttl_max")
+	}
+
+	return nil
 }

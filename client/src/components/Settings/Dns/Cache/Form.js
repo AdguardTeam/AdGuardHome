@@ -41,7 +41,7 @@ const Form = ({
         cache_ttl_max, cache_ttl_min,
     } = useSelector((state) => state.form[FORM_NAME.CACHE].values, shallowEqual);
 
-    const minExceedsMax = cache_ttl_min > cache_ttl_max;
+    const minExceedsMax = cache_ttl_min > 0 && cache_ttl_max > 0 && cache_ttl_min > cache_ttl_max;
 
     const handleClearCache = () => {
         if (window.confirm(t('confirm_dns_cache_clear'))) {

@@ -231,7 +231,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			`ParseAddr("a"): unable to parse IP`,
 	}, {
 		name:    "cache_bad_ttl",
-		wantSet: `validating dns config: cache_ttl_min must be less or equal than cache_ttl_max`,
+		wantSet: `validating dns config: cache_ttl_min must be less than or equal to cache_ttl_max`,
 	}, {
 		name:    "upstream_mode_bad",
 		wantSet: `validating dns config: upstream_mode: incorrect value "somethingelse"`,

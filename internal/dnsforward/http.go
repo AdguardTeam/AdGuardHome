@@ -378,15 +378,12 @@ func (req *jsonDNSConfig) checkCacheTTL() (err error) {
 	if req.CacheMinTTL != nil {
 		minTTL = *req.CacheMinTTL
 	}
+
 	if req.CacheMaxTTL != nil {
 		maxTTL = *req.CacheMaxTTL
 	}
 
-	if minTTL <= maxTTL {
-		return nil
-	}
-
-	return errors.Error("cache_ttl_min must be less or equal than cache_ttl_max")
+	return validateCacheTTL(minTTL, maxTTL)
 }
 
 // checkRatelimitSubnetMaskLen returns an error if the length of the subnet mask
