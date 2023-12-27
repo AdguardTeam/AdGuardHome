@@ -58,6 +58,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Non-anonymized IP addresses on the dashboard ([#6584]).
 - Maximum cache TTL requirement when editing minimum cache TTL in the Web UI
   ([#6409]).
 - Load balancing algorithm stuck on a single server ([#6480]).
@@ -74,6 +75,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6534]: https://github.com/AdguardTeam/AdGuardHome/issues/6534
 [#6541]: https://github.com/AdguardTeam/AdGuardHome/issues/6541
 [#6545]: https://github.com/AdguardTeam/AdGuardHome/issues/6545
+[#6584]: https://github.com/AdguardTeam/AdGuardHome/issues/6584
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
