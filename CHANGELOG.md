@@ -40,6 +40,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 #### Configuration changes
 
+- The new property `clients.persistent.*.uid`, which is unique identifier of the
+  persistent client.
 - The properties `dns.'all_servers` and `dns.fastest_addr` were removed, their
   values migrated to newly added field `dns.upstream_mode` that describes the
   logic through which upstreams will be used.

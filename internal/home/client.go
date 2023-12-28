@@ -1,6 +1,7 @@
 package home
 
 import (
+	"encoding"
 	"fmt"
 	"time"
 
@@ -8,10 +9,38 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/google/uuid"
 )
 
-// Client contains information about persistent clients.
-type Client struct {
+// UID is the type for the unique IDs of persistent clients.
+type UID uuid.UUID
+
+// NewUID returns a new persistent client UID.  Any error returned is an error
+// from the cryptographic randomness reader.
+func NewUID() (uid UID, err error) {
+	uuidv7, err := uuid.NewV7()
+
+	return UID(uuidv7), err
+}
+
+// type check
+var _ encoding.TextMarshaler = UID{}
+
+// MarshalText implements the [encoding.TextMarshaler] for UID.
+func (uid UID) MarshalText() ([]byte, error) {
+	return uuid.UUID(uid).MarshalText()
+}
+
+// type check
+var _ encoding.TextUnmarshaler = (*UID)(nil)
+
+// UnmarshalText implements the [encoding.TextUnmarshaler] interface for UID.
+func (uid *UID) UnmarshalText(data []byte) error {
+	return (*uuid.UUID)(uid).UnmarshalText(data)
+}
+
+// persistentClient contains information about persistent clients.
+type persistentClient struct {
 	// upstreamConfig is the custom upstream configuration for this client.  If
 	// it's nil, it has not been initialized yet.  If it's non-nil and empty,
 	// there are no valid upstreams.  If it's non-nil and non-empty, these
@@ -31,6 +60,9 @@ type Client struct {
 	Tags      []string
 	Upstreams []string
 
+	// UID is the unique identifier of the persistent client.
+	UID UID
+
 	UpstreamsCacheSize    uint32
 	UpstreamsCacheEnabled bool
 
@@ -45,7 +77,7 @@ type Client struct {
 
 // ShallowClone returns a deep copy of the client, except upstreamConfig,
 // safeSearchConf, SafeSearch fields, because it's difficult to copy them.
-func (c *Client) ShallowClone() (sh *Client) {
+func (c *persistentClient) ShallowClone() (sh *persistentClient) {
 	clone := *c
 
 	clone.BlockedServices = c.BlockedServices.Clone()
@@ -57,7 +89,7 @@ func (c *Client) ShallowClone() (sh *Client) {
 }
 
 // closeUpstreams closes the client-specific upstream config of c if any.
-func (c *Client) closeUpstreams() (err error) {
+func (c *persistentClient) closeUpstreams() (err error) {
 	if c.upstreamConfig != nil {
 		if err = c.upstreamConfig.Close(); err != nil {
 			return fmt.Errorf("closing upstreams of client %q: %w", c.Name, err)
@@ -68,7 +100,7 @@ func (c *Client) closeUpstreams() (err error) {
 }
 
 // setSafeSearch initializes and sets the safe search filter for this client.
-func (c *Client) setSafeSearch(
+func (c *persistentClient) setSafeSearch(
 	conf filtering.SafeSearchConfig,
 	cacheSize uint,
 	cacheTTL time.Duration,

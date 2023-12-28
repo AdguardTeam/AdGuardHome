@@ -411,9 +411,9 @@ func applyAdditionalFiltering(clientIP netip.Addr, clientID string, setts *filte
 
 	setts.ClientIP = clientIP
 
-	c, ok := Context.clients.Find(clientID)
+	c, ok := Context.clients.find(clientID)
 	if !ok {
-		c, ok = Context.clients.Find(clientIP.String())
+		c, ok = Context.clients.find(clientIP.String())
 		if !ok {
 			log.Debug("%s: no clients with ip %s and clientid %q", pref, clientIP, clientID)
 
