@@ -25,6 +25,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- Etc timezones to the timezone list ([#6568]).
 - The schema version of the configuration file to the output of running
   `AdGuardHome` (or `AdGuardHome.exe) with `-v --version` command-line options
   ([#6545]).
@@ -75,6 +76,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6534]: https://github.com/AdguardTeam/AdGuardHome/issues/6534
 [#6541]: https://github.com/AdguardTeam/AdGuardHome/issues/6541
 [#6545]: https://github.com/AdguardTeam/AdGuardHome/issues/6545
+[#6568]: https://github.com/AdguardTeam/AdGuardHome/issues/6568
 [#6584]: https://github.com/AdguardTeam/AdGuardHome/issues/6584
 
 <!--

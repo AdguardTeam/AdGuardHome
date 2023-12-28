@@ -1,5 +1,5 @@
 import React from 'react';
-import timezones from 'timezones-list';
+import ct from 'countries-and-timezones';
 import { useTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
 
@@ -14,6 +14,8 @@ export const Timezone = ({
     const onTimeZoneChange = (event) => {
         setTimezone(event.target.value);
     };
+
+    const timezones = ct.getAllTimezones();
 
     return (
         <div className="schedule__timezone">
@@ -30,9 +32,9 @@ export const Timezone = ({
                     {t('schedule_timezone')}
                 </option>
                 {/* TODO: get timezones from backend method when the method is ready */}
-                {timezones.map((zone) => (
-                    <option key={zone.name} value={zone.tzCode}>
-                        {zone.label}
+                {Object.keys(timezones).map((zone) => (
+                    <option key={zone} value={zone}>
+                        {zone} (GMT{timezones[zone].utcOffsetStr})
                     </option>
                 ))}
             </select>
