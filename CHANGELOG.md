@@ -34,6 +34,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- Logging level of timeout errors is now `error` instead of `debug` ([#6574]).
 - The field `"upstream_mode"` in `POST /control/dns_config` and
   `GET /control/dns_info` HTTP APIs now accepts `load_balance` value.  Check
   `openapi/CHANGELOG.md` for more details.
@@ -79,6 +80,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6541]: https://github.com/AdguardTeam/AdGuardHome/issues/6541
 [#6545]: https://github.com/AdguardTeam/AdGuardHome/issues/6545
 [#6568]: https://github.com/AdguardTeam/AdGuardHome/issues/6568
+[#6574]: https://github.com/AdguardTeam/AdGuardHome/issues/6574
 [#6584]: https://github.com/AdguardTeam/AdGuardHome/issues/6584
 
 <!--
