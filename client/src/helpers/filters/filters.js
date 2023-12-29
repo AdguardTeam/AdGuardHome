@@ -34,6 +34,12 @@ export default {
             "homepage": "https://badmojr.github.io/1Hosts/",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_38.txt"
         },
+        "awavenue_ads_rule": {
+            "name": "AWAvenue Ads Rule",
+            "categoryId": "general",
+            "homepage": "https://awavenue.top/",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_53.txt"
+        },
         "CHN_adrules": {
             "name": "CHN: AdRules DNS List",
             "categoryId": "regional",
