@@ -47,7 +47,14 @@ func (l *queryLog) client(clientID, ip string, cache clientCache) (c *Client, er
 // searchMemory looks up log records which are currently in the in-memory
 // buffer.  It optionally uses the client cache, if provided.  It also returns
 // the total amount of records in the buffer at the moment of searching.
+// l.confMu is expected to be locked.
 func (l *queryLog) searchMemory(params *searchParams, cache clientCache) (entries []*logEntry, total int) {
+	// We use this configuration check because a buffer can contain a single log
+	// record.  See [newQueryLog].
+	if l.conf.MemSize == 0 {
+		return nil, 0
+	}
+
 	l.bufferLock.Lock()
 	defer l.bufferLock.Unlock()
 
@@ -73,11 +80,12 @@ func (l *queryLog) searchMemory(params *searchParams, cache clientCache) (entrie
 		return true
 	})
 
-	return entries, l.buffer.Len()
+	return entries, int(l.buffer.Len())
 }
 
-// search - searches log entries in the query log using specified parameters
-// returns the list of entries found + time of the oldest entry
+// search searches log entries in memory buffer and log file using specified
+// parameters and returns the list of entries found and the time of the oldest
+// entry.  l.confMu is expected to be locked.
 func (l *queryLog) search(params *searchParams) (entries []*logEntry, oldest time.Time) {
 	start := time.Now()
 

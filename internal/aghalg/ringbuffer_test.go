@@ -9,13 +9,13 @@ import (
 )
 
 // elements is a helper function that returns n elements of the buffer.
-func elements(b *aghalg.RingBuffer[int], n int, reverse bool) (es []int) {
+func elements(b *aghalg.RingBuffer[int], n uint, reverse bool) (es []int) {
 	fn := b.Range
 	if reverse {
 		fn = b.ReverseRange
 	}
 
-	i := 0
+	var i uint
 	fn(func(e int) (cont bool) {
 		if i >= n {
 			return false
@@ -42,19 +42,14 @@ func TestNewRingBuffer(t *testing.T) {
 		assert.Zero(t, b.Len())
 	})
 
-	t.Run("negative_size", func(t *testing.T) {
-		assert.PanicsWithError(t, "ring buffer: size must be greater or equal to zero", func() {
-			aghalg.NewRingBuffer[int](-5)
-		})
-	})
-
 	t.Run("zero", func(t *testing.T) {
 		b := aghalg.NewRingBuffer[int](0)
 		for i := 0; i < 10; i++ {
 			b.Append(i)
-			assert.Equal(t, 0, b.Len())
-			assert.Empty(t, elements(b, b.Len(), false))
-			assert.Empty(t, elements(b, b.Len(), true))
+			bufLen := b.Len()
+			assert.EqualValues(t, 0, bufLen)
+			assert.Empty(t, elements(b, bufLen, false))
+			assert.Empty(t, elements(b, bufLen, true))
 		}
 	})
 
@@ -62,9 +57,10 @@ func TestNewRingBuffer(t *testing.T) {
 		b := aghalg.NewRingBuffer[int](1)
 		for i := 0; i < 10; i++ {
 			b.Append(i)
-			assert.Equal(t, 1, b.Len())
-			assert.Equal(t, []int{i}, elements(b, b.Len(), false))
-			assert.Equal(t, []int{i}, elements(b, b.Len(), true))
+			bufLen := b.Len()
+			assert.EqualValues(t, 1, bufLen)
+			assert.Equal(t, []int{i}, elements(b, bufLen, false))
+			assert.Equal(t, []int{i}, elements(b, bufLen, true))
 		}
 	})
 }
@@ -78,7 +74,7 @@ func TestRingBuffer_Range(t *testing.T) {
 		name   string
 		want   []int
 		count  int
-		length int
+		length uint
 	}{{
 		name:   "three",
 		count:  3,
@@ -163,11 +159,11 @@ func TestRingBuffer_Range_increment(t *testing.T) {
 	for i, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			b.Append(i)
-
-			assert.Equal(t, tc.want, elements(b, b.Len(), false))
+			bufLen := b.Len()
+			assert.Equal(t, tc.want, elements(b, bufLen, false))
 
 			slices.Reverse(tc.want)
-			assert.Equal(t, tc.want, elements(b, b.Len(), true))
+			assert.Equal(t, tc.want, elements(b, bufLen, true))
 		})
 	}
 }
