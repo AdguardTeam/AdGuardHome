@@ -278,6 +278,15 @@ cd AdGuardHome
 make
 ```
 
+  #### <a href="#building-node" id="building-node" name="building-node">Building with Node.js 17 and later</a>
+
+In order to build AdGuard Home with Node.js 17 and later, specify
+`--openssl-legacy-provider` option.
+
+```sh
+export NODE_OPTIONS=--openssl-legacy-provider
+```
+
 **NOTE:**  The non-standard `-j` flag is currently not supported, so building
 with `make -j 4` or setting your `MAKEFLAGS` to include, for example, `-j 4` is
 likely to break the build.  If you do have your `MAKEFLAGS` set to that, and you

@@ -41,11 +41,14 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 #### Configuration changes
 
+In this release, the schema version has changed from 27 to 28.
+
 - The new property `clients.persistent.*.uid`, which is unique identifier of the
   persistent client.
-- The properties `dns.'all_servers` and `dns.fastest_addr` were removed, their
+- The properties `dns.all_servers` and `dns.fastest_addr` were removed, their
   values migrated to newly added field `dns.upstream_mode` that describes the
-  logic through which upstreams will be used.
+  logic through which upstreams will be used.  See also a [Wiki
+  page][wiki-config].
 
   ```yaml
   # BEFORE:
@@ -59,6 +62,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
       # …
       'upstream_mode': 'parallel'
   ```
+
+  To rollback this change, remove the new field `upstream_mode`, set back
+  `dns.all_servers` and `dns.fastest_addr` properties in `dns` section, and
+  change the `schema_version` back to `27`.
 
 ### Fixed
 
@@ -84,6 +91,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6570]: https://github.com/AdguardTeam/AdGuardHome/issues/6570
 [#6574]: https://github.com/AdguardTeam/AdGuardHome/issues/6574
 [#6584]: https://github.com/AdguardTeam/AdGuardHome/issues/6584
+
+[wiki-config]: https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
