@@ -267,16 +267,21 @@ func (req *jsonDNSConfig) checkBootstrap() (err error) {
 	}
 
 	var b string
-	defer func() { err = errors.Annotate(err, "checking bootstrap %s: invalid address: %w", b) }()
+	defer func() { err = errors.Annotate(err, "checking bootstrap %s: %w", b) }()
 
 	for _, b = range *req.Bootstraps {
 		if b == "" {
 			return errors.Error("empty")
 		}
 
-		if _, err = upstream.NewUpstreamResolver(b, nil); err != nil {
+		var resolver *upstream.UpstreamResolver
+		if resolver, err = upstream.NewUpstreamResolver(b, nil); err != nil {
 			// Don't wrap the error because it's informative enough as is.
 			return err
+		}
+
+		if err = resolver.Close(); err != nil {
+			return fmt.Errorf("closing %s: %w", b, err)
 		}
 	}
 

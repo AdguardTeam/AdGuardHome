@@ -34,6 +34,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- The bootstrapped upstream addresses now updated according to the TTL of the
+  bootstrap DNS response ([#6321]).
 - Logging level of timeout errors is now `error` instead of `debug` ([#6574]).
 - The field `"upstream_mode"` in `POST /control/dns_config` and
   `GET /control/dns_info` HTTP APIs now accepts `load_balance` value.  Check
@@ -81,6 +83,7 @@ In this release, the schema version has changed from 27 to 28.
 - Omitted CNAME records in safe search results, which can cause YouTube to not
   work on iOS ([#6352]).
 
+[#6321]: https://github.com/AdguardTeam/AdGuardHome/issues/6321
 [#6352]: https://github.com/AdguardTeam/AdGuardHome/issues/6352
 [#6409]: https://github.com/AdguardTeam/AdGuardHome/issues/6409
 [#6480]: https://github.com/AdguardTeam/AdGuardHome/issues/6480

@@ -110,7 +110,7 @@ func addressesToUpstreams(
 	// TODO(e.burkov):  Add system hosts resolver here.
 	var bootstrap upstream.ParallelResolver
 	for _, r := range boots {
-		bootstrap = append(bootstrap, r)
+		bootstrap = append(bootstrap, upstream.NewCachingResolver(r))
 	}
 
 	upstreams = make([]upstream.Upstream, len(upsStrs))

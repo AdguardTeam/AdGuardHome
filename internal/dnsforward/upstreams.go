@@ -180,7 +180,7 @@ func (s *Server) createBootstrap(
 
 	var parallel upstream.ParallelResolver
 	for _, b := range boots {
-		parallel = append(parallel, b)
+		parallel = append(parallel, upstream.NewCachingResolver(b))
 	}
 
 	if s.etcHosts != nil {

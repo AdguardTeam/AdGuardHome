@@ -227,8 +227,8 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			`upstream servers: validating upstream "!!!": not an ip:port`,
 	}, {
 		name: "bootstraps_bad",
-		wantSet: `validating dns config: checking bootstrap a: invalid address: not a bootstrap: ` +
-			`ParseAddr("a"): unable to parse IP`,
+		wantSet: `validating dns config: checking bootstrap a: not a bootstrap: ParseAddr("a"): ` +
+			`unable to parse IP`,
 	}, {
 		name:    "cache_bad_ttl",
 		wantSet: `validating dns config: cache_ttl_min must be less than or equal to cache_ttl_max`,
