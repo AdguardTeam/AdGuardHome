@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/renameio/v2/maybe"
 	yaml "gopkg.in/yaml.v3"
@@ -200,7 +201,7 @@ type dnsConfig struct {
 
 	// PrivateNets is the set of IP networks for which the private reverse DNS
 	// resolver should be used.
-	PrivateNets []string `yaml:"private_networks"`
+	PrivateNets []netutil.Prefix `yaml:"private_networks"`
 
 	// UsePrivateRDNS defines if the PTR requests for unknown addresses from
 	// locally-served networks should be resolved via private PTR resolvers.
@@ -321,8 +322,12 @@ var config = &configuration{
 				Duration: fastip.DefaultPingWaitTimeout,
 			},
 
-			TrustedProxies: []string{"127.0.0.0/8", "::1/128"},
-			CacheSize:      4 * 1024 * 1024,
+			TrustedProxies: []netutil.Prefix{{
+				Prefix: netip.MustParsePrefix("127.0.0.0/8"),
+			}, {
+				Prefix: netip.MustParsePrefix("::1/128"),
+			}},
+			CacheSize: 4 * 1024 * 1024,
 
 			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{
 				CustomIP:  netip.Addr{},

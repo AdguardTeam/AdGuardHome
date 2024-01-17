@@ -262,8 +262,7 @@ func (p *DefaultAddrProc) processRDNS(ip netip.Addr) (host string) {
 // shouldResolve returns false if ip is a loopback address, or ip is private and
 // resolving of private addresses is disabled.
 func (p *DefaultAddrProc) shouldResolve(ip netip.Addr) (ok bool) {
-	return !ip.IsLoopback() &&
-		(p.usePrivateRDNS || !p.privateSubnets.Contains(ip.AsSlice()))
+	return !ip.IsLoopback() && (p.usePrivateRDNS || !p.privateSubnets.Contains(ip))
 }
 
 // processWHOIS looks up the information about clients' IP addresses in the

@@ -311,7 +311,7 @@ func (s *Server) WriteDiskConfig(c *Config) {
 	c.AllowedClients = stringutil.CloneSlice(sc.AllowedClients)
 	c.DisallowedClients = stringutil.CloneSlice(sc.DisallowedClients)
 	c.BlockedHosts = stringutil.CloneSlice(sc.BlockedHosts)
-	c.TrustedProxies = stringutil.CloneSlice(sc.TrustedProxies)
+	c.TrustedProxies = slices.Clone(sc.TrustedProxies)
 	c.UpstreamDNS = stringutil.CloneSlice(sc.UpstreamDNS)
 }
 
@@ -390,7 +390,7 @@ func (s *Server) Exchange(ip netip.Addr) (host string, ttl time.Duration, err er
 
 	var resolver *proxy.Proxy
 	var errMsg string
-	if s.privateNets.Contains(ip.AsSlice()) {
+	if s.privateNets.Contains(ip) {
 		if !s.conf.UsePrivateRDNS {
 			return "", 0, nil
 		}

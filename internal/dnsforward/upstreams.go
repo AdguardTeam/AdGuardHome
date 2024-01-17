@@ -298,7 +298,7 @@ func ValidateUpstreamsPrivate(upstreams []string, privateNets netutil.SubnetSet)
 			continue
 		}
 
-		if !privateNets.Contains(subnet.Addr().AsSlice()) {
+		if !privateNets.Contains(subnet.Addr()) {
 			errs = append(
 				errs,
 				fmt.Errorf("arpa domain %q should point to a locally-served network", domain),

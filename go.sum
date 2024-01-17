@@ -1,7 +1,7 @@
-github.com/AdguardTeam/dnsproxy v0.62.0 h1:IaWW+Ln4SJ4V+y8qyVlTlYDN3ATDkqWCufph+Gxz82c=
-github.com/AdguardTeam/dnsproxy v0.62.0/go.mod h1:IdmXdkpc+m+S2EajJkVZDZm//yQ4mQm2FCOugQpc/N8=
-github.com/AdguardTeam/golibs v0.18.1 h1:6u0fvrIj2qjUsRdbIGJ9AR0g5QRSWdKIo/DYl3tp5aM=
-github.com/AdguardTeam/golibs v0.18.1/go.mod h1:DKhCIXHcUYtBhU8ibTLKh1paUL96n5zhQBlx763sj+U=
+github.com/AdguardTeam/dnsproxy v0.63.0 h1:Mpce87y9/RXy8b3A8gZ56Mfxl31fyjukesdm9T+MkR0=
+github.com/AdguardTeam/dnsproxy v0.63.0/go.mod h1:dRRAFOjrq4QYM92jGs4lt4BoY0Dm3EY3HkaleoM2Feo=
+github.com/AdguardTeam/golibs v0.19.0 h1:y/x+Xn3pDg1ZfQ+QEZapPJqaeVYUIMp/EODMtVhn7PM=
+github.com/AdguardTeam/golibs v0.19.0/go.mod h1:3WunclLLfrVAq7fYQRhd6f168FHOEMssnipVXCxDL/w=
 github.com/AdguardTeam/urlfilter v0.17.3 h1:fg/ObbnO0Cv6aw0tW6N/ETDMhhNvmcUUOZ7HlmKC3rw=
 github.com/AdguardTeam/urlfilter v0.17.3/go.mod h1:Jru7jFfeH2CoDf150uDs+rRYcZBzHHBz05r9REyDKyE=
 github.com/NYTimes/gziphandler v1.1.1 h1:ZUDjpQae29j0ryrS0u/B8HZfJBtBQHjqw2rQ2cqUQ3I=
@@ -122,8 +122,8 @@ golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACk
 golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
 golang.org/x/crypto v0.16.0 h1:mMMrFzRSCF0GvB7Ne27XVtVAaXLrPmgPC7/v0tkwHaY=
 golang.org/x/crypto v0.16.0/go.mod h1:gCAAfMLgwOJRpTjQ2zCCt2OcSfYMTeZVSRtQlPC7Nq4=
-golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb h1:c0vyKkb6yr3KR7jEfJaOSv4lG7xPkbN6r52aJz1d8a8=
-golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb/go.mod h1:iRJReGqOEeBhDZGkGbynYwcHlctCvnjTYIamk7uXpHI=
+golang.org/x/exp v0.0.0-20231219180239-dc181d75b848 h1:+iq7lrkxmFNBM7xx+Rae2W6uyPfhPeDWD+n+JgppptE=
+golang.org/x/exp v0.0.0-20231219180239-dc181d75b848/go.mod h1:iRJReGqOEeBhDZGkGbynYwcHlctCvnjTYIamk7uXpHI=
 golang.org/x/lint v0.0.0-20200302205851-738671d3881b/go.mod h1:3xt1FjdF8hUf6vQPIChWIBhFzV8gjjsPE/fR3IyQdNY=
 golang.org/x/mod v0.1.1-0.20191105210325-c90efee705ee/go.mod h1:QqPTAvyqsEbceGzBzNggFXnrqF1CaUcvgkdR5Ot7KZg=
 golang.org/x/mod v0.14.0 h1:dGoOF9QVLYng8IHTm7BAyWqCqSheQ5pYWGhzW00YJr0=

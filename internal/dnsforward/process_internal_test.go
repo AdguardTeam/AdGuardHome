@@ -795,7 +795,7 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 		}
 		dnsCtx = &dnsContext{
 			proxyCtx:        proxyCtx,
-			unreversedReqIP: net.IP{192, 168, 1, 1},
+			unreversedReqIP: netip.MustParseAddr("192.168.1.1"),
 		}
 		s.conf.UsePrivateRDNS = use
 	}

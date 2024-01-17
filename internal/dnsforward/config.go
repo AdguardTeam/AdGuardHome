@@ -110,11 +110,10 @@ type Config struct {
 	// BlockedHosts is the list of hosts that should be blocked.
 	BlockedHosts []string `yaml:"blocked_hosts"`
 
-	// TrustedProxies is the list of IP addresses and CIDR networks to detect
-	// proxy servers addresses the DoH requests from which should be handled.
-	// The value of nil or an empty slice for this field makes Proxy not trust
-	// any address.
-	TrustedProxies []string `yaml:"trusted_proxies"`
+	// TrustedProxies is the list of CIDR networks with proxy servers addresses
+	// from which the DoH requests should be handled.  The value of nil or an
+	// empty slice for this field makes Proxy not trust any address.
+	TrustedProxies []netutil.Prefix `yaml:"trusted_proxies"`
 
 	// DNS cache settings
 
@@ -303,6 +302,8 @@ const (
 // newProxyConfig creates and validates configuration for the main proxy.
 func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 	srvConf := s.conf
+	trustedPrefixes := netutil.UnembedPrefixes(srvConf.TrustedProxies)
+
 	conf = &proxy.Config{
 		HTTP3:                  srvConf.ServeHTTP3,
 		Ratelimit:              int(srvConf.Ratelimit),
@@ -310,7 +311,7 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 		RatelimitSubnetLenIPv6: srvConf.RatelimitSubnetLenIPv6,
 		RatelimitWhitelist:     srvConf.RatelimitWhitelist,
 		RefuseAny:              srvConf.RefuseAny,
-		TrustedProxies:         srvConf.TrustedProxies,
+		TrustedProxies:         netutil.SliceSubnetSet(trustedPrefixes),
 		CacheMinTTL:            srvConf.CacheMinTTL,
 		CacheMaxTTL:            srvConf.CacheMaxTTL,
 		CacheOptimistic:        srvConf.CacheOptimistic,

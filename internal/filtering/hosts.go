@@ -53,15 +53,13 @@ func hostsRewrites(
 	case dns.TypeAAAA:
 		isValidProto = netip.Addr.Is6
 	case dns.TypePTR:
-		// TODO(e.burkov):  Add some [netip]-aware alternative to [netutil].
-		ip, err := netutil.IPFromReversedAddr(host)
+		addr, err := netutil.IPFromReversedAddr(host)
 		if err != nil {
 			log.Debug("filtering: failed to parse PTR record %q: %s", host, err)
 
 			return nil, nil, false
 		}
 
-		addr, _ := netip.AddrFromSlice(ip)
 		names := hs.ByAddr(addr)
 
 		for _, name := range names {

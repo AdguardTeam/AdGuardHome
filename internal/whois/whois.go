@@ -268,7 +268,7 @@ var _ Interface = (*Default)(nil)
 // Process makes WHOIS request and returns WHOIS information or nil.  changed
 // indicates that Info was updated since last request.
 func (w *Default) Process(ctx context.Context, ip netip.Addr) (wi *Info, changed bool) {
-	if netutil.IsSpecialPurposeAddr(ip) {
+	if netutil.IsSpecialPurpose(ip) {
 		return nil, false
 	}
 
