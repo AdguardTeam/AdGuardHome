@@ -162,7 +162,7 @@ let Form = (props) => {
     const [activeTabLabel, setActiveTabLabel] = useState('settings');
 
     const handleScheduleSubmit = (values) => {
-        change('blocked_services_schedule', values);
+        change('blocked_services_schedule', { ...values });
     };
 
     const tabs = {

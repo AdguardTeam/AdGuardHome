@@ -71,6 +71,7 @@ In this release, the schema version has changed from 27 to 28.
 
 ### Fixed
 
+- Schedule display in the client settings after creating or updating.
 - Zero value in `querylog.size_memory` disables logging ([#6570]).
 - Non-anonymized IP addresses on the dashboard ([#6584]).
 - Maximum cache TTL requirement when editing minimum cache TTL in the Web UI
