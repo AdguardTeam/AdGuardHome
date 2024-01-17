@@ -1,7 +1,6 @@
 package home
 
 import (
-	"bytes"
 	"fmt"
 	"net"
 	"net/netip"
@@ -218,7 +217,6 @@ func (o *clientObject) toPersistent(
 	cli = &persistentClient{
 		Name: o.Name,
 
-		IDs:       o.IDs,
 		Upstreams: o.Upstreams,
 
 		UID: o.UID,
@@ -233,6 +231,11 @@ func (o *clientObject) toPersistent(
 		IgnoreStatistics:      o.IgnoreStatistics,
 		UpstreamsCacheEnabled: o.UpstreamsCacheEnabled,
 		UpstreamsCacheSize:    o.UpstreamsCacheSize,
+	}
+
+	err = cli.setIDs(o.IDs)
+	if err != nil {
+		return nil, fmt.Errorf("parsing ids: %w", err)
 	}
 
 	if (cli.UID == UID{}) {
@@ -262,15 +265,7 @@ func (o *clientObject) toPersistent(
 
 	cli.BlockedServices = o.BlockedServices.Clone()
 
-	for _, t := range o.Tags {
-		if allTags.Has(t) {
-			cli.Tags = append(cli.Tags, t)
-		} else {
-			log.Info("skipping unknown tag %q", t)
-		}
-	}
-
-	slices.Sort(cli.Tags)
+	cli.setTags(o.Tags, allTags)
 
 	return cli, nil
 }
@@ -310,7 +305,7 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 
 			BlockedServices: cli.BlockedServices.Clone(),
 
-			IDs:       stringutil.CloneSlice(cli.IDs),
+			IDs:       cli.ids(),
 			Tags:      stringutil.CloneSlice(cli.Tags),
 			Upstreams: stringutil.CloneSlice(cli.Upstreams),
 
@@ -449,7 +444,7 @@ func (clients *clientsContainer) find(id string) (c *persistentClient, ok bool) 
 		return nil, false
 	}
 
-	return c.ShallowClone(), true
+	return c.shallowClone(), true
 }
 
 // shouldCountClient is a wrapper around [clientsContainer.find] to make it a
@@ -534,13 +529,7 @@ func (clients *clientsContainer) findLocked(id string) (c *persistentClient, ok 
 	}
 
 	for _, c = range clients.list {
-		for _, id := range c.IDs {
-			var subnet netip.Prefix
-			subnet, err = netip.ParsePrefix(id)
-			if err != nil {
-				continue
-			}
-
+		for _, subnet := range c.Subnets {
 			if subnet.Contains(ip) {
 				return c, true
 			}
@@ -560,15 +549,9 @@ func (clients *clientsContainer) findDHCP(ip netip.Addr) (c *persistentClient, o
 	}
 
 	for _, c = range clients.list {
-		for _, id := range c.IDs {
-			mac, err := net.ParseMAC(id)
-			if err != nil {
-				continue
-			}
-
-			if bytes.Equal(mac, foundMAC) {
-				return c, true
-			}
+		_, found := slices.BinarySearchFunc(c.MACs, foundMAC, slices.Compare[net.HardwareAddr])
+		if found {
+			return c, true
 		}
 	}
 
@@ -608,27 +591,17 @@ func (clients *clientsContainer) findRuntimeClient(ip netip.Addr) (rc *client.Ru
 	return rc, ok
 }
 
-// check validates the client.
+// check validates the client.  It also sorts the client tags.
 func (clients *clientsContainer) check(c *persistentClient) (err error) {
 	switch {
 	case c == nil:
 		return errors.Error("client is nil")
 	case c.Name == "":
 		return errors.Error("invalid name")
-	case len(c.IDs) == 0:
+	case c.idsLen() == 0:
 		return errors.Error("id required")
 	default:
 		// Go on.
-	}
-
-	for i, id := range c.IDs {
-		var norm string
-		norm, err = normalizeClientIdentifier(id)
-		if err != nil {
-			return fmt.Errorf("client at index %d: %w", i, err)
-		}
-
-		c.IDs[i] = norm
 	}
 
 	for _, t := range c.Tags {
@@ -637,6 +610,7 @@ func (clients *clientsContainer) check(c *persistentClient) (err error) {
 		}
 	}
 
+	// TODO(s.chzhen):  Move to the constructor.
 	slices.Sort(c.Tags)
 
 	err = dnsforward.ValidateUpstreams(c.Upstreams)
@@ -645,35 +619,6 @@ func (clients *clientsContainer) check(c *persistentClient) (err error) {
 	}
 
 	return nil
-}
-
-// normalizeClientIdentifier returns a normalized version of idStr.  If idStr
-// cannot be normalized, it returns an error.
-func normalizeClientIdentifier(idStr string) (norm string, err error) {
-	if idStr == "" {
-		return "", errors.Error("clientid is empty")
-	}
-
-	var ip netip.Addr
-	if ip, err = netip.ParseAddr(idStr); err == nil {
-		return ip.String(), nil
-	}
-
-	var subnet netip.Prefix
-	if subnet, err = netip.ParsePrefix(idStr); err == nil {
-		return subnet.String(), nil
-	}
-
-	var mac net.HardwareAddr
-	if mac, err = net.ParseMAC(idStr); err == nil {
-		return mac.String(), nil
-	}
-
-	if err = dnsforward.ValidateClientID(idStr); err == nil {
-		return strings.ToLower(idStr), nil
-	}
-
-	return "", fmt.Errorf("bad client identifier %q", idStr)
 }
 
 // add adds a new client object.  ok is false if such client already exists or
@@ -694,7 +639,8 @@ func (clients *clientsContainer) add(c *persistentClient) (ok bool, err error) {
 	}
 
 	// check ID index
-	for _, id := range c.IDs {
+	ids := c.ids()
+	for _, id := range ids {
 		var c2 *persistentClient
 		c2, ok = clients.idIndex[id]
 		if ok {
@@ -704,7 +650,7 @@ func (clients *clientsContainer) add(c *persistentClient) (ok bool, err error) {
 
 	clients.addLocked(c)
 
-	log.Debug("clients: added %q: ID:%q [%d]", c.Name, c.IDs, len(clients.list))
+	log.Debug("clients: added %q: ID:%q [%d]", c.Name, ids, len(clients.list))
 
 	return true, nil
 }
@@ -715,7 +661,7 @@ func (clients *clientsContainer) addLocked(c *persistentClient) {
 	clients.list[c.Name] = c
 
 	// update ID index
-	for _, id := range c.IDs {
+	for _, id := range c.ids() {
 		clients.idIndex[id] = c
 	}
 }
@@ -747,7 +693,7 @@ func (clients *clientsContainer) removeLocked(c *persistentClient) {
 	delete(clients.list, c.Name)
 
 	// Update the ID index.
-	for _, id := range c.IDs {
+	for _, id := range c.ids() {
 		delete(clients.idIndex, id)
 	}
 }
@@ -771,13 +717,18 @@ func (clients *clientsContainer) update(prev, c *persistentClient) (err error) {
 		}
 	}
 
+	if c.equalIDs(prev) {
+		clients.removeLocked(prev)
+		clients.addLocked(c)
+
+		return nil
+	}
+
 	// Check the ID index.
-	if !slices.Equal(prev.IDs, c.IDs) {
-		for _, id := range c.IDs {
-			existing, ok := clients.idIndex[id]
-			if ok && existing != prev {
-				return fmt.Errorf("id %q is used by client with name %q", id, existing.Name)
-			}
+	for _, id := range c.ids() {
+		existing, ok := clients.idIndex[id]
+		if ok && existing != prev {
+			return fmt.Errorf("id %q is used by client with name %q", id, existing.Name)
 		}
 	}
 

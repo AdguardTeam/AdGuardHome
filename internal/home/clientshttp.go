@@ -195,9 +195,14 @@ func (clients *clientsContainer) jsonToClient(
 		return nil, err
 	}
 
+	err = c.setIDs(cj.IDs)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return nil, err
+	}
+
 	c.safeSearchConf = copySafeSearch(cj.SafeSearchConf, cj.SafeSearchEnabled)
 	c.Name = cj.Name
-	c.IDs = cj.IDs
 	c.Tags = cj.Tags
 	c.Upstreams = cj.Upstreams
 	c.UseOwnSettings = !cj.UseGlobalSettings
@@ -286,7 +291,7 @@ func clientToJSON(c *persistentClient) (cj *clientJSON) {
 
 	return &clientJSON{
 		Name:                c.Name,
-		IDs:                 c.IDs,
+		IDs:                 c.ids(),
 		Tags:                c.Tags,
 		UseGlobalSettings:   !c.UseOwnSettings,
 		FilteringEnabled:    c.FilteringEnabled,
