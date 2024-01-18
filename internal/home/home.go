@@ -360,6 +360,11 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 	)
 
 	conf.EtcHosts = Context.etcHosts
+	// TODO(s.chzhen):  Use empty interface.
+	if Context.etcHosts == nil {
+		conf.EtcHosts = nil
+	}
+
 	conf.ConfigModified = onConfigModified
 	conf.HTTPRegister = httpRegister
 	conf.DataDir = Context.getDataDir()

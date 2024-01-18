@@ -71,6 +71,7 @@ In this release, the schema version has changed from 27 to 28.
 
 ### Fixed
 
+- Panic on using `--no-etc-hosts` flag ([#6644]).
 - Schedule display in the client settings after creating or updating.
 - Zero value in `querylog.size_memory` disables logging ([#6570]).
 - Non-anonymized IP addresses on the dashboard ([#6584]).
@@ -95,6 +96,7 @@ In this release, the schema version has changed from 27 to 28.
 [#6570]: https://github.com/AdguardTeam/AdGuardHome/issues/6570
 [#6574]: https://github.com/AdguardTeam/AdGuardHome/issues/6574
 [#6584]: https://github.com/AdguardTeam/AdGuardHome/issues/6584
+[#6644]: https://github.com/AdguardTeam/AdGuardHome/issues/6644
 
 [wiki-config]: https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration
 
