@@ -418,6 +418,7 @@ There are three options how you can install an unstable version:
     ```sh
     curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s -- -c edge
     ```
+
 [wiki-platf]: https://github.com/AdguardTeam/AdGuardHome/wiki/Platforms
 
 
@@ -471,10 +472,6 @@ bug or implementing the feature.
  *  [OpenWrt LUCI app](https://github.com/kongfl888/luci-app-adguardhome) by
     [@kongfl888](https://github.com/kongfl888) (originally by
     [@rufengsuixing](https://github.com/rufengsuixing)).
-
- *  [Prometheus exporter for AdGuard
-    Home](https://github.com/ebrianne/adguard-exporter) by
-    [@ebrianne](https://github.com/ebrianne).
 
  *  [Terminal-based, real-time traffic monitoring and statistics for your AdGuard Home
     instance](https://github.com/Lissy93/AdGuardian-Term) by
