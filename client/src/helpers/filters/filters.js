@@ -142,11 +142,11 @@ export default {
             "homepage": "https://github.com/AdguardTeam/AdGuardSDNSFilter",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt"
         },
-        "adway_default_blocklist": {
-            "name": "AdAway Default Blocklist",
+        "awavenue_ads_rule": {
+            "name": "AWAvenue Ads Rule",
             "categoryId": "general",
-            "homepage": "https://github.com/AdAway/adaway.github.io/",
-            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt"
+            "homepage": "https://awavenue.top/",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_53.txt"
         },
         "curben_phishing_filter": {
             "name": "Phishing URL Blocklist (PhishTank and OpenPhish)",
@@ -189,6 +189,12 @@ export default {
             "categoryId": "other",
             "homepage": "https://github.com/hagezi/dns-blocklists#piracy",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_46.txt"
+        },
+        "hagezi_dyndns_blocklist": {
+            "name": "HaGeZi's DynDNS Blocklist",
+            "categoryId": "security",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_54.txt"
         },
         "hagezi_encrypted_dns_vpn_tor_proxy_bypass": {
             "name": "HaGeZi's Encrypted DNS/VPN/TOR/Proxy Bypass",
