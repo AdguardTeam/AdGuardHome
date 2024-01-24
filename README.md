@@ -491,7 +491,8 @@ bug or implementing the feature.
  *  [Node.js library](https://github.com/Andrea055/AdguardHomeAPI) by
     [@Andrea055](https://github.com/Andrea055/).
 
-
+ *  [Browser Extension](https://github.com/satheshshiva/Adguard-Home-Browser-Ext) by
+    [@satheshshiva](https://github.com/satheshshiva/).
 
 ## <a href="#acknowledgments" id="acknowledgments" name="acknowledgments">Acknowledgments</a>
 
