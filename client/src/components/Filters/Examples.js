@@ -36,7 +36,7 @@ const Examples = () => (
             <Trans
                 components={[
                     <a
-                        href="https://github.com/AdguardTeam/AdGuardHome/wiki/Hosts-Blocklists"
+                        href="https://link.adtidy.org/forward.html?action=dns_kb_filtering_syntax&from=ui&app=home"
                         target="_blank"
                         rel="noopener noreferrer"
                         key="0"
