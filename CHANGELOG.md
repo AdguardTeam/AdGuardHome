@@ -27,7 +27,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Etc timezones to the timezone list ([#6568]).
 - The schema version of the configuration file to the output of running
-  `AdGuardHome` (or `AdGuardHome.exe) with `-v --version` command-line options
+  `AdGuardHome` (or `AdGuardHome.exe`) with `-v --version` command-line options
   ([#6545]).
 - Ability to disable plain-DNS serving via UI if an encrypted protocol is
   already used ([#1660]).
