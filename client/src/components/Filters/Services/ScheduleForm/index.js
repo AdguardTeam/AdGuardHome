@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
 import cn from 'classnames';
@@ -21,10 +21,7 @@ export const ScheduleForm = ({
     const onModalOpen = () => setModalOpen(true);
     const onModalClose = () => setModalOpen(false);
 
-    const filteredScheduleKeys = useMemo(() => (
-        schedule ? Object.keys(schedule).filter((v) => v !== 'time_zone') : []
-    ), [schedule]);
-
+    const filteredScheduleKeys = schedule ? Object.keys(schedule).filter((v) => v !== 'time_zone') : [];
     const scheduleMap = new Map();
     filteredScheduleKeys.forEach((day) => scheduleMap.set(day, schedule[day]));
 

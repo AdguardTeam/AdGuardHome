@@ -63,7 +63,7 @@ type Config struct {
 
 	// MemSize is the number of entries kept in a memory buffer before they are
 	// flushed to disk.
-	MemSize int
+	MemSize uint
 
 	// Enabled tells if the query log is enabled.
 	Enabled bool
@@ -143,14 +143,17 @@ func newQueryLog(conf Config) (l *queryLog, err error) {
 		}
 	}
 
-	if conf.MemSize < 0 {
-		return nil, errors.Error("memory size must be greater or equal to zero")
+	memSize := conf.MemSize
+	if memSize == 0 {
+		// If query log is enabled, we still need to write entries to a file.
+		// And all writing goes through a buffer.
+		memSize = 1
 	}
 
 	l = &queryLog{
 		findClient: findClient,
 
-		buffer: aghalg.NewRingBuffer[*logEntry](conf.MemSize),
+		buffer: aghalg.NewRingBuffer[*logEntry](memSize),
 
 		conf:    &Config{},
 		confMu:  &sync.RWMutex{},

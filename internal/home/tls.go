@@ -38,15 +38,19 @@ type tlsManager struct {
 
 	confLock sync.Mutex
 	conf     tlsConfigSettings
+
+	// servePlainDNS defines if plain DNS is allowed for incoming requests.
+	servePlainDNS bool
 }
 
 // newTLSManager initializes the manager of TLS configuration.  m is always
 // non-nil while any returned error indicates that the TLS configuration isn't
 // valid.  Thus TLS may be initialized later, e.g. via the web UI.
-func newTLSManager(conf tlsConfigSettings) (m *tlsManager, err error) {
+func newTLSManager(conf tlsConfigSettings, servePlainDNS bool) (m *tlsManager, err error) {
 	m = &tlsManager{
-		status: &tlsConfigStatus{},
-		conf:   conf,
+		status:        &tlsConfigStatus{},
+		conf:          conf,
+		servePlainDNS: servePlainDNS,
 	}
 
 	if m.conf.Enabled {
@@ -283,21 +287,29 @@ type tlsConfig struct {
 	tlsConfigSettingsExt `json:",inline"`
 }
 
-// tlsConfigSettingsExt is used to (un)marshal the PrivateKeySaved field to
-// ensure that clients don't send and receive previously saved private keys.
+// tlsConfigSettingsExt is used to (un)marshal PrivateKeySaved field and
+// ServePlainDNS field.
 type tlsConfigSettingsExt struct {
 	tlsConfigSettings `json:",inline"`
 
 	// PrivateKeySaved is true if the private key is saved as a string and omit
-	// key from answer.
-	PrivateKeySaved bool `yaml:"-" json:"private_key_saved,inline"`
+	// key from answer.  It is used to ensure that clients don't send and
+	// receive previously saved private keys.
+	PrivateKeySaved bool `yaml:"-" json:"private_key_saved"`
+
+	// ServePlainDNS defines if plain DNS is allowed for incoming requests.  It
+	// is an [aghalg.NullBool] to be able to tell when it's set without using
+	// pointers.
+	ServePlainDNS aghalg.NullBool `yaml:"-" json:"serve_plain_dns"`
 }
 
+// handleTLSStatus is the handler for the GET /control/tls/status HTTP API.
 func (m *tlsManager) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 	m.confLock.Lock()
 	data := tlsConfig{
 		tlsConfigSettingsExt: tlsConfigSettingsExt{
 			tlsConfigSettings: m.conf,
+			ServePlainDNS:     aghalg.BoolToNullBool(m.servePlainDNS),
 		},
 		tlsConfigStatus: m.status,
 	}
@@ -306,6 +318,7 @@ func (m *tlsManager) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 	marshalTLS(w, r, data)
 }
 
+// handleTLSValidate is the handler for the POST /control/tls/validate HTTP API.
 func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	setts, err := unmarshalTLS(r)
 	if err != nil {
@@ -318,30 +331,8 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		setts.PrivateKey = m.conf.PrivateKey
 	}
 
-	if setts.Enabled {
-		err = validatePorts(
-			tcpPort(config.HTTPConfig.Address.Port()),
-			tcpPort(setts.PortHTTPS),
-			tcpPort(setts.PortDNSOverTLS),
-			tcpPort(setts.PortDNSCrypt),
-			udpPort(config.DNS.Port),
-			udpPort(setts.PortDNSOverQUIC),
-		)
-		if err != nil {
-			aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
-
-			return
-		}
-	}
-
-	if !webCheckPortAvailable(setts.PortHTTPS) {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusBadRequest,
-			"port %d is not available, cannot enable HTTPS on it",
-			setts.PortHTTPS,
-		)
+	if err = validateTLSSettings(setts); err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -358,7 +349,12 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	marshalTLS(w, r, resp)
 }
 
-func (m *tlsManager) setConfig(newConf tlsConfigSettings, status *tlsConfigStatus) (restartHTTPS bool) {
+// setConfig updates manager conf with the given one.
+func (m *tlsManager) setConfig(
+	newConf tlsConfigSettings,
+	status *tlsConfigStatus,
+	servePlain aghalg.NullBool,
+) (restartHTTPS bool) {
 	m.confLock.Lock()
 	defer m.confLock.Unlock()
 
@@ -390,9 +386,15 @@ func (m *tlsManager) setConfig(newConf tlsConfigSettings, status *tlsConfigStatu
 	m.conf.PrivateKeyData = newConf.PrivateKeyData
 	m.status = status
 
+	if servePlain != aghalg.NBNull {
+		m.servePlainDNS = servePlain == aghalg.NBTrue
+	}
+
 	return restartHTTPS
 }
 
+// handleTLSConfigure is the handler for the POST /control/tls/configure HTTP
+// API.
 func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	req, err := unmarshalTLS(r)
 	if err != nil {
@@ -405,31 +407,8 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 		req.PrivateKey = m.conf.PrivateKey
 	}
 
-	if req.Enabled {
-		err = validatePorts(
-			tcpPort(config.HTTPConfig.Address.Port()),
-			tcpPort(req.PortHTTPS),
-			tcpPort(req.PortDNSOverTLS),
-			tcpPort(req.PortDNSCrypt),
-			udpPort(config.DNS.Port),
-			udpPort(req.PortDNSOverQUIC),
-		)
-		if err != nil {
-			aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
-
-			return
-		}
-	}
-
-	// TODO(e.burkov):  Investigate and perhaps check other ports.
-	if !webCheckPortAvailable(req.PortHTTPS) {
-		aghhttp.Error(
-			r,
-			w,
-			http.StatusBadRequest,
-			"port %d is not available, cannot enable https on it",
-			req.PortHTTPS,
-		)
+	if err = validateTLSSettings(req); err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
@@ -447,8 +426,18 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	restartHTTPS := m.setConfig(req.tlsConfigSettings, status)
+	restartHTTPS := m.setConfig(req.tlsConfigSettings, status, req.ServePlainDNS)
 	m.setCertFileTime()
+
+	if req.ServePlainDNS != aghalg.NBNull {
+		func() {
+			m.confLock.Lock()
+			defer m.confLock.Unlock()
+
+			config.DNS.ServePlainDNS = req.ServePlainDNS == aghalg.NBTrue
+		}()
+	}
+
 	onConfigModified()
 
 	err = reconfigureDNSServer()
@@ -477,6 +466,33 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 			Context.web.tlsConfigChanged(context.Background(), req.tlsConfigSettings)
 		}()
 	}
+}
+
+// validateTLSSettings returns error if the setts are not valid.
+func validateTLSSettings(setts tlsConfigSettingsExt) (err error) {
+	if setts.Enabled {
+		err = validatePorts(
+			tcpPort(config.HTTPConfig.Address.Port()),
+			tcpPort(setts.PortHTTPS),
+			tcpPort(setts.PortDNSOverTLS),
+			tcpPort(setts.PortDNSCrypt),
+			udpPort(config.DNS.Port),
+			udpPort(setts.PortDNSOverQUIC),
+		)
+		if err != nil {
+			// Don't wrap the error since it's informative enough as is.
+			return err
+		}
+	} else if setts.ServePlainDNS == aghalg.NBFalse {
+		// TODO(a.garipov): Support full disabling of all DNS.
+		return errors.Error("plain DNS is required in case encryption protocols are disabled")
+	}
+
+	if !webCheckPortAvailable(setts.PortHTTPS) {
+		return fmt.Errorf("port %d is not available, cannot enable HTTPS on it", setts.PortHTTPS)
+	}
+
+	return nil
 }
 
 // validatePorts validates the uniqueness of TCP and UDP ports for AdGuard Home

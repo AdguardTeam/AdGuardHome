@@ -62,6 +62,7 @@ const encryption = handleActions({
     processingConfig: false,
     processingValidate: false,
     enabled: false,
+    serve_plain_dns: false,
     dns_names: null,
     force_https: false,
     issuer: '',

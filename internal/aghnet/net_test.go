@@ -1,11 +1,9 @@
 package aghnet_test
 
 import (
-	"io/fs"
 	"net"
 	"net/netip"
 	"net/url"
-	"os"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -17,9 +15,6 @@ import (
 func TestMain(m *testing.M) {
 	testutil.DiscardLogOutput(m)
 }
-
-// testdata is the filesystem containing data for testing the package.
-var testdata fs.FS = os.DirFS("./testdata")
 
 func TestParseAddrPort(t *testing.T) {
 	const defaultPort = 1

@@ -162,7 +162,7 @@ let Form = (props) => {
     const [activeTabLabel, setActiveTabLabel] = useState('settings');
 
     const handleScheduleSubmit = (values) => {
-        change('blocked_services_schedule', values);
+        change('blocked_services_schedule', { ...values });
     };
 
     const tabs = {
@@ -371,7 +371,7 @@ let Form = (props) => {
                         </div>
                         <div className="form__desc mt-0 mb-2">
                             <Trans components={[
-                                <a target="_blank" rel="noopener noreferrer" href="https://github.com/AdguardTeam/AdGuardHome/wiki/Hosts-Blocklists#ctag"
+                                <a target="_blank" rel="noopener noreferrer" href="https://link.adtidy.org/forward.html?action=dns_kb_filtering_syntax_ctag&from=ui&app=home"
                                    key="0">link</a>,
                             ]}>
                                 tags_desc

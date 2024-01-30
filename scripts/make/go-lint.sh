@@ -206,18 +206,18 @@ run_linter gocognit --over='11'\
 
 run_linter gocognit --over='10'\
 	./internal/aghalg/\
-	./internal/aghchan/\
 	./internal/aghhttp/\
 	./internal/aghrenameio/\
 	./internal/aghtest/\
 	./internal/arpdb/\
 	./internal/client/\
-	./internal/confmigrate/\
+	./internal/configmigrate/\
 	./internal/dhcpsvc\
 	./internal/dnsforward/\
 	./internal/filtering/hashprefix/\
 	./internal/filtering/rulelist/\
 	./internal/filtering/safesearch/\
+	./internal/ipset\
 	./internal/next/\
 	./internal/rdns/\
 	./internal/schedule/\
@@ -243,7 +243,6 @@ run_linter nilness ./...
 # TODO(a.garipov): Enable for all.
 run_linter fieldalignment \
 	./internal/aghalg/\
-	./internal/aghchan/\
 	./internal/aghhttp/\
 	./internal/aghos/\
 	./internal/aghrenameio/\
@@ -251,15 +250,17 @@ run_linter fieldalignment \
 	./internal/aghtls/\
 	./internal/arpdb/\
 	./internal/client/\
-	./internal/confmigrate/\
+	./internal/configmigrate/\
 	./internal/dhcpsvc/\
 	./internal/filtering/hashprefix/\
 	./internal/filtering/rewrite/\
 	./internal/filtering/rulelist/\
 	./internal/filtering/safesearch/\
+	./internal/ipset/\
 	./internal/next/...\
 	./internal/querylog/\
 	./internal/rdns/\
+	./internal/schedule/\
 	./internal/stats/\
 	./internal/updater/\
 	./internal/version/\
@@ -279,7 +280,7 @@ run_linter gosec --quiet\
 	./internal/aghtest/\
 	./internal/arpdb/\
 	./internal/client/\
-	./internal/confmigrate/\
+	./internal/configmigrate/\
 	./internal/dhcpd/\
 	./internal/dhcpsvc/\
 	./internal/dnsforward/\
@@ -287,6 +288,7 @@ run_linter gosec --quiet\
 	./internal/filtering/rewrite/\
 	./internal/filtering/rulelist/\
 	./internal/filtering/safesearch/\
+	./internal/ipset/\
 	./internal/next/\
 	./internal/rdns/\
 	./internal/schedule/\

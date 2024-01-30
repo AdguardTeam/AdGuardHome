@@ -24,23 +24,25 @@ func validateFilterURL(urlStr string) (err error) {
 
 	if filepath.IsAbs(urlStr) {
 		_, err = os.Stat(urlStr)
-		if err != nil {
-			// Don't wrap the error since it's informative enough as is.
-			return err
-		}
 
-		return nil
+		// Don't wrap the error since it's informative enough as is.
+		return err
 	}
 
 	u, err := url.ParseRequestURI(urlStr)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
-	} else if s := u.Scheme; s != aghhttp.SchemeHTTP && s != aghhttp.SchemeHTTPS {
+	}
+
+	if s := u.Scheme; s != aghhttp.SchemeHTTP && s != aghhttp.SchemeHTTPS {
 		return &url.Error{
 			Op:  "Check scheme",
 			URL: urlStr,
-			Err: fmt.Errorf("only %v allowed", []string{aghhttp.SchemeHTTP, aghhttp.SchemeHTTPS}),
+			Err: fmt.Errorf("only %v allowed", []string{
+				aghhttp.SchemeHTTP,
+				aghhttp.SchemeHTTPS,
+			}),
 		}
 	}
 

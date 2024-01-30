@@ -136,18 +136,22 @@ func UpstreamHTTPVersions(http3 bool) (v []upstream.HTTPVersion) {
 // based on provided parameters.
 func setProxyUpstreamMode(
 	conf *proxy.Config,
-	allServers bool,
-	fastestAddr bool,
+	upstreamMode UpstreamMode,
 	fastestTimeout time.Duration,
-) {
-	if allServers {
+) (err error) {
+	switch upstreamMode {
+	case UpstreamModeParallel:
 		conf.UpstreamMode = proxy.UModeParallel
-	} else if fastestAddr {
+	case UpstreamModeFastestAddr:
 		conf.UpstreamMode = proxy.UModeFastestAddr
 		conf.FastestPingTimeout = fastestTimeout
-	} else {
+	case UpstreamModeLoadBalance:
 		conf.UpstreamMode = proxy.UModeLoadBalance
+	default:
+		return fmt.Errorf("unexpected value %q", upstreamMode)
 	}
+
+	return nil
 }
 
 // createBootstrap returns a bootstrap resolver based on the configuration of s.
@@ -176,7 +180,7 @@ func (s *Server) createBootstrap(
 
 	var parallel upstream.ParallelResolver
 	for _, b := range boots {
-		parallel = append(parallel, b)
+		parallel = append(parallel, upstream.NewCachingResolver(b))
 	}
 
 	if s.etcHosts != nil {
@@ -294,7 +298,7 @@ func ValidateUpstreamsPrivate(upstreams []string, privateNets netutil.SubnetSet)
 			continue
 		}
 
-		if !privateNets.Contains(subnet.Addr().AsSlice()) {
+		if !privateNets.Contains(subnet.Addr()) {
 			errs = append(
 				errs,
 				fmt.Errorf("arpa domain %q should point to a locally-served network", domain),

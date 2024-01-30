@@ -181,6 +181,7 @@ export const MODAL_TYPE = {
     ADD_REWRITE: 'ADD_REWRITE',
     EDIT_REWRITE: 'EDIT_REWRITE',
     EDIT_LEASE: 'EDIT_LEASE',
+    ADD_LEASE: 'ADD_LEASE',
 };
 
 export const CLIENT_ID = {
@@ -435,7 +436,7 @@ export const SCHEME_TO_PROTOCOL_MAP = {
 export const DNS_REQUEST_OPTIONS = {
     PARALLEL: 'parallel',
     FASTEST_ADDR: 'fastest_addr',
-    LOAD_BALANCING: '',
+    LOAD_BALANCING: 'load_balance',
 };
 
 export const DHCP_FORM_NAMES = {

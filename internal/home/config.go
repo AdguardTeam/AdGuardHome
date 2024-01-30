@@ -10,7 +10,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
-	"github.com/AdguardTeam/AdGuardHome/internal/confmigrate"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/renameio/v2/maybe"
 	yaml "gopkg.in/yaml.v3"
@@ -149,7 +150,7 @@ type configuration struct {
 	sync.RWMutex `yaml:"-"`
 
 	// SchemaVersion is the version of the configuration schema.  See
-	// [confmigrate.LastSchemaVersion].
+	// [configmigrate.LastSchemaVersion].
 	SchemaVersion uint `yaml:"schema_version"`
 }
 
@@ -200,7 +201,7 @@ type dnsConfig struct {
 
 	// PrivateNets is the set of IP networks for which the private reverse DNS
 	// resolver should be used.
-	PrivateNets []string `yaml:"private_networks"`
+	PrivateNets []netutil.Prefix `yaml:"private_networks"`
 
 	// UsePrivateRDNS defines if the PTR requests for unknown addresses from
 	// locally-served networks should be resolved via private PTR resolvers.
@@ -267,7 +268,7 @@ type queryLogConfig struct {
 
 	// MemSize is the number of entries kept in memory before they are flushed
 	// to disk.
-	MemSize int `yaml:"size_memory"`
+	MemSize uint `yaml:"size_memory"`
 
 	// Enabled defines if the query log is enabled.
 	Enabled bool `yaml:"enabled"`
@@ -315,14 +316,18 @@ var config = &configuration{
 			RatelimitSubnetLenIPv4: 24,
 			RatelimitSubnetLenIPv6: 56,
 			RefuseAny:              true,
-			AllServers:             false,
+			UpstreamMode:           dnsforward.UpstreamModeLoadBalance,
 			HandleDDR:              true,
 			FastestTimeout: timeutil.Duration{
 				Duration: fastip.DefaultPingWaitTimeout,
 			},
 
-			TrustedProxies: []string{"127.0.0.0/8", "::1/128"},
-			CacheSize:      4 * 1024 * 1024,
+			TrustedProxies: []netutil.Prefix{{
+				Prefix: netip.MustParsePrefix("127.0.0.0/8"),
+			}, {
+				Prefix: netip.MustParsePrefix("::1/128"),
+			}},
+			CacheSize: 4 * 1024 * 1024,
 
 			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{
 				CustomIP:  netip.Addr{},
@@ -434,7 +439,7 @@ var config = &configuration{
 		MaxAge:     3,
 	},
 	OSConfig:      &osConfig{},
-	SchemaVersion: confmigrate.LastSchemaVersion,
+	SchemaVersion: configmigrate.LastSchemaVersion,
 	Theme:         ThemeAuto,
 }
 
@@ -479,14 +484,14 @@ func parseConfig() (err error) {
 		return err
 	}
 
-	migrator := confmigrate.New(&confmigrate.Config{
+	migrator := configmigrate.New(&configmigrate.Config{
 		WorkingDir: Context.workDir,
 	})
 
 	var upgraded bool
 	config.fileData, upgraded, err = migrator.Migrate(
 		config.fileData,
-		confmigrate.LastSchemaVersion,
+		configmigrate.LastSchemaVersion,
 	)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.

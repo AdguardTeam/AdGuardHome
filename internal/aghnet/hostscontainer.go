@@ -1,64 +1,22 @@
 package aghnet
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"io/fs"
 	"net/netip"
 	"path"
-	"strings"
 	"sync/atomic"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/log"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
-
-// DefaultHostsPaths returns the slice of paths default for the operating system
-// to files and directories which are containing the hosts database.  The result
-// is intended to be used within fs.FS so the initial slash is omitted.
-func DefaultHostsPaths() (paths []string) {
-	return defaultHostsPaths()
-}
-
-// MatchAddr returns the records for the IP address.
-func (hc *HostsContainer) MatchAddr(ip netip.Addr) (recs []*hostsfile.Record) {
-	cur := hc.current.Load()
-	if cur == nil {
-		return nil
-	}
-
-	return cur.addrs[ip]
-}
-
-// MatchName returns the records for the hostname.
-func (hc *HostsContainer) MatchName(name string) (recs []*hostsfile.Record) {
-	cur := hc.current.Load()
-	if cur != nil {
-		recs = cur.names[name]
-	}
-
-	return recs
-}
 
 // hostsContainerPrefix is a prefix for logging and wrapping errors in
 // HostsContainer's methods.
 const hostsContainerPrefix = "hosts container"
-
-// Hosts is a map of IP addresses to the records, as it primarily stored in the
-// [HostsContainer].  It should not be accessed for writing since it may be read
-// concurrently, users should clone it before modifying.
-//
-// The order of records for each address is preserved from original files, but
-// the order of the addresses, being a map key, is not.
-//
-// TODO(e.burkov):  Probably, this should be a sorted slice of records.
-type Hosts map[netip.Addr][]*hostsfile.Record
 
 // HostsContainer stores the relevant hosts database provided by the OS and
 // processes both A/AAAA and PTR DNS requests for those.
@@ -67,10 +25,10 @@ type HostsContainer struct {
 	done chan struct{}
 
 	// updates is the channel for receiving updated hosts.
-	updates chan Hosts
+	updates chan *hostsfile.DefaultStorage
 
 	// current is the last set of hosts parsed.
-	current atomic.Pointer[hostsIndex]
+	current atomic.Pointer[hostsfile.DefaultStorage]
 
 	// fsys is the working file system to read hosts files from.
 	fsys fs.FS
@@ -111,7 +69,7 @@ func NewHostsContainer(
 
 	hc = &HostsContainer{
 		done:     make(chan struct{}, 1),
-		updates:  make(chan Hosts, 1),
+		updates:  make(chan *hostsfile.DefaultStorage, 1),
 		fsys:     fsys,
 		watcher:  w,
 		patterns: patterns,
@@ -152,9 +110,23 @@ func (hc *HostsContainer) Close() (err error) {
 	return err
 }
 
-// Upd returns the channel into which the updates are sent.
-func (hc *HostsContainer) Upd() (updates <-chan Hosts) {
+// Upd returns the channel into which the updates are sent.  The updates
+// themselves must not be modified.
+func (hc *HostsContainer) Upd() (updates <-chan *hostsfile.DefaultStorage) {
 	return hc.updates
+}
+
+// type check
+var _ hostsfile.Storage = (*HostsContainer)(nil)
+
+// ByAddr implements the [hostsfile.Storage] interface for *HostsContainer.
+func (hc *HostsContainer) ByAddr(addr netip.Addr) (names []string) {
+	return hc.current.Load().ByAddr(addr)
+}
+
+// ByName implements the [hostsfile.Storage] interface for *HostsContainer.
+func (hc *HostsContainer) ByName(name string) (addrs []netip.Addr) {
+	return hc.current.Load().ByName(name)
 }
 
 // pathsToPatterns converts paths into patterns compatible with fs.Glob.
@@ -167,7 +139,7 @@ func pathsToPatterns(fsys fs.FS, paths []string) (patterns []string, err error) 
 				continue
 			}
 
-			// Don't put a filename here since it's already added by fs.Stat.
+			// Don't put a filename here since it's already added by [fs.Stat].
 			return nil, fmt.Errorf("path at index %d: %w", i, err)
 		}
 
@@ -209,7 +181,7 @@ func (hc *HostsContainer) handleEvents() {
 }
 
 // sendUpd tries to send the parsed data to the ch.
-func (hc *HostsContainer) sendUpd(recs Hosts) {
+func (hc *HostsContainer) sendUpd(recs *hostsfile.DefaultStorage) {
 	log.Debug("%s: sending upd", hostsContainerPrefix)
 
 	ch := hc.updates
@@ -226,67 +198,6 @@ func (hc *HostsContainer) sendUpd(recs Hosts) {
 	}
 }
 
-// hostsIndex is a [hostsfile.Set] to enumerate all the records.
-type hostsIndex struct {
-	// addrs maps IP addresses to the records.
-	addrs Hosts
-
-	// names maps hostnames to the records.
-	names map[string][]*hostsfile.Record
-}
-
-// walk is a file walking function for hostsIndex.
-func (idx *hostsIndex) walk(r io.Reader) (patterns []string, cont bool, err error) {
-	return nil, true, hostsfile.Parse(idx, r, nil)
-}
-
-// type check
-var _ hostsfile.Set = (*hostsIndex)(nil)
-
-// Add implements the [hostsfile.Set] interface for *hostsIndex.
-func (idx *hostsIndex) Add(rec *hostsfile.Record) {
-	idx.addrs[rec.Addr] = append(idx.addrs[rec.Addr], rec)
-	for _, name := range rec.Names {
-		idx.names[name] = append(idx.names[name], rec)
-	}
-}
-
-// type check
-var _ hostsfile.HandleSet = (*hostsIndex)(nil)
-
-// HandleInvalid implements the [hostsfile.HandleSet] interface for *hostsIndex.
-func (idx *hostsIndex) HandleInvalid(src string, _ []byte, err error) {
-	lineErr := &hostsfile.LineError{}
-	if !errors.As(err, &lineErr) {
-		// Must not happen if idx passed to [hostsfile.Parse].
-		return
-	} else if errors.Is(lineErr, hostsfile.ErrEmptyLine) {
-		// Ignore empty lines.
-		return
-	}
-
-	log.Info("%s: warning: parsing %q: %s", hostsContainerPrefix, src, lineErr)
-}
-
-// equalRecs is an equality function for [*hostsfile.Record].
-func equalRecs(a, b *hostsfile.Record) (ok bool) {
-	return a.Addr == b.Addr && a.Source == b.Source && slices.Equal(a.Names, b.Names)
-}
-
-// equalRecSlices is an equality function for slices of [*hostsfile.Record].
-func equalRecSlices(a, b []*hostsfile.Record) (ok bool) { return slices.EqualFunc(a, b, equalRecs) }
-
-// Equal returns true if indexes are equal.
-func (idx *hostsIndex) Equal(other *hostsIndex) (ok bool) {
-	if idx == nil {
-		return other == nil
-	} else if other == nil {
-		return false
-	}
-
-	return maps.EqualFunc(idx.addrs, other.addrs, equalRecSlices)
-}
-
 // refresh gets the data from specified files and propagates the updates if
 // needed.
 //
@@ -294,63 +205,22 @@ func (idx *hostsIndex) Equal(other *hostsIndex) (ok bool) {
 func (hc *HostsContainer) refresh() (err error) {
 	log.Debug("%s: refreshing", hostsContainerPrefix)
 
-	var addrLen, nameLen int
-	last := hc.current.Load()
-	if last != nil {
-		addrLen, nameLen = len(last.addrs), len(last.names)
-	}
-	idx := &hostsIndex{
-		addrs: make(Hosts, addrLen),
-		names: make(map[string][]*hostsfile.Record, nameLen),
-	}
-
-	_, err = aghos.FileWalker(idx.walk).Walk(hc.fsys, hc.patterns...)
+	// The error is always nil here since no readers passed.
+	strg, _ := hostsfile.NewDefaultStorage()
+	_, err = aghos.FileWalker(func(r io.Reader) (patterns []string, cont bool, err error) {
+		// Don't wrap the error since it's already informative enough as is.
+		return nil, true, hostsfile.Parse(strg, r, nil)
+	}).Walk(hc.fsys, hc.patterns...)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
 
-	// TODO(e.burkov):  Serialize updates using time.
-	if !last.Equal(idx) {
-		hc.current.Store(idx)
-		hc.sendUpd(idx.addrs)
+	// TODO(e.burkov):  Serialize updates using [time.Time].
+	if !hc.current.Load().Equal(strg) {
+		hc.current.Store(strg)
+		hc.sendUpd(strg)
 	}
 
 	return nil
-}
-
-// type check
-var _ upstream.Resolver = (*HostsContainer)(nil)
-
-// LookupNetIP implements the [upstream.Resolver] interface for *HostsContainer.
-func (hc *HostsContainer) LookupNetIP(
-	ctx context.Context,
-	network string,
-	hostname string,
-) (addrs []netip.Addr, err error) {
-	// TODO(e.burkov):  Think of extracting this logic to a golibs function if
-	// needed anywhere else.
-	var isDesiredProto func(ip netip.Addr) (ok bool)
-	switch network {
-	case "ip4":
-		isDesiredProto = (netip.Addr).Is4
-	case "ip6":
-		isDesiredProto = (netip.Addr).Is6
-	case "ip":
-		isDesiredProto = func(ip netip.Addr) (ok bool) { return true }
-	default:
-		return nil, fmt.Errorf("unsupported network: %q", network)
-	}
-
-	idx := hc.current.Load()
-	recs := idx.names[strings.ToLower(hostname)]
-
-	addrs = make([]netip.Addr, 0, len(recs))
-	for _, rec := range recs {
-		if isDesiredProto(rec.Addr) {
-			addrs = append(addrs, rec.Addr)
-		}
-	}
-
-	return slices.Clip(addrs), nil
 }

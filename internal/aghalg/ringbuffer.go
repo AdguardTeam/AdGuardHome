@@ -1,23 +1,15 @@
 package aghalg
 
-import (
-	"github.com/AdguardTeam/golibs/errors"
-)
-
 // RingBuffer is the implementation of ring buffer data structure.
 type RingBuffer[T any] struct {
 	buf  []T
-	cur  int
+	cur  uint
 	full bool
 }
 
 // NewRingBuffer initializes the new instance of ring buffer.  size must be
 // greater or equal to zero.
-func NewRingBuffer[T any](size int) (rb *RingBuffer[T]) {
-	if size < 0 {
-		panic(errors.Error("ring buffer: size must be greater or equal to zero"))
-	}
-
+func NewRingBuffer[T any](size uint) (rb *RingBuffer[T]) {
 	return &RingBuffer[T]{
 		buf: make([]T, size),
 	}
@@ -30,7 +22,7 @@ func (rb *RingBuffer[T]) Append(e T) {
 	}
 
 	rb.buf[rb.cur] = e
-	rb.cur = (rb.cur + 1) % cap(rb.buf)
+	rb.cur = (rb.cur + 1) % uint(cap(rb.buf))
 	if rb.cur == 0 {
 		rb.full = true
 	}
@@ -87,12 +79,12 @@ func (rb *RingBuffer[T]) splitCur() (before, after []T) {
 }
 
 // Len returns a length of the buffer.
-func (rb *RingBuffer[T]) Len() (l int) {
+func (rb *RingBuffer[T]) Len() (l uint) {
 	if !rb.full {
 		return rb.cur
 	}
 
-	return cap(rb.buf)
+	return uint(cap(rb.buf))
 }
 
 // Clear clears the buffer.

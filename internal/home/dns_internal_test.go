@@ -22,7 +22,7 @@ func TestApplyAdditionalFiltering(t *testing.T) {
 	}, nil)
 	require.NoError(t, err)
 
-	Context.clients.idIndex = map[string]*Client{
+	Context.clients.idIndex = map[string]*persistentClient{
 		"default": {
 			UseOwnSettings:      false,
 			safeSearchConf:      filtering.SafeSearchConfig{Enabled: false},
@@ -108,7 +108,7 @@ func TestApplyAdditionalFiltering_blockedServices(t *testing.T) {
 	}, nil)
 	require.NoError(t, err)
 
-	Context.clients.idIndex = map[string]*Client{
+	Context.clients.idIndex = map[string]*persistentClient{
 		"default": {
 			UseOwnBlockedServices: false,
 		},

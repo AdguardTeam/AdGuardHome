@@ -1,7 +1,7 @@
 import { handleActions } from 'redux-actions';
 
 import * as actions from '../actions/dnsConfig';
-import { ALL_INTERFACES_IP, BLOCKING_MODES } from '../helpers/constants';
+import { ALL_INTERFACES_IP, BLOCKING_MODES, DNS_REQUEST_OPTIONS } from '../helpers/constants';
 
 const DEFAULT_BLOCKING_IPV4 = ALL_INTERFACES_IP;
 const DEFAULT_BLOCKING_IPV6 = '::';
@@ -15,6 +15,7 @@ const dnsConfig = handleActions(
                 blocking_ipv4,
                 blocking_ipv6,
                 upstream_dns,
+                upstream_mode,
                 fallback_dns,
                 bootstrap_dns,
                 local_ptr_upstreams,
@@ -33,6 +34,7 @@ const dnsConfig = handleActions(
                 local_ptr_upstreams: (local_ptr_upstreams && local_ptr_upstreams.join('\n')) || '',
                 ratelimit_whitelist: (ratelimit_whitelist && ratelimit_whitelist.join('\n')) || '',
                 processingGetConfig: false,
+                upstream_mode: upstream_mode === '' ? DNS_REQUEST_OPTIONS.LOAD_BALANCING : upstream_mode,
             };
         },
 

@@ -127,16 +127,11 @@ func initDNSServer(
 	httpReg aghhttp.RegisterFunc,
 	tlsConf *tlsConfigSettings,
 ) (err error) {
-	privateNets, err := parseSubnetSet(config.DNS.PrivateNets)
-	if err != nil {
-		return fmt.Errorf("preparing set of private subnets: %w", err)
-	}
-
 	Context.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
 		DNSFilter:   filters,
 		Stats:       sts,
 		QueryLog:    qlog,
-		PrivateNets: privateNets,
+		PrivateNets: parseSubnetSet(config.DNS.PrivateNets),
 		Anonymizer:  anonymizer,
 		DHCPServer:  dhcpSrv,
 		EtcHosts:    Context.etcHosts,
@@ -169,26 +164,15 @@ func initDNSServer(
 // parseSubnetSet parses a slice of subnets.  If the slice is empty, it returns
 // a subnet set that matches all locally served networks, see
 // [netutil.IsLocallyServed].
-func parseSubnetSet(nets []string) (s netutil.SubnetSet, err error) {
+func parseSubnetSet(nets []netutil.Prefix) (s netutil.SubnetSet) {
 	switch len(nets) {
 	case 0:
 		// Use an optimized function-based matcher.
-		return netutil.SubnetSetFunc(netutil.IsLocallyServed), nil
+		return netutil.SubnetSetFunc(netutil.IsLocallyServed)
 	case 1:
-		s, err = netutil.ParseSubnet(nets[0])
-		if err != nil {
-			return nil, err
-		}
-
-		return s, nil
+		return nets[0].Prefix
 	default:
-		var nets []*net.IPNet
-		nets, err = netutil.ParseSubnets(config.DNS.PrivateNets...)
-		if err != nil {
-			return nil, err
-		}
-
-		return netutil.SliceSubnetSet(nets), nil
+		return netutil.SliceSubnetSet(netutil.UnembedPrefixes(nets))
 	}
 }
 
@@ -411,9 +395,9 @@ func applyAdditionalFiltering(clientIP netip.Addr, clientID string, setts *filte
 
 	setts.ClientIP = clientIP
 
-	c, ok := Context.clients.Find(clientID)
+	c, ok := Context.clients.find(clientID)
 	if !ok {
-		c, ok = Context.clients.Find(clientIP.String())
+		c, ok = Context.clients.find(clientIP.String())
 		if !ok {
 			log.Debug("%s: no clients with ip %s and clientid %q", pref, clientIP, clientID)
 

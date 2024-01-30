@@ -1,5 +1,0 @@
-# The "testdata" part is added here because the test is actually run from the
-# parent directory.  Real interface files usually contain only absolute paths.
-
-source ./testdata/ifaces
-source ./testdata/*

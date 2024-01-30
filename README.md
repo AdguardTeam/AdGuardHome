@@ -278,6 +278,15 @@ cd AdGuardHome
 make
 ```
 
+  #### <a href="#building-node" id="building-node" name="building-node">Building with Node.js 17 and later</a>
+
+In order to build AdGuard Home with Node.js 17 and later, specify
+`--openssl-legacy-provider` option.
+
+```sh
+export NODE_OPTIONS=--openssl-legacy-provider
+```
+
 **NOTE:**  The non-standard `-j` flag is currently not supported, so building
 with `make -j 4` or setting your `MAKEFLAGS` to include, for example, `-j 4` is
 likely to break the build.  If you do have your `MAKEFLAGS` set to that, and you
@@ -409,6 +418,7 @@ There are three options how you can install an unstable version:
     ```sh
     curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s -- -c edge
     ```
+
 [wiki-platf]: https://github.com/AdguardTeam/AdGuardHome/wiki/Platforms
 
 
@@ -463,10 +473,6 @@ bug or implementing the feature.
     [@kongfl888](https://github.com/kongfl888) (originally by
     [@rufengsuixing](https://github.com/rufengsuixing)).
 
- *  [Prometheus exporter for AdGuard
-    Home](https://github.com/ebrianne/adguard-exporter) by
-    [@ebrianne](https://github.com/ebrianne).
-
  *  [Terminal-based, real-time traffic monitoring and statistics for your AdGuard Home
     instance](https://github.com/Lissy93/AdGuardian-Term) by
     [@Lissy93](https://github.com/Lissy93)
@@ -485,7 +491,8 @@ bug or implementing the feature.
  *  [Node.js library](https://github.com/Andrea055/AdguardHomeAPI) by
     [@Andrea055](https://github.com/Andrea055/).
 
-
+ *  [Browser Extension](https://github.com/satheshshiva/Adguard-Home-Browser-Ext) by
+    [@satheshshiva](https://github.com/satheshshiva/).
 
 ## <a href="#acknowledgments" id="acknowledgments" name="acknowledgments">Acknowledgments</a>
 

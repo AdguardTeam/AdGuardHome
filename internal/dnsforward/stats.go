@@ -25,10 +25,10 @@ func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
 
 	ip := pctx.Addr.Addr().AsSlice()
 	s.anonymizer.Load()(ip)
+	ipStr := net.IP(ip).String()
 
-	log.Debug("dnsforward: client ip for stats and querylog: %s", ip)
+	log.Debug("dnsforward: client ip for stats and querylog: %s", ipStr)
 
-	ipStr := pctx.Addr.Addr().String()
 	ids := []string{ipStr, dctx.clientID}
 	qt, cl := q.Qtype, q.Qclass
 

@@ -196,7 +196,7 @@ func newLogEntry(params *AddParams) (entry *logEntry) {
 // Add implements the [QueryLog] interface for *queryLog.
 func (l *queryLog) Add(params *AddParams) {
 	var isEnabled, fileIsEnabled bool
-	var memSize int
+	var memSize uint
 	func() {
 		l.confMu.RLock()
 		defer l.confMu.RUnlock()
@@ -205,7 +205,7 @@ func (l *queryLog) Add(params *AddParams) {
 		memSize = l.conf.MemSize
 	}()
 
-	if !isEnabled || memSize == 0 {
+	if !isEnabled {
 		return
 	}
 
@@ -230,6 +230,7 @@ func (l *queryLog) Add(params *AddParams) {
 	if !l.flushPending && fileIsEnabled && l.buffer.Len() >= memSize {
 		l.flushPending = true
 
+		// TODO(s.chzhen):  Fix occasional rewrite of entires.
 		go func() {
 			flushErr := l.flushLogBuffer()
 			if flushErr != nil {

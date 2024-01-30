@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2023-12-01T15:24:07.522Z",
+    "timeUpdated": "2024-01-22T00:10:10.554Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -10758,9 +10758,10 @@
         },
         "localytics": {
             "name": "Localytics",
-            "categoryId": 6,
-            "url": "http://www.localytics.com/",
-            "companyId": "localytics"
+            "categoryId": 101,
+            "url": "https://uplandsoftware.com/localytics/",
+            "companyId": "upland",
+            "source": "AdGuard"
         },
         "lockerdome": {
             "name": "LockerDome",
@@ -15613,10 +15614,11 @@
             "companyId": "sharecompany"
         },
         "sharepoint": {
-            "name": "Microsoft SharePoint",
-            "categoryId": 2,
-            "url": "https://products.office.com/en-us/sharepoint/sharepoint-online-collaboration-software",
-            "companyId": "microsoft"
+            "name": "SharePoint",
+            "categoryId": 8,
+            "url": "https://www.microsoft.com/microsoft-365/sharepoint/collaboration",
+            "companyId": "microsoft",
+            "source": "AdGuard"
         },
         "sharethis": {
             "name": "ShareThis",
@@ -22958,6 +22960,7 @@
         "loadercdn.com": "loadercdn.com",
         "loadsource.org": "loadsource.org",
         "web.localytics.com": "localytics",
+        "localytics.com": "localytics",
         "cdn2.lockerdome.com": "lockerdome",
         "addtoany.com": "lockerz_share",
         "pixel.loganmedia.mobi": "logan_media",
@@ -23254,6 +23257,7 @@
         "k-msedge.net": "msedge",
         "l-msedge.net": "msedge",
         "s-msedge.net": "msedge",
+        "spo-msedge.net": "msedge",
         "t-msedge.net": "msedge",
         "wac-msedge.net": "msedge",
         "msn.com": "msn",
@@ -23521,8 +23525,10 @@
         "outbrain.com": "outbrain",
         "outbrainimg.com": "outbrain",
         "live.com": "outlook",
+        "cloud.microsoft": "outlook",
         "hotmail.com": "outlook",
         "outlook.com": "outlook",
+        "svc.ms": "outlook",
         "overheat.it": "overheat.it",
         "oewabox.at": "owa",
         "owneriq.net": "owneriq",
@@ -23790,6 +23796,7 @@
         "rcsmediagroup.it": "rcs.it",
         "d335luupugsy2.cloudfront.net": "rd_station",
         "rea-group.com": "rea_group",
+        "reagroupdata.com.au": "rea_group",
         "reastatic.net": "rea_group",
         "d12ulf131zb0yj.cloudfront.net": "reachforce",
         "reachforce.com": "reachforce",
@@ -24109,6 +24116,8 @@
         "quintrics.nl": "sharecompany",
         "sharecompany.nl": "sharecompany",
         "sharepointonline.com": "sharepoint",
+        "onmicrosoft.com": "sharepoint",
+        "sharepoint.com": "sharepoint",
         "sharethis.com": "sharethis",
         "shareth.ru": "sharethrough",
         "sharethrough.com": "sharethrough",

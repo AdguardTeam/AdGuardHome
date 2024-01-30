@@ -23,6 +23,83 @@ See also the [v0.107.44 GitHub milestone][ms-v0.107.44].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- Etc timezones to the timezone list ([#6568]).
+- The schema version of the configuration file to the output of running
+  `AdGuardHome` (or `AdGuardHome.exe`) with `-v --version` command-line options
+  ([#6545]).
+- Ability to disable plain-DNS serving via UI if an encrypted protocol is
+  already used ([#1660]).
+
+### Changed
+
+- The bootstrapped upstream addresses now updated according to the TTL of the
+  bootstrap DNS response ([#6321]).
+- Logging level of timeout errors is now `error` instead of `debug` ([#6574]).
+- The field `"upstream_mode"` in `POST /control/dns_config` and
+  `GET /control/dns_info` HTTP APIs now accepts `load_balance` value.  Check
+  `openapi/CHANGELOG.md` for more details.
+
+#### Configuration changes
+
+In this release, the schema version has changed from 27 to 28.
+
+- The new property `clients.persistent.*.uid`, which is unique identifier of the
+  persistent client.
+- The properties `dns.all_servers` and `dns.fastest_addr` were removed, their
+  values migrated to newly added field `dns.upstream_mode` that describes the
+  logic through which upstreams will be used.  See also a [Wiki
+  page][wiki-config].
+
+  ```yaml
+  # BEFORE:
+  'dns':
+      # …
+      'all_servers': true
+      'fastest_addr': true
+
+  # AFTER:
+  'dns':
+      # …
+      'upstream_mode': 'parallel'
+  ```
+
+  To rollback this change, remove the new field `upstream_mode`, set back
+  `dns.all_servers` and `dns.fastest_addr` properties in `dns` section, and
+  change the `schema_version` back to `27`.
+
+### Fixed
+
+- Panic on using `--no-etc-hosts` flag ([#6644]).
+- Schedule display in the client settings after creating or updating.
+- Zero value in `querylog.size_memory` disables logging ([#6570]).
+- Non-anonymized IP addresses on the dashboard ([#6584]).
+- Maximum cache TTL requirement when editing minimum cache TTL in the Web UI
+  ([#6409]).
+- Load balancing algorithm stuck on a single server ([#6480]).
+- Statistics for 7 days displayed as 168 hours on the dashboard.
+- Pre-filling the Edit static lease window with data ([#6534]).
+- Names defined in the `/etc/hosts` for a single address family wrongly
+  considered undefined for another family ([#6541]).
+- Omitted CNAME records in safe search results, which can cause YouTube to not
+  work on iOS ([#6352]).
+
+[#6321]: https://github.com/AdguardTeam/AdGuardHome/issues/6321
+[#6352]: https://github.com/AdguardTeam/AdGuardHome/issues/6352
+[#6409]: https://github.com/AdguardTeam/AdGuardHome/issues/6409
+[#6480]: https://github.com/AdguardTeam/AdGuardHome/issues/6480
+[#6534]: https://github.com/AdguardTeam/AdGuardHome/issues/6534
+[#6541]: https://github.com/AdguardTeam/AdGuardHome/issues/6541
+[#6545]: https://github.com/AdguardTeam/AdGuardHome/issues/6545
+[#6568]: https://github.com/AdguardTeam/AdGuardHome/issues/6568
+[#6570]: https://github.com/AdguardTeam/AdGuardHome/issues/6570
+[#6574]: https://github.com/AdguardTeam/AdGuardHome/issues/6574
+[#6584]: https://github.com/AdguardTeam/AdGuardHome/issues/6584
+[#6644]: https://github.com/AdguardTeam/AdGuardHome/issues/6644
+
+[wiki-config]: https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

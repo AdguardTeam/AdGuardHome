@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -76,6 +77,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 			FallbackDNS:            []string{"9.9.9.10"},
 			RatelimitSubnetLenIPv4: 24,
 			RatelimitSubnetLenIPv6: 56,
+			UpstreamMode:           UpstreamModeLoadBalance,
 			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
@@ -102,7 +104,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 	}, {
 		conf: func() ServerConfig {
 			conf := defaultConf
-			conf.FastestAddr = true
+			conf.UpstreamMode = UpstreamModeFastestAddr
 
 			return conf
 		},
@@ -110,7 +112,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 	}, {
 		conf: func() ServerConfig {
 			conf := defaultConf
-			conf.AllServers = true
+			conf.UpstreamMode = UpstreamModeParallel
 
 			return conf
 		},
@@ -156,6 +158,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			UpstreamDNS:            []string{"8.8.8.8:53", "8.8.4.4:53"},
 			RatelimitSubnetLenIPv4: 24,
 			RatelimitSubnetLenIPv6: 56,
+			UpstreamMode:           UpstreamModeLoadBalance,
 			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 		},
 		ConfigModified: func() {},
@@ -224,11 +227,11 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			`upstream servers: validating upstream "!!!": not an ip:port`,
 	}, {
 		name: "bootstraps_bad",
-		wantSet: `validating dns config: checking bootstrap a: invalid address: not a bootstrap: ` +
-			`ParseAddr("a"): unable to parse IP`,
+		wantSet: `validating dns config: checking bootstrap a: not a bootstrap: ParseAddr("a"): ` +
+			`unable to parse IP`,
 	}, {
 		name:    "cache_bad_ttl",
-		wantSet: `validating dns config: cache_ttl_min must be less or equal than cache_ttl_max`,
+		wantSet: `validating dns config: cache_ttl_min must be less than or equal to cache_ttl_max`,
 	}, {
 		name:    "upstream_mode_bad",
 		wantSet: `validating dns config: upstream_mode: incorrect value "somethingelse"`,
@@ -522,11 +525,12 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		TCPListenAddrs:  []*net.TCPAddr{{}},
 		UpstreamTimeout: upsTimeout,
 		Config: Config{
+			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 		ServePlainDNS: true,
 	}, nil)
-	srv.etcHosts = hc
+	srv.etcHosts = upstream.NewHostsResolver(hc)
 	startDeferStop(t, srv)
 
 	testCases := []struct {

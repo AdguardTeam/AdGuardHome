@@ -389,3 +389,18 @@ export const validateIPv6Subnet = (value) => {
     }
     return undefined;
 };
+
+/**
+ * @returns {undefined|string}
+ * @param value
+ * @param allValues
+ */
+export const validatePlainDns = (value, allValues) => {
+    const { enabled } = allValues;
+
+    if (!enabled && !value) {
+        return 'encryption_plain_dns_error';
+    }
+
+    return undefined;
+};
