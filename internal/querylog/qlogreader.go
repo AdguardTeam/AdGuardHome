@@ -131,7 +131,6 @@ func (r *qLogReader) ReadNext() (string, error) {
 
 			// Set its position to the start right away.
 			_, err = q.SeekStart()
-
 			// This is unexpected, return an error right away.
 			if err != nil {
 				return "", err

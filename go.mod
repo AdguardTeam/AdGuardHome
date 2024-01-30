@@ -28,7 +28,7 @@ require (
 	// own code for that.  Perhaps, use gopacket.
 	github.com/mdlayher/raw v0.1.0
 	github.com/miekg/dns v1.1.58
-	github.com/quic-go/quic-go v0.40.0
+	github.com/quic-go/quic-go v0.40.1
 	github.com/stretchr/testify v1.8.4
 	github.com/ti-mo/netfilter v0.5.1
 	go.etcd.io/bbolt v1.3.8
