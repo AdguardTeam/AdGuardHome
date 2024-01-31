@@ -7,48 +7,14 @@ import (
 	"context"
 	"net"
 	"net/netip"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
-	"golang.org/x/exp/slices"
 )
 
-// Lease is a DHCP lease.
+// Interface is a DHCP service.
 //
-// TODO(e.burkov):  Consider moving it to [agh], since it also may be needed in
-// [websvc].
-type Lease struct {
-	// IP is the IP address leased to the client.
-	IP netip.Addr
-
-	// Expiry is the expiration time of the lease.
-	Expiry time.Time
-
-	// Hostname of the client.
-	Hostname string
-
-	// HWAddr is the physical hardware address (MAC address).
-	HWAddr net.HardwareAddr
-
-	// IsStatic defines if the lease is static.
-	IsStatic bool
-}
-
-// Clone returns a deep copy of l.
-func (l *Lease) Clone() (clone *Lease) {
-	if l == nil {
-		return nil
-	}
-
-	return &Lease{
-		Expiry:   l.Expiry,
-		Hostname: l.Hostname,
-		HWAddr:   slices.Clone(l.HWAddr),
-		IP:       l.IP,
-		IsStatic: l.IsStatic,
-	}
-}
-
+// TODO(e.burkov):  Separate HostByIP, MACByIP, IPByHost into a separate
+// interface.  This is also valid for Enabled method.
 type Interface interface {
 	agh.ServiceWithConfig[*Config]
 
@@ -71,7 +37,8 @@ type Interface interface {
 	// hostname, either set or generated.
 	IPByHost(host string) (ip netip.Addr)
 
-	// Leases returns all the active DHCP leases.
+	// Leases returns all the active DHCP leases.  The returned slice should be
+	// a clone.
 	//
 	// TODO(e.burkov):  Consider implementing iterating methods with appropriate
 	// signatures instead of cloning the whole list.
@@ -91,6 +58,8 @@ type Interface interface {
 	RemoveLease(l *Lease) (err error)
 
 	// Reset removes all the DHCP leases.
+	//
+	// TODO(e.burkov):  If it's really needed?
 	Reset() (err error)
 }
 

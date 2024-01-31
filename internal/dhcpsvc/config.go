@@ -19,6 +19,8 @@ type Config struct {
 	// clients' hostnames.
 	LocalDomainName string
 
+	// TODO(e.burkov):  Add DB path.
+
 	// ICMPTimeout is the timeout for checking another DHCP server's presence.
 	ICMPTimeout time.Duration
 
@@ -66,12 +68,6 @@ func (conf *Config) Validate() (err error) {
 	}
 
 	return nil
-}
-
-// newMustErr returns an error that indicates that valName must be as must
-// describes.
-func newMustErr(valName, must string, val fmt.Stringer) (err error) {
-	return fmt.Errorf("%s %s must %s", valName, val, must)
 }
 
 // validate returns an error in ic, if any.
