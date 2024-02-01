@@ -218,7 +218,7 @@ func (s *Server) defaultLocalPTRUpstreams() (ups []string, err error) {
 		return nil, err
 	}
 
-	sysResolvers := slices.DeleteFunc(s.sysResolvers.Addrs(), matcher.Has)
+	sysResolvers := slices.DeleteFunc(slices.Clone(s.sysResolvers.Addrs()), matcher.Has)
 	ups = make([]string, 0, len(sysResolvers))
 	for _, r := range sysResolvers {
 		ups = append(ups, r.String())
