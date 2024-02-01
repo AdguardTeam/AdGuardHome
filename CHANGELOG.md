@@ -71,6 +71,8 @@ In this release, the schema version has changed from 27 to 28.
 
 ### Fixed
 
+- “Invalid AddrPort” in the *Private reverse DNS servers* section on the
+  *Settings → DNS settings* page.
 - Panic on using `--no-etc-hosts` flag ([#6644]).
 - Schedule display in the client settings after creating or updating.
 - Zero value in `querylog.size_memory` disables logging ([#6570]).

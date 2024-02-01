@@ -83,7 +83,9 @@ type DHCP interface {
 
 // SystemResolvers is an interface for accessing the OS-provided resolvers.
 type SystemResolvers interface {
-	// Addrs returns the list of system resolvers' addresses.
+	// Addrs returns the list of system resolvers' addresses.  Callers must
+	// clone the returned slice before modifying it.  Implementations of Addrs
+	// must be safe for concurrent use.
 	Addrs() (addrs []netip.AddrPort)
 }
 
