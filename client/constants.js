@@ -3,7 +3,7 @@ const BUILD_ENVS = {
     prod: 'production',
 };
 
-const BASE_URL = 'control';
+const BASE_URL = '/control';
 
 module.exports = {
     BUILD_ENVS,
