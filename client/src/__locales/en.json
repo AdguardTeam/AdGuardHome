@@ -236,6 +236,7 @@
     "updated_upstream_dns_toast": "Upstream servers successfully saved",
     "dns_test_ok_toast": "Specified DNS servers are working correctly",
     "dns_test_not_ok_toast": "Server \"{{key}}\": could not be used, please check that you've written it correctly",
+    "dns_test_parsing_error_toast": "Section {{section}}: line {{line}}: could not be used, please check that you've written it correctly",
     "dns_test_warning_toast": "Upstream \"{{key}}\" does not respond to test requests and may not work properly",
     "unblock": "Unblock",
     "block": "Block",

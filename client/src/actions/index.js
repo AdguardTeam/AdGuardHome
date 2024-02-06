@@ -403,6 +403,11 @@ export const testUpstream = (
                 const message = upstreamResponse[key];
                 if (message.startsWith('WARNING:')) {
                     dispatch(addErrorToast({ error: i18next.t('dns_test_warning_toast', { key }) }));
+                } else if (message.endsWith(': parsing error')) {
+                    const info = message.substring(0, message.indexOf(':'));
+                    const [sectionKey, line] = info.split(' ');
+                    const section = i18next.t(sectionKey);
+                    dispatch(addErrorToast({ error: i18next.t('dns_test_parsing_error_toast', { section, line }) }));
                 } else if (message !== 'OK') {
                     dispatch(addErrorToast({ error: i18next.t('dns_test_not_ok_toast', { key }) }));
                 }

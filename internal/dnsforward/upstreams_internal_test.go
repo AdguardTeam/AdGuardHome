@@ -100,8 +100,7 @@ func TestUpstreamConfigValidator(t *testing.T) {
 		name:    "bad_specification",
 		general: []string{"[/domain.example/]/]1.2.3.4"},
 		want: map[string]string{
-			"[/domain.example/]/]1.2.3.4": `splitting upstream line ` +
-				`"[/domain.example/]/]1.2.3.4": duplicated separator`,
+			"[/domain.example/]/]1.2.3.4": generalTextLabel + " 1: parsing error",
 		},
 	}, {
 		name:     "all_different",
@@ -120,23 +119,9 @@ func TestUpstreamConfigValidator(t *testing.T) {
 		fallback: []string{"[/example/" + goodUps},
 		private:  []string{"[/example//bad.123/]" + goodUps},
 		want: map[string]string{
-			`[/example/]/]` + goodUps: `splitting upstream line ` +
-				`"[/example/]/]` + goodUps + `": duplicated separator`,
-			`[/example/` + goodUps: `splitting upstream line ` +
-				`"[/example/` + goodUps + `": missing separator`,
-			`[/example//bad.123/]` + goodUps: `splitting upstream line ` +
-				`"[/example//bad.123/]` + goodUps + `": domain at index 2: ` +
-				`bad domain name "bad.123": ` +
-				`bad top-level domain name label "123": all octets are numeric`,
-		},
-	}, {
-		name: "non-specific_default",
-		general: []string{
-			"#",
-			"[/example/]#",
-		},
-		want: map[string]string{
-			"#": "not a domain-specific upstream",
+			"[/example/]/]" + goodUps:        generalTextLabel + " 1: parsing error",
+			"[/example/" + goodUps:           fallbackTextLabel + " 1: parsing error",
+			"[/example//bad.123/]" + goodUps: privateTextLabel + " 1: parsing error",
 		},
 	}, {
 		name: "bad_proto",
@@ -144,7 +129,15 @@ func TestUpstreamConfigValidator(t *testing.T) {
 			"bad://1.2.3.4",
 		},
 		want: map[string]string{
-			"bad://1.2.3.4": `bad protocol "bad"`,
+			"bad://1.2.3.4": generalTextLabel + " 1: parsing error",
+		},
+	}, {
+		name: "truncated_line",
+		general: []string{
+			"This is a very long line.  It will cause a parsing error and will be truncated here.",
+		},
+		want: map[string]string{
+			"This is a very long line.  It will cause a parsing error and will be truncated …": "upstream_dns 1: parsing error",
 		},
 	}}
 
