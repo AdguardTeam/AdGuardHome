@@ -35,7 +35,7 @@ See also the [v0.107.44 GitHub milestone][ms-v0.107.44].
 
 ### Added
 
-- Etc timezones to the timezone list ([#6568]).
+- Timezones in the Etc/ area to the timezone list ([#6568]).
 - The schema version of the configuration file to the output of running
   `AdGuardHome` (or `AdGuardHome.exe`) with `-v --version` command-line options
   ([#6545]).
@@ -44,8 +44,8 @@ See also the [v0.107.44 GitHub milestone][ms-v0.107.44].
 
 ### Changed
 
-- The bootstrapped upstream addresses now updated according to the TTL of the
-  bootstrap DNS response ([#6321]).
+- The bootstrapped upstream addresses are now updated according to the TTL of
+  the bootstrap DNS response ([#6321]).
 - Logging level of timeout errors is now `error` instead of `debug` ([#6574]).
 - The field `"upstream_mode"` in `POST /control/dns_config` and
   `GET /control/dns_info` HTTP APIs now accepts `load_balance` value.  Check
@@ -55,8 +55,8 @@ See also the [v0.107.44 GitHub milestone][ms-v0.107.44].
 
 In this release, the schema version has changed from 27 to 28.
 
-- The new property `clients.persistent.*.uid`, which is unique identifier of the
-  persistent client.
+- The new property `clients.persistent.*.uid`, which is a unique identifier of
+  the persistent client.
 - The properties `dns.all_servers` and `dns.fastest_addr` were removed, their
   values migrated to newly added field `dns.upstream_mode` that describes the
   logic through which upstreams will be used.  See also a [Wiki
