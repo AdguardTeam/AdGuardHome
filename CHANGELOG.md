@@ -14,18 +14,28 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.44] - 2023-12-20 (APPROX.)
+## [v0.107.45] - 2024-03-05 (APPROX.)
 
-See also the [v0.107.44 GitHub milestone][ms-v0.107.44].
+See also the [v0.107.45 GitHub milestone][ms-v0.107.45].
 
-[ms-v0.107.44]: https://github.com/AdguardTeam/AdGuardHome/milestone/79?closed=1
+[ms-v0.107.45]: https://github.com/AdguardTeam/AdGuardHome/milestone/80?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+
+
+## [v0.107.44] - 2024-02-06
+
+See also the [v0.107.44 GitHub milestone][ms-v0.107.44].
+
 ### Added
 
-- Etc timezones to the timezone list ([#6568]).
+- Timezones in the Etc/ area to the timezone list ([#6568]).
 - The schema version of the configuration file to the output of running
   `AdGuardHome` (or `AdGuardHome.exe`) with `-v --version` command-line options
   ([#6545]).
@@ -34,8 +44,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
-- The bootstrapped upstream addresses now updated according to the TTL of the
-  bootstrap DNS response ([#6321]).
+- The bootstrapped upstream addresses are now updated according to the TTL of
+  the bootstrap DNS response ([#6321]).
 - Logging level of timeout errors is now `error` instead of `debug` ([#6574]).
 - The field `"upstream_mode"` in `POST /control/dns_config` and
   `GET /control/dns_info` HTTP APIs now accepts `load_balance` value.  Check
@@ -45,8 +55,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 In this release, the schema version has changed from 27 to 28.
 
-- The new property `clients.persistent.*.uid`, which is unique identifier of the
-  persistent client.
+- The new property `clients.persistent.*.uid`, which is a unique identifier of
+  the persistent client.
 - The properties `dns.all_servers` and `dns.fastest_addr` were removed, their
   values migrated to newly added field `dns.upstream_mode` that describes the
   logic through which upstreams will be used.  See also a [Wiki
@@ -100,11 +110,8 @@ In this release, the schema version has changed from 27 to 28.
 [#6584]: https://github.com/AdguardTeam/AdGuardHome/issues/6584
 [#6644]: https://github.com/AdguardTeam/AdGuardHome/issues/6644
 
-[wiki-config]: https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[ms-v0.107.44]: https://github.com/AdguardTeam/AdGuardHome/milestone/79?closed=1
+[wiki-config]:  https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration
 
 
 
@@ -2752,11 +2759,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.44...HEAD
-[v0.107.44]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.43...v0.107.44
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.45...HEAD
+[v0.107.45]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.44...v0.107.45
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.43...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.44...HEAD
+[v0.107.44]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.43...v0.107.44
 [v0.107.43]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.42...v0.107.43
 [v0.107.42]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.41...v0.107.42
 [v0.107.41]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.40...v0.107.41
