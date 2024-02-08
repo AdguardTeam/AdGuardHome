@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -23,7 +24,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 // DHCP is an interface for accessing DHCP lease data the [clientsContainer]

@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"net"
 	"net/netip"
+	"slices"
 	"time"
-
-	"golang.org/x/exp/slices"
 )
 
 // Lease is a DHCP lease.

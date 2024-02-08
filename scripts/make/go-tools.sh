@@ -30,8 +30,6 @@ set -e -f -u
 go="${GO:-go}"
 readonly go
 
-# TODO(a.garipov): Add goconst?
-
 # Remove only the actual binaries in the bin/ directory, as developers may add
 # their own scripts there.  Most commonly, a script named “go” for tools that
 # call the go binary and need a particular version.

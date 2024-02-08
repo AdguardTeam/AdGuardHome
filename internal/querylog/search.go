@@ -3,11 +3,11 @@ package querylog
 import (
 	"fmt"
 	"io"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"golang.org/x/exp/slices"
 )
 
 // client finds the client info, if any, by its ClientID and IP address,

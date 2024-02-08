@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -12,7 +13,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"go.etcd.io/bbolt"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 const (

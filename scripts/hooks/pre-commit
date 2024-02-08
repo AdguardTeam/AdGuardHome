@@ -6,7 +6,9 @@ set -e -f -u
 # Bump this number every time a significant change is made to this
 # script.
 #
-# AdGuard-Project-Version: 1
+# AdGuard-Project-Version: 2
+
+# TODO(a.garipov): Add pre-merge-commit.
 
 # Only show interactive prompts if there a terminal is attached to
 # stdout.  While this technically doesn't guarantee that reading from

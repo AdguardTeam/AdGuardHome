@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/netip"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
@@ -16,7 +17,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
-	"golang.org/x/exp/slices"
 )
 
 // jsonDNSConfig is the JSON representation of the DNS server configuration.

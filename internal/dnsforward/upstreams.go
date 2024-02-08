@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/netip"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -14,7 +15,6 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 // loadUpstreams parses upstream DNS servers from the configured file or from

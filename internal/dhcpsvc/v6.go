@@ -3,12 +3,12 @@ package dhcpsvc
 import (
 	"fmt"
 	"net/netip"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/google/gopacket/layers"
-	"golang.org/x/exp/slices"
 )
 
 // IPv6Config is the interface-specific configuration for DHCPv6.

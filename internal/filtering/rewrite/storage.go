@@ -3,6 +3,7 @@ package rewrite
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
-	"golang.org/x/exp/slices"
 )
 
 // Storage is a storage for rewrite rules.
