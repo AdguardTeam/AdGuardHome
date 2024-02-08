@@ -12,13 +12,13 @@ import (
 	"os/exec"
 	"path"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/mathutil"
-	"golang.org/x/exp/slices"
 )
 
 // UnsupportedError is returned by functions and methods when a particular

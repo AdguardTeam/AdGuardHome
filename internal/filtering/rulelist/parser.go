@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
+	"slices"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"golang.org/x/exp/slices"
 )
 
 // Parser is a filtering-rule parser that collects data, such as the checksum

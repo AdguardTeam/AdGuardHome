@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -12,7 +13,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
-	"golang.org/x/exp/slices"
 )
 
 // beforeRequestHandler is the handler that is called before any other

@@ -2,13 +2,13 @@ package dnsforward
 
 import (
 	"net/netip"
+	"slices"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
-	"golang.org/x/exp/slices"
 )
 
 // makeResponse creates a DNS response by req and sets necessary flags.  It also

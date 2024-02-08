@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
@@ -12,7 +13,6 @@ import (
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/log"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 // TODO(a.garipov): Make configurable.

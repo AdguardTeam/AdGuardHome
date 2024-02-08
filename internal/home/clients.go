@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -23,7 +24,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 // DHCP is an interface for accessing DHCP lease data the [clientsContainer]
@@ -613,7 +613,7 @@ func (clients *clientsContainer) check(c *persistentClient) (err error) {
 	// TODO(s.chzhen):  Move to the constructor.
 	slices.Sort(c.Tags)
 
-	err = dnsforward.ValidateUpstreams(c.Upstreams)
+	_, err = proxy.ParseUpstreamsConfig(c.Upstreams, &upstream.Options{})
 	if err != nil {
 		return fmt.Errorf("invalid upstream servers: %w", err)
 	}

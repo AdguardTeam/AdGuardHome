@@ -1,10 +1,10 @@
 package dnsforward
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/exp/slices"
 )
 
 func TestAnyNameMatches(t *testing.T) {

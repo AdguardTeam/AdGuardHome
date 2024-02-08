@@ -2,9 +2,8 @@ package dhcpsvc
 
 import (
 	"fmt"
+	"slices"
 	"time"
-
-	"golang.org/x/exp/slices"
 )
 
 // netInterface is a common part of any network interface within the DHCP

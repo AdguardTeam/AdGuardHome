@@ -223,8 +223,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		wantSet: "",
 	}, {
 		name: "upstream_dns_bad",
-		wantSet: `validating dns config: ` +
-			`upstream servers: validating upstream "!!!": not an ip:port`,
+		wantSet: `validating dns config: upstream servers: parsing error at index 0: ` +
+			`cannot prepare the upstream: invalid address !!!: bad hostname "!!!": ` +
+			`bad top-level domain name label "!!!": bad top-level domain name label rune '!'`,
 	}, {
 		name: "bootstraps_bad",
 		wantSet: `validating dns config: checking bootstrap a: not a bootstrap: ParseAddr("a"): ` +
@@ -310,98 +311,6 @@ func TestIsCommentOrEmpty(t *testing.T) {
 		str:  "1.2.3.4",
 	}} {
 		tc.want(t, IsCommentOrEmpty(tc.str))
-	}
-}
-
-func TestValidateUpstreams(t *testing.T) {
-	const sdnsStamp = `sdns://AQMAAAAAAAAAFDE3Ni4xMDMuMTMwLjEzMDo1NDQzINErR_J` +
-		`S3PLCu_iZEIbq95zkSV2LFsigxDIuUso_OQhzIjIuZG5zY3J5cHQuZGVmYXVsdC5uczE` +
-		`uYWRndWFyZC5jb20`
-
-	testCases := []struct {
-		name    string
-		wantErr string
-		set     []string
-	}{{
-		name:    "empty",
-		wantErr: ``,
-		set:     nil,
-	}, {
-		name:    "comment",
-		wantErr: ``,
-		set:     []string{"# comment"},
-	}, {
-		name:    "no_default",
-		wantErr: `no default upstreams specified`,
-		set: []string{
-			"[/host.com/]1.1.1.1",
-			"[//]tls://1.1.1.1",
-			"[/www.host.com/]#",
-			"[/host.com/google.com/]8.8.8.8",
-			"[/host/]" + sdnsStamp,
-		},
-	}, {
-		name:    "with_default",
-		wantErr: ``,
-		set: []string{
-			"[/host.com/]1.1.1.1",
-			"[//]tls://1.1.1.1",
-			"[/www.host.com/]#",
-			"[/host.com/google.com/]8.8.8.8",
-			"[/host/]" + sdnsStamp,
-			"8.8.8.8",
-		},
-	}, {
-		name:    "invalid",
-		wantErr: `validating upstream "dhcp://fake.dns": bad protocol "dhcp"`,
-		set:     []string{"dhcp://fake.dns"},
-	}, {
-		name:    "invalid",
-		wantErr: `validating upstream "1.2.3.4.5": not an ip:port`,
-		set:     []string{"1.2.3.4.5"},
-	}, {
-		name:    "invalid",
-		wantErr: `validating upstream "123.3.7m": not an ip:port`,
-		set:     []string{"123.3.7m"},
-	}, {
-		name: "invalid",
-		wantErr: `splitting upstream line "[/host.com]tls://dns.adguard.com": ` +
-			`missing separator`,
-		set: []string{"[/host.com]tls://dns.adguard.com"},
-	}, {
-		name:    "invalid",
-		wantErr: `validating upstream "[host.ru]#": not an ip:port`,
-		set:     []string{"[host.ru]#"},
-	}, {
-		name:    "valid_default",
-		wantErr: ``,
-		set: []string{
-			"1.1.1.1",
-			"tls://1.1.1.1",
-			"https://dns.adguard.com/dns-query",
-			sdnsStamp,
-			"udp://dns.google",
-			"udp://8.8.8.8",
-			"[/host.com/]1.1.1.1",
-			"[//]tls://1.1.1.1",
-			"[/www.host.com/]#",
-			"[/host.com/google.com/]8.8.8.8",
-			"[/host/]" + sdnsStamp,
-			"[/пример.рф/]8.8.8.8",
-		},
-	}, {
-		name: "bad_domain",
-		wantErr: `splitting upstream line "[/!/]8.8.8.8": domain at index 0: ` +
-			`bad domain name "!": bad top-level domain name label "!": ` +
-			`bad top-level domain name label rune '!'`,
-		set: []string{"[/!/]8.8.8.8"},
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateUpstreams(tc.set)
-			testutil.AssertErrorMsg(t, tc.wantErr, err)
-		})
 	}
 }
 

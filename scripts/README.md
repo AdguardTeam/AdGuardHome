@@ -87,6 +87,22 @@ Optional environment:
  *  `VERSION`: release version.  Will be set by `version.sh` if it is unset or
     if it has the default `Makefile` value of `v0.0.0`.
 
+We're using Go's [forward compatibility mechanism][go-toolchain] for updating
+the Go version.  This means that if your `go` version is 1.21+ but is different
+from the one required by AdGuard Home, the `go` tool will automatically download
+the required version.
+
+If you want to use the version installed on your builder, run:
+
+```sh
+go get go@$YOUR_VERSION
+go mod tidy
+```
+
+and call `make` with `GOTOOLCHAIN=local`.
+
+[go-toolchain]: https://go.dev/blog/toolchain
+
 
 
    ###  `clean.sh`: Cleanup

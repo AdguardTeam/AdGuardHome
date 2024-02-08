@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 // DHCPServer is a DHCP server for both IPv4 and IPv6 address families.
@@ -174,8 +174,8 @@ func (srv *DHCPServer) Reset() (err error) {
 		iface.reset()
 	}
 
-	maps.Clear(srv.leaseByIP)
-	maps.Clear(srv.leaseByName)
+	clear(srv.leaseByIP)
+	clear(srv.leaseByName)
 
 	return nil
 }
