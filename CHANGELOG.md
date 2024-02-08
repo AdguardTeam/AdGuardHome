@@ -23,6 +23,12 @@ See also the [v0.107.45 GitHub milestone][ms-v0.107.45].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added 
+
+- Context menu item in the Query Log to add a Client to the Persistent client list ([#6679]).
+
+[#6679]: https://github.com/AdguardTeam/AdGuardHome/issues/6679
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
