@@ -74,8 +74,16 @@ readonly channel
 case "$channel"
 in
 ('development')
-	# Use the dummy version for development builds.
-	version='v0.0.0'
+	# commit_number is the number of current commit within the branch.
+	commit_number="$( git rev-list --count master..HEAD )"
+	readonly commit_number
+
+	# The development builds are described with a combination of unset semantic
+	# version, the commit's number within the branch, and the commit hash, e.g.:
+	#
+	#   v0.0.0-dev.5-a1b2c3d4
+	#
+	version="v0.0.0-dev.${commit_number}+$( git rev-parse --short HEAD )"
 	;;
 ('edge')
 	# last_minor_zero is the last new minor release.
@@ -128,7 +136,7 @@ in
 esac
 
 # Finally, make sure that we don't output invalid versions.
-if ! echo "$version" | grep -E -e '^v[0-9]+\.[0-9]+\.[0-9]+(-[ab]\.[0-9]+)?(\+[[:xdigit:]]+)?$' -q
+if ! echo "$version" | grep -E -e '^v[0-9]+\.[0-9]+\.[0-9]+(-(a|b|dev)\.[0-9]+)?(\+[[:xdigit:]]+)?$' -q
 then
 	echo "generated an invalid version '$version'" 1>&2
 
