@@ -66,7 +66,7 @@ func NewOSWritesWatcher() (w FSWatcher, err error) {
 	return fsw, nil
 }
 
-// handleErrors handles accompanying errors.  It used to be called in a separate
+// handleErrors handles accompanying errors.  It is intended to be used as a
 // goroutine.
 func (w *osWatcher) handleErrors() {
 	defer log.OnPanic(fmt.Sprintf("%s: handling errors", osWatcherPref))
@@ -100,7 +100,7 @@ func (w *osWatcher) Close() (err error) {
 }
 
 // handleEvents notifies about the received file system's event if needed.  It
-// used to be called in a separate goroutine.
+// is intended to be used as a goroutine.
 func (w *osWatcher) handleEvents() {
 	defer log.OnPanic(fmt.Sprintf("%s: handling events", osWatcherPref))
 

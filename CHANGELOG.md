@@ -30,6 +30,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- Ability to define custom directories for storage of query log files and
+  statistics ([#5992]).
 - Context menu item in the Query Log to add a Client to the Persistent client
   list ([#6679]).
 
@@ -59,6 +61,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Go 1.20 support, as it has reached end of life.
 
+[#5992]: https://github.com/AdguardTeam/AdGuardHome/issues/5992
 [#6679]: https://github.com/AdguardTeam/AdGuardHome/issues/6679
 
 [go-toolchain]: https://go.dev/blog/toolchain

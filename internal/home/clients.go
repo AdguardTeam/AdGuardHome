@@ -140,8 +140,7 @@ func (clients *clientsContainer) Init(
 }
 
 // handleHostsUpdates receives the updates from the hosts container and adds
-// them to the clients container.  It's used to be called in a separate
-// goroutine.
+// them to the clients container.  It is intended to be used as a goroutine.
 func (clients *clientsContainer) handleHostsUpdates() {
 	for upd := range clients.etcHosts.Upd() {
 		clients.addFromHostsFile(upd)

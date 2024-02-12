@@ -40,7 +40,7 @@ type ClientsContainer interface {
 	) (conf *proxy.CustomUpstreamConfig, err error)
 }
 
-// Config represents the DNS filtering configuration of AdGuard Home. The zero
+// Config represents the DNS filtering configuration of AdGuard Home.  The zero
 // Config is empty and ready for use.
 type Config struct {
 	// Callbacks for other modules

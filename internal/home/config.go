@@ -259,6 +259,10 @@ type tlsConfigSettings struct {
 }
 
 type queryLogConfig struct {
+	// DirPath is the custom directory for logs.  If it's empty the default
+	// directory will be used.  See [homeContext.getDataDir].
+	DirPath string `yaml:"dir_path"`
+
 	// Ignored is the list of host names, which should not be written to log.
 	// "." is considered to be the root domain.
 	Ignored []string `yaml:"ignored"`
@@ -278,6 +282,10 @@ type queryLogConfig struct {
 }
 
 type statsConfig struct {
+	// DirPath is the custom directory for statistics.  If it's empty the
+	// default directory is used.  See [homeContext.getDataDir].
+	DirPath string `yaml:"dir_path"`
+
 	// Ignored is the list of host names, which should not be counted.
 	Ignored []string `yaml:"ignored"`
 
