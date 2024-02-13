@@ -59,7 +59,7 @@ set -f -u
 # schemas, which use package reflect.  If your project needs more exceptions,
 # add and document them.
 #
-# TODO(a.garipov): Add goilbs/log.
+# TODO(a.garipov): Add golibs/log.
 #
 # TODO(a.garipov): Add deprecated package golang.org/x/exp/maps once all
 # projects switch to Go 1.22.

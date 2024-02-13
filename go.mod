@@ -5,7 +5,7 @@ go 1.21.7
 require (
 	github.com/AdguardTeam/dnsproxy v0.65.0
 	github.com/AdguardTeam/golibs v0.20.1
-	github.com/AdguardTeam/urlfilter v0.17.3
+	github.com/AdguardTeam/urlfilter v0.18.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.2.7
 	github.com/bluele/gcache v0.0.2
@@ -61,6 +61,6 @@ require (
 	golang.org/x/mod v0.15.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.17.0 // indirect
+	golang.org/x/tools v0.18.0 // indirect
 	gonum.org/v1/gonum v0.14.0 // indirect
 )

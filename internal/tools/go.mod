@@ -8,9 +8,9 @@ require (
 	github.com/gordonklaus/ineffassign v0.1.0
 	github.com/kisielk/errcheck v1.7.0
 	github.com/kyoh86/looppointer v0.2.1
-	github.com/securego/gosec/v2 v2.18.2
+	github.com/securego/gosec/v2 v2.19.0
 	github.com/uudashr/gocognit v1.1.2
-	golang.org/x/tools v0.17.0
+	golang.org/x/tools v0.18.0
 	golang.org/x/vuln v1.0.4
 	honnef.co/go/tools v0.4.6
 	mvdan.cc/gofumpt v0.6.0
