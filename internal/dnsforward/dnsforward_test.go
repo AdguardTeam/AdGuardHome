@@ -1330,6 +1330,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 	var eventsCalledCounter uint32
 	hc, err := aghnet.NewHostsContainer(testFS, &aghtest.FSWatcher{
+		OnStart: func() (_ error) { panic("not implemented") },
 		OnEvents: func() (e <-chan struct{}) {
 			assert.Equal(t, uint32(1), atomic.AddUint32(&eventsCalledCounter, 1))
 

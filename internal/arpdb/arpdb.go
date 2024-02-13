@@ -14,6 +14,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/osutil"
 )
 
 // Variables and functions to substitute in tests.
@@ -22,7 +23,7 @@ var (
 	aghosRunCommand = aghos.RunCommand
 
 	// rootDirFS is the filesystem pointing to the root directory.
-	rootDirFS = aghos.RootDirFS()
+	rootDirFS = osutil.RootDirFS()
 )
 
 // Interface stores and refreshes the network neighborhood reported by ARP

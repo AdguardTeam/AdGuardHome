@@ -250,7 +250,7 @@ func setupHostsContainer() (err error) {
 		return errors.Join(fmt.Errorf("initializing hosts container: %w", err), closeErr)
 	}
 
-	return nil
+	return hostsWatcher.Start()
 }
 
 // setupOpts sets up command-line options.

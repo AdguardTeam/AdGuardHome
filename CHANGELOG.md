@@ -57,12 +57,17 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Go 1.21 support.  Future versions will require at least Go 1.22 to build.
 
+### Fixed
+
+- Incorrect tracking of the system hosts file's changes ([#6711]).
+
 ### Removed
 
 - Go 1.20 support, as it has reached end of life.
 
 [#5992]: https://github.com/AdguardTeam/AdGuardHome/issues/5992
 [#6679]: https://github.com/AdguardTeam/AdGuardHome/issues/6679
+[#6711]: https://github.com/AdguardTeam/AdGuardHome/issues/6711
 
 [go-toolchain]: https://go.dev/blog/toolchain
 
