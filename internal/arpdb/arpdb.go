@@ -32,7 +32,7 @@ type Interface interface {
 	// Refresh updates the stored data.  It must be safe for concurrent use.
 	Refresh() (err error)
 
-	// Neighbors returnes the last set of data reported by ARP.  Both the method
+	// Neighbors returns the last set of data reported by ARP.  Both the method
 	// and it's result must be safe for concurrent use.
 	Neighbors() (ns []Neighbor)
 }
