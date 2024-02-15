@@ -30,6 +30,16 @@ func NewUID() (uid UID, err error) {
 	return UID(uuidv7), err
 }
 
+// MustNewUID is a wrapper around [NewUID] that panics if there is an error.
+func MustNewUID() (uid UID) {
+	uid, err := NewUID()
+	if err != nil {
+		panic(fmt.Errorf("unexpected uuidv7 error: %w", err))
+	}
+
+	return uid
+}
+
 // type check
 var _ encoding.TextMarshaler = UID{}
 

@@ -12,6 +12,19 @@ import (
 
 var testIPv4 = netip.AddrFrom4([4]byte{1, 2, 3, 4})
 
+// newIDIndex is a helper function that returns a client index filled with
+// persistent clients from the m.  It also generates a UID for each client.
+func newIDIndex(m []*persistentClient) (ci *clientIndex) {
+	ci = NewClientIndex()
+
+	for _, c := range m {
+		c.UID = MustNewUID()
+		ci.add(c)
+	}
+
+	return ci
+}
+
 func TestApplyAdditionalFiltering(t *testing.T) {
 	var err error
 
@@ -22,29 +35,28 @@ func TestApplyAdditionalFiltering(t *testing.T) {
 	}, nil)
 	require.NoError(t, err)
 
-	Context.clients.idIndex = map[string]*persistentClient{
-		"default": {
-			UseOwnSettings:      false,
-			safeSearchConf:      filtering.SafeSearchConfig{Enabled: false},
-			FilteringEnabled:    false,
-			SafeBrowsingEnabled: false,
-			ParentalEnabled:     false,
-		},
-		"custom_filtering": {
-			UseOwnSettings:      true,
-			safeSearchConf:      filtering.SafeSearchConfig{Enabled: true},
-			FilteringEnabled:    true,
-			SafeBrowsingEnabled: true,
-			ParentalEnabled:     true,
-		},
-		"partial_custom_filtering": {
-			UseOwnSettings:      true,
-			safeSearchConf:      filtering.SafeSearchConfig{Enabled: true},
-			FilteringEnabled:    true,
-			SafeBrowsingEnabled: false,
-			ParentalEnabled:     false,
-		},
-	}
+	Context.clients.clientIndex = newIDIndex([]*persistentClient{{
+		ClientIDs:           []string{"default"},
+		UseOwnSettings:      false,
+		safeSearchConf:      filtering.SafeSearchConfig{Enabled: false},
+		FilteringEnabled:    false,
+		SafeBrowsingEnabled: false,
+		ParentalEnabled:     false,
+	}, {
+		ClientIDs:           []string{"custom_filtering"},
+		UseOwnSettings:      true,
+		safeSearchConf:      filtering.SafeSearchConfig{Enabled: true},
+		FilteringEnabled:    true,
+		SafeBrowsingEnabled: true,
+		ParentalEnabled:     true,
+	}, {
+		ClientIDs:           []string{"partial_custom_filtering"},
+		UseOwnSettings:      true,
+		safeSearchConf:      filtering.SafeSearchConfig{Enabled: true},
+		FilteringEnabled:    true,
+		SafeBrowsingEnabled: false,
+		ParentalEnabled:     false,
+	}})
 
 	testCases := []struct {
 		name                string
@@ -108,38 +120,37 @@ func TestApplyAdditionalFiltering_blockedServices(t *testing.T) {
 	}, nil)
 	require.NoError(t, err)
 
-	Context.clients.idIndex = map[string]*persistentClient{
-		"default": {
-			UseOwnBlockedServices: false,
+	Context.clients.clientIndex = newIDIndex([]*persistentClient{{
+		ClientIDs:             []string{"default"},
+		UseOwnBlockedServices: false,
+	}, {
+		ClientIDs: []string{"no_services"},
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
 		},
-		"no_services": {
-			BlockedServices: &filtering.BlockedServices{
-				Schedule: schedule.EmptyWeekly(),
-			},
-			UseOwnBlockedServices: true,
+		UseOwnBlockedServices: true,
+	}, {
+		ClientIDs: []string{"services"},
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
+			IDs:      clientBlockedServices,
 		},
-		"services": {
-			BlockedServices: &filtering.BlockedServices{
-				Schedule: schedule.EmptyWeekly(),
-				IDs:      clientBlockedServices,
-			},
-			UseOwnBlockedServices: true,
+		UseOwnBlockedServices: true,
+	}, {
+		ClientIDs: []string{"invalid_services"},
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
+			IDs:      invalidBlockedServices,
 		},
-		"invalid_services": {
-			BlockedServices: &filtering.BlockedServices{
-				Schedule: schedule.EmptyWeekly(),
-				IDs:      invalidBlockedServices,
-			},
-			UseOwnBlockedServices: true,
+		UseOwnBlockedServices: true,
+	}, {
+		ClientIDs: []string{"allow_all"},
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.FullWeekly(),
+			IDs:      clientBlockedServices,
 		},
-		"allow_all": {
-			BlockedServices: &filtering.BlockedServices{
-				Schedule: schedule.FullWeekly(),
-				IDs:      clientBlockedServices,
-			},
-			UseOwnBlockedServices: true,
-		},
-	}
+		UseOwnBlockedServices: true,
+	}})
 
 	testCases := []struct {
 		name    string
