@@ -43,7 +43,7 @@ bump_minor='/^v[0-9]+\.[0-9]+\.0$/ {
 }
 
 {
-	printf("invalid release version: \"%s\"\n", $0);
+	printf("invalid minor release version: \"%s\"\n", $0);
 
 	exit 1;
 }'
@@ -128,15 +128,40 @@ in
 
 	version="$last_tag"
 	;;
+('candidate')
+	# This pseudo-channel is used to set a proper versions into release
+	# candidate builds.
+
+	# last_tag is expected to be the latest release tag.
+	last_tag="$( git describe --abbrev=0 )"
+	readonly last_tag
+
+	# current_branch is the name of the branch currently checked out.
+	current_branch="$( git rev-parse --abbrev-ref HEAD )"
+	readonly current_branch
+
+	# The branch should be named like:
+	#
+	#   rc-v12.34.56
+	#
+	if ! echo "$current_branch" | grep -E -e '^rc-v[0-9]+\.[0-9]+\.[0-9]+$' -q
+	then
+		echo "invalid release candidate branch name '$current_branch'" 1>&2
+
+		exit 1
+	fi
+
+	version="${current_branch#rc-}-rc.$( git rev-list --count "$last_tag"..HEAD )"
+	;;
 (*)
 	echo "invalid channel '$channel', supported values are\
-		'development', 'edge', 'beta', and 'release'" 1>&2
+		'development', 'edge', 'beta', 'release' and 'candidate'" 1>&2
 	exit 1
 	;;
 esac
 
 # Finally, make sure that we don't output invalid versions.
-if ! echo "$version" | grep -E -e '^v[0-9]+\.[0-9]+\.[0-9]+(-(a|b|dev)\.[0-9]+)?(\+[[:xdigit:]]+)?$' -q
+if ! echo "$version" | grep -E -e '^v[0-9]+\.[0-9]+\.[0-9]+(-(a|b|dev|rc)\.[0-9]+)?(\+[[:xdigit:]]+)?$' -q
 then
 	echo "generated an invalid version '$version'" 1>&2
 
