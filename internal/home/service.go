@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -728,4 +729,13 @@ func secureBinaryUnix() error {
 	}
 
 	return nil
+}
+
+// execDirAvaliable returns true if the executable's current folder is avaliable to be
+// used as a workDir.
+// If AdGuardHome is running as a service, it should not use the binary's location as a
+// workDir, thus this function will return false.
+func execDirAvaliable() bool {
+	// If installed in /usr/bin do not use /usr/bin/data to store files
+	return filepath.Dir(os.Args[0]) != "/usr/bin"
 }
