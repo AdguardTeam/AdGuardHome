@@ -748,6 +748,7 @@ func writePIDFile(fn string) bool {
 // initConfigFilename sets up context config file path.  This file path can be
 // overridden by command-line arguments, or is set to default.
 func initConfigFilename(opts options) {
+	// TODO: if running as service the config location should be /etc/AdGuardHome/AdGuardHome.yaml
 	Context.configFilename = stringutil.Coalesce(opts.confFilename, "AdGuardHome.yaml")
 }
 
@@ -759,6 +760,8 @@ func initWorkingDir(opts options) (err error) {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
+
+	// TODO: if running as a service use /var/lib/AdGuardHome
 
 	if opts.workDir != "" {
 		// If there is a custom config file, use it's directory as our working dir
