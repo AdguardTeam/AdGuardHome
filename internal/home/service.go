@@ -740,6 +740,11 @@ func secureBinaryUnix() error {
 // If AdGuardHome is running as a service, it should not use the binary's location as a
 // workDir, thus this function will return false.
 func execDirAvaliable() bool {
+	binary, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+
 	// If installed in /usr/bin do not use /usr/bin/data to store files
-	return filepath.Dir(os.Args[0]) != "/usr/bin"
+	return filepath.Dir(binary) != "/usr/bin"
 }
