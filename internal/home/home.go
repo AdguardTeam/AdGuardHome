@@ -769,7 +769,7 @@ func initWorkingDir(opts options) (err error) {
 	if opts.workDir != "" {
 		// If there is a custom config file, use it's directory as our working dir
 		Context.workDir = opts.workDir
-	} else if pwdAvaliable {
+	} else if !pwdAvaliable {
 		// If running as a service and from /usr/bin/ use /var/lib for working dir instead of
 		// /usr/bin/data
 		Context.workDir = "/var/lib/AdGuardHome"
