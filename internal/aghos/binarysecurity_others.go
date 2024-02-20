@@ -5,10 +5,9 @@ package aghos
 import (
 	"fmt"
 	"os"
-	"path/filepath"
+	"strings"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 )
 
 // protectedDirectories are directories which contain other application binaries,
@@ -16,13 +15,13 @@ import (
 // overwriting other files. Moreover, these directories are innapproriate for storage of
 // config files or session storage.
 var protectedDirectories = []string{
-	"/usr/bin"
-	"/usr/sbin"
-	"/user/bin"
+	"/usr/bin",
+	"/usr/sbin",
+	"/user/bin",
 }
 
 // serviceInstallDir is a executable path in a directory which secure permissions
-// which prevent the manipulation of the binary. 
+// which prevent the manipulation of the binary.
 const serviceInstallDir = "/usr/bin/AdGuardHome"
 
 // SecureBinary is used before service.Install(). This function protects AdGuardHome from
@@ -52,11 +51,10 @@ func SecureBinary() error {
 		return fmt.Errorf("os.Chmod() %q: %w", binary, err)
 	}
 
-
 	// Move binary to the PATH in a folder which is read-only to non root users
 	// If already moved, this is a no-op
 	if err := os.Rename(binary, serviceInstallDir); err != nil {
-		return fmt.Errorf("os.Rename() %q to %q: %w", binary, installDir, err)
+		return fmt.Errorf("os.Rename() %q to %q: %w", binary, serviceInstallDir, err)
 	}
 
 	return nil
@@ -67,7 +65,7 @@ func SecureBinary() error {
 func CurrentDirAvaliable() (bool, error) {
 	binary, err := os.Executable()
 	if err != nil {
-		return fmt.Errorf("os.Executable(): %w", err)
+		return false, fmt.Errorf("os.Executable(): %w", err)
 	}
 
 	for i := 0; i < len(protectedDirectories); i++ {
