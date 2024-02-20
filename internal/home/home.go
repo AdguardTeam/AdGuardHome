@@ -760,17 +760,23 @@ func initWorkingDir(opts options) (err error) {
 		return err
 	}
 
+	// Can we use the current directory to store application data?
+	pwdAvaliable, err := aghos.CurrentDirAvaliable()
+	if err != nil {
+		return err
+	}
+
 	if opts.workDir != "" {
 		// If there is a custom config file, use it's directory as our working dir
 		Context.workDir = opts.workDir
-	} else if !execDirAvaliable() {
+	} else if pwdAvaliable {
 		// If running as a service and from /usr/bin/ use /var/lib for working dir instead of
 		// /usr/bin/data
 		Context.workDir = "/var/lib/AdGuardHome"
 
 		// Create dir if it does not already exist
 		if err := os.MkdirAll(Context.workDir, 0755); err != nil {
-			return err
+			return fmt.Errorf("os.MkdirAll: %s: %w", Context.workDir, err)
 		}
 	} else {
 		Context.workDir = filepath.Dir(execPath)

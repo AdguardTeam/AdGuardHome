@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -306,7 +305,7 @@ func handleServiceStatusCommand(s service.Service) {
 // handleServiceStatusCommand handles service "install" command
 func handleServiceInstallCommand(s service.Service) {
 	// Set the binary's permissions and move to /usr/bin (if on linux)
-	if err := secureBinary(); err != nil {
+	if err := aghos.SecureBinary(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -687,64 +686,3 @@ rc_bg=YES
 
 rc_cmd $1
 `
-
-// secureBinary is used before service.Install(). This function protects AdGuardHome from
-// privilege escalation vulnerabilities caused by writable files
-func secureBinary() error {
-	switch runtime.GOOS {
-	case "windows":
-		// TODO: support windows service support securely
-		// Set file owner to admin/system and public permissions read-only
-		return errors.Error("you currently cannot install adguardhome as a service on window")
-	default:
-		return secureBinaryUnix()
-	}
-}
-
-func secureBinaryUnix() error {
-	// Installalation can only be completed with root privileges, so check and handle if not
-	if os.Getuid() != 0 {
-		return errors.Error("permission denied. Root privileges required")
-	}
-
-	// Get current file path
-	binary, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	// Change owner to root:root
-	err = os.Chown(binary, 0, 0)
-	if err != nil {
-		return err
-	}
-
-	// Set permissions to root(read,write,exec), group(read,exec), public(read)
-	// This combined with changing the owner make the file undeletable without root privlages
-	// UNLESS THE PARENT FOLDER IS WRITABLE!
-	if err := os.Chmod(binary, 0755); err != nil {
-		return err
-	}
-
-	// Move binary to the PATH in a folder which is read-only to non root users
-	// If already moved, this is a no-op
-	if err := os.Rename(binary, "/usr/bin/AdGuardHome"); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// execDirAvaliable returns true if the executable's current folder is avaliable to be
-// used as a workDir.
-// If AdGuardHome is running as a service, it should not use the binary's location as a
-// workDir, thus this function will return false.
-func execDirAvaliable() bool {
-	binary, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-
-	// If installed in /usr/bin do not use /usr/bin/data to store files
-	return filepath.Dir(binary) != "/usr/bin"
-}
