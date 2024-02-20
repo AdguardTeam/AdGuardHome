@@ -708,10 +708,13 @@ func secureBinaryUnix() error {
 	}
 
 	// Get current file path
-	binary := os.Args[0]
+	binary, err := os.Executable()
+	if err != nil {
+		return err
+	}
 
 	// Change owner to root:root
-	err := os.Chown(binary, 0, 0)
+	err = os.Chown(binary, 0, 0)
 	if err != nil {
 		return err
 	}
@@ -724,6 +727,7 @@ func secureBinaryUnix() error {
 	}
 
 	// Move binary to the PATH in a folder which is read-only to non root users
+	// If already moved, this is a no-op
 	if err := os.Rename(binary, "/usr/bin/AdGuardHome"); err != nil {
 		return err
 	}
