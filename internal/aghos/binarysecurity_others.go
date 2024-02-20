@@ -47,13 +47,15 @@ func SecureBinary() error {
 	// Set permissions to root(read,write,exec), group(read,exec), public(read)
 	// This combined with changing the owner make the file undeletable without root privlages
 	// UNLESS THE PARENT FOLDER IS WRITABLE!
-	if err := os.Chmod(binary, 0755); err != nil {
+	err = os.Chmod(binary, 0755)
+	if err != nil {
 		return fmt.Errorf("os.Chmod() %q: %w", binary, err)
 	}
 
 	// Move binary to the PATH in a folder which is read-only to non root users
 	// If already moved, this is a no-op
-	if err := os.Rename(binary, serviceInstallDir); err != nil {
+	err = os.Rename(binary, serviceInstallDir)
+	if err != nil {
 		return fmt.Errorf("os.Rename() %q to %q: %w", binary, serviceInstallDir, err)
 	}
 

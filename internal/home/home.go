@@ -775,7 +775,8 @@ func initWorkingDir(opts options) (err error) {
 		Context.workDir = "/var/lib/AdGuardHome"
 
 		// Create dir if it does not already exist
-		if err := os.MkdirAll(Context.workDir, 0755); err != nil {
+		err := os.MkdirAll(Context.workDir, 0755)
+		if err != nil {
 			return fmt.Errorf("os.MkdirAll: %s: %w", Context.workDir, err)
 		}
 	} else {
