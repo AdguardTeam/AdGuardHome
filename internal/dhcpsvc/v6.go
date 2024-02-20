@@ -150,7 +150,7 @@ func (ifaces netInterfacesV6) find(ip netip.Addr) (iface6 *netInterface, ok bool
 	const prefLen = netutil.IPv6BitLen - 8
 
 	i := slices.IndexFunc(ifaces, func(iface *netInterfaceV6) (contains bool) {
-		return !iface.rangeStart.Less(ip) &&
+		return !ip.Less(iface.rangeStart) &&
 			netip.PrefixFrom(iface.rangeStart, prefLen).Contains(ip)
 	})
 	if i < 0 {
