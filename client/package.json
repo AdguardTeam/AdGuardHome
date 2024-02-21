@@ -14,7 +14,7 @@
     },
     "dependencies": {
         "@nivo/line": "^0.64.0",
-        "axios": "^0.19.2",
+        "axios": "^0.28.0",
         "classnames": "^2.2.6",
         "countries-and-timezones": "^3.6.0",
         "date-fns": "^1.29.0",
