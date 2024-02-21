@@ -232,6 +232,10 @@ type dnsConfig struct {
 
 	// ServePlainDNS defines if plain DNS is allowed for incoming requests.
 	ServePlainDNS bool `yaml:"serve_plain_dns"`
+
+	// HostsFileEnabled defines whether to use information from the system hosts
+	// file to resolve queries.
+	HostsFileEnabled bool `yaml:"hostsfile_enabled"`
 }
 
 type tlsConfigSettings struct {
@@ -349,9 +353,10 @@ var config = &configuration{
 			// was later increased to 300 due to https://github.com/AdguardTeam/AdGuardHome/issues/2257
 			MaxGoroutines: 300,
 		},
-		UpstreamTimeout: timeutil.Duration{Duration: dnsforward.DefaultTimeout},
-		UsePrivateRDNS:  true,
-		ServePlainDNS:   true,
+		UpstreamTimeout:  timeutil.Duration{Duration: dnsforward.DefaultTimeout},
+		UsePrivateRDNS:   true,
+		ServePlainDNS:    true,
+		HostsFileEnabled: true,
 	},
 	TLS: tlsConfigSettings{
 		PortHTTPS:       defaultPortHTTPS,

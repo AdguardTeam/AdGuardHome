@@ -361,7 +361,7 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 
 	conf.EtcHosts = Context.etcHosts
 	// TODO(s.chzhen):  Use empty interface.
-	if Context.etcHosts == nil {
+	if Context.etcHosts == nil || !config.DNS.HostsFileEnabled {
 		conf.EtcHosts = nil
 	}
 

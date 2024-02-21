@@ -270,15 +270,17 @@ var cmdLineOpts = []cmdLineOpt{{
 		log.Info(
 			"warning: --no-etc-hosts flag is deprecated " +
 				"and will be removed in the future versions; " +
-				"set clients.runtime_sources.hosts in the configuration file to false instead",
+				"set clients.runtime_sources.hosts and dns.hostsfile_enabled " +
+				"in the configuration file to false instead",
 		)
 
 		return nil, nil
 	},
-	serialize:   func(o options) (val string, ok bool) { return "", o.noEtcHosts },
-	description: "Deprecated: use clients.runtime_sources.hosts instead.  Do not use the OS-provided hosts.",
-	longName:    "no-etc-hosts",
-	shortName:   "",
+	serialize: func(o options) (val string, ok bool) { return "", o.noEtcHosts },
+	description: "Deprecated: use clients.runtime_sources.hosts and dns.hostsfile_enabled " +
+		"instead.  Do not use the OS-provided hosts.",
+	longName:  "no-etc-hosts",
+	shortName: "",
 }, {
 	updateWithValue: nil,
 	updateNoValue:   func(o options) (options, error) { o.localFrontend = true; return o, nil },
