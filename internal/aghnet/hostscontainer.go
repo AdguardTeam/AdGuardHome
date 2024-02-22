@@ -154,8 +154,8 @@ func pathsToPatterns(fsys fs.FS, paths []string) (patterns []string, err error) 
 }
 
 // handleEvents concurrently handles the file system events.  It closes the
-// update channel of HostsContainer when finishes.  It's used to be called
-// within a separate goroutine.
+// update channel of HostsContainer when finishes.  It is intended to be used as
+// a goroutine.
 func (hc *HostsContainer) handleEvents() {
 	defer log.OnPanic(fmt.Sprintf("%s: handling events", hostsContainerPrefix))
 

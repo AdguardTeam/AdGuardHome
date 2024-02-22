@@ -473,6 +473,9 @@ bug or implementing the feature.
     [@kongfl888](https://github.com/kongfl888) (originally by
     [@rufengsuixing](https://github.com/rufengsuixing)).
 
+ *  [AdGuardHome sync](https://github.com/bakito/adguardhome-sync) by
+    [@bakito](https://github.com/bakito).
+
  *  [Terminal-based, real-time traffic monitoring and statistics for your AdGuard Home
     instance](https://github.com/Lissy93/AdGuardian-Term) by
     [@Lissy93](https://github.com/Lissy93)

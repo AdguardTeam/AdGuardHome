@@ -51,12 +51,12 @@ readonly channel
 
 case "$channel"
 in
-('development'|'edge'|'beta'|'release')
+('development'|'edge'|'beta'|'release'|'candidate')
 	# All is well, go on.
 	;;
 (*)
 	echo "invalid channel '$channel', supported values are\
-		'development', 'edge', 'beta', and 'release'" 1>&2
+		'development', 'edge', 'beta', 'release', and 'candidate'" 1>&2
 	exit 1
 	;;
 esac

@@ -9,12 +9,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
 	"strings"
 	"text/template"
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
-	"golang.org/x/exp/slices"
 )
 
 func main() {

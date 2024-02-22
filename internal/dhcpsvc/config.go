@@ -2,11 +2,11 @@ package dhcpsvc
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/golibs/netutil"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 // Config is the configuration for the DHCP service.

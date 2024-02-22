@@ -1928,6 +1928,14 @@ var blockedServices = []blockedService{{
 		"||mojang.com^",
 	},
 }, {
+	ID:      "nebula",
+	Name:    "Nebula",
+	IconSVG: []byte("<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"currentColor\" viewBox=\"0 0 50.8 50.8\"><path d=\"m20.404 31.36 4.847 14.195 4.6-14.295 14.988-.05-11.97-9.002 4.748-14.344-12.316 9.002-12.416-9.15 4.65 14.492-11.773 9.003Z\"/></svg>"),
+	Rules: []string{
+		"||nebula.app^",
+		"||nebula.tv^",
+	},
+}, {
 	ID:      "netflix",
 	Name:    "Netflix",
 	IconSVG: []byte("<svg fill=\"currentColor\" xmlns=\"http://www.w3.org/2000/svg\"  viewBox=\"0 0 30 30\"><path d=\"M24,4H6C4.895,4,4,4.895,4,6v18c0,1.105,0.895,2,2,2h18c1.105,0,2-0.895,2-2V6C26,4.895,25.105,4,24,4z M19,22c0,0-1.5-0.232-3-0.232l-2-5.507v5.507c-1.5,0-3,0.232-3,0.232V8h3l2,5.6V8h3V22z\" /></svg>"),

@@ -8,13 +8,13 @@ import (
 	"io/fs"
 	"net/netip"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/log"
-	"golang.org/x/exp/slices"
 )
 
 // options contains all command-line options for the AdGuardHome(.exe) binary.

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -23,7 +24,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 // DHCP is an interface for accessing DHCP lease data the [clientsContainer]
@@ -47,8 +47,9 @@ type DHCP interface {
 type clientsContainer struct {
 	// TODO(a.garipov): Perhaps use a number of separate indices for different
 	// types (string, netip.Addr, and so on).
-	list    map[string]*persistentClient // name -> client
-	idIndex map[string]*persistentClient // ID -> client
+	list map[string]*persistentClient // name -> client
+
+	clientIndex *clientIndex
 
 	// ipToRC maps IP addresses to runtime client information.
 	ipToRC map[netip.Addr]*client.Runtime
@@ -103,8 +104,9 @@ func (clients *clientsContainer) Init(
 	}
 
 	clients.list = map[string]*persistentClient{}
-	clients.idIndex = map[string]*persistentClient{}
 	clients.ipToRC = map[netip.Addr]*client.Runtime{}
+
+	clients.clientIndex = NewClientIndex()
 
 	clients.allTags = stringutil.NewSet(clientTags...)
 
@@ -140,8 +142,7 @@ func (clients *clientsContainer) Init(
 }
 
 // handleHostsUpdates receives the updates from the hosts container and adds
-// them to the clients container.  It's used to be called in a separate
-// goroutine.
+// them to the clients container.  It is intended to be used as a goroutine.
 func (clients *clientsContainer) handleHostsUpdates() {
 	for upd := range clients.etcHosts.Upd() {
 		clients.addFromHostsFile(upd)
@@ -518,7 +519,7 @@ func (clients *clientsContainer) UpstreamConfigByID(
 // findLocked searches for a client by its ID.  clients.lock is expected to be
 // locked.
 func (clients *clientsContainer) findLocked(id string) (c *persistentClient, ok bool) {
-	c, ok = clients.idIndex[id]
+	c, ok = clients.clientIndex.find(id)
 	if ok {
 		return c, true
 	}
@@ -526,14 +527,6 @@ func (clients *clientsContainer) findLocked(id string) (c *persistentClient, ok 
 	ip, err := netip.ParseAddr(id)
 	if err != nil {
 		return nil, false
-	}
-
-	for _, c = range clients.list {
-		for _, subnet := range c.Subnets {
-			if subnet.Contains(ip) {
-				return c, true
-			}
-		}
 	}
 
 	// TODO(e.burkov):  Iterate through clients.list only once.
@@ -639,18 +632,15 @@ func (clients *clientsContainer) add(c *persistentClient) (ok bool, err error) {
 	}
 
 	// check ID index
-	ids := c.ids()
-	for _, id := range ids {
-		var c2 *persistentClient
-		c2, ok = clients.idIndex[id]
-		if ok {
-			return false, fmt.Errorf("another client uses the same ID (%q): %q", id, c2.Name)
-		}
+	err = clients.clientIndex.clashes(c)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return false, err
 	}
 
 	clients.addLocked(c)
 
-	log.Debug("clients: added %q: ID:%q [%d]", c.Name, ids, len(clients.list))
+	log.Debug("clients: added %q: ID:%q [%d]", c.Name, c.ids(), len(clients.list))
 
 	return true, nil
 }
@@ -661,9 +651,7 @@ func (clients *clientsContainer) addLocked(c *persistentClient) {
 	clients.list[c.Name] = c
 
 	// update ID index
-	for _, id := range c.ids() {
-		clients.idIndex[id] = c
-	}
+	clients.clientIndex.add(c)
 }
 
 // remove removes a client.  ok is false if there is no such client.
@@ -693,9 +681,7 @@ func (clients *clientsContainer) removeLocked(c *persistentClient) {
 	delete(clients.list, c.Name)
 
 	// Update the ID index.
-	for _, id := range c.ids() {
-		delete(clients.idIndex, id)
-	}
+	clients.clientIndex.del(c)
 }
 
 // update updates a client by its name.
@@ -725,11 +711,10 @@ func (clients *clientsContainer) update(prev, c *persistentClient) (err error) {
 	}
 
 	// Check the ID index.
-	for _, id := range c.ids() {
-		existing, ok := clients.idIndex[id]
-		if ok && existing != prev {
-			return fmt.Errorf("id %q is used by client with name %q", id, existing.Name)
-		}
+	err = clients.clientIndex.clashes(c)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
 	}
 
 	clients.removeLocked(prev)

@@ -40,6 +40,7 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 		},
 	}
 	watcher := &aghtest.FSWatcher{
+		OnStart:  func() (_ error) { panic("not implemented") },
 		OnEvents: func() (e <-chan struct{}) { return nil },
 		OnAdd:    func(name string) (err error) { return nil },
 		OnClose:  func() (err error) { return nil },

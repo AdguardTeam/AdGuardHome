@@ -418,6 +418,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 			},
 		},
 		&aghtest.FSWatcher{
+			OnStart:  func() (_ error) { panic("not implemented") },
 			OnEvents: func() (e <-chan struct{}) { return nil },
 			OnAdd:    func(_ string) (err error) { return nil },
 			OnClose:  func() (err error) { return nil },

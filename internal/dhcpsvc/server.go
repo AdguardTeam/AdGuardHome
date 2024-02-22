@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
-	"strings"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/AdguardTeam/golibs/errors"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 // DHCPServer is a DHCP server for both IPv4 and IPv6 address families.
@@ -23,17 +23,11 @@ type DHCPServer struct {
 	// hostnames.
 	localTLD string
 
-	// leasesMu protects the ipIndex and nameIndex fields against concurrent
-	// access, as well as leaseHandlers within the interfaces.
+	// leasesMu protects the leases index as well as leases in the interfaces.
 	leasesMu *sync.RWMutex
 
-	// leaseByIP is a lookup shortcut for leases by their IP addresses.
-	leaseByIP map[netip.Addr]*Lease
-
-	// leaseByName is a lookup shortcut for leases by their hostnames.
-	//
-	// TODO(e.burkov):  Use a slice of leases with the same hostname?
-	leaseByName map[string]*Lease
+	// leases stores the DHCP leases for quick lookups.
+	leases *leaseIndex
 
 	// interfaces4 is the set of IPv4 interfaces sorted by interface name.
 	interfaces4 netInterfacesV4
@@ -88,8 +82,7 @@ func New(conf *Config) (srv *DHCPServer, err error) {
 		enabled:     enabled,
 		localTLD:    conf.LocalDomainName,
 		leasesMu:    &sync.RWMutex{},
-		leaseByIP:   map[netip.Addr]*Lease{},
-		leaseByName: map[string]*Lease{},
+		leases:      newLeaseIndex(),
 		interfaces4: ifaces4,
 		interfaces6: ifaces6,
 		icmpTimeout: conf.ICMPTimeout,
@@ -120,6 +113,11 @@ func (srv *DHCPServer) Leases() (leases []*Lease) {
 			leases = append(leases, lease.Clone())
 		}
 	}
+	for _, iface := range srv.interfaces6 {
+		for _, lease := range iface.leases {
+			leases = append(leases, lease.Clone())
+		}
+	}
 
 	return leases
 }
@@ -129,7 +127,7 @@ func (srv *DHCPServer) HostByIP(ip netip.Addr) (host string) {
 	srv.leasesMu.RLock()
 	defer srv.leasesMu.RUnlock()
 
-	if l, ok := srv.leaseByIP[ip]; ok {
+	if l, ok := srv.leases.leaseByAddr(ip); ok {
 		return l.Hostname
 	}
 
@@ -141,7 +139,7 @@ func (srv *DHCPServer) MACByIP(ip netip.Addr) (mac net.HardwareAddr) {
 	srv.leasesMu.RLock()
 	defer srv.leasesMu.RUnlock()
 
-	if l, ok := srv.leaseByIP[ip]; ok {
+	if l, ok := srv.leases.leaseByAddr(ip); ok {
 		return l.HWAddr
 	}
 
@@ -150,12 +148,10 @@ func (srv *DHCPServer) MACByIP(ip netip.Addr) (mac net.HardwareAddr) {
 
 // IPByHost implements the [Interface] interface for *DHCPServer.
 func (srv *DHCPServer) IPByHost(host string) (ip netip.Addr) {
-	lowered := strings.ToLower(host)
-
 	srv.leasesMu.RLock()
 	defer srv.leasesMu.RUnlock()
 
-	if l, ok := srv.leaseByName[lowered]; ok {
+	if l, ok := srv.leases.leaseByName(host); ok {
 		return l.IP
 	}
 
@@ -173,39 +169,76 @@ func (srv *DHCPServer) Reset() (err error) {
 	for _, iface := range srv.interfaces6 {
 		iface.reset()
 	}
-
-	maps.Clear(srv.leaseByIP)
-	maps.Clear(srv.leaseByName)
+	srv.leases.clear()
 
 	return nil
 }
 
 // AddLease implements the [Interface] interface for *DHCPServer.
 func (srv *DHCPServer) AddLease(l *Lease) (err error) {
-	var ok bool
-	var iface *netInterface
+	defer func() { err = errors.Annotate(err, "adding lease: %w") }()
 
 	addr := l.IP
+	iface, err := srv.ifaceForAddr(addr)
+	if err != nil {
+		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
 
+	srv.leasesMu.Lock()
+	defer srv.leasesMu.Unlock()
+
+	return srv.leases.add(l, iface)
+}
+
+// UpdateStaticLease implements the [Interface] interface for *DHCPServer.
+//
+// TODO(e.burkov):  Support moving leases between interfaces.
+func (srv *DHCPServer) UpdateStaticLease(l *Lease) (err error) {
+	defer func() { err = errors.Annotate(err, "updating static lease: %w") }()
+
+	addr := l.IP
+	iface, err := srv.ifaceForAddr(addr)
+	if err != nil {
+		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
+
+	srv.leasesMu.Lock()
+	defer srv.leasesMu.Unlock()
+
+	return srv.leases.update(l, iface)
+}
+
+// RemoveLease implements the [Interface] interface for *DHCPServer.
+func (srv *DHCPServer) RemoveLease(l *Lease) (err error) {
+	defer func() { err = errors.Annotate(err, "removing lease: %w") }()
+
+	addr := l.IP
+	iface, err := srv.ifaceForAddr(addr)
+	if err != nil {
+		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
+
+	srv.leasesMu.Lock()
+	defer srv.leasesMu.Unlock()
+
+	return srv.leases.remove(l, iface)
+}
+
+// ifaceForAddr returns the handled network interface for the given IP address,
+// or an error if no such interface exists.
+func (srv *DHCPServer) ifaceForAddr(addr netip.Addr) (iface *netInterface, err error) {
+	var ok bool
 	if addr.Is4() {
 		iface, ok = srv.interfaces4.find(addr)
 	} else {
 		iface, ok = srv.interfaces6.find(addr)
 	}
 	if !ok {
-		return fmt.Errorf("no interface for IP address %s", addr)
+		return nil, fmt.Errorf("no interface for ip %s", addr)
 	}
 
-	srv.leasesMu.Lock()
-	defer srv.leasesMu.Unlock()
-
-	err = iface.insertLease(l)
-	if err != nil {
-		return err
-	}
-
-	srv.leaseByIP[l.IP] = l
-	srv.leaseByName[strings.ToLower(l.Hostname)] = l
-
-	return nil
+	return iface, nil
 }

@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Trans, useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
+import { useHistory, useLocation } from 'react-router-dom';
 import ReactTable from 'react-table';
 
 import { getAllBlockedServices, getBlockedServices } from '../../../../actions/services';
@@ -39,8 +40,12 @@ const ClientsTable = ({
 }) => {
     const [t] = useTranslation();
     const dispatch = useDispatch();
+    const location = useLocation();
+    const history = useHistory();
     const services = useSelector((store) => store?.services);
     const globalSettings = useSelector((store) => store?.settings.settingsList) || {};
+    const params = new URLSearchParams(location.search);
+    const clientId = params.get('clientId');
 
     const { safesearch } = globalSettings;
 
@@ -48,6 +53,12 @@ const ClientsTable = ({
         dispatch(getAllBlockedServices());
         dispatch(getBlockedServices());
         dispatch(initSettings());
+
+        if (clientId) {
+            toggleClientModal({
+                type: MODAL_TYPE.ADD_CLIENT,
+            });
+        }
     }, []);
 
     const handleFormAdd = (values) => {
@@ -85,10 +96,14 @@ const ClientsTable = ({
             }
         }
 
-        if (modalType === MODAL_TYPE.EDIT_FILTERS) {
+        if (modalType === MODAL_TYPE.EDIT_CLIENT) {
             handleFormUpdate(config, modalClientName);
         } else {
             handleFormAdd(config);
+        }
+
+        if (clientId) {
+            history.push('/#clients');
         }
     };
 
@@ -130,6 +145,14 @@ const ClientsTable = ({
         if (window.confirm(t('client_confirm_delete', { key: data.name }))) {
             deleteClient(data);
             getStats();
+        }
+    };
+
+    const handleClose = () => {
+        toggleClientModal();
+
+        if (clientId) {
+            history.push('/#clients');
         }
     };
 
@@ -298,7 +321,7 @@ const ClientsTable = ({
                             type="button"
                             className="btn btn-icon btn-outline-primary btn-sm mr-2"
                             onClick={() => toggleClientModal({
-                                type: MODAL_TYPE.EDIT_FILTERS,
+                                type: MODAL_TYPE.EDIT_CLIENT,
                                 name: clientName,
                             })
                             }
@@ -371,12 +394,13 @@ const ClientsTable = ({
                 <Modal
                     isModalOpen={isModalOpen}
                     modalType={modalType}
-                    toggleClientModal={toggleClientModal}
+                    handleClose={handleClose}
                     currentClientData={currentClientData}
                     handleSubmit={handleSubmit}
                     processingAdding={processingAdding}
                     processingUpdating={processingUpdating}
                     tagsOptions={tagsOptions}
+                    clientId={clientId}
                 />
             </>
         </Card>

@@ -2,9 +2,8 @@ package dhcpsvc
 
 import (
 	"fmt"
+	"slices"
 	"time"
-
-	"golang.org/x/exp/slices"
 )
 
 // netInterface is a common part of any network interface within the DHCP
@@ -36,6 +35,32 @@ func (iface *netInterface) insertLease(l *Lease) (err error) {
 	}
 
 	iface.leases = slices.Insert(iface.leases, i, l)
+
+	return nil
+}
+
+// updateLease replaces an existing lease within iface with the given one.  It
+// returns an error if there is no lease with such hardware address.
+func (iface *netInterface) updateLease(l *Lease) (prev *Lease, err error) {
+	i, found := slices.BinarySearchFunc(iface.leases, l, compareLeaseMAC)
+	if !found {
+		return nil, fmt.Errorf("no lease for mac %s", l.HWAddr)
+	}
+
+	prev, iface.leases[i] = iface.leases[i], l
+
+	return prev, nil
+}
+
+// removeLease removes an existing lease from iface.  It returns an error if
+// there is no lease equal to l.
+func (iface *netInterface) removeLease(l *Lease) (err error) {
+	i, found := slices.BinarySearchFunc(iface.leases, l, compareLeaseMAC)
+	if !found {
+		return fmt.Errorf("no lease for mac %s", l.HWAddr)
+	}
+
+	iface.leases = slices.Delete(iface.leases, i, i+1)
 
 	return nil
 }

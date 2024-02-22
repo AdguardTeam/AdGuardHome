@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/netip"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
@@ -19,7 +20,6 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
-	"golang.org/x/exp/slices"
 )
 
 type v4ServerConfJSON struct {
@@ -592,7 +592,7 @@ func setOtherDHCPResult(ifaceName string, result *dhcpSearchResult) {
 }
 
 // parseLease parses a lease from r.  If there is no error returns DHCPServer
-// and *Lease. r must be non-nil.
+// and *Lease.  r must be non-nil.
 func (s *server) parseLease(r io.Reader) (srv DHCPServer, lease *dhcpsvc.Lease, err error) {
 	l := &leaseStatic{}
 	err = json.NewDecoder(r).Decode(l)

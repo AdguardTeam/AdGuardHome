@@ -314,7 +314,7 @@ func (u *Updater) clean() {
 	_ = os.RemoveAll(u.updateDir)
 }
 
-// MaxPackageFileSize is a maximum package file length in bytes. The largest
+// MaxPackageFileSize is a maximum package file length in bytes.  The largest
 // package whose size is limited by this constant currently has the size of
 // approximately 9 MiB.
 const MaxPackageFileSize = 32 * 1024 * 1024

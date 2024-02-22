@@ -227,12 +227,15 @@ func handleServiceControlAction(
 	runOpts := opts
 	runOpts.serviceControlAction = "run"
 
+	args := optsToArgs(runOpts)
+	log.Debug("service: using args %q", args)
+
 	svcConfig := &service.Config{
 		Name:             serviceName,
 		DisplayName:      serviceDisplayName,
 		Description:      serviceDescription,
 		WorkingDirectory: pwd,
-		Arguments:        optsToArgs(runOpts),
+		Arguments:        args,
 	}
 	configureService(svcConfig)
 

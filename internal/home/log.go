@@ -75,6 +75,8 @@ func getLogSettings(opts options) (ls *logSettings) {
 	if opts.verbose {
 		ls.Verbose = true
 	}
+
+	// TODO(a.garipov): Use cmp.Or in Go 1.22.
 	ls.File = stringutil.Coalesce(opts.logFile, ls.File)
 
 	if opts.runningAsService && ls.File == "" && runtime.GOOS == "windows" {

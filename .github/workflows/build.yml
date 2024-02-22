@@ -1,7 +1,7 @@
 'name': 'build'
 
 'env':
-  'GO_VERSION': '1.20.12'
+  'GO_VERSION': '1.21.7'
   'NODE_VERSION': '16'
 
 'on':
@@ -101,7 +101,10 @@
     - 'name': 'Set up Docker Buildx'
       'uses': 'docker/setup-buildx-action@v1'
     - 'name': 'Run snapshot build'
-      'run': 'make SIGN=0 VERBOSE=1 build-release build-docker'
+      # Set a custom version string, since the checkout@v2 action does not seem
+      # to know about the master branch, while the version script uses it to
+      # count the number of commits within the branch.
+      'run': 'make SIGN=0 VERBOSE=1 VERSION="v0.0.0-github" build-release build-docker'
 
   'notify':
     'needs':

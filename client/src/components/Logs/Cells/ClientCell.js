@@ -3,7 +3,7 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { nanoid } from 'nanoid';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import propTypes from 'prop-types';
 
 import { checkFiltered, getBlockingClientName } from '../../../helpers/helpers';
@@ -25,12 +25,14 @@ const ClientCell = ({
 }) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
+    const history = useHistory();
     const autoClients = useSelector((state) => state.dashboard.autoClients, shallowEqual);
     const isDetailed = useSelector((state) => state.queryLogs.isDetailed);
     const allowedСlients = useSelector((state) => state.access.allowed_clients, shallowEqual);
     const [isOptionsOpened, setOptionsOpened] = useState(false);
 
     const autoClient = autoClients.find((autoClient) => autoClient.name === client);
+    const clients = useSelector((state) => state.dashboard.clients);
     const source = autoClient?.source;
     const whoisAvailable = client_info && Object.keys(client_info.whois).length > 0;
     const clientName = client_info?.name || client_id;
@@ -55,6 +57,8 @@ const ClientCell = ({
 
     const isFiltered = checkFiltered(reason);
 
+    const clientIds = clients.map((c) => c.ids).flat();
+
     const nameClass = classNames('w-90 o-hidden d-flex flex-column', {
         'mt-2': isDetailed && !client_info?.name && !whoisAvailable,
         'white-space--nowrap': isDetailed,
@@ -66,7 +70,6 @@ const ClientCell = ({
 
     const renderBlockingButton = (isFiltered, domain) => {
         const buttonType = isFiltered ? BLOCK_ACTIONS.UNBLOCK : BLOCK_ACTIONS.BLOCK;
-        const clients = useSelector((state) => state.dashboard.clients);
 
         const {
             confirmMessage,
@@ -117,6 +120,15 @@ const ClientCell = ({
                 disabled: lastRuleInAllowlist,
             },
         ];
+
+        if (!clientIds.includes(client)) {
+            BUTTON_OPTIONS.push({
+                name: 'add_persistent_client',
+                onClick: () => {
+                    history.push(`/#clients?clientId=${client}`);
+                },
+            });
+        }
 
         const getOptions = (options) => {
             if (options.length === 0) {

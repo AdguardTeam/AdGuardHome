@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/netip"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -30,7 +31,6 @@ import (
 	"github.com/AdguardTeam/golibs/netutil/sysresolv"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
-	"golang.org/x/exp/slices"
 )
 
 // DefaultTimeout is the default upstream timeout

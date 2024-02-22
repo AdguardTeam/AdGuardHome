@@ -1,11 +1,11 @@
 package aghnet
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
-	"golang.org/x/exp/slices"
 )
 
 // IgnoreEngine contains the list of rules for ignoring hostnames and matches

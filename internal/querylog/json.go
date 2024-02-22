@@ -1,6 +1,7 @@
 package querylog
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -9,7 +10,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
-	"golang.org/x/exp/slices"
 	"golang.org/x/net/idna"
 )
 

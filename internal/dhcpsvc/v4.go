@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/google/gopacket/layers"
-	"golang.org/x/exp/slices"
 )
 
 // IPv4Config is the interface-specific configuration for DHCPv4.

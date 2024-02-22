@@ -5,7 +5,8 @@
     'key': 'AHBRTSPECS'
     'name': 'AdGuard Home - Build and run tests'
 'variables':
-    'dockerGo': 'adguard/golang-ubuntu:7.6'
+    'dockerGo': 'adguard/golang-ubuntu:8.0'
+    'channel': 'development'
 
 'stages':
   - 'Tests':
@@ -73,7 +74,7 @@
                 make\
                         ARCH="amd64"\
                         OS="windows darwin linux"\
-                        CHANNEL="development"\
+                        CHANNEL=${bamboo.channel}\
                         SIGN=0\
                         PARALLELISM=1\
                         VERBOSE=2\
@@ -115,3 +116,16 @@
 'labels': []
 'other':
     'concurrent-build-plugin': 'system-default'
+
+'branch-overrides':
+    # rc-vX.Y.Z branches are the release candidate branches. They are created
+    # from the release branch and are used to build the release candidate
+    # images.
+  - '^rc-v[0-9]+\.[0-9]+\.[0-9]+':
+        # Build betas on release branches manually.
+        'triggers': []
+        # Set the default release channel on the release branch to beta, as we
+        # may need to build a few of these.
+        'variables':
+            'dockerGo': 'adguard/golang-ubuntu:8.0'
+            'channel': 'candidate'

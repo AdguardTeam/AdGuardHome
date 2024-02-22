@@ -3,11 +3,11 @@ package querylog
 import (
 	"fmt"
 	"io"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"golang.org/x/exp/slices"
 )
 
 // client finds the client info, if any, by its ClientID and IP address,
@@ -49,8 +49,8 @@ func (l *queryLog) client(clientID, ip string, cache clientCache) (c *Client, er
 // the total amount of records in the buffer at the moment of searching.
 // l.confMu is expected to be locked.
 func (l *queryLog) searchMemory(params *searchParams, cache clientCache) (entries []*logEntry, total int) {
-	// We use this configuration check because a buffer can contain a single log
-	// record.  See [newQueryLog].
+	// Check memory size, as the buffer can contain a single log record.  See
+	// [newQueryLog].
 	if l.conf.MemSize == 0 {
 		return nil, 0
 	}
@@ -186,7 +186,7 @@ func (l *queryLog) setQLogReader(olderThan time.Time) (qr *qLogReader, err error
 	return r, nil
 }
 
-// readEntries reads entries from the reader to totalLimit.   By default, we do
+// readEntries reads entries from the reader to totalLimit.  By default, we do
 // not scan more than maxFileScanEntries at once.  The idea is to make search
 // calls faster so that the UI could handle it and show something quicker.
 // This behavior can be overridden if maxFileScanEntries is set to 0.

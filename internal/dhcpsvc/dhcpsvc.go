@@ -14,7 +14,9 @@ import (
 // Interface is a DHCP service.
 //
 // TODO(e.burkov):  Separate HostByIP, MACByIP, IPByHost into a separate
-// interface.  This is also valid for Enabled method.
+// interface.  This is also applicable to Enabled method.
+//
+// TODO(e.burkov):  Reconsider the requirements for the leases validity.
 type Interface interface {
 	agh.ServiceWithConfig[*Config]
 
@@ -29,6 +31,8 @@ type Interface interface {
 	// MACByIP returns the MAC address for the given IP address leased.  It
 	// returns nil if there is no such client, due to an assumption that a DHCP
 	// client must always have a MAC address.
+	//
+	// TODO(e.burkov):  Think of a contract for the returned value.
 	MACByIP(ip netip.Addr) (mac net.HardwareAddr)
 
 	// IPByHost returns the IP address of the DHCP client with the given
@@ -44,17 +48,17 @@ type Interface interface {
 	// signatures instead of cloning the whole list.
 	Leases() (ls []*Lease)
 
-	// AddLease adds a new DHCP lease.  It returns an error if the lease is
-	// invalid or already exists.
+	// AddLease adds a new DHCP lease.  l must be valid.  It returns an error if
+	// l already exists.
 	AddLease(l *Lease) (err error)
 
-	// UpdateStaticLease changes an existing DHCP lease.  It returns an error if
-	// there is no lease with such hardware addressor if new values are invalid
-	// or already exist.
+	// UpdateStaticLease replaces an existing static DHCP lease.  l must be
+	// valid.  It returns an error if the lease with the given hardware address
+	// doesn't exist or if other values match another existing lease.
 	UpdateStaticLease(l *Lease) (err error)
 
-	// RemoveLease removes an existing DHCP lease.  It returns an error if there
-	// is no lease equal to l.
+	// RemoveLease removes an existing DHCP lease.  l must be valid.  It returns
+	// an error if there is no lease equal to l.
 	RemoveLease(l *Lease) (err error)
 
 	// Reset removes all the DHCP leases.

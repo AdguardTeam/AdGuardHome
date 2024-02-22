@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
 	"strings"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/google/uuid"
-	"golang.org/x/exp/slices"
 )
 
 // UID is the type for the unique IDs of persistent clients.
@@ -28,6 +28,16 @@ func NewUID() (uid UID, err error) {
 	uuidv7, err := uuid.NewV7()
 
 	return UID(uuidv7), err
+}
+
+// MustNewUID is a wrapper around [NewUID] that panics if there is an error.
+func MustNewUID() (uid UID) {
+	uid, err := NewUID()
+	if err != nil {
+		panic(fmt.Errorf("unexpected uuidv7 error: %w", err))
+	}
+
+	return uid
 }
 
 // type check

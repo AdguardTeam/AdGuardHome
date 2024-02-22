@@ -3,10 +3,10 @@ package filtering
 import (
 	"encoding/json"
 	"net/http"
+	"slices"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/log"
-	"golang.org/x/exp/slices"
 )
 
 // TODO(d.kolyshev): Use [rewrite.Item] instead.

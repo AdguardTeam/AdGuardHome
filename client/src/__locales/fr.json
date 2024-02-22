@@ -236,6 +236,7 @@
     "updated_upstream_dns_toast": "Serveurs en amont enregistrés",
     "dns_test_ok_toast": "Les serveurs DNS spécifiés fonctionnent correctement",
     "dns_test_not_ok_toast": "Impossible d'utiliser le serveur « {{key}} »: veuillez vérifier si le nom saisi est bien correct",
+    "dns_test_parsing_error_toast": "La section {{section}}: ligne {{line}}: n'a pas pu être utilisée, veuillez vérifier que vous l'avez écrite correctement",
     "dns_test_warning_toast": "L'amont « {{key}} » ne répond pas aux demandes de test et peut ne pas fonctionner correctement",
     "unblock": "Débloquer",
     "block": "Bloquer",

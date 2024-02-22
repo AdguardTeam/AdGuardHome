@@ -14,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sync"
 	"syscall"
 	"time"
@@ -39,8 +40,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/osutil"
-	"github.com/AdguardTeam/golibs/stringutil"
-	"golang.org/x/exp/slices"
 )
 
 // Global context
@@ -68,11 +67,14 @@ type homeContext struct {
 	// Runtime properties
 	// --
 
-	configFilename string // Config filename (can be overridden via the command line arguments)
-	workDir        string // Location of our directory, used to protect against CWD being somewhere else
-	pidFileName    string // PID file name.  Empty if no PID file was created.
-	controlLock    sync.Mutex
-	tlsRoots       *x509.CertPool // list of root CAs for TLSv1.2
+	// confFilePath is the configuration file path as set by default or from the
+	// command-line options.
+	confFilePath string
+
+	workDir     string // Location of our directory, used to protect against CWD being somewhere else
+	pidFileName string // PID file name.  Empty if no PID file was created.
+	controlLock sync.Mutex
+	tlsRoots    *x509.CertPool // list of root CAs for TLSv1.2
 
 	// tlsCipherIDs are the ID of the cipher suites that AdGuard Home must use.
 	tlsCipherIDs []uint16
@@ -250,7 +252,7 @@ func setupHostsContainer() (err error) {
 		return errors.Join(fmt.Errorf("initializing hosts container: %w", err), closeErr)
 	}
 
-	return nil
+	return hostsWatcher.Start()
 }
 
 // setupOpts sets up command-line options.
@@ -361,7 +363,7 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 
 	conf.EtcHosts = Context.etcHosts
 	// TODO(s.chzhen):  Use empty interface.
-	if Context.etcHosts == nil {
+	if Context.etcHosts == nil || !config.DNS.HostsFileEnabled {
 		conf.EtcHosts = nil
 	}
 
@@ -575,6 +577,9 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 		Path: path.Join("adguardhome", version.Channel(), "version.json"),
 	}
 
+	confPath := configFilePath()
+	log.Debug("using config path %q for updater", confPath)
+
 	upd := updater.NewUpdater(&updater.Config{
 		Client:          config.Filtering.HTTPClient,
 		Version:         version.Version(),
@@ -584,7 +589,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 		GOARM:           version.GOARM(),
 		GOMIPS:          version.GOMIPS(),
 		WorkDir:         Context.workDir,
-		ConfName:        config.getConfigFilename(),
+		ConfName:        confPath,
 		ExecPath:        execPath,
 		VersionCheckURL: u.String(),
 	})
@@ -748,7 +753,16 @@ func writePIDFile(fn string) bool {
 // initConfigFilename sets up context config file path.  This file path can be
 // overridden by command-line arguments, or is set to default.
 func initConfigFilename(opts options) {
-	Context.configFilename = stringutil.Coalesce(opts.confFilename, "AdGuardHome.yaml")
+	confPath := opts.confFilename
+	if confPath == "" {
+		Context.confFilePath = "AdGuardHome.yaml"
+
+		return
+	}
+
+	log.Debug("config path overridden to %q from cmdline", confPath)
+
+	Context.confFilePath = confPath
 }
 
 // initWorkingDir initializes the workDir.  If no command-line arguments are
@@ -906,16 +920,23 @@ func printHTTPAddresses(proto string) {
 	}
 }
 
-// -------------------
-// first run / install
-// -------------------
-func detectFirstRun() bool {
-	configfile := Context.configFilename
-	if !filepath.IsAbs(configfile) {
-		configfile = filepath.Join(Context.workDir, Context.configFilename)
+// detectFirstRun returns true if this is the first run of AdGuard Home.
+func detectFirstRun() (ok bool) {
+	confPath := Context.confFilePath
+	if !filepath.IsAbs(confPath) {
+		confPath = filepath.Join(Context.workDir, Context.confFilePath)
 	}
-	_, err := os.Stat(configfile)
-	return errors.Is(err, os.ErrNotExist)
+
+	_, err := os.Stat(confPath)
+	if err == nil {
+		return false
+	} else if errors.Is(err, os.ErrNotExist) {
+		return true
+	}
+
+	log.Error("detecting first run: %s; considering first run", err)
+
+	return true
 }
 
 // jsonError is a generic JSON error response.

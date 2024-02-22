@@ -17,6 +17,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/osutil"
 )
 
 // DialContextFunc is the semantic alias for dialing functions, such as
@@ -32,7 +33,7 @@ var (
 	netInterfaceAddrs = net.InterfaceAddrs
 
 	// rootDirFS is the filesystem pointing to the root directory.
-	rootDirFS = aghos.RootDirFS()
+	rootDirFS = osutil.RootDirFS()
 )
 
 // ErrNoStaticIPInfo is returned by IfaceHasStaticIP when no information about
