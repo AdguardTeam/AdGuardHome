@@ -1,4 +1,4 @@
-package home
+package client
 
 import (
 	"testing"
@@ -27,10 +27,10 @@ func TestPersistentClient_EqualIDs(t *testing.T) {
 	)
 
 	testCases := []struct {
+		want    assert.BoolAssertionFunc
 		name    string
 		ids     []string
 		prevIDs []string
-		want    assert.BoolAssertionFunc
 	}{{
 		name:    "single_ip",
 		ids:     []string{ip1},
@@ -110,15 +110,15 @@ func TestPersistentClient_EqualIDs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			c := &persistentClient{}
-			err := c.setIDs(tc.ids)
+			c := &Persistent{}
+			err := c.SetIDs(tc.ids)
 			require.NoError(t, err)
 
-			prev := &persistentClient{}
-			err = prev.setIDs(tc.prevIDs)
+			prev := &Persistent{}
+			err = prev.SetIDs(tc.prevIDs)
 			require.NoError(t, err)
 
-			tc.want(t, c.equalIDs(prev))
+			tc.want(t, c.EqualIDs(prev))
 		})
 	}
 }
