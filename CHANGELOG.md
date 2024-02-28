@@ -61,6 +61,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Wrong algorithm for caching bootstrapped upstream addresses ([#6723]).
 - Incorrect tracking of the system hosts file's changes ([#6711]).
 
 ### Removed
