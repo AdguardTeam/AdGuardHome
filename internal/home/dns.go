@@ -427,7 +427,7 @@ func applyAdditionalFiltering(clientIP netip.Addr, clientID string, setts *filte
 	}
 
 	setts.FilteringEnabled = c.FilteringEnabled
-	setts.SafeSearchEnabled = c.safeSearchConf.Enabled
+	setts.SafeSearchEnabled = c.SafeSearchConf.Enabled
 	setts.ClientSafeSearch = c.SafeSearch
 	setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
 	setts.ParentalEnabled = c.ParentalEnabled
