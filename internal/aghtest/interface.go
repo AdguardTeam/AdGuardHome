@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
@@ -94,9 +93,6 @@ type AddressProcessor struct {
 	OnClose   func() (err error)
 }
 
-// type check
-var _ client.AddressProcessor = (*AddressProcessor)(nil)
-
 // Process implements the [client.AddressProcessor] interface for
 // *AddressProcessor.
 func (p *AddressProcessor) Process(ip netip.Addr) {
@@ -113,9 +109,6 @@ func (p *AddressProcessor) Close() (err error) {
 type AddressUpdater struct {
 	OnUpdateAddress func(ip netip.Addr, host string, info *whois.Info)
 }
-
-// type check
-var _ client.AddressUpdater = (*AddressUpdater)(nil)
 
 // UpdateAddress implements the [client.AddressUpdater] interface for
 // *AddressUpdater.

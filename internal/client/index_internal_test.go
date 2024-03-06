@@ -1,4 +1,4 @@
-package home
+package client
 
 import (
 	"net"
@@ -8,6 +8,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// newIDIndex is a helper function that returns a client index filled with
+// persistent clients from the m.  It also generates a UID for each client.
+func newIDIndex(m []*Persistent) (ci *Index) {
+	ci = NewIndex()
+
+	for _, c := range m {
+		c.UID = MustNewUID()
+		ci.Add(c)
+	}
+
+	return ci
+}
 
 func TestClientIndex(t *testing.T) {
 	const (
@@ -24,7 +37,7 @@ func TestClientIndex(t *testing.T) {
 		cliMAC = "11:11:11:11:11:11"
 	)
 
-	clients := []*persistentClient{{
+	clients := []*Persistent{{
 		Name: "client1",
 		IPs: []netip.Addr{
 			netip.MustParseAddr(cliIP1),
@@ -45,9 +58,9 @@ func TestClientIndex(t *testing.T) {
 	ci := newIDIndex(clients)
 
 	testCases := []struct {
+		want *Persistent
 		name string
 		ids  []string
-		want *persistentClient
 	}{{
 		name: "ipv4_ipv6",
 		ids:  []string{cliIP1, cliIPv6},
@@ -69,7 +82,7 @@ func TestClientIndex(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, id := range tc.ids {
-				c, ok := ci.find(id)
+				c, ok := ci.Find(id)
 				require.True(t, ok)
 
 				assert.Equal(t, tc.want, c)
@@ -78,7 +91,7 @@ func TestClientIndex(t *testing.T) {
 	}
 
 	t.Run("not_found", func(t *testing.T) {
-		_, ok := ci.find(cliIPNone)
+		_, ok := ci.Find(cliIPNone)
 		assert.False(t, ok)
 	})
 }
@@ -92,7 +105,7 @@ func TestClientIndex_Clashes(t *testing.T) {
 		cliMAC      = "11:11:11:11:11:11"
 	)
 
-	clients := []*persistentClient{{
+	clients := []*Persistent{{
 		Name: "client_with_ip",
 		IPs:  []netip.Addr{netip.MustParseAddr(cliIP1)},
 	}, {
@@ -109,8 +122,8 @@ func TestClientIndex_Clashes(t *testing.T) {
 	ci := newIDIndex(clients)
 
 	testCases := []struct {
+		client *Persistent
 		name   string
-		client *persistentClient
 	}{{
 		name:   "ipv4",
 		client: clients[0],
@@ -127,14 +140,14 @@ func TestClientIndex_Clashes(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			clone := tc.client.shallowClone()
+			clone := tc.client.ShallowClone()
 			clone.UID = MustNewUID()
 
-			err := ci.clashes(clone)
+			err := ci.Clashes(clone)
 			require.Error(t, err)
 
-			ci.del(tc.client)
-			err = ci.clashes(clone)
+			ci.Delete(tc.client)
+			err = ci.Clashes(clone)
 			require.NoError(t, err)
 		})
 	}
@@ -153,9 +166,9 @@ func mustParseMAC(s string) (mac net.HardwareAddr) {
 
 func TestMACToKey(t *testing.T) {
 	testCases := []struct {
+		want any
 		name string
 		in   string
-		want any
 	}{{
 		name: "column6",
 		in:   "00:00:5e:00:53:01",

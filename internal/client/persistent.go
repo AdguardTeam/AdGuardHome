@@ -1,4 +1,4 @@
-package home
+package client
 
 import (
 	"encoding"
@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/google/uuid"
 )
@@ -56,16 +56,16 @@ func (uid *UID) UnmarshalText(data []byte) error {
 	return (*uuid.UUID)(uid).UnmarshalText(data)
 }
 
-// persistentClient contains information about persistent clients.
-type persistentClient struct {
-	// upstreamConfig is the custom upstream configuration for this client.  If
+// Persistent contains information about persistent clients.
+type Persistent struct {
+	// UpstreamConfig is the custom upstream configuration for this client.  If
 	// it's nil, it has not been initialized yet.  If it's non-nil and empty,
 	// there are no valid upstreams.  If it's non-nil and non-empty, these
 	// upstream must be used.
-	upstreamConfig *proxy.CustomUpstreamConfig
+	UpstreamConfig *proxy.CustomUpstreamConfig
 
-	// TODO(d.kolyshev): Make safeSearchConf a pointer.
-	safeSearchConf filtering.SafeSearchConfig
+	// TODO(d.kolyshev): Make SafeSearchConf a pointer.
+	SafeSearchConf filtering.SafeSearchConfig
 	SafeSearch     filtering.SafeSearch
 
 	// BlockedServices is the configuration of blocked services of a client.
@@ -97,8 +97,8 @@ type persistentClient struct {
 	IgnoreStatistics      bool
 }
 
-// setTags sets the tags if they are known, otherwise logs an unknown tag.
-func (c *persistentClient) setTags(tags []string, known *stringutil.Set) {
+// SetTags sets the tags if they are known, otherwise logs an unknown tag.
+func (c *Persistent) SetTags(tags []string, known *stringutil.Set) {
 	for _, t := range tags {
 		if !known.Has(t) {
 			log.Info("skipping unknown tag %q", t)
@@ -112,9 +112,9 @@ func (c *persistentClient) setTags(tags []string, known *stringutil.Set) {
 	slices.Sort(c.Tags)
 }
 
-// setIDs parses a list of strings into typed fields and returns an error if
+// SetIDs parses a list of strings into typed fields and returns an error if
 // there is one.
-func (c *persistentClient) setIDs(ids []string) (err error) {
+func (c *Persistent) SetIDs(ids []string) (err error) {
 	for _, id := range ids {
 		err = c.setID(id)
 		if err != nil {
@@ -154,7 +154,7 @@ func subnetCompare(x, y netip.Prefix) (cmp int) {
 }
 
 // setID parses id into typed field if there is no error.
-func (c *persistentClient) setID(id string) (err error) {
+func (c *Persistent) setID(id string) (err error) {
 	if id == "" {
 		return errors.Error("clientid is empty")
 	}
@@ -180,7 +180,7 @@ func (c *persistentClient) setID(id string) (err error) {
 		return nil
 	}
 
-	err = dnsforward.ValidateClientID(id)
+	err = ValidateClientID(id)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
@@ -191,9 +191,23 @@ func (c *persistentClient) setID(id string) (err error) {
 	return nil
 }
 
-// ids returns a list of client ids containing at least one element.
-func (c *persistentClient) ids() (ids []string) {
-	ids = make([]string, 0, c.idsLen())
+// ValidateClientID returns an error if id is not a valid ClientID.
+//
+// TODO(s.chzhen):  It's an exact copy of the [dnsforward.ValidateClientID] to
+// avoid the import cycle.  Remove it.
+func ValidateClientID(id string) (err error) {
+	err = netutil.ValidateHostnameLabel(id)
+	if err != nil {
+		// Replace the domain name label wrapper with our own.
+		return fmt.Errorf("invalid clientid %q: %w", id, errors.Unwrap(err))
+	}
+
+	return nil
+}
+
+// IDs returns a list of client IDs containing at least one element.
+func (c *Persistent) IDs() (ids []string) {
+	ids = make([]string, 0, c.IDsLen())
 
 	for _, ip := range c.IPs {
 		ids = append(ids, ip.String())
@@ -210,24 +224,24 @@ func (c *persistentClient) ids() (ids []string) {
 	return append(ids, c.ClientIDs...)
 }
 
-// idsLen returns a length of client ids.
-func (c *persistentClient) idsLen() (n int) {
+// IDsLen returns a length of client ids.
+func (c *Persistent) IDsLen() (n int) {
 	return len(c.IPs) + len(c.Subnets) + len(c.MACs) + len(c.ClientIDs)
 }
 
-// equalIDs returns true if the ids of the current and previous clients are the
+// EqualIDs returns true if the ids of the current and previous clients are the
 // same.
-func (c *persistentClient) equalIDs(prev *persistentClient) (equal bool) {
+func (c *Persistent) EqualIDs(prev *Persistent) (equal bool) {
 	return slices.Equal(c.IPs, prev.IPs) &&
 		slices.Equal(c.Subnets, prev.Subnets) &&
 		slices.EqualFunc(c.MACs, prev.MACs, slices.Equal[net.HardwareAddr]) &&
 		slices.Equal(c.ClientIDs, prev.ClientIDs)
 }
 
-// shallowClone returns a deep copy of the client, except upstreamConfig,
+// ShallowClone returns a deep copy of the client, except upstreamConfig,
 // safeSearchConf, SafeSearch fields, because it's difficult to copy them.
-func (c *persistentClient) shallowClone() (clone *persistentClient) {
-	clone = &persistentClient{}
+func (c *Persistent) ShallowClone() (clone *Persistent) {
+	clone = &Persistent{}
 	*clone = *c
 
 	clone.BlockedServices = c.BlockedServices.Clone()
@@ -242,10 +256,10 @@ func (c *persistentClient) shallowClone() (clone *persistentClient) {
 	return clone
 }
 
-// closeUpstreams closes the client-specific upstream config of c if any.
-func (c *persistentClient) closeUpstreams() (err error) {
-	if c.upstreamConfig != nil {
-		if err = c.upstreamConfig.Close(); err != nil {
+// CloseUpstreams closes the client-specific upstream config of c if any.
+func (c *Persistent) CloseUpstreams() (err error) {
+	if c.UpstreamConfig != nil {
+		if err = c.UpstreamConfig.Close(); err != nil {
 			return fmt.Errorf("closing upstreams of client %q: %w", c.Name, err)
 		}
 	}
@@ -253,8 +267,8 @@ func (c *persistentClient) closeUpstreams() (err error) {
 	return nil
 }
 
-// setSafeSearch initializes and sets the safe search filter for this client.
-func (c *persistentClient) setSafeSearch(
+// SetSafeSearch initializes and sets the safe search filter for this client.
+func (c *Persistent) SetSafeSearch(
 	conf filtering.SafeSearchConfig,
 	cacheSize uint,
 	cacheTTL time.Duration,

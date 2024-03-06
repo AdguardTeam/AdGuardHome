@@ -1,4 +1,4 @@
-package home
+package client
 
 import (
 	"fmt"
@@ -26,8 +26,8 @@ func macToKey(mac net.HardwareAddr) (key macKey) {
 	}
 }
 
-// clientIndex stores all information about persistent clients.
-type clientIndex struct {
+// Index stores all information about persistent clients.
+type Index struct {
 	// clientIDToUID maps client ID to UID.
 	clientIDToUID map[string]UID
 
@@ -38,26 +38,26 @@ type clientIndex struct {
 	macToUID map[macKey]UID
 
 	// uidToClient maps UID to the persistent client.
-	uidToClient map[UID]*persistentClient
+	uidToClient map[UID]*Persistent
 
 	// subnetToUID maps subnet to UID.
 	subnetToUID aghalg.SortedMap[netip.Prefix, UID]
 }
 
-// NewClientIndex initializes the new instance of client index.
-func NewClientIndex() (ci *clientIndex) {
-	return &clientIndex{
+// NewIndex initializes the new instance of client index.
+func NewIndex() (ci *Index) {
+	return &Index{
 		clientIDToUID: map[string]UID{},
 		ipToUID:       map[netip.Addr]UID{},
 		subnetToUID:   aghalg.NewSortedMap[netip.Prefix, UID](subnetCompare),
 		macToUID:      map[macKey]UID{},
-		uidToClient:   map[UID]*persistentClient{},
+		uidToClient:   map[UID]*Persistent{},
 	}
 }
 
-// add stores information about a persistent client in the index.  c must be
+// Add stores information about a persistent client in the index.  c must be
 // non-nil and contain UID.
-func (ci *clientIndex) add(c *persistentClient) {
+func (ci *Index) Add(c *Persistent) {
 	if (c.UID == UID{}) {
 		panic("client must contain uid")
 	}
@@ -82,9 +82,9 @@ func (ci *clientIndex) add(c *persistentClient) {
 	ci.uidToClient[c.UID] = c
 }
 
-// clashes returns an error if the index contains a different persistent client
+// Clashes returns an error if the index contains a different persistent client
 // with at least a single identifier contained by c.  c must be non-nil.
-func (ci *clientIndex) clashes(c *persistentClient) (err error) {
+func (ci *Index) Clashes(c *Persistent) (err error) {
 	for _, id := range c.ClientIDs {
 		existing, ok := ci.clientIDToUID[id]
 		if ok && existing != c.UID {
@@ -114,7 +114,7 @@ func (ci *clientIndex) clashes(c *persistentClient) (err error) {
 
 // clashesIP returns a previous client with the same IP address as c.  c must be
 // non-nil.
-func (ci *clientIndex) clashesIP(c *persistentClient) (p *persistentClient, ip netip.Addr) {
+func (ci *Index) clashesIP(c *Persistent) (p *Persistent, ip netip.Addr) {
 	for _, ip := range c.IPs {
 		existing, ok := ci.ipToUID[ip]
 		if ok && existing != c.UID {
@@ -127,7 +127,7 @@ func (ci *clientIndex) clashesIP(c *persistentClient) (p *persistentClient, ip n
 
 // clashesSubnet returns a previous client with the same subnet as c.  c must be
 // non-nil.
-func (ci *clientIndex) clashesSubnet(c *persistentClient) (p *persistentClient, s netip.Prefix) {
+func (ci *Index) clashesSubnet(c *Persistent) (p *Persistent, s netip.Prefix) {
 	for _, s = range c.Subnets {
 		var existing UID
 		var ok bool
@@ -153,7 +153,7 @@ func (ci *clientIndex) clashesSubnet(c *persistentClient) (p *persistentClient, 
 
 // clashesMAC returns a previous client with the same MAC address as c.  c must
 // be non-nil.
-func (ci *clientIndex) clashesMAC(c *persistentClient) (p *persistentClient, mac net.HardwareAddr) {
+func (ci *Index) clashesMAC(c *Persistent) (p *Persistent, mac net.HardwareAddr) {
 	for _, mac = range c.MACs {
 		k := macToKey(mac)
 		existing, ok := ci.macToUID[k]
@@ -165,9 +165,9 @@ func (ci *clientIndex) clashesMAC(c *persistentClient) (p *persistentClient, mac
 	return nil, nil
 }
 
-// find finds persistent client by string representation of the client ID, IP
+// Find finds persistent client by string representation of the client ID, IP
 // address, or MAC.
-func (ci *clientIndex) find(id string) (c *persistentClient, ok bool) {
+func (ci *Index) Find(id string) (c *Persistent, ok bool) {
 	uid, found := ci.clientIDToUID[id]
 	if found {
 		return ci.uidToClient[uid], true
@@ -191,7 +191,7 @@ func (ci *clientIndex) find(id string) (c *persistentClient, ok bool) {
 }
 
 // find finds persistent client by IP address.
-func (ci *clientIndex) findByIP(ip netip.Addr) (c *persistentClient, found bool) {
+func (ci *Index) findByIP(ip netip.Addr) (c *Persistent, found bool) {
 	uid, found := ci.ipToUID[ip]
 	if found {
 		return ci.uidToClient[uid], true
@@ -215,7 +215,7 @@ func (ci *clientIndex) findByIP(ip netip.Addr) (c *persistentClient, found bool)
 }
 
 // find finds persistent client by MAC.
-func (ci *clientIndex) findByMAC(mac net.HardwareAddr) (c *persistentClient, found bool) {
+func (ci *Index) findByMAC(mac net.HardwareAddr) (c *Persistent, found bool) {
 	k := macToKey(mac)
 	uid, found := ci.macToUID[k]
 	if found {
@@ -225,9 +225,9 @@ func (ci *clientIndex) findByMAC(mac net.HardwareAddr) (c *persistentClient, fou
 	return nil, false
 }
 
-// del removes information about persistent client from the index.  c must be
+// Delete removes information about persistent client from the index.  c must be
 // non-nil.
-func (ci *clientIndex) del(c *persistentClient) {
+func (ci *Index) Delete(c *Persistent) {
 	for _, id := range c.ClientIDs {
 		delete(ci.clientIDToUID, id)
 	}
