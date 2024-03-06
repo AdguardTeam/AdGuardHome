@@ -30,33 +30,6 @@ set -f -u
 
 
 
-# Warnings
-
-go_version="$( "${GO:-go}" version )"
-readonly go_version
-
-go_min_version='go1.20.12'
-go_version_msg="
-warning: your go version (${go_version}) is different from the recommended minimal one (${go_min_version}).
-if you have the version installed, please set the GO environment variable.
-for example:
-
-	export GO='${go_min_version}'
-"
-readonly go_min_version go_version_msg
-
-case "$go_version"
-in
-('go version'*"$go_min_version"*)
-	# Go on.
-	;;
-(*)
-	echo "$go_version_msg" 1>&2
-	;;
-esac
-
-
-
 # Simple analyzers
 
 # blocklist_imports is a simple check against unwanted packages.  The following
@@ -74,9 +47,11 @@ esac
 #
 #      See https://github.com/golang/go/issues/45200.
 #
-#   *  Package sort is replaced by golang.org/x/exp/slices.
+#   *  Package sort is replaced by package slices.
 #
 #   *  Package unsafe is… unsafe.
+#
+#   *  Package golang.org/x/exp/slices has been moved into stdlib.
 #
 #   *  Package golang.org/x/net/context has been moved into stdlib.
 #
@@ -84,8 +59,12 @@ esac
 # schemas, which use package reflect.  If your project needs more exceptions,
 # add and document them.
 #
-# TODO(a.garipov): Add deprecated packages golang.org/x/exp/maps and
-# golang.org/x/exp/slices once all projects switch to Go 1.21.
+# TODO(a.garipov): Add golibs/log.
+#
+# TODO(a.garipov): Add "golang.org/x/exp/slices" back after a release.
+#
+# TODO(a.garipov): Add deprecated package golang.org/x/exp/maps once all
+# projects switch to Go 1.22.
 blocklist_imports() {
 	git grep\
 		-e '[[:space:]]"errors"$'\
@@ -124,12 +103,10 @@ underscores() {
 	underscore_files="$(
 		git ls-files '*_*.go'\
 			| grep -F\
-			-e '_big.go'\
 			-e '_bsd.go'\
 			-e '_darwin.go'\
 			-e '_freebsd.go'\
 			-e '_linux.go'\
-			-e '_little.go'\
 			-e '_next.go'\
 			-e '_openbsd.go'\
 			-e '_others.go'\

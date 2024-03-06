@@ -102,6 +102,9 @@
             the best way.  For crashes, please provide a full failure log.
         'label': 'Action'
         'value': |
+            Replace the following command with the one you're calling or a
+            description of the failing action:
+
             ```sh
             nslookup -debug -type=a 'www.example.com' '$YOUR_AGH_ADDRESS'
             ```

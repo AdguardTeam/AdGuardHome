@@ -7,7 +7,6 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/mathutil"
 	"github.com/bluele/gcache"
 )
 
@@ -88,8 +87,7 @@ func (r *Default) Process(ip netip.Addr) (host string, changed bool) {
 		log.Debug("rdns: resolving %q: %s", ip, err)
 	}
 
-	// TODO(s.chzhen):  Use built-in function max in Go 1.21.
-	ttl = mathutil.Max(ttl, r.cacheTTL)
+	ttl = max(ttl, r.cacheTTL)
 
 	item := &cacheItem{
 		expiry: time.Now().Add(ttl),

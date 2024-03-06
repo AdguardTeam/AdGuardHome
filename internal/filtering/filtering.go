@@ -1113,8 +1113,7 @@ func (d *DNSFilter) periodicallyRefreshFilters(ivl time.Duration) (nextIvl time.
 		ivl = maxInterval
 	} else if isNetErr {
 		ivl *= 2
-		// TODO(s.chzhen):  Use built-in function max in Go 1.21.
-		ivl = mathutil.Max(ivl, maxInterval)
+		ivl = max(ivl, maxInterval)
 	}
 
 	return ivl

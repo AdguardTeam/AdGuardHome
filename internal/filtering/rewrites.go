@@ -7,7 +7,6 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/mathutil"
 	"github.com/miekg/dns"
 	"golang.org/x/exp/slices"
 )
@@ -181,7 +180,7 @@ func findRewrites(
 		if isWildcard(r.Domain) {
 			// Don't use rewrites[:0], because we need to return at least one
 			// item here.
-			rewrites = rewrites[:mathutil.Max(1, i)]
+			rewrites = rewrites[:max(1, i)]
 
 			break
 		}

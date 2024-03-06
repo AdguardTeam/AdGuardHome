@@ -212,6 +212,7 @@
     "updated_upstream_dns_toast": "Oppdaterte oppstrøms-DNS-tjenerne",
     "dns_test_ok_toast": "De spesifiserte DNS-tjenerne fungerer riktig",
     "dns_test_not_ok_toast": "Tjeneren «{{key}}» kunne ikke brukes, vennligst dobbeltsjekk at du har skrevet den riktig",
+    "dns_test_parsing_error_toast": "Seksjon {{section}}: linje {{line}}: kunne ikke brukes, vennligst sjekk at du har skrevet det riktig",
     "unblock": "Tillat",
     "block": "Blokker",
     "disallow_this_client": "Ikke tillat denne klienten",

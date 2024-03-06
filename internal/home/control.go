@@ -15,7 +15,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/mathutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/NYTimes/gziphandler"
 )
@@ -145,7 +144,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 			// Make sure that we don't send negative numbers to the frontend,
 			// since enough time might have passed to make the difference less
 			// than zero.
-			protectionDisabledDuration = mathutil.Max(
+			protectionDisabledDuration = max(
 				0,
 				time.Until(*protectionDisabledUntil).Milliseconds(),
 			)

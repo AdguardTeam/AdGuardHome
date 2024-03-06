@@ -17,7 +17,6 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/mathutil"
 	"golang.org/x/exp/slices"
 )
 
@@ -63,7 +62,7 @@ func RunCommand(command string, arguments ...string) (code int, output []byte, e
 	cmd := exec.Command(command, arguments...)
 	out, err := cmd.Output()
 
-	out = out[:mathutil.Min(len(out), MaxCmdOutputSize)]
+	out = out[:min(len(out), MaxCmdOutputSize)]
 
 	if err != nil {
 		if eerr := new(exec.ExitError); errors.As(err, &eerr) {
@@ -142,7 +141,7 @@ func parsePSOutput(r io.Reader, cmdName string, ignore []int) (largest, instNum 
 		}
 
 		instNum++
-		largest = mathutil.Max(largest, cur)
+		largest = max(largest, cur)
 	}
 	if err = s.Err(); err != nil {
 		return 0, 0, fmt.Errorf("scanning stdout: %w", err)

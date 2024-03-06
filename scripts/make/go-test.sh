@@ -51,9 +51,9 @@ readonly count_flags cover_flags shuffle_flags timeout_flags
 "$go" test\
 	"$count_flags"\
 	"$cover_flags"\
-	"$shuffle_flags"\
 	"$race_flags"\
+	"$shuffle_flags"\
 	"$timeout_flags"\
-	"$x_flags"\
 	"$v_flags"\
+	"$x_flags"\
 	./...
