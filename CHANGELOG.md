@@ -26,7 +26,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Security
 
 - Go version has been updated to prevent the possibility of exploiting the Go
-  vulnerabilities fixed in Go 1.21.6 and Go 1.21.7.
+  vulnerabilities fixed in [Go 1.21.8][go-1.21.8].
 
 ### Added
 
@@ -74,6 +74,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6711]: https://github.com/AdguardTeam/AdGuardHome/issues/6711
 
 [go-toolchain]: https://go.dev/blog/toolchain
+[go-1.21.8]:    https://groups.google.com/g/golang-announce/c/5pwGVUPoMbg
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

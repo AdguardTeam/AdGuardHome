@@ -1,6 +1,6 @@
 module github.com/AdguardTeam/AdGuardHome/internal/tools
 
-go 1.21.7
+go 1.21.8
 
 require (
 	github.com/fzipp/gocyclo v0.6.0
