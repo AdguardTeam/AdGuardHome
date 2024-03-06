@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2024-01-22T00:10:10.554Z",
+    "timeUpdated": "2024-03-01T00:10:14.031Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -2731,6 +2731,13 @@
             "categoryId": 9,
             "url": "https://www.microsoft.com/",
             "companyId": "microsoft"
+        },
+        "assemblyexchange": {
+            "name": "Assembly Exchange",
+            "categoryId": 4,
+            "url": "https://www.medialab.la/",
+            "companyId": "medialab",
+            "source": "AdGuard"
         },
         "astronomer": {
             "name": "Astronomer",
@@ -20831,6 +20838,7 @@
         "asambeauty.com": "asambeauty.com",
         "ask.com": "ask.com",
         "aspnetcdn.com": "aspnetcdn",
+        "ads.assemblyexchange.com": "assemblyexchange",
         "cdn.astronomer.io": "astronomer",
         "ati-host.net": "at_internet",
         "aticdn.net": "at_internet",
