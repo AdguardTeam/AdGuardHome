@@ -46,7 +46,7 @@ func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
 			dns.Class(cl),
 			dns.Type(qt),
 			host,
-			ip,
+			ipStr,
 		)
 	}
 
@@ -58,7 +58,7 @@ func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
 			dns.Class(cl),
 			dns.Type(qt),
 			host,
-			ip,
+			ipStr,
 		)
 	}
 
