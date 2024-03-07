@@ -22,7 +22,7 @@ var testdata fs.FS = os.DirFS("./testdata")
 // RunCmdFunc is the signature of aghos.RunCommand function.
 type RunCmdFunc func(cmd string, args ...string) (code int, out []byte, err error)
 
-// substShell replaces the the aghos.RunCommand function used throughout the
+// substShell replaces the aghos.RunCommand function used throughout the
 // package with rc for tests ran under t.
 func substShell(t testing.TB, rc RunCmdFunc) {
 	t.Helper()
