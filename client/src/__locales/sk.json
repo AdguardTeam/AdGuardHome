@@ -26,7 +26,7 @@
     "enabled_dhcp": "DHCP server zapnutý",
     "disabled_dhcp": "DHCP server vypnutý",
     "unavailable_dhcp": "DHCP nie je dostupné",
-    "unavailable_dhcp_desc": "AdGuard Home nemôže vo vašom OS prevádzkovať DHCP server",
+    "unavailable_dhcp_desc": "AdGuard Home nemôže vo Vašom OS prevádzkovať DHCP server",
     "dhcp_title": "DHCP server (experimentálne!)",
     "dhcp_description": "Ak Váš smerovač neposkytuje možnosť nastaviť DHCP, môžete použiť vlastný zabudovaný DHCP server AdGuard.",
     "dhcp_enable": "Zapnúť DHCP server",

@@ -467,7 +467,7 @@
     "form_add_id": "新增識別碼",
     "form_client_name": "輸入用戶端名稱",
     "name": "名稱",
-    "client_name": "客戶端 {{id}}",
+    "client_name": "用戶端 {{id}}",
     "client_global_settings": "使用全域的設定",
     "client_deleted": "用戶端 \"{{key}}\" 被成功地刪除",
     "client_added": "用戶端 \"{{key}}\" 被成功地加入",
