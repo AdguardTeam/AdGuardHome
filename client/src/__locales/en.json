@@ -678,7 +678,7 @@
     "use_saved_key": "Use the previously saved key",
     "parental_control": "Parental Control",
     "safe_browsing": "Safe Browsing",
-    "served_from_cache": "{{value}} <i>(served from cache)</i>",
+    "served_from_cache_label": "Served from cache",
     "form_error_password_length": "Password must be {{min}} to {{max}} characters long",
     "anonymizer_notification": "<0>Note:</0> IP anonymization is enabled. You can disable it in <1>General settings</1>.",
     "confirm_dns_cache_clear": "Are you sure you want to clear DNS cache?",
