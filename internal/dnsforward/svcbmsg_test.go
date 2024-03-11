@@ -21,7 +21,7 @@ func TestGenAnswerHTTPS_andSVCB(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 		ServePlainDNS: true,
-	}, nil)
+	})
 
 	req := &dns.Msg{
 		Question: []dns.Question{{

@@ -83,7 +83,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 		ConfigModified: func() {},
 		ServePlainDNS:  true,
 	}
-	s := createTestServer(t, filterConf, forwardConf, nil)
+	s := createTestServer(t, filterConf, forwardConf)
 	s.sysResolvers = &emptySysResolvers{}
 
 	require.NoError(t, s.Start())
@@ -164,7 +164,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		ConfigModified: func() {},
 		ServePlainDNS:  true,
 	}
-	s := createTestServer(t, filterConf, forwardConf, nil)
+	s := createTestServer(t, filterConf, forwardConf)
 	s.sysResolvers = &emptySysResolvers{}
 
 	defaultConf := s.conf
@@ -439,7 +439,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 		ServePlainDNS: true,
-	}, nil)
+	})
 	srv.etcHosts = upstream.NewHostsResolver(hc)
 	startDeferStop(t, srv)
 

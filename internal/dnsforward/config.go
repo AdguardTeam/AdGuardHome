@@ -357,10 +357,6 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 		conf.DNSCryptResolverCert = c.ResolverCert
 	}
 
-	if conf.UpstreamConfig == nil || len(conf.UpstreamConfig.Upstreams) == 0 {
-		return nil, errors.Error("no default upstream servers configured")
-	}
-
 	conf, err = prepareCacheConfig(conf,
 		srvConf.CacheSize,
 		srvConf.CacheMinTTL,
