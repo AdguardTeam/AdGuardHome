@@ -55,6 +55,12 @@ const Dashboard = ({
             return t('stats_disabled_short');
         }
 
+        const msIn7Days = 604800000;
+
+        if (stats.timeUnits === TIME_UNITS.HOURS && stats.interval === msIn7Days) {
+            return t('for_last_days', { count: msToDays(stats.interval) });
+        }
+
         return stats.timeUnits === TIME_UNITS.HOURS
             ? t('for_last_hours', { count: msToHours(stats.interval) })
             : t('for_last_days', { count: msToDays(stats.interval) });

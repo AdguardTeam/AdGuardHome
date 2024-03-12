@@ -484,7 +484,7 @@ func (s *StatsCtx) fillCollectedStats(data *StatsResp, units []*unitDB, curID ui
 	data.TimeUnits = timeUnitsHours
 
 	daysCount := size / 24
-	if daysCount >= 7 {
+	if daysCount > 7 {
 		size = daysCount
 		data.TimeUnits = timeUnitsDays
 	}

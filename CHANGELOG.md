@@ -32,12 +32,14 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Statistics for 7 days displayed by day on the dashboard graph ([#6712]).
 - Missing "served from cache" label on long DNS server strings ([#6740]).
 - Incorrect tracking of the system hosts file's changes ([#6711]).
 
 [#5992]: https://github.com/AdguardTeam/AdGuardHome/issues/5992
 [#6610]: https://github.com/AdguardTeam/AdGuardHome/issues/6610
 [#6711]: https://github.com/AdguardTeam/AdGuardHome/issues/6711
+[#6712]: https://github.com/AdguardTeam/AdGuardHome/issues/6712
 [#6740]: https://github.com/AdguardTeam/AdGuardHome/issues/6740
 
 <!--
