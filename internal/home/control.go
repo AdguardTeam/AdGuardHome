@@ -144,10 +144,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 			// Make sure that we don't send negative numbers to the frontend,
 			// since enough time might have passed to make the difference less
 			// than zero.
-			protectionDisabledDuration = max(
-				0,
-				time.Until(*protectionDisabledUntil).Milliseconds(),
-			)
+			protectionDisabledDuration = max(0, time.Until(*protectionDisabledUntil).Milliseconds())
 		}
 
 		resp = statusResponse{

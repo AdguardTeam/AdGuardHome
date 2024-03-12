@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -12,7 +13,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"go.etcd.io/bbolt"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 const (
@@ -484,7 +484,7 @@ func (s *StatsCtx) fillCollectedStats(data *StatsResp, units []*unitDB, curID ui
 	data.TimeUnits = timeUnitsHours
 
 	daysCount := size / 24
-	if daysCount >= 7 {
+	if daysCount > 7 {
 		size = daysCount
 		data.TimeUnits = timeUnitsDays
 	}

@@ -3,12 +3,12 @@ package filtering
 import (
 	"fmt"
 	"net/netip"
+	"slices"
 	"strings"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
-	"golang.org/x/exp/slices"
 )
 
 // Legacy DNS rewrites

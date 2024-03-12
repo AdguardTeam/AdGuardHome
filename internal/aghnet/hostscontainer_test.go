@@ -67,6 +67,7 @@ func TestNewHostsContainer(t *testing.T) {
 			}
 
 			hc, err := aghnet.NewHostsContainer(testFS, &aghtest.FSWatcher{
+				OnStart:  func() (_ error) { panic("not implemented") },
 				OnEvents: onEvents,
 				OnAdd:    onAdd,
 				OnClose:  func() (err error) { return nil },
@@ -93,6 +94,7 @@ func TestNewHostsContainer(t *testing.T) {
 	t.Run("nil_fs", func(t *testing.T) {
 		require.Panics(t, func() {
 			_, _ = aghnet.NewHostsContainer(nil, &aghtest.FSWatcher{
+				OnStart: func() (_ error) { panic("not implemented") },
 				// Those shouldn't panic.
 				OnEvents: func() (e <-chan struct{}) { return nil },
 				OnAdd:    func(name string) (err error) { return nil },
@@ -111,6 +113,7 @@ func TestNewHostsContainer(t *testing.T) {
 		const errOnAdd errors.Error = "error"
 
 		errWatcher := &aghtest.FSWatcher{
+			OnStart:  func() (_ error) { panic("not implemented") },
 			OnEvents: func() (e <-chan struct{}) { panic("not implemented") },
 			OnAdd:    func(name string) (err error) { return errOnAdd },
 			OnClose:  func() (err error) { return nil },
@@ -155,6 +158,7 @@ func TestHostsContainer_refresh(t *testing.T) {
 	t.Cleanup(func() { close(eventsCh) })
 
 	w := &aghtest.FSWatcher{
+		OnStart:  func() (_ error) { panic("not implemented") },
 		OnEvents: func() (e <-chan event) { return eventsCh },
 		OnAdd: func(name string) (err error) {
 			assert.Equal(t, "dir", name)

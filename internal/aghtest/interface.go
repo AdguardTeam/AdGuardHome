@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
@@ -26,13 +25,24 @@ import (
 
 // FSWatcher is a fake [aghos.FSWatcher] implementation for tests.
 type FSWatcher struct {
+	OnStart  func() (err error)
+	OnClose  func() (err error)
 	OnEvents func() (e <-chan struct{})
 	OnAdd    func(name string) (err error)
-	OnClose  func() (err error)
 }
 
 // type check
 var _ aghos.FSWatcher = (*FSWatcher)(nil)
+
+// Start implements the [aghos.FSWatcher] interface for *FSWatcher.
+func (w *FSWatcher) Start() (err error) {
+	return w.OnStart()
+}
+
+// Close implements the [aghos.FSWatcher] interface for *FSWatcher.
+func (w *FSWatcher) Close() (err error) {
+	return w.OnClose()
+}
 
 // Events implements the [aghos.FSWatcher] interface for *FSWatcher.
 func (w *FSWatcher) Events() (e <-chan struct{}) {
@@ -42,11 +52,6 @@ func (w *FSWatcher) Events() (e <-chan struct{}) {
 // Add implements the [aghos.FSWatcher] interface for *FSWatcher.
 func (w *FSWatcher) Add(name string) (err error) {
 	return w.OnAdd(name)
-}
-
-// Close implements the [aghos.FSWatcher] interface for *FSWatcher.
-func (w *FSWatcher) Close() (err error) {
-	return w.OnClose()
 }
 
 // Package agh
@@ -88,9 +93,6 @@ type AddressProcessor struct {
 	OnClose   func() (err error)
 }
 
-// type check
-var _ client.AddressProcessor = (*AddressProcessor)(nil)
-
 // Process implements the [client.AddressProcessor] interface for
 // *AddressProcessor.
 func (p *AddressProcessor) Process(ip netip.Addr) {
@@ -107,9 +109,6 @@ func (p *AddressProcessor) Close() (err error) {
 type AddressUpdater struct {
 	OnUpdateAddress func(ip netip.Addr, host string, info *whois.Info)
 }
-
-// type check
-var _ client.AddressUpdater = (*AddressUpdater)(nil)
 
 // UpdateAddress implements the [client.AddressUpdater] interface for
 // *AddressUpdater.

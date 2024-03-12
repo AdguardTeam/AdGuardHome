@@ -46,12 +46,15 @@ func onConfigModified() {
 // server and initializes it at last.  It also must not be called unless
 // [config] and [Context] are initialized.
 func initDNS() (err error) {
-	baseDir := Context.getDataDir()
-
 	anonymizer := config.anonymizer()
 
+	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&Context, config)
+	if err != nil {
+		return err
+	}
+
 	statsConf := stats.Config{
-		Filename:          filepath.Join(baseDir, "stats.db"),
+		Filename:          filepath.Join(statsDir, "stats.db"),
 		Limit:             config.Stats.Interval.Duration,
 		ConfigModified:    onConfigModified,
 		HTTPRegister:      httpRegister,
@@ -75,7 +78,7 @@ func initDNS() (err error) {
 		ConfigModified:    onConfigModified,
 		HTTPRegister:      httpRegister,
 		FindClient:        Context.clients.findMultiple,
-		BaseDir:           baseDir,
+		BaseDir:           querylogDir,
 		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
 		RotationIvl:       config.QueryLog.Interval.Duration,
 		MemSize:           config.QueryLog.MemSize,
@@ -424,7 +427,7 @@ func applyAdditionalFiltering(clientIP netip.Addr, clientID string, setts *filte
 	}
 
 	setts.FilteringEnabled = c.FilteringEnabled
-	setts.SafeSearchEnabled = c.safeSearchConf.Enabled
+	setts.SafeSearchEnabled = c.SafeSearchConf.Enabled
 	setts.ClientSafeSearch = c.SafeSearch
 	setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
 	setts.ParentalEnabled = c.ParentalEnabled
@@ -544,4 +547,51 @@ func (r safeSearchResolver) LookupIP(
 	}
 
 	return ips, nil
+}
+
+// checkStatsAndQuerylogDirs checks and returns directory paths to store
+// statistics and query log.
+func checkStatsAndQuerylogDirs(
+	ctx *homeContext,
+	conf *configuration,
+) (statsDir, querylogDir string, err error) {
+	baseDir := ctx.getDataDir()
+
+	statsDir = conf.Stats.DirPath
+	if statsDir == "" {
+		statsDir = baseDir
+	} else {
+		err = checkDir(statsDir)
+		if err != nil {
+			return "", "", fmt.Errorf("statistics: custom directory: %w", err)
+		}
+	}
+
+	querylogDir = conf.QueryLog.DirPath
+	if querylogDir == "" {
+		querylogDir = baseDir
+	} else {
+		err = checkDir(querylogDir)
+		if err != nil {
+			return "", "", fmt.Errorf("querylog: custom directory: %w", err)
+		}
+	}
+
+	return statsDir, querylogDir, nil
+}
+
+// checkDir checks if the path is a directory.  It's used to check for
+// misconfiguration at startup.
+func checkDir(path string) (err error) {
+	var fi os.FileInfo
+	if fi, err = os.Stat(path); err != nil {
+		// Don't wrap the error, since it's informative enough as is.
+		return err
+	}
+
+	if !fi.IsDir() {
+		return fmt.Errorf("%q is not a directory", path)
+	}
+
+	return nil
 }

@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/google/gopacket/layers"
-	"golang.org/x/exp/slices"
 )
 
 // IPv4Config is the interface-specific configuration for DHCPv4.
@@ -62,69 +62,6 @@ func (conf *IPv4Config) validate() (err error) {
 	default:
 		return nil
 	}
-}
-
-// iface4 is a DHCP interface for IPv4 address family.
-type iface4 struct {
-	// gateway is the IP address of the network gateway.
-	gateway netip.Addr
-
-	// subnet is the network subnet.
-	subnet netip.Prefix
-
-	// addrSpace is the IPv4 address space allocated for leasing.
-	addrSpace ipRange
-
-	// name is the name of the interface.
-	name string
-
-	// implicitOpts are the options listed in Appendix A of RFC 2131 and
-	// initialized with default values.  It must not have intersections with
-	// explicitOpts.
-	implicitOpts layers.DHCPOptions
-
-	// explicitOpts are the user-configured options.  It must not have
-	// intersections with implicitOpts.
-	explicitOpts layers.DHCPOptions
-
-	// leaseTTL is the time-to-live of dynamic leases on this interface.
-	leaseTTL time.Duration
-}
-
-// newIface4 creates a new DHCP interface for IPv4 address family with the given
-// configuration.  It returns an error if the given configuration can't be used.
-func newIface4(name string, conf *IPv4Config) (i *iface4, err error) {
-	if !conf.Enabled {
-		return nil, nil
-	}
-
-	maskLen, _ := net.IPMask(conf.SubnetMask.AsSlice()).Size()
-	subnet := netip.PrefixFrom(conf.GatewayIP, maskLen)
-
-	switch {
-	case !subnet.Contains(conf.RangeStart):
-		return nil, fmt.Errorf("range start %s is not within %s", conf.RangeStart, subnet)
-	case !subnet.Contains(conf.RangeEnd):
-		return nil, fmt.Errorf("range end %s is not within %s", conf.RangeEnd, subnet)
-	}
-
-	addrSpace, err := newIPRange(conf.RangeStart, conf.RangeEnd)
-	if err != nil {
-		return nil, err
-	} else if addrSpace.contains(conf.GatewayIP) {
-		return nil, fmt.Errorf("gateway ip %s in the ip range %s", conf.GatewayIP, addrSpace)
-	}
-
-	i = &iface4{
-		name:      name,
-		gateway:   conf.GatewayIP,
-		subnet:    subnet,
-		addrSpace: addrSpace,
-		leaseTTL:  conf.LeaseDuration,
-	}
-	i.implicitOpts, i.explicitOpts = conf.options()
-
-	return i, nil
 }
 
 // options returns the implicit and explicit options for the interface.  The two
@@ -317,4 +254,84 @@ func (conf *IPv4Config) options() (implicit, explicit layers.DHCPOptions) {
 // compareV4OptionCodes compares option codes of a and b.
 func compareV4OptionCodes(a, b layers.DHCPOption) (res int) {
 	return int(a.Type) - int(b.Type)
+}
+
+// netInterfaceV4 is a DHCP interface for IPv4 address family.
+type netInterfaceV4 struct {
+	// gateway is the IP address of the network gateway.
+	gateway netip.Addr
+
+	// subnet is the network subnet.
+	subnet netip.Prefix
+
+	// addrSpace is the IPv4 address space allocated for leasing.
+	addrSpace ipRange
+
+	// implicitOpts are the options listed in Appendix A of RFC 2131 and
+	// initialized with default values.  It must not have intersections with
+	// explicitOpts.
+	implicitOpts layers.DHCPOptions
+
+	// explicitOpts are the user-configured options.  It must not have
+	// intersections with implicitOpts.
+	explicitOpts layers.DHCPOptions
+
+	// netInterface is embedded here to provide some common network interface
+	// logic.
+	netInterface
+}
+
+// newNetInterfaceV4 creates a new DHCP interface for IPv4 address family with
+// the given configuration.  It returns an error if the given configuration
+// can't be used.
+func newNetInterfaceV4(name string, conf *IPv4Config) (i *netInterfaceV4, err error) {
+	if !conf.Enabled {
+		return nil, nil
+	}
+
+	maskLen, _ := net.IPMask(conf.SubnetMask.AsSlice()).Size()
+	subnet := netip.PrefixFrom(conf.GatewayIP, maskLen)
+
+	switch {
+	case !subnet.Contains(conf.RangeStart):
+		return nil, fmt.Errorf("range start %s is not within %s", conf.RangeStart, subnet)
+	case !subnet.Contains(conf.RangeEnd):
+		return nil, fmt.Errorf("range end %s is not within %s", conf.RangeEnd, subnet)
+	}
+
+	addrSpace, err := newIPRange(conf.RangeStart, conf.RangeEnd)
+	if err != nil {
+		return nil, err
+	} else if addrSpace.contains(conf.GatewayIP) {
+		return nil, fmt.Errorf("gateway ip %s in the ip range %s", conf.GatewayIP, addrSpace)
+	}
+
+	i = &netInterfaceV4{
+		gateway:   conf.GatewayIP,
+		subnet:    subnet,
+		addrSpace: addrSpace,
+		netInterface: netInterface{
+			name:     name,
+			leaseTTL: conf.LeaseDuration,
+		},
+	}
+	i.implicitOpts, i.explicitOpts = conf.options()
+
+	return i, nil
+}
+
+// netInterfacesV4 is a slice of network interfaces of IPv4 address family.
+type netInterfacesV4 []*netInterfaceV4
+
+// find returns the first network interface within ifaces containing ip.  It
+// returns false if there is no such interface.
+func (ifaces netInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok bool) {
+	i := slices.IndexFunc(ifaces, func(iface *netInterfaceV4) (contains bool) {
+		return iface.subnet.Contains(ip)
+	})
+	if i < 0 {
+		return nil, false
+	}
+
+	return &ifaces[i].netInterface, true
 }

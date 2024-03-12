@@ -61,8 +61,6 @@ set -f -u
 #
 # TODO(a.garipov): Add golibs/log.
 #
-# TODO(a.garipov): Add "golang.org/x/exp/slices" back after a release.
-#
 # TODO(a.garipov): Add deprecated package golang.org/x/exp/maps once all
 # projects switch to Go 1.22.
 blocklist_imports() {
@@ -73,6 +71,7 @@ blocklist_imports() {
 		-e '[[:space:]]"reflect"$'\
 		-e '[[:space:]]"sort"$'\
 		-e '[[:space:]]"unsafe"$'\
+		-e '[[:space:]]"golang.org/x/exp/slices"$'\
 		-e '[[:space:]]"golang.org/x/net/context"$'\
 		-n\
 		-- '*.go'\

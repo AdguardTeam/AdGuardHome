@@ -118,9 +118,6 @@ const Row = memo(({
 
         const blockingForClientKey = isFiltered ? 'unblock_for_this_client_only' : 'block_for_this_client_only';
         const clientNameBlockingFor = getBlockingClientName(clients, client);
-        const upstreamString = cached
-            ? t('served_from_cache', { value: upstream, i: <i /> })
-            : upstream;
 
         const onBlockingForClientClick = () => {
             dispatch(toggleBlockingForClient(buttonType, domain, clientNameBlockingFor));
@@ -192,7 +189,16 @@ const Row = memo(({
                             className="link--green">{sourceData.name}
                     </a>,
             response_details: 'title',
-            install_settings_dns: upstreamString,
+            install_settings_dns: upstream,
+            ...(cached
+                && {
+                    served_from_cache_label: (
+                        <svg className="icons icon--20 icon--green">
+                            <use xlinkHref="#check" />
+                        </svg>
+                    ),
+                }
+            ),
             elapsed: formattedElapsedMs,
             ...(rules.length > 0
                     && { rule_label: getRulesToFilterList(rules, filters, whitelistFilters) }

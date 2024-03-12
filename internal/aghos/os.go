@@ -7,17 +7,16 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"os/exec"
 	"path"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"golang.org/x/exp/slices"
 )
 
 // UnsupportedError is returned by functions and methods when a particular
@@ -153,13 +152,6 @@ func parsePSOutput(r io.Reader, cmdName string, ignore []int) (largest, instNum 
 // IsOpenWrt returns true if host OS is OpenWrt.
 func IsOpenWrt() (ok bool) {
 	return isOpenWrt()
-}
-
-// RootDirFS returns the [fs.FS] rooted at the operating system's root.  On
-// Windows it returns the fs.FS rooted at the volume of the system directory
-// (usually, C:).
-func RootDirFS() (fsys fs.FS) {
-	return rootDirFS()
 }
 
 // NotifyReconfigureSignal notifies c on receiving reconfigure signals.

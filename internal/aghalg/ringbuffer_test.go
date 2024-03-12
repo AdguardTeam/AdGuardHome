@@ -1,11 +1,11 @@
 package aghalg_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/exp/slices"
 )
 
 // elements is a helper function that returns n elements of the buffer.

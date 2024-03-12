@@ -67,19 +67,15 @@ func New(c *Config) (svc *Service, err error) {
 	}
 
 	svc.bootstrapResolvers = resolvers
-	svc.proxy = &proxy.Proxy{
-		Config: proxy.Config{
-			UDPListenAddr: udpAddrs(c.Addresses),
-			TCPListenAddr: tcpAddrs(c.Addresses),
-			UpstreamConfig: &proxy.UpstreamConfig{
-				Upstreams: upstreams,
-			},
-			UseDNS64:   c.UseDNS64,
-			DNS64Prefs: c.DNS64Prefixes,
+	svc.proxy, err = proxy.New(&proxy.Config{
+		UDPListenAddr: udpAddrs(c.Addresses),
+		TCPListenAddr: tcpAddrs(c.Addresses),
+		UpstreamConfig: &proxy.UpstreamConfig{
+			Upstreams: upstreams,
 		},
-	}
-
-	err = svc.proxy.Init()
+		UseDNS64:   c.UseDNS64,
+		DNS64Prefs: c.DNS64Prefixes,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("proxy: %w", err)
 	}
@@ -174,7 +170,7 @@ func (svc *Service) Start() (err error) {
 		svc.running.Store(err == nil)
 	}()
 
-	return svc.proxy.Start()
+	return svc.proxy.Start(context.Background())
 }
 
 // Shutdown implements the [agh.Service] interface for *Service.  svc may be
@@ -185,7 +181,7 @@ func (svc *Service) Shutdown(ctx context.Context) (err error) {
 	}
 
 	errs := []error{
-		svc.proxy.Stop(),
+		svc.proxy.Shutdown(ctx),
 	}
 
 	for _, b := range svc.bootstrapResolvers {

@@ -122,8 +122,6 @@
     # from the release branch and are used to build the release candidate
     # images.
   - '^rc-v[0-9]+\.[0-9]+\.[0-9]+':
-        # Build betas on release branches manually.
-        'triggers': []
         # Set the default release channel on the release branch to beta, as we
         # may need to build a few of these.
         'variables':

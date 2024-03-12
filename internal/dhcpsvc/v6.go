@@ -3,11 +3,12 @@ package dhcpsvc
 import (
 	"fmt"
 	"net/netip"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/google/gopacket/layers"
-	"golang.org/x/exp/slices"
 )
 
 // IPv6Config is the interface-specific configuration for DHCPv6.
@@ -52,57 +53,6 @@ func (conf *IPv6Config) validate() (err error) {
 	}
 }
 
-// iface6 is a DHCP interface for IPv6 address family.
-//
-// TODO(e.burkov):  Add options.
-type iface6 struct {
-	// rangeStart is the first IP address in the range.
-	rangeStart netip.Addr
-
-	// name is the name of the interface.
-	name string
-
-	// implicitOpts are the DHCPv6 options listed in RFC 8415 (and others) and
-	// initialized with default values.  It must not have intersections with
-	// explicitOpts.
-	implicitOpts layers.DHCPv6Options
-
-	// explicitOpts are the user-configured options.  It must not have
-	// intersections with implicitOpts.
-	explicitOpts layers.DHCPv6Options
-
-	// leaseTTL is the time-to-live of dynamic leases on this interface.
-	leaseTTL time.Duration
-
-	// raSLAACOnly defines if DHCP should send ICMPv6.RA packets without MO
-	// flags.
-	raSLAACOnly bool
-
-	// raAllowSLAAC defines if DHCP should send ICMPv6.RA packets with MO flags.
-	raAllowSLAAC bool
-}
-
-// newIface6 creates a new DHCP interface for IPv6 address family with the given
-// configuration.
-//
-// TODO(e.burkov):  Validate properly.
-func newIface6(name string, conf *IPv6Config) (i *iface6) {
-	if !conf.Enabled {
-		return nil
-	}
-
-	i = &iface6{
-		name:         name,
-		rangeStart:   conf.RangeStart,
-		leaseTTL:     conf.LeaseDuration,
-		raSLAACOnly:  conf.RASLAACOnly,
-		raAllowSLAAC: conf.RAAllowSLAAC,
-	}
-	i.implicitOpts, i.explicitOpts = conf.options()
-
-	return i
-}
-
 // options returns the implicit and explicit options for the interface.  The two
 // lists are disjoint and the implicit options are initialized with default
 // values.
@@ -132,4 +82,80 @@ func (conf *IPv6Config) options() (implicit, explicit layers.DHCPv6Options) {
 // compareV6OptionCodes compares option codes of a and b.
 func compareV6OptionCodes(a, b layers.DHCPv6Option) (res int) {
 	return int(a.Code) - int(b.Code)
+}
+
+// netInterfaceV6 is a DHCP interface for IPv6 address family.
+//
+// TODO(e.burkov):  Add options.
+type netInterfaceV6 struct {
+	// rangeStart is the first IP address in the range.
+	rangeStart netip.Addr
+
+	// implicitOpts are the DHCPv6 options listed in RFC 8415 (and others) and
+	// initialized with default values.  It must not have intersections with
+	// explicitOpts.
+	implicitOpts layers.DHCPv6Options
+
+	// explicitOpts are the user-configured options.  It must not have
+	// intersections with implicitOpts.
+	explicitOpts layers.DHCPv6Options
+
+	// netInterface is embedded here to provide some common network interface
+	// logic.
+	netInterface
+
+	// raSLAACOnly defines if DHCP should send ICMPv6.RA packets without MO
+	// flags.
+	raSLAACOnly bool
+
+	// raAllowSLAAC defines if DHCP should send ICMPv6.RA packets with MO flags.
+	raAllowSLAAC bool
+}
+
+// newNetInterfaceV6 creates a new DHCP interface for IPv6 address family with
+// the given configuration.
+//
+// TODO(e.burkov):  Validate properly.
+func newNetInterfaceV6(name string, conf *IPv6Config) (i *netInterfaceV6) {
+	if !conf.Enabled {
+		return nil
+	}
+
+	i = &netInterfaceV6{
+		rangeStart: conf.RangeStart,
+		netInterface: netInterface{
+			name:     name,
+			leaseTTL: conf.LeaseDuration,
+		},
+		raSLAACOnly:  conf.RASLAACOnly,
+		raAllowSLAAC: conf.RAAllowSLAAC,
+	}
+	i.implicitOpts, i.explicitOpts = conf.options()
+
+	return i
+}
+
+// netInterfacesV4 is a slice of network interfaces of IPv4 address family.
+type netInterfacesV6 []*netInterfaceV6
+
+// find returns the first network interface within ifaces containing ip.  It
+// returns false if there is no such interface.
+func (ifaces netInterfacesV6) find(ip netip.Addr) (iface6 *netInterface, ok bool) {
+	// prefLen is the length of prefix to match ip against.
+	//
+	// TODO(e.burkov):  DHCPv6 inherits the weird behavior of legacy
+	// implementation where the allocated range constrained by the first address
+	// and the first address with last byte set to 0xff.  Proper prefixes should
+	// be used instead.
+	const prefLen = netutil.IPv6BitLen - 8
+
+	i := slices.IndexFunc(ifaces, func(iface *netInterfaceV6) (contains bool) {
+		return !ip.Less(iface.rangeStart) &&
+			netip.PrefixFrom(iface.rangeStart, prefLen).Contains(ip)
+	})
+	if i < 0 {
+		return nil, false
+	}
+
+	return &ifaces[i].netInterface, true
 }

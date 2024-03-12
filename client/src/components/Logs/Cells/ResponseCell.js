@@ -38,9 +38,6 @@ const ResponseCell = ({
 
     const statusLabel = t(isBlockedByResponse ? 'blocked_by_cname_or_ip' : FILTERED_STATUS_TO_META_MAP[reason]?.LABEL || reason);
     const boldStatusLabel = <span className="font-weight-bold">{statusLabel}</span>;
-    const upstreamString = cached
-        ? t('served_from_cache', { value: upstream, i: <i /> })
-        : upstream;
 
     const renderResponses = (responseArr) => {
         if (!responseArr || responseArr.length === 0) {
@@ -58,7 +55,16 @@ const ResponseCell = ({
 
     const COMMON_CONTENT = {
         encryption_status: boldStatusLabel,
-        install_settings_dns: upstreamString,
+        install_settings_dns: upstream,
+        ...(cached
+            && {
+                served_from_cache_label: (
+                    <svg className="icons icon--20 icon--green mb-1">
+                        <use xlinkHref="#check" />
+                    </svg>
+                ),
+            }
+        ),
         elapsed: formattedElapsedMs,
         response_code: status,
         ...(service_name && services.allServices

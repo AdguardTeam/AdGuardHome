@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/netip"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -24,7 +25,6 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/ameshkov/dnscrypt/v2"
-	"golang.org/x/exp/slices"
 )
 
 // ClientsContainer provides information about preconfigured DNS clients.
@@ -40,7 +40,7 @@ type ClientsContainer interface {
 	) (conf *proxy.CustomUpstreamConfig, err error)
 }
 
-// Config represents the DNS filtering configuration of AdGuard Home. The zero
+// Config represents the DNS filtering configuration of AdGuard Home.  The zero
 // Config is empty and ready for use.
 type Config struct {
 	// Callbacks for other modules
@@ -355,10 +355,6 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 		conf.DNSCryptTCPListenAddr = c.TCPListenAddrs
 		conf.DNSCryptProviderName = c.ProviderName
 		conf.DNSCryptResolverCert = c.ResolverCert
-	}
-
-	if conf.UpstreamConfig == nil || len(conf.UpstreamConfig.Upstreams) == 0 {
-		return nil, errors.Error("no default upstream servers configured")
 	}
 
 	conf, err = prepareCacheConfig(conf,

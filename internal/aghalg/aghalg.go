@@ -5,9 +5,9 @@ package aghalg
 
 import (
 	"fmt"
+	"slices"
 
 	"golang.org/x/exp/constraints"
-	"golang.org/x/exp/slices"
 )
 
 // Coalesce returns the first non-zero value.  It is named after function

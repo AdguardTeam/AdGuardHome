@@ -704,9 +704,9 @@ const (
 	keyTypeRSA     = "RSA"
 )
 
-// Attempt to parse the given private key DER block. OpenSSL 0.9.8 generates
+// Attempt to parse the given private key DER block.  OpenSSL 0.9.8 generates
 // PKCS#1 private keys by default, while OpenSSL 1.0.0 generates PKCS#8 keys.
-// OpenSSL ecparam generates SEC1 EC private keys for ECDSA. We try all three.
+// OpenSSL ecparam generates SEC1 EC private keys for ECDSA.  We try all three.
 //
 // TODO(a.garipov): Find out if this version of parsePrivateKey from the stdlib
 // is actually necessary.
