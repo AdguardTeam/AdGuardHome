@@ -40,6 +40,8 @@
         'jobs':
           - 'Publish to GitHub Releases'
 
+# TODO(e.burkov):  In jobs below find out why the explicit checkout is
+# performed.
 'Build frontend':
     'docker':
         'image': '${bamboo.dockerGo}'
