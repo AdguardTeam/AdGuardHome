@@ -68,9 +68,6 @@
 
                 set -e -f -u -x
 
-                # Explicitly checkout the revision that we need.
-                git checkout "${bamboo.repository.revision.number}"
-
                 make\
                         ARCH="amd64"\
                         OS="windows darwin linux"\

@@ -494,7 +494,14 @@ func initWeb(opts options, clientBuildFS fs.FS, upd *updater.Updater) (web *webA
 		}
 	}
 
-	disableUpdate := opts.disableUpdate || version.Channel() == version.ChannelDevelopment
+	disableUpdate := opts.disableUpdate
+	switch version.Channel() {
+	case
+		version.ChannelDevelopment,
+		version.ChannelCandidate:
+		disableUpdate = true
+	}
+
 	if disableUpdate {
 		log.Info("AdGuard Home updates are disabled")
 	}
