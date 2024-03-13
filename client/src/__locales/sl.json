@@ -678,7 +678,7 @@
     "use_saved_key": "Uporabi prej shranjeni ključ",
     "parental_control": "Starševski nadzor",
     "safe_browsing": "Varno brskanje",
-    "served_from_cache": "{{value}} <i>(postreženo iz predpomnilnika)</i>",
+    "served_from_cache_label": "Dostavljeno iz predpomnilnika",
     "form_error_password_length": "Geslo mora vsebovati od {{min}} do {{max}} znakov",
     "anonymizer_notification": "<0>Opomba:</0> Anonimizacija IP je omogočena. Onemogočite ga lahko v <1>Splošnih nastavitvah</1>.",
     "confirm_dns_cache_clear": "Ali ste prepričani, da želite počistiti predpomnilnik DNS?",

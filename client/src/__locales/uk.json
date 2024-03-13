@@ -678,7 +678,7 @@
     "use_saved_key": "Використати раніше збережений ключ",
     "parental_control": "Батьківський контроль",
     "safe_browsing": "Безпечний перегляд",
-    "served_from_cache": "{{value}} <i>(отримано з кешу)</i>",
+    "served_from_cache_label": "Отримано з кешу",
     "form_error_password_length": "Пароль має містити від {{min}} до {{max}} символів",
     "anonymizer_notification": "<0>Примітка:</0> IP-анонімізацію ввімкнено. Ви можете вимкнути його в <1>Загальні налаштування</1> .",
     "confirm_dns_cache_clear": "Ви впевнені, що бажаєте очистити кеш DNS?",
