@@ -32,19 +32,6 @@ import (
 	"github.com/miekg/dns"
 )
 
-// The IDs of built-in filter lists.
-//
-// Keep in sync with client/src/helpers/constants.js.
-// TODO(d.kolyshev): Add RewritesListID and don't forget to keep in sync.
-const (
-	CustomListID = -iota
-	SysHostsListID
-	BlockedSvcsListID
-	ParentalListID
-	SafeBrowsingListID
-	SafeSearchListID
-)
-
 // ServiceEntry - blocked service array element
 type ServiceEntry struct {
 	Name  string
@@ -1139,7 +1126,7 @@ func (d *DNSFilter) checkSafeBrowsing(
 	res = Result{
 		Rules: []*ResultRule{{
 			Text:         "adguard-malware-shavar",
-			FilterListID: SafeBrowsingListID,
+			FilterListID: rulelist.URLFilterIDSafeBrowsing,
 		}},
 		Reason:     FilteredSafeBrowsing,
 		IsFiltered: true,
@@ -1171,7 +1158,7 @@ func (d *DNSFilter) checkParental(
 	res = Result{
 		Rules: []*ResultRule{{
 			Text:         "parental CATEGORY_BLACKLISTED",
-			FilterListID: ParentalListID,
+			FilterListID: rulelist.URLFilterIDParentalControl,
 		}},
 		Reason:     FilteredParental,
 		IsFiltered: true,

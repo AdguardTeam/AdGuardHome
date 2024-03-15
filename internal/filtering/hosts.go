@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/netip"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -66,7 +67,7 @@ func hostsRewrites(
 			vals = append(vals, name)
 			rls = append(rls, &ResultRule{
 				Text:         fmt.Sprintf("%s %s", addr, name),
-				FilterListID: SysHostsListID,
+				FilterListID: rulelist.URLFilterIDEtcHosts,
 			})
 		}
 
@@ -84,7 +85,7 @@ func hostsRewrites(
 		}
 		rls = append(rls, &ResultRule{
 			Text:         fmt.Sprintf("%s %s", addr, host),
-			FilterListID: SysHostsListID,
+			FilterListID: rulelist.URLFilterIDEtcHosts,
 		})
 	}
 

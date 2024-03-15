@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -28,7 +29,7 @@ func initBlockedServices() {
 	for i, s := range blockedServices {
 		netRules := make([]*rules.NetworkRule, 0, len(s.Rules))
 		for _, text := range s.Rules {
-			rule, err := rules.NewNetworkRule(text, BlockedSvcsListID)
+			rule, err := rules.NewNetworkRule(text, rulelist.URLFilterIDBlockedService)
 			if err != nil {
 				log.Error("parsing blocked service %q rule %q: %s", s.ID, text, err)
 

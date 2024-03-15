@@ -2,9 +2,7 @@ package rulelist_test
 
 import (
 	"context"
-	"io"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -20,23 +18,8 @@ func TestFilter_Refresh(t *testing.T) {
 	cacheDir := t.TempDir()
 	uid := rulelist.MustNewUID()
 
-	initialFile := filepath.Join(cacheDir, "initial.txt")
-	initialData := []byte(
-		testRuleTextTitle +
-			testRuleTextBlocked,
-	)
-	writeErr := os.WriteFile(initialFile, initialData, 0o644)
-	require.NoError(t, writeErr)
-
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		pt := testutil.PanicT{}
-
-		_, err := io.WriteString(w, testRuleTextTitle+testRuleTextBlocked)
-		require.NoError(pt, err)
-	}))
-
-	srvURL, urlErr := url.Parse(srv.URL)
-	require.NoError(t, urlErr)
+	const fltData = testRuleTextTitle + testRuleTextBlocked
+	fileURL, srvURL := newFilterLocations(t, cacheDir, fltData, fltData)
 
 	testCases := []struct {
 		url           *url.URL
@@ -56,7 +39,7 @@ func TestFilter_Refresh(t *testing.T) {
 		name: "file",
 		url: &url.URL{
 			Scheme: "file",
-			Path:   initialFile,
+			Path:   fileURL.Path,
 		},
 		wantNewErrMsg: "",
 	}, {

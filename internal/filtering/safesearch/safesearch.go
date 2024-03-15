@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter"
@@ -98,7 +99,7 @@ func NewDefault(
 		cacheTTL:  cacheTTL,
 	}
 
-	err = ss.resetEngine(filtering.SafeSearchListID, conf)
+	err = ss.resetEngine(rulelist.URLFilterIDSafeSearch, conf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return nil, err
@@ -234,7 +235,7 @@ func (ss *Default) newResult(
 ) (res *filtering.Result, err error) {
 	res = &filtering.Result{
 		Rules: []*filtering.ResultRule{{
-			FilterListID: filtering.SafeSearchListID,
+			FilterListID: rulelist.URLFilterIDSafeSearch,
 		}},
 		Reason:     filtering.FilteredSafeSearch,
 		IsFiltered: true,
@@ -368,7 +369,7 @@ func (ss *Default) Update(conf filtering.SafeSearchConfig) (err error) {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
-	err = ss.resetEngine(filtering.SafeSearchListID, conf)
+	err = ss.resetEngine(rulelist.URLFilterIDSafeSearch, conf)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err

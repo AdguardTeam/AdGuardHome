@@ -9,6 +9,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
@@ -69,7 +70,7 @@ func TestDefault_CheckHost_yandex(t *testing.T) {
 		require.Len(t, res.Rules, 1)
 
 		assert.Equal(t, yandexIP, res.Rules[0].IP)
-		assert.EqualValues(t, filtering.SafeSearchListID, res.Rules[0].FilterListID)
+		assert.EqualValues(t, rulelist.URLFilterIDSafeSearch, res.Rules[0].FilterListID)
 	}
 }
 
@@ -89,7 +90,7 @@ func TestDefault_CheckHost_yandexAAAA(t *testing.T) {
 	require.Len(t, res.Rules, 1)
 
 	assert.Empty(t, res.Rules[0].IP)
-	assert.EqualValues(t, filtering.SafeSearchListID, res.Rules[0].FilterListID)
+	assert.EqualValues(t, rulelist.URLFilterIDSafeSearch, res.Rules[0].FilterListID)
 }
 
 func TestDefault_CheckHost_google(t *testing.T) {
@@ -128,7 +129,7 @@ func TestDefault_CheckHost_google(t *testing.T) {
 			require.Len(t, res.Rules, 1)
 
 			assert.Equal(t, wantIP, res.Rules[0].IP)
-			assert.EqualValues(t, filtering.SafeSearchListID, res.Rules[0].FilterListID)
+			assert.EqualValues(t, rulelist.URLFilterIDSafeSearch, res.Rules[0].FilterListID)
 		})
 	}
 }
@@ -180,7 +181,7 @@ func TestDefault_CheckHost_duckduckgoAAAA(t *testing.T) {
 	require.Len(t, res.Rules, 1)
 
 	assert.Empty(t, res.Rules[0].IP)
-	assert.EqualValues(t, filtering.SafeSearchListID, res.Rules[0].FilterListID)
+	assert.EqualValues(t, rulelist.URLFilterIDSafeSearch, res.Rules[0].FilterListID)
 }
 
 func TestDefault_Update(t *testing.T) {
