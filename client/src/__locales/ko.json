@@ -678,7 +678,7 @@
     "use_saved_key": "이전에 저장했던 키 사용하기",
     "parental_control": "자녀 보호",
     "safe_browsing": "세이프 브라우징",
-    "served_from_cache": "{{value}} <i>(캐시에서 제공)</i>",
+    "served_from_cache_label": "캐시에서 가져옴",
     "form_error_password_length": "비밀번호는 {{min}}~{{max}}자 길이여야 합니다.",
     "anonymizer_notification": "<0>참고:</0> IP 익명화가 활성화되었습니다. <1>일반 설정</1>에서 비활성화할 수 있습니다.",
     "confirm_dns_cache_clear": "정말로 DNS 캐시를 지우시겠습니까?",

@@ -678,7 +678,7 @@
     "use_saved_key": "使用該先前已儲存的金鑰",
     "parental_control": "家長控制",
     "safe_browsing": "安全瀏覽",
-    "served_from_cache": "{{value}} <i>(由快取提供)</i>",
+    "served_from_cache_label": "從快取中",
     "form_error_password_length": "密碼長度必須為 {{min}} 到 {{max}} 個字符",
     "anonymizer_notification": "<0>注意：</0>IP 匿名化被啟用。您可在<1>一般設定</1>中禁用它。",
     "confirm_dns_cache_clear": "您確定您想要清除 DNS 快取嗎？",

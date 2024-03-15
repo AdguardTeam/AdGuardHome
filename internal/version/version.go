@@ -14,9 +14,10 @@ import (
 
 // Channel constants.
 const (
+	ChannelBeta        = "beta"
+	ChannelCandidate   = "candidate"
 	ChannelDevelopment = "development"
 	ChannelEdge        = "edge"
-	ChannelBeta        = "beta"
 	ChannelRelease     = "release"
 )
 

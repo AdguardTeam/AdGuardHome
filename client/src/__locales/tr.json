@@ -678,7 +678,7 @@
     "use_saved_key": "Önceden kaydedilmiş anahtarı kullan",
     "parental_control": "Ebeveyn Denetimi",
     "safe_browsing": "Güvenli Gezinti",
-    "served_from_cache": "{{value}} <i>(önbellekten kullanıldı)</i>",
+    "served_from_cache_label": "Önbellekten kullanıldı",
     "form_error_password_length": "Parola {{min}} ila {{max}} karakter uzunluğunda olmalıdır",
     "anonymizer_notification": "<0>Not:</0> IP anonimleştirme etkinleştirildi. Bunu <1>Genel ayarlardan</1> devre dışı bırakabilirsiniz.",
     "confirm_dns_cache_clear": "DNS önbelleğini temizlemek istediğinizden emin misiniz?",

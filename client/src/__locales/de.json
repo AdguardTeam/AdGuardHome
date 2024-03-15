@@ -678,7 +678,7 @@
     "use_saved_key": "Zuvor gespeicherten Schlüssel verwenden",
     "parental_control": "Kindersicherung",
     "safe_browsing": "Internetsicherheit",
-    "served_from_cache": "{{value}} <i>(aus dem Cache abgerufen)</i>",
+    "served_from_cache_label": "Aus dem Cache abgerufen",
     "form_error_password_length": "Das Passwort muss zwischen {{min}} und {{max}} Zeichen enthalten",
     "anonymizer_notification": "<0>Hinweis:</0> Die IP-Anonymisierung ist aktiviert. Sie können sie in den <1>Allgemeinen Einstellungen</1> deaktivieren.",
     "confirm_dns_cache_clear": "Möchten Sie den DNS-Cache wirklich leeren?",

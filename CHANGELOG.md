@@ -30,13 +30,27 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Ability to define custom directories for storage of query log files and
   statistics ([#5992]).
 
+### Changed
+
+- Private RDNS resolution (`dns.use_private_ptr_resolvers` in YAML
+  configuration) now requires a valid "Private reverse DNS servers", when
+  enabled ([#6820]).
+
+  **NOTE:** Disabling private RDNS resolution behaves effectively the same as if
+  no private reverse DNS servers provided by user and by the OS.
+
 ### Fixed
 
+- Statistics for 7 days displayed by day on the dashboard graph ([#6712]).
+- Missing "served from cache" label on long DNS server strings ([#6740]).
 - Incorrect tracking of the system hosts file's changes ([#6711]).
 
 [#5992]: https://github.com/AdguardTeam/AdGuardHome/issues/5992
 [#6610]: https://github.com/AdguardTeam/AdGuardHome/issues/6610
 [#6711]: https://github.com/AdguardTeam/AdGuardHome/issues/6711
+[#6712]: https://github.com/AdguardTeam/AdGuardHome/issues/6712
+[#6740]: https://github.com/AdguardTeam/AdGuardHome/issues/6740
+[#6820]: https://github.com/AdguardTeam/AdGuardHome/issues/6820
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

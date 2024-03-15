@@ -678,7 +678,7 @@
     "use_saved_key": "De eerder opgeslagen sleutel gebruiken",
     "parental_control": "Ouderlijk toezicht",
     "safe_browsing": "Veilig browsen",
-    "served_from_cache": "{{value}} <i>(geleverd vanuit cache)</i>",
+    "served_from_cache_label": "Geleverd vanuit cache",
     "form_error_password_length": "Wachtwoord moet {{min}} tot {{max}} tekens lang zijn",
     "anonymizer_notification": "<0>Opmerking:</0> IP-anonimisering is ingeschakeld. Je kunt het uitschakelen in <1>Algemene instellingen</1>.",
     "confirm_dns_cache_clear": "Weet je zeker dat je de DNS-cache wilt wissen?",

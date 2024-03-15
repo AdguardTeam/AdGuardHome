@@ -678,7 +678,7 @@
     "use_saved_key": "Использовать сохранённый ранее ключ",
     "parental_control": "Родительский контроль",
     "safe_browsing": "Безопасный интернет",
-    "served_from_cache": "{{value}} <i>(получено из кеша)</i>",
+    "served_from_cache_label": "Получено из кеша",
     "form_error_password_length": "Пароль должен содержать от {{min}} до {{max}} символов",
     "anonymizer_notification": "<0>Внимание:</0> включена анонимизация IP-адресов. Вы можете отключить её в разделе <1>Основные настройки</1>.",
     "confirm_dns_cache_clear": "Вы уверены, что хотите очистить кеш DNS?",

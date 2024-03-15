@@ -9,8 +9,13 @@ import (
 	"net/netip"
 	"net/url"
 	"testing"
+	"time"
 
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/require"
 )
 
@@ -70,4 +75,50 @@ func StartHTTPServer(t testing.TB, data []byte) (c *http.Client, u *url.URL) {
 	require.NoError(t, err)
 
 	return srv.Client(), u
+}
+
+// testTimeout is a timeout for tests.
+//
+// TODO(e.burkov):  Move into agdctest.
+const testTimeout = 1 * time.Second
+
+// StartLocalhostUpstream is a test helper that starts a DNS server on
+// localhost.
+func StartLocalhostUpstream(t *testing.T, h dns.Handler) (addr *url.URL) {
+	t.Helper()
+
+	startCh := make(chan netip.AddrPort)
+	defer close(startCh)
+	errCh := make(chan error)
+
+	srv := &dns.Server{
+		Addr:         "127.0.0.1:0",
+		Net:          string(proxy.ProtoTCP),
+		Handler:      h,
+		ReadTimeout:  testTimeout,
+		WriteTimeout: testTimeout,
+	}
+	srv.NotifyStartedFunc = func() {
+		addrPort := srv.Listener.Addr()
+		startCh <- netutil.NetAddrToAddrPort(addrPort)
+	}
+
+	go func() { errCh <- srv.ListenAndServe() }()
+
+	select {
+	case addrPort := <-startCh:
+		addr = &url.URL{
+			Scheme: string(proxy.ProtoTCP),
+			Host:   addrPort.String(),
+		}
+
+		testutil.CleanupAndRequireSuccess(t, func() (err error) { return <-errCh })
+		testutil.CleanupAndRequireSuccess(t, srv.Shutdown)
+	case err := <-errCh:
+		require.NoError(t, err)
+	case <-time.After(testTimeout):
+		require.FailNow(t, "timeout exceeded")
+	}
+
+	return addr
 }

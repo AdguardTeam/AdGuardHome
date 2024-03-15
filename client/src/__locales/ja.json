@@ -678,7 +678,7 @@
     "use_saved_key": "以前に保存したキーを使用する",
     "parental_control": "ペアレンタルコントロール",
     "safe_browsing": "セーフブラウジング",
-    "served_from_cache": "{{value}} <i>(キャッシュから応答)</i>",
+    "served_from_cache_label": "キャッシュからの配信:",
     "form_error_password_length": "パスワードの長さは{{min}}〜{{max}}文字にしてください。",
     "anonymizer_notification": "【<0>注意</0>】IPの匿名化が有効になっています。 <1>一般設定</1>で無効にできます。",
     "confirm_dns_cache_clear": "DNS キャッシュをクリアしてもよろしいですか？",

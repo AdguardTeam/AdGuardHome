@@ -42,7 +42,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
 		},
 		ServePlainDNS: true,
-	}, nil)
+	})
 
 	makeQ := func(qtype rules.RRType) (req *dns.Msg) {
 		return &dns.Msg{

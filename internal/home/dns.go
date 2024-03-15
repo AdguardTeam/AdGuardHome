@@ -18,6 +18,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -157,6 +158,17 @@ func initDNSServer(
 	}
 
 	err = Context.dnsServer.Prepare(dnsConf)
+
+	// TODO(e.burkov):  Recreate the server with private RDNS disabled.  This
+	// should go away once the private RDNS resolution is moved to the proxy.
+	var locResErr *dnsforward.LocalResolversError
+	if errors.As(err, &locResErr) && errors.Is(locResErr.Err, upstream.ErrNoUpstreams) {
+		log.Info("WARNING: no local resolvers configured while private RDNS " +
+			"resolution enabled, trying to disable")
+		dnsConf.UsePrivateRDNS = false
+		err = Context.dnsServer.Prepare(dnsConf)
+	}
+
 	if err != nil {
 		return fmt.Errorf("dnsServer.Prepare: %w", err)
 	}
