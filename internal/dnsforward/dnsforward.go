@@ -518,6 +518,29 @@ func (s *Server) prepareLocalResolvers(
 	return uc, nil
 }
 
+// LocalResolversError is an error type for errors during local resolvers setup.
+// This is only needed to distinguish these errors from errors returned by
+// creating the proxy.
+type LocalResolversError struct {
+	Err error
+}
+
+// type check
+var _ error = (*LocalResolversError)(nil)
+
+// Error implements the error interface for *LocalResolversError.
+func (err *LocalResolversError) Error() (s string) {
+	return fmt.Sprintf("creating local resolvers: %s", err.Err)
+}
+
+// type check
+var _ errors.Wrapper = (*LocalResolversError)(nil)
+
+// Unwrap implements the [errors.Wrapper] interface for *LocalResolversError.
+func (err *LocalResolversError) Unwrap() error {
+	return err.Err
+}
+
 // setupLocalResolvers initializes and sets the resolvers for local addresses.
 // It assumes s.serverLock is locked or s not running.  It returns the upstream
 // configuration used for private PTR resolving, or nil if it's disabled.  Note,
@@ -534,12 +557,14 @@ func (s *Server) setupLocalResolvers(boot upstream.Resolver) (uc *proxy.Upstream
 		return nil, err
 	}
 
-	s.localResolvers, err = proxy.New(&proxy.Config{
+	localResolvers, err := proxy.New(&proxy.Config{
 		UpstreamConfig: uc,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("creating local resolvers: %w", err)
+		return nil, &LocalResolversError{Err: err}
 	}
+
+	s.localResolvers = localResolvers
 
 	// TODO(e.burkov):  Should we also consider the DNS64 usage?
 	return uc, nil
@@ -594,10 +619,12 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 		return fmt.Errorf("setting up fallback dns servers: %w", err)
 	}
 
-	s.dnsProxy, err = proxy.New(proxyConfig)
+	dnsProxy, err := proxy.New(proxyConfig)
 	if err != nil {
 		return fmt.Errorf("creating proxy: %w", err)
 	}
+
+	s.dnsProxy = dnsProxy
 
 	s.recDetector.clear()
 
@@ -831,6 +858,8 @@ func (s *Server) Reconfigure(conf *ServerConfig) error {
 		}
 	}
 
+	// TODO(e.burkov):  It seems an error here brings the server down, which is
+	// not reliable enough.
 	err = s.Prepare(conf)
 	if err != nil {
 		return fmt.Errorf("could not reconfigure the server: %w", err)

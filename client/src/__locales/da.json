@@ -678,7 +678,7 @@
     "use_saved_key": "Brug den tidligere gemte nøgle",
     "parental_control": "Forældrekontrol",
     "safe_browsing": "Sikker Browsing",
-    "served_from_cache": "{{value}} <i>(leveret fra cache)</i>",
+    "served_from_cache_label": "Leveret fra cache",
     "form_error_password_length": "Adgangskode skal udgøre fra {{min}} til {{max}} tegn",
     "anonymizer_notification": "<0>Bemærk:</0> IP-anonymisering er aktiveret. Det kan deaktiveres via <1>Generelle indstillinger</1>.",
     "confirm_dns_cache_clear": "Sikker på, at DNS-cache skal ryddes?",

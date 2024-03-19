@@ -678,7 +678,7 @@
     "use_saved_key": "Použiť predtým uložený kľúč",
     "parental_control": "Rodičovská kontrola",
     "safe_browsing": "Bezpečné prehliadanie",
-    "served_from_cache": "{{value}} <i>(prevzatá z cache pamäte)</i>",
+    "served_from_cache_label": "Prevzaté z cache pamäte",
     "form_error_password_length": "Heslo musí mať od {{min}} do {{max}} znakov",
     "anonymizer_notification": "<0>Poznámka:</0> Anonymizácia IP je zapnutá. Môžete ju vypnúť vo <1>Všeobecných nastaveniach</1>.",
     "confirm_dns_cache_clear": "Naozaj chcete vymazať vyrovnávaciu pamäť DNS?",
