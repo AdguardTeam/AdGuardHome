@@ -82,8 +82,6 @@ build: deps quick-build
 
 quick-build: js-build go-build
 
-ci: deps test go-bench go-fuzz
-
 deps: js-deps go-deps
 lint: js-lint go-lint
 test: js-test go-test
@@ -98,15 +96,10 @@ build-release: $(BUILD_RELEASE_DEPS_$(FRONTEND_PREBUILT))
 clean: ; $(ENV) "$(SHELL)" ./scripts/make/clean.sh
 init:  ; git config core.hooksPath ./scripts/hooks
 
-js-build:
-	$(NPM) $(NPM_FLAGS) run build-prod
-js-deps:
-	$(NPM) $(NPM_INSTALL_FLAGS) ci
-
-# TODO(a.garipov): Remove the legacy client tasks support once the new
-# client is done and the old one is removed.
-js-lint: ; $(NPM) $(NPM_FLAGS) run lint
-js-test: ; $(NPM) $(NPM_FLAGS) run test
+js-build: ; $(NPM) $(NPM_FLAGS) run build-prod
+js-deps:  ; $(NPM) $(NPM_INSTALL_FLAGS) ci
+js-lint:  ; $(NPM) $(NPM_FLAGS) run lint
+js-test:  ; $(NPM) $(NPM_FLAGS) run test
 
 go-bench: ; $(ENV) "$(SHELL)" ./scripts/make/go-bench.sh
 go-build: ; $(ENV) "$(SHELL)" ./scripts/make/go-build.sh

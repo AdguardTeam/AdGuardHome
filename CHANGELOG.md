@@ -23,6 +23,10 @@ See also the [v0.107.47 GitHub milestone][ms-v0.107.47].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Deprecated
+
+- Node.JS 16.  Future versions will require at least Node.JS 18 to build.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
@@ -42,11 +46,11 @@ See also the [v0.107.46 GitHub milestone][ms-v0.107.46].
 
 ### Changed
 
-- Private RDNS resolution (`dns.use_private_ptr_resolvers` in YAML
+- Private rDNS resolution (`dns.use_private_ptr_resolvers` in YAML
   configuration) now requires a valid "Private reverse DNS servers", when
   enabled ([#6820]).
 
-  **NOTE:** Disabling private RDNS resolution behaves effectively the same as if
+  **NOTE:** Disabling private rDNS resolution behaves effectively the same as if
   no private reverse DNS servers provided by user and by the OS.
 
 ### Fixed

@@ -7,8 +7,7 @@
 # Make sure to sync any changes with the branch overrides below.
 'variables':
     'channel': 'edge'
-    # TODO(a.garipov): Split away the frontend image.
-    'dockerFrontend': 'adguard/golang-ubuntu:9.0'
+    'dockerFrontend': 'adguard/home-js-builder:1.1'
     'dockerGo': 'adguard/go-builder:1.21.8--1'
 
 'stages':
@@ -42,9 +41,12 @@
         'jobs':
           - 'Publish to GitHub Releases'
 
-# TODO(e.burkov):  In jobs below find out why the explicit checkout is
-# performed.
 'Build frontend':
+    'artifacts':
+      - 'name': 'AdGuardHome frontend'
+        'pattern': 'build/**'
+        'shared': true
+        'required': true
     'docker':
         'image': '${bamboo.dockerFrontend}'
         'volumes':
@@ -63,19 +65,21 @@
 
                 set -e -f -u -x
 
-                # Explicitly checkout the revision that we need.
-                git checkout "${bamboo.repository.revision.number}"
-
-                make js-deps js-build
-    'artifacts':
-      - 'name': 'AdGuardHome frontend'
-        'pattern': 'build/**'
-        'shared': true
-        'required': true
+                make\
+                        VERBOSE=1\
+                        js-deps js-build
     'requirements':
       - 'adg-docker': 'true'
 
 'Make release':
+    'artifact-subscriptions':
+      - 'artifact': 'AdGuardHome frontend'
+    # TODO(a.garipov): Use more fine-grained artifact rules.
+    'artifacts':
+      - 'name': 'AdGuardHome dists'
+        'pattern': 'dist/**'
+        'shared': true
+        'required': true
     'docker':
         'image': '${bamboo.dockerGo}'
         'volumes':
@@ -95,9 +99,6 @@
 
                 set -e -f -u -x
 
-                # Explicitly checkout the revision that we need.
-                git checkout "${bamboo.repository.revision.number}"
-
                 # Run the build with the specified channel.
                 echo "${bamboo.gpgSecretKeyPart1}${bamboo.gpgSecretKeyPart2}"\
                         | awk '{ gsub(/\\n/, "\n"); print; }'\
@@ -110,12 +111,6 @@
                         PARALLELISM=1\
                         VERBOSE=2\
                         build-release
-    # TODO(a.garipov): Use more fine-grained artifact rules.
-    'artifacts':
-      - 'name': 'AdGuardHome dists'
-        'pattern': 'dist/**'
-        'shared': true
-        'required': true
     'requirements':
       - 'adg-docker': 'true'
 
@@ -133,13 +128,6 @@
                 #!/bin/sh
 
                 set -e -f -u -x
-
-                COMMIT="${bamboo.repository.revision.number}"
-                export COMMIT
-                readonly COMMIT
-
-                # Explicitly checkout the revision that we need.
-                git checkout "$COMMIT"
 
                 # Install Qemu, create builder.
                 docker version -f '{{ .Server.Experimental }}'
@@ -276,7 +264,7 @@
         # need to build a few of these.
         'variables':
             'channel': 'beta'
-            'dockerFrontend': 'adguard/golang-ubuntu:9.0'
+            'dockerFrontend': 'adguard/home-js-builder:1.1'
             'dockerGo': 'adguard/go-builder:1.21.8--1'
     # release-vX.Y.Z branches are the branches from which the actual final
     # release is built.
@@ -292,5 +280,5 @@
         # are the ones that actually get released.
         'variables':
             'channel': 'release'
-            'dockerFrontend': 'adguard/golang-ubuntu:9.0'
+            'dockerFrontend': 'adguard/home-js-builder:1.1'
             'dockerGo': 'adguard/go-builder:1.21.8--1'
