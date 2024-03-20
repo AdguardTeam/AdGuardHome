@@ -14,8 +14,12 @@ const DEFAULT_PORT = 80;
  */
 const importConfig = () => {
     try {
-        const doc = yaml.safeLoad(fs.readFileSync('../AdguardHome.yaml', 'utf8'));
-        const { bind_host, bind_port } = doc;
+        const doc = yaml.safeLoad(fs.readFileSync('../AdGuardHome.yaml', 'utf8'));
+        const { http } = doc;
+        const { address } = http;
+        const splitAddress = address.split(':');
+        bind_host = splitAddress[0];
+        bind_port = parseInt(splitAddress[1]);
         return {
             bind_host,
             bind_port,
