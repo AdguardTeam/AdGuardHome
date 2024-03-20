@@ -23,9 +23,16 @@ See also the [v0.107.47 GitHub milestone][ms-v0.107.47].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Changed
+
+- Failed authentication attempts show the originating IP address in the logs, if
+  the request came from a trusted proxy ([#5829]).
+
 ### Deprecated
 
 - Node.JS 16.  Future versions will require at least Node.JS 18 to build.
+
+[#5829]: https://github.com/AdguardTeam/AdGuardHome/issues/5829
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

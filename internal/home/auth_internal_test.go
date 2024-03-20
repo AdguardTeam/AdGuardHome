@@ -37,7 +37,7 @@ func TestAuth(t *testing.T) {
 		Name:         "name",
 		PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2",
 	}}
-	a := InitAuth(fn, nil, 60, nil)
+	a := InitAuth(fn, nil, 60, nil, nil)
 	s := session{}
 
 	user := webUser{Name: "name"}
@@ -66,7 +66,7 @@ func TestAuth(t *testing.T) {
 	a.Close()
 
 	// load saved session
-	a = InitAuth(fn, users, 60, nil)
+	a = InitAuth(fn, users, 60, nil, nil)
 
 	// the session is still alive
 	assert.Equal(t, checkSessionOK, a.checkSession(sessStr))
@@ -82,7 +82,7 @@ func TestAuth(t *testing.T) {
 	time.Sleep(3 * time.Second)
 
 	// load and remove expired sessions
-	a = InitAuth(fn, users, 60, nil)
+	a = InitAuth(fn, users, 60, nil, nil)
 	assert.Equal(t, checkSessionNotFound, a.checkSession(sessStr))
 
 	a.Close()

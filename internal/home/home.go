@@ -674,8 +674,10 @@ func initUsers() (auth *Auth, err error) {
 		log.Info("authratelimiter is disabled")
 	}
 
+	trustedProxies := netutil.SliceSubnetSet(netutil.UnembedPrefixes(config.DNS.TrustedProxies))
+
 	sessionTTL := config.HTTPConfig.SessionTTL.Seconds()
-	auth = InitAuth(sessFilename, config.Users, uint32(sessionTTL), rateLimiter)
+	auth = InitAuth(sessFilename, config.Users, uint32(sessionTTL), rateLimiter, trustedProxies)
 	if auth == nil {
 		return nil, errors.Error("initializing auth module failed")
 	}
