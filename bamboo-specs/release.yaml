@@ -149,6 +149,7 @@
                 # Prepare and push the build.
                 env\
                         CHANNEL="${bamboo.channel}"\
+                        COMMIT="${bamboo.repository.revision.number}"\
                         DIST_DIR='dist'\
                         DOCKER_IMAGE_NAME='adguard/adguardhome'\
                         DOCKER_OUTPUT="type=image,name=adguard/adguardhome,push=true"\
