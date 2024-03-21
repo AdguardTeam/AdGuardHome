@@ -8,6 +8,6 @@ Please send your vulnerability reports to <security@adguard.com>.  To make sure 
 
    > AdGuard Home API vulnerability: possible XSS attack
 
-2. Make sure that the message body contains a clear description of the vulnerability.
+1. Make sure that the message body contains a clear description of the vulnerability.
 
 If you have not received a reply to your email within 7 days, please make sure to follow up with us again at <security@adguard.com>.  Once again, make sure that the word “vulnerability” is in the subject line.

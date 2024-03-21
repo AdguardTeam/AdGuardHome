@@ -74,7 +74,14 @@
 
                 set -e -f -u -x
 
-                make VERBOSE=1 go-deps go-tools go-lint go-test
+                make\
+                    GOMAXPROCS=1\
+                    VERBOSE=1\
+                    go-deps go-tools go-lint
+
+                make\
+                    VERBOSE=1\
+                    go-test
     'final-tasks':
       - 'clean'
     'requirements':

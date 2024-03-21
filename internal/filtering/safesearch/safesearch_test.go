@@ -70,7 +70,7 @@ func TestDefault_CheckHost_yandex(t *testing.T) {
 		require.Len(t, res.Rules, 1)
 
 		assert.Equal(t, yandexIP, res.Rules[0].IP)
-		assert.EqualValues(t, rulelist.URLFilterIDSafeSearch, res.Rules[0].FilterListID)
+		assert.Equal(t, rulelist.URLFilterIDSafeSearch, res.Rules[0].FilterListID)
 	}
 }
 
@@ -90,7 +90,7 @@ func TestDefault_CheckHost_yandexAAAA(t *testing.T) {
 	require.Len(t, res.Rules, 1)
 
 	assert.Empty(t, res.Rules[0].IP)
-	assert.EqualValues(t, rulelist.URLFilterIDSafeSearch, res.Rules[0].FilterListID)
+	assert.Equal(t, rulelist.URLFilterIDSafeSearch, res.Rules[0].FilterListID)
 }
 
 func TestDefault_CheckHost_google(t *testing.T) {
@@ -129,7 +129,7 @@ func TestDefault_CheckHost_google(t *testing.T) {
 			require.Len(t, res.Rules, 1)
 
 			assert.Equal(t, wantIP, res.Rules[0].IP)
-			assert.EqualValues(t, rulelist.URLFilterIDSafeSearch, res.Rules[0].FilterListID)
+			assert.Equal(t, rulelist.URLFilterIDSafeSearch, res.Rules[0].FilterListID)
 		})
 	}
 }
@@ -181,7 +181,7 @@ func TestDefault_CheckHost_duckduckgoAAAA(t *testing.T) {
 	require.Len(t, res.Rules, 1)
 
 	assert.Empty(t, res.Rules[0].IP)
-	assert.EqualValues(t, rulelist.URLFilterIDSafeSearch, res.Rules[0].FilterListID)
+	assert.Equal(t, rulelist.URLFilterIDSafeSearch, res.Rules[0].FilterListID)
 }
 
 func TestDefault_Update(t *testing.T) {

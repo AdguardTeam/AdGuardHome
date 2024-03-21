@@ -23,8 +23,6 @@ const DefaultMaxRuleListSize = 64 * datasize.MB
 
 // URLFilterID is a semantic type-alias for IDs used for working with package
 // urlfilter.
-//
-// TODO(a.garipov): Use everywhere in package filtering.
 type URLFilterID = int
 
 // The IDs of built-in filter lists.
@@ -37,12 +35,12 @@ type URLFilterID = int
 //
 // TODO(d.kolyshev): Add URLFilterIDLegacyRewrite here and to the UI.
 const (
-	URLFilterIDCustom          = 0
-	URLFilterIDEtcHosts        = -1
-	URLFilterIDBlockedService  = -2
-	URLFilterIDParentalControl = -3
-	URLFilterIDSafeBrowsing    = -4
-	URLFilterIDSafeSearch      = -5
+	URLFilterIDCustom          URLFilterID = 0
+	URLFilterIDEtcHosts        URLFilterID = -1
+	URLFilterIDBlockedService  URLFilterID = -2
+	URLFilterIDParentalControl URLFilterID = -3
+	URLFilterIDSafeBrowsing    URLFilterID = -4
+	URLFilterIDSafeSearch      URLFilterID = -5
 )
 
 // UID is the type for the unique IDs of filtering-rule lists.

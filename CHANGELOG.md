@@ -30,6 +30,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Deprecated
 
+- Currently, AdGuard Home uses a best-effort algorithm to fix invalid IDs of
+  filtering-rule lists on startup.  This feature is deprecated, and invalid IDs
+  will cause errors on startup in a future version.
 - Node.JS 16.  Future versions will require at least Node.JS 18 to build.
 
 [#5829]: https://github.com/AdguardTeam/AdGuardHome/issues/5829
