@@ -1942,6 +1942,8 @@ var blockedServices = []blockedService{{
 		"||minecraft.net^",
 		"||minecraftservices.com^",
 		"||mojang.com^",
+		"||20ca2.playfabapi.com^", // Bedrock PlayFab Services (Login, Marketplace, etc.)
+		"||minecraft-services.net^", // Bedrock Services (Realms)
 	},
 }, {
 	ID:      "nebula",
