@@ -307,6 +307,11 @@ func handleServiceStatusCommand(s service.Service) {
 
 // handleServiceStatusCommand handles service "install" command
 func handleServiceInstallCommand(s service.Service) {
+	// Set the binary's permissions and move to /usr/bin (if on linux)
+	if err := aghos.SecureBinary(); err != nil {
+		log.Fatal(err)
+	}
+
 	err := svcAction(s, "install")
 	if err != nil {
 		log.Fatalf("service: executing action %q: %s", "install", err)
