@@ -35,7 +35,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
   will cause errors on startup in a future version.
 - Node.JS 16.  Future versions will require at least Node.JS 18 to build.
 
+### Fixed
+
+- Resetting DNS upstream mode when applying unrelated settings ([#6851]).
+
 [#5829]: https://github.com/AdguardTeam/AdGuardHome/issues/5829
+[#6851]: https://github.com/AdguardTeam/AdGuardHome/issues/6851
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

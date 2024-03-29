@@ -474,8 +474,6 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 
 	if dc.UpstreamMode != nil {
 		s.conf.UpstreamMode = mustParseUpstreamMode(*dc.UpstreamMode)
-	} else {
-		s.conf.UpstreamMode = UpstreamModeLoadBalance
 	}
 
 	if dc.EDNSCSUseCustom != nil && *dc.EDNSCSUseCustom {

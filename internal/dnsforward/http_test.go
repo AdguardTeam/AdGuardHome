@@ -29,6 +29,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TODO(e.burkov):  Use the better approach to testdata with a separate
+// directory for each test, and a separate file for each subtest.  See the
+// [configmigrate] package.
+
 // emptySysResolvers is an empty [SystemResolvers] implementation that always
 // returns nil.
 type emptySysResolvers struct{}
