@@ -38,8 +38,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Fixed
 
 - Resetting DNS upstream mode when applying unrelated settings ([#6851]).
+- Symbolic links to config YAML are replaced by a copy of the real file by AGH
+  after startup ([#6717]).
 
 [#5829]: https://github.com/AdguardTeam/AdGuardHome/issues/5829
+[#6717]: https://github.com/AdguardTeam/AdGuardHome/issues/6717
 [#6851]: https://github.com/AdguardTeam/AdGuardHome/issues/6851
 
 <!--

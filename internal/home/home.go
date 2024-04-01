@@ -539,12 +539,12 @@ func fatalOnError(err error) {
 
 // run configures and starts AdGuard Home.
 func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
-	// Configure config filename.
-	initConfigFilename(opts)
-
-	// Configure working dir and config path.
+	// Configure working dir.
 	err := initWorkingDir(opts)
 	fatalOnError(err)
+
+	// Configure config filename.
+	initConfigFilename(opts)
 
 	// Configure log level and output.
 	err = configureLogger(opts)
@@ -760,11 +760,12 @@ func writePIDFile(fn string) bool {
 }
 
 // initConfigFilename sets up context config file path.  This file path can be
-// overridden by command-line arguments, or is set to default.
+// overridden by command-line arguments, or is set to default.  Must only be
+// called after initializing the workDir with initWorkingDir.
 func initConfigFilename(opts options) {
 	confPath := opts.confFilename
 	if confPath == "" {
-		Context.confFilePath = "AdGuardHome.yaml"
+		Context.confFilePath = filepath.Join(Context.workDir, "AdGuardHome.yaml")
 
 		return
 	}
