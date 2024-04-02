@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -179,7 +180,8 @@ func decodeResultRuleKey(key string, i int, dec *json.Decoder, ent *logEntry) {
 	case "FilterListID":
 		ent.Result.Rules, vToken = decodeVTokenAndAddRule(key, i, dec, ent.Result.Rules)
 		if n, ok := vToken.(json.Number); ok {
-			ent.Result.Rules[i].FilterListID, _ = n.Int64()
+			id, _ := n.Int64()
+			ent.Result.Rules[i].FilterListID = rulelist.URLFilterID(id)
 		}
 	case "IP":
 		ent.Result.Rules, vToken = decodeVTokenAndAddRule(key, i, dec, ent.Result.Rules)
@@ -582,7 +584,7 @@ var resultHandlers = map[string]logEntryHandler{
 			return nil
 		}
 
-		i, err := n.Int64()
+		id, err := n.Int64()
 		if err != nil {
 			return err
 		}
@@ -593,7 +595,7 @@ var resultHandlers = map[string]logEntryHandler{
 			l++
 		}
 
-		ent.Result.Rules[l-1].FilterListID = i
+		ent.Result.Rules[l-1].FilterListID = rulelist.URLFilterID(id)
 
 		return nil
 	},

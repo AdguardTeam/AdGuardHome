@@ -13,19 +13,14 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghrenameio"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/stringutil"
 )
 
 // filterDir is the subdirectory of a data directory to store downloaded
 // filters.
 const filterDir = "filters"
-
-// nextFilterID is a way to seed a unique ID generation.
-//
-// TODO(e.burkov):  Use more deterministic approach.
-var nextFilterID = time.Now().Unix()
 
 // FilterYAML represents a filter list in the configuration file.
 //
@@ -50,7 +45,10 @@ func (filter *FilterYAML) unload() {
 
 // Path to the filter contents
 func (filter *FilterYAML) Path(dataDir string) string {
-	return filepath.Join(dataDir, filterDir, strconv.FormatInt(filter.ID, 10)+".txt")
+	return filepath.Join(
+		dataDir,
+		filterDir,
+		strconv.FormatInt(int64(filter.ID), 10)+".txt")
 }
 
 // ensureName sets provided title or default name for the filter if it doesn't
@@ -217,7 +215,10 @@ func (d *DNSFilter) loadFilters(array []FilterYAML) {
 	for i := range array {
 		filter := &array[i] // otherwise we're operating on a copy
 		if filter.ID == 0 {
-			filter.ID = assignUniqueFilterID()
+			newID := d.idGen.next()
+			log.Info("filtering: warning: filter at index %d has no id; assigning to %d", i, newID)
+
+			filter.ID = newID
 		}
 
 		if !filter.Enabled {
@@ -233,7 +234,7 @@ func (d *DNSFilter) loadFilters(array []FilterYAML) {
 }
 
 func deduplicateFilters(filters []FilterYAML) (deduplicated []FilterYAML) {
-	urls := stringutil.NewSet()
+	urls := container.NewMapSet[string]()
 	lastIdx := 0
 
 	for _, filter := range filters {
@@ -245,22 +246,6 @@ func deduplicateFilters(filters []FilterYAML) (deduplicated []FilterYAML) {
 	}
 
 	return filters[:lastIdx]
-}
-
-// Set the next filter ID to max(filter.ID) + 1
-func updateUniqueFilterID(filters []FilterYAML) {
-	for _, filter := range filters {
-		if nextFilterID < filter.ID {
-			nextFilterID = filter.ID + 1
-		}
-	}
-}
-
-// TODO(e.burkov):  Improve this inexhaustible source of races.
-func assignUniqueFilterID() int64 {
-	value := nextFilterID
-	nextFilterID++
-	return value
 }
 
 // tryRefreshFilters is like [refreshFilters], but backs down if the update is
@@ -608,7 +593,7 @@ func (d *DNSFilter) EnableFilters(async bool) {
 func (d *DNSFilter) enableFiltersLocked(async bool) {
 	filters := make([]Filter, 1, len(d.conf.Filters)+len(d.conf.WhitelistFilters)+1)
 	filters[0] = Filter{
-		ID:   CustomListID,
+		ID:   rulelist.URLFilterIDCustom,
 		Data: []byte(strings.Join(d.conf.UserRules, "\n")),
 	}
 

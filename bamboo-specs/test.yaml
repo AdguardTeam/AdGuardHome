@@ -5,7 +5,8 @@
     'key': 'AHBRTSPECS'
     'name': 'AdGuard Home - Build and run tests'
 'variables':
-    'dockerGo': 'adguard/golang-ubuntu:8.1'
+    'dockerFrontend': 'adguard/home-js-builder:1.1'
+    'dockerGo': 'adguard/go-builder:1.21.8--1'
     'channel': 'development'
 
 'stages':
@@ -13,7 +14,14 @@
         'manual': false
         'final': false
         'jobs':
-          - 'Test'
+          - 'Test frontend'
+          - 'Test backend'
+
+  - 'Frontend':
+        manual: false
+        final: false
+        jobs:
+          - 'Build frontend'
 
   - 'Artifact':
         manual: false
@@ -21,14 +29,12 @@
         jobs:
           - 'Artifact'
 
-'Test':
+'Test frontend':
     'docker':
-        'image': '${bamboo.dockerGo}'
+        'image': '${bamboo.dockerFrontend}'
         'volumes':
             '${system.YARN_DIR}': '${bamboo.cacheYarn}'
-            '${system.GO_CACHE_DIR}': '${bamboo.cacheGo}'
-            '${system.GO_PKG_CACHE_DIR}': '${bamboo.cacheGoPkg}'
-    'key': 'TEST'
+    'key': 'JSTEST'
     'other':
         'clean-working-dir': true
     'tasks':
@@ -42,13 +48,91 @@
 
                 set -e -f -u -x
 
-                make VERBOSE=1 ci go-tools lint
+                make VERBOSE=1 js-deps js-lint js-test
     'final-tasks':
       - 'clean'
     'requirements':
       - 'adg-docker': 'true'
 
+'Test backend':
+    'docker':
+        'image': '${bamboo.dockerGo}'
+        'volumes':
+            '${system.GO_CACHE_DIR}': '${bamboo.cacheGo}'
+            '${system.GO_PKG_CACHE_DIR}': '${bamboo.cacheGoPkg}'
+    'key': 'GOTEST'
+    'other':
+        'clean-working-dir': true
+    'tasks':
+      - 'checkout':
+            'force-clean-build': true
+      - 'script':
+            'interpreter': 'SHELL'
+            'scripts':
+              - |
+                #!/bin/sh
+
+                set -e -f -u -x
+
+                make\
+                    GOMAXPROCS=1\
+                    VERBOSE=1\
+                    go-deps go-tools go-lint
+
+                make\
+                    VERBOSE=1\
+                    go-test
+    'final-tasks':
+      - 'clean'
+    'requirements':
+      - 'adg-docker': 'true'
+
+'Build frontend':
+    'artifacts':
+      - 'name': 'AdGuardHome frontend'
+        'pattern': 'build/**'
+        'shared': true
+        'required': true
+    'docker':
+        'image': '${bamboo.dockerFrontend}'
+        'volumes':
+            '${system.YARN_DIR}': '${bamboo.cacheYarn}'
+    'key': 'BF'
+    'other':
+         'clean-working-dir': true
+    'tasks':
+      - 'checkout':
+            'force-clean-build': true
+      - 'script':
+            'interpreter': 'SHELL'
+            'scripts':
+              - |-
+                #!/bin/sh
+
+                set -e -f -u -x
+
+                make\
+                        VERBOSE=1\
+                        js-deps js-build
+    'requirements':
+      - 'adg-docker': 'true'
+
 'Artifact':
+    'artifact-subscriptions':
+      - 'artifact': 'AdGuardHome frontend'
+    'artifacts':
+      - 'name': 'AdGuardHome_windows_amd64'
+        'pattern': 'dist/AdGuardHome_windows_amd64.zip'
+        'shared': true
+        'required': true
+      - 'name': 'AdGuardHome_darwin_amd64'
+        'pattern': 'dist/AdGuardHome_darwin_amd64.zip'
+        'shared': true
+        'required': true
+      - 'name': 'AdGuardHome_linux_amd64'
+        'pattern': 'dist/AdGuardHome_linux_amd64.tar.gz'
+        'shared': true
+        'required': true
     'docker':
         'image': '${bamboo.dockerGo}'
         'volumes':
@@ -70,25 +154,13 @@
 
                 make\
                         ARCH="amd64"\
-                        OS="windows darwin linux"\
                         CHANNEL=${bamboo.channel}\
-                        SIGN=0\
+                        FRONTEND_PREBUILT=1\
+                        OS="windows darwin linux"\
                         PARALLELISM=1\
+                        SIGN=0\
                         VERBOSE=2\
                         build-release
-    'artifacts':
-      - 'name': 'AdGuardHome_windows_amd64'
-        'pattern': 'dist/AdGuardHome_windows_amd64.zip'
-        'shared': true
-        'required': true
-      - 'name': 'AdGuardHome_darwin_amd64'
-        'pattern': 'dist/AdGuardHome_darwin_amd64.zip'
-        'shared': true
-        'required': true
-      - 'name': 'AdGuardHome_linux_amd64'
-        'pattern': 'dist/AdGuardHome_linux_amd64.tar.gz'
-        'shared': true
-        'required': true
     'requirements':
       - 'adg-docker': 'true'
 
@@ -122,5 +194,6 @@
         # Set the default release channel on the release branch to beta, as we
         # may need to build a few of these.
         'variables':
-            'dockerGo': 'adguard/golang-ubuntu:8.1'
+            'dockerFrontend': 'adguard/home-js-builder:1.1'
+            'dockerGo': 'adguard/go-builder:1.21.8--1'
             'channel': 'candidate'

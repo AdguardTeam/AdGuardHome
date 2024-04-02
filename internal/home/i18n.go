@@ -5,12 +5,12 @@ import (
 	"net/http"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/stringutil"
 )
 
 // TODO(a.garipov): Get rid of a global or generate from .twosky.json.
-var allowedLanguages = stringutil.NewSet(
+var allowedLanguages = container.NewMapSet(
 	"ar",
 	"be",
 	"bg",

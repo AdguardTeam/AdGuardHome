@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/digineo/go-ipset/v2"
@@ -174,18 +175,6 @@ func (p *props) parseAttrData(a netfilter.Attribute) {
 	}
 }
 
-// unit is a convenient alias for struct{}.
-type unit = struct{}
-
-// ipsInIpset is the type of a set of IP-address-to-ipset mappings.
-type ipsInIpset map[ipInIpsetEntry]unit
-
-// ipInIpsetEntry is the type for entries in an ipsInIpset set.
-type ipInIpsetEntry struct {
-	ipsetName string
-	ipArr     [net.IPv6len]byte
-}
-
 // manager is the Linux Netfilter ipset manager.
 type manager struct {
 	nameToIpset    map[string]props
@@ -196,15 +185,22 @@ type manager struct {
 	// mu protects all properties below.
 	mu *sync.Mutex
 
-	// TODO(a.garipov): Currently, the ipset list is static, and we don't
-	// read the IPs already in sets, so we can assume that all incoming IPs
-	// are either added to all corresponding ipsets or not.  When that stops
-	// being the case, for example if we add dynamic reconfiguration of
-	// ipsets, this map will need to become a per-ipset-name one.
-	addedIPs ipsInIpset
+	// TODO(a.garipov): Currently, the ipset list is static, and we don't read
+	// the IPs already in sets, so we can assume that all incoming IPs are
+	// either added to all corresponding ipsets or not.  When that stops being
+	// the case, for example if we add dynamic reconfiguration of ipsets, this
+	// map will need to become a per-ipset-name one.
+	addedIPs *container.MapSet[ipInIpsetEntry]
 
 	ipv4Conn ipsetConn
 	ipv6Conn ipsetConn
+}
+
+// ipInIpsetEntry is the type for entries in [manager.addIPs].
+type ipInIpsetEntry struct {
+	ipsetName string
+	// TODO(schzen):  Use netip.Addr.
+	ipArr [net.IPv6len]byte
 }
 
 // dialNetfilter establishes connections to Linux's netfilter module.
@@ -372,7 +368,7 @@ func newManagerWithDialer(ipsetConf []string, dial dialer) (mgr Manager, err err
 
 		dial: dial,
 
-		addedIPs: make(ipsInIpset),
+		addedIPs: container.NewMapSet[ipInIpsetEntry](),
 	}
 
 	err = m.dialNetfilter(&netlink.Config{})
@@ -438,7 +434,7 @@ func (m *manager) addIPs(host string, set props, ips []net.IP) (n int, err error
 		}
 		copy(e.ipArr[:], ip.To16())
 
-		if _, added := m.addedIPs[e]; added {
+		if m.addedIPs.Has(e) {
 			continue
 		}
 
@@ -471,7 +467,7 @@ func (m *manager) addIPs(host string, set props, ips []net.IP) (n int, err error
 	for _, e := range newAddedEntries {
 		s := m.nameToIpset[e.ipsetName]
 		if s.isPersistent {
-			m.addedIPs[e] = unit{}
+			m.addedIPs.Add(e)
 		}
 	}
 

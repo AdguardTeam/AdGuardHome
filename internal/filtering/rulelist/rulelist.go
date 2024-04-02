@@ -25,6 +25,24 @@ const DefaultMaxRuleListSize = 64 * datasize.MB
 // urlfilter.
 type URLFilterID = int
 
+// The IDs of built-in filter lists.
+//
+// NOTE: Do not change without the need for it and keep in sync with
+// client/src/helpers/constants.js.
+//
+// TODO(a.garipov): Add type [URLFilterID] once it is used consistently in
+// package filtering.
+//
+// TODO(d.kolyshev): Add URLFilterIDLegacyRewrite here and to the UI.
+const (
+	URLFilterIDCustom          URLFilterID = 0
+	URLFilterIDEtcHosts        URLFilterID = -1
+	URLFilterIDBlockedService  URLFilterID = -2
+	URLFilterIDParentalControl URLFilterID = -3
+	URLFilterIDSafeBrowsing    URLFilterID = -4
+	URLFilterIDSafeSearch      URLFilterID = -5
+)
+
 // UID is the type for the unique IDs of filtering-rule lists.
 type UID uuid.UUID
 

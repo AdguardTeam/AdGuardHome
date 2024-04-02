@@ -4,8 +4,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
+	"net/netip"
 	"path"
 	"strconv"
 	"strings"
@@ -78,7 +78,7 @@ func (a *Auth) newCookie(req loginJSON, addr string) (c *http.Cookie, err error)
 // a well-maintained third-party module.
 //
 // TODO(a.garipov): Support header Forwarded from RFC 7329.
-func realIP(r *http.Request) (ip net.IP, err error) {
+func realIP(r *http.Request) (ip netip.Addr, err error) {
 	proxyHeaders := []string{
 		httphdr.CFConnectingIP,
 		httphdr.TrueClientIP,
@@ -87,8 +87,8 @@ func realIP(r *http.Request) (ip net.IP, err error) {
 
 	for _, h := range proxyHeaders {
 		v := r.Header.Get(h)
-		ip = net.ParseIP(v)
-		if ip != nil {
+		ip, err = netip.ParseAddr(v)
+		if err == nil {
 			return ip, nil
 		}
 	}
@@ -96,20 +96,20 @@ func realIP(r *http.Request) (ip net.IP, err error) {
 	// If none of the above yielded any results, get the leftmost IP address
 	// from the X-Forwarded-For header.
 	s := r.Header.Get(httphdr.XForwardedFor)
-	ipStrs := strings.SplitN(s, ", ", 2)
-	ip = net.ParseIP(ipStrs[0])
-	if ip != nil {
+	ipStr, _, _ := strings.Cut(s, ",")
+	ip, err = netip.ParseAddr(ipStr)
+	if err == nil {
 		return ip, nil
 	}
 
 	// When everything else fails, just return the remote address as understood
 	// by the stdlib.
-	ipStr, err := netutil.SplitHost(r.RemoteAddr)
+	ipStr, err = netutil.SplitHost(r.RemoteAddr)
 	if err != nil {
-		return nil, fmt.Errorf("getting ip from client addr: %w", err)
+		return netip.Addr{}, fmt.Errorf("getting ip from client addr: %w", err)
 	}
 
-	return net.ParseIP(ipStr), nil
+	return netip.ParseAddr(ipStr)
 }
 
 // writeErrorWithIP is like [aghhttp.Error], but includes the remote IP address
@@ -142,8 +142,6 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	// to security issues.
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
-	//
-	// TODO(e.burkov): Use realIP when the issue will be fixed.
 	if remoteIP, err = netutil.SplitHost(r.RemoteAddr); err != nil {
 		writeErrorWithIP(
 			r,
@@ -173,20 +171,24 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cookie, err := Context.auth.newCookie(req, remoteIP)
-	if err != nil {
-		writeErrorWithIP(r, w, http.StatusForbidden, remoteIP, "%s", err)
-
-		return
-	}
-
-	// Use realIP here, since this IP address is only used for logging.
 	ip, err := realIP(r)
 	if err != nil {
 		log.Error("auth: getting real ip from request with remote ip %s: %s", remoteIP, err)
 	}
 
-	log.Info("auth: user %q successfully logged in from ip %v", req.Name, ip)
+	cookie, err := Context.auth.newCookie(req, remoteIP)
+	if err != nil {
+		logIP := remoteIP
+		if Context.auth.trustedProxies.Contains(ip.Unmap()) {
+			logIP = ip.String()
+		}
+
+		writeErrorWithIP(r, w, http.StatusForbidden, logIP, "%s", err)
+
+		return
+	}
+
+	log.Info("auth: user %q successfully logged in from ip %s", req.Name, ip)
 
 	http.SetCookie(w, cookie)
 

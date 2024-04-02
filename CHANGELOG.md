@@ -14,11 +14,11 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.47] - 2024-04-03 (APPROX.)
+## [v0.107.48] - 2024-04-24 (APPROX.)
 
-See also the [v0.107.47 GitHub milestone][ms-v0.107.47].
+See also the [v0.107.48 GitHub milestone][ms-v0.107.48].
 
-[ms-v0.107.47]: https://github.com/AdguardTeam/AdGuardHome/milestone/82?closed=1
+[ms-v0.107.48]: https://github.com/AdguardTeam/AdGuardHome/milestone/83?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -26,6 +26,38 @@ NOTE: Add new changes BELOW THIS COMMENT.
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.47] - 2024-04-04
+
+See also the [v0.107.47 GitHub milestone][ms-v0.107.47].
+
+[ms-v0.107.47]: https://github.com/AdguardTeam/AdGuardHome/milestone/82?closed=1
+
+### Changed
+
+- Time Zone Database is now embedded in the binary ([#6758]).
+- Failed authentication attempts show the originating IP address in the logs, if
+  the request came from a trusted proxy ([#5829]).
+
+### Deprecated
+
+- Currently, AdGuard Home uses a best-effort algorithm to fix invalid IDs of
+  filtering-rule lists on startup.  This feature is deprecated, and invalid IDs
+  will cause errors on startup in a future version.
+- Node.JS 16.  Future versions will require at least Node.JS 18 to build.
+
+### Fixed
+
+- Resetting DNS upstream mode when applying unrelated settings ([#6851]).
+- Symbolic links to config YAML are replaced by a copy of the real file by AGH
+  after startup ([#6717]).
+
+[#5829]: https://github.com/AdguardTeam/AdGuardHome/issues/5829
+[#6717]: https://github.com/AdguardTeam/AdGuardHome/issues/6717
+[#6758]: https://github.com/AdguardTeam/AdGuardHome/issues/6758
+[#6851]: https://github.com/AdguardTeam/AdGuardHome/issues/6851
 
 
 
@@ -42,11 +74,11 @@ See also the [v0.107.46 GitHub milestone][ms-v0.107.46].
 
 ### Changed
 
-- Private RDNS resolution (`dns.use_private_ptr_resolvers` in YAML
+- Private rDNS resolution (`dns.use_private_ptr_resolvers` in YAML
   configuration) now requires a valid "Private reverse DNS servers", when
   enabled ([#6820]).
 
-  **NOTE:** Disabling private RDNS resolution behaves effectively the same as if
+  **NOTE:** Disabling private rDNS resolution behaves effectively the same as if
   no private reverse DNS servers provided by user and by the OS.
 
 ### Fixed
@@ -2853,11 +2885,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.47...HEAD
-[v0.107.47]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.46...v0.107.46
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.48...HEAD
+[v0.107.48]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.47...v0.107.48
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.46...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.47...HEAD
+[v0.107.47]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.46...v0.107.47
 [v0.107.46]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.45...v0.107.46
 [v0.107.45]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.44...v0.107.45
 [v0.107.44]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.43...v0.107.44

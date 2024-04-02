@@ -20,29 +20,16 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/mathutil"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/syncutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
-)
-
-// The IDs of built-in filter lists.
-//
-// Keep in sync with client/src/helpers/constants.js.
-// TODO(d.kolyshev): Add RewritesListID and don't forget to keep in sync.
-const (
-	CustomListID = -iota
-	SysHostsListID
-	BlockedSvcsListID
-	ParentalListID
-	SafeBrowsingListID
-	SafeSearchListID
 )
 
 // ServiceEntry - blocked service array element
@@ -232,6 +219,9 @@ type Checker interface {
 
 // DNSFilter matches hostnames and DNS requests against filtering rules.
 type DNSFilter struct {
+	// idGen is used to generate IDs for package urlfilter.
+	idGen *idGenerator
+
 	// bufPool is a pool of buffers used for filtering-rule list parsing.
 	bufPool *syncutil.Pool[[]byte]
 
@@ -278,7 +268,7 @@ type Filter struct {
 	Data []byte `yaml:"-"`
 
 	// ID is automatically assigned when filter is added using nextFilterID.
-	ID int64 `yaml:"id"`
+	ID rulelist.URLFilterID `yaml:"id"`
 }
 
 // Reason holds an enum detailing why it was filtered or not filtered
@@ -530,11 +520,13 @@ func (d *DNSFilter) ParentalBlockHost() (host string) {
 type ResultRule struct {
 	// Text is the text of the rule.
 	Text string `json:",omitempty"`
+
 	// IP is the host IP.  It is nil unless the rule uses the
 	// /etc/hosts syntax or the reason is FilteredSafeSearch.
 	IP netip.Addr `json:",omitempty"`
+
 	// FilterListID is the ID of the rule's filter list.
-	FilterListID int64 `json:",omitempty"`
+	FilterListID rulelist.URLFilterID `json:",omitempty"`
 }
 
 // Result contains the result of a request check.
@@ -637,7 +629,7 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 
 	res.Reason = Rewritten
 
-	cnames := stringutil.NewSet()
+	cnames := container.NewMapSet[string]()
 	origHost := host
 	for matched && len(rewrites) > 0 && rewrites[0].Type == dns.TypeCNAME {
 		rw := rewrites[0]
@@ -705,7 +697,7 @@ func matchBlockedServicesRules(
 
 				ruleText := rule.Text()
 				res.Rules = []*ResultRule{{
-					FilterListID: int64(rule.GetFilterListID()),
+					FilterListID: rule.GetFilterListID(),
 					Text:         ruleText,
 				}}
 
@@ -970,7 +962,7 @@ func makeResult(matchedRules []rules.Rule, reason Reason) (res Result) {
 	resRules := make([]*ResultRule, len(matchedRules))
 	for i, mr := range matchedRules {
 		resRules[i] = &ResultRule{
-			FilterListID: int64(mr.GetFilterListID()),
+			FilterListID: mr.GetFilterListID(),
 			Text:         mr.Text(),
 		}
 	}
@@ -991,6 +983,7 @@ func InitModule() {
 // be non-nil.
 func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	d = &DNSFilter{
+		idGen:                  newIDGenerator(int32(time.Now().Unix())),
 		bufPool:                syncutil.NewSlicePool[byte](rulelist.DefaultRuleBufSize),
 		refreshLock:            &sync.Mutex{},
 		safeBrowsingChecker:    c.SafeBrowsingChecker,
@@ -1054,8 +1047,8 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	d.conf.Filters = deduplicateFilters(d.conf.Filters)
 	d.conf.WhitelistFilters = deduplicateFilters(d.conf.WhitelistFilters)
 
-	updateUniqueFilterID(d.conf.Filters)
-	updateUniqueFilterID(d.conf.WhitelistFilters)
+	d.idGen.fix(d.conf.Filters)
+	d.idGen.fix(d.conf.WhitelistFilters)
 
 	return d, nil
 }
@@ -1139,7 +1132,7 @@ func (d *DNSFilter) checkSafeBrowsing(
 	res = Result{
 		Rules: []*ResultRule{{
 			Text:         "adguard-malware-shavar",
-			FilterListID: SafeBrowsingListID,
+			FilterListID: rulelist.URLFilterIDSafeBrowsing,
 		}},
 		Reason:     FilteredSafeBrowsing,
 		IsFiltered: true,
@@ -1171,7 +1164,7 @@ func (d *DNSFilter) checkParental(
 	res = Result{
 		Rules: []*ResultRule{{
 			Text:         "parental CATEGORY_BLACKLISTED",
-			FilterListID: ParentalListID,
+			FilterListID: rulelist.URLFilterIDParentalControl,
 		}},
 		Reason:     FilteredParental,
 		IsFiltered: true,

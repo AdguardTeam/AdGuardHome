@@ -53,9 +53,9 @@
         'path': '${{ steps.npm-cache.outputs.dir }}'
         'key': "${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}"
         'restore-keys': '${{ runner.os }}-node-'
-    - 'name': 'Run make ci'
+    - 'name': 'Run tests'
       'shell': 'bash'
-      'run': 'make VERBOSE=1 ci'
+      'run': 'make VERBOSE=1 deps test go-bench go-fuzz'
     - 'name': 'Upload coverage'
       'uses': 'codecov/codecov-action@v1'
       'if': "success() && matrix.os == 'ubuntu-latest'"

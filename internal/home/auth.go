@@ -11,6 +11,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 	"go.etcd.io/bbolt"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -51,14 +52,15 @@ func (s *session) deserialize(data []byte) bool {
 	return true
 }
 
-// Auth - global object
+// Auth is the global authentication object.
 type Auth struct {
-	db          *bbolt.DB
-	rateLimiter *authRateLimiter
-	sessions    map[string]*session
-	users       []webUser
-	lock        sync.Mutex
-	sessionTTL  uint32
+	trustedProxies netutil.SubnetSet
+	db             *bbolt.DB
+	rateLimiter    *authRateLimiter
+	sessions       map[string]*session
+	users          []webUser
+	lock           sync.Mutex
+	sessionTTL     uint32
 }
 
 // webUser represents a user of the Web UI.
@@ -69,15 +71,22 @@ type webUser struct {
 	PasswordHash string `yaml:"password"`
 }
 
-// InitAuth - create a global object
-func InitAuth(dbFilename string, users []webUser, sessionTTL uint32, rateLimiter *authRateLimiter) *Auth {
+// InitAuth initializes the global authentication object.
+func InitAuth(
+	dbFilename string,
+	users []webUser,
+	sessionTTL uint32,
+	rateLimiter *authRateLimiter,
+	trustedProxies netutil.SubnetSet,
+) (a *Auth) {
 	log.Info("Initializing auth module: %s", dbFilename)
 
-	a := &Auth{
-		sessionTTL:  sessionTTL,
-		rateLimiter: rateLimiter,
-		sessions:    make(map[string]*session),
-		users:       users,
+	a = &Auth{
+		sessionTTL:     sessionTTL,
+		rateLimiter:    rateLimiter,
+		sessions:       make(map[string]*session),
+		users:          users,
+		trustedProxies: trustedProxies,
 	}
 	var err error
 	a.db, err = bbolt.Open(dbFilename, 0o644, nil)
@@ -95,7 +104,7 @@ func InitAuth(dbFilename string, users []webUser, sessionTTL uint32, rateLimiter
 	return a
 }
 
-// Close - close module
+// Close closes the authentication database.
 func (a *Auth) Close() {
 	_ = a.db.Close()
 }
@@ -104,7 +113,8 @@ func bucketName() []byte {
 	return []byte("sessions-2")
 }
 
-// load sessions from file, remove expired sessions
+// loadSessions loads sessions from the database file and removes expired
+// sessions.
 func (a *Auth) loadSessions() {
 	tx, err := a.db.Begin(true)
 	if err != nil {
@@ -156,7 +166,8 @@ func (a *Auth) loadSessions() {
 	log.Debug("auth: loaded %d sessions from DB (removed %d expired)", len(a.sessions), removed)
 }
 
-// store session data in file
+// addSession adds a new session to the list of sessions and saves it in the
+// database file.
 func (a *Auth) addSession(data []byte, s *session) {
 	name := hex.EncodeToString(data)
 	a.lock.Lock()
@@ -167,7 +178,7 @@ func (a *Auth) addSession(data []byte, s *session) {
 	}
 }
 
-// store session data in file
+// storeSession saves a session in the database file.
 func (a *Auth) storeSession(data []byte, s *session) bool {
 	tx, err := a.db.Begin(true)
 	if err != nil {

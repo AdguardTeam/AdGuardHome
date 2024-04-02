@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -15,7 +16,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"golang.org/x/net/idna"
 )
@@ -308,7 +308,7 @@ func parseSearchCriterion(q url.Values, name string, ct criterionType) (
 			asciiVal = ""
 		}
 	case ctFilteringStatus:
-		if !stringutil.InSlice(filteringStatusValues, val) {
+		if !slices.Contains(filteringStatusValues, val) {
 			return false, sc, fmt.Errorf("invalid value %s", val)
 		}
 	default:

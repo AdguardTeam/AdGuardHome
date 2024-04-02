@@ -8,6 +8,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -71,7 +72,7 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 		dtyp: dns.TypeA,
 		wantRules: []*ResultRule{{
 			Text:         "1.2.3.4 v4.host.example",
-			FilterListID: SysHostsListID,
+			FilterListID: rulelist.URLFilterIDEtcHosts,
 		}},
 		wantResps: []rules.RRValue{addrv4},
 	}, {
@@ -80,7 +81,7 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 		dtyp: dns.TypeAAAA,
 		wantRules: []*ResultRule{{
 			Text:         "::1 v6.host.example",
-			FilterListID: SysHostsListID,
+			FilterListID: rulelist.URLFilterIDEtcHosts,
 		}},
 		wantResps: []rules.RRValue{addrv6},
 	}, {
@@ -89,7 +90,7 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 		dtyp: dns.TypeAAAA,
 		wantRules: []*ResultRule{{
 			Text:         "::ffff:1.2.3.4 mapped.host.example",
-			FilterListID: SysHostsListID,
+			FilterListID: rulelist.URLFilterIDEtcHosts,
 		}},
 		wantResps: []rules.RRValue{addrMapped},
 	}, {
@@ -98,7 +99,7 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 		dtyp: dns.TypePTR,
 		wantRules: []*ResultRule{{
 			Text:         "1.2.3.4 v4.host.example",
-			FilterListID: SysHostsListID,
+			FilterListID: rulelist.URLFilterIDEtcHosts,
 		}},
 		wantResps: []rules.RRValue{"v4.host.example"},
 	}, {
@@ -107,7 +108,7 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 		dtyp: dns.TypePTR,
 		wantRules: []*ResultRule{{
 			Text:         "::ffff:1.2.3.4 mapped.host.example",
-			FilterListID: SysHostsListID,
+			FilterListID: rulelist.URLFilterIDEtcHosts,
 		}},
 		wantResps: []rules.RRValue{"mapped.host.example"},
 	}, {
@@ -134,7 +135,7 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 		dtyp: dns.TypeAAAA,
 		wantRules: []*ResultRule{{
 			Text:         fmt.Sprintf("%s v4.host.example", addrv4),
-			FilterListID: SysHostsListID,
+			FilterListID: rulelist.URLFilterIDEtcHosts,
 		}},
 		wantResps: nil,
 	}, {
@@ -143,7 +144,7 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 		dtyp: dns.TypeA,
 		wantRules: []*ResultRule{{
 			Text:         fmt.Sprintf("%s v6.host.example", addrv6),
-			FilterListID: SysHostsListID,
+			FilterListID: rulelist.URLFilterIDEtcHosts,
 		}},
 		wantResps: nil,
 	}, {
@@ -164,7 +165,7 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 		dtyp: dns.TypeA,
 		wantRules: []*ResultRule{{
 			Text:         "4.3.2.1 v4.host.with-dup",
-			FilterListID: SysHostsListID,
+			FilterListID: rulelist.URLFilterIDEtcHosts,
 		}},
 		wantResps: []rules.RRValue{addrv4Dup},
 	}}

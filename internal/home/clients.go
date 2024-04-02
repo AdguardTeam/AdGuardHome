@@ -19,6 +19,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/log"
@@ -54,7 +55,7 @@ type clientsContainer struct {
 	// ipToRC maps IP addresses to runtime client information.
 	ipToRC map[netip.Addr]*client.Runtime
 
-	allTags *stringutil.Set
+	allTags *container.MapSet[string]
 
 	// dhcp is the DHCP service implementation.
 	dhcp DHCP
@@ -108,7 +109,7 @@ func (clients *clientsContainer) Init(
 
 	clients.clientIndex = client.NewIndex()
 
-	clients.allTags = stringutil.NewSet(clientTags...)
+	clients.allTags = container.NewMapSet(clientTags...)
 
 	// TODO(e.burkov):  Use [dhcpsvc] implementation when it's ready.
 	clients.dhcp = dhcpServer
@@ -213,7 +214,7 @@ type clientObject struct {
 // toPersistent returns an initialized persistent client if there are no errors.
 func (o *clientObject) toPersistent(
 	filteringConf *filtering.Config,
-	allTags *stringutil.Set,
+	allTags *container.MapSet[string],
 ) (cli *client.Persistent, err error) {
 	cli = &client.Persistent{
 		Name: o.Name,
@@ -307,8 +308,8 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 			BlockedServices: cli.BlockedServices.Clone(),
 
 			IDs:       cli.IDs(),
-			Tags:      stringutil.CloneSlice(cli.Tags),
-			Upstreams: stringutil.CloneSlice(cli.Upstreams),
+			Tags:      slices.Clone(cli.Tags),
+			Upstreams: slices.Clone(cli.Upstreams),
 
 			UID: cli.UID,
 

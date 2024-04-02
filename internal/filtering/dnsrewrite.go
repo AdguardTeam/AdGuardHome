@@ -30,7 +30,7 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 		if dr.NewCNAME != "" {
 			// NewCNAME rules have a higher priority than other rules.
 			rules = []*ResultRule{{
-				FilterListID: int64(nr.GetFilterListID()),
+				FilterListID: nr.GetFilterListID(),
 				Text:         nr.RuleText,
 			}}
 
@@ -46,14 +46,14 @@ func (d *DNSFilter) processDNSRewrites(dnsr []*rules.NetworkRule) (res Result) {
 			dnsrr.RCode = dr.RCode
 			dnsrr.Response[dr.RRType] = append(dnsrr.Response[dr.RRType], dr.Value)
 			rules = append(rules, &ResultRule{
-				FilterListID: int64(nr.GetFilterListID()),
+				FilterListID: nr.GetFilterListID(),
 				Text:         nr.RuleText,
 			})
 		default:
 			// RcodeRefused and other such codes have higher priority.  Return
 			// immediately.
 			rules = []*ResultRule{{
-				FilterListID: int64(nr.GetFilterListID()),
+				FilterListID: nr.GetFilterListID(),
 				Text:         nr.RuleText,
 			}}
 			dnsrr = &DNSRewriteResult{

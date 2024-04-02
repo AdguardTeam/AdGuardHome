@@ -14,7 +14,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghrenameio"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/c2h5oh/datasize"
 )
@@ -52,8 +51,6 @@ type Filter struct {
 	checksum uint32
 
 	// enabled, if true, means that this rule-list filter is used for filtering.
-	//
-	// TODO(a.garipov): Take into account.
 	enabled bool
 }
 
@@ -106,6 +103,11 @@ func NewFilter(c *FilterConfig) (f *Filter, err error) {
 // Refresh updates the data in the rule-list filter.  parseBuf is the initial
 // buffer used to parse information from the data.  cli and maxSize are only
 // used when f is a URL-based list.
+//
+// TODO(a.garipov): Unexport and test in an internal test or through enigne
+// tests.
+//
+// TODO(a.garipov): Consider not returning parseRes.
 func (f *Filter) Refresh(
 	ctx context.Context,
 	parseBuf []byte,
@@ -299,40 +301,4 @@ func (f *Filter) Close() (err error) {
 	}
 
 	return f.ruleList.Close()
-}
-
-// filterUpdate represents a single ongoing rule-list filter update.
-//
-//lint:ignore U1000 TODO(a.garipov): Use.
-type filterUpdate struct {
-	httpCli  *http.Client
-	cacheDir string
-	name     string
-	parseBuf []byte
-	maxSize  datasize.ByteSize
-}
-
-// process runs an update of a single rule-list.
-func (u *filterUpdate) process(ctx context.Context, f *Filter) (err error) {
-	prevChecksum := f.checksum
-	parseRes, err := f.Refresh(ctx, u.parseBuf, u.httpCli, u.cacheDir, u.maxSize)
-	if err != nil {
-		return fmt.Errorf("updating %s: %w", f.uid, err)
-	}
-
-	if prevChecksum == parseRes.Checksum {
-		log.Info("filtering: filter %q: filter %q: no change", u.name, f.uid)
-
-		return nil
-	}
-
-	log.Info(
-		"filtering: updated filter %q: filter %q: %d bytes, %d rules",
-		u.name,
-		f.uid,
-		parseRes.BytesWritten,
-		parseRes.RulesCount,
-	)
-
-	return nil
 }

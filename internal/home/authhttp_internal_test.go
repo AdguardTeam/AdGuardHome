@@ -1,8 +1,8 @@
 package home
 
 import (
-	"net"
 	"net/http"
+	"net/netip"
 	"net/textproto"
 	"net/url"
 	"path/filepath"
@@ -39,7 +39,7 @@ func TestAuthHTTP(t *testing.T) {
 	users := []webUser{
 		{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
 	}
-	Context.auth = InitAuth(fn, users, 60, nil)
+	Context.auth = InitAuth(fn, users, 60, nil, nil)
 
 	handlerCalled := false
 	handler := func(_ http.ResponseWriter, _ *http.Request) {
@@ -125,13 +125,13 @@ func TestRealIP(t *testing.T) {
 		header     http.Header
 		remoteAddr string
 		wantErrMsg string
-		wantIP     net.IP
+		wantIP     netip.Addr
 	}{{
 		name:       "success_no_proxy",
 		header:     nil,
 		remoteAddr: remoteAddr,
 		wantErrMsg: "",
-		wantIP:     net.IPv4(1, 2, 3, 4),
+		wantIP:     netip.MustParseAddr("1.2.3.4"),
 	}, {
 		name: "success_proxy",
 		header: http.Header{
@@ -139,7 +139,7 @@ func TestRealIP(t *testing.T) {
 		},
 		remoteAddr: remoteAddr,
 		wantErrMsg: "",
-		wantIP:     net.IPv4(1, 2, 3, 5),
+		wantIP:     netip.MustParseAddr("1.2.3.5"),
 	}, {
 		name: "success_proxy_multiple",
 		header: http.Header{
@@ -149,14 +149,14 @@ func TestRealIP(t *testing.T) {
 		},
 		remoteAddr: remoteAddr,
 		wantErrMsg: "",
-		wantIP:     net.IPv4(1, 2, 3, 6),
+		wantIP:     netip.MustParseAddr("1.2.3.6"),
 	}, {
 		name:       "error_no_proxy",
 		header:     nil,
 		remoteAddr: "1:::2",
 		wantErrMsg: `getting ip from client addr: address 1:::2: ` +
 			`too many colons in address`,
-		wantIP: nil,
+		wantIP: netip.Addr{},
 	}}
 
 	for _, tc := range testCases {

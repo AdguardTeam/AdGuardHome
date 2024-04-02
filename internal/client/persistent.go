@@ -12,10 +12,10 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/google/uuid"
 )
 
@@ -98,7 +98,7 @@ type Persistent struct {
 }
 
 // SetTags sets the tags if they are known, otherwise logs an unknown tag.
-func (c *Persistent) SetTags(tags []string, known *stringutil.Set) {
+func (c *Persistent) SetTags(tags []string, known *container.MapSet[string]) {
 	for _, t := range tags {
 		if !known.Has(t) {
 			log.Info("skipping unknown tag %q", t)

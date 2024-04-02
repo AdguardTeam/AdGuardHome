@@ -4,6 +4,10 @@ package main
 
 import (
 	"embed"
+	// Embed tzdata in binary.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/6758
+	_ "time/tzdata"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/home"
 )
