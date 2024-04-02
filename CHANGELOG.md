@@ -25,6 +25,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- Time Zone Database is now embedded in the binary ([#6758]).
 - Failed authentication attempts show the originating IP address in the logs, if
   the request came from a trusted proxy ([#5829]).
 
@@ -43,6 +44,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#5829]: https://github.com/AdguardTeam/AdGuardHome/issues/5829
 [#6717]: https://github.com/AdguardTeam/AdGuardHome/issues/6717
+[#6758]: https://github.com/AdguardTeam/AdGuardHome/issues/6758
 [#6851]: https://github.com/AdguardTeam/AdGuardHome/issues/6851
 
 <!--
