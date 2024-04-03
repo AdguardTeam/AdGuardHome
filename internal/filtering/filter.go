@@ -13,9 +13,9 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghrenameio"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/stringutil"
 )
 
 // filterDir is the subdirectory of a data directory to store downloaded
@@ -234,7 +234,7 @@ func (d *DNSFilter) loadFilters(array []FilterYAML) {
 }
 
 func deduplicateFilters(filters []FilterYAML) (deduplicated []FilterYAML) {
-	urls := stringutil.NewSet()
+	urls := container.NewMapSet[string]()
 	lastIdx := 0
 
 	for _, filter := range filters {

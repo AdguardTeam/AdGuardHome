@@ -52,7 +52,7 @@ func prepareMultipartMsg(
 	w := multipart.NewWriter(buf)
 	var fw io.Writer
 
-	err = mapsutil.OrderedRangeError(formData, w.WriteField)
+	err = mapsutil.SortedRangeError(formData, w.WriteField)
 	if err != nil {
 		return nil, "", fmt.Errorf("writing field: %w", err)
 	}

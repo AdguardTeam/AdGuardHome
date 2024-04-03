@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -85,7 +85,7 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 	}
 
 	// TODO(a.garipov): Check cnames for cycles on initialization.
-	cnames := stringutil.NewSet()
+	cnames := container.NewMapSet[string]()
 	host := dReq.Hostname
 	for len(rrules) > 0 && rrules[0].DNSRewrite != nil && rrules[0].DNSRewrite.NewCNAME != "" {
 		rule := rrules[0]

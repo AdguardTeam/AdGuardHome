@@ -5,6 +5,7 @@ import (
 	"sync/atomic"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/log"
 )
 
@@ -41,7 +42,7 @@ func (g *idGenerator) next() (id rulelist.URLFilterID) {
 
 // fix ensures that flts all have unique IDs.
 func (g *idGenerator) fix(flts []FilterYAML) {
-	set := map[rulelist.URLFilterID]struct{}{}
+	set := container.NewMapSet[rulelist.URLFilterID]()
 	for i, f := range flts {
 		id := f.ID
 		if id == 0 {
@@ -49,14 +50,14 @@ func (g *idGenerator) fix(flts []FilterYAML) {
 			flts[i].ID = id
 		}
 
-		if _, ok := set[id]; !ok {
-			set[id] = struct{}{}
+		if !set.Has(id) {
+			set.Add(id)
 
 			continue
 		}
 
 		newID := g.next()
-		for _, ok := set[newID]; ok; _, ok = set[newID] {
+		for set.Has(newID) {
 			newID = g.next()
 		}
 
@@ -68,6 +69,6 @@ func (g *idGenerator) fix(flts []FilterYAML) {
 		)
 
 		flts[i].ID = newID
-		set[newID] = struct{}{}
+		set.Add(newID)
 	}
 }

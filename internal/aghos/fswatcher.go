@@ -6,10 +6,10 @@ import (
 	"io/fs"
 	"path/filepath"
 
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/osutil"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -46,7 +46,7 @@ type osWatcher struct {
 	events chan event
 
 	// files is the set of tracked files.
-	files *stringutil.Set
+	files *container.MapSet[string]
 }
 
 // osWatcherPref is a prefix for logging and wrapping errors in osWathcer's
@@ -67,7 +67,7 @@ func NewOSWritesWatcher() (w FSWatcher, err error) {
 	return &osWatcher{
 		watcher: watcher,
 		events:  make(chan event, 1),
-		files:   stringutil.NewSet(),
+		files:   container.NewMapSet[string](),
 	}, nil
 }
 

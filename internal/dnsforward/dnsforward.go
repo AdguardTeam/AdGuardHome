@@ -308,13 +308,13 @@ func (s *Server) WriteDiskConfig(c *Config) {
 	sc := s.conf.Config
 	*c = sc
 	c.RatelimitWhitelist = slices.Clone(sc.RatelimitWhitelist)
-	c.BootstrapDNS = stringutil.CloneSlice(sc.BootstrapDNS)
-	c.FallbackDNS = stringutil.CloneSlice(sc.FallbackDNS)
-	c.AllowedClients = stringutil.CloneSlice(sc.AllowedClients)
-	c.DisallowedClients = stringutil.CloneSlice(sc.DisallowedClients)
-	c.BlockedHosts = stringutil.CloneSlice(sc.BlockedHosts)
+	c.BootstrapDNS = slices.Clone(sc.BootstrapDNS)
+	c.FallbackDNS = slices.Clone(sc.FallbackDNS)
+	c.AllowedClients = slices.Clone(sc.AllowedClients)
+	c.DisallowedClients = slices.Clone(sc.DisallowedClients)
+	c.BlockedHosts = slices.Clone(sc.BlockedHosts)
 	c.TrustedProxies = slices.Clone(sc.TrustedProxies)
-	c.UpstreamDNS = stringutil.CloneSlice(sc.UpstreamDNS)
+	c.UpstreamDNS = slices.Clone(sc.UpstreamDNS)
 }
 
 // LocalPTRResolvers returns the current local PTR resolver configuration.
@@ -322,7 +322,7 @@ func (s *Server) LocalPTRResolvers() (localPTRResolvers []string) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	return stringutil.CloneSlice(s.conf.LocalPTRResolvers)
+	return slices.Clone(s.conf.LocalPTRResolvers)
 }
 
 // AddrProcConfig returns the current address processing configuration.  Only

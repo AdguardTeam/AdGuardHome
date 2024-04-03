@@ -19,6 +19,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -461,26 +462,27 @@ func (s *Server) prepareIpsetListSettings() (err error) {
 // unspecPorts if its address is unspecified.
 func collectListenAddr(
 	addrPort netip.AddrPort,
-	addrs map[netip.AddrPort]unit,
-	unspecPorts map[uint16]unit,
+	addrs *container.MapSet[netip.AddrPort],
+	unspecPorts *container.MapSet[uint16],
 ) {
 	if addrPort == (netip.AddrPort{}) {
 		return
 	}
 
-	addrs[addrPort] = unit{}
+	addrs.Add(addrPort)
 	if addrPort.Addr().IsUnspecified() {
-		unspecPorts[addrPort.Port()] = unit{}
+		unspecPorts.Add(addrPort.Port())
 	}
 }
 
 // collectDNSAddrs returns configured set of listening addresses.  It also
 // returns a set of ports of each unspecified listening address.
-func (conf *ServerConfig) collectDNSAddrs() (addrs mapAddrPortSet, unspecPorts map[uint16]unit) {
-	// TODO(e.burkov):  Perhaps, we shouldn't allocate as much memory, since the
-	// TCP and UDP listening addresses are currently the same.
-	addrs = make(map[netip.AddrPort]unit, len(conf.TCPListenAddrs)+len(conf.UDPListenAddrs))
-	unspecPorts = map[uint16]unit{}
+func (conf *ServerConfig) collectDNSAddrs() (
+	addrs *container.MapSet[netip.AddrPort],
+	unspecPorts *container.MapSet[uint16],
+) {
+	addrs = container.NewMapSet[netip.AddrPort]()
+	unspecPorts = container.NewMapSet[uint16]()
 
 	for _, laddr := range conf.TCPListenAddrs {
 		collectListenAddr(laddr.AddrPort(), addrs, unspecPorts)
@@ -511,26 +513,12 @@ type emptyAddrPortSet struct{}
 // Has implements the [addrPortSet] interface for [emptyAddrPortSet].
 func (emptyAddrPortSet) Has(_ netip.AddrPort) (ok bool) { return false }
 
-// mapAddrPortSet is the [addrPortSet] containing values of [netip.AddrPort] as
-// keys of a map.
-type mapAddrPortSet map[netip.AddrPort]unit
-
-// type check
-var _ addrPortSet = mapAddrPortSet{}
-
-// Has implements the [addrPortSet] interface for [mapAddrPortSet].
-func (m mapAddrPortSet) Has(addrPort netip.AddrPort) (ok bool) {
-	_, ok = m[addrPort]
-
-	return ok
-}
-
 // combinedAddrPortSet is the [addrPortSet] defined by some IP addresses along
 // with ports, any combination of which is considered being in the set.
 type combinedAddrPortSet struct {
-	// TODO(e.burkov):  Use sorted slices in combination with binary search.
-	ports map[uint16]unit
-	addrs []netip.Addr
+	// TODO(e.burkov):  Use container.SliceSet when available.
+	ports *container.MapSet[uint16]
+	addrs *container.MapSet[netip.Addr]
 }
 
 // type check
@@ -538,9 +526,7 @@ var _ addrPortSet = (*combinedAddrPortSet)(nil)
 
 // Has implements the [addrPortSet] interface for [*combinedAddrPortSet].
 func (m *combinedAddrPortSet) Has(addrPort netip.AddrPort) (ok bool) {
-	_, ok = m.ports[addrPort.Port()]
-
-	return ok && slices.Contains(m.addrs, addrPort.Addr())
+	return m.ports.Has(addrPort.Port()) && m.addrs.Has(addrPort.Addr())
 }
 
 // filterOut filters out all the upstreams that match um.  It returns all the
@@ -578,11 +564,11 @@ func filterOutAddrs(upsConf *proxy.UpstreamConfig, set addrPortSet) (err error) 
 func (conf *ServerConfig) ourAddrsSet() (m addrPortSet, err error) {
 	addrs, unspecPorts := conf.collectDNSAddrs()
 	switch {
-	case len(addrs) == 0:
+	case addrs.Len() == 0:
 		log.Debug("dnsforward: no listen addresses")
 
 		return emptyAddrPortSet{}, nil
-	case len(unspecPorts) == 0:
+	case unspecPorts.Len() == 0:
 		log.Debug("dnsforward: filtering out addresses %s", addrs)
 
 		return addrs, nil
@@ -598,7 +584,7 @@ func (conf *ServerConfig) ourAddrsSet() (m addrPortSet, err error) {
 
 		return &combinedAddrPortSet{
 			ports: unspecPorts,
-			addrs: ifaceAddrs,
+			addrs: container.NewMapSet(ifaceAddrs...),
 		}, nil
 	}
 }
