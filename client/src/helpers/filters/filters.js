@@ -190,6 +190,12 @@ export default {
             "homepage": "https://github.com/hagezi/dns-blocklists#piracy",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_46.txt"
         },
+        "hagezi_badware_hoster_blocklist": {
+            "name": "HaGeZi's Badware Hoster Blocklist",
+            "categoryId": "security",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_55.txt"
+        },
         "hagezi_dyndns_blocklist": {
             "name": "HaGeZi's DynDNS Blocklist",
             "categoryId": "security",
@@ -225,6 +231,12 @@ export default {
             "categoryId": "general",
             "homepage": "https://github.com/hagezi/dns-blocklists",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_51.txt"
+        },
+        "hagezi_the_worlds_most_abused_tlds": {
+            "name": "HaGeZi's The World's Most Abused TLDs",
+            "categoryId": "security",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_56.txt"
         },
         "hagezi_threat_intelligence_feeds": {
             "name": "HaGeZi's Threat Intelligence Feeds",
