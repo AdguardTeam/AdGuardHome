@@ -33,7 +33,10 @@ NOTE: Add new changes ABOVE THIS COMMENT.
 
 See also the [v0.107.47 GitHub milestone][ms-v0.107.47].
 
-[ms-v0.107.47]: https://github.com/AdguardTeam/AdGuardHome/milestone/82?closed=1
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go
+  vulnerabilities fixed in [Go 1.22.2][go-1.22.2].
 
 ### Changed
 
@@ -43,6 +46,7 @@ See also the [v0.107.47 GitHub milestone][ms-v0.107.47].
 
 ### Deprecated
 
+- Go 1.22 support.  Future versions will require at least Go 1.23 to build.
 - Currently, AdGuard Home uses a best-effort algorithm to fix invalid IDs of
   filtering-rule lists on startup.  This feature is deprecated, and invalid IDs
   will cause errors on startup in a future version.
@@ -54,10 +58,17 @@ See also the [v0.107.47 GitHub milestone][ms-v0.107.47].
 - Symbolic links to config YAML are replaced by a copy of the real file by AGH
   after startup ([#6717]).
 
+### Removed
+
+- Go 1.21 support.
+
 [#5829]: https://github.com/AdguardTeam/AdGuardHome/issues/5829
 [#6717]: https://github.com/AdguardTeam/AdGuardHome/issues/6717
 [#6758]: https://github.com/AdguardTeam/AdGuardHome/issues/6758
 [#6851]: https://github.com/AdguardTeam/AdGuardHome/issues/6851
+
+[go-1.22.2]:    https://groups.google.com/g/golang-announce/c/YgW0sx8mN3M/
+[ms-v0.107.47]: https://github.com/AdguardTeam/AdGuardHome/milestone/82?closed=1
 
 
 

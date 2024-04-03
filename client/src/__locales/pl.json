@@ -678,7 +678,7 @@
     "use_saved_key": "Użyj wcześniej zapisanego klucza",
     "parental_control": "Kontrola rodzicielska",
     "safe_browsing": "Bezpieczne przeglądanie",
-    "served_from_cache": "{{value}} <i>(podawane z pamięci podręcznej)</i>",
+    "served_from_cache_label": "Podano z pamięci podręcznej",
     "form_error_password_length": "Hasło musi zawierać od {{min}} do {{max}} znaków",
     "anonymizer_notification": "<0>Uwaga:</0> Anonimizacja IP jest włączona. Możesz ją wyłączyć w <1>Ustawieniach ogólnych</1>.",
     "confirm_dns_cache_clear": "Czy na pewno chcesz wyczyścić pamięć podręczną DNS?",

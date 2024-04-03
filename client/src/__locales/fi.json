@@ -678,7 +678,7 @@
     "use_saved_key": "Käytä aiemmin tallennettua avainta",
     "parental_control": "Lapsilukko",
     "safe_browsing": "Turvallinen selaus",
-    "served_from_cache": "{{value}} <i>(jaettu välimuistista)</i>",
+    "served_from_cache_label": "Toimitettu välimuistista",
     "form_error_password_length": "Salasanan on oltava {{min}} - {{max}} merkkiä pitkä",
     "anonymizer_notification": "<0>Huomioi:</0> IP-osoitteen anonymisointi on käytössä. Voit poistaa sen käytöstä <1>Yleisistä asetuksista</1>.",
     "confirm_dns_cache_clear": "Haluatko varmasti tyhjentää DNS-välimuistin?",
