@@ -266,7 +266,6 @@ func TestServer_HandleDNSRequest_dns64(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			upsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
 				q := req.Question[0]

@@ -3,6 +3,7 @@ package whois
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"fmt"
 	"io"
@@ -17,7 +18,6 @@ import (
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/bluele/gcache"
 )
 
@@ -174,7 +174,7 @@ func whoisParse(data []byte, maxLen int) (info map[string]string) {
 			val = trimValue(val, maxLen)
 		case "descr", "netname":
 			key = "orgname"
-			val = stringutil.Coalesce(orgname, val)
+			val = cmp.Or(orgname, val)
 			orgname = val
 		case "whois":
 			key = "whois"
@@ -232,7 +232,7 @@ func (w *Default) queryAll(ctx context.Context, target string) (info map[string]
 	server := net.JoinHostPort(w.serverAddr, w.portStr)
 	var data []byte
 
-	for i := 0; i < w.maxRedirects; i++ {
+	for range w.maxRedirects {
 		data, err = w.query(ctx, target, server)
 		if err != nil {
 			// Don't wrap the error since it's informative enough as is.

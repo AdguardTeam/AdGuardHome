@@ -1,5 +1,7 @@
 package configmigrate
 
+import "github.com/AdguardTeam/golibs/errors"
+
 // migrateTo15 performs the following changes:
 //
 //	# BEFORE:
@@ -43,7 +45,7 @@ func migrateTo15(diskConf yobj) (err error) {
 	}
 	diskConf["querylog"] = qlog
 
-	return coalesceError(
+	return errors.Join(
 		moveVal[bool](dns, qlog, "querylog_enabled", "enabled"),
 		moveVal[bool](dns, qlog, "querylog_file_enabled", "file_enabled"),
 		moveVal[any](dns, qlog, "querylog_interval", "interval"),

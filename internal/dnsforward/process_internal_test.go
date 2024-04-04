@@ -1,11 +1,11 @@
 package dnsforward
 
 import (
+	"cmp"
 	"net"
 	"net/netip"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -70,8 +70,6 @@ func TestServer_ProcessInitial(t *testing.T) {
 	}}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -171,8 +169,6 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 	}}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -667,7 +663,7 @@ func TestServer_ProcessRestrictLocal(t *testing.T) {
 	)
 
 	localUpsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
-		resp := aghalg.Coalesce(
+		resp := cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypePTR, extPTRQuestion, extPTRAnswer),
 			aghtest.MatchedResponse(req, dns.TypePTR, intPTRQuestion, intPTRAnswer),
 			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
@@ -756,7 +752,7 @@ func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
 	const reqAddr = "1.1.168.192.in-addr.arpa."
 
 	localUpsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
-		resp := aghalg.Coalesce(
+		resp := cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypePTR, reqAddr, locDomain),
 			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
 		)

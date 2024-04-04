@@ -3,6 +3,7 @@
 package home
 
 import (
+	"cmp"
 	"fmt"
 	"os"
 	"os/signal"
@@ -14,7 +15,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/kardianos/service"
 )
 
@@ -76,7 +76,7 @@ func (*openbsdRunComService) Platform() (p string) {
 
 // String implements service.Service interface for *openbsdRunComService.
 func (s *openbsdRunComService) String() string {
-	return stringutil.Coalesce(s.cfg.DisplayName, s.cfg.Name)
+	return cmp.Or(s.cfg.DisplayName, s.cfg.Name)
 }
 
 // getBool returns the value of the given name from kv, assuming the value is a

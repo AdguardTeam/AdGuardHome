@@ -2,6 +2,7 @@
 package dnsforward
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"io"
@@ -15,7 +16,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -908,5 +908,5 @@ func (s *Server) IsBlockedClient(ip netip.Addr, clientID string) (blocked bool, 
 		blocked = true
 	}
 
-	return blocked, aghalg.Coalesce(rule, clientID)
+	return blocked, cmp.Or(rule, clientID)
 }

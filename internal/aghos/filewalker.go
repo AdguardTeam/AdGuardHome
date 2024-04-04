@@ -97,6 +97,8 @@ func (fw FileWalker) Walk(fsys fs.FS, initial ...string) (ok bool, err error) {
 	var filename string
 	defer func() { err = errors.Annotate(err, "checking %q: %w", filename) }()
 
+	// TODO(e.burkov):  Redo this loop, as it modifies the very same slice it
+	// iterates over.
 	for i := 0; i < len(src); i++ {
 		var patterns []string
 		var cont bool

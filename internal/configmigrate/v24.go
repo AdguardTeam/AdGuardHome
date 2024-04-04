@@ -1,5 +1,7 @@
 package configmigrate
 
+import "github.com/AdguardTeam/golibs/errors"
+
 // migrateTo24 performs the following changes:
 //
 //	# BEFORE:
@@ -28,7 +30,7 @@ func migrateTo24(diskConf yobj) (err error) {
 	diskConf["schema_version"] = 24
 
 	logObj := yobj{}
-	err = coalesceError(
+	err = errors.Join(
 		moveVal[string](diskConf, logObj, "log_file", "file"),
 		moveVal[int](diskConf, logObj, "log_max_backups", "max_backups"),
 		moveVal[int](diskConf, logObj, "log_max_size", "max_size"),

@@ -127,7 +127,7 @@ var dnsRewriteSink *rules.DNSRewrite
 func BenchmarkSafeSearch(b *testing.B) {
 	ss := newForTest(b, defaultSafeSearchConf)
 
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		dnsRewriteSink = ss.searchHost(googleHost, testQType)
 	}
 

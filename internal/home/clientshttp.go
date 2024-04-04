@@ -434,7 +434,7 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	data := []map[string]*clientJSON{}
-	for i := 0; i < len(q); i++ {
+	for i := range len(q) {
 		idStr := q.Get(fmt.Sprintf("ip%d", i))
 		if idStr == "" {
 			break

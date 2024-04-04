@@ -11,7 +11,7 @@ func TestNewSortedMap(t *testing.T) {
 	var m SortedMap[string, int]
 
 	letters := []string{}
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		r := string('a' + rune(i))
 		letters = append(letters, r)
 	}

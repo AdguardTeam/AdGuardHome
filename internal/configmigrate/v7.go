@@ -1,5 +1,7 @@
 package configmigrate
 
+import "github.com/AdguardTeam/golibs/errors"
+
 // migrateTo7 performs the following changes:
 //
 //	# BEFORE:
@@ -37,7 +39,7 @@ func migrateTo7(diskConf yobj) (err error) {
 	}
 
 	dhcpv4 := yobj{}
-	err = coalesceError(
+	err = errors.Join(
 		moveSameVal[string](dhcp, dhcpv4, "gateway_ip"),
 		moveSameVal[string](dhcp, dhcpv4, "subnet_mask"),
 		moveSameVal[string](dhcp, dhcpv4, "range_start"),

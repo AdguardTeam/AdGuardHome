@@ -68,13 +68,13 @@ func TestStats_races(t *testing.T) {
 		startWG, finWG := &sync.WaitGroup{}, &sync.WaitGroup{}
 		waitCh := make(chan unit)
 
-		for i := 0; i < writersNum; i++ {
+		for i := range writersNum {
 			startWG.Add(1)
 			finWG.Add(1)
 			go writeFunc(startWG, finWG, waitCh, i)
 		}
 
-		for i := 0; i < readersNum; i++ {
+		for range readersNum {
 			startWG.Add(1)
 			finWG.Add(1)
 			go readFunc(startWG, finWG, waitCh)
@@ -111,7 +111,7 @@ func TestStatsCtx_FillCollectedStats_daily(t *testing.T) {
 
 	dailyData := []*unitDB{}
 
-	for i := 0; i < daysCount*24; i++ {
+	for i := range daysCount * 24 {
 		n := uint64(i)
 		nResult := make([]uint64, resultLast)
 		nResult[RFiltered] = n

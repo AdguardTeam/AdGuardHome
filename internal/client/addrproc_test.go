@@ -91,8 +91,6 @@ func TestDefaultAddrProc_Process_rDNS(t *testing.T) {
 	}}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -186,8 +184,6 @@ func TestDefaultAddrProc_Process_WHOIS(t *testing.T) {
 	}}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 

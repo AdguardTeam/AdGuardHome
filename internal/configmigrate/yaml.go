@@ -50,19 +50,3 @@ func moveVal[T any](src, dst yobj, srcKey, dstKey string) (err error) {
 func moveSameVal[T any](src, dst yobj, key string) (err error) {
 	return moveVal[T](src, dst, key, key)
 }
-
-// coalesceError returns the first non-nil error.  It is named after function
-// COALESCE in SQL.  If all errors are nil, it returns nil.
-//
-// TODO(e.burkov): Replace with [errors.Join].
-//
-// TODO(a.garipov): Think of ways to merge with [aghalg.Coalesce].
-func coalesceError(errors ...error) (res error) {
-	for _, err := range errors {
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
