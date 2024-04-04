@@ -55,8 +55,8 @@ See also the [v0.107.47 GitHub milestone][ms-v0.107.47].
 ### Fixed
 
 - Resetting DNS upstream mode when applying unrelated settings ([#6851]).
-- Symbolic links to config YAML are replaced by a copy of the real file by AGH
-  after startup ([#6717]).
+- Symbolic links to the configuration file begin replaced by a copy of the real
+  file upon startup on FreeBSD ([#6717]).
 
 ### Removed
 
