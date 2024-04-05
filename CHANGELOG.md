@@ -14,11 +14,11 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.48] - 2024-04-24 (APPROX.)
+## [v0.107.49] - 2024-04-24 (APPROX.)
 
-See also the [v0.107.48 GitHub milestone][ms-v0.107.48].
+See also the [v0.107.49 GitHub milestone][ms-v0.107.49].
 
-[ms-v0.107.48]: https://github.com/AdguardTeam/AdGuardHome/milestone/83?closed=1
+[ms-v0.107.49]: https://github.com/AdguardTeam/AdGuardHome/milestone/84?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -26,6 +26,20 @@ NOTE: Add new changes BELOW THIS COMMENT.
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.48] - 2024-04-05
+
+See also the [v0.107.48 GitHub milestone][ms-v0.107.48].
+
+### Fixed
+
+- Access settings not being applied to encrypted protocols ([#6890])
+
+[#6890]: https://github.com/AdguardTeam/AdGuardHome/issues/6890
+
+[ms-v0.107.48]: https://github.com/AdguardTeam/AdGuardHome/milestone/83?closed=1
 
 
 
@@ -2896,11 +2910,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.48...HEAD
-[v0.107.48]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.47...v0.107.48
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.49...HEAD
+[v0.107.49]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.48...v0.107.49
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.47...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.48...HEAD
+[v0.107.48]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.47...v0.107.48
 [v0.107.47]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.46...v0.107.47
 [v0.107.46]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.45...v0.107.46
 [v0.107.45]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.44...v0.107.45

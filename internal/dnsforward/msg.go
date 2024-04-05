@@ -353,6 +353,7 @@ func (s *Server) preBlockedResponse(pctx *proxy.DNSContext) (reply bool, err err
 
 	pctx.Res = s.makeResponseREFUSED(pctx.Req)
 
+	// Return true so that dnsproxy responds with the REFUSED message.
 	return true, nil
 }
 
