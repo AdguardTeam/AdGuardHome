@@ -452,6 +452,7 @@ func (s *Server) prepareIpsetListSettings() (err error) {
 	}
 
 	ipsets := stringutil.SplitTrimmed(string(data), "\n")
+	ipsets = stringutil.FilterOut(ipsets, IsCommentOrEmpty)
 
 	log.Debug("dns: using %d ipset rules from file %q", len(ipsets), fn)
 

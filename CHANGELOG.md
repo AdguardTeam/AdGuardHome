@@ -23,6 +23,12 @@ See also the [v0.107.49 GitHub milestone][ms-v0.107.49].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- Support for comments in the ipset file ([#5345]).
+
+[#5345]: https://github.com/AdguardTeam/AdGuardHome/issues/5345
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
