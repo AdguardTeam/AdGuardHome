@@ -14,14 +14,38 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.47] - 2024-04-03 (APPROX.)
+## [v0.107.49] - 2024-04-24 (APPROX.)
 
-See also the [v0.107.47 GitHub milestone][ms-v0.107.47].
+See also the [v0.107.49 GitHub milestone][ms-v0.107.49].
 
-[ms-v0.107.47]: https://github.com/AdguardTeam/AdGuardHome/milestone/82?closed=1
+[ms-v0.107.49]: https://github.com/AdguardTeam/AdGuardHome/milestone/84?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+
+
+## [v0.107.48] - 2024-04-05
+
+See also the [v0.107.48 GitHub milestone][ms-v0.107.48].
+
+### Fixed
+
+- Access settings not being applied to encrypted protocols ([#6890])
+
+[#6890]: https://github.com/AdguardTeam/AdGuardHome/issues/6890
+
+[ms-v0.107.48]: https://github.com/AdguardTeam/AdGuardHome/milestone/83?closed=1
+
+
+
+## [v0.107.47] - 2024-04-04
+
+See also the [v0.107.47 GitHub milestone][ms-v0.107.47].
 
 ### Security
 
@@ -45,8 +69,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Fixed
 
 - Resetting DNS upstream mode when applying unrelated settings ([#6851]).
-- Symbolic links to config YAML are replaced by a copy of the real file by AGH
-  after startup ([#6717]).
+- Symbolic links to the configuration file begin replaced by a copy of the real
+  file upon startup on FreeBSD ([#6717]).
 
 ### Removed
 
@@ -57,11 +81,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6758]: https://github.com/AdguardTeam/AdGuardHome/issues/6758
 [#6851]: https://github.com/AdguardTeam/AdGuardHome/issues/6851
 
-[go-1.22.2]: https://groups.google.com/g/golang-announce/c/YgW0sx8mN3M/
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[go-1.22.2]:    https://groups.google.com/g/golang-announce/c/YgW0sx8mN3M/
+[ms-v0.107.47]: https://github.com/AdguardTeam/AdGuardHome/milestone/82?closed=1
 
 
 
@@ -2889,11 +2910,13 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.47...HEAD
-[v0.107.47]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.46...v0.107.46
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.49...HEAD
+[v0.107.49]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.48...v0.107.49
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.46...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.48...HEAD
+[v0.107.48]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.47...v0.107.48
+[v0.107.47]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.46...v0.107.47
 [v0.107.46]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.45...v0.107.46
 [v0.107.45]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.44...v0.107.45
 [v0.107.44]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.43...v0.107.44
