@@ -1,56 +1,16 @@
 package dnsforward
 
 import (
-	"encoding/binary"
 	"fmt"
 	"net"
 	"slices"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 )
-
-// beforeRequestHandler is the handler that is called before any other
-// processing, including logs.  It performs access checks and puts the client
-// ID, if there is one, into the server's cache.
-func (s *Server) beforeRequestHandler(
-	_ *proxy.Proxy,
-	pctx *proxy.DNSContext,
-) (reply bool, err error) {
-	clientID, err := s.clientIDFromDNSContext(pctx)
-	if err != nil {
-		return false, fmt.Errorf("getting clientid: %w", err)
-	}
-
-	blocked, _ := s.IsBlockedClient(pctx.Addr.Addr(), clientID)
-	if blocked {
-		return s.preBlockedResponse(pctx)
-	}
-
-	if len(pctx.Req.Question) == 1 {
-		q := pctx.Req.Question[0]
-		qt := q.Qtype
-		host := aghnet.NormalizeDomain(q.Name)
-		if s.access.isBlockedHost(host, qt) {
-			log.Debug("access: request %s %s is in access blocklist", dns.Type(qt), host)
-
-			return s.preBlockedResponse(pctx)
-		}
-	}
-
-	if clientID != "" {
-		key := [8]byte{}
-		binary.BigEndian.PutUint64(key[:], pctx.RequestID)
-		s.clientIDCache.Set(key[:], []byte(clientID))
-	}
-
-	return true, nil
-}
 
 // clientRequestFilteringSettings looks up client filtering settings using the
 // client's IP address and ID, if any, from dctx.

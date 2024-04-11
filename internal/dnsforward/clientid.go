@@ -110,46 +110,6 @@ type quicConnection interface {
 	ConnectionState() (cs quic.ConnectionState)
 }
 
-// clientIDFromDNSContext extracts the client's ID from the server name of the
-// client's DoT or DoQ request or the path of the client's DoH.  If the protocol
-// is not one of these, clientID is an empty string and err is nil.
-func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string, err error) {
-	proto := pctx.Proto
-	if proto == proxy.ProtoHTTPS {
-		clientID, err = clientIDFromDNSContextHTTPS(pctx)
-		if err != nil {
-			return "", fmt.Errorf("checking url: %w", err)
-		} else if clientID != "" {
-			return clientID, nil
-		}
-
-		// Go on and check the domain name as well.
-	} else if proto != proxy.ProtoTLS && proto != proxy.ProtoQUIC {
-		return "", nil
-	}
-
-	hostSrvName := s.conf.ServerName
-	if hostSrvName == "" {
-		return "", nil
-	}
-
-	cliSrvName, err := clientServerName(pctx, proto)
-	if err != nil {
-		return "", err
-	}
-
-	clientID, err = clientIDFromClientServerName(
-		hostSrvName,
-		cliSrvName,
-		s.conf.StrictSNICheck,
-	)
-	if err != nil {
-		return "", fmt.Errorf("clientid check: %w", err)
-	}
-
-	return clientID, nil
-}
-
 // clientServerName returns the TLS server name based on the protocol.  For
 // DNS-over-HTTPS requests, it will return the hostname part of the Host header
 // if there is one.

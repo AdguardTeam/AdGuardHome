@@ -27,7 +27,17 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Support for comments in the ipset file ([#5345]).
 
+### Fixed
+
+- Subdomains of `in-addr.arpa` and `ip6.arpa` containing zero-length prefix
+  incorrectly considered invalid when specified for private RDNS upstream
+  servers ([#6854]).
+- Unspecified IP addresses aren't checked when using "Fastest IP address" mode
+  ([#6875]).
+
 [#5345]: https://github.com/AdguardTeam/AdGuardHome/issues/5345
+[#6854]: https://github.com/AdguardTeam/AdGuardHome/issues/6854
+[#6875]: https://github.com/AdguardTeam/AdGuardHome/issues/6875
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
