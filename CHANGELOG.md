@@ -29,6 +29,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The ability to apply an invalid configuration for private RDNS, which led to
+  server inoperability.
 - Ignoring query log for clients with ClientID set ([#5812]).
 - Subdomains of `in-addr.arpa` and `ip6.arpa` containing zero-length prefix
   incorrectly considered invalid when specified for private RDNS upstream

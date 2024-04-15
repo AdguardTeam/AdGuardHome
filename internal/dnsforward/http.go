@@ -1,6 +1,7 @@
 package dnsforward
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -332,6 +333,28 @@ func (req *jsonDNSConfig) checkBootstrap() (err error) {
 	return nil
 }
 
+// checkPrivateRDNS returns an error if the configuration of the private RDNS is
+// not valid.
+func (req *jsonDNSConfig) checkPrivateRDNS(
+	ownAddrs addrPortSet,
+	sysResolvers SystemResolvers,
+	privateNets netutil.SubnetSet,
+) (err error) {
+	if (req.UsePrivateRDNS == nil || !*req.UsePrivateRDNS) && req.LocalPTRUpstreams == nil {
+		return nil
+	}
+
+	addrs := cmp.Or(req.LocalPTRUpstreams, &[]string{})
+
+	uc, err := newPrivateConfig(*addrs, ownAddrs, sysResolvers, privateNets, &upstream.Options{})
+	err = errors.WithDeferred(err, uc.Close())
+	if err != nil {
+		return fmt.Errorf("private upstream servers: %w", err)
+	}
+
+	return nil
+}
+
 // validateUpstreamDNSServers returns an error if any field of req is invalid.
 func (req *jsonDNSConfig) validateUpstreamDNSServers(
 	ownAddrs addrPortSet,
@@ -349,12 +372,10 @@ func (req *jsonDNSConfig) validateUpstreamDNSServers(
 		}
 	}
 
-	if addrs := req.LocalPTRUpstreams; addrs != nil {
-		uc, err = newPrivateConfig(*addrs, ownAddrs, sysResolvers, privateNets, opts)
-		err = errors.WithDeferred(err, uc.Close())
-		if err != nil {
-			return fmt.Errorf("private upstream servers: %w", err)
-		}
+	err = req.checkPrivateRDNS(ownAddrs, sysResolvers, privateNets)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
 	}
 
 	err = req.checkBootstrap()
@@ -440,7 +461,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	// TODO(e.burkov):  Consider prebuilding this set on startup.
 	ourAddrs, err := s.conf.ourAddrsSet()
 	if err != nil {
-		// TODO(e.burkov):  !! Put into openapi
+		// TODO(e.burkov):  Put into openapi
 		aghhttp.Error(r, w, http.StatusInternalServerError, "getting our addresses: %s", err)
 
 		return
