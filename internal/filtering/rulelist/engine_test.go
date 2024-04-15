@@ -1,7 +1,6 @@
 package rulelist_test
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -28,14 +27,12 @@ func TestEngine_Refresh(t *testing.T) {
 	require.NotNil(t, eng)
 	testutil.CleanupAndRequireSuccess(t, eng.Close)
 
-	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
-	t.Cleanup(cancel)
-
 	buf := make([]byte, rulelist.DefaultRuleBufSize)
 	cli := &http.Client{
 		Timeout: testTimeout,
 	}
 
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	err := eng.Refresh(ctx, buf, cli, cacheDir, rulelist.DefaultMaxRuleListSize)
 	require.NoError(t, err)
 

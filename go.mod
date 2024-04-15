@@ -4,7 +4,7 @@ go 1.22.2
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.69.1
-	github.com/AdguardTeam/golibs v0.23.0
+	github.com/AdguardTeam/golibs v0.23.2
 	github.com/AdguardTeam/urlfilter v0.18.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.2.7
@@ -32,10 +32,10 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/ti-mo/netfilter v0.5.1
 	go.etcd.io/bbolt v1.3.9
-	golang.org/x/crypto v0.21.0
-	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8
-	golang.org/x/net v0.23.0
-	golang.org/x/sys v0.18.0
+	golang.org/x/crypto v0.22.0
+	golang.org/x/exp v0.0.0-20240409090435-93d18d7e34b8
+	golang.org/x/net v0.24.0
+	golang.org/x/sys v0.19.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.1
@@ -58,9 +58,9 @@ require (
 	github.com/quic-go/qpack v0.4.0 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	go.uber.org/mock v0.4.0 // indirect
-	golang.org/x/mod v0.16.0 // indirect
-	golang.org/x/sync v0.6.0 // indirect
+	golang.org/x/mod v0.17.0 // indirect
+	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.19.0 // indirect
+	golang.org/x/tools v0.20.0 // indirect
 	gonum.org/v1/gonum v0.14.0 // indirect
 )
