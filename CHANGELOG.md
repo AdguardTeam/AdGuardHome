@@ -29,6 +29,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Ignoring query log for clients with ClientID set ([#5812]).
 - Subdomains of `in-addr.arpa` and `ip6.arpa` containing zero-length prefix
   incorrectly considered invalid when specified for private RDNS upstream
   servers ([#6854]).
@@ -36,6 +37,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
   ([#6875]).
 
 [#5345]: https://github.com/AdguardTeam/AdGuardHome/issues/5345
+[#5812]: https://github.com/AdguardTeam/AdGuardHome/issues/5812
 [#6854]: https://github.com/AdguardTeam/AdGuardHome/issues/6854
 [#6875]: https://github.com/AdguardTeam/AdGuardHome/issues/6875
 
