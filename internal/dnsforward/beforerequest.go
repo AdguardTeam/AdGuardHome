@@ -25,7 +25,10 @@ func (s *Server) HandleBefore(
 ) (err error) {
 	clientID, err := s.clientIDFromDNSContext(pctx)
 	if err != nil {
-		return fmt.Errorf("getting clientid: %w", err)
+		return &proxy.BeforeRequestError{
+			Err:      fmt.Errorf("getting clientid: %w", err),
+			Response: s.NewMsgSERVFAIL(pctx.Req),
+		}
 	}
 
 	blocked, _ := s.IsBlockedClient(pctx.Addr.Addr(), clientID)

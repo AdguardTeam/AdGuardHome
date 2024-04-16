@@ -461,7 +461,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	// TODO(e.burkov):  Consider prebuilding this set on startup.
 	ourAddrs, err := s.conf.ourAddrsSet()
 	if err != nil {
-		// TODO(e.burkov):  Put into openapi
+		// TODO(e.burkov):  Put into openapi.
 		aghhttp.Error(r, w, http.StatusInternalServerError, "getting our addresses: %s", err)
 
 		return
