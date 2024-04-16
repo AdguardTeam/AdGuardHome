@@ -29,6 +29,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Support for link-local subnets, i.e. `fe80::/16`, in the access settings
+  ([#6192]).
 - The ability to apply an invalid configuration for private RDNS, which led to
   server inoperability.
 - Ignoring query log for clients with ClientID set ([#5812]).
@@ -40,6 +42,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#5345]: https://github.com/AdguardTeam/AdGuardHome/issues/5345
 [#5812]: https://github.com/AdguardTeam/AdGuardHome/issues/5812
+[#6192]: https://github.com/AdguardTeam/AdGuardHome/issues/6192
 [#6854]: https://github.com/AdguardTeam/AdGuardHome/issues/6854
 [#6875]: https://github.com/AdguardTeam/AdGuardHome/issues/6875
 
