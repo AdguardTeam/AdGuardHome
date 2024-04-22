@@ -1,7 +1,6 @@
 package home
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"net/netip"
@@ -526,36 +525,6 @@ func closeDNSServer() {
 	}
 
 	log.Debug("all dns modules are closed")
-}
-
-// safeSearchResolver is a [filtering.Resolver] implementation used for safe
-// search.
-type safeSearchResolver struct{}
-
-// type check
-var _ filtering.Resolver = safeSearchResolver{}
-
-// LookupIP implements [filtering.Resolver] interface for safeSearchResolver.
-// It returns the slice of net.Addr with IPv4 and IPv6 instances.
-func (r safeSearchResolver) LookupIP(
-	ctx context.Context,
-	network string,
-	host string,
-) (ips []net.IP, err error) {
-	addrs, err := Context.dnsServer.Resolve(ctx, network, host)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(addrs) == 0 {
-		return nil, fmt.Errorf("couldn't lookup host: %s", host)
-	}
-
-	for _, a := range addrs {
-		ips = append(ips, a.AsSlice())
-	}
-
-	return ips, nil
 }
 
 // checkStatsAndQuerylogDirs checks and returns directory paths to store

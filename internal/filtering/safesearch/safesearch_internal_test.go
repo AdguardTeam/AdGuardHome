@@ -1,13 +1,10 @@
 package safesearch
 
 import (
-	"context"
-	"net"
 	"net/netip"
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -77,47 +74,6 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 	require.Len(t, cachedValue.Rules, 1)
 
 	assert.Equal(t, cachedValue.Rules[0].IP, yandexIP)
-}
-
-func TestSafeSearchCacheGoogle(t *testing.T) {
-	const domain = "www.google.ru"
-
-	ss := newForTest(t, filtering.SafeSearchConfig{Enabled: false})
-
-	res, err := ss.CheckHost(domain, testQType)
-	require.NoError(t, err)
-
-	assert.False(t, res.IsFiltered)
-	assert.Empty(t, res.Rules)
-
-	resolver := &aghtest.Resolver{
-		OnLookupIP: func(_ context.Context, _, host string) (ips []net.IP, err error) {
-			ip4, ip6 := aghtest.HostToIPs(host)
-
-			return []net.IP{ip4.AsSlice(), ip6.AsSlice()}, nil
-		},
-	}
-
-	ss = newForTest(t, defaultSafeSearchConf)
-	ss.resolver = resolver
-
-	// Lookup for safesearch domain.
-	rewrite := ss.searchHost(domain, testQType)
-
-	wantIP, _ := aghtest.HostToIPs(rewrite.NewCNAME)
-
-	res, err = ss.CheckHost(domain, testQType)
-	require.NoError(t, err)
-	require.Len(t, res.Rules, 1)
-
-	assert.Equal(t, wantIP, res.Rules[0].IP)
-
-	// Check cache.
-	cachedValue, isFound := ss.getCachedResult(domain, testQType)
-	require.True(t, isFound)
-	require.Len(t, cachedValue.Rules, 1)
-
-	assert.Equal(t, wantIP, cachedValue.Rules[0].IP)
 }
 
 const googleHost = "www.google.com"

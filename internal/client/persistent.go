@@ -64,9 +64,7 @@ type Persistent struct {
 	// upstream must be used.
 	UpstreamConfig *proxy.CustomUpstreamConfig
 
-	// TODO(d.kolyshev): Make SafeSearchConf a pointer.
-	SafeSearchConf filtering.SafeSearchConfig
-	SafeSearch     filtering.SafeSearch
+	SafeSearch filtering.SafeSearch
 
 	// BlockedServices is the configuration of blocked services of a client.
 	BlockedServices *filtering.BlockedServices
@@ -95,6 +93,9 @@ type Persistent struct {
 	UseOwnBlockedServices bool
 	IgnoreQueryLog        bool
 	IgnoreStatistics      bool
+
+	// TODO(d.kolyshev): Make SafeSearchConf a pointer.
+	SafeSearchConf filtering.SafeSearchConfig
 }
 
 // SetTags sets the tags if they are known, otherwise logs an unknown tag.

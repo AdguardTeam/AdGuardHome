@@ -2,7 +2,6 @@ package dnsforward
 
 import (
 	"cmp"
-	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
@@ -491,19 +490,10 @@ func TestServerRace(t *testing.T) {
 }
 
 func TestSafeSearch(t *testing.T) {
-	resolver := &aghtest.Resolver{
-		OnLookupIP: func(_ context.Context, _, host string) (ips []net.IP, err error) {
-			ip4, ip6 := aghtest.HostToIPs(host)
-
-			return []net.IP{ip4.AsSlice(), ip6.AsSlice()}, nil
-		},
-	}
-
 	safeSearchConf := filtering.SafeSearchConfig{
-		Enabled:        true,
-		Google:         true,
-		Yandex:         true,
-		CustomResolver: resolver,
+		Enabled: true,
+		Google:  true,
+		Yandex:  true,
 	}
 
 	filterConf := &filtering.Config{
@@ -540,7 +530,6 @@ func TestSafeSearch(t *testing.T) {
 	client := &dns.Client{}
 
 	yandexIP := netip.AddrFrom4([4]byte{213, 180, 193, 56})
-	googleIP, _ := aghtest.HostToIPs("forcesafesearch.google.com")
 
 	testCases := []struct {
 		host      string
@@ -564,19 +553,19 @@ func TestSafeSearch(t *testing.T) {
 		wantCNAME: "",
 	}, {
 		host:      "www.google.com.",
-		want:      googleIP,
+		want:      netip.Addr{},
 		wantCNAME: "forcesafesearch.google.com.",
 	}, {
 		host:      "www.google.com.af.",
-		want:      googleIP,
+		want:      netip.Addr{},
 		wantCNAME: "forcesafesearch.google.com.",
 	}, {
 		host:      "www.google.be.",
-		want:      googleIP,
+		want:      netip.Addr{},
 		wantCNAME: "forcesafesearch.google.com.",
 	}, {
 		host:      "www.google.by.",
-		want:      googleIP,
+		want:      netip.Addr{},
 		wantCNAME: "forcesafesearch.google.com.",
 	}}
 
@@ -593,12 +582,15 @@ func TestSafeSearch(t *testing.T) {
 
 				cname := testutil.RequireTypeAssert[*dns.CNAME](t, reply.Answer[0])
 				assert.Equal(t, tc.wantCNAME, cname.Target)
+
+				a := testutil.RequireTypeAssert[*dns.A](t, reply.Answer[1])
+				assert.NotEmpty(t, a.A)
 			} else {
 				require.Len(t, reply.Answer, 1)
-			}
 
-			a := testutil.RequireTypeAssert[*dns.A](t, reply.Answer[len(reply.Answer)-1])
-			assert.Equal(t, net.IP(tc.want.AsSlice()), a.A)
+				a := testutil.RequireTypeAssert[*dns.A](t, reply.Answer[0])
+				assert.Equal(t, net.IP(tc.want.AsSlice()), a.A)
+			}
 		})
 	}
 }

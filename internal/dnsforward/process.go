@@ -598,7 +598,8 @@ func (s *Server) processFilteringAfterResponse(dctx *dnsContext) (rc resultCode)
 		return resultCodeSuccess
 	case
 		filtering.Rewritten,
-		filtering.RewrittenRule:
+		filtering.RewrittenRule,
+		filtering.FilteredSafeSearch:
 
 		if dctx.origQuestion.Name == "" {
 			// origQuestion is set in case we get only CNAME without IP from
@@ -608,11 +609,10 @@ func (s *Server) processFilteringAfterResponse(dctx *dnsContext) (rc resultCode)
 
 		pctx := dctx.proxyCtx
 		pctx.Req.Question[0], pctx.Res.Question[0] = dctx.origQuestion, dctx.origQuestion
-		if len(pctx.Res.Answer) > 0 {
-			rr := s.genAnswerCNAME(pctx.Req, res.CanonName)
-			answer := append([]dns.RR{rr}, pctx.Res.Answer...)
-			pctx.Res.Answer = answer
-		}
+
+		rr := s.genAnswerCNAME(pctx.Req, res.CanonName)
+		answer := append([]dns.RR{rr}, pctx.Res.Answer...)
+		pctx.Res.Answer = answer
 
 		return resultCodeSuccess
 	default:

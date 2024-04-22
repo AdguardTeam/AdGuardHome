@@ -3,11 +3,9 @@ package safesearch
 
 import (
 	"bytes"
-	"context"
 	"encoding/binary"
 	"encoding/gob"
 	"fmt"
-	"net"
 	"net/netip"
 	"strings"
 	"sync"
@@ -67,7 +65,6 @@ type Default struct {
 	engine *urlfilter.DNSEngine
 
 	cache     cache.Cache
-	resolver  filtering.Resolver
 	logPrefix string
 	cacheTTL  time.Duration
 }
@@ -80,11 +77,6 @@ func NewDefault(
 	cacheSize uint,
 	cacheTTL time.Duration,
 ) (ss *Default, err error) {
-	var resolver filtering.Resolver = net.DefaultResolver
-	if conf.CustomResolver != nil {
-		resolver = conf.CustomResolver
-	}
-
 	ss = &Default{
 		mu: &sync.RWMutex{},
 
@@ -92,7 +84,6 @@ func NewDefault(
 			EnableLRU: true,
 			MaxSize:   cacheSize,
 		}),
-		resolver: resolver,
 		// Use %s, because the client safe-search names already contain double
 		// quotes.
 		logPrefix: fmt.Sprintf("safesearch %s: ", name),
@@ -170,8 +161,11 @@ func (ss *Default) CheckHost(host string, qtype rules.RRType) (res filtering.Res
 		ss.log(log.DEBUG, "lookup for %q finished in %s", host, time.Since(start))
 	}()
 
-	if qtype != dns.TypeA && qtype != dns.TypeAAAA {
-		return filtering.Result{}, fmt.Errorf("unsupported question type %s", dns.Type(qtype))
+	switch qtype {
+	case dns.TypeA, dns.TypeAAAA, dns.TypeHTTPS:
+		// Go on.
+	default:
+		return filtering.Result{}, nil
 	}
 
 	// Check cache. Return cached result if it was found
@@ -195,6 +189,9 @@ func (ss *Default) CheckHost(host string, qtype rules.RRType) (res filtering.Res
 	}
 
 	res = *fltRes
+
+	// TODO(a.garipov): Consider switch back to resolving CNAME records IPs and
+	// saving results to cache.
 	ss.setCacheResult(host, qtype, res)
 
 	return res, nil
@@ -223,20 +220,13 @@ func (ss *Default) searchHost(host string, qtype rules.RRType) (res *rules.DNSRe
 }
 
 // newResult creates Result object from rewrite rule.  qtype must be either
-// [dns.TypeA] or [dns.TypeAAAA].  If err is nil, res is never nil, so that the
-// empty result is converted into a NODATA response.
-//
-// TODO(a.garipov): Use the main rewrite result mechanism used in
-// [dnsforward.Server.filterDNSRequest].  Now we resolve IPs for CNAME to save
-// them in the safe search cache.
+// [dns.TypeA] or [dns.TypeAAAA], or [dns.TypeHTTPS].  If err is nil, res is
+// never nil, so that the empty result is converted into a NODATA response.
 func (ss *Default) newResult(
 	rewrite *rules.DNSRewrite,
 	qtype rules.RRType,
 ) (res *filtering.Result, err error) {
 	res = &filtering.Result{
-		Rules: []*filtering.ResultRule{{
-			FilterListID: rulelist.URLFilterIDSafeSearch,
-		}},
 		Reason:     filtering.FilteredSafeSearch,
 		IsFiltered: true,
 	}
@@ -247,67 +237,17 @@ func (ss *Default) newResult(
 			return nil, fmt.Errorf("expected ip rewrite value, got %T(%[1]v)", rewrite.Value)
 		}
 
-		res.Rules[0].IP = ip
+		res.Rules = []*filtering.ResultRule{{
+			FilterListID: rulelist.URLFilterIDSafeSearch,
+			IP:           ip,
+		}}
 
 		return res, nil
 	}
 
-	host := rewrite.NewCNAME
-	if host == "" {
-		return res, nil
-	}
-
-	res.CanonName = host
-
-	ss.log(log.DEBUG, "resolving %q", host)
-
-	ips, err := ss.resolver.LookupIP(context.Background(), qtypeToProto(qtype), host)
-	if err != nil {
-		return nil, fmt.Errorf("resolving cname: %w", err)
-	}
-
-	ss.log(log.DEBUG, "resolved %s", ips)
-
-	for _, ip := range ips {
-		// TODO(a.garipov): Remove this filtering once the resolver we use
-		// actually learns about network.
-		addr := fitToProto(ip, qtype)
-		if addr == (netip.Addr{}) {
-			continue
-		}
-
-		// TODO(e.burkov):  Rules[0]?
-		res.Rules[0].IP = addr
-	}
+	res.CanonName = rewrite.NewCNAME
 
 	return res, nil
-}
-
-// qtypeToProto returns "ip4" for [dns.TypeA] and "ip6" for [dns.TypeAAAA].
-// It panics for other types.
-func qtypeToProto(qtype rules.RRType) (proto string) {
-	switch qtype {
-	case dns.TypeA:
-		return "ip4"
-	case dns.TypeAAAA:
-		return "ip6"
-	default:
-		panic(fmt.Errorf("safesearch: unsupported question type %s", dns.Type(qtype)))
-	}
-}
-
-// fitToProto returns a non-nil IP address if ip is the correct protocol version
-// for qtype.  qtype is expected to be either [dns.TypeA] or [dns.TypeAAAA].
-func fitToProto(ip net.IP, qtype rules.RRType) (res netip.Addr) {
-	if ip4 := ip.To4(); qtype == dns.TypeA {
-		if ip4 != nil {
-			return netip.AddrFrom4([4]byte(ip4))
-		}
-	} else if ip = ip.To16(); ip != nil && qtype == dns.TypeAAAA {
-		return netip.AddrFrom16([16]byte(ip))
-	}
-
-	return netip.Addr{}
 }
 
 // setCacheResult stores data in cache for host.  qtype is expected to be either

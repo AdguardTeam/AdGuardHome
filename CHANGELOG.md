@@ -27,8 +27,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Support for comments in the ipset file ([#5345]).
 
+### Changed
+
+- Rewrite rules mechanics was changed due to improve resolving in safe search.
+
 ### Fixed
 
+- YouTube restricted mode is not enforced by HTTPS queries on Firefox.
 - Support for link-local subnets, i.e. `fe80::/16`, in the access settings
   ([#6192]).
 - The ability to apply an invalid configuration for private RDNS, which led to
@@ -58,7 +63,7 @@ See also the [v0.107.48 GitHub milestone][ms-v0.107.48].
 
 ### Fixed
 
-- Access settings not being applied to encrypted protocols ([#6890])
+- Access settings not being applied to encrypted protocols ([#6890]).
 
 [#6890]: https://github.com/AdguardTeam/AdGuardHome/issues/6890
 

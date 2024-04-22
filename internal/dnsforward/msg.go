@@ -52,7 +52,7 @@ func (s *Server) genDNSFilterMessage(
 ) (resp *dns.Msg) {
 	req := dctx.Req
 	qt := req.Question[0].Qtype
-	if qt != dns.TypeA && qt != dns.TypeAAAA {
+	if qt != dns.TypeA && qt != dns.TypeAAAA && qt != dns.TypeHTTPS {
 		m, _, _ := s.dnsFilter.BlockingMode()
 		if m == filtering.BlockingModeNullIP {
 			return s.replyCompressed(req)

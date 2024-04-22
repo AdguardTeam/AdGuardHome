@@ -249,8 +249,6 @@ func (o *clientObject) toPersistent(
 	}
 
 	if o.SafeSearchConf.Enabled {
-		o.SafeSearchConf.CustomResolver = safeSearchResolver{}
-
 		err = cli.SetSafeSearch(
 			o.SafeSearchConf,
 			filteringConf.SafeSearchCacheSize,

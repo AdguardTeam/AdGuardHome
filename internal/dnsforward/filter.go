@@ -31,6 +31,7 @@ func (s *Server) filterDNSRequest(dctx *dnsContext) (res *filtering.Result, err 
 	req := pctx.Req
 	q := req.Question[0]
 	host := strings.TrimSuffix(q.Name, ".")
+
 	resVal, err := s.dnsFilter.CheckHost(host, q.Qtype, dctx.setts)
 	if err != nil {
 		return nil, fmt.Errorf("checking host %q: %w", host, err)
@@ -39,22 +40,15 @@ func (s *Server) filterDNSRequest(dctx *dnsContext) (res *filtering.Result, err 
 	// TODO(a.garipov): Make CheckHost return a pointer.
 	res = &resVal
 	switch {
-	case res.IsFiltered:
-		log.Debug(
-			"dnsforward: host %q is filtered, reason: %q; rule: %q",
-			host,
-			res.Reason,
-			res.Rules[0].Text,
-		)
-		pctx.Res = s.genDNSFilterMessage(pctx, res)
-	case res.Reason.In(filtering.Rewritten, filtering.RewrittenRule) &&
-		res.CanonName != "" &&
-		len(res.IPList) == 0:
+	case isRewrittenCNAME(res):
 		// Resolve the new canonical name, not the original host name.  The
 		// original question is readded in processFilteringAfterResponse.
 		dctx.origQuestion = q
 		req.Question[0].Name = dns.Fqdn(res.CanonName)
-	case res.Reason == filtering.Rewritten:
+	case res.IsFiltered:
+		log.Debug("dnsforward: host %q is filtered, reason: %q", host, res.Reason)
+		pctx.Res = s.genDNSFilterMessage(pctx, res)
+	case res.Reason.In(filtering.Rewritten, filtering.FilteredSafeSearch):
 		pctx.Res = s.getCNAMEWithIPs(req, res.IPList, res.CanonName)
 	case res.Reason.In(filtering.RewrittenRule, filtering.RewrittenAutoHosts):
 		if err = s.filterDNSRewrite(req, res, pctx); err != nil {
@@ -63,6 +57,17 @@ func (s *Server) filterDNSRequest(dctx *dnsContext) (res *filtering.Result, err 
 	}
 
 	return res, err
+}
+
+// isRewrittenCNAME returns true if the request considered to be rewritten with
+// CNAME and has no resolved IPs.
+func isRewrittenCNAME(res *filtering.Result) (ok bool) {
+	return res.Reason.In(
+		filtering.Rewritten,
+		filtering.RewrittenRule,
+		filtering.FilteredSafeSearch) &&
+		res.CanonName != "" &&
+		len(res.IPList) == 0
 }
 
 // checkHostRules checks the host against filters.  It is safe for concurrent
