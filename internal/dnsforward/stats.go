@@ -130,7 +130,7 @@ func (s *Server) logQuery(dctx *dnsContext, ip net.IP, processingTime time.Durat
 	s.queryLog.Add(p)
 }
 
-// updatesStats writes the request into statistics.
+// updateStats writes the request into statistics.
 func (s *Server) updateStats(dctx *dnsContext, clientIP string, processingTime time.Duration) {
 	pctx := dctx.proxyCtx
 
