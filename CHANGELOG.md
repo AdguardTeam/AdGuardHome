@@ -29,6 +29,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- Private rDNS resolution now also affects `SOA` and `NS` requests ([#6882]).
 - Rewrite rules mechanics was changed due to improve resolving in safe search.
 
 ### Fixed
@@ -50,6 +51,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6192]: https://github.com/AdguardTeam/AdGuardHome/issues/6192
 [#6854]: https://github.com/AdguardTeam/AdGuardHome/issues/6854
 [#6875]: https://github.com/AdguardTeam/AdGuardHome/issues/6875
+[#6882]: https://github.com/AdguardTeam/AdGuardHome/issues/6882
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

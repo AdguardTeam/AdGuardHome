@@ -241,7 +241,7 @@ func newServerConfig(
 		TLSv12Roots:            Context.tlsRoots,
 		ConfigModified:         onConfigModified,
 		HTTPRegister:           httpReg,
-		LocalPTRResolvers:      dnsConf.LocalPTRResolvers,
+		LocalPTRResolvers:      dnsConf.PrivateRDNSResolvers,
 		UseDNS64:               dnsConf.UseDNS64,
 		DNS64Prefixes:          dnsConf.DNS64Prefixes,
 		UsePrivateRDNS:         dnsConf.UsePrivateRDNS,
