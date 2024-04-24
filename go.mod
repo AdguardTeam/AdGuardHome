@@ -3,7 +3,8 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.22.2
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.70.0
+	// TODO(a.garipov): Use a tagged version once released.
+	github.com/AdguardTeam/dnsproxy v0.70.1-0.20240424112457-69feed2dd25e
 	github.com/AdguardTeam/golibs v0.23.2
 	github.com/AdguardTeam/urlfilter v0.18.0
 	github.com/NYTimes/gziphandler v1.1.1
@@ -28,7 +29,8 @@ require (
 	// own code for that.  Perhaps, use gopacket.
 	github.com/mdlayher/raw v0.1.0
 	github.com/miekg/dns v1.1.58
-	github.com/quic-go/quic-go v0.42.0
+	// TODO(a.garipov): Use a tagged version once released.
+	github.com/quic-go/quic-go v0.42.1-0.20240424132812-713525777535
 	github.com/stretchr/testify v1.9.0
 	github.com/ti-mo/netfilter v0.5.1
 	go.etcd.io/bbolt v1.3.9

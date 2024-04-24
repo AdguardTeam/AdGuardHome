@@ -34,6 +34,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Issues with QUIC and HTTP/3 upstreams on older Linux kernel versions
+  ([#6422]).
 - YouTube restricted mode is not enforced by HTTPS queries on Firefox.
 - Support for link-local subnets, i.e. `fe80::/16`, in the access settings
   ([#6192]).
@@ -49,6 +51,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#5345]: https://github.com/AdguardTeam/AdGuardHome/issues/5345
 [#5812]: https://github.com/AdguardTeam/AdGuardHome/issues/5812
 [#6192]: https://github.com/AdguardTeam/AdGuardHome/issues/6192
+[#6422]: https://github.com/AdguardTeam/AdGuardHome/issues/6422
 [#6854]: https://github.com/AdguardTeam/AdGuardHome/issues/6854
 [#6875]: https://github.com/AdguardTeam/AdGuardHome/issues/6875
 [#6882]: https://github.com/AdguardTeam/AdGuardHome/issues/6882
