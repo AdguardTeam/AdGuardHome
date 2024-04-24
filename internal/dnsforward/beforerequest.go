@@ -18,7 +18,7 @@ var _ proxy.BeforeRequestHandler = (*Server)(nil)
 // including logs.  It performs access checks and puts the client ID, if there
 // is one, into the server's cache.
 //
-// TODO(e.burkov):  Write tests.
+// TODO(d.kolyshev): Extract to separate package.
 func (s *Server) HandleBefore(
 	_ *proxy.Proxy,
 	pctx *proxy.DNSContext,
