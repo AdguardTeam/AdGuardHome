@@ -31,6 +31,7 @@ type logEntry struct {
 	Answer     []byte `json:",omitempty"`
 	OrigAnswer []byte `json:",omitempty"`
 
+	// TODO(s.chzhen):  Use netip.Addr.
 	IP net.IP `json:"IP"`
 
 	Result filtering.Result

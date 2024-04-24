@@ -35,27 +35,49 @@ func TestClientIndex(t *testing.T) {
 
 		cliID  = "client-id"
 		cliMAC = "11:11:11:11:11:11"
+
+		linkLocalIP     = "fe80::abcd:abcd:abcd:ab%eth0"
+		linkLocalSubnet = "fe80::/16"
 	)
 
-	clients := []*Persistent{{
-		Name: "client1",
-		IPs: []netip.Addr{
-			netip.MustParseAddr(cliIP1),
-			netip.MustParseAddr(cliIPv6),
-		},
-	}, {
-		Name:    "client2",
-		IPs:     []netip.Addr{netip.MustParseAddr(cliIP2)},
-		Subnets: []netip.Prefix{netip.MustParsePrefix(cliSubnet)},
-	}, {
-		Name: "client_with_mac",
-		MACs: []net.HardwareAddr{mustParseMAC(cliMAC)},
-	}, {
-		Name:      "client_with_id",
-		ClientIDs: []string{cliID},
-	}}
+	var (
+		clientWithBothFams = &Persistent{
+			Name: "client1",
+			IPs: []netip.Addr{
+				netip.MustParseAddr(cliIP1),
+				netip.MustParseAddr(cliIPv6),
+			},
+		}
 
-	ci := newIDIndex(clients)
+		clientWithSubnet = &Persistent{
+			Name:    "client2",
+			IPs:     []netip.Addr{netip.MustParseAddr(cliIP2)},
+			Subnets: []netip.Prefix{netip.MustParsePrefix(cliSubnet)},
+		}
+
+		clientWithMAC = &Persistent{
+			Name: "client_with_mac",
+			MACs: []net.HardwareAddr{mustParseMAC(cliMAC)},
+		}
+
+		clientWithID = &Persistent{
+			Name:      "client_with_id",
+			ClientIDs: []string{cliID},
+		}
+
+		clientLinkLocal = &Persistent{
+			Name:    "client_link_local",
+			Subnets: []netip.Prefix{netip.MustParsePrefix(linkLocalSubnet)},
+		}
+	)
+
+	ci := newIDIndex([]*Persistent{
+		clientWithBothFams,
+		clientWithSubnet,
+		clientWithMAC,
+		clientWithID,
+		clientLinkLocal,
+	})
 
 	testCases := []struct {
 		want *Persistent
@@ -64,19 +86,23 @@ func TestClientIndex(t *testing.T) {
 	}{{
 		name: "ipv4_ipv6",
 		ids:  []string{cliIP1, cliIPv6},
-		want: clients[0],
+		want: clientWithBothFams,
 	}, {
 		name: "ipv4_subnet",
 		ids:  []string{cliIP2, cliSubnetIP},
-		want: clients[1],
+		want: clientWithSubnet,
 	}, {
 		name: "mac",
 		ids:  []string{cliMAC},
-		want: clients[2],
+		want: clientWithMAC,
 	}, {
 		name: "client_id",
 		ids:  []string{cliID},
-		want: clients[3],
+		want: clientWithID,
+	}, {
+		name: "client_link_local_subnet",
+		ids:  []string{linkLocalIP},
+		want: clientLinkLocal,
 	}}
 
 	for _, tc := range testCases {
@@ -220,4 +246,53 @@ func TestMACToKey(t *testing.T) {
 		mac := net.HardwareAddr([]byte{1, 2, 3})
 		_ = macToKey(mac)
 	})
+}
+
+func TestIndex_FindByIPWithoutZone(t *testing.T) {
+	var (
+		ip         = netip.MustParseAddr("fe80::a098:7654:32ef:ff1")
+		ipWithZone = netip.MustParseAddr("fe80::1ff:fe23:4567:890a%eth2")
+	)
+
+	var (
+		clientNoZone = &Persistent{
+			Name: "client",
+			IPs:  []netip.Addr{ip},
+		}
+
+		clientWithZone = &Persistent{
+			Name: "client_with_zone",
+			IPs:  []netip.Addr{ipWithZone},
+		}
+	)
+
+	ci := newIDIndex([]*Persistent{
+		clientNoZone,
+		clientWithZone,
+	})
+
+	testCases := []struct {
+		ip   netip.Addr
+		want *Persistent
+		name string
+	}{{
+		name: "without_zone",
+		ip:   ip,
+		want: clientNoZone,
+	}, {
+		name: "with_zone",
+		ip:   ipWithZone,
+		want: clientWithZone,
+	}, {
+		name: "zero_address",
+		ip:   netip.Addr{},
+		want: nil,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := ci.FindByIPWithoutZone(tc.ip.WithZone(""))
+			require.Equal(t, tc.want, c)
+		})
+	}
 }

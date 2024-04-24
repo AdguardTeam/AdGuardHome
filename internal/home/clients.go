@@ -412,7 +412,11 @@ func (clients *clientsContainer) clientOrArtificial(
 	}()
 
 	cli, ok := clients.find(id)
-	if ok {
+	if !ok {
+		cli = clients.clientIndex.FindByIPWithoutZone(ip)
+	}
+
+	if cli != nil {
 		return &querylog.Client{
 			Name:           cli.Name,
 			IgnoreQueryLog: cli.IgnoreQueryLog,
