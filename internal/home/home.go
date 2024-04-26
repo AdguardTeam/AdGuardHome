@@ -439,7 +439,6 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 		conf.ParentalBlockHost = host
 	}
 
-	conf.SafeSearchConf.CustomResolver = safeSearchResolver{}
 	conf.SafeSearch, err = safesearch.NewDefault(
 		conf.SafeSearchConf,
 		"default",

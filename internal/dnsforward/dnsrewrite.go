@@ -143,7 +143,7 @@ func (s *Server) filterDNSRewrite(
 	res *filtering.Result,
 	pctx *proxy.DNSContext,
 ) (err error) {
-	resp := s.makeResponse(req)
+	resp := s.replyCompressed(req)
 	dnsrr := res.DNSRewriteResult
 	if dnsrr == nil {
 		return errors.Error("no dns rewrite rule content")

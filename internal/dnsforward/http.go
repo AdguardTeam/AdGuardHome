@@ -1,6 +1,7 @@
 package dnsforward
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -261,55 +262,17 @@ func (req *jsonDNSConfig) checkUpstreamMode() (err error) {
 	}
 }
 
-// checkBootstrap returns an error if any bootstrap address is invalid.
-func (req *jsonDNSConfig) checkBootstrap() (err error) {
-	if req.Bootstraps == nil {
-		return nil
-	}
-
-	var b string
-	defer func() { err = errors.Annotate(err, "checking bootstrap %s: %w", b) }()
-
-	for _, b = range *req.Bootstraps {
-		if b == "" {
-			return errors.Error("empty")
-		}
-
-		var resolver *upstream.UpstreamResolver
-		if resolver, err = upstream.NewUpstreamResolver(b, nil); err != nil {
-			// Don't wrap the error because it's informative enough as is.
-			return err
-		}
-
-		if err = resolver.Close(); err != nil {
-			return fmt.Errorf("closing %s: %w", b, err)
-		}
-	}
-
-	return nil
-}
-
-// checkFallbacks returns an error if any fallback address is invalid.
-func (req *jsonDNSConfig) checkFallbacks() (err error) {
-	if req.Fallbacks == nil {
-		return nil
-	}
-
-	_, err = proxy.ParseUpstreamsConfig(*req.Fallbacks, &upstream.Options{})
-	if err != nil {
-		return fmt.Errorf("fallback servers: %w", err)
-	}
-
-	return nil
-}
-
 // validate returns an error if any field of req is invalid.
 //
 // TODO(s.chzhen):  Parse, don't validate.
-func (req *jsonDNSConfig) validate(privateNets netutil.SubnetSet) (err error) {
+func (req *jsonDNSConfig) validate(
+	ownAddrs addrPortSet,
+	sysResolvers SystemResolvers,
+	privateNets netutil.SubnetSet,
+) (err error) {
 	defer func() { err = errors.Annotate(err, "validating dns config: %w") }()
 
-	err = req.validateUpstreamDNSServers(privateNets)
+	err = req.validateUpstreamDNSServers(ownAddrs, sysResolvers, privateNets)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
@@ -342,20 +305,77 @@ func (req *jsonDNSConfig) validate(privateNets netutil.SubnetSet) (err error) {
 	return nil
 }
 
+// checkBootstrap returns an error if any bootstrap address is invalid.
+func (req *jsonDNSConfig) checkBootstrap() (err error) {
+	if req.Bootstraps == nil {
+		return nil
+	}
+
+	var b string
+	defer func() { err = errors.Annotate(err, "checking bootstrap %s: %w", b) }()
+
+	for _, b = range *req.Bootstraps {
+		if b == "" {
+			return errors.Error("empty")
+		}
+
+		var resolver *upstream.UpstreamResolver
+		if resolver, err = upstream.NewUpstreamResolver(b, nil); err != nil {
+			// Don't wrap the error because it's informative enough as is.
+			return err
+		}
+
+		if err = resolver.Close(); err != nil {
+			return fmt.Errorf("closing %s: %w", b, err)
+		}
+	}
+
+	return nil
+}
+
+// checkPrivateRDNS returns an error if the configuration of the private RDNS is
+// not valid.
+func (req *jsonDNSConfig) checkPrivateRDNS(
+	ownAddrs addrPortSet,
+	sysResolvers SystemResolvers,
+	privateNets netutil.SubnetSet,
+) (err error) {
+	if (req.UsePrivateRDNS == nil || !*req.UsePrivateRDNS) && req.LocalPTRUpstreams == nil {
+		return nil
+	}
+
+	addrs := cmp.Or(req.LocalPTRUpstreams, &[]string{})
+
+	uc, err := newPrivateConfig(*addrs, ownAddrs, sysResolvers, privateNets, &upstream.Options{})
+	err = errors.WithDeferred(err, uc.Close())
+	if err != nil {
+		return fmt.Errorf("private upstream servers: %w", err)
+	}
+
+	return nil
+}
+
 // validateUpstreamDNSServers returns an error if any field of req is invalid.
-func (req *jsonDNSConfig) validateUpstreamDNSServers(privateNets netutil.SubnetSet) (err error) {
+func (req *jsonDNSConfig) validateUpstreamDNSServers(
+	ownAddrs addrPortSet,
+	sysResolvers SystemResolvers,
+	privateNets netutil.SubnetSet,
+) (err error) {
+	var uc *proxy.UpstreamConfig
+	opts := &upstream.Options{}
+
 	if req.Upstreams != nil {
-		_, err = proxy.ParseUpstreamsConfig(*req.Upstreams, &upstream.Options{})
+		uc, err = proxy.ParseUpstreamsConfig(*req.Upstreams, opts)
+		err = errors.WithDeferred(err, uc.Close())
 		if err != nil {
 			return fmt.Errorf("upstream servers: %w", err)
 		}
 	}
 
-	if req.LocalPTRUpstreams != nil {
-		err = ValidateUpstreamsPrivate(*req.LocalPTRUpstreams, privateNets)
-		if err != nil {
-			return fmt.Errorf("private upstream servers: %w", err)
-		}
+	err = req.checkPrivateRDNS(ownAddrs, sysResolvers, privateNets)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
 	}
 
 	err = req.checkBootstrap()
@@ -364,10 +384,12 @@ func (req *jsonDNSConfig) validateUpstreamDNSServers(privateNets netutil.SubnetS
 		return err
 	}
 
-	err = req.checkFallbacks()
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return err
+	if req.Fallbacks != nil {
+		uc, err = proxy.ParseUpstreamsConfig(*req.Fallbacks, opts)
+		err = errors.WithDeferred(err, uc.Close())
+		if err != nil {
+			return fmt.Errorf("fallback servers: %w", err)
+		}
 	}
 
 	return nil
@@ -436,7 +458,16 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = req.validate(s.privateNets)
+	// TODO(e.burkov):  Consider prebuilding this set on startup.
+	ourAddrs, err := s.conf.ourAddrsSet()
+	if err != nil {
+		// TODO(e.burkov):  Put into openapi.
+		aghhttp.Error(r, w, http.StatusInternalServerError, "getting our addresses: %s", err)
+
+		return
+	}
+
+	err = req.validate(ourAddrs, s.sysResolvers, s.privateNets)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
@@ -587,7 +618,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var boots []*upstream.UpstreamResolver
-	opts.Bootstrap, boots, err = s.createBootstrap(req.BootstrapDNS, opts)
+	opts.Bootstrap, boots, err = newBootstrap(req.BootstrapDNS, s.etcHosts, opts)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "Failed to parse bootstrap servers: %s", err)
 

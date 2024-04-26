@@ -8,6 +8,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/configmgr"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/google/renameio/v2/maybe"
 )
 
@@ -38,7 +39,7 @@ func (h *signalHandler) handle() {
 
 		if aghos.IsReconfigureSignal(sig) {
 			h.reconfigure()
-		} else if aghos.IsShutdownSignal(sig) {
+		} else if osutil.IsShutdownSignal(sig) {
 			status := h.shutdown()
 			h.removePID()
 
@@ -122,7 +123,8 @@ func newSignalHandler(
 		services:    svcs,
 	}
 
-	aghos.NotifyShutdownSignal(h.signal)
+	notifier := osutil.DefaultSignalNotifier{}
+	osutil.NotifyShutdownSignal(notifier, h.signal)
 	aghos.NotifyReconfigureSignal(h.signal)
 
 	return h

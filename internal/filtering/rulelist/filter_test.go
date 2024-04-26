@@ -1,7 +1,6 @@
 package rulelist_test
 
 import (
-	"context"
 	"net/http"
 	"net/url"
 	"os"
@@ -67,14 +66,12 @@ func TestFilter_Refresh(t *testing.T) {
 
 			require.NotNil(t, f)
 
-			ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
-			t.Cleanup(cancel)
-
 			buf := make([]byte, rulelist.DefaultRuleBufSize)
 			cli := &http.Client{
 				Timeout: testTimeout,
 			}
 
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
 			res, err := f.Refresh(ctx, buf, cli, cacheDir, rulelist.DefaultMaxRuleListSize)
 			require.NoError(t, err)
 

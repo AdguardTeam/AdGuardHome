@@ -27,7 +27,40 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Support for comments in the ipset file ([#5345]).
 
+### Changed
+
+- Private rDNS resolution now also affects `SOA` and `NS` requests ([#6882]).
+- Rewrite rules mechanics was changed due to improve resolving in safe search.
+
+### Fixed
+
+- Domain specifications for top-level domains not considered for requests to
+  unqualified domains ([#6744]).
+- Support for link-local subnets, i.e. `fe80::/16`, as client identifiers
+  ([#6312]).
+- Issues with QUIC and HTTP/3 upstreams on older Linux kernel versions
+  ([#6422]).
+- YouTube restricted mode is not enforced by HTTPS queries on Firefox.
+- Support for link-local subnets, i.e. `fe80::/16`, in the access settings
+  ([#6192]).
+- The ability to apply an invalid configuration for private RDNS, which led to
+  server inoperability.
+- Ignoring query log for clients with ClientID set ([#5812]).
+- Subdomains of `in-addr.arpa` and `ip6.arpa` containing zero-length prefix
+  incorrectly considered invalid when specified for private RDNS upstream
+  servers ([#6854]).
+- Unspecified IP addresses aren't checked when using "Fastest IP address" mode
+  ([#6875]).
+
 [#5345]: https://github.com/AdguardTeam/AdGuardHome/issues/5345
+[#5812]: https://github.com/AdguardTeam/AdGuardHome/issues/5812
+[#6192]: https://github.com/AdguardTeam/AdGuardHome/issues/6192
+[#6312]: https://github.com/AdguardTeam/AdGuardHome/issues/6312
+[#6422]: https://github.com/AdguardTeam/AdGuardHome/issues/6422
+[#6744]: https://github.com/AdguardTeam/AdGuardHome/issues/6744
+[#6854]: https://github.com/AdguardTeam/AdGuardHome/issues/6854
+[#6875]: https://github.com/AdguardTeam/AdGuardHome/issues/6875
+[#6882]: https://github.com/AdguardTeam/AdGuardHome/issues/6882
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
@@ -41,7 +74,7 @@ See also the [v0.107.48 GitHub milestone][ms-v0.107.48].
 
 ### Fixed
 
-- Access settings not being applied to encrypted protocols ([#6890])
+- Access settings not being applied to encrypted protocols ([#6890]).
 
 [#6890]: https://github.com/AdguardTeam/AdGuardHome/issues/6890
 

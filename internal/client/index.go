@@ -197,8 +197,10 @@ func (ci *Index) findByIP(ip netip.Addr) (c *Persistent, found bool) {
 		return ci.uidToClient[uid], true
 	}
 
+	ipWithoutZone := ip.WithZone("")
 	ci.subnetToUID.Range(func(pref netip.Prefix, id UID) (cont bool) {
-		if pref.Contains(ip) {
+		// Remove zone before checking because prefixes strip zones.
+		if pref.Contains(ipWithoutZone) {
 			uid, found = id, true
 
 			return false
@@ -212,6 +214,26 @@ func (ci *Index) findByIP(ip netip.Addr) (c *Persistent, found bool) {
 	}
 
 	return nil, false
+}
+
+// FindByIPWithoutZone finds a persistent client by IP address without zone.  It
+// strips the IPv6 zone index from the stored IP addresses before comparing,
+// because querylog entries don't have it.  See TODO on [querylog.logEntry.IP].
+//
+// Note that multiple clients can have the same IP address with different zones.
+// Therefore, the result of this method is indeterminate.
+func (ci *Index) FindByIPWithoutZone(ip netip.Addr) (c *Persistent) {
+	if (ip == netip.Addr{}) {
+		return nil
+	}
+
+	for addr, uid := range ci.ipToUID {
+		if addr.WithZone("") == ip {
+			return ci.uidToClient[uid]
+		}
+	}
+
+	return nil
 }
 
 // find finds persistent client by MAC.
