@@ -306,7 +306,7 @@ func handleServiceStatusCommand(s service.Service) {
 	}
 }
 
-// handleServiceInstallCommand handles service "install" command
+// handleServiceInstallCommand handles service "install" command.
 func handleServiceInstallCommand(s service.Service) {
 	err := svcAction(s, "install")
 	if err != nil {
@@ -340,7 +340,7 @@ AdGuard Home is now available at the following addresses:`)
 	}
 }
 
-// handleServiceUninstallCommand handles service "uninstall" command
+// handleServiceUninstallCommand handles service "uninstall" command.
 func handleServiceUninstallCommand(s service.Service) {
 	if aghos.IsOpenWrt() {
 		// On OpenWrt it is important to run disable command first
