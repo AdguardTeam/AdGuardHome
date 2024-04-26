@@ -286,7 +286,13 @@ func (clients *clientsContainer) addFromConfig(
 
 		_, err = clients.add(cli)
 		if err != nil {
-			log.Error("clients: adding client at index %d %s: %s", i, cli.Name, err)
+			if errors.Is(err, client.ErrDuplicateUID) {
+				return fmt.Errorf("clients: adding client %s at index %d: %w", cli.Name, i, err)
+			}
+
+			// TODO(s.chzhen):  Return an error instead of logging if more
+			// stringent requirements are implemented.
+			log.Error("clients: adding client %s at index %d: %s", cli.Name, i, err)
 		}
 	}
 

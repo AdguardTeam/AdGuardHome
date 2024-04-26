@@ -32,8 +32,16 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Private rDNS resolution now also affects `SOA` and `NS` requests ([#6882]).
 - Rewrite rules mechanics was changed due to improve resolving in safe search.
 
+### Deprecated
+
+- Currently, AdGuard Home skips persistent clients that have duplicate fields
+  when reading them from the configuration file.  This behaviour is deprecated
+  and will cause errors on startup in a future release.
+
 ### Fixed
 
+- Acceptance of duplicate UIDs for persistent clients at startup.  See also the
+  section on client settings on the [Wiki page][wiki-config].
 - Domain specifications for top-level domains not considered for requests to
   unqualified domains ([#6744]).
 - Support for link-local subnets, i.e. `fe80::/16`, as client identifiers

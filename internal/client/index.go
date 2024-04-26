@@ -6,6 +6,7 @@ import (
 	"net/netip"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/golibs/errors"
 )
 
 // macKey contains MAC as byte array of 6, 8, or 20 bytes.
@@ -82,15 +83,25 @@ func (ci *Index) Add(c *Persistent) {
 	ci.uidToClient[c.UID] = c
 }
 
+// ErrDuplicateUID is an error returned by [Index.Clashes] when adding a
+// persistent client with a UID that already exists in an index.
+const ErrDuplicateUID errors.Error = "duplicate uid"
+
 // Clashes returns an error if the index contains a different persistent client
 // with at least a single identifier contained by c.  c must be non-nil.
 func (ci *Index) Clashes(c *Persistent) (err error) {
+	_, ok := ci.uidToClient[c.UID]
+	if ok {
+		return ErrDuplicateUID
+	}
+
 	for _, id := range c.ClientIDs {
-		existing, ok := ci.clientIDToUID[id]
+		var existing UID
+		existing, ok = ci.clientIDToUID[id]
 		if ok && existing != c.UID {
 			p := ci.uidToClient[existing]
 
-			return fmt.Errorf("another client %q uses the same ID %q", p.Name, id)
+			return fmt.Errorf("another client %q uses the same ClientID %q", p.Name, id)
 		}
 	}
 
