@@ -34,6 +34,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Domain specifications for top-level domains not considered for requests to
+  unqualified domains ([#6744]).
 - Support for link-local subnets, i.e. `fe80::/16`, as client identifiers
   ([#6312]).
 - Issues with QUIC and HTTP/3 upstreams on older Linux kernel versions
@@ -55,6 +57,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6192]: https://github.com/AdguardTeam/AdGuardHome/issues/6192
 [#6312]: https://github.com/AdguardTeam/AdGuardHome/issues/6312
 [#6422]: https://github.com/AdguardTeam/AdGuardHome/issues/6422
+[#6744]: https://github.com/AdguardTeam/AdGuardHome/issues/6744
 [#6854]: https://github.com/AdguardTeam/AdGuardHome/issues/6854
 [#6875]: https://github.com/AdguardTeam/AdGuardHome/issues/6875
 [#6882]: https://github.com/AdguardTeam/AdGuardHome/issues/6882
