@@ -1,7 +1,7 @@
 # The %VARIABLES% are be replaced by actual values by the build script.
 
 'name': 'adguard-home'
-'base': 'core22'
+'base': 'core24'
 'version': '%VERSION%'
 'summary': Network-wide ads & trackers blocking DNS server
 'description': |
