@@ -23,6 +23,11 @@ See also the [v0.107.49 GitHub milestone][ms-v0.107.49].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go
+  vulnerabilities fixed in [Go 1.22.3][go-1.22.3].
+
 ### Added
 
 - Support for comments in the ipset file ([#5345]).
@@ -69,6 +74,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6854]: https://github.com/AdguardTeam/AdGuardHome/issues/6854
 [#6875]: https://github.com/AdguardTeam/AdGuardHome/issues/6875
 [#6882]: https://github.com/AdguardTeam/AdGuardHome/issues/6882
+
+[go-1.22.3]: https://groups.google.com/g/golang-announce/c/wkkO4P9stm0
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
