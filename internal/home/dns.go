@@ -148,7 +148,7 @@ func initDNSServer(
 		return fmt.Errorf("dnsforward.NewServer: %w", err)
 	}
 
-	Context.clients.dnsServer = Context.dnsServer
+	Context.clients.clientChecker = Context.dnsServer
 
 	dnsConf, err := newServerConfig(&config.DNS, config.Clients.Sources, tlsConf, httpReg)
 	if err != nil {

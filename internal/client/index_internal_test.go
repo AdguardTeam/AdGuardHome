@@ -22,7 +22,7 @@ func newIDIndex(m []*Persistent) (ci *Index) {
 	return ci
 }
 
-func TestClientIndex(t *testing.T) {
+func TestClientIndex_Find(t *testing.T) {
 	const (
 		cliIPNone = "1.2.3.4"
 		cliIP1    = "1.1.1.1"
@@ -71,13 +71,14 @@ func TestClientIndex(t *testing.T) {
 		}
 	)
 
-	ci := newIDIndex([]*Persistent{
+	clients := []*Persistent{
 		clientWithBothFams,
 		clientWithSubnet,
 		clientWithMAC,
 		clientWithID,
 		clientLinkLocal,
-	})
+	}
+	ci := newIDIndex(clients)
 
 	testCases := []struct {
 		want *Persistent
@@ -293,6 +294,57 @@ func TestIndex_FindByIPWithoutZone(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			c := ci.FindByIPWithoutZone(tc.ip.WithZone(""))
 			require.Equal(t, tc.want, c)
+		})
+	}
+}
+
+func TestClientIndex_RangeByName(t *testing.T) {
+	sortedClients := []*Persistent{{
+		Name:      "clientA",
+		ClientIDs: []string{"A"},
+	}, {
+		Name:      "clientB",
+		ClientIDs: []string{"B"},
+	}, {
+		Name:      "clientC",
+		ClientIDs: []string{"C"},
+	}, {
+		Name:      "clientD",
+		ClientIDs: []string{"D"},
+	}, {
+		Name:      "clientE",
+		ClientIDs: []string{"E"},
+	}}
+
+	testCases := []struct {
+		name string
+		want []*Persistent
+	}{{
+		name: "basic",
+		want: sortedClients,
+	}, {
+		name: "nil",
+		want: nil,
+	}, {
+		name: "one_element",
+		want: sortedClients[:1],
+	}, {
+		name: "two_elements",
+		want: sortedClients[:2],
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ci := newIDIndex(tc.want)
+
+			var got []*Persistent
+			ci.RangeByName(func(c *Persistent) (cont bool) {
+				got = append(got, c)
+
+				return true
+			})
+
+			assert.Equal(t, tc.want, got)
 		})
 	}
 }

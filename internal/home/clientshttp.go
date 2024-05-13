@@ -96,10 +96,12 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	for _, c := range clients.list {
+	clients.clientIndex.Range(func(c *client.Persistent) (cont bool) {
 		cj := clientToJSON(c)
 		data.Clients = append(data.Clients, cj)
-	}
+
+		return true
+	})
 
 	clients.runtimeIndex.Range(func(rc *client.Runtime) (cont bool) {
 		src, host := rc.Info()
@@ -334,20 +336,16 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	ok, err := clients.add(c)
+	err = clients.add(c)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
-	if !ok {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Client already exists")
-
-		return
+	if !clients.testing {
+		onConfigModified()
 	}
-
-	onConfigModified()
 }
 
 // handleDelClient is the handler for POST /control/clients/delete HTTP API.
@@ -372,7 +370,9 @@ func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	onConfigModified()
+	if !clients.testing {
+		onConfigModified()
+	}
 }
 
 // updateJSON contains the name and data of the updated persistent client.
@@ -406,7 +406,7 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 		clients.lock.Lock()
 		defer clients.lock.Unlock()
 
-		prev, ok = clients.list[dj.Name]
+		prev, ok = clients.clientIndex.FindByName(dj.Name)
 	}()
 
 	if !ok {
@@ -429,7 +429,9 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 		return
 	}
 
-	onConfigModified()
+	if !clients.testing {
+		onConfigModified()
+	}
 }
 
 // handleFindClient is the handler for GET /control/clients/find HTTP API.
@@ -449,7 +451,7 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 			cj = clients.findRuntime(ip, idStr)
 		} else {
 			cj = clientToJSON(c)
-			disallowed, rule := clients.dnsServer.IsBlockedClient(ip, idStr)
+			disallowed, rule := clients.clientChecker.IsBlockedClient(ip, idStr)
 			cj.Disallowed, cj.DisallowedRule = &disallowed, &rule
 		}
 
@@ -472,7 +474,7 @@ func (clients *clientsContainer) findRuntime(ip netip.Addr, idStr string) (cj *c
 		// blocked IP list.
 		//
 		// See https://github.com/AdguardTeam/AdGuardHome/issues/2428.
-		disallowed, rule := clients.dnsServer.IsBlockedClient(ip, idStr)
+		disallowed, rule := clients.clientChecker.IsBlockedClient(ip, idStr)
 		cj = &clientJSON{
 			IDs:            []string{idStr},
 			Disallowed:     &disallowed,
@@ -490,7 +492,7 @@ func (clients *clientsContainer) findRuntime(ip netip.Addr, idStr string) (cj *c
 		WHOIS: whoisOrEmpty(rc),
 	}
 
-	disallowed, rule := clients.dnsServer.IsBlockedClient(ip, idStr)
+	disallowed, rule := clients.clientChecker.IsBlockedClient(ip, idStr)
 	cj.Disallowed, cj.DisallowedRule = &disallowed, &rule
 
 	return cj
