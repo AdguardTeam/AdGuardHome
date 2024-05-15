@@ -66,11 +66,11 @@ See also the [v0.107.49 GitHub milestone][ms-v0.107.49].
 - YouTube restricted mode is not enforced by HTTPS queries on Firefox.
 - Support for link-local subnets, i.e. `fe80::/16`, in the access settings
   ([#6192]).
-- The ability to apply an invalid configuration for private RDNS, which led to
-  server inoperability.
+- The ability to apply an invalid configuration for private rDNS, which led to
+  server not starting.
 - Ignoring query log for clients with ClientID set ([#5812]).
 - Subdomains of `in-addr.arpa` and `ip6.arpa` containing zero-length prefix
-  incorrectly considered invalid when specified for private RDNS upstream
+  incorrectly considered invalid when specified for private rDNS upstream
   servers ([#6854]).
 - Unspecified IP addresses aren't checked when using "Fastest IP address" mode
   ([#6875]).
