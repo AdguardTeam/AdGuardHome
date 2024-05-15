@@ -14,14 +14,24 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.49] - 2024-05-20 (APPROX.)
+## [v0.107.50] - 2024-04-24 (APPROX.)
 
-See also the [v0.107.49 GitHub milestone][ms-v0.107.49].
+See also the [v0.107.50 GitHub milestone][ms-v0.107.50].
 
-[ms-v0.107.49]: https://github.com/AdguardTeam/AdGuardHome/milestone/84?closed=1
+[ms-v0.107.50]: https://github.com/AdguardTeam/AdGuardHome/milestone/85?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+
+
+## [v0.107.49] - 2024-05-20
+
+See also the [v0.107.49 GitHub milestone][ms-v0.107.49].
 
 ### Security
 
@@ -56,11 +66,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - YouTube restricted mode is not enforced by HTTPS queries on Firefox.
 - Support for link-local subnets, i.e. `fe80::/16`, in the access settings
   ([#6192]).
-- The ability to apply an invalid configuration for private rDNS, which led to
-  server not starting.
+- The ability to apply an invalid configuration for private RDNS, which led to
+  server inoperability.
 - Ignoring query log for clients with ClientID set ([#5812]).
 - Subdomains of `in-addr.arpa` and `ip6.arpa` containing zero-length prefix
-  incorrectly considered invalid when specified for private rDNS upstream
+  incorrectly considered invalid when specified for private RDNS upstream
   servers ([#6854]).
 - Unspecified IP addresses aren't checked when using "Fastest IP address" mode
   ([#6875]).
@@ -75,11 +85,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6875]: https://github.com/AdguardTeam/AdGuardHome/issues/6875
 [#6882]: https://github.com/AdguardTeam/AdGuardHome/issues/6882
 
-[go-1.22.3]: https://groups.google.com/g/golang-announce/c/wkkO4P9stm0
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[go-1.22.3]:    https://groups.google.com/g/golang-announce/c/wkkO4P9stm0
+[ms-v0.107.49]: https://github.com/AdguardTeam/AdGuardHome/milestone/84?closed=1
 
 
 
@@ -2964,11 +2971,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.49...HEAD
-[v0.107.49]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.48...v0.107.49
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.50...HEAD
+[v0.107.50]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.49...v0.107.50
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.48...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.49...HEAD
+[v0.107.49]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.48...v0.107.49
 [v0.107.48]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.47...v0.107.48
 [v0.107.47]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.46...v0.107.47
 [v0.107.46]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.45...v0.107.46

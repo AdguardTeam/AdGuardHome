@@ -142,6 +142,12 @@ export default {
             "homepage": "https://github.com/AdguardTeam/AdGuardSDNSFilter",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt"
         },
+        "adguard_popup_filter": {
+            "name": "AdGuard DNS Popup Hosts filter",
+            "categoryId": "general",
+            "homepage": "https://github.com/AdguardTeam/AdGuardSDNSFilter",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_59.txt"
+        },
         "awavenue_ads_rule": {
             "name": "AWAvenue Ads Rule",
             "categoryId": "general",
@@ -297,6 +303,12 @@ export default {
             "categoryId": "security",
             "homepage": "https://github.com/durablenapkin/scamblocklist",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_10.txt"
+        },
+        "shadowwhisperers_dating_list": {
+            "name": "ShadowWhisperer's Dating List",
+            "categoryId": "other",
+            "homepage": "https://github.com/ShadowWhisperer/BlockLists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_57.txt"
         },
         "shadowwhisperers_malware_list": {
             "name": "ShadowWhisperer's Malware List",
