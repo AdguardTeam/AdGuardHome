@@ -48,7 +48,7 @@ func (c *twoskyClient) download() (err error) {
 	failed := &sync.Map{}
 	uriCh := make(chan *url.URL, len(c.langs))
 
-	for i := 0; i < numWorker; i++ {
+	for range numWorker {
 		wg.Add(1)
 		go downloadWorker(wg, failed, client, uriCh)
 	}

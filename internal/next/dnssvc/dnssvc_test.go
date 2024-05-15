@@ -1,7 +1,6 @@
 package dnssvc_test
 
 import (
-	"context"
 	"net/netip"
 	"testing"
 	"time"
@@ -94,10 +93,8 @@ func TestService(t *testing.T) {
 			}},
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
-		defer cancel()
-
 		cli := &dns.Client{}
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 		var resp *dns.Msg
 		require.Eventually(t, func() (ok bool) {
@@ -110,10 +107,8 @@ func TestService(t *testing.T) {
 		assert.NotNil(t, resp)
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
-	defer cancel()
+	err = svc.Shutdown(testutil.ContextWithTimeout(t, testTimeout))
 
-	err = svc.Shutdown(ctx)
 	require.NoError(t, err)
 
 	err = upstreamSrv.Shutdown()

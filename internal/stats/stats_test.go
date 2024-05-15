@@ -195,7 +195,7 @@ func TestLargeNumbers(t *testing.T) {
 	for h := 0; h < hoursNum; h++ {
 		atomic.AddUint32(&curHour, 1)
 
-		for i := 0; i < cliNumPerHour; i++ {
+		for i := range cliNumPerHour {
 			ip := net.IP{127, 0, byte((i & 0xff00) >> 8), byte(i & 0xff)}
 			e := &stats.Entry{
 				Domain:         fmt.Sprintf("domain%d.hour%d", i, h),

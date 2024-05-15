@@ -1,7 +1,5 @@
 package filtering
 
-import "github.com/miekg/dns"
-
 // SafeSearch interface describes a service for search engines hosts rewrites.
 type SafeSearch interface {
 	// CheckHost checks host with safe search filter.  CheckHost must be safe
@@ -16,9 +14,6 @@ type SafeSearch interface {
 
 // SafeSearchConfig is a struct with safe search related settings.
 type SafeSearchConfig struct {
-	// CustomResolver is the resolver used by safe search.
-	CustomResolver Resolver `yaml:"-" json:"-"`
-
 	// Enabled indicates if safe search is enabled entirely.
 	Enabled bool `yaml:"enabled" json:"enabled"`
 
@@ -40,13 +35,7 @@ func (d *DNSFilter) checkSafeSearch(
 	qtype uint16,
 	setts *Settings,
 ) (res Result, err error) {
-	if !setts.ProtectionEnabled ||
-		!setts.SafeSearchEnabled ||
-		(qtype != dns.TypeA && qtype != dns.TypeAAAA) {
-		return Result{}, nil
-	}
-
-	if d.safeSearch == nil {
+	if d.safeSearch == nil || !setts.ProtectionEnabled || !setts.SafeSearchEnabled {
 		return Result{}, nil
 	}
 

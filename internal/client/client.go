@@ -7,6 +7,7 @@ package client
 import (
 	"encoding"
 	"fmt"
+	"net/netip"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 )
@@ -56,6 +57,9 @@ func (cs Source) MarshalText() (text []byte, err error) {
 
 // Runtime is a client information from different sources.
 type Runtime struct {
+	// ip is an IP address of a client.
+	ip netip.Addr
+
 	// whois is the filtered WHOIS information of a client.
 	whois *whois.Info
 
@@ -78,6 +82,15 @@ type Runtime struct {
 	// there is no information from the source.  Empty non-nil slice indicates
 	// that the data from the source is present, but empty.
 	hostsFile []string
+}
+
+// NewRuntime constructs a new runtime client.  ip must be valid IP address.
+//
+// TODO(s.chzhen):  Validate IP address.
+func NewRuntime(ip netip.Addr) (r *Runtime) {
+	return &Runtime{
+		ip: ip,
+	}
 }
 
 // Info returns a client information from the highest-priority source.
@@ -133,8 +146,8 @@ func (r *Runtime) SetWHOIS(info *whois.Info) {
 	r.whois = info
 }
 
-// Unset clears a cs information.
-func (r *Runtime) Unset(cs Source) {
+// unset clears a cs information.
+func (r *Runtime) unset(cs Source) {
 	switch cs {
 	case SourceWHOIS:
 		r.whois = nil
@@ -149,11 +162,16 @@ func (r *Runtime) Unset(cs Source) {
 	}
 }
 
-// IsEmpty returns true if there is no information from any source.
-func (r *Runtime) IsEmpty() (ok bool) {
+// isEmpty returns true if there is no information from any source.
+func (r *Runtime) isEmpty() (ok bool) {
 	return r.whois == nil &&
 		r.arp == nil &&
 		r.rdns == nil &&
 		r.dhcp == nil &&
 		r.hostsFile == nil
+}
+
+// Addr returns an IP address of the client.
+func (r *Runtime) Addr() (ip netip.Addr) {
+	return r.ip
 }

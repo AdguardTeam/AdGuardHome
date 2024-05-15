@@ -1,13 +1,13 @@
 package home
 
 import (
+	"cmp"
 	"fmt"
 	"path/filepath"
 	"runtime"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/AdguardTeam/golibs/stringutil"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"gopkg.in/yaml.v3"
 )
@@ -76,8 +76,7 @@ func getLogSettings(opts options) (ls *logSettings) {
 		ls.Verbose = true
 	}
 
-	// TODO(a.garipov): Use cmp.Or in Go 1.22.
-	ls.File = stringutil.Coalesce(opts.logFile, ls.File)
+	ls.File = cmp.Or(opts.logFile, ls.File)
 
 	if opts.runningAsService && ls.File == "" && runtime.GOOS == "windows" {
 		// When running as a Windows service, use eventlog by default if

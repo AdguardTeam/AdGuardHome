@@ -306,7 +306,7 @@ func handleServiceStatusCommand(s service.Service) {
 	}
 }
 
-// handleServiceStatusCommand handles service "install" command
+// handleServiceInstallCommand handles service "install" command.
 func handleServiceInstallCommand(s service.Service) {
 	err := svcAction(s, "install")
 	if err != nil {
@@ -340,7 +340,7 @@ AdGuard Home is now available at the following addresses:`)
 	}
 }
 
-// handleServiceStatusCommand handles service "uninstall" command
+// handleServiceUninstallCommand handles service "uninstall" command.
 func handleServiceUninstallCommand(s service.Service) {
 	if aghos.IsOpenWrt() {
 		// On OpenWrt it is important to run disable command first
@@ -649,11 +649,6 @@ status() {
 
 // freeBSDScript is the source of the daemon script for FreeBSD.  Keep as close
 // as possible to the https://github.com/kardianos/service/blob/18c957a3dc1120a2efe77beb401d476bade9e577/service_freebsd.go#L204.
-//
-// TODO(a.garipov): Don't use .WorkingDirectory here.  There are currently no
-// guarantees that it will actually be the required directory.
-//
-// See https://github.com/AdguardTeam/AdGuardHome/issues/2614.
 const freeBSDScript = `#!/bin/sh
 # PROVIDE: {{.Name}}
 # REQUIRE: networking
@@ -667,7 +662,9 @@ name="{{.Name}}"
 pidfile_child="/var/run/${name}.pid"
 pidfile="/var/run/${name}_daemon.pid"
 command="/usr/sbin/daemon"
-command_args="-P ${pidfile} -p ${pidfile_child} -T ${name} -r {{.WorkingDirectory}}/{{.Name}}"
+daemon_args="-P ${pidfile} -p ${pidfile_child} -r -t ${name}"
+command_args="${daemon_args} {{.Path}}{{range .Arguments}} {{.}}{{end}}"
+
 run_rc_command "$1"
 `
 

@@ -303,7 +303,7 @@ func BenchmarkAnonymizeIP(b *testing.B) {
 		b.Run(bc.name, func(b *testing.B) {
 			b.ReportAllocs()
 
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				AnonymizeIP(bc.ip)
 			}
 
@@ -313,7 +313,7 @@ func BenchmarkAnonymizeIP(b *testing.B) {
 		b.Run(bc.name+"_slow", func(b *testing.B) {
 			b.ReportAllocs()
 
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				anonymizeIPSlow(bc.ip)
 			}
 

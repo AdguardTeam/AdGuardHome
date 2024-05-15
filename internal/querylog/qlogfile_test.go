@@ -37,7 +37,7 @@ func prepareTestFile(t *testing.T, dir string, linesNum int) (name string) {
 
 	var lineIP uint32
 	lineTime := time.Date(2020, 2, 18, 19, 36, 35, 920973000, time.UTC)
-	for i := 0; i < linesNum; i++ {
+	for range linesNum {
 		lineIP++
 		lineTime = lineTime.Add(time.Second)
 

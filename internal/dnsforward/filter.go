@@ -1,56 +1,16 @@
 package dnsforward
 
 import (
-	"encoding/binary"
 	"fmt"
 	"net"
 	"slices"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 )
-
-// beforeRequestHandler is the handler that is called before any other
-// processing, including logs.  It performs access checks and puts the client
-// ID, if there is one, into the server's cache.
-func (s *Server) beforeRequestHandler(
-	_ *proxy.Proxy,
-	pctx *proxy.DNSContext,
-) (reply bool, err error) {
-	clientID, err := s.clientIDFromDNSContext(pctx)
-	if err != nil {
-		return false, fmt.Errorf("getting clientid: %w", err)
-	}
-
-	blocked, _ := s.IsBlockedClient(pctx.Addr.Addr(), clientID)
-	if blocked {
-		return s.preBlockedResponse(pctx)
-	}
-
-	if len(pctx.Req.Question) == 1 {
-		q := pctx.Req.Question[0]
-		qt := q.Qtype
-		host := aghnet.NormalizeDomain(q.Name)
-		if s.access.isBlockedHost(host, qt) {
-			log.Debug("access: request %s %s is in access blocklist", dns.Type(qt), host)
-
-			return s.preBlockedResponse(pctx)
-		}
-	}
-
-	if clientID != "" {
-		key := [8]byte{}
-		binary.BigEndian.PutUint64(key[:], pctx.RequestID)
-		s.clientIDCache.Set(key[:], []byte(clientID))
-	}
-
-	return true, nil
-}
 
 // clientRequestFilteringSettings looks up client filtering settings using the
 // client's IP address and ID, if any, from dctx.
@@ -71,6 +31,7 @@ func (s *Server) filterDNSRequest(dctx *dnsContext) (res *filtering.Result, err 
 	req := pctx.Req
 	q := req.Question[0]
 	host := strings.TrimSuffix(q.Name, ".")
+
 	resVal, err := s.dnsFilter.CheckHost(host, q.Qtype, dctx.setts)
 	if err != nil {
 		return nil, fmt.Errorf("checking host %q: %w", host, err)
@@ -79,22 +40,15 @@ func (s *Server) filterDNSRequest(dctx *dnsContext) (res *filtering.Result, err 
 	// TODO(a.garipov): Make CheckHost return a pointer.
 	res = &resVal
 	switch {
-	case res.IsFiltered:
-		log.Debug(
-			"dnsforward: host %q is filtered, reason: %q; rule: %q",
-			host,
-			res.Reason,
-			res.Rules[0].Text,
-		)
-		pctx.Res = s.genDNSFilterMessage(pctx, res)
-	case res.Reason.In(filtering.Rewritten, filtering.RewrittenRule) &&
-		res.CanonName != "" &&
-		len(res.IPList) == 0:
+	case isRewrittenCNAME(res):
 		// Resolve the new canonical name, not the original host name.  The
 		// original question is readded in processFilteringAfterResponse.
 		dctx.origQuestion = q
 		req.Question[0].Name = dns.Fqdn(res.CanonName)
-	case res.Reason == filtering.Rewritten:
+	case res.IsFiltered:
+		log.Debug("dnsforward: host %q is filtered, reason: %q", host, res.Reason)
+		pctx.Res = s.genDNSFilterMessage(pctx, res)
+	case res.Reason.In(filtering.Rewritten, filtering.FilteredSafeSearch):
 		pctx.Res = s.getCNAMEWithIPs(req, res.IPList, res.CanonName)
 	case res.Reason.In(filtering.RewrittenRule, filtering.RewrittenAutoHosts):
 		if err = s.filterDNSRewrite(req, res, pctx); err != nil {
@@ -103,6 +57,17 @@ func (s *Server) filterDNSRequest(dctx *dnsContext) (res *filtering.Result, err 
 	}
 
 	return res, err
+}
+
+// isRewrittenCNAME returns true if the request considered to be rewritten with
+// CNAME and has no resolved IPs.
+func isRewrittenCNAME(res *filtering.Result) (ok bool) {
+	return res.Reason.In(
+		filtering.Rewritten,
+		filtering.RewrittenRule,
+		filtering.FilteredSafeSearch) &&
+		res.CanonName != "" &&
+		len(res.IPList) == 0
 }
 
 // checkHostRules checks the host against filters.  It is safe for concurrent

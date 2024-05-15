@@ -200,7 +200,7 @@ func TestParallelSB(t *testing.T) {
 	t.Cleanup(d.Close)
 
 	t.Run("group", func(t *testing.T) {
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			t.Run(fmt.Sprintf("aaa%d", i), func(t *testing.T) {
 				t.Parallel()
 				d.checkMatch(t, sbBlocked, setts)
@@ -670,7 +670,7 @@ func BenchmarkSafeBrowsing(b *testing.B) {
 	}, nil)
 	b.Cleanup(d.Close)
 
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		res, err := d.CheckHost(sbBlocked, dns.TypeA, setts)
 		require.NoError(b, err)
 

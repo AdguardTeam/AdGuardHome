@@ -29,7 +29,13 @@ func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
 
 	log.Debug("dnsforward: client ip for stats and querylog: %s", ipStr)
 
-	ids := []string{ipStr, dctx.clientID}
+	ids := []string{ipStr}
+	if dctx.clientID != "" {
+		// Use the ClientID first because it has a higher priority.  Filters
+		// have the same priority, see applyAdditionalFiltering.
+		ids = []string{dctx.clientID, ipStr}
+	}
+
 	qt, cl := q.Qtype, q.Qclass
 
 	// Synchronize access to s.queryLog and s.stats so they won't be suddenly
@@ -124,7 +130,7 @@ func (s *Server) logQuery(dctx *dnsContext, ip net.IP, processingTime time.Durat
 	s.queryLog.Add(p)
 }
 
-// updatesStats writes the request into statistics.
+// updateStats writes the request data into statistics.
 func (s *Server) updateStats(dctx *dnsContext, clientIP string, processingTime time.Duration) {
 	pctx := dctx.proxyCtx
 

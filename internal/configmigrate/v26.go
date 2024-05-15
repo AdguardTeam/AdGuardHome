@@ -1,5 +1,7 @@
 package configmigrate
 
+import "github.com/AdguardTeam/golibs/errors"
+
 // migrateTo26 performs the following changes:
 //
 //	# BEFORE:
@@ -78,7 +80,7 @@ func migrateTo26(diskConf yobj) (err error) {
 	}
 
 	filteringObj := yobj{}
-	err = coalesceError(
+	err = errors.Join(
 		moveSameVal[bool](dns, filteringObj, "filtering_enabled"),
 		moveSameVal[int](dns, filteringObj, "filters_update_interval"),
 		moveSameVal[bool](dns, filteringObj, "parental_enabled"),

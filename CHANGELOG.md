@@ -14,7 +14,7 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.49] - 2024-04-24 (APPROX.)
+## [v0.107.49] - 2024-05-20 (APPROX.)
 
 See also the [v0.107.49 GitHub milestone][ms-v0.107.49].
 
@@ -22,6 +22,60 @@ See also the [v0.107.49 GitHub milestone][ms-v0.107.49].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go
+  vulnerabilities fixed in [Go 1.22.3][go-1.22.3].
+
+### Added
+
+- Support for comments in the ipset file ([#5345]).
+
+### Changed
+
+- Private rDNS resolution now also affects `SOA` and `NS` requests ([#6882]).
+- Rewrite rules mechanics was changed due to improve resolving in safe search.
+
+### Deprecated
+
+- Currently, AdGuard Home skips persistent clients that have duplicate fields
+  when reading them from the configuration file.  This behaviour is deprecated
+  and will cause errors on startup in a future release.
+
+### Fixed
+
+- Acceptance of duplicate UIDs for persistent clients at startup.  See also the
+  section on client settings on the [Wiki page][wiki-config].
+- Domain specifications for top-level domains not considered for requests to
+  unqualified domains ([#6744]).
+- Support for link-local subnets, i.e. `fe80::/16`, as client identifiers
+  ([#6312]).
+- Issues with QUIC and HTTP/3 upstreams on older Linux kernel versions
+  ([#6422]).
+- YouTube restricted mode is not enforced by HTTPS queries on Firefox.
+- Support for link-local subnets, i.e. `fe80::/16`, in the access settings
+  ([#6192]).
+- The ability to apply an invalid configuration for private rDNS, which led to
+  server not starting.
+- Ignoring query log for clients with ClientID set ([#5812]).
+- Subdomains of `in-addr.arpa` and `ip6.arpa` containing zero-length prefix
+  incorrectly considered invalid when specified for private rDNS upstream
+  servers ([#6854]).
+- Unspecified IP addresses aren't checked when using "Fastest IP address" mode
+  ([#6875]).
+
+[#5345]: https://github.com/AdguardTeam/AdGuardHome/issues/5345
+[#5812]: https://github.com/AdguardTeam/AdGuardHome/issues/5812
+[#6192]: https://github.com/AdguardTeam/AdGuardHome/issues/6192
+[#6312]: https://github.com/AdguardTeam/AdGuardHome/issues/6312
+[#6422]: https://github.com/AdguardTeam/AdGuardHome/issues/6422
+[#6744]: https://github.com/AdguardTeam/AdGuardHome/issues/6744
+[#6854]: https://github.com/AdguardTeam/AdGuardHome/issues/6854
+[#6875]: https://github.com/AdguardTeam/AdGuardHome/issues/6875
+[#6882]: https://github.com/AdguardTeam/AdGuardHome/issues/6882
+
+[go-1.22.3]: https://groups.google.com/g/golang-announce/c/wkkO4P9stm0
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
@@ -35,7 +89,7 @@ See also the [v0.107.48 GitHub milestone][ms-v0.107.48].
 
 ### Fixed
 
-- Access settings not being applied to encrypted protocols ([#6890])
+- Access settings not being applied to encrypted protocols ([#6890]).
 
 [#6890]: https://github.com/AdguardTeam/AdGuardHome/issues/6890
 

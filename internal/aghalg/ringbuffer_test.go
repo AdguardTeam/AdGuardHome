@@ -33,7 +33,7 @@ func elements(b *aghalg.RingBuffer[int], n uint, reverse bool) (es []int) {
 func TestNewRingBuffer(t *testing.T) {
 	t.Run("success_and_clear", func(t *testing.T) {
 		b := aghalg.NewRingBuffer[int](5)
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			b.Append(i)
 		}
 		assert.Equal(t, []int{5, 6, 7, 8, 9}, elements(b, b.Len(), false))
@@ -44,7 +44,7 @@ func TestNewRingBuffer(t *testing.T) {
 
 	t.Run("zero", func(t *testing.T) {
 		b := aghalg.NewRingBuffer[int](0)
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			b.Append(i)
 			bufLen := b.Len()
 			assert.EqualValues(t, 0, bufLen)
@@ -55,7 +55,7 @@ func TestNewRingBuffer(t *testing.T) {
 
 	t.Run("single", func(t *testing.T) {
 		b := aghalg.NewRingBuffer[int](1)
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			b.Append(i)
 			bufLen := b.Len()
 			assert.EqualValues(t, 1, bufLen)
@@ -94,7 +94,7 @@ func TestRingBuffer_Range(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			for i := 0; i < tc.count; i++ {
+			for i := range tc.count {
 				b.Append(i)
 			}
 

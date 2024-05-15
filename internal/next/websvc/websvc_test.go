@@ -109,12 +109,8 @@ func newTestServer(
 
 	err = svc.Start()
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
-		t.Cleanup(cancel)
-
-		err = svc.Shutdown(ctx)
-		require.NoError(t, err)
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+		return svc.Shutdown(testutil.ContextWithTimeout(t, testTimeout))
 	})
 
 	c = svc.Config()

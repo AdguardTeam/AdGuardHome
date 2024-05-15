@@ -525,9 +525,8 @@ func (s *StatsCtx) fillCollectedStatsDaily(
 	hours := countHours(curHour, days)
 	units = units[len(units)-hours:]
 
-	for i := 0; i < len(units); i++ {
+	for i, u := range units {
 		day := i / 24
-		u := units[i]
 
 		data.DNSQueries[day] += u.NTotal
 		data.BlockedFiltering[day] += u.NResult[RFiltered]

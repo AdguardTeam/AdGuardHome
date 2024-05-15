@@ -203,15 +203,24 @@ type dnsConfig struct {
 	// resolver should be used.
 	PrivateNets []netutil.Prefix `yaml:"private_networks"`
 
-	// UsePrivateRDNS defines if the PTR requests for unknown addresses from
-	// locally-served networks should be resolved via private PTR resolvers.
+	// UsePrivateRDNS enables resolving requests containing a private IP address
+	// using private reverse DNS resolvers.  See PrivateRDNSResolvers.
+	//
+	// TODO(e.burkov):  Rename in YAML.
 	UsePrivateRDNS bool `yaml:"use_private_ptr_resolvers"`
 
-	// LocalPTRResolvers is the slice of addresses to be used as upstreams
-	// for PTR queries for locally-served networks.
-	LocalPTRResolvers []string `yaml:"local_ptr_upstreams"`
+	// PrivateRDNSResolvers is the slice of addresses to be used as upstreams
+	// for private requests.  It's only used for PTR, SOA, and NS queries,
+	// containing an ARPA subdomain, came from the the client with private
+	// address.  The address considered private according to PrivateNets.
+	//
+	// If empty, the OS-provided resolvers are used for private requests.
+	PrivateRDNSResolvers []string `yaml:"local_ptr_upstreams"`
 
-	// UseDNS64 defines if DNS64 should be used for incoming requests.
+	// UseDNS64 defines if DNS64 should be used for incoming requests.  Requests
+	// of type PTR for addresses within the configured prefixes will be resolved
+	// via [PrivateRDNSResolvers], so those should be valid and UsePrivateRDNS
+	// be set to true.
 	UseDNS64 bool `yaml:"use_dns64"`
 
 	// DNS64Prefixes is the list of NAT64 prefixes to be used for DNS64.
@@ -658,7 +667,7 @@ func (c *configuration) write() (err error) {
 		dns := &config.DNS
 		dns.Config = c
 
-		dns.LocalPTRResolvers = s.LocalPTRResolvers()
+		dns.PrivateRDNSResolvers = s.LocalPTRResolvers()
 
 		addrProcConf := s.AddrProcConfig()
 		config.Clients.Sources.RDNS = addrProcConf.UseRDNS

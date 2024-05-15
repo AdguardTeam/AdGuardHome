@@ -132,7 +132,6 @@ func TestParser_Parse(t *testing.T) {
 	}}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -216,7 +215,7 @@ func BenchmarkParser_Parse(b *testing.B) {
 
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		resSink, errSink = p.Parse(dst, src, buf)
 		dst.Reset()
 	}

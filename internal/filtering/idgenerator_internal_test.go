@@ -63,8 +63,6 @@ func TestIDGenerator_Fix(t *testing.T) {
 	}}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		t.Run(tc.name, func(t *testing.T) {
 			g := newIDGenerator(1)
 			g.fix(tc.in)

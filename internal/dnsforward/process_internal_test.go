@@ -1,14 +1,15 @@
 package dnsforward
 
 import (
+	"cmp"
 	"net"
 	"net/netip"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -70,8 +71,6 @@ func TestServer_ProcessInitial(t *testing.T) {
 	}}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -171,8 +170,6 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 	}}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -379,44 +376,6 @@ func createTestDNSFilter(t *testing.T) (f *filtering.DNSFilter) {
 	return f
 }
 
-func TestServer_ProcessDetermineLocal(t *testing.T) {
-	s := &Server{
-		privateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-	}
-
-	testCases := []struct {
-		want    assert.BoolAssertionFunc
-		name    string
-		cliAddr netip.AddrPort
-	}{{
-		want:    assert.True,
-		name:    "local",
-		cliAddr: netip.MustParseAddrPort("192.168.0.1:1"),
-	}, {
-		want:    assert.False,
-		name:    "external",
-		cliAddr: netip.MustParseAddrPort("250.249.0.1:1"),
-	}, {
-		want:    assert.False,
-		name:    "invalid",
-		cliAddr: netip.AddrPort{},
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			proxyCtx := &proxy.DNSContext{
-				Addr: tc.cliAddr,
-			}
-			dctx := &dnsContext{
-				proxyCtx: proxyCtx,
-			}
-			s.processDetermineLocal(dctx)
-
-			tc.want(t, dctx.isLocalClient)
-		})
-	}
-}
-
 func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 	const (
 		localDomainSuffix = "lan"
@@ -486,9 +445,9 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 
 			dctx := &dnsContext{
 				proxyCtx: &proxy.DNSContext{
-					Req: req,
+					Req:             req,
+					IsPrivateClient: tc.isLocalCli,
 				},
-				isLocalClient: tc.isLocalCli,
 			}
 
 			res := s.processDHCPHosts(dctx)
@@ -621,9 +580,9 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 
 		dctx := &dnsContext{
 			proxyCtx: &proxy.DNSContext{
-				Req: req,
+				Req:             req,
+				IsPrivateClient: true,
 			},
-			isLocalClient: true,
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -658,19 +617,28 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 	}
 }
 
-func TestServer_ProcessRestrictLocal(t *testing.T) {
+// TODO(e.burkov):  Rewrite this test to use the whole server instead of just
+// testing the [handleDNSRequest] method.  See comment on
+// "from_external_for_local" test case.
+func TestServer_HandleDNSRequest_restrictLocal(t *testing.T) {
+	intAddr := netip.MustParseAddr("192.168.1.1")
+	intPTRQuestion, err := netutil.IPToReversedAddr(intAddr.AsSlice())
+	require.NoError(t, err)
+
+	extAddr := netip.MustParseAddr("254.253.252.1")
+	extPTRQuestion, err := netutil.IPToReversedAddr(extAddr.AsSlice())
+	require.NoError(t, err)
+
 	const (
-		extPTRQuestion = "251.252.253.254.in-addr.arpa."
-		extPTRAnswer   = "host1.example.net."
-		intPTRQuestion = "1.1.168.192.in-addr.arpa."
-		intPTRAnswer   = "some.local-client."
+		extPTRAnswer = "host1.example.net."
+		intPTRAnswer = "some.local-client."
 	)
 
 	localUpsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
-		resp := aghalg.Coalesce(
+		resp := cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypePTR, extPTRQuestion, extPTRAnswer),
 			aghtest.MatchedResponse(req, dns.TypePTR, intPTRQuestion, intPTRAnswer),
-			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+			(&dns.Msg{}).SetRcode(req, dns.RcodeNameError),
 		)
 
 		require.NoError(testutil.PanicT{}, w.WriteMsg(resp))
@@ -696,123 +664,165 @@ func TestServer_ProcessRestrictLocal(t *testing.T) {
 	startDeferStop(t, s)
 
 	testCases := []struct {
-		name     string
-		want     string
-		question net.IP
-		cliAddr  netip.AddrPort
-		wantLen  int
+		name      string
+		question  string
+		wantErr   error
+		wantAns   []dns.RR
+		isPrivate bool
 	}{{
-		name:     "from_local_to_external",
-		want:     "host1.example.net.",
-		question: net.IP{254, 253, 252, 251},
-		cliAddr:  netip.MustParseAddrPort("192.168.10.10:1"),
-		wantLen:  1,
+		name:     "from_local_for_external",
+		question: extPTRQuestion,
+		wantErr:  nil,
+		wantAns: []dns.RR{&dns.PTR{
+			Hdr: dns.RR_Header{
+				Name:     dns.Fqdn(extPTRQuestion),
+				Rrtype:   dns.TypePTR,
+				Class:    dns.ClassINET,
+				Ttl:      60,
+				Rdlength: uint16(len(extPTRAnswer) + 1),
+			},
+			Ptr: dns.Fqdn(extPTRAnswer),
+		}},
+		isPrivate: true,
 	}, {
-		name:     "from_external_for_local",
-		want:     "",
-		question: net.IP{192, 168, 1, 1},
-		cliAddr:  netip.MustParseAddrPort("254.253.252.251:1"),
-		wantLen:  0,
+		// In theory this case is not reproducible because [proxy.Proxy] should
+		// respond to such queries with NXDOMAIN before they reach
+		// [Server.handleDNSRequest].
+		name:      "from_external_for_local",
+		question:  intPTRQuestion,
+		wantErr:   upstream.ErrNoUpstreams,
+		wantAns:   nil,
+		isPrivate: false,
 	}, {
 		name:     "from_local_for_local",
-		want:     "some.local-client.",
-		question: net.IP{192, 168, 1, 1},
-		cliAddr:  netip.MustParseAddrPort("192.168.1.2:1"),
-		wantLen:  1,
+		question: intPTRQuestion,
+		wantErr:  nil,
+		wantAns: []dns.RR{&dns.PTR{
+			Hdr: dns.RR_Header{
+				Name:     dns.Fqdn(intPTRQuestion),
+				Rrtype:   dns.TypePTR,
+				Class:    dns.ClassINET,
+				Ttl:      60,
+				Rdlength: uint16(len(intPTRAnswer) + 1),
+			},
+			Ptr: dns.Fqdn(intPTRAnswer),
+		}},
+		isPrivate: true,
 	}, {
 		name:     "from_external_for_external",
-		want:     "host1.example.net.",
-		question: net.IP{254, 253, 252, 251},
-		cliAddr:  netip.MustParseAddrPort("254.253.252.255:1"),
-		wantLen:  1,
+		question: extPTRQuestion,
+		wantErr:  nil,
+		wantAns: []dns.RR{&dns.PTR{
+			Hdr: dns.RR_Header{
+				Name:     dns.Fqdn(extPTRQuestion),
+				Rrtype:   dns.TypePTR,
+				Class:    dns.ClassINET,
+				Ttl:      60,
+				Rdlength: uint16(len(extPTRAnswer) + 1),
+			},
+			Ptr: dns.Fqdn(extPTRAnswer),
+		}},
+		isPrivate: false,
 	}}
 
 	for _, tc := range testCases {
-		reqAddr, err := dns.ReverseAddr(tc.question.String())
-		require.NoError(t, err)
-		req := createTestMessageWithType(reqAddr, dns.TypePTR)
+		pref, extErr := netutil.ExtractReversedAddr(tc.question)
+		require.NoError(t, extErr)
 
+		req := createTestMessageWithType(dns.Fqdn(tc.question), dns.TypePTR)
 		pctx := &proxy.DNSContext{
-			Proto: proxy.ProtoTCP,
-			Req:   req,
-			Addr:  tc.cliAddr,
+			Req:             req,
+			IsPrivateClient: tc.isPrivate,
+		}
+		// TODO(e.burkov):  Configure the subnet set properly.
+		if netutil.IsLocallyServed(pref.Addr()) {
+			pctx.RequestedPrivateRDNS = pref
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			err = s.handleDNSRequest(nil, pctx)
-			require.NoError(t, err)
-			require.NotNil(t, pctx.Res)
-			require.Len(t, pctx.Res.Answer, tc.wantLen)
+			err = s.handleDNSRequest(s.dnsProxy, pctx)
+			require.ErrorIs(t, err, tc.wantErr)
 
-			if tc.wantLen > 0 {
-				assert.Equal(t, tc.want, pctx.Res.Answer[0].(*dns.PTR).Ptr)
-			}
+			require.NotNil(t, pctx.Res)
+			assert.Equal(t, tc.wantAns, pctx.Res.Answer)
 		})
 	}
 }
 
-func TestServer_ProcessLocalPTR_usingResolvers(t *testing.T) {
+func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 	const locDomain = "some.local."
 	const reqAddr = "1.1.168.192.in-addr.arpa."
 
 	localUpsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
-		resp := aghalg.Coalesce(
+		resp := cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypePTR, reqAddr, locDomain),
-			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
+			(&dns.Msg{}).SetRcode(req, dns.RcodeNameError),
 		)
 
 		require.NoError(testutil.PanicT{}, w.WriteMsg(resp))
 	})
 	localUpsAddr := aghtest.StartLocalhostUpstream(t, localUpsHdlr).String()
 
-	s := createTestServer(
-		t,
-		&filtering.Config{
-			BlockingMode: filtering.BlockingModeDefault,
-		},
-		ServerConfig{
-			UDPListenAddrs: []*net.UDPAddr{{}},
-			TCPListenAddrs: []*net.TCPAddr{{}},
-			Config: Config{
-				UpstreamMode:     UpstreamModeLoadBalance,
-				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
-			},
-			UsePrivateRDNS:    true,
-			LocalPTRResolvers: []string{localUpsAddr},
-			ServePlainDNS:     true,
-		},
-	)
-
-	var proxyCtx *proxy.DNSContext
-	var dnsCtx *dnsContext
-	setup := func(use bool) {
-		proxyCtx = &proxy.DNSContext{
-			Addr: testClientAddrPort,
-			Req:  createTestMessageWithType(reqAddr, dns.TypePTR),
+	newPrxCtx := func() (prxCtx *proxy.DNSContext) {
+		return &proxy.DNSContext{
+			Addr:                 testClientAddrPort,
+			Req:                  createTestMessageWithType(reqAddr, dns.TypePTR),
+			IsPrivateClient:      true,
+			RequestedPrivateRDNS: netip.MustParsePrefix("192.168.1.1/32"),
 		}
-		dnsCtx = &dnsContext{
-			proxyCtx:        proxyCtx,
-			unreversedReqIP: netip.MustParseAddr("192.168.1.1"),
-		}
-		s.conf.UsePrivateRDNS = use
 	}
 
 	t.Run("enabled", func(t *testing.T) {
-		setup(true)
+		s := createTestServer(
+			t,
+			&filtering.Config{
+				BlockingMode: filtering.BlockingModeDefault,
+			},
+			ServerConfig{
+				UDPListenAddrs: []*net.UDPAddr{{}},
+				TCPListenAddrs: []*net.TCPAddr{{}},
+				Config: Config{
+					UpstreamMode:     UpstreamModeLoadBalance,
+					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				},
+				UsePrivateRDNS:    true,
+				LocalPTRResolvers: []string{localUpsAddr},
+				ServePlainDNS:     true,
+			},
+		)
+		pctx := newPrxCtx()
 
-		rc := s.processLocalPTR(dnsCtx)
+		rc := s.processUpstream(&dnsContext{proxyCtx: pctx})
 		require.Equal(t, resultCodeSuccess, rc)
-		require.NotEmpty(t, proxyCtx.Res.Answer)
+		require.NotEmpty(t, pctx.Res.Answer)
+		ptr := testutil.RequireTypeAssert[*dns.PTR](t, pctx.Res.Answer[0])
 
-		assert.Equal(t, locDomain, proxyCtx.Res.Answer[0].(*dns.PTR).Ptr)
+		assert.Equal(t, locDomain, ptr.Ptr)
 	})
 
 	t.Run("disabled", func(t *testing.T) {
-		setup(false)
+		s := createTestServer(
+			t,
+			&filtering.Config{
+				BlockingMode: filtering.BlockingModeDefault,
+			},
+			ServerConfig{
+				UDPListenAddrs: []*net.UDPAddr{{}},
+				TCPListenAddrs: []*net.TCPAddr{{}},
+				Config: Config{
+					UpstreamMode:     UpstreamModeLoadBalance,
+					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				},
+				UsePrivateRDNS:    false,
+				LocalPTRResolvers: []string{localUpsAddr},
+				ServePlainDNS:     true,
+			},
+		)
+		pctx := newPrxCtx()
 
-		rc := s.processLocalPTR(dnsCtx)
-		require.Equal(t, resultCodeFinish, rc)
-		require.Empty(t, proxyCtx.Res.Answer)
+		rc := s.processUpstream(&dnsContext{proxyCtx: pctx})
+		require.Equal(t, resultCodeError, rc)
+		require.Empty(t, pctx.Res.Answer)
 	})
 }
 
@@ -829,130 +839,4 @@ func TestIPStringFromAddr(t *testing.T) {
 	t.Run("nil", func(t *testing.T) {
 		assert.Empty(t, ipStringFromAddr(nil))
 	})
-}
-
-// TODO(e.burkov):  Add fuzzing when moving to golibs.
-func TestExtractARPASubnet(t *testing.T) {
-	const (
-		v4Suf   = `in-addr.arpa.`
-		v4Part  = `2.1.` + v4Suf
-		v4Whole = `4.3.` + v4Part
-
-		v6Suf   = `ip6.arpa.`
-		v6Part  = `4.3.2.1.0.0.0.0.0.0.0.0.0.0.0.0.` + v6Suf
-		v6Whole = `f.e.d.c.0.0.0.0.0.0.0.0.0.0.0.0.` + v6Part
-	)
-
-	v4Pref := netip.MustParsePrefix("1.2.3.4/32")
-	v4PrefPart := netip.MustParsePrefix("1.2.0.0/16")
-	v6Pref := netip.MustParsePrefix("::1234:0:0:0:cdef/128")
-	v6PrefPart := netip.MustParsePrefix("0:0:0:1234::/64")
-
-	testCases := []struct {
-		want    netip.Prefix
-		name    string
-		domain  string
-		wantErr string
-	}{{
-		want:   netip.Prefix{},
-		name:   "not_an_arpa",
-		domain: "some.domain.name.",
-		wantErr: `bad arpa domain name "some.domain.name.": ` +
-			`not a reversed ip network`,
-	}, {
-		want:   netip.Prefix{},
-		name:   "bad_domain_name",
-		domain: "abc.123.",
-		wantErr: `bad domain name "abc.123": ` +
-			`bad top-level domain name label "123": all octets are numeric`,
-	}, {
-		want:    v4Pref,
-		name:    "whole_v4",
-		domain:  v4Whole,
-		wantErr: "",
-	}, {
-		want:    v4PrefPart,
-		name:    "partial_v4",
-		domain:  v4Part,
-		wantErr: "",
-	}, {
-		want:    v4Pref,
-		name:    "whole_v4_within_domain",
-		domain:  "a." + v4Whole,
-		wantErr: "",
-	}, {
-		want:    v4Pref,
-		name:    "whole_v4_additional_label",
-		domain:  "5." + v4Whole,
-		wantErr: "",
-	}, {
-		want:    v4PrefPart,
-		name:    "partial_v4_within_domain",
-		domain:  "a." + v4Part,
-		wantErr: "",
-	}, {
-		want:    v4PrefPart,
-		name:    "overflow_v4",
-		domain:  "256." + v4Part,
-		wantErr: "",
-	}, {
-		want:    v4PrefPart,
-		name:    "overflow_v4_within_domain",
-		domain:  "a.256." + v4Part,
-		wantErr: "",
-	}, {
-		want:   netip.Prefix{},
-		name:   "empty_v4",
-		domain: v4Suf,
-		wantErr: `bad arpa domain name "in-addr.arpa": ` +
-			`not a reversed ip network`,
-	}, {
-		want:   netip.Prefix{},
-		name:   "empty_v4_within_domain",
-		domain: "a." + v4Suf,
-		wantErr: `bad arpa domain name "in-addr.arpa": ` +
-			`not a reversed ip network`,
-	}, {
-		want:    v6Pref,
-		name:    "whole_v6",
-		domain:  v6Whole,
-		wantErr: "",
-	}, {
-		want:   v6PrefPart,
-		name:   "partial_v6",
-		domain: v6Part,
-	}, {
-		want:    v6Pref,
-		name:    "whole_v6_within_domain",
-		domain:  "g." + v6Whole,
-		wantErr: "",
-	}, {
-		want:    v6Pref,
-		name:    "whole_v6_additional_label",
-		domain:  "1." + v6Whole,
-		wantErr: "",
-	}, {
-		want:    v6PrefPart,
-		name:    "partial_v6_within_domain",
-		domain:  "label." + v6Part,
-		wantErr: "",
-	}, {
-		want:    netip.Prefix{},
-		name:    "empty_v6",
-		domain:  v6Suf,
-		wantErr: `bad arpa domain name "ip6.arpa": not a reversed ip network`,
-	}, {
-		want:    netip.Prefix{},
-		name:    "empty_v6_within_domain",
-		domain:  "g." + v6Suf,
-		wantErr: `bad arpa domain name "ip6.arpa": not a reversed ip network`,
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			subnet, err := extractARPASubnet(tc.domain)
-			testutil.AssertErrorMsg(t, tc.wantErr, err)
-			assert.Equal(t, tc.want, subnet)
-		})
-	}
 }

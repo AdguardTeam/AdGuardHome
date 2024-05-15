@@ -8,7 +8,7 @@
 'variables':
     'channel': 'edge'
     'dockerFrontend': 'adguard/home-js-builder:1.1'
-    'dockerGo': 'adguard/go-builder:1.22.2--1'
+    'dockerGo': 'adguard/go-builder:1.22.3--1'
 
 'stages':
   - 'Build frontend':
@@ -249,7 +249,7 @@
     'recipients':
       - 'webhook':
             'name': 'Build webhook'
-            'url': 'http://prod.jirahub.service.eu.consul/v1/webhook/bamboo?channel=adguard-qa'
+            'url': 'http://prod.jirahub.service.eu.consul/v1/webhook/bamboo?channel=adguard-qa-dns-builds'
 
 'labels': []
 'other':
@@ -266,7 +266,7 @@
         'variables':
             'channel': 'beta'
             'dockerFrontend': 'adguard/home-js-builder:1.1'
-            'dockerGo': 'adguard/go-builder:1.22.2--1'
+            'dockerGo': 'adguard/go-builder:1.22.3--1'
     # release-vX.Y.Z branches are the branches from which the actual final
     # release is built.
   - '^release-v[0-9]+\.[0-9]+\.[0-9]+':
@@ -282,4 +282,4 @@
         'variables':
             'channel': 'release'
             'dockerFrontend': 'adguard/home-js-builder:1.1'
-            'dockerGo': 'adguard/go-builder:1.22.2--1'
+            'dockerGo': 'adguard/go-builder:1.22.3--1'

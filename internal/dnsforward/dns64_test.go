@@ -3,7 +3,6 @@ package dnsforward
 import (
 	"net"
 	"testing"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -11,6 +10,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -64,6 +64,8 @@ func newRR(t *testing.T, name string, qtype uint16, ttl uint32, val any) (rr dns
 }
 
 func TestServer_HandleDNSRequest_dns64(t *testing.T) {
+	t.Parallel()
+
 	const (
 		ipv4Domain    = "ipv4.only."
 		ipv6Domain    = "ipv6.only."
@@ -252,33 +254,33 @@ func TestServer_HandleDNSRequest_dns64(t *testing.T) {
 	localUpsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
 		require.Len(pt, m.Question, 1)
 		require.Equal(pt, m.Question[0].Name, ptr64Domain)
-		resp := (&dns.Msg{
-			Answer: []dns.RR{localRR},
-		}).SetReply(m)
+
+		resp := (&dns.Msg{}).SetReply(m)
+		resp.Answer = []dns.RR{localRR}
 
 		require.NoError(t, w.WriteMsg(resp))
 	})
 	localUpsAddr := aghtest.StartLocalhostUpstream(t, localUpsHdlr).String()
 
 	client := &dns.Client{
-		Net:     "tcp",
-		Timeout: 1 * time.Second,
+		Net:     string(proxy.ProtoTCP),
+		Timeout: testTimeout,
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			upsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
 				q := req.Question[0]
-				require.Contains(pt, tc.upsAns, q.Qtype)
 
+				require.Contains(pt, tc.upsAns, q.Qtype)
 				answer := tc.upsAns[q.Qtype]
 
-				resp := (&dns.Msg{
-					Answer: answer[sectionAnswer],
-					Ns:     answer[sectionAuthority],
-					Extra:  answer[sectionAdditional],
-				}).SetReply(req)
+				resp := (&dns.Msg{}).SetReply(req)
+				resp.Answer = answer[sectionAnswer]
+				resp.Ns = answer[sectionAuthority]
+				resp.Extra = answer[sectionAdditional]
 
 				require.NoError(pt, w.WriteMsg(resp))
 			})
@@ -308,10 +310,54 @@ func TestServer_HandleDNSRequest_dns64(t *testing.T) {
 
 			req := (&dns.Msg{}).SetQuestion(tc.qname, tc.qtype)
 
-			resp, _, excErr := client.Exchange(req, s.dnsProxy.Addr(proxy.ProtoTCP).String())
+			resp, _, excErr := client.Exchange(req, s.proxy().Addr(proxy.ProtoTCP).String())
 			require.NoError(t, excErr)
 
 			require.Equal(t, tc.wantAns, resp.Answer)
 		})
 	}
+}
+
+func TestServer_dns64WithDisabledRDNS(t *testing.T) {
+	t.Parallel()
+
+	// Shouldn't go to upstream at all.
+	panicHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, m *dns.Msg) {
+		panic("not implemented")
+	})
+	upsAddr := aghtest.StartLocalhostUpstream(t, panicHdlr).String()
+	localUpsAddr := aghtest.StartLocalhostUpstream(t, panicHdlr).String()
+
+	s := createTestServer(t, &filtering.Config{
+		BlockingMode: filtering.BlockingModeDefault,
+	}, ServerConfig{
+		UDPListenAddrs: []*net.UDPAddr{{}},
+		TCPListenAddrs: []*net.TCPAddr{{}},
+		UseDNS64:       true,
+		Config: Config{
+			UpstreamMode:     UpstreamModeLoadBalance,
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			UpstreamDNS:      []string{upsAddr},
+		},
+		UsePrivateRDNS:    false,
+		LocalPTRResolvers: []string{localUpsAddr},
+		ServePlainDNS:     true,
+	})
+	startDeferStop(t, s)
+
+	mappedIPv6 := net.ParseIP("64:ff9b::102:304")
+	arpa, err := netutil.IPToReversedAddr(mappedIPv6)
+	require.NoError(t, err)
+
+	req := (&dns.Msg{}).SetQuestion(dns.Fqdn(arpa), dns.TypePTR)
+
+	cli := &dns.Client{
+		Net:     string(proxy.ProtoTCP),
+		Timeout: testTimeout,
+	}
+
+	resp, _, err := cli.Exchange(req, s.proxy().Addr(proxy.ProtoTCP).String())
+	require.NoError(t, err)
+
+	assert.Equal(t, dns.RcodeNameError, resp.Rcode)
 }

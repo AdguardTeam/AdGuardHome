@@ -559,6 +559,8 @@ type Result struct {
 	Reason Reason `json:",omitempty"`
 
 	// IsFiltered is true if the request is filtered.
+	//
+	// TODO(d.kolyshev): Get rid of this flag.
 	IsFiltered bool `json:",omitempty"`
 }
 

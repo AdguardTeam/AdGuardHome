@@ -4,8 +4,12 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
+	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/golibs/errors"
+	"golang.org/x/exp/maps"
 )
 
 // macKey contains MAC as byte array of 6, 8, or 20 bytes.
@@ -28,6 +32,9 @@ func macToKey(mac net.HardwareAddr) (key macKey) {
 
 // Index stores all information about persistent clients.
 type Index struct {
+	// nameToUID maps client name to UID.
+	nameToUID map[string]UID
+
 	// clientIDToUID maps client ID to UID.
 	clientIDToUID map[string]UID
 
@@ -47,6 +54,7 @@ type Index struct {
 // NewIndex initializes the new instance of client index.
 func NewIndex() (ci *Index) {
 	return &Index{
+		nameToUID:     map[string]UID{},
 		clientIDToUID: map[string]UID{},
 		ipToUID:       map[netip.Addr]UID{},
 		subnetToUID:   aghalg.NewSortedMap[netip.Prefix, UID](subnetCompare),
@@ -61,6 +69,8 @@ func (ci *Index) Add(c *Persistent) {
 	if (c.UID == UID{}) {
 		panic("client must contain uid")
 	}
+
+	ci.nameToUID[c.Name] = c.UID
 
 	for _, id := range c.ClientIDs {
 		ci.clientIDToUID[id] = c.UID
@@ -82,15 +92,30 @@ func (ci *Index) Add(c *Persistent) {
 	ci.uidToClient[c.UID] = c
 }
 
+// ClashesUID returns existing persistent client with the same UID as c.  Note
+// that this is only possible when configuration contains duplicate fields.
+func (ci *Index) ClashesUID(c *Persistent) (err error) {
+	p, ok := ci.uidToClient[c.UID]
+	if ok {
+		return fmt.Errorf("another client %q uses the same uid", p.Name)
+	}
+
+	return nil
+}
+
 // Clashes returns an error if the index contains a different persistent client
 // with at least a single identifier contained by c.  c must be non-nil.
 func (ci *Index) Clashes(c *Persistent) (err error) {
+	if p := ci.clashesName(c); p != nil {
+		return fmt.Errorf("another client uses the same name %q", p.Name)
+	}
+
 	for _, id := range c.ClientIDs {
 		existing, ok := ci.clientIDToUID[id]
 		if ok && existing != c.UID {
 			p := ci.uidToClient[existing]
 
-			return fmt.Errorf("another client %q uses the same ID %q", p.Name, id)
+			return fmt.Errorf("another client %q uses the same ClientID %q", p.Name, id)
 		}
 	}
 
@@ -107,6 +132,21 @@ func (ci *Index) Clashes(c *Persistent) (err error) {
 	p, mac := ci.clashesMAC(c)
 	if p != nil {
 		return fmt.Errorf("another client %q uses the same MAC %q", p.Name, mac)
+	}
+
+	return nil
+}
+
+// clashesName returns existing persistent client with the same name as c or
+// nil.  c must be non-nil.
+func (ci *Index) clashesName(c *Persistent) (existing *Persistent) {
+	existing, ok := ci.FindByName(c.Name)
+	if !ok {
+		return nil
+	}
+
+	if existing.UID != c.UID {
+		return existing
 	}
 
 	return nil
@@ -184,21 +224,33 @@ func (ci *Index) Find(id string) (c *Persistent, ok bool) {
 
 	mac, err := net.ParseMAC(id)
 	if err == nil {
-		return ci.findByMAC(mac)
+		return ci.FindByMAC(mac)
 	}
 
 	return nil, false
 }
 
-// find finds persistent client by IP address.
+// FindByName finds persistent client by name.
+func (ci *Index) FindByName(name string) (c *Persistent, found bool) {
+	uid, found := ci.nameToUID[name]
+	if found {
+		return ci.uidToClient[uid], true
+	}
+
+	return nil, false
+}
+
+// findByIP finds persistent client by IP address.
 func (ci *Index) findByIP(ip netip.Addr) (c *Persistent, found bool) {
 	uid, found := ci.ipToUID[ip]
 	if found {
 		return ci.uidToClient[uid], true
 	}
 
+	ipWithoutZone := ip.WithZone("")
 	ci.subnetToUID.Range(func(pref netip.Prefix, id UID) (cont bool) {
-		if pref.Contains(ip) {
+		// Remove zone before checking because prefixes strip zones.
+		if pref.Contains(ipWithoutZone) {
 			uid, found = id, true
 
 			return false
@@ -214,8 +266,8 @@ func (ci *Index) findByIP(ip netip.Addr) (c *Persistent, found bool) {
 	return nil, false
 }
 
-// find finds persistent client by MAC.
-func (ci *Index) findByMAC(mac net.HardwareAddr) (c *Persistent, found bool) {
+// FindByMAC finds persistent client by MAC.
+func (ci *Index) FindByMAC(mac net.HardwareAddr) (c *Persistent, found bool) {
 	k := macToKey(mac)
 	uid, found := ci.macToUID[k]
 	if found {
@@ -225,9 +277,31 @@ func (ci *Index) findByMAC(mac net.HardwareAddr) (c *Persistent, found bool) {
 	return nil, false
 }
 
+// FindByIPWithoutZone finds a persistent client by IP address without zone.  It
+// strips the IPv6 zone index from the stored IP addresses before comparing,
+// because querylog entries don't have it.  See TODO on [querylog.logEntry.IP].
+//
+// Note that multiple clients can have the same IP address with different zones.
+// Therefore, the result of this method is indeterminate.
+func (ci *Index) FindByIPWithoutZone(ip netip.Addr) (c *Persistent) {
+	if (ip == netip.Addr{}) {
+		return nil
+	}
+
+	for addr, uid := range ci.ipToUID {
+		if addr.WithZone("") == ip {
+			return ci.uidToClient[uid]
+		}
+	}
+
+	return nil
+}
+
 // Delete removes information about persistent client from the index.  c must be
 // non-nil.
 func (ci *Index) Delete(c *Persistent) {
+	delete(ci.nameToUID, c.Name)
+
 	for _, id := range c.ClientIDs {
 		delete(ci.clientIDToUID, id)
 	}
@@ -246,4 +320,49 @@ func (ci *Index) Delete(c *Persistent) {
 	}
 
 	delete(ci.uidToClient, c.UID)
+}
+
+// Size returns the number of persistent clients.
+func (ci *Index) Size() (n int) {
+	return len(ci.uidToClient)
+}
+
+// Range calls f for each persistent client, unless cont is false.  The order is
+// undefined.
+func (ci *Index) Range(f func(c *Persistent) (cont bool)) {
+	for _, c := range ci.uidToClient {
+		if !f(c) {
+			return
+		}
+	}
+}
+
+// RangeByName is like [Index.Range] but sorts the persistent clients by name
+// before iterating ensuring a predictable order.
+func (ci *Index) RangeByName(f func(c *Persistent) (cont bool)) {
+	cs := maps.Values(ci.uidToClient)
+	slices.SortFunc(cs, func(a, b *Persistent) (n int) {
+		return strings.Compare(a.Name, b.Name)
+	})
+
+	for _, c := range cs {
+		if !f(c) {
+			break
+		}
+	}
+}
+
+// CloseUpstreams closes upstream configurations of persistent clients.
+func (ci *Index) CloseUpstreams() (err error) {
+	var errs []error
+	ci.RangeByName(func(c *Persistent) (cont bool) {
+		err = c.CloseUpstreams()
+		if err != nil {
+			errs = append(errs, err)
+		}
+
+		return true
+	})
+
+	return errors.Join(errs...)
 }

@@ -235,9 +235,18 @@ type DNSCryptConfig struct {
 // ServerConfig represents server configuration.
 // The zero ServerConfig is empty and ready for use.
 type ServerConfig struct {
-	UDPListenAddrs []*net.UDPAddr        // UDP listen address
-	TCPListenAddrs []*net.TCPAddr        // TCP listen address
-	UpstreamConfig *proxy.UpstreamConfig // Upstream DNS servers config
+	// UDPListenAddrs is the list of addresses to listen for DNS-over-UDP.
+	UDPListenAddrs []*net.UDPAddr
+
+	// TCPListenAddrs is the list of addresses to listen for DNS-over-TCP.
+	TCPListenAddrs []*net.TCPAddr
+
+	// UpstreamConfig is the general configuration of upstream DNS servers.
+	UpstreamConfig *proxy.UpstreamConfig
+
+	// PrivateRDNSUpstreamConfig is the configuration of upstream DNS servers
+	// for private reverse DNS.
+	PrivateRDNSUpstreamConfig *proxy.UpstreamConfig
 
 	// AddrProcConf defines the configuration for the client IP processor.
 	// If nil, [client.EmptyAddrProc] is used.
@@ -306,24 +315,28 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 	trustedPrefixes := netutil.UnembedPrefixes(srvConf.TrustedProxies)
 
 	conf = &proxy.Config{
-		HTTP3:                  srvConf.ServeHTTP3,
-		Ratelimit:              int(srvConf.Ratelimit),
-		RatelimitSubnetLenIPv4: srvConf.RatelimitSubnetLenIPv4,
-		RatelimitSubnetLenIPv6: srvConf.RatelimitSubnetLenIPv6,
-		RatelimitWhitelist:     srvConf.RatelimitWhitelist,
-		RefuseAny:              srvConf.RefuseAny,
-		TrustedProxies:         netutil.SliceSubnetSet(trustedPrefixes),
-		CacheMinTTL:            srvConf.CacheMinTTL,
-		CacheMaxTTL:            srvConf.CacheMaxTTL,
-		CacheOptimistic:        srvConf.CacheOptimistic,
-		UpstreamConfig:         srvConf.UpstreamConfig,
-		BeforeRequestHandler:   s.beforeRequestHandler,
-		RequestHandler:         s.handleDNSRequest,
-		HTTPSServerName:        aghhttp.UserAgent(),
-		EnableEDNSClientSubnet: srvConf.EDNSClientSubnet.Enabled,
-		MaxGoroutines:          srvConf.MaxGoroutines,
-		UseDNS64:               srvConf.UseDNS64,
-		DNS64Prefs:             srvConf.DNS64Prefixes,
+		HTTP3:                     srvConf.ServeHTTP3,
+		Ratelimit:                 int(srvConf.Ratelimit),
+		RatelimitSubnetLenIPv4:    srvConf.RatelimitSubnetLenIPv4,
+		RatelimitSubnetLenIPv6:    srvConf.RatelimitSubnetLenIPv6,
+		RatelimitWhitelist:        srvConf.RatelimitWhitelist,
+		RefuseAny:                 srvConf.RefuseAny,
+		TrustedProxies:            netutil.SliceSubnetSet(trustedPrefixes),
+		CacheMinTTL:               srvConf.CacheMinTTL,
+		CacheMaxTTL:               srvConf.CacheMaxTTL,
+		CacheOptimistic:           srvConf.CacheOptimistic,
+		UpstreamConfig:            srvConf.UpstreamConfig,
+		PrivateRDNSUpstreamConfig: srvConf.PrivateRDNSUpstreamConfig,
+		BeforeRequestHandler:      s,
+		RequestHandler:            s.handleDNSRequest,
+		HTTPSServerName:           aghhttp.UserAgent(),
+		EnableEDNSClientSubnet:    srvConf.EDNSClientSubnet.Enabled,
+		MaxGoroutines:             srvConf.MaxGoroutines,
+		UseDNS64:                  srvConf.UseDNS64,
+		DNS64Prefs:                srvConf.DNS64Prefixes,
+		UsePrivateRDNS:            srvConf.UsePrivateRDNS,
+		PrivateSubnets:            s.privateNets,
+		MessageConstructor:        s,
 	}
 
 	if srvConf.EDNSClientSubnet.UseCustom {
@@ -452,10 +465,31 @@ func (s *Server) prepareIpsetListSettings() (err error) {
 	}
 
 	ipsets := stringutil.SplitTrimmed(string(data), "\n")
+	ipsets = stringutil.FilterOut(ipsets, IsCommentOrEmpty)
 
 	log.Debug("dns: using %d ipset rules from file %q", len(ipsets), fn)
 
 	return s.ipset.init(ipsets)
+}
+
+// loadUpstreams parses upstream DNS servers from the configured file or from
+// the configuration itself.
+func (conf *ServerConfig) loadUpstreams() (upstreams []string, err error) {
+	if conf.UpstreamDNSFileName == "" {
+		return stringutil.FilterOut(conf.UpstreamDNS, IsCommentOrEmpty), nil
+	}
+
+	var data []byte
+	data, err = os.ReadFile(conf.UpstreamDNSFileName)
+	if err != nil {
+		return nil, fmt.Errorf("reading upstream from file: %w", err)
+	}
+
+	upstreams = stringutil.SplitTrimmed(string(data), "\n")
+
+	log.Debug("dnsforward: got %d upstreams in %q", len(upstreams), conf.UpstreamDNSFileName)
+
+	return stringutil.FilterOut(upstreams, IsCommentOrEmpty), nil
 }
 
 // collectListenAddr adds addrPort to addrs.  It also adds its port to
@@ -529,8 +563,8 @@ func (m *combinedAddrPortSet) Has(addrPort netip.AddrPort) (ok bool) {
 	return m.ports.Has(addrPort.Port()) && m.addrs.Has(addrPort.Addr())
 }
 
-// filterOut filters out all the upstreams that match um.  It returns all the
-// closing errors joined.
+// filterOutAddrs filters out all the upstreams that match um.  It returns all
+// the closing errors joined.
 func filterOutAddrs(upsConf *proxy.UpstreamConfig, set addrPortSet) (err error) {
 	var errs []error
 	delFunc := func(u upstream.Upstream) (ok bool) {

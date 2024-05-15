@@ -143,13 +143,13 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 		secondPageDomain = "second.example.org"
 	)
 	// Add entries to the log.
-	for i := 0; i < entNum; i++ {
+	for range entNum {
 		addEntry(l, secondPageDomain, net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	}
 	// Write them to the first file.
 	require.NoError(t, l.flushLogBuffer())
 	// Add more to the in-memory part of log.
-	for i := 0; i < entNum; i++ {
+	for range entNum {
 		addEntry(l, firstPageDomain, net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	}
 
@@ -215,7 +215,7 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 
 	const entNum = 10
 	// Add entries to the log.
-	for i := 0; i < entNum; i++ {
+	for range entNum {
 		addEntry(l, "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	}
 	// Write them to disk.

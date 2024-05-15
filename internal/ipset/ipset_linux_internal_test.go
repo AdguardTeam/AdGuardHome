@@ -147,7 +147,7 @@ func BenchmarkManager_LookupHost(b *testing.B) {
 
 	b.Run("long", func(b *testing.B) {
 		const name = "a.very.long.domain.name.inside.the.domain.example.com"
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			ipsetPropsSink = m.lookupHost(name)
 		}
 
@@ -156,7 +156,7 @@ func BenchmarkManager_LookupHost(b *testing.B) {
 
 	b.Run("short", func(b *testing.B) {
 		const name = "example.net"
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			ipsetPropsSink = m.lookupHost(name)
 		}
 

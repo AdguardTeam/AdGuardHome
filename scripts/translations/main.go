@@ -5,6 +5,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -204,19 +205,13 @@ type twoskyClient struct {
 func (t *twoskyConfig) toClient() (cli *twoskyClient, err error) {
 	defer func() { err = errors.Annotate(err, "filling config: %w") }()
 
-	uriStr := os.Getenv("TWOSKY_URI")
-	if uriStr == "" {
-		uriStr = twoskyURI
-	}
+	uriStr := cmp.Or(os.Getenv("TWOSKY_URI"), twoskyURI)
 	uri, err := url.Parse(uriStr)
 	if err != nil {
 		return nil, err
 	}
 
-	projectID := os.Getenv("TWOSKY_PROJECT_ID")
-	if projectID == "" {
-		projectID = defaultProjectID
-	}
+	projectID := cmp.Or(os.Getenv("TWOSKY_PROJECT_ID"), defaultProjectID)
 
 	baseLang := t.BaseLangcode
 	uLangStr := os.Getenv("UPLOAD_LANGUAGE")

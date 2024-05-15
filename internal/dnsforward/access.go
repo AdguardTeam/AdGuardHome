@@ -156,7 +156,10 @@ func (a *accessManager) isBlockedIP(ip netip.Addr) (blocked bool, rule string) {
 	}
 
 	for _, ipnet := range ipnets {
-		if ipnet.Contains(ip) {
+		// Remove zone before checking because prefixes stip zones.
+		//
+		// TODO(d.kolyshev):  Cover with tests.
+		if ipnet.Contains(ip.WithZone("")) {
 			return blocked, ipnet.String()
 		}
 	}

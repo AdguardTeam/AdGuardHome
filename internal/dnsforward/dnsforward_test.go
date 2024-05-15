@@ -1,7 +1,7 @@
 package dnsforward
 
 import (
-	"context"
+	"cmp"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
@@ -21,7 +21,6 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -190,7 +189,7 @@ func newGoogleUpstream() (u upstream.Upstream) {
 	return &aghtest.UpstreamMock{
 		OnAddress: func() (addr string) { return "google.upstream.example" },
 		OnExchange: func(req *dns.Msg) (resp *dns.Msg, err error) {
-			return aghalg.Coalesce(
+			return cmp.Or(
 				aghtest.MatchedResponse(req, dns.TypeA, googleDomainName, "8.8.8.8"),
 				new(dns.Msg).SetRcode(req, dns.RcodeNameError),
 			), nil
@@ -253,7 +252,7 @@ func sendTestMessagesAsync(t *testing.T, conn *dns.Conn) {
 
 	wg := &sync.WaitGroup{}
 
-	for i := 0; i < testMessagesCount; i++ {
+	for range testMessagesCount {
 		msg := createGoogleATestMessage()
 		wg.Add(1)
 
@@ -276,7 +275,7 @@ func sendTestMessagesAsync(t *testing.T, conn *dns.Conn) {
 func sendTestMessages(t *testing.T, conn *dns.Conn) {
 	t.Helper()
 
-	for i := 0; i < testMessagesCount; i++ {
+	for i := range testMessagesCount {
 		req := createGoogleATestMessage()
 		err := conn.WriteMsg(req)
 		assert.NoErrorf(t, err, "cannot write message #%d: %s", i, err)
@@ -491,19 +490,10 @@ func TestServerRace(t *testing.T) {
 }
 
 func TestSafeSearch(t *testing.T) {
-	resolver := &aghtest.Resolver{
-		OnLookupIP: func(_ context.Context, _, host string) (ips []net.IP, err error) {
-			ip4, ip6 := aghtest.HostToIPs(host)
-
-			return []net.IP{ip4.AsSlice(), ip6.AsSlice()}, nil
-		},
-	}
-
 	safeSearchConf := filtering.SafeSearchConfig{
-		Enabled:        true,
-		Google:         true,
-		Yandex:         true,
-		CustomResolver: resolver,
+		Enabled: true,
+		Google:  true,
+		Yandex:  true,
 	}
 
 	filterConf := &filtering.Config{
@@ -540,7 +530,6 @@ func TestSafeSearch(t *testing.T) {
 	client := &dns.Client{}
 
 	yandexIP := netip.AddrFrom4([4]byte{213, 180, 193, 56})
-	googleIP, _ := aghtest.HostToIPs("forcesafesearch.google.com")
 
 	testCases := []struct {
 		host      string
@@ -564,19 +553,19 @@ func TestSafeSearch(t *testing.T) {
 		wantCNAME: "",
 	}, {
 		host:      "www.google.com.",
-		want:      googleIP,
+		want:      netip.Addr{},
 		wantCNAME: "forcesafesearch.google.com.",
 	}, {
 		host:      "www.google.com.af.",
-		want:      googleIP,
+		want:      netip.Addr{},
 		wantCNAME: "forcesafesearch.google.com.",
 	}, {
 		host:      "www.google.be.",
-		want:      googleIP,
+		want:      netip.Addr{},
 		wantCNAME: "forcesafesearch.google.com.",
 	}, {
 		host:      "www.google.by.",
-		want:      googleIP,
+		want:      netip.Addr{},
 		wantCNAME: "forcesafesearch.google.com.",
 	}}
 
@@ -593,12 +582,15 @@ func TestSafeSearch(t *testing.T) {
 
 				cname := testutil.RequireTypeAssert[*dns.CNAME](t, reply.Answer[0])
 				assert.Equal(t, tc.wantCNAME, cname.Target)
+
+				a := testutil.RequireTypeAssert[*dns.A](t, reply.Answer[1])
+				assert.NotEmpty(t, a.A)
 			} else {
 				require.Len(t, reply.Answer, 1)
-			}
 
-			a := testutil.RequireTypeAssert[*dns.A](t, reply.Answer[len(reply.Answer)-1])
-			assert.Equal(t, net.IP(tc.want.AsSlice()), a.A)
+				a := testutil.RequireTypeAssert[*dns.A](t, reply.Answer[0])
+				assert.Equal(t, net.IP(tc.want.AsSlice()), a.A)
+			}
 		})
 	}
 }
@@ -691,7 +683,7 @@ func TestServerCustomClientUpstream(t *testing.T) {
 	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
 		atomic.AddUint32(&upsCalledCounter, 1)
 
-		return aghalg.Coalesce(
+		return cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypeA, "host", "192.168.0.1"),
 			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
 		), nil
@@ -1152,7 +1144,7 @@ func TestRewrite(t *testing.T) {
 	}))
 
 	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
-		return aghalg.Coalesce(
+		return cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypeA, "example.org", "4.3.2.1"),
 			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
 		), nil
@@ -1481,7 +1473,7 @@ func TestServer_Exchange(t *testing.T) {
 	require.NoError(t, err)
 
 	extUpsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
-		resp := aghalg.Coalesce(
+		resp := cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypePTR, onesRevExtIPv4, dns.Fqdn(onesHost)),
 			doubleTTL(aghtest.MatchedResponse(req, dns.TypePTR, twosRevExtIPv4, dns.Fqdn(twosHost))),
 			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
@@ -1495,7 +1487,7 @@ func TestServer_Exchange(t *testing.T) {
 	require.NoError(t, err)
 
 	locUpsHdlr := dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
-		resp := aghalg.Coalesce(
+		resp := cmp.Or(
 			aghtest.MatchedResponse(req, dns.TypePTR, revLocIPv4, dns.Fqdn(localDomainHost)),
 			new(dns.Msg).SetRcode(req, dns.RcodeNameError),
 		)

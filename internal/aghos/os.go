@@ -159,19 +159,9 @@ func NotifyReconfigureSignal(c chan<- os.Signal) {
 	notifyReconfigureSignal(c)
 }
 
-// NotifyShutdownSignal notifies c on receiving shutdown signals.
-func NotifyShutdownSignal(c chan<- os.Signal) {
-	notifyShutdownSignal(c)
-}
-
 // IsReconfigureSignal returns true if sig is a reconfigure signal.
 func IsReconfigureSignal(sig os.Signal) (ok bool) {
 	return isReconfigureSignal(sig)
-}
-
-// IsShutdownSignal returns true if sig is a shutdown signal.
-func IsShutdownSignal(sig os.Signal) (ok bool) {
-	return isShutdownSignal(sig)
 }
 
 // SendShutdownSignal sends the shutdown signal to the channel.
