@@ -14,11 +14,11 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.50] - 2024-04-24 (APPROX.)
+## [v0.107.51] - 2024-06-22 (APPROX.)
 
-See also the [v0.107.50 GitHub milestone][ms-v0.107.50].
+See also the [v0.107.51 GitHub milestone][ms-v0.107.51].
 
-[ms-v0.107.50]: https://github.com/AdguardTeam/AdGuardHome/milestone/85?closed=1
+[ms-v0.107.51]: https://github.com/AdguardTeam/AdGuardHome/milestone/86?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -26,6 +26,21 @@ NOTE: Add new changes BELOW THIS COMMENT.
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.50] - 2024-05-22
+
+See also the [v0.107.50 GitHub milestone][ms-v0.107.50].
+
+### Fixed
+
+- Broken private reverse DNS upstream servers validation causing update failures
+  ([#7013]).
+
+[#7013]: https://github.com/AdguardTeam/AdGuardHome/issues/7013
+
+[ms-v0.107.50]: https://github.com/AdguardTeam/AdGuardHome/milestone/85?closed=1
 
 
 
@@ -45,7 +60,7 @@ See also the [v0.107.49 GitHub milestone][ms-v0.107.49].
 ### Changed
 
 - Private rDNS resolution now also affects `SOA` and `NS` requests ([#6882]).
-- Rewrite rules mechanics was changed due to improve resolving in safe search.
+- Rewrite rules mechanics were changed due to improved resolving in safe search.
 
 ### Deprecated
 
@@ -2971,11 +2986,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.50...HEAD
-[v0.107.50]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.49...v0.107.50
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.51...HEAD
+[v0.107.51]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.50...v0.107.51
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.49...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.50...HEAD
+[v0.107.50]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.49...v0.107.50
 [v0.107.49]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.48...v0.107.49
 [v0.107.48]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.47...v0.107.48
 [v0.107.47]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.46...v0.107.47
