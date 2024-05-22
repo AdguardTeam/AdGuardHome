@@ -23,6 +23,13 @@ See also the [v0.107.50 GitHub milestone][ms-v0.107.50].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Broken private reverse DNS upstream servers validation causing update failures
+  ([#7013]).
+
+[#7013]: https://github.com/AdguardTeam/AdGuardHome/issues/7013
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

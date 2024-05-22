@@ -333,6 +333,13 @@ func (req *jsonDNSConfig) checkBootstrap() (err error) {
 	return nil
 }
 
+// containsPrivateRDNS returns true if req contains private RDNS settings and
+// should be validated.
+func (req *jsonDNSConfig) containsPrivateRDNS() (ok bool) {
+	return (req.UsePrivateRDNS != nil && *req.UsePrivateRDNS) ||
+		(req.LocalPTRUpstreams != nil && len(*req.LocalPTRUpstreams) > 0)
+}
+
 // checkPrivateRDNS returns an error if the configuration of the private RDNS is
 // not valid.
 func (req *jsonDNSConfig) checkPrivateRDNS(
@@ -340,7 +347,7 @@ func (req *jsonDNSConfig) checkPrivateRDNS(
 	sysResolvers SystemResolvers,
 	privateNets netutil.SubnetSet,
 ) (err error) {
-	if (req.UsePrivateRDNS == nil || !*req.UsePrivateRDNS) && req.LocalPTRUpstreams == nil {
+	if !req.containsPrivateRDNS() {
 		return nil
 	}
 

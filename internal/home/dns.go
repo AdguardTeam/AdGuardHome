@@ -156,7 +156,7 @@ func initDNSServer(
 	}
 
 	// Try to prepare the server with disabled private RDNS resolution if it
-	// failed to prepare as is.  See TODO on [ErrBadPrivateRDNSUpstreams].
+	// failed to prepare as is.  See TODO on [dnsforward.PrivateRDNSError].
 	err = Context.dnsServer.Prepare(dnsConf)
 	if privRDNSErr := (&dnsforward.PrivateRDNSError{}); errors.As(err, &privRDNSErr) {
 		log.Info("WARNING: %s; trying to disable private RDNS resolution", err)
