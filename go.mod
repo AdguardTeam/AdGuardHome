@@ -3,7 +3,8 @@ module github.com/AdguardTeam/AdGuardHome
 go 1.22.3
 
 require (
-	github.com/AdguardTeam/dnsproxy v0.71.1
+	// TODO(a.garipov): Use a tagged version once released.
+	github.com/AdguardTeam/dnsproxy v0.71.2-0.20240524084138-ee010801be05
 	github.com/AdguardTeam/golibs v0.23.2
 	github.com/AdguardTeam/urlfilter v0.18.0
 	github.com/NYTimes/gziphandler v1.1.1
@@ -49,6 +50,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/google/pprof v0.0.0-20240521024322-9665fa269a30 // indirect
+	github.com/jessevdk/go-flags v1.5.0 // indirect
 	github.com/mdlayher/socket v0.5.1 // indirect
 	github.com/onsi/ginkgo/v2 v2.17.3 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect

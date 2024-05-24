@@ -1,5 +1,7 @@
 github.com/AdguardTeam/dnsproxy v0.71.1 h1:R8jKmoE9HwqdTt7bm8irpvrQEOSmD+iGdNXbOg/uM8Y=
 github.com/AdguardTeam/dnsproxy v0.71.1/go.mod h1:rCaCL4m4n63sgwTOyUVdc7MC42PlUYBt11Fz/UjD+kM=
+github.com/AdguardTeam/dnsproxy v0.71.2-0.20240524084138-ee010801be05 h1:Ay61A/PPlfKedeDLDj1A086zVYivD5jezwYi24JH6/M=
+github.com/AdguardTeam/dnsproxy v0.71.2-0.20240524084138-ee010801be05/go.mod h1:ejrJRou/fCxCtTR6ZYOPblzte2zzHnGLpaN2Yz80ZKk=
 github.com/AdguardTeam/golibs v0.23.2 h1:rMjYantwtQ39e8G4zBQ6ZLlm4s3XH30Bc9VxhoOHwao=
 github.com/AdguardTeam/golibs v0.23.2/go.mod h1:o9i55Sx6v7qogRQeqaBfmLbC/pZqeMBWi015U5PTDY0=
 github.com/AdguardTeam/urlfilter v0.18.0 h1:ZZzwODC/ADpjJSODxySrrUnt/fvOCfGFaCW6j+wsGfQ=
@@ -56,6 +58,8 @@ github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714/go.mod h1:2Go
 github.com/insomniacslk/dhcp v0.0.0-20240419123447-f1cffa2c0c49 h1:/OuvSMGT9+xnyZ+7MZQ1zdngaCCAdPoSw8B/uurZ7pg=
 github.com/insomniacslk/dhcp v0.0.0-20240419123447-f1cffa2c0c49/go.mod h1:KclMyHxX06VrVr0DJmeFSUb1ankt7xTfoOA35pCkoic=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
+github.com/jessevdk/go-flags v1.5.0 h1:1jKYvbxEjfUl0fmqTCOfonvskHHXMjBySTLW4y9LFvc=
+github.com/jessevdk/go-flags v1.5.0/go.mod h1:Fw0T6WPc1dYxT4mKEZRfG5kJhaTDP9pj1c2EWnYs/m4=
 github.com/josharian/native v1.0.0/go.mod h1:7X/raswPFr05uY3HiLlYeyQntB6OO7E/d2Cu7qoaN2w=
 github.com/josharian/native v1.1.1-0.20230202152459-5c7d0dd6ab86 h1:elKwZS1OcdQ0WwEDBeqxKwb7WB62QX8bvZ/FJnVXIfk=
 github.com/josharian/native v1.1.1-0.20230202152459-5c7d0dd6ab86/go.mod h1:aFAMtuldEgx/4q7iSGazk22+IcgvtiC+HIimFO9XlS8=
@@ -155,6 +159,7 @@ golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20201015000850-e3ed0017c211/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20201119102817-f84b799fce68/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210315160823-c6e025ad8005/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220209214540-3681064d5158/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.4.1-0.20230131160137-e7d7f63158de/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
