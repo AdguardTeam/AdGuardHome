@@ -30,20 +30,15 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- Frontend rewritten in TypeScript
+
 - The HTTP server's write timeout has been increased from 1 minute to 5 minutes
   to match the one used by AdGuard Home's HTTP client to fetch filtering-list
   data ([#7041]).
- 
-- Frontend rewritten in TypeScript
 
 ### Deprecated
 
-- Node 16 support, Node 18.18 or higher is required
-
-### Added
-
-- Node 18 support
-
+- Node 18 support, Node 20 will be required in future releases.
 
 [#7041]: https://github.com/AdguardTeam/AdGuardHome/issues/7041
 
