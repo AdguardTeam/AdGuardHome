@@ -1,6 +1,6 @@
 # A docker file for scripts/make/build-docker.sh.
 
-FROM alpine:latest
+FROM alpine:3.18
 
 ARG BUILD_DATE
 ARG VERSION

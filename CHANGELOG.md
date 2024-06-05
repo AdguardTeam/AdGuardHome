@@ -30,8 +30,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
-- Frontend rewritten in TypeScript
-
+- Frontend rewritten in TypeScript.
 - The HTTP server's write timeout has been increased from 1 minute to 5 minutes
   to match the one used by AdGuard Home's HTTP client to fetch filtering-list
   data ([#7041]).
