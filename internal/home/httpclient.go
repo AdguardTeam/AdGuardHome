@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 // httpClient returns a new HTTP client that uses the AdGuard Home's own DNS
@@ -23,7 +22,7 @@ func httpClient() (c *http.Client) {
 
 	return &http.Client{
 		// TODO(a.garipov): Make configurable.
-		Timeout: time.Minute * 5,
+		Timeout: writeTimeout,
 		Transport: &http.Transport{
 			DialContext: dialContext,
 			Proxy:       httpProxy,
