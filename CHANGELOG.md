@@ -23,6 +23,11 @@ See also the [v0.107.51 GitHub milestone][ms-v0.107.51].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go
+  vulnerabilities fixed in [Go 1.22.4][go-1.22.4].
+
 ### Changed
 
 - The HTTP server's write timeout has been increased from 1 minute to 5 minutes
@@ -41,6 +46,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 
 [#7041]: https://github.com/AdguardTeam/AdGuardHome/issues/7041
+
+[go-1.22.4]: https://groups.google.com/g/golang-announce/c/XbxouI9gY7k/
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
