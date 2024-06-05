@@ -385,7 +385,7 @@ var config = &configuration{
 		Ignored:  []string{},
 	},
 	// NOTE: Keep these parameters in sync with the one put into
-	// client/src/helpers/filters/filters.js by scripts/vetted-filters.
+	// client/src/helpers/filters/filters.ts by scripts/vetted-filters.
 	//
 	// TODO(a.garipov): Think of a way to make scripts/vetted-filters update
 	// these as well if necessary.

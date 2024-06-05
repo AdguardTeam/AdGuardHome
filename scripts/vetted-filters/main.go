@@ -91,7 +91,7 @@ func main() {
 	err = enc.Encode(aghFlt)
 	check(err)
 
-	err = maybe.WriteFile("client/src/helpers/filters/filters.js", buf.Bytes(), 0o644)
+	err = maybe.WriteFile("client/src/helpers/filters/filters.ts", buf.Bytes(), 0o644)
 	check(err)
 }
 
@@ -145,7 +145,7 @@ func (f *hlFiltersFilter) category() (cat string) {
 }
 
 // aghFilters is the JSON structure for AdGuard Home's list of vetted filtering
-// rule list in file client/src/helpers/filters/filters.js.
+// rule list in file client/src/helpers/filters/filters.ts.
 type aghFilters struct {
 	Categories map[string]*aghFiltersCategory `json:"categories"`
 	Filters    map[string]*aghFiltersFilter   `json:"filters"`
