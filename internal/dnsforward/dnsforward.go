@@ -734,19 +734,21 @@ func (s *Server) Stop() error {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
-	return s.stopLocked()
+	s.stopLocked()
+
+	return nil
 }
 
 // stopLocked stops the DNS server without locking.  s.serverLock is expected to
 // be locked.
-func (s *Server) stopLocked() (err error) {
+func (s *Server) stopLocked() {
 	// TODO(e.burkov, a.garipov):  Return critical errors, not just log them.
 	// This will require filtering all the non-critical errors in
 	// [upstream.Upstream] implementations.
 
 	if s.dnsProxy != nil {
 		// TODO(e.burkov):  Use context properly.
-		err = s.dnsProxy.Shutdown(context.Background())
+		err := s.dnsProxy.Shutdown(context.Background())
 		if err != nil {
 			log.Error("dnsforward: closing primary resolvers: %s", err)
 		}
@@ -757,8 +759,6 @@ func (s *Server) stopLocked() (err error) {
 	}
 
 	s.isRunning = false
-
-	return nil
 }
 
 // logCloserErr logs the error returned by c, if any.
@@ -804,10 +804,7 @@ func (s *Server) Reconfigure(conf *ServerConfig) error {
 	log.Info("dnsforward: starting reconfiguring server")
 	defer log.Info("dnsforward: finished reconfiguring server")
 
-	err := s.stopLocked()
-	if err != nil {
-		return fmt.Errorf("could not reconfigure the server: %w", err)
-	}
+	s.stopLocked()
 
 	// It seems that net.Listener.Close() doesn't close file descriptors right away.
 	// We wait for some time and hope that this fd will be closed.
@@ -825,7 +822,7 @@ func (s *Server) Reconfigure(conf *ServerConfig) error {
 
 	// TODO(e.burkov):  It seems an error here brings the server down, which is
 	// not reliable enough.
-	err = s.Prepare(conf)
+	err := s.Prepare(conf)
 	if err != nil {
 		return fmt.Errorf("could not reconfigure the server: %w", err)
 	}
