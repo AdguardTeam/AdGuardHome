@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2024-05-27T12:08:27.431Z",
+    "timeUpdated": "2024-03-01T00:10:14.031Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -12869,13 +12869,6 @@
             "url": "http://opensharecount.com/",
             "companyId": "open_share_count"
         },
-        "openai": {
-            "name": "OpenAI",
-            "categoryId": 8,
-            "url": "https://openai.com/",
-            "companyId": "openai",
-            "source": "AdGuard"
-        },
         "openload": {
             "name": "Openload",
             "categoryId": 9,
@@ -23480,10 +23473,6 @@
         "realmedia.com": "open_adstream",
         "realmediadigital.com": "open_adstream",
         "opensharecount.com": "open_share_count",
-        "chatgpt.com": "openai",
-        "oaistatic.com": "openai",
-        "oaiusercontent.com": "openai",
-        "openai.com": "openai",
         "oloadcdn.net": "openload",
         "openload.co": "openload",
         "openstat.net": "openstat",
@@ -24367,10 +24356,6 @@
         "spoteffects.net": "spoteffect",
         "scdn.co": "spotify",
         "spotify.com": "spotify",
-        "pscdn.co": "spotify",
-        "spotifycdn.com": "spotify",
-        "spotifycdn.net": "spotify",
-        "spotilocal.com": "spotify",
         "embed.spotify.com": "spotify_embed",
         "spotscenered.info": "spotscenered.info",
         "spotx.tv": "spotxchange",
@@ -24690,8 +24675,6 @@
         "t.co": "twitter",
         "twimg.com": "twitter",
         "twitter.com": "twitter",
-        "twttr.com": "twitter",
-        "x.com": "twitter",
         "ads-twitter.com": "twitter_ads",
         "analytics.twitter.com": "twitter_analytics",
         "tellapart.com": "twitter_for_business",

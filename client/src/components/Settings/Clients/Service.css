@@ -24,9 +24,9 @@
     .service {
         flex-grow: 0;
         flex-shrink: 0;
-        flex-basis: calc(99.9% * 4/12 - (30px - 30px * 4/12));
-        max-width: calc(99.9% * 4/12 - (30px - 30px * 4/12));
-        width: calc(99.9% * 4/12 - (30px - 30px * 4/12));
+        flex-basis: calc(99.9% * 4 / 12 - (30px - 30px * 4 / 12));
+        max-width: calc(99.9% * 4 / 12 - (30px - 30px * 4 / 12));
+        width: calc(99.9% * 4 / 12 - (30px - 30px * 4 / 12));
     }
 
     .service--global {

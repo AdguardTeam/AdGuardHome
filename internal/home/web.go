@@ -23,7 +23,6 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
-// TODO(a.garipov): Make configurable.
 const (
 	// readTimeout is the maximum duration for reading the entire request,
 	// including the body.
@@ -32,7 +31,7 @@ const (
 	readHdrTimeout = 60 * time.Second
 	// writeTimeout is the maximum duration before timing out writes of the
 	// response.
-	writeTimeout = 5 * time.Minute
+	writeTimeout = 60 * time.Second
 )
 
 type webConfig struct {
