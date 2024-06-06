@@ -614,31 +614,6 @@ export const initialState: RootState = {
         topUpstreamsResponses: [],
     },
     toasts: { notices: [] },
-    install: {
-        step: INSTALL_FIRST_STEP,
-        processingDefault: true,
-        processingSubmit: false,
-        processingCheck: false,
-        web: {
-            ip: ALL_INTERFACES_IP,
-            port: STANDARD_WEB_PORT,
-            status: '',
-            can_autofix: false,
-        },
-        dns: {
-            ip: ALL_INTERFACES_IP,
-            port: STANDARD_DNS_PORT,
-            status: '',
-            can_autofix: false,
-        },
-        staticIp: {
-            static: '',
-            ip: '',
-            error: '',
-        },
-        interfaces: [],
-        dnsVersion: '',
-    },
     loadingBar: {},
     form: {},
 };
