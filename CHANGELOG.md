@@ -7,6 +7,10 @@ The format is based on
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+<!--
+TODO(a.garipov): Use the common markdown formatting tools.
+-->
+
 
 
 ## [Unreleased]
@@ -14,14 +18,24 @@ and this project adheres to
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.51] - 2024-06-22 (APPROX.)
+## [v0.107.52] - 2024-06-29 (APPROX.)
 
-See also the [v0.107.51 GitHub milestone][ms-v0.107.51].
+See also the [v0.107.52 GitHub milestone][ms-v0.107.52].
 
-[ms-v0.107.51]: https://github.com/AdguardTeam/AdGuardHome/milestone/86?closed=1
+[ms-v0.107.52]: https://github.com/AdguardTeam/AdGuardHome/milestone/87?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+
+
+## [v0.107.51] - 2024-06-06
+
+See also the [v0.107.51 GitHub milestone][ms-v0.107.51].
 
 ### Security
 
@@ -36,11 +50,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#7041]: https://github.com/AdguardTeam/AdGuardHome/issues/7041
 
-[go-1.22.4]: https://groups.google.com/g/golang-announce/c/XbxouI9gY7k/
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[go-1.22.4]:    https://groups.google.com/g/golang-announce/c/XbxouI9gY7k/
+[ms-v0.107.51]: https://github.com/AdguardTeam/AdGuardHome/milestone/86?closed=1
 
 
 
@@ -3001,11 +3012,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.51...HEAD
-[v0.107.51]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.50...v0.107.51
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.52...HEAD
+[v0.107.52]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.51...v0.107.52
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.50...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.51...HEAD
+[v0.107.51]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.50...v0.107.51
 [v0.107.50]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.49...v0.107.50
 [v0.107.49]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.48...v0.107.49
 [v0.107.48]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.47...v0.107.48
