@@ -27,6 +27,14 @@ See also the [v0.107.52 GitHub milestone][ms-v0.107.52].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Changed
+
+- Frontend rewritten in TypeScript.
+
+### Deprecated
+
+- Node 18 support, Node 20 will be required in future releases.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
@@ -44,14 +52,9 @@ See also the [v0.107.51 GitHub milestone][ms-v0.107.51].
 
 ### Changed
 
-- Frontend rewritten in TypeScript.
 - The HTTP server's write timeout has been increased from 1 minute to 5 minutes
   to match the one used by AdGuard Home's HTTP client to fetch filtering-list
   data ([#7041]).
-
-### Deprecated
-
-- Node 18 support, Node 20 will be required in future releases.
 
 [#7041]: https://github.com/AdguardTeam/AdGuardHome/issues/7041
 
