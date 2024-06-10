@@ -206,9 +206,8 @@ Run `make init` to prepare the development environment.
 You will need this to build AdGuard Home:
 
 - [Go](https://golang.org/dl/) v1.22 or later;
-- [Node.js](https://nodejs.org/en/download/) v16 or later;
+- [Node.js](https://nodejs.org/en/download/) v18.18 or later;
 - [npm](https://www.npmjs.com/) v8 or later;
-- [yarn](https://yarnpkg.com/) v1.22.5 or later.
 
 ### <a href="#building" id="building" name="building">Building</a>
 
@@ -218,14 +217,6 @@ Open your terminal and execute these commands:
 git clone https://github.com/AdguardTeam/AdGuardHome
 cd AdGuardHome
 make
-```
-
-#### <a href="#building-node" id="building-node" name="building-node">Building with Node.js 17 and later</a>
-
-In order to build AdGuard Home with Node.js 17 and later, specify `--openssl-legacy-provider` option.
-
-```sh
-export NODE_OPTIONS=--openssl-legacy-provider
 ```
 
 > [!WARNING]

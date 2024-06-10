@@ -4,7 +4,7 @@
     box-shadow: 1px 1px 6px rgba(0, 0, 0, 0.2);
 }
 
-[data-theme=dark] .tooltip-container {
+[data-theme='dark'] .tooltip-container {
     background-color: var(--ctrl-select-bgcolor);
     color: var(--mcolor);
 }

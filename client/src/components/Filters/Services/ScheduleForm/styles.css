@@ -73,7 +73,7 @@
     outline: 0;
 }
 
-.schedule__button-day[data-active="true"] {
+.schedule__button-day[data-active='true'] {
     color: var(--btn-success-bgcolor);
     border-color: var(--btn-success-bgcolor);
 }

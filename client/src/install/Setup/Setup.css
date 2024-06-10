@@ -1,6 +1,8 @@
 /* Disable Auto Zoom in Input - Safari on iPhone https://stackoverflow.com/a/6394497 */
 @media screen and (max-width: 767px) {
-    input, select, textarea {
+    input,
+    select,
+    textarea {
         font-size: 1rem;
     }
 }
@@ -27,7 +29,7 @@
     border-radius: 3px;
 }
 
-[data-theme=dark] .setup__container {
+[data-theme='dark'] .setup__container {
     box-shadow: none;
     border: 1px solid var(--card-border-color);
 }
@@ -45,7 +47,7 @@
     max-width: 140px;
 }
 
-[data-theme=dark] .setup__logo {
+[data-theme='dark'] .setup__logo {
     filter: invert(1);
 }
 

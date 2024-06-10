@@ -39,7 +39,7 @@
 }
 
 .checkbox__label:before {
-    content: "";
+    content: '';
     position: relative;
     top: 1px;
     display: inline-block;
@@ -53,7 +53,9 @@
     background-position: center center;
     background-size: 12px 10px;
     border-radius: 3px;
-    transition: 0.3s ease-in-out box-shadow, 0.3s ease-in-out opacity;
+    transition:
+        0.3s ease-in-out box-shadow,
+        0.3s ease-in-out opacity;
 }
 
 .checkbox__label .checkbox__label-text {

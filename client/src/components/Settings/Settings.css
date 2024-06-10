@@ -80,11 +80,11 @@
 }
 
 .interface__ip:after {
-    content: ", ";
+    content: ', ';
 }
 
 .interface__ip:last-child:after {
-    content: "";
+    content: '';
 }
 
 .form__desc {
@@ -150,7 +150,9 @@
 
 .custom-control-label,
 .custom-control-label:before {
-    transition: 0.3s ease-in-out background-color, 0.3s ease-in-out color;
+    transition:
+        0.3s ease-in-out background-color,
+        0.3s ease-in-out color;
 }
 
 .custom-select:disabled {
@@ -158,5 +160,7 @@
 }
 
 .custom-select {
-    transition: 0.3s ease-in-out background-color, 0.3s ease-in-out color;
+    transition:
+        0.3s ease-in-out background-color,
+        0.3s ease-in-out color;
 }

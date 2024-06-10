@@ -40,7 +40,7 @@
     opacity: 0.6;
 }
 
-[data-theme=dark] .tab__control {
+[data-theme='dark'] .tab__control {
     filter: invert(1);
 }
 

@@ -73,7 +73,7 @@
 }
 
 .btn-secondary.footer__theme-button,
-[data-theme="dark"] .btn-secondary.footer__theme-button {
+[data-theme='dark'] .btn-secondary.footer__theme-button {
     height: 38px;
     border-color: var(--ctrl-select-bgcolor);
 }
@@ -86,12 +86,12 @@
     color: var(--gray-ac);
 }
 
-[data-theme="dark"] .footer__theme-icon {
+[data-theme='dark'] .footer__theme-icon {
     color: var(--mcolor);
 }
 
 .footer__theme-icon--active,
-[data-theme="dark"] .footer__theme-icon--active {
+[data-theme='dark'] .footer__theme-icon--active {
     color: var(--btn-success-bgcolor);
 }
 

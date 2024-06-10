@@ -91,18 +91,24 @@
         margin: -0.5rem 0 0;
     }
 
-    .grid > .key__time_table_header, .grid > .key__data, .grid > .key__encryption_status, .grid > .key__elapsed {
+    .grid > .key__time_table_header,
+    .grid > .key__data,
+    .grid > .key__encryption_status,
+    .grid > .key__elapsed {
         grid-column: 1 / span 1;
     }
 
-    .grid > .value__time_table_header, .grid > .value__data, .grid > .value__encryption_status, .grid > .value__elapsed {
+    .grid > .value__time_table_header,
+    .grid > .value__data,
+    .grid > .value__encryption_status,
+    .grid > .value__elapsed {
         grid-column: 2 / span 1;
         margin: 0 !important;
     }
 }
 
 .grid .key-colon:nth-child(odd)::after {
-    content: ":";
+    content: ':';
 }
 
 .grid__one-row {
@@ -127,7 +133,7 @@
 }
 
 .title--border:before {
-    content: "";
+    content: '';
     position: absolute;
     left: 0;
     border-top: 0.5px solid var(--gray-d8) !important;

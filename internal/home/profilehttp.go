@@ -14,7 +14,7 @@ type Theme string
 
 // Allowed [Theme] values.
 //
-// Keep in sync with client/src/helpers/constants.js.
+// Keep in sync with client/src/helpers/constants.ts.
 const (
 	ThemeAuto  Theme = "auto"
 	ThemeLight Theme = "light"
