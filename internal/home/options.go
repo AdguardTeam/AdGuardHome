@@ -48,6 +48,10 @@ type options struct {
 	// bindAddr is the address to serve the web UI on.
 	bindAddr netip.AddrPort
 
+	// sessionCookieName is the name of the session cookie for the web UI.
+    // Customizing this value can prevent cookie key conflict for multiple AdGuardHome instances that have the same domain.
+    sessionCookieName string
+
 	// checkConfig is true if the current invocation is only required to check
 	// the configuration file and exit.
 	checkConfig bool
@@ -196,6 +200,18 @@ var cmdLineOpts = []cmdLineOpt{{
 	description: "Address to serve the web UI on, in the host:port format.",
 	longName:    "web-addr",
 	shortName:   "",
+}, {
+    updateWithValue: func(o options, v string) (oo options, err error) {
+        o.sessionCookieName = v
+
+        return o, nil
+    },
+    updateNoValue:   nil,
+    effect:          nil,
+    serialize:       func(o options) (val string, ok bool) { return o.sessionCookieName, o.sessionCookieName != "" },
+    description:     "Customize the session cookie name for the web UI.",
+    longName:        "session-cookie-name",
+    shortName:       "",
 }, {
 	updateWithValue: func(o options, v string) (options, error) {
 		o.serviceControlAction = v
