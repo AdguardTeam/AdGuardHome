@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/ipset"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -35,7 +34,7 @@ func (c *ipsetCtx) init(ipsetConf []string) (err error) {
 		log.Info("ipset: warning: cannot initialize: %s", err)
 
 		return nil
-	} else if unsupErr := (&aghos.UnsupportedError{}); errors.As(err, &unsupErr) {
+	} else if errors.Is(err, errors.ErrUnsupported) {
 		log.Info("ipset: warning: %s", err)
 
 		return nil

@@ -178,7 +178,7 @@ func setupContext(opts options) (err error) {
 // unsupported errors and returns nil.  If err is nil, logIfUnsupported returns
 // nil.  Otherwise, it returns err.
 func logIfUnsupported(msg string, err error) (outErr error) {
-	if errors.As(err, new(*aghos.UnsupportedError)) {
+	if errors.Is(err, errors.ErrUnsupported) {
 		log.Debug(msg, err)
 
 		return nil

@@ -22,8 +22,8 @@ type Manager interface {
 //
 //	DOMAIN[,DOMAIN].../IPSET_NAME[,IPSET_NAME]...
 //
-// If ipsetConf is empty, msg and err are nil.  The error is of type
-// *aghos.UnsupportedError if the OS is not supported.
+// If ipsetConf is empty, msg and err are nil.  The error's chain contains
+// [errors.ErrUnsupported] if current OS is not supported.
 func NewManager(ipsetConf []string) (mgr Manager, err error) {
 	if len(ipsetConf) == 0 {
 		return nil, nil
