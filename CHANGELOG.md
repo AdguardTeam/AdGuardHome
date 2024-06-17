@@ -49,6 +49,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Node 18 support, Node 20 will be required in future releases.
 
+### Fixed
+
+- Tracking `/etc/hosts` file changes causing panics within particular
+  filesystems on start ([#7076]).
+
 [#7053]: https://github.com/AdguardTeam/AdGuardHome/issues/7053
 
 [install-script]: https://github.com/AdguardTeam/AdGuardHome/?tab=readme-ov-file#automated-install-linux-and-mac

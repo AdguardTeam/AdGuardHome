@@ -232,7 +232,9 @@ func configureOS(conf *configuration) (err error) {
 func setupHostsContainer() (err error) {
 	hostsWatcher, err := aghos.NewOSWritesWatcher()
 	if err != nil {
-		return fmt.Errorf("initing hosts watcher: %w", err)
+		log.Info("WARNING: initializing filesystem watcher: %s; not watching for changes", err)
+
+		hostsWatcher = aghos.EmptyFSWatcher{}
 	}
 
 	paths, err := hostsfile.DefaultHostsPaths()
