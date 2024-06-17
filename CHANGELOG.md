@@ -30,10 +30,28 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Changed
 
 - Frontend rewritten in TypeScript.
+- The `systemd`-based service now uses `journal` for logging by default.  It
+  also doesn't create the `/var/log/` directory anymore ([#7053]).
+
+  **NOTE:** With an installed service for changes to take effect, you need to
+  reinstall the service using `-r` flag of the [install script][install-script]
+  or via the CLI (with root privileges):
+
+  ```sh
+  ./AdGuardHome -s uninstall
+  ./AdGuardHome -s install
+  ```
+
+  Don't forget to backup your configuration file and other important data before
+  reinstalling the service.
 
 ### Deprecated
 
 - Node 18 support, Node 20 will be required in future releases.
+
+[#7053]: https://github.com/AdguardTeam/AdGuardHome/issues/7053
+
+[install-script]: https://github.com/AdguardTeam/AdGuardHome/?tab=readme-ov-file#automated-install-linux-and-mac
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
