@@ -267,7 +267,7 @@ func copyBlockedServices(
 	var weekly *schedule.Weekly
 	if sch != nil {
 		weekly = sch.Clone()
-	} else if prev != nil && prev.BlockedServices != nil {
+	} else if prev != nil {
 		weekly = prev.BlockedServices.Schedule.Clone()
 	} else {
 		weekly = schedule.EmptyWeekly()

@@ -51,10 +51,14 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Panic caused by missing user-specific blocked services object in configuration
+  file ([#7069]).
 - Tracking `/etc/hosts` file changes causing panics within particular
   filesystems on start ([#7076]).
 
 [#7053]: https://github.com/AdguardTeam/AdGuardHome/issues/7053
+[#7069]: https://github.com/AdguardTeam/AdGuardHome/issues/7069
+[#7076]: https://github.com/AdguardTeam/AdGuardHome/issues/7076
 
 [install-script]: https://github.com/AdguardTeam/AdGuardHome/?tab=readme-ov-file#automated-install-linux-and-mac
 

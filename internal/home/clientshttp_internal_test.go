@@ -49,7 +49,7 @@ func newPersistentClient(name string) (c *client.Persistent) {
 		Name: name,
 		UID:  client.MustNewUID(),
 		BlockedServices: &filtering.BlockedServices{
-			Schedule: &schedule.Weekly{},
+			Schedule: schedule.EmptyWeekly(),
 		},
 	}
 }
