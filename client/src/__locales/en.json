@@ -6,7 +6,7 @@
     "upstream_parallel": "Use parallel queries to speed up resolving by querying all upstream servers simultaneously.",
     "parallel_requests": "Parallel requests",
     "load_balancing": "Load-balancing",
-    "load_balancing_desc": "Query one upstream server at a time. AdGuard Home uses its weighted random algorithm to pick the server so that the fastest server is used more often.",
+    "load_balancing_desc": "Query one upstream server at a time. AdGuard Home uses a weighted random algorithm to select servers with the lowest number of failed lookups and the lowest average lookup time.",
     "bootstrap_dns": "Bootstrap DNS servers",
     "bootstrap_dns_desc": "IP addresses of DNS servers used to resolve IP addresses of the DoH/DoT resolvers you specify as upstreams. Comments are not permitted.",
     "fallback_dns_title": "Fallback DNS servers",
