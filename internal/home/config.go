@@ -32,6 +32,9 @@ const dataDir = "data"
 
 // logSettings are the logging settings part of the configuration file.
 type logSettings struct {
+	// Enabled indicates whether logging is enabled.
+	Enabled bool `yaml:"enabled"`
+
 	// File is the path to the log file.  If empty, logs are written to stdout.
 	// If "syslog", logs are written to syslog.
 	File string `yaml:"file"`
@@ -454,11 +457,14 @@ var config = &configuration{
 		},
 	},
 	Log: logSettings{
-		Compress:   false,
-		LocalTime:  false,
+		Enabled:    true,
+		File:       "",
 		MaxBackups: 0,
 		MaxSize:    100,
 		MaxAge:     3,
+		Compress:   false,
+		LocalTime:  false,
+		Verbose:    false,
 	},
 	OSConfig:      &osConfig{},
 	SchemaVersion: configmigrate.LastSchemaVersion,

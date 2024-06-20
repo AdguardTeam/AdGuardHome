@@ -27,6 +27,11 @@ See also the [v0.107.52 GitHub milestone][ms-v0.107.52].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- The ability to disable logging using the new `log.enabled` configuration
+  property ([#7079]).
+
 ### Changed
 
 - Frontend rewritten in TypeScript.
@@ -59,6 +64,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#7053]: https://github.com/AdguardTeam/AdGuardHome/issues/7053
 [#7069]: https://github.com/AdguardTeam/AdGuardHome/issues/7069
 [#7076]: https://github.com/AdguardTeam/AdGuardHome/issues/7076
+[#7079]: https://github.com/AdguardTeam/AdGuardHome/issues/7079
 
 [install-script]: https://github.com/AdguardTeam/AdGuardHome/?tab=readme-ov-file#automated-install-linux-and-mac
 
