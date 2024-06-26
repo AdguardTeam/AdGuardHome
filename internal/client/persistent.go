@@ -12,6 +12,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -70,6 +71,7 @@ type Persistent struct {
 	// must not be nil after initialization.
 	BlockedServices *filtering.BlockedServices
 
+	// Name of the persistent client.  Must not be empty.
 	Name string
 
 	Tags      []string
@@ -97,6 +99,39 @@ type Persistent struct {
 
 	// TODO(d.kolyshev): Make SafeSearchConf a pointer.
 	SafeSearchConf filtering.SafeSearchConfig
+}
+
+// validate returns an error if persistent client information contains errors.
+func (c *Persistent) validate(allTags *container.MapSet[string]) (err error) {
+	switch {
+	case c.Name == "":
+		return errors.Error("empty name")
+	case c.IDsLen() == 0:
+		return errors.Error("id required")
+	case c.UID == UID{}:
+		return errors.Error("uid required")
+	}
+
+	conf, err := proxy.ParseUpstreamsConfig(c.Upstreams, &upstream.Options{})
+	if err != nil {
+		return fmt.Errorf("invalid upstream servers: %w", err)
+	}
+
+	err = conf.Close()
+	if err != nil {
+		log.Error("client: closing upstream config: %s", err)
+	}
+
+	for _, t := range c.Tags {
+		if !allTags.Has(t) {
+			return fmt.Errorf("invalid tag: %q", t)
+		}
+	}
+
+	// TODO(s.chzhen):  Move to the constructor.
+	slices.Sort(c.Tags)
+
+	return nil
 }
 
 // SetTags sets the tags if they are known, otherwise logs an unknown tag.

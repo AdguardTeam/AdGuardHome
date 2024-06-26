@@ -64,7 +64,7 @@ func NewIndex() (ci *Index) {
 }
 
 // Add stores information about a persistent client in the index.  c must be
-// non-nil and contain UID.
+// non-nil, have a UID, and contain at least one identifier.
 func (ci *Index) Add(c *Persistent) {
 	if (c.UID == UID{}) {
 		panic("client must contain uid")

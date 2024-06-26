@@ -1,13 +1,15 @@
 package client
 
 import (
+	"net/netip"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestPersistentClient_EqualIDs(t *testing.T) {
+func TestPersistent_EqualIDs(t *testing.T) {
 	const (
 		ip  = "0.0.0.0"
 		ip1 = "1.1.1.1"
@@ -119,6 +121,53 @@ func TestPersistentClient_EqualIDs(t *testing.T) {
 			require.NoError(t, err)
 
 			tc.want(t, c.EqualIDs(prev))
+		})
+	}
+}
+
+func TestPersistent_Validate(t *testing.T) {
+	// TODO(s.chzhen):  Add test cases.
+	testCases := []struct {
+		name       string
+		cli        *Persistent
+		wantErrMsg string
+	}{{
+		name: "basic",
+		cli: &Persistent{
+			Name: "basic",
+			IPs: []netip.Addr{
+				netip.MustParseAddr("1.2.3.4"),
+			},
+			UID: MustNewUID(),
+		},
+		wantErrMsg: "",
+	}, {
+		name: "empty_name",
+		cli: &Persistent{
+			Name: "",
+		},
+		wantErrMsg: "empty name",
+	}, {
+		name: "no_id",
+		cli: &Persistent{
+			Name: "no_id",
+		},
+		wantErrMsg: "id required",
+	}, {
+		name: "no_uid",
+		cli: &Persistent{
+			Name: "no_uid",
+			IPs: []netip.Addr{
+				netip.MustParseAddr("1.2.3.4"),
+			},
+		},
+		wantErrMsg: "uid required",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.cli.validate(nil)
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
 }

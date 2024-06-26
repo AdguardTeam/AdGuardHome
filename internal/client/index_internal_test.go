@@ -22,6 +22,7 @@ func newIDIndex(m []*Persistent) (ci *Index) {
 	return ci
 }
 
+// TODO(s.chzhen):  Remove.
 func TestClientIndex_Find(t *testing.T) {
 	const (
 		cliIPNone = "1.2.3.4"
