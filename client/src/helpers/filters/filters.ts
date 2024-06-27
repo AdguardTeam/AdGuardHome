@@ -295,7 +295,7 @@ export default {
         "phishing_army": {
             "name": "Phishing Army",
             "categoryId": "security",
-            "homepage": "https://gitlab.com/malware-filter/phishing-filter",
+            "homepage": "https://phishing.army/",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_18.txt"
         },
         "scam_blocklist_by_durablenapkin": {

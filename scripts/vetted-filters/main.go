@@ -4,18 +4,23 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
 
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/google/renameio/v2/maybe"
 )
 
 func main() {
+	ctx := context.Background()
+	l := slogutil.New(nil)
+
 	urlStr := "https://adguardteam.github.io/HostlistsRegistry/assets/filters.json"
 	if v, ok := os.LookupEnv("URL"); ok {
 		urlStr = v
@@ -31,7 +36,7 @@ func main() {
 
 	resp, err := c.Get(urlStr)
 	check(err)
-	defer log.OnCloserError(resp.Body, log.ERROR)
+	defer slogutil.CloseAndLog(ctx, l, resp.Body, slog.LevelError)
 
 	if resp.StatusCode != http.StatusOK {
 		panic(fmt.Errorf("expected code %d, got %d", http.StatusOK, resp.StatusCode))
@@ -64,13 +69,13 @@ func main() {
 	}
 
 	for i, f := range hlFlt.Filters {
-		id := f.FilterID
+		key := f.FilterKey
 		cat := f.category()
 		if cat == "" {
-			log.Info("warning: filter %s at index %d does not have a fitting category", id, i)
+			l.WarnContext(ctx, "no fitting category for filter", "key", key, "idx", i)
 		}
 
-		aghFlt.Filters[id] = &aghFiltersFilter{
+		aghFlt.Filters[key] = &aghFiltersFilter{
 			Name:       f.Name,
 			CategoryID: cat,
 			Homepage:   f.Homepage,
@@ -118,26 +123,34 @@ type hlFilters struct {
 
 // hlFiltersFilter is the JSON structure for a filter in the Hostlists Registry.
 type hlFiltersFilter struct {
-	DownloadURL string   `json:"downloadUrl"`
-	FilterID    string   `json:"filterId"`
-	Homepage    string   `json:"homepage"`
-	Name        string   `json:"name"`
-	Tags        []string `json:"tags"`
+	DownloadURL string `json:"downloadUrl"`
+	FilterKey   string `json:"filterKey"`
+	Homepage    string `json:"homepage"`
+	Name        string `json:"name"`
+	Tags        []int  `json:"tags"`
 }
+
+// Known tag IDs.  Keep in sync with tags/metadata.json in the source repo.
+const (
+	tagIDGeneral  = 1
+	tagIDSecurity = 2
+	tagIDRegional = 3
+	tagIDOther    = 4
+)
 
 // category returns the AdGuard Home category for this filter.  If there is no
 // fitting category, cat is empty.
 func (f *hlFiltersFilter) category() (cat string) {
 	for _, t := range f.Tags {
 		switch t {
-		case "purpose:general":
+		case tagIDGeneral:
 			return "general"
-		case "purpose:other":
-			return "other"
-		case "purpose:regional":
-			return "regional"
-		case "purpose:security":
+		case tagIDSecurity:
 			return "security"
+		case tagIDRegional:
+			return "regional"
+		case tagIDOther:
+			return "other"
 		}
 	}
 
