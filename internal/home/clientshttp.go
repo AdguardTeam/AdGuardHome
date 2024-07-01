@@ -96,7 +96,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	clients.clientIndex.Range(func(c *client.Persistent) (cont bool) {
+	clients.storage.RangeByName(func(c *client.Persistent) (cont bool) {
 		cj := clientToJSON(c)
 		data.Clients = append(data.Clients, cj)
 
@@ -336,7 +336,7 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	err = clients.add(c)
+	err = clients.storage.Add(c)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
@@ -364,7 +364,7 @@ func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if !clients.remove(cj.Name) {
+	if !clients.storage.RemoveByName(cj.Name) {
 		aghhttp.Error(r, w, http.StatusBadRequest, "Client not found")
 
 		return
@@ -399,30 +399,14 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 		return
 	}
 
-	var prev *client.Persistent
-	var ok bool
-
-	func() {
-		clients.lock.Lock()
-		defer clients.lock.Unlock()
-
-		prev, ok = clients.clientIndex.FindByName(dj.Name)
-	}()
-
-	if !ok {
-		aghhttp.Error(r, w, http.StatusBadRequest, "client not found")
-
-		return
-	}
-
-	c, err := clients.jsonToClient(dj.Data, prev)
+	c, err := clients.jsonToClient(dj.Data, nil)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
-	err = clients.update(prev, c)
+	err = clients.storage.Update(dj.Name, c)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 

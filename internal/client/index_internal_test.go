@@ -11,12 +11,12 @@ import (
 
 // newIDIndex is a helper function that returns a client index filled with
 // persistent clients from the m.  It also generates a UID for each client.
-func newIDIndex(m []*Persistent) (ci *Index) {
-	ci = NewIndex()
+func newIDIndex(m []*Persistent) (ci *index) {
+	ci = newIndex()
 
 	for _, c := range m {
 		c.UID = MustNewUID()
-		ci.Add(c)
+		ci.add(c)
 	}
 
 	return ci
@@ -110,7 +110,7 @@ func TestClientIndex_Find(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, id := range tc.ids {
-				c, ok := ci.Find(id)
+				c, ok := ci.find(id)
 				require.True(t, ok)
 
 				assert.Equal(t, tc.want, c)
@@ -119,7 +119,7 @@ func TestClientIndex_Find(t *testing.T) {
 	}
 
 	t.Run("not_found", func(t *testing.T) {
-		_, ok := ci.Find(cliIPNone)
+		_, ok := ci.find(cliIPNone)
 		assert.False(t, ok)
 	})
 }
@@ -171,11 +171,11 @@ func TestClientIndex_Clashes(t *testing.T) {
 			clone := tc.client.ShallowClone()
 			clone.UID = MustNewUID()
 
-			err := ci.Clashes(clone)
+			err := ci.clashes(clone)
 			require.Error(t, err)
 
-			ci.Delete(tc.client)
-			err = ci.Clashes(clone)
+			ci.remove(tc.client)
+			err = ci.clashes(clone)
 			require.NoError(t, err)
 		})
 	}
@@ -293,7 +293,7 @@ func TestIndex_FindByIPWithoutZone(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			c := ci.FindByIPWithoutZone(tc.ip.WithZone(""))
+			c := ci.findByIPWithoutZone(tc.ip.WithZone(""))
 			require.Equal(t, tc.want, c)
 		})
 	}
@@ -339,7 +339,7 @@ func TestClientIndex_RangeByName(t *testing.T) {
 			ci := newIDIndex(tc.want)
 
 			var got []*Persistent
-			ci.RangeByName(func(c *Persistent) (cont bool) {
+			ci.rangeByName(func(c *Persistent) (cont bool) {
 				got = append(got, c)
 
 				return true

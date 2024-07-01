@@ -65,6 +65,7 @@ type Persistent struct {
 	// upstream must be used.
 	UpstreamConfig *proxy.CustomUpstreamConfig
 
+	// SafeSearch handles search engine hosts rewrites.
 	SafeSearch filtering.SafeSearch
 
 	// BlockedServices is the configuration of blocked services of a client.  It
@@ -74,29 +75,62 @@ type Persistent struct {
 	// Name of the persistent client.  Must not be empty.
 	Name string
 
-	Tags      []string
+	// Tags is a list of client tags that categorize the client.
+	Tags []string
+
+	// Upstreams is a list of custom upstream DNS servers for the client.
 	Upstreams []string
 
+	// IPs is a list of IP addresses that identify the client.  The client must
+	// have at least one ID (IP, subnet, MAC, or ClientID).
 	IPs []netip.Addr
+
+	// Subnets identifying the client.  The client must have at least one ID
+	// (IP, subnet, MAC, or ClientID).
+	//
 	// TODO(s.chzhen):  Use netutil.Prefix.
-	Subnets   []netip.Prefix
-	MACs      []net.HardwareAddr
+	Subnets []netip.Prefix
+
+	// MACs identifying the client.  The client must have at least one ID (IP,
+	// subnet, MAC, or ClientID).
+	MACs []net.HardwareAddr
+
+	// ClientIDs identifying the client.  The client must have at least one ID
+	// (IP, subnet, MAC, or ClientID).
 	ClientIDs []string
 
 	// UID is the unique identifier of the persistent client.
 	UID UID
 
-	UpstreamsCacheSize    uint32
+	// UpstreamsCacheSize is the cache size for custom upstreams.
+	UpstreamsCacheSize uint32
+
+	// UpstreamsCacheEnabled specifies whether custom upstreams are used.
 	UpstreamsCacheEnabled bool
 
-	UseOwnSettings        bool
-	FilteringEnabled      bool
-	SafeBrowsingEnabled   bool
-	ParentalEnabled       bool
-	UseOwnBlockedServices bool
-	IgnoreQueryLog        bool
-	IgnoreStatistics      bool
+	// UseOwnSettings specifies whether custom filtering settings are used.
+	UseOwnSettings bool
 
+	// FilteringEnabled specifies whether filtering is enabled.
+	FilteringEnabled bool
+
+	// SafeBrowsingEnabled specifies whether safe browsing is enabled.
+	SafeBrowsingEnabled bool
+
+	// ParentalEnabled specifies whether parental control is enabled.
+	ParentalEnabled bool
+
+	// UseOwnBlockedServices specifies whether custom services are blocked.
+	UseOwnBlockedServices bool
+
+	// IgnoreQueryLog specifies whether the client requests are logged.
+	IgnoreQueryLog bool
+
+	// IgnoreStatistics  specifies whether the client requests are counted.
+	IgnoreStatistics bool
+
+	// SafeSearchConf is the safe search filtering configuration.
+	//
 	// TODO(d.kolyshev): Make SafeSearchConf a pointer.
 	SafeSearchConf filtering.SafeSearchConfig
 }
@@ -132,21 +166,6 @@ func (c *Persistent) validate(allTags *container.MapSet[string]) (err error) {
 	slices.Sort(c.Tags)
 
 	return nil
-}
-
-// SetTags sets the tags if they are known, otherwise logs an unknown tag.
-func (c *Persistent) SetTags(tags []string, known *container.MapSet[string]) {
-	for _, t := range tags {
-		if !known.Has(t) {
-			log.Info("skipping unknown tag %q", t)
-
-			continue
-		}
-
-		c.Tags = append(c.Tags, t)
-	}
-
-	slices.Sort(c.Tags)
 }
 
 // SetIDs parses a list of strings into typed fields and returns an error if

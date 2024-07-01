@@ -13,17 +13,21 @@ import (
 
 var testIPv4 = netip.AddrFrom4([4]byte{1, 2, 3, 4})
 
-// newIDIndex is a helper function that returns a client index filled with
-// persistent clients from the m.  It also generates a UID for each client.
-func newIDIndex(m []*client.Persistent) (ci *client.Index) {
-	ci = client.NewIndex()
+// newStorage is a helper function that returns a client storage filled with
+// persistent clients.  It also generates a UID for each client.
+func newStorage(tb testing.TB, clients []*client.Persistent) (s *client.Storage) {
+	tb.Helper()
 
-	for _, c := range m {
-		c.UID = client.MustNewUID()
-		ci.Add(c)
+	s = client.NewStorage(&client.Config{
+		AllowedTags: nil,
+	})
+
+	for _, p := range clients {
+		p.UID = client.MustNewUID()
+		require.NoError(tb, s.Add(p))
 	}
 
-	return ci
+	return s
 }
 
 func TestApplyAdditionalFiltering(t *testing.T) {
@@ -36,7 +40,8 @@ func TestApplyAdditionalFiltering(t *testing.T) {
 	}, nil)
 	require.NoError(t, err)
 
-	Context.clients.clientIndex = newIDIndex([]*client.Persistent{{
+	Context.clients.storage = newStorage(t, []*client.Persistent{{
+		Name:                "default",
 		ClientIDs:           []string{"default"},
 		UseOwnSettings:      false,
 		SafeSearchConf:      filtering.SafeSearchConfig{Enabled: false},
@@ -44,6 +49,7 @@ func TestApplyAdditionalFiltering(t *testing.T) {
 		SafeBrowsingEnabled: false,
 		ParentalEnabled:     false,
 	}, {
+		Name:                "custom_filtering",
 		ClientIDs:           []string{"custom_filtering"},
 		UseOwnSettings:      true,
 		SafeSearchConf:      filtering.SafeSearchConfig{Enabled: true},
@@ -51,6 +57,7 @@ func TestApplyAdditionalFiltering(t *testing.T) {
 		SafeBrowsingEnabled: true,
 		ParentalEnabled:     true,
 	}, {
+		Name:                "partial_custom_filtering",
 		ClientIDs:           []string{"partial_custom_filtering"},
 		UseOwnSettings:      true,
 		SafeSearchConf:      filtering.SafeSearchConfig{Enabled: true},
@@ -121,16 +128,19 @@ func TestApplyAdditionalFiltering_blockedServices(t *testing.T) {
 	}, nil)
 	require.NoError(t, err)
 
-	Context.clients.clientIndex = newIDIndex([]*client.Persistent{{
+	Context.clients.storage = newStorage(t, []*client.Persistent{{
+		Name:                  "default",
 		ClientIDs:             []string{"default"},
 		UseOwnBlockedServices: false,
 	}, {
+		Name:      "no_services",
 		ClientIDs: []string{"no_services"},
 		BlockedServices: &filtering.BlockedServices{
 			Schedule: schedule.EmptyWeekly(),
 		},
 		UseOwnBlockedServices: true,
 	}, {
+		Name:      "services",
 		ClientIDs: []string{"services"},
 		BlockedServices: &filtering.BlockedServices{
 			Schedule: schedule.EmptyWeekly(),
@@ -138,6 +148,7 @@ func TestApplyAdditionalFiltering_blockedServices(t *testing.T) {
 		},
 		UseOwnBlockedServices: true,
 	}, {
+		Name:      "invalid_services",
 		ClientIDs: []string{"invalid_services"},
 		BlockedServices: &filtering.BlockedServices{
 			Schedule: schedule.EmptyWeekly(),
@@ -145,6 +156,7 @@ func TestApplyAdditionalFiltering_blockedServices(t *testing.T) {
 		},
 		UseOwnBlockedServices: true,
 	}, {
+		Name:      "allow_all",
 		ClientIDs: []string{"allow_all"},
 		BlockedServices: &filtering.BlockedServices{
 			Schedule: schedule.FullWeekly(),

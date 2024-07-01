@@ -16,7 +16,9 @@ import (
 func newStorage(tb testing.TB, m []*client.Persistent) (s *client.Storage) {
 	tb.Helper()
 
-	s = client.NewStorage(nil)
+	s = client.NewStorage(&client.Config{
+		AllowedTags: nil,
+	})
 
 	for _, c := range m {
 		c.UID = client.MustNewUID()
@@ -57,7 +59,9 @@ func TestStorage_Add(t *testing.T) {
 		UID:       existingClientUID,
 	}
 
-	s := client.NewStorage(nil)
+	s := client.NewStorage(&client.Config{
+		AllowedTags: nil,
+	})
 	err := s.Add(existingClient)
 	require.NoError(t, err)
 
@@ -137,7 +141,9 @@ func TestStorage_RemoveByName(t *testing.T) {
 		UID:  client.MustNewUID(),
 	}
 
-	s := client.NewStorage(nil)
+	s := client.NewStorage(&client.Config{
+		AllowedTags: nil,
+	})
 	err := s.Add(existingClient)
 	require.NoError(t, err)
 
@@ -162,7 +168,9 @@ func TestStorage_RemoveByName(t *testing.T) {
 	}
 
 	t.Run("duplicate_remove", func(t *testing.T) {
-		s = client.NewStorage(nil)
+		s = client.NewStorage(&client.Config{
+			AllowedTags: nil,
+		})
 		err = s.Add(existingClient)
 		require.NoError(t, err)
 

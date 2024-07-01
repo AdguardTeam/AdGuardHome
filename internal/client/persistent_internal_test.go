@@ -4,6 +4,7 @@ import (
 	"net/netip"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -126,13 +127,19 @@ func TestPersistent_EqualIDs(t *testing.T) {
 }
 
 func TestPersistent_Validate(t *testing.T) {
-	// TODO(s.chzhen):  Add test cases.
+	const (
+		allowedTag    = "allowed_tag"
+		notAllowedTag = "not_allowed_tag"
+	)
+
+	allowedTags := container.NewMapSet(allowedTag)
+
 	testCases := []struct {
 		name       string
 		cli        *Persistent
 		wantErrMsg string
 	}{{
-		name: "basic",
+		name: "success",
 		cli: &Persistent{
 			Name: "basic",
 			IPs: []netip.Addr{
@@ -162,11 +169,24 @@ func TestPersistent_Validate(t *testing.T) {
 			},
 		},
 		wantErrMsg: "uid required",
+	}, {
+		name: "not_allowed_tag",
+		cli: &Persistent{
+			Name: "basic",
+			IPs: []netip.Addr{
+				netip.MustParseAddr("1.2.3.4"),
+			},
+			UID: MustNewUID(),
+			Tags: []string{
+				notAllowedTag,
+			},
+		},
+		wantErrMsg: `invalid tag: "` + notAllowedTag + `"`,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.cli.validate(nil)
+			err := tc.cli.validate(allowedTags)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}

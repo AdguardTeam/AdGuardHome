@@ -11,6 +11,14 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
+// Config is the client storage configuration structure.
+//
+// TODO(s.chzhen):  Expand.
+type Config struct {
+	// AllowedTags is a list of all allowed client tags.
+	AllowedTags []string
+}
+
 // Storage contains information about persistent and runtime clients.
 type Storage struct {
 	// allowedTags is a set of all allowed tags.
@@ -20,18 +28,22 @@ type Storage struct {
 	mu *sync.Mutex
 
 	// index contains information about persistent clients.
-	index *Index
+	index *index
 
 	// runtimeIndex contains information about runtime clients.
+	//
+	// TODO(s.chzhen):  Use it.
 	runtimeIndex *RuntimeIndex
 }
 
-// NewStorage returns initialized client storage.
-func NewStorage(allowedTags *container.MapSet[string]) (s *Storage) {
+// NewStorage returns initialized client storage.  conf must not be nil.
+func NewStorage(conf *Config) (s *Storage) {
+	allowedTags := container.NewMapSet(conf.AllowedTags...)
+
 	return &Storage{
 		allowedTags:  allowedTags,
 		mu:           &sync.Mutex{},
-		index:        NewIndex(),
+		index:        newIndex(),
 		runtimeIndex: NewRuntimeIndex(),
 	}
 }
@@ -49,40 +61,45 @@ func (s *Storage) Add(p *Persistent) (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	err = s.index.ClashesUID(p)
+	err = s.index.clashesUID(p)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
 	}
 
-	err = s.index.Clashes(p)
+	err = s.index.clashes(p)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
 	}
 
-	s.index.Add(p)
+	s.index.add(p)
 
-	log.Debug("client storage: added %q: IDs: %q [%d]", p.Name, p.IDs(), s.index.Size())
+	log.Debug("client storage: added %q: IDs: %q [%d]", p.Name, p.IDs(), s.index.size())
 
 	return nil
 }
 
-// FindByName finds persistent client by name.
-func (s *Storage) FindByName(name string) (c *Persistent, found bool) {
+// FindByName finds persistent client by name.  And returns its shallow copy.
+func (s *Storage) FindByName(name string) (p *Persistent, ok bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.index.FindByName(name)
+	p, ok = s.index.findByName(name)
+	if ok {
+		return p.ShallowClone(), ok
+	}
+
+	return nil, false
 }
 
 // Find finds persistent client by string representation of the client ID, IP
-// address, or MAC.  And returns it shallow copy.
+// address, or MAC.  And returns its shallow copy.
 func (s *Storage) Find(id string) (p *Persistent, ok bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	p, ok = s.index.Find(id)
+	p, ok = s.index.find(id)
 	if ok {
 		return p.ShallowClone(), ok
 	}
@@ -101,12 +118,12 @@ func (s *Storage) FindLoose(ip netip.Addr, id string) (p *Persistent, ok bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	p, ok = s.index.Find(id)
+	p, ok = s.index.find(id)
 	if ok {
 		return p.ShallowClone(), ok
 	}
 
-	p = s.index.FindByIPWithoutZone(ip)
+	p = s.index.findByIPWithoutZone(ip)
 	if p != nil {
 		return p.ShallowClone(), true
 	}
@@ -114,12 +131,17 @@ func (s *Storage) FindLoose(ip netip.Addr, id string) (p *Persistent, ok bool) {
 	return nil, false
 }
 
-// FindByMAC finds persistent client by MAC.
-func (s *Storage) FindByMAC(mac net.HardwareAddr) (c *Persistent, found bool) {
+// FindByMAC finds persistent client by MAC and returns its shallow copy.
+func (s *Storage) FindByMAC(mac net.HardwareAddr) (p *Persistent, ok bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.index.FindByMAC(mac)
+	p, ok = s.index.findByMAC(mac)
+	if ok {
+		return p.ShallowClone(), ok
+	}
+
+	return nil, false
 }
 
 // RemoveByName removes persistent client information.  ok is false if no such
@@ -128,7 +150,7 @@ func (s *Storage) RemoveByName(name string) (ok bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	p, ok := s.index.FindByName(name)
+	p, ok := s.index.findByName(name)
 	if !ok {
 		return false
 	}
@@ -137,7 +159,7 @@ func (s *Storage) RemoveByName(name string) (ok bool) {
 		log.Error("client storage: removing client %q: %s", p.Name, err)
 	}
 
-	s.index.Delete(p)
+	s.index.remove(p)
 
 	return true
 }
@@ -156,7 +178,7 @@ func (s *Storage) Update(name string, p *Persistent) (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	stored, ok := s.index.FindByName(name)
+	stored, ok := s.index.findByName(name)
 	if !ok {
 		return fmt.Errorf("client %q is not found", name)
 	}
@@ -166,14 +188,14 @@ func (s *Storage) Update(name string, p *Persistent) (err error) {
 	// TODO(s.chzhen):  Remove when frontend starts handling UIDs.
 	p.UID = stored.UID
 
-	err = s.index.Clashes(p)
+	err = s.index.clashes(p)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
 	}
 
-	s.index.Delete(stored)
-	s.index.Add(p)
+	s.index.remove(stored)
+	s.index.add(p)
 
 	return nil
 }
@@ -184,7 +206,7 @@ func (s *Storage) RangeByName(f func(c *Persistent) (cont bool)) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.index.RangeByName(f)
+	s.index.rangeByName(f)
 }
 
 // Size returns the number of persistent clients.
@@ -192,7 +214,7 @@ func (s *Storage) Size() (n int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.index.Size()
+	return s.index.size()
 }
 
 // CloseUpstreams closes upstream configurations of persistent clients.
@@ -200,11 +222,13 @@ func (s *Storage) CloseUpstreams() (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.index.CloseUpstreams()
+	return s.index.closeUpstreams()
 }
 
 // ClientRuntime returns a copy of the saved runtime client by ip.  If no such
 // client exists, returns nil.
+//
+// TODO(s.chzhen):  Use it.
 func (s *Storage) ClientRuntime(ip netip.Addr) (rc *Runtime) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -214,6 +238,8 @@ func (s *Storage) ClientRuntime(ip netip.Addr) (rc *Runtime) {
 
 // AddRuntime saves the runtime client information in the storage.  IP address
 // of a client must be unique.  rc must not be nil.
+//
+// TODO(s.chzhen):  Use it.
 func (s *Storage) AddRuntime(rc *Runtime) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -222,6 +248,8 @@ func (s *Storage) AddRuntime(rc *Runtime) {
 }
 
 // SizeRuntime returns the number of the runtime clients.
+//
+// TODO(s.chzhen):  Use it.
 func (s *Storage) SizeRuntime() (n int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -230,6 +258,8 @@ func (s *Storage) SizeRuntime() (n int) {
 }
 
 // RangeRuntime calls f for each runtime client in an undefined order.
+//
+// TODO(s.chzhen):  Use it.
 func (s *Storage) RangeRuntime(f func(rc *Runtime) (cont bool)) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -238,6 +268,8 @@ func (s *Storage) RangeRuntime(f func(rc *Runtime) (cont bool)) {
 }
 
 // DeleteRuntime removes the runtime client by ip.
+//
+// TODO(s.chzhen):  Use it.
 func (s *Storage) DeleteRuntime(ip netip.Addr) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -247,6 +279,8 @@ func (s *Storage) DeleteRuntime(ip netip.Addr) {
 
 // DeleteBySource removes all runtime clients that have information only from
 // the specified source and returns the number of removed clients.
+//
+// TODO(s.chzhen):  Use it.
 func (s *Storage) DeleteBySource(src Source) (n int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
