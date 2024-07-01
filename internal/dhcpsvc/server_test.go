@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,6 +16,12 @@ import (
 
 // testLocalTLD is a common local TLD for tests.
 const testLocalTLD = "local"
+
+// testTimeout is a common timeout for tests and contexts.
+const testTimeout time.Duration = 10 * time.Second
+
+// discardLog is a logger to discard test output.
+var discardLog = slogutil.NewDiscardLogger()
 
 // testInterfaceConf is a common set of interface configurations for tests.
 var testInterfaceConf = map[string]*dhcpsvc.InterfaceConfig{
@@ -103,6 +110,7 @@ func TestNew(t *testing.T) {
 	}{{
 		conf: &dhcpsvc.Config{
 			Enabled:         true,
+			Logger:          discardLog,
 			LocalDomainName: testLocalTLD,
 			Interfaces: map[string]*dhcpsvc.InterfaceConfig{
 				"eth0": {
@@ -116,6 +124,7 @@ func TestNew(t *testing.T) {
 	}, {
 		conf: &dhcpsvc.Config{
 			Enabled:         true,
+			Logger:          discardLog,
 			LocalDomainName: testLocalTLD,
 			Interfaces: map[string]*dhcpsvc.InterfaceConfig{
 				"eth0": {
@@ -129,6 +138,7 @@ func TestNew(t *testing.T) {
 	}, {
 		conf: &dhcpsvc.Config{
 			Enabled:         true,
+			Logger:          discardLog,
 			LocalDomainName: testLocalTLD,
 			Interfaces: map[string]*dhcpsvc.InterfaceConfig{
 				"eth0": {
@@ -143,6 +153,7 @@ func TestNew(t *testing.T) {
 	}, {
 		conf: &dhcpsvc.Config{
 			Enabled:         true,
+			Logger:          discardLog,
 			LocalDomainName: testLocalTLD,
 			Interfaces: map[string]*dhcpsvc.InterfaceConfig{
 				"eth0": {
@@ -156,17 +167,22 @@ func TestNew(t *testing.T) {
 			`range start 127.0.0.1 is not within 192.168.0.1/24`,
 	}}
 
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := dhcpsvc.New(tc.conf)
+			_, err := dhcpsvc.New(ctx, tc.conf)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
 }
 
 func TestDHCPServer_AddLease(t *testing.T) {
-	srv, err := dhcpsvc.New(&dhcpsvc.Config{
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	srv, err := dhcpsvc.New(ctx, &dhcpsvc.Config{
 		Enabled:         true,
+		Logger:          discardLog,
 		LocalDomainName: testLocalTLD,
 		Interfaces:      testInterfaceConf,
 	})
@@ -267,8 +283,11 @@ func TestDHCPServer_AddLease(t *testing.T) {
 }
 
 func TestDHCPServer_index(t *testing.T) {
-	srv, err := dhcpsvc.New(&dhcpsvc.Config{
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	srv, err := dhcpsvc.New(ctx, &dhcpsvc.Config{
 		Enabled:         true,
+		Logger:          discardLog,
 		LocalDomainName: testLocalTLD,
 		Interfaces:      testInterfaceConf,
 	})
@@ -342,8 +361,11 @@ func TestDHCPServer_index(t *testing.T) {
 }
 
 func TestDHCPServer_UpdateStaticLease(t *testing.T) {
-	srv, err := dhcpsvc.New(&dhcpsvc.Config{
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	srv, err := dhcpsvc.New(ctx, &dhcpsvc.Config{
 		Enabled:         true,
+		Logger:          discardLog,
 		LocalDomainName: testLocalTLD,
 		Interfaces:      testInterfaceConf,
 	})
@@ -462,8 +484,11 @@ func TestDHCPServer_UpdateStaticLease(t *testing.T) {
 }
 
 func TestDHCPServer_RemoveLease(t *testing.T) {
-	srv, err := dhcpsvc.New(&dhcpsvc.Config{
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	srv, err := dhcpsvc.New(ctx, &dhcpsvc.Config{
 		Enabled:         true,
+		Logger:          discardLog,
 		LocalDomainName: testLocalTLD,
 		Interfaces:      testInterfaceConf,
 	})
@@ -554,8 +579,11 @@ func TestDHCPServer_RemoveLease(t *testing.T) {
 }
 
 func TestDHCPServer_Reset(t *testing.T) {
-	srv, err := dhcpsvc.New(&dhcpsvc.Config{
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	srv, err := dhcpsvc.New(ctx, &dhcpsvc.Config{
 		Enabled:         true,
+		Logger:          discardLog,
 		LocalDomainName: testLocalTLD,
 		Interfaces:      testInterfaceConf,
 	})

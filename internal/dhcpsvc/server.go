@@ -1,6 +1,7 @@
 package dhcpsvc
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/netip"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"golang.org/x/exp/maps"
 )
 
@@ -43,8 +45,12 @@ type DHCPServer struct {
 // error if the given configuration can't be used.
 //
 // TODO(e.burkov):  Use.
-func New(conf *Config) (srv *DHCPServer, err error) {
+func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
+	l := conf.Logger.With(slogutil.KeyPrefix, "dhcpsvc")
+
 	if !conf.Enabled {
+		l.DebugContext(ctx, "disabled")
+
 		// TODO(e.burkov):  Perhaps return [Empty]?
 		return nil, nil
 	}
@@ -59,20 +65,26 @@ func New(conf *Config) (srv *DHCPServer, err error) {
 	var i4 *netInterfaceV4
 	var i6 *netInterfaceV6
 
+	var errs []error
+
 	for _, ifaceName := range ifaceNames {
 		iface := conf.Interfaces[ifaceName]
 
-		i4, err = newNetInterfaceV4(ifaceName, iface.IPv4)
+		i4, err = newNetInterfaceV4(ctx, l, ifaceName, iface.IPv4)
 		if err != nil {
-			return nil, fmt.Errorf("interface %q: ipv4: %w", ifaceName, err)
+			errs = append(errs, fmt.Errorf("interface %q: ipv4: %w", ifaceName, err))
 		} else if i4 != nil {
 			ifaces4 = append(ifaces4, i4)
 		}
 
-		i6 = newNetInterfaceV6(ifaceName, iface.IPv6)
+		i6 = newNetInterfaceV6(ctx, l, ifaceName, iface.IPv6)
 		if i6 != nil {
 			ifaces6 = append(ifaces6, i6)
 		}
+	}
+
+	if err = errors.Join(errs...); err != nil {
+		return nil, err
 	}
 
 	enabled := &atomic.Bool{}

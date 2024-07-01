@@ -11,6 +11,14 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 )
 
+const (
+	// keyInterface is the key for logging the network interface name.
+	keyInterface = "iface"
+
+	// keyFamily is the key for logging the handled address family.
+	keyFamily = "family"
+)
+
 // Interface is a DHCP service.
 //
 // TODO(e.burkov):  Separate HostByIP, MACByIP, IPByHost into a separate
