@@ -3,6 +3,7 @@ package dhcpsvc
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/netip"
 	"slices"
@@ -20,6 +21,11 @@ type DHCPServer struct {
 	// enabled indicates whether the DHCP server is enabled and can provide
 	// information about its clients.
 	enabled *atomic.Bool
+
+	// logger logs common DHCP events.
+	//
+	// TODO(e.burkov):  Use.
+	logger *slog.Logger
 
 	// localTLD is the top-level domain name to use for resolving DHCP clients'
 	// hostnames.
@@ -92,6 +98,7 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 
 	srv = &DHCPServer{
 		enabled:     enabled,
+		logger:      l,
 		localTLD:    conf.LocalDomainName,
 		leasesMu:    &sync.RWMutex{},
 		leases:      newLeaseIndex(),
