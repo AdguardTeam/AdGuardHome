@@ -75,7 +75,7 @@ func (c *IPv4Config) validate() (err error) {
 	}
 
 	if c.LeaseDuration <= 0 {
-		err = newMustErr("lease duration", "be less than %d", c.LeaseDuration)
+		err = newMustErr("icmp timeout", "be positive", c.LeaseDuration)
 		errs = append(errs, err)
 	}
 
@@ -341,15 +341,15 @@ func (c *IPv4Config) options(ctx context.Context, l *slog.Logger) (imp, exp laye
 	slices.SortFunc(imp, compareV4OptionCodes)
 
 	// Set values for explicitly configured options.
-	for _, e := range c.Options {
-		i, found := slices.BinarySearchFunc(imp, e, compareV4OptionCodes)
+	for _, o := range c.Options {
+		i, found := slices.BinarySearchFunc(imp, o, compareV4OptionCodes)
 		if found {
 			imp = slices.Delete(imp, i, i+1)
 		}
 
-		i, found = slices.BinarySearchFunc(exp, e, compareV4OptionCodes)
-		if e.Length > 0 {
-			exp = slices.Insert(exp, i, e)
+		i, found = slices.BinarySearchFunc(exp, o, compareV4OptionCodes)
+		if o.Length > 0 {
+			exp = slices.Insert(exp, i, o)
 		} else if found {
 			exp = slices.Delete(exp, i, i+1)
 		}
