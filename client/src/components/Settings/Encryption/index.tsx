@@ -38,7 +38,7 @@ class Encryption extends Component<EncryptionProps> {
     handleFormChange = debounce((values) => {
         const submitValues = this.getSubmitValues(values);
 
-        if (submitValues.enabled || submitValues.serve_plain_dns) {
+        if (submitValues.enabled) {
             this.props.validateTlsConfig(submitValues);
         }
     }, DEBOUNCE_TIMEOUT);

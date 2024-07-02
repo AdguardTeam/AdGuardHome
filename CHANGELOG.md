@@ -56,6 +56,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Unnecessary validation call on the encryption page.
+- Missing version in the footer.
 - Panic caused by missing user-specific blocked services object in configuration
   file ([#7069]).
 - Tracking `/etc/hosts` file changes causing panics within particular

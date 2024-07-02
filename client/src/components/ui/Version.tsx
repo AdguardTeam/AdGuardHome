@@ -12,12 +12,11 @@ const Version = () => {
     const dashboard = useSelector((state: RootState) => state.dashboard, shallowEqual);
     const install = useSelector((state: RootState) => state.install, shallowEqual);
 
-    if (!dashboard || !install) {
+    if (!dashboard && !install) {
         return null;
     }
 
-    const { dnsVersion, processingVersion, checkUpdateFlag } = dashboard;
-    const version = dnsVersion || install?.dnsVersion;
+    const version = dashboard?.dnsVersion || install?.dnsVersion;
 
     const onClick = () => {
         dispatch(getVersion(true));
@@ -35,12 +34,12 @@ const Version = () => {
                     </>
                 )}
 
-                {checkUpdateFlag && (
+                {dashboard?.checkUpdateFlag && (
                     <button
                         type="button"
                         className="btn btn-icon btn-icon-sm btn-outline-primary btn-sm ml-2"
                         onClick={onClick}
-                        disabled={processingVersion}
+                        disabled={dashboard?.processingVersion}
                         title={t('check_updates_now')}>
                         <svg className="icons icon12">
                             <use xlinkHref="#refresh" />
