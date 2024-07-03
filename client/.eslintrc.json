@@ -1,9 +1,13 @@
 {
-    "parser": "babel-eslint",
+    "plugins": ["prettier"],
     "extends": [
+        "airbnb-base",
+        "prettier",
+        "eslint:recommended",
         "plugin:react/recommended",
-        "airbnb-base"
+        "plugin:@typescript-eslint/recommended"
     ],
+    "parser": "@typescript-eslint/parser",
     "env": {
         "jest": true,
         "node": true,
@@ -16,50 +20,21 @@
             "version": "16.4"
         },
         "import/resolver": {
-            "webpack": {
-                "config": "webpack.common.js"
+            "node": {
+                "extensions": [".js", ".jsx", ".ts", ".tsx"]
             }
         }
     },
     "rules": {
-        "indent": [
+        "@typescript-eslint/no-explicit-any": "off",
+        "import/extensions": [
             "error",
-            4,
+            "ignorePackages",
             {
-                "SwitchCase": 1,
-                "VariableDeclarator": 1,
-                "outerIIFEBody": 1,
-                "FunctionDeclaration": {
-                    "parameters": 1,
-                    "body": 1
-                },
-                "FunctionExpression": {
-                    "parameters": 1,
-                    "body": 1
-                },
-                "CallExpression": {
-                    "arguments": 1
-                },
-                "ArrayExpression": 1,
-                "ObjectExpression": 1,
-                "ImportDeclaration": 1,
-                "flatTernaryExpressions": false,
-                "ignoredNodes": [
-                    "JSXElement",
-                    "JSXElement > *",
-                    "JSXAttribute",
-                    "JSXIdentifier",
-                    "JSXNamespacedName",
-                    "JSXMemberExpression",
-                    "JSXSpreadAttribute",
-                    "JSXExpressionContainer",
-                    "JSXOpeningElement",
-                    "JSXClosingElement",
-                    "JSXText",
-                    "JSXEmptyExpression",
-                    "JSXSpreadChild"
-                ],
-                "ignoreComments": false
+                "js": "never",
+                "jsx": "never",
+                "ts": "never",
+                "tsx": "never"
             }
         ],
         "class-methods-use-this": "off",
@@ -68,10 +43,7 @@
         "no-console": [
             "warn",
             {
-                "allow": [
-                    "warn",
-                    "error"
-                ]
+                "allow": ["warn", "error"]
             }
         ],
         "import/no-extraneous-dependencies": [

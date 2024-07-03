@@ -6,7 +6,7 @@
     "upstream_parallel": "並列リクエストを使用する（同時にすべてのアップストリームサーバーに処理要求することで解決スピードが向上）",
     "parallel_requests": "並列リクエスト",
     "load_balancing": "ロードバランシング",
-    "load_balancing_desc": "一度に1つのアップストリームサーバに処理要求します。 AdGuard Homeは、重み付きランダムアルゴリズム（weighted random algorithm）を使用してサーバを選択するため、最速のサーバがより頻繁に使用されます。",
+    "load_balancing_desc": "一度に1つのアップストリームサーバーをクエリします。AdGuard Home は、重み付き乱択アルゴリズムを使用して、ルックアップに失敗した回数が最も少なく、平均ルックアップ時間が最も短いサーバーを選択します。",
     "bootstrap_dns": "ブートストラップDNSサーバ",
     "bootstrap_dns_desc": "アップストリームとして指定したDoH/DoTリゾルバのIPアドレスを解決するために使用されるDNSサーバーのIPアドレスです。（コメントは許可されていません）",
     "fallback_dns_title": "フォールバックDNSサーバー",

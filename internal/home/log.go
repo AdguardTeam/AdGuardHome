@@ -21,7 +21,9 @@ func configureLogger(opts options) (err error) {
 	ls := getLogSettings(opts)
 
 	// Configure logger level.
-	if ls.Verbose {
+	if !ls.Enabled {
+		log.SetLevel(log.OFF)
+	} else if ls.Verbose {
 		log.SetLevel(log.DEBUG)
 	}
 
@@ -91,7 +93,14 @@ func getLogSettings(opts options) (ls *logSettings) {
 // separate method in order to configure logger before the actual configuration
 // is parsed and applied.
 func readLogSettings() (ls *logSettings) {
-	conf := &configuration{}
+	// TODO(s.chzhen):  Add a helper function that returns default parameters
+	// for this structure and for the global configuration structure [config].
+	conf := &configuration{
+		Log: logSettings{
+			// By default, it is true if the property does not exist.
+			Enabled: true,
+		},
+	}
 
 	yamlFile, err := readConfigFile()
 	if err != nil {

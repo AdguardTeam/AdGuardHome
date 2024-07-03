@@ -161,7 +161,8 @@ func (hc *HostsContainer) handleEvents() {
 
 	defer close(hc.updates)
 
-	ok, eventsCh := true, hc.watcher.Events()
+	eventsCh := hc.watcher.Events()
+	ok := eventsCh != nil
 	for ok {
 		select {
 		case _, ok = <-eventsCh:

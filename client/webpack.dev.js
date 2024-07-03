@@ -1,8 +1,8 @@
-const merge = require('webpack-merge');
-const yaml = require('js-yaml');
-const fs = require('fs');
-const common = require('./webpack.common.js');
-const { BASE_URL } = require('./constants');
+import { merge } from 'webpack-merge';
+import yaml from 'js-yaml';
+import fs from 'fs';
+import { BASE_URL } from './constants.js';
+import common from './webpack.common.js';
 
 const ZERO_HOST = '0.0.0.0';
 const LOCALHOST = '127.0.0.1';
@@ -47,20 +47,7 @@ const getDevServerConfig = (proxyUrl = BASE_URL) => {
     };
 };
 
-module.exports = merge(common, {
+export default merge(common, {
     devtool: 'eval-source-map',
-    module: {
-        rules: [
-            {
-                test: /\.js$/,
-                exclude: /node_modules/,
-                loader: 'eslint-loader',
-                options: {
-                    emitWarning: true,
-                    configFile: 'dev.eslintrc',
-                },
-            },
-        ],
-    },
     ...(process.env.WEBPACK_DEV_SERVER ? { devServer: getDevServerConfig(BASE_URL) } : undefined),
 });

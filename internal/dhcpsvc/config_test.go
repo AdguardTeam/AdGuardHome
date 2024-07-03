@@ -23,7 +23,8 @@ func TestConfig_Validate(t *testing.T) {
 	}, {
 		name: "empty",
 		conf: &dhcpsvc.Config{
-			Enabled: true,
+			Enabled:    true,
+			Interfaces: testInterfaceConf,
 		},
 		wantErrMsg: `bad domain name "": domain name is empty`,
 	}, {

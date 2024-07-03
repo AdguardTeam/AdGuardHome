@@ -24,7 +24,7 @@
     --option-border-radius: 4px;
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
     --red: rgba(223, 56, 18, 0.25);
     --green-pale: rgba(103, 178, 121, 0.25);
     --yellow: rgba(247, 181, 0, 0.2);
@@ -42,11 +42,11 @@
     line-height: 1.5rem;
 }
 
-[data-theme="dark"] .logs__text a {
+[data-theme='dark'] .logs__text a {
     color: var(--gray-f3);
 }
 
-[data-theme="dark"] .logs__text a:hover {
+[data-theme='dark'] .logs__text a:hover {
     color: var(--gray-f3);
 }
 
@@ -74,9 +74,9 @@
     color: #295a9f;
 }
 
-[data-theme="dark"] .logs__text--link,
-[data-theme="dark"] .logs__text--link:hover,
-[data-theme="dark"] .logs__text--link:focus {
+[data-theme='dark'] .logs__text--link,
+[data-theme='dark'] .logs__text--link:hover,
+[data-theme='dark'] .logs__text--link:focus {
     color: var(--gray-f3);
 }
 
@@ -90,7 +90,7 @@
     border-radius: 4px;
 }
 
-[data-theme=dark] .icon--selected {
+[data-theme='dark'] .icon--selected {
     opacity: 0.75;
 }
 
@@ -131,7 +131,7 @@
 }
 
 .custom-select__arrow--left {
-    background: var(--white) url("../ui/svg/chevron-down.svg") no-repeat;
+    background: var(--white) url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM5YWEwYWMiCiAgICAgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJmZWF0aGVyIGZlYXRoZXItY2hldnJvbi1kb3duIj4KICAgIDxwb2x5bGluZSBwb2ludHM9IjYgOSAxMiAxNSAxOCA5Ij48L3BvbHlsaW5lPgo8L3N2Zz4K") no-repeat;
     background-position: 5px 9px;
     background-size: 22px;
 }
@@ -150,7 +150,7 @@
     background-color: transparent !important;
 }
 
-[data-theme="dark"] .form-control--transparent option {
+[data-theme='dark'] .form-control--transparent option {
     background-color: var(--card-bgcolor);
 }
 
@@ -351,7 +351,7 @@
     overflow: hidden;
 }
 
-[data-theme="dark"] .tooltip-custom__container .button-action--arrow-option:not(:disabled):hover {
+[data-theme='dark'] .tooltip-custom__container .button-action--arrow-option:not(:disabled):hover {
     background: var(--ctrl-dropdown-bgcolor-focus);
 }
 
@@ -387,7 +387,7 @@
     background-color: var(--logs__row--blue-bgcolor);
 }
 
-[data-theme="dark"] .logs__row--blue .logs__text--link {
+[data-theme='dark'] .logs__row--blue .logs__text--link {
     color: var(--white);
 }
 
@@ -465,13 +465,13 @@
 }
 
 .logs__whois::after {
-    content: "|";
+    content: '|';
     padding: 0 5px;
     opacity: 0.3;
 }
 
 .logs__whois:last-child::after {
-    content: "";
+    content: '';
 }
 
 .logs__whois-icon.icons {
@@ -501,7 +501,7 @@
     color: var(--green79);
 }
 
-[data-theme="dark"] .logs__question.icon--lightgray {
+[data-theme='dark'] .logs__question.icon--lightgray {
     color: var(--gray-f3);
 }
 
@@ -533,6 +533,6 @@
     clip: rect(0 0 0 0);
 }
 
-[data-theme="dark"] .button-action__icon {
+[data-theme='dark'] .button-action__icon {
     color: var(--gray-f3);
 }

@@ -589,6 +589,7 @@
     "cache_optimistic_desc": "AdGuard Home را وادار می کند که از سمت حافظه پنهان پاسخ دهد حتی وقتی که موارد وارد شده منقضی شده باشد و همچنین سعی بر تازه کردن آنها می کند.",
     "filter_category_general": "General",
     "filter_category_security": "مسدودسازی بدافزار و فیشینگ",
+    "filter_category_regional": "منطقه‌ای",
     "filter_category_other": "ساير",
     "use_saved_key": "از کلید ذخیره شده قبلی استفاده کنید",
     "parental_control": "نظارت والدین",

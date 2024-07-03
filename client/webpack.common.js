@@ -1,16 +1,18 @@
-const path = require('path');
-const autoprefixer = require('autoprefixer');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const flexBugsFixes = require('postcss-flexbugs-fixes');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const CopyPlugin = require('copy-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const { BUILD_ENVS } = require('./constants');
+import path from 'path';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import { CleanWebpackPlugin } from 'clean-webpack-plugin';
+import CopyPlugin from 'copy-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import * as url from 'url';
+import { BUILD_ENVS } from './constants.js';
+
+// eslint-disable-next-line no-underscore-dangle
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 const RESOURCES_PATH = path.resolve(__dirname);
-const ENTRY_REACT = path.resolve(RESOURCES_PATH, 'src/index.js');
-const ENTRY_INSTALL = path.resolve(RESOURCES_PATH, 'src/install/index.js');
-const ENTRY_LOGIN = path.resolve(RESOURCES_PATH, 'src/login/index.js');
+const ENTRY_REACT = path.resolve(RESOURCES_PATH, 'src/index.tsx');
+const ENTRY_INSTALL = path.resolve(RESOURCES_PATH, 'src/install/index.tsx');
+const ENTRY_LOGIN = path.resolve(RESOURCES_PATH, 'src/login/index.tsx');
 const HTML_PATH = path.resolve(RESOURCES_PATH, 'public/index.html');
 const HTML_INSTALL_PATH = path.resolve(RESOURCES_PATH, 'public/install.html');
 const HTML_LOGIN_PATH = path.resolve(RESOURCES_PATH, 'public/login.html');
@@ -34,16 +36,11 @@ const config = {
     },
     output: {
         path: PUBLIC_PATH,
-        filename: '[name].[hash].js',
+        filename: '[name].[chunkhash].js',
     },
     resolve: {
         modules: ['node_modules'],
-        alias: {
-            MainRoot: path.resolve(__dirname, '../'),
-            ClientRoot: path.resolve(__dirname, './src'),
-            // TODO: uncomment when v16.13.1 is released https://stackoverflow.com/a/62671689/12942752
-            // 'react-dom': '@hot-loader/react-dom',
-        },
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
     },
     module: {
         rules: [
@@ -55,12 +52,8 @@ const config = {
             {
                 test: /\.css$/i,
                 use: [
-                    'style-loader',
                     {
                         loader: MiniCssExtractPlugin.loader,
-                        options: {
-                            hmr: isDev,
-                        },
                     },
                     {
                         loader: 'css-loader',
@@ -70,37 +63,14 @@ const config = {
                     },
                     {
                         loader: 'postcss-loader',
-                        options: {
-                            ident: 'postcss',
-                            plugins: () => [
-                                flexBugsFixes,
-                                autoprefixer({
-                                    flexbox: 'no-2009',
-                                }),
-                            ],
-                        },
                     },
                 ],
             },
             {
-                test: /\.js$/,
+                test: /\.tsx?$/,
                 exclude: /node_modules/,
                 use: {
-                    loader: 'babel-loader',
-                    options: {
-                        cacheDirectory: true,
-                    },
-                },
-            },
-            {
-                exclude: [/\.js$/, /\.html$/, /\.json$/, /\.css$/],
-                use: {
-                    loader: 'url-loader',
-                    options: {
-                        fallback: 'file-loader',
-                        name: 'media/[name].[hash:8].[ext]',
-                        limit: 10 * 1024,
-                    },
+                    loader: 'ts-loader',
                 },
             },
         ],
@@ -146,4 +116,4 @@ const config = {
     ],
 };
 
-module.exports = config;
+export default config;

@@ -19,25 +19,9 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// UnsupportedError is returned by functions and methods when a particular
-// operation Op cannot be performed on the current OS.
-type UnsupportedError struct {
-	Op string
-	OS string
-}
-
-// Error implements the error interface for *UnsupportedError.
-func (err *UnsupportedError) Error() (msg string) {
-	return fmt.Sprintf("%s is unsupported on %s", err.Op, err.OS)
-}
-
-// Unsupported is a helper that returns an *UnsupportedError with the Op field
-// set to op and the OS field set to the current OS.
+// Unsupported is a helper that returns a wrapped [errors.ErrUnsupported].
 func Unsupported(op string) (err error) {
-	return &UnsupportedError{
-		Op: op,
-		OS: runtime.GOOS,
-	}
+	return fmt.Errorf("%s: not supported on %s: %w", op, runtime.GOOS, errors.ErrUnsupported)
 }
 
 // SetRlimit sets user-specified limit of how many fd's we can use.

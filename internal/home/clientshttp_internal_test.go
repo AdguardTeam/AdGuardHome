@@ -49,7 +49,7 @@ func newPersistentClient(name string) (c *client.Persistent) {
 		Name: name,
 		UID:  client.MustNewUID(),
 		BlockedServices: &filtering.BlockedServices{
-			Schedule: &schedule.Weekly{},
+			Schedule: schedule.EmptyWeekly(),
 		},
 	}
 }
@@ -198,11 +198,11 @@ func TestClientsContainer_HandleDelClient(t *testing.T) {
 	clients := newClientsContainer(t)
 
 	clientOne := newPersistentClientWithIDs(t, "client1", []string{testClientIP1})
-	err := clients.add(clientOne)
+	err := clients.storage.Add(clientOne)
 	require.NoError(t, err)
 
 	clientTwo := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
-	err = clients.add(clientTwo)
+	err = clients.storage.Add(clientTwo)
 	require.NoError(t, err)
 
 	assertPersistentClients(t, clients, []*client.Persistent{clientOne, clientTwo})
@@ -260,7 +260,7 @@ func TestClientsContainer_HandleUpdateClient(t *testing.T) {
 	clients := newClientsContainer(t)
 
 	clientOne := newPersistentClientWithIDs(t, "client1", []string{testClientIP1})
-	err := clients.add(clientOne)
+	err := clients.storage.Add(clientOne)
 	require.NoError(t, err)
 
 	assertPersistentClients(t, clients, []*client.Persistent{clientOne})
@@ -342,11 +342,11 @@ func TestClientsContainer_HandleFindClient(t *testing.T) {
 	}
 
 	clientOne := newPersistentClientWithIDs(t, "client1", []string{testClientIP1})
-	err := clients.add(clientOne)
+	err := clients.storage.Add(clientOne)
 	require.NoError(t, err)
 
 	clientTwo := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
-	err = clients.add(clientTwo)
+	err = clients.storage.Add(clientTwo)
 	require.NoError(t, err)
 
 	assertPersistentClients(t, clients, []*client.Persistent{clientOne, clientTwo})

@@ -1,5 +1,5 @@
 {
-    "timeUpdated": "2024-05-27T12:08:27.431Z",
+    "timeUpdated": "2024-07-01T00:11:48.891Z",
     "categories": {
         "0": "audio_video_player",
         "1": "comments",
@@ -1182,6 +1182,13 @@
             "url": "https://www.admitad.com/en/#",
             "companyId": "admitad"
         },
+        "admixer": {
+            "name": "Admixer",
+            "categoryId": 4,
+            "url": "https://admixer.com/",
+            "companyId": "admixer",
+            "source": "AdGuard"
+        },
         "admixer.net": {
             "name": "Admixer",
             "categoryId": 4,
@@ -1472,6 +1479,13 @@
             "categoryId": 4,
             "url": "http://www.adplus.co.id/",
             "companyId": "adplus"
+        },
+        "adprofex": {
+            "name": "AdProfex",
+            "categoryId": 4,
+            "url": "https://adprofex.com/",
+            "companyId": "adprofex",
+            "source": "AdGuard"
         },
         "adprofy": {
             "name": "AdProfy",
@@ -2019,6 +2033,13 @@
             "url": "https://hybridtheory.com/",
             "companyId": "affectv"
         },
+        "affilbox": {
+            "name": "Affilbox",
+            "categoryId": 4,
+            "url": "https://affilbox.com/",
+            "companyId": "affilbox",
+            "source": "AdGuard"
+        },
         "affiliate-b": {
             "name": "Affiliate-B",
             "categoryId": 4,
@@ -2372,6 +2393,13 @@
             "categoryId": 4,
             "url": "http://www.amadesa.com/",
             "companyId": "amadesa"
+        },
+        "amap": {
+            "name": "Amap",
+            "categoryId": 2,
+            "url": "https://www.amap.com/",
+            "companyId": "softbank",
+            "source": "AdGuard"
         },
         "amazon": {
             "name": "Amazon.com",
@@ -4590,6 +4618,13 @@
             "categoryId": 4,
             "url": "http://clickaider.com/",
             "companyId": "clickaider"
+        },
+        "clickaine": {
+            "name": "Clickaine",
+            "categoryId": 4,
+            "url": "https://clickaine.com/",
+            "companyId": "clickaine",
+            "source": "AdGuard"
         },
         "clickbank": {
             "name": "ClickBank",
@@ -12470,6 +12505,13 @@
             "url": "http://nolix.ru/",
             "companyId": "nolix"
         },
+        "nonli": {
+            "name": "Nonli",
+            "categoryId": 4,
+            "url": "https://www.nonli.com/",
+            "companyId": "nonli",
+            "source": "AdGuard"
+        },
         "nonstop_consulting": {
             "name": "Resolution Media",
             "categoryId": 4,
@@ -20346,6 +20388,7 @@
         "adguard.org": "adguard",
         "adtidy.org": "adguard",
         "agrd.io": "adguard",
+        "agrd.eu": "adguard",
         "adguard-dns.com": "adguard_dns",
         "adguard-dns.io": "adguard_dns",
         "adguard-vpn.com": "adguard_vpn",
@@ -20420,7 +20463,8 @@
         "admicro.vn": "admicro",
         "vcmedia.vn": "admicro",
         "admitad.com": "admitad.com",
-        "admixer.net": "admixer.net",
+        "admixer.net": "admixer",
+        "admixer.com": "admixer",
         "admized.com": "admized",
         "admo.tv": "admo.tv",
         "a.admob.com": "admob",
@@ -20500,6 +20544,8 @@
         "advg.jp": "adplan",
         "c.p-advg.com": "adplan",
         "adplus.co.id": "adplus",
+        "adprofex.com": "adprofex",
+        "ads2.bid": "adprofex",
         "adframesrc.com": "adprofy",
         "adserve.adpulse.ir": "adpulse",
         "ads.adpv.com": "adpv",
@@ -20623,6 +20669,8 @@
         "affectv.com": "affectv",
         "go.affec.tv": "affectv",
         "hybridtheory.com": "affectv",
+        "affilbox.com": "affilbox",
+        "affilbox.cz": "affilbox",
         "track.affiliate-b.com": "affiliate-b",
         "affiliate4you.nl": "affiliate4you",
         "ads.affbuzzads.com": "affiliatebuzz",
@@ -20711,6 +20759,7 @@
         "inputs.alooma.com": "alooma",
         "arena.altitude-arena.com": "altitude_digital",
         "amadesa.com": "amadesa",
+        "amap.com": "amap",
         "amazon.ca": "amazon",
         "amazon.co.jp": "amazon",
         "amazon.co.uk": "amazon",
@@ -21238,6 +21287,7 @@
         "clickandchat.com": "click_and_chat",
         "software.clickback.com": "click_back",
         "hit.clickaider.com": "clickaider",
+        "clickaine.com": "clickaine",
         "clickbank.net": "clickbank",
         "cbproads.com": "clickbank_proads",
         "adtoll.com": "clickbooth",
@@ -22249,6 +22299,7 @@
         "withgoogle.com": "google",
         "googleadservices.com": "google_adservices",
         "google-analytics.com": "google_analytics",
+        "app-analytics-services.com": "google_analytics",
         "ssl-google-analytics.l.google.com": "google_analytics",
         "www-googletagmanager.l.google.com": "google_analytics",
         "appspot.com": "google_appspot",
@@ -23403,6 +23454,8 @@
         "noaa.gov": "noaa.gov",
         "track.noddus.com": "noddus",
         "contextbar.ru": "nolix",
+        "nonli.com": "nonli",
+        "non.li": "nonli",
         "trkme.net": "nonstop_consulting",
         "noop.style": "noop.style",
         "nosto.com": "nosto.com",
@@ -23660,6 +23713,7 @@
         "popads.net": "popads",
         "popadscdn.net": "popads",
         "popcash.net": "popcash",
+        "popcashjs.b-cdn.net": "popcash",
         "desv383oqqc0.cloudfront.net": "popcorn_metrics",
         "popin.cc": "popin.cc",
         "cdn.popmyads.com": "popmyads",

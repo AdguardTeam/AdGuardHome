@@ -11,6 +11,14 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 )
 
+const (
+	// keyInterface is the key for logging the network interface name.
+	keyInterface = "iface"
+
+	// keyFamily is the key for logging the handled address family.
+	keyFamily = "family"
+)
+
 // Interface is a DHCP service.
 //
 // TODO(e.burkov):  Separate HostByIP, MACByIP, IPByHost into a separate
@@ -50,21 +58,21 @@ type Interface interface {
 
 	// AddLease adds a new DHCP lease.  l must be valid.  It returns an error if
 	// l already exists.
-	AddLease(l *Lease) (err error)
+	AddLease(ctx context.Context, l *Lease) (err error)
 
 	// UpdateStaticLease replaces an existing static DHCP lease.  l must be
 	// valid.  It returns an error if the lease with the given hardware address
 	// doesn't exist or if other values match another existing lease.
-	UpdateStaticLease(l *Lease) (err error)
+	UpdateStaticLease(ctx context.Context, l *Lease) (err error)
 
 	// RemoveLease removes an existing DHCP lease.  l must be valid.  It returns
 	// an error if there is no lease equal to l.
-	RemoveLease(l *Lease) (err error)
+	RemoveLease(ctx context.Context, l *Lease) (err error)
 
 	// Reset removes all the DHCP leases.
 	//
 	// TODO(e.burkov):  If it's really needed?
-	Reset() (err error)
+	Reset(ctx context.Context) (err error)
 }
 
 // Empty is an [Interface] implementation that does nothing.
@@ -101,13 +109,13 @@ func (Empty) IPByHost(_ string) (ip netip.Addr) { return netip.Addr{} }
 func (Empty) Leases() (leases []*Lease) { return nil }
 
 // AddLease implements the [Interface] interface for Empty.
-func (Empty) AddLease(_ *Lease) (err error) { return nil }
+func (Empty) AddLease(_ context.Context, _ *Lease) (err error) { return nil }
 
 // UpdateStaticLease implements the [Interface] interface for Empty.
-func (Empty) UpdateStaticLease(_ *Lease) (err error) { return nil }
+func (Empty) UpdateStaticLease(_ context.Context, _ *Lease) (err error) { return nil }
 
 // RemoveLease implements the [Interface] interface for Empty.
-func (Empty) RemoveLease(_ *Lease) (err error) { return nil }
+func (Empty) RemoveLease(_ context.Context, _ *Lease) (err error) { return nil }
 
 // Reset implements the [Interface] interface for Empty.
-func (Empty) Reset() (err error) { return nil }
+func (Empty) Reset(_ context.Context) (err error) { return nil }

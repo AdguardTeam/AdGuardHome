@@ -28,7 +28,7 @@ type URLFilterID = int
 // The IDs of built-in filter lists.
 //
 // NOTE: Do not change without the need for it and keep in sync with
-// client/src/helpers/constants.js.
+// client/src/helpers/constants.ts.
 //
 // TODO(a.garipov): Add type [URLFilterID] once it is used consistently in
 // package filtering.

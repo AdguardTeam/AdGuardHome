@@ -178,7 +178,7 @@ func setupContext(opts options) (err error) {
 // unsupported errors and returns nil.  If err is nil, logIfUnsupported returns
 // nil.  Otherwise, it returns err.
 func logIfUnsupported(msg string, err error) (outErr error) {
-	if errors.As(err, new(*aghos.UnsupportedError)) {
+	if errors.Is(err, errors.ErrUnsupported) {
 		log.Debug(msg, err)
 
 		return nil
@@ -232,7 +232,9 @@ func configureOS(conf *configuration) (err error) {
 func setupHostsContainer() (err error) {
 	hostsWatcher, err := aghos.NewOSWritesWatcher()
 	if err != nil {
-		return fmt.Errorf("initing hosts watcher: %w", err)
+		log.Info("WARNING: initializing filesystem watcher: %s; not watching for changes", err)
+
+		hostsWatcher = aghos.EmptyFSWatcher{}
 	}
 
 	paths, err := hostsfile.DefaultHostsPaths()

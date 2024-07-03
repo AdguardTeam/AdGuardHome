@@ -23,24 +23,25 @@
     color: var(--gray300);
 }
 
-.ReactTable .-pagination input, .ReactTable .-pagination select {
+.ReactTable .-pagination input,
+.ReactTable .-pagination select {
     color: var(--rt-nodata-color);
     background-color: var(--rt-nodata-bgcolor);
 }
 
-[data-theme=dark] .ReactTable .rt-table::-webkit-scrollbar-track {
+[data-theme='dark'] .ReactTable .rt-table::-webkit-scrollbar-track {
     background-color: var(--card-bgcolor);
 }
 
-[data-theme=dark] .ReactTable .rt-table::-webkit-scrollbar-thumb {
+[data-theme='dark'] .ReactTable .rt-table::-webkit-scrollbar-thumb {
     background-color: #888888;
 }
 
-[data-theme=dark] .ReactTable .-pagination .-btn {
+[data-theme='dark'] .ReactTable .-pagination .-btn {
     filter: invert(1);
 }
 
-[data-theme=dark] .ReactTable .-pagination .-btn:disabled {
+[data-theme='dark'] .ReactTable .-pagination .-btn:disabled {
     opacity: 1;
 }
 

@@ -6,7 +6,7 @@
     "upstream_parallel": "Brug parallelforespørgsler til at accelerere fortolkningen ved at forespørge alle upstream-servere samtidigt.",
     "parallel_requests": "Parallelle forespørgsler",
     "load_balancing": "Belastningsfordeling",
-    "load_balancing_desc": "Forespørg én server ad gangen. AdGuard Home vil bruge en vægtet randomiseringsalgoritme til valg af server, så den hurtigste server oftere anvendes.",
+    "load_balancing_desc": "Forespørg én upstream-server ad gangen. AdGuard Home bruger en vægtet tilfældighedsalgoritme til vælg af servere med det laveste antal fejlslagne opslag og den laveste gennemsnitlige opslagstid.",
     "bootstrap_dns": "Bootstrap DNS-servere",
     "bootstrap_dns_desc": "IP-adresser på DNS-servere, som bruges til at opløse IP-adresser på de DoH/DoT-opløsere, som angives som upstreams. Kommentarer er ikke tilladt.",
     "fallback_dns_title": "Reserve DNS-servere",
