@@ -194,6 +194,6 @@
         # Set the default release channel on the release branch to beta, as we
         # may need to build a few of these.
         'variables':
-            'dockerFrontend': '${bamboo.adguardRegistryBasePath}/home-js-builder:2.0'
-            'dockerGo': '${bamboo.adguardRegistryBasePath}/go-builder:1.22.5--1'
+            'dockerFrontend': 'adguard/home-js-builder:2.0'
+            'dockerGo': 'adguard/go-builder:1.22.5--1'
             'channel': 'candidate'
