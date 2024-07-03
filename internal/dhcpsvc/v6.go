@@ -1,12 +1,14 @@
 package dhcpsvc
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"net/netip"
 	"slices"
 	"time"
 
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/google/gopacket/layers"
 )
@@ -38,50 +40,26 @@ type IPv6Config struct {
 }
 
 // validate returns an error in conf if any.
-func (conf *IPv6Config) validate() (err error) {
-	switch {
-	case conf == nil:
+func (c *IPv6Config) validate() (err error) {
+	if c == nil {
 		return errNilConfig
-	case !conf.Enabled:
-		return nil
-	case !conf.RangeStart.Is6():
-		return fmt.Errorf("range start %s should be a valid ipv6", conf.RangeStart)
-	case conf.LeaseDuration <= 0:
-		return fmt.Errorf("lease duration %s must be positive", conf.LeaseDuration)
-	default:
+	} else if !c.Enabled {
 		return nil
 	}
-}
 
-// options returns the implicit and explicit options for the interface.  The two
-// lists are disjoint and the implicit options are initialized with default
-// values.
-//
-// TODO(e.burkov):  Add implicit options according to RFC.
-func (conf *IPv6Config) options() (implicit, explicit layers.DHCPv6Options) {
-	// Set default values of host configuration parameters listed in RFC 8415.
-	implicit = layers.DHCPv6Options{}
-	slices.SortFunc(implicit, compareV6OptionCodes)
+	var errs []error
 
-	// Set values for explicitly configured options.
-	for _, exp := range conf.Options {
-		i, found := slices.BinarySearchFunc(implicit, exp, compareV6OptionCodes)
-		if found {
-			implicit = slices.Delete(implicit, i, i+1)
-		}
-
-		explicit = append(explicit, exp)
+	if !c.RangeStart.Is6() {
+		err = fmt.Errorf("range start %s should be a valid ipv6", c.RangeStart)
+		errs = append(errs, err)
 	}
 
-	log.Debug("dhcpsvc: v6: implicit options: %s", implicit)
-	log.Debug("dhcpsvc: v6: explicit options: %s", explicit)
+	if c.LeaseDuration <= 0 {
+		err = fmt.Errorf("lease duration %s must be positive", c.LeaseDuration)
+		errs = append(errs, err)
+	}
 
-	return implicit, explicit
-}
-
-// compareV6OptionCodes compares option codes of a and b.
-func compareV6OptionCodes(a, b layers.DHCPv6Option) (res int) {
-	return int(a.Code) - int(b.Code)
+	return errors.Join(errs...)
 }
 
 // netInterfaceV6 is a DHCP interface for IPv6 address family.
@@ -116,8 +94,16 @@ type netInterfaceV6 struct {
 // the given configuration.
 //
 // TODO(e.burkov):  Validate properly.
-func newNetInterfaceV6(name string, conf *IPv6Config) (i *netInterfaceV6) {
+func newNetInterfaceV6(
+	ctx context.Context,
+	l *slog.Logger,
+	name string,
+	conf *IPv6Config,
+) (i *netInterfaceV6) {
+	l = l.With(keyInterface, name, keyFamily, netutil.AddrFamilyIPv6)
 	if !conf.Enabled {
+		l.DebugContext(ctx, "disabled")
+
 		return nil
 	}
 
@@ -126,11 +112,12 @@ func newNetInterfaceV6(name string, conf *IPv6Config) (i *netInterfaceV6) {
 		netInterface: netInterface{
 			name:     name,
 			leaseTTL: conf.LeaseDuration,
+			logger:   l,
 		},
 		raSLAACOnly:  conf.RASLAACOnly,
 		raAllowSLAAC: conf.RAAllowSLAAC,
 	}
-	i.implicitOpts, i.explicitOpts = conf.options()
+	i.implicitOpts, i.explicitOpts = conf.options(ctx, l)
 
 	return i
 }
@@ -158,4 +145,34 @@ func (ifaces netInterfacesV6) find(ip netip.Addr) (iface6 *netInterface, ok bool
 	}
 
 	return &ifaces[i].netInterface, true
+}
+
+// options returns the implicit and explicit options for the interface.  The two
+// lists are disjoint and the implicit options are initialized with default
+// values.
+//
+// TODO(e.burkov):  Add implicit options according to RFC.
+func (c *IPv6Config) options(ctx context.Context, l *slog.Logger) (imp, exp layers.DHCPv6Options) {
+	// Set default values of host configuration parameters listed in RFC 8415.
+	imp = layers.DHCPv6Options{}
+	slices.SortFunc(imp, compareV6OptionCodes)
+
+	// Set values for explicitly configured options.
+	for _, e := range c.Options {
+		i, found := slices.BinarySearchFunc(imp, e, compareV6OptionCodes)
+		if found {
+			imp = slices.Delete(imp, i, i+1)
+		}
+
+		exp = append(exp, e)
+	}
+
+	l.DebugContext(ctx, "options", "implicit", imp, "explicit", exp)
+
+	return imp, exp
+}
+
+// compareV6OptionCodes compares option codes of a and b.
+func compareV6OptionCodes(a, b layers.DHCPv6Option) (res int) {
+	return int(a.Code) - int(b.Code)
 }

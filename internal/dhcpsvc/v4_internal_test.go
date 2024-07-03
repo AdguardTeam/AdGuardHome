@@ -3,7 +3,10 @@ package dhcpsvc
 import (
 	"net/netip"
 	"testing"
+	"time"
 
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/google/gopacket/layers"
 	"github.com/stretchr/testify/assert"
 )
@@ -75,9 +78,12 @@ func TestIPv4Config_Options(t *testing.T) {
 		wantExplicit: layers.DHCPOptions{opt1},
 	}}
 
+	ctx := testutil.ContextWithTimeout(t, time.Second)
+	l := slogutil.NewDiscardLogger()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			imp, exp := tc.conf.options()
+			imp, exp := tc.conf.options(ctx, l)
 			assert.Equal(t, tc.wantExplicit, exp)
 
 			for c := range exp {

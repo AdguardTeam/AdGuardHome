@@ -2,6 +2,7 @@ package dhcpsvc
 
 import (
 	"fmt"
+	"log/slog"
 	"slices"
 	"time"
 )
@@ -11,6 +12,9 @@ import (
 //
 // TODO(e.burkov):  Add other methods as [DHCPServer] evolves.
 type netInterface struct {
+	// logger logs the events related to the network interface.
+	logger *slog.Logger
+
 	// name is the name of the network interface.
 	name string
 

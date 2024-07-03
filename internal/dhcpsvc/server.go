@@ -1,16 +1,17 @@
 package dhcpsvc
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/netip"
-	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"golang.org/x/exp/maps"
+	"github.com/AdguardTeam/golibs/mapsutil"
 )
 
 // DHCPServer is a DHCP server for both IPv4 and IPv6 address families.
@@ -18,6 +19,9 @@ type DHCPServer struct {
 	// enabled indicates whether the DHCP server is enabled and can provide
 	// information about its clients.
 	enabled *atomic.Bool
+
+	// logger logs common DHCP events.
+	logger *slog.Logger
 
 	// localTLD is the top-level domain name to use for resolving DHCP clients'
 	// hostnames.
@@ -43,8 +47,11 @@ type DHCPServer struct {
 // error if the given configuration can't be used.
 //
 // TODO(e.burkov):  Use.
-func New(conf *Config) (srv *DHCPServer, err error) {
+func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
+	l := conf.Logger
 	if !conf.Enabled {
+		l.DebugContext(ctx, "disabled")
+
 		// TODO(e.burkov):  Perhaps return [Empty]?
 		return nil, nil
 	}
@@ -52,27 +59,26 @@ func New(conf *Config) (srv *DHCPServer, err error) {
 	// TODO(e.burkov):  Add validations scoped to the network interfaces set.
 	ifaces4 := make(netInterfacesV4, 0, len(conf.Interfaces))
 	ifaces6 := make(netInterfacesV6, 0, len(conf.Interfaces))
+	var errs []error
 
-	ifaceNames := maps.Keys(conf.Interfaces)
-	slices.Sort(ifaceNames)
-
-	var i4 *netInterfaceV4
-	var i6 *netInterfaceV6
-
-	for _, ifaceName := range ifaceNames {
-		iface := conf.Interfaces[ifaceName]
-
-		i4, err = newNetInterfaceV4(ifaceName, iface.IPv4)
+	mapsutil.SortedRange(conf.Interfaces, func(name string, iface *InterfaceConfig) (cont bool) {
+		var i4 *netInterfaceV4
+		i4, err = newNetInterfaceV4(ctx, l, name, iface.IPv4)
 		if err != nil {
-			return nil, fmt.Errorf("interface %q: ipv4: %w", ifaceName, err)
+			errs = append(errs, fmt.Errorf("interface %q: ipv4: %w", name, err))
 		} else if i4 != nil {
 			ifaces4 = append(ifaces4, i4)
 		}
 
-		i6 = newNetInterfaceV6(ifaceName, iface.IPv6)
+		i6 := newNetInterfaceV6(ctx, l, name, iface.IPv6)
 		if i6 != nil {
 			ifaces6 = append(ifaces6, i6)
 		}
+
+		return true
+	})
+	if err = errors.Join(errs...); err != nil {
+		return nil, err
 	}
 
 	enabled := &atomic.Bool{}
@@ -80,6 +86,7 @@ func New(conf *Config) (srv *DHCPServer, err error) {
 
 	srv = &DHCPServer{
 		enabled:     enabled,
+		logger:      l,
 		localTLD:    conf.LocalDomainName,
 		leasesMu:    &sync.RWMutex{},
 		leases:      newLeaseIndex(),
@@ -159,7 +166,7 @@ func (srv *DHCPServer) IPByHost(host string) (ip netip.Addr) {
 }
 
 // Reset implements the [Interface] interface for *DHCPServer.
-func (srv *DHCPServer) Reset() (err error) {
+func (srv *DHCPServer) Reset(ctx context.Context) (err error) {
 	srv.leasesMu.Lock()
 	defer srv.leasesMu.Unlock()
 
@@ -171,11 +178,13 @@ func (srv *DHCPServer) Reset() (err error) {
 	}
 	srv.leases.clear()
 
+	srv.logger.DebugContext(ctx, "reset leases")
+
 	return nil
 }
 
 // AddLease implements the [Interface] interface for *DHCPServer.
-func (srv *DHCPServer) AddLease(l *Lease) (err error) {
+func (srv *DHCPServer) AddLease(ctx context.Context, l *Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "adding lease: %w") }()
 
 	addr := l.IP
@@ -188,13 +197,27 @@ func (srv *DHCPServer) AddLease(l *Lease) (err error) {
 	srv.leasesMu.Lock()
 	defer srv.leasesMu.Unlock()
 
-	return srv.leases.add(l, iface)
+	err = srv.leases.add(l, iface)
+	if err != nil {
+		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
+
+	iface.logger.DebugContext(
+		ctx, "added lease",
+		"hostname", l.Hostname,
+		"ip", l.IP,
+		"mac", l.HWAddr,
+		"static", l.IsStatic,
+	)
+
+	return nil
 }
 
 // UpdateStaticLease implements the [Interface] interface for *DHCPServer.
 //
 // TODO(e.burkov):  Support moving leases between interfaces.
-func (srv *DHCPServer) UpdateStaticLease(l *Lease) (err error) {
+func (srv *DHCPServer) UpdateStaticLease(ctx context.Context, l *Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "updating static lease: %w") }()
 
 	addr := l.IP
@@ -207,11 +230,25 @@ func (srv *DHCPServer) UpdateStaticLease(l *Lease) (err error) {
 	srv.leasesMu.Lock()
 	defer srv.leasesMu.Unlock()
 
-	return srv.leases.update(l, iface)
+	err = srv.leases.update(l, iface)
+	if err != nil {
+		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
+
+	iface.logger.DebugContext(
+		ctx, "updated lease",
+		"hostname", l.Hostname,
+		"ip", l.IP,
+		"mac", l.HWAddr,
+		"static", l.IsStatic,
+	)
+
+	return nil
 }
 
 // RemoveLease implements the [Interface] interface for *DHCPServer.
-func (srv *DHCPServer) RemoveLease(l *Lease) (err error) {
+func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 	defer func() { err = errors.Annotate(err, "removing lease: %w") }()
 
 	addr := l.IP
@@ -224,7 +261,21 @@ func (srv *DHCPServer) RemoveLease(l *Lease) (err error) {
 	srv.leasesMu.Lock()
 	defer srv.leasesMu.Unlock()
 
-	return srv.leases.remove(l, iface)
+	err = srv.leases.remove(l, iface)
+	if err != nil {
+		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
+
+	iface.logger.DebugContext(
+		ctx, "removed lease",
+		"hostname", l.Hostname,
+		"ip", l.IP,
+		"mac", l.HWAddr,
+		"static", l.IsStatic,
+	)
+
+	return nil
 }
 
 // ifaceForAddr returns the handled network interface for the given IP address,
