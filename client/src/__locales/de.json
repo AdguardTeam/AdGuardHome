@@ -6,7 +6,7 @@
     "upstream_parallel": "Parallele Abfragen verwenden, um das Auflösen zu beschleunigen, indem alle Upstream-Server gleichzeitig abgefragt werden.",
     "parallel_requests": "Paralleles Abfragen",
     "load_balancing": "Lastverteilung",
-    "load_balancing_desc": "Einen Server nach dem anderen abfragen. AdGuard Home verwendet den gewichteten Zufallsalgorithmus, um den Server so auszuwählen, dass der schnellste Server häufiger verwendet wird.",
+    "load_balancing_desc": "Es wird jeweils ein Upstream-Server abgefragt. AdGuard Home verwendet einen gewichteten Zufallsalgorithmus, um die Server mit der geringsten Anzahl an fehlgeschlagenen Suchvorgängen und der niedrigsten durchschnittlichen Suchzeit auszuwählen.",
     "bootstrap_dns": "Bootstrap-DNS-Server",
     "bootstrap_dns_desc": "IP-Adressen der DNS-Server, die zum Auflösen der IP-Adressen von DoH/DoT Upstream-Servern verwendet werden, die Sie angegeben haben. Kommentare sind nicht erlaubt.",
     "fallback_dns_title": "Fallback-DNS-Server",

@@ -6,7 +6,7 @@
     "upstream_parallel": "쿼리 처리 속도를 높이려면 모든 업스트림 서버에서 동시에 병렬 쿼리를 사용해주세요.",
     "parallel_requests": "병렬 처리 요청",
     "load_balancing": "로드 밸런싱",
-    "load_balancing_desc": "한 번에 하나의 서버씩 질의합니다. AdGuard Home은 가중 랜덤 알고리즘를 사용해서 가장 빠른 서버가 자주 사용되도록 서버를 선택합니다.",
+    "load_balancing_desc": "한 번에 하나의 업스트림 서버를 쿼리합니다. AdGuard Home은 가중 무작위 알고리즘을 사용하여 조회 실패 횟수가 가장 적고 평균 조회 시간이 가장 짧은 서버를 선택합니다.",
     "bootstrap_dns": "부트스트랩 DNS 서버",
     "bootstrap_dns_desc": "업스트림으로 지정한 DoH/DoT 리졸버의 IP 주소를 확인하는 데 사용되는 DNS 서버의 IP 주소입니다. 주석은 허용되지 않습니다.",
     "fallback_dns_title": "폴백 DNS 서버",

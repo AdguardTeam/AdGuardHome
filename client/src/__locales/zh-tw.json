@@ -6,7 +6,7 @@
     "upstream_parallel": "透過同時地查詢所有上游的伺服器，使用並行的查詢以加速解析。",
     "parallel_requests": "並行的請求",
     "load_balancing": "負載平衡",
-    "load_balancing_desc": "每次查詢一個上游伺服器。AdGuard Home 使用它的加權隨機的演算法來選擇伺服器，以便最快的伺服器被更常使用。",
+    "load_balancing_desc": "一次查詢一台伺服器。AdGuard Home 使用加權隨機演算法來選擇具有最少失敗查詢和最低平均查詢時間的伺服器。",
     "bootstrap_dns": "自我啟動（Bootstrap）DNS 伺服器",
     "bootstrap_dns_desc": "DNS 伺服器的 IP 位址，用於解析您指定為上游伺服器的 DoH/DoT 解析器的 IP 位址。不允許註釋。",
     "fallback_dns_title": "應變 DNS 伺服器",

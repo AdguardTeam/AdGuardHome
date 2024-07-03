@@ -6,7 +6,7 @@
     "upstream_parallel": "Použijte paralelní požadavky na urychlení řešení simultánním dotazováním na všechny navazující servery.",
     "parallel_requests": "Paralelní požadavky",
     "load_balancing": "Optimalizace vytížení",
-    "load_balancing_desc": "Optimalizovaný dotaz na odchozí server. AdGuard Home použije vážený náhodný algoritmus k výběru serveru, takže nejrychlejší server je používán častěji.",
+    "load_balancing_desc": "Dotazy jednoho odchozího serveru ve stejný čas. AdGuard Home používá náhodný algoritmus pro výběr serverů s nejnižším počtem neúspěšných vyhledávání a nejnižší průměrnou dobou vyhledávání.",
     "bootstrap_dns": "Bootstrap DNS servery",
     "bootstrap_dns_desc": "IP adresy DNS serverů používaných k překladu IP adres řešitelů DoH/DoT, které zadáte jako odchozí servery. Komentáře nejsou povoleny.",
     "fallback_dns_title": "Záložní DNS servery",

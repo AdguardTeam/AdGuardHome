@@ -6,7 +6,7 @@
     "upstream_parallel": "Utilisez des requêtes parallèles pour accélérer la résolution en requêtant simultanément tous les serveurs en amont.",
     "parallel_requests": "Requêtes en parallèle",
     "load_balancing": "Équilibrage de charge",
-    "load_balancing_desc": "Interroger un serveur en amont à la fois. AdGuard Home utilise son algorithme aléatoire pondéré pour choisir le serveur de sorte que le serveur le plus rapide soit utilisé plus souvent.",
+    "load_balancing_desc": "Une requête par serveur en amont à la fois. AdGuard Home utilise un algorithme aléatoire pondéré pour sélectionner les serveurs avec le plus petit nombre d'échecs de recherche et le temps de recherche moyen le plus bas.",
     "bootstrap_dns": "Serveurs DNS d'amorçage",
     "bootstrap_dns_desc": "Les adresses IP des serveurs DNS utilisées pour résoudre les adresses IP des résolveurs DoH/DoT que vous spécifiez comme en amont. Les commentaires ne sont pas autorisés.",
     "fallback_dns_title": "Serveurs DNS de repli",

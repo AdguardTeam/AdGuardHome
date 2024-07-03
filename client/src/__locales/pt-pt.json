@@ -6,7 +6,7 @@
     "upstream_parallel": "Usar consultas paralelas para acelerar a resolução consultando simultaneamente todos os servidores DNS",
     "parallel_requests": "Solicitações paralelas",
     "load_balancing": "Balanceamento de carga",
-    "load_balancing_desc": "Consulte um servidor DNS primário por vez. O AdGuard Home usa seu algoritmo aleatório ponderado para escolher o servidor para que o servidor mais rápido seja usado com mais frequência.",
+    "load_balancing_desc": "Consulta um servidor a montante de cada vez. O AdGuard Home usa um algoritmo aleatório ponderado para selecionar servidores com o menor número de pesquisas com falha e o menor tempo médio de pesquisa.",
     "bootstrap_dns": "Servidores DNS de arranque",
     "bootstrap_dns_desc": "Endereços IP de servidores DNS usados para resolver endereços IP dos resolvedores DoH/DoT que você especifica como upstreams. Comentários não são permitidos.",
     "fallback_dns_title": "Servidores DNS de fallback",

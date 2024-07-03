@@ -27,6 +27,11 @@ See also the [v0.107.52 GitHub milestone][ms-v0.107.52].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go
+  vulnerabilities fixed in [Go 1.22.5][go-1.22.5].
+
 ### Added
 
 - The ability to disable logging using the new `log.enabled` configuration
@@ -68,6 +73,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#7076]: https://github.com/AdguardTeam/AdGuardHome/issues/7076
 [#7079]: https://github.com/AdguardTeam/AdGuardHome/issues/7079
 
+[go-1.22.5]:      https://groups.google.com/g/golang-announce/c/gyb7aM1C9H4
 [install-script]: https://github.com/AdguardTeam/AdGuardHome/?tab=readme-ov-file#automated-install-linux-and-mac
 
 <!--
