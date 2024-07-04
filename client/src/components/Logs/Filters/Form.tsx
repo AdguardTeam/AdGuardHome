@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-import { Field, reduxForm } from 'redux-form';
+import { Field, type InjectedFormProps, reduxForm } from 'redux-form';
 import { useTranslation } from 'react-i18next';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
@@ -104,14 +104,13 @@ const FORM_NAMES = {
     response_status: 'response_status',
 };
 
-interface FiltersFormProps {
+type FiltersFormProps = {
     className?: string;
     responseStatusClass?: string;
-    change: (...args: unknown[]) => unknown;
-    setIsLoading?: (...args: unknown[]) => unknown;
-}
+    setIsLoading: (...args: unknown[]) => unknown;
+};
 
-const Form = (props: FiltersFormProps) => {
+const Form = (props: FiltersFormProps & InjectedFormProps) => {
     const { className = '', responseStatusClass, setIsLoading, change } = props;
 
     const { t } = useTranslation();
@@ -142,7 +141,6 @@ const Form = (props: FiltersFormProps) => {
 
     const onInputClear = async () => {
         setIsLoading(true);
-
         change(FORM_NAMES.search, DEFAULT_LOGS_FILTER[FORM_NAMES.search]);
         setIsLoading(false);
     };
@@ -195,7 +193,7 @@ const Form = (props: FiltersFormProps) => {
     );
 };
 
-export default reduxForm({
+export const FiltersForm = reduxForm<Record<string, any>, FiltersFormProps>({
     form: FORM_NAME.LOGS_FILTER,
     enableReinitialize: true,
 })(Form);
