@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 
-import Form from './Form';
+import { FiltersForm } from './Form';
 import { refreshFilteredLogs } from '../../../actions/queryLogs';
 import { addSuccessToast } from '../../../actions/toasts';
 
@@ -38,12 +38,7 @@ const Filters = ({ filter, setIsLoading }: FiltersProps) => {
                     </svg>
                 </button>
             </h1>
-
-            <Form
-                // responseStatusClass="d-sm-block"
-                // setIsLoading={setIsLoading}
-                initialValues={filter}
-            />
+            <FiltersForm responseStatusClass="d-sm-block" setIsLoading={setIsLoading} initialValues={filter} />
         </div>
     );
 };
