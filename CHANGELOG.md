@@ -18,14 +18,24 @@ TODO(a.garipov): Use the common markdown formatting tools.
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.52] - 2024-06-29 (APPROX.)
+## [v0.107.53] - 2024-07-24 (APPROX.)
 
-See also the [v0.107.52 GitHub milestone][ms-v0.107.52].
+See also the [v0.107.53 GitHub milestone][ms-v0.107.53].
 
-[ms-v0.107.52]: https://github.com/AdguardTeam/AdGuardHome/milestone/87?closed=1
+[ms-v0.107.53]: https://github.com/AdguardTeam/AdGuardHome/milestone/88?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+
+
+## [v0.107.52] - 2024-07-04
+
+See also the [v0.107.52 GitHub milestone][ms-v0.107.52].
 
 ### Security
 
@@ -48,8 +58,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
   or via the CLI (with root privileges):
 
   ```sh
+  ./AdGuardHome -s stop
   ./AdGuardHome -s uninstall
   ./AdGuardHome -s install
+  ./AdGuardHome -s start
   ```
 
   Don't forget to backup your configuration file and other important data before
@@ -61,8 +73,6 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
-- Unnecessary validation call on the encryption page.
-- Missing version in the footer.
 - Panic caused by missing user-specific blocked services object in configuration
   file ([#7069]).
 - Tracking `/etc/hosts` file changes causing panics within particular
@@ -76,9 +86,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [go-1.22.5]:      https://groups.google.com/g/golang-announce/c/gyb7aM1C9H4
 [install-script]: https://github.com/AdguardTeam/AdGuardHome/?tab=readme-ov-file#automated-install-linux-and-mac
 
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[ms-v0.107.52]: https://github.com/AdguardTeam/AdGuardHome/milestone/87?closed=1
 
 
 
@@ -3061,11 +3069,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.52...HEAD
-[v0.107.52]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.51...v0.107.52
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.53...HEAD
+[v0.107.53]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.52...v0.107.53
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.51...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.52...HEAD
+[v0.107.52]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.51...v0.107.52
 [v0.107.51]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.50...v0.107.51
 [v0.107.50]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.49...v0.107.50
 [v0.107.49]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.48...v0.107.49
