@@ -120,6 +120,7 @@ func newNetInterfaceV4(
 		keyInterface, name,
 		keyFamily, netutil.AddrFamilyIPv4,
 	)
+
 	if !conf.Enabled {
 		l.DebugContext(ctx, "disabled")
 

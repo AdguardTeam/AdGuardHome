@@ -124,3 +124,18 @@ func (idx *leaseIndex) update(l *Lease, iface *netInterface) (err error) {
 
 	return nil
 }
+
+// rangeLeases calls f for each lease in idx in an unspecified order until f
+// returns false.
+func (idx *leaseIndex) rangeLeases(f func(l *Lease) (cont bool)) {
+	for _, l := range idx.byName {
+		if !f(l) {
+			break
+		}
+	}
+}
+
+// len returns the number of leases in idx.
+func (idx *leaseIndex) len() (l uint) {
+	return uint(len(idx.byAddr))
+}

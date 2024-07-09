@@ -27,6 +27,13 @@ type DHCPServer struct {
 	// hostnames.
 	localTLD string
 
+	// dbFilePath is the path to the database file containing the DHCP leases.
+	//
+	// TODO(e.burkov):  Consider extracting the database logic into a separate
+	// interface to prevent packages that only need lease data from depending on
+	// the entire server and to simplify testing.
+	dbFilePath string
+
 	// leasesMu protects the leases index as well as leases in the interfaces.
 	leasesMu *sync.RWMutex
 
@@ -93,9 +100,14 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 		interfaces4: ifaces4,
 		interfaces6: ifaces6,
 		icmpTimeout: conf.ICMPTimeout,
+		dbFilePath:  conf.DBFilePath,
 	}
 
-	// TODO(e.burkov):  Load leases.
+	err = srv.dbLoad(ctx)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return nil, err
+	}
 
 	return srv, nil
 }
@@ -167,9 +179,26 @@ func (srv *DHCPServer) IPByHost(host string) (ip netip.Addr) {
 
 // Reset implements the [Interface] interface for *DHCPServer.
 func (srv *DHCPServer) Reset(ctx context.Context) (err error) {
+	defer func() { err = errors.Annotate(err, "resetting leases: %w") }()
+
 	srv.leasesMu.Lock()
 	defer srv.leasesMu.Unlock()
 
+	srv.resetLeases()
+	err = srv.dbStore(ctx)
+	if err != nil {
+		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
+
+	srv.logger.DebugContext(ctx, "reset leases")
+
+	return nil
+}
+
+// resetLeases resets the leases for all network interfaces of the server.  It
+// expects the DHCPServer.leasesMu to be locked.
+func (srv *DHCPServer) resetLeases() {
 	for _, iface := range srv.interfaces4 {
 		iface.reset()
 	}
@@ -177,10 +206,6 @@ func (srv *DHCPServer) Reset(ctx context.Context) (err error) {
 		iface.reset()
 	}
 	srv.leases.clear()
-
-	srv.logger.DebugContext(ctx, "reset leases")
-
-	return nil
 }
 
 // AddLease implements the [Interface] interface for *DHCPServer.
@@ -190,7 +215,7 @@ func (srv *DHCPServer) AddLease(ctx context.Context, l *Lease) (err error) {
 	addr := l.IP
 	iface, err := srv.ifaceForAddr(addr)
 	if err != nil {
-		// Don't wrap the error since there is already an annotation deferred.
+		// Don't wrap the error since it's already informative enough as is.
 		return err
 	}
 
@@ -200,6 +225,12 @@ func (srv *DHCPServer) AddLease(ctx context.Context, l *Lease) (err error) {
 	err = srv.leases.add(l, iface)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
+
+	err = srv.dbStore(ctx)
+	if err != nil {
+		// Don't wrap the error since it's already informative enough as is.
 		return err
 	}
 
@@ -223,7 +254,7 @@ func (srv *DHCPServer) UpdateStaticLease(ctx context.Context, l *Lease) (err err
 	addr := l.IP
 	iface, err := srv.ifaceForAddr(addr)
 	if err != nil {
-		// Don't wrap the error since there is already an annotation deferred.
+		// Don't wrap the error since it's already informative enough as is.
 		return err
 	}
 
@@ -233,6 +264,12 @@ func (srv *DHCPServer) UpdateStaticLease(ctx context.Context, l *Lease) (err err
 	err = srv.leases.update(l, iface)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
+
+	err = srv.dbStore(ctx)
+	if err != nil {
+		// Don't wrap the error since it's already informative enough as is.
 		return err
 	}
 
@@ -254,7 +291,7 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 	addr := l.IP
 	iface, err := srv.ifaceForAddr(addr)
 	if err != nil {
-		// Don't wrap the error since there is already an annotation deferred.
+		// Don't wrap the error since it's already informative enough as is.
 		return err
 	}
 
@@ -264,6 +301,12 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 	err = srv.leases.remove(l, iface)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
+
+	err = srv.dbStore(ctx)
+	if err != nil {
+		// Don't wrap the error since it's already informative enough as is.
 		return err
 	}
 
