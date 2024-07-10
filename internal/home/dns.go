@@ -2,6 +2,7 @@ package home
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
 	"net/netip"
 	"net/url"
@@ -43,8 +44,8 @@ func onConfigModified() {
 
 // initDNS updates all the fields of the [Context] needed to initialize the DNS
 // server and initializes it at last.  It also must not be called unless
-// [config] and [Context] are initialized.
-func initDNS() (err error) {
+// [config] and [Context] are initialized.  l must not be nil.
+func initDNS(l *slog.Logger) (err error) {
 	anonymizer := config.anonymizer()
 
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&Context, config)
@@ -113,13 +114,16 @@ func initDNS() (err error) {
 		anonymizer,
 		httpRegister,
 		tlsConf,
+		l,
 	)
 }
 
 // initDNSServer initializes the [context.dnsServer].  To only use the internal
-// proxy, none of the arguments are required, but tlsConf still must not be nil,
-// in other cases all the arguments also must not be nil.  It also must not be
-// called unless [config] and [Context] are initialized.
+// proxy, none of the arguments are required, but tlsConf and l still must not
+// be nil, in other cases all the arguments also must not be nil.  It also must
+// not be called unless [config] and [Context] are initialized.
+//
+// TODO(e.burkov): Use [dnsforward.DNSCreateParams] as a parameter.
 func initDNSServer(
 	filters *filtering.DNSFilter,
 	sts stats.Interface,
@@ -128,8 +132,10 @@ func initDNSServer(
 	anonymizer *aghnet.IPMut,
 	httpReg aghhttp.RegisterFunc,
 	tlsConf *tlsConfigSettings,
+	l *slog.Logger,
 ) (err error) {
 	Context.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
+		Logger:      l,
 		DNSFilter:   filters,
 		Stats:       sts,
 		QueryLog:    qlog,

@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/netip"
@@ -27,6 +28,7 @@ import (
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/sysresolv"
 	"github.com/AdguardTeam/golibs/stringutil"
@@ -121,6 +123,12 @@ type Server struct {
 	// access drops disallowed clients.
 	access *accessManager
 
+	// logger is used for logging during server routines.
+	//
+	// TODO(d.kolyshev): Make it never nil.
+	// TODO(d.kolyshev): Use this logger.
+	logger *slog.Logger
+
 	// localDomainSuffix is the suffix used to detect internal hosts.  It
 	// must be a valid domain name plus dots on each side.
 	localDomainSuffix string
@@ -197,6 +205,10 @@ type DNSCreateParams struct {
 	PrivateNets netutil.SubnetSet
 	Anonymizer  *aghnet.IPMut
 	EtcHosts    *aghnet.HostsContainer
+
+	// Logger is used as a base logger.  It must not be nil.
+	Logger *slog.Logger
+
 	LocalDomain string
 }
 
@@ -233,6 +245,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		stats:       p.Stats,
 		queryLog:    p.QueryLog,
 		privateNets: p.PrivateNets,
+		logger:      p.Logger.With(slogutil.KeyPrefix, "dnsforward"),
 		// TODO(e.burkov):  Use some case-insensitive string comparison.
 		localDomainSuffix: strings.ToLower(localDomainSuffix),
 		etcHosts:          etcHosts,
@@ -717,6 +730,10 @@ func (s *Server) prepareInternalProxy() (err error) {
 		UsePrivateRDNS:            srvConf.UsePrivateRDNS,
 		PrivateSubnets:            s.privateNets,
 		MessageConstructor:        s,
+	}
+
+	if s.logger != nil {
+		conf.Logger = s.logger.With(slogutil.KeyPrefix, "dnsproxy")
 	}
 
 	err = setProxyUpstreamMode(conf, srvConf.UpstreamMode, srvConf.FastestTimeout.Duration)

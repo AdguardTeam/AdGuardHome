@@ -159,7 +159,7 @@ func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
 	q := pctx.Req.Question[0]
 	qt := q.Qtype
 	if s.conf.AAAADisabled && qt == dns.TypeAAAA {
-		_ = proxy.CheckDisabledAAAARequest(pctx, true)
+		pctx.Res = s.newMsgNODATA(pctx.Req)
 
 		return resultCodeFinish
 	}

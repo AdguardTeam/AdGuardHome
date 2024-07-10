@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"net/netip"
 	"net/url"
@@ -90,6 +91,8 @@ func (c *homeContext) getDataDir() string {
 }
 
 // Context - a global context object
+//
+// TODO(a.garipov): Refactor.
 var Context homeContext
 
 // Main is the entry point
@@ -482,7 +485,12 @@ func checkPorts() (err error) {
 	return nil
 }
 
-func initWeb(opts options, clientBuildFS fs.FS, upd *updater.Updater) (web *webAPI, err error) {
+func initWeb(
+	opts options,
+	clientBuildFS fs.FS,
+	upd *updater.Updater,
+	l *slog.Logger,
+) (web *webAPI, err error) {
 	var clientFS fs.FS
 	if opts.localFrontend {
 		log.Info("warning: using local frontend files")
@@ -524,7 +532,7 @@ func initWeb(opts options, clientBuildFS fs.FS, upd *updater.Updater) (web *webA
 		serveHTTP3:       config.DNS.ServeHTTP3,
 	}
 
-	web = newWebAPI(webConf)
+	web = newWebAPI(webConf, l)
 	if web == nil {
 		return nil, fmt.Errorf("initializing web: %w", err)
 	}
@@ -547,9 +555,14 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	// Configure config filename.
 	initConfigFilename(opts)
 
+	ls := getLogSettings(opts)
+
 	// Configure log level and output.
-	err = configureLogger(opts)
+	err = configureLogger(ls)
 	fatalOnError(err)
+
+	// TODO(a.garipov): Use slog everywhere.
+	slogLogger := newSlogLogger(ls)
 
 	// Print the first message after logger is configured.
 	log.Info(version.Full())
@@ -604,7 +617,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
-	cmdlineUpdate(opts, upd)
+	cmdlineUpdate(opts, upd, slogLogger)
 
 	if !Context.firstRun {
 		// Save the updated config.
@@ -632,11 +645,11 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 		onConfigModified()
 	}
 
-	Context.web, err = initWeb(opts, clientBuildFS, upd)
+	Context.web, err = initWeb(opts, clientBuildFS, upd, slogLogger)
 	fatalOnError(err)
 
 	if !Context.firstRun {
-		err = initDNS()
+		err = initDNS(slogLogger)
 		fatalOnError(err)
 
 		Context.tls.start()
@@ -697,9 +710,10 @@ func (c *configuration) anonymizer() (ipmut *aghnet.IPMut) {
 	return aghnet.NewIPMut(anonFunc)
 }
 
-// startMods initializes and starts the DNS server after installation.
-func startMods() (err error) {
-	err = initDNS()
+// startMods initializes and starts the DNS server after installation.  l must
+// not be nil.
+func startMods(l *slog.Logger) (err error) {
+	err = initDNS(l)
 	if err != nil {
 		return err
 	}
@@ -959,8 +973,8 @@ type jsonError struct {
 	Message string `json:"message"`
 }
 
-// cmdlineUpdate updates current application and exits.
-func cmdlineUpdate(opts options, upd *updater.Updater) {
+// cmdlineUpdate updates current application and exits.  l must not be nil.
+func cmdlineUpdate(opts options, upd *updater.Updater, l *slog.Logger) {
 	if !opts.performUpdate {
 		return
 	}
@@ -970,7 +984,7 @@ func cmdlineUpdate(opts options, upd *updater.Updater) {
 	//
 	// TODO(e.burkov):  We could probably initialize the internal resolver
 	// separately.
-	err := initDNSServer(nil, nil, nil, nil, nil, nil, &tlsConfigSettings{})
+	err := initDNSServer(nil, nil, nil, nil, nil, nil, &tlsConfigSettings{}, l)
 	fatalOnError(err)
 
 	log.Info("cmdline update: performing update")

@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -301,6 +302,8 @@ type ServerConfig struct {
 
 // UpstreamMode is a enumeration of upstream mode representations.  See
 // [proxy.UpstreamModeType].
+//
+// TODO(d.kolyshev): Consider using [proxy.UpstreamMode].
 type UpstreamMode string
 
 const (
@@ -337,6 +340,10 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 		UsePrivateRDNS:            srvConf.UsePrivateRDNS,
 		PrivateSubnets:            s.privateNets,
 		MessageConstructor:        s,
+	}
+
+	if s.logger != nil {
+		conf.Logger = s.logger.With(slogutil.KeyPrefix, "dnsproxy")
 	}
 
 	if srvConf.EDNSClientSubnet.UseCustom {

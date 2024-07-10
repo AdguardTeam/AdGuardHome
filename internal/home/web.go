@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"net/netip"
 	"runtime"
@@ -90,17 +91,22 @@ type webAPI struct {
 	// TODO(a.garipov): Refactor all these servers.
 	httpServer *http.Server
 
+	// logger is a slog logger used in webAPI. It must not be nil.
+	logger *slog.Logger
+
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
 	httpsServer httpsServer
 }
 
-// newWebAPI creates a new instance of the web UI and API server.
-func newWebAPI(conf *webConfig) (w *webAPI) {
+// newWebAPI creates a new instance of the web UI and API server.  l must not be
+// nil.
+func newWebAPI(conf *webConfig, l *slog.Logger) (w *webAPI) {
 	log.Info("web: initializing")
 
 	w = &webAPI{
-		conf: conf,
+		conf:   conf,
+		logger: l,
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))

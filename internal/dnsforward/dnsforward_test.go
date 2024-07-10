@@ -28,6 +28,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -99,6 +100,7 @@ func createTestServer(
 		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
+		Logger:      slogutil.NewDiscardLogger(),
 	})
 	require.NoError(t, err)
 
@@ -339,7 +341,10 @@ func TestServer_timeout(t *testing.T) {
 			ServePlainDNS: true,
 		}
 
-		s, err := NewServer(DNSCreateParams{DNSFilter: createTestDNSFilter(t)})
+		s, err := NewServer(DNSCreateParams{
+			DNSFilter: createTestDNSFilter(t),
+			Logger:    slogutil.NewDiscardLogger(),
+		})
 		require.NoError(t, err)
 
 		err = s.Prepare(srvConf)
@@ -349,7 +354,10 @@ func TestServer_timeout(t *testing.T) {
 	})
 
 	t.Run("default", func(t *testing.T) {
-		s, err := NewServer(DNSCreateParams{DNSFilter: createTestDNSFilter(t)})
+		s, err := NewServer(DNSCreateParams{
+			DNSFilter: createTestDNSFilter(t),
+			Logger:    slogutil.NewDiscardLogger(),
+		})
 		require.NoError(t, err)
 
 		s.conf.Config.UpstreamMode = UpstreamModeLoadBalance
@@ -376,7 +384,9 @@ func TestServer_Prepare_fallbacks(t *testing.T) {
 		ServePlainDNS: true,
 	}
 
-	s, err := NewServer(DNSCreateParams{})
+	s, err := NewServer(DNSCreateParams{
+		Logger: slogutil.NewDiscardLogger(),
+	})
 	require.NoError(t, err)
 
 	err = s.Prepare(srvConf)
@@ -962,6 +972,7 @@ func TestBlockedCustomIP(t *testing.T) {
 		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
+		Logger:      slogutil.NewDiscardLogger(),
 	})
 	require.NoError(t, err)
 
@@ -1127,6 +1138,7 @@ func TestRewrite(t *testing.T) {
 		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
+		Logger:      slogutil.NewDiscardLogger(),
 	})
 	require.NoError(t, err)
 
@@ -1256,6 +1268,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 			},
 		},
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
+		Logger:      slogutil.NewDiscardLogger(),
 		LocalDomain: localDomain,
 	})
 	require.NoError(t, err)
@@ -1341,6 +1354,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 		DHCPServer:  dhcp,
 		DNSFilter:   flt,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
+		Logger:      slogutil.NewDiscardLogger(),
 	})
 	require.NoError(t, err)
 
@@ -1392,24 +1406,29 @@ func TestNewServer(t *testing.T) {
 		in         DNSCreateParams
 		wantErrMsg string
 	}{{
-		name:       "success",
-		in:         DNSCreateParams{},
+		name: "success",
+		in: DNSCreateParams{
+			Logger: slogutil.NewDiscardLogger(),
+		},
 		wantErrMsg: "",
 	}, {
 		name: "success_local_tld",
 		in: DNSCreateParams{
+			Logger:      slogutil.NewDiscardLogger(),
 			LocalDomain: "mynet",
 		},
 		wantErrMsg: "",
 	}, {
 		name: "success_local_domain",
 		in: DNSCreateParams{
+			Logger:      slogutil.NewDiscardLogger(),
 			LocalDomain: "my.local.net",
 		},
 		wantErrMsg: "",
 	}, {
 		name: "bad_local_domain",
 		in: DNSCreateParams{
+			Logger:      slogutil.NewDiscardLogger(),
 			LocalDomain: "!!!",
 		},
 		wantErrMsg: `local domain: bad domain name "!!!": ` +

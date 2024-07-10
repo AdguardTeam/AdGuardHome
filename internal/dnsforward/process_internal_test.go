@@ -10,6 +10,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -430,6 +431,7 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 				dnsFilter:         createTestDNSFilter(t),
 				dhcpServer:        dhcp,
 				localDomainSuffix: localDomainSuffix,
+				logger:            slogutil.NewDiscardLogger(),
 			}
 
 			req := &dns.Msg{
@@ -565,6 +567,7 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 			dnsFilter:         createTestDNSFilter(t),
 			dhcpServer:        testDHCP,
 			localDomainSuffix: tc.suffix,
+			logger:            slogutil.NewDiscardLogger(),
 		}
 
 		req := &dns.Msg{
