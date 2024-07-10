@@ -106,6 +106,9 @@ func (srv *DHCPServer) dbLoad(ctx context.Context) (err error) {
 
 		return nil
 	}
+	defer func() {
+		err = errors.WithDeferred(err, file.Close())
+	}()
 
 	dl := &dataLeases{}
 	err = json.NewDecoder(file).Decode(dl)

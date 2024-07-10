@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"net/netip"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -19,14 +20,14 @@ import (
 var testdata = os.DirFS("testdata")
 
 // newTempDB copies the leases database file located in the testdata FS, under
-// tb.Name()/leases.db, to a temporary directory and returns the path to the
+// tb.Name()/leases.json, to a temporary directory and returns the path to the
 // copied file.
 func newTempDB(tb testing.TB) (dst string) {
 	tb.Helper()
 
 	const filename = "leases.json"
 
-	data, err := fs.ReadFile(testdata, filepath.Join(tb.Name(), filename))
+	data, err := fs.ReadFile(testdata, path.Join(tb.Name(), filename))
 	require.NoError(tb, err)
 
 	dst = filepath.Join(tb.TempDir(), filename)
