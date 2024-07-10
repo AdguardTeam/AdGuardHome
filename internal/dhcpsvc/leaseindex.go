@@ -61,7 +61,7 @@ func (idx *leaseIndex) add(l *Lease, iface *netInterface) (err error) {
 		return fmt.Errorf("lease for hostname %s already exists", l.Hostname)
 	}
 
-	err = iface.insertLease(l)
+	err = iface.addLease(l)
 	if err != nil {
 		return err
 	}

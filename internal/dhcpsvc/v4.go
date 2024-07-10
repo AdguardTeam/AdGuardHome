@@ -82,8 +82,12 @@ func (c *IPv4Config) validate() (err error) {
 	return errors.Join(errs...)
 }
 
-// netInterfaceV4 is a DHCP interface for IPv4 address family.
-type netInterfaceV4 struct {
+// dhcpInterfaceV4 is a DHCP interface for IPv4 address family.
+type dhcpInterfaceV4 struct {
+	// common is the common part of any network interface within the DHCP
+	// server.
+	common *netInterface
+
 	// gateway is the IP address of the network gateway.
 	gateway netip.Addr
 
@@ -101,21 +105,17 @@ type netInterfaceV4 struct {
 	// explicitOpts are the user-configured options.  It must not have
 	// intersections with implicitOpts.
 	explicitOpts layers.DHCPOptions
-
-	// netInterface is embedded here to provide some common network interface
-	// logic.
-	netInterface
 }
 
-// newNetInterfaceV4 creates a new DHCP interface for IPv4 address family with
+// newDHCPInterfaceV4 creates a new DHCP interface for IPv4 address family with
 // the given configuration.  It returns an error if the given configuration
 // can't be used.
-func newNetInterfaceV4(
+func newDHCPInterfaceV4(
 	ctx context.Context,
 	l *slog.Logger,
 	name string,
 	conf *IPv4Config,
-) (i *netInterfaceV4, err error) {
+) (i *dhcpInterfaceV4, err error) {
 	l = l.With(
 		keyInterface, name,
 		keyFamily, netutil.AddrFamilyIPv4,
@@ -144,35 +144,31 @@ func newNetInterfaceV4(
 		return nil, fmt.Errorf("gateway ip %s in the ip range %s", conf.GatewayIP, addrSpace)
 	}
 
-	i = &netInterfaceV4{
+	i = &dhcpInterfaceV4{
 		gateway:   conf.GatewayIP,
 		subnet:    subnet,
 		addrSpace: addrSpace,
-		netInterface: netInterface{
-			name:     name,
-			leaseTTL: conf.LeaseDuration,
-			logger:   l,
-		},
+		common:    newNetInterface(name, l, conf.LeaseDuration),
 	}
 	i.implicitOpts, i.explicitOpts = conf.options(ctx, l)
 
 	return i, nil
 }
 
-// netInterfacesV4 is a slice of network interfaces of IPv4 address family.
-type netInterfacesV4 []*netInterfaceV4
+// dhcpInterfacesV4 is a slice of network interfaces of IPv4 address family.
+type dhcpInterfacesV4 []*dhcpInterfaceV4
 
 // find returns the first network interface within ifaces containing ip.  It
 // returns false if there is no such interface.
-func (ifaces netInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok bool) {
-	i := slices.IndexFunc(ifaces, func(iface *netInterfaceV4) (contains bool) {
+func (ifaces dhcpInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok bool) {
+	i := slices.IndexFunc(ifaces, func(iface *dhcpInterfaceV4) (contains bool) {
 		return iface.subnet.Contains(ip)
 	})
 	if i < 0 {
 		return nil, false
 	}
 
-	return &ifaces[i].netInterface, true
+	return ifaces[i].common, true
 }
 
 // options returns the implicit and explicit options for the interface.  The two

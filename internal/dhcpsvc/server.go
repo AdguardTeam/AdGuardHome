@@ -41,10 +41,10 @@ type DHCPServer struct {
 	leases *leaseIndex
 
 	// interfaces4 is the set of IPv4 interfaces sorted by interface name.
-	interfaces4 netInterfacesV4
+	interfaces4 dhcpInterfacesV4
 
 	// interfaces6 is the set of IPv6 interfaces sorted by interface name.
-	interfaces6 netInterfacesV6
+	interfaces6 dhcpInterfacesV6
 
 	// icmpTimeout is the timeout for checking another DHCP server's presence.
 	icmpTimeout time.Duration
@@ -63,28 +63,9 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 		return nil, nil
 	}
 
-	// TODO(e.burkov):  Add validations scoped to the network interfaces set.
-	ifaces4 := make(netInterfacesV4, 0, len(conf.Interfaces))
-	ifaces6 := make(netInterfacesV6, 0, len(conf.Interfaces))
-	var errs []error
-
-	mapsutil.SortedRange(conf.Interfaces, func(name string, iface *InterfaceConfig) (cont bool) {
-		var i4 *netInterfaceV4
-		i4, err = newNetInterfaceV4(ctx, l, name, iface.IPv4)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("interface %q: ipv4: %w", name, err))
-		} else if i4 != nil {
-			ifaces4 = append(ifaces4, i4)
-		}
-
-		i6 := newNetInterfaceV6(ctx, l, name, iface.IPv6)
-		if i6 != nil {
-			ifaces6 = append(ifaces6, i6)
-		}
-
-		return true
-	})
-	if err = errors.Join(errs...); err != nil {
+	ifaces4, ifaces6, err := newInterfaces(ctx, l, conf.Interfaces)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
 		return nil, err
 	}
 
@@ -112,6 +93,43 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 	return srv, nil
 }
 
+// newInterfaces creates interfaces for the given map of interface names to
+// their configurations.
+func newInterfaces(
+	ctx context.Context,
+	l *slog.Logger,
+	ifaces map[string]*InterfaceConfig,
+) (v4 dhcpInterfacesV4, v6 dhcpInterfacesV6, err error) {
+	defer func() { err = errors.Annotate(err, "creating interfaces: %w") }()
+
+	// TODO(e.burkov):  Add validations scoped to the network interfaces set.
+	v4 = make(dhcpInterfacesV4, 0, len(ifaces))
+	v6 = make(dhcpInterfacesV6, 0, len(ifaces))
+
+	var errs []error
+	mapsutil.SortedRange(ifaces, func(name string, iface *InterfaceConfig) (cont bool) {
+		var i4 *dhcpInterfaceV4
+		i4, err = newDHCPInterfaceV4(ctx, l, name, iface.IPv4)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("interface %q: ipv4: %w", name, err))
+		} else if i4 != nil {
+			v4 = append(v4, i4)
+		}
+
+		i6 := newDHCPInterfaceV6(ctx, l, name, iface.IPv6)
+		if i6 != nil {
+			v6 = append(v6, i6)
+		}
+
+		return true
+	})
+	if err = errors.Join(errs...); err != nil {
+		return nil, nil, err
+	}
+
+	return v4, v6, nil
+}
+
 // type check
 //
 // TODO(e.burkov):  Uncomment when the [Interface] interface is implemented.
@@ -127,16 +145,11 @@ func (srv *DHCPServer) Leases() (leases []*Lease) {
 	srv.leasesMu.RLock()
 	defer srv.leasesMu.RUnlock()
 
-	for _, iface := range srv.interfaces4 {
-		for _, lease := range iface.leases {
-			leases = append(leases, lease.Clone())
-		}
-	}
-	for _, iface := range srv.interfaces6 {
-		for _, lease := range iface.leases {
-			leases = append(leases, lease.Clone())
-		}
-	}
+	srv.leases.rangeLeases(func(l *Lease) (cont bool) {
+		leases = append(leases, l.Clone())
+
+		return true
+	})
 
 	return leases
 }
@@ -200,10 +213,10 @@ func (srv *DHCPServer) Reset(ctx context.Context) (err error) {
 // expects the DHCPServer.leasesMu to be locked.
 func (srv *DHCPServer) resetLeases() {
 	for _, iface := range srv.interfaces4 {
-		iface.reset()
+		iface.common.reset()
 	}
 	for _, iface := range srv.interfaces6 {
-		iface.reset()
+		iface.common.reset()
 	}
 	srv.leases.clear()
 }

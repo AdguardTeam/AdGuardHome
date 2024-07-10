@@ -62,10 +62,12 @@ func (c *IPv6Config) validate() (err error) {
 	return errors.Join(errs...)
 }
 
-// netInterfaceV6 is a DHCP interface for IPv6 address family.
-//
-// TODO(e.burkov):  Add options.
-type netInterfaceV6 struct {
+// dhcpInterfaceV6 is a DHCP interface for IPv6 address family.
+type dhcpInterfaceV6 struct {
+	// common is the common part of any network interface within the DHCP
+	// server.
+	common *netInterface
+
 	// rangeStart is the first IP address in the range.
 	rangeStart netip.Addr
 
@@ -78,10 +80,6 @@ type netInterfaceV6 struct {
 	// intersections with implicitOpts.
 	explicitOpts layers.DHCPv6Options
 
-	// netInterface is embedded here to provide some common network interface
-	// logic.
-	netInterface
-
 	// raSLAACOnly defines if DHCP should send ICMPv6.RA packets without MO
 	// flags.
 	raSLAACOnly bool
@@ -90,16 +88,16 @@ type netInterfaceV6 struct {
 	raAllowSLAAC bool
 }
 
-// newNetInterfaceV6 creates a new DHCP interface for IPv6 address family with
+// newDHCPInterfaceV6 creates a new DHCP interface for IPv6 address family with
 // the given configuration.
 //
 // TODO(e.burkov):  Validate properly.
-func newNetInterfaceV6(
+func newDHCPInterfaceV6(
 	ctx context.Context,
 	l *slog.Logger,
 	name string,
 	conf *IPv6Config,
-) (i *netInterfaceV6) {
+) (i *dhcpInterfaceV6) {
 	l = l.With(keyInterface, name, keyFamily, netutil.AddrFamilyIPv6)
 	if !conf.Enabled {
 		l.DebugContext(ctx, "disabled")
@@ -107,13 +105,9 @@ func newNetInterfaceV6(
 		return nil
 	}
 
-	i = &netInterfaceV6{
-		rangeStart: conf.RangeStart,
-		netInterface: netInterface{
-			name:     name,
-			leaseTTL: conf.LeaseDuration,
-			logger:   l,
-		},
+	i = &dhcpInterfaceV6{
+		rangeStart:   conf.RangeStart,
+		common:       newNetInterface(name, l, conf.LeaseDuration),
 		raSLAACOnly:  conf.RASLAACOnly,
 		raAllowSLAAC: conf.RAAllowSLAAC,
 	}
@@ -122,12 +116,12 @@ func newNetInterfaceV6(
 	return i
 }
 
-// netInterfacesV4 is a slice of network interfaces of IPv4 address family.
-type netInterfacesV6 []*netInterfaceV6
+// dhcpInterfacesV6 is a slice of network interfaces of IPv6 address family.
+type dhcpInterfacesV6 []*dhcpInterfaceV6
 
 // find returns the first network interface within ifaces containing ip.  It
 // returns false if there is no such interface.
-func (ifaces netInterfacesV6) find(ip netip.Addr) (iface6 *netInterface, ok bool) {
+func (ifaces dhcpInterfacesV6) find(ip netip.Addr) (iface6 *netInterface, ok bool) {
 	// prefLen is the length of prefix to match ip against.
 	//
 	// TODO(e.burkov):  DHCPv6 inherits the weird behavior of legacy
@@ -136,7 +130,7 @@ func (ifaces netInterfacesV6) find(ip netip.Addr) (iface6 *netInterface, ok bool
 	// be used instead.
 	const prefLen = netutil.IPv6BitLen - 8
 
-	i := slices.IndexFunc(ifaces, func(iface *netInterfaceV6) (contains bool) {
+	i := slices.IndexFunc(ifaces, func(iface *dhcpInterfaceV6) (contains bool) {
 		return !ip.Less(iface.rangeStart) &&
 			netip.PrefixFrom(iface.rangeStart, prefLen).Contains(ip)
 	})
@@ -144,7 +138,7 @@ func (ifaces netInterfacesV6) find(ip netip.Addr) (iface6 *netInterface, ok bool
 		return nil, false
 	}
 
-	return &ifaces[i].netInterface, true
+	return ifaces[i].common, true
 }
 
 // options returns the implicit and explicit options for the interface.  The two
