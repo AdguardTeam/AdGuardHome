@@ -58,10 +58,8 @@ See also the [v0.107.52 GitHub milestone][ms-v0.107.52].
   or via the CLI (with root privileges):
 
   ```sh
-  ./AdGuardHome -s stop
   ./AdGuardHome -s uninstall
   ./AdGuardHome -s install
-  ./AdGuardHome -s start
   ```
 
   Don't forget to backup your configuration file and other important data before
