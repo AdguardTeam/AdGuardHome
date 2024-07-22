@@ -27,6 +27,12 @@ See also the [v0.107.53 GitHub milestone][ms-v0.107.53].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Text overflow on the query log page ([#7119]).
+
+[#7119]: https://github.com/AdguardTeam/AdGuardHome/issues/7119
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
