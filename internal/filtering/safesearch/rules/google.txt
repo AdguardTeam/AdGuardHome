@@ -46,6 +46,9 @@
 |www.google.co.uz^$dnsrewrite=NOERROR;CNAME;forcesafesearch.google.com
 |www.google.co.ve^$dnsrewrite=NOERROR;CNAME;forcesafesearch.google.com
 |www.google.co.vi^$dnsrewrite=NOERROR;CNAME;forcesafesearch.google.com
+|www.google.co.za^$dnsrewrite=NOERROR;CNAME;forcesafesearch.google.com
+|www.google.co.zm^$dnsrewrite=NOERROR;CNAME;forcesafesearch.google.com
+|www.google.co.zw^$dnsrewrite=NOERROR;CNAME;forcesafesearch.google.com
 |www.google.com.af^$dnsrewrite=NOERROR;CNAME;forcesafesearch.google.com
 |www.google.com.ag^$dnsrewrite=NOERROR;CNAME;forcesafesearch.google.com
 |www.google.com.ai^$dnsrewrite=NOERROR;CNAME;forcesafesearch.google.com
