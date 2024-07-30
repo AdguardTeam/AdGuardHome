@@ -1,1 +1,2 @@
 |www.bing.com^$dnsrewrite=NOERROR;CNAME;strict.bing.com
+|edgeservices.bing.com^$dnsrewrite=NOERROR;CNAME;strict.bing.com
