@@ -29,9 +29,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Update Google safe search domains list ([#7155]).
 - Text overflow on the query log page ([#7119]).
 
 [#7119]: https://github.com/AdguardTeam/AdGuardHome/issues/7119
+[#7155]: https://github.com/AdguardTeam/AdGuardHome/pull/7155
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
