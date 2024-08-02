@@ -423,6 +423,7 @@ var config = &configuration{
 			Enabled:    false,
 			Bing:       true,
 			DuckDuckGo: true,
+			Ecosia:     true,
 			Google:     true,
 			Pixabay:    true,
 			Yandex:     true,

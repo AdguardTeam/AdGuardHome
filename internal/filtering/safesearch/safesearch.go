@@ -28,6 +28,7 @@ type Service string
 const (
 	Bing       Service = "bing"
 	DuckDuckGo Service = "duckduckgo"
+	Ecosia     Service = "ecosia"
 	Google     Service = "google"
 	Pixabay    Service = "pixabay"
 	Yandex     Service = "yandex"
@@ -41,6 +42,8 @@ func isServiceProtected(s filtering.SafeSearchConfig, service Service) (ok bool)
 		return s.Bing
 	case DuckDuckGo:
 		return s.DuckDuckGo
+	case Ecosia:
+		return s.Ecosia
 	case Google:
 		return s.Google
 	case Pixabay:

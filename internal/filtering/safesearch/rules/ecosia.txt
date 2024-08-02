@@ -1,0 +1,1 @@
+|www.ecosia.org^$dnsrewrite=NOERROR;CNAME;strict-safe-search.ecosia.org

@@ -154,7 +154,7 @@
     "use_adguard_parental": "Use AdGuard parental control web service",
     "use_adguard_parental_hint": "AdGuard Home will check if domain contains adult materials. It uses the same privacy-friendly API as the browsing security web service.",
     "enforce_safe_search": "Use Safe Search",
-    "enforce_save_search_hint": "AdGuard Home will enforce safe search in the following search engines: Google, YouTube, Bing, DuckDuckGo, Yandex, Pixabay.",
+    "enforce_save_search_hint": "AdGuard Home will enforce safe search in the following search engines: Google, YouTube, Bing, DuckDuckGo, Ecosia, Yandex, Pixabay.",
     "no_servers_specified": "No servers specified",
     "general_settings": "General settings",
     "dns_settings": "DNS settings",

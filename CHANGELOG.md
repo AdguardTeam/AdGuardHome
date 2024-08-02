@@ -27,12 +27,17 @@ See also the [v0.107.53 GitHub milestone][ms-v0.107.53].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- Ecosia search engine is now supported in safe search ([#5009]).
+
 ### Fixed
 
 - Update Google safe search domains list ([#7155]).
 - Enforce Bing safe search from Edge sidebar ([#7154]).
 - Text overflow on the query log page ([#7119]).
 
+[#5009]: https://github.com/AdguardTeam/AdGuardHome/issues/5009
 [#7119]: https://github.com/AdguardTeam/AdGuardHome/issues/7119
 [#7154]: https://github.com/AdguardTeam/AdGuardHome/pull/7154
 [#7155]: https://github.com/AdguardTeam/AdGuardHome/pull/7155

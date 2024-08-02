@@ -248,6 +248,7 @@ func copySafeSearch(
 	if conf.Enabled {
 		conf.Bing = true
 		conf.DuckDuckGo = true
+		conf.Ecosia = true
 		conf.Google = true
 		conf.Pixabay = true
 		conf.Yandex = true

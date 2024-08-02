@@ -34,6 +34,7 @@ var testConf = filtering.SafeSearchConfig{
 
 	Bing:       true,
 	DuckDuckGo: true,
+	Ecosia:     true,
 	Google:     true,
 	Pixabay:    true,
 	Yandex:     true,
