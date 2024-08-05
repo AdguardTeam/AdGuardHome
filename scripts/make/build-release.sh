@@ -122,6 +122,7 @@ readonly use_shasum
 
 #    os  arch      arm mips
 platforms="\
+android  arm64     -   -
 darwin   amd64     -   -
 darwin   arm64     -   -
 freebsd  386       -   -
