@@ -5,12 +5,15 @@ import (
 	"net/http"
 
 	"github.com/AdguardTeam/golibs/ioutil"
+	"github.com/c2h5oh/datasize"
 )
 
 // middlerware is a wrapper function signature.
 type middleware func(http.Handler) http.Handler
 
 // withMiddlewares consequently wraps h with all the middlewares.
+//
+// TODO(e.burkov):  Use [httputil.Wrap].
 func withMiddlewares(h http.Handler, middlewares ...middleware) (wrapped http.Handler) {
 	wrapped = h
 
@@ -23,11 +26,11 @@ func withMiddlewares(h http.Handler, middlewares ...middleware) (wrapped http.Ha
 
 const (
 	// defaultReqBodySzLim is the default maximum request body size.
-	defaultReqBodySzLim = 64 * 1024
+	defaultReqBodySzLim datasize.ByteSize = 64 * datasize.KB
 
 	// largerReqBodySzLim is the maximum request body size for APIs expecting
 	// larger requests.
-	largerReqBodySzLim = 4 * 1024 * 1024
+	largerReqBodySzLim datasize.ByteSize = 4 * datasize.MB
 )
 
 // expectsLargerRequests shows if this request should use a larger body size
@@ -38,26 +41,28 @@ const (
 // See https://github.com/AdguardTeam/AdGuardHome/issues/2666 and
 // https://github.com/AdguardTeam/AdGuardHome/issues/2675.
 func expectsLargerRequests(r *http.Request) (ok bool) {
-	m := r.Method
-	if m != http.MethodPost {
+	if r.Method != http.MethodPost {
 		return false
 	}
 
-	p := r.URL.Path
-	return p == "/control/access/set" ||
-		p == "/control/filtering/set_rules"
+	switch r.URL.Path {
+	case "/control/access/set", "/control/filtering/set_rules":
+		return true
+	default:
+		return false
+	}
 }
 
 // limitRequestBody wraps underlying handler h, making it's request's body Read
 // method limited.
 func limitRequestBody(h http.Handler) (limited http.Handler) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var szLim uint64 = defaultReqBodySzLim
+		szLim := defaultReqBodySzLim
 		if expectsLargerRequests(r) {
 			szLim = largerReqBodySzLim
 		}
 
-		reader := ioutil.LimitReader(r.Body, szLim)
+		reader := ioutil.LimitReader(r.Body, szLim.Bytes())
 
 		// HTTP handlers aren't supposed to call r.Body.Close(), so just
 		// replace the body in a clone.

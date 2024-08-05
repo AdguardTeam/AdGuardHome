@@ -697,7 +697,7 @@ func matchesDomainWildcard(host, pat string) (ok bool) {
 // the DNS names and patterns from certificate.  dnsNames must be sorted.
 func anyNameMatches(dnsNames []string, sni string) (ok bool) {
 	// Check sni is either a valid hostname or a valid IP address.
-	if netutil.ValidateHostname(sni) != nil && net.ParseIP(sni) == nil {
+	if !netutil.IsValidHostname(sni) && !netutil.IsValidIPString(sni) {
 		return false
 	}
 

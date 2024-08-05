@@ -10,6 +10,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil"
 )
 
 // DialContext is an [aghnet.DialContextFunc] that uses s to resolve hostnames.
@@ -28,7 +29,7 @@ func (s *Server) DialContext(ctx context.Context, network, addr string) (conn ne
 		Timeout: time.Minute * 5,
 	}
 
-	if net.ParseIP(host) != nil {
+	if netutil.IsValidIPString(host) {
 		return dialer.DialContext(ctx, network, addr)
 	}
 

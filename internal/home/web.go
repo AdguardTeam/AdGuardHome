@@ -17,7 +17,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/AdguardTeam/golibs/pprofutil"
+	"github.com/AdguardTeam/golibs/netutil/httputil"
 	"github.com/NYTimes/gziphandler"
 	"github.com/quic-go/quic-go/http3"
 	"golang.org/x/net/http2"
@@ -333,7 +333,7 @@ func startPprof(port uint16) {
 	runtime.SetMutexProfileFraction(1)
 
 	mux := http.NewServeMux()
-	pprofutil.RoutePprof(mux)
+	httputil.RoutePprof(mux)
 
 	go func() {
 		defer log.OnPanic("pprof server")
