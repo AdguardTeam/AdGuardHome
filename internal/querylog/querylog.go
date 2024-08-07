@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/miekg/dns"
 )
@@ -153,7 +153,7 @@ func newQueryLog(conf Config) (l *queryLog, err error) {
 	l = &queryLog{
 		findClient: findClient,
 
-		buffer: aghalg.NewRingBuffer[*logEntry](memSize),
+		buffer: container.NewRingBuffer[*logEntry](memSize),
 
 		conf:    &Config{},
 		confMu:  &sync.RWMutex{},

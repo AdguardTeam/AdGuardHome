@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -32,7 +32,7 @@ type queryLog struct {
 
 	// buffer contains recent log entries.  The entries in this buffer must not
 	// be modified.
-	buffer *aghalg.RingBuffer[*logEntry]
+	buffer *container.RingBuffer[*logEntry]
 
 	// logFile is the path to the log file.
 	logFile string
@@ -225,7 +225,7 @@ func (l *queryLog) Add(params *AddParams) {
 	l.bufferLock.Lock()
 	defer l.bufferLock.Unlock()
 
-	l.buffer.Append(entry)
+	l.buffer.Push(entry)
 
 	if !l.flushPending && fileIsEnabled && l.buffer.Len() >= memSize {
 		l.flushPending = true
