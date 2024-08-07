@@ -154,7 +154,7 @@
     "use_adguard_parental": "AdGuardペアレンタルコントロール・ウェブサービスを使用する",
     "use_adguard_parental_hint": "AdGuard Homeは、ドメインにアダルトコンテンツが含まれているかどうかを確認します。 ブラウジングセキュリティ・ウェブサービスと同じプライバシーに優しいAPIを使用します。",
     "enforce_safe_search": "セーフサーチを使用する",
-    "enforce_save_search_hint": "AdGuard Homeは、次の検索エンジンでセーフサーチを強制適用します: Google, YouTube, Bing, DuckDuckGo, Yandex, Pixabay",
+    "enforce_save_search_hint": "AdGuard Homeは、次の検索エンジンでセーフサーチを強制適用します: Google, YouTube, Bing, DuckDuckGo, Ecosia, Yandex, Pixabay",
     "no_servers_specified": "サーバが指定されていません",
     "general_settings": "一般設定",
     "dns_settings": "DNS設定",

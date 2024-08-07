@@ -154,7 +154,7 @@
     "use_adguard_parental": "Použiť AdGuard službu Rodičovská kontrola",
     "use_adguard_parental_hint": "AdGuard Home skontroluje, či doména obsahuje materiály pre dospelých. Používa rovnaké API priateľské k ochrane osobných údajov ako služba Bezpečného prehliadania.",
     "enforce_safe_search": "Používať bezpečné vyhľadávanie",
-    "enforce_save_search_hint": "AdGuard Home vynucuje bezpečné vyhľadávanie v nasledujúcich vyhľadávačoch: Google, YouTube, Bing, DuckDuckGo, Yandex a Pixabay.",
+    "enforce_save_search_hint": "AdGuard Home vynúti bezpečné vyhľadávanie v nasledujúcich vyhľadávačoch: Google, YouTube, Bing, DuckDuckGo, Ecosia, Yandex, Pixabay.",
     "no_servers_specified": "Neboli špecifikované žiadne servery",
     "general_settings": "Všeobecné nastavenia",
     "dns_settings": "Nastavenia DNS",

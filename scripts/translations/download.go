@@ -41,7 +41,7 @@ func (c *twoskyClient) download() (err error) {
 	downloadURI := c.uri.JoinPath("download")
 
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 20 * time.Second,
 	}
 
 	wg := &sync.WaitGroup{}

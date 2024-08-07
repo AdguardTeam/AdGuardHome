@@ -154,7 +154,7 @@
     "use_adguard_parental": "Включить модуль Родительского контроля AdGuard ",
     "use_adguard_parental_hint": "AdGuard Home проверит, содержит ли домен материалы 18+. Он использует тот же API для обеспечения конфиденциальности, что и веб-служба безопасности браузера.",
     "enforce_safe_search": "Включить безопасный поиск",
-    "enforce_save_search_hint": "AdGuard Home может обеспечить безопасный поиск в следующих поисковых системах: Google, YouTube, Bing, DuckDuckGo, Yandex и Pixabay.",
+    "enforce_save_search_hint": "AdGuard Home будет обеспечивать безопасный поиск в следующих поисковых системах: Google, YouTube, Bing, DuckDuckGo, Ecosia, Yandex, Pixabay.",
     "no_servers_specified": "Нет указанных серверов",
     "general_settings": "Основные настройки",
     "dns_settings": "Настройки DNS",
