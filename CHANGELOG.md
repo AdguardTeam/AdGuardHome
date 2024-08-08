@@ -29,6 +29,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
+- Support for 64-bit RISC-V architecture ([#5704]).
 - Ecosia search engine is now supported in safe search ([#5009]).
 
 ### Fixed

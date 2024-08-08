@@ -141,6 +141,7 @@ linux    mips64    -   softfloat
 linux    mips64le  -   softfloat
 linux    mipsle    -   softfloat
 linux    ppc64le   -   -
+linux    riscv64   -   -
 openbsd  amd64     -   -
 openbsd  arm64     -   -
 windows  386       -   -
