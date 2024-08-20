@@ -58,7 +58,7 @@ func (s *Server) genDNSFilterMessage(
 			return s.replyCompressed(req)
 		}
 
-		return s.newMsgNODATA(req)
+		return s.NewMsgNODATA(req)
 	}
 
 	switch res.Reason {
@@ -344,51 +344,6 @@ func (s *Server) makeResponseREFUSED(req *dns.Msg) *dns.Msg {
 	return s.reply(req, dns.RcodeRefused)
 }
 
-// newMsgNODATA returns a properly initialized NODATA response.
-//
-// See https://www.rfc-editor.org/rfc/rfc2308#section-2.2.
-func (s *Server) newMsgNODATA(req *dns.Msg) (resp *dns.Msg) {
-	resp = s.reply(req, dns.RcodeSuccess)
-	resp.Ns = s.genSOA(req)
-
-	return resp
-}
-
-func (s *Server) genSOA(request *dns.Msg) []dns.RR {
-	zone := ""
-	if len(request.Question) > 0 {
-		zone = request.Question[0].Name
-	}
-
-	soa := dns.SOA{
-		// values copied from verisign's nonexistent .com domain
-		// their exact values are not important in our use case because they are used for domain transfers between primary/secondary DNS servers
-		Refresh: 1800,
-		Retry:   900,
-		Expire:  604800,
-		Minttl:  86400,
-		// copied from AdGuard DNS
-		Ns:     "fake-for-negative-caching.adguard.com.",
-		Serial: 100500,
-		// rest is request-specific
-		Hdr: dns.RR_Header{
-			Name:   zone,
-			Rrtype: dns.TypeSOA,
-			Ttl:    s.dnsFilter.BlockedResponseTTL(),
-			Class:  dns.ClassINET,
-		},
-		Mbox: "hostmaster.", // zone will be appended later if it's not empty or "."
-	}
-	if soa.Hdr.Ttl == 0 {
-		soa.Hdr.Ttl = defaultBlockedResponseTTL
-	}
-	if len(zone) > 0 && zone[0] != '.' {
-		soa.Mbox += zone
-	}
-
-	return []dns.RR{&soa}
-}
-
 // type check
 var _ proxy.MessageConstructor = (*Server)(nil)
 
@@ -424,4 +379,53 @@ func (s *Server) NewMsgNOTIMPLEMENTED(req *dns.Msg) (resp *dns.Msg) {
 	resp.SetEdns0(maxUDPPayload, false)
 
 	return resp
+}
+
+// NewMsgNODATA implements the [proxy.MessageConstructor] interface for *Server.
+func (s *Server) NewMsgNODATA(req *dns.Msg) (resp *dns.Msg) {
+	resp = s.reply(req, dns.RcodeSuccess)
+	resp.Ns = s.genSOA(req)
+
+	return resp
+}
+
+func (s *Server) genSOA(req *dns.Msg) []dns.RR {
+	zone := ""
+	if len(req.Question) > 0 {
+		zone = req.Question[0].Name
+	}
+
+	const defaultBlockedResponseTTL = 3600
+
+	soa := dns.SOA{
+		// Values copied from verisign's nonexistent.com domain.
+		//
+		// Their exact values are not important in our use case because they are
+		// used for domain transfers between primary/secondary DNS servers.
+		Refresh: 1800,
+		Retry:   900,
+		Expire:  604800,
+		Minttl:  86400,
+		// copied from AdGuard DNS
+		Ns:     "fake-for-negative-caching.adguard.com.",
+		Serial: 100500,
+		// rest is request-specific
+		Hdr: dns.RR_Header{
+			Name:   zone,
+			Rrtype: dns.TypeSOA,
+			Ttl:    s.dnsFilter.BlockedResponseTTL(),
+			Class:  dns.ClassINET,
+		},
+		// zone will be appended later if it's not ".".
+		Mbox: "hostmaster.",
+	}
+	if soa.Hdr.Ttl == 0 {
+		soa.Hdr.Ttl = defaultBlockedResponseTTL
+	}
+
+	if zone != "." {
+		soa.Mbox += zone
+	}
+
+	return []dns.RR{&soa}
 }

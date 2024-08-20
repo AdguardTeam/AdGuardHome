@@ -8,7 +8,7 @@
 # Makefile.  Bump this number every time a significant change is made to
 # this Makefile.
 #
-# AdGuard-Project-Version: 4
+# AdGuard-Project-Version: 6
 
 # Don't name these macros "GO" etc., because GNU Make apparently makes
 # them exported environment variables with the literal value of
@@ -25,9 +25,10 @@ CLIENT_DIR = client
 COMMIT = $$( git rev-parse --short HEAD )
 DIST_DIR = dist
 GOAMD64 = v1
-GOPROXY = https://goproxy.cn|https://proxy.golang.org|direct
+GOPROXY = https://proxy.golang.org|direct
 GOSUMDB = sum.golang.google.cn
-GOTOOLCHAIN = go1.22.5
+GOTOOLCHAIN = go1.22.6
+GOTELEMETRY = off
 GPG_KEY = devteam@adguard.com
 GPG_KEY_PASSPHRASE = not-a-real-password
 NPM = npm
@@ -61,9 +62,10 @@ ENV = env\
 	COMMIT='$(COMMIT)'\
 	DIST_DIR='$(DIST_DIR)'\
 	GO="$(GO.MACRO)"\
-	GOAMD64="$(GOAMD64)"\
+	GOAMD64='$(GOAMD64)'\
 	GOPROXY='$(GOPROXY)'\
 	GOSUMDB='$(GOSUMDB)'\
+	GOTELEMETRY='$(GOTELEMETRY)'\
 	GOTOOLCHAIN='$(GOTOOLCHAIN)'\
 	GPG_KEY='$(GPG_KEY)'\
 	GPG_KEY_PASSPHRASE='$(GPG_KEY_PASSPHRASE)'\
@@ -72,7 +74,12 @@ ENV = env\
 	SIGN='$(SIGN)'\
 	NEXTAPI='$(NEXTAPI)'\
 	VERBOSE="$(VERBOSE.MACRO)"\
-	VERSION='$(VERSION)'\
+	VERSION="$(VERSION)"\
+
+# Keep the line above blank.
+
+ENV_MISC = env\
+	VERBOSE="$(VERBOSE.MACRO)"\
 
 # Keep the line above blank.
 
@@ -101,23 +108,22 @@ js-deps:  ; $(NPM) $(NPM_INSTALL_FLAGS) ci
 js-lint:  ; $(NPM) $(NPM_FLAGS) run lint
 js-test:  ; $(NPM) $(NPM_FLAGS) run test
 
-go-bench: ; $(ENV) "$(SHELL)" ./scripts/make/go-bench.sh
-go-build: ; $(ENV) "$(SHELL)" ./scripts/make/go-build.sh
-go-deps:  ; $(ENV) "$(SHELL)" ./scripts/make/go-deps.sh
-go-fuzz:  ; $(ENV) "$(SHELL)" ./scripts/make/go-fuzz.sh
-go-lint:  ; $(ENV) "$(SHELL)" ./scripts/make/go-lint.sh
-go-tools: ; $(ENV) "$(SHELL)" ./scripts/make/go-tools.sh
-
+go-bench:     ; $(ENV) "$(SHELL)"    ./scripts/make/go-bench.sh
+go-build:     ; $(ENV) "$(SHELL)"    ./scripts/make/go-build.sh
+go-deps:      ; $(ENV) "$(SHELL)"    ./scripts/make/go-deps.sh
+go-env:       ; $(ENV) "$(GO.MACRO)" env
+go-fuzz:      ; $(ENV) "$(SHELL)"    ./scripts/make/go-fuzz.sh
+go-lint:      ; $(ENV) "$(SHELL)"    ./scripts/make/go-lint.sh
 # TODO(a.garipov): Think about making RACE='1' the default for all
 # targets.
-go-test:  ; $(ENV) RACE='1' "$(SHELL)" ./scripts/make/go-test.sh
-
-go-upd-tools: ; $(ENV) "$(SHELL)" ./scripts/make/go-upd-tools.sh
+go-test:      ; $(ENV) RACE='1' "$(SHELL)" ./scripts/make/go-test.sh
+go-tools:     ; $(ENV)          "$(SHELL)" ./scripts/make/go-tools.sh
+go-upd-tools: ; $(ENV)          "$(SHELL)" ./scripts/make/go-upd-tools.sh
 
 go-check: go-tools go-lint go-test
 
-# A quick check to make sure that all supported operating systems can be
-# typechecked and built successfully.
+# A quick check to make sure that all operating systems relevant to the
+# development of the project can be typechecked and built successfully.
 go-os-check:
 	env GOOS='darwin'  "$(GO.MACRO)" vet ./internal/...
 	env GOOS='freebsd' "$(GO.MACRO)" vet ./internal/...
@@ -125,7 +131,11 @@ go-os-check:
 	env GOOS='linux'   "$(GO.MACRO)" vet ./internal/...
 	env GOOS='windows' "$(GO.MACRO)" vet ./internal/...
 
+
 openapi-lint: ; cd ./openapi/ && $(YARN) test
 openapi-show: ; cd ./openapi/ && $(YARN) start
 
 txt-lint: ; $(ENV) "$(SHELL)" ./scripts/make/txt-lint.sh
+
+md-lint:  ; $(ENV_MISC) "$(SHELL)" ./scripts/make/md-lint.sh
+sh-lint:  ; $(ENV_MISC) "$(SHELL)" ./scripts/make/sh-lint.sh

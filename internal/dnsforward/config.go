@@ -427,8 +427,6 @@ func parseBogusNXDOMAIN(confBogusNXDOMAIN []string) (subnets []netip.Prefix, err
 	return subnets, nil
 }
 
-const defaultBlockedResponseTTL = 3600
-
 // initDefaultSettings initializes default settings if nothing
 // is configured
 func (s *Server) initDefaultSettings() {

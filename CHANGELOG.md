@@ -32,6 +32,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Support for 64-bit RISC-V architecture ([#5704]).
 - Ecosia search engine is now supported in safe search ([#5009]).
 
+### Changed
+
+- Upstream server URL domain names requirements has been relaxed and now follow
+  the same rules as their domain specifications.
+- Go version has been updated to [1.22.6][go-1.22.6].
+
 ### Fixed
 
 - Update Google safe search domains list ([#7155]).
@@ -42,6 +48,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#7119]: https://github.com/AdguardTeam/AdGuardHome/issues/7119
 [#7154]: https://github.com/AdguardTeam/AdGuardHome/pull/7154
 [#7155]: https://github.com/AdguardTeam/AdGuardHome/pull/7155
+
+[go-1.22.6]: https://groups.google.com/g/golang-announce/c/X4q_-Wf-5g4
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

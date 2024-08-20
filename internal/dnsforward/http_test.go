@@ -228,7 +228,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	}, {
 		name: "upstream_dns_bad",
 		wantSet: `validating dns config: upstream servers: parsing error at index 0: ` +
-			`cannot prepare the upstream: invalid address !!!: bad hostname "!!!": ` +
+			`cannot prepare the upstream: invalid address !!!: bad domain name "!!!": ` +
 			`bad top-level domain name label "!!!": bad top-level domain name label rune '!'`,
 	}, {
 		name: "bootstraps_bad",

@@ -91,6 +91,7 @@ elif [ "${GOMIPS:-}" != '' ]
 then
 	ldflags="${ldflags} -X ${version_pkg}.gomips=${GOMIPS}"
 fi
+readonly ldflags
 
 # Allow users to limit the build's parallelism.
 parallelism="${PARALLELISM:-}"
@@ -143,7 +144,7 @@ then
 fi
 
 "$go" build\
-	--ldflags "$ldflags"\
+	--ldflags="$ldflags"\
 	"$race_flags"\
 	"$tags_flags"\
 	--trimpath\
