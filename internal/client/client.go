@@ -8,6 +8,7 @@ import (
 	"encoding"
 	"fmt"
 	"net/netip"
+	"slices"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 )
@@ -120,6 +121,7 @@ func (r *Runtime) Info() (cs Source, host string) {
 
 // SetInfo sets a host as a client information from the cs.
 func (r *Runtime) SetInfo(cs Source, hosts []string) {
+	// TODO(s.chzhen):  Use contract where hosts must contain non-empty host.
 	if len(hosts) == 1 && hosts[0] == "" {
 		hosts = []string{}
 	}
@@ -174,4 +176,16 @@ func (r *Runtime) isEmpty() (ok bool) {
 // Addr returns an IP address of the client.
 func (r *Runtime) Addr() (ip netip.Addr) {
 	return r.ip
+}
+
+// Clone returns a deep copy of the runtime client.
+func (r *Runtime) Clone() (c *Runtime) {
+	return &Runtime{
+		ip:        r.ip,
+		whois:     r.whois.Clone(),
+		arp:       slices.Clone(r.arp),
+		rdns:      slices.Clone(r.rdns),
+		dhcp:      slices.Clone(r.dhcp),
+		hostsFile: slices.Clone(r.hostsFile),
+	}
 }

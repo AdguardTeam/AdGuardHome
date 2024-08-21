@@ -47,9 +47,6 @@ type clientsContainer struct {
 	// storage stores information about persistent clients.
 	storage *client.Storage
 
-	// runtimeIndex stores information about runtime clients.
-	runtimeIndex *client.RuntimeIndex
-
 	// dhcp is the DHCP service implementation.
 	dhcp DHCP
 
@@ -104,8 +101,6 @@ func (clients *clientsContainer) Init(
 	if clients.storage != nil {
 		return errors.Error("clients container already initialized")
 	}
-
-	clients.runtimeIndex = client.NewRuntimeIndex()
 
 	clients.storage = client.NewStorage(&client.Config{
 		AllowedTags: clientTags,
@@ -358,7 +353,7 @@ func (clients *clientsContainer) clientSource(ip netip.Addr) (src client.Source)
 		return client.SourcePersistent
 	}
 
-	rc := clients.runtimeIndex.Client(ip)
+	rc := clients.storage.ClientRuntime(ip)
 	if rc != nil {
 		src, _ = rc.Info()
 	}
@@ -539,22 +534,9 @@ func (clients *clientsContainer) findDHCP(ip netip.Addr) (c *client.Persistent, 
 	return clients.storage.FindByMAC(foundMAC)
 }
 
-// runtimeClient returns a runtime client from internal index.  Note that it
-// doesn't include DHCP clients.
-func (clients *clientsContainer) runtimeClient(ip netip.Addr) (rc *client.Runtime) {
-	if ip == (netip.Addr{}) {
-		return nil
-	}
-
-	clients.lock.Lock()
-	defer clients.lock.Unlock()
-
-	return clients.runtimeIndex.Client(ip)
-}
-
 // findRuntimeClient finds a runtime client by their IP.
 func (clients *clientsContainer) findRuntimeClient(ip netip.Addr) (rc *client.Runtime) {
-	rc = clients.runtimeClient(ip)
+	rc = clients.storage.ClientRuntime(ip)
 	host := clients.dhcp.HostByIP(ip)
 
 	if host != "" {
@@ -580,20 +562,11 @@ func (clients *clientsContainer) setWHOISInfo(ip netip.Addr, wi *whois.Info) {
 		return
 	}
 
-	rc := clients.runtimeIndex.Client(ip)
-	if rc == nil {
-		// Create a RuntimeClient implicitly so that we don't do this check
-		// again.
-		rc = client.NewRuntime(ip)
-		clients.runtimeIndex.Add(rc)
-
-		log.Debug("clients: set whois info for runtime client with ip %s: %+v", ip, wi)
-	} else {
-		host, _ := rc.Info()
-		log.Debug("clients: set whois info for runtime client %s: %+v", host, wi)
-	}
-
+	rc := client.NewRuntime(ip)
 	rc.SetWHOIS(wi)
+	clients.storage.UpdateRuntime(rc)
+
+	log.Debug("clients: set whois info for runtime client with ip %s: %+v", ip, wi)
 }
 
 // addHost adds a new IP-hostname pairing.  The priorities of the sources are
@@ -644,26 +617,20 @@ func (clients *clientsContainer) addHostLocked(
 	host string,
 	src client.Source,
 ) (ok bool) {
-	rc := clients.runtimeIndex.Client(ip)
-	if rc == nil {
-		if src < client.SourceDHCP {
-			if clients.dhcp.HostByIP(ip) != "" {
-				return false
-			}
-		}
-
-		rc = client.NewRuntime(ip)
-		clients.runtimeIndex.Add(rc)
+	rc := client.NewRuntime(ip)
+	rc.SetInfo(src, []string{host})
+	if dhcpHost := clients.dhcp.HostByIP(ip); dhcpHost != "" {
+		rc.SetInfo(client.SourceDHCP, []string{dhcpHost})
 	}
 
-	rc.SetInfo(src, []string{host})
+	clients.storage.UpdateRuntime(rc)
 
 	log.Debug(
 		"clients: adding client info %s -> %q %q [%d]",
 		ip,
 		src,
 		host,
-		clients.runtimeIndex.Size(),
+		clients.storage.SizeRuntime(),
 	)
 
 	return true
@@ -675,23 +642,22 @@ func (clients *clientsContainer) addFromHostsFile(hosts *hostsfile.DefaultStorag
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	deleted := clients.runtimeIndex.DeleteBySource(client.SourceHostsFile)
-	log.Debug("clients: removed %d client aliases from system hosts file", deleted)
-
-	added := 0
+	var rcs []*client.Runtime
 	hosts.RangeNames(func(addr netip.Addr, names []string) (cont bool) {
 		// Only the first name of the first record is considered a canonical
 		// hostname for the IP address.
 		//
 		// TODO(e.burkov):  Consider using all the names from all the records.
-		if clients.addHostLocked(addr, names[0], client.SourceHostsFile) {
-			added++
-		}
+		rc := client.NewRuntime(addr)
+		rc.SetInfo(client.SourceHostsFile, []string{names[0]})
+
+		rcs = append(rcs, rc)
 
 		return true
 	})
 
-	log.Debug("clients: added %d client aliases from system hosts file", added)
+	added, removed := clients.storage.BatchUpdateBySource(client.SourceHostsFile, rcs)
+	log.Debug("clients: added %d, removed %d client aliases from system hosts file", added, removed)
 }
 
 // addFromSystemARP adds the IP-hostname pairings from the output of the arp -a
@@ -715,17 +681,16 @@ func (clients *clientsContainer) addFromSystemARP() {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	deleted := clients.runtimeIndex.DeleteBySource(client.SourceARP)
-	log.Debug("clients: removed %d client aliases from arp neighborhood", deleted)
-
-	added := 0
+	var rcs []*client.Runtime
 	for _, n := range ns {
-		if clients.addHostLocked(n.IP, n.Name, client.SourceARP) {
-			added++
-		}
+		rc := client.NewRuntime(n.IP)
+		rc.SetInfo(client.SourceARP, []string{n.Name})
+
+		rcs = append(rcs, rc)
 	}
 
-	log.Debug("clients: added %d client aliases from arp neighborhood", added)
+	added, removed := clients.storage.BatchUpdateBySource(client.SourceARP, rcs)
+	log.Debug("clients: added %d, removed %d client aliases from arp neighborhood", added, removed)
 }
 
 // close gracefully closes all the client-specific upstream configurations of

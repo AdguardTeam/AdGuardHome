@@ -354,6 +354,19 @@ type Info struct {
 	Orgname string `json:"orgname,omitempty"`
 }
 
+// Clone returns a deep copy of the WHOIS info.
+func (i *Info) Clone() (c *Info) {
+	if i == nil {
+		return nil
+	}
+
+	return &Info{
+		City:    i.City,
+		Country: i.Country,
+		Orgname: i.Orgname,
+	}
+}
+
 // cacheItem represents an item that we will store in the cache.
 type cacheItem struct {
 	// expiry is the time when cacheItem will expire.
