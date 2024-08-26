@@ -133,8 +133,9 @@ type Server struct {
 	// must be a valid domain name plus dots on each side.
 	localDomainSuffix string
 
-	// ipset processes DNS requests using ipset data.
-	ipset ipsetCtx
+	// ipset processes DNS requests using ipset data.  It must not be nil after
+	// initialization.  See [newIpsetHandler].
+	ipset *ipsetHandler
 
 	// privateNets is the configured set of IP networks considered private.
 	privateNets netutil.SubnetSet
@@ -609,9 +610,16 @@ func (s *Server) prepareLocalResolvers() (uc *proxy.UpstreamConfig, err error) {
 // the primary DNS proxy instance.  It assumes s.serverLock is locked or the
 // Server not running.
 func (s *Server) prepareInternalDNS() (err error) {
-	err = s.prepareIpsetListSettings()
+	ipsetList, err := s.prepareIpsetListSettings()
 	if err != nil {
 		return fmt.Errorf("preparing ipset settings: %w", err)
+	}
+
+	ipsetLogger := s.logger.With(slogutil.KeyPrefix, "ipset")
+	s.ipset, err = newIpsetHandler(context.TODO(), ipsetLogger, ipsetList)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
 	}
 
 	bootOpts := &upstream.Options{

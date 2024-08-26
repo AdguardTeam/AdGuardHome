@@ -1,10 +1,12 @@
 package dnsforward
 
 import (
+	"context"
 	"net"
 	"testing"
 
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
@@ -16,7 +18,7 @@ type fakeIpsetMgr struct {
 }
 
 // Add implements the aghnet.IpsetManager interface for *fakeIpsetMgr.
-func (m *fakeIpsetMgr) Add(host string, ip4s, ip6s []net.IP) (n int, err error) {
+func (m *fakeIpsetMgr) Add(_ context.Context, host string, ip4s, ip6s []net.IP) (n int, err error) {
 	m.ip4s = append(m.ip4s, ip4s...)
 	m.ip6s = append(m.ip6s, ip6s...)
 
@@ -58,7 +60,9 @@ func TestIpsetCtx_process(t *testing.T) {
 			responseFromUpstream: true,
 		}
 
-		ictx := &ipsetCtx{}
+		ictx := &ipsetHandler{
+			logger: slogutil.NewDiscardLogger(),
+		}
 		rc := ictx.process(dctx)
 		assert.Equal(t, resultCodeSuccess, rc)
 
@@ -77,8 +81,9 @@ func TestIpsetCtx_process(t *testing.T) {
 		}
 
 		m := &fakeIpsetMgr{}
-		ictx := &ipsetCtx{
+		ictx := &ipsetHandler{
 			ipsetMgr: m,
+			logger:   slogutil.NewDiscardLogger(),
 		}
 
 		rc := ictx.process(dctx)
@@ -101,8 +106,9 @@ func TestIpsetCtx_process(t *testing.T) {
 		}
 
 		m := &fakeIpsetMgr{}
-		ictx := &ipsetCtx{
+		ictx := &ipsetHandler{
 			ipsetMgr: m,
+			logger:   slogutil.NewDiscardLogger(),
 		}
 
 		rc := ictx.process(dctx)
@@ -124,8 +130,9 @@ func TestIpsetCtx_SkipIpsetProcessing(t *testing.T) {
 	}
 
 	m := &fakeIpsetMgr{}
-	ictx := &ipsetCtx{
+	ictx := &ipsetHandler{
 		ipsetMgr: m,
+		logger:   slogutil.NewDiscardLogger(),
 	}
 
 	testCases := []struct {
