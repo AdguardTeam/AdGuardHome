@@ -146,6 +146,7 @@ export const SETTINGS_URLS = {
     dns: '/dns',
     settings: '/settings',
     clients: '/clients',
+    license: '/license', // ライセンス設定用の新しいパス
 };
 
 export const FILTERS_URLS = {

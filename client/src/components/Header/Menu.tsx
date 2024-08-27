@@ -57,6 +57,10 @@ const SETTINGS_ITEMS = [
         route: SETTINGS_URLS.dhcp,
         text: 'dhcp_settings',
     },
+    {
+        route: SETTINGS_URLS.license, // 新しいライセンス設定の追加
+        text: 'license_settings',    // 表示するテキスト
+    },
 ];
 
 const FILTERS_ITEMS = [

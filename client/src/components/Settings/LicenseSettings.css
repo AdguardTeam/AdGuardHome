@@ -1,0 +1,23 @@
+.settings-container {
+  padding: 20px;
+}
+
+.license-info {
+  margin-top: 20px;
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  label {
+    font-weight: bold;
+  }
+
+  input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+}

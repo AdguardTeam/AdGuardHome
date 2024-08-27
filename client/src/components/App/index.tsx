@@ -47,6 +47,8 @@ import Logs from '../Logs';
 import ProtectionTimer from '../ProtectionTimer';
 import { RootState } from '../../initialState';
 
+import LicenseSettings from '../../components/Settings/LicenseSettings';
+
 const ROUTES = [
     {
         path: MENU_URLS.root,
@@ -100,6 +102,10 @@ const ROUTES = [
     {
         path: FILTERS_URLS.blocked_services,
         component: Services,
+    },
+    {
+        path: SETTINGS_URLS.license, // 新しいライセンス設定のルート
+        component: LicenseSettings,
     },
 ];
 
