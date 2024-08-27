@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,7 +62,7 @@ func (s mapShell) RunCmd(cmd string, args ...string) (code int, out []byte, err 
 
 func Test_New(t *testing.T) {
 	var a Interface
-	require.NotPanics(t, func() { a = New() })
+	require.NotPanics(t, func() { a = New(slogutil.NewDiscardLogger()) })
 
 	assert.NotNil(t, a)
 }
@@ -201,8 +202,9 @@ func Test_NewARPDBs(t *testing.T) {
 
 func TestCmdARPDB_arpa(t *testing.T) {
 	a := &cmdARPDB{
-		cmd:   "cmd",
-		parse: parseArpA,
+		logger: slogutil.NewDiscardLogger(),
+		cmd:    "cmd",
+		parse:  parseArpA,
 		ns: &neighs{
 			mu: &sync.RWMutex{},
 			ns: make([]Neighbor, 0),

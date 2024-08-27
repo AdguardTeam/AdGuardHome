@@ -4,17 +4,17 @@ package arpdb
 
 import (
 	"bufio"
-	"net"
-	"net/netip"
+	"log/slog"
 	"strings"
 	"sync"
 
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
-func newARPDB() (arp *cmdARPDB) {
+func newARPDB(logger *slog.Logger) (arp *cmdARPDB) {
 	return &cmdARPDB{
-		parse: parseArpA,
+		logger: logger,
+		parse:  parseArpA,
 		ns: &neighs{
 			mu: &sync.RWMutex{},
 			ns: make([]Neighbor, 0),
@@ -34,7 +34,7 @@ func newARPDB() (arp *cmdARPDB) {
 //
 //	Host        Ethernet Address  Netif Expire    Flags
 //	192.168.1.1 ab:cd:ef:ab:cd:ef   em0 19m59s
-func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
+func parseArpA(logger *slog.Logger, sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 	// Skip the header.
 	if !sc.Scan() {
 		return nil
@@ -49,27 +49,14 @@ func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 			continue
 		}
 
-		n := Neighbor{}
-
-		ip, err := netip.ParseAddr(fields[0])
+		n, err := newNeighbor("", fields[0], fields[1])
 		if err != nil {
-			log.Debug("arpdb: parsing arp output: ip: %s", err)
+			logger.Debug("parsing arp output", "line", ln, slogutil.KeyError, err)
 
 			continue
-		} else {
-			n.IP = ip
 		}
 
-		mac, err := net.ParseMAC(fields[1])
-		if err != nil {
-			log.Debug("arpdb: parsing arp output: mac: %s", err)
-
-			continue
-		} else {
-			n.MAC = mac
-		}
-
-		ns = append(ns, n)
+		ns = append(ns, *n)
 	}
 
 	return ns

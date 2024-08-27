@@ -39,6 +39,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/osutil"
 )
@@ -276,7 +277,7 @@ func setupOpts(opts options) (err error) {
 }
 
 // initContextClients initializes Context clients and related fields.
-func initContextClients() (err error) {
+func initContextClients(logger *slog.Logger) (err error) {
 	err = setupDNSFilteringConf(config.Filtering)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
@@ -300,7 +301,7 @@ func initContextClients() (err error) {
 
 	var arpDB arpdb.Interface
 	if config.Clients.Sources.ARP {
-		arpDB = arpdb.New()
+		arpDB = arpdb.New(logger.With(slogutil.KeyError, "arpdb"))
 	}
 
 	return Context.clients.Init(
@@ -582,7 +583,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	// data first, but also to avoid relying on automatic Go init() function.
 	filtering.InitModule()
 
-	err = initContextClients()
+	err = initContextClients(slogLogger)
 	fatalOnError(err)
 
 	err = setupOpts(opts)

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -69,9 +70,10 @@ func TestCmdARPDB_linux(t *testing.T) {
 
 	t.Run("wrt", func(t *testing.T) {
 		a := &cmdARPDB{
-			parse: parseArpAWrt,
-			cmd:   "arp",
-			args:  []string{"-a"},
+			logger: slogutil.NewDiscardLogger(),
+			parse:  parseArpAWrt,
+			cmd:    "arp",
+			args:   []string{"-a"},
 			ns: &neighs{
 				mu: &sync.RWMutex{},
 				ns: make([]Neighbor, 0),
@@ -86,9 +88,10 @@ func TestCmdARPDB_linux(t *testing.T) {
 
 	t.Run("ip_neigh", func(t *testing.T) {
 		a := &cmdARPDB{
-			parse: parseIPNeigh,
-			cmd:   "ip",
-			args:  []string{"neigh"},
+			logger: slogutil.NewDiscardLogger(),
+			parse:  parseIPNeigh,
+			cmd:    "ip",
+			args:   []string{"neigh"},
 			ns: &neighs{
 				mu: &sync.RWMutex{},
 				ns: make([]Neighbor, 0),

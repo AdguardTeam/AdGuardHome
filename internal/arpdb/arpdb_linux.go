@@ -6,17 +6,18 @@ import (
 	"bufio"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net"
 	"net/netip"
 	"strings"
 	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
 
-func newARPDB() (arp *arpdbs) {
+func newARPDB(logger *slog.Logger) (arp *arpdbs) {
 	// Use the common storage among the implementations.
 	ns := &neighs{
 		mu: &sync.RWMutex{},
@@ -39,9 +40,10 @@ func newARPDB() (arp *arpdbs) {
 		},
 		// Then, try "arp -a -n".
 		&cmdARPDB{
-			parse: parseF,
-			ns:    ns,
-			cmd:   "arp",
+			logger: logger,
+			parse:  parseF,
+			ns:     ns,
+			cmd:    "arp",
 			// Use -n flag to avoid resolving the hostnames of the neighbors.
 			// By default ARP attempts to resolve the hostnames via DNS.  See
 			// man 8 arp.
@@ -51,10 +53,11 @@ func newARPDB() (arp *arpdbs) {
 		},
 		// Finally, try "ip neigh".
 		&cmdARPDB{
-			parse: parseIPNeigh,
-			ns:    ns,
-			cmd:   "ip",
-			args:  []string{"neigh"},
+			logger: logger,
+			parse:  parseIPNeigh,
+			ns:     ns,
+			cmd:    "ip",
+			args:   []string{"neigh"},
 		},
 	)
 }
@@ -131,7 +134,7 @@ func (arp *fsysARPDB) Neighbors() (ns []Neighbor) {
 //
 //	IP address     HW type  Flags  HW address         Mask  Device
 //	192.168.11.98  0x1      0x2    5a:92:df:a9:7e:28  *     wan
-func parseArpAWrt(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
+func parseArpAWrt(logger *slog.Logger, sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 	if !sc.Scan() {
 		// Skip the header.
 		return
@@ -146,25 +149,14 @@ func parseArpAWrt(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 			continue
 		}
 
-		ip, err := netip.ParseAddr(fields[0])
+		n, err := newNeighbor("", fields[0], fields[3])
 		if err != nil {
-			log.Debug("arpdb: parsing arp output: ip: %s", err)
+			logger.Debug("parsing arp output", "line", ln, slogutil.KeyError, err)
 
 			continue
 		}
 
-		hwStr := fields[3]
-		mac, err := net.ParseMAC(hwStr)
-		if err != nil {
-			log.Debug("arpdb: parsing arp output: mac: %s", err)
-
-			continue
-		}
-
-		ns = append(ns, Neighbor{
-			IP:  ip,
-			MAC: mac,
-		})
+		ns = append(ns, *n)
 	}
 
 	return ns
@@ -174,7 +166,7 @@ func parseArpAWrt(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 // expected input format:
 //
 //	hostname (192.168.1.1) at ab:cd:ef:ab:cd:ef [ether] on enp0s3
-func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
+func parseArpA(logger *slog.Logger, sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 	ns = make([]Neighbor, 0, lenHint)
 	for sc.Scan() {
 		ln := sc.Text()
@@ -189,26 +181,15 @@ func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 			continue
 		}
 
-		ip, err := netip.ParseAddr(ipStr[1 : len(ipStr)-1])
+		host := validatedHostname(logger, fields[0])
+		n, err := newNeighbor(host, ipStr[1:len(ipStr)-1], fields[3])
 		if err != nil {
-			log.Debug("arpdb: parsing arp output: ip: %s", err)
+			logger.Debug("parsing arp output", "line", ln, slogutil.KeyError, err)
 
 			continue
 		}
 
-		hwStr := fields[3]
-		mac, err := net.ParseMAC(hwStr)
-		if err != nil {
-			log.Debug("arpdb: parsing arp output: mac: %s", err)
-
-			continue
-		}
-
-		ns = append(ns, Neighbor{
-			IP:   ip,
-			MAC:  mac,
-			Name: validatedHostname(fields[0]),
-		})
+		ns = append(ns, *n)
 	}
 
 	return ns
@@ -218,7 +199,7 @@ func parseArpA(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 // expected input format:
 //
 //	192.168.1.1 dev enp0s3 lladdr ab:cd:ef:ab:cd:ef REACHABLE
-func parseIPNeigh(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
+func parseIPNeigh(logger *slog.Logger, sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 	ns = make([]Neighbor, 0, lenHint)
 	for sc.Scan() {
 		ln := sc.Text()
@@ -228,27 +209,14 @@ func parseIPNeigh(sc *bufio.Scanner, lenHint int) (ns []Neighbor) {
 			continue
 		}
 
-		n := Neighbor{}
-
-		ip, err := netip.ParseAddr(fields[0])
+		n, err := newNeighbor("", fields[0], fields[4])
 		if err != nil {
-			log.Debug("arpdb: parsing arp output: ip: %s", err)
+			logger.Debug("parsing arp output", "line", ln, slogutil.KeyError, err)
 
 			continue
-		} else {
-			n.IP = ip
 		}
 
-		mac, err := net.ParseMAC(fields[4])
-		if err != nil {
-			log.Debug("arpdb: parsing arp output: mac: %s", err)
-
-			continue
-		} else {
-			n.MAC = mac
-		}
-
-		ns = append(ns, n)
+		ns = append(ns, *n)
 	}
 
 	return ns
