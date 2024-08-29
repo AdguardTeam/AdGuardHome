@@ -123,11 +123,9 @@ type Server struct {
 	// access drops disallowed clients.
 	access *accessManager
 
-	// logger is used for logging during server routines.
-	//
-	// TODO(d.kolyshev): Make it never nil.
-	// TODO(d.kolyshev): Use this logger.
-	logger *slog.Logger
+	// baseLogger is used to create loggers for other entities.  It should not
+	// have a prefix and must not be nil.
+	baseLogger *slog.Logger
 
 	// localDomainSuffix is the suffix used to detect internal hosts.  It
 	// must be a valid domain name plus dots on each side.
@@ -246,7 +244,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		stats:       p.Stats,
 		queryLog:    p.QueryLog,
 		privateNets: p.PrivateNets,
-		logger:      p.Logger.With(slogutil.KeyPrefix, "dnsforward"),
+		baseLogger:  p.Logger,
 		// TODO(e.burkov):  Use some case-insensitive string comparison.
 		localDomainSuffix: strings.ToLower(localDomainSuffix),
 		etcHosts:          etcHosts,
@@ -615,7 +613,7 @@ func (s *Server) prepareInternalDNS() (err error) {
 		return fmt.Errorf("preparing ipset settings: %w", err)
 	}
 
-	ipsetLogger := s.logger.With(slogutil.KeyPrefix, "ipset")
+	ipsetLogger := s.baseLogger.With(slogutil.KeyPrefix, "ipset")
 	s.ipset, err = newIpsetHandler(context.TODO(), ipsetLogger, ipsetList)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
@@ -685,6 +683,7 @@ func (s *Server) setupAddrProc() {
 		s.addrProc = client.EmptyAddrProc{}
 	} else {
 		c := s.conf.AddrProcConf
+		c.BaseLogger = s.baseLogger
 		c.DialContext = s.DialContext
 		c.PrivateSubnets = s.privateNets
 		c.UsePrivateRDNS = s.conf.UsePrivateRDNS
@@ -728,6 +727,7 @@ func validateBlockingMode(
 func (s *Server) prepareInternalProxy() (err error) {
 	srvConf := s.conf
 	conf := &proxy.Config{
+		Logger:                    s.baseLogger.With(slogutil.KeyPrefix, "dnsproxy"),
 		CacheEnabled:              true,
 		CacheSizeBytes:            4096,
 		PrivateRDNSUpstreamConfig: srvConf.PrivateRDNSUpstreamConfig,
@@ -738,10 +738,6 @@ func (s *Server) prepareInternalProxy() (err error) {
 		UsePrivateRDNS:            srvConf.UsePrivateRDNS,
 		PrivateSubnets:            s.privateNets,
 		MessageConstructor:        s,
-	}
-
-	if s.logger != nil {
-		conf.Logger = s.logger.With(slogutil.KeyPrefix, "dnsproxy")
 	}
 
 	err = setProxyUpstreamMode(conf, srvConf.UpstreamMode, srvConf.FastestTimeout.Duration)

@@ -431,7 +431,7 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 				dnsFilter:         createTestDNSFilter(t),
 				dhcpServer:        dhcp,
 				localDomainSuffix: localDomainSuffix,
-				logger:            slogutil.NewDiscardLogger(),
+				baseLogger:        slogutil.NewDiscardLogger(),
 			}
 
 			req := &dns.Msg{
@@ -567,7 +567,7 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 			dnsFilter:         createTestDNSFilter(t),
 			dhcpServer:        testDHCP,
 			localDomainSuffix: tc.suffix,
-			logger:            slogutil.NewDiscardLogger(),
+			baseLogger:        slogutil.NewDiscardLogger(),
 		}
 
 		req := &dns.Msg{

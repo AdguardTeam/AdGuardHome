@@ -13,6 +13,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/testutil/fakenet"
@@ -99,6 +100,7 @@ func TestDefaultAddrProc_Process_rDNS(t *testing.T) {
 			updInfoCh := make(chan *whois.Info, 1)
 
 			p := client.NewDefaultAddrProc(&client.DefaultAddrProcConfig{
+				BaseLogger: slogutil.NewDiscardLogger(),
 				DialContext: func(_ context.Context, _, _ string) (conn net.Conn, err error) {
 					panic("not implemented")
 				},
@@ -208,6 +210,7 @@ func TestDefaultAddrProc_Process_WHOIS(t *testing.T) {
 			updInfoCh := make(chan *whois.Info, 1)
 
 			p := client.NewDefaultAddrProc(&client.DefaultAddrProcConfig{
+				BaseLogger: slogutil.NewDiscardLogger(),
 				DialContext: func(_ context.Context, _, _ string) (conn net.Conn, err error) {
 					return whoisConn, nil
 				},

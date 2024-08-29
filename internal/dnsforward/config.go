@@ -318,6 +318,7 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 	trustedPrefixes := netutil.UnembedPrefixes(srvConf.TrustedProxies)
 
 	conf = &proxy.Config{
+		Logger:                    s.baseLogger.With(slogutil.KeyPrefix, "dnsproxy"),
 		HTTP3:                     srvConf.ServeHTTP3,
 		Ratelimit:                 int(srvConf.Ratelimit),
 		RatelimitSubnetLenIPv4:    srvConf.RatelimitSubnetLenIPv4,
@@ -340,10 +341,6 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 		UsePrivateRDNS:            srvConf.UsePrivateRDNS,
 		PrivateSubnets:            s.privateNets,
 		MessageConstructor:        s,
-	}
-
-	if s.logger != nil {
-		conf.Logger = s.logger.With(slogutil.KeyPrefix, "dnsproxy")
 	}
 
 	if srvConf.EDNSClientSubnet.UseCustom {

@@ -218,8 +218,8 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 			}
 
 			srv := &Server{
-				conf:   ServerConfig{TLSConfig: tlsConf},
-				logger: slogutil.NewDiscardLogger(),
+				conf:       ServerConfig{TLSConfig: tlsConf},
+				baseLogger: slogutil.NewDiscardLogger(),
 			}
 
 			var (

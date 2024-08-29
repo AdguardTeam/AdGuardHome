@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/netip"
 	"strconv"
@@ -16,9 +17,10 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/bluele/gcache"
+	"github.com/c2h5oh/datasize"
 )
 
 const (
@@ -49,6 +51,10 @@ func (Empty) Process(_ context.Context, _ netip.Addr) (info *Info, changed bool)
 
 // Config is the configuration structure for Default.
 type Config struct {
+	// Logger is used for logging the operation of the WHOIS lookup queries.  It
+	// must not be nil.
+	Logger *slog.Logger
+
 	// DialContext is used to create TCP connections to WHOIS servers.
 	DialContext aghnet.DialContextFunc
 
@@ -80,6 +86,10 @@ type Config struct {
 
 // Default is the default WHOIS information processor.
 type Default struct {
+	// logger is used for logging the operation of the WHOIS lookup queries.  It
+	// must not be nil.
+	logger *slog.Logger
+
 	// cache is the cache containing IP addresses of clients.  An active IP
 	// address is resolved once again after it expires.  If IP address couldn't
 	// be resolved, it stays here for some time to prevent further attempts to
@@ -115,6 +125,7 @@ type Default struct {
 // nil.
 func New(conf *Config) (w *Default) {
 	return &Default{
+		logger:          conf.Logger,
 		serverAddr:      conf.ServerAddr,
 		dialContext:     conf.DialContext,
 		timeout:         conf.Timeout,
@@ -230,16 +241,22 @@ func (w *Default) query(ctx context.Context, target, serverAddr string) (data []
 // queryAll queries WHOIS server and handles redirects.
 func (w *Default) queryAll(ctx context.Context, target string) (info map[string]string, err error) {
 	server := net.JoinHostPort(w.serverAddr, w.portStr)
-	var data []byte
 
 	for range w.maxRedirects {
+		var data []byte
 		data, err = w.query(ctx, target, server)
 		if err != nil {
 			// Don't wrap the error since it's informative enough as is.
 			return nil, err
 		}
 
-		log.Debug("whois: received response (%d bytes) from %q about %q", len(data), server, target)
+		w.logger.DebugContext(
+			ctx,
+			"received response",
+			"size", datasize.ByteSize(len(data)),
+			"source", server,
+			"target", target,
+		)
 
 		info = whoisParse(data, w.maxInfoLen)
 		redir, ok := info["whois"]
@@ -256,7 +273,7 @@ func (w *Default) queryAll(ctx context.Context, target string) (info map[string]
 			server = redir
 		}
 
-		log.Debug("whois: redirected to %q about %q", redir, target)
+		w.logger.DebugContext(ctx, "redirected", "destination", redir, "target", target)
 	}
 
 	return nil, fmt.Errorf("whois: redirect loop")
@@ -272,7 +289,7 @@ func (w *Default) Process(ctx context.Context, ip netip.Addr) (wi *Info, changed
 		return nil, false
 	}
 
-	wi, expired := w.findInCache(ip)
+	wi, expired := w.findInCache(ctx, ip)
 	if wi != nil && !expired {
 		// Don't return an empty struct so that the frontend doesn't get
 		// confused.
@@ -299,13 +316,13 @@ func (w *Default) requestInfo(
 		item := toCacheItem(info, w.cacheTTL)
 		err := w.cache.Set(ip, item)
 		if err != nil {
-			log.Debug("whois: cache: adding item %q: %s", ip, err)
+			w.logger.DebugContext(ctx, "adding item to cache", "key", ip, slogutil.KeyError, err)
 		}
 	}()
 
 	kv, err := w.queryAll(ctx, ip.String())
 	if err != nil {
-		log.Debug("whois: querying %q: %s", ip, err)
+		w.logger.DebugContext(ctx, "querying", "target", ip, slogutil.KeyError, err)
 
 		return nil, true
 	}
@@ -327,24 +344,22 @@ func (w *Default) requestInfo(
 }
 
 // findInCache finds Info in the cache.  expired indicates that Info is valid.
-func (w *Default) findInCache(ip netip.Addr) (wi *Info, expired bool) {
+func (w *Default) findInCache(ctx context.Context, ip netip.Addr) (wi *Info, expired bool) {
 	val, err := w.cache.Get(ip)
 	if err != nil {
 		if !errors.Is(err, gcache.KeyNotFoundError) {
-			log.Debug("whois: cache: retrieving info about %q: %s", ip, err)
+			w.logger.DebugContext(
+				ctx,
+				"retrieving item from cache",
+				"key", ip,
+				slogutil.KeyError, err,
+			)
 		}
 
 		return nil, false
 	}
 
-	item, ok := val.(*cacheItem)
-	if !ok {
-		log.Debug("whois: cache: %q bad type %T", ip, val)
-
-		return nil, false
-	}
-
-	return fromCacheItem(item)
+	return fromCacheItem(val.(*cacheItem))
 }
 
 // Info is the filtered WHOIS data for a runtime client.

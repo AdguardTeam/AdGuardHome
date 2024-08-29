@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil/fakenet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -119,6 +120,7 @@ func TestDefault_Process(t *testing.T) {
 			}
 
 			w := whois.New(&whois.Config{
+				Logger:  slogutil.NewDiscardLogger(),
 				Timeout: 5 * time.Second,
 				DialContext: func(_ context.Context, _, _ string) (_ net.Conn, _ error) {
 					hit = 0
