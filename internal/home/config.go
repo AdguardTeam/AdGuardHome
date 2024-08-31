@@ -214,7 +214,7 @@ type dnsConfig struct {
 
 	// PrivateRDNSResolvers is the slice of addresses to be used as upstreams
 	// for private requests.  It's only used for PTR, SOA, and NS queries,
-	// containing an ARPA subdomain, came from the the client with private
+	// containing an ARPA subdomain, came from the client with private
 	// address.  The address considered private according to PrivateNets.
 	//
 	// If empty, the OS-provided resolvers are used for private requests.
