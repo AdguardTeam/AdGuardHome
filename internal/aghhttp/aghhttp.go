@@ -2,13 +2,16 @@
 package aghhttp
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
 // HTTP scheme constants.
@@ -31,9 +34,36 @@ func OK(w http.ResponseWriter) {
 }
 
 // Error writes formatted message to w and also logs it.
+//
+// TODO(s.chzhen):  Remove it.
 func Error(r *http.Request, w http.ResponseWriter, code int, format string, args ...any) {
 	text := fmt.Sprintf(format, args...)
 	log.Error("%s %s %s: %s", r.Method, r.Host, r.URL, text)
+	http.Error(w, text, code)
+}
+
+// ErrorAndLog writes formatted message to w and also logs it with the specified
+// logging level.
+func ErrorAndLog(
+	ctx context.Context,
+	l *slog.Logger,
+	r *http.Request,
+	w http.ResponseWriter,
+	code int,
+	format string,
+	args ...any,
+) {
+	text := fmt.Sprintf(format, args...)
+	l.ErrorContext(
+		ctx,
+		"http error",
+		"host", r.Host,
+		"method", r.Method,
+		"raddr", r.RemoteAddr,
+		"request_uri", r.RequestURI,
+		slogutil.KeyError, text,
+	)
+
 	http.Error(w, text, code)
 }
 

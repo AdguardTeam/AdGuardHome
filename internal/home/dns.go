@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/ameshkov/dnscrypt/v2"
 	yaml "gopkg.in/yaml.v3"
@@ -54,6 +55,7 @@ func initDNS(l *slog.Logger) (err error) {
 	}
 
 	statsConf := stats.Config{
+		Logger:            l.With(slogutil.KeyPrefix, "stats"),
 		Filename:          filepath.Join(statsDir, "stats.db"),
 		Limit:             config.Stats.Interval.Duration,
 		ConfigModified:    onConfigModified,

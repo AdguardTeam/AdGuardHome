@@ -10,7 +10,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/timeutil"
 )
 
@@ -51,6 +50,8 @@ type StatsResp struct {
 func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
+	ctx := r.Context()
+
 	var (
 		resp *StatsResp
 		ok   bool
@@ -62,12 +63,17 @@ func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 		resp, ok = s.getData(uint32(s.limit.Hours()))
 	}()
 
-	log.Debug("stats: prepared data in %v", time.Since(start))
+	s.logger.DebugContext(
+		ctx,
+		"prepared data",
+		"elapsed", timeutil.Duration{Duration: time.Since(start)},
+	)
 
 	if !ok {
 		// Don't bring the message to the lower case since it's a part of UI
 		// text for the moment.
-		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't get statistics data")
+		const msg = "Couldn't get statistics data"
+		aghhttp.ErrorAndLog(ctx, s.logger, r, w, http.StatusInternalServerError, msg)
 
 		return
 	}
@@ -146,16 +152,18 @@ func (s *StatsCtx) handleGetStatsConfig(w http.ResponseWriter, r *http.Request) 
 //
 // Deprecated:  Remove it when migration to the new API is over.
 func (s *StatsCtx) handleStatsConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	reqData := configResp{}
 	err := json.NewDecoder(r.Body).Decode(&reqData)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.ErrorAndLog(ctx, s.logger, r, w, http.StatusBadRequest, "json decode: %s", err)
 
 		return
 	}
 
 	if !checkInterval(reqData.IntervalDays) {
-		aghhttp.Error(r, w, http.StatusBadRequest, "Unsupported interval")
+		aghhttp.ErrorAndLog(ctx, s.logger, r, w, http.StatusBadRequest, "Unsupported interval")
 
 		return
 	}
@@ -173,17 +181,19 @@ func (s *StatsCtx) handleStatsConfig(w http.ResponseWriter, r *http.Request) {
 // handlePutStatsConfig is the handler for the PUT /control/stats/config/update
 // HTTP API.
 func (s *StatsCtx) handlePutStatsConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	reqData := getConfigResp{}
 	err := json.NewDecoder(r.Body).Decode(&reqData)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
+		aghhttp.ErrorAndLog(ctx, s.logger, r, w, http.StatusBadRequest, "json decode: %s", err)
 
 		return
 	}
 
 	engine, err := aghnet.NewIgnoreEngine(reqData.Ignored)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "ignored: %s", err)
+		aghhttp.ErrorAndLog(ctx, s.logger, r, w, http.StatusUnprocessableEntity, "ignored: %s", err)
 
 		return
 	}
@@ -191,13 +201,21 @@ func (s *StatsCtx) handlePutStatsConfig(w http.ResponseWriter, r *http.Request) 
 	ivl := time.Duration(reqData.Interval) * time.Millisecond
 	err = validateIvl(ivl)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "unsupported interval: %s", err)
+		aghhttp.ErrorAndLog(
+			ctx,
+			s.logger,
+			r,
+			w,
+			http.StatusUnprocessableEntity,
+			"unsupported interval: %s",
+			err,
+		)
 
 		return
 	}
 
 	if reqData.Enabled == aghalg.NBNull {
-		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "enabled is null")
+		aghhttp.ErrorAndLog(ctx, s.logger, r, w, http.StatusUnprocessableEntity, "enabled is null")
 
 		return
 	}
@@ -216,7 +234,15 @@ func (s *StatsCtx) handlePutStatsConfig(w http.ResponseWriter, r *http.Request) 
 func (s *StatsCtx) handleStatsReset(w http.ResponseWriter, r *http.Request) {
 	err := s.clear()
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusInternalServerError, "stats: %s", err)
+		aghhttp.ErrorAndLog(
+			r.Context(),
+			s.logger,
+			r,
+			w,
+			http.StatusInternalServerError,
+			"stats: %s",
+			err,
+		)
 	}
 }
 
