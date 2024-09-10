@@ -244,9 +244,9 @@ run_linter fieldalignment \
 run_linter -e shadow --strict ./...
 
 # TODO(a.garipov): Enable for all.
-run_linter gosec --quiet\
+# TODO(e.burkov):  Re-enable G115.
+run_linter gosec --exclude G115 --quiet\
 	./internal/aghalg/\
-	./internal/aghchan/\
 	./internal/aghhttp/\
 	./internal/aghnet/\
 	./internal/aghos/\
