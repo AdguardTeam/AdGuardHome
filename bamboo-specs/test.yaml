@@ -143,6 +143,12 @@
     'other':
          'clean-working-dir': true
     'tasks':
+      # TODO(e.burkov):  Remove after test.
+      - 'checkout':
+            'repository': 'bamboo-deploy-publisher'
+            # The paths are always relative to the working directory.
+            'path': 'bamboo-deploy-publisher'
+            'force-clean-build': true
       - 'checkout':
             'force-clean-build': true
       - 'script':
