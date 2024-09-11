@@ -91,6 +91,11 @@
     'tasks':
       - 'checkout':
             'force-clean-build': true
+      - 'checkout':
+            'repository': 'bamboo-deploy-publisher'
+            # The paths are always relative to the working directory.
+            'path': 'bamboo-deploy-publisher'
+            'force-clean-build': true
       - 'script':
             'interpreter': 'SHELL'
             'scripts':
@@ -98,6 +103,9 @@
                 #!/bin/sh
 
                 set -e -f -u -x
+
+                # Explicitly checkout the revision that we need.
+                git checkout "${bamboo.repository.revision.number}"
 
                 # Run the build with the specified channel.
                 echo "${bamboo.gpgSecretKeyPart1}${bamboo.gpgSecretKeyPart2}"\
@@ -107,6 +115,8 @@
                 make\
                         CHANNEL=${bamboo.channel}\
                         GPG_KEY_PASSPHRASE=${bamboo.gpgPassword}\
+                        DEPLOY_SCRIPT_PATH="./bamboo-deploy-publisher/deploy.sh"\
+                        SIGNER_API_KEY="${bamboo.adguardHomeWinSignerSecretApiKey}"\
                         FRONTEND_PREBUILT=1\
                         PARALLELISM=1\
                         VERBOSE=2\

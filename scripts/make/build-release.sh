@@ -83,11 +83,15 @@ if [ "$sign" -eq '1' ]
 then
 	gpg_key_passphrase="${GPG_KEY_PASSPHRASE:?please set GPG_KEY_PASSPHRASE or unset SIGN}"
 	gpg_key="${GPG_KEY:?please set GPG_KEY or unset SIGN}"
+	signer_api_key="${SIGNER_API_KEY:?please set SIGNER_API_KEY or unset SIGN}"
+	deploy_script_path="${DEPLOY_SCRIPT_PATH:?please set DEPLOY_SCRIPT_PATH or unset SIGN}"
 else
 	gpg_key_passphrase=''
 	gpg_key=''
+	signer_api_key=''
+	deploy_script_path=''
 fi
-readonly gpg_key_passphrase gpg_key
+readonly gpg_key_passphrase gpg_key signer_api_key deploy_script_path
 
 # The default distribution files directory is dist.
 dist="${DIST_DIR:-dist}"
@@ -149,6 +153,50 @@ windows  amd64     -   -
 windows  arm64     -   -"
 readonly platforms
 
+# Function sign signs the specified build as intended by the target operating
+# system.
+sign() {
+	# Only sign if needed.
+	if [ "$sign" -ne '1' ]
+	then
+		return
+	fi
+
+	# Get the arguments.  Here and below, use the "sign_" prefix for all
+	# variables local to function sign.
+	sign_os="$1"
+	sign_bin_path="$2"
+
+	if [ "$sign_os" != 'windows' ]
+	then
+		gpg\
+			--default-key "$gpg_key"\
+			--detach-sig\
+			--passphrase "$gpg_key_passphrase"\
+			--pinentry-mode loopback\
+			-q\
+			"$sign_bin_path"\
+			;
+
+		return
+	# TODO(e.burkov):  Enable for all releases.
+	elif [ "$channel" != 'beta' ]
+	then
+		return
+	fi
+
+	signed_bin_path="${sign_bin_path}.signed"
+
+	env\
+		INPUT_FILE="$sign_bin_path"\
+		OUTPUT_FILE="$signed_bin_path"\
+		SIGNER_API_KEY="$signer_api_key"\
+		"$deploy_script_path" sign-executable\
+		;
+
+	mv "$signed_bin_path" "$sign_bin_path"
+}
+
 # Function build builds the release for one platform.  It builds a binary and an
 # archive.
 build() {
@@ -189,17 +237,7 @@ build() {
 
 	log "$build_output"
 
-	if [ "$sign" -eq '1' ]
-	then
-		gpg\
-			--default-key "$gpg_key"\
-			--detach-sig\
-			--passphrase "$gpg_key_passphrase"\
-			--pinentry-mode loopback\
-			-q\
-			"$build_output"\
-			;
-	fi
+	sign "$os" "$build_output"
 
 	# Prepare the build directory for archiving.
 	cp ./CHANGELOG.md ./LICENSE.txt ./README.md "$build_dir"
