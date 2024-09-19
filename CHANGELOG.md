@@ -44,6 +44,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Property `clients.runtime_sources.dhcp` in the configuration file not taking
+  effect.
 - Update Google safe search domains list ([#7155]).
 - Enforce Bing safe search from Edge sidebar ([#7154]).
 - Text overflow on the query log page ([#7119]).

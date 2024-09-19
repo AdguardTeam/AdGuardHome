@@ -619,8 +619,11 @@ func (clients *clientsContainer) addHostLocked(
 ) (ok bool) {
 	rc := client.NewRuntime(ip)
 	rc.SetInfo(src, []string{host})
-	if dhcpHost := clients.dhcp.HostByIP(ip); dhcpHost != "" {
-		rc.SetInfo(client.SourceDHCP, []string{dhcpHost})
+
+	if config.Clients.Sources.DHCP {
+		if dhcpHost := clients.dhcp.HostByIP(ip); dhcpHost != "" {
+			rc.SetInfo(client.SourceDHCP, []string{dhcpHost})
+		}
 	}
 
 	clients.storage.UpdateRuntime(rc)
