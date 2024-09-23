@@ -21,6 +21,8 @@ import (
 	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
+	"github.com/u-root/uio/uio"
+	"golang.org/x/exp/slices"
 )
 
 // v4Server is a DHCPv4 server.
@@ -1279,6 +1281,23 @@ func (s *v4Server) packetHandler(conn net.PacketConn, peer net.Addr, req *dhcpv4
 		log.Debug("dhcpv4: dhcpv4.New: %s", err)
 
 		return
+	}
+	if opt := req.Options.Get(dhcpv4.OptionClientIdentifier); opt != nil {
+		buf := uio.NewBigEndianBuffer(opt)
+		hdType := buf.Read8()
+		// refer: https://github.com/wireshark/wireshark/blob/c3cc0e5fa7123f3d493c6a61b8919eac2973000f/epan/dissectors/packet-dhcp.c#L2306
+		//    The code for this option is 61, and its minimum length is 2.
+		//
+		//   Code   Len   Type  Client-Identifier
+		//   +-----+-----+-----+-----+-----+---
+		//   |  61 |  n  |  t1 |  i1 |  i2 | ...
+		//   +-----+-----+-----+-----+-----+---
+		// A hardware type of 0 (zero) should be used when the value field
+		//   contains an identifier other than a hardware address
+		// mac address length plus type field equal seven
+		if hdType > 0 && len(opt) == 7 {
+			buf.ReadBytes(req.ClientHWAddr)
+		}
 	}
 
 	err = netutil.ValidateMAC(req.ClientHWAddr)
