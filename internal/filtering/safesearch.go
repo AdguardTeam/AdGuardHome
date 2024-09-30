@@ -22,6 +22,7 @@ type SafeSearchConfig struct {
 
 	Bing       bool `yaml:"bing" json:"bing"`
 	DuckDuckGo bool `yaml:"duckduckgo" json:"duckduckgo"`
+	Ecosia     bool `yaml:"ecosia" json:"ecosia"`
 	Google     bool `yaml:"google" json:"google"`
 	Pixabay    bool `yaml:"pixabay" json:"pixabay"`
 	Yandex     bool `yaml:"yandex" json:"yandex"`

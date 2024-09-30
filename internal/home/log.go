@@ -3,11 +3,13 @@ package home
 import (
 	"cmp"
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"runtime"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"gopkg.in/yaml.v3"
 )
@@ -16,10 +18,21 @@ import (
 // for logger output.
 const configSyslog = "syslog"
 
-// configureLogger configures logger level and output.
-func configureLogger(opts options) (err error) {
-	ls := getLogSettings(opts)
+// newSlogLogger returns new [*slog.Logger] configured with the given settings.
+func newSlogLogger(ls *logSettings) (l *slog.Logger) {
+	if !ls.Enabled {
+		return slogutil.NewDiscardLogger()
+	}
 
+	return slogutil.New(&slogutil.Config{
+		Format:       slogutil.FormatAdGuardLegacy,
+		AddTimestamp: true,
+		Verbose:      ls.Verbose,
+	})
+}
+
+// configureLogger configures logger level and output.
+func configureLogger(ls *logSettings) (err error) {
 	// Configure logger level.
 	if !ls.Enabled {
 		log.SetLevel(log.OFF)
@@ -60,7 +73,7 @@ func configureLogger(opts options) (err error) {
 		MaxAge:     ls.MaxAge,
 	})
 
-	return nil
+	return err
 }
 
 // getLogSettings returns a log settings object properly initialized from opts.

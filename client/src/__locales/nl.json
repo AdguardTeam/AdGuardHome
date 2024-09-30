@@ -154,7 +154,7 @@
     "use_adguard_parental": "Gebruik AdGuard Ouderlijk toezicht web service",
     "use_adguard_parental_hint": "AdGuard Home controleert of het domein 18+ content bevat. Dit gebeurt dmv dezelfde privacy vriendelijke API als de Browsing Security web service.",
     "enforce_safe_search": "Veilig zoeken gebruiken",
-    "enforce_save_search_hint": "AdGuard Home kan veilig zoeken forceren voor de volgende zoekmachines: Google, Youtube, Bing, en DuckDuckGo, Yandex, Pixabay.",
+    "enforce_save_search_hint": "AdGuard Home dwingt veilig zoeken af in de volgende zoekmachines: Google, YouTube, Bing, DuckDuckGo, Ecosia, Yandex, Pixabay.",
     "no_servers_specified": "Geen servers gespecificeerd",
     "general_settings": "Algemene instellingen",
     "dns_settings": "DNS instellingen",

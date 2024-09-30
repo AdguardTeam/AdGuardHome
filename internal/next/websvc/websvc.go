@@ -24,7 +24,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/mathutil"
-	"github.com/AdguardTeam/golibs/pprofutil"
+	"github.com/AdguardTeam/golibs/netutil/httputil"
 	httptreemux "github.com/dimfeld/httptreemux/v5"
 )
 
@@ -107,7 +107,7 @@ func (svc *Service) setupPprof(c *PprofConfig) {
 	runtime.SetMutexProfileFraction(1)
 
 	pprofMux := http.NewServeMux()
-	pprofutil.RoutePprof(pprofMux)
+	httputil.RoutePprof(pprofMux)
 
 	svc.pprofPort = c.Port
 	addr := netip.AddrPortFrom(netip.AddrFrom4([4]byte{127, 0, 0, 1}), c.Port)

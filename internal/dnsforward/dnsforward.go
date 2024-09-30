@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/netip"
@@ -27,6 +28,7 @@ import (
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/sysresolv"
 	"github.com/AdguardTeam/golibs/stringutil"
@@ -121,12 +123,17 @@ type Server struct {
 	// access drops disallowed clients.
 	access *accessManager
 
+	// baseLogger is used to create loggers for other entities.  It should not
+	// have a prefix and must not be nil.
+	baseLogger *slog.Logger
+
 	// localDomainSuffix is the suffix used to detect internal hosts.  It
 	// must be a valid domain name plus dots on each side.
 	localDomainSuffix string
 
-	// ipset processes DNS requests using ipset data.
-	ipset ipsetCtx
+	// ipset processes DNS requests using ipset data.  It must not be nil after
+	// initialization.  See [newIpsetHandler].
+	ipset *ipsetHandler
 
 	// privateNets is the configured set of IP networks considered private.
 	privateNets netutil.SubnetSet
@@ -197,6 +204,10 @@ type DNSCreateParams struct {
 	PrivateNets netutil.SubnetSet
 	Anonymizer  *aghnet.IPMut
 	EtcHosts    *aghnet.HostsContainer
+
+	// Logger is used as a base logger.  It must not be nil.
+	Logger *slog.Logger
+
 	LocalDomain string
 }
 
@@ -233,6 +244,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		stats:       p.Stats,
 		queryLog:    p.QueryLog,
 		privateNets: p.PrivateNets,
+		baseLogger:  p.Logger,
 		// TODO(e.burkov):  Use some case-insensitive string comparison.
 		localDomainSuffix: strings.ToLower(localDomainSuffix),
 		etcHosts:          etcHosts,
@@ -596,9 +608,16 @@ func (s *Server) prepareLocalResolvers() (uc *proxy.UpstreamConfig, err error) {
 // the primary DNS proxy instance.  It assumes s.serverLock is locked or the
 // Server not running.
 func (s *Server) prepareInternalDNS() (err error) {
-	err = s.prepareIpsetListSettings()
+	ipsetList, err := s.prepareIpsetListSettings()
 	if err != nil {
 		return fmt.Errorf("preparing ipset settings: %w", err)
+	}
+
+	ipsetLogger := s.baseLogger.With(slogutil.KeyPrefix, "ipset")
+	s.ipset, err = newIpsetHandler(context.TODO(), ipsetLogger, ipsetList)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return err
 	}
 
 	bootOpts := &upstream.Options{
@@ -664,6 +683,7 @@ func (s *Server) setupAddrProc() {
 		s.addrProc = client.EmptyAddrProc{}
 	} else {
 		c := s.conf.AddrProcConf
+		c.BaseLogger = s.baseLogger
 		c.DialContext = s.DialContext
 		c.PrivateSubnets = s.privateNets
 		c.UsePrivateRDNS = s.conf.UsePrivateRDNS
@@ -707,6 +727,7 @@ func validateBlockingMode(
 func (s *Server) prepareInternalProxy() (err error) {
 	srvConf := s.conf
 	conf := &proxy.Config{
+		Logger:                    s.baseLogger.With(slogutil.KeyPrefix, "dnsproxy"),
 		CacheEnabled:              true,
 		CacheSizeBytes:            4096,
 		PrivateRDNSUpstreamConfig: srvConf.PrivateRDNSUpstreamConfig,

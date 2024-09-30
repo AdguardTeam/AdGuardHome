@@ -8,7 +8,7 @@
 'variables':
     'channel': 'edge'
     'dockerFrontend': 'adguard/home-js-builder:2.0'
-    'dockerGo': 'adguard/go-builder:1.22.5--1'
+    'dockerGo': 'adguard/go-builder:1.23.1--1'
 
 'stages':
   - 'Build frontend':
@@ -91,6 +91,11 @@
     'tasks':
       - 'checkout':
             'force-clean-build': true
+      - 'checkout':
+            'repository': 'bamboo-deploy-publisher'
+            # The paths are always relative to the working directory.
+            'path': 'bamboo-deploy-publisher'
+            'force-clean-build': true
       - 'script':
             'interpreter': 'SHELL'
             'scripts':
@@ -98,6 +103,9 @@
                 #!/bin/sh
 
                 set -e -f -u -x
+
+                # Explicitly checkout the revision that we need.
+                git checkout "${bamboo.repository.revision.number}"
 
                 # Run the build with the specified channel.
                 echo "${bamboo.gpgSecretKeyPart1}${bamboo.gpgSecretKeyPart2}"\
@@ -107,6 +115,8 @@
                 make\
                         CHANNEL=${bamboo.channel}\
                         GPG_KEY_PASSPHRASE=${bamboo.gpgPassword}\
+                        DEPLOY_SCRIPT_PATH="./bamboo-deploy-publisher/deploy.sh"\
+                        SIGNER_API_KEY="${bamboo.adguardHomeWinSignerSecretApiKey}"\
                         FRONTEND_PREBUILT=1\
                         PARALLELISM=1\
                         VERBOSE=2\
@@ -266,7 +276,7 @@
         'variables':
             'channel': 'beta'
             'dockerFrontend': 'adguard/home-js-builder:2.0'
-            'dockerGo': 'adguard/go-builder:1.22.5--1'
+            'dockerGo': 'adguard/go-builder:1.23.1--1'
     # release-vX.Y.Z branches are the branches from which the actual final
     # release is built.
   - '^release-v[0-9]+\.[0-9]+\.[0-9]+':
@@ -282,4 +292,4 @@
         'variables':
             'channel': 'release'
             'dockerFrontend': 'adguard/home-js-builder:2.0'
-            'dockerGo': 'adguard/go-builder:1.22.5--1'
+            'dockerGo': 'adguard/go-builder:1.23.1--1'

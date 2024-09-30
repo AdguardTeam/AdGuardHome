@@ -154,7 +154,7 @@
     "use_adguard_parental": "使用 AdGuard 【家长控制】服务",
     "use_adguard_parental_hint": "AdGuard Home 将使用与浏览安全服务相同的隐私性强的 API 来检查域名指向的网站是否包含成人内容。",
     "enforce_safe_search": "使用安全搜索",
-    "enforce_save_search_hint": "AdGuard Home 对以下搜索引擎可强制启用安全搜索：Google、YouTube、Bing、DuckDuckGo、Yandex、Pixabay。",
+    "enforce_save_search_hint": "AdGuard Home 将会在下列搜索引擎中强制启用安全搜索：Google、YouTube、Bing、DuckDuckGo、Ecosia、Yandex、Pixabay。",
     "no_servers_specified": "未找到指定的服务器",
     "general_settings": "常规设置",
     "dns_settings": "DNS 设置",

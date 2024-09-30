@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 3
+# AdGuard-Project-Version: 4
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -42,7 +42,6 @@ rm -f\
 	bin/gosec\
 	bin/govulncheck\
 	bin/ineffassign\
-	bin/looppointer\
 	bin/misspell\
 	bin/nilness\
 	bin/shadow\
@@ -66,7 +65,6 @@ env\
 	github.com/golangci/misspell/cmd/misspell\
 	github.com/gordonklaus/ineffassign\
 	github.com/kisielk/errcheck\
-	github.com/kyoh86/looppointer/cmd/looppointer\
 	github.com/securego/gosec/v2/cmd/gosec\
 	github.com/uudashr/gocognit/cmd/gocognit\
 	golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment\

@@ -14,6 +14,9 @@ var pixabay string
 //go:embed rules/duckduckgo.txt
 var duckduckgo string
 
+//go:embed rules/ecosia.txt
+var ecosia string
+
 //go:embed rules/yandex.txt
 var yandex string
 
@@ -27,6 +30,7 @@ var youtube string
 var safeSearchRules = map[Service]string{
 	Bing:       bing,
 	DuckDuckGo: duckduckgo,
+	Ecosia:     ecosia,
 	Google:     google,
 	Pixabay:    pixabay,
 	Yandex:     yandex,

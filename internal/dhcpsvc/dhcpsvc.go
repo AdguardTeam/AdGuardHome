@@ -50,7 +50,7 @@ type Interface interface {
 	IPByHost(host string) (ip netip.Addr)
 
 	// Leases returns all the active DHCP leases.  The returned slice should be
-	// a clone.
+	// a clone.  The order of leases is undefined.
 	//
 	// TODO(e.burkov):  Consider implementing iterating methods with appropriate
 	// signatures instead of cloning the whole list.

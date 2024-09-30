@@ -13,6 +13,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -20,10 +21,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
-}
 
 // constUnitID is the UnitIDGenFunc which always return 0.
 func constUnitID() (id uint32) { return 0 }
@@ -55,6 +52,7 @@ func TestStats(t *testing.T) {
 
 	handlers := map[string]http.Handler{}
 	conf := stats.Config{
+		Logger:            slogutil.NewDiscardLogger(),
 		ShouldCountClient: func([]string) bool { return true },
 		Filename:          filepath.Join(t.TempDir(), "stats.db"),
 		Limit:             timeutil.Day,
@@ -171,6 +169,7 @@ func TestLargeNumbers(t *testing.T) {
 	handlers := map[string]http.Handler{}
 
 	conf := stats.Config{
+		Logger:            slogutil.NewDiscardLogger(),
 		ShouldCountClient: func([]string) bool { return true },
 		Filename:          filepath.Join(t.TempDir(), "stats.db"),
 		Limit:             timeutil.Day,
@@ -222,6 +221,7 @@ func TestShouldCount(t *testing.T) {
 	require.NoError(t, err)
 
 	s, err := stats.New(stats.Config{
+		Logger:   slogutil.NewDiscardLogger(),
 		Enabled:  true,
 		Filename: filepath.Join(t.TempDir(), "stats.db"),
 		Limit:    timeutil.Day,

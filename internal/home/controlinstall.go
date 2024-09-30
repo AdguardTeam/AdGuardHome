@@ -433,7 +433,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	// moment we'll allow setting up TLS in the initial configuration or the
 	// configuration itself will use HTTPS protocol, because the underlying
 	// functions potentially restart the HTTPS server.
-	err = startMods()
+	err = startMods(web.logger)
 	if err != nil {
 		Context.firstRun = true
 		copyInstallSettings(config, curConfig)

@@ -103,7 +103,9 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 		return true
 	})
 
-	clients.runtimeIndex.Range(func(rc *client.Runtime) (cont bool) {
+	clients.storage.UpdateDHCP()
+
+	clients.storage.RangeRuntime(func(rc *client.Runtime) (cont bool) {
 		src, host := rc.Info()
 		cj := runtimeClientJSON{
 			WHOIS:  whoisOrEmpty(rc),
@@ -117,18 +119,7 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 		return true
 	})
 
-	for _, l := range clients.dhcp.Leases() {
-		cj := runtimeClientJSON{
-			Name:   l.Hostname,
-			Source: client.SourceDHCP,
-			IP:     l.IP,
-			WHOIS:  &whois.Info{},
-		}
-
-		data.RuntimeClients = append(data.RuntimeClients, cj)
-	}
-
-	data.Tags = clientTags
+	data.Tags = clients.storage.AllowedTags()
 
 	aghhttp.WriteJSONResponseOK(w, r, data)
 }
@@ -248,6 +239,7 @@ func copySafeSearch(
 	if conf.Enabled {
 		conf.Bing = true
 		conf.DuckDuckGo = true
+		conf.Ecosia = true
 		conf.Google = true
 		conf.Pixabay = true
 		conf.Yandex = true
@@ -429,7 +421,7 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 		}
 
 		ip, _ := netip.ParseAddr(idStr)
-		c, ok := clients.find(idStr)
+		c, ok := clients.storage.Find(idStr)
 		var cj *clientJSON
 		if !ok {
 			cj = clients.findRuntime(ip, idStr)
@@ -451,7 +443,7 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 // /etc/hosts tables, DHCP leases, or blocklists.  cj is guaranteed to be
 // non-nil.
 func (clients *clientsContainer) findRuntime(ip netip.Addr, idStr string) (cj *clientJSON) {
-	rc := clients.findRuntimeClient(ip)
+	rc := clients.storage.ClientRuntime(ip)
 	if rc == nil {
 		// It is still possible that the IP used to be in the runtime clients
 		// list, but then the server was reloaded.  So, check the DNS server's

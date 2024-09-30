@@ -4,8 +4,10 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,10 +16,13 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
 func main() {
+	ctx := context.Background()
+	l := slogutil.New(nil)
+
 	urlStr := "https://adguardteam.github.io/HostlistsRegistry/assets/services.json"
 	if v, ok := os.LookupEnv("URL"); ok {
 		urlStr = v
@@ -33,7 +38,7 @@ func main() {
 
 	resp, err := c.Get(urlStr)
 	check(err)
-	defer log.OnCloserError(resp.Body, log.ERROR)
+	defer slogutil.CloseAndLog(ctx, l, resp.Body, slog.LevelError)
 
 	if resp.StatusCode != http.StatusOK {
 		panic(fmt.Errorf("expected code %d, got %d", http.StatusOK, resp.StatusCode))
@@ -64,7 +69,7 @@ func main() {
 		0o644,
 	)
 	check(err)
-	defer log.OnCloserError(f, log.ERROR)
+	defer slogutil.CloseAndLog(ctx, l, f, slog.LevelError)
 
 	err = tmpl.Execute(f, hlSvcs)
 	check(err)

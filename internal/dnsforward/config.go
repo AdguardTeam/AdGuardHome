@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -158,7 +159,7 @@ type Config struct {
 	// IpsetList is the ipset configuration that allows AdGuard Home to add IP
 	// addresses of the specified domain names to an ipset list.  Syntax:
 	//
-	//	DOMAIN[,DOMAIN].../IPSET_NAME
+	//	DOMAIN[,DOMAIN].../IPSET_NAME[,IPSET_NAME]...
 	//
 	// This field is ignored if [IpsetListFileName] is set.
 	IpsetList []string `yaml:"ipset"`
@@ -301,6 +302,8 @@ type ServerConfig struct {
 
 // UpstreamMode is a enumeration of upstream mode representations.  See
 // [proxy.UpstreamModeType].
+//
+// TODO(d.kolyshev): Consider using [proxy.UpstreamMode].
 type UpstreamMode string
 
 const (
@@ -315,6 +318,7 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 	trustedPrefixes := netutil.UnembedPrefixes(srvConf.TrustedProxies)
 
 	conf = &proxy.Config{
+		Logger:                    s.baseLogger.With(slogutil.KeyPrefix, "dnsproxy"),
 		HTTP3:                     srvConf.ServeHTTP3,
 		Ratelimit:                 int(srvConf.Ratelimit),
 		RatelimitSubnetLenIPv4:    srvConf.RatelimitSubnetLenIPv4,
@@ -420,8 +424,6 @@ func parseBogusNXDOMAIN(confBogusNXDOMAIN []string) (subnets []netip.Prefix, err
 	return subnets, nil
 }
 
-const defaultBlockedResponseTTL = 3600
-
 // initDefaultSettings initializes default settings if nothing
 // is configured
 func (s *Server) initDefaultSettings() {
@@ -452,24 +454,24 @@ func (s *Server) initDefaultSettings() {
 
 // prepareIpsetListSettings reads and prepares the ipset configuration either
 // from a file or from the data in the configuration file.
-func (s *Server) prepareIpsetListSettings() (err error) {
+func (s *Server) prepareIpsetListSettings() (ipsets []string, err error) {
 	fn := s.conf.IpsetListFileName
 	if fn == "" {
-		return s.ipset.init(s.conf.IpsetList)
+		return s.conf.IpsetList, nil
 	}
 
 	// #nosec G304 -- Trust the path explicitly given by the user.
 	data, err := os.ReadFile(fn)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	ipsets := stringutil.SplitTrimmed(string(data), "\n")
-	ipsets = stringutil.FilterOut(ipsets, IsCommentOrEmpty)
+	ipsets = stringutil.SplitTrimmed(string(data), "\n")
+	ipsets = slices.DeleteFunc(ipsets, IsCommentOrEmpty)
 
 	log.Debug("dns: using %d ipset rules from file %q", len(ipsets), fn)
 
-	return s.ipset.init(ipsets)
+	return ipsets, nil
 }
 
 // loadUpstreams parses upstream DNS servers from the configured file or from
@@ -690,7 +692,7 @@ func matchesDomainWildcard(host, pat string) (ok bool) {
 // the DNS names and patterns from certificate.  dnsNames must be sorted.
 func anyNameMatches(dnsNames []string, sni string) (ok bool) {
 	// Check sni is either a valid hostname or a valid IP address.
-	if netutil.ValidateHostname(sni) != nil && net.ParseIP(sni) == nil {
+	if !netutil.IsValidHostname(sni) && !netutil.IsValidIPString(sni) {
 		return false
 	}
 

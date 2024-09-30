@@ -1,25 +1,26 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
 // download and save all translations.
-func (c *twoskyClient) download() (err error) {
+func (c *twoskyClient) download(ctx context.Context, l *slog.Logger) (err error) {
 	var numWorker int
 
 	flagSet := flag.NewFlagSet("download", flag.ExitOnError)
@@ -50,7 +51,7 @@ func (c *twoskyClient) download() (err error) {
 
 	for range numWorker {
 		wg.Add(1)
-		go downloadWorker(wg, failed, client, uriCh)
+		go downloadWorker(ctx, l, wg, failed, client, uriCh)
 	}
 
 	for _, lang := range c.langs {
@@ -62,13 +63,13 @@ func (c *twoskyClient) download() (err error) {
 	close(uriCh)
 	wg.Wait()
 
-	printFailedLocales(failed)
+	printFailedLocales(ctx, l, failed)
 
 	return nil
 }
 
 // printFailedLocales prints sorted list of failed downloads, if any.
-func printFailedLocales(failed *sync.Map) {
+func printFailedLocales(ctx context.Context, l *slog.Logger, failed *sync.Map) {
 	keys := []string{}
 	failed.Range(func(k, _ any) bool {
 		s, ok := k.(string)
@@ -86,12 +87,14 @@ func printFailedLocales(failed *sync.Map) {
 	}
 
 	slices.Sort(keys)
-	log.Info("failed locales: %s", strings.Join(keys, " "))
+	l.InfoContext(ctx, "failed", "locales", keys)
 }
 
 // downloadWorker downloads translations by received urls and saves them.
 // Where failed is a map for storing failed downloads.
 func downloadWorker(
+	ctx context.Context,
+	l *slog.Logger,
 	wg *sync.WaitGroup,
 	failed *sync.Map,
 	client *http.Client,
@@ -103,9 +106,9 @@ func downloadWorker(
 		q := uri.Query()
 		code := q.Get("language")
 
-		err := saveToFile(client, uri, code)
+		err := saveToFile(ctx, l, client, uri, code)
 		if err != nil {
-			log.Error("download: worker: %s", err)
+			l.ErrorContext(ctx, "download worker", slogutil.KeyError, err)
 			failed.Store(code, struct{}{})
 		}
 	}
@@ -113,12 +116,16 @@ func downloadWorker(
 
 // saveToFile downloads translation by url and saves it to a file, or returns
 // error.
-func saveToFile(client *http.Client, uri *url.URL, code string) (err error) {
-	data, err := getTranslation(client, uri.String())
+func saveToFile(
+	ctx context.Context,
+	l *slog.Logger,
+	client *http.Client,
+	uri *url.URL,
+	code string,
+) (err error) {
+	data, err := getTranslation(ctx, l, client, uri.String())
 	if err != nil {
-		log.Info("%s", data)
-
-		return fmt.Errorf("getting translation: %s", err)
+		return fmt.Errorf("getting translation %q: %s", code, err)
 	}
 
 	name := filepath.Join(localesDir, code+".json")
@@ -134,13 +141,18 @@ func saveToFile(client *http.Client, uri *url.URL, code string) (err error) {
 
 // getTranslation returns received translation data and error.  If err is not
 // nil, data may contain a response from server for inspection.
-func getTranslation(client *http.Client, url string) (data []byte, err error) {
+func getTranslation(
+	ctx context.Context,
+	l *slog.Logger,
+	client *http.Client,
+	url string,
+) (data []byte, err error) {
 	resp, err := client.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("requesting: %w", err)
 	}
 
-	defer log.OnCloserError(resp.Body, log.ERROR)
+	defer slogutil.CloseAndLog(ctx, l, resp.Body, slog.LevelError)
 
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("url: %q; status code: %s", url, http.StatusText(resp.StatusCode))

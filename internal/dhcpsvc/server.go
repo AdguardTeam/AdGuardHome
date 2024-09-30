@@ -27,6 +27,13 @@ type DHCPServer struct {
 	// hostnames.
 	localTLD string
 
+	// dbFilePath is the path to the database file containing the DHCP leases.
+	//
+	// TODO(e.burkov):  Consider extracting the database logic into a separate
+	// interface to prevent packages that only need lease data from depending on
+	// the entire server and to simplify testing.
+	dbFilePath string
+
 	// leasesMu protects the leases index as well as leases in the interfaces.
 	leasesMu *sync.RWMutex
 
@@ -34,10 +41,10 @@ type DHCPServer struct {
 	leases *leaseIndex
 
 	// interfaces4 is the set of IPv4 interfaces sorted by interface name.
-	interfaces4 netInterfacesV4
+	interfaces4 dhcpInterfacesV4
 
 	// interfaces6 is the set of IPv6 interfaces sorted by interface name.
-	interfaces6 netInterfacesV6
+	interfaces6 dhcpInterfacesV6
 
 	// icmpTimeout is the timeout for checking another DHCP server's presence.
 	icmpTimeout time.Duration
@@ -56,28 +63,9 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 		return nil, nil
 	}
 
-	// TODO(e.burkov):  Add validations scoped to the network interfaces set.
-	ifaces4 := make(netInterfacesV4, 0, len(conf.Interfaces))
-	ifaces6 := make(netInterfacesV6, 0, len(conf.Interfaces))
-	var errs []error
-
-	mapsutil.SortedRange(conf.Interfaces, func(name string, iface *InterfaceConfig) (cont bool) {
-		var i4 *netInterfaceV4
-		i4, err = newNetInterfaceV4(ctx, l, name, iface.IPv4)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("interface %q: ipv4: %w", name, err))
-		} else if i4 != nil {
-			ifaces4 = append(ifaces4, i4)
-		}
-
-		i6 := newNetInterfaceV6(ctx, l, name, iface.IPv6)
-		if i6 != nil {
-			ifaces6 = append(ifaces6, i6)
-		}
-
-		return true
-	})
-	if err = errors.Join(errs...); err != nil {
+	ifaces4, ifaces6, err := newInterfaces(ctx, l, conf.Interfaces)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
 		return nil, err
 	}
 
@@ -93,11 +81,53 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 		interfaces4: ifaces4,
 		interfaces6: ifaces6,
 		icmpTimeout: conf.ICMPTimeout,
+		dbFilePath:  conf.DBFilePath,
 	}
 
-	// TODO(e.burkov):  Load leases.
+	err = srv.dbLoad(ctx)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return nil, err
+	}
 
 	return srv, nil
+}
+
+// newInterfaces creates interfaces for the given map of interface names to
+// their configurations.
+func newInterfaces(
+	ctx context.Context,
+	l *slog.Logger,
+	ifaces map[string]*InterfaceConfig,
+) (v4 dhcpInterfacesV4, v6 dhcpInterfacesV6, err error) {
+	defer func() { err = errors.Annotate(err, "creating interfaces: %w") }()
+
+	// TODO(e.burkov):  Add validations scoped to the network interfaces set.
+	v4 = make(dhcpInterfacesV4, 0, len(ifaces))
+	v6 = make(dhcpInterfacesV6, 0, len(ifaces))
+
+	var errs []error
+	mapsutil.SortedRange(ifaces, func(name string, iface *InterfaceConfig) (cont bool) {
+		var i4 *dhcpInterfaceV4
+		i4, err = newDHCPInterfaceV4(ctx, l, name, iface.IPv4)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("interface %q: ipv4: %w", name, err))
+		} else if i4 != nil {
+			v4 = append(v4, i4)
+		}
+
+		i6 := newDHCPInterfaceV6(ctx, l, name, iface.IPv6)
+		if i6 != nil {
+			v6 = append(v6, i6)
+		}
+
+		return true
+	})
+	if err = errors.Join(errs...); err != nil {
+		return nil, nil, err
+	}
+
+	return v4, v6, nil
 }
 
 // type check
@@ -115,16 +145,11 @@ func (srv *DHCPServer) Leases() (leases []*Lease) {
 	srv.leasesMu.RLock()
 	defer srv.leasesMu.RUnlock()
 
-	for _, iface := range srv.interfaces4 {
-		for _, lease := range iface.leases {
-			leases = append(leases, lease.Clone())
-		}
-	}
-	for _, iface := range srv.interfaces6 {
-		for _, lease := range iface.leases {
-			leases = append(leases, lease.Clone())
-		}
-	}
+	srv.leases.rangeLeases(func(l *Lease) (cont bool) {
+		leases = append(leases, l.Clone())
+
+		return true
+	})
 
 	return leases
 }
@@ -167,20 +192,33 @@ func (srv *DHCPServer) IPByHost(host string) (ip netip.Addr) {
 
 // Reset implements the [Interface] interface for *DHCPServer.
 func (srv *DHCPServer) Reset(ctx context.Context) (err error) {
+	defer func() { err = errors.Annotate(err, "resetting leases: %w") }()
+
 	srv.leasesMu.Lock()
 	defer srv.leasesMu.Unlock()
 
-	for _, iface := range srv.interfaces4 {
-		iface.reset()
+	srv.resetLeases()
+	err = srv.dbStore(ctx)
+	if err != nil {
+		// Don't wrap the error since there is already an annotation deferred.
+		return err
 	}
-	for _, iface := range srv.interfaces6 {
-		iface.reset()
-	}
-	srv.leases.clear()
 
 	srv.logger.DebugContext(ctx, "reset leases")
 
 	return nil
+}
+
+// resetLeases resets the leases for all network interfaces of the server.  It
+// expects the DHCPServer.leasesMu to be locked.
+func (srv *DHCPServer) resetLeases() {
+	for _, iface := range srv.interfaces4 {
+		iface.common.reset()
+	}
+	for _, iface := range srv.interfaces6 {
+		iface.common.reset()
+	}
+	srv.leases.clear()
 }
 
 // AddLease implements the [Interface] interface for *DHCPServer.
@@ -190,7 +228,7 @@ func (srv *DHCPServer) AddLease(ctx context.Context, l *Lease) (err error) {
 	addr := l.IP
 	iface, err := srv.ifaceForAddr(addr)
 	if err != nil {
-		// Don't wrap the error since there is already an annotation deferred.
+		// Don't wrap the error since it's already informative enough as is.
 		return err
 	}
 
@@ -200,6 +238,12 @@ func (srv *DHCPServer) AddLease(ctx context.Context, l *Lease) (err error) {
 	err = srv.leases.add(l, iface)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
+
+	err = srv.dbStore(ctx)
+	if err != nil {
+		// Don't wrap the error since it's already informative enough as is.
 		return err
 	}
 
@@ -223,7 +267,7 @@ func (srv *DHCPServer) UpdateStaticLease(ctx context.Context, l *Lease) (err err
 	addr := l.IP
 	iface, err := srv.ifaceForAddr(addr)
 	if err != nil {
-		// Don't wrap the error since there is already an annotation deferred.
+		// Don't wrap the error since it's already informative enough as is.
 		return err
 	}
 
@@ -233,6 +277,12 @@ func (srv *DHCPServer) UpdateStaticLease(ctx context.Context, l *Lease) (err err
 	err = srv.leases.update(l, iface)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
+
+	err = srv.dbStore(ctx)
+	if err != nil {
+		// Don't wrap the error since it's already informative enough as is.
 		return err
 	}
 
@@ -254,7 +304,7 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 	addr := l.IP
 	iface, err := srv.ifaceForAddr(addr)
 	if err != nil {
-		// Don't wrap the error since there is already an annotation deferred.
+		// Don't wrap the error since it's already informative enough as is.
 		return err
 	}
 
@@ -264,6 +314,12 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 	err = srv.leases.remove(l, iface)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
+
+	err = srv.dbStore(ctx)
+	if err != nil {
+		// Don't wrap the error since it's already informative enough as is.
 		return err
 	}
 

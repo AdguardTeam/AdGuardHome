@@ -6,8 +6,10 @@ import (
 	"bufio"
 	"bytes"
 	"cmp"
+	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"os"
 	"os/exec"
@@ -18,7 +20,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"golang.org/x/exp/maps"
 )
 
@@ -63,6 +65,9 @@ type textLabel string
 type locales map[textLabel]string
 
 func main() {
+	ctx := context.Background()
+	l := slogutil.New(nil)
+
 	if len(os.Args) == 1 {
 		usage("need a command")
 	}
@@ -83,9 +88,9 @@ func main() {
 		cli, err = conf.toClient()
 		check(err)
 
-		err = cli.download()
+		err = cli.download(ctx, l)
 	case "unused":
-		err = unused(conf.LocalizableFiles[0])
+		err = unused(ctx, l, conf.LocalizableFiles[0])
 	case "upload":
 		cli, err = conf.toClient()
 		check(err)
@@ -322,7 +327,7 @@ func summary(langs languages) (err error) {
 }
 
 // unused prints unused text labels.
-func unused(basePath string) (err error) {
+func unused(ctx context.Context, l *slog.Logger, basePath string) (err error) {
 	defer func() { err = errors.Annotate(err, "unused: %w") }()
 
 	baseLoc, err := readLocales(basePath)
@@ -331,7 +336,7 @@ func unused(basePath string) (err error) {
 	}
 
 	locDir := filepath.Clean(localesDir)
-	js, err := findJS(locDir)
+	js, err := findJS(ctx, l, locDir)
 	if err != nil {
 		return err
 	}
@@ -340,10 +345,10 @@ func unused(basePath string) (err error) {
 }
 
 // findJS returns list of JavaScript and JSON files or error.
-func findJS(locDir string) (fileNames []string, err error) {
+func findJS(ctx context.Context, l *slog.Logger, locDir string) (fileNames []string, err error) {
 	walkFn := func(name string, _ os.FileInfo, err error) error {
 		if err != nil {
-			log.Info("warning: accessing a path %q: %s", name, err)
+			l.WarnContext(ctx, "accessing a path", slogutil.KeyError, err)
 
 			return nil
 		}

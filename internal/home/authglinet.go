@@ -97,6 +97,7 @@ func glGetTokenDate(file string) uint32 {
 
 	buf := bytes.NewBuffer(bs)
 
+	// TODO(a.garipov): Get rid of github.com/josharian/native dependency.
 	err = binary.Read(buf, native.Endian, &dateToken)
 	if err != nil {
 		log.Error("decoding token: %s", err)

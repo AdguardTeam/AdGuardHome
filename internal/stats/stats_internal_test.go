@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
@@ -18,6 +19,7 @@ func TestStats_races(t *testing.T) {
 	var r uint32
 	idGen := func() (id uint32) { return atomic.LoadUint32(&r) }
 	conf := Config{
+		Logger:            slogutil.NewDiscardLogger(),
 		ShouldCountClient: func([]string) bool { return true },
 		UnitID:            idGen,
 		Filename:          filepath.Join(t.TempDir(), "./stats.db"),
@@ -94,6 +96,7 @@ func TestStatsCtx_FillCollectedStats_daily(t *testing.T) {
 	)
 
 	s, err := New(Config{
+		Logger:            slogutil.NewDiscardLogger(),
 		ShouldCountClient: func([]string) bool { return true },
 		Filename:          filepath.Join(t.TempDir(), "./stats.db"),
 		Limit:             time.Hour,
@@ -151,6 +154,7 @@ func TestStatsCtx_DataFromUnits_month(t *testing.T) {
 	const hoursInMonth = 720
 
 	s, err := New(Config{
+		Logger:            slogutil.NewDiscardLogger(),
 		ShouldCountClient: func([]string) bool { return true },
 		Filename:          filepath.Join(t.TempDir(), "./stats.db"),
 		Limit:             time.Hour,

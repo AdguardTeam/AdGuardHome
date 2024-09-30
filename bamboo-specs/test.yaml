@@ -6,7 +6,7 @@
     'name': 'AdGuard Home - Build and run tests'
 'variables':
     'dockerFrontend': 'adguard/home-js-builder:2.0'
-    'dockerGo': 'adguard/go-builder:1.22.5--1'
+    'dockerGo': 'adguard/go-builder:1.23.1--1'
     'channel': 'development'
 
 'stages':
@@ -54,6 +54,7 @@
     'requirements':
       - 'adg-docker': 'true'
 
+# TODO(e.burkov):  Add the linting stage for markdown docs and shell scripts.
 'Test backend':
     'docker':
         'image': '${bamboo.dockerGo}'
@@ -195,5 +196,5 @@
         # may need to build a few of these.
         'variables':
             'dockerFrontend': 'adguard/home-js-builder:2.0'
-            'dockerGo': 'adguard/go-builder:1.22.5--1'
+            'dockerGo': 'adguard/go-builder:1.23.1--1'
             'channel': 'candidate'

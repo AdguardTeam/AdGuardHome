@@ -6,10 +6,10 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"net"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/golibs/netutil"
 )
 
 func ifaceHasStaticIP(ifaceName string) (ok bool, err error) {
@@ -25,7 +25,13 @@ func hostnameIfStaticConfig(r io.Reader) (_ []string, ok bool, err error) {
 	for s.Scan() {
 		line := strings.TrimSpace(s.Text())
 		fields := strings.Fields(line)
-		if len(fields) >= 2 && fields[0] == "inet" && net.ParseIP(fields[1]) != nil {
+		switch {
+		case
+			len(fields) < 2,
+			fields[0] != "inet",
+			!netutil.IsValidIPString(fields[1]):
+			continue
+		default:
 			return nil, false, s.Err()
 		}
 	}

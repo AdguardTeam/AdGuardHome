@@ -25,6 +25,7 @@ var defaultSafeSearchConf = filtering.SafeSearchConfig{
 	Enabled:    true,
 	Bing:       true,
 	DuckDuckGo: true,
+	Ecosia:     true,
 	Google:     true,
 	Pixabay:    true,
 	Yandex:     true,

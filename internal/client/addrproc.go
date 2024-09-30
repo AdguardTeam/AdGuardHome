@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"log/slog"
 	"net/netip"
 	"sync"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 )
 
@@ -38,6 +40,10 @@ func (EmptyAddrProc) Close() (_ error) { return nil }
 
 // DefaultAddrProcConfig is the configuration structure for address processors.
 type DefaultAddrProcConfig struct {
+	// BaseLogger is used to create loggers with custom prefixes for sources of
+	// information about runtime clients.  It must not be nil.
+	BaseLogger *slog.Logger
+
 	// DialContext is used to create TCP connections to WHOIS servers.
 	// DialContext must not be nil if [DefaultAddrProcConfig.UseWHOIS] is true.
 	DialContext aghnet.DialContextFunc
@@ -147,6 +153,7 @@ func NewDefaultAddrProc(c *DefaultAddrProcConfig) (p *DefaultAddrProc) {
 
 	if c.UseRDNS {
 		p.rdns = rdns.New(&rdns.Config{
+			Logger:    c.BaseLogger.With(slogutil.KeyPrefix, "rdns"),
 			Exchanger: c.Exchanger,
 			CacheSize: defaultCacheSize,
 			CacheTTL:  defaultIPTTL,
@@ -154,7 +161,7 @@ func NewDefaultAddrProc(c *DefaultAddrProcConfig) (p *DefaultAddrProc) {
 	}
 
 	if c.UseWHOIS {
-		p.whois = newWHOIS(c.DialContext)
+		p.whois = newWHOIS(c.BaseLogger.With(slogutil.KeyPrefix, "whois"), c.DialContext)
 	}
 
 	go p.process(c.CatchPanics)
@@ -168,7 +175,7 @@ func NewDefaultAddrProc(c *DefaultAddrProcConfig) (p *DefaultAddrProc) {
 
 // newWHOIS returns a whois.Interface instance using the given function for
 // dialing.
-func newWHOIS(dialFunc aghnet.DialContextFunc) (w whois.Interface) {
+func newWHOIS(logger *slog.Logger, dialFunc aghnet.DialContextFunc) (w whois.Interface) {
 	// TODO(s.chzhen):  Consider making configurable.
 	const (
 		// defaultTimeout is the timeout for WHOIS requests.
@@ -186,6 +193,7 @@ func newWHOIS(dialFunc aghnet.DialContextFunc) (w whois.Interface) {
 	)
 
 	return whois.New(&whois.Config{
+		Logger:          logger,
 		DialContext:     dialFunc,
 		ServerAddr:      whois.DefaultServer,
 		Port:            whois.DefaultPort,
@@ -227,9 +235,11 @@ func (p *DefaultAddrProc) process(catchPanics bool) {
 
 	log.Info("clients: processing addresses")
 
+	ctx := context.TODO()
+
 	for ip := range p.clientIPs {
-		host := p.processRDNS(ip)
-		info := p.processWHOIS(ip)
+		host := p.processRDNS(ctx, ip)
+		info := p.processWHOIS(ctx, ip)
 
 		p.addrUpdater.UpdateAddress(ip, host, info)
 	}
@@ -239,7 +249,7 @@ func (p *DefaultAddrProc) process(catchPanics bool) {
 
 // processRDNS resolves the clients' IP addresses using reverse DNS.  host is
 // empty if there were errors or if the information hasn't changed.
-func (p *DefaultAddrProc) processRDNS(ip netip.Addr) (host string) {
+func (p *DefaultAddrProc) processRDNS(ctx context.Context, ip netip.Addr) (host string) {
 	start := time.Now()
 	log.Debug("clients: processing %s with rdns", ip)
 	defer func() {
@@ -251,7 +261,7 @@ func (p *DefaultAddrProc) processRDNS(ip netip.Addr) (host string) {
 		return
 	}
 
-	host, changed := p.rdns.Process(ip)
+	host, changed := p.rdns.Process(ctx, ip)
 	if !changed {
 		host = ""
 	}
@@ -268,7 +278,7 @@ func (p *DefaultAddrProc) shouldResolve(ip netip.Addr) (ok bool) {
 // processWHOIS looks up the information about clients' IP addresses in the
 // WHOIS databases.  info is nil if there were errors or if the information
 // hasn't changed.
-func (p *DefaultAddrProc) processWHOIS(ip netip.Addr) (info *whois.Info) {
+func (p *DefaultAddrProc) processWHOIS(ctx context.Context, ip netip.Addr) (info *whois.Info) {
 	start := time.Now()
 	log.Debug("clients: processing %s with whois", ip)
 	defer func() {
@@ -277,7 +287,7 @@ func (p *DefaultAddrProc) processWHOIS(ip netip.Addr) (info *whois.Info) {
 
 	// TODO(s.chzhen):  Move the timeout logic from WHOIS configuration to the
 	// context.
-	info, changed := p.whois.Process(context.Background(), ip)
+	info, changed := p.whois.Process(ctx, ip)
 	if !changed {
 		info = nil
 	}

@@ -3,6 +3,7 @@ package dhcpsvc
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
@@ -23,7 +24,8 @@ type Config struct {
 	// clients' hostnames.
 	LocalDomainName string
 
-	// TODO(e.burkov):  Add DB path.
+	// DBFilePath is the path to the database file containing the DHCP leases.
+	DBFilePath string
 
 	// ICMPTimeout is the timeout for checking another DHCP server's presence.
 	ICMPTimeout time.Duration
@@ -62,6 +64,12 @@ func (conf *Config) Validate() (err error) {
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		errs = append(errs, err)
+	}
+
+	// This is a best-effort check for the file accessibility.  The file will be
+	// checked again when it is opened later.
+	if _, err = os.Stat(conf.DBFilePath); err != nil && !errors.Is(err, os.ErrNotExist) {
+		errs = append(errs, fmt.Errorf("db file path %q: %w", conf.DBFilePath, err))
 	}
 
 	if len(conf.Interfaces) == 0 {

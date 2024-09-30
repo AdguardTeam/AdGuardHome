@@ -11,6 +11,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -202,6 +203,7 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		ql := &testQueryLog{}
 		st := &testStats{}
 		srv := &Server{
+			baseLogger: slogutil.NewDiscardLogger(),
 			queryLog:   ql,
 			stats:      st,
 			anonymizer: aghnet.NewIPMut(nil),

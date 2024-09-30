@@ -8,9 +8,13 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// testTimeout is a common timeout for tests and contexts.
+const testTimeout = 1 * time.Second
 
 func TestDefault_Process(t *testing.T) {
 	ip1 := netip.MustParseAddr("1.2.3.4")
@@ -71,14 +75,14 @@ func TestDefault_Process(t *testing.T) {
 				Exchanger: &aghtest.Exchanger{OnExchange: onExchange},
 			})
 
-			got, changed := r.Process(tc.addr)
+			got, changed := r.Process(testutil.ContextWithTimeout(t, testTimeout), tc.addr)
 			require.True(t, changed)
 
 			assert.Equal(t, tc.want, got)
 			assert.Equal(t, 1, hit)
 
 			// From cache.
-			got, changed = r.Process(tc.addr)
+			got, changed = r.Process(testutil.ContextWithTimeout(t, testTimeout), tc.addr)
 			require.False(t, changed)
 
 			assert.Equal(t, tc.want, got)
@@ -101,7 +105,7 @@ func TestDefault_Process(t *testing.T) {
 			Exchanger: zeroTTLExchanger,
 		})
 
-		got, changed := r.Process(ip1)
+		got, changed := r.Process(testutil.ContextWithTimeout(t, testTimeout), ip1)
 		require.True(t, changed)
 		assert.Equal(t, revAddr1, got)
 
@@ -109,14 +113,15 @@ func TestDefault_Process(t *testing.T) {
 			return revAddr2, time.Hour, nil
 		}
 
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
 		require.EventuallyWithT(t, func(t *assert.CollectT) {
-			got, changed = r.Process(ip1)
+			got, changed = r.Process(ctx, ip1)
 			assert.True(t, changed)
 			assert.Equal(t, revAddr2, got)
 		}, 2*cacheTTL, time.Millisecond*100)
 
 		assert.Never(t, func() (changed bool) {
-			_, changed = r.Process(ip1)
+			_, changed = r.Process(testutil.ContextWithTimeout(t, testTimeout), ip1)
 
 			return changed
 		}, 2*cacheTTL, time.Millisecond*100)

@@ -6,7 +6,7 @@ set -e -f -u
 # Bump this number every time a significant change is made to this
 # script.
 #
-# AdGuard-Project-Version: 2
+# AdGuard-Project-Version: 3
 
 # TODO(a.garipov): Add pre-merge-commit.
 
@@ -56,13 +56,15 @@ prompt() {
 # Warn the programmer about unstaged changes and untracked files, but do
 # not fail the commit, because those changes might be temporary or for
 # a different branch.
+#
+# shellcheck disable=SC2016
 awk_prog='substr($2, 2, 1) != "." { print $9; } $1 == "?" { print $2; }'
 readonly awk_prog
 
 unstaged="$( git status --porcelain=2 | awk "$awk_prog" )"
 readonly unstaged
 
-if [ "$unstaged" != "" ]
+if [ "$unstaged" != '' ]
 then
 	printf 'WARNING: you have unstaged changes:\n\n%s\n\n' "$unstaged"
 	prompt
@@ -73,7 +75,7 @@ fi
 temp_todos="$( git grep -e 'TODO.*!!' -- ':!scripts/hooks/pre-commit' || : )"
 readonly temp_todos
 
-if [ "$temp_todos" != "" ]
+if [ "$temp_todos" != '' ]
 then
 	printf 'WARNING: you have temporary todos:\n\n%s\n\n' "$temp_todos"
 	prompt
@@ -82,22 +84,32 @@ fi
 verbose="${VERBOSE:-0}"
 readonly verbose
 
-if [ "$( git diff --cached --name-only -- 'client/*.js' )" ]
+if [ "$( git diff --cached --name-only -- 'client/*.js' || true )" != '' ]
 then
 	make VERBOSE="$verbose" js-lint js-test
 fi
 
-if [ "$( git diff --cached --name-only -- '*.go' '*.mod' '*.sh' 'Makefile' )" ]
+if [ "$( git diff --cached --name-only -- '*.go' '*.mod' 'Makefile' || true )" != '' ]
 then
 	make VERBOSE="$verbose" go-os-check go-lint go-test
 fi
 
-if [ "$( git diff --cached --name-only -- '*.md' '*.txt' '*.yaml' '*.yml' )" ]
+if [ "$( git diff --cached --name-only -- '*.md' || true )" != '' ]
+then
+	make VERBOSE="$verbose" md-lint
+fi
+
+if [ "$( git diff --cached --name-only -- '*.sh' || true )" != '' ]
+then
+	make VERBOSE="$verbose" sh-lint
+fi
+
+if [ "$( git diff --cached --name-only -- '*.md' '*.txt' '*.yaml' '*.yml' || true )" != '' ]
 then
 	make VERBOSE="$verbose" txt-lint
 fi
 
-if [ "$( git diff --cached --name-only -- './openapi/openapi.yaml' )" ]
+if [ "$( git diff --cached --name-only -- './openapi/openapi.yaml' || true )" != '' ]
 then
 	make VERBOSE="$verbose" openapi-lint
 fi

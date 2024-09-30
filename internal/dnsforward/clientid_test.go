@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/quic-go/quic-go"
 	"github.com/stretchr/testify/assert"
@@ -217,7 +218,8 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 			}
 
 			srv := &Server{
-				conf: ServerConfig{TLSConfig: tlsConf},
+				conf:       ServerConfig{TLSConfig: tlsConf},
+				baseLogger: slogutil.NewDiscardLogger(),
 			}
 
 			var (

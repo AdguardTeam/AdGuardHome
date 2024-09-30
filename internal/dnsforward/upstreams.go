@@ -150,12 +150,12 @@ func setProxyUpstreamMode(
 ) (err error) {
 	switch upstreamMode {
 	case UpstreamModeParallel:
-		conf.UpstreamMode = proxy.UModeParallel
+		conf.UpstreamMode = proxy.UpstreamModeParallel
 	case UpstreamModeFastestAddr:
-		conf.UpstreamMode = proxy.UModeFastestAddr
+		conf.UpstreamMode = proxy.UpstreamModeFastestAddr
 		conf.FastestPingTimeout = fastestTimeout
 	case UpstreamModeLoadBalance:
-		conf.UpstreamMode = proxy.UModeLoadBalance
+		conf.UpstreamMode = proxy.UpstreamModeLoadBalance
 	default:
 		return fmt.Errorf("unexpected value %q", upstreamMode)
 	}

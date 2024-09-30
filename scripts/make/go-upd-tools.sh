@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 1
+# AdGuard-Project-Version: 2
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -29,5 +29,6 @@ go="${GO:-go}"
 readonly go
 
 cd ./internal/tools/
-"$go" get -u
+
+"$go" get -u "$x_flags"
 "$go" mod tidy

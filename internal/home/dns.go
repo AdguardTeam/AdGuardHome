@@ -1,7 +1,9 @@
 package home
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/netip"
 	"net/url"
@@ -19,6 +21,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/ameshkov/dnscrypt/v2"
 	yaml "gopkg.in/yaml.v3"
@@ -43,8 +46,8 @@ func onConfigModified() {
 
 // initDNS updates all the fields of the [Context] needed to initialize the DNS
 // server and initializes it at last.  It also must not be called unless
-// [config] and [Context] are initialized.
-func initDNS() (err error) {
+// [config] and [Context] are initialized.  l must not be nil.
+func initDNS(l *slog.Logger) (err error) {
 	anonymizer := config.anonymizer()
 
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&Context, config)
@@ -53,6 +56,7 @@ func initDNS() (err error) {
 	}
 
 	statsConf := stats.Config{
+		Logger:            l.With(slogutil.KeyPrefix, "stats"),
 		Filename:          filepath.Join(statsDir, "stats.db"),
 		Limit:             config.Stats.Interval.Duration,
 		ConfigModified:    onConfigModified,
@@ -113,13 +117,16 @@ func initDNS() (err error) {
 		anonymizer,
 		httpRegister,
 		tlsConf,
+		l,
 	)
 }
 
 // initDNSServer initializes the [context.dnsServer].  To only use the internal
-// proxy, none of the arguments are required, but tlsConf still must not be nil,
-// in other cases all the arguments also must not be nil.  It also must not be
-// called unless [config] and [Context] are initialized.
+// proxy, none of the arguments are required, but tlsConf and l still must not
+// be nil, in other cases all the arguments also must not be nil.  It also must
+// not be called unless [config] and [Context] are initialized.
+//
+// TODO(e.burkov): Use [dnsforward.DNSCreateParams] as a parameter.
 func initDNSServer(
 	filters *filtering.DNSFilter,
 	sts stats.Interface,
@@ -128,8 +135,10 @@ func initDNSServer(
 	anonymizer *aghnet.IPMut,
 	httpReg aghhttp.RegisterFunc,
 	tlsConf *tlsConfigSettings,
+	l *slog.Logger,
 ) (err error) {
 	Context.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
+		Logger:      l,
 		DNSFilter:   filters,
 		Stats:       sts,
 		QueryLog:    qlog,
@@ -406,9 +415,9 @@ func applyAdditionalFiltering(clientIP netip.Addr, clientID string, setts *filte
 
 	setts.ClientIP = clientIP
 
-	c, ok := Context.clients.find(clientID)
+	c, ok := Context.clients.storage.Find(clientID)
 	if !ok {
-		c, ok = Context.clients.find(clientIP.String())
+		c, ok = Context.clients.storage.Find(clientIP.String())
 		if !ok {
 			log.Debug("%s: no clients with ip %s and clientid %q", pref, clientIP, clientID)
 
@@ -451,11 +460,15 @@ func startDNSServer() error {
 
 	Context.filters.EnableFilters(false)
 
-	Context.clients.Start()
-
-	err := Context.dnsServer.Start()
+	// TODO(s.chzhen):  Pass context.
+	err := Context.clients.Start(context.TODO())
 	if err != nil {
-		return fmt.Errorf("couldn't start forwarding DNS server: %w", err)
+		return fmt.Errorf("starting clients container: %w", err)
+	}
+
+	err = Context.dnsServer.Start()
+	if err != nil {
+		return fmt.Errorf("starting dns server: %w", err)
 	}
 
 	Context.filters.Start()
@@ -492,7 +505,7 @@ func stopDNSServer() (err error) {
 		return fmt.Errorf("stopping forwarding dns server: %w", err)
 	}
 
-	err = Context.clients.close()
+	err = Context.clients.close(context.TODO())
 	if err != nil {
 		return fmt.Errorf("closing clients container: %w", err)
 	}

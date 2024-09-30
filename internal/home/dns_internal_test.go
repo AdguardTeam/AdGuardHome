@@ -18,9 +18,8 @@ var testIPv4 = netip.AddrFrom4([4]byte{1, 2, 3, 4})
 func newStorage(tb testing.TB, clients []*client.Persistent) (s *client.Storage) {
 	tb.Helper()
 
-	s = client.NewStorage(&client.Config{
-		AllowedTags: nil,
-	})
+	s, err := client.NewStorage(&client.StorageConfig{})
+	require.NoError(tb, err)
 
 	for _, p := range clients {
 		p.UID = client.MustNewUID()

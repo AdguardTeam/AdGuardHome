@@ -1,7 +1,6 @@
 package dhcpsvc
 
 import (
-	"bytes"
 	"net"
 	"net/netip"
 	"slices"
@@ -44,9 +43,4 @@ func (l *Lease) Clone() (clone *Lease) {
 		IP:       l.IP,
 		IsStatic: l.IsStatic,
 	}
-}
-
-// compareLeaseMAC compares two [Lease]s by hardware address.
-func compareLeaseMAC(a, b *Lease) (res int) {
-	return bytes.Compare(a.HWAddr, b.HWAddr)
 }

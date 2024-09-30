@@ -1,0 +1,19 @@
+{
+    "leases": [
+        {
+            "expires": "",
+            "ip": "192.168.0.2",
+            "hostname": "host1",
+            "mac": "01:02:03:04:05:06",
+            "static": true
+        },
+        {
+            "expires": "",
+            "ip": "2001:db8::2",
+            "hostname": "host3",
+            "mac": "06:05:04:03:02:01",
+            "static": true
+        }
+    ],
+    "version": 1
+}

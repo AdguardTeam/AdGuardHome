@@ -2,39 +2,34 @@ package client
 
 import "net/netip"
 
-// RuntimeIndex stores information about runtime clients.
-type RuntimeIndex struct {
+// runtimeIndex stores information about runtime clients.
+type runtimeIndex struct {
 	// index maps IP address to runtime client.
 	index map[netip.Addr]*Runtime
 }
 
-// NewRuntimeIndex returns initialized runtime index.
-func NewRuntimeIndex() (ri *RuntimeIndex) {
-	return &RuntimeIndex{
+// newRuntimeIndex returns initialized runtime index.
+func newRuntimeIndex() (ri *runtimeIndex) {
+	return &runtimeIndex{
 		index: map[netip.Addr]*Runtime{},
 	}
 }
 
-// Client returns the saved runtime client by ip.  If no such client exists,
+// client returns the saved runtime client by ip.  If no such client exists,
 // returns nil.
-func (ri *RuntimeIndex) Client(ip netip.Addr) (rc *Runtime) {
+func (ri *runtimeIndex) client(ip netip.Addr) (rc *Runtime) {
 	return ri.index[ip]
 }
 
-// Add saves the runtime client in the index.  IP address of a client must be
+// add saves the runtime client in the index.  IP address of a client must be
 // unique.  See [Runtime.Client].  rc must not be nil.
-func (ri *RuntimeIndex) Add(rc *Runtime) {
+func (ri *runtimeIndex) add(rc *Runtime) {
 	ip := rc.Addr()
 	ri.index[ip] = rc
 }
 
-// Size returns the number of the runtime clients.
-func (ri *RuntimeIndex) Size() (n int) {
-	return len(ri.index)
-}
-
-// Range calls f for each runtime client in an undefined order.
-func (ri *RuntimeIndex) Range(f func(rc *Runtime) (cont bool)) {
+// rangeClients calls f for each runtime client in an undefined order.
+func (ri *runtimeIndex) rangeClients(f func(rc *Runtime) (cont bool)) {
 	for _, rc := range ri.index {
 		if !f(rc) {
 			return
@@ -42,17 +37,31 @@ func (ri *RuntimeIndex) Range(f func(rc *Runtime) (cont bool)) {
 	}
 }
 
-// Delete removes the runtime client by ip.
-func (ri *RuntimeIndex) Delete(ip netip.Addr) {
-	delete(ri.index, ip)
+// setInfo sets the client information from cs for runtime client stored by ip.
+// If no such client exists, it creates one.
+func (ri *runtimeIndex) setInfo(ip netip.Addr, cs Source, hosts []string) (rc *Runtime) {
+	rc = ri.index[ip]
+	if rc == nil {
+		rc = NewRuntime(ip)
+		ri.add(rc)
+	}
+
+	rc.setInfo(cs, hosts)
+
+	return rc
 }
 
-// DeleteBySource removes all runtime clients that have information only from
-// the specified source and returns the number of removed clients.
-func (ri *RuntimeIndex) DeleteBySource(src Source) (n int) {
-	for ip, rc := range ri.index {
+// clearSource removes information from the specified source from all clients.
+func (ri *runtimeIndex) clearSource(src Source) {
+	for _, rc := range ri.index {
 		rc.unset(src)
+	}
+}
 
+// removeEmpty removes empty runtime clients and returns the number of removed
+// clients.
+func (ri *runtimeIndex) removeEmpty() (n int) {
+	for ip, rc := range ri.index {
 		if rc.isEmpty() {
 			delete(ri.index, ip)
 			n++

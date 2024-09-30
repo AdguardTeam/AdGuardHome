@@ -4,6 +4,14 @@
 
 ## v0.108.0: API changes
 
+## v0.107.55: API changes
+
+### The new field `"ecosia"` in `SafeSearchConfig`
+
+* The new field `"ecosia"` in `PUT /control/safesearch/settings` and
+  `GET /control/safesearch/status` is true if safe search is enforced for Ecosia
+  search engine.
+
 ## v0.107.44: API changes
 
 ### The field `"upstream_mode"` in `DNSConfig`

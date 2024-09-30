@@ -61,7 +61,7 @@ func (idx *leaseIndex) add(l *Lease, iface *netInterface) (err error) {
 		return fmt.Errorf("lease for hostname %s already exists", l.Hostname)
 	}
 
-	err = iface.insertLease(l)
+	err = iface.addLease(l)
 	if err != nil {
 		return err
 	}
@@ -123,4 +123,19 @@ func (idx *leaseIndex) update(l *Lease, iface *netInterface) (err error) {
 	idx.byName[loweredName] = l
 
 	return nil
+}
+
+// rangeLeases calls f for each lease in idx in an unspecified order until f
+// returns false.
+func (idx *leaseIndex) rangeLeases(f func(l *Lease) (cont bool)) {
+	for _, l := range idx.byName {
+		if !f(l) {
+			break
+		}
+	}
+}
+
+// len returns the number of leases in idx.
+func (idx *leaseIndex) len() (l uint) {
+	return uint(len(idx.byAddr))
 }

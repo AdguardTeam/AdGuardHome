@@ -2,11 +2,13 @@
 package rdns
 
 import (
+	"context"
+	"log/slog"
 	"net/netip"
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/bluele/gcache"
 )
 
@@ -14,7 +16,7 @@ import (
 type Interface interface {
 	// Process makes rDNS request and returns domain name.  changed indicates
 	// that domain name was updated since last request.
-	Process(ip netip.Addr) (host string, changed bool)
+	Process(ctx context.Context, ip netip.Addr) (host string, changed bool)
 }
 
 // Empty is an empty [Interface] implementation which does nothing.
@@ -24,7 +26,7 @@ type Empty struct{}
 var _ Interface = (*Empty)(nil)
 
 // Process implements the [Interface] interface for Empty.
-func (Empty) Process(_ netip.Addr) (host string, changed bool) {
+func (Empty) Process(_ context.Context, _ netip.Addr) (host string, changed bool) {
 	return "", false
 }
 
@@ -37,6 +39,10 @@ type Exchanger interface {
 
 // Config is the configuration structure for Default.
 type Config struct {
+	// Logger is used for logging the operation of the reverse DNS lookup
+	// queries.  It must not be nil.
+	Logger *slog.Logger
+
 	// Exchanger resolves IP addresses to domain names.
 	Exchanger Exchanger
 
@@ -50,6 +56,10 @@ type Config struct {
 
 // Default is the default rDNS query processor.
 type Default struct {
+	// logger is used for logging the operation of the reverse DNS lookup
+	// queries.  It must not be nil.
+	logger *slog.Logger
+
 	// cache is the cache containing IP addresses of clients.  An active IP
 	// address is resolved once again after it expires.  If IP address couldn't
 	// be resolved, it stays here for some time to prevent further attempts to
@@ -66,6 +76,7 @@ type Default struct {
 // New returns a new default rDNS query processor.  conf must not be nil.
 func New(conf *Config) (r *Default) {
 	return &Default{
+		logger:    conf.Logger,
 		cache:     gcache.New(conf.CacheSize).LRU().Build(),
 		exchanger: conf.Exchanger,
 		cacheTTL:  conf.CacheTTL,
@@ -76,15 +87,15 @@ func New(conf *Config) (r *Default) {
 var _ Interface = (*Default)(nil)
 
 // Process implements the [Interface] interface for Default.
-func (r *Default) Process(ip netip.Addr) (host string, changed bool) {
-	fromCache, expired := r.findInCache(ip)
+func (r *Default) Process(ctx context.Context, ip netip.Addr) (host string, changed bool) {
+	fromCache, expired := r.findInCache(ctx, ip)
 	if !expired {
 		return fromCache, false
 	}
 
 	host, ttl, err := r.exchanger.Exchange(ip)
 	if err != nil {
-		log.Debug("rdns: resolving %q: %s", ip, err)
+		r.logger.DebugContext(ctx, "resolving", "ip", ip, slogutil.KeyError, err)
 	}
 
 	ttl = max(ttl, r.cacheTTL)
@@ -96,7 +107,7 @@ func (r *Default) Process(ip netip.Addr) (host string, changed bool) {
 
 	err = r.cache.Set(ip, item)
 	if err != nil {
-		log.Debug("rdns: cache: adding item %q: %s", ip, err)
+		r.logger.DebugContext(ctx, "adding item to cache", "key", ip, slogutil.KeyError, err)
 	}
 
 	// TODO(e.burkov):  The name doesn't change if it's neither stored in cache
@@ -106,22 +117,22 @@ func (r *Default) Process(ip netip.Addr) (host string, changed bool) {
 
 // findInCache finds domain name in the cache.  expired is true if host is not
 // valid anymore.
-func (r *Default) findInCache(ip netip.Addr) (host string, expired bool) {
+func (r *Default) findInCache(ctx context.Context, ip netip.Addr) (host string, expired bool) {
 	val, err := r.cache.Get(ip)
 	if err != nil {
 		if !errors.Is(err, gcache.KeyNotFoundError) {
-			log.Debug("rdns: cache: retrieving %q: %s", ip, err)
+			r.logger.DebugContext(
+				ctx,
+				"retrieving item from cache",
+				"key", ip,
+				slogutil.KeyError, err,
+			)
 		}
 
 		return "", true
 	}
 
-	item, ok := val.(*cacheItem)
-	if !ok {
-		log.Debug("rdns: cache: %q bad type %T", ip, val)
-
-		return "", true
-	}
+	item := val.(*cacheItem)
 
 	return item.host, time.Now().After(item.expiry)
 }
