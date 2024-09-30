@@ -1,8 +1,8 @@
 package home
 
 import (
+	"context"
 	"fmt"
-	"net"
 	"net/netip"
 	"slices"
 	"sync"
@@ -11,7 +11,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
-	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -20,46 +19,17 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/hostsfile"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
-
-// DHCP is an interface for accessing DHCP lease data the [clientsContainer]
-// needs.
-type DHCP interface {
-	// Leases returns all the DHCP leases.
-	Leases() (leases []*dhcpsvc.Lease)
-
-	// HostByIP returns the hostname of the DHCP client with the given IP
-	// address.  The address will be netip.Addr{} if there is no such client,
-	// due to an assumption that a DHCP client must always have a hostname.
-	HostByIP(ip netip.Addr) (host string)
-
-	// MACByIP returns the MAC address for the given IP address leased.  It
-	// returns nil if there is no such client, due to an assumption that a DHCP
-	// client must always have a MAC address.
-	MACByIP(ip netip.Addr) (mac net.HardwareAddr)
-}
 
 // clientsContainer is the storage of all runtime and persistent clients.
 type clientsContainer struct {
 	// storage stores information about persistent clients.
 	storage *client.Storage
 
-	// dhcp is the DHCP service implementation.
-	dhcp DHCP
-
 	// clientChecker checks if a client is blocked by the current access
 	// settings.
 	clientChecker BlockedClientChecker
-
-	// etcHosts contains list of rewrite rules taken from the operating system's
-	// hosts database.
-	etcHosts *aghnet.HostsContainer
-
-	// arpDB stores the neighbors retrieved from ARP.
-	arpDB arpdb.Interface
 
 	// lock protects all fields.
 	//
@@ -92,7 +62,7 @@ type BlockedClientChecker interface {
 // Note: this function must be called only once
 func (clients *clientsContainer) Init(
 	objects []*clientObject,
-	dhcpServer DHCP,
+	dhcpServer client.DHCP,
 	etcHosts *aghnet.HostsContainer,
 	arpDB arpdb.Interface,
 	filteringConf *filtering.Config,
@@ -102,26 +72,15 @@ func (clients *clientsContainer) Init(
 		return errors.Error("clients container already initialized")
 	}
 
-	clients.storage = client.NewStorage(&client.Config{
-		AllowedTags: clientTags,
-	})
+	confClients := make([]*client.Persistent, 0, len(objects))
+	for i, o := range objects {
+		var p *client.Persistent
+		p, err = o.toPersistent(filteringConf)
+		if err != nil {
+			return fmt.Errorf("init persistent client at index %d: %w", i, err)
+		}
 
-	// TODO(e.burkov):  Use [dhcpsvc] implementation when it's ready.
-	clients.dhcp = dhcpServer
-
-	clients.etcHosts = etcHosts
-	clients.arpDB = arpDB
-	err = clients.addFromConfig(objects, filteringConf)
-	if err != nil {
-		// Don't wrap the error, because it's informative enough as is.
-		return err
-	}
-
-	clients.safeSearchCacheSize = filteringConf.SafeSearchCacheSize
-	clients.safeSearchCacheTTL = time.Minute * time.Duration(filteringConf.CacheTime)
-
-	if clients.testing {
-		return nil
+		confClients = append(confClients, p)
 	}
 
 	// The clients.etcHosts may be nil even if config.Clients.Sources.HostsFile
@@ -130,19 +89,24 @@ func (clients *clientsContainer) Init(
 	// TODO(e.burkov):  The option should probably be returned, since hosts file
 	// currently used not only for clients' information enrichment, but also in
 	// the filtering module and upstream addresses resolution.
-	if config.Clients.Sources.HostsFile && clients.etcHosts != nil {
-		go clients.handleHostsUpdates()
+	var hosts client.HostsContainer = etcHosts
+	if !config.Clients.Sources.HostsFile {
+		hosts = nil
+	}
+
+	clients.storage, err = client.NewStorage(&client.StorageConfig{
+		InitialClients:         confClients,
+		DHCP:                   dhcpServer,
+		EtcHosts:               hosts,
+		ARPDB:                  arpDB,
+		ARPClientsUpdatePeriod: arpClientsUpdatePeriod,
+		RuntimeSourceDHCP:      config.Clients.Sources.DHCP,
+	})
+	if err != nil {
+		return fmt.Errorf("init client storage: %w", err)
 	}
 
 	return nil
-}
-
-// handleHostsUpdates receives the updates from the hosts container and adds
-// them to the clients container.  It is intended to be used as a goroutine.
-func (clients *clientsContainer) handleHostsUpdates() {
-	for upd := range clients.etcHosts.Upd() {
-		clients.addFromHostsFile(upd)
-	}
 }
 
 // webHandlersRegistered prevents a [clientsContainer] from registering its web
@@ -152,7 +116,7 @@ func (clients *clientsContainer) handleHostsUpdates() {
 var webHandlersRegistered = false
 
 // Start starts the clients container.
-func (clients *clientsContainer) Start() {
+func (clients *clientsContainer) Start(ctx context.Context) (err error) {
 	if clients.testing {
 		return
 	}
@@ -162,14 +126,7 @@ func (clients *clientsContainer) Start() {
 		clients.registerWebHandlers()
 	}
 
-	go clients.periodicUpdate()
-}
-
-// reloadARP reloads runtime clients from ARP, if configured.
-func (clients *clientsContainer) reloadARP() {
-	if clients.arpDB != nil {
-		clients.addFromSystemARP()
-	}
+	return clients.storage.Start(ctx)
 }
 
 // clientObject is the YAML representation of a persistent client.
@@ -270,28 +227,6 @@ func (o *clientObject) toPersistent(
 	return cli, nil
 }
 
-// addFromConfig initializes the clients container with objects from the
-// configuration file.
-func (clients *clientsContainer) addFromConfig(
-	objects []*clientObject,
-	filteringConf *filtering.Config,
-) (err error) {
-	for i, o := range objects {
-		var cli *client.Persistent
-		cli, err = o.toPersistent(filteringConf)
-		if err != nil {
-			return fmt.Errorf("clients: init persistent client at index %d: %w", i, err)
-		}
-
-		err = clients.storage.Add(cli)
-		if err != nil {
-			return fmt.Errorf("adding client %q at index %d: %w", cli.Name, i, err)
-		}
-	}
-
-	return nil
-}
-
 // forConfig returns all currently known persistent clients as objects for the
 // configuration file.
 func (clients *clientsContainer) forConfig() (objs []*clientObject) {
@@ -331,39 +266,6 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 
 // arpClientsUpdatePeriod defines how often ARP clients are updated.
 const arpClientsUpdatePeriod = 10 * time.Minute
-
-func (clients *clientsContainer) periodicUpdate() {
-	defer log.OnPanic("clients container")
-
-	for {
-		clients.reloadARP()
-		time.Sleep(arpClientsUpdatePeriod)
-	}
-}
-
-// clientSource checks if client with this IP address already exists and returns
-// the source which updated it last.  It returns [client.SourceNone] if the
-// client doesn't exist.  Note that it is only used in tests.
-func (clients *clientsContainer) clientSource(ip netip.Addr) (src client.Source) {
-	clients.lock.Lock()
-	defer clients.lock.Unlock()
-
-	_, ok := clients.findLocked(ip.String())
-	if ok {
-		return client.SourcePersistent
-	}
-
-	rc := clients.storage.ClientRuntime(ip)
-	if rc != nil {
-		src, _ = rc.Info()
-	}
-
-	if src < client.SourceDHCP && clients.dhcp.HostByIP(ip) != "" {
-		src = client.SourceDHCP
-	}
-
-	return src
-}
 
 // findMultiple is a wrapper around [clientsContainer.find] to make it a valid
 // client finder for the query log.  c is never nil; if no information about the
@@ -410,7 +312,7 @@ func (clients *clientsContainer) clientOrArtificial(
 		}, false
 	}
 
-	rc := clients.findRuntimeClient(ip)
+	rc := clients.storage.ClientRuntime(ip)
 	if rc != nil {
 		_, host := rc.Info()
 
@@ -425,19 +327,6 @@ func (clients *clientsContainer) clientOrArtificial(
 	}, true
 }
 
-// find returns a shallow copy of the client if there is one found.
-func (clients *clientsContainer) find(id string) (c *client.Persistent, ok bool) {
-	clients.lock.Lock()
-	defer clients.lock.Unlock()
-
-	c, ok = clients.findLocked(id)
-	if !ok {
-		return nil, false
-	}
-
-	return c, true
-}
-
 // shouldCountClient is a wrapper around [clientsContainer.find] to make it a
 // valid client information finder for the statistics.  If no information about
 // the client is found, it returns true.
@@ -446,7 +335,7 @@ func (clients *clientsContainer) shouldCountClient(ids []string) (y bool) {
 	defer clients.lock.Unlock()
 
 	for _, id := range ids {
-		client, ok := clients.findLocked(id)
+		client, ok := clients.storage.Find(id)
 		if ok {
 			return !client.IgnoreStatistics
 		}
@@ -468,7 +357,7 @@ func (clients *clientsContainer) UpstreamConfigByID(
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	c, ok := clients.findLocked(id)
+	c, ok := clients.storage.Find(id)
 	if !ok {
 		return nil, nil
 	} else if c.UpstreamConfig != nil {
@@ -506,198 +395,17 @@ func (clients *clientsContainer) UpstreamConfigByID(
 	return conf, nil
 }
 
-// findLocked searches for a client by its ID.  clients.lock is expected to be
-// locked.
-func (clients *clientsContainer) findLocked(id string) (c *client.Persistent, ok bool) {
-	c, ok = clients.storage.Find(id)
-	if ok {
-		return c, true
-	}
-
-	ip, err := netip.ParseAddr(id)
-	if err != nil {
-		return nil, false
-	}
-
-	// TODO(e.burkov):  Iterate through clients.list only once.
-	return clients.findDHCP(ip)
-}
-
-// findDHCP searches for a client by its MAC, if the DHCP server is active and
-// there is such client.  clients.lock is expected to be locked.
-func (clients *clientsContainer) findDHCP(ip netip.Addr) (c *client.Persistent, ok bool) {
-	foundMAC := clients.dhcp.MACByIP(ip)
-	if foundMAC == nil {
-		return nil, false
-	}
-
-	return clients.storage.FindByMAC(foundMAC)
-}
-
-// findRuntimeClient finds a runtime client by their IP.
-func (clients *clientsContainer) findRuntimeClient(ip netip.Addr) (rc *client.Runtime) {
-	rc = clients.storage.ClientRuntime(ip)
-	host := clients.dhcp.HostByIP(ip)
-
-	if host != "" {
-		if rc == nil {
-			rc = client.NewRuntime(ip)
-		}
-
-		rc.SetInfo(client.SourceDHCP, []string{host})
-
-		return rc
-	}
-
-	return rc
-}
-
-// setWHOISInfo sets the WHOIS information for a client.  clients.lock is
-// expected to be locked.
-func (clients *clientsContainer) setWHOISInfo(ip netip.Addr, wi *whois.Info) {
-	_, ok := clients.findLocked(ip.String())
-	if ok {
-		log.Debug("clients: client for %s is already created, ignore whois info", ip)
-
-		return
-	}
-
-	rc := client.NewRuntime(ip)
-	rc.SetWHOIS(wi)
-	clients.storage.UpdateRuntime(rc)
-
-	log.Debug("clients: set whois info for runtime client with ip %s: %+v", ip, wi)
-}
-
-// addHost adds a new IP-hostname pairing.  The priorities of the sources are
-// taken into account.  ok is true if the pairing was added.
-//
-// TODO(a.garipov): Only used in internal tests.  Consider removing.
-func (clients *clientsContainer) addHost(
-	ip netip.Addr,
-	host string,
-	src client.Source,
-) (ok bool) {
-	clients.lock.Lock()
-	defer clients.lock.Unlock()
-
-	return clients.addHostLocked(ip, host, src)
-}
-
 // type check
 var _ client.AddressUpdater = (*clientsContainer)(nil)
 
 // UpdateAddress implements the [client.AddressUpdater] interface for
 // *clientsContainer
 func (clients *clientsContainer) UpdateAddress(ip netip.Addr, host string, info *whois.Info) {
-	// Common fast path optimization.
-	if host == "" && info == nil {
-		return
-	}
-
-	clients.lock.Lock()
-	defer clients.lock.Unlock()
-
-	if host != "" {
-		ok := clients.addHostLocked(ip, host, client.SourceRDNS)
-		if !ok {
-			log.Debug("clients: host for client %q already set with higher priority source", ip)
-		}
-	}
-
-	if info != nil {
-		clients.setWHOISInfo(ip, info)
-	}
-}
-
-// addHostLocked adds a new IP-hostname pairing.  clients.lock is expected to be
-// locked.
-func (clients *clientsContainer) addHostLocked(
-	ip netip.Addr,
-	host string,
-	src client.Source,
-) (ok bool) {
-	rc := client.NewRuntime(ip)
-	rc.SetInfo(src, []string{host})
-
-	if config.Clients.Sources.DHCP {
-		if dhcpHost := clients.dhcp.HostByIP(ip); dhcpHost != "" {
-			rc.SetInfo(client.SourceDHCP, []string{dhcpHost})
-		}
-	}
-
-	clients.storage.UpdateRuntime(rc)
-
-	log.Debug(
-		"clients: adding client info %s -> %q %q [%d]",
-		ip,
-		src,
-		host,
-		clients.storage.SizeRuntime(),
-	)
-
-	return true
-}
-
-// addFromHostsFile fills the client-hostname pairing index from the system's
-// hosts files.
-func (clients *clientsContainer) addFromHostsFile(hosts *hostsfile.DefaultStorage) {
-	clients.lock.Lock()
-	defer clients.lock.Unlock()
-
-	var rcs []*client.Runtime
-	hosts.RangeNames(func(addr netip.Addr, names []string) (cont bool) {
-		// Only the first name of the first record is considered a canonical
-		// hostname for the IP address.
-		//
-		// TODO(e.burkov):  Consider using all the names from all the records.
-		rc := client.NewRuntime(addr)
-		rc.SetInfo(client.SourceHostsFile, []string{names[0]})
-
-		rcs = append(rcs, rc)
-
-		return true
-	})
-
-	added, removed := clients.storage.BatchUpdateBySource(client.SourceHostsFile, rcs)
-	log.Debug("clients: added %d, removed %d client aliases from system hosts file", added, removed)
-}
-
-// addFromSystemARP adds the IP-hostname pairings from the output of the arp -a
-// command.
-func (clients *clientsContainer) addFromSystemARP() {
-	if err := clients.arpDB.Refresh(); err != nil {
-		log.Error("refreshing arp container: %s", err)
-
-		clients.arpDB = arpdb.Empty{}
-
-		return
-	}
-
-	ns := clients.arpDB.Neighbors()
-	if len(ns) == 0 {
-		log.Debug("refreshing arp container: the update is empty")
-
-		return
-	}
-
-	clients.lock.Lock()
-	defer clients.lock.Unlock()
-
-	var rcs []*client.Runtime
-	for _, n := range ns {
-		rc := client.NewRuntime(n.IP)
-		rc.SetInfo(client.SourceARP, []string{n.Name})
-
-		rcs = append(rcs, rc)
-	}
-
-	added, removed := clients.storage.BatchUpdateBySource(client.SourceARP, rcs)
-	log.Debug("clients: added %d, removed %d client aliases from arp neighborhood", added, removed)
+	clients.storage.UpdateAddress(ip, host, info)
 }
 
 // close gracefully closes all the client-specific upstream configurations of
 // the persistent clients.
-func (clients *clientsContainer) close() (err error) {
-	return clients.storage.CloseUpstreams()
+func (clients *clientsContainer) close(ctx context.Context) (err error) {
+	return clients.storage.Shutdown(ctx)
 }

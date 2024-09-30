@@ -1,6 +1,7 @@
 package home
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net"
@@ -414,9 +415,9 @@ func applyAdditionalFiltering(clientIP netip.Addr, clientID string, setts *filte
 
 	setts.ClientIP = clientIP
 
-	c, ok := Context.clients.find(clientID)
+	c, ok := Context.clients.storage.Find(clientID)
 	if !ok {
-		c, ok = Context.clients.find(clientIP.String())
+		c, ok = Context.clients.storage.Find(clientIP.String())
 		if !ok {
 			log.Debug("%s: no clients with ip %s and clientid %q", pref, clientIP, clientID)
 
@@ -459,11 +460,15 @@ func startDNSServer() error {
 
 	Context.filters.EnableFilters(false)
 
-	Context.clients.Start()
-
-	err := Context.dnsServer.Start()
+	// TODO(s.chzhen):  Pass context.
+	err := Context.clients.Start(context.TODO())
 	if err != nil {
-		return fmt.Errorf("couldn't start forwarding DNS server: %w", err)
+		return fmt.Errorf("starting clients container: %w", err)
+	}
+
+	err = Context.dnsServer.Start()
+	if err != nil {
+		return fmt.Errorf("starting dns server: %w", err)
 	}
 
 	Context.filters.Start()
@@ -500,7 +505,7 @@ func stopDNSServer() (err error) {
 		return fmt.Errorf("stopping forwarding dns server: %w", err)
 	}
 
-	err = Context.clients.close()
+	err = Context.clients.close(context.TODO())
 	if err != nil {
 		return fmt.Errorf("closing clients container: %w", err)
 	}

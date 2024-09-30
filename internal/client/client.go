@@ -119,8 +119,8 @@ func (r *Runtime) Info() (cs Source, host string) {
 	return cs, info[0]
 }
 
-// SetInfo sets a host as a client information from the cs.
-func (r *Runtime) SetInfo(cs Source, hosts []string) {
+// setInfo sets a host as a client information from the cs.
+func (r *Runtime) setInfo(cs Source, hosts []string) {
 	// TODO(s.chzhen):  Use contract where hosts must contain non-empty host.
 	if len(hosts) == 1 && hosts[0] == "" {
 		hosts = []string{}
@@ -138,13 +138,13 @@ func (r *Runtime) SetInfo(cs Source, hosts []string) {
 	}
 }
 
-// WHOIS returns a WHOIS client information.
+// WHOIS returns a copy of WHOIS client information.
 func (r *Runtime) WHOIS() (info *whois.Info) {
-	return r.whois
+	return r.whois.Clone()
 }
 
-// SetWHOIS sets a WHOIS client information.  info must be non-nil.
-func (r *Runtime) SetWHOIS(info *whois.Info) {
+// setWHOIS sets a WHOIS client information.  info must be non-nil.
+func (r *Runtime) setWHOIS(info *whois.Info) {
 	r.whois = info
 }
 
@@ -178,8 +178,8 @@ func (r *Runtime) Addr() (ip netip.Addr) {
 	return r.ip
 }
 
-// Clone returns a deep copy of the runtime client.
-func (r *Runtime) Clone() (c *Runtime) {
+// clone returns a deep copy of the runtime client.
+func (r *Runtime) clone() (c *Runtime) {
 	return &Runtime{
 		ip:        r.ip,
 		whois:     r.whois.Clone(),
