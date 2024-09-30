@@ -159,6 +159,8 @@
     "dns_over_https": "DNS-пред-HTTPS",
     "dns_over_quic": "DNS-over-QUIC",
     "plain_dns": "Обикновен DNS",
+    "theme_light": "Светла тема",
+    "theme_dark": "Тъмна тема",
     "source_label": "Източник",
     "found_in_known_domain_db": "Намерен в списъците с домейни.",
     "category_label": "Категория",
@@ -283,5 +285,12 @@
     "filter_category_general": "General",
     "filter_category_security": "Сигурност",
     "port_53_faq_link": "Порт 53 често е зает от \"DNSStubListener\" или \"systemd-resolved\" услуги. Моля, прочетете <0>тази инструкция</0> как да решите това.",
-    "parental_control": "Родителски контрол"
+    "parental_control": "Родителски контрол",
+    "sunday_short": "Нд",
+    "monday_short": "Пон",
+    "tuesday_short": "Вт",
+    "wednesday_short": "Ср",
+    "thursday_short": "Чт",
+    "friday_short": "Пт",
+    "saturday_short": "Съб"
 }

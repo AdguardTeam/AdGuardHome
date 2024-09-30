@@ -154,7 +154,7 @@
     "use_adguard_parental": "使用 AdGuard 家長控制之網路服務",
     "use_adguard_parental_hint": "AdGuard Home 將檢查網域是否包含成人資料。它使用如同瀏覽安全網路服務一樣之對隱私友好的應用程式介面（API）。",
     "enforce_safe_search": "使用安全搜尋",
-    "enforce_save_search_hint": "AdGuard Home 將在下列的搜尋引擎：Google、YouTube、Bing、DuckDuckGo、Yandex 和 Pixabay 中強制執行安全搜尋。",
+    "enforce_save_search_hint": "AdGuard Home 將在下列的搜尋引擎：Google、YouTube、Bing、DuckDuckGo、Ecosia、Yandex 和 Pixabay 中強制執行安全搜尋。",
     "no_servers_specified": "無已明確指定的伺服器",
     "general_settings": "一般設定",
     "dns_settings": "DNS 設定",

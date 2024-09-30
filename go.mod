@@ -28,7 +28,7 @@ require (
 	// own code for that.  Perhaps, use gopacket.
 	github.com/mdlayher/raw v0.1.0
 	github.com/miekg/dns v1.1.61
-	github.com/quic-go/quic-go v0.44.0
+	github.com/quic-go/quic-go v0.47.0
 	github.com/stretchr/testify v1.9.0
 	github.com/ti-mo/netfilter v0.5.2
 	go.etcd.io/bbolt v1.3.10
@@ -55,7 +55,7 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/quic-go/qpack v0.4.0 // indirect
+	github.com/quic-go/qpack v0.5.1 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	golang.org/x/mod v0.20.0 // indirect
@@ -64,3 +64,6 @@ require (
 	golang.org/x/tools v0.24.0 // indirect
 	gonum.org/v1/gonum v0.15.0 // indirect
 )
+
+// TODO(a.garipov): Remove once https://github.com/quic-go/quic-go/pull/4685 is merged.
+replace github.com/quic-go/quic-go => github.com/ainar-g/quic-go v0.0.0-20240930125330-446bd86056fd

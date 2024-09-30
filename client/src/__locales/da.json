@@ -154,7 +154,7 @@
     "use_adguard_parental": "Brug AdGuards forældrekontrolwebtjeneste",
     "use_adguard_parental_hint": "AdGuard Home vil tjekke, om domænet indeholder voksenindhold vha. den samme fortrolighedsvenlige API som browsingsikkerhedswebtjenesten.",
     "enforce_safe_search": "Brug sikker søgning",
-    "enforce_save_search_hint": "AdGuard Home vil håndhæve sikker søgning i flg. søgemaskiner: Google, YouTube, Bing, DuckDuckGo, Yandex og Pixabay.",
+    "enforce_save_search_hint": "AdGuard Home vil håndhæve sikker søgning i flg. søgemaskiner: Google, YouTube, Bing, DuckDuckGo, Ecosia, Yandex, Pixabay.",
     "no_servers_specified": "Ingen servere angivet",
     "general_settings": "Generelle indstillinger",
     "dns_settings": "DNS-indstillinger",

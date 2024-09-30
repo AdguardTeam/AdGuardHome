@@ -256,6 +256,12 @@ export default {
             "homepage": "https://github.com/hagezi/dns-blocklists",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_49.txt"
         },
+        "hagezi_xiaomi_tracking_blocklist": {
+            "name": "HaGeZi's Xiaomi Tracker Blocklist",
+            "categoryId": "other",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_60.txt"
+        },
         "no_google": {
             "name": "No Google",
             "categoryId": "other",

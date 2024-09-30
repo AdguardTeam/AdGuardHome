@@ -51,6 +51,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Text overflow on the query log page ([#7119]).
 
 [#5009]: https://github.com/AdguardTeam/AdGuardHome/issues/5009
+[#5704]: https://github.com/AdguardTeam/AdGuardHome/issues/5704
 [#7119]: https://github.com/AdguardTeam/AdGuardHome/issues/7119
 [#7154]: https://github.com/AdguardTeam/AdGuardHome/pull/7154
 [#7155]: https://github.com/AdguardTeam/AdGuardHome/pull/7155
