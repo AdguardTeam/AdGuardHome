@@ -15,6 +15,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -383,7 +384,7 @@ func (s *StatsCtx) openDB() (err error) {
 	s.logger.Debug("opening database")
 
 	var db *bbolt.DB
-	db, err = bbolt.Open(s.filename, 0o644, nil)
+	db, err = bbolt.Open(s.filename, aghos.DefaultPermFile, nil)
 	if err != nil {
 		if err.Error() == "invalid argument" {
 			const lines = `AdGuard Home cannot be initialized due to an incompatible file system.

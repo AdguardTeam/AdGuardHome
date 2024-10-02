@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
@@ -26,9 +27,15 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
-// dataDir is the name of a directory under the working one to store some
-// persistent data.
-const dataDir = "data"
+const (
+	// dataDir is the name of a directory under the working one to store some
+	// persistent data.
+	dataDir = "data"
+
+	// userFilterDataDir is the name of the directory used to store users'
+	// FS-based rule lists.
+	userFilterDataDir = "userfilters"
+)
 
 // logSettings are the logging settings part of the configuration file.
 type logSettings struct {
@@ -520,6 +527,7 @@ func parseConfig() (err error) {
 
 	migrator := configmigrate.New(&configmigrate.Config{
 		WorkingDir: Context.workDir,
+		DataDir:    Context.getDataDir(),
 	})
 
 	var upgraded bool
@@ -534,7 +542,7 @@ func parseConfig() (err error) {
 		confPath := configFilePath()
 		log.Debug("writing config file %q after config upgrade", confPath)
 
-		err = maybe.WriteFile(confPath, config.fileData, 0o644)
+		err = maybe.WriteFile(confPath, config.fileData, aghos.DefaultPermFile)
 		if err != nil {
 			return fmt.Errorf("writing new config: %w", err)
 		}
@@ -700,7 +708,7 @@ func (c *configuration) write() (err error) {
 		return fmt.Errorf("generating config file: %w", err)
 	}
 
-	err = maybe.WriteFile(confPath, buf.Bytes(), 0o644)
+	err = maybe.WriteFile(confPath, buf.Bytes(), aghos.DefaultPermFile)
 	if err != nil {
 		return fmt.Errorf("writing config file: %w", err)
 	}

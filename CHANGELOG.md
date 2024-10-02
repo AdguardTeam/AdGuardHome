@@ -29,6 +29,20 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Security
 
+- Previous versions of AdGuard Home allowed users to add any system it had
+  access to as filters, exposing them to be world-readable.  To prevent this,
+  AdGuard Home now allows adding filtering-rule list files only from files
+  matching the patterns enumerated in the `filtering.safe_fs_patterns` property
+  in the configuration file.
+
+  We thank @itz-d0dgy for reporting this vulnerability, designated
+  CVE-2024-36814, to us.
+- Additionally, AdGuard Home will now try to change the permissions of its files
+  and directories to more restrictive ones to prevent similar vulnerabilities
+  as well as limit the access to the configuration.
+
+  We thank @go-compile for reporting this vulnerability, designated
+  CVE-2024-36586, to us.
 - Go version has been updated to prevent the possibility of exploiting the Go
   vulnerabilities fixed in [1.23.2][go-1.23.2].
 
@@ -42,6 +56,15 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Upstream server URL domain names requirements has been relaxed and now follow
   the same rules as their domain specifications.
 
+#### Configuration changes
+
+In this release, the schema version has changed from 28 to 29.
+
+- The new array `filtering.safe_fs_patterns` contains glob patterns for paths of
+  files that can be added as local filtering-rule lists.  The migration should
+  add list files that have already been added, as well as the default value,
+  `$DATA_DIR/userfilters/*`.
+
 ### Fixed
 
 - Property `clients.runtime_sources.dhcp` in the configuration file not taking
@@ -49,6 +72,22 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Update Google safe search domains list ([#7155]).
 - Enforce Bing safe search from Edge sidebar ([#7154]).
 - Text overflow on the query log page ([#7119]).
+
+### Known issues
+
+- Due to the complexity of the Windows permissions architecture and poor support
+  from the standard Go library, we have to postpone the proper automated Windows
+  fix until the next release.
+
+  **Temporary workaround:**  Set the permissions of the `AdGuardHome` directory
+  to more restrictive ones manually.  To do that:
+
+  1. Locate the `AdGuardHome` directory.
+  2. Right-click on it and navigate to *Properties → Security → Advanced*.
+  3. (You might need to disable permission inheritance to make them more
+     restricted.)
+  4. Adjust to give the `Full control` access to only the user which runs
+     AdGuard Home.  Typically, `Administrator`.
 
 [#5009]: https://github.com/AdguardTeam/AdGuardHome/issues/5009
 [#5704]: https://github.com/AdguardTeam/AdGuardHome/issues/5704

@@ -1,9 +1,12 @@
 package configmigrate_test
 
 import (
+	"bytes"
 	"io/fs"
 	"os"
 	"path"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
@@ -202,6 +205,7 @@ func TestMigrateConfig_Migrate(t *testing.T) {
 
 			migrator := configmigrate.New(&configmigrate.Config{
 				WorkingDir: t.Name(),
+				DataDir:    filepath.Join(t.Name(), "data"),
 			})
 			newBody, upgraded, err := migrator.Migrate(body, tc.targetVersion)
 			require.NoError(t, err)
@@ -210,4 +214,44 @@ func TestMigrateConfig_Migrate(t *testing.T) {
 			tc.yamlEqFunc(t, string(wantBody), string(newBody))
 		})
 	}
+}
+
+// TODO(a.garipov):  Consider ways of merging into the previous one.
+func TestMigrateConfig_Migrate_v29(t *testing.T) {
+	const (
+		pathUnix       = `/path/to/file.txt`
+		userDirPatUnix = `TestMigrateConfig_Migrate/v29/data/userfilters/*`
+
+		pathWindows       = `C:\path\to\file.txt`
+		userDirPatWindows = `TestMigrateConfig_Migrate\v29\data\userfilters\*`
+	)
+
+	pathToReplace := pathUnix
+	patternToReplace := userDirPatUnix
+	if runtime.GOOS == "windows" {
+		pathToReplace = pathWindows
+		patternToReplace = userDirPatWindows
+	}
+
+	body, err := fs.ReadFile(testdata, "TestMigrateConfig_Migrate/v29/input.yml")
+	require.NoError(t, err)
+
+	body = bytes.ReplaceAll(body, []byte("FILEPATH"), []byte(pathToReplace))
+
+	wantBody, err := fs.ReadFile(testdata, "TestMigrateConfig_Migrate/v29/output.yml")
+	require.NoError(t, err)
+
+	wantBody = bytes.ReplaceAll(wantBody, []byte("FILEPATH"), []byte(pathToReplace))
+	wantBody = bytes.ReplaceAll(wantBody, []byte("USERFILTERSPATH"), []byte(patternToReplace))
+
+	migrator := configmigrate.New(&configmigrate.Config{
+		WorkingDir: t.Name(),
+		DataDir:    "TestMigrateConfig_Migrate/v29/data",
+	})
+
+	newBody, upgraded, err := migrator.Migrate(body, 29)
+	require.NoError(t, err)
+	require.True(t, upgraded)
+
+	require.YAMLEq(t, string(wantBody), string(newBody))
 }

@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
@@ -182,7 +183,7 @@ func (m *Manager) write() (err error) {
 		return fmt.Errorf("encoding: %w", err)
 	}
 
-	err = maybe.WriteFile(m.fileName, b, 0o644)
+	err = maybe.WriteFile(m.fileName, b, aghos.DefaultPermFile)
 	if err != nil {
 		return fmt.Errorf("writing: %w", err)
 	}

@@ -20,14 +20,22 @@ import (
 )
 
 // validateFilterURL validates the filter list URL or file name.
-func validateFilterURL(urlStr string) (err error) {
+func (d *DNSFilter) validateFilterURL(urlStr string) (err error) {
 	defer func() { err = errors.Annotate(err, "checking filter: %w") }()
 
 	if filepath.IsAbs(urlStr) {
+		urlStr = filepath.Clean(urlStr)
 		_, err = os.Stat(urlStr)
+		if err != nil {
+			// Don't wrap the error since it's informative enough as is.
+			return err
+		}
 
-		// Don't wrap the error since it's informative enough as is.
-		return err
+		if !pathMatchesAny(d.safeFSPatterns, urlStr) {
+			return fmt.Errorf("path %q does not match safe patterns", urlStr)
+		}
+
+		return nil
 	}
 
 	u, err := url.ParseRequestURI(urlStr)
@@ -65,7 +73,7 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = validateFilterURL(fj.URL)
+	err = d.validateFilterURL(fj.URL)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
@@ -225,7 +233,7 @@ func (d *DNSFilter) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = validateFilterURL(fj.Data.URL)
+	err = d.validateFilterURL(fj.Data.URL)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "invalid url: %s", err)
 

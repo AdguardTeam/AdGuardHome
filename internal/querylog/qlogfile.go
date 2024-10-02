@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -56,7 +57,7 @@ type qLogFile struct {
 
 // newQLogFile initializes a new instance of the qLogFile.
 func newQLogFile(path string) (qf *qLogFile, err error) {
-	f, err := os.OpenFile(path, os.O_RDONLY, 0o644)
+	f, err := os.OpenFile(path, os.O_RDONLY, aghos.DefaultPermFile)
 	if err != nil {
 		return nil, err
 	}

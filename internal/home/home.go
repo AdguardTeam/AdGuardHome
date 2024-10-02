@@ -31,6 +31,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
+	"github.com/AdguardTeam/AdGuardHome/internal/permcheck"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
@@ -630,9 +631,9 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 		}
 	}
 
-	dir := Context.getDataDir()
-	err = os.MkdirAll(dir, 0o755)
-	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dir))
+	dataDir := Context.getDataDir()
+	err = os.MkdirAll(dataDir, aghos.DefaultPermDir)
+	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDir))
 
 	GLMode = opts.glinetMode
 
@@ -649,8 +650,11 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	Context.web, err = initWeb(opts, clientBuildFS, upd, slogLogger)
 	fatalOnError(err)
 
+	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&Context, config)
+	fatalOnError(err)
+
 	if !Context.firstRun {
-		err = initDNS(slogLogger)
+		err = initDNS(slogLogger, statsDir, querylogDir)
 		fatalOnError(err)
 
 		Context.tls.start()
@@ -670,6 +674,12 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 			}
 		}
 	}
+
+	if permcheck.NeedsMigration(confPath) {
+		permcheck.Migrate(Context.workDir, dataDir, statsDir, querylogDir, confPath)
+	}
+
+	permcheck.Check(Context.workDir, dataDir, statsDir, querylogDir, confPath)
 
 	Context.web.start()
 
@@ -714,7 +724,12 @@ func (c *configuration) anonymizer() (ipmut *aghnet.IPMut) {
 // startMods initializes and starts the DNS server after installation.  l must
 // not be nil.
 func startMods(l *slog.Logger) (err error) {
-	err = initDNS(l)
+	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&Context, config)
+	if err != nil {
+		return err
+	}
+
+	err = initDNS(l, statsDir, querylogDir)
 	if err != nil {
 		return err
 	}
