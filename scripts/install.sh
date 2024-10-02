@@ -497,7 +497,7 @@ download() {
 # Function unpack unpacks the passed archive depending on it's extension.
 unpack() {
 	log "unpacking package from $pkg_name into $out_dir"
-	if ! mkdir -p "$out_dir"
+	if ! mkdir -m 0700 -p "$out_dir"
 	then
 		error_exit "cannot create directory $out_dir"
 	fi

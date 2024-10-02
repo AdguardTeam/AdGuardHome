@@ -19,6 +19,7 @@ func TestUpgradeSchema1to2(t *testing.T) {
 
 	m := New(&Config{
 		WorkingDir: "",
+		DataDir:    "",
 	})
 
 	err := m.migrateTo2(diskConf)

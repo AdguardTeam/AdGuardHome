@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
@@ -190,6 +191,10 @@ func TestMigrateConfig_Migrate(t *testing.T) {
 		yamlEqFunc:    require.YAMLEq,
 		name:          "v27",
 		targetVersion: 27,
+	}, {
+		yamlEqFunc:    require.YAMLEq,
+		name:          "v29",
+		targetVersion: 29,
 	}}
 
 	for _, tc := range testCases {
@@ -202,6 +207,7 @@ func TestMigrateConfig_Migrate(t *testing.T) {
 
 			migrator := configmigrate.New(&configmigrate.Config{
 				WorkingDir: t.Name(),
+				DataDir:    filepath.Join(t.Name(), "data"),
 			})
 			newBody, upgraded, err := migrator.Migrate(body, tc.targetVersion)
 			require.NoError(t, err)

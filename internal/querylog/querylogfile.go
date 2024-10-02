@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -70,7 +71,7 @@ func (l *queryLog) flushToFile(b *bytes.Buffer) (err error) {
 
 	filename := l.logFile
 
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, aghos.DefaultPermFile)
 	if err != nil {
 		return fmt.Errorf("creating file %q: %w", filename, err)
 	}

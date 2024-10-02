@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -89,7 +90,7 @@ func InitAuth(
 		trustedProxies: trustedProxies,
 	}
 	var err error
-	a.db, err = bbolt.Open(dbFilename, 0o644, nil)
+	a.db, err = bbolt.Open(dbFilename, aghos.DefaultPermFile, nil)
 	if err != nil {
 		log.Error("auth: open DB: %s: %s", dbFilename, err)
 		if err.Error() == "invalid argument" {

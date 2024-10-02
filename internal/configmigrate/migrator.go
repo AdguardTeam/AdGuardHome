@@ -10,20 +10,24 @@ import (
 
 // Config is a the configuration for initializing a [Migrator].
 type Config struct {
-	// WorkingDir is an absolute path to the working directory of AdGuardHome.
+	// WorkingDir is the absolute path to the working directory of AdGuardHome.
 	WorkingDir string
+
+	// DataDir is the absolute path to the data directory of AdGuardHome.
+	DataDir string
 }
 
 // Migrator performs the YAML configuration file migrations.
 type Migrator struct {
-	// workingDir is an absolute path to the working directory of AdGuardHome.
 	workingDir string
+	dataDir    string
 }
 
 // New creates a new Migrator.
-func New(cfg *Config) (m *Migrator) {
+func New(c *Config) (m *Migrator) {
 	return &Migrator{
-		workingDir: cfg.WorkingDir,
+		workingDir: c.WorkingDir,
+		dataDir:    c.DataDir,
 	}
 }
 
@@ -120,6 +124,7 @@ func (m *Migrator) upgradeConfigSchema(current, target uint, diskConf yobj) (err
 		25: migrateTo26,
 		26: migrateTo27,
 		27: migrateTo28,
+		28: m.migrateTo29,
 	}
 
 	for i, migrate := range upgrades[current:target] {

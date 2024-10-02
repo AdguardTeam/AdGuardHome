@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghrenameio"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
@@ -196,7 +197,7 @@ func (f *Filter) readFromHTTP(
 		return "", nil, fmt.Errorf("got status code %d, want %d", resp.StatusCode, http.StatusOK)
 	}
 
-	fltFile, err := aghrenameio.NewPendingFile(cachePath, 0o644)
+	fltFile, err := aghrenameio.NewPendingFile(cachePath, aghos.DefaultPermFile)
 	if err != nil {
 		return "", nil, fmt.Errorf("creating temp file: %w", err)
 	}
@@ -271,7 +272,7 @@ func parseIntoCache(
 	filePath string,
 	cachePath string,
 ) (parseRes *ParseResult, err error) {
-	tmpFile, err := aghrenameio.NewPendingFile(cachePath, 0o644)
+	tmpFile, err := aghrenameio.NewPendingFile(cachePath, aghos.DefaultPermFile)
 	if err != nil {
 		return nil, fmt.Errorf("creating temp file: %w", err)
 	}

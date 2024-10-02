@@ -18,19 +18,43 @@ TODO(a.garipov): Use the common markdown formatting tools.
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.53] - 2024-07-24 (APPROX.)
+## [v0.107.54] - 2024-10-03 (APPROX.)
 
-See also the [v0.107.53 GitHub milestone][ms-v0.107.53].
+See also the [v0.107.54 GitHub milestone][ms-v0.107.54].
 
-[ms-v0.107.53]: https://github.com/AdguardTeam/AdGuardHome/milestone/88?closed=1
+[ms-v0.107.54]: https://github.com/AdguardTeam/AdGuardHome/milestone/89?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+
+
+## [v0.107.53] - 2024-10-03
+
+See also the [v0.107.53 GitHub milestone][ms-v0.107.53].
+
 ### Security
 
+- Previous versions of AdGuard Home allowed users to add any system it had
+  access to as filters, exposing them to be world-readable.  To prevent this,
+  AdGuard Home now allows adding filtering-rule list files only from files
+  matching the patterns enumerated in the `filtering.safe_fs_patterns` property
+  in the configuration file.
+
+  We thank @itz-d0dgy for reporting this vulnerability, designated
+  CVE-2024-36814, to us.
+- Additionally, AdGuard Home will now try to change the permissions of its files
+  and directories to more restrictive ones to prevent similar vulnerabilities
+  as well as limit the access to the configuration.
+
+  We thank @go-compile for reporting this vulnerability, designated
+  CVE-2024-36586, to us.
 - Go version has been updated to prevent the possibility of exploiting the Go
-  vulnerabilities fixed in [1.23.1][go-1.23.1].
+  vulnerabilities fixed in [1.23.2][go-1.23.2].
 
 ### Added
 
@@ -42,6 +66,15 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Upstream server URL domain names requirements has been relaxed and now follow
   the same rules as their domain specifications.
 
+#### Configuration changes
+
+In this release, the schema version has changed from 28 to 29.
+
+- The new array `filtering.safe_fs_patterns` contains glob patterns for paths of
+  files that can be added as local filtering-rule lists.  The migration should
+  add list files that have already been added, as well as the default value,
+  `$DATA_DIR/userfilters/*`.
+
 ### Fixed
 
 - Property `clients.runtime_sources.dhcp` in the configuration file not taking
@@ -50,17 +83,30 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Enforce Bing safe search from Edge sidebar ([#7154]).
 - Text overflow on the query log page ([#7119]).
 
+### Known issues
+
+- Due to the complexity of the Windows permissions architecture and poor support
+  from the standard Go library, we have to postpone the proper automated Windows
+  fix until the next release.
+
+  **Temporary workaround:**  Set the permissions of the `AdGuardHome` directory
+  to more restrictive ones manually.  To do that:
+
+  1. Locate the `AdGuardHome` directory.
+  2. Right-click on it and navigate to *Properties → Security → Advanced.*
+  3. (You might need to disable permission inheritance to make them more
+     restricted.)
+  4. Adjust to give the `Full control` access to only the user which runs
+     AdGuard Home.  Typically, `Administrator`.
+
 [#5009]: https://github.com/AdguardTeam/AdGuardHome/issues/5009
 [#5704]: https://github.com/AdguardTeam/AdGuardHome/issues/5704
 [#7119]: https://github.com/AdguardTeam/AdGuardHome/issues/7119
 [#7154]: https://github.com/AdguardTeam/AdGuardHome/pull/7154
 [#7155]: https://github.com/AdguardTeam/AdGuardHome/pull/7155
 
-[go-1.23.1]: https://groups.google.com/g/golang-announce/c/K-cEzDeCtpc
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[go-1.23.2]:    https://groups.google.com/g/golang-announce/c/NKEc8VT7Fz0
+[ms-v0.107.53]: https://github.com/AdguardTeam/AdGuardHome/milestone/88?closed=1
 
 
 
@@ -3098,11 +3144,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.53...HEAD
-[v0.107.53]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.52...v0.107.53
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.54...HEAD
+[v0.107.54]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.53...v0.107.54
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.52...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.53...HEAD
+[v0.107.53]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.52...v0.107.53
 [v0.107.52]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.51...v0.107.52
 [v0.107.51]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.50...v0.107.51
 [v0.107.50]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.49...v0.107.50

@@ -19,6 +19,12 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
+// Default file and directory permissions.
+const (
+	DefaultPermDir  = 0o700
+	DefaultPermFile = 0o600
+)
+
 // Unsupported is a helper that returns a wrapped [errors.ErrUnsupported].
 func Unsupported(op string) (err error) {
 	return fmt.Errorf("%s: not supported on %s: %w", op, runtime.GOOS, errors.ErrUnsupported)

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -185,7 +186,7 @@ func writeDB(path string, leases []*dbLease) (err error) {
 		return err
 	}
 
-	err = maybe.WriteFile(path, buf, 0o644)
+	err = maybe.WriteFile(path, buf, aghos.DefaultPermFile)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err

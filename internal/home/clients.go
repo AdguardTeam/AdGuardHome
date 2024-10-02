@@ -72,10 +72,13 @@ func (clients *clientsContainer) Init(
 		return errors.Error("clients container already initialized")
 	}
 
+	clients.safeSearchCacheSize = filteringConf.SafeSearchCacheSize
+	clients.safeSearchCacheTTL = time.Minute * time.Duration(filteringConf.CacheTime)
+
 	confClients := make([]*client.Persistent, 0, len(objects))
 	for i, o := range objects {
 		var p *client.Persistent
-		p, err = o.toPersistent(filteringConf)
+		p, err = o.toPersistent(clients.safeSearchCacheSize, clients.safeSearchCacheTTL)
 		if err != nil {
 			return fmt.Errorf("init persistent client at index %d: %w", i, err)
 		}
@@ -165,7 +168,8 @@ type clientObject struct {
 
 // toPersistent returns an initialized persistent client if there are no errors.
 func (o *clientObject) toPersistent(
-	filteringConf *filtering.Config,
+	safeSearchCacheSize uint,
+	safeSearchCacheTTL time.Duration,
 ) (cli *client.Persistent, err error) {
 	cli = &client.Persistent{
 		Name: o.Name,
@@ -201,8 +205,8 @@ func (o *clientObject) toPersistent(
 	if o.SafeSearchConf.Enabled {
 		err = cli.SetSafeSearch(
 			o.SafeSearchConf,
-			filteringConf.SafeSearchCacheSize,
-			time.Minute*time.Duration(filteringConf.CacheTime),
+			safeSearchCacheSize,
+			safeSearchCacheTTL,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("init safesearch %q: %w", cli.Name, err)

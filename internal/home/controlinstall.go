@@ -270,9 +270,9 @@ DNSStubListener=no
 const resolvConfPath = "/etc/resolv.conf"
 
 // Deactivate DNSStubListener
-func disableDNSStubListener() error {
+func disableDNSStubListener() (err error) {
 	dir := filepath.Dir(resolvedConfPath)
-	err := os.MkdirAll(dir, 0o755)
+	err = os.MkdirAll(dir, 0o755)
 	if err != nil {
 		return fmt.Errorf("os.MkdirAll: %s: %w", dir, err)
 	}
@@ -413,9 +413,12 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	copyInstallSettings(curConfig, config)
 
 	Context.firstRun = false
-	config.HTTPConfig.Address = netip.AddrPortFrom(req.Web.IP, req.Web.Port)
 	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
+	config.Filtering.SafeFSPatterns = []string{
+		filepath.Join(Context.workDir, userFilterDataDir, "*"),
+	}
+	config.HTTPConfig.Address = netip.AddrPortFrom(req.Web.IP, req.Web.Port)
 
 	u := &webUser{
 		Name: req.Username,

@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
@@ -263,7 +264,7 @@ func (u *Updater) check() (err error) {
 // ignores the configuration file if firstRun is true.
 func (u *Updater) backup(firstRun bool) (err error) {
 	log.Debug("updater: backing up current configuration")
-	_ = os.Mkdir(u.backupDir, 0o755)
+	_ = os.Mkdir(u.backupDir, aghos.DefaultPermDir)
 	if !firstRun {
 		err = copyFile(u.confName, filepath.Join(u.backupDir, "AdGuardHome.yaml"))
 		if err != nil {
@@ -337,10 +338,10 @@ func (u *Updater) downloadPackageFile() (err error) {
 		return fmt.Errorf("io.ReadAll() failed: %w", err)
 	}
 
-	_ = os.Mkdir(u.updateDir, 0o755)
+	_ = os.Mkdir(u.updateDir, aghos.DefaultPermDir)
 
 	log.Debug("updater: saving package to file")
-	err = os.WriteFile(u.packageName, body, 0o644)
+	err = os.WriteFile(u.packageName, body, aghos.DefaultPermFile)
 	if err != nil {
 		return fmt.Errorf("os.WriteFile() failed: %w", err)
 	}
@@ -527,7 +528,7 @@ func copyFile(src, dst string) error {
 	if e != nil {
 		return e
 	}
-	e = os.WriteFile(dst, d, 0o644)
+	e = os.WriteFile(dst, d, aghos.DefaultPermFile)
 	if e != nil {
 		return e
 	}
