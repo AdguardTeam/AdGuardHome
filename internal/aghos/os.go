@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path"
@@ -21,8 +22,8 @@ import (
 
 // Default file and directory permissions.
 const (
-	DefaultPermDir  = 0o700
-	DefaultPermFile = 0o600
+	DefaultPermDir  fs.FileMode = 0o700
+	DefaultPermFile fs.FileMode = 0o600
 )
 
 // Unsupported is a helper that returns a wrapped [errors.ErrUnsupported].

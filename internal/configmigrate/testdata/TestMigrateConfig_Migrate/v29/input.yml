@@ -45,7 +45,7 @@ filters:
 - url: https://adaway.org/hosts.txt
   name: AdAway
   enabled: false
-- url: /path/to/file.txt
+- url: FILEPATH
   name: Local Filter
   enabled: false
 clients:

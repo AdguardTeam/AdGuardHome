@@ -584,7 +584,11 @@ func TestSafeSearch(t *testing.T) {
 			req := createTestMessage(tc.host)
 
 			var reply *dns.Msg
-			reply, _, err = client.Exchange(req, addr)
+			require.Eventually(t, func() (ok bool) {
+				reply, _, err = client.Exchange(req, addr)
+
+				return err == nil
+			}, testTimeout*10, testTimeout)
 			require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
 
 			if tc.wantCNAME != "" {

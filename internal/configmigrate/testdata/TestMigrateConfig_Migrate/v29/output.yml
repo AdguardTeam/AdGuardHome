@@ -27,8 +27,8 @@ filtering:
   parental_enabled: false
   safebrowsing_enabled: false
   safe_fs_patterns:
-      - TestMigrateConfig_Migrate/v29/data/userfilters/*
-      - /path/to/file.txt
+      - USERFILTERSPATH
+      - FILEPATH
   safe_search:
     enabled:    false
     bing:       true
@@ -48,7 +48,7 @@ filters:
 - url: https://adaway.org/hosts.txt
   name: AdAway
   enabled: false
-- url: /path/to/file.txt
+- url: FILEPATH
   name: Local Filter
   enabled: false
 clients:
