@@ -18,7 +18,7 @@ TODO(a.garipov): Use the common markdown formatting tools.
 <!--
 ## [v0.108.0] - TBA
 
-## [v0.107.53] - 2024-07-24 (APPROX.)
+## [v0.107.53] - 2024-10-03 (APPROX.)
 
 See also the [v0.107.53 GitHub milestone][ms-v0.107.53].
 
@@ -30,7 +30,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Security
 
 - Go version has been updated to prevent the possibility of exploiting the Go
-  vulnerabilities fixed in [1.23.1][go-1.23.1].
+  vulnerabilities fixed in [1.23.2][go-1.23.2].
 
 ### Added
 
@@ -56,7 +56,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#7154]: https://github.com/AdguardTeam/AdGuardHome/pull/7154
 [#7155]: https://github.com/AdguardTeam/AdGuardHome/pull/7155
 
-[go-1.23.1]: https://groups.google.com/g/golang-announce/c/K-cEzDeCtpc
+[go-1.23.2]: https://groups.google.com/g/golang-announce/c/NKEc8VT7Fz0
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
