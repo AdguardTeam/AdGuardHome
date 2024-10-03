@@ -92,7 +92,15 @@ func (clients *clientsContainer) Init(
 	// TODO(e.burkov):  The option should probably be returned, since hosts file
 	// currently used not only for clients' information enrichment, but also in
 	// the filtering module and upstream addresses resolution.
-	var hosts client.HostsContainer = etcHosts
+	var hosts client.HostsContainer
+	
+	// Assign etcHosts to hosts if it's not nil.
+	// This avoids creating a non-nil interface containing a nil pointer,
+	// which would pass a nil check but cause a panic when used.
+	if etcHosts != nil {
+		hosts = etcHosts
+	}
+	
 	if !config.Clients.Sources.HostsFile {
 		hosts = nil
 	}
