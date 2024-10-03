@@ -39,7 +39,7 @@ See also the [v0.107.53 GitHub milestone][ms-v0.107.53].
 
 ### Security
 
-- Previous versions of AdGuard Home allowed users to add any system it had
+- Previous versions of AdGuard Home allowed users to add any system file it had
   access to as filters, exposing them to be world-readable.  To prevent this,
   AdGuard Home now allows adding filtering-rule list files only from files
   matching the patterns enumerated in the `filtering.safe_fs_patterns` property
@@ -79,8 +79,8 @@ In this release, the schema version has changed from 28 to 29.
 
 - Property `clients.runtime_sources.dhcp` in the configuration file not taking
   effect.
-- Update Google safe search domains list ([#7155]).
-- Enforce Bing safe search from Edge sidebar ([#7154]).
+- Stale Google safe search domains list ([#7155]).
+- Bing safe search from Edge sidebar ([#7154]).
 - Text overflow on the query log page ([#7119]).
 
 ### Known issues
