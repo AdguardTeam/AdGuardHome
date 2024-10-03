@@ -16,20 +16,28 @@ TODO(a.garipov): Use the common markdown formatting tools.
 ## [Unreleased]
 
 <!--
-## [v0.108.0] - TBA
+## [v0.107.54] - 2024-10-09 (APPROX.)
 
-## [v0.107.53] - 2024-10-03 (APPROX.)
+See also the [v0.107.54 GitHub milestone][ms-v0.107.54].
 
-See also the [v0.107.53 GitHub milestone][ms-v0.107.53].
-
-[ms-v0.107.53]: https://github.com/AdguardTeam/AdGuardHome/milestone/88?closed=1
+[ms-v0.107.54]: https://github.com/AdguardTeam/AdGuardHome/milestone/89?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+
+
+## [v0.107.53] - 2024-10-03
+
+See also the [v0.107.53 GitHub milestone][ms-v0.107.53].
+
 ### Security
 
-- Previous versions of AdGuard Home allowed users to add any system it had
+- Previous versions of AdGuard Home allowed users to add any system file it had
   access to as filters, exposing them to be world-readable.  To prevent this,
   AdGuard Home now allows adding filtering-rule list files only from files
   matching the patterns enumerated in the `filtering.safe_fs_patterns` property
@@ -69,8 +77,8 @@ In this release, the schema version has changed from 28 to 29.
 
 - Property `clients.runtime_sources.dhcp` in the configuration file not taking
   effect.
-- Update Google safe search domains list ([#7155]).
-- Enforce Bing safe search from Edge sidebar ([#7154]).
+- Stale Google safe search domains list ([#7155]).
+- Bing safe search from Edge sidebar ([#7154]).
 - Text overflow on the query log page ([#7119]).
 
 ### Known issues
@@ -83,7 +91,7 @@ In this release, the schema version has changed from 28 to 29.
   to more restrictive ones manually.  To do that:
 
   1. Locate the `AdGuardHome` directory.
-  2. Right-click on it and navigate to *Properties → Security → Advanced*.
+  2. Right-click on it and navigate to *Properties → Security → Advanced.*
   3. (You might need to disable permission inheritance to make them more
      restricted.)
   4. Adjust to give the `Full control` access to only the user which runs
@@ -95,11 +103,8 @@ In this release, the schema version has changed from 28 to 29.
 [#7154]: https://github.com/AdguardTeam/AdGuardHome/pull/7154
 [#7155]: https://github.com/AdguardTeam/AdGuardHome/pull/7155
 
-[go-1.23.2]: https://groups.google.com/g/golang-announce/c/NKEc8VT7Fz0
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[go-1.23.2]:    https://groups.google.com/g/golang-announce/c/NKEc8VT7Fz0
+[ms-v0.107.53]: https://github.com/AdguardTeam/AdGuardHome/milestone/88?closed=1
 
 
 
@@ -3137,11 +3142,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.53...HEAD
-[v0.107.53]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.52...v0.107.53
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.54...HEAD
+[v0.107.54]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.53...v0.107.54
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.52...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.53...HEAD
+[v0.107.53]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.52...v0.107.53
 [v0.107.52]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.51...v0.107.52
 [v0.107.51]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.50...v0.107.51
 [v0.107.50]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.49...v0.107.50
