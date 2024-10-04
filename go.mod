@@ -24,9 +24,6 @@ require (
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/netlink v1.7.2
 	github.com/mdlayher/packet v1.1.2
-	// TODO(a.garipov): This package is deprecated; find a new one or use our
-	// own code for that.  Perhaps, use gopacket.
-	github.com/mdlayher/raw v0.1.0
 	github.com/miekg/dns v1.1.61
 	github.com/quic-go/quic-go v0.47.0
 	github.com/stretchr/testify v1.9.0
