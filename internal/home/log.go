@@ -24,10 +24,15 @@ func newSlogLogger(ls *logSettings) (l *slog.Logger) {
 		return slogutil.NewDiscardLogger()
 	}
 
+	lvl := slog.LevelInfo
+	if ls.Verbose {
+		lvl = slog.LevelDebug
+	}
+
 	return slogutil.New(&slogutil.Config{
 		Format:       slogutil.FormatAdGuardLegacy,
+		Level:        lvl,
 		AddTimestamp: true,
-		Verbose:      ls.Verbose,
 	})
 }
 

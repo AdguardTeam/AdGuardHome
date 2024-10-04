@@ -3,11 +3,12 @@ package dhcpsvc
 import (
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/mapsutil"
 	"github.com/AdguardTeam/golibs/netutil"
 )
 
@@ -78,14 +79,13 @@ func (conf *Config) Validate() (err error) {
 		return errors.Join(errs...)
 	}
 
-	mapsutil.SortedRange(conf.Interfaces, func(iface string, ic *InterfaceConfig) (ok bool) {
+	for _, iface := range slices.Sorted(maps.Keys(conf.Interfaces)) {
+		ic := conf.Interfaces[iface]
 		err = ic.validate()
 		if err != nil {
 			errs = append(errs, fmt.Errorf("interface %q: %w", iface, err))
 		}
-
-		return true
-	})
+	}
 
 	return errors.Join(errs...)
 }
