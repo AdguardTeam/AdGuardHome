@@ -11,7 +11,6 @@ import (
 
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/log"
-	"github.com/josharian/native"
 )
 
 // GLMode - enable GL-Inet compatibility mode
@@ -97,8 +96,7 @@ func glGetTokenDate(file string) uint32 {
 
 	buf := bytes.NewBuffer(bs)
 
-	// TODO(a.garipov): Get rid of github.com/josharian/native dependency.
-	err = binary.Read(buf, native.Endian, &dateToken)
+	err = binary.Read(buf, binary.NativeEndian, &dateToken)
 	if err != nil {
 		log.Error("decoding token: %s", err)
 
