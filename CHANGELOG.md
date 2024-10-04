@@ -25,6 +25,13 @@ See also the [v0.107.54 GitHub milestone][ms-v0.107.54].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Missing runtime clients with information from the system hosts file on first
+  AdGuard Home start ([#7315]).
+
+[#7315]: https://github.com/AdguardTeam/AdGuardHome/issues/7315
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

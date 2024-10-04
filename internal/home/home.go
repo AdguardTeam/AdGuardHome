@@ -148,6 +148,14 @@ func setupContext(opts options) (err error) {
 	Context.tlsRoots = aghtls.SystemRootCAs()
 	Context.mux = http.NewServeMux()
 
+	if !opts.noEtcHosts {
+		err = setupHostsContainer()
+		if err != nil {
+			// Don't wrap the error, because it's informative enough as is.
+			return err
+		}
+	}
+
 	if Context.firstRun {
 		log.Info("This is the first time AdGuard Home is launched")
 		checkPermissions()
@@ -166,14 +174,6 @@ func setupContext(opts options) (err error) {
 		log.Info("configuration file is ok")
 
 		os.Exit(0)
-	}
-
-	if !opts.noEtcHosts {
-		err = setupHostsContainer()
-		if err != nil {
-			// Don't wrap the error, because it's informative enough as is.
-			return err
-		}
 	}
 
 	return nil

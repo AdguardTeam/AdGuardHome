@@ -92,9 +92,9 @@ func (clients *clientsContainer) Init(
 	// TODO(e.burkov):  The option should probably be returned, since hosts file
 	// currently used not only for clients' information enrichment, but also in
 	// the filtering module and upstream addresses resolution.
-	var hosts client.HostsContainer = etcHosts
-	if !config.Clients.Sources.HostsFile {
-		hosts = nil
+	var hosts client.HostsContainer
+	if config.Clients.Sources.HostsFile && etcHosts != nil {
+		hosts = etcHosts
 	}
 
 	clients.storage, err = client.NewStorage(&client.StorageConfig{
