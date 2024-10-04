@@ -3,7 +3,6 @@
 package dhcpd
 
 import (
-	"github.com/mdlayher/packet"
 	"net"
 	"testing"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/insomniacslk/dhcp/dhcpv4"
+	"github.com/mdlayher/packet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
