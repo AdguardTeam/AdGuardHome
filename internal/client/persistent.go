@@ -7,10 +7,8 @@ import (
 	"net/netip"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
@@ -320,23 +318,6 @@ func (c *Persistent) CloseUpstreams() (err error) {
 			return fmt.Errorf("closing upstreams of client %q: %w", c.Name, err)
 		}
 	}
-
-	return nil
-}
-
-// SetSafeSearch initializes and sets the safe search filter for this client.
-func (c *Persistent) SetSafeSearch(
-	conf filtering.SafeSearchConfig,
-	cacheSize uint,
-	cacheTTL time.Duration,
-) (err error) {
-	ss, err := safesearch.NewDefault(conf, fmt.Sprintf("client %q", c.Name), cacheSize, cacheTTL)
-	if err != nil {
-		// Don't wrap the error, because it's informative enough as is.
-		return err
-	}
-
-	c.SafeSearch = ss
 
 	return nil
 }

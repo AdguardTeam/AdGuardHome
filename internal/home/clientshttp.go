@@ -1,6 +1,7 @@
 package home
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,8 +11,10 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
 // clientJSON is a common structure used by several handlers to deal with
@@ -181,6 +184,7 @@ func initPrev(cj clientJSON, prev *client.Persistent) (c *client.Persistent, err
 // jsonToClient converts JSON object to persistent client object if there are no
 // errors.
 func (clients *clientsContainer) jsonToClient(
+	ctx context.Context,
 	cj clientJSON,
 	prev *client.Persistent,
 ) (c *client.Persistent, err error) {
@@ -207,14 +211,23 @@ func (clients *clientsContainer) jsonToClient(
 	c.UseOwnBlockedServices = !cj.UseGlobalBlockedServices
 
 	if c.SafeSearchConf.Enabled {
-		err = c.SetSafeSearch(
-			c.SafeSearchConf,
-			clients.safeSearchCacheSize,
-			clients.safeSearchCacheTTL,
+		logger := clients.baseLogger.With(
+			slogutil.KeyPrefix, safesearch.LogPrefix,
+			safesearch.LogKeyClient, c.Name,
 		)
+		var ss *safesearch.Default
+		ss, err = safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
+			Logger:         logger,
+			ServicesConfig: c.SafeSearchConf,
+			ClientName:     c.Name,
+			CacheSize:      clients.safeSearchCacheSize,
+			CacheTTL:       clients.safeSearchCacheTTL,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("creating safesearch for client %q: %w", c.Name, err)
 		}
+
+		c.SafeSearch = ss
 	}
 
 	return c, nil
@@ -321,7 +334,7 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	c, err := clients.jsonToClient(cj, nil)
+	c, err := clients.jsonToClient(r.Context(), cj, nil)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
@@ -391,7 +404,7 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 		return
 	}
 
-	c, err := clients.jsonToClient(dj.Data, nil)
+	c, err := clients.jsonToClient(r.Context(), dj.Data, nil)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 

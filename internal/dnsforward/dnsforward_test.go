@@ -513,12 +513,14 @@ func TestSafeSearch(t *testing.T) {
 		SafeSearchCacheSize: 1000,
 		CacheTime:           30,
 	}
-	safeSearch, err := safesearch.NewDefault(
-		safeSearchConf,
-		"",
-		filterConf.SafeSearchCacheSize,
-		time.Minute*time.Duration(filterConf.CacheTime),
-	)
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	safeSearch, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
+		Logger:         slogutil.NewDiscardLogger(),
+		ServicesConfig: safeSearchConf,
+		CacheSize:      filterConf.SafeSearchCacheSize,
+		CacheTTL:       time.Minute * time.Duration(filterConf.CacheTime),
+	})
 	require.NoError(t, err)
 
 	filterConf.SafeSearch = safeSearch

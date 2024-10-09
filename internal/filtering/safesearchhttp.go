@@ -51,7 +51,7 @@ func (d *DNSFilter) handleSafeSearchSettings(w http.ResponseWriter, r *http.Requ
 	}
 
 	conf := *req
-	err = d.safeSearch.Update(conf)
+	err = d.safeSearch.Update(r.Context(), conf)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "updating: %s", err)
 

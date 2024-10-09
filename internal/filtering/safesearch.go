@@ -1,15 +1,17 @@
 package filtering
 
+import "context"
+
 // SafeSearch interface describes a service for search engines hosts rewrites.
 type SafeSearch interface {
 	// CheckHost checks host with safe search filter.  CheckHost must be safe
 	// for concurrent use.  qtype must be either [dns.TypeA] or [dns.TypeAAAA].
-	CheckHost(host string, qtype uint16) (res Result, err error)
+	CheckHost(ctx context.Context, host string, qtype uint16) (res Result, err error)
 
 	// Update updates the configuration of the safe search filter.  Update must
 	// be safe for concurrent use.  An implementation of Update may ignore some
 	// fields, but it must document which.
-	Update(conf SafeSearchConfig) (err error)
+	Update(ctx context.Context, conf SafeSearchConfig) (err error)
 }
 
 // SafeSearchConfig is a struct with safe search related settings.
@@ -40,10 +42,13 @@ func (d *DNSFilter) checkSafeSearch(
 		return Result{}, nil
 	}
 
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+
 	clientSafeSearch := setts.ClientSafeSearch
 	if clientSafeSearch != nil {
-		return clientSafeSearch.CheckHost(host, qtype)
+		return clientSafeSearch.CheckHost(ctx, host, qtype)
 	}
 
-	return d.safeSearch.CheckHost(host, qtype)
+	return d.safeSearch.CheckHost(ctx, host, qtype)
 }
