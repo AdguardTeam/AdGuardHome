@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"cmp"
+	"context"
 	"encoding/binary"
 	"net"
 	"net/netip"
@@ -203,7 +204,8 @@ func (s *Server) processClientIP(addr netip.Addr) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	s.addrProc.Process(addr)
+	// TODO(s.chzhen):  Pass context.
+	s.addrProc.Process(context.TODO(), addr)
 }
 
 // processDDRQuery responds to Discovery of Designated Resolvers (DDR) SVCB

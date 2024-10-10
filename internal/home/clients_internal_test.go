@@ -40,9 +40,10 @@ func newClientsContainer(t *testing.T) (c *clientsContainer) {
 
 func TestClientsCustomUpstream(t *testing.T) {
 	clients := newClientsContainer(t)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	// Add client with upstreams.
-	err := clients.storage.Add(&client.Persistent{
+	err := clients.storage.Add(ctx, &client.Persistent{
 		Name: "client1",
 		UID:  client.MustNewUID(),
 		IPs:  []netip.Addr{netip.MustParseAddr("1.1.1.1"), netip.MustParseAddr("1:2:3::4")},

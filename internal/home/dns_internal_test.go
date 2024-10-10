@@ -7,6 +7,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,12 +20,15 @@ var testIPv4 = netip.AddrFrom4([4]byte{1, 2, 3, 4})
 func newStorage(tb testing.TB, clients []*client.Persistent) (s *client.Storage) {
 	tb.Helper()
 
-	s, err := client.NewStorage(&client.StorageConfig{})
+	ctx := testutil.ContextWithTimeout(tb, testTimeout)
+	s, err := client.NewStorage(ctx, &client.StorageConfig{
+		Logger: slogutil.NewDiscardLogger(),
+	})
 	require.NoError(tb, err)
 
 	for _, p := range clients {
 		p.UID = client.MustNewUID()
-		require.NoError(tb, s.Add(p))
+		require.NoError(tb, s.Add(ctx, p))
 	}
 
 	return s
