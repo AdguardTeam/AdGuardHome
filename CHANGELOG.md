@@ -31,10 +31,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Custom client cache ([#7250]).
 - Missing runtime clients with information from the system hosts file on first
   AdGuard Home start ([#7315]).
 
 [#6818]: https://github.com/AdguardTeam/AdGuardHome/issues/6818
+[#7250]: https://github.com/AdguardTeam/AdGuardHome/issues/7250
 [#7315]: https://github.com/AdguardTeam/AdGuardHome/issues/7315
 
 <!--

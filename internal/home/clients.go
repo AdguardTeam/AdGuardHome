@@ -417,6 +417,11 @@ func (clients *clientsContainer) UpstreamConfigByID(
 	)
 	c.UpstreamConfig = conf
 
+	err = clients.storage.Update(c.Name, c)
+	if err != nil {
+		return nil, fmt.Errorf("setting upstream config: %w", err)
+	}
+
 	return conf, nil
 }
 
