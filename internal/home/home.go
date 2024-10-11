@@ -115,10 +115,10 @@ func Main(clientBuildFS fs.FS) {
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 
 	go func() {
+		ctx := context.Background()
 		for {
 			sig := <-signals
 			log.Info("Received signal %q", sig)
-			ctx := context.Background()
 			switch sig {
 			case syscall.SIGHUP:
 				Context.clients.storage.ReloadARP(ctx)

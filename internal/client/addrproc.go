@@ -236,7 +236,7 @@ func (p *DefaultAddrProc) Process(ctx context.Context, ip netip.Addr) {
 // to be used as a goroutine.  Once clientIPs is closed, process exits.
 func (p *DefaultAddrProc) process(ctx context.Context, catchPanics bool) {
 	if catchPanics {
-		slogutil.RecoverAndLog(ctx, p.logger)
+		defer slogutil.RecoverAndLog(ctx, p.logger)
 	}
 
 	p.logger.InfoContext(ctx, "processing addresses")

@@ -21,6 +21,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// testStorage is a helper function that returns initialized storage.
+func testStorage(tb testing.TB) (s *client.Storage) {
+	ctx := testutil.ContextWithTimeout(tb, testTimeout)
+	s, err := client.NewStorage(ctx, &client.StorageConfig{
+		Logger: slogutil.NewDiscardLogger(),
+	})
+	require.NoError(tb, err)
+
+	return s
+}
+
 // testHostsContainer is a mock implementation of the [client.HostsContainer]
 // interface.
 type testHostsContainer struct {
@@ -571,11 +582,7 @@ func TestStorage_Add(t *testing.T) {
 	}
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	s, err := client.NewStorage(ctx, &client.StorageConfig{
-		Logger: slogutil.NewDiscardLogger(),
-	})
-	require.NoError(t, err)
-
+	s := testStorage(t)
 	tags := s.AllowedTags()
 	require.NotZero(t, len(tags))
 	require.True(t, slices.IsSorted(tags))
@@ -586,7 +593,7 @@ func TestStorage_Add(t *testing.T) {
 	_, ok = slices.BinarySearch(tags, notAllowedTag)
 	require.False(t, ok)
 
-	err = s.Add(ctx, existingClient)
+	err := s.Add(ctx, existingClient)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -706,12 +713,8 @@ func TestStorage_RemoveByName(t *testing.T) {
 	}
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	s, err := client.NewStorage(ctx, &client.StorageConfig{
-		Logger: slogutil.NewDiscardLogger(),
-	})
-	require.NoError(t, err)
-
-	err = s.Add(ctx, existingClient)
+	s := testStorage(t)
+	err := s.Add(ctx, existingClient)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -735,11 +738,7 @@ func TestStorage_RemoveByName(t *testing.T) {
 	}
 
 	t.Run("duplicate_remove", func(t *testing.T) {
-		s, err = client.NewStorage(ctx, &client.StorageConfig{
-			Logger: slogutil.NewDiscardLogger(),
-		})
-		require.NoError(t, err)
-
+		s = testStorage(t)
 		err = s.Add(ctx, existingClient)
 		require.NoError(t, err)
 
