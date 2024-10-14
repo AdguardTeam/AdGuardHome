@@ -85,7 +85,8 @@ type HostsContainer interface {
 
 // StorageConfig is the client storage configuration structure.
 type StorageConfig struct {
-	// Logger is used for logging the operation of the client storage.
+	// Logger is used for logging the operation of the client storage.  It must
+	// not be nil.
 	Logger *slog.Logger
 
 	// DHCP is used to match IPs against MACs of persistent clients and update
@@ -113,7 +114,8 @@ type StorageConfig struct {
 
 // Storage contains information about persistent and runtime clients.
 type Storage struct {
-	// logger is used for logging the operation of the client storage.
+	// logger is used for logging the operation of the client storage.  It must
+	// not be nil.
 	logger *slog.Logger
 
 	// mu protects indexes of persistent and runtime clients.
@@ -205,7 +207,7 @@ func (s *Storage) Shutdown(_ context.Context) (err error) {
 // periodicARPUpdate periodically reloads runtime clients from ARP.  It is
 // intended to be used as a goroutine.
 func (s *Storage) periodicARPUpdate(ctx context.Context) {
-	slogutil.RecoverAndLog(ctx, s.logger)
+	defer slogutil.RecoverAndLog(ctx, s.logger)
 
 	t := time.NewTicker(s.arpClientsUpdatePeriod)
 
@@ -270,7 +272,7 @@ func (s *Storage) handleHostsUpdates(ctx context.Context) {
 		return
 	}
 
-	slogutil.RecoverAndLog(ctx, s.logger)
+	defer slogutil.RecoverAndLog(ctx, s.logger)
 
 	for {
 		select {
