@@ -31,6 +31,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Repetitive statistics log messages ([#7338]).
 - Custom client cache ([#7250]).
 - Missing runtime clients with information from the system hosts file on first
   AdGuard Home start ([#7315]).
@@ -38,6 +39,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#6818]: https://github.com/AdguardTeam/AdGuardHome/issues/6818
 [#7250]: https://github.com/AdguardTeam/AdGuardHome/issues/7250
 [#7315]: https://github.com/AdguardTeam/AdGuardHome/issues/7315
+[#7338]: https://github.com/AdguardTeam/AdGuardHome/issues/7338
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
