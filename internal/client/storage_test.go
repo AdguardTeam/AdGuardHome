@@ -21,8 +21,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// testStorage is a helper function that returns initialized storage.
-func testStorage(tb testing.TB) (s *client.Storage) {
+// newTestStorage is a helper function that returns initialized storage.
+func newTestStorage(tb testing.TB) (s *client.Storage) {
+	tb.Helper()
+
 	ctx := testutil.ContextWithTimeout(tb, testTimeout)
 	s, err := client.NewStorage(ctx, &client.StorageConfig{
 		Logger: slogutil.NewDiscardLogger(),
@@ -582,7 +584,7 @@ func TestStorage_Add(t *testing.T) {
 	}
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	s := testStorage(t)
+	s := newTestStorage(t)
 	tags := s.AllowedTags()
 	require.NotZero(t, len(tags))
 	require.True(t, slices.IsSorted(tags))
@@ -713,7 +715,7 @@ func TestStorage_RemoveByName(t *testing.T) {
 	}
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	s := testStorage(t)
+	s := newTestStorage(t)
 	err := s.Add(ctx, existingClient)
 	require.NoError(t, err)
 
@@ -738,7 +740,7 @@ func TestStorage_RemoveByName(t *testing.T) {
 	}
 
 	t.Run("duplicate_remove", func(t *testing.T) {
-		s = testStorage(t)
+		s = newTestStorage(t)
 		err = s.Add(ctx, existingClient)
 		require.NoError(t, err)
 
