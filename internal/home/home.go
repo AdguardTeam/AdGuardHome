@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -275,6 +276,14 @@ func setupOpts(opts options) (err error) {
 	}
 
 	return nil
+}
+
+// setupAghUISettings sets up some AdGuard Home UI settings.
+func setupAghUISettings(opts options) {
+	cookieName := strings.TrimSpace(opts.sessionCookieName)
+	if cookieName != "" {
+		sessionCookieName = cookieName
+	}
 }
 
 // initContextClients initializes Context clients and related fields.
@@ -599,6 +608,8 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 
 	err = setupOpts(opts)
 	fatalOnError(err)
+
+	setupAghUISettings(opts)
 
 	execPath, err := os.Executable()
 	fatalOnError(errors.Annotate(err, "getting executable path: %w"))
