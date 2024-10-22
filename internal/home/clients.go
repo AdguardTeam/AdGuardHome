@@ -107,7 +107,8 @@ func (clients *clientsContainer) Init(
 		hosts = etcHosts
 	}
 
-	clients.storage, err = client.NewStorage(&client.StorageConfig{
+	clients.storage, err = client.NewStorage(ctx, &client.StorageConfig{
+		Logger:                 baseLogger.With(slogutil.KeyPrefix, "client_storage"),
 		InitialClients:         confClients,
 		DHCP:                   dhcpServer,
 		EtcHosts:               hosts,
@@ -417,7 +418,8 @@ func (clients *clientsContainer) UpstreamConfigByID(
 	)
 	c.UpstreamConfig = conf
 
-	err = clients.storage.Update(c.Name, c)
+	// TODO(s.chzhen):  Pass context.
+	err = clients.storage.Update(context.TODO(), c.Name, c)
 	if err != nil {
 		return nil, fmt.Errorf("setting upstream config: %w", err)
 	}
@@ -430,8 +432,13 @@ var _ client.AddressUpdater = (*clientsContainer)(nil)
 
 // UpdateAddress implements the [client.AddressUpdater] interface for
 // *clientsContainer
-func (clients *clientsContainer) UpdateAddress(ip netip.Addr, host string, info *whois.Info) {
-	clients.storage.UpdateAddress(ip, host, info)
+func (clients *clientsContainer) UpdateAddress(
+	ctx context.Context,
+	ip netip.Addr,
+	host string,
+	info *whois.Info,
+) {
+	clients.storage.UpdateAddress(ctx, ip, host, info)
 }
 
 // close gracefully closes all the client-specific upstream configurations of

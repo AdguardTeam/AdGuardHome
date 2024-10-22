@@ -26,7 +26,8 @@ func TestEmptyAddrProc(t *testing.T) {
 	p := client.EmptyAddrProc{}
 
 	assert.NotPanics(t, func() {
-		p.Process(testIP)
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		p.Process(ctx, testIP)
 	})
 
 	assert.NotPanics(t, func() {
@@ -120,7 +121,8 @@ func TestDefaultAddrProc_Process_rDNS(t *testing.T) {
 			})
 			testutil.CleanupAndRequireSuccess(t, p.Close)
 
-			p.Process(tc.ip)
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			p.Process(ctx, tc.ip)
 
 			if !tc.wantUpd {
 				return
@@ -146,8 +148,8 @@ func newOnUpdateAddress(
 	ips chan<- netip.Addr,
 	hosts chan<- string,
 	infos chan<- *whois.Info,
-) (f func(ip netip.Addr, host string, info *whois.Info)) {
-	return func(ip netip.Addr, host string, info *whois.Info) {
+) (f func(ctx context.Context, ip netip.Addr, host string, info *whois.Info)) {
+	return func(ctx context.Context, ip netip.Addr, host string, info *whois.Info) {
 		if !want && (host != "" || info != nil) {
 			panic(fmt.Errorf("got unexpected update for %v with %q and %v", ip, host, info))
 		}
@@ -230,7 +232,8 @@ func TestDefaultAddrProc_Process_WHOIS(t *testing.T) {
 			})
 			testutil.CleanupAndRequireSuccess(t, p.Close)
 
-			p.Process(testIP)
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			p.Process(ctx, testIP)
 
 			if !tc.wantUpd {
 				return
@@ -251,7 +254,9 @@ func TestDefaultAddrProc_Process_WHOIS(t *testing.T) {
 func TestDefaultAddrProc_Close(t *testing.T) {
 	t.Parallel()
 
-	p := client.NewDefaultAddrProc(&client.DefaultAddrProcConfig{})
+	p := client.NewDefaultAddrProc(&client.DefaultAddrProcConfig{
+		BaseLogger: slogutil.NewDiscardLogger(),
+	})
 
 	err := p.Close()
 	assert.NoError(t, err)

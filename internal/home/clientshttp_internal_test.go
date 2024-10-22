@@ -203,13 +203,14 @@ func TestClientsContainer_HandleAddClient(t *testing.T) {
 
 func TestClientsContainer_HandleDelClient(t *testing.T) {
 	clients := newClientsContainer(t)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	clientOne := newPersistentClientWithIDs(t, "client1", []string{testClientIP1})
-	err := clients.storage.Add(clientOne)
+	err := clients.storage.Add(ctx, clientOne)
 	require.NoError(t, err)
 
 	clientTwo := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
-	err = clients.storage.Add(clientTwo)
+	err = clients.storage.Add(ctx, clientTwo)
 	require.NoError(t, err)
 
 	assertPersistentClients(t, clients, []*client.Persistent{clientOne, clientTwo})
@@ -265,9 +266,10 @@ func TestClientsContainer_HandleDelClient(t *testing.T) {
 
 func TestClientsContainer_HandleUpdateClient(t *testing.T) {
 	clients := newClientsContainer(t)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	clientOne := newPersistentClientWithIDs(t, "client1", []string{testClientIP1})
-	err := clients.storage.Add(clientOne)
+	err := clients.storage.Add(ctx, clientOne)
 	require.NoError(t, err)
 
 	assertPersistentClients(t, clients, []*client.Persistent{clientOne})
@@ -348,12 +350,14 @@ func TestClientsContainer_HandleFindClient(t *testing.T) {
 		},
 	}
 
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
 	clientOne := newPersistentClientWithIDs(t, "client1", []string{testClientIP1})
-	err := clients.storage.Add(clientOne)
+	err := clients.storage.Add(ctx, clientOne)
 	require.NoError(t, err)
 
 	clientTwo := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
-	err = clients.storage.Add(clientTwo)
+	err = clients.storage.Add(ctx, clientTwo)
 	require.NoError(t, err)
 
 	assertPersistentClients(t, clients, []*client.Persistent{clientOne, clientTwo})

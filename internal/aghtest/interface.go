@@ -89,14 +89,14 @@ func (s *ServiceWithConfig[ConfigType]) Config() (c ConfigType) {
 // AddressProcessor is a fake [client.AddressProcessor] implementation for
 // tests.
 type AddressProcessor struct {
-	OnProcess func(ip netip.Addr)
+	OnProcess func(ctx context.Context, ip netip.Addr)
 	OnClose   func() (err error)
 }
 
 // Process implements the [client.AddressProcessor] interface for
 // *AddressProcessor.
-func (p *AddressProcessor) Process(ip netip.Addr) {
-	p.OnProcess(ip)
+func (p *AddressProcessor) Process(ctx context.Context, ip netip.Addr) {
+	p.OnProcess(ctx, ip)
 }
 
 // Close implements the [client.AddressProcessor] interface for
@@ -107,13 +107,18 @@ func (p *AddressProcessor) Close() (err error) {
 
 // AddressUpdater is a fake [client.AddressUpdater] implementation for tests.
 type AddressUpdater struct {
-	OnUpdateAddress func(ip netip.Addr, host string, info *whois.Info)
+	OnUpdateAddress func(ctx context.Context, ip netip.Addr, host string, info *whois.Info)
 }
 
 // UpdateAddress implements the [client.AddressUpdater] interface for
 // *AddressUpdater.
-func (p *AddressUpdater) UpdateAddress(ip netip.Addr, host string, info *whois.Info) {
-	p.OnUpdateAddress(ip, host, info)
+func (p *AddressUpdater) UpdateAddress(
+	ctx context.Context,
+	ip netip.Addr,
+	host string,
+	info *whois.Info,
+) {
+	p.OnUpdateAddress(ctx, ip, host, info)
 }
 
 // Package dnsforward

@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/netip"
 	"slices"
@@ -15,6 +16,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
 // allowedTags is the list of available client tags.
@@ -83,6 +85,10 @@ type HostsContainer interface {
 
 // StorageConfig is the client storage configuration structure.
 type StorageConfig struct {
+	// Logger is used for logging the operation of the client storage.  It must
+	// not be nil.
+	Logger *slog.Logger
+
 	// DHCP is used to match IPs against MACs of persistent clients and update
 	// [SourceDHCP] runtime client information.  It must not be nil.
 	DHCP DHCP
@@ -108,6 +114,10 @@ type StorageConfig struct {
 
 // Storage contains information about persistent and runtime clients.
 type Storage struct {
+	// logger is used for logging the operation of the client storage.  It must
+	// not be nil.
+	logger *slog.Logger
+
 	// mu protects indexes of persistent and runtime clients.
 	mu *sync.Mutex
 
@@ -145,12 +155,12 @@ type Storage struct {
 }
 
 // NewStorage returns initialized client storage.  conf must not be nil.
-func NewStorage(conf *StorageConfig) (s *Storage, err error) {
+func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error) {
 	tags := slices.Clone(allowedTags)
 	slices.Sort(tags)
 
 	s = &Storage{
-		allowedTags:            tags,
+		logger:                 conf.Logger,
 		mu:                     &sync.Mutex{},
 		index:                  newIndex(),
 		runtimeIndex:           newRuntimeIndex(),
@@ -158,18 +168,19 @@ func NewStorage(conf *StorageConfig) (s *Storage, err error) {
 		etcHosts:               conf.EtcHosts,
 		arpDB:                  conf.ARPDB,
 		done:                   make(chan struct{}),
+		allowedTags:            tags,
 		arpClientsUpdatePeriod: conf.ARPClientsUpdatePeriod,
 		runtimeSourceDHCP:      conf.RuntimeSourceDHCP,
 	}
 
 	for i, p := range conf.InitialClients {
-		err = s.Add(p)
+		err = s.Add(ctx, p)
 		if err != nil {
 			return nil, fmt.Errorf("adding client %q at index %d: %w", p.Name, i, err)
 		}
 	}
 
-	s.ReloadARP()
+	s.ReloadARP(ctx)
 
 	return s, nil
 }
@@ -177,9 +188,9 @@ func NewStorage(conf *StorageConfig) (s *Storage, err error) {
 // Start starts the goroutines for updating the runtime client information.
 //
 // TODO(s.chzhen):  Pass context.
-func (s *Storage) Start(_ context.Context) (err error) {
-	go s.periodicARPUpdate()
-	go s.handleHostsUpdates()
+func (s *Storage) Start(ctx context.Context) (err error) {
+	go s.periodicARPUpdate(ctx)
+	go s.handleHostsUpdates(ctx)
 
 	return nil
 }
@@ -195,15 +206,15 @@ func (s *Storage) Shutdown(_ context.Context) (err error) {
 
 // periodicARPUpdate periodically reloads runtime clients from ARP.  It is
 // intended to be used as a goroutine.
-func (s *Storage) periodicARPUpdate() {
-	defer log.OnPanic("storage")
+func (s *Storage) periodicARPUpdate(ctx context.Context) {
+	defer slogutil.RecoverAndLog(ctx, s.logger)
 
 	t := time.NewTicker(s.arpClientsUpdatePeriod)
 
 	for {
 		select {
 		case <-t.C:
-			s.ReloadARP()
+			s.ReloadARP(ctx)
 		case <-s.done:
 			return
 		}
@@ -211,28 +222,28 @@ func (s *Storage) periodicARPUpdate() {
 }
 
 // ReloadARP reloads runtime clients from ARP, if configured.
-func (s *Storage) ReloadARP() {
+func (s *Storage) ReloadARP(ctx context.Context) {
 	if s.arpDB != nil {
-		s.addFromSystemARP()
+		s.addFromSystemARP(ctx)
 	}
 }
 
 // addFromSystemARP adds the IP-hostname pairings from the output of the arp -a
 // command.
-func (s *Storage) addFromSystemARP() {
+func (s *Storage) addFromSystemARP(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if err := s.arpDB.Refresh(); err != nil {
 		s.arpDB = arpdb.Empty{}
-		log.Error("refreshing arp container: %s", err)
+		s.logger.ErrorContext(ctx, "refreshing arp container", slogutil.KeyError, err)
 
 		return
 	}
 
 	ns := s.arpDB.Neighbors()
 	if len(ns) == 0 {
-		log.Debug("refreshing arp container: the update is empty")
+		s.logger.DebugContext(ctx, "refreshing arp container: the update is empty")
 
 		return
 	}
@@ -246,17 +257,22 @@ func (s *Storage) addFromSystemARP() {
 
 	removed := s.runtimeIndex.removeEmpty()
 
-	log.Debug("storage: added %d, removed %d client aliases from arp neighborhood", len(ns), removed)
+	s.logger.DebugContext(
+		ctx,
+		"updating client aliases from arp neighborhood",
+		"added", len(ns),
+		"removed", removed,
+	)
 }
 
 // handleHostsUpdates receives the updates from the hosts container and adds
 // them to the clients storage.  It is intended to be used as a goroutine.
-func (s *Storage) handleHostsUpdates() {
+func (s *Storage) handleHostsUpdates(ctx context.Context) {
 	if s.etcHosts == nil {
 		return
 	}
 
-	defer log.OnPanic("storage")
+	defer slogutil.RecoverAndLog(ctx, s.logger)
 
 	for {
 		select {
@@ -265,7 +281,7 @@ func (s *Storage) handleHostsUpdates() {
 				return
 			}
 
-			s.addFromHostsFile(upd)
+			s.addFromHostsFile(ctx, upd)
 		case <-s.done:
 			return
 		}
@@ -274,7 +290,7 @@ func (s *Storage) handleHostsUpdates() {
 
 // addFromHostsFile fills the client-hostname pairing index from the system's
 // hosts files.
-func (s *Storage) addFromHostsFile(hosts *hostsfile.DefaultStorage) {
+func (s *Storage) addFromHostsFile(ctx context.Context, hosts *hostsfile.DefaultStorage) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -294,14 +310,19 @@ func (s *Storage) addFromHostsFile(hosts *hostsfile.DefaultStorage) {
 	})
 
 	removed := s.runtimeIndex.removeEmpty()
-	log.Debug("storage: added %d, removed %d client aliases from system hosts file", added, removed)
+	s.logger.DebugContext(
+		ctx,
+		"updating client aliases from system hosts file",
+		"added", added,
+		"removed", removed,
+	)
 }
 
 // type check
 var _ AddressUpdater = (*Storage)(nil)
 
 // UpdateAddress implements the [AddressUpdater] interface for *Storage
-func (s *Storage) UpdateAddress(ip netip.Addr, host string, info *whois.Info) {
+func (s *Storage) UpdateAddress(ctx context.Context, ip netip.Addr, host string, info *whois.Info) {
 	// Common fast path optimization.
 	if host == "" && info == nil {
 		return
@@ -315,12 +336,12 @@ func (s *Storage) UpdateAddress(ip netip.Addr, host string, info *whois.Info) {
 	}
 
 	if info != nil {
-		s.setWHOISInfo(ip, info)
+		s.setWHOISInfo(ctx, ip, info)
 	}
 }
 
 // UpdateDHCP updates [SourceDHCP] runtime client information.
-func (s *Storage) UpdateDHCP() {
+func (s *Storage) UpdateDHCP(ctx context.Context) {
 	if s.dhcp == nil || !s.runtimeSourceDHCP {
 		return
 	}
@@ -338,14 +359,23 @@ func (s *Storage) UpdateDHCP() {
 	}
 
 	removed := s.runtimeIndex.removeEmpty()
-	log.Debug("storage: added %d, removed %d client aliases from dhcp", added, removed)
+	s.logger.DebugContext(
+		ctx,
+		"updating client aliases from dhcp",
+		"added", added,
+		"removed", removed,
+	)
 }
 
 // setWHOISInfo sets the WHOIS information for a runtime client.
-func (s *Storage) setWHOISInfo(ip netip.Addr, wi *whois.Info) {
+func (s *Storage) setWHOISInfo(ctx context.Context, ip netip.Addr, wi *whois.Info) {
 	_, ok := s.index.findByIP(ip)
 	if ok {
-		log.Debug("storage: client for %s is already created, ignore whois info", ip)
+		s.logger.DebugContext(
+			ctx,
+			"persistent client is already created, ignore whois info",
+			"ip", ip,
+		)
 
 		return
 	}
@@ -358,14 +388,14 @@ func (s *Storage) setWHOISInfo(ip netip.Addr, wi *whois.Info) {
 
 	rc.setWHOIS(wi)
 
-	log.Debug("storage: set whois info for runtime client with ip %s: %+v", ip, wi)
+	s.logger.DebugContext(ctx, "set whois info for runtime client", "ip", ip, "whois", wi)
 }
 
 // Add stores persistent client information or returns an error.
-func (s *Storage) Add(p *Persistent) (err error) {
+func (s *Storage) Add(ctx context.Context, p *Persistent) (err error) {
 	defer func() { err = errors.Annotate(err, "adding client: %w") }()
 
-	err = p.validate(s.allowedTags)
+	err = p.validate(ctx, s.logger, s.allowedTags)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
@@ -388,7 +418,13 @@ func (s *Storage) Add(p *Persistent) (err error) {
 
 	s.index.add(p)
 
-	log.Debug("client storage: added %q: IDs: %q [%d]", p.Name, p.IDs(), s.index.size())
+	s.logger.DebugContext(
+		ctx,
+		"client added",
+		"name", p.Name,
+		"ids", p.IDs(),
+		"clients_count", s.index.size(),
+	)
 
 	return nil
 }
@@ -490,10 +526,10 @@ func (s *Storage) RemoveByName(name string) (ok bool) {
 
 // Update finds the stored persistent client by its name and updates its
 // information from p.
-func (s *Storage) Update(name string, p *Persistent) (err error) {
+func (s *Storage) Update(ctx context.Context, name string, p *Persistent) (err error) {
 	defer func() { err = errors.Annotate(err, "updating client: %w") }()
 
-	err = p.validate(s.allowedTags)
+	err = p.validate(ctx, s.logger, s.allowedTags)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
