@@ -487,7 +487,7 @@ func (clients *clientsContainer) findRuntime(ip netip.Addr, idStr string) (cj *c
 	return cj
 }
 
-// RegisterClientsHandlers registers HTTP handlers
+// registerWebHandlers registers HTTP handlers
 func (clients *clientsContainer) registerWebHandlers() {
 	httpRegister(http.MethodGet, "/control/clients", clients.handleGetClients)
 	httpRegister(http.MethodPost, "/control/clients/add", clients.handleAddClient)
