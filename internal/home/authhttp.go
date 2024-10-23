@@ -22,8 +22,11 @@ import (
 // cookieTTL is the time-to-live of the session cookie.
 const cookieTTL = 365 * timeutil.Day
 
+// defaultSessionCookieName is the default name of the session cookie.
+const defaultSessionCookieName = "agh_session"
+
 // sessionCookieName is the name of the session cookie.
-const sessionCookieName = "agh_session"
+var sessionCookieName = defaultSessionCookieName
 
 // loginJSON is the JSON structure for authentication.
 type loginJSON struct {
