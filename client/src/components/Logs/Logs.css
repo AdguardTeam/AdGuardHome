@@ -156,7 +156,7 @@
 
 .input-group-search {
     background-color: transparent;
-    position: relative;
+    position: absolute;
     width: 1.5rem;
     height: 1.5rem;
     top: 0.4rem;
@@ -167,12 +167,12 @@
 }
 
 .input-group-search__icon--cross {
-    left: -4.5rem;
+    right: 4.5rem;
     cursor: pointer;
 }
 
 .input-group-search__icon--tooltip {
-    left: -4rem;
+    right: 2.5rem;
 }
 
 .form-control--container {
@@ -182,6 +182,9 @@
 .field__search {
     display: flex;
     flex-grow: 1;
+    position: relative;
+    padding-left: 24px;
+    padding-right: 24px;
 }
 
 @media (max-width: 767.98px) {
