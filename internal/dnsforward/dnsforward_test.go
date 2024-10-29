@@ -513,12 +513,14 @@ func TestSafeSearch(t *testing.T) {
 		SafeSearchCacheSize: 1000,
 		CacheTime:           30,
 	}
-	safeSearch, err := safesearch.NewDefault(
-		safeSearchConf,
-		"",
-		filterConf.SafeSearchCacheSize,
-		time.Minute*time.Duration(filterConf.CacheTime),
-	)
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	safeSearch, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
+		Logger:         slogutil.NewDiscardLogger(),
+		ServicesConfig: safeSearchConf,
+		CacheSize:      filterConf.SafeSearchCacheSize,
+		CacheTTL:       time.Minute * time.Duration(filterConf.CacheTime),
+	})
 	require.NoError(t, err)
 
 	filterConf.SafeSearch = safeSearch
@@ -583,13 +585,15 @@ func TestSafeSearch(t *testing.T) {
 		t.Run(tc.host, func(t *testing.T) {
 			req := createTestMessage(tc.host)
 
+			// TODO(a.garipov):  Create our own helper for this.
 			var reply *dns.Msg
-			require.Eventually(t, func() (ok bool) {
-				reply, _, err = client.Exchange(req, addr)
-
-				return err == nil
+			once := &sync.Once{}
+			require.EventuallyWithT(t, func(c *assert.CollectT) {
+				r, _, errExch := client.Exchange(req, addr)
+				if assert.NoError(c, errExch) {
+					once.Do(func() { reply = r })
+				}
 			}, testTimeout*10, testTimeout)
-			require.NoErrorf(t, err, "couldn't talk to server %s: %s", addr, err)
 
 			if tc.wantCNAME != "" {
 				require.Len(t, reply.Answer, 2)

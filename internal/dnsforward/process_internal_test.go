@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"cmp"
+	"context"
 	"net"
 	"net/netip"
 	"testing"
@@ -90,7 +91,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 
 			var gotAddr netip.Addr
 			s.addrProc = &aghtest.AddressProcessor{
-				OnProcess: func(ip netip.Addr) { gotAddr = ip },
+				OnProcess: func(ctx context.Context, ip netip.Addr) { gotAddr = ip },
 				OnClose:   func() (err error) { panic("not implemented") },
 			}
 

@@ -11,13 +11,18 @@ import (
 	"net/url"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// testTimeout is the common timeout for tests and contexts.
+const testTimeout = 1 * time.Second
 
 const (
 	testClientIP1 = "1.1.1.1"
@@ -103,9 +108,10 @@ func assertPersistentClients(tb testing.TB, clients *clientsContainer, want []*c
 	require.NoError(tb, err)
 
 	var got []*client.Persistent
+	ctx := testutil.ContextWithTimeout(tb, testTimeout)
 	for _, cj := range clientList.Clients {
 		var c *client.Persistent
-		c, err = clients.jsonToClient(*cj, nil)
+		c, err = clients.jsonToClient(ctx, *cj, nil)
 		require.NoError(tb, err)
 
 		got = append(got, c)
@@ -125,10 +131,11 @@ func assertPersistentClientsData(
 	tb.Helper()
 
 	var got []*client.Persistent
+	ctx := testutil.ContextWithTimeout(tb, testTimeout)
 	for _, cm := range data {
 		for _, cj := range cm {
 			var c *client.Persistent
-			c, err := clients.jsonToClient(*cj, nil)
+			c, err := clients.jsonToClient(ctx, *cj, nil)
 			require.NoError(tb, err)
 
 			got = append(got, c)
@@ -196,13 +203,14 @@ func TestClientsContainer_HandleAddClient(t *testing.T) {
 
 func TestClientsContainer_HandleDelClient(t *testing.T) {
 	clients := newClientsContainer(t)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	clientOne := newPersistentClientWithIDs(t, "client1", []string{testClientIP1})
-	err := clients.storage.Add(clientOne)
+	err := clients.storage.Add(ctx, clientOne)
 	require.NoError(t, err)
 
 	clientTwo := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
-	err = clients.storage.Add(clientTwo)
+	err = clients.storage.Add(ctx, clientTwo)
 	require.NoError(t, err)
 
 	assertPersistentClients(t, clients, []*client.Persistent{clientOne, clientTwo})
@@ -258,9 +266,10 @@ func TestClientsContainer_HandleDelClient(t *testing.T) {
 
 func TestClientsContainer_HandleUpdateClient(t *testing.T) {
 	clients := newClientsContainer(t)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	clientOne := newPersistentClientWithIDs(t, "client1", []string{testClientIP1})
-	err := clients.storage.Add(clientOne)
+	err := clients.storage.Add(ctx, clientOne)
 	require.NoError(t, err)
 
 	assertPersistentClients(t, clients, []*client.Persistent{clientOne})
@@ -341,12 +350,14 @@ func TestClientsContainer_HandleFindClient(t *testing.T) {
 		},
 	}
 
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
 	clientOne := newPersistentClientWithIDs(t, "client1", []string{testClientIP1})
-	err := clients.storage.Add(clientOne)
+	err := clients.storage.Add(ctx, clientOne)
 	require.NoError(t, err)
 
 	clientTwo := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
-	err = clients.storage.Add(clientTwo)
+	err = clients.storage.Add(ctx, clientTwo)
 	require.NoError(t, err)
 
 	assertPersistentClients(t, clients, []*client.Persistent{clientOne, clientTwo})

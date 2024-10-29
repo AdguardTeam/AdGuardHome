@@ -641,7 +641,7 @@
     "show_processed_responses": "Verarbeitet",
     "blocked_safebrowsing": "Gesperrt durch Internetsicherheit",
     "blocked_adult_websites": "Gesperrt durch Kindersicherung",
-    "blocked_threats": "Bedrohungen blockiert",
+    "blocked_threats": "Gesperrte Bedrohungen",
     "allowed": "Zugelassen",
     "filtered": "Gefiltert",
     "rewritten": "Umgeschrieben",

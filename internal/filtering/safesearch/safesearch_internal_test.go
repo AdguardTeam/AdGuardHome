@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -21,6 +23,9 @@ const (
 	testCacheTTL  = 30 * time.Minute
 )
 
+// testTimeout is the common timeout for tests and contexts.
+const testTimeout = 1 * time.Second
+
 var defaultSafeSearchConf = filtering.SafeSearchConfig{
 	Enabled:    true,
 	Bing:       true,
@@ -35,7 +40,12 @@ var defaultSafeSearchConf = filtering.SafeSearchConfig{
 var yandexIP = netip.AddrFrom4([4]byte{213, 180, 193, 56})
 
 func newForTest(t testing.TB, ssConf filtering.SafeSearchConfig) (ss *Default) {
-	ss, err := NewDefault(ssConf, "", testCacheSize, testCacheTTL)
+	ss, err := NewDefault(testutil.ContextWithTimeout(t, testTimeout), &DefaultConfig{
+		Logger:         slogutil.NewDiscardLogger(),
+		ServicesConfig: ssConf,
+		CacheSize:      testCacheSize,
+		CacheTTL:       testCacheTTL,
+	})
 	require.NoError(t, err)
 
 	return ss
@@ -52,16 +62,17 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 	const domain = "yandex.ru"
 
 	ss := newForTest(t, filtering.SafeSearchConfig{Enabled: false})
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	// Check host with disabled safesearch.
-	res, err := ss.CheckHost(domain, testQType)
+	res, err := ss.CheckHost(ctx, domain, testQType)
 	require.NoError(t, err)
 
 	assert.False(t, res.IsFiltered)
 	assert.Empty(t, res.Rules)
 
 	ss = newForTest(t, defaultSafeSearchConf)
-	res, err = ss.CheckHost(domain, testQType)
+	res, err = ss.CheckHost(ctx, domain, testQType)
 	require.NoError(t, err)
 
 	// For yandex we already know valid IP.
@@ -70,7 +81,7 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 	assert.Equal(t, res.Rules[0].IP, yandexIP)
 
 	// Check cache.
-	cachedValue, isFound := ss.getCachedResult(domain, testQType)
+	cachedValue, isFound := ss.getCachedResult(ctx, domain, testQType)
 	require.True(t, isFound)
 	require.Len(t, cachedValue.Rules, 1)
 

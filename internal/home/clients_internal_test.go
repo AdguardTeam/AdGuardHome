@@ -7,6 +7,8 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,16 +22,28 @@ func newClientsContainer(t *testing.T) (c *clientsContainer) {
 		testing: true,
 	}
 
-	require.NoError(t, c.Init(nil, client.EmptyDHCP{}, nil, nil, &filtering.Config{}))
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	err := c.Init(
+		ctx,
+		slogutil.NewDiscardLogger(),
+		nil,
+		client.EmptyDHCP{},
+		nil,
+		nil,
+		&filtering.Config{},
+	)
+
+	require.NoError(t, err)
 
 	return c
 }
 
 func TestClientsCustomUpstream(t *testing.T) {
 	clients := newClientsContainer(t)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	// Add client with upstreams.
-	err := clients.storage.Add(&client.Persistent{
+	err := clients.storage.Add(ctx, &client.Persistent{
 		Name: "client1",
 		UID:  client.MustNewUID(),
 		IPs:  []netip.Addr{netip.MustParseAddr("1.1.1.1"), netip.MustParseAddr("1:2:3::4")},

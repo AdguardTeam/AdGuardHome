@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net"
 	"net/netip"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/mapsutil"
 )
 
 // DHCPServer is a DHCP server for both IPv4 and IPv6 address families.
@@ -107,7 +108,8 @@ func newInterfaces(
 	v6 = make(dhcpInterfacesV6, 0, len(ifaces))
 
 	var errs []error
-	mapsutil.SortedRange(ifaces, func(name string, iface *InterfaceConfig) (cont bool) {
+	for _, name := range slices.Sorted(maps.Keys(ifaces)) {
+		iface := ifaces[name]
 		var i4 *dhcpInterfaceV4
 		i4, err = newDHCPInterfaceV4(ctx, l, name, iface.IPv4)
 		if err != nil {
@@ -120,9 +122,8 @@ func newInterfaces(
 		if i6 != nil {
 			v6 = append(v6, i6)
 		}
+	}
 
-		return true
-	})
 	if err = errors.Join(errs...); err != nil {
 		return nil, nil, err
 	}

@@ -16,13 +16,11 @@ TODO(a.garipov): Use the common markdown formatting tools.
 ## [Unreleased]
 
 <!--
-## [v0.108.0] - TBA
+## [v0.107.55] - 2024-11-09 (APPROX.)
 
-## [v0.107.54] - 2024-10-03 (APPROX.)
+See also the [v0.107.55 GitHub milestone][ms-v0.107.55].
 
-See also the [v0.107.54 GitHub milestone][ms-v0.107.54].
-
-[ms-v0.107.54]: https://github.com/AdguardTeam/AdGuardHome/milestone/89?closed=1
+[ms-v0.107.55]: https://github.com/AdguardTeam/AdGuardHome/milestone/90?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
@@ -30,6 +28,35 @@ NOTE: Add new changes BELOW THIS COMMENT.
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+
+
+## [v0.107.54] - 2024-10-30
+
+See also the [v0.107.54 GitHub milestone][ms-v0.107.54].
+
+### Security
+
+- Incorrect handling of sensitive files permissions on Windows ([#7314]).
+
+### Changed
+
+- Improved filtering performance ([#6818]).
+
+### Fixed
+
+- Repetitive statistics log messages ([#7338]).
+- Custom client cache ([#7250]).
+- Missing runtime clients with information from the system hosts file on first
+  AdGuard Home start ([#7315]).
+
+[#6818]: https://github.com/AdguardTeam/AdGuardHome/issues/6818
+[#7250]: https://github.com/AdguardTeam/AdGuardHome/issues/7250
+[#7314]: https://github.com/AdguardTeam/AdGuardHome/issues/7314
+[#7315]: https://github.com/AdguardTeam/AdGuardHome/issues/7315
+[#7338]: https://github.com/AdguardTeam/AdGuardHome/issues/7338
+
+[ms-v0.107.54]: https://github.com/AdguardTeam/AdGuardHome/milestone/89?closed=1
 
 
 
@@ -3144,11 +3171,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.54...HEAD
-[v0.107.54]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.53...v0.107.54
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.55...HEAD
+[v0.107.55]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.54...v0.107.55
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.53...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.54...HEAD
+[v0.107.54]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.53...v0.107.54
 [v0.107.53]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.52...v0.107.53
 [v0.107.52]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.51...v0.107.52
 [v0.107.51]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.50...v0.107.51

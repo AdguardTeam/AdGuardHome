@@ -115,15 +115,16 @@ func Main(clientBuildFS fs.FS) {
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 
 	go func() {
+		ctx := context.Background()
 		for {
 			sig := <-signals
 			log.Info("Received signal %q", sig)
 			switch sig {
 			case syscall.SIGHUP:
-				Context.clients.storage.ReloadARP()
+				Context.clients.storage.ReloadARP(ctx)
 				Context.tls.reload()
 			default:
-				cleanup(context.Background())
+				cleanup(ctx)
 				cleanupAlways()
 				close(done)
 			}
@@ -148,6 +149,14 @@ func setupContext(opts options) (err error) {
 	Context.tlsRoots = aghtls.SystemRootCAs()
 	Context.mux = http.NewServeMux()
 
+	if !opts.noEtcHosts {
+		err = setupHostsContainer()
+		if err != nil {
+			// Don't wrap the error, because it's informative enough as is.
+			return err
+		}
+	}
+
 	if Context.firstRun {
 		log.Info("This is the first time AdGuard Home is launched")
 		checkPermissions()
@@ -166,14 +175,6 @@ func setupContext(opts options) (err error) {
 		log.Info("configuration file is ok")
 
 		os.Exit(0)
-	}
-
-	if !opts.noEtcHosts {
-		err = setupHostsContainer()
-		if err != nil {
-			// Don't wrap the error, because it's informative enough as is.
-			return err
-		}
 	}
 
 	return nil
@@ -278,8 +279,8 @@ func setupOpts(opts options) (err error) {
 }
 
 // initContextClients initializes Context clients and related fields.
-func initContextClients(logger *slog.Logger) (err error) {
-	err = setupDNSFilteringConf(config.Filtering)
+func initContextClients(ctx context.Context, logger *slog.Logger) (err error) {
+	err = setupDNSFilteringConf(ctx, logger, config.Filtering)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
@@ -306,6 +307,8 @@ func initContextClients(logger *slog.Logger) (err error) {
 	}
 
 	return Context.clients.Init(
+		ctx,
+		logger,
 		config.Clients.Persistent,
 		Context.dhcpServer,
 		Context.etcHosts,
@@ -355,7 +358,11 @@ func setupBindOpts(opts options) (err error) {
 }
 
 // setupDNSFilteringConf sets up DNS filtering configuration settings.
-func setupDNSFilteringConf(conf *filtering.Config) (err error) {
+func setupDNSFilteringConf(
+	ctx context.Context,
+	baseLogger *slog.Logger,
+	conf *filtering.Config,
+) (err error) {
 	const (
 		dnsTimeout = 3 * time.Second
 
@@ -446,12 +453,13 @@ func setupDNSFilteringConf(conf *filtering.Config) (err error) {
 		conf.ParentalBlockHost = host
 	}
 
-	conf.SafeSearch, err = safesearch.NewDefault(
-		conf.SafeSearchConf,
-		"default",
-		conf.SafeSearchCacheSize,
-		cacheTime,
-	)
+	logger := baseLogger.With(slogutil.KeyPrefix, safesearch.LogPrefix)
+	conf.SafeSearch, err = safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
+		Logger:         logger,
+		ServicesConfig: conf.SafeSearchConf,
+		CacheSize:      conf.SafeSearchCacheSize,
+		CacheTTL:       cacheTime,
+	})
 	if err != nil {
 		return fmt.Errorf("initializing safesearch: %w", err)
 	}
@@ -584,7 +592,10 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	// data first, but also to avoid relying on automatic Go init() function.
 	filtering.InitModule()
 
-	err = initContextClients(slogLogger)
+	// TODO(s.chzhen):  Use it for the entire initialization process.
+	ctx := context.Background()
+
+	err = initContextClients(ctx, slogLogger)
 	fatalOnError(err)
 
 	err = setupOpts(opts)
@@ -632,7 +643,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	}
 
 	dataDir := Context.getDataDir()
-	err = os.MkdirAll(dataDir, aghos.DefaultPermDir)
+	err = aghos.MkdirAll(dataDir, aghos.DefaultPermDir)
 	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDir))
 
 	GLMode = opts.glinetMode

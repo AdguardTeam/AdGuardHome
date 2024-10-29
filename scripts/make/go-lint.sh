@@ -54,9 +54,12 @@ set -f -u
 #
 #   *  Package unsafe is… unsafe.
 #
-# Currently, the only standard exception are files generated from protobuf
-# schemas, which use package reflect.  If your project needs more exceptions,
-# add and document them.
+# If your project needs more exceptions, add and document them.  Currently,
+# there are only two standard exceptions:
+#
+#   *  Files generated from protobuf schemas, which use package reflect.
+#
+#   *  Windows-specific code caused by golang.org/x/sys/windows API design.
 #
 # TODO(a.garipov): Add golibs/log.
 #
@@ -75,6 +78,7 @@ blocklist_imports() {
 		-n\
 		-- '*.go'\
 		':!*.pb.go'\
+		':!./internal/aghos/permission_windows.go'\
 		| sed -e 's/^\([^[:space:]]\+\)\(.*\)$/\1 blocked import:\2/'\
 		|| exit 0
 }

@@ -3,6 +3,7 @@ package home
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/netip"
 	"slices"
 	"sync"
@@ -13,17 +14,23 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
 
 // clientsContainer is the storage of all runtime and persistent clients.
 type clientsContainer struct {
+	// baseLogger is used to create loggers with custom prefixes for safe search
+	// filter.  It must not be nil.
+	baseLogger *slog.Logger
+
 	// storage stores information about persistent clients.
 	storage *client.Storage
 
@@ -61,6 +68,8 @@ type BlockedClientChecker interface {
 // dhcpServer: optional
 // Note: this function must be called only once
 func (clients *clientsContainer) Init(
+	ctx context.Context,
+	baseLogger *slog.Logger,
 	objects []*clientObject,
 	dhcpServer client.DHCP,
 	etcHosts *aghnet.HostsContainer,
@@ -72,13 +81,14 @@ func (clients *clientsContainer) Init(
 		return errors.Error("clients container already initialized")
 	}
 
+	clients.baseLogger = baseLogger
 	clients.safeSearchCacheSize = filteringConf.SafeSearchCacheSize
 	clients.safeSearchCacheTTL = time.Minute * time.Duration(filteringConf.CacheTime)
 
 	confClients := make([]*client.Persistent, 0, len(objects))
 	for i, o := range objects {
 		var p *client.Persistent
-		p, err = o.toPersistent(clients.safeSearchCacheSize, clients.safeSearchCacheTTL)
+		p, err = o.toPersistent(ctx, baseLogger, clients.safeSearchCacheSize, clients.safeSearchCacheTTL)
 		if err != nil {
 			return fmt.Errorf("init persistent client at index %d: %w", i, err)
 		}
@@ -92,12 +102,13 @@ func (clients *clientsContainer) Init(
 	// TODO(e.burkov):  The option should probably be returned, since hosts file
 	// currently used not only for clients' information enrichment, but also in
 	// the filtering module and upstream addresses resolution.
-	var hosts client.HostsContainer = etcHosts
-	if !config.Clients.Sources.HostsFile {
-		hosts = nil
+	var hosts client.HostsContainer
+	if config.Clients.Sources.HostsFile && etcHosts != nil {
+		hosts = etcHosts
 	}
 
-	clients.storage, err = client.NewStorage(&client.StorageConfig{
+	clients.storage, err = client.NewStorage(ctx, &client.StorageConfig{
+		Logger:                 baseLogger.With(slogutil.KeyPrefix, "client_storage"),
 		InitialClients:         confClients,
 		DHCP:                   dhcpServer,
 		EtcHosts:               hosts,
@@ -168,6 +179,8 @@ type clientObject struct {
 
 // toPersistent returns an initialized persistent client if there are no errors.
 func (o *clientObject) toPersistent(
+	ctx context.Context,
+	baseLogger *slog.Logger,
 	safeSearchCacheSize uint,
 	safeSearchCacheTTL time.Duration,
 ) (cli *client.Persistent, err error) {
@@ -203,14 +216,23 @@ func (o *clientObject) toPersistent(
 	}
 
 	if o.SafeSearchConf.Enabled {
-		err = cli.SetSafeSearch(
-			o.SafeSearchConf,
-			safeSearchCacheSize,
-			safeSearchCacheTTL,
+		logger := baseLogger.With(
+			slogutil.KeyPrefix, safesearch.LogPrefix,
+			safesearch.LogKeyClient, cli.Name,
 		)
+		var ss *safesearch.Default
+		ss, err = safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
+			Logger:         logger,
+			ServicesConfig: o.SafeSearchConf,
+			ClientName:     cli.Name,
+			CacheSize:      safeSearchCacheSize,
+			CacheTTL:       safeSearchCacheTTL,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("init safesearch %q: %w", cli.Name, err)
 		}
+
+		cli.SafeSearch = ss
 	}
 
 	if o.BlockedServices == nil {
@@ -396,6 +418,12 @@ func (clients *clientsContainer) UpstreamConfigByID(
 	)
 	c.UpstreamConfig = conf
 
+	// TODO(s.chzhen):  Pass context.
+	err = clients.storage.Update(context.TODO(), c.Name, c)
+	if err != nil {
+		return nil, fmt.Errorf("setting upstream config: %w", err)
+	}
+
 	return conf, nil
 }
 
@@ -404,8 +432,13 @@ var _ client.AddressUpdater = (*clientsContainer)(nil)
 
 // UpdateAddress implements the [client.AddressUpdater] interface for
 // *clientsContainer
-func (clients *clientsContainer) UpdateAddress(ip netip.Addr, host string, info *whois.Info) {
-	clients.storage.UpdateAddress(ip, host, info)
+func (clients *clientsContainer) UpdateAddress(
+	ctx context.Context,
+	ip netip.Addr,
+	host string,
+	info *whois.Info,
+) {
+	clients.storage.UpdateAddress(ctx, ip, host, info)
 }
 
 // close gracefully closes all the client-specific upstream configurations of

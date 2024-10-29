@@ -14,7 +14,7 @@ import (
 //
 // TODO(a.garipov):  Consider ways to detect this better.
 func NeedsMigration(confFilePath string) (ok bool) {
-	s, err := os.Stat(confFilePath)
+	s, err := aghos.Stat(confFilePath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			// Likely a first run.  Don't check.
@@ -70,7 +70,7 @@ func chmodFile(filePath string) {
 // chmodPath changes the permissions of a single filesystem entity.  The results
 // are logged at the appropriate level.
 func chmodPath(entPath, fileType string, fm fs.FileMode) {
-	err := os.Chmod(entPath, fm)
+	err := aghos.Chmod(entPath, fm)
 	if err == nil {
 		log.Info("permcheck: changed permissions for %s %q", fileType, entPath)
 

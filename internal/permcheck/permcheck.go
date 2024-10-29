@@ -60,7 +60,7 @@ func checkFile(filePath string) {
 // checkPath checks the permissions of a single filesystem entity.  The results
 // are logged at the appropriate level.
 func checkPath(entPath, fileType string, want fs.FileMode) {
-	s, err := os.Stat(entPath)
+	s, err := aghos.Stat(entPath)
 	if err != nil {
 		logFunc := log.Error
 		if errors.Is(err, os.ErrNotExist) {

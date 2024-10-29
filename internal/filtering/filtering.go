@@ -1057,7 +1057,7 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 		}
 	}
 
-	err = os.MkdirAll(filepath.Join(d.conf.DataDir, filterDir), aghos.DefaultPermDir)
+	err = aghos.MkdirAll(filepath.Join(d.conf.DataDir, filterDir), aghos.DefaultPermDir)
 	if err != nil {
 		d.Close()
 

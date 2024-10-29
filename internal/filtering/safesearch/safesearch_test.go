@@ -10,15 +10,15 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
-}
+// testTimeout is the common timeout for tests and contexts.
+const testTimeout = 1 * time.Second
 
 // Common test constants.
 const (
@@ -47,7 +47,13 @@ var yandexIP = netip.AddrFrom4([4]byte{213, 180, 193, 56})
 
 func TestDefault_CheckHost_yandex(t *testing.T) {
 	conf := testConf
-	ss, err := safesearch.NewDefault(conf, "", testCacheSize, testCacheTTL)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	ss, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
+		Logger:         slogutil.NewDiscardLogger(),
+		ServicesConfig: conf,
+		CacheSize:      testCacheSize,
+		CacheTTL:       testCacheTTL,
+	})
 	require.NoError(t, err)
 
 	hosts := []string{
@@ -82,7 +88,7 @@ func TestDefault_CheckHost_yandex(t *testing.T) {
 			for _, host := range hosts {
 				// Check host for each domain.
 				var res filtering.Result
-				res, err = ss.CheckHost(host, tc.qt)
+				res, err = ss.CheckHost(ctx, host, tc.qt)
 				require.NoError(t, err)
 
 				assert.True(t, res.IsFiltered)
@@ -103,7 +109,13 @@ func TestDefault_CheckHost_yandex(t *testing.T) {
 }
 
 func TestDefault_CheckHost_google(t *testing.T) {
-	ss, err := safesearch.NewDefault(testConf, "", testCacheSize, testCacheTTL)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	ss, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
+		Logger:         slogutil.NewDiscardLogger(),
+		ServicesConfig: testConf,
+		CacheSize:      testCacheSize,
+		CacheTTL:       testCacheTTL,
+	})
 	require.NoError(t, err)
 
 	// Check host for each domain.
@@ -118,7 +130,7 @@ func TestDefault_CheckHost_google(t *testing.T) {
 	} {
 		t.Run(host, func(t *testing.T) {
 			var res filtering.Result
-			res, err = ss.CheckHost(host, testQType)
+			res, err = ss.CheckHost(ctx, host, testQType)
 			require.NoError(t, err)
 
 			assert.True(t, res.IsFiltered)
@@ -149,13 +161,19 @@ func (r *testResolver) LookupIP(
 }
 
 func TestDefault_CheckHost_duckduckgoAAAA(t *testing.T) {
-	ss, err := safesearch.NewDefault(testConf, "", testCacheSize, testCacheTTL)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	ss, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
+		Logger:         slogutil.NewDiscardLogger(),
+		ServicesConfig: testConf,
+		CacheSize:      testCacheSize,
+		CacheTTL:       testCacheTTL,
+	})
 	require.NoError(t, err)
 
 	// The DuckDuckGo safe-search addresses are resolved through CNAMEs, but
 	// DuckDuckGo doesn't have a safe-search IPv6 address.  The result should be
 	// the same as the one for Yandex IPv6.  That is, a NODATA response.
-	res, err := ss.CheckHost("www.duckduckgo.com", dns.TypeAAAA)
+	res, err := ss.CheckHost(ctx, "www.duckduckgo.com", dns.TypeAAAA)
 	require.NoError(t, err)
 
 	assert.True(t, res.IsFiltered)
@@ -166,32 +184,38 @@ func TestDefault_CheckHost_duckduckgoAAAA(t *testing.T) {
 
 func TestDefault_Update(t *testing.T) {
 	conf := testConf
-	ss, err := safesearch.NewDefault(conf, "", testCacheSize, testCacheTTL)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	ss, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
+		Logger:         slogutil.NewDiscardLogger(),
+		ServicesConfig: conf,
+		CacheSize:      testCacheSize,
+		CacheTTL:       testCacheTTL,
+	})
 	require.NoError(t, err)
 
-	res, err := ss.CheckHost("www.yandex.com", testQType)
+	res, err := ss.CheckHost(ctx, "www.yandex.com", testQType)
 	require.NoError(t, err)
 
 	assert.True(t, res.IsFiltered)
 
-	err = ss.Update(filtering.SafeSearchConfig{
+	err = ss.Update(ctx, filtering.SafeSearchConfig{
 		Enabled: true,
 		Google:  false,
 	})
 	require.NoError(t, err)
 
-	res, err = ss.CheckHost("www.yandex.com", testQType)
+	res, err = ss.CheckHost(ctx, "www.yandex.com", testQType)
 	require.NoError(t, err)
 
 	assert.False(t, res.IsFiltered)
 
-	err = ss.Update(filtering.SafeSearchConfig{
+	err = ss.Update(ctx, filtering.SafeSearchConfig{
 		Enabled: false,
 		Google:  true,
 	})
 	require.NoError(t, err)
 
-	res, err = ss.CheckHost("www.yandex.com", testQType)
+	res, err = ss.CheckHost(ctx, "www.yandex.com", testQType)
 	require.NoError(t, err)
 
 	assert.False(t, res.IsFiltered)

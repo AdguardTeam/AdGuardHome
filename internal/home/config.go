@@ -708,7 +708,7 @@ func (c *configuration) write() (err error) {
 		return fmt.Errorf("generating config file: %w", err)
 	}
 
-	err = maybe.WriteFile(confPath, buf.Bytes(), aghos.DefaultPermFile)
+	err = aghos.WriteFile(confPath, buf.Bytes(), aghos.DefaultPermFile)
 	if err != nil {
 		return fmt.Errorf("writing config file: %w", err)
 	}
