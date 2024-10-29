@@ -1,5 +1,5 @@
 {
-	"timeUpdated": "2024-09-30T10:04:46.112Z",
+	"timeUpdated": "2024-10-28T10:04:59.054Z",
 	"categories": {
 		"0": "audio_video_player",
 		"1": "comments",
@@ -21872,6 +21872,7 @@
 		"fastly-insights.com": "fastly_insights",
 		"fastly.net": "fastlylb.net",
 		"fastlylb.net": "fastlylb.net",
+		"fastly-edge.com": "fastlylb.net",
 		"fastly-masque.net": "fastlylb.net",
 		"fastpic.ru": "fastpic.ru",
 		"fmpub.net": "federated_media",
