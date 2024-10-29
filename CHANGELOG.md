@@ -25,6 +25,10 @@ See also the [v0.107.54 GitHub milestone][ms-v0.107.54].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Incorrect handling of sensitive files permissions on Windows ([#7314]).
+
 ### Changed
 
 - Improved filtering performance ([#6818]).
@@ -38,6 +42,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#6818]: https://github.com/AdguardTeam/AdGuardHome/issues/6818
 [#7250]: https://github.com/AdguardTeam/AdGuardHome/issues/7250
+[#7314]: https://github.com/AdguardTeam/AdGuardHome/issues/7314
 [#7315]: https://github.com/AdguardTeam/AdGuardHome/issues/7315
 [#7338]: https://github.com/AdguardTeam/AdGuardHome/issues/7338
 

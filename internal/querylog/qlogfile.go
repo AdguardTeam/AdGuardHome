@@ -57,6 +57,7 @@ type qLogFile struct {
 
 // newQLogFile initializes a new instance of the qLogFile.
 func newQLogFile(path string) (qf *qLogFile, err error) {
+	// Don't use [aghos.OpenFile] here, because the file is expected to exist.
 	f, err := os.OpenFile(path, os.O_RDONLY, aghos.DefaultPermFile)
 	if err != nil {
 		return nil, err

@@ -643,7 +643,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	}
 
 	dataDir := Context.getDataDir()
-	err = os.MkdirAll(dataDir, aghos.DefaultPermDir)
+	err = aghos.MkdirAll(dataDir, aghos.DefaultPermDir)
 	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDir))
 
 	GLMode = opts.glinetMode

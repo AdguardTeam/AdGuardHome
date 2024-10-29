@@ -9,7 +9,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/next/configmgr"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/osutil"
-	"github.com/google/renameio/v2/maybe"
 )
 
 // signalHandler processes incoming signals and shuts services down.
@@ -142,7 +141,7 @@ func (h *signalHandler) writePID() {
 	data = strconv.AppendInt(data, int64(os.Getpid()), 10)
 	data = append(data, '\n')
 
-	err := maybe.WriteFile(h.pidFile, data, 0o644)
+	err := aghos.WriteFile(h.pidFile, data, 0o644)
 	if err != nil {
 		log.Error("sighdlr: writing pidfile: %s", err)
 

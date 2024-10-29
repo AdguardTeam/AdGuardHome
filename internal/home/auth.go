@@ -90,7 +90,11 @@ func InitAuth(
 		trustedProxies: trustedProxies,
 	}
 	var err error
-	a.db, err = bbolt.Open(dbFilename, aghos.DefaultPermFile, nil)
+
+	opts := *bbolt.DefaultOptions
+	opts.OpenFile = aghos.OpenFile
+
+	a.db, err = bbolt.Open(dbFilename, aghos.DefaultPermFile, &opts)
 	if err != nil {
 		log.Error("auth: open DB: %s: %s", dbFilename, err)
 		if err.Error() == "invalid argument" {

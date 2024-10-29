@@ -384,7 +384,13 @@ func (s *StatsCtx) openDB() (err error) {
 	s.logger.Debug("opening database")
 
 	var db *bbolt.DB
-	db, err = bbolt.Open(s.filename, aghos.DefaultPermFile, nil)
+
+	opts := *bbolt.DefaultOptions
+	// Use the custom OpenFile function to properly handle access rights on
+	// Windows.
+	opts.OpenFile = aghos.OpenFile
+
+	db, err = bbolt.Open(s.filename, aghos.DefaultPermFile, &opts)
 	if err != nil {
 		if err.Error() == "invalid argument" {
 			const lines = `AdGuard Home cannot be initialized due to an incompatible file system.
