@@ -105,7 +105,7 @@ func NewFilter(c *FilterConfig) (f *Filter, err error) {
 // buffer used to parse information from the data.  cli and maxSize are only
 // used when f is a URL-based list.
 //
-// TODO(a.garipov): Unexport and test in an internal test or through enigne
+// TODO(a.garipov): Unexport and test in an internal test or through engine
 // tests.
 //
 // TODO(a.garipov): Consider not returning parseRes.

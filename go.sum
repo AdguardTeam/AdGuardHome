@@ -1,7 +1,7 @@
 github.com/AdguardTeam/dnsproxy v0.73.3-0.20241004151328-c7c7b977a2a3 h1:IGXwBjdKDzUm007QzZyxSllMnkbdXe7K79x7JWcBW/E=
 github.com/AdguardTeam/dnsproxy v0.73.3-0.20241004151328-c7c7b977a2a3/go.mod h1:356iHROxo+SOdBVifp1MXEh6qHyydtzGCcsQMfx+ZVs=
-github.com/AdguardTeam/golibs v0.30.0 h1:3pTdW1B9GZgqARrA5BvmYlAaEG1zAHI/ReikCDxrhiE=
-github.com/AdguardTeam/golibs v0.30.0/go.mod h1:vjw1OVZG6BYyoqGRY88U4LCJLOMfhBFhU0UJBdaSAuQ=
+github.com/AdguardTeam/golibs v0.30.1 h1:/yv7dq2h7WXw/jTDxkE3FP9zHerRT+i03PZRHJX4fPU=
+github.com/AdguardTeam/golibs v0.30.1/go.mod h1:FkwcNQEJoGsgDGXcalrVa/4gWbE68KsmE2guXWtBQUE=
 github.com/AdguardTeam/urlfilter v0.20.0 h1:X32qiuVCVd8WDYCEsbdZKfXMzwdVqrdulamtUi4rmzs=
 github.com/AdguardTeam/urlfilter v0.20.0/go.mod h1:gjrywLTxfJh6JOkwi9SU+frhP7kVVEZ5exFGkR99qpk=
 github.com/NYTimes/gziphandler v1.1.1 h1:ZUDjpQae29j0ryrS0u/B8HZfJBtBQHjqw2rQ2cqUQ3I=

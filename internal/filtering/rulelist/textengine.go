@@ -20,15 +20,15 @@ type TextEngine struct {
 	// storage is the filtering-rule storage.  It is saved here to close it.
 	storage *filterlist.RuleStorage
 
-	// name is the human-readable name of the engine, like "custom".
+	// name is the human-readable name of the engine.
 	name string
 }
 
 // TextEngineConfig is the configuration for a rule-list filtering engine
 // created from a filtering rule text.
 type TextEngineConfig struct {
-	// Name is the human-readable name of this engine, like "allowed",
-	// "blocked", or "custom".
+	// name is the human-readable name of the engine; see [EngineNameAllow] and
+	// similar constants.
 	Name string
 
 	// Rules is the text of the filtering rules for this engine.

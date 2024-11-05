@@ -23,6 +23,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/ameshkov/dnscrypt/v2"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -371,7 +372,7 @@ func getDNSEncryption() (de dnsEncryption) {
 		}
 
 		de.https = (&url.URL{
-			Scheme: "https",
+			Scheme: urlutil.SchemeHTTPS,
 			Host:   addr,
 			Path:   "/dns-query",
 		}).String()

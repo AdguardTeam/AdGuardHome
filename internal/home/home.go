@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
@@ -42,6 +41,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil"
 )
 
@@ -605,7 +605,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	fatalOnError(errors.Annotate(err, "getting executable path: %w"))
 
 	u := &url.URL{
-		Scheme: "https",
+		Scheme: urlutil.SchemeHTTPS,
 		// TODO(a.garipov): Make configurable.
 		Host: "static.adtidy.org",
 		Path: path.Join("adguardhome", version.Channel(), "version.json"),
@@ -936,12 +936,12 @@ func printHTTPAddresses(proto string) {
 	}
 
 	port := config.HTTPConfig.Address.Port()
-	if proto == aghhttp.SchemeHTTPS {
+	if proto == urlutil.SchemeHTTPS {
 		port = tlsConf.PortHTTPS
 	}
 
 	// TODO(e.burkov): Inspect and perhaps merge with the previous condition.
-	if proto == aghhttp.SchemeHTTPS && tlsConf.ServerName != "" {
+	if proto == urlutil.SchemeHTTPS && tlsConf.ServerName != "" {
 		printWebAddrs(proto, tlsConf.ServerName, tlsConf.PortHTTPS)
 
 		return

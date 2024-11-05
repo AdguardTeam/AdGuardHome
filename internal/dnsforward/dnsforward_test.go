@@ -592,6 +592,8 @@ func TestSafeSearch(t *testing.T) {
 				r, _, errExch := client.Exchange(req, addr)
 				if assert.NoError(c, errExch) {
 					once.Do(func() { reply = r })
+				} else {
+					t.Logf("got error: %v", errExch)
 				}
 			}, testTimeout*10, testTimeout)
 

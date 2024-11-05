@@ -5,7 +5,7 @@ go 1.23.2
 require (
 	// TODO(a.garipov):  Update when v0.73.3 is released.
 	github.com/AdguardTeam/dnsproxy v0.73.3-0.20241004151328-c7c7b977a2a3
-	github.com/AdguardTeam/golibs v0.30.0
+	github.com/AdguardTeam/golibs v0.30.1
 	github.com/AdguardTeam/urlfilter v0.20.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.3.0

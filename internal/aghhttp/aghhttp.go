@@ -14,12 +14,6 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
-// HTTP scheme constants.
-const (
-	SchemeHTTP  = "http"
-	SchemeHTTPS = "https"
-)
-
 // RegisterFunc is the function that sets the handler to handle the URL for the
 // method.
 //

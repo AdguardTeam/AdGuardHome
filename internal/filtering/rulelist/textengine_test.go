@@ -12,6 +12,8 @@ import (
 )
 
 func TestNewTextEngine(t *testing.T) {
+	t.Parallel()
+
 	eng, err := rulelist.NewTextEngine(&rulelist.TextEngineConfig{
 		Name: "RulesEngine",
 		Rules: []string{

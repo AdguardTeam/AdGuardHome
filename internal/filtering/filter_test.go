@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,7 +33,7 @@ func serveHTTPLocally(t *testing.T, h http.Handler) (urlStr string) {
 	require.IsType(t, (*net.TCPAddr)(nil), addr)
 
 	return (&url.URL{
-		Scheme: aghhttp.SchemeHTTP,
+		Scheme: urlutil.SchemeHTTP,
 		Host:   addr.String(),
 	}).String()
 }

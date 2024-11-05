@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/miekg/dns"
@@ -13,6 +14,8 @@ import (
 )
 
 func TestEngine_Refresh(t *testing.T) {
+	t.Parallel()
+
 	cacheDir := t.TempDir()
 
 	fileURL, srvURL := newFilterLocations(t, cacheDir, testRuleTextBlocked, testRuleTextBlocked2)
@@ -21,6 +24,7 @@ func TestEngine_Refresh(t *testing.T) {
 	httpFlt := newFilter(t, srvURL, "HTTP Filter")
 
 	eng := rulelist.NewEngine(&rulelist.EngineConfig{
+		Logger:  slogutil.NewDiscardLogger(),
 		Name:    "Engine",
 		Filters: []*rulelist.Filter{fileFlt, httpFlt},
 	})
