@@ -7,6 +7,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
@@ -240,7 +241,7 @@ func (u *Updater) unpack() error {
 func (u *Updater) check() (err error) {
 	log.Debug("updater: checking configuration")
 
-	err = copyFile(u.confName, filepath.Join(u.updateDir, "AdGuardHome.yaml"))
+	err = copyFile(u.confName, filepath.Join(u.updateDir, "AdGuardHome.yaml"), aghos.DefaultPermFile)
 	if err != nil {
 		return fmt.Errorf("copyFile() failed: %w", err)
 	}
@@ -266,7 +267,7 @@ func (u *Updater) backup(firstRun bool) (err error) {
 	log.Debug("updater: backing up current configuration")
 	_ = aghos.Mkdir(u.backupDir, aghos.DefaultPermDir)
 	if !firstRun {
-		err = copyFile(u.confName, filepath.Join(u.backupDir, "AdGuardHome.yaml"))
+		err = copyFile(u.confName, filepath.Join(u.backupDir, "AdGuardHome.yaml"), aghos.DefaultPermFile)
 		if err != nil {
 			return fmt.Errorf("copyFile() failed: %w", err)
 		}
@@ -296,8 +297,8 @@ func (u *Updater) replace() error {
 	}
 
 	if u.goos == "windows" {
-		// rename fails with "File in use" error
-		err = copyFile(u.updateExeName, u.currentExeName)
+		// Use copy, since renaming fails with "File in use" error.
+		err = copyFile(u.updateExeName, u.currentExeName, aghos.DefaultPermExe)
 	} else {
 		err = os.Rename(u.updateExeName, u.currentExeName)
 	}
@@ -521,15 +522,15 @@ func zipFileUnpack(zipfile, outDir string) (files []string, err error) {
 	return files, err
 }
 
-// Copy file on disk
-func copyFile(src, dst string) (err error) {
+// copyFile copies a file from src to dst with the specified permissions.
+func copyFile(src, dst string, perm fs.FileMode) (err error) {
 	d, err := os.ReadFile(src)
 	if err != nil {
 		// Don't wrap the error, since it's informative enough as is.
 		return err
 	}
 
-	err = aghos.WriteFile(dst, d, aghos.DefaultPermFile)
+	err = aghos.WriteFile(dst, d, perm)
 	if err != nil {
 		// Don't wrap the error, since it's informative enough as is.
 		return err
@@ -538,6 +539,9 @@ func copyFile(src, dst string) (err error) {
 	return nil
 }
 
+// copySupportingFiles copies each file specified in files from srcdir to
+// dstdir.  If a file specified as a path, only the name of the file is used.
+// It skips AdGuardHome, AdGuardHome.exe, and AdGuardHome.yaml.
 func copySupportingFiles(files []string, srcdir, dstdir string) error {
 	for _, f := range files {
 		_, name := filepath.Split(f)
@@ -548,7 +552,7 @@ func copySupportingFiles(files []string, srcdir, dstdir string) error {
 		src := filepath.Join(srcdir, name)
 		dst := filepath.Join(dstdir, name)
 
-		err := copyFile(src, dst)
+		err := copyFile(src, dst, aghos.DefaultPermFile)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}

@@ -20,9 +20,10 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// Default file and directory permissions.
+// Default file, binary, and directory permissions.
 const (
 	DefaultPermDir  fs.FileMode = 0o700
+	DefaultPermExe  fs.FileMode = 0o700
 	DefaultPermFile fs.FileMode = 0o600
 )
 
