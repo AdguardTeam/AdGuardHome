@@ -25,6 +25,10 @@ See also the [v0.107.55 GitHub milestone][ms-v0.107.55].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- The release executables are now signed.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

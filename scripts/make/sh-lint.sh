@@ -22,18 +22,5 @@ fi
 shellcheck -e 'SC2250' -f 'gcc' -o 'all' -x --\
 	./scripts/hooks/*\
 	./scripts/snap/*\
-	./scripts/make/clean.sh\
-	./scripts/make/go-bench.sh\
-	./scripts/make/go-build.sh\
-	./scripts/make/go-deps.sh\
-	./scripts/make/go-fuzz.sh\
-	./scripts/make/go-lint.sh\
-	./scripts/make/go-test.sh\
-	./scripts/make/go-tools.sh\
-	./scripts/make/go-upd-tools.sh\
-	./scripts/make/helper.sh\
-	./scripts/make/md-lint.sh\
-	./scripts/make/sh-lint.sh\
-	./scripts/make/txt-lint.sh\
-	./scripts/make/version.sh\
+	./scripts/make/*\
 	;
