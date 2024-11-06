@@ -1,5 +1,5 @@
 {
-	"timeUpdated": "2024-10-28T10:04:59.054Z",
+	"timeUpdated": "2024-11-06T13:56:52.653Z",
 	"categories": {
 		"0": "audio_video_player",
 		"1": "comments",
@@ -8195,7 +8195,7 @@
 		"google_dns": {
 			"name": "Google DNS",
 			"categoryId": 10,
-			"url": "hhttps://dns.google/",
+			"url": "https://dns.google/",
 			"companyId": "google",
 			"source": "AdGuard"
 		},
@@ -15654,7 +15654,7 @@
 		"shareaholic": {
 			"name": "Shareaholic",
 			"categoryId": 6,
-			"url": "hhttps://www.shareaholic.com/",
+			"url": "https://www.shareaholic.com/",
 			"companyId": "shareaholic"
 		},
 		"shareasale": {

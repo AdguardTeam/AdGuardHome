@@ -238,6 +238,12 @@ export default {
             "homepage": "https://github.com/hagezi/dns-blocklists",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_51.txt"
         },
+        "hagezi_samsung_tracker_blocklist": {
+            "name": "HaGeZi's Samsung Tracker Blocklist",
+            "categoryId": "other",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_61.txt"
+        },
         "hagezi_the_worlds_most_abused_tlds": {
             "name": "HaGeZi's The World's Most Abused TLDs",
             "categoryId": "security",
@@ -255,6 +261,12 @@ export default {
             "categoryId": "general",
             "homepage": "https://github.com/hagezi/dns-blocklists",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_49.txt"
+        },
+        "hagezi_windows_office_tracker_blocklist": {
+            "name": "HaGeZi's Windows/Office Tracker Blocklist",
+            "categoryId": "other",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_63.txt"
         },
         "hagezi_xiaomi_tracking_blocklist": {
             "name": "HaGeZi's Xiaomi Tracker Blocklist",
@@ -346,17 +358,17 @@ export default {
             "homepage": "https://github.com/uBlockOrigin/uAssets",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_50.txt"
         },
+        "ukrainian_security_filter": {
+            "name": "Ukrainian Security Filter",
+            "categoryId": "other",
+            "homepage": "https://github.com/braveinnovators/ukrainian-security-filter",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_62.txt"
+        },
         "urlhaus_filter_online": {
             "name": "Malicious URL Blocklist (URLHaus)",
             "categoryId": "security",
             "homepage": "https://urlhaus.abuse.ch/",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt"
-        },
-        "windowsspyblocker_hosts_spy_rules": {
-            "name": "WindowsSpyBlocker - Hosts spy rules",
-            "categoryId": "other",
-            "homepage": "https://github.com/crazy-max/WindowsSpyBlocker",
-            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_23.txt"
         }
     }
 }
