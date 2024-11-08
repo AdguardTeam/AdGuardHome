@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"fmt"
+	"maps"
 	"slices"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"go.etcd.io/bbolt"
-	"golang.org/x/exp/maps"
 )
 
 const (
@@ -234,18 +234,15 @@ func (a countPair) compareCount(b countPair) (res int) {
 	}
 }
 
-func convertMapToSlice(m map[string]uint64, max int) (s []countPair) {
+func convertMapToSlice(m map[string]uint64, maxVal int) (s []countPair) {
 	s = make([]countPair, 0, len(m))
 	for k, v := range m {
 		s = append(s, countPair{Name: k, Count: v})
 	}
 
 	slices.SortFunc(s, countPair.compareCount)
-	if max > len(s) {
-		max = len(s)
-	}
 
-	return s[:max]
+	return s[:min(maxVal, len(s))]
 }
 
 func convertSliceToMap(a []countPair) (m map[string]uint64) {
@@ -611,9 +608,7 @@ func microsecondsToSeconds(n float64) (r float64) {
 func prepareTopUpstreamsAvgTime(
 	upstreamsAvgTime topAddrsFloat,
 ) (topUpstreamsAvgTime []topAddrsFloat) {
-	keys := maps.Keys(upstreamsAvgTime)
-
-	slices.SortFunc(keys, func(a, b string) (res int) {
+	keys := slices.SortedStableFunc(maps.Keys(upstreamsAvgTime), func(a, b string) (res int) {
 		switch x, y := upstreamsAvgTime[a], upstreamsAvgTime[b]; {
 		case x > y:
 			return -1

@@ -27,7 +27,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Security
 
+- Go version has been updated to prevent the possibility of exploiting the Go
+  vulnerabilities fixed in [1.23.3][go-1.23.3].
+
 - The release executables are now signed.
+
+[go-1.23.3]: https://groups.google.com/g/golang-announce/c/X5KodEJYuqI
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

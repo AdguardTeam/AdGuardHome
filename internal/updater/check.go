@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"slices"
 	"time"
@@ -12,7 +13,6 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/log"
-	"golang.org/x/exp/maps"
 )
 
 // TODO(a.garipov): Make configurable.
@@ -120,8 +120,8 @@ func (u *Updater) downloadURL(versionObj map[string]string) (dlURL, key string, 
 		return dlURL, key, true
 	}
 
-	keys := maps.Keys(versionObj)
-	slices.Sort(keys)
+	keys := slices.Sorted(maps.Keys(versionObj))
+
 	log.Error("updater: key %q not found; got keys %q", key, keys)
 
 	return "", key, false

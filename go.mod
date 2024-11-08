@@ -1,11 +1,10 @@
 module github.com/AdguardTeam/AdGuardHome
 
-go 1.23.2
+go 1.23.3
 
 require (
-	// TODO(a.garipov):  Update when v0.73.3 is released.
-	github.com/AdguardTeam/dnsproxy v0.73.3-0.20241004151328-c7c7b977a2a3
-	github.com/AdguardTeam/golibs v0.30.1
+	github.com/AdguardTeam/dnsproxy v0.73.3
+	github.com/AdguardTeam/golibs v0.30.2
 	github.com/AdguardTeam/urlfilter v0.20.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.3.0
@@ -13,7 +12,7 @@ require (
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500
 	github.com/digineo/go-ipset/v2 v2.2.1
 	github.com/dimfeld/httptreemux/v5 v5.5.0
-	github.com/fsnotify/fsnotify v1.7.0
+	github.com/fsnotify/fsnotify v1.8.0
 	github.com/go-ping/ping v1.1.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/gopacket v1.1.19
@@ -33,10 +32,10 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/ti-mo/netfilter v0.5.2
 	go.etcd.io/bbolt v1.3.11
-	golang.org/x/crypto v0.28.0
+	golang.org/x/crypto v0.29.0
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	golang.org/x/net v0.30.0
-	golang.org/x/sys v0.26.0
+	golang.org/x/sys v0.27.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.1
@@ -49,9 +48,9 @@ require (
 	github.com/beefsack/go-rate v0.0.0-20220214233405-116f4ca011a0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
-	github.com/google/pprof v0.0.0-20241029010322-833c56d90c8e // indirect
+	github.com/google/pprof v0.0.0-20241101162523-b92577c0c142 // indirect
 	github.com/mdlayher/socket v0.5.1 // indirect
-	github.com/onsi/ginkgo/v2 v2.20.2 // indirect
+	github.com/onsi/ginkgo/v2 v2.21.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -59,9 +58,9 @@ require (
 	github.com/quic-go/qpack v0.5.1 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	go.uber.org/mock v0.5.0 // indirect
-	golang.org/x/mod v0.21.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
+	golang.org/x/mod v0.22.0 // indirect
+	golang.org/x/sync v0.9.0 // indirect
+	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/tools v0.26.0 // indirect
 	gonum.org/v1/gonum v0.15.1 // indirect
 )

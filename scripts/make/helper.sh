@@ -8,9 +8,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a remarkable change is made to this script.
 #
-# AdGuard-Project-Version: 3
-
-
+# AdGuard-Project-Version: 4
 
 # Deferred helpers
 
@@ -23,8 +21,7 @@ make sure you have installed the linter binaries using:
 readonly not_found_msg
 
 not_found() {
-	if [ "$?" -eq '127' ]
-	then
+	if [ "$?" -eq '127' ]; then
 		# Code 127 is the exit status a shell uses when a command or a file is
 		# not found, according to the Bash Hackers wiki.
 		#
@@ -33,8 +30,6 @@ not_found() {
 	fi
 }
 trap not_found EXIT
-
-
 
 # Helpers
 
@@ -47,8 +42,7 @@ trap not_found EXIT
 run_linter() (
 	set +e
 
-	if [ "${VERBOSE:-0}" -lt '2' ]
-	then
+	if [ "${VERBOSE:-0}" -lt '2' ]; then
 		set +x
 	fi
 
@@ -56,8 +50,7 @@ run_linter() (
 	shift
 
 	exit_on_output='0'
-	if [ "$cmd" = '-e' ]
-	then
+	if [ "$cmd" = '-e' ]; then
 		exit_on_output='1'
 		cmd="${1:?run_linter: provide a command}"
 		shift
@@ -65,17 +58,15 @@ run_linter() (
 
 	readonly cmd
 
-	output="$( "$cmd" "$@" )"
+	output="$("$cmd" "$@")"
 	exitcode="$?"
 
 	readonly output
 
-	if [ "$output" != '' ]
-	then
+	if [ "$output" != '' ]; then
 		echo "$output" | sed -e "s/^/${cmd}: /"
 
-		if [ "$exitcode" -eq '0' ] && [ "$exit_on_output" -eq '1' ]
-		then
+		if [ "$exitcode" -eq '0' ] && [ "$exit_on_output" -eq '1' ]; then
 			exitcode='1'
 		fi
 	fi

@@ -15,7 +15,7 @@ set -e -f -u
 
 # Require these to be set.  The channel value is validated later.
 channel="${CHANNEL:?please set CHANNEL}"
-commit="${COMMIT:?please set COMMIT}"
+commit="${REVISION:?please set REVISION}"
 dist_dir="${DIST_DIR:?please set DIST_DIR}"
 readonly channel commit dist_dir
 

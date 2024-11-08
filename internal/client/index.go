@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"maps"
 	"net"
 	"net/netip"
 	"slices"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/golibs/errors"
-	"golang.org/x/exp/maps"
 )
 
 // macKey contains MAC as byte array of 6, 8, or 20 bytes.
@@ -330,12 +330,14 @@ func (ci *index) size() (n int) {
 // rangeByName is like [Index.Range] but sorts the persistent clients by name
 // before iterating ensuring a predictable order.
 func (ci *index) rangeByName(f func(c *Persistent) (cont bool)) {
-	cs := maps.Values(ci.uidToClient)
-	slices.SortFunc(cs, func(a, b *Persistent) (n int) {
-		return strings.Compare(a.Name, b.Name)
-	})
+	clients := slices.SortedStableFunc(
+		maps.Values(ci.uidToClient),
+		func(a, b *Persistent) (res int) {
+			return strings.Compare(a.Name, b.Name)
+		},
+	)
 
-	for _, c := range cs {
+	for _, c := range clients {
 		if !f(c) {
 			break
 		}
