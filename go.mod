@@ -4,14 +4,13 @@ go 1.23.3
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.73.3
-	github.com/AdguardTeam/golibs v0.30.2
+	github.com/AdguardTeam/golibs v0.30.3
 	github.com/AdguardTeam/urlfilter v0.20.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.3.0
 	github.com/bluele/gcache v0.0.2
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500
 	github.com/digineo/go-ipset/v2 v2.2.1
-	github.com/dimfeld/httptreemux/v5 v5.5.0
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/go-ping/ping v1.1.0
 	github.com/google/go-cmp v0.6.0

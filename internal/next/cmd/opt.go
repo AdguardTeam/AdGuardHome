@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"context"
 	"encoding"
 	"flag"
 	"fmt"
 	"io"
 	"io/fs"
+	"log/slog"
 	"net/netip"
 	"os"
 	"slices"
@@ -14,7 +16,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/osutil"
 )
 
 // options contains all command-line options for the AdGuardHome(.exe) binary.
@@ -372,13 +374,13 @@ func processOptions(
 ) (exitCode int, needExit bool) {
 	if parseErr != nil {
 		// Assume that usage has already been printed.
-		return statusArgumentError, true
+		return osutil.ExitCodeArgumentError, true
 	}
 
 	if opts.help {
 		usage(cmdName, os.Stdout)
 
-		return statusSuccess, true
+		return osutil.ExitCodeSuccess, true
 	}
 
 	if opts.version {
@@ -388,7 +390,7 @@ func processOptions(
 			fmt.Printf("AdGuard Home %s\n", version.Version())
 		}
 
-		return statusSuccess, true
+		return osutil.ExitCodeSuccess, true
 	}
 
 	if opts.checkConfig {
@@ -396,21 +398,26 @@ func processOptions(
 		if err != nil {
 			_, _ = io.WriteString(os.Stdout, err.Error()+"\n")
 
-			return statusError, true
+			return osutil.ExitCodeFailure, true
 		}
 
-		return statusSuccess, true
+		return osutil.ExitCodeSuccess, true
 	}
 
 	return 0, false
 }
 
 // frontendFromOpts returns the frontend to use based on the options.
-func frontendFromOpts(opts *options, embeddedFrontend fs.FS) (frontend fs.FS, err error) {
+func frontendFromOpts(
+	ctx context.Context,
+	logger *slog.Logger,
+	opts *options,
+	embeddedFrontend fs.FS,
+) (frontend fs.FS, err error) {
 	const frontendSubdir = "build/static"
 
 	if opts.localFrontend {
-		log.Info("warning: using local frontend files")
+		logger.WarnContext(ctx, "using local frontend files")
 
 		return os.DirFS(frontendSubdir), nil
 	}

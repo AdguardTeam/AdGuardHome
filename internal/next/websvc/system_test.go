@@ -20,7 +20,7 @@ func TestService_handleGetV1SystemInfo(t *testing.T) {
 	u := &url.URL{
 		Scheme: urlutil.SchemeHTTP,
 		Host:   addr.String(),
-		Path:   websvc.PathV1SystemInfo,
+		Path:   websvc.PathPatternV1SystemInfo,
 	}
 
 	body := httpGet(t, u, http.StatusOK)

@@ -13,6 +13,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,14 +28,15 @@ func TestService_HandlePatchSettingsHTTP(t *testing.T) {
 	}
 
 	svc, err := websvc.New(&websvc.Config{
+		Logger: slogutil.NewDiscardLogger(),
 		Pprof: &websvc.PprofConfig{
 			Enabled: false,
 		},
 		TLS: &tls.Config{
 			Certificates: []tls.Certificate{{}},
 		},
-		Addresses:       []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:80")},
-		SecureAddresses: []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:443")},
+		Addresses:       []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:0")},
+		SecureAddresses: []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:0")},
 		Timeout:         5 * time.Second,
 		ForceHTTPS:      true,
 	})
@@ -48,7 +50,7 @@ func TestService_HandlePatchSettingsHTTP(t *testing.T) {
 	u := &url.URL{
 		Scheme: urlutil.SchemeHTTP,
 		Host:   addr.String(),
-		Path:   websvc.PathV1SettingsHTTP,
+		Path:   websvc.PathPatternV1SettingsHTTP,
 	}
 
 	req := jobj{

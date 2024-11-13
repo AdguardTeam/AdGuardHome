@@ -58,7 +58,7 @@ func (w *FSWatcher) Add(name string) (err error) {
 
 // ServiceWithConfig is a fake [agh.ServiceWithConfig] implementation for tests.
 type ServiceWithConfig[ConfigType any] struct {
-	OnStart    func() (err error)
+	OnStart    func(ctx context.Context) (err error)
 	OnShutdown func(ctx context.Context) (err error)
 	OnConfig   func() (c ConfigType)
 }
@@ -68,8 +68,8 @@ var _ agh.ServiceWithConfig[struct{}] = (*ServiceWithConfig[struct{}])(nil)
 
 // Start implements the [agh.ServiceWithConfig] interface for
 // *ServiceWithConfig.
-func (s *ServiceWithConfig[_]) Start() (err error) {
-	return s.OnStart()
+func (s *ServiceWithConfig[_]) Start(ctx context.Context) (err error) {
+	return s.OnStart(ctx)
 }
 
 // Shutdown implements the [agh.ServiceWithConfig] interface for

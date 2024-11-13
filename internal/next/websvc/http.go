@@ -10,10 +10,8 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
-
-// HTTP Settings Handlers
 
 // ReqPatchSettingsHTTP describes the request to the PATCH /api/v1/settings/http
 // HTTP API.
@@ -53,6 +51,7 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	newConf := &Config{
+		Logger: svc.logger,
 		Pprof: &PprofConfig{
 			Port:    svc.pprofPort,
 			Enabled: svc.pprof != nil,
@@ -89,13 +88,13 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 // relaunch updates the web service in the configuration manager and starts it.
 // It is intended to be used as a goroutine.
 func (svc *Service) relaunch(ctx context.Context, cancel context.CancelFunc, newConf *Config) {
-	defer log.OnPanic("websvc: relaunching")
+	defer slogutil.RecoverAndLog(ctx, svc.logger)
 
 	defer cancel()
 
 	err := svc.confMgr.UpdateWeb(ctx, newConf)
 	if err != nil {
-		log.Error("websvc: updating web: %s", err)
+		svc.logger.ErrorContext(ctx, "updating web", slogutil.KeyError, err)
 
 		return
 	}
@@ -106,18 +105,18 @@ func (svc *Service) relaunch(ctx context.Context, cancel context.CancelFunc, new
 	var newSvc agh.ServiceWithConfig[*Config]
 	for newSvc = svc.confMgr.Web(); newSvc == svc; {
 		if time.Since(updStart) >= maxUpdDur {
-			log.Error("websvc: failed to update svc after %s", maxUpdDur)
+			svc.logger.ErrorContext(ctx, "failed to update service on time", "duration", maxUpdDur)
 
 			return
 		}
 
-		log.Debug("websvc: waiting for new websvc to be configured")
+		svc.logger.DebugContext(ctx, "waiting for new service")
 
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	err = newSvc.Start()
+	err = newSvc.Start(ctx)
 	if err != nil {
-		log.Error("websvc: new svc failed to start with error: %s", err)
+		svc.logger.ErrorContext(ctx, "new service failed", slogutil.KeyError, err)
 	}
 }

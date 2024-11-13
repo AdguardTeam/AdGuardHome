@@ -4,12 +4,11 @@ package aghos
 
 import (
 	"os"
-	"os/signal"
 
 	"golang.org/x/sys/windows"
 )
 
-func setRlimit(val uint64) (err error) {
+func setRlimit(_ uint64) (err error) {
 	return Unsupported("setrlimit")
 }
 
@@ -36,14 +35,6 @@ func haveAdminRights() (bool, error) {
 
 func isOpenWrt() (ok bool) {
 	return false
-}
-
-func notifyReconfigureSignal(c chan<- os.Signal) {
-	signal.Notify(c, windows.SIGHUP)
-}
-
-func isReconfigureSignal(sig os.Signal) (ok bool) {
-	return sig == windows.SIGHUP
 }
 
 func sendShutdownSignal(c chan<- os.Signal) {

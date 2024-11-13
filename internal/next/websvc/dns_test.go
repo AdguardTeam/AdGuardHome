@@ -35,7 +35,7 @@ func TestService_HandlePatchSettingsDNS(t *testing.T) {
 	confMgr := newConfigManager()
 	confMgr.onDNS = func() (s agh.ServiceWithConfig[*dnssvc.Config]) {
 		return &aghtest.ServiceWithConfig[*dnssvc.Config]{
-			OnStart: func() (err error) {
+			OnStart: func(_ context.Context) (err error) {
 				started.Store(true)
 
 				return nil
@@ -52,7 +52,7 @@ func TestService_HandlePatchSettingsDNS(t *testing.T) {
 	u := &url.URL{
 		Scheme: urlutil.SchemeHTTP,
 		Host:   addr.String(),
-		Path:   websvc.PathV1SettingsDNS,
+		Path:   websvc.PathPatternV1SettingsDNS,
 	}
 
 	req := jobj{

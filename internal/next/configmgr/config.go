@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"net/netip"
 
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/timeutil"
 )
-
-// Configuration Structures
 
 // config is the top-level on-disk configuration structure.
 type config struct {
@@ -19,35 +18,33 @@ type config struct {
 	SchemaVersion int `yaml:"schema_version"`
 }
 
-const errNoConf errors.Error = "configuration not found"
+// type check
+var _ validator = (*config)(nil)
 
-// validate returns an error if the configuration structure is invalid.
+// validate implements the [validator] interface for *config.
 func (c *config) validate() (err error) {
 	if c == nil {
-		return errNoConf
+		return errors.ErrNoValue
 	}
 
 	// TODO(a.garipov): Add more validations.
 
 	// Keep this in the same order as the fields in the config.
-	validators := []struct {
-		validate func() (err error)
-		name     string
-	}{{
-		validate: c.DNS.validate,
-		name:     "dns",
+	validators := container.KeyValues[string, validator]{{
+		Key:   "dns",
+		Value: c.DNS,
 	}, {
-		validate: c.HTTP.validate,
-		name:     "http",
+		Key:   "http",
+		Value: c.HTTP,
 	}, {
-		validate: c.Log.validate,
-		name:     "log",
+		Key:   "log",
+		Value: c.Log,
 	}}
 
-	for _, v := range validators {
-		err = v.validate()
+	for _, kv := range validators {
+		err = kv.Value.validate()
 		if err != nil {
-			return fmt.Errorf("%s: %w", v.name, err)
+			return fmt.Errorf("%s: %w", kv.Key, err)
 		}
 	}
 
@@ -65,16 +62,19 @@ type dnsConfig struct {
 	UseDNS64            bool              `yaml:"use_dns64"`
 }
 
-// validate returns an error if the DNS configuration structure is invalid.
+// type check
+var _ validator = (*dnsConfig)(nil)
+
+// validate implements the [validator] interface for *dnsConfig.
 //
 // TODO(a.garipov): Add more validations.
 func (c *dnsConfig) validate() (err error) {
 	// TODO(a.garipov): Add more validations.
 	switch {
 	case c == nil:
-		return errNoConf
+		return errors.ErrNoValue
 	case c.UpstreamTimeout.Duration <= 0:
-		return newMustBePositiveError("upstream_timeout", c.UpstreamTimeout)
+		return newErrNotPositive("upstream_timeout", c.UpstreamTimeout)
 	default:
 		return nil
 	}
@@ -91,15 +91,18 @@ type httpConfig struct {
 	ForceHTTPS      bool              `yaml:"force_https"`
 }
 
-// validate returns an error if the HTTP configuration structure is invalid.
+// type check
+var _ validator = (*httpConfig)(nil)
+
+// validate implements the [validator] interface for *httpConfig.
 //
 // TODO(a.garipov): Add more validations.
 func (c *httpConfig) validate() (err error) {
 	switch {
 	case c == nil:
-		return errNoConf
+		return errors.ErrNoValue
 	case c.Timeout.Duration <= 0:
-		return newMustBePositiveError("timeout", c.Timeout)
+		return newErrNotPositive("timeout", c.Timeout)
 	default:
 		return c.Pprof.validate()
 	}
@@ -111,10 +114,13 @@ type httpPprofConfig struct {
 	Enabled bool   `yaml:"enabled"`
 }
 
-// validate returns an error if the pprof configuration structure is invalid.
+// type check
+var _ validator = (*httpPprofConfig)(nil)
+
+// validate implements the [validator] interface for *httpPprofConfig.
 func (c *httpPprofConfig) validate() (err error) {
 	if c == nil {
-		return errNoConf
+		return errors.ErrNoValue
 	}
 
 	return nil
@@ -126,12 +132,15 @@ type logConfig struct {
 	Verbose bool `yaml:"verbose"`
 }
 
-// validate returns an error if the HTTP configuration structure is invalid.
+// type check
+var _ validator = (*logConfig)(nil)
+
+// validate implements the [validator] interface for *logConfig.
 //
 // TODO(a.garipov): Add more validations.
 func (c *logConfig) validate() (err error) {
 	if c == nil {
-		return errNoConf
+		return errors.ErrNoValue
 	}
 
 	return nil

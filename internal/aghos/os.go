@@ -146,16 +146,6 @@ func IsOpenWrt() (ok bool) {
 	return isOpenWrt()
 }
 
-// NotifyReconfigureSignal notifies c on receiving reconfigure signals.
-func NotifyReconfigureSignal(c chan<- os.Signal) {
-	notifyReconfigureSignal(c)
-}
-
-// IsReconfigureSignal returns true if sig is a reconfigure signal.
-func IsReconfigureSignal(sig os.Signal) (ok bool) {
-	return isReconfigureSignal(sig)
-}
-
 // SendShutdownSignal sends the shutdown signal to the channel.
 func SendShutdownSignal(c chan<- os.Signal) {
 	sendShutdownSignal(c)

@@ -1,6 +1,7 @@
 package dnssvc
 
 import (
+	"log/slog"
 	"net/netip"
 	"time"
 )
@@ -9,6 +10,10 @@ import (
 //
 // TODO(a.garipov): Add timeout for incoming requests.
 type Config struct {
+	// Logger is used for logging the operation of the web API service.  It must
+	// not be nil.
+	Logger *slog.Logger
+
 	// Addresses are the addresses on which to serve plain DNS queries.
 	Addresses []netip.AddrPort
 
