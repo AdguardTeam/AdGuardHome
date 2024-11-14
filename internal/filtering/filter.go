@@ -593,7 +593,7 @@ func (d *DNSFilter) EnableFilters(async bool) {
 }
 
 func (d *DNSFilter) enableFiltersLocked(async bool) {
-	filters := make([]Filter, 1, len(d.conf.Filters)+len(d.conf.WhitelistFilters)+1)
+	filters := make([]Filter, 1, len(d.conf.Filters)+1)
 	filters[0] = Filter{
 		ID:   rulelist.URLFilterIDCustom,
 		Data: []byte(strings.Join(d.conf.UserRules, "\n")),
@@ -610,7 +610,7 @@ func (d *DNSFilter) enableFiltersLocked(async bool) {
 		})
 	}
 
-	var allowFilters []Filter
+	allowFilters := make([]Filter, 0, len(d.conf.WhitelistFilters))
 	for _, filter := range d.conf.WhitelistFilters {
 		if !filter.Enabled {
 			continue
