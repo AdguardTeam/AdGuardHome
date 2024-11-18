@@ -15,9 +15,9 @@
   'go-lint':
     'runs-on': 'ubuntu-latest'
     'steps':
-    - 'uses': 'actions/checkout@v2'
+    - 'uses': 'actions/checkout@v4'
     - 'name': 'Set up Go'
-      'uses': 'actions/setup-go@v3'
+      'uses': 'actions/setup-go@v5'
       'with':
         'go-version': '${{ env.GO_VERSION }}'
     - 'name': 'run-lint'
@@ -27,7 +27,7 @@
   'eslint':
     'runs-on': 'ubuntu-latest'
     'steps':
-    - 'uses': 'actions/checkout@v2'
+    - 'uses': 'actions/checkout@v4'
     - 'name': 'Install modules'
       'run': 'npm --prefix="./client" ci'
     - 'name': 'Run ESLint'
@@ -54,7 +54,7 @@
     'runs-on': 'ubuntu-latest'
     'steps':
     - 'name': 'Conclusion'
-      'uses': 'technote-space/workflow-conclusion-action@v1'
+      'uses': 'technote-space/workflow-conclusion-action@v3'
     - 'name': 'Send Slack notif'
       'uses': '8398a7/action-slack@v3'
       'with':

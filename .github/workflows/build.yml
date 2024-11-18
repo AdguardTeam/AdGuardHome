@@ -27,19 +27,19 @@
         - 'windows-latest'
     'steps':
     - 'name': 'Checkout'
-      'uses': 'actions/checkout@v2'
+      'uses': 'actions/checkout@v4'
       'with':
         'fetch-depth': 0
     - 'name': 'Set up Go'
-      'uses': 'actions/setup-go@v3'
+      'uses': 'actions/setup-go@v5'
       'with':
         'go-version': '${{ env.GO_VERSION }}'
     - 'name': 'Set up Node'
-      'uses': 'actions/setup-node@v1'
+      'uses': 'actions/setup-node@v4'
       'with':
         'node-version': '${{ env.NODE_VERSION }}'
     - 'name': 'Set up Go modules cache'
-      'uses': 'actions/cache@v2'
+      'uses': 'actions/cache@v4'
       'with':
         'path': '~/go/pkg/mod'
         'key': "${{ runner.os }}-go-${{ hashFiles('go.sum') }}"
@@ -48,7 +48,7 @@
       'id': 'npm-cache'
       'run': 'echo "::set-output name=dir::$( npm config get cache )"'
     - 'name': 'Set up npm cache'
-      'uses': 'actions/cache@v2'
+      'uses': 'actions/cache@v4'
       'with':
         'path': '${{ steps.npm-cache.outputs.dir }}'
         'key': "${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}"
@@ -57,7 +57,7 @@
       'shell': 'bash'
       'run': 'make VERBOSE=1 deps test go-bench go-fuzz'
     - 'name': 'Upload coverage'
-      'uses': 'codecov/codecov-action@v1'
+      'uses': 'codecov/codecov-action@v5'
       'if': "success() && matrix.os == 'ubuntu-latest'"
       'with':
         'token': '${{ secrets.CODECOV_TOKEN }}'
@@ -68,19 +68,19 @@
     'needs': 'test'
     'steps':
     - 'name': 'Checkout'
-      'uses': 'actions/checkout@v2'
+      'uses': 'actions/checkout@v4'
       'with':
         'fetch-depth': 0
     - 'name': 'Set up Go'
-      'uses': 'actions/setup-go@v3'
+      'uses': 'actions/setup-go@v5'
       'with':
         'go-version': '${{ env.GO_VERSION }}'
     - 'name': 'Set up Node'
-      'uses': 'actions/setup-node@v1'
+      'uses': 'actions/setup-node@v4'
       'with':
         'node-version': '${{ env.NODE_VERSION }}'
     - 'name': 'Set up Go modules cache'
-      'uses': 'actions/cache@v2'
+      'uses': 'actions/cache@v4'
       'with':
         'path': '~/go/pkg/mod'
         'key': "${{ runner.os }}-go-${{ hashFiles('go.sum') }}"
@@ -89,7 +89,7 @@
       'id': 'npm-cache'
       'run': 'echo "::set-output name=dir::$(npm config get cache)"'
     - 'name': 'Set up npm cache'
-      'uses': 'actions/cache@v2'
+      'uses': 'actions/cache@v4'
       'with':
         'path': '${{ steps.npm-cache.outputs.dir }}'
         'key': "${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}"
@@ -97,9 +97,9 @@
     - 'name': 'Set up Snapcraft'
       'run': 'sudo snap install snapcraft --classic'
     - 'name': 'Set up QEMU'
-      'uses': 'docker/setup-qemu-action@v1'
+      'uses': 'docker/setup-qemu-action@v3'
     - 'name': 'Set up Docker Buildx'
-      'uses': 'docker/setup-buildx-action@v1'
+      'uses': 'docker/setup-buildx-action@v3'
     - 'name': 'Run snapshot build'
       # Set a custom version string, since the checkout@v2 action does not seem
       # to know about the master branch, while the version script uses it to
@@ -126,7 +126,7 @@
     'runs-on': 'ubuntu-latest'
     'steps':
     - 'name': 'Conclusion'
-      'uses': 'technote-space/workflow-conclusion-action@v1'
+      'uses': 'technote-space/workflow-conclusion-action@v3'
     - 'name': 'Send Slack notif'
       'uses': '8398a7/action-slack@v3'
       'with':
