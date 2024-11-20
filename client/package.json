@@ -17,8 +17,8 @@
     },
     "type": "module",
     "dependencies": {
-        "@nivo/line": "^0.64.0",
-        "axios": "^0.19.2",
+        "@nivo/line": "^0.88.0",
+        "axios": "^0.28.0",
         "classnames": "^2.5.1",
         "countries-and-timezones": "^3.6.0",
         "date-fns": "^1.29.0",
@@ -97,7 +97,7 @@
         "stylelint": "^16.5.0",
         "ts-loader": "^9.5.1",
         "url-loader": "^4.1.1",
-        "webpack": "^5.91.0",
+        "webpack": "^5.94.0",
         "webpack-cli": "^5.1.4",
         "webpack-dev-server": "^5.0.4",
         "webpack-merge": "^5.10.0"
