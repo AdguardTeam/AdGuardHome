@@ -57,7 +57,7 @@
       'shell': 'bash'
       'run': 'make VERBOSE=1 deps test go-bench go-fuzz'
     - 'name': 'Upload coverage'
-      'uses': 'codecov/codecov-action@v1'
+      'uses': 'codecov/codecov-action@v5'
       'if': "success() && matrix.os == 'ubuntu-latest'"
       'with':
         'token': '${{ secrets.CODECOV_TOKEN }}'
