@@ -35,7 +35,7 @@
       'with':
         'go-version': '${{ env.GO_VERSION }}'
     - 'name': 'Set up Node'
-      'uses': 'actions/setup-node@v1'
+      'uses': 'actions/setup-node@v4'
       'with':
         'node-version': '${{ env.NODE_VERSION }}'
     - 'name': 'Set up Go modules cache'
@@ -76,7 +76,7 @@
       'with':
         'go-version': '${{ env.GO_VERSION }}'
     - 'name': 'Set up Node'
-      'uses': 'actions/setup-node@v1'
+      'uses': 'actions/setup-node@v4'
       'with':
         'node-version': '${{ env.NODE_VERSION }}'
     - 'name': 'Set up Go modules cache'
