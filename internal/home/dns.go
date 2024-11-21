@@ -48,11 +48,11 @@ func onConfigModified() {
 // initDNS updates all the fields of the [Context] needed to initialize the DNS
 // server and initializes it at last.  It also must not be called unless
 // [config] and [Context] are initialized.  l must not be nil.
-func initDNS(l *slog.Logger, statsDir, querylogDir string) (err error) {
+func initDNS(baseLogger *slog.Logger, statsDir, querylogDir string) (err error) {
 	anonymizer := config.anonymizer()
 
 	statsConf := stats.Config{
-		Logger:            l.With(slogutil.KeyPrefix, "stats"),
+		Logger:            baseLogger.With(slogutil.KeyPrefix, "stats"),
 		Filename:          filepath.Join(statsDir, "stats.db"),
 		Limit:             config.Stats.Interval.Duration,
 		ConfigModified:    onConfigModified,
@@ -73,6 +73,7 @@ func initDNS(l *slog.Logger, statsDir, querylogDir string) (err error) {
 	}
 
 	conf := querylog.Config{
+		Logger:            baseLogger.With(slogutil.KeyPrefix, "querylog"),
 		Anonymizer:        anonymizer,
 		ConfigModified:    onConfigModified,
 		HTTPRegister:      httpRegister,
@@ -113,7 +114,7 @@ func initDNS(l *slog.Logger, statsDir, querylogDir string) (err error) {
 		anonymizer,
 		httpRegister,
 		tlsConf,
-		l,
+		baseLogger,
 	)
 }
 
@@ -457,7 +458,8 @@ func startDNSServer() error {
 	Context.filters.EnableFilters(false)
 
 	// TODO(s.chzhen):  Pass context.
-	err := Context.clients.Start(context.TODO())
+	ctx := context.TODO()
+	err := Context.clients.Start(ctx)
 	if err != nil {
 		return fmt.Errorf("starting clients container: %w", err)
 	}
@@ -469,7 +471,11 @@ func startDNSServer() error {
 
 	Context.filters.Start()
 	Context.stats.Start()
-	Context.queryLog.Start()
+
+	err = Context.queryLog.Start(ctx)
+	if err != nil {
+		return fmt.Errorf("starting query log: %w", err)
+	}
 
 	return nil
 }
@@ -525,12 +531,16 @@ func closeDNSServer() {
 	if Context.stats != nil {
 		err := Context.stats.Close()
 		if err != nil {
-			log.Debug("closing stats: %s", err)
+			log.Error("closing stats: %s", err)
 		}
 	}
 
 	if Context.queryLog != nil {
-		Context.queryLog.Close()
+		// TODO(s.chzhen):  Pass context.
+		err := Context.queryLog.Shutdown(context.TODO())
+		if err != nil {
+			log.Error("closing query log: %s", err)
+		}
 	}
 
 	log.Debug("all dns modules are closed")

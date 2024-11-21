@@ -2,6 +2,7 @@ package querylog
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
 	"path/filepath"
 	"sync"
@@ -12,20 +13,19 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/service"
 	"github.com/miekg/dns"
 )
 
-// QueryLog - main interface
+// QueryLog is the query log interface for use by other packages.
 type QueryLog interface {
-	Start()
+	// Interface starts and stops the query log.
+	service.Interface
 
-	// Close query log object
-	Close()
-
-	// Add a log entry
+	// Add adds a log entry.
 	Add(params *AddParams)
 
-	// WriteDiskConfig - write configuration
+	// WriteDiskConfig writes the query log configuration to c.
 	WriteDiskConfig(c *Config)
 
 	// ShouldLog returns true if request for the host should be logged.
@@ -36,6 +36,10 @@ type QueryLog interface {
 //
 // Do not alter any fields of this structure after using it.
 type Config struct {
+	// Logger is used for logging the operation of the query log.  It must not
+	// be nil.
+	Logger *slog.Logger
+
 	// Ignored contains the list of host names, which should not be written to
 	// log, and matches them.
 	Ignored *aghnet.IgnoreEngine
@@ -151,6 +155,7 @@ func newQueryLog(conf Config) (l *queryLog, err error) {
 	}
 
 	l = &queryLog{
+		logger:     conf.Logger,
 		findClient: findClient,
 
 		buffer: container.NewRingBuffer[*logEntry](memSize),

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,8 +18,11 @@ func newTestQLogReader(t *testing.T, filesNum, linesNum int) (reader *qLogReader
 
 	testFiles := prepareTestFiles(t, filesNum, linesNum)
 
+	logger := slogutil.NewDiscardLogger()
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
 	// Create the new qLogReader instance.
-	reader, err := newQLogReader(testFiles)
+	reader, err := newQLogReader(ctx, logger, testFiles)
 	require.NoError(t, err)
 
 	assert.NotNil(t, reader)
@@ -73,6 +77,7 @@ func TestQLogReader(t *testing.T) {
 
 func TestQLogReader_Seek(t *testing.T) {
 	r := newTestQLogReader(t, 2, 10000)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	testCases := []struct {
 		want error
@@ -113,7 +118,7 @@ func TestQLogReader_Seek(t *testing.T) {
 			ts, err := time.Parse(time.RFC3339Nano, tc.time)
 			require.NoError(t, err)
 
-			err = r.seekTS(ts.UnixNano())
+			err = r.seekTS(ctx, ts.UnixNano())
 			assert.ErrorIs(t, err, tc.want)
 		})
 	}

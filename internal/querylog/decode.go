@@ -1,6 +1,7 @@
 package querylog
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -13,7 +14,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 )
@@ -174,26 +175,32 @@ var logEntryHandlers = map[string]logEntryHandler{
 }
 
 // decodeResultRuleKey decodes the token of "Rules" type to logEntry struct.
-func decodeResultRuleKey(key string, i int, dec *json.Decoder, ent *logEntry) {
+func (l *queryLog) decodeResultRuleKey(
+	ctx context.Context,
+	key string,
+	i int,
+	dec *json.Decoder,
+	ent *logEntry,
+) {
 	var vToken json.Token
 	switch key {
 	case "FilterListID":
-		ent.Result.Rules, vToken = decodeVTokenAndAddRule(key, i, dec, ent.Result.Rules)
+		ent.Result.Rules, vToken = l.decodeVTokenAndAddRule(ctx, key, i, dec, ent.Result.Rules)
 		if n, ok := vToken.(json.Number); ok {
 			id, _ := n.Int64()
 			ent.Result.Rules[i].FilterListID = rulelist.URLFilterID(id)
 		}
 	case "IP":
-		ent.Result.Rules, vToken = decodeVTokenAndAddRule(key, i, dec, ent.Result.Rules)
+		ent.Result.Rules, vToken = l.decodeVTokenAndAddRule(ctx, key, i, dec, ent.Result.Rules)
 		if ipStr, ok := vToken.(string); ok {
 			if ip, err := netip.ParseAddr(ipStr); err == nil {
 				ent.Result.Rules[i].IP = ip
 			} else {
-				log.Debug("querylog: decoding ipStr value: %s", err)
+				l.logger.DebugContext(ctx, "decoding ip", "value", ipStr, slogutil.KeyError, err)
 			}
 		}
 	case "Text":
-		ent.Result.Rules, vToken = decodeVTokenAndAddRule(key, i, dec, ent.Result.Rules)
+		ent.Result.Rules, vToken = l.decodeVTokenAndAddRule(ctx, key, i, dec, ent.Result.Rules)
 		if s, ok := vToken.(string); ok {
 			ent.Result.Rules[i].Text = s
 		}
@@ -204,7 +211,8 @@ func decodeResultRuleKey(key string, i int, dec *json.Decoder, ent *logEntry) {
 
 // decodeVTokenAndAddRule decodes the "Rules" toke as [filtering.ResultRule]
 // and then adds the decoded object to the slice of result rules.
-func decodeVTokenAndAddRule(
+func (l *queryLog) decodeVTokenAndAddRule(
+	ctx context.Context,
 	key string,
 	i int,
 	dec *json.Decoder,
@@ -215,7 +223,12 @@ func decodeVTokenAndAddRule(
 	vToken, err := dec.Token()
 	if err != nil {
 		if err != io.EOF {
-			log.Debug("decodeResultRuleKey %s err: %s", key, err)
+			l.logger.DebugContext(
+				ctx,
+				"decoding result rule key",
+				"key", key,
+				slogutil.KeyError, err,
+			)
 		}
 
 		return newRules, nil
@@ -230,12 +243,14 @@ func decodeVTokenAndAddRule(
 
 // decodeResultRules parses the dec's tokens into logEntry ent interpreting it
 // as a slice of the result rules.
-func decodeResultRules(dec *json.Decoder, ent *logEntry) {
+func (l *queryLog) decodeResultRules(ctx context.Context, dec *json.Decoder, ent *logEntry) {
+	const msgPrefix = "decoding result rules"
+
 	for {
 		delimToken, err := dec.Token()
 		if err != nil {
 			if err != io.EOF {
-				log.Debug("decodeResultRules err: %s", err)
+				l.logger.DebugContext(ctx, msgPrefix+"; token", slogutil.KeyError, err)
 			}
 
 			return
@@ -244,13 +259,17 @@ func decodeResultRules(dec *json.Decoder, ent *logEntry) {
 		if d, ok := delimToken.(json.Delim); !ok {
 			return
 		} else if d != '[' {
-			log.Debug("decodeResultRules: unexpected delim %q", d)
+			l.logger.DebugContext(
+				ctx,
+				msgPrefix,
+				slogutil.KeyError, newUnexpectedDelimiterError(d),
+			)
 		}
 
-		err = decodeResultRuleToken(dec, ent)
+		err = l.decodeResultRuleToken(ctx, dec, ent)
 		if err != nil {
 			if err != io.EOF && !errors.Is(err, ErrEndOfToken) {
-				log.Debug("decodeResultRules err: %s", err)
+				l.logger.DebugContext(ctx, msgPrefix+"; rule token", slogutil.KeyError, err)
 			}
 
 			return
@@ -259,7 +278,11 @@ func decodeResultRules(dec *json.Decoder, ent *logEntry) {
 }
 
 // decodeResultRuleToken decodes the tokens of "Rules" type to the logEntry ent.
-func decodeResultRuleToken(dec *json.Decoder, ent *logEntry) (err error) {
+func (l *queryLog) decodeResultRuleToken(
+	ctx context.Context,
+	dec *json.Decoder,
+	ent *logEntry,
+) (err error) {
 	i := 0
 	for {
 		var keyToken json.Token
@@ -287,7 +310,7 @@ func decodeResultRuleToken(dec *json.Decoder, ent *logEntry) (err error) {
 			return fmt.Errorf("keyToken is %T (%[1]v) and not string", keyToken)
 		}
 
-		decodeResultRuleKey(key, i, dec, ent)
+		l.decodeResultRuleKey(ctx, key, i, dec, ent)
 	}
 }
 
@@ -296,12 +319,14 @@ func decodeResultRuleToken(dec *json.Decoder, ent *logEntry) (err error) {
 // other occurrences of DNSRewriteResult in the entry since hosts container's
 // rewrites currently has the highest priority along the entire filtering
 // pipeline.
-func decodeResultReverseHosts(dec *json.Decoder, ent *logEntry) {
+func (l *queryLog) decodeResultReverseHosts(ctx context.Context, dec *json.Decoder, ent *logEntry) {
+	const msgPrefix = "decoding result reverse hosts"
+
 	for {
 		itemToken, err := dec.Token()
 		if err != nil {
 			if err != io.EOF {
-				log.Debug("decodeResultReverseHosts err: %s", err)
+				l.logger.DebugContext(ctx, msgPrefix+"; token", slogutil.KeyError, err)
 			}
 
 			return
@@ -315,7 +340,11 @@ func decodeResultReverseHosts(dec *json.Decoder, ent *logEntry) {
 				return
 			}
 
-			log.Debug("decodeResultReverseHosts: unexpected delim %q", v)
+			l.logger.DebugContext(
+				ctx,
+				msgPrefix,
+				slogutil.KeyError, newUnexpectedDelimiterError(v),
+			)
 
 			return
 		case string:
@@ -346,12 +375,14 @@ func decodeResultReverseHosts(dec *json.Decoder, ent *logEntry) {
 
 // decodeResultIPList parses the dec's tokens into logEntry ent interpreting it
 // as the result IP addresses list.
-func decodeResultIPList(dec *json.Decoder, ent *logEntry) {
+func (l *queryLog) decodeResultIPList(ctx context.Context, dec *json.Decoder, ent *logEntry) {
+	const msgPrefix = "decoding result ip list"
+
 	for {
 		itemToken, err := dec.Token()
 		if err != nil {
 			if err != io.EOF {
-				log.Debug("decodeResultIPList err: %s", err)
+				l.logger.DebugContext(ctx, msgPrefix+"; token", slogutil.KeyError, err)
 			}
 
 			return
@@ -365,7 +396,11 @@ func decodeResultIPList(dec *json.Decoder, ent *logEntry) {
 				return
 			}
 
-			log.Debug("decodeResultIPList: unexpected delim %q", v)
+			l.logger.DebugContext(
+				ctx,
+				msgPrefix,
+				slogutil.KeyError, newUnexpectedDelimiterError(v),
+			)
 
 			return
 		case string:
@@ -382,7 +417,14 @@ func decodeResultIPList(dec *json.Decoder, ent *logEntry) {
 
 // decodeResultDNSRewriteResultKey decodes the token of "DNSRewriteResult" type
 // to the logEntry struct.
-func decodeResultDNSRewriteResultKey(key string, dec *json.Decoder, ent *logEntry) {
+func (l *queryLog) decodeResultDNSRewriteResultKey(
+	ctx context.Context,
+	key string,
+	dec *json.Decoder,
+	ent *logEntry,
+) {
+	const msgPrefix = "decoding result dns rewrite result key"
+
 	var err error
 
 	switch key {
@@ -391,7 +433,7 @@ func decodeResultDNSRewriteResultKey(key string, dec *json.Decoder, ent *logEntr
 		vToken, err = dec.Token()
 		if err != nil {
 			if err != io.EOF {
-				log.Debug("decodeResultDNSRewriteResultKey err: %s", err)
+				l.logger.DebugContext(ctx, msgPrefix+"; token", slogutil.KeyError, err)
 			}
 
 			return
@@ -419,7 +461,7 @@ func decodeResultDNSRewriteResultKey(key string, dec *json.Decoder, ent *logEntr
 		// decoding and correct the values.
 		err = dec.Decode(&ent.Result.DNSRewriteResult.Response)
 		if err != nil {
-			log.Debug("decodeResultDNSRewriteResultKey response err: %s", err)
+			l.logger.DebugContext(ctx, msgPrefix+"; response", slogutil.KeyError, err)
 		}
 
 		ent.parseDNSRewriteResultIPs()
@@ -430,12 +472,18 @@ func decodeResultDNSRewriteResultKey(key string, dec *json.Decoder, ent *logEntr
 
 // decodeResultDNSRewriteResult parses the dec's tokens into logEntry ent
 // interpreting it as the result DNSRewriteResult.
-func decodeResultDNSRewriteResult(dec *json.Decoder, ent *logEntry) {
+func (l *queryLog) decodeResultDNSRewriteResult(
+	ctx context.Context,
+	dec *json.Decoder,
+	ent *logEntry,
+) {
+	const msgPrefix = "decoding result dns rewrite result"
+
 	for {
 		key, err := parseKeyToken(dec)
 		if err != nil {
 			if err != io.EOF && !errors.Is(err, ErrEndOfToken) {
-				log.Debug("decodeResultDNSRewriteResult: %s", err)
+				l.logger.DebugContext(ctx, msgPrefix+"; token", slogutil.KeyError, err)
 			}
 
 			return
@@ -445,7 +493,7 @@ func decodeResultDNSRewriteResult(dec *json.Decoder, ent *logEntry) {
 			continue
 		}
 
-		decodeResultDNSRewriteResultKey(key, dec, ent)
+		l.decodeResultDNSRewriteResultKey(ctx, key, dec, ent)
 	}
 }
 
@@ -508,14 +556,16 @@ func parseKeyToken(dec *json.Decoder) (key string, err error) {
 }
 
 // decodeResult decodes a token of "Result" type to logEntry struct.
-func decodeResult(dec *json.Decoder, ent *logEntry) {
+func (l *queryLog) decodeResult(ctx context.Context, dec *json.Decoder, ent *logEntry) {
+	const msgPrefix = "decoding result"
+
 	defer translateResult(ent)
 
 	for {
 		key, err := parseKeyToken(dec)
 		if err != nil {
 			if err != io.EOF && !errors.Is(err, ErrEndOfToken) {
-				log.Debug("decodeResult: %s", err)
+				l.logger.DebugContext(ctx, msgPrefix+"; token", slogutil.KeyError, err)
 			}
 
 			return
@@ -525,10 +575,8 @@ func decodeResult(dec *json.Decoder, ent *logEntry) {
 			continue
 		}
 
-		decHandler, ok := resultDecHandlers[key]
+		ok := l.resultDecHandler(ctx, key, dec, ent)
 		if ok {
-			decHandler(dec, ent)
-
 			continue
 		}
 
@@ -543,7 +591,7 @@ func decodeResult(dec *json.Decoder, ent *logEntry) {
 		}
 
 		if err = handler(val, ent); err != nil {
-			log.Debug("decodeResult handler err: %s", err)
+			l.logger.DebugContext(ctx, msgPrefix+"; handler", slogutil.KeyError, err)
 
 			return
 		}
@@ -636,16 +684,34 @@ var resultHandlers = map[string]logEntryHandler{
 	},
 }
 
-// resultDecHandlers is the map of decode handlers for various keys.
-var resultDecHandlers = map[string]func(dec *json.Decoder, ent *logEntry){
-	"ReverseHosts":     decodeResultReverseHosts,
-	"IPList":           decodeResultIPList,
-	"Rules":            decodeResultRules,
-	"DNSRewriteResult": decodeResultDNSRewriteResult,
+// resultDecHandlers calls a decode handler for key if there is one.
+func (l *queryLog) resultDecHandler(
+	ctx context.Context,
+	name string,
+	dec *json.Decoder,
+	ent *logEntry,
+) (ok bool) {
+	ok = true
+	switch name {
+	case "ReverseHosts":
+		l.decodeResultReverseHosts(ctx, dec, ent)
+	case "IPList":
+		l.decodeResultIPList(ctx, dec, ent)
+	case "Rules":
+		l.decodeResultRules(ctx, dec, ent)
+	case "DNSRewriteResult":
+		l.decodeResultDNSRewriteResult(ctx, dec, ent)
+	default:
+		ok = false
+	}
+
+	return ok
 }
 
 // decodeLogEntry decodes string str to logEntry ent.
-func decodeLogEntry(ent *logEntry, str string) {
+func (l *queryLog) decodeLogEntry(ctx context.Context, ent *logEntry, str string) {
+	const msgPrefix = "decoding log entry"
+
 	dec := json.NewDecoder(strings.NewReader(str))
 	dec.UseNumber()
 
@@ -653,7 +719,7 @@ func decodeLogEntry(ent *logEntry, str string) {
 		keyToken, err := dec.Token()
 		if err != nil {
 			if err != io.EOF {
-				log.Debug("decodeLogEntry err: %s", err)
+				l.logger.DebugContext(ctx, msgPrefix+"; token", slogutil.KeyError, err)
 			}
 
 			return
@@ -665,13 +731,14 @@ func decodeLogEntry(ent *logEntry, str string) {
 
 		key, ok := keyToken.(string)
 		if !ok {
-			log.Debug("decodeLogEntry: keyToken is %T (%[1]v) and not string", keyToken)
+			err = fmt.Errorf("%s: keyToken is %T (%[2]v) and not string", msgPrefix, keyToken)
+			l.logger.DebugContext(ctx, msgPrefix, slogutil.KeyError, err)
 
 			return
 		}
 
 		if key == "Result" {
-			decodeResult(dec, ent)
+			l.decodeResult(ctx, dec, ent)
 
 			continue
 		}
@@ -687,9 +754,14 @@ func decodeLogEntry(ent *logEntry, str string) {
 		}
 
 		if err = handler(val, ent); err != nil {
-			log.Debug("decodeLogEntry handler err: %s", err)
+			l.logger.DebugContext(ctx, msgPrefix+"; handler", slogutil.KeyError, err)
 
 			return
 		}
 	}
+}
+
+// newUnexpectedDelimiterError is a helper for creating informative errors.
+func newUnexpectedDelimiterError(d json.Delim) (err error) {
+	return fmt.Errorf("unexpected delimiter: %q", d)
 }
