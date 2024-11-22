@@ -15,7 +15,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
@@ -506,7 +505,7 @@ func (s *Storage) FindByMAC(mac net.HardwareAddr) (p *Persistent, ok bool) {
 
 // RemoveByName removes persistent client information.  ok is false if no such
 // client exists by that name.
-func (s *Storage) RemoveByName(name string) (ok bool) {
+func (s *Storage) RemoveByName(ctx context.Context, name string) (ok bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -516,7 +515,7 @@ func (s *Storage) RemoveByName(name string) (ok bool) {
 	}
 
 	if err := p.CloseUpstreams(); err != nil {
-		log.Error("client storage: removing client %q: %s", p.Name, err)
+		s.logger.ErrorContext(ctx, "removing client", "name", p.Name, slogutil.KeyError, err)
 	}
 
 	s.index.remove(p)

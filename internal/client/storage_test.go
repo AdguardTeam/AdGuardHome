@@ -735,7 +735,7 @@ func TestStorage_RemoveByName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.want(t, s.RemoveByName(tc.cliName))
+			tc.want(t, s.RemoveByName(ctx, tc.cliName))
 		})
 	}
 
@@ -744,8 +744,8 @@ func TestStorage_RemoveByName(t *testing.T) {
 		err = s.Add(ctx, existingClient)
 		require.NoError(t, err)
 
-		assert.True(t, s.RemoveByName(existingName))
-		assert.False(t, s.RemoveByName(existingName))
+		assert.True(t, s.RemoveByName(ctx, existingName))
+		assert.False(t, s.RemoveByName(ctx, existingName))
 	})
 }
 
