@@ -89,6 +89,12 @@ type options struct {
 	// TODO(a.garipov): Use.
 	performUpdate bool
 
+	// noPermCheck, if true, instructs AdGuard Home to skip checking and
+	// migrating the permissions of its security-sensitive files.
+	//
+	// TODO(e.burkov):  Use.
+	noPermCheck bool
+
 	// verbose, if true, instructs AdGuard Home to enable verbose logging.
 	verbose bool
 
@@ -110,7 +116,8 @@ const (
 	disableUpdateIdx
 	glinetModeIdx
 	helpIdx
-	localFrontend
+	localFrontendIdx
+	noPermCheckIdx
 	performUpdateIdx
 	verboseIdx
 	versionIdx
@@ -214,10 +221,18 @@ var commandLineOptions = []*commandLineOption{
 		valueType:    "",
 	},
 
-	localFrontend: {
+	localFrontendIdx: {
 		defaultValue: false,
 		description:  "Use local frontend directories.",
 		long:         "local-frontend",
+		short:        "",
+		valueType:    "",
+	},
+
+	noPermCheckIdx: {
+		defaultValue: false,
+		description:  "Skip checking the permissions of security-sensitive files.",
+		long:         "no-permcheck",
 		short:        "",
 		valueType:    "",
 	},
@@ -264,7 +279,8 @@ func parseOptions(cmdName string, args []string) (opts *options, err error) {
 		disableUpdateIdx: &opts.disableUpdate,
 		glinetModeIdx:    &opts.glinetMode,
 		helpIdx:          &opts.help,
-		localFrontend:    &opts.localFrontend,
+		localFrontendIdx: &opts.localFrontend,
+		noPermCheckIdx:   &opts.noPermCheck,
 		performUpdateIdx: &opts.performUpdate,
 		verboseIdx:       &opts.verbose,
 		versionIdx:       &opts.version,
