@@ -32,6 +32,14 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The release executables are now signed.
 
+### Added
+
+- The `--no-permcheck` command-line option to disable checking and migration of
+  permissions for the security-sensitive files and directories, which caused
+  issues on Windows ([#7400]).
+
+[#7400]: https://github.com/AdguardTeam/AdGuardHome/issues/7400
+
 [go-1.23.3]: https://groups.google.com/g/golang-announce/c/X5KodEJYuqI
 
 <!--

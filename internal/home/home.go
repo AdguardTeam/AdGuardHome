@@ -159,7 +159,7 @@ func setupContext(opts options) (err error) {
 
 	if Context.firstRun {
 		log.Info("This is the first time AdGuard Home is launched")
-		checkPermissions()
+		checkNetworkPermissions()
 
 		return nil
 	}
@@ -686,16 +686,24 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 		}
 	}
 
-	if permcheck.NeedsMigration(confPath) {
-		permcheck.Migrate(Context.workDir, dataDir, statsDir, querylogDir, confPath)
+	if !opts.noPermCheck {
+		checkPermissions(Context.workDir, confPath, dataDir, statsDir, querylogDir)
 	}
-
-	permcheck.Check(Context.workDir, dataDir, statsDir, querylogDir, confPath)
 
 	Context.web.start()
 
 	// Wait for other goroutines to complete their job.
 	<-done
+}
+
+// checkPermissions checks and migrates permissions of the files and directories
+// used by AdGuard Home, if needed.
+func checkPermissions(workDir, confPath, dataDir, statsDir, querylogDir string) {
+	if permcheck.NeedsMigration(confPath) {
+		permcheck.Migrate(workDir, dataDir, statsDir, querylogDir, confPath)
+	}
+
+	permcheck.Check(workDir, dataDir, statsDir, querylogDir, confPath)
 }
 
 // initUsers initializes context auth module.  Clears config users field.
@@ -757,8 +765,9 @@ func startMods(l *slog.Logger) (err error) {
 	return nil
 }
 
-// Check if the current user permissions are enough to run AdGuard Home
-func checkPermissions() {
+// checkNetworkPermissions checks if the current user permissions are enough to
+// use the required networking functionality.
+func checkNetworkPermissions() {
 	log.Info("Checking if AdGuard Home has necessary permissions")
 
 	if ok, err := aghnet.CanBindPrivilegedPorts(); !ok || err != nil {

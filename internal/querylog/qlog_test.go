@@ -7,6 +7,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
@@ -14,14 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
-}
-
 // TestQueryLog tests adding and loading (with filtering) entries from disk and
 // memory.
 func TestQueryLog(t *testing.T) {
 	l, err := newQueryLog(Config{
+		Logger:      slogutil.NewDiscardLogger(),
 		Enabled:     true,
 		FileEnabled: true,
 		RotationIvl: timeutil.Day,
@@ -30,16 +28,21 @@ func TestQueryLog(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
 	// Add disk entries.
 	addEntry(l, "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	// Write to disk (first file).
-	require.NoError(t, l.flushLogBuffer())
+	require.NoError(t, l.flushLogBuffer(ctx))
+
 	// Start writing to the second file.
-	require.NoError(t, l.rotate())
+	require.NoError(t, l.rotate(ctx))
+
 	// Add disk entries.
 	addEntry(l, "example.org", net.IPv4(1, 1, 1, 2), net.IPv4(2, 2, 2, 2))
 	// Write to disk.
-	require.NoError(t, l.flushLogBuffer())
+	require.NoError(t, l.flushLogBuffer(ctx))
+
 	// Add memory entries.
 	addEntry(l, "test.example.org", net.IPv4(1, 1, 1, 3), net.IPv4(2, 2, 2, 3))
 	addEntry(l, "example.com", net.IPv4(1, 1, 1, 4), net.IPv4(2, 2, 2, 4))
@@ -119,8 +122,9 @@ func TestQueryLog(t *testing.T) {
 			params := newSearchParams()
 			params.searchCriteria = tc.sCr
 
-			entries, _ := l.search(params)
+			entries, _ := l.search(ctx, params)
 			require.Len(t, entries, len(tc.want))
+
 			for _, want := range tc.want {
 				assertLogEntry(t, entries[want.num], want.host, want.answer, want.client)
 			}
@@ -130,6 +134,7 @@ func TestQueryLog(t *testing.T) {
 
 func TestQueryLogOffsetLimit(t *testing.T) {
 	l, err := newQueryLog(Config{
+		Logger:      slogutil.NewDiscardLogger(),
 		Enabled:     true,
 		RotationIvl: timeutil.Day,
 		MemSize:     100,
@@ -142,12 +147,16 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 		firstPageDomain  = "first.example.org"
 		secondPageDomain = "second.example.org"
 	)
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
 	// Add entries to the log.
 	for range entNum {
 		addEntry(l, secondPageDomain, net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	}
 	// Write them to the first file.
-	require.NoError(t, l.flushLogBuffer())
+	require.NoError(t, l.flushLogBuffer(ctx))
+
 	// Add more to the in-memory part of log.
 	for range entNum {
 		addEntry(l, firstPageDomain, net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
@@ -191,8 +200,7 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			params.offset = tc.offset
 			params.limit = tc.limit
-			entries, _ := l.search(params)
-
+			entries, _ := l.search(ctx, params)
 			require.Len(t, entries, tc.wantLen)
 
 			if tc.wantLen > 0 {
@@ -205,6 +213,7 @@ func TestQueryLogOffsetLimit(t *testing.T) {
 
 func TestQueryLogMaxFileScanEntries(t *testing.T) {
 	l, err := newQueryLog(Config{
+		Logger:      slogutil.NewDiscardLogger(),
 		Enabled:     true,
 		FileEnabled: true,
 		RotationIvl: timeutil.Day,
@@ -213,20 +222,21 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
 	const entNum = 10
 	// Add entries to the log.
 	for range entNum {
 		addEntry(l, "example.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 	}
 	// Write them to disk.
-	require.NoError(t, l.flushLogBuffer())
+	require.NoError(t, l.flushLogBuffer(ctx))
 
 	params := newSearchParams()
-
 	for _, maxFileScanEntries := range []int{5, 0} {
 		t.Run(fmt.Sprintf("limit_%d", maxFileScanEntries), func(t *testing.T) {
 			params.maxFileScanEntries = maxFileScanEntries
-			entries, _ := l.search(params)
+			entries, _ := l.search(ctx, params)
 			assert.Len(t, entries, entNum-maxFileScanEntries)
 		})
 	}
@@ -234,6 +244,7 @@ func TestQueryLogMaxFileScanEntries(t *testing.T) {
 
 func TestQueryLogFileDisabled(t *testing.T) {
 	l, err := newQueryLog(Config{
+		Logger:      slogutil.NewDiscardLogger(),
 		Enabled:     true,
 		FileEnabled: false,
 		RotationIvl: timeutil.Day,
@@ -248,8 +259,10 @@ func TestQueryLogFileDisabled(t *testing.T) {
 	addEntry(l, "example3.org", net.IPv4(1, 1, 1, 1), net.IPv4(2, 2, 2, 1))
 
 	params := newSearchParams()
-	ll, _ := l.search(params)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	ll, _ := l.search(ctx, params)
 	require.Len(t, ll, 2)
+
 	assert.Equal(t, "example3.org", ll[0].QHost)
 	assert.Equal(t, "example2.org", ll[1].QHost)
 }

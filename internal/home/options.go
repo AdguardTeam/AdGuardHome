@@ -78,6 +78,10 @@ type options struct {
 	// localFrontend forces AdGuard Home to use the frontend files from disk
 	// rather than the ones that have been compiled into the binary.
 	localFrontend bool
+
+	// noPermCheck disables checking and migration of permissions for the
+	// security-sensitive files.
+	noPermCheck bool
 }
 
 // initCmdLineOpts completes initialization of the global command-line option
@@ -305,6 +309,15 @@ var cmdLineOpts = []cmdLineOpt{{
 	description:     "Run in GL-Inet compatibility mode.",
 	longName:        "glinet",
 	shortName:       "",
+}, {
+	updateWithValue: nil,
+	updateNoValue:   func(o options) (options, error) { o.noPermCheck = true; return o, nil },
+	effect:          nil,
+	serialize:       func(o options) (val string, ok bool) { return "", o.noPermCheck },
+	description: "Skip checking and migration of permissions " +
+		"of security-sensitive files.",
+	longName:  "no-permcheck",
+	shortName: "",
 }, {
 	updateWithValue: nil,
 	updateNoValue:   nil,

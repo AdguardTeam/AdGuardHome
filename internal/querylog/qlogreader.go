@@ -1,12 +1,14 @@
 package querylog
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
 // qLogReader allows reading from multiple query log files in the reverse
@@ -16,6 +18,10 @@ import (
 // pointer to a particular query log file, and to a specific position in this
 // file, and it reads lines in reverse order starting from that position.
 type qLogReader struct {
+	// logger is used for logging the operation of the query log reader.  It
+	// must not be nil.
+	logger *slog.Logger
+
 	// qFiles is an array with the query log files.  The order is from oldest
 	// to newest.
 	qFiles []*qLogFile
@@ -25,7 +31,7 @@ type qLogReader struct {
 }
 
 // newQLogReader initializes a qLogReader instance with the specified files.
-func newQLogReader(files []string) (*qLogReader, error) {
+func newQLogReader(ctx context.Context, logger *slog.Logger, files []string) (*qLogReader, error) {
 	qFiles := make([]*qLogFile, 0)
 
 	for _, f := range files {
@@ -38,7 +44,7 @@ func newQLogReader(files []string) (*qLogReader, error) {
 			// Close what we've already opened.
 			cErr := closeQFiles(qFiles)
 			if cErr != nil {
-				log.Debug("querylog: closing files: %s", cErr)
+				logger.DebugContext(ctx, "closing files", slogutil.KeyError, cErr)
 			}
 
 			return nil, err
@@ -47,16 +53,20 @@ func newQLogReader(files []string) (*qLogReader, error) {
 		qFiles = append(qFiles, q)
 	}
 
-	return &qLogReader{qFiles: qFiles, currentFile: len(qFiles) - 1}, nil
+	return &qLogReader{
+		logger:      logger,
+		qFiles:      qFiles,
+		currentFile: len(qFiles) - 1,
+	}, nil
 }
 
 // seekTS performs binary search of a query log record with the specified
 // timestamp.  If the record is found, it sets qLogReader's position to point
 // to that line, so that the next ReadNext call returned this line.
-func (r *qLogReader) seekTS(timestamp int64) (err error) {
+func (r *qLogReader) seekTS(ctx context.Context, timestamp int64) (err error) {
 	for i := len(r.qFiles) - 1; i >= 0; i-- {
 		q := r.qFiles[i]
-		_, _, err = q.seekTS(timestamp)
+		_, _, err = q.seekTS(ctx, r.logger, timestamp)
 		if err != nil {
 			if errors.Is(err, errTSTooEarly) {
 				// Look at the next file, since we've reached the end of this

@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -36,6 +38,7 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 	}
 
 	l, err := newQueryLog(Config{
+		Logger:            slogutil.NewDiscardLogger(),
 		FindClient:        findClient,
 		BaseDir:           t.TempDir(),
 		RotationIvl:       timeutil.Day,
@@ -45,7 +48,11 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 		AnonymizeClientIP: false,
 	})
 	require.NoError(t, err)
-	t.Cleanup(l.Close)
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+		return l.Shutdown(ctx)
+	})
 
 	q := &dns.Msg{
 		Question: []dns.Question{{
@@ -81,7 +88,7 @@ func TestQueryLog_Search_findClient(t *testing.T) {
 		olderThan: time.Now().Add(10 * time.Second),
 		limit:     3,
 	}
-	entries, _ := l.search(sp)
+	entries, _ := l.search(ctx, sp)
 	assert.Equal(t, 2, findClientCalls)
 
 	require.Len(t, entries, 3)
