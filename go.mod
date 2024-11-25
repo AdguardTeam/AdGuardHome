@@ -28,7 +28,7 @@ require (
 	github.com/mdlayher/raw v0.1.0
 	github.com/miekg/dns v1.1.62
 	github.com/quic-go/quic-go v0.48.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/ti-mo/netfilter v0.5.2
 	go.etcd.io/bbolt v1.3.11
 	golang.org/x/crypto v0.29.0
