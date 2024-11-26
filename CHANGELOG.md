@@ -38,6 +38,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
   permissions for the security-sensitive files and directories, which caused
   issues on Windows ([#7400]).
 
+### Fixed
+
+- Goroutine leak during configuration update resulting in increased response
+  time. ([#6818]).
+
+[#6818]: https://github.com/AdguardTeam/AdGuardHome/issues/6818
 [#7400]: https://github.com/AdguardTeam/AdGuardHome/issues/7400
 
 [go-1.23.3]: https://groups.google.com/g/golang-announce/c/X5KodEJYuqI
