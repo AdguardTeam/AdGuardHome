@@ -75,30 +75,31 @@ func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 // update server.
 func (web *webAPI) requestVersionInfo(resp *versionResponse, recheck bool) (err error) {
 	updater := web.conf.updater
-	for i := 0; i != 3; i++ {
+	for range 3 {
 		resp.VersionInfo, err = updater.VersionInfo(recheck)
-		if err != nil {
-			var terr temporaryError
-			if errors.As(err, &terr) && terr.Temporary() {
-				// Temporary network error.  This case may happen while we're
-				// restarting our DNS server.  Log and sleep for some time.
-				//
-				// See https://github.com/AdguardTeam/AdGuardHome/issues/934.
-				d := time.Duration(i) * time.Second
-				log.Info("update: temp net error: %q; sleeping for %s and retrying", err, d)
-				time.Sleep(d)
+		if err == nil {
+			return nil
+		}
 
-				continue
-			}
+		var terr temporaryError
+		if errors.As(err, &terr) && terr.Temporary() {
+			// Temporary network error.  This case may happen while we're
+			// restarting our DNS server.  Log and sleep for some time.
+			//
+			// See https://github.com/AdguardTeam/AdGuardHome/issues/934.
+			const sleepTime = 2 * time.Second
+
+			log.Info("update: temp net error: %v; sleeping for %s and retrying", err, sleepTime)
+			time.Sleep(sleepTime)
+
+			continue
 		}
 
 		break
 	}
 
 	if err != nil {
-		vcu := updater.VersionCheckURL()
-
-		return fmt.Errorf("getting version info from %s: %w", vcu, err)
+		return fmt.Errorf("getting version info: %w", err)
 	}
 
 	return nil

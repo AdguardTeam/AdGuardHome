@@ -9,8 +9,10 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -21,6 +23,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil/urlutil"
 )
 
 // Updater is the AdGuard Home updater.
@@ -61,9 +64,22 @@ type Updater struct {
 	prevCheckResult VersionInfo
 }
 
+// DefaultVersionURL returns the default URL for the version announcement.
+func DefaultVersionURL() *url.URL {
+	return &url.URL{
+		Scheme: urlutil.SchemeHTTPS,
+		Host:   "static.adtidy.org",
+		Path:   path.Join("adguardhome", version.Channel(), "version.json"),
+	}
+}
+
 // Config is the AdGuard Home updater configuration.
 type Config struct {
 	Client *http.Client
+
+	// VersionCheckURL is URL to the latest version announcement.  It must not
+	// be nil, see [DefaultVersionURL].
+	VersionCheckURL *url.URL
 
 	Version string
 	Channel string
@@ -81,12 +97,9 @@ type Config struct {
 
 	// ExecPath is path to the executable file.
 	ExecPath string
-
-	// VersionCheckURL is url to the latest version announcement.
-	VersionCheckURL string
 }
 
-// NewUpdater creates a new Updater.
+// NewUpdater creates a new Updater.  conf must not be nil.
 func NewUpdater(conf *Config) *Updater {
 	return &Updater{
 		client: conf.Client,
@@ -101,7 +114,7 @@ func NewUpdater(conf *Config) *Updater {
 		confName:        conf.ConfName,
 		workDir:         conf.WorkDir,
 		execPath:        conf.ExecPath,
-		versionCheckURL: conf.VersionCheckURL,
+		versionCheckURL: conf.VersionCheckURL.String(),
 
 		mu: &sync.RWMutex{},
 	}
@@ -165,14 +178,6 @@ func (u *Updater) NewVersion() (nv string) {
 	defer u.mu.RUnlock()
 
 	return u.newVersion
-}
-
-// VersionCheckURL returns the version check URL.
-func (u *Updater) VersionCheckURL() (vcu string) {
-	u.mu.RLock()
-	defer u.mu.RUnlock()
-
-	return u.versionCheckURL
 }
 
 // prepare fills all necessary fields in Updater object.
