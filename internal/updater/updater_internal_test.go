@@ -1,6 +1,7 @@
 package updater
 
 import (
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -45,7 +46,7 @@ func TestUpdater_internal(t *testing.T) {
 	for _, tc := range testCases {
 		exePath := filepath.Join(wd, tc.exeName)
 
-		// start server for returning package file
+		// Start server for returning package file.
 		pkgData, err := os.ReadFile(filepath.Join("testdata", tc.archiveName))
 		require.NoError(t, err)
 
@@ -59,6 +60,9 @@ func TestUpdater_internal(t *testing.T) {
 			ExecPath: exePath,
 			WorkDir:  wd,
 			ConfName: yamlPath,
+			// TODO(e.burkov):  Rewrite the test to use a fake version check
+			// URL with a fake URLs for the package files.
+			VersionCheckURL: &url.URL{},
 		})
 
 		u.newVersion = "v0.103.1"
@@ -72,36 +76,40 @@ func TestUpdater_internal(t *testing.T) {
 
 		u.clean()
 
-		// check backup files
-		d, err := os.ReadFile(filepath.Join(wd, "agh-backup", "AdGuardHome.yaml"))
-		require.NoError(t, err)
+		require.True(t, t.Run("backup", func(t *testing.T) {
+			var d []byte
+			d, err = os.ReadFile(filepath.Join(wd, "agh-backup", "AdGuardHome.yaml"))
+			require.NoError(t, err)
 
-		assert.Equal(t, "AdGuardHome.yaml", string(d))
+			assert.Equal(t, "AdGuardHome.yaml", string(d))
 
-		d, err = os.ReadFile(filepath.Join(wd, "agh-backup", tc.exeName))
-		require.NoError(t, err)
+			d, err = os.ReadFile(filepath.Join(wd, "agh-backup", tc.exeName))
+			require.NoError(t, err)
 
-		assert.Equal(t, tc.exeName, string(d))
+			assert.Equal(t, tc.exeName, string(d))
+		}))
 
-		// check updated files
-		d, err = os.ReadFile(exePath)
-		require.NoError(t, err)
+		require.True(t, t.Run("updated", func(t *testing.T) {
+			var d []byte
+			d, err = os.ReadFile(exePath)
+			require.NoError(t, err)
 
-		assert.Equal(t, "1", string(d))
+			assert.Equal(t, "1", string(d))
 
-		d, err = os.ReadFile(readmePath)
-		require.NoError(t, err)
+			d, err = os.ReadFile(readmePath)
+			require.NoError(t, err)
 
-		assert.Equal(t, "2", string(d))
+			assert.Equal(t, "2", string(d))
 
-		d, err = os.ReadFile(licensePath)
-		require.NoError(t, err)
+			d, err = os.ReadFile(licensePath)
+			require.NoError(t, err)
 
-		assert.Equal(t, "3", string(d))
+			assert.Equal(t, "3", string(d))
 
-		d, err = os.ReadFile(yamlPath)
-		require.NoError(t, err)
+			d, err = os.ReadFile(yamlPath)
+			require.NoError(t, err)
 
-		assert.Equal(t, "AdGuardHome.yaml", string(d))
+			assert.Equal(t, "AdGuardHome.yaml", string(d))
+		}))
 	}
 }

@@ -162,6 +162,12 @@ type configuration struct {
 	// SchemaVersion is the version of the configuration schema.  See
 	// [configmigrate.LastSchemaVersion].
 	SchemaVersion uint `yaml:"schema_version"`
+
+	// UnsafeUseCustomUpdateIndexURL is the URL to the custom update index.
+	//
+	// NOTE: It's only exists for testing purposes and should not be used in
+	// release.
+	UnsafeUseCustomUpdateIndexURL bool `yaml:"unsafe_use_custom_update_index_url,omitempty"`
 }
 
 // httpConfig is a block with HTTP configuration params.

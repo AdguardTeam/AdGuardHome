@@ -101,6 +101,8 @@ type webAPI struct {
 
 // newWebAPI creates a new instance of the web UI and API server.  l must not be
 // nil.
+//
+// TODO(a.garipov):  Return a proper error.
 func newWebAPI(conf *webConfig, l *slog.Logger) (w *webAPI) {
 	log.Info("web: initializing")
 

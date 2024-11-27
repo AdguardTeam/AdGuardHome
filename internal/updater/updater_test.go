@@ -65,7 +65,10 @@ func TestUpdater_Update(t *testing.T) {
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
 
-	versionCheckURL, err := url.JoinPath(srv.URL, versionPath)
+	srvURL, err := url.Parse(srv.URL)
+	require.NoError(t, err)
+
+	versionCheckURL := srvURL.JoinPath(versionPath)
 	require.NoError(t, err)
 
 	u := updater.NewUpdater(&updater.Config{

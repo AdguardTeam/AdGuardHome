@@ -13,6 +13,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/c2h5oh/datasize"
 )
 
 // TODO(a.garipov): Make configurable.
@@ -28,8 +29,9 @@ type VersionInfo struct {
 	CanAutoUpdate aghalg.NullBool `json:"can_autoupdate,omitempty"`
 }
 
-// MaxResponseSize is responses on server's requests maximum length in bytes.
-const MaxResponseSize = 64 * 1024
+// maxVersionRespSize is the maximum length in bytes for version information
+// response.
+const maxVersionRespSize datasize.ByteSize = 64 * datasize.KB
 
 // VersionInfo downloads the latest version information.  If forceRecheck is
 // false and there are cached results, those results are returned.
@@ -51,7 +53,7 @@ func (u *Updater) VersionInfo(forceRecheck bool) (vi VersionInfo, err error) {
 	}
 	defer func() { err = errors.WithDeferred(err, resp.Body.Close()) }()
 
-	r := ioutil.LimitReader(resp.Body, MaxResponseSize)
+	r := ioutil.LimitReader(resp.Body, maxVersionRespSize.Bytes())
 
 	// This use of ReadAll is safe, because we just limited the appropriate
 	// ReadCloser.
