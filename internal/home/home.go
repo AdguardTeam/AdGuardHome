@@ -726,7 +726,7 @@ func newUpdater(
 	}
 
 	err := urlutil.ValidateHTTPURL(versionURL)
-	if customURL = err == nil; customURL {
+	if customURL = err == nil; !customURL {
 		l.DebugContext(ctx, "parsing custom version url", slogutil.KeyError, err)
 
 		versionURL = updater.DefaultVersionURL()
