@@ -40,10 +40,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Goroutine leak during the upstream DNS server test ([#7357]).
 - Goroutine leak during configuration update resulting in increased response
-  time. ([#6818]).
+  time ([#6818]).
 
 [#6818]: https://github.com/AdguardTeam/AdGuardHome/issues/6818
+[#7357]: https://github.com/AdguardTeam/AdGuardHome/issues/7357
 [#7400]: https://github.com/AdguardTeam/AdGuardHome/issues/7400
 
 [go-1.23.3]: https://groups.google.com/g/golang-announce/c/X5KodEJYuqI
