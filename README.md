@@ -114,7 +114,7 @@ If you're running **Linux,** there's a secure and easy way to install AdGuard Ho
 
 [Docker Hub]: https://hub.docker.com/r/adguard/adguardhome
 [Snap Store]: https://snapcraft.io/adguard-home
-[wiki-start]: https://github.com/AdguardTeam/AdGuardHome/wiki/Getting-Started
+[wiki-start]: https://adguard-dns.io/kb/adguard-home/getting-started/
 
 ### <a href="#guides" id="guides" name="guides">Guides</a>
 
