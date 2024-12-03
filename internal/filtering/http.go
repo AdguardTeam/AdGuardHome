@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -27,7 +26,7 @@ func (d *DNSFilter) validateFilterURL(urlStr string) (err error) {
 
 	if filepath.IsAbs(urlStr) {
 		urlStr = filepath.Clean(urlStr)
-		_, err = aghos.Stat(urlStr)
+		_, err = os.Stat(urlStr)
 		if err != nil {
 			// Don't wrap the error since it's informative enough as is.
 			return err

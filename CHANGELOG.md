@@ -27,6 +27,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Security
 
+- The permission check and migration on Windows has been fixed to use the
+  Windows security model more accurately ([#7400]).
+
 - Go version has been updated to prevent the possibility of exploiting the Go
   vulnerabilities fixed in [1.23.3][go-1.23.3].
 

@@ -645,7 +645,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	}
 
 	dataDir := Context.getDataDir()
-	err = aghos.MkdirAll(dataDir, aghos.DefaultPermDir)
+	err = os.MkdirAll(dataDir, aghos.DefaultPermDir)
 	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDir))
 
 	GLMode = opts.glinetMode
@@ -689,7 +689,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	}
 
 	if !opts.noPermCheck {
-		checkPermissions(Context.workDir, confPath, dataDir, statsDir, querylogDir)
+		checkPermissions(ctx, slogLogger, Context.workDir, confPath, dataDir, statsDir, querylogDir)
 	}
 
 	Context.web.start()
@@ -751,12 +751,22 @@ func newUpdater(
 
 // checkPermissions checks and migrates permissions of the files and directories
 // used by AdGuard Home, if needed.
-func checkPermissions(workDir, confPath, dataDir, statsDir, querylogDir string) {
-	if permcheck.NeedsMigration(confPath) {
-		permcheck.Migrate(workDir, dataDir, statsDir, querylogDir, confPath)
+func checkPermissions(
+	ctx context.Context,
+	baseLogger *slog.Logger,
+	workDir string,
+	confPath string,
+	dataDir string,
+	statsDir string,
+	querylogDir string,
+) {
+	l := baseLogger.With(slogutil.KeyPrefix, "permcheck")
+
+	if permcheck.NeedsMigration(ctx, l, workDir, confPath) {
+		permcheck.Migrate(ctx, l, workDir, dataDir, statsDir, querylogDir, confPath)
 	}
 
-	permcheck.Check(workDir, dataDir, statsDir, querylogDir, confPath)
+	permcheck.Check(ctx, l, workDir, dataDir, statsDir, querylogDir, confPath)
 }
 
 // initUsers initializes context auth module.  Clears config users field.

@@ -91,10 +91,7 @@ func InitAuth(
 	}
 	var err error
 
-	opts := *bbolt.DefaultOptions
-	opts.OpenFile = aghos.OpenFile
-
-	a.db, err = bbolt.Open(dbFilename, aghos.DefaultPermFile, &opts)
+	a.db, err = bbolt.Open(dbFilename, aghos.DefaultPermFile, nil)
 	if err != nil {
 		log.Error("auth: open DB: %s: %s", dbFilename, err)
 		if err.Error() == "invalid argument" {

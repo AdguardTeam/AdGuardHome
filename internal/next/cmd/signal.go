@@ -8,12 +8,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/configmgr"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/service"
+	"github.com/google/renameio/v2/maybe"
 )
 
 // signalHandler processes incoming signals and shuts services down.
@@ -84,7 +84,7 @@ func (h *signalHandler) writePID(ctx context.Context) {
 	data := strconv.AppendInt(nil, int64(pid), 10)
 	data = append(data, '\n')
 
-	err := aghos.WriteFile(h.pidFile, data, 0o644)
+	err := maybe.WriteFile(h.pidFile, data, 0o644)
 	if err != nil {
 		h.logger.ErrorContext(ctx, "writing pidfile", slogutil.KeyError, err)
 

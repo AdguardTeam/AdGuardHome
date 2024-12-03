@@ -83,7 +83,7 @@ func (l *queryLog) flushToFile(ctx context.Context, b *bytes.Buffer) (err error)
 
 	filename := l.logFile
 
-	f, err := aghos.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, aghos.DefaultPermFile)
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, aghos.DefaultPermFile)
 	if err != nil {
 		return fmt.Errorf("creating file %q: %w", filename, err)
 	}

@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/google/renameio/v2/maybe"
 	"gopkg.in/yaml.v3"
 )
 
@@ -203,7 +204,7 @@ func (m *Manager) write(ctx context.Context) (err error) {
 		return fmt.Errorf("encoding: %w", err)
 	}
 
-	err = aghos.WriteFile(m.fileName, b, aghos.DefaultPermFile)
+	err = maybe.WriteFile(m.fileName, b, aghos.DefaultPermFile)
 	if err != nil {
 		return fmt.Errorf("writing: %w", err)
 	}

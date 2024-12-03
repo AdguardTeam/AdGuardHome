@@ -62,8 +62,8 @@ set -f -u
 # NOTE:  Flag -H for grep is non-POSIX but all of Busybox, GNU, macOS, and
 # OpenBSD support it.
 #
-# NOTE:  Exclude the permission_windows.go, because it requires unsafe for the
-# OS APIs.
+# NOTE:  Exclude the security_windows.go, because it requires unsafe for the OS
+# APIs.
 #
 # TODO(a.garipov): Add golibs/log.
 blocklist_imports() {
@@ -72,7 +72,7 @@ blocklist_imports() {
 		-name '*.go' \
 		'!' '(' \
 		-name '*.pb.go' \
-		-o -path './internal/aghos/permission_windows.go' \
+		-o -path './internal/permcheck/security_windows.go' \
 		')' \
 		-exec \
 		'grep' \

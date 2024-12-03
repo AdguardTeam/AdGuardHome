@@ -270,7 +270,7 @@ func (u *Updater) check() (err error) {
 // ignores the configuration file if firstRun is true.
 func (u *Updater) backup(firstRun bool) (err error) {
 	log.Debug("updater: backing up current configuration")
-	_ = aghos.Mkdir(u.backupDir, aghos.DefaultPermDir)
+	_ = os.Mkdir(u.backupDir, aghos.DefaultPermDir)
 	if !firstRun {
 		err = copyFile(u.confName, filepath.Join(u.backupDir, "AdGuardHome.yaml"), aghos.DefaultPermFile)
 		if err != nil {
@@ -344,10 +344,10 @@ func (u *Updater) downloadPackageFile() (err error) {
 		return fmt.Errorf("io.ReadAll() failed: %w", err)
 	}
 
-	_ = aghos.Mkdir(u.updateDir, aghos.DefaultPermDir)
+	_ = os.Mkdir(u.updateDir, aghos.DefaultPermDir)
 
 	log.Debug("updater: saving package to file")
-	err = aghos.WriteFile(u.packageName, body, aghos.DefaultPermFile)
+	err = os.WriteFile(u.packageName, body, aghos.DefaultPermFile)
 	if err != nil {
 		return fmt.Errorf("writing package file: %w", err)
 	}
@@ -360,7 +360,7 @@ func tarGzFileUnpackOne(outDir string, tr *tar.Reader, hdr *tar.Header) (name st
 		return "", nil
 	}
 
-	outputName := filepath.Join(outDir, name)
+	outName := filepath.Join(outDir, name)
 
 	if hdr.Typeflag == tar.TypeDir {
 		if name == "AdGuardHome" {
@@ -372,12 +372,12 @@ func tarGzFileUnpackOne(outDir string, tr *tar.Reader, hdr *tar.Header) (name st
 			return "", nil
 		}
 
-		err = aghos.Mkdir(outputName, os.FileMode(hdr.Mode&0o755))
+		err = os.Mkdir(outName, os.FileMode(hdr.Mode&0o755))
 		if err != nil && !errors.Is(err, os.ErrExist) {
-			return "", fmt.Errorf("creating directory %q: %w", outputName, err)
+			return "", fmt.Errorf("creating directory %q: %w", outName, err)
 		}
 
-		log.Debug("updater: created directory %q", outputName)
+		log.Debug("updater: created directory %q", outName)
 
 		return "", nil
 	}
@@ -389,13 +389,9 @@ func tarGzFileUnpackOne(outDir string, tr *tar.Reader, hdr *tar.Header) (name st
 	}
 
 	var wc io.WriteCloser
-	wc, err = aghos.OpenFile(
-		outputName,
-		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
-		os.FileMode(hdr.Mode&0o755),
-	)
+	wc, err = os.OpenFile(outName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(hdr.Mode)&0o755)
 	if err != nil {
-		return "", fmt.Errorf("os.OpenFile(%s): %w", outputName, err)
+		return "", fmt.Errorf("os.OpenFile(%s): %w", outName, err)
 	}
 	defer func() { err = errors.WithDeferred(err, wc.Close()) }()
 
@@ -404,7 +400,7 @@ func tarGzFileUnpackOne(outDir string, tr *tar.Reader, hdr *tar.Header) (name st
 		return "", fmt.Errorf("io.Copy(): %w", err)
 	}
 
-	log.Debug("updater: created file %q", outputName)
+	log.Debug("updater: created file %q", outName)
 
 	return name, nil
 }
@@ -474,7 +470,7 @@ func zipFileUnpackOne(outDir string, zf *zip.File) (name string, err error) {
 			return "", nil
 		}
 
-		err = aghos.Mkdir(outputName, fi.Mode())
+		err = os.Mkdir(outputName, fi.Mode())
 		if err != nil && !errors.Is(err, os.ErrExist) {
 			return "", fmt.Errorf("creating directory %q: %w", outputName, err)
 		}
@@ -485,7 +481,7 @@ func zipFileUnpackOne(outDir string, zf *zip.File) (name string, err error) {
 	}
 
 	var wc io.WriteCloser
-	wc, err = aghos.OpenFile(outputName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fi.Mode())
+	wc, err = os.OpenFile(outputName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fi.Mode())
 	if err != nil {
 		return "", fmt.Errorf("os.OpenFile(): %w", err)
 	}
@@ -535,7 +531,7 @@ func copyFile(src, dst string, perm fs.FileMode) (err error) {
 		return err
 	}
 
-	err = aghos.WriteFile(dst, d, perm)
+	err = os.WriteFile(dst, d, perm)
 	if err != nil {
 		// Don't wrap the error, since it's informative enough as is.
 		return err
