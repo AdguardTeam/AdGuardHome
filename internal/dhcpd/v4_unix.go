@@ -18,9 +18,11 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
-	"github.com/go-ping/ping"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
+
+	//lint:ignore SA1019 See the TODO in go.mod.
+	"github.com/go-ping/ping"
 )
 
 // v4Server is a DHCPv4 server.

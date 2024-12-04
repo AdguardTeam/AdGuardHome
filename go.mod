@@ -1,10 +1,10 @@
 module github.com/AdguardTeam/AdGuardHome
 
-go 1.23.3
+go 1.23.4
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.73.4
-	github.com/AdguardTeam/golibs v0.30.4
+	github.com/AdguardTeam/golibs v0.30.5
 	github.com/AdguardTeam/urlfilter v0.20.0
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ameshkov/dnscrypt/v2 v2.3.0
@@ -12,7 +12,9 @@ require (
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500
 	github.com/digineo/go-ipset/v2 v2.2.1
 	github.com/fsnotify/fsnotify v1.8.0
-	github.com/go-ping/ping v1.1.0
+	// TODO(e.burkov): This package is deprecated; find a new one or use our
+	// own code for that.  Perhaps, use gopacket.
+	github.com/go-ping/ping v1.2.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/gopacket v1.1.19
 	github.com/google/renameio/v2 v2.0.0
@@ -27,14 +29,14 @@ require (
 	// own code for that.  Perhaps, use gopacket.
 	github.com/mdlayher/raw v0.1.0
 	github.com/miekg/dns v1.1.62
-	github.com/quic-go/quic-go v0.48.1
-	github.com/stretchr/testify v1.9.0
+	github.com/quic-go/quic-go v0.48.2
+	github.com/stretchr/testify v1.10.0
 	github.com/ti-mo/netfilter v0.5.2
 	go.etcd.io/bbolt v1.3.11
 	golang.org/x/crypto v0.29.0
-	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
-	golang.org/x/net v0.30.0
-	golang.org/x/sys v0.27.0
+	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f
+	golang.org/x/net v0.31.0
+	golang.org/x/sys v0.28.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.1
@@ -60,6 +62,6 @@ require (
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/sync v0.9.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
-	golang.org/x/tools v0.26.0 // indirect
+	golang.org/x/tools v0.27.0 // indirect
 	gonum.org/v1/gonum v0.15.1 // indirect
 )
