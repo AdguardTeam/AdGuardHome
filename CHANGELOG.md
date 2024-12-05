@@ -27,7 +27,7 @@ See also the [v0.107.56 GitHub milestone][ms-v0.107.56].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
-## [v0.107.55] - 2024-12-05
+## [v0.107.55] - 2024-12-10
 
 See also the [v0.107.55 GitHub milestone][ms-v0.107.55].
 
