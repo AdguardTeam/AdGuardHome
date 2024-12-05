@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,6 +25,7 @@ func prepareTestFile(t *testing.T, dir string, linesNum int) (name string) {
 
 	f, err := os.CreateTemp(dir, "*.txt")
 	require.NoError(t, err)
+
 	// Use defer and not t.Cleanup to make sure that the file is closed
 	// after this function is done.
 	defer func() {
@@ -108,6 +110,7 @@ func TestQLogFile_ReadNext(t *testing.T) {
 			// Calculate the expected position.
 			fileInfo, err := q.file.Stat()
 			require.NoError(t, err)
+
 			var expPos int64
 			if expPos = fileInfo.Size(); expPos > 0 {
 				expPos--
@@ -129,6 +132,7 @@ func TestQLogFile_ReadNext(t *testing.T) {
 			}
 
 			require.Equal(t, io.EOF, err)
+
 			assert.Equal(t, tc.linesNum, read)
 		})
 	}
@@ -145,6 +149,9 @@ func TestQLogFile_SeekTS_good(t *testing.T) {
 		name: "small",
 		num:  10,
 	}}
+
+	logger := slogutil.NewDiscardLogger()
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	for _, l := range linesCases {
 		testCases := []struct {
@@ -171,16 +178,19 @@ func TestQLogFile_SeekTS_good(t *testing.T) {
 			t.Run(l.name+"_"+tc.name, func(t *testing.T) {
 				line, err := getQLogFileLine(q, tc.line)
 				require.NoError(t, err)
-				ts := readQLogTimestamp(line)
+
+				ts := readQLogTimestamp(ctx, logger, line)
 				assert.NotEqualValues(t, 0, ts)
 
 				// Try seeking to that line now.
-				pos, _, err := q.seekTS(ts)
+				pos, _, err := q.seekTS(ctx, logger, ts)
 				require.NoError(t, err)
+
 				assert.NotEqualValues(t, 0, pos)
 
 				testLine, err := q.ReadNext()
 				require.NoError(t, err)
+
 				assert.Equal(t, line, testLine)
 			})
 		}
@@ -198,6 +208,9 @@ func TestQLogFile_SeekTS_bad(t *testing.T) {
 		name: "small",
 		num:  10,
 	}}
+
+	logger := slogutil.NewDiscardLogger()
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	for _, l := range linesCases {
 		testCases := []struct {
@@ -221,14 +234,14 @@ func TestQLogFile_SeekTS_bad(t *testing.T) {
 
 		line, err := getQLogFileLine(q, l.num/2)
 		require.NoError(t, err)
-		testCases[2].ts = readQLogTimestamp(line) - 1
 
+		testCases[2].ts = readQLogTimestamp(ctx, logger, line) - 1
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				assert.NotEqualValues(t, 0, tc.ts)
 
 				var depth int
-				_, depth, err = q.seekTS(tc.ts)
+				_, depth, err = q.seekTS(ctx, logger, tc.ts)
 				assert.NotEmpty(t, l.num)
 				require.Error(t, err)
 
@@ -262,11 +275,13 @@ func TestQLogFile(t *testing.T) {
 	// Seek to the start.
 	pos, err := q.SeekStart()
 	require.NoError(t, err)
+
 	assert.Greater(t, pos, int64(0))
 
 	// Read first line.
 	line, err := q.ReadNext()
 	require.NoError(t, err)
+
 	assert.Contains(t, line, "0.0.0.2")
 	assert.True(t, strings.HasPrefix(line, "{"), line)
 	assert.True(t, strings.HasSuffix(line, "}"), line)
@@ -274,6 +289,7 @@ func TestQLogFile(t *testing.T) {
 	// Read second line.
 	line, err = q.ReadNext()
 	require.NoError(t, err)
+
 	assert.EqualValues(t, 0, q.position)
 	assert.Contains(t, line, "0.0.0.1")
 	assert.True(t, strings.HasPrefix(line, "{"), line)
@@ -282,12 +298,14 @@ func TestQLogFile(t *testing.T) {
 	// Try reading again (there's nothing to read anymore).
 	line, err = q.ReadNext()
 	require.Equal(t, io.EOF, err)
+
 	assert.Empty(t, line)
 }
 
 func newTestQLogFileData(t *testing.T, data string) (file *qLogFile) {
 	f, err := os.CreateTemp(t.TempDir(), "*.txt")
 	require.NoError(t, err)
+
 	testutil.CleanupAndRequireSuccess(t, f.Close)
 
 	_, err = f.WriteString(data)
@@ -295,6 +313,7 @@ func newTestQLogFileData(t *testing.T, data string) (file *qLogFile) {
 
 	file, err = newQLogFile(f.Name())
 	require.NoError(t, err)
+
 	testutil.CleanupAndRequireSuccess(t, file.Close)
 
 	return file
@@ -307,6 +326,9 @@ func TestQLog_Seek(t *testing.T) {
 		`{"T":"` + strV + `"}` + nl +
 		`{"T":"` + strV + `"}` + nl
 	timestamp, _ := time.Parse(time.RFC3339Nano, "2020-08-31T18:44:25.376690873+03:00")
+
+	logger := slogutil.NewDiscardLogger()
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	testCases := []struct {
 		wantErr   error
@@ -340,8 +362,10 @@ func TestQLog_Seek(t *testing.T) {
 
 			q := newTestQLogFileData(t, data)
 
-			_, depth, err := q.seekTS(timestamp.Add(time.Second * time.Duration(tc.delta)).UnixNano())
+			ts := timestamp.Add(time.Second * time.Duration(tc.delta)).UnixNano()
+			_, depth, err := q.seekTS(ctx, logger, ts)
 			require.Truef(t, errors.Is(err, tc.wantErr), "%v", err)
+
 			assert.Equal(t, tc.wantDepth, depth)
 		})
 	}

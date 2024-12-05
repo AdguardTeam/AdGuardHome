@@ -11,13 +11,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/httputil"
+	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/NYTimes/gziphandler"
 	"github.com/quic-go/quic-go/http3"
 	"golang.org/x/net/http2"
@@ -101,6 +101,8 @@ type webAPI struct {
 
 // newWebAPI creates a new instance of the web UI and API server.  l must not be
 // nil.
+//
+// TODO(a.garipov):  Return a proper error.
 func newWebAPI(conf *webConfig, l *slog.Logger) (w *webAPI) {
 	log.Info("web: initializing")
 
@@ -192,7 +194,7 @@ func (web *webAPI) start() {
 
 	// this loop is used as an ability to change listening host and/or port
 	for !web.httpsServer.inShutdown {
-		printHTTPAddresses(aghhttp.SchemeHTTP)
+		printHTTPAddresses(urlutil.SchemeHTTP)
 		errs := make(chan error, 2)
 
 		// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
@@ -286,7 +288,7 @@ func (web *webAPI) tlsServerLoop() {
 			WriteTimeout:      web.conf.WriteTimeout,
 		}
 
-		printHTTPAddresses(aghhttp.SchemeHTTPS)
+		printHTTPAddresses(urlutil.SchemeHTTPS)
 
 		if web.conf.serveHTTP3 {
 			go web.mustStartHTTP3(addr)

@@ -1,7 +1,6 @@
 package websvc_test
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"net/http"
 	"net/netip"
@@ -13,6 +12,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,16 +29,10 @@ func TestService_HandleGetSettingsAll(t *testing.T) {
 		BootstrapPreferIPv6: true,
 	}
 
-	wantWeb := &websvc.HTTPAPIHTTPSettings{
-		Addresses:       []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:80")},
-		SecureAddresses: []netip.AddrPort{netip.MustParseAddrPort("127.0.0.1:443")},
-		Timeout:         aghhttp.JSONDuration(5 * time.Second),
-		ForceHTTPS:      true,
-	}
-
 	confMgr := newConfigManager()
 	confMgr.onDNS = func() (s agh.ServiceWithConfig[*dnssvc.Config]) {
 		c, err := dnssvc.New(&dnssvc.Config{
+			Logger:              slogutil.NewDiscardLogger(),
 			Addresses:           wantDNS.Addresses,
 			UpstreamServers:     wantDNS.UpstreamServers,
 			BootstrapServers:    wantDNS.BootstrapServers,
@@ -49,34 +44,27 @@ func TestService_HandleGetSettingsAll(t *testing.T) {
 		return c
 	}
 
-	svc, err := websvc.New(&websvc.Config{
-		Pprof: &websvc.PprofConfig{
-			Enabled: false,
-		},
-		TLS: &tls.Config{
-			Certificates: []tls.Certificate{{}},
-		},
-		Addresses:       wantWeb.Addresses,
-		SecureAddresses: wantWeb.SecureAddresses,
-		Timeout:         time.Duration(wantWeb.Timeout),
-		ForceHTTPS:      true,
-	})
-	require.NoError(t, err)
+	svc, addr := newTestServer(t, confMgr)
+	u := &url.URL{
+		Scheme: urlutil.SchemeHTTP,
+		Host:   addr.String(),
+		Path:   websvc.PathPatternV1SettingsAll,
+	}
 
 	confMgr.onWeb = func() (s agh.ServiceWithConfig[*websvc.Config]) {
 		return svc
 	}
 
-	_, addr := newTestServer(t, confMgr)
-	u := &url.URL{
-		Scheme: "http",
-		Host:   addr.String(),
-		Path:   websvc.PathV1SettingsAll,
+	wantWeb := &websvc.HTTPAPIHTTPSettings{
+		Addresses:       []netip.AddrPort{addr},
+		SecureAddresses: nil,
+		Timeout:         aghhttp.JSONDuration(testTimeout),
+		ForceHTTPS:      false,
 	}
 
 	body := httpGet(t, u, http.StatusOK)
 	resp := &websvc.RespGetV1SettingsAll{}
-	err = json.Unmarshal(body, resp)
+	err := json.Unmarshal(body, resp)
 	require.NoError(t, err)
 
 	assert.Equal(t, wantDNS, resp.DNS)

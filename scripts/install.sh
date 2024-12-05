@@ -9,8 +9,7 @@ set -e -f -u
 # Function log is an echo wrapper that writes to stderr if the caller
 # requested verbosity level greater than 0.  Otherwise, it does nothing.
 log() {
-	if [ "$verbose" -gt '0' ]
-	then
+	if [ "$verbose" -gt '0' ]; then
 		echo "$1" 1>&2
 	fi
 }
@@ -27,7 +26,7 @@ error_exit() {
 #
 # TODO(e.burkov): Document each option.
 usage() {
-	echo 'install.sh: usage: [-c channel] [-C cpu_type] [-h] [-O os] [-o output_dir]'\
+	echo 'install.sh: usage: [-c channel] [-C cpu_type] [-h] [-O os] [-o output_dir]' \
 		'[-r|-R] [-u|-U] [-v|-V]' 1>&2
 
 	exit 2
@@ -38,8 +37,7 @@ usage() {
 #
 # TODO(e.burkov):  Use everywhere the sudo_cmd isn't quoted.
 maybe_sudo() {
-	if [ "$use_sudo" -eq 0 ]
-	then
+	if [ "$use_sudo" -eq 0 ]; then
 		"$@"
 	else
 		"$sudo_cmd" "$@"
@@ -64,8 +62,8 @@ is_little_endian() {
 	# explicitly implementation-defined in POSIX.  Use hexdump instead of od,
 	# because OpenWrt and its derivatives have the former but not the latter.
 	is_little_endian_result="$(
-		printf 'I'\
-			| hexdump -o\
+		printf 'I' \
+			| hexdump -o \
 			| awk '{ print substr($2, 6, 1); exit; }'
 	)"
 	readonly is_little_endian_result
@@ -84,15 +82,14 @@ check_required() {
 	required_unix="tar"
 	readonly required_darwin required_unix
 
-	case "$os"
-	in
-	('freebsd'|'linux'|'openbsd')
+	case "$os" in
+	'freebsd' | 'linux' | 'openbsd')
 		required="$required_unix"
 		;;
-	('darwin')
+	'darwin')
 		required="$required_darwin"
 		;;
-	(*)
+	*)
 		# Generally shouldn't happen, since the OS has already been validated.
 		error_exit "unsupported operating system: '$os'"
 		;;
@@ -100,11 +97,9 @@ check_required() {
 	readonly required
 
 	# Don't use quotes to get word splitting.
-	for cmd in $required
-	do
+	for cmd in $required; do
 		log "checking $cmd"
-		if ! is_command "$cmd"
-		then
+		if ! is_command "$cmd"; then
 			log "the full list of required software: [$required]"
 
 			error_exit "$cmd is required to install AdGuard Home via this script"
@@ -114,57 +109,53 @@ check_required() {
 
 # Function check_out_dir requires the output directory to be set and exist.
 check_out_dir() {
-	if [ "$out_dir" = '' ]
-	then
+	if [ "$out_dir" = '' ]; then
 		error_exit 'output directory should be presented'
 	fi
 
-	if ! [ -d "$out_dir" ]
-	then
+	if ! [ -d "$out_dir" ]; then
 		log "$out_dir directory will be created"
 	fi
 }
 
 # Function parse_opts parses the options list and validates it's combinations.
 parse_opts() {
-	while getopts "C:c:hO:o:rRuUvV" opt "$@"
-	do
-		case "$opt"
-		in
-		(C)
+	while getopts "C:c:hO:o:rRuUvV" opt "$@"; do
+		case "$opt" in
+		C)
 			cpu="$OPTARG"
 			;;
-		(c)
+		c)
 			channel="$OPTARG"
 			;;
-		(h)
+		h)
 			usage
 			;;
-		(O)
+		O)
 			os="$OPTARG"
 			;;
-		(o)
+		o)
 			out_dir="$OPTARG"
 			;;
-		(R)
+		R)
 			reinstall='0'
 			;;
-		(U)
+		U)
 			uninstall='0'
 			;;
-		(r)
+		r)
 			reinstall='1'
 			;;
-		(u)
+		u)
 			uninstall='1'
 			;;
-		(V)
+		V)
 			verbose='0'
 			;;
-		(v)
+		v)
 			verbose='1'
 			;;
-		(*)
+		*)
 			log "bad option $OPTARG"
 
 			usage
@@ -172,8 +163,7 @@ parse_opts() {
 		esac
 	done
 
-	if [ "$uninstall" -eq '1' ] && [ "$reinstall" -eq '1' ]
-	then
+	if [ "$uninstall" -eq '1' ] && [ "$reinstall" -eq '1' ]; then
 		error_exit 'the -r and -u options are mutually exclusive'
 	fi
 }
@@ -181,14 +171,12 @@ parse_opts() {
 # Function set_channel sets the channel if needed and validates the value.
 set_channel() {
 	# Validate.
-	case "$channel"
-	in
-	('development'|'edge'|'beta'|'release')
+	case "$channel" in
+	'development' | 'edge' | 'beta' | 'release')
 		# All is well, go on.
 		;;
-	(*)
-		error_exit \
-"invalid channel '$channel'
+	*)
+		error_exit "invalid channel '$channel'
 supported values are 'development', 'edge', 'beta', and 'release'"
 		;;
 	esac
@@ -200,36 +188,33 @@ supported values are 'development', 'edge', 'beta', and 'release'"
 # Function set_os sets the os if needed and validates the value.
 set_os() {
 	# Set if needed.
-	if [ "$os" = '' ]
-	then
-		os="$( uname -s )"
-		case "$os"
-		in
-		('Darwin')
+	if [ "$os" = '' ]; then
+		os="$(uname -s)"
+		case "$os" in
+		'Darwin')
 			os='darwin'
 			;;
-		('FreeBSD')
+		'FreeBSD')
 			os='freebsd'
 			;;
-		('Linux')
+		'Linux')
 			os='linux'
 			;;
-		('OpenBSD')
+		'OpenBSD')
 			os='openbsd'
 			;;
-		(*)
+		*)
 			error_exit "unsupported operating system: '$os'"
 			;;
 		esac
 	fi
 
 	# Validate.
-	case "$os"
-	in
-	('darwin'|'freebsd'|'linux'|'openbsd')
+	case "$os" in
+	'darwin' | 'freebsd' | 'linux' | 'openbsd')
 		# All right, go on.
 		;;
-	(*)
+	*)
 		error_exit "unsupported operating system: '$os'"
 		;;
 	esac
@@ -241,52 +226,49 @@ set_os() {
 # Function set_cpu sets the cpu if needed and validates the value.
 set_cpu() {
 	# Set if needed.
-	if [ "$cpu" = '' ]
-	then
-		cpu="$( uname -m )"
-		case "$cpu"
-		in
-		('x86_64'|'x86-64'|'x64'|'amd64')
+	if [ "$cpu" = '' ]; then
+		cpu="$(uname -m)"
+		case "$cpu" in
+		'x86_64' | 'x86-64' | 'x64' | 'amd64')
 			cpu='amd64'
 			;;
-		('i386'|'i486'|'i686'|'i786'|'x86')
+		'i386' | 'i486' | 'i686' | 'i786' | 'x86')
 			cpu='386'
 			;;
-		('armv5l')
+		'armv5l')
 			cpu='armv5'
 			;;
-		('armv6l')
+		'armv6l')
 			cpu='armv6'
 			;;
-		('armv7l' | 'armv8l')
+		'armv7l' | 'armv8l')
 			cpu='armv7'
 			;;
-		('aarch64'|'arm64')
+		'aarch64' | 'arm64')
 			cpu='arm64'
 			;;
-		('mips'|'mips64')
-			if is_little_endian
-			then
+		'mips' | 'mips64')
+			if is_little_endian; then
 				cpu="${cpu}le"
 			fi
+
 			cpu="${cpu}_softfloat"
 			;;
-		(*)
+		*)
 			error_exit "unsupported cpu type: $cpu"
 			;;
 		esac
 	fi
 
 	# Validate.
-	case "$cpu"
-	in
-	('amd64'|'386'|'armv5'|'armv6'|'armv7'|'arm64')
+	case "$cpu" in
+	'amd64' | '386' | 'armv5' | 'armv6' | 'armv7' | 'arm64')
 		# All right, go on.
 		;;
-	('mips64le_softfloat'|'mips64_softfloat'|'mipsle_softfloat'|'mips_softfloat')
+	'mips64le_softfloat' | 'mips64_softfloat' | 'mipsle_softfloat' | 'mips_softfloat')
 		# That's right too.
 		;;
-	(*)
+	*)
 		error_exit "unsupported cpu type: $cpu"
 		;;
 	esac
@@ -301,8 +283,7 @@ set_cpu() {
 #
 # See https://github.com/AdguardTeam/AdGuardHome/issues/2443.
 fix_darwin() {
-	if [ "$os" != 'darwin' ]
-	then
+	if [ "$os" != 'darwin' ]; then
 		return 0
 	fi
 
@@ -317,16 +298,14 @@ fix_darwin() {
 
 # Function fix_freebsd performs some fixes to make it work on FreeBSD.
 fix_freebsd() {
-	if ! [ "$os" = 'freebsd' ]
-	then
+	if ! [ "$os" = 'freebsd' ]; then
 		return 0
 	fi
 
 	rcd='/usr/local/etc/rc.d'
 	readonly rcd
 
-	if ! [ -d "$rcd" ]
-	then
+	if ! [ -d "$rcd" ]; then
 		mkdir "$rcd"
 	fi
 }
@@ -335,8 +314,7 @@ fix_freebsd() {
 # The second argument is optional and is the output file.
 download_curl() {
 	curl_output="${2:-}"
-	if [ "$curl_output" = '' ]
-	then
+	if [ "$curl_output" = '' ]; then
 		curl -L -S -s "$1"
 	else
 		curl -L -S -o "$curl_output" -s "$1"
@@ -355,8 +333,7 @@ download_wget() {
 # URL.  The second argument is optional and is the output file.
 download_fetch() {
 	fetch_output="${2:-}"
-	if [ "$fetch_output" = '' ]
-	then
+	if [ "$fetch_output" = '' ]; then
 		fetch -o '-' "$1"
 	else
 		fetch -o "$fetch_output" "$1"
@@ -366,15 +343,12 @@ download_fetch() {
 # Function set_download_func sets the appropriate function for downloading
 # files.
 set_download_func() {
-	if is_command 'curl'
-	then
+	if is_command 'curl'; then
 		# Go on and use the default, download_curl.
 		return 0
-	elif is_command 'wget'
-	then
+	elif is_command 'wget'; then
 		download_func='download_wget'
-	elif is_command 'fetch'
-	then
+	elif is_command 'fetch'; then
 		download_func='download_fetch'
 	else
 		error_exit "either curl or wget is required to install AdGuard Home via this script"
@@ -384,15 +358,14 @@ set_download_func() {
 # Function set_sudo_cmd sets the appropriate command to run a command under
 # superuser privileges.
 set_sudo_cmd() {
-	case "$os"
-	in
-	('openbsd')
+	case "$os" in
+	'openbsd')
 		sudo_cmd='doas'
 		;;
-	('darwin'|'freebsd'|'linux')
+	'darwin' | 'freebsd' | 'linux')
 		# Go on and use the default, sudo.
 		;;
-	(*)
+	*)
 		error_exit "unsupported operating system: '$os'"
 		;;
 	esac
@@ -418,22 +391,20 @@ configure() {
 
 # Function is_root checks for root privileges to be granted.
 is_root() {
-	if [ "$( id -u )" -eq '0' ]
-	then
+	user_id="$(id -u)"
+	if [ "$user_id" -eq '0' ]; then
 		log 'script is executed with root privileges'
 
 		return 0
 	fi
 
-	if is_command "$sudo_cmd"
-	then
+	if is_command "$sudo_cmd"; then
 		log 'note that AdGuard Home requires root privileges to install using this script'
 
 		return 1
 	fi
 
-	error_exit \
-'root privileges are required to install AdGuard Home using this script
+	error_exit 'root privileges are required to install AdGuard Home using this script
 please, restart it with root privileges'
 }
 
@@ -443,25 +414,21 @@ please, restart it with root privileges'
 #
 # TODO(e.burkov): Try to avoid restarting.
 rerun_with_root() {
-	script_url=\
-'https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh'
+	script_url='https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh'
 	readonly script_url
 
 	r='-R'
-	if [ "$reinstall" -eq '1' ]
-	then
+	if [ "$reinstall" -eq '1' ]; then
 		r='-r'
 	fi
 
 	u='-U'
-	if [ "$uninstall" -eq '1' ]
-	then
+	if [ "$uninstall" -eq '1' ]; then
 		u='-u'
 	fi
 
 	v='-V'
-	if [ "$verbose" -eq '1' ]
-	then
+	if [ "$verbose" -eq '1' ]; then
 		v='-v'
 	fi
 
@@ -473,7 +440,7 @@ rerun_with_root() {
 	# producing any output, the latter prints an exit command for the following
 	# shell to execute to prevent it from getting an empty input and exiting
 	# with a zero code in that case.
-	{ "$download_func" "$script_url" || echo 'exit 1'; }\
+	{ "$download_func" "$script_url" || echo 'exit 1'; } \
 		| $sudo_cmd sh -s -- -c "$channel" -C "$cpu" -O "$os" -o "$out_dir" "$r" "$u" "$v"
 
 	# Exit the script.  Since if the code of the previous pipeline is non-zero,
@@ -484,10 +451,9 @@ rerun_with_root() {
 # Function download downloads the file from the URL and saves it to the
 # specified filepath.
 download() {
-	log "downloading package from $url -> $pkg_name"
+	log "downloading package from $url to $pkg_name"
 
-	if ! "$download_func" "$url" "$pkg_name"
-	then
+	if ! "$download_func" "$url" "$pkg_name"; then
 		error_exit "cannot download the package from $url into $pkg_name"
 	fi
 
@@ -497,25 +463,29 @@ download() {
 # Function unpack unpacks the passed archive depending on it's extension.
 unpack() {
 	log "unpacking package from $pkg_name into $out_dir"
-	if ! mkdir -m 0700 -p "$out_dir"
-	then
+
+	# shellcheck disable=SC2174
+	if ! mkdir -m 0700 -p "$out_dir"; then
 		error_exit "cannot create directory $out_dir"
 	fi
 
-	case "$pkg_ext"
-	in
-	('zip')
+	case "$pkg_ext" in
+	'zip')
 		unzip "$pkg_name" -d "$out_dir"
 		;;
-	('tar.gz')
+	'tar.gz')
 		tar -C "$out_dir" -f "$pkg_name" -x -z
 		;;
-	(*)
+	*)
 		error_exit "unexpected package extension: '$pkg_ext'"
 		;;
 	esac
 
-	log "successfully unpacked, contents: $( echo; ls -l -A "$agh_dir" )"
+	unpacked_contents="$(
+		echo
+		ls -l -A "$agh_dir"
+	)"
+	log "successfully unpacked, contents: $unpacked_contents"
 
 	rm "$pkg_name"
 }
@@ -523,34 +493,29 @@ unpack() {
 # Function handle_existing detects the existing AGH installation and takes care
 # of removing it if needed.
 handle_existing() {
-	if ! [ -d "$agh_dir" ]
-	then
+	if ! [ -d "$agh_dir" ]; then
 		log 'no need to uninstall'
 
-		if [ "$uninstall" -eq '1' ]
-		then
+		if [ "$uninstall" -eq '1' ]; then
 			exit 0
 		fi
 
 		return 0
 	fi
 
-	if [ "$( ls -1 -A "$agh_dir" )" != '' ]
-	then
+	existing_adguard_home="$(ls -1 -A "$agh_dir")"
+	if [ "$existing_adguard_home" != '' ]; then
 		log 'the existing AdGuard Home installation is detected'
 
-		if [ "$reinstall" -ne '1' ] && [ "$uninstall" -ne '1' ]
-		then
+		if [ "$reinstall" -ne '1' ] && [ "$uninstall" -ne '1' ]; then
 			error_exit \
-"to reinstall/uninstall the AdGuard Home using this script specify one of the '-r' or '-u' flags"
+				"to reinstall/uninstall the AdGuard Home using this script specify one of the '-r' or '-u' flags"
 		fi
 
 		# TODO(e.burkov):  Remove the stop once v0.107.1 released.
-		if ( cd "$agh_dir" && ! ./AdGuardHome -s stop || ! ./AdGuardHome -s uninstall )
-		then
-			# It doesn't terminate the script since it is possible
-			# that AGH just not installed as service but appearing
-			# in the directory.
+		if (cd "$agh_dir" && ! ./AdGuardHome -s stop || ! ./AdGuardHome -s uninstall); then
+			# It doesn't terminate the script since it is possible that AGH just
+			# not installed as service but appearing in the directory.
 			log "cannot uninstall AdGuard Home from $agh_dir"
 		fi
 
@@ -559,8 +524,7 @@ handle_existing() {
 		log 'AdGuard Home was successfully uninstalled'
 	fi
 
-	if [ "$uninstall" -eq '1' ]
-	then
+	if [ "$uninstall" -eq '1' ]; then
 		exit 0
 	fi
 }
@@ -569,13 +533,11 @@ handle_existing() {
 install_service() {
 	# Installing the service as root is required at least on FreeBSD.
 	use_sudo='0'
-	if [ "$os" = 'freebsd' ]
-	then
+	if [ "$os" = 'freebsd' ]; then
 		use_sudo='1'
 	fi
 
-	if ( cd "$agh_dir" && maybe_sudo ./AdGuardHome -s install )
-	then
+	if (cd "$agh_dir" && maybe_sudo ./AdGuardHome -s install); then
 		return 0
 	fi
 
@@ -583,13 +545,11 @@ install_service() {
 
 	rm -r "$agh_dir"
 
-	# Some devices detected to have armv7 CPU face the compatibility
-	# issues with actual armv7 builds.  We should try to install the
-	# armv5 binary instead.
+	# Some devices detected to have armv7 CPU face the compatibility issues with
+	# actual armv7 builds.  We should try to install the armv5 binary instead.
 	#
 	# See https://github.com/AdguardTeam/AdGuardHome/issues/2542.
-	if [ "$cpu" = 'armv7' ]
-	then
+	if [ "$cpu" = 'armv7' ]; then
 		cpu='armv5'
 		reinstall='1'
 
@@ -600,8 +560,6 @@ install_service() {
 
 	error_exit 'cannot install AdGuardHome as a service'
 }
-
-
 
 # Entrypoint
 
@@ -624,8 +582,7 @@ echo 'starting AdGuard Home installation script'
 configure
 check_required
 
-if ! is_root
-then
+if ! is_root; then
 	rerun_with_root
 fi
 # Needs rights.
@@ -638,7 +595,7 @@ unpack
 
 install_service
 
-echo "\
-AdGuard Home is now installed and running
-you can control the service status with the following commands:
-$sudo_cmd ${agh_dir}/AdGuardHome -s start|stop|restart|status|install|uninstall"
+printf '%s\n' \
+	'AdGuard Home is now installed and running' \
+	'you can control the service status with the following commands:' \
+	"$sudo_cmd ${agh_dir}/AdGuardHome -s start|stop|restart|status|install|uninstall"

@@ -6,19 +6,15 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
-	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
+	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/require"
 )
-
-func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
-}
 
 // testTimeout is the common timeout for tests.
 const testTimeout = 1 * time.Second
@@ -31,6 +27,7 @@ const testTitle = "Test Title"
 
 // Common rule texts for tests.
 const (
+	testRuleTextAllowed     = "||allowed.example^\n"
 	testRuleTextBadTab      = "||bad-tab-and-comment.example^\t# A comment.\n"
 	testRuleTextBlocked     = "||blocked.example^\n"
 	testRuleTextBlocked2    = "||blocked-2.example^\n"
@@ -79,8 +76,16 @@ func newFilterLocations(
 	fileData string,
 	httpData string,
 ) (fileURL, srvURL *url.URL) {
-	filePath := filepath.Join(cacheDir, "initial.txt")
-	err := os.WriteFile(filePath, []byte(fileData), 0o644)
+	t.Helper()
+
+	f, err := os.CreateTemp(cacheDir, "")
+	require.NoError(t, err)
+
+	err = f.Close()
+	require.NoError(t, err)
+
+	filePath := f.Name()
+	err = os.WriteFile(filePath, []byte(fileData), 0o644)
 	require.NoError(t, err)
 
 	testutil.CleanupAndRequireSuccess(t, func() (err error) {
@@ -88,7 +93,7 @@ func newFilterLocations(
 	})
 
 	fileURL = &url.URL{
-		Scheme: "file",
+		Scheme: urlutil.SchemeFile,
 		Path:   filePath,
 	}
 

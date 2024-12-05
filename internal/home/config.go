@@ -162,6 +162,12 @@ type configuration struct {
 	// SchemaVersion is the version of the configuration schema.  See
 	// [configmigrate.LastSchemaVersion].
 	SchemaVersion uint `yaml:"schema_version"`
+
+	// UnsafeUseCustomUpdateIndexURL is the URL to the custom update index.
+	//
+	// NOTE: It's only exists for testing purposes and should not be used in
+	// release.
+	UnsafeUseCustomUpdateIndexURL bool `yaml:"unsafe_use_custom_update_index_url,omitempty"`
 }
 
 // httpConfig is a block with HTTP configuration params.
@@ -708,7 +714,7 @@ func (c *configuration) write() (err error) {
 		return fmt.Errorf("generating config file: %w", err)
 	}
 
-	err = aghos.WriteFile(confPath, buf.Bytes(), aghos.DefaultPermFile)
+	err = maybe.WriteFile(confPath, buf.Bytes(), aghos.DefaultPermFile)
 	if err != nil {
 		return fmt.Errorf("writing config file: %w", err)
 	}

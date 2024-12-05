@@ -51,8 +51,10 @@ func TestUpdater_VersionInfo(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 
-	fakeURL, err := url.JoinPath(srv.URL, "adguardhome", version.ChannelBeta, "version.json")
+	srvURL, err := url.Parse(srv.URL)
 	require.NoError(t, err)
+
+	fakeURL := srvURL.JoinPath("adguardhome", version.ChannelBeta, "version.json")
 
 	u := updater.NewUpdater(&updater.Config{
 		Client:          srv.Client(),
@@ -134,7 +136,7 @@ func TestUpdater_VersionInfo_others(t *testing.T) {
 			GOARCH:          tc.arch,
 			GOARM:           tc.arm,
 			GOMIPS:          tc.mips,
-			VersionCheckURL: fakeURL.String(),
+			VersionCheckURL: fakeURL,
 		})
 
 		info, err := u.VersionInfo(false)

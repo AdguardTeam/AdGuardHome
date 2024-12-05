@@ -542,7 +542,7 @@
     "stats_params": "Tilastoinnin määritys",
     "config_successfully_saved": "Asetukset tallennettiin",
     "interval_6_hour": "6 tuntia",
-    "interval_24_hour": "24 tuntia",
+    "interval_24_hour": "24 tunnilta",
     "interval_days": "{{count}} päivä",
     "interval_days_plural": "{{count}} päivää",
     "domain": "Verkkotunnus",

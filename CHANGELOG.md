@@ -16,14 +16,48 @@ TODO(a.garipov): Use the common markdown formatting tools.
 ## [Unreleased]
 
 <!--
-## [v0.107.55] - 2024-11-09 (APPROX.)
+## [v0.108.0] – TBA
 
-See also the [v0.107.55 GitHub milestone][ms-v0.107.55].
+## [v0.107.56] - 2025-01-10 (APPROX.)
 
-[ms-v0.107.55]: https://github.com/AdguardTeam/AdGuardHome/milestone/90?closed=1
+See also the [v0.107.56 GitHub milestone][ms-v0.107.56].
+
+[ms-v0.107.56]: https://github.com/AdguardTeam/AdGuardHome/milestone/91?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+## [v0.107.55] - 2024-12-05
+
+See also the [v0.107.55 GitHub milestone][ms-v0.107.55].
+
+### Security
+
+- The permission check and migration on Windows has been fixed to use the
+  Windows security model more accurately ([#7400]).
+- Go version has been updated to prevent the possibility of exploiting the Go
+  vulnerabilities fixed in [1.23.4][go-1.23.4].
+- The release executables are now signed.
+
+### Added
+
+- The `--no-permcheck` command-line option to disable checking and migration of
+  permissions for the security-sensitive files and directories, which caused
+  issues on Windows ([#7400]).
+
+### Fixed
+
+- Setup guide styles in Firefox.
+- Goroutine leak during the upstream DNS server test ([#7357]).
+- Goroutine leak during configuration update resulting in increased response
+  time ([#6818]).
+
+[#6818]: https://github.com/AdguardTeam/AdGuardHome/issues/6818
+[#7357]: https://github.com/AdguardTeam/AdGuardHome/issues/7357
+[#7400]: https://github.com/AdguardTeam/AdGuardHome/issues/7400
+
+[go-1.23.4]: https://groups.google.com/g/golang-announce/c/3DyiMkYx4Fo
+[ms-v0.107.55]: https://github.com/AdguardTeam/AdGuardHome/milestone/90?closed=1
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
@@ -3171,11 +3205,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.55...HEAD
-[v0.107.55]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.54...v0.107.55
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.56...HEAD
+[v0.107.55]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.55...v0.107.56
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.54...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.55...HEAD
+[v0.107.55]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.54...v0.107.55
 [v0.107.54]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.53...v0.107.54
 [v0.107.53]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.52...v0.107.53
 [v0.107.52]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.51...v0.107.52

@@ -500,6 +500,10 @@ func TestServerRace(t *testing.T) {
 }
 
 func TestSafeSearch(t *testing.T) {
+	const (
+		googleSafeSearch = "forcesafesearch.google.com."
+	)
+
 	safeSearchConf := filtering.SafeSearchConfig{
 		Enabled: true,
 		Google:  true,
@@ -536,10 +540,17 @@ func TestSafeSearch(t *testing.T) {
 		ServePlainDNS: true,
 	}
 	s := createTestServer(t, filterConf, forwardConf)
-	startDeferStop(t, s)
 
+	ups := aghtest.NewUpstreamMock(func(req *dns.Msg) (resp *dns.Msg, err error) {
+		pt := testutil.PanicT{}
+		assert.Equal(pt, googleSafeSearch, req.Question[0].Name)
+
+		return aghtest.MatchedResponse(req, dns.TypeA, googleSafeSearch, "1.2.3.4"), nil
+	})
+	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
+
+	startDeferStop(t, s)
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
-	client := &dns.Client{}
 
 	yandexIP := netip.AddrFrom4([4]byte{213, 180, 193, 56})
 
@@ -585,15 +596,9 @@ func TestSafeSearch(t *testing.T) {
 		t.Run(tc.host, func(t *testing.T) {
 			req := createTestMessage(tc.host)
 
-			// TODO(a.garipov):  Create our own helper for this.
 			var reply *dns.Msg
-			once := &sync.Once{}
-			require.EventuallyWithT(t, func(c *assert.CollectT) {
-				r, _, errExch := client.Exchange(req, addr)
-				if assert.NoError(c, errExch) {
-					once.Do(func() { reply = r })
-				}
-			}, testTimeout*10, testTimeout)
+			reply, err = dns.Exchange(req, addr)
+			require.NoError(t, err)
 
 			if tc.wantCNAME != "" {
 				require.Len(t, reply.Answer, 2)

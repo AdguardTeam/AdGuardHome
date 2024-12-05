@@ -8,7 +8,7 @@
 'variables':
     'channel': 'edge'
     'dockerFrontend': 'adguard/home-js-builder:2.0'
-    'dockerGo': 'adguard/go-builder:1.23.2--1'
+    'dockerGo': 'adguard/go-builder:1.23.4--1'
 
 'stages':
   - 'Build frontend':
@@ -142,13 +142,15 @@
                 # Install Qemu, create builder.
                 docker version -f '{{ .Server.Experimental }}'
                 docker buildx rm buildx-builder || :
-                docker buildx create --name buildx-builder --driver docker-container\
-                                --use
+                docker buildx create \
+                    --name buildx-builder \
+                    --driver docker-container \
+                    --use
                 docker buildx inspect --bootstrap
 
                 # Login to DockerHub.
-                docker login -u="${bamboo.dockerHubUsername}"\
-                        -p="${bamboo.dockerHubPassword}"
+                docker login -u="${bamboo.dockerHubUsername}" \
+                    -p="${bamboo.dockerHubPassword}"
 
                 # Boot the builder.
                 docker buildx inspect --bootstrap
@@ -157,14 +159,14 @@
                 docker info
 
                 # Prepare and push the build.
-                env\
-                        CHANNEL="${bamboo.channel}"\
-                        COMMIT="${bamboo.repository.revision.number}"\
-                        DIST_DIR='dist'\
-                        DOCKER_IMAGE_NAME='adguard/adguardhome'\
-                        DOCKER_OUTPUT="type=image,name=adguard/adguardhome,push=true"\
-                        VERBOSE='1'\
-                        sh ./scripts/make/build-docker.sh
+                env \
+                    CHANNEL="${bamboo.channel}" \
+                    REVISION="${bamboo.repository.revision.number}" \
+                    DIST_DIR='dist' \
+                    DOCKER_IMAGE_NAME='adguard/adguardhome' \
+                    DOCKER_OUTPUT="type=image,name=adguard/adguardhome,push=true" \
+                    VERBOSE='1' \
+                    sh ./scripts/make/build-docker.sh
             'environment':
                 DOCKER_CLI_EXPERIMENTAL=enabled
     'final-tasks':
@@ -276,7 +278,7 @@
         'variables':
             'channel': 'beta'
             'dockerFrontend': 'adguard/home-js-builder:2.0'
-            'dockerGo': 'adguard/go-builder:1.23.2--1'
+            'dockerGo': 'adguard/go-builder:1.23.4--1'
     # release-vX.Y.Z branches are the branches from which the actual final
     # release is built.
   - '^release-v[0-9]+\.[0-9]+\.[0-9]+':
@@ -292,4 +294,4 @@
         'variables':
             'channel': 'release'
             'dockerFrontend': 'adguard/home-js-builder:2.0'
-            'dockerGo': 'adguard/go-builder:1.23.2--1'
+            'dockerGo': 'adguard/go-builder:1.23.4--1'

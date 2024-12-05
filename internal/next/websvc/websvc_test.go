@@ -15,15 +15,14 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/netutil/httputil"
+	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/testutil/fakefs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
-}
 
 // testTimeout is the common timeout for tests.
 const testTimeout = 1 * time.Second
@@ -80,8 +79,6 @@ func newConfigManager() (m *configManager) {
 // newTestServer creates and starts a new web service instance as well as its
 // sole address.  It also registers a cleanup procedure, which shuts the
 // instance down.
-//
-// TODO(a.garipov): Use svc or remove it.
 func newTestServer(
 	t testing.TB,
 	confMgr websvc.ConfigManager,
@@ -89,6 +86,7 @@ func newTestServer(
 	t.Helper()
 
 	c := &websvc.Config{
+		Logger: slogutil.NewDiscardLogger(),
 		Pprof: &websvc.PprofConfig{
 			Enabled: false,
 		},
@@ -107,7 +105,7 @@ func newTestServer(
 	svc, err := websvc.New(c)
 	require.NoError(t, err)
 
-	err = svc.Start()
+	err = svc.Start(testutil.ContextWithTimeout(t, testTimeout))
 	require.NoError(t, err)
 	testutil.CleanupAndRequireSuccess(t, func() (err error) {
 		return svc.Shutdown(testutil.ContextWithTimeout(t, testTimeout))
@@ -181,12 +179,12 @@ func TestService_Start_getHealthCheck(t *testing.T) {
 	confMgr := newConfigManager()
 	_, addr := newTestServer(t, confMgr)
 	u := &url.URL{
-		Scheme: "http",
+		Scheme: urlutil.SchemeHTTP,
 		Host:   addr.String(),
-		Path:   websvc.PathHealthCheck,
+		Path:   websvc.PathPatternHealthCheck,
 	}
 
 	body := httpGet(t, u, http.StatusOK)
 
-	assert.Equal(t, []byte("OK"), body)
+	assert.Equal(t, []byte(httputil.HealthCheckHandler), body)
 }

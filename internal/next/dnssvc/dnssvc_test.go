@@ -6,15 +6,12 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
-}
 
 // testTimeout is the common timeout for tests.
 const testTimeout = 1 * time.Second
@@ -59,6 +56,7 @@ func TestService(t *testing.T) {
 	_, _ = testutil.RequireReceive(t, upstreamStartedCh, testTimeout)
 
 	c := &dnssvc.Config{
+		Logger:              slogutil.NewDiscardLogger(),
 		Addresses:           []netip.AddrPort{netip.MustParseAddrPort(listenAddr)},
 		BootstrapServers:    []string{upstreamSrv.PacketConn.LocalAddr().String()},
 		UpstreamServers:     []string{upstreamAddr},
@@ -71,7 +69,7 @@ func TestService(t *testing.T) {
 	svc, err := dnssvc.New(c)
 	require.NoError(t, err)
 
-	err = svc.Start()
+	err = svc.Start(testutil.ContextWithTimeout(t, testTimeout))
 	require.NoError(t, err)
 
 	gotConf := svc.Config()

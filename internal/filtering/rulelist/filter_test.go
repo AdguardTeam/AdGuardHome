@@ -8,12 +8,15 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
+	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestFilter_Refresh(t *testing.T) {
+	t.Parallel()
+
 	cacheDir := t.TempDir()
 	uid := rulelist.MustNewUID()
 
@@ -37,7 +40,7 @@ func TestFilter_Refresh(t *testing.T) {
 	}, {
 		name: "file",
 		url: &url.URL{
-			Scheme: "file",
+			Scheme: urlutil.SchemeFile,
 			Path:   fileURL.Path,
 		},
 		wantNewErrMsg: "",
@@ -49,6 +52,8 @@ func TestFilter_Refresh(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			f, err := rulelist.NewFilter(&rulelist.FilterConfig{
 				URL:         tc.url,
 				Name:        tc.name,

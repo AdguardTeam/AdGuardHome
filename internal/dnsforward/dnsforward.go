@@ -818,6 +818,8 @@ func (s *Server) proxy() (p *proxy.Proxy) {
 }
 
 // Reconfigure applies the new configuration to the DNS server.
+//
+// TODO(a.garipov): This whole piece of API is weird and needs to be remade.
 func (s *Server) Reconfigure(conf *ServerConfig) error {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
@@ -831,14 +833,15 @@ func (s *Server) Reconfigure(conf *ServerConfig) error {
 	// We wait for some time and hope that this fd will be closed.
 	time.Sleep(100 * time.Millisecond)
 
-	// TODO(a.garipov): This whole piece of API is weird and needs to be remade.
+	if s.addrProc != nil {
+		err := s.addrProc.Close()
+		if err != nil {
+			log.Error("dnsforward: closing address processor: %s", err)
+		}
+	}
+
 	if conf == nil {
 		conf = &s.conf
-	} else {
-		closeErr := s.addrProc.Close()
-		if closeErr != nil {
-			log.Error("dnsforward: closing address processor: %s", closeErr)
-		}
 	}
 
 	// TODO(e.burkov):  It seems an error here brings the server down, which is

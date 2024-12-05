@@ -33,13 +33,13 @@ const SetupGuide = ({
                     <Trans>install_devices_address</Trans>:
                 </div>
 
-                <div className="mt-3">
+                <ul className="guide__list">
                     {dnsAddresses.map((ip: any) => (
                         <li key={ip} className="guide__address">
                             {ip}
                         </li>
                     ))}
-                </div>
+                </ul>
             </div>
 
             <Guide dnsAddresses={dnsAddresses} />

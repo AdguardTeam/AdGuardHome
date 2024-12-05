@@ -8,11 +8,11 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/google/uuid"
 	"howett.net/plist"
 )
@@ -84,7 +84,7 @@ func encodeMobileConfig(d *dnsSettings, clientID string) ([]byte, error) {
 	case dnsProtoHTTPS:
 		dspName = fmt.Sprintf("%s DoH", d.ServerName)
 		u := &url.URL{
-			Scheme: aghhttp.SchemeHTTPS,
+			Scheme: urlutil.SchemeHTTPS,
 			Host:   d.ServerName,
 			Path:   path.Join("/dns-query", clientID),
 		}

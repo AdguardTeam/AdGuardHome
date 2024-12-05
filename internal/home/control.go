@@ -16,6 +16,7 @@ import (
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/NYTimes/gziphandler"
 )
 
@@ -376,7 +377,7 @@ func handleHTTPSRedirect(w http.ResponseWriter, r *http.Request) (proceed bool) 
 	//
 	// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin.
 	originURL := &url.URL{
-		Scheme: aghhttp.SchemeHTTP,
+		Scheme: urlutil.SchemeHTTP,
 		Host:   r.Host,
 	}
 
@@ -395,7 +396,7 @@ func httpsURL(u *url.URL, host string, portHTTPS uint16) (redirectURL *url.URL) 
 	}
 
 	return &url.URL{
-		Scheme:   aghhttp.SchemeHTTPS,
+		Scheme:   urlutil.SchemeHTTPS,
 		Host:     hostPort,
 		Path:     u.Path,
 		RawQuery: u.RawQuery,

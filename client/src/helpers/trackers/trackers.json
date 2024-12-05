@@ -1,5 +1,5 @@
 {
-	"timeUpdated": "2024-10-28T10:04:59.054Z",
+	"timeUpdated": "2024-12-03T12:12:08.316Z",
 	"categories": {
 		"0": "audio_video_player",
 		"1": "comments",
@@ -2514,6 +2514,13 @@
 			"categoryId": 6,
 			"url": "http://www.ancoramediasolutions.com/",
 			"companyId": "ancora"
+		},
+		"android": {
+			"name": "Android",
+			"categoryId": 101,
+			"url": "https://www.android.com/",
+			"companyId": "google",
+			"source": "AdGuard"
 		},
 		"anetwork": {
 			"name": "Anetwork",
@@ -8195,7 +8202,7 @@
 		"google_dns": {
 			"name": "Google DNS",
 			"categoryId": 10,
-			"url": "hhttps://dns.google/",
+			"url": "https://dns.google/",
 			"companyId": "google",
 			"source": "AdGuard"
 		},
@@ -13980,6 +13987,13 @@
 			"url": "http://prostor-lite.ru/",
 			"companyId": "prostor"
 		},
+		"proton_ag": {
+			"name": "Proton AG",
+			"categoryId": 2,
+			"url": "https://proton.me/",
+			"companyId": "proton_foundation",
+			"source": "AdGuard"
+		},
 		"provide_support": {
 			"name": "Provide Support",
 			"categoryId": 2,
@@ -15654,7 +15668,7 @@
 		"shareaholic": {
 			"name": "Shareaholic",
 			"categoryId": 6,
-			"url": "hhttps://www.shareaholic.com/",
+			"url": "https://www.shareaholic.com/",
 			"companyId": "shareaholic"
 		},
 		"shareasale": {
@@ -20827,6 +20841,7 @@
 		"anametrix.net": "anametrix",
 		"ancestrycdn.com": "ancestry_cdn",
 		"ancoraplatform.com": "ancora",
+		"android.com": "android",
 		"anetwork.ir": "anetwork",
 		"aniview.com": "aniview.com",
 		"a-ads.com": "anonymousads",
@@ -23321,6 +23336,7 @@
 		"mrskincash.com": "mrskincash",
 		"a-msedge.net": "msedge",
 		"b-msedge.net": "msedge",
+		"dual-s-msedge.net": "msedge",
 		"e-msedge.net": "msedge",
 		"k-msedge.net": "msedge",
 		"l-msedge.net": "msedge",
@@ -23767,6 +23783,7 @@
 		"tr.prospecteye.com": "prospecteye",
 		"prosperent.com": "prosperent",
 		"prostor-lite.ru": "prostor",
+		"reports.proton.me": "proton_ag",
 		"providesupport.com": "provide_support",
 		"proximic.com": "proximic",
 		"proxistore.com": "proxistore.com",

@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net/url"
 	"os"
 	"os/exec"
@@ -21,7 +22,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
-	"golang.org/x/exp/maps"
 )
 
 const (
@@ -76,39 +76,29 @@ func main() {
 		usage("")
 	}
 
-	conf, err := readTwoskyConfig()
-	check(err)
+	conf := errors.Must(readTwoskyConfig())
 
 	var cli *twoskyClient
 
 	switch os.Args[1] {
 	case "summary":
-		err = summary(conf.Languages)
+		errors.Check(summary(conf.Languages))
 	case "download":
-		cli, err = conf.toClient()
-		check(err)
+		cli = errors.Must(conf.toClient())
 
-		err = cli.download(ctx, l)
+		errors.Check(cli.download(ctx, l))
 	case "unused":
-		err = unused(ctx, l, conf.LocalizableFiles[0])
+		err := unused(ctx, l, conf.LocalizableFiles[0])
+		errors.Check(err)
 	case "upload":
-		cli, err = conf.toClient()
-		check(err)
+		cli = errors.Must(conf.toClient())
 
-		err = cli.upload()
+		errors.Check(cli.upload())
 	case "auto-add":
-		err = autoAdd(conf.LocalizableFiles[0])
+		err := autoAdd(conf.LocalizableFiles[0])
+		errors.Check(err)
 	default:
 		usage("unknown command")
-	}
-
-	check(err)
-}
-
-// check is a simple error-checking helper for scripts.
-func check(err error) {
-	if err != nil {
-		panic(err)
 	}
 }
 
@@ -163,15 +153,11 @@ func readTwoskyConfig() (t *twoskyConfig, err error) {
 	var tsc []twoskyConfig
 	err = json.Unmarshal(b, &tsc)
 	if err != nil {
-		err = fmt.Errorf("unmarshalling %q: %w", twoskyConfFile, err)
-
-		return nil, err
+		return nil, fmt.Errorf("unmarshalling %q: %w", twoskyConfFile, err)
 	}
 
 	if len(tsc) == 0 {
-		err = fmt.Errorf("%q is empty", twoskyConfFile)
-
-		return nil, err
+		return nil, fmt.Errorf("%q is empty", twoskyConfFile)
 	}
 
 	conf := tsc[0]
@@ -224,7 +210,8 @@ func (t *twoskyConfig) toClient() (cli *twoskyClient, err error) {
 		baseLang = langCode(uLangStr)
 	}
 
-	langs := maps.Keys(t.Languages)
+	langs := slices.Sorted(maps.Keys(t.Languages))
+
 	dlLangStr := os.Getenv("DOWNLOAD_LANGUAGES")
 	if dlLangStr == "blocker" {
 		langs = blockerLangCodes
@@ -295,8 +282,7 @@ func summary(langs languages) (err error) {
 
 	size := float64(len(baseLoc))
 
-	keys := maps.Keys(langs)
-	slices.Sort(keys)
+	keys := slices.Sorted(maps.Keys(langs))
 
 	for _, lang := range keys {
 		name := filepath.Join(localesDir, string(lang)+".json")
@@ -399,10 +385,7 @@ func findUnused(fileNames []string, loc locales) (err error) {
 		}
 	}
 
-	keys := maps.Keys(loc)
-	slices.Sort(keys)
-
-	for _, v := range keys {
+	for _, v := range slices.Sorted(maps.Keys(loc)) {
 		fmt.Println(v)
 	}
 

@@ -1,8 +1,10 @@
 package querylog
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"strings"
 	"sync"
@@ -10,7 +12,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
 const (
@@ -57,7 +59,6 @@ type qLogFile struct {
 
 // newQLogFile initializes a new instance of the qLogFile.
 func newQLogFile(path string) (qf *qLogFile, err error) {
-	// Don't use [aghos.OpenFile] here, because the file is expected to exist.
 	f, err := os.OpenFile(path, os.O_RDONLY, aghos.DefaultPermFile)
 	if err != nil {
 		return nil, err
@@ -102,7 +103,11 @@ func (q *qLogFile) validateQLogLineIdx(lineIdx, lastProbeLineIdx, ts, fSize int6
 //     for so that when we call "ReadNext" this line was returned.
 //   - Depth of the search (how many times we compared timestamps).
 //   - If we could not find it, it returns one of the errors described above.
-func (q *qLogFile) seekTS(timestamp int64) (pos int64, depth int, err error) {
+func (q *qLogFile) seekTS(
+	ctx context.Context,
+	logger *slog.Logger,
+	timestamp int64,
+) (pos int64, depth int, err error) {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
@@ -151,7 +156,7 @@ func (q *qLogFile) seekTS(timestamp int64) (pos int64, depth int, err error) {
 		lastProbeLineIdx = lineIdx
 
 		// Get the timestamp from the query log record.
-		ts := readQLogTimestamp(line)
+		ts := readQLogTimestamp(ctx, logger, line)
 		if ts == 0 {
 			return 0, depth, fmt.Errorf(
 				"looking up timestamp %d in %q: record %q has empty timestamp",
@@ -385,20 +390,22 @@ func readJSONValue(s, prefix string) string {
 }
 
 // readQLogTimestamp reads the timestamp field from the query log line.
-func readQLogTimestamp(str string) int64 {
+func readQLogTimestamp(ctx context.Context, logger *slog.Logger, str string) int64 {
 	val := readJSONValue(str, `"T":"`)
 	if len(val) == 0 {
 		val = readJSONValue(str, `"Time":"`)
 	}
 
 	if len(val) == 0 {
-		log.Error("Couldn't find timestamp: %s", str)
+		logger.ErrorContext(ctx, "couldn't find timestamp", "line", str)
+
 		return 0
 	}
 
 	tm, err := time.Parse(time.RFC3339Nano, val)
 	if err != nil {
-		log.Error("Couldn't parse timestamp: %s", val)
+		logger.ErrorContext(ctx, "couldn't parse timestamp", "value", val, slogutil.KeyError, err)
+
 		return 0
 	}
 

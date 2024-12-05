@@ -3,27 +3,35 @@ package querylog
 import (
 	"bytes"
 	"encoding/base64"
+	"log/slog"
 	"net"
 	"net/netip"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+// Common constants for tests.
+const testTimeout = 1 * time.Second
+
 func TestDecodeLogEntry(t *testing.T) {
 	logOutput := &bytes.Buffer{}
+	l := &queryLog{
+		logger: slog.New(slog.NewTextHandler(logOutput, &slog.HandlerOptions{
+			Level:       slog.LevelDebug,
+			ReplaceAttr: slogutil.RemoveTime,
+		})),
+	}
 
-	aghtest.ReplaceLogWriter(t, logOutput)
-	aghtest.ReplaceLogLevel(t, log.DEBUG)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	t.Run("success", func(t *testing.T) {
 		const ansStr = `Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==`
@@ -92,7 +100,7 @@ func TestDecodeLogEntry(t *testing.T) {
 		}
 
 		got := &logEntry{}
-		decodeLogEntry(got, data)
+		l.decodeLogEntry(ctx, got, data)
 
 		s := logOutput.String()
 		assert.Empty(t, s)
@@ -113,11 +121,11 @@ func TestDecodeLogEntry(t *testing.T) {
 	}, {
 		name: "bad_filter_id_old_rule",
 		log:  `{"IP":"127.0.0.1","T":"2020-11-25T18:55:56.519796+03:00","QH":"an.yandex.ru","QT":"A","QC":"IN","CP":"","Answer":"Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==","Result":{"IsFiltered":true,"Reason":3,"FilterID":1.5},"Elapsed":837429}`,
-		want: "decodeResult handler err: strconv.ParseInt: parsing \"1.5\": invalid syntax\n",
+		want: `level=DEBUG msg="decoding result; handler" err="strconv.ParseInt: parsing \"1.5\": invalid syntax"`,
 	}, {
 		name: "bad_is_filtered",
 		log:  `{"IP":"127.0.0.1","T":"2020-11-25T18:55:56.519796+03:00","QH":"an.yandex.ru","QT":"A","QC":"IN","CP":"","Answer":"Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==","Result":{"IsFiltered":trooe,"Reason":3},"Elapsed":837429}`,
-		want: "decodeLogEntry err: invalid character 'o' in literal true (expecting 'u')\n",
+		want: `level=DEBUG msg="decoding log entry; token" err="invalid character 'o' in literal true (expecting 'u')"`,
 	}, {
 		name: "bad_elapsed",
 		log:  `{"IP":"127.0.0.1","T":"2020-11-25T18:55:56.519796+03:00","QH":"an.yandex.ru","QT":"A","QC":"IN","CP":"","Answer":"Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==","Result":{"IsFiltered":true,"Reason":3},"Elapsed":-1}`,
@@ -129,7 +137,7 @@ func TestDecodeLogEntry(t *testing.T) {
 	}, {
 		name: "bad_time",
 		log:  `{"IP":"127.0.0.1","T":"12/09/1998T15:00:00.000000+05:00","QH":"an.yandex.ru","QT":"A","QC":"IN","CP":"","Answer":"Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==","Result":{"IsFiltered":true,"Reason":3},"Elapsed":837429}`,
-		want: "decodeLogEntry handler err: parsing time \"12/09/1998T15:00:00.000000+05:00\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"12/09/1998T15:00:00.000000+05:00\" as \"2006\"\n",
+		want: `level=DEBUG msg="decoding log entry; handler" err="parsing time \"12/09/1998T15:00:00.000000+05:00\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"12/09/1998T15:00:00.000000+05:00\" as \"2006\""`,
 	}, {
 		name: "bad_host",
 		log:  `{"IP":"127.0.0.1","T":"2020-11-25T18:55:56.519796+03:00","QH":6,"QT":"A","QC":"IN","CP":"","Answer":"Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==","Result":{"IsFiltered":true,"Reason":3},"Elapsed":837429}`,
@@ -149,7 +157,7 @@ func TestDecodeLogEntry(t *testing.T) {
 	}, {
 		name: "very_bad_client_proto",
 		log:  `{"IP":"127.0.0.1","T":"2020-11-25T18:55:56.519796+03:00","QH":"an.yandex.ru","QT":"A","QC":"IN","CP":"dog","Answer":"Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==","Result":{"IsFiltered":true,"Reason":3},"Elapsed":837429}`,
-		want: "decodeLogEntry handler err: invalid client proto: \"dog\"\n",
+		want: `level=DEBUG msg="decoding log entry; handler" err="invalid client proto: \"dog\""`,
 	}, {
 		name: "bad_answer",
 		log:  `{"IP":"127.0.0.1","T":"2020-11-25T18:55:56.519796+03:00","QH":"an.yandex.ru","QT":"A","QC":"IN","CP":"","Answer":0.9,"Result":{"IsFiltered":true,"Reason":3},"Elapsed":837429}`,
@@ -157,7 +165,7 @@ func TestDecodeLogEntry(t *testing.T) {
 	}, {
 		name: "very_bad_answer",
 		log:  `{"IP":"127.0.0.1","T":"2020-11-25T18:55:56.519796+03:00","QH":"an.yandex.ru","QT":"A","QC":"IN","CP":"","Answer":"Qz+BgAABAAEAAAAAAmuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==","Result":{"IsFiltered":true,"Reason":3},"Elapsed":837429}`,
-		want: "decodeLogEntry handler err: illegal base64 data at input byte 61\n",
+		want: `level=DEBUG msg="decoding log entry; handler" err="illegal base64 data at input byte 61"`,
 	}, {
 		name: "bad_rule",
 		log:  `{"IP":"127.0.0.1","T":"2020-11-25T18:55:56.519796+03:00","QH":"an.yandex.ru","QT":"A","QC":"IN","CP":"","Answer":"Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==","Result":{"IsFiltered":true,"Reason":3,"Rule":false},"Elapsed":837429}`,
@@ -169,22 +177,25 @@ func TestDecodeLogEntry(t *testing.T) {
 	}, {
 		name: "bad_reverse_hosts",
 		log:  `{"IP":"127.0.0.1","T":"2020-11-25T18:55:56.519796+03:00","QH":"an.yandex.ru","QT":"A","QC":"IN","CP":"","Answer":"Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==","Result":{"IsFiltered":true,"Reason":3,"ReverseHosts":[{}]},"Elapsed":837429}`,
-		want: "decodeResultReverseHosts: unexpected delim \"{\"\n",
+		want: `level=DEBUG msg="decoding result reverse hosts" err="unexpected delimiter: \"{\""`,
 	}, {
 		name: "bad_ip_list",
 		log:  `{"IP":"127.0.0.1","T":"2020-11-25T18:55:56.519796+03:00","QH":"an.yandex.ru","QT":"A","QC":"IN","CP":"","Answer":"Qz+BgAABAAEAAAAAAmFuBnlhbmRleAJydQAAAQABwAwAAQABAAAACgAEAAAAAA==","Result":{"IsFiltered":true,"Reason":3,"ReverseHosts":["example.net"],"IPList":[{}]},"Elapsed":837429}`,
-		want: "decodeResultIPList: unexpected delim \"{\"\n",
+		want: `level=DEBUG msg="decoding result ip list" err="unexpected delimiter: \"{\""`,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			decodeLogEntry(new(logEntry), tc.log)
-
-			s := logOutput.String()
+			l.decodeLogEntry(ctx, new(logEntry), tc.log)
+			got := logOutput.String()
 			if tc.want == "" {
-				assert.Empty(t, s)
+				assert.Empty(t, got)
 			} else {
-				assert.True(t, strings.HasSuffix(s, tc.want), "got %q", s)
+				require.NotEmpty(t, got)
+
+				// Remove newline.
+				got = got[:len(got)-1]
+				assert.Equal(t, tc.want, got)
 			}
 
 			logOutput.Reset()
@@ -199,6 +210,12 @@ func TestDecodeLogEntry_backwardCompatability(t *testing.T) {
 		aaaa1 = netutil.IPv6Localhost()
 		aaaa2 = aaaa1.Next()
 	)
+
+	l := &queryLog{
+		logger: slogutil.NewDiscardLogger(),
+	}
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	testCases := []struct {
 		want  *logEntry
@@ -249,7 +266,7 @@ func TestDecodeLogEntry_backwardCompatability(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			e := &logEntry{}
-			decodeLogEntry(e, tc.entry)
+			l.decodeLogEntry(ctx, e, tc.entry)
 
 			assert.Equal(t, tc.want, e)
 		})

@@ -3,12 +3,17 @@ package websvc
 import (
 	"crypto/tls"
 	"io/fs"
+	"log/slog"
 	"net/netip"
 	"time"
 )
 
 // Config is the AdGuard Home web service configuration structure.
 type Config struct {
+	// Logger is used for logging the operation of the web API service.  It must
+	// not be nil.
+	Logger *slog.Logger
+
 	// Pprof is the configuration for the pprof debug API.  It must not be nil.
 	Pprof *PprofConfig
 
@@ -60,17 +65,20 @@ type PprofConfig struct {
 // finished.
 func (svc *Service) Config() (c *Config) {
 	c = &Config{
+		Logger: svc.logger,
 		Pprof: &PprofConfig{
 			Port:    svc.pprofPort,
 			Enabled: svc.pprof != nil,
 		},
 		ConfigManager: svc.confMgr,
+		Frontend:      svc.frontend,
 		TLS:           svc.tls,
 		// Leave Addresses and SecureAddresses empty and get the actual
 		// addresses that include the :0 ones later.
-		Start:      svc.start,
-		Timeout:    svc.timeout,
-		ForceHTTPS: svc.forceHTTPS,
+		Start:           svc.start,
+		OverrideAddress: svc.overrideAddr,
+		Timeout:         svc.timeout,
+		ForceHTTPS:      svc.forceHTTPS,
 	}
 
 	c.Addresses, c.SecureAddresses = svc.addrs()

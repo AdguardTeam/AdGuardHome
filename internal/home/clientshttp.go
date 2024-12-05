@@ -369,7 +369,7 @@ func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if !clients.storage.RemoveByName(cj.Name) {
+	if !clients.storage.RemoveByName(r.Context(), cj.Name) {
 		aghhttp.Error(r, w, http.StatusBadRequest, "Client not found")
 
 		return

@@ -1,18 +1,26 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
+	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/configmgr"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/service"
+	"github.com/google/renameio/v2/maybe"
 )
 
 // signalHandler processes incoming signals and shuts services down.
 type signalHandler struct {
+	// logger is used for logging the operation of the signal handler.
+	logger *slog.Logger
+
 	// confMgrConf contains the configuration parameters for the configuration
 	// manager.
 	confMgrConf *configmgr.Config
@@ -24,145 +32,172 @@ type signalHandler struct {
 	pidFile string
 
 	// services are the services that are shut down before application exiting.
-	services []agh.Service
+	services []service.Interface
+
+	// shutdownTimeout is the timeout for the shutdown operation.
+	shutdownTimeout time.Duration
 }
 
-// handle processes OS signals.
-func (h *signalHandler) handle() {
-	defer log.OnPanic("signalHandler.handle")
+// handle processes OS signals.  It blocks until a termination or a
+// reconfiguration signal is received, after which it either shuts down all
+// services or reconfigures them.  ctx is used for logging and serves as the
+// base for the shutdown timeout.  status is [osutil.ExitCodeSuccess] on success
+// and [osutil.ExitCodeFailure] on error.
+//
+// TODO(a.garipov):  Add reconfiguration logic to golibs.
+func (h *signalHandler) handle(ctx context.Context) (status osutil.ExitCode) {
+	defer slogutil.RecoverAndLog(ctx, h.logger)
 
-	h.writePID()
+	h.writePID(ctx)
 
 	for sig := range h.signal {
-		log.Info("sighdlr: received signal %q", sig)
+		h.logger.InfoContext(ctx, "received", "signal", sig)
 
-		if aghos.IsReconfigureSignal(sig) {
-			h.reconfigure()
+		if osutil.IsReconfigureSignal(sig) {
+			err := h.reconfigure(ctx)
+			if err != nil {
+				h.logger.ErrorContext(ctx, "reconfiguration error", slogutil.KeyError, err)
+
+				return osutil.ExitCodeFailure
+			}
 		} else if osutil.IsShutdownSignal(sig) {
-			status := h.shutdown()
-			h.removePID()
+			status = h.shutdown(ctx)
 
-			log.Info("sighdlr: exiting with status %d", status)
+			h.removePID(ctx)
 
-			os.Exit(status)
+			return status
 		}
 	}
+
+	// Shouldn't happen, since h.signal is currently never closed.
+	panic("unexpected close of h.signal")
+}
+
+// writePID writes the PID to the file, if needed.  Any errors are reported to
+// log.
+func (h *signalHandler) writePID(ctx context.Context) {
+	if h.pidFile == "" {
+		return
+	}
+
+	pid := os.Getpid()
+	data := strconv.AppendInt(nil, int64(pid), 10)
+	data = append(data, '\n')
+
+	err := maybe.WriteFile(h.pidFile, data, 0o644)
+	if err != nil {
+		h.logger.ErrorContext(ctx, "writing pidfile", slogutil.KeyError, err)
+
+		return
+	}
+
+	h.logger.DebugContext(ctx, "wrote pid", "file", h.pidFile, "pid", pid)
 }
 
 // reconfigure rereads the configuration file and updates and restarts services.
-func (h *signalHandler) reconfigure() {
-	log.Info("sighdlr: reconfiguring adguard home")
+func (h *signalHandler) reconfigure(ctx context.Context) (err error) {
+	h.logger.InfoContext(ctx, "reconfiguring started")
 
-	status := h.shutdown()
-	if status != statusSuccess {
-		log.Info("sighdlr: reconfiguring: exiting with status %d", status)
-
-		os.Exit(status)
+	status := h.shutdown(ctx)
+	if status != osutil.ExitCodeSuccess {
+		return errors.Error("shutdown failed")
 	}
 
-	// TODO(a.garipov): This is a very rough way to do it.  Some services can be
-	// reconfigured without the full shutdown, and the error handling is
+	// TODO(a.garipov):  This is a very rough way to do it.  Some services can
+	// be reconfigured without the full shutdown, and the error handling is
 	// currently not the best.
 
-	confMgr, err := newConfigMgr(h.confMgrConf)
-	check(err)
+	var errs []error
+
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeoutStart)
+	defer cancel()
+
+	confMgr, err := newConfigMgr(ctx, h.confMgrConf)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("configuration manager: %w", err))
+	}
 
 	web := confMgr.Web()
-	err = web.Start()
-	check(err)
+	err = web.Start(ctx)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("starting web: %w", err))
+	}
 
 	dns := confMgr.DNS()
-	err = dns.Start()
-	check(err)
+	err = dns.Start(ctx)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("starting dns: %w", err))
+	}
 
-	h.services = []agh.Service{
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+
+	h.services = []service.Interface{
 		dns,
 		web,
 	}
 
-	log.Info("sighdlr: successfully reconfigured adguard home")
+	h.logger.InfoContext(ctx, "reconfiguring finished")
+
+	return nil
 }
 
-// Exit status constants.
-const (
-	statusSuccess       = 0
-	statusError         = 1
-	statusArgumentError = 2
-)
-
 // shutdown gracefully shuts down all services.
-func (h *signalHandler) shutdown() (status int) {
-	ctx, cancel := ctxWithDefaultTimeout()
+func (h *signalHandler) shutdown(ctx context.Context) (status int) {
+	ctx, cancel := context.WithTimeout(ctx, h.shutdownTimeout)
 	defer cancel()
 
-	status = statusSuccess
+	status = osutil.ExitCodeSuccess
 
-	log.Info("sighdlr: shutting down services")
-	for i, service := range h.services {
-		err := service.Shutdown(ctx)
+	h.logger.InfoContext(ctx, "shutting down")
+	for i, svc := range h.services {
+		err := svc.Shutdown(ctx)
 		if err != nil {
-			log.Error("sighdlr: shutting down service at index %d: %s", i, err)
-			status = statusError
+			h.logger.ErrorContext(ctx, "shutting down service", "idx", i, slogutil.KeyError, err)
+			status = osutil.ExitCodeFailure
 		}
 	}
 
 	return status
 }
 
-// newSignalHandler returns a new signalHandler that shuts down svcs.
+// newSignalHandler returns a new signalHandler that shuts down svcs.  logger
+// and confMgrConf must not be nil.
 func newSignalHandler(
+	logger *slog.Logger,
 	confMgrConf *configmgr.Config,
 	pidFile string,
-	svcs ...agh.Service,
+	svcs ...service.Interface,
 ) (h *signalHandler) {
 	h = &signalHandler{
-		confMgrConf: confMgrConf,
-		signal:      make(chan os.Signal, 1),
-		pidFile:     pidFile,
-		services:    svcs,
+		logger:          logger,
+		confMgrConf:     confMgrConf,
+		signal:          make(chan os.Signal, 1),
+		pidFile:         pidFile,
+		services:        svcs,
+		shutdownTimeout: defaultTimeoutShutdown,
 	}
 
 	notifier := osutil.DefaultSignalNotifier{}
 	osutil.NotifyShutdownSignal(notifier, h.signal)
-	aghos.NotifyReconfigureSignal(h.signal)
+	osutil.NotifyReconfigureSignal(notifier, h.signal)
 
 	return h
 }
 
-// writePID writes the PID to the file, if needed.  Any errors are reported to
-// log.
-func (h *signalHandler) writePID() {
-	if h.pidFile == "" {
-		return
-	}
-
-	// Use 8, since most PIDs will fit.
-	data := make([]byte, 0, 8)
-	data = strconv.AppendInt(data, int64(os.Getpid()), 10)
-	data = append(data, '\n')
-
-	err := aghos.WriteFile(h.pidFile, data, 0o644)
-	if err != nil {
-		log.Error("sighdlr: writing pidfile: %s", err)
-
-		return
-	}
-
-	log.Debug("sighdlr: wrote pid to %q", h.pidFile)
-}
-
 // removePID removes the PID file, if any.
-func (h *signalHandler) removePID() {
+func (h *signalHandler) removePID(ctx context.Context) {
 	if h.pidFile == "" {
 		return
 	}
 
 	err := os.Remove(h.pidFile)
 	if err != nil {
-		log.Error("sighdlr: removing pidfile: %s", err)
+		h.logger.ErrorContext(ctx, "removing pidfile", slogutil.KeyError, err)
 
 		return
 	}
 
-	log.Debug("sighdlr: removed pid at %q", h.pidFile)
+	h.logger.DebugContext(ctx, "removed pidfile", "file", h.pidFile)
 }

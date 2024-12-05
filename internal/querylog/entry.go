@@ -1,12 +1,14 @@
 package querylog
 
 import (
+	"context"
+	"log/slog"
 	"net"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/miekg/dns"
 )
 
@@ -52,7 +54,7 @@ func (e *logEntry) shallowClone() (clone *logEntry) {
 // addResponse adds data from resp to e.Answer if resp is not nil.  If isOrig is
 // true, addResponse sets the e.OrigAnswer field instead of e.Answer.  Any
 // errors are logged.
-func (e *logEntry) addResponse(resp *dns.Msg, isOrig bool) {
+func (e *logEntry) addResponse(ctx context.Context, l *slog.Logger, resp *dns.Msg, isOrig bool) {
 	if resp == nil {
 		return
 	}
@@ -65,8 +67,9 @@ func (e *logEntry) addResponse(resp *dns.Msg, isOrig bool) {
 		e.Answer, err = resp.Pack()
 		err = errors.Annotate(err, "packing answer: %w")
 	}
+
 	if err != nil {
-		log.Error("querylog: %s", err)
+		l.ErrorContext(ctx, "adding data from response", slogutil.KeyError, err)
 	}
 }
 

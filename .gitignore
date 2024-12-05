@@ -1,3 +1,8 @@
+# This comment is used to simplify checking local copies of the file.  Bump
+# this number every time a significant change is made to this file.
+#
+# AdGuard-Project-Version: 1
+
 # Please, DO NOT put your text editors' temporary files here.  The more are
 # added, the harder it gets to maintain and manage projects' gitignores.  Put
 # them into your global gitignore file instead.
@@ -8,6 +13,7 @@
 # bottom to make sure they take effect.
 *.db
 *.log
+*.out
 *.snap
 *.test
 /agh-backup/
@@ -21,6 +27,7 @@
 /launchpad_credentials
 /querylog.json*
 /snapcraft_login
+/test-reports/
 AdGuardHome
 AdGuardHome.exe
 AdGuardHome.yaml*

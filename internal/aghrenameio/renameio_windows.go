@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 )
 
@@ -63,7 +62,9 @@ func newPendingFile(filePath string, mode fs.FileMode) (f PendingFile, err error
 		return nil, fmt.Errorf("opening pending file: %w", err)
 	}
 
-	err = aghos.Chmod(file.Name(), mode)
+	// TODO(e.burkov):  The [os.Chmod] implementation is useless on Windows,
+	// investigate if it can be removed.
+	err = os.Chmod(file.Name(), mode)
 	if err != nil {
 		return nil, fmt.Errorf("preparing pending file: %w", err)
 	}

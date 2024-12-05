@@ -11,8 +11,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
 )
 
-// DNS Settings Handlers
-
 // ReqPatchSettingsDNS describes the request to the PATCH /api/v1/settings/dns
 // HTTP API.
 type ReqPatchSettingsDNS struct {
@@ -60,6 +58,7 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 	}
 
 	newConf := &dnssvc.Config{
+		Logger:              svc.logger,
 		Addresses:           req.Addresses,
 		BootstrapServers:    req.BootstrapServers,
 		UpstreamServers:     req.UpstreamServers,
@@ -78,7 +77,7 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 	}
 
 	newSvc := svc.confMgr.DNS()
-	err = newSvc.Start()
+	err = newSvc.Start(ctx)
 	if err != nil {
 		aghhttp.WriteJSONResponseError(w, r, fmt.Errorf("starting new service: %w", err))
 

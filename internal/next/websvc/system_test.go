@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/next/websvc"
+	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,9 +18,9 @@ func TestService_handleGetV1SystemInfo(t *testing.T) {
 	confMgr := newConfigManager()
 	_, addr := newTestServer(t, confMgr)
 	u := &url.URL{
-		Scheme: "http",
+		Scheme: urlutil.SchemeHTTP,
 		Host:   addr.String(),
-		Path:   websvc.PathV1SystemInfo,
+		Path:   websvc.PathPatternV1SystemInfo,
 	}
 
 	body := httpGet(t, u, http.StatusOK)

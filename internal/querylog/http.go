@@ -1,6 +1,7 @@
 package querylog
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -15,7 +16,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"golang.org/x/net/idna"
 )
@@ -74,7 +75,8 @@ func (l *queryLog) initWeb() {
 
 // handleQueryLog is the handler for the GET /control/querylog HTTP API.
 func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
-	params, err := parseSearchParams(r)
+	ctx := r.Context()
+	params, err := l.parseSearchParams(ctx, r)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "parsing params: %s", err)
 
@@ -87,18 +89,18 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 		l.confMu.RLock()
 		defer l.confMu.RUnlock()
 
-		entries, oldest = l.search(params)
+		entries, oldest = l.search(ctx, params)
 	}()
 
-	resp := entriesToJSON(entries, oldest, l.anonymizer.Load())
+	resp := l.entriesToJSON(ctx, entries, oldest, l.anonymizer.Load())
 
 	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
 // handleQueryLogClear is the handler for the POST /control/querylog/clear HTTP
 // API.
-func (l *queryLog) handleQueryLogClear(_ http.ResponseWriter, _ *http.Request) {
-	l.clear()
+func (l *queryLog) handleQueryLogClear(_ http.ResponseWriter, r *http.Request) {
+	l.clear(r.Context())
 }
 
 // handleQueryLogInfo is the handler for the GET /control/querylog_info HTTP
@@ -280,11 +282,12 @@ func getDoubleQuotesEnclosedValue(s *string) bool {
 }
 
 // parseSearchCriterion parses a search criterion from the query parameter.
-func parseSearchCriterion(q url.Values, name string, ct criterionType) (
-	ok bool,
-	sc searchCriterion,
-	err error,
-) {
+func (l *queryLog) parseSearchCriterion(
+	ctx context.Context,
+	q url.Values,
+	name string,
+	ct criterionType,
+) (ok bool, sc searchCriterion, err error) {
 	val := q.Get(name)
 	if val == "" {
 		return false, sc, nil
@@ -301,7 +304,7 @@ func parseSearchCriterion(q url.Values, name string, ct criterionType) (
 		// TODO(e.burkov):  Make it work with parts of IDNAs somehow.
 		loweredVal := strings.ToLower(val)
 		if asciiVal, err = idna.ToASCII(loweredVal); err != nil {
-			log.Debug("can't convert %q to ascii: %s", val, err)
+			l.logger.DebugContext(ctx, "converting  to ascii", "value", val, slogutil.KeyError, err)
 		} else if asciiVal == loweredVal {
 			// Purge asciiVal to prevent checking the same value
 			// twice.
@@ -331,7 +334,10 @@ func parseSearchCriterion(q url.Values, name string, ct criterionType) (
 
 // parseSearchParams parses search parameters from the HTTP request's query
 // string.
-func parseSearchParams(r *http.Request) (p *searchParams, err error) {
+func (l *queryLog) parseSearchParams(
+	ctx context.Context,
+	r *http.Request,
+) (p *searchParams, err error) {
 	p = newSearchParams()
 
 	q := r.URL.Query()
@@ -369,7 +375,7 @@ func parseSearchParams(r *http.Request) (p *searchParams, err error) {
 	}} {
 		var ok bool
 		var c searchCriterion
-		ok, c, err = parseSearchCriterion(q, v.urlField, v.ct)
+		ok, c, err = l.parseSearchCriterion(ctx, q, v.urlField, v.ct)
 		if err != nil {
 			return nil, err
 		}

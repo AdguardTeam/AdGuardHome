@@ -1,7 +1,9 @@
 package querylog
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -87,7 +89,12 @@ func ctDomainOrClientCaseNonStrict(
 // quickMatch quickly checks if the line matches the given search criterion.
 // It returns false if the like doesn't match.  This method is only here for
 // optimization purposes.
-func (c *searchCriterion) quickMatch(line string, findClient quickMatchClientFunc) (ok bool) {
+func (c *searchCriterion) quickMatch(
+	ctx context.Context,
+	logger *slog.Logger,
+	line string,
+	findClient quickMatchClientFunc,
+) (ok bool) {
 	switch c.criterionType {
 	case ctTerm:
 		host := readJSONValue(line, `"QH":"`)
@@ -95,7 +102,7 @@ func (c *searchCriterion) quickMatch(line string, findClient quickMatchClientFun
 		clientID := readJSONValue(line, `"CID":"`)
 
 		var name string
-		if cli := findClient(clientID, ip); cli != nil {
+		if cli := findClient(ctx, logger, clientID, ip); cli != nil {
 			name = cli.Name
 		}
 

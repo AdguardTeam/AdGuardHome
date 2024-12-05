@@ -32,9 +32,9 @@ Required environment:
 
  *  `CHANNEL`: release channel, see above.
 
- *  `COMMIT`: current Git revision.
-
  *  `DIST_DIR`: the directory where a release has previously been built.
+
+ *  `REVISION`: current Git revision.
 
  *  `VERSION`: release version.
 
@@ -102,18 +102,6 @@ go mod tidy
 and call `make` with `GOTOOLCHAIN=local`.
 
 [go-toolchain]: https://go.dev/blog/toolchain
-
-
-
-   ###  `clean.sh`: Cleanup
-
-Optional environment:
-
- *  `GO`: set an alternative name for the Go compiler.
-
-Required environment:
-
- *  `DIST_DIR`: the directory where a release has previously been built.
 
 
 

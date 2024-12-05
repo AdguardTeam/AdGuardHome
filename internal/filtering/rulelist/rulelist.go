@@ -71,3 +71,10 @@ var _ fmt.Stringer = UID{}
 func (id UID) String() (s string) {
 	return uuid.UUID(id).String()
 }
+
+// Common engine names.
+const (
+	EngineNameAllow  = "allow"
+	EngineNameBlock  = "block"
+	EngineNameCustom = "custom"
+)

@@ -82,7 +82,7 @@ type Empty struct{}
 var _ agh.ServiceWithConfig[*Config] = Empty{}
 
 // Start implements the [Service] interface for Empty.
-func (Empty) Start() (err error) { return nil }
+func (Empty) Start(_ context.Context) (err error) { return nil }
 
 // Shutdown implements the [Service] interface for Empty.
 func (Empty) Shutdown(_ context.Context) (err error) { return nil }

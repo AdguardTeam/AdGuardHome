@@ -7,6 +7,7 @@ package dnssvc
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/netip"
 	"sync/atomic"
@@ -28,6 +29,7 @@ import (
 // TODO(a.garipov): Consider saving a [*proxy.Config] instance for those
 // fields that are only used in [New] and [Service.Config].
 type Service struct {
+	logger              *slog.Logger
 	proxy               *proxy.Proxy
 	bootstraps          []string
 	bootstrapResolvers  []*upstream.UpstreamResolver
@@ -48,6 +50,7 @@ func New(c *Config) (svc *Service, err error) {
 	}
 
 	svc = &Service{
+		logger:              c.Logger,
 		bootstraps:          c.BootstrapServers,
 		upstreams:           c.UpstreamServers,
 		dns64Prefixes:       c.DNS64Prefixes,
@@ -68,6 +71,7 @@ func New(c *Config) (svc *Service, err error) {
 
 	svc.bootstrapResolvers = resolvers
 	svc.proxy, err = proxy.New(&proxy.Config{
+		Logger:        svc.logger,
 		UDPListenAddr: udpAddrs(c.Addresses),
 		TCPListenAddr: tcpAddrs(c.Addresses),
 		UpstreamConfig: &proxy.UpstreamConfig{
@@ -153,12 +157,12 @@ func udpAddrs(addrPorts []netip.AddrPort) (udpAddrs []*net.UDPAddr) {
 }
 
 // type check
-var _ agh.Service = (*Service)(nil)
+var _ agh.ServiceWithConfig[*Config] = (*Service)(nil)
 
 // Start implements the [agh.Service] interface for *Service.  svc may be nil.
 // After Start exits, all DNS servers have tried to start, but there is no
 // guarantee that they did.  Errors from the servers are written to the log.
-func (svc *Service) Start() (err error) {
+func (svc *Service) Start(ctx context.Context) (err error) {
 	if svc == nil {
 		return nil
 	}
@@ -170,7 +174,7 @@ func (svc *Service) Start() (err error) {
 		svc.running.Store(err == nil)
 	}()
 
-	return svc.proxy.Start(context.Background())
+	return svc.proxy.Start(ctx)
 }
 
 // Shutdown implements the [agh.Service] interface for *Service.  svc may be
@@ -215,6 +219,7 @@ func (svc *Service) Config() (c *Config) {
 	}
 
 	c = &Config{
+		Logger:              svc.logger,
 		Addresses:           addrs,
 		BootstrapServers:    svc.bootstraps,
 		UpstreamServers:     svc.upstreams,

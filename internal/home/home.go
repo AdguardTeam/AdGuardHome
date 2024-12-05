@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"path"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -21,7 +20,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
@@ -42,6 +40,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil"
 )
 
@@ -159,7 +158,7 @@ func setupContext(opts options) (err error) {
 
 	if Context.firstRun {
 		log.Info("This is the first time AdGuard Home is launched")
-		checkPermissions()
+		checkNetworkPermissions()
 
 		return nil
 	}
@@ -495,11 +494,42 @@ func checkPorts() (err error) {
 	return nil
 }
 
+// isUpdateEnabled returns true if the update is enabled for current
+// configuration.  It also logs the decision.  customURL should be true if the
+// updater is using a custom URL.
+func isUpdateEnabled(ctx context.Context, l *slog.Logger, opts *options, customURL bool) (ok bool) {
+	if opts.disableUpdate {
+		l.DebugContext(ctx, "updates are disabled by command-line option")
+
+		return false
+	}
+
+	switch version.Channel() {
+	case
+		version.ChannelDevelopment,
+		version.ChannelCandidate:
+		if customURL {
+			l.DebugContext(ctx, "updates are enabled because custom url is used")
+		} else {
+			l.DebugContext(ctx, "updates are disabled for development and candidate builds")
+		}
+
+		return customURL
+	default:
+		l.DebugContext(ctx, "updates are enabled")
+
+		return true
+	}
+}
+
+// initWeb initializes the web module.
 func initWeb(
+	ctx context.Context,
 	opts options,
 	clientBuildFS fs.FS,
 	upd *updater.Updater,
 	l *slog.Logger,
+	customURL bool,
 ) (web *webAPI, err error) {
 	var clientFS fs.FS
 	if opts.localFrontend {
@@ -513,17 +543,7 @@ func initWeb(
 		}
 	}
 
-	disableUpdate := opts.disableUpdate
-	switch version.Channel() {
-	case
-		version.ChannelDevelopment,
-		version.ChannelCandidate:
-		disableUpdate = true
-	}
-
-	if disableUpdate {
-		log.Info("AdGuard Home updates are disabled")
-	}
+	disableUpdate := !isUpdateEnabled(ctx, l, &opts, customURL)
 
 	webConf := &webConfig{
 		updater: upd,
@@ -544,7 +564,7 @@ func initWeb(
 
 	web = newWebAPI(webConf, l)
 	if web == nil {
-		return nil, fmt.Errorf("initializing web: %w", err)
+		return nil, errors.Error("can not initialize web")
 	}
 
 	return web, nil
@@ -557,6 +577,8 @@ func fatalOnError(err error) {
 }
 
 // run configures and starts AdGuard Home.
+//
+// TODO(e.burkov):  Make opts a pointer.
 func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	// Configure working dir.
 	err := initWorkingDir(opts)
@@ -604,33 +626,13 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	execPath, err := os.Executable()
 	fatalOnError(errors.Annotate(err, "getting executable path: %w"))
 
-	u := &url.URL{
-		Scheme: "https",
-		// TODO(a.garipov): Make configurable.
-		Host: "static.adtidy.org",
-		Path: path.Join("adguardhome", version.Channel(), "version.json"),
-	}
-
 	confPath := configFilePath()
-	log.Debug("using config path %q for updater", confPath)
 
-	upd := updater.NewUpdater(&updater.Config{
-		Client:          config.Filtering.HTTPClient,
-		Version:         version.Version(),
-		Channel:         version.Channel(),
-		GOARCH:          runtime.GOARCH,
-		GOOS:            runtime.GOOS,
-		GOARM:           version.GOARM(),
-		GOMIPS:          version.GOMIPS(),
-		WorkDir:         Context.workDir,
-		ConfName:        confPath,
-		ExecPath:        execPath,
-		VersionCheckURL: u.String(),
-	})
+	upd, customURL := newUpdater(ctx, slogLogger, Context.workDir, confPath, execPath, config)
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
-	cmdlineUpdate(opts, upd, slogLogger)
+	cmdlineUpdate(ctx, slogLogger, opts, upd)
 
 	if !Context.firstRun {
 		// Save the updated config.
@@ -643,7 +645,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	}
 
 	dataDir := Context.getDataDir()
-	err = aghos.MkdirAll(dataDir, aghos.DefaultPermDir)
+	err = os.MkdirAll(dataDir, aghos.DefaultPermDir)
 	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDir))
 
 	GLMode = opts.glinetMode
@@ -658,7 +660,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 		onConfigModified()
 	}
 
-	Context.web, err = initWeb(opts, clientBuildFS, upd, slogLogger)
+	Context.web, err = initWeb(ctx, opts, clientBuildFS, upd, slogLogger, customURL)
 	fatalOnError(err)
 
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&Context, config)
@@ -686,16 +688,85 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 		}
 	}
 
-	if permcheck.NeedsMigration(confPath) {
-		permcheck.Migrate(Context.workDir, dataDir, statsDir, querylogDir, confPath)
+	if !opts.noPermCheck {
+		checkPermissions(ctx, slogLogger, Context.workDir, confPath, dataDir, statsDir, querylogDir)
 	}
-
-	permcheck.Check(Context.workDir, dataDir, statsDir, querylogDir, confPath)
 
 	Context.web.start()
 
 	// Wait for other goroutines to complete their job.
 	<-done
+}
+
+// newUpdater creates a new AdGuard Home updater.  customURL is true if the user
+// has specified a custom version announcement URL.
+func newUpdater(
+	ctx context.Context,
+	l *slog.Logger,
+	workDir string,
+	confPath string,
+	execPath string,
+	config *configuration,
+) (upd *updater.Updater, customURL bool) {
+	// envName is the name of the environment variable that can be used to
+	// override the default version check URL.
+	const envName = "ADGUARD_HOME_TEST_UPDATE_VERSION_URL"
+
+	customURLStr := os.Getenv(envName)
+
+	var versionURL *url.URL
+	switch {
+	case version.Channel() == version.ChannelRelease:
+		// Only enable custom version URL for development builds.
+		l.DebugContext(ctx, "custom version url is disabled for release builds")
+	case !config.UnsafeUseCustomUpdateIndexURL:
+		l.DebugContext(ctx, "custom version url is disabled in config")
+	default:
+		versionURL, _ = url.Parse(customURLStr)
+	}
+
+	err := urlutil.ValidateHTTPURL(versionURL)
+	if customURL = err == nil; !customURL {
+		l.DebugContext(ctx, "parsing custom version url", slogutil.KeyError, err)
+
+		versionURL = updater.DefaultVersionURL()
+	}
+
+	l.DebugContext(ctx, "creating updater", "config_path", confPath)
+
+	return updater.NewUpdater(&updater.Config{
+		Client:          config.Filtering.HTTPClient,
+		Version:         version.Version(),
+		Channel:         version.Channel(),
+		GOARCH:          runtime.GOARCH,
+		GOOS:            runtime.GOOS,
+		GOARM:           version.GOARM(),
+		GOMIPS:          version.GOMIPS(),
+		WorkDir:         workDir,
+		ConfName:        confPath,
+		ExecPath:        execPath,
+		VersionCheckURL: versionURL,
+	}), customURL
+}
+
+// checkPermissions checks and migrates permissions of the files and directories
+// used by AdGuard Home, if needed.
+func checkPermissions(
+	ctx context.Context,
+	baseLogger *slog.Logger,
+	workDir string,
+	confPath string,
+	dataDir string,
+	statsDir string,
+	querylogDir string,
+) {
+	l := baseLogger.With(slogutil.KeyPrefix, "permcheck")
+
+	if permcheck.NeedsMigration(ctx, l, workDir, confPath) {
+		permcheck.Migrate(ctx, l, workDir, dataDir, statsDir, querylogDir, confPath)
+	}
+
+	permcheck.Check(ctx, l, workDir, dataDir, statsDir, querylogDir, confPath)
 }
 
 // initUsers initializes context auth module.  Clears config users field.
@@ -757,8 +828,9 @@ func startMods(l *slog.Logger) (err error) {
 	return nil
 }
 
-// Check if the current user permissions are enough to run AdGuard Home
-func checkPermissions() {
+// checkNetworkPermissions checks if the current user permissions are enough to
+// use the required networking functionality.
+func checkNetworkPermissions() {
 	log.Info("Checking if AdGuard Home has necessary permissions")
 
 	if ok, err := aghnet.CanBindPrivilegedPorts(); !ok || err != nil {
@@ -936,12 +1008,12 @@ func printHTTPAddresses(proto string) {
 	}
 
 	port := config.HTTPConfig.Address.Port()
-	if proto == aghhttp.SchemeHTTPS {
+	if proto == urlutil.SchemeHTTPS {
 		port = tlsConf.PortHTTPS
 	}
 
 	// TODO(e.burkov): Inspect and perhaps merge with the previous condition.
-	if proto == aghhttp.SchemeHTTPS && tlsConf.ServerName != "" {
+	if proto == urlutil.SchemeHTTPS && tlsConf.ServerName != "" {
 		printWebAddrs(proto, tlsConf.ServerName, tlsConf.PortHTTPS)
 
 		return
@@ -1001,7 +1073,7 @@ type jsonError struct {
 }
 
 // cmdlineUpdate updates current application and exits.  l must not be nil.
-func cmdlineUpdate(opts options, upd *updater.Updater, l *slog.Logger) {
+func cmdlineUpdate(ctx context.Context, l *slog.Logger, opts options, upd *updater.Updater) {
 	if !opts.performUpdate {
 		return
 	}
@@ -1014,20 +1086,19 @@ func cmdlineUpdate(opts options, upd *updater.Updater, l *slog.Logger) {
 	err := initDNSServer(nil, nil, nil, nil, nil, nil, &tlsConfigSettings{}, l)
 	fatalOnError(err)
 
-	log.Info("cmdline update: performing update")
+	l.InfoContext(ctx, "performing update via cli")
 
 	info, err := upd.VersionInfo(true)
 	if err != nil {
-		vcu := upd.VersionCheckURL()
-		log.Error("getting version info from %s: %s", vcu, err)
+		l.ErrorContext(ctx, "getting version info", slogutil.KeyError, err)
 
-		os.Exit(1)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	if info.NewVersion == version.Version() {
-		log.Info("no updates available")
+		l.InfoContext(ctx, "no updates available")
 
-		os.Exit(0)
+		os.Exit(osutil.ExitCodeSuccess)
 	}
 
 	err = upd.Update(Context.firstRun)
@@ -1035,10 +1106,10 @@ func cmdlineUpdate(opts options, upd *updater.Updater, l *slog.Logger) {
 
 	err = restartService()
 	if err != nil {
-		log.Debug("restarting service: %s", err)
-		log.Info("AdGuard Home was not installed as a service. " +
+		l.DebugContext(ctx, "restarting service", slogutil.KeyError, err)
+		l.InfoContext(ctx, "AdGuard Home was not installed as a service. "+
 			"Please restart running instances of AdGuardHome manually.")
 	}
 
-	os.Exit(0)
+	os.Exit(osutil.ExitCodeSuccess)
 }
