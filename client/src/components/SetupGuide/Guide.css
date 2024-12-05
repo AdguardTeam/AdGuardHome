@@ -14,6 +14,17 @@
     font-size: 15px;
 }
 
+.guide__list {
+    margin-top: 16px;
+    padding-left: 0;
+}
+
+@media screen and (min-width: 768px) {
+    .guide__list {
+        padding-left: 24px;
+    }
+}
+
 .guide__address {
     display: block;
     margin-bottom: 7px;

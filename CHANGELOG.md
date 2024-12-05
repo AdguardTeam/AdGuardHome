@@ -41,6 +41,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Setup guide styles in Firefox.
 - Goroutine leak during the upstream DNS server test ([#7357]).
 - Goroutine leak during configuration update resulting in increased response
   time ([#6818]).
