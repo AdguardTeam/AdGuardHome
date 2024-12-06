@@ -47,7 +47,7 @@ func onConfigModified() {
 
 // initDNS updates all the fields of the [Context] needed to initialize the DNS
 // server and initializes it at last.  It also must not be called unless
-// [config] and [Context] are initialized.  l must not be nil.
+// [config] and [Context] are initialized.  baseLogger must not be nil.
 func initDNS(baseLogger *slog.Logger, statsDir, querylogDir string) (err error) {
 	anonymizer := config.anonymizer()
 

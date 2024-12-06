@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/netip"
 	"os"
@@ -19,7 +20,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/quic-go/quic-go/http3"
 )
 
@@ -124,6 +125,8 @@ func (req *checkConfReq) validateWeb(tcpPorts aghalg.UniqChecker[tcpPort]) (err 
 // be set.  canAutofix is true if the port can be unbound by AdGuard Home
 // automatically.
 func (req *checkConfReq) validateDNS(
+	ctx context.Context,
+	l *slog.Logger,
 	tcpPorts aghalg.UniqChecker[tcpPort],
 ) (canAutofix bool, err error) {
 	defer func() { err = errors.Annotate(err, "validating ports: %w") }()
@@ -154,10 +157,10 @@ func (req *checkConfReq) validateDNS(
 	}
 
 	// Try to fix automatically.
-	canAutofix = checkDNSStubListener()
+	canAutofix = checkDNSStubListener(ctx, l)
 	if canAutofix && req.DNS.Autofix {
-		if derr := disableDNSStubListener(); derr != nil {
-			log.Error("disabling DNSStubListener: %s", err)
+		if derr := disableDNSStubListener(ctx, l); derr != nil {
+			l.ErrorContext(ctx, "disabling DNSStubListener", slogutil.KeyError, err)
 		}
 
 		err = aghnet.CheckPort("udp", netip.AddrPortFrom(req.DNS.IP, port))
@@ -184,7 +187,7 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 		resp.Web.Status = err.Error()
 	}
 
-	if resp.DNS.CanAutofix, err = req.validateDNS(tcpPorts); err != nil {
+	if resp.DNS.CanAutofix, err = req.validateDNS(r.Context(), web.logger, tcpPorts); err != nil {
 		resp.DNS.Status = err.Error()
 	} else if !req.DNS.IP.IsUnspecified() {
 		resp.StaticIP = handleStaticIP(req.DNS.IP, req.SetStaticIP)
@@ -233,27 +236,39 @@ func handleStaticIP(ip netip.Addr, set bool) staticIPJSON {
 	return resp
 }
 
-// Check if DNSStubListener is active
-func checkDNSStubListener() bool {
+// checkDNSStubListener returns true if DNSStubListener is active.
+func checkDNSStubListener(ctx context.Context, l *slog.Logger) (ok bool) {
 	if runtime.GOOS != "linux" {
 		return false
 	}
 
 	cmd := exec.Command("systemctl", "is-enabled", "systemd-resolved")
-	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
+	l.DebugContext(ctx, "executing", "cmd", cmd.Path, "args", cmd.Args)
 	_, err := cmd.Output()
 	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		log.Info("command %s has failed: %v code:%d",
-			cmd.Path, err, cmd.ProcessState.ExitCode())
+		l.InfoContext(
+			ctx,
+			"execution failed",
+			"cmd", cmd.Path,
+			"code", cmd.ProcessState.ExitCode(),
+			slogutil.KeyError, err,
+		)
+
 		return false
 	}
 
 	cmd = exec.Command("grep", "-E", "#?DNSStubListener=yes", "/etc/systemd/resolved.conf")
-	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
+	l.DebugContext(ctx, "executing", "cmd", cmd.Path, "args", cmd.Args)
 	_, err = cmd.Output()
 	if err != nil || cmd.ProcessState.ExitCode() != 0 {
-		log.Info("command %s has failed: %v code:%d",
-			cmd.Path, err, cmd.ProcessState.ExitCode())
+		l.InfoContext(
+			ctx,
+			"execution failed",
+			"cmd", cmd.Path,
+			"code", cmd.ProcessState.ExitCode(),
+			slogutil.KeyError, err,
+		)
+
 		return false
 	}
 
@@ -269,8 +284,9 @@ DNSStubListener=no
 )
 const resolvConfPath = "/etc/resolv.conf"
 
-// Deactivate DNSStubListener
-func disableDNSStubListener() (err error) {
+// disableDNSStubListener deactivates DNSStubListerner and returns an error, if
+// any.
+func disableDNSStubListener(ctx context.Context, l *slog.Logger) (err error) {
 	dir := filepath.Dir(resolvedConfPath)
 	err = os.MkdirAll(dir, 0o755)
 	if err != nil {
@@ -290,7 +306,7 @@ func disableDNSStubListener() (err error) {
 	}
 
 	cmd := exec.Command("systemctl", "reload-or-restart", "systemd-resolved")
-	log.Tracef("executing %s %v", cmd.Path, cmd.Args)
+	l.DebugContext(ctx, "executing", "cmd", cmd.Path, "args", cmd.Args)
 	_, err = cmd.Output()
 	if err != nil {
 		return err
@@ -327,9 +343,9 @@ func copyInstallSettings(dst, src *configuration) {
 // shutdownTimeout is the timeout for shutting HTTP server down operation.
 const shutdownTimeout = 5 * time.Second
 
-// shutdownSrv shuts srv down and prints error messages to the log.
-func shutdownSrv(ctx context.Context, srv *http.Server) {
-	defer log.OnPanic("")
+// shutdownSrv shuts down srv and logs the error, if any.  l must not be nil.
+func shutdownSrv(ctx context.Context, l *slog.Logger, srv *http.Server) {
+	defer slogutil.RecoverAndLog(ctx, l)
 
 	if srv == nil {
 		return
@@ -340,19 +356,19 @@ func shutdownSrv(ctx context.Context, srv *http.Server) {
 		return
 	}
 
-	const msgFmt = "shutting down http server %q: %s"
-	if errors.Is(err, context.Canceled) {
-		log.Debug(msgFmt, srv.Addr, err)
-	} else {
-		log.Error(msgFmt, srv.Addr, err)
+	lvl := slog.LevelDebug
+	if !errors.Is(err, context.Canceled) {
+		lvl = slog.LevelError
 	}
+
+	l.Log(ctx, lvl, "shutting down http server", "addr", srv.Addr, slogutil.KeyError, err)
 }
 
-// shutdownSrv3 shuts srv down and prints error messages to the log.
+// shutdownSrv3 shuts down srv and logs the error, if any.  l must not be nil.
 //
 // TODO(a.garipov): Think of a good way to merge with [shutdownSrv].
-func shutdownSrv3(srv *http3.Server) {
-	defer log.OnPanic("")
+func shutdownSrv3(ctx context.Context, l *slog.Logger, srv *http3.Server) {
+	defer slogutil.RecoverAndLog(ctx, l)
 
 	if srv == nil {
 		return
@@ -363,12 +379,12 @@ func shutdownSrv3(srv *http3.Server) {
 		return
 	}
 
-	const msgFmt = "shutting down http/3 server %q: %s"
-	if errors.Is(err, context.Canceled) {
-		log.Debug(msgFmt, srv.Addr, err)
-	} else {
-		log.Error(msgFmt, srv.Addr, err)
+	lvl := slog.LevelDebug
+	if !errors.Is(err, context.Canceled) {
+		lvl = slog.LevelError
 	}
+
+	l.Log(ctx, lvl, "shutting down http/3 server", "addr", srv.Addr, slogutil.KeyError, err)
 }
 
 // PasswordMinRunes is the minimum length of user's password in runes.
@@ -436,7 +452,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	// moment we'll allow setting up TLS in the initial configuration or the
 	// configuration itself will use HTTPS protocol, because the underlying
 	// functions potentially restart the HTTPS server.
-	err = startMods(web.logger)
+	err = startMods(web.baseLogger)
 	if err != nil {
 		Context.firstRun = true
 		copyInstallSettings(config, curConfig)
@@ -472,12 +488,11 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	// and with its own context, because it waits until all requests are handled
 	// and will be blocked by it's own caller.
 	go func(timeout time.Duration) {
-		defer log.OnPanic("web")
-
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer slogutil.RecoverAndLog(ctx, web.logger)
 		defer cancel()
 
-		shutdownSrv(ctx, web.httpServer)
+		shutdownSrv(ctx, web.logger, web.httpServer)
 	}(shutdownTimeout)
 }
 

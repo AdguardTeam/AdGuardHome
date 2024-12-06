@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
@@ -16,7 +17,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/osutil"
 )
 
 // temporaryError is the interface for temporary errors from the Go standard
@@ -52,7 +54,7 @@ func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = web.requestVersionInfo(resp, req.Recheck)
+	err = web.requestVersionInfo(r.Context(), resp, req.Recheck)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		aghhttp.Error(r, w, http.StatusBadGateway, "%s", err)
@@ -73,7 +75,11 @@ func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 
 // requestVersionInfo sets the VersionInfo field of resp if it can reach the
 // update server.
-func (web *webAPI) requestVersionInfo(resp *versionResponse, recheck bool) (err error) {
+func (web *webAPI) requestVersionInfo(
+	ctx context.Context,
+	resp *versionResponse,
+	recheck bool,
+) (err error) {
 	updater := web.conf.updater
 	for range 3 {
 		resp.VersionInfo, err = updater.VersionInfo(recheck)
@@ -89,7 +95,9 @@ func (web *webAPI) requestVersionInfo(resp *versionResponse, recheck bool) (err 
 			// See https://github.com/AdguardTeam/AdGuardHome/issues/934.
 			const sleepTime = 2 * time.Second
 
-			log.Info("update: temp net error: %v; sleeping for %s and retrying", err, sleepTime)
+			err = fmt.Errorf("temp net error: %w; sleeping for %s and retrying", err, sleepTime)
+			web.logger.InfoContext(ctx, "updating version info", slogutil.KeyError, err)
+
 			time.Sleep(sleepTime)
 
 			continue
@@ -140,7 +148,7 @@ func (web *webAPI) handleUpdate(w http.ResponseWriter, r *http.Request) {
 	// The background context is used because the underlying functions wrap it
 	// with timeout and shut down the server, which handles current request.  It
 	// also should be done in a separate goroutine for the same reason.
-	go finishUpdate(context.Background(), execPath, web.conf.runningAsService)
+	go finishUpdate(context.Background(), web.logger, execPath, web.conf.runningAsService)
 }
 
 // versionResponse is the response for /control/version.json endpoint.
@@ -180,15 +188,17 @@ func tlsConfUsesPrivilegedPorts(c *tlsConfigSettings) (ok bool) {
 	return c.Enabled && (c.PortHTTPS < 1024 || c.PortDNSOverTLS < 1024 || c.PortDNSOverQUIC < 1024)
 }
 
-// finishUpdate completes an update procedure.
-func finishUpdate(ctx context.Context, execPath string, runningAsService bool) {
-	var err error
+// finishUpdate completes an update procedure.  It is intended to be used as a
+// goroutine.
+func finishUpdate(ctx context.Context, l *slog.Logger, execPath string, runningAsService bool) {
+	defer slogutil.RecoverAndExit(ctx, l, osutil.ExitCodeFailure)
 
-	log.Info("stopping all tasks")
+	l.InfoContext(ctx, "stopping all tasks")
 
 	cleanup(ctx)
 	cleanupAlways()
 
+	var err error
 	if runtime.GOOS == "windows" {
 		if runningAsService {
 			// NOTE: We can't restart the service via "kardianos/service"
@@ -199,28 +209,28 @@ func finishUpdate(ctx context.Context, execPath string, runningAsService bool) {
 			cmd := exec.Command("cmd", "/c", "net stop AdGuardHome & net start AdGuardHome")
 			err = cmd.Start()
 			if err != nil {
-				log.Fatalf("restarting: stopping: %s", err)
+				panic(fmt.Errorf("restarting service: %w", err))
 			}
 
-			os.Exit(0)
+			os.Exit(osutil.ExitCodeSuccess)
 		}
 
 		cmd := exec.Command(execPath, os.Args[1:]...)
-		log.Info("restarting: %q %q", execPath, os.Args[1:])
+		l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err = cmd.Start()
 		if err != nil {
-			log.Fatalf("restarting:: %s", err)
+			panic(fmt.Errorf("restarting: %w", err))
 		}
 
-		os.Exit(0)
+		os.Exit(osutil.ExitCodeSuccess)
 	}
 
-	log.Info("restarting: %q %q", execPath, os.Args[1:])
+	l.InfoContext(ctx, "restarting", "exec_path", execPath, "args", os.Args[1:])
 	err = syscall.Exec(execPath, os.Args, os.Environ())
 	if err != nil {
-		log.Fatalf("restarting: %s", err)
+		panic(fmt.Errorf("restarting: %w", err))
 	}
 }
