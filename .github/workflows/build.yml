@@ -46,7 +46,7 @@
         'restore-keys': '${{ runner.os }}-go-'
     - 'name': 'Get npm cache directory'
       'id': 'npm-cache'
-      'run': 'echo "::set-output name=dir::$( npm config get cache )"'
+      'run': 'echo "dir=$( npm config get cache )"' >> "$GITHUB_OUTPUT"
     - 'name': 'Set up npm cache'
       'uses': 'actions/cache@v2'
       'with':
@@ -87,7 +87,7 @@
         'restore-keys': '${{ runner.os }}-go-'
     - 'name': 'Get npm cache directory'
       'id': 'npm-cache'
-      'run': 'echo "::set-output name=dir::$(npm config get cache)"'
+      'run': 'echo "dir=$(npm config get cache)"' >> "$GITHUB_OUTPUT"
     - 'name': 'Set up npm cache'
       'uses': 'actions/cache@v2'
       'with':
