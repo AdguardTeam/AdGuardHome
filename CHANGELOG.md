@@ -37,7 +37,7 @@ See also the [v0.107.55 GitHub milestone][ms-v0.107.55].
   Windows security model more accurately ([#7400]).
 - Go version has been updated to prevent the possibility of exploiting the Go
   vulnerabilities fixed in [1.23.4][go-1.23.4].
-- The release executables are now signed.
+- The Windows executables are now signed.
 
 ### Added
 
