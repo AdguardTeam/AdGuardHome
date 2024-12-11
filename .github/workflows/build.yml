@@ -99,7 +99,7 @@
     - 'name': 'Set up QEMU'
       'uses': 'docker/setup-qemu-action@v3'
     - 'name': 'Set up Docker Buildx'
-      'uses': 'docker/setup-buildx-action@v1'
+      'uses': 'docker/setup-buildx-action@v3'
     - 'name': 'Run snapshot build'
       # Set a custom version string, since the checkout@v2 action does not seem
       # to know about the master branch, while the version script uses it to
