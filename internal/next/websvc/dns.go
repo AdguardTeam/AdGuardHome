@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/netip"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/AdGuardHome/internal/next/dnssvc"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/jsonpatch"
 )
 
 // ReqPatchSettingsDNS describes the request to the PATCH /api/v1/settings/dns
@@ -16,13 +15,15 @@ import (
 type ReqPatchSettingsDNS struct {
 	// TODO(a.garipov): Add more as we go.
 
-	Addresses           []netip.AddrPort     `json:"addresses"`
-	BootstrapServers    []string             `json:"bootstrap_servers"`
-	UpstreamServers     []string             `json:"upstream_servers"`
-	DNS64Prefixes       []netip.Prefix       `json:"dns64_prefixes"`
-	UpstreamTimeout     aghhttp.JSONDuration `json:"upstream_timeout"`
-	BootstrapPreferIPv6 bool                 `json:"bootstrap_prefer_ipv6"`
-	UseDNS64            bool                 `json:"use_dns64"`
+	Addresses        jsonpatch.NonRemovable[[]netip.AddrPort] `json:"addresses"`
+	BootstrapServers jsonpatch.NonRemovable[[]string]         `json:"bootstrap_servers"`
+	UpstreamServers  jsonpatch.NonRemovable[[]string]         `json:"upstream_servers"`
+	DNS64Prefixes    jsonpatch.NonRemovable[[]netip.Prefix]   `json:"dns64_prefixes"`
+
+	UpstreamTimeout jsonpatch.NonRemovable[aghhttp.JSONDuration] `json:"upstream_timeout"`
+
+	BootstrapPreferIPv6 jsonpatch.NonRemovable[bool] `json:"bootstrap_prefer_ipv6"`
+	UseDNS64            jsonpatch.NonRemovable[bool] `json:"use_dns64"`
 }
 
 // HTTPAPIDNSSettings are the DNS settings as used by the HTTP API.  See the
@@ -42,13 +43,7 @@ type HTTPAPIDNSSettings struct {
 // handlePatchSettingsDNS is the handler for the PATCH /api/v1/settings/dns HTTP
 // API.
 func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Request) {
-	req := &ReqPatchSettingsDNS{
-		Addresses:        []netip.AddrPort{},
-		BootstrapServers: []string{},
-		UpstreamServers:  []string{},
-	}
-
-	// TODO(a.garipov): Validate nulls and proper JSON patch.
+	req := &ReqPatchSettingsDNS{}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -57,16 +52,20 @@ func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	newConf := &dnssvc.Config{
-		Logger:              svc.logger,
-		Addresses:           req.Addresses,
-		BootstrapServers:    req.BootstrapServers,
-		UpstreamServers:     req.UpstreamServers,
-		DNS64Prefixes:       req.DNS64Prefixes,
-		UpstreamTimeout:     time.Duration(req.UpstreamTimeout),
-		BootstrapPreferIPv6: req.BootstrapPreferIPv6,
-		UseDNS64:            req.UseDNS64,
-	}
+	dnsSvc := svc.confMgr.DNS()
+	newConf := dnsSvc.Config()
+
+	// TODO(a.garipov): Add more as we go.
+
+	req.Addresses.Set(&newConf.Addresses)
+	req.BootstrapServers.Set(&newConf.BootstrapServers)
+	req.UpstreamServers.Set(&newConf.UpstreamServers)
+	req.DNS64Prefixes.Set(&newConf.DNS64Prefixes)
+
+	req.UpstreamTimeout.Set((*aghhttp.JSONDuration)(&newConf.UpstreamTimeout))
+
+	req.BootstrapPreferIPv6.Set(&newConf.BootstrapPreferIPv6)
+	req.UseDNS64.Set(&newConf.UseDNS64)
 
 	ctx := r.Context()
 	err = svc.confMgr.UpdateDNS(ctx, newConf)
