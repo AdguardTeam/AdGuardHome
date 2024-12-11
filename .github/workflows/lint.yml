@@ -15,7 +15,7 @@
   'go-lint':
     'runs-on': 'ubuntu-latest'
     'steps':
-    - 'uses': 'actions/checkout@v2'
+    - 'uses': 'actions/checkout@v4'
     - 'name': 'Set up Go'
       'uses': 'actions/setup-go@v3'
       'with':
@@ -27,7 +27,7 @@
   'eslint':
     'runs-on': 'ubuntu-latest'
     'steps':
-    - 'uses': 'actions/checkout@v2'
+    - 'uses': 'actions/checkout@v4'
     - 'name': 'Install modules'
       'run': 'npm --prefix="./client" ci'
     - 'name': 'Run ESLint'
