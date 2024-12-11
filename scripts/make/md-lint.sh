@@ -14,7 +14,7 @@ if [ "$verbose" -gt '0' ]; then
 	set -x
 fi
 
-# TODO(e.burkov):  Lint markdown documents within this project.
-# markdownlint \
-# 	./README.md \
-# 	;
+# TODO(e.burkov):  Lint allmarkdown documents within this project.
+markdownlint \
+	./CHANGELOG.md \
+	;

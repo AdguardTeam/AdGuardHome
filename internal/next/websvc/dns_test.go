@@ -41,7 +41,7 @@ func TestService_HandlePatchSettingsDNS(t *testing.T) {
 				return nil
 			},
 			OnShutdown: func(_ context.Context) (err error) { panic("not implemented") },
-			OnConfig:   func() (c *dnssvc.Config) { panic("not implemented") },
+			OnConfig:   func() (c *dnssvc.Config) { return &dnssvc.Config{} },
 		}
 	}
 	confMgr.onUpdateDNS = func(ctx context.Context, c *dnssvc.Config) (err error) {
