@@ -126,7 +126,7 @@
     'runs-on': 'ubuntu-latest'
     'steps':
     - 'name': 'Conclusion'
-      'uses': 'technote-space/workflow-conclusion-action@v1'
+      'uses': 'technote-space/workflow-conclusion-action@v3'
     - 'name': 'Send Slack notif'
       'uses': '8398a7/action-slack@v3'
       'with':
