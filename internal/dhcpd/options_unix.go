@@ -84,7 +84,7 @@ func parseDHCPOptionDur(s string) (val dhcpv4.OptionValue, err error) {
 		return nil, fmt.Errorf("decoding dur: %w", err)
 	}
 
-	return dhcpv4.Duration(v.Duration), nil
+	return dhcpv4.Duration(v), nil
 }
 
 // parseDHCPOptionUint parses a DHCP option as an unsigned integer.  bitSize is

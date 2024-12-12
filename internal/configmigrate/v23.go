@@ -48,7 +48,7 @@ func migrateTo23(diskConf yobj) (err error) {
 
 	diskConf["http"] = yobj{
 		"address":     netip.AddrPortFrom(bindHostAddr, uint16(bindPort)).String(),
-		"session_ttl": timeutil.Duration{Duration: time.Duration(sessionTTL) * time.Hour}.String(),
+		"session_ttl": timeutil.Duration(time.Duration(sessionTTL) * time.Hour).String(),
 	}
 
 	delete(diskConf, "bind_host")

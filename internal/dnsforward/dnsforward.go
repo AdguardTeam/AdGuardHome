@@ -740,7 +740,7 @@ func (s *Server) prepareInternalProxy() (err error) {
 		MessageConstructor:        s,
 	}
 
-	err = setProxyUpstreamMode(conf, srvConf.UpstreamMode, srvConf.FastestTimeout.Duration)
+	err = setProxyUpstreamMode(conf, srvConf.UpstreamMode, time.Duration(srvConf.FastestTimeout))
 	if err != nil {
 		return fmt.Errorf("invalid upstream mode: %w", err)
 	}

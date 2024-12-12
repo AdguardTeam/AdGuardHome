@@ -37,7 +37,7 @@ func migrateTo12(diskConf yobj) (err error) {
 		qlogIvl = 90
 	}
 
-	dns[field] = timeutil.Duration{Duration: time.Duration(qlogIvl) * timeutil.Day}
+	dns[field] = timeutil.Duration(time.Duration(qlogIvl) * timeutil.Day)
 
 	return nil
 }

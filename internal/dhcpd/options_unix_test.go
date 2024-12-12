@@ -144,8 +144,8 @@ func TestParseOpt(t *testing.T) {
 		in:       "24 dur 3y",
 		wantCode: nil,
 		wantVal:  nil,
-		wantErrMsg: "invalid option string \"24 dur 3y\": decoding dur: " +
-			"unmarshaling duration: time: unknown unit \"y\" in duration \"3y\"",
+		wantErrMsg: `invalid option string "24 dur 3y": decoding dur: time: ` +
+			`unknown unit "y" in duration "3y"`,
 	}, {
 		name:     "u8_error",
 		in:       "23 u8 256",
