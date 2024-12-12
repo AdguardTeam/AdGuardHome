@@ -27,7 +27,8 @@ export const setAllSettingsSuccess = createAction('SET_ALL_SETTINGS_SUCCESS');
 export const setAllSettings = (values: any) => async (dispatch: any) => {
     dispatch(setAllSettingsRequest());
     try {
-        const { confirm_password, ...config } = values;
+        const config = { ...values };
+        delete config.confirm_password;
 
         await apiClient.setAllSettings(config);
         dispatch(setAllSettingsSuccess());
@@ -48,7 +49,10 @@ export const checkConfig = (values: any) => async (dispatch: any) => {
     dispatch(checkConfigRequest());
     try {
         const check = await apiClient.checkConfig(values);
-        dispatch(checkConfigSuccess(check));
+        dispatch(checkConfigSuccess({
+            ...values,
+            check,
+        }));
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(checkConfigFailure());

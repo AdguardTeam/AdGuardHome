@@ -38,6 +38,7 @@
         "react": "^16.13.1",
         "react-click-outside": "^3.0.1",
         "react-dom": "^16.13.1",
+        "react-hook-form": "^7.54.0",
         "react-i18next": "^11.7.2",
         "react-modal": "^3.11.2",
         "react-popper-tooltip": "^2.11.1",

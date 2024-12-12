@@ -1,47 +1,46 @@
 import React from 'react';
-
-import { Field, reduxForm } from 'redux-form';
+import { useForm } from 'react-hook-form';
 import { withTranslation, Trans } from 'react-i18next';
 import flow from 'lodash/flow';
-
+import cn from 'classnames';
 import i18n from '../../i18n';
-
 import Controls from './Controls';
-
-import { renderInputField } from '../../helpers/form';
-import { FORM_NAME } from '../../helpers/constants';
 import { validatePasswordLength } from '../../helpers/validators';
 
-const required = (value: any) => {
-    if (value || value === 0) {
-        return false;
-    }
-
-    return <Trans>form_error_required</Trans>;
-};
-
-const validate = (values: any) => {
-    const errors: { confirm_password?: string } = {};
-
-    if (values.confirm_password !== values.password) {
-        errors.confirm_password = i18n.t('form_error_password');
-    }
-
-    return errors;
-};
-
-interface AuthProps {
-    handleSubmit: (...args: unknown[]) => string;
+type Props = {
+    onAuthSubmit: (...args: unknown[]) => string;
     pristine: boolean;
     invalid: boolean;
     t: (...args: unknown[]) => string;
 }
 
-const Auth = (props: AuthProps) => {
-    const { handleSubmit, pristine, invalid, t } = props;
+const Auth = (props: Props) => {
+    const { t, onAuthSubmit } = props;
+    const {
+        register,
+        handleSubmit,
+        watch,
+        formState: { errors, isDirty, isValid },
+    } = useForm({
+        mode: 'onChange',
+        defaultValues: {
+            username: '',
+            password: '',
+            confirm_password: '',
+        },
+    });
+
+    const password = watch('password');
+
+    const validateConfirmPassword = (value: string) => {
+        if (value !== password) {
+            return i18n.t('form_error_password');
+        }
+        return undefined;
+    };
 
     return (
-        <form className="setup__step" onSubmit={handleSubmit}>
+        <form className="setup__step" onSubmit={handleSubmit(onAuthSubmit)}>
             <div className="setup__group">
                 <div className="setup__subtitle">
                     <Trans>install_auth_title</Trans>
@@ -55,62 +54,80 @@ const Auth = (props: AuthProps) => {
                     <label>
                         <Trans>install_auth_username</Trans>
                     </label>
-
-                    <Field
-                        name="username"
-                        component={renderInputField}
+                    <input
+                        {...register('username', { required: {
+                            value: true,
+                            message: i18n.t('form_error_required'),
+                        }})}
                         type="text"
-                        className="form-control"
+                        className={cn('form-control', { 'is-invalid': errors.username })}
                         placeholder={t('install_auth_username_enter')}
-                        validate={[required]}
                         autoComplete="username"
                     />
+                    {errors.username && (
+                        <div className="invalid-feedback">
+                            {errors.username.message}
+                        </div>
+                    )}
                 </div>
 
                 <div className="form-group">
                     <label>
                         <Trans>install_auth_password</Trans>
                     </label>
-
-                    <Field
-                        name="password"
-                        component={renderInputField}
+                    <input
+                        {...register('password', {
+                            required: {
+                                value: true,
+                                message: i18n.t('form_error_required'),
+                            },
+                            validate: validatePasswordLength,
+                        })}
                         type="password"
-                        className="form-control"
+                        className={cn('form-control', { 'is-invalid': errors.password })}
                         placeholder={t('install_auth_password_enter')}
-                        validate={[required, validatePasswordLength]}
                         autoComplete="new-password"
                     />
+                    {errors.password && (
+                        <div className="invalid-feedback">
+                            {errors.password.message || i18n.t('form_error_password_length')}
+                        </div>
+                    )}
                 </div>
 
                 <div className="form-group">
                     <label>
                         <Trans>install_auth_confirm</Trans>
                     </label>
-
-                    <Field
-                        name="confirm_password"
-                        component={renderInputField}
+                    <input
+                        {...register('confirm_password', {
+                            required: {
+                                value: true,
+                                message: i18n.t('form_error_required'),
+                            },
+                            validate: validateConfirmPassword,
+                        })}
                         type="password"
-                        className="form-control"
+                        className={cn('form-control', { 'is-invalid': errors.confirm_password })}
                         placeholder={t('install_auth_confirm')}
-                        validate={[required]}
                         autoComplete="new-password"
                     />
+                    {errors.confirm_password && (
+                        <div className="invalid-feedback">
+                            {errors.confirm_password.message}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            <Controls pristine={pristine} invalid={invalid} />
+            <Controls
+                isDirty={isDirty}
+                isValid={isValid}
+            />
         </form>
     );
 };
 
 export default flow([
     withTranslation(),
-    reduxForm({
-        form: FORM_NAME.INSTALL,
-        destroyOnUnmount: false,
-        forceUnregisterOnUnmount: true,
-        validate,
-    }),
 ])(Auth);
