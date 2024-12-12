@@ -3,7 +3,6 @@ import { useForm, Controller } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 
-import i18next from 'i18next';
 import Controls from './Controls';
 import AddressList from './AddressList';
 
@@ -24,7 +23,7 @@ import { DhcpInterface } from '../../initialState';
 
 const validateInstallPort = (value: any) => {
     if (value < 1 || value > MAX_PORT) {
-        return i18next.t('form_error_port');
+        return i18n.t('form_error_port');
     }
     return undefined;
 };
@@ -118,7 +117,7 @@ const Settings: React.FC<Props> = ({
     const webPortVal = watch("web.port");
     const dnsIpVal = watch("dns.ip");
     const dnsPortVal = watch("dns.port");
-    
+
     useEffect(() => {
         validateForm({
             web: {
