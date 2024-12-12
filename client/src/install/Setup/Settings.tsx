@@ -276,7 +276,7 @@ const Settings: React.FC<Props> = ({
                                 )}
                             />
                             {errors.web?.port && (
-                                <div className="text-danger">
+                                <div className="form__message form__message--error">
                                     {errors.web.port.message}
                                 </div>
                             )}
@@ -376,7 +376,7 @@ const Settings: React.FC<Props> = ({
                                 )}
                             />
                             {errors.dns?.port.message && (
-                                <div className="text-danger">
+                                <div className="form__message form__message--error">
                                     {t(errors.dns.port.message)}
                                 </div>
                             )}

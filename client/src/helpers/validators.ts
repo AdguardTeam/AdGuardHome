@@ -292,7 +292,7 @@ export const validateIsSafePort = (value: any) => {
  */
 export const validateDomain = (value: any) => {
     if (value && !R_HOST.test(value)) {
-        return 'form_error_domain_format';
+        return i18next.t('form_error_domain_format');
     }
     return undefined;
 };
@@ -303,7 +303,7 @@ export const validateDomain = (value: any) => {
  */
 export const validateAnswer = (value: any) => {
     if (value && !R_IPV4.test(value) && !R_IPV6.test(value) && !R_HOST.test(value)) {
-        return 'form_error_answer_format';
+        return i18next.t('form_error_answer_format');
     }
     return undefined;
 };

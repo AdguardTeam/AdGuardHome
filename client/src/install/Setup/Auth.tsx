@@ -55,17 +55,14 @@ const Auth = (props: Props) => {
                         <Trans>install_auth_username</Trans>
                     </label>
                     <input
-                        {...register('username', { required: {
-                            value: true,
-                            message: i18n.t('form_error_required'),
-                        }})}
+                        {...register('username', { required: t('form_error_required') })}
                         type="text"
                         className={cn('form-control', { 'is-invalid': errors.username })}
                         placeholder={t('install_auth_username_enter')}
                         autoComplete="username"
                     />
                     {errors.username && (
-                        <div className="invalid-feedback">
+                        <div className="form__message form__message--error">
                             {errors.username.message}
                         </div>
                     )}
@@ -77,10 +74,7 @@ const Auth = (props: Props) => {
                     </label>
                     <input
                         {...register('password', {
-                            required: {
-                                value: true,
-                                message: i18n.t('form_error_required'),
-                            },
+                            required: t('form_error_required'),
                             validate: validatePasswordLength,
                         })}
                         type="password"
@@ -89,8 +83,8 @@ const Auth = (props: Props) => {
                         autoComplete="new-password"
                     />
                     {errors.password && (
-                        <div className="invalid-feedback">
-                            {errors.password.message || i18n.t('form_error_password_length')}
+                        <div className="form__message form__message--error">
+                            {errors.password.message}
                         </div>
                     )}
                 </div>
@@ -101,10 +95,7 @@ const Auth = (props: Props) => {
                     </label>
                     <input
                         {...register('confirm_password', {
-                            required: {
-                                value: true,
-                                message: i18n.t('form_error_required'),
-                            },
+                            required: t('form_error_required'),
                             validate: validateConfirmPassword,
                         })}
                         type="password"

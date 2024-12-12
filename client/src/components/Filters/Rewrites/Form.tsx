@@ -1,50 +1,71 @@
 import React from 'react';
+import { useForm } from 'react-hook-form';
+import { Trans, useTranslation } from 'react-i18next';
 
-import { Field, reduxForm } from 'redux-form';
-import { Trans, withTranslation } from 'react-i18next';
-import flow from 'lodash/flow';
+import { validateAnswer, validateDomain } from '../../../helpers/validators';
 
-import { renderInputField } from '../../../helpers/form';
-import { validateAnswer, validateDomain, validateRequiredValue } from '../../../helpers/validators';
-import { FORM_NAME } from '../../../helpers/constants';
-
-interface FormProps {
-    pristine: boolean;
-    handleSubmit: (...args: unknown[]) => string;
-    reset: (...args: unknown[]) => string;
-    toggleRewritesModal: (...args: unknown[]) => unknown;
-    submitting: boolean;
-    processingAdd: boolean;
-    t: (...args: unknown[]) => string;
-    initialValues?: object;
+interface FormValues {
+    domain: string;
+    answer: string;
 }
 
-const Form = (props: FormProps) => {
-    const { t, handleSubmit, reset, pristine, submitting, toggleRewritesModal, processingAdd } = props;
+type Props = {
+    processingAdd: boolean;
+    currentRewrite?: { answer: string, domain: string; };
+    toggleRewritesModal: () => void;
+    onSubmit?: (data: FormValues) => Promise<void> | void;
+}
+
+const Form = ({ processingAdd, currentRewrite, toggleRewritesModal, onSubmit }: Props) => {
+    const { t } = useTranslation();
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { isDirty, isSubmitting, errors },
+    } = useForm<FormValues>({
+        mode: 'onChange', 
+        defaultValues: {
+            domain: currentRewrite?.domain || '',
+            answer: currentRewrite?.answer || '',
+        },
+    });
+
+    const handleFormSubmit = async (data: FormValues) => {
+        if (onSubmit) {
+            await onSubmit(data);
+        }
+    };
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
             <div className="modal-body">
                 <div className="form__desc form__desc--top">
                     <Trans>domain_desc</Trans>
                 </div>
                 <div className="form__group">
-                    <Field
+                    <input
                         id="domain"
-                        name="domain"
-                        component={renderInputField}
                         type="text"
                         className="form-control"
                         placeholder={t('form_domain')}
-                        validate={[validateRequiredValue, validateDomain]}
+                        {...register('domain', {
+                            validate: validateDomain,
+                            required: t('form_error_required'),
+                        })}
                     />
+                    {errors.domain && (
+                        <div className="form__message form__message--error">
+                            {errors.domain.message}
+                        </div>
+                    )}
                 </div>
                 <Trans>examples_title</Trans>:
                 <ol className="leading-loose">
                     <li>
                         <code>example.org</code> – <Trans>example_rewrite_domain</Trans>
                     </li>
-
                     <li>
                         <code>*.example.org</code> –&nbsp;
                         <span>
@@ -53,15 +74,21 @@ const Form = (props: FormProps) => {
                     </li>
                 </ol>
                 <div className="form__group">
-                    <Field
+                    <input
                         id="answer"
-                        name="answer"
-                        component={renderInputField}
                         type="text"
                         className="form-control"
-                        placeholder={t('form_answer')}
-                        validate={[validateRequiredValue, validateAnswer]}
+                        placeholder={t('form_answer') ?? ''}
+                        {...register('answer', {
+                            validate: validateAnswer,
+                            required: t('form_error_required'),
+                        })}
                     />
+                    {errors.answer && (
+                        <div className="form__message form__message--error">
+                            {errors.answer.message}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -78,18 +105,20 @@ const Form = (props: FormProps) => {
                     <button
                         type="button"
                         className="btn btn-secondary btn-standard"
-                        disabled={submitting || processingAdd}
+                        disabled={isSubmitting || processingAdd}
                         onClick={() => {
                             reset();
                             toggleRewritesModal();
-                        }}>
+                        }}
+                    >
                         <Trans>cancel_btn</Trans>
                     </button>
 
                     <button
                         type="submit"
                         className="btn btn-success btn-standard"
-                        disabled={submitting || pristine || processingAdd}>
+                        disabled={isSubmitting || !isDirty || processingAdd}
+                    >
                         <Trans>save_btn</Trans>
                     </button>
                 </div>
@@ -98,10 +127,4 @@ const Form = (props: FormProps) => {
     );
 };
 
-export default flow([
-    withTranslation(),
-    reduxForm({
-        form: FORM_NAME.REWRITES,
-        enableReinitialize: true,
-    }),
-])(Form);
+export default Form;

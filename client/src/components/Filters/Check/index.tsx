@@ -44,7 +44,7 @@ const Check = ({ onSubmit }: Props) => {
                                 type="text"
                                 className="form-control"
                                 placeholder={t('form_enter_host') ?? ''}
-                                {...register('name', { required: true })}
+                                {...register('name', { required: t('form_error_required') })}
                             />
                             <span className="input-group-append">
                                 <button
