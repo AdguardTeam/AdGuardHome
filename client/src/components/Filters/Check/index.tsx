@@ -1,53 +1,57 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-
-import { Field, reduxForm } from 'redux-form';
 import { useSelector } from 'react-redux';
+import { useForm } from 'react-hook-form';
 
 import Card from '../../ui/Card';
-
-import { renderInputField } from '../../../helpers/form';
-
 import Info from './Info';
-import { FORM_NAME } from '../../../helpers/constants';
+
 import { RootState } from '../../../initialState';
 
-interface CheckProps {
-    handleSubmit: (...args: unknown[]) => string;
-    pristine: boolean;
-    invalid: boolean;
+interface FormValues {
+    name: string;
 }
 
-const Check = (props: CheckProps) => {
-    const { pristine, invalid, handleSubmit } = props;
+type Props = {
+    onSubmit?: (data: FormValues) => void;
+}
 
+const Check = ({ onSubmit }: Props) => {
     const { t } = useTranslation();
 
     const processingCheck = useSelector((state: RootState) => state.filtering.processingCheck);
-
     const hostname = useSelector((state: RootState) => state.filtering.check.hostname);
+
+    const {
+        register,
+        handleSubmit,
+        formState: { isDirty, isValid },
+    } = useForm<FormValues>({
+        mode: 'onChange',
+        defaultValues: {
+            name: '',
+        },
+    });
 
     return (
         <Card title={t('check_title')} subtitle={t('check_desc')}>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="row">
                     <div className="col-12 col-md-6">
                         <div className="input-group">
-                            <Field
+                            <input
                                 id="name"
-                                name="name"
-                                component={renderInputField}
                                 type="text"
                                 className="form-control"
-                                placeholder={t('form_enter_host')}
+                                placeholder={t('form_enter_host') ?? ''}
+                                {...register('name', { required: true })}
                             />
-
                             <span className="input-group-append">
                                 <button
                                     className="btn btn-success btn-standard btn-large"
                                     type="submit"
-                                    onClick={handleSubmit}
-                                    disabled={pristine || invalid || processingCheck}>
+                                    disabled={!isDirty || !isValid || processingCheck}
+                                >
                                     {t('check')}
                                 </button>
                             </span>
@@ -56,7 +60,6 @@ const Check = (props: CheckProps) => {
                         {hostname && (
                             <>
                                 <hr />
-
                                 <Info />
                             </>
                         )}
@@ -67,4 +70,4 @@ const Check = (props: CheckProps) => {
     );
 };
 
-export default reduxForm({ form: FORM_NAME.DOMAIN_CHECK })(Check);
+export default Check;
