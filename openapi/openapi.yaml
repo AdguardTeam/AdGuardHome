@@ -934,6 +934,9 @@
           'description': 'OK.'
   '/clients/find':
     'get':
+      'deprecated': true
+      'description': >
+        Deprecated: Use `POST /clients/search` instead.
       'tags':
       - 'clients'
       'operationId': 'clientsFind'
@@ -950,6 +953,26 @@
           TODO(a.garipov): Replace with a better query API.
         'schema':
           'type': 'string'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/ClientsFindResponse'
+  '/clients/search':
+    'post':
+      'tags':
+      - 'clients'
+      'operationId': 'clientsSearch'
+      'summary': >
+        Get information about clients by their IP addresses, CIDRs, MAC addresses, or ClientIDs.
+      'requestBody':
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/ClientsSearchRequest'
+        'required': true
       'responses':
         '200':
           'description': 'OK.'
@@ -2749,6 +2772,20 @@
       'properties':
         'name':
           'type': 'string'
+    'ClientsSearchRequest':
+      'type': 'object'
+      'description': 'Client search request'
+      'properties':
+        'clients':
+          'type': 'array'
+          'items':
+            '$ref': '#/components/schemas/ClientsSearchRequestItem'
+    'ClientsSearchRequestItem':
+      'type': 'object'
+      'properties':
+        'id':
+          'type': 'string'
+          'description': 'Client IP address, CIDR, MAC address, or ClientID'
     'ClientsFindResponse':
       'type': 'array'
       'description': 'Client search results.'

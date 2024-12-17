@@ -415,7 +415,7 @@ class Api {
     // Per-client settings
     GET_CLIENTS = { path: 'clients', method: 'GET' };
 
-    FIND_CLIENTS = { path: 'clients/find', method: 'GET' };
+    SEARCH_CLIENTS = { path: 'clients/search', method: 'POST' };
 
     ADD_CLIENT = { path: 'clients/add', method: 'POST' };
 
@@ -453,11 +453,12 @@ class Api {
         return this.makeRequest(path, method, parameters);
     }
 
-    findClients(params: any) {
-        const { path, method } = this.FIND_CLIENTS;
-        const url = getPathWithQueryString(path, params);
-
-        return this.makeRequest(url, method);
+    searchClients(config: any) {
+        const { path, method } = this.SEARCH_CLIENTS;
+        const parameters = {
+            data: config,
+        };
+        return this.makeRequest(path, method, parameters);
     }
 
     // DNS access settings

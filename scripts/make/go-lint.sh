@@ -223,6 +223,12 @@ run_linter ineffassign ./...
 run_linter unparam ./...
 
 find . \
+	'(' \
+	-name 'node_modules' \
+	-type 'd' \
+	-prune \
+	')' \
+	-o \
 	-type 'f' \
 	'(' \
 	-name 'Makefile' \

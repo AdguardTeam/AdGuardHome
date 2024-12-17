@@ -18,6 +18,14 @@ See also the [v0.107.56 GitHub milestone][ms-v0.107.56].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- The new HTTP API `POST /clients/search` that finds clients by their IP addresses, CIDRs, MAC addresses, or ClientIDs.  See `openapi/openapi.yaml` for the full description.
+
+### Deprecated
+
+- The `GET /clients/find` HTTP API is deprecated.  Use the new `POST /clients/search` API.
+
 ### Fixed
 
 - The formatting of large numbers on the dashboard ([#7329]).
