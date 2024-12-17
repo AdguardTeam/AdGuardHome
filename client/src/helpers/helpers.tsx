@@ -451,13 +451,10 @@ export const getParamsForClientsSearch = (data: any, param: any, additionalParam
             clients.add(e[additionalParam]);
         }
     });
-    const params = {};
-    const ids = Array.from(clients.values());
-    ids.forEach((id, i) => {
-        params[`ip${i}`] = id;
-    });
 
-    return params;
+    return {
+        clients: Array.from(clients).map(id => ({ id })),
+    };
 };
 
 /**
