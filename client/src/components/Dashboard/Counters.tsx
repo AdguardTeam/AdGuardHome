@@ -23,7 +23,7 @@ interface RowProps {
 
 const Row = ({ label, count, response_status, tooltipTitle, translationComponents }: RowProps) => {
     const content = response_status ? (
-        <LogsSearchLink response_status={response_status}>{formatNumber(count)}</LogsSearchLink>
+        <LogsSearchLink response_status={response_status}>{count}</LogsSearchLink>
     ) : (
         count
     );
@@ -77,16 +77,16 @@ const Counters = ({ refreshButton, subtitle }: CountersProps) => {
             ? t('number_of_dns_query_hours', { count: msToHours(interval) })
             : t('number_of_dns_query_days', { count: msToDays(interval) });
 
-    const rows = [
+    const rows: RowProps[] = [
         {
             label: 'dns_query',
-            count: numDnsQueries.toString(),
+            count: formatNumber(numDnsQueries),
             tooltipTitle: dnsQueryTooltip,
             response_status: RESPONSE_FILTER.ALL.QUERY,
         },
         {
             label: 'blocked_by',
-            count: numBlockedFiltering.toString(),
+            count: formatNumber(numBlockedFiltering),
             tooltipTitle: 'number_of_dns_query_blocked_24_hours',
             response_status: RESPONSE_FILTER.BLOCKED.QUERY,
 
@@ -98,19 +98,19 @@ const Counters = ({ refreshButton, subtitle }: CountersProps) => {
         },
         {
             label: 'stats_malware_phishing',
-            count: numReplacedSafebrowsing.toString(),
+            count: formatNumber(numReplacedSafebrowsing),
             tooltipTitle: 'number_of_dns_query_blocked_24_hours_by_sec',
             response_status: RESPONSE_FILTER.BLOCKED_THREATS.QUERY,
         },
         {
             label: 'stats_adult',
-            count: numReplacedParental.toString(),
+            count: formatNumber(numReplacedParental),
             tooltipTitle: 'number_of_dns_query_blocked_24_hours_adult',
             response_status: RESPONSE_FILTER.BLOCKED_ADULT_WEBSITES.QUERY,
         },
         {
             label: 'enforced_save_search',
-            count: numReplacedSafesearch.toString(),
+            count: formatNumber(numReplacedSafesearch),
             tooltipTitle: 'number_of_dns_query_to_safe_search',
             response_status: RESPONSE_FILTER.SAFE_SEARCH.QUERY,
         },

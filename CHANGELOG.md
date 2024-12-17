@@ -26,6 +26,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The `GET /clients/find` HTTP API is deprecated.  Use the new `POST /clients/search` API.
 
+### Fixed
+
+- The formatting of large numbers on the dashboard ([#7329]).
+
+[#7329]: https://github.com/AdguardTeam/AdGuardHome/issues/7329
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
