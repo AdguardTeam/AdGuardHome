@@ -175,7 +175,7 @@ See also the [v0.107.52 GitHub milestone][ms-v0.107.52].
 
 - Frontend rewritten in TypeScript.
 
-- The `systemd`-based service now uses `journal` for logging by default.  It also doesn't create the `/var/log/` directory anymore ([#7053]).
+- The `systemd`-based service now uses `journal` for logging by default.  It also doesn’t create the `/var/log/` directory anymore ([#7053]).
 
     **NOTE:** With an installed service for changes to take effect, you need to reinstall the service using `-r` flag of the [install script][install-script] or via the CLI (with root privileges):
 
@@ -184,7 +184,7 @@ See also the [v0.107.52 GitHub milestone][ms-v0.107.52].
     ./AdGuardHome -s install
     ```
 
-    Don't forget to backup your configuration file and other important data before reinstalling the service.
+    Don’t forget to backup your configuration file and other important data before reinstalling the service.
 
 ### Deprecated
 
@@ -216,7 +216,7 @@ See also the [v0.107.51 GitHub milestone][ms-v0.107.51].
 
 ### Changed
 
-- The HTTP server's write timeout has been increased from 1 minute to 5 minutes to match the one used by AdGuard Home's HTTP client to fetch filtering-list data ([#7041]).
+- The HTTP server’s write timeout has been increased from 1 minute to 5 minutes to match the one used by AdGuard Home’s HTTP client to fetch filtering-list data ([#7041]).
 
 [#7041]: https://github.com/AdguardTeam/AdGuardHome/issues/7041
 
@@ -277,7 +277,7 @@ See also the [v0.107.49 GitHub milestone][ms-v0.107.49].
 
 - Subdomains of `in-addr.arpa` and `ip6.arpa` containing zero-length prefix incorrectly considered invalid when specified for private rDNS upstream servers ([#6854]).
 
-- Unspecified IP addresses aren't checked when using "Fastest IP address" mode ([#6875]).
+- Unspecified IP addresses aren’t checked when using "Fastest IP address" mode ([#6875]).
 
 [#5345]: https://github.com/AdguardTeam/AdGuardHome/issues/5345
 [#5812]: https://github.com/AdguardTeam/AdGuardHome/issues/5812
@@ -366,7 +366,7 @@ See also the [v0.107.46 GitHub milestone][ms-v0.107.46].
 
 - Missing "served from cache" label on long DNS server strings ([#6740]).
 
-- Incorrect tracking of the system hosts file's changes ([#6711]).
+- Incorrect tracking of the system hosts file’s changes ([#6711]).
 
 [#5992]: https://github.com/AdguardTeam/AdGuardHome/issues/5992
 [#6610]: https://github.com/AdguardTeam/AdGuardHome/issues/6610
@@ -391,7 +391,7 @@ See also the [v0.107.45 GitHub milestone][ms-v0.107.45].
 
 ### Changed
 
-- Starting with this release our scripts are using Go's [forward compatibility mechanism][go-toolchain] for updating the Go version.
+- Starting with this release our scripts are using Go’s [forward compatibility mechanism][go-toolchain] for updating the Go version.
 
     **Important note for porters:**  This change means that if your `go` version is 1.21+ but is different from the one required by AdGuard Home, the `go` tool will automatically download the required version.
 
@@ -533,7 +533,7 @@ See also the [v0.107.42 GitHub milestone][ms-v0.107.42].
 
 ### Added
 
-- Ability to set client's custom DNS cache ([#6263]).
+- Ability to set client’s custom DNS cache ([#6263]).
 
 - Ability to disable plain-DNS serving through configuration file if an encrypted protocol is already enabled ([#1660]).
 
@@ -547,7 +547,7 @@ See also the [v0.107.42 GitHub milestone][ms-v0.107.42].
 
 - The property `dns.bogus_nxdomain` is now validated more strictly.
 
-- Added new properties `clients.persistent.*.upstreams_cache_enabled` and `clients.persistent.*.upstreams_cache_size` that describe cache configuration for each client's custom upstream configuration.
+- Added new properties `clients.persistent.*.upstreams_cache_enabled` and `clients.persistent.*.upstreams_cache_size` that describe cache configuration for each client’s custom upstream configuration.
 
 ### Fixed
 
@@ -730,7 +730,7 @@ See also the [v0.107.37 GitHub milestone][ms-v0.107.37].
 
 - The ability to set fallback DNS servers in the configuration file and the UI ([#3701]).
 
-- While adding or updating blocklists, the title can now be parsed from `! Title:` definition of the blocklist's source ([#6020]).
+- While adding or updating blocklists, the title can now be parsed from `! Title:` definition of the blocklist’s source ([#6020]).
 
 - The ability to filter DNS HTTPS records including IPv4 and IPv6 hints ([#6053]).
 
@@ -742,7 +742,7 @@ See also the [v0.107.37 GitHub milestone][ms-v0.107.37].
 
 - `$dnsrewrite` rules containing IPv4-mapped IPv6 addresses are now working consistently with legacy DNS rewrites and match the `AAAA` requests.
 
-- For non-A and non-AAAA requests, which has been filtered, the NODATA response is returned if the blocking mode isn't set to `Null IP`.  In previous versions it returned NXDOMAIN response in such cases.
+- For non-A and non-AAAA requests, which has been filtered, the NODATA response is returned if the blocking mode isn’t set to `Null IP`.  In previous versions it returned NXDOMAIN response in such cases.
 
 #### Configuration changes
 
@@ -1112,7 +1112,7 @@ In this release, the schema version has changed from 20 to 23.
 
 - Queries with the question-section target `.`, for example `NS .`, are now counted in the statistics and correctly shown in the query log ([#5910]).
 
-- Safe Search not working with `AAAA` queries for domains that don't have `AAAA` records ([#5913]).
+- Safe Search not working with `AAAA` queries for domains that don’t have `AAAA` records ([#5913]).
 
 [#951]:  https://github.com/AdguardTeam/AdGuardHome/issues/951
 [#1577]: https://github.com/AdguardTeam/AdGuardHome/issues/1577
@@ -1161,7 +1161,7 @@ See also the [v0.107.30 GitHub milestone][ms-v0.107.30].
 
 - Unquoted IPv6 bind hosts with trailing colons erroneously considered unspecified addresses are now properly validated ([#5752]).
 
-    **NOTE:** the Docker healthcheck script now also doesn't interpret the `""` value as unspecified address.
+    **NOTE:** the Docker healthcheck script now also doesn’t interpret the `""` value as unspecified address.
 
 - Incorrect `Content-Type` header value in `POST /control/version.json` and `GET /control/dhcp/interfaces` HTTP APIs ([#5716]).
 
@@ -1178,7 +1178,7 @@ See also the [v0.107.29 GitHub milestone][ms-v0.107.29].
 
 ### Added
 
-- The ability to exclude client activity from the query log or statistics by editing client's settings on the respective page in the UI ([#1717], [#4299]).
+- The ability to exclude client activity from the query log or statistics by editing client’s settings on the respective page in the UI ([#1717], [#4299]).
 
 ### Changed
 
@@ -1215,7 +1215,7 @@ See also the [v0.107.28 GitHub milestone][ms-v0.107.28].
 
 - The ability to make bootstrap DNS lookups prefer IPv6 addresses to IPv4 ones using the new `dns.bootstrap_prefer_ipv6` configuration file property ([#4262]).
 
-- Docker container's healthcheck ([#3290]).
+- Docker container’s healthcheck ([#3290]).
 
 - The new HTTP API `POST /control/protection`, that updates protection state and adds an optional pause duration ([#1333]).  The format of request body is described in `openapi/openapi.yaml`.  The duration of this pause could also be set with the property `protection_disabled_until` in the `dns` object of the YAML configuration file.
 
@@ -1272,7 +1272,7 @@ In this release, the schema version has changed from 17 to 20.
         'youtube': true
     ```
 
-    To rollback this change, move the value of `dns.safe_search.enabled` into the `dns.safesearch_enabled`, then remove `dns.safe_search` property.  Do the same client's specific `clients.persistent.safesearch` and then change the `schema_version` back to `17`.
+    To rollback this change, move the value of `dns.safe_search.enabled` into the `dns.safesearch_enabled`, then remove `dns.safe_search` property.  Do the same client’s specific `clients.persistent.safesearch` and then change the `schema_version` back to `17`.
 
 ### Deprecated
 
@@ -1302,7 +1302,7 @@ In this release, the schema version has changed from 17 to 20.
 
 ### Fixed
 
-- Logging of the client's IP address after failed login attempts ([#5701]).
+- Logging of the client’s IP address after failed login attempts ([#5701]).
 
 [#1163]: https://github.com/AdguardTeam/AdGuardHome/issues/1163
 [#1333]: https://github.com/AdguardTeam/AdGuardHome/issues/1333
@@ -1328,7 +1328,7 @@ See also the [v0.107.27 GitHub milestone][ms-v0.107.27].
 
 - Query log not showing all filtered queries when the “Filtered” log filter is selected ([#5639]).
 
-- Panic in empty hostname in the filter's URL ([#5631]).
+- Panic in empty hostname in the filter’s URL ([#5631]).
 
 - Panic caused by empty top-level domain name label in `/etc/hosts` files ([#5584]).
 
@@ -1535,7 +1535,7 @@ See also the [v0.107.22 GitHub milestone][ms-v0.107.22].
 
 ### Changed
 
-- The HTTP API `GET /control/profile` now returns enhanced object with current user's name, language, and UI theme.  The format of response body is described in `openapi/openapi.yaml` and `openapi/CHANGELOG.md`.
+- The HTTP API `GET /control/profile` now returns enhanced object with current user’s name, language, and UI theme.  The format of response body is described in `openapi/openapi.yaml` and `openapi/CHANGELOG.md`.
 
 ### Fixed
 
@@ -1666,7 +1666,7 @@ See also the [v0.107.17 GitHub milestone][ms-v0.107.17].
 
 ### Changed
 
-- DNS-over-TLS resolvers aren't returned anymore when the configured TLS certificate contains no IP addresses ([#4927]).
+- DNS-over-TLS resolvers aren’t returned anymore when the configured TLS certificate contains no IP addresses ([#4927]).
 
 - Responses with `SERVFAIL` code are now cached for at least 30 seconds.
 
@@ -1682,7 +1682,7 @@ See also the [v0.107.17 GitHub milestone][ms-v0.107.17].
 
 - The default value of `dns.cache_size` accidentally set to 0 has now been reverted to 4 MiB ([#5010]).
 
-- Responses for which the DNSSEC validation had explicitly been omitted aren't cached now ([#4942]).
+- Responses for which the DNSSEC validation had explicitly been omitted aren’t cached now ([#4942]).
 
 - Web UI not switching to HTTP/3 ([#4986], [#4993]).
 
@@ -1803,7 +1803,7 @@ See also the [v0.107.13 GitHub milestone][ms-v0.107.13].
 
 ### Changed
 
-- The minimum DHCP message size is reassigned back to BOOTP's constraint of 300 bytes ([#4904]).
+- The minimum DHCP message size is reassigned back to BOOTP’s constraint of 300 bytes ([#4904]).
 
 ### Fixed
 
@@ -1827,7 +1827,7 @@ See also the [v0.107.12 GitHub milestone][ms-v0.107.12].
 
 - New `bool`, `dur`, `u8`, and `u16` DHCP options to provide more convenience on options control by setting values in a human-readable format ([#4705]).  See also a [Wiki page][wiki-dhcp-opts].
 
-- New `del` DHCP option which removes the corresponding option from server's response ([#4337]).  See also a [Wiki page][wiki-dhcp-opts].
+- New `del` DHCP option which removes the corresponding option from server’s response ([#4337]).  See also a [Wiki page][wiki-dhcp-opts].
 
     **NOTE:** This modifier affects all the parameters in the response and not only the requested ones.
 
@@ -1851,7 +1851,7 @@ See also the [v0.107.12 GitHub milestone][ms-v0.107.12].
 
 ### Fixed
 
-- The length of the DHCP server's response is now at least 576 bytes as per [RFC 2131][rfc-2131] recommendation ([#4337]).
+- The length of the DHCP server’s response is now at least 576 bytes as per [RFC 2131][rfc-2131] recommendation ([#4337]).
 
 - Dynamic leases created with empty hostnames ([#4745]).
 
@@ -2021,7 +2021,7 @@ See also the [v0.107.7 GitHub milestone][ms-v0.107.7].
 
 - The default DNS-over-QUIC port number is now `853` instead of `754` in accordance with [RFC 9250][rfc-9250] ([#4276]).
 
-- Reverse DNS now has a greater priority as the source of runtime clients' information than ARP neighborhood.
+- Reverse DNS now has a greater priority as the source of runtime clients’ information than ARP neighborhood.
 
 - Improved detection of runtime clients through more resilient ARP processing ([#3597]).
 
@@ -2165,7 +2165,7 @@ See also the [v0.107.6 GitHub milestone][ms-v0.107.6].
 
 ### Removed
 
-- Go 1.16 support, since that branch of the Go compiler has reached end of life and doesn't receive security updates anymore.
+- Go 1.16 support, since that branch of the Go compiler has reached end of life and doesn’t receive security updates anymore.
 
 [#3717]: https://github.com/AdguardTeam/AdGuardHome/issues/3717
 [#4437]: https://github.com/AdguardTeam/AdGuardHome/issues/4437
@@ -2199,7 +2199,7 @@ See also the [v0.107.4 GitHub milestone][ms-v0.107.4].
 
 ### Fixed
 
-- Optimistic cache now responds with expired items even if those can't be resolved again ([#4254]).
+- Optimistic cache now responds with expired items even if those can’t be resolved again ([#4254]).
 
 - Unnecessarily complex hosts-related logic leading to infinite recursion in some cases ([#4216]).
 
@@ -2227,7 +2227,7 @@ See also the [v0.107.3 GitHub milestone][ms-v0.107.3].
 
 - Poor testing of domain-specific upstream servers ([#4074]).
 
-- Omitted aliases of hosts specified by another line within the OS's hosts file ([#4079]).
+- Omitted aliases of hosts specified by another line within the OS’s hosts file ([#4079]).
 
 [#4074]: https://github.com/AdguardTeam/AdGuardHome/issues/4074
 [#4079]: https://github.com/AdguardTeam/AdGuardHome/issues/4079
@@ -2271,7 +2271,7 @@ See also the [v0.107.1 GitHub milestone][ms-v0.107.1].
 
 - Panic on port availability check during installation ([#3987]).
 
-- Incorrect application of rules from the OS's hosts files ([#3998]).
+- Incorrect application of rules from the OS’s hosts files ([#3998]).
 
 [#3868]: https://github.com/AdguardTeam/AdGuardHome/issues/3868
 [#3975]: https://github.com/AdguardTeam/AdGuardHome/issues/3975
@@ -2289,7 +2289,7 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
 
 ### Added
 
-- Upstream server information for responses from cache ([#3772]).  Note that old log entries concerning cached responses won't include that information.
+- Upstream server information for responses from cache ([#3772]).  Note that old log entries concerning cached responses won’t include that information.
 
 - Finnish and Ukrainian localizations.
 
@@ -2317,7 +2317,7 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
 
 - Experimental OpenBSD support for AMD64 and 64-bit ARM CPUs ([#2439], [#3225], [#3226]).
 
-- Support for custom port in DNS-over-HTTPS profiles for Apple's devices ([#3172]).
+- Support for custom port in DNS-over-HTTPS profiles for Apple’s devices ([#3172]).
 
 - `darwin/arm64` support ([#2443]).
 
@@ -2349,11 +2349,11 @@ See also the [v0.107.0 GitHub milestone][ms-v0.107.0].
 
 - DHCP gateway address, subnet mask, IP address range, and leases validations ([#3529]).
 
-- The `systemd` service script will now create the `/var/log` directory when it doesn't exist ([#3579]).
+- The `systemd` service script will now create the `/var/log` directory when it doesn’t exist ([#3579]).
 
 - Items in allowed clients, disallowed clients, and blocked hosts lists are now required to be unique ([#3419]).
 
-- The TLS private key previously saved as a string isn't shown in API responses anymore ([#1898]).
+- The TLS private key previously saved as a string isn’t shown in API responses anymore ([#1898]).
 
 - Better OpenWrt detection ([#3435]).
 
@@ -2416,15 +2416,15 @@ In this release, the schema version has changed from 10 to 12.
 
 - EDNS0 TCP keepalive option handling ([#3778]).
 
-- Rules with the `denyallow` modifier applying to IP addresses when they shouldn't ([#3175]).
+- Rules with the `denyallow` modifier applying to IP addresses when they shouldn’t ([#3175]).
 
 - The length of the EDNS0 client subnet option appearing too long for some upstream servers ([#3887]).
 
 - Invalid redirection to the HTTPS web interface after saving enabled encryption settings ([#3558]).
 
-- Incomplete propagation of the client's IP anonymization setting to the statistics ([#3890]).
+- Incomplete propagation of the client’s IP anonymization setting to the statistics ([#3890]).
 
-- Incorrect results with the `dnsrewrite` modifier for entries from the operating system's hosts file ([#3815]).
+- Incorrect results with the `dnsrewrite` modifier for entries from the operating system’s hosts file ([#3815]).
 
 - Matching against rules with `|` at the end of the domain name ([#3371]).
 
@@ -2456,7 +2456,7 @@ In this release, the schema version has changed from 10 to 12.
 
 - Incomplete HTTP response for static IP address.
 
-- DNSCrypt queries weren't appearing in query log ([#3372]).
+- DNSCrypt queries weren’t appearing in query log ([#3372]).
 
 - Wrong IP address for proxied DNS-over-HTTPS queries ([#2799]).
 
@@ -2636,15 +2636,15 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 
 - Hostname uniqueness validation in the DHCP server ([#2952]).
 
-- Hostname generating for DHCP clients which don't provide their own ([#2723]).
+- Hostname generating for DHCP clients which don’t provide their own ([#2723]).
 
-- New flag `--no-etc-hosts` to disable client domain name lookups in the operating system's `/etc/hosts` files ([#1947]).
+- New flag `--no-etc-hosts` to disable client domain name lookups in the operating system’s `/etc/hosts` files ([#1947]).
 
-- The ability to set up custom upstreams to resolve PTR queries for local addresses and to disable the automatic resolving of clients' addresses ([#2704]).
+- The ability to set up custom upstreams to resolve PTR queries for local addresses and to disable the automatic resolving of clients’ addresses ([#2704]).
 
-- Logging of the client's IP address after failed login attempts ([#2824]).
+- Logging of the client’s IP address after failed login attempts ([#2824]).
 
-- Search by clients' names in the query log ([#1273]).
+- Search by clients’ names in the query log ([#1273]).
 
 - Verbose version output with `-v --version` ([#2416]).
 
@@ -2686,7 +2686,7 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 
 - Inconsistent resolving of DHCP clients when the DHCP server is disabled ([#2934]).
 
-- Comment handling in clients' custom upstreams ([#2947]).
+- Comment handling in clients’ custom upstreams ([#2947]).
 
 - Overwriting of DHCPv4 options when using the HTTP API ([#2927]).
 
@@ -2737,7 +2737,7 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 
 ### Security
 
-- Session token doesn't contain user's information anymore ([#2470]).
+- Session token doesn’t contain user’s information anymore ([#2470]).
 
 See also the [v0.105.2 GitHub milestone][ms-v0.105.2].
 
@@ -2751,7 +2751,7 @@ See also the [v0.105.2 GitHub milestone][ms-v0.105.2].
 
 - Incomplete OpenWrt detection ([#2757]).
 
-- DHCP lease's `expired` property incorrect time format ([#2692]).
+- DHCP lease’s `expired` property incorrect time format ([#2692]).
 
 - Incomplete DNS upstreams validation ([#2674]).
 
@@ -2784,7 +2784,7 @@ See also the [v0.105.1 GitHub milestone][ms-v0.105.1].
 
 ### Fixed
 
-- Error when enabling the DHCP server when AdGuard Home couldn't determine if the machine has a static IP.
+- Error when enabling the DHCP server when AdGuard Home couldn’t determine if the machine has a static IP.
 
 - Optical issue on custom rules ([#2641]).
 
@@ -2792,7 +2792,7 @@ See also the [v0.105.1 GitHub milestone][ms-v0.105.1].
 
 - The property `"range_start"` in the `GET /control/dhcp/status` HTTP API response is now correctly named again ([#2678]).
 
-- DHCPv6 server's `ra_slaac_only` and `ra_allow_slaac` properties aren't reset to `false` on update anymore ([#2653]).
+- DHCPv6 server’s `ra_slaac_only` and `ra_allow_slaac` properties aren’t reset to `false` on update anymore ([#2653]).
 
 - The `Vary` header is now added along with `Access-Control-Allow-Origin` to prevent cache-related and other issues in browsers ([#2658]).
 
@@ -2800,7 +2800,7 @@ See also the [v0.105.1 GitHub milestone][ms-v0.105.1].
 
 - Incorrect version tag in the Docker release ([#2663]).
 
-- DNSCrypt queries weren't marked as such in logs ([#2662]).
+- DNSCrypt queries weren’t marked as such in logs ([#2662]).
 
 [#2641]: https://github.com/AdguardTeam/AdGuardHome/issues/2641
 [#2653]: https://github.com/AdguardTeam/AdGuardHome/issues/2653
@@ -2837,7 +2837,7 @@ See also the [v0.105.0 GitHub milestone][ms-v0.105.0].
 
 - DNSCrypt protocol support ([#1361]).
 
-- A 5 second wait period until a DHCP server's network interface gets an IP address ([#2304]).
+- A 5 second wait period until a DHCP server’s network interface gets an IP address ([#2304]).
 
 - `dnstype` modifier for filters ([#2337]).
 
