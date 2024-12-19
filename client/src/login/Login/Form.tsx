@@ -1,67 +1,88 @@
 import React from 'react';
+import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 
-import { Field, reduxForm } from 'redux-form';
-import { Trans, withTranslation } from 'react-i18next';
-import flow from 'lodash/flow';
-
-import { renderInputField } from '../../helpers/form';
-import { validateRequiredValue } from '../../helpers/validators';
-import { FORM_NAME } from '../../helpers/constants';
-
-interface LoginFormProps {
-    handleSubmit: (...args: unknown[]) => string;
-    submitting: boolean;
-    invalid: boolean;
-    processing: boolean;
-    t: (...args: unknown[]) => string;
+type FormValues = {
+    username: string;
+    password: string;
 }
 
-const Form = (props: LoginFormProps) => {
-    const { handleSubmit, processing, invalid, t } = props;
+type LoginFormProps = {
+    onSubmit: (data: FormValues) => void;
+    processing: boolean;
+}
+
+const Form = ({ onSubmit, processing }: LoginFormProps) => {
+    const { t } = useTranslation();
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isValid },
+    } = useForm<FormValues>({
+        mode: 'onChange',
+        defaultValues: {
+            username: '',
+            password: '',
+        },
+    });
 
     return (
-        <form onSubmit={handleSubmit} className="card">
+        <form onSubmit={handleSubmit(onSubmit)} className="card">
             <div className="card-body p-6">
                 <div className="form__group form__group--settings">
                     <label className="form__label" htmlFor="username">
-                        <Trans>username_label</Trans>
+                        {t('username_label')}
                     </label>
 
-                    <Field
-                        id="username1"
-                        name="username"
+                    <input
+                        id="username"
                         type="text"
                         className="form-control"
-                        component={renderInputField}
                         placeholder={t('username_placeholder')}
                         autoComplete="username"
-                        autocapitalize="none"
+                        autoCapitalize="none"
                         disabled={processing}
-                        validate={[validateRequiredValue]}
+                        {...register('username', {
+                            required: t('form_error_required'),
+                        })}
                     />
+                    {errors.username && (
+                        <span className="form__message form__message--error">
+                            {errors.username.message}
+                        </span>
+                    )}
                 </div>
 
                 <div className="form__group form__group--settings">
                     <label className="form__label" htmlFor="password">
-                        <Trans>password_label</Trans>
+                        {t('password_label')}
                     </label>
 
-                    <Field
+                    <input
                         id="password"
-                        name="password"
                         type="password"
                         className="form-control"
-                        component={renderInputField}
                         placeholder={t('password_placeholder')}
                         autoComplete="current-password"
                         disabled={processing}
-                        validate={[validateRequiredValue]}
+                        {...register('password', {
+                            required: t('form_error_required'),
+                        })}
                     />
+                    {errors.password && (
+                        <span className="form__message form__message--error">
+                            {errors.password.message}
+                        </span>
+                    )}
                 </div>
 
                 <div className="form-footer">
-                    <button type="submit" className="btn btn-success btn-block" disabled={processing || invalid}>
-                        <Trans>sign_in</Trans>
+                    <button
+                        type="submit"
+                        className="btn btn-success btn-block"
+                        disabled={processing || !isValid}
+                    >
+                        {t('sign_in')}
                     </button>
                 </div>
             </div>
@@ -69,4 +90,4 @@ const Form = (props: LoginFormProps) => {
     );
 };
 
-export default flow([withTranslation(), reduxForm({ form: FORM_NAME.LOGIN })])(Form);
+export default Form;
