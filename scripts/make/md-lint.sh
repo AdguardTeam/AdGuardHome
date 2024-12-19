@@ -17,4 +17,5 @@ fi
 # TODO(e.burkov):  Lint allmarkdown documents within this project.
 markdownlint \
 	./CHANGELOG.md \
+	./openapi/CHANGELOG.md \
 	;

@@ -2501,9 +2501,11 @@
       'description': 'Network interface info'
       'required':
       - 'flags'
+      - 'gateway_ip'
       - 'hardware_address'
+      - 'ipv4_addresses'
+      - 'ipv6_addresses'
       - 'name'
-      - 'mtu'
       'properties':
         'flags':
           'type': 'string'
@@ -2512,18 +2514,28 @@
             the "|" character: "up", "broadcast", "loopback", "pointtopoint" and
             "multicast".
           'example': 'up|broadcast|multicast'
+        'gateway_ip':
+          'type': 'string'
+          'description': 'The IP address of the gateway.'
+          'example': '192.0.2.0'
         'hardware_address':
           'type': 'string'
           'example': '52:54:00:11:09:ba'
+        'ipv4_addresses':
+          'type': 'array'
+          'description': >
+            The addresses of the interface of v4 family.
+          'items':
+            'type': 'string'
+        'ipv6_addresses':
+          'type': 'array'
+          'description': >
+            The addresses of the interface of v6 family.
+          'items':
+            'type': 'string'
         'name':
           'type': 'string'
           'example': 'eth0'
-        'ip_addresses':
-          'type': 'array'
-          'items':
-            'type': 'string'
-        'mtu':
-          'type': 'integer'
     'AddressInfo':
       'type': 'object'
       'description': 'Port information'
