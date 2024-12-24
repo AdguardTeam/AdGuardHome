@@ -1,64 +1,73 @@
-import React, { useCallback } from 'react';
-import { shallowEqual, useSelector } from 'react-redux';
-
-import { Field, reduxForm } from 'redux-form';
+import React from 'react';
+import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 
-import { renderInputField, toNumber } from '../../../helpers/form';
-import { FORM_NAME, UINT32_RANGE } from '../../../helpers/constants';
+import { UINT32_RANGE } from '../../../helpers/constants';
 import { validateIpv6, validateRequiredValue } from '../../../helpers/validators';
 import { RootState } from '../../../initialState';
 
-interface FormDHCPv6Props {
-    handleSubmit: (...args: unknown[]) => string;
-    submitting: boolean;
-    initialValues: {
-        v6?: any;
+type FormValues = {
+    v6?: {
+        range_start?: string;
+        range_end?: string;
+        lease_duration?: number;
     };
-    change: (field: string, value: any) => void;
-    reset: () => void;
+}
+
+type FormDHCPv6Props = {
     processingConfig?: boolean;
+    initialValues?: FormValues;
     ipv6placeholders?: {
         range_start: string;
         range_end: string;
         lease_duration: string;
     };
+    onSubmit?: (data: FormValues) => Promise<void> | void;
 }
 
-const FormDHCPv6 = ({ handleSubmit, submitting, processingConfig, ipv6placeholders }: FormDHCPv6Props) => {
+const FormDHCPv6 = ({
+    processingConfig,
+    initialValues,
+    ipv6placeholders,
+    onSubmit,
+}: FormDHCPv6Props) => {
     const { t } = useTranslation();
 
-    const dhcp = useSelector((state: RootState) => state.form[FORM_NAME.DHCPv6], shallowEqual);
-
-    const interfaces = useSelector((state: RootState) => state.form[FORM_NAME.DHCP_INTERFACES], shallowEqual);
+    const interfaces = useSelector((state: RootState) => state.form.DHCP_INTERFACES);
     const interface_name = interfaces?.values?.interface_name;
 
     const isInterfaceIncludesIpv6 = useSelector(
         (state: RootState) => !!state.dhcp?.interfaces?.[interface_name]?.ipv6_addresses,
     );
 
-    const isEmptyConfig = !Object.values(dhcp?.values?.v6 ?? {}).some(Boolean);
-
-    const invalid =
-        dhcp?.syncErrors ||
-        interfaces?.syncErrors ||
-        !isInterfaceIncludesIpv6 ||
-        isEmptyConfig ||
-        submitting ||
-        processingConfig;
-
-    const validateRequired = useCallback(
-        (value) => {
-            if (isEmptyConfig) {
-                return undefined;
-            }
-            return validateRequiredValue(value);
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+        watch,
+    } = useForm<FormValues>({
+        mode: 'onChange',
+        defaultValues: {
+            v6: initialValues?.v6 || {
+                range_start: '',
+                range_end: '',
+                lease_duration: 0,
+            },
         },
-        [isEmptyConfig],
-    );
+    });
+
+    const formValues = watch('v6');
+    const isEmptyConfig = !Object.values(formValues || {}).some(Boolean);
+
+    const handleFormSubmit = async (data: FormValues) => {
+        if (onSubmit) {
+            await onSubmit(data);
+        }
+    };
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
             <div className="row">
                 <div className="col-lg-6">
                     <div className="form__group form__group--settings">
@@ -68,27 +77,43 @@ const FormDHCPv6 = ({ handleSubmit, submitting, processingConfig, ipv6placeholde
                             </div>
 
                             <div className="col">
-                                <Field
-                                    name="v6.range_start"
-                                    component={renderInputField}
+                                <input
                                     type="text"
                                     className="form-control"
-                                    placeholder={t(ipv6placeholders.range_start)}
-                                    validate={[validateIpv6, validateRequired]}
+                                    placeholder={t(ipv6placeholders?.range_start || '')}
                                     disabled={!isInterfaceIncludesIpv6}
+                                    {...register('v6.range_start', {
+                                        validate: {
+                                            ipv6: validateIpv6,
+                                            required: (value) => isEmptyConfig ? undefined : validateRequiredValue(value),
+                                        }
+                                    })}
                                 />
+                                {errors.v6?.range_start && (
+                                    <div className="form__message form__message--error">
+                                        {t(errors.v6.range_start.message)}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="col">
-                                <Field
-                                    name="v6.range_end"
-                                    component="input"
+                                <input
                                     type="text"
-                                    className="form-control disabled cursor--not-allowed"
-                                    placeholder={t(ipv6placeholders.range_end)}
-                                    value={t(ipv6placeholders.range_end)}
-                                    disabled
+                                    className="form-control"
+                                    placeholder={t(ipv6placeholders?.range_end || '')}
+                                    disabled={!isInterfaceIncludesIpv6}
+                                    {...register('v6.range_end', {
+                                        validate: {
+                                            ipv6: validateIpv6,
+                                            required: (value) => isEmptyConfig ? undefined : validateRequiredValue(value),
+                                        }
+                                    })}
                                 />
+                                {errors.v6?.range_end && (
+                                    <div className="form__message form__message--error">
+                                        {t(errors.v6.range_end.message)}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -98,24 +123,34 @@ const FormDHCPv6 = ({ handleSubmit, submitting, processingConfig, ipv6placeholde
             <div className="row">
                 <div className="col-lg-6 form__group form__group--settings">
                     <label>{t('dhcp_form_lease_title')}</label>
-
-                    <Field
-                        name="v6.lease_duration"
-                        component={renderInputField}
+                    <input
                         type="number"
                         className="form-control"
-                        placeholder={t(ipv6placeholders.lease_duration)}
-                        validate={validateRequired}
-                        normalizeOnBlur={toNumber}
+                        placeholder={t(ipv6placeholders?.lease_duration || '')}
+                        disabled={!isInterfaceIncludesIpv6}
                         min={1}
                         max={UINT32_RANGE.MAX}
-                        disabled={!isInterfaceIncludesIpv6}
+                        {...register('v6.lease_duration', {
+                            valueAsNumber: true,
+                            validate: {
+                                required: (value) => isEmptyConfig ? undefined : validateRequiredValue(value),
+                            }
+                        })}
                     />
+                    {errors.v6?.lease_duration && (
+                        <div className="form__message form__message--error">
+                            {t(errors.v6.lease_duration.message)}
+                        </div>
+                    )}
                 </div>
             </div>
 
             <div className="btn-list">
-                <button type="submit" className="btn btn-success btn-standard" disabled={invalid}>
+                <button
+                    type="submit"
+                    className="btn btn-success btn-standard"
+                    disabled={isSubmitting || processingConfig || !isInterfaceIncludesIpv6 || isEmptyConfig || Object.keys(errors).length > 0}
+                >
                     {t('save_config')}
                 </button>
             </div>
@@ -123,9 +158,4 @@ const FormDHCPv6 = ({ handleSubmit, submitting, processingConfig, ipv6placeholde
     );
 };
 
-export default reduxForm<
-    Record<string, any>,
-    Omit<FormDHCPv6Props, 'handleSubmit' | 'change' | 'submitting' | 'reset'>
->({
-    form: FORM_NAME.DHCPv6,
-})(FormDHCPv6);
+export default FormDHCPv6;

@@ -424,10 +424,9 @@ export const testUpstream =
         }
     };
 
-export const testUpstreamWithFormValues = () => async (dispatch: any, getState: any) => {
+export const testUpstreamWithFormValues = (formValues: any) => async (dispatch: any, getState: any) => {
     const { upstream_dns_file } = getState().dnsConfig;
-    const { bootstrap_dns, upstream_dns, local_ptr_upstreams, fallback_dns } =
-        getState().form[FORM_NAME.UPSTREAM].values;
+    const { bootstrap_dns, upstream_dns, local_ptr_upstreams, fallback_dns } = formValues;
 
     return dispatch(
         testUpstream(

@@ -1,227 +1,195 @@
+import classnames from 'classnames';
 import React, { useRef } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { Field, reduxForm } from 'redux-form';
-import { Trans, useTranslation } from 'react-i18next';
-import classnames from 'classnames';
-
-import Examples from './Examples';
-
-import { renderRadioField, renderTextareaField, CheckboxField } from '../../../../helpers/form';
-import { DNS_REQUEST_OPTIONS, FORM_NAME, UPSTREAM_CONFIGURATION_WIKI_LINK } from '../../../../helpers/constants';
-
 import { testUpstreamWithFormValues } from '../../../../actions';
-
-import { removeEmptyLines, trimLinesAndRemoveEmpty } from '../../../../helpers/helpers';
-
+import { DNS_REQUEST_OPTIONS, UPSTREAM_CONFIGURATION_WIKI_LINK } from '../../../../helpers/constants';
+import { removeEmptyLines } from '../../../../helpers/helpers';
 import { getTextareaCommentsHighlight, syncScroll } from '../../../../helpers/highlightTextareaComments';
-import '../../../ui/texareaCommentsHighlight.css';
 import { RootState } from '../../../../initialState';
+import '../../../ui/texareaCommentsHighlight.css';
+import Examples from './Examples';
 
 const UPSTREAM_DNS_NAME = 'upstream_dns';
 const UPSTREAM_MODE_NAME = 'upstream_mode';
 
-interface renderFieldProps {
-    name: string;
-    component: any;
-    type: string;
-    className?: string;
-    placeholder: string;
-    subtitle?: string;
-    value?: string;
-    normalizeOnBlur?: (...args: unknown[]) => unknown;
-    containerClass?: string;
-    onScroll?: (...args: unknown[]) => unknown;
+type FormData = {
+    upstream_dns: string;
+    upstream_mode: string;
+    fallback_dns: string;
+    bootstrap_dns: string;
+    local_ptr_upstreams: string;
+    use_private_ptr_resolvers: boolean;
+    resolve_clients: boolean;
 }
 
-const renderField = ({
-    name,
-    component,
-    type,
-    className,
-    placeholder,
-    subtitle,
-    value,
-    normalizeOnBlur,
-    containerClass,
-    onScroll,
-}: renderFieldProps) => {
-    const { t } = useTranslation();
-
-    const processingTestUpstream = useSelector((state: RootState) => state.settings.processingTestUpstream);
-
-    const processingSetConfig = useSelector((state: RootState) => state.dnsConfig.processingSetConfig);
-
-    return (
-        <div key={placeholder} className={classnames('col-12 mb-4', containerClass)}>
-            <Field
-                id={name}
-                value={value}
-                name={name}
-                component={component}
-                type={type}
-                className={className}
-                placeholder={t(placeholder)}
-                subtitle={t(subtitle)}
-                disabled={processingSetConfig || processingTestUpstream}
-                normalizeOnBlur={normalizeOnBlur}
-                onScroll={onScroll}
-            />
-        </div>
-    );
-};
-
-interface renderTextareaWithHighlightFieldProps {
-    className: string;
-    disabled?: boolean;
-    id: string;
-    input?: object;
-    meta?: object;
-    normalizeOnBlur?: (...args: unknown[]) => unknown;
-    onScroll?: (...args: unknown[]) => unknown;
-    placeholder: string;
-    type: string;
+type FormProps = {
+    initialValues?: Partial<FormData>;
+    onSubmit: (data: FormData) => void;
 }
-
-const renderTextareaWithHighlightField = (props: renderTextareaWithHighlightFieldProps) => {
-    const upstream_dns = useSelector((store: RootState) => store.form[FORM_NAME.UPSTREAM].values.upstream_dns);
-
-    const upstream_dns_file = useSelector((state: RootState) => state.dnsConfig.upstream_dns_file);
-    const ref = useRef(null);
-
-    const onScroll = (e: any) => syncScroll(e, ref);
-
-    return (
-        <>
-            {renderTextareaField({
-                ...props,
-                disabled: !!upstream_dns_file,
-                onScroll,
-                normalizeOnBlur: trimLinesAndRemoveEmpty,
-            })}
-
-            {getTextareaCommentsHighlight(ref, upstream_dns)}
-        </>
-    );
-};
 
 const INPUT_FIELDS = [
     {
         name: UPSTREAM_MODE_NAME,
-        type: 'radio',
         value: DNS_REQUEST_OPTIONS.LOAD_BALANCING,
-        component: renderRadioField,
         subtitle: 'load_balancing_desc',
         placeholder: 'load_balancing',
     },
     {
         name: UPSTREAM_MODE_NAME,
-        type: 'radio',
         value: DNS_REQUEST_OPTIONS.PARALLEL,
-        component: renderRadioField,
         subtitle: 'upstream_parallel',
         placeholder: 'parallel_requests',
     },
     {
         name: UPSTREAM_MODE_NAME,
-        type: 'radio',
         value: DNS_REQUEST_OPTIONS.FASTEST_ADDR,
-        component: renderRadioField,
         subtitle: 'fastest_addr_desc',
         placeholder: 'fastest_addr',
     },
 ];
 
-interface FormProps {
-    handleSubmit?: (...args: unknown[]) => string;
-    submitting?: boolean;
-    invalid?: boolean;
-    initialValues?: object;
-    upstream_dns?: string;
-    fallback_dns?: string;
-    bootstrap_dns?: string;
-}
-
-const Form = ({ submitting, invalid, handleSubmit }: FormProps) => {
-    const dispatch = useDispatch();
+const Form = ({ initialValues, onSubmit }: FormProps) => {
     const { t } = useTranslation();
+    const dispatch = useDispatch();
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const upstream_dns = useSelector((store: RootState) => store.form[FORM_NAME.UPSTREAM].values.upstream_dns);
+    const {
+        control,
+        handleSubmit,
+        watch,
+        formState: { isSubmitting, isDirty },
+    } = useForm<FormData>({
+        mode: 'onChange',
+        defaultValues: {
+            upstream_dns: initialValues?.upstream_dns || '',
+            upstream_mode: initialValues?.upstream_mode || DNS_REQUEST_OPTIONS.LOAD_BALANCING,
+            fallback_dns: initialValues?.fallback_dns || '',
+            bootstrap_dns: initialValues?.bootstrap_dns || '',
+            local_ptr_upstreams: initialValues?.local_ptr_upstreams || '',
+            use_private_ptr_resolvers: initialValues?.use_private_ptr_resolvers || false,
+            resolve_clients: initialValues?.resolve_clients || false,
+        },
+    });
 
+    const upstream_dns = watch('upstream_dns');
     const processingTestUpstream = useSelector((state: RootState) => state.settings.processingTestUpstream);
-
     const processingSetConfig = useSelector((state: RootState) => state.dnsConfig.processingSetConfig);
     const defaultLocalPtrUpstreams = useSelector((state: RootState) => state.dnsConfig.default_local_ptr_upstreams);
+    const upstream_dns_file = useSelector((state: RootState) => state.dnsConfig.upstream_dns_file);
 
-    const handleUpstreamTest = () => dispatch(testUpstreamWithFormValues());
+    const handleUpstreamTest = () => {
+        const formValues = {
+            bootstrap_dns: watch('bootstrap_dns'),
+            upstream_dns: watch('upstream_dns'),
+            local_ptr_upstreams: watch('local_ptr_upstreams'),
+            fallback_dns: watch('fallback_dns'),
+        };
+        dispatch(testUpstreamWithFormValues(formValues));
+    };
 
     const testButtonClass = classnames('btn btn-primary btn-standard mr-2', {
         'btn-loading': processingTestUpstream,
     });
 
-    const components = {
-        a: <a href={UPSTREAM_CONFIGURATION_WIKI_LINK} target="_blank" rel="noopener noreferrer" />,
-    };
-
     return (
-        <form onSubmit={handleSubmit} className="form--upstream">
+        <form onSubmit={handleSubmit(onSubmit)} className="form--upstream">
             <div className="row">
                 <label className="col form__label" htmlFor={UPSTREAM_DNS_NAME}>
-                    <Trans components={components}>upstream_dns_help</Trans>{' '}
-                    <Trans
-                        components={[
-                            <a
-                                href="https://link.adtidy.org/forward.html?action=dns_kb_providers&from=ui&app=home"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                key="0">
-                                DNS providers
-                            </a>,
-                        ]}>
-                        dns_providers
-                    </Trans>
+                    {t('upstream_dns_help', { a: (text: string) => <a href={UPSTREAM_CONFIGURATION_WIKI_LINK} target="_blank" rel="noopener noreferrer">{text}</a> })}
+                    {' '}
+                    <a
+                        href="https://link.adtidy.org/forward.html?action=dns_kb_providers&from=ui&app=home"
+                        target="_blank"
+                        rel="noopener noreferrer">
+                        {t('dns_providers', { 0: (text: string) => <a href={UPSTREAM_CONFIGURATION_WIKI_LINK} target="_blank" rel="noopener noreferrer">{text}</a> }    )}
+                    </a>
                 </label>
 
                 <div className="col-12 mb-4">
                     <div className="text-edit-container">
-                        <Field
-                            id={UPSTREAM_DNS_NAME}
-                            name={UPSTREAM_DNS_NAME}
-                            component={renderTextareaWithHighlightField}
-                            type="text"
-                            className="form-control form-control--textarea font-monospace text-input"
-                            placeholder={t('upstream_dns')}
-                            disabled={processingSetConfig || processingTestUpstream}
-                            normalizeOnBlur={removeEmptyLines}
+                        <Controller
+                            name="upstream_dns"
+                            control={control}
+                            render={({ field }) => (
+                                <>
+                                    <textarea
+                                        {...field}
+                                        id={UPSTREAM_DNS_NAME}
+                                        className="form-control form-control--textarea font-monospace text-input"
+                                        placeholder={t('upstream_dns')}
+                                        disabled={!!upstream_dns_file || processingSetConfig || processingTestUpstream}
+                                        onScroll={(e) => syncScroll(e, textareaRef)}
+                                        onBlur={(e) => {
+                                            const value = removeEmptyLines(e.target.value);
+                                            field.onChange(value);
+                                        }}
+                                    />
+                                    {getTextareaCommentsHighlight(textareaRef, upstream_dns)}
+                                </>
+                            )}
                         />
                     </div>
                 </div>
-                {INPUT_FIELDS.map(renderField)}
 
                 <div className="col-12">
                     <Examples />
-
                     <hr />
                 </div>
 
+                {INPUT_FIELDS.map(({ name, value, subtitle, placeholder }) => (
+                    <div key={value} className="col-12 mb-4">
+                        <Controller
+                            name="upstream_mode"
+                            control={control}
+                            render={({ field }) => (
+                                <div className="custom-control custom-radio">
+                                    <input
+                                        {...field}
+                                        type="radio"
+                                        className="custom-control-input"
+                                        id={`${name}_${value}`}
+                                        value={value}
+                                        checked={field.value === value}
+                                        disabled={processingSetConfig || processingTestUpstream}
+                                    />
+                                    <label className="custom-control-label" htmlFor={`${name}_${value}`}>
+                                        <span className="custom-control-label__title">{t(placeholder)}</span>
+                                        <span className="custom-control-label__subtitle">{t(subtitle)}</span>
+                                    </label>
+                                </div>
+                            )}
+                        />
+                    </div>
+                ))}
+
                 <div className="col-12">
                     <label className="form__label form__label--with-desc" htmlFor="fallback_dns">
-                        <Trans>fallback_dns_title</Trans>
+                        {t('fallback_dns_title')}
                     </label>
 
                     <div className="form__desc form__desc--top">
-                        <Trans>fallback_dns_desc</Trans>
+                        {t('fallback_dns_desc')}
                     </div>
 
-                    <Field
-                        id="fallback_dns"
+                    <Controller
                         name="fallback_dns"
-                        component={renderTextareaField}
-                        type="text"
-                        className="form-control form-control--textarea form-control--textarea-small font-monospace"
-                        placeholder={t('fallback_dns_placeholder')}
-                        disabled={processingSetConfig}
-                        normalizeOnBlur={removeEmptyLines}
+                        control={control}
+                        render={({ field }) => (
+                            <textarea
+                                {...field}
+                                id="fallback_dns"
+                                className="form-control form-control--textarea form-control--textarea-small font-monospace"
+                                placeholder={t('fallback_dns_placeholder')}
+                                disabled={processingSetConfig}
+                                onBlur={(e) => {
+                                    const value = removeEmptyLines(e.target.value);
+                                    field.onChange(value);
+                                }}
+                            />
+                        )}
                     />
                 </div>
 
@@ -231,22 +199,29 @@ const Form = ({ submitting, invalid, handleSubmit }: FormProps) => {
 
                 <div className="col-12 mb-2">
                     <label className="form__label form__label--with-desc" htmlFor="bootstrap_dns">
-                        <Trans>bootstrap_dns</Trans>
+                        {t('bootstrap_dns')}
                     </label>
 
                     <div className="form__desc form__desc--top">
-                        <Trans>bootstrap_dns_desc</Trans>
+                        {t('bootstrap_dns_desc')}
                     </div>
 
-                    <Field
-                        id="bootstrap_dns"
+                    <Controller
                         name="bootstrap_dns"
-                        component={renderTextareaField}
-                        type="text"
-                        className="form-control form-control--textarea form-control--textarea-small font-monospace"
-                        placeholder={t('bootstrap_dns')}
-                        disabled={processingSetConfig}
-                        normalizeOnBlur={removeEmptyLines}
+                        control={control}
+                        render={({ field }) => (
+                            <textarea
+                                {...field}
+                                id="bootstrap_dns"
+                                className="form-control form-control--textarea form-control--textarea-small font-monospace"
+                                placeholder={t('bootstrap_dns')}
+                                disabled={processingSetConfig}
+                                onBlur={(e) => {
+                                    const value = removeEmptyLines(e.target.value);
+                                    field.onChange(value);
+                                }}
+                            />
+                        )}
                     />
                 </div>
 
@@ -256,43 +231,64 @@ const Form = ({ submitting, invalid, handleSubmit }: FormProps) => {
 
                 <div className="col-12">
                     <label className="form__label form__label--with-desc" htmlFor="local_ptr">
-                        <Trans>local_ptr_title</Trans>
+                        {t('local_ptr_title')}
                     </label>
 
                     <div className="form__desc form__desc--top">
-                        <Trans>local_ptr_desc</Trans>
+                        {t('local_ptr_desc')}
                     </div>
 
                     <div className="form__desc form__desc--top">
-                        {/** TODO: Add internazionalization for "" */}
-                        {defaultLocalPtrUpstreams?.length > 0 ? (
-                            <Trans values={{ ip: defaultLocalPtrUpstreams.map((s: any) => `"${s}"`).join(', ') }}>
-                                local_ptr_default_resolver
-                            </Trans>
-                        ) : (
-                            <Trans>local_ptr_no_default_resolver</Trans>
-                        )}
+                        {defaultLocalPtrUpstreams?.length > 0 
+                            ? t('local_ptr_default_resolver', { ip: defaultLocalPtrUpstreams.map((s: any) => `"${s}"`).join(', ') })
+                            : t('local_ptr_no_default_resolver')}
                     </div>
 
-                    <Field
-                        id="local_ptr_upstreams"
+                    <Controller
                         name="local_ptr_upstreams"
-                        component={renderTextareaField}
-                        type="text"
-                        className="form-control form-control--textarea form-control--textarea-small font-monospace"
-                        placeholder={t('local_ptr_placeholder')}
-                        disabled={processingSetConfig}
-                        normalizeOnBlur={removeEmptyLines}
+                        control={control}
+                        render={({ field }) => (
+                            <textarea
+                                {...field}
+                                id="local_ptr_upstreams"
+                                className="form-control form-control--textarea form-control--textarea-small font-monospace"
+                                placeholder={t('local_ptr_placeholder')}
+                                disabled={processingSetConfig}
+                                onBlur={(e) => {
+                                    const value = removeEmptyLines(e.target.value);
+                                    field.onChange(value);
+                                }}
+                            />
+                        )}
                     />
 
                     <div className="mt-4">
-                        <Field
+                        <Controller
                             name="use_private_ptr_resolvers"
-                            type="checkbox"
-                            component={CheckboxField}
-                            placeholder={t('use_private_ptr_resolvers_title')}
-                            subtitle={t('use_private_ptr_resolvers_desc')}
-                            disabled={processingSetConfig}
+                            control={control}
+                            render={({ field: { value, onChange, ...field } }) => (
+                                <label className="checkbox">
+                                    <span className="checkbox__marker" />
+                                    <input
+                                        {...field}
+                                        type="checkbox"
+                                        checked={value}
+                                        onChange={(e) => onChange(e.target.checked)}
+                                        className="checkbox__input"
+                                        disabled={processingSetConfig}
+                                    />
+                                    <span className="checkbox__label">
+                                        <span className="checkbox__label-text checkbox__label-text--long">
+                                            <span className="checkbox__label-title">
+                                                {t('use_private_ptr_resolvers_title')}
+                                            </span>
+                                            <span className="checkbox__label-subtitle">
+                                                {t('use_private_ptr_resolvers_desc')}
+                                            </span>
+                                        </span>
+                                    </span>
+                                </label>
+                            )}
                         />
                     </div>
                 </div>
@@ -302,13 +298,28 @@ const Form = ({ submitting, invalid, handleSubmit }: FormProps) => {
                 </div>
 
                 <div className="col-12 mb-4">
-                    <Field
+                    <Controller
                         name="resolve_clients"
-                        type="checkbox"
-                        component={CheckboxField}
-                        placeholder={t('resolve_clients_title')}
-                        subtitle={t('resolve_clients_desc')}
-                        disabled={processingSetConfig}
+                        control={control}
+                        render={({ field: { value, onChange, ...field } }) => (
+                            <label className="checkbox">
+                                <span className="checkbox__marker" />
+                                <input
+                                    {...field}
+                                    type="checkbox"
+                                    checked={value}
+                                    onChange={(e) => onChange(e.target.checked)}
+                                    className="checkbox__input"
+                                    disabled={processingSetConfig}
+                                />
+                                <span className="checkbox__label">
+                                    <span className="checkbox__label-text checkbox__label-text--long">
+                                        <span className="checkbox__label-title">{t('resolve_clients_title')}</span>
+                                        <span className="checkbox__label-subtitle">{t('resolve_clients_desc')}</span>
+                                    </span>
+                                </span>
+                            </label>
+                        )}
                     />
                 </div>
             </div>
@@ -320,14 +331,14 @@ const Form = ({ submitting, invalid, handleSubmit }: FormProps) => {
                         className={testButtonClass}
                         onClick={handleUpstreamTest}
                         disabled={!upstream_dns || processingTestUpstream}>
-                        <Trans>test_upstream_btn</Trans>
+                        {t('test_upstream_btn')}
                     </button>
 
                     <button
                         type="submit"
                         className="btn btn-success btn-standard"
-                        disabled={submitting || invalid || processingSetConfig || processingTestUpstream}>
-                        <Trans>apply_btn</Trans>
+                        disabled={isSubmitting || !isDirty || processingSetConfig || processingTestUpstream}>
+                        {t('apply_btn')}
                     </button>
                 </div>
             </div>
@@ -335,4 +346,4 @@ const Form = ({ submitting, invalid, handleSubmit }: FormProps) => {
     );
 };
 
-export default reduxForm({ form: FORM_NAME.UPSTREAM })(Form);
+export default Form;

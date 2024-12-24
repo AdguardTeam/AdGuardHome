@@ -1,28 +1,32 @@
-import React, { useCallback } from 'react';
-import { shallowEqual, useSelector } from 'react-redux';
-
-import { Field, reduxForm } from 'redux-form';
+import React from 'react';
+import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 
-import { renderInputField, toNumber } from '../../../helpers/form';
-import { FORM_NAME, UINT32_RANGE } from '../../../helpers/constants';
+import { UINT32_RANGE } from '../../../helpers/constants';
 import {
-    validateIpv4,
-    validateRequiredValue,
-    validateIpv4RangeEnd,
     validateGatewaySubnetMask,
     validateIpForGatewaySubnetMask,
+    validateIpv4,
+    validateIpv4RangeEnd,
     validateNotInRange,
+    validateRequiredValue,
 } from '../../../helpers/validators';
 import { RootState } from '../../../initialState';
 
-interface FormDHCPv4Props {
-    handleSubmit: (...args: unknown[]) => string;
-    submitting: boolean;
-    initialValues: { v4?: any };
+type FormValues = {
+    v4?: {
+        gateway_ip?: string;
+        subnet_mask?: string;
+        range_start?: string;
+        range_end?: string;
+        lease_duration?: number;
+    };
+}
+
+type FormDHCPv4Props = {
     processingConfig?: boolean;
-    change: (field: string, value: any) => void;
-    reset: () => void;
+    initialValues?: FormValues;
     ipv4placeholders?: {
         gateway_ip: string;
         subnet_mask: string;
@@ -30,70 +34,96 @@ interface FormDHCPv4Props {
         range_end: string;
         lease_duration: string;
     };
+    onSubmit?: (data: FormValues) => Promise<void> | void;
 }
 
-const FormDHCPv4 = ({ handleSubmit, submitting, processingConfig, ipv4placeholders }: FormDHCPv4Props) => {
+const FormDHCPv4 = ({ 
+    processingConfig,
+    initialValues,
+    ipv4placeholders,
+    onSubmit 
+}: FormDHCPv4Props) => {
     const { t } = useTranslation();
 
-    const dhcp = useSelector((state: RootState) => state.form[FORM_NAME.DHCPv4], shallowEqual);
-
-    const interfaces = useSelector((state: RootState) => state.form[FORM_NAME.DHCP_INTERFACES], shallowEqual);
+    const interfaces = useSelector((state: RootState) => state.form.DHCP_INTERFACES);
     const interface_name = interfaces?.values?.interface_name;
 
     const isInterfaceIncludesIpv4 = useSelector(
         (state: RootState) => !!state.dhcp?.interfaces?.[interface_name]?.ipv4_addresses,
     );
 
-    const isEmptyConfig = !Object.values(dhcp?.values?.v4 ?? {}).some(Boolean);
-
-    const invalid =
-        dhcp?.syncErrors ||
-        interfaces?.syncErrors ||
-        !isInterfaceIncludesIpv4 ||
-        isEmptyConfig ||
-        submitting ||
-        processingConfig;
-
-    const validateRequired = useCallback(
-        (value) => {
-            if (isEmptyConfig) {
-                return undefined;
-            }
-            return validateRequiredValue(value);
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+        watch,
+    } = useForm<FormValues>({
+        mode: 'onChange',
+        defaultValues: {
+            v4: initialValues?.v4 || {
+                gateway_ip: '',
+                subnet_mask: '',
+                range_start: '',
+                range_end: '',
+                lease_duration: 0,
+            },
         },
-        [isEmptyConfig],
-    );
+    });
+
+    const formValues = watch('v4');
+    const isEmptyConfig = !Object.values(formValues || {}).some(Boolean);
+
+    const handleFormSubmit = async (data: FormValues) => {
+        if (onSubmit) {
+            await onSubmit(data);
+        }
+    };
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
             <div className="row">
                 <div className="col-lg-6">
                     <div className="form__group form__group--settings">
                         <label>{t('dhcp_form_gateway_input')}</label>
-
-                        <Field
-                            name="v4.gateway_ip"
-                            component={renderInputField}
+                        <input
                             type="text"
                             className="form-control"
-                            placeholder={t(ipv4placeholders.gateway_ip)}
-                            validate={[validateIpv4, validateRequired, validateNotInRange]}
+                            placeholder={t(ipv4placeholders?.gateway_ip || '')}
                             disabled={!isInterfaceIncludesIpv4}
+                            {...register('v4.gateway_ip', {
+                                validate: {
+                                    ipv4: validateIpv4,
+                                    required: (value) => isEmptyConfig ? undefined : validateRequiredValue(value),
+                                    notInRange: validateNotInRange,
+                                }
+                            })}
                         />
+                        {errors.v4?.gateway_ip && (
+                            <div className="form__message form__message--error">
+                                {t(errors.v4.gateway_ip.message)}
+                            </div>
+                        )}
                     </div>
 
                     <div className="form__group form__group--settings">
                         <label>{t('dhcp_form_subnet_input')}</label>
-
-                        <Field
-                            name="v4.subnet_mask"
-                            component={renderInputField}
+                        <input
                             type="text"
                             className="form-control"
-                            placeholder={t(ipv4placeholders.subnet_mask)}
-                            validate={[validateRequired, validateGatewaySubnetMask]}
+                            placeholder={t(ipv4placeholders?.subnet_mask || '')}
                             disabled={!isInterfaceIncludesIpv4}
+                            {...register('v4.subnet_mask', {
+                                validate: {
+                                    required: (value) => isEmptyConfig ? undefined : validateRequiredValue(value),
+                                    subnet: validateGatewaySubnetMask,
+                                }
+                            })}
                         />
+                        {errors.v4?.subnet_mask && (
+                            <div className="form__message form__message--error">
+                                {t(errors.v4.subnet_mask.message)}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -105,52 +135,79 @@ const FormDHCPv4 = ({ handleSubmit, submitting, processingConfig, ipv4placeholde
                             </div>
 
                             <div className="col">
-                                <Field
-                                    name="v4.range_start"
-                                    component={renderInputField}
+                                <input
                                     type="text"
                                     className="form-control"
-                                    placeholder={t(ipv4placeholders.range_start)}
-                                    validate={[validateIpv4, validateIpForGatewaySubnetMask]}
+                                    placeholder={t(ipv4placeholders?.range_start || '')}
                                     disabled={!isInterfaceIncludesIpv4}
+                                    {...register('v4.range_start', {
+                                        validate: {
+                                            ipv4: validateIpv4,
+                                            gateway: validateIpForGatewaySubnetMask,
+                                        }
+                                    })}
                                 />
+                                {errors.v4?.range_start && (
+                                    <div className="form__message form__message--error">
+                                        {t(errors.v4.range_start.message)}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="col">
-                                <Field
-                                    name="v4.range_end"
-                                    component={renderInputField}
+                                <input
                                     type="text"
                                     className="form-control"
-                                    placeholder={t(ipv4placeholders.range_end)}
-                                    validate={[validateIpv4, validateIpv4RangeEnd, validateIpForGatewaySubnetMask]}
+                                    placeholder={t(ipv4placeholders?.range_end || '')}
                                     disabled={!isInterfaceIncludesIpv4}
+                                    {...register('v4.range_end', {
+                                        validate: {
+                                            ipv4: validateIpv4,
+                                            rangeEnd: validateIpv4RangeEnd,
+                                            gateway: validateIpForGatewaySubnetMask,
+                                        }
+                                    })}
                                 />
+                                {errors.v4?.range_end && (
+                                    <div className="form__message form__message--error">
+                                        {errors.v4.range_end.message}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
 
                     <div className="form__group form__group--settings">
                         <label>{t('dhcp_form_lease_title')}</label>
-
-                        <Field
-                            name="v4.lease_duration"
-                            component={renderInputField}
+                        <input
                             type="number"
                             className="form-control"
-                            placeholder={t(ipv4placeholders.lease_duration)}
-                            validate={validateRequired}
-                            normalize={toNumber}
+                            placeholder={t(ipv4placeholders?.lease_duration || '')}
+                            disabled={!isInterfaceIncludesIpv4}
                             min={1}
                             max={UINT32_RANGE.MAX}
-                            disabled={!isInterfaceIncludesIpv4}
+                            {...register('v4.lease_duration', {
+                                valueAsNumber: true,
+                                validate: {
+                                    required: (value) => isEmptyConfig ? undefined : validateRequiredValue(value),
+                                }
+                            })}
                         />
+                        {errors.v4?.lease_duration && (
+                            <div className="form__message form__message--error">
+                                {t(errors.v4.lease_duration.message)}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
 
             <div className="btn-list">
-                <button type="submit" className="btn btn-success btn-standard" disabled={invalid}>
+                <button
+                    type="submit"
+                    className="btn btn-success btn-standard"
+                    disabled={isSubmitting || processingConfig || !isInterfaceIncludesIpv4 || isEmptyConfig || Object.keys(errors).length > 0}
+                >
                     {t('save_config')}
                 </button>
             </div>
@@ -158,9 +215,4 @@ const FormDHCPv4 = ({ handleSubmit, submitting, processingConfig, ipv4placeholde
     );
 };
 
-export default reduxForm<
-    Record<string, any>,
-    Omit<FormDHCPv4Props, 'submitting' | 'handleSubmit' | 'reset' | 'change'>
->({
-    form: FORM_NAME.DHCPv4,
-})(FormDHCPv4);
+export default FormDHCPv4;

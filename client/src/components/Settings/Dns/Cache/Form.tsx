@@ -1,14 +1,11 @@
 import React from 'react';
+import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
 
-import { Field, reduxForm } from 'redux-form';
-import { Trans, useTranslation } from 'react-i18next';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
-
-import { renderInputField, toNumber, CheckboxField } from '../../../../helpers/form';
-import { CACHE_CONFIG_FIELDS, FORM_NAME, UINT32_RANGE } from '../../../../helpers/constants';
-
-import { replaceZeroWithEmptyString } from '../../../../helpers/helpers';
 import { clearDnsCache } from '../../../../actions/dnsConfig';
+import { CACHE_CONFIG_FIELDS, UINT32_RANGE } from '../../../../helpers/constants';
+import { replaceZeroWithEmptyString } from '../../../../helpers/helpers';
 import { RootState } from '../../../../initialState';
 
 const INPUTS_FIELDS = [
@@ -32,21 +29,41 @@ const INPUTS_FIELDS = [
     },
 ];
 
-interface CacheFormProps {
-    handleSubmit: (...args: unknown[]) => string;
-    submitting: boolean;
-    invalid: boolean;
-}
+type FormData = {
+    cache_size: number;
+    cache_ttl_min: number;
+    cache_ttl_max: number;
+    cache_optimistic: boolean;
+};
 
-const Form = ({ handleSubmit, submitting, invalid }: CacheFormProps) => {
+type CacheFormProps = {
+    initialValues?: Partial<FormData>;
+    onSubmit: (data: FormData) => void;
+};
+
+const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
 
-    const { processingSetConfig } = useSelector((state: RootState) => state.dnsConfig, shallowEqual);
-    const { cache_ttl_max, cache_ttl_min } = useSelector(
-        (state: RootState) => state.form[FORM_NAME.CACHE].values,
-        shallowEqual,
-    );
+    const { processingSetConfig } = useSelector((state: RootState) => state.dnsConfig);
+
+    const {
+        register,
+        handleSubmit,
+        watch,
+        formState: { isSubmitting, isDirty },
+    } = useForm<FormData>({
+        mode: 'onChange',
+        defaultValues: {
+            cache_size: initialValues?.cache_size || 0,
+            cache_ttl_min: initialValues?.cache_ttl_min || 0,
+            cache_ttl_max: initialValues?.cache_ttl_max || 0,
+            cache_optimistic: initialValues?.cache_optimistic || false,
+        },
+    });
+
+    const cache_ttl_min = watch('cache_ttl_min');
+    const cache_ttl_max = watch('cache_ttl_max');
 
     const minExceedsMax = cache_ttl_min > 0 && cache_ttl_max > 0 && cache_ttl_min > cache_ttl_max;
 
@@ -57,7 +74,7 @@ const Form = ({ handleSubmit, submitting, invalid }: CacheFormProps) => {
     };
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
             <div className="row">
                 {INPUTS_FIELDS.map(({ name, title, description, placeholder }) => (
                     <div className="col-12" key={name}>
@@ -69,17 +86,17 @@ const Form = ({ handleSubmit, submitting, invalid }: CacheFormProps) => {
 
                                 <div className="form__desc form__desc--top">{t(description)}</div>
 
-                                <Field
-                                    name={name}
+                                <input
                                     type="number"
-                                    component={renderInputField}
+                                    className="form-control"
                                     placeholder={t(placeholder)}
                                     disabled={processingSetConfig}
-                                    className="form-control"
-                                    normalizeOnBlur={replaceZeroWithEmptyString}
-                                    normalize={toNumber}
                                     min={0}
                                     max={UINT32_RANGE.MAX}
+                                    {...register(name as keyof FormData, {
+                                        valueAsNumber: true,
+                                        setValueAs: (value) => replaceZeroWithEmptyString(value),
+                                    })}
                                 />
                             </div>
                         </div>
@@ -91,14 +108,20 @@ const Form = ({ handleSubmit, submitting, invalid }: CacheFormProps) => {
             <div className="row">
                 <div className="col-12 col-md-7">
                     <div className="form__group form__group--settings">
-                        <Field
-                            name="cache_optimistic"
-                            type="checkbox"
-                            component={CheckboxField}
-                            placeholder={t('cache_optimistic')}
-                            disabled={processingSetConfig}
-                            subtitle={t('cache_optimistic_desc')}
-                        />
+                        <label className="checkbox">
+                            <input
+                                type="checkbox"
+                                className="checkbox__input"
+                                disabled={processingSetConfig}
+                                {...register('cache_optimistic')}
+                            />
+                            <span className="checkbox__label">
+                                <span className="checkbox__label-text checkbox__label-text--long">
+                                    <span className="checkbox__label-title">{t('cache_optimistic')}</span>
+                                    <span className="checkbox__label-subtitle">{t('cache_optimistic_desc')}</span>
+                                </span>
+                            </span>
+                        </label>
                     </div>
                 </div>
             </div>
@@ -106,18 +129,18 @@ const Form = ({ handleSubmit, submitting, invalid }: CacheFormProps) => {
             <button
                 type="submit"
                 className="btn btn-success btn-standard btn-large"
-                disabled={submitting || invalid || processingSetConfig || minExceedsMax}>
-                <Trans>save_btn</Trans>
+                disabled={isSubmitting || !isDirty || processingSetConfig || minExceedsMax}>
+                {t('save_btn')}
             </button>
 
             <button
                 type="button"
                 className="btn btn-outline-secondary btn-standard form__button"
                 onClick={handleClearCache}>
-                <Trans>clear_cache</Trans>
+                {t('clear_cache')}
             </button>
         </form>
     );
 };
 
-export default reduxForm({ form: FORM_NAME.CACHE })(Form);
+export default Form;
