@@ -1,7 +1,7 @@
 import classnames from 'classnames';
 import React, { useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { testUpstreamWithFormValues } from '../../../../actions';
@@ -96,19 +96,37 @@ const Form = ({ initialValues, onSubmit }: FormProps) => {
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="form--upstream">
-            <div className="row">
-                <label className="col form__label" htmlFor={UPSTREAM_DNS_NAME}>
-                    {t('upstream_dns_help', { a: (text: string) => <a href={UPSTREAM_CONFIGURATION_WIKI_LINK} target="_blank" rel="noopener noreferrer">{text}</a> })}
+             <div className="row">
+                 <label className="col form__label" htmlFor={UPSTREAM_DNS_NAME}>
+                    <Trans
+                        components={{
+                            a: <a 
+                                href={UPSTREAM_CONFIGURATION_WIKI_LINK} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                            />,
+                        }}
+                    >
+                        upstream_dns_help
+                    </Trans>
                     {' '}
-                    <a
-                        href="https://link.adtidy.org/forward.html?action=dns_kb_providers&from=ui&app=home"
-                        target="_blank"
-                        rel="noopener noreferrer">
-                        {t('dns_providers', { 0: (text: string) => <a href={UPSTREAM_CONFIGURATION_WIKI_LINK} target="_blank" rel="noopener noreferrer">{text}</a> }    )}
-                    </a>
-                </label>
-
-                <div className="col-12 mb-4">
+                    <Trans
+                        components={[
+                            <a
+                                href="https://link.adtidy.org/forward.html?action=dns_kb_providers&from=ui&app=home"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                key="0"
+                            >
+                                DNS providers
+                            </a>
+                        ]}
+                    >
+                        dns_providers
+                    </Trans>
+                 </label>
+ 
+                 <div className="col-12 mb-4">
                     <div className="text-edit-container">
                         <Controller
                             name="upstream_dns"

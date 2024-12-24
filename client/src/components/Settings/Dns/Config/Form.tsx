@@ -45,7 +45,7 @@ type FormData = {
     ratelimit_whitelist: string;
     edns_cs_enabled: boolean;
     edns_cs_use_custom: boolean;
-    edns_cs_custom_ip?: string;
+    edns_cs_custom_ip?: boolean;
     dnssec_enabled: boolean;
     disable_ipv6: boolean;
     blocking_mode: string;
@@ -67,7 +67,6 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
         register,
         handleSubmit,
         watch,
-        control,
         formState: { errors, isSubmitting, isDirty },
     } = useForm<FormData>({
         mode: 'onChange',
