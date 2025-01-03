@@ -50,16 +50,7 @@ func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
 		return nil, err
 	}
 
-	if len(hwa) == 6 || len(hwa) == 8 {
-		lla = make([]byte, 8)
-		copy(lla, hwa)
-
-		return lla, nil
-	}
-
-	// Assume that netutil.ValidateMAC prevents lengths other than 20 by
-	// now.
-	lla = make([]byte, 24)
+	lla = make([]byte, len(hwa))
 	copy(lla, hwa)
 
 	return lla, nil
@@ -109,9 +100,15 @@ func createICMPv6RAPacket(params icmpv6RA) (data []byte, err error) {
 		return nil, fmt.Errorf("converting source link layer address: %w", err)
 	}
 
+	// Calculate length of source link layer address section
+	// This is based on calculation from radvd's add_ra_option_sllao function
+	sllao_bytes := len(lla) + 2
+	sllao_len := (sllao_bytes + 7) / 8
+	sllao_pad_bytes := sllao_len * 8 - sllao_bytes
+
 	// TODO(a.garipov): Don't use a magic constant here.  Refactor the code
 	// and make all constants named instead of all those comments..
-	data = make([]byte, 82+len(lla))
+	data = make([]byte, 80+sllao_bytes+sllao_pad_bytes)
 	i := 0
 
 	// ICMPv6:
@@ -176,11 +173,11 @@ func createICMPv6RAPacket(params icmpv6RA) (data []byte, err error) {
 	// Option=Source link-layer address:
 
 	data[i] = 1   // Type
-	data[i+1] = 1 // Length
+	data[i+1] = byte(sllao_len) // Length
 	i += 2
 
 	copy(data[i:], lla) // Link-Layer Address[8/24]
-	i += len(lla)
+	i += len(lla) + sllao_pad_bytes
 
 	// Option=Recursive DNS Server:
 
