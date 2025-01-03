@@ -15,8 +15,8 @@ import (
 )
 
 type raCtx struct {
-	raAllowSLAAC     bool   // send RA packets without MO flags
-	raSLAACOnly      bool   // send RA packets with MO flags
+	raAllowSLAAC     bool   // send RA packets with MO flags
+	raSLAACOnly      bool   // send RA packets without MO flags
 	ipAddr           net.IP // source IP address (link-local-unicast)
 	dnsIPAddr        net.IP // IP address for DNS Server option
 	prefixIPAddr     net.IP // IP address for Prefix option
