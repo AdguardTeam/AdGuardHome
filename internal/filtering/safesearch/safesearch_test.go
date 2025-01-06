@@ -33,6 +33,7 @@ var testConf = filtering.SafeSearchConfig{
 	Enabled: true,
 
 	Bing:       true,
+	Brave:      true,
 	DuckDuckGo: true,
 	Ecosia:     true,
 	Google:     true,
@@ -219,4 +220,28 @@ func TestDefault_Update(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.False(t, res.IsFiltered)
+}
+
+func TestDefault_CheckHost_brave(t *testing.T) {
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	ss, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
+		Logger:         slogutil.NewDiscardLogger(),
+		ServicesConfig: testConf,
+		CacheSize:      testCacheSize,
+		CacheTTL:       testCacheTTL,
+	})
+	require.NoError(t, err)
+
+	host := "search.brave.com"
+
+	t.Run(host, func(t *testing.T) {
+		var res filtering.Result
+		res, err = ss.CheckHost(ctx, host, testQType)
+		require.NoError(t, err)
+
+		assert.True(t, res.IsFiltered)
+		assert.Equal(t, filtering.FilteredSafeSearch, res.Reason)
+		assert.Equal(t, "safesearch.brave.com", res.CanonName)
+		assert.Empty(t, res.Rules)
+	})
 }
