@@ -432,6 +432,7 @@ var config = &configuration{
 
 		SafeSearchConf: filtering.SafeSearchConfig{
 			Enabled:    false,
+			Brave:      true,
 			Bing:       true,
 			DuckDuckGo: true,
 			Ecosia:     true,

@@ -23,6 +23,7 @@ type SafeSearchConfig struct {
 	// enabled or disabled.
 
 	Bing       bool `yaml:"bing" json:"bing"`
+	Brave      bool `yaml:"brave" json:"brave"`
 	DuckDuckGo bool `yaml:"duckduckgo" json:"duckduckgo"`
 	Ecosia     bool `yaml:"ecosia" json:"ecosia"`
 	Google     bool `yaml:"google" json:"google"`
