@@ -254,7 +254,7 @@ set_cpu() {
 
 			cpu="${cpu}_softfloat"
 			;;
-      		'riscv64')
+		'riscv64')
 			cpu='riscv64'
 			;;
 		*)
