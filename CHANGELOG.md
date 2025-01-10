@@ -28,8 +28,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Request count link in the clients table ([#7513]).
+
 - The formatting of large numbers on the dashboard ([#7329]).
 
+[#7513]: https://github.com/AdguardTeam/AdGuardHome/issues/7513
 [#7329]: https://github.com/AdguardTeam/AdGuardHome/issues/7329
 
 <!--
