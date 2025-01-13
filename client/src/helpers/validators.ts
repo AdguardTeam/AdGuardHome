@@ -180,7 +180,7 @@ export const validateConfigClientId = (value: any) => {
     }
     const formattedValue = value.trim();
     if (formattedValue && !R_CLIENT_ID.test(formattedValue)) {
-        return 'form_error_client_id_format';
+        return i18next.t('form_error_client_id_format');
     }
     return undefined;
 };
@@ -195,7 +195,7 @@ export const validateServerName = (value: any) => {
     }
     const formattedValue = value ? value.trim() : value;
     if (formattedValue && !R_DOMAIN.test(formattedValue)) {
-        return 'form_error_server_name';
+        return i18next.t('form_error_server_name');
     }
     return undefined;
 };
@@ -239,7 +239,7 @@ export const validateMac = (value: any) => {
  */
 export const validatePort = (value: any) => {
     if ((value || value === 0) && (value < STANDARD_WEB_PORT || value > MAX_PORT)) {
-        return 'form_error_port_range';
+        return i18next.t('form_error_port_range');
     }
     return undefined;
 };
@@ -281,7 +281,7 @@ export const validatePortQuic = validatePortTLS;
  */
 export const validateIsSafePort = (value: any) => {
     if (UNSAFE_PORTS.includes(value)) {
-        return 'form_error_port_unsafe';
+        return i18next.t('form_error_port_unsafe');
     }
     return undefined;
 };

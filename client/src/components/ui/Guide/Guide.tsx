@@ -7,7 +7,7 @@ import { MOBILE_CONFIG_LINKS } from '../../../helpers/constants';
 
 import Tabs from '../Tabs';
 
-import MobileConfigForm from './MobileConfigForm';
+import { MobileConfigForm } from './MobileConfigForm';
 import { RootState } from '../../../initialState';
 
 interface renderLiProps {
