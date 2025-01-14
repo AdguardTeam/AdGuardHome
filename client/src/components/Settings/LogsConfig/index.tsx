@@ -3,7 +3,7 @@ import { withTranslation } from 'react-i18next';
 
 import Card from '../../ui/Card';
 
-import Form from './Form';
+import { LogsConfigForm } from './Form';
 import { HOUR } from '../../../helpers/constants';
 
 interface LogsConfigProps {
@@ -53,26 +53,19 @@ class LogsConfig extends Component<LogsConfigProps> {
     render() {
         const {
             t,
-
             enabled,
-
             interval,
-
             processing,
-
             processingClear,
-
             anonymize_client_ip,
-
             ignored,
-
             customInterval,
         } = this.props;
 
         return (
             <Card title={t('query_log_configuration')} bodyType="card-body box-body--settings" id="logs-config">
                 <div className="form">
-                    <Form
+                    <LogsConfigForm
                         initialValues={{
                             enabled,
                             interval,
