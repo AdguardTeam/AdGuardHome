@@ -10,6 +10,7 @@ import {
     DAY,
     RETENTION_CUSTOM,
     RETENTION_RANGE,
+    CUSTOM_INTERVAL,
 } from '../../../helpers/constants';
 import '../FormButton.css';
 
@@ -26,7 +27,7 @@ const getIntervalTitle = (interval: number) => {
     }
 };
 
-type FormValues = {
+export type FormValues = {
     enabled: boolean;
     anonymize_client_ip: boolean;
     interval: number;
@@ -36,18 +37,18 @@ type FormValues = {
 
 type Props = {
     initialValues: Partial<FormValues>;
-    onSubmit: (values: FormValues) => void;
-    handleClear: () => void;
     processing: boolean;
-    processingClear: boolean;
+    processingReset: boolean;
+    onSubmit: (values: FormValues) => void;
+    onReset: () => void;
 }
 
-export const LogsConfigForm = ({
+export const Form = ({
     initialValues,
-    onSubmit,
     processing,
-    processingClear,
-    handleClear,
+    processingReset,
+    onSubmit,
+    onReset,
 }: Props) => {
     const {
         register,
@@ -62,7 +63,7 @@ export const LogsConfigForm = ({
           anonymize_client_ip: initialValues.anonymize_client_ip || false,
           interval: initialValues.interval || DAY,
           customInterval: initialValues.customInterval || null,
-          ignored: initialValues.ignored ?? '',
+          ignored: initialValues.ignored || '',
         },
     });
 
@@ -88,8 +89,6 @@ export const LogsConfigForm = ({
         isSubmitting ||
         processing ||
         (intervalValue === RETENTION_CUSTOM && !customIntervalValue);
-
-    console.log(intervalValue, RETENTION_CUSTOM, customIntervalValue);
 
     return (
         <form onSubmit={handleSubmit(onSubmitForm)}>
@@ -132,9 +131,9 @@ export const LogsConfigForm = ({
                 </label>
             </div>
 
-            <label className="form__label">
+            <div className="form__label">
                 <Trans>query_log_retention</Trans>
-            </label>
+            </div>
 
             <div className="form__group form__group--settings">
                 <div className="custom-controls-stacked">
@@ -143,8 +142,8 @@ export const LogsConfigForm = ({
                             type="radio"
                             className="custom-control-input"
                             disabled={processing}
-                            value={RETENTION_CUSTOM}
                             checked={!QUERY_LOG_INTERVALS_DAYS.includes(intervalValue)}
+                            value={RETENTION_CUSTOM}
                             onChange={(e) => {
                                 setValue('interval', parseInt(e.target.value, 10));
                             }}
@@ -160,6 +159,7 @@ export const LogsConfigForm = ({
                             <input
                                 type="number"
                                 className="form-control"
+                                name={CUSTOM_INTERVAL}
                                 min={RETENTION_RANGE.MIN}
                                 max={RETENTION_RANGE.MAX}
                                 disabled={processing}
@@ -220,8 +220,8 @@ export const LogsConfigForm = ({
                 <button
                     type="button"
                     className="btn btn-outline-secondary btn-standard form__button"
-                    onClick={handleClear}
-                    disabled={processingClear}
+                    onClick={onReset}
+                    disabled={processingReset}
                 >
                     <Trans>query_log_clear</Trans>
                 </button>

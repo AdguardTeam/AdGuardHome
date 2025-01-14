@@ -98,6 +98,10 @@
     margin: 0 0 8px;
 }
 
+.form__label {
+    margin-bottom: 8px;
+}
+
 .form__label--bold {
     font-weight: 700;
 }
