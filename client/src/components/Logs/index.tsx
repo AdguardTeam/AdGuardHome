@@ -175,7 +175,7 @@ const Logs = () => {
     const renderPage = () => (
         <>
             <Filters
-                filter={{
+                initialValues={{
                     response_status,
                     search,
                 }}
