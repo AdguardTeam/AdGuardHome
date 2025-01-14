@@ -1,30 +1,41 @@
 import React from 'react';
 
-import { Field, reduxForm } from 'redux-form';
-import { Trans, withTranslation } from 'react-i18next';
-import flow from 'lodash/flow';
+import { Trans } from 'react-i18next';
 
-import { toggleAllServices } from '../../../helpers/helpers';
+import { Controller, useForm } from 'react-hook-form';
 
-import { renderServiceField } from '../../../helpers/form';
-import { FORM_NAME } from '../../../helpers/constants';
+import { ServiceField } from './ServiceField';
 
-interface FormProps {
-    blockedServices: unknown[];
-    pristine: boolean;
-    handleSubmit: (...args: unknown[]) => string;
-    change: (...args: unknown[]) => unknown;
-    submitting: boolean;
-    processing: boolean;
-    processingSet: boolean;
-    t: (...args: unknown[]) => string;
+type BlockedService = {
+    id: string;
+    name: string;
+    icon_svg: string;
 }
 
-const Form = (props: FormProps) => {
-    const { blockedServices, handleSubmit, change, pristine, submitting, processing, processingSet } = props;
+type FormValues = {
+    blocked_services: Record<string, boolean>;
+}
+
+interface FormProps {
+    initialValues: Record<string, boolean>;
+    blockedServices: BlockedService[];
+    onSubmit: (...args: unknown[]) => void;
+    processing: boolean;
+    processingSet: boolean;
+}
+
+export const Form = ({ initialValues, blockedServices, processing, processingSet, onSubmit }: FormProps) => {
+    const { handleSubmit, control, setValue, formState: { isSubmitting, isDirty } } = useForm<FormValues>({
+        mode: 'onChange',
+        defaultValues: initialValues,
+    });
+
+    const handleToggleAllServices = (isSelected: boolean) => {
+        blockedServices.forEach((service: BlockedService) => setValue(`blocked_services.${service.id}`, isSelected));
+    };
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
             <div className="form__group">
                 <div className="row mb-4">
                     <div className="col-6">
@@ -32,7 +43,8 @@ const Form = (props: FormProps) => {
                             type="button"
                             className="btn btn-secondary btn-block"
                             disabled={processing || processingSet}
-                            onClick={() => toggleAllServices(blockedServices, change, true)}>
+                            onClick={() => handleToggleAllServices(true)}
+                        >
                             <Trans>block_all</Trans>
                         </button>
                     </div>
@@ -42,7 +54,8 @@ const Form = (props: FormProps) => {
                             type="button"
                             className="btn btn-secondary btn-block"
                             disabled={processing || processingSet}
-                            onClick={() => toggleAllServices(blockedServices, change, false)}>
+                            onClick={() => handleToggleAllServices(false)}
+                        >
                             <Trans>unblock_all</Trans>
                         </button>
                     </div>
@@ -50,14 +63,18 @@ const Form = (props: FormProps) => {
 
                 <div className="services">
                     {blockedServices.map((service: any) => (
-                        <Field
+                        <Controller
                             key={service.id}
-                            icon={service.icon_svg}
                             name={`blocked_services.${service.id}`}
-                            type="checkbox"
-                            component={renderServiceField}
-                            placeholder={service.name}
-                            disabled={processing || processingSet}
+                            control={control}
+                            render={({ field }) => (
+                                <ServiceField
+                                    {...field}
+                                    placeholder={service.name}
+                                    disabled={processing || processingSet}
+                                    icon={service.icon_svg}
+                                />
+                            )}
                         />
                     ))}
                 </div>
@@ -67,18 +84,10 @@ const Form = (props: FormProps) => {
                 <button
                     type="submit"
                     className="btn btn-success btn-standard btn-large"
-                    disabled={submitting || pristine || processing || processingSet}>
+                    disabled={isSubmitting || !isDirty || processing || processingSet}>
                     <Trans>save_btn</Trans>
                 </button>
             </div>
         </form>
     );
 };
-
-export default flow([
-    withTranslation(),
-    reduxForm({
-        form: FORM_NAME.SERVICES,
-        enableReinitialize: true,
-    }),
-])(Form);
