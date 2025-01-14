@@ -97,23 +97,27 @@ func newDHCPInterfaceV6(
 	l *slog.Logger,
 	name string,
 	conf *IPv6Config,
-) (i *dhcpInterfaceV6) {
-	l = l.With(keyInterface, name, keyFamily, netutil.AddrFamilyIPv6)
+) (iface *dhcpInterfaceV6) {
 	if !conf.Enabled {
 		l.DebugContext(ctx, "disabled")
 
 		return nil
 	}
 
-	i = &dhcpInterfaceV6{
-		rangeStart:   conf.RangeStart,
-		common:       newNetInterface(name, l, conf.LeaseDuration),
+	iface = &dhcpInterfaceV6{
+		rangeStart: conf.RangeStart,
+		common: &netInterface{
+			logger:   l,
+			leases:   map[macKey]*Lease{},
+			name:     name,
+			leaseTTL: conf.LeaseDuration,
+		},
 		raSLAACOnly:  conf.RASLAACOnly,
 		raAllowSLAAC: conf.RAAllowSLAAC,
 	}
-	i.implicitOpts, i.explicitOpts = conf.options(ctx, l)
+	iface.implicitOpts, iface.explicitOpts = conf.options(ctx, l)
 
-	return i
+	return iface
 }
 
 // dhcpInterfacesV6 is a slice of network interfaces of IPv6 address family.

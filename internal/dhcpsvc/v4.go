@@ -91,7 +91,7 @@ type dhcpInterfaceV4 struct {
 	// gateway is the IP address of the network gateway.
 	gateway netip.Addr
 
-	// subnet is the network subnet.
+	// subnet is the network subnet of the interface.
 	subnet netip.Prefix
 
 	// addrSpace is the IPv4 address space allocated for leasing.
@@ -115,12 +115,7 @@ func newDHCPInterfaceV4(
 	l *slog.Logger,
 	name string,
 	conf *IPv4Config,
-) (i *dhcpInterfaceV4, err error) {
-	l = l.With(
-		keyInterface, name,
-		keyFamily, netutil.AddrFamilyIPv4,
-	)
-
+) (iface *dhcpInterfaceV4, err error) {
 	if !conf.Enabled {
 		l.DebugContext(ctx, "disabled")
 
@@ -144,15 +139,20 @@ func newDHCPInterfaceV4(
 		return nil, fmt.Errorf("gateway ip %s in the ip range %s", conf.GatewayIP, addrSpace)
 	}
 
-	i = &dhcpInterfaceV4{
+	iface = &dhcpInterfaceV4{
 		gateway:   conf.GatewayIP,
 		subnet:    subnet,
 		addrSpace: addrSpace,
-		common:    newNetInterface(name, l, conf.LeaseDuration),
+		common: &netInterface{
+			logger:   l,
+			leases:   map[macKey]*Lease{},
+			name:     name,
+			leaseTTL: conf.LeaseDuration,
+		},
 	}
-	i.implicitOpts, i.explicitOpts = conf.options(ctx, l)
+	iface.implicitOpts, iface.explicitOpts = conf.options(ctx, l)
 
-	return i, nil
+	return iface, nil
 }
 
 // dhcpInterfacesV4 is a slice of network interfaces of IPv4 address family.
@@ -360,4 +360,33 @@ func (c *IPv4Config) options(ctx context.Context, l *slog.Logger) (imp, exp laye
 // compareV4OptionCodes compares option codes of a and b.
 func compareV4OptionCodes(a, b layers.DHCPOption) (res int) {
 	return int(a.Type) - int(b.Type)
+}
+
+// msgType returns the message type of msg, if it's present within the options.
+func msgType(msg *layers.DHCPv4) (typ layers.DHCPMsgType, ok bool) {
+	for _, opt := range msg.Options {
+		if opt.Type == layers.DHCPOptMessageType && len(opt.Data) > 0 {
+			return layers.DHCPMsgType(opt.Data[0]), true
+		}
+	}
+
+	return 0, false
+}
+
+func requestedIP(msg *layers.DHCPv4) (ip netip.Addr, ok bool) {
+	for _, opt := range msg.Options {
+		if opt.Type == layers.DHCPOptRequestIP && len(opt.Data) == net.IPv4len {
+			return netip.AddrFromSlice(opt.Data)
+		}
+	}
+
+	return netip.Addr{}, false
+}
+
+func (iface *dhcpInterfaceV4) handleDiscover(ctx context.Context, msg *layers.DHCPv4) {
+	// TODO(e.burkov):  Implement.
+}
+
+func (iface *dhcpInterfaceV4) handleRequest(ctx context.Context, msg *layers.DHCPv4) {
+	// TODO(e.burkov):  Implement.
 }

@@ -13,9 +13,13 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/google/gopacket"
 )
 
 // DHCPServer is a DHCP server for both IPv4 and IPv6 address families.
+//
+// TODO(e.burkov):  Rename to Default.
 type DHCPServer struct {
 	// enabled indicates whether the DHCP server is enabled and can provide
 	// information about its clients.
@@ -23,6 +27,9 @@ type DHCPServer struct {
 
 	// logger logs common DHCP events.
 	logger *slog.Logger
+
+	// TODO(e.burkov):  !! implement and set
+	packetSource gopacket.PacketSource
 
 	// localTLD is the top-level domain name to use for resolving DHCP clients'
 	// hostnames.
@@ -98,7 +105,7 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 // their configurations.
 func newInterfaces(
 	ctx context.Context,
-	l *slog.Logger,
+	baseLogger *slog.Logger,
 	ifaces map[string]*InterfaceConfig,
 ) (v4 dhcpInterfacesV4, v6 dhcpInterfacesV6, err error) {
 	defer func() { err = errors.Annotate(err, "creating interfaces: %w") }()
@@ -110,18 +117,27 @@ func newInterfaces(
 	var errs []error
 	for _, name := range slices.Sorted(maps.Keys(ifaces)) {
 		iface := ifaces[name]
-		var i4 *dhcpInterfaceV4
-		i4, err = newDHCPInterfaceV4(ctx, l, name, iface.IPv4)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("interface %q: ipv4: %w", name, err))
-		} else if i4 != nil {
-			v4 = append(v4, i4)
+
+		iface4, v4Err := newDHCPInterfaceV4(
+			ctx,
+			baseLogger.With(keyInterface, name, keyFamily, netutil.AddrFamilyIPv4),
+			name,
+			iface.IPv4,
+		)
+		if v4Err != nil {
+			v4Err = fmt.Errorf("interface %q: %s: %w", name, netutil.AddrFamilyIPv4, v4Err)
+			errs = append(errs, v4Err)
+		} else {
+			v4 = append(v4, iface4)
 		}
 
-		i6 := newDHCPInterfaceV6(ctx, l, name, iface.IPv6)
-		if i6 != nil {
-			v6 = append(v6, i6)
-		}
+		iface6 := newDHCPInterfaceV6(
+			ctx,
+			baseLogger.With(keyInterface, name, keyFamily, netutil.AddrFamilyIPv6),
+			name,
+			iface.IPv6,
+		)
+		v6 = append(v6, iface6)
 	}
 
 	if err = errors.Join(errs...); err != nil {
@@ -135,6 +151,25 @@ func newInterfaces(
 //
 // TODO(e.burkov):  Uncomment when the [Interface] interface is implemented.
 // var _ Interface = (*DHCPServer)(nil)
+
+// Start implements the [Interface] interface for *DHCPServer.
+func (srv *DHCPServer) Start(ctx context.Context) (err error) {
+	srv.logger.DebugContext(ctx, "starting dhcp server")
+
+	// TODO(e.burkov):  !! listen to configured interfaces
+
+	go srv.serve(context.Background())
+
+	return nil
+}
+
+func (srv *DHCPServer) Shutdown(ctx context.Context) (err error) {
+	srv.logger.DebugContext(ctx, "shutting down dhcp server")
+
+	// TODO(e.burkov):  !! close the packet source
+
+	return nil
+}
 
 // Enabled implements the [Interface] interface for *DHCPServer.
 func (srv *DHCPServer) Enabled() (ok bool) {
@@ -311,6 +346,48 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 
 	srv.leasesMu.Lock()
 	defer srv.leasesMu.Unlock()
+
+	err = srv.leases.remove(l, iface)
+	if err != nil {
+		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
+
+	err = srv.dbStore(ctx)
+	if err != nil {
+		// Don't wrap the error since it's already informative enough as is.
+		return err
+	}
+
+	iface.logger.DebugContext(
+		ctx, "removed lease",
+		"hostname", l.Hostname,
+		"ip", l.IP,
+		"mac", l.HWAddr,
+		"static", l.IsStatic,
+	)
+
+	return nil
+}
+
+// removeLeaseByAddr removes the lease with the given IP address from the
+// server.  It returns an error if the lease can't be removed.
+func (srv *DHCPServer) removeLeaseByAddr(ctx context.Context, addr netip.Addr) (err error) {
+	defer func() { err = errors.Annotate(err, "removing lease by address: %w") }()
+
+	iface, err := srv.ifaceForAddr(addr)
+	if err != nil {
+		// Don't wrap the error since it's already informative enough as is.
+		return err
+	}
+
+	srv.leasesMu.Lock()
+	defer srv.leasesMu.Unlock()
+
+	l, ok := srv.leases.leaseByAddr(addr)
+	if !ok {
+		return fmt.Errorf("no lease for ip %s", addr)
+	}
 
 	err = srv.leases.remove(l, iface)
 	if err != nil {
