@@ -5,7 +5,7 @@ import { withTranslation } from 'react-i18next';
 
 import { MODAL_TYPE } from '../../helpers/constants';
 
-import Form from './Form';
+import { Form } from './Form';
 import '../ui/Modal.css';
 
 import { getMap } from '../../helpers/helpers';
@@ -75,25 +75,15 @@ class Modal extends Component<ModalProps> {
     render() {
         const {
             isOpen,
-
             processingAddFilter,
-
             processingConfigFilter,
-
             handleSubmit,
-
             modalType,
-
             currentFilterData,
-
             whitelist,
-
             toggleFilteringModal,
-
             filters,
-
             t,
-
             filtersCatalog,
         } = this.props;
 
@@ -116,6 +106,8 @@ class Modal extends Component<ModalProps> {
         }
 
         const title = t(getTitle(modalType, whitelist));
+
+        console.log(modalType, initialValues);
 
         return (
             <ReactModal
