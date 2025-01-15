@@ -1,10 +1,9 @@
 import React from 'react';
-
-import { Field, reduxForm } from 'redux-form';
+import { useForm, Controller } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 
-import { renderInputField, normalizeMac } from '../../../../helpers/form';
+import { normalizeMac } from '../../../../helpers/form';
 import {
     validateIpv4,
     validateMac,
@@ -12,12 +11,11 @@ import {
     validateIpv4InCidr,
     validateIpGateway,
 } from '../../../../helpers/validators';
-import { FORM_NAME } from '../../../../helpers/constants';
 
 import { toggleLeaseModal } from '../../../../actions';
 import { RootState } from '../../../../initialState';
 
-interface FormStaticLeaseProps {
+type Props = {
     initialValues?: {
         mac?: string;
         ip?: string;
@@ -25,20 +23,20 @@ interface FormStaticLeaseProps {
         cidr?: string;
         gatewayIp?: string;
     };
-    pristine: boolean;
-    handleSubmit: (...args: unknown[]) => string;
-    reset: () => void;
-    submitting: boolean;
     processingAdding?: boolean;
     cidr?: string;
     isEdit?: boolean;
+    onSubmit: (data: any) => void;
 }
 
-const Form = ({ handleSubmit, reset, pristine, submitting, processingAdding, cidr, isEdit }: FormStaticLeaseProps) => {
+export const Form = ({ initialValues, processingAdding, cidr, isEdit, onSubmit }: Props) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-
     const dynamicLease = useSelector((store: RootState) => store.dhcp.leaseModalConfig, shallowEqual);
+
+    const { handleSubmit, control, reset, formState: { isSubmitting, isDirty } } = useForm({
+        defaultValues: initialValues,
+    });
 
     const onClick = () => {
         reset();
@@ -46,42 +44,59 @@ const Form = ({ handleSubmit, reset, pristine, submitting, processingAdding, cid
     };
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
             <div className="modal-body">
                 <div className="form__group">
-                    <Field
-                        id="mac"
+                    <Controller
                         name="mac"
-                        component={renderInputField}
-                        type="text"
-                        className="form-control"
-                        placeholder={t('form_enter_mac')}
-                        normalize={normalizeMac}
-                        validate={[validateRequiredValue, validateMac]}
-                        disabled={isEdit}
+                        control={control}
+                        rules={{ validate: { required: validateRequiredValue, mac: validateMac } }}
+                        render={({ field }) => (
+                            <input
+                                {...field}
+                                type="text"
+                                className="form-control"
+                                placeholder={t('form_enter_mac')}
+                                disabled={isEdit}
+                                onChange={(e) => field.onChange(normalizeMac(e.target.value))}
+                            />
+                        )}
                     />
                 </div>
 
                 <div className="form__group">
-                    <Field
-                        id="ip"
+                    <Controller
                         name="ip"
-                        component={renderInputField}
-                        type="text"
-                        className="form-control"
-                        placeholder={t('form_enter_subnet_ip', { cidr })}
-                        validate={[validateRequiredValue, validateIpv4, validateIpv4InCidr, validateIpGateway]}
+                        control={control}
+                        rules={{ validate: {
+                            required: validateRequiredValue,
+                            ipv4: validateIpv4,
+                            inCidr: validateIpv4InCidr,
+                            gateway: validateIpGateway,
+                        } }}
+                        render={({ field }) => (
+                            <input
+                                {...field}
+                                type="text"
+                                className="form-control"
+                                placeholder={t('form_enter_subnet_ip', { cidr })}
+                            />
+                        )}
                     />
                 </div>
 
                 <div className="form__group">
-                    <Field
-                        id="hostname"
+                    <Controller
                         name="hostname"
-                        component={renderInputField}
-                        type="text"
-                        className="form-control"
-                        placeholder={t('form_enter_hostname')}
+                        control={control}
+                        render={({ field }) => (
+                            <input
+                                {...field}
+                                type="text"
+                                className="form-control"
+                                placeholder={t('form_enter_hostname')}
+                            />
+                        )}
                     />
                 </div>
             </div>
@@ -91,15 +106,17 @@ const Form = ({ handleSubmit, reset, pristine, submitting, processingAdding, cid
                     <button
                         type="button"
                         className="btn btn-secondary btn-standard"
-                        disabled={submitting}
-                        onClick={onClick}>
+                        disabled={isSubmitting}
+                        onClick={onClick}
+                    >
                         <Trans>cancel_btn</Trans>
                     </button>
 
                     <button
                         type="submit"
                         className="btn btn-success btn-standard"
-                        disabled={submitting || processingAdding || (pristine && !dynamicLease)}>
+                        disabled={isSubmitting || processingAdding || (!isDirty && !dynamicLease)}
+                    >
                         <Trans>save_btn</Trans>
                     </button>
                 </div>
@@ -107,8 +124,3 @@ const Form = ({ handleSubmit, reset, pristine, submitting, processingAdding, cid
         </form>
     );
 };
-
-export default reduxForm<
-    Record<string, any>,
-    Omit<FormStaticLeaseProps, 'submitting' | 'handleSubmit' | 'reset' | 'pristine'>
->({ form: FORM_NAME.LEASE })(Form);
