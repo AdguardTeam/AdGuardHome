@@ -1,12 +1,9 @@
 import React from 'react';
-import { connect } from 'react-redux';
 
-import { reduxForm, formValueSelector } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
 import Controls from './Controls';
-import { FORM_NAME } from '../../helpers/constants';
 
 interface SubmitProps {
     webIp: string;
@@ -17,7 +14,7 @@ interface SubmitProps {
     openDashboard: (...args: unknown[]) => unknown;
 }
 
-let Submit = (props: SubmitProps) => (
+const Submit = (props: SubmitProps) => (
     <div className="setup__step">
         <div className="setup__group">
             <h1 className="setup__title">
@@ -29,27 +26,11 @@ let Submit = (props: SubmitProps) => (
             </p>
         </div>
 
+        {/* TODO props webIp webPort */}
         <Controls openDashboard={props.openDashboard} ip={props.webIp} port={props.webPort} />
     </div>
 );
 
-const selector = formValueSelector('install');
-
-Submit = connect((state) => {
-    const webIp = selector(state, 'web.ip');
-    const webPort = selector(state, 'web.port');
-
-    return {
-        webIp,
-        webPort,
-    };
-})(Submit);
-
 export default flow([
     withTranslation(),
-    reduxForm({
-        form: FORM_NAME.INSTALL,
-        destroyOnUnmount: false,
-        forceUnregisterOnUnmount: true,
-    }),
 ])(Submit);

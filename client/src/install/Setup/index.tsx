@@ -89,9 +89,9 @@ const Setup = () => {
             case 3:
                 return <Auth onAuthSubmit={handleFormSubmit} />;
             case 4:
-                return <Devices interfaces={interfaces} />;
+                return <Devices interfaces={interfaces} dnsIp={dns.ip} dnsPort={dns.port} />;
             case 5:
-                return <Submit openDashboard={openDashboard} />;
+                return <Submit openDashboard={openDashboard} webIp={web.ip} webPort={web.port} />;
             default:
                 return false;
         }

@@ -1,7 +1,5 @@
 import React from 'react';
-import { connect } from 'react-redux';
 
-import { reduxForm, formValueSelector } from 'redux-form';
 import { Trans, withTranslation } from 'react-i18next';
 import flow from 'lodash/flow';
 
@@ -10,7 +8,6 @@ import Guide from '../../components/ui/Guide';
 import Controls from './Controls';
 
 import AddressList from './AddressList';
-import { FORM_NAME } from '../../helpers/constants';
 import { DhcpInterface } from '../../initialState';
 
 interface DevicesProps {
@@ -19,7 +16,7 @@ interface DevicesProps {
     dnsPort: number;
 }
 
-let Devices = (props: DevicesProps) => (
+const Devices = ({ interfaces, dnsIp, dnsPort }: DevicesProps) => (
     <div className="setup__step">
         <div className="setup__group">
             <div className="setup__subtitle">
@@ -34,7 +31,7 @@ let Devices = (props: DevicesProps) => (
                 </div>
 
                 <div className="mt-1">
-                    <AddressList interfaces={props.interfaces} address={props.dnsIp} port={props.dnsPort} isDns />
+                    <AddressList interfaces={interfaces} address={dnsIp} port={dnsPort} isDns />
                 </div>
             </div>
 
@@ -45,23 +42,6 @@ let Devices = (props: DevicesProps) => (
     </div>
 );
 
-const selector = formValueSelector('install');
-
-Devices = connect((state) => {
-    const dnsIp = selector(state, 'dns.ip');
-    const dnsPort = selector(state, 'dns.port');
-
-    return {
-        dnsIp,
-        dnsPort,
-    };
-})(Devices);
-
 export default flow([
     withTranslation(),
-    reduxForm({
-        form: FORM_NAME.INSTALL,
-        destroyOnUnmount: false,
-        forceUnregisterOnUnmount: true,
-    }),
 ])(Devices);
