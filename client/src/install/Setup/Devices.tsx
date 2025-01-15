@@ -42,6 +42,4 @@ const Devices = ({ interfaces, dnsIp, dnsPort }: DevicesProps) => (
     </div>
 );
 
-export default flow([
-    withTranslation(),
-])(Devices);
+export default flow([withTranslation()])(Devices);

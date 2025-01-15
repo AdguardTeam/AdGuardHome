@@ -37,7 +37,6 @@ const renderIcons = (iconsData: any) =>
     ));
 
 interface renderCheckboxFieldProps {
-    // https://redux-form.com/8.3.0/docs/api/field.md/#props
     input: {
         name: string;
         value: string;

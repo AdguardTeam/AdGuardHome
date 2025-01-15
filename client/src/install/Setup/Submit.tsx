@@ -26,11 +26,8 @@ const Submit = (props: SubmitProps) => (
             </p>
         </div>
 
-        {/* TODO props webIp webPort */}
         <Controls openDashboard={props.openDashboard} ip={props.webIp} port={props.webPort} />
     </div>
 );
 
-export default flow([
-    withTranslation(),
-])(Submit);
+export default flow([withTranslation()])(Submit);

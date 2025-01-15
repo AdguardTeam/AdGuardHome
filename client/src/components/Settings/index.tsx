@@ -5,7 +5,7 @@ import StatsConfig from './StatsConfig';
 
 import LogsConfig from './LogsConfig';
 
-import FiltersConfig from './FiltersConfig';
+import { FiltersConfig } from './FiltersConfig';
 
 import Checkbox from '../ui/Checkbox';
 
@@ -136,23 +136,14 @@ class Settings extends Component<SettingsProps> {
     render() {
         const {
             settings,
-
             setStatsConfig,
-
             resetStats,
-
             stats,
-
             queryLogs,
-
             setLogsConfig,
-
             clearLogs,
-
             filtering,
-
             setFiltersConfig,
-
             t,
         } = this.props;
 
@@ -163,6 +154,7 @@ class Settings extends Component<SettingsProps> {
                 <PageTitle title={t('general_settings')} />
 
                 {!isDataReady && <Loading />}
+
                 {isDataReady && (
                     <div className="content">
                         <div className="row">

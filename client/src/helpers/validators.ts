@@ -24,7 +24,6 @@ import { ip4ToInt, isValidAbsolutePath } from './form';
 import { isIpInCidr, parseSubnetMask } from './helpers';
 
 // Validation functions
-// https://redux-form.com/8.3.0/examples/fieldlevelvalidation/
 // If the value is valid, the validation function should return undefined.
 /**
  * @param value {string|number}
