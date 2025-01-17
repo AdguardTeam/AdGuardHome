@@ -107,8 +107,6 @@ class Modal extends Component<ModalProps> {
 
         const title = t(getTitle(modalType, whitelist));
 
-        console.log(modalType, initialValues);
-
         return (
             <ReactModal
                 className="Modal__Bootstrap modal-dialog modal-dialog-centered"

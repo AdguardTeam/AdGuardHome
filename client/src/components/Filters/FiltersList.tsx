@@ -1,7 +1,8 @@
 import React from 'react';
 import classNames from 'classnames';
-import { useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { Checkbox } from '../ui/Controls/Checkbox';
 
 const getIconsData = (homepage: string, source: string) => [
     {
@@ -49,7 +50,7 @@ type Props = {
 
 export const FiltersList = ({ categories, filters, selectedSources }: Props) => {
     const { t } = useTranslation();
-    const { register } = useFormContext();
+    const { control } = useFormContext();
 
     return (
         <>
@@ -69,21 +70,19 @@ export const FiltersList = ({ categories, filters, selectedSources }: Props) => 
 
                             return (
                                 <div key={name} className="d-flex align-items-center pb-1">
-                                    <label className="checkbox checkbox--settings">
-                                        <span className="checkbox__marker" />
-                                        <input
-                                            id={id}
-                                            type="checkbox"
-                                            className="checkbox__input"
-                                            disabled={isSelected}
-                                            {...register(id)}
-                                        />
-                                        <span className="checkbox__label">
-                                            <span className="checkbox__label-text">
-                                                <span className="checkbox__label-title">{t(name)}</span>
-                                            </span>
-                                        </span>
-                                    </label>
+                                    <Controller
+                                        name={id}
+                                        control={control}
+                                        render={({ field: { value, onChange } }) => (
+                                            <Checkbox
+                                                name={id}
+                                                title={name}
+                                                value={value}
+                                                onChange={(value) => onChange(value)}
+                                                disabled={isSelected}
+                                            />
+                                        )}
+                                    />
                                     {renderIcons(iconsData)}
                                 </div>
                             );

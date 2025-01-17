@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import { Trans } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import i18next from 'i18next';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
 import { trimLinesAndRemoveEmpty } from '../../../helpers/helpers';
 import {
@@ -13,6 +13,7 @@ import {
     CUSTOM_INTERVAL,
 } from '../../../helpers/constants';
 import '../FormButton.css';
+import { Checkbox } from '../../ui/Controls/Checkbox';
 
 const getIntervalTitle = (interval: number) => {
     switch (interval) {
@@ -33,7 +34,7 @@ export type FormValues = {
     interval: number;
     customInterval?: number | null;
     ignored: string;
-}
+};
 
 type Props = {
     initialValues: Partial<FormValues>;
@@ -41,29 +42,26 @@ type Props = {
     processingReset: boolean;
     onSubmit: (values: FormValues) => void;
     onReset: () => void;
-}
+};
 
-export const Form = ({
-    initialValues,
-    processing,
-    processingReset,
-    onSubmit,
-    onReset,
-}: Props) => {
+export const Form = ({ initialValues, processing, processingReset, onSubmit, onReset }: Props) => {
+    const { t } = useTranslation();
+
     const {
         register,
         handleSubmit,
         watch,
         setValue,
+        control,
         formState: { isSubmitting },
-      } = useForm<FormValues>({
+    } = useForm<FormValues>({
         mode: 'onChange',
         defaultValues: {
-          enabled: initialValues.enabled || false,
-          anonymize_client_ip: initialValues.anonymize_client_ip || false,
-          interval: initialValues.interval || DAY,
-          customInterval: initialValues.customInterval || null,
-          ignored: initialValues.ignored || '',
+            enabled: initialValues.enabled || false,
+            anonymize_client_ip: initialValues.anonymize_client_ip || false,
+            interval: initialValues.interval || DAY,
+            customInterval: initialValues.customInterval || null,
+            ignored: initialValues.ignored || '',
         },
     });
 
@@ -85,50 +83,41 @@ export const Form = ({
         setValue('ignored', trimmed);
     };
 
-    const disableSubmit =
-        isSubmitting ||
-        processing ||
-        (intervalValue === RETENTION_CUSTOM && !customIntervalValue);
+    const disableSubmit = isSubmitting || processing || (intervalValue === RETENTION_CUSTOM && !customIntervalValue);
 
     return (
         <form onSubmit={handleSubmit(onSubmitForm)}>
             <div className="form__group form__group--settings">
-                <label className="checkbox">
-                    <span className="checkbox__marker" />
-
-                    <input
-                        type="checkbox"
-                        className="checkbox__input"
-                        {...register('enabled')}
-                        disabled={processing}
-                    />
-
-                    <span className="checkbox__label">
-                        <span className="checkbox__label-text checkbox__label-text--long">
-                            <span className="checkbox__label-title">{i18next.t('query_log_enable')}</span>
-                        </span>
-                    </span>
-                </label>
+                <Controller
+                    name="enabled"
+                    control={control}
+                    render={({ field: { name, value, onChange } }) => (
+                        <Checkbox
+                            name={name}
+                            title={t('query_log_enable')}
+                            value={value}
+                            onChange={(value) => onChange(value)}
+                            disabled={processing}
+                        />
+                    )}
+                />
             </div>
 
             <div className="form__group form__group--settings">
-                <label className="checkbox">
-                    <span className="checkbox__marker" />
-
-                    <input
-                        type="checkbox"
-                        className="checkbox__input"
-                        {...register('anonymize_client_ip')}
-                        disabled={processing}
-                    />
-
-                    <span className="checkbox__label">
-                        <span className="checkbox__label-text checkbox__label-text--long">
-                            <span className="checkbox__label-title">{i18next.t('anonymize_client_ip')}</span>
-                            <span className="checkbox__label-subtitle">{i18next.t('anonymize_client_ip_desc')}</span>
-                        </span>
-                    </span>
-                </label>
+                <Controller
+                    name="anonymize_client_ip"
+                    control={control}
+                    render={({ field: { name, value, onChange } }) => (
+                        <Checkbox
+                            name={name}
+                            title={t('anonymize_client_ip')}
+                            subtitle={t('anonymize_client_ip_desc')}
+                            value={value}
+                            onChange={(value) => onChange(value)}
+                            disabled={processing}
+                        />
+                    )}
+                />
             </div>
 
             <div className="form__label">
@@ -180,7 +169,7 @@ export const Form = ({
                                 value={interval}
                                 checked={intervalValue === interval}
                                 onChange={(e) => {
-                                    setValue("interval", parseInt(e.target.value, 10));
+                                    setValue('interval', parseInt(e.target.value, 10));
                                 }}
                             />
 
@@ -209,11 +198,7 @@ export const Form = ({
             </div>
 
             <div className="mt-5">
-                <button
-                    type="submit"
-                    className="btn btn-success btn-standard btn-large"
-                    disabled={disableSubmit}
-                >
+                <button type="submit" className="btn btn-success btn-standard btn-large" disabled={disableSubmit}>
                     <Trans>save_btn</Trans>
                 </button>
 
@@ -221,8 +206,7 @@ export const Form = ({
                     type="button"
                     className="btn btn-outline-secondary btn-standard form__button"
                     onClick={onReset}
-                    disabled={processingReset}
-                >
+                    disabled={processingReset}>
                     <Trans>query_log_clear</Trans>
                 </button>
             </div>

@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { toNumber } from '../../../helpers/form';
 import { FILTERS_INTERVALS_HOURS, FILTERS_RELATIVE_LINK } from '../../../helpers/constants';
+import { Checkbox } from '../../ui/Controls/Checkbox';
 
 const getTitleForInterval = (interval: any, t: any) => {
     if (interval === 0) {
@@ -31,7 +32,7 @@ export const FiltersConfig = ({ initialValues, setFiltersConfig, processing }: P
     const { t } = useTranslation();
     const prevFormValuesRef = useRef<FormValues>(initialValues);
 
-    const { register, watch } = useForm({
+    const { register, watch, control } = useForm({
         mode: 'onChange',
         defaultValues: initialValues,
     });
@@ -56,24 +57,20 @@ export const FiltersConfig = ({ initialValues, setFiltersConfig, processing }: P
             <div className="row">
                 <div className="col-12">
                     <div className="form__group form__group--settings">
-                        <label className="checkbox">
-                            <span className="checkbox__marker" />
+                        <Controller
+                            name="enabled"
+                            control={control}
+                            render={({ field: { name, value, onChange } }) => (
+                                <Checkbox
+                                    name={name}
+                                    title={t('block_domain_use_filters_and_hosts')}
+                                    value={value}
+                                    onChange={(value) => onChange(value)}
+                                    disabled={processing}
+                                />
+                            )}
+                        />
 
-                            <input
-                                type="checkbox"
-                                className="checkbox__input"
-                                {...register('enabled')}
-                                disabled={processing}
-                            />
-
-                            <span className="checkbox__label">
-                                <span className="checkbox__label-text checkbox__label-text--long">
-                                    <span className="checkbox__label-title">
-                                        {t('block_domain_use_filters_and_hosts')}
-                                    </span>
-                                </span>
-                            </span>
-                        </label>
                         <p>
                             <Trans components={components}>filters_block_toggle_hint</Trans>
                         </p>

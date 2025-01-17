@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { Trans } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import i18next from 'i18next';
 
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import {
     STATS_INTERVALS_DAYS,
     DAY,
@@ -13,6 +13,7 @@ import {
 
 import { trimLinesAndRemoveEmpty } from '../../../helpers/helpers';
 import '../FormButton.css';
+import { Checkbox } from '../../ui/Controls/Checkbox';
 
 const getIntervalTitle = (interval: any) => {
     switch (interval) {
@@ -30,7 +31,7 @@ export type FormValues = {
     interval: number;
     customInterval?: number | null;
     ignored: string;
-}
+};
 
 type Props = {
     initialValues: Partial<FormValues>;
@@ -38,28 +39,25 @@ type Props = {
     processingReset: boolean;
     onSubmit: (values: FormValues) => void;
     onReset: () => void;
-}
+};
 
-export const Form = ({
-    initialValues,
-    processing,
-    processingReset,
-    onSubmit,
-    onReset,
-}: Props) => {
+export const Form = ({ initialValues, processing, processingReset, onSubmit, onReset }: Props) => {
+    const { t } = useTranslation();
+
     const {
         register,
         handleSubmit,
         watch,
         setValue,
+        control,
         formState: { isSubmitting },
-      } = useForm<FormValues>({
+    } = useForm<FormValues>({
         mode: 'onChange',
         defaultValues: {
-          enabled: initialValues.enabled || false,
-          interval: initialValues.interval || DAY,
-          customInterval: initialValues.customInterval || null,
-          ignored: initialValues.ignored || '',
+            enabled: initialValues.enabled || false,
+            interval: initialValues.interval || DAY,
+            customInterval: initialValues.customInterval || null,
+            ignored: initialValues.ignored || '',
         },
     });
 
@@ -81,30 +79,24 @@ export const Form = ({
         setValue('ignored', trimmed);
     };
 
-    const disableSubmit =
-        isSubmitting ||
-        processing ||
-        (intervalValue === RETENTION_CUSTOM && !customIntervalValue);
+    const disableSubmit = isSubmitting || processing || (intervalValue === RETENTION_CUSTOM && !customIntervalValue);
 
     return (
         <form onSubmit={handleSubmit(onSubmitForm)}>
             <div className="form__group form__group--settings">
-                <label className="checkbox">
-                    <span className="checkbox__marker" />
-
-                    <input
-                        type="checkbox"
-                        className="checkbox__input"
-                        {...register('enabled')}
-                        disabled={processing}
-                    />
-
-                    <span className="checkbox__label">
-                        <span className="checkbox__label-text checkbox__label-text--long">
-                            <span className="checkbox__label-title">{i18next.t('statistics_enable')}</span>
-                        </span>
-                    </span>
-                </label>
+                <Controller
+                    name="enabled"
+                    control={control}
+                    render={({ field: { name, value, onChange } }) => (
+                        <Checkbox
+                            name={name}
+                            title={t('statistics_enable')}
+                            value={value}
+                            onChange={(value) => onChange(value)}
+                            disabled={processing}
+                        />
+                    )}
+                />
             </div>
 
             <div className="form__label form__label--with-desc">
@@ -134,9 +126,7 @@ export const Form = ({
 
                     {!STATS_INTERVALS_DAYS.includes(intervalValue) && (
                         <div className="form__group--input">
-                            <div className="form__desc form__desc--top">
-                                {i18next.t('custom_retention_input')}
-                            </div>
+                            <div className="form__desc form__desc--top">{i18next.t('custom_retention_input')}</div>
 
                             {/* <Field
                                 key={RETENTION_CUSTOM_INPUT}
@@ -183,7 +173,7 @@ export const Form = ({
                                 value={interval}
                                 checked={intervalValue === interval}
                                 onChange={(e) => {
-                                    setValue("interval", parseInt(e.target.value, 10));
+                                    setValue('interval', parseInt(e.target.value, 10));
                                 }}
                             />
 
@@ -221,11 +211,7 @@ export const Form = ({
             </div>
 
             <div className="mt-5">
-                <button
-                    type="submit"
-                    className="btn btn-success btn-standard btn-large"
-                    disabled={disableSubmit}
-                >
+                <button type="submit" className="btn btn-success btn-standard btn-large" disabled={disableSubmit}>
                     <Trans>save_btn</Trans>
                 </button>
 

@@ -1,13 +1,14 @@
 import React, { Component, Fragment } from 'react';
 import { withTranslation } from 'react-i18next';
 
+import i18next from 'i18next';
 import StatsConfig from './StatsConfig';
 
 import LogsConfig from './LogsConfig';
 
 import { FiltersConfig } from './FiltersConfig';
 
-import Checkbox from '../ui/Checkbox';
+import { Checkbox } from '../ui/Controls/Checkbox';
 
 import Loading from '../ui/Loading';
 
@@ -24,14 +25,14 @@ const ORDER_KEY = 'order';
 const SETTINGS = {
     safebrowsing: {
         enabled: false,
-        title: 'use_adguard_browsing_sec',
-        subtitle: 'use_adguard_browsing_sec_hint',
+        title: i18next.t('use_adguard_browsing_sec'),
+        subtitle: i18next.t('use_adguard_browsing_sec_hint'),
         [ORDER_KEY]: 0,
     },
     parental: {
         enabled: false,
-        title: 'use_adguard_parental',
-        subtitle: 'use_adguard_parental_hint',
+        title: i18next.t('use_adguard_parental'),
+        subtitle: i18next.t('use_adguard_parental_hint'),
         [ORDER_KEY]: 1,
     },
 };
@@ -89,9 +90,18 @@ class Settings extends Component<SettingsProps> {
     renderSettings = (settings: any) =>
         getObjectKeysSorted(SETTINGS, ORDER_KEY).map((key: any) => {
             const setting = settings[key];
-            const { enabled } = setting;
+            const { enabled, title, subtitle } = setting;
 
-            return <Checkbox {...setting} key={key} handleChange={() => this.props.toggleSetting(key, enabled)} />;
+            return (
+                <div key={key} className="form__group form__group--checkbox">
+                    <Checkbox
+                        value={enabled}
+                        title={title}
+                        subtitle={subtitle}
+                        onChange={(checked) => this.props.toggleSetting(key, !checked)}
+                    />
+                </div>
+            );
         });
 
     renderSafeSearch = () => {
@@ -106,27 +116,29 @@ class Settings extends Component<SettingsProps> {
 
         return (
             <>
-                <Checkbox
-                    enabled={enabled}
-                    title="enforce_safe_search"
-                    subtitle="enforce_save_search_hint"
-                    handleChange={({ target: { checked: enabled } }) =>
-                        this.props.toggleSetting('safesearch', { ...safesearch, enabled })
-                    }
-                />
+                <div className="form__group form__group--checkbox">
+                    <Checkbox
+                        value={enabled}
+                        title={i18next.t('enforce_safe_search')}
+                        subtitle={i18next.t('enforce_save_search_hint')}
+                        onChange={(checked) =>
+                            this.props.toggleSetting('safesearch', { ...safesearch, enabled: checked })
+                        }
+                    />
+                </div>
 
                 <div className="form__group--inner">
                     {Object.keys(searches).map((searchKey) => (
-                        <Checkbox
-                            key={searchKey}
-                            enabled={searches[searchKey]}
-                            title={captitalizeWords(searchKey)}
-                            subtitle=""
-                            disabled={!safesearch.enabled}
-                            handleChange={({ target: { checked } }: any) =>
-                                this.props.toggleSetting('safesearch', { ...safesearch, [searchKey]: checked })
-                            }
-                        />
+                        <div key={searchKey} className="form__group form__group--checkbox">
+                            <Checkbox
+                                value={searches[searchKey]}
+                                title={captitalizeWords(searchKey)}
+                                disabled={!safesearch.enabled}
+                                onChange={(checked) =>
+                                    this.props.toggleSetting('safesearch', { ...safesearch, [searchKey]: checked })
+                                }
+                            />
+                        </div>
                     ))}
                 </div>
             </>

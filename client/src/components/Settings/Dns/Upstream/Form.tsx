@@ -11,6 +11,7 @@ import { getTextareaCommentsHighlight, syncScroll } from '../../../../helpers/hi
 import { RootState } from '../../../../initialState';
 import '../../../ui/texareaCommentsHighlight.css';
 import Examples from './Examples';
+import { Checkbox } from '../../../ui/Controls/Checkbox';
 
 const UPSTREAM_DNS_NAME = 'upstream_dns';
 const UPSTREAM_MODE_NAME = 'upstream_mode';
@@ -23,12 +24,12 @@ type FormData = {
     local_ptr_upstreams: string;
     use_private_ptr_resolvers: boolean;
     resolve_clients: boolean;
-}
+};
 
 type FormProps = {
     initialValues?: Partial<FormData>;
     onSubmit: (data: FormData) => void;
-}
+};
 
 const INPUT_FIELDS = [
     {
@@ -96,37 +97,29 @@ const Form = ({ initialValues, onSubmit }: FormProps) => {
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="form--upstream">
-             <div className="row">
-                 <label className="col form__label" htmlFor={UPSTREAM_DNS_NAME}>
+            <div className="row">
+                <label className="col form__label" htmlFor={UPSTREAM_DNS_NAME}>
                     <Trans
                         components={{
-                            a: <a 
-                                href={UPSTREAM_CONFIGURATION_WIKI_LINK} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                            />,
-                        }}
-                    >
+                            a: <a href={UPSTREAM_CONFIGURATION_WIKI_LINK} target="_blank" rel="noopener noreferrer" />,
+                        }}>
                         upstream_dns_help
-                    </Trans>
-                    {' '}
+                    </Trans>{' '}
                     <Trans
                         components={[
                             <a
                                 href="https://link.adtidy.org/forward.html?action=dns_kb_providers&from=ui&app=home"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                key="0"
-                            >
+                                key="0">
                                 DNS providers
-                            </a>
-                        ]}
-                    >
+                            </a>,
+                        ]}>
                         dns_providers
                     </Trans>
-                 </label>
- 
-                 <div className="col-12 mb-4">
+                </label>
+
+                <div className="col-12 mb-4">
                     <div className="text-edit-container">
                         <Controller
                             name="upstream_dns"
@@ -188,9 +181,7 @@ const Form = ({ initialValues, onSubmit }: FormProps) => {
                         {t('fallback_dns_title')}
                     </label>
 
-                    <div className="form__desc form__desc--top">
-                        {t('fallback_dns_desc')}
-                    </div>
+                    <div className="form__desc form__desc--top">{t('fallback_dns_desc')}</div>
 
                     <Controller
                         name="fallback_dns"
@@ -220,9 +211,7 @@ const Form = ({ initialValues, onSubmit }: FormProps) => {
                         {t('bootstrap_dns')}
                     </label>
 
-                    <div className="form__desc form__desc--top">
-                        {t('bootstrap_dns_desc')}
-                    </div>
+                    <div className="form__desc form__desc--top">{t('bootstrap_dns_desc')}</div>
 
                     <Controller
                         name="bootstrap_dns"
@@ -252,13 +241,13 @@ const Form = ({ initialValues, onSubmit }: FormProps) => {
                         {t('local_ptr_title')}
                     </label>
 
-                    <div className="form__desc form__desc--top">
-                        {t('local_ptr_desc')}
-                    </div>
+                    <div className="form__desc form__desc--top">{t('local_ptr_desc')}</div>
 
                     <div className="form__desc form__desc--top">
-                        {defaultLocalPtrUpstreams?.length > 0 
-                            ? t('local_ptr_default_resolver', { ip: defaultLocalPtrUpstreams.map((s: any) => `"${s}"`).join(', ') })
+                        {defaultLocalPtrUpstreams?.length > 0
+                            ? t('local_ptr_default_resolver', {
+                                  ip: defaultLocalPtrUpstreams.map((s: any) => `"${s}"`).join(', '),
+                              })
                             : t('local_ptr_no_default_resolver')}
                     </div>
 
@@ -284,28 +273,15 @@ const Form = ({ initialValues, onSubmit }: FormProps) => {
                         <Controller
                             name="use_private_ptr_resolvers"
                             control={control}
-                            render={({ field: { value, onChange, ...field } }) => (
-                                <label className="checkbox">
-                                    <span className="checkbox__marker" />
-                                    <input
-                                        {...field}
-                                        type="checkbox"
-                                        checked={value}
-                                        onChange={(e) => onChange(e.target.checked)}
-                                        className="checkbox__input"
-                                        disabled={processingSetConfig}
-                                    />
-                                    <span className="checkbox__label">
-                                        <span className="checkbox__label-text checkbox__label-text--long">
-                                            <span className="checkbox__label-title">
-                                                {t('use_private_ptr_resolvers_title')}
-                                            </span>
-                                            <span className="checkbox__label-subtitle">
-                                                {t('use_private_ptr_resolvers_desc')}
-                                            </span>
-                                        </span>
-                                    </span>
-                                </label>
+                            render={({ field: { name, value, onChange } }) => (
+                                <Checkbox
+                                    name={name}
+                                    title={t('use_private_ptr_resolvers_title')}
+                                    subtitle={t('use_private_ptr_resolvers_desc')}
+                                    value={value}
+                                    onChange={(value) => onChange(value)}
+                                    disabled={processingSetConfig}
+                                />
                             )}
                         />
                     </div>
@@ -319,24 +295,15 @@ const Form = ({ initialValues, onSubmit }: FormProps) => {
                     <Controller
                         name="resolve_clients"
                         control={control}
-                        render={({ field: { value, onChange, ...field } }) => (
-                            <label className="checkbox">
-                                <span className="checkbox__marker" />
-                                <input
-                                    {...field}
-                                    type="checkbox"
-                                    checked={value}
-                                    onChange={(e) => onChange(e.target.checked)}
-                                    className="checkbox__input"
-                                    disabled={processingSetConfig}
-                                />
-                                <span className="checkbox__label">
-                                    <span className="checkbox__label-text checkbox__label-text--long">
-                                        <span className="checkbox__label-title">{t('resolve_clients_title')}</span>
-                                        <span className="checkbox__label-subtitle">{t('resolve_clients_desc')}</span>
-                                    </span>
-                                </span>
-                            </label>
+                        render={({ field: { name, value, onChange } }) => (
+                            <Checkbox
+                                name={name}
+                                title={t('resolve_clients_title')}
+                                subtitle={t('resolve_clients_desc')}
+                                value={value}
+                                onChange={(value) => onChange(value)}
+                                disabled={processingSetConfig}
+                            />
                         )}
                     />
                 </div>

@@ -1,27 +1,28 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
-import {
-    validateIp,
-    validateIpv4,
-    validateIpv6,
-    validateRequiredValue
-} from '../../../../helpers/validators';
+import i18next from 'i18next';
+import { validateIp, validateIpv4, validateIpv6, validateRequiredValue } from '../../../../helpers/validators';
 
 import { BLOCKING_MODES, UINT32_RANGE } from '../../../../helpers/constants';
 import { removeEmptyLines } from '../../../../helpers/helpers';
+import { Checkbox } from '../../../ui/Controls/Checkbox';
 
-const checkboxes = [
+const checkboxes: {
+    name: 'dnssec_enabled' | 'disable_ipv6';
+    placeholder: string;
+    subtitle: string;
+}[] = [
     {
         name: 'dnssec_enabled',
-        placeholder: 'dnssec_enable',
-        subtitle: 'dnssec_enable_desc',
+        placeholder: i18next.t('dnssec_enable'),
+        subtitle: i18next.t('dnssec_enable_desc'),
     },
     {
         name: 'disable_ipv6',
-        placeholder: 'disable_ipv6',
-        subtitle: 'disable_ipv6_desc',
+        placeholder: i18next.t('disable_ipv6'),
+        subtitle: i18next.t('disable_ipv6_desc'),
     },
 ];
 
@@ -52,13 +53,13 @@ type FormData = {
     blocking_ipv4?: string;
     blocking_ipv6?: string;
     blocked_response_ttl: number;
-}
+};
 
 type Props = {
     processing?: boolean;
     initialValues?: Partial<FormData>;
     onSubmit: (data: FormData) => void;
-}
+};
 
 const Form = ({ processing, initialValues, onSubmit }: Props) => {
     const { t } = useTranslation();
@@ -67,6 +68,7 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
         register,
         handleSubmit,
         watch,
+        control,
         formState: { errors, isSubmitting, isDirty },
     } = useForm<FormData>({
         mode: 'onChange',
@@ -86,9 +88,7 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                             {t('rate_limit')}
                         </label>
 
-                        <div className="form__desc form__desc--top">
-                            {t('rate_limit_desc')}
-                        </div>
+                        <div className="form__desc form__desc--top">{t('rate_limit_desc')}</div>
 
                         <input
                             id="ratelimit"
@@ -103,9 +103,7 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                             })}
                         />
                         {errors.ratelimit && (
-                            <div className="form__message form__message--error">
-                                {errors.ratelimit.message}
-                            </div>
+                            <div className="form__message form__message--error">{errors.ratelimit.message}</div>
                         )}
                     </div>
                 </div>
@@ -116,9 +114,7 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                             {t('rate_limit_subnet_len_ipv4')}
                         </label>
 
-                        <div className="form__desc form__desc--top">
-                            {t('rate_limit_subnet_len_ipv4_desc')}
-                        </div>
+                        <div className="form__desc form__desc--top">{t('rate_limit_subnet_len_ipv4_desc')}</div>
 
                         <input
                             id="ratelimit_subnet_len_ipv4"
@@ -146,9 +142,7 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                             {t('rate_limit_subnet_len_ipv6')}
                         </label>
 
-                        <div className="form__desc form__desc--top">
-                            {t('rate_limit_subnet_len_ipv6_desc')}
-                        </div>
+                        <div className="form__desc form__desc--top">{t('rate_limit_subnet_len_ipv6_desc')}</div>
 
                         <input
                             id="ratelimit_subnet_len_ipv6"
@@ -176,9 +170,7 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                             {t('rate_limit_whitelist')}
                         </label>
 
-                        <div className="form__desc form__desc--top">
-                            {t('rate_limit_whitelist_desc')}
-                        </div>
+                        <div className="form__desc form__desc--top">{t('rate_limit_whitelist_desc')}</div>
 
                         <textarea
                             id="ratelimit_whitelist"
@@ -198,41 +190,37 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
 
                 <div className="col-12">
                     <div className="form__group form__group--settings">
-                        <label className="checkbox checkbox--settings">
-                            <span className="checkbox__marker" />
-                            <input
-                                id="edns_cs_enabled"
-                                type="checkbox"
-                                className="checkbox__input"
-                                disabled={processing}
-                                {...register('edns_cs_enabled')}
-                            />
-                            <span className="checkbox__label">
-                                <span className="checkbox__label-text">
-                                    <span className="checkbox__label-title">{t('edns_enable')}</span>
-                                </span>
-                            </span>
-                        </label>
+                        <Controller
+                            name="edns_cs_enabled"
+                            control={control}
+                            render={({ field: { name, value, onChange } }) => (
+                                <Checkbox
+                                    name={name}
+                                    title={t('edns_enable')}
+                                    value={value}
+                                    onChange={(value) => onChange(value)}
+                                    disabled={processing}
+                                />
+                            )}
+                        />
                     </div>
                 </div>
 
                 <div className="col-12 form__group form__group--inner">
                     <div className="form__group">
-                        <label className="checkbox checkbox--settings">
-                            <span className="checkbox__marker" />
-                            <input
-                                id="edns_cs_use_custom"
-                                type="checkbox"
-                                className="checkbox__input"
-                                disabled={processing || !edns_cs_enabled}
-                                {...register('edns_cs_use_custom')}
-                            />
-                            <span className="checkbox__label">
-                                <span className="checkbox__label-text">
-                                    <span className="checkbox__label-subtitle">{t('edns_use_custom_ip')}</span>
-                                </span>
-                            </span>
-                        </label>
+                        <Controller
+                            name="edns_cs_use_custom"
+                            control={control}
+                            render={({ field: { name, value, onChange } }) => (
+                                <Checkbox
+                                    name={name}
+                                    title={t('edns_use_custom_ip')}
+                                    value={value}
+                                    onChange={(value) => onChange(value)}
+                                    disabled={processing || !edns_cs_enabled}
+                                />
+                            )}
+                        />
                     </div>
 
                     {edns_cs_use_custom && (
@@ -252,42 +240,32 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                 {checkboxes.map(({ name, placeholder, subtitle }) => (
                     <div className="col-12" key={name}>
                         <div className="form__group form__group--settings">
-                            <label className="checkbox checkbox--settings">
-                                <span className="checkbox__marker" />
-                                <input
-                                    id={name}
-                                    type="checkbox"
-                                    className="checkbox__input"
-                                    disabled={processing}
-                                    {...register(name as keyof FormData)}
-                                />
-                                <span className="checkbox__label">
-                                    <span className="checkbox__label-text">
-                                        <span className="checkbox__label-title">{t(placeholder)}</span>
-                                        {subtitle && (
-                                            <span className="checkbox__label-subtitle">{t(subtitle)}</span>
-                                        )}
-                                    </span>
-                                </span>
-                            </label>
+                            <Controller
+                                name={name}
+                                control={control}
+                                render={({ field: { name, value, onChange } }) => (
+                                    <Checkbox
+                                        name={name}
+                                        title={placeholder}
+                                        subtitle={subtitle}
+                                        value={value}
+                                        onChange={(value) => onChange(value)}
+                                        disabled={processing}
+                                    />
+                                )}
+                            />
                         </div>
                     </div>
                 ))}
 
                 <div className="col-12">
                     <div className="form__group form__group--settings mb-4">
-                        <label className="form__label form__label--with-desc">
-                            {t('blocking_mode')}
-                        </label>
+                        <label className="form__label form__label--with-desc">{t('blocking_mode')}</label>
 
                         <div className="form__desc form__desc--top">
-                            {Object.values(BLOCKING_MODES)
-
-                                .map((mode: any) => (
-                                    <li key={mode}>
-                                        {t(`blocking_mode_${mode}`)}
-                                    </li>
-                                ))}
+                            {Object.values(BLOCKING_MODES).map((mode: any) => (
+                                <li key={mode}>{t(`blocking_mode_${mode}`)}</li>
+                            ))}
                         </div>
 
                         <div className="custom-controls-stacked">
@@ -315,9 +293,7 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                         {t(name)}
                                     </label>
 
-                                    <div className="form__desc form__desc--top">
-                                        {t(description)}
-                                    </div>
+                                    <div className="form__desc form__desc--top">{t(description)}</div>
 
                                     <input
                                         id={name}
@@ -346,9 +322,7 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                             {t('blocked_response_ttl')}
                         </label>
 
-                        <div className="form__desc form__desc--top">
-                            {t('blocked_response_ttl_desc')}
-                        </div>
+                        <div className="form__desc form__desc--top">{t('blocked_response_ttl_desc')}</div>
 
                         <input
                             id="blocked_response_ttl"
