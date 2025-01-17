@@ -18,6 +18,10 @@ See also the [v0.107.56 GitHub milestone][ms-v0.107.56].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.23.5][go-1.23.5].
+
 ### Added
 
 - The new HTTP API `POST /clients/search` that finds clients by their IP addresses, CIDRs, MAC addresses, or ClientIDs.  See `openapi/openapi.yaml` for the full description.
@@ -34,6 +38,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#7513]: https://github.com/AdguardTeam/AdGuardHome/issues/7513
 [#7329]: https://github.com/AdguardTeam/AdGuardHome/issues/7329
+
+[go-1.23.5]: https://groups.google.com/g/golang-announce/c/sSaUhLA-2SI
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
