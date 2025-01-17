@@ -91,15 +91,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                 <Controller
                     name="enabled"
                     control={control}
-                    render={({ field: { name, value, onChange } }) => (
-                        <Checkbox
-                            name={name}
-                            title={t('query_log_enable')}
-                            value={value}
-                            onChange={(value) => onChange(value)}
-                            disabled={processing}
-                        />
-                    )}
+                    render={({ field }) => <Checkbox {...field} title={t('query_log_enable')} disabled={processing} />}
                 />
             </div>
 
@@ -107,13 +99,11 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                 <Controller
                     name="anonymize_client_ip"
                     control={control}
-                    render={({ field: { name, value, onChange } }) => (
+                    render={({ field }) => (
                         <Checkbox
-                            name={name}
+                            {...field}
                             title={t('anonymize_client_ip')}
                             subtitle={t('anonymize_client_ip_desc')}
-                            value={value}
-                            onChange={(value) => onChange(value)}
                             disabled={processing}
                         />
                     )}

@@ -193,14 +193,8 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                         <Controller
                             name="edns_cs_enabled"
                             control={control}
-                            render={({ field: { name, value, onChange } }) => (
-                                <Checkbox
-                                    name={name}
-                                    title={t('edns_enable')}
-                                    value={value}
-                                    onChange={(value) => onChange(value)}
-                                    disabled={processing}
-                                />
+                            render={({ field }) => (
+                                <Checkbox {...field} title={t('edns_enable')} disabled={processing} />
                             )}
                         />
                     </div>
@@ -211,12 +205,10 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                         <Controller
                             name="edns_cs_use_custom"
                             control={control}
-                            render={({ field: { name, value, onChange } }) => (
+                            render={({ field }) => (
                                 <Checkbox
-                                    name={name}
+                                    {...field}
                                     title={t('edns_use_custom_ip')}
-                                    value={value}
-                                    onChange={(value) => onChange(value)}
                                     disabled={processing || !edns_cs_enabled}
                                 />
                             )}
@@ -243,13 +235,11 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                             <Controller
                                 name={name}
                                 control={control}
-                                render={({ field: { name, value, onChange } }) => (
+                                render={({ field }) => (
                                     <Checkbox
-                                        name={name}
+                                        {...field}
                                         title={placeholder}
                                         subtitle={subtitle}
-                                        value={value}
-                                        onChange={(value) => onChange(value)}
                                         disabled={processing}
                                     />
                                 )}

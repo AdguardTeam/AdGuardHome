@@ -87,15 +87,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                 <Controller
                     name="enabled"
                     control={control}
-                    render={({ field: { name, value, onChange } }) => (
-                        <Checkbox
-                            name={name}
-                            title={t('statistics_enable')}
-                            value={value}
-                            onChange={(value) => onChange(value)}
-                            disabled={processing}
-                        />
-                    )}
+                    render={({ field }) => <Checkbox {...field} title={t('statistics_enable')} disabled={processing} />}
                 />
             </div>
 

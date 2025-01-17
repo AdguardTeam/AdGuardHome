@@ -60,12 +60,10 @@ export const FiltersConfig = ({ initialValues, setFiltersConfig, processing }: P
                         <Controller
                             name="enabled"
                             control={control}
-                            render={({ field: { name, value, onChange } }) => (
+                            render={({ field }) => (
                                 <Checkbox
-                                    name={name}
+                                    {...field}
                                     title={t('block_domain_use_filters_and_hosts')}
-                                    value={value}
-                                    onChange={(value) => onChange(value)}
                                     disabled={processing}
                                 />
                             )}

@@ -273,13 +273,11 @@ const Form = ({ initialValues, onSubmit }: FormProps) => {
                         <Controller
                             name="use_private_ptr_resolvers"
                             control={control}
-                            render={({ field: { name, value, onChange } }) => (
+                            render={({ field }) => (
                                 <Checkbox
-                                    name={name}
+                                    {...field}
                                     title={t('use_private_ptr_resolvers_title')}
                                     subtitle={t('use_private_ptr_resolvers_desc')}
-                                    value={value}
-                                    onChange={(value) => onChange(value)}
                                     disabled={processingSetConfig}
                                 />
                             )}
@@ -295,13 +293,11 @@ const Form = ({ initialValues, onSubmit }: FormProps) => {
                     <Controller
                         name="resolve_clients"
                         control={control}
-                        render={({ field: { name, value, onChange } }) => (
+                        render={({ field }) => (
                             <Checkbox
-                                name={name}
+                                {...field}
                                 title={t('resolve_clients_title')}
                                 subtitle={t('resolve_clients_desc')}
-                                value={value}
-                                onChange={(value) => onChange(value)}
                                 disabled={processingSetConfig}
                             />
                         )}

@@ -73,14 +73,8 @@ export const FiltersList = ({ categories, filters, selectedSources }: Props) => 
                                     <Controller
                                         name={id}
                                         control={control}
-                                        render={({ field: { value, onChange } }) => (
-                                            <Checkbox
-                                                name={id}
-                                                title={name}
-                                                value={value}
-                                                onChange={(value) => onChange(value)}
-                                                disabled={isSelected}
-                                            />
+                                        render={({ field }) => (
+                                            <Checkbox {...field} title={name} disabled={isSelected} />
                                         )}
                                     />
                                     {renderIcons(iconsData)}
