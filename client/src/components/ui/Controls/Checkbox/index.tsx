@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { forwardRef, ReactNode } from 'react';
 import clsx from 'clsx';
 
 import './checkbox.css';
@@ -10,26 +10,35 @@ type Props = {
     name?: string;
     disabled?: boolean;
     className?: string;
+    error?: string;
     onChange: (value: boolean) => void;
 };
 
-export const Checkbox = ({ title, subtitle, value, name, disabled, className = 'checkbox--form', onChange }: Props) => (
-    <label className={clsx('checkbox', className)}>
-        <span className="checkbox__marker" />
-        <input
-            name={name}
-            type="checkbox"
-            className="checkbox__input"
-            disabled={disabled}
-            checked={value}
-            onChange={(e) => onChange(e.target.checked)}
-        />
-        <span className="checkbox__label">
-            <span className="checkbox__label-text checkbox__label-text--long">
-                <span className="checkbox__label-title">{title}</span>
+export const Checkbox = forwardRef<HTMLInputElement, Props>(
+    ({ title, subtitle, value, name, disabled, error, className = 'checkbox--form', onChange }, ref) => (
+        <>
+            <label className={clsx('checkbox', className)}>
+                <span className="checkbox__marker" />
+                <input
+                    name={name}
+                    type="checkbox"
+                    className="checkbox__input"
+                    disabled={disabled}
+                    checked={value}
+                    onChange={(e) => onChange(e.target.checked)}
+                    ref={ref}
+                />
+                <span className="checkbox__label">
+                    <span className="checkbox__label-text checkbox__label-text--long">
+                        <span className="checkbox__label-title">{title}</span>
 
-                {subtitle && <span className="checkbox__label-subtitle">{subtitle}</span>}
-            </span>
-        </span>
-    </label>
+                        {subtitle && <span className="checkbox__label-subtitle">{subtitle}</span>}
+                    </span>
+                </span>
+            </label>
+            {error && <div className="form__message form__message--error">{error}</div>}
+        </>
+    ),
 );
+
+Checkbox.displayName = 'Checkbox';

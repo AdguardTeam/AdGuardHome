@@ -65,10 +65,12 @@ const Dhcp = () => {
         modalType,
     } = useSelector((state: RootState) => state.dhcp, shallowEqual);
 
-    const interface_name =
-        useSelector((state: RootState) => state.form[FORM_NAME.DHCP_INTERFACES]?.values?.interface_name);
-    const isInterfaceIncludesIpv4 =
-        useSelector((state: RootState) => !!state.dhcp?.interfaces?.[interface_name]?.ipv4_addresses);
+    const interface_name = useSelector(
+        (state: RootState) => state.form[FORM_NAME.DHCP_INTERFACES]?.values?.interface_name,
+    );
+    const isInterfaceIncludesIpv4 = useSelector(
+        (state: RootState) => !!state.dhcp?.interfaces?.[interface_name]?.ipv4_addresses,
+    );
 
     const dhcp = useSelector((state: RootState) => state.form[FORM_NAME.DHCPv4], shallowEqual);
 
@@ -130,12 +132,7 @@ const Dhcp = () => {
     const enteredSomeValue = enteredSomeV4Value || enteredSomeV6Value || interfaceName;
 
     const getToggleDhcpButton = () => {
-        const filledConfig =
-            interface_name &&
-            (Object.values(v4)
-
-                .every(Boolean) ||
-                Object.values(v6).every(Boolean));
+        const filledConfig = interface_name && (Object.values(v4).every(Boolean) || Object.values(v6).every(Boolean));
 
         const className = classNames('btn btn-sm', {
             'btn-gray': enabled,
@@ -200,11 +197,7 @@ const Dhcp = () => {
 
     const isEmptyConfig = !Object.values(dhcp?.values?.v4 ?? {}).some(Boolean);
     const disabledLeasesButton = Boolean(
-        dhcp?.syncErrors ||
-            !isInterfaceIncludesIpv4 ||
-            isEmptyConfig ||
-            processingConfig ||
-            !inputtedIPv4values,
+        dhcp?.syncErrors || !isInterfaceIncludesIpv4 || isEmptyConfig || processingConfig || !inputtedIPv4values,
     );
     const cidr = inputtedIPv4values
         ? `${dhcp?.values?.v4?.gateway_ip}/${subnetMaskToBitMask(dhcp?.values?.v4?.subnet_mask)}`
