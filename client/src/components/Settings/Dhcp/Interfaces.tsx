@@ -1,20 +1,11 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { useForm } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { validateRequiredValue } from '../../../helpers/validators';
 import { RootState } from '../../../initialState';
-
-type FormValues = {
-    interface_name: string;
-};
-
-type InterfacesProps = {
-    initialValues?: {
-        interface_name: string;
-    };
-};
+import { DhcpFormValues } from '.';
 
 const renderInterfaces = (interfaces: any) =>
     Object.keys(interfaces).map((item) => {
@@ -82,19 +73,15 @@ const renderInterfaceValues = ({ gateway_ip, hardware_address, ip_addresses }: R
     </div>
 );
 
-const Interfaces = ({ initialValues }: InterfacesProps) => {
+const Interfaces = () => {
     const { t } = useTranslation();
-
-    const { processingInterfaces, interfaces, enabled } = useSelector((store: RootState) => store.dhcp);
-
     const {
         register,
         watch,
         formState: { errors },
-    } = useForm<FormValues>({
-        mode: 'onChange',
-        defaultValues: initialValues,
-    });
+    } = useFormContext<DhcpFormValues>();
+
+    const { processingInterfaces, interfaces, enabled } = useSelector((store: RootState) => store.dhcp);
 
     const interface_name = watch('interface_name');
 
@@ -116,24 +103,22 @@ const Interfaces = ({ initialValues }: InterfacesProps) => {
                     disabled={enabled}
                     {...register('interface_name', {
                         validate: validateRequiredValue,
-                    })}
-                >
+                    })}>
                     <option value="" disabled={enabled}>
                         {t('dhcp_interface_select')}
                     </option>
                     {renderInterfaces(interfaces)}
                 </select>
                 {errors.interface_name && (
-                    <div className="form__message form__message--error">
-                        {t(errors.interface_name.message)}
-                    </div>
+                    <div className="form__message form__message--error">{t(errors.interface_name.message)}</div>
                 )}
             </div>
-            {interfaceValue && renderInterfaceValues({
-                gateway_ip: interfaceValue.gateway_ip,
-                hardware_address: interfaceValue.hardware_address,
-                ip_addresses: interfaceValue.ip_addresses
-            })}
+            {interfaceValue &&
+                renderInterfaceValues({
+                    gateway_ip: interfaceValue.gateway_ip,
+                    hardware_address: interfaceValue.hardware_address,
+                    ip_addresses: interfaceValue.ip_addresses,
+                })}
         </div>
     );
 };

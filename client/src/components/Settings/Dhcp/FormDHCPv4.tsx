@@ -1,7 +1,6 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
 
 import { UINT32_RANGE } from '../../../helpers/constants';
 import {
@@ -12,21 +11,10 @@ import {
     validateNotInRange,
     validateRequiredValue,
 } from '../../../helpers/validators';
-import { RootState } from '../../../initialState';
-
-type FormValues = {
-    v4?: {
-        gateway_ip?: string;
-        subnet_mask?: string;
-        range_start?: string;
-        range_end?: string;
-        lease_duration?: number;
-    };
-}
+import { DhcpFormValues } from '.';
 
 type FormDHCPv4Props = {
     processingConfig?: boolean;
-    initialValues?: FormValues;
     ipv4placeholders?: {
         gateway_ip: string;
         subnet_mask: string;
@@ -34,46 +22,28 @@ type FormDHCPv4Props = {
         range_end: string;
         lease_duration: string;
     };
-    onSubmit?: (data: FormValues) => Promise<void> | void;
-}
+    interfaces: any;
+    onSubmit?: (data: DhcpFormValues) => Promise<void> | void;
+};
 
-const FormDHCPv4 = ({ 
-    processingConfig,
-    initialValues,
-    ipv4placeholders,
-    onSubmit 
-}: FormDHCPv4Props) => {
+const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }: FormDHCPv4Props) => {
     const { t } = useTranslation();
-
-    const interfaces = useSelector((state: RootState) => state.form.DHCP_INTERFACES);
-    const interface_name = interfaces?.values?.interface_name;
-
-    const isInterfaceIncludesIpv4 = useSelector(
-        (state: RootState) => !!state.dhcp?.interfaces?.[interface_name]?.ipv4_addresses,
-    );
 
     const {
         register,
         handleSubmit,
         formState: { errors, isSubmitting },
         watch,
-    } = useForm<FormValues>({
-        mode: 'onChange',
-        defaultValues: {
-            v4: initialValues?.v4 || {
-                gateway_ip: '',
-                subnet_mask: '',
-                range_start: '',
-                range_end: '',
-                lease_duration: 0,
-            },
-        },
-    });
+    } = useFormContext<DhcpFormValues>();
+
+    const interfaceName = watch('interface_name');
+    const isInterfaceIncludesIpv4 = interfaces?.[interfaceName]?.ipv4_addresses;
 
     const formValues = watch('v4');
     const isEmptyConfig = !Object.values(formValues || {}).some(Boolean);
 
-    const handleFormSubmit = async (data: FormValues) => {
+    const handleFormSubmit = async (data: DhcpFormValues) => {
+        // TODO handle submit
         if (onSubmit) {
             await onSubmit(data);
         }
@@ -93,15 +63,13 @@ const FormDHCPv4 = ({
                             {...register('v4.gateway_ip', {
                                 validate: {
                                     ipv4: validateIpv4,
-                                    required: (value) => isEmptyConfig ? undefined : validateRequiredValue(value),
+                                    required: (value) => (isEmptyConfig ? undefined : validateRequiredValue(value)),
                                     notInRange: validateNotInRange,
-                                }
+                                },
                             })}
                         />
                         {errors.v4?.gateway_ip && (
-                            <div className="form__message form__message--error">
-                                {t(errors.v4.gateway_ip.message)}
-                            </div>
+                            <div className="form__message form__message--error">{t(errors.v4.gateway_ip.message)}</div>
                         )}
                     </div>
 
@@ -114,15 +82,13 @@ const FormDHCPv4 = ({
                             disabled={!isInterfaceIncludesIpv4}
                             {...register('v4.subnet_mask', {
                                 validate: {
-                                    required: (value) => isEmptyConfig ? undefined : validateRequiredValue(value),
+                                    required: (value) => (isEmptyConfig ? undefined : validateRequiredValue(value)),
                                     subnet: validateGatewaySubnetMask,
-                                }
+                                },
                             })}
                         />
                         {errors.v4?.subnet_mask && (
-                            <div className="form__message form__message--error">
-                                {t(errors.v4.subnet_mask.message)}
-                            </div>
+                            <div className="form__message form__message--error">{t(errors.v4.subnet_mask.message)}</div>
                         )}
                     </div>
                 </div>
@@ -144,7 +110,7 @@ const FormDHCPv4 = ({
                                         validate: {
                                             ipv4: validateIpv4,
                                             gateway: validateIpForGatewaySubnetMask,
-                                        }
+                                        },
                                     })}
                                 />
                                 {errors.v4?.range_start && (
@@ -165,7 +131,7 @@ const FormDHCPv4 = ({
                                             ipv4: validateIpv4,
                                             rangeEnd: validateIpv4RangeEnd,
                                             gateway: validateIpForGatewaySubnetMask,
-                                        }
+                                        },
                                     })}
                                 />
                                 {errors.v4?.range_end && (
@@ -189,8 +155,8 @@ const FormDHCPv4 = ({
                             {...register('v4.lease_duration', {
                                 valueAsNumber: true,
                                 validate: {
-                                    required: (value) => isEmptyConfig ? undefined : validateRequiredValue(value),
-                                }
+                                    required: (value) => (isEmptyConfig ? undefined : validateRequiredValue(value)),
+                                },
                             })}
                         />
                         {errors.v4?.lease_duration && (
@@ -206,8 +172,13 @@ const FormDHCPv4 = ({
                 <button
                     type="submit"
                     className="btn btn-success btn-standard"
-                    disabled={isSubmitting || processingConfig || !isInterfaceIncludesIpv4 || isEmptyConfig || Object.keys(errors).length > 0}
-                >
+                    disabled={
+                        isSubmitting ||
+                        processingConfig ||
+                        !isInterfaceIncludesIpv4 ||
+                        isEmptyConfig ||
+                        Object.keys(errors).length > 0
+                    }>
                     {t('save_config')}
                 </button>
             </div>

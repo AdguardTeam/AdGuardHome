@@ -4,8 +4,8 @@ import { Trans, useTranslation } from 'react-i18next';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames';
 
-import { destroy } from 'redux-form';
-import { DHCP_DESCRIPTION_PLACEHOLDERS, DHCP_FORM_NAMES, STATUS_RESPONSE, FORM_NAME } from '../../../helpers/constants';
+import { FormProvider, useForm } from 'react-hook-form';
+import { DHCP_DESCRIPTION_PLACEHOLDERS, STATUS_RESPONSE } from '../../../helpers/constants';
 
 import Leases from './Leases';
 
@@ -40,6 +40,36 @@ import {
 import './index.css';
 import { RootState } from '../../../initialState';
 
+export type DhcpFormValues = {
+    v4?: {
+        gateway_ip?: string;
+        subnet_mask?: string;
+        range_start?: string;
+        range_end?: string;
+        lease_duration?: number;
+    };
+    v6?: {
+        range_start?: string;
+        range_end?: string;
+        lease_duration?: number;
+    };
+    interface_name?: string;
+};
+
+const DEFAULT_V4_VALUES = {
+    gateway_ip: '',
+    subnet_mask: '',
+    range_start: '',
+    range_end: '',
+    lease_duration: 0,
+};
+
+const DEFAULT_V6_VALUES = {
+    range_start: '',
+    range_end: '',
+    lease_duration: 0,
+};
+
 const Dhcp = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -65,14 +95,21 @@ const Dhcp = () => {
         modalType,
     } = useSelector((state: RootState) => state.dhcp, shallowEqual);
 
-    const interface_name = useSelector(
-        (state: RootState) => state.form[FORM_NAME.DHCP_INTERFACES]?.values?.interface_name,
-    );
+    const methods = useForm<DhcpFormValues>({
+        mode: 'onChange',
+        defaultValues: {
+            v4: v4 || DEFAULT_V4_VALUES,
+            v6: v6 || DEFAULT_V6_VALUES,
+            interface_name: interfaceName || '',
+        },
+    });
+    const { watch, reset } = methods;
+
+    const interface_name = watch('interface_name');
     const isInterfaceIncludesIpv4 = useSelector(
         (state: RootState) => !!state.dhcp?.interfaces?.[interface_name]?.ipv4_addresses,
     );
-
-    const dhcp = useSelector((state: RootState) => state.form[FORM_NAME.DHCPv4], shallowEqual);
+    const ipv4Config = watch('v4');
 
     const [ipv4placeholders, setIpv4Placeholders] = useState(DHCP_DESCRIPTION_PLACEHOLDERS.ipv4);
     const [ipv6placeholders, setIpv6Placeholders] = useState(DHCP_DESCRIPTION_PLACEHOLDERS.ipv6);
@@ -86,6 +123,16 @@ const Dhcp = () => {
             dispatch(getDhcpInterfaces());
         }
     }, [dhcp_available]);
+
+    useEffect(() => {
+        if (v4 || v6 || interfaceName) {
+            reset({
+                v4: v4 || DEFAULT_V4_VALUES,
+                v6: v6 || DEFAULT_V6_VALUES,
+                interface_name: interfaceName || '',
+            });
+        }
+    }, [v4, v6, interfaceName, reset]);
 
     useEffect(() => {
         const [ipv4] = interfaces?.[interface_name]?.ipv4_addresses ?? [];
@@ -105,7 +152,11 @@ const Dhcp = () => {
     const clear = () => {
         // eslint-disable-next-line no-alert
         if (window.confirm(t('dhcp_reset'))) {
-            Object.values(DHCP_FORM_NAMES).forEach((formName: any) => dispatch(destroy(formName)));
+            reset({
+                v4: DEFAULT_V4_VALUES,
+                v6: DEFAULT_V6_VALUES,
+                interface_name: '',
+            });
             dispatch(resetDhcp());
             dispatch(getDhcpStatus());
         }
@@ -170,9 +221,6 @@ const Dhcp = () => {
 
     const toggleModal = () => dispatch(toggleLeaseModal());
 
-    const initialV4 = enteredSomeV4Value ? v4 : {};
-    const initialV6 = enteredSomeV6Value ? v6 : {};
-
     if (processing || processingInterfaces) {
         return <Loading />;
     }
@@ -193,15 +241,13 @@ const Dhcp = () => {
 
     const toggleDhcpButton = getToggleDhcpButton();
 
-    const inputtedIPv4values = dhcp?.values?.v4?.gateway_ip && dhcp?.values?.v4?.subnet_mask;
+    const inputtedIPv4values = ipv4Config.gateway_ip && ipv4Config.subnet_mask;
 
-    const isEmptyConfig = !Object.values(dhcp?.values?.v4 ?? {}).some(Boolean);
+    const isEmptyConfig = !Object.values(ipv4Config).some(Boolean);
     const disabledLeasesButton = Boolean(
-        dhcp?.syncErrors || !isInterfaceIncludesIpv4 || isEmptyConfig || processingConfig || !inputtedIPv4values,
+        !isInterfaceIncludesIpv4 || isEmptyConfig || processingConfig || !inputtedIPv4values,
     );
-    const cidr = inputtedIPv4values
-        ? `${dhcp?.values?.v4?.gateway_ip}/${subnetMaskToBitMask(dhcp?.values?.v4?.subnet_mask)}`
-        : '';
+    const cidr = inputtedIPv4values ? `${ipv4Config.gateway_ip}/${subnetMaskToBitMask(ipv4Config.subnet_mask)}` : '';
 
     return (
         <>
@@ -239,29 +285,32 @@ const Dhcp = () => {
                             </div>
                         )}
 
-                    <Interfaces initialValues={{ interface_name: interfaceName }} />
+                    <FormProvider {...methods}>
+                        <Interfaces />
 
-                    <Card title={t('dhcp_ipv4_settings')} bodyType="card-body box-body--settings">
-                        <div>
-                            <FormDHCPv4
-                                onSubmit={handleSubmit}
-                                initialValues={{ v4: initialV4 }}
-                                processingConfig={processingConfig}
-                                ipv4placeholders={ipv4placeholders}
-                            />
-                        </div>
-                    </Card>
+                        <Card title={t('dhcp_ipv4_settings')} bodyType="card-body box-body--settings">
+                            <div>
+                                <FormDHCPv4
+                                    onSubmit={handleSubmit}
+                                    processingConfig={processingConfig}
+                                    ipv4placeholders={ipv4placeholders}
+                                    interfaces={interfaces}
+                                />
+                            </div>
+                        </Card>
 
-                    <Card title={t('dhcp_ipv6_settings')} bodyType="card-body box-body--settings">
-                        <div>
-                            <FormDHCPv6
-                                onSubmit={handleSubmit}
-                                initialValues={{ v6: initialV6 }}
-                                processingConfig={processingConfig}
-                                ipv6placeholders={ipv6placeholders}
-                            />
-                        </div>
-                    </Card>
+                        <Card title={t('dhcp_ipv6_settings')} bodyType="card-body box-body--settings">
+                            <div>
+                                <FormDHCPv6
+                                    onSubmit={handleSubmit}
+                                    processingConfig={processingConfig}
+                                    ipv6placeholders={ipv6placeholders}
+                                    interfaces={interfaces}
+                                />
+                            </div>
+                        </Card>
+                    </FormProvider>
+
                     {enabled && (
                         <Card title={t('dhcp_leases')} bodyType="card-body box-body--settings">
                             <div className="row">
@@ -283,7 +332,7 @@ const Dhcp = () => {
                                     processingDeleting={processingDeleting}
                                     processingUpdating={processingUpdating}
                                     cidr={cidr}
-                                    gatewayIp={dhcp?.values?.v4?.gateway_ip}
+                                    gatewayIp={ipv4Config.gateway_ip}
                                 />
 
                                 <div className="btn-list mt-2">

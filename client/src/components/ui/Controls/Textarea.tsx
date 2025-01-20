@@ -7,26 +7,23 @@ interface Props extends ComponentProps<'textarea'> {
     error?: string;
 }
 
-export const Textarea = forwardRef<HTMLTextAreaElement, Props>(
-    ({ name, label, className, error, onClick, ...rest }, ref) => (
-        <div className={clsx('form-group', { 'has-error': !!error })}>
-            {label && (
-                <label className="form__label" htmlFor={name}>
-                    {label}
-                </label>
+export const Textarea = forwardRef<HTMLTextAreaElement, Props>(({ name, label, className, error, ...rest }, ref) => (
+    <div className={clsx('form-group', { 'has-error': !!error })}>
+        {label && (
+            <label className="form__label" htmlFor={name}>
+                {label}
+            </label>
+        )}
+        <textarea
+            className={clsx(
+                'form-control form-control--textarea form-control--textarea-small font-monospace',
+                className,
             )}
-            <textarea
-                onClick={onClick}
-                className={clsx(
-                    'form-control form-control--textarea form-control--textarea-small font-monospace',
-                    className,
-                )}
-                ref={ref}
-                {...rest}
-            />
-            {error && <div className="form__message form__message--error">{error}</div>}
-        </div>
-    ),
-);
+            ref={ref}
+            {...rest}
+        />
+        {error && <div className="form__message form__message--error">{error}</div>}
+    </div>
+));
 
 Textarea.displayName = 'Textarea';

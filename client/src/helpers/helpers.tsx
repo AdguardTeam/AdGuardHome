@@ -757,12 +757,9 @@ type NestedObject = {
     order: number;
 };
 
-export const getObjectKeysSorted = <
-    T extends Record<string, NestedObject>,
-    K extends keyof NestedObject
->(
+export const getObjectKeysSorted = <T extends Record<string, NestedObject>, K extends keyof NestedObject>(
     object: T,
-    sortKey: K
+    sortKey: K,
 ): string[] => {
     return Object.entries(object)
         .sort(([, a], [, b]) => (a[sortKey] as number) - (b[sortKey] as number))

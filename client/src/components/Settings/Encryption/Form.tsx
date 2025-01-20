@@ -181,7 +181,6 @@ export const Form = ({
 
         if (JSON.stringify(previousValues) !== JSON.stringify(watchedValues)) {
             // TODO onChange TLS config validation
-            console.log('TLS config validation');
             previousValuesRef.current = watchedValues;
         }
     }, [watchedValues]);
