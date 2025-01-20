@@ -10,6 +10,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
 
@@ -329,7 +330,7 @@ var cmdLineOpts = []cmdLineOpt{{
 				fmt.Println(version.Full())
 			}
 
-			os.Exit(0)
+			os.Exit(osutil.ExitCodeSuccess)
 
 			return nil
 		}, nil

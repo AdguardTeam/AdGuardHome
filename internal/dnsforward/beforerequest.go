@@ -81,7 +81,7 @@ func (s *Server) clientIDFromDNSContext(pctx *proxy.DNSContext) (clientID string
 
 	cliSrvName, err := clientServerName(pctx, proto)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("getting client server-name: %w", err)
 	}
 
 	clientID, err = clientIDFromClientServerName(

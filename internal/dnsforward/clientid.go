@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"crypto/tls"
 	"fmt"
+	"net/http"
 	"path"
 	"strings"
 
@@ -118,17 +119,13 @@ func clientServerName(pctx *proxy.DNSContext, proto proxy.Proto) (srvName string
 
 	switch proto {
 	case proxy.ProtoHTTPS:
-		r := pctx.HTTPRequest
-		if connState := r.TLS; connState != nil {
-			srvName = connState.ServerName
-		} else if r.Host != "" {
-			var host string
-			host, err = netutil.SplitHost(r.Host)
-			if err != nil {
-				return "", fmt.Errorf("parsing host: %w", err)
-			}
+		var fromHost bool
+		srvName, fromHost, err = clientServerNameFromHTTP(pctx.HTTPRequest)
+		if err != nil {
+			return "", fmt.Errorf("from http: %w", err)
+		}
 
-			srvName = host
+		if fromHost {
 			from = "host header"
 		}
 	case proxy.ProtoQUIC:
@@ -152,4 +149,24 @@ func clientServerName(pctx *proxy.DNSContext, proto proxy.Proto) (srvName string
 	log.Debug("dnsforward: got client server name %q from %s", srvName, from)
 
 	return srvName, nil
+}
+
+// clientServerNameFromHTTP returns the TLS server name or the value of the host
+// header depending on the protocol.  fromHost is true if srvName comes from the
+// "Host" HTTP header.
+func clientServerNameFromHTTP(r *http.Request) (srvName string, fromHost bool, err error) {
+	if connState := r.TLS; connState != nil {
+		return connState.ServerName, false, nil
+	}
+
+	if r.Host == "" {
+		return "", false, nil
+	}
+
+	srvName, err = netutil.SplitHost(r.Host)
+	if err != nil {
+		return "", false, fmt.Errorf("parsing host: %w", err)
+	}
+
+	return srvName, true, nil
 }

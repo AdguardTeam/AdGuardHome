@@ -521,7 +521,7 @@ func TestUpgradeSchema11to12(t *testing.T) {
 		name    string
 	}{{
 		ivl:     1,
-		want:    timeutil.Duration{Duration: timeutil.Day},
+		want:    timeutil.Duration(timeutil.Day),
 		wantErr: "",
 		name:    "success",
 	}, {
@@ -604,7 +604,7 @@ func TestUpgradeSchema11to12(t *testing.T) {
 		ivlVal, ok = ivl.(timeutil.Duration)
 		require.True(t, ok)
 
-		assert.Equal(t, 90*24*time.Hour, ivlVal.Duration)
+		assert.Equal(t, 90*24*time.Hour, time.Duration(ivlVal))
 	})
 }
 
@@ -1055,12 +1055,12 @@ func TestUpgradeSchema19to20(t *testing.T) {
 		name    string
 	}{{
 		ivl:     1,
-		want:    timeutil.Duration{Duration: timeutil.Day},
+		want:    timeutil.Duration(timeutil.Day),
 		wantErr: "",
 		name:    "success",
 	}, {
 		ivl:     0,
-		want:    timeutil.Duration{Duration: timeutil.Day},
+		want:    timeutil.Duration(timeutil.Day),
 		wantErr: "",
 		name:    "success",
 	}, {
@@ -1143,7 +1143,7 @@ func TestUpgradeSchema19to20(t *testing.T) {
 		ivlVal, ok = ivl.(timeutil.Duration)
 		require.True(t, ok)
 
-		assert.Equal(t, 24*time.Hour, ivlVal.Duration)
+		assert.Equal(t, 24*time.Hour, time.Duration(ivlVal))
 	})
 }
 

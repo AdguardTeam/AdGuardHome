@@ -63,11 +63,7 @@ func (s *StatsCtx) handleStats(w http.ResponseWriter, r *http.Request) {
 		resp, ok = s.getData(uint32(s.limit.Hours()))
 	}()
 
-	s.logger.DebugContext(
-		ctx,
-		"prepared data",
-		"elapsed", timeutil.Duration{Duration: time.Since(start)},
-	)
+	s.logger.DebugContext(ctx, "prepared data", "elapsed", time.Since(start))
 
 	if !ok {
 		// Don't bring the message to the lower case since it's a part of UI

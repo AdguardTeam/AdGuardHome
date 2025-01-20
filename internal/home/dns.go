@@ -47,14 +47,14 @@ func onConfigModified() {
 
 // initDNS updates all the fields of the [Context] needed to initialize the DNS
 // server and initializes it at last.  It also must not be called unless
-// [config] and [Context] are initialized.  l must not be nil.
+// [config] and [Context] are initialized.  baseLogger must not be nil.
 func initDNS(baseLogger *slog.Logger, statsDir, querylogDir string) (err error) {
 	anonymizer := config.anonymizer()
 
 	statsConf := stats.Config{
 		Logger:            baseLogger.With(slogutil.KeyPrefix, "stats"),
 		Filename:          filepath.Join(statsDir, "stats.db"),
-		Limit:             config.Stats.Interval.Duration,
+		Limit:             time.Duration(config.Stats.Interval),
 		ConfigModified:    onConfigModified,
 		HTTPRegister:      httpRegister,
 		Enabled:           config.Stats.Enabled,
@@ -80,7 +80,7 @@ func initDNS(baseLogger *slog.Logger, statsDir, querylogDir string) (err error) 
 		FindClient:        Context.clients.findMultiple,
 		BaseDir:           querylogDir,
 		AnonymizeClientIP: config.DNS.AnonymizeClientIP,
-		RotationIvl:       config.QueryLog.Interval.Duration,
+		RotationIvl:       time.Duration(config.QueryLog.Interval),
 		MemSize:           config.QueryLog.MemSize,
 		Enabled:           config.QueryLog.Enabled,
 		FileEnabled:       config.QueryLog.FileEnabled,
@@ -243,7 +243,7 @@ func newServerConfig(
 		Config:                 fwdConf,
 		TLSConfig:              newDNSTLSConfig(tlsConf, hosts),
 		TLSAllowUnencryptedDoH: tlsConf.AllowUnencryptedDoH,
-		UpstreamTimeout:        dnsConf.UpstreamTimeout.Duration,
+		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
 		TLSv12Roots:            Context.tlsRoots,
 		ConfigModified:         onConfigModified,
 		HTTPRegister:           httpReg,

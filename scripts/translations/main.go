@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/osutil"
 )
 
 const (
@@ -124,12 +125,12 @@ Commands:
 	if addStr != "" {
 		fmt.Printf("%s\n%s\n", addStr, usageStr)
 
-		os.Exit(1)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	fmt.Println(usageStr)
 
-	os.Exit(0)
+	os.Exit(osutil.ExitCodeSuccess)
 }
 
 // twoskyConfig is the configuration structure for localization.

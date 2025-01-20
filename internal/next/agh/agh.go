@@ -13,6 +13,7 @@ import (
 type ServiceWithConfig[ConfigType any] interface {
 	service.Interface
 
+	// Config returns a deep clone of the configuration of the service.
 	Config() (c ConfigType)
 }
 

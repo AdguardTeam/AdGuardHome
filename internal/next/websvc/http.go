@@ -10,6 +10,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
+	"github.com/AdguardTeam/AdGuardHome/internal/next/jsonpatch"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
@@ -20,9 +21,12 @@ type ReqPatchSettingsHTTP struct {
 	//
 	// TODO(a.garipov): Add wait time.
 
-	Addresses       []netip.AddrPort     `json:"addresses"`
-	SecureAddresses []netip.AddrPort     `json:"secure_addresses"`
-	Timeout         aghhttp.JSONDuration `json:"timeout"`
+	Addresses       jsonpatch.NonRemovable[[]netip.AddrPort] `json:"addresses"`
+	SecureAddresses jsonpatch.NonRemovable[[]netip.AddrPort] `json:"secure_addresses"`
+
+	Timeout jsonpatch.NonRemovable[aghhttp.JSONDuration] `json:"timeout"`
+
+	ForceHTTPS jsonpatch.NonRemovable[bool] `json:"force_https"`
 }
 
 // HTTPAPIHTTPSettings are the HTTP settings as used by the HTTP API.  See the
@@ -41,8 +45,6 @@ type HTTPAPIHTTPSettings struct {
 func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Request) {
 	req := &ReqPatchSettingsHTTP{}
 
-	// TODO(a.garipov): Validate nulls and proper JSON patch.
-
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		aghhttp.WriteJSONResponseError(w, r, fmt.Errorf("decoding: %w", err))
@@ -50,20 +52,14 @@ func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	newConf := &Config{
-		Logger: svc.logger,
-		Pprof: &PprofConfig{
-			Port:    svc.pprofPort,
-			Enabled: svc.pprof != nil,
-		},
-		ConfigManager:   svc.confMgr,
-		Frontend:        svc.frontend,
-		TLS:             svc.tls,
-		Addresses:       req.Addresses,
-		SecureAddresses: req.SecureAddresses,
-		Timeout:         time.Duration(req.Timeout),
-		ForceHTTPS:      svc.forceHTTPS,
-	}
+	newConf := svc.Config()
+
+	// TODO(a.garipov): Add more as we go.
+
+	req.Addresses.Set(&newConf.Addresses)
+	req.SecureAddresses.Set(&newConf.SecureAddresses)
+	req.Timeout.Set((*aghhttp.JSONDuration)(&newConf.Timeout))
+	req.ForceHTTPS.Set(&newConf.ForceHTTPS)
 
 	aghhttp.WriteJSONResponseOK(w, r, &HTTPAPIHTTPSettings{
 		Addresses:       newConf.Addresses,

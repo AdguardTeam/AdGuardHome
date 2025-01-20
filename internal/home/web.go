@@ -3,6 +3,7 @@ package home
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -15,9 +16,11 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/httputil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
+	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/NYTimes/gziphandler"
 	"github.com/quic-go/quic-go/http3"
 	"golang.org/x/net/http2"
@@ -38,6 +41,13 @@ const (
 
 type webConfig struct {
 	updater *updater.Updater
+
+	// logger is a slog logger used in webAPI. It must not be nil.
+	logger *slog.Logger
+
+	// baseLogger is used to create loggers for other entities.  It must not be
+	// nil.
+	baseLogger *slog.Logger
 
 	clientFS fs.FS
 
@@ -94,21 +104,26 @@ type webAPI struct {
 	// logger is a slog logger used in webAPI. It must not be nil.
 	logger *slog.Logger
 
+	// baseLogger is used to create loggers for other entities.  It must not be
+	// nil.
+	baseLogger *slog.Logger
+
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
 	httpsServer httpsServer
 }
 
-// newWebAPI creates a new instance of the web UI and API server.  l must not be
-// nil.
+// newWebAPI creates a new instance of the web UI and API server.  conf must be
+// valid.
 //
 // TODO(a.garipov):  Return a proper error.
-func newWebAPI(conf *webConfig, l *slog.Logger) (w *webAPI) {
-	log.Info("web: initializing")
+func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
+	conf.logger.InfoContext(ctx, "initializing")
 
 	w = &webAPI{
-		conf:   conf,
-		logger: l,
+		conf:       conf,
+		logger:     conf.logger,
+		baseLogger: conf.baseLogger,
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
@@ -118,7 +133,11 @@ func newWebAPI(conf *webConfig, l *slog.Logger) (w *webAPI) {
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if conf.firstRun {
-		log.Info("This is the first launch of AdGuard Home, redirecting everything to /install.html ")
+		conf.logger.InfoContext(
+			ctx,
+			"This is the first launch of AdGuard Home, redirecting everything to /install.html",
+		)
+
 		Context.mux.Handle("/install.html", preInstallHandler(clientFS))
 		w.registerInstallHandlers()
 	} else {
@@ -154,7 +173,9 @@ func webCheckPortAvailable(port uint16) (ok bool) {
 // tlsConfigChanged updates the TLS configuration and restarts the HTTPS server
 // if necessary.
 func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf tlsConfigSettings) {
-	log.Debug("web: applying new tls configuration")
+	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
+
+	web.logger.DebugContext(ctx, "applying new tls configuration")
 
 	enabled := tlsConf.Enabled &&
 		tlsConf.PortHTTPS != 0 &&
@@ -165,7 +186,7 @@ func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf tlsConfigSettin
 	if enabled {
 		cert, err = tls.X509KeyPair(tlsConf.CertificateChainData, tlsConf.PrivateKeyData)
 		if err != nil {
-			log.Fatal(err)
+			panic(err)
 		}
 	}
 
@@ -173,8 +194,8 @@ func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf tlsConfigSettin
 	if web.httpsServer.server != nil {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, shutdownTimeout)
-		shutdownSrv(ctx, web.httpsServer.server)
-		shutdownSrv3(web.httpsServer.server3)
+		shutdownSrv(ctx, web.logger, web.httpsServer.server)
+		shutdownSrv3(ctx, web.logger, web.httpsServer.server3)
 
 		cancel()
 	}
@@ -185,12 +206,17 @@ func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf tlsConfigSettin
 	web.httpsServer.cond.L.Unlock()
 }
 
+// loggerKeyServer is the key used by [webAPI] to identify servers.
+const loggerKeyServer = "server"
+
 // start - start serving HTTP requests
-func (web *webAPI) start() {
-	log.Println("AdGuard Home is available at the following addresses:")
+func (web *webAPI) start(ctx context.Context) {
+	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
+
+	web.logger.InfoContext(ctx, "AdGuard Home is available at the following addresses:")
 
 	// for https, we have a separate goroutine loop
-	go web.tlsServerLoop()
+	go web.tlsServerLoop(ctx)
 
 	// this loop is used as an ability to change listening host and/or port
 	for !web.httpsServer.inShutdown {
@@ -200,17 +226,19 @@ func (web *webAPI) start() {
 		// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
 		hdlr := h2c.NewHandler(withMiddlewares(Context.mux, limitRequestBody), &http2.Server{})
 
+		logger := web.baseLogger.With(loggerKeyServer, "plain")
+
 		// Create a new instance, because the Web is not usable after Shutdown.
 		web.httpServer = &http.Server{
-			ErrorLog:          log.StdLog("web: plain", log.DEBUG),
 			Addr:              web.conf.BindAddr.String(),
 			Handler:           hdlr,
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 			WriteTimeout:      web.conf.WriteTimeout,
+			ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		}
 		go func() {
-			defer log.OnPanic("web: plain")
+			defer slogutil.RecoverAndLog(ctx, web.logger)
 
 			errs <- web.httpServer.ListenAndServe()
 		}()
@@ -218,7 +246,7 @@ func (web *webAPI) start() {
 		err := <-errs
 		if !errors.Is(err, http.ErrServerClosed) {
 			cleanupAlways()
-			log.Fatal(err)
+			panic(err)
 		}
 
 		// We use ErrServerClosed as a sign that we need to rebind on a new
@@ -228,7 +256,7 @@ func (web *webAPI) start() {
 
 // close gracefully shuts down the HTTP servers.
 func (web *webAPI) close(ctx context.Context) {
-	log.Info("stopping http server...")
+	web.logger.InfoContext(ctx, "stopping http server")
 
 	web.httpsServer.cond.L.Lock()
 	web.httpsServer.inShutdown = true
@@ -238,14 +266,16 @@ func (web *webAPI) close(ctx context.Context) {
 	ctx, cancel = context.WithTimeout(ctx, shutdownTimeout)
 	defer cancel()
 
-	shutdownSrv(ctx, web.httpsServer.server)
-	shutdownSrv3(web.httpsServer.server3)
-	shutdownSrv(ctx, web.httpServer)
+	shutdownSrv(ctx, web.logger, web.httpsServer.server)
+	shutdownSrv3(ctx, web.logger, web.httpsServer.server3)
+	shutdownSrv(ctx, web.logger, web.httpServer)
 
-	log.Info("stopped http server")
+	web.logger.InfoContext(ctx, "stopped http server")
 }
 
-func (web *webAPI) tlsServerLoop() {
+func (web *webAPI) tlsServerLoop(ctx context.Context) {
+	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
+
 	for {
 		web.httpsServer.cond.L.Lock()
 		if web.httpsServer.inShutdown {
@@ -273,38 +303,40 @@ func (web *webAPI) tlsServerLoop() {
 		}()
 
 		addr := netip.AddrPortFrom(web.conf.BindAddr.Addr(), portHTTPS).String()
+		logger := web.baseLogger.With(loggerKeyServer, "https")
+
 		web.httpsServer.server = &http.Server{
-			ErrorLog: log.StdLog("web: https", log.DEBUG),
-			Addr:     addr,
+			Addr:    addr,
+			Handler: withMiddlewares(Context.mux, limitRequestBody),
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
 				RootCAs:      Context.tlsRoots,
 				CipherSuites: Context.tlsCipherIDs,
 				MinVersion:   tls.VersionTLS12,
 			},
-			Handler:           withMiddlewares(Context.mux, limitRequestBody),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 			WriteTimeout:      web.conf.WriteTimeout,
+			ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		}
 
 		printHTTPAddresses(urlutil.SchemeHTTPS)
 
 		if web.conf.serveHTTP3 {
-			go web.mustStartHTTP3(addr)
+			go web.mustStartHTTP3(ctx, addr)
 		}
 
-		log.Debug("web: starting https server")
+		web.logger.DebugContext(ctx, "starting https server")
 		err := web.httpsServer.server.ListenAndServeTLS("", "")
 		if !errors.Is(err, http.ErrServerClosed) {
 			cleanupAlways()
-			log.Fatalf("web: https: %s", err)
+			panic(fmt.Errorf("https: %w", err))
 		}
 	}
 }
 
-func (web *webAPI) mustStartHTTP3(address string) {
-	defer log.OnPanic("web: http3")
+func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
+	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
 	web.httpsServer.server3 = &http3.Server{
 		// TODO(a.garipov): See if there is a way to use the error log as
@@ -319,16 +351,16 @@ func (web *webAPI) mustStartHTTP3(address string) {
 		Handler: withMiddlewares(Context.mux, limitRequestBody),
 	}
 
-	log.Debug("web: starting http/3 server")
+	web.logger.DebugContext(ctx, "starting http/3 server")
 	err := web.httpsServer.server3.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
 		cleanupAlways()
-		log.Fatalf("web: http3: %s", err)
+		panic(fmt.Errorf("http3: %w", err))
 	}
 }
 
 // startPprof launches the debug and profiling server on the provided port.
-func startPprof(port uint16) {
+func startPprof(baseLogger *slog.Logger, port uint16) {
 	addr := netip.AddrPortFrom(netutil.IPv4Localhost(), port)
 
 	runtime.SetBlockProfileRate(1)
@@ -337,13 +369,16 @@ func startPprof(port uint16) {
 	mux := http.NewServeMux()
 	httputil.RoutePprof(mux)
 
-	go func() {
-		defer log.OnPanic("pprof server")
+	ctx := context.Background()
+	logger := baseLogger.With(slogutil.KeyPrefix, "pprof")
 
-		log.Info("pprof: listening on %q", addr)
+	go func() {
+		defer slogutil.RecoverAndLog(ctx, logger)
+
+		logger.InfoContext(ctx, "listening", "addr", addr)
 		err := http.ListenAndServe(addr.String(), mux)
 		if !errors.Is(err, http.ErrServerClosed) {
-			log.Error("pprof: shutting down: %s", err)
+			logger.ErrorContext(ctx, "shutting down", slogutil.KeyError, err)
 		}
 	}()
 }

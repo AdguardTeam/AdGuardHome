@@ -8,13 +8,21 @@
 verbose="${VERBOSE:-0}"
 readonly verbose
 
-set -e -f -u
+# Don't use -f, because we use globs in this script.
+set -e -u
 
 if [ "$verbose" -gt '0' ]; then
 	set -x
 fi
 
-# TODO(e.burkov):  Lint markdown documents within this project.
-# markdownlint \
-# 	./README.md \
-# 	;
+# TODO(e.burkov):  Add README.md and possibly AGHTechDoc.md.
+markdownlint \
+	./CHANGELOG.md \
+	./CONTRIBUTING.md \
+	./HACKING.md \
+	./SECURITY.md \
+	./internal/next/changelog.md \
+	./internal/dhcpd/*.md \
+	./openapi/*.md \
+	./scripts/*.md \
+	;
