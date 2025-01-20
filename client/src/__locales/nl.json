@@ -166,7 +166,7 @@
     "encryption_settings": "Encryptie instellingen",
     "dhcp_settings": "DHCP instellingen",
     "upstream_dns": "Upstream DNS-servers",
-    "upstream_dns_help": "Een server-adres per regel invoeren. <a>Meer weten</a> over het configureren van upstream DNS-servers.",
+    "upstream_dns_help": "Een server-adres per regel invoeren. <a>Meer informatie</a> over het configureren van upstream DNS-servers.",
     "upstream_dns_configured_in_file": "Geconfigureerd in {{path}}",
     "test_upstream_btn": "Test upstream",
     "upstreams": "Upstreams",
