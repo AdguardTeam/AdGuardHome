@@ -93,7 +93,7 @@ export const FiltersConfig = ({ initialValues, setFiltersConfig, processing }: P
                             disabled={processing}>
                             {FILTERS_INTERVALS_HOURS.map((interval) => (
                                 <option value={interval} key={interval}>
-                                    {getTitleForInterval(interval, t)}
+                                    {getTitleForInterval(interval)}
                                 </option>
                             ))}
                         </select>

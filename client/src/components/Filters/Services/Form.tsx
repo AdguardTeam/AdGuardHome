@@ -19,7 +19,7 @@ type FormValues = {
 interface FormProps {
     initialValues: Record<string, boolean>;
     blockedServices: BlockedService[];
-    onSubmit: (...args: unknown[]) => void;
+    onSubmit: (values: FormValues) => void;
     processing: boolean;
     processingSet: boolean;
 }

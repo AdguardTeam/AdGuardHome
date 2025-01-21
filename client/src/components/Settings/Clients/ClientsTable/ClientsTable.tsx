@@ -111,6 +111,12 @@ const ClientsTable = ({
                 config.tags = [];
             }
 
+            if (values.ids) {
+                config.ids = values.ids.map((id) => id.name);
+            } else {
+                config.ids = [];
+            }
+
             if (typeof values.upstreams_cache_size === 'string') {
                 config.upstreams_cache_size = 0;
             }

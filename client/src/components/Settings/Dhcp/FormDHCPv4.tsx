@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
-import { isValid } from 'date-fns';
 import { UINT32_RANGE } from '../../../helpers/constants';
 import {
     validateGatewaySubnetMask,

@@ -1,8 +1,9 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 
-import { validateAnswer, validateDomain } from '../../../helpers/validators';
+import { validateAnswer, validateDomain, validateRequiredValue } from '../../../helpers/validators';
+import { Input } from '../../ui/Controls/Input';
 
 interface FormValues {
     domain: string;
@@ -11,21 +12,21 @@ interface FormValues {
 
 type Props = {
     processingAdd: boolean;
-    currentRewrite?: { answer: string, domain: string; };
+    currentRewrite?: { answer: string; domain: string };
     toggleRewritesModal: () => void;
     onSubmit?: (data: FormValues) => Promise<void> | void;
-}
+};
 
 const Form = ({ processingAdd, currentRewrite, toggleRewritesModal, onSubmit }: Props) => {
     const { t } = useTranslation();
 
     const {
-        register,
         handleSubmit,
         reset,
-        formState: { isDirty, isSubmitting, errors },
+        control,
+        formState: { isDirty, isSubmitting },
     } = useForm<FormValues>({
-        mode: 'onChange', 
+        mode: 'onChange',
         defaultValues: {
             domain: currentRewrite?.domain || '',
             answer: currentRewrite?.answer || '',
@@ -45,21 +46,24 @@ const Form = ({ processingAdd, currentRewrite, toggleRewritesModal, onSubmit }: 
                     <Trans>domain_desc</Trans>
                 </div>
                 <div className="form__group">
-                    <input
-                        id="domain"
-                        type="text"
-                        className="form-control"
-                        placeholder={t('form_domain')}
-                        {...register('domain', {
-                            validate: validateDomain,
-                            required: t('form_error_required'),
-                        })}
+                    <Controller
+                        name="domain"
+                        control={control}
+                        rules={{
+                            validate: {
+                                validate: validateDomain,
+                                required: validateRequiredValue,
+                            },
+                        }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                type="text"
+                                placeholder={t('form_domain')}
+                                error={fieldState.error?.message}
+                            />
+                        )}
                     />
-                    {errors.domain && (
-                        <div className="form__message form__message--error">
-                            {errors.domain.message}
-                        </div>
-                    )}
                 </div>
                 <Trans>examples_title</Trans>:
                 <ol className="leading-loose">
@@ -74,21 +78,24 @@ const Form = ({ processingAdd, currentRewrite, toggleRewritesModal, onSubmit }: 
                     </li>
                 </ol>
                 <div className="form__group">
-                    <input
-                        id="answer"
-                        type="text"
-                        className="form-control"
-                        placeholder={t('form_answer') ?? ''}
-                        {...register('answer', {
-                            validate: validateAnswer,
-                            required: t('form_error_required'),
-                        })}
+                    <Controller
+                        name="answer"
+                        control={control}
+                        rules={{
+                            validate: {
+                                validate: validateAnswer,
+                                required: validateRequiredValue,
+                            },
+                        }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                type="text"
+                                placeholder={t('form_answer')}
+                                error={fieldState.error?.message}
+                            />
+                        )}
                     />
-                    {errors.answer && (
-                        <div className="form__message form__message--error">
-                            {errors.answer.message}
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -109,16 +116,14 @@ const Form = ({ processingAdd, currentRewrite, toggleRewritesModal, onSubmit }: 
                         onClick={() => {
                             reset();
                             toggleRewritesModal();
-                        }}
-                    >
+                        }}>
                         <Trans>cancel_btn</Trans>
                     </button>
 
                     <button
                         type="submit"
                         className="btn btn-success btn-standard"
-                        disabled={isSubmitting || !isDirty || processingAdd}
-                    >
+                        disabled={isSubmitting || !isDirty || processingAdd}>
                         <Trans>save_btn</Trans>
                     </button>
                 </div>

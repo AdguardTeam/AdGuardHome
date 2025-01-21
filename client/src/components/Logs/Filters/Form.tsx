@@ -22,12 +22,12 @@ import { SearchField } from './SearchField';
 export type FormValues = {
     search: string;
     response_status: string;
-}
+};
 
 type Props = {
     initialValues: FormValues;
     className?: string;
-    setIsLoading: (...args: unknown[]) => unknown;
+    setIsLoading: (value: boolean) => void;
 };
 
 export const Form = ({ initialValues, className, setIsLoading }: Props) => {
@@ -35,11 +35,7 @@ export const Form = ({ initialValues, className, setIsLoading }: Props) => {
     const dispatch = useDispatch();
     const history = useHistory();
 
-    const {
-        register,
-        watch,
-        setValue,
-    } = useForm<FormValues>({
+    const { register, watch, setValue } = useForm<FormValues>({
         mode: 'onChange',
         defaultValues: {
             search: initialValues.search || DEFAULT_LOGS_FILTER.search,
@@ -50,10 +46,7 @@ export const Form = ({ initialValues, className, setIsLoading }: Props) => {
     const searchValue = watch('search');
     const responseStatusValue = watch('response_status');
 
-    const [debouncedSearch, setDebouncedSearch] = useDebounce(
-        searchValue.trim(),
-        DEBOUNCE_FILTER_TIMEOUT
-    );
+    const [debouncedSearch, setDebouncedSearch] = useDebounce(searchValue.trim(), DEBOUNCE_FILTER_TIMEOUT);
 
     useEffect(() => {
         dispatch(
@@ -91,7 +84,7 @@ export const Form = ({ initialValues, className, setIsLoading }: Props) => {
                 value: e.target.value,
                 onChange: (v: string) => setValue('search', v),
             },
-            (data: string) => data.trim()
+            (data: string) => data.trim(),
         );
 
     return (
@@ -99,8 +92,7 @@ export const Form = ({ initialValues, className, setIsLoading }: Props) => {
             className="d-flex flex-wrap form-control--container"
             onSubmit={(e) => {
                 e.preventDefault();
-            }}
-        >
+            }}>
             <div className="field__search">
                 <SearchField
                     value={searchValue}
@@ -117,8 +109,7 @@ export const Form = ({ initialValues, className, setIsLoading }: Props) => {
             <div className="field__select">
                 <select
                     {...register('response_status')}
-                    className="form-control custom-select custom-select--logs custom-select__arrow--left form-control--transparent d-sm-block"
-                >
+                    className="form-control custom-select custom-select--logs custom-select__arrow--left form-control--transparent d-sm-block">
                     {Object.values(RESPONSE_FILTER).map(({ QUERY, LABEL, disabled }: any) => (
                         <option key={LABEL} value={QUERY} disabled={disabled}>
                             {t(LABEL)}

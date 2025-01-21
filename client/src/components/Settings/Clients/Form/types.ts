@@ -21,3 +21,8 @@ export type ClientForm = {
     ignore_querylog: boolean;
     ignore_statistics: boolean;
 };
+
+export type SubmitClientForm = Omit<ClientForm, 'ids' | 'tags'> & {
+    ids: string[];
+    tags: string[];
+};

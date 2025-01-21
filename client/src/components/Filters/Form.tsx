@@ -6,6 +6,7 @@ import { validatePath, validateRequiredValue } from '../../helpers/validators';
 import { MODAL_OPEN_TIMEOUT, MODAL_TYPE } from '../../helpers/constants';
 import filtersCatalog from '../../helpers/filters/filters';
 import { FiltersList } from './FiltersList';
+import { Input } from '../ui/Controls/Input';
 
 type FormValues = {
     enabled: boolean;
@@ -15,7 +16,7 @@ type FormValues = {
 
 type Props = {
     closeModal: (...args: unknown[]) => void;
-    onSubmit: (...args: unknown[]) => void;
+    onSubmit: (values: FormValues) => void;
     processingAddFilter: boolean;
     processingConfigFilter: boolean;
     whitelist?: boolean;
@@ -81,13 +82,7 @@ export const Form = ({
                                     name="name"
                                     control={control}
                                     render={({ field }) => (
-                                        <input
-                                            {...field}
-                                            type="text"
-                                            className="form-control"
-                                            placeholder={t('enter_name_hint')}
-                                            onBlur={(e) => field.onChange(e.target.value.trim())}
-                                        />
+                                        <Input {...field} type="text" placeholder={t('enter_name_hint')} trimOnBlur />
                                     )}
                                 />
                             </div>
@@ -98,12 +93,11 @@ export const Form = ({
                                     control={control}
                                     rules={{ validate: { validateRequiredValue, validatePath } }}
                                     render={({ field }) => (
-                                        <input
+                                        <Input
                                             {...field}
                                             type="text"
-                                            className="form-control"
                                             placeholder={t('enter_url_or_path_hint')}
-                                            onBlur={(e) => field.onChange(e.target.value.trim())}
+                                            trimOnBlur
                                         />
                                     )}
                                 />

@@ -52,7 +52,7 @@ interface ModalProps {
     handleClose: (...args: unknown[]) => unknown;
     processingAdding: boolean;
     processingUpdating: boolean;
-    tagsOptions: unknown[];
+    tagsOptions: { label: string; value: string }[];
     t: (...args: unknown[]) => string;
     clientId?: string;
 }

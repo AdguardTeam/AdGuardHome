@@ -36,7 +36,7 @@ const defaultFormValues: ClientForm = {
 };
 
 type Props = {
-    onSubmit: (...args: unknown[]) => void;
+    onSubmit: (values: ClientForm) => void;
     onClose: () => void;
     useGlobalSettings?: boolean;
     useGlobalServices?: boolean;
@@ -45,7 +45,7 @@ type Props = {
     };
     processingAdding: boolean;
     processingUpdating: boolean;
-    tagsOptions: unknown[];
+    tagsOptions: { label: string; value: string }[];
     initialValues?: ClientForm;
 };
 
@@ -79,15 +79,6 @@ export const Form = ({
     const safeSearchServices = { ...safe_search };
     delete safeSearchServices.enabled;
 
-    const onFormSubmit = (values: ClientForm) => {
-        const data = {
-            ...values,
-            ids: values.ids.map((idObj) => idObj.name),
-        };
-
-        onSubmit(data);
-    };
-
     const [activeTabLabel, setActiveTabLabel] = useState('settings');
 
     const tabs = {
@@ -113,7 +104,7 @@ export const Form = ({
 
     return (
         <FormProvider {...methods}>
-            <form onSubmit={handleSubmit(onFormSubmit)}>
+            <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="modal-body">
                     <div className="form__group mb-0">
                         <div className="form__group">
