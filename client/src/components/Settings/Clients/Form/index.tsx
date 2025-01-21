@@ -1,0 +1,212 @@
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { Trans, useTranslation } from 'react-i18next';
+import { Controller, FormProvider, useForm } from 'react-hook-form';
+import Select from 'react-select';
+
+import Tabs from '../../../ui/Tabs';
+import { CLIENT_ID_LINK } from '../../../../helpers/constants';
+import { RootState } from '../../../../initialState';
+import { Input } from '../../../ui/Controls/Input';
+import { validateRequiredValue } from '../../../../helpers/validators';
+import { ClientForm } from './types';
+import { BlockedServices, ClientIds, MainSettings, ScheduleServices, UpstreamDns } from './components';
+
+import '../Service.css';
+
+type Props = {
+    onSubmit: (...args: unknown[]) => void;
+    onClose: () => void;
+    useGlobalSettings?: boolean;
+    useGlobalServices?: boolean;
+    blockedServicesSchedule?: {
+        time_zone: string;
+    };
+    processingAdding: boolean;
+    processingUpdating: boolean;
+    tagsOptions: unknown[];
+    initialValues?: ClientForm;
+};
+
+export const Form = ({
+    onSubmit,
+    onClose,
+    processingAdding,
+    processingUpdating,
+    tagsOptions,
+    initialValues,
+}: Props) => {
+    const { t } = useTranslation();
+    const methods = useForm<ClientForm>({
+        defaultValues: initialValues,
+        mode: 'onChange',
+    });
+
+    const {
+        handleSubmit,
+        reset,
+        control,
+        setValue,
+        formState: { isSubmitting, isValid },
+    } = methods;
+
+    const services = useSelector((store: RootState) => store?.services);
+    const { safe_search } = initialValues;
+    const safeSearchServices = { ...safe_search };
+    delete safeSearchServices.enabled;
+
+    const onFormSubmit = (values: ClientForm) => {
+        const data = {
+            ...values,
+            ids: values.ids.map((idObj) => idObj.name),
+        };
+
+        onSubmit(data);
+    };
+
+    const [activeTabLabel, setActiveTabLabel] = useState('settings');
+
+    const tabs = {
+        settings: {
+            title: 'settings',
+            component: <MainSettings safeSearchServices={safeSearchServices} />,
+        },
+        block_services: {
+            title: 'block_services',
+            component: <BlockedServices services={services?.allServices} />,
+        },
+        schedule_services: {
+            title: 'schedule_services',
+            component: <ScheduleServices />,
+        },
+        upstream_dns: {
+            title: 'upstream_dns',
+            component: <UpstreamDns />,
+        },
+    };
+
+    const activeTab = tabs[activeTabLabel].component;
+
+    return (
+        <FormProvider {...methods}>
+            <form onSubmit={handleSubmit(onFormSubmit)}>
+                <div className="modal-body">
+                    <div className="form__group mb-0">
+                        <div className="form__group">
+                            <Controller
+                                name="name"
+                                control={control}
+                                rules={{ validate: validateRequiredValue }}
+                                render={({ field, fieldState }) => (
+                                    <Input
+                                        {...field}
+                                        type="text"
+                                        placeholder={t('form_client_name')}
+                                        error={fieldState.error?.message}
+                                        onBlur={(event) => {
+                                            const trimmedValue = event.target.value.trim();
+                                            field.onBlur();
+                                            field.onChange(trimmedValue);
+                                        }}
+                                    />
+                                )}
+                            />
+                        </div>
+
+                        <div className="form__group mb-4">
+                            <div className="form__label">
+                                <strong className="mr-3">
+                                    <Trans>tags_title</Trans>
+                                </strong>
+                            </div>
+
+                            <div className="form__desc mt-0 mb-2">
+                                <Trans
+                                    components={[
+                                        <a
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            href="https://link.adtidy.org/forward.html?action=dns_kb_filtering_syntax_ctag&from=ui&app=home"
+                                            key="0"
+                                        />,
+                                    ]}>
+                                    tags_desc
+                                </Trans>
+                            </div>
+
+                            <Controller
+                                name="tags"
+                                control={control}
+                                render={({ field }) => (
+                                    <Select
+                                        {...field}
+                                        options={tagsOptions}
+                                        className="basic-multi-select"
+                                        classNamePrefix="select"
+                                        isMulti
+                                        onChange={(selectedOptions) => {
+                                            setValue('tags', selectedOptions);
+                                        }}
+                                    />
+                                )}
+                            />
+                        </div>
+
+                        <div className="form__group">
+                            <div className="form__label">
+                                <strong className="mr-3">
+                                    <Trans>client_identifier</Trans>
+                                </strong>
+                            </div>
+
+                            <div className="form__desc mt-0">
+                                <Trans
+                                    components={[
+                                        <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer" key="0">
+                                            text
+                                        </a>,
+                                    ]}>
+                                    client_identifier_desc
+                                </Trans>
+                            </div>
+                        </div>
+
+                        <div className="form__group">
+                            <ClientIds />
+                        </div>
+                    </div>
+
+                    <Tabs
+                        controlClass="form"
+                        tabs={tabs}
+                        activeTabLabel={activeTabLabel}
+                        setActiveTabLabel={setActiveTabLabel}>
+                        {activeTab}
+                    </Tabs>
+                </div>
+
+                <div className="modal-footer">
+                    <div className="btn-list">
+                        <button
+                            type="button"
+                            className="btn btn-secondary btn-standard"
+                            disabled={isSubmitting}
+                            onClick={() => {
+                                reset();
+                                onClose();
+                            }}>
+                            <Trans>cancel_btn</Trans>
+                        </button>
+
+                        <button
+                            type="submit"
+                            className="btn btn-success btn-standard"
+                            disabled={isSubmitting || !isValid || processingAdding || processingUpdating}>
+                            <Trans>save_btn</Trans>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </FormProvider>
+    );
+};

@@ -78,17 +78,17 @@ export type EncryptionData = {
 };
 
 export type Client = {
-    blocked_services: string[],
+    blocked_services: string[];
     blocked_services_schedule: {
-        sun?: { start: number, end: number },
-        mon?: { start: number, end: number },
-        tue?: { start: number, end: number },
-        wed?: { start: number, end: number },
-        thu?: { start: number, end: number },
-        fri?: { start: number, end: number },
-        sat?: { start: number, end: number },
+        sun?: { start: number; end: number };
+        mon?: { start: number; end: number };
+        tue?: { start: number; end: number };
+        wed?: { start: number; end: number };
+        thu?: { start: number; end: number };
+        fri?: { start: number; end: number };
+        sat?: { start: number; end: number };
         time_zone: string;
-    },
+    };
     filtering_enabled: boolean;
     ids: string[];
     ignore_querylog: boolean;
@@ -104,14 +104,14 @@ export type Client = {
     upstreams_cache_size: number;
     use_global_blocked_services: boolean;
     use_global_settings: boolean;
-}
+};
 
 export type AutoClient = {
     ip: string;
     name: string;
     source: string;
     whois_info: any;
-}
+};
 
 export type DashboardData = {
     processing: boolean;
@@ -151,13 +151,13 @@ export type SettingsData = {
             order: number;
             subtitle: string;
             title: string;
-        },
+        };
         safebrowsing: {
             enabled: boolean;
             order: number;
             subtitle: string;
             title: string;
-        },
+        };
         safesearch: Record<string, boolean>;
     };
 };
@@ -182,7 +182,7 @@ export type RewritesData = {
 export type NormalizedTopClients = {
     auto: Record<string, number>;
     configured: Record<string, number>;
-}
+};
 
 export type StatsData = {
     processingGetConfig: boolean;
@@ -256,13 +256,13 @@ export type DhcpData = {
     interface_name: string;
     check?: {
         v4?: {
-            other_server?: { found: string; error?: string },
-            static_ip?: {static: string, ip: string},
-        },
+            other_server?: { found: string; error?: string };
+            static_ip?: { static: string; ip: string };
+        };
         v6?: {
-            other_server?: { found: string; error?: string },
-            static_ip?: {static: string, ip: string},
-        },
+            other_server?: { found: string; error?: string };
+            static_ip?: { static: string; ip: string };
+        };
     };
     v4: {
         gateway_ip: string;
@@ -390,7 +390,6 @@ export type RootState = {
     install?: InstallData;
     toasts: { notices: any[] };
     loadingBar: any;
-    form: any;
 };
 
 export type InstallState = {
@@ -615,5 +614,4 @@ export const initialState: RootState = {
     },
     toasts: { notices: [] },
     loadingBar: {},
-    form: {},
 };

@@ -148,7 +148,7 @@ export const validateIpForGatewaySubnetMask = (value: any, allValues: any) => {
  * @param value {string}
  * @returns {undefined|string}
  */
-export const validateClientId = (value: any) => {
+export const validateClientId = (value: string) => {
     if (!value) {
         return undefined;
     }

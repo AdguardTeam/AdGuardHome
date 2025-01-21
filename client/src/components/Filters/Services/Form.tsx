@@ -6,15 +6,15 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { ServiceField } from './ServiceField';
 
-type BlockedService = {
+export type BlockedService = {
     id: string;
     name: string;
     icon_svg: string;
-}
+};
 
 type FormValues = {
     blocked_services: Record<string, boolean>;
-}
+};
 
 interface FormProps {
     initialValues: Record<string, boolean>;
@@ -25,7 +25,12 @@ interface FormProps {
 }
 
 export const Form = ({ initialValues, blockedServices, processing, processingSet, onSubmit }: FormProps) => {
-    const { handleSubmit, control, setValue, formState: { isSubmitting, isDirty } } = useForm<FormValues>({
+    const {
+        handleSubmit,
+        control,
+        setValue,
+        formState: { isSubmitting, isDirty },
+    } = useForm<FormValues>({
         mode: 'onChange',
         defaultValues: initialValues,
     });
@@ -43,8 +48,7 @@ export const Form = ({ initialValues, blockedServices, processing, processingSet
                             type="button"
                             className="btn btn-secondary btn-block"
                             disabled={processing || processingSet}
-                            onClick={() => handleToggleAllServices(true)}
-                        >
+                            onClick={() => handleToggleAllServices(true)}>
                             <Trans>block_all</Trans>
                         </button>
                     </div>
@@ -54,8 +58,7 @@ export const Form = ({ initialValues, blockedServices, processing, processingSet
                             type="button"
                             className="btn btn-secondary btn-block"
                             disabled={processing || processingSet}
-                            onClick={() => handleToggleAllServices(false)}
-                        >
+                            onClick={() => handleToggleAllServices(false)}>
                             <Trans>unblock_all</Trans>
                         </button>
                     </div>

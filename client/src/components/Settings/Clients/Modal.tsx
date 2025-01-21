@@ -4,8 +4,15 @@ import { Trans, withTranslation } from 'react-i18next';
 import ReactModal from 'react-modal';
 
 import { MODAL_TYPE } from '../../../helpers/constants';
+import { Form } from './Form';
 
-import Form from './Form';
+const normalizeIds = (initialIds?: string[]): { name: string }[] => {
+    if (!initialIds || initialIds.length === 0) {
+        return [{ name: '' }];
+    }
+
+    return initialIds.map((id: string) => ({ name: id }));
+};
 
 const getInitialData = ({ initial, modalType, clientId, clientName }: any) => {
     if (initial && initial.blocked_services) {
@@ -19,6 +26,7 @@ const getInitialData = ({ initial, modalType, clientId, clientName }: any) => {
         return {
             ...initial,
             blocked_services: blocked,
+            ids: normalizeIds(initial.ids),
         };
     }
 
@@ -26,11 +34,14 @@ const getInitialData = ({ initial, modalType, clientId, clientName }: any) => {
         return {
             ...initial,
             name: clientName,
-            ids: [clientId],
+            ids: [{ name: clientId }],
         };
     }
 
-    return initial;
+    return {
+        ...initial,
+        ids: normalizeIds(initial.ids),
+    };
 };
 
 interface ModalProps {
@@ -85,7 +96,7 @@ const Modal = ({
                 <Form
                     initialValues={{ ...initialData }}
                     onSubmit={handleSubmit}
-                    handleClose={handleClose}
+                    onClose={handleClose}
                     processingAdding={processingAdding}
                     processingUpdating={processingUpdating}
                     tagsOptions={tagsOptions}

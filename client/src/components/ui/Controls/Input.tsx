@@ -16,7 +16,7 @@ export const Input = forwardRef<HTMLInputElement, Props>(
                     {label}
                 </label>
             )}
-            <div>
+            <div className="input-group">
                 {leftAddon && <div>{leftAddon}</div>}
                 <input className={clsx('form-control', className)} ref={ref} {...rest} />
                 {rightAddon && <div>{rightAddon}</div>}
