@@ -15,14 +15,17 @@ import {
     STANDARD_DNS_PORT,
     STANDARD_WEB_PORT,
     MAX_PORT,
+    MIN_PORT,
 } from '../../helpers/constants';
 
-import { toNumber } from '../../helpers/form';
 import { validateRequiredValue } from '../../helpers/validators';
 import { DhcpInterface } from '../../initialState';
+import { Input } from '../../components/ui/Controls/Input';
+import { Select } from '../../components/ui/Controls/Select';
+import { toNumber } from '../../helpers/form';
 
-const validateInstallPort = (value: any) => {
-    if (value < 1 || value > MAX_PORT) {
+const validateInstallPort = (value: number) => {
+    if (value < MIN_PORT || value > MAX_PORT) {
         return i18n.t('form_error_port');
     }
     return undefined;
@@ -77,13 +80,7 @@ const renderInterfaces = (interfaces: DhcpInterface[]) =>
         return null;
     });
 
-const Settings: React.FC<Props> = ({
-    handleSubmit,
-    handleFix,
-    validateForm,
-    config,
-    interfaces,
-}) => {
+export const Settings = ({ handleSubmit, handleFix, validateForm, config, interfaces }: Props) => {
     const { t } = useTranslation();
 
     const defaultValues = {
@@ -101,7 +98,7 @@ const Settings: React.FC<Props> = ({
         control,
         watch,
         handleSubmit: reactHookFormSubmit,
-        formState: { isValid, errors },
+        formState: { isValid },
     } = useForm({
         defaultValues,
         mode: 'onChange',
@@ -113,12 +110,16 @@ const Settings: React.FC<Props> = ({
     const { status: dnsStatus, can_autofix: isDnsFixAvailable } = config.dns;
     const { staticIp } = config;
 
-    const webIpVal = watch("web.ip");
-    const webPortVal = watch("web.port");
-    const dnsIpVal = watch("dns.ip");
-    const dnsPortVal = watch("dns.port");
+    const webIpVal = watch('web.ip');
+    const webPortVal = watch('web.port');
+    const dnsIpVal = watch('dns.ip');
+    const dnsPortVal = watch('dns.port');
 
     useEffect(() => {
+        if (!isValid || validateInstallPort(webPortVal) || validateInstallPort(dnsPortVal)) {
+            return;
+        }
+
         validateForm({
             web: {
                 ip: webIpVal,
@@ -171,44 +172,46 @@ const Settings: React.FC<Props> = ({
         }
     };
 
-    const getStaticIpMessage = useCallback((staticIp: StaticIpType) => {
-        const { static: status, ip } = staticIp;
+    const getStaticIpMessage = useCallback(
+        (staticIp: StaticIpType) => {
+            const { static: status, ip } = staticIp;
 
-        switch (status) {
-            case STATUS_RESPONSE.NO:
-                return (
-                    <>
-                        <div className="mb-2">
-                            <Trans values={{ ip }} components={[<strong key="0">text</strong>]}>
-                                install_static_configure
-                            </Trans>
+            switch (status) {
+                case STATUS_RESPONSE.NO:
+                    return (
+                        <>
+                            <div className="mb-2">
+                                <Trans values={{ ip }} components={[<strong key="0">text</strong>]}>
+                                    install_static_configure
+                                </Trans>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="btn btn-outline-primary btn-sm"
+                                onClick={() => handleStaticIp(ip)}>
+                                <Trans>set_static_ip</Trans>
+                            </button>
+                        </>
+                    );
+                case STATUS_RESPONSE.ERROR:
+                    return (
+                        <div className="text-danger">
+                            <Trans>install_static_error</Trans>
                         </div>
-
-                        <button
-                            type="button"
-                            className="btn btn-outline-primary btn-sm"
-                            onClick={() => handleStaticIp(ip)}
-                        >
-                            <Trans>set_static_ip</Trans>
-                        </button>
-                    </>
-                );
-            case STATUS_RESPONSE.ERROR:
-                return (
-                    <div className="text-danger">
-                        <Trans>install_static_error</Trans>
-                    </div>
-                );
-            case STATUS_RESPONSE.YES:
-                return (
-                    <div className="text-success">
-                        <Trans>install_static_ok</Trans>
-                    </div>
-                );
-            default:
-                return null;
-        }
-    }, [handleStaticIp]);
+                    );
+                case STATUS_RESPONSE.YES:
+                    return (
+                        <div className="text-success">
+                            <Trans>install_static_ok</Trans>
+                        </div>
+                    );
+                default:
+                    return null;
+            }
+        },
+        [handleStaticIp],
+    );
 
     const onSubmit = (data: any) => {
         validateForm(data);
@@ -232,17 +235,12 @@ const Settings: React.FC<Props> = ({
                                 name="web.ip"
                                 control={control}
                                 render={({ field }) => (
-                                    <select
-                                        {...field}
-                                        className="form-control custom-select"
-                                        onChange={(e) => {
-                                            field.onChange(e);
-                                        }}>
+                                    <Select {...field}>
                                         <option value={ALL_INTERFACES_IP}>
                                             {t('install_settings_all_interfaces')}
                                         </option>
                                         {renderInterfaces(interfaces)}
-                                    </select>
+                                    </Select>
                                 )}
                             />
                         </div>
@@ -257,29 +255,24 @@ const Settings: React.FC<Props> = ({
                                 name="web.port"
                                 control={control}
                                 rules={{
-                                    required: t('form_error_required'),
                                     validate: {
+                                        required: validateRequiredValue,
                                         installPort: validateInstallPort,
                                     },
                                 }}
-                                render={({ field }) => (
-                                    <input
+                                render={({ field, fieldState }) => (
+                                    <Input
                                         {...field}
                                         type="number"
-                                        className="form-control"
                                         placeholder={STANDARD_WEB_PORT.toString()}
+                                        error={fieldState.error?.message}
                                         onChange={(e) => {
-                                            const val = toNumber(e.target.value);
-                                            field.onChange(val);
+                                            const { value } = e.target;
+                                            field.onChange(toNumber(value));
                                         }}
                                     />
                                 )}
                             />
-                            {errors.web?.port && (
-                                <div className="form__message form__message--error">
-                                    {errors.web.port.message}
-                                </div>
-                            )}
                         </div>
                     </div>
 
@@ -291,8 +284,7 @@ const Settings: React.FC<Props> = ({
                                     <button
                                         type="button"
                                         className="btn btn-secondary btn-sm ml-2"
-                                        onClick={() => handleAutofix('web')}
-                                    >
+                                        onClick={() => handleAutofix('web')}>
                                         <Trans>fix</Trans>
                                     </button>
                                 )}
@@ -331,17 +323,12 @@ const Settings: React.FC<Props> = ({
                                 name="dns.ip"
                                 control={control}
                                 render={({ field }) => (
-                                    <select
-                                        {...field}
-                                        className="form-control custom-select"
-                                        onChange={(e) => {
-                                            field.onChange(e);
-                                        }}>
+                                    <Select {...field}>
                                         <option value={ALL_INTERFACES_IP}>
                                             {t('install_settings_all_interfaces')}
                                         </option>
                                         {renderInterfaces(interfaces)}
-                                    </select>
+                                    </Select>
                                 )}
                             />
                         </div>
@@ -362,24 +349,19 @@ const Settings: React.FC<Props> = ({
                                         installPort: validateInstallPort,
                                     },
                                 }}
-                                render={({ field }) => (
-                                    <input
+                                render={({ field, fieldState }) => (
+                                    <Input
                                         {...field}
                                         type="number"
-                                        className="form-control"
+                                        error={fieldState.error?.message}
                                         placeholder={STANDARD_WEB_PORT.toString()}
                                         onChange={(e) => {
-                                            const val = toNumber(e.target.value);
-                                            field.onChange(val);
+                                            const { value } = e.target;
+                                            field.onChange(toNumber(value));
                                         }}
                                     />
                                 )}
                             />
-                            {errors.dns?.port.message && (
-                                <div className="form__message form__message--error">
-                                    {t(errors.dns.port.message)}
-                                </div>
-                            )}
                         </div>
                     </div>
 
@@ -415,16 +397,10 @@ const Settings: React.FC<Props> = ({
                             dnsStatus?.includes(ADDRESS_IN_USE_TEXT) && (
                                 <Trans
                                     components={[
-                                        <a
-                                            href={PORT_53_FAQ_LINK}
-                                            key="0"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
+                                        <a href={PORT_53_FAQ_LINK} key="0" target="_blank" rel="noopener noreferrer">
                                             link
                                         </a>,
-                                    ]}
-                                >
+                                    ]}>
                                     port_53_faq_link
                                 </Trans>
                             )}
@@ -463,5 +439,3 @@ const Settings: React.FC<Props> = ({
         </form>
     );
 };
-
-export default Settings;

@@ -1,27 +1,28 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
-import { withTranslation, Trans } from 'react-i18next';
-import flow from 'lodash/flow';
-import cn from 'classnames';
-import i18n from '../../i18n';
+import { Controller, useForm } from 'react-hook-form';
+import { Trans, useTranslation } from 'react-i18next';
 import Controls from './Controls';
-import { validatePasswordLength } from '../../helpers/validators';
+import { validatePasswordLength, validateRequiredValue } from '../../helpers/validators';
+import { Input } from '../../components/ui/Controls/Input';
+
+type AuthFormValues = {
+    username: string;
+    password: string;
+    confirm_password: string;
+};
 
 type Props = {
-    onAuthSubmit: (...args: unknown[]) => string;
-    pristine: boolean;
-    invalid: boolean;
-    t: (...args: unknown[]) => string;
-}
+    onAuthSubmit: (values: AuthFormValues) => void;
+};
 
-const Auth = (props: Props) => {
-    const { t, onAuthSubmit } = props;
+export const Auth = ({ onAuthSubmit }: Props) => {
+    const { t } = useTranslation();
     const {
-        register,
         handleSubmit,
         watch,
-        formState: { errors, isDirty, isValid },
-    } = useForm({
+        control,
+        formState: { isDirty, isValid },
+    } = useForm<AuthFormValues>({
         mode: 'onChange',
         defaultValues: {
             username: '',
@@ -34,7 +35,7 @@ const Auth = (props: Props) => {
 
     const validateConfirmPassword = (value: string) => {
         if (value !== password) {
-            return i18n.t('form_error_password');
+            return t('form_error_password');
         }
         return undefined;
     };
@@ -51,74 +52,71 @@ const Auth = (props: Props) => {
                 </p>
 
                 <div className="form-group">
-                    <label>
-                        <Trans>install_auth_username</Trans>
-                    </label>
-                    <input
-                        {...register('username', { required: t('form_error_required') })}
-                        type="text"
-                        className={cn('form-control', { 'is-invalid': errors.username })}
-                        placeholder={t('install_auth_username_enter')}
-                        autoComplete="username"
+                    <Controller
+                        name="username"
+                        control={control}
+                        rules={{ validate: validateRequiredValue }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                type="text"
+                                label={t('install_auth_username')}
+                                placeholder={t('install_auth_username_enter')}
+                                error={fieldState.error?.message}
+                                autoComplete="username"
+                            />
+                        )}
                     />
-                    {errors.username && (
-                        <div className="form__message form__message--error">
-                            {errors.username.message}
-                        </div>
-                    )}
                 </div>
 
                 <div className="form-group">
-                    <label>
-                        <Trans>install_auth_password</Trans>
-                    </label>
-                    <input
-                        {...register('password', {
-                            required: t('form_error_required'),
-                            validate: validatePasswordLength,
-                        })}
-                        type="password"
-                        className={cn('form-control', { 'is-invalid': errors.password })}
-                        placeholder={t('install_auth_password_enter')}
-                        autoComplete="new-password"
+                    <Controller
+                        name="password"
+                        control={control}
+                        rules={{
+                            validate: {
+                                required: validateRequiredValue,
+                                passwordLength: validatePasswordLength,
+                            },
+                        }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                type="password"
+                                label={t('install_auth_password')}
+                                placeholder={t('install_auth_password_enter')}
+                                error={fieldState.error?.message}
+                                autoComplete="new-password"
+                            />
+                        )}
                     />
-                    {errors.password && (
-                        <div className="form__message form__message--error">
-                            {errors.password.message}
-                        </div>
-                    )}
                 </div>
 
                 <div className="form-group">
-                    <label>
-                        <Trans>install_auth_confirm</Trans>
-                    </label>
-                    <input
-                        {...register('confirm_password', {
-                            required: t('form_error_required'),
-                            validate: validateConfirmPassword,
-                        })}
-                        type="password"
-                        className={cn('form-control', { 'is-invalid': errors.confirm_password })}
-                        placeholder={t('install_auth_confirm')}
-                        autoComplete="new-password"
+                    <Controller
+                        name="confirm_password"
+                        control={control}
+                        rules={{
+                            validate: {
+                                required: validateRequiredValue,
+                                confirmPassword: validateConfirmPassword,
+                            },
+                        }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                type="password"
+                                label={t('install_auth_confirm')}
+                                placeholder={t('install_auth_confirm')}
+                                error={fieldState.error?.message}
+                                autoComplete="new-password"
+                            />
+                        )}
                     />
-                    {errors.confirm_password && (
-                        <div className="invalid-feedback">
-                            {errors.confirm_password.message}
-                        </div>
-                    )}
                 </div>
             </div>
 
-            <Controls
-                isDirty={isDirty}
-                isValid={isValid}
-            />
+            <Controls isDirty={isDirty} isValid={isValid} />
         </form>
     );
 };
-
-export default flow([
-    withTranslation(),
-])(Auth);

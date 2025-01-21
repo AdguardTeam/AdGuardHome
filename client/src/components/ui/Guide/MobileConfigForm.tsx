@@ -1,6 +1,6 @@
 import React from 'react';
-import { Trans } from 'react-i18next';
-import { useForm } from 'react-hook-form';
+import { Trans, useTranslation } from 'react-i18next';
+import { Controller, useForm } from 'react-hook-form';
 import i18next from 'i18next';
 import cn from 'classnames';
 
@@ -13,6 +13,7 @@ import {
     validatePort,
     validateIsSafePort,
 } from '../../../helpers/validators';
+import { Input } from '../Controls/Input';
 
 const getDownloadLink = (host: string, clientId: string, protocol: string, invalid: boolean) => {
     if (!host || invalid) {
@@ -23,7 +24,7 @@ const getDownloadLink = (host: string, clientId: string, protocol: string, inval
         );
     }
 
-    const linkParams: { host: string, client_id?: string } = { host };
+    const linkParams: { host: string; client_id?: string } = { host };
 
     if (clientId) {
         linkParams.client_id = clientId;
@@ -33,8 +34,7 @@ const getDownloadLink = (host: string, clientId: string, protocol: string, inval
         <a
             href={getPathWithQueryString(protocol, linkParams)}
             className={cn('btn btn-success btn-standard btn-large')}
-            download
-        >
+            download>
             {i18next.t('download_mobileconfig')}
         </a>
     );
@@ -51,24 +51,32 @@ type FormValues = {
     clientId: string;
     protocol: string;
     port?: number;
-}
+};
 
 type Props = {
     initialValues?: FormValues;
-}
+};
+
+const defaultFormValues = {
+    host: '',
+    clientId: '',
+    protocol: MOBILE_CONFIG_LINKS.DOT,
+    port: undefined,
+};
 
 export const MobileConfigForm = ({ initialValues }: Props) => {
+    const { t } = useTranslation();
+
     const {
         register,
         watch,
-        formState: { errors, isValid },
-      } = useForm<FormValues>({
+        control,
+        formState: { isValid },
+    } = useForm<FormValues>({
         mode: 'onChange',
         defaultValues: {
-          host: initialValues?.host || '',
-          clientId: initialValues?.clientId || '',
-          protocol: initialValues?.protocol || MOBILE_CONFIG_LINKS.DOT,
-          port: initialValues?.port || undefined,
+            ...defaultFormValues,
+            ...initialValues,
         },
     });
 
@@ -91,50 +99,46 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                 <div className="form__group form__group--settings">
                     <div className="row">
                         <div className="col">
-                            <label htmlFor="host" className="form__label">
-                                {i18next.t('dhcp_table_hostname')}
-                            </label>
-
-                            <input
-                                id="host"
-                                type="text"
-                                className="form-control"
-                                placeholder={i18next.t('form_enter_hostname')}
-                                {...register('host', {
-                                    validate: validateServerName,
-                                })}
+                            <Controller
+                                name="host"
+                                control={control}
+                                rules={{ validate: validateServerName }}
+                                render={({ field, fieldState }) => (
+                                    <Input
+                                        {...field}
+                                        type="text"
+                                        label={t('dhcp_table_hostname')}
+                                        placeholder={t('form_enter_hostname')}
+                                        error={fieldState.error?.message}
+                                    />
+                                )}
                             />
-                            {errors.host && (
-                                <div className="form__message form__message--error">
-                                    {errors.host.message}
-                                </div>
-                            )}
                         </div>
                         {protocol === MOBILE_CONFIG_LINKS.DOH && (
                             <div className="col">
-                                <label htmlFor="port" className="form__label">
-                                    {i18next.t('encryption_https')}
-                                </label>
-
-                                <input
-                                    id="port"
-                                    type="number"
-                                    className="form-control"
-                                    placeholder={i18next.t('encryption_https')}
-                                    {...register('port', {
-                                        setValueAs: (val) => toNumber(val),
+                                <Controller
+                                    name="port"
+                                    control={control}
+                                    rules={{
                                         validate: {
                                             range: (value) => validatePort(value) || true,
                                             safety: (value) => validateIsSafePort(value) || true,
                                         },
-                                    })}
+                                    }}
+                                    render={({ field, fieldState }) => (
+                                        <Input
+                                            {...field}
+                                            type="number"
+                                            label={t('encryption_https')}
+                                            placeholder={t('encryption_https')}
+                                            error={fieldState.error?.message}
+                                            onChange={(e) => {
+                                                const { value } = e.target;
+                                                field.onChange(toNumber(value));
+                                            }}
+                                        />
+                                    )}
                                 />
-
-                                {errors.port && (
-                                    <div className="form__message form__message--error">
-                                        {errors.port.message}
-                                    </div>
-                                )}
                             </div>
                         )}
                     </div>
@@ -149,21 +153,21 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                         <Trans components={{ a: githubLink }}>client_id_desc</Trans>
                     </div>
 
-                    <input
-                        id="clientId"
-                        type="text"
-                        className="form-control"
-                        placeholder={i18next.t('client_id_placeholder')}
-                        {...register('clientId', {
+                    <Controller
+                        name="clientId"
+                        control={control}
+                        rules={{
                             validate: validateConfigClientId,
-                        })}
+                        }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                type="text"
+                                placeholder={t('client_id_placeholder')}
+                                error={fieldState.error?.message}
+                            />
+                        )}
                     />
-                    
-                    {errors.clientId && (
-                        <div className="form__message form__message--error">
-                            {errors.clientId.message}
-                        </div>
-                    )}
                 </div>
 
                 <div className="form__group form__group--settings">
@@ -171,11 +175,7 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                         {i18next.t('protocol')}
                     </label>
 
-                    <select
-                        id="protocol"
-                        className="form-control"
-                        {...register('protocol')}
-                    >
+                    <select id="protocol" className="form-control" {...register('protocol')}>
                         <option value={MOBILE_CONFIG_LINKS.DOT}>{i18next.t('dns_over_tls')}</option>
                         <option value={MOBILE_CONFIG_LINKS.DOH}>{i18next.t('dns_over_https')}</option>
                     </select>

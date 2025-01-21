@@ -9,10 +9,11 @@ import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '../../
 
 import Loading from '../../components/ui/Loading';
 import Greeting from './Greeting';
-import Settings from './Settings';
+import { Settings } from './Settings';
 import Devices from './Devices';
 import Submit from './Submit';
 import Progress from './Progress';
+import { Auth } from './Auth';
 import Toasts from '../../components/Toasts';
 import Footer from '../../components/ui/Footer';
 import Icons from '../../components/ui/Icons';
@@ -20,7 +21,6 @@ import { Logo } from '../../components/ui/svg/logo';
 
 import './Setup.css';
 import '../../components/ui/Tabler.css';
-import Auth from './Auth';
 
 const Setup = () => {
     const dispatch = useDispatch();
@@ -37,11 +37,13 @@ const Setup = () => {
         delete config.staticIp;
 
         if (web.port && dns.port) {
-            dispatch(actionCreators.setAllSettings({
-                web,
-                dns,
-                ...config,
-            }));
+            dispatch(
+                actionCreators.setAllSettings({
+                    web,
+                    dns,
+                    ...config,
+                }),
+            );
         }
     };
 

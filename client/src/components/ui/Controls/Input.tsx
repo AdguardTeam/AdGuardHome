@@ -1,12 +1,12 @@
 import React, { ComponentProps, forwardRef, ReactNode } from 'react';
 import clsx from 'clsx';
 
-interface Props extends ComponentProps<'input'> {
+type Props = ComponentProps<'input'> & {
     label?: string;
     leftAddon?: ReactNode;
     rightAddon?: ReactNode;
     error?: string;
-}
+};
 
 export const Input = forwardRef<HTMLInputElement, Props>(
     ({ name, label, className, leftAddon, rightAddon, error, ...rest }, ref) => (
@@ -18,10 +18,10 @@ export const Input = forwardRef<HTMLInputElement, Props>(
             )}
             <div className="input-group">
                 {leftAddon && <div>{leftAddon}</div>}
-                <input className={clsx('form-control', className)} ref={ref} {...rest} />
+                <input className={clsx('form-control', { 'is-invalid': !!error }, className)} ref={ref} {...rest} />
                 {rightAddon && <div>{rightAddon}</div>}
             </div>
-            {error && <div className="form__message form__message--error">{error}</div>}
+            {error && <div className="form__message form__message--error mt-1">{error}</div>}
         </div>
     ),
 );

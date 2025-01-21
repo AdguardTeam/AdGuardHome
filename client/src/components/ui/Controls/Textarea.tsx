@@ -1,11 +1,11 @@
 import React, { ComponentProps, forwardRef } from 'react';
 import clsx from 'clsx';
 
-interface Props extends ComponentProps<'textarea'> {
+type Props = ComponentProps<'textarea'> & {
     className?: string;
     label?: string;
     error?: string;
-}
+};
 
 export const Textarea = forwardRef<HTMLTextAreaElement, Props>(({ name, label, className, error, ...rest }, ref) => (
     <div className={clsx('form-group', { 'has-error': !!error })}>
