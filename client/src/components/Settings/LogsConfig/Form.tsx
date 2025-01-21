@@ -4,16 +4,12 @@ import i18next from 'i18next';
 import { Controller, useForm } from 'react-hook-form';
 
 import { trimLinesAndRemoveEmpty } from '../../../helpers/helpers';
-import {
-    QUERY_LOG_INTERVALS_DAYS,
-    HOUR,
-    DAY,
-    RETENTION_CUSTOM,
-    RETENTION_RANGE,
-    CUSTOM_INTERVAL,
-} from '../../../helpers/constants';
+import { QUERY_LOG_INTERVALS_DAYS, HOUR, DAY, RETENTION_CUSTOM, RETENTION_RANGE } from '../../../helpers/constants';
 import '../FormButton.css';
 import { Checkbox } from '../../ui/Controls/Checkbox';
+import { Input } from '../../ui/Controls/Input';
+import { toNumber } from '../../../helpers/form';
+import { Textarea } from '../../ui/Controls/Textarea';
 
 const getIntervalTitle = (interval: number) => {
     switch (interval) {
@@ -48,7 +44,6 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
     const { t } = useTranslation();
 
     const {
-        register,
         handleSubmit,
         watch,
         setValue,
@@ -135,17 +130,23 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                         <div className="form__group--input">
                             <div className="form__desc form__desc--top">{i18next.t('custom_rotation_input')}</div>
 
-                            <input
-                                type="number"
-                                className="form-control"
-                                name={CUSTOM_INTERVAL}
-                                min={RETENTION_RANGE.MIN}
-                                max={RETENTION_RANGE.MAX}
-                                disabled={processing}
-                                {...register('customInterval')}
-                                onChange={(e) => {
-                                    setValue('customInterval', parseInt(e.target.value, 10));
-                                }}
+                            <Controller
+                                name="customInterval"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Input
+                                        {...field}
+                                        placeholder={t('encryption_certificates_input')}
+                                        disabled={processing}
+                                        error={fieldState.error?.message}
+                                        min={RETENTION_RANGE.MIN}
+                                        max={RETENTION_RANGE.MAX}
+                                        onChange={(e) => {
+                                            const { value } = e.target;
+                                            field.onChange(toNumber(value));
+                                        }}
+                                    />
+                                )}
                             />
                         </div>
                     )}
@@ -178,12 +179,19 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
             </div>
 
             <div className="form__group form__group--settings">
-                <textarea
-                    className="form-control form-control--textarea font-monospace text-input"
-                    placeholder={i18next.t('ignore_domains')}
-                    disabled={processing}
-                    {...register('ignored')}
-                    onBlur={handleIgnoredBlur}
+                <Controller
+                    name="ignored"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                        <Textarea
+                            {...field}
+                            placeholder={t('ignore_domains')}
+                            className="text-input"
+                            disabled={processing}
+                            error={fieldState.error?.message}
+                            onBlur={handleIgnoredBlur}
+                        />
+                    )}
                 />
             </div>
 

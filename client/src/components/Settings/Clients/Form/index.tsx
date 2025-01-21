@@ -186,9 +186,7 @@ export const Form = ({
                             <div className="form__desc mt-0">
                                 <Trans
                                     components={[
-                                        <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer" key="0">
-                                            text
-                                        </a>,
+                                        <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer" key="0" />,
                                     ]}>
                                     client_identifier_desc
                                 </Trans>

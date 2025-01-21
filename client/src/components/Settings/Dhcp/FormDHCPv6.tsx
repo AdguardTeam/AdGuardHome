@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
@@ -30,7 +30,7 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
     const {
         register,
         handleSubmit,
-        formState: { errors, isSubmitting },
+        formState: { errors, isSubmitting, isValid },
         watch,
     } = useFormContext<DhcpFormValues>();
 
@@ -45,6 +45,10 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
             await onSubmit(data);
         }
     };
+
+    const isDisabled = useMemo(() => {
+        return isSubmitting || !isValid || processingConfig || !isInterfaceIncludesIpv6 || isEmptyConfig;
+    }, [isSubmitting, isValid, processingConfig, isInterfaceIncludesIpv6, isEmptyConfig]);
 
     return (
         <form onSubmit={handleSubmit(handleFormSubmit)}>
@@ -126,16 +130,7 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
             </div>
 
             <div className="btn-list">
-                <button
-                    type="submit"
-                    className="btn btn-success btn-standard"
-                    disabled={
-                        isSubmitting ||
-                        processingConfig ||
-                        !isInterfaceIncludesIpv6 ||
-                        isEmptyConfig ||
-                        Object.keys(errors).length > 0
-                    }>
+                <button type="submit" className="btn btn-success btn-standard" disabled={isDisabled}>
                     {t('save_config')}
                 </button>
             </div>

@@ -4,6 +4,7 @@ import { Trans, useTranslation } from 'react-i18next';
 
 import { CLIENT_ID_LINK } from '../../../../helpers/constants';
 import { removeEmptyLines, trimMultilineString } from '../../../../helpers/helpers';
+import { Textarea } from '../../../ui/Controls/Textarea';
 
 const fields = [
     {
@@ -44,7 +45,7 @@ interface FormData {
 
 const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
     const { t } = useTranslation();
-    
+
     const {
         control,
         handleSubmit,
@@ -88,11 +89,7 @@ const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
                 <div className="form__desc form__desc--top">
                     <Trans
                         components={{
-                            a: (
-                                <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer">
-                                    {t('text')}
-                                </a>
-                            ),
+                            a: <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer" />,
                         }}>
                         {subtitle}
                     </Trans>
@@ -102,14 +99,12 @@ const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
                     name={id}
                     control={control}
                     render={({ field }) => (
-                        <textarea
+                        <Textarea
                             {...field}
                             id={id}
-                            className="form-control form-control--textarea font-monospace"
                             disabled={disabled || processingSet}
                             onBlur={(e) => {
-                                const normalized = normalizeOnBlur(e.target.value);
-                                field.onChange(normalized);
+                                field.onChange(normalizeOnBlur(e.target.value));
                             }}
                         />
                     )}
@@ -120,8 +115,17 @@ const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
 
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
-            {fields.map((f) => renderField(f as { id: keyof FormData; title: string; subtitle: string; normalizeOnBlur: (value: string) => string; }))}
-            
+            {fields.map((f) =>
+                renderField(
+                    f as {
+                        id: keyof FormData;
+                        title: string;
+                        subtitle: string;
+                        normalizeOnBlur: (value: string) => string;
+                    },
+                ),
+            )}
+
             <div className="card-actions">
                 <div className="btn-list">
                     <button

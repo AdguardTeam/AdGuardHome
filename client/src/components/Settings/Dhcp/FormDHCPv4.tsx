@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
+import { isValid } from 'date-fns';
 import { UINT32_RANGE } from '../../../helpers/constants';
 import {
     validateGatewaySubnetMask,
@@ -32,7 +33,7 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
     const {
         register,
         handleSubmit,
-        formState: { errors, isSubmitting },
+        formState: { errors, isSubmitting, isValid },
         watch,
     } = useFormContext<DhcpFormValues>();
 
@@ -48,6 +49,10 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
             await onSubmit(data);
         }
     };
+
+    const isDisabled = useMemo(() => {
+        return isSubmitting || !isValid || processingConfig || !isInterfaceIncludesIpv4 || isEmptyConfig;
+    }, [isSubmitting, isValid, processingConfig, isInterfaceIncludesIpv4, isEmptyConfig]);
 
     return (
         <form onSubmit={handleSubmit(handleFormSubmit)}>
@@ -169,16 +174,7 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
             </div>
 
             <div className="btn-list">
-                <button
-                    type="submit"
-                    className="btn btn-success btn-standard"
-                    disabled={
-                        isSubmitting ||
-                        processingConfig ||
-                        !isInterfaceIncludesIpv4 ||
-                        isEmptyConfig ||
-                        Object.keys(errors).length > 0
-                    }>
+                <button type="submit" className="btn btn-success btn-standard" disabled={isDisabled}>
                     {t('save_config')}
                 </button>
             </div>

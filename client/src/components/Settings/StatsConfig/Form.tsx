@@ -3,17 +3,14 @@ import { Trans, useTranslation } from 'react-i18next';
 import i18next from 'i18next';
 
 import { Controller, useForm } from 'react-hook-form';
-import {
-    STATS_INTERVALS_DAYS,
-    DAY,
-    RETENTION_CUSTOM,
-    CUSTOM_INTERVAL,
-    RETENTION_RANGE,
-} from '../../../helpers/constants';
+import { STATS_INTERVALS_DAYS, DAY, RETENTION_CUSTOM, RETENTION_RANGE } from '../../../helpers/constants';
 
 import { trimLinesAndRemoveEmpty } from '../../../helpers/helpers';
 import '../FormButton.css';
 import { Checkbox } from '../../ui/Controls/Checkbox';
+import { Input } from '../../ui/Controls/Input';
+import { toNumber } from '../../../helpers/form';
+import { Textarea } from '../../ui/Controls/Textarea';
 
 const getIntervalTitle = (interval: any) => {
     switch (interval) {
@@ -33,8 +30,15 @@ export type FormValues = {
     ignored: string;
 };
 
+const defaultFormValues = {
+    enabled: false,
+    interval: DAY,
+    customInterval: null,
+    ignored: '',
+};
+
 type Props = {
-    initialValues: Partial<FormValues>;
+    initialValues: FormValues;
     processing: boolean;
     processingReset: boolean;
     onSubmit: (values: FormValues) => void;
@@ -45,7 +49,6 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
     const { t } = useTranslation();
 
     const {
-        register,
         handleSubmit,
         watch,
         setValue,
@@ -54,10 +57,8 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
     } = useForm<FormValues>({
         mode: 'onChange',
         defaultValues: {
-            enabled: initialValues.enabled || false,
-            interval: initialValues.interval || DAY,
-            customInterval: initialValues.customInterval || null,
-            ignored: initialValues.ignored || '',
+            ...defaultFormValues,
+            ...initialValues,
         },
     });
 
@@ -120,43 +121,27 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                         <div className="form__group--input">
                             <div className="form__desc form__desc--top">{i18next.t('custom_retention_input')}</div>
 
-                            {/* <Field
-                                key={RETENTION_CUSTOM_INPUT}
-                                name={CUSTOM_INTERVAL}
-                                type="number"
-                                className="form-control"
-                                component={renderInputField}
-                                disabled={processing}
-                                normalize={toFloatNumber}
-                                min={RETENTION_RANGE.MIN}
-                                max={RETENTION_RANGE.MAX}
-                            /> */}
-
-                            <input
-                                name={CUSTOM_INTERVAL}
-                                type="number"
-                                className="form-control"
-                                min={RETENTION_RANGE.MIN}
-                                max={RETENTION_RANGE.MAX}
-                                disabled={processing}
-                                {...register('customInterval')}
-                                onChange={(e) => {
-                                    setValue('customInterval', parseInt(e.target.value, 10));
-                                }}
+                            <Controller
+                                name="customInterval"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Input
+                                        {...field}
+                                        placeholder={t('encryption_certificates_input')}
+                                        disabled={processing}
+                                        error={fieldState.error?.message}
+                                        min={RETENTION_RANGE.MIN}
+                                        max={RETENTION_RANGE.MAX}
+                                        onChange={(e) => {
+                                            const { value } = e.target;
+                                            field.onChange(toNumber(value));
+                                        }}
+                                    />
+                                )}
                             />
                         </div>
                     )}
                     {STATS_INTERVALS_DAYS.map((interval) => (
-                        // <Field
-                        //     key={interval}
-                        //     name="interval"
-                        //     type="radio"
-                        //     component={renderRadioField}
-                        //     value={interval}
-                        //     placeholder={getIntervalTitle(interval, t)}
-                        //     normalize={toNumber}
-                        //     disabled={processing}
-                        // />
                         <label key={interval} className="custom-control custom-radio">
                             <input
                                 type="radio"
@@ -184,21 +169,19 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
             </div>
 
             <div className="form__group form__group--settings">
-                {/* <Field
+                <Controller
                     name="ignored"
-                    type="textarea"
-                    className="form-control form-control--textarea font-monospace text-input"
-                    component={renderTextareaField}
-                    placeholder={t('ignore_domains')}
-                    disabled={processing}
-                    normalizeOnBlur={trimLinesAndRemoveEmpty}
-                /> */}
-                <textarea
-                    className="form-control form-control--textarea font-monospace text-input"
-                    placeholder={i18next.t('ignore_domains')}
-                    disabled={processing}
-                    {...register('ignored')}
-                    onBlur={handleIgnoredBlur}
+                    control={control}
+                    render={({ field, fieldState }) => (
+                        <Textarea
+                            {...field}
+                            placeholder={t('ignore_domains')}
+                            className="text-input"
+                            disabled={processing}
+                            error={fieldState.error?.message}
+                            onBlur={handleIgnoredBlur}
+                        />
+                    )}
                 />
             </div>
 

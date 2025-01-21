@@ -2,19 +2,24 @@ import React, { useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 
+import i18next from 'i18next';
 import { toNumber } from '../../../helpers/form';
-import { FILTERS_INTERVALS_HOURS, FILTERS_RELATIVE_LINK } from '../../../helpers/constants';
+import { DAY, FILTERS_INTERVALS_HOURS, FILTERS_RELATIVE_LINK } from '../../../helpers/constants';
 import { Checkbox } from '../../ui/Controls/Checkbox';
 
-const getTitleForInterval = (interval: any, t: any) => {
+const THREE_DAYS_INTERVAL = DAY * 3;
+const SEVEN_DAYS_INTERVAL = DAY * 7;
+
+const getTitleForInterval = (interval: number) => {
     if (interval === 0) {
-        return t('disabled');
-    }
-    if (interval === 72 || interval === 168) {
-        return t('interval_days', { count: interval / 24 });
+        return i18next.t('disabled');
     }
 
-    return t('interval_hours', { count: interval });
+    if (interval === THREE_DAYS_INTERVAL || interval === SEVEN_DAYS_INTERVAL) {
+        return i18next.t('interval_days', { count: interval / DAY });
+    }
+
+    return i18next.t('interval_hours', { count: interval });
 };
 
 export type FormValues = {

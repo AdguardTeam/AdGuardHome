@@ -40,12 +40,6 @@ const getDownloadLink = (host: string, clientId: string, protocol: string, inval
     );
 };
 
-const githubLink = (
-    <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer">
-        text
-    </a>
-);
-
 type FormValues = {
     host: string;
     clientId: string;
@@ -150,7 +144,10 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                     </label>
 
                     <div className="form__desc form__desc--top">
-                        <Trans components={{ a: githubLink }}>client_id_desc</Trans>
+                        <Trans
+                            components={{ a: <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer" /> }}>
+                            client_id_desc
+                        </Trans>
                     </div>
 
                     <Controller
