@@ -52,7 +52,6 @@
         "react-transition-group": "^4.4.5",
         "redux": "^4.0.5",
         "redux-actions": "^2.6.5",
-        "redux-form": "^8.3.10",
         "redux-thunk": "^2.3.0",
         "ts-migrate": "^0.1.35",
         "url-polyfill": "^1.1.12"
@@ -76,7 +75,6 @@
         "@types/react-router-dom": "^5.3.3",
         "@types/react-table": "^7.7.20",
         "@types/redux-actions": "^2.6.5",
-        "@types/redux-form": "^8.3.10",
         "@typescript-eslint/eslint-plugin": "^7.11.0",
         "@typescript-eslint/parser": "^7.10.0",
         "babel-loader": "^9.1.3",

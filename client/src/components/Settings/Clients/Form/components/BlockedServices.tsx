@@ -29,7 +29,6 @@ export const BlockedServices = ({ services }: Props) => {
                         <ServiceField
                             {...field}
                             placeholder={t('blocked_services_global')}
-                            disabled={useGlobalServices}
                             className="service--global"
                         />
                     )}

@@ -5,7 +5,7 @@ import { Controller, FormProvider, useForm } from 'react-hook-form';
 import Select from 'react-select';
 
 import Tabs from '../../../ui/Tabs';
-import { CLIENT_ID_LINK } from '../../../../helpers/constants';
+import { CLIENT_ID_LINK, LOCAL_TIMEZONE_VALUE } from '../../../../helpers/constants';
 import { RootState } from '../../../../initialState';
 import { Input } from '../../../ui/Controls/Input';
 import { validateRequiredValue } from '../../../../helpers/validators';
@@ -13,6 +13,27 @@ import { ClientForm } from './types';
 import { BlockedServices, ClientIds, MainSettings, ScheduleServices, UpstreamDns } from './components';
 
 import '../Service.css';
+
+const defaultFormValues: ClientForm = {
+    ids: [{ name: '' }],
+    name: '',
+    tags: [],
+    use_global_settings: false,
+    filtering_enabled: false,
+    safebrowsing_enabled: false,
+    parental_enabled: false,
+    ignore_querylog: false,
+    ignore_statistics: false,
+    blocked_services: {},
+    safe_search: { enabled: false },
+    upstreams: '',
+    upstreams_cache_enabled: false,
+    upstreams_cache_size: 0,
+    use_global_blocked_services: false,
+    blocked_services_schedule: {
+        time_zone: LOCAL_TIMEZONE_VALUE,
+    },
+};
 
 type Props = {
     onSubmit: (...args: unknown[]) => void;
@@ -38,7 +59,10 @@ export const Form = ({
 }: Props) => {
     const { t } = useTranslation();
     const methods = useForm<ClientForm>({
-        defaultValues: initialValues,
+        defaultValues: {
+            ...defaultFormValues,
+            ...initialValues,
+        },
         mode: 'onChange',
     });
 
