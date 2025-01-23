@@ -22,7 +22,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
 
-## [v0.107.56] - 2025-01-21
+## [v0.107.56] - 2025-01-23
 
 See also the [v0.107.56 GitHub milestone][ms-v0.107.56].
 
