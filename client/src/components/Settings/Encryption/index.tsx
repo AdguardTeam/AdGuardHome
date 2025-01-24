@@ -72,7 +72,6 @@ export const Encryption = ({ encryption, setTlsConfig, validateTlsConfig }: Prop
             const submitValues = getSubmitValues(values);
 
             if (submitValues.enabled) {
-                console.log('validateTlsConfig');
                 validateTlsConfig(submitValues);
             }
         }, DEBOUNCE_TIMEOUT),

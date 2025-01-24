@@ -143,7 +143,6 @@ export const Form = ({
     subject,
     warning_validation,
     onSubmit,
-    debouncedConfigValidation,
     setTlsConfig,
     validateTlsConfig,
 }: Props) => {
@@ -187,7 +186,6 @@ export const Form = ({
         if (JSON.stringify(previousValues) !== JSON.stringify(watchedValues)) {
             // TODO(ik) onChange TLS config validation
             console.log('debouncedConfigValidation');
-            debouncedConfigValidation(watchedValues);
             previousValuesRef.current = watchedValues;
         }
     }, [watchedValues]);

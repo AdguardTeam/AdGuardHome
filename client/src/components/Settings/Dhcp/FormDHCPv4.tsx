@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
 import { UINT32_RANGE } from '../../../helpers/constants';
@@ -12,6 +12,8 @@ import {
     validateRequiredValue,
 } from '../../../helpers/validators';
 import { DhcpFormValues } from '.';
+import { Input } from '../../ui/Controls/Input';
+import { toNumber } from '../../../helpers/form';
 
 type FormDHCPv4Props = {
     processingConfig?: boolean;
@@ -30,9 +32,9 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
     const { t } = useTranslation();
 
     const {
-        register,
         handleSubmit,
         formState: { errors, isSubmitting },
+        control,
         watch,
     } = useFormContext<DhcpFormValues>();
 
@@ -52,121 +54,138 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
             <div className="row">
                 <div className="col-lg-6">
                     <div className="form__group form__group--settings">
-                        <label>{t('dhcp_form_gateway_input')}</label>
-                        <input
-                            data-testid="v4_gateway_ip"
-                            type="text"
-                            className="form-control"
-                            placeholder={t(ipv4placeholders?.gateway_ip || '')}
-                            disabled={!isInterfaceIncludesIpv4}
-                            {...register('v4.gateway_ip', {
+                        <Controller
+                            name="v4.gateway_ip"
+                            control={control}
+                            rules={{
                                 validate: {
                                     ipv4: validateIpv4,
                                     required: (value) => (isEmptyConfig ? undefined : validateRequiredValue(value)),
                                     notInRange: validateNotInRange,
                                 },
-                            })}
+                            }}
+                            render={({ field, fieldState }) => (
+                                <Input
+                                    {...field}
+                                    type="text"
+                                    data-testid="v4_gateway_ip"
+                                    label={t('dhcp_form_gateway_input')}
+                                    placeholder={t(ipv4placeholders.gateway_ip)}
+                                    error={fieldState.error?.message}
+                                    disabled={!isInterfaceIncludesIpv4}
+                                />
+                            )}
                         />
-                        {errors.v4?.gateway_ip && (
-                            <div className="form__message form__message--error">{t(errors.v4.gateway_ip.message)}</div>
-                        )}
                     </div>
 
                     <div className="form__group form__group--settings">
-                        <label>{t('dhcp_form_subnet_input')}</label>
-                        <input
-                            data-testid="v4_subnet_mask"
-                            type="text"
-                            className="form-control"
-                            placeholder={t(ipv4placeholders?.subnet_mask || '')}
-                            disabled={!isInterfaceIncludesIpv4}
-                            {...register('v4.subnet_mask', {
+                        <Controller
+                            name="v4.subnet_mask"
+                            control={control}
+                            rules={{
                                 validate: {
                                     required: (value) => (isEmptyConfig ? undefined : validateRequiredValue(value)),
                                     subnet: validateGatewaySubnetMask,
                                 },
-                            })}
+                            }}
+                            render={({ field, fieldState }) => (
+                                <Input
+                                    {...field}
+                                    type="text"
+                                    data-testid="v4_subnet_mask"
+                                    label={t('dhcp_form_subnet_input')}
+                                    placeholder={t(ipv4placeholders.subnet_mask)}
+                                    error={fieldState.error?.message}
+                                    disabled={!isInterfaceIncludesIpv4}
+                                />
+                            )}
                         />
-                        {errors.v4?.subnet_mask && (
-                            <div className="form__message form__message--error">{t(errors.v4.subnet_mask.message)}</div>
-                        )}
                     </div>
                 </div>
 
                 <div className="col-lg-6">
-                    <div className="form__group form__group--settings">
+                    <div className="form__group mb-0">
                         <div className="row">
                             <div className="col-12">
                                 <label>{t('dhcp_form_range_title')}</label>
                             </div>
 
                             <div className="col">
-                                <input
-                                    data-testid="v4_range_start"
-                                    type="text"
-                                    className="form-control"
-                                    placeholder={t(ipv4placeholders?.range_start || '')}
-                                    disabled={!isInterfaceIncludesIpv4}
-                                    {...register('v4.range_start', {
+                                <Controller
+                                    name="v4.range_start"
+                                    control={control}
+                                    rules={{
                                         validate: {
                                             ipv4: validateIpv4,
                                             gateway: validateIpForGatewaySubnetMask,
                                         },
-                                    })}
+                                    }}
+                                    render={({ field, fieldState }) => (
+                                        <Input
+                                            {...field}
+                                            type="text"
+                                            data-testid="v4_range_start"
+                                            placeholder={t(ipv4placeholders.range_start)}
+                                            error={fieldState.error?.message}
+                                            disabled={!isInterfaceIncludesIpv4}
+                                        />
+                                    )}
                                 />
-                                {errors.v4?.range_start && (
-                                    <div className="form__message form__message--error">
-                                        {t(errors.v4.range_start.message)}
-                                    </div>
-                                )}
                             </div>
 
                             <div className="col">
-                                <input
-                                    data-testid="v4_range_end"
-                                    type="text"
-                                    className="form-control"
-                                    placeholder={t(ipv4placeholders?.range_end || '')}
-                                    disabled={!isInterfaceIncludesIpv4}
-                                    {...register('v4.range_end', {
+                                <Controller
+                                    name="v4.range_end"
+                                    control={control}
+                                    rules={{
                                         validate: {
                                             ipv4: validateIpv4,
                                             rangeEnd: validateIpv4RangeEnd,
                                             gateway: validateIpForGatewaySubnetMask,
                                         },
-                                    })}
+                                    }}
+                                    render={({ field, fieldState }) => (
+                                        <Input
+                                            {...field}
+                                            type="text"
+                                            data-testid="v4_range_end"
+                                            placeholder={t(ipv4placeholders.range_end)}
+                                            error={fieldState.error?.message}
+                                            disabled={!isInterfaceIncludesIpv4}
+                                        />
+                                    )}
                                 />
-                                {errors.v4?.range_end && (
-                                    <div className="form__message form__message--error">
-                                        {errors.v4.range_end.message}
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>
 
                     <div className="form__group form__group--settings">
-                        <label>{t('dhcp_form_lease_title')}</label>
-                        <input
-                            data-testid="v4_lease_duration"
-                            type="number"
-                            className="form-control"
-                            placeholder={t(ipv4placeholders?.lease_duration || '')}
-                            disabled={!isInterfaceIncludesIpv4}
-                            min={1}
-                            max={UINT32_RANGE.MAX}
-                            {...register('v4.lease_duration', {
-                                valueAsNumber: true,
+                        <Controller
+                            name="v4.lease_duration"
+                            control={control}
+                            rules={{
                                 validate: {
                                     required: (value) => (isEmptyConfig ? undefined : validateRequiredValue(value)),
                                 },
-                            })}
+                            }}
+                            render={({ field, fieldState }) => (
+                                <Input
+                                    {...field}
+                                    type="number"
+                                    data-testid="v4_lease_duration"
+                                    label={t('dhcp_form_lease_title')}
+                                    placeholder={t(ipv4placeholders.lease_duration)}
+                                    error={fieldState.error?.message}
+                                    disabled={!isInterfaceIncludesIpv4}
+                                    min={1}
+                                    max={UINT32_RANGE.MAX}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        field.onChange(toNumber(value));
+                                    }}
+                                />
+                            )}
                         />
-                        {errors.v4?.lease_duration && (
-                            <div className="form__message form__message--error">
-                                {t(errors.v4.lease_duration.message)}
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>

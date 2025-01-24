@@ -168,7 +168,7 @@ const Dhcp = () => {
         }
     };
 
-    const handleSubmit = (values: any) => {
+    const handleSubmit = (values: DhcpFormValues) => {
         dispatch(
             setDhcpConfig({
                 interface_name,
@@ -293,7 +293,6 @@ const Dhcp = () => {
 
                     <FormProvider {...methods}>
                         <Interfaces />
-
                         <Card title={t('dhcp_ipv4_settings')} bodyType="card-body box-body--settings">
                             <div>
                                 <FormDHCPv4
@@ -304,7 +303,6 @@ const Dhcp = () => {
                                 />
                             </div>
                         </Card>
-
                         <Card title={t('dhcp_ipv6_settings')} bodyType="card-body box-body--settings">
                             <div>
                                 <FormDHCPv6
