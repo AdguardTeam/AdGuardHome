@@ -67,7 +67,7 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
         control,
         formState: { isValid },
     } = useForm<FormValues>({
-        mode: 'onChange',
+        mode: 'onBlur',
         defaultValues: {
             ...defaultFormValues,
             ...initialValues,

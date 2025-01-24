@@ -29,7 +29,7 @@ const Check = ({ onSubmit }: Props) => {
         handleSubmit,
         formState: { isDirty, isValid },
     } = useForm<FormValues>({
-        mode: 'onChange',
+        mode: 'onBlur',
         defaultValues: {
             name: '',
         },

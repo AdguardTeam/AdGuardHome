@@ -99,6 +99,7 @@ const Interfaces = () => {
                 </label>
                 <select
                     id="interface_name"
+                    data-testid="interface_name"
                     className="form-control custom-select pl-4 col-md"
                     disabled={enabled}
                     {...register('interface_name', {

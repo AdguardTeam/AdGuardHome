@@ -63,7 +63,7 @@ const Form = ({ initialValues, onSubmit }: FormProps) => {
         watch,
         formState: { isSubmitting, isDirty },
     } = useForm<FormData>({
-        mode: 'onChange',
+        mode: 'onBlur',
         defaultValues: {
             upstream_dns: initialValues?.upstream_dns || '',
             upstream_mode: initialValues?.upstream_mode || DNS_REQUEST_OPTIONS.LOAD_BALANCING,

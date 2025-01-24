@@ -31,7 +31,7 @@ export const Form = ({ initialValues, blockedServices, processing, processingSet
         setValue,
         formState: { isSubmitting, isDirty },
     } = useForm<FormValues>({
-        mode: 'onChange',
+        mode: 'onBlur',
         defaultValues: initialValues,
     });
 

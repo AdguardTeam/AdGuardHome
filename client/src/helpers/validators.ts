@@ -125,7 +125,7 @@ export const validateGatewaySubnetMask = (_: any, allValues: any) => {
  * @param allValues
  */
 export const validateIpForGatewaySubnetMask = (value: any, allValues: any) => {
-    if (!allValues || !allValues.v4 || !value) {
+    if (!allValues || !allValues.v4 || !value || !allValues.gateway_ip || !allValues.subnet_mask) {
         return undefined;
     }
 

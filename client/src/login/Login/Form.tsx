@@ -21,7 +21,7 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
         control,
         formState: { isValid },
     } = useForm<FormValues>({
-        mode: 'onChange',
+        mode: 'onBlur',
         defaultValues: {
             username: '',
             password: '',
@@ -39,6 +39,7 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
                         render={({ field, fieldState }) => (
                             <Input
                                 {...field}
+                                data-testid="username"
                                 type="text"
                                 label={t('username_label')}
                                 placeholder={t('username_placeholder')}
@@ -59,6 +60,7 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
                         render={({ field, fieldState }) => (
                             <Input
                                 {...field}
+                                data-testid="password"
                                 type="password"
                                 label={t('username_label')}
                                 placeholder={t('password_placeholder')}
@@ -71,7 +73,11 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
                 </div>
 
                 <div className="form-footer">
-                    <button type="submit" className="btn btn-success btn-block" disabled={processing || !isValid}>
+                    <button
+                        data-testid="sign_in"
+                        type="submit"
+                        className="btn btn-success btn-block"
+                        disabled={processing || !isValid}>
                         {t('sign_in')}
                     </button>
                 </div>

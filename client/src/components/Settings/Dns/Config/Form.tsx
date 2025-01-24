@@ -71,7 +71,7 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
         control,
         formState: { errors, isSubmitting, isDirty },
     } = useForm<FormData>({
-        mode: 'onChange',
+        mode: 'onBlur',
         defaultValues: initialValues,
     });
 

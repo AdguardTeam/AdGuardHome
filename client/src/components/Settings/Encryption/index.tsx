@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { debounce } from 'lodash';
 import { DEBOUNCE_TIMEOUT, ENCRYPTION_SOURCE } from '../../../helpers/constants';
 
-import { Form, FormValues } from './Form';
+import { EncryptionFormValues, Form } from './Form';
 import Card from '../../ui/Card';
 import PageTitle from '../../ui/PageTitle';
 import Loading from '../../ui/Loading';
@@ -11,8 +11,8 @@ import { EncryptionData } from '../../../initialState';
 
 type Props = {
     encryption: EncryptionData;
-    setTlsConfig: (values: EncryptionData) => void;
-    validateTlsConfig: (values: EncryptionData) => void;
+    setTlsConfig: (values: Partial<EncryptionData>) => void;
+    validateTlsConfig: (values: Partial<EncryptionData>) => void;
 };
 
 export const Encryption = ({ encryption, setTlsConfig, validateTlsConfig }: Props) => {
@@ -24,7 +24,7 @@ export const Encryption = ({ encryption, setTlsConfig, validateTlsConfig }: Prop
         }
     }, [encryption, validateTlsConfig]);
 
-    const getInitialValues = useCallback((data: any): FormValues => {
+    const getInitialValues = useCallback((data: any): EncryptionFormValues => {
         const { certificate_chain, private_key, private_key_saved } = data;
         const certificate_source = certificate_chain ? ENCRYPTION_SOURCE.CONTENT : ENCRYPTION_SOURCE.PATH;
         const key_source = private_key || private_key_saved ? ENCRYPTION_SOURCE.CONTENT : ENCRYPTION_SOURCE.PATH;
@@ -67,15 +67,16 @@ export const Encryption = ({ encryption, setTlsConfig, validateTlsConfig }: Prop
         [getSubmitValues, setTlsConfig],
     );
 
-    const handleChange = useCallback(
+    const debouncedConfigValidation = useCallback(
         debounce((values) => {
             const submitValues = getSubmitValues(values);
 
             if (submitValues.enabled) {
+                console.log('validateTlsConfig');
                 validateTlsConfig(submitValues);
             }
         }, DEBOUNCE_TIMEOUT),
-        [getSubmitValues, validateTlsConfig],
+        [],
     );
 
     const initialValues = getInitialValues(encryption);
@@ -94,7 +95,7 @@ export const Encryption = ({ encryption, setTlsConfig, validateTlsConfig }: Prop
                     <Form
                         initialValues={initialValues}
                         onSubmit={handleFormSubmit}
-                        onChange={handleChange}
+                        debouncedConfigValidation={debouncedConfigValidation}
                         setTlsConfig={setTlsConfig}
                         validateTlsConfig={validateTlsConfig}
                         {...encryption}

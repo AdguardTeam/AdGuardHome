@@ -38,7 +38,7 @@ export const FiltersConfig = ({ initialValues, setFiltersConfig, processing }: P
     const prevFormValuesRef = useRef<FormValues>(initialValues);
 
     const { register, watch, control } = useForm({
-        mode: 'onChange',
+        mode: 'onBlur',
         defaultValues: initialValues,
     });
 

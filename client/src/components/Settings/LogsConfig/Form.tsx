@@ -50,7 +50,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
         control,
         formState: { isSubmitting },
     } = useForm<FormValues>({
-        mode: 'onChange',
+        mode: 'onBlur',
         defaultValues: {
             enabled: initialValues.enabled || false,
             anonymize_client_ip: initialValues.anonymize_client_ip || false,

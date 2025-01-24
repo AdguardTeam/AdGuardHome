@@ -101,7 +101,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
         formState: { isValid },
     } = useForm({
         defaultValues,
-        mode: 'onChange',
+        mode: 'onBlur',
     });
 
     const watchFields = watch();

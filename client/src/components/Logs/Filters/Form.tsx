@@ -36,7 +36,7 @@ export const Form = ({ initialValues, className, setIsLoading }: Props) => {
     const history = useHistory();
 
     const { register, watch, setValue } = useForm<FormValues>({
-        mode: 'onChange',
+        mode: 'onBlur',
         defaultValues: {
             search: initialValues.search || DEFAULT_LOGS_FILTER.search,
             response_status: initialValues.response_status || DEFAULT_LOGS_FILTER.response_status,

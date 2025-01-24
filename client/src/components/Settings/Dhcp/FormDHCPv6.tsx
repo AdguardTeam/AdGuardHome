@@ -6,14 +6,6 @@ import { UINT32_RANGE } from '../../../helpers/constants';
 import { validateIpv6, validateRequiredValue } from '../../../helpers/validators';
 import { DhcpFormValues } from '.';
 
-type FormValues = {
-    v6?: {
-        range_start?: string;
-        range_end?: string;
-        lease_duration?: number;
-    };
-};
-
 type FormDHCPv6Props = {
     processingConfig?: boolean;
     ipv6placeholders?: {
@@ -40,18 +32,12 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
     const formValues = watch('v6');
     const isEmptyConfig = !Object.values(formValues || {}).some(Boolean);
 
-    const handleFormSubmit = async (data: FormValues) => {
-        if (onSubmit) {
-            await onSubmit(data);
-        }
-    };
-
     const isDisabled = useMemo(() => {
         return isSubmitting || !isValid || processingConfig || !isInterfaceIncludesIpv6 || isEmptyConfig;
     }, [isSubmitting, isValid, processingConfig, isInterfaceIncludesIpv6, isEmptyConfig]);
 
     return (
-        <form onSubmit={handleSubmit(handleFormSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)}>
             <div className="row">
                 <div className="col-lg-6">
                     <div className="form__group form__group--settings">
@@ -62,6 +48,7 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
 
                             <div className="col">
                                 <input
+                                    data-testid="v6_range_start"
                                     type="text"
                                     className="form-control"
                                     placeholder={t(ipv6placeholders?.range_start || '')}
@@ -70,7 +57,7 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
                                         validate: {
                                             ipv6: validateIpv6,
                                             required: (value) =>
-                                                isEmptyConfig ? undefined : validateRequiredValue(value),
+                                                isInterfaceIncludesIpv6 ? undefined : validateRequiredValue(value),
                                         },
                                     })}
                                 />
@@ -83,6 +70,7 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
 
                             <div className="col">
                                 <input
+                                    data-testid="v6_range_end"
                                     type="text"
                                     className="form-control"
                                     placeholder={t(ipv6placeholders?.range_end || '')}
@@ -91,7 +79,7 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
                                         validate: {
                                             ipv6: validateIpv6,
                                             required: (value) =>
-                                                isEmptyConfig ? undefined : validateRequiredValue(value),
+                                                isInterfaceIncludesIpv6 ? undefined : validateRequiredValue(value),
                                         },
                                     })}
                                 />
@@ -110,6 +98,7 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
                 <div className="col-lg-6 form__group form__group--settings">
                     <label>{t('dhcp_form_lease_title')}</label>
                     <input
+                        data-testid="v6_lease_duration"
                         type="number"
                         className="form-control"
                         placeholder={t(ipv6placeholders?.lease_duration || '')}
@@ -119,7 +108,8 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
                         {...register('v6.lease_duration', {
                             valueAsNumber: true,
                             validate: {
-                                required: (value) => (isEmptyConfig ? undefined : validateRequiredValue(value)),
+                                required: (value) =>
+                                    isInterfaceIncludesIpv6 ? undefined : validateRequiredValue(value),
                             },
                         })}
                     />
@@ -130,7 +120,11 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
             </div>
 
             <div className="btn-list">
-                <button type="submit" className="btn btn-success btn-standard" disabled={isDisabled}>
+                <button
+                    data-testid="v6_save"
+                    type="submit"
+                    className="btn btn-success btn-standard"
+                    disabled={isDisabled}>
                     {t('save_config')}
                 </button>
             </div>

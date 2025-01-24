@@ -55,7 +55,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
         control,
         formState: { isSubmitting },
     } = useForm<FormValues>({
-        mode: 'onChange',
+        mode: 'onBlur',
         defaultValues: {
             ...defaultFormValues,
             ...initialValues,

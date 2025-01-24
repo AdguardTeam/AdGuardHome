@@ -26,6 +26,7 @@ import { Checkbox } from '../../ui/Controls/Checkbox';
 import { Radio } from '../../ui/Controls/Radio';
 import { Input } from '../../ui/Controls/Input';
 import { Textarea } from '../../ui/Controls/Textarea';
+import { EncryptionData } from '../../../initialState';
 
 const certificateSourceOptions = [
     {
@@ -71,7 +72,7 @@ const validationMessage = (warningValidation: string, isWarning: boolean) => {
     );
 };
 
-export type FormValues = {
+export type EncryptionFormValues = {
     enabled: boolean;
     serve_plain_dns: boolean;
     server_name: string;
@@ -89,7 +90,7 @@ export type FormValues = {
 };
 
 type Props = {
-    initialValues: FormValues;
+    initialValues: EncryptionFormValues;
     processingConfig: boolean;
     processingValidate: boolean;
     status_key?: string;
@@ -103,10 +104,10 @@ type Props = {
     key_type?: string;
     issuer?: string;
     subject?: string;
-    onSubmit: (...args: unknown[]) => void;
-    onChange: (...args: unknown[]) => void;
-    setTlsConfig: (...args: unknown[]) => void;
-    validateTlsConfig: (...args: unknown[]) => void;
+    onSubmit: (values: EncryptionFormValues) => void;
+    debouncedConfigValidation: (values: EncryptionFormValues) => void;
+    setTlsConfig: (values: Partial<EncryptionData>) => void;
+    validateTlsConfig: (values: Partial<EncryptionData>) => void;
 };
 
 const defaultValues = {
@@ -141,11 +142,12 @@ export const Form = ({
     subject,
     warning_validation,
     onSubmit,
+    debouncedConfigValidation,
     setTlsConfig,
     validateTlsConfig,
 }: Props) => {
     const { t } = useTranslation();
-    const previousValuesRef = useRef<FormValues>(initialValues);
+    const previousValuesRef = useRef<EncryptionFormValues>(initialValues);
 
     const {
         control,
@@ -156,31 +158,35 @@ export const Form = ({
         setError,
         getValues,
         formState: { isSubmitting, isValid },
-    } = useForm<FormValues>({
+    } = useForm<EncryptionFormValues>({
         defaultValues: {
             ...initialValues,
             ...defaultValues,
         },
-        mode: 'onChange',
+        mode: 'onBlur',
     });
 
     const watchedValues = watch();
 
-    const isEnabled = watch('enabled');
-    const servePlainDns = watch('serve_plain_dns');
-    const certificateChain = watch('certificate_chain');
-    const privateKey = watch('private_key');
-    const certificatePath = watch('certificate_path');
-    const privateKeyPath = watch('private_key_path');
-    const certificateSource = watch('certificate_source');
-    const privateKeySaved = watch('private_key_saved');
-    const privateKeySource = watch('key_source');
+    const {
+        enabled: isEnabled,
+        serve_plain_dns: servePlainDns,
+        certificate_chain: certificateChain,
+        private_key: privateKey,
+        certificate_path: certificatePath,
+        private_key_path: privateKeyPath,
+        certificate_source: certificateSource,
+        private_key_saved: privateKeySaved,
+        key_source: privateKeySource,
+    } = watchedValues;
 
     useEffect(() => {
         const previousValues = previousValuesRef.current;
 
         if (JSON.stringify(previousValues) !== JSON.stringify(watchedValues)) {
-            // TODO onChange TLS config validation
+            // TODO(ik) onChange TLS config validation
+            console.log('debouncedConfigValidation');
+            debouncedConfigValidation(watchedValues);
             previousValuesRef.current = watchedValues;
         }
     }, [watchedValues]);
@@ -203,7 +209,7 @@ export const Form = ({
         }
     };
 
-    const validatePorts = (values: FormValues) => {
+    const validatePorts = (values: EncryptionFormValues) => {
         const errors: { port_dns_over_tls?: string; port_https?: string } = {};
 
         if (values.port_dns_over_tls && values.port_https) {
@@ -216,12 +222,12 @@ export const Form = ({
         return errors;
     };
 
-    const onFormSubmit = (data: FormValues) => {
+    const onFormSubmit = (data: EncryptionFormValues) => {
         const validationErrors = validatePorts(data);
 
         if (Object.keys(validationErrors).length > 0) {
             Object.entries(validationErrors).forEach(([field, message]) => {
-                setError(field as keyof FormValues, { type: 'manual', message });
+                setError(field as keyof EncryptionFormValues, { type: 'manual', message });
             });
         } else {
             onSubmit(data);

@@ -26,7 +26,7 @@ const Form = ({ processingAdd, currentRewrite, toggleRewritesModal, onSubmit }: 
         control,
         formState: { isDirty, isSubmitting },
     } = useForm<FormValues>({
-        mode: 'onChange',
+        mode: 'onBlur',
         defaultValues: {
             domain: currentRewrite?.domain || '',
             answer: currentRewrite?.answer || '',

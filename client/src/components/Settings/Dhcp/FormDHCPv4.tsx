@@ -23,7 +23,7 @@ type FormDHCPv4Props = {
         lease_duration: string;
     };
     interfaces: any;
-    onSubmit?: (data: DhcpFormValues) => Promise<void> | void;
+    onSubmit?: (data: DhcpFormValues) => void;
 };
 
 const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }: FormDHCPv4Props) => {
@@ -32,7 +32,7 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
     const {
         register,
         handleSubmit,
-        formState: { errors, isSubmitting, isValid },
+        formState: { errors, isSubmitting },
         watch,
     } = useFormContext<DhcpFormValues>();
 
@@ -41,25 +41,20 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
 
     const formValues = watch('v4');
     const isEmptyConfig = !Object.values(formValues || {}).some(Boolean);
-
-    const handleFormSubmit = async (data: DhcpFormValues) => {
-        // TODO handle submit
-        if (onSubmit) {
-            await onSubmit(data);
-        }
-    };
+    const hasV4Errors = errors.v4 && Object.keys(errors.v4).length > 0;
 
     const isDisabled = useMemo(() => {
-        return isSubmitting || !isValid || processingConfig || !isInterfaceIncludesIpv4 || isEmptyConfig;
-    }, [isSubmitting, isValid, processingConfig, isInterfaceIncludesIpv4, isEmptyConfig]);
+        return isSubmitting || hasV4Errors || processingConfig || !isInterfaceIncludesIpv4 || isEmptyConfig;
+    }, [isSubmitting, hasV4Errors, processingConfig, isInterfaceIncludesIpv4, isEmptyConfig]);
 
     return (
-        <form onSubmit={handleSubmit(handleFormSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)}>
             <div className="row">
                 <div className="col-lg-6">
                     <div className="form__group form__group--settings">
                         <label>{t('dhcp_form_gateway_input')}</label>
                         <input
+                            data-testid="v4_gateway_ip"
                             type="text"
                             className="form-control"
                             placeholder={t(ipv4placeholders?.gateway_ip || '')}
@@ -80,6 +75,7 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
                     <div className="form__group form__group--settings">
                         <label>{t('dhcp_form_subnet_input')}</label>
                         <input
+                            data-testid="v4_subnet_mask"
                             type="text"
                             className="form-control"
                             placeholder={t(ipv4placeholders?.subnet_mask || '')}
@@ -106,6 +102,7 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
 
                             <div className="col">
                                 <input
+                                    data-testid="v4_range_start"
                                     type="text"
                                     className="form-control"
                                     placeholder={t(ipv4placeholders?.range_start || '')}
@@ -126,6 +123,7 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
 
                             <div className="col">
                                 <input
+                                    data-testid="v4_range_end"
                                     type="text"
                                     className="form-control"
                                     placeholder={t(ipv4placeholders?.range_end || '')}
@@ -150,6 +148,7 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
                     <div className="form__group form__group--settings">
                         <label>{t('dhcp_form_lease_title')}</label>
                         <input
+                            data-testid="v4_lease_duration"
                             type="number"
                             className="form-control"
                             placeholder={t(ipv4placeholders?.lease_duration || '')}
@@ -173,7 +172,11 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
             </div>
 
             <div className="btn-list">
-                <button type="submit" className="btn btn-success btn-standard" disabled={isDisabled}>
+                <button
+                    data-testid="v4_save"
+                    type="submit"
+                    className="btn btn-success btn-standard"
+                    disabled={isDisabled}>
                     {t('save_config')}
                 </button>
             </div>

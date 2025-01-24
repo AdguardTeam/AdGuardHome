@@ -52,7 +52,7 @@ const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
         watch,
         formState: { isSubmitting, isDirty },
     } = useForm<FormData>({
-        mode: 'onChange',
+        mode: 'onBlur',
         defaultValues: {
             allowed_clients: initialValues?.allowed_clients || '',
             disallowed_clients: initialValues?.disallowed_clients || '',

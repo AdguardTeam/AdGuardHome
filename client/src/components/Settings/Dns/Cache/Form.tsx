@@ -53,7 +53,7 @@ const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
         watch,
         formState: { isSubmitting, isDirty },
     } = useForm<FormData>({
-        mode: 'onChange',
+        mode: 'onBlur',
         defaultValues: {
             cache_size: initialValues?.cache_size || 0,
             cache_ttl_min: initialValues?.cache_ttl_min || 0,

@@ -63,7 +63,7 @@ export const Form = ({
             ...defaultFormValues,
             ...initialValues,
         },
-        mode: 'onChange',
+        mode: 'onBlur',
     });
 
     const {
