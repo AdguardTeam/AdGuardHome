@@ -28,6 +28,7 @@ export const BlockedServices = ({ services }: Props) => {
                     render={({ field }) => (
                         <ServiceField
                             {...field}
+                            data-testid="clients_use_global_blocked_services"
                             placeholder={t('blocked_services_global')}
                             className="service--global"
                         />
@@ -38,6 +39,7 @@ export const BlockedServices = ({ services }: Props) => {
                     <div className="col-6">
                         <button
                             type="button"
+                            data-testid="clients_block_all"
                             className="btn btn-secondary btn-block"
                             disabled={useGlobalServices}
                             onClick={() => handleToggleAllServices(true)}>
@@ -48,6 +50,7 @@ export const BlockedServices = ({ services }: Props) => {
                     <div className="col-6">
                         <button
                             type="button"
+                            data-testid="clients_unblock_all"
                             className="btn btn-secondary btn-block"
                             disabled={useGlobalServices}
                             onClick={() => handleToggleAllServices(false)}>
@@ -65,6 +68,7 @@ export const BlockedServices = ({ services }: Props) => {
                                 render={({ field }) => (
                                     <ServiceField
                                         {...field}
+                                        data-testid={`clients_service_${service.id}`}
                                         placeholder={service.name}
                                         disabled={useGlobalServices}
                                         icon={service.icon_svg}

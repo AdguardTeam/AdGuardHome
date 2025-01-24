@@ -11,7 +11,7 @@ type Props = ControllerRenderProps<FieldValues> & {
 };
 
 export const ServiceField = React.forwardRef<HTMLInputElement, Props>(
-    ({ name, value, onChange, onBlur, placeholder, disabled, className, icon, error }, ref) => (
+    ({ name, value, onChange, onBlur, placeholder, disabled, className, icon, error, ...rest }, ref) => (
         <>
             <label className={cn('service custom-switch', className)}>
                 <input
@@ -23,6 +23,7 @@ export const ServiceField = React.forwardRef<HTMLInputElement, Props>(
                     onBlur={onBlur}
                     ref={ref}
                     disabled={disabled}
+                    {...rest}
                 />
 
                 <span className="service__switch custom-switch-indicator"></span>

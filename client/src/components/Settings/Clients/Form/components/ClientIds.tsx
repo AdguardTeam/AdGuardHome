@@ -31,6 +31,7 @@ export const ClientIds = () => {
                             <Input
                                 {...field}
                                 type="text"
+                                data-testid={`clients_id_${index}`}
                                 placeholder={t('form_enter_id')}
                                 error={fieldState.error?.message}
                                 onBlur={(event) => {
@@ -43,6 +44,7 @@ export const ClientIds = () => {
                                         <span className="input-group-append">
                                             <button
                                                 type="button"
+                                                data-testid={`clients_id_remove_${index}`}
                                                 className="btn btn-secondary btn-icon btn-icon--green"
                                                 onClick={() => remove(index)}>
                                                 <svg className="icon icon--24">
@@ -59,6 +61,7 @@ export const ClientIds = () => {
             ))}
             <button
                 type="button"
+                data-testid="clients_id_add"
                 className="btn btn-link btn-block btn-sm"
                 onClick={() => append({ name: '' })}
                 title={t('form_add_id')}>

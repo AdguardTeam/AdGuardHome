@@ -74,7 +74,12 @@ export const FiltersList = ({ categories, filters, selectedSources }: Props) => 
                                         name={id}
                                         control={control}
                                         render={({ field }) => (
-                                            <Checkbox {...field} title={name} disabled={isSelected} />
+                                            <Checkbox
+                                                {...field}
+                                                data-testid={`filters_${id}`}
+                                                title={name}
+                                                disabled={isSelected}
+                                            />
                                         )}
                                     />
                                     {renderIcons(iconsData)}

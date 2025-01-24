@@ -48,6 +48,7 @@ const Check = ({ onSubmit }: Props) => {
                                 <Input
                                     {...field}
                                     type="text"
+                                    data-testid="check_domain_name"
                                     placeholder={t('form_enter_host')}
                                     error={fieldState.error?.message}
                                     rightAddon={
@@ -55,6 +56,7 @@ const Check = ({ onSubmit }: Props) => {
                                             <button
                                                 className="btn btn-success btn-standard btn-large"
                                                 type="submit"
+                                                data-testid="check_domain_submit"
                                                 disabled={!isDirty || !isValid || processingCheck}>
                                                 {t('check')}
                                             </button>

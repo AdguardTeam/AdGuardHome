@@ -5,7 +5,6 @@ import i18next from 'i18next';
 import { Controller, useForm } from 'react-hook-form';
 import { STATS_INTERVALS_DAYS, DAY, RETENTION_CUSTOM, RETENTION_RANGE } from '../../../helpers/constants';
 
-import { trimLinesAndRemoveEmpty } from '../../../helpers/helpers';
 import '../FormButton.css';
 import { Checkbox } from '../../ui/Controls/Checkbox';
 import { Input } from '../../ui/Controls/Input';
@@ -73,11 +72,6 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
 
     const onSubmitForm = (data: FormValues) => {
         onSubmit(data);
-    };
-
-    const handleIgnoredBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
-        const trimmed = trimLinesAndRemoveEmpty(e.target.value);
-        setValue('ignored', trimmed);
     };
 
     const disableSubmit = isSubmitting || processing || (intervalValue === RETENTION_CUSTOM && !customIntervalValue);
@@ -179,7 +173,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                             className="text-input"
                             disabled={processing}
                             error={fieldState.error?.message}
-                            onBlur={handleIgnoredBlur}
+                            trimOnBlur
                         />
                     )}
                 />

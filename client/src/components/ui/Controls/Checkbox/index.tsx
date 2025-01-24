@@ -15,7 +15,7 @@ type Props = {
 };
 
 export const Checkbox = forwardRef<HTMLInputElement, Props>(
-    ({ title, subtitle, value, name, disabled, error, className = 'checkbox--form', onChange }, ref) => (
+    ({ title, subtitle, value, name, disabled, error, className = 'checkbox--form', onChange, ...rest }, ref) => (
         <>
             <label className={clsx('checkbox', className)}>
                 <span className="checkbox__marker" />
@@ -27,6 +27,7 @@ export const Checkbox = forwardRef<HTMLInputElement, Props>(
                     checked={value}
                     onChange={(e) => onChange(e.target.checked)}
                     ref={ref}
+                    {...rest}
                 />
                 <span className="checkbox__label">
                     <span className="checkbox__label-text checkbox__label-text--long">

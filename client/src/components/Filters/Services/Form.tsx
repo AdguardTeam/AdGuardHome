@@ -46,6 +46,7 @@ export const Form = ({ initialValues, blockedServices, processing, processingSet
                     <div className="col-6">
                         <button
                             type="button"
+                            data-testid="blocked_services_block_all"
                             className="btn btn-secondary btn-block"
                             disabled={processing || processingSet}
                             onClick={() => handleToggleAllServices(true)}>
@@ -56,6 +57,7 @@ export const Form = ({ initialValues, blockedServices, processing, processingSet
                     <div className="col-6">
                         <button
                             type="button"
+                            data-testid="blocked_services_unblock_all"
                             className="btn btn-secondary btn-block"
                             disabled={processing || processingSet}
                             onClick={() => handleToggleAllServices(false)}>
@@ -65,7 +67,7 @@ export const Form = ({ initialValues, blockedServices, processing, processingSet
                 </div>
 
                 <div className="services">
-                    {blockedServices.map((service: any) => (
+                    {blockedServices.map((service: BlockedService) => (
                         <Controller
                             key={service.id}
                             name={`blocked_services.${service.id}`}
@@ -73,6 +75,7 @@ export const Form = ({ initialValues, blockedServices, processing, processingSet
                             render={({ field }) => (
                                 <ServiceField
                                     {...field}
+                                    data-testid={`blocked_services_${service.id}`}
                                     placeholder={service.name}
                                     disabled={processing || processingSet}
                                     icon={service.icon_svg}
@@ -86,6 +89,7 @@ export const Form = ({ initialValues, blockedServices, processing, processingSet
             <div className="btn-list">
                 <button
                     type="submit"
+                    data-testid="blocked_services_save"
                     className="btn btn-success btn-standard btn-large"
                     disabled={isSubmitting || !isDirty || processing || processingSet}>
                     <Trans>save_btn</Trans>

@@ -64,6 +64,7 @@ export const MainSettings = ({ safeSearchServices }: Props) => {
                         render={({ field }) => (
                             <Checkbox
                                 {...field}
+                                data-testid={`clients_${setting.name}`}
                                 title={setting.placeholder}
                                 disabled={setting.name !== 'use_global_settings' ? useGlobalSettings : false}
                             />
@@ -77,7 +78,12 @@ export const MainSettings = ({ safeSearchServices }: Props) => {
                     name="safe_search.enabled"
                     control={control}
                     render={({ field }) => (
-                        <Checkbox {...field} title={t('enforce_safe_search')} disabled={useGlobalSettings} />
+                        <Checkbox
+                            data-testid="clients_safe_search"
+                            {...field}
+                            title={t('enforce_safe_search')}
+                            disabled={useGlobalSettings}
+                        />
                     )}
                 />
             </div>
@@ -89,7 +95,12 @@ export const MainSettings = ({ safeSearchServices }: Props) => {
                             name={`safe_search.${searchKey}`}
                             control={control}
                             render={({ field }) => (
-                                <Checkbox {...field} title={captitalizeWords(searchKey)} disabled={useGlobalSettings} />
+                                <Checkbox
+                                    {...field}
+                                    data-testid={`clients_safe_search_${searchKey}`}
+                                    title={captitalizeWords(searchKey)}
+                                    disabled={useGlobalSettings}
+                                />
                             )}
                         />
                     </div>
@@ -104,7 +115,9 @@ export const MainSettings = ({ safeSearchServices }: Props) => {
                     <Controller
                         name={setting.name}
                         control={control}
-                        render={({ field }) => <Checkbox {...field} title={setting.placeholder} />}
+                        render={({ field }) => (
+                            <Checkbox {...field} data-testid={`clients_${setting.name}`} title={setting.placeholder} />
+                        )}
                     />
                 </div>
             ))}

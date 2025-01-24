@@ -5,16 +5,16 @@ import { Trans, useTranslation } from 'react-i18next';
 import { validateAnswer, validateDomain, validateRequiredValue } from '../../../helpers/validators';
 import { Input } from '../../ui/Controls/Input';
 
-interface FormValues {
+interface RewriteFormValues {
     domain: string;
     answer: string;
 }
 
 type Props = {
     processingAdd: boolean;
-    currentRewrite?: { answer: string; domain: string };
+    currentRewrite?: RewriteFormValues;
     toggleRewritesModal: () => void;
-    onSubmit?: (data: FormValues) => Promise<void> | void;
+    onSubmit?: (data: RewriteFormValues) => Promise<void> | void;
 };
 
 const Form = ({ processingAdd, currentRewrite, toggleRewritesModal, onSubmit }: Props) => {
@@ -25,7 +25,7 @@ const Form = ({ processingAdd, currentRewrite, toggleRewritesModal, onSubmit }: 
         reset,
         control,
         formState: { isDirty, isSubmitting },
-    } = useForm<FormValues>({
+    } = useForm<RewriteFormValues>({
         mode: 'onBlur',
         defaultValues: {
             domain: currentRewrite?.domain || '',
@@ -33,7 +33,7 @@ const Form = ({ processingAdd, currentRewrite, toggleRewritesModal, onSubmit }: 
         },
     });
 
-    const handleFormSubmit = async (data: FormValues) => {
+    const handleFormSubmit = async (data: RewriteFormValues) => {
         if (onSubmit) {
             await onSubmit(data);
         }
@@ -59,6 +59,7 @@ const Form = ({ processingAdd, currentRewrite, toggleRewritesModal, onSubmit }: 
                             <Input
                                 {...field}
                                 type="text"
+                                data-testid="rewrites_domain"
                                 placeholder={t('form_domain')}
                                 error={fieldState.error?.message}
                             />
@@ -91,6 +92,7 @@ const Form = ({ processingAdd, currentRewrite, toggleRewritesModal, onSubmit }: 
                             <Input
                                 {...field}
                                 type="text"
+                                data-testid="rewrites_answer"
                                 placeholder={t('form_answer')}
                                 error={fieldState.error?.message}
                             />
@@ -111,6 +113,7 @@ const Form = ({ processingAdd, currentRewrite, toggleRewritesModal, onSubmit }: 
                 <div className="btn-list">
                     <button
                         type="button"
+                        data-testid="rewrites_cancel"
                         className="btn btn-secondary btn-standard"
                         disabled={isSubmitting || processingAdd}
                         onClick={() => {
@@ -122,6 +125,7 @@ const Form = ({ processingAdd, currentRewrite, toggleRewritesModal, onSubmit }: 
 
                     <button
                         type="submit"
+                        data-testid="rewrites_save"
                         className="btn btn-success btn-standard"
                         disabled={isSubmitting || !isDirty || processingAdd}>
                         <Trans>save_btn</Trans>

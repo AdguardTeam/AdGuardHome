@@ -27,6 +27,7 @@ import { Radio } from '../../ui/Controls/Radio';
 import { Input } from '../../ui/Controls/Input';
 import { Textarea } from '../../ui/Controls/Textarea';
 import { EncryptionData } from '../../../initialState';
+import { toNumber } from '../../../helpers/form';
 
 const certificateSourceOptions = [
     {
@@ -335,6 +336,10 @@ export const Form = ({
                                     placeholder={t('encryption_https')}
                                     error={fieldState.error?.message}
                                     disabled={!isEnabled}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        field.onChange(toNumber(value));
+                                    }}
                                 />
                             )}
                         />
@@ -362,6 +367,10 @@ export const Form = ({
                                     placeholder={t('encryption_dot')}
                                     error={fieldState.error?.message}
                                     disabled={!isEnabled}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        field.onChange(toNumber(value));
+                                    }}
                                 />
                             )}
                         />
@@ -389,6 +398,10 @@ export const Form = ({
                                     placeholder={t('encryption_doq')}
                                     error={fieldState.error?.message}
                                     disabled={!isEnabled}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        field.onChange(toNumber(value));
+                                    }}
                                 />
                             )}
                         />

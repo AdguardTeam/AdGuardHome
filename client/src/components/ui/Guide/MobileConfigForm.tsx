@@ -14,6 +14,7 @@ import {
     validateIsSafePort,
 } from '../../../helpers/validators';
 import { Input } from '../Controls/Input';
+import { Select } from '../Controls/Select';
 
 const getDownloadLink = (host: string, clientId: string, protocol: string, invalid: boolean) => {
     if (!host || invalid) {
@@ -62,7 +63,6 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
     const { t } = useTranslation();
 
     const {
-        register,
         watch,
         control,
         formState: { isValid },
@@ -101,6 +101,7 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                                     <Input
                                         {...field}
                                         type="text"
+                                        data-testid="mobile_config_host"
                                         label={t('dhcp_table_hostname')}
                                         placeholder={t('form_enter_hostname')}
                                         error={fieldState.error?.message}
@@ -123,6 +124,7 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                                         <Input
                                             {...field}
                                             type="number"
+                                            data-testid="mobile_config_port"
                                             label={t('encryption_https')}
                                             placeholder={t('encryption_https')}
                                             error={fieldState.error?.message}
@@ -160,6 +162,7 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                             <Input
                                 {...field}
                                 type="text"
+                                data-testid="mobile_config_client_id"
                                 placeholder={t('client_id_placeholder')}
                                 error={fieldState.error?.message}
                             />
@@ -168,14 +171,16 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                 </div>
 
                 <div className="form__group form__group--settings">
-                    <label htmlFor="protocol" className="form__label">
-                        {i18next.t('protocol')}
-                    </label>
-
-                    <select id="protocol" className="form-control" {...register('protocol')}>
-                        <option value={MOBILE_CONFIG_LINKS.DOT}>{i18next.t('dns_over_tls')}</option>
-                        <option value={MOBILE_CONFIG_LINKS.DOH}>{i18next.t('dns_over_https')}</option>
-                    </select>
+                    <Controller
+                        name="protocol"
+                        control={control}
+                        render={({ field }) => (
+                            <Select {...field} label={t('protocol')} data-testid="mobile_config_protocol">
+                                <option value={MOBILE_CONFIG_LINKS.DOT}>{i18next.t('dns_over_tls')}</option>
+                                <option value={MOBILE_CONFIG_LINKS.DOH}>{i18next.t('dns_over_https')}</option>
+                            </Select>
+                        )}
+                    />
                 </div>
             </div>
 

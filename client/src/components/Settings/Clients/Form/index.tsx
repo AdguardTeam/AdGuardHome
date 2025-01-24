@@ -70,7 +70,6 @@ export const Form = ({
         handleSubmit,
         reset,
         control,
-        setValue,
         formState: { isSubmitting, isValid },
     } = methods;
 
@@ -116,6 +115,7 @@ export const Form = ({
                                     <Input
                                         {...field}
                                         type="text"
+                                        data-testid="clients_name"
                                         placeholder={t('form_client_name')}
                                         error={fieldState.error?.message}
                                         onBlur={(event) => {
@@ -155,13 +155,11 @@ export const Form = ({
                                 render={({ field }) => (
                                     <Select
                                         {...field}
+                                        data-testid="clients_tags"
                                         options={tagsOptions}
                                         className="basic-multi-select"
                                         classNamePrefix="select"
                                         isMulti
-                                        onChange={(selectedOptions) => {
-                                            setValue('tags', selectedOptions);
-                                        }}
                                     />
                                 )}
                             />

@@ -15,13 +15,13 @@ type FormValues = {
 };
 
 type Props = {
-    closeModal: (...args: unknown[]) => void;
+    closeModal: () => void;
     onSubmit: (values: FormValues) => void;
     processingAddFilter: boolean;
     processingConfigFilter: boolean;
     whitelist?: boolean;
     modalType: string;
-    toggleFilteringModal: (...args: unknown[]) => void;
+    toggleFilteringModal: ({ type }: { type?: keyof typeof MODAL_TYPE }) => void;
     selectedSources?: Record<string, boolean>;
     initialValues?: FormValues;
 };
@@ -42,14 +42,14 @@ export const Form = ({
     const methods = useForm({ defaultValues: initialValues });
     const { handleSubmit, control } = methods;
 
-    const openModal = (modalType: any, timeout = MODAL_OPEN_TIMEOUT) => {
-        toggleFilteringModal();
+    const openModal = (modalType: keyof typeof MODAL_TYPE, timeout = MODAL_OPEN_TIMEOUT) => {
+        toggleFilteringModal(undefined);
         setTimeout(() => toggleFilteringModal({ type: modalType }), timeout);
     };
 
-    const openFilteringListModal = () => openModal(MODAL_TYPE.CHOOSE_FILTERING_LIST);
+    const openFilteringListModal = () => openModal('CHOOSE_FILTERING_LIST');
 
-    const openAddFiltersModal = () => openModal(MODAL_TYPE.ADD_FILTERS);
+    const openAddFiltersModal = () => openModal('ADD_FILTERS');
 
     return (
         <FormProvider {...methods}>
@@ -81,8 +81,15 @@ export const Form = ({
                                 <Controller
                                     name="name"
                                     control={control}
-                                    render={({ field }) => (
-                                        <Input {...field} type="text" placeholder={t('enter_name_hint')} trimOnBlur />
+                                    render={({ field, fieldState }) => (
+                                        <Input
+                                            {...field}
+                                            type="text"
+                                            data-testid="filters_name"
+                                            placeholder={t('enter_name_hint')}
+                                            error={fieldState.error?.message}
+                                            trimOnBlur
+                                        />
                                     )}
                                 />
                             </div>
@@ -92,11 +99,13 @@ export const Form = ({
                                     name="url"
                                     control={control}
                                     rules={{ validate: { validateRequiredValue, validatePath } }}
-                                    render={({ field }) => (
+                                    render={({ field, fieldState }) => (
                                         <Input
                                             {...field}
                                             type="text"
+                                            data-testid="filters_url"
                                             placeholder={t('enter_url_or_path_hint')}
+                                            error={fieldState.error?.message}
                                             trimOnBlur
                                         />
                                     )}
@@ -118,6 +127,7 @@ export const Form = ({
                     {modalType !== MODAL_TYPE.SELECT_MODAL_TYPE && (
                         <button
                             type="submit"
+                            data-testid="filters_save"
                             className="btn btn-success"
                             disabled={processingAddFilter || processingConfigFilter}>
                             {t('save_btn')}
