@@ -28,7 +28,7 @@ import {
     THEMES,
 } from './constants';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from './localStorageHelper';
-import { DhcpInterface } from '../initialState';
+import { DhcpInterface, InstallInterface } from '../initialState';
 
 /**
  * @param time {string} The time to format
@@ -217,9 +217,9 @@ export const getInterfaceIp = (option: any) => {
     return interfaceIP;
 };
 
-export const getIpList = (interfaces: DhcpInterface[]) =>
+export const getIpList = (interfaces: InstallInterface[]) =>
     Object.values(interfaces)
-        .reduce((acc: string[], curr: DhcpInterface) => acc.concat(curr.ip_addresses), [] as string[])
+        .reduce((acc: string[], curr: InstallInterface) => acc.concat(curr.ip_addresses), [] as string[])
         .sort();
 
 /**

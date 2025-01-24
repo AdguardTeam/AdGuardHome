@@ -1,20 +1,16 @@
 import React from 'react';
 
-import { Trans, withTranslation } from 'react-i18next';
-import flow from 'lodash/flow';
+import { Trans } from 'react-i18next';
 
 import Controls from './Controls';
+import { WebConfig } from './Settings';
 
-interface SubmitProps {
-    webIp: string;
-    webPort: number;
-    handleSubmit: (...args: unknown[]) => string;
-    pristine: boolean;
-    submitting: boolean;
-    openDashboard: (...args: unknown[]) => unknown;
-}
+type Props = {
+    webConfig: WebConfig;
+    openDashboard: (ip: string, port: number) => void;
+};
 
-const Submit = (props: SubmitProps) => (
+export const Submit = ({ openDashboard, webConfig }: Props) => (
     <div className="setup__step">
         <div className="setup__group">
             <h1 className="setup__title">
@@ -26,8 +22,6 @@ const Submit = (props: SubmitProps) => (
             </p>
         </div>
 
-        <Controls openDashboard={props.openDashboard} ip={props.webIp} port={props.webPort} />
+        <Controls openDashboard={openDashboard} ip={webConfig.ip} port={webConfig.port} />
     </div>
 );
-
-export default flow([withTranslation()])(Submit);

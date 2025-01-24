@@ -19,7 +19,7 @@ import {
 } from '../../helpers/constants';
 
 import { validateRequiredValue } from '../../helpers/validators';
-import { DhcpInterface } from '../../initialState';
+import { InstallInterface } from '../../initialState';
 import { Input } from '../../components/ui/Controls/Input';
 import { Select } from '../../components/ui/Controls/Select';
 import { toNumber } from '../../helpers/form';
@@ -31,12 +31,27 @@ const validateInstallPort = (value: number) => {
     return undefined;
 };
 
+export type WebConfig = {
+    ip: string;
+    port: number;
+};
+
+export type DnsConfig = {
+    ip: string;
+    port: number;
+};
+
+export type SettingsFormValues = {
+    web: WebConfig;
+    dns: DnsConfig;
+};
+
 type StaticIpType = {
     ip: string;
     static: string;
 };
 
-type ConfigType = {
+export type ConfigType = {
     web: {
         ip: string;
         port?: number;
@@ -53,17 +68,17 @@ type ConfigType = {
 };
 
 type Props = {
-    handleSubmit: (data: any) => void;
-    handleChange?: (...args: unknown[]) => unknown;
-    handleFix: (web: any, dns: any, set_static_ip: boolean) => void;
-    validateForm: (data: any) => void;
+    handleSubmit: (data: SettingsFormValues) => void;
+    handleChange?: (data: SettingsFormValues) => unknown;
+    handleFix: (web: WebConfig, dns: DnsConfig, set_static_ip: boolean) => void;
+    validateForm: (data: SettingsFormValues) => void;
     config: ConfigType;
-    interfaces: DhcpInterface[];
+    interfaces: InstallInterface[];
     initialValues?: object;
 };
 
-const renderInterfaces = (interfaces: DhcpInterface[]) =>
-    Object.values(interfaces).map((option: DhcpInterface) => {
+const renderInterfaces = (interfaces: InstallInterface[]) =>
+    Object.values(interfaces).map((option: InstallInterface) => {
         const { name, ip_addresses, flags } = option;
 
         if (option && ip_addresses?.length > 0) {
@@ -99,7 +114,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
         watch,
         handleSubmit: reactHookFormSubmit,
         formState: { isValid },
-    } = useForm({
+    } = useForm<SettingsFormValues>({
         defaultValues,
         mode: 'onBlur',
     });
@@ -235,7 +250,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                 name="web.ip"
                                 control={control}
                                 render={({ field }) => (
-                                    <Select {...field}>
+                                    <Select {...field} data-testid="install_web_ip">
                                         <option value={ALL_INTERFACES_IP}>
                                             {t('install_settings_all_interfaces')}
                                         </option>
@@ -264,6 +279,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                     <Input
                                         {...field}
                                         type="number"
+                                        data-testid="install_web_port"
                                         placeholder={STANDARD_WEB_PORT.toString()}
                                         error={fieldState.error?.message}
                                         onChange={(e) => {
@@ -283,6 +299,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                 {isWebFixAvailable && (
                                     <button
                                         type="button"
+                                        data-testid="install_web_fix"
                                         className="btn btn-secondary btn-sm ml-2"
                                         onClick={() => handleAutofix('web')}>
                                         <Trans>fix</Trans>
@@ -323,7 +340,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                 name="dns.ip"
                                 control={control}
                                 render={({ field }) => (
-                                    <Select {...field}>
+                                    <Select {...field} data-testid="install_dns_ip">
                                         <option value={ALL_INTERFACES_IP}>
                                             {t('install_settings_all_interfaces')}
                                         </option>
@@ -353,6 +370,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                     <Input
                                         {...field}
                                         type="number"
+                                        data-testid="install_dns_port"
                                         error={fieldState.error?.message}
                                         placeholder={STANDARD_WEB_PORT.toString()}
                                         onChange={(e) => {
@@ -373,6 +391,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
                                     {isDnsFixAvailable && (
                                         <button
                                             type="button"
+                                            data-testid="install_dns_fix"
                                             className="btn btn-secondary btn-sm ml-2"
                                             onClick={() => handleAutofix('dns')}>
                                             <Trans>fix</Trans>

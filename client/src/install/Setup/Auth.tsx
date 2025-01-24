@@ -60,6 +60,7 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                             <Input
                                 {...field}
                                 type="text"
+                                data-testid="install_username"
                                 label={t('install_auth_username')}
                                 placeholder={t('install_auth_username_enter')}
                                 error={fieldState.error?.message}
@@ -83,6 +84,7 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                             <Input
                                 {...field}
                                 type="password"
+                                data-testid="install_password"
                                 label={t('install_auth_password')}
                                 placeholder={t('install_auth_password_enter')}
                                 error={fieldState.error?.message}
@@ -106,6 +108,7 @@ export const Auth = ({ onAuthSubmit }: Props) => {
                             <Input
                                 {...field}
                                 type="password"
+                                data-testid="install_confirm_password"
                                 label={t('install_auth_confirm')}
                                 placeholder={t('install_auth_confirm')}
                                 error={fieldState.error?.message}

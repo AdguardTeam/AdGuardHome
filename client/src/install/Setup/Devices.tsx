@@ -1,22 +1,21 @@
 import React from 'react';
 
-import { Trans, withTranslation } from 'react-i18next';
-import flow from 'lodash/flow';
+import { Trans } from 'react-i18next';
 
 import Guide from '../../components/ui/Guide';
 
 import Controls from './Controls';
 
 import AddressList from './AddressList';
-import { DhcpInterface } from '../../initialState';
+import { InstallInterface } from '../../initialState';
+import { DnsConfig } from './Settings';
 
-interface DevicesProps {
-    interfaces: DhcpInterface[];
-    dnsIp: string;
-    dnsPort: number;
-}
+type Props = {
+    interfaces: InstallInterface[];
+    dnsConfig: DnsConfig;
+};
 
-const Devices = ({ interfaces, dnsIp, dnsPort }: DevicesProps) => (
+export const Devices = ({ interfaces, dnsConfig }: Props) => (
     <div className="setup__step">
         <div className="setup__group">
             <div className="setup__subtitle">
@@ -31,7 +30,7 @@ const Devices = ({ interfaces, dnsIp, dnsPort }: DevicesProps) => (
                 </div>
 
                 <div className="mt-1">
-                    <AddressList interfaces={interfaces} address={dnsIp} port={dnsPort} isDns />
+                    <AddressList interfaces={interfaces} address={dnsConfig.ip} port={dnsConfig.port} isDns />
                 </div>
             </div>
 
@@ -41,5 +40,3 @@ const Devices = ({ interfaces, dnsIp, dnsPort }: DevicesProps) => (
         <Controls />
     </div>
 );
-
-export default flow([withTranslation()])(Devices);

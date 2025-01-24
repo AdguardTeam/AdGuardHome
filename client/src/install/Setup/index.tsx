@@ -9,10 +9,10 @@ import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '../../
 
 import Loading from '../../components/ui/Loading';
 import Greeting from './Greeting';
-import { Settings } from './Settings';
-import Devices from './Devices';
-import Submit from './Submit';
-import Progress from './Progress';
+import { ConfigType, DnsConfig, Settings, WebConfig } from './Settings';
+import { Devices } from './Devices';
+import { Submit } from './Submit';
+import { Progress } from './Progress';
 import { Auth } from './Auth';
 import Toasts from '../../components/Toasts';
 import Footer from '../../components/ui/Footer';
@@ -21,11 +21,12 @@ import { Logo } from '../../components/ui/svg/logo';
 
 import './Setup.css';
 import '../../components/ui/Tabler.css';
+import { InstallInterface, InstallState } from '../../initialState';
 
-const Setup = () => {
+export const Setup = () => {
     const dispatch = useDispatch();
 
-    const install = useSelector((state: any) => state.install);
+    const install = useSelector((state: InstallState) => state.install);
     const { processingDefault, step, web, dns, staticIp, interfaces } = install;
 
     useEffect(() => {
@@ -55,11 +56,11 @@ const Setup = () => {
         }
     }, DEBOUNCE_TIMEOUT);
 
-    const handleFix = (web: any, dns: any, set_static_ip: any) => {
+    const handleFix = (web: WebConfig, dns: DnsConfig, set_static_ip: boolean) => {
         dispatch(actionCreators.checkConfig({ web, dns, set_static_ip }));
     };
 
-    const openDashboard = (ip: any, port: any) => {
+    const openDashboard = (ip: string, port: number) => {
         let address = getWebAddress(ip, port);
         if (ip === ALL_INTERFACES_IP) {
             address = getWebAddress(window.location.hostname, port);
@@ -73,7 +74,7 @@ const Setup = () => {
         }
     };
 
-    const renderPage = (step: any, config: any, interfaces: any) => {
+    const renderPage = (step: number, config: ConfigType, interfaces: InstallInterface[]) => {
         switch (step) {
             case 1:
                 return <Greeting />;
@@ -91,9 +92,9 @@ const Setup = () => {
             case 3:
                 return <Auth onAuthSubmit={handleFormSubmit} />;
             case 4:
-                return <Devices interfaces={interfaces} dnsIp={dns.ip} dnsPort={dns.port} />;
+                return <Devices interfaces={interfaces} dnsConfig={dns} />;
             case 5:
-                return <Submit openDashboard={openDashboard} webIp={web.ip} webPort={web.port} />;
+                return <Submit openDashboard={openDashboard} webConfig={web} />;
             default:
                 return false;
         }
@@ -121,5 +122,3 @@ const Setup = () => {
         </>
     );
 };
-
-export default Setup;

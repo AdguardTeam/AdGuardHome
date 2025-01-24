@@ -9,6 +9,14 @@ import {
 import { DEFAULT_BLOCKING_IPV4, DEFAULT_BLOCKING_IPV6 } from './reducers/dnsConfig';
 import { Filter } from './helpers/helpers';
 
+export type InstallInterface = {
+    flags: string;
+    hardware_address: string;
+    ip_addresses: string[];
+    mtu: number;
+    name: string;
+};
+
 export type InstallData = {
     step: number;
     processingDefault: boolean;
@@ -31,13 +39,7 @@ export type InstallData = {
         ip: string;
         error: string;
     };
-    interfaces: {
-        flags: string;
-        hardware_address: string;
-        ip_addresses: string[];
-        mtu: number;
-        name: string;
-    }[];
+    interfaces: InstallInterface[];
     dnsVersion: string;
 };
 
