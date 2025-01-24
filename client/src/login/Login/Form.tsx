@@ -4,13 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { Input } from '../../components/ui/Controls/Input';
 import { validateRequiredValue } from '../../helpers/validators';
 
-type FormValues = {
+export type LoginFormValues = {
     username: string;
     password: string;
 };
 
 type LoginFormProps = {
-    onSubmit: (data: FormValues) => void;
+    onSubmit: (data: LoginFormValues) => void;
     processing: boolean;
 };
 
@@ -20,7 +20,7 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
         handleSubmit,
         control,
         formState: { isValid },
-    } = useForm<FormValues>({
+    } = useForm<LoginFormValues>({
         mode: 'onBlur',
         defaultValues: {
             username: '',

@@ -8,7 +8,7 @@ import configureStore from '../configureStore';
 import reducers from '../reducers/login';
 import '../i18n';
 
-import Login from './Login';
+import { Login } from './Login';
 import { LoginState } from '../initialState';
 
 const store = configureStore<LoginState>(reducers, {});
