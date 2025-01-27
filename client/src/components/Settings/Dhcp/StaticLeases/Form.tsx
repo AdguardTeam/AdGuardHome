@@ -14,6 +14,7 @@ import {
 
 import { toggleLeaseModal } from '../../../../actions';
 import { RootState } from '../../../../initialState';
+import { Input } from '../../../ui/Controls/Input';
 
 type Props = {
     initialValues?: {
@@ -27,15 +28,21 @@ type Props = {
     cidr?: string;
     isEdit?: boolean;
     onSubmit: (data: any) => void;
-}
+};
 
 export const Form = ({ initialValues, processingAdding, cidr, isEdit, onSubmit }: Props) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const dynamicLease = useSelector((store: RootState) => store.dhcp.leaseModalConfig, shallowEqual);
 
-    const { handleSubmit, control, reset, formState: { isSubmitting, isDirty } } = useForm({
+    const {
+        handleSubmit,
+        control,
+        reset,
+        formState: { isSubmitting, isDirty },
+    } = useForm({
         defaultValues: initialValues,
+        mode: 'onBlur',
     });
 
     const onClick = () => {
@@ -51,13 +58,14 @@ export const Form = ({ initialValues, processingAdding, cidr, isEdit, onSubmit }
                         name="mac"
                         control={control}
                         rules={{ validate: { required: validateRequiredValue, mac: validateMac } }}
-                        render={({ field }) => (
-                            <input
+                        render={({ field, fieldState }) => (
+                            <Input
                                 {...field}
                                 type="text"
-                                className="form-control"
+                                data-testid="static_lease_mac"
                                 placeholder={t('form_enter_mac')}
                                 disabled={isEdit}
+                                error={fieldState.error?.message}
                                 onChange={(e) => field.onChange(normalizeMac(e.target.value))}
                             />
                         )}
@@ -68,17 +76,20 @@ export const Form = ({ initialValues, processingAdding, cidr, isEdit, onSubmit }
                     <Controller
                         name="ip"
                         control={control}
-                        rules={{ validate: {
-                            required: validateRequiredValue,
-                            ipv4: validateIpv4,
-                            inCidr: validateIpv4InCidr,
-                            gateway: validateIpGateway,
-                        } }}
-                        render={({ field }) => (
-                            <input
+                        rules={{
+                            validate: {
+                                required: validateRequiredValue,
+                                ipv4: validateIpv4,
+                                inCidr: validateIpv4InCidr,
+                                gateway: validateIpGateway,
+                            },
+                        }}
+                        render={({ field, fieldState }) => (
+                            <Input
                                 {...field}
                                 type="text"
-                                className="form-control"
+                                data-testid="static_lease_ip"
+                                error={fieldState.error?.message}
                                 placeholder={t('form_enter_subnet_ip', { cidr })}
                             />
                         )}
@@ -89,11 +100,12 @@ export const Form = ({ initialValues, processingAdding, cidr, isEdit, onSubmit }
                     <Controller
                         name="hostname"
                         control={control}
-                        render={({ field }) => (
-                            <input
+                        render={({ field, fieldState }) => (
+                            <Input
                                 {...field}
                                 type="text"
-                                className="form-control"
+                                data-testid="static_lease_hostname"
+                                error={fieldState.error?.message}
                                 placeholder={t('form_enter_hostname')}
                             />
                         )}
@@ -105,18 +117,18 @@ export const Form = ({ initialValues, processingAdding, cidr, isEdit, onSubmit }
                 <div className="btn-list">
                     <button
                         type="button"
+                        data-testid="static_lease_cancel"
                         className="btn btn-secondary btn-standard"
                         disabled={isSubmitting}
-                        onClick={onClick}
-                    >
+                        onClick={onClick}>
                         <Trans>cancel_btn</Trans>
                     </button>
 
                     <button
                         type="submit"
+                        data-testid="static_lease_save"
                         className="btn btn-success btn-standard"
-                        disabled={isSubmitting || processingAdding || (!isDirty && !dynamicLease)}
-                    >
+                        disabled={isSubmitting || processingAdding || (!isDirty && !dynamicLease)}>
                         <Trans>save_btn</Trans>
                     </button>
                 </div>
