@@ -14,6 +14,12 @@ type FormValues = {
     url: string;
 };
 
+const defaultValues: FormValues = {
+    enabled: true,
+    name: '',
+    url: '',
+};
+
 type Props = {
     closeModal: () => void;
     onSubmit: (values: FormValues) => void;
@@ -39,7 +45,13 @@ export const Form = ({
 }: Props) => {
     const { t } = useTranslation();
 
-    const methods = useForm({ defaultValues: initialValues });
+    const methods = useForm({
+        defaultValues: {
+            ...defaultValues,
+            ...initialValues,
+        },
+        mode: 'onBlur',
+    });
     const { handleSubmit, control } = methods;
 
     const openModal = (modalType: keyof typeof MODAL_TYPE, timeout = MODAL_OPEN_TIMEOUT) => {
