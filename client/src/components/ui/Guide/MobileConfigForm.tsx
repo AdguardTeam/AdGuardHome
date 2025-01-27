@@ -142,7 +142,7 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
 
                 <div className="form__group form__group--settings">
                     <label htmlFor="clientId" className="form__label form__label--with-desc">
-                        {i18next.t('client_id')}
+                        {t('client_id')}
                     </label>
 
                     <div className="form__desc form__desc--top">
@@ -176,8 +176,8 @@ export const MobileConfigForm = ({ initialValues }: Props) => {
                         control={control}
                         render={({ field }) => (
                             <Select {...field} label={t('protocol')} data-testid="mobile_config_protocol">
-                                <option value={MOBILE_CONFIG_LINKS.DOT}>{i18next.t('dns_over_tls')}</option>
-                                <option value={MOBILE_CONFIG_LINKS.DOH}>{i18next.t('dns_over_https')}</option>
+                                <option value={MOBILE_CONFIG_LINKS.DOT}>{t('dns_over_tls')}</option>
+                                <option value={MOBILE_CONFIG_LINKS.DOH}>{t('dns_over_https')}</option>
                             </Select>
                         )}
                     />

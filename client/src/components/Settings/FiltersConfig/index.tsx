@@ -6,6 +6,7 @@ import i18next from 'i18next';
 import { toNumber } from '../../../helpers/form';
 import { DAY, FILTERS_INTERVALS_HOURS, FILTERS_RELATIVE_LINK } from '../../../helpers/constants';
 import { Checkbox } from '../../ui/Controls/Checkbox';
+import { Select } from '../../ui/Controls/Select';
 
 const THREE_DAYS_INTERVAL = DAY * 3;
 const SEVEN_DAYS_INTERVAL = DAY * 7;
@@ -37,7 +38,7 @@ export const FiltersConfig = ({ initialValues, setFiltersConfig, processing }: P
     const { t } = useTranslation();
     const prevFormValuesRef = useRef<FormValues>(initialValues);
 
-    const { register, watch, control } = useForm({
+    const { watch, control } = useForm({
         mode: 'onBlur',
         defaultValues: initialValues,
     });
@@ -68,6 +69,7 @@ export const FiltersConfig = ({ initialValues, setFiltersConfig, processing }: P
                             render={({ field }) => (
                                 <Checkbox
                                     {...field}
+                                    data-testid="filters_enabled"
                                     title={t('block_domain_use_filters_and_hosts')}
                                     disabled={processing}
                                 />
@@ -85,18 +87,26 @@ export const FiltersConfig = ({ initialValues, setFiltersConfig, processing }: P
                         <label className="form__label">
                             <Trans>filters_interval</Trans>
                         </label>
-                        <select
-                            {...register('interval', {
-                                setValueAs: toNumber,
-                            })}
-                            className="custom-select"
-                            disabled={processing}>
-                            {FILTERS_INTERVALS_HOURS.map((interval) => (
-                                <option value={interval} key={interval}>
-                                    {getTitleForInterval(interval)}
-                                </option>
-                            ))}
-                        </select>
+                        <Controller
+                            name="interval"
+                            control={control}
+                            render={({ field }) => (
+                                <Select
+                                    {...field}
+                                    data-testid="filters_interval"
+                                    disabled={processing}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        field.onChange(toNumber(value));
+                                    }}>
+                                    {FILTERS_INTERVALS_HOURS.map((interval) => (
+                                        <option value={interval} key={interval}>
+                                            {getTitleForInterval(interval)}
+                                        </option>
+                                    ))}
+                                </Select>
+                            )}
+                        />
                     </div>
                 </div>
             </div>

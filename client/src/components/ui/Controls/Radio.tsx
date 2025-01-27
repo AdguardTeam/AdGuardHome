@@ -25,6 +25,7 @@ export const Radio = forwardRef<HTMLInputElement, Props<string | boolean | numbe
                             className="custom-control custom-radio">
                             <input
                                 id={getId(o.label)}
+                                data-testid={o.value}
                                 type="radio"
                                 className="custom-control-input"
                                 onChange={() => onChange(o.value)}

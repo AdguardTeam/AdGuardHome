@@ -3,6 +3,7 @@ import clsx from 'clsx';
 
 type Props = ComponentProps<'input'> & {
     label?: string;
+    desc?: string;
     leftAddon?: ReactNode;
     rightAddon?: ReactNode;
     error?: string;
@@ -10,13 +11,14 @@ type Props = ComponentProps<'input'> & {
 };
 
 export const Input = forwardRef<HTMLInputElement, Props>(
-    ({ name, label, className, leftAddon, rightAddon, error, trimOnBlur, onBlur, ...rest }, ref) => (
+    ({ name, label, desc, className, leftAddon, rightAddon, error, trimOnBlur, onBlur, ...rest }, ref) => (
         <div className={clsx('form-group', { 'has-error': !!error })}>
             {label && (
-                <label className="form__label" htmlFor={name}>
+                <label className={clsx('form__label', { 'form__label--with-desc': !!desc })} htmlFor={name}>
                     {label}
                 </label>
             )}
+            {desc && <div className="form__desc form__desc--top">{desc}</div>}
             <div className="input-group">
                 {leftAddon && <div>{leftAddon}</div>}
                 <input

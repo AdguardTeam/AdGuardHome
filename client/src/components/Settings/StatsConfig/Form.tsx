@@ -82,7 +82,14 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                 <Controller
                     name="enabled"
                     control={control}
-                    render={({ field }) => <Checkbox {...field} title={t('statistics_enable')} disabled={processing} />}
+                    render={({ field }) => (
+                        <Checkbox
+                            {...field}
+                            data-testid="stats_config_enabled"
+                            title={t('statistics_enable')}
+                            disabled={processing}
+                        />
+                    )}
                 />
             </div>
 
@@ -99,6 +106,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                     <label className="custom-control custom-radio">
                         <input
                             type="radio"
+                            data-testid="stats_config_interval"
                             className="custom-control-input"
                             disabled={processing}
                             checked={!STATS_INTERVALS_DAYS.includes(intervalValue)}
@@ -121,7 +129,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                                 render={({ field, fieldState }) => (
                                     <Input
                                         {...field}
-                                        placeholder={t('encryption_certificates_input')}
+                                        data-testid="stats_config_custom_interval"
                                         disabled={processing}
                                         error={fieldState.error?.message}
                                         min={RETENTION_RANGE.MIN}
@@ -169,6 +177,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                     render={({ field, fieldState }) => (
                         <Textarea
                             {...field}
+                            data-testid="stats_config_ignored"
                             placeholder={t('ignore_domains')}
                             className="text-input"
                             disabled={processing}
@@ -180,12 +189,17 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
             </div>
 
             <div className="mt-5">
-                <button type="submit" className="btn btn-success btn-standard btn-large" disabled={disableSubmit}>
+                <button
+                    type="submit"
+                    data-testid="stats_config_save"
+                    className="btn btn-success btn-standard btn-large"
+                    disabled={disableSubmit}>
                     <Trans>save_btn</Trans>
                 </button>
 
                 <button
                     type="button"
+                    data-testid="stats_config_clear"
                     className="btn btn-outline-secondary btn-standard form__button"
                     onClick={onReset}
                     disabled={processingReset}>

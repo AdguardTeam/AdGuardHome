@@ -86,7 +86,14 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                 <Controller
                     name="enabled"
                     control={control}
-                    render={({ field }) => <Checkbox {...field} title={t('query_log_enable')} disabled={processing} />}
+                    render={({ field }) => (
+                        <Checkbox
+                            {...field}
+                            data-testid="logs_enabled"
+                            title={t('query_log_enable')}
+                            disabled={processing}
+                        />
+                    )}
                 />
             </div>
 
@@ -97,6 +104,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                     render={({ field }) => (
                         <Checkbox
                             {...field}
+                            data-testid="logs_anonymize_client_ip"
                             title={t('anonymize_client_ip')}
                             subtitle={t('anonymize_client_ip_desc')}
                             disabled={processing}
@@ -114,6 +122,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                     <label className="custom-control custom-radio">
                         <input
                             type="radio"
+                            data-testid="logs_config_interval"
                             className="custom-control-input"
                             disabled={processing}
                             checked={!QUERY_LOG_INTERVALS_DAYS.includes(intervalValue)}
@@ -128,7 +137,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
 
                     {!QUERY_LOG_INTERVALS_DAYS.includes(intervalValue) && (
                         <div className="form__group--input">
-                            <div className="form__desc form__desc--top">{i18next.t('custom_rotation_input')}</div>
+                            <div className="form__desc form__desc--top">{t('custom_rotation_input')}</div>
 
                             <Controller
                                 name="customInterval"
@@ -136,7 +145,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                                 render={({ field, fieldState }) => (
                                     <Input
                                         {...field}
-                                        placeholder={t('encryption_certificates_input')}
+                                        data-testid="logs_config_custom_interval"
                                         disabled={processing}
                                         error={fieldState.error?.message}
                                         min={RETENTION_RANGE.MIN}
@@ -156,6 +165,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                             <input
                                 type="radio"
                                 className="custom-control-input"
+                                data-testid={`logs_config_${interval}`}
                                 disabled={processing}
                                 value={interval}
                                 checked={intervalValue === interval}
@@ -185,6 +195,7 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
                     render={({ field, fieldState }) => (
                         <Textarea
                             {...field}
+                            data-testid="logs_config_ingored"
                             placeholder={t('ignore_domains')}
                             className="text-input"
                             disabled={processing}
@@ -196,12 +207,17 @@ export const Form = ({ initialValues, processing, processingReset, onSubmit, onR
             </div>
 
             <div className="mt-5">
-                <button type="submit" className="btn btn-success btn-standard btn-large" disabled={disableSubmit}>
+                <button
+                    type="submit"
+                    data-testid="logs_config_save"
+                    className="btn btn-success btn-standard btn-large"
+                    disabled={disableSubmit}>
                     <Trans>save_btn</Trans>
                 </button>
 
                 <button
                     type="button"
+                    data-testid="logs_config_clear"
                     className="btn btn-outline-secondary btn-standard form__button"
                     onClick={onReset}
                     disabled={processingReset}>

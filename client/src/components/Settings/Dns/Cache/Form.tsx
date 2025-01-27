@@ -1,31 +1,33 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 
+import i18next from 'i18next';
 import { clearDnsCache } from '../../../../actions/dnsConfig';
 import { CACHE_CONFIG_FIELDS, UINT32_RANGE } from '../../../../helpers/constants';
 import { replaceZeroWithEmptyString } from '../../../../helpers/helpers';
 import { RootState } from '../../../../initialState';
+import { Checkbox } from '../../../ui/Controls/Checkbox';
 
 const INPUTS_FIELDS = [
     {
         name: CACHE_CONFIG_FIELDS.cache_size,
-        title: 'cache_size',
-        description: 'cache_size_desc',
-        placeholder: 'enter_cache_size',
+        title: i18next.t('cache_size'),
+        description: i18next.t('cache_size_desc'),
+        placeholder: i18next.t('enter_cache_size'),
     },
     {
         name: CACHE_CONFIG_FIELDS.cache_ttl_min,
-        title: 'cache_ttl_min_override',
-        description: 'cache_ttl_min_override_desc',
-        placeholder: 'enter_cache_ttl_min_override',
+        title: i18next.t('cache_ttl_min_override'),
+        description: i18next.t('cache_ttl_min_override_desc'),
+        placeholder: i18next.t('enter_cache_ttl_min_override'),
     },
     {
         name: CACHE_CONFIG_FIELDS.cache_ttl_max,
-        title: 'cache_ttl_max_override',
-        description: 'cache_ttl_max_override_desc',
-        placeholder: 'enter_cache_ttl_max_override',
+        title: i18next.t('cache_ttl_max_override'),
+        description: i18next.t('cache_ttl_max_override_desc'),
+        placeholder: i18next.t('enter_cache_ttl_max_override'),
     },
 ];
 
@@ -51,6 +53,7 @@ const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
         register,
         handleSubmit,
         watch,
+        control,
         formState: { isSubmitting, isDirty },
     } = useForm<FormData>({
         mode: 'onBlur',
@@ -81,15 +84,16 @@ const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                         <div className="col-12 col-md-7 p-0">
                             <div className="form__group form__group--settings">
                                 <label htmlFor={name} className="form__label form__label--with-desc">
-                                    {t(title)}
+                                    {title}
                                 </label>
 
-                                <div className="form__desc form__desc--top">{t(description)}</div>
+                                <div className="form__desc form__desc--top">{description}</div>
 
                                 <input
                                     type="number"
+                                    data-testid={`dns_${name}`}
                                     className="form-control"
-                                    placeholder={t(placeholder)}
+                                    placeholder={placeholder}
                                     disabled={processingSetConfig}
                                     min={0}
                                     max={UINT32_RANGE.MAX}
@@ -108,26 +112,26 @@ const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
             <div className="row">
                 <div className="col-12 col-md-7">
                     <div className="form__group form__group--settings">
-                        <label className="checkbox">
-                            <input
-                                type="checkbox"
-                                className="checkbox__input"
-                                disabled={processingSetConfig}
-                                {...register('cache_optimistic')}
-                            />
-                            <span className="checkbox__label">
-                                <span className="checkbox__label-text checkbox__label-text--long">
-                                    <span className="checkbox__label-title">{t('cache_optimistic')}</span>
-                                    <span className="checkbox__label-subtitle">{t('cache_optimistic_desc')}</span>
-                                </span>
-                            </span>
-                        </label>
+                        <Controller
+                            name="cache_optimistic"
+                            control={control}
+                            render={({ field }) => (
+                                <Checkbox
+                                    {...field}
+                                    data-testid="dns_cache_optimistic"
+                                    title={t('cache_optimistic')}
+                                    subtitle={t('cache_optimistic_desc')}
+                                    disabled={processingSetConfig}
+                                />
+                            )}
+                        />
                     </div>
                 </div>
             </div>
 
             <button
                 type="submit"
+                data-testid="dns_save"
                 className="btn btn-success btn-standard btn-large"
                 disabled={isSubmitting || !isDirty || processingSetConfig || minExceedsMax}>
                 {t('save_btn')}
@@ -135,6 +139,7 @@ const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
 
             <button
                 type="button"
+                data-testid="dns_clear"
                 className="btn btn-outline-secondary btn-standard form__button"
                 onClick={handleClearCache}>
                 {t('clear_cache')}

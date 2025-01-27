@@ -6,8 +6,11 @@ import i18next from 'i18next';
 import { validateIp, validateIpv4, validateIpv6, validateRequiredValue } from '../../../../helpers/validators';
 
 import { BLOCKING_MODES, UINT32_RANGE } from '../../../../helpers/constants';
-import { removeEmptyLines } from '../../../../helpers/helpers';
 import { Checkbox } from '../../../ui/Controls/Checkbox';
+import { Input } from '../../../ui/Controls/Input';
+import { toNumber } from '../../../../helpers/form';
+import { Textarea } from '../../../ui/Controls/Textarea';
+import { Radio } from '../../../ui/Controls/Radio';
 
 const checkboxes: {
     name: 'dnssec_enabled' | 'disable_ipv6';
@@ -26,17 +29,55 @@ const checkboxes: {
     },
 ];
 
-const customIps = [
+const customIps: {
+    name: 'blocking_ipv4' | 'blocking_ipv6';
+    label: string;
+    description: string;
+    validateIp: (value: string) => string;
+}[] = [
     {
-        description: 'blocking_ipv4_desc',
         name: 'blocking_ipv4',
+        label: i18next.t('blocking_ipv4'),
+        description: i18next.t('blocking_ipv4_desc'),
         validateIp: validateIpv4,
     },
     {
-        description: 'blocking_ipv6_desc',
         name: 'blocking_ipv6',
+        label: i18next.t('blocking_ipv6'),
+        description: i18next.t('blocking_ipv6_desc'),
         validateIp: validateIpv6,
     },
+];
+
+const blockingModeOptions = [
+    {
+        value: BLOCKING_MODES.default,
+        label: i18next.t('default'),
+    },
+    {
+        value: BLOCKING_MODES.refused,
+        label: i18next.t('refused'),
+    },
+    {
+        value: BLOCKING_MODES.nxdomain,
+        label: i18next.t('nxdomain'),
+    },
+    {
+        value: BLOCKING_MODES.null_ip,
+        label: i18next.t('null_ip'),
+    },
+    {
+        value: BLOCKING_MODES.custom_ip,
+        label: i18next.t('custom_ip'),
+    },
+];
+
+const blockingModeDescriptions = [
+    i18next.t(`blocking_mode_default`),
+    i18next.t(`blocking_mode_refused`),
+    i18next.t(`blocking_mode_nxdomain`),
+    i18next.t(`blocking_mode_null_ip`),
+    i18next.t(`blocking_mode_custom_ip`),
 ];
 
 type FormData = {
@@ -46,7 +87,7 @@ type FormData = {
     ratelimit_whitelist: string;
     edns_cs_enabled: boolean;
     edns_cs_use_custom: boolean;
-    edns_cs_custom_ip?: boolean;
+    edns_cs_custom_ip?: string;
     dnssec_enabled: boolean;
     disable_ipv6: boolean;
     blocking_mode: string;
@@ -65,11 +106,10 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
     const { t } = useTranslation();
 
     const {
-        register,
         handleSubmit,
         watch,
         control,
-        formState: { errors, isSubmitting, isDirty },
+        formState: { isSubmitting, isDirty },
     } = useForm<FormData>({
         mode: 'onBlur',
         defaultValues: initialValues,
@@ -84,107 +124,102 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
             <div className="row">
                 <div className="col-12 col-md-7">
                     <div className="form__group form__group--settings">
-                        <label htmlFor="ratelimit" className="form__label form__label--with-desc">
-                            {t('rate_limit')}
-                        </label>
-
-                        <div className="form__desc form__desc--top">{t('rate_limit_desc')}</div>
-
-                        <input
-                            id="ratelimit"
-                            type="number"
-                            className="form-control"
-                            disabled={processing}
-                            {...register('ratelimit', {
-                                required: t('form_error_required'),
-                                valueAsNumber: true,
-                                min: UINT32_RANGE.MIN,
-                                max: UINT32_RANGE.MAX,
-                            })}
+                        <Controller
+                            name="ratelimit"
+                            control={control}
+                            rules={{ validate: validateRequiredValue }}
+                            render={({ field, fieldState }) => (
+                                <Input
+                                    {...field}
+                                    data-testid="dns_config_ratelimit"
+                                    type="number"
+                                    label={t('rate_limit')}
+                                    desc={t('rate_limit_desc')}
+                                    error={fieldState.error?.message}
+                                    min={UINT32_RANGE.MIN}
+                                    max={UINT32_RANGE.MAX}
+                                    disabled={processing}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        field.onChange(toNumber(value));
+                                    }}
+                                />
+                            )}
                         />
-                        {errors.ratelimit && (
-                            <div className="form__message form__message--error">{errors.ratelimit.message}</div>
-                        )}
                     </div>
                 </div>
 
                 <div className="col-12 col-md-7">
                     <div className="form__group form__group--settings">
-                        <label htmlFor="ratelimit_subnet_len_ipv4" className="form__label form__label--with-desc">
-                            {t('rate_limit_subnet_len_ipv4')}
-                        </label>
-
-                        <div className="form__desc form__desc--top">{t('rate_limit_subnet_len_ipv4_desc')}</div>
-
-                        <input
-                            id="ratelimit_subnet_len_ipv4"
-                            type="number"
-                            className="form-control"
-                            disabled={processing}
-                            {...register('ratelimit_subnet_len_ipv4', {
-                                required: t('form_error_required'),
-                                valueAsNumber: true,
-                                min: 0,
-                                max: 32,
-                            })}
+                        <Controller
+                            name="ratelimit_subnet_len_ipv4"
+                            control={control}
+                            rules={{ validate: validateRequiredValue }}
+                            render={({ field, fieldState }) => (
+                                <Input
+                                    {...field}
+                                    data-testid="dns_config_subnet_ipv4"
+                                    type="number"
+                                    label={t('rate_limit_subnet_len_ipv4')}
+                                    desc={t('rate_limit_subnet_len_ipv4_desc')}
+                                    error={fieldState.error?.message}
+                                    min={0}
+                                    max={32}
+                                    disabled={processing}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        field.onChange(toNumber(value));
+                                    }}
+                                />
+                            )}
                         />
-                        {errors.ratelimit_subnet_len_ipv4 && (
-                            <div className="form__message form__message--error">
-                                {errors.ratelimit_subnet_len_ipv4.message}
-                            </div>
-                        )}
                     </div>
                 </div>
 
                 <div className="col-12 col-md-7">
                     <div className="form__group form__group--settings">
-                        <label htmlFor="ratelimit_subnet_len_ipv6" className="form__label form__label--with-desc">
-                            {t('rate_limit_subnet_len_ipv6')}
-                        </label>
-
-                        <div className="form__desc form__desc--top">{t('rate_limit_subnet_len_ipv6_desc')}</div>
-
-                        <input
-                            id="ratelimit_subnet_len_ipv6"
-                            type="number"
-                            className="form-control"
-                            disabled={processing}
-                            {...register('ratelimit_subnet_len_ipv6', {
-                                required: t('form_error_required'),
-                                valueAsNumber: true,
-                                min: 0,
-                                max: 128,
-                            })}
+                        <Controller
+                            name="ratelimit_subnet_len_ipv6"
+                            control={control}
+                            rules={{ validate: validateRequiredValue }}
+                            render={({ field, fieldState }) => (
+                                <Input
+                                    {...field}
+                                    data-testid="dns_config_subnet_ipv6"
+                                    type="number"
+                                    label={t('rate_limit_subnet_len_ipv6')}
+                                    desc={t('rate_limit_subnet_len_ipv6_desc')}
+                                    error={fieldState.error?.message}
+                                    min={0}
+                                    max={128}
+                                    disabled={processing}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        field.onChange(toNumber(value));
+                                    }}
+                                />
+                            )}
                         />
-                        {errors.ratelimit_subnet_len_ipv6 && (
-                            <div className="form__message form__message--error">
-                                {errors.ratelimit_subnet_len_ipv6.message}
-                            </div>
-                        )}
                     </div>
                 </div>
 
                 <div className="col-12 col-md-7">
                     <div className="form__group form__group--settings">
-                        <label htmlFor="ratelimit_whitelist" className="form__label form__label--with-desc">
-                            {t('rate_limit_whitelist')}
-                        </label>
-
-                        <div className="form__desc form__desc--top">{t('rate_limit_whitelist_desc')}</div>
-
-                        <textarea
-                            id="ratelimit_whitelist"
-                            className="form-control"
-                            disabled={processing}
-                            {...register('ratelimit_whitelist', {
-                                onChange: removeEmptyLines,
-                            })}
+                        <Controller
+                            name="ratelimit_whitelist"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <Textarea
+                                    {...field}
+                                    data-testid="dns_config_subnet_ipv6"
+                                    label={t('rate_limit_whitelist')}
+                                    desc={t('rate_limit_whitelist_desc')}
+                                    error={fieldState.error?.message}
+                                    disabled={processing}
+                                    trimOnBlur
+                                />
+                            )}
                         />
-                        {errors.ratelimit_whitelist && (
-                            <div className="form__message form__message--error">
-                                {errors.ratelimit_whitelist.message}
-                            </div>
-                        )}
                     </div>
                 </div>
 
@@ -194,7 +229,12 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                             name="edns_cs_enabled"
                             control={control}
                             render={({ field }) => (
-                                <Checkbox {...field} title={t('edns_enable')} disabled={processing} />
+                                <Checkbox
+                                    {...field}
+                                    data-testid="dns_config_edns_cs_enabled"
+                                    title={t('edns_enable')}
+                                    disabled={processing}
+                                />
                             )}
                         />
                     </div>
@@ -208,6 +248,7 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                             render={({ field }) => (
                                 <Checkbox
                                     {...field}
+                                    data-testid="dns_config_edns_use_custom_ip"
                                     title={t('edns_use_custom_ip')}
                                     disabled={processing || !edns_cs_enabled}
                                 />
@@ -216,15 +257,23 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                     </div>
 
                     {edns_cs_use_custom && (
-                        <input
-                            id="edns_cs_custom_ip"
-                            type="text"
-                            className="form-control"
-                            disabled={processing || !edns_cs_enabled}
-                            {...register('edns_cs_custom_ip', {
-                                required: t('form_error_required'),
-                                validate: (value) => validateIp(value) || validateRequiredValue(value),
-                            })}
+                        <Controller
+                            name="edns_cs_custom_ip"
+                            control={control}
+                            rules={{
+                                validate: {
+                                    required: validateRequiredValue,
+                                    id: validateIp,
+                                },
+                            }}
+                            render={({ field, fieldState }) => (
+                                <Input
+                                    {...field}
+                                    data-testid="dns_config_edns_cs_custom_ip"
+                                    error={fieldState.error?.message}
+                                    disabled={processing || !edns_cs_enabled}
+                                />
+                            )}
                         />
                     )}
                 </div>
@@ -238,6 +287,7 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 render={({ field }) => (
                                     <Checkbox
                                         {...field}
+                                        data-testid={`dns_config_${name}`}
                                         title={placeholder}
                                         subtitle={subtitle}
                                         disabled={processing}
@@ -253,53 +303,52 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                         <label className="form__label form__label--with-desc">{t('blocking_mode')}</label>
 
                         <div className="form__desc form__desc--top">
-                            {Object.values(BLOCKING_MODES).map((mode: any) => (
-                                <li key={mode}>{t(`blocking_mode_${mode}`)}</li>
+                            {blockingModeDescriptions.map((desc: string) => (
+                                <li key={desc}>{desc}</li>
                             ))}
                         </div>
 
                         <div className="custom-controls-stacked">
-                            {Object.values(BLOCKING_MODES).map((mode: any) => (
-                                <label key={mode} className="custom-control custom-radio">
-                                    <input
-                                        type="radio"
-                                        className="custom-control-input"
-                                        value={mode}
-                                        disabled={processing}
-                                        {...register('blocking_mode')}
-                                    />
-                                    <span className="custom-control-label">{t(mode)}</span>
-                                </label>
-                            ))}
+                            <Controller
+                                name="blocking_mode"
+                                control={control}
+                                render={({ field }) => (
+                                    <Radio {...field} options={blockingModeOptions} disabled={processing} />
+                                )}
+                            />
                         </div>
                     </div>
                 </div>
                 {blocking_mode === BLOCKING_MODES.custom_ip && (
                     <>
-                        {customIps.map(({ description, name, validateIp }) => (
+                        {customIps.map(({ label, description, name, validateIp }) => (
                             <div className="col-12 col-sm-6" key={name}>
                                 <div className="form__group form__group--settings">
-                                    <label className="form__label form__label--with-desc" htmlFor={name}>
-                                        {t(name)}
-                                    </label>
-
-                                    <div className="form__desc form__desc--top">{t(description)}</div>
-
-                                    <input
-                                        id={name}
-                                        type="text"
-                                        className="form-control"
-                                        disabled={processing}
-                                        {...register(name as keyof FormData, {
-                                            required: t('form_error_required'),
-                                            validate: (value) => validateIp(value) || validateRequiredValue(value),
-                                        })}
+                                    <Controller
+                                        name={name}
+                                        control={control}
+                                        rules={{
+                                            validate: {
+                                                required: validateRequiredValue,
+                                                ip: validateIp,
+                                            },
+                                        }}
+                                        render={({ field, fieldState }) => (
+                                            <Input
+                                                {...field}
+                                                data-testid="dns_config_blocked_response_ttl"
+                                                type="number"
+                                                label={label}
+                                                desc={description}
+                                                error={fieldState.error?.message}
+                                                disabled={processing}
+                                                onChange={(e) => {
+                                                    const { value } = e.target;
+                                                    field.onChange(toNumber(value));
+                                                }}
+                                            />
+                                        )}
                                     />
-                                    {errors[name as keyof FormData] && (
-                                        <div className="form__message form__message--error">
-                                            {errors[name as keyof FormData]?.message}
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         ))}
@@ -308,35 +357,35 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
 
                 <div className="col-12 col-md-7">
                     <div className="form__group form__group--settings">
-                        <label htmlFor="blocked_response_ttl" className="form__label form__label--with-desc">
-                            {t('blocked_response_ttl')}
-                        </label>
-
-                        <div className="form__desc form__desc--top">{t('blocked_response_ttl_desc')}</div>
-
-                        <input
-                            id="blocked_response_ttl"
-                            type="number"
-                            className="form-control"
-                            disabled={processing}
-                            {...register('blocked_response_ttl', {
-                                required: t('form_error_required'),
-                                valueAsNumber: true,
-                                min: UINT32_RANGE.MIN,
-                                max: UINT32_RANGE.MAX,
-                            })}
+                        <Controller
+                            name="blocked_response_ttl"
+                            control={control}
+                            rules={{ validate: validateRequiredValue }}
+                            render={({ field, fieldState }) => (
+                                <Input
+                                    {...field}
+                                    data-testid="dns_config_blocked_response_ttl"
+                                    type="number"
+                                    label={t('blocked_response_ttl')}
+                                    desc={t('blocked_response_ttl_desc')}
+                                    error={fieldState.error?.message}
+                                    min={UINT32_RANGE.MIN}
+                                    max={UINT32_RANGE.MAX}
+                                    disabled={processing}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        field.onChange(toNumber(value));
+                                    }}
+                                />
+                            )}
                         />
-                        {errors.blocked_response_ttl && (
-                            <div className="form__message form__message--error">
-                                {errors.blocked_response_ttl.message}
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
 
             <button
                 type="submit"
+                data-testid="dns_config_save"
                 className="btn btn-success btn-standard btn-large"
                 disabled={isSubmitting || !isDirty || processing}>
                 {t('save_btn')}
