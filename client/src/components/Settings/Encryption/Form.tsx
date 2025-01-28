@@ -74,20 +74,20 @@ const validationMessage = (warningValidation: string, isWarning: boolean) => {
 };
 
 export type EncryptionFormValues = {
-    enabled: boolean;
-    serve_plain_dns: boolean;
-    server_name: string;
-    force_https: boolean;
-    port_https: number;
-    port_dns_over_tls: number;
-    port_dns_over_quic: number;
-    certificate_chain: string;
-    private_key: string;
-    certificate_path: string;
-    private_key_path: string;
-    certificate_source: string;
-    key_source: string;
-    private_key_saved: boolean;
+    enabled?: boolean;
+    serve_plain_dns?: boolean;
+    server_name?: string;
+    force_https?: boolean;
+    port_https?: number;
+    port_dns_over_tls?: number;
+    port_dns_over_quic?: number;
+    certificate_chain?: string;
+    private_key?: string;
+    certificate_path?: string;
+    private_key_path?: string;
+    certificate_source?: string;
+    key_source?: string;
+    private_key_saved?: boolean;
 };
 
 type Props = {
@@ -173,11 +173,11 @@ export const Form = ({
         serve_plain_dns: servePlainDns,
         certificate_chain: certificateChain,
         private_key: privateKey,
-        certificate_path: certificatePath,
         private_key_path: privateKeyPath,
-        certificate_source: certificateSource,
-        private_key_saved: privateKeySaved,
         key_source: privateKeySource,
+        private_key_saved: privateKeySaved,
+        certificate_path: certificatePath,
+        certificate_source: certificateSource,
     } = watchedValues;
 
     useEffect(() => {
@@ -185,7 +185,6 @@ export const Form = ({
 
         if (JSON.stringify(previousValues) !== JSON.stringify(watchedValues)) {
             // TODO(ik) onChange TLS config validation
-            console.log('debouncedConfigValidation');
             previousValuesRef.current = watchedValues;
         }
     }, [watchedValues]);

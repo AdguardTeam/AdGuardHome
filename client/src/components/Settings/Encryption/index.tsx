@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { debounce } from 'lodash';
 import { DEBOUNCE_TIMEOUT, ENCRYPTION_SOURCE } from '../../../helpers/constants';
@@ -24,17 +24,17 @@ export const Encryption = ({ encryption, setTlsConfig, validateTlsConfig }: Prop
         }
     }, [encryption, validateTlsConfig]);
 
-    const getInitialValues = useCallback((data: any): EncryptionFormValues => {
-        const { certificate_chain, private_key, private_key_saved } = data;
+    const initialValues = useMemo((): EncryptionFormValues => {
+        const { certificate_chain, private_key, private_key_saved } = encryption;
         const certificate_source = certificate_chain ? ENCRYPTION_SOURCE.CONTENT : ENCRYPTION_SOURCE.PATH;
         const key_source = private_key || private_key_saved ? ENCRYPTION_SOURCE.CONTENT : ENCRYPTION_SOURCE.PATH;
 
         return {
-            ...data,
+            ...encryption,
             certificate_source,
             key_source,
         };
-    }, []);
+    }, [encryption]);
 
     const getSubmitValues = useCallback((values: any) => {
         const { certificate_source, key_source, private_key_saved, ...config } = values;
@@ -67,18 +67,15 @@ export const Encryption = ({ encryption, setTlsConfig, validateTlsConfig }: Prop
         [getSubmitValues, setTlsConfig],
     );
 
-    const debouncedConfigValidation = useCallback(
-        debounce((values) => {
-            const submitValues = getSubmitValues(values);
+    const validateConfig = useCallback((values) => {
+        const submitValues = getSubmitValues(values);
 
-            if (submitValues.enabled) {
-                validateTlsConfig(submitValues);
-            }
-        }, DEBOUNCE_TIMEOUT),
-        [],
-    );
+        if (submitValues.enabled) {
+            validateTlsConfig(submitValues);
+        }
+    }, []);
 
-    const initialValues = getInitialValues(encryption);
+    const debouncedConfigValidation = useCallback(debounce(validateConfig, DEBOUNCE_TIMEOUT), [validateConfig]);
 
     return (
         <div className="encryption">
