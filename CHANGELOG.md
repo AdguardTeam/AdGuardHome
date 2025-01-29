@@ -32,12 +32,15 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The formatting of large numbers in the upstream table and query log ([#7590]).
+
 - Request count link in the clients table ([#7513]).
 
 - The formatting of large numbers on the dashboard ([#7329]).
 
 [#7513]: https://github.com/AdguardTeam/AdGuardHome/issues/7513
 [#7329]: https://github.com/AdguardTeam/AdGuardHome/issues/7329
+[#7590]: https://github.com/AdguardTeam/AdGuardHome/issues/7329
 
 [go-1.23.5]: https://groups.google.com/g/golang-announce/c/sSaUhLA-2SI
 

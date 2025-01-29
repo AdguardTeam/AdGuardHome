@@ -10,6 +10,7 @@ import Card from '../ui/Card';
 
 import DomainCell from './DomainCell';
 import { DASHBOARD_TABLES_DEFAULT_PAGE_SIZE, TABLES_MIN_ROWS } from '../../helpers/constants';
+import { formatNumber } from '../../helpers/helpers';
 
 interface TimeCellProps {
     value?: string | number;
@@ -20,7 +21,7 @@ const TimeCell = ({ value }: TimeCellProps) => {
         return '–';
     }
 
-    const valueInMilliseconds = round(Number(value) * 1000);
+    const valueInMilliseconds = formatNumber(round(Number(value) * 1000));
 
     return (
         <div className="logs__row o-hidden">
