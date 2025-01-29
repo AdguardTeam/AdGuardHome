@@ -14,8 +14,9 @@ test.describe('DHCP Configuration', () => {
         await page.getByTestId('username').fill(ADMIN_USERNAME);
         await page.getByTestId('password').click();
         await page.getByTestId('password').fill(ADMIN_PASSWORD);
+        await page.keyboard.press('Tab');
         await page.getByTestId('sign_in').click();
-        await page.getByText('Settings', { exact: true }).click();
+        await page.waitForURL((url) => !url.href.endsWith('/login.html'));
         await page.goto(`/#dhcp`);
     });
 
@@ -45,8 +46,7 @@ test.describe('DHCP Configuration', () => {
         await page.getByTestId('v4_range_start').fill(RANGE_END);
         await page.getByTestId('v4_range_end').click();
         await page.getByTestId('v4_range_end').fill(RANGE_START);
-        await page.locator('.col-12').first().click();
-        await page.getByText('Must be greater than range').click();
+        await page.keyboard.press('Tab');
 
         expect(await page.getByText('Must be greater than range').isVisible()).toBe(true);
     });
@@ -55,7 +55,7 @@ test.describe('DHCP Configuration', () => {
         await page.getByTestId('interface_name').selectOption(INTERFACE_NAME);
         await page.getByTestId('v4_gateway_ip').click();
         await page.getByTestId('v4_gateway_ip').fill('192.168.1.200s');
-        await page.getByText('Invalid IPv4 address').click();
+        await page.keyboard.press('Tab');
 
         expect(await page.getByText('Invalid IPv4 address').isVisible()).toBe(true);
     });

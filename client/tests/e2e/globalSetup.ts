@@ -1,18 +1,27 @@
-import { test } from '@playwright/test';
+import { chromium, FullConfig } from '@playwright/test';
 
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'superpassword';
-const PORT = 3000;
+import { ADMIN_USERNAME, ADMIN_PASSWORD, PORT } from '../constants';
 
-test('install', async ({ page }) => {
+async function globalSetup(config: FullConfig) {
+    const browser = await chromium.launch({
+        slowMo: 100,
+    });
+    const page = await browser.newPage({ baseURL: config.webServer?.url });
+
     await page.goto('/');
     await page.getByTestId('install_get_started').click();
     await page.getByTestId('install_web_port').fill(PORT.toString());
     await page.getByTestId('install_next').click();
     await page.getByTestId('install_username').fill(ADMIN_USERNAME);
     await page.getByTestId('install_password').fill(ADMIN_PASSWORD);
+    await page.getByTestId('install_confirm_password').click();
     await page.getByTestId('install_confirm_password').fill(ADMIN_PASSWORD);
     await page.getByTestId('install_next').click();
     await page.getByTestId('install_next').click();
     await page.getByTestId('install_open_dashboard').click();
-});
+    await page.waitForURL((url) => !url.href.endsWith('/install.html'));
+
+    await browser.close();
+}
+
+export default globalSetup;
