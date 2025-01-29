@@ -312,7 +312,7 @@ const ClientsTable = ({
                     return content;
                 }
 
-                return <LogsSearchLink search={row.original.ids[0]}>{content}</LogsSearchLink>;
+                return <LogsSearchLink search={row.original.name}>{content}</LogsSearchLink>;
             },
         },
         {

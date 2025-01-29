@@ -1,12 +1,12 @@
 package configmgr
 
 import (
-	"fmt"
 	"net/netip"
 
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/AdguardTeam/golibs/validate"
 )
 
 // config is the top-level on-disk configuration structure.
@@ -19,10 +19,10 @@ type config struct {
 }
 
 // type check
-var _ validator = (*config)(nil)
+var _ validate.Interface = (*config)(nil)
 
-// validate implements the [validator] interface for *config.
-func (c *config) validate() (err error) {
+// Validate implements the [validate.Interface] interface for *config.
+func (c *config) Validate() (err error) {
 	if c == nil {
 		return errors.ErrNoValue
 	}
@@ -30,7 +30,7 @@ func (c *config) validate() (err error) {
 	// TODO(a.garipov): Add more validations.
 
 	// Keep this in the same order as the fields in the config.
-	validators := container.KeyValues[string, validator]{{
+	validators := container.KeyValues[string, validate.Interface]{{
 		Key:   "dns",
 		Value: c.DNS,
 	}, {
@@ -41,14 +41,12 @@ func (c *config) validate() (err error) {
 		Value: c.Log,
 	}}
 
+	var errs []error
 	for _, kv := range validators {
-		err = kv.Value.validate()
-		if err != nil {
-			return fmt.Errorf("%s: %w", kv.Key, err)
-		}
+		errs = validate.Append(errs, kv.Key, kv.Value)
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 // dnsConfig is the on-disk DNS configuration.
@@ -63,21 +61,19 @@ type dnsConfig struct {
 }
 
 // type check
-var _ validator = (*dnsConfig)(nil)
+var _ validate.Interface = (*dnsConfig)(nil)
 
-// validate implements the [validator] interface for *dnsConfig.
+// Validate implements the [validate.Interface] interface for *dnsConfig.
 //
 // TODO(a.garipov): Add more validations.
-func (c *dnsConfig) validate() (err error) {
-	// TODO(a.garipov): Add more validations.
-	switch {
-	case c == nil:
+func (c *dnsConfig) Validate() (err error) {
+	if c == nil {
 		return errors.ErrNoValue
-	case c.UpstreamTimeout.Duration <= 0:
-		return newErrNotPositive("upstream_timeout", c.UpstreamTimeout)
-	default:
-		return nil
 	}
+
+	// TODO(a.garipov): Add more validations.
+
+	return validate.Positive("upstream_timeout", c.UpstreamTimeout)
 }
 
 // httpConfig is the on-disk web API configuration.
@@ -92,20 +88,23 @@ type httpConfig struct {
 }
 
 // type check
-var _ validator = (*httpConfig)(nil)
+var _ validate.Interface = (*httpConfig)(nil)
 
-// validate implements the [validator] interface for *httpConfig.
+// Validate implements the [validate.Interface] interface for *httpConfig.
 //
 // TODO(a.garipov): Add more validations.
-func (c *httpConfig) validate() (err error) {
-	switch {
-	case c == nil:
+func (c *httpConfig) Validate() (err error) {
+	if c == nil {
 		return errors.ErrNoValue
-	case c.Timeout.Duration <= 0:
-		return newErrNotPositive("timeout", c.Timeout)
-	default:
-		return c.Pprof.validate()
 	}
+
+	errs := []error{
+		validate.Positive("timeout", c.Timeout),
+	}
+
+	errs = validate.Append(errs, "pprof", c.Pprof)
+
+	return errors.Join(errs...)
 }
 
 // httpPprofConfig is the on-disk pprof configuration.
@@ -115,10 +114,10 @@ type httpPprofConfig struct {
 }
 
 // type check
-var _ validator = (*httpPprofConfig)(nil)
+var _ validate.Interface = (*httpPprofConfig)(nil)
 
-// validate implements the [validator] interface for *httpPprofConfig.
-func (c *httpPprofConfig) validate() (err error) {
+// Validate implements the [validate.Interface] interface for *httpPprofConfig.
+func (c *httpPprofConfig) Validate() (err error) {
 	if c == nil {
 		return errors.ErrNoValue
 	}
@@ -128,17 +127,17 @@ func (c *httpPprofConfig) validate() (err error) {
 
 // logConfig is the on-disk web API configuration.
 type logConfig struct {
-	// TODO(a.garipov): Use.
+	// TODO(a.garipov):  Use.
 	Verbose bool `yaml:"verbose"`
 }
 
 // type check
-var _ validator = (*logConfig)(nil)
+var _ validate.Interface = (*logConfig)(nil)
 
-// validate implements the [validator] interface for *logConfig.
+// Validate implements the [validate.Interface] interface for *logConfig.
 //
 // TODO(a.garipov): Add more validations.
-func (c *logConfig) validate() (err error) {
+func (c *logConfig) Validate() (err error) {
 	if c == nil {
 		return errors.ErrNoValue
 	}

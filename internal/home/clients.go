@@ -400,7 +400,7 @@ func (clients *clientsContainer) UpstreamConfigByID(
 		upstreams,
 		&upstream.Options{
 			Bootstrap:    bootstrap,
-			Timeout:      config.DNS.UpstreamTimeout.Duration,
+			Timeout:      time.Duration(config.DNS.UpstreamTimeout),
 			HTTPVersions: dnsforward.UpstreamHTTPVersions(config.DNS.UseHTTP3Upstreams),
 			PreferIPv6:   config.DNS.BootstrapPreferIPv6,
 		},

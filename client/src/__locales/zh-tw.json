@@ -20,7 +20,7 @@
     "resolve_clients_title": "啟用用戶端的 IP 位址之反向的解析",
     "resolve_clients_desc": "透過傳送指標（PTR）查詢到對應的解析器（私人 DNS 伺服器供區域的用戶端，上游的伺服器供有公共 IP 位址的用戶端），反向地解析用戶端的 IP 位址變為它們的主機名稱。",
     "use_private_ptr_resolvers_title": "使用私人反向的 DNS 解析器",
-    "use_private_ptr_resolvers_desc": "使用私人上游伺服器、DHCP、/etc/hosts 等方式解析包含私人 IP 位址的 ARPA 網域的 PTR、SOA 和 NS 請求。如果禁用，AdGuard Home 將對所有此類請求以 NXDOMAIN 回應。",
+    "use_private_ptr_resolvers_desc": "通過私人上游伺服器、DHCP、/etc/hosts 等等，對包含私人 IP 位址的 ARPA 網域解析 PTR、SOA 和 NS 請求。如果被禁用，AdGuard Home 將對所有此類的請求以 NXDOMAIN 回覆。",
     "check_dhcp_servers": "檢查動態主機設定協定（DHCP）伺服器",
     "save_config": "儲存配置",
     "enabled_dhcp": "動態主機設定協定（DHCP）伺服器被啟用",

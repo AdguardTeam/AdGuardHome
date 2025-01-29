@@ -348,7 +348,7 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 		conf.EDNSAddr = net.IP(srvConf.EDNSClientSubnet.CustomIP.AsSlice())
 	}
 
-	err = setProxyUpstreamMode(conf, srvConf.UpstreamMode, srvConf.FastestTimeout.Duration)
+	err = setProxyUpstreamMode(conf, srvConf.UpstreamMode, time.Duration(srvConf.FastestTimeout))
 	if err != nil {
 		return nil, fmt.Errorf("upstream mode: %w", err)
 	}

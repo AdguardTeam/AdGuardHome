@@ -154,7 +154,7 @@ const Dashboard = ({
                         }}
                         disabled={processingProtection}>
                         {protectionDisabledDuration
-                            ? `${t('enable_protection_timer')} ${getRemaningTimeText(protectionDisabledDuration)}`
+                            ? `${t('enable_protection_timer', { time: getRemaningTimeText(protectionDisabledDuration) })}`
                             : getProtectionBtnText(protectionEnabled)}
                     </button>
 

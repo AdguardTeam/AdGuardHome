@@ -934,6 +934,9 @@
           'description': 'OK.'
   '/clients/find':
     'get':
+      'deprecated': true
+      'description': >
+        Deprecated: Use `POST /clients/search` instead.
       'tags':
       - 'clients'
       'operationId': 'clientsFind'
@@ -950,6 +953,26 @@
           TODO(a.garipov): Replace with a better query API.
         'schema':
           'type': 'string'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/ClientsFindResponse'
+  '/clients/search':
+    'post':
+      'tags':
+      - 'clients'
+      'operationId': 'clientsSearch'
+      'summary': >
+        Get information about clients by their IP addresses, CIDRs, MAC addresses, or ClientIDs.
+      'requestBody':
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/ClientsSearchRequest'
+        'required': true
       'responses':
         '200':
           'description': 'OK.'
@@ -2478,9 +2501,11 @@
       'description': 'Network interface info'
       'required':
       - 'flags'
+      - 'gateway_ip'
       - 'hardware_address'
+      - 'ipv4_addresses'
+      - 'ipv6_addresses'
       - 'name'
-      - 'mtu'
       'properties':
         'flags':
           'type': 'string'
@@ -2489,18 +2514,28 @@
             the "|" character: "up", "broadcast", "loopback", "pointtopoint" and
             "multicast".
           'example': 'up|broadcast|multicast'
+        'gateway_ip':
+          'type': 'string'
+          'description': 'The IP address of the gateway.'
+          'example': '192.0.2.0'
         'hardware_address':
           'type': 'string'
           'example': '52:54:00:11:09:ba'
+        'ipv4_addresses':
+          'type': 'array'
+          'description': >
+            The addresses of the interface of v4 family.
+          'items':
+            'type': 'string'
+        'ipv6_addresses':
+          'type': 'array'
+          'description': >
+            The addresses of the interface of v6 family.
+          'items':
+            'type': 'string'
         'name':
           'type': 'string'
           'example': 'eth0'
-        'ip_addresses':
-          'type': 'array'
-          'items':
-            'type': 'string'
-        'mtu':
-          'type': 'integer'
     'AddressInfo':
       'type': 'object'
       'description': 'Port information'
@@ -2749,6 +2784,20 @@
       'properties':
         'name':
           'type': 'string'
+    'ClientsSearchRequest':
+      'type': 'object'
+      'description': 'Client search request'
+      'properties':
+        'clients':
+          'type': 'array'
+          'items':
+            '$ref': '#/components/schemas/ClientsSearchRequestItem'
+    'ClientsSearchRequestItem':
+      'type': 'object'
+      'properties':
+        'id':
+          'type': 'string'
+          'description': 'Client IP address, CIDR, MAC address, or ClientID'
     'ClientsFindResponse':
       'type': 'array'
       'description': 'Client search results.'

@@ -424,6 +424,8 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 }
 
 // handleFindClient is the handler for GET /control/clients/find HTTP API.
+//
+// Deprecated:  Remove it when migration to the new API is over.
 func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	data := []map[string]*clientJSON{}
@@ -433,19 +435,58 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 			break
 		}
 
-		ip, _ := netip.ParseAddr(idStr)
-		c, ok := clients.storage.Find(idStr)
-		var cj *clientJSON
-		if !ok {
-			cj = clients.findRuntime(ip, idStr)
-		} else {
-			cj = clientToJSON(c)
-			disallowed, rule := clients.clientChecker.IsBlockedClient(ip, idStr)
-			cj.Disallowed, cj.DisallowedRule = &disallowed, &rule
-		}
-
 		data = append(data, map[string]*clientJSON{
-			idStr: cj,
+			idStr: clients.findClient(idStr),
+		})
+	}
+
+	aghhttp.WriteJSONResponseOK(w, r, data)
+}
+
+// findClient returns available information about a client by idStr from the
+// client's storage or access settings.  cj is guaranteed to be non-nil.
+func (clients *clientsContainer) findClient(idStr string) (cj *clientJSON) {
+	ip, _ := netip.ParseAddr(idStr)
+	c, ok := clients.storage.Find(idStr)
+	if !ok {
+		return clients.findRuntime(ip, idStr)
+	}
+
+	cj = clientToJSON(c)
+	disallowed, rule := clients.clientChecker.IsBlockedClient(ip, idStr)
+	cj.Disallowed, cj.DisallowedRule = &disallowed, &rule
+
+	return cj
+}
+
+// searchQueryJSON is a request to the POST /control/clients/search HTTP API.
+//
+// TODO(s.chzhen):  Add UIDs.
+type searchQueryJSON struct {
+	Clients []searchClientJSON `json:"clients"`
+}
+
+// searchClientJSON is a part of [searchQueryJSON] that contains a string
+// representation of the client's IP address, CIDR, MAC address, or ClientID.
+type searchClientJSON struct {
+	ID string `json:"id"`
+}
+
+// handleSearchClient is the handler for the POST /control/clients/search HTTP API.
+func (clients *clientsContainer) handleSearchClient(w http.ResponseWriter, r *http.Request) {
+	q := searchQueryJSON{}
+	err := json.NewDecoder(r.Body).Decode(&q)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "failed to process request body: %s", err)
+
+		return
+	}
+
+	data := []map[string]*clientJSON{}
+	for _, c := range q.Clients {
+		idStr := c.ID
+		data = append(data, map[string]*clientJSON{
+			idStr: clients.findClient(idStr),
 		})
 	}
 
@@ -493,5 +534,8 @@ func (clients *clientsContainer) registerWebHandlers() {
 	httpRegister(http.MethodPost, "/control/clients/add", clients.handleAddClient)
 	httpRegister(http.MethodPost, "/control/clients/delete", clients.handleDelClient)
 	httpRegister(http.MethodPost, "/control/clients/update", clients.handleUpdateClient)
+	httpRegister(http.MethodPost, "/control/clients/search", clients.handleSearchClient)
+
+	// Deprecated handler.
 	httpRegister(http.MethodGet, "/control/clients/find", clients.handleFindClient)
 }

@@ -46,7 +46,7 @@ export const getStats = () => async (dispatch: any) => {
         const normalizedTopClients = normalizeTopStats(stats.top_clients);
 
         const clientsParams = getParamsForClientsSearch(normalizedTopClients, 'name');
-        const clients = await apiClient.findClients(clientsParams);
+        const clients = await apiClient.searchClients(clientsParams);
         const topClientsWithInfo = addClientInfo(normalizedTopClients, clients, 'name');
 
         const normalizedStats = {

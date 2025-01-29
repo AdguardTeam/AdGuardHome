@@ -133,7 +133,14 @@ if [ "$verbose" -gt '0' ]; then
 	"$go" env
 fi
 
+if [ "${COVER:-0}" -eq '1' ]; then
+	cover_flags='--cover=1'
+else
+	cover_flags='--cover=0'
+fi
+
 "$go" build \
+	"$cover_flags" \
 	--ldflags="$ldflags" \
 	"$race_flags" \
 	"$tags_flags" \

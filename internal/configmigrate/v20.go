@@ -38,7 +38,7 @@ func migrateTo20(diskConf yobj) (err error) {
 		ivl = 1
 	}
 
-	stats[field] = timeutil.Duration{Duration: time.Duration(ivl) * timeutil.Day}
+	stats[field] = timeutil.Duration(time.Duration(ivl) * timeutil.Day)
 
 	return nil
 }
