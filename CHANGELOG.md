@@ -18,6 +18,10 @@ See also the [v0.107.57 GitHub milestone][ms-v0.107.57].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Changed
+
+- The *Fastest IP adddress* upstream mode now collects statistics for the all upstream DNS servers.
+
 ### Fixed
 
 - The formatting of large numbers in the upstream table and query log ([#7590]).
