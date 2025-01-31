@@ -194,12 +194,11 @@
 
                 export CI=true
 
-                mkdir -p /tmp/adguard
-                tar -xzf dist/AdGuardHome_linux_amd64.tar.gz -C /tmp/adguard
+                tar -xzf dist/AdGuardHome_linux_amd64.tar.gz -C /
 
-                chmod +x /tmp/adguard/AdGuardHome
+                chmod +x /AdGuardHome
 
-                ls -l /tmp/adguard/AdGuardHome
+                ls -l /AdGuardHome
 
                 make VERBOSE=1 js-deps js-test-e2e
     'requirements':
