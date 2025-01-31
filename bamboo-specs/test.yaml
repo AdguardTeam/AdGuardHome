@@ -28,6 +28,7 @@
         final: false
         jobs:
           - 'Artifact'
+          - 'Test e2e'
 
 'Test frontend':
     'docker':
@@ -162,6 +163,29 @@
                         SIGN=0\
                         VERBOSE=2\
                         build-release
+    'requirements':
+      - 'adg-docker': 'true'
+
+'Test e2e':
+    'docker':
+        'image': '${bamboo.dockerFrontend}'
+        'volumes':
+            '${system.YARN_DIR}': '${bamboo.cacheYarn}'
+    'key': 'E2ETEST'
+    'other':
+        'clean-working-dir': true
+    'tasks':
+      - 'checkout':
+            'force-clean-build': true
+      - 'script':
+            'interpreter': 'SHELL'
+            'scripts':
+              - |
+                #!/bin/sh
+
+                set -e -f -u -x
+
+                make VERBOSE=1 js-test-e2e
     'requirements':
       - 'adg-docker': 'true'
 
