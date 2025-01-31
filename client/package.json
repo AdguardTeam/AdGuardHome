@@ -12,7 +12,7 @@
         "lint:fix": "eslint './src/**/*.(ts|tsx)' --fix",
         "test": "vitest --run",
         "test:watch": "vitest --watch",
-        "test:e2e": "npx playwright test tests/e2e",
+        "test:e2e": "cross-env DEBUG=pw:* npx playwright test tests/e2e",
         "test:e2e:interactive": "npx playwright test --ui",
         "test:e2e:debug": "npx playwright test --debug",
         "test:e2e:codegen": "npx playwright codegen",
