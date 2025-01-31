@@ -194,7 +194,9 @@
 
                 export CI=true
 
-                tar -xzf dist/AdGuardHome_linux_amd64.tar.gz -C ./
+                tar -xzf dist/AdGuardHome_linux_amd64.tar.gz -C /tmp
+
+                mv /tmp/AdGuardHome/AdGuardHome ./AdGuardHome
 
                 chmod +x ./AdGuardHome
 
