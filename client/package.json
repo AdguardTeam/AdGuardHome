@@ -10,7 +10,7 @@
         "lint": "echo 'Lint temporarily disabled'",
         "lint-new": "eslint './src/**/*.(ts|tsx)'",
         "lint:fix": "eslint './src/**/*.(ts|tsx)' --fix",
-        "test": "vitest",
+        "test": "vitest --run && npx playwright test",
         "test:watch": "vitest --watch",
         "test:e2e": "npx playwright test tests/e2e",
         "test:e2e:interactive": "npx playwright test --ui",
