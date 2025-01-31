@@ -185,6 +185,8 @@
 
                 set -e -f -u -x
 
+                export CI=true
+
                 make VERBOSE=1 js-deps js-test-e2e
     'requirements':
       - 'adg-docker': 'true'
