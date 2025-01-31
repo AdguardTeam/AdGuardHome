@@ -185,7 +185,7 @@
 
                 set -e -f -u -x
 
-                make VERBOSE=1 js-test-e2e
+                make VERBOSE=1 js-deps js-test-e2e
     'requirements':
       - 'adg-docker': 'true'
 
