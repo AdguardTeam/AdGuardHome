@@ -199,6 +199,8 @@
 
                 chmod +x /tmp/adguard/AdGuardHome
 
+                ls -l /tmp/adguard/AdGuardHome
+
                 make VERBOSE=1 js-deps js-test-e2e
     'requirements':
       - 'adg-docker': 'true'
