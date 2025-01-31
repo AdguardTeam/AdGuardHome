@@ -69,6 +69,7 @@ export default defineConfig({
     ],
 
     webServer: {
+        stdout: process.env.CI ? 'pipe' : 'ignore',
         command: process.env.CI
             ? '/tmp/adguard/AdGuardHome --local-frontend -v'
             : 'rm -f AdGuardHome.yaml && sudo ./AdGuardHome --local-frontend -v',
