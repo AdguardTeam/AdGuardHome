@@ -33,5 +33,9 @@ AdGuardHome.exe
 AdGuardHome.yaml*
 coverage.txt
 node_modules/
+client/test-results/
+client/playwright-report/
+client/blob-report/
+client/playwright/.cache/
 
 !/build/gitkeep
