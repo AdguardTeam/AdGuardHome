@@ -76,6 +76,6 @@ export default defineConfig({
         url: 'http://127.0.0.1:3000',
         cwd: '..',
         reuseExistingServer: !process.env.CI,
-        timeout: 30000,
+        timeout: 60000,
     },
 });
