@@ -195,7 +195,7 @@
                 export CI=true
 
                 mkdir -p /tmp/adguard
-                tar -xzf dist/AdGuardHome_darwin_amd64.tar.gz -C /tmp/adguard
+                unzip dist/AdGuardHome_darwin_amd64.zip -d /tmp/adguard
 
                 chmod +x /tmp/adguard/AdGuardHome
 
