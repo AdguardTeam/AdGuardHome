@@ -173,7 +173,7 @@
 
 'Test e2e':
     'artifact-subscriptions':
-      - 'name': 'AdGuardHome_linux_amd64'
+      - 'artifact': 'AdGuardHome_linux_amd64'
     'docker':
         'image': '${bamboo.dockerFrontend}'
         'volumes':
