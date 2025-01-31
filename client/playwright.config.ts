@@ -70,7 +70,7 @@ export default defineConfig({
 
     webServer: {
         command: process.env.CI
-            ? 'sudo /tmp/adguard/AdGuardHome --local-frontend -v'
+            ? '/tmp/adguard/AdGuardHome --local-frontend -v'
             : 'rm -f AdGuardHome.yaml && sudo ./AdGuardHome --local-frontend -v',
         url: 'http://127.0.0.1:3000',
         cwd: '..',

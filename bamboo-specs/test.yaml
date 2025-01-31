@@ -173,7 +173,7 @@
 
 'Test e2e':
     'artifact-subscriptions':
-      - 'artifact': 'AdGuardHome_linux_amd64'
+      - 'artifact': 'AdGuardHome_darwin_amd64'
     'docker':
         'image': '${bamboo.dockerFrontend}'
         'volumes':
@@ -195,7 +195,7 @@
                 export CI=true
 
                 mkdir -p /tmp/adguard
-                tar -xzf dist/AdGuardHome_linux_amd64.tar.gz -C /tmp/adguard
+                tar -xzf dist/AdGuardHome_darwin_amd64.tar.gz -C /tmp/adguard
 
                 chmod +x /tmp/adguard/AdGuardHome
 
