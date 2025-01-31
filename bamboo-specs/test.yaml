@@ -28,7 +28,12 @@
         final: false
         jobs:
           - 'Artifact'
-          - 'Test e2e'
+
+  - 'E2E':
+      manual: false
+      final: false
+      jobs:
+        - 'Test e2e'
 
 'Test frontend':
     'docker':
@@ -167,6 +172,9 @@
       - 'adg-docker': 'true'
 
 'Test e2e':
+    'artifact-dependencies':
+      - 'name': 'AdGuardHome_linux_amd64'
+        'required': true
     'docker':
         'image': '${bamboo.dockerFrontend}'
         'volumes':
@@ -186,6 +194,11 @@
                 set -e -f -u -x
 
                 export CI=true
+
+                mkdir -p /tmp/adguard
+                tar -xzf dist/AdGuardHome_linux_amd64.tar.gz -C /tmp/adguard
+
+                chmod +x /tmp/adguard/AdGuardHome
 
                 make VERBOSE=1 js-deps js-test-e2e
     'requirements':
