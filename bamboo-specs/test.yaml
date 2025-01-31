@@ -172,9 +172,8 @@
       - 'adg-docker': 'true'
 
 'Test e2e':
-    'artifact-dependencies':
+    'artifact-subscriptions':
       - 'name': 'AdGuardHome_linux_amd64'
-        'required': true
     'docker':
         'image': '${bamboo.dockerFrontend}'
         'volumes':
