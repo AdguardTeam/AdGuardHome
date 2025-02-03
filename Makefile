@@ -33,7 +33,7 @@ GPG_KEY_PASSPHRASE = not-a-real-password
 NPM = npm
 NPM_FLAGS = --prefix $(CLIENT_DIR)
 NPM_INSTALL_FLAGS = $(NPM_FLAGS) --quiet --no-progress --ignore-engines\
-	--ignore-optional --ignore-platform --ignore-scripts
+	--ignore-platform --ignore-scripts
 RACE = 0
 REVISION = $${REVISION:-$$(git rev-parse --short HEAD)}
 SIGN = 1
