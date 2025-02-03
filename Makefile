@@ -111,7 +111,9 @@ js-lint:  ; $(NPM) $(NPM_FLAGS) run lint
 js-test:  ; $(NPM) $(NPM_FLAGS) run test
 js-test-e2e:  ; $(NPM) $(NPM_FLAGS) run test:e2e
 js-deps-e2e:
-	@npx playwright install --with-deps
+	rm -rf ~/.cache/ms-playwright
+
+	@npx playwright install
 	@echo "Playwright installation complete"
 
 	@npx playwright --version || { echo "ERROR: Playwright installation failed"; exit 1; }
