@@ -118,8 +118,6 @@ js-deps-e2e:
 
 	@npx playwright --version || { echo "ERROR: Playwright installation failed"; exit 1; }
 
-	@npx playwright show-browsers || { echo "ERROR: Playwright browsers are missing"; exit 1; }
-
 	@ls -l ~/.cache/ms-playwright/ || { echo "ERROR: Playwright browser binaries not found"; exit 1; }
 
 	@echo "Playwright setup verified successfully"
