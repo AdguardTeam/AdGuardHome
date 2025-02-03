@@ -1,10 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { ADMIN_PASSWORD, ADMIN_USERNAME } from '../constants';
+import { getDHCPConfig } from '../helpers/network';
 
-const INTERFACE_NAME = 'en0';
-const RANGE_START = '192.168.1.100';
-const RANGE_END = '192.168.1.200';
-const SUBNET_MASK = '255.255.255.0';
+const dhcpConfig = getDHCPConfig();
+const INTERFACE_NAME = dhcpConfig.interfaceName;
+const RANGE_START = dhcpConfig.rangeStart;
+const RANGE_END = dhcpConfig.rangeEnd;
+const SUBNET_MASK = dhcpConfig.subnetMask;
 const LEASE_TIME = '86400';
 
 test.describe('DHCP Configuration', () => {

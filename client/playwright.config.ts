@@ -8,6 +8,7 @@ import path from 'path';
 export default defineConfig({
     testDir: './tests/e2e',
     globalSetup: path.resolve('./tests/e2e/globalSetup.ts'),
+    timeout: 5000,
     /* Run tests in files in parallel */
     fullyParallel: true,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
