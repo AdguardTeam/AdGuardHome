@@ -8,20 +8,25 @@ async function globalSetup(config: FullConfig) {
     });
     const page = await browser.newPage({ baseURL: config.webServer?.url });
 
-    await page.goto('/');
-    await page.getByTestId('install_get_started').click();
-    await page.getByTestId('install_web_port').fill(PORT.toString());
-    await page.getByTestId('install_next').click();
-    await page.getByTestId('install_username').fill(ADMIN_USERNAME);
-    await page.getByTestId('install_password').fill(ADMIN_PASSWORD);
-    await page.getByTestId('install_confirm_password').click();
-    await page.getByTestId('install_confirm_password').fill(ADMIN_PASSWORD);
-    await page.getByTestId('install_next').click();
-    await page.getByTestId('install_next').click();
-    await page.getByTestId('install_open_dashboard').click();
-    await page.waitForURL((url) => !url.href.endsWith('/install.html'));
-
-    await browser.close();
+    try {
+        await page.goto('/');
+        await page.getByTestId('install_get_started').click();
+        await page.getByTestId('install_web_port').fill(PORT.toString());
+        await page.getByTestId('install_next').click();
+        await page.getByTestId('install_username').fill(ADMIN_USERNAME);
+        await page.getByTestId('install_password').fill(ADMIN_PASSWORD);
+        await page.getByTestId('install_confirm_password').click();
+        await page.getByTestId('install_confirm_password').fill(ADMIN_PASSWORD);
+        await page.getByTestId('install_next').click();
+        await page.getByTestId('install_next').click();
+        await page.getByTestId('install_open_dashboard').click();
+        await page.waitForURL((url) => !url.href.endsWith('/install.html'));
+    } catch (error) {
+        console.error('Error during global setup:', error);
+        await page.screenshot({ path: 'error_screenshot.png' });
+    } finally {
+        await browser.close();
+    }
 }
 
 export default globalSetup;
