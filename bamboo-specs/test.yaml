@@ -202,10 +202,12 @@
                 chmod +x ./AdGuardHome
 
                 ls -l ./AdGuardHome
+                
+                npx playwright install --with-deps
 
                 tree ./build/
 
-                make VERBOSE=1 js-deps js-deps-e2e js-test-e2e
+                make VERBOSE=1 js-deps js-test-e2e
     'requirements':
       - 'adg-docker': 'true'
 

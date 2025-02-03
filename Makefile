@@ -110,19 +110,6 @@ js-deps:  ; $(NPM) $(NPM_INSTALL_FLAGS) ci
 js-lint:  ; $(NPM) $(NPM_FLAGS) run lint
 js-test:  ; $(NPM) $(NPM_FLAGS) run test
 js-test-e2e:  ; $(NPM) $(NPM_FLAGS) run test:e2e
-js-deps-e2e:
-	rm -rf ~/.cache/ms-playwright
-
-	@npx playwright install
-	@echo "Playwright installation complete"
-
-	@npx playwright --version || { echo "ERROR: Playwright installation failed"; exit 1; }
-
-	@npx playwright show-browsers || { echo "ERROR: Playwright browsers are missing"; exit 1; }
-
-	@ls -l ~/.cache/ms-playwright/ || { echo "ERROR: Playwright browser binaries not found"; exit 1; }
-
-	@echo "Playwright setup verified successfully"
 
 go-bench:     ; $(ENV) "$(SHELL)"    ./scripts/make/go-bench.sh
 go-build:     ; $(ENV) "$(SHELL)"    ./scripts/make/go-build.sh
