@@ -203,6 +203,8 @@
 
                 ls -l ./AdGuardHome
 
+                tree ./build/
+
                 make VERBOSE=1 js-test-e2e
     'requirements':
       - 'adg-docker': 'true'
