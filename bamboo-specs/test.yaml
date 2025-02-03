@@ -205,9 +205,7 @@
 
                 tree ./build/
 
-                npx playwright install
-
-                make VERBOSE=1 js-deps js-test-e2e
+                make VERBOSE=1 js-deps js-deps-e2e js-test-e2e
     'requirements':
       - 'adg-docker': 'true'
 

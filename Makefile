@@ -110,6 +110,7 @@ js-deps:  ; $(NPM) $(NPM_INSTALL_FLAGS) ci
 js-lint:  ; $(NPM) $(NPM_FLAGS) run lint
 js-test:  ; $(NPM) $(NPM_FLAGS) run test
 js-test-e2e:  ; $(NPM) $(NPM_FLAGS) run test:e2e
+js-deps-e2e:  ; npx playwright install
 
 go-bench:     ; $(ENV) "$(SHELL)"    ./scripts/make/go-bench.sh
 go-build:     ; $(ENV) "$(SHELL)"    ./scripts/make/go-build.sh
