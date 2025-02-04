@@ -23,7 +23,6 @@ async function globalSetup(config: FullConfig) {
         await page.waitForURL((url) => !url.href.endsWith('/install.html'));
     } catch (error) {
         console.error('Error during global setup:', error);
-        await page.screenshot({ path: 'error_screenshot.png' });
     } finally {
         await browser.close();
     }
