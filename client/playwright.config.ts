@@ -8,6 +8,7 @@ import path from 'path';
 export default defineConfig({
     testDir: './tests/e2e',
     globalSetup: path.resolve('./tests/e2e/globalSetup.ts'),
+    globalTeardown: path.resolve('./tests/e2e/globalTeardown.ts'),
     timeout: 5000,
     /* Run tests in files in parallel */
     fullyParallel: true,
@@ -41,9 +42,7 @@ export default defineConfig({
 
     webServer: {
         stdout: process.env.CI ? 'pipe' : 'ignore',
-        command: process.env.CI
-            ? './AdGuardHome --local-frontend -v'
-            : 'rm -f AdGuardHome.yaml && sudo ./AdGuardHome --local-frontend -v',
+        command: process.env.CI ? './AdGuardHome --local-frontend -v' : 'sudo ./AdGuardHome --local-frontend -v',
         url: 'http://127.0.0.1:3000',
         cwd: '..',
         reuseExistingServer: !process.env.CI,

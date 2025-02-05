@@ -108,7 +108,7 @@ js-build:     ; $(NPM) $(NPM_FLAGS) run build-prod
 js-deps:      ; $(NPM) $(NPM_INSTALL_FLAGS) ci
 js-lint:      ; $(NPM) $(NPM_FLAGS) run lint
 js-test:      ; $(NPM) $(NPM_FLAGS) run test
-js-test-e2e:  ; npx $(NPM_FLAGS) playwright install --with-deps && $(NPM) $(NPM_FLAGS) run test:e2e
+js-test-e2e:  ; $(NPM) $(NPM_FLAGS) run test:e2e
 
 go-bench:     ; $(ENV) "$(SHELL)"    ./scripts/make/go-bench.sh
 go-build:     ; $(ENV) "$(SHELL)"    ./scripts/make/go-build.sh

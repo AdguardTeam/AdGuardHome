@@ -1,8 +1,18 @@
 import { chromium, FullConfig } from '@playwright/test';
+import { existsSync, renameSync } from 'fs';
+import { join } from 'path';
 
 import { ADMIN_USERNAME, ADMIN_PASSWORD, PORT } from '../constants';
 
+export const CONFIG_FILE = 'AdGuardHome.yaml';
+export const TEMP_CONFIG_FILE = 'AdGuardHome.yaml.temp';
+
 async function globalSetup(config: FullConfig) {
+    // Backup existing config file if it exists
+    if (existsSync(CONFIG_FILE)) {
+        renameSync(CONFIG_FILE, TEMP_CONFIG_FILE);
+    }
+
     const browser = await chromium.launch({
         slowMo: 100,
     });
