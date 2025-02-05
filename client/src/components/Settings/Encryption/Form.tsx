@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 
 import { Trans, useTranslation } from 'react-i18next';
 
@@ -92,19 +92,7 @@ export type EncryptionFormValues = {
 
 type Props = {
     initialValues: EncryptionFormValues;
-    processingConfig: boolean;
-    processingValidate: boolean;
-    status_key?: string;
-    not_after?: string;
-    warning_validation?: string;
-    valid_chain?: boolean;
-    valid_key?: boolean;
-    valid_cert?: boolean;
-    valid_pair?: boolean;
-    dns_names?: string[];
-    key_type?: string;
-    issuer?: string;
-    subject?: string;
+    encryption: EncryptionData;
     onSubmit: (values: EncryptionFormValues) => void;
     debouncedConfigValidation: (values: EncryptionFormValues) => void;
     setTlsConfig: (values: Partial<EncryptionData>) => void;
@@ -130,24 +118,28 @@ const defaultValues = {
 
 export const Form = ({
     initialValues,
-    processingConfig,
-    processingValidate,
-    not_after,
-    valid_chain,
-    valid_key,
-    valid_cert,
-    valid_pair,
-    dns_names,
-    key_type,
-    issuer,
-    subject,
-    warning_validation,
+    encryption,
     onSubmit,
     setTlsConfig,
+    debouncedConfigValidation,
     validateTlsConfig,
 }: Props) => {
     const { t } = useTranslation();
-    const previousValuesRef = useRef<EncryptionFormValues>(initialValues);
+
+    const {
+        not_after,
+        valid_chain,
+        valid_key,
+        valid_cert,
+        valid_pair,
+        dns_names,
+        key_type,
+        issuer,
+        subject,
+        warning_validation,
+        processingConfig,
+        processingValidate,
+    } = encryption;
 
     const {
         control,
@@ -166,8 +158,6 @@ export const Form = ({
         mode: 'onBlur',
     });
 
-    const watchedValues = watch();
-
     const {
         enabled: isEnabled,
         serve_plain_dns: servePlainDns,
@@ -178,16 +168,11 @@ export const Form = ({
         private_key_saved: privateKeySaved,
         certificate_path: certificatePath,
         certificate_source: certificateSource,
-    } = watchedValues;
+    } = watch();
 
-    useEffect(() => {
-        const previousValues = previousValuesRef.current;
-
-        if (JSON.stringify(previousValues) !== JSON.stringify(watchedValues)) {
-            // TODO(ik) onChange TLS config validation
-            previousValuesRef.current = watchedValues;
-        }
-    }, [watchedValues]);
+    const handleBlur = () => {
+        debouncedConfigValidation(getValues());
+    };
 
     const isSavingDisabled = () => {
         const processing = isSubmitting || processingConfig || processingValidate;
@@ -243,7 +228,9 @@ export const Form = ({
                         <Controller
                             name="enabled"
                             control={control}
-                            render={({ field }) => <Checkbox {...field} title={t('encryption_enable')} />}
+                            render={({ field }) => (
+                                <Checkbox {...field} title={t('encryption_enable')} onBlur={handleBlur} />
+                            )}
                         />
                     </div>
 
@@ -288,6 +275,7 @@ export const Form = ({
                                     placeholder={t('encryption_server_enter')}
                                     error={fieldState.error?.message}
                                     disabled={!isEnabled}
+                                    onBlur={handleBlur}
                                 />
                             )}
                         />
@@ -337,6 +325,7 @@ export const Form = ({
                                         const { value } = e.target;
                                         field.onChange(toNumber(value));
                                     }}
+                                    onBlur={handleBlur}
                                 />
                             )}
                         />
@@ -368,6 +357,7 @@ export const Form = ({
                                         const { value } = e.target;
                                         field.onChange(toNumber(value));
                                     }}
+                                    onBlur={handleBlur}
                                 />
                             )}
                         />
@@ -399,6 +389,7 @@ export const Form = ({
                                         const { value } = e.target;
                                         field.onChange(toNumber(value));
                                     }}
+                                    onBlur={handleBlur}
                                 />
                             )}
                         />
@@ -457,6 +448,7 @@ export const Form = ({
                                         placeholder={t('encryption_certificates_input')}
                                         disabled={!isEnabled}
                                         error={fieldState.error?.message}
+                                        onBlur={handleBlur}
                                     />
                                 )}
                             />
@@ -471,6 +463,7 @@ export const Form = ({
                                         placeholder={t('encryption_certificate_path')}
                                         error={fieldState.error?.message}
                                         disabled={!isEnabled}
+                                        onBlur={handleBlur}
                                     />
                                 )}
                             />
@@ -527,6 +520,7 @@ export const Form = ({
                                                 }
                                                 field.onChange(checked);
                                             }}
+                                            onBlur={handleBlur}
                                         />
                                     )}
                                 />
@@ -540,6 +534,7 @@ export const Form = ({
                                             placeholder={t('encryption_key_input')}
                                             disabled={!isEnabled || privateKeySaved}
                                             error={fieldState.error?.message}
+                                            onBlur={handleBlur}
                                         />
                                     )}
                                 />
@@ -555,6 +550,7 @@ export const Form = ({
                                         placeholder={t('encryption_private_key_path')}
                                         error={fieldState.error?.message}
                                         disabled={!isEnabled}
+                                        onBlur={handleBlur}
                                     />
                                 )}
                             />

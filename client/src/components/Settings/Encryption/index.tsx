@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { debounce } from 'lodash';
 import { DEBOUNCE_TIMEOUT, ENCRYPTION_SOURCE } from '../../../helpers/constants';
@@ -18,19 +18,37 @@ type Props = {
 export const Encryption = ({ encryption, setTlsConfig, validateTlsConfig }: Props) => {
     const { t } = useTranslation();
 
-    useEffect(() => {
-        if (encryption.enabled) {
-            validateTlsConfig(encryption);
-        }
-    }, [encryption, validateTlsConfig]);
-
     const initialValues = useMemo((): EncryptionFormValues => {
-        const { certificate_chain, private_key, private_key_saved } = encryption;
+        const {
+            enabled,
+            serve_plain_dns,
+            server_name,
+            force_https,
+            port_https,
+            port_dns_over_tls,
+            port_dns_over_quic,
+            certificate_chain,
+            private_key,
+            certificate_path,
+            private_key_path,
+            private_key_saved,
+        } = encryption;
         const certificate_source = certificate_chain ? ENCRYPTION_SOURCE.CONTENT : ENCRYPTION_SOURCE.PATH;
         const key_source = private_key || private_key_saved ? ENCRYPTION_SOURCE.CONTENT : ENCRYPTION_SOURCE.PATH;
 
         return {
-            ...encryption,
+            enabled,
+            serve_plain_dns,
+            server_name,
+            force_https,
+            port_https,
+            port_dns_over_tls,
+            port_dns_over_quic,
+            certificate_chain,
+            private_key,
+            certificate_path,
+            private_key_path,
+            private_key_saved,
             certificate_source,
             key_source,
         };
@@ -75,7 +93,7 @@ export const Encryption = ({ encryption, setTlsConfig, validateTlsConfig }: Prop
         }
     }, []);
 
-    const debouncedConfigValidation = useCallback(debounce(validateConfig, DEBOUNCE_TIMEOUT), [validateConfig]);
+    const debouncedConfigValidation = useMemo(() => debounce(validateConfig, DEBOUNCE_TIMEOUT), [validateConfig]);
 
     return (
         <div className="encryption">
@@ -94,7 +112,7 @@ export const Encryption = ({ encryption, setTlsConfig, validateTlsConfig }: Prop
                         debouncedConfigValidation={debouncedConfigValidation}
                         setTlsConfig={setTlsConfig}
                         validateTlsConfig={validateTlsConfig}
-                        {...encryption}
+                        encryption={encryption}
                     />
                 </Card>
             )}

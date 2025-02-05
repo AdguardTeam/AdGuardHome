@@ -12,10 +12,14 @@ type Props = {
     className?: string;
     error?: string;
     onChange: (value: boolean) => void;
+    onBlur?: () => void;
 };
 
 export const Checkbox = forwardRef<HTMLInputElement, Props>(
-    ({ title, subtitle, value, name, disabled, error, className = 'checkbox--form', onChange, ...rest }, ref) => (
+    (
+        { title, subtitle, value, name, disabled, error, className = 'checkbox--form', onChange, onBlur, ...rest },
+        ref,
+    ) => (
         <>
             <label className={clsx('checkbox', className)}>
                 <span className="checkbox__marker" />
@@ -26,6 +30,7 @@ export const Checkbox = forwardRef<HTMLInputElement, Props>(
                     disabled={disabled}
                     checked={value}
                     onChange={(e) => onChange(e.target.checked)}
+                    onBlur={onBlur}
                     ref={ref}
                     {...rest}
                 />
