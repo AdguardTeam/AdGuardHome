@@ -1,7 +1,3 @@
-import { chromium, FullConfig } from '@playwright/test';
-
-import { ADMIN_USERNAME, ADMIN_PASSWORD, PORT } from '../constants';
-
 import { existsSync, renameSync, unlinkSync } from 'fs';
 import { CONFIG_FILE, TEMP_CONFIG_FILE } from './globalSetup';
 

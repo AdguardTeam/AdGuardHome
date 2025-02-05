@@ -1,6 +1,5 @@
 import { chromium, FullConfig } from '@playwright/test';
 import { existsSync, renameSync } from 'fs';
-import { join } from 'path';
 
 import { ADMIN_USERNAME, ADMIN_PASSWORD, PORT } from '../constants';
 
