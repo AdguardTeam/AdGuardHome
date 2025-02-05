@@ -199,12 +199,6 @@
 
                 mv /tmp/AdGuardHome/AdGuardHome ./AdGuardHome
 
-                chmod +x ./AdGuardHome
-
-                ls -l ./AdGuardHome
-
-                tree ./build/
-
                 make VERBOSE=1 js-deps js-test-e2e
     'requirements':
       - 'adg-docker': 'true'
