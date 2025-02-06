@@ -453,7 +453,7 @@ export const getParamsForClientsSearch = (data: any, param: any, additionalParam
     });
 
     return {
-        clients: Array.from(clients).map(id => ({ id })),
+        clients: Array.from(clients).map((id) => ({ id })),
     };
 };
 
@@ -670,9 +670,16 @@ export const countClientsStatistics = (ids: any, autoClients: any) => {
  * @param {function} t translate
  * @returns {string}
  */
-export const formatElapsedMs = (elapsedMs: any, t: any) => {
-    const formattedElapsedMs = parseInt(elapsedMs, 10) || parseFloat(elapsedMs).toFixed(2);
-    return `${formattedElapsedMs} ${t('milliseconds_abbreviation')}`;
+export const formatElapsedMs = (elapsedMs: string, t: (key: string) => string) => {
+    const parsedElapsedMs = parseInt(elapsedMs, 10);
+
+    if (Number.isNaN(parsedElapsedMs)) {
+        return elapsedMs;
+    }
+
+    const formattedMs = formatNumber(parsedElapsedMs);
+
+    return `${formattedMs} ${t('milliseconds_abbreviation')}`;
 };
 
 /**
