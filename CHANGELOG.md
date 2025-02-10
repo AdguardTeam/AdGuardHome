@@ -18,6 +18,22 @@ See also the [v0.107.57 GitHub milestone][ms-v0.107.57].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.23.6][go-1.23.6].
+
+### Changed
+
+- The *Fastest IP adddress* upstream mode now collects statistics for the all upstream DNS servers.
+
+### Fixed
+
+- The formatting of large numbers in the upstream table and query log ([#7590]).
+
+[#7590]: https://github.com/AdguardTeam/AdGuardHome/issues/7590
+
+[go-1.23.6]: https://groups.google.com/g/golang-announce/c/xU1ZCHUZw3k
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->

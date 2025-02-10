@@ -122,9 +122,14 @@ func (s *Server) logQuery(dctx *dnsContext, ip net.IP, processingTime time.Durat
 
 	if pctx.Upstream != nil {
 		p.Upstream = pctx.Upstream.Address()
-	} else if cachedUps := pctx.CachedUpstreamAddr; cachedUps != "" {
-		p.Upstream = pctx.CachedUpstreamAddr
-		p.Cached = true
+	}
+
+	if qs := pctx.QueryStatistics(); qs != nil {
+		ms := qs.Main()
+		if len(ms) == 1 && ms[0].IsCached {
+			p.Upstream = ms[0].Address
+			p.Cached = true
+		}
 	}
 
 	s.queryLog.Add(p)
@@ -134,15 +139,18 @@ func (s *Server) logQuery(dctx *dnsContext, ip net.IP, processingTime time.Durat
 func (s *Server) updateStats(dctx *dnsContext, clientIP string, processingTime time.Duration) {
 	pctx := dctx.proxyCtx
 
+	var upstreamStats []*proxy.UpstreamStatistics
+	qs := pctx.QueryStatistics()
+	if qs != nil {
+		upstreamStats = append(upstreamStats, qs.Main()...)
+		upstreamStats = append(upstreamStats, qs.Fallback()...)
+	}
+
 	e := &stats.Entry{
+		UpstreamStats:  upstreamStats,
 		Domain:         aghnet.NormalizeDomain(pctx.Req.Question[0].Name),
 		Result:         stats.RNotFiltered,
 		ProcessingTime: processingTime,
-		UpstreamTime:   pctx.QueryDuration,
-	}
-
-	if pctx.Upstream != nil {
-		e.Upstream = pctx.Upstream.Address()
 	}
 
 	if clientID := dctx.clientID; clientID != "" {

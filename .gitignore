@@ -19,6 +19,10 @@
 /agh-backup/
 /bin/
 /build/*
+/client/blob-report/
+/client/playwright-report/
+/client/playwright/.cache/
+/client/test-results/
 /data/
 /dist/
 /filtering/tests/filtering.TestLotsOfRules*.pprof
@@ -33,9 +37,5 @@ AdGuardHome.exe
 AdGuardHome.yaml*
 coverage.txt
 node_modules/
-/client/blob-report/
-/client/playwright-report/
-/client/playwright/.cache/
-/client/test-results/
 
 !/build/gitkeep
