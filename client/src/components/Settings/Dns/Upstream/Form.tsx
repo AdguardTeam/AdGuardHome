@@ -7,8 +7,19 @@ import classnames from 'classnames';
 
 import Examples from './Examples';
 
-import { renderRadioField, renderTextareaField, CheckboxField } from '../../../../helpers/form';
-import { DNS_REQUEST_OPTIONS, FORM_NAME, UPSTREAM_CONFIGURATION_WIKI_LINK } from '../../../../helpers/constants';
+import {
+    renderRadioField,
+    renderTextareaField,
+    CheckboxField,
+    renderInputField,
+    toNumber,
+} from '../../../../helpers/form';
+import {
+    DNS_REQUEST_OPTIONS,
+    FORM_NAME,
+    UINT32_RANGE,
+    UPSTREAM_CONFIGURATION_WIKI_LINK,
+} from '../../../../helpers/constants';
 
 import { testUpstreamWithFormValues } from '../../../../actions';
 
@@ -17,6 +28,7 @@ import { removeEmptyLines, trimLinesAndRemoveEmpty } from '../../../../helpers/h
 import { getTextareaCommentsHighlight, syncScroll } from '../../../../helpers/highlightTextareaComments';
 import '../../../ui/texareaCommentsHighlight.css';
 import { RootState } from '../../../../initialState';
+import { validateRequiredValue } from '../../../../helpers/validators';
 
 const UPSTREAM_DNS_NAME = 'upstream_dns';
 const UPSTREAM_MODE_NAME = 'upstream_mode';
@@ -301,7 +313,7 @@ const Form = ({ submitting, invalid, handleSubmit }: FormProps) => {
                     <hr />
                 </div>
 
-                <div className="col-12 mb-4">
+                <div className="col-12">
                     <Field
                         name="resolve_clients"
                         type="checkbox"
@@ -310,6 +322,34 @@ const Form = ({ submitting, invalid, handleSubmit }: FormProps) => {
                         subtitle={t('resolve_clients_desc')}
                         disabled={processingSetConfig}
                     />
+                </div>
+
+                <div className="col-12">
+                    <hr />
+                </div>
+
+                <div className="col-12 col-md-7">
+                    <div className="form__group">
+                        <label htmlFor="upstream_timeout" className="form__label form__label--with-desc">
+                            <Trans>upstream_timeout</Trans>
+                        </label>
+
+                        <div className="form__desc form__desc--top">
+                            <Trans>upstream_timeout_desc</Trans>
+                        </div>
+
+                        <Field
+                            name="upstream_timeout"
+                            type="number"
+                            component={renderInputField}
+                            className="form-control"
+                            placeholder={t('form_enter_upstream_timeout')}
+                            normalize={toNumber}
+                            validate={validateRequiredValue}
+                            min={1}
+                            max={UINT32_RANGE.MAX}
+                        />
+                    </div>
                 </div>
             </div>
 

@@ -22,6 +22,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.23.6][go-1.23.6].
 
+### Added
+
+- The ability to specify the upstream timeout in the Web UI.
+
 ### Changed
 
 - The *Fastest IP adddress* upstream mode now collects statistics for the all upstream DNS servers.
