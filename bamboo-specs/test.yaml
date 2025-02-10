@@ -54,7 +54,7 @@
 
                 set -e -f -u -x
 
-                make VERBOSE=1 js-deps js-lint js-test
+                make VERBOSE=1 js-deps js-typecheck js-lint js-test
     'final-tasks':
       - 'clean'
     'requirements':

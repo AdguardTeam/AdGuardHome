@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Trans } from 'react-i18next';
 
-import Guide from '../../components/ui/Guide';
+import { Guide } from '../../components/ui/Guide';
 
 import Controls from './Controls';
 

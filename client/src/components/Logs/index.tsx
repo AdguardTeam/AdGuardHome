@@ -29,7 +29,7 @@ import { BUTTON_PREFIX } from './Cells/helpers';
 import AnonymizerNotification from './AnonymizerNotification';
 import { RootState } from '../../initialState';
 
-const processContent = (data: any, buttonType: string) =>
+const processContent = (data: any, _buttonType: string) =>
     Object.entries(data).map(([key, value]) => {
         if (!value) {
             return null;

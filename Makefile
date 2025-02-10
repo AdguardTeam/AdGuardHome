@@ -106,6 +106,7 @@ build-release: $(BUILD_RELEASE_DEPS_$(FRONTEND_PREBUILT))
 
 js-build:     ; $(NPM) $(NPM_FLAGS) run build-prod
 js-deps:      ; $(NPM) $(NPM_INSTALL_FLAGS) ci
+js-typecheck: ; $(NPM) $(NPM_FLAGS) run typecheck
 js-lint:      ; $(NPM) $(NPM_FLAGS) run lint
 js-test:      ; $(NPM) $(NPM_FLAGS) run test
 js-test-e2e:  ; $(NPM) $(NPM_FLAGS) run test:e2e
