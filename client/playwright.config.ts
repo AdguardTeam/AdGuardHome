@@ -42,7 +42,7 @@ export default defineConfig({
 
     webServer: {
         stdout: process.env.CI ? 'pipe' : 'ignore',
-        command: process.env.CI ? './AdGuardHome --local-frontend -v' : 'sudo ./AdGuardHome --local-frontend -v',
+        command: `${!process.env.CI ? 'sudo ' : ''}./AdGuardHome --local-frontend -v -c /tmp/AdGuard.temp2.e2e.yaml `,
         url: 'http://127.0.0.1:3000',
         cwd: '..',
         reuseExistingServer: !process.env.CI,
