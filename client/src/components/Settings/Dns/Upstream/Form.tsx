@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import i18next from 'i18next';
 import clsx from 'clsx';
 import { testUpstreamWithFormValues } from '../../../../actions';
-import { DNS_REQUEST_OPTIONS, UPSTREAM_CONFIGURATION_WIKI_LINK } from '../../../../helpers/constants';
+import { DNS_REQUEST_OPTIONS, UINT32_RANGE, UPSTREAM_CONFIGURATION_WIKI_LINK } from '../../../../helpers/constants';
 import { removeEmptyLines } from '../../../../helpers/helpers';
 import { getTextareaCommentsHighlight, syncScroll } from '../../../../helpers/highlightTextareaComments';
 import { RootState } from '../../../../initialState';
@@ -15,6 +15,9 @@ import Examples from './Examples';
 import { Checkbox } from '../../../ui/Controls/Checkbox';
 import { Textarea } from '../../../ui/Controls/Textarea';
 import { Radio } from '../../../ui/Controls/Radio';
+import { Input } from '../../../ui/Controls/Input';
+import { validateRequiredValue } from '../../../../helpers/validators';
+import { toNumber } from '../../../../helpers/form';
 
 const UPSTREAM_DNS_NAME = 'upstream_dns';
 
@@ -26,6 +29,7 @@ type FormData = {
     local_ptr_upstreams: string;
     use_private_ptr_resolvers: boolean;
     resolve_clients: boolean;
+    upstream_timeout: number;
 };
 
 type FormProps = {
@@ -71,6 +75,7 @@ const Form = ({ initialValues, onSubmit }: FormProps) => {
             local_ptr_upstreams: initialValues?.local_ptr_upstreams || '',
             use_private_ptr_resolvers: initialValues?.use_private_ptr_resolvers || false,
             resolve_clients: initialValues?.resolve_clients || false,
+            upstream_timeout: initialValues?.upstream_timeout || 0,
         },
     });
 
@@ -282,6 +287,44 @@ const Form = ({ initialValues, onSubmit }: FormProps) => {
                             />
                         )}
                     />
+                </div>
+
+                <div className="col-12">
+                    <hr />
+                </div>
+
+                <div className="col-12 col-md-7">
+                    <div className="form__group">
+                        <label htmlFor="upstream_timeout" className="form__label form__label--with-desc">
+                            <Trans>upstream_timeout</Trans>
+                        </label>
+
+                        <div className="form__desc form__desc--top">
+                            <Trans>upstream_timeout_desc</Trans>
+                        </div>
+
+                        <Controller
+                            name="upstream_timeout"
+                            control={control}
+                            rules={{ validate: validateRequiredValue }}
+                            render={({ field }) => (
+                                <Input
+                                    {...field}
+                                    type="number"
+                                    id="upstream_timeout"
+                                    data-testid="upstream_timeout"
+                                    placeholder={t('form_enter_upstream_timeout')}
+                                    disabled={processingSetConfig}
+                                    min={1}
+                                    max={UINT32_RANGE.MAX}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        field.onChange(toNumber(value));
+                                    }}
+                                />
+                            )}
+                        />
+                    </div>
                 </div>
             </div>
 

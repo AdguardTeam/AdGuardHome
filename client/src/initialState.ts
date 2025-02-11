@@ -304,6 +304,7 @@ export type DnsConfigData = {
     blocking_ipv4: string;
     blocking_ipv6: string;
     blocked_response_ttl: number;
+    upstream_timeout: number;
     edns_cs_enabled: boolean;
     disable_ipv6: boolean;
     dnssec_enabled: boolean;
@@ -488,6 +489,7 @@ export const initialState: RootState = {
         blocking_ipv4: DEFAULT_BLOCKING_IPV4,
         blocking_ipv6: DEFAULT_BLOCKING_IPV6,
         blocked_response_ttl: 10,
+        upstream_timeout: 10,
         edns_cs_enabled: false,
         disable_ipv6: false,
         dnssec_enabled: false,

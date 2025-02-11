@@ -329,6 +329,14 @@ func (s *Server) AddrProcConfig() (c *client.DefaultAddrProcConfig) {
 	}
 }
 
+// UpstreamTimeout returns the current upstream timeout configuration.
+func (s *Server) UpstreamTimeout() (t time.Duration) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	return s.conf.UpstreamTimeout
+}
+
 // Resolve gets IP addresses by host name from an upstream server.  No
 // request/response filtering is performed.  Query log and Stats are not
 // updated.  This method may be called before [Server.Start].
