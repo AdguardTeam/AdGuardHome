@@ -304,6 +304,8 @@ AdGuard Home uses [Playwright](https://playwright.dev) for E2E testing. Tests ar
 1. Run `npm install` to install dependencies.
 2. Run `npx playwright install` to set up required browsers.
 
+> **Warning:** Playwright will download and install its own browser binaries for testing, which may differ from the browsers installed on your system.
+
 ## <a href="#contributing" id="contributing" name="contributing">Contributing</a>
 
 You are welcome to fork this repository, make your changes and [submit a pull request][pr]. Please make sure you follow our [code guidelines][guide] though.
