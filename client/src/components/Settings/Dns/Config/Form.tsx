@@ -337,15 +337,11 @@ const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                             <Input
                                                 {...field}
                                                 data-testid="dns_config_blocked_response_ttl"
-                                                type="number"
+                                                type="text"
                                                 label={label}
                                                 desc={description}
                                                 error={fieldState.error?.message}
                                                 disabled={processing}
-                                                onChange={(e) => {
-                                                    const { value } = e.target;
-                                                    field.onChange(toNumber(value));
-                                                }}
                                             />
                                         )}
                                     />
