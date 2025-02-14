@@ -131,7 +131,10 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
     const dnsPortVal = watch('dns.port');
 
     useEffect(() => {
-        if (!isValid || validateInstallPort(webPortVal) || validateInstallPort(dnsPortVal)) {
+        const webPortError = validateInstallPort(webPortVal);
+        const dnsPortError = validateInstallPort(dnsPortVal);
+
+        if (!isValid || webPortError || dnsPortError) {
             return;
         }
 

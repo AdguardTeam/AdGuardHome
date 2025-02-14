@@ -2,17 +2,16 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 
-import { Form, FormValues } from './Form';
+import { Form } from './Form';
 import { refreshFilteredLogs } from '../../../actions/queryLogs';
 import { addSuccessToast } from '../../../actions/toasts';
 
 interface FiltersProps {
-    initialValues: FormValues;
     processingGetLogs: boolean;
     setIsLoading: (...args: unknown[]) => unknown;
 }
 
-const Filters = ({ initialValues, setIsLoading }: FiltersProps) => {
+const Filters = ({ setIsLoading }: FiltersProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
 
@@ -40,7 +39,6 @@ const Filters = ({ initialValues, setIsLoading }: FiltersProps) => {
             </h1>
             <Form
                 setIsLoading={setIsLoading}
-                initialValues={initialValues}
             />
         </div>
     );

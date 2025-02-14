@@ -19,6 +19,11 @@ export const SearchField = ({
         handleChange(e.target.value);
     };
 
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        e.target.value = e.target.value.trim();
+        handleChange(e.target.value)
+    }
+
     return (
         <>
             <div className="input-group-search input-group-search__icon--magnifier">
@@ -30,6 +35,7 @@ export const SearchField = ({
                 className={className}
                 value={value}
                 onChange={handleInputChange}
+                onBlur={handleBlur}
                 {...rest}
             />
             {typeof value === 'string' && value.length > 0 && (

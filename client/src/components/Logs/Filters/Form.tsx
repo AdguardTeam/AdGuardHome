@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 
 import { useHistory } from 'react-router-dom';
 import classNames from 'classnames';
-import { useForm } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import {
     DEBOUNCE_FILTER_TIMEOUT,
     DEFAULT_LOGS_FILTER,
@@ -15,33 +15,22 @@ import {
 import { setLogsFilter } from '../../../actions/queryLogs';
 import useDebounce from '../../../helpers/useDebounce';
 
-import { createOnBlurHandler, getLogsUrlParams } from '../../../helpers/helpers';
+import { getLogsUrlParams } from '../../../helpers/helpers';
 
 import { SearchField } from './SearchField';
-
-export type FormValues = {
-    search: string;
-    response_status: string;
-};
+import { SearchFormValues } from '..';
 
 type Props = {
-    initialValues: FormValues;
     className?: string;
     setIsLoading: (value: boolean) => void;
 };
 
-export const Form = ({ initialValues, className, setIsLoading }: Props) => {
+export const Form = ({ className, setIsLoading }: Props) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const history = useHistory();
 
-    const { register, watch, setValue } = useForm<FormValues>({
-        mode: 'onBlur',
-        defaultValues: {
-            search: initialValues.search || DEFAULT_LOGS_FILTER.search,
-            response_status: initialValues.response_status || DEFAULT_LOGS_FILTER.response_status,
-        },
-    });
+    const { register, watch, setValue } = useFormContext<SearchFormValues>();
 
     const searchValue = watch('search');
     const responseStatusValue = watch('response_status');
@@ -77,16 +66,6 @@ export const Form = ({ initialValues, className, setIsLoading }: Props) => {
         }
     };
 
-    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) =>
-        createOnBlurHandler(
-            e,
-            {
-                value: e.target.value,
-                onChange: (v: string) => setValue('search', v),
-            },
-            (data: string) => data.trim(),
-        );
-
     return (
         <form
             className="d-flex flex-wrap form-control--container"
@@ -97,7 +76,6 @@ export const Form = ({ initialValues, className, setIsLoading }: Props) => {
                 <SearchField
                     value={searchValue}
                     handleChange={(val) => setValue('search', val)}
-                    onBlur={handleBlur}
                     onKeyDown={onEnterPress}
                     onClear={onInputClear}
                     placeholder={t('domain_or_client')}

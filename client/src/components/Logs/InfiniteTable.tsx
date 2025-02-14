@@ -18,6 +18,7 @@ interface InfiniteTableProps {
     isLoading: boolean;
     items: unknown[];
     isSmallScreen: boolean;
+    currentQuery: string;
     setDetailedDataCurrent: Dispatch<SetStateAction<any>>;
     setButtonType: (...args: unknown[]) => unknown;
     setModalOpened: (...args: unknown[]) => unknown;
@@ -27,6 +28,7 @@ const InfiniteTable = ({
     isLoading,
     items,
     isSmallScreen,
+    currentQuery,
     setDetailedDataCurrent,
     setButtonType,
     setModalOpened,
@@ -43,7 +45,7 @@ const InfiniteTable = ({
 
     const listener = useCallback(() => {
         if (!loadingRef.current && loader.current && isScrolledIntoView(loader.current)) {
-            dispatch(getLogs());
+            dispatch(getLogs(currentQuery));
         }
     }, []);
 

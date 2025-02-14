@@ -468,8 +468,6 @@ export const getParamsForClientsSearch = (data: any, param: any, additionalParam
  * @param {function} [normalizeOnBlur]
  * @returns {function}
  */
-export const createOnBlurHandler = (event: any, input: any, normalizeOnBlur: any) =>
-    normalizeOnBlur ? input.onBlur(normalizeOnBlur(event.target.value)) : input.onBlur();
 
 export const checkFiltered = (reason: any) => reason.indexOf(FILTERED) === 0;
 export const checkRewrite = (reason: any) => reason === FILTERED_STATUS.REWRITE;
