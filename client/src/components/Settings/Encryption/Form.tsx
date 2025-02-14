@@ -152,8 +152,8 @@ export const Form = ({
         formState: { isSubmitting, isValid },
     } = useForm<EncryptionFormValues>({
         defaultValues: {
-            ...initialValues,
             ...defaultValues,
+            ...initialValues,
         },
         mode: 'onBlur',
     });
