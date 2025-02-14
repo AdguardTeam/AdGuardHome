@@ -29,13 +29,13 @@ export const Form = ({ initialValues, blockedServices, processing, processingSet
         handleSubmit,
         control,
         setValue,
-        formState: { isSubmitting, isDirty },
+        formState: { isSubmitting },
     } = useForm<FormValues>({
         mode: 'onBlur',
         defaultValues: initialValues,
     });
 
-    const handleToggleAllServices = (isSelected: boolean) => {
+    const handleToggleAllServices = async (isSelected: boolean) => {
         blockedServices.forEach((service: BlockedService) => setValue(`blocked_services.${service.id}`, isSelected));
     };
 
@@ -91,7 +91,7 @@ export const Form = ({ initialValues, blockedServices, processing, processingSet
                     type="submit"
                     data-testid="blocked_services_save"
                     className="btn btn-success btn-standard btn-large"
-                    disabled={isSubmitting || !isDirty || processing || processingSet}>
+                    disabled={isSubmitting || processing || processingSet}>
                     <Trans>save_btn</Trans>
                 </button>
             </div>
