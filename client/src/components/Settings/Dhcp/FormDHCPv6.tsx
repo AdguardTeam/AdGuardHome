@@ -77,14 +77,6 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
                                 <Controller
                                     name="v6.range_end"
                                     control={control}
-                                    rules={{
-                                        validate: isInterfaceIncludesIpv6
-                                            ? {
-                                                  ipv6: validateIpv6,
-                                                  required: validateRequiredValue,
-                                              }
-                                            : undefined,
-                                    }}
                                     render={({ field, fieldState }) => (
                                         <Input
                                             {...field}
@@ -92,7 +84,7 @@ const FormDHCPv6 = ({ processingConfig, ipv6placeholders, interfaces, onSubmit }
                                             data-testid="v6_range_end"
                                             placeholder={t(ipv6placeholders.range_end)}
                                             error={fieldState.error?.message}
-                                            disabled={!isInterfaceIncludesIpv6}
+                                            disabled
                                         />
                                     )}
                                 />

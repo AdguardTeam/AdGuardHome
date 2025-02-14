@@ -98,8 +98,8 @@ const Dhcp = () => {
     const methods = useForm<DhcpFormValues>({
         mode: 'onBlur',
         defaultValues: {
-            v4: v4 || DEFAULT_V4_VALUES,
-            v6: v6 || DEFAULT_V6_VALUES,
+            v4,
+            v6,
             interface_name: interfaceName || '',
         },
     });
