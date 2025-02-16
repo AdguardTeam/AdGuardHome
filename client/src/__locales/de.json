@@ -20,7 +20,7 @@
     "resolve_clients_title": "Hostnamenauflösung der Clients aktivieren",
     "resolve_clients_desc": "Inverses Auflösen der IP-Adressen der Clients in ihre Hostnamen durch Senden von PTR-Anfragen an die entsprechenden Resolver (private DNS-Server für lokale Kunden, Upstream-Server für Kunden mit öffentlichen IP-Adressen).",
     "use_private_ptr_resolvers_title": "Private Reverse-DNS-Resolver verwenden",
-    "use_private_ptr_resolvers_desc": "Löst PTR-, SOA- und NS-Anfragen für ARD-Domains mit privaten IP-Adressen über private Upstream-Server, DHCP, /etc/hosts usw. auf. Ist diese Option deaktiviert, antwortet AdGuard Home auf alle derartigen Anfragen mit NXDOMAIN.",
+    "use_private_ptr_resolvers_desc": "Löst PTR-, SOA- und NS-Anfragen für ARPA-Domains mit privaten IP-Adressen über private Upstream-Server, DHCP, /etc/hosts usw. auf. Ist diese Option deaktiviert, antwortet AdGuard Home auf alle derartigen Anfragen mit NXDOMAIN.",
     "check_dhcp_servers": "Auf DHCP-Server prüfen",
     "save_config": "Konfiguration speichern",
     "enabled_dhcp": "DHCP-Server aktiviert",
