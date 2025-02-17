@@ -51,7 +51,7 @@ export const checkConfig = (values: any) => async (dispatch: any) => {
         const check = await apiClient.checkConfig(values);
         dispatch(checkConfigSuccess({
             ...values,
-            check,
+            ...check,
         }));
     } catch (error) {
         dispatch(addErrorToast({ error }));

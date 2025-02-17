@@ -134,7 +134,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
         const webPortError = validateInstallPort(webPortVal);
         const dnsPortError = validateInstallPort(dnsPortVal);
 
-        if (!isValid || webPortError || dnsPortError) {
+        if (webPortError || dnsPortError) {
             return;
         }
 
