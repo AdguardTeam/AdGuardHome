@@ -231,7 +231,7 @@ export const Settings = ({ handleSubmit, handleFix, validateForm, config, interf
         [handleStaticIp],
     );
 
-    const onSubmit = (data: any) => {
+    const onSubmit = (data: SettingsFormValues) => {
         validateForm(data);
         handleSubmit(data);
     };

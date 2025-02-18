@@ -50,8 +50,9 @@ export const checkConfig = (values: any) => async (dispatch: any) => {
     try {
         const check = await apiClient.checkConfig(values);
         dispatch(checkConfigSuccess({
-            ...values,
-            ...check,
+            web: { ...values.web, ...check.web },
+            dns: { ...values.dns, ...check.dns },
+            static_ip: check.static_ip,
         }));
     } catch (error) {
         dispatch(addErrorToast({ error }));
