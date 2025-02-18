@@ -28,7 +28,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
-- The *Fastest IP adddress* upstream mode now collects statistics for the all upstream DNS servers.
+- The *Fastest IP address* upstream mode now collects statistics for the all upstream DNS servers.
 
 ### Fixed
 
