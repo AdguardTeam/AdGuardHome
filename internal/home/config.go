@@ -692,6 +692,7 @@ func (c *configuration) write() (err error) {
 		config.Clients.Sources.RDNS = addrProcConf.UseRDNS
 		config.Clients.Sources.WHOIS = addrProcConf.UseWHOIS
 		dns.UsePrivateRDNS = addrProcConf.UsePrivateRDNS
+		dns.UpstreamTimeout = timeutil.Duration(s.UpstreamTimeout())
 	}
 
 	if Context.dhcpServer != nil {
