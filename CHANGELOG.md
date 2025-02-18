@@ -32,9 +32,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The hostnames of DHCP clients not being shown in the *Top clients* table on the dashboard ([#7627]).
 - The formatting of large numbers in the upstream table and query log ([#7590]).
 
 [#7590]: https://github.com/AdguardTeam/AdGuardHome/issues/7590
+[#7627]: https://github.com/AdguardTeam/AdGuardHome/issues/7627
 
 [go-1.23.6]: https://groups.google.com/g/golang-announce/c/xU1ZCHUZw3k
 
