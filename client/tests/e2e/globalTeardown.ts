@@ -1,11 +1,10 @@
 import { existsSync, unlinkSync } from 'fs';
-
-export const CONFIG_FILE = '/tmp/AdGuard.temp.e2e.yaml';
+import { CONFIG_FILE_PATH } from '../constants';
 
 async function globalTeardown() {
     // Remove the test config file
-    if (existsSync(CONFIG_FILE)) {
-        unlinkSync(CONFIG_FILE);
+    if (existsSync(CONFIG_FILE_PATH)) {
+        unlinkSync(CONFIG_FILE_PATH);
     }
 }
 

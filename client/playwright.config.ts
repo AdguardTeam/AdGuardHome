@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 import path from 'path';
+import { CONFIG_FILE_PATH } from './tests/constants';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -42,7 +43,7 @@ export default defineConfig({
 
     webServer: {
         stdout: process.env.CI ? 'pipe' : 'ignore',
-        command: `${!process.env.CI ? 'sudo ' : ''}./AdGuardHome --local-frontend -v -c /tmp/AdGuard.temp.e2e.yaml`,
+        command: `${!process.env.CI ? 'sudo ' : ''}./AdGuardHome --local-frontend -v -c ${CONFIG_FILE_PATH}`,
         url: 'http://127.0.0.1:3000',
         cwd: '..',
         reuseExistingServer: !process.env.CI,
