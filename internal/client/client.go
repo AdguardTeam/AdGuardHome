@@ -178,8 +178,12 @@ func (r *Runtime) Addr() (ip netip.Addr) {
 	return r.ip
 }
 
-// clone returns a deep copy of the runtime client.
+// clone returns a deep copy of the runtime client.  If r is nil, c is nil.
 func (r *Runtime) clone() (c *Runtime) {
+	if r == nil {
+		return nil
+	}
+
 	return &Runtime{
 		ip:        r.ip,
 		whois:     r.whois.Clone(),

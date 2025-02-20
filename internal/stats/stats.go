@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"go.etcd.io/bbolt"
+	bbolterrors "go.etcd.io/bbolt/errors"
 )
 
 // checkInterval returns true if days is valid to be used as statistics
@@ -469,7 +470,7 @@ func (s *StatsCtx) flushDB(id, limit uint32, ptr *unit) (cont bool, sleepFor tim
 		// TODO(e.burkov):  Improve the algorithm of deleting the oldest bucket
 		// to avoid the error.
 		lvl := slog.LevelDebug
-		if !errors.Is(delErr, bbolt.ErrBucketNotFound) {
+		if !errors.Is(delErr, bbolterrors.ErrBucketNotFound) {
 			isCommitable = false
 			lvl = slog.LevelError
 		}
