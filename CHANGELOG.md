@@ -36,7 +36,7 @@ See also the [v0.107.57 GitHub milestone][ms-v0.107.57].
 
 ### Changed
 
-- The *Fastest IP address* upstream mode now collects statistics for the all upstream DNS servers.
+- The *Fastest IP address* upstream mode now correctly collects statistics for all upstream DNS servers.
 
 ### Fixed
 
