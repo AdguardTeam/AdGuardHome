@@ -112,7 +112,7 @@ func (m *tlsManager) start() {
 	// The background context is used because the TLSConfigChanged wraps context
 	// with timeout on its own and shuts down the server, which handles current
 	// request.
-	Context.web.tlsConfigChanged(context.Background(), tlsConf)
+	globalContext.web.tlsConfigChanged(context.Background(), tlsConf)
 }
 
 // reload updates the configuration and restarts t.
@@ -160,7 +160,7 @@ func (m *tlsManager) reload() {
 	// The background context is used because the TLSConfigChanged wraps context
 	// with timeout on its own and shuts down the server, which handles current
 	// request.
-	Context.web.tlsConfigChanged(context.Background(), tlsConf)
+	globalContext.web.tlsConfigChanged(context.Background(), tlsConf)
 }
 
 // loadTLSConf loads and validates the TLS configuration.  The returned error is
@@ -463,7 +463,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	// same reason.
 	if restartHTTPS {
 		go func() {
-			Context.web.tlsConfigChanged(context.Background(), req.tlsConfigSettings)
+			globalContext.web.tlsConfigChanged(context.Background(), req.tlsConfigSettings)
 		}()
 	}
 }
@@ -539,7 +539,7 @@ func validateCertChain(certs []*x509.Certificate, srvName string) (err error) {
 
 	opts := x509.VerifyOptions{
 		DNSName:       srvName,
-		Roots:         Context.tlsRoots,
+		Roots:         globalContext.tlsRoots,
 		Intermediates: pool,
 	}
 	_, err = main.Verify(opts)

@@ -486,9 +486,9 @@ var config = &configuration{
 // configFilePath returns the absolute path to the symlink-evaluated path to the
 // current config file.
 func configFilePath() (confPath string) {
-	confPath, err := filepath.EvalSymlinks(Context.confFilePath)
+	confPath, err := filepath.EvalSymlinks(globalContext.confFilePath)
 	if err != nil {
-		confPath = Context.confFilePath
+		confPath = globalContext.confFilePath
 		logFunc := log.Error
 		if errors.Is(err, os.ErrNotExist) {
 			logFunc = log.Debug
@@ -498,7 +498,7 @@ func configFilePath() (confPath string) {
 	}
 
 	if !filepath.IsAbs(confPath) {
-		confPath = filepath.Join(Context.workDir, confPath)
+		confPath = filepath.Join(globalContext.workDir, confPath)
 	}
 
 	return confPath
@@ -530,8 +530,8 @@ func parseConfig() (err error) {
 	}
 
 	migrator := configmigrate.New(&configmigrate.Config{
-		WorkingDir: Context.workDir,
-		DataDir:    Context.getDataDir(),
+		WorkingDir: globalContext.workDir,
+		DataDir:    globalContext.getDataDir(),
 	})
 
 	var upgraded bool
@@ -644,27 +644,27 @@ func (c *configuration) write() (err error) {
 	c.Lock()
 	defer c.Unlock()
 
-	if Context.auth != nil {
-		config.Users = Context.auth.usersList()
+	if globalContext.auth != nil {
+		config.Users = globalContext.auth.usersList()
 	}
 
-	if Context.tls != nil {
+	if globalContext.tls != nil {
 		tlsConf := tlsConfigSettings{}
-		Context.tls.WriteDiskConfig(&tlsConf)
+		globalContext.tls.WriteDiskConfig(&tlsConf)
 		config.TLS = tlsConf
 	}
 
-	if Context.stats != nil {
+	if globalContext.stats != nil {
 		statsConf := stats.Config{}
-		Context.stats.WriteDiskConfig(&statsConf)
+		globalContext.stats.WriteDiskConfig(&statsConf)
 		config.Stats.Interval = timeutil.Duration(statsConf.Limit)
 		config.Stats.Enabled = statsConf.Enabled
 		config.Stats.Ignored = statsConf.Ignored.Values()
 	}
 
-	if Context.queryLog != nil {
+	if globalContext.queryLog != nil {
 		dc := querylog.Config{}
-		Context.queryLog.WriteDiskConfig(&dc)
+		globalContext.queryLog.WriteDiskConfig(&dc)
 		config.DNS.AnonymizeClientIP = dc.AnonymizeClientIP
 		config.QueryLog.Enabled = dc.Enabled
 		config.QueryLog.FileEnabled = dc.FileEnabled
@@ -673,14 +673,14 @@ func (c *configuration) write() (err error) {
 		config.QueryLog.Ignored = dc.Ignored.Values()
 	}
 
-	if Context.filters != nil {
-		Context.filters.WriteDiskConfig(config.Filtering)
+	if globalContext.filters != nil {
+		globalContext.filters.WriteDiskConfig(config.Filtering)
 		config.Filters = config.Filtering.Filters
 		config.WhitelistFilters = config.Filtering.WhitelistFilters
 		config.UserRules = config.Filtering.UserRules
 	}
 
-	if s := Context.dnsServer; s != nil {
+	if s := globalContext.dnsServer; s != nil {
 		c := dnsforward.Config{}
 		s.WriteDiskConfig(&c)
 		dns := &config.DNS
@@ -692,13 +692,14 @@ func (c *configuration) write() (err error) {
 		config.Clients.Sources.RDNS = addrProcConf.UseRDNS
 		config.Clients.Sources.WHOIS = addrProcConf.UseWHOIS
 		dns.UsePrivateRDNS = addrProcConf.UsePrivateRDNS
+		dns.UpstreamTimeout = timeutil.Duration(s.UpstreamTimeout())
 	}
 
-	if Context.dhcpServer != nil {
-		Context.dhcpServer.WriteDiskConfig(config.DHCP)
+	if globalContext.dhcpServer != nil {
+		globalContext.dhcpServer.WriteDiskConfig(config.DHCP)
 	}
 
-	config.Clients.Persistent = Context.clients.forConfig()
+	config.Clients.Persistent = globalContext.clients.forConfig()
 
 	confPath := configFilePath()
 	log.Debug("writing config file %q", confPath)
@@ -725,14 +726,14 @@ func setContextTLSCipherIDs() (err error) {
 	if len(config.TLS.OverrideTLSCiphers) == 0 {
 		log.Info("tls: using default ciphers")
 
-		Context.tlsCipherIDs = aghtls.SaferCipherSuites()
+		globalContext.tlsCipherIDs = aghtls.SaferCipherSuites()
 
 		return nil
 	}
 
 	log.Info("tls: overriding ciphers: %s", config.TLS.OverrideTLSCiphers)
 
-	Context.tlsCipherIDs, err = aghtls.ParseCiphers(config.TLS.OverrideTLSCiphers)
+	globalContext.tlsCipherIDs, err = aghtls.ParseCiphers(config.TLS.OverrideTLSCiphers)
 	if err != nil {
 		return fmt.Errorf("parsing override ciphers: %w", err)
 	}
