@@ -18,6 +18,12 @@ See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- The formatting of large numbers in the clients tables on the *Client settings* page ([#7583]).
+
+[#7583]: https://github.com/AdguardTeam/AdGuardHome/issues/7583
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
