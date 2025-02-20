@@ -300,12 +300,15 @@ const ClientsTable = ({
             sortMethod: (a: any, b: any) => b - a,
             minWidth: 120,
             Cell: (row: any) => {
-                let content = CellWrap(row);
-
-                if (!row.value) {
-                    return content;
+                let content = row.value;
+                if (typeof content === "number") {
+                    content = formatNumber(content);
+                } else {
+                    content = CellWrap(row);
                 }
-                content = typeof content === "number" ? formatNumber(content) : content;
+                if (!content) {
+                    return content;
+                }    
                 return <LogsSearchLink search={row.original.name}>{content}</LogsSearchLink>;
             },
         },
