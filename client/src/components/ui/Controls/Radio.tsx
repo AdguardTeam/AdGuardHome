@@ -1,10 +1,10 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, ReactNode } from 'react';
 
 type Props<T> = {
     name: string;
     value: T;
     onChange: (e: T) => void;
-    options: { label: string; desc?: string; value: T }[];
+    options: { label: string; desc?: ReactNode; value: T }[];
     disabled?: boolean;
     error?: string;
 };

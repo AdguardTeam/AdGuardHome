@@ -40,17 +40,17 @@ type FormProps = {
 const upstreamModeOptions = [
     {
         label: i18next.t('load_balancing'),
-        desc: i18next.t('load_balancing_desc'),
+        desc: <Trans components={{ br: <br />, b: <b /> }}>load_balancing_desc</Trans>,
         value: DNS_REQUEST_OPTIONS.LOAD_BALANCING,
     },
     {
         label: i18next.t('parallel_requests'),
-        desc: i18next.t('upstream_parallel'),
+        desc: <Trans components={{ br: <br />, b: <b /> }}>upstream_parallel</Trans>,
         value: DNS_REQUEST_OPTIONS.PARALLEL,
     },
     {
         label: i18next.t('fastest_addr'),
-        desc: i18next.t('fastest_addr_desc'),
+        desc: <Trans components={{ br: <br />, b: <b /> }}>fastest_addr_desc</Trans>,
         value: DNS_REQUEST_OPTIONS.FASTEST_ADDR,
     },
 ];
