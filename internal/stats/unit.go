@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"go.etcd.io/bbolt"
@@ -62,8 +63,9 @@ type Entry struct {
 	// Domain is the domain name requested.
 	Domain string
 
-	// Upstream is the upstream DNS server.
-	Upstream string
+	// UpstreamStats contains the DNS query statistics for both the upstream and
+	// fallback DNS servers.
+	UpstreamStats []*proxy.UpstreamStatistics
 
 	// Result is the result of processing the request.
 	Result Result
@@ -71,9 +73,6 @@ type Entry struct {
 	// ProcessingTime is the duration of the request processing from the start
 	// of the request including timeouts.
 	ProcessingTime time.Duration
-
-	// UpstreamTime is the duration of the successful request to the upstream.
-	UpstreamTime time.Duration
 }
 
 // validate returns an error if entry is not valid.
@@ -329,10 +328,14 @@ func (u *unit) add(e *Entry) {
 	u.timeSum += pt
 	u.nTotal++
 
-	if e.Upstream != "" {
-		u.upstreamsResponses[e.Upstream]++
-		ut := uint64(e.UpstreamTime.Microseconds())
-		u.upstreamsTimeSum[e.Upstream] += ut
+	for _, s := range e.UpstreamStats {
+		if s.IsCached || s.Error != nil {
+			continue
+		}
+
+		addr := s.Address
+		u.upstreamsResponses[addr]++
+		u.upstreamsTimeSum[addr] += uint64(s.QueryDuration.Microseconds())
 	}
 }
 
