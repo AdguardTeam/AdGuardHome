@@ -40,19 +40,38 @@ import {
 import './index.css';
 import { RootState } from '../../../initialState';
 
+type IPv4FormValues = {
+    gateway_ip?: string;
+    subnet_mask?: string;
+    range_start?: string;
+    range_end?: string;
+    lease_duration?: number;
+}
+
+type IPv6FormValues = {
+    range_start?: string;
+    range_end?: string;
+    lease_duration?: number;
+}
+
+const getDefaultV4Values = (v4: IPv4FormValues) => {
+    const emptyForm = Object.entries(v4).every(
+        ([key, value]) => key === 'lease_duration' || value === ''
+    );
+
+    if (emptyForm) {
+        return {
+            ...v4,
+            lease_duration: undefined,
+        }
+    }
+
+    return v4;
+}
+
 export type DhcpFormValues = {
-    v4?: {
-        gateway_ip?: string;
-        subnet_mask?: string;
-        range_start?: string;
-        range_end?: string;
-        lease_duration?: number;
-    };
-    v6?: {
-        range_start?: string;
-        range_end?: string;
-        lease_duration?: number;
-    };
+    v4?: IPv4FormValues;
+    v6?: IPv6FormValues;
     interface_name?: string;
 };
 
@@ -61,13 +80,13 @@ const DEFAULT_V4_VALUES = {
     subnet_mask: '',
     range_start: '',
     range_end: '',
-    lease_duration: 0,
+    lease_duration: undefined,
 };
 
 const DEFAULT_V6_VALUES = {
     range_start: '',
     range_end: '',
-    lease_duration: 0,
+    lease_duration: undefined,
 };
 
 const Dhcp = () => {
@@ -98,7 +117,7 @@ const Dhcp = () => {
     const methods = useForm<DhcpFormValues>({
         mode: 'onBlur',
         defaultValues: {
-            v4,
+            v4: getDefaultV4Values(v4),
             v6,
             interface_name: interfaceName || '',
         },
@@ -129,7 +148,7 @@ const Dhcp = () => {
             reset({
                 v4: {
                     ...DEFAULT_V4_VALUES,
-                    ...v4,
+                    ...getDefaultV4Values(v4),
                 },
                 v6: {
                     ...DEFAULT_V6_VALUES,

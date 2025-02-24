@@ -179,6 +179,7 @@ const FormDHCPv4 = ({ processingConfig, ipv4placeholders, interfaces, onSubmit }
                                     disabled={!isInterfaceIncludesIpv4}
                                     min={1}
                                     max={UINT32_RANGE.MAX}
+                                    value={field.value ?? ''}
                                     onChange={(e) => {
                                         const { value } = e.target;
                                         field.onChange(toNumber(value));
