@@ -591,17 +591,21 @@ func (s *Storage) ClientRuntime(ip netip.Addr) (rc *Runtime) {
 	defer s.mu.Unlock()
 
 	rc = s.runtimeIndex.client(ip)
-	if rc != nil {
+	if !s.runtimeSourceDHCP {
 		return rc.clone()
 	}
 
-	if !s.runtimeSourceDHCP {
-		return nil
+	// SourceHostsFile > SourceDHCP, so return immediately if the client is from
+	// the hosts file.
+	if rc != nil && rc.hostsFile != nil {
+		return rc.clone()
 	}
 
+	// Otherwise, check the DHCP server and add the client information if there
+	// is any.
 	host := s.dhcp.HostByIP(ip)
 	if host == "" {
-		return nil
+		return rc.clone()
 	}
 
 	rc = s.runtimeIndex.setInfo(ip, SourceDHCP, []string{host})
