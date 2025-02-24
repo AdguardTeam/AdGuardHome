@@ -210,7 +210,7 @@ export const WHOIS_ICONS = {
 
 export const DEFAULT_LOGS_FILTER = {
     search: '',
-    response_status: '',
+    response_status: 'all',
 };
 
 export const DEFAULT_LANGUAGE = 'en';
