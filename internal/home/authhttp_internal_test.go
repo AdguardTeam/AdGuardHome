@@ -39,7 +39,7 @@ func TestAuthHTTP(t *testing.T) {
 	users := []webUser{
 		{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
 	}
-	Context.auth = InitAuth(fn, users, 60, nil, nil)
+	globalContext.auth = InitAuth(fn, users, 60, nil, nil)
 
 	handlerCalled := false
 	handler := func(_ http.ResponseWriter, _ *http.Request) {
@@ -68,7 +68,7 @@ func TestAuthHTTP(t *testing.T) {
 	assert.True(t, handlerCalled)
 
 	// perform login
-	cookie, err := Context.auth.newCookie(loginJSON{Name: "name", Password: "password"}, "")
+	cookie, err := globalContext.auth.newCookie(loginJSON{Name: "name", Password: "password"}, "")
 	require.NoError(t, err)
 	require.NotNil(t, cookie)
 
@@ -114,7 +114,7 @@ func TestAuthHTTP(t *testing.T) {
 	assert.True(t, handlerCalled)
 	r.Header.Del(httphdr.Cookie)
 
-	Context.auth.Close()
+	globalContext.auth.Close()
 }
 
 func TestRealIP(t *testing.T) {

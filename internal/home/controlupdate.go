@@ -165,7 +165,7 @@ func (vr *versionResponse) setAllowedToAutoUpdate() (err error) {
 	}
 
 	tlsConf := &tlsConfigSettings{}
-	Context.tls.WriteDiskConfig(tlsConf)
+	globalContext.tls.WriteDiskConfig(tlsConf)
 
 	canUpdate := true
 	if tlsConfUsesPrivilegedPorts(tlsConf) ||

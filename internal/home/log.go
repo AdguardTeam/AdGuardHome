@@ -66,7 +66,7 @@ func configureLogger(ls *logSettings) (err error) {
 
 	logFilePath := ls.File
 	if !filepath.IsAbs(logFilePath) {
-		logFilePath = filepath.Join(Context.workDir, logFilePath)
+		logFilePath = filepath.Join(globalContext.workDir, logFilePath)
 	}
 
 	log.SetOutput(&lumberjack.Logger{

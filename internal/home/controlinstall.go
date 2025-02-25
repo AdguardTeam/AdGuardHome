@@ -428,20 +428,20 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	curConfig := &configuration{}
 	copyInstallSettings(curConfig, config)
 
-	Context.firstRun = false
+	globalContext.firstRun = false
 	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
 	config.Filtering.SafeFSPatterns = []string{
-		filepath.Join(Context.workDir, userFilterDataDir, "*"),
+		filepath.Join(globalContext.workDir, userFilterDataDir, "*"),
 	}
 	config.HTTPConfig.Address = netip.AddrPortFrom(req.Web.IP, req.Web.Port)
 
 	u := &webUser{
 		Name: req.Username,
 	}
-	err = Context.auth.addUser(u, req.Password)
+	err = globalContext.auth.addUser(u, req.Password)
 	if err != nil {
-		Context.firstRun = true
+		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)
 		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "%s", err)
 
@@ -454,7 +454,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	// functions potentially restart the HTTPS server.
 	err = startMods(web.baseLogger)
 	if err != nil {
-		Context.firstRun = true
+		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)
 		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 
@@ -463,7 +463,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 
 	err = config.write()
 	if err != nil {
-		Context.firstRun = true
+		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)
 		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write config: %s", err)
 
@@ -528,7 +528,7 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 }
 
 func (web *webAPI) registerInstallHandlers() {
-	Context.mux.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(web.handleInstallGetAddresses)))
-	Context.mux.HandleFunc("/control/install/check_config", preInstall(ensurePOST(web.handleInstallCheckConfig)))
-	Context.mux.HandleFunc("/control/install/configure", preInstall(ensurePOST(web.handleInstallConfigure)))
+	globalContext.mux.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(web.handleInstallGetAddresses)))
+	globalContext.mux.HandleFunc("/control/install/check_config", preInstall(ensurePOST(web.handleInstallCheckConfig)))
+	globalContext.mux.HandleFunc("/control/install/configure", preInstall(ensurePOST(web.handleInstallConfigure)))
 }

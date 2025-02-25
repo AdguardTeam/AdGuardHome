@@ -19,10 +19,10 @@ func setupDNSIPs(t testing.TB) {
 	t.Helper()
 
 	prevConfig := config
-	prevTLS := Context.tls
+	prevTLS := globalContext.tls
 	t.Cleanup(func() {
 		config = prevConfig
-		Context.tls = prevTLS
+		globalContext.tls = prevTLS
 	})
 
 	config = &configuration{
@@ -32,7 +32,7 @@ func setupDNSIPs(t testing.TB) {
 		},
 	}
 
-	Context.tls = &tlsManager{}
+	globalContext.tls = &tlsManager{}
 }
 
 func TestHandleMobileConfigDoH(t *testing.T) {
@@ -62,10 +62,10 @@ func TestHandleMobileConfigDoH(t *testing.T) {
 	})
 
 	t.Run("error_no_host", func(t *testing.T) {
-		oldTLSConf := Context.tls
-		t.Cleanup(func() { Context.tls = oldTLSConf })
+		oldTLSConf := globalContext.tls
+		t.Cleanup(func() { globalContext.tls = oldTLSConf })
 
-		Context.tls = &tlsManager{conf: tlsConfigSettings{}}
+		globalContext.tls = &tlsManager{conf: tlsConfigSettings{}}
 
 		r, err := http.NewRequest(http.MethodGet, "https://example.com:12345/apple/doh.mobileconfig", nil)
 		require.NoError(t, err)
@@ -134,10 +134,10 @@ func TestHandleMobileConfigDoT(t *testing.T) {
 	})
 
 	t.Run("error_no_host", func(t *testing.T) {
-		oldTLSConf := Context.tls
-		t.Cleanup(func() { Context.tls = oldTLSConf })
+		oldTLSConf := globalContext.tls
+		t.Cleanup(func() { globalContext.tls = oldTLSConf })
 
-		Context.tls = &tlsManager{conf: tlsConfigSettings{}}
+		globalContext.tls = &tlsManager{conf: tlsConfigSettings{}}
 
 		r, err := http.NewRequest(http.MethodGet, "https://example.com:12345/apple/dot.mobileconfig", nil)
 		require.NoError(t, err)

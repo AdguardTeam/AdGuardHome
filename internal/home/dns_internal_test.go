@@ -37,14 +37,14 @@ func newStorage(tb testing.TB, clients []*client.Persistent) (s *client.Storage)
 func TestApplyAdditionalFiltering(t *testing.T) {
 	var err error
 
-	Context.filters, err = filtering.New(&filtering.Config{
+	globalContext.filters, err = filtering.New(&filtering.Config{
 		BlockedServices: &filtering.BlockedServices{
 			Schedule: schedule.EmptyWeekly(),
 		},
 	}, nil)
 	require.NoError(t, err)
 
-	Context.clients.storage = newStorage(t, []*client.Persistent{{
+	globalContext.clients.storage = newStorage(t, []*client.Persistent{{
 		Name:                "default",
 		ClientIDs:           []string{"default"},
 		UseOwnSettings:      false,
@@ -124,7 +124,7 @@ func TestApplyAdditionalFiltering_blockedServices(t *testing.T) {
 		err error
 	)
 
-	Context.filters, err = filtering.New(&filtering.Config{
+	globalContext.filters, err = filtering.New(&filtering.Config{
 		BlockedServices: &filtering.BlockedServices{
 			Schedule: schedule.EmptyWeekly(),
 			IDs:      globalBlockedServices,
@@ -132,7 +132,7 @@ func TestApplyAdditionalFiltering_blockedServices(t *testing.T) {
 	}, nil)
 	require.NoError(t, err)
 
-	Context.clients.storage = newStorage(t, []*client.Persistent{{
+	globalContext.clients.storage = newStorage(t, []*client.Persistent{{
 		Name:                  "default",
 		ClientIDs:             []string{"default"},
 		UseOwnBlockedServices: false,

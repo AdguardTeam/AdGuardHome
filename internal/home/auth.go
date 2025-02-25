@@ -356,7 +356,7 @@ func (a *Auth) getCurrentUser(r *http.Request) (u webUser) {
 		// There's no Cookie, check Basic authentication.
 		user, pass, ok := r.BasicAuth()
 		if ok {
-			u, _ = Context.auth.findUser(user, pass)
+			u, _ = globalContext.auth.findUser(user, pass)
 
 			return u
 		}
