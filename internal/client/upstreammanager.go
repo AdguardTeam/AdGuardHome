@@ -1,6 +1,7 @@
 package client
 
 import (
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -23,8 +24,11 @@ type CommonUpstreamConfig struct {
 // customUpstreamConfig contains custom client upstream configuration and the
 // timestamp of the latest configuration update.
 type customUpstreamConfig struct {
-	prxConf    *proxy.CustomUpstreamConfig
-	confUpdate time.Time
+	prxConf               *proxy.CustomUpstreamConfig
+	confUpdate            time.Time
+	upstreams             []string
+	upstreamsCacheSize    uint32
+	upstreamsCacheEnabled bool
 }
 
 // upstreamManager stores and updates custom client upstream configurations.
@@ -60,17 +64,38 @@ func (m *upstreamManager) customUpstreamConfig(
 	c *Persistent,
 ) (prxConf *proxy.CustomUpstreamConfig) {
 	cliConf, ok := m.uidToCustomConf[c.UID]
-	if ok && m.confUpdate.Equal(cliConf.confUpdate) {
+	if ok && !m.isConfigChanged(c, cliConf) {
 		return cliConf.prxConf
 	}
 
 	prxConf = newCustomUpstreamConfig(c, m.commonConf)
 	m.uidToCustomConf[c.UID] = &customUpstreamConfig{
-		prxConf:    prxConf,
-		confUpdate: m.confUpdate,
+		prxConf:               prxConf,
+		confUpdate:            m.confUpdate,
+		upstreams:             slices.Clone(c.Upstreams),
+		upstreamsCacheEnabled: c.UpstreamsCacheEnabled,
+		upstreamsCacheSize:    c.UpstreamsCacheSize,
 	}
 
 	return prxConf
+}
+
+// isConfigChanged returns true if the update is necessary for the custom client
+// upstream configuration.
+func (m *upstreamManager) isConfigChanged(c *Persistent, cliConf *customUpstreamConfig) (ok bool) {
+	if !slices.Equal(c.Upstreams, cliConf.upstreams) {
+		return true
+	}
+
+	if c.UpstreamsCacheEnabled != cliConf.upstreamsCacheEnabled {
+		return true
+	}
+
+	if c.UpstreamsCacheSize != cliConf.upstreamsCacheSize {
+		return true
+	}
+
+	return !m.confUpdate.Equal(cliConf.confUpdate)
 }
 
 // clearUpstreamCache clears the upstream cache for each stored custom client
@@ -97,6 +122,10 @@ func (m *upstreamManager) remove(c *Persistent) (err error) {
 func (m *upstreamManager) close() (err error) {
 	var errs []error
 	for _, c := range m.uidToCustomConf {
+		if c.prxConf == nil {
+			continue
+		}
+
 		errs = append(errs, c.prxConf.Close())
 	}
 

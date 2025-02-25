@@ -36,6 +36,7 @@ func TestHandleDNSRequest_handleDNSRequest(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	}

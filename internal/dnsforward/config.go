@@ -44,6 +44,29 @@ type ClientsContainer interface {
 	ClearUpstreamCache()
 }
 
+// EmptyClientsContainer is an [ClientsContainer] implementation that does nothing.
+type EmptyClientsContainer struct{}
+
+// type check
+var _ ClientsContainer = EmptyClientsContainer{}
+
+// CustomUpstreamConfig implements the [ClientsContainer] interface for
+// EmptyClientsContainer.
+func (EmptyClientsContainer) CustomUpstreamConfig(
+	clientID string,
+	cliAddr netip.Addr,
+) (conf *proxy.CustomUpstreamConfig) {
+	return nil
+}
+
+// UpdateCommonUpstreamConfig implements the [ClientsContainer] interface for
+// EmptyClientsContainer.
+func (EmptyClientsContainer) UpdateCommonUpstreamConfig(conf *client.CommonUpstreamConfig) {}
+
+// ClearUpstreamCache implements the [ClientsContainer] interface for
+// EmptyClientsContainer.
+func (EmptyClientsContainer) ClearUpstreamCache() {}
+
 // Config represents the DNS filtering configuration of AdGuard Home.  The zero
 // Config is empty and ready for use.
 type Config struct {
@@ -469,7 +492,7 @@ func (s *Server) prepareIpsetListSettings() (ipsets []string, err error) {
 	}
 
 	ipsets = stringutil.SplitTrimmed(string(data), "\n")
-	ipsets = slices.DeleteFunc(ipsets, IsCommentOrEmpty)
+	ipsets = slices.DeleteFunc(ipsets, aghnet.IsCommentOrEmpty)
 
 	log.Debug("dns: using %d ipset rules from file %q", len(ipsets), fn)
 
@@ -480,7 +503,7 @@ func (s *Server) prepareIpsetListSettings() (ipsets []string, err error) {
 // the configuration itself.
 func (conf *ServerConfig) loadUpstreams() (upstreams []string, err error) {
 	if conf.UpstreamDNSFileName == "" {
-		return stringutil.FilterOut(conf.UpstreamDNS, IsCommentOrEmpty), nil
+		return stringutil.FilterOut(conf.UpstreamDNS, aghnet.IsCommentOrEmpty), nil
 	}
 
 	var data []byte
@@ -493,7 +516,7 @@ func (conf *ServerConfig) loadUpstreams() (upstreams []string, err error) {
 
 	log.Debug("dnsforward: got %d upstreams in %q", len(upstreams), conf.UpstreamDNSFileName)
 
-	return stringutil.FilterOut(upstreams, IsCommentOrEmpty), nil
+	return stringutil.FilterOut(upstreams, aghnet.IsCommentOrEmpty), nil
 }
 
 // collectListenAddr adds addrPort to addrs.  It also adds its port to

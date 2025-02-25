@@ -94,7 +94,7 @@ func newPrivateConfig(
 ) (uc *proxy.UpstreamConfig, err error) {
 	confNeedsFiltering := len(addrs) > 0
 	if confNeedsFiltering {
-		addrs = stringutil.FilterOut(addrs, IsCommentOrEmpty)
+		addrs = stringutil.FilterOut(addrs, aghnet.IsCommentOrEmpty)
 	} else {
 		sysResolvers := slices.DeleteFunc(slices.Clone(sysResolvers.Addrs()), unwanted.Has)
 		addrs = make([]string, 0, len(sysResolvers))
@@ -127,20 +127,6 @@ func newPrivateConfig(
 	return uc, nil
 }
 
-// UpstreamHTTPVersions returns the HTTP versions for upstream configuration
-// depending on configuration.
-func UpstreamHTTPVersions(http3 bool) (v []upstream.HTTPVersion) {
-	if !http3 {
-		return upstream.DefaultHTTPVersions
-	}
-
-	return []upstream.HTTPVersion{
-		upstream.HTTPVersion3,
-		upstream.HTTPVersion2,
-		upstream.HTTPVersion11,
-	}
-}
-
 // setProxyUpstreamMode sets the upstream mode and related settings in conf
 // based on provided parameters.
 func setProxyUpstreamMode(
@@ -161,11 +147,4 @@ func setProxyUpstreamMode(
 	}
 
 	return nil
-}
-
-// IsCommentOrEmpty returns true if s starts with a "#" character or is empty.
-// This function is useful for filtering out non-upstream lines from upstream
-// configs.
-func IsCommentOrEmpty(s string) (ok bool) {
-	return len(s) == 0 || s[0] == '#'
 }

@@ -83,6 +83,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 			RatelimitSubnetLenIPv6: 56,
 			UpstreamMode:           UpstreamModeLoadBalance,
 			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
+			ClientsContainer:       EmptyClientsContainer{},
 		},
 		ConfigModified: func() {},
 		ServePlainDNS:  true,
@@ -164,6 +165,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			RatelimitSubnetLenIPv6: 56,
 			UpstreamMode:           UpstreamModeLoadBalance,
 			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
+			ClientsContainer:       EmptyClientsContainer{},
 		},
 		ConfigModified: func() {},
 		ServePlainDNS:  true,
@@ -299,24 +301,6 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	}
 }
 
-func TestIsCommentOrEmpty(t *testing.T) {
-	for _, tc := range []struct {
-		want assert.BoolAssertionFunc
-		str  string
-	}{{
-		want: assert.True,
-		str:  "",
-	}, {
-		want: assert.True,
-		str:  "# comment",
-	}, {
-		want: assert.False,
-		str:  "1.2.3.4",
-	}} {
-		tc.want(t, IsCommentOrEmpty(tc.str))
-	}
-}
-
 func newLocalUpstreamListener(t *testing.T, port uint16, handler dns.Handler) (real netip.AddrPort) {
 	t.Helper()
 
@@ -388,6 +372,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		Config: Config{
 			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	})

@@ -266,6 +266,7 @@ func TestServer_HandleBefore_udp(t *testing.T) {
 					UpstreamDNS:       []string{localUpsAddr},
 					UpstreamMode:      UpstreamModeLoadBalance,
 					EDNSClientSubnet:  &EDNSClientSubnet{Enabled: false},
+					ClientsContainer:  EmptyClientsContainer{},
 				},
 				ServePlainDNS: true,
 			})

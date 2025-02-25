@@ -205,6 +205,7 @@ func createTestTLS(t *testing.T, tlsConf TLSConfig) (s *Server, certPem []byte) 
 		Config: Config{
 			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	})
@@ -334,6 +335,7 @@ func TestServer(t *testing.T) {
 		Config: Config{
 			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	})
@@ -374,6 +376,7 @@ func TestServer_timeout(t *testing.T) {
 			Config: Config{
 				UpstreamMode:     UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				ClientsContainer: EmptyClientsContainer{},
 			},
 			ServePlainDNS: true,
 		}
@@ -401,6 +404,7 @@ func TestServer_timeout(t *testing.T) {
 		s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{
 			Enabled: false,
 		}
+		s.conf.Config.ClientsContainer = EmptyClientsContainer{}
 		err = s.Prepare(&s.conf)
 		require.NoError(t, err)
 
@@ -417,6 +421,7 @@ func TestServer_Prepare_fallbacks(t *testing.T) {
 			},
 			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	}
@@ -442,6 +447,7 @@ func TestServerWithProtectionDisabled(t *testing.T) {
 		Config: Config{
 			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	})
@@ -573,6 +579,7 @@ func TestSafeSearch(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	}
@@ -666,6 +673,7 @@ func TestInvalidRequest(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	})
@@ -696,6 +704,7 @@ func TestBlockedRequest(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	}
@@ -733,6 +742,7 @@ func TestServerCustomClientUpstream(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	}
@@ -811,6 +821,7 @@ func TestBlockCNAMEProtectionEnabled(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	})
@@ -845,6 +856,7 @@ func TestBlockCNAME(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	}
@@ -921,6 +933,7 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	}
@@ -967,6 +980,7 @@ func TestNullBlockedRequest(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	}
@@ -1035,6 +1049,7 @@ func TestBlockedCustomIP(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	}
@@ -1088,6 +1103,7 @@ func TestBlockedByHosts(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	}
@@ -1140,6 +1156,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	}
@@ -1201,6 +1218,7 @@ func TestRewrite(t *testing.T) {
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
 			},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	}))
@@ -1327,6 +1345,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
 	s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{Enabled: false}
+	s.conf.Config.ClientsContainer = EmptyClientsContainer{}
 	s.conf.Config.UpstreamMode = UpstreamModeLoadBalance
 
 	err = s.Prepare(&s.conf)
@@ -1412,6 +1431,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
 	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
 	s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{Enabled: false}
+	s.conf.Config.ClientsContainer = EmptyClientsContainer{}
 	s.conf.Config.UpstreamMode = UpstreamModeLoadBalance
 
 	err = s.Prepare(&s.conf)
@@ -1680,6 +1700,7 @@ func TestServer_Exchange(t *testing.T) {
 					UpstreamDNS:      []string{upsAddr},
 					UpstreamMode:     UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+					ClientsContainer: EmptyClientsContainer{},
 				},
 				LocalPTRResolvers: []string{localUpsAddr},
 				UsePrivateRDNS:    true,
@@ -1702,6 +1723,7 @@ func TestServer_Exchange(t *testing.T) {
 				UpstreamDNS:      []string{upsAddr},
 				UpstreamMode:     UpstreamModeLoadBalance,
 				EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+				ClientsContainer: EmptyClientsContainer{},
 			},
 			LocalPTRResolvers: []string{},
 			ServePlainDNS:     true,

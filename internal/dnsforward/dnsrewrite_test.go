@@ -40,6 +40,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		Config: Config{
 			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		ServePlainDNS: true,
 	})

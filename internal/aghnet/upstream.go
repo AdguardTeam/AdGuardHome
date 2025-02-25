@@ -4,8 +4,6 @@ import "github.com/AdguardTeam/dnsproxy/upstream"
 
 // UpstreamHTTPVersions returns the HTTP versions for upstream configuration
 // depending on configuration.
-//
-// TODO(s.chzhen): !! Use in the dnsforward package.
 func UpstreamHTTPVersions(http3 bool) (v []upstream.HTTPVersion) {
 	if !http3 {
 		return upstream.DefaultHTTPVersions

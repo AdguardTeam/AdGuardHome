@@ -1282,3 +1282,72 @@ func TestStorage_RangeByName(t *testing.T) {
 		})
 	}
 }
+
+func TestStorage_CustomUpstreamConfig(t *testing.T) {
+	const (
+		existingName     = "existing_name"
+		existingClientID = "existing_client_id"
+
+		nonExistingClientID = "non_existing_client_id"
+	)
+
+	var (
+		existingClientUID = client.MustNewUID()
+		existingIP        = netip.MustParseAddr("192.0.2.1")
+
+		nonExistingIP = netip.MustParseAddr("192.0.2.255")
+	)
+
+	existingClient := &client.Persistent{
+		Name:      existingName,
+		IPs:       []netip.Addr{existingIP},
+		ClientIDs: []string{existingClientID},
+		UID:       existingClientUID,
+		Upstreams: []string{"192.0.2.0"},
+	}
+
+	s := newTestStorage(t)
+	s.UpdateCommonUpstreamConfig(&client.CommonUpstreamConfig{})
+
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+		return s.Shutdown(testutil.ContextWithTimeout(t, testTimeout))
+	})
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	err := s.Add(ctx, existingClient)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		cliAddr     netip.Addr
+		wantNilConf assert.BoolAssertionFunc
+		name        string
+		cliID       string
+	}{{
+		name:        "client_id",
+		cliID:       existingClientID,
+		cliAddr:     netip.Addr{},
+		wantNilConf: assert.False,
+	}, {
+		name:        "client_addr",
+		cliID:       "",
+		cliAddr:     existingIP,
+		wantNilConf: assert.False,
+	}, {
+		name:        "non_existing_client_id",
+		cliID:       nonExistingClientID,
+		cliAddr:     netip.Addr{},
+		wantNilConf: assert.True,
+	}, {
+		name:        "non_existing_client_addr",
+		cliID:       "",
+		cliAddr:     nonExistingIP,
+		wantNilConf: assert.True,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			conf := s.CustomUpstreamConfig(tc.cliID, tc.cliAddr)
+			tc.wantNilConf(t, conf == nil)
+		})
+	}
+}
