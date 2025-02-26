@@ -99,7 +99,7 @@
         "stylelint": "^16.5.0",
         "ts-loader": "^9.5.1",
         "url-loader": "^4.1.1",
-        "vitest": "^3.0.4",
+        "vitest": "^3.0.5",
         "webpack": "^5.91.0",
         "webpack-cli": "^5.1.4",
         "webpack-dev-server": "^5.0.4",
