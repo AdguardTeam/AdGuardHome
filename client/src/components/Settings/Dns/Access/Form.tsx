@@ -1,118 +1,140 @@
-import React from 'react';
-import { connect } from 'react-redux';
+import React, { ReactNode } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Trans, useTranslation } from 'react-i18next';
 
-import { Field, reduxForm, formValueSelector } from 'redux-form';
-import { Trans, withTranslation } from 'react-i18next';
-import flow from 'lodash/flow';
+import i18next from 'i18next';
+import { CLIENT_ID_LINK } from '../../../../helpers/constants';
+import { removeEmptyLines, trimMultilineString } from '../../../../helpers/helpers';
+import { Textarea } from '../../../ui/Controls/Textarea';
 
-import { renderTextareaField } from '../../../../helpers/form';
-import { trimMultilineString, removeEmptyLines } from '../../../../helpers/helpers';
-import { CLIENT_ID_LINK, FORM_NAME } from '../../../../helpers/constants';
+type FormData = {
+    allowed_clients: string;
+    disallowed_clients: string;
+    blocked_hosts: string;
+};
 
-const fields = [
+const fields: {
+    id: keyof FormData;
+    title: string;
+    subtitle: ReactNode;
+    normalizeOnBlur: (value: string) => string;
+}[] = [
     {
         id: 'allowed_clients',
-        title: 'access_allowed_title',
-        subtitle: 'access_allowed_desc',
+        title: i18next.t('access_allowed_title'),
+        subtitle: (
+            <Trans
+                components={{
+                    a: <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer" />,
+                }}>
+                access_allowed_desc
+            </Trans>
+        ),
         normalizeOnBlur: removeEmptyLines,
     },
     {
         id: 'disallowed_clients',
-        title: 'access_disallowed_title',
-        subtitle: 'access_disallowed_desc',
+        title: i18next.t('access_disallowed_title'),
+        subtitle: (
+            <Trans
+                components={{
+                    a: <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer" />,
+                }}>
+                access_disallowed_desc
+            </Trans>
+        ),
         normalizeOnBlur: trimMultilineString,
     },
     {
         id: 'blocked_hosts',
-        title: 'access_blocked_title',
-        subtitle: 'access_blocked_desc',
+        title: i18next.t('access_blocked_title'),
+        subtitle: i18next.t('access_blocked_desc'),
         normalizeOnBlur: removeEmptyLines,
     },
 ];
 
-interface FormProps {
-    handleSubmit: (...args: unknown[]) => string;
-    submitting: boolean;
-    invalid: boolean;
-    initialValues: object;
+type FormProps = {
+    initialValues?: {
+        allowed_clients?: string;
+        disallowed_clients?: string;
+        blocked_hosts?: string;
+    };
+    onSubmit: (data: FormData) => void;
     processingSet: boolean;
-    t: (...args: unknown[]) => string;
-    textarea?: boolean;
-    allowedClients?: string;
-}
+};
 
-interface renderFieldProps {
-    id?: string;
-    title?: string;
-    subtitle?: string;
-    disabled?: boolean;
-    processingSet?: boolean;
-    normalizeOnBlur?: (...args: unknown[]) => unknown;
-}
+const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
+    const { t } = useTranslation();
 
-let Form = (props: FormProps) => {
-    const { allowedClients, handleSubmit, submitting, invalid, processingSet } = props;
+    const {
+        control,
+        handleSubmit,
+        watch,
+        formState: { isSubmitting, isDirty },
+    } = useForm<FormData>({
+        mode: 'onBlur',
+        defaultValues: {
+            allowed_clients: initialValues?.allowed_clients || '',
+            disallowed_clients: initialValues?.disallowed_clients || '',
+            blocked_hosts: initialValues?.blocked_hosts || '',
+        },
+    });
+
+    const allowedClients = watch('allowed_clients');
 
     const renderField = ({
         id,
         title,
         subtitle,
-        disabled = false,
-        processingSet,
         normalizeOnBlur,
-    }: renderFieldProps) => (
-        <div key={id} className="form__group mb-5">
-            <label className="form__label form__label--with-desc" htmlFor={id}>
-                <Trans>{title}</Trans>
+    }: {
+        id: keyof FormData;
+        title: string;
+        subtitle: ReactNode;
+        normalizeOnBlur: (value: string) => string;
+    }) => {
+        const disabled = allowedClients && id === 'disallowed_clients';
 
-                {disabled && (
-                    <>
-                        <span> </span>(<Trans>disabled</Trans>)
-                    </>
-                )}
-            </label>
+        return (
+            <div key={id} className="form__group mb-5">
+                <label className="form__label form__label--with-desc" htmlFor={id}>
+                    {title}
+                    {disabled && <>&nbsp;({t('disabled')})</>}
+                </label>
 
-            <div className="form__desc form__desc--top">
-                <Trans
-                    components={{
-                        a: (
-                            <a href={CLIENT_ID_LINK} target="_blank" rel="noopener noreferrer">
-                                text
-                            </a>
-                        ),
-                    }}>
-                    {subtitle}
-                </Trans>
+                <div className="form__desc form__desc--top">{subtitle}</div>
+
+                <Controller
+                    name={id}
+                    control={control}
+                    render={({ field }) => (
+                        <Textarea
+                            {...field}
+                            id={id}
+                            data-testid={id}
+                            disabled={disabled || processingSet}
+                            onBlur={(e) => {
+                                field.onChange(normalizeOnBlur(e.target.value));
+                            }}
+                        />
+                    )}
+                />
             </div>
-
-            <Field
-                id={id}
-                name={id}
-                component={renderTextareaField}
-                type="text"
-                className="form-control form-control--textarea font-monospace"
-                disabled={disabled || processingSet}
-                normalizeOnBlur={normalizeOnBlur}
-            />
-        </div>
-    );
+        );
+    };
 
     return (
-        <form onSubmit={handleSubmit}>
-            {fields.map((f) => {
-                return renderField({
-                    ...f,
-                    disabled: allowedClients && f.id === 'disallowed_clients' || false
-                });
-            })}
+        <form onSubmit={handleSubmit(onSubmit)}>
+            {fields.map((f) => renderField(f))}
 
             <div className="card-actions">
                 <div className="btn-list">
                     <button
                         type="submit"
+                        data-testid="access_save"
                         className="btn btn-success btn-standard"
-                        disabled={submitting || invalid || processingSet}>
-                        <Trans>save_config</Trans>
+                        disabled={isSubmitting || !isDirty || processingSet}>
+                        {t('save_config')}
                     </button>
                 </div>
             </div>
@@ -120,18 +142,4 @@ let Form = (props: FormProps) => {
     );
 };
 
-const selector = formValueSelector(FORM_NAME.ACCESS);
-
-Form = connect((state) => {
-    const allowedClients = selector(state, 'allowed_clients');
-    return {
-        allowedClients,
-    };
-})(Form);
-
-export default flow([
-    withTranslation(),
-    reduxForm({
-        form: FORM_NAME.ACCESS,
-    }),
-])(Form);
+export default Form;

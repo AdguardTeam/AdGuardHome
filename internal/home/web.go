@@ -228,6 +228,10 @@ func (web *webAPI) start(ctx context.Context) {
 
 		logger := web.baseLogger.With(loggerKeyServer, "plain")
 
+		// TODO(a.garipov):  Remove other logs like this in other code.
+		logMw := httputil.NewLogMiddleware(logger, slog.LevelDebug)
+		hdlr = logMw.Wrap(hdlr)
+
 		// Create a new instance, because the Web is not usable after Shutdown.
 		web.httpServer = &http.Server{
 			Addr:              web.conf.BindAddr.String(),
@@ -238,7 +242,9 @@ func (web *webAPI) start(ctx context.Context) {
 			ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		}
 		go func() {
-			defer slogutil.RecoverAndLog(ctx, web.logger)
+			defer slogutil.RecoverAndLog(ctx, logger)
+
+			logger.InfoContext(ctx, "starting plain server", "addr", web.httpServer.Addr)
 
 			errs <- web.httpServer.ListenAndServe()
 		}()
@@ -305,9 +311,13 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 		addr := netip.AddrPortFrom(web.conf.BindAddr.Addr(), portHTTPS).String()
 		logger := web.baseLogger.With(loggerKeyServer, "https")
 
+		// TODO(a.garipov):  Remove other logs like this in other code.
+		logMw := httputil.NewLogMiddleware(logger, slog.LevelDebug)
+		hdlr := logMw.Wrap(withMiddlewares(globalContext.mux, limitRequestBody))
+
 		web.httpsServer.server = &http.Server{
 			Addr:    addr,
-			Handler: withMiddlewares(globalContext.mux, limitRequestBody),
+			Handler: hdlr,
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
 				RootCAs:      globalContext.tlsRoots,
@@ -326,7 +336,7 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 			go web.mustStartHTTP3(ctx, addr)
 		}
 
-		web.logger.DebugContext(ctx, "starting https server")
+		logger.InfoContext(ctx, "starting https server")
 		err := web.httpsServer.server.ListenAndServeTLS("", "")
 		if !errors.Is(err, http.ErrServerClosed) {
 			cleanupAlways()

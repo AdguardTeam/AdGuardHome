@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useDispatch, useSelector } from 'react-redux';
 
-import Form from './Form';
+import { Form } from './Form';
 
 import Card from '../../ui/Card';
 import { getBlockedServices, getAllBlockedServices, updateBlockedServices } from '../../../actions/services';
@@ -86,7 +86,8 @@ const Services = () => {
             <Card
                 title={t('schedule_services')}
                 subtitle={t('schedule_services_desc')}
-                bodyType="card-body box-body--settings">
+                bodyType="card-body box-body--settings"
+            >
                 <ScheduleForm schedule={services.list.schedule} onScheduleSubmit={handleScheduleSubmit} />
             </Card>
         </>

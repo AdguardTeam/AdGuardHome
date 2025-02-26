@@ -1,25 +1,21 @@
 import React from 'react';
-import { connect } from 'react-redux';
 
-import { reduxForm, formValueSelector } from 'redux-form';
-import { Trans, withTranslation } from 'react-i18next';
-import flow from 'lodash/flow';
+import { Trans } from 'react-i18next';
 
-import Guide from '../../components/ui/Guide';
+import { Guide } from '../../components/ui/Guide';
 
 import Controls from './Controls';
 
 import AddressList from './AddressList';
-import { FORM_NAME } from '../../helpers/constants';
-import { DhcpInterface } from '../../initialState';
+import { InstallInterface } from '../../initialState';
+import { DnsConfig } from './Settings';
 
-interface DevicesProps {
-    interfaces: DhcpInterface[];
-    dnsIp: string;
-    dnsPort: number;
-}
+type Props = {
+    interfaces: InstallInterface[];
+    dnsConfig: DnsConfig;
+};
 
-let Devices = (props: DevicesProps) => (
+export const Devices = ({ interfaces, dnsConfig }: Props) => (
     <div className="setup__step">
         <div className="setup__group">
             <div className="setup__subtitle">
@@ -34,7 +30,7 @@ let Devices = (props: DevicesProps) => (
                 </div>
 
                 <div className="mt-1">
-                    <AddressList interfaces={props.interfaces} address={props.dnsIp} port={props.dnsPort} isDns />
+                    <AddressList interfaces={interfaces} address={dnsConfig.ip} port={dnsConfig.port} isDns />
                 </div>
             </div>
 
@@ -44,24 +40,3 @@ let Devices = (props: DevicesProps) => (
         <Controls />
     </div>
 );
-
-const selector = formValueSelector('install');
-
-Devices = connect((state) => {
-    const dnsIp = selector(state, 'dns.ip');
-    const dnsPort = selector(state, 'dns.port');
-
-    return {
-        dnsIp,
-        dnsPort,
-    };
-})(Devices);
-
-export default flow([
-    withTranslation(),
-    reduxForm({
-        form: FORM_NAME.INSTALL,
-        destroyOnUnmount: false,
-        forceUnregisterOnUnmount: true,
-    }),
-])(Devices);

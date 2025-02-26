@@ -1,3 +1,5 @@
+import { describe, expect, test, afterEach, vi, beforeEach, it } from 'vitest';
+
 import { sortIp, countClientsStatistics, findAddressType, subnetMaskToBitMask } from '../helpers/helpers';
 import { ADDRESS_TYPES } from '../helpers/constants';
 
@@ -259,7 +261,7 @@ describe('sortIp', () => {
         const originalWarn = console.warn;
 
         beforeEach(() => {
-            console.warn = jest.fn();
+            console.warn = vi.fn();
         });
 
         afterEach(() => {
@@ -347,15 +349,15 @@ describe('sortIp', () => {
 });
 
 describe('findAddressType', () => {
-    describe('ip', () => {
+    it('should return IP type for IP addresses', () => {
         expect(findAddressType('127.0.0.1')).toStrictEqual(ADDRESS_TYPES.IP);
     });
 
-    describe('cidr', () => {
+    it('should return CIDR type for CIDR addresses', () => {
         expect(findAddressType('127.0.0.1/8')).toStrictEqual(ADDRESS_TYPES.CIDR);
     });
 
-    describe('mac', () => {
+    it('should return UNKNOWN type for MAC addresses', () => {
         expect(findAddressType('00:1B:44:11:3A:B7')).toStrictEqual(ADDRESS_TYPES.UNKNOWN);
     });
 });

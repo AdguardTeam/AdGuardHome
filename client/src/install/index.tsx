@@ -8,7 +8,7 @@ import configureStore from '../configureStore';
 import reducers from '../reducers/install';
 import '../i18n';
 
-import Setup from './Setup';
+import { Setup } from './Setup';
 import { InstallState } from '../initialState';
 
 const store = configureStore<InstallState>(reducers, {});

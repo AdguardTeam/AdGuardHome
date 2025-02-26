@@ -3,7 +3,7 @@ import { withTranslation } from 'react-i18next';
 
 import Card from '../../ui/Card';
 
-import Form from './Form';
+import { Form, FormValues } from './Form';
 import { HOUR } from '../../../helpers/constants';
 
 interface StatsConfigProps {
@@ -19,7 +19,7 @@ interface StatsConfigProps {
 }
 
 class StatsConfig extends Component<StatsConfigProps> {
-    handleFormSubmit = ({ enabled, interval, ignored, customInterval }: any) => {
+    handleFormSubmit = ({ enabled, interval, ignored, customInterval }: FormValues) => {
         const { t, interval: prevInterval } = this.props;
         const newInterval = customInterval ? customInterval * HOUR : interval;
 
@@ -49,17 +49,11 @@ class StatsConfig extends Component<StatsConfigProps> {
     render() {
         const {
             t,
-
             interval,
-
             customInterval,
-
             processing,
-
             processingReset,
-
             ignored,
-
             enabled,
         } = this.props;
 
@@ -73,10 +67,10 @@ class StatsConfig extends Component<StatsConfigProps> {
                             enabled,
                             ignored: ignored.join('\n'),
                         }}
-                        onSubmit={this.handleFormSubmit}
                         processing={processing}
                         processingReset={processingReset}
-                        handleReset={this.handleReset}
+                        onSubmit={this.handleFormSubmit}
+                        onReset={this.handleReset}
                     />
                 </div>
             </Card>

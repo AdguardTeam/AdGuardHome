@@ -14,7 +14,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/httphdr"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/NYTimes/gziphandler"
@@ -207,11 +206,7 @@ func ensure(
 	handler func(http.ResponseWriter, *http.Request),
 ) (wrapped func(http.ResponseWriter, *http.Request)) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		m, u := r.Method, r.URL
-		log.Debug("started %s %s %s", m, r.Host, u)
-		defer func() { log.Debug("finished %s %s %s in %s", m, r.Host, u, time.Since(start)) }()
-
+		m := r.Method
 		if m != method {
 			aghhttp.Error(r, w, http.StatusMethodNotAllowed, "only method %s is allowed", method)
 

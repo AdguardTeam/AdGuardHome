@@ -3,7 +3,7 @@ import { withTranslation } from 'react-i18next';
 
 import Card from '../../ui/Card';
 
-import Form from './Form';
+import { Form, FormValues } from './Form';
 import { HOUR } from '../../../helpers/constants';
 
 interface LogsConfigProps {
@@ -20,7 +20,7 @@ interface LogsConfigProps {
 }
 
 class LogsConfig extends Component<LogsConfigProps> {
-    handleFormSubmit = (values: any) => {
+    handleFormSubmit = (values: FormValues) => {
         const { t, interval: prevInterval } = this.props;
         const { interval, customInterval, ...rest } = values;
 
@@ -53,19 +53,12 @@ class LogsConfig extends Component<LogsConfigProps> {
     render() {
         const {
             t,
-
             enabled,
-
             interval,
-
             processing,
-
             processingClear,
-
             anonymize_client_ip,
-
             ignored,
-
             customInterval,
         } = this.props;
 
@@ -80,10 +73,10 @@ class LogsConfig extends Component<LogsConfigProps> {
                             anonymize_client_ip,
                             ignored: ignored?.join('\n'),
                         }}
-                        onSubmit={this.handleFormSubmit}
                         processing={processing}
-                        processingClear={processingClear}
-                        handleClear={this.handleClear}
+                        processingReset={processingClear}
+                        onSubmit={this.handleFormSubmit}
+                        onReset={this.handleClear}
                     />
                 </div>
             </Card>

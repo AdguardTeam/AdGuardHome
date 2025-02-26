@@ -1,67 +1,84 @@
 import React from 'react';
-
-import { Field, reduxForm } from 'redux-form';
-import { Trans, withTranslation } from 'react-i18next';
-import flow from 'lodash/flow';
-
-import { renderInputField } from '../../helpers/form';
+import { Controller, useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { Input } from '../../components/ui/Controls/Input';
 import { validateRequiredValue } from '../../helpers/validators';
-import { FORM_NAME } from '../../helpers/constants';
 
-interface LoginFormProps {
-    handleSubmit: (...args: unknown[]) => string;
-    submitting: boolean;
-    invalid: boolean;
+export type LoginFormValues = {
+    username: string;
+    password: string;
+};
+
+type LoginFormProps = {
+    onSubmit: (data: LoginFormValues) => void;
     processing: boolean;
-    t: (...args: unknown[]) => string;
-}
+};
 
-const Form = (props: LoginFormProps) => {
-    const { handleSubmit, processing, invalid, t } = props;
+const Form = ({ onSubmit, processing }: LoginFormProps) => {
+    const { t } = useTranslation();
+    const {
+        handleSubmit,
+        control,
+        formState: { isValid },
+    } = useForm<LoginFormValues>({
+        mode: 'onBlur',
+        defaultValues: {
+            username: '',
+            password: '',
+        },
+    });
 
     return (
-        <form onSubmit={handleSubmit} className="card">
+        <form onSubmit={handleSubmit(onSubmit)} className="card">
             <div className="card-body p-6">
                 <div className="form__group form__group--settings">
-                    <label className="form__label" htmlFor="username">
-                        <Trans>username_label</Trans>
-                    </label>
-
-                    <Field
-                        id="username1"
+                    <Controller
                         name="username"
-                        type="text"
-                        className="form-control"
-                        component={renderInputField}
-                        placeholder={t('username_placeholder')}
-                        autoComplete="username"
-                        autocapitalize="none"
-                        disabled={processing}
-                        validate={[validateRequiredValue]}
+                        control={control}
+                        rules={{ validate: validateRequiredValue }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                data-testid="username"
+                                type="text"
+                                label={t('username_label')}
+                                placeholder={t('username_placeholder')}
+                                error={fieldState.error?.message}
+                                autoComplete="username"
+                                autoCapitalize="none"
+                                disabled={processing}
+                            />
+                        )}
                     />
                 </div>
 
                 <div className="form__group form__group--settings">
-                    <label className="form__label" htmlFor="password">
-                        <Trans>password_label</Trans>
-                    </label>
-
-                    <Field
-                        id="password"
+                    <Controller
                         name="password"
-                        type="password"
-                        className="form-control"
-                        component={renderInputField}
-                        placeholder={t('password_placeholder')}
-                        autoComplete="current-password"
-                        disabled={processing}
-                        validate={[validateRequiredValue]}
+                        control={control}
+                        rules={{ validate: validateRequiredValue }}
+                        render={({ field, fieldState }) => (
+                            <Input
+                                {...field}
+                                data-testid="password"
+                                type="password"
+                                label={t('username_label')}
+                                placeholder={t('password_placeholder')}
+                                error={fieldState.error?.message}
+                                autoComplete="current-password"
+                                disabled={processing}
+                            />
+                        )}
                     />
                 </div>
 
                 <div className="form-footer">
-                    <button type="submit" className="btn btn-success btn-block" disabled={processing || invalid}>
-                        <Trans>sign_in</Trans>
+                    <button
+                        data-testid="sign_in"
+                        type="submit"
+                        className="btn btn-success btn-block"
+                        disabled={processing || !isValid}>
+                        {t('sign_in')}
                     </button>
                 </div>
             </div>
@@ -69,4 +86,4 @@ const Form = (props: LoginFormProps) => {
     );
 };
 
-export default flow([withTranslation(), reduxForm({ form: FORM_NAME.LOGIN })])(Form);
+export default Form;

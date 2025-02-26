@@ -290,6 +290,22 @@ When you need to debug the frontend without recompiling the production version e
 [targ-docker]:  https://github.com/AdguardTeam/AdGuardHome/tree/master/scripts#build-dockersh-build-a-multi-architecture-docker-image
 [targ-release]: https://github.com/AdguardTeam/AdGuardHome/tree/master/scripts#build-releasesh-build-a-release-for-all-platforms
 
+#### <a href="#e2e-frontend-tests" id="e2e-frontend-tests" name="e2e-frontend-tests">End-to-End (E2E) Frontend Tests</a>
+
+AdGuard Home uses [Playwright](https://playwright.dev) for E2E testing. Tests are located in `tests/e2e`.
+
+**Running Tests:**
+- `npm run test:e2e` – run all tests (headless).
+- `npm run test:e2e:interactive` – run tests interactively.
+- `npm run test:e2e:debug` – run tests in debug mode.
+- `npm run test:e2e:codegen` – generate new test code.
+
+**Setup:**
+1. Run `npm install` to install dependencies.
+2. Run `npx playwright install` to set up required browsers.
+
+> **Warning:** Playwright will download and install its own browser binaries for testing, which may differ from the browsers installed on your system.
+
 ## <a href="#contributing" id="contributing" name="contributing">Contributing</a>
 
 You are welcome to fork this repository, make your changes and [submit a pull request][pr]. Please make sure you follow our [code guidelines][guide] though.
