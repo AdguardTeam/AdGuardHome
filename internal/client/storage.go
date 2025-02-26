@@ -446,7 +446,7 @@ func (s *Storage) FindByName(name string) (p *Persistent, ok bool) {
 	return nil, false
 }
 
-// Find finds persistent client by string representation of the client ID, IP
+// Find finds persistent client by string representation of the ClientID, IP
 // address, or MAC.  And returns its shallow copy.
 //
 // TODO(s.chzhen):  Accept ClientIDData structure instead, which will contain
@@ -658,5 +658,8 @@ func (s *Storage) UpdateCommonUpstreamConfig(conf *CommonUpstreamConfig) {
 // ClearUpstreamCache implements the [dnsforward.ClientsContainer] interface for
 // *Storage
 func (s *Storage) ClearUpstreamCache() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.upstreamManager.clearUpstreamCache()
 }

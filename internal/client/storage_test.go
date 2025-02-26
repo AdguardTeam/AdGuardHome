@@ -1296,6 +1296,8 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		existingIP        = netip.MustParseAddr("192.0.2.1")
 
 		nonExistingIP = netip.MustParseAddr("192.0.2.255")
+
+		testUpstreamTimeout = time.Second
 	)
 
 	existingClient := &client.Persistent{
@@ -1307,7 +1309,9 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 	}
 
 	s := newTestStorage(t)
-	s.UpdateCommonUpstreamConfig(&client.CommonUpstreamConfig{})
+	s.UpdateCommonUpstreamConfig(&client.CommonUpstreamConfig{
+		UpstreamTimeout: testUpstreamTimeout,
+	})
 
 	testutil.CleanupAndRequireSuccess(t, func() (err error) {
 		return s.Shutdown(testutil.ContextWithTimeout(t, testTimeout))
@@ -1319,35 +1323,49 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 
 	testCases := []struct {
 		cliAddr     netip.Addr
-		wantNilConf assert.BoolAssertionFunc
+		wantNilConf assert.ValueAssertionFunc
 		name        string
 		cliID       string
 	}{{
 		name:        "client_id",
 		cliID:       existingClientID,
 		cliAddr:     netip.Addr{},
-		wantNilConf: assert.False,
+		wantNilConf: assert.NotNil,
 	}, {
 		name:        "client_addr",
 		cliID:       "",
 		cliAddr:     existingIP,
-		wantNilConf: assert.False,
+		wantNilConf: assert.NotNil,
 	}, {
 		name:        "non_existing_client_id",
 		cliID:       nonExistingClientID,
 		cliAddr:     netip.Addr{},
-		wantNilConf: assert.True,
+		wantNilConf: assert.Nil,
 	}, {
 		name:        "non_existing_client_addr",
 		cliID:       "",
 		cliAddr:     nonExistingIP,
-		wantNilConf: assert.True,
+		wantNilConf: assert.Nil,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			conf := s.CustomUpstreamConfig(tc.cliID, tc.cliAddr)
-			tc.wantNilConf(t, conf == nil)
+			tc.wantNilConf(t, conf)
 		})
 	}
+
+	t.Run("update_common_config", func(t *testing.T) {
+		conf := s.CustomUpstreamConfig(existingClientID, existingIP)
+		assert.NotNil(t, conf)
+
+		s.UpdateCommonUpstreamConfig(&client.CommonUpstreamConfig{
+			UpstreamTimeout: testUpstreamTimeout * 2,
+		})
+
+		updConf := s.CustomUpstreamConfig(existingClientID, existingIP)
+		assert.NotNil(t, updConf)
+
+		assert.NotEqual(t, conf, updConf)
+	})
 }

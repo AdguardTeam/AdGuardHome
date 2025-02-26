@@ -27,7 +27,7 @@ type CommonUpstreamConfig struct {
 // timestamp of the latest configuration update.
 type customUpstreamConfig struct {
 	prxConf               *proxy.CustomUpstreamConfig
-	confUpdate            time.Time
+	commonConfUpdate      time.Time
 	upstreams             []string
 	upstreamsCacheSize    uint32
 	upstreamsCacheEnabled bool
@@ -88,7 +88,7 @@ func (m *upstreamManager) customUpstreamConfig(
 	prxConf = newCustomUpstreamConfig(c, m.commonConf)
 	m.uidToCustomConf[c.UID] = &customUpstreamConfig{
 		prxConf:               prxConf,
-		confUpdate:            m.confUpdate,
+		commonConfUpdate:      m.confUpdate,
 		upstreams:             slices.Clone(c.Upstreams),
 		upstreamsCacheEnabled: c.UpstreamsCacheEnabled,
 		upstreamsCacheSize:    c.UpstreamsCacheSize,
@@ -112,7 +112,7 @@ func (m *upstreamManager) isConfigChanged(c *Persistent, cliConf *customUpstream
 		return true
 	}
 
-	return !m.confUpdate.Equal(cliConf.confUpdate)
+	return !m.confUpdate.Equal(cliConf.commonConfUpdate)
 }
 
 // clearUpstreamCache clears the upstream cache for each stored custom client

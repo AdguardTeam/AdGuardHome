@@ -34,7 +34,7 @@ type index struct {
 	// nameToUID maps client name to UID.
 	nameToUID map[string]UID
 
-	// clientIDToUID maps client ID to UID.
+	// clientIDToUID maps ClientID to UID.
 	clientIDToUID map[string]UID
 
 	// ipToUID maps IP address to UID.
@@ -204,7 +204,7 @@ func (ci *index) clashesMAC(c *Persistent) (p *Persistent, mac net.HardwareAddr)
 	return nil, nil
 }
 
-// find finds persistent client by string representation of the client ID, IP
+// find finds persistent client by string representation of the ClientID, IP
 // address, or MAC.
 func (ci *index) find(id string) (c *Persistent, ok bool) {
 	c, ok = ci.findByClientID(id)
@@ -229,7 +229,7 @@ func (ci *index) find(id string) (c *Persistent, ok bool) {
 	return nil, false
 }
 
-// findByClientID finds persistent client by client ID.
+// findByClientID finds persistent client by ClientID.
 func (ci *index) findByClientID(clientID string) (c *Persistent, ok bool) {
 	uid, ok := ci.clientIDToUID[clientID]
 	if ok {

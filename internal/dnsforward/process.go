@@ -1,7 +1,6 @@
 package dnsforward
 
 import (
-	"cmp"
 	"context"
 	"encoding/binary"
 	"net"
@@ -580,8 +579,11 @@ func (s *Server) setCustomUpstream(pctx *proxy.DNSContext, clientID string) {
 	cliAddr := pctx.Addr.Addr()
 	upsConf := s.conf.ClientsContainer.CustomUpstreamConfig(clientID, cliAddr)
 	if upsConf != nil {
-		cli := cmp.Or(clientID, cliAddr.String())
-		log.Debug("dnsforward: using custom upstreams for client %s", cli)
+		log.Debug(
+			"dnsforward: using custom upstreams for client with ip %s and clientid %q",
+			cliAddr,
+			clientID,
+		)
 
 		pctx.CustomUpstreamConfig = upsConf
 	}
