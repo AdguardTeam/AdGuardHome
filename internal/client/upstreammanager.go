@@ -1,6 +1,7 @@
 package client
 
 import (
+	"log/slog"
 	"slices"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
 
@@ -33,6 +35,12 @@ type customUpstreamConfig struct {
 
 // upstreamManager stores and updates custom client upstream configurations.
 type upstreamManager struct {
+	// logger is used for logging the operation of the upstream manager.  It
+	// must not be nil.
+	//
+	// TODO(s.chzhen):  Consider using a logger with its own prefix.
+	logger *slog.Logger
+
 	// uidToCustomConf maps persistent client UID to the custom client upstream
 	// configuration.
 	uidToCustomConf map[UID]*customUpstreamConfig
@@ -46,8 +54,9 @@ type upstreamManager struct {
 }
 
 // newUpstreamManager returns the new properly initialized upstream manager.
-func newUpstreamManager() (m *upstreamManager) {
+func newUpstreamManager(logger *slog.Logger) (m *upstreamManager) {
 	return &upstreamManager{
+		logger:          logger,
 		uidToCustomConf: make(map[UID]*customUpstreamConfig),
 	}
 }
@@ -66,6 +75,14 @@ func (m *upstreamManager) customUpstreamConfig(
 	cliConf, ok := m.uidToCustomConf[c.UID]
 	if ok && !m.isConfigChanged(c, cliConf) {
 		return cliConf.prxConf
+	}
+
+	if ok && cliConf.prxConf != nil {
+		err := cliConf.prxConf.Close()
+		if err != nil {
+			// TODO(s.chzhen):  Pass context.
+			m.logger.Debug("closing custom upstream config", slogutil.KeyError, err)
+		}
 	}
 
 	prxConf = newCustomUpstreamConfig(c, m.commonConf)
