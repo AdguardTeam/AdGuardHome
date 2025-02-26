@@ -26,11 +26,14 @@ type CommonUpstreamConfig struct {
 // customUpstreamConfig contains custom client upstream configuration and the
 // timestamp of the latest configuration update.
 type customUpstreamConfig struct {
-	prxConf               *proxy.CustomUpstreamConfig
+	proxyConf             *proxy.CustomUpstreamConfig
 	commonConfUpdate      time.Time
 	upstreams             []string
 	upstreamsCacheSize    uint32
 	upstreamsCacheEnabled bool
+
+	// isChanged indicates whether the proxyConf needs to be updated.
+	isChanged bool
 }
 
 // upstreamManager stores and updates custom client upstream configurations.
@@ -42,7 +45,7 @@ type upstreamManager struct {
 	logger *slog.Logger
 
 	// uidToCustomConf maps persistent client UID to the custom client upstream
-	// configuration.
+	// configuration.  Stored UIDs must be in sync with the [index.uidToClient].
 	uidToCustomConf map[UID]*customUpstreamConfig
 
 	// commonConf is the common upstream configuration.
@@ -68,69 +71,78 @@ func (m *upstreamManager) updateCommonUpstreamConfig(conf *CommonUpstreamConfig)
 	m.confUpdate = time.Now()
 }
 
-// customUpstreamConfig returns the custom client upstream configuration.
-func (m *upstreamManager) customUpstreamConfig(
-	c *Persistent,
-) (prxConf *proxy.CustomUpstreamConfig) {
+// updateCustomUpstreamConfig updates the stored custom client upstream
+// configuration associated with the persistent client.  It also sets
+// [customUpstreamConfig.isChanged] to true so [customUpstreamConfig.proxyConf]
+// can be updated later in [upstreamManager.customUpstreamConfig].
+func (m *upstreamManager) updateCustomUpstreamConfig(c *Persistent) {
 	cliConf, ok := m.uidToCustomConf[c.UID]
-	if ok && !m.isConfigChanged(c, cliConf) {
-		return cliConf.prxConf
+	if !ok {
+		cliConf = &customUpstreamConfig{
+			commonConfUpdate: m.confUpdate,
+		}
+
+		m.uidToCustomConf[c.UID] = cliConf
 	}
 
-	if ok && cliConf.prxConf != nil {
-		err := cliConf.prxConf.Close()
+	// TODO(s.chzhen):  Compare before cloning.
+	cliConf.upstreams = slices.Clone(c.Upstreams)
+	cliConf.upstreamsCacheSize = c.UpstreamsCacheSize
+	cliConf.upstreamsCacheEnabled = c.UpstreamsCacheEnabled
+	cliConf.isChanged = true
+}
+
+// customUpstreamConfig returns the custom client upstream configuration.
+func (m *upstreamManager) customUpstreamConfig(uid UID) (proxyConf *proxy.CustomUpstreamConfig) {
+	cliConf, ok := m.uidToCustomConf[uid]
+	if !ok {
+		// TODO(s.chzhen):  Consider panic.
+		m.logger.Error("no associated custom client upstream config")
+
+		return nil
+	}
+
+	if !m.isConfigChanged(cliConf) {
+		return cliConf.proxyConf
+	}
+
+	if cliConf.proxyConf != nil {
+		err := cliConf.proxyConf.Close()
 		if err != nil {
 			// TODO(s.chzhen):  Pass context.
 			m.logger.Debug("closing custom upstream config", slogutil.KeyError, err)
 		}
 	}
 
-	prxConf = newCustomUpstreamConfig(c, m.commonConf)
-	m.uidToCustomConf[c.UID] = &customUpstreamConfig{
-		prxConf:               prxConf,
-		commonConfUpdate:      m.confUpdate,
-		upstreams:             slices.Clone(c.Upstreams),
-		upstreamsCacheEnabled: c.UpstreamsCacheEnabled,
-		upstreamsCacheSize:    c.UpstreamsCacheSize,
-	}
+	proxyConf = newCustomUpstreamConfig(cliConf, m.commonConf)
+	cliConf.proxyConf = proxyConf
+	cliConf.isChanged = false
 
-	return prxConf
+	return proxyConf
 }
 
 // isConfigChanged returns true if the update is necessary for the custom client
 // upstream configuration.
-func (m *upstreamManager) isConfigChanged(c *Persistent, cliConf *customUpstreamConfig) (ok bool) {
-	if !slices.Equal(c.Upstreams, cliConf.upstreams) {
-		return true
-	}
-
-	if c.UpstreamsCacheEnabled != cliConf.upstreamsCacheEnabled {
-		return true
-	}
-
-	if c.UpstreamsCacheSize != cliConf.upstreamsCacheSize {
-		return true
-	}
-
-	return !m.confUpdate.Equal(cliConf.commonConfUpdate)
+func (m *upstreamManager) isConfigChanged(cliConf *customUpstreamConfig) (ok bool) {
+	return !m.confUpdate.Equal(cliConf.commonConfUpdate) || cliConf.isChanged
 }
 
 // clearUpstreamCache clears the upstream cache for each stored custom client
 // upstream configuration.
 func (m *upstreamManager) clearUpstreamCache() {
 	for _, c := range m.uidToCustomConf {
-		c.prxConf.ClearCache()
+		c.proxyConf.ClearCache()
 	}
 }
 
 // remove deletes the custom client upstream configuration.
-func (m *upstreamManager) remove(c *Persistent) (err error) {
-	cliConf, ok := m.uidToCustomConf[c.UID]
-	if ok {
-		return cliConf.prxConf.Close()
+func (m *upstreamManager) remove(uid UID) (err error) {
+	cliConf, ok := m.uidToCustomConf[uid]
+	if ok && cliConf.proxyConf != nil {
+		return cliConf.proxyConf.Close()
 	}
 
-	delete(m.uidToCustomConf, c.UID)
+	delete(m.uidToCustomConf, uid)
 
 	return nil
 }
@@ -139,11 +151,11 @@ func (m *upstreamManager) remove(c *Persistent) (err error) {
 func (m *upstreamManager) close() (err error) {
 	var errs []error
 	for _, c := range m.uidToCustomConf {
-		if c.prxConf == nil {
+		if c.proxyConf == nil {
 			continue
 		}
 
-		errs = append(errs, c.prxConf.Close())
+		errs = append(errs, c.proxyConf.Close())
 	}
 
 	return errors.Join(errs...)
@@ -152,10 +164,10 @@ func (m *upstreamManager) close() (err error) {
 // newCustomUpstreamConfig returns the new properly initialized custom proxy
 // upstream configuration for the client.
 func newCustomUpstreamConfig(
-	c *Persistent,
+	cliConf *customUpstreamConfig,
 	conf *CommonUpstreamConfig,
-) (prxConf *proxy.CustomUpstreamConfig) {
-	upstreams := stringutil.FilterOut(c.Upstreams, aghnet.IsCommentOrEmpty)
+) (proxyConf *proxy.CustomUpstreamConfig) {
+	upstreams := stringutil.FilterOut(cliConf.upstreams, aghnet.IsCommentOrEmpty)
 	if len(upstreams) == 0 {
 		return nil
 	}
@@ -177,8 +189,8 @@ func newCustomUpstreamConfig(
 
 	return proxy.NewCustomUpstreamConfig(
 		upsConf,
-		c.UpstreamsCacheEnabled,
-		int(c.UpstreamsCacheSize),
+		cliConf.upstreamsCacheEnabled,
+		int(cliConf.upstreamsCacheSize),
 		conf.EDNSClientSubnetEnabled,
 	)
 }

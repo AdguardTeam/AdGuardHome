@@ -430,6 +430,8 @@ func (s *Storage) Add(ctx context.Context, p *Persistent) (err error) {
 		"clients_count", s.index.size(),
 	)
 
+	s.upstreamManager.updateCustomUpstreamConfig(p)
+
 	return nil
 }
 
@@ -521,7 +523,7 @@ func (s *Storage) RemoveByName(ctx context.Context, name string) (ok bool) {
 
 	s.index.remove(p)
 
-	err := s.upstreamManager.remove(p)
+	err := s.upstreamManager.remove(p.UID)
 	if err != nil {
 		s.logger.DebugContext(ctx, "closing client upstreams", "name", name, slogutil.KeyError, err)
 	}
@@ -561,6 +563,8 @@ func (s *Storage) Update(ctx context.Context, name string, p *Persistent) (err e
 
 	s.index.remove(stored)
 	s.index.add(p)
+
+	s.upstreamManager.updateCustomUpstreamConfig(p)
 
 	return nil
 }
@@ -643,7 +647,7 @@ func (s *Storage) CustomUpstreamConfig(
 		return nil
 	}
 
-	return s.upstreamManager.customUpstreamConfig(c)
+	return s.upstreamManager.customUpstreamConfig(c.UID)
 }
 
 // UpdateCommonUpstreamConfig implements the [dnsforward.ClientsContainer]
