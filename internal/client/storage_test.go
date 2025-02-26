@@ -1357,14 +1357,14 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 
 	t.Run("update_common_config", func(t *testing.T) {
 		conf := s.CustomUpstreamConfig(existingClientID, existingIP)
-		assert.NotNil(t, conf)
+		require.NotNil(t, conf)
 
 		s.UpdateCommonUpstreamConfig(&client.CommonUpstreamConfig{
 			UpstreamTimeout: testUpstreamTimeout * 2,
 		})
 
 		updConf := s.CustomUpstreamConfig(existingClientID, existingIP)
-		assert.NotNil(t, updConf)
+		require.NotNil(t, updConf)
 
 		assert.NotEqual(t, conf, updConf)
 	})
