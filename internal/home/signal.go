@@ -2,17 +2,25 @@ package home
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"sync"
+	"sync/atomic"
 	"syscall"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/osutil"
 )
 
 // signalHandler processes incoming signals.  It reloads configurations of
 // stored entities on SIGHUP and performs cleanup on all other signals.
 type signalHandler struct {
+	// logger is used to log the operation of the signal handler.  Initially,
+	// [slog.Default] is used, but it should be swapped later using
+	// [signalHandler.swapLogger].
+	logger *atomic.Pointer[slog.Logger]
+
 	// mu protects clientStorage and tlsManager.
 	mu *sync.Mutex
 
@@ -36,11 +44,21 @@ func newSignalHandler(
 	signals <-chan os.Signal,
 	cleanup func(ctx context.Context),
 ) (h *signalHandler) {
-	return &signalHandler{
+	h = &signalHandler{
+		logger:  &atomic.Pointer[slog.Logger]{},
 		mu:      &sync.Mutex{},
 		signals: signals,
 		cleanup: cleanup,
 	}
+
+	h.logger.Store(slog.Default())
+
+	return h
+}
+
+// swapLogger replaces the stored logger with the given logger.
+func (h *signalHandler) swapLogger(logger *slog.Logger) {
+	h.logger.Swap(logger)
 }
 
 // addClientStorage stores the client storage.
@@ -63,11 +81,11 @@ func (h *signalHandler) addTLSManager(m *tlsManager) {
 // reloads configurations of stored entities on SIGHUP, or performs cleanup on
 // all other signals.  It is intended to be used as a goroutine.
 func (h *signalHandler) handle(ctx context.Context) {
-	defer log.OnPanic("handling signal")
+	defer slogutil.RecoverAndExit(ctx, h.logger.Load(), osutil.ExitCodeFailure)
 
 	for {
 		sig := <-h.signals
-		log.Info("received signal %q", sig)
+		h.logger.Load().InfoContext(ctx, "received signal", "signal", sig)
 		switch sig {
 		case syscall.SIGHUP:
 			h.reloadConfig(ctx)

@@ -596,6 +596,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 
 	// TODO(a.garipov): Use slog everywhere.
 	slogLogger := newSlogLogger(ls)
+	sigHdlr.swapLogger(slogLogger)
 
 	// Print the first message after logger is configured.
 	log.Info(version.Full())
