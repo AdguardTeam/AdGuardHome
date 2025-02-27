@@ -3,7 +3,6 @@ package home
 import (
 	"net"
 	"net/netip"
-	"sync"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
@@ -32,7 +31,7 @@ func newClientsContainer(t *testing.T) (c *clientsContainer) {
 		nil,
 		nil,
 		&filtering.Config{},
-		&signalHandler{mu: &sync.Mutex{}},
+		newSignalHandler(nil, nil),
 	)
 
 	require.NoError(t, err)
