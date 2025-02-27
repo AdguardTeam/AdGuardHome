@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"log/slog"
 	"slices"
 	"time"
@@ -26,10 +27,26 @@ type CommonUpstreamConfig struct {
 // customUpstreamConfig contains custom client upstream configuration and the
 // timestamp of the latest configuration update.
 type customUpstreamConfig struct {
-	proxyConf             *proxy.CustomUpstreamConfig
-	commonConfUpdate      time.Time
-	upstreams             []string
-	upstreamsCacheSize    uint32
+	// proxyConf is the constructed upstream configuration for the [proxy],
+	// derived from the fields below.  It is initialized on demand with
+	// [newCustomUpstreamConfig].
+	proxyConf *proxy.CustomUpstreamConfig
+
+	// commonConfUpdate is the timestamp of the latest configuration update,
+	// used to check against [upstreamManager.confUpdate] to determine if the
+	// configuration is up to date.
+	commonConfUpdate time.Time
+
+	// upstreams is the cached list of custom upstream DNS servers used for the
+	// configuration of proxyConf.
+	upstreams []string
+
+	// upstreamsCacheSize is the cached value of the cache size of the
+	// upstreams, used for the configuration of proxyConf.
+	upstreamsCacheSize uint32
+
+	// upstreamsCacheEnabled is the cached value indicating whether the cache of
+	// the upstreams is enabled for the configuration of proxyConf.
 	upstreamsCacheEnabled bool
 
 	// isChanged indicates whether the proxyConf needs to be updated.
@@ -135,14 +152,20 @@ func (m *upstreamManager) clearUpstreamCache() {
 	}
 }
 
-// remove deletes the custom client upstream configuration.
+// remove deletes the custom client upstream configuration and closes
+// [customUpstreamConfig.proxyConf] if necessary.
 func (m *upstreamManager) remove(uid UID) (err error) {
 	cliConf, ok := m.uidToCustomConf[uid]
-	if ok && cliConf.proxyConf != nil {
-		return cliConf.proxyConf.Close()
+	if !ok {
+		// TODO(s.chzhen):  Consider panic.
+		return errors.Error("no associated custom client upstream config")
 	}
 
 	delete(m.uidToCustomConf, uid)
+
+	if cliConf.proxyConf != nil {
+		return cliConf.proxyConf.Close()
+	}
 
 	return nil
 }
@@ -184,7 +207,7 @@ func newCustomUpstreamConfig(
 	if err != nil {
 		// Should not happen because upstreams are already validated.  See
 		// [Persistent.validate].
-		panic(err)
+		panic(fmt.Errorf("creating custom upstream config: %w", err))
 	}
 
 	return proxy.NewCustomUpstreamConfig(

@@ -421,6 +421,7 @@ func (s *Storage) Add(ctx context.Context, p *Persistent) (err error) {
 	}
 
 	s.index.add(p)
+	s.upstreamManager.updateCustomUpstreamConfig(p)
 
 	s.logger.DebugContext(
 		ctx,
@@ -429,8 +430,6 @@ func (s *Storage) Add(ctx context.Context, p *Persistent) (err error) {
 		"ids", p.IDs(),
 		"clients_count", s.index.size(),
 	)
-
-	s.upstreamManager.updateCustomUpstreamConfig(p)
 
 	return nil
 }
