@@ -81,7 +81,18 @@ func (h *signalHandler) addTLSManager(m *tlsManager) {
 // reloads configurations of stored entities on SIGHUP, or performs cleanup on
 // all other signals.  It is intended to be used as a goroutine.
 func (h *signalHandler) handle(ctx context.Context) {
-	defer slogutil.RecoverAndExit(ctx, h.logger.Load(), osutil.ExitCodeFailure)
+	// NOTE:  Avoid using [slogutil.RecoverAndExit] to prevent immediate
+	// evaluation of the logger.
+	defer func() {
+		v := recover()
+		if v == nil {
+			return
+		}
+
+		slogutil.PrintRecovered(ctx, h.logger.Load(), v)
+
+		os.Exit(osutil.ExitCodeFailure)
+	}()
 
 	for {
 		sig := <-h.signals
