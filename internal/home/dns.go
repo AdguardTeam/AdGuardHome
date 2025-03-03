@@ -156,7 +156,13 @@ func initDNSServer(
 
 	globalContext.clients.clientChecker = globalContext.dnsServer
 
-	dnsConf, err := newServerConfig(&config.DNS, config.Clients.Sources, tlsConf, httpReg)
+	dnsConf, err := newServerConfig(
+		&config.DNS,
+		config.Clients.Sources,
+		tlsConf,
+		httpReg,
+		globalContext.clients.storage,
+	)
 	if err != nil {
 		return fmt.Errorf("newServerConfig: %w", err)
 	}
@@ -230,12 +236,13 @@ func newServerConfig(
 	clientSrcConf *clientSourcesConfig,
 	tlsConf *tlsConfigSettings,
 	httpReg aghhttp.RegisterFunc,
+	clientsContainer dnsforward.ClientsContainer,
 ) (newConf *dnsforward.ServerConfig, err error) {
 	hosts := aghalg.CoalesceSlice(dnsConf.BindHosts, []netip.Addr{netutil.IPv4Localhost()})
 
 	fwdConf := dnsConf.Config
 	fwdConf.FilterHandler = applyAdditionalFiltering
-	fwdConf.ClientsContainer = &globalContext.clients
+	fwdConf.ClientsContainer = clientsContainer
 
 	newConf = &dnsforward.ServerConfig{
 		UDPListenAddrs:         ipsToUDPAddrs(hosts, dnsConf.Port),
@@ -484,7 +491,13 @@ func reconfigureDNSServer() (err error) {
 	tlsConf := &tlsConfigSettings{}
 	globalContext.tls.WriteDiskConfig(tlsConf)
 
-	newConf, err := newServerConfig(&config.DNS, config.Clients.Sources, tlsConf, httpRegister)
+	newConf, err := newServerConfig(
+		&config.DNS,
+		config.Clients.Sources,
+		tlsConf,
+		httpRegister,
+		globalContext.clients.storage,
+	)
 	if err != nil {
 		return fmt.Errorf("generating forwarding dns server config: %w", err)
 	}

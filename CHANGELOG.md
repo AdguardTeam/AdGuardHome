@@ -20,6 +20,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Changes to global upstream DNS settings not applying to custom client upstream configurations.
 - The formatting of large numbers in the clients tables on the *Client settings* page ([#7583]).
 
 [#7583]: https://github.com/AdguardTeam/AdGuardHome/issues/7583

@@ -62,7 +62,7 @@ func clientIDFromClientServerName(
 	return strings.ToLower(clientID), nil
 }
 
-// clientIDFromDNSContextHTTPS extracts the client's ID from the path of the
+// clientIDFromDNSContextHTTPS extracts the ClientID from the path of the
 // client's DNS-over-HTTPS request.
 func clientIDFromDNSContextHTTPS(pctx *proxy.DNSContext) (clientID string, err error) {
 	r := pctx.HTTPRequest

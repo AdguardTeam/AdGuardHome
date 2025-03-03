@@ -13,6 +13,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
+	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -33,6 +34,9 @@ func newTestStorage(tb testing.TB) (s *client.Storage) {
 
 	return s
 }
+
+// type check
+var _ dnsforward.ClientsContainer = (*client.Storage)(nil)
 
 // testHostsContainer is a mock implementation of the [client.HostsContainer]
 // interface.
@@ -1277,4 +1281,91 @@ func TestStorage_RangeByName(t *testing.T) {
 			assert.Equal(t, tc.want, got)
 		})
 	}
+}
+
+func TestStorage_CustomUpstreamConfig(t *testing.T) {
+	const (
+		existingName     = "existing_name"
+		existingClientID = "existing_client_id"
+
+		nonExistingClientID = "non_existing_client_id"
+	)
+
+	var (
+		existingClientUID = client.MustNewUID()
+		existingIP        = netip.MustParseAddr("192.0.2.1")
+
+		nonExistingIP = netip.MustParseAddr("192.0.2.255")
+
+		testUpstreamTimeout = time.Second
+	)
+
+	existingClient := &client.Persistent{
+		Name:      existingName,
+		IPs:       []netip.Addr{existingIP},
+		ClientIDs: []string{existingClientID},
+		UID:       existingClientUID,
+		Upstreams: []string{"192.0.2.0"},
+	}
+
+	s := newTestStorage(t)
+	s.UpdateCommonUpstreamConfig(&client.CommonUpstreamConfig{
+		UpstreamTimeout: testUpstreamTimeout,
+	})
+
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+		return s.Shutdown(testutil.ContextWithTimeout(t, testTimeout))
+	})
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	err := s.Add(ctx, existingClient)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		cliAddr     netip.Addr
+		wantNilConf assert.ValueAssertionFunc
+		name        string
+		cliID       string
+	}{{
+		name:        "client_id",
+		cliID:       existingClientID,
+		cliAddr:     netip.Addr{},
+		wantNilConf: assert.NotNil,
+	}, {
+		name:        "client_addr",
+		cliID:       "",
+		cliAddr:     existingIP,
+		wantNilConf: assert.NotNil,
+	}, {
+		name:        "non_existing_client_id",
+		cliID:       nonExistingClientID,
+		cliAddr:     netip.Addr{},
+		wantNilConf: assert.Nil,
+	}, {
+		name:        "non_existing_client_addr",
+		cliID:       "",
+		cliAddr:     nonExistingIP,
+		wantNilConf: assert.Nil,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			conf := s.CustomUpstreamConfig(tc.cliID, tc.cliAddr)
+			tc.wantNilConf(t, conf)
+		})
+	}
+
+	t.Run("update_common_config", func(t *testing.T) {
+		conf := s.CustomUpstreamConfig(existingClientID, existingIP)
+		require.NotNil(t, conf)
+
+		s.UpdateCommonUpstreamConfig(&client.CommonUpstreamConfig{
+			UpstreamTimeout: testUpstreamTimeout * 2,
+		})
+
+		updConf := s.CustomUpstreamConfig(existingClientID, existingIP)
+		require.NotNil(t, updConf)
+
+		assert.NotEqual(t, conf, updConf)
+	})
 }
