@@ -113,31 +113,23 @@ func Main(clientBuildFS fs.FS) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 
-	go func() {
-		ctx := context.Background()
-		for {
-			sig := <-signals
-			log.Info("Received signal %q", sig)
-			switch sig {
-			case syscall.SIGHUP:
-				globalContext.clients.storage.ReloadARP(ctx)
-				globalContext.tls.reload()
-			default:
-				cleanup(ctx)
-				cleanupAlways()
-				close(done)
-			}
-		}
-	}()
+	ctx := context.Background()
+	sigHdlr := newSignalHandler(signals, func(ctx context.Context) {
+		cleanup(ctx)
+		cleanupAlways()
+		close(done)
+	})
+
+	go sigHdlr.handle(ctx)
 
 	if opts.serviceControlAction != "" {
-		handleServiceControlAction(opts, clientBuildFS, signals, done)
+		handleServiceControlAction(opts, clientBuildFS, signals, done, sigHdlr)
 
 		return
 	}
 
 	// run the protection
-	run(opts, clientBuildFS, done)
+	run(opts, clientBuildFS, done, sigHdlr)
 }
 
 // setupContext initializes [globalContext] fields.  It also reads and upgrades
@@ -278,7 +270,11 @@ func setupOpts(opts options) (err error) {
 }
 
 // initContextClients initializes Context clients and related fields.
-func initContextClients(ctx context.Context, logger *slog.Logger) (err error) {
+func initContextClients(
+	ctx context.Context,
+	logger *slog.Logger,
+	sigHdlr *signalHandler,
+) (err error) {
 	err = setupDNSFilteringConf(ctx, logger, config.Filtering)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
@@ -313,6 +309,7 @@ func initContextClients(ctx context.Context, logger *slog.Logger) (err error) {
 		globalContext.etcHosts,
 		arpDB,
 		config.Filtering,
+		sigHdlr,
 	)
 }
 
@@ -583,7 +580,7 @@ func fatalOnError(err error) {
 // run configures and starts AdGuard Home.
 //
 // TODO(e.burkov):  Make opts a pointer.
-func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
+func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalHandler) {
 	// Configure working dir.
 	err := initWorkingDir(opts)
 	fatalOnError(err)
@@ -599,6 +596,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 
 	// TODO(a.garipov): Use slog everywhere.
 	slogLogger := newSlogLogger(ls)
+	sigHdlr.swapLogger(slogLogger)
 
 	// Print the first message after logger is configured.
 	log.Info(version.Full())
@@ -621,7 +619,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 	// TODO(s.chzhen):  Use it for the entire initialization process.
 	ctx := context.Background()
 
-	err = initContextClients(ctx, slogLogger)
+	err = initContextClients(ctx, slogLogger, sigHdlr)
 	fatalOnError(err)
 
 	err = setupOpts(opts)
@@ -663,6 +661,8 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}) {
 		log.Error("initializing tls: %s", err)
 		onConfigModified()
 	}
+
+	sigHdlr.addTLSManager(globalContext.tls)
 
 	globalContext.web, err = initWeb(ctx, opts, clientBuildFS, upd, slogLogger, customURL)
 	fatalOnError(err)

@@ -36,6 +36,7 @@ type program struct {
 	signals       chan os.Signal
 	done          chan struct{}
 	opts          options
+	sigHdlr       *signalHandler
 }
 
 // type check
@@ -47,7 +48,7 @@ func (p *program) Start(_ service.Service) (err error) {
 	args := p.opts
 	args.runningAsService = true
 
-	go run(args, p.clientBuildFS, p.done)
+	go run(args, p.clientBuildFS, p.done, p.sigHdlr)
 
 	return nil
 }
@@ -204,6 +205,7 @@ func handleServiceControlAction(
 	clientBuildFS fs.FS,
 	signals chan os.Signal,
 	done chan struct{},
+	sigHdlr *signalHandler,
 ) {
 	// Call chooseSystem explicitly to introduce OpenBSD support for service
 	// package.  It's a noop for other GOOS values.
@@ -244,6 +246,7 @@ func handleServiceControlAction(
 		signals:       signals,
 		done:          done,
 		opts:          runOpts,
+		sigHdlr:       sigHdlr,
 	}, svcConfig)
 	if err != nil {
 		log.Fatalf("service: initializing service: %s", err)

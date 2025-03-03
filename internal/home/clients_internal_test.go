@@ -31,6 +31,7 @@ func newClientsContainer(t *testing.T) (c *clientsContainer) {
 		nil,
 		nil,
 		&filtering.Config{},
+		newSignalHandler(nil, nil),
 	)
 
 	require.NoError(t, err)

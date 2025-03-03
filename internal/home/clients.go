@@ -75,6 +75,7 @@ func (clients *clientsContainer) Init(
 	etcHosts *aghnet.HostsContainer,
 	arpDB arpdb.Interface,
 	filteringConf *filtering.Config,
+	sigHdlr *signalHandler,
 ) (err error) {
 	// TODO(s.chzhen):  Refactor it.
 	if clients.storage != nil {
@@ -119,6 +120,8 @@ func (clients *clientsContainer) Init(
 	if err != nil {
 		return fmt.Errorf("init client storage: %w", err)
 	}
+
+	sigHdlr.addClientStorage(clients.storage)
 
 	return nil
 }
