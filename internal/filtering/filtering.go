@@ -47,6 +47,8 @@ type Settings struct {
 
 	ServicesRules []ServiceEntry
 
+	BlockedServices *BlockedServices
+
 	ProtectionEnabled   bool
 	FilteringEnabled    bool
 	SafeSearchEnabled   bool
@@ -77,6 +79,10 @@ type Config struct {
 	ParentalControlChecker Checker `yaml:"-"`
 
 	SafeSearch SafeSearch `yaml:"-"`
+
+	// ApplyClientFiltering retrieves persistent client information using the
+	// ClientID or client IP address, and applies it to the filtering settings.
+	ApplyClientFiltering func(clientID string, cliAddr netip.Addr, setts *Settings) `yaml:"-"`
 
 	// BlockedServices is the configuration of blocked services.
 	// Per-client settings can override this configuration.
@@ -243,6 +249,13 @@ type DNSFilter struct {
 
 	// parentalControl is the parental control hash-prefix checker.
 	parentalControlChecker Checker
+
+	// applyClientFiltering retrieves persistent client information using the
+	// ClientID or client IP address, and applies it to the filtering settings.
+	//
+	// TODO(s.chzhen): !! Consider finding a better approach while taking an
+	// import cycle into account.
+	applyClientFiltering func(clientID string, cliAddr netip.Addr, setts *Settings)
 
 	engineLock sync.RWMutex
 
@@ -998,6 +1011,7 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 		refreshLock:            &sync.Mutex{},
 		safeBrowsingChecker:    c.SafeBrowsingChecker,
 		parentalControlChecker: c.ParentalControlChecker,
+		applyClientFiltering:   c.ApplyClientFiltering,
 		confMu:                 &sync.RWMutex{},
 	}
 

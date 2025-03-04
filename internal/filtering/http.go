@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"sync"
 	"time"
 
@@ -422,13 +423,35 @@ type checkHostResp struct {
 
 func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 	host := r.URL.Query().Get("name")
+	cli := r.URL.Query().Get("client")
+	qTypeStr := r.URL.Query().Get("qtype")
+	qType, err := stringToDNSType(qTypeStr)
+	if err != nil {
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusUnprocessableEntity,
+			"bad qtype query parameter: %s",
+			qTypeStr,
+		)
+
+		return
+	}
 
 	setts := d.Settings()
 	setts.FilteringEnabled = true
 	setts.ProtectionEnabled = true
 
 	d.ApplyBlockedServices(setts)
-	result, err := d.CheckHost(host, dns.TypeA, setts)
+
+	addr, err := netip.ParseAddr(cli)
+	if err == nil {
+		d.applyAdditionalFiltering(addr, "", setts)
+	} else if cli != "" {
+		d.applyAdditionalFiltering(netip.Addr{}, cli, setts)
+	}
+
+	result, err := d.CheckHost(host, qType, setts)
 	if err != nil {
 		aghhttp.Error(
 			r,
@@ -464,6 +487,26 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aghhttp.WriteJSONResponseOK(w, r, resp)
+}
+
+// stringToDNSType is a helper function that converts a string to DNS type.  If
+// the string is empty, it returns the default value [dns.TypeA].
+func stringToDNSType(str string) (qtype uint16, err error) {
+	if str == "" {
+		return dns.TypeA, nil
+	}
+
+	qtype, ok := dns.StringToType[str]
+	if ok {
+		return qtype, nil
+	}
+
+	val, err := strconv.ParseUint(str, 10, 16)
+	if err == nil {
+		return uint16(val), nil
+	}
+
+	return 0, errors.ErrBadEnumValue
 }
 
 // setProtectedBool sets the value of a boolean pointer under a lock.  l must

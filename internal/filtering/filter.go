@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"slices"
@@ -628,4 +629,19 @@ func (d *DNSFilter) enableFiltersLocked(async bool) {
 	}
 
 	d.SetEnabled(d.conf.FilteringEnabled)
+}
+
+// applyAdditionalFiltering adds additional client information and settings if
+// the client has them.
+func (d *DNSFilter) applyAdditionalFiltering(cliAddr netip.Addr, clientID string, setts *Settings) {
+	d.applyClientFiltering(clientID, cliAddr, setts)
+
+	if setts.BlockedServices != nil {
+		// TODO(e.burkov):  Get rid of this crutch.
+		setts.ServicesRules = nil
+		svcs := setts.BlockedServices.IDs
+		if !setts.BlockedServices.Schedule.Contains(time.Now()) {
+			d.ApplyBlockedServicesList(setts, svcs)
+		}
+	}
 }
