@@ -640,7 +640,7 @@ func readConfigFile() (fileData []byte, err error) {
 }
 
 // Saves configuration to the YAML file and also saves the user filter contents to a file
-func (c *configuration) write() (err error) {
+func (c *configuration) write(tlsMgr *tlsManager) (err error) {
 	c.Lock()
 	defer c.Unlock()
 
@@ -648,9 +648,9 @@ func (c *configuration) write() (err error) {
 		config.Users = globalContext.auth.usersList()
 	}
 
-	if globalContext.tls != nil {
+	if tlsMgr != nil {
 		tlsConf := tlsConfigSettings{}
-		globalContext.tls.WriteDiskConfig(&tlsConf)
+		tlsMgr.WriteDiskConfig(&tlsConf)
 		config.TLS = tlsConf
 	}
 

@@ -68,7 +68,7 @@ func appendDNSAddrsWithIfaces(dst []string, src []netip.Addr) (res []string, err
 
 // collectDNSAddresses returns the list of DNS addresses the server is listening
 // on, including the addresses on all interfaces in cases of unspecified IPs.
-func collectDNSAddresses() (addrs []string, err error) {
+func collectDNSAddresses(tlsMgr *tlsManager) (addrs []string, err error) {
 	if hosts := config.DNS.BindHosts; len(hosts) == 0 {
 		addrs = appendDNSAddrs(addrs, netutil.IPv4Localhost())
 	} else {
@@ -78,7 +78,7 @@ func collectDNSAddresses() (addrs []string, err error) {
 		}
 	}
 
-	de := getDNSEncryption()
+	de := getDNSEncryption(tlsMgr)
 	if de.https != "" {
 		addrs = append(addrs, de.https)
 	}
@@ -113,8 +113,8 @@ type statusResponse struct {
 	IsRunning       bool `json:"running"`
 }
 
-func handleStatus(w http.ResponseWriter, r *http.Request) {
-	dnsAddrs, err := collectDNSAddresses()
+func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
+	dnsAddrs, err := collectDNSAddresses(web.tlsManager)
 	if err != nil {
 		// Don't add a lot of formatting, since the error is already
 		// wrapped by collectDNSAddresses.
@@ -177,7 +177,7 @@ func registerControlHandlers(web *webAPI) {
 	)
 	httpRegister(http.MethodPost, "/control/update", web.handleUpdate)
 
-	httpRegister(http.MethodGet, "/control/status", handleStatus)
+	httpRegister(http.MethodGet, "/control/status", web.handleStatus)
 	httpRegister(http.MethodPost, "/control/i18n/change_language", handleI18nChangeLanguage)
 	httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
 	httpRegister(http.MethodGet, "/control/profile", handleGetProfile)

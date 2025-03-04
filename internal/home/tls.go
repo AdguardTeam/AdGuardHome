@@ -151,7 +151,7 @@ func (m *tlsManager) reload() {
 
 	m.certLastMod = fi.ModTime().UTC()
 
-	_ = reconfigureDNSServer()
+	_ = reconfigureDNSServer(m)
 
 	m.confLock.Lock()
 	tlsConf = m.conf
@@ -440,7 +440,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 
 	onConfigModified()
 
-	err = reconfigureDNSServer()
+	err = reconfigureDNSServer(m)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 

@@ -526,6 +526,7 @@ func initWeb(
 	clientBuildFS fs.FS,
 	upd *updater.Updater,
 	baseLogger *slog.Logger,
+	tlsMgr *tlsManager,
 	customURL bool,
 ) (web *webAPI, err error) {
 	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
@@ -548,6 +549,7 @@ func initWeb(
 		updater:    upd,
 		logger:     logger,
 		baseLogger: baseLogger,
+		tlsManager: tlsMgr,
 
 		clientFS: clientFS,
 
@@ -638,7 +640,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 
 	if !globalContext.firstRun {
 		// Save the updated config.
-		err = config.write()
+		err = config.write(nil)
 		fatalOnError(err)
 
 		if config.HTTPConfig.Pprof.Enabled {
@@ -656,25 +658,26 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	globalContext.auth, err = initUsers()
 	fatalOnError(err)
 
-	globalContext.tls, err = newTLSManager(config.TLS, config.DNS.ServePlainDNS)
+	tlsMgr, err := newTLSManager(config.TLS, config.DNS.ServePlainDNS)
 	if err != nil {
 		log.Error("initializing tls: %s", err)
 		onConfigModified()
 	}
 
-	sigHdlr.addTLSManager(globalContext.tls)
+	globalContext.tls = tlsMgr
+	sigHdlr.addTLSManager(tlsMgr)
 
-	globalContext.web, err = initWeb(ctx, opts, clientBuildFS, upd, slogLogger, customURL)
+	globalContext.web, err = initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, customURL)
 	fatalOnError(err)
 
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
 	fatalOnError(err)
 
 	if !globalContext.firstRun {
-		err = initDNS(slogLogger, statsDir, querylogDir)
+		err = initDNS(slogLogger, tlsMgr, statsDir, querylogDir)
 		fatalOnError(err)
 
-		globalContext.tls.start()
+		tlsMgr.start()
 
 		go func() {
 			startErr := startDNSServer()
@@ -809,18 +812,18 @@ func (c *configuration) anonymizer() (ipmut *aghnet.IPMut) {
 
 // startMods initializes and starts the DNS server after installation.
 // baseLogger must not be nil.
-func startMods(baseLogger *slog.Logger) (err error) {
+func startMods(baseLogger *slog.Logger, tlsMgr *tlsManager) (err error) {
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
 	if err != nil {
 		return err
 	}
 
-	err = initDNS(baseLogger, statsDir, querylogDir)
+	err = initDNS(baseLogger, tlsMgr, statsDir, querylogDir)
 	if err != nil {
 		return err
 	}
 
-	globalContext.tls.start()
+	tlsMgr.start()
 
 	err = startDNSServer()
 	if err != nil {
@@ -950,10 +953,6 @@ func cleanup(ctx context.Context) {
 			log.Error("closing hosts container: %s", err)
 		}
 	}
-
-	if globalContext.tls != nil {
-		globalContext.tls = nil
-	}
 }
 
 // This function is called before application exits
@@ -1005,10 +1004,10 @@ func printWebAddrs(proto, addr string, port uint16) {
 
 // printHTTPAddresses prints the IP addresses which user can use to access the
 // admin interface.  proto is either schemeHTTP or schemeHTTPS.
-func printHTTPAddresses(proto string) {
+func printHTTPAddresses(proto string, tlsMgr *tlsManager) {
 	tlsConf := tlsConfigSettings{}
-	if globalContext.tls != nil {
-		globalContext.tls.WriteDiskConfig(&tlsConf)
+	if tlsMgr != nil {
+		tlsMgr.WriteDiskConfig(&tlsConf)
 	}
 
 	port := config.HTTPConfig.Address.Port()

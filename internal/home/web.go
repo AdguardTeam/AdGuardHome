@@ -49,6 +49,10 @@ type webConfig struct {
 	// nil.
 	baseLogger *slog.Logger
 
+	// tlsManager contains the current configuration and state of TLS
+	// encryption.  It must not be nil.
+	tlsManager *tlsManager
+
 	clientFS fs.FS
 
 	// BindAddr is the binding address with port for plain HTTP web interface.
@@ -108,6 +112,10 @@ type webAPI struct {
 	// nil.
 	baseLogger *slog.Logger
 
+	// tlsManager contains the current configuration and state of TLS
+	// encryption.
+	tlsManager *tlsManager
+
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
 	httpsServer httpsServer
@@ -124,6 +132,7 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 		conf:       conf,
 		logger:     conf.logger,
 		baseLogger: conf.baseLogger,
+		tlsManager: conf.tlsManager,
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
@@ -220,7 +229,7 @@ func (web *webAPI) start(ctx context.Context) {
 
 	// this loop is used as an ability to change listening host and/or port
 	for !web.httpsServer.inShutdown {
-		printHTTPAddresses(urlutil.SchemeHTTP)
+		printHTTPAddresses(urlutil.SchemeHTTP, web.tlsManager)
 		errs := make(chan error, 2)
 
 		// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
@@ -330,7 +339,7 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 			ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		}
 
-		printHTTPAddresses(urlutil.SchemeHTTPS)
+		printHTTPAddresses(urlutil.SchemeHTTPS, web.tlsManager)
 
 		if web.conf.serveHTTP3 {
 			go web.mustStartHTTP3(ctx, addr)
