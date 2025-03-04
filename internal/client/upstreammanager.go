@@ -12,6 +12,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // CommonUpstreamConfig contains common settings for custom client upstream
@@ -68,16 +69,20 @@ type upstreamManager struct {
 	// commonConf is the common upstream configuration.
 	commonConf *CommonUpstreamConfig
 
+	// clock is used to get the current time.  It must not be nil.
+	clock timeutil.Clock
+
 	// confUpdate is the timestamp of the latest common upstream configuration
 	// update.
 	confUpdate time.Time
 }
 
 // newUpstreamManager returns the new properly initialized upstream manager.
-func newUpstreamManager(logger *slog.Logger) (m *upstreamManager) {
+func newUpstreamManager(logger *slog.Logger, clock timeutil.Clock) (m *upstreamManager) {
 	return &upstreamManager{
 		logger:          logger,
 		uidToCustomConf: make(map[UID]*customUpstreamConfig),
+		clock:           clock,
 	}
 }
 
@@ -85,7 +90,7 @@ func newUpstreamManager(logger *slog.Logger) (m *upstreamManager) {
 // timestamp of the latest configuration update.
 func (m *upstreamManager) updateCommonUpstreamConfig(conf *CommonUpstreamConfig) {
 	m.commonConf = conf
-	m.confUpdate = time.Now()
+	m.confUpdate = m.clock.Now()
 }
 
 // updateCustomUpstreamConfig updates the stored custom client upstream

@@ -17,6 +17,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // allowedTags is the list of available client tags.
@@ -88,6 +89,10 @@ type StorageConfig struct {
 	// Logger is used for logging the operation of the client storage.  It must
 	// not be nil.
 	Logger *slog.Logger
+
+	// Clock is used by [upstreamManager] to retrieve the current time.  It must
+	// not be nil.
+	Clock timeutil.Clock
 
 	// DHCP is used to match IPs against MACs of persistent clients and update
 	// [SourceDHCP] runtime client information.  It must not be nil.
@@ -167,7 +172,7 @@ func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error
 		mu:                     &sync.Mutex{},
 		index:                  newIndex(),
 		runtimeIndex:           newRuntimeIndex(),
-		upstreamManager:        newUpstreamManager(conf.Logger),
+		upstreamManager:        newUpstreamManager(conf.Logger, conf.Clock),
 		dhcp:                   conf.DHCP,
 		etcHosts:               conf.EtcHosts,
 		arpDB:                  conf.ARPDB,

@@ -19,6 +19,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // clientsContainer is the storage of all runtime and persistent clients.
@@ -106,6 +107,7 @@ func (clients *clientsContainer) Init(
 
 	clients.storage, err = client.NewStorage(ctx, &client.StorageConfig{
 		Logger:                 baseLogger.With(slogutil.KeyPrefix, "client_storage"),
+		Clock:                  timeutil.SystemClock{},
 		InitialClients:         confClients,
 		DHCP:                   dhcpServer,
 		EtcHosts:               hosts,
