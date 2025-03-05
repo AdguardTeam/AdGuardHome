@@ -4,6 +4,12 @@
 
 ## v0.108.0: API changes
 
+## v0.107.58: API changes
+
+### API: Get filtering status of host: GET /control/check_host
+
+- Added optional "client" and "qtype" parameters.
+
 ## v0.107.57: API changes
 
 - The new field `"upstream_timeout"` in `GET /control/dns_info` and `POST /control/dns_config` is the number of seconds to wait for a response from the upstream server.

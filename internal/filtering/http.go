@@ -421,17 +421,19 @@ type checkHostResp struct {
 	FilterID rulelist.URLFilterID `json:"filter_id"`
 }
 
+// handleCheckHost is the handler for the GET /control/check_host HTTP API.
 func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
-	host := r.URL.Query().Get("name")
-	cli := r.URL.Query().Get("client")
-	qTypeStr := r.URL.Query().Get("qtype")
+	query := r.URL.Query()
+	host := query.Get("name")
+	cli := query.Get("client")
+	qTypeStr := query.Get("qtype")
 	qType, err := stringToDNSType(qTypeStr)
 	if err != nil {
 		aghhttp.Error(
 			r,
 			w,
 			http.StatusUnprocessableEntity,
-			"bad qtype query parameter: %s",
+			"bad qtype query parameter: %q",
 			qTypeStr,
 		)
 

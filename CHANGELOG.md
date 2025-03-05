@@ -18,6 +18,10 @@ See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- Optional `client` and `qtype` parameters to the `GET /control/check_host` HTTP API.
+
 ### Fixed
 
 - Changes to global upstream DNS settings not applying to custom client upstream configurations.

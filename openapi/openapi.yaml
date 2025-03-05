@@ -741,6 +741,16 @@
         'description': 'Filter by host name'
         'schema':
           'type': 'string'
+      - 'name': 'client'
+        'in': 'query'
+        'description': 'Optional ClientID or client IP address'
+        'schema':
+          'type': 'string'
+      - 'name': 'qtype'
+        'in': 'query'
+        'description': 'Optional DNS type'
+        'schema':
+          'type': 'string'
       'responses':
         '200':
           'description': 'OK.'
