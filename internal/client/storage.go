@@ -13,9 +13,11 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // allowedTags is the list of available client tags.
@@ -88,6 +90,10 @@ type StorageConfig struct {
 	// not be nil.
 	Logger *slog.Logger
 
+	// Clock is used by [upstreamManager] to retrieve the current time.  It must
+	// not be nil.
+	Clock timeutil.Clock
+
 	// DHCP is used to match IPs against MACs of persistent clients and update
 	// [SourceDHCP] runtime client information.  It must not be nil.
 	DHCP DHCP
@@ -126,6 +132,9 @@ type Storage struct {
 	// runtimeIndex contains information about runtime clients.
 	runtimeIndex *runtimeIndex
 
+	// upstreamManager stores and updates custom client upstream configurations.
+	upstreamManager *upstreamManager
+
 	// dhcp is used to update [SourceDHCP] runtime client information.
 	dhcp DHCP
 
@@ -163,6 +172,7 @@ func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error
 		mu:                     &sync.Mutex{},
 		index:                  newIndex(),
 		runtimeIndex:           newRuntimeIndex(),
+		upstreamManager:        newUpstreamManager(conf.Logger, conf.Clock),
 		dhcp:                   conf.DHCP,
 		etcHosts:               conf.EtcHosts,
 		arpDB:                  conf.ARPDB,
@@ -200,7 +210,7 @@ func (s *Storage) Start(ctx context.Context) (err error) {
 func (s *Storage) Shutdown(_ context.Context) (err error) {
 	close(s.done)
 
-	return s.closeUpstreams()
+	return s.upstreamManager.close()
 }
 
 // periodicARPUpdate periodically reloads runtime clients from ARP.  It is
@@ -416,6 +426,7 @@ func (s *Storage) Add(ctx context.Context, p *Persistent) (err error) {
 	}
 
 	s.index.add(p)
+	s.upstreamManager.updateCustomUpstreamConfig(p)
 
 	s.logger.DebugContext(
 		ctx,
@@ -441,7 +452,7 @@ func (s *Storage) FindByName(name string) (p *Persistent, ok bool) {
 	return nil, false
 }
 
-// Find finds persistent client by string representation of the client ID, IP
+// Find finds persistent client by string representation of the ClientID, IP
 // address, or MAC.  And returns its shallow copy.
 //
 // TODO(s.chzhen):  Accept ClientIDData structure instead, which will contain
@@ -514,11 +525,12 @@ func (s *Storage) RemoveByName(ctx context.Context, name string) (ok bool) {
 		return false
 	}
 
-	if err := p.CloseUpstreams(); err != nil {
-		s.logger.ErrorContext(ctx, "removing client", "name", p.Name, slogutil.KeyError, err)
-	}
-
 	s.index.remove(p)
+
+	err := s.upstreamManager.remove(p.UID)
+	if err != nil {
+		s.logger.DebugContext(ctx, "closing client upstreams", "name", name, slogutil.KeyError, err)
+	}
 
 	return true
 }
@@ -556,6 +568,8 @@ func (s *Storage) Update(ctx context.Context, name string, p *Persistent) (err e
 	s.index.remove(stored)
 	s.index.add(p)
 
+	s.upstreamManager.updateCustomUpstreamConfig(p)
+
 	return nil
 }
 
@@ -576,14 +590,6 @@ func (s *Storage) Size() (n int) {
 	return s.index.size()
 }
 
-// closeUpstreams closes upstream configurations of persistent clients.
-func (s *Storage) closeUpstreams() (err error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	return s.index.closeUpstreams()
-}
-
 // ClientRuntime returns a copy of the saved runtime client by ip.  If no such
 // client exists, returns nil.
 func (s *Storage) ClientRuntime(ip netip.Addr) (rc *Runtime) {
@@ -591,17 +597,21 @@ func (s *Storage) ClientRuntime(ip netip.Addr) (rc *Runtime) {
 	defer s.mu.Unlock()
 
 	rc = s.runtimeIndex.client(ip)
-	if rc != nil {
+	if !s.runtimeSourceDHCP {
 		return rc.clone()
 	}
 
-	if !s.runtimeSourceDHCP {
-		return nil
+	// SourceHostsFile > SourceDHCP, so return immediately if the client is from
+	// the hosts file.
+	if rc != nil && rc.hostsFile != nil {
+		return rc.clone()
 	}
 
+	// Otherwise, check the DHCP server and add the client information if there
+	// is any.
 	host := s.dhcp.HostByIP(ip)
 	if host == "" {
-		return nil
+		return rc.clone()
 	}
 
 	rc = s.runtimeIndex.setInfo(ip, SourceDHCP, []string{host})
@@ -621,4 +631,43 @@ func (s *Storage) RangeRuntime(f func(rc *Runtime) (cont bool)) {
 // modified.
 func (s *Storage) AllowedTags() (tags []string) {
 	return s.allowedTags
+}
+
+// CustomUpstreamConfig implements the [dnsforward.ClientsContainer] interface
+// for *Storage
+func (s *Storage) CustomUpstreamConfig(
+	id string,
+	addr netip.Addr,
+) (prxConf *proxy.CustomUpstreamConfig) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	c, ok := s.index.findByClientID(id)
+	if !ok {
+		c, ok = s.index.findByIP(addr)
+	}
+
+	if !ok {
+		return nil
+	}
+
+	return s.upstreamManager.customUpstreamConfig(c.UID)
+}
+
+// UpdateCommonUpstreamConfig implements the [dnsforward.ClientsContainer]
+// interface for *Storage
+func (s *Storage) UpdateCommonUpstreamConfig(conf *CommonUpstreamConfig) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.upstreamManager.updateCommonUpstreamConfig(conf)
+}
+
+// ClearUpstreamCache implements the [dnsforward.ClientsContainer] interface for
+// *Storage
+func (s *Storage) ClearUpstreamCache() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.upstreamManager.clearUpstreamCache()
 }

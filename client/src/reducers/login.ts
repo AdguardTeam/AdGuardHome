@@ -2,8 +2,6 @@ import { combineReducers } from 'redux';
 
 import { handleActions } from 'redux-actions';
 
-import { reducer as formReducer } from 'redux-form';
-
 import * as actions from '../actions/login';
 import toasts from './toasts';
 
@@ -33,5 +31,4 @@ const login = handleActions(
 export default combineReducers({
     login,
     toasts,
-    form: formReducer,
 });

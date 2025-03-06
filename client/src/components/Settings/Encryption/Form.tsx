@@ -1,11 +1,9 @@
 import React from 'react';
-import { connect } from 'react-redux';
 
-import { Field, reduxForm, formValueSelector } from 'redux-form';
-import { Trans, withTranslation } from 'react-i18next';
-import flow from 'lodash/flow';
+import { Trans, useTranslation } from 'react-i18next';
 
-import { renderInputField, CheckboxField, renderRadioField, toNumber } from '../../../helpers/form';
+import { Controller, useForm } from 'react-hook-form';
+import i18next from 'i18next';
 import {
     validateServerName,
     validateIsSafePort,
@@ -14,7 +12,6 @@ import {
     validatePortTLS,
     validatePlainDns,
 } from '../../../helpers/validators';
-import i18n from '../../../i18n';
 
 import KeyStatus from './KeyStatus';
 
@@ -22,51 +19,39 @@ import CertificateStatus from './CertificateStatus';
 import {
     DNS_OVER_QUIC_PORT,
     DNS_OVER_TLS_PORT,
-    FORM_NAME,
     STANDARD_HTTPS_PORT,
     ENCRYPTION_SOURCE,
 } from '../../../helpers/constants';
+import { Checkbox } from '../../ui/Controls/Checkbox';
+import { Radio } from '../../ui/Controls/Radio';
+import { Input } from '../../ui/Controls/Input';
+import { Textarea } from '../../ui/Controls/Textarea';
+import { EncryptionData } from '../../../initialState';
+import { toNumber } from '../../../helpers/form';
 
-const validate = (values: any) => {
-    const errors: { port_dns_over_tls?: string; port_https?: string } = {};
+const certificateSourceOptions = [
+    {
+        label: i18next.t('encryption_certificates_source_path'),
+        value: ENCRYPTION_SOURCE.PATH,
+    },
+    {
+        label: i18next.t('encryption_certificates_source_content'),
+        value: ENCRYPTION_SOURCE.CONTENT,
+    },
+];
 
-    if (values.port_dns_over_tls && values.port_https) {
-        if (values.port_dns_over_tls === values.port_https) {
-            errors.port_dns_over_tls = i18n.t('form_error_equal');
+const keySourceOptions = [
+    {
+        label: i18next.t('encryption_key_source_path'),
+        value: ENCRYPTION_SOURCE.PATH,
+    },
+    {
+        label: i18next.t('encryption_key_source_content'),
+        value: ENCRYPTION_SOURCE.CONTENT,
+    },
+];
 
-            errors.port_https = i18n.t('form_error_equal');
-        }
-    }
-
-    return errors;
-};
-
-const clearFields = (change: any, setTlsConfig: any, validateTlsConfig: any, t: any) => {
-    const fields = {
-        private_key: '',
-        certificate_chain: '',
-        private_key_path: '',
-        certificate_path: '',
-        port_https: STANDARD_HTTPS_PORT,
-        port_dns_over_tls: DNS_OVER_TLS_PORT,
-        port_dns_over_quic: DNS_OVER_QUIC_PORT,
-        server_name: '',
-        force_https: false,
-        enabled: false,
-        private_key_saved: false,
-        serve_plain_dns: true,
-    };
-    // eslint-disable-next-line no-alert
-    if (window.confirm(t('encryption_reset'))) {
-        Object.keys(fields)
-
-            .forEach((field) => change(field, fields[field]));
-        setTlsConfig(fields);
-        validateTlsConfig(fields);
-    }
-};
-
-const validationMessage = (warningValidation: any, isWarning: any) => {
+const validationMessage = (warningValidation: string, isWarning: boolean) => {
     if (!warningValidation) {
         return null;
     }
@@ -88,56 +73,60 @@ const validationMessage = (warningValidation: any, isWarning: any) => {
     );
 };
 
-interface FormProps {
-    handleSubmit: (...args: unknown[]) => string;
-    handleChange?: (...args: unknown[]) => unknown;
-    isEnabled: boolean;
-    servePlainDns: boolean;
-    certificateChain: string;
-    privateKey: string;
-    certificatePath: string;
-    privateKeyPath: string;
-    change: (...args: unknown[]) => unknown;
-    submitting: boolean;
-    invalid: boolean;
-    initialValues: object;
-    processingConfig: boolean;
-    processingValidate: boolean;
-    status_key?: string;
-    not_after?: string;
-    warning_validation?: string;
-    valid_chain?: boolean;
-    valid_key?: boolean;
-    valid_cert?: boolean;
-    valid_pair?: boolean;
-    dns_names?: string[];
-    key_type?: string;
-    issuer?: string;
-    subject?: string;
-    t: (...args: unknown[]) => string;
-    setTlsConfig: (...args: unknown[]) => unknown;
-    validateTlsConfig: (...args: unknown[]) => unknown;
-    certificateSource?: string;
-    privateKeySource?: string;
-    privateKeySaved?: boolean;
-}
+export type EncryptionFormValues = {
+    enabled?: boolean;
+    serve_plain_dns?: boolean;
+    server_name?: string;
+    force_https?: boolean;
+    port_https?: number;
+    port_dns_over_tls?: number;
+    port_dns_over_quic?: number;
+    certificate_chain?: string;
+    private_key?: string;
+    certificate_path?: string;
+    private_key_path?: string;
+    certificate_source?: string;
+    key_source?: string;
+    private_key_saved?: boolean;
+};
 
-let Form = (props: FormProps) => {
+type Props = {
+    initialValues: EncryptionFormValues;
+    encryption: EncryptionData;
+    onSubmit: (values: EncryptionFormValues) => void;
+    debouncedConfigValidation: (values: EncryptionFormValues) => void;
+    setTlsConfig: (values: Partial<EncryptionData>) => void;
+    validateTlsConfig: (values: Partial<EncryptionData>) => void;
+};
+
+const defaultValues = {
+    enabled: false,
+    serve_plain_dns: true,
+    server_name: '',
+    force_https: false,
+    port_https: STANDARD_HTTPS_PORT,
+    port_dns_over_tls: DNS_OVER_TLS_PORT,
+    port_dns_over_quic: DNS_OVER_QUIC_PORT,
+    certificate_chain: '',
+    private_key: '',
+    certificate_path: '',
+    private_key_path: '',
+    certificate_source: ENCRYPTION_SOURCE.PATH,
+    key_source: ENCRYPTION_SOURCE.PATH,
+    private_key_saved: false,
+};
+
+export const Form = ({
+    initialValues,
+    encryption,
+    onSubmit,
+    setTlsConfig,
+    debouncedConfigValidation,
+    validateTlsConfig,
+}: Props) => {
+    const { t } = useTranslation();
+
     const {
-        t,
-        handleSubmit,
-        handleChange,
-        isEnabled,
-        servePlainDns,
-        certificateChain,
-        privateKey,
-        certificatePath,
-        privateKeyPath,
-        change,
-        invalid,
-        submitting,
-        processingConfig,
-        processingValidate,
         not_after,
         valid_chain,
         valid_key,
@@ -148,37 +137,100 @@ let Form = (props: FormProps) => {
         issuer,
         subject,
         warning_validation,
-        setTlsConfig,
-        validateTlsConfig,
-        certificateSource,
-        privateKeySource,
-        privateKeySaved,
-    } = props;
+        processingConfig,
+        processingValidate,
+    } = encryption;
+
+    const {
+        control,
+        handleSubmit,
+        watch,
+        reset,
+        setValue,
+        setError,
+        getValues,
+        formState: { isSubmitting, isValid },
+    } = useForm<EncryptionFormValues>({
+        defaultValues: {
+            ...defaultValues,
+            ...initialValues,
+        },
+        mode: 'onBlur',
+    });
+
+    const {
+        enabled: isEnabled,
+        serve_plain_dns: servePlainDns,
+        certificate_chain: certificateChain,
+        private_key: privateKey,
+        private_key_path: privateKeyPath,
+        key_source: privateKeySource,
+        private_key_saved: privateKeySaved,
+        certificate_path: certificatePath,
+        certificate_source: certificateSource,
+    } = watch();
+
+    const handleBlur = () => {
+        debouncedConfigValidation(getValues());
+    };
 
     const isSavingDisabled = () => {
-        const processing = submitting || processingConfig || processingValidate;
+        const processing = isSubmitting || processingConfig || processingValidate;
 
         if (servePlainDns && !isEnabled) {
-            return invalid || processing;
+            return !isValid || processing;
         }
 
-        return invalid || processing || !valid_key || !valid_cert || !valid_pair;
+        return !isValid || processing || !valid_key || !valid_cert || !valid_pair;
+    };
+
+    const clearFields = () => {
+        if (window.confirm(t('encryption_reset'))) {
+            reset();
+            setTlsConfig(defaultValues);
+            validateTlsConfig(defaultValues);
+        }
+    };
+
+    const validatePorts = (values: EncryptionFormValues) => {
+        const errors: { port_dns_over_tls?: string; port_https?: string } = {};
+
+        if (values.port_dns_over_tls && values.port_https) {
+            if (values.port_dns_over_tls === values.port_https) {
+                errors.port_dns_over_tls = i18next.t('form_error_equal');
+                errors.port_https = i18next.t('form_error_equal');
+            }
+        }
+
+        return errors;
+    };
+
+    const onFormSubmit = (data: EncryptionFormValues) => {
+        const validationErrors = validatePorts(data);
+
+        if (Object.keys(validationErrors).length > 0) {
+            Object.entries(validationErrors).forEach(([field, message]) => {
+                setError(field as keyof EncryptionFormValues, { type: 'manual', message });
+            });
+        } else {
+            onSubmit(data);
+        }
     };
 
     const isDisabled = isSavingDisabled();
     const isWarning = valid_key && valid_cert && valid_pair;
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onFormSubmit)}>
             <div className="row">
                 <div className="col-12">
                     <div className="form__group form__group--settings mb-3">
-                        <Field
+                        <Controller
                             name="enabled"
-                            type="checkbox"
-                            component={CheckboxField}
-                            placeholder={t('encryption_enable')}
-                            onChange={handleChange}
+                            control={control}
+                            render={({ field }) => (
+                                <Checkbox {...field} title={t('encryption_enable')} onBlur={handleBlur} />
+                            )}
                         />
                     </div>
 
@@ -187,13 +239,13 @@ let Form = (props: FormProps) => {
                     </div>
 
                     <div className="form__group mb-3 mt-5">
-                        <Field
+                        <Controller
                             name="serve_plain_dns"
-                            type="checkbox"
-                            component={CheckboxField}
-                            placeholder={t('encryption_plain_dns_enable')}
-                            onChange={handleChange}
-                            validate={validatePlainDns}
+                            control={control}
+                            rules={{
+                                validate: (value) => validatePlainDns(value, getValues()),
+                            }}
+                            render={({ field }) => <Checkbox {...field} title={t('encryption_plain_dns_enable')} />}
                         />
                     </div>
 
@@ -212,16 +264,20 @@ let Form = (props: FormProps) => {
 
                 <div className="col-lg-6">
                     <div className="form__group form__group--settings">
-                        <Field
-                            id="server_name"
+                        <Controller
                             name="server_name"
-                            component={renderInputField}
-                            type="text"
-                            className="form-control"
-                            placeholder={t('encryption_server_enter')}
-                            onChange={handleChange}
-                            disabled={!isEnabled}
-                            validate={validateServerName}
+                            control={control}
+                            rules={{ validate: validateServerName }}
+                            render={({ field, fieldState }) => (
+                                <Input
+                                    {...field}
+                                    type="text"
+                                    placeholder={t('encryption_server_enter')}
+                                    error={fieldState.error?.message}
+                                    disabled={!isEnabled}
+                                    onBlur={handleBlur}
+                                />
+                            )}
                         />
 
                         <div className="form__desc">
@@ -232,13 +288,12 @@ let Form = (props: FormProps) => {
 
                 <div className="col-lg-6">
                     <div className="form__group form__group--settings">
-                        <Field
+                        <Controller
                             name="force_https"
-                            type="checkbox"
-                            component={CheckboxField}
-                            placeholder={t('encryption_redirect')}
-                            onChange={handleChange}
-                            disabled={!isEnabled}
+                            control={control}
+                            render={({ field }) => (
+                                <Checkbox {...field} title={t('encryption_redirect')} disabled={!isEnabled} />
+                            )}
                         />
 
                         <div className="form__desc">
@@ -255,17 +310,24 @@ let Form = (props: FormProps) => {
                             <Trans>encryption_https</Trans>
                         </label>
 
-                        <Field
-                            id="port_https"
+                        <Controller
                             name="port_https"
-                            component={renderInputField}
-                            type="number"
-                            className="form-control"
-                            placeholder={t('encryption_https')}
-                            validate={[validatePort, validateIsSafePort]}
-                            normalize={toNumber}
-                            onChange={handleChange}
-                            disabled={!isEnabled}
+                            control={control}
+                            rules={{ validate: { validatePort, validateIsSafePort } }}
+                            render={({ field, fieldState }) => (
+                                <Input
+                                    {...field}
+                                    type="number"
+                                    placeholder={t('encryption_https')}
+                                    error={fieldState.error?.message}
+                                    disabled={!isEnabled}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        field.onChange(toNumber(value));
+                                    }}
+                                    onBlur={handleBlur}
+                                />
+                            )}
                         />
 
                         <div className="form__desc">
@@ -280,17 +342,24 @@ let Form = (props: FormProps) => {
                             <Trans>encryption_dot</Trans>
                         </label>
 
-                        <Field
-                            id="port_dns_over_tls"
+                        <Controller
                             name="port_dns_over_tls"
-                            component={renderInputField}
-                            type="number"
-                            className="form-control"
-                            placeholder={t('encryption_dot')}
-                            validate={[validatePortTLS]}
-                            normalize={toNumber}
-                            onChange={handleChange}
-                            disabled={!isEnabled}
+                            control={control}
+                            rules={{ validate: validatePortTLS }}
+                            render={({ field, fieldState }) => (
+                                <Input
+                                    {...field}
+                                    type="number"
+                                    placeholder={t('encryption_dot')}
+                                    error={fieldState.error?.message}
+                                    disabled={!isEnabled}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        field.onChange(toNumber(value));
+                                    }}
+                                    onBlur={handleBlur}
+                                />
+                            )}
                         />
 
                         <div className="form__desc">
@@ -305,17 +374,24 @@ let Form = (props: FormProps) => {
                             <Trans>encryption_doq</Trans>
                         </label>
 
-                        <Field
-                            id="port_dns_over_quic"
+                        <Controller
                             name="port_dns_over_quic"
-                            component={renderInputField}
-                            type="number"
-                            className="form-control"
-                            placeholder={t('encryption_doq')}
-                            validate={[validatePortQuic]}
-                            normalize={toNumber}
-                            onChange={handleChange}
-                            disabled={!isEnabled}
+                            control={control}
+                            rules={{ validate: validatePortQuic }}
+                            render={({ field, fieldState }) => (
+                                <Input
+                                    {...field}
+                                    type="number"
+                                    placeholder={t('encryption_doq')}
+                                    error={fieldState.error?.message}
+                                    disabled={!isEnabled}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        field.onChange(toNumber(value));
+                                    }}
+                                    onBlur={handleBlur}
+                                />
+                            )}
                         />
 
                         <div className="form__desc">
@@ -352,50 +428,44 @@ let Form = (props: FormProps) => {
 
                         <div className="form__inline mb-2">
                             <div className="custom-controls-stacked">
-                                <Field
+                                <Controller
                                     name="certificate_source"
-                                    component={renderRadioField}
-                                    type="radio"
-                                    className="form-control mr-2"
-                                    value="path"
-                                    placeholder={t('encryption_certificates_source_path')}
-                                    disabled={!isEnabled}
-                                />
-
-                                <Field
-                                    name="certificate_source"
-                                    component={renderRadioField}
-                                    type="radio"
-                                    className="form-control mr-2"
-                                    value="content"
-                                    placeholder={t('encryption_certificates_source_content')}
-                                    disabled={!isEnabled}
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Radio {...field} options={certificateSourceOptions} disabled={!isEnabled} />
+                                    )}
                                 />
                             </div>
                         </div>
 
-                        {certificateSource === ENCRYPTION_SOURCE.CONTENT && (
-                            <Field
-                                id="certificate_chain"
+                        {certificateSource === ENCRYPTION_SOURCE.CONTENT ? (
+                            <Controller
                                 name="certificate_chain"
-                                component="textarea"
-                                type="text"
-                                className="form-control form-control--textarea"
-                                placeholder={t('encryption_certificates_input')}
-                                onChange={handleChange}
-                                disabled={!isEnabled}
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Textarea
+                                        {...field}
+                                        placeholder={t('encryption_certificates_input')}
+                                        disabled={!isEnabled}
+                                        error={fieldState.error?.message}
+                                        onBlur={handleBlur}
+                                    />
+                                )}
                             />
-                        )}
-                        {certificateSource === ENCRYPTION_SOURCE.PATH && (
-                            <Field
-                                id="certificate_path"
+                        ) : (
+                            <Controller
                                 name="certificate_path"
-                                component={renderInputField}
-                                type="text"
-                                className="form-control"
-                                placeholder={t('encryption_certificate_path')}
-                                onChange={handleChange}
-                                disabled={!isEnabled}
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Input
+                                        {...field}
+                                        type="text"
+                                        placeholder={t('encryption_certificate_path')}
+                                        error={fieldState.error?.message}
+                                        disabled={!isEnabled}
+                                        onBlur={handleBlur}
+                                    />
+                                )}
                             />
                         )}
                     </div>
@@ -424,70 +494,67 @@ let Form = (props: FormProps) => {
 
                         <div className="form__inline mb-2">
                             <div className="custom-controls-stacked">
-                                <Field
+                                <Controller
                                     name="key_source"
-                                    component={renderRadioField}
-                                    type="radio"
-                                    className="form-control mr-2"
-                                    value={ENCRYPTION_SOURCE.PATH}
-                                    placeholder={t('encryption_key_source_path')}
-                                    disabled={!isEnabled}
-                                />
-
-                                <Field
-                                    name="key_source"
-                                    component={renderRadioField}
-                                    type="radio"
-                                    className="form-control mr-2"
-                                    value={ENCRYPTION_SOURCE.CONTENT}
-                                    placeholder={t('encryption_key_source_content')}
-                                    disabled={!isEnabled}
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Radio {...field} options={keySourceOptions} disabled={!isEnabled} />
+                                    )}
                                 />
                             </div>
                         </div>
 
-                        {privateKeySource === ENCRYPTION_SOURCE.PATH && (
-                            <Field
+                        {privateKeySource === ENCRYPTION_SOURCE.CONTENT ? (
+                            <>
+                                <Controller
+                                    name="private_key_saved"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Checkbox
+                                            {...field}
+                                            title={t('use_saved_key')}
+                                            disabled={!isEnabled}
+                                            onChange={(checked: boolean) => {
+                                                if (checked) {
+                                                    setValue('private_key', '');
+                                                }
+                                                field.onChange(checked);
+                                            }}
+                                            onBlur={handleBlur}
+                                        />
+                                    )}
+                                />
+
+                                <Controller
+                                    name="private_key"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Textarea
+                                            {...field}
+                                            placeholder={t('encryption_key_input')}
+                                            disabled={!isEnabled || privateKeySaved}
+                                            error={fieldState.error?.message}
+                                            onBlur={handleBlur}
+                                        />
+                                    )}
+                                />
+                            </>
+                        ) : (
+                            <Controller
                                 name="private_key_path"
-                                component={renderInputField}
-                                type="text"
-                                className="form-control"
-                                placeholder={t('encryption_private_key_path')}
-                                onChange={handleChange}
-                                disabled={!isEnabled}
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <Input
+                                        {...field}
+                                        type="text"
+                                        placeholder={t('encryption_private_key_path')}
+                                        error={fieldState.error?.message}
+                                        disabled={!isEnabled}
+                                        onBlur={handleBlur}
+                                    />
+                                )}
                             />
                         )}
-                        {privateKeySource === ENCRYPTION_SOURCE.CONTENT && [
-                            <Field
-                                key="private_key_saved"
-                                name="private_key_saved"
-                                type="checkbox"
-                                className="form__group form__group--settings mb-2"
-                                component={CheckboxField}
-                                disabled={!isEnabled}
-                                placeholder={t('use_saved_key')}
-                                onChange={(event: any) => {
-                                    if (event.target.checked) {
-                                        change('private_key', '');
-                                    }
-                                    if (handleChange) {
-                                        handleChange(event);
-                                    }
-                                }}
-                            />,
-
-                            <Field
-                                id="private_key"
-                                key="private_key"
-                                name="private_key"
-                                component="textarea"
-                                type="text"
-                                className="form-control form-control--textarea"
-                                placeholder={t('encryption_key_input')}
-                                onChange={handleChange}
-                                disabled={!isEnabled || privateKeySaved}
-                            />,
-                        ]}
                     </div>
 
                     <div className="form__status">
@@ -505,44 +572,11 @@ let Form = (props: FormProps) => {
                 <button
                     type="button"
                     className="btn btn-secondary btn-standart"
-                    disabled={submitting || processingConfig}
-                    onClick={() => clearFields(change, setTlsConfig, validateTlsConfig, t)}>
+                    disabled={isSubmitting || processingConfig}
+                    onClick={clearFields}>
                     <Trans>reset_settings</Trans>
                 </button>
             </div>
         </form>
     );
 };
-
-const selector = formValueSelector(FORM_NAME.ENCRYPTION);
-
-Form = connect((state) => {
-    const isEnabled = selector(state, 'enabled');
-    const servePlainDns = selector(state, 'serve_plain_dns');
-    const certificateChain = selector(state, 'certificate_chain');
-    const privateKey = selector(state, 'private_key');
-    const certificatePath = selector(state, 'certificate_path');
-    const privateKeyPath = selector(state, 'private_key_path');
-    const certificateSource = selector(state, 'certificate_source');
-    const privateKeySource = selector(state, 'key_source');
-    const privateKeySaved = selector(state, 'private_key_saved');
-    return {
-        isEnabled,
-        servePlainDns,
-        certificateChain,
-        privateKey,
-        certificatePath,
-        privateKeyPath,
-        certificateSource,
-        privateKeySource,
-        privateKeySaved,
-    };
-})(Form);
-
-export default flow([
-    withTranslation(),
-    reduxForm({
-        form: FORM_NAME.ENCRYPTION,
-        validate,
-    }),
-])(Form);

@@ -1,5 +1,5 @@
 {
-	"timeUpdated": "2024-12-03T12:12:08.316Z",
+	"timeUpdated": "2025-01-13T10:04:54.031Z",
 	"categories": {
 		"0": "audio_video_player",
 		"1": "comments",
@@ -9771,6 +9771,13 @@
 			"categoryId": 6,
 			"url": "http://www.jetinteractive.com.au/",
 			"companyId": "jet_interactive"
+		},
+		"jetbrains": {
+			"name": "JetBrains",
+			"categoryId": 8,
+			"url": "https://www.jetbrains.com/",
+			"companyId": "jetbrains",
+			"source": "AdGuard"
 		},
 		"jetlore": {
 			"name": "Jetlore",
@@ -22410,6 +22417,7 @@
 		"adservice.google.pl": "google_marketing",
 		"adservice.google.ru": "google_marketing",
 		"adservice.google.vg": "google_marketing",
+		"adtrafficquality.google": "google_marketing",
 		"dai.google.com": "google_marketing",
 		"doubleclickbygoogle.com": "google_marketing",
 		"googlesyndication-cn.com": "google_marketing",
@@ -22763,6 +22771,22 @@
 		"jeeng.com": "jeeng",
 		"api.jeeng.com": "jeeng_widgets",
 		"phone-analytics.com": "jet_interactive",
+		"grazie.ai": "jetbrains",
+		"intellij.net": "jetbrains",
+		"jb.gg": "jetbrains",
+		"jetbrains.ai": "jetbrains",
+		"jetbrains.com": "jetbrains",
+		"jetbrains.com.cn": "jetbrains",
+		"jetbrains.dev": "jetbrains",
+		"jetbrains.net": "jetbrains",
+		"jetbrains.org": "jetbrains",
+		"jetbrains.ru": "jetbrains",
+		"jetbrains.space": "jetbrains",
+		"kotl.in": "jetbrains",
+		"kotlinconf.com": "jetbrains",
+		"kotlinlang.org": "jetbrains",
+		"myjetbrains.com": "jetbrains",
+		"talkingkotlin.com": "jetbrains",
 		"jetlore.com": "jetlore",
 		"pixel.wp.com": "jetpack",
 		"stats.wp.com": "jetpack",

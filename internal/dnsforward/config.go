@@ -29,19 +29,6 @@ import (
 	"github.com/ameshkov/dnscrypt/v2"
 )
 
-// ClientsContainer provides information about preconfigured DNS clients.
-type ClientsContainer interface {
-	// UpstreamConfigByID returns the custom upstream configuration for the
-	// client having id, using boot to initialize the one if necessary.  It
-	// returns nil if there is no custom upstream configuration for the client.
-	// The id is expected to be either a string representation of an IP address
-	// or the ClientID.
-	UpstreamConfigByID(
-		id string,
-		boot upstream.Resolver,
-	) (conf *proxy.CustomUpstreamConfig, err error)
-}
-
 // Config represents the DNS filtering configuration of AdGuard Home.  The zero
 // Config is empty and ready for use.
 type Config struct {
@@ -467,7 +454,7 @@ func (s *Server) prepareIpsetListSettings() (ipsets []string, err error) {
 	}
 
 	ipsets = stringutil.SplitTrimmed(string(data), "\n")
-	ipsets = slices.DeleteFunc(ipsets, IsCommentOrEmpty)
+	ipsets = slices.DeleteFunc(ipsets, aghnet.IsCommentOrEmpty)
 
 	log.Debug("dns: using %d ipset rules from file %q", len(ipsets), fn)
 
@@ -478,7 +465,7 @@ func (s *Server) prepareIpsetListSettings() (ipsets []string, err error) {
 // the configuration itself.
 func (conf *ServerConfig) loadUpstreams() (upstreams []string, err error) {
 	if conf.UpstreamDNSFileName == "" {
-		return stringutil.FilterOut(conf.UpstreamDNS, IsCommentOrEmpty), nil
+		return stringutil.FilterOut(conf.UpstreamDNS, aghnet.IsCommentOrEmpty), nil
 	}
 
 	var data []byte
@@ -491,7 +478,7 @@ func (conf *ServerConfig) loadUpstreams() (upstreams []string, err error) {
 
 	log.Debug("dnsforward: got %d upstreams in %q", len(upstreams), conf.UpstreamDNSFileName)
 
-	return stringutil.FilterOut(upstreams, IsCommentOrEmpty), nil
+	return stringutil.FilterOut(upstreams, aghnet.IsCommentOrEmpty), nil
 }
 
 // collectListenAddr adds addrPort to addrs.  It also adds its port to

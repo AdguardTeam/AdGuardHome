@@ -329,6 +329,14 @@ func (s *Server) AddrProcConfig() (c *client.DefaultAddrProcConfig) {
 	}
 }
 
+// UpstreamTimeout returns the current upstream timeout configuration.
+func (s *Server) UpstreamTimeout() (t time.Duration) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	return s.conf.UpstreamTimeout
+}
+
 // Resolve gets IP addresses by host name from an upstream server.  No
 // request/response filtering is performed.  Query log and Stats are not
 // updated.  This method may be called before [Server.Start].
@@ -532,7 +540,7 @@ func (s *Server) prepareUpstreamSettings(boot upstream.Resolver) (err error) {
 	uc, err := newUpstreamConfig(upstreams, defaultDNS, &upstream.Options{
 		Bootstrap:    boot,
 		Timeout:      s.conf.UpstreamTimeout,
-		HTTPVersions: UpstreamHTTPVersions(s.conf.UseHTTP3Upstreams),
+		HTTPVersions: aghnet.UpstreamHTTPVersions(s.conf.UseHTTP3Upstreams),
 		PreferIPv6:   s.conf.BootstrapPreferIPv6,
 		// Use a customized set of RootCAs, because Go's default mechanism of
 		// loading TLS roots does not always work properly on some routers so we're
@@ -549,6 +557,13 @@ func (s *Server) prepareUpstreamSettings(boot upstream.Resolver) (err error) {
 	}
 
 	s.conf.UpstreamConfig = uc
+	s.conf.ClientsContainer.UpdateCommonUpstreamConfig(&client.CommonUpstreamConfig{
+		Bootstrap:               boot,
+		UpstreamTimeout:         s.conf.UpstreamTimeout,
+		BootstrapPreferIPv6:     s.conf.BootstrapPreferIPv6,
+		EDNSClientSubnetEnabled: s.conf.EDNSClientSubnet.Enabled,
+		UseHTTP3Upstreams:       s.conf.UseHTTP3Upstreams,
+	})
 
 	return nil
 }
@@ -622,7 +637,7 @@ func (s *Server) prepareInternalDNS() (err error) {
 
 	bootOpts := &upstream.Options{
 		Timeout:      DefaultTimeout,
-		HTTPVersions: UpstreamHTTPVersions(s.conf.UseHTTP3Upstreams),
+		HTTPVersions: aghnet.UpstreamHTTPVersions(s.conf.UseHTTP3Upstreams),
 	}
 
 	s.bootstrap, s.bootResolvers, err = newBootstrap(s.conf.BootstrapDNS, s.etcHosts, bootOpts)
@@ -653,7 +668,7 @@ func (s *Server) prepareInternalDNS() (err error) {
 // setupFallbackDNS initializes the fallback DNS servers.
 func (s *Server) setupFallbackDNS() (uc *proxy.UpstreamConfig, err error) {
 	fallbacks := s.conf.FallbackDNS
-	fallbacks = stringutil.FilterOut(fallbacks, IsCommentOrEmpty)
+	fallbacks = stringutil.FilterOut(fallbacks, aghnet.IsCommentOrEmpty)
 	if len(fallbacks) == 0 {
 		return nil, nil
 	}

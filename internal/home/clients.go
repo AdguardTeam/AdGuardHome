@@ -12,17 +12,14 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
-	"github.com/AdguardTeam/dnsproxy/proxy"
-	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
-	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // clientsContainer is the storage of all runtime and persistent clients.
@@ -75,6 +72,7 @@ func (clients *clientsContainer) Init(
 	etcHosts *aghnet.HostsContainer,
 	arpDB arpdb.Interface,
 	filteringConf *filtering.Config,
+	sigHdlr *signalHandler,
 ) (err error) {
 	// TODO(s.chzhen):  Refactor it.
 	if clients.storage != nil {
@@ -109,6 +107,7 @@ func (clients *clientsContainer) Init(
 
 	clients.storage, err = client.NewStorage(ctx, &client.StorageConfig{
 		Logger:                 baseLogger.With(slogutil.KeyPrefix, "client_storage"),
+		Clock:                  timeutil.SystemClock{},
 		InitialClients:         confClients,
 		DHCP:                   dhcpServer,
 		EtcHosts:               hosts,
@@ -119,6 +118,8 @@ func (clients *clientsContainer) Init(
 	if err != nil {
 		return fmt.Errorf("init client storage: %w", err)
 	}
+
+	sigHdlr.addClientStorage(clients.storage)
 
 	return nil
 }
@@ -368,63 +369,6 @@ func (clients *clientsContainer) shouldCountClient(ids []string) (y bool) {
 	}
 
 	return true
-}
-
-// type check
-var _ dnsforward.ClientsContainer = (*clientsContainer)(nil)
-
-// UpstreamConfigByID implements the [dnsforward.ClientsContainer] interface for
-// *clientsContainer.  upsConf is nil if the client isn't found or if the client
-// has no custom upstreams.
-func (clients *clientsContainer) UpstreamConfigByID(
-	id string,
-	bootstrap upstream.Resolver,
-) (conf *proxy.CustomUpstreamConfig, err error) {
-	clients.lock.Lock()
-	defer clients.lock.Unlock()
-
-	c, ok := clients.storage.Find(id)
-	if !ok {
-		return nil, nil
-	} else if c.UpstreamConfig != nil {
-		return c.UpstreamConfig, nil
-	}
-
-	upstreams := stringutil.FilterOut(c.Upstreams, dnsforward.IsCommentOrEmpty)
-	if len(upstreams) == 0 {
-		return nil, nil
-	}
-
-	var upsConf *proxy.UpstreamConfig
-	upsConf, err = proxy.ParseUpstreamsConfig(
-		upstreams,
-		&upstream.Options{
-			Bootstrap:    bootstrap,
-			Timeout:      time.Duration(config.DNS.UpstreamTimeout),
-			HTTPVersions: dnsforward.UpstreamHTTPVersions(config.DNS.UseHTTP3Upstreams),
-			PreferIPv6:   config.DNS.BootstrapPreferIPv6,
-		},
-	)
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return nil, err
-	}
-
-	conf = proxy.NewCustomUpstreamConfig(
-		upsConf,
-		c.UpstreamsCacheEnabled,
-		int(c.UpstreamsCacheSize),
-		config.DNS.EDNSClientSubnet.Enabled,
-	)
-	c.UpstreamConfig = conf
-
-	// TODO(s.chzhen):  Pass context.
-	err = clients.storage.Update(context.TODO(), c.Name, c)
-	if err != nil {
-		return nil, fmt.Errorf("setting upstream config: %w", err)
-	}
-
-	return conf, nil
 }
 
 // type check

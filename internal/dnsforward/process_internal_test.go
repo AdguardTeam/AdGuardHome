@@ -81,6 +81,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 					AAAADisabled:     tc.aaaaDisabled,
 					UpstreamMode:     UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+					ClientsContainer: EmptyClientsContainer{},
 				},
 				ServePlainDNS: true,
 			}
@@ -180,6 +181,7 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 					AAAADisabled:     tc.aaaaDisabled,
 					UpstreamMode:     UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+					ClientsContainer: EmptyClientsContainer{},
 				},
 				ServePlainDNS: true,
 			}
@@ -324,6 +326,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 					HandleDDR:        tc.ddrEnabled,
 					UpstreamMode:     UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+					ClientsContainer: EmptyClientsContainer{},
 				},
 				TLSConfig: TLSConfig{
 					ServerName:           ddrTestDomainName,
@@ -660,6 +663,7 @@ func TestServer_HandleDNSRequest_restrictLocal(t *testing.T) {
 			UpstreamDNS:      []string{localUpsAddr},
 			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			ClientsContainer: EmptyClientsContainer{},
 		},
 		UsePrivateRDNS:    true,
 		LocalPTRResolvers: []string{localUpsAddr},
@@ -788,6 +792,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				Config: Config{
 					UpstreamMode:     UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+					ClientsContainer: EmptyClientsContainer{},
 				},
 				UsePrivateRDNS:    true,
 				LocalPTRResolvers: []string{localUpsAddr},
@@ -816,6 +821,7 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				Config: Config{
 					UpstreamMode:     UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+					ClientsContainer: EmptyClientsContainer{},
 				},
 				UsePrivateRDNS:    false,
 				LocalPTRResolvers: []string{localUpsAddr},

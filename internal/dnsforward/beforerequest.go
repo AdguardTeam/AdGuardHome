@@ -15,7 +15,7 @@ import (
 var _ proxy.BeforeRequestHandler = (*Server)(nil)
 
 // HandleBefore is the handler that is called before any other processing,
-// including logs.  It performs access checks and puts the client ID, if there
+// including logs.  It performs access checks and puts the ClientID, if there
 // is one, into the server's cache.
 //
 // TODO(d.kolyshev): Extract to separate package.

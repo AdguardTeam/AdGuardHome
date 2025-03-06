@@ -1570,6 +1570,10 @@
           'example':
           - 'tls://1.1.1.1'
           - 'tls://1.0.0.1'
+        'upstream_timeout':
+          'type': 'integer'
+          'minimum': 1
+          'description': 'The number of seconds to wait for a response from the upstream server'
     'UpstreamsConfig':
       'type': 'object'
       'description': 'Upstream configuration to be tested'

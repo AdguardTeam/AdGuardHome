@@ -4,6 +4,10 @@
 
 ## v0.108.0: API changes
 
+## v0.107.57: API changes
+
+- The new field `"upstream_timeout"` in `GET /control/dns_info` and `POST /control/dns_config` is the number of seconds to wait for a response from the upstream server.
+
 ## v0.107.56: API changes
 
 ### Documentation fix of `NetInterface`

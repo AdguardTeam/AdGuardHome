@@ -129,7 +129,7 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 	clientFS := http.FileServer(http.FS(conf.clientFS))
 
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
-	Context.mux.Handle("/", withMiddlewares(clientFS, gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler))
+	globalContext.mux.Handle("/", withMiddlewares(clientFS, gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler))
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if conf.firstRun {
@@ -138,7 +138,7 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 			"This is the first launch of AdGuard Home, redirecting everything to /install.html",
 		)
 
-		Context.mux.Handle("/install.html", preInstallHandler(clientFS))
+		globalContext.mux.Handle("/install.html", preInstallHandler(clientFS))
 		w.registerInstallHandlers()
 	} else {
 		registerControlHandlers(w)
@@ -154,7 +154,7 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 //
 // TODO(a.garipov): Adapt for HTTP/3.
 func webCheckPortAvailable(port uint16) (ok bool) {
-	if Context.web.httpsServer.server != nil {
+	if globalContext.web.httpsServer.server != nil {
 		return true
 	}
 
@@ -224,9 +224,13 @@ func (web *webAPI) start(ctx context.Context) {
 		errs := make(chan error, 2)
 
 		// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
-		hdlr := h2c.NewHandler(withMiddlewares(Context.mux, limitRequestBody), &http2.Server{})
+		hdlr := h2c.NewHandler(withMiddlewares(globalContext.mux, limitRequestBody), &http2.Server{})
 
 		logger := web.baseLogger.With(loggerKeyServer, "plain")
+
+		// TODO(a.garipov):  Remove other logs like this in other code.
+		logMw := httputil.NewLogMiddleware(logger, slog.LevelDebug)
+		hdlr = logMw.Wrap(hdlr)
 
 		// Create a new instance, because the Web is not usable after Shutdown.
 		web.httpServer = &http.Server{
@@ -238,7 +242,9 @@ func (web *webAPI) start(ctx context.Context) {
 			ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		}
 		go func() {
-			defer slogutil.RecoverAndLog(ctx, web.logger)
+			defer slogutil.RecoverAndLog(ctx, logger)
+
+			logger.InfoContext(ctx, "starting plain server", "addr", web.httpServer.Addr)
 
 			errs <- web.httpServer.ListenAndServe()
 		}()
@@ -305,13 +311,17 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 		addr := netip.AddrPortFrom(web.conf.BindAddr.Addr(), portHTTPS).String()
 		logger := web.baseLogger.With(loggerKeyServer, "https")
 
+		// TODO(a.garipov):  Remove other logs like this in other code.
+		logMw := httputil.NewLogMiddleware(logger, slog.LevelDebug)
+		hdlr := logMw.Wrap(withMiddlewares(globalContext.mux, limitRequestBody))
+
 		web.httpsServer.server = &http.Server{
 			Addr:    addr,
-			Handler: withMiddlewares(Context.mux, limitRequestBody),
+			Handler: hdlr,
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
-				RootCAs:      Context.tlsRoots,
-				CipherSuites: Context.tlsCipherIDs,
+				RootCAs:      globalContext.tlsRoots,
+				CipherSuites: globalContext.tlsCipherIDs,
 				MinVersion:   tls.VersionTLS12,
 			},
 			ReadTimeout:       web.conf.ReadTimeout,
@@ -326,7 +336,7 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 			go web.mustStartHTTP3(ctx, addr)
 		}
 
-		web.logger.DebugContext(ctx, "starting https server")
+		logger.InfoContext(ctx, "starting https server")
 		err := web.httpsServer.server.ListenAndServeTLS("", "")
 		if !errors.Is(err, http.ErrServerClosed) {
 			cleanupAlways()
@@ -344,11 +354,11 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 		Addr: address,
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{web.httpsServer.cert},
-			RootCAs:      Context.tlsRoots,
-			CipherSuites: Context.tlsCipherIDs,
+			RootCAs:      globalContext.tlsRoots,
+			CipherSuites: globalContext.tlsCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
-		Handler: withMiddlewares(Context.mux, limitRequestBody),
+		Handler: withMiddlewares(globalContext.mux, limitRequestBody),
 	}
 
 	web.logger.DebugContext(ctx, "starting http/3 server")

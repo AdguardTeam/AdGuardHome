@@ -1,8 +1,8 @@
 'name': 'build'
 
 'env':
-  'GO_VERSION': '1.23.4'
-  'NODE_VERSION': '16'
+  'GO_VERSION': '1.23.6'
+  'NODE_VERSION': '18'
 
 'on':
   'push':
@@ -39,7 +39,7 @@
       'with':
         'node-version': '${{ env.NODE_VERSION }}'
     - 'name': 'Set up Go modules cache'
-      'uses': 'actions/cache@v2'
+      'uses': 'actions/cache@v4'
       'with':
         'path': '~/go/pkg/mod'
         'key': "${{ runner.os }}-go-${{ hashFiles('go.sum') }}"
@@ -48,7 +48,7 @@
       'id': 'npm-cache'
       'run': 'echo "::set-output name=dir::$( npm config get cache )"'
     - 'name': 'Set up npm cache'
-      'uses': 'actions/cache@v2'
+      'uses': 'actions/cache@v4'
       'with':
         'path': '${{ steps.npm-cache.outputs.dir }}'
         'key': "${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}"
@@ -80,7 +80,7 @@
       'with':
         'node-version': '${{ env.NODE_VERSION }}'
     - 'name': 'Set up Go modules cache'
-      'uses': 'actions/cache@v2'
+      'uses': 'actions/cache@v4'
       'with':
         'path': '~/go/pkg/mod'
         'key': "${{ runner.os }}-go-${{ hashFiles('go.sum') }}"
@@ -89,7 +89,7 @@
       'id': 'npm-cache'
       'run': 'echo "::set-output name=dir::$(npm config get cache)"'
     - 'name': 'Set up npm cache'
-      'uses': 'actions/cache@v2'
+      'uses': 'actions/cache@v4'
       'with':
         'path': '${{ steps.npm-cache.outputs.dir }}'
         'key': "${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}"

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -18,6 +19,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/golibs/validate"
 )
 
 // jsonDNSConfig is the JSON representation of the DNS server configuration.
@@ -52,6 +54,9 @@ type jsonDNSConfig struct {
 	// RatelimitSubnetLenIPv6 is a subnet length for IPv6 addresses used for
 	// rate limiting requests.
 	RatelimitSubnetLenIPv6 *int `json:"ratelimit_subnet_len_ipv6"`
+
+	// UpstreamTimeout is an upstream timeout in seconds.
+	UpstreamTimeout *int `json:"upstream_timeout"`
 
 	// RatelimitWhitelist is a list of IP addresses excluded from rate limiting.
 	RatelimitWhitelist *[]netip.Addr `json:"ratelimit_whitelist"`
@@ -147,6 +152,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 	ratelimitSubnetLenIPv4 := s.conf.RatelimitSubnetLenIPv4
 	ratelimitSubnetLenIPv6 := s.conf.RatelimitSubnetLenIPv6
 	ratelimitWhitelist := append([]netip.Addr{}, s.conf.RatelimitWhitelist...)
+	upstreamTimeout := int(s.conf.UpstreamTimeout.Seconds())
 
 	customIP := s.conf.EDNSClientSubnet.CustomIP
 	enableEDNSClientSubnet := s.conf.EDNSClientSubnet.Enabled
@@ -192,6 +198,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		RatelimitSubnetLenIPv4:   &ratelimitSubnetLenIPv4,
 		RatelimitSubnetLenIPv6:   &ratelimitSubnetLenIPv6,
 		RatelimitWhitelist:       &ratelimitWhitelist,
+		UpstreamTimeout:          &upstreamTimeout,
 		EDNSCSCustomIP:           customIP,
 		EDNSCSEnabled:            &enableEDNSClientSubnet,
 		EDNSCSUseCustom:          &useCustom,
@@ -297,6 +304,12 @@ func (req *jsonDNSConfig) validate(
 	}
 
 	err = req.checkCacheTTL()
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	err = req.checkUpstreamTimeout()
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
@@ -435,6 +448,16 @@ func (req *jsonDNSConfig) checkRatelimitSubnetMaskLen() (err error) {
 	}
 
 	return nil
+}
+
+// checkUpstreamTimeout returns an error if the configuration of the upstream
+// timeout is invalid.
+func (req *jsonDNSConfig) checkUpstreamTimeout() (err error) {
+	if req.UpstreamTimeout == nil {
+		return nil
+	}
+
+	return validate.NoLessThan("upstream_timeout", *req.UpstreamTimeout, 1)
 }
 
 // checkInclusion returns an error if a ptr is not nil and points to value,
@@ -588,6 +611,14 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 		shouldRestart = true
 	}
 
+	if dc.UpstreamTimeout != nil {
+		ut := time.Duration(*dc.UpstreamTimeout) * time.Second
+		if s.conf.UpstreamTimeout != ut {
+			s.conf.UpstreamTimeout = ut
+			shouldRestart = true
+		}
+	}
+
 	return shouldRestart
 }
 
@@ -617,7 +648,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.BootstrapDNS = stringutil.FilterOut(req.BootstrapDNS, IsCommentOrEmpty)
+	req.BootstrapDNS = stringutil.FilterOut(req.BootstrapDNS, aghnet.IsCommentOrEmpty)
 
 	opts := &upstream.Options{
 		Timeout:    s.conf.UpstreamTimeout,
@@ -643,6 +674,8 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 // handleCacheClear is the handler for the POST /control/cache_clear HTTP API.
 func (s *Server) handleCacheClear(w http.ResponseWriter, _ *http.Request) {
 	s.dnsProxy.ClearCache()
+	s.conf.ClientsContainer.ClearUpstreamCache()
+
 	_, _ = io.WriteString(w, "OK")
 }
 

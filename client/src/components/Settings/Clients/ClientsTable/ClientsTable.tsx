@@ -12,7 +12,7 @@ import ReactTable from 'react-table';
 import { getAllBlockedServices, getBlockedServices } from '../../../../actions/services';
 
 import { initSettings } from '../../../../actions';
-import { splitByNewLine, countClientsStatistics, sortIp, getService } from '../../../../helpers/helpers';
+import { splitByNewLine, countClientsStatistics, sortIp, getService, formatNumber } from '../../../../helpers/helpers';
 import { MODAL_TYPE, LOCAL_TIMEZONE_VALUE, TABLES_MIN_ROWS } from '../../../../helpers/constants';
 
 import Card from '../../../ui/Card';
@@ -109,6 +109,12 @@ const ClientsTable = ({
                 config.tags = values.tags.map((tag: any) => tag.value);
             } else {
                 config.tags = [];
+            }
+
+            if (values.ids) {
+                config.ids = values.ids.map((id) => id.name);
+            } else {
+                config.ids = [];
             }
 
             if (typeof values.upstreams_cache_size === 'string') {
@@ -300,13 +306,16 @@ const ClientsTable = ({
             sortMethod: (a: any, b: any) => b - a,
             minWidth: 120,
             Cell: (row: any) => {
-                const content = CellWrap(row);
-
-                if (!row.value) {
+                let content = row.value;
+                if (typeof content === "number") {
+                    content = formatNumber(content);
+                } else {
+                    content = CellWrap(row);
+                }
+                if (!content) {
                     return content;
                 }
-
-                return <LogsSearchLink search={row.original.ids[0]}>{content}</LogsSearchLink>;
+                return <LogsSearchLink search={row.original.name}>{content}</LogsSearchLink>;
             },
         },
         {

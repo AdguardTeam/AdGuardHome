@@ -284,6 +284,7 @@
     "blocklist": "Черен списък",
     "filter_category_general": "General",
     "filter_category_security": "Сигурност",
+    "filter_category_other": "Друго",
     "port_53_faq_link": "Порт 53 често е зает от \"DNSStubListener\" или \"systemd-resolved\" услуги. Моля, прочетете <0>тази инструкция</0> как да решите това.",
     "parental_control": "Родителски контрол",
     "sunday_short": "Нд",

@@ -66,6 +66,7 @@ const dnsConfig = handleActions(
         blocking_ipv4: DEFAULT_BLOCKING_IPV4,
         blocking_ipv6: DEFAULT_BLOCKING_IPV6,
         blocked_response_ttl: 10,
+        upstream_timeout: 10,
         edns_cs_enabled: false,
         disable_ipv6: false,
         dnssec_enabled: false,
