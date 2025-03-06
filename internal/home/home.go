@@ -57,7 +57,13 @@ type homeContext struct {
 	auth       *Auth                // HTTP authentication module
 	filters    *filtering.DNSFilter // DNS filtering module
 	web        *webAPI              // Web (HTTP, HTTPS) module
-	tls        *tlsManager          // TLS module
+
+	// tlsManager contains the current configuration and state of TLS
+	// encryption.
+	//
+	// TODO(s.chzhen):  Remove once it is no longer called from different
+	// modules.  See [onConfigModified].
+	tls *tlsManager
 
 	// etcHosts contains IP-hostname mappings taken from the OS-specific hosts
 	// configuration files, for example /etc/hosts.
@@ -519,7 +525,8 @@ func isUpdateEnabled(ctx context.Context, l *slog.Logger, opts *options, customU
 	}
 }
 
-// initWeb initializes the web module.  upd and baseLogger must not be nil.
+// initWeb initializes the web module.  upd, baseLogger, and tlsMgr  must not be
+// nil.
 func initWeb(
 	ctx context.Context,
 	opts options,
@@ -677,7 +684,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 		err = initDNS(slogLogger, tlsMgr, statsDir, querylogDir)
 		fatalOnError(err)
 
-		tlsMgr.start()
+		tlsMgr.start(ctx)
 
 		go func() {
 			startErr := startDNSServer()
@@ -808,31 +815,6 @@ func (c *configuration) anonymizer() (ipmut *aghnet.IPMut) {
 	}
 
 	return aghnet.NewIPMut(anonFunc)
-}
-
-// startMods initializes and starts the DNS server after installation.
-// baseLogger must not be nil.
-func startMods(baseLogger *slog.Logger, tlsMgr *tlsManager) (err error) {
-	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
-	if err != nil {
-		return err
-	}
-
-	err = initDNS(baseLogger, tlsMgr, statsDir, querylogDir)
-	if err != nil {
-		return err
-	}
-
-	tlsMgr.start()
-
-	err = startDNSServer()
-	if err != nil {
-		closeDNSServer()
-
-		return err
-	}
-
-	return nil
 }
 
 // checkNetworkPermissions checks if the current user permissions are enough to
@@ -1004,6 +986,8 @@ func printWebAddrs(proto, addr string, port uint16) {
 
 // printHTTPAddresses prints the IP addresses which user can use to access the
 // admin interface.  proto is either schemeHTTP or schemeHTTPS.
+//
+// TODO(s.chzhen):  Implement separate functions for HTTP and HTTPS.
 func printHTTPAddresses(proto string, tlsMgr *tlsManager) {
 	tlsConf := tlsConfigSettings{}
 	if tlsMgr != nil {
@@ -1015,7 +999,6 @@ func printHTTPAddresses(proto string, tlsMgr *tlsManager) {
 		port = tlsConf.PortHTTPS
 	}
 
-	// TODO(e.burkov): Inspect and perhaps merge with the previous condition.
 	if proto == urlutil.SchemeHTTPS && tlsConf.ServerName != "" {
 		printWebAddrs(proto, tlsConf.ServerName, tlsConf.PortHTTPS)
 

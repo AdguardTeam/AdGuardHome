@@ -45,9 +45,10 @@ func onConfigModified() {
 	}
 }
 
-// initDNS updates all the fields of the [globalContext] needed to initialize the DNS
-// server and initializes it at last.  It also must not be called unless
-// [config] and [globalContext] are initialized.  baseLogger must not be nil.
+// initDNS updates all the fields of the [globalContext] needed to initialize
+// the DNS server and initializes it at last.  It also must not be called unless
+// [config] and [globalContext] are initialized.  baseLogger and tlsMgr must not
+// be nil.
 func initDNS(
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
@@ -362,12 +363,15 @@ func newDNSCryptConfig(
 	}, nil
 }
 
+// dnsEncryption contains different types of TLS encryption addresses.
 type dnsEncryption struct {
 	https string
 	tls   string
 	quic  string
 }
 
+// getDNSEncryption returns the TLS encryption addresses that AdGuard Home
+// listens on.  tlsMgr must not be nil.
 func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
 	tlsConf := tlsConfigSettings{}
 	tlsMgr.WriteDiskConfig(&tlsConf)
@@ -491,6 +495,8 @@ func startDNSServer() error {
 	return nil
 }
 
+// reconfigureDNSServer updates the DNS server configuration using the provided
+// TLS settings.  tlsMgr must not be nil.
 func reconfigureDNSServer(tlsMgr *tlsManager) (err error) {
 	tlsConf := &tlsConfigSettings{}
 	tlsMgr.WriteDiskConfig(tlsConf)

@@ -102,7 +102,7 @@ func (m *tlsManager) setCertFileTime() {
 }
 
 // start updates the configuration of t and starts it.
-func (m *tlsManager) start() {
+func (m *tlsManager) start(_ context.Context) {
 	m.registerWebHandlers()
 
 	m.confLock.Lock()

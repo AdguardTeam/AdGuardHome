@@ -158,7 +158,7 @@ type versionResponse struct {
 }
 
 // setAllowedToAutoUpdate sets CanAutoUpdate to true if AdGuard Home is actually
-// allowed to perform an automatic update by the OS.
+// allowed to perform an automatic update by the OS.  tlsMgr must not be nil.
 func (vr *versionResponse) setAllowedToAutoUpdate(tlsMgr *tlsManager) (err error) {
 	if vr.CanAutoUpdate != aghalg.NBTrue {
 		return nil
