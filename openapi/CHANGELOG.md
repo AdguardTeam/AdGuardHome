@@ -6,9 +6,9 @@
 
 ## v0.107.58: API changes
 
-### API: Get filtering status of host: GET /control/check_host
+### The ability to check rules for query types and/or clients: GET /control/check_host
 
-- Added optional "client" and "qtype" URL query parameters.
+- Added optional `client` and `qtype` URL query parameters.
 
 ## v0.107.57: API changes
 

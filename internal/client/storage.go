@@ -677,8 +677,12 @@ func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filter
 	}
 
 	if !ok {
+		s.logger.Debug("no client filtering settings found", "clientid", id, "addr", addr)
+
 		return
 	}
+
+	s.logger.Debug("applying custom client filtering settings", "client_name", c.Name)
 
 	setts.ClientIP = addr
 

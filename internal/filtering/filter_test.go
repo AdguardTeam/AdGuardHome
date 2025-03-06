@@ -1,7 +1,6 @@
 package filtering_test
 
 import (
-	"fmt"
 	"net/netip"
 	"testing"
 
@@ -198,7 +197,6 @@ func TestApplyAdditionalFiltering_blockedServices(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			setts := &filtering.Settings{}
 
-			fmt.Println(tc.name)
 			dnsFilter.ApplyAdditionalFiltering(testIPv4, tc.id, setts)
 			require.Len(t, setts.ServicesRules, tc.wantLen)
 		})

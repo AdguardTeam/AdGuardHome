@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -421,10 +422,22 @@ type checkHostResp struct {
 	FilterID rulelist.URLFilterID `json:"filter_id"`
 }
 
-// handleCheckHost is the handler for the GET /control/check_host HTTP API.
+// handleCheckHost is the handler for the GET /control/filtering/check_host HTTP
+// API.
 func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	host := query.Get("name")
+	if host == "" {
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusBadRequest,
+			`query parameter "name" is required`,
+		)
+
+		return
+	}
+
 	cli := query.Get("client")
 	qTypeStr := query.Get("qtype")
 	qType, err := stringToDNSType(qTypeStr)
@@ -501,7 +514,14 @@ func stringToDNSType(str string) (qtype uint16, err error) {
 		return qtype, nil
 	}
 
-	val, err := strconv.ParseUint(str, 10, 16)
+	// typePref is a prefix for DNS types from experimental RFCs.
+	const typePref = "TYPE"
+
+	if !strings.HasPrefix(str, typePref) {
+		return 0, errors.ErrBadEnumValue
+	}
+
+	val, err := strconv.ParseUint(str[len(typePref):], 10, 16)
 	if err == nil {
 		return uint16(val), nil
 	}
