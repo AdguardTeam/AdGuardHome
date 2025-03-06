@@ -16,20 +16,47 @@ import (
 )
 
 // raCtx is a context for the Router Advertisement logic.
-//
-// TODO(e.burkov):  !! Improve docs
 type raCtx struct {
-	raAllowSLAAC     bool   // send RA packets with MO flags
-	raSLAACOnly      bool   // send RA packets without MO flags
-	ipAddr           net.IP // source IP address (link-local-unicast)
-	dnsIPAddr        net.IP // IP address for DNS Server option
-	prefixIPAddr     net.IP // IP address for Prefix option
-	ifaceName        string
-	iface            *net.Interface
-	packetSendPeriod time.Duration // how often RA packets are sent
+	// raAllowSLAAC is used to determine if the ICMP Router Advertisement
+	// messages should be sent.
+	//
+	// If both raAllowSLAAC and raSLAACOnly are false, the Router Advertisement
+	// messages aren't sent.
+	raAllowSLAAC bool
 
-	conn *icmp.PacketConn // ICMPv6 socket
-	stop atomic.Value     // stop the packet sending loop
+	// raSLAACOnly is used to determine if the ICMP Router Advertisement
+	// messages should set M and O flags, see RFC 4861, section 4.2.
+	//
+	// If both raAllowSLAAC and raSLAACOnly are false, the Router Advertisement
+	// messages aren't sent.
+	raSLAACOnly bool
+
+	// ipAddr is an IP address used within the Source Link-Layer Address option.
+	// See RFC 4861, section 4.6.1.
+	ipAddr net.IP
+
+	// dnsIPAddr is an IP address used within the DNS Server option.
+	dnsIPAddr net.IP
+
+	// prefixIPAddr is an IP address used within the Prefix Information option.
+	// See RFC 4861, section 4.6.2.
+	prefixIPAddr net.IP
+
+	// ifaceName is the name of the interface used as a scope of the IP
+	// addresses.
+	ifaceName string
+
+	// iface is the network interface used to send the ICMPv6 packets.
+	iface *net.Interface
+
+	// packetSendPeriod is the interval between sending the ICMPv6 packets.
+	packetSendPeriod time.Duration
+
+	// conn is the ICMPv6 socket.
+	conn *icmp.PacketConn
+
+	// stop is used to stop the packet sending loop.
+	stop atomic.Value
 }
 
 type icmpv6RA struct {
