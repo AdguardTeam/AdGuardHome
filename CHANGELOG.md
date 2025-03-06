@@ -20,9 +20,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Invalid ICMPv6 Router Advertisement messages ([#7547]).
+
 - Changes to global upstream DNS settings not applying to custom client upstream configurations.
+
 - The formatting of large numbers in the clients tables on the *Client settings* page ([#7583]).
 
+[#7547]: https://github.com/AdguardTeam/AdGuardHome/issues/7547
 [#7583]: https://github.com/AdguardTeam/AdGuardHome/issues/7583
 
 <!--
@@ -48,6 +52,7 @@ See also the [v0.107.57 GitHub milestone][ms-v0.107.57].
 ### Fixed
 
 - The hostnames of DHCP clients not being shown in the *Top clients* table on the dashboard ([#7627]).
+
 - The formatting of large numbers in the upstream table and query log ([#7590]).
 
 [#7590]: https://github.com/AdguardTeam/AdGuardHome/issues/7590
@@ -74,15 +79,12 @@ See also the [v0.107.56 GitHub milestone][ms-v0.107.56].
 
 ### Fixed
 
-- Invalid ICMPv6 Router Advertisement messages ([#7547]).
-
 - Request count link in the clients table ([#7513]).
 
 - The formatting of large numbers on the dashboard ([#7329]).
 
 [#7329]: https://github.com/AdguardTeam/AdGuardHome/issues/7329
 [#7513]: https://github.com/AdguardTeam/AdGuardHome/issues/7513
-[#7547]: https://github.com/AdguardTeam/AdGuardHome/issues/7547
 
 [go-1.23.5]: https://groups.google.com/g/golang-announce/c/sSaUhLA-2SI
 [ms-v0.107.56]: https://github.com/AdguardTeam/AdGuardHome/milestone/91?closed=1
