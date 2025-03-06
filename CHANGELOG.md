@@ -28,9 +28,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Invalid ICMPv6 Router Advertisement messages ([#7547]).
 - The formatting of large numbers on the dashboard ([#7329]).
 
 [#7329]: https://github.com/AdguardTeam/AdGuardHome/issues/7329
+[#7547]: https://github.com/AdguardTeam/AdGuardHome/issues/7547
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"slices"
 	"sync/atomic"
 	"time"
 
@@ -14,6 +15,9 @@ import (
 	"golang.org/x/net/ipv6"
 )
 
+// raCtx is a context for the Router Advertisement logic.
+//
+// TODO(e.burkov):  !! Improve docs
 type raCtx struct {
 	raAllowSLAAC     bool   // send RA packets with MO flags
 	raSLAACOnly      bool   // send RA packets without MO flags
@@ -50,10 +54,8 @@ func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
 		return nil, err
 	}
 
-	lla = make([]byte, len(hwa))
-	copy(lla, hwa)
-
-	return lla, nil
+	// TODO(e.burkov):  Check if it's safe to use the original slice.
+	return slices.Clone(hwa), nil
 }
 
 // Create an ICMPv6.RouterAdvertisement packet with all necessary options.
@@ -94,21 +96,19 @@ func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
 //
 // TODO(a.garipov): Replace with an existing implementation from a dependency.
 func createICMPv6RAPacket(params icmpv6RA) (data []byte, err error) {
-	var lla []byte
-	lla, err = hwAddrToLinkLayerAddr(params.sourceLinkLayerAddress)
+	lla, err := hwAddrToLinkLayerAddr(params.sourceLinkLayerAddress)
 	if err != nil {
 		return nil, fmt.Errorf("converting source link layer address: %w", err)
 	}
 
-	// Calculate length of source link layer address section
-	// This is based on calculation from radvd's add_ra_option_sllao function
-	sllao_bytes := len(lla) + 2
-	sllao_len := (sllao_bytes + 7) / 8
-	sllao_pad_bytes := sllao_len * 8 - sllao_bytes
+	// Calculate length of the source link-layer address option.
+	srcLLAOptLen := len(lla) + 2
+	srcLLAOptLenValue := (srcLLAOptLen + 7) / 8
+	srcLLAPadLen := srcLLAOptLenValue*8 - srcLLAOptLen
 
 	// TODO(a.garipov): Don't use a magic constant here.  Refactor the code
 	// and make all constants named instead of all those comments..
-	data = make([]byte, 80+sllao_bytes+sllao_pad_bytes)
+	data = make([]byte, 80+srcLLAOptLen+srcLLAPadLen)
 	i := 0
 
 	// ICMPv6:
@@ -172,12 +172,11 @@ func createICMPv6RAPacket(params icmpv6RA) (data []byte, err error) {
 
 	// Option=Source link-layer address:
 
-	data[i] = 1   // Type
-	data[i+1] = byte(sllao_len) // Length
+	data[i] = 1                         // Type
+	data[i+1] = byte(srcLLAOptLenValue) // Length
 	i += 2
-
 	copy(data[i:], lla) // Link-Layer Address[8/24]
-	i += len(lla) + sllao_pad_bytes
+	i += len(lla) + srcLLAPadLen
 
 	// Option=Recursive DNS Server:
 
