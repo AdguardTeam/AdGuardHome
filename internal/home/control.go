@@ -169,6 +169,7 @@ func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // registerControlHandlers sets up HTTP handlers for various control endpoints.
+// web must not be nil.
 func registerControlHandlers(web *webAPI) {
 	globalContext.mux.HandleFunc(
 		"/control/version.json",
