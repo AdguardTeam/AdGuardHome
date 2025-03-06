@@ -49,6 +49,8 @@ type Settings struct {
 
 	ServicesRules []ServiceEntry
 
+	// BlockedServices is the configuration of blocked services of a client.  It
+	// is nil if the client does not have any blocked services.
 	BlockedServices *BlockedServices
 
 	ProtectionEnabled   bool
@@ -255,7 +257,7 @@ type DNSFilter struct {
 	// applyClientFiltering retrieves persistent client information using the
 	// ClientID or client IP address, and applies it to the filtering settings.
 	//
-	// TODO(s.chzhen): !! Consider finding a better approach while taking an
+	// TODO(s.chzhen):  Consider finding a better approach while taking an
 	// import cycle into account.
 	applyClientFiltering func(clientID string, cliAddr netip.Addr, setts *Settings)
 

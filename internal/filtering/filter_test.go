@@ -1,175 +1,206 @@
-package filtering
+package filtering_test
 
 import (
-	"net"
-	"net/http"
-	"net/url"
-	"os"
-	"path/filepath"
+	"fmt"
+	"net/netip"
 	"testing"
-	"time"
 
-	"github.com/AdguardTeam/golibs/netutil/urlutil"
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// testTimeout is the common timeout for tests.
-const testTimeout = 5 * time.Second
+var testIPv4 = netip.AddrFrom4([4]byte{192, 0, 2, 1})
 
-// serveHTTPLocally starts a new HTTP server, that handles its index with h.  It
-// also gracefully closes the listener when the test under t finishes.
-func serveHTTPLocally(t *testing.T, h http.Handler) (urlStr string) {
-	t.Helper()
+// newStorage is a helper function that returns a client storage filled with
+// persistent clients.  It also generates a UID for each client.
+func newStorage(tb testing.TB, clients []*client.Persistent) (s *client.Storage) {
+	tb.Helper()
 
-	l, err := net.Listen("tcp", ":0")
-	require.NoError(t, err)
+	ctx := testutil.ContextWithTimeout(tb, testTimeout)
+	s, err := client.NewStorage(ctx, &client.StorageConfig{
+		Logger: slogutil.NewDiscardLogger(),
+	})
+	require.NoError(tb, err)
 
-	go func() { _ = http.Serve(l, h) }()
-	testutil.CleanupAndRequireSuccess(t, l.Close)
+	for _, p := range clients {
+		p.UID = client.MustNewUID()
+		require.NoError(tb, s.Add(ctx, p))
+	}
 
-	addr := l.Addr()
-	require.IsType(t, (*net.TCPAddr)(nil), addr)
-
-	return (&url.URL{
-		Scheme: urlutil.SchemeHTTP,
-		Host:   addr.String(),
-	}).String()
+	return s
 }
 
-// serveFiltersLocally is a helper that concurrently listens on a free port to
-// respond with fltContent.
-func serveFiltersLocally(t *testing.T, fltContent []byte) (urlStr string) {
-	t.Helper()
+func TestApplyAdditionalFiltering(t *testing.T) {
+	storage := newStorage(t, []*client.Persistent{{
+		Name:                "default",
+		ClientIDs:           []string{"default"},
+		UseOwnSettings:      false,
+		SafeSearchConf:      filtering.SafeSearchConfig{Enabled: false},
+		FilteringEnabled:    false,
+		SafeBrowsingEnabled: false,
+		ParentalEnabled:     false,
+	}, {
+		Name:                "custom_filtering",
+		ClientIDs:           []string{"custom_filtering"},
+		UseOwnSettings:      true,
+		SafeSearchConf:      filtering.SafeSearchConfig{Enabled: true},
+		FilteringEnabled:    true,
+		SafeBrowsingEnabled: true,
+		ParentalEnabled:     true,
+	}, {
+		Name:                "partial_custom_filtering",
+		ClientIDs:           []string{"partial_custom_filtering"},
+		UseOwnSettings:      true,
+		SafeSearchConf:      filtering.SafeSearchConfig{Enabled: true},
+		FilteringEnabled:    true,
+		SafeBrowsingEnabled: false,
+		ParentalEnabled:     false,
+	}})
 
-	return serveHTTPLocally(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		pt := testutil.PanicT{}
-
-		n, werr := w.Write(fltContent)
-		require.NoError(pt, werr)
-		require.Equal(pt, len(fltContent), n)
-	}))
-}
-
-// updateAndAssert loads filter content from its URL and then asserts rules
-// count.
-func updateAndAssert(
-	t *testing.T,
-	dnsFilter *DNSFilter,
-	f *FilterYAML,
-	wantUpd require.BoolAssertionFunc,
-	wantRulesCount int,
-) {
-	t.Helper()
-
-	ok, err := dnsFilter.update(f)
-	require.NoError(t, err)
-	wantUpd(t, ok)
-
-	assert.Equal(t, wantRulesCount, f.RulesCount)
-
-	dir, err := os.ReadDir(filepath.Join(dnsFilter.conf.DataDir, filterDir))
-	require.NoError(t, err)
-	require.FileExists(t, f.Path(dnsFilter.conf.DataDir))
-
-	assert.Len(t, dir, 1)
-
-	err = dnsFilter.load(f)
-	require.NoError(t, err)
-}
-
-// newDNSFilter returns a new properly initialized DNS filter instance.
-func newDNSFilter(t *testing.T) (d *DNSFilter) {
-	t.Helper()
-
-	dnsFilter, err := New(&Config{
-		DataDir: t.TempDir(),
-		HTTPClient: &http.Client{
-			Timeout: testTimeout,
+	dnsFilter, err := filtering.New(&filtering.Config{
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
 		},
+		ApplyClientFiltering: storage.ApplyClientFiltering,
 	}, nil)
 	require.NoError(t, err)
 
-	return dnsFilter
-}
+	testCases := []struct {
+		name                string
+		id                  string
+		FilteringEnabled    assert.BoolAssertionFunc
+		SafeSearchEnabled   assert.BoolAssertionFunc
+		SafeBrowsingEnabled assert.BoolAssertionFunc
+		ParentalEnabled     assert.BoolAssertionFunc
+	}{{
+		name:                "global_settings",
+		id:                  "default",
+		FilteringEnabled:    assert.False,
+		SafeSearchEnabled:   assert.False,
+		SafeBrowsingEnabled: assert.False,
+		ParentalEnabled:     assert.False,
+	}, {
+		name:                "custom_settings",
+		id:                  "custom_filtering",
+		FilteringEnabled:    assert.True,
+		SafeSearchEnabled:   assert.True,
+		SafeBrowsingEnabled: assert.True,
+		ParentalEnabled:     assert.True,
+	}, {
+		name:                "partial",
+		id:                  "partial_custom_filtering",
+		FilteringEnabled:    assert.True,
+		SafeSearchEnabled:   assert.True,
+		SafeBrowsingEnabled: assert.False,
+		ParentalEnabled:     assert.False,
+	}}
 
-func TestDNSFilter_Update(t *testing.T) {
-	const content = `||example.org^$third-party
-	# Inline comment example
-	||example.com^$third-party
-	0.0.0.0 example.com
-	`
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			setts := &filtering.Settings{}
 
-	fltContent := []byte(content)
-	addr := serveFiltersLocally(t, fltContent)
-	f := &FilterYAML{
-		URL:  addr,
-		Name: "test-filter",
+			dnsFilter.ApplyAdditionalFiltering(testIPv4, tc.id, setts)
+			tc.FilteringEnabled(t, setts.FilteringEnabled)
+			tc.SafeSearchEnabled(t, setts.SafeSearchEnabled)
+			tc.SafeBrowsingEnabled(t, setts.SafeBrowsingEnabled)
+			tc.ParentalEnabled(t, setts.ParentalEnabled)
+		})
 	}
-
-	dnsFilter := newDNSFilter(t)
-
-	t.Run("download", func(t *testing.T) {
-		updateAndAssert(t, dnsFilter, f, require.True, 3)
-	})
-
-	t.Run("refresh_idle", func(t *testing.T) {
-		updateAndAssert(t, dnsFilter, f, require.False, 3)
-	})
-
-	t.Run("refresh_actually", func(t *testing.T) {
-		anotherContent := []byte(`||example.com^`)
-		oldURL := f.URL
-
-		f.URL = serveFiltersLocally(t, anotherContent)
-		t.Cleanup(func() { f.URL = oldURL })
-
-		updateAndAssert(t, dnsFilter, f, require.True, 1)
-	})
-
-	t.Run("load_unload", func(t *testing.T) {
-		err := dnsFilter.load(f)
-		require.NoError(t, err)
-
-		f.unload()
-	})
 }
 
-func TestFilterYAML_EnsureName(t *testing.T) {
-	dnsFilter := newDNSFilter(t)
+func TestApplyAdditionalFiltering_blockedServices(t *testing.T) {
+	filtering.InitModule()
 
-	t.Run("title_custom", func(t *testing.T) {
-		content := []byte("! Title: src-title\n||example.com^")
+	var (
+		globalBlockedServices  = []string{"ok"}
+		clientBlockedServices  = []string{"ok", "mail_ru", "vk"}
+		invalidBlockedServices = []string{"invalid"}
+	)
 
-		f := &FilterYAML{
-			URL:  serveFiltersLocally(t, content),
-			Name: "user-custom",
-		}
+	storage := newStorage(t, []*client.Persistent{{
+		Name:                  "default",
+		ClientIDs:             []string{"default"},
+		UseOwnBlockedServices: false,
+	}, {
+		Name:      "no_services",
+		ClientIDs: []string{"no_services"},
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
+		},
+		UseOwnBlockedServices: true,
+	}, {
+		Name:      "services",
+		ClientIDs: []string{"services"},
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
+			IDs:      clientBlockedServices,
+		},
+		UseOwnBlockedServices: true,
+	}, {
+		Name:      "invalid_services",
+		ClientIDs: []string{"invalid_services"},
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
+			IDs:      invalidBlockedServices,
+		},
+		UseOwnBlockedServices: true,
+	}, {
+		Name:      "allow_all",
+		ClientIDs: []string{"allow_all"},
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.FullWeekly(),
+			IDs:      clientBlockedServices,
+		},
+		UseOwnBlockedServices: true,
+	}})
 
-		updateAndAssert(t, dnsFilter, f, require.True, 1)
-		assert.Equal(t, "user-custom", f.Name)
-	})
+	dnsFilter, err := filtering.New(&filtering.Config{
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
+			IDs:      globalBlockedServices,
+		},
+		ApplyClientFiltering: storage.ApplyClientFiltering,
+	}, nil)
+	require.NoError(t, err)
 
-	t.Run("title_from_src", func(t *testing.T) {
-		content := []byte("! Title: src-title\n||example.com^")
+	testCases := []struct {
+		name    string
+		id      string
+		wantLen int
+	}{{
+		name:    "global_settings",
+		id:      "default",
+		wantLen: len(globalBlockedServices),
+	}, {
+		name:    "custom_settings",
+		id:      "no_services",
+		wantLen: 0,
+	}, {
+		name:    "custom_settings_block",
+		id:      "services",
+		wantLen: len(clientBlockedServices),
+	}, {
+		name:    "custom_settings_invalid",
+		id:      "invalid_services",
+		wantLen: 0,
+	}, {
+		name:    "custom_settings_inactive_schedule",
+		id:      "allow_all",
+		wantLen: 0,
+	}}
 
-		f := &FilterYAML{
-			URL: serveFiltersLocally(t, content),
-		}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			setts := &filtering.Settings{}
 
-		updateAndAssert(t, dnsFilter, f, require.True, 1)
-		assert.Equal(t, "src-title", f.Name)
-	})
-
-	t.Run("title_default", func(t *testing.T) {
-		content := []byte("||example.com^")
-
-		f := &FilterYAML{
-			URL: serveFiltersLocally(t, content),
-		}
-
-		updateAndAssert(t, dnsFilter, f, require.True, 1)
-		assert.Equal(t, "List 0", f.Name)
-	})
+			fmt.Println(tc.name)
+			dnsFilter.ApplyAdditionalFiltering(testIPv4, tc.id, setts)
+			require.Len(t, setts.ServicesRules, tc.wantLen)
+		})
+	}
 }

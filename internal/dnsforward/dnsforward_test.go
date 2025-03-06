@@ -27,6 +27,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
+	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -122,6 +123,18 @@ func createTestServer(
 		ID:   0,
 		Data: []byte(rules),
 	}}
+
+	filterConf.BlockedServices = cmp.Or(filterConf.BlockedServices, &filtering.BlockedServices{
+		Schedule: schedule.EmptyWeekly(),
+	})
+
+	if filterConf.ApplyClientFiltering == nil {
+		filterConf.ApplyClientFiltering = func(
+			clientID string,
+			cliAddr netip.Addr,
+			setts *filtering.Settings) {
+		}
+	}
 
 	f, err := filtering.New(filterConf, filters)
 	require.NoError(t, err)
@@ -926,9 +939,6 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
-			FilterHandler: func(_ netip.Addr, _ string, settings *filtering.Settings) {
-				settings.FilteringEnabled = false
-			},
 			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
@@ -1020,10 +1030,14 @@ func TestBlockedCustomIP(t *testing.T) {
 	}}
 
 	f, err := filtering.New(&filtering.Config{
-		ProtectionEnabled: true,
-		BlockingMode:      filtering.BlockingModeCustomIP,
-		BlockingIPv4:      netip.Addr{},
-		BlockingIPv6:      netip.Addr{},
+		ProtectionEnabled:    true,
+		ApplyClientFiltering: func(cliID string, cliAddr netip.Addr, setts *filtering.Settings) {},
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
+		},
+		BlockingMode: filtering.BlockingModeCustomIP,
+		BlockingIPv4: netip.Addr{},
+		BlockingIPv6: netip.Addr{},
 	}, filters)
 	require.NoError(t, err)
 
@@ -1176,6 +1190,10 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 
 func TestRewrite(t *testing.T) {
 	c := &filtering.Config{
+		ApplyClientFiltering: func(cliID string, cliAddr netip.Addr, setts *filtering.Settings) {},
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
+		},
 		BlockingMode: filtering.BlockingModeDefault,
 		Rewrites: []*filtering.LegacyRewrite{{
 			Domain: "test.com",
@@ -1322,6 +1340,10 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	const localDomain = "lan"
 
 	flt, err := filtering.New(&filtering.Config{
+		ApplyClientFiltering: func(cliID string, cliAddr netip.Addr, setts *filtering.Settings) {},
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
+		},
 		BlockingMode: filtering.BlockingModeDefault,
 	}, nil)
 	require.NoError(t, err)
@@ -1411,6 +1433,10 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	})
 
 	flt, err := filtering.New(&filtering.Config{
+		ApplyClientFiltering: func(cliID string, cliAddr netip.Addr, setts *filtering.Settings) {},
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
+		},
 		BlockingMode: filtering.BlockingModeDefault,
 		EtcHosts:     hc,
 	}, nil)

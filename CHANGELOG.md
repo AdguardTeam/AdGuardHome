@@ -20,7 +20,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Added
 
-- Optional `client` and `qtype` parameters to the `GET /control/check_host` HTTP API.
+- Optional `client` and `qtype` URL query parameters to the `GET /control/check_host` HTTP API.
 
 ### Fixed
 

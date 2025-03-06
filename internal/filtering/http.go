@@ -444,13 +444,11 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 	setts.FilteringEnabled = true
 	setts.ProtectionEnabled = true
 
-	d.ApplyBlockedServices(setts)
-
 	addr, err := netip.ParseAddr(cli)
 	if err == nil {
-		d.applyAdditionalFiltering(addr, "", setts)
+		d.ApplyAdditionalFiltering(addr, "", setts)
 	} else if cli != "" {
-		d.applyAdditionalFiltering(netip.Addr{}, cli, setts)
+		d.ApplyAdditionalFiltering(netip.Addr{}, cli, setts)
 	}
 
 	result, err := d.CheckHost(host, qType, setts)

@@ -8,7 +8,7 @@
 
 ### API: Get filtering status of host: GET /control/check_host
 
-- Added optional "client" and "qtype" parameters.
+- Added optional "client" and "qtype" URL query parameters.
 
 ## v0.107.57: API changes
 

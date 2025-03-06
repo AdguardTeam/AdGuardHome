@@ -7,6 +7,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -45,8 +46,12 @@ func TestHandleDNSRequest_handleDNSRequest(t *testing.T) {
 	}}
 
 	f, err := filtering.New(&filtering.Config{
-		ProtectionEnabled: true,
-		BlockingMode:      filtering.BlockingModeDefault,
+		ProtectionEnabled:    true,
+		ApplyClientFiltering: func(cliID string, cliAddr netip.Addr, setts *filtering.Settings) {},
+		BlockedServices: &filtering.BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
+		},
+		BlockingMode: filtering.BlockingModeDefault,
 	}, filters)
 	require.NoError(t, err)
 	f.SetEnabled(true)

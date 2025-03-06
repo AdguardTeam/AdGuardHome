@@ -631,11 +631,12 @@ func (d *DNSFilter) enableFiltersLocked(async bool) {
 	d.SetEnabled(d.conf.FilteringEnabled)
 }
 
-// applyAdditionalFiltering adds additional client information and settings if
-// the client has them.
-func (d *DNSFilter) applyAdditionalFiltering(cliAddr netip.Addr, clientID string, setts *Settings) {
-	d.applyClientFiltering(clientID, cliAddr, setts)
+// ApplyAdditionalFiltering enhances the provided filtering settings with
+// blocked services and client-specific configurations.
+func (d *DNSFilter) ApplyAdditionalFiltering(cliAddr netip.Addr, clientID string, setts *Settings) {
+	d.ApplyBlockedServices(setts)
 
+	d.applyClientFiltering(clientID, cliAddr, setts)
 	if setts.BlockedServices != nil {
 		// TODO(e.burkov):  Get rid of this crutch.
 		setts.ServicesRules = nil
