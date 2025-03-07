@@ -18,6 +18,10 @@ See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.1][go-1.24.1].
+
 ### Fixed
 
 - Formatting of elapsed times less than one millisecond.
@@ -25,6 +29,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - The formatting of large numbers in the clients tables on the *Client settings* page ([#7583]).
 
 [#7583]: https://github.com/AdguardTeam/AdGuardHome/issues/7583
+
+[go-1.24.1]: https://groups.google.com/g/golang-announce/c/4t3lzH3I0eI
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

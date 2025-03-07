@@ -408,13 +408,12 @@ func (a *Auth) authRequired() bool {
 // bytes of sessionTokenSize length.
 //
 // TODO(e.burkov): Think about using byte array instead of byte slice.
-func newSessionToken() (data []byte, err error) {
+func newSessionToken() (data []byte) {
 	randData := make([]byte, sessionTokenSize)
 
-	_, err = rand.Read(randData)
-	if err != nil {
-		return nil, err
-	}
+	// Since Go 1.24, crypto/rand.Read doesn't return an error and crashes
+	// unrecoverably instead.
+	_, _ = rand.Read(randData)
 
-	return randData, nil
+	return randData
 }

@@ -212,7 +212,7 @@ func handleServiceControlAction(
 	chooseSystem()
 
 	action := opts.serviceControlAction
-	log.Info(version.Full())
+	log.Info("%s", version.Full())
 	log.Info("service: control action: %s", action)
 
 	if action == "reload" {

@@ -212,7 +212,6 @@ run_linter gocognit --over='10' \
 	./internal/rdns/ \
 	./internal/schedule/ \
 	./internal/stats/ \
-	./internal/tools/ \
 	./internal/version/ \
 	./internal/whois/ \
 	./scripts/ \
@@ -296,7 +295,6 @@ run_linter gosec --exclude G115 --quiet \
 	./internal/rdns/ \
 	./internal/schedule/ \
 	./internal/stats/ \
-	./internal/tools/ \
 	./internal/version/ \
 	./internal/whois/ \
 	;

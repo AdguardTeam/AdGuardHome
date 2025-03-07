@@ -239,7 +239,7 @@ func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 
 	err = validateAccessSet(list)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, err.Error())
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
