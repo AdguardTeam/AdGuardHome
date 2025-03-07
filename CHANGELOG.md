@@ -22,6 +22,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Invalid ICMPv6 Router Advertisement messages ([#7547]).
 
+- Formatting of elapsed times less than one millisecond.
+
 - Changes to global upstream DNS settings not applying to custom client upstream configurations.
 
 - The formatting of large numbers in the clients tables on the *Client settings* page ([#7583]).
