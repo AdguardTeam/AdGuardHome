@@ -69,10 +69,11 @@ type icmpv6RA struct {
 	mtu                         uint32
 }
 
-// hwAddrToLinkLayerAddr converts a hardware address into a form required by
-// RFC4861.  That is, a byte slice of length divisible by 8.
+// hwAddrToLinkLayerAddr clones the hardware address and returns it as a byte
+// slice suitable for the Source Link-Layer Address option in the ICMPv6
+// Router Advertisement packet.
 //
-// See https://tools.ietf.org/html/rfc4861#section-4.6.1.
+// TODO(e.burkov):  Check if it's safe to use the original slice.
 func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
 	err = netutil.ValidateMAC(hwa)
 	if err != nil {
@@ -81,7 +82,6 @@ func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
 		return nil, err
 	}
 
-	// TODO(e.burkov):  Check if it's safe to use the original slice.
 	return slices.Clone(hwa), nil
 }
 
@@ -125,16 +125,21 @@ func hwAddrToLinkLayerAddr(hwa net.HardwareAddr) (lla []byte, err error) {
 func createICMPv6RAPacket(params icmpv6RA) (data []byte, err error) {
 	lla, err := hwAddrToLinkLayerAddr(params.sourceLinkLayerAddress)
 	if err != nil {
-		return nil, fmt.Errorf("converting source link layer address: %w", err)
+		return nil, fmt.Errorf("converting source link-layer address: %w", err)
 	}
 
-	// Calculate length of the source link-layer address option.
+	// Calculate length of the source link-layer address option.  As per RFC
+	// 4861, section 4.6.1, the length should be in units of 8 octets, including
+	// the type and length fields.
+	//
+	// See https://datatracker.ietf.org/doc/html/rfc4861#section-4.6.1.
 	srcLLAOptLen := len(lla) + 2
+	// Make sure the value is rounded up to the nearest multiple of 8.
 	srcLLAOptLenValue := (srcLLAOptLen + 7) / 8
 	srcLLAPadLen := srcLLAOptLenValue*8 - srcLLAOptLen
 
 	// TODO(a.garipov): Don't use a magic constant here.  Refactor the code
-	// and make all constants named instead of all those comments..
+	// and make all constants named instead of all those comments.
 	data = make([]byte, 80+srcLLAOptLen+srcLLAPadLen)
 	i := 0
 
