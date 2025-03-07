@@ -21,7 +21,7 @@
     "type": "module",
     "dependencies": {
         "@nivo/line": "^0.64.0",
-        "axios": "^0.19.2",
+        "axios": "^1.8.2",
         "classnames": "^2.5.1",
         "clsx": "^2.1.1",
         "countries-and-timezones": "^3.6.0",
