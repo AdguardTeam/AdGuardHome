@@ -129,6 +129,10 @@ const getDisabledMessage = (time: any) => {
             return i18next.t('disable_notify_for_minutes', {
                 count: msToMinutes(DISABLE_PROTECTION_TIMINGS.TEN_MINUTES),
             });
+        case DISABLE_PROTECTION_TIMINGS.THIRTY_MINUTES:
+            return i18next.t('disable_notify_for_minutes', {
+                count: msToMinutes(DISABLE_PROTECTION_TIMINGS.THIRTY_MINUTES),
+            });
         case DISABLE_PROTECTION_TIMINGS.HOUR:
             return i18next.t('disable_notify_for_hours', { count: msToHours(DISABLE_PROTECTION_TIMINGS.HOUR) });
         case DISABLE_PROTECTION_TIMINGS.TOMORROW:
