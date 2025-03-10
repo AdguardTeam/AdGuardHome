@@ -21,7 +21,7 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
         control,
         formState: { isValid },
     } = useForm<LoginFormValues>({
-        mode: 'onBlur',
+        mode: 'onChange',
         defaultValues: {
             username: '',
             password: '',
