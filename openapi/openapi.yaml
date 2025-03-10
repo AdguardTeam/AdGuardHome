@@ -740,7 +740,7 @@
         'in': 'query'
         'description': 'Filter by host name'
         'required': true
-        'example': 'client_name'
+        'example': 'google.com'
         'schema':
           'type': 'string'
       - 'name': 'client'

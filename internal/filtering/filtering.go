@@ -86,6 +86,7 @@ type Config struct {
 
 	// ApplyClientFiltering retrieves persistent client information using the
 	// ClientID or client IP address, and applies it to the filtering settings.
+	// It must not be nil.
 	ApplyClientFiltering func(clientID string, cliAddr netip.Addr, setts *Settings) `yaml:"-"`
 
 	// BlockedServices is the configuration of blocked services.

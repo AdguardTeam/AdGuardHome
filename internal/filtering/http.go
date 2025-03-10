@@ -522,11 +522,11 @@ func stringToDNSType(str string) (qtype uint16, err error) {
 	}
 
 	val, err := strconv.ParseUint(str[len(typePref):], 10, 16)
-	if err == nil {
-		return uint16(val), nil
+	if err != nil {
+		return 0, errors.ErrBadEnumValue
 	}
 
-	return 0, errors.ErrBadEnumValue
+	return uint16(val), nil
 }
 
 // setProtectedBool sets the value of a boolean pointer under a lock.  l must
