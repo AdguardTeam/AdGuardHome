@@ -102,7 +102,9 @@ func (m *tlsManager) setCertFileTime() {
 }
 
 // start updates the configuration of t and starts it.
-func (m *tlsManager) start() {
+//
+// TODO(s.chzhen):  Use context.
+func (m *tlsManager) start(_ context.Context) {
 	m.registerWebHandlers()
 
 	m.confLock.Lock()
@@ -151,7 +153,7 @@ func (m *tlsManager) reload() {
 
 	m.certLastMod = fi.ModTime().UTC()
 
-	_ = reconfigureDNSServer()
+	_ = reconfigureDNSServer(m)
 
 	m.confLock.Lock()
 	tlsConf = m.conf
@@ -440,7 +442,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 
 	onConfigModified()
 
-	err = reconfigureDNSServer()
+	err = reconfigureDNSServer(m)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 

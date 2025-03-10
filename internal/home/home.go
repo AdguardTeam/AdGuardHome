@@ -57,7 +57,12 @@ type homeContext struct {
 	auth       *Auth                // HTTP authentication module
 	filters    *filtering.DNSFilter // DNS filtering module
 	web        *webAPI              // Web (HTTP, HTTPS) module
-	tls        *tlsManager          // TLS module
+
+	// tls contains the current configuration and state of TLS encryption.
+	//
+	// TODO(s.chzhen):  Remove once it is no longer called from different
+	// modules.  See [onConfigModified].
+	tls *tlsManager
 
 	// etcHosts contains IP-hostname mappings taken from the OS-specific hosts
 	// configuration files, for example /etc/hosts.
@@ -519,13 +524,15 @@ func isUpdateEnabled(ctx context.Context, l *slog.Logger, opts *options, customU
 	}
 }
 
-// initWeb initializes the web module.  upd and baseLogger must not be nil.
+// initWeb initializes the web module.  upd, baseLogger, and tlsMgr  must not be
+// nil.
 func initWeb(
 	ctx context.Context,
 	opts options,
 	clientBuildFS fs.FS,
 	upd *updater.Updater,
 	baseLogger *slog.Logger,
+	tlsMgr *tlsManager,
 	customURL bool,
 ) (web *webAPI, err error) {
 	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
@@ -548,6 +555,7 @@ func initWeb(
 		updater:    upd,
 		logger:     logger,
 		baseLogger: baseLogger,
+		tlsManager: tlsMgr,
 
 		clientFS: clientFS,
 
@@ -638,7 +646,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 
 	if !globalContext.firstRun {
 		// Save the updated config.
-		err = config.write()
+		err = config.write(nil)
 		fatalOnError(err)
 
 		if config.HTTPConfig.Pprof.Enabled {
@@ -656,25 +664,26 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	globalContext.auth, err = initUsers()
 	fatalOnError(err)
 
-	globalContext.tls, err = newTLSManager(config.TLS, config.DNS.ServePlainDNS)
+	tlsMgr, err := newTLSManager(config.TLS, config.DNS.ServePlainDNS)
 	if err != nil {
 		log.Error("initializing tls: %s", err)
 		onConfigModified()
 	}
 
-	sigHdlr.addTLSManager(globalContext.tls)
+	globalContext.tls = tlsMgr
+	sigHdlr.addTLSManager(tlsMgr)
 
-	globalContext.web, err = initWeb(ctx, opts, clientBuildFS, upd, slogLogger, customURL)
+	globalContext.web, err = initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, customURL)
 	fatalOnError(err)
 
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
 	fatalOnError(err)
 
 	if !globalContext.firstRun {
-		err = initDNS(slogLogger, statsDir, querylogDir)
+		err = initDNS(slogLogger, tlsMgr, statsDir, querylogDir)
 		fatalOnError(err)
 
-		globalContext.tls.start()
+		tlsMgr.start(ctx)
 
 		go func() {
 			startErr := startDNSServer()
@@ -807,31 +816,6 @@ func (c *configuration) anonymizer() (ipmut *aghnet.IPMut) {
 	return aghnet.NewIPMut(anonFunc)
 }
 
-// startMods initializes and starts the DNS server after installation.
-// baseLogger must not be nil.
-func startMods(baseLogger *slog.Logger) (err error) {
-	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
-	if err != nil {
-		return err
-	}
-
-	err = initDNS(baseLogger, statsDir, querylogDir)
-	if err != nil {
-		return err
-	}
-
-	globalContext.tls.start()
-
-	err = startDNSServer()
-	if err != nil {
-		closeDNSServer()
-
-		return err
-	}
-
-	return nil
-}
-
 // checkNetworkPermissions checks if the current user permissions are enough to
 // use the required networking functionality.
 func checkNetworkPermissions() {
@@ -950,10 +934,6 @@ func cleanup(ctx context.Context) {
 			log.Error("closing hosts container: %s", err)
 		}
 	}
-
-	if globalContext.tls != nil {
-		globalContext.tls = nil
-	}
 }
 
 // This function is called before application exits
@@ -1005,10 +985,12 @@ func printWebAddrs(proto, addr string, port uint16) {
 
 // printHTTPAddresses prints the IP addresses which user can use to access the
 // admin interface.  proto is either schemeHTTP or schemeHTTPS.
-func printHTTPAddresses(proto string) {
+//
+// TODO(s.chzhen):  Implement separate functions for HTTP and HTTPS.
+func printHTTPAddresses(proto string, tlsMgr *tlsManager) {
 	tlsConf := tlsConfigSettings{}
-	if globalContext.tls != nil {
-		globalContext.tls.WriteDiskConfig(&tlsConf)
+	if tlsMgr != nil {
+		tlsMgr.WriteDiskConfig(&tlsConf)
 	}
 
 	port := config.HTTPConfig.Address.Port()
@@ -1016,7 +998,6 @@ func printHTTPAddresses(proto string) {
 		port = tlsConf.PortHTTPS
 	}
 
-	// TODO(e.burkov): Inspect and perhaps merge with the previous condition.
 	if proto == urlutil.SchemeHTTPS && tlsConf.ServerName != "" {
 		printWebAddrs(proto, tlsConf.ServerName, tlsConf.PortHTTPS)
 

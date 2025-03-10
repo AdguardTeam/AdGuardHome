@@ -62,7 +62,7 @@ func (web *webAPI) handleVersionJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = resp.setAllowedToAutoUpdate()
+	err = resp.setAllowedToAutoUpdate(web.tlsManager)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
@@ -158,14 +158,14 @@ type versionResponse struct {
 }
 
 // setAllowedToAutoUpdate sets CanAutoUpdate to true if AdGuard Home is actually
-// allowed to perform an automatic update by the OS.
-func (vr *versionResponse) setAllowedToAutoUpdate() (err error) {
+// allowed to perform an automatic update by the OS.  tlsMgr must not be nil.
+func (vr *versionResponse) setAllowedToAutoUpdate(tlsMgr *tlsManager) (err error) {
 	if vr.CanAutoUpdate != aghalg.NBTrue {
 		return nil
 	}
 
 	tlsConf := &tlsConfigSettings{}
-	globalContext.tls.WriteDiskConfig(tlsConf)
+	tlsMgr.WriteDiskConfig(tlsConf)
 
 	canUpdate := true
 	if tlsConfUsesPrivilegedPorts(tlsConf) ||

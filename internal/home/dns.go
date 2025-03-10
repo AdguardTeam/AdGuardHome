@@ -39,16 +39,22 @@ const (
 
 // Called by other modules when configuration is changed
 func onConfigModified() {
-	err := config.write()
+	err := config.write(globalContext.tls)
 	if err != nil {
 		log.Error("writing config: %s", err)
 	}
 }
 
-// initDNS updates all the fields of the [globalContext] needed to initialize the DNS
-// server and initializes it at last.  It also must not be called unless
-// [config] and [globalContext] are initialized.  baseLogger must not be nil.
-func initDNS(baseLogger *slog.Logger, statsDir, querylogDir string) (err error) {
+// initDNS updates all the fields of the [globalContext] needed to initialize
+// the DNS server and initializes it at last.  It also must not be called unless
+// [config] and [globalContext] are initialized.  baseLogger and tlsMgr must not
+// be nil.
+func initDNS(
+	baseLogger *slog.Logger,
+	tlsMgr *tlsManager,
+	statsDir string,
+	querylogDir string,
+) (err error) {
 	anonymizer := config.anonymizer()
 
 	statsConf := stats.Config{
@@ -104,7 +110,7 @@ func initDNS(baseLogger *slog.Logger, statsDir, querylogDir string) (err error) 
 	}
 
 	tlsConf := &tlsConfigSettings{}
-	globalContext.tls.WriteDiskConfig(tlsConf)
+	tlsMgr.WriteDiskConfig(tlsConf)
 
 	return initDNSServer(
 		globalContext.filters,
@@ -357,16 +363,18 @@ func newDNSCryptConfig(
 	}, nil
 }
 
+// dnsEncryption contains different types of TLS encryption addresses.
 type dnsEncryption struct {
 	https string
 	tls   string
 	quic  string
 }
 
-func getDNSEncryption() (de dnsEncryption) {
+// getDNSEncryption returns the TLS encryption addresses that AdGuard Home
+// listens on.  tlsMgr must not be nil.
+func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
 	tlsConf := tlsConfigSettings{}
-
-	globalContext.tls.WriteDiskConfig(&tlsConf)
+	tlsMgr.WriteDiskConfig(&tlsConf)
 
 	if !tlsConf.Enabled || len(tlsConf.ServerName) == 0 {
 		return dnsEncryption{}
@@ -487,9 +495,11 @@ func startDNSServer() error {
 	return nil
 }
 
-func reconfigureDNSServer() (err error) {
+// reconfigureDNSServer updates the DNS server configuration using the provided
+// TLS settings.  tlsMgr must not be nil.
+func reconfigureDNSServer(tlsMgr *tlsManager) (err error) {
 	tlsConf := &tlsConfigSettings{}
-	globalContext.tls.WriteDiskConfig(tlsConf)
+	tlsMgr.WriteDiskConfig(tlsConf)
 
 	newConf, err := newServerConfig(
 		&config.DNS,
