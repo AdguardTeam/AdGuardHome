@@ -119,6 +119,9 @@ func emptyFilteringBlockedServices() (bsvc *filtering.BlockedServices) {
 	}
 }
 
+// createTestServer is a helper function that returns a properly initialized
+// *Server for use in tests, given the provided parameters.  It also populates
+// the filtering configuration with default parameters.
 func createTestServer(
 	t *testing.T,
 	filterConf *filtering.Config,
