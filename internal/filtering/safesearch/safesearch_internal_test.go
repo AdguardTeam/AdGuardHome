@@ -88,16 +88,25 @@ func TestSafeSearchCacheYandex(t *testing.T) {
 	assert.Equal(t, cachedValue.Rules[0].IP, yandexIP)
 }
 
-const googleHost = "www.google.com"
+func BenchmarkDefault_SearchHost(b *testing.B) {
+	const googleHost = "www.google.com"
 
-var dnsRewriteSink *rules.DNSRewrite
-
-func BenchmarkSafeSearch(b *testing.B) {
 	ss := newForTest(b, defaultSafeSearchConf)
 
-	for range b.N {
-		dnsRewriteSink = ss.searchHost(googleHost, testQType)
+	var rewrite *rules.DNSRewrite
+	b.ReportAllocs()
+	for b.Loop() {
+		rewrite = ss.searchHost(googleHost, testQType)
 	}
 
-	assert.Equal(b, "forcesafesearch.google.com", dnsRewriteSink.NewCNAME)
+	require.NotNil(b, rewrite)
+	assert.Equal(b, "forcesafesearch.google.com", rewrite.NewCNAME)
+
+	// Most recent results:
+	//
+	//	goos: darwin
+	//	goarch: amd64
+	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch
+	//	cpu: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
+	//	BenchmarkDefault_SearchHost-12    	  751882	      1604 ns/op	     129 B/op	       5 allocs/op
 }

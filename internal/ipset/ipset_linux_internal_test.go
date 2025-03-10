@@ -134,9 +134,6 @@ func TestManager_Add(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-// ipsetPropsSink is the typed sink for benchmark results.
-var ipsetPropsSink []props
-
 func BenchmarkManager_LookupHost(b *testing.B) {
 	propsLong := []props{{
 		name:   "example.com",
@@ -155,9 +152,13 @@ func BenchmarkManager_LookupHost(b *testing.B) {
 		},
 	}
 
+	var ipsetPropsSink []props
+
 	b.Run("long", func(b *testing.B) {
 		const name = "a.very.long.domain.name.inside.the.domain.example.com"
-		for range b.N {
+
+		b.ReportAllocs()
+		for b.Loop() {
 			ipsetPropsSink = m.lookupHost(name)
 		}
 
@@ -166,10 +167,21 @@ func BenchmarkManager_LookupHost(b *testing.B) {
 
 	b.Run("short", func(b *testing.B) {
 		const name = "example.net"
-		for range b.N {
+
+		b.ReportAllocs()
+		for b.Loop() {
 			ipsetPropsSink = m.lookupHost(name)
 		}
 
 		require.Equal(b, propsShort, ipsetPropsSink)
 	})
+
+	// Most recent results:
+	//
+	//	goos: linux
+	//	goarch: amd64
+	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/ipset
+	//	cpu: Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz
+	//	BenchmarkManager_LookupHost/long-8         	 6562424	       174.8 ns/op	       0 B/op	       0 allocs/op
+	//	BenchmarkManager_LookupHost/short-8        	100000000	        10.72 ns/op	       0 B/op	       0 allocs/op
 }

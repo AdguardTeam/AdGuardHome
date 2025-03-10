@@ -47,11 +47,7 @@ func (a *Auth) newCookie(req loginJSON, addr string) (c *http.Cookie, err error)
 		rateLimiter.remove(addr)
 	}
 
-	sess, err := newSessionToken()
-	if err != nil {
-		return nil, fmt.Errorf("generating token: %w", err)
-	}
-
+	sess := newSessionToken()
 	now := time.Now().UTC()
 
 	a.addSession(sess, &session{

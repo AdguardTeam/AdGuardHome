@@ -661,8 +661,6 @@ func TestClientSettings(t *testing.T) {
 	}
 }
 
-// Benchmarks.
-
 func BenchmarkSafeBrowsing(b *testing.B) {
 	d, setts := newForTest(b, &Config{
 		SafeBrowsingEnabled: true,
@@ -670,15 +668,26 @@ func BenchmarkSafeBrowsing(b *testing.B) {
 	}, nil)
 	b.Cleanup(d.Close)
 
-	for range b.N {
-		res, err := d.CheckHost(sbBlocked, dns.TypeA, setts)
-		require.NoError(b, err)
-
-		assert.Truef(b, res.IsFiltered, "expected hostname %q to match", sbBlocked)
+	var res Result
+	var err error
+	b.ReportAllocs()
+	for b.Loop() {
+		res, err = d.CheckHost(sbBlocked, dns.TypeA, setts)
 	}
+
+	require.NoError(b, err)
+	assert.Truef(b, res.IsFiltered, "expected hostname %q to match", sbBlocked)
+
+	// Most recent results:
+	//
+	//	goos: darwin
+	//	goarch: amd64
+	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/filtering
+	//	cpu: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
+	//	BenchmarkSafeBrowsing-12    	  358934	      2994 ns/op	    1304 B/op	      40 allocs/op
 }
 
-func BenchmarkSafeBrowsingParallel(b *testing.B) {
+func BenchmarkSafeBrowsing_parallel(b *testing.B) {
 	d, setts := newForTest(b, &Config{
 		SafeBrowsingEnabled: true,
 		SafeBrowsingChecker: newChecker(sbBlocked),
@@ -693,4 +702,12 @@ func BenchmarkSafeBrowsingParallel(b *testing.B) {
 			assert.Truef(b, res.IsFiltered, "expected hostname %q to match", sbBlocked)
 		}
 	})
+
+	// Most recent results:
+	//
+	//	goos: darwin
+	//	goarch: amd64
+	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/filtering
+	//	cpu: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
+	//	BenchmarkSafeBrowsing_parallel-12    	  507327	      2382 ns/op	    1352 B/op	      42 allocs/op
 }

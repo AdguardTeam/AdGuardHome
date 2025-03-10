@@ -283,6 +283,8 @@ func anonymizeIPSlow(ip net.IP) {
 	}
 }
 
+// TODO(e.burkov):  Investigate the results, it seems that the slow version
+// isn't that slow.
 func BenchmarkAnonymizeIP(b *testing.B) {
 	benchCases := []struct {
 		name string
@@ -320,7 +322,7 @@ func BenchmarkAnonymizeIP(b *testing.B) {
 		b.Run(bc.name, func(b *testing.B) {
 			b.ReportAllocs()
 
-			for range b.N {
+			for b.Loop() {
 				AnonymizeIP(bc.ip)
 			}
 
@@ -330,11 +332,26 @@ func BenchmarkAnonymizeIP(b *testing.B) {
 		b.Run(bc.name+"_slow", func(b *testing.B) {
 			b.ReportAllocs()
 
-			for range b.N {
+			for b.Loop() {
 				anonymizeIPSlow(bc.ip)
 			}
 
 			assert.Equal(b, bc.want, bc.ip)
 		})
 	}
+
+	// Most recent results:
+	//
+	//	goos: darwin
+	//	goarch: amd64
+	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/querylog
+	//	cpu: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
+	//	BenchmarkAnonymizeIP/v4-12              	426499675	         2.687 ns/op	       0 B/op	       0 allocs/op
+	//	BenchmarkAnonymizeIP/v4_slow-12         	510082938	         2.412 ns/op	       0 B/op	       0 allocs/op
+	//	BenchmarkAnonymizeIP/v4_mapped-12       	149121745	         7.992 ns/op	       0 B/op	       0 allocs/op
+	//	BenchmarkAnonymizeIP/v4_mapped_slow-12  	178441804	         6.698 ns/op	       0 B/op	       0 allocs/op
+	//	BenchmarkAnonymizeIP/v6-12              	346746447	         3.436 ns/op	       0 B/op	       0 allocs/op
+	//	BenchmarkAnonymizeIP/v6_slow-12         	419062732	         2.966 ns/op	       0 B/op	       0 allocs/op
+	//	BenchmarkAnonymizeIP/invalid-12         	316385232	         3.941 ns/op	       0 B/op	       0 allocs/op
+	//	BenchmarkAnonymizeIP/invalid_slow-12    	456531592	         2.760 ns/op	       0 B/op	       0 allocs/op
 }

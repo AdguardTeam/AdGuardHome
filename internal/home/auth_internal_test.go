@@ -1,8 +1,6 @@
 package home
 
 import (
-	"bytes"
-	"crypto/rand"
 	"encoding/hex"
 	"path/filepath"
 	"testing"
@@ -11,23 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestNewSessionToken(t *testing.T) {
-	// Successful case.
-	token, err := newSessionToken()
-	require.NoError(t, err)
-	assert.Len(t, token, sessionTokenSize)
-
-	// Break the rand.Reader.
-	prevReader := rand.Reader
-	t.Cleanup(func() { rand.Reader = prevReader })
-	rand.Reader = &bytes.Buffer{}
-
-	// Unsuccessful case.
-	token, err = newSessionToken()
-	require.Error(t, err)
-	assert.Empty(t, token)
-}
 
 func TestAuth(t *testing.T) {
 	dir := t.TempDir()
@@ -47,8 +28,7 @@ func TestAuth(t *testing.T) {
 	assert.Equal(t, checkSessionNotFound, a.checkSession("notfound"))
 	a.removeSession("notfound")
 
-	sess, err := newSessionToken()
-	require.NoError(t, err)
+	sess := newSessionToken()
 	sessStr := hex.EncodeToString(sess)
 
 	now := time.Now().UTC().Unix()

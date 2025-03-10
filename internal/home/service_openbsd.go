@@ -392,7 +392,7 @@ type sysLogger struct{}
 
 // Error implements service.Logger interface for sysLogger.
 func (sysLogger) Error(v ...any) error {
-	log.Error(fmt.Sprint(v...))
+	log.Error("%s", fmt.Sprint(v...))
 
 	return nil
 }
@@ -406,7 +406,7 @@ func (sysLogger) Warning(v ...any) error {
 
 // Info implements service.Logger interface for sysLogger.
 func (sysLogger) Info(v ...any) error {
-	log.Info(fmt.Sprint(v...))
+	log.Info("%s", fmt.Sprint(v...))
 
 	return nil
 }

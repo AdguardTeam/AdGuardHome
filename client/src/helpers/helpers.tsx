@@ -669,15 +669,17 @@ export const countClientsStatistics = (ids: any, autoClients: any) => {
  * @returns {string}
  */
 export const formatElapsedMs = (elapsedMs: string, t: (key: string) => string) => {
-    const parsedElapsedMs = parseInt(elapsedMs, 10);
+    const parsedElapsedMs = parseFloat(elapsedMs);
 
     if (Number.isNaN(parsedElapsedMs)) {
         return elapsedMs;
     }
 
-    const formattedMs = formatNumber(parsedElapsedMs);
+    const formattedValue = parsedElapsedMs < 1
+        ? parsedElapsedMs.toFixed(2)
+        : Math.floor(parsedElapsedMs).toString();
 
-    return `${formattedMs} ${t('milliseconds_abbreviation')}`;
+    return `${formattedValue} ${t('milliseconds_abbreviation')}`;
 };
 
 /**

@@ -314,7 +314,7 @@ const ClientsTable = ({
                 }
                 if (!content) {
                     return content;
-                }    
+                }
                 return <LogsSearchLink search={row.original.name}>{content}</LogsSearchLink>;
             },
         },

@@ -18,17 +18,20 @@ import (
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/testutil/faketime"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // newTestStorage is a helper function that returns initialized storage.
-func newTestStorage(tb testing.TB) (s *client.Storage) {
+func newTestStorage(tb testing.TB, clock timeutil.Clock) (s *client.Storage) {
 	tb.Helper()
 
 	ctx := testutil.ContextWithTimeout(tb, testTimeout)
 	s, err := client.NewStorage(ctx, &client.StorageConfig{
 		Logger: slogutil.NewDiscardLogger(),
+		Clock:  clock,
 	})
 	require.NoError(tb, err)
 
@@ -695,7 +698,7 @@ func TestStorage_Add(t *testing.T) {
 	}
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	s := newTestStorage(t)
+	s := newTestStorage(t, timeutil.SystemClock{})
 	tags := s.AllowedTags()
 	require.NotZero(t, len(tags))
 	require.True(t, slices.IsSorted(tags))
@@ -826,7 +829,7 @@ func TestStorage_RemoveByName(t *testing.T) {
 	}
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	s := newTestStorage(t)
+	s := newTestStorage(t, timeutil.SystemClock{})
 	err := s.Add(ctx, existingClient)
 	require.NoError(t, err)
 
@@ -851,7 +854,7 @@ func TestStorage_RemoveByName(t *testing.T) {
 	}
 
 	t.Run("duplicate_remove", func(t *testing.T) {
-		s = newTestStorage(t)
+		s = newTestStorage(t, timeutil.SystemClock{})
 		err = s.Add(ctx, existingClient)
 		require.NoError(t, err)
 
@@ -1308,7 +1311,16 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		Upstreams: []string{"192.0.2.0"},
 	}
 
-	s := newTestStorage(t)
+	date := time.Now()
+	clock := &faketime.Clock{
+		OnNow: func() (now time.Time) {
+			date = date.Add(time.Second)
+
+			return date
+		},
+	}
+
+	s := newTestStorage(t, clock)
 	s.UpdateCommonUpstreamConfig(&client.CommonUpstreamConfig{
 		UpstreamTimeout: testUpstreamTimeout,
 	})
