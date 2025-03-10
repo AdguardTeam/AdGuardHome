@@ -7,7 +7,7 @@ import PageTitle from '../ui/PageTitle';
 
 import Examples from './Examples';
 
-import Check from './Check';
+import Check, { FilteringCheckFormValues } from './Check';
 
 import { getTextareaCommentsHighlight, syncScroll } from '../../helpers/highlightTextareaComments';
 import { COMMENT_LINE_DEFAULT_TOKEN } from '../../helpers/constants';
@@ -48,8 +48,12 @@ class CustomRules extends Component<CustomRulesProps> {
         this.props.setRules(this.props.filtering.userRules);
     };
 
-    handleCheck = (values: any) => {
-        this.props.checkHost(values);
+    handleCheck = (values: FilteringCheckFormValues) => {
+        const filteredValues = Object.fromEntries(
+            Object.entries(values).filter(([_, value]) => value !== undefined && value !== '')
+        );
+
+        this.props.checkHost(filteredValues);
     };
 
     onScroll = (e: any) => syncScroll(e, this.ref);

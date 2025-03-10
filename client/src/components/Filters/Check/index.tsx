@@ -9,13 +9,17 @@ import Info from './Info';
 import { RootState } from '../../../initialState';
 import { validateRequiredValue } from '../../../helpers/validators';
 import { Input } from '../../ui/Controls/Input';
+import { DNS_RECORD_TYPES } from '../../../helpers/constants';
+import { Select } from '../../ui/Controls/Select';
 
-interface FormValues {
+export type FilteringCheckFormValues = {
     name: string;
+    client_id?: string;
+    dns_record_type?: string;
 }
 
 type Props = {
-    onSubmit?: (data: FormValues) => void;
+    onSubmit?: (data: FilteringCheckFormValues) => void;
 };
 
 const Check = ({ onSubmit }: Props) => {
@@ -27,11 +31,13 @@ const Check = ({ onSubmit }: Props) => {
     const {
         control,
         handleSubmit,
-        formState: { isDirty, isValid },
-    } = useForm<FormValues>({
+        formState: { isValid },
+    } = useForm<FilteringCheckFormValues>({
         mode: 'onBlur',
         defaultValues: {
             name: '',
+            client_id: '',
+            dns_record_type: DNS_RECORD_TYPES[0],
         },
     });
 
@@ -48,23 +54,55 @@ const Check = ({ onSubmit }: Props) => {
                                 <Input
                                     {...field}
                                     type="text"
+                                    label={t('check_hostname')}
                                     data-testid="check_domain_name"
-                                    placeholder={t('form_enter_host')}
+                                    placeholder="example.com"
                                     error={fieldState.error?.message}
-                                    rightAddon={
-                                        <span className="input-group-append">
-                                            <button
-                                                className="btn btn-success btn-standard btn-large"
-                                                type="submit"
-                                                data-testid="check_domain_submit"
-                                                disabled={!isDirty || !isValid || processingCheck}>
-                                                {t('check')}
-                                            </button>
-                                        </span>
-                                    }
                                 />
                             )}
                         />
+
+                        <Controller
+                            name="client_id"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <Input
+                                    {...field}
+                                    type="text"
+                                    data-testid="check_client_id"
+                                    label={t('check_client_id')}
+                                    placeholder={t('check_enter_client_id')}
+                                    error={fieldState.error?.message}
+                                />
+                            )}
+                        />
+
+                        <Controller
+                            name="dns_record_type"
+                            control={control}
+                            render={({ field }) => (
+                                <Select
+                                    {...field}
+                                    label={t('check_dns_record')}
+                                    data-testid="check_dns_record_type"
+                                >
+                                    {DNS_RECORD_TYPES.map((type) => (
+                                        <option key={type} value={type}>
+                                            {type}
+                                        </option>
+                                    ))}
+                                </Select>
+                            )}
+                        />
+
+                        <button
+                            className="btn btn-success btn-standard btn-large"
+                            type="submit"
+                            data-testid="check_domain_submit"
+                            disabled={!isValid || processingCheck}
+                        >
+                            {t('check')}
+                        </button>
 
                         {hostname && (
                             <>
