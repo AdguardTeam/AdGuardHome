@@ -1,14 +1,15 @@
-package aghalg
+package aghalg_test
 
 import (
 	"strings"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewSortedMap(t *testing.T) {
-	var m SortedMap[string, int]
+	var m aghalg.SortedMap[string, int]
 
 	letters := []string{}
 	for i := range 10 {
@@ -17,7 +18,7 @@ func TestNewSortedMap(t *testing.T) {
 	}
 
 	t.Run("create_and_fill", func(t *testing.T) {
-		m = NewSortedMap[string, int](strings.Compare)
+		m = aghalg.NewSortedMap[string, int](strings.Compare)
 
 		nums := []int{}
 		for i, r := range letters {
@@ -68,7 +69,7 @@ func TestNewSortedMap_nil(t *testing.T) {
 		val = "val"
 	)
 
-	var m SortedMap[string, string]
+	var m aghalg.SortedMap[string, string]
 
 	assert.Panics(t, func() {
 		m.Set(key, val)
