@@ -49,11 +49,7 @@ class CustomRules extends Component<CustomRulesProps> {
     };
 
     handleCheck = (values: FilteringCheckFormValues) => {
-        const filteredValues = Object.fromEntries(
-            Object.entries(values).filter(([_, value]) => value !== undefined && value !== '')
-        );
-
-        this.props.checkHost(filteredValues);
+        this.props.checkHost(values);
     };
 
     onScroll = (e: any) => syncScroll(e, this.ref);
