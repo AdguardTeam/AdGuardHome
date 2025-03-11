@@ -14,7 +14,7 @@ interface ModalProps {
     processingAdd: boolean;
     processingDelete: boolean;
     modalType: string;
-    currentRewrite?: object;
+    currentRewrite?: { answer: string, domain: string; };
 }
 
 const Modal = (props: ModalProps) => {
@@ -23,7 +23,6 @@ const Modal = (props: ModalProps) => {
         handleSubmit,
         toggleRewritesModal,
         processingAdd,
-        processingDelete,
         modalType,
         currentRewrite,
     } = props;
@@ -50,11 +49,10 @@ const Modal = (props: ModalProps) => {
                 </div>
 
                 <Form
-                    initialValues={{ ...currentRewrite }}
                     onSubmit={handleSubmit}
                     toggleRewritesModal={toggleRewritesModal}
                     processingAdd={processingAdd}
-                    processingDelete={processingDelete}
+                    currentRewrite={currentRewrite}
                 />
             </div>
         </ReactModal>

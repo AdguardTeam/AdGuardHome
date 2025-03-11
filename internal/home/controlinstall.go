@@ -428,20 +428,20 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	curConfig := &configuration{}
 	copyInstallSettings(curConfig, config)
 
-	Context.firstRun = false
+	globalContext.firstRun = false
 	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
 	config.Filtering.SafeFSPatterns = []string{
-		filepath.Join(Context.workDir, userFilterDataDir, "*"),
+		filepath.Join(globalContext.workDir, userFilterDataDir, "*"),
 	}
 	config.HTTPConfig.Address = netip.AddrPortFrom(req.Web.IP, req.Web.Port)
 
 	u := &webUser{
 		Name: req.Username,
 	}
-	err = Context.auth.addUser(u, req.Password)
+	err = globalContext.auth.addUser(u, req.Password)
 	if err != nil {
-		Context.firstRun = true
+		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)
 		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "%s", err)
 
@@ -452,18 +452,18 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	// moment we'll allow setting up TLS in the initial configuration or the
 	// configuration itself will use HTTPS protocol, because the underlying
 	// functions potentially restart the HTTPS server.
-	err = startMods(web.baseLogger)
+	err = startMods(r.Context(), web.baseLogger, web.tlsManager)
 	if err != nil {
-		Context.firstRun = true
+		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)
 		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 
 		return
 	}
 
-	err = config.write()
+	err = config.write(web.tlsManager)
 	if err != nil {
-		Context.firstRun = true
+		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)
 		aghhttp.Error(r, w, http.StatusInternalServerError, "Couldn't write config: %s", err)
 
@@ -527,8 +527,33 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 	return req, restartHTTP, err
 }
 
+// startMods initializes and starts the DNS server after installation.
+// baseLogger and tlsMgr must not be nil.
+func startMods(ctx context.Context, baseLogger *slog.Logger, tlsMgr *tlsManager) (err error) {
+	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
+	if err != nil {
+		return err
+	}
+
+	err = initDNS(baseLogger, tlsMgr, statsDir, querylogDir)
+	if err != nil {
+		return err
+	}
+
+	tlsMgr.start(ctx)
+
+	err = startDNSServer()
+	if err != nil {
+		closeDNSServer()
+
+		return err
+	}
+
+	return nil
+}
+
 func (web *webAPI) registerInstallHandlers() {
-	Context.mux.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(web.handleInstallGetAddresses)))
-	Context.mux.HandleFunc("/control/install/check_config", preInstall(ensurePOST(web.handleInstallCheckConfig)))
-	Context.mux.HandleFunc("/control/install/configure", preInstall(ensurePOST(web.handleInstallConfigure)))
+	globalContext.mux.HandleFunc("/control/install/get_addresses", preInstall(ensureGET(web.handleInstallGetAddresses)))
+	globalContext.mux.HandleFunc("/control/install/check_config", preInstall(ensurePOST(web.handleInstallCheckConfig)))
+	globalContext.mux.HandleFunc("/control/install/configure", preInstall(ensurePOST(web.handleInstallConfigure)))
 }

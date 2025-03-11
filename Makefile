@@ -27,13 +27,12 @@ DIST_DIR = dist
 GOAMD64 = v1
 GOPROXY = https://proxy.golang.org|direct
 GOTELEMETRY = off
-GOTOOLCHAIN = go1.23.6
+GOTOOLCHAIN = go1.24.1
 GPG_KEY = devteam@adguard.com
 GPG_KEY_PASSPHRASE = not-a-real-password
 NPM = npm
 NPM_FLAGS = --prefix $(CLIENT_DIR)
-NPM_INSTALL_FLAGS = $(NPM_FLAGS) --quiet --no-progress --ignore-engines\
-	--ignore-optional --ignore-platform --ignore-scripts
+NPM_INSTALL_FLAGS = $(NPM_FLAGS) --quiet --no-progress
 RACE = 0
 REVISION = $${REVISION:-$$(git rev-parse --short HEAD)}
 SIGN = 1
@@ -105,10 +104,12 @@ build-docker: ; $(ENV) "$(SHELL)" ./scripts/make/build-docker.sh
 build-release: $(BUILD_RELEASE_DEPS_$(FRONTEND_PREBUILT))
 	$(ENV) "$(SHELL)" ./scripts/make/build-release.sh
 
-js-build: ; $(NPM) $(NPM_FLAGS) run build-prod
-js-deps:  ; $(NPM) $(NPM_INSTALL_FLAGS) ci
-js-lint:  ; $(NPM) $(NPM_FLAGS) run lint
-js-test:  ; $(NPM) $(NPM_FLAGS) run test
+js-build:     ; $(NPM) $(NPM_FLAGS) run build-prod
+js-deps:      ; $(NPM) $(NPM_INSTALL_FLAGS) ci
+js-typecheck: ; $(NPM) $(NPM_FLAGS) run typecheck
+js-lint:      ; $(NPM) $(NPM_FLAGS) run lint
+js-test:      ; $(NPM) $(NPM_FLAGS) run test
+js-test-e2e:  ; $(NPM) $(NPM_FLAGS) run test:e2e
 
 go-bench:     ; $(ENV) "$(SHELL)"    ./scripts/make/go-bench.sh
 go-build:     ; $(ENV) "$(SHELL)"    ./scripts/make/go-build.sh

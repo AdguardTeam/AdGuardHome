@@ -356,7 +356,7 @@ func (a *Auth) getCurrentUser(r *http.Request) (u webUser) {
 		// There's no Cookie, check Basic authentication.
 		user, pass, ok := r.BasicAuth()
 		if ok {
-			u, _ = Context.auth.findUser(user, pass)
+			u, _ = globalContext.auth.findUser(user, pass)
 
 			return u
 		}
@@ -408,13 +408,12 @@ func (a *Auth) authRequired() bool {
 // bytes of sessionTokenSize length.
 //
 // TODO(e.burkov): Think about using byte array instead of byte slice.
-func newSessionToken() (data []byte, err error) {
+func newSessionToken() (data []byte) {
 	randData := make([]byte, sessionTokenSize)
 
-	_, err = rand.Read(randData)
-	if err != nil {
-		return nil, err
-	}
+	// Since Go 1.24, crypto/rand.Read doesn't return an error and crashes
+	// unrecoverably instead.
+	_, _ = rand.Read(randData)
 
-	return randData, nil
+	return randData
 }

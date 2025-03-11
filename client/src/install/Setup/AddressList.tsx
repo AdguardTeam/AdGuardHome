@@ -2,7 +2,7 @@ import React from 'react';
 
 import { getIpList, getDnsAddress, getWebAddress } from '../../helpers/helpers';
 import { ALL_INTERFACES_IP } from '../../helpers/constants';
-import { DhcpInterface } from '../../initialState';
+import { InstallInterface } from '../../initialState';
 
 interface renderItemProps {
     ip: string;
@@ -28,7 +28,7 @@ const renderItem = ({ ip, port, isDns }: renderItemProps) => {
 };
 
 interface AddressListProps {
-    interfaces: DhcpInterface[];
+    interfaces: InstallInterface[];
     address: string;
     port: number;
     isDns?: boolean;

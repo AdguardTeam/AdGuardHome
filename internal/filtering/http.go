@@ -244,7 +244,7 @@ func (d *DNSFilter) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 
 	restart, err := d.filterSetProperties(fj.URL, filt, fj.Whitelist)
 	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, err.Error())
+		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}

@@ -19,7 +19,6 @@ import {
     CHECK_TIMEOUT,
     STATUS_RESPONSE,
     SETTINGS_NAMES,
-    FORM_NAME,
     MANUAL_UPDATE_LINK,
     DISABLE_PROTECTION_TIMINGS,
 } from '../helpers/constants';
@@ -424,10 +423,9 @@ export const testUpstream =
         }
     };
 
-export const testUpstreamWithFormValues = () => async (dispatch: any, getState: any) => {
+export const testUpstreamWithFormValues = (formValues: any) => async (dispatch: any, getState: any) => {
     const { upstream_dns_file } = getState().dnsConfig;
-    const { bootstrap_dns, upstream_dns, local_ptr_upstreams, fallback_dns } =
-        getState().form[FORM_NAME.UPSTREAM].values;
+    const { bootstrap_dns, upstream_dns, local_ptr_upstreams, fallback_dns } = formValues;
 
     return dispatch(
         testUpstream(
@@ -512,16 +510,15 @@ export const findActiveDhcpRequest = createAction('FIND_ACTIVE_DHCP_REQUEST');
 export const findActiveDhcpSuccess = createAction('FIND_ACTIVE_DHCP_SUCCESS');
 export const findActiveDhcpFailure = createAction('FIND_ACTIVE_DHCP_FAILURE');
 
-export const findActiveDhcp = (name: any) => async (dispatch: any, getState: any) => {
+export const findActiveDhcp = (selectedInterface: any) => async (dispatch: any, getState: any) => {
     dispatch(findActiveDhcpRequest());
     try {
         const req = {
-            interface: name,
+            interface: selectedInterface,
         };
         const activeDhcp = await apiClient.findActiveDhcp(req);
         dispatch(findActiveDhcpSuccess(activeDhcp));
         const { check, interface_name, interfaces } = getState().dhcp;
-        const selectedInterface = getState().form[FORM_NAME.DHCP_INTERFACES].values.interface_name;
         const v4 = check?.v4 ?? { static_ip: {}, other_server: {} };
         const v6 = check?.v6 ?? { other_server: {} };
 

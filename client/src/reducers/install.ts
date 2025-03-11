@@ -2,23 +2,21 @@ import { combineReducers } from 'redux';
 
 import { handleActions } from 'redux-actions';
 
-import { reducer as formReducer } from 'redux-form';
-
 import * as actions from '../actions/install';
 import toasts from './toasts';
 import { ALL_INTERFACES_IP, INSTALL_FIRST_STEP, STANDARD_DNS_PORT, STANDARD_WEB_PORT } from '../helpers/constants';
 
 const install = handleActions(
     {
-        [actions.getDefaultAddressesRequest.toString().toString()]: (state: any) => ({
+        [actions.getDefaultAddressesRequest.toString()]: (state: any) => ({
             ...state,
             processingDefault: true,
         }),
-        [actions.getDefaultAddressesFailure.toString().toString()]: (state: any) => ({
+        [actions.getDefaultAddressesFailure.toString()]: (state: any) => ({
             ...state,
             processingDefault: false,
         }),
-        [actions.getDefaultAddressesSuccess.toString().toString()]: (state: any, { payload }: any) => {
+        [actions.getDefaultAddressesSuccess.toString()]: (state: any, { payload }: any) => {
             const { interfaces, version } = payload;
             const web = { ...state.web, port: payload.web_port };
             const dns = { ...state.dns, port: payload.dns_port };
@@ -35,37 +33,37 @@ const install = handleActions(
             return newState;
         },
 
-        [actions.nextStep.toString().toString()]: (state: any) => ({
+        [actions.nextStep.toString()]: (state: any) => ({
             ...state,
             step: state.step + 1,
         }),
-        [actions.prevStep.toString().toString()]: (state: any) => ({
+        [actions.prevStep.toString()]: (state: any) => ({
             ...state,
             step: state.step - 1,
         }),
 
-        [actions.setAllSettingsRequest.toString().toString()]: (state: any) => ({
+        [actions.setAllSettingsRequest.toString()]: (state: any) => ({
             ...state,
             processingSubmit: true,
         }),
-        [actions.setAllSettingsFailure.toString().toString()]: (state: any) => ({
+        [actions.setAllSettingsFailure.toString()]: (state: any) => ({
             ...state,
             processingSubmit: false,
         }),
-        [actions.setAllSettingsSuccess.toString().toString()]: (state: any) => ({
+        [actions.setAllSettingsSuccess.toString()]: (state: any) => ({
             ...state,
             processingSubmit: false,
         }),
 
-        [actions.checkConfigRequest.toString().toString()]: (state: any) => ({
+        [actions.checkConfigRequest.toString()]: (state: any) => ({
             ...state,
             processingCheck: true,
         }),
-        [actions.checkConfigFailure.toString().toString()]: (state: any) => ({
+        [actions.checkConfigFailure.toString()]: (state: any) => ({
             ...state,
             processingCheck: false,
         }),
-        [actions.checkConfigSuccess.toString().toString()]: (state: any, { payload }: any) => {
+        [actions.checkConfigSuccess.toString()]: (state: any, { payload }: any) => {
             const web = { ...state.web, ...payload.web };
             const dns = { ...state.dns, ...payload.dns };
             const staticIp = { ...state.staticIp, ...payload.static_ip };
@@ -110,5 +108,4 @@ const install = handleActions(
 export default combineReducers({
     install,
     toasts,
-    form: formReducer,
 });

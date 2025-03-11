@@ -28,7 +28,7 @@ import {
     THEMES,
 } from './constants';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from './localStorageHelper';
-import { DhcpInterface } from '../initialState';
+import { DhcpInterface, InstallInterface } from '../initialState';
 
 /**
  * @param time {string} The time to format
@@ -217,9 +217,9 @@ export const getInterfaceIp = (option: any) => {
     return interfaceIP;
 };
 
-export const getIpList = (interfaces: DhcpInterface[]) =>
+export const getIpList = (interfaces: InstallInterface[]) =>
     Object.values(interfaces)
-        .reduce((acc: string[], curr: DhcpInterface) => acc.concat(curr.ip_addresses), [] as string[])
+        .reduce((acc: string[], curr: InstallInterface) => acc.concat(curr.ip_addresses), [] as string[])
         .sort();
 
 /**
@@ -468,8 +468,6 @@ export const getParamsForClientsSearch = (data: any, param: any, additionalParam
  * @param {function} [normalizeOnBlur]
  * @returns {function}
  */
-export const createOnBlurHandler = (event: any, input: any, normalizeOnBlur: any) =>
-    normalizeOnBlur ? input.onBlur(normalizeOnBlur(event.target.value)) : input.onBlur();
 
 export const checkFiltered = (reason: any) => reason.indexOf(FILTERED) === 0;
 export const checkRewrite = (reason: any) => reason === FILTERED_STATUS.REWRITE;
@@ -671,15 +669,17 @@ export const countClientsStatistics = (ids: any, autoClients: any) => {
  * @returns {string}
  */
 export const formatElapsedMs = (elapsedMs: string, t: (key: string) => string) => {
-    const parsedElapsedMs = parseInt(elapsedMs, 10);
+    const parsedElapsedMs = parseFloat(elapsedMs);
 
     if (Number.isNaN(parsedElapsedMs)) {
         return elapsedMs;
     }
 
-    const formattedMs = formatNumber(parsedElapsedMs);
+    const formattedValue = parsedElapsedMs < 1
+        ? parsedElapsedMs.toFixed(2)
+        : Math.floor(parsedElapsedMs).toString();
 
-    return `${formattedMs} ${t('milliseconds_abbreviation')}`;
+    return `${formattedValue} ${t('milliseconds_abbreviation')}`;
 };
 
 /**

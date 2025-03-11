@@ -5,8 +5,8 @@
     'key': 'AHBRTSPECS'
     'name': 'AdGuard Home - Build and run tests'
 'variables':
-    'dockerFrontend': 'adguard/home-js-builder:2.0'
-    'dockerGo': 'adguard/go-builder:1.23.6--1'
+    'dockerFrontend': 'adguard/home-js-builder:2.1-bullseye'
+    'dockerGo': 'adguard/go-builder:1.24.1--1'
     'channel': 'development'
 
 'stages':
@@ -29,6 +29,12 @@
         jobs:
           - 'Artifact'
 
+  - 'E2E':
+      manual: false
+      final: false
+      jobs:
+        - 'Test e2e'
+
 'Test frontend':
     'docker':
         'image': '${bamboo.dockerFrontend}'
@@ -48,7 +54,7 @@
 
                 set -e -f -u -x
 
-                make VERBOSE=1 js-deps js-lint js-test
+                make VERBOSE=1 js-deps js-typecheck js-lint js-test
     'final-tasks':
       - 'clean'
     'requirements':
@@ -165,6 +171,38 @@
     'requirements':
       - 'adg-docker': 'true'
 
+'Test e2e':
+    'artifact-subscriptions':
+      - 'artifact': 'AdGuardHome_linux_amd64'
+      - 'artifact': 'AdGuardHome frontend'
+    'docker':
+        'image': '${bamboo.dockerFrontend}'
+        'volumes':
+            '${system.YARN_DIR}': '${bamboo.cacheYarn}'
+    'key': 'E2ETEST'
+    'other':
+        'clean-working-dir': true
+    'tasks':
+      - 'checkout':
+            'force-clean-build': true
+      - 'script':
+            'interpreter': 'SHELL'
+            'scripts':
+              - |
+                #!/bin/sh
+
+                set -e -f -u -x
+
+                export CI=true
+
+                tar -xzf dist/AdGuardHome_linux_amd64.tar.gz -C /tmp
+
+                mv /tmp/AdGuardHome/AdGuardHome ./AdGuardHome
+
+                make VERBOSE=1 js-deps js-test-e2e
+    'requirements':
+      - 'adg-docker': 'true'
+
 'branches':
     'create': 'for-pull-request'
     'delete':
@@ -195,6 +233,6 @@
         # Set the default release channel on the release branch to beta, as we
         # may need to build a few of these.
         'variables':
-            'dockerFrontend': 'adguard/home-js-builder:2.0'
-            'dockerGo': 'adguard/go-builder:1.23.6--1'
+            'dockerFrontend': 'adguard/home-js-builder:2.1-bullseye'
+            'dockerGo': 'adguard/go-builder:1.24.1--1'
             'channel': 'candidate'

@@ -47,11 +47,7 @@ func (a *Auth) newCookie(req loginJSON, addr string) (c *http.Cookie, err error)
 		rateLimiter.remove(addr)
 	}
 
-	sess, err := newSessionToken()
-	if err != nil {
-		return nil, fmt.Errorf("generating token: %w", err)
-	}
-
+	sess := newSessionToken()
 	now := time.Now().UTC()
 
 	a.addSession(sess, &session{
@@ -155,7 +151,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if rateLimiter := Context.auth.rateLimiter; rateLimiter != nil {
+	if rateLimiter := globalContext.auth.rateLimiter; rateLimiter != nil {
 		if left := rateLimiter.check(remoteIP); left > 0 {
 			w.Header().Set(httphdr.RetryAfter, strconv.Itoa(int(left.Seconds())))
 			writeErrorWithIP(
@@ -176,10 +172,10 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		log.Error("auth: getting real ip from request with remote ip %s: %s", remoteIP, err)
 	}
 
-	cookie, err := Context.auth.newCookie(req, remoteIP)
+	cookie, err := globalContext.auth.newCookie(req, remoteIP)
 	if err != nil {
 		logIP := remoteIP
-		if Context.auth.trustedProxies.Contains(ip.Unmap()) {
+		if globalContext.auth.trustedProxies.Contains(ip.Unmap()) {
 			logIP = ip.String()
 		}
 
@@ -213,7 +209,7 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	Context.auth.removeSession(c.Value)
+	globalContext.auth.removeSession(c.Value)
 
 	c = &http.Cookie{
 		Name:    sessionCookieName,
@@ -232,7 +228,7 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 
 // RegisterAuthHandlers - register handlers
 func RegisterAuthHandlers() {
-	Context.mux.Handle("/control/login", postInstallHandler(ensureHandler(http.MethodPost, handleLogin)))
+	globalContext.mux.Handle("/control/login", postInstallHandler(ensureHandler(http.MethodPost, handleLogin)))
 	httpRegister(http.MethodGet, "/control/logout", handleLogout)
 }
 
@@ -254,13 +250,13 @@ func optionalAuthThird(w http.ResponseWriter, r *http.Request) (mustAuth bool) {
 		// Check Basic authentication.
 		user, pass, hasBasic := r.BasicAuth()
 		if hasBasic {
-			_, isAuthenticated = Context.auth.findUser(user, pass)
+			_, isAuthenticated = globalContext.auth.findUser(user, pass)
 			if !isAuthenticated {
 				log.Info("%s: invalid basic authorization value", pref)
 			}
 		}
 	} else {
-		res := Context.auth.checkSession(cookie.Value)
+		res := globalContext.auth.checkSession(cookie.Value)
 		isAuthenticated = res == checkSessionOK
 		if !isAuthenticated {
 			log.Debug("%s: invalid cookie value: %q", pref, cookie)
@@ -294,12 +290,12 @@ func optionalAuth(
 ) (wrapped func(http.ResponseWriter, *http.Request)) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		p := r.URL.Path
-		authRequired := Context.auth != nil && Context.auth.authRequired()
+		authRequired := globalContext.auth != nil && globalContext.auth.authRequired()
 		if p == "/login.html" {
 			cookie, err := r.Cookie(sessionCookieName)
 			if authRequired && err == nil {
 				// Redirect to the dashboard if already authenticated.
-				res := Context.auth.checkSession(cookie.Value)
+				res := globalContext.auth.checkSession(cookie.Value)
 				if res == checkSessionOK {
 					http.Redirect(w, r, "", http.StatusFound)
 
