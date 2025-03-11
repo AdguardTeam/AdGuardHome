@@ -18,6 +18,10 @@ See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- Client id and DNS record type to the filtering check form.
+
 ### Security
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.1][go-1.24.1].
