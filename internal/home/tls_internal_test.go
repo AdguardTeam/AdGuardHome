@@ -1,11 +1,21 @@
 package home
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
+	"math/big"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var testCertChainData = []byte(`-----BEGIN CERTIFICATE-----
@@ -74,4 +84,104 @@ func TestValidateCertificates(t *testing.T) {
 		assert.Equal(t, notAfter, status.NotAfter)
 		assert.True(t, status.ValidPair)
 	})
+}
+
+// newCertAndKey is a helper function that generates certificate and key.
+func newCertAndKey(tb testing.TB, n int64) (certDER []byte, key *rsa.PrivateKey) {
+	tb.Helper()
+
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(tb, err)
+
+	certTmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(n),
+	}
+
+	certDER, err = x509.CreateCertificate(rand.Reader, certTmpl, certTmpl, &key.PublicKey, key)
+	require.NoError(tb, err)
+
+	return certDER, key
+}
+
+// writeCertAndKey is a helper function that writes certificate and key to
+// specified paths.
+func writeCertAndKey(
+	tb testing.TB,
+	certDER []byte,
+	certPath string,
+	key *rsa.PrivateKey,
+	keyPath string,
+) {
+	tb.Helper()
+
+	certFile, err := os.OpenFile(certPath, os.O_WRONLY|os.O_CREATE, 0o600)
+	require.NoError(tb, err)
+
+	defer func() {
+		err = certFile.Close()
+		require.NoError(tb, err)
+	}()
+
+	err = pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: certDER})
+	require.NoError(tb, err)
+
+	keyFile, err := os.OpenFile(keyPath, os.O_WRONLY|os.O_CREATE, 0o600)
+	require.NoError(tb, err)
+
+	defer func() {
+		err = keyFile.Close()
+		require.NoError(tb, err)
+	}()
+
+	err = pem.Encode(keyFile, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	})
+	require.NoError(tb, err)
+}
+
+// assertCertSerialNumber is a helper function that checks serial number of the
+// TLS certificate.
+func assertCertSerialNumber(tb testing.TB, conf *tlsConfigSettings, wantSN int64) {
+	tb.Helper()
+
+	cert, err := tls.X509KeyPair(conf.CertificateChainData, conf.PrivateKeyData)
+	require.NoError(tb, err)
+
+	assert.Equal(tb, wantSN, cert.Leaf.SerialNumber.Int64())
+}
+
+func TestTLSManager_Reload(t *testing.T) {
+	const (
+		snBefore int64 = 1
+		snAfter  int64 = 2
+	)
+
+	tmpDir := t.TempDir()
+	certPath := filepath.Join(tmpDir, "cert.pem")
+	keyPath := filepath.Join(tmpDir, "key.pem")
+
+	certDER, key := newCertAndKey(t, snBefore)
+	writeCertAndKey(t, certDER, certPath, key, keyPath)
+
+	m, err := newTLSManager(tlsConfigSettings{
+		Enabled: true,
+		TLSConfig: dnsforward.TLSConfig{
+			CertificatePath: certPath,
+			PrivateKeyPath:  keyPath,
+		},
+	}, false)
+	require.NoError(t, err)
+
+	conf := &tlsConfigSettings{}
+	m.WriteDiskConfig(conf)
+	assertCertSerialNumber(t, conf, snBefore)
+
+	certDER, key = newCertAndKey(t, snAfter)
+	writeCertAndKey(t, certDER, certPath, key, keyPath)
+
+	m.reload()
+
+	m.WriteDiskConfig(conf)
+	assertCertSerialNumber(t, conf, snAfter)
 }

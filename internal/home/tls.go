@@ -153,6 +153,12 @@ func (m *tlsManager) reload() {
 
 	m.certLastMod = fi.ModTime().UTC()
 
+	// TODO(s.chzhen):  Temporary check for tests.  Remove this after
+	// refactoring.
+	if globalContext.dnsServer == nil && globalContext.web == nil {
+		return
+	}
+
 	_ = reconfigureDNSServer(m)
 
 	m.confLock.Lock()
