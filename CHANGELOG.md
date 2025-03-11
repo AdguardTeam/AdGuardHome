@@ -9,14 +9,22 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.58] - 2025-03-11 (APPROX.)
+## [v0.107.59] - 2025-04-01 (APPROX.)
 
-See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
+See also the [v0.107.59 GitHub milestone][ms-v0.107.59].
 
-[ms-v0.107.58]: https://github.com/AdguardTeam/AdGuardHome/milestone/93?closed=1
+[ms-v0.107.59]: https://github.com/AdguardTeam/AdGuardHome/milestone/94?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v0.107.58] - 2025-03-13
+
+See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
 
 ### Security
 
@@ -38,10 +46,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#7583]: https://github.com/AdguardTeam/AdGuardHome/issues/7583
 
 [go-1.24.1]: https://groups.google.com/g/golang-announce/c/4t3lzH3I0eI
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[ms-v0.107.58]: https://github.com/AdguardTeam/AdGuardHome/milestone/93?closed=1
 
 ## [v0.107.57] - 2025-02-20
 
@@ -3039,11 +3044,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.58...HEAD
-[v0.107.58]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.57...v0.107.58
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.59...HEAD
+[v0.107.59]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.58...v0.107.59
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.57...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.58...HEAD
+[v0.107.58]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.57...v0.107.58
 [v0.107.57]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.56...v0.107.57
 [v0.107.56]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.55...v0.107.56
 [v0.107.55]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.54...v0.107.55
