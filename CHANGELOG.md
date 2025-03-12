@@ -24,6 +24,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Clearing the DNS cache on the *DNS settings* page now includes both global cache and custom client cache.
+
 - Invalid ICMPv6 Router Advertisement messages ([#7547]).
 
 - Disabled button for autofilled login form.
