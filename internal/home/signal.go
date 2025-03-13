@@ -116,6 +116,6 @@ func (h *signalHandler) reloadConfig(ctx context.Context) {
 	}
 
 	if h.tlsManager != nil {
-		h.tlsManager.reload()
+		h.tlsManager.reload(ctx)
 	}
 }

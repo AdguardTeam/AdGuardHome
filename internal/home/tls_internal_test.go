@@ -4,8 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var testCertChainData = []byte(`-----BEGIN CERTIFICATE-----
@@ -41,9 +43,15 @@ kXS9jgARhhiWXJrk
 -----END PRIVATE KEY-----`)
 
 func TestValidateCertificates(t *testing.T) {
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	logger := slogutil.NewDiscardLogger()
+
+	m, err := newTLSManager(ctx, logger, tlsConfigSettings{}, false)
+	require.NoError(t, err)
+
 	t.Run("bad_certificate", func(t *testing.T) {
 		status := &tlsConfigStatus{}
-		err := validateCertificates(status, []byte("bad cert"), nil, "")
+		err = m.validateCertificates(ctx, status, []byte("bad cert"), nil, "")
 		testutil.AssertErrorMsg(t, "empty certificate", err)
 		assert.False(t, status.ValidCert)
 		assert.False(t, status.ValidChain)
@@ -51,14 +59,14 @@ func TestValidateCertificates(t *testing.T) {
 
 	t.Run("bad_private_key", func(t *testing.T) {
 		status := &tlsConfigStatus{}
-		err := validateCertificates(status, nil, []byte("bad priv key"), "")
+		err = m.validateCertificates(ctx, status, nil, []byte("bad priv key"), "")
 		testutil.AssertErrorMsg(t, "no valid keys were found", err)
 		assert.False(t, status.ValidKey)
 	})
 
 	t.Run("valid", func(t *testing.T) {
 		status := &tlsConfigStatus{}
-		err := validateCertificates(status, testCertChainData, testPrivateKeyData, "")
+		err = m.validateCertificates(ctx, status, testCertChainData, testPrivateKeyData, "")
 		assert.Error(t, err)
 
 		notBefore := time.Date(2019, 2, 27, 9, 24, 23, 0, time.UTC)
