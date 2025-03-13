@@ -153,13 +153,7 @@ func (m *tlsManager) reload() {
 
 	m.certLastMod = fi.ModTime().UTC()
 
-	// TODO(s.chzhen):  Temporary check for tests.  Remove this after
-	// refactoring.
-	if globalContext.dnsServer == nil && globalContext.web == nil {
-		return
-	}
-
-	_ = reconfigureDNSServer(m)
+	_ = m.reconfigureDNSServer()
 
 	m.confLock.Lock()
 	tlsConf = m.conf
@@ -169,6 +163,31 @@ func (m *tlsManager) reload() {
 	// with timeout on its own and shuts down the server, which handles current
 	// request.
 	globalContext.web.tlsConfigChanged(context.Background(), tlsConf)
+}
+
+// reconfigureDNSServer updates the DNS server configuration using the stored
+// TLS settings.
+func (m *tlsManager) reconfigureDNSServer() (err error) {
+	tlsConf := &tlsConfigSettings{}
+	m.WriteDiskConfig(tlsConf)
+
+	newConf, err := newServerConfig(
+		&config.DNS,
+		config.Clients.Sources,
+		tlsConf,
+		httpRegister,
+		globalContext.clients.storage,
+	)
+	if err != nil {
+		return fmt.Errorf("generating forwarding dns server config: %w", err)
+	}
+
+	err = globalContext.dnsServer.Reconfigure(newConf)
+	if err != nil {
+		return fmt.Errorf("starting forwarding dns server: %w", err)
+	}
+
+	return nil
 }
 
 // loadTLSConf loads and validates the TLS configuration.  The returned error is
@@ -448,7 +467,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 
 	onConfigModified()
 
-	err = reconfigureDNSServer(m)
+	err = m.reconfigureDNSServer()
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 
