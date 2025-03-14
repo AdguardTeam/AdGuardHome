@@ -27,6 +27,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
+	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -106,6 +107,21 @@ func startDeferStop(t *testing.T, s *Server) {
 	testutil.CleanupAndRequireSuccess(t, s.Stop)
 }
 
+// applyEmptyClientFiltering is a helper function for tests with
+// [filtering.Config] that does nothing.
+func applyEmptyClientFiltering(_ string, _ netip.Addr, _ *filtering.Settings) {}
+
+// emptyFilteringBlockedServices is a helper function that returns an empty
+// filtering blocked services for tests.
+func emptyFilteringBlockedServices() (bsvc *filtering.BlockedServices) {
+	return &filtering.BlockedServices{
+		Schedule: schedule.EmptyWeekly(),
+	}
+}
+
+// createTestServer is a helper function that returns a properly initialized
+// *Server for use in tests, given the provided parameters.  It also populates
+// the filtering configuration with default parameters.
 func createTestServer(
 	t *testing.T,
 	filterConf *filtering.Config,
@@ -122,6 +138,12 @@ func createTestServer(
 		ID:   0,
 		Data: []byte(rules),
 	}}
+
+	filterConf.BlockedServices = cmp.Or(filterConf.BlockedServices, emptyFilteringBlockedServices())
+
+	if filterConf.ApplyClientFiltering == nil {
+		filterConf.ApplyClientFiltering = applyEmptyClientFiltering
+	}
 
 	f, err := filtering.New(filterConf, filters)
 	require.NoError(t, err)
@@ -926,9 +948,6 @@ func TestClientRulesForCNAMEMatching(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		Config: Config{
-			FilterHandler: func(_ netip.Addr, _ string, settings *filtering.Settings) {
-				settings.FilteringEnabled = false
-			},
 			UpstreamMode: UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{
 				Enabled: false,
@@ -1020,10 +1039,12 @@ func TestBlockedCustomIP(t *testing.T) {
 	}}
 
 	f, err := filtering.New(&filtering.Config{
-		ProtectionEnabled: true,
-		BlockingMode:      filtering.BlockingModeCustomIP,
-		BlockingIPv4:      netip.Addr{},
-		BlockingIPv6:      netip.Addr{},
+		ProtectionEnabled:    true,
+		ApplyClientFiltering: applyEmptyClientFiltering,
+		BlockedServices:      emptyFilteringBlockedServices(),
+		BlockingMode:         filtering.BlockingModeCustomIP,
+		BlockingIPv4:         netip.Addr{},
+		BlockingIPv6:         netip.Addr{},
 	}, filters)
 	require.NoError(t, err)
 
@@ -1176,7 +1197,9 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 
 func TestRewrite(t *testing.T) {
 	c := &filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
+		ApplyClientFiltering: applyEmptyClientFiltering,
+		BlockedServices:      emptyFilteringBlockedServices(),
+		BlockingMode:         filtering.BlockingModeDefault,
 		Rewrites: []*filtering.LegacyRewrite{{
 			Domain: "test.com",
 			Answer: "1.2.3.4",
@@ -1322,7 +1345,9 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	const localDomain = "lan"
 
 	flt, err := filtering.New(&filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
+		ApplyClientFiltering: applyEmptyClientFiltering,
+		BlockedServices:      emptyFilteringBlockedServices(),
+		BlockingMode:         filtering.BlockingModeDefault,
 	}, nil)
 	require.NoError(t, err)
 
@@ -1411,8 +1436,10 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	})
 
 	flt, err := filtering.New(&filtering.Config{
-		BlockingMode: filtering.BlockingModeDefault,
-		EtcHosts:     hc,
+		ApplyClientFiltering: applyEmptyClientFiltering,
+		BlockedServices:      emptyFilteringBlockedServices(),
+		BlockingMode:         filtering.BlockingModeDefault,
+		EtcHosts:             hc,
 	}, nil)
 	require.NoError(t, err)
 

@@ -49,6 +49,9 @@ func initBlockedServices() {
 }
 
 // BlockedServices is the configuration of blocked services.
+//
+// TODO(s.chzhen):  Move to a higher-level package to allow importing the client
+// package into the filtering package.
 type BlockedServices struct {
 	// Schedule is blocked services schedule for every day of the week.
 	Schedule *schedule.Weekly `json:"schedule" yaml:"schedule"`

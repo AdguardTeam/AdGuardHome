@@ -22,6 +22,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.1][go-1.24.1].
 
+### Added
+
+- The ability to check filtering rules for host names using an optional query type and optional ClientID or client IP address.
+- Optional `client` and `qtype` URL query parameters to the `GET /control/check_host` HTTP API.
+
 ### Fixed
 
 - Clearing the DNS cache on the *DNS settings* page now includes both global cache and custom client cache.
