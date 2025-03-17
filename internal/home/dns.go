@@ -443,31 +443,6 @@ func startDNSServer() error {
 	return nil
 }
 
-// reconfigureDNSServer updates the DNS server configuration using the provided
-// TLS settings.  tlsMgr must not be nil.
-func reconfigureDNSServer(tlsMgr *tlsManager) (err error) {
-	tlsConf := &tlsConfigSettings{}
-	tlsMgr.WriteDiskConfig(tlsConf)
-
-	newConf, err := newServerConfig(
-		&config.DNS,
-		config.Clients.Sources,
-		tlsConf,
-		httpRegister,
-		globalContext.clients.storage,
-	)
-	if err != nil {
-		return fmt.Errorf("generating forwarding dns server config: %w", err)
-	}
-
-	err = globalContext.dnsServer.Reconfigure(newConf)
-	if err != nil {
-		return fmt.Errorf("starting forwarding dns server: %w", err)
-	}
-
-	return nil
-}
-
 func stopDNSServer() (err error) {
 	if !isRunning() {
 		return nil
