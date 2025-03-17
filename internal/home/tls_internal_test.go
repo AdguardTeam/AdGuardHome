@@ -63,9 +63,15 @@ kXS9jgARhhiWXJrk
 -----END PRIVATE KEY-----`)
 
 func TestValidateCertificates(t *testing.T) {
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	logger := slogutil.NewDiscardLogger()
+
+	m, err := newTLSManager(ctx, logger, tlsConfigSettings{}, false)
+	require.NoError(t, err)
+
 	t.Run("bad_certificate", func(t *testing.T) {
 		status := &tlsConfigStatus{}
-		err := validateCertificates(status, []byte("bad cert"), nil, "")
+		err = m.validateCertificates(ctx, status, []byte("bad cert"), nil, "")
 		testutil.AssertErrorMsg(t, "empty certificate", err)
 		assert.False(t, status.ValidCert)
 		assert.False(t, status.ValidChain)
@@ -73,14 +79,14 @@ func TestValidateCertificates(t *testing.T) {
 
 	t.Run("bad_private_key", func(t *testing.T) {
 		status := &tlsConfigStatus{}
-		err := validateCertificates(status, nil, []byte("bad priv key"), "")
+		err = m.validateCertificates(ctx, status, nil, []byte("bad priv key"), "")
 		testutil.AssertErrorMsg(t, "no valid keys were found", err)
 		assert.False(t, status.ValidKey)
 	})
 
 	t.Run("valid", func(t *testing.T) {
 		status := &tlsConfigStatus{}
-		err := validateCertificates(status, testCertChainData, testPrivateKeyData, "")
+		err = m.validateCertificates(ctx, status, testCertChainData, testPrivateKeyData, "")
 		assert.Error(t, err)
 
 		notBefore := time.Date(2019, 2, 27, 9, 24, 23, 0, time.UTC)
@@ -230,7 +236,7 @@ func TestTLSManager_Reload(t *testing.T) {
 	certDER, key := newCertAndKey(t, snBefore)
 	writeCertAndKey(t, certDER, certPath, key, keyPath)
 
-	m, err := newTLSManager(tlsConfigSettings{
+	m, err := newTLSManager(ctx, logger, tlsConfigSettings{
 		Enabled: true,
 		TLSConfig: dnsforward.TLSConfig{
 			CertificatePath: certPath,
@@ -246,14 +252,20 @@ func TestTLSManager_Reload(t *testing.T) {
 	certDER, key = newCertAndKey(t, snAfter)
 	writeCertAndKey(t, certDER, certPath, key, keyPath)
 
-	m.reload()
+	m.reload(ctx)
 
 	m.WriteDiskConfig(conf)
 	assertCertSerialNumber(t, conf, snAfter)
 }
 
 func TestTLSManager_HandleTLSStatus(t *testing.T) {
-	m, err := newTLSManager(tlsConfigSettings{
+	var (
+		logger = slogutil.NewDiscardLogger()
+		ctx    = testutil.ContextWithTimeout(t, testTimeout)
+		err    error
+	)
+
+	m, err := newTLSManager(ctx, logger, tlsConfigSettings{
 		Enabled: true,
 		TLSConfig: dnsforward.TLSConfig{
 			CertificateChain: string(testCertChainData),
@@ -356,7 +368,7 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 	globalContext.web, err = initWeb(ctx, options{}, nil, nil, logger, nil, false)
 	require.NoError(t, err)
 
-	m, err := newTLSManager(tlsConfigSettings{
+	m, err := newTLSManager(ctx, logger, tlsConfigSettings{
 		Enabled: true,
 		TLSConfig: dnsforward.TLSConfig{
 			CertificateChain: string(testCertChainData),
@@ -443,7 +455,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	writeCertAndKey(t, certDER, certPath, key, keyPath)
 
 	// Initialize the TLS manager and assert its configuration.
-	m, err := newTLSManager(tlsConfigSettings{
+	m, err := newTLSManager(ctx, logger, tlsConfigSettings{
 		Enabled: true,
 		TLSConfig: dnsforward.TLSConfig{
 			CertificatePath: certPath,

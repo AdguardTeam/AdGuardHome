@@ -664,7 +664,8 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	globalContext.auth, err = initUsers()
 	fatalOnError(err)
 
-	tlsMgr, err := newTLSManager(config.TLS, config.DNS.ServePlainDNS)
+	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
+	tlsMgr, err := newTLSManager(ctx, tlsMgrLogger, config.TLS, config.DNS.ServePlainDNS)
 	if err != nil {
 		log.Error("initializing tls: %s", err)
 		onConfigModified()
