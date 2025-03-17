@@ -41,6 +41,12 @@ type tlsManager struct {
 	// certLastMod is the last modification time of the certificate file.
 	certLastMod time.Time
 
+	// tlsRoots is a pool of root CAs for TLSv1.2.
+	tlsRoots *x509.CertPool
+
+	// tlsCipherIDs are the ID of the cipher suites that AdGuard Home must use.
+	tlsCipherIDs []uint16
+
 	confLock sync.Mutex
 	conf     tlsConfigSettings
 
@@ -63,6 +69,21 @@ func newTLSManager(
 		status:        &tlsConfigStatus{},
 		conf:          conf,
 		servePlainDNS: servePlainDNS,
+	}
+
+	m.tlsRoots = aghtls.SystemRootCAs()
+
+	if len(conf.OverrideTLSCiphers) != 0 {
+		m.tlsCipherIDs, err = aghtls.ParseCiphers(config.TLS.OverrideTLSCiphers)
+		if err != nil {
+			// Should not happen because upstreams are already validated.  See
+			// [validateTLSCipherIDs].
+			panic(err)
+		}
+
+		m.logger.Info("overriding ciphers", "ciphers", config.TLS.OverrideTLSCiphers)
+	} else {
+		m.logger.Info("using default ciphers")
 	}
 
 	if m.conf.Enabled {
@@ -191,6 +212,7 @@ func (m *tlsManager) reconfigureDNSServer() (err error) {
 		&config.DNS,
 		config.Clients.Sources,
 		tlsConf,
+		m,
 		httpRegister,
 		globalContext.clients.storage,
 	)
@@ -604,7 +626,7 @@ func (m *tlsManager) validateCertChain(
 
 	opts := x509.VerifyOptions{
 		DNSName:       srvName,
-		Roots:         globalContext.tlsRoots,
+		Roots:         m.tlsRoots,
 		Intermediates: pool,
 	}
 	_, err = main.Verify(opts)

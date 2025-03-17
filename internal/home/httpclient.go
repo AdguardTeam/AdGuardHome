@@ -13,7 +13,7 @@ import (
 // until [Context.dnsServer] is initialized.
 //
 // TODO(a.garipov, e.burkov): This is rather messy.  Refactor.
-func httpClient() (c *http.Client) {
+func httpClient(tlsMgr *tlsManager) (c *http.Client) {
 	// Do not use Context.dnsServer.DialContext directly in the struct literal
 	// below, since Context.dnsServer may be nil when this function is called.
 	dialContext := func(ctx context.Context, network, addr string) (conn net.Conn, err error) {
@@ -27,8 +27,8 @@ func httpClient() (c *http.Client) {
 			DialContext: dialContext,
 			Proxy:       httpProxy,
 			TLSClientConfig: &tls.Config{
-				RootCAs:      globalContext.tlsRoots,
-				CipherSuites: globalContext.tlsCipherIDs,
+				RootCAs:      tlsMgr.tlsRoots,
+				CipherSuites: tlsMgr.tlsCipherIDs,
 				MinVersion:   tls.VersionTLS12,
 			},
 		},

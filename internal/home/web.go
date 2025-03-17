@@ -329,8 +329,8 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 			Handler: hdlr,
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
-				RootCAs:      globalContext.tlsRoots,
-				CipherSuites: globalContext.tlsCipherIDs,
+				RootCAs:      web.tlsManager.tlsRoots,
+				CipherSuites: web.tlsManager.tlsCipherIDs,
 				MinVersion:   tls.VersionTLS12,
 			},
 			ReadTimeout:       web.conf.ReadTimeout,
@@ -363,8 +363,8 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 		Addr: address,
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{web.httpsServer.cert},
-			RootCAs:      globalContext.tlsRoots,
-			CipherSuites: globalContext.tlsCipherIDs,
+			RootCAs:      web.tlsManager.tlsRoots,
+			CipherSuites: web.tlsManager.tlsCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
 		Handler: withMiddlewares(globalContext.mux, limitRequestBody),

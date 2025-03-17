@@ -120,6 +120,7 @@ func initDNS(
 		anonymizer,
 		httpRegister,
 		tlsConf,
+		tlsMgr,
 		baseLogger,
 	)
 }
@@ -138,6 +139,7 @@ func initDNSServer(
 	anonymizer *aghnet.IPMut,
 	httpReg aghhttp.RegisterFunc,
 	tlsConf *tlsConfigSettings,
+	tlsMgr *tlsManager,
 	l *slog.Logger,
 ) (err error) {
 	globalContext.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
@@ -166,6 +168,7 @@ func initDNSServer(
 		&config.DNS,
 		config.Clients.Sources,
 		tlsConf,
+		tlsMgr,
 		httpReg,
 		globalContext.clients.storage,
 	)
@@ -241,6 +244,7 @@ func newServerConfig(
 	dnsConf *dnsConfig,
 	clientSrcConf *clientSourcesConfig,
 	tlsConf *tlsConfigSettings,
+	tlsMgr *tlsManager,
 	httpReg aghhttp.RegisterFunc,
 	clientsContainer dnsforward.ClientsContainer,
 ) (newConf *dnsforward.ServerConfig, err error) {
@@ -256,7 +260,7 @@ func newServerConfig(
 		TLSConfig:              newDNSTLSConfig(tlsConf, hosts),
 		TLSAllowUnencryptedDoH: tlsConf.AllowUnencryptedDoH,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
-		TLSv12Roots:            globalContext.tlsRoots,
+		TLSv12Roots:            tlsMgr.tlsRoots,
 		ConfigModified:         onConfigModified,
 		HTTPRegister:           httpReg,
 		LocalPTRResolvers:      dnsConf.PrivateRDNSResolvers,
