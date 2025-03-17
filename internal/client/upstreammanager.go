@@ -153,7 +153,9 @@ func (m *upstreamManager) isConfigChanged(cliConf *customUpstreamConfig) (ok boo
 // upstream configuration.
 func (m *upstreamManager) clearUpstreamCache() {
 	for _, c := range m.uidToCustomConf {
-		c.proxyConf.ClearCache()
+		if c.proxyConf != nil {
+			c.proxyConf.ClearCache()
+		}
 	}
 }
 

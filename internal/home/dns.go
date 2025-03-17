@@ -247,7 +247,6 @@ func newServerConfig(
 	hosts := aghalg.CoalesceSlice(dnsConf.BindHosts, []netip.Addr{netutil.IPv4Localhost()})
 
 	fwdConf := dnsConf.Config
-	fwdConf.FilterHandler = applyAdditionalFiltering
 	fwdConf.ClientsContainer = clientsContainer
 
 	newConf = &dnsforward.ServerConfig{
@@ -411,57 +410,6 @@ func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
 	return de
 }
 
-// applyAdditionalFiltering adds additional client information and settings if
-// the client has them.
-func applyAdditionalFiltering(clientIP netip.Addr, clientID string, setts *filtering.Settings) {
-	// pref is a prefix for logging messages around the scope.
-	const pref = "applying filters"
-
-	globalContext.filters.ApplyBlockedServices(setts)
-
-	log.Debug("%s: looking for client with ip %s and clientid %q", pref, clientIP, clientID)
-
-	if !clientIP.IsValid() {
-		return
-	}
-
-	setts.ClientIP = clientIP
-
-	c, ok := globalContext.clients.storage.Find(clientID)
-	if !ok {
-		c, ok = globalContext.clients.storage.Find(clientIP.String())
-		if !ok {
-			log.Debug("%s: no clients with ip %s and clientid %q", pref, clientIP, clientID)
-
-			return
-		}
-	}
-
-	log.Debug("%s: using settings for client %q (%s; %q)", pref, c.Name, clientIP, clientID)
-
-	if c.UseOwnBlockedServices {
-		// TODO(e.burkov):  Get rid of this crutch.
-		setts.ServicesRules = nil
-		svcs := c.BlockedServices.IDs
-		if !c.BlockedServices.Schedule.Contains(time.Now()) {
-			globalContext.filters.ApplyBlockedServicesList(setts, svcs)
-			log.Debug("%s: services for client %q set: %s", pref, c.Name, svcs)
-		}
-	}
-
-	setts.ClientName = c.Name
-	setts.ClientTags = c.Tags
-	if !c.UseOwnSettings {
-		return
-	}
-
-	setts.FilteringEnabled = c.FilteringEnabled
-	setts.SafeSearchEnabled = c.SafeSearchConf.Enabled
-	setts.ClientSafeSearch = c.SafeSearch
-	setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
-	setts.ParentalEnabled = c.ParentalEnabled
-}
-
 func startDNSServer() error {
 	config.RLock()
 	defer config.RUnlock()
@@ -490,31 +438,6 @@ func startDNSServer() error {
 	err = globalContext.queryLog.Start(ctx)
 	if err != nil {
 		return fmt.Errorf("starting query log: %w", err)
-	}
-
-	return nil
-}
-
-// reconfigureDNSServer updates the DNS server configuration using the provided
-// TLS settings.  tlsMgr must not be nil.
-func reconfigureDNSServer(tlsMgr *tlsManager) (err error) {
-	tlsConf := &tlsConfigSettings{}
-	tlsMgr.WriteDiskConfig(tlsConf)
-
-	newConf, err := newServerConfig(
-		&config.DNS,
-		config.Clients.Sources,
-		tlsConf,
-		httpRegister,
-		globalContext.clients.storage,
-	)
-	if err != nil {
-		return fmt.Errorf("generating forwarding dns server config: %w", err)
-	}
-
-	err = globalContext.dnsServer.Reconfigure(newConf)
-	if err != nil {
-		return fmt.Errorf("starting forwarding dns server: %w", err)
 	}
 
 	return nil

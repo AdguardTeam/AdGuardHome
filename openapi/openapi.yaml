@@ -739,6 +739,20 @@
       - 'name': 'name'
         'in': 'query'
         'description': 'Filter by host name'
+        'required': true
+        'example': 'google.com'
+        'schema':
+          'type': 'string'
+      - 'name': 'client'
+        'in': 'query'
+        'description': 'Optional ClientID or client IP address'
+        'example': '192.0.2.1'
+        'schema':
+          'type': 'string'
+      - 'name': 'qtype'
+        'in': 'query'
+        'description': 'Optional DNS type'
+        'example': 'AAAA'
         'schema':
           'type': 'string'
       'responses':

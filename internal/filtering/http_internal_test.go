@@ -3,11 +3,15 @@ package filtering
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -302,6 +306,171 @@ func TestDNSFilter_handleParentalStatus(t *testing.T) {
 			require.NoError(t, err)
 
 			tc.wantStatus(t, status.Enabled)
+		})
+	}
+}
+
+func TestDNSFilter_HandleCheckHost(t *testing.T) {
+	const (
+		cliName = "client_name"
+		cliID   = "client_id"
+
+		notFilteredHost = "not.filterd.example"
+		allowedHost     = "allowed.example"
+		blockedHost     = "blocked.example"
+		cliHost         = "client.example"
+		qTypeHost       = "qtype.example"
+		cliQTypeHost    = "cli.qtype.example"
+
+		target          = "/control/check_host"
+		hostFmt         = target + "?name=%s"
+		hostCliFmt      = hostFmt + "&client=%s"
+		hostQTypeFmt    = hostFmt + "&qtype=%s"
+		hostCliQTypeFmt = hostCliFmt + "&qtype=%s"
+
+		allowedRuleFmt         = "@@||%s^"
+		blockedRuleFmt         = "||%s^"
+		blockedRuleCliFmt      = blockedRuleFmt + "$client=%s"
+		blockedRuleQTypeFmt    = blockedRuleFmt + "$dnstype=%s"
+		blockedRuleCliQTypeFmt = blockedRuleCliFmt + ",dnstype=%s"
+	)
+
+	var (
+		allowedRule            = fmt.Sprintf(allowedRuleFmt, allowedHost)
+		blockedRule            = fmt.Sprintf(blockedRuleFmt, blockedHost)
+		blockedClientRule      = fmt.Sprintf(blockedRuleCliFmt, cliHost, cliName)
+		blockedQTypeRule       = fmt.Sprintf(blockedRuleQTypeFmt, qTypeHost, "CNAME")
+		blockedClientQTypeRule = fmt.Sprintf(blockedRuleCliQTypeFmt, cliQTypeHost, cliName, "CNAME")
+
+		notFilteredURL        = fmt.Sprintf(hostFmt, notFilteredHost)
+		allowedURL            = fmt.Sprintf(hostFmt, allowedHost)
+		blockedURL            = fmt.Sprintf(hostFmt, blockedHost)
+		blockedClientURL      = fmt.Sprintf(hostCliFmt, cliHost, cliID)
+		allowedQTypeURL       = fmt.Sprintf(hostQTypeFmt, qTypeHost, "AAAA")
+		blockedQTypeURL       = fmt.Sprintf(hostQTypeFmt, qTypeHost, "CNAME")
+		allowedClientQTypeURL = fmt.Sprintf(hostCliQTypeFmt, cliQTypeHost, cliID, "AAAA")
+		blockedClientQTypeURL = fmt.Sprintf(hostCliQTypeFmt, cliQTypeHost, cliID, "CNAME")
+	)
+
+	rules := []string{
+		allowedRule,
+		blockedRule,
+		blockedClientRule,
+		blockedQTypeRule,
+		blockedClientQTypeRule,
+	}
+	rulesData := strings.Join(rules, "\n")
+
+	filters := []Filter{{
+		ID: 0, Data: []byte(rulesData),
+	}}
+
+	clientNames := map[string]string{
+		cliID: cliName,
+	}
+
+	dnsFilter, err := New(&Config{
+		BlockedServices: &BlockedServices{
+			Schedule: schedule.EmptyWeekly(),
+		},
+		ApplyClientFiltering: func(clientID string, cliAddr netip.Addr, setts *Settings) {
+			setts.ClientName = clientNames[clientID]
+		},
+	}, filters)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name string
+		url  string
+		want *checkHostResp
+	}{{
+		name: "not_filtered",
+		url:  notFilteredURL,
+		want: &checkHostResp{
+			Reason: reasonNames[NotFilteredNotFound],
+			Rule:   "",
+			Rules:  []*checkHostRespRule{},
+		},
+	}, {
+		name: "allowed",
+		url:  allowedURL,
+		want: &checkHostResp{
+			Reason: reasonNames[NotFilteredAllowList],
+			Rule:   allowedRule,
+			Rules: []*checkHostRespRule{{
+				Text: allowedRule,
+			}},
+		},
+	}, {
+		name: "blocked",
+		url:  blockedURL,
+		want: &checkHostResp{
+			Reason: reasonNames[FilteredBlockList],
+			Rule:   blockedRule,
+			Rules: []*checkHostRespRule{{
+				Text: blockedRule,
+			}},
+		},
+	}, {
+		name: "blocked_client",
+		url:  blockedClientURL,
+		want: &checkHostResp{
+			Reason: reasonNames[FilteredBlockList],
+			Rule:   blockedClientRule,
+			Rules: []*checkHostRespRule{{
+				Text: blockedClientRule,
+			}},
+		},
+	}, {
+		name: "allowed_qtype",
+		url:  allowedQTypeURL,
+		want: &checkHostResp{
+			Reason: reasonNames[NotFilteredNotFound],
+			Rule:   "",
+			Rules:  []*checkHostRespRule{},
+		},
+	}, {
+		name: "blocked_qtype",
+		url:  blockedQTypeURL,
+		want: &checkHostResp{
+			Reason: reasonNames[FilteredBlockList],
+			Rule:   blockedQTypeRule,
+			Rules: []*checkHostRespRule{{
+				Text: blockedQTypeRule,
+			}},
+		},
+	}, {
+		name: "blocked_client_qtype",
+		url:  blockedClientQTypeURL,
+		want: &checkHostResp{
+			Reason: reasonNames[FilteredBlockList],
+			Rule:   blockedClientQTypeRule,
+			Rules: []*checkHostRespRule{{
+				Text: blockedClientQTypeRule,
+			}},
+		},
+	}, {
+		name: "allowed_client_qtype",
+		url:  allowedClientQTypeURL,
+		want: &checkHostResp{
+			Reason: reasonNames[NotFilteredNotFound],
+			Rule:   "",
+			Rules:  []*checkHostRespRule{},
+		},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := httptest.NewRequest(http.MethodGet, tc.url, nil)
+			w := httptest.NewRecorder()
+
+			dnsFilter.handleCheckHost(w, r)
+
+			res := &checkHostResp{}
+			err = json.NewDecoder(w.Body).Decode(res)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, res)
 		})
 	}
 }

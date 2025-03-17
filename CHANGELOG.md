@@ -22,7 +22,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
 
-## [v0.107.58] - 2025-03-13
+## [v0.107.58] - 2025-03-18
 
 See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
 
@@ -30,7 +30,15 @@ See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.1][go-1.24.1].
 
+### Added
+
+- The ability to check filtering rules for host names using an optional query type and optional ClientID or client IP address.
+
+- Optional `client` and `qtype` URL query parameters to the `GET /control/check_host` HTTP API.
+
 ### Fixed
+
+- Clearing the DNS cache on the *DNS settings* page now includes both global cache and custom client cache.
 
 - Invalid ICMPv6 Router Advertisement messages ([#7547]).
 

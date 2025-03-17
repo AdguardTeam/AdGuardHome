@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -420,15 +422,53 @@ type checkHostResp struct {
 	FilterID rulelist.URLFilterID `json:"filter_id"`
 }
 
+// handleCheckHost is the handler for the GET /control/filtering/check_host HTTP
+// API.
 func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
-	host := r.URL.Query().Get("name")
+	query := r.URL.Query()
+	host := query.Get("name")
+	if host == "" {
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusBadRequest,
+			`query parameter "name" is required`,
+		)
+
+		return
+	}
+
+	cli := query.Get("client")
+	qTypeStr := query.Get("qtype")
+	qType, err := stringToDNSType(qTypeStr)
+	if err != nil {
+		aghhttp.Error(
+			r,
+			w,
+			http.StatusUnprocessableEntity,
+			"bad qtype query parameter: %q",
+			qTypeStr,
+		)
+
+		return
+	}
 
 	setts := d.Settings()
 	setts.FilteringEnabled = true
 	setts.ProtectionEnabled = true
 
-	d.ApplyBlockedServices(setts)
-	result, err := d.CheckHost(host, dns.TypeA, setts)
+	addr, err := netip.ParseAddr(cli)
+	if err == nil {
+		setts.ClientIP = addr
+		d.ApplyAdditionalFiltering(addr, "", setts)
+	} else if cli != "" {
+		// TODO(s.chzhen):  Set [Settings.ClientName] once urlfilter supports
+		// multiple client names.  This will handle the case when a rule exists
+		// but the persistent client does not.
+		d.ApplyAdditionalFiltering(netip.Addr{}, cli, setts)
+	}
+
+	result, err := d.CheckHost(host, qType, setts)
 	if err != nil {
 		aghhttp.Error(
 			r,
@@ -464,6 +504,33 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aghhttp.WriteJSONResponseOK(w, r, resp)
+}
+
+// stringToDNSType is a helper function that converts a string to DNS type.  If
+// the string is empty, it returns the default value [dns.TypeA].
+func stringToDNSType(str string) (qtype uint16, err error) {
+	if str == "" {
+		return dns.TypeA, nil
+	}
+
+	qtype, ok := dns.StringToType[str]
+	if ok {
+		return qtype, nil
+	}
+
+	// typePref is a prefix for DNS types from experimental RFCs.
+	const typePref = "TYPE"
+
+	if !strings.HasPrefix(str, typePref) {
+		return 0, errors.ErrBadEnumValue
+	}
+
+	val, err := strconv.ParseUint(str[len(typePref):], 10, 16)
+	if err != nil {
+		return 0, errors.ErrBadEnumValue
+	}
+
+	return uint16(val), nil
 }
 
 // setProtectedBool sets the value of a boolean pointer under a lock.  l must

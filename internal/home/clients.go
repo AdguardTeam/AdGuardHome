@@ -121,6 +121,8 @@ func (clients *clientsContainer) Init(
 
 	sigHdlr.addClientStorage(clients.storage)
 
+	filteringConf.ApplyClientFiltering = clients.storage.ApplyClientFiltering
+
 	return nil
 }
 

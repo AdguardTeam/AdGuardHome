@@ -45,8 +45,10 @@ func TestHandleDNSRequest_handleDNSRequest(t *testing.T) {
 	}}
 
 	f, err := filtering.New(&filtering.Config{
-		ProtectionEnabled: true,
-		BlockingMode:      filtering.BlockingModeDefault,
+		ProtectionEnabled:    true,
+		ApplyClientFiltering: applyEmptyClientFiltering,
+		BlockedServices:      emptyFilteringBlockedServices(),
+		BlockingMode:         filtering.BlockingModeDefault,
 	}, filters)
 	require.NoError(t, err)
 	f.SetEnabled(true)
