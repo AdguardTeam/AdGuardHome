@@ -27,8 +27,8 @@ func httpClient(tlsMgr *tlsManager) (c *http.Client) {
 			DialContext: dialContext,
 			Proxy:       httpProxy,
 			TLSClientConfig: &tls.Config{
-				RootCAs:      tlsMgr.tlsRoots,
-				CipherSuites: tlsMgr.tlsCipherIDs,
+				RootCAs:      tlsMgr.rootCerts,
+				CipherSuites: tlsMgr.customCipherIDs,
 				MinVersion:   tls.VersionTLS12,
 			},
 		},

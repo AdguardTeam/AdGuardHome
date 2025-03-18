@@ -38,6 +38,8 @@ const (
 )
 
 // Called by other modules when configuration is changed
+//
+// TODO(s.chzhen):  Remove this after refactoring.
 func onConfigModified() {
 	err := config.write(globalContext.tls)
 	if err != nil {
@@ -260,7 +262,7 @@ func newServerConfig(
 		TLSConfig:              newDNSTLSConfig(tlsConf, hosts),
 		TLSAllowUnencryptedDoH: tlsConf.AllowUnencryptedDoH,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
-		TLSv12Roots:            tlsMgr.tlsRoots,
+		TLSv12Roots:            tlsMgr.rootCerts,
 		ConfigModified:         onConfigModified,
 		HTTPRegister:           httpReg,
 		LocalPTRResolvers:      dnsConf.PrivateRDNSResolvers,
