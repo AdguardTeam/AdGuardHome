@@ -261,6 +261,7 @@ func TestTLSManager_Reload(t *testing.T) {
 	certDER, key = newCertAndKey(t, snAfter)
 	writeCertAndKey(t, certDER, certPath, key, keyPath)
 
+	m.setWebAPI(globalContext.web)
 	m.reload(ctx)
 
 	m.WriteDiskConfig(conf)
@@ -511,6 +512,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	// Reconfigure the TLS manager.
+	m.setWebAPI(globalContext.web)
 	m.handleTLSConfigure(w, r)
 
 	// The [tlsManager.handleTLSConfigure] method will start the DNS server and

@@ -44,6 +44,12 @@ type tlsManager struct {
 	// tlsRoots is a pool of root CAs for TLSv1.2.
 	tlsRoots *x509.CertPool
 
+	// webAPI is the web UI and API server.
+	//
+	// TODO(s.chzhen):  Temporary cyclic dependency due to ongoing refactoring.
+	// Resolve it.
+	webAPI *webAPI
+
 	// configModified is called when the TLS configuration is changed via an
 	// HTTP request.
 	configModified func()
@@ -116,6 +122,14 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 	return m, nil
 }
 
+// setWebAPI stores the provided web API.  It must be called before
+// [tlsManager.start], [tlsManager.reload], or [tlsManager.handleTLSConfigure].
+//
+// TODO(s.chzhen):  Remove it once cyclic dependency is resolved.
+func (m *tlsManager) setWebAPI(webAPI *webAPI) {
+	m.webAPI = webAPI
+}
+
 // load reloads the TLS configuration from files or data from the config file.
 func (m *tlsManager) load(ctx context.Context) (err error) {
 	err = m.loadTLSConf(ctx, &m.conf, m.status)
@@ -163,7 +177,7 @@ func (m *tlsManager) start(_ context.Context) {
 	// The background context is used because the TLSConfigChanged wraps context
 	// with timeout on its own and shuts down the server, which handles current
 	// request.
-	globalContext.web.tlsConfigChanged(context.Background(), tlsConf)
+	m.webAPI.tlsConfigChanged(context.Background(), tlsConf)
 }
 
 // reload updates the configuration and restarts the TLS manager.
@@ -215,7 +229,7 @@ func (m *tlsManager) reload(ctx context.Context) {
 	// The background context is used because the TLSConfigChanged wraps context
 	// with timeout on its own and shuts down the server, which handles current
 	// request.
-	globalContext.web.tlsConfigChanged(context.Background(), tlsConf)
+	m.webAPI.tlsConfigChanged(context.Background(), tlsConf)
 }
 
 // reconfigureDNSServer updates the DNS server configuration using the stored
@@ -554,7 +568,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	// same reason.
 	if restartHTTPS {
 		go func() {
-			globalContext.web.tlsConfigChanged(context.Background(), req.tlsConfigSettings)
+			m.webAPI.tlsConfigChanged(context.Background(), req.tlsConfigSettings)
 		}()
 	}
 }
@@ -756,26 +770,11 @@ func (m *tlsManager) validateCertificates(
 ) (err error) {
 	// Check only the public certificate separately from the key.
 	if len(certChain) > 0 {
-		var certs []*x509.Certificate
-		certs, status.ValidCert, err = m.parseCertChain(ctx, certChain)
-		if !status.ValidCert {
+		var ok bool
+		ok, err = m.validateCertificate(ctx, status, certChain, serverName)
+		if !ok {
 			// Don't wrap the error, since it's informative enough as is.
 			return err
-		}
-
-		mainCert := certs[0]
-		status.Subject = mainCert.Subject.String()
-		status.Issuer = mainCert.Issuer.String()
-		status.NotAfter = mainCert.NotAfter
-		status.NotBefore = mainCert.NotBefore
-		status.DNSNames = mainCert.DNSNames
-
-		if chainErr := m.validateCertChain(ctx, certs, serverName); chainErr != nil {
-			// Let self-signed certs through and don't return this error to set
-			// its message into the status.WarningValidation afterwards.
-			err = chainErr
-		} else {
-			status.ValidChain = true
 		}
 	}
 
@@ -802,6 +801,41 @@ func (m *tlsManager) validateCertificates(
 	}
 
 	return err
+}
+
+// validateCertificate processes certificate data.  status must not be nil, as
+// it is used to accumulate the validation results.  Other parameters are
+// optional.  If ok is true, the returned error, if any, is not critical.
+func (m *tlsManager) validateCertificate(
+	ctx context.Context,
+	status *tlsConfigStatus,
+	certChain []byte,
+	serverName string,
+) (ok bool, err error) {
+	var certs []*x509.Certificate
+	certs, status.ValidCert, err = m.parseCertChain(ctx, certChain)
+	if !status.ValidCert {
+		// Don't wrap the error, since it's informative enough as is.
+		return false, err
+	}
+
+	mainCert := certs[0]
+	status.Subject = mainCert.Subject.String()
+	status.Issuer = mainCert.Issuer.String()
+	status.NotAfter = mainCert.NotAfter
+	status.NotBefore = mainCert.NotBefore
+	status.DNSNames = mainCert.DNSNames
+
+	err = m.validateCertChain(ctx, certs, serverName)
+	if err != nil {
+		// Let self-signed certs through and don't return this error to set
+		// its message into the status.WarningValidation afterwards.
+		return true, err
+	}
+
+	status.ValidChain = true
+
+	return true, nil
 }
 
 // Key types.
@@ -866,17 +900,19 @@ func unmarshalTLS(r *http.Request) (tlsConfigSettingsExt, error) {
 		}
 	}
 
-	if data.PrivateKey != "" {
-		var key []byte
-		key, err = base64.StdEncoding.DecodeString(data.PrivateKey)
-		if err != nil {
-			return data, fmt.Errorf("failed to base64-decode private key: %w", err)
-		}
+	if data.PrivateKey == "" {
+		return data, nil
+	}
 
-		data.PrivateKey = string(key)
-		if data.PrivateKeyPath != "" {
-			return data, fmt.Errorf("private key data and file can't be set together")
-		}
+	var key []byte
+	key, err = base64.StdEncoding.DecodeString(data.PrivateKey)
+	if err != nil {
+		return data, fmt.Errorf("failed to base64-decode private key: %w", err)
+	}
+
+	data.PrivateKey = string(key)
+	if data.PrivateKeyPath != "" {
+		return data, fmt.Errorf("private key data and file can't be set together")
 	}
 
 	return data, nil
