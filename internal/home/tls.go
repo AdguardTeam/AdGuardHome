@@ -602,7 +602,7 @@ func (m *tlsManager) validateTLSSettings(setts tlsConfigSettingsExt) (err error)
 		return errors.Error("plain DNS is required in case encryption protocols are disabled")
 	}
 
-	if m.web.httpServer != nil {
+	if m.web.httpsServer.server != nil {
 		return nil
 	}
 

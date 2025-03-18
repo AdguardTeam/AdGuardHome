@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TODO(s.chzhen):  Consider moving to testdata.
 var testCertChainData = []byte(`-----BEGIN CERTIFICATE-----
 MIICKzCCAZSgAwIBAgIJAMT9kPVJdM7LMA0GCSqGSIb3DQEBCwUAMC0xFDASBgNV
 BAoMC0FkR3VhcmQgTHRkMRUwEwYDVQQDDAxBZEd1YXJkIEhvbWUwHhcNMTkwMjI3
