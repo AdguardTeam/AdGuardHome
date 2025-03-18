@@ -32,7 +32,7 @@ See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
 
 ### Added
 
-- The ability to check filtering rules for host names using an optional query type and optional ClientID or client IP address.
+- The ability to check filtering rules for host names using an optional query type and optional ClientID or client IP address ([#4036]).
 
 - Optional `client` and `qtype` URL query parameters to the `GET /control/check_host` HTTP API.
 
@@ -50,6 +50,7 @@ See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
 
 - The formatting of large numbers in the clients tables on the *Client settings* page ([#7583]).
 
+[#4036]: https://github.com/AdguardTeam/AdGuardHome/issues/4036
 [#7547]: https://github.com/AdguardTeam/AdGuardHome/issues/7547
 [#7583]: https://github.com/AdguardTeam/AdGuardHome/issues/7583
 
