@@ -44,6 +44,10 @@ type tlsManager struct {
 	// tlsRoots is a pool of root CAs for TLSv1.2.
 	tlsRoots *x509.CertPool
 
+	// configModified is called when the TLS configuration is changed via an
+	// HTTP request.
+	configModified func()
+
 	// tlsCipherIDs are the ID of the cipher suites that AdGuard Home must use.
 	tlsCipherIDs []uint16
 
@@ -54,26 +58,38 @@ type tlsManager struct {
 	servePlainDNS bool
 }
 
+// tlsManagerConfig contains the settings for initializing the TLS manager.
+type tlsManagerConfig struct {
+	// logger is used for logging the operation of the TLS Manager.  It must not
+	// be nil.
+	logger *slog.Logger
+
+	// configModified is called when the TLS configuration is changed via an
+	// HTTP request.  It must not be nil.
+	configModified func()
+
+	// tlsSettings contains the TLS configuration settings.
+	tlsSettings tlsConfigSettings
+
+	// servePlainDNS defines if plain DNS is allowed for incoming requests.
+	servePlainDNS bool
+}
+
 // newTLSManager initializes the manager of TLS configuration.  m is always
 // non-nil while any returned error indicates that the TLS configuration isn't
-// valid.  Thus TLS may be initialized later, e.g. via the web UI.  logger must
-// not be nil.
-func newTLSManager(
-	ctx context.Context,
-	logger *slog.Logger,
-	conf tlsConfigSettings,
-	servePlainDNS bool,
-) (m *tlsManager, err error) {
+// valid.  Thus TLS may be initialized later, e.g. via the web UI.
+func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, err error) {
 	m = &tlsManager{
-		logger:        logger,
-		status:        &tlsConfigStatus{},
-		conf:          conf,
-		servePlainDNS: servePlainDNS,
+		logger:         conf.logger,
+		configModified: conf.configModified,
+		status:         &tlsConfigStatus{},
+		conf:           conf.tlsSettings,
+		servePlainDNS:  conf.servePlainDNS,
 	}
 
 	m.tlsRoots = aghtls.SystemRootCAs()
 
-	if len(conf.OverrideTLSCiphers) != 0 {
+	if len(conf.tlsSettings.OverrideTLSCiphers) != 0 {
 		m.tlsCipherIDs, err = aghtls.ParseCiphers(config.TLS.OverrideTLSCiphers)
 		if err != nil {
 			// Should not happen because upstreams are already validated.  See
@@ -511,7 +527,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 		}()
 	}
 
-	onConfigModified()
+	m.configModified()
 
 	err = m.reconfigureDNSServer()
 	if err != nil {

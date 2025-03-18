@@ -66,7 +66,11 @@ func TestValidateCertificates(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	logger := slogutil.NewDiscardLogger()
 
-	m, err := newTLSManager(ctx, logger, tlsConfigSettings{}, false)
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:         logger,
+		configModified: func() {},
+		servePlainDNS:  false,
+	})
 	require.NoError(t, err)
 
 	t.Run("bad_certificate", func(t *testing.T) {
@@ -236,13 +240,18 @@ func TestTLSManager_Reload(t *testing.T) {
 	certDER, key := newCertAndKey(t, snBefore)
 	writeCertAndKey(t, certDER, certPath, key, keyPath)
 
-	m, err := newTLSManager(ctx, logger, tlsConfigSettings{
-		Enabled: true,
-		TLSConfig: dnsforward.TLSConfig{
-			CertificatePath: certPath,
-			PrivateKeyPath:  keyPath,
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:         logger,
+		configModified: func() {},
+		tlsSettings: tlsConfigSettings{
+			Enabled: true,
+			TLSConfig: dnsforward.TLSConfig{
+				CertificatePath: certPath,
+				PrivateKeyPath:  keyPath,
+			},
 		},
-	}, false)
+		servePlainDNS: false,
+	})
 	require.NoError(t, err)
 
 	conf := &tlsConfigSettings{}
@@ -265,13 +274,18 @@ func TestTLSManager_HandleTLSStatus(t *testing.T) {
 		err    error
 	)
 
-	m, err := newTLSManager(ctx, logger, tlsConfigSettings{
-		Enabled: true,
-		TLSConfig: dnsforward.TLSConfig{
-			CertificateChain: string(testCertChainData),
-			PrivateKey:       string(testPrivateKeyData),
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:         logger,
+		configModified: func() {},
+		tlsSettings: tlsConfigSettings{
+			Enabled: true,
+			TLSConfig: dnsforward.TLSConfig{
+				CertificateChain: string(testCertChainData),
+				PrivateKey:       string(testPrivateKeyData),
+			},
 		},
-	}, false)
+		servePlainDNS: false,
+	})
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()
@@ -368,13 +382,18 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 	globalContext.web, err = initWeb(ctx, options{}, nil, nil, logger, nil, false)
 	require.NoError(t, err)
 
-	m, err := newTLSManager(ctx, logger, tlsConfigSettings{
-		Enabled: true,
-		TLSConfig: dnsforward.TLSConfig{
-			CertificateChain: string(testCertChainData),
-			PrivateKey:       string(testPrivateKeyData),
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:         logger,
+		configModified: func() {},
+		tlsSettings: tlsConfigSettings{
+			Enabled: true,
+			TLSConfig: dnsforward.TLSConfig{
+				CertificateChain: string(testCertChainData),
+				PrivateKey:       string(testPrivateKeyData),
+			},
 		},
-	}, false)
+		servePlainDNS: false,
+	})
 	require.NoError(t, err)
 
 	setts := &tlsConfigSettingsExt{
@@ -455,13 +474,18 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	writeCertAndKey(t, certDER, certPath, key, keyPath)
 
 	// Initialize the TLS manager and assert its configuration.
-	m, err := newTLSManager(ctx, logger, tlsConfigSettings{
-		Enabled: true,
-		TLSConfig: dnsforward.TLSConfig{
-			CertificatePath: certPath,
-			PrivateKeyPath:  keyPath,
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:         logger,
+		configModified: func() {},
+		tlsSettings: tlsConfigSettings{
+			Enabled: true,
+			TLSConfig: dnsforward.TLSConfig{
+				CertificatePath: certPath,
+				PrivateKeyPath:  keyPath,
+			},
 		},
-	}, true)
+		servePlainDNS: true,
+	})
 	require.NoError(t, err)
 
 	conf := &tlsConfigSettings{}
