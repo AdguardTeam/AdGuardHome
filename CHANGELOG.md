@@ -9,7 +9,7 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.58] - 2025-03-11 (APPROX.)
+## [v0.107.58] - 2025-03-19 (APPROX.)
 
 See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
 
@@ -25,6 +25,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 ### Added
 
 - The ability to check filtering rules for host names using an optional query type and optional ClientID or client IP address.
+
 - Optional `client` and `qtype` URL query parameters to the `GET /control/check_host` HTTP API.
 
 ### Fixed
