@@ -46,7 +46,7 @@ type tlsManager struct {
 	// rootCerts is a pool of root CAs for TLSv1.2.
 	rootCerts *x509.CertPool
 
-	// web is the web UI and API server.
+	// web is the web UI and API server.  It must not be nil.
 	//
 	// TODO(s.chzhen):  Temporary cyclic dependency due to ongoing refactoring.
 	// Resolve it.
@@ -85,7 +85,9 @@ type tlsManagerConfig struct {
 
 // newTLSManager initializes the manager of TLS configuration.  m is always
 // non-nil while any returned error indicates that the TLS configuration isn't
-// valid.  Thus TLS may be initialized later, e.g. via the web UI.
+// valid.  Thus TLS may be initialized later, e.g. via the web UI.  conf must
+// not be nil.  Note that [tlsManager.web] must be initialized later on by using
+// [tlsManager.setWebAPI].
 func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, err error) {
 	m = &tlsManager{
 		logger:         conf.logger,
@@ -679,7 +681,7 @@ func (m *tlsManager) validateCertChain(
 }
 
 // isPortAvailable checks if port, which is considered an HTTPS port, is
-// available, unless the HTTPS server isn't active.
+// available.
 //
 // TODO(a.garipov): Adapt for HTTP/3.
 func isPortAvailable(port uint16) (ok bool) {
