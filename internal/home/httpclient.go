@@ -10,7 +10,7 @@ import (
 
 // httpClient returns a new HTTP client that uses the AdGuard Home's own DNS
 // server for resolving hostnames.  The resulting client should not be used
-// until [Context.dnsServer] is initialized.
+// until [Context.dnsServer] is initialized.  tlsMgr must not be nil.
 //
 // TODO(a.garipov, e.burkov): This is rather messy.  Refactor.
 func httpClient(tlsMgr *tlsManager) (c *http.Client) {

@@ -568,7 +568,7 @@ func parseConfig() (err error) {
 	}
 
 	// Do not wrap the error because it's informative enough as is.
-	return validateTLSCipherIDs()
+	return validateTLSCipherIDs(config.TLS.OverrideTLSCiphers)
 }
 
 // validateConfig returns error if the configuration is invalid.
@@ -722,12 +722,12 @@ func (c *configuration) write(tlsMgr *tlsManager) (err error) {
 }
 
 // validateTLSCipherIDs validates the custom TLS cipher suite IDs.
-func validateTLSCipherIDs() (err error) {
-	if len(config.TLS.OverrideTLSCiphers) == 0 {
+func validateTLSCipherIDs(cipherIDs []string) (err error) {
+	if len(cipherIDs) == 0 {
 		return nil
 	}
 
-	_, err = aghtls.ParseCiphers(config.TLS.OverrideTLSCiphers)
+	_, err = aghtls.ParseCiphers(cipherIDs)
 	if err != nil {
 		return fmt.Errorf("override_tls_ciphers: %w", err)
 	}

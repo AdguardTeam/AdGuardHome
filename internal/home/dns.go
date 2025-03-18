@@ -128,9 +128,9 @@ func initDNS(
 }
 
 // initDNSServer initializes the [context.dnsServer].  To only use the internal
-// proxy, none of the arguments are required, but tlsConf and l still must not
-// be nil, in other cases all the arguments also must not be nil.  It also must
-// not be called unless [config] and [globalContext] are initialized.
+// proxy, none of the arguments are required, but tlsConf, tlsMgr and l still
+// must not be nil, in other cases all the arguments also must not be nil.  It
+// also must not be called unless [config] and [globalContext] are initialized.
 //
 // TODO(e.burkov): Use [dnsforward.DNSCreateParams] as a parameter.
 func initDNSServer(
@@ -241,7 +241,7 @@ func ipsToUDPAddrs(ips []netip.Addr, port uint16) (udpAddrs []*net.UDPAddr) {
 }
 
 // newServerConfig converts values from the configuration file into the internal
-// DNS server configuration.  All arguments must not be nil.
+// DNS server configuration.  All arguments must not be nil, except for httpReg.
 func newServerConfig(
 	dnsConf *dnsConfig,
 	clientSrcConf *clientSourcesConfig,

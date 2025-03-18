@@ -267,7 +267,8 @@ func setupOpts(opts options) (err error) {
 	return nil
 }
 
-// initContextClients initializes Context clients and related fields.
+// initContextClients initializes Context clients and related fields.  All
+// arguments must not be nil.
 func initContextClients(
 	ctx context.Context,
 	logger *slog.Logger,
@@ -352,7 +353,8 @@ func setupBindOpts(opts options) (err error) {
 	return nil
 }
 
-// setupDNSFilteringConf sets up DNS filtering configuration settings.
+// setupDNSFilteringConf sets up DNS filtering configuration settings.  All
+// arguments must not be nil.
 func setupDNSFilteringConf(
 	ctx context.Context,
 	baseLogger *slog.Logger,
@@ -630,12 +632,11 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 		servePlainDNS:  config.DNS.ServePlainDNS,
 	})
 	if err != nil {
-		log.Error("initializing tls: %s", err)
+		log.Error("tls_manager: initializing: %s", err)
 		onConfigModified()
 	}
 
 	globalContext.tls = tlsMgr
-	sigHdlr.addTLSManager(tlsMgr)
 
 	err = initContextClients(ctx, slogLogger, sigHdlr, tlsMgr)
 	fatalOnError(err)
@@ -678,6 +679,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	fatalOnError(err)
 
 	tlsMgr.setWebAPI(globalContext.web)
+	sigHdlr.addTLSManager(tlsMgr)
 
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
 	fatalOnError(err)
