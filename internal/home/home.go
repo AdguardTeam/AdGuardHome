@@ -1058,7 +1058,8 @@ type jsonError struct {
 	Message string `json:"message"`
 }
 
-// cmdlineUpdate updates current application and exits.  l must not be nil.
+// cmdlineUpdate updates current application and exits.  l and tlsMgr must not
+// be nil.
 func cmdlineUpdate(
 	ctx context.Context,
 	l *slog.Logger,
