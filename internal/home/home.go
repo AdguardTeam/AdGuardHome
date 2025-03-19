@@ -273,14 +273,7 @@ func initContextClients(
 	ctx context.Context,
 	logger *slog.Logger,
 	sigHdlr *signalHandler,
-	tlsMgr *tlsManager,
 ) (err error) {
-	err = setupDNSFilteringConf(ctx, logger, config.Filtering, tlsMgr)
-	if err != nil {
-		// Don't wrap the error, because it's informative enough as is.
-		return err
-	}
-
 	//lint:ignore SA1019 Migration is not over.
 	config.DHCP.WorkDir = globalContext.workDir
 	config.DHCP.DataDir = globalContext.getDataDir()
@@ -624,6 +617,9 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	// TODO(s.chzhen):  Use it for the entire initialization process.
 	ctx := context.Background()
 
+	err = initContextClients(ctx, slogLogger, sigHdlr)
+	fatalOnError(err)
+
 	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
 	tlsMgr, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:         tlsMgrLogger,
@@ -638,7 +634,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 
 	globalContext.tls = tlsMgr
 
-	err = initContextClients(ctx, slogLogger, sigHdlr, tlsMgr)
+	err = setupDNSFilteringConf(ctx, slogLogger, config.Filtering, tlsMgr)
 	fatalOnError(err)
 
 	err = setupOpts(opts)
