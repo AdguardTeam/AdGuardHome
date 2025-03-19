@@ -602,11 +602,7 @@ func (m *tlsManager) validateTLSSettings(setts tlsConfigSettingsExt) (err error)
 		return errors.Error("plain DNS is required in case encryption protocols are disabled")
 	}
 
-	if m.web.httpsServer.server != nil {
-		return nil
-	}
-
-	if !isPortAvailable(setts.PortHTTPS) {
+	if !m.isPortAvailable(setts.PortHTTPS) {
 		return fmt.Errorf("port %d is not available, cannot enable HTTPS on it", setts.PortHTTPS)
 	}
 
@@ -680,11 +676,32 @@ func (m *tlsManager) validateCertChain(
 	return nil
 }
 
-// isPortAvailable checks if port, which is considered an HTTPS port, is
-// available.
+// isPortAvailable checks if a given port, typically used for HTTPS, is
+// available for use.  It checks the current configuration and, if needed,
+// attempts to bind to the port.
 //
 // TODO(a.garipov): Adapt for HTTP/3.
-func isPortAvailable(port uint16) (ok bool) {
+func (m *tlsManager) isPortAvailable(port uint16) (ok bool) {
+	needBindingCheck := false
+	func() {
+		m.web.httpsServer.condLock.Lock()
+		defer m.web.httpsServer.condLock.Unlock()
+
+		if m.web.httpsServer.server == nil {
+			needBindingCheck = true
+
+			return
+		}
+
+		if port != m.conf.PortHTTPS {
+			needBindingCheck = true
+		}
+	}()
+
+	if !needBindingCheck {
+		return true
+	}
+
 	addrPort := netip.AddrPortFrom(config.HTTPConfig.Address.Addr(), port)
 	err := aghnet.CheckPort("tcp", addrPort)
 
