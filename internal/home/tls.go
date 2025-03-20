@@ -696,6 +696,8 @@ func (m *tlsManager) isPortAvailable(port uint16) (ok bool) {
 		// If the current HTTPS port and the provided ports are not identical,
 		// there is a need to attempt to bind to the port for availability
 		// checking.
+		// These preparations help prevent a panic due to an "address already in
+		// use" error.  See [webAPI.tlsServerLoop].
 		if port != m.conf.PortHTTPS {
 			needBindingCheck = true
 		}
