@@ -932,10 +932,9 @@ func (d *DNSFilter) matchHost(
 	ufReq := &urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
-		// TODO(e.burkov): Wait for urlfilter update to pass net.IP.
-		ClientIP:   setts.ClientIP,
-		ClientName: setts.ClientName,
-		DNSType:    rrtype,
+		ClientIP:         setts.ClientIP,
+		ClientName:       setts.ClientName,
+		DNSType:          rrtype,
 	}
 
 	d.engineLock.RLock()

@@ -459,7 +459,6 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 
 	addr, err := netip.ParseAddr(cli)
 	if err == nil {
-		setts.ClientIP = addr
 		d.ApplyAdditionalFiltering(addr, "", setts)
 	} else if cli != "" {
 		// TODO(s.chzhen):  Set [Settings.ClientName] once urlfilter supports

@@ -634,8 +634,9 @@ func (d *DNSFilter) enableFiltersLocked(async bool) {
 // ApplyAdditionalFiltering enhances the provided filtering settings with
 // blocked services and client-specific configurations.
 func (d *DNSFilter) ApplyAdditionalFiltering(cliAddr netip.Addr, clientID string, setts *Settings) {
-	d.ApplyBlockedServices(setts)
+	setts.ClientIP = cliAddr
 
+	d.ApplyBlockedServices(setts)
 	d.applyClientFiltering(clientID, cliAddr, setts)
 	if setts.BlockedServices != nil {
 		// TODO(e.burkov):  Get rid of this crutch.

@@ -675,6 +675,7 @@ func (s *Storage) ClearUpstreamCache() {
 
 // ApplyClientFiltering retrieves persistent client information using the
 // ClientID or client IP address, and applies it to the filtering settings.
+// setts must not be nil.
 func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filtering.Settings) {
 	c, ok := s.index.findByClientID(id)
 	if !ok {
@@ -688,8 +689,6 @@ func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filter
 	}
 
 	s.logger.Debug("applying custom client filtering settings", "client_name", c.Name)
-
-	setts.ClientIP = addr
 
 	if c.UseOwnBlockedServices {
 		setts.BlockedServices = c.BlockedServices.Clone()
