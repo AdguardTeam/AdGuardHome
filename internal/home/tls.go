@@ -693,6 +693,9 @@ func (m *tlsManager) isPortAvailable(port uint16) (ok bool) {
 			return
 		}
 
+		// If the current HTTPS port and the provided ports are not identical,
+		// there is a need to attempt to bind to the port for availability
+		// checking.
 		if port != m.conf.PortHTTPS {
 			needBindingCheck = true
 		}

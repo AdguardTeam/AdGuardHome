@@ -628,7 +628,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 		servePlainDNS:  config.DNS.ServePlainDNS,
 	})
 	if err != nil {
-		log.Error("tls_manager: initializing: %s", err)
+		tlsMgrLogger.ErrorContext(ctx, "initializing", slogutil.KeyError, err)
 		onConfigModified()
 	}
 
@@ -671,10 +671,12 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	globalContext.auth, err = initUsers()
 	fatalOnError(err)
 
-	globalContext.web, err = initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, customURL)
+	web, err := initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, customURL)
 	fatalOnError(err)
 
-	tlsMgr.setWebAPI(globalContext.web)
+	globalContext.web = web
+
+	tlsMgr.setWebAPI(web)
 	sigHdlr.addTLSManager(tlsMgr)
 
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
@@ -706,7 +708,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 		checkPermissions(ctx, slogLogger, globalContext.workDir, confPath, dataDir, statsDir, querylogDir)
 	}
 
-	globalContext.web.start(ctx)
+	web.start(ctx)
 
 	// Wait for other goroutines to complete their job.
 	<-done
