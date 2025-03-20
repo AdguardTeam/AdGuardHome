@@ -62,7 +62,7 @@ export const Form = ({ className, setIsLoading }: Props) => {
         if (searchUrlParam !== searchValue) {
             setValue('search', searchUrlParam ? searchUrlParam.toString() : '');
         }
-    }, [history.location.search, setValue, searchValue]);
+    }, [history.location.search]);
 
     const onInputClear = async () => {
         setIsLoading(true);
