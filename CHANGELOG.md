@@ -32,6 +32,14 @@ See also the [v0.107.59 GitHub milestone][ms-v0.107.59].
 
 - The search form not working in the query log ([#7704]).
 
+### Deprecated
+
+- Node 20 support, Node 22 will be required in future releases.
+
+### Removed
+
+- Node 18 support.
+
 [#7704]: https://github.com/AdguardTeam/AdGuardHome/issues/7704
 [#7708]: https://github.com/AdguardTeam/AdGuardHome/issues/7708
 
