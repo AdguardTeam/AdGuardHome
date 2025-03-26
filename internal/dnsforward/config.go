@@ -168,39 +168,39 @@ type EDNSClientSubnet struct {
 	UseCustom bool `yaml:"use_custom"`
 }
 
-// TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
+// TLSConfig is the TLS configuration for DNS-over-TLS, DNS-over-QUIC, and
+// HTTPS.
 type TLSConfig struct {
+	// cert is the TLS certificate used for TLS connections.
 	cert tls.Certificate
 
-	TLSListenAddrs   []*net.TCPAddr `yaml:"-" json:"-"`
-	QUICListenAddrs  []*net.UDPAddr `yaml:"-" json:"-"`
-	HTTPSListenAddrs []*net.TCPAddr `yaml:"-" json:"-"`
+	// TLSListenAddrs are the addresses to listen on for DoT connections.
+	TLSListenAddrs []*net.TCPAddr
 
-	// PEM-encoded certificates chain
-	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"`
-	// PEM-encoded private key
-	PrivateKey string `yaml:"private_key" json:"private_key"`
+	// QUICListenAddrs are the addresses to listen on for DoQ connections.
+	QUICListenAddrs []*net.UDPAddr
 
-	CertificatePath string `yaml:"certificate_path" json:"certificate_path"`
-	PrivateKeyPath  string `yaml:"private_key_path" json:"private_key_path"`
+	// HTTPSListenAddrs are the addresses to listen on for HTTPS connections.
+	HTTPSListenAddrs []*net.TCPAddr
 
-	CertificateChainData []byte `yaml:"-" json:"-"`
-	PrivateKeyData       []byte `yaml:"-" json:"-"`
+	// CertificateChainData is the PEM-encoded byte data for the certificate
+	// chain.
+	CertificateChainData []byte
+
+	// PrivateKeyData is the PEM-encoded byte data for the private key.
+	PrivateKeyData []byte
 
 	// ServerName is the hostname of the server.  Currently, it is only being
 	// used for ClientID checking and Discovery of Designated Resolvers (DDR).
-	ServerName string `yaml:"-" json:"-"`
+	ServerName string
 
-	// DNS names from certificate (SAN) or CN value from Subject
+	// dnsNames are the DNS names from certificate (SAN) or CN value from
+	// Subject.
 	dnsNames []string
-
-	// OverrideTLSCiphers, when set, contains the names of the cipher suites to
-	// use.  If the slice is empty, the default safe suites are used.
-	OverrideTLSCiphers []string `yaml:"override_tls_ciphers,omitempty" json:"-"`
 
 	// StrictSNICheck controls if the connections with SNI mismatching the
 	// certificate's ones should be rejected.
-	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
+	StrictSNICheck bool
 
 	// hasIPAddrs is set during the certificate parsing and is true if the
 	// configured certificate contains at least a single IP address.

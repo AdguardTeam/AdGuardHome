@@ -59,6 +59,7 @@ type tlsManager struct {
 	// customCipherIDs are the ID of the cipher suites that AdGuard Home must use.
 	customCipherIDs []uint16
 
+	// TODO(s.chzhen): !! Rename.
 	confLock sync.Mutex
 	conf     tlsConfigSettings
 

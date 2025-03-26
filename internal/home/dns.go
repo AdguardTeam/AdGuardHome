@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
@@ -310,8 +311,12 @@ func newDNSTLSConfig(conf *tlsConfigSettings, addrs []netip.Addr) (dnsConf dnsfo
 		return dnsforward.TLSConfig{}
 	}
 
-	dnsConf = conf.TLSConfig
-	dnsConf.ServerName = conf.ServerName
+	dnsConf = dnsforward.TLSConfig{
+		CertificateChainData: slices.Clone(conf.CertificateChainData),
+		PrivateKeyData:       slices.Clone(conf.PrivateKeyData),
+		ServerName:           conf.ServerName,
+		StrictSNICheck:       conf.StrictSNICheck,
+	}
 
 	if conf.PortHTTPS != 0 {
 		dnsConf.HTTPSListenAddrs = ipsToTCPAddrs(addrs, conf.PortHTTPS)

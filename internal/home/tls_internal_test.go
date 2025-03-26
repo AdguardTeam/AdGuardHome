@@ -239,11 +239,9 @@ func TestTLSManager_Reload(t *testing.T) {
 		logger:         logger,
 		configModified: func() {},
 		tlsSettings: tlsConfigSettings{
-			Enabled: true,
-			TLSConfig: dnsforward.TLSConfig{
-				CertificatePath: certPath,
-				PrivateKeyPath:  keyPath,
-			},
+			Enabled:         true,
+			CertificatePath: certPath,
+			PrivateKeyPath:  keyPath,
 		},
 		servePlainDNS: false,
 	})
@@ -278,11 +276,9 @@ func TestTLSManager_HandleTLSStatus(t *testing.T) {
 		logger:         logger,
 		configModified: func() {},
 		tlsSettings: tlsConfigSettings{
-			Enabled: true,
-			TLSConfig: dnsforward.TLSConfig{
-				CertificateChain: string(testCertChainData),
-				PrivateKey:       string(testPrivateKeyData),
-			},
+			Enabled:          true,
+			CertificateChain: string(testCertChainData),
+			PrivateKey:       string(testPrivateKeyData),
 		},
 		servePlainDNS: false,
 	})
@@ -417,11 +413,9 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 		logger:         logger,
 		configModified: func() {},
 		tlsSettings: tlsConfigSettings{
-			Enabled: true,
-			TLSConfig: dnsforward.TLSConfig{
-				CertificateChain: string(testCertChainData),
-				PrivateKey:       string(testPrivateKeyData),
-			},
+			Enabled:          true,
+			CertificateChain: string(testCertChainData),
+			PrivateKey:       string(testPrivateKeyData),
 		},
 		servePlainDNS: false,
 	})
@@ -434,11 +428,9 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 
 	setts := &tlsConfigSettingsExt{
 		tlsConfigSettings: tlsConfigSettings{
-			Enabled: true,
-			TLSConfig: dnsforward.TLSConfig{
-				CertificateChain: base64.StdEncoding.EncodeToString(testCertChainData),
-				PrivateKey:       base64.StdEncoding.EncodeToString(testPrivateKeyData),
-			},
+			Enabled:          true,
+			CertificateChain: base64.StdEncoding.EncodeToString(testCertChainData),
+			PrivateKey:       base64.StdEncoding.EncodeToString(testPrivateKeyData),
 		},
 	}
 
@@ -511,11 +503,9 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 		logger:         logger,
 		configModified: func() {},
 		tlsSettings: tlsConfigSettings{
-			Enabled: true,
-			TLSConfig: dnsforward.TLSConfig{
-				CertificatePath: certPath,
-				PrivateKeyPath:  keyPath,
-			},
+			Enabled:         true,
+			CertificatePath: certPath,
+			PrivateKeyPath:  keyPath,
 		},
 		servePlainDNS: true,
 	})
@@ -533,12 +523,10 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	// Prepare a request with the new TLS configuration.
 	setts := &tlsConfigSettingsExt{
 		tlsConfigSettings: tlsConfigSettings{
-			Enabled:   true,
-			PortHTTPS: 4433,
-			TLSConfig: dnsforward.TLSConfig{
-				CertificateChain: base64.StdEncoding.EncodeToString(testCertChainData),
-				PrivateKey:       base64.StdEncoding.EncodeToString(testPrivateKeyData),
-			},
+			Enabled:          true,
+			PortHTTPS:        4433,
+			CertificateChain: base64.StdEncoding.EncodeToString(testCertChainData),
+			PrivateKey:       base64.StdEncoding.EncodeToString(testPrivateKeyData),
 		},
 	}
 

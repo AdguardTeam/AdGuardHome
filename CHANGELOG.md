@@ -28,6 +28,8 @@ See also the [v0.107.59 GitHub milestone][ms-v0.107.59].
 
 ### Fixed
 
+- Validation process for the DNS-over-TLS, DNS-over-QUIC, and HTTPS ports on the *Encryption Settings* page.
+
 - Rules with the `client` modifier not working ([#7708]).
 
 - The search form not working in the query log ([#7704]).
@@ -52,8 +54,6 @@ See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
 - Optional `client` and `qtype` URL query parameters to the `GET /control/check_host` HTTP API.
 
 ### Fixed
-
-- Validation process for the HTTPS port on the *Encryption Settings* page.
 
 - Clearing the DNS cache on the *DNS settings* page now includes both global cache and custom client cache.
 
