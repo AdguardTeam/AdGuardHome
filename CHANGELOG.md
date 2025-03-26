@@ -53,6 +53,8 @@ See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
 
 ### Fixed
 
+- Validation process for the HTTPS port on the *Encryption Settings* page.
+
 - Clearing the DNS cache on the *DNS settings* page now includes both global cache and custom client cache.
 
 - Invalid ICMPv6 Router Advertisement messages ([#7547]).

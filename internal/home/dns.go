@@ -38,6 +38,8 @@ const (
 )
 
 // Called by other modules when configuration is changed
+//
+// TODO(s.chzhen):  Remove this after refactoring.
 func onConfigModified() {
 	err := config.write(globalContext.tls)
 	if err != nil {
@@ -120,14 +122,15 @@ func initDNS(
 		anonymizer,
 		httpRegister,
 		tlsConf,
+		tlsMgr,
 		baseLogger,
 	)
 }
 
 // initDNSServer initializes the [context.dnsServer].  To only use the internal
-// proxy, none of the arguments are required, but tlsConf and l still must not
-// be nil, in other cases all the arguments also must not be nil.  It also must
-// not be called unless [config] and [globalContext] are initialized.
+// proxy, none of the arguments are required, but tlsConf, tlsMgr and l still
+// must not be nil, in other cases all the arguments also must not be nil.  It
+// also must not be called unless [config] and [globalContext] are initialized.
 //
 // TODO(e.burkov): Use [dnsforward.DNSCreateParams] as a parameter.
 func initDNSServer(
@@ -138,6 +141,7 @@ func initDNSServer(
 	anonymizer *aghnet.IPMut,
 	httpReg aghhttp.RegisterFunc,
 	tlsConf *tlsConfigSettings,
+	tlsMgr *tlsManager,
 	l *slog.Logger,
 ) (err error) {
 	globalContext.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
@@ -166,6 +170,7 @@ func initDNSServer(
 		&config.DNS,
 		config.Clients.Sources,
 		tlsConf,
+		tlsMgr,
 		httpReg,
 		globalContext.clients.storage,
 	)
@@ -236,11 +241,12 @@ func ipsToUDPAddrs(ips []netip.Addr, port uint16) (udpAddrs []*net.UDPAddr) {
 }
 
 // newServerConfig converts values from the configuration file into the internal
-// DNS server configuration.  All arguments must not be nil.
+// DNS server configuration.  All arguments must not be nil, except for httpReg.
 func newServerConfig(
 	dnsConf *dnsConfig,
 	clientSrcConf *clientSourcesConfig,
 	tlsConf *tlsConfigSettings,
+	tlsMgr *tlsManager,
 	httpReg aghhttp.RegisterFunc,
 	clientsContainer dnsforward.ClientsContainer,
 ) (newConf *dnsforward.ServerConfig, err error) {
@@ -256,7 +262,7 @@ func newServerConfig(
 		TLSConfig:              newDNSTLSConfig(tlsConf, hosts),
 		TLSAllowUnencryptedDoH: tlsConf.AllowUnencryptedDoH,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
-		TLSv12Roots:            globalContext.tlsRoots,
+		TLSv12Roots:            tlsMgr.rootCerts,
 		ConfigModified:         onConfigModified,
 		HTTPRegister:           httpReg,
 		LocalPTRResolvers:      dnsConf.PrivateRDNSResolvers,
