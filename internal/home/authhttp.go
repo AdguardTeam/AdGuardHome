@@ -1,6 +1,7 @@
 package home
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -32,9 +33,13 @@ type loginJSON struct {
 }
 
 // newCookie creates a new authentication cookie.
-func (a *Auth) newCookie(req loginJSON, addr string) (c *http.Cookie, err error) {
+func (a *Auth) newCookie(
+	ctx context.Context,
+	req loginJSON,
+	addr string,
+) (c *http.Cookie, err error) {
 	rateLimiter := a.rateLimiter
-	u, ok := a.findUser(req.Name, req.Password)
+	u, ok := a.findUser(ctx, req.Name, req.Password)
 	if !ok {
 		if rateLimiter != nil {
 			rateLimiter.inc(addr)
@@ -172,7 +177,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		log.Error("auth: getting real ip from request with remote ip %s: %s", remoteIP, err)
 	}
 
-	cookie, err := globalContext.auth.newCookie(req, remoteIP)
+	cookie, err := globalContext.auth.newCookie(r.Context(), req, remoteIP)
 	if err != nil {
 		logIP := remoteIP
 		if globalContext.auth.trustedProxies.Contains(ip.Unmap()) {
@@ -250,7 +255,7 @@ func optionalAuthThird(w http.ResponseWriter, r *http.Request) (mustAuth bool) {
 		// Check Basic authentication.
 		user, pass, hasBasic := r.BasicAuth()
 		if hasBasic {
-			_, isAuthenticated = globalContext.auth.findUser(user, pass)
+			_, isAuthenticated = globalContext.auth.findUser(r.Context(), user, pass)
 			if !isAuthenticated {
 				log.Info("%s: invalid basic authorization value", pref)
 			}
@@ -290,7 +295,7 @@ func optionalAuth(
 ) (wrapped func(http.ResponseWriter, *http.Request)) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		p := r.URL.Path
-		authRequired := globalContext.auth != nil && globalContext.auth.authRequired()
+		authRequired := globalContext.auth != nil && globalContext.auth.authRequired(r.Context())
 		if p == "/login.html" {
 			cookie, err := r.Cookie(sessionCookieName)
 			if authRequired && err == nil {

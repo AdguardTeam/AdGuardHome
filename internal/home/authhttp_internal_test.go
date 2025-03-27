@@ -68,7 +68,11 @@ func TestAuthHTTP(t *testing.T) {
 	assert.True(t, handlerCalled)
 
 	// perform login
-	cookie, err := globalContext.auth.newCookie(loginJSON{Name: "name", Password: "password"}, "")
+	cookie, err := globalContext.auth.newCookie(
+		testutil.ContextWithTimeout(t, testTimeout),
+		loginJSON{Name: "name", Password: "password"},
+		"",
+	)
 	require.NoError(t, err)
 	require.NotNil(t, cookie)
 

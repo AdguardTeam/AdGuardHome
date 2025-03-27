@@ -1,6 +1,7 @@
 package home
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/binary"
 	"encoding/hex"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -59,7 +61,7 @@ type Auth struct {
 	db             *bbolt.DB
 	rateLimiter    *authRateLimiter
 	sessions       map[string]*session
-	users          []webUser
+	userDB         aghuser.DB
 	lock           sync.Mutex
 	sessionTTL     uint32
 }
@@ -68,8 +70,25 @@ type Auth struct {
 //
 // TODO(s.chzhen):  Improve naming.
 type webUser struct {
-	Name         string `yaml:"name"`
+	// Name represents the login name of the web user.
+	Name string `yaml:"name"`
+
+	// PasswordHash is the hashed representation of the web user password.
 	PasswordHash string `yaml:"password"`
+
+	// UserID is the unique identifier of the web user.
+	//
+	// TODO(s.chzhen): !! Use this.
+	UserID aghuser.UserID `yaml:"-"`
+}
+
+// toUser returns the new properly initialized *aghuser.User using stored
+// properties.
+func (wu *webUser) toUser() (u *aghuser.User) {
+	return &aghuser.User{
+		Login:    aghuser.Login(wu.Name),
+		Password: aghuser.NewDefaultPassword(wu.PasswordHash),
+	}
 }
 
 // InitAuth initializes the global authentication object.
@@ -82,11 +101,21 @@ func InitAuth(
 ) (a *Auth) {
 	log.Info("Initializing auth module: %s", dbFilename)
 
+	userDB := aghuser.NewDefaultDB()
+	for _, u := range users {
+		// TODO(s.chzhen):  Pass context.
+		err := userDB.Create(context.TODO(), u.toUser())
+		if err != nil {
+			// Should not happen.
+			panic(err)
+		}
+	}
+
 	a = &Auth{
 		sessionTTL:     sessionTTL,
 		rateLimiter:    rateLimiter,
 		sessions:       make(map[string]*session),
-		users:          users,
+		userDB:         userDB,
 		trustedProxies: trustedProxies,
 	}
 	var err error
@@ -101,7 +130,7 @@ func InitAuth(
 		return nil
 	}
 	a.loadSessions()
-	log.Info("auth: initialized.  users:%d  sessions:%d", len(a.users), len(a.sessions))
+	log.Info("auth: initialized.  users:%d  sessions:%d", len(users), len(a.sessions))
 
 	return a
 }
@@ -311,7 +340,7 @@ func (a *Auth) removeSession(sess string) {
 }
 
 // addUser adds a new user with the given password.
-func (a *Auth) addUser(u *webUser, password string) (err error) {
+func (a *Auth) addUser(ctx context.Context, u *webUser, password string) (err error) {
 	if len(password) == 0 {
 		return errors.Error("empty password")
 	}
@@ -326,7 +355,11 @@ func (a *Auth) addUser(u *webUser, password string) (err error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	a.users = append(a.users, *u)
+	err = a.userDB.Create(ctx, u.toUser())
+	if err != nil {
+		// Should not happen.
+		panic(err)
+	}
 
 	log.Debug("auth: added user with login %q", u.Name)
 
@@ -334,29 +367,37 @@ func (a *Auth) addUser(u *webUser, password string) (err error) {
 }
 
 // findUser returns a user if there is one.
-func (a *Auth) findUser(login, password string) (u webUser, ok bool) {
+//
+// TODO(s.chzhen):  Return [*aghuser.User].
+func (a *Auth) findUser(ctx context.Context, login, password string) (u webUser, ok bool) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	for _, u = range a.users {
-		if u.Name == login &&
-			bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)) == nil {
-			return u, true
-		}
+	user, err := a.userDB.ByLogin(ctx, aghuser.Login(login))
+	if err != nil {
+		return webUser{}, false
 	}
 
-	return webUser{}, false
+	ok = user.Password.Authenticate(ctx, password)
+	if !ok {
+		return webUser{}, false
+	}
+
+	return webUser{Name: string(user.Login)}, true
 }
 
 // getCurrentUser returns the current user.  It returns an empty User if the
 // user is not found.
+//
+// TODO(s.chzhen):  Return [*aghuser.User].
 func (a *Auth) getCurrentUser(r *http.Request) (u webUser) {
+	ctx := r.Context()
 	cookie, err := r.Cookie(sessionCookieName)
 	if err != nil {
 		// There's no Cookie, check Basic authentication.
 		user, pass, ok := r.BasicAuth()
 		if ok {
-			u, _ = globalContext.auth.findUser(user, pass)
+			u, _ = globalContext.auth.findUser(ctx, user, pass)
 
 			return u
 		}
@@ -372,28 +413,37 @@ func (a *Auth) getCurrentUser(r *http.Request) (u webUser) {
 		return webUser{}
 	}
 
-	for _, u = range a.users {
-		if u.Name == s.userName {
-			return u
-		}
+	user, err := a.userDB.ByLogin(ctx, aghuser.Login(s.userName))
+	if err != nil {
+		return webUser{}
 	}
 
-	return webUser{}
+	return webUser{Name: string(user.Login)}
 }
 
 // usersList returns a copy of a users list.
-func (a *Auth) usersList() (users []webUser) {
+func (a *Auth) usersList(ctx context.Context) (users []webUser) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	users = make([]webUser, len(a.users))
-	copy(users, a.users)
+	us, err := a.userDB.All(ctx)
+	if err != nil {
+		return users
+	}
+
+	users = make([]webUser, 0, len(us))
+	for _, u := range us {
+		users = append(users, webUser{
+			Name:         string(u.Login),
+			PasswordHash: string(u.Password.Hash()),
+		})
+	}
 
 	return users
 }
 
 // authRequired returns true if a authentication is required.
-func (a *Auth) authRequired() bool {
+func (a *Auth) authRequired(ctx context.Context) bool {
 	if GLMode {
 		return true
 	}
@@ -401,7 +451,9 @@ func (a *Auth) authRequired() bool {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	return len(a.users) != 0
+	_, err := a.userDB.All(ctx)
+
+	return err == nil
 }
 
 // newSessionToken returns cryptographically secure randomly generated slice of
