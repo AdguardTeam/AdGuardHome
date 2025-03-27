@@ -6,6 +6,7 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
@@ -23,6 +24,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/renameio/v2/maybe"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -263,6 +265,9 @@ type dnsConfig struct {
 	HostsFileEnabled bool `yaml:"hostsfile_enabled"`
 }
 
+// tlsConfigSettings is the TLS configuration for DNS-over-TLS, DNS-over-QUIC,
+// and HTTPS.  When adding new properties, update the [tlsConfigSettings.clone]
+// and [tlsConfigSettings.setPrivateFieldsAndCompare] methods as necessary.
 type tlsConfigSettings struct {
 	// Enabled indicates whether encryption (DoT/DoH/HTTPS) is enabled.
 	Enabled bool `yaml:"enabled" json:"enabled"`
@@ -327,6 +332,42 @@ type tlsConfigSettings struct {
 	// StrictSNICheck controls if the connections with SNI mismatching the
 	// certificate's ones should be rejected.
 	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
+}
+
+// clone returns a deep copy of c.
+func (c *tlsConfigSettings) clone() (clone tlsConfigSettings) {
+	clone = *c
+
+	clone.OverrideTLSCiphers = slices.Clone(c.OverrideTLSCiphers)
+	clone.CertificateChainData = slices.Clone(c.CertificateChainData)
+	clone.PrivateKeyData = slices.Clone(c.PrivateKeyData)
+
+	return clone
+}
+
+// setPrivateFieldsAndCompare sets any missing properties in conf to match those
+// in c and returns true if TLS configurations are equal.  conf must not be be
+// nil.
+// It sets the following properties because these are not accepted from the
+// frontend:
+//
+//	[tlsConfigSettings.AllowUnencryptedDoH]
+//	[tlsConfigSettings.CertificateChainData]
+//	[tlsConfigSettings.DNSCryptConfigFile]
+//	[tlsConfigSettings.OverrideTLSCiphers]
+//	[tlsConfigSettings.PortDNSCrypt]
+//	[tlsConfigSettings.PrivateKeyData]
+func (c *tlsConfigSettings) setPrivateFieldsAndCompare(conf *tlsConfigSettings) (equal bool) {
+	conf.CertificateChainData = slices.Clone(c.CertificateChainData)
+	conf.OverrideTLSCiphers = slices.Clone(c.OverrideTLSCiphers)
+	conf.PrivateKeyData = slices.Clone(c.PrivateKeyData)
+
+	conf.AllowUnencryptedDoH = c.AllowUnencryptedDoH
+	conf.DNSCryptConfigFile = c.DNSCryptConfigFile
+	conf.PortDNSCrypt = c.PortDNSCrypt
+
+	// TODO(a.garipov): Define a custom comparer.
+	return cmp.Equal(c, conf)
 }
 
 type queryLogConfig struct {

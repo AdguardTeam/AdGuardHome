@@ -338,47 +338,49 @@ func TestValidateTLSSettings(t *testing.T) {
 	busyUDPPort := udpAddr.Port
 
 	testCases := []struct {
-		setts   tlsConfigSettingsExt
 		name    string
 		wantErr string
+		setts   tlsConfigSettingsExt
 	}{{
 		name:    "basic",
-		setts:   tlsConfigSettingsExt{},
 		wantErr: "",
+		setts:   tlsConfigSettingsExt{},
 	}, {
+		name:    "disabled_all",
+		wantErr: "plain DNS is required in case encryption protocols are disabled",
 		setts: tlsConfigSettingsExt{
 			ServePlainDNS: aghalg.NBFalse,
 		},
-		name:    "disabled_all",
-		wantErr: "plain DNS is required in case encryption protocols are disabled",
 	}, {
+		name:    "busy_https_port",
+		wantErr: fmt.Sprintf("port %d for HTTPS is not available", busyTCPPort),
 		setts: tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:   true,
 				PortHTTPS: uint16(busyTCPPort),
 			},
 		},
-		name:    "busy_https_port",
-		wantErr: fmt.Sprintf("port %d for HTTPS is not available", busyTCPPort),
 	}, {
+		name:    "busy_dot_port",
+		wantErr: fmt.Sprintf("port %d for DNS-over-TLS is not available", busyTCPPort),
 		setts: tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:        true,
 				PortDNSOverTLS: uint16(busyTCPPort),
 			},
 		},
-		name:    "busy_dot_port",
-		wantErr: fmt.Sprintf("port %d for DNS-over-TLS is not available", busyTCPPort),
 	}, {
+		name:    "busy_doq_port",
+		wantErr: fmt.Sprintf("port %d for DNS-over-QUIC is not available", busyUDPPort),
 		setts: tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:         true,
 				PortDNSOverQUIC: uint16(busyUDPPort),
 			},
 		},
-		name:    "busy_doq_port",
-		wantErr: fmt.Sprintf("port %d for DNS-over-QUIC is not available", busyUDPPort),
 	}, {
+		name:    "duplicate_port",
+		wantErr: "validating tcp ports: duplicated values: [4433]",
 		setts: tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:        true,
@@ -386,8 +388,6 @@ func TestValidateTLSSettings(t *testing.T) {
 				PortDNSOverTLS: 4433,
 			},
 		},
-		name:    "duplicate_port",
-		wantErr: "validating tcp ports: duplicated values: [4433]",
 	}}
 
 	for _, tc := range testCases {

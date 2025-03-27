@@ -24,11 +24,9 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/c2h5oh/datasize"
-	"github.com/google/go-cmp/cmp"
 )
 
 // tlsManager contains the current configuration and state of AdGuard Home TLS
@@ -52,16 +50,18 @@ type tlsManager struct {
 	// Resolve it.
 	web *webAPI
 
+	// mu protects status, certLastMod, conf, and servePlainDNS.
+	mu *sync.Mutex
+
+	// conf contains the TLS configuration settings.
+	conf *tlsConfigSettings
+
 	// configModified is called when the TLS configuration is changed via an
 	// HTTP request.
 	configModified func()
 
 	// customCipherIDs are the ID of the cipher suites that AdGuard Home must use.
 	customCipherIDs []uint16
-
-	// TODO(s.chzhen): !! Rename.
-	confLock sync.Mutex
-	conf     tlsConfigSettings
 
 	// servePlainDNS defines if plain DNS is allowed for incoming requests.
 	servePlainDNS bool
@@ -92,9 +92,10 @@ type tlsManagerConfig struct {
 func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, err error) {
 	m = &tlsManager{
 		logger:         conf.logger,
+		mu:             &sync.Mutex{},
 		configModified: conf.configModified,
 		status:         &tlsConfigStatus{},
-		conf:           conf.tlsSettings,
+		conf:           &conf.tlsSettings,
 		servePlainDNS:  conf.servePlainDNS,
 	}
 
@@ -113,16 +114,21 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 		m.logger.InfoContext(ctx, "using default ciphers")
 	}
 
-	if m.conf.Enabled {
-		err = m.load(ctx)
-		if err != nil {
-			m.conf.Enabled = false
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-			return m, err
-		}
-
-		m.setCertFileTime(ctx)
+	if !m.conf.Enabled {
+		return m, nil
 	}
+
+	err = m.load(ctx)
+	if err != nil {
+		m.conf.Enabled = false
+
+		return m, err
+	}
+
+	m.setCertFileTime(ctx)
 
 	return m, nil
 }
@@ -137,8 +143,9 @@ func (m *tlsManager) setWebAPI(webAPI *webAPI) {
 }
 
 // load reloads the TLS configuration from files or data from the config file.
+// m.mu is expected to be locked.
 func (m *tlsManager) load(ctx context.Context) (err error) {
-	err = m.loadTLSConf(ctx, &m.conf, m.status)
+	err = m.loadTLSConf(ctx, m.conf, m.status)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
@@ -146,15 +153,16 @@ func (m *tlsManager) load(ctx context.Context) (err error) {
 	return nil
 }
 
-// WriteDiskConfig - write config
+// WriteDiskConfig writes the stored TLS configuration to conf.
 func (m *tlsManager) WriteDiskConfig(conf *tlsConfigSettings) {
-	m.confLock.Lock()
-	*conf = m.conf
-	m.confLock.Unlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	*conf = m.conf.clone()
 }
 
 // setCertFileTime sets [tlsManager.certLastMod] from the certificate.  If there
-// are errors, setCertFileTime logs them.
+// are errors, setCertFileTime logs them.  m.mu is expected to be locked.
 func (m *tlsManager) setCertFileTime(ctx context.Context) {
 	if len(m.conf.CertificatePath) == 0 {
 		return
@@ -176,21 +184,21 @@ func (m *tlsManager) setCertFileTime(ctx context.Context) {
 func (m *tlsManager) start(_ context.Context) {
 	m.registerWebHandlers()
 
-	m.confLock.Lock()
-	tlsConf := m.conf
-	m.confLock.Unlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	// The background context is used because the TLSConfigChanged wraps context
 	// with timeout on its own and shuts down the server, which handles current
 	// request.
-	m.web.tlsConfigChanged(context.Background(), tlsConf)
+	m.web.tlsConfigChanged(context.Background(), m.conf)
 }
 
 // reload updates the configuration and restarts the TLS manager.
 func (m *tlsManager) reload(ctx context.Context) {
-	m.confLock.Lock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	tlsConf := m.conf
-	m.confLock.Unlock()
 
 	if !tlsConf.Enabled || len(tlsConf.CertificatePath) == 0 {
 		return
@@ -212,9 +220,7 @@ func (m *tlsManager) reload(ctx context.Context) {
 
 	m.logger.InfoContext(ctx, "certificate file is modified")
 
-	m.confLock.Lock()
 	err = m.load(ctx)
-	m.confLock.Unlock()
 	if err != nil {
 		m.logger.ErrorContext(ctx, "reloading", slogutil.KeyError, err)
 
@@ -228,10 +234,6 @@ func (m *tlsManager) reload(ctx context.Context) {
 		m.logger.ErrorContext(ctx, "reconfiguring dns server", slogutil.KeyError, err)
 	}
 
-	m.confLock.Lock()
-	tlsConf = m.conf
-	m.confLock.Unlock()
-
 	// The background context is used because the TLSConfigChanged wraps context
 	// with timeout on its own and shuts down the server, which handles current
 	// request.
@@ -239,15 +241,12 @@ func (m *tlsManager) reload(ctx context.Context) {
 }
 
 // reconfigureDNSServer updates the DNS server configuration using the stored
-// TLS settings.
+// TLS settings.  m.mu is expected to be locked.
 func (m *tlsManager) reconfigureDNSServer() (err error) {
-	tlsConf := &tlsConfigSettings{}
-	m.WriteDiskConfig(tlsConf)
-
 	newConf, err := newServerConfig(
 		&config.DNS,
 		config.Clients.Sources,
-		tlsConf,
+		m.conf,
 		m,
 		httpRegister,
 		globalContext.clients.storage,
@@ -411,15 +410,23 @@ type tlsConfigSettingsExt struct {
 
 // handleTLSStatus is the handler for the GET /control/tls/status HTTP API.
 func (m *tlsManager) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
-	m.confLock.Lock()
+	var tlsConf tlsConfigSettings
+	var servePlainDNS bool
+	func() {
+		m.mu.Lock()
+		defer m.mu.Unlock()
+
+		tlsConf = m.conf.clone()
+		servePlainDNS = m.servePlainDNS
+	}()
+
 	data := tlsConfig{
 		tlsConfigSettingsExt: tlsConfigSettingsExt{
-			tlsConfigSettings: m.conf,
-			ServePlainDNS:     aghalg.BoolToNullBool(m.servePlainDNS),
+			tlsConfigSettings: tlsConf,
+			ServePlainDNS:     aghalg.BoolToNullBool(servePlainDNS),
 		},
 		tlsConfigStatus: m.status,
 	}
-	m.confLock.Unlock()
 
 	marshalTLS(w, r, data)
 }
@@ -434,6 +441,9 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	if setts.PrivateKeySaved {
 		setts.PrivateKey = m.conf.PrivateKey
@@ -459,23 +469,15 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	marshalTLS(w, r, resp)
 }
 
-// setConfig updates manager conf with the given one.
+// setConfig updates manager TLS configuration with the given one.  m.mu is
+// expected to be locked.
 func (m *tlsManager) setConfig(
 	ctx context.Context,
 	newConf tlsConfigSettings,
 	status *tlsConfigStatus,
 	servePlain aghalg.NullBool,
 ) (restartHTTPS bool) {
-	m.confLock.Lock()
-	defer m.confLock.Unlock()
-
-	// Reset the DNSCrypt data before comparing, since we currently do not
-	// accept these from the frontend.
-	//
-	// TODO(a.garipov): Define a custom comparer for dnsforward.TLSConfig.
-	newConf.DNSCryptConfigFile = m.conf.DNSCryptConfigFile
-	newConf.PortDNSCrypt = m.conf.PortDNSCrypt
-	if !cmp.Equal(m.conf, newConf, cmp.AllowUnexported(dnsforward.TLSConfig{})) {
+	if !m.conf.setPrivateFieldsAndCompare(&newConf) {
 		m.logger.InfoContext(ctx, "config has changed, restarting https server")
 		restartHTTPS = true
 	} else {
@@ -516,6 +518,16 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	var restartHTTPS bool
+	defer func() {
+		if restartHTTPS {
+			m.configModified()
+		}
+	}()
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if req.PrivateKeySaved {
 		req.PrivateKey = m.conf.PrivateKey
 	}
@@ -539,19 +551,17 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	restartHTTPS := m.setConfig(ctx, req.tlsConfigSettings, status, req.ServePlainDNS)
+	restartHTTPS = m.setConfig(ctx, req.tlsConfigSettings, status, req.ServePlainDNS)
 	m.setCertFileTime(ctx)
 
 	if req.ServePlainDNS != aghalg.NBNull {
 		func() {
-			m.confLock.Lock()
-			defer m.confLock.Unlock()
+			config.Lock()
+			defer config.Unlock()
 
 			config.DNS.ServePlainDNS = req.ServePlainDNS == aghalg.NBTrue
 		}()
 	}
-
-	m.configModified()
 
 	err = m.reconfigureDNSServer()
 	if err != nil {
@@ -574,12 +584,9 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 
 	// The background context is used because the TLSConfigChanged wraps context
 	// with timeout on its own and shuts down the server, which handles current
-	// request. It is also should be done in a separate goroutine due to the
-	// same reason.
+	// request.
 	if restartHTTPS {
-		go func() {
-			m.web.tlsConfigChanged(context.Background(), req.tlsConfigSettings)
-		}()
+		m.web.tlsConfigChanged(context.Background(), &req.tlsConfigSettings)
 	}
 }
 
