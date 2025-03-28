@@ -501,7 +501,7 @@
     "setup_dns_privacy_android_1": "Android 9 podporuje DNS skrze TLS nativně. Pokud ho chcete konfigurovat, přejděte na Nastavení → Síť & internet → Pokročilé → Soukromé DNS a tam zadejte název vaší domény.",
     "setup_dns_privacy_android_2": "<0>AdGuard pro Android</0> podporuje <1>DNS skrze HTTPS</1> a <1>DNS skrze LS</1>.",
     "setup_dns_privacy_android_3": "<0>Intra</0> přidává podporu <1>DNS skrze HTTPS</1> pro Android.",
-    "setup_dns_privacy_ios_1": "<0>DNSCloak</0> podporuje funkci <1>DNS skrze HTTPS</1>, ale abyste ji mohli nakonfigurovat pro používání vlastního serveru, musíte vygenerovat značku <2>DNS Stamp</2>.",
+    "setup_dns_privacy_ios_1": "<0>DNSecure</0> podporuje funkci <1>DNS skrze HTTPS</1> a <1>DNS skrze LS</1>.",
     "setup_dns_privacy_ios_2": "<0>AdGuard pro iOS</0> podporuje nastavení <1>DNS skrze HTTPS</1> a <1>DNS skrze TLS</1>.",
     "setup_dns_privacy_other_title": "Další implementace",
     "setup_dns_privacy_other_1": "Samotný AdGuard Home může být bezpečným klientem DNS na jakékoli platformě.",

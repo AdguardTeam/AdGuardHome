@@ -498,7 +498,7 @@
     "setup_dns_privacy_android_1": "يدعم Android 9 DNS-over-TLS أصلاً. لتكوينه ، انتقل إلى الإعدادات → الشبكة والإنترنت → متقدم → DNS الخاص وأدخل اسم المجال الخاص بك هناك.",
     "setup_dns_privacy_android_2": "<0> AdGuard لنظام Android </0> يدعم <1> DNS-over-HTTPS </1> و <1> DNS-over-TLS </1>.",
     "setup_dns_privacy_android_3": "<0> Intra </0> يضيف دعم <1> DNS-over-HTTPS </1> إلى Android.",
-    "setup_dns_privacy_ios_1": "<0> DNSCloak </0> يدعم <1> DNS-over-HTTPS </1> ، ولكن من أجل تكوينه لاستخدام الخادم الخاص بك ، ستحتاج إلى إنشاء <2> DNS Stamp </2> لذلك.",
+    "setup_dns_privacy_ios_1": "<0> DNSecure </0> يدعم <1> DNS-over-HTTPS </1> و <1> DNS-over-TLS </1>.",
     "setup_dns_privacy_ios_2": "<0> AdGuard لنظام iOS </0> يدعم إعداد <1> DNS-over-HTTPS </1> و <1> DNS-over-TLS </1> الإعداد.",
     "setup_dns_privacy_other_title": "تطبيقات أخرى",
     "setup_dns_privacy_other_1": "يمكن أن يكون AdGuard Home نفسه عميل DNS آمنًا على أي نظام أساسي.",
