@@ -38,7 +38,6 @@ REVISION = $${REVISION:-$$(git rev-parse --short HEAD)}
 SIGN = 1
 SIGNER_API_KEY = not-a-real-key
 VERSION = v0.0.0
-YARN = yarn
 
 NEXTAPI = 0
 
@@ -139,5 +138,4 @@ txt-lint: ; $(ENV) "$(SHELL)" ./scripts/make/txt-lint.sh
 md-lint:  ; $(ENV_MISC) "$(SHELL)" ./scripts/make/md-lint.sh
 sh-lint:  ; $(ENV_MISC) "$(SHELL)" ./scripts/make/sh-lint.sh
 
-openapi-lint: ; cd ./openapi/ && $(YARN) test
-openapi-show: ; cd ./openapi/ && $(YARN) start
+# TODO(a.garipov):  Re-add openapi-lint.

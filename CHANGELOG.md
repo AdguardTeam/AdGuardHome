@@ -18,6 +18,17 @@ See also the [v0.107.60 GitHub milestone][ms-v0.107.60].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Deprecated
+
+- Node 20 support, Node 22 will be required in future releases.
+
+    **NOTE:** `npm` may be replaced with a different tool, such as `pnpm` or
+    `yarn`, in a future release.
+
+### Removed
+
+- Node 18 support.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
