@@ -86,7 +86,10 @@ export const Form = ({
     const tabs = {
         settings: {
             title: 'settings',
-            component: <MainSettings processingAdding={processingAdding} processingUpdating={processingUpdating} safeSearchServices={safeSearchServices} />,
+            component: <MainSettings
+                processingAdding={processingAdding}
+                processingUpdating={processingUpdating}
+                safeSearchServices={safeSearchServices} />,
         },
         block_services: {
             title: 'block_services',

@@ -166,7 +166,9 @@ export const MainSettings = ({ processingAdding, processingUpdating, safeSearchS
                         name="blocking_mode"
                         control={control}
                         render={({ field }) => (
-                            <Radio {...field} options={blockingModeOptions} disabled={processingAdding || processingUpdating} />
+                            <Radio {...field}
+                                options={blockingModeOptions}
+                                disabled={processingAdding || processingUpdating} />
                         )}
                     />
                 </div>
@@ -174,28 +176,30 @@ export const MainSettings = ({ processingAdding, processingUpdating, safeSearchS
             {blockingMode === BLOCKING_MODES.custom_ip && (
                 <>
                     {customIps.map(({ label, description, name, validateIp }) => (
-                        <div className="form__group">
-                            <Controller
-                                name={name}
-                                control={control}
-                                rules={{
-                                    validate: {
-                                        required: validateRequiredValue,
-                                        ip: validateIp,
-                                    },
-                                }}
-                                render={({ field, fieldState }) => (
-                                    <Input
-                                        {...field}
-                                        data-testid="dns_config_blocked_response_ttl"
-                                        type="text"
-                                        label={label}
-                                        desc={description}
-                                        error={fieldState.error?.message}
-                                        disabled={processingAdding || processingUpdating}
-                                    />
-                                )}
-                            />
+                        <div className="col-12 col-sm-6" key={name}>
+                            <div className="form__group">
+                                <Controller
+                                    name={name}
+                                    control={control}
+                                    rules={{
+                                        validate: {
+                                            required: validateRequiredValue,
+                                            ip: validateIp,
+                                        },
+                                    }}
+                                    render={({ field, fieldState }) => (
+                                        <Input
+                                            {...field}
+                                            data-testid="dns_config_blocked_response_ttl"
+                                            type="text"
+                                            label={label}
+                                            desc={description}
+                                            error={fieldState.error?.message}
+                                            disabled={processingAdding || processingUpdating}
+                                        />
+                                    )}
+                                />
+                            </div>
                         </div>
                     ))}
                 </>

@@ -149,22 +149,8 @@ func (c *Persistent) validate(ctx context.Context, l *slog.Logger, allTags []str
 		return errors.Error("uid required")
 	}
 
-	switch c.BlockingMode {
-	case
-		filtering.BlockingModeDefault,
-		filtering.BlockingModeNXDOMAIN,
-		filtering.BlockingModeREFUSED,
-		filtering.BlockingModeNullIP:
-		break
-	case filtering.BlockingModeCustomIP:
-		if !c.BlockingIPv4.Is4() {
-			return fmt.Errorf("blocking_ipv4 must be valid ipv4 on custom_ip blocking_mode")
-		}
-		if !c.BlockingIPv6.Is6() {
-			return fmt.Errorf("blocking_ipv6 must be valid ipv6 on custom_ip blocking_mode")
-		}
-	default:
-		return fmt.Errorf("unknown blocking_mode: %s", c.BlockingMode)
+	if e := c.validateBlockingMode(); e != nil {
+		return e
 	}
 
 	conf, err := proxy.ParseUpstreamsConfig(c.Upstreams, &upstream.Options{})
@@ -188,6 +174,26 @@ func (c *Persistent) validate(ctx context.Context, l *slog.Logger, allTags []str
 	slices.Sort(c.Tags)
 
 	return nil
+}
+
+func (c *Persistent) validateBlockingMode() error {
+	switch c.BlockingMode {
+	case
+		filtering.BlockingModeDefault,
+		filtering.BlockingModeNXDOMAIN,
+		filtering.BlockingModeREFUSED,
+		filtering.BlockingModeNullIP:
+		return nil
+	case filtering.BlockingModeCustomIP:
+		if !c.BlockingIPv4.Is4() {
+			return fmt.Errorf("blocking_ipv4 must be valid ipv4 on custom_ip blocking_mode")
+		}
+		if !c.BlockingIPv6.Is6() {
+			return fmt.Errorf("blocking_ipv6 must be valid ipv6 on custom_ip blocking_mode")
+		}
+	}
+
+	return fmt.Errorf("unknown blocking_mode: %s", c.BlockingMode)
 }
 
 // SetIDs parses a list of strings into typed fields and returns an error if
