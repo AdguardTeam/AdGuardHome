@@ -47,13 +47,14 @@ func ipsFromRules(resRules []*filtering.ResultRule) (ips []netip.Addr) {
 // genDNSFilterMessage generates a filtered response to req for the filtering
 // result res.
 func (s *Server) genDNSFilterMessage(
-	dctx *proxy.DNSContext,
+	dctx *dnsContext,
+	pctx *proxy.DNSContext,
 	res *filtering.Result,
 ) (resp *dns.Msg) {
-	req := dctx.Req
+	req := pctx.Req
 	qt := req.Question[0].Qtype
 	if qt != dns.TypeA && qt != dns.TypeAAAA && qt != dns.TypeHTTPS {
-		m, _, _ := s.dnsFilter.BlockingMode()
+		m, _, _ := s.blockingMode(dctx)
 		if m == filtering.BlockingModeNullIP {
 			return s.replyCompressed(req)
 		}
@@ -63,16 +64,16 @@ func (s *Server) genDNSFilterMessage(
 
 	switch res.Reason {
 	case filtering.FilteredSafeBrowsing:
-		return s.genBlockedHost(req, s.dnsFilter.SafeBrowsingBlockHost(), dctx)
+		return s.genBlockedHost(req, s.dnsFilter.SafeBrowsingBlockHost(), pctx)
 	case filtering.FilteredParental:
-		return s.genBlockedHost(req, s.dnsFilter.ParentalBlockHost(), dctx)
+		return s.genBlockedHost(req, s.dnsFilter.ParentalBlockHost(), pctx)
 	case filtering.FilteredSafeSearch:
 		// If Safe Search generated the necessary IP addresses, use them.
 		// Otherwise, if there were no errors, there are no addresses for the
 		// requested IP version, so produce a NODATA response.
 		return s.getCNAMEWithIPs(req, ipsFromRules(res.Rules), res.CanonName)
 	default:
-		return s.genForBlockingMode(req, ipsFromRules(res.Rules))
+		return s.genForBlockingMode(dctx, req, ipsFromRules(res.Rules))
 	}
 }
 
@@ -112,8 +113,8 @@ func (s *Server) getCNAMEWithIPs(req *dns.Msg, ips []netip.Addr, cname string) (
 
 // genForBlockingMode generates a filtered response to req based on the server's
 // blocking mode.
-func (s *Server) genForBlockingMode(req *dns.Msg, ips []netip.Addr) (resp *dns.Msg) {
-	switch mode, bIPv4, bIPv6 := s.dnsFilter.BlockingMode(); mode {
+func (s *Server) genForBlockingMode(dctx *dnsContext, req *dns.Msg, ips []netip.Addr) (resp *dns.Msg) {
+	switch mode, bIPv4, bIPv6 := s.blockingMode(dctx); mode {
 	case filtering.BlockingModeCustomIP:
 		return s.makeResponseCustomIP(req, bIPv4, bIPv6)
 	case filtering.BlockingModeDefault:

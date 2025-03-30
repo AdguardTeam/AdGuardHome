@@ -621,6 +621,12 @@ func (s *Server) processFilteringAfterResponse(dctx *dnsContext) (rc resultCode)
 	}
 }
 
+// blockingMode fetches the blocking mode for the specific client from the context
+func (s *Server) blockingMode(dctx *dnsContext) (filtering.BlockingMode, netip.Addr, netip.Addr) {
+
+	return dctx.setts.BlockingMode, dctx.setts.BlockingIPv4, dctx.setts.BlockingIPv6
+}
+
 // filterAfterResponse returns the result of filtering the response that wasn't
 // explicitly allowed or rewritten.
 func (s *Server) filterAfterResponse(dctx *dnsContext) (res resultCode) {

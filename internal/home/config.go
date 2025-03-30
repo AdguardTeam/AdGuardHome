@@ -567,8 +567,22 @@ func parseConfig() (err error) {
 		config.DNS.UpstreamTimeout = timeutil.Duration(dnsforward.DefaultTimeout)
 	}
 
+	setDefaultsForPersistentClients()
+
 	// Do not wrap the error because it's informative enough as is.
 	return validateTLSCipherIDs(config.TLS.OverrideTLSCiphers)
+}
+
+// setDefaultsForPersistentClients sets some default values for persistent clients
+// derived from global defaults
+func setDefaultsForPersistentClients() {
+	for i, o := range config.Clients.Persistent {
+		if o.BlockingMode == "" {
+			config.Clients.Persistent[i].BlockingMode = config.Filtering.BlockingMode
+			config.Clients.Persistent[i].BlockingIPv4 = config.Filtering.BlockingIPv4
+			config.Clients.Persistent[i].BlockingIPv6 = config.Filtering.BlockingIPv6
+		}
+	}
 }
 
 // validateConfig returns error if the configuration is invalid.

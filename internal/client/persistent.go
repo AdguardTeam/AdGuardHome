@@ -65,6 +65,15 @@ type Persistent struct {
 	// must not be nil after initialization.
 	BlockedServices *filtering.BlockedServices
 
+	// BlockingMode is the blocking mode override for a client
+	BlockingMode filtering.BlockingMode
+
+	// BlockingIPv4 is the IP address to be returned for a blocked A request.
+	BlockingIPv4 netip.Addr
+
+	// BlockingIPv6 is the IP address to be returned for a blocked AAAA request.
+	BlockingIPv6 netip.Addr
+
 	// Name of the persistent client.  Must not be empty.
 	Name string
 
@@ -138,6 +147,24 @@ func (c *Persistent) validate(ctx context.Context, l *slog.Logger, allTags []str
 		return errors.Error("id required")
 	case c.UID == UID{}:
 		return errors.Error("uid required")
+	}
+
+	switch c.BlockingMode {
+	case
+		filtering.BlockingModeDefault,
+		filtering.BlockingModeNXDOMAIN,
+		filtering.BlockingModeREFUSED,
+		filtering.BlockingModeNullIP:
+		break
+	case filtering.BlockingModeCustomIP:
+		if !c.BlockingIPv4.Is4() {
+			return fmt.Errorf("blocking_ipv4 must be valid ipv4 on custom_ip blocking_mode")
+		}
+		if !c.BlockingIPv6.Is6() {
+			return fmt.Errorf("blocking_ipv6 must be valid ipv6 on custom_ip blocking_mode")
+		}
+	default:
+		return fmt.Errorf("unknown blocking_mode: %s", c.BlockingMode)
 	}
 
 	conf, err := proxy.ParseUpstreamsConfig(c.Upstreams, &upstream.Options{})
@@ -294,6 +321,10 @@ func (c *Persistent) EqualIDs(prev *Persistent) (equal bool) {
 func (c *Persistent) ShallowClone() (clone *Persistent) {
 	clone = &Persistent{}
 	*clone = *c
+
+	clone.BlockingMode = c.BlockingMode
+	clone.BlockingIPv4 = c.BlockingIPv4
+	clone.BlockingIPv6 = c.BlockingIPv6
 
 	clone.BlockedServices = c.BlockedServices.Clone()
 	clone.Tags = slices.Clone(c.Tags)
