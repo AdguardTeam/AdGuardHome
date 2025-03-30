@@ -5,6 +5,11 @@ import i18next from 'i18next';
 import { captitalizeWords } from '../../../../../helpers/helpers';
 import { ClientForm } from '../types';
 import { Checkbox } from '../../../../ui/Controls/Checkbox';
+import { Radio } from '../../../../ui/Controls/Radio';
+import { Input } from '../../../../ui/Controls/Input';
+import { BLOCKING_MODES } from '../../../../../helpers/constants';
+import { validateIpv4, validateIpv6, validateRequiredValue } from '../../../../../helpers/validators';
+
 
 type ProtectionSettings = 'use_global_settings' | 'filtering_enabled' | 'safebrowsing_enabled' | 'parental_enabled';
 
@@ -43,14 +48,60 @@ const logAndStatsCheckboxes: { name: LogsStatsSettings; placeholder: string }[] 
     },
 ];
 
+const customIps: {
+    name: 'blocking_ipv4' | 'blocking_ipv6';
+    label: string;
+    description: string;
+    validateIp: (value: string) => string;
+}[] = [
+    {
+        name: 'blocking_ipv4',
+        label: i18next.t('blocking_ipv4'),
+        description: i18next.t('blocking_ipv4_desc'),
+        validateIp: validateIpv4,
+    },
+    {
+        name: 'blocking_ipv6',
+        label: i18next.t('blocking_ipv6'),
+        description: i18next.t('blocking_ipv6_desc'),
+        validateIp: validateIpv6,
+    },
+];
+
+const blockingModeOptions = [
+    {
+        value: BLOCKING_MODES.default,
+        label: i18next.t('default'),
+    },
+    {
+        value: BLOCKING_MODES.refused,
+        label: i18next.t('refused'),
+    },
+    {
+        value: BLOCKING_MODES.nxdomain,
+        label: i18next.t('nxdomain'),
+    },
+    {
+        value: BLOCKING_MODES.null_ip,
+        label: i18next.t('null_ip'),
+    },
+    {
+        value: BLOCKING_MODES.custom_ip,
+        label: i18next.t('custom_ip'),
+    },
+];
+
 type Props = {
     safeSearchServices: Record<string, boolean>;
+    processingAdding: boolean;
+    processingUpdating: boolean;
 };
 
-export const MainSettings = ({ safeSearchServices }: Props) => {
+export const MainSettings = ({ processingAdding, processingUpdating, safeSearchServices }: Props) => {
     const { t } = useTranslation();
     const { watch, control } = useFormContext<ClientForm>();
 
+    const blockingMode = watch('blocking_mode');
     const useGlobalSettings = watch('use_global_settings');
 
     return (
@@ -106,6 +157,49 @@ export const MainSettings = ({ safeSearchServices }: Props) => {
                     </div>
                 ))}
             </div>
+
+            <div className="form__group">
+                <label className="form__label--bold form__label--top form__label--with-desc">{t('blocking_mode')}</label>
+
+                <div className="custom-controls-stacked">
+                    <Controller
+                        name="blocking_mode"
+                        control={control}
+                        render={({ field }) => (
+                            <Radio {...field} options={blockingModeOptions} disabled={processingAdding || processingUpdating} />
+                        )}
+                    />
+                </div>
+            </div>
+            {blockingMode === BLOCKING_MODES.custom_ip && (
+                <>
+                    {customIps.map(({ label, description, name, validateIp }) => (
+                        <div className="form__group">
+                            <Controller
+                                name={name}
+                                control={control}
+                                rules={{
+                                    validate: {
+                                        required: validateRequiredValue,
+                                        ip: validateIp,
+                                    },
+                                }}
+                                render={({ field, fieldState }) => (
+                                    <Input
+                                        {...field}
+                                        data-testid="dns_config_blocked_response_ttl"
+                                        type="text"
+                                        label={label}
+                                        desc={description}
+                                        error={fieldState.error?.message}
+                                        disabled={processingAdding || processingUpdating}
+                                    />
+                                )}
+                            />
+                        </div>
+                    ))}
+                </>
+            )}
 
             <div className="form__label--bold form__label--top form__label--bot">
                 {t('log_and_stats_section_label')}

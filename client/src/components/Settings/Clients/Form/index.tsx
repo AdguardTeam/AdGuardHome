@@ -5,7 +5,7 @@ import { Controller, FormProvider, useForm } from 'react-hook-form';
 import Select from 'react-select';
 
 import Tabs from '../../../ui/Tabs';
-import { CLIENT_ID_LINK, LOCAL_TIMEZONE_VALUE } from '../../../../helpers/constants';
+import { CLIENT_ID_LINK, LOCAL_TIMEZONE_VALUE, BLOCKING_MODES } from '../../../../helpers/constants';
 import { RootState } from '../../../../initialState';
 import { Input } from '../../../ui/Controls/Input';
 import { validateRequiredValue } from '../../../../helpers/validators';
@@ -33,6 +33,9 @@ const defaultFormValues: ClientForm = {
     blocked_services_schedule: {
         time_zone: LOCAL_TIMEZONE_VALUE,
     },
+    blocking_mode: BLOCKING_MODES.default,
+    blocking_ipv4: '',
+    blocking_ipv6: '',
 };
 
 type Props = {
@@ -83,7 +86,7 @@ export const Form = ({
     const tabs = {
         settings: {
             title: 'settings',
-            component: <MainSettings safeSearchServices={safeSearchServices} />,
+            component: <MainSettings processingAdding={processingAdding} processingUpdating={processingUpdating} safeSearchServices={safeSearchServices} />,
         },
         block_services: {
             title: 'block_services',

@@ -57,6 +57,10 @@ type clientJSON struct {
 	UseGlobalBlockedServices bool `json:"use_global_blocked_services"`
 	UseGlobalSettings        bool `json:"use_global_settings"`
 
+	BlockingMode filtering.BlockingMode `json:"blocking_mode"`
+	BlockingIPv4 string                 `json:"blocking_ipv4"`
+	BlockingIPv6 string                 `json:"blocking_ipv6"`
+
 	IgnoreQueryLog   aghalg.NullBool `json:"ignore_querylog"`
 	IgnoreStatistics aghalg.NullBool `json:"ignore_statistics"`
 
@@ -136,6 +140,9 @@ func initPrev(cj clientJSON, prev *client.Persistent) (c *client.Persistent, err
 		ignoreStatistics bool
 		upsCacheEnabled  bool
 		upsCacheSize     uint32
+		blockingMode     filtering.BlockingMode
+		blockingIPv4     netip.Addr
+		blockingIPv6     netip.Addr
 	)
 
 	if prev != nil {
@@ -144,6 +151,9 @@ func initPrev(cj clientJSON, prev *client.Persistent) (c *client.Persistent, err
 		ignoreStatistics = prev.IgnoreStatistics
 		upsCacheEnabled = prev.UpstreamsCacheEnabled
 		upsCacheSize = prev.UpstreamsCacheSize
+		blockingMode = prev.BlockingMode
+		blockingIPv4 = prev.BlockingIPv4
+		blockingIPv6 = prev.BlockingIPv6
 	}
 
 	if cj.IgnoreQueryLog != aghalg.NBNull {
@@ -159,6 +169,27 @@ func initPrev(cj clientJSON, prev *client.Persistent) (c *client.Persistent, err
 		upsCacheSize = cj.UpstreamsCacheSize
 	}
 
+	switch cj.BlockingMode {
+	case filtering.BlockingModeDefault,
+		filtering.BlockingModeNXDOMAIN,
+		filtering.BlockingModeREFUSED,
+		filtering.BlockingModeNullIP:
+		blockingMode = cj.BlockingMode
+	case filtering.BlockingModeCustomIP:
+		blockingMode = cj.BlockingMode
+
+		if addr, err := netip.ParseAddr(cj.BlockingIPv4); err != nil {
+			return nil, fmt.Errorf("invalid blocking_ipv4 address: %s", err.Error())
+		} else {
+			blockingIPv4 = addr
+		}
+		if addr, err := netip.ParseAddr(cj.BlockingIPv6); err != nil {
+			return nil, fmt.Errorf("invalid blocking_ipv6 address: %s", err.Error())
+		} else {
+			blockingIPv6 = addr
+		}
+	}
+
 	svcs, err := copyBlockedServices(cj.Schedule, cj.BlockedServices, prev)
 	if err != nil {
 		return nil, fmt.Errorf("invalid blocked services: %w", err)
@@ -172,6 +203,9 @@ func initPrev(cj clientJSON, prev *client.Persistent) (c *client.Persistent, err
 	}
 
 	return &client.Persistent{
+		BlockingMode:          blockingMode,
+		BlockingIPv4:          blockingIPv4,
+		BlockingIPv6:          blockingIPv6,
 		BlockedServices:       svcs,
 		UID:                   uid,
 		IgnoreQueryLog:        ignoreQueryLog,
@@ -209,6 +243,27 @@ func (clients *clientsContainer) jsonToClient(
 	c.ParentalEnabled = cj.ParentalEnabled
 	c.SafeBrowsingEnabled = cj.SafeBrowsingEnabled
 	c.UseOwnBlockedServices = !cj.UseGlobalBlockedServices
+
+	switch cj.BlockingMode {
+	case filtering.BlockingModeDefault,
+		filtering.BlockingModeNXDOMAIN,
+		filtering.BlockingModeREFUSED,
+		filtering.BlockingModeNullIP:
+		c.BlockingMode = cj.BlockingMode
+	case filtering.BlockingModeCustomIP:
+		c.BlockingMode = cj.BlockingMode
+
+		if addr, err := netip.ParseAddr(cj.BlockingIPv4); err != nil {
+			return nil, fmt.Errorf("invalid blocking_ipv4 address: %s", err.Error())
+		} else {
+			c.BlockingIPv4 = addr
+		}
+		if addr, err := netip.ParseAddr(cj.BlockingIPv6); err != nil {
+			return nil, fmt.Errorf("invalid blocking_ipv6 address: %s", err.Error())
+		} else {
+			c.BlockingIPv6 = addr
+		}
+	}
 
 	if c.SafeSearchConf.Enabled {
 		logger := clients.baseLogger.With(
@@ -262,6 +317,10 @@ func copySafeSearch(
 	return conf
 }
 
+func copyClientBlockingMode() {
+
+}
+
 // copyBlockedServices converts a json blocked services to an internal blocked
 // services.
 func copyBlockedServices(
@@ -308,6 +367,10 @@ func clientToJSON(c *client.Persistent) (cj *clientJSON) {
 		SafeSearchEnabled:   safeSearchConf.Enabled,
 		SafeSearchConf:      safeSearchConf,
 		SafeBrowsingEnabled: c.SafeBrowsingEnabled,
+
+		BlockingMode: c.BlockingMode,
+		BlockingIPv4: c.BlockingIPv4.String(),
+		BlockingIPv6: c.BlockingIPv6.String(),
 
 		UseGlobalBlockedServices: !c.UseOwnBlockedServices,
 
