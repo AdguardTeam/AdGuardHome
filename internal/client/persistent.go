@@ -193,7 +193,8 @@ func (c *Persistent) validateBlockingMode() error {
 		}
 	}
 
-	return fmt.Errorf("unknown blocking_mode: %s", c.BlockingMode)
+	// Assumed to default to the default blocking mode
+	return nil
 }
 
 // SetIDs parses a list of strings into typed fields and returns an error if

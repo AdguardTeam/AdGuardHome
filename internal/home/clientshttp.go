@@ -216,7 +216,7 @@ func copyBlockingMode(blockingMode filtering.BlockingMode, ipv4, ipv6 string) (f
 		return blockingMode, addrIpv4, addrIpv6, nil
 	}
 
-	return "", netip.Addr{}, netip.Addr{}, fmt.Errorf("unknown blocking mode: %s", blockingMode)
+	return filtering.BlockingModeDefault, netip.Addr{}, netip.Addr{}, nil
 }
 
 // jsonToClient converts JSON object to persistent client object if there are no
