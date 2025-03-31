@@ -35,6 +35,9 @@ type tlsManager struct {
 	// logger is used for logging the operation of the TLS Manager.
 	logger *slog.Logger
 
+	// mu protects status, certLastMod, conf, and servePlainDNS.
+	mu *sync.Mutex
+
 	// status is the current status of the configuration.  It is never nil.
 	status *tlsConfigStatus
 
@@ -49,9 +52,6 @@ type tlsManager struct {
 	// TODO(s.chzhen):  Temporary cyclic dependency due to ongoing refactoring.
 	// Resolve it.
 	web *webAPI
-
-	// mu protects status, certLastMod, conf, and servePlainDNS.
-	mu *sync.Mutex
 
 	// conf contains the TLS configuration settings.
 	conf *tlsConfigSettings

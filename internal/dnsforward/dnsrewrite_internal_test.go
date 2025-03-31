@@ -37,6 +37,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 	srv := createTestServer(t, &filtering.Config{
 		BlockingMode: filtering.BlockingModeDefault,
 	}, ServerConfig{
+		TLSConf: &TLSConfig{},
 		Config: Config{
 			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},

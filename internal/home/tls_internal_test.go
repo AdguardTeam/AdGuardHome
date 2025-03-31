@@ -468,6 +468,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	require.NoError(t, err)
 
 	err = globalContext.dnsServer.Prepare(&dnsforward.ServerConfig{
+		TLSConf: &dnsforward.TLSConfig{},
 		Config: dnsforward.Config{
 			UpstreamMode:     dnsforward.UpstreamModeLoadBalance,
 			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{Enabled: false},

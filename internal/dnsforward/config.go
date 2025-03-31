@@ -239,8 +239,11 @@ type ServerConfig struct {
 	// Remove that.
 	AddrProcConf *client.DefaultAddrProcConfig
 
+	// TLSConf is the TLS configuration for DNS-over-TLS, DNS-over-QUIC, and
+	// HTTPS.  It must not be nil.
+	TLSConf *TLSConfig
+
 	Config
-	TLSConfig
 	DNSCryptConfig
 	TLSAllowUnencryptedDoH bool
 
@@ -610,43 +613,46 @@ func (conf *ServerConfig) ourAddrsSet() (m addrPortSet, err error) {
 
 // prepareTLS - prepares TLS configuration for the DNS proxy
 func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
-	if len(s.conf.CertificateChainData) == 0 || len(s.conf.PrivateKeyData) == 0 {
+	if len(s.conf.TLSConf.CertificateChainData) == 0 || len(s.conf.TLSConf.PrivateKeyData) == 0 {
 		return nil
 	}
 
-	if s.conf.TLSListenAddrs == nil && s.conf.QUICListenAddrs == nil {
+	if s.conf.TLSConf.TLSListenAddrs == nil && s.conf.TLSConf.QUICListenAddrs == nil {
 		return nil
 	}
 
 	proxyConfig.TLSListenAddr = aghalg.CoalesceSlice(
-		s.conf.TLSListenAddrs,
+		s.conf.TLSConf.TLSListenAddrs,
 		proxyConfig.TLSListenAddr,
 	)
 
 	proxyConfig.QUICListenAddr = aghalg.CoalesceSlice(
-		s.conf.QUICListenAddrs,
+		s.conf.TLSConf.QUICListenAddrs,
 		proxyConfig.QUICListenAddr,
 	)
 
-	s.conf.cert, err = tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
+	s.conf.TLSConf.cert, err = tls.X509KeyPair(
+		s.conf.TLSConf.CertificateChainData,
+		s.conf.TLSConf.PrivateKeyData,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to parse TLS keypair: %w", err)
 	}
 
-	cert, err := x509.ParseCertificate(s.conf.cert.Certificate[0])
+	cert, err := x509.ParseCertificate(s.conf.TLSConf.cert.Certificate[0])
 	if err != nil {
 		return fmt.Errorf("x509.ParseCertificate(): %w", err)
 	}
 
-	s.conf.hasIPAddrs = aghtls.CertificateHasIP(cert)
+	s.conf.TLSConf.hasIPAddrs = aghtls.CertificateHasIP(cert)
 
-	if s.conf.StrictSNICheck {
+	if s.conf.TLSConf.StrictSNICheck {
 		if len(cert.DNSNames) != 0 {
-			s.conf.dnsNames = cert.DNSNames
+			s.conf.TLSConf.dnsNames = cert.DNSNames
 			log.Debug("dns: using certificate's SAN as DNS names: %v", cert.DNSNames)
-			slices.Sort(s.conf.dnsNames)
+			slices.Sort(s.conf.TLSConf.dnsNames)
 		} else {
-			s.conf.dnsNames = append(s.conf.dnsNames, cert.Subject.CommonName)
+			s.conf.TLSConf.dnsNames = append(s.conf.TLSConf.dnsNames, cert.Subject.CommonName)
 			log.Debug("dns: using certificate's CN as DNS name: %s", cert.Subject.CommonName)
 		}
 	}
@@ -695,11 +701,11 @@ func anyNameMatches(dnsNames []string, sni string) (ok bool) {
 // Called by 'tls' package when Client Hello is received
 // If the server name (from SNI) supplied by client is incorrect - we terminate the ongoing TLS handshake.
 func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	if s.conf.StrictSNICheck && !anyNameMatches(s.conf.dnsNames, ch.ServerName) {
+	if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(s.conf.TLSConf.dnsNames, ch.ServerName) {
 		log.Info("dns: tls: unknown SNI in Client Hello: %s", ch.ServerName)
 		return nil, fmt.Errorf("invalid SNI")
 	}
-	return &s.conf.cert, nil
+	return &s.conf.TLSConf.cert, nil
 }
 
 // preparePlain prepares the plain-DNS configuration for the DNS proxy.

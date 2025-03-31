@@ -300,6 +300,8 @@ type tlsConfigSettings struct {
 
 	// AllowUnencryptedDoH allows DoH queries via unencrypted HTTP (e.g. for
 	// reverse proxying).
+	//
+	// TODO(s.chzhen):  Add this option into the Web UI.
 	AllowUnencryptedDoH bool `yaml:"allow_unencrypted_doh" json:"allow_unencrypted_doh"`
 
 	// CertificateChain is the PEM-encoded certificate chain.  Must be empty if
@@ -362,6 +364,7 @@ func (c *tlsConfigSettings) setPrivateFieldsAndCompare(conf *tlsConfigSettings) 
 	conf.OverrideTLSCiphers = slices.Clone(c.OverrideTLSCiphers)
 	conf.PrivateKeyData = slices.Clone(c.PrivateKeyData)
 
+	// TODO(s.chzhen):  Remove this once the frontend supports it.
 	conf.AllowUnencryptedDoH = c.AllowUnencryptedDoH
 	conf.DNSCryptConfigFile = c.DNSCryptConfigFile
 	conf.PortDNSCrypt = c.PortDNSCrypt

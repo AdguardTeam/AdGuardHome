@@ -260,7 +260,7 @@ func newServerConfig(
 		UDPListenAddrs:         ipsToUDPAddrs(hosts, dnsConf.Port),
 		TCPListenAddrs:         ipsToTCPAddrs(hosts, dnsConf.Port),
 		Config:                 fwdConf,
-		TLSConfig:              newDNSTLSConfig(tlsConf, hosts),
+		TLSConf:                newDNSTLSConfig(tlsConf, hosts),
 		TLSAllowUnencryptedDoH: tlsConf.AllowUnencryptedDoH,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
 		TLSv12Roots:            tlsMgr.rootCerts,
@@ -305,13 +305,14 @@ func newServerConfig(
 }
 
 // newDNSTLSConfig converts values from the configuration file into the internal
-// TLS settings for the DNS server.  tlsConf must not be nil.
-func newDNSTLSConfig(conf *tlsConfigSettings, addrs []netip.Addr) (dnsConf dnsforward.TLSConfig) {
+// TLS settings for the DNS server.  tlsConf must not be nil.  dnsConf is never
+// nil.
+func newDNSTLSConfig(conf *tlsConfigSettings, addrs []netip.Addr) (dnsConf *dnsforward.TLSConfig) {
 	if !conf.Enabled {
-		return dnsforward.TLSConfig{}
+		return &dnsforward.TLSConfig{}
 	}
 
-	dnsConf = dnsforward.TLSConfig{
+	dnsConf = &dnsforward.TLSConfig{
 		CertificateChainData: slices.Clone(conf.CertificateChainData),
 		PrivateKeyData:       slices.Clone(conf.PrivateKeyData),
 		ServerName:           conf.ServerName,
