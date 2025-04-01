@@ -65,13 +65,3 @@ type User struct {
 	Login    Login
 	Password Password
 }
-
-// Authenticate checks the given credentials and returns true if they are valid.
-// TODO!! remove
-func (u *User) Authenticate(ctx context.Context, login, passwd string) (ok bool) {
-	if u.Login != Login(login) {
-		return false
-	}
-
-	return u.Password.Authenticate(ctx, passwd)
-}

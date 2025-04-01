@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +22,7 @@ func TestAuth(t *testing.T) {
 	s := session{}
 
 	user := webUser{Name: "name"}
-	err := a.addUser(testutil.ContextWithTimeout(t, testTimeout), &user, "password")
+	err := a.addUser(&user, "password")
 	require.NoError(t, err)
 
 	assert.Equal(t, checkSessionNotFound, a.checkSession("notfound"))
@@ -56,7 +55,7 @@ func TestAuth(t *testing.T) {
 	a.storeSession(sess, &s)
 	a.Close()
 
-	u, ok := a.findUser(testutil.ContextWithTimeout(t, testTimeout), "name", "password")
+	u, ok := a.findUser("name", "password")
 	assert.True(t, ok)
 	assert.NotEmpty(t, u.Name)
 

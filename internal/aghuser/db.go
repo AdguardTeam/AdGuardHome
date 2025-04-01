@@ -2,6 +2,9 @@ package aghuser
 
 import (
 	"context"
+	"maps"
+	"slices"
+	"strings"
 	"sync"
 
 	"github.com/AdguardTeam/golibs/errors"
@@ -23,9 +26,11 @@ const (
 
 // DB is an interface that defines methods for interacting with user
 // information.
+//
+// TODO(s.chzhen):  Use this.  Consider updating methods to return a clone.
 type DB interface {
-	// All retrieves all users from the database.  If there are no users, it
-	// returns [ErrEmptyDB].
+	// All retrieves all users from the database, sorted by login.  If there are
+	// no users, it returns [ErrEmptyDB].
 	All(ctx context.Context) (users []*User, err error)
 
 	// ByLogin retrieves a user by their login.  If no such user exists, it
@@ -41,8 +46,8 @@ type DB interface {
 	ByUUID(ctx context.Context, id UserID) (u *User, err error)
 
 	// Create adds a new user to the database.  If the credentials already
-	// exist, it returns the [ErrDuplicateCredentials] error.  u must not be
-	// modified.  u must not be nil.
+	// exist, it returns the [ErrDuplicateCredentials] error.  It also can
+	// return an error from the cryptographic randomness reader.  u must not be
 	Create(ctx context.Context, u *User) (err error)
 }
 
@@ -78,10 +83,12 @@ func (db *DefaultDB) All(ctx context.Context) (users []*User, err error) {
 		return nil, ErrEmptyDB
 	}
 
-	// TODO(s.chzhen):  Consider using [aghalg.SortedMap].
-	for _, u := range db.userIDToUser {
-		users = append(users, u)
-	}
+	users = slices.SortedStableFunc(
+		maps.Values(db.userIDToUser),
+		func(a, b *User) (res int) {
+			return strings.Compare(string(a.Login), string(b.Login))
+		},
+	)
 
 	return users, nil
 }
@@ -108,11 +115,23 @@ func (db *DefaultDB) ByUUID(ctx context.Context, id UserID) (u *User, err error)
 
 // Create implements [DB] interface for *DefaultDB.
 func (db *DefaultDB) Create(ctx context.Context, u *User) (err error) {
-	// TODO(s.chzhen): !! Use provided [UserID] first.
-	uid, err := NewUserID()
-	if err != nil {
-		// TODO(s.chzhen): !! Mention this error in [DB.Create] documentation.
-		return err
+	uid := u.ID
+	if uid == (UserID{}) {
+		uid, err = NewUserID()
+		if err != nil {
+			// Don't wrap the error, because it's informative enough as is.
+			return err
+		}
+	}
+
+	_, ok := db.userIDToUser[uid]
+	if ok {
+		return ErrDuplicateCredentials
+	}
+
+	_, ok = db.loginToUserID[u.Login]
+	if ok {
+		return ErrDuplicateCredentials
 	}
 
 	u.ID = uid
