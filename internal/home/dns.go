@@ -2,6 +2,7 @@ package home
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log/slog"
 	"net"
@@ -9,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"slices"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
@@ -256,11 +256,16 @@ func newServerConfig(
 	fwdConf := dnsConf.Config
 	fwdConf.ClientsContainer = clientsContainer
 
+	intTLSConf, err := newDNSTLSConfig(tlsConf, hosts)
+	if err != nil {
+		return nil, fmt.Errorf("constructing tls config: %w", err)
+	}
+
 	newConf = &dnsforward.ServerConfig{
 		UDPListenAddrs:         ipsToUDPAddrs(hosts, dnsConf.Port),
 		TCPListenAddrs:         ipsToTCPAddrs(hosts, dnsConf.Port),
 		Config:                 fwdConf,
-		TLSConf:                newDNSTLSConfig(tlsConf, hosts),
+		TLSConf:                intTLSConf,
 		TLSAllowUnencryptedDoH: tlsConf.AllowUnencryptedDoH,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
 		TLSv12Roots:            tlsMgr.rootCerts,
@@ -307,16 +312,26 @@ func newServerConfig(
 // newDNSTLSConfig converts values from the configuration file into the internal
 // TLS settings for the DNS server.  tlsConf must not be nil.  dnsConf is never
 // nil.
-func newDNSTLSConfig(conf *tlsConfigSettings, addrs []netip.Addr) (dnsConf *dnsforward.TLSConfig) {
+func newDNSTLSConfig(
+	conf *tlsConfigSettings,
+	addrs []netip.Addr,
+) (dnsConf *dnsforward.TLSConfig, err error) {
 	if !conf.Enabled {
-		return &dnsforward.TLSConfig{}
+		return &dnsforward.TLSConfig{}, nil
+	}
+
+	cert, err := tls.X509KeyPair(
+		conf.CertificateChainData,
+		conf.PrivateKeyData,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("parsing tls key pair: %w", err)
 	}
 
 	dnsConf = &dnsforward.TLSConfig{
-		CertificateChainData: slices.Clone(conf.CertificateChainData),
-		PrivateKeyData:       slices.Clone(conf.PrivateKeyData),
-		ServerName:           conf.ServerName,
-		StrictSNICheck:       conf.StrictSNICheck,
+		Cert:           &cert,
+		ServerName:     conf.ServerName,
+		StrictSNICheck: conf.StrictSNICheck,
 	}
 
 	if conf.PortHTTPS != 0 {
@@ -331,7 +346,7 @@ func newDNSTLSConfig(conf *tlsConfigSettings, addrs []netip.Addr) (dnsConf *dnsf
 		dnsConf.QUICListenAddrs = ipsToUDPAddrs(addrs, conf.PortDNSOverQUIC)
 	}
 
-	return dnsConf
+	return dnsConf, nil
 }
 
 // newDNSCryptConfig converts values from the configuration file into the

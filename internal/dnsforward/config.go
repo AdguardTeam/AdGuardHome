@@ -171,8 +171,9 @@ type EDNSClientSubnet struct {
 // TLSConfig is the TLS configuration for DNS-over-TLS, DNS-over-QUIC, and
 // HTTPS.
 type TLSConfig struct {
-	// cert is the TLS certificate used for TLS connections.
-	cert tls.Certificate
+	// Cert is the TLS certificate used for TLS connections.  It is nil if
+	// encryption is disabled.
+	Cert *tls.Certificate
 
 	// TLSListenAddrs are the addresses to listen on for DoT connections.
 	TLSListenAddrs []*net.TCPAddr
@@ -182,13 +183,6 @@ type TLSConfig struct {
 
 	// HTTPSListenAddrs are the addresses to listen on for HTTPS connections.
 	HTTPSListenAddrs []*net.TCPAddr
-
-	// CertificateChainData is the PEM-encoded byte data for the certificate
-	// chain.
-	CertificateChainData []byte
-
-	// PrivateKeyData is the PEM-encoded byte data for the private key.
-	PrivateKeyData []byte
 
 	// ServerName is the hostname of the server.  Currently, it is only being
 	// used for ClientID checking and Discovery of Designated Resolvers (DDR).
@@ -613,8 +607,8 @@ func (conf *ServerConfig) ourAddrsSet() (m addrPortSet, err error) {
 
 // prepareTLS - prepares TLS configuration for the DNS proxy
 func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
-	if len(s.conf.TLSConf.CertificateChainData) == 0 || len(s.conf.TLSConf.PrivateKeyData) == 0 {
-		return nil
+	if s.conf.TLSConf.Cert == nil {
+		return
 	}
 
 	if s.conf.TLSConf.TLSListenAddrs == nil && s.conf.TLSConf.QUICListenAddrs == nil {
@@ -631,15 +625,7 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
 		proxyConfig.QUICListenAddr,
 	)
 
-	s.conf.TLSConf.cert, err = tls.X509KeyPair(
-		s.conf.TLSConf.CertificateChainData,
-		s.conf.TLSConf.PrivateKeyData,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to parse TLS keypair: %w", err)
-	}
-
-	cert, err := x509.ParseCertificate(s.conf.TLSConf.cert.Certificate[0])
+	cert, err := x509.ParseCertificate(s.conf.TLSConf.Cert.Certificate[0])
 	if err != nil {
 		return fmt.Errorf("x509.ParseCertificate(): %w", err)
 	}
@@ -705,7 +691,7 @@ func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, er
 		log.Info("dns: tls: unknown SNI in Client Hello: %s", ch.ServerName)
 		return nil, fmt.Errorf("invalid SNI")
 	}
-	return &s.conf.TLSConf.cert, nil
+	return s.conf.TLSConf.Cert, nil
 }
 
 // preparePlain prepares the plain-DNS configuration for the DNS proxy.

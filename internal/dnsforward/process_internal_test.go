@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"cmp"
 	"context"
+	"crypto/tls"
 	"net"
 	"net/netip"
 	"testing"
@@ -318,6 +319,8 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}}
 
 	_, certPem, keyPem := createServerTLSConfig(t)
+	cert, err := tls.X509KeyPair(certPem, keyPem)
+	require.NoError(t, err)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -331,12 +334,11 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 					ClientsContainer: EmptyClientsContainer{},
 				},
 				TLSConf: &TLSConfig{
-					ServerName:           ddrTestDomainName,
-					CertificateChainData: certPem,
-					PrivateKeyData:       keyPem,
-					TLSListenAddrs:       tc.addrsDoT,
-					HTTPSListenAddrs:     tc.addrsDoH,
-					QUICListenAddrs:      tc.addrsDoQ,
+					ServerName:       ddrTestDomainName,
+					Cert:             &cert,
+					TLSListenAddrs:   tc.addrsDoT,
+					HTTPSListenAddrs: tc.addrsDoH,
+					QUICListenAddrs:  tc.addrsDoQ,
 				},
 				ServePlainDNS: true,
 			})

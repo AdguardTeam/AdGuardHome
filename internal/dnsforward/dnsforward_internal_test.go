@@ -219,12 +219,17 @@ func createTestTLS(t *testing.T, tlsConf *TLSConfig) (s *Server, certPem []byte)
 	var keyPem []byte
 	_, certPem, keyPem = createServerTLSConfig(t)
 
+	cert, err := tls.X509KeyPair(certPem, keyPem)
+	require.NoError(t, err)
+
+	tlsConf.Cert = &cert
+
 	s = createTestServer(t, &filtering.Config{
 		BlockingMode: filtering.BlockingModeDefault,
 	}, ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
-		TLSConf:        &TLSConfig{},
+		TLSConf:        tlsConf,
 		Config: Config{
 			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
@@ -233,10 +238,7 @@ func createTestTLS(t *testing.T, tlsConf *TLSConfig) (s *Server, certPem []byte)
 		ServePlainDNS: true,
 	})
 
-	tlsConf.CertificateChainData, tlsConf.PrivateKeyData = certPem, keyPem
-	s.conf.TLSConf = tlsConf
-
-	err := s.Prepare(&s.conf)
+	err = s.Prepare(&s.conf)
 	require.NoErrorf(t, err, "failed to prepare server: %s", err)
 
 	return s, certPem
