@@ -484,19 +484,8 @@ func (m *tlsManager) setConfig(
 		m.logger.InfoContext(ctx, "config has not changed")
 	}
 
-	// Note: don't do just `t.conf = data` because we must preserve all other members of t.conf
-	m.conf.Enabled = newConf.Enabled
-	m.conf.ServerName = newConf.ServerName
-	m.conf.ForceHTTPS = newConf.ForceHTTPS
-	m.conf.PortHTTPS = newConf.PortHTTPS
-	m.conf.PortDNSOverTLS = newConf.PortDNSOverTLS
-	m.conf.PortDNSOverQUIC = newConf.PortDNSOverQUIC
-	m.conf.CertificateChain = newConf.CertificateChain
-	m.conf.CertificatePath = newConf.CertificatePath
-	m.conf.CertificateChainData = newConf.CertificateChainData
-	m.conf.PrivateKey = newConf.PrivateKey
-	m.conf.PrivateKeyPath = newConf.PrivateKeyPath
-	m.conf.PrivateKeyData = newConf.PrivateKeyData
+	m.conf = &newConf
+
 	m.status = status
 
 	if servePlain != aghalg.NBNull {
