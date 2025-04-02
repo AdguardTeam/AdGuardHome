@@ -1,57 +1,45 @@
 package aghuser
 
 import (
+	"cmp"
 	"context"
+	"fmt"
 	"maps"
 	"slices"
-	"strings"
 	"sync"
 
 	"github.com/AdguardTeam/golibs/errors"
 )
 
-const (
-	// ErrEmptyDB is returned by [DB.All] when there are no users in the
-	// database.
-	ErrEmptyDB errors.Error = "empty user database"
-
-	// ErrUserNotFound is returned by [DB.ByLogin] and [DB.ByUUID] when
-	// searching for a user that does not exist.
-	ErrUserNotFound errors.Error = "user not found"
-
-	// ErrDuplicateCredentials is returned by [DB.Create] when attempting to add
-	// a user with a duplicate [User.Login] or [User.ID] to the database.
-	ErrDuplicateCredentials errors.Error = "duplicate credentials"
-)
-
 // DB is an interface that defines methods for interacting with user
 // information.
 //
-// TODO(s.chzhen):  Use this.  Consider updating methods to return a clone.
+// TODO(s.chzhen):  Use this.
+//
+// TODO(s.chzhen):  Consider updating methods to return a clone.
 type DB interface {
-	// All retrieves all users from the database, sorted by login.  If there are
-	// no users, it returns [ErrEmptyDB].
+	// All retrieves all users from the database, sorted by login.
 	All(ctx context.Context) (users []*User, err error)
 
-	// ByLogin retrieves a user by their login.  If no such user exists, it
-	// returns the [ErrUserNotFound] error.  u must not be modified.
+	// ByLogin retrieves a user by their login.  u must not be modified.
 	//
 	// TODO(s.chzhen):  Remove this once user sessions support [UserID].
 	ByLogin(ctx context.Context, login Login) (u *User, err error)
 
-	// ByUUID retrieves a user by their unique identifier.  If no such user
-	// exists, it returns the [ErrUserNotFound] error.  u must not be modified.
+	// ByUUID retrieves a user by their unique identifier.  u must not be
+	// modified.
 	//
 	// TODO(s.chzhen):  Use this.
 	ByUUID(ctx context.Context, id UserID) (u *User, err error)
 
 	// Create adds a new user to the database.  If the credentials already
-	// exist, it returns the [ErrDuplicateCredentials] error.  It also can
-	// return an error from the cryptographic randomness reader.  u must not be
+	// exist, it returns the [errors.ErrDuplicated] error.  It also can return
+	// an error from the cryptographic randomness reader.  u must not be
 	Create(ctx context.Context, u *User) (err error)
 }
 
-// DefaultDB is the default in-memory implementation of the [DB] interface.
+// DefaultDB is the default in-memory implementation of the [DB] interface.  All
+// methods must be safe for concurrent use.
 type DefaultDB struct {
 	// mu protects all properties below.
 	mu *sync.Mutex
@@ -79,14 +67,18 @@ var _ DB = (*DefaultDB)(nil)
 
 // All implements [DB] interface for *DefaultDB.
 func (db *DefaultDB) All(ctx context.Context) (users []*User, err error) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
 	if len(db.userIDToUser) == 0 {
-		return nil, ErrEmptyDB
+		return nil, nil
 	}
 
 	users = slices.SortedStableFunc(
 		maps.Values(db.userIDToUser),
 		func(a, b *User) (res int) {
-			return strings.Compare(string(a.Login), string(b.Login))
+			// TODO(s.chzhen):  Consider adding a custom comparer.
+			return cmp.Compare(a.Login, b.Login)
 		},
 	)
 
@@ -95,9 +87,12 @@ func (db *DefaultDB) All(ctx context.Context) (users []*User, err error) {
 
 // ByLogin implements [DB] interface for *DefaultDB.
 func (db *DefaultDB) ByLogin(ctx context.Context, login Login) (u *User, err error) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
 	id, ok := db.loginToUserID[login]
 	if !ok {
-		return nil, ErrUserNotFound
+		return nil, nil
 	}
 
 	return db.userIDToUser[id], nil
@@ -105,9 +100,12 @@ func (db *DefaultDB) ByLogin(ctx context.Context, login Login) (u *User, err err
 
 // ByUUID implements [DB] interface for *DefaultDB.
 func (db *DefaultDB) ByUUID(ctx context.Context, id UserID) (u *User, err error) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
 	u, ok := db.userIDToUser[id]
 	if !ok {
-		return nil, ErrUserNotFound
+		return nil, nil
 	}
 
 	return u, nil
@@ -115,27 +113,24 @@ func (db *DefaultDB) ByUUID(ctx context.Context, id UserID) (u *User, err error)
 
 // Create implements [DB] interface for *DefaultDB.
 func (db *DefaultDB) Create(ctx context.Context, u *User) (err error) {
-	uid := u.ID
-	if uid == (UserID{}) {
-		uid, err = NewUserID()
-		if err != nil {
-			// Don't wrap the error, because it's informative enough as is.
-			return err
-		}
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if u.ID == (UserID{}) {
+		return errors.ErrEmptyValue
 	}
 
-	_, ok := db.userIDToUser[uid]
+	_, ok := db.userIDToUser[u.ID]
 	if ok {
-		return ErrDuplicateCredentials
+		return fmt.Errorf("userid: %w", errors.ErrDuplicated)
 	}
 
 	_, ok = db.loginToUserID[u.Login]
 	if ok {
-		return ErrDuplicateCredentials
+		return fmt.Errorf("login: %w", errors.ErrDuplicated)
 	}
 
-	u.ID = uid
-	db.userIDToUser[uid] = u
+	db.userIDToUser[u.ID] = u
 	db.loginToUserID[u.Login] = u.ID
 
 	return nil

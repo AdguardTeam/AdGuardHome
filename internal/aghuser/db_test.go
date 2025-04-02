@@ -2,24 +2,21 @@ package aghuser_test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// testTimeout is the common timeout for tests.
-const testTimeout = 1 * time.Second
-
 func TestDB(t *testing.T) {
 	db := aghuser.NewDefaultDB()
 
 	const (
 		userWithIDPassRaw = "user_with_id_password"
-		userNoIDPassRaw   = "user_no_id_password"
+		userSecondPassRaw = "user_second_password"
 	)
 
 	userWithIDPassHash, err := bcrypt.GenerateFromPassword(
@@ -28,14 +25,14 @@ func TestDB(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	userNoIDPassHash, err := bcrypt.GenerateFromPassword(
-		[]byte(userNoIDPassRaw),
+	userSecondPassHash, err := bcrypt.GenerateFromPassword(
+		[]byte(userSecondPassRaw),
 		bcrypt.DefaultCost,
 	)
 	require.NoError(t, err)
 
 	userWithIDPass := aghuser.NewDefaultPassword(string(userWithIDPassHash))
-	userNoIDPass := aghuser.NewDefaultPassword(string(userNoIDPassHash))
+	userSecondPass := aghuser.NewDefaultPassword(string(userSecondPassHash))
 
 	var (
 		userWithID = &aghuser.User{
@@ -43,9 +40,10 @@ func TestDB(t *testing.T) {
 			Login:    "user_with_id",
 			Password: userWithIDPass,
 		}
-		userNoID = &aghuser.User{
-			Login:    "user_no_id",
-			Password: userNoIDPass,
+		userSecond = &aghuser.User{
+			ID:       aghuser.MustNewUserID(),
+			Login:    "user_second",
+			Password: userSecondPass,
 		}
 		userDuplicateLogin = &aghuser.User{
 			ID:       aghuser.MustNewUserID(),
@@ -59,11 +57,11 @@ func TestDB(t *testing.T) {
 	err = db.Create(ctx, userWithID)
 	require.NoError(t, err)
 
-	err = db.Create(ctx, userNoID)
+	err = db.Create(ctx, userSecond)
 	require.NoError(t, err)
 
 	err = db.Create(ctx, userDuplicateLogin)
-	assert.ErrorIs(t, err, aghuser.ErrDuplicateCredentials)
+	assert.ErrorIs(t, err, errors.ErrDuplicated)
 
 	got, err := db.ByUUID(ctx, userWithID.ID)
 	require.NoError(t, err)
@@ -71,15 +69,15 @@ func TestDB(t *testing.T) {
 	assert.Equal(t, userWithID, got)
 	assert.True(t, got.Password.Authenticate(ctx, userWithIDPassRaw))
 
-	got, err = db.ByLogin(ctx, userNoID.Login)
+	got, err = db.ByLogin(ctx, userSecond.Login)
 	require.NoError(t, err)
 
-	assert.Equal(t, userNoID, got)
-	assert.True(t, got.Password.Authenticate(ctx, userNoIDPassRaw))
+	assert.Equal(t, userSecond, got)
+	assert.True(t, got.Password.Authenticate(ctx, userSecondPassRaw))
 
 	users, err := db.All(ctx)
 	require.NoError(t, err)
 
 	assert.Len(t, users, 2)
-	assert.Equal(t, []*aghuser.User{userNoID, userWithID}, users)
+	assert.Equal(t, []*aghuser.User{userSecond, userWithID}, users)
 }

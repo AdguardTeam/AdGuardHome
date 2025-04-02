@@ -3,10 +3,9 @@
 package aghuser
 
 import (
-	"context"
+	"fmt"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // UserID is the type for the unique IDs of web users.
@@ -20,48 +19,25 @@ func NewUserID() (uid UserID, err error) {
 	return UserID(uuidv7), err
 }
 
-// Login is the type for web user logins.
-type Login string
-
-// Password is an interface that defines methods for handling web user
-// passwords.
-type Password interface {
-	// Authenticate returns true if the provided password is allowed.
-	Authenticate(ctx context.Context, password string) (ok bool)
-
-	// Hash returns a hashed representation of the web user password.
-	Hash() (b []byte)
-}
-
-// DefaultPassword is the default bcrypt implementation of the [Password]
-// interface.
-type DefaultPassword struct {
-	hash []byte
-}
-
-// NewDefaultPassword returns the new properly initialized *DefaultPassword.
-func NewDefaultPassword(hash string) (p *DefaultPassword) {
-	return &DefaultPassword{
-		hash: []byte(hash),
+// MustNewUserID is a wrapper around [NewUserID] that panics if there is an
+// error.  It is currently only used in tests.
+func MustNewUserID() (uid UserID) {
+	uid, err := NewUserID()
+	if err != nil {
+		panic(fmt.Errorf("unexpected uuidv7 error: %w", err))
 	}
-}
 
-// type check
-var _ Password = (*DefaultPassword)(nil)
-
-// Authenticate implements [Password] interface for *DefaultPassword.
-func (p *DefaultPassword) Authenticate(ctx context.Context, passwd string) (ok bool) {
-	return bcrypt.CompareHashAndPassword([]byte(p.hash), []byte(passwd)) == nil
-}
-
-// Hash implements [Password] interface for *DefaultPassword.
-func (p *DefaultPassword) Hash() (b []byte) {
-	return p.hash
+	return uid
 }
 
 // User represents a web user.
 type User struct {
-	ID       UserID
-	Login    Login
+	// ID is the unique identifier for the web user.
+	ID UserID
+
+	// Login is the login name of the web user.
+	Login Login
+
+	// Password stores the password information for the web user.
 	Password Password
 }
