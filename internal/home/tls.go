@@ -145,7 +145,7 @@ func (m *tlsManager) setWebAPI(webAPI *webAPI) {
 // load reloads the TLS configuration from files or data from the config file.
 // m.mu is expected to be locked.
 func (m *tlsManager) load(ctx context.Context) (err error) {
-	err = m.loadTLSConf(ctx, m.conf, m.status)
+	err = m.loadTLSConfig(ctx, m.conf, m.status)
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
@@ -263,9 +263,11 @@ func (m *tlsManager) reconfigureDNSServer() (err error) {
 	return nil
 }
 
-// loadTLSConf loads and validates the TLS configuration.  The returned error is
-// also set in status.WarningValidation.
-func (m *tlsManager) loadTLSConf(
+// loadTLSConfig loads and validates the TLS configuration.  It also sets
+// [tlsConfigSettings.CertificateChainData] and
+// [tlsConfigSettings.PrivateKeyData] properties.  The returned error is also
+// set in status.WarningValidation.
+func (m *tlsManager) loadTLSConfig(
 	ctx context.Context,
 	tlsConf *tlsConfigSettings,
 	status *tlsConfigStatus,
@@ -460,7 +462,7 @@ func (m *tlsManager) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 	// Skip the error check, since we are only interested in the value of
 	// status.WarningValidation.
 	status := &tlsConfigStatus{}
-	_ = m.loadTLSConf(ctx, &setts.tlsConfigSettings, status)
+	_ = m.loadTLSConfig(ctx, &setts.tlsConfigSettings, status)
 	resp := tlsConfig{
 		tlsConfigSettingsExt: setts,
 		tlsConfigStatus:      status,
@@ -528,7 +530,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	}
 
 	status := &tlsConfigStatus{}
-	err = m.loadTLSConf(ctx, &req.tlsConfigSettings, status)
+	err = m.loadTLSConfig(ctx, &req.tlsConfigSettings, status)
 	if err != nil {
 		resp := tlsConfig{
 			tlsConfigSettingsExt: req,

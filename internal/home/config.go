@@ -354,18 +354,21 @@ func (c *tlsConfigSettings) clone() (clone tlsConfigSettings) {
 // frontend:
 //
 //	[tlsConfigSettings.AllowUnencryptedDoH]
-//	[tlsConfigSettings.CertificateChainData]
 //	[tlsConfigSettings.DNSCryptConfigFile]
 //	[tlsConfigSettings.OverrideTLSCiphers]
 //	[tlsConfigSettings.PortDNSCrypt]
+//
+// The following properties are skipped as they are set by
+// [tlsManager.loadTLSConfig]:
+//
+//	[tlsConfigSettings.CertificateChainData]
 //	[tlsConfigSettings.PrivateKeyData]
 func (c *tlsConfigSettings) setPrivateFieldsAndCompare(conf *tlsConfigSettings) (equal bool) {
-	conf.CertificateChainData = slices.Clone(c.CertificateChainData)
 	conf.OverrideTLSCiphers = slices.Clone(c.OverrideTLSCiphers)
-	conf.PrivateKeyData = slices.Clone(c.PrivateKeyData)
 
 	// TODO(s.chzhen):  Remove this once the frontend supports it.
 	conf.AllowUnencryptedDoH = c.AllowUnencryptedDoH
+
 	conf.DNSCryptConfigFile = c.DNSCryptConfigFile
 	conf.PortDNSCrypt = c.PortDNSCrypt
 
