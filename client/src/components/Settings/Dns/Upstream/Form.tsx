@@ -122,7 +122,6 @@ const Form = ({ initialValues, onSubmit }: FormProps) => {
                 <div className="col-12 mb-4">
                     <div className="text-edit-container">
                         <Controller
-                            data-testid="upstream_dns"
                             name="upstream_dns"
                             control={control}
                             render={({ field }) => (

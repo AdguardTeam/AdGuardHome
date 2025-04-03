@@ -74,6 +74,7 @@ export const Form = ({ className, setIsLoading }: Props) => {
             }}>
             <div className="field__search">
                 <SearchField
+                    data-testid="querylog_search"
                     value={searchValue}
                     handleChange={(val) => setValue('search', val)}
                     onKeyDown={onEnterPress}

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { ADMIN_USERNAME, ADMIN_PASSWORD } from '../constants';
 import { execSync } from 'child_process';
+import { ADMIN_USERNAME, ADMIN_PASSWORD } from '../constants';
 
 test.describe('General Settings', () => {
     test.beforeEach(async ({ page }) => {
@@ -17,17 +17,18 @@ test.describe('General Settings', () => {
 
     test('should toggle browsing security feature and verify DNS changes', async ({ page }) => {
         // Navigate to general settings
-        await page.goto('/#settings/general');
+        await page.goto('/#settings');
         
         // Find the browsing security toggle
-        const browsingSecurity = page.getByTestId('browsing_security_toggle');
+        const browsingSecurity = await page.getByTestId('safebrowsing');
+        const browsingSecurityLabel = await browsingSecurity.locator('xpath=following-sibling::*[1]');
         
         // Check initial state
         const initialState = await browsingSecurity.isChecked();
-        
+
         // Enable browsing security if it's not already enabled
         if (!initialState) {
-            await browsingSecurity.click();
+            await browsingSecurityLabel.click();
             await expect(browsingSecurity).toBeChecked();
         }
         
@@ -35,7 +36,7 @@ test.describe('General Settings', () => {
         const resultEnabled = execSync('nslookup totalvirus.com 127.0.0.1').toString();
         
         // Disable browsing security
-        await browsingSecurity.click();
+        await browsingSecurityLabel.click();
         await expect(browsingSecurity).not.toBeChecked();
         
         // Run nslookup with browsing security disabled
@@ -46,24 +47,25 @@ test.describe('General Settings', () => {
         
         // Restore initial state
         if (initialState) {
-            await browsingSecurity.click();
+            await browsingSecurityLabel.click();
             await expect(browsingSecurity).toBeChecked();
         }
     });
 
     test('should toggle parental control feature and verify DNS changes', async ({ page }) => {
         // Navigate to general settings
-        await page.goto('/#settings/general');
+        await page.goto('/#settings');
         
         // Find the parental control toggle
-        const parentalControl = page.getByTestId('parental_control_toggle');
+        const parentalControl = page.getByTestId('parental');
+        const parentalControlLabel = await parentalControl.locator('xpath=following-sibling::*[1]');
         
         // Check initial state
         const initialState = await parentalControl.isChecked();
         
         // Enable parental control if it's not already enabled
         if (!initialState) {
-            await parentalControl.click();
+            await parentalControlLabel.click();
             await expect(parentalControl).toBeChecked();
         }
         
@@ -71,7 +73,7 @@ test.describe('General Settings', () => {
         const resultEnabled = execSync('nslookup pornhub.com 127.0.0.1').toString();
         
         // Disable parental control
-        await parentalControl.click();
+        await parentalControlLabel.click();
         await expect(parentalControl).not.toBeChecked();
         
         // Run nslookup with parental control disabled
@@ -82,29 +84,30 @@ test.describe('General Settings', () => {
         
         // Restore initial state
         if (initialState) {
-            await parentalControl.click();
+            await parentalControlLabel.click();
             await expect(parentalControl).toBeChecked();
         }
     });
 
     test('should toggle safe search feature', async ({ page }) => {
         // Navigate to general settings
-        await page.goto('/#settings/general');
+        await page.goto('/#settings');
         
         // Find the safe search toggle
-        const safeSearch = page.getByTestId('safe_search_toggle');
+        const safeSearch = page.getByTestId('safesearch');
+        const safeSearchLabel = await safeSearch.locator('xpath=following-sibling::*[1]');
         
         // Check initial state
         const initialState = await safeSearch.isChecked();
         
         // Toggle it
-        await safeSearch.click();
+        await safeSearchLabel.click();
         
         // Verify it changed state
         await expect(safeSearch).not.toBeChecked({ checked: initialState });
         
         // Toggle it back
-        await safeSearch.click();
+        await safeSearchLabel.click();
         
         // Verify it's back to the initial state
         await expect(safeSearch).toBeChecked({ checked: initialState });

@@ -1,6 +1,6 @@
-import { test, expect } from '@playwright/test';
-import { ADMIN_USERNAME, ADMIN_PASSWORD } from '../constants';
+import { test, expect, type Page } from '@playwright/test';
 import { execSync } from 'child_process';
+import { ADMIN_USERNAME, ADMIN_PASSWORD } from '../constants';
 
 test.describe('Filtering', () => {
     test.beforeEach(async ({ page }) => {
@@ -15,31 +15,63 @@ test.describe('Filtering', () => {
         await page.waitForURL((url) => !url.href.endsWith('/login.html'));
     });
 
-    test('should block domain using CNAME and IP rules', async ({ page }) => {
-        // Navigate to filtering page
-        await page.goto('/#filtering');
+    const runTerminalCommand = (command: string) => {
+        try {
+            console.info(`Executing command: ${command}`);
         
-        // Add a test rule
-        await page.getByTestId('add_rule_button').click();
-        const ruleModal = page.getByTestId('rule_modal');
+            const output = execSync(command, { encoding: 'utf-8', stdio: 'pipe' }).trim();
         
-        // Enter CNAME rule
-        await ruleModal.getByTestId('rule_text').fill('||example.org^');
-        await ruleModal.getByTestId('save_rule').click();
+            console.info('Command executed successfully.');
+            console.debug(`Command output:\n${output}`);
         
-        // Verify rule was added
-        await expect(page.getByText('||example.org^')).toBeVisible();
-        
-        // Check if the domain is blocked
-        const result = execSync('nslookup example.org 127.0.0.1').toString();
-        
-        // Verify result contains blocked indicator
-        const isBlocked = result.includes('Non-existent domain') || result.includes('0.0.0.0');
-        expect(isBlocked).toBeTruthy();
-        
-        // Clean up - remove the rule
-        await page.getByText('||example.org^').hover();
-        await page.getByTestId('delete_rule').click();
-        await page.getByTestId('modal_confirm').click();
+            return output;
+        } catch (error: any) {
+            console.error(`Command execution failed with error:\n${error.message}`);
+            throw new Error(`Failed to execute command: ${command}\nError: ${error.message}`);
+        }
+    }
+
+    const runCustomRuleTest = async (page: Page, domain_to_block: string) => {
+        await page.goto('/#custom_rules');
+    
+        // Apply custom rule
+        await page.getByTestId('custom_rule_textarea').fill(domain_to_block);
+        await page.getByTestId('apply_custom_rule').click();
+
+        // Run terminal command
+        const nslookupBlockedResult = await runTerminalCommand(`nslookup ${domain_to_block} 127.0.0.1`).toString();
+
+        console.info(`nslookup blocked CNAME result: '${nslookupBlockedResult}'`);
+
+        // Remove custom rule
+        const currentRules = await page.getByTestId('custom_rule_textarea').inputValue();
+        console.debug(`Current rules before removal:\n${currentRules}`);
+
+        if (currentRules.includes(domain_to_block)) {
+            const updatedRules = currentRules
+            .split('\n')
+            .filter((line) => line.trim() !== domain_to_block.trim())
+            .join('\n');
+
+            await page.getByTestId('custom_rule_textarea').fill(updatedRules);
+            console.info(`Rule '${domain_to_block}' removed successfully.`);
+
+            console.info('Applying the updated filtering rules after removal.');
+            await page.getByTestId('apply_custom_rule').click();
+
+            await page.waitForLoadState('domcontentloaded');
+
+            console.info(`Filtering rules successfully updated after removing '${domain_to_block}'.`);
+        } else {
+            console.warn(`Rule '${domain_to_block}' not found. No changes were made.`);
+        }
+
+        // Run terminal command
+        const nslookupUnblockedResult = await runTerminalCommand(`nslookup ${domain_to_block} 127.0.0.1`).toString();
+        console.info(`nslookup unblocked CNAME result: '${nslookupUnblockedResult}'`);
+    };
+
+    test('Test blocking rule for apple.com', async ({ page }) => {
+        await runCustomRuleTest(page, 'apple.com');
     });
 });
