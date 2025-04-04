@@ -991,9 +991,9 @@ func printWebAddrs(proto, addr string, port uint16) {
 //
 // TODO(s.chzhen):  Implement separate functions for HTTP and HTTPS.
 func printHTTPAddresses(proto string, tlsMgr *tlsManager) {
-	tlsConf := tlsConfigSettings{}
+	var tlsConf *tlsConfigSettings
 	if tlsMgr != nil {
-		tlsMgr.WriteDiskConfig(&tlsConf)
+		tlsConf = tlsMgr.config()
 	}
 
 	port := config.HTTPConfig.Address.Port()

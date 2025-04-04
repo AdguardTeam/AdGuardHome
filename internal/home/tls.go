@@ -53,7 +53,7 @@ type tlsManager struct {
 	// Resolve it.
 	web *webAPI
 
-	// conf contains the TLS configuration settings.
+	// conf contains the TLS configuration settings.  It must not be nil.
 	conf *tlsConfigSettings
 
 	// configModified is called when the TLS configuration is changed via an
@@ -153,12 +153,12 @@ func (m *tlsManager) load(ctx context.Context) (err error) {
 	return nil
 }
 
-// WriteDiskConfig writes the stored TLS configuration to conf.
-func (m *tlsManager) WriteDiskConfig(conf *tlsConfigSettings) {
+// config returns a deep copy of the stored TLS configuration.
+func (m *tlsManager) config() (conf *tlsConfigSettings) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	*conf = m.conf.clone()
+	return m.conf.clone()
 }
 
 // setCertFileTime sets [tlsManager.certLastMod] from the certificate.  If there
@@ -359,10 +359,10 @@ type tlsConfigStatus struct {
 	KeyType string `json:"key_type,omitempty"`
 
 	// NotBefore is the NotBefore field of the first certificate in the chain.
-	NotBefore time.Time `json:"not_before,omitempty"`
+	NotBefore time.Time `json:"not_before"`
 
 	// NotAfter is the NotAfter field of the first certificate in the chain.
-	NotAfter time.Time `json:"not_after,omitempty"`
+	NotAfter time.Time `json:"not_after"`
 
 	// WarningValidation is a validation warning message with the issue
 	// description.
@@ -412,7 +412,7 @@ type tlsConfigSettingsExt struct {
 
 // handleTLSStatus is the handler for the GET /control/tls/status HTTP API.
 func (m *tlsManager) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
-	var tlsConf tlsConfigSettings
+	var tlsConf *tlsConfigSettings
 	var servePlainDNS bool
 	func() {
 		m.mu.Lock()
@@ -424,7 +424,7 @@ func (m *tlsManager) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 
 	data := tlsConfig{
 		tlsConfigSettingsExt: tlsConfigSettingsExt{
-			tlsConfigSettings: tlsConf,
+			tlsConfigSettings: *tlsConf,
 			ServePlainDNS:     aghalg.BoolToNullBool(servePlainDNS),
 		},
 		tlsConfigStatus: m.status,
@@ -569,15 +569,18 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	}
 
 	marshalTLS(w, r, resp)
-	if f, ok := w.(http.Flusher); ok {
-		f.Flush()
+	rc := http.NewResponseController(w)
+	err = rc.Flush()
+	if err != nil {
+		m.logger.ErrorContext(ctx, "flushing response", slogutil.KeyError, err)
 	}
 
 	// The background context is used because the TLSConfigChanged wraps context
 	// with timeout on its own and shuts down the server, which handles current
-	// request.
+	// request.  It is also should be done in a separate goroutine due to the
+	// same reason.
 	if restartHTTPS {
-		m.web.tlsConfigChanged(context.Background(), &req.tlsConfigSettings)
+		go m.web.tlsConfigChanged(context.Background(), &req.tlsConfigSettings)
 	}
 }
 

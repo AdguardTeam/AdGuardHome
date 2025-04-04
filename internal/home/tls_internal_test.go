@@ -252,8 +252,7 @@ func TestTLSManager_Reload(t *testing.T) {
 
 	m.setWebAPI(web)
 
-	conf := &tlsConfigSettings{}
-	m.WriteDiskConfig(conf)
+	conf := m.config()
 	assertCertSerialNumber(t, conf, snBefore)
 
 	certDER, key = newCertAndKey(t, snAfter)
@@ -261,7 +260,7 @@ func TestTLSManager_Reload(t *testing.T) {
 
 	m.reload(ctx)
 
-	m.WriteDiskConfig(conf)
+	conf = m.config()
 	assertCertSerialNumber(t, conf, snAfter)
 }
 
@@ -517,8 +516,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 
 	m.setWebAPI(web)
 
-	conf := &tlsConfigSettings{}
-	m.WriteDiskConfig(conf)
+	conf := m.config()
 	assertCertSerialNumber(t, conf, wantSerialNumber)
 
 	// Prepare a request with the new TLS configuration.

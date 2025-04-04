@@ -112,9 +112,6 @@ func initDNS(
 		return err
 	}
 
-	tlsConf := &tlsConfigSettings{}
-	tlsMgr.WriteDiskConfig(tlsConf)
-
 	return initDNSServer(
 		globalContext.filters,
 		globalContext.stats,
@@ -122,7 +119,7 @@ func initDNS(
 		globalContext.dhcpServer,
 		anonymizer,
 		httpRegister,
-		tlsConf,
+		tlsMgr.config(),
 		tlsMgr,
 		baseLogger,
 	)
@@ -310,8 +307,7 @@ func newServerConfig(
 }
 
 // newDNSTLSConfig converts values from the configuration file into the internal
-// TLS settings for the DNS server.  tlsConf must not be nil.  dnsConf is never
-// nil.
+// TLS settings for the DNS server.  tlsConf must not be nil.
 func newDNSTLSConfig(
 	conf *tlsConfigSettings,
 	addrs []netip.Addr,
@@ -320,10 +316,7 @@ func newDNSTLSConfig(
 		return &dnsforward.TLSConfig{}, nil
 	}
 
-	cert, err := tls.X509KeyPair(
-		conf.CertificateChainData,
-		conf.PrivateKeyData,
-	)
+	cert, err := tls.X509KeyPair(conf.CertificateChainData, conf.PrivateKeyData)
 	if err != nil {
 		return nil, fmt.Errorf("parsing tls key pair: %w", err)
 	}
@@ -399,8 +392,7 @@ type dnsEncryption struct {
 // getDNSEncryption returns the TLS encryption addresses that AdGuard Home
 // listens on.  tlsMgr must not be nil.
 func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
-	tlsConf := tlsConfigSettings{}
-	tlsMgr.WriteDiskConfig(&tlsConf)
+	tlsConf := tlsMgr.config()
 
 	if !tlsConf.Enabled || len(tlsConf.ServerName) == 0 {
 		return dnsEncryption{}

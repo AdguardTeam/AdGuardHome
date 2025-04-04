@@ -337,8 +337,9 @@ type tlsConfigSettings struct {
 }
 
 // clone returns a deep copy of c.
-func (c *tlsConfigSettings) clone() (clone tlsConfigSettings) {
-	clone = *c
+func (c *tlsConfigSettings) clone() (clone *tlsConfigSettings) {
+	clone = &tlsConfigSettings{}
+	*clone = *c
 
 	clone.OverrideTLSCiphers = slices.Clone(c.OverrideTLSCiphers)
 	clone.CertificateChainData = slices.Clone(c.CertificateChainData)
@@ -738,9 +739,8 @@ func (c *configuration) write(tlsMgr *tlsManager) (err error) {
 	}
 
 	if tlsMgr != nil {
-		tlsConf := tlsConfigSettings{}
-		tlsMgr.WriteDiskConfig(&tlsConf)
-		config.TLS = tlsConf
+		tlsConf := tlsMgr.config()
+		config.TLS = *tlsConf
 	}
 
 	if globalContext.stats != nil {

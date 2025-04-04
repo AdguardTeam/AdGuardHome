@@ -168,20 +168,23 @@ type EDNSClientSubnet struct {
 	UseCustom bool `yaml:"use_custom"`
 }
 
-// TLSConfig is the TLS configuration for DNS-over-TLS, DNS-over-QUIC, and
-// HTTPS.
+// TLSConfig is the TLS configuration for DNS-over-HTTPS, DNS-over-TLS,
+// DNS-over-QUIC, and HTTPS.
 type TLSConfig struct {
 	// Cert is the TLS certificate used for TLS connections.  It is nil if
 	// encryption is disabled.
 	Cert *tls.Certificate
 
-	// TLSListenAddrs are the addresses to listen on for DoT connections.
+	// TLSListenAddrs are the addresses to listen on for DoT connections.  Each
+	// item must be non-nil.
 	TLSListenAddrs []*net.TCPAddr
 
 	// QUICListenAddrs are the addresses to listen on for DoQ connections.
+	// Each item must be non-nil.
 	QUICListenAddrs []*net.UDPAddr
 
-	// HTTPSListenAddrs are the addresses to listen on for HTTPS connections.
+	// HTTPSListenAddrs are the addresses to listen on for DoH and HTTPS
+	// connections.  Each item must be non-nil.
 	HTTPSListenAddrs []*net.TCPAddr
 
 	// ServerName is the hostname of the server.  Currently, it is only being
