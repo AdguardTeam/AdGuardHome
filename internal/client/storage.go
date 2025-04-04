@@ -683,6 +683,13 @@ func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filter
 	}
 
 	if !ok {
+		foundMAC := s.dhcp.MACByIP(addr)
+		if foundMAC != nil {
+			c, ok = s.FindByMAC(foundMAC)
+		}
+	}
+
+	if !ok {
 		s.logger.Debug("no client filtering settings found", "clientid", id, "addr", addr)
 
 		return
