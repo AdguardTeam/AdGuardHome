@@ -25,9 +25,17 @@ NOTE: Add new changes BELOW THIS COMMENT.
     **NOTE:** `npm` may be replaced with a different tool, such as `pnpm` or
     `yarn`, in a future release.
 
+### Fixed
+
+- Filtering for DHCP clients ([#7734]).
+
+- Validation process for the HTTPS port on the *Encryption Settings* page.
+
 ### Removed
 
 - Node 18 support.
+
+[#7734]: https://github.com/AdguardTeam/AdGuardHome/issues/7734
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
@@ -63,8 +71,6 @@ See also the [v0.107.58 GitHub milestone][ms-v0.107.58].
 - Optional `client` and `qtype` URL query parameters to the `GET /control/check_host` HTTP API.
 
 ### Fixed
-
-- Validation process for the HTTPS port on the *Encryption Settings* page.
 
 - Clearing the DNS cache on the *DNS settings* page now includes both global cache and custom client cache.
 
