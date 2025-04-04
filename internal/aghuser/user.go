@@ -32,12 +32,13 @@ func MustNewUserID() (uid UserID) {
 
 // User represents a web user.
 type User struct {
-	// ID is the unique identifier for the web user.
+	// ID is the unique identifier for the web user.  It must not be empty.
 	ID UserID
 
-	// Login is the login name of the web user.
+	// Login is the login name of the web user.  It must not be empty.
 	Login Login
 
-	// Password stores the password information for the web user.
+	// Password stores the password information for the web user.  It must not
+	// be nil.
 	Password Password
 }

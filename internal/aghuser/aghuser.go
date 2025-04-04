@@ -47,12 +47,12 @@ func NewDefaultPassword(hash string) (p *DefaultPassword) {
 // type check
 var _ Password = (*DefaultPassword)(nil)
 
-// Authenticate implements [Password] interface for *DefaultPassword.
+// Authenticate implements the [Password] interface for *DefaultPassword.
 func (p *DefaultPassword) Authenticate(ctx context.Context, passwd string) (ok bool) {
 	return bcrypt.CompareHashAndPassword([]byte(p.hash), []byte(passwd)) == nil
 }
 
-// Hash implements [Password] interface for *DefaultPassword.
+// Hash implements the [Password] interface for *DefaultPassword.
 func (p *DefaultPassword) Hash() (b []byte) {
 	return p.hash
 }
