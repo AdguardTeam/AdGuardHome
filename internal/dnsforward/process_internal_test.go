@@ -344,7 +344,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 			})
 			// TODO(e.burkov):  Generate a certificate actually containing the
 			// IP addresses.
-			s.conf.TLSConf.hasIPAddrs = true
+			s.hasIPAddrs = true
 
 			req := createTestMessageWithType(tc.host, tc.qtype)
 

@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
@@ -191,17 +190,9 @@ type TLSConfig struct {
 	// used for ClientID checking and Discovery of Designated Resolvers (DDR).
 	ServerName string
 
-	// dnsNames are the DNS names from certificate (SAN) or CN value from
-	// Subject.
-	dnsNames []string
-
 	// StrictSNICheck controls if the connections with SNI mismatching the
 	// certificate's ones should be rejected.
 	StrictSNICheck bool
-
-	// hasIPAddrs is set during the certificate parsing and is true if the
-	// configured certificate contains at least a single IP address.
-	hasIPAddrs bool
 }
 
 // DNSCryptConfig is the DNSCrypt server configuration struct.
@@ -618,30 +609,23 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
 		return nil
 	}
 
-	proxyConfig.TLSListenAddr = aghalg.CoalesceSlice(
-		s.conf.TLSConf.TLSListenAddrs,
-		proxyConfig.TLSListenAddr,
-	)
-
-	proxyConfig.QUICListenAddr = aghalg.CoalesceSlice(
-		s.conf.TLSConf.QUICListenAddrs,
-		proxyConfig.QUICListenAddr,
-	)
+	proxyConfig.TLSListenAddr = s.conf.TLSConf.TLSListenAddrs
+	proxyConfig.QUICListenAddr = s.conf.TLSConf.QUICListenAddrs
 
 	cert, err := x509.ParseCertificate(s.conf.TLSConf.Cert.Certificate[0])
 	if err != nil {
 		return fmt.Errorf("x509.ParseCertificate(): %w", err)
 	}
 
-	s.conf.TLSConf.hasIPAddrs = aghtls.CertificateHasIP(cert)
+	s.hasIPAddrs = aghtls.CertificateHasIP(cert)
 
 	if s.conf.TLSConf.StrictSNICheck {
 		if len(cert.DNSNames) != 0 {
-			s.conf.TLSConf.dnsNames = cert.DNSNames
+			s.dnsNames = cert.DNSNames
 			log.Debug("dns: using certificate's SAN as DNS names: %v", cert.DNSNames)
-			slices.Sort(s.conf.TLSConf.dnsNames)
+			slices.Sort(s.dnsNames)
 		} else {
-			s.conf.TLSConf.dnsNames = append(s.conf.TLSConf.dnsNames, cert.Subject.CommonName)
+			s.dnsNames = []string{cert.Subject.CommonName}
 			log.Debug("dns: using certificate's CN as DNS name: %s", cert.Subject.CommonName)
 		}
 	}
@@ -690,7 +674,7 @@ func anyNameMatches(dnsNames []string, sni string) (ok bool) {
 // Called by 'tls' package when Client Hello is received
 // If the server name (from SNI) supplied by client is incorrect - we terminate the ongoing TLS handshake.
 func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(s.conf.TLSConf.dnsNames, ch.ServerName) {
+	if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(s.dnsNames, ch.ServerName) {
 		log.Info("dns: tls: unknown SNI in Client Hello: %s", ch.ServerName)
 		return nil, fmt.Errorf("invalid SNI")
 	}

@@ -265,7 +265,7 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 		resp.Answer = append(resp.Answer, ans)
 	}
 
-	if s.conf.TLSConf.hasIPAddrs {
+	if s.hasIPAddrs {
 		// Only add DNS-over-TLS resolvers in case the certificate contains IP
 		// addresses.
 		//
