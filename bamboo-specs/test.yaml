@@ -6,7 +6,7 @@
     'name': 'AdGuard Home - Build and run tests'
 'variables':
     'dockerFrontend': 'adguard/home-js-builder:3.0'
-    'dockerGo': 'adguard/go-builder:1.24.1--1'
+    'dockerGo': 'adguard/go-builder:1.24.2--1'
     'channel': 'development'
 
 'stages':
@@ -234,5 +234,5 @@
         # may need to build a few of these.
         'variables':
             'dockerFrontend': 'adguard/home-js-builder:3.0'
-            'dockerGo': 'adguard/go-builder:1.24.1--1'
+            'dockerGo': 'adguard/go-builder:1.24.2--1'
             'channel': 'candidate'

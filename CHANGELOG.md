@@ -18,12 +18,15 @@ See also the [v0.107.60 GitHub milestone][ms-v0.107.60].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.2][go-1.24.2].
+
 ### Deprecated
 
 - Node 20 support, Node 22 will be required in future releases.
 
-    **NOTE:** `npm` may be replaced with a different tool, such as `pnpm` or
-    `yarn`, in a future release.
+    **NOTE:** `npm` may be replaced with a different tool, such as `pnpm` or `yarn`, in a future release.
 
 ### Fixed
 
@@ -36,6 +39,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Node 18 support.
 
 [#7734]: https://github.com/AdguardTeam/AdGuardHome/issues/7734
+
+[go-1.24.2]: https://groups.google.com/g/golang-announce/c/Y2uBTVKjBQk
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

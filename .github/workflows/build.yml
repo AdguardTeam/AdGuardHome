@@ -1,7 +1,7 @@
 'name': 'build'
 
 'env':
-  'GO_VERSION': '1.24.1'
+  'GO_VERSION': '1.24.2'
   'NODE_VERSION': '20'
 
 'on':
