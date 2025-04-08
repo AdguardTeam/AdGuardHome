@@ -34,6 +34,18 @@ trailing_newlines() (
 	readonly nl
 
 	find . \
+		'(' \
+		-type 'd' \
+		'(' \
+		-name 'node_modules' \
+		-o -path './.git' \
+		-o -path './bin' \
+		-o -path './build' \
+		-o -path './client/playwright-report' \
+		')' \
+		-prune \
+		')' \
+		-o \
 		-type 'f' \
 		'!' '(' \
 		-name '*.db' \
@@ -46,11 +58,8 @@ trailing_newlines() (
 		-o -name '*.zip' \
 		-o -name 'AdGuardHome' \
 		-o -name 'adguard-home' \
-		-o -path '*/node_modules/*' \
-		-o -path './.git/*' \
-		-o -path './bin/*' \
-		-o -path './build/*' \
 		')' \
+		-print \
 		| while read -r f; do
 			final_byte="$(tail -c -1 "$f")"
 			if [ "$final_byte" != "$nl" ]; then

@@ -78,11 +78,11 @@ func TestHostnameToHashes(t *testing.T) {
 		wantLen: 2,
 	}, {
 		name:    "private_domain_v2",
-		host:    "foo.blogspot.co.uk",
-		wantLen: 4,
+		host:    "foo.dyndns.org",
+		wantLen: 3,
 	}, {
 		name:    "sub_private_domain_v2",
-		host:    "bar.foo.blogspot.co.uk",
+		host:    "bar.foo.dyndns.org",
 		wantLen: 4,
 	}}
 

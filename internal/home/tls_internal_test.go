@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TODO(s.chzhen):  Consider moving to testdata.
 var testCertChainData = []byte(`-----BEGIN CERTIFICATE-----
 MIICKzCCAZSgAwIBAgIJAMT9kPVJdM7LMA0GCSqGSIb3DQEBCwUAMC0xFDASBgNV
 BAoMC0FkR3VhcmQgTHRkMRUwEwYDVQQDDAxBZEd1YXJkIEhvbWUwHhcNMTkwMjI3
@@ -66,7 +67,11 @@ func TestValidateCertificates(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	logger := slogutil.NewDiscardLogger()
 
-	m, err := newTLSManager(ctx, logger, tlsConfigSettings{}, false)
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:         logger,
+		configModified: func() {},
+		servePlainDNS:  false,
+	})
 	require.NoError(t, err)
 
 	t.Run("bad_certificate", func(t *testing.T) {
@@ -112,7 +117,6 @@ func TestValidateCertificates(t *testing.T) {
 //   - [homeContext.clients.storage]
 //   - [homeContext.dnsServer]
 //   - [homeContext.mux]
-//   - [homeContext.web]
 //
 // TODO(s.chzhen):  Remove this once the TLS manager no longer accesses global
 // variables.  Make tests that use this helper concurrent.
@@ -123,14 +127,12 @@ func storeGlobals(tb testing.TB) {
 	storage := globalContext.clients.storage
 	dnsServer := globalContext.dnsServer
 	mux := globalContext.mux
-	web := globalContext.web
 
 	tb.Cleanup(func() {
 		config = prevConfig
 		globalContext.clients.storage = storage
 		globalContext.dnsServer = dnsServer
 		globalContext.mux = mux
-		globalContext.web = web
 	})
 }
 
@@ -221,9 +223,6 @@ func TestTLSManager_Reload(t *testing.T) {
 
 	globalContext.mux = http.NewServeMux()
 
-	globalContext.web, err = initWeb(ctx, options{}, nil, nil, logger, nil, false)
-	require.NoError(t, err)
-
 	const (
 		snBefore int64 = 1
 		snAfter  int64 = 2
@@ -236,14 +235,24 @@ func TestTLSManager_Reload(t *testing.T) {
 	certDER, key := newCertAndKey(t, snBefore)
 	writeCertAndKey(t, certDER, certPath, key, keyPath)
 
-	m, err := newTLSManager(ctx, logger, tlsConfigSettings{
-		Enabled: true,
-		TLSConfig: dnsforward.TLSConfig{
-			CertificatePath: certPath,
-			PrivateKeyPath:  keyPath,
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:         logger,
+		configModified: func() {},
+		tlsSettings: tlsConfigSettings{
+			Enabled: true,
+			TLSConfig: dnsforward.TLSConfig{
+				CertificatePath: certPath,
+				PrivateKeyPath:  keyPath,
+			},
 		},
-	}, false)
+		servePlainDNS: false,
+	})
 	require.NoError(t, err)
+
+	web, err := initWeb(ctx, options{}, nil, nil, logger, nil, false)
+	require.NoError(t, err)
+
+	m.setWebAPI(web)
 
 	conf := &tlsConfigSettings{}
 	m.WriteDiskConfig(conf)
@@ -265,13 +274,18 @@ func TestTLSManager_HandleTLSStatus(t *testing.T) {
 		err    error
 	)
 
-	m, err := newTLSManager(ctx, logger, tlsConfigSettings{
-		Enabled: true,
-		TLSConfig: dnsforward.TLSConfig{
-			CertificateChain: string(testCertChainData),
-			PrivateKey:       string(testPrivateKeyData),
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:         logger,
+		configModified: func() {},
+		tlsSettings: tlsConfigSettings{
+			Enabled: true,
+			TLSConfig: dnsforward.TLSConfig{
+				CertificateChain: string(testCertChainData),
+				PrivateKey:       string(testPrivateKeyData),
+			},
 		},
-	}, false)
+		servePlainDNS: false,
+	})
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()
@@ -291,25 +305,41 @@ func TestTLSManager_HandleTLSStatus(t *testing.T) {
 func TestValidateTLSSettings(t *testing.T) {
 	storeGlobals(t)
 
+	globalContext.mux = http.NewServeMux()
+
 	var (
 		logger = slogutil.NewDiscardLogger()
 		ctx    = testutil.ContextWithTimeout(t, testTimeout)
 		err    error
 	)
 
-	ln, err := net.Listen("tcp", ":0")
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:         logger,
+		configModified: func() {},
+		servePlainDNS:  false,
+	})
 	require.NoError(t, err)
 
-	testutil.CleanupAndRequireSuccess(t, ln.Close)
-
-	addr := testutil.RequireTypeAssert[*net.TCPAddr](t, ln.Addr())
-
-	busyPort := addr.Port
-
-	globalContext.mux = http.NewServeMux()
-
-	globalContext.web, err = initWeb(ctx, options{}, nil, nil, logger, nil, false)
+	web, err := initWeb(ctx, options{}, nil, nil, logger, nil, false)
 	require.NoError(t, err)
+
+	m.setWebAPI(web)
+
+	tcpLn, err := net.Listen("tcp", ":0")
+	require.NoError(t, err)
+
+	testutil.CleanupAndRequireSuccess(t, tcpLn.Close)
+
+	tcpAddr := testutil.RequireTypeAssert[*net.TCPAddr](t, tcpLn.Addr())
+	busyTCPPort := tcpAddr.Port
+
+	udpLn, err := net.ListenPacket("udp", ":0")
+	require.NoError(t, err)
+
+	testutil.CleanupAndRequireSuccess(t, udpLn.Close)
+
+	udpAddr := testutil.RequireTypeAssert[*net.UDPAddr](t, udpLn.LocalAddr())
+	busyUDPPort := udpAddr.Port
 
 	testCases := []struct {
 		setts   tlsConfigSettingsExt
@@ -329,11 +359,29 @@ func TestValidateTLSSettings(t *testing.T) {
 		setts: tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:   true,
-				PortHTTPS: uint16(busyPort),
+				PortHTTPS: uint16(busyTCPPort),
 			},
 		},
-		name:    "busy_port",
-		wantErr: fmt.Sprintf("port %d is not available, cannot enable HTTPS on it", busyPort),
+		name:    "busy_https_port",
+		wantErr: fmt.Sprintf("port %d for HTTPS is not available", busyTCPPort),
+	}, {
+		setts: tlsConfigSettingsExt{
+			tlsConfigSettings: tlsConfigSettings{
+				Enabled:        true,
+				PortDNSOverTLS: uint16(busyTCPPort),
+			},
+		},
+		name:    "busy_dot_port",
+		wantErr: fmt.Sprintf("port %d for DNS-over-TLS is not available", busyTCPPort),
+	}, {
+		setts: tlsConfigSettingsExt{
+			tlsConfigSettings: tlsConfigSettings{
+				Enabled:         true,
+				PortDNSOverQUIC: uint16(busyUDPPort),
+			},
+		},
+		name:    "busy_doq_port",
+		wantErr: fmt.Sprintf("port %d for DNS-over-QUIC is not available", busyUDPPort),
 	}, {
 		setts: tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
@@ -348,7 +396,7 @@ func TestValidateTLSSettings(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err = validateTLSSettings(tc.setts)
+			err = m.validateTLSSettings(tc.setts)
 			testutil.AssertErrorMsg(t, tc.wantErr, err)
 		})
 	}
@@ -357,25 +405,32 @@ func TestValidateTLSSettings(t *testing.T) {
 func TestTLSManager_HandleTLSValidate(t *testing.T) {
 	storeGlobals(t)
 
+	globalContext.mux = http.NewServeMux()
+
 	var (
 		logger = slogutil.NewDiscardLogger()
 		ctx    = testutil.ContextWithTimeout(t, testTimeout)
 		err    error
 	)
 
-	globalContext.mux = http.NewServeMux()
-
-	globalContext.web, err = initWeb(ctx, options{}, nil, nil, logger, nil, false)
-	require.NoError(t, err)
-
-	m, err := newTLSManager(ctx, logger, tlsConfigSettings{
-		Enabled: true,
-		TLSConfig: dnsforward.TLSConfig{
-			CertificateChain: string(testCertChainData),
-			PrivateKey:       string(testPrivateKeyData),
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:         logger,
+		configModified: func() {},
+		tlsSettings: tlsConfigSettings{
+			Enabled: true,
+			TLSConfig: dnsforward.TLSConfig{
+				CertificateChain: string(testCertChainData),
+				PrivateKey:       string(testPrivateKeyData),
+			},
 		},
-	}, false)
+		servePlainDNS: false,
+	})
 	require.NoError(t, err)
+
+	web, err := initWeb(ctx, options{}, nil, nil, logger, nil, false)
+	require.NoError(t, err)
+
+	m.setWebAPI(web)
 
 	setts := &tlsConfigSettingsExt{
 		tlsConfigSettings: tlsConfigSettings{
@@ -438,9 +493,6 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 
 	globalContext.mux = http.NewServeMux()
 
-	globalContext.web, err = initWeb(ctx, options{}, nil, nil, logger, nil, false)
-	require.NoError(t, err)
-
 	config.DNS.BindHosts = []netip.Addr{netip.MustParseAddr("127.0.0.1")}
 	config.DNS.Port = 0
 
@@ -455,14 +507,24 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	writeCertAndKey(t, certDER, certPath, key, keyPath)
 
 	// Initialize the TLS manager and assert its configuration.
-	m, err := newTLSManager(ctx, logger, tlsConfigSettings{
-		Enabled: true,
-		TLSConfig: dnsforward.TLSConfig{
-			CertificatePath: certPath,
-			PrivateKeyPath:  keyPath,
+	m, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:         logger,
+		configModified: func() {},
+		tlsSettings: tlsConfigSettings{
+			Enabled: true,
+			TLSConfig: dnsforward.TLSConfig{
+				CertificatePath: certPath,
+				PrivateKeyPath:  keyPath,
+			},
 		},
-	}, true)
+		servePlainDNS: true,
+	})
 	require.NoError(t, err)
+
+	web, err := initWeb(ctx, options{}, nil, nil, logger, nil, false)
+	require.NoError(t, err)
+
+	m.setWebAPI(web)
 
 	conf := &tlsConfigSettings{}
 	m.WriteDiskConfig(conf)
@@ -509,10 +571,10 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	//
 	// TODO(s.chzhen):  Remove when [httpsServer.cond] is removed.
 	assert.Eventually(t, func() bool {
-		globalContext.web.httpsServer.condLock.Lock()
-		defer globalContext.web.httpsServer.condLock.Unlock()
+		web.httpsServer.condLock.Lock()
+		defer web.httpsServer.condLock.Unlock()
 
-		cert = globalContext.web.httpsServer.cert
+		cert = web.httpsServer.cert
 		if cert.Leaf == nil {
 			return false
 		}

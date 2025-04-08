@@ -3,7 +3,6 @@ package home
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
 	"io/fs"
 	"log/slog"
@@ -22,7 +21,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -81,10 +79,6 @@ type homeContext struct {
 	workDir     string // Location of our directory, used to protect against CWD being somewhere else
 	pidFileName string // PID file name.  Empty if no PID file was created.
 	controlLock sync.Mutex
-	tlsRoots    *x509.CertPool // list of root CAs for TLSv1.2
-
-	// tlsCipherIDs are the ID of the cipher suites that AdGuard Home must use.
-	tlsCipherIDs []uint16
 
 	// firstRun, if true, tells AdGuard Home to only start the web interface
 	// service, and only serve the first-run APIs.
@@ -142,7 +136,6 @@ func Main(clientBuildFS fs.FS) {
 func setupContext(opts options) (err error) {
 	globalContext.firstRun = detectFirstRun()
 
-	globalContext.tlsRoots = aghtls.SystemRootCAs()
 	globalContext.mux = http.NewServeMux()
 
 	if !opts.noEtcHosts {
@@ -274,18 +267,13 @@ func setupOpts(opts options) (err error) {
 	return nil
 }
 
-// initContextClients initializes Context clients and related fields.
+// initContextClients initializes Context clients and related fields.  All
+// arguments must not be nil.
 func initContextClients(
 	ctx context.Context,
 	logger *slog.Logger,
 	sigHdlr *signalHandler,
 ) (err error) {
-	err = setupDNSFilteringConf(ctx, logger, config.Filtering)
-	if err != nil {
-		// Don't wrap the error, because it's informative enough as is.
-		return err
-	}
-
 	//lint:ignore SA1019 Migration is not over.
 	config.DHCP.WorkDir = globalContext.workDir
 	config.DHCP.DataDir = globalContext.getDataDir()
@@ -358,11 +346,13 @@ func setupBindOpts(opts options) (err error) {
 	return nil
 }
 
-// setupDNSFilteringConf sets up DNS filtering configuration settings.
+// setupDNSFilteringConf sets up DNS filtering configuration settings.  All
+// arguments must not be nil.
 func setupDNSFilteringConf(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	conf *filtering.Config,
+	tlsMgr *tlsManager,
 ) (err error) {
 	const (
 		dnsTimeout = 3 * time.Second
@@ -388,7 +378,7 @@ func setupDNSFilteringConf(
 	conf.Filters = slices.Clone(config.Filters)
 	conf.WhitelistFilters = slices.Clone(config.WhitelistFilters)
 	conf.UserRules = slices.Clone(config.UserRules)
-	conf.HTTPClient = httpClient()
+	conf.HTTPClient = httpClient(tlsMgr)
 
 	cacheTime := time.Duration(conf.CacheTime) * time.Minute
 
@@ -630,6 +620,23 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	err = initContextClients(ctx, slogLogger, sigHdlr)
 	fatalOnError(err)
 
+	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
+	tlsMgr, err := newTLSManager(ctx, &tlsManagerConfig{
+		logger:         tlsMgrLogger,
+		configModified: onConfigModified,
+		tlsSettings:    config.TLS,
+		servePlainDNS:  config.DNS.ServePlainDNS,
+	})
+	if err != nil {
+		tlsMgrLogger.ErrorContext(ctx, "initializing", slogutil.KeyError, err)
+		onConfigModified()
+	}
+
+	globalContext.tls = tlsMgr
+
+	err = setupDNSFilteringConf(ctx, slogLogger, config.Filtering, tlsMgr)
+	fatalOnError(err)
+
 	err = setupOpts(opts)
 	fatalOnError(err)
 
@@ -642,7 +649,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
-	cmdlineUpdate(ctx, slogLogger, opts, upd)
+	cmdlineUpdate(ctx, slogLogger, opts, upd, tlsMgr)
 
 	if !globalContext.firstRun {
 		// Save the updated config.
@@ -664,18 +671,13 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	globalContext.auth, err = initUsers()
 	fatalOnError(err)
 
-	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
-	tlsMgr, err := newTLSManager(ctx, tlsMgrLogger, config.TLS, config.DNS.ServePlainDNS)
-	if err != nil {
-		log.Error("initializing tls: %s", err)
-		onConfigModified()
-	}
-
-	globalContext.tls = tlsMgr
-	sigHdlr.addTLSManager(tlsMgr)
-
-	globalContext.web, err = initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, customURL)
+	web, err := initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, customURL)
 	fatalOnError(err)
+
+	globalContext.web = web
+
+	tlsMgr.setWebAPI(web)
+	sigHdlr.addTLSManager(tlsMgr)
 
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
 	fatalOnError(err)
@@ -706,7 +708,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 		checkPermissions(ctx, slogLogger, globalContext.workDir, confPath, dataDir, statsDir, querylogDir)
 	}
 
-	globalContext.web.start(ctx)
+	web.start(ctx)
 
 	// Wait for other goroutines to complete their job.
 	<-done
@@ -1058,8 +1060,15 @@ type jsonError struct {
 	Message string `json:"message"`
 }
 
-// cmdlineUpdate updates current application and exits.  l must not be nil.
-func cmdlineUpdate(ctx context.Context, l *slog.Logger, opts options, upd *updater.Updater) {
+// cmdlineUpdate updates current application and exits.  l and tlsMgr must not
+// be nil.
+func cmdlineUpdate(
+	ctx context.Context,
+	l *slog.Logger,
+	opts options,
+	upd *updater.Updater,
+	tlsMgr *tlsManager,
+) {
 	if !opts.performUpdate {
 		return
 	}
@@ -1069,7 +1078,7 @@ func cmdlineUpdate(ctx context.Context, l *slog.Logger, opts options, upd *updat
 	//
 	// TODO(e.burkov):  We could probably initialize the internal resolver
 	// separately.
-	err := initDNSServer(nil, nil, nil, nil, nil, nil, &tlsConfigSettings{}, l)
+	err := initDNSServer(nil, nil, nil, nil, nil, nil, &tlsConfigSettings{}, tlsMgr, l)
 	fatalOnError(err)
 
 	l.InfoContext(ctx, "performing update via cli")

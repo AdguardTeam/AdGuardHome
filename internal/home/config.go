@@ -568,7 +568,7 @@ func parseConfig() (err error) {
 	}
 
 	// Do not wrap the error because it's informative enough as is.
-	return setContextTLSCipherIDs()
+	return validateTLSCipherIDs(config.TLS.OverrideTLSCiphers)
 }
 
 // validateConfig returns error if the configuration is invalid.
@@ -721,21 +721,15 @@ func (c *configuration) write(tlsMgr *tlsManager) (err error) {
 	return nil
 }
 
-// setContextTLSCipherIDs sets the TLS cipher suite IDs to use.
-func setContextTLSCipherIDs() (err error) {
-	if len(config.TLS.OverrideTLSCiphers) == 0 {
-		log.Info("tls: using default ciphers")
-
-		globalContext.tlsCipherIDs = aghtls.SaferCipherSuites()
-
+// validateTLSCipherIDs validates the custom TLS cipher suite IDs.
+func validateTLSCipherIDs(cipherIDs []string) (err error) {
+	if len(cipherIDs) == 0 {
 		return nil
 	}
 
-	log.Info("tls: overriding ciphers: %s", config.TLS.OverrideTLSCiphers)
-
-	globalContext.tlsCipherIDs, err = aghtls.ParseCiphers(config.TLS.OverrideTLSCiphers)
+	_, err = aghtls.ParseCiphers(cipherIDs)
 	if err != nil {
-		return fmt.Errorf("parsing override ciphers: %w", err)
+		return fmt.Errorf("override_tls_ciphers: %w", err)
 	}
 
 	return nil
