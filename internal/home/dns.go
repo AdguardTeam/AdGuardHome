@@ -38,6 +38,8 @@ const (
 )
 
 // Called by other modules when configuration is changed
+//
+// TODO(s.chzhen):  Remove this after refactoring.
 func onConfigModified() {
 	err := config.write(globalContext.tls)
 	if err != nil {
@@ -120,14 +122,15 @@ func initDNS(
 		anonymizer,
 		httpRegister,
 		tlsConf,
+		tlsMgr,
 		baseLogger,
 	)
 }
 
 // initDNSServer initializes the [context.dnsServer].  To only use the internal
-// proxy, none of the arguments are required, but tlsConf and l still must not
-// be nil, in other cases all the arguments also must not be nil.  It also must
-// not be called unless [config] and [globalContext] are initialized.
+// proxy, none of the arguments are required, but tlsConf, tlsMgr and l still
+// must not be nil, in other cases all the arguments also must not be nil.  It
+// also must not be called unless [config] and [globalContext] are initialized.
 //
 // TODO(e.burkov): Use [dnsforward.DNSCreateParams] as a parameter.
 func initDNSServer(
@@ -138,6 +141,7 @@ func initDNSServer(
 	anonymizer *aghnet.IPMut,
 	httpReg aghhttp.RegisterFunc,
 	tlsConf *tlsConfigSettings,
+	tlsMgr *tlsManager,
 	l *slog.Logger,
 ) (err error) {
 	globalContext.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
@@ -166,6 +170,7 @@ func initDNSServer(
 		&config.DNS,
 		config.Clients.Sources,
 		tlsConf,
+		tlsMgr,
 		httpReg,
 		globalContext.clients.storage,
 	)
@@ -236,18 +241,18 @@ func ipsToUDPAddrs(ips []netip.Addr, port uint16) (udpAddrs []*net.UDPAddr) {
 }
 
 // newServerConfig converts values from the configuration file into the internal
-// DNS server configuration.  All arguments must not be nil.
+// DNS server configuration.  All arguments must not be nil, except for httpReg.
 func newServerConfig(
 	dnsConf *dnsConfig,
 	clientSrcConf *clientSourcesConfig,
 	tlsConf *tlsConfigSettings,
+	tlsMgr *tlsManager,
 	httpReg aghhttp.RegisterFunc,
 	clientsContainer dnsforward.ClientsContainer,
 ) (newConf *dnsforward.ServerConfig, err error) {
 	hosts := aghalg.CoalesceSlice(dnsConf.BindHosts, []netip.Addr{netutil.IPv4Localhost()})
 
 	fwdConf := dnsConf.Config
-	fwdConf.FilterHandler = applyAdditionalFiltering
 	fwdConf.ClientsContainer = clientsContainer
 
 	newConf = &dnsforward.ServerConfig{
@@ -257,7 +262,7 @@ func newServerConfig(
 		TLSConfig:              newDNSTLSConfig(tlsConf, hosts),
 		TLSAllowUnencryptedDoH: tlsConf.AllowUnencryptedDoH,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
-		TLSv12Roots:            globalContext.tlsRoots,
+		TLSv12Roots:            tlsMgr.rootCerts,
 		ConfigModified:         onConfigModified,
 		HTTPRegister:           httpReg,
 		LocalPTRResolvers:      dnsConf.PrivateRDNSResolvers,
@@ -411,57 +416,6 @@ func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
 	return de
 }
 
-// applyAdditionalFiltering adds additional client information and settings if
-// the client has them.
-func applyAdditionalFiltering(clientIP netip.Addr, clientID string, setts *filtering.Settings) {
-	// pref is a prefix for logging messages around the scope.
-	const pref = "applying filters"
-
-	globalContext.filters.ApplyBlockedServices(setts)
-
-	log.Debug("%s: looking for client with ip %s and clientid %q", pref, clientIP, clientID)
-
-	if !clientIP.IsValid() {
-		return
-	}
-
-	setts.ClientIP = clientIP
-
-	c, ok := globalContext.clients.storage.Find(clientID)
-	if !ok {
-		c, ok = globalContext.clients.storage.Find(clientIP.String())
-		if !ok {
-			log.Debug("%s: no clients with ip %s and clientid %q", pref, clientIP, clientID)
-
-			return
-		}
-	}
-
-	log.Debug("%s: using settings for client %q (%s; %q)", pref, c.Name, clientIP, clientID)
-
-	if c.UseOwnBlockedServices {
-		// TODO(e.burkov):  Get rid of this crutch.
-		setts.ServicesRules = nil
-		svcs := c.BlockedServices.IDs
-		if !c.BlockedServices.Schedule.Contains(time.Now()) {
-			globalContext.filters.ApplyBlockedServicesList(setts, svcs)
-			log.Debug("%s: services for client %q set: %s", pref, c.Name, svcs)
-		}
-	}
-
-	setts.ClientName = c.Name
-	setts.ClientTags = c.Tags
-	if !c.UseOwnSettings {
-		return
-	}
-
-	setts.FilteringEnabled = c.FilteringEnabled
-	setts.SafeSearchEnabled = c.SafeSearchConf.Enabled
-	setts.ClientSafeSearch = c.SafeSearch
-	setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
-	setts.ParentalEnabled = c.ParentalEnabled
-}
-
 func startDNSServer() error {
 	config.RLock()
 	defer config.RUnlock()
@@ -490,31 +444,6 @@ func startDNSServer() error {
 	err = globalContext.queryLog.Start(ctx)
 	if err != nil {
 		return fmt.Errorf("starting query log: %w", err)
-	}
-
-	return nil
-}
-
-// reconfigureDNSServer updates the DNS server configuration using the provided
-// TLS settings.  tlsMgr must not be nil.
-func reconfigureDNSServer(tlsMgr *tlsManager) (err error) {
-	tlsConf := &tlsConfigSettings{}
-	tlsMgr.WriteDiskConfig(tlsConf)
-
-	newConf, err := newServerConfig(
-		&config.DNS,
-		config.Clients.Sources,
-		tlsConf,
-		httpRegister,
-		globalContext.clients.storage,
-	)
-	if err != nil {
-		return fmt.Errorf("generating forwarding dns server config: %w", err)
-	}
-
-	err = globalContext.dnsServer.Reconfigure(newConf)
-	if err != nil {
-		return fmt.Errorf("starting forwarding dns server: %w", err)
 	}
 
 	return nil

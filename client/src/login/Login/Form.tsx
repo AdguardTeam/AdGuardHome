@@ -62,7 +62,7 @@ const Form = ({ onSubmit, processing }: LoginFormProps) => {
                                 {...field}
                                 data-testid="password"
                                 type="password"
-                                label={t('username_label')}
+                                label={t('password_label')}
                                 placeholder={t('password_placeholder')}
                                 error={fieldState.error?.message}
                                 autoComplete="current-password"

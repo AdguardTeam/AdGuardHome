@@ -12,10 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/httputil"
@@ -156,27 +154,6 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 	w.httpsServer.cond = sync.NewCond(&w.httpsServer.condLock)
 
 	return w
-}
-
-// webCheckPortAvailable checks if port, which is considered an HTTPS port, is
-// available, unless the HTTPS server isn't active.
-//
-// TODO(a.garipov): Adapt for HTTP/3.
-func webCheckPortAvailable(port uint16) (ok bool) {
-	if globalContext.web.httpsServer.server != nil {
-		return true
-	}
-
-	addrPort := netip.AddrPortFrom(config.HTTPConfig.Address.Addr(), port)
-
-	err := aghnet.CheckPort("tcp", addrPort)
-	if err != nil {
-		log.Info("web: warning: checking https port: %s", err)
-
-		return false
-	}
-
-	return true
 }
 
 // tlsConfigChanged updates the TLS configuration and restarts the HTTPS server
@@ -329,8 +306,8 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 			Handler: hdlr,
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
-				RootCAs:      globalContext.tlsRoots,
-				CipherSuites: globalContext.tlsCipherIDs,
+				RootCAs:      web.tlsManager.rootCerts,
+				CipherSuites: web.tlsManager.customCipherIDs,
 				MinVersion:   tls.VersionTLS12,
 			},
 			ReadTimeout:       web.conf.ReadTimeout,
@@ -363,8 +340,8 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 		Addr: address,
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{web.httpsServer.cert},
-			RootCAs:      globalContext.tlsRoots,
-			CipherSuites: globalContext.tlsCipherIDs,
+			RootCAs:      web.tlsManager.rootCerts,
+			CipherSuites: web.tlsManager.customCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
 		Handler: withMiddlewares(globalContext.mux, limitRequestBody),

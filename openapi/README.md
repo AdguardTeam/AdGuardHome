@@ -6,12 +6,6 @@ We are using [OpenAPI specification](https://swagger.io/docs/specification/about
 
 The easiest way would be to use [Swagger Editor](http://editor.swagger.io/) and just copy/paste the YAML file there.
 
-## How to read the API doc
-
-1. `yarn install`
-2. `yarn start`
-3. open `http://localhost:4000/`
-
 ## Changelog
 
 [Here](CHANGELOG.md) we keep track of all non-compatible changes that are being made.

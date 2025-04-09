@@ -1,9 +1,10 @@
-package aghnet
+package aghnet_test
 
 import (
 	"net/netip"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,13 +30,13 @@ func TestGenerateHostName(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				hostname := GenerateHostname(tc.ip)
+				hostname := aghnet.GenerateHostname(tc.ip)
 				assert.Equal(t, tc.want, hostname)
 			})
 		}
 	})
 
 	t.Run("invalid", func(t *testing.T) {
-		assert.Panics(t, func() { GenerateHostname(netip.Addr{}) })
+		assert.Panics(t, func() { aghnet.GenerateHostname(netip.Addr{}) })
 	})
 }

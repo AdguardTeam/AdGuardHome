@@ -3,6 +3,9 @@ package filtering
 import "context"
 
 // SafeSearch interface describes a service for search engines hosts rewrites.
+//
+// TODO(s.chzhen):  Move to a higher-level package to allow importing the client
+// package into the filtering package.
 type SafeSearch interface {
 	// CheckHost checks host with safe search filter.  CheckHost must be safe
 	// for concurrent use.  qtype must be either [dns.TypeA] or [dns.TypeAAAA].
