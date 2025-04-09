@@ -4,7 +4,6 @@ import { ADMIN_USERNAME, ADMIN_PASSWORD } from '../constants';
 
 test.describe('General Settings', () => {
     test.beforeEach(async ({ page }) => {
-        // Login before each test
         await page.goto('/login.html');
         await page.getByTestId('username').click();
         await page.getByTestId('username').fill(ADMIN_USERNAME);
@@ -16,36 +15,27 @@ test.describe('General Settings', () => {
     });
 
     test('should toggle browsing security feature and verify DNS changes', async ({ page }) => {
-        // Navigate to general settings
         await page.goto('/#settings');
-        
-        // Find the browsing security toggle
+
         const browsingSecurity = await page.getByTestId('safebrowsing');
         const browsingSecurityLabel = await browsingSecurity.locator('xpath=following-sibling::*[1]');
-        
-        // Check initial state
+
         const initialState = await browsingSecurity.isChecked();
 
-        // Enable browsing security if it's not already enabled
         if (!initialState) {
             await browsingSecurityLabel.click();
             await expect(browsingSecurity).toBeChecked();
         }
-        
-        // Run nslookup with browsing security enabled
+
         const resultEnabled = execSync('nslookup totalvirus.com 127.0.0.1').toString();
-        
-        // Disable browsing security
+
         await browsingSecurityLabel.click();
         await expect(browsingSecurity).not.toBeChecked();
-        
-        // Run nslookup with browsing security disabled
+
         const resultDisabled = execSync('nslookup totalvirus.com 127.0.0.1').toString();
-        
-        // Compare results (using length as a simple way to detect differences)
+
         expect(resultEnabled).not.toEqual(resultDisabled);
-        
-        // Restore initial state
+
         if (initialState) {
             await browsingSecurityLabel.click();
             await expect(browsingSecurity).toBeChecked();
@@ -53,36 +43,27 @@ test.describe('General Settings', () => {
     });
 
     test('should toggle parental control feature and verify DNS changes', async ({ page }) => {
-        // Navigate to general settings
         await page.goto('/#settings');
-        
-        // Find the parental control toggle
+
         const parentalControl = page.getByTestId('parental');
         const parentalControlLabel = await parentalControl.locator('xpath=following-sibling::*[1]');
-        
-        // Check initial state
+
         const initialState = await parentalControl.isChecked();
-        
-        // Enable parental control if it's not already enabled
+
         if (!initialState) {
             await parentalControlLabel.click();
             await expect(parentalControl).toBeChecked();
         }
-        
-        // Run nslookup with parental control enabled
+
         const resultEnabled = execSync('nslookup pornhub.com 127.0.0.1').toString();
-        
-        // Disable parental control
+
         await parentalControlLabel.click();
         await expect(parentalControl).not.toBeChecked();
-        
-        // Run nslookup with parental control disabled
+
         const resultDisabled = execSync('nslookup pornhub.com 127.0.0.1').toString();
-        
-        // Compare results
+
         expect(resultEnabled).not.toEqual(resultDisabled);
-        
-        // Restore initial state
+
         if (initialState) {
             await parentalControlLabel.click();
             await expect(parentalControl).toBeChecked();
@@ -90,26 +71,19 @@ test.describe('General Settings', () => {
     });
 
     test('should toggle safe search feature', async ({ page }) => {
-        // Navigate to general settings
         await page.goto('/#settings');
-        
-        // Find the safe search toggle
+
         const safeSearch = page.getByTestId('safesearch');
         const safeSearchLabel = await safeSearch.locator('xpath=following-sibling::*[1]');
-        
-        // Check initial state
+
         const initialState = await safeSearch.isChecked();
-        
-        // Toggle it
+
         await safeSearchLabel.click();
-        
-        // Verify it changed state
+
         await expect(safeSearch).not.toBeChecked({ checked: initialState });
-        
-        // Toggle it back
+
         await safeSearchLabel.click();
-        
-        // Verify it's back to the initial state
+
         await expect(safeSearch).toBeChecked({ checked: initialState });
     });
 });

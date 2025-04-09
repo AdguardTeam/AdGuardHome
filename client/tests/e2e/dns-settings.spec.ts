@@ -17,21 +17,15 @@ test.describe('DNS Settings', () => {
     const runDNSSettingsTest = async (page: Page, address: string) => {
         await page.goto('/#dns');
 
-        // TODO: Implement DNS behavior verification by visiting a test page.
-        
-        // Save current upstream DNS for later restoration
         const currentDns = await page.getByTestId('upstream_dns').inputValue();
 
         await page.getByTestId('upstream_dns').fill(address);
         await page.getByTestId('dns_upstream_test').click();
-        
-        // Wait for changes to be applied
-        await page.waitForTimeout(2000);  // 2 seconds
-        
-        // Verify DNS change was successful
+
+        await page.waitForTimeout(2000);
+
         await expect(page.getByTestId('upstream_dns')).toHaveValue(address);
-        
-        // Restore original DNS settings
+
         await page.getByTestId('upstream_dns').fill(currentDns);
         await page.getByTestId('dns_upstream_save').click({ force: true });
     };

@@ -33,17 +33,14 @@ test.describe('Filtering', () => {
 
     const runCustomRuleTest = async (page: Page, domain_to_block: string) => {
         await page.goto('/#custom_rules');
-    
-        // Apply custom rule
+
         await page.getByTestId('custom_rule_textarea').fill(domain_to_block);
         await page.getByTestId('apply_custom_rule').click();
 
-        // Run terminal command
         const nslookupBlockedResult = await runTerminalCommand(`nslookup ${domain_to_block} 127.0.0.1`).toString();
 
         console.info(`nslookup blocked CNAME result: '${nslookupBlockedResult}'`);
 
-        // Remove custom rule
         const currentRules = await page.getByTestId('custom_rule_textarea').inputValue();
         console.debug(`Current rules before removal:\n${currentRules}`);
 
@@ -66,7 +63,6 @@ test.describe('Filtering', () => {
             console.warn(`Rule '${domain_to_block}' not found. No changes were made.`);
         }
 
-        // Run terminal command
         const nslookupUnblockedResult = await runTerminalCommand(`nslookup ${domain_to_block} 127.0.0.1`).toString();
         console.info(`nslookup unblocked CNAME result: '${nslookupUnblockedResult}'`);
     };

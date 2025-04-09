@@ -3,7 +3,6 @@ import { ADMIN_USERNAME, ADMIN_PASSWORD } from '../constants';
 
 test.describe('QueryLog', () => {
     test.beforeEach(async ({ page }) => {
-        // Login before each test
         await page.goto('/login.html');
         await page.getByTestId('username').click();
         await page.getByTestId('username').fill(ADMIN_USERNAME);
@@ -16,7 +15,6 @@ test.describe('QueryLog', () => {
 
     test('Search of queryLog should work correctly', async ({ page }) => {
         await page.route('/control/querylog', async (route) => {
-            // Provide the custom response:
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
@@ -114,7 +112,6 @@ test.describe('QueryLog', () => {
 
         await page.getByTestId('querylog_search').fill('127.0.0.1');
 
-        // Trigger an action that sends a request
         const [request] = await Promise.all([
             page.waitForRequest((req) => req.url().includes('/control/querylog')),
         ]);
