@@ -37,9 +37,9 @@ test.describe('Filtering', () => {
         await page.getByTestId('custom_rule_textarea').fill(domain_to_block);
         await page.getByTestId('apply_custom_rule').click();
 
-        const nslookupBlockedResult = await runTerminalCommand(`nslookup ${domain_to_block} 127.0.0.1`).toString();
+        const digBlockedResult = await runTerminalCommand(`dig @127.0.0.1 ${domain_to_block}`).toString();
 
-        console.info(`nslookup blocked CNAME result: '${nslookupBlockedResult}'`);
+        console.info(`dig blocked result: '${digBlockedResult}'`);
 
         const currentRules = await page.getByTestId('custom_rule_textarea').inputValue();
         console.debug(`Current rules before removal:\n${currentRules}`);
@@ -63,8 +63,8 @@ test.describe('Filtering', () => {
             console.warn(`Rule '${domain_to_block}' not found. No changes were made.`);
         }
 
-        const nslookupUnblockedResult = await runTerminalCommand(`nslookup ${domain_to_block} 127.0.0.1`).toString();
-        console.info(`nslookup unblocked CNAME result: '${nslookupUnblockedResult}'`);
+        const digUnblockedResult = await runTerminalCommand(`dig @127.0.0.1 ${domain_to_block}`).toString();
+        console.info(`dig unblocked result: '${digUnblockedResult}'`);
     };
 
     test('Test blocking rule for apple.com', async ({ page }) => {

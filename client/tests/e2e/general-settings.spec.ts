@@ -27,12 +27,12 @@ test.describe('General Settings', () => {
             await expect(browsingSecurity).toBeChecked();
         }
 
-        const resultEnabled = execSync('nslookup totalvirus.com 127.0.0.1').toString();
+        const resultEnabled = execSync('dig @127.0.0.1 totalvirus.com').toString();
 
         await browsingSecurityLabel.click();
         await expect(browsingSecurity).not.toBeChecked();
 
-        const resultDisabled = execSync('nslookup totalvirus.com 127.0.0.1').toString();
+        const resultDisabled = execSync('dig @127.0.0.1 totalvirus.com').toString();
 
         expect(resultEnabled).not.toEqual(resultDisabled);
 
@@ -55,12 +55,12 @@ test.describe('General Settings', () => {
             await expect(parentalControl).toBeChecked();
         }
 
-        const resultEnabled = execSync('nslookup pornhub.com 127.0.0.1').toString();
+        const resultEnabled = execSync('dig @127.0.0.1 pornhub.com').toString();
 
         await parentalControlLabel.click();
         await expect(parentalControl).not.toBeChecked();
 
-        const resultDisabled = execSync('nslookup pornhub.com 127.0.0.1').toString();
+        const resultDisabled = execSync('dig @127.0.0.1 pornhub.com').toString();
 
         expect(resultEnabled).not.toEqual(resultDisabled);
 
