@@ -117,7 +117,6 @@ $sudo_cmd docker "$debug_flags" \
 	--build-arg DIST_DIR="$dist_dir" \
 	--build-arg VCS_REF="$commit" \
 	--build-arg VERSION="$version" \
-	--debug \
 	--output "$docker_output" \
 	--platform "$docker_platforms" \
 	--progress 'plain' \
