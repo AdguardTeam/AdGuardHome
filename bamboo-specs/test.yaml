@@ -195,7 +195,7 @@
 
                 export CI=true
 
-                ls -la
+                ls -la build
                 
                 tar -xzf dist/AdGuardHome_linux_amd64.tar.gz -C /tmp
 
