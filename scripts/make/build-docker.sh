@@ -119,4 +119,5 @@ $sudo_cmd docker "$debug_flags" \
 	--build-arg VERSION="$version" \
 	--output "$docker_output" \
 	--platform "$docker_platforms" \
+	--progress 'plain' \
 	$docker_version_tag $docker_channel_tag -f ./docker/Dockerfile .

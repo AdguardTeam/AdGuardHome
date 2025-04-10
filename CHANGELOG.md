@@ -21,13 +21,17 @@ NOTE: Add new changes BELOW THIS COMMENT.
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
 
-## [v0.107.60] - 2025-04-09
+## [v0.107.60] - 2025-04-14
 
 See also the [v0.107.60 GitHub milestone][ms-v0.107.60].
 
 ### Security
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.2][go-1.24.2].
+
+### Changed
+
+- Alpine Linux version in `Dockerfile` has been updated to 3.21 ([#7588]).
 
 ### Deprecated
 
@@ -47,6 +51,7 @@ See also the [v0.107.60 GitHub milestone][ms-v0.107.60].
 
 - Node 18 support.
 
+[#7588]: https://github.com/AdguardTeam/AdGuardHome/issues/7588
 [#7729]: https://github.com/AdguardTeam/AdGuardHome/issues/7729
 [#7734]: https://github.com/AdguardTeam/AdGuardHome/issues/7734
 

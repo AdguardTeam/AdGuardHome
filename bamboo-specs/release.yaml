@@ -157,6 +157,7 @@
 
                 # Print Docker info.
                 docker info
+                docker buildx version
 
                 # Prepare and push the build.
                 env \
