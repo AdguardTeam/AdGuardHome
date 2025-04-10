@@ -5,7 +5,7 @@
     'key': 'AHBRTSPECS'
     'name': 'AdGuard Home - Build and run tests'
 'variables':
-    'dockerFrontend': 'adguard/home-js-builder:3.1'
+    'dockerFrontend': 'adguard/home-js-builder:3.2'
     'dockerGo': 'adguard/go-builder:1.24.2--1'
     'channel': 'development'
 
@@ -195,11 +195,13 @@
 
                 export CI=true
 
+                ls -la
+                
                 tar -xzf dist/AdGuardHome_linux_amd64.tar.gz -C /tmp
 
                 mv /tmp/AdGuardHome/AdGuardHome ./AdGuardHome
 
-                make VERBOSE=1 js-deps js-test-e2e
+                make VERBOSE=1 js-test-e2e
     'requirements':
       - 'adg-docker': 'true'
 
