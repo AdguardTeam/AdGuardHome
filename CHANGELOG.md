@@ -22,6 +22,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.2][go-1.24.2].
 
+### Changed
+
+- Alpine Linux version in `Dockerfile` has been updated to 3.21 ([#7588]).
+
 ### Deprecated
 
 - Node 20 support, Node 22 will be required in future releases.
@@ -38,6 +42,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Node 18 support.
 
+[#7588]: https://github.com/AdguardTeam/AdGuardHome/issues/7588
 [#7734]: https://github.com/AdguardTeam/AdGuardHome/issues/7734
 
 [go-1.24.2]: https://groups.google.com/g/golang-announce/c/Y2uBTVKjBQk
