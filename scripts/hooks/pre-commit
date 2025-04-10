@@ -97,6 +97,7 @@ if [ "$(git diff --cached --name-only -- '*.go' '*.mod' 'Makefile' || :)" != '' 
 	make VERBOSE="$verbose" go-os-check go-lint go-test
 fi
 
-if [ "$(git diff --cached --name-only -- './openapi/openapi.yaml' || :)" != '' ]; then
-	make VERBOSE="$verbose" openapi-lint
-fi
+# TODO(a.gairpov):  Re-enable after finding a better linter.
+# if [ "$(git diff --cached --name-only -- './openapi/openapi.yaml' || :)" != '' ]; then
+# 	make VERBOSE="$verbose" openapi-lint
+# fi
