@@ -194,7 +194,7 @@
                 set -e -f -u -x
 
                 export CI=true
-                
+
                 tar -xzf dist/AdGuardHome_linux_amd64.tar.gz -C /tmp
 
                 mv /tmp/AdGuardHome/AdGuardHome ./AdGuardHome
