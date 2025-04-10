@@ -194,14 +194,12 @@
                 set -e -f -u -x
 
                 export CI=true
-
-                ls -la build
                 
                 tar -xzf dist/AdGuardHome_linux_amd64.tar.gz -C /tmp
 
                 mv /tmp/AdGuardHome/AdGuardHome ./AdGuardHome
 
-                make VERBOSE=1 js-test-e2e
+                make VERBOSE=1 js-deps js-test-e2e
     'requirements':
       - 'adg-docker': 'true'
 
