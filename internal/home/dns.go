@@ -272,6 +272,7 @@ func newServerConfig(
 		ServeHTTP3:             dnsConf.ServeHTTP3,
 		UseHTTP3Upstreams:      dnsConf.UseHTTP3Upstreams,
 		ServePlainDNS:          dnsConf.ServePlainDNS,
+		PendingRequestsEnabled: dnsConf.PendingRequests.Enabled,
 	}
 
 	var initialAddresses []netip.Addr
