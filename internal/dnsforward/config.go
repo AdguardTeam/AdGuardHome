@@ -175,15 +175,15 @@ type TLSConfig struct {
 	Cert *tls.Certificate
 
 	// TLSListenAddrs are the addresses to listen on for DoT connections.  Each
-	// item must be non-nil.
+	// item in the list must be non-nil if Cert is not nil.
 	TLSListenAddrs []*net.TCPAddr
 
-	// QUICListenAddrs are the addresses to listen on for DoQ connections.
-	// Each item must be non-nil.
+	// QUICListenAddrs are the addresses to listen on for DoQ connections.  Each
+	// item in the list must be non-nil if Cert is not nil.
 	QUICListenAddrs []*net.UDPAddr
 
 	// HTTPSListenAddrs are the addresses to listen on for DoH and HTTPS
-	// connections.  Each item must be non-nil.
+	// connections.  Each item in the list must be non-nil if Cert is not nil.
 	HTTPSListenAddrs []*net.TCPAddr
 
 	// ServerName is the hostname of the server.  Currently, it is only being
@@ -599,7 +599,7 @@ func (conf *ServerConfig) ourAddrsSet() (m addrPortSet, err error) {
 	}
 }
 
-// prepareTLS - prepares TLS configuration for the DNS proxy
+// prepareTLS sets up the TLS configuration for the DNS proxy.
 func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
 	if s.conf.TLSConf.Cert == nil {
 		return

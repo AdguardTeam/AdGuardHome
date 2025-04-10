@@ -307,7 +307,7 @@ func newServerConfig(
 }
 
 // newDNSTLSConfig converts values from the configuration file into the internal
-// TLS settings for the DNS server.  tlsConf must not be nil.
+// TLS settings for the DNS server.  conf must not be nil.
 func newDNSTLSConfig(
 	conf *tlsConfigSettings,
 	addrs []netip.Addr,
