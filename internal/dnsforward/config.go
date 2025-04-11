@@ -167,8 +167,9 @@ type EDNSClientSubnet struct {
 	UseCustom bool `yaml:"use_custom"`
 }
 
-// TLSConfig is the TLS configuration for DNS-over-HTTPS, DNS-over-TLS,
-// DNS-over-QUIC, and HTTPS.
+// TLSConfig contains the TLS configuration settings for DNS-over-HTTPS (DoH),
+// DNS-over-TLS (DoT), DNS-over-QUIC (DoQ), and Discovery of Designated
+// Resolvers (DDR).
 type TLSConfig struct {
 	// Cert is the TLS certificate used for TLS connections.  It is nil if
 	// encryption is disabled.
@@ -182,8 +183,9 @@ type TLSConfig struct {
 	// item in the list must be non-nil if Cert is not nil.
 	QUICListenAddrs []*net.UDPAddr
 
-	// HTTPSListenAddrs are the addresses to listen on for DoH and HTTPS
-	// connections.  Each item in the list must be non-nil if Cert is not nil.
+	// HTTPSListenAddrs should be the addresses AdGuard Home is listening on for
+	// DoH connections.  These addresses are announced with DDR.  Each item in
+	// the list must be non-nil.
 	HTTPSListenAddrs []*net.TCPAddr
 
 	// ServerName is the hostname of the server.  Currently, it is only being
