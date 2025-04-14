@@ -261,6 +261,16 @@ type dnsConfig struct {
 	// HostsFileEnabled defines whether to use information from the system hosts
 	// file to resolve queries.
 	HostsFileEnabled bool `yaml:"hostsfile_enabled"`
+
+	// PendingRequests configures duplicate requests policy.
+	PendingRequests *pendingRequests `yaml:"pending_requests"`
+}
+
+// pendingRequests is a block with pending requests configuration.
+type pendingRequests struct {
+	// Enabled controls if duplicate requests should be sent to the upstreams
+	// along with the original one.
+	Enabled bool `yaml:"enabled"`
 }
 
 type tlsConfigSettings struct {
@@ -380,6 +390,9 @@ var config = &configuration{
 		UsePrivateRDNS:   true,
 		ServePlainDNS:    true,
 		HostsFileEnabled: true,
+		PendingRequests: &pendingRequests{
+			Enabled: true,
+		},
 	},
 	TLS: tlsConfigSettings{
 		PortHTTPS:       defaultPortHTTPS,

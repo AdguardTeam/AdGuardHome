@@ -281,6 +281,10 @@ type ServerConfig struct {
 
 	// ServePlainDNS defines if plain DNS is allowed for incoming requests.
 	ServePlainDNS bool
+
+	// PendingRequestsEnabled defines if duplicate requests should be forwarded
+	// to upstreams along with the original one.
+	PendingRequestsEnabled bool
 }
 
 // UpstreamMode is a enumeration of upstream mode representations.  See
@@ -324,6 +328,9 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 		UsePrivateRDNS:            srvConf.UsePrivateRDNS,
 		PrivateSubnets:            s.privateNets,
 		MessageConstructor:        s,
+		PendingRequests: &proxy.PendingRequestsConfig{
+			Enabled: srvConf.PendingRequestsEnabled,
+		},
 	}
 
 	if srvConf.EDNSClientSubnet.UseCustom {

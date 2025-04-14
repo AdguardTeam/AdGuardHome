@@ -5,7 +5,7 @@
     'key': 'AHBRTSPECS'
     'name': 'AdGuard Home - Build and run tests'
 'variables':
-    'dockerFrontend': 'adguard/home-js-builder:3.0'
+    'dockerFrontend': 'adguard/home-js-builder:3.1'
     'dockerGo': 'adguard/go-builder:1.24.2--1'
     'channel': 'development'
 
@@ -233,6 +233,6 @@
         # Set the default release channel on the release branch to beta, as we
         # may need to build a few of these.
         'variables':
-            'dockerFrontend': 'adguard/home-js-builder:3.0'
+            'dockerFrontend': 'adguard/home-js-builder:3.1'
             'dockerGo': 'adguard/go-builder:1.24.2--1'
             'channel': 'candidate'

@@ -78,6 +78,7 @@ class CustomRules extends Component<CustomRulesProps> {
                     <form onSubmit={this.handleSubmit}>
                         <div className="text-edit-container mb-4">
                             <textarea
+                                data-testid="custom_rule_textarea"
                                 className="form-control font-monospace text-input"
                                 value={userRules}
                                 onChange={this.handleChange}
@@ -91,6 +92,7 @@ class CustomRules extends Component<CustomRulesProps> {
 
                         <div className="card-actions">
                             <button
+                                data-testid="apply_custom_rule"
                                 className="btn btn-success btn-standard btn-large"
                                 type="submit"
                                 onClick={this.handleSubmit}>
