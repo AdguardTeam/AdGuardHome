@@ -9,14 +9,21 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v0.108.0] – TBA
 
-## [v0.107.60] - 2025-04-01 (APPROX.)
+## [v0.107.61] - 2025-04-22 (APPROX.)
 
-See also the [v0.107.60 GitHub milestone][ms-v0.107.60].
+See also the [v0.107.61 GitHub milestone][ms-v0.107.61].
 
-[ms-v0.107.60]: https://github.com/AdguardTeam/AdGuardHome/milestone/95?closed=1
+[ms-v0.107.61]: https://github.com/AdguardTeam/AdGuardHome/milestone/96?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v0.107.60] - 2025-04-14
+
+See also the [v0.107.60 GitHub milestone][ms-v0.107.60].
 
 ### Security
 
@@ -36,6 +43,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Filtering for DHCP clients ([#7734]).
 
+- Incorrect label on login page ([#7729]).
+
 - Validation process for the HTTPS port on the *Encryption Settings* page.
 
 ### Removed
@@ -43,13 +52,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Node 18 support.
 
 [#7588]: https://github.com/AdguardTeam/AdGuardHome/issues/7588
+[#7729]: https://github.com/AdguardTeam/AdGuardHome/issues/7729
 [#7734]: https://github.com/AdguardTeam/AdGuardHome/issues/7734
 
 [go-1.24.2]: https://groups.google.com/g/golang-announce/c/Y2uBTVKjBQk
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[ms-v0.107.60]: https://github.com/AdguardTeam/AdGuardHome/milestone/95?closed=1
 
 ## [v0.107.59] - 2025-03-21
 
@@ -3097,11 +3104,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.60...HEAD
-[v0.107.60]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.59...v0.107.60
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.61...HEAD
+[v0.107.61]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.60...v0.107.61
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.59...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.60...HEAD
+[v0.107.60]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.59...v0.107.60
 [v0.107.59]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.58...v0.107.59
 [v0.107.58]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.57...v0.107.58
 [v0.107.57]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.56...v0.107.57
