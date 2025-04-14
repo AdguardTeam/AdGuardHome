@@ -7,7 +7,7 @@
 # Make sure to sync any changes with the branch overrides below.
 'variables':
     'channel': 'edge'
-    'dockerFrontend': 'adguard/home-js-builder:3.0'
+    'dockerFrontend': 'adguard/home-js-builder:3.1'
     'dockerGo': 'adguard/go-builder:1.24.2--1'
 
 'stages':
@@ -278,7 +278,7 @@
         # need to build a few of these.
         'variables':
             'channel': 'beta'
-            'dockerFrontend': 'adguard/home-js-builder:3.0'
+            'dockerFrontend': 'adguard/home-js-builder:3.1'
             'dockerGo': 'adguard/go-builder:1.24.2--1'
     # release-vX.Y.Z branches are the branches from which the actual final
     # release is built.
@@ -294,5 +294,5 @@
         # are the ones that actually get released.
         'variables':
             'channel': 'release'
-            'dockerFrontend': 'adguard/home-js-builder:3.0'
+            'dockerFrontend': 'adguard/home-js-builder:3.1'
             'dockerGo': 'adguard/go-builder:1.24.2--1'
