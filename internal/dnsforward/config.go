@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
@@ -168,43 +167,34 @@ type EDNSClientSubnet struct {
 	UseCustom bool `yaml:"use_custom"`
 }
 
-// TLSConfig is the TLS configuration for HTTPS, DNS-over-HTTPS, and DNS-over-TLS
+// TLSConfig contains the TLS configuration settings for DNS-over-HTTPS (DoH),
+// DNS-over-TLS (DoT), DNS-over-QUIC (DoQ), and Discovery of Designated
+// Resolvers (DDR).
 type TLSConfig struct {
-	cert tls.Certificate
+	// Cert is the TLS certificate used for TLS connections.  It is nil if
+	// encryption is disabled.
+	Cert *tls.Certificate
 
-	TLSListenAddrs   []*net.TCPAddr `yaml:"-" json:"-"`
-	QUICListenAddrs  []*net.UDPAddr `yaml:"-" json:"-"`
-	HTTPSListenAddrs []*net.TCPAddr `yaml:"-" json:"-"`
+	// TLSListenAddrs are the addresses to listen on for DoT connections.  Each
+	// item in the list must be non-nil if Cert is not nil.
+	TLSListenAddrs []*net.TCPAddr
 
-	// PEM-encoded certificates chain
-	CertificateChain string `yaml:"certificate_chain" json:"certificate_chain"`
-	// PEM-encoded private key
-	PrivateKey string `yaml:"private_key" json:"private_key"`
+	// QUICListenAddrs are the addresses to listen on for DoQ connections.  Each
+	// item in the list must be non-nil if Cert is not nil.
+	QUICListenAddrs []*net.UDPAddr
 
-	CertificatePath string `yaml:"certificate_path" json:"certificate_path"`
-	PrivateKeyPath  string `yaml:"private_key_path" json:"private_key_path"`
-
-	CertificateChainData []byte `yaml:"-" json:"-"`
-	PrivateKeyData       []byte `yaml:"-" json:"-"`
+	// HTTPSListenAddrs should be the addresses AdGuard Home is listening on for
+	// DoH connections.  These addresses are announced with DDR.  Each item in
+	// the list must be non-nil.
+	HTTPSListenAddrs []*net.TCPAddr
 
 	// ServerName is the hostname of the server.  Currently, it is only being
 	// used for ClientID checking and Discovery of Designated Resolvers (DDR).
-	ServerName string `yaml:"-" json:"-"`
-
-	// DNS names from certificate (SAN) or CN value from Subject
-	dnsNames []string
-
-	// OverrideTLSCiphers, when set, contains the names of the cipher suites to
-	// use.  If the slice is empty, the default safe suites are used.
-	OverrideTLSCiphers []string `yaml:"override_tls_ciphers,omitempty" json:"-"`
+	ServerName string
 
 	// StrictSNICheck controls if the connections with SNI mismatching the
 	// certificate's ones should be rejected.
-	StrictSNICheck bool `yaml:"strict_sni_check" json:"-"`
-
-	// hasIPAddrs is set during the certificate parsing and is true if the
-	// configured certificate contains at least a single IP address.
-	hasIPAddrs bool
+	StrictSNICheck bool
 }
 
 // DNSCryptConfig is the DNSCrypt server configuration struct.
@@ -239,8 +229,11 @@ type ServerConfig struct {
 	// Remove that.
 	AddrProcConf *client.DefaultAddrProcConfig
 
+	// TLSConf is the TLS configuration for DNS-over-TLS, DNS-over-QUIC, and
+	// HTTPS.  It must not be nil.
+	TLSConf *TLSConfig
+
 	Config
-	TLSConfig
 	DNSCryptConfig
 	TLSAllowUnencryptedDoH bool
 
@@ -608,45 +601,33 @@ func (conf *ServerConfig) ourAddrsSet() (m addrPortSet, err error) {
 	}
 }
 
-// prepareTLS - prepares TLS configuration for the DNS proxy
+// prepareTLS sets up the TLS configuration for the DNS proxy.
 func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
-	if len(s.conf.CertificateChainData) == 0 || len(s.conf.PrivateKeyData) == 0 {
+	if s.conf.TLSConf.Cert == nil {
+		return
+	}
+
+	if s.conf.TLSConf.TLSListenAddrs == nil && s.conf.TLSConf.QUICListenAddrs == nil {
 		return nil
 	}
 
-	if s.conf.TLSListenAddrs == nil && s.conf.QUICListenAddrs == nil {
-		return nil
-	}
+	proxyConfig.TLSListenAddr = s.conf.TLSConf.TLSListenAddrs
+	proxyConfig.QUICListenAddr = s.conf.TLSConf.QUICListenAddrs
 
-	proxyConfig.TLSListenAddr = aghalg.CoalesceSlice(
-		s.conf.TLSListenAddrs,
-		proxyConfig.TLSListenAddr,
-	)
-
-	proxyConfig.QUICListenAddr = aghalg.CoalesceSlice(
-		s.conf.QUICListenAddrs,
-		proxyConfig.QUICListenAddr,
-	)
-
-	s.conf.cert, err = tls.X509KeyPair(s.conf.CertificateChainData, s.conf.PrivateKeyData)
-	if err != nil {
-		return fmt.Errorf("failed to parse TLS keypair: %w", err)
-	}
-
-	cert, err := x509.ParseCertificate(s.conf.cert.Certificate[0])
+	cert, err := x509.ParseCertificate(s.conf.TLSConf.Cert.Certificate[0])
 	if err != nil {
 		return fmt.Errorf("x509.ParseCertificate(): %w", err)
 	}
 
-	s.conf.hasIPAddrs = aghtls.CertificateHasIP(cert)
+	s.hasIPAddrs = aghtls.CertificateHasIP(cert)
 
-	if s.conf.StrictSNICheck {
+	if s.conf.TLSConf.StrictSNICheck {
 		if len(cert.DNSNames) != 0 {
-			s.conf.dnsNames = cert.DNSNames
+			s.dnsNames = cert.DNSNames
 			log.Debug("dns: using certificate's SAN as DNS names: %v", cert.DNSNames)
-			slices.Sort(s.conf.dnsNames)
+			slices.Sort(s.dnsNames)
 		} else {
-			s.conf.dnsNames = append(s.conf.dnsNames, cert.Subject.CommonName)
+			s.dnsNames = []string{cert.Subject.CommonName}
 			log.Debug("dns: using certificate's CN as DNS name: %s", cert.Subject.CommonName)
 		}
 	}
@@ -695,11 +676,11 @@ func anyNameMatches(dnsNames []string, sni string) (ok bool) {
 // Called by 'tls' package when Client Hello is received
 // If the server name (from SNI) supplied by client is incorrect - we terminate the ongoing TLS handshake.
 func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	if s.conf.StrictSNICheck && !anyNameMatches(s.conf.dnsNames, ch.ServerName) {
+	if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(s.dnsNames, ch.ServerName) {
 		log.Info("dns: tls: unknown SNI in Client Hello: %s", ch.ServerName)
 		return nil, fmt.Errorf("invalid SNI")
 	}
-	return &s.conf.cert, nil
+	return s.conf.TLSConf.Cert, nil
 }
 
 // preparePlain prepares the plain-DNS configuration for the DNS proxy.

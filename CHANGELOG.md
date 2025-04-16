@@ -64,6 +64,8 @@ See also the [v0.107.59 GitHub milestone][ms-v0.107.59].
 
 ### Fixed
 
+- Validation process for the DNS-over-TLS, DNS-over-QUIC, and HTTPS ports on the *Encryption Settings* page.
+
 - Rules with the `client` modifier not working ([#7708]).
 
 - The search form not working in the query log ([#7704]).

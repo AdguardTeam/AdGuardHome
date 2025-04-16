@@ -76,6 +76,7 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{},
 		TCPListenAddrs: []*net.TCPAddr{},
+		TLSConf:        &TLSConfig{},
 		Config: Config{
 			UpstreamDNS:            []string{"8.8.8.8:53", "8.8.4.4:53"},
 			FallbackDNS:            []string{"9.9.9.10"},
@@ -159,6 +160,7 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 	forwardConf := ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{},
 		TCPListenAddrs: []*net.TCPAddr{},
+		TLSConf:        &TLSConfig{},
 		Config: Config{
 			UpstreamDNS:            []string{"8.8.8.8:53", "8.8.4.4:53"},
 			RatelimitSubnetLenIPv4: 24,
@@ -369,6 +371,7 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		UDPListenAddrs:  []*net.UDPAddr{{}},
 		TCPListenAddrs:  []*net.TCPAddr{{}},
 		UpstreamTimeout: upsTimeout,
+		TLSConf:         &TLSConfig{},
 		Config: Config{
 			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},

@@ -2,6 +2,7 @@ package home
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log/slog"
 	"net"
@@ -111,9 +112,6 @@ func initDNS(
 		return err
 	}
 
-	tlsConf := &tlsConfigSettings{}
-	tlsMgr.WriteDiskConfig(tlsConf)
-
 	return initDNSServer(
 		globalContext.filters,
 		globalContext.stats,
@@ -121,7 +119,7 @@ func initDNS(
 		globalContext.dhcpServer,
 		anonymizer,
 		httpRegister,
-		tlsConf,
+		tlsMgr.config(),
 		tlsMgr,
 		baseLogger,
 	)
@@ -255,11 +253,16 @@ func newServerConfig(
 	fwdConf := dnsConf.Config
 	fwdConf.ClientsContainer = clientsContainer
 
+	intTLSConf, err := newDNSTLSConfig(tlsConf, hosts)
+	if err != nil {
+		return nil, fmt.Errorf("constructing tls config: %w", err)
+	}
+
 	newConf = &dnsforward.ServerConfig{
 		UDPListenAddrs:         ipsToUDPAddrs(hosts, dnsConf.Port),
 		TCPListenAddrs:         ipsToTCPAddrs(hosts, dnsConf.Port),
 		Config:                 fwdConf,
-		TLSConfig:              newDNSTLSConfig(tlsConf, hosts),
+		TLSConf:                intTLSConf,
 		TLSAllowUnencryptedDoH: tlsConf.AllowUnencryptedDoH,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
 		TLSv12Roots:            tlsMgr.rootCerts,
@@ -304,14 +307,25 @@ func newServerConfig(
 }
 
 // newDNSTLSConfig converts values from the configuration file into the internal
-// TLS settings for the DNS server.  tlsConf must not be nil.
-func newDNSTLSConfig(conf *tlsConfigSettings, addrs []netip.Addr) (dnsConf dnsforward.TLSConfig) {
+// TLS settings for the DNS server.  conf must not be nil.
+func newDNSTLSConfig(
+	conf *tlsConfigSettings,
+	addrs []netip.Addr,
+) (dnsConf *dnsforward.TLSConfig, err error) {
 	if !conf.Enabled {
-		return dnsforward.TLSConfig{}
+		return &dnsforward.TLSConfig{}, nil
 	}
 
-	dnsConf = conf.TLSConfig
-	dnsConf.ServerName = conf.ServerName
+	cert, err := tls.X509KeyPair(conf.CertificateChainData, conf.PrivateKeyData)
+	if err != nil {
+		return nil, fmt.Errorf("parsing tls key pair: %w", err)
+	}
+
+	dnsConf = &dnsforward.TLSConfig{
+		Cert:           &cert,
+		ServerName:     conf.ServerName,
+		StrictSNICheck: conf.StrictSNICheck,
+	}
 
 	if conf.PortHTTPS != 0 {
 		dnsConf.HTTPSListenAddrs = ipsToTCPAddrs(addrs, conf.PortHTTPS)
@@ -325,7 +339,7 @@ func newDNSTLSConfig(conf *tlsConfigSettings, addrs []netip.Addr) (dnsConf dnsfo
 		dnsConf.QUICListenAddrs = ipsToUDPAddrs(addrs, conf.PortDNSOverQUIC)
 	}
 
-	return dnsConf
+	return dnsConf, nil
 }
 
 // newDNSCryptConfig converts values from the configuration file into the
@@ -378,8 +392,7 @@ type dnsEncryption struct {
 // getDNSEncryption returns the TLS encryption addresses that AdGuard Home
 // listens on.  tlsMgr must not be nil.
 func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
-	tlsConf := tlsConfigSettings{}
-	tlsMgr.WriteDiskConfig(&tlsConf)
+	tlsConf := tlsMgr.config()
 
 	if !tlsConf.Enabled || len(tlsConf.ServerName) == 0 {
 		return dnsEncryption{}
