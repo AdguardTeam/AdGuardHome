@@ -14,26 +14,20 @@ test.describe('Control Panel', () => {
     });
 
     test('should sign out successfully', async ({ page }) => {
-
         await page.getByTestId('sign_out').click();
-        
 
         await page.waitForURL((url) => url.href.endsWith('/login.html'));
-        
 
         await expect(page.getByTestId('sign_in')).toBeVisible();
     });
 
     test('should change theme to dark and then light', async ({ page }) => {
-
         await page.getByTestId('theme_dark').click();
-        
 
         await expect(page.locator('body[data-theme="dark"]')).toBeVisible();
 
 
         await page.getByTestId('theme_light').click();
-        
 
         await expect(page.locator('body:not([data-theme="dark"])')).toBeVisible();
     });

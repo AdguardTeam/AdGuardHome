@@ -18,12 +18,12 @@ test.describe('Filtering', () => {
     const runTerminalCommand = (command: string) => {
         try {
             console.info(`Executing command: ${command}`);
-        
+
             const output = execSync(command, { encoding: 'utf-8', stdio: 'pipe' }).trim();
-        
+
             console.info('Command executed successfully.');
             console.debug(`Command output:\n${output}`);
-        
+
             return output;
         } catch (error: any) {
             console.error(`Command execution failed with error:\n${error.message}`);
