@@ -461,9 +461,6 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 // findClient returns available information about a client by params from the
 // client's storage or access settings.  idStr is the string representation of
 // typed params.  cj is guaranteed to be non-nil.
-//
-// TODO(s.chzhen):  Remove idStr once [BlockedClientChecker] starts supporting
-// [client.FindParams].
 func (clients *clientsContainer) findClient(
 	idStr string,
 	params *client.FindParams,
@@ -474,7 +471,10 @@ func (clients *clientsContainer) findClient(
 	}
 
 	cj = clientToJSON(c)
-	disallowed, rule := clients.clientChecker.IsBlockedClient(params.RemoteIP, idStr)
+	disallowed, rule := clients.clientChecker.IsBlockedClient(
+		params.RemoteIP,
+		string(params.ClientID),
+	)
 	cj.Disallowed, cj.DisallowedRule = &disallowed, &rule
 
 	return cj
@@ -552,7 +552,7 @@ func (clients *clientsContainer) findRuntime(
 	// then the server was reloaded.
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2428.
-	disallowed, rule := clients.clientChecker.IsBlockedClient(ip, idStr)
+	disallowed, rule := clients.clientChecker.IsBlockedClient(ip, string(params.ClientID))
 
 	return &clientJSON{
 		Name:           host,
