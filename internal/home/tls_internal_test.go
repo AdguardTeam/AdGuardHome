@@ -239,11 +239,9 @@ func TestTLSManager_Reload(t *testing.T) {
 		logger:         logger,
 		configModified: func() {},
 		tlsSettings: tlsConfigSettings{
-			Enabled: true,
-			TLSConfig: dnsforward.TLSConfig{
-				CertificatePath: certPath,
-				PrivateKeyPath:  keyPath,
-			},
+			Enabled:         true,
+			CertificatePath: certPath,
+			PrivateKeyPath:  keyPath,
 		},
 		servePlainDNS: false,
 	})
@@ -254,8 +252,7 @@ func TestTLSManager_Reload(t *testing.T) {
 
 	m.setWebAPI(web)
 
-	conf := &tlsConfigSettings{}
-	m.WriteDiskConfig(conf)
+	conf := m.config()
 	assertCertSerialNumber(t, conf, snBefore)
 
 	certDER, key = newCertAndKey(t, snAfter)
@@ -263,7 +260,7 @@ func TestTLSManager_Reload(t *testing.T) {
 
 	m.reload(ctx)
 
-	m.WriteDiskConfig(conf)
+	conf = m.config()
 	assertCertSerialNumber(t, conf, snAfter)
 }
 
@@ -278,11 +275,9 @@ func TestTLSManager_HandleTLSStatus(t *testing.T) {
 		logger:         logger,
 		configModified: func() {},
 		tlsSettings: tlsConfigSettings{
-			Enabled: true,
-			TLSConfig: dnsforward.TLSConfig{
-				CertificateChain: string(testCertChainData),
-				PrivateKey:       string(testPrivateKeyData),
-			},
+			Enabled:          true,
+			CertificateChain: string(testCertChainData),
+			PrivateKey:       string(testPrivateKeyData),
 		},
 		servePlainDNS: false,
 	})
@@ -342,47 +337,49 @@ func TestValidateTLSSettings(t *testing.T) {
 	busyUDPPort := udpAddr.Port
 
 	testCases := []struct {
-		setts   tlsConfigSettingsExt
 		name    string
 		wantErr string
+		setts   tlsConfigSettingsExt
 	}{{
 		name:    "basic",
-		setts:   tlsConfigSettingsExt{},
 		wantErr: "",
+		setts:   tlsConfigSettingsExt{},
 	}, {
+		name:    "disabled_all",
+		wantErr: "plain DNS is required in case encryption protocols are disabled",
 		setts: tlsConfigSettingsExt{
 			ServePlainDNS: aghalg.NBFalse,
 		},
-		name:    "disabled_all",
-		wantErr: "plain DNS is required in case encryption protocols are disabled",
 	}, {
+		name:    "busy_https_port",
+		wantErr: fmt.Sprintf("port %d for HTTPS is not available", busyTCPPort),
 		setts: tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:   true,
 				PortHTTPS: uint16(busyTCPPort),
 			},
 		},
-		name:    "busy_https_port",
-		wantErr: fmt.Sprintf("port %d for HTTPS is not available", busyTCPPort),
 	}, {
+		name:    "busy_dot_port",
+		wantErr: fmt.Sprintf("port %d for DNS-over-TLS is not available", busyTCPPort),
 		setts: tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:        true,
 				PortDNSOverTLS: uint16(busyTCPPort),
 			},
 		},
-		name:    "busy_dot_port",
-		wantErr: fmt.Sprintf("port %d for DNS-over-TLS is not available", busyTCPPort),
 	}, {
+		name:    "busy_doq_port",
+		wantErr: fmt.Sprintf("port %d for DNS-over-QUIC is not available", busyUDPPort),
 		setts: tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:         true,
 				PortDNSOverQUIC: uint16(busyUDPPort),
 			},
 		},
-		name:    "busy_doq_port",
-		wantErr: fmt.Sprintf("port %d for DNS-over-QUIC is not available", busyUDPPort),
 	}, {
+		name:    "duplicate_port",
+		wantErr: "validating tcp ports: duplicated values: [4433]",
 		setts: tlsConfigSettingsExt{
 			tlsConfigSettings: tlsConfigSettings{
 				Enabled:        true,
@@ -390,8 +387,6 @@ func TestValidateTLSSettings(t *testing.T) {
 				PortDNSOverTLS: 4433,
 			},
 		},
-		name:    "duplicate_port",
-		wantErr: "validating tcp ports: duplicated values: [4433]",
 	}}
 
 	for _, tc := range testCases {
@@ -417,11 +412,9 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 		logger:         logger,
 		configModified: func() {},
 		tlsSettings: tlsConfigSettings{
-			Enabled: true,
-			TLSConfig: dnsforward.TLSConfig{
-				CertificateChain: string(testCertChainData),
-				PrivateKey:       string(testPrivateKeyData),
-			},
+			Enabled:          true,
+			CertificateChain: string(testCertChainData),
+			PrivateKey:       string(testPrivateKeyData),
 		},
 		servePlainDNS: false,
 	})
@@ -434,11 +427,9 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 
 	setts := &tlsConfigSettingsExt{
 		tlsConfigSettings: tlsConfigSettings{
-			Enabled: true,
-			TLSConfig: dnsforward.TLSConfig{
-				CertificateChain: base64.StdEncoding.EncodeToString(testCertChainData),
-				PrivateKey:       base64.StdEncoding.EncodeToString(testPrivateKeyData),
-			},
+			Enabled:          true,
+			CertificateChain: base64.StdEncoding.EncodeToString(testCertChainData),
+			PrivateKey:       base64.StdEncoding.EncodeToString(testPrivateKeyData),
 		},
 	}
 
@@ -476,6 +467,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	require.NoError(t, err)
 
 	err = globalContext.dnsServer.Prepare(&dnsforward.ServerConfig{
+		TLSConf: &dnsforward.TLSConfig{},
 		Config: dnsforward.Config{
 			UpstreamMode:     dnsforward.UpstreamModeLoadBalance,
 			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{Enabled: false},
@@ -511,11 +503,9 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 		logger:         logger,
 		configModified: func() {},
 		tlsSettings: tlsConfigSettings{
-			Enabled: true,
-			TLSConfig: dnsforward.TLSConfig{
-				CertificatePath: certPath,
-				PrivateKeyPath:  keyPath,
-			},
+			Enabled:         true,
+			CertificatePath: certPath,
+			PrivateKeyPath:  keyPath,
 		},
 		servePlainDNS: true,
 	})
@@ -526,19 +516,16 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 
 	m.setWebAPI(web)
 
-	conf := &tlsConfigSettings{}
-	m.WriteDiskConfig(conf)
+	conf := m.config()
 	assertCertSerialNumber(t, conf, wantSerialNumber)
 
 	// Prepare a request with the new TLS configuration.
 	setts := &tlsConfigSettingsExt{
 		tlsConfigSettings: tlsConfigSettings{
-			Enabled:   true,
-			PortHTTPS: 4433,
-			TLSConfig: dnsforward.TLSConfig{
-				CertificateChain: base64.StdEncoding.EncodeToString(testCertChainData),
-				PrivateKey:       base64.StdEncoding.EncodeToString(testPrivateKeyData),
-			},
+			Enabled:          true,
+			PortHTTPS:        4433,
+			CertificateChain: base64.StdEncoding.EncodeToString(testCertChainData),
+			PrivateKey:       base64.StdEncoding.EncodeToString(testPrivateKeyData),
 		},
 	}
 

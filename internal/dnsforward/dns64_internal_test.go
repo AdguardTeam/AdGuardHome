@@ -296,6 +296,7 @@ func TestServer_HandleDNSRequest_dns64(t *testing.T) {
 				UDPListenAddrs: []*net.UDPAddr{{}},
 				TCPListenAddrs: []*net.TCPAddr{{}},
 				UseDNS64:       true,
+				TLSConf:        &TLSConfig{},
 				Config: Config{
 					UpstreamMode:     UpstreamModeLoadBalance,
 					EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
@@ -335,6 +336,7 @@ func TestServer_dns64WithDisabledRDNS(t *testing.T) {
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		UseDNS64:       true,
+		TLSConf:        &TLSConfig{},
 		Config: Config{
 			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},

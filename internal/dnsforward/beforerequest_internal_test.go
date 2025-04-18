@@ -121,7 +121,7 @@ func TestServer_HandleBefore_tls(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s, _ := createTestTLS(t, TLSConfig{
+			s, _ := createTestTLS(t, &TLSConfig{
 				TLSListenAddrs: []*net.TCPAddr{{}},
 				ServerName:     tlsServerName,
 			})
@@ -259,6 +259,7 @@ func TestServer_HandleBefore_udp(t *testing.T) {
 			}, ServerConfig{
 				UDPListenAddrs: []*net.UDPAddr{{}},
 				TCPListenAddrs: []*net.TCPAddr{{}},
+				TLSConf:        &TLSConfig{},
 				Config: Config{
 					AllowedClients:    tc.allowedClients,
 					DisallowedClients: tc.disallowedClients,

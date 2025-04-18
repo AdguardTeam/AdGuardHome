@@ -246,9 +246,9 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 
 	// TODO(e.burkov):  Think about storing the FQDN version of the server's
 	// name somewhere.
-	domainName := dns.Fqdn(s.conf.ServerName)
+	domainName := dns.Fqdn(s.conf.TLSConf.ServerName)
 
-	for _, addr := range s.conf.HTTPSListenAddrs {
+	for _, addr := range s.conf.TLSConf.HTTPSListenAddrs {
 		values := []dns.SVCBKeyValue{
 			&dns.SVCBAlpn{Alpn: []string{"h2"}},
 			&dns.SVCBPort{Port: uint16(addr.Port)},
@@ -265,7 +265,7 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 		resp.Answer = append(resp.Answer, ans)
 	}
 
-	if s.conf.hasIPAddrs {
+	if s.hasIPAddrs {
 		// Only add DNS-over-TLS resolvers in case the certificate contains IP
 		// addresses.
 		//

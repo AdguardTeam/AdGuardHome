@@ -64,7 +64,7 @@ type Entry struct {
 	Domain string
 
 	// UpstreamStats contains the DNS query statistics for both the upstream and
-	// fallback DNS servers.
+	// fallback DNS servers.  Don't modify items in the slice.
 	UpstreamStats []*proxy.UpstreamStatistics
 
 	// Result is the result of processing the request.

@@ -264,7 +264,7 @@
     "custom_ip": "Tilpasset IP",
     "blocking_ipv4": "IPv4-blokkering",
     "blocking_ipv6": "IPv6-blokkering",
-    "blocked_response_ttl": "Blokkert svar TTL",
+    "blocked_response_ttl": "Blokkerte svars TTL",
     "dnscrypt": "DNSCrypt",
     "dns_over_https": "DNS-over-HTTPS",
     "dns_over_tls": "DNS-over-TLS",

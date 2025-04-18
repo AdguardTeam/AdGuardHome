@@ -103,15 +103,25 @@ type SystemResolvers interface {
 //
 // The zero Server is empty and ready for use.
 type Server struct {
-	// dnsProxy is the DNS proxy for forwarding client's DNS requests.
-	dnsProxy *proxy.Proxy
+	// addrProc, if not nil, is used to process clients' IP addresses with rDNS,
+	// WHOIS, etc.
+	addrProc client.AddressProcessor
 
-	// dnsFilter is the DNS filter for filtering client's DNS requests and
-	// responses.
-	dnsFilter *filtering.DNSFilter
+	// bootstrap is the resolver for upstreams' hostnames.
+	bootstrap upstream.Resolver
+
+	// clientIDCache is a temporary storage for ClientIDs that were extracted
+	// during the BeforeRequestHandler stage.
+	clientIDCache cache.Cache
 
 	// dhcpServer is the DHCP server for accessing lease data.
 	dhcpServer DHCP
+
+	// etcHosts contains the current data from the system's hosts files.
+	etcHosts upstream.Resolver
+
+	// privateNets is the configured set of IP networks considered private.
+	privateNets netutil.SubnetSet
 
 	// queryLog is the query log for client's DNS requests, responses and
 	// filtering results.
@@ -120,37 +130,43 @@ type Server struct {
 	// stats is the statistics collector for client's DNS usage data.
 	stats stats.Interface
 
+	// sysResolvers used to fetch system resolvers to use by default for private
+	// PTR resolving.
+	sysResolvers SystemResolvers
+
 	// access drops disallowed clients.
 	access *accessManager
+
+	// anonymizer masks the client's IP addresses if needed.
+	anonymizer *aghnet.IPMut
 
 	// baseLogger is used to create loggers for other entities.  It should not
 	// have a prefix and must not be nil.
 	baseLogger *slog.Logger
 
-	// localDomainSuffix is the suffix used to detect internal hosts.  It
-	// must be a valid domain name plus dots on each side.
-	localDomainSuffix string
+	// dnsFilter is the DNS filter for filtering client's DNS requests and
+	// responses.
+	dnsFilter *filtering.DNSFilter
+
+	// dnsProxy is the DNS proxy for forwarding client's DNS requests.
+	dnsProxy *proxy.Proxy
+
+	// internalProxy resolves internal requests from the application itself.  It
+	// isn't started and so no listen ports are required.
+	internalProxy *proxy.Proxy
 
 	// ipset processes DNS requests using ipset data.  It must not be nil after
 	// initialization.  See [newIpsetHandler].
 	ipset *ipsetHandler
 
-	// privateNets is the configured set of IP networks considered private.
-	privateNets netutil.SubnetSet
+	// dns64Pref is the NAT64 prefix used for DNS64 response mapping.  The major
+	// part of DNS64 happens inside the [proxy] package, but there still are
+	// some places where response mapping is needed (e.g. DHCP).
+	dns64Pref netip.Prefix
 
-	// addrProc, if not nil, is used to process clients' IP addresses with rDNS,
-	// WHOIS, etc.
-	addrProc client.AddressProcessor
-
-	// sysResolvers used to fetch system resolvers to use by default for private
-	// PTR resolving.
-	sysResolvers SystemResolvers
-
-	// etcHosts contains the current data from the system's hosts files.
-	etcHosts upstream.Resolver
-
-	// bootstrap is the resolver for upstreams' hostnames.
-	bootstrap upstream.Resolver
+	// localDomainSuffix is the suffix used to detect internal hosts.  It
+	// must be a valid domain name plus dots on each side.
+	localDomainSuffix string
 
 	// bootResolvers are the resolvers that should be used for
 	// bootstrapping along with [etcHosts].
@@ -159,34 +175,26 @@ type Server struct {
 	// [upstream.Resolver] interface.
 	bootResolvers []*upstream.UpstreamResolver
 
-	// dns64Pref is the NAT64 prefix used for DNS64 response mapping.  The major
-	// part of DNS64 happens inside the [proxy] package, but there still are
-	// some places where response mapping is needed (e.g. DHCP).
-	dns64Pref netip.Prefix
-
-	// anonymizer masks the client's IP addresses if needed.
-	anonymizer *aghnet.IPMut
-
-	// clientIDCache is a temporary storage for ClientIDs that were extracted
-	// during the BeforeRequestHandler stage.
-	clientIDCache cache.Cache
-
-	// internalProxy resolves internal requests from the application itself.  It
-	// isn't started and so no listen ports are required.
-	internalProxy *proxy.Proxy
-
-	// isRunning is true if the DNS server is running.
-	isRunning bool
-
-	// protectionUpdateInProgress is used to make sure that only one goroutine
-	// updating the protection configuration after a pause is running at a time.
-	protectionUpdateInProgress atomic.Bool
+	// dnsNames are the DNS names from certificate (SAN) or CN value from
+	// Subject.
+	dnsNames []string
 
 	// conf is the current configuration of the server.
 	conf ServerConfig
 
 	// serverLock protects Server.
 	serverLock sync.RWMutex
+
+	// protectionUpdateInProgress is used to make sure that only one goroutine
+	// updating the protection configuration after a pause is running at a time.
+	protectionUpdateInProgress atomic.Bool
+
+	// isRunning is true if the DNS server is running.
+	isRunning bool
+
+	// hasIPAddrs is set during the certificate parsing and is true if the
+	// configured certificate contains at least a single IP address.
+	hasIPAddrs bool
 }
 
 // defaultLocalDomainSuffix is the default suffix used to detect internal hosts

@@ -164,11 +164,8 @@ func (vr *versionResponse) setAllowedToAutoUpdate(tlsMgr *tlsManager) (err error
 		return nil
 	}
 
-	tlsConf := &tlsConfigSettings{}
-	tlsMgr.WriteDiskConfig(tlsConf)
-
 	canUpdate := true
-	if tlsConfUsesPrivilegedPorts(tlsConf) ||
+	if tlsConfUsesPrivilegedPorts(tlsMgr.config()) ||
 		config.HTTPConfig.Address.Port() < 1024 ||
 		config.DNS.Port < 1024 {
 		canUpdate, err = aghnet.CanBindPrivilegedPorts()

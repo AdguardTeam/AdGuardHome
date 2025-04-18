@@ -16,6 +16,7 @@ func TestGenAnswerHTTPS_andSVCB(t *testing.T) {
 	s := createTestServer(t, &filtering.Config{
 		BlockingMode: filtering.BlockingModeDefault,
 	}, ServerConfig{
+		TLSConf: &TLSConfig{},
 		Config: Config{
 			UpstreamMode:     UpstreamModeLoadBalance,
 			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
