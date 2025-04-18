@@ -10,7 +10,8 @@ import (
 // Login is the type for web user logins.
 type Login string
 
-// NewLogin returns a web user login.
+// NewLogin returns a web user login.  The length of s must not be greater than
+// [math.MaxUint16].
 //
 // TODO(s.chzhen): Add more constraints as needed.
 func NewLogin(s string) (l Login, err error) {
