@@ -334,13 +334,24 @@ func newDNSTLSConfig(
 		dnsConf.QUICListenAddrs = ipsToUDPAddrs(addrs, conf.PortDNSOverQUIC)
 	}
 
-	if conf.AllowUnencryptedDoH {
-		return dnsConf, nil
-	}
-
 	cert, err := tls.X509KeyPair(conf.CertificateChainData, conf.PrivateKeyData)
 	if err != nil {
-		return nil, fmt.Errorf("parsing tls key pair: %w", err)
+		const format = "parsing tls key pair: %w"
+		if conf.AllowUnencryptedDoH {
+			// TODO(s.chzhen):  Use [slog.Logger].
+			log.Info("warning: %s: %s", format, err)
+
+			return dnsConf, nil
+		}
+
+		return nil, fmt.Errorf(format, err)
+	}
+
+	// Unencrypted DoH is managed by AdGuard Home itself, not by dnsproxy.
+	// Therefore, avoid setting the certificate property to prevent dnsproxy
+	// from starting encrypted listeners.  See [dnsforward.Server.prepareTLS].
+	if conf.AllowUnencryptedDoH {
+		return dnsConf, nil
 	}
 
 	dnsConf.Cert = &cert
