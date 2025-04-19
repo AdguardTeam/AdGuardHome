@@ -638,6 +638,7 @@ func (d *DNSFilter) ApplyAdditionalFiltering(cliAddr netip.Addr, clientID string
 
 	d.ApplyBlockedServices(setts)
 	d.applyClientFiltering(clientID, cliAddr, setts)
+
 	if setts.BlockedServices != nil {
 		// TODO(e.burkov):  Get rid of this crutch.
 		setts.ServicesRules = nil

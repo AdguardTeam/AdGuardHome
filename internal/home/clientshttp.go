@@ -57,6 +57,10 @@ type clientJSON struct {
 	UseGlobalBlockedServices bool `json:"use_global_blocked_services"`
 	UseGlobalSettings        bool `json:"use_global_settings"`
 
+	BlockingMode filtering.BlockingMode `json:"blocking_mode"`
+	BlockingIPv4 string                 `json:"blocking_ipv4"`
+	BlockingIPv6 string                 `json:"blocking_ipv6"`
+
 	IgnoreQueryLog   aghalg.NullBool `json:"ignore_querylog"`
 	IgnoreStatistics aghalg.NullBool `json:"ignore_statistics"`
 
@@ -171,7 +175,15 @@ func initPrev(cj clientJSON, prev *client.Persistent) (c *client.Persistent, err
 		}
 	}
 
+	blockingMode, blockingIPv4, blockingIPv6, err := copyBlockingMode(cj.BlockingMode, cj.BlockingIPv4, cj.BlockingIPv6)
+	if err != nil {
+		return nil, err
+	}
+
 	return &client.Persistent{
+		BlockingMode:          blockingMode,
+		BlockingIPv4:          blockingIPv4,
+		BlockingIPv6:          blockingIPv6,
 		BlockedServices:       svcs,
 		UID:                   uid,
 		IgnoreQueryLog:        ignoreQueryLog,
@@ -179,6 +191,32 @@ func initPrev(cj clientJSON, prev *client.Persistent) (c *client.Persistent, err
 		UpstreamsCacheEnabled: upsCacheEnabled,
 		UpstreamsCacheSize:    upsCacheSize,
 	}, nil
+}
+
+func copyBlockingMode(blockingMode filtering.BlockingMode, ipv4, ipv6 string) (filtering.BlockingMode, netip.Addr, netip.Addr, error) {
+	switch blockingMode {
+	case filtering.BlockingModeDefault,
+		filtering.BlockingModeNXDOMAIN,
+		filtering.BlockingModeREFUSED,
+		filtering.BlockingModeNullIP:
+
+		return blockingMode, netip.Addr{}, netip.Addr{}, nil
+	case filtering.BlockingModeCustomIP:
+
+		addrIpv4, err := netip.ParseAddr(ipv4)
+		if err != nil {
+			return blockingMode, netip.Addr{}, netip.Addr{}, fmt.Errorf("invalid blocking_ipv4 address: %s", err.Error())
+		}
+
+		addrIpv6, err := netip.ParseAddr(ipv6)
+		if err != nil {
+			return blockingMode, netip.Addr{}, netip.Addr{}, fmt.Errorf("invalid blocking_ipv6 address: %s", err.Error())
+		}
+
+		return blockingMode, addrIpv4, addrIpv6, nil
+	}
+
+	return filtering.BlockingModeDefault, netip.Addr{}, netip.Addr{}, nil
 }
 
 // jsonToClient converts JSON object to persistent client object if there are no
@@ -209,6 +247,11 @@ func (clients *clientsContainer) jsonToClient(
 	c.ParentalEnabled = cj.ParentalEnabled
 	c.SafeBrowsingEnabled = cj.SafeBrowsingEnabled
 	c.UseOwnBlockedServices = !cj.UseGlobalBlockedServices
+
+	c.BlockingMode, c.BlockingIPv4, c.BlockingIPv6, err = copyBlockingMode(cj.BlockingMode, cj.BlockingIPv4, cj.BlockingIPv6)
+	if err != nil {
+		return nil, err
+	}
 
 	if c.SafeSearchConf.Enabled {
 		logger := clients.baseLogger.With(
@@ -308,6 +351,10 @@ func clientToJSON(c *client.Persistent) (cj *clientJSON) {
 		SafeSearchEnabled:   safeSearchConf.Enabled,
 		SafeSearchConf:      safeSearchConf,
 		SafeBrowsingEnabled: c.SafeBrowsingEnabled,
+
+		BlockingMode: c.BlockingMode,
+		BlockingIPv4: c.BlockingIPv4.String(),
+		BlockingIPv6: c.BlockingIPv6.String(),
 
 		UseGlobalBlockedServices: !c.UseOwnBlockedServices,
 
