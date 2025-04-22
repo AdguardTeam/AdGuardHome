@@ -347,13 +347,6 @@ func newDNSTLSConfig(
 		return nil, fmt.Errorf(format, err)
 	}
 
-	// Unencrypted DoH is managed by AdGuard Home itself, not by dnsproxy.
-	// Therefore, avoid setting the certificate property to prevent dnsproxy
-	// from starting encrypted listeners.  See [dnsforward.Server.prepareTLS].
-	if conf.AllowUnencryptedDoH {
-		return dnsConf, nil
-	}
-
 	dnsConf.Cert = &cert
 
 	return dnsConf, nil
