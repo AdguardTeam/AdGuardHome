@@ -10,6 +10,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/stringutil"
@@ -51,7 +52,7 @@ func processAccessClients(
 		} else if ipnet, err = netip.ParsePrefix(s); err == nil {
 			*nets = append(*nets, ipnet)
 		} else {
-			err = ValidateClientID(s)
+			err = client.ValidateClientID(s)
 			if err != nil {
 				return fmt.Errorf("value %q at index %d: bad ip, cidr, or clientid", s, i)
 			}

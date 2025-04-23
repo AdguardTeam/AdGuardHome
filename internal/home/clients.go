@@ -28,6 +28,10 @@ type clientsContainer struct {
 	// filter.  It must not be nil.
 	baseLogger *slog.Logger
 
+	// logger is used for logging the operation of the client container.  It
+	// must not be nil.
+	logger *slog.Logger
+
 	// storage stores information about persistent clients.
 	storage *client.Storage
 
@@ -58,6 +62,7 @@ type clientsContainer struct {
 // BlockedClientChecker checks if a client is blocked by the current access
 // settings.
 type BlockedClientChecker interface {
+	// TODO(s.chzhen):  Accept [client.FindParams].
 	IsBlockedClient(ip netip.Addr, clientID string) (blocked bool, rule string)
 }
 
@@ -80,6 +85,7 @@ func (clients *clientsContainer) Init(
 	}
 
 	clients.baseLogger = baseLogger
+	clients.logger = baseLogger.With(slogutil.KeyPrefix, "client_container")
 	clients.safeSearchCacheSize = filteringConf.SafeSearchCacheSize
 	clients.safeSearchCacheTTL = time.Minute * time.Duration(filteringConf.CacheTime)
 
@@ -269,7 +275,7 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 
 			BlockedServices: cli.BlockedServices.Clone(),
 
-			IDs:       cli.IDs(),
+			IDs:       cli.Identifiers(),
 			Tags:      slices.Clone(cli.Tags),
 			Upstreams: slices.Clone(cli.Upstreams),
 
@@ -356,15 +362,27 @@ func (clients *clientsContainer) clientOrArtificial(
 	}, true
 }
 
-// shouldCountClient is a wrapper around [clientsContainer.find] to make it a
+// shouldCountClient is a wrapper around [client.Storage.Find] to make it a
 // valid client information finder for the statistics.  If no information about
-// the client is found, it returns true.
+// the client is found, it returns true.  Values of ids must be either a valid
+// ClientID or a valid IP address.
+//
+// TODO(s.chzhen):  Accept [client.FindParams].
 func (clients *clientsContainer) shouldCountClient(ids []string) (y bool) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
+	params := &client.FindParams{}
 	for _, id := range ids {
-		client, ok := clients.storage.Find(id)
+		err := params.Set(id)
+		if err != nil {
+			// Should not happen.
+			clients.logger.Warn("parsing find params", slogutil.KeyError, err)
+
+			continue
+		}
+
+		client, ok := clients.storage.Find(params)
 		if ok {
 			return !client.IgnoreStatistics
 		}

@@ -980,7 +980,8 @@
       - 'clients'
       'operationId': 'clientsSearch'
       'summary': >
-        Get information about clients by their IP addresses, CIDRs, MAC addresses, or ClientIDs.
+        Retrieve information about clients by performing an exact match search
+        using IP addresses, CIDRs, MAC addresses, or ClientIDs.
       'requestBody':
         'content':
           'application/json':

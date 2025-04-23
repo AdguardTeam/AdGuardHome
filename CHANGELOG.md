@@ -36,6 +36,10 @@ See also the [v0.107.61 GitHub milestone][ms-v0.107.61].
 
     **NOTE:** We thank [Xiang Li][mr-xiang-li] for reporting this security issue.  It's strongly recommended to leave it enabled, otherwise AdGuard Home will be vulnerable to untrusted clients.
 
+### Fixed
+
+- Searching for persistent clients using an exact match for CIDR in the `POST /clients/search HTTP API`.
+
 [mr-xiang-li]:  https://lixiang521.com/
 [ms-v0.107.61]: https://github.com/AdguardTeam/AdGuardHome/milestone/96?closed=1
 
