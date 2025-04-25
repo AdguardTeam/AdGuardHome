@@ -20,6 +20,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- DNS cache not working for custom upstream configurations.
+
 - Validation process for the DNS-over-TLS, DNS-over-QUIC, and HTTPS ports on the *Encryption Settings* page.
 
 <!--

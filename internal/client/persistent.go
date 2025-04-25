@@ -70,7 +70,9 @@ type Persistent struct {
 	// Tags is a list of client tags that categorize the client.
 	Tags []string
 
-	// Upstreams is a list of custom upstream DNS servers for the client.
+	// Upstreams is a list of custom upstream DNS servers for the client.  If
+	// it's empty, the custom upstream cache is disabled, regardless of the
+	// value of UpstreamsCacheEnabled.
 	Upstreams []string
 
 	// IPs is a list of IP addresses that identify the client.  The client must
@@ -94,10 +96,11 @@ type Persistent struct {
 	// UID is the unique identifier of the persistent client.
 	UID UID
 
-	// UpstreamsCacheSize is the cache size for custom upstreams.
+	// UpstreamsCacheSize defines the size of the custom upstream cache.
 	UpstreamsCacheSize uint32
 
-	// UpstreamsCacheEnabled specifies whether custom upstreams are used.
+	// UpstreamsCacheEnabled specifies whether the custom upstream cache is
+	// used.  If true, the list of Upstreams should not be empty.
 	UpstreamsCacheEnabled bool
 
 	// UseOwnSettings specifies whether custom filtering settings are used.

@@ -1169,28 +1169,19 @@ func TestStorage_RangeByName(t *testing.T) {
 
 func TestStorage_CustomUpstreamConfig(t *testing.T) {
 	const (
-		existingName     = "existing_name"
-		existingClientID = "existing_client_id"
-
+		existingClientID    = "existing_client_id"
 		nonExistingClientID = "non_existing_client_id"
 	)
 
 	var (
-		existingClientUID = client.MustNewUID()
-		existingIP        = netip.MustParseAddr("192.0.2.1")
-
+		existingIP    = netip.MustParseAddr("192.0.2.1")
 		nonExistingIP = netip.MustParseAddr("192.0.2.255")
+
+		dhcpCliIP  = netip.MustParseAddr("192.0.2.2")
+		dhcpCliMAC = errors.Must(net.ParseMAC("02:00:00:00:00:00"))
 
 		testUpstreamTimeout = time.Second
 	)
-
-	existingClient := &client.Persistent{
-		Name:      existingName,
-		IPs:       []netip.Addr{existingIP},
-		ClientIDs: []client.ClientID{existingClientID},
-		UID:       existingClientUID,
-		Upstreams: []string{"192.0.2.0"},
-	}
 
 	date := time.Now()
 	clock := &faketime.Clock{
@@ -1201,7 +1192,30 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		},
 	}
 
-	s := newTestStorage(t, clock)
+	ipToMAC := map[netip.Addr]net.HardwareAddr{
+		dhcpCliIP: dhcpCliMAC,
+	}
+
+	dhcp := &testDHCP{
+		OnLeases: func() (ls []*dhcpsvc.Lease) {
+			panic("not implemented")
+		},
+		OnHostBy: func(ip netip.Addr) (host string) {
+			panic("not implemented")
+		},
+		OnMACBy: func(ip netip.Addr) (mac net.HardwareAddr) {
+			return ipToMAC[ip]
+		},
+	}
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	s, err := client.NewStorage(ctx, &client.StorageConfig{
+		Logger: slogutil.NewDiscardLogger(),
+		Clock:  clock,
+		DHCP:   dhcp,
+	})
+	require.NoError(t, err)
+
 	s.UpdateCommonUpstreamConfig(&client.CommonUpstreamConfig{
 		UpstreamTimeout: testUpstreamTimeout,
 	})
@@ -1210,8 +1224,21 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		return s.Shutdown(testutil.ContextWithTimeout(t, testTimeout))
 	})
 
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	err := s.Add(ctx, existingClient)
+	err = s.Add(ctx, &client.Persistent{
+		Name:      "client_first",
+		IPs:       []netip.Addr{existingIP},
+		ClientIDs: []client.ClientID{existingClientID},
+		UID:       client.MustNewUID(),
+		Upstreams: []string{"192.0.2.0"},
+	})
+	require.NoError(t, err)
+
+	err = s.Add(ctx, &client.Persistent{
+		Name:      "client_second",
+		MACs:      []net.HardwareAddr{dhcpCliMAC},
+		UID:       client.MustNewUID(),
+		Upstreams: []string{"192.0.2.0"},
+	})
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -1228,6 +1255,11 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		name:        "client_addr",
 		cliID:       "",
 		cliAddr:     existingIP,
+		wantNilConf: assert.NotNil,
+	}, {
+		name:        "client_dhcp",
+		cliID:       "",
+		cliAddr:     dhcpCliIP,
 		wantNilConf: assert.NotNil,
 	}, {
 		name:        "non_existing_client_id",
@@ -1260,6 +1292,16 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		require.NotNil(t, updConf)
 
 		assert.NotEqual(t, conf, updConf)
+	})
+
+	t.Run("same_custom_config", func(t *testing.T) {
+		firstConf := s.CustomUpstreamConfig(existingClientID, existingIP)
+		require.NotNil(t, firstConf)
+
+		secondConf := s.CustomUpstreamConfig(existingClientID, existingIP)
+		require.NotNil(t, secondConf)
+
+		assert.Same(t, firstConf, secondConf)
 	})
 }
 

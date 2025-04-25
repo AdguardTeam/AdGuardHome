@@ -781,7 +781,7 @@ func (s *Storage) CustomUpstreamConfig(
 
 	c, ok := s.index.findByClientID(ClientID(id))
 	if !ok {
-		c, ok = s.index.findByIP(addr)
+		c, ok = s.findByIP(addr)
 	}
 
 	if !ok {
