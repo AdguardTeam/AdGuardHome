@@ -656,7 +656,7 @@
     "blocklist": "Blocklist",
     "milliseconds_abbreviation": "ms",
     "cache_size": "Cache size",
-    "cache_size_desc": "DNS cache size (in bytes). To disable caching, leave empty.",
+    "cache_size_desc": "DNS cache size (in bytes). To disable caching, set to 0.",
     "cache_ttl_min_override": "Override minimum TTL",
     "cache_ttl_max_override": "Override maximum TTL",
     "enter_cache_size": "Enter cache size (bytes)",
