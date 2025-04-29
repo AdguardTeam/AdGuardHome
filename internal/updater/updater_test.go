@@ -10,17 +10,21 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
-}
+// testTimeout is the common timeout for tests.
+const testTimeout = 1 * time.Second
+
+// testLogger is the common logger for tests.
+var testLogger = slogutil.NewDiscardLogger()
 
 func TestUpdater_Update(t *testing.T) {
 	const jsonData = `{
@@ -73,6 +77,7 @@ func TestUpdater_Update(t *testing.T) {
 
 	u := updater.NewUpdater(&updater.Config{
 		Client:          srv.Client(),
+		Logger:          testLogger,
 		GOARCH:          "amd64",
 		GOOS:            "linux",
 		Version:         "v0.103.0",
@@ -82,10 +87,12 @@ func TestUpdater_Update(t *testing.T) {
 		VersionCheckURL: versionCheckURL,
 	})
 
-	_, err = u.VersionInfo(false)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	_, err = u.VersionInfo(ctx, false)
 	require.NoError(t, err)
 
-	err = u.Update(true)
+	ctx = testutil.ContextWithTimeout(t, testTimeout)
+	err = u.Update(ctx, true)
 	require.NoError(t, err)
 
 	// check backup files
@@ -124,14 +131,15 @@ func TestUpdater_Update(t *testing.T) {
 			t.Skip("skipping config check test on windows")
 		}
 
-		err = u.Update(false)
+		err = u.Update(testutil.ContextWithTimeout(t, testTimeout), false)
 		assert.NoError(t, err)
 	})
 
 	t.Run("api_fail", func(t *testing.T) {
 		srv.Close()
 
-		err = u.Update(true)
+		err = u.Update(testutil.ContextWithTimeout(t, testTimeout), true)
+
 		var urlErr *url.Error
 		assert.ErrorAs(t, err, &urlErr)
 	})
