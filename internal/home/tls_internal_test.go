@@ -204,6 +204,8 @@ func assertCertSerialNumber(tb testing.TB, conf *tlsConfigSettings, wantSN int64
 func TestTLSManager_Reload(t *testing.T) {
 	storeGlobals(t)
 
+	config.DNS.Port = 0
+
 	var (
 		logger = slogutil.NewDiscardLogger()
 		ctx    = testutil.ContextWithTimeout(t, testTimeout)
@@ -259,6 +261,10 @@ func TestTLSManager_Reload(t *testing.T) {
 	writeCertAndKey(t, certDER, certPath, key, keyPath)
 
 	m.reload(ctx)
+
+	// The [tlsManager.reload] method will start the DNS server and it should be
+	// stopped after the test ends.
+	testutil.CleanupAndRequireSuccess(t, globalContext.dnsServer.Stop)
 
 	conf = m.config()
 	assertCertSerialNumber(t, conf, snAfter)
