@@ -304,7 +304,7 @@ func (u *Updater) replace(ctx context.Context) (err error) {
 
 	u.logger.InfoContext(
 		ctx,
-		"renaming previous executable",
+		"backing up current executable",
 		"from", u.currentExeName,
 		"to", u.backupExeName,
 	)
@@ -325,7 +325,7 @@ func (u *Updater) replace(ctx context.Context) (err error) {
 
 	u.logger.InfoContext(
 		ctx,
-		"renaming new executable",
+		"replacing current executable",
 		"from", u.updateExeName,
 		"to", u.currentExeName,
 	)

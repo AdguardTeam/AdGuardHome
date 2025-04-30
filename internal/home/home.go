@@ -487,13 +487,13 @@ func checkPorts() (err error) {
 }
 
 // isUpdateEnabled returns true if the update is enabled for current
-// configuration.  It also logs the decision.  urlIsCustom should be true if the
+// configuration.  It also logs the decision.  isCustomURL should be true if the
 // updater is using a custom URL.
 func isUpdateEnabled(
 	ctx context.Context,
 	l *slog.Logger,
 	opts *options,
-	urlIsCustom bool,
+	isCustomURL bool,
 ) (ok bool) {
 	if opts.disableUpdate {
 		l.DebugContext(ctx, "updates are disabled by command-line option")
@@ -505,13 +505,13 @@ func isUpdateEnabled(
 	case
 		version.ChannelDevelopment,
 		version.ChannelCandidate:
-		if urlIsCustom {
+		if isCustomURL {
 			l.DebugContext(ctx, "updates are enabled because custom url is used")
 		} else {
 			l.DebugContext(ctx, "updates are disabled for development and candidate builds")
 		}
 
-		return urlIsCustom
+		return isCustomURL
 	default:
 		l.DebugContext(ctx, "updates are enabled")
 
@@ -519,7 +519,7 @@ func isUpdateEnabled(
 	}
 }
 
-// initWeb initializes the web module.  upd, baseLogger, and tlsMgr  must not be
+// initWeb initializes the web module.  upd, baseLogger, and tlsMgr must not be
 // nil.
 func initWeb(
 	ctx context.Context,
@@ -528,7 +528,7 @@ func initWeb(
 	upd *updater.Updater,
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
-	updURLIsCustom bool,
+	isCustomUpdURL bool,
 ) (web *webAPI, err error) {
 	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
 
@@ -544,7 +544,7 @@ func initWeb(
 		}
 	}
 
-	disableUpdate := !isUpdateEnabled(ctx, baseLogger, &opts, updURLIsCustom)
+	disableUpdate := !isUpdateEnabled(ctx, baseLogger, &opts, isCustomUpdURL)
 
 	webConf := &webConfig{
 		updater:    upd,
@@ -651,7 +651,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	confPath := configFilePath()
 
 	updLogger := slogLogger.With(slogutil.KeyPrefix, "updater")
-	upd, urlIsCustom := newUpdater(ctx, updLogger, config, globalContext.workDir, confPath, execPath)
+	upd, isCustomURL := newUpdater(ctx, updLogger, config, globalContext.workDir, confPath, execPath)
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
@@ -677,7 +677,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	globalContext.auth, err = initUsers()
 	fatalOnError(err)
 
-	web, err := initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, urlIsCustom)
+	web, err := initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, isCustomURL)
 	fatalOnError(err)
 
 	globalContext.web = web
@@ -721,7 +721,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 }
 
 // newUpdater creates a new AdGuard Home updater.  l and conf must not be nil.
-// workDir, confPath, and execPath must not be empty.  urlIsCustom is true if
+// workDir, confPath, and execPath must not be empty.  isCustomURL is true if
 // the user has specified a custom version announcement URL.
 func newUpdater(
 	ctx context.Context,
@@ -730,7 +730,7 @@ func newUpdater(
 	workDir string,
 	confPath string,
 	execPath string,
-) (upd *updater.Updater, urlIsCustom bool) {
+) (upd *updater.Updater, isCustomURL bool) {
 	// envName is the name of the environment variable that can be used to
 	// override the default version check URL.
 	const envName = "ADGUARD_HOME_TEST_UPDATE_VERSION_URL"
@@ -749,7 +749,7 @@ func newUpdater(
 	}
 
 	err := urlutil.ValidateHTTPURL(versionURL)
-	if urlIsCustom = err == nil; !urlIsCustom {
+	if isCustomURL = err == nil; !isCustomURL {
 		l.DebugContext(ctx, "parsing custom version url", slogutil.KeyError, err)
 
 		versionURL = updater.DefaultVersionURL()
@@ -770,7 +770,7 @@ func newUpdater(
 		ConfName:        confPath,
 		ExecPath:        execPath,
 		VersionCheckURL: versionURL,
-	}), urlIsCustom
+	}), isCustomURL
 }
 
 // checkPermissions checks and migrates permissions of the files and directories

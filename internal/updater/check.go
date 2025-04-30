@@ -48,12 +48,12 @@ func (u *Updater) VersionInfo(ctx context.Context, forceRecheck bool) (vi Versio
 	vcu := u.versionCheckURL
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, vcu, nil)
 	if err != nil {
-		return VersionInfo{}, fmt.Errorf("updater: constructing request to %s: %w", vcu, err)
+		return VersionInfo{}, fmt.Errorf("constructing request to %s: %w", vcu, err)
 	}
 
 	resp, err := u.client.Do(req)
 	if err != nil {
-		return VersionInfo{}, fmt.Errorf("updater: requesting %s: %w", vcu, err)
+		return VersionInfo{}, fmt.Errorf("requesting %s: %w", vcu, err)
 	}
 	defer func() { err = errors.WithDeferred(err, resp.Body.Close()) }()
 
@@ -63,7 +63,7 @@ func (u *Updater) VersionInfo(ctx context.Context, forceRecheck bool) (vi Versio
 	// ReadCloser.
 	body, err := io.ReadAll(r)
 	if err != nil {
-		return VersionInfo{}, fmt.Errorf("updater: HTTP GET %s: %w", vcu, err)
+		return VersionInfo{}, fmt.Errorf("reading response from %s: %w", vcu, err)
 	}
 
 	u.prevCheckTime = now
