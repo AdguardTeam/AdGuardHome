@@ -88,21 +88,38 @@ type Config struct {
 	// be nil, see [DefaultVersionURL].
 	VersionCheckURL *url.URL
 
+	// Version is the current AdGuard Home version.  It must not be empty.
 	Version string
-	Channel string
-	GOARCH  string
-	GOOS    string
-	GOARM   string
-	GOMIPS  string
 
-	// ConfName is the name of the current configuration file.  Typically,
-	// "AdGuardHome.yaml".
+	// Channel is the current AdGuard Home update channel.  It must be a valid
+	// channel, see [version.ChannelBeta] and the related constants.
+	Channel string
+
+	// GOARCH is the current CPU architecture.  It must not be empty and must be
+	// one of the supported architectures.
+	GOARCH string
+
+	// GOOS is the current operating system.  It must not be empty and must be
+	// one of the supported OSs.
+	GOOS string
+
+	// GOARM is the current ARM variant, if any.  It must either be empty or be
+	// a valid and supported GOARM value.
+	GOARM string
+
+	// GOMIPS is the current MIPS variant, if any.  It must either be empty or
+	// be a valid and supported GOMIPS value.
+	GOMIPS string
+
+	// ConfName is the name of the current configuration file.  It must not be
+	// empty.
 	ConfName string
 
-	// WorkDir is the working directory that is used for temporary files.
+	// WorkDir is the working directory that is used for temporary files.  It
+	// must not be empty.
 	WorkDir string
 
-	// ExecPath is path to the executable file.
+	// ExecPath is path to the executable file.  It must not be empty.
 	ExecPath string
 }
 
