@@ -28,7 +28,7 @@ type DHCPServer struct {
 	// logger logs common DHCP events.
 	logger *slog.Logger
 
-	// TODO(e.burkov):  !! implement and set
+	// TODO(e.burkov):  Implement and set.
 	packetSource gopacket.PacketSource
 
 	// localTLD is the top-level domain name to use for resolving DHCP clients'
@@ -156,7 +156,7 @@ func newInterfaces(
 func (srv *DHCPServer) Start(ctx context.Context) (err error) {
 	srv.logger.DebugContext(ctx, "starting dhcp server")
 
-	// TODO(e.burkov):  !! listen to configured interfaces
+	// TODO(e.burkov):  Listen to configured interfaces.
 
 	go srv.serve(context.Background())
 
@@ -166,7 +166,7 @@ func (srv *DHCPServer) Start(ctx context.Context) (err error) {
 func (srv *DHCPServer) Shutdown(ctx context.Context) (err error) {
 	srv.logger.DebugContext(ctx, "shutting down dhcp server")
 
-	// TODO(e.burkov):  !! close the packet source
+	// TODO(e.burkov):  Close the packet source.
 
 	return nil
 }
@@ -372,6 +372,8 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 
 // removeLeaseByAddr removes the lease with the given IP address from the
 // server.  It returns an error if the lease can't be removed.
+//
+// TODO(e.burkov):  !! Use.
 func (srv *DHCPServer) removeLeaseByAddr(ctx context.Context, addr netip.Addr) (err error) {
 	defer func() { err = errors.Annotate(err, "removing lease by address: %w") }()
 

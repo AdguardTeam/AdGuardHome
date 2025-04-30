@@ -155,22 +155,6 @@ func newDHCPInterfaceV4(
 	return iface, nil
 }
 
-// dhcpInterfacesV4 is a slice of network interfaces of IPv4 address family.
-type dhcpInterfacesV4 []*dhcpInterfaceV4
-
-// find returns the first network interface within ifaces containing ip.  It
-// returns false if there is no such interface.
-func (ifaces dhcpInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok bool) {
-	i := slices.IndexFunc(ifaces, func(iface *dhcpInterfaceV4) (contains bool) {
-		return iface.subnet.Contains(ip)
-	})
-	if i < 0 {
-		return nil, false
-	}
-
-	return ifaces[i].common, true
-}
-
 // options returns the implicit and explicit options for the interface.  The two
 // lists are disjoint and the implicit options are initialized with default
 // values.
@@ -362,8 +346,8 @@ func compareV4OptionCodes(a, b layers.DHCPOption) (res int) {
 	return int(a.Type) - int(b.Type)
 }
 
-// msgType returns the message type of msg, if it's present within the options.
-func msgType(msg *layers.DHCPv4) (typ layers.DHCPMsgType, ok bool) {
+// msg4Type returns the message type of msg, if it's present within the options.
+func msg4Type(msg *layers.DHCPv4) (typ layers.DHCPMsgType, ok bool) {
 	for _, opt := range msg.Options {
 		if opt.Type == layers.DHCPOptMessageType && len(opt.Data) > 0 {
 			return layers.DHCPMsgType(opt.Data[0]), true
@@ -373,7 +357,9 @@ func msgType(msg *layers.DHCPv4) (typ layers.DHCPMsgType, ok bool) {
 	return 0, false
 }
 
-func requestedIP(msg *layers.DHCPv4) (ip netip.Addr, ok bool) {
+// requestedIPv4 returns the IPv4 address, requested by client in the DHCP
+// message, if any.
+func requestedIPv4(msg *layers.DHCPv4) (ip netip.Addr, ok bool) {
 	for _, opt := range msg.Options {
 		if opt.Type == layers.DHCPOptRequestIP && len(opt.Data) == net.IPv4len {
 			return netip.AddrFromSlice(opt.Data)
@@ -383,10 +369,80 @@ func requestedIP(msg *layers.DHCPv4) (ip netip.Addr, ok bool) {
 	return netip.Addr{}, false
 }
 
-func (iface *dhcpInterfaceV4) handleDiscover(ctx context.Context, msg *layers.DHCPv4) {
-	// TODO(e.burkov):  Implement.
+// serverID4 returns the server ID of the DHCP message, if any.
+func serverID4(msg *layers.DHCPv4) (ip netip.Addr, ok bool) {
+	for _, opt := range msg.Options {
+		if opt.Type == layers.DHCPOptServerID && len(opt.Data) == net.IPv4len {
+			return netip.AddrFromSlice(opt.Data)
+		}
+	}
+
+	return netip.Addr{}, false
 }
 
-func (iface *dhcpInterfaceV4) handleRequest(ctx context.Context, msg *layers.DHCPv4) {
-	// TODO(e.burkov):  Implement.
+// handleDiscover handles messages of type discover.
+func (iface *dhcpInterfaceV4) handleDiscover(
+	ctx context.Context,
+	rw responseWriter4,
+	msg *layers.DHCPv4,
+) {
+	// TODO(e.burkov):  !! Implement.
+}
+
+// handleSelecting handles messages of type request in SELECTING state.
+func (iface *dhcpInterfaceV4) handleSelecting(
+	ctx context.Context,
+	rw responseWriter4,
+	msg *layers.DHCPv4,
+	reqIP netip.Addr,
+) {
+	// TODO(e.burkov):  !! Implement.
+}
+
+// handleSelecting handles messages of type request in INIT-REBOOT state.
+func (iface *dhcpInterfaceV4) handleInitReboot(
+	ctx context.Context,
+	rw responseWriter4,
+	msg *layers.DHCPv4,
+	reqIP netip.Addr,
+) {
+	// TODO(e.burkov):  !! Implement.
+}
+
+// handleRenew handles messages of type request in RENEWING or REBINDING state.
+func (iface *dhcpInterfaceV4) handleRenew(
+	ctx context.Context,
+	rw responseWriter4,
+	req *layers.DHCPv4,
+) {
+	// TODO(e.burkov):  !! Implement.
+}
+
+// dhcpInterfacesV4 is a slice of network interfaces of IPv4 address family.
+type dhcpInterfacesV4 []*dhcpInterfaceV4
+
+// find returns the first network interface within ifaces containing ip.  It
+// returns false if there is no such interface.
+func (ifaces dhcpInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok bool) {
+	i := slices.IndexFunc(ifaces, func(iface *dhcpInterfaceV4) (contains bool) {
+		return iface.subnet.Contains(ip)
+	})
+	if i < 0 {
+		return nil, false
+	}
+
+	return ifaces[i].common, true
+}
+
+// findInterface returns the first DHCPv4 interface within ifaces containing
+// ip.  It returns false if there is no such interface.
+func (ifaces dhcpInterfacesV4) findInterface(ip netip.Addr) (iface *dhcpInterfaceV4, ok bool) {
+	i := slices.IndexFunc(ifaces, func(iface *dhcpInterfaceV4) (contains bool) {
+		return iface.subnet.Contains(ip)
+	})
+	if i < 0 {
+		return nil, false
+	}
+
+	return ifaces[i], true
 }
