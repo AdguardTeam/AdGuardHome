@@ -656,7 +656,7 @@
     "blocklist": "Sortliste",
     "milliseconds_abbreviation": "ms",
     "cache_size": "Cache-størrelse",
-    "cache_size_desc": "DNS cache-størrelse (i bytes). Lad stå tomt for at deaktivere cache.",
+    "cache_size_desc": "DNS cache-størrelse (i bytes). Sæt til 0 for at deaktivere cache.",
     "cache_ttl_min_override": "Tilsidesæt minimum TTL",
     "cache_ttl_max_override": "Tilsidesæt maksimal TTL",
     "enter_cache_size": "Angiv cache-størrelse (bytes)",

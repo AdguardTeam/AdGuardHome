@@ -656,7 +656,7 @@
     "blocklist": "Sperrliste",
     "milliseconds_abbreviation": "ms",
     "cache_size": "Größe des Cache",
-    "cache_size_desc": "Größe des DNS-Zwischenspeichers (in Bytes)",
+    "cache_size_desc": "Größe des DNS-Cache (in Bytes). Um das Caching zu deaktivieren, setzen Sie den Wert auf 0.",
     "cache_ttl_min_override": "TTL-Minimalwert überschreiben",
     "cache_ttl_max_override": "TTL-Höchstwert überschreiben",
     "enter_cache_size": "Größe des Cache (Bytes) eingeben",

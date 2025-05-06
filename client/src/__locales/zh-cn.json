@@ -656,7 +656,7 @@
     "blocklist": "黑名单",
     "milliseconds_abbreviation": "毫秒",
     "cache_size": "缓存大小",
-    "cache_size_desc": "DNS 缓存大小（单位：字节）。若要关闭缓存，请留空。",
+    "cache_size_desc": "DNS 缓存大小（单位：字节）。若要禁用缓存，请设置为 0。",
     "cache_ttl_min_override": "覆盖最小 TTL 值",
     "cache_ttl_max_override": "覆盖最大 TTL 值",
     "enter_cache_size": "输入缓存大小（字节）",

@@ -656,7 +656,7 @@
     "blocklist": "Liste de blocage",
     "milliseconds_abbreviation": "ms",
     "cache_size": "Taille du cache",
-    "cache_size_desc": "Taille du cache DNS (en octets). Pour désactiver la mise en cache, laissez vide.",
+    "cache_size_desc": "Taille du cache DNS (en octets). Pour désactiver la mise en cache, mettez la valeur sur 0.",
     "cache_ttl_min_override": "Remplacer le TTL minimum",
     "cache_ttl_max_override": "Remplacer le TTL maximum",
     "enter_cache_size": "Entrer la taille du cache (octets)",

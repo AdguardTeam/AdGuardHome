@@ -656,7 +656,7 @@
     "blocklist": "Blokkeerlijst",
     "milliseconds_abbreviation": "ms",
     "cache_size": "Cache grootte",
-    "cache_size_desc": "DNS-cachegrootte (in bytes). Leeg laten om caching uit te schakelen.",
+    "cache_size_desc": "DNS-cachegrootte (in bytes). Om caching uit te schakelen, stel deze in op 0.",
     "cache_ttl_min_override": "Minimale TTL overschrijven",
     "cache_ttl_max_override": "Maximale TTL overschrijven",
     "enter_cache_size": "Cache grootte invoeren (bytes)",

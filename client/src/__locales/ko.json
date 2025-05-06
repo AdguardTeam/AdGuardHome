@@ -656,7 +656,7 @@
     "blocklist": "차단 목록",
     "milliseconds_abbreviation": "ms",
     "cache_size": "캐시 크기",
-    "cache_size_desc": "DNS 캐시 크기(바이트). 캐싱을 비활성화하려면 비워 둡니다.",
+    "cache_size_desc": "DNS 캐시 크기(바이트). 캐싱을 사용하지 않으려면 0으로 설정합니다.",
     "cache_ttl_min_override": "최소 TTL (초) 무시",
     "cache_ttl_max_override": "최대 TTL (초) 무시",
     "enter_cache_size": "캐시 크기를 입력하세요",

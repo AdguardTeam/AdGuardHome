@@ -656,7 +656,7 @@
     "blocklist": "Zakázaný",
     "milliseconds_abbreviation": "ms",
     "cache_size": "Velikost mezipaměti",
-    "cache_size_desc": "Velikost mezipaměti DNS (v bajtech). Chcete-li ukládání do mezipaměti zakázat, ponechte prázdné.",
+    "cache_size_desc": "Velikost mezipaměti DNS (v bajtech). Chcete-li ukládání do mezipaměti zakázat, nastavte 0.",
     "cache_ttl_min_override": "Přepsat minimální hodnotu TTL",
     "cache_ttl_max_override": "Přepsat maximální hodnotu TTL",
     "enter_cache_size": "Zadejte velikost mezipaměti (v bajtech)",
