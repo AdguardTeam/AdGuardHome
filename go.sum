@@ -10,8 +10,8 @@ cloud.google.com/go/compute/metadata v0.6.0 h1:A6hENjEsCDtC1k8byVsgwvVcioamEHvZ4
 cloud.google.com/go/compute/metadata v0.6.0/go.mod h1:FjyFAW1MW0C203CEOMDTu3Dk1FlqW3Rga40jzHL4hfg=
 cloud.google.com/go/longrunning v0.6.7 h1:IGtfDWHhQCgCjwQjV9iiLnUta9LBCo8R9QmAFsS/PrE=
 cloud.google.com/go/longrunning v0.6.7/go.mod h1:EAFV3IZAKmM56TyiE6VAP3VoTzhZzySwI/YI1s/nRsY=
-github.com/AdguardTeam/dnsproxy v0.75.3 h1:pxlMNO+cP1A3px40PY/old6SAE82pkdLPUA2P3KY8u0=
-github.com/AdguardTeam/dnsproxy v0.75.3/go.mod h1:50OyTHao+uQzUJiXay08hgfvWQ3o2Q2WV99W8u8ypDE=
+github.com/AdguardTeam/dnsproxy v0.75.4 h1:hTnHh9HoTYKKhKqePpIxCzfecl7dAXykZTw2gcj0I5U=
+github.com/AdguardTeam/dnsproxy v0.75.4/go.mod h1:50OyTHao+uQzUJiXay08hgfvWQ3o2Q2WV99W8u8ypDE=
 github.com/AdguardTeam/golibs v0.32.8 h1:O3mc3kYcPkW3kbmd+gqzFNgUka13a+iBgFLThwOYSQE=
 github.com/AdguardTeam/golibs v0.32.8/go.mod h1:McV1QFFlKLElKa306V4OL/T2kr7564PhsayfvTWYBVs=
 github.com/AdguardTeam/urlfilter v0.20.0 h1:X32qiuVCVd8WDYCEsbdZKfXMzwdVqrdulamtUi4rmzs=
