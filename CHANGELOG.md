@@ -20,9 +20,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Command line option `--update` when the `dns.serve_plain_dns` configuration property was disabled ([7801]).
+
 - DNS cache not working for custom upstream configurations.
 
 - Validation process for the DNS-over-TLS, DNS-over-QUIC, and HTTPS ports on the *Encryption Settings* page.
+
+[#7801]: https://github.com/AdguardTeam/AdGuardHome/issues/7801
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

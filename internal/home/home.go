@@ -1078,7 +1078,7 @@ func cmdlineUpdate(
 	//
 	// TODO(e.burkov):  We could probably initialize the internal resolver
 	// separately.
-	err := initDNSServer(nil, nil, nil, nil, nil, nil, &tlsConfigSettings{}, tlsMgr, l)
+	err := initDNSServer(nil, nil, nil, nil, nil, nil, tlsMgr, l)
 	fatalOnError(err)
 
 	l.InfoContext(ctx, "performing update via cli")
