@@ -113,10 +113,12 @@ func TestValidateCertificates(t *testing.T) {
 // restores them once the test is complete.
 //
 // The global variables are:
-//   - [configuration.dns]
+//   - [configuration]
 //   - [homeContext.clients.storage]
 //   - [homeContext.dnsServer]
+//   - [homeContext.firstRun]
 //   - [homeContext.mux]
+//   - [homeContext.web]
 //
 // TODO(s.chzhen):  Remove this once the TLS manager no longer accesses global
 // variables.  Make tests that use this helper concurrent.
@@ -126,13 +128,17 @@ func storeGlobals(tb testing.TB) {
 	prevConfig := config
 	storage := globalContext.clients.storage
 	dnsServer := globalContext.dnsServer
+	firstRun := globalContext.firstRun
 	mux := globalContext.mux
+	web := globalContext.web
 
 	tb.Cleanup(func() {
 		config = prevConfig
 		globalContext.clients.storage = storage
 		globalContext.dnsServer = dnsServer
+		globalContext.firstRun = firstRun
 		globalContext.mux = mux
+		globalContext.web = web
 	})
 }
 

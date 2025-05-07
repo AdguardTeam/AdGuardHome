@@ -2,6 +2,7 @@ package home
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"net/netip"
 	"net/textproto"
 	"net/url"
@@ -9,10 +10,112 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/golibs/httphdr"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// TODO(s.chzhen): !! Add more tests.
+func TestAuth_ServeHTTP_first_run(t *testing.T) {
+	storeGlobals(t)
+
+	globalContext.firstRun = true
+
+	mux := http.NewServeMux()
+	globalContext.mux = mux
+
+	var (
+		logger = slogutil.NewDiscardLogger()
+		ctx    = testutil.ContextWithTimeout(t, testTimeout)
+		err    error
+	)
+
+	web, err := initWeb(ctx, options{}, nil, nil, logger, nil, false)
+	require.NoError(t, err)
+
+	globalContext.web = web
+
+	testCases := []struct {
+		url    string
+		method string
+		code   int
+	}{{
+		url:    "/",
+		method: http.MethodGet,
+		code:   http.StatusFound,
+	}, {
+		url:    "/apple/doh.mobileconfig",
+		method: http.MethodGet,
+		code:   http.StatusFound,
+	}, {
+		url:    "/apple/dot.mobileconfig",
+		method: http.MethodGet,
+		code:   http.StatusFound,
+	}, {
+		url:    "/control/i18n/change_language",
+		method: http.MethodGet,
+		code:   http.StatusFound,
+	}, {
+		url:    "/control/i18n/current_language",
+		method: http.MethodGet,
+		code:   http.StatusFound,
+	}, {
+		url:    "/control/install/check_config",
+		method: http.MethodPost,
+		code:   http.StatusBadRequest,
+	}, {
+		url:    "/control/install/configure",
+		method: http.MethodPost,
+		code:   http.StatusBadRequest,
+	}, {
+		url:    "/control/install/get_addresses",
+		method: http.MethodGet,
+		code:   http.StatusOK,
+	}, {
+		url:    "/control/login",
+		method: http.MethodGet,
+		code:   http.StatusFound,
+	}, {
+		url:    "/control/logout",
+		method: http.MethodGet,
+		code:   http.StatusFound,
+	}, {
+		url:    "/control/profile",
+		method: http.MethodGet,
+		code:   http.StatusFound,
+	}, {
+		url:    "/control/profile/update",
+		method: http.MethodGet,
+		code:   http.StatusFound,
+	}, {
+		url:    "/control/status",
+		method: http.MethodGet,
+		code:   http.StatusFound,
+	}, {
+		url:    "/control/update",
+		method: http.MethodGet,
+		code:   http.StatusFound,
+	}, {
+		url:    "/control/version.json",
+		method: http.MethodGet,
+		code:   http.StatusFound,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.url, func(t *testing.T) {
+			r := httptest.NewRequest(tc.method, tc.url, nil)
+
+			h, pattern := mux.Handler(r)
+			require.NotEmpty(t, pattern)
+
+			w := httptest.NewRecorder()
+			h.ServeHTTP(w, r)
+
+			assert.Equal(t, tc.code, w.Code)
+		})
+	}
+}
 
 // implements http.ResponseWriter
 type testResponseWriter struct {
