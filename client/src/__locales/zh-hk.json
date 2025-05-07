@@ -498,7 +498,7 @@
     "setup_dns_privacy_android_1": "Android 9 原生支援 DNS-over-TLS。前往「設定」→「網路 & 網際網路」→「進階」→「私人 DNS」設定。",
     "setup_dns_privacy_android_2": "<0>AdGuard for Android</0> 支援  <1>DNS-over-HTTPS</1> 與 <1>DNS-over-TLS</1>。",
     "setup_dns_privacy_android_3": "<0>Intra</0> 對 Android 新增支援 <1>DNS-over-HTTPS</1>。",
-    "setup_dns_privacy_ios_1": "<0>DNSCloak</0> 支援 <1>DNS-over-HTTPS</1>，若要使用您必須先產生 <2>DNS Stamp</2>。",
+    "setup_dns_privacy_ios_1": "<0>DNSecure</0> 支援 <1>DNS-over-HTTPS</1> 與 <1>DNS-over-TLS</1>。",
     "setup_dns_privacy_ios_2": "<0>AdGuard for iOS</0> 支援 <1>DNS-over-HTTPS</1> 與 <1>DNS-over-TLS</1> 設定。",
     "setup_dns_privacy_other_title": "其他實作方式",
     "setup_dns_privacy_other_1": "AdGuard Home 本身在任何平台都是安全的 DNS 用戶端。",

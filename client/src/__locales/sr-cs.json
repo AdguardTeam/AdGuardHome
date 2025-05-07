@@ -495,7 +495,7 @@
     "setup_dns_privacy_android_1": "Android 9 podržava DNS-over-TLS. Za konfiguraciju, idite u postavke → mreža i internet → Napredno → Privatni DNS i tamo unesite ime vašeg domena.",
     "setup_dns_privacy_android_2": "<0>AdGuard for Android</0> podržava <1>DNS-over-HTTPS</1> i <1>DNS-over-TLS</1>.",
     "setup_dns_privacy_android_3": "<0>Intra</0> dodaje <1>DNS-over-HTTPS</1> podršku za Android.",
-    "setup_dns_privacy_ios_1": "<0>DNSCloak</0> podržava <1>DNS-over-HTTPS</1>, ali da biste mogli da ga konfigurišete da koristi vaš lični server, biće potrebno da generišete a <2>DNS Stamp</2> za njega.",
+    "setup_dns_privacy_ios_1": "<0>DNSecure</0> podržava <1>DNS-over-HTTPS</1> i <1>DNS-over-TLS</1>.",
     "setup_dns_privacy_ios_2": "<0>AdGuard za iOS</0> podržava <1>DNS-over-HTTPS</1> i <1>DNS-over-TLS</1>.",
     "setup_dns_privacy_other_title": "Druge implementacije",
     "setup_dns_privacy_other_1": "AdGuard home može biti bezbedan DNS server na bilo kojoj platformi.",
