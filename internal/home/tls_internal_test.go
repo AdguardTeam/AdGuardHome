@@ -114,6 +114,7 @@ func TestValidateCertificates(t *testing.T) {
 //
 // The global variables are:
 //   - [configuration]
+//   - [homeContext.auth]
 //   - [homeContext.clients.storage]
 //   - [homeContext.dnsServer]
 //   - [homeContext.firstRun]
@@ -126,6 +127,7 @@ func storeGlobals(tb testing.TB) {
 	tb.Helper()
 
 	prevConfig := config
+	auth := globalContext.auth
 	storage := globalContext.clients.storage
 	dnsServer := globalContext.dnsServer
 	firstRun := globalContext.firstRun
@@ -134,6 +136,7 @@ func storeGlobals(tb testing.TB) {
 
 	tb.Cleanup(func() {
 		config = prevConfig
+		globalContext.auth = auth
 		globalContext.clients.storage = storage
 		globalContext.dnsServer = dnsServer
 		globalContext.firstRun = firstRun
