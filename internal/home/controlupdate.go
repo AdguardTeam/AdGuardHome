@@ -82,7 +82,7 @@ func (web *webAPI) requestVersionInfo(
 ) (err error) {
 	updater := web.conf.updater
 	for range 3 {
-		resp.VersionInfo, err = updater.VersionInfo(recheck)
+		resp.VersionInfo, err = updater.VersionInfo(ctx, recheck)
 		if err == nil {
 			return nil
 		}
@@ -133,7 +133,7 @@ func (web *webAPI) handleUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = updater.Update(false)
+	err = updater.Update(r.Context(), false)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 
