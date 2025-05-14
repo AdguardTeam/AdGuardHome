@@ -8,20 +8,22 @@ import (
 	"net/netip"
 	"net/textproto"
 	"net/url"
+	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/httphdr"
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/josharian/native"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// TODO(s.chzhen): !! Add more tests.
-func TestAuth_ServeHTTP_first_run(t *testing.T) {
+// TODO(s.chzhen): !! Improve naming.
+func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 	storeGlobals(t)
 
 	globalContext.firstRun = true
@@ -29,81 +31,76 @@ func TestAuth_ServeHTTP_first_run(t *testing.T) {
 	mux := http.NewServeMux()
 	globalContext.mux = mux
 
-	var (
-		logger = slogutil.NewDiscardLogger()
-		ctx    = testutil.ContextWithTimeout(t, testTimeout)
-		err    error
-	)
-
-	web, err := initWeb(ctx, options{}, nil, nil, logger, nil, false)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, false)
 	require.NoError(t, err)
 
 	globalContext.web = web
 
 	testCases := []struct {
-		url    string
-		method string
-		code   int
+		url      string
+		method   string
+		wantCode int
 	}{{
-		url:    "/",
-		method: http.MethodGet,
-		code:   http.StatusFound,
+		url:      "/",
+		method:   http.MethodGet,
+		wantCode: http.StatusFound,
 	}, {
-		url:    "/apple/doh.mobileconfig",
-		method: http.MethodGet,
-		code:   http.StatusFound,
+		url:      "/apple/doh.mobileconfig",
+		method:   http.MethodGet,
+		wantCode: http.StatusFound,
 	}, {
-		url:    "/apple/dot.mobileconfig",
-		method: http.MethodGet,
-		code:   http.StatusFound,
+		url:      "/apple/dot.mobileconfig",
+		method:   http.MethodGet,
+		wantCode: http.StatusFound,
 	}, {
-		url:    "/control/i18n/change_language",
-		method: http.MethodGet,
-		code:   http.StatusFound,
+		url:      "/control/i18n/change_language",
+		method:   http.MethodGet,
+		wantCode: http.StatusFound,
 	}, {
-		url:    "/control/i18n/current_language",
-		method: http.MethodGet,
-		code:   http.StatusFound,
+		url:      "/control/i18n/current_language",
+		method:   http.MethodGet,
+		wantCode: http.StatusFound,
 	}, {
-		url:    "/control/install/check_config",
-		method: http.MethodPost,
-		code:   http.StatusBadRequest,
+		url:      "/control/install/check_config",
+		method:   http.MethodPost,
+		wantCode: http.StatusBadRequest,
 	}, {
-		url:    "/control/install/configure",
-		method: http.MethodPost,
-		code:   http.StatusBadRequest,
+		url:      "/control/install/configure",
+		method:   http.MethodPost,
+		wantCode: http.StatusBadRequest,
 	}, {
-		url:    "/control/install/get_addresses",
-		method: http.MethodGet,
-		code:   http.StatusOK,
+		url:      "/control/install/get_addresses",
+		method:   http.MethodGet,
+		wantCode: http.StatusOK,
 	}, {
-		url:    "/control/login",
-		method: http.MethodPost,
-		code:   http.StatusFound,
+		url:      "/control/login",
+		method:   http.MethodPost,
+		wantCode: http.StatusFound,
 	}, {
-		url:    "/control/logout",
-		method: http.MethodGet,
-		code:   http.StatusFound,
+		url:      "/control/logout",
+		method:   http.MethodGet,
+		wantCode: http.StatusFound,
 	}, {
-		url:    "/control/profile",
-		method: http.MethodGet,
-		code:   http.StatusFound,
+		url:      "/control/profile",
+		method:   http.MethodGet,
+		wantCode: http.StatusFound,
 	}, {
-		url:    "/control/profile/update",
-		method: http.MethodGet,
-		code:   http.StatusFound,
+		url:      "/control/profile/update",
+		method:   http.MethodGet,
+		wantCode: http.StatusFound,
 	}, {
-		url:    "/control/status",
-		method: http.MethodGet,
-		code:   http.StatusFound,
+		url:      "/control/status",
+		method:   http.MethodGet,
+		wantCode: http.StatusFound,
 	}, {
-		url:    "/control/update",
-		method: http.MethodGet,
-		code:   http.StatusFound,
+		url:      "/control/update",
+		method:   http.MethodGet,
+		wantCode: http.StatusFound,
 	}, {
-		url:    "/control/version.json",
-		method: http.MethodGet,
-		code:   http.StatusFound,
+		url:      "/control/version.json",
+		method:   http.MethodGet,
+		wantCode: http.StatusFound,
 	}}
 
 	for _, tc := range testCases {
@@ -116,30 +113,156 @@ func TestAuth_ServeHTTP_first_run(t *testing.T) {
 			w := httptest.NewRecorder()
 			h.ServeHTTP(w, r)
 
-			assert.Equal(t, tc.code, w.Code)
+			assert.Equal(t, tc.wantCode, w.Code)
 		})
 	}
 }
 
-func TestAuth_ServeHTTP(t *testing.T) {
+func TestAuth_ServeHTTP_auth(t *testing.T) {
 	storeGlobals(t)
 
 	const (
-		authNone = iota
-		authBasic
-		authCookie
-	)
+		testTTL = 60
 
-	const (
-		testTTL      = 60
+		glTokenFileSuffix = "test"
+
 		userName     = "name"
 		userPassword = "password"
 	)
 
-	var (
-		logger = slogutil.NewDiscardLogger()
-		ctx    = testutil.ContextWithTimeout(t, testTimeout)
-		err    error
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userPassword), bcrypt.DefaultCost)
+	require.NoError(t, err)
+
+	tempDir := t.TempDir()
+	glFilePrefix = tempDir + "/gl_token_"
+	glTokenFile := glFilePrefix + glTokenFileSuffix
+
+	glFileData := make([]byte, 4)
+	native.Endian.PutUint32(glFileData, uint32(time.Now().Unix()+testTTL))
+
+	err = os.WriteFile(glTokenFile, glFileData, 0o644)
+	require.NoError(t, err)
+
+	sessionsDB := filepath.Join(tempDir, "sessions.db")
+
+	users := []webUser{{
+		Name:         userName,
+		PasswordHash: string(passwordHash),
+	}}
+	auth := InitAuth(sessionsDB, users, testTTL, nil, nil)
+	globalContext.auth = auth
+
+	mux := http.NewServeMux()
+	globalContext.mux = mux
+
+	tlsMgr, err := newTLSManager(testutil.ContextWithTimeout(t, testTimeout), &tlsManagerConfig{
+		logger:         testLogger,
+		configModified: func() {},
+	})
+	require.NoError(t, err)
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, tlsMgr, false)
+	require.NoError(t, err)
+
+	globalContext.web = web
+
+	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
+
+	testCases := []struct {
+		url      string
+		method   string
+		wantCode int
+	}{{
+		url:      "/control/i18n/change_language",
+		method:   http.MethodPost,
+		wantCode: http.StatusInternalServerError,
+	}, {
+		url:      "/control/i18n/current_language",
+		method:   http.MethodGet,
+		wantCode: http.StatusOK,
+	}, {
+		url:      "/control/profile",
+		method:   http.MethodGet,
+		wantCode: http.StatusOK,
+	}, {
+		url:      "/control/profile/update",
+		method:   http.MethodPut,
+		wantCode: http.StatusBadRequest,
+	}, {
+		url:      "/control/status",
+		method:   http.MethodGet,
+		wantCode: http.StatusOK,
+	}, {
+		url:      "/control/version.json",
+		method:   http.MethodGet,
+		wantCode: http.StatusOK,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.url, func(t *testing.T) {
+			r := httptest.NewRequest(tc.method, tc.url, nil)
+			assertHandlerStatusCode(t, mux, r, http.StatusForbidden)
+
+			r = httptest.NewRequest(tc.method, tc.url, nil)
+			r.SetBasicAuth(userName, userPassword)
+			assertHandlerStatusCode(t, mux, r, tc.wantCode)
+
+			r = httptest.NewRequest(tc.method, tc.url, nil)
+			r.AddCookie(loginCookie)
+			assertHandlerStatusCode(t, mux, r, tc.wantCode)
+
+			GLMode = true
+			t.Cleanup(func() { GLMode = false })
+
+			r.AddCookie(&http.Cookie{Name: glCookieName, Value: "test"})
+			assertHandlerStatusCode(t, mux, r, tc.wantCode)
+		})
+	}
+}
+
+// generateAuthCookie is a helper function that logs in with the provided
+// credentials and returns the resulting authentication cookie.
+func generateAuthCookie(t *testing.T, mux *http.ServeMux, name, password string) (ac *http.Cookie) {
+	t.Helper()
+
+	creds, err := json.Marshal(&loginJSON{Name: name, Password: password})
+	require.NoError(t, err)
+
+	r := httptest.NewRequest(http.MethodPost, "/control/login", bytes.NewReader(creds))
+	r.Header.Set(httphdr.ContentType, aghhttp.HdrValApplicationJSON)
+
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, r)
+
+	for _, c := range w.Result().Cookies() {
+		if c.Name == sessionCookieName {
+			return c
+		}
+	}
+
+	return nil
+}
+
+// assertHandlerStatusCode is a helper function that asserts the response status
+// code of a HTTP handler.
+func assertHandlerStatusCode(t *testing.T, h http.Handler, r *http.Request, wantCode int) {
+	t.Helper()
+
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+
+	assert.Equal(t, wantCode, w.Code)
+}
+
+func TestAuth_ServeHTTP_logout(t *testing.T) {
+	storeGlobals(t)
+
+	const (
+		testTTL = 60
+
+		userName     = "name"
+		userPassword = "password"
 	)
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userPassword), bcrypt.DefaultCost)
@@ -157,197 +280,26 @@ func TestAuth_ServeHTTP(t *testing.T) {
 	mux := http.NewServeMux()
 	globalContext.mux = mux
 
-	tlsMgr, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         logger,
-		configModified: func() {},
-	})
-	require.NoError(t, err)
-
-	web, err := initWeb(ctx, options{}, nil, nil, logger, tlsMgr, false)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, false)
 	require.NoError(t, err)
 
 	globalContext.web = web
 
-	creds, err := json.Marshal(&loginJSON{Name: userName, Password: userPassword})
-	require.NoError(t, err)
-
-	r := httptest.NewRequest(http.MethodPost, "/control/login", bytes.NewReader(creds))
-	r.Header.Set(httphdr.ContentType, aghhttp.HdrValApplicationJSON)
-
-	w := httptest.NewRecorder()
-	mux.ServeHTTP(w, r)
-
-	var loginCookie *http.Cookie
-	for _, c := range w.Result().Cookies() {
-		if c.Name == sessionCookieName {
-			loginCookie = c
-		}
-	}
+	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
 	require.NotNil(t, loginCookie)
 
-	testCases := []struct {
-		url        string
-		method     string
-		authMethod int
-		wantCode   int
-	}{{
-		url:        "/",
-		method:     http.MethodGet,
-		authMethod: authNone,
-		wantCode:   http.StatusFound,
-	}, {
-		url:        "/control/i18n/change_language",
-		method:     http.MethodPost,
-		authMethod: authNone,
-		wantCode:   http.StatusForbidden,
-	}, {
-		url:        "/control/i18n/change_language",
-		method:     http.MethodPost,
-		authMethod: authBasic,
-		wantCode:   http.StatusInternalServerError,
-	}, {
-		url:        "/control/i18n/change_language",
-		method:     http.MethodPost,
-		authMethod: authCookie,
-		wantCode:   http.StatusInternalServerError,
-	}, {
-		url:        "/control/i18n/current_language",
-		method:     http.MethodGet,
-		authMethod: authNone,
-		wantCode:   http.StatusForbidden,
-	}, {
-		url:        "/control/i18n/current_language",
-		method:     http.MethodGet,
-		authMethod: authBasic,
-		wantCode:   http.StatusOK,
-	}, {
-		url:        "/control/i18n/current_language",
-		method:     http.MethodGet,
-		authMethod: authCookie,
-		wantCode:   http.StatusOK,
-	}, {
-		url:        "/control/logout",
-		method:     http.MethodGet,
-		authMethod: authNone,
-		wantCode:   http.StatusForbidden,
-	}, {
-		url:        "/control/logout",
-		method:     http.MethodGet,
-		authMethod: authBasic,
-		wantCode:   http.StatusFound,
-	}, {
-		url:        "/control/profile",
-		method:     http.MethodGet,
-		authMethod: authNone,
-		wantCode:   http.StatusForbidden,
-	}, {
-		url:        "/control/profile",
-		method:     http.MethodGet,
-		authMethod: authBasic,
-		wantCode:   http.StatusOK,
-	}, {
-		url:        "/control/profile",
-		method:     http.MethodGet,
-		authMethod: authCookie,
-		wantCode:   http.StatusOK,
-	}, {
-		url:        "/control/profile/update",
-		method:     http.MethodPut,
-		authMethod: authNone,
-		wantCode:   http.StatusForbidden,
-	}, {
-		url:        "/control/profile/update",
-		method:     http.MethodPut,
-		authMethod: authBasic,
-		wantCode:   http.StatusBadRequest,
-	}, {
-		url:        "/control/profile/update",
-		method:     http.MethodPut,
-		authMethod: authCookie,
-		wantCode:   http.StatusBadRequest,
-	}, {
-		url:        "/control/status",
-		method:     http.MethodGet,
-		authMethod: authNone,
-		wantCode:   http.StatusForbidden,
-	}, {
-		url:        "/control/status",
-		method:     http.MethodGet,
-		authMethod: authBasic,
-		wantCode:   http.StatusOK,
-	}, {
-		url:        "/control/status",
-		method:     http.MethodGet,
-		authMethod: authCookie,
-		wantCode:   http.StatusOK,
-	}, {
-		url:        "/control/update",
-		method:     http.MethodPost,
-		authMethod: authNone,
-		wantCode:   http.StatusForbidden,
-	}, {
-		url:        "/control/version.json",
-		method:     http.MethodGet,
-		authMethod: authNone,
-		wantCode:   http.StatusForbidden,
-	}, {
-		url:        "/control/version.json",
-		method:     http.MethodGet,
-		authMethod: authBasic,
-		wantCode:   http.StatusOK,
-	}, {
-		url:        "/control/version.json",
-		method:     http.MethodGet,
-		authMethod: authCookie,
-		wantCode:   http.StatusOK,
-	}}
+	r := httptest.NewRequest(http.MethodGet, "/control/profile", nil)
+	r.AddCookie(loginCookie)
+	assertHandlerStatusCode(t, mux, r, http.StatusOK)
 
-	for _, tc := range testCases {
-		t.Run(tc.url, func(t *testing.T) {
-			r = httptest.NewRequest(tc.method, tc.url, nil)
-			switch tc.authMethod {
-			case authNone:
-				// Go on.
-			case authBasic:
-				r.SetBasicAuth(userName, userPassword)
-			case authCookie:
-				r.AddCookie(loginCookie)
-			default:
-				panic("unrecognized auth method")
-			}
+	r = httptest.NewRequest(http.MethodGet, "/control/logout", nil)
+	r.AddCookie(loginCookie)
+	assertHandlerStatusCode(t, mux, r, http.StatusFound)
 
-			h, pattern := mux.Handler(r)
-			require.NotEmpty(t, pattern)
-
-			w = httptest.NewRecorder()
-			h.ServeHTTP(w, r)
-
-			assert.Equal(t, tc.wantCode, w.Code)
-		})
-	}
-
-	t.Run("logout", func(t *testing.T) {
-		r = httptest.NewRequest(http.MethodGet, "/control/status", nil)
-		r.AddCookie(loginCookie)
-		w = httptest.NewRecorder()
-
-		mux.ServeHTTP(w, r)
-		assert.Equal(t, http.StatusOK, w.Code)
-
-		r = httptest.NewRequest(http.MethodGet, "/control/logout", nil)
-		r.AddCookie(loginCookie)
-		w = httptest.NewRecorder()
-
-		mux.ServeHTTP(w, r)
-		assert.Equal(t, http.StatusFound, w.Code)
-
-		r = httptest.NewRequest(http.MethodGet, "/control/status", nil)
-		r.AddCookie(loginCookie)
-		w = httptest.NewRecorder()
-
-		mux.ServeHTTP(w, r)
-		assert.Equal(t, http.StatusForbidden, w.Code)
-	})
+	r = httptest.NewRequest(http.MethodGet, "/control/profile", nil)
+	r.AddCookie(loginCookie)
+	assertHandlerStatusCode(t, mux, r, http.StatusForbidden)
 }
 
 // implements http.ResponseWriter
