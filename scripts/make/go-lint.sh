@@ -199,6 +199,7 @@ run_linter gocognit --over='10' \
 	./internal/aghhttp/ \
 	./internal/aghrenameio/ \
 	./internal/aghtest/ \
+	./internal/aghuser/ \
 	./internal/arpdb/ \
 	./internal/client/ \
 	./internal/configmigrate/ \
@@ -250,6 +251,7 @@ run_linter fieldalignment \
 	./internal/aghrenameio/ \
 	./internal/aghtest/ \
 	./internal/aghtls/ \
+	./internal/aghuser/ \
 	./internal/arpdb/ \
 	./internal/client/ \
 	./internal/configmigrate/ \
@@ -280,6 +282,7 @@ run_linter gosec --exclude G115 --quiet \
 	./internal/aghos/ \
 	./internal/aghrenameio/ \
 	./internal/aghtest/ \
+	./internal/aghuser/ \
 	./internal/arpdb/ \
 	./internal/client/ \
 	./internal/configmigrate/ \

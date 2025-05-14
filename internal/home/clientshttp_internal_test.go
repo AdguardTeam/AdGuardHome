@@ -153,7 +153,7 @@ func TestClientsContainer_HandleAddClient(t *testing.T) {
 	clientTwo := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
 
 	clientEmptyID := newPersistentClient("empty_client_id")
-	clientEmptyID.ClientIDs = []string{""}
+	clientEmptyID.ClientIDs = []client.ClientID{""}
 
 	testCases := []struct {
 		name       string
@@ -278,7 +278,7 @@ func TestClientsContainer_HandleUpdateClient(t *testing.T) {
 	clientModified := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
 
 	clientEmptyID := newPersistentClient("empty_client_id")
-	clientEmptyID.ClientIDs = []string{""}
+	clientEmptyID.ClientIDs = []client.ClientID{""}
 
 	testCases := []struct {
 		name       string

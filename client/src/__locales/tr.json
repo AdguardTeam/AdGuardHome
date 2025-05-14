@@ -656,7 +656,7 @@
     "blocklist": "Engel listesi",
     "milliseconds_abbreviation": "ms",
     "cache_size": "Önbellek boyutu",
-    "cache_size_desc": "DNS önbellek boyutu (bayt cinsinden). Önbelleğe almayı devre dışı bırakmak için boş bırakın.",
+    "cache_size_desc": "DNS önbellek boyutu (bayt cinsinden). Önbelleği devre dışı bırakmak için 0 olarak ayarlayın.",
     "cache_ttl_min_override": "Minimum kullanım süresini geçersiz kıl",
     "cache_ttl_max_override": "Maksimum kullanım süresini geçersiz kıl",
     "enter_cache_size": "Önbellek boyutunu girin (bayt)",

@@ -487,9 +487,14 @@ func checkPorts() (err error) {
 }
 
 // isUpdateEnabled returns true if the update is enabled for current
-// configuration.  It also logs the decision.  customURL should be true if the
+// configuration.  It also logs the decision.  isCustomURL should be true if the
 // updater is using a custom URL.
-func isUpdateEnabled(ctx context.Context, l *slog.Logger, opts *options, customURL bool) (ok bool) {
+func isUpdateEnabled(
+	ctx context.Context,
+	l *slog.Logger,
+	opts *options,
+	isCustomURL bool,
+) (ok bool) {
 	if opts.disableUpdate {
 		l.DebugContext(ctx, "updates are disabled by command-line option")
 
@@ -500,13 +505,13 @@ func isUpdateEnabled(ctx context.Context, l *slog.Logger, opts *options, customU
 	case
 		version.ChannelDevelopment,
 		version.ChannelCandidate:
-		if customURL {
+		if isCustomURL {
 			l.DebugContext(ctx, "updates are enabled because custom url is used")
 		} else {
 			l.DebugContext(ctx, "updates are disabled for development and candidate builds")
 		}
 
-		return customURL
+		return isCustomURL
 	default:
 		l.DebugContext(ctx, "updates are enabled")
 
@@ -514,7 +519,7 @@ func isUpdateEnabled(ctx context.Context, l *slog.Logger, opts *options, customU
 	}
 }
 
-// initWeb initializes the web module.  upd, baseLogger, and tlsMgr  must not be
+// initWeb initializes the web module.  upd, baseLogger, and tlsMgr must not be
 // nil.
 func initWeb(
 	ctx context.Context,
@@ -523,7 +528,7 @@ func initWeb(
 	upd *updater.Updater,
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
-	customURL bool,
+	isCustomUpdURL bool,
 ) (web *webAPI, err error) {
 	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
 
@@ -539,7 +544,7 @@ func initWeb(
 		}
 	}
 
-	disableUpdate := !isUpdateEnabled(ctx, baseLogger, &opts, customURL)
+	disableUpdate := !isUpdateEnabled(ctx, baseLogger, &opts, isCustomUpdURL)
 
 	webConf := &webConfig{
 		updater:    upd,
@@ -645,11 +650,12 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 
 	confPath := configFilePath()
 
-	upd, customURL := newUpdater(ctx, slogLogger, globalContext.workDir, confPath, execPath, config)
+	updLogger := slogLogger.With(slogutil.KeyPrefix, "updater")
+	upd, isCustomURL := newUpdater(ctx, updLogger, config, globalContext.workDir, confPath, execPath)
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
-	cmdlineUpdate(ctx, slogLogger, opts, upd, tlsMgr)
+	cmdlineUpdate(ctx, updLogger, opts, upd, tlsMgr)
 
 	if !globalContext.firstRun {
 		// Save the updated config.
@@ -671,7 +677,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	globalContext.auth, err = initUsers()
 	fatalOnError(err)
 
-	web, err := initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, customURL)
+	web, err := initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, isCustomURL)
 	fatalOnError(err)
 
 	globalContext.web = web
@@ -714,16 +720,17 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	<-done
 }
 
-// newUpdater creates a new AdGuard Home updater.  customURL is true if the user
-// has specified a custom version announcement URL.
+// newUpdater creates a new AdGuard Home updater.  l and conf must not be nil.
+// workDir, confPath, and execPath must not be empty.  isCustomURL is true if
+// the user has specified a custom version announcement URL.
 func newUpdater(
 	ctx context.Context,
 	l *slog.Logger,
+	conf *configuration,
 	workDir string,
 	confPath string,
 	execPath string,
-	config *configuration,
-) (upd *updater.Updater, customURL bool) {
+) (upd *updater.Updater, isCustomURL bool) {
 	// envName is the name of the environment variable that can be used to
 	// override the default version check URL.
 	const envName = "ADGUARD_HOME_TEST_UPDATE_VERSION_URL"
@@ -735,14 +742,14 @@ func newUpdater(
 	case version.Channel() == version.ChannelRelease:
 		// Only enable custom version URL for development builds.
 		l.DebugContext(ctx, "custom version url is disabled for release builds")
-	case !config.UnsafeUseCustomUpdateIndexURL:
+	case !conf.UnsafeUseCustomUpdateIndexURL:
 		l.DebugContext(ctx, "custom version url is disabled in config")
 	default:
 		versionURL, _ = url.Parse(customURLStr)
 	}
 
 	err := urlutil.ValidateHTTPURL(versionURL)
-	if customURL = err == nil; !customURL {
+	if isCustomURL = err == nil; !isCustomURL {
 		l.DebugContext(ctx, "parsing custom version url", slogutil.KeyError, err)
 
 		versionURL = updater.DefaultVersionURL()
@@ -751,7 +758,8 @@ func newUpdater(
 	l.DebugContext(ctx, "creating updater", "config_path", confPath)
 
 	return updater.NewUpdater(&updater.Config{
-		Client:          config.Filtering.HTTPClient,
+		Client:          conf.Filtering.HTTPClient,
+		Logger:          l,
 		Version:         version.Version(),
 		Channel:         version.Channel(),
 		GOARCH:          runtime.GOARCH,
@@ -762,7 +770,7 @@ func newUpdater(
 		ConfName:        confPath,
 		ExecPath:        execPath,
 		VersionCheckURL: versionURL,
-	}), customURL
+	}), isCustomURL
 }
 
 // checkPermissions checks and migrates permissions of the files and directories
@@ -991,9 +999,9 @@ func printWebAddrs(proto, addr string, port uint16) {
 //
 // TODO(s.chzhen):  Implement separate functions for HTTP and HTTPS.
 func printHTTPAddresses(proto string, tlsMgr *tlsManager) {
-	tlsConf := tlsConfigSettings{}
+	var tlsConf *tlsConfigSettings
 	if tlsMgr != nil {
-		tlsMgr.WriteDiskConfig(&tlsConf)
+		tlsConf = tlsMgr.config()
 	}
 
 	port := config.HTTPConfig.Address.Port()
@@ -1078,12 +1086,12 @@ func cmdlineUpdate(
 	//
 	// TODO(e.burkov):  We could probably initialize the internal resolver
 	// separately.
-	err := initDNSServer(nil, nil, nil, nil, nil, nil, &tlsConfigSettings{}, tlsMgr, l)
+	err := initDNSServer(nil, nil, nil, nil, nil, nil, tlsMgr, l)
 	fatalOnError(err)
 
 	l.InfoContext(ctx, "performing update via cli")
 
-	info, err := upd.VersionInfo(true)
+	info, err := upd.VersionInfo(ctx, true)
 	if err != nil {
 		l.ErrorContext(ctx, "getting version info", slogutil.KeyError, err)
 
@@ -1096,7 +1104,7 @@ func cmdlineUpdate(
 		os.Exit(osutil.ExitCodeSuccess)
 	}
 
-	err = upd.Update(globalContext.firstRun)
+	err = upd.Update(ctx, globalContext.firstRun)
 	fatalOnError(err)
 
 	err = restartService()

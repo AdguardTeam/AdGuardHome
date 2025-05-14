@@ -656,7 +656,7 @@
     "blocklist": "ブロックリスト",
     "milliseconds_abbreviation": "ms",
     "cache_size": "キャッシュサイズ",
-    "cache_size_desc": "DNSキャッシュサイズ（バイト単位）。※キャッシュを無効化するには、この欄を空してください。",
+    "cache_size_desc": "DNSキャッシュサイズ（バイト単位）※キャッシュを無効化するには、「0」（ゼロ）にしてください。",
     "cache_ttl_min_override": "最小TTLの上書き（秒単位）",
     "cache_ttl_max_override": "最大TTLの上書き（秒単位）",
     "enter_cache_size": "キャッシュサイズ（バイト単位）を入力してください",

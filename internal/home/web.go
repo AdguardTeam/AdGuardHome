@@ -157,8 +157,8 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 }
 
 // tlsConfigChanged updates the TLS configuration and restarts the HTTPS server
-// if necessary.
-func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf tlsConfigSettings) {
+// if necessary.  tlsConf must not be nil.
+func (web *webAPI) tlsConfigChanged(ctx context.Context, tlsConf *tlsConfigSettings) {
 	defer slogutil.RecoverAndExit(ctx, web.logger, osutil.ExitCodeFailure)
 
 	web.logger.DebugContext(ctx, "applying new tls configuration")

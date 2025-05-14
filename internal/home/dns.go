@@ -2,6 +2,7 @@ package home
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log/slog"
 	"net"
@@ -111,9 +112,6 @@ func initDNS(
 		return err
 	}
 
-	tlsConf := &tlsConfigSettings{}
-	tlsMgr.WriteDiskConfig(tlsConf)
-
 	return initDNSServer(
 		globalContext.filters,
 		globalContext.stats,
@@ -121,16 +119,15 @@ func initDNS(
 		globalContext.dhcpServer,
 		anonymizer,
 		httpRegister,
-		tlsConf,
 		tlsMgr,
 		baseLogger,
 	)
 }
 
 // initDNSServer initializes the [context.dnsServer].  To only use the internal
-// proxy, none of the arguments are required, but tlsConf, tlsMgr and l still
-// must not be nil, in other cases all the arguments also must not be nil.  It
-// also must not be called unless [config] and [globalContext] are initialized.
+// proxy, none of the arguments are required, but tlsMgr and l still must not be
+// nil, in other cases all the arguments also must not be nil.  It also must not
+// be called unless [config] and [globalContext] are initialized.
 //
 // TODO(e.burkov): Use [dnsforward.DNSCreateParams] as a parameter.
 func initDNSServer(
@@ -140,7 +137,6 @@ func initDNSServer(
 	dhcpSrv dnsforward.DHCP,
 	anonymizer *aghnet.IPMut,
 	httpReg aghhttp.RegisterFunc,
-	tlsConf *tlsConfigSettings,
 	tlsMgr *tlsManager,
 	l *slog.Logger,
 ) (err error) {
@@ -169,7 +165,7 @@ func initDNSServer(
 	dnsConf, err := newServerConfig(
 		&config.DNS,
 		config.Clients.Sources,
-		tlsConf,
+		tlsMgr.config(),
 		tlsMgr,
 		httpReg,
 		globalContext.clients.storage,
@@ -255,11 +251,16 @@ func newServerConfig(
 	fwdConf := dnsConf.Config
 	fwdConf.ClientsContainer = clientsContainer
 
+	intTLSConf, err := newDNSTLSConfig(tlsConf, hosts)
+	if err != nil {
+		return nil, fmt.Errorf("constructing tls config: %w", err)
+	}
+
 	newConf = &dnsforward.ServerConfig{
 		UDPListenAddrs:         ipsToUDPAddrs(hosts, dnsConf.Port),
 		TCPListenAddrs:         ipsToTCPAddrs(hosts, dnsConf.Port),
 		Config:                 fwdConf,
-		TLSConfig:              newDNSTLSConfig(tlsConf, hosts),
+		TLSConf:                intTLSConf,
 		TLSAllowUnencryptedDoH: tlsConf.AllowUnencryptedDoH,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
 		TLSv12Roots:            tlsMgr.rootCerts,
@@ -305,14 +306,19 @@ func newServerConfig(
 }
 
 // newDNSTLSConfig converts values from the configuration file into the internal
-// TLS settings for the DNS server.  tlsConf must not be nil.
-func newDNSTLSConfig(conf *tlsConfigSettings, addrs []netip.Addr) (dnsConf dnsforward.TLSConfig) {
+// TLS settings for the DNS server.  conf must not be nil.
+func newDNSTLSConfig(
+	conf *tlsConfigSettings,
+	addrs []netip.Addr,
+) (dnsConf *dnsforward.TLSConfig, err error) {
 	if !conf.Enabled {
-		return dnsforward.TLSConfig{}
+		return &dnsforward.TLSConfig{}, nil
 	}
 
-	dnsConf = conf.TLSConfig
-	dnsConf.ServerName = conf.ServerName
+	dnsConf = &dnsforward.TLSConfig{
+		ServerName:     conf.ServerName,
+		StrictSNICheck: conf.StrictSNICheck,
+	}
 
 	if conf.PortHTTPS != 0 {
 		dnsConf.HTTPSListenAddrs = ipsToTCPAddrs(addrs, conf.PortHTTPS)
@@ -326,7 +332,22 @@ func newDNSTLSConfig(conf *tlsConfigSettings, addrs []netip.Addr) (dnsConf dnsfo
 		dnsConf.QUICListenAddrs = ipsToUDPAddrs(addrs, conf.PortDNSOverQUIC)
 	}
 
-	return dnsConf
+	cert, err := tls.X509KeyPair(conf.CertificateChainData, conf.PrivateKeyData)
+	if err != nil {
+		const format = "parsing tls key pair: %w"
+		if conf.AllowUnencryptedDoH {
+			// TODO(s.chzhen):  Use [slog.Logger].
+			log.Info("warning: %s: %s", format, err)
+
+			return dnsConf, nil
+		}
+
+		return nil, fmt.Errorf(format, err)
+	}
+
+	dnsConf.Cert = &cert
+
+	return dnsConf, nil
 }
 
 // newDNSCryptConfig converts values from the configuration file into the
@@ -379,8 +400,7 @@ type dnsEncryption struct {
 // getDNSEncryption returns the TLS encryption addresses that AdGuard Home
 // listens on.  tlsMgr must not be nil.
 func getDNSEncryption(tlsMgr *tlsManager) (de dnsEncryption) {
-	tlsConf := tlsConfigSettings{}
-	tlsMgr.WriteDiskConfig(&tlsConf)
+	tlsConf := tlsMgr.config()
 
 	if !tlsConf.Enabled || len(tlsConf.ServerName) == 0 {
 		return dnsEncryption{}

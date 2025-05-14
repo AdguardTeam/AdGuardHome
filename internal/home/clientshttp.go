@@ -300,7 +300,7 @@ func clientToJSON(c *client.Persistent) (cj *clientJSON) {
 
 	return &clientJSON{
 		Name:                c.Name,
-		IDs:                 c.IDs(),
+		IDs:                 c.Identifiers(),
 		Tags:                c.Tags,
 		UseGlobalSettings:   !c.UseOwnSettings,
 		FilteringEnabled:    c.FilteringEnabled,
@@ -428,32 +428,53 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 // Deprecated:  Remove it when migration to the new API is over.
 func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	data := []map[string]*clientJSON{}
+	data := make([]map[string]*clientJSON, 0, len(q))
+	params := &client.FindParams{}
+	var err error
+
 	for i := range len(q) {
 		idStr := q.Get(fmt.Sprintf("ip%d", i))
 		if idStr == "" {
 			break
 		}
 
+		err = params.Set(idStr)
+		if err != nil {
+			clients.logger.DebugContext(
+				r.Context(),
+				"finding client",
+				"id", idStr,
+				slogutil.KeyError, err,
+			)
+
+			continue
+		}
+
 		data = append(data, map[string]*clientJSON{
-			idStr: clients.findClient(idStr),
+			idStr: clients.findClient(idStr, params),
 		})
 	}
 
 	aghhttp.WriteJSONResponseOK(w, r, data)
 }
 
-// findClient returns available information about a client by idStr from the
-// client's storage or access settings.  cj is guaranteed to be non-nil.
-func (clients *clientsContainer) findClient(idStr string) (cj *clientJSON) {
-	ip, _ := netip.ParseAddr(idStr)
-	c, ok := clients.storage.Find(idStr)
+// findClient returns available information about a client by params from the
+// client's storage or access settings.  idStr is the string representation of
+// typed params.  params must not be nil.  cj is guaranteed to be non-nil.
+func (clients *clientsContainer) findClient(
+	idStr string,
+	params *client.FindParams,
+) (cj *clientJSON) {
+	c, ok := clients.storage.Find(params)
 	if !ok {
-		return clients.findRuntime(ip, idStr)
+		return clients.findRuntime(idStr, params)
 	}
 
 	cj = clientToJSON(c)
-	disallowed, rule := clients.clientChecker.IsBlockedClient(ip, idStr)
+	disallowed, rule := clients.clientChecker.IsBlockedClient(
+		params.RemoteIP,
+		string(params.ClientID),
+	)
 	cj.Disallowed, cj.DisallowedRule = &disallowed, &rule
 
 	return cj
@@ -472,7 +493,8 @@ type searchClientJSON struct {
 	ID string `json:"id"`
 }
 
-// handleSearchClient is the handler for the POST /control/clients/search HTTP API.
+// handleSearchClient is the handler for the POST /control/clients/search HTTP
+// API.
 func (clients *clientsContainer) handleSearchClient(w http.ResponseWriter, r *http.Request) {
 	q := searchQueryJSON{}
 	err := json.NewDecoder(r.Body).Decode(&q)
@@ -482,11 +504,25 @@ func (clients *clientsContainer) handleSearchClient(w http.ResponseWriter, r *ht
 		return
 	}
 
-	data := []map[string]*clientJSON{}
+	data := make([]map[string]*clientJSON, 0, len(q.Clients))
+	params := &client.FindParams{}
+
 	for _, c := range q.Clients {
 		idStr := c.ID
+		err = params.Set(idStr)
+		if err != nil {
+			clients.logger.DebugContext(
+				r.Context(),
+				"searching client",
+				"id", idStr,
+				slogutil.KeyError, err,
+			)
+
+			continue
+		}
+
 		data = append(data, map[string]*clientJSON{
-			idStr: clients.findClient(idStr),
+			idStr: clients.findClient(idStr, params),
 		})
 	}
 
@@ -494,38 +530,37 @@ func (clients *clientsContainer) handleSearchClient(w http.ResponseWriter, r *ht
 }
 
 // findRuntime looks up the IP in runtime and temporary storages, like
-// /etc/hosts tables, DHCP leases, or blocklists.  cj is guaranteed to be
-// non-nil.
-func (clients *clientsContainer) findRuntime(ip netip.Addr, idStr string) (cj *clientJSON) {
+// /etc/hosts tables, DHCP leases, or blocklists.  params must not be nil.  cj
+// is guaranteed to be non-nil.
+func (clients *clientsContainer) findRuntime(
+	idStr string,
+	params *client.FindParams,
+) (cj *clientJSON) {
+	var host string
+	whois := &whois.Info{}
+
+	ip := params.RemoteIP
 	rc := clients.storage.ClientRuntime(ip)
-	if rc == nil {
-		// It is still possible that the IP used to be in the runtime clients
-		// list, but then the server was reloaded.  So, check the DNS server's
-		// blocked IP list.
-		//
-		// See https://github.com/AdguardTeam/AdGuardHome/issues/2428.
-		disallowed, rule := clients.clientChecker.IsBlockedClient(ip, idStr)
-		cj = &clientJSON{
-			IDs:            []string{idStr},
-			Disallowed:     &disallowed,
-			DisallowedRule: &rule,
-			WHOIS:          &whois.Info{},
-		}
-
-		return cj
+	if rc != nil {
+		_, host = rc.Info()
+		whois = whoisOrEmpty(rc)
 	}
 
-	_, host := rc.Info()
-	cj = &clientJSON{
-		Name:  host,
-		IDs:   []string{idStr},
-		WHOIS: whoisOrEmpty(rc),
+	// Check the DNS server's blocked IP list regardless of whether a runtime
+	// client was found or not.  This is because it's still possible that the
+	// runtime client associated with the IP address was stored previously, but
+	// then the server was reloaded.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/2428.
+	disallowed, rule := clients.clientChecker.IsBlockedClient(ip, string(params.ClientID))
+
+	return &clientJSON{
+		Name:           host,
+		IDs:            []string{idStr},
+		WHOIS:          whois,
+		Disallowed:     &disallowed,
+		DisallowedRule: &rule,
 	}
-
-	disallowed, rule := clients.clientChecker.IsBlockedClient(ip, idStr)
-	cj.Disallowed, cj.DisallowedRule = &disallowed, &rule
-
-	return cj
 }
 
 // RegisterClientsHandlers registers HTTP handlers

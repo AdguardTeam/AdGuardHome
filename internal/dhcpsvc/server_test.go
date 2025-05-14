@@ -2,6 +2,7 @@ package dhcpsvc_test
 
 import (
 	"io/fs"
+	"net"
 	"net/netip"
 	"os"
 	"path"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -176,9 +178,9 @@ func TestDHCPServer_AddLease(t *testing.T) {
 		newIP   = netip.MustParseAddr("192.168.0.3")
 		newIPv6 = netip.MustParseAddr("2001:db8::2")
 
-		existMAC = mustParseMAC(t, "01:02:03:04:05:06")
-		newMAC   = mustParseMAC(t, "06:05:04:03:02:01")
-		ipv6MAC  = mustParseMAC(t, "02:03:04:05:06:07")
+		existMAC = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
+		newMAC   = errors.Must(net.ParseMAC("06:05:04:03:02:01"))
+		ipv6MAC  = errors.Must(net.ParseMAC("02:03:04:05:06:07"))
 	)
 
 	require.NoError(t, srv.AddLease(ctx, &dhcpsvc.Lease{
@@ -291,9 +293,9 @@ func TestDHCPServer_index(t *testing.T) {
 		ip3 = netip.MustParseAddr("172.16.0.3")
 		ip4 = netip.MustParseAddr("172.16.0.4")
 
-		mac1 = mustParseMAC(t, "01:02:03:04:05:06")
-		mac2 = mustParseMAC(t, "06:05:04:03:02:01")
-		mac3 = mustParseMAC(t, "02:03:04:05:06:07")
+		mac1 = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
+		mac2 = errors.Must(net.ParseMAC("06:05:04:03:02:01"))
+		mac3 = errors.Must(net.ParseMAC("02:03:04:05:06:07"))
 	)
 
 	t.Run("ip_idx", func(t *testing.T) {
@@ -349,9 +351,9 @@ func TestDHCPServer_UpdateStaticLease(t *testing.T) {
 		ip3 = netip.MustParseAddr("192.168.0.4")
 		ip4 = netip.MustParseAddr("2001:db8::3")
 
-		mac1 = mustParseMAC(t, "01:02:03:04:05:06")
-		mac2 = mustParseMAC(t, "06:05:04:03:02:01")
-		mac3 = mustParseMAC(t, "06:05:04:03:02:02")
+		mac1 = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
+		mac2 = errors.Must(net.ParseMAC("06:05:04:03:02:01"))
+		mac3 = errors.Must(net.ParseMAC("06:05:04:03:02:02"))
 	)
 
 	testCases := []struct {
@@ -452,9 +454,9 @@ func TestDHCPServer_RemoveLease(t *testing.T) {
 		newIP   = netip.MustParseAddr("192.168.0.3")
 		newIPv6 = netip.MustParseAddr("2001:db8::2")
 
-		existMAC = mustParseMAC(t, "01:02:03:04:05:06")
-		newMAC   = mustParseMAC(t, "02:03:04:05:06:07")
-		ipv6MAC  = mustParseMAC(t, "06:05:04:03:02:01")
+		existMAC = errors.Must(net.ParseMAC("01:02:03:04:05:06"))
+		newMAC   = errors.Must(net.ParseMAC("02:03:04:05:06:07"))
+		ipv6MAC  = errors.Must(net.ParseMAC("06:05:04:03:02:01"))
 	)
 
 	testCases := []struct {
@@ -559,13 +561,13 @@ func TestServer_Leases(t *testing.T) {
 		Expiry:   expiry,
 		IP:       netip.MustParseAddr("192.168.0.3"),
 		Hostname: "example.host",
-		HWAddr:   mustParseMAC(t, "AA:AA:AA:AA:AA:AA"),
+		HWAddr:   errors.Must(net.ParseMAC("AA:AA:AA:AA:AA:AA")),
 		IsStatic: false,
 	}, {
 		Expiry:   time.Time{},
 		IP:       netip.MustParseAddr("192.168.0.4"),
 		Hostname: "example.static.host",
-		HWAddr:   mustParseMAC(t, "BB:BB:BB:BB:BB:BB"),
+		HWAddr:   errors.Must(net.ParseMAC("BB:BB:BB:BB:BB:BB")),
 		IsStatic: true,
 	}}
 	assert.ElementsMatch(t, wantLeases, srv.Leases())

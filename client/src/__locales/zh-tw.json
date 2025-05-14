@@ -656,7 +656,7 @@
     "blocklist": "封鎖清單",
     "milliseconds_abbreviation": "ms",
     "cache_size": "快取大小",
-    "cache_size_desc": "DNS 快取大小 (位元組)。若要停用快取，請留空。",
+    "cache_size_desc": "DNS 快取大小（位元組）。若要停用快取，請設為 0。",
     "cache_ttl_min_override": "覆寫最小的存活時間（TTL）",
     "cache_ttl_max_override": "覆寫最大的存活時間（TTL）",
     "enter_cache_size": "輸入快取大小（位元組）",

@@ -15,6 +15,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
+	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -350,15 +351,15 @@ func TestClientsDHCP(t *testing.T) {
 		cliName1 = "one.dhcp"
 
 		cliIP2   = netip.MustParseAddr("2.2.2.2")
-		cliMAC2  = mustParseMAC("22:22:22:22:22:22")
+		cliMAC2  = errors.Must(net.ParseMAC("22:22:22:22:22:22"))
 		cliName2 = "two.dhcp"
 
 		cliIP3   = netip.MustParseAddr("3.3.3.3")
-		cliMAC3  = mustParseMAC("33:33:33:33:33:33")
+		cliMAC3  = errors.Must(net.ParseMAC("33:33:33:33:33:33"))
 		cliName3 = "three.dhcp"
 
 		prsCliIP   = netip.MustParseAddr("4.3.2.1")
-		prsCliMAC  = mustParseMAC("AA:AA:AA:AA:AA:AA")
+		prsCliMAC  = errors.Must(net.ParseMAC("AA:AA:AA:AA:AA:AA"))
 		prsCliName = "persistent.dhcp"
 
 		otherARPCliName = "other.arp"
@@ -519,7 +520,11 @@ func TestClientsDHCP(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		prsCli, ok := storage.Find(prsCliIP.String())
+		params := &client.FindParams{}
+		err = params.Set(prsCliIP.String())
+		require.NoError(t, err)
+
+		prsCli, ok := storage.Find(params)
 		require.True(t, ok)
 
 		assert.Equal(t, prsCliName, prsCli.Name)
@@ -663,17 +668,6 @@ func newStorage(tb testing.TB, m []*client.Persistent) (s *client.Storage) {
 	return s
 }
 
-// mustParseMAC is wrapper around [net.ParseMAC] that panics if there is an
-// error.
-func mustParseMAC(s string) (mac net.HardwareAddr) {
-	mac, err := net.ParseMAC(s)
-	if err != nil {
-		panic(err)
-	}
-
-	return mac
-}
-
 func TestStorage_Add(t *testing.T) {
 	const (
 		existingName     = "existing_name"
@@ -693,7 +687,7 @@ func TestStorage_Add(t *testing.T) {
 		Name:      existingName,
 		IPs:       []netip.Addr{existingIP},
 		Subnets:   []netip.Prefix{existingSubnet},
-		ClientIDs: []string{existingClientID},
+		ClientIDs: []client.ClientID{existingClientID},
 		UID:       existingClientUID,
 	}
 
@@ -761,7 +755,7 @@ func TestStorage_Add(t *testing.T) {
 		name: "duplicate_client_id",
 		cli: &client.Persistent{
 			Name:      "duplicate_client_id",
-			ClientIDs: []string{existingClientID},
+			ClientIDs: []client.ClientID{existingClientID},
 			UID:       client.MustNewUID(),
 		},
 		wantErrMsg: `adding client: another client "existing_name" ` +
@@ -898,12 +892,12 @@ func TestStorage_Find(t *testing.T) {
 
 		clientWithMAC = &client.Persistent{
 			Name: "client_with_mac",
-			MACs: []net.HardwareAddr{mustParseMAC(cliMAC)},
+			MACs: []net.HardwareAddr{errors.Must(net.ParseMAC(cliMAC))},
 		}
 
 		clientWithID = &client.Persistent{
 			Name:      "client_with_id",
-			ClientIDs: []string{cliID},
+			ClientIDs: []client.ClientID{cliID},
 		}
 
 		clientLinkLocal = &client.Persistent{
@@ -950,7 +944,11 @@ func TestStorage_Find(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, id := range tc.ids {
-				c, ok := s.Find(id)
+				params := &client.FindParams{}
+				err := params.Set(id)
+				require.NoError(t, err)
+
+				c, ok := s.Find(params)
 				require.True(t, ok)
 
 				assert.Equal(t, tc.want, c)
@@ -959,7 +957,11 @@ func TestStorage_Find(t *testing.T) {
 	}
 
 	t.Run("not_found", func(t *testing.T) {
-		_, ok := s.Find(cliIPNone)
+		params := &client.FindParams{}
+		err := params.Set(cliIPNone)
+		require.NoError(t, err)
+
+		_, ok := s.Find(params)
 		assert.False(t, ok)
 	})
 }
@@ -1025,127 +1027,6 @@ func TestStorage_FindLoose(t *testing.T) {
 	}
 }
 
-func TestStorage_FindByName(t *testing.T) {
-	const (
-		cliIP1 = "1.1.1.1"
-		cliIP2 = "2.2.2.2"
-	)
-
-	const (
-		clientExistingName        = "client_existing"
-		clientAnotherExistingName = "client_another_existing"
-		nonExistingClientName     = "client_non_existing"
-	)
-
-	var (
-		clientExisting = &client.Persistent{
-			Name: clientExistingName,
-			IPs:  []netip.Addr{netip.MustParseAddr(cliIP1)},
-		}
-
-		clientAnotherExisting = &client.Persistent{
-			Name: clientAnotherExistingName,
-			IPs:  []netip.Addr{netip.MustParseAddr(cliIP2)},
-		}
-	)
-
-	clients := []*client.Persistent{
-		clientExisting,
-		clientAnotherExisting,
-	}
-	s := newStorage(t, clients)
-
-	testCases := []struct {
-		want       *client.Persistent
-		name       string
-		clientName string
-	}{{
-		name:       "existing",
-		clientName: clientExistingName,
-		want:       clientExisting,
-	}, {
-		name:       "another_existing",
-		clientName: clientAnotherExistingName,
-		want:       clientAnotherExisting,
-	}, {
-		name:       "non_existing",
-		clientName: nonExistingClientName,
-		want:       nil,
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			c, ok := s.FindByName(tc.clientName)
-			if tc.want == nil {
-				assert.False(t, ok)
-
-				return
-			}
-
-			assert.True(t, ok)
-			assert.Equal(t, tc.want, c)
-		})
-	}
-}
-
-func TestStorage_FindByMAC(t *testing.T) {
-	var (
-		cliMAC               = mustParseMAC("11:11:11:11:11:11")
-		cliAnotherMAC        = mustParseMAC("22:22:22:22:22:22")
-		nonExistingClientMAC = mustParseMAC("33:33:33:33:33:33")
-	)
-
-	var (
-		clientExisting = &client.Persistent{
-			Name: "client",
-			MACs: []net.HardwareAddr{cliMAC},
-		}
-
-		clientAnotherExisting = &client.Persistent{
-			Name: "another_client",
-			MACs: []net.HardwareAddr{cliAnotherMAC},
-		}
-	)
-
-	clients := []*client.Persistent{
-		clientExisting,
-		clientAnotherExisting,
-	}
-	s := newStorage(t, clients)
-
-	testCases := []struct {
-		want      *client.Persistent
-		name      string
-		clientMAC net.HardwareAddr
-	}{{
-		name:      "existing",
-		clientMAC: cliMAC,
-		want:      clientExisting,
-	}, {
-		name:      "another_existing",
-		clientMAC: cliAnotherMAC,
-		want:      clientAnotherExisting,
-	}, {
-		name:      "non_existing",
-		clientMAC: nonExistingClientMAC,
-		want:      nil,
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			c, ok := s.FindByMAC(tc.clientMAC)
-			if tc.want == nil {
-				assert.False(t, ok)
-
-				return
-			}
-
-			assert.True(t, ok)
-			assert.Equal(t, tc.want, c)
-		})
-	}
-}
-
 func TestStorage_Update(t *testing.T) {
 	const (
 		clientName          = "client_name"
@@ -1162,7 +1043,7 @@ func TestStorage_Update(t *testing.T) {
 		Name:      obstructingName,
 		IPs:       []netip.Addr{obstructingIP},
 		Subnets:   []netip.Prefix{obstructingSubnet},
-		ClientIDs: []string{obstructingClientID},
+		ClientIDs: []client.ClientID{obstructingClientID},
 	}
 
 	clientToUpdate := &client.Persistent{
@@ -1211,7 +1092,7 @@ func TestStorage_Update(t *testing.T) {
 		name: "duplicate_client_id",
 		cli: &client.Persistent{
 			Name:      "duplicate_client_id",
-			ClientIDs: []string{obstructingClientID},
+			ClientIDs: []client.ClientID{obstructingClientID},
 			UID:       client.MustNewUID(),
 		},
 		wantErrMsg: `updating client: another client "obstructing_name" ` +
@@ -1238,19 +1119,19 @@ func TestStorage_Update(t *testing.T) {
 func TestStorage_RangeByName(t *testing.T) {
 	sortedClients := []*client.Persistent{{
 		Name:      "clientA",
-		ClientIDs: []string{"A"},
+		ClientIDs: []client.ClientID{"A"},
 	}, {
 		Name:      "clientB",
-		ClientIDs: []string{"B"},
+		ClientIDs: []client.ClientID{"B"},
 	}, {
 		Name:      "clientC",
-		ClientIDs: []string{"C"},
+		ClientIDs: []client.ClientID{"C"},
 	}, {
 		Name:      "clientD",
-		ClientIDs: []string{"D"},
+		ClientIDs: []client.ClientID{"D"},
 	}, {
 		Name:      "clientE",
-		ClientIDs: []string{"E"},
+		ClientIDs: []client.ClientID{"E"},
 	}}
 
 	testCases := []struct {
@@ -1288,28 +1169,19 @@ func TestStorage_RangeByName(t *testing.T) {
 
 func TestStorage_CustomUpstreamConfig(t *testing.T) {
 	const (
-		existingName     = "existing_name"
-		existingClientID = "existing_client_id"
-
+		existingClientID    = "existing_client_id"
 		nonExistingClientID = "non_existing_client_id"
 	)
 
 	var (
-		existingClientUID = client.MustNewUID()
-		existingIP        = netip.MustParseAddr("192.0.2.1")
-
+		existingIP    = netip.MustParseAddr("192.0.2.1")
 		nonExistingIP = netip.MustParseAddr("192.0.2.255")
+
+		dhcpCliIP  = netip.MustParseAddr("192.0.2.2")
+		dhcpCliMAC = errors.Must(net.ParseMAC("02:00:00:00:00:00"))
 
 		testUpstreamTimeout = time.Second
 	)
-
-	existingClient := &client.Persistent{
-		Name:      existingName,
-		IPs:       []netip.Addr{existingIP},
-		ClientIDs: []string{existingClientID},
-		UID:       existingClientUID,
-		Upstreams: []string{"192.0.2.0"},
-	}
 
 	date := time.Now()
 	clock := &faketime.Clock{
@@ -1320,7 +1192,30 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		},
 	}
 
-	s := newTestStorage(t, clock)
+	ipToMAC := map[netip.Addr]net.HardwareAddr{
+		dhcpCliIP: dhcpCliMAC,
+	}
+
+	dhcp := &testDHCP{
+		OnLeases: func() (ls []*dhcpsvc.Lease) {
+			panic("not implemented")
+		},
+		OnHostBy: func(ip netip.Addr) (host string) {
+			panic("not implemented")
+		},
+		OnMACBy: func(ip netip.Addr) (mac net.HardwareAddr) {
+			return ipToMAC[ip]
+		},
+	}
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	s, err := client.NewStorage(ctx, &client.StorageConfig{
+		Logger: slogutil.NewDiscardLogger(),
+		Clock:  clock,
+		DHCP:   dhcp,
+	})
+	require.NoError(t, err)
+
 	s.UpdateCommonUpstreamConfig(&client.CommonUpstreamConfig{
 		UpstreamTimeout: testUpstreamTimeout,
 	})
@@ -1329,8 +1224,21 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		return s.Shutdown(testutil.ContextWithTimeout(t, testTimeout))
 	})
 
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	err := s.Add(ctx, existingClient)
+	err = s.Add(ctx, &client.Persistent{
+		Name:      "client_first",
+		IPs:       []netip.Addr{existingIP},
+		ClientIDs: []client.ClientID{existingClientID},
+		UID:       client.MustNewUID(),
+		Upstreams: []string{"192.0.2.0"},
+	})
+	require.NoError(t, err)
+
+	err = s.Add(ctx, &client.Persistent{
+		Name:      "client_second",
+		MACs:      []net.HardwareAddr{dhcpCliMAC},
+		UID:       client.MustNewUID(),
+		Upstreams: []string{"192.0.2.0"},
+	})
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -1347,6 +1255,11 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		name:        "client_addr",
 		cliID:       "",
 		cliAddr:     existingIP,
+		wantNilConf: assert.NotNil,
+	}, {
+		name:        "client_dhcp",
+		cliID:       "",
+		cliAddr:     dhcpCliIP,
 		wantNilConf: assert.NotNil,
 	}, {
 		name:        "non_existing_client_id",
@@ -1380,4 +1293,193 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 
 		assert.NotEqual(t, conf, updConf)
 	})
+
+	t.Run("same_custom_config", func(t *testing.T) {
+		firstConf := s.CustomUpstreamConfig(existingClientID, existingIP)
+		require.NotNil(t, firstConf)
+
+		secondConf := s.CustomUpstreamConfig(existingClientID, existingIP)
+		require.NotNil(t, secondConf)
+
+		assert.Same(t, firstConf, secondConf)
+	})
+}
+
+func BenchmarkFindParams_Set(b *testing.B) {
+	const (
+		testIPStr    = "192.0.2.1"
+		testCIDRStr  = "192.0.2.0/24"
+		testMACStr   = "02:00:00:00:00:00"
+		testClientID = "clientid"
+	)
+
+	benchCases := []struct {
+		wantErr error
+		params  *client.FindParams
+		name    string
+		id      string
+	}{{
+		wantErr: nil,
+		params: &client.FindParams{
+			ClientID: testClientID,
+		},
+		name: "client_id",
+		id:   testClientID,
+	}, {
+		wantErr: nil,
+		params: &client.FindParams{
+			RemoteIP: netip.MustParseAddr(testIPStr),
+		},
+		name: "ip_address",
+		id:   testIPStr,
+	}, {
+		wantErr: nil,
+		params: &client.FindParams{
+			Subnet: netip.MustParsePrefix(testCIDRStr),
+		},
+		name: "subnet",
+		id:   testCIDRStr,
+	}, {
+		wantErr: nil,
+		params: &client.FindParams{
+			MAC: errors.Must(net.ParseMAC(testMACStr)),
+		},
+		name: "mac_address",
+		id:   testMACStr,
+	}, {
+		wantErr: client.ErrBadIdentifier,
+		params:  &client.FindParams{},
+		name:    "bad_id",
+		id:      "!@#$%^&*()_+",
+	}}
+
+	for _, bc := range benchCases {
+		b.Run(bc.name, func(b *testing.B) {
+			params := &client.FindParams{}
+			var err error
+
+			b.ReportAllocs()
+			for b.Loop() {
+				err = params.Set(bc.id)
+			}
+
+			assert.ErrorIs(b, err, bc.wantErr)
+			assert.Equal(b, bc.params, params)
+		})
+	}
+
+	// Most recent results:
+	//
+	//	goos: linux
+	//	goarch: amd64
+	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/client
+	//	cpu: Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz
+	//	BenchmarkFindParams_Set/client_id-8         	49463488	        24.27 ns/op	       0 B/op	       0 allocs/op
+	//	BenchmarkFindParams_Set/ip_address-8        	18740977	        62.22 ns/op	       0 B/op	       0 allocs/op
+	//	BenchmarkFindParams_Set/subnet-8            	10848192	       110.0 ns/op	       0 B/op	       0 allocs/op
+	//	BenchmarkFindParams_Set/mac_address-8       	 8148494	       133.2 ns/op	       8 B/op	       1 allocs/op
+	//	BenchmarkFindParams_Set/bad_id-8            	73894278	        16.29 ns/op	       0 B/op	       0 allocs/op
+}
+
+func BenchmarkStorage_Find(b *testing.B) {
+	const (
+		cliID  = "cid"
+		cliMAC = "02:00:00:00:00:00"
+	)
+
+	const (
+		cliNameWithID   = "client_with_id"
+		cliNameWithIP   = "client_with_ip"
+		cliNameWithCIDR = "client_with_cidr"
+		cliNameWithMAC  = "client_with_mac"
+	)
+
+	var (
+		cliIP   = netip.MustParseAddr("192.0.2.1")
+		cliCIDR = netip.MustParsePrefix("192.0.2.0/24")
+	)
+
+	var (
+		clientWithID = &client.Persistent{
+			Name:      cliNameWithID,
+			ClientIDs: []client.ClientID{cliID},
+		}
+		clientWithIP = &client.Persistent{
+			Name: cliNameWithIP,
+			IPs:  []netip.Addr{cliIP},
+		}
+		clientWithCIDR = &client.Persistent{
+			Name:    cliNameWithCIDR,
+			Subnets: []netip.Prefix{cliCIDR},
+		}
+		clientWithMAC = &client.Persistent{
+			Name: cliNameWithMAC,
+			MACs: []net.HardwareAddr{errors.Must(net.ParseMAC(cliMAC))},
+		}
+	)
+
+	clients := []*client.Persistent{
+		clientWithID,
+		clientWithIP,
+		clientWithCIDR,
+		clientWithMAC,
+	}
+	s := newStorage(b, clients)
+
+	benchCases := []struct {
+		params   *client.FindParams
+		name     string
+		wantName string
+	}{{
+		params: &client.FindParams{
+			ClientID: cliID,
+		},
+		name:     "client_id",
+		wantName: cliNameWithID,
+	}, {
+		params: &client.FindParams{
+			RemoteIP: cliIP,
+		},
+		name:     "ip_address",
+		wantName: cliNameWithIP,
+	}, {
+		params: &client.FindParams{
+			Subnet: cliCIDR,
+		},
+		name:     "subnet",
+		wantName: cliNameWithCIDR,
+	}, {
+		params: &client.FindParams{
+			MAC: errors.Must(net.ParseMAC(cliMAC)),
+		},
+		name:     "mac_address",
+		wantName: cliNameWithMAC,
+	}}
+
+	for _, bc := range benchCases {
+		b.Run(bc.name, func(b *testing.B) {
+			var p *client.Persistent
+			var ok bool
+
+			b.ReportAllocs()
+			for b.Loop() {
+				p, ok = s.Find(bc.params)
+			}
+
+			assert.True(b, ok)
+			assert.NotNil(b, p)
+			assert.Equal(b, bc.wantName, p.Name)
+		})
+	}
+
+	// Most recent results:
+	//
+	//	goos: linux
+	//	goarch: amd64
+	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/client
+	//	cpu: Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz
+	//	BenchmarkStorage_Find/client_id-8         	 7070107	       154.4 ns/op	     240 B/op	       2 allocs/op
+	//	BenchmarkStorage_Find/ip_address-8        	 6831823	       168.6 ns/op	     248 B/op	       2 allocs/op
+	//	BenchmarkStorage_Find/subnet-8            	 7209050	       167.5 ns/op	     256 B/op	       2 allocs/op
+	//	BenchmarkStorage_Find/mac_address-8       	 5776131	       199.7 ns/op	     256 B/op	       3 allocs/op
 }

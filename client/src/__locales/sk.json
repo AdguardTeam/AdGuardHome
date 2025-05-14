@@ -656,7 +656,7 @@
     "blocklist": "Zoznam blokovaní",
     "milliseconds_abbreviation": "ms",
     "cache_size": "Veľkosť cache",
-    "cache_size_desc": "Veľkosť vyrovnávacej pamäte DNS (v bajtoch). Ak chcete zakázať ukladanie do vyrovnávacej pamäte, ponechajte pole prázdne.",
+    "cache_size_desc": "Veľkosť vyrovnávacej pamäte DNS (v bajtoch). Ak chcete vypnúť ukladanie do vyrovnávacej pamäte, nastavte hodnotu 0.",
     "cache_ttl_min_override": "Prepísať minimálne TTL",
     "cache_ttl_max_override": "Prepísať maximálne TTL",
     "enter_cache_size": "Zadať veľkosť cache (v bajtoch)",

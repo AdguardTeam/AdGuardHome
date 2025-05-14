@@ -15,7 +15,6 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
-	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/google/uuid"
 )
 
@@ -71,7 +70,9 @@ type Persistent struct {
 	// Tags is a list of client tags that categorize the client.
 	Tags []string
 
-	// Upstreams is a list of custom upstream DNS servers for the client.
+	// Upstreams is a list of custom upstream DNS servers for the client.  If
+	// it's empty, the custom upstream cache is disabled, regardless of the
+	// value of UpstreamsCacheEnabled.
 	Upstreams []string
 
 	// IPs is a list of IP addresses that identify the client.  The client must
@@ -90,15 +91,16 @@ type Persistent struct {
 
 	// ClientIDs identifying the client.  The client must have at least one ID
 	// (IP, subnet, MAC, or ClientID).
-	ClientIDs []string
+	ClientIDs []ClientID
 
 	// UID is the unique identifier of the persistent client.
 	UID UID
 
-	// UpstreamsCacheSize is the cache size for custom upstreams.
+	// UpstreamsCacheSize defines the size of the custom upstream cache.
 	UpstreamsCacheSize uint32
 
-	// UpstreamsCacheEnabled specifies whether custom upstreams are used.
+	// UpstreamsCacheEnabled specifies whether the custom upstream cache is
+	// used.  If true, the list of Upstreams should not be empty.
 	UpstreamsCacheEnabled bool
 
 	// UseOwnSettings specifies whether custom filtering settings are used.
@@ -134,7 +136,7 @@ func (c *Persistent) validate(ctx context.Context, l *slog.Logger, allTags []str
 	switch {
 	case c.Name == "":
 		return errors.Error("empty name")
-	case c.IDsLen() == 0:
+	case c.idendifiersLen() == 0:
 		return errors.Error("id required")
 	case c.UID == UID{}:
 		return errors.Error("uid required")
@@ -237,28 +239,15 @@ func (c *Persistent) setID(id string) (err error) {
 		return err
 	}
 
-	c.ClientIDs = append(c.ClientIDs, strings.ToLower(id))
+	c.ClientIDs = append(c.ClientIDs, ClientID(strings.ToLower(id)))
 
 	return nil
 }
 
-// ValidateClientID returns an error if id is not a valid ClientID.
-//
-// TODO(s.chzhen):  It's an exact copy of the [dnsforward.ValidateClientID] to
-// avoid the import cycle.  Remove it.
-func ValidateClientID(id string) (err error) {
-	err = netutil.ValidateHostnameLabel(id)
-	if err != nil {
-		// Replace the domain name label wrapper with our own.
-		return fmt.Errorf("invalid clientid %q: %w", id, errors.Unwrap(err))
-	}
-
-	return nil
-}
-
-// IDs returns a list of ClientIDs containing at least one element.
-func (c *Persistent) IDs() (ids []string) {
-	ids = make([]string, 0, c.IDsLen())
+// Identifiers returns a list of client identifiers containing at least one
+// element.
+func (c *Persistent) Identifiers() (ids []string) {
+	ids = make([]string, 0, c.idendifiersLen())
 
 	for _, ip := range c.IPs {
 		ids = append(ids, ip.String())
@@ -272,11 +261,15 @@ func (c *Persistent) IDs() (ids []string) {
 		ids = append(ids, mac.String())
 	}
 
-	return append(ids, c.ClientIDs...)
+	for _, cid := range c.ClientIDs {
+		ids = append(ids, string(cid))
+	}
+
+	return ids
 }
 
-// IDsLen returns a length of ClientIDs.
-func (c *Persistent) IDsLen() (n int) {
+// identifiersLen returns the number of client identifiers.
+func (c *Persistent) idendifiersLen() (n int) {
 	return len(c.IPs) + len(c.Subnets) + len(c.MACs) + len(c.ClientIDs)
 }
 
