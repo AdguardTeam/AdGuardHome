@@ -18,15 +18,21 @@ See also the [v0.107.62 GitHub milestone][ms-v0.107.62].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.3][go-1.24.3].
+
 ### Fixed
 
-- Command line option `--update` when the `dns.serve_plain_dns` configuration property was disabled ([7801]).
+- Command line option `--update` when the `dns.serve_plain_dns` configuration property was disabled ([#7801]).
 
 - DNS cache not working for custom upstream configurations.
 
 - Validation process for the DNS-over-TLS, DNS-over-QUIC, and HTTPS ports on the *Encryption Settings* page.
 
 [#7801]: https://github.com/AdguardTeam/AdGuardHome/issues/7801
+
+[go-1.24.3]: https://groups.google.com/g/golang-announce/c/UZoIkUT367A
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
