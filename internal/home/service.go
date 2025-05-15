@@ -466,6 +466,9 @@ var launchdConfig = `<?xml version='1.0' encoding='UTF-8'?>
 //  2. The StandardOutput and StandardError settings are set to redirect the
 //     output to the systemd journal, see
 //     https://man7.org/linux/man-pages/man5/systemd.exec.5.html#LOGGING_AND_STANDARD_INPUT/OUTPUT.
+//
+//  3. The Type setting has been configured to enable service readiness
+//     notification support.
 const systemdScript = `[Unit]
 Description={{.Description}}
 ConditionFileIsExecutable={{.Path|cmdEscape}}
@@ -473,6 +476,7 @@ ConditionFileIsExecutable={{.Path|cmdEscape}}
 {{$dep}} {{end}}
 
 [Service]
+Type=notify
 StartLimitInterval=5
 StartLimitBurst=10
 ExecStart={{.Path|cmdEscape}}{{range .Arguments}} {{.|cmd}}{{end}}
