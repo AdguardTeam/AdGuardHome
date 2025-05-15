@@ -140,6 +140,7 @@ func (m *upstreamManager) customUpstreamConfig(uid UID) (proxyConf *proxy.Custom
 	cliConf.proxyConf = proxyConf
 	cliConf.commonConfUpdate = m.confUpdate
 	cliConf.isChanged = false
+	cliConf.commonConfUpdate = m.confUpdate
 
 	return proxyConf
 }
