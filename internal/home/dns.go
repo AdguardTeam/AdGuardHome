@@ -119,16 +119,15 @@ func initDNS(
 		globalContext.dhcpServer,
 		anonymizer,
 		httpRegister,
-		tlsMgr.config(),
 		tlsMgr,
 		baseLogger,
 	)
 }
 
 // initDNSServer initializes the [context.dnsServer].  To only use the internal
-// proxy, none of the arguments are required, but tlsConf, tlsMgr and l still
-// must not be nil, in other cases all the arguments also must not be nil.  It
-// also must not be called unless [config] and [globalContext] are initialized.
+// proxy, none of the arguments are required, but tlsMgr and l still must not be
+// nil, in other cases all the arguments also must not be nil.  It also must not
+// be called unless [config] and [globalContext] are initialized.
 //
 // TODO(e.burkov): Use [dnsforward.DNSCreateParams] as a parameter.
 func initDNSServer(
@@ -138,7 +137,6 @@ func initDNSServer(
 	dhcpSrv dnsforward.DHCP,
 	anonymizer *aghnet.IPMut,
 	httpReg aghhttp.RegisterFunc,
-	tlsConf *tlsConfigSettings,
 	tlsMgr *tlsManager,
 	l *slog.Logger,
 ) (err error) {
@@ -167,7 +165,7 @@ func initDNSServer(
 	dnsConf, err := newServerConfig(
 		&config.DNS,
 		config.Clients.Sources,
-		tlsConf,
+		tlsMgr.config(),
 		tlsMgr,
 		httpReg,
 		globalContext.clients.storage,

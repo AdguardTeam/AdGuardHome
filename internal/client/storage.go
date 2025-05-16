@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/netip"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
@@ -478,7 +477,7 @@ const ErrBadIdentifier errors.Error = "bad client identifier"
 func (p *FindParams) Set(id string) (err error) {
 	*p = FindParams{}
 
-	isClientID := true
+	isFound := false
 
 	if netutil.IsValidIPString(id) {
 		// It is safe to use [netip.MustParseAddr] because it has already been
@@ -488,24 +487,27 @@ func (p *FindParams) Set(id string) (err error) {
 
 		// Even if id can be parsed as an IP address, it may be a MAC address.
 		// So do not return prematurely, continue parsing.
-		isClientID = false
+		isFound = true
 	}
 
-	if canBeValidIPPrefixString(id) {
-		p.Subnet, err = netip.ParsePrefix(id)
-		if err == nil {
-			isClientID = false
-		}
-	}
-
-	if canBeMACString(id) {
+	if netutil.IsValidMACString(id) {
 		p.MAC, err = net.ParseMAC(id)
-		if err == nil {
-			isClientID = false
+		if err != nil {
+			panic(fmt.Errorf("parsing mac from %q: %w", id, err))
 		}
+
+		isFound = true
 	}
 
-	if !isClientID {
+	if isFound {
+		return nil
+	}
+
+	if netutil.IsValidIPPrefixString(id) {
+		// It is safe to use [netip.MustParsePrefix] because it has already been
+		// validated that id contains the string representation of IP prefix.
+		p.Subnet = netip.MustParsePrefix(id)
+
 		return nil
 	}
 
@@ -516,57 +518,6 @@ func (p *FindParams) Set(id string) (err error) {
 	p.ClientID = ClientID(id)
 
 	return nil
-}
-
-// canBeValidIPPrefixString is a best-effort check to determine if s is a valid
-// CIDR before using [netip.ParsePrefix], aimed at reducing allocations.
-//
-// TODO(s.chzhen):  Replace this implementation with the more robust version
-// from golibs.
-func canBeValidIPPrefixString(s string) (ok bool) {
-	ipStr, bitStr, ok := strings.Cut(s, "/")
-	if !ok {
-		return false
-	}
-
-	if bitStr == "" || len(bitStr) > 3 {
-		return false
-	}
-
-	bits := 0
-	for _, c := range bitStr {
-		if c < '0' || c > '9' {
-			return false
-		}
-
-		bits = bits*10 + int(c-'0')
-	}
-
-	if bits > 128 {
-		return false
-	}
-
-	return netutil.IsValidIPString(ipStr)
-}
-
-// canBeMACString is a best-effort check to determine if s is a valid MAC
-// address before using [net.ParseMAC], aimed at reducing allocations.
-//
-// TODO(s.chzhen):  Replace this implementation with the more robust version
-// from golibs.
-func canBeMACString(s string) (ok bool) {
-	switch len(s) {
-	case
-		len("0000.0000.0000"),
-		len("00:00:00:00:00:00"),
-		len("0000.0000.0000.0000"),
-		len("00:00:00:00:00:00:00:00"),
-		len("0000.0000.0000.0000.0000.0000.0000.0000.0000.0000"),
-		len("00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00"):
-		return true
-	default:
-		return false
-	}
 }
 
 // Find represents the parameters for searching a client.  params must not be

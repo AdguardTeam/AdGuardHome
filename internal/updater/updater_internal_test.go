@@ -1,12 +1,16 @@
 package updater
 
 import (
+	"context"
 	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -55,6 +59,7 @@ func TestUpdater_internal(t *testing.T) {
 
 		u := NewUpdater(&Config{
 			Client:   fakeClient,
+			Logger:   slogutil.NewDiscardLogger(),
 			GOOS:     tc.os,
 			Version:  "v0.103.0",
 			ExecPath: exePath,
@@ -68,13 +73,13 @@ func TestUpdater_internal(t *testing.T) {
 		u.newVersion = "v0.103.1"
 		u.packageURL = fakeURL.String()
 
-		require.NoError(t, u.prepare())
-		require.NoError(t, u.downloadPackageFile())
-		require.NoError(t, u.unpack())
-		require.NoError(t, u.backup(false))
-		require.NoError(t, u.replace())
+		require.NoError(t, u.prepare(newCtx(t)))
+		require.NoError(t, u.downloadPackageFile(newCtx(t)))
+		require.NoError(t, u.unpack(newCtx(t)))
+		require.NoError(t, u.backup(newCtx(t), false))
+		require.NoError(t, u.replace(newCtx(t)))
 
-		u.clean()
+		u.clean(newCtx(t))
 
 		require.True(t, t.Run("backup", func(t *testing.T) {
 			var d []byte
@@ -112,4 +117,9 @@ func TestUpdater_internal(t *testing.T) {
 			assert.Equal(t, "AdGuardHome.yaml", string(d))
 		}))
 	}
+}
+
+// newCtx is a helper that returns a new context with a timeout.
+func newCtx(tb testing.TB) (ctx context.Context) {
+	return testutil.ContextWithTimeout(tb, 1*time.Second)
 }

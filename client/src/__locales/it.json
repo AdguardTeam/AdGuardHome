@@ -656,7 +656,7 @@
     "blocklist": "Lista nera",
     "milliseconds_abbreviation": "ms",
     "cache_size": "Dimensioni cache",
-    "cache_size_desc": "Dimensione della cache DNS (in byte). Per disabilitare la cache, impostare su 0.",
+    "cache_size_desc": "Dimensione della memoria temporanea DNS (in byte). Per disabilitare la memoria temporanea, impostare a 0.",
     "cache_ttl_min_override": "Sovrascrivi TTL minimo",
     "cache_ttl_max_override": "Sovrascrivi TTL massimo",
     "enter_cache_size": "Immetti dimensioni cache (in byte)",

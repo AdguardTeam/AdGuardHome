@@ -193,7 +193,10 @@ func (m *tlsManager) start(_ context.Context) {
 	m.web.tlsConfigChanged(context.Background(), m.conf)
 }
 
-// reload updates the configuration and restarts the TLS manager.
+// reload updates the configuration and restarts the TLS manager.  It logs any
+// encountered errors.
+//
+// TODO(s.chzhen):  Consider returning an error.
 func (m *tlsManager) reload(ctx context.Context) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
