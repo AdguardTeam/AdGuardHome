@@ -22,7 +22,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// TODO(s.chzhen): !! Improve naming.
 func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 	storeGlobals(t)
 
@@ -38,74 +37,90 @@ func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 	globalContext.web = web
 
 	testCases := []struct {
-		url      string
+		name     string
+		path     string
 		method   string
 		wantCode int
 	}{{
-		url:      "/",
+		name:     "root",
+		path:     "/",
 		method:   http.MethodGet,
 		wantCode: http.StatusFound,
 	}, {
-		url:      "/apple/doh.mobileconfig",
+		name:     "doh_mobileconfig",
+		path:     "/apple/doh.mobileconfig",
 		method:   http.MethodGet,
 		wantCode: http.StatusFound,
 	}, {
-		url:      "/apple/dot.mobileconfig",
+		name:     "dot_mobileconfig",
+		path:     "/apple/dot.mobileconfig",
 		method:   http.MethodGet,
 		wantCode: http.StatusFound,
 	}, {
-		url:      "/control/i18n/change_language",
+		name:     "change_language",
+		path:     "/control/i18n/change_language",
 		method:   http.MethodGet,
 		wantCode: http.StatusFound,
 	}, {
-		url:      "/control/i18n/current_language",
+		name:     "current_language",
+		path:     "/control/i18n/current_language",
 		method:   http.MethodGet,
 		wantCode: http.StatusFound,
 	}, {
-		url:      "/control/install/check_config",
+		name:     "check_config",
+		path:     "/control/install/check_config",
 		method:   http.MethodPost,
 		wantCode: http.StatusBadRequest,
 	}, {
-		url:      "/control/install/configure",
+		name:     "configure",
+		path:     "/control/install/configure",
 		method:   http.MethodPost,
 		wantCode: http.StatusBadRequest,
 	}, {
-		url:      "/control/install/get_addresses",
+		name:     "get_addresses",
+		path:     "/control/install/get_addresses",
 		method:   http.MethodGet,
 		wantCode: http.StatusOK,
 	}, {
-		url:      "/control/login",
+		name:     "login",
+		path:     "/control/login",
 		method:   http.MethodPost,
 		wantCode: http.StatusFound,
 	}, {
-		url:      "/control/logout",
+		name:     "logout",
+		path:     "/control/logout",
 		method:   http.MethodGet,
 		wantCode: http.StatusFound,
 	}, {
-		url:      "/control/profile",
+		name:     "profile",
+		path:     "/control/profile",
 		method:   http.MethodGet,
 		wantCode: http.StatusFound,
 	}, {
-		url:      "/control/profile/update",
+		name:     "profile_update",
+		path:     "/control/profile/update",
 		method:   http.MethodGet,
 		wantCode: http.StatusFound,
 	}, {
-		url:      "/control/status",
+		name:     "status",
+		path:     "/control/status",
 		method:   http.MethodGet,
 		wantCode: http.StatusFound,
 	}, {
-		url:      "/control/update",
+		name:     "update",
+		path:     "/control/update",
 		method:   http.MethodGet,
 		wantCode: http.StatusFound,
 	}, {
-		url:      "/control/version.json",
+		name:     "version",
+		path:     "/control/version.json",
 		method:   http.MethodGet,
 		wantCode: http.StatusFound,
 	}}
 
 	for _, tc := range testCases {
-		t.Run(tc.url, func(t *testing.T) {
-			r := httptest.NewRequest(tc.method, tc.url, nil)
+		t.Run(tc.name, func(t *testing.T) {
+			r := httptest.NewRequest(tc.method, tc.path, nil)
 
 			h, pattern := mux.Handler(r)
 			require.NotEmpty(t, pattern)
@@ -170,45 +185,52 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
 
 	testCases := []struct {
-		url      string
+		name     string
+		path     string
 		method   string
 		wantCode int
 	}{{
-		url:      "/control/i18n/change_language",
+		name:     "change_language",
+		path:     "/control/i18n/change_language",
 		method:   http.MethodPost,
 		wantCode: http.StatusInternalServerError,
 	}, {
-		url:      "/control/i18n/current_language",
+		name:     "current_language",
+		path:     "/control/i18n/current_language",
 		method:   http.MethodGet,
 		wantCode: http.StatusOK,
 	}, {
-		url:      "/control/profile",
+		name:     "profile",
+		path:     "/control/profile",
 		method:   http.MethodGet,
 		wantCode: http.StatusOK,
 	}, {
-		url:      "/control/profile/update",
+		name:     "profile_update",
+		path:     "/control/profile/update",
 		method:   http.MethodPut,
 		wantCode: http.StatusBadRequest,
 	}, {
-		url:      "/control/status",
+		name:     "status",
+		path:     "/control/status",
 		method:   http.MethodGet,
 		wantCode: http.StatusOK,
 	}, {
-		url:      "/control/version.json",
+		name:     "version",
+		path:     "/control/version.json",
 		method:   http.MethodGet,
 		wantCode: http.StatusOK,
 	}}
 
 	for _, tc := range testCases {
-		t.Run(tc.url, func(t *testing.T) {
-			r := httptest.NewRequest(tc.method, tc.url, nil)
+		t.Run(tc.path, func(t *testing.T) {
+			r := httptest.NewRequest(tc.method, tc.path, nil)
 			assertHandlerStatusCode(t, mux, r, http.StatusForbidden)
 
-			r = httptest.NewRequest(tc.method, tc.url, nil)
+			r = httptest.NewRequest(tc.method, tc.path, nil)
 			r.SetBasicAuth(userName, userPassword)
 			assertHandlerStatusCode(t, mux, r, tc.wantCode)
 
-			r = httptest.NewRequest(tc.method, tc.url, nil)
+			r = httptest.NewRequest(tc.method, tc.path, nil)
 			r.AddCookie(loginCookie)
 			assertHandlerStatusCode(t, mux, r, tc.wantCode)
 
