@@ -165,6 +165,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 		PasswordHash: string(passwordHash),
 	}}
 	auth := InitAuth(sessionsDB, users, testTTL, nil, nil)
+	t.Cleanup(auth.Close)
 	globalContext.auth = auth
 
 	mux := http.NewServeMux()
@@ -297,6 +298,7 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 		PasswordHash: string(passwordHash),
 	}}
 	auth := InitAuth(sessionsDB, users, testTTL, nil, nil)
+	t.Cleanup(auth.Close)
 	globalContext.auth = auth
 
 	mux := http.NewServeMux()
