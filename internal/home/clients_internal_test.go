@@ -5,7 +5,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +21,7 @@ func newClientsContainer(t *testing.T) (c *clientsContainer) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	err := c.Init(
 		ctx,
-		slogutil.NewDiscardLogger(),
+		testLogger,
 		nil,
 		client.EmptyDHCP{},
 		nil,
