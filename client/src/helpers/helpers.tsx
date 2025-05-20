@@ -548,6 +548,8 @@ const isIpMatchCidr = (parsedIp: any, parsedCidr: any) => {
 
         return ipVersion === cidrIpVersion && parsedIp.match(parsedCidr);
     } catch (e) {
+        // TODO(a.garipov): Remove or fix.
+        console.error(e);
         return false;
     }
 };
@@ -608,6 +610,7 @@ export const findAddressType = (address: any) => {
 
         return ADDRESS_TYPES.UNKNOWN;
     } catch (e) {
+        console.error(e);
         return ADDRESS_TYPES.UNKNOWN;
     }
 };
