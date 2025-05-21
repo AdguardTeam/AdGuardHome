@@ -654,7 +654,7 @@ export const countClientsStatistics = (ids: any, autoClients: any) => {
     const cidrsCount = Object.entries(autoClients).reduce((acc: any, curr: any) => {
         const [id, count] = curr;
         if (!ipaddr.isValid(id)) {
-            return false;
+            return acc;
         }
         if (cidrs.some((cidr: any) => isIpInCidr(id, cidr))) {
             // eslint-disable-next-line no-param-reassign
