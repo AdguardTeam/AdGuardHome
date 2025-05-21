@@ -24,12 +24,15 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Clients with CIDR identifiers showing zero requests on the *Settings → Client settings* page ([#2945]).
+
 - Command line option `--update` when the `dns.serve_plain_dns` configuration property was disabled ([#7801]).
 
 - DNS cache not working for custom upstream configurations.
 
 - Validation process for the DNS-over-TLS, DNS-over-QUIC, and HTTPS ports on the *Encryption Settings* page.
 
+[#2945]: https://github.com/AdguardTeam/AdGuardHome/issues/2945
 [#7801]: https://github.com/AdguardTeam/AdGuardHome/issues/7801
 
 [go-1.24.3]: https://groups.google.com/g/golang-announce/c/UZoIkUT367A
@@ -2822,7 +2825,7 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 
 - Quality of logging ([#2954]).
 
-- Normalization of hostnames sent by DHCP clients ([#2945], [#2952]).
+- Normalization of hostnames sent by DHCP clients ([#2946], [#2952]).
 
 - The access to the private hosts is now forbidden for users from external networks ([#2889]).
 
@@ -2882,7 +2885,7 @@ See also the [v0.106.0 GitHub milestone][ms-v0.106.0].
 [#2923]: https://github.com/AdguardTeam/AdGuardHome/issues/2923
 [#2927]: https://github.com/AdguardTeam/AdGuardHome/issues/2927
 [#2934]: https://github.com/AdguardTeam/AdGuardHome/issues/2934
-[#2945]: https://github.com/AdguardTeam/AdGuardHome/issues/2945
+[#2946]: https://github.com/AdguardTeam/AdGuardHome/issues/2946
 [#2947]: https://github.com/AdguardTeam/AdGuardHome/issues/2947
 [#2952]: https://github.com/AdguardTeam/AdGuardHome/issues/2952
 [#2954]: https://github.com/AdguardTeam/AdGuardHome/issues/2954
