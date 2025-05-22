@@ -501,7 +501,7 @@
     "setup_dns_privacy_android_1": "Android 9 tukee DNS-over-TLS -toteutusta natiivisti. Se määritetään syöttämällä oma verkkotunnus kohtaan \"Asetukset\" → \"Yhteydet\" → \"Lisää yhteysasetuksia\" → \"Yksityinen DNS\".",
     "setup_dns_privacy_android_2": "<0>AdGuard Androidille</0> tukee <1>DNS-over-HTTPS</1> ja <1>DNS-over-TLS</1> -toteutuksia.",
     "setup_dns_privacy_android_3": "<0>Intra</0> lisää <1>DNS-over-HTTPS</1> tuen Androidiin.",
-    "setup_dns_privacy_ios_1": "<0>DNSCloak</0> tukee <1>DNS-over-HTTPS</1>, mutta oman palvelimen käyttö' varten sille on luotava <2>DNS Stamp</2> -merkintä.",
+    "setup_dns_privacy_ios_1": "<0>DNSecure</0> tukee <1>DNS-over-HTTPS</1>  ja <1>DNS-over-TLS</1> -toteutuksia.",
     "setup_dns_privacy_ios_2": "<0>AdGuard iOS:lle</0> tukee <1>DNS-over-HTTPS</1> ja <1>DNS-over-TLS</1> -toteutuksia.",
     "setup_dns_privacy_other_title": "Muita toteutuksia",
     "setup_dns_privacy_other_1": "AdGuard Home voi itse olla suojattu DNS -pääte millä tahansa alustalla.",
