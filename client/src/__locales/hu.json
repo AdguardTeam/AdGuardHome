@@ -501,7 +501,7 @@
     "setup_dns_privacy_android_1": "Az Android 9 natív módon támogatja a DNS-over-TLS-t. A beállításához menjen a Beállítások → Hálózat & internet → Speciális → Privát DNS menübe, és adja meg itt a domaint.",
     "setup_dns_privacy_android_2": "Az <0>AdGuard for Android</0> támogatja a <1>DNS-over-HTTPS</1>-t és a <1>DNS-over-TLS</1>-t.",
     "setup_dns_privacy_android_3": "Az <0>Intra</0> hozzáadja a <1>DNS-over-HTTPS</1> támogatást az Androidhoz.",
-    "setup_dns_privacy_ios_1": "A <0>DNSCloak</0> támogatja a <1>DNS-over-HTTPS</1>-t, de ahhoz, hogy a saját szerverhez konfigurálhassa, létre kell hoznia egy <2>DNS bélyeget</2> hozzá.",
+    "setup_dns_privacy_ios_1": "A <0>DNSecure</0> támogatja a <1>DNS-over-HTTPS</1>-t és a <1>DNS-over-TLS</1>-t.",
     "setup_dns_privacy_ios_2": "Az <0>AdGuard for iOS</0> támogatja a <1>DNS-over-HTTPS</1> és a <1>DNS-over-TLS</1> beállításokat.",
     "setup_dns_privacy_other_title": "Egyéb megvalósítások",
     "setup_dns_privacy_other_1": "Maga az AdGuard Home bármilyen platformon biztonságos DNS-kliens lehet.",
