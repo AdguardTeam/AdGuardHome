@@ -33,7 +33,8 @@
 }
 
 .header {
-    position: relative;
+    position: sticky;
+    top: 0;
     padding: 5px 0;
     z-index: 102;
 }
