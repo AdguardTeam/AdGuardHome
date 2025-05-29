@@ -40,18 +40,20 @@ func chooseSystem() {
 //
 // TODO(e.burkov):  File a PR to github.com/kardianos/service.
 type sysvSystem struct {
-	// System is expected to have an unexported type
-	// *service.linuxSystemService.
+	// System must have an unexported type *service.linuxSystemService.
 	service.System
 }
 
 // type check
 var _ service.System = (*sysvSystem)(nil)
 
-// New implements the [service.System] interface for *sysvSystem.
+// New implements the [service.System] interface for *sysvSystem.  i and c must
+// not be nil.
 func (sys *sysvSystem) New(i service.Interface, c *service.Config) (s service.Service, err error) {
 	s, err = sys.System.New(i, c)
 	if err != nil {
+		// Don't wrap the error to keep it as close to the original one as
+		// possible.
 		return s, err
 	}
 
@@ -78,7 +80,8 @@ var _ service.Service = (*sysvService)(nil)
 func (svc *sysvService) Install() (err error) {
 	err = svc.Service.Install()
 	if err != nil {
-		// Don't wrap an error since it's informative enough as is.
+		// Don't wrap the error to keep it as close to the original one as
+		// possible.
 		return err
 	}
 
@@ -92,7 +95,8 @@ func (svc *sysvService) Install() (err error) {
 func (svc *sysvService) Uninstall() (err error) {
 	err = svc.Service.Uninstall()
 	if err != nil {
-		// Don't wrap an error since it's informative enough as is.
+		// Don't wrap the error to keep it as close to the original one as
+		// possible.
 		return err
 	}
 
@@ -105,18 +109,20 @@ func (svc *sysvService) Uninstall() (err error) {
 // systemdSystem is a wrapper for a [service.System] that returns the custom
 // implementation of the [service.Service] interface.
 type systemdSystem struct {
-	// System is expected to have an unexported type
-	// *service.linuxSystemService.
+	// System must have an unexported type *service.linuxSystemService.
 	service.System
 }
 
 // type check
 var _ service.System = (*systemdSystem)(nil)
 
-// New implements the [service.System] interface for *systemdSystem.
+// New implements the [service.System] interface for *systemdSystem.  i and c
+// must not be nil.
 func (sys *systemdSystem) New(i service.Interface, c *service.Config) (s service.Service, err error) {
 	s, err = sys.System.New(i, c)
 	if err != nil {
+		// Don't wrap the error to keep it as close to the original one as
+		// possible.
 		return s, err
 	}
 
@@ -147,7 +153,7 @@ func (s *systemdService) Status() (status service.Status, err error) {
 	cmd := exec.Command("systemctl", "show", s.unitName)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return service.StatusUnknown, err
+		return service.StatusUnknown, fmt.Errorf("connecting to command stdout: %w", err)
 	}
 
 	if err = cmd.Start(); err != nil {
