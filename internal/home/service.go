@@ -292,6 +292,10 @@ func handleServiceCommand(s service.Service, action string, opts options) (err e
 	return nil
 }
 
+// statusRestartOnFail is a custom status value used to indicate the service's
+// state of restarting after failed start.
+const statusRestartOnFail = service.StatusStopped + 1
+
 // handleServiceStatusCommand handles service "status" command.
 func handleServiceStatusCommand(s service.Service) {
 	status, errSt := svcStatus(s)
@@ -306,6 +310,8 @@ func handleServiceStatusCommand(s service.Service) {
 		log.Printf("service: stopped")
 	case service.StatusRunning:
 		log.Printf("service: running")
+	case statusRestartOnFail:
+		log.Printf("service: restarting after failed start")
 	}
 }
 
