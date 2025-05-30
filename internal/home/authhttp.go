@@ -1,9 +1,11 @@
 package home
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/netip"
 	"path"
@@ -12,11 +14,14 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/AdguardTeam/golibs/validate"
 )
 
 // cookieTTL is the time-to-live of the session cookie.
@@ -347,4 +352,155 @@ func (a *authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // optionalAuthHandler returns a authentication handler.
 func optionalAuthHandler(handler http.Handler) http.Handler {
 	return &authHandler{handler}
+}
+
+const (
+	// errInvalidLogin is returned when there is an invalid login attempt.
+	errInvalidLogin errors.Error = "invalid username or password"
+)
+
+// authMiddlewareDefaultConfig is the configuration structure for the default
+// authentication middleware.
+type authMiddlewareDefaultConfig struct {
+	// logger is used for logging the operation of the middleware.  It must not
+	// be nil.
+	logger *slog.Logger
+
+	// sessions contains web user sessions.  It must not be nil.
+	sessions aghuser.SessionStorage
+
+	// users contains web user information.  It must not be nil.
+	users aghuser.DB
+}
+
+// authMiddlewareDefault is the default authentication middleware.  It searches
+// for a web client using an authentication cookie or basic auth credentials and
+// passes it with the context.
+type authMiddlewareDefault struct {
+	logger   *slog.Logger
+	sessions aghuser.SessionStorage
+	users    aghuser.DB
+}
+
+// newAuthMiddlewareDefault returns the new properly initialized
+// *authMiddlewareDefault.
+func newAuthMiddlewareDefault(c *authMiddlewareDefaultConfig) (mw *authMiddlewareDefault) {
+	return &authMiddlewareDefault{
+		logger:   c.logger,
+		sessions: c.sessions,
+		users:    c.users,
+	}
+}
+
+// wrap adds authentication logic to the provided HTTP handler.
+func (mw *authMiddlewareDefault) wrap(h http.Handler) (wrapped http.Handler) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		if !mw.needsAuthentication(ctx, r) {
+			h.ServeHTTP(w, r)
+
+			return
+		}
+
+		u, err := mw.userFromRequest(ctx, r)
+		if u != nil {
+			h.ServeHTTP(w, r.WithContext(withWebUser(ctx, u)))
+
+			return
+		}
+
+		if err != nil {
+			mw.logger.ErrorContext(ctx, "retrieving user from request", slogutil.KeyError, err)
+		}
+
+		w.WriteHeader(http.StatusUnauthorized)
+	})
+}
+
+// needsAuthentication returns true if the current request requires
+// authentication.
+//
+// TODO(s.chzhen):  Use the request's path.
+func (mw *authMiddlewareDefault) needsAuthentication(
+	ctx context.Context,
+	_ *http.Request,
+) (ok bool) {
+	users, err := mw.users.All(ctx)
+	if err != nil {
+		// Should not happen.
+		panic(err)
+	}
+
+	if len(users) == 0 {
+		return false
+	}
+
+	return true
+}
+
+// userFromRequest tries to retrieve a user based on the request.
+func (mw *authMiddlewareDefault) userFromRequest(
+	ctx context.Context,
+	r *http.Request,
+) (u *aghuser.User, err error) {
+	defer func() { err = errors.Annotate(err, "getting user from request: %w") }()
+
+	cookie, err := r.Cookie(sessionCookieName)
+	if err == http.ErrNoCookie {
+		return mw.userFromRequestBasicAuth(ctx, r)
+	}
+
+	sess, err := hex.DecodeString(cookie.Value)
+	if err != nil {
+		return nil, fmt.Errorf("decoding cookie: %w", err)
+	}
+
+	l := aghuser.SessionTokenLength
+
+	// TODO(a.garipov):  Add validate.Len.
+	err = validate.InRange("token length", len(sess), l, l)
+	if err != nil {
+		// Don't wrap the error because it's informative enough as is.
+		return nil, err
+	}
+
+	t := aghuser.SessionToken(sess)
+	s, err := mw.sessions.FindByToken(ctx, t)
+	if err != nil {
+		return nil, fmt.Errorf("searching session by token: %w", err)
+	}
+
+	if s == nil {
+		return nil, nil
+	}
+
+	u, err = mw.users.ByLogin(ctx, s.UserLogin)
+	if err != nil {
+		return nil, fmt.Errorf("searching user by login %q: %w", s.UserLogin, err)
+	}
+
+	return u, nil
+}
+
+// userFromRequestBasicAuth searches for a user using Basic Auth credentials.
+func (mw *authMiddlewareDefault) userFromRequestBasicAuth(
+	ctx context.Context,
+	r *http.Request,
+) (user *aghuser.User, err error) {
+	login, pass, ok := r.BasicAuth()
+	if !ok {
+		return nil, fmt.Errorf("credentials: %w", errors.ErrNoValue)
+	}
+
+	user, _ = mw.users.ByLogin(ctx, aghuser.Login(login))
+	if user == nil {
+		return nil, errInvalidLogin
+	}
+
+	ok = user.Password.Authenticate(ctx, pass)
+	if !ok {
+		return nil, errInvalidLogin
+	}
+
+	return user, nil
 }

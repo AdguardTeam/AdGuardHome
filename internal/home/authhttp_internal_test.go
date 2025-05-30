@@ -2,7 +2,12 @@ package home
 
 import (
 	"bytes"
+	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
@@ -10,10 +15,12 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/josharian/native"
@@ -21,6 +28,280 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 )
+
+// testSessionStorage is the mock implementation of the [aghuser.SessionStorage]
+// interface.
+type testSessionStorage struct {
+	onNew         func(ctx context.Context, u *aghuser.User) (s *aghuser.Session, err error)
+	onFindByToken func(
+		ctx context.Context,
+		t aghuser.SessionToken,
+	) (s *aghuser.Session, err error)
+	onDeleteByToken func(ctx context.Context, t aghuser.SessionToken) (err error)
+	onClose         func() (err error)
+}
+
+// type check
+var _ aghuser.SessionStorage = (*testSessionStorage)(nil)
+
+// newTestSessionStorage returns a new *testSessionStorage all methods of which
+// panic.
+func newTestSessionStorage() (ts *testSessionStorage) {
+	return &testSessionStorage{
+		onNew: func(_ context.Context, u *aghuser.User) (_ *aghuser.Session, _ error) {
+			panic(fmt.Errorf("unexpected call to testSessionStorage.New(%v)", u))
+		},
+		onFindByToken: func(
+			_ context.Context,
+			t aghuser.SessionToken,
+		) (_ *aghuser.Session, err error) {
+			panic(fmt.Errorf("unexpected call to testSessionStorage.FindByToken(%v)", t))
+		},
+		onDeleteByToken: func(_ context.Context, t aghuser.SessionToken) (_ error) {
+			panic(fmt.Errorf("unexpected call to testSessionStorage.DeleteByToken(%v)", t))
+		},
+		onClose: func() (_ error) {
+			panic("unexpected call to testSessionStorage.Close")
+		},
+	}
+}
+
+// New implements the [aghuser.SessionStorage] interface for
+// *testSessionStorage.
+func (ts *testSessionStorage) New(
+	ctx context.Context,
+	u *aghuser.User,
+) (s *aghuser.Session, err error) {
+	return ts.onNew(ctx, u)
+}
+
+// FindByToken implements the [aghuser.SessionStorage] interface for
+// *testSessionStorage.
+func (ts *testSessionStorage) FindByToken(
+	ctx context.Context,
+	t aghuser.SessionToken,
+) (s *aghuser.Session, err error) {
+	return ts.onFindByToken(ctx, t)
+}
+
+// DeleteByToken implements the [aghuser.SessionStorage] interface for
+// *testSessionStorage.
+func (ts *testSessionStorage) DeleteByToken(
+	ctx context.Context,
+	t aghuser.SessionToken,
+) (err error) {
+	return ts.onDeleteByToken(ctx, t)
+}
+
+// Close implements the [aghuser.SessionStorage] interface for
+// *testSessionStorage.
+func (ts *testSessionStorage) Close() (err error) {
+	return ts.onClose()
+}
+
+// testUsersDB is the mock implementation of the [aghuser.DB] interface.
+type testUsersDB struct {
+	onAll     func(ctx context.Context) (users []*aghuser.User, err error)
+	onByLogin func(ctx context.Context, login aghuser.Login) (u *aghuser.User, err error)
+	onByUUID  func(ctx context.Context, id aghuser.UserID) (u *aghuser.User, err error)
+	onCreate  func(ctx context.Context, u *aghuser.User) (err error)
+}
+
+// newTestUsersDB returns a new *testUsersDB all methods of which panic.
+func newTestUsersDB() (ts *testUsersDB) {
+	return &testUsersDB{
+		onAll: func(_ context.Context) (_ []*aghuser.User, _ error) {
+			panic("unexpected call to testUsersDB.All")
+		},
+		onByLogin: func(_ context.Context, l aghuser.Login) (_ *aghuser.User, _ error) {
+			panic(fmt.Errorf("unexpected call to testUsersDB.ByLogin(%v)", l))
+		},
+		onByUUID: func(_ context.Context, id aghuser.UserID) (_ *aghuser.User, _ error) {
+			panic(fmt.Errorf("unexpected call to testUsersDB.ByUUID(%v)", id))
+		},
+		onCreate: func(_ context.Context, u *aghuser.User) (_ error) {
+			panic(fmt.Errorf("unexpected call to testUsersDB.Create(%v)", u))
+		},
+	}
+}
+
+// type check
+var _ aghuser.DB = (*testUsersDB)(nil)
+
+// All implements the [aghuser.DB] interface for *testUsersDB.
+func (db *testUsersDB) All(ctx context.Context) (users []*aghuser.User, err error) {
+	return db.onAll(ctx)
+}
+
+// ByLogin implements the [aghuser.DB] interface for *testUsersDB.
+func (db *testUsersDB) ByLogin(
+	ctx context.Context,
+	login aghuser.Login,
+) (u *aghuser.User, err error) {
+	return db.onByLogin(ctx, login)
+}
+
+// ByUUID implements the [aghuser.DB] interface for *testUsersDB.
+func (db *testUsersDB) ByUUID(ctx context.Context, id aghuser.UserID) (u *aghuser.User, err error) {
+	return db.onByUUID(ctx, id)
+}
+
+// Create implements the [aghuser.DB] interface for *testUsersDB.
+func (db *testUsersDB) Create(ctx context.Context, u *aghuser.User) (err error) {
+	return db.onCreate(ctx, u)
+}
+
+// testAuthHandler is a helper handler used for testing HTTP middleware.
+type testAuthHandler struct {
+	user   *aghuser.User
+	called bool
+}
+
+// type check
+var _ http.Handler = (*testAuthHandler)(nil)
+
+// ServeHTTP implements the [http.Handler] interface for *testAuthHandler.
+func (h *testAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.called = true
+	h.user, _ = webUserFromContext(r.Context())
+}
+
+func TestAuthMiddlewareDefault_firstRun(t *testing.T) {
+	db := newTestUsersDB()
+	db.onAll = func(_ context.Context) (users []*aghuser.User, err error) {
+		return nil, nil
+	}
+
+	mw := newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
+		logger:   testLogger,
+		sessions: &testSessionStorage{},
+		users:    db,
+	})
+
+	h := &testAuthHandler{}
+	wrapped := mw.wrap(h)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	wrapped.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.True(t, h.called)
+}
+
+func TestAuthMiddlewareDefault(t *testing.T) {
+	t.Parallel()
+
+	const (
+		login aghuser.Login = "user_login"
+
+		passwordRaw = "user_password"
+	)
+
+	passwordHash, err := bcrypt.GenerateFromPassword(
+		[]byte(passwordRaw),
+		bcrypt.DefaultCost,
+	)
+	require.NoError(t, err)
+
+	user := &aghuser.User{
+		Login:    login,
+		Password: aghuser.NewDefaultPassword(string(passwordHash)),
+	}
+
+	var token aghuser.SessionToken
+	_, _ = rand.Read(token[:])
+
+	tokenHex := hex.EncodeToString(token[:])
+
+	users := map[aghuser.Login]*aghuser.User{login: user}
+	usersDB := newTestUsersDB()
+	usersDB.onAll = func(_ context.Context) (us []*aghuser.User, err error) {
+		return slices.Collect(maps.Values(users)), nil
+	}
+
+	usersDB.onByLogin = func(_ context.Context, login aghuser.Login) (u *aghuser.User, err error) {
+		return users[login], nil
+	}
+
+	sessions := map[aghuser.SessionToken]*aghuser.Session{
+		token: {
+			UserLogin: login,
+		},
+	}
+	ts := newTestSessionStorage()
+	ts.onFindByToken = func(
+		_ context.Context,
+		t aghuser.SessionToken,
+	) (s *aghuser.Session, err error) {
+		return sessions[t], nil
+	}
+
+	mw := newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
+		logger:   testLogger,
+		sessions: ts,
+		users:    usersDB,
+	})
+
+	reqCookie := httptest.NewRequest(http.MethodGet, "/", nil)
+	reqCookie.AddCookie(&http.Cookie{Name: sessionCookieName, Value: tokenHex})
+
+	reqInvalidCookie := httptest.NewRequest(http.MethodGet, "/", nil)
+	reqInvalidCookie.AddCookie(&http.Cookie{Name: sessionCookieName, Value: "invalid_cookie"})
+
+	reqBasicAuth := httptest.NewRequest(http.MethodGet, "/", nil)
+	reqBasicAuth.SetBasicAuth(string(login), passwordRaw)
+
+	reqInvalidPassBasicAuth := httptest.NewRequest(http.MethodGet, "/", nil)
+	reqInvalidPassBasicAuth.SetBasicAuth(string(login), "invalid_password")
+
+	testCases := []struct {
+		req      *http.Request
+		wantUser *aghuser.User
+		name     string
+		wantCode int
+	}{{
+		req:      httptest.NewRequest(http.MethodGet, "/", nil),
+		wantUser: nil,
+		name:     "no_auth",
+		wantCode: http.StatusUnauthorized,
+	}, {
+		req:      reqCookie,
+		wantUser: user,
+		name:     "cookie",
+		wantCode: http.StatusOK,
+	}, {
+		req:      reqBasicAuth,
+		wantUser: user,
+		name:     "basic_auth",
+		wantCode: http.StatusOK,
+	}, {
+		req:      reqInvalidCookie,
+		wantUser: nil,
+		name:     "invalid_cookie",
+		wantCode: http.StatusUnauthorized,
+	}, {
+		req:      reqInvalidPassBasicAuth,
+		wantUser: nil,
+		name:     "invalid_basic_auth",
+		wantCode: http.StatusUnauthorized,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			h := &testAuthHandler{}
+			wrapped := mw.wrap(h)
+
+			w := httptest.NewRecorder()
+			wrapped.ServeHTTP(w, tc.req)
+
+			assert.Equal(t, tc.wantCode, w.Code)
+			assert.Equal(t, tc.wantUser, h.user)
+		})
+	}
+}
 
 func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 	storeGlobals(t)
