@@ -66,7 +66,7 @@ func (sys *sysvSystem) New(i service.Interface, c *service.Config) (s service.Se
 // sysvService is a wrapper for a SysV [service.Service] that supplements the
 // installation and uninstallation.
 type sysvService struct {
-	// Service is expected to have an unexported type *service.sysv.
+	// Service must have an unexported type *service.sysv.
 	service.Service
 
 	// name stores the name of the service to call updating script with it.
