@@ -17,6 +17,11 @@ See also the [v0.107.63 GitHub milestone][ms-v0.107.63].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Fixed
+
+- Status reported by the systemd service implementation in cases of auto-restart after a failed start.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
