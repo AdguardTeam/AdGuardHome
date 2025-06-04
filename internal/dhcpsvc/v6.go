@@ -10,6 +10,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/validate"
 	"github.com/google/gopacket/layers"
 )
 
@@ -39,10 +40,13 @@ type IPv6Config struct {
 	Enabled bool
 }
 
-// validate returns an error in conf if any.
-func (c *IPv6Config) validate() (err error) {
+// type check
+var _ validate.Interface = (*IPv6Config)(nil)
+
+// Validate implements the [validate.Interface] interface for *IPv6Config.
+func (c *IPv6Config) Validate() (err error) {
 	if c == nil {
-		return errNilConfig
+		return errors.ErrNoValue
 	} else if !c.Enabled {
 		return nil
 	}
@@ -89,9 +93,8 @@ type dhcpInterfaceV6 struct {
 }
 
 // newDHCPInterfaceV6 creates a new DHCP interface for IPv6 address family with
-// the given configuration.
-//
-// TODO(e.burkov):  Validate properly.
+// the given configuration.  If the interface is disabled, it returns nil.  conf
+// must be valid.
 func newDHCPInterfaceV6(
 	ctx context.Context,
 	l *slog.Logger,

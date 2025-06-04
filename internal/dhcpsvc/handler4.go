@@ -10,7 +10,8 @@ import (
 	"github.com/google/gopacket/layers"
 )
 
-// serveV4 handles the ethernet packet of IPv4 type.
+// serveV4 handles the ethernet packet of IPv4 type.  rw and pkt must not be
+// nil.
 func (srv *DHCPServer) serveV4(
 	ctx context.Context,
 	rw responseWriter4,
@@ -20,6 +21,8 @@ func (srv *DHCPServer) serveV4(
 
 	req, ok := pkt.Layer(layers.LayerTypeDHCPv4).(*layers.DHCPv4)
 	if !ok {
+		// TODO(e.burkov):  Consider adding some debug information about the
+		// actual received packet.
 		srv.logger.DebugContext(ctx, "skipping non-dhcpv4 packet")
 
 		return nil
@@ -28,7 +31,7 @@ func (srv *DHCPServer) serveV4(
 	// TODO(e.burkov):  Handle duplicate Xid.
 
 	if req.Operation != layers.DHCPOpRequest {
-		srv.logger.DebugContext(ctx, "skipping non-request dhcpv4 packet")
+		srv.logger.DebugContext(ctx, "skipping non-request dhcpv4 packet", "op", req.Operation)
 
 		return nil
 	}
@@ -61,9 +64,9 @@ func (srv *DHCPServer) handleDHCPv4(
 	case layers.DHCPMsgTypeRequest:
 		srv.handleRequest(ctx, rw, req)
 	case layers.DHCPMsgTypeRelease:
-		// TODO(e.burkov):  !! Remove the lease, either allocated or offered.
+		// TODO(e.burkov):  Remove the lease, either allocated or offered.
 	case layers.DHCPMsgTypeDecline:
-		// TODO(e.burkov):  !! Remove the allocated lease.  RFC tells it only
+		// TODO(e.burkov):  Remove the allocated lease.  RFC tells it only
 		// possible if the client found the address already in use.
 	default:
 		// TODO(e.burkov):  Handle DHCPINFORM.

@@ -2,16 +2,6 @@ package dhcpsvc
 
 import (
 	"fmt"
-
-	"github.com/AdguardTeam/golibs/errors"
-)
-
-const (
-	// errNilConfig is returned when a nil config met.
-	errNilConfig errors.Error = "config is nil"
-
-	// errNoInterfaces is returned when no interfaces found in configuration.
-	errNoInterfaces errors.Error = "no interfaces specified"
 )
 
 // newMustErr returns an error that indicates that valName must be as must

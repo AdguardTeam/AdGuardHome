@@ -28,6 +28,8 @@ type DHCPServer struct {
 	// logger logs common DHCP events.
 	logger *slog.Logger
 
+	// packetSource is the source of DHCP packets to process.
+	//
 	// TODO(e.burkov):  Implement and set.
 	packetSource gopacket.PacketSource
 
@@ -58,8 +60,8 @@ type DHCPServer struct {
 	icmpTimeout time.Duration
 }
 
-// New creates a new DHCP server with the given configuration.  It returns an
-// error if the given configuration can't be used.
+// New creates a new DHCP server with the given configuration.  conf must be
+// valid.
 //
 // TODO(e.burkov):  Use.
 func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
@@ -71,11 +73,7 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 		return nil, nil
 	}
 
-	ifaces4, ifaces6, err := newInterfaces(ctx, l, conf.Interfaces)
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return nil, err
-	}
+	ifaces4, ifaces6 := newInterfaces(ctx, l, conf.Interfaces)
 
 	enabled := &atomic.Bool{}
 	enabled.Store(conf.Enabled)
@@ -102,49 +100,42 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 }
 
 // newInterfaces creates interfaces for the given map of interface names to
-// their configurations.
+// their configurations.  ifaces must be valid, baseLogger must not be nil.
 func newInterfaces(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	ifaces map[string]*InterfaceConfig,
-) (v4 dhcpInterfacesV4, v6 dhcpInterfacesV6, err error) {
-	defer func() { err = errors.Annotate(err, "creating interfaces: %w") }()
-
+) (v4 dhcpInterfacesV4, v6 dhcpInterfacesV6) {
 	// TODO(e.burkov):  Add validations scoped to the network interfaces set.
 	v4 = make(dhcpInterfacesV4, 0, len(ifaces))
 	v6 = make(dhcpInterfacesV6, 0, len(ifaces))
 
-	var errs []error
 	for _, name := range slices.Sorted(maps.Keys(ifaces)) {
 		iface := ifaces[name]
+		ifaceLogger := baseLogger.With(keyInterface, name)
 
-		iface4, v4Err := newDHCPInterfaceV4(
+		iface4 := newDHCPInterfaceV4(
 			ctx,
-			baseLogger.With(keyInterface, name, keyFamily, netutil.AddrFamilyIPv4),
+			ifaceLogger.With(keyFamily, netutil.AddrFamilyIPv4),
 			name,
 			iface.IPv4,
 		)
-		if v4Err != nil {
-			v4Err = fmt.Errorf("interface %q: %s: %w", name, netutil.AddrFamilyIPv4, v4Err)
-			errs = append(errs, v4Err)
-		} else {
+		if iface4 != nil {
 			v4 = append(v4, iface4)
 		}
 
 		iface6 := newDHCPInterfaceV6(
 			ctx,
-			baseLogger.With(keyInterface, name, keyFamily, netutil.AddrFamilyIPv6),
+			ifaceLogger.With(keyFamily, netutil.AddrFamilyIPv6),
 			name,
 			iface.IPv6,
 		)
-		v6 = append(v6, iface6)
+		if iface6 != nil {
+			v6 = append(v6, iface6)
+		}
 	}
 
-	if err = errors.Join(errs...); err != nil {
-		return nil, nil, err
-	}
-
-	return v4, v6, nil
+	return v4, v6
 }
 
 // type check
@@ -181,11 +172,9 @@ func (srv *DHCPServer) Leases() (leases []*Lease) {
 	srv.leasesMu.RLock()
 	defer srv.leasesMu.RUnlock()
 
-	srv.leases.rangeLeases(func(l *Lease) (cont bool) {
-		leases = append(leases, l.Clone())
-
-		return true
-	})
+	for l := range srv.leases.rangeLeases {
+		leases = append(leases, l)
+	}
 
 	return leases
 }
@@ -288,7 +277,7 @@ func (srv *DHCPServer) AddLease(ctx context.Context, l *Lease) (err error) {
 		"hostname", l.Hostname,
 		"ip", l.IP,
 		"mac", l.HWAddr,
-		"static", l.IsStatic,
+		"is_static", l.IsStatic,
 	)
 
 	return nil
@@ -327,7 +316,7 @@ func (srv *DHCPServer) UpdateStaticLease(ctx context.Context, l *Lease) (err err
 		"hostname", l.Hostname,
 		"ip", l.IP,
 		"mac", l.HWAddr,
-		"static", l.IsStatic,
+		"is_static", l.IsStatic,
 	)
 
 	return nil
@@ -364,7 +353,7 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 		"hostname", l.Hostname,
 		"ip", l.IP,
 		"mac", l.HWAddr,
-		"static", l.IsStatic,
+		"is_static", l.IsStatic,
 	)
 
 	return nil
@@ -373,8 +362,8 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 // removeLeaseByAddr removes the lease with the given IP address from the
 // server.  It returns an error if the lease can't be removed.
 //
-// TODO(e.burkov):  !! Use.
-func (srv *DHCPServer) removeLeaseByAddr(ctx context.Context, addr netip.Addr) (err error) {
+// TODO(e.burkov):  Rename to removeLeaseByAddr and use.
+func (srv *DHCPServer) _(ctx context.Context, addr netip.Addr) (err error) {
 	defer func() { err = errors.Annotate(err, "removing lease by address: %w") }()
 
 	iface, err := srv.ifaceForAddr(addr)
@@ -408,7 +397,7 @@ func (srv *DHCPServer) removeLeaseByAddr(ctx context.Context, addr netip.Addr) (
 		"hostname", l.Hostname,
 		"ip", l.IP,
 		"mac", l.HWAddr,
-		"static", l.IsStatic,
+		"is_static", l.IsStatic,
 	)
 
 	return nil
