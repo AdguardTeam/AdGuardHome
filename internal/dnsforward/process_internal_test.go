@@ -498,14 +498,28 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 
 func TestServer_ProcessDHCPHosts(t *testing.T) {
 	const (
-		localTLD = "lan"
+		localTLD  = "lan"
+		customTLD = "custom"
 
-		knownClient  = "example"
-		externalHost = knownClient + ".com"
-		clientHost   = knownClient + "." + localTLD
+		oneLabelClient     = "example"
+		twoLabelClient     = "sub.example"
+		externalHost       = oneLabelClient + ".com"
+		oneLabelClientHost = oneLabelClient + "." + localTLD
+		twoLabelClientHost = twoLabelClient + "." + localTLD
 	)
 
-	knownIP := netip.MustParseAddr("1.2.3.4")
+	knownClients := map[string]netip.Addr{
+		oneLabelClient: netip.MustParseAddr("1.2.3.4"),
+		twoLabelClient: netip.MustParseAddr("1.2.3.5"),
+	}
+
+	testDHCP := &testDHCP{
+		OnEnabled: func() (ok bool) { return true },
+		OnIPByHost: func(host string) (ip netip.Addr) {
+			return knownClients[host]
+		},
+		OnHostByIP: func(ip netip.Addr) (host string) { panic("not implemented") },
+	}
 
 	testCases := []struct {
 		wantIP  netip.Addr
@@ -529,9 +543,16 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeCNAME,
 	}, {
-		wantIP:  knownIP,
+		wantIP:  knownClients[oneLabelClient],
 		name:    "internal",
-		host:    clientHost,
+		host:    oneLabelClientHost,
+		suffix:  localTLD,
+		wantRes: resultCodeSuccess,
+		qtyp:    dns.TypeA,
+	}, {
+		wantIP:  knownClients[twoLabelClient],
+		name:    "internal_two_label",
+		host:    twoLabelClientHost,
 		suffix:  localTLD,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
@@ -545,32 +566,27 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 	}, {
 		wantIP:  netip.Addr{},
 		name:    "internal_aaaa",
-		host:    clientHost,
+		host:    oneLabelClientHost,
 		suffix:  localTLD,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeAAAA,
 	}, {
-		wantIP:  knownIP,
+		wantIP:  knownClients[oneLabelClient],
 		name:    "custom_suffix",
-		host:    knownClient + ".custom",
-		suffix:  "custom",
+		host:    oneLabelClient + "." + customTLD,
+		suffix:  customTLD,
+		wantRes: resultCodeSuccess,
+		qtyp:    dns.TypeA,
+	}, {
+		wantIP:  knownClients[twoLabelClient],
+		name:    "custom_suffix_two_label",
+		host:    twoLabelClient + "." + customTLD,
+		suffix:  customTLD,
 		wantRes: resultCodeSuccess,
 		qtyp:    dns.TypeA,
 	}}
 
 	for _, tc := range testCases {
-		testDHCP := &testDHCP{
-			OnEnabled: func() (_ bool) { return true },
-			OnIPByHost: func(host string) (ip netip.Addr) {
-				if host == knownClient {
-					ip = knownIP
-				}
-
-				return ip
-			},
-			OnHostByIP: func(ip netip.Addr) (host string) { panic("not implemented") },
-		}
-
 		s := &Server{
 			dnsFilter:         createTestDNSFilter(t),
 			dhcpServer:        testDHCP,
@@ -578,16 +594,7 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 			baseLogger:        slogutil.NewDiscardLogger(),
 		}
 
-		req := &dns.Msg{
-			MsgHdr: dns.MsgHdr{
-				Id: 1234,
-			},
-			Question: []dns.Question{{
-				Name:   dns.Fqdn(tc.host),
-				Qtype:  tc.qtyp,
-				Qclass: dns.ClassINET,
-			}},
-		}
+		req := (&dns.Msg{}).SetQuestion(dns.Fqdn(tc.host), tc.qtyp)
 
 		dctx := &dnsContext{
 			proxyCtx: &proxy.DNSContext{
@@ -603,8 +610,8 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 			require.NoError(t, dctx.err)
 
 			if tc.qtyp == dns.TypeAAAA {
-				// TODO(a.garipov): Remove this special handling
-				// when we fully support AAAA.
+				// TODO(a.garipov): Remove this special handling when we fully
+				// support AAAA.
 				require.NotNil(t, pctx.Res)
 
 				ans := pctx.Res.Answer

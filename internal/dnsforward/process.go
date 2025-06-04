@@ -563,7 +563,7 @@ func (s *Server) dhcpHostFromRequest(q *dns.Question) (reqHost string) {
 	}
 
 	reqHost = strings.ToLower(q.Name[:len(q.Name)-1])
-	if !netutil.IsImmediateSubdomain(reqHost, s.localDomainSuffix) {
+	if !netutil.IsSubdomain(reqHost, s.localDomainSuffix) {
 		return ""
 	}
 

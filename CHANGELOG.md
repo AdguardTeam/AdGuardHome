@@ -20,6 +20,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The hostnames of DHCP clients with multiple labels not being recognized.
+
 - Status reported by the systemd service implementation in cases of auto-restart after a failed start.
 
 <!--
