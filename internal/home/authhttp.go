@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/netutil/httputil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/AdguardTeam/golibs/validate"
 )
@@ -392,8 +393,12 @@ func newAuthMiddlewareDefault(c *authMiddlewareDefaultConfig) (mw *authMiddlewar
 	}
 }
 
-// wrap adds authentication logic to the provided HTTP handler.
-func (mw *authMiddlewareDefault) wrap(h http.Handler) (wrapped http.Handler) {
+// type check
+var _ httputil.Middleware = (*authMiddlewareDefault)(nil)
+
+// Wrap implements the [httputil.Middleware] interface for
+// *authMiddlewareDefault.
+func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		if !mw.needsAuthentication(ctx, r) {

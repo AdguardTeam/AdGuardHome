@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -23,7 +24,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/testutil"
-	"github.com/josharian/native"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
@@ -179,7 +179,7 @@ func TestAuthMiddlewareDefault_firstRun(t *testing.T) {
 	})
 
 	h := &testAuthHandler{}
-	wrapped := mw.wrap(h)
+	wrapped := mw.Wrap(h)
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -292,7 +292,7 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 			t.Parallel()
 
 			h := &testAuthHandler{}
-			wrapped := mw.wrap(h)
+			wrapped := mw.Wrap(h)
 
 			w := httptest.NewRecorder()
 			wrapped.ServeHTTP(w, tc.req)
@@ -434,7 +434,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	glTokenFile := glFilePrefix + glTokenFileSuffix
 
 	glFileData := make([]byte, 4)
-	native.Endian.PutUint32(glFileData, uint32(time.Now().Unix()+testTTL))
+	binary.NativeEndian.PutUint32(glFileData, uint32(time.Now().Unix()+testTTL))
 
 	err = os.WriteFile(glTokenFile, glFileData, 0o644)
 	require.NoError(t, err)
