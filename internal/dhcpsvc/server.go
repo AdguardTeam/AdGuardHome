@@ -149,7 +149,7 @@ func (srv *DHCPServer) Start(ctx context.Context) (err error) {
 
 	// TODO(e.burkov):  Listen to configured interfaces.
 
-	go srv.serve(context.Background())
+	go srv.serve(context.WithoutCancel(ctx))
 
 	return nil
 }
@@ -362,8 +362,8 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 // removeLeaseByAddr removes the lease with the given IP address from the
 // server.  It returns an error if the lease can't be removed.
 //
-// TODO(e.burkov):  Rename to removeLeaseByAddr and use.
-func (srv *DHCPServer) _(ctx context.Context, addr netip.Addr) (err error) {
+//lint:ignore U1000 TODO(e.burkov):  Use
+func (srv *DHCPServer) removeLeaseByAddr(ctx context.Context, addr netip.Addr) (err error) {
 	defer func() { err = errors.Annotate(err, "removing lease by address: %w") }()
 
 	iface, err := srv.ifaceForAddr(addr)
