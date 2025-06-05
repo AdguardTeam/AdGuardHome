@@ -799,4 +799,7 @@ func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filter
 	setts.ClientSafeSearch = c.SafeSearch
 	setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
 	setts.ParentalEnabled = c.ParentalEnabled
+	setts.BlockingMode = c.BlockingMode
+	setts.BlockingIPv4 = c.BlockingIPv4
+	setts.BlockingIPv6 = c.BlockingIPv6
 }
