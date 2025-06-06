@@ -18,7 +18,7 @@ func TestConfig_Validate(t *testing.T) {
 	}{{
 		name:       "nil_config",
 		conf:       nil,
-		wantErrMsg: "config is nil",
+		wantErrMsg: "no value",
 	}, {
 		name:       "disabled",
 		conf:       &dhcpsvc.Config{},
@@ -30,7 +30,7 @@ func TestConfig_Validate(t *testing.T) {
 			Interfaces: testInterfaceConf,
 			DBFilePath: leasesPath,
 		},
-		wantErrMsg: `bad domain name "": domain name is empty`,
+		wantErrMsg: `LocalDomainName: bad domain name "": domain name is empty`,
 	}, {
 		conf: &dhcpsvc.Config{
 			Enabled:         true,
@@ -59,7 +59,7 @@ func TestConfig_Validate(t *testing.T) {
 			DBFilePath: leasesPath,
 		},
 		name:       "nil_interface",
-		wantErrMsg: `interface "eth0": config is nil`,
+		wantErrMsg: `interface "eth0": no value`,
 	}, {
 		conf: &dhcpsvc.Config{
 			Enabled:         true,
@@ -73,7 +73,7 @@ func TestConfig_Validate(t *testing.T) {
 			DBFilePath: leasesPath,
 		},
 		name:       "nil_ipv4",
-		wantErrMsg: `interface "eth0": ipv4: config is nil`,
+		wantErrMsg: `interface "eth0": ipv4: no value`,
 	}, {
 		conf: &dhcpsvc.Config{
 			Enabled:         true,
@@ -87,7 +87,7 @@ func TestConfig_Validate(t *testing.T) {
 			DBFilePath: leasesPath,
 		},
 		name:       "nil_ipv6",
-		wantErrMsg: `interface "eth0": ipv6: config is nil`,
+		wantErrMsg: `interface "eth0": ipv6: no value`,
 	}}
 
 	for _, tc := range testCases {
