@@ -10,7 +10,6 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/AdguardTeam/golibs/validate"
 )
 
 // Config is the configuration for the DHCP service.
@@ -36,31 +35,42 @@ type Config struct {
 	Enabled bool
 }
 
-// type check
-var _ validate.Interface = (*Config)(nil)
+// InterfaceConfig is the configuration of a single DHCP interface.
+type InterfaceConfig struct {
+	// IPv4 is the configuration of DHCP protocol for IPv4.
+	IPv4 *IPv4Config
 
-// Validate implements the [validate.Interface] for *Config.
+	// IPv6 is the configuration of DHCP protocol for IPv6.
+	IPv6 *IPv6Config
+}
+
+// Validate returns an error in conf if any.
+//
+// TODO(e.burkov):  Unexport and rewrite the test.
 func (conf *Config) Validate() (err error) {
 	switch {
 	case conf == nil:
-		return errors.ErrNoValue
+		return errNilConfig
 	case !conf.Enabled:
 		return nil
 	}
 
-	errs := []error{
-		validate.NotNegative("ICMPTimeout", conf.ICMPTimeout),
+	var errs []error
+	if conf.ICMPTimeout < 0 {
+		err = newMustErr("icmp timeout", "be non-negative", conf.ICMPTimeout)
+		errs = append(errs, err)
 	}
 
 	err = netutil.ValidateDomainName(conf.LocalDomainName)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("LocalDomainName: %w", err))
+		// Don't wrap the error since it's informative enough as is.
+		errs = append(errs, err)
 	}
 
 	// This is a best-effort check for the file accessibility.  The file will be
 	// checked again when it is opened later.
 	if _, err = os.Stat(conf.DBFilePath); err != nil && !errors.Is(err, os.ErrNotExist) {
-		errs = append(errs, fmt.Errorf("DBFilePath %q: %w", conf.DBFilePath, err))
+		errs = append(errs, fmt.Errorf("db file path %q: %w", conf.DBFilePath, err))
 	}
 
 	if len(conf.Interfaces) == 0 {
@@ -71,7 +81,7 @@ func (conf *Config) Validate() (err error) {
 
 	for _, iface := range slices.Sorted(maps.Keys(conf.Interfaces)) {
 		ic := conf.Interfaces[iface]
-		err = ic.Validate()
+		err = ic.validate()
 		if err != nil {
 			errs = append(errs, fmt.Errorf("interface %q: %w", iface, err))
 		}
@@ -80,29 +90,17 @@ func (conf *Config) Validate() (err error) {
 	return errors.Join(errs...)
 }
 
-// InterfaceConfig is the configuration of a single DHCP interface.
-type InterfaceConfig struct {
-	// IPv4 is the configuration of DHCP protocol for IPv4.
-	IPv4 *IPv4Config
-
-	// IPv6 is the configuration of DHCP protocol for IPv6.
-	IPv6 *IPv6Config
-}
-
-// type check
-var _ validate.Interface = (*InterfaceConfig)(nil)
-
-// Validate implements the [validate.Interface] interface for *InterfaceConfig.
-func (ic *InterfaceConfig) Validate() (err error) {
+// validate returns an error in ic, if any.
+func (ic *InterfaceConfig) validate() (err error) {
 	if ic == nil {
-		return errors.ErrNoValue
+		return errNilConfig
 	}
 
-	if err = ic.IPv4.Validate(); err != nil {
+	if err = ic.IPv4.validate(); err != nil {
 		return fmt.Errorf("ipv4: %w", err)
 	}
 
-	if err = ic.IPv6.Validate(); err != nil {
+	if err = ic.IPv6.validate(); err != nil {
 		return fmt.Errorf("ipv6: %w", err)
 	}
 

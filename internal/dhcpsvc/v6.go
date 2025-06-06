@@ -10,22 +10,20 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/AdguardTeam/golibs/validate"
 	"github.com/google/gopacket/layers"
 )
 
 // IPv6Config is the interface-specific configuration for DHCPv6.
 type IPv6Config struct {
 	// RangeStart is the first address in the range to assign to DHCP clients.
-	// It should be a valid IPv6 address.
 	RangeStart netip.Addr
 
-	// Options is the list of explicit DHCP options to send to clients.  The
-	// options with zero length are treated as deletions of the corresponding
-	// options, either implicit or explicit.
+	// Options is the list of DHCP options to send to DHCP clients.  The options
+	// with zero length are treated as deletions of the corresponding options,
+	// either implicit or explicit.
 	Options layers.DHCPv6Options
 
-	// LeaseDuration is the TTL of a DHCP lease.  It should be positive.
+	// LeaseDuration is the TTL of a DHCP lease.
 	LeaseDuration time.Duration
 
 	// RASlaacOnly defines whether the DHCP clients should only use SLAAC for
@@ -41,13 +39,10 @@ type IPv6Config struct {
 	Enabled bool
 }
 
-// type check
-var _ validate.Interface = (*IPv6Config)(nil)
-
-// Validate implements the [validate.Interface] interface for *IPv6Config.
-func (c *IPv6Config) Validate() (err error) {
+// validate returns an error in conf if any.
+func (c *IPv6Config) validate() (err error) {
 	if c == nil {
-		return errors.ErrNoValue
+		return errNilConfig
 	} else if !c.Enabled {
 		return nil
 	}
