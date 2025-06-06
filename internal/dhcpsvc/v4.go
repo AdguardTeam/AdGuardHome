@@ -18,8 +18,9 @@ import (
 // IPv4Config is the interface-specific configuration for DHCPv4.
 type IPv4Config struct {
 	// GatewayIP is the IPv4 address of the network's gateway.  It is used as
-	// the default gateway for DHCP clients and also used in calculating the
-	// network-specific broadcast address.
+	// the default gateway for DHCP clients and also used for calculating the
+	// network-specific broadcast address.  It should be a valid IPv4 address,
+	// should be within the subnet, and should be outside the address range.
 	GatewayIP netip.Addr
 
 	// SubnetMask is the IPv4 subnet mask of the network.  It should be a valid
@@ -27,20 +28,22 @@ type IPv4Config struct {
 	SubnetMask netip.Addr
 
 	// RangeStart is the first address in the range to assign to DHCP clients.
-	// It must be within the subnet defined by the GatewayIP and SubnetMask.
+	// It should be a valid IPv4 address, should be within the subnet, and
+	// should be less or equal to RangeEnd.
 	RangeStart netip.Addr
 
 	// RangeEnd is the last address in the range to assign to DHCP clients.  It
-	// must be within the subnet defined by the GatewayIP and SubnetMask.  It
-	// must be greater than RangeStart.
+	// should be a valid IPv4 address, should be within the subnet, and should
+	// be greater or equal to RangeStart.
 	RangeEnd netip.Addr
 
-	// Options is the list of DHCP options to send to DHCP clients.  The options
-	// having a zero value within the Length field are treated as deletions of
-	// the corresponding options, either implicit or explicit.
+	// Options is the list of explicitly configured DHCP options to send to
+	// clients.  The options having a zero value within the Length field are
+	// treated as deletions of the corresponding options, either implicit or
+	// explicit.
 	Options layers.DHCPOptions
 
-	// LeaseDuration is the TTL of a DHCP lease.  It must be positive.
+	// LeaseDuration is the TTL of a DHCP lease.  It should be positive.
 	LeaseDuration time.Duration
 
 	// Enabled is the state of the DHCPv4 service, whether it is enabled or not
@@ -158,6 +161,8 @@ func newDHCPInterfaceV4(
 		return nil
 	}
 
+	// TODO(e.burkov):  Add a helper for converting [netip.Addr] to subnet mask
+	// to [netutil].
 	maskLen, _ := net.IPMask(conf.SubnetMask.AsSlice()).Size()
 	addrSpace, _ := newIPRange(conf.RangeStart, conf.RangeEnd)
 

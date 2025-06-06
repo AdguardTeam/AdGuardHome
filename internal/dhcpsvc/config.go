@@ -39,19 +39,10 @@ type Config struct {
 	Enabled bool
 }
 
-// InterfaceConfig is the configuration of a single DHCP interface.
-type InterfaceConfig struct {
-	// IPv4 is the configuration of DHCP protocol for IPv4.
-	IPv4 *IPv4Config
-
-	// IPv6 is the configuration of DHCP protocol for IPv6.
-	IPv6 *IPv6Config
-}
-
 // type check
 var _ validate.Interface = (*Config)(nil)
 
-// Validate implements the [validate.Interface] interface for *Config.
+// Validate implements the [validate.Interface] for *Config.
 func (conf *Config) Validate() (err error) {
 	switch {
 	case conf == nil:
@@ -61,19 +52,18 @@ func (conf *Config) Validate() (err error) {
 	}
 
 	errs := []error{
-		validate.NotNegative("icmp timeout", conf.ICMPTimeout),
+		validate.NotNegative("ICMPTimeout", conf.ICMPTimeout),
 	}
 
 	err = netutil.ValidateDomainName(conf.LocalDomainName)
 	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		errs = append(errs, err)
+		errs = append(errs, fmt.Errorf("LocalDomainName: %w", err))
 	}
 
 	// This is a best-effort check for the file accessibility.  The file will be
 	// checked again when it is opened later.
 	if _, err = os.Stat(conf.DBFilePath); err != nil && !errors.Is(err, os.ErrNotExist) {
-		errs = append(errs, fmt.Errorf("db file path %q: %w", conf.DBFilePath, err))
+		errs = append(errs, fmt.Errorf("DBFilePath %q: %w", conf.DBFilePath, err))
 	}
 
 	if len(conf.Interfaces) == 0 {
@@ -89,6 +79,15 @@ func (conf *Config) Validate() (err error) {
 	}
 
 	return errors.Join(errs...)
+}
+
+// InterfaceConfig is the configuration of a single DHCP interface.
+type InterfaceConfig struct {
+	// IPv4 is the configuration of DHCP protocol for IPv4.
+	IPv4 *IPv4Config
+
+	// IPv6 is the configuration of DHCP protocol for IPv6.
+	IPv6 *IPv6Config
 }
 
 // type check

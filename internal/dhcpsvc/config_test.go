@@ -65,7 +65,7 @@ func TestConfig_Validate(t *testing.T) {
 			Interfaces: testInterfaceConf,
 			DBFilePath: leasesPath,
 		},
-		wantErrMsg: `bad domain name "": domain name is empty`,
+		wantErrMsg: `LocalDomainName: bad domain name "": domain name is empty`,
 	}, {
 		conf: &dhcpsvc.Config{
 			Enabled:         true,
