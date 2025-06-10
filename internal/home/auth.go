@@ -1,18 +1,24 @@
 package home
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/netutil/httputil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"go.etcd.io/bbolt"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -68,8 +74,81 @@ type Auth struct {
 //
 // TODO(s.chzhen):  Improve naming.
 type webUser struct {
-	Name         string `yaml:"name"`
+	// Name represents the login name of the web user.
+	Name string `yaml:"name"`
+
+	// PasswordHash is the hashed representation of the web user password.
 	PasswordHash string `yaml:"password"`
+
+	// UserID is the unique identifier of the web user.
+	UserID aghuser.UserID `yaml:"-"`
+}
+
+// toUser returns the new properly initialized *aghuser.User using stored
+// properties.  It panics if there is an error generating the user ID.
+func (wu *webUser) toUser() (u *aghuser.User) {
+	uid := wu.UserID
+	if uid == (aghuser.UserID{}) {
+		uid = aghuser.MustNewUserID()
+	}
+
+	return &aghuser.User{
+		Password: aghuser.NewDefaultPassword(wu.PasswordHash),
+		Login:    aghuser.Login(wu.Name),
+		ID:       uid,
+	}
+}
+
+// authMw is the global authentication object.
+//
+// TODO(s.chzhen): !! Ratelimiter.  Docs.  Replace [Auth].
+type authMw struct {
+	logger   *slog.Logger
+	sessions aghuser.SessionStorage
+	users    aghuser.DB
+}
+
+// NewAuthMW initializes the global authentication object.
+func NewAuthMW(
+	ctx context.Context,
+	baseLogger *slog.Logger,
+	dbFilename string,
+	users []webUser,
+	sessionTTL time.Duration,
+) (a *authMw, err error) {
+	userDB := aghuser.NewDefaultDB()
+	for i, u := range users {
+		err = userDB.Create(ctx, u.toUser())
+		if err != nil {
+			return nil, fmt.Errorf("users: at index %d: %w", i, err)
+		}
+	}
+
+	s, err := aghuser.NewDefaultSessionStorage(ctx, &aghuser.DefaultSessionStorageConfig{
+		Logger:     baseLogger.With(slogutil.KeyPrefix, "session_storage"),
+		Clock:      timeutil.SystemClock{},
+		UserDB:     aghuser.NewDefaultDB(),
+		DBPath:     dbFilename,
+		SessionTTL: sessionTTL,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("creating session storage: %w", err)
+	}
+
+	return &authMw{
+		logger:   baseLogger.With(slogutil.KeyPrefix, "auth"),
+		sessions: s,
+		users:    userDB,
+	}, nil
+}
+
+// TODO(s.chzhen): !! Naming.  Docs.
+func (a *authMw) mw() (mw httputil.Middleware) {
+	return newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
+		logger:   a.logger,
+		sessions: a.sessions,
+		users:    a.users,
+	})
 }
 
 // InitAuth initializes the global authentication object.

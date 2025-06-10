@@ -221,7 +221,7 @@ func (web *webAPI) start(ctx context.Context) {
 		// Create a new instance, because the Web is not usable after Shutdown.
 		web.httpServer = &http.Server{
 			Addr:              web.conf.BindAddr.String(),
-			Handler:           hdlr,
+			Handler:           globalContext.authMw.mw().Wrap(hdlr),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 			WriteTimeout:      web.conf.WriteTimeout,
@@ -303,7 +303,7 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 
 		web.httpsServer.server = &http.Server{
 			Addr:    addr,
-			Handler: hdlr,
+			Handler: globalContext.authMw.mw().Wrap(hdlr),
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
 				RootCAs:      web.tlsManager.rootCerts,
@@ -344,7 +344,7 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 			CipherSuites: web.tlsManager.customCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
-		Handler: withMiddlewares(globalContext.mux, limitRequestBody),
+		Handler: globalContext.authMw.mw().Wrap(withMiddlewares(globalContext.mux, limitRequestBody)),
 	}
 
 	web.logger.DebugContext(ctx, "starting http/3 server")

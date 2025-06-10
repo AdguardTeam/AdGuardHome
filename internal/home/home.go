@@ -53,6 +53,7 @@ type homeContext struct {
 	dnsServer  *dnsforward.Server   // DNS module
 	dhcpServer dhcpd.Interface      // DHCP module
 	auth       *Auth                // HTTP authentication module
+	authMw     *authMw              // HTTP authentication module
 	filters    *filtering.DNSFilter // DNS filtering module
 	web        *webAPI              // Web (HTTP, HTTPS) module
 
@@ -677,6 +678,9 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	globalContext.auth, err = initUsers()
 	fatalOnError(err)
 
+	globalContext.authMw, err = initUsersMw(ctx, slogLogger)
+	fatalOnError(err)
+
 	web, err := initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, isCustomURL)
 	fatalOnError(err)
 
@@ -791,6 +795,26 @@ func checkPermissions(
 	}
 
 	permcheck.Check(ctx, l, workDir, dataDir, statsDir, querylogDir, confPath)
+}
+
+// initUsersMw initializes context auth module.  Clears config users field.
+//
+// TODO(s.chzhen): !! Replace [initUsers].
+func initUsersMw(ctx context.Context, baseLogger *slog.Logger) (auth *authMw, err error) {
+	auth, err = NewAuthMW(
+		ctx,
+		baseLogger,
+		filepath.Join(globalContext.getDataDir(), "sessions.db"),
+		config.Users,
+		time.Duration(config.HTTPConfig.SessionTTL),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("initializing auth module: %w", err)
+	}
+
+	config.Users = nil
+
+	return auth, nil
 }
 
 // initUsers initializes context auth module.  Clears config users field.

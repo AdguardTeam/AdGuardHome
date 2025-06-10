@@ -425,7 +425,7 @@ func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 // needsAuthentication returns true if the current request requires
 // authentication.
 //
-// TODO(s.chzhen):  Use the request's path.
+// TODO(s.chzhen): !! Use the request's path.
 func (mw *authMiddlewareDefault) needsAuthentication(
 	ctx context.Context,
 	_ *http.Request,
