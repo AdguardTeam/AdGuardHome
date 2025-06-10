@@ -6,7 +6,7 @@
     "upstream_parallel": "Tüm üst sunucuları eş zamanlı sorgulayarak çözümlemeyi hızlandırmak için paralel sorgular kullanın.",
     "parallel_requests": "Paralel istekler",
     "load_balancing": "Yük dengeleme",
-    "load_balancing_desc": "Aynı anda bir üst kaynak sunucusunu sorgulayın. AdGuard Home, en düşük başarısız arama sayısına ve en düşük ortalama arama süresine sahip sunucuları seçmek için ağırlıklı rastgele bir algoritma kullanır.",
+    "load_balancing_desc": "Üst kaynak sunucuları aynı anda sorgulanır.<br/>AdGuard Home, en düşük başarısız sorgu sayısına ve en düşük ortalama sorgu süresine sahip sunucuları seçmek için ağırlıklı rastgele algoritma kullanır.",
     "bootstrap_dns": "DNS Önyükleme sunucuları",
     "bootstrap_dns_desc": "Üst kaynak olarak belirttiğiniz DoH/DoT çözümleyicilerin IP adreslerini çözümlemek için kullanılan DNS sunucularının IP adresleri. Yorumlara izin verilmez.",
     "fallback_dns_title": "Yedek DNS sunucuları",

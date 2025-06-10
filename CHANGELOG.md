@@ -18,11 +18,17 @@ See also the [v0.107.63 GitHub milestone][ms-v0.107.63].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.4][go-1.24.4].
+
 ### Fixed
 
 - The hostnames of DHCP clients with multiple labels not being recognized.
 
 - Status reported by the systemd service implementation in cases of auto-restart after a failed start.
+
+[go-1.24.4]: https://groups.google.com/g/golang-announce/c/ufZ8WpEsA3A
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

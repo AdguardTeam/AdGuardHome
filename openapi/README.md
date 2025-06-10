@@ -8,7 +8,7 @@ The easiest way would be to use [Swagger Editor](http://editor.swagger.io/) and 
 
 ## Changelog
 
-[Here](CHANGELOG.md) we keep track of all non-compatible changes that are being made.
+See [`CHANGELOG.md`](CHANGELOG.md) where we keep track of all non-compatible changes that are being made.
 
 ## Authentication
 
