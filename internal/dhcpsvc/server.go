@@ -13,9 +13,13 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/google/gopacket"
 )
 
 // DHCPServer is a DHCP server for both IPv4 and IPv6 address families.
+//
+// TODO(e.burkov):  Rename to Default.
 type DHCPServer struct {
 	// enabled indicates whether the DHCP server is enabled and can provide
 	// information about its clients.
@@ -23,6 +27,11 @@ type DHCPServer struct {
 
 	// logger logs common DHCP events.
 	logger *slog.Logger
+
+	// packetSource is the source of DHCP packets to process.
+	//
+	// TODO(e.burkov):  Implement and set.
+	packetSource gopacket.PacketSource
 
 	// localTLD is the top-level domain name to use for resolving DHCP clients'
 	// hostnames.
@@ -51,8 +60,8 @@ type DHCPServer struct {
 	icmpTimeout time.Duration
 }
 
-// New creates a new DHCP server with the given configuration.  It returns an
-// error if the given configuration can't be used.
+// New creates a new DHCP server with the given configuration.  conf must be
+// valid.
 //
 // TODO(e.burkov):  Use.
 func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
@@ -64,11 +73,7 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 		return nil, nil
 	}
 
-	ifaces4, ifaces6, err := newInterfaces(ctx, l, conf.Interfaces)
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return nil, err
-	}
+	ifaces4, ifaces6 := newInterfaces(ctx, l, conf.Interfaces)
 
 	enabled := &atomic.Bool{}
 	enabled.Store(conf.Enabled)
@@ -95,46 +100,67 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 }
 
 // newInterfaces creates interfaces for the given map of interface names to
-// their configurations.
+// their configurations.  ifaces must be valid, baseLogger must not be nil.
 func newInterfaces(
 	ctx context.Context,
-	l *slog.Logger,
+	baseLogger *slog.Logger,
 	ifaces map[string]*InterfaceConfig,
-) (v4 dhcpInterfacesV4, v6 dhcpInterfacesV6, err error) {
-	defer func() { err = errors.Annotate(err, "creating interfaces: %w") }()
-
+) (v4 dhcpInterfacesV4, v6 dhcpInterfacesV6) {
 	// TODO(e.burkov):  Add validations scoped to the network interfaces set.
 	v4 = make(dhcpInterfacesV4, 0, len(ifaces))
 	v6 = make(dhcpInterfacesV6, 0, len(ifaces))
 
-	var errs []error
 	for _, name := range slices.Sorted(maps.Keys(ifaces)) {
 		iface := ifaces[name]
-		var i4 *dhcpInterfaceV4
-		i4, err = newDHCPInterfaceV4(ctx, l, name, iface.IPv4)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("interface %q: ipv4: %w", name, err))
-		} else if i4 != nil {
-			v4 = append(v4, i4)
+		ifaceLogger := baseLogger.With(keyInterface, name)
+
+		iface4 := newDHCPInterfaceV4(
+			ctx,
+			ifaceLogger.With(keyFamily, netutil.AddrFamilyIPv4),
+			name,
+			iface.IPv4,
+		)
+		if iface4 != nil {
+			v4 = append(v4, iface4)
 		}
 
-		i6 := newDHCPInterfaceV6(ctx, l, name, iface.IPv6)
-		if i6 != nil {
-			v6 = append(v6, i6)
+		iface6 := newDHCPInterfaceV6(
+			ctx,
+			ifaceLogger.With(keyFamily, netutil.AddrFamilyIPv6),
+			name,
+			iface.IPv6,
+		)
+		if iface6 != nil {
+			v6 = append(v6, iface6)
 		}
 	}
 
-	if err = errors.Join(errs...); err != nil {
-		return nil, nil, err
-	}
-
-	return v4, v6, nil
+	return v4, v6
 }
 
 // type check
 //
 // TODO(e.burkov):  Uncomment when the [Interface] interface is implemented.
 // var _ Interface = (*DHCPServer)(nil)
+
+// Start implements the [Interface] interface for *DHCPServer.
+func (srv *DHCPServer) Start(ctx context.Context) (err error) {
+	srv.logger.DebugContext(ctx, "starting dhcp server")
+
+	// TODO(e.burkov):  Listen to configured interfaces.
+
+	go srv.serve(context.WithoutCancel(ctx))
+
+	return nil
+}
+
+func (srv *DHCPServer) Shutdown(ctx context.Context) (err error) {
+	srv.logger.DebugContext(ctx, "shutting down dhcp server")
+
+	// TODO(e.burkov):  Close the packet source.
+
+	return nil
+}
 
 // Enabled implements the [Interface] interface for *DHCPServer.
 func (srv *DHCPServer) Enabled() (ok bool) {
@@ -146,11 +172,9 @@ func (srv *DHCPServer) Leases() (leases []*Lease) {
 	srv.leasesMu.RLock()
 	defer srv.leasesMu.RUnlock()
 
-	srv.leases.rangeLeases(func(l *Lease) (cont bool) {
-		leases = append(leases, l.Clone())
-
-		return true
-	})
+	for l := range srv.leases.rangeLeases {
+		leases = append(leases, l)
+	}
 
 	return leases
 }
@@ -253,7 +277,7 @@ func (srv *DHCPServer) AddLease(ctx context.Context, l *Lease) (err error) {
 		"hostname", l.Hostname,
 		"ip", l.IP,
 		"mac", l.HWAddr,
-		"static", l.IsStatic,
+		"is_static", l.IsStatic,
 	)
 
 	return nil
@@ -292,7 +316,7 @@ func (srv *DHCPServer) UpdateStaticLease(ctx context.Context, l *Lease) (err err
 		"hostname", l.Hostname,
 		"ip", l.IP,
 		"mac", l.HWAddr,
-		"static", l.IsStatic,
+		"is_static", l.IsStatic,
 	)
 
 	return nil
@@ -329,7 +353,51 @@ func (srv *DHCPServer) RemoveLease(ctx context.Context, l *Lease) (err error) {
 		"hostname", l.Hostname,
 		"ip", l.IP,
 		"mac", l.HWAddr,
-		"static", l.IsStatic,
+		"is_static", l.IsStatic,
+	)
+
+	return nil
+}
+
+// removeLeaseByAddr removes the lease with the given IP address from the
+// server.  It returns an error if the lease can't be removed.
+//
+//lint:ignore U1000 TODO(e.burkov):  Use
+func (srv *DHCPServer) removeLeaseByAddr(ctx context.Context, addr netip.Addr) (err error) {
+	defer func() { err = errors.Annotate(err, "removing lease by address: %w") }()
+
+	iface, err := srv.ifaceForAddr(addr)
+	if err != nil {
+		// Don't wrap the error since it's already informative enough as is.
+		return err
+	}
+
+	srv.leasesMu.Lock()
+	defer srv.leasesMu.Unlock()
+
+	l, ok := srv.leases.leaseByAddr(addr)
+	if !ok {
+		return fmt.Errorf("no lease for ip %s", addr)
+	}
+
+	err = srv.leases.remove(l, iface)
+	if err != nil {
+		// Don't wrap the error since there is already an annotation deferred.
+		return err
+	}
+
+	err = srv.dbStore(ctx)
+	if err != nil {
+		// Don't wrap the error since it's already informative enough as is.
+		return err
+	}
+
+	iface.logger.DebugContext(
+		ctx, "removed lease",
+		"hostname", l.Hostname,
+		"ip", l.IP,
+		"mac", l.HWAddr,
+		"is_static", l.IsStatic,
 	)
 
 	return nil

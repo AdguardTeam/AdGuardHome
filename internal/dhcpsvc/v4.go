@@ -11,14 +11,16 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/validate"
 	"github.com/google/gopacket/layers"
 )
 
 // IPv4Config is the interface-specific configuration for DHCPv4.
 type IPv4Config struct {
 	// GatewayIP is the IPv4 address of the network's gateway.  It is used as
-	// the default gateway for DHCP clients and also used in calculating the
-	// network-specific broadcast address.
+	// the default gateway for DHCP clients and also used for calculating the
+	// network-specific broadcast address.  It should be a valid IPv4 address,
+	// should be within the subnet, and should be outside the address range.
 	GatewayIP netip.Addr
 
 	// SubnetMask is the IPv4 subnet mask of the network.  It should be a valid
@@ -26,17 +28,22 @@ type IPv4Config struct {
 	SubnetMask netip.Addr
 
 	// RangeStart is the first address in the range to assign to DHCP clients.
+	// It should be a valid IPv4 address, should be within the subnet, and
+	// should be less or equal to RangeEnd.
 	RangeStart netip.Addr
 
-	// RangeEnd is the last address in the range to assign to DHCP clients.
+	// RangeEnd is the last address in the range to assign to DHCP clients.  It
+	// should be a valid IPv4 address, should be within the subnet, and should
+	// be greater or equal to RangeStart.
 	RangeEnd netip.Addr
 
-	// Options is the list of DHCP options to send to DHCP clients.  The options
-	// having a zero value within the Length field are treated as deletions of
-	// the corresponding options, either implicit or explicit.
+	// Options is the list of explicitly configured DHCP options to send to
+	// clients.  The options having a zero value within the Length field are
+	// treated as deletions of the corresponding options, either implicit or
+	// explicit.
 	Options layers.DHCPOptions
 
-	// LeaseDuration is the TTL of a DHCP lease.
+	// LeaseDuration is the TTL of a DHCP lease.  It should be positive.
 	LeaseDuration time.Duration
 
 	// Enabled is the state of the DHCPv4 service, whether it is enabled or not
@@ -44,35 +51,23 @@ type IPv4Config struct {
 	Enabled bool
 }
 
-// validate returns an error in conf if any.
-func (c *IPv4Config) validate() (err error) {
+// type check
+var _ validate.Interface = (*IPv4Config)(nil)
+
+// Validate implements the [validate.Interface] interface for *IPv4Config.
+//
+// TODO(e.burkov):  Use [validate].
+func (c *IPv4Config) Validate() (err error) {
 	if c == nil {
-		return errNilConfig
+		return errors.ErrNoValue
 	} else if !c.Enabled {
+		// Don't validate the configuration for disabled interface.
 		return nil
 	}
 
 	var errs []error
 
-	if !c.GatewayIP.Is4() {
-		err = newMustErr("gateway ip", "be a valid ipv4", c.GatewayIP)
-		errs = append(errs, err)
-	}
-
-	if !c.SubnetMask.Is4() {
-		err = newMustErr("subnet mask", "be a valid ipv4 cidr mask", c.SubnetMask)
-		errs = append(errs, err)
-	}
-
-	if !c.RangeStart.Is4() {
-		err = newMustErr("range start", "be a valid ipv4", c.RangeStart)
-		errs = append(errs, err)
-	}
-
-	if !c.RangeEnd.Is4() {
-		err = newMustErr("range end", "be a valid ipv4", c.RangeEnd)
-		errs = append(errs, err)
-	}
+	errs = c.validateSubnet(errs)
 
 	if c.LeaseDuration <= 0 {
 		err = newMustErr("icmp timeout", "be positive", c.LeaseDuration)
@@ -80,6 +75,50 @@ func (c *IPv4Config) validate() (err error) {
 	}
 
 	return errors.Join(errs...)
+}
+
+// validateSubnet validates the subnet configuration.
+func (c *IPv4Config) validateSubnet(errs []error) (res []error) {
+	res = errs
+
+	if !c.GatewayIP.Is4() {
+		err := newMustErr("gateway ip", "be a valid ipv4", c.GatewayIP)
+		res = append(res, err)
+	}
+
+	if !c.SubnetMask.Is4() {
+		err := newMustErr("subnet mask", "be a valid ipv4 cidr mask", c.SubnetMask)
+		res = append(res, err)
+	}
+
+	if !c.RangeStart.Is4() {
+		err := newMustErr("range start", "be a valid ipv4", c.RangeStart)
+		res = append(res, err)
+	}
+
+	if !c.RangeEnd.Is4() {
+		err := newMustErr("range end", "be a valid ipv4", c.RangeEnd)
+		res = append(res, err)
+	}
+
+	maskLen, _ := net.IPMask(c.SubnetMask.AsSlice()).Size()
+	subnet := netip.PrefixFrom(c.GatewayIP, maskLen)
+
+	switch {
+	case !subnet.Contains(c.RangeStart):
+		res = append(res, fmt.Errorf("range start %s is not within %s", c.RangeStart, subnet))
+	case !subnet.Contains(c.RangeEnd):
+		res = append(res, fmt.Errorf("range end %s is not within %s", c.RangeEnd, subnet))
+	}
+
+	addrSpace, err := newIPRange(c.RangeStart, c.RangeEnd)
+	if err != nil {
+		res = append(res, err)
+	} else if addrSpace.contains(c.GatewayIP) {
+		res = append(res, fmt.Errorf("gateway ip %s in the ip range %s", c.GatewayIP, addrSpace))
+	}
+
+	return res
 }
 
 // dhcpInterfaceV4 is a DHCP interface for IPv4 address family.
@@ -91,7 +130,7 @@ type dhcpInterfaceV4 struct {
 	// gateway is the IP address of the network gateway.
 	gateway netip.Addr
 
-	// subnet is the network subnet.
+	// subnet is the network subnet of the interface.
 	subnet netip.Prefix
 
 	// addrSpace is the IPv4 address space allocated for leasing.
@@ -108,67 +147,39 @@ type dhcpInterfaceV4 struct {
 }
 
 // newDHCPInterfaceV4 creates a new DHCP interface for IPv4 address family with
-// the given configuration.  It returns an error if the given configuration
-// can't be used.
+// the given configuration.  If the interface is disabled, it returns nil.  conf
+// must be valid.
 func newDHCPInterfaceV4(
 	ctx context.Context,
 	l *slog.Logger,
 	name string,
 	conf *IPv4Config,
-) (i *dhcpInterfaceV4, err error) {
-	l = l.With(
-		keyInterface, name,
-		keyFamily, netutil.AddrFamilyIPv4,
-	)
-
+) (iface *dhcpInterfaceV4) {
 	if !conf.Enabled {
 		l.DebugContext(ctx, "disabled")
 
-		return nil, nil
+		return nil
 	}
 
+	// TODO(e.burkov):  Add a helper for converting [netip.Addr] to subnet mask
+	// to [netutil].
 	maskLen, _ := net.IPMask(conf.SubnetMask.AsSlice()).Size()
-	subnet := netip.PrefixFrom(conf.GatewayIP, maskLen)
+	addrSpace, _ := newIPRange(conf.RangeStart, conf.RangeEnd)
 
-	switch {
-	case !subnet.Contains(conf.RangeStart):
-		return nil, fmt.Errorf("range start %s is not within %s", conf.RangeStart, subnet)
-	case !subnet.Contains(conf.RangeEnd):
-		return nil, fmt.Errorf("range end %s is not within %s", conf.RangeEnd, subnet)
-	}
-
-	addrSpace, err := newIPRange(conf.RangeStart, conf.RangeEnd)
-	if err != nil {
-		return nil, err
-	} else if addrSpace.contains(conf.GatewayIP) {
-		return nil, fmt.Errorf("gateway ip %s in the ip range %s", conf.GatewayIP, addrSpace)
-	}
-
-	i = &dhcpInterfaceV4{
+	iface = &dhcpInterfaceV4{
 		gateway:   conf.GatewayIP,
-		subnet:    subnet,
+		subnet:    netip.PrefixFrom(conf.GatewayIP, maskLen),
 		addrSpace: addrSpace,
-		common:    newNetInterface(name, l, conf.LeaseDuration),
+		common: &netInterface{
+			logger:   l,
+			leases:   map[macKey]*Lease{},
+			name:     name,
+			leaseTTL: conf.LeaseDuration,
+		},
 	}
-	i.implicitOpts, i.explicitOpts = conf.options(ctx, l)
+	iface.implicitOpts, iface.explicitOpts = conf.options(ctx, l)
 
-	return i, nil
-}
-
-// dhcpInterfacesV4 is a slice of network interfaces of IPv4 address family.
-type dhcpInterfacesV4 []*dhcpInterfaceV4
-
-// find returns the first network interface within ifaces containing ip.  It
-// returns false if there is no such interface.
-func (ifaces dhcpInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok bool) {
-	i := slices.IndexFunc(ifaces, func(iface *dhcpInterfaceV4) (contains bool) {
-		return iface.subnet.Contains(ip)
-	})
-	if i < 0 {
-		return nil, false
-	}
-
-	return ifaces[i].common, true
+	return iface
 }
 
 // options returns the implicit and explicit options for the interface.  The two
@@ -360,4 +371,107 @@ func (c *IPv4Config) options(ctx context.Context, l *slog.Logger) (imp, exp laye
 // compareV4OptionCodes compares option codes of a and b.
 func compareV4OptionCodes(a, b layers.DHCPOption) (res int) {
 	return int(a.Type) - int(b.Type)
+}
+
+// msg4Type returns the message type of msg, if it's present within the options.
+func msg4Type(msg *layers.DHCPv4) (typ layers.DHCPMsgType, ok bool) {
+	for _, opt := range msg.Options {
+		if opt.Type == layers.DHCPOptMessageType && len(opt.Data) > 0 {
+			return layers.DHCPMsgType(opt.Data[0]), true
+		}
+	}
+
+	return 0, false
+}
+
+// requestedIPv4 returns the IPv4 address, requested by client in the DHCP
+// message, if any.
+//
+// TODO(e.burkov):  DRY with other IP-from-option helpers.
+func requestedIPv4(msg *layers.DHCPv4) (ip netip.Addr, ok bool) {
+	for _, opt := range msg.Options {
+		if opt.Type == layers.DHCPOptRequestIP && len(opt.Data) == net.IPv4len {
+			return netip.AddrFromSlice(opt.Data)
+		}
+	}
+
+	return netip.Addr{}, false
+}
+
+// serverID4 returns the server ID of the DHCP message, if any.
+func serverID4(msg *layers.DHCPv4) (ip netip.Addr, ok bool) {
+	for _, opt := range msg.Options {
+		if opt.Type == layers.DHCPOptServerID && len(opt.Data) == net.IPv4len {
+			return netip.AddrFromSlice(opt.Data)
+		}
+	}
+
+	return netip.Addr{}, false
+}
+
+// handleDiscover handles messages of type discover.
+func (iface *dhcpInterfaceV4) handleDiscover(
+	ctx context.Context,
+	rw responseWriter4,
+	msg *layers.DHCPv4,
+) {
+	// TODO(e.burkov):  Implement.
+}
+
+// handleSelecting handles messages of type request in SELECTING state.
+func (iface *dhcpInterfaceV4) handleSelecting(
+	ctx context.Context,
+	rw responseWriter4,
+	msg *layers.DHCPv4,
+	reqIP netip.Addr,
+) {
+	// TODO(e.burkov):  Implement.
+}
+
+// handleSelecting handles messages of type request in INIT-REBOOT state.
+func (iface *dhcpInterfaceV4) handleInitReboot(
+	ctx context.Context,
+	rw responseWriter4,
+	msg *layers.DHCPv4,
+	reqIP netip.Addr,
+) {
+	// TODO(e.burkov):  Implement.
+}
+
+// handleRenew handles messages of type request in RENEWING or REBINDING state.
+func (iface *dhcpInterfaceV4) handleRenew(
+	ctx context.Context,
+	rw responseWriter4,
+	req *layers.DHCPv4,
+) {
+	// TODO(e.burkov):  Implement.
+}
+
+// dhcpInterfacesV4 is a slice of network interfaces of IPv4 address family.
+type dhcpInterfacesV4 []*dhcpInterfaceV4
+
+// find returns the first network interface within ifaces containing ip.  It
+// returns false if there is no such interface.
+func (ifaces dhcpInterfacesV4) find(ip netip.Addr) (iface4 *netInterface, ok bool) {
+	i := slices.IndexFunc(ifaces, func(iface *dhcpInterfaceV4) (contains bool) {
+		return iface.subnet.Contains(ip)
+	})
+	if i < 0 {
+		return nil, false
+	}
+
+	return ifaces[i].common, true
+}
+
+// findInterface returns the first DHCPv4 interface within ifaces containing
+// ip.  It returns false if there is no such interface.
+func (ifaces dhcpInterfacesV4) findInterface(ip netip.Addr) (iface *dhcpInterfaceV4, ok bool) {
+	i := slices.IndexFunc(ifaces, func(iface *dhcpInterfaceV4) (contains bool) {
+		return iface.subnet.Contains(ip)
+	})
+	if i < 0 {
+		return nil, false
+	}
+
+	return ifaces[i], true
 }
