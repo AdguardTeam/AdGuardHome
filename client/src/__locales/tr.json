@@ -501,7 +501,7 @@
     "setup_dns_privacy_android_1": "Android 9, yerel olarak DNS-over-TLS protokolünü destekler. Yapılandırmak için Ayarlar → Ağ ve İnternet → Gelişmiş → Özel DNS öğesine gidin ve alan adınızı girin.",
     "setup_dns_privacy_android_2": "<0>Android için AdGuard</0>, <1>DNS-over-HTTPS</1> ve <1>DNS-over-TLS</1> protokolünü destekler.",
     "setup_dns_privacy_android_3": "<0>Intra</0> Android'e <1>DNS-over-HTTPS</1> protokol desteğini ekler.",
-    "setup_dns_privacy_ios_1": "<0>DNSCloak</0>, <1>DNS-over-HTTPS</1> protokolünü destekler, ancak kendi sunucunuzu kullanacak şekilde yapılandırmak için bir <2>DNS Damgası</2> oluşturmanız gerekir.",
+    "setup_dns_privacy_ios_1": "<0>DNSecure</0>, <1>DNS-over-HTTPS</1> ve <1>DNS-over-TLS</1> protokolünü destekler.",
     "setup_dns_privacy_ios_2": "<0>iOS için AdGuard</0>, <1>DNS-over-HTTPS</1> ve <1>DNS-over-TLS</1> protokolünü destekler.",
     "setup_dns_privacy_other_title": "Diğer kullanım alanları",
     "setup_dns_privacy_other_1": "AdGuard Home, herhangi bir platformda güvenli bir DNS istemcisi olabilir.",
