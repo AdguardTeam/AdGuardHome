@@ -53,6 +53,10 @@ type Settings struct {
 	// is nil if the client does not have any blocked services.
 	BlockedServices *BlockedServices
 
+	BlockingMode BlockingMode
+	BlockingIPv4 netip.Addr
+	BlockingIPv6 netip.Addr
+
 	ProtectionEnabled   bool
 	FilteringEnabled    bool
 	SafeSearchEnabled   bool
@@ -387,6 +391,9 @@ func (d *DNSFilter) Settings() (s *Settings) {
 		SafeSearchEnabled:   d.conf.SafeSearchConf.Enabled,
 		SafeBrowsingEnabled: d.conf.SafeBrowsingEnabled,
 		ParentalEnabled:     d.conf.ParentalEnabled,
+		BlockingMode:        d.conf.BlockingMode,
+		BlockingIPv4:        d.conf.BlockingIPv4,
+		BlockingIPv6:        d.conf.BlockingIPv6,
 	}
 }
 
