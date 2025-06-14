@@ -793,6 +793,8 @@ const getAddressesComparisonChunks = (address: string, allowOnlyIpAddresses: boo
     }
     catch (e) {
         if (allowOnlyIpAddresses) {
+            // Rethrowing the exception if only IP addresses and CIDRs are allowed.
+            // This is to ensure exactly same behavior as in the original code.
             throw e
         }
         
