@@ -675,9 +675,6 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	GLMode = opts.glinetMode
 
 	// Init auth module.
-	globalContext.auth, err = initUsers()
-	fatalOnError(err)
-
 	globalContext.authMw, err = initUsersMw(ctx, slogLogger)
 	fatalOnError(err)
 

@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/netip"
 	"path"
-	"strconv"
 	"strings"
 	"time"
 
@@ -131,68 +130,29 @@ func writeErrorWithIP(
 
 // handleLogin is the handler for the POST /control/login HTTP API.
 func handleLogin(w http.ResponseWriter, r *http.Request) {
-	req := loginJSON{}
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
+	ctx := r.Context()
+	user, ok := webUserFromContext(ctx)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
 
 		return
 	}
 
-	var remoteIP string
-	// realIP cannot be used here without taking TrustedProxies into account due
-	// to security issues.
-	//
-	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
-	if remoteIP, err = netutil.SplitHost(r.RemoteAddr); err != nil {
-		writeErrorWithIP(
-			r,
-			w,
-			http.StatusBadRequest,
-			r.RemoteAddr,
-			"auth: getting remote address: %s",
-			err,
-		)
+	sess, err := globalContext.authMw.sessions.New(ctx, user)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
 
-	if rateLimiter := globalContext.auth.rateLimiter; rateLimiter != nil {
-		if left := rateLimiter.check(remoteIP); left > 0 {
-			w.Header().Set(httphdr.RetryAfter, strconv.Itoa(int(left.Seconds())))
-			writeErrorWithIP(
-				r,
-				w,
-				http.StatusTooManyRequests,
-				remoteIP,
-				"auth: blocked for %s",
-				left,
-			)
-
-			return
-		}
-	}
-
-	ip, err := realIP(r)
-	if err != nil {
-		log.Error("auth: getting real ip from request with remote ip %s: %s", remoteIP, err)
-	}
-
-	cookie, err := globalContext.auth.newCookie(req, remoteIP)
-	if err != nil {
-		logIP := remoteIP
-		if globalContext.auth.trustedProxies.Contains(ip.Unmap()) {
-			logIP = ip.String()
-		}
-
-		writeErrorWithIP(r, w, http.StatusForbidden, logIP, "%s", err)
-
-		return
-	}
-
-	log.Info("auth: user %q successfully logged in from ip %s", req.Name, ip)
-
-	http.SetCookie(w, cookie)
+	http.SetCookie(w, &http.Cookie{
+		Name:     sessionCookieName,
+		Value:    hex.EncodeToString(sess.Token[:]),
+		Path:     "/",
+		Expires:  time.Now().Add(cookieTTL),
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
 
 	h := w.Header()
 	h.Set(httphdr.CacheControl, "no-store, no-cache, must-revalidate, proxy-revalidate")
@@ -215,7 +175,21 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	globalContext.auth.removeSession(c.Value)
+	// TODO(s.chzhen): !! Use helper.
+	sess, err := hex.DecodeString(c.Value)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+
+		return
+	}
+
+	var t aghuser.SessionToken
+	copy(t[:], sess)
+
+	err = globalContext.authMw.sessions.DeleteByToken(r.Context(), t)
+	if err != nil {
+		log.Error("removing session by token: %s", err)
+	}
 
 	c = &http.Cookie{
 		Name:    sessionCookieName,
@@ -414,6 +388,13 @@ func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 			return
 		}
 
+		path := r.URL.Path
+		if path == "/" {
+			http.Redirect(w, r, "login.html", http.StatusFound)
+
+			return
+		}
+
 		if err != nil {
 			mw.logger.ErrorContext(ctx, "retrieving user from request", slogutil.KeyError, err)
 		}
@@ -424,12 +405,16 @@ func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 
 // needsAuthentication returns true if the current request requires
 // authentication.
-//
-// TODO(s.chzhen): !! Use the request's path.
 func (mw *authMiddlewareDefault) needsAuthentication(
 	ctx context.Context,
-	_ *http.Request,
+	r *http.Request,
 ) (ok bool) {
+	path := r.URL.Path
+
+	if isPublicResource(path) {
+		return false
+	}
+
 	users, err := mw.users.All(ctx)
 	if err != nil {
 		// Should not happen.
@@ -449,6 +434,10 @@ func (mw *authMiddlewareDefault) userFromRequest(
 	r *http.Request,
 ) (u *aghuser.User, err error) {
 	defer func() { err = errors.Annotate(err, "getting user from request: %w") }()
+
+	if r.URL.Path == "/control/login" {
+		return mw.userFromRequestBody(ctx, r)
+	}
 
 	cookie, err := r.Cookie(sessionCookieName)
 	if err == http.ErrNoCookie {
@@ -503,6 +492,31 @@ func (mw *authMiddlewareDefault) userFromRequestBasicAuth(
 	}
 
 	ok = user.Password.Authenticate(ctx, pass)
+	if !ok {
+		return nil, errInvalidLogin
+	}
+
+	return user, nil
+}
+
+// userFromRequestBody searches for a user using a request's body.
+func (mw *authMiddlewareDefault) userFromRequestBody(
+	ctx context.Context,
+	r *http.Request,
+) (user *aghuser.User, err error) {
+	creds := &loginJSON{}
+	err = json.NewDecoder(r.Body).Decode(creds)
+	if err != nil {
+		// Don't wrap the error because it's informative enough as is.
+		return nil, err
+	}
+
+	user, _ = mw.users.ByLogin(ctx, aghuser.Login(creds.Name))
+	if user == nil {
+		return nil, errInvalidLogin
+	}
+
+	ok := user.Password.Authenticate(ctx, creds.Password)
 	if !ok {
 		return nil, errInvalidLogin
 	}

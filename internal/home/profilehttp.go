@@ -47,7 +47,12 @@ type profileJSON struct {
 
 // handleGetProfile is the handler for GET /control/profile endpoint.
 func handleGetProfile(w http.ResponseWriter, r *http.Request) {
-	u := globalContext.auth.getCurrentUser(r)
+	u, ok := webUserFromContext(r.Context())
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+
+		return
+	}
 
 	var resp profileJSON
 	func() {
@@ -55,7 +60,7 @@ func handleGetProfile(w http.ResponseWriter, r *http.Request) {
 		defer config.RUnlock()
 
 		resp = profileJSON{
-			Name:     u.Name,
+			Name:     string(u.Login),
 			Language: config.Language,
 			Theme:    config.Theme,
 		}
