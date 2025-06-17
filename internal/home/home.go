@@ -798,9 +798,20 @@ func checkPermissions(
 //
 // TODO(s.chzhen): !! Replace [initUsers].
 func initUsersMw(ctx context.Context, baseLogger *slog.Logger) (auth *authMw, err error) {
+	var rateLimiter rateLimiterInterface
+	if config.AuthAttempts > 0 && config.AuthBlockMin > 0 {
+		blockDur := time.Duration(config.AuthBlockMin) * time.Minute
+		rateLimiter = newAuthRateLimiter(blockDur, config.AuthAttempts)
+	} else {
+		baseLogger.InfoContext(ctx, "authratelimiter is disabled")
+		rateLimiter = emptyRateLimiter{}
+	}
+
 	auth, err = NewAuthMW(
 		ctx,
 		baseLogger,
+		rateLimiter,
+		netutil.SliceSubnetSet(netutil.UnembedPrefixes(config.DNS.TrustedProxies)),
 		filepath.Join(globalContext.getDataDir(), "sessions.db"),
 		config.Users,
 		time.Duration(config.HTTPConfig.SessionTTL),

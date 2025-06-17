@@ -341,6 +341,12 @@ type authMiddlewareDefaultConfig struct {
 	// be nil.
 	logger *slog.Logger
 
+	// rateLimiter manages the rate limiting for login attempts.
+	rateLimiter rateLimiterInterface
+
+	// trustedProxies is a set of subnets considered as trusted.
+	trustedProxies netutil.SubnetSet
+
 	// sessions contains web user sessions.  It must not be nil.
 	sessions aghuser.SessionStorage
 
@@ -352,9 +358,12 @@ type authMiddlewareDefaultConfig struct {
 // for a web client using an authentication cookie or basic auth credentials and
 // passes it with the context.
 type authMiddlewareDefault struct {
-	logger   *slog.Logger
-	sessions aghuser.SessionStorage
-	users    aghuser.DB
+	logger      *slog.Logger
+	rateLimiter rateLimiterInterface
+	// TODO(s.chzhen): !! Use it.
+	trustedProxies netutil.SubnetSet
+	sessions       aghuser.SessionStorage
+	users          aghuser.DB
 }
 
 // newAuthMiddlewareDefault returns the new properly initialized
@@ -435,16 +444,47 @@ func (mw *authMiddlewareDefault) userFromRequest(
 ) (u *aghuser.User, err error) {
 	defer func() { err = errors.Annotate(err, "getting user from request: %w") }()
 
+	cookie, err := r.Cookie(sessionCookieName)
+	if err == nil {
+		return mw.userFromCookie(ctx, cookie.Value)
+	}
+
+	var remoteIP string
+	// realIP cannot be used here without taking TrustedProxies into account due
+	// to security issues.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
+	if remoteIP, err = netutil.SplitHost(r.RemoteAddr); err != nil {
+		return nil, fmt.Errorf("getting remote address: %w", err)
+	}
+
+	rateLimiter := mw.rateLimiter
+	if left := rateLimiter.check(remoteIP); left > 0 {
+		return nil, fmt.Errorf("login attempt blocked for %s", left)
+	}
+
+	rateLimiter.inc(remoteIP)
+	defer func() {
+		if err != nil {
+			return
+		}
+
+		rateLimiter.remove(remoteIP)
+	}()
+
 	if r.URL.Path == "/control/login" {
 		return mw.userFromRequestBody(ctx, r)
 	}
 
-	cookie, err := r.Cookie(sessionCookieName)
-	if err == http.ErrNoCookie {
-		return mw.userFromRequestBasicAuth(ctx, r)
-	}
+	return mw.userFromRequestBasicAuth(ctx, r)
+}
 
-	sess, err := hex.DecodeString(cookie.Value)
+// userFromCookie tries to retrieve a user based on the provided cookie value.
+func (mw *authMiddlewareDefault) userFromCookie(
+	ctx context.Context,
+	val string,
+) (u *aghuser.User, err error) {
+	sess, err := hex.DecodeString(val)
 	if err != nil {
 		return nil, fmt.Errorf("decoding cookie: %w", err)
 	}

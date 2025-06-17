@@ -9,6 +9,39 @@ import (
 // cache.
 const failedAuthTTL = 1 * time.Minute
 
+// rateLimiterInterface is an interface for rate limiting login attempts.
+type rateLimiterInterface interface {
+	// check returns the duration of time left until a user is unblocked.
+	// A non-positive result indicates that the user is not blocked.
+	check(usrID string) (left time.Duration)
+
+	// inc records a failed login attempt for the specified user.
+	inc(usrID string)
+
+	// remove stops tracking and blocking of the specified user.
+	remove(usrID string)
+}
+
+// emptyRateLimiter is the [rateLimiter] interface implementation that does
+// nothing.
+type emptyRateLimiter struct{}
+
+// type check
+var _ emptyRateLimiter = emptyRateLimiter{}
+
+// check implements the [rateLimiter] interface for emptyRateLimiter.  It always
+// returns zero.
+func (rl emptyRateLimiter) check(_ string) (left time.Duration) {
+	return 0
+}
+
+// inc implements the [rateLimiter] interface for emptyRateLimiter.
+// returns zero.
+func (rl emptyRateLimiter) inc(_ string) {}
+
+// remove implements the [rateLimiter] interface for emptyRateLimiter.
+func (rl emptyRateLimiter) remove(_ string) {}
+
 // failedAuth is an entry of authRateLimiter's cache.
 type failedAuth struct {
 	until time.Time
@@ -32,6 +65,9 @@ func newAuthRateLimiter(blockDur time.Duration, maxAttempts uint) (ab *authRateL
 		maxAttempts: maxAttempts,
 	}
 }
+
+// type check
+var _ rateLimiterInterface = (*authRateLimiter)(nil)
 
 // cleanupLocked checks each blocked users removing ones with expired TTL.  For
 // internal use only.

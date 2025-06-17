@@ -103,15 +103,19 @@ func (wu *webUser) toUser() (u *aghuser.User) {
 //
 // TODO(s.chzhen): !! Ratelimiter.  Docs.  Replace [Auth].
 type authMw struct {
-	logger   *slog.Logger
-	sessions aghuser.SessionStorage
-	users    aghuser.DB
+	logger         *slog.Logger
+	rateLimiter    rateLimiterInterface
+	trustedProxies netutil.SubnetSet
+	sessions       aghuser.SessionStorage
+	users          aghuser.DB
 }
 
 // NewAuthMW initializes the global authentication object.
 func NewAuthMW(
 	ctx context.Context,
 	baseLogger *slog.Logger,
+	rateLimiter rateLimiterInterface,
+	trustedProxies netutil.SubnetSet,
 	dbFilename string,
 	users []webUser,
 	sessionTTL time.Duration,
@@ -136,18 +140,22 @@ func NewAuthMW(
 	}
 
 	return &authMw{
-		logger:   baseLogger.With(slogutil.KeyPrefix, "auth"),
-		sessions: s,
-		users:    userDB,
+		logger:         baseLogger.With(slogutil.KeyPrefix, "auth"),
+		rateLimiter:    rateLimiter,
+		trustedProxies: trustedProxies,
+		sessions:       s,
+		users:          userDB,
 	}, nil
 }
 
 // TODO(s.chzhen): !! Naming.  Docs.
 func (a *authMw) mw() (mw httputil.Middleware) {
 	return newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
-		logger:   a.logger,
-		sessions: a.sessions,
-		users:    a.users,
+		logger:         a.logger,
+		rateLimiter:    a.rateLimiter,
+		trustedProxies: a.trustedProxies,
+		sessions:       a.sessions,
+		users:          a.users,
 	})
 }
 
