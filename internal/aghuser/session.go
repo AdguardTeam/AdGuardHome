@@ -5,8 +5,11 @@ import (
 	"time"
 )
 
+// SessionTokenLength is the length of the web user session token.
+const SessionTokenLength = 16
+
 // SessionToken is the type for the web user session token.
-type SessionToken [16]byte
+type SessionToken [SessionTokenLength]byte
 
 // NewSessionToken returns a cryptographically secure randomly generated web
 // user session token.  If an error occurs during random generation, it will

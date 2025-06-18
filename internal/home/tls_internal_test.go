@@ -23,7 +23,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/stretchr/testify/assert"
@@ -65,10 +64,9 @@ kXS9jgARhhiWXJrk
 
 func TestValidateCertificates(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	logger := slogutil.NewDiscardLogger()
 
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         logger,
+		logger:         testLogger,
 		configModified: func() {},
 		servePlainDNS:  false,
 	})
@@ -113,26 +111,41 @@ func TestValidateCertificates(t *testing.T) {
 // restores them once the test is complete.
 //
 // The global variables are:
-//   - [configuration.dns]
-//   - [homeContext.clients.storage]
-//   - [homeContext.dnsServer]
-//   - [homeContext.mux]
+//   - [GLMode]
+//   - [config]
+//   - [glFilePrefix]
+//   - [globalContext.auth]
+//   - [globalContext.clients.storage]
+//   - [globalContext.dnsServer]
+//   - [globalContext.firstRun]
+//   - [globalContext.mux]
+//   - [globalContext.web]
 //
 // TODO(s.chzhen):  Remove this once the TLS manager no longer accesses global
 // variables.  Make tests that use this helper concurrent.
 func storeGlobals(tb testing.TB) {
 	tb.Helper()
 
+	prevGLMode := GLMode
 	prevConfig := config
+	prefGLFilePrefix := glFilePrefix
+	auth := globalContext.auth
 	storage := globalContext.clients.storage
 	dnsServer := globalContext.dnsServer
+	firstRun := globalContext.firstRun
 	mux := globalContext.mux
+	web := globalContext.web
 
 	tb.Cleanup(func() {
+		GLMode = prevGLMode
 		config = prevConfig
+		glFilePrefix = prefGLFilePrefix
+		globalContext.auth = auth
 		globalContext.clients.storage = storage
 		globalContext.dnsServer = dnsServer
+		globalContext.firstRun = firstRun
 		globalContext.mux = mux
+		globalContext.web = web
 	})
 }
 
@@ -207,18 +220,17 @@ func TestTLSManager_Reload(t *testing.T) {
 	config.DNS.Port = 0
 
 	var (
-		logger = slogutil.NewDiscardLogger()
-		ctx    = testutil.ContextWithTimeout(t, testTimeout)
-		err    error
+		ctx = testutil.ContextWithTimeout(t, testTimeout)
+		err error
 	)
 
 	globalContext.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
-		Logger: logger,
+		Logger: testLogger,
 	})
 	require.NoError(t, err)
 
 	globalContext.clients.storage, err = client.NewStorage(ctx, &client.StorageConfig{
-		Logger: logger,
+		Logger: testLogger,
 		Clock:  timeutil.SystemClock{},
 	})
 	require.NoError(t, err)
@@ -238,7 +250,7 @@ func TestTLSManager_Reload(t *testing.T) {
 	writeCertAndKey(t, certDER, certPath, key, keyPath)
 
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         logger,
+		logger:         testLogger,
 		configModified: func() {},
 		tlsSettings: tlsConfigSettings{
 			Enabled:         true,
@@ -249,7 +261,7 @@ func TestTLSManager_Reload(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, logger, nil, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, false)
 	require.NoError(t, err)
 
 	m.setWebAPI(web)
@@ -272,13 +284,12 @@ func TestTLSManager_Reload(t *testing.T) {
 
 func TestTLSManager_HandleTLSStatus(t *testing.T) {
 	var (
-		logger = slogutil.NewDiscardLogger()
-		ctx    = testutil.ContextWithTimeout(t, testTimeout)
-		err    error
+		ctx = testutil.ContextWithTimeout(t, testTimeout)
+		err error
 	)
 
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         logger,
+		logger:         testLogger,
 		configModified: func() {},
 		tlsSettings: tlsConfigSettings{
 			Enabled:          true,
@@ -309,19 +320,18 @@ func TestValidateTLSSettings(t *testing.T) {
 	globalContext.mux = http.NewServeMux()
 
 	var (
-		logger = slogutil.NewDiscardLogger()
-		ctx    = testutil.ContextWithTimeout(t, testTimeout)
-		err    error
+		ctx = testutil.ContextWithTimeout(t, testTimeout)
+		err error
 	)
 
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         logger,
+		logger:         testLogger,
 		configModified: func() {},
 		servePlainDNS:  false,
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, logger, nil, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, false)
 	require.NoError(t, err)
 
 	m.setWebAPI(web)
@@ -409,13 +419,12 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 	globalContext.mux = http.NewServeMux()
 
 	var (
-		logger = slogutil.NewDiscardLogger()
-		ctx    = testutil.ContextWithTimeout(t, testTimeout)
-		err    error
+		ctx = testutil.ContextWithTimeout(t, testTimeout)
+		err error
 	)
 
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         logger,
+		logger:         testLogger,
 		configModified: func() {},
 		tlsSettings: tlsConfigSettings{
 			Enabled:          true,
@@ -426,7 +435,7 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, logger, nil, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, false)
 	require.NoError(t, err)
 
 	m.setWebAPI(web)
@@ -462,13 +471,12 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	storeGlobals(t)
 
 	var (
-		logger = slogutil.NewDiscardLogger()
-		ctx    = testutil.ContextWithTimeout(t, testTimeout)
-		err    error
+		ctx = testutil.ContextWithTimeout(t, testTimeout)
+		err error
 	)
 
 	globalContext.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
-		Logger: logger,
+		Logger: testLogger,
 	})
 	require.NoError(t, err)
 
@@ -484,7 +492,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	require.NoError(t, err)
 
 	globalContext.clients.storage, err = client.NewStorage(ctx, &client.StorageConfig{
-		Logger: logger,
+		Logger: testLogger,
 		Clock:  timeutil.SystemClock{},
 	})
 	require.NoError(t, err)
@@ -506,7 +514,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 
 	// Initialize the TLS manager and assert its configuration.
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         logger,
+		logger:         testLogger,
 		configModified: func() {},
 		tlsSettings: tlsConfigSettings{
 			Enabled:         true,
@@ -517,7 +525,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, logger, nil, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, false)
 	require.NoError(t, err)
 
 	m.setWebAPI(web)
