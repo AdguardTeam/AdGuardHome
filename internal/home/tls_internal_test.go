@@ -129,7 +129,6 @@ func storeGlobals(tb testing.TB) {
 	prevGLMode := GLMode
 	prevConfig := config
 	prefGLFilePrefix := glFilePrefix
-	auth := globalContext.auth
 	storage := globalContext.clients.storage
 	dnsServer := globalContext.dnsServer
 	firstRun := globalContext.firstRun
@@ -140,7 +139,6 @@ func storeGlobals(tb testing.TB) {
 		GLMode = prevGLMode
 		config = prevConfig
 		glFilePrefix = prefGLFilePrefix
-		globalContext.auth = auth
 		globalContext.clients.storage = storage
 		globalContext.dnsServer = dnsServer
 		globalContext.firstRun = firstRun

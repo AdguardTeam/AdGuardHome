@@ -136,7 +136,10 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 	clientFS := http.FileServer(http.FS(conf.clientFS))
 
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
-	globalContext.mux.Handle("/", withMiddlewares(clientFS, gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler))
+	globalContext.mux.Handle(
+		"/",
+		withMiddlewares(clientFS, gziphandler.GzipHandler, postInstallHandler),
+	)
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if conf.firstRun {

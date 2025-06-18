@@ -36,40 +36,6 @@ type loginJSON struct {
 	Password string `json:"password"`
 }
 
-// newCookie creates a new authentication cookie.
-func (a *Auth) newCookie(req loginJSON, addr string) (c *http.Cookie, err error) {
-	rateLimiter := a.rateLimiter
-	u, ok := a.findUser(req.Name, req.Password)
-	if !ok {
-		if rateLimiter != nil {
-			rateLimiter.inc(addr)
-		}
-
-		return nil, errors.Error("invalid username or password")
-	}
-
-	if rateLimiter != nil {
-		rateLimiter.remove(addr)
-	}
-
-	sess := newSessionToken()
-	now := time.Now().UTC()
-
-	a.addSession(sess, &session{
-		userName: u.Name,
-		expire:   uint32(now.Unix()) + a.sessionTTL,
-	})
-
-	return &http.Cookie{
-		Name:     sessionCookieName,
-		Value:    hex.EncodeToString(sess),
-		Path:     "/",
-		Expires:  now.Add(cookieTTL),
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-	}, nil
-}
-
 // realIP extracts the real IP address of the client from an HTTP request using
 // the known HTTP headers.
 //
@@ -212,90 +178,6 @@ func RegisterAuthHandlers() {
 	httpRegister(http.MethodGet, "/control/logout", handleLogout)
 }
 
-// optionalAuthThird returns true if a user should authenticate first.
-func optionalAuthThird(w http.ResponseWriter, r *http.Request) (mustAuth bool) {
-	pref := fmt.Sprintf("auth: raddr %s", r.RemoteAddr)
-
-	if glProcessCookie(r) {
-		log.Debug("%s: authentication is handled by gl-inet submodule", pref)
-
-		return false
-	}
-
-	// redirect to login page if not authenticated
-	isAuthenticated := false
-	cookie, err := r.Cookie(sessionCookieName)
-	if err != nil {
-		// The only error that is returned from r.Cookie is [http.ErrNoCookie].
-		// Check Basic authentication.
-		user, pass, hasBasic := r.BasicAuth()
-		if hasBasic {
-			_, isAuthenticated = globalContext.auth.findUser(user, pass)
-			if !isAuthenticated {
-				log.Info("%s: invalid basic authorization value", pref)
-			}
-		}
-	} else {
-		res := globalContext.auth.checkSession(cookie.Value)
-		isAuthenticated = res == checkSessionOK
-		if !isAuthenticated {
-			log.Debug("%s: invalid cookie value: %q", pref, cookie)
-		}
-	}
-
-	if isAuthenticated {
-		return false
-	}
-
-	if p := r.URL.Path; p == "/" || p == "/index.html" {
-		if glProcessRedirect(w, r) {
-			log.Debug("%s: redirected to login page by gl-inet submodule", pref)
-		} else {
-			log.Debug("%s: redirected to login page", pref)
-			http.Redirect(w, r, "login.html", http.StatusFound)
-		}
-	} else {
-		log.Debug("%s: responded with forbidden to %s %s", pref, r.Method, p)
-		w.WriteHeader(http.StatusForbidden)
-		_, _ = w.Write([]byte("Forbidden"))
-	}
-
-	return true
-}
-
-// TODO(a.garipov): Use [http.Handler] consistently everywhere throughout the
-// project.
-func optionalAuth(
-	h func(http.ResponseWriter, *http.Request),
-) (wrapped func(http.ResponseWriter, *http.Request)) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		p := r.URL.Path
-		authRequired := globalContext.auth != nil && globalContext.auth.authRequired()
-		if p == "/login.html" {
-			cookie, err := r.Cookie(sessionCookieName)
-			if authRequired && err == nil {
-				// Redirect to the dashboard if already authenticated.
-				res := globalContext.auth.checkSession(cookie.Value)
-				if res == checkSessionOK {
-					http.Redirect(w, r, "", http.StatusFound)
-
-					return
-				}
-
-				log.Debug("auth: raddr %s: invalid cookie value: %q", r.RemoteAddr, cookie)
-			}
-		} else if isPublicResource(p) {
-			// Process as usual, no additional auth requirements.
-		} else if authRequired {
-			if optionalAuthThird(w, r) {
-				return
-			}
-		}
-
-		h(w, r)
-	}
-}
-
 // isPublicResource returns true if p is a path to a public resource.
 func isPublicResource(p string) (ok bool) {
 	isAsset, err := path.Match("/assets/*", p)
@@ -312,21 +194,6 @@ func isPublicResource(p string) (ok bool) {
 	}
 
 	return isAsset || isLogin
-}
-
-// authHandler is a helper structure that implements [http.Handler].
-type authHandler struct {
-	handler http.Handler
-}
-
-// ServeHTTP implements the [http.Handler] interface for *authHandler.
-func (a *authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	optionalAuth(a.handler.ServeHTTP)(w, r)
-}
-
-// optionalAuthHandler returns a authentication handler.
-func optionalAuthHandler(handler http.Handler) http.Handler {
-	return &authHandler{handler}
 }
 
 const (
@@ -370,9 +237,11 @@ type authMiddlewareDefault struct {
 // *authMiddlewareDefault.
 func newAuthMiddlewareDefault(c *authMiddlewareDefaultConfig) (mw *authMiddlewareDefault) {
 	return &authMiddlewareDefault{
-		logger:   c.logger,
-		sessions: c.sessions,
-		users:    c.users,
+		logger:         c.logger,
+		rateLimiter:    c.rateLimiter,
+		trustedProxies: c.trustedProxies,
+		sessions:       c.sessions,
+		users:          c.users,
 	}
 }
 

@@ -2,6 +2,7 @@ package home
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/netip"
 	"os"
@@ -747,8 +748,9 @@ func (c *configuration) write(tlsMgr *tlsManager) (err error) {
 	c.Lock()
 	defer c.Unlock()
 
-	if globalContext.auth != nil {
-		config.Users = globalContext.auth.usersList()
+	if globalContext.authMw != nil {
+		// TODO(s.chzhen):  Pass context.
+		config.Users = globalContext.authMw.usersList(context.TODO())
 	}
 
 	if tlsMgr != nil {

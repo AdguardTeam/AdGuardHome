@@ -52,7 +52,6 @@ type homeContext struct {
 	queryLog   querylog.QueryLog    // query log module
 	dnsServer  *dnsforward.Server   // DNS module
 	dhcpServer dhcpd.Interface      // DHCP module
-	auth       *Auth                // HTTP authentication module
 	authMw     *authMw              // HTTP authentication module
 	filters    *filtering.DNSFilter // DNS filtering module
 	web        *webAPI              // Web (HTTP, HTTPS) module
@@ -825,31 +824,6 @@ func initUsersMw(ctx context.Context, baseLogger *slog.Logger) (auth *authMw, er
 	return auth, nil
 }
 
-// initUsers initializes context auth module.  Clears config users field.
-func initUsers() (auth *Auth, err error) {
-	sessFilename := filepath.Join(globalContext.getDataDir(), "sessions.db")
-
-	var rateLimiter *authRateLimiter
-	if config.AuthAttempts > 0 && config.AuthBlockMin > 0 {
-		blockDur := time.Duration(config.AuthBlockMin) * time.Minute
-		rateLimiter = newAuthRateLimiter(blockDur, config.AuthAttempts)
-	} else {
-		log.Info("authratelimiter is disabled")
-	}
-
-	trustedProxies := netutil.SliceSubnetSet(netutil.UnembedPrefixes(config.DNS.TrustedProxies))
-
-	sessionTTL := time.Duration(config.HTTPConfig.SessionTTL).Seconds()
-	auth = InitAuth(sessFilename, config.Users, uint32(sessionTTL), rateLimiter, trustedProxies)
-	if auth == nil {
-		return nil, errors.Error("initializing auth module failed")
-	}
-
-	config.Users = nil
-
-	return auth, nil
-}
-
 func (c *configuration) anonymizer() (ipmut *aghnet.IPMut) {
 	var anonFunc aghnet.IPMutFunc
 	if c.DNS.AnonymizeClientIP {
@@ -955,9 +929,9 @@ func cleanup(ctx context.Context) {
 		globalContext.web.close(ctx)
 		globalContext.web = nil
 	}
-	if globalContext.auth != nil {
-		globalContext.auth.Close()
-		globalContext.auth = nil
+	if globalContext.authMw != nil {
+		globalContext.authMw.Close(ctx)
+		globalContext.authMw = nil
 	}
 
 	err := stopDNSServer()
