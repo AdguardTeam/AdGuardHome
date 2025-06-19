@@ -51,6 +51,9 @@ type webConfig struct {
 	// encryption.  It must not be nil.
 	tlsManager *tlsManager
 
+	// TODO(s.chzhen): !! Docs.
+	authMw *authMw
+
 	clientFS fs.FS
 
 	// BindAddr is the binding address with port for plain HTTP web interface.
@@ -114,6 +117,9 @@ type webAPI struct {
 	// encryption.
 	tlsManager *tlsManager
 
+	// TODO(s.chzhen): !! Docs.
+	authMw *authMw
+
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
 	httpsServer httpsServer
@@ -131,6 +137,7 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 		logger:     conf.logger,
 		baseLogger: conf.baseLogger,
 		tlsManager: conf.tlsManager,
+		authMw:     conf.authMw,
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
@@ -264,6 +271,10 @@ func (web *webAPI) close(ctx context.Context) {
 	shutdownSrv(ctx, web.logger, web.httpsServer.server)
 	shutdownSrv3(ctx, web.logger, web.httpsServer.server3)
 	shutdownSrv(ctx, web.logger, web.httpServer)
+
+	if web.authMw != nil {
+		web.authMw.Close(ctx)
+	}
 
 	web.logger.InfoContext(ctx, "stopped http server")
 }

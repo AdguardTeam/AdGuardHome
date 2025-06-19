@@ -744,13 +744,13 @@ func readConfigFile() (fileData []byte, err error) {
 }
 
 // Saves configuration to the YAML file and also saves the user filter contents to a file
-func (c *configuration) write(tlsMgr *tlsManager) (err error) {
+func (c *configuration) write(tlsMgr *tlsManager, authMw *authMw) (err error) {
 	c.Lock()
 	defer c.Unlock()
 
-	if globalContext.authMw != nil {
+	if authMw != nil {
 		// TODO(s.chzhen):  Pass context.
-		config.Users = globalContext.authMw.usersList(context.TODO())
+		config.Users = authMw.usersList(context.TODO())
 	}
 
 	if tlsMgr != nil {

@@ -256,7 +256,7 @@ func TestTLSManager_Reload(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, false)
 	require.NoError(t, err)
 
 	m.setWebAPI(web)
@@ -326,7 +326,7 @@ func TestValidateTLSSettings(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, false)
 	require.NoError(t, err)
 
 	m.setWebAPI(web)
@@ -430,7 +430,7 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, false)
 	require.NoError(t, err)
 
 	m.setWebAPI(web)
@@ -520,7 +520,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, false)
 	require.NoError(t, err)
 
 	m.setWebAPI(web)

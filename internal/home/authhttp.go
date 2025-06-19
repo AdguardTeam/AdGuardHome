@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/netip"
 	"path"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -95,30 +97,71 @@ func writeErrorWithIP(
 }
 
 // handleLogin is the handler for the POST /control/login HTTP API.
-func handleLogin(w http.ResponseWriter, r *http.Request) {
+func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	user, ok := webUserFromContext(ctx)
-	if !ok {
-		w.WriteHeader(http.StatusUnauthorized)
 
-		return
-	}
-
-	sess, err := globalContext.authMw.sessions.New(ctx, user)
+	req := loginJSON{}
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		aghhttp.Error(r, w, http.StatusBadRequest, "json decode: %s", err)
 
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     sessionCookieName,
-		Value:    hex.EncodeToString(sess.Token[:]),
-		Path:     "/",
-		Expires:  time.Now().Add(cookieTTL),
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-	})
+	var remoteIP string
+	// realIP cannot be used here without taking TrustedProxies into account due
+	// to security issues.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
+	if remoteIP, err = netutil.SplitHost(r.RemoteAddr); err != nil {
+		writeErrorWithIP(
+			r,
+			w,
+			http.StatusBadRequest,
+			r.RemoteAddr,
+			"auth: getting remote address: %s",
+			err,
+		)
+
+		return
+	}
+
+	if rateLimiter := web.authMw.rateLimiter; rateLimiter != nil {
+		if left := rateLimiter.check(remoteIP); left > 0 {
+			w.Header().Set(httphdr.RetryAfter, strconv.Itoa(int(left.Seconds())))
+			writeErrorWithIP(
+				r,
+				w,
+				http.StatusTooManyRequests,
+				remoteIP,
+				"auth: blocked for %s",
+				left,
+			)
+
+			return
+		}
+	}
+
+	ip, err := realIP(r)
+	if err != nil {
+		log.Error("auth: getting real ip from request with remote ip %s: %s", remoteIP, err)
+	}
+
+	cookie, err := newCookie(ctx, web.authMw, req, remoteIP)
+	if err != nil {
+		logIP := remoteIP
+		if web.authMw.trustedProxies.Contains(ip.Unmap()) {
+			logIP = ip.String()
+		}
+
+		writeErrorWithIP(r, w, http.StatusForbidden, logIP, "%s", err)
+
+		return
+	}
+
+	log.Info("auth: user %q successfully logged in from ip %s", req.Name, ip)
+
+	http.SetCookie(w, cookie)
 
 	h := w.Header()
 	h.Set(httphdr.CacheControl, "no-store, no-cache, must-revalidate, proxy-revalidate")
@@ -128,8 +171,52 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	aghhttp.OK(w)
 }
 
+// newCookie creates a new authentication cookie.  rateLimiter must not be nil.
+func newCookie(
+	ctx context.Context,
+	authMw *authMw,
+	req loginJSON,
+	addr string,
+) (c *http.Cookie, err error) {
+	user, _ := authMw.users.ByLogin(ctx, aghuser.Login(req.Name))
+	if err != nil {
+		// Should not happen.
+		panic(err)
+	}
+
+	rateLimiter := authMw.rateLimiter
+	if user == nil {
+		rateLimiter.inc(addr)
+
+		return nil, errInvalidLogin
+	}
+
+	ok := user.Password.Authenticate(ctx, req.Password)
+	if !ok {
+		rateLimiter.inc(addr)
+
+		return nil, errInvalidLogin
+	}
+
+	rateLimiter.remove(addr)
+
+	sess, err := authMw.sessions.New(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &http.Cookie{
+		Name:     sessionCookieName,
+		Value:    hex.EncodeToString(sess.Token[:]),
+		Path:     "/",
+		Expires:  time.Now().Add(cookieTTL),
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	}, nil
+}
+
 // handleLogout is the handler for the GET /control/logout HTTP API.
-func handleLogout(w http.ResponseWriter, r *http.Request) {
+func (web *webAPI) handleLogout(w http.ResponseWriter, r *http.Request) {
 	respHdr := w.Header()
 	c, err := r.Cookie(sessionCookieName)
 	if err != nil {
@@ -152,7 +239,7 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 	var t aghuser.SessionToken
 	copy(t[:], sess)
 
-	err = globalContext.authMw.sessions.DeleteByToken(r.Context(), t)
+	err = web.authMw.sessions.DeleteByToken(r.Context(), t)
 	if err != nil {
 		log.Error("removing session by token: %s", err)
 	}
@@ -173,9 +260,12 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 // RegisterAuthHandlers - register handlers
-func RegisterAuthHandlers() {
-	globalContext.mux.Handle("/control/login", postInstallHandler(ensureHandler(http.MethodPost, handleLogin)))
-	httpRegister(http.MethodGet, "/control/logout", handleLogout)
+func RegisterAuthHandlers(web *webAPI) {
+	globalContext.mux.Handle(
+		"/control/login",
+		postInstallHandler(ensureHandler(http.MethodPost, web.handleLogin)),
+	)
+	httpRegister(http.MethodGet, "/control/logout", web.handleLogout)
 }
 
 // isPublicResource returns true if p is a path to a public resource.
@@ -193,7 +283,19 @@ func isPublicResource(p string) (ok bool) {
 		panic(fmt.Errorf("bad login pattern: %w", err))
 	}
 
-	return isAsset || isLogin
+	paths := []string{
+		"/dns-query",
+		"/dns-query/",
+		"/control/login",
+		"/apple/doh.mobileconfig",
+		"/apple/dot.mobileconfig",
+		"/control/install/get_addresses",
+		"/control/install/check_config",
+		"/control/install/configure",
+		"/install.html",
+	}
+
+	return isAsset || isLogin || slices.Contains(paths, p)
 }
 
 const (
@@ -341,10 +443,6 @@ func (mw *authMiddlewareDefault) userFromRequest(
 		rateLimiter.remove(remoteIP)
 	}()
 
-	if r.URL.Path == "/control/login" {
-		return mw.userFromRequestBody(ctx, r)
-	}
-
 	return mw.userFromRequestBasicAuth(ctx, r)
 }
 
@@ -401,31 +499,6 @@ func (mw *authMiddlewareDefault) userFromRequestBasicAuth(
 	}
 
 	ok = user.Password.Authenticate(ctx, pass)
-	if !ok {
-		return nil, errInvalidLogin
-	}
-
-	return user, nil
-}
-
-// userFromRequestBody searches for a user using a request's body.
-func (mw *authMiddlewareDefault) userFromRequestBody(
-	ctx context.Context,
-	r *http.Request,
-) (user *aghuser.User, err error) {
-	creds := &loginJSON{}
-	err = json.NewDecoder(r.Body).Decode(creds)
-	if err != nil {
-		// Don't wrap the error because it's informative enough as is.
-		return nil, err
-	}
-
-	user, _ = mw.users.ByLogin(ctx, aghuser.Login(creds.Name))
-	if user == nil {
-		return nil, errInvalidLogin
-	}
-
-	ok := user.Password.Authenticate(ctx, creds.Password)
 	if !ok {
 		return nil, errInvalidLogin
 	}

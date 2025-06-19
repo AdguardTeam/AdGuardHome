@@ -183,7 +183,7 @@ func registerControlHandlers(web *webAPI) {
 	// No auth is necessary for DoH/DoT configurations
 	globalContext.mux.HandleFunc("/apple/doh.mobileconfig", postInstall(handleMobileConfigDoH))
 	globalContext.mux.HandleFunc("/apple/dot.mobileconfig", postInstall(handleMobileConfigDoT))
-	RegisterAuthHandlers()
+	RegisterAuthHandlers(web)
 }
 
 // httpRegister registers an HTTP handler.

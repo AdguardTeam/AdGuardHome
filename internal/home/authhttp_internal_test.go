@@ -172,9 +172,10 @@ func TestAuthMiddlewareDefault_firstRun(t *testing.T) {
 	}
 
 	mw := newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
-		logger:   testLogger,
-		sessions: &testSessionStorage{},
-		users:    db,
+		logger:      testLogger,
+		rateLimiter: emptyRateLimiter{},
+		sessions:    &testSessionStorage{},
+		users:       db,
 	})
 
 	h := &testAuthHandler{}
@@ -237,9 +238,10 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 	}
 
 	mw := newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
-		logger:   testLogger,
-		sessions: ts,
-		users:    usersDB,
+		logger:      testLogger,
+		rateLimiter: emptyRateLimiter{},
+		sessions:    ts,
+		users:       usersDB,
 	})
 
 	reqCookie := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -311,7 +313,7 @@ func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 	globalContext.mux = mux
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, false)
 	require.NoError(t, err)
 
 	globalContext.web = web
@@ -444,12 +446,22 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 		Name:         userName,
 		PasswordHash: string(passwordHash),
 	}}
-	auth := InitAuth(sessionsDB, users, testTTL, nil, nil)
-	t.Cleanup(auth.Close)
-	globalContext.auth = auth
 
-	mux := http.NewServeMux()
-	globalContext.mux = mux
+	auth, err := NewAuthMW(
+		testutil.ContextWithTimeout(t, testTimeout),
+		testLogger,
+		emptyRateLimiter{},
+		nil,
+		sessionsDB,
+		users,
+		testTTL,
+		false,
+	)
+	require.NoError(t, err)
+
+	t.Cleanup(func() { auth.Close(testutil.ContextWithTimeout(t, testTimeout)) })
+
+	globalContext.mux = http.NewServeMux()
 
 	tlsMgr, err := newTLSManager(testutil.ContextWithTimeout(t, testTimeout), &tlsManagerConfig{
 		logger:         testLogger,
@@ -458,12 +470,15 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, tlsMgr, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, tlsMgr, auth, false)
 	require.NoError(t, err)
 
 	globalContext.web = web
 
+	mux := auth.mw().Wrap(globalContext.mux)
+
 	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
+	require.NotNil(t, loginCookie)
 
 	testCases := []struct {
 		name     string
@@ -524,7 +539,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 
 // generateAuthCookie is a helper function that logs in with the provided
 // credentials and returns the resulting authentication cookie.
-func generateAuthCookie(t *testing.T, mux *http.ServeMux, name, password string) (ac *http.Cookie) {
+func generateAuthCookie(t *testing.T, mux http.Handler, name, password string) (ac *http.Cookie) {
 	t.Helper()
 
 	creds, err := json.Marshal(&loginJSON{Name: name, Password: password})
@@ -575,15 +590,26 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 		Name:         userName,
 		PasswordHash: string(passwordHash),
 	}}
-	auth := InitAuth(sessionsDB, users, testTTL, nil, nil)
-	t.Cleanup(auth.Close)
-	globalContext.auth = auth
+
+	auth, err := NewAuthMW(
+		testutil.ContextWithTimeout(t, testTimeout),
+		testLogger,
+		emptyRateLimiter{},
+		nil,
+		sessionsDB,
+		users,
+		testTTL,
+		false,
+	)
+	require.NoError(t, err)
+
+	t.Cleanup(func() { auth.Close(testutil.ContextWithTimeout(t, testTimeout)) })
 
 	mux := http.NewServeMux()
 	globalContext.mux = mux
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, auth, false)
 	require.NoError(t, err)
 
 	globalContext.web = web

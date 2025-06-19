@@ -441,7 +441,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	u := &webUser{
 		Name: req.Username,
 	}
-	err = globalContext.authMw.addUser(ctx, u, req.Password)
+	err = web.authMw.addUser(ctx, u, req.Password)
 	if err != nil {
 		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)
@@ -463,7 +463,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = config.write(web.tlsManager)
+	err = config.write(web.tlsManager, web.authMw)
 	if err != nil {
 		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)

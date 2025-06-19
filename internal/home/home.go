@@ -528,6 +528,7 @@ func initWeb(
 	upd *updater.Updater,
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
+	authMw *authMw,
 	isCustomUpdURL bool,
 ) (web *webAPI, err error) {
 	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
@@ -551,6 +552,7 @@ func initWeb(
 		logger:     logger,
 		baseLogger: baseLogger,
 		tlsManager: tlsMgr,
+		authMw:     authMw,
 
 		clientFS: clientFS,
 
@@ -659,7 +661,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 
 	if !globalContext.firstRun {
 		// Save the updated config.
-		err = config.write(nil)
+		err = config.write(nil, nil)
 		fatalOnError(err)
 
 		if config.HTTPConfig.Pprof.Enabled {
@@ -671,11 +673,12 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	err = os.MkdirAll(dataDir, aghos.DefaultPermDir)
 	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDir))
 
-	// Init auth module.
-	globalContext.authMw, err = initUsersMw(ctx, slogLogger, opts.glinetMode)
+	authMw, err := initUsersMw(ctx, slogLogger, opts.glinetMode)
 	fatalOnError(err)
 
-	web, err := initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, isCustomURL)
+	globalContext.authMw = authMw
+
+	web, err := initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, authMw, isCustomURL)
 	fatalOnError(err)
 
 	globalContext.web = web
@@ -931,10 +934,6 @@ func cleanup(ctx context.Context) {
 	if globalContext.web != nil {
 		globalContext.web.close(ctx)
 		globalContext.web = nil
-	}
-	if globalContext.authMw != nil {
-		globalContext.authMw.Close(ctx)
-		globalContext.authMw = nil
 	}
 
 	err := stopDNSServer()
