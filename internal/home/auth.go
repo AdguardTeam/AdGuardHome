@@ -53,6 +53,7 @@ type authMw struct {
 	trustedProxies netutil.SubnetSet
 	sessions       aghuser.SessionStorage
 	users          aghuser.DB
+	isGLiNet       bool
 }
 
 // NewAuthMW initializes the global authentication object.
@@ -64,6 +65,7 @@ func NewAuthMW(
 	dbFilename string,
 	users []webUser,
 	sessionTTL time.Duration,
+	isGLiNet bool,
 ) (a *authMw, err error) {
 	userDB := aghuser.NewDefaultDB()
 	for i, u := range users {
@@ -76,7 +78,7 @@ func NewAuthMW(
 	s, err := aghuser.NewDefaultSessionStorage(ctx, &aghuser.DefaultSessionStorageConfig{
 		Logger:     baseLogger.With(slogutil.KeyPrefix, "session_storage"),
 		Clock:      timeutil.SystemClock{},
-		UserDB:     aghuser.NewDefaultDB(),
+		UserDB:     userDB,
 		DBPath:     dbFilename,
 		SessionTTL: sessionTTL,
 	})
@@ -90,11 +92,22 @@ func NewAuthMW(
 		trustedProxies: trustedProxies,
 		sessions:       s,
 		users:          userDB,
+		isGLiNet:       isGLiNet,
 	}, nil
 }
 
 // TODO(s.chzhen): !! Naming.  Docs.
 func (a *authMw) mw() (mw httputil.Middleware) {
+	if a.isGLiNet {
+		return newAuthMiddlewareGLiNet(&authMiddlewareGLiNetConfig{
+			logger:          a.logger,
+			clock:           timeutil.SystemClock{},
+			tokenFilePrefix: glFilePrefix,
+			ttl:             glTokenTimeout,
+			maxTokenSize:    MaxFileSize,
+		})
+	}
+
 	return newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
 		logger:         a.logger,
 		rateLimiter:    a.rateLimiter,

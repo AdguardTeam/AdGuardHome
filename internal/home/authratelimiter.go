@@ -36,7 +36,6 @@ func (rl emptyRateLimiter) check(_ string) (left time.Duration) {
 }
 
 // inc implements the [rateLimiter] interface for emptyRateLimiter.
-// returns zero.
 func (rl emptyRateLimiter) inc(_ string) {}
 
 // remove implements the [rateLimiter] interface for emptyRateLimiter.

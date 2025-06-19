@@ -671,10 +671,8 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	err = os.MkdirAll(dataDir, aghos.DefaultPermDir)
 	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDir))
 
-	GLMode = opts.glinetMode
-
 	// Init auth module.
-	globalContext.authMw, err = initUsersMw(ctx, slogLogger)
+	globalContext.authMw, err = initUsersMw(ctx, slogLogger, opts.glinetMode)
 	fatalOnError(err)
 
 	web, err := initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, isCustomURL)
@@ -796,7 +794,11 @@ func checkPermissions(
 // initUsersMw initializes context auth module.  Clears config users field.
 //
 // TODO(s.chzhen): !! Replace [initUsers].
-func initUsersMw(ctx context.Context, baseLogger *slog.Logger) (auth *authMw, err error) {
+func initUsersMw(
+	ctx context.Context,
+	baseLogger *slog.Logger,
+	isGLiNet bool,
+) (auth *authMw, err error) {
 	var rateLimiter rateLimiterInterface
 	if config.AuthAttempts > 0 && config.AuthBlockMin > 0 {
 		blockDur := time.Duration(config.AuthBlockMin) * time.Minute
@@ -814,6 +816,7 @@ func initUsersMw(ctx context.Context, baseLogger *slog.Logger) (auth *authMw, er
 		filepath.Join(globalContext.getDataDir(), "sessions.db"),
 		config.Users,
 		time.Duration(config.HTTPConfig.SessionTTL),
+		isGLiNet,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("initializing auth module: %w", err)

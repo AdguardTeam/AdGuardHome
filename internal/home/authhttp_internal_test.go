@@ -515,9 +515,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 			r.AddCookie(loginCookie)
 			assertHandlerStatusCode(t, mux, r, tc.wantCode)
 
-			GLMode = true
-			t.Cleanup(func() { GLMode = false })
-
+			// TODO(s.chzhen): !! GLiNet mode.
 			r.AddCookie(&http.Cookie{Name: glCookieName, Value: "test"})
 			assertHandlerStatusCode(t, mux, r, tc.wantCode)
 		})

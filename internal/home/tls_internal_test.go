@@ -111,7 +111,6 @@ func TestValidateCertificates(t *testing.T) {
 // restores them once the test is complete.
 //
 // The global variables are:
-//   - [GLMode]
 //   - [config]
 //   - [glFilePrefix]
 //   - [globalContext.auth]
@@ -126,7 +125,6 @@ func TestValidateCertificates(t *testing.T) {
 func storeGlobals(tb testing.TB) {
 	tb.Helper()
 
-	prevGLMode := GLMode
 	prevConfig := config
 	prefGLFilePrefix := glFilePrefix
 	storage := globalContext.clients.storage
@@ -136,7 +134,6 @@ func storeGlobals(tb testing.TB) {
 	web := globalContext.web
 
 	tb.Cleanup(func() {
-		GLMode = prevGLMode
 		config = prevConfig
 		glFilePrefix = prefGLFilePrefix
 		globalContext.clients.storage = storage
