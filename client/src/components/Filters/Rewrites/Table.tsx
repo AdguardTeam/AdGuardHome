@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import ReactTable from 'react-table';
 import { withTranslation } from 'react-i18next';
 
-import { sortAddress, sortAddressByTld } from '../../../helpers/helpers';
+import { sortAddress } from '../../../helpers/helpers';
 import { MODAL_TYPE, TABLES_MIN_ROWS } from '../../../helpers/constants';
 import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from '../../../helpers/localStorageHelper';
 
