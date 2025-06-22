@@ -355,7 +355,23 @@ describe('sortIp', () => {
 describe('sortAddress', () => {
     testBaseSortFunction(sortAddress);
 
-    describe('mixed_withString', () => {
+    describe('domain_names_sorting', () => {
+        test('widcard before other names', () => {
+            const arr = [
+                'home.fritz.box', 
+                '*.home.fritz.box', 
+                'adguard-home.fritz.box'
+            ]
+
+            const sortedArr = [
+                '*.home.fritz.box', 
+                'adguard-home.fritz.box', 
+                'home.fritz.box'
+            ];
+
+            expect(arr.sort(sortAddress)).toStrictEqual(sortedArr);
+        })
+
         test('only non-ip strings', () => {
             const arr = [
                 'fritz.box', 
@@ -392,7 +408,7 @@ describe('sortAddress', () => {
             expect(arr.sort(sortAddress)).toStrictEqual(sortedArr);
         });
 
-        test('ipv4, ipv6 in short and long forms and cidr', () => {
+        test('ipv4, ipv6 in short and long forms and cidr, and a few domain names', () => {
             const arr = [
                 '2001:db8:11a3:9d7:0:0:0:1/32',
                 '192.168.1.2',
