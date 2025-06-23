@@ -25,6 +25,8 @@ import (
 )
 
 // ConfigManager is the configuration manager interface.
+//
+// TODO(a.garipov): Add docs.
 type ConfigManager interface {
 	DNS() (svc agh.ServiceWithConfig[*dnssvc.Config])
 	Web() (svc agh.ServiceWithConfig[*Config])
