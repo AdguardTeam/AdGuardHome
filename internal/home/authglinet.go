@@ -14,12 +14,19 @@ import (
 	"github.com/AdguardTeam/golibs/timeutil"
 )
 
+// glFilePrefix is the prefix of the filepath where the authentication token is
+// stored.  Note that it is variable so it can be edited in tests.
+//
+// TODO(s.chzhen):  Make it a constant.
 var glFilePrefix = "/tmp/gl_token_"
 
 const (
-	// TODO(s.chzhen): !! Docs.
+	// glTokenTimeout is the TTL (Time To Live) of the authentication token.
 	glTokenTimeout = 3600 * time.Second
-	glCookieName   = "Admin-Token"
+
+	// glCookieName is the name of the cookie that stores the authentication
+	// token.
+	glCookieName = "Admin-Token"
 )
 
 // MaxFileSize is a maximum file length in bytes.

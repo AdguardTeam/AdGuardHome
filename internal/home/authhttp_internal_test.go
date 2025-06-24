@@ -447,16 +447,15 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 		PasswordHash: string(passwordHash),
 	}}
 
-	auth, err := NewAuthMW(
-		testutil.ContextWithTimeout(t, testTimeout),
-		testLogger,
-		emptyRateLimiter{},
-		nil,
-		sessionsDB,
-		users,
-		testTTL,
-		false,
-	)
+	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
+		baseLogger:     testLogger,
+		rateLimiter:    emptyRateLimiter{},
+		trustedProxies: nil,
+		dbFilename:     sessionsDB,
+		users:          users,
+		sessionTTL:     testTTL,
+		isGLiNet:       false,
+	})
 	require.NoError(t, err)
 
 	t.Cleanup(func() { auth.Close(testutil.ContextWithTimeout(t, testTimeout)) })
@@ -475,7 +474,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 
 	globalContext.web = web
 
-	mux := auth.mw().Wrap(globalContext.mux)
+	mux := auth.middleware().Wrap(globalContext.mux)
 
 	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
 	require.NotNil(t, loginCookie)
@@ -591,16 +590,15 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 		PasswordHash: string(passwordHash),
 	}}
 
-	auth, err := NewAuthMW(
-		testutil.ContextWithTimeout(t, testTimeout),
-		testLogger,
-		emptyRateLimiter{},
-		nil,
-		sessionsDB,
-		users,
-		testTTL,
-		false,
-	)
+	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
+		baseLogger:     testLogger,
+		rateLimiter:    emptyRateLimiter{},
+		trustedProxies: nil,
+		dbFilename:     sessionsDB,
+		users:          users,
+		sessionTTL:     testTTL,
+		isGLiNet:       false,
+	})
 	require.NoError(t, err)
 
 	t.Cleanup(func() { auth.Close(testutil.ContextWithTimeout(t, testTimeout)) })

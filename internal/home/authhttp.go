@@ -126,7 +126,7 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if rateLimiter := web.authMw.rateLimiter; rateLimiter != nil {
+	if rateLimiter := web.auth.rateLimiter; rateLimiter != nil {
 		if left := rateLimiter.check(remoteIP); left > 0 {
 			w.Header().Set(httphdr.RetryAfter, strconv.Itoa(int(left.Seconds())))
 			writeErrorWithIP(
@@ -144,13 +144,18 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	ip, err := realIP(r)
 	if err != nil {
-		log.Error("auth: getting real ip from request with remote ip %s: %s", remoteIP, err)
+		web.logger.ErrorContext(
+			ctx,
+			"getting real ip",
+			"remote_ip", remoteIP,
+			slogutil.KeyError, err,
+		)
 	}
 
-	cookie, err := newCookie(ctx, web.authMw, req, remoteIP)
+	cookie, err := newCookie(ctx, web.auth, req, remoteIP)
 	if err != nil {
 		logIP := remoteIP
-		if web.authMw.trustedProxies.Contains(ip.Unmap()) {
+		if web.auth.trustedProxies.Contains(ip.Unmap()) {
 			logIP = ip.String()
 		}
 
@@ -159,7 +164,7 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Info("auth: user %q successfully logged in from ip %s", req.Name, ip)
+	web.logger.InfoContext(ctx, "successfull login", "user", req.Name, "ip", ip)
 
 	http.SetCookie(w, cookie)
 
@@ -174,17 +179,17 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 // newCookie creates a new authentication cookie.  rateLimiter must not be nil.
 func newCookie(
 	ctx context.Context,
-	authMw *authMw,
+	auth *auth,
 	req loginJSON,
 	addr string,
 ) (c *http.Cookie, err error) {
-	user, _ := authMw.users.ByLogin(ctx, aghuser.Login(req.Name))
+	user, _ := auth.users.ByLogin(ctx, aghuser.Login(req.Name))
 	if err != nil {
 		// Should not happen.
 		panic(err)
 	}
 
-	rateLimiter := authMw.rateLimiter
+	rateLimiter := auth.rateLimiter
 	if user == nil {
 		rateLimiter.inc(addr)
 
@@ -200,7 +205,7 @@ func newCookie(
 
 	rateLimiter.remove(addr)
 
-	sess, err := authMw.sessions.New(ctx, user)
+	sess, err := auth.sessions.New(ctx, user)
 	if err != nil {
 		return nil, err
 	}
@@ -217,6 +222,8 @@ func newCookie(
 
 // handleLogout is the handler for the GET /control/logout HTTP API.
 func (web *webAPI) handleLogout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	respHdr := w.Header()
 	c, err := r.Cookie(sessionCookieName)
 	if err != nil {
@@ -228,20 +235,18 @@ func (web *webAPI) handleLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO(s.chzhen): !! Use helper.
-	sess, err := hex.DecodeString(c.Value)
+	t, err := sessionTokenFromHex(c.Value)
 	if err != nil {
+		web.logger.ErrorContext(ctx, "getting token", slogutil.KeyError, err)
+
 		w.WriteHeader(http.StatusUnauthorized)
 
 		return
 	}
 
-	var t aghuser.SessionToken
-	copy(t[:], sess)
-
-	err = web.authMw.sessions.DeleteByToken(r.Context(), t)
+	err = web.auth.sessions.DeleteByToken(ctx, t)
 	if err != nil {
-		log.Error("removing session by token: %s", err)
+		web.logger.ErrorContext(ctx, "removing session by token", slogutil.KeyError, err)
 	}
 
 	c = &http.Cookie{
@@ -369,8 +374,18 @@ func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 		}
 
 		path := r.URL.Path
-		if path == "/" {
+		if path == "/" || path == "index.html" {
 			http.Redirect(w, r, "login.html", http.StatusFound)
+
+			return
+		} else if path == "/login.html" {
+			if u != nil {
+				http.Redirect(w, r, "/", http.StatusFound)
+
+				return
+			}
+
+			h.ServeHTTP(w, r)
 
 			return
 		}
@@ -451,21 +466,12 @@ func (mw *authMiddlewareDefault) userFromCookie(
 	ctx context.Context,
 	val string,
 ) (u *aghuser.User, err error) {
-	sess, err := hex.DecodeString(val)
-	if err != nil {
-		return nil, fmt.Errorf("decoding cookie: %w", err)
-	}
-
-	l := aghuser.SessionTokenLength
-
-	// TODO(a.garipov):  Add validate.Len.
-	err = validate.InRange("token length", len(sess), l, l)
+	t, err := sessionTokenFromHex(val)
 	if err != nil {
 		// Don't wrap the error because it's informative enough as is.
 		return nil, err
 	}
 
-	t := aghuser.SessionToken(sess)
 	s, err := mw.sessions.FindByToken(ctx, t)
 	if err != nil {
 		return nil, fmt.Errorf("searching session by token: %w", err)
@@ -481,6 +487,25 @@ func (mw *authMiddlewareDefault) userFromCookie(
 	}
 
 	return u, nil
+}
+
+// sessionTokenFromHex converts a hexadecimal string into a session token.
+func sessionTokenFromHex(val string) (token aghuser.SessionToken, err error) {
+	sess, err := hex.DecodeString(val)
+	if err != nil {
+		return token, fmt.Errorf("decoding value: %w", err)
+	}
+
+	l := aghuser.SessionTokenLength
+
+	// TODO(s.chzhen):  Use validate.Len.
+	err = validate.InRange("token length", len(sess), l, l)
+	if err != nil {
+		// Don't wrap the error because it's informative enough as is.
+		return token, err
+	}
+
+	return aghuser.SessionToken(sess), nil
 }
 
 // userFromRequestBasicAuth searches for a user using Basic Auth credentials.

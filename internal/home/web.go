@@ -51,8 +51,9 @@ type webConfig struct {
 	// encryption.  It must not be nil.
 	tlsManager *tlsManager
 
-	// TODO(s.chzhen): !! Docs.
-	authMw *authMw
+	// auth stores web user information and handles authentication.  It must not
+	// be nil.
+	auth *auth
 
 	clientFS fs.FS
 
@@ -117,8 +118,8 @@ type webAPI struct {
 	// encryption.
 	tlsManager *tlsManager
 
-	// TODO(s.chzhen): !! Docs.
-	authMw *authMw
+	// auth stores web user information and handles authentication.
+	auth *auth
 
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
@@ -137,7 +138,7 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 		logger:     conf.logger,
 		baseLogger: conf.baseLogger,
 		tlsManager: conf.tlsManager,
-		authMw:     conf.authMw,
+		auth:       conf.auth,
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
@@ -231,7 +232,7 @@ func (web *webAPI) start(ctx context.Context) {
 		// Create a new instance, because the Web is not usable after Shutdown.
 		web.httpServer = &http.Server{
 			Addr:              web.conf.BindAddr.String(),
-			Handler:           globalContext.authMw.mw().Wrap(hdlr),
+			Handler:           globalContext.auth.middleware().Wrap(hdlr),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 			WriteTimeout:      web.conf.WriteTimeout,
@@ -272,8 +273,8 @@ func (web *webAPI) close(ctx context.Context) {
 	shutdownSrv3(ctx, web.logger, web.httpsServer.server3)
 	shutdownSrv(ctx, web.logger, web.httpServer)
 
-	if web.authMw != nil {
-		web.authMw.Close(ctx)
+	if web.auth != nil {
+		web.auth.Close(ctx)
 	}
 
 	web.logger.InfoContext(ctx, "stopped http server")
@@ -317,7 +318,7 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 
 		web.httpsServer.server = &http.Server{
 			Addr:    addr,
-			Handler: globalContext.authMw.mw().Wrap(hdlr),
+			Handler: globalContext.auth.middleware().Wrap(hdlr),
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
 				RootCAs:      web.tlsManager.rootCerts,
@@ -358,7 +359,7 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 			CipherSuites: web.tlsManager.customCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
-		Handler: globalContext.authMw.mw().Wrap(withMiddlewares(globalContext.mux, limitRequestBody)),
+		Handler: globalContext.auth.middleware().Wrap(withMiddlewares(globalContext.mux, limitRequestBody)),
 	}
 
 	web.logger.DebugContext(ctx, "starting http/3 server")
