@@ -24,9 +24,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Validation process for DNSCrypt settings ([#7856])
+
 - The hostnames of DHCP clients with multiple labels not being recognized.
 
 - Status reported by the systemd service implementation in cases of auto-restart after a failed start.
+
+[#7856]: https://github.com/AdguardTeam/AdGuardHome/issues/7856
 
 [go-1.24.4]: https://groups.google.com/g/golang-announce/c/ufZ8WpEsA3A
 

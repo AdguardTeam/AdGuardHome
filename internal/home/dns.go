@@ -295,13 +295,6 @@ func newServerConfig(
 		UseWHOIS:         clientSrcConf.WHOIS,
 	}
 
-	newConf.DNSCryptConfig, err = newDNSCryptConfig(tlsConf, hosts)
-	if err != nil {
-		// Don't wrap the error, because it's already wrapped by
-		// newDNSCryptConfig.
-		return nil, err
-	}
-
 	return newConf, nil
 }
 
@@ -315,7 +308,14 @@ func newDNSTLSConfig(
 		return &dnsforward.TLSConfig{}, nil
 	}
 
+	dnsCryptConf, err := newDNSCryptConfig(conf, addrs)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return nil, err
+	}
+
 	dnsConf = &dnsforward.TLSConfig{
+		DNSCryptConf:   dnsCryptConf,
 		ServerName:     conf.ServerName,
 		StrictSNICheck: conf.StrictSNICheck,
 	}
@@ -334,15 +334,16 @@ func newDNSTLSConfig(
 
 	cert, err := tls.X509KeyPair(conf.CertificateChainData, conf.PrivateKeyData)
 	if err != nil {
-		const format = "parsing tls key pair: %w"
-		if conf.AllowUnencryptedDoH {
+		err = fmt.Errorf("parsing tls key pair: %w", err)
+		if conf.AllowUnencryptedDoH || dnsCryptConf != nil {
 			// TODO(s.chzhen):  Use [slog.Logger].
-			log.Info("warning: %s: %s", format, err)
+			log.Info("warning: %s", err)
 
 			return dnsConf, nil
 		}
 
-		return nil, fmt.Errorf(format, err)
+		// Don't wrap the error, because it's already annotated.
+		return nil, err
 	}
 
 	dnsConf.Cert = &cert
@@ -355,38 +356,37 @@ func newDNSTLSConfig(
 func newDNSCryptConfig(
 	conf *tlsConfigSettings,
 	addrs []netip.Addr,
-) (dnsCryptConf dnsforward.DNSCryptConfig, err error) {
-	if !conf.Enabled || conf.PortDNSCrypt == 0 {
-		return dnsforward.DNSCryptConfig{}, nil
+) (dnsCryptConf *dnsforward.DNSCryptConfig, err error) {
+	if conf.PortDNSCrypt == 0 {
+		return nil, nil
 	}
 
 	if conf.DNSCryptConfigFile == "" {
-		return dnsforward.DNSCryptConfig{}, errors.Error("no dnscrypt_config_file")
+		return nil, fmt.Errorf("dnscrypt_config_file: %w", errors.ErrEmptyValue)
 	}
 
 	f, err := os.Open(conf.DNSCryptConfigFile)
 	if err != nil {
-		return dnsforward.DNSCryptConfig{}, fmt.Errorf("opening dnscrypt config: %w", err)
+		return nil, fmt.Errorf("opening dnscrypt config: %w", err)
 	}
 	defer func() { err = errors.WithDeferred(err, f.Close()) }()
 
 	rc := &dnscrypt.ResolverConfig{}
 	err = yaml.NewDecoder(f).Decode(rc)
 	if err != nil {
-		return dnsforward.DNSCryptConfig{}, fmt.Errorf("decoding dnscrypt config: %w", err)
+		return nil, fmt.Errorf("decoding dnscrypt config: %w", err)
 	}
 
 	cert, err := rc.CreateCert()
 	if err != nil {
-		return dnsforward.DNSCryptConfig{}, fmt.Errorf("creating dnscrypt cert: %w", err)
+		return nil, fmt.Errorf("creating dnscrypt cert: %w", err)
 	}
 
-	return dnsforward.DNSCryptConfig{
+	return &dnsforward.DNSCryptConfig{
 		ResolverCert:   cert,
-		ProviderName:   rc.ProviderName,
 		UDPListenAddrs: ipsToUDPAddrs(addrs, conf.PortDNSCrypt),
 		TCPListenAddrs: ipsToTCPAddrs(addrs, conf.PortDNSCrypt),
-		Enabled:        true,
+		ProviderName:   rc.ProviderName,
 	}, nil
 }
 
