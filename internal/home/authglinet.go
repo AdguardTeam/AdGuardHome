@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"time"
@@ -87,8 +88,30 @@ var _ httputil.Middleware = (*authMiddlewareGLiNet)(nil)
 func (mw *authMiddlewareGLiNet) Wrap(h http.Handler) (wrapped http.Handler) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		if mw.isAuthenticated(ctx, r) {
+
+		path := r.URL.Path
+		if isPublicResource(path) {
 			h.ServeHTTP(w, r)
+
+			return
+		}
+
+		if mw.isAuthenticated(ctx, r) {
+			if path == "/login.html" {
+				http.Redirect(w, r, "/", http.StatusFound)
+
+				return
+			}
+
+			h.ServeHTTP(w, r)
+
+			return
+		}
+
+		if path == "/" || path == "/index.html" {
+			host, _, _ := net.SplitHostPort(r.Host)
+			url := "http://" + host
+			http.Redirect(w, r, url, http.StatusFound)
 
 			return
 		}

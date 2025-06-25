@@ -265,7 +265,7 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 		req:      httptest.NewRequest(http.MethodGet, "/", nil),
 		wantUser: nil,
 		name:     "no_auth",
-		wantCode: http.StatusUnauthorized,
+		wantCode: http.StatusFound,
 	}, {
 		req:      reqCookie,
 		wantUser: user,
@@ -280,12 +280,12 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 		req:      reqInvalidCookie,
 		wantUser: nil,
 		name:     "invalid_cookie",
-		wantCode: http.StatusUnauthorized,
+		wantCode: http.StatusFound,
 	}, {
 		req:      reqInvalidPassBasicAuth,
 		wantUser: nil,
 		name:     "invalid_basic_auth",
-		wantCode: http.StatusUnauthorized,
+		wantCode: http.StatusFound,
 	}}
 
 	for _, tc := range testCases {
@@ -453,7 +453,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 		trustedProxies: nil,
 		dbFilename:     sessionsDB,
 		users:          users,
-		sessionTTL:     testTTL,
+		sessionTTL:     testTTL * time.Second,
 		isGLiNet:       false,
 	})
 	require.NoError(t, err)
@@ -476,8 +476,10 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 
 	mux := auth.middleware().Wrap(globalContext.mux)
 
+	auth.isGLiNet = true
+	gliNetMw := auth.middleware().Wrap(globalContext.mux)
+
 	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
-	require.NotNil(t, loginCookie)
 
 	testCases := []struct {
 		name     string
@@ -519,7 +521,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.path, func(t *testing.T) {
 			r := httptest.NewRequest(tc.method, tc.path, nil)
-			assertHandlerStatusCode(t, mux, r, http.StatusForbidden)
+			assertHandlerStatusCode(t, mux, r, http.StatusUnauthorized)
 
 			r = httptest.NewRequest(tc.method, tc.path, nil)
 			r.SetBasicAuth(userName, userPassword)
@@ -529,9 +531,8 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 			r.AddCookie(loginCookie)
 			assertHandlerStatusCode(t, mux, r, tc.wantCode)
 
-			// TODO(s.chzhen): !! GLiNet mode.
 			r.AddCookie(&http.Cookie{Name: glCookieName, Value: "test"})
-			assertHandlerStatusCode(t, mux, r, tc.wantCode)
+			assertHandlerStatusCode(t, gliNetMw, r, tc.wantCode)
 		})
 	}
 }
@@ -552,11 +553,15 @@ func generateAuthCookie(t *testing.T, mux http.Handler, name, password string) (
 
 	for _, c := range w.Result().Cookies() {
 		if c.Name == sessionCookieName {
-			return c
+			ac = c
+
+			break
 		}
 	}
 
-	return nil
+	require.NotNil(t, ac)
+
+	return ac
 }
 
 // assertHandlerStatusCode is a helper function that asserts the response status
@@ -596,15 +601,14 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 		trustedProxies: nil,
 		dbFilename:     sessionsDB,
 		users:          users,
-		sessionTTL:     testTTL,
+		sessionTTL:     testTTL * time.Second,
 		isGLiNet:       false,
 	})
 	require.NoError(t, err)
 
 	t.Cleanup(func() { auth.Close(testutil.ContextWithTimeout(t, testTimeout)) })
 
-	mux := http.NewServeMux()
-	globalContext.mux = mux
+	globalContext.mux = http.NewServeMux()
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, auth, false)
@@ -612,8 +616,9 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 
 	globalContext.web = web
 
+	mux := auth.middleware().Wrap(globalContext.mux)
+
 	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
-	require.NotNil(t, loginCookie)
 
 	r := httptest.NewRequest(http.MethodGet, "/control/profile", nil)
 	r.AddCookie(loginCookie)
@@ -625,7 +630,7 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 
 	r = httptest.NewRequest(http.MethodGet, "/control/profile", nil)
 	r.AddCookie(loginCookie)
-	assertHandlerStatusCode(t, mux, r, http.StatusForbidden)
+	assertHandlerStatusCode(t, mux, r, http.StatusUnauthorized)
 }
 
 // implements http.ResponseWriter

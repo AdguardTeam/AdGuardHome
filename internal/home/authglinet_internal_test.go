@@ -56,7 +56,7 @@ func TestAuthMiddlewareGLiNet(t *testing.T) {
 	}{{
 		req:      httptest.NewRequest(http.MethodGet, "/", nil),
 		name:     "no_cookie",
-		wantCode: http.StatusUnauthorized,
+		wantCode: http.StatusFound,
 	}, {
 		req:      reqValidCookie,
 		name:     "valid_cookie",
@@ -64,7 +64,7 @@ func TestAuthMiddlewareGLiNet(t *testing.T) {
 	}, {
 		req:      reqInvalidCookie,
 		name:     "invalid_cookie",
-		wantCode: http.StatusUnauthorized,
+		wantCode: http.StatusFound,
 	}}
 
 	for _, tc := range testCases {
