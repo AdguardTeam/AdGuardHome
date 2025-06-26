@@ -203,7 +203,8 @@ type TLSConfig struct {
 
 // DNSCryptConfig contains the configuration settings for a DNSCrypt server.
 type DNSCryptConfig struct {
-	// ResolverCert is the certificate used for DNSCrypt connections.
+	// ResolverCert is the certificate used for DNSCrypt connections.  It is not
+	// nil if there is at least one UDP or TCP address present.
 	ResolverCert *dnscrypt.Cert
 
 	// UDPListenAddrs are the addresses to listen on for DNSCrypt UDP
@@ -214,7 +215,8 @@ type DNSCryptConfig struct {
 	// connections.
 	TCPListenAddrs []*net.TCPAddr
 
-	// ProviderName is the name of the DNSCrypt provider.
+	// ProviderName is the name of the DNSCrypt provider.  It is not empty if
+	// there is at least one UDP or TCP address present.
 	ProviderName string
 }
 
