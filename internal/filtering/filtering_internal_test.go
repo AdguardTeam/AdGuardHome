@@ -9,6 +9,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -53,6 +54,7 @@ func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts 
 
 func newChecker(host string) Checker {
 	return hashprefix.New(&hashprefix.Config{
+		Logger:    slogutil.NewDiscardLogger(),
 		CacheTime: 10,
 		CacheSize: 100000,
 		Upstream:  aghtest.NewBlockUpstream(host, true),

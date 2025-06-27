@@ -1173,6 +1173,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 	)
 
 	sbChecker := hashprefix.New(&hashprefix.Config{
+		Logger:    slogutil.NewDiscardLogger(),
 		CacheTime: cacheTime,
 		CacheSize: cacheSize,
 		Upstream:  aghtest.NewBlockUpstream(hostname, true),

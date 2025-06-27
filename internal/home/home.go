@@ -402,6 +402,7 @@ func setupDNSFilteringConf(
 	}
 
 	conf.SafeBrowsingChecker = hashprefix.New(&hashprefix.Config{
+		Logger:      baseLogger.With(slogutil.KeyPrefix, "safe_browsing"),
 		Upstream:    sbUps,
 		ServiceName: sbService,
 		TXTSuffix:   sbTXTSuffix,
@@ -426,6 +427,7 @@ func setupDNSFilteringConf(
 	}
 
 	conf.ParentalControlChecker = hashprefix.New(&hashprefix.Config{
+		Logger:      baseLogger.With(slogutil.KeyPrefix, "parental_control"),
 		Upstream:    parUps,
 		ServiceName: pcService,
 		TXTSuffix:   pcTXTSuffix,

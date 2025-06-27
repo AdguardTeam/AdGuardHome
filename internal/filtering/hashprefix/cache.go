@@ -3,8 +3,6 @@ package hashprefix
 import (
 	"encoding/binary"
 	"time"
-
-	"github.com/AdguardTeam/golibs/log"
 )
 
 // expirySize is the size of expiry in cacheItem.
@@ -124,5 +122,5 @@ func (c *Checker) setCache(pref prefix, hashes []hostnameHash) {
 	}
 
 	c.cache.Set(pref[:], fromCacheItem(item))
-	log.Debug("%s: stored in cache: %v", c.svc, pref)
+	c.logger.Debug("stored in cache", "pref", pref)
 }
