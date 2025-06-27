@@ -402,12 +402,11 @@ func setupDNSFilteringConf(
 	}
 
 	conf.SafeBrowsingChecker = hashprefix.New(&hashprefix.Config{
-		Logger:      baseLogger.With(slogutil.KeyPrefix, "safe_browsing"),
-		Upstream:    sbUps,
-		ServiceName: sbService,
-		TXTSuffix:   sbTXTSuffix,
-		CacheTime:   cacheTime,
-		CacheSize:   conf.SafeBrowsingCacheSize,
+		Logger:    baseLogger.With(slogutil.KeyPrefix, sbService),
+		Upstream:  sbUps,
+		TXTSuffix: sbTXTSuffix,
+		CacheTime: cacheTime,
+		CacheSize: conf.SafeBrowsingCacheSize,
 	})
 
 	// Protect against invalid configuration, see #6181.
@@ -427,12 +426,11 @@ func setupDNSFilteringConf(
 	}
 
 	conf.ParentalControlChecker = hashprefix.New(&hashprefix.Config{
-		Logger:      baseLogger.With(slogutil.KeyPrefix, "parental_control"),
-		Upstream:    parUps,
-		ServiceName: pcService,
-		TXTSuffix:   pcTXTSuffix,
-		CacheTime:   cacheTime,
-		CacheSize:   conf.ParentalCacheSize,
+		Logger:    baseLogger.With(slogutil.KeyPrefix, pcService),
+		Upstream:  parUps,
+		TXTSuffix: pcTXTSuffix,
+		CacheTime: cacheTime,
+		CacheSize: conf.ParentalCacheSize,
 	})
 
 	// Protect against invalid configuration, see #6181.

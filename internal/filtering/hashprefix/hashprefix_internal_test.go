@@ -44,9 +44,8 @@ func TestChcker_getQuestion(t *testing.T) {
 	assert.False(t, slices.Contains(hashes, hash))
 
 	c := New(&Config{
-		Logger:      slogutil.NewDiscardLogger(),
-		ServiceName: "SafeBrowsing",
-		TXTSuffix:   suf,
+		Logger:    slogutil.NewDiscardLogger(),
+		TXTSuffix: suf,
 	})
 
 	q := c.getQuestion(hashes)
@@ -98,9 +97,8 @@ func TestHostnameToHashes(t *testing.T) {
 
 func TestChecker_storeInCache(t *testing.T) {
 	c := New(&Config{
-		Logger:      slogutil.NewDiscardLogger(),
-		ServiceName: "SafeBrowsing",
-		CacheTime:   cacheTime,
+		Logger:    slogutil.NewDiscardLogger(),
+		CacheTime: cacheTime,
 	})
 
 	conf := cache.Config{}
@@ -157,9 +155,8 @@ func TestChecker_storeInCache(t *testing.T) {
 	assert.True(t, ok)
 
 	c = New(&Config{
-		Logger:      slogutil.NewDiscardLogger(),
-		ServiceName: "SafeBrowsing",
-		CacheTime:   cacheTime,
+		Logger:    slogutil.NewDiscardLogger(),
+		CacheTime: cacheTime,
 	})
 
 	c.cache = cache.New(cache.Config{})

@@ -59,9 +59,6 @@ type Config struct {
 	// Upstream is the upstream DNS server.
 	Upstream upstream.Upstream
 
-	// ServiceName is the name of the service.
-	ServiceName string
-
 	// TXTSuffix is the TXT suffix for DNS request.
 	TXTSuffix string
 
@@ -83,9 +80,6 @@ type Checker struct {
 	// cache stores hostname hashes.
 	cache cache.Cache
 
-	// svc is the name of the service.
-	svc string
-
 	// txtSuffix is the TXT suffix for DNS request.
 	txtSuffix string
 
@@ -96,13 +90,12 @@ type Checker struct {
 // New returns Checker.
 func New(conf *Config) (c *Checker) {
 	return &Checker{
-		logger:   conf.Logger.With("svc", conf.ServiceName),
+		logger:   conf.Logger,
 		upstream: conf.Upstream,
 		cache: cache.New(cache.Config{
 			EnableLRU: true,
 			MaxSize:   conf.CacheSize,
 		}),
-		svc:       conf.ServiceName,
 		txtSuffix: conf.TXTSuffix,
 		cacheTime: conf.CacheTime,
 	}
