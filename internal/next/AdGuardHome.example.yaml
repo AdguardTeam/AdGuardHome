@@ -17,6 +17,7 @@ dns:
   upstream_timeout: 1s
   bootstrap_prefer_ipv6: true
   use_dns64: true
+safe_search: true
 http:
   pprof:
     enabled: true
