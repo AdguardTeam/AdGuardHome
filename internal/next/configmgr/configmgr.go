@@ -158,12 +158,17 @@ func (m *Manager) assemble(
 ) (err error) {
 	dnsConf := &dnssvc.Config{
 		Logger:              m.baseLogger.With(slogutil.KeyPrefix, "dnssvc"),
+		UpstreamMode:        conf.DNS.UpstreamMode,
 		Addresses:           conf.DNS.Addresses,
 		BootstrapServers:    conf.DNS.BootstrapDNS,
 		UpstreamServers:     conf.DNS.UpstreamDNS,
 		DNS64Prefixes:       conf.DNS.DNS64Prefixes,
 		UpstreamTimeout:     time.Duration(conf.DNS.UpstreamTimeout),
+		CacheSize:           conf.DNS.CacheSize,
+		Ratelimit:           conf.DNS.Ratelimit,
 		BootstrapPreferIPv6: conf.DNS.BootstrapPreferIPv6,
+		CacheEnabled:        conf.DNS.CacheSize > 0,
+		RefuseAny:           conf.DNS.RefuseAny,
 		UseDNS64:            conf.DNS.UseDNS64,
 	}
 	err = m.updateDNS(ctx, dnsConf)
@@ -263,11 +268,15 @@ func (m *Manager) updateDNS(ctx context.Context, c *dnssvc.Config) (err error) {
 // updateCurrentDNS updates the DNS configuration in the current config.
 func (m *Manager) updateCurrentDNS(c *dnssvc.Config) {
 	m.current.DNS.Addresses = slices.Clone(c.Addresses)
+	m.current.DNS.UpstreamMode = c.UpstreamMode
 	m.current.DNS.BootstrapDNS = slices.Clone(c.BootstrapServers)
 	m.current.DNS.UpstreamDNS = slices.Clone(c.UpstreamServers)
 	m.current.DNS.DNS64Prefixes = slices.Clone(c.DNS64Prefixes)
 	m.current.DNS.UpstreamTimeout = timeutil.Duration(c.UpstreamTimeout)
+	m.current.DNS.Ratelimit = c.Ratelimit
+	m.current.DNS.CacheSize = c.CacheSize
 	m.current.DNS.BootstrapPreferIPv6 = c.BootstrapPreferIPv6
+	m.current.DNS.RefuseAny = c.RefuseAny
 	m.current.DNS.UseDNS64 = c.UseDNS64
 }
 

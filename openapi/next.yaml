@@ -2284,7 +2284,8 @@
           'dnssec': false
           'edns_client_subnet': false
           'ipv6': true
-          'rate_limit': 20
+          'ratelimit': 20
+          'refuse_any': true
           'upstream_mode': 'load_balancing'
           'upstream_servers':
           - '1.1.1.1'
@@ -2300,7 +2301,8 @@
         - 'dnssec'
         - 'edns_client_subnet'
         - 'ipv6'
-        - 'rate_limit'
+        - 'ratelimit'
+        - 'refuse_any'
         - 'upstream_mode'
         - 'upstream_servers'
         - 'upstream_timeout'
@@ -2380,13 +2382,17 @@
             If `true`, accept `AAAA` DNS queries.  If `false`, respond to them
             with an empty answer.
           'type': 'boolean'
-        'rate_limit':
+        'ratelimit':
           'description': >
             The number of requests per second that a single client is allowed to
             make.  `0` means no limit.
           'format': 'int64'
           'minimum': 0
           'type': 'integer'
+        'refuse_any':
+          'description': >
+            If `true`, reject `ANY` DNS queries.
+          'type': 'boolean'
         'upstream_mode':
           '$ref': '#/components/schemas/DnsUpstreamMode'
         'upstream_servers':
