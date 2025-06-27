@@ -3,12 +3,12 @@ package rewrite
 
 import (
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 	"sync"
 
 	"github.com/AdguardTeam/golibs/container"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -30,8 +30,23 @@ type Storage interface {
 	List() (items []*Item)
 }
 
+// Config is the configuration for DefaultStorage.
+type Config struct {
+	// logger is used for logging storage processes.  It must not be nil.
+	Logger *slog.Logger
+
+	// Rewrites stores the rewrite entries.  It must not be nil.
+	Rewrites []*Item
+
+	// ListID is used as an identifier of the underlying rules list.
+	ListID int
+}
+
 // DefaultStorage is the default storage for rewrite rules.
 type DefaultStorage struct {
+	// logger is used for logging storage processes.  It must not be nil.
+	logger *slog.Logger
+
 	// mu protects items.
 	mu *sync.RWMutex
 
@@ -51,13 +66,13 @@ type DefaultStorage struct {
 	urlFilterID int
 }
 
-// NewDefaultStorage returns new rewrites storage.  listID is used as an
-// identifier of the underlying rules list.  rewrites must not be nil.
-func NewDefaultStorage(listID int, rewrites []*Item) (s *DefaultStorage, err error) {
+// NewDefaultStorage returns new rewrites storage.  conf must not be nil.
+func NewDefaultStorage(conf *Config) (s *DefaultStorage, err error) {
 	s = &DefaultStorage{
+		logger:      conf.Logger,
 		mu:          &sync.RWMutex{},
-		urlFilterID: listID,
-		rewrites:    rewrites,
+		urlFilterID: conf.ListID,
+		rewrites:    conf.Rewrites,
 	}
 
 	s.mu.Lock()
@@ -91,7 +106,7 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 		rule := rrules[0]
 		rwAns := rule.DNSRewrite.NewCNAME
 
-		log.Debug("rewrite: cname for %s is %s", host, rwAns)
+		s.logger.Debug("cname found", "host", host, "cname", rwAns)
 
 		if dReq.Hostname == rwAns {
 			// A request for the hostname itself is an exception rule.
@@ -109,7 +124,7 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 		}
 
 		if cnames.Has(rwAns) {
-			log.Info("rewrite: cname loop for %q on %q", dReq.Hostname, rwAns)
+			s.logger.Info("rewrite cname loop", "host", dReq.Hostname, "rewrite", rwAns)
 
 			return nil
 		}
@@ -173,7 +188,7 @@ func (s *DefaultStorage) Remove(item *Item) (err error) {
 	// TODO(d.kolyshev): Use slices.IndexFunc + slices.Delete?
 	for _, ent := range s.rewrites {
 		if ent.equal(item) {
-			log.Debug("rewrite: removed element: %s -> %s", ent.Domain, ent.Answer)
+			s.logger.Debug("removed element", "domain", ent.Domain, "ans", ent.Answer)
 
 			continue
 		}
@@ -215,7 +230,7 @@ func (s *DefaultStorage) resetRules() (err error) {
 	s.ruleList = strList
 	s.engine = urlfilter.NewDNSEngine(rs)
 
-	log.Info("rewrite: filter %d: reset %d rules", s.urlFilterID, s.engine.RulesCount)
+	s.logger.Info("reset rules", "filter", s.urlFilterID, "count", s.engine.RulesCount)
 
 	return nil
 }
