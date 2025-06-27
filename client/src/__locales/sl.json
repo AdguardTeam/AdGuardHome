@@ -501,7 +501,7 @@
     "setup_dns_privacy_android_1": "Android 9 izvirno podpira DNS-prek-TLS. Če ga želite konfigurirati, pojdite v Nastavitve → Omrežje in internet → Napredno → Zasebni DNS, in tam vnesite svoje ime domene.",
     "setup_dns_privacy_android_2": "<0>AdGuard za Android</0> podpira <1>DNS-prek-HTTPS</1> in <1>DNS-prek-TLS</1>.",
     "setup_dns_privacy_android_3": "<0>Intra</0> doda podporo <1>DNS-prek-HTTPS</1> za Android.",
-    "setup_dns_privacy_ios_1": "<0>DNSCloak</0> podpira <1>DNS-prek-HTTPS</1> vendar za njegovo konfiguracijo, da bo uporabljal svoj strežnik, morate zanj ustvariti <2>DNS Stamp</2>.",
+    "setup_dns_privacy_ios_1": "<0>DNSecure</0> podpira <1>DNS-prek-HTTPS</1> in <1>DNS-prek-TLS</1>.",
     "setup_dns_privacy_ios_2": "<0>AdGuard za iOS</0> podpira nastavitev <1>DNS-prek-HTTPS</1> in <1>DNS-prek-TLS</1>.",
     "setup_dns_privacy_other_title": "Druge izvedbe",
     "setup_dns_privacy_other_1": "Sam AdGuard Home je lahko varen odjemalec DNS na kateri koli platformi.",
