@@ -1,12 +1,13 @@
 package filtering
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"sync/atomic"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/container"
-	"github.com/AdguardTeam/golibs/log"
 )
 
 // idGenerator generates filtering-list IDs in a way broadly compatible with the
@@ -16,13 +17,15 @@ import (
 // rule-list architecture.
 type idGenerator struct {
 	current *atomic.Int32
+	logger  *slog.Logger
 }
 
 // newIDGenerator returns a new ID generator initialized with the given seed
 // value.
-func newIDGenerator(seed int32) (g *idGenerator) {
+func newIDGenerator(seed int32, l *slog.Logger) (g *idGenerator) {
 	g = &idGenerator{
 		current: &atomic.Int32{},
+		logger:  l,
 	}
 
 	g.current.Store(seed)
@@ -61,11 +64,12 @@ func (g *idGenerator) fix(flts []FilterYAML) {
 			newID = g.next()
 		}
 
-		log.Info(
-			"filtering: warning: filter at index %d has duplicate id %d; reassigning to %d",
-			i,
-			id,
-			newID,
+		g.logger.WarnContext(
+			context.TODO(),
+			"filter has duplicate id; reassigning",
+			"idx", i,
+			"id", id,
+			"new_id", newID,
 		)
 
 		flts[i].ID = newID

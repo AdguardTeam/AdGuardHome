@@ -1041,7 +1041,7 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 
 	d = &DNSFilter{
 		logger:                 c.Logger,
-		idGen:                  newIDGenerator(int32(time.Now().Unix())),
+		idGen:                  newIDGenerator(int32(time.Now().Unix()), c.Logger),
 		bufPool:                syncutil.NewSlicePool[byte](rulelist.DefaultRuleBufSize),
 		safeSearch:             c.SafeSearch,
 		refreshLock:            &sync.Mutex{},
