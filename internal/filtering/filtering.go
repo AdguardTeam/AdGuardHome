@@ -25,7 +25,7 @@ import (
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/hostsfile"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/mathutil"
 	"github.com/AdguardTeam/golibs/syncutil"
 	"github.com/AdguardTeam/urlfilter"
@@ -421,7 +421,12 @@ func (d *DNSFilter) WriteDiskConfig(c *Config) {
 // filters are ready.
 //
 // In this case the caller must ensure that the old filter files are intact.
-func (d *DNSFilter) setFilters(blockFilters, allowFilters []Filter, async bool) error {
+func (d *DNSFilter) setFilters(
+	ctx context.Context,
+	blockFilters []Filter,
+	allowFilters []Filter,
+	async bool,
+) (err error) {
 	if async {
 		params := filtersInitializerParams{
 			allowFilters: allowFilters,
@@ -447,7 +452,7 @@ func (d *DNSFilter) setFilters(blockFilters, allowFilters []Filter, async bool) 
 		return nil
 	}
 
-	return d.initFiltering(allowFilters, blockFilters)
+	return d.initFiltering(ctx, allowFilters, blockFilters)
 }
 
 // Close - close the object
@@ -459,19 +464,19 @@ func (d *DNSFilter) Close() {
 		d.done <- struct{}{}
 	}
 
-	d.reset()
+	d.reset(context.TODO())
 }
 
-func (d *DNSFilter) reset() {
+func (d *DNSFilter) reset(ctx context.Context) {
 	if d.rulesStorage != nil {
 		if err := d.rulesStorage.Close(); err != nil {
-			log.Error("filtering: rulesStorage.Close: %s", err)
+			d.logger.ErrorContext(ctx, "closing rules storage", slogutil.KeyError, err)
 		}
 	}
 
 	if d.rulesStorageAllow != nil {
 		if err := d.rulesStorageAllow.Close(); err != nil {
-			log.Error("filtering: rulesStorageAllow.Close: %s", err)
+			d.logger.ErrorContext(ctx, "closing allow rules storage", slogutil.KeyError, err)
 		}
 	}
 }
@@ -657,6 +662,8 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 	d.confMu.RLock()
 	defer d.confMu.RUnlock()
 
+	ctx := context.TODO()
+
 	rewrites, matched := findRewrites(d.conf.Rewrites, host, qtype)
 	if !matched {
 		return Result{}
@@ -671,7 +678,7 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 		rwPat := rw.Domain
 		rwAns := rw.Answer
 
-		log.Debug("rewrite: cname for %s is %s", host, rwAns)
+		d.logger.DebugContext(ctx, "found rewrite", "host", host, "cname", rwAns)
 
 		if origHost == rwAns || rwPat == rwAns {
 			// Either a request for the hostname itself or a rewrite of
@@ -690,7 +697,7 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 
 		host = rwAns
 		if cnames.Has(host) {
-			log.Info("rewrite: cname loop for %q on %q", origHost, host)
+			d.logger.InfoContext(ctx, "cname loop", "host", host, "original", origHost)
 
 			return res
 		}
@@ -706,9 +713,9 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 }
 
 // matchBlockedServicesRules checks the host against the blocked services rules
-// in settings, if any.  The err is always nil, it is only there to make this
-// a valid hostChecker function.
-func matchBlockedServicesRules(
+// in settings, if any.  err is always nil, it is only there to make this a
+// valid hostChecker function.
+func (d *DNSFilter) matchBlockedServicesRules(
 	host string,
 	_ uint16,
 	setts *Settings,
@@ -736,8 +743,13 @@ func matchBlockedServicesRules(
 					Text:         ruleText,
 				}}
 
-				log.Debug("blocked services: matched rule: %s  host: %s  service: %s",
-					ruleText, host, s.Name)
+				d.logger.DebugContext(
+					context.TODO(),
+					"blocked services matched rule",
+					"rule", ruleText,
+					"host", host,
+					"service", s.Name,
+				)
 
 				return res, nil
 			}
@@ -801,7 +813,7 @@ func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
 }
 
 // Initialize urlfilter objects.
-func (d *DNSFilter) initFiltering(allowFilters, blockFilters []Filter) (err error) {
+func (d *DNSFilter) initFiltering(ctx context.Context, allowFilters, blockFilters []Filter) (err error) {
 	rulesStorage, err := newRuleStorage(blockFilters)
 	if err != nil {
 		return err
@@ -819,7 +831,7 @@ func (d *DNSFilter) initFiltering(allowFilters, blockFilters []Filter) (err erro
 		d.engineLock.Lock()
 		defer d.engineLock.Unlock()
 
-		d.reset()
+		d.reset(ctx)
 		d.rulesStorage = rulesStorage
 		d.filteringEngine = filteringEngine
 		d.rulesStorageAllow = rulesStorageAllow
@@ -829,7 +841,7 @@ func (d *DNSFilter) initFiltering(allowFilters, blockFilters []Filter) (err erro
 	// Make sure that the OS reclaims memory as soon as possible.
 	debug.FreeOSMemory()
 
-	log.Debug("filtering: initialized filtering engine")
+	d.logger.DebugContext(ctx, "initialized filtering engine")
 
 	return nil
 }
@@ -851,6 +863,7 @@ func hostRulesToRules(netRules []*rules.HostRule) (res []rules.Rule) {
 
 // matchHostProcessAllowList processes the allowlist logic of host matching.
 func (d *DNSFilter) matchHostProcessAllowList(
+	ctx context.Context,
 	host string,
 	dnsres *urlfilter.DNSResult,
 ) (res Result, err error) {
@@ -867,7 +880,12 @@ func (d *DNSFilter) matchHostProcessAllowList(
 		return Result{}, fmt.Errorf("invalid dns result: rules are empty")
 	}
 
-	log.Debug("filtering: allowlist rules for host %q: %+v", host, matchedRules)
+	d.logger.DebugContext(
+		ctx,
+		"allowlist rules for host",
+		"host", host,
+		"rules", matchedRules,
+	)
 
 	return makeResult(matchedRules, NotFilteredAllowList), nil
 }
@@ -937,6 +955,8 @@ func (d *DNSFilter) matchHost(
 		return Result{}, nil
 	}
 
+	ctx := context.TODO()
+
 	ufReq := &urlfilter.DNSRequest{
 		Hostname:         host,
 		SortedClientTags: setts.ClientTags,
@@ -955,7 +975,7 @@ func (d *DNSFilter) matchHost(
 	if setts.ProtectionEnabled && d.filteringEngineAllow != nil {
 		dnsres, ok := d.filteringEngineAllow.MatchRequest(ufReq)
 		if ok {
-			return d.matchHostProcessAllowList(host, dnsres)
+			return d.matchHostProcessAllowList(ctx, host, dnsres)
 		}
 	}
 
@@ -980,11 +1000,12 @@ func (d *DNSFilter) matchHost(
 
 	res = d.matchHostProcessDNSResult(rrtype, dnsres)
 	for _, r := range res.Rules {
-		log.Debug(
-			"filtering: found rule %q for host %q, filter list id: %d",
-			r.Text,
-			host,
-			r.FilterListID,
+		d.logger.DebugContext(
+			ctx,
+			"found rule for host",
+			"host", host,
+			"rule", r.Text,
+			"filter_list_id", r.FilterListID,
 		)
 	}
 
@@ -1016,6 +1037,8 @@ func InitModule() {
 // New creates properly initialized DNS Filter that is ready to be used.  c must
 // be non-nil.
 func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
+	ctx := context.TODO()
+
 	d = &DNSFilter{
 		logger:                 c.Logger,
 		idGen:                  newIDGenerator(int32(time.Now().Unix())),
@@ -1045,7 +1068,7 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 		check: d.matchHost,
 		name:  "filtering",
 	}, {
-		check: matchBlockedServicesRules,
+		check: d.matchBlockedServicesRules,
 		name:  "blocked services",
 	}, {
 		check: d.checkSafeBrowsing,
@@ -1076,7 +1099,7 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	}
 
 	if blockFilters != nil {
-		err = d.initFiltering(nil, blockFilters)
+		err = d.initFiltering(ctx, nil, blockFilters)
 		if err != nil {
 			d.Close()
 
@@ -1091,8 +1114,8 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 		return nil, fmt.Errorf("making filtering directory: %w", err)
 	}
 
-	d.loadFilters(d.conf.Filters)
-	d.loadFilters(d.conf.WhitelistFilters)
+	d.loadFilters(ctx, d.conf.Filters)
+	d.loadFilters(ctx, d.conf.WhitelistFilters)
 
 	d.conf.Filters = deduplicateFilters(d.conf.Filters)
 	d.conf.WhitelistFilters = deduplicateFilters(d.conf.WhitelistFilters)
@@ -1110,12 +1133,12 @@ func (d *DNSFilter) Start() {
 
 	d.RegisterFilteringHandlers()
 
-	go d.updatesLoop()
+	go d.updatesLoop(context.TODO())
 }
 
 // updatesLoop initializes new filters and checks for filters updates in a loop.
-func (d *DNSFilter) updatesLoop() {
-	defer log.OnPanic("filtering: updates loop")
+func (d *DNSFilter) updatesLoop(ctx context.Context) {
+	defer slogutil.RecoverAndLog(ctx, d.logger)
 
 	ivl := time.Second * 5
 	t := time.NewTimer(ivl)
@@ -1123,9 +1146,9 @@ func (d *DNSFilter) updatesLoop() {
 	for {
 		select {
 		case params := <-d.filtersInitializerChan:
-			err := d.initFiltering(params.allowFilters, params.blockFilters)
+			err := d.initFiltering(ctx, params.allowFilters, params.blockFilters)
 			if err != nil {
-				log.Error("filtering: initializing: %s", err)
+				d.logger.ErrorContext(ctx, "initializing", slogutil.KeyError, err)
 
 				continue
 			}
@@ -1174,9 +1197,13 @@ func (d *DNSFilter) checkSafeBrowsing(
 		return Result{}, nil
 	}
 
-	if log.GetLevel() >= log.DEBUG {
-		timer := log.StartTimer()
-		defer timer.LogElapsed("filtering: safebrowsing lookup for %q", host)
+	ctx := context.TODO()
+	if d.logger.Enabled(ctx, slogutil.LevelDebug) {
+		startTime := time.Now()
+		defer func() {
+			elapsed := time.Since(startTime)
+			d.logger.DebugContext(ctx, "safebrowsing lookup", "host", host, "elapsed", elapsed)
+		}()
 	}
 
 	res = Result{
@@ -1206,9 +1233,13 @@ func (d *DNSFilter) checkParental(
 		return Result{}, nil
 	}
 
-	if log.GetLevel() >= log.DEBUG {
-		timer := log.StartTimer()
-		defer timer.LogElapsed("filtering: parental lookup for %q", host)
+	ctx := context.TODO()
+	if d.logger.Enabled(ctx, slogutil.LevelDebug) {
+		startTime := time.Now()
+		defer func() {
+			elapsed := time.Since(startTime)
+			d.logger.DebugContext(ctx, "parental lookup", "host", host, "elapsed", elapsed)
+		}()
 	}
 
 	res = Result{

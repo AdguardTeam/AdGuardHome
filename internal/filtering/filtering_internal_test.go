@@ -2,13 +2,13 @@ package filtering
 
 import (
 	"bytes"
+	"cmp"
 	"fmt"
 	"net/netip"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -35,7 +35,7 @@ func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts 
 		FilteringEnabled:  true,
 	}
 	if c != nil {
-		c.Logger = slogutil.NewDiscardLogger()
+		c.Logger = cmp.Or(c.Logger, slogutil.NewDiscardLogger())
 		c.SafeBrowsingCacheSize = 10000
 		c.ParentalCacheSize = 10000
 		c.SafeSearchCacheSize = 1000
@@ -173,12 +173,15 @@ func TestDNSFilter_CheckHost_hostRules(t *testing.T) {
 
 func TestSafeBrowsing(t *testing.T) {
 	logOutput := &bytes.Buffer{}
-	aghtest.ReplaceLogWriter(t, logOutput)
-	aghtest.ReplaceLogLevel(t, log.DEBUG)
-
 	sbChecker := newChecker(sbBlocked)
 
 	d, setts := newForTest(t, &Config{
+		Logger: slogutil.New(&slogutil.Config{
+			Level:        slogutil.LevelDebug,
+			Output:       logOutput,
+			Format:       slogutil.FormatDefault,
+			AddTimestamp: false,
+		}),
 		SafeBrowsingEnabled: true,
 		SafeBrowsingChecker: sbChecker,
 	}, nil)
@@ -186,7 +189,7 @@ func TestSafeBrowsing(t *testing.T) {
 
 	d.checkMatch(t, sbBlocked, setts)
 
-	require.Contains(t, logOutput.String(), fmt.Sprintf("safebrowsing lookup for %q", sbBlocked))
+	require.Contains(t, logOutput.String(), fmt.Sprintf("safebrowsing lookup host=%s", sbBlocked))
 
 	d.checkMatch(t, "test."+sbBlocked, setts)
 	d.checkMatchEmpty(t, "yandex.ru", setts)
@@ -221,17 +224,21 @@ func TestParallelSB(t *testing.T) {
 
 func TestParentalControl(t *testing.T) {
 	logOutput := &bytes.Buffer{}
-	aghtest.ReplaceLogWriter(t, logOutput)
-	aghtest.ReplaceLogLevel(t, log.DEBUG)
 
 	d, setts := newForTest(t, &Config{
+		Logger: slogutil.New(&slogutil.Config{
+			Level:        slogutil.LevelDebug,
+			Output:       logOutput,
+			Format:       slogutil.FormatDefault,
+			AddTimestamp: false,
+		}),
 		ParentalEnabled:        true,
 		ParentalControlChecker: newChecker(pcBlocked),
 	}, nil)
 	t.Cleanup(d.Close)
 
 	d.checkMatch(t, pcBlocked, setts)
-	require.Contains(t, logOutput.String(), fmt.Sprintf("parental lookup for %q", pcBlocked))
+	require.Contains(t, logOutput.String(), fmt.Sprintf("parental lookup host=%s", pcBlocked))
 
 	d.checkMatch(t, "www."+pcBlocked, setts)
 	d.checkMatchEmpty(t, "www.yandex.ru", setts)
@@ -553,7 +560,8 @@ func TestWhitelist(t *testing.T) {
 	}}
 	d, setts := newForTest(t, nil, filters)
 
-	err := d.setFilters(filters, whiteFilters, false)
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	err := d.setFilters(ctx, filters, whiteFilters, false)
 	require.NoError(t, err)
 
 	t.Cleanup(d.Close)
