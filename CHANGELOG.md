@@ -18,6 +18,12 @@ See also the [v0.107.64 GitHub milestone][ms-v0.107.64].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Fixed
+
+- Validation process for DNSCrypt settings ([#7856])
+
+[#7856]: https://github.com/AdguardTeam/AdGuardHome/issues/7856
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
