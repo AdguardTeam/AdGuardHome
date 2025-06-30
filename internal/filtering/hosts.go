@@ -1,12 +1,13 @@
 package filtering
 
 import (
+	"context"
 	"fmt"
 	"net/netip"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/hostsfile"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -24,7 +25,7 @@ func (d *DNSFilter) matchSysHosts(
 		return Result{}, nil
 	}
 
-	vals, rs, matched := hostsRewrites(qtype, host, d.conf.EtcHosts)
+	vals, rs, matched := d.hostsRewrites(qtype, host, d.conf.EtcHosts)
 	if !matched {
 		return Result{}, nil
 	}
@@ -42,11 +43,13 @@ func (d *DNSFilter) matchSysHosts(
 }
 
 // hostsRewrites returns values and rules matched by qt and host within hs.
-func hostsRewrites(
+func (d *DNSFilter) hostsRewrites(
 	qtype uint16,
 	host string,
 	hs hostsfile.Storage,
 ) (vals []rules.RRValue, rls []*ResultRule, matched bool) {
+	ctx := context.TODO()
+
 	var isValidProto func(netip.Addr) (ok bool)
 	switch qtype {
 	case dns.TypeA:
@@ -56,7 +59,12 @@ func hostsRewrites(
 	case dns.TypePTR:
 		addr, err := netutil.IPFromReversedAddr(host)
 		if err != nil {
-			log.Debug("filtering: failed to parse PTR record %q: %s", host, err)
+			d.logger.DebugContext(
+				ctx,
+				"failed to parse PTR record",
+				"host", host,
+				slogutil.KeyError, err,
+			)
 
 			return nil, nil, false
 		}
@@ -73,7 +81,11 @@ func hostsRewrites(
 
 		return vals, rls, len(names) > 0
 	default:
-		log.Debug("filtering: unsupported qtype %d", qtype)
+		d.logger.DebugContext(
+			ctx,
+			"unsupported qtype",
+			"qtype", qtype,
+		)
 
 		return nil, nil, false
 	}

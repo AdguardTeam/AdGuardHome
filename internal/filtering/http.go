@@ -17,7 +17,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/miekg/dns"
 )
@@ -148,6 +148,8 @@ func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 		Whitelist bool   `json:"whitelist"`
 	}
 
+	ctx := r.Context()
+
 	req := request{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -170,7 +172,12 @@ func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 			return flt.URL == req.URL
 		})
 		if delIdx == -1 {
-			log.Error("deleting filter with url %q: %s", req.URL, errFilterNotExist)
+			d.logger.ErrorContext(
+				ctx,
+				"deleting filter",
+				"url", req.URL,
+				slogutil.KeyError, errFilterNotExist,
+			)
 
 			return
 		}
@@ -179,14 +186,20 @@ func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 		p := deleted.Path(d.conf.DataDir)
 		err = os.Rename(p, p+".old")
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			log.Error("deleting filter %d: renaming file %q: %s", deleted.ID, p, err)
+			d.logger.ErrorContext(
+				ctx,
+				"renaming filter file",
+				"id", deleted.ID,
+				"path", p,
+				slogutil.KeyError, err,
+			)
 
 			return
 		}
 
 		*filters = slices.Delete(*filters, delIdx, delIdx+1)
 
-		log.Info("deleted filter %d", deleted.ID)
+		d.logger.InfoContext(ctx, "deleted filter", "id", deleted.ID)
 	}()
 
 	d.conf.ConfigModified()

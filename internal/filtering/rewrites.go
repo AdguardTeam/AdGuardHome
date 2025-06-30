@@ -1,13 +1,15 @@
 package filtering
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"net/netip"
 	"slices"
 	"strings"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/miekg/dns"
 )
 
@@ -58,7 +60,7 @@ func (rw *LegacyRewrite) matchesQType(qt uint16) (ok bool) {
 // to domain name case, IP length, and so on.
 //
 // If rw is nil, it returns an errors.
-func (rw *LegacyRewrite) normalize() (err error) {
+func (rw *LegacyRewrite) normalize(ctx context.Context, l *slog.Logger) (err error) {
 	if rw == nil {
 		return errors.Error("nil rewrite entry")
 	}
@@ -85,7 +87,7 @@ func (rw *LegacyRewrite) normalize() (err error) {
 
 	ip, err := netip.ParseAddr(rw.Answer)
 	if err != nil {
-		log.Debug("normalizing legacy rewrite: %s", err)
+		l.DebugContext(ctx, "normalizing legacy rewrite", slogutil.KeyError, err)
 		rw.Type = dns.TypeCNAME
 
 		return nil
@@ -136,9 +138,9 @@ func (rw *LegacyRewrite) Compare(b *LegacyRewrite) (res int) {
 }
 
 // prepareRewrites normalizes and validates all legacy DNS rewrites.
-func (d *DNSFilter) prepareRewrites() (err error) {
+func (d *DNSFilter) prepareRewrites(ctx context.Context) (err error) {
 	for i, r := range d.conf.Rewrites {
-		err = r.normalize()
+		err = r.normalize(ctx, d.logger)
 		if err != nil {
 			return fmt.Errorf("at index %d: %w", i, err)
 		}
@@ -191,7 +193,13 @@ func findRewrites(
 
 // setRewriteResult sets the Reason or IPList of res if necessary.  res must not
 // be nil.
-func setRewriteResult(res *Result, host string, rewrites []*LegacyRewrite, qtype uint16) {
+func (d *DNSFilter) setRewriteResult(
+	ctx context.Context,
+	res *Result,
+	host string,
+	rewrites []*LegacyRewrite,
+	qtype uint16,
+) {
 	for _, rw := range rewrites {
 		if rw.Type == qtype && (qtype == dns.TypeA || qtype == dns.TypeAAAA) {
 			if rw.IP == (netip.Addr{}) {
@@ -203,7 +211,7 @@ func setRewriteResult(res *Result, host string, rewrites []*LegacyRewrite, qtype
 
 			res.IPList = append(res.IPList, rw.IP)
 
-			log.Debug("rewrite: a/aaaa for %s is %s", host, rw.IP)
+			d.logger.DebugContext(ctx, "set a/aaaa rewrite", "host", host, "ans", rw.IP)
 		}
 	}
 }

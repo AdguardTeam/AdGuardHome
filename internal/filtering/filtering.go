@@ -707,7 +707,7 @@ func (d *DNSFilter) processRewrites(host string, qtype uint16) (res Result) {
 		rewrites, matched = findRewrites(d.conf.Rewrites, host, qtype)
 	}
 
-	setRewriteResult(&res, host, rewrites, qtype)
+	d.setRewriteResult(ctx, &res, host, rewrites, qtype)
 
 	return res
 }
@@ -1030,8 +1030,8 @@ func makeResult(matchedRules []rules.Rule, reason Reason) (res Result) {
 }
 
 // InitModule manually initializes blocked services map.
-func InitModule() {
-	initBlockedServices()
+func InitModule(l *slog.Logger) {
+	initBlockedServices(context.TODO(), l)
 }
 
 // New creates properly initialized DNS Filter that is ready to be used.  c must
@@ -1086,7 +1086,7 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	d.conf = c
 	d.conf.filtersMu = &sync.RWMutex{}
 
-	err = d.prepareRewrites()
+	err = d.prepareRewrites(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("rewrites: preparing: %w", err)
 	}

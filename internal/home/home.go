@@ -619,7 +619,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	// Clients package uses filtering package's static data
 	// (filtering.BlockedSvcKnown()), so we have to initialize filtering static
 	// data first, but also to avoid relying on automatic Go init() function.
-	filtering.InitModule()
+	filtering.InitModule(slogLogger)
 
 	// TODO(s.chzhen):  Use it for the entire initialization process.
 	ctx := context.Background()
