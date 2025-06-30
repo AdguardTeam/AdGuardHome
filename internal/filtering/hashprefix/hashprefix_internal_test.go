@@ -11,6 +11,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -96,6 +97,8 @@ func TestHostnameToHashes(t *testing.T) {
 }
 
 func TestChecker_storeInCache(t *testing.T) {
+	const testTimeout = 1 * time.Second
+
 	c := New(&Config{
 		Logger:    slogutil.NewDiscardLogger(),
 		CacheTime: cacheTime,
@@ -114,7 +117,7 @@ func TestChecker_storeInCache(t *testing.T) {
 	hashesArray = append(hashesArray, hash4)
 	hash2 := sha256.Sum256([]byte("host.com"))
 	hashesArray = append(hashesArray, hash2)
-	c.storeInCache(hashes, hashesArray)
+	c.storeInCache(testutil.ContextWithTimeout(t, testTimeout), hashes, hashesArray)
 
 	// match "3.sub.host.com" or "host.com" from cache
 	hashes = []hostnameHash{}

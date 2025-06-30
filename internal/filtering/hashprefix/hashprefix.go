@@ -2,6 +2,7 @@
 package hashprefix
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -103,20 +104,22 @@ func New(conf *Config) (c *Checker) {
 
 // Check returns true if request for the host should be blocked.
 func (c *Checker) Check(host string) (ok bool, err error) {
+	ctx := context.TODO()
+
 	hashes := hostnameToHashes(host)
 
 	l := c.logger.With("host", host)
 
 	found, blocked, hashesToRequest := c.findInCache(hashes)
 	if found {
-		l.Debug("found in cache", "blocked", blocked)
+		l.DebugContext(ctx, "found in cache", "blocked", blocked)
 
 		return blocked, nil
 	}
 
 	question := c.getQuestion(hashesToRequest)
 
-	c.logger.Debug("checking", "question", question)
+	l.DebugContext(ctx, "checking", "question", question)
 	req := (&dns.Msg{}).SetQuestion(question, dns.TypeTXT)
 
 	resp, err := c.upstream.Exchange(req)
@@ -124,9 +127,9 @@ func (c *Checker) Check(host string) (ok bool, err error) {
 		return false, fmt.Errorf("getting hashes: %w", err)
 	}
 
-	matched, receivedHashes := c.processAnswer(l, hashesToRequest, resp)
+	matched, receivedHashes := c.processAnswer(ctx, l, hashesToRequest, resp)
 
-	c.storeInCache(hashesToRequest, receivedHashes)
+	c.storeInCache(ctx, hashesToRequest, receivedHashes)
 
 	return matched, nil
 }
@@ -187,6 +190,7 @@ func (c *Checker) getQuestion(hashes []hostnameHash) (q string) {
 // processAnswer returns true if DNS response matches the hash, and received
 // hashed hostnames from the upstream.  l must not be nil.
 func (c *Checker) processAnswer(
+	ctx context.Context,
 	l *slog.Logger,
 	hashesToRequest []hostnameHash,
 	resp *dns.Msg,
@@ -201,14 +205,14 @@ func (c *Checker) processAnswer(
 
 		txtCount++
 
-		receivedHashes = c.appendHashesFromTXT(l, receivedHashes, txt)
+		receivedHashes = c.appendHashesFromTXT(ctx, l, receivedHashes, txt)
 	}
 
-	l.Debug("processing answer with TXT", "txt_count", txtCount)
+	l.DebugContext(ctx, "processing answer with TXT", "txt_count", txtCount)
 
 	matched = findMatch(hashesToRequest, receivedHashes)
 	if matched {
-		l.Debug("matched")
+		l.DebugContext(ctx, "matched")
 
 		return true, receivedHashes
 	}
@@ -218,22 +222,23 @@ func (c *Checker) processAnswer(
 
 // appendHashesFromTXT appends received hashed hostnames.  l must not be nil.
 func (c *Checker) appendHashesFromTXT(
+	ctx context.Context,
 	l *slog.Logger,
 	hashes []hostnameHash,
 	txt *dns.TXT,
 ) (receivedHashes []hostnameHash) {
-	l.Debug("received hashes", "txt", txt.Txt)
+	l.DebugContext(ctx, "received hashes", "txt", txt.Txt)
 
 	for _, t := range txt.Txt {
 		if len(t) != hexSize {
-			l.Debug("wrong hex size", "len", len(t), "txt", t)
+			l.DebugContext(ctx, "wrong hex size", "len", len(t), "txt", t)
 
 			continue
 		}
 
 		buf, err := hex.DecodeString(t)
 		if err != nil {
-			l.Debug("decoding hex string", "txt", t, slogutil.KeyError, err)
+			l.DebugContext(ctx, "decoding hex string", "txt", t, slogutil.KeyError, err)
 
 			continue
 		}
