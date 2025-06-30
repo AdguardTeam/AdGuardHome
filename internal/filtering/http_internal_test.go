@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -103,6 +104,7 @@ func TestDNSFilter_handleFilteringSetURL(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			confModifiedCalled := false
 			d, err := New(&Config{
+				Logger:           slogutil.NewDiscardLogger(),
 				FilteringEnabled: true,
 				Filters:          tc.initial,
 				HTTPClient: &http.Client{
@@ -183,6 +185,7 @@ func TestDNSFilter_handleSafeBrowsingStatus(t *testing.T) {
 			handlers := make(map[string]http.Handler)
 
 			d, err := New(&Config{
+				Logger: slogutil.NewDiscardLogger(),
 				ConfigModified: func() {
 					testutil.RequireSend(testutil.PanicT{}, confModCh, struct{}{}, testTimeout)
 				},
@@ -267,6 +270,7 @@ func TestDNSFilter_handleParentalStatus(t *testing.T) {
 			handlers := make(map[string]http.Handler)
 
 			d, err := New(&Config{
+				Logger: slogutil.NewDiscardLogger(),
 				ConfigModified: func() {
 					testutil.RequireSend(testutil.PanicT{}, confModCh, struct{}{}, testTimeout)
 				},
@@ -370,6 +374,7 @@ func TestDNSFilter_HandleCheckHost(t *testing.T) {
 	}
 
 	dnsFilter, err := New(&Config{
+		Logger: slogutil.NewDiscardLogger(),
 		BlockedServices: &BlockedServices{
 			Schedule: schedule.EmptyWeekly(),
 		},

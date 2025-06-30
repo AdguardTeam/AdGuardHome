@@ -10,6 +10,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
@@ -52,6 +53,7 @@ func TestDNSFilter_CheckHost_hostsContainer(t *testing.T) {
 	testutil.CleanupAndRequireSuccess(t, hc.Close)
 
 	conf := &filtering.Config{
+		Logger:   slogutil.NewDiscardLogger(),
 		EtcHosts: hc,
 	}
 	f, err := filtering.New(conf, nil)

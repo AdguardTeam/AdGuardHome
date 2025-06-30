@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
@@ -84,6 +85,7 @@ func newDNSFilter(t *testing.T) (d *DNSFilter) {
 	t.Helper()
 
 	dnsFilter, err := New(&Config{
+		Logger:  slogutil.NewDiscardLogger(),
 		DataDir: t.TempDir(),
 		HTTPClient: &http.Client{
 			Timeout: testTimeout,

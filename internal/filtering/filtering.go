@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/netip"
@@ -70,6 +71,10 @@ type Resolver interface {
 
 // Config allows you to configure DNS filtering with New() or just change variables directly.
 type Config struct {
+	// logger is used to log the operations of DNS filtering.  It must not be
+	// nil.
+	Logger *slog.Logger `yaml:"-"`
+
 	// BlockingIPv4 is the IP address to be returned for a blocked A request.
 	BlockingIPv4 netip.Addr `yaml:"blocking_ipv4"`
 
@@ -235,6 +240,9 @@ type Checker interface {
 
 // DNSFilter matches hostnames and DNS requests against filtering rules.
 type DNSFilter struct {
+	// logger is used for logging the filtering process.
+	logger *slog.Logger
+
 	// idGen is used to generate IDs for package urlfilter.
 	idGen *idGenerator
 
@@ -1009,6 +1017,7 @@ func InitModule() {
 // be non-nil.
 func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	d = &DNSFilter{
+		logger:                 c.Logger,
 		idGen:                  newIDGenerator(int32(time.Now().Unix())),
 		bufPool:                syncutil.NewSlicePool[byte](rulelist.DefaultRuleBufSize),
 		safeSearch:             c.SafeSearch,

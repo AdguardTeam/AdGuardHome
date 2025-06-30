@@ -35,6 +35,7 @@ func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts 
 		FilteringEnabled:  true,
 	}
 	if c != nil {
+		c.Logger = slogutil.NewDiscardLogger()
 		c.SafeBrowsingCacheSize = 10000
 		c.ParentalCacheSize = 10000
 		c.SafeSearchCacheSize = 1000
@@ -44,7 +45,9 @@ func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts 
 		setts.ParentalEnabled = c.ParentalEnabled
 	} else {
 		// It must not be nil.
-		c = &Config{}
+		c = &Config{
+			Logger: slogutil.NewDiscardLogger(),
+		}
 	}
 	f, err := New(c, filters)
 	require.NoError(t, err)
@@ -665,6 +668,7 @@ func TestClientSettings(t *testing.T) {
 
 func BenchmarkSafeBrowsing(b *testing.B) {
 	d, setts := newForTest(b, &Config{
+		Logger:              slogutil.NewDiscardLogger(),
 		SafeBrowsingEnabled: true,
 		SafeBrowsingChecker: newChecker(sbBlocked),
 	}, nil)
@@ -691,6 +695,7 @@ func BenchmarkSafeBrowsing(b *testing.B) {
 
 func BenchmarkSafeBrowsing_parallel(b *testing.B) {
 	d, setts := newForTest(b, &Config{
+		Logger:              slogutil.NewDiscardLogger(),
 		SafeBrowsingEnabled: true,
 		SafeBrowsingChecker: newChecker(sbBlocked),
 	}, nil)

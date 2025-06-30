@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -52,6 +53,7 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 `
 
 	conf := &filtering.Config{
+		Logger:                slogutil.NewDiscardLogger(),
 		SafeBrowsingCacheSize: 10000,
 		ParentalCacheSize:     10000,
 		SafeSearchCacheSize:   1000,

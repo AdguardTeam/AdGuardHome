@@ -366,6 +366,8 @@ func setupDNSFilteringConf(
 		pcTXTSuffix           = `pc.dns.adguard.com.`
 	)
 
+	conf.Logger = baseLogger.With(slogutil.KeyPrefix, "filtering")
+
 	conf.EtcHosts = globalContext.etcHosts
 	// TODO(s.chzhen):  Use empty interface.
 	if globalContext.etcHosts == nil || !config.DNS.HostsFileEnabled {
