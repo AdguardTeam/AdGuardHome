@@ -2,6 +2,7 @@
 package rewrite
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"slices"
@@ -94,6 +95,8 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
+	ctx := context.TODO()
+
 	rrules := s.rewriteRulesForReq(dReq)
 	if len(rrules) == 0 {
 		return nil
@@ -106,7 +109,7 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 		rule := rrules[0]
 		rwAns := rule.DNSRewrite.NewCNAME
 
-		s.logger.Debug("cname found", "host", host, "cname", rwAns)
+		s.logger.DebugContext(ctx, "cname found", "host", host, "cname", rwAns)
 
 		if dReq.Hostname == rwAns {
 			// A request for the hostname itself is an exception rule.
@@ -124,7 +127,7 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 		}
 
 		if cnames.Has(rwAns) {
-			s.logger.Info("rewrite cname loop", "host", dReq.Hostname, "rewrite", rwAns)
+			s.logger.InfoContext(ctx, "rewrite cname loop", "host", dReq.Hostname, "rewrite", rwAns)
 
 			return nil
 		}
@@ -183,12 +186,14 @@ func (s *DefaultStorage) Remove(item *Item) (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	ctx := context.TODO()
+
 	arr := []*Item{}
 
 	// TODO(d.kolyshev): Use slices.IndexFunc + slices.Delete?
 	for _, ent := range s.rewrites {
 		if ent.equal(item) {
-			s.logger.Debug("removed element", "domain", ent.Domain, "ans", ent.Answer)
+			s.logger.DebugContext(ctx, "removed element", "domain", ent.Domain, "ans", ent.Answer)
 
 			continue
 		}
@@ -230,7 +235,12 @@ func (s *DefaultStorage) resetRules() (err error) {
 	s.ruleList = strList
 	s.engine = urlfilter.NewDNSEngine(rs)
 
-	s.logger.Info("reset rules", "filter", s.urlFilterID, "count", s.engine.RulesCount)
+	s.logger.InfoContext(
+		context.TODO(),
+		"reset rules",
+		"filter", s.urlFilterID,
+		"count", s.engine.RulesCount,
+	)
 
 	return nil
 }
