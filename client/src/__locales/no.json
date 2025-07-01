@@ -501,7 +501,7 @@
     "setup_dns_privacy_android_1": "Android 9 har innebygd støtte for DNS-over-TLS. For å sette det opp, gå til Innstillinger → Nettverk og internett → Avansert → Privat DNS, og skriv inn domenenavnet ditt der.",
     "setup_dns_privacy_android_2": "<0>AdGuard for Android</0> støtter <1>DNS-over-HTTPS</1> og <1>DNS-over-TLS</1>.",
     "setup_dns_privacy_android_3": "<0>Intra</0> legger til <1>DNS-over-HTTPS</1>-støtte i Android.",
-    "setup_dns_privacy_ios_1": "<0>DNSCloak</0> støtter <1>DNS-over-HTTPS</1>, men for å sette det opp til å bruke din egen tjener, vil du måtte generere et <2>DNS-stempel</2> for det.",
+    "setup_dns_privacy_ios_1": "<0>DNSecure</0> støtter <1>DNS-over-HTTPS</1> og <1>DNS-over-TLS</1>.",
     "setup_dns_privacy_ios_2": "<0>AdGuard for iOS</0> støtter <1>DNS-over-HTTPS</1>- og <1>DNS-over-TLS</1>-oppsett.",
     "setup_dns_privacy_other_title": "Andre implementeringer",
     "setup_dns_privacy_other_1": "AdGuard Home i seg selv kan brukes som en sikker DNS-klient for enhver plattform.",
