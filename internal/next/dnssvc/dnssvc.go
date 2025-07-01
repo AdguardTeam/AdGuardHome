@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -122,8 +123,7 @@ func addressesToUpstreams(
 	preferIPv6 bool,
 ) (upstreams []upstream.Upstream, boots []*upstream.UpstreamResolver, err error) {
 	boots, err = aghnet.ParseBootstraps(bootstraps, &upstream.Options{
-		// TODO(d.kolyshev):  Use consts.
-		Logger:     logger.With("upstream_type", "bootstrap"),
+		Logger:     logger.With(aghslog.UpstreamType, aghslog.UpstreamTypeBootstrap),
 		Timeout:    timeout,
 		PreferIPv6: preferIPv6,
 	})
@@ -141,7 +141,7 @@ func addressesToUpstreams(
 	upstreams = make([]upstream.Upstream, len(upsStrs))
 	for i, upsStr := range upsStrs {
 		upstreams[i], err = upstream.AddressToUpstream(upsStr, &upstream.Options{
-			Logger:     logger.With("upstream_type", "main"),
+			Logger:     logger.With(aghslog.UpstreamType, aghslog.UpstreamTypeMain),
 			Bootstrap:  bootstrap,
 			Timeout:    timeout,
 			PreferIPv6: preferIPv6,
