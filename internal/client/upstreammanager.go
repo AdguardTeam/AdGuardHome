@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
@@ -56,10 +57,12 @@ type customUpstreamConfig struct {
 
 // upstreamManager stores and updates custom client upstream configurations.
 type upstreamManager struct {
+	// baseLogger is used as the base logger for client upstream configurations.
+	// It must not be nil.
+	baseLogger *slog.Logger
+
 	// logger is used for logging the operation of the upstream manager.  It
 	// must not be nil.
-	//
-	// TODO(s.chzhen):  Consider using a logger with its own prefix.
 	logger *slog.Logger
 
 	// uidToCustomConf maps persistent client UID to the custom client upstream
@@ -78,9 +81,10 @@ type upstreamManager struct {
 }
 
 // newUpstreamManager returns the new properly initialized upstream manager.
-func newUpstreamManager(logger *slog.Logger, clock timeutil.Clock) (m *upstreamManager) {
+func newUpstreamManager(baseLogger *slog.Logger, clock timeutil.Clock) (m *upstreamManager) {
 	return &upstreamManager{
-		logger:          logger,
+		baseLogger:      baseLogger,
+		logger:          baseLogger.With(slogutil.KeyPrefix, "upstream_manager"),
 		uidToCustomConf: make(map[UID]*customUpstreamConfig),
 		clock:           clock,
 	}
@@ -136,7 +140,8 @@ func (m *upstreamManager) customUpstreamConfig(uid UID) (proxyConf *proxy.Custom
 		}
 	}
 
-	proxyConf = newCustomUpstreamConfig(cliConf, m.commonConf)
+	cliLogger := m.baseLogger.With(aghslog.UpstreamClient, uid)
+	proxyConf = newCustomUpstreamConfig(cliConf, m.commonConf, cliLogger)
 	cliConf.proxyConf = proxyConf
 	cliConf.commonConfUpdate = m.confUpdate
 	cliConf.isChanged = false
@@ -193,10 +198,12 @@ func (m *upstreamManager) close() (err error) {
 }
 
 // newCustomUpstreamConfig returns the new properly initialized custom proxy
-// upstream configuration for the client.
+// upstream configuration for the client.  cliConf, conf, and cliLogger must not
+// be nil.
 func newCustomUpstreamConfig(
 	cliConf *customUpstreamConfig,
 	conf *CommonUpstreamConfig,
+	cliLogger *slog.Logger,
 ) (proxyConf *proxy.CustomUpstreamConfig) {
 	upstreams := stringutil.FilterOut(cliConf.upstreams, aghnet.IsCommentOrEmpty)
 	if len(upstreams) == 0 {
@@ -206,8 +213,9 @@ func newCustomUpstreamConfig(
 	upsConf, err := proxy.ParseUpstreamsConfig(
 		upstreams,
 		&upstream.Options{
+			Logger:       cliLogger.With(aghslog.UpstreamType, aghslog.UpstreamTypeCustom),
 			Bootstrap:    conf.Bootstrap,
-			Timeout:      time.Duration(conf.UpstreamTimeout),
+			Timeout:      conf.UpstreamTimeout,
 			HTTPVersions: aghnet.UpstreamHTTPVersions(conf.UseHTTP3Upstreams),
 			PreferIPv6:   conf.BootstrapPreferIPv6,
 		},

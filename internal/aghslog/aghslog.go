@@ -2,6 +2,9 @@
 package aghslog
 
 const (
+	// UpstreamClient is the log attribute for the client name.
+	UpstreamClient = "client_name"
+
 	// UpstreamType is the log attribute for the upstream types.  See the
 	// UpstreamType* constants below.
 	UpstreamType = "upstream_type"

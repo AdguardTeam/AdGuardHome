@@ -142,7 +142,9 @@ func (c *Persistent) validate(ctx context.Context, l *slog.Logger, allTags []str
 		return errors.Error("uid required")
 	}
 
-	conf, err := proxy.ParseUpstreamsConfig(c.Upstreams, &upstream.Options{})
+	conf, err := proxy.ParseUpstreamsConfig(c.Upstreams, &upstream.Options{
+		Logger: slogutil.NewDiscardLogger(),
+	})
 	if err != nil {
 		return fmt.Errorf("invalid upstream servers: %w", err)
 	}

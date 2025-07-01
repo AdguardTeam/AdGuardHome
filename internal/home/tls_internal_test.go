@@ -230,8 +230,9 @@ func TestTLSManager_Reload(t *testing.T) {
 	require.NoError(t, err)
 
 	globalContext.clients.storage, err = client.NewStorage(ctx, &client.StorageConfig{
-		Logger: testLogger,
-		Clock:  timeutil.SystemClock{},
+		BaseLogger: testLogger,
+		Logger:     testLogger,
+		Clock:      timeutil.SystemClock{},
 	})
 	require.NoError(t, err)
 
@@ -492,8 +493,9 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	require.NoError(t, err)
 
 	globalContext.clients.storage, err = client.NewStorage(ctx, &client.StorageConfig{
-		Logger: testLogger,
-		Clock:  timeutil.SystemClock{},
+		BaseLogger: testLogger,
+		Logger:     testLogger,
+		Clock:      timeutil.SystemClock{},
 	})
 	require.NoError(t, err)
 

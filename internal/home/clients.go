@@ -112,6 +112,7 @@ func (clients *clientsContainer) Init(
 	}
 
 	clients.storage, err = client.NewStorage(ctx, &client.StorageConfig{
+		BaseLogger:             baseLogger,
 		Logger:                 baseLogger.With(slogutil.KeyPrefix, "client_storage"),
 		Clock:                  timeutil.SystemClock{},
 		InitialClients:         confClients,
