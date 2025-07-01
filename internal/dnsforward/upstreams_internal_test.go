@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -144,6 +145,7 @@ func TestUpstreamConfigValidator(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cv := newUpstreamConfigValidator(tc.general, tc.fallback, tc.private, &upstream.Options{
+				Logger:    slogutil.NewDiscardLogger(),
 				Timeout:   upsTimeout,
 				Bootstrap: net.DefaultResolver,
 			})
@@ -195,6 +197,7 @@ func TestUpstreamConfigValidator_Check_once(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cv := newUpstreamConfigValidator(tc.ups, nil, nil, &upstream.Options{
+				Logger:  slogutil.NewDiscardLogger(),
 				Timeout: testTimeout,
 			})
 

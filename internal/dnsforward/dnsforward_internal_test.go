@@ -527,7 +527,10 @@ func TestDoQServer(t *testing.T) {
 
 	// Create a DNS-over-QUIC upstream.
 	addr := s.dnsProxy.Addr(proxy.ProtoQUIC)
-	opts := &upstream.Options{InsecureSkipVerify: true}
+	opts := &upstream.Options{
+		Logger:             slogutil.NewDiscardLogger(),
+		InsecureSkipVerify: true,
+	}
 	u, err := upstream.AddressToUpstream(fmt.Sprintf("%s://%s", proxy.ProtoQUIC, addr), opts)
 	require.NoError(t, err)
 

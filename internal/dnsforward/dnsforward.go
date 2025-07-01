@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -546,6 +547,7 @@ func (s *Server) prepareUpstreamSettings(boot upstream.Resolver) (err error) {
 	}
 
 	uc, err := newUpstreamConfig(upstreams, defaultDNS, &upstream.Options{
+		Logger:       s.baseLogger.With(aghslog.UpstreamType, aghslog.UpstreamTypeMain),
 		Bootstrap:    boot,
 		Timeout:      s.conf.UpstreamTimeout,
 		HTTPVersions: aghnet.UpstreamHTTPVersions(s.conf.UseHTTP3Upstreams),
@@ -612,6 +614,7 @@ func (s *Server) prepareLocalResolvers() (uc *proxy.UpstreamConfig, err error) {
 	}
 
 	opts := &upstream.Options{
+		Logger:    s.baseLogger.With(aghslog.UpstreamType, aghslog.UpstreamTypeLocal),
 		Bootstrap: s.bootstrap,
 		Timeout:   defaultLocalTimeout,
 		// TODO(e.burkov): Should we verify server's certificates?
@@ -644,6 +647,7 @@ func (s *Server) prepareInternalDNS() (err error) {
 	}
 
 	bootOpts := &upstream.Options{
+		Logger:       s.baseLogger.With(aghslog.UpstreamType, aghslog.UpstreamTypeBootstrap),
 		Timeout:      DefaultTimeout,
 		HTTPVersions: aghnet.UpstreamHTTPVersions(s.conf.UseHTTP3Upstreams),
 	}
@@ -682,6 +686,7 @@ func (s *Server) setupFallbackDNS() (uc *proxy.UpstreamConfig, err error) {
 	}
 
 	uc, err = proxy.ParseUpstreamsConfig(fallbacks, &upstream.Options{
+		Logger: s.baseLogger.With(aghslog.UpstreamType, aghslog.UpstreamTypeFallback),
 		// TODO(s.chzhen):  Investigate if other options are needed.
 		Timeout:    s.conf.UpstreamTimeout,
 		PreferIPv6: s.conf.BootstrapPreferIPv6,
