@@ -3,7 +3,6 @@ package home
 import (
 	"bytes"
 	"fmt"
-	"log/slog"
 	"net/netip"
 	"os"
 	"path/filepath"
@@ -519,7 +518,6 @@ var config = &configuration{
 		Name:    "AdAway Default Blocklist",
 	}},
 	Filtering: &filtering.Config{
-		Logger:             slog.Default(),
 		ProtectionEnabled:  true,
 		BlockingMode:       filtering.BlockingModeDefault,
 		BlockedResponseTTL: 10, // in seconds

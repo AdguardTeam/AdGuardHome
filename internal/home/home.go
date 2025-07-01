@@ -357,11 +357,11 @@ func setupDNSFilteringConf(
 	const (
 		dnsTimeout = 3 * time.Second
 
-		sbService                 = "safe browsing"
+		sbService                 = "safe_browsing"
 		defaultSafeBrowsingServer = `https://family.adguard-dns.com/dns-query`
 		sbTXTSuffix               = `sb.dns.adguard.com.`
 
-		pcService             = "parental control"
+		pcService             = "parental_control"
 		defaultParentalServer = `https://family.adguard-dns.com/dns-query`
 		pcTXTSuffix           = `pc.dns.adguard.com.`
 	)
@@ -417,7 +417,11 @@ func setupDNSFilteringConf(
 	// default.
 	if conf.SafeBrowsingBlockHost == "" {
 		host := defaultSafeBrowsingBlockHost
-		log.Info("%s: warning: empty blocking host; using default: %q", sbService, host)
+		baseLogger.WarnContext(ctx,
+			"empty blocking host; set default",
+			"service", sbService,
+			"host", host,
+		)
 
 		conf.SafeBrowsingBlockHost = host
 	}
@@ -441,7 +445,11 @@ func setupDNSFilteringConf(
 	// default.
 	if conf.ParentalBlockHost == "" {
 		host := defaultParentalBlockHost
-		log.Info("%s: warning: empty blocking host; using default: %q", pcService, host)
+		baseLogger.WarnContext(ctx,
+			"empty blocking host; set default",
+			"service", pcService,
+			"host", host,
+		)
 
 		conf.ParentalBlockHost = host
 	}
@@ -616,13 +624,13 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	err = configureOS(config)
 	fatalOnError(err)
 
+	// TODO(s.chzhen):  Use it for the entire initialization process.
+	ctx := context.Background()
+
 	// Clients package uses filtering package's static data
 	// (filtering.BlockedSvcKnown()), so we have to initialize filtering static
 	// data first, but also to avoid relying on automatic Go init() function.
-	filtering.InitModule(slogLogger)
-
-	// TODO(s.chzhen):  Use it for the entire initialization process.
-	ctx := context.Background()
+	filtering.InitModule(ctx, slogLogger)
 
 	err = initContextClients(ctx, slogLogger, sigHdlr)
 	fatalOnError(err)

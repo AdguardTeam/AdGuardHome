@@ -1029,9 +1029,9 @@ func makeResult(matchedRules []rules.Rule, reason Reason) (res Result) {
 	}
 }
 
-// InitModule manually initializes blocked services map.
-func InitModule(l *slog.Logger) {
-	initBlockedServices(context.TODO(), l)
+// InitModule manually initializes blocked services map.  l must not be nil.
+func InitModule(ctx context.Context, l *slog.Logger) {
+	initBlockedServices(ctx, l)
 }
 
 // New creates properly initialized DNS Filter that is ready to be used.  c must

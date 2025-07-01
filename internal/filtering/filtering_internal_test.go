@@ -18,14 +18,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
-}
-
 const (
 	sbBlocked = "wmconvirus.narod.ru"
 	pcBlocked = "pornhub.com"
 )
+
+// testLogger is the common logger for tests.
+var testLogger = slogutil.NewDiscardLogger()
 
 // Helpers.
 
@@ -35,7 +34,7 @@ func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts 
 		FilteringEnabled:  true,
 	}
 	if c != nil {
-		c.Logger = cmp.Or(c.Logger, slogutil.NewDiscardLogger())
+		c.Logger = cmp.Or(c.Logger, testLogger)
 		c.SafeBrowsingCacheSize = 10000
 		c.ParentalCacheSize = 10000
 		c.SafeSearchCacheSize = 1000
@@ -46,7 +45,7 @@ func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts 
 	} else {
 		// It must not be nil.
 		c = &Config{
-			Logger: slogutil.NewDiscardLogger(),
+			Logger: testLogger,
 		}
 	}
 	f, err := New(c, filters)
@@ -57,7 +56,7 @@ func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts 
 
 func newChecker(host string) Checker {
 	return hashprefix.New(&hashprefix.Config{
-		Logger:    slogutil.NewDiscardLogger(),
+		Logger:    testLogger,
 		CacheTime: 10,
 		CacheSize: 100000,
 		Upstream:  aghtest.NewBlockUpstream(host, true),
@@ -676,7 +675,7 @@ func TestClientSettings(t *testing.T) {
 
 func BenchmarkSafeBrowsing(b *testing.B) {
 	d, setts := newForTest(b, &Config{
-		Logger:              slogutil.NewDiscardLogger(),
+		Logger:              testLogger,
 		SafeBrowsingEnabled: true,
 		SafeBrowsingChecker: newChecker(sbBlocked),
 	}, nil)
@@ -703,7 +702,7 @@ func BenchmarkSafeBrowsing(b *testing.B) {
 
 func BenchmarkSafeBrowsing_parallel(b *testing.B) {
 	d, setts := newForTest(b, &Config{
-		Logger:              slogutil.NewDiscardLogger(),
+		Logger:              testLogger,
 		SafeBrowsingEnabled: true,
 		SafeBrowsingChecker: newChecker(sbBlocked),
 	}, nil)

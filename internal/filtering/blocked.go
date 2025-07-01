@@ -22,7 +22,8 @@ var serviceRules map[string][]*rules.NetworkRule
 // serviceIDs contains service IDs sorted alphabetically.
 var serviceIDs []string
 
-// initBlockedServices initializes package-level blocked service data.
+// initBlockedServices initializes package-level blocked service data.  l must
+// not be nil.
 func initBlockedServices(ctx context.Context, l *slog.Logger) {
 	svcLen := len(blockedServices)
 	serviceIDs = make([]string, svcLen)
