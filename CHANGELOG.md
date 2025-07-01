@@ -20,9 +20,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
-- Validation process for DNSCrypt settings ([#7856])
+- TTL override calculation ([#7903]).
+- Validation process for DNSCrypt settings ([#7856]).
 
 [#7856]: https://github.com/AdguardTeam/AdGuardHome/issues/7856
+[#7903]: https://github.com/AdguardTeam/AdGuardHome/issues/7903
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
