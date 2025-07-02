@@ -1,6 +1,9 @@
 // Package aghslog contains logging constants and helpers.
 package aghslog
 
+// PrefixDNSProxy is the prefix for DNS proxy logs.
+const PrefixDNSProxy = "dnsproxy"
+
 const (
 	// KeyClientName is the log attribute for the client name.
 	KeyClientName = "client_name"

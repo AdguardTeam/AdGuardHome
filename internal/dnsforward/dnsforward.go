@@ -755,7 +755,7 @@ func validateBlockingMode(
 func (s *Server) prepareInternalProxy() (err error) {
 	srvConf := s.conf
 	conf := &proxy.Config{
-		Logger:                    s.baseLogger.With(slogutil.KeyPrefix, "dnsproxy"),
+		Logger:                    s.baseLogger.With(slogutil.KeyPrefix, aghslog.PrefixDNSProxy),
 		CacheEnabled:              true,
 		CacheSizeBytes:            4096,
 		PrivateRDNSUpstreamConfig: srvConf.PrivateRDNSUpstreamConfig,
