@@ -165,41 +165,18 @@ func (h *testAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.user, _ = webUserFromContext(r.Context())
 }
 
-func TestAuthMiddlewareDefault_firstRun(t *testing.T) {
-	db := newTestUsersDB()
-	db.onAll = func(_ context.Context) (users []*aghuser.User, err error) {
-		return nil, nil
-	}
-
-	mw := newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
-		logger:      testLogger,
-		rateLimiter: emptyRateLimiter{},
-		sessions:    &testSessionStorage{},
-		users:       db,
-	})
-
-	h := &testAuthHandler{}
-	wrapped := mw.Wrap(h)
-
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/", nil)
-	wrapped.ServeHTTP(w, r)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.True(t, h.called)
-}
-
 func TestAuthMiddlewareDefault(t *testing.T) {
 	t.Parallel()
 
 	const (
-		login aghuser.Login = "user_login"
+		loginStr    = "user_login"
+		passwordStr = "user_password"
 
-		passwordRaw = "user_password"
+		login = aghuser.Login(loginStr)
 	)
 
 	passwordHash, err := bcrypt.GenerateFromPassword(
-		[]byte(passwordRaw),
+		[]byte(passwordStr),
 		bcrypt.DefaultCost,
 	)
 	require.NoError(t, err)
@@ -244,17 +221,8 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 		users:       usersDB,
 	})
 
-	reqCookie := httptest.NewRequest(http.MethodGet, "/", nil)
-	reqCookie.AddCookie(&http.Cookie{Name: sessionCookieName, Value: tokenHex})
-
-	reqInvalidCookie := httptest.NewRequest(http.MethodGet, "/", nil)
-	reqInvalidCookie.AddCookie(&http.Cookie{Name: sessionCookieName, Value: "invalid_cookie"})
-
-	reqBasicAuth := httptest.NewRequest(http.MethodGet, "/", nil)
-	reqBasicAuth.SetBasicAuth(string(login), passwordRaw)
-
-	reqInvalidPassBasicAuth := httptest.NewRequest(http.MethodGet, "/", nil)
-	reqInvalidPassBasicAuth.SetBasicAuth(string(login), "invalid_password")
+	cookie := &http.Cookie{Name: sessionCookieName, Value: tokenHex}
+	invalidCookie := &http.Cookie{Name: sessionCookieName, Value: "123"}
 
 	testCases := []struct {
 		req      *http.Request
@@ -264,25 +232,55 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 	}{{
 		req:      httptest.NewRequest(http.MethodGet, "/", nil),
 		wantUser: nil,
+		name:     "no_auth_root",
+		wantCode: http.StatusFound,
+	}, {
+		req:      httptest.NewRequest(http.MethodGet, "/index.html", nil),
+		wantUser: nil,
 		name:     "no_auth",
 		wantCode: http.StatusFound,
 	}, {
-		req:      reqCookie,
+		req:      authRequest("/", invalidCookie, "", ""),
+		wantUser: nil,
+		name:     "invalid_auth",
+		wantCode: http.StatusFound,
+	}, {
+		req:      authRequest("/", cookie, "", ""),
 		wantUser: user,
 		name:     "cookie",
 		wantCode: http.StatusOK,
 	}, {
-		req:      reqBasicAuth,
+		req:      authRequest("/login.html", cookie, "", ""),
+		wantUser: nil,
+		name:     "redirect",
+		wantCode: http.StatusFound,
+	}, {
+		req:      authRequest("/control/profile", cookie, "", ""),
+		wantUser: user,
+		name:     "protected",
+		wantCode: http.StatusOK,
+	}, {
+		req:      authRequest("/control/profile", invalidCookie, "", ""),
+		wantUser: nil,
+		name:     "no_auth_protected",
+		wantCode: http.StatusUnauthorized,
+	}, {
+		req:      httptest.NewRequest(http.MethodGet, "/control/login", nil),
+		wantUser: nil,
+		name:     "public",
+		wantCode: http.StatusOK,
+	}, {
+		req:      authRequest("/", nil, loginStr, passwordStr),
 		wantUser: user,
 		name:     "basic_auth",
 		wantCode: http.StatusOK,
 	}, {
-		req:      reqInvalidCookie,
+		req:      authRequest("/", invalidCookie, "", ""),
 		wantUser: nil,
 		name:     "invalid_cookie",
 		wantCode: http.StatusFound,
 	}, {
-		req:      reqInvalidPassBasicAuth,
+		req:      authRequest("/", nil, "invalid", "creds"),
 		wantUser: nil,
 		name:     "invalid_basic_auth",
 		wantCode: http.StatusFound,
@@ -302,6 +300,22 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 			assert.Equal(t, tc.wantUser, h.user)
 		})
 	}
+}
+
+// authRequest is a test helper function that returns a GET request configured
+// with the provided credentials and path.
+func authRequest(path string, c *http.Cookie, user, pass string) (r *http.Request) {
+	r = httptest.NewRequest(http.MethodGet, path, nil)
+
+	if c != nil {
+		r.AddCookie(c)
+	}
+
+	if user != "" {
+		r.SetBasicAuth(user, pass)
+	}
+
+	return r
 }
 
 func TestAuth_ServeHTTP_firstRun(t *testing.T) {
@@ -458,7 +472,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	t.Cleanup(func() { auth.Close(testutil.ContextWithTimeout(t, testTimeout)) })
+	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
 	globalContext.mux = http.NewServeMux()
 
@@ -606,7 +620,7 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	t.Cleanup(func() { auth.Close(testutil.ContextWithTimeout(t, testTimeout)) })
+	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
 
 	globalContext.mux = http.NewServeMux()
 

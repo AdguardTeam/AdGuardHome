@@ -319,6 +319,9 @@ type authMiddlewareDefaultConfig struct {
 	rateLimiter loginRaateLimiter
 
 	// trustedProxies is a set of subnets considered as trusted.
+	//
+	// TODO(s.chzhen):  Use it not only to pass it to the middleware but also to
+	// log the work of the rate limiter.
 	trustedProxies netutil.SubnetSet
 
 	// sessions contains web user sessions.  It must not be nil.
@@ -332,9 +335,8 @@ type authMiddlewareDefaultConfig struct {
 // for a web client using an authentication cookie or basic auth credentials and
 // passes it with the context.
 type authMiddlewareDefault struct {
-	logger      *slog.Logger
-	rateLimiter loginRaateLimiter
-	// TODO(s.chzhen): !! Use it.
+	logger         *slog.Logger
+	rateLimiter    loginRaateLimiter
 	trustedProxies netutil.SubnetSet
 	sessions       aghuser.SessionStorage
 	users          aghuser.DB
@@ -360,14 +362,13 @@ var _ httputil.Middleware = (*authMiddlewareDefault)(nil)
 func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		if !mw.needsAuthentication(ctx, r) {
-			h.ServeHTTP(w, r)
-
-			return
-		}
 
 		path := r.URL.Path
 		u, err := mw.userFromRequest(ctx, r)
+		if err != nil {
+			mw.logger.ErrorContext(ctx, "retrieving user from request", slogutil.KeyError, err)
+		}
+
 		if u != nil {
 			if path == "/login.html" {
 				http.Redirect(w, r, "/", http.StatusFound)
@@ -380,31 +381,29 @@ func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 			return
 		}
 
-		if path == "/" || path == "index.html" {
-			http.Redirect(w, r, "login.html", http.StatusFound)
+		if isPublicResource(path) {
+			h.ServeHTTP(w, r)
 
 			return
 		}
 
-		if err != nil {
-			mw.logger.ErrorContext(ctx, "retrieving user from request", slogutil.KeyError, err)
+		if path == "/" || path == "/index.html" {
+			http.Redirect(w, r, "login.html", http.StatusFound)
+
+			return
 		}
 
 		w.WriteHeader(http.StatusUnauthorized)
 	})
 }
 
-// needsAuthentication returns true if the current request requires
-// authentication.
-func (mw *authMiddlewareDefault) needsAuthentication(
+// userFromRequest tries to retrieve a user based on the request.  r must not be
+// nil.
+func (mw *authMiddlewareDefault) userFromRequest(
 	ctx context.Context,
 	r *http.Request,
-) (ok bool) {
-	path := r.URL.Path
-
-	if isPublicResource(path) {
-		return false
-	}
+) (u *aghuser.User, err error) {
+	defer func() { err = errors.Annotate(err, "getting user from request: %w") }()
 
 	users, err := mw.users.All(ctx)
 	if err != nil {
@@ -413,46 +412,13 @@ func (mw *authMiddlewareDefault) needsAuthentication(
 	}
 
 	if len(users) == 0 {
-		return false
+		return nil, nil
 	}
-
-	return true
-}
-
-// userFromRequest tries to retrieve a user based on the request.
-func (mw *authMiddlewareDefault) userFromRequest(
-	ctx context.Context,
-	r *http.Request,
-) (u *aghuser.User, err error) {
-	defer func() { err = errors.Annotate(err, "getting user from request: %w") }()
 
 	cookie, err := r.Cookie(sessionCookieName)
 	if err == nil {
 		return mw.userFromCookie(ctx, cookie.Value)
 	}
-
-	var remoteIP string
-	// realIP cannot be used here without taking TrustedProxies into account due
-	// to security issues.
-	//
-	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
-	if remoteIP, err = netutil.SplitHost(r.RemoteAddr); err != nil {
-		return nil, fmt.Errorf("getting remote address: %w", err)
-	}
-
-	rateLimiter := mw.rateLimiter
-	if left := rateLimiter.check(remoteIP); left > 0 {
-		return nil, fmt.Errorf("login attempt blocked for %s", left)
-	}
-
-	rateLimiter.inc(remoteIP)
-	defer func() {
-		if err != nil {
-			return
-		}
-
-		rateLimiter.remove(remoteIP)
-	}()
 
 	return mw.userFromRequestBasicAuth(ctx, r)
 }
@@ -494,8 +460,7 @@ func sessionTokenFromHex(val string) (token aghuser.SessionToken, err error) {
 
 	l := aghuser.SessionTokenLength
 
-	// TODO(s.chzhen):  Use validate.Len.
-	err = validate.InRange("token length", len(sess), l, l)
+	err = validate.Equal("token length", l, len(sess))
 	if err != nil {
 		// Don't wrap the error because it's informative enough as is.
 		return token, err
@@ -504,15 +469,39 @@ func sessionTokenFromHex(val string) (token aghuser.SessionToken, err error) {
 	return aghuser.SessionToken(sess), nil
 }
 
-// userFromRequestBasicAuth searches for a user using Basic Auth credentials.
+// userFromRequestBasicAuth searches for a user using Basic Auth credentials.  r
+// must not be nil.
 func (mw *authMiddlewareDefault) userFromRequestBasicAuth(
 	ctx context.Context,
 	r *http.Request,
 ) (user *aghuser.User, err error) {
 	login, pass, ok := r.BasicAuth()
 	if !ok {
-		return nil, fmt.Errorf("credentials: %w", errors.ErrNoValue)
+		return nil, nil
 	}
+
+	var remoteIP string
+	// realIP cannot be used here without taking TrustedProxies into account due
+	// to security issues.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
+	if remoteIP, err = netutil.SplitHost(r.RemoteAddr); err != nil {
+		return nil, fmt.Errorf("getting remote address: %w", err)
+	}
+
+	rateLimiter := mw.rateLimiter
+	if left := rateLimiter.check(remoteIP); left > 0 {
+		return nil, fmt.Errorf("login attempt blocked for %s", left)
+	}
+
+	rateLimiter.inc(remoteIP)
+	defer func() {
+		if err != nil {
+			return
+		}
+
+		rateLimiter.remove(remoteIP)
+	}()
 
 	user, _ = mw.users.ByLogin(ctx, aghuser.Login(login))
 	if user == nil {

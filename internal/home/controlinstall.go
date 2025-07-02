@@ -490,7 +490,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	// and with its own context, because it waits until all requests are handled
 	// and will be blocked by it's own caller.
 	go func(timeout time.Duration) {
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
+		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), timeout)
 		defer slogutil.RecoverAndLog(shutdownCtx, web.logger)
 		defer cancel()
 

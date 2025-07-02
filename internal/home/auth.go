@@ -179,8 +179,8 @@ func (a *auth) addUser(ctx context.Context, u *webUser, password string) (err er
 	return nil
 }
 
-// Close closes the authentication database.
-func (a *auth) Close(ctx context.Context) {
+// close closes the authentication database.
+func (a *auth) close(ctx context.Context) {
 	err := a.sessions.Close()
 	if err != nil {
 		a.logger.ErrorContext(ctx, "closing session storage", slogutil.KeyError, err)

@@ -221,7 +221,10 @@ func (web *webAPI) start(ctx context.Context) {
 		errs := make(chan error, 2)
 
 		// Use an h2c handler to support unencrypted HTTP/2, e.g. for proxies.
-		hdlr := h2c.NewHandler(withMiddlewares(globalContext.mux, limitRequestBody), &http2.Server{})
+		hdlr := h2c.NewHandler(
+			withMiddlewares(globalContext.mux, limitRequestBody),
+			&http2.Server{},
+		)
 
 		logger := web.baseLogger.With(loggerKeyServer, "plain")
 
@@ -232,7 +235,7 @@ func (web *webAPI) start(ctx context.Context) {
 		// Create a new instance, because the Web is not usable after Shutdown.
 		web.httpServer = &http.Server{
 			Addr:              web.conf.BindAddr.String(),
-			Handler:           globalContext.auth.middleware().Wrap(hdlr),
+			Handler:           web.auth.middleware().Wrap(hdlr),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 			WriteTimeout:      web.conf.WriteTimeout,
@@ -274,7 +277,7 @@ func (web *webAPI) close(ctx context.Context) {
 	shutdownSrv(ctx, web.logger, web.httpServer)
 
 	if web.auth != nil {
-		web.auth.Close(ctx)
+		web.auth.close(ctx)
 	}
 
 	web.logger.InfoContext(ctx, "stopped http server")
@@ -318,7 +321,7 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 
 		web.httpsServer.server = &http.Server{
 			Addr:    addr,
-			Handler: globalContext.auth.middleware().Wrap(hdlr),
+			Handler: web.auth.middleware().Wrap(hdlr),
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
 				RootCAs:      web.tlsManager.rootCerts,
@@ -359,7 +362,7 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 			CipherSuites: web.tlsManager.customCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
-		Handler: globalContext.auth.middleware().Wrap(withMiddlewares(globalContext.mux, limitRequestBody)),
+		Handler: web.auth.middleware().Wrap(withMiddlewares(globalContext.mux, limitRequestBody)),
 	}
 
 	web.logger.DebugContext(ctx, "starting http/3 server")

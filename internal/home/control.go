@@ -177,7 +177,7 @@ func registerControlHandlers(web *webAPI) {
 	httpRegister(http.MethodGet, "/control/status", web.handleStatus)
 	httpRegister(http.MethodPost, "/control/i18n/change_language", handleI18nChangeLanguage)
 	httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
-	httpRegister(http.MethodGet, "/control/profile", handleGetProfile)
+	httpRegister(http.MethodGet, "/control/profile", web.handleGetProfile)
 	httpRegister(http.MethodPut, "/control/profile/update", handlePutProfile)
 
 	// No auth is necessary for DoH/DoT configurations

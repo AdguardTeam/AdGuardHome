@@ -812,7 +812,7 @@ func initUsers(
 		blockDur := time.Duration(config.AuthBlockMin) * time.Minute
 		rateLimiter = newAuthRateLimiter(blockDur, config.AuthAttempts)
 	} else {
-		baseLogger.InfoContext(ctx, "authratelimiter is disabled")
+		baseLogger.WarnContext(ctx, "authratelimiter is disabled")
 		rateLimiter = emptyRateLimiter{}
 	}
 
