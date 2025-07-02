@@ -39,6 +39,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// testLogger is a logger used in tests.
+var testLogger = slogutil.NewDiscardLogger()
+
 func TestMain(m *testing.M) {
 	testutil.DiscardLogOutput(m)
 }
@@ -159,7 +162,7 @@ func createTestServer(
 		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
@@ -410,7 +413,7 @@ func TestServer_timeout(t *testing.T) {
 
 		s, err := NewServer(DNSCreateParams{
 			DNSFilter: createTestDNSFilter(t),
-			Logger:    slogutil.NewDiscardLogger(),
+			Logger:    testLogger,
 		})
 		require.NoError(t, err)
 
@@ -423,7 +426,7 @@ func TestServer_timeout(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
 		s, err := NewServer(DNSCreateParams{
 			DNSFilter: createTestDNSFilter(t),
-			Logger:    slogutil.NewDiscardLogger(),
+			Logger:    testLogger,
 		})
 		require.NoError(t, err)
 
@@ -456,7 +459,7 @@ func TestServer_Prepare_fallbacks(t *testing.T) {
 	}
 
 	s, err := NewServer(DNSCreateParams{
-		Logger: slogutil.NewDiscardLogger(),
+		Logger: testLogger,
 	})
 	require.NoError(t, err)
 
@@ -528,7 +531,7 @@ func TestDoQServer(t *testing.T) {
 	// Create a DNS-over-QUIC upstream.
 	addr := s.dnsProxy.Addr(proxy.ProtoQUIC)
 	opts := &upstream.Options{
-		Logger:             slogutil.NewDiscardLogger(),
+		Logger:             testLogger,
 		InsecureSkipVerify: true,
 	}
 	u, err := upstream.AddressToUpstream(fmt.Sprintf("%s://%s", proxy.ProtoQUIC, addr), opts)
@@ -596,7 +599,7 @@ func TestSafeSearch(t *testing.T) {
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	safeSearch, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
-		Logger:         slogutil.NewDiscardLogger(),
+		Logger:         testLogger,
 		ServicesConfig: safeSearchConf,
 		CacheSize:      filterConf.SafeSearchCacheSize,
 		CacheTTL:       time.Minute * time.Duration(filterConf.CacheTime),
@@ -1076,7 +1079,7 @@ func TestBlockedCustomIP(t *testing.T) {
 		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
@@ -1250,7 +1253,7 @@ func TestRewrite(t *testing.T) {
 		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
@@ -1384,7 +1387,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 			},
 		},
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 		LocalDomain: localDomain,
 	})
 	require.NoError(t, err)
@@ -1474,7 +1477,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 		DHCPServer:  dhcp,
 		DNSFilter:   flt,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
@@ -1530,27 +1533,27 @@ func TestNewServer(t *testing.T) {
 	}{{
 		name: "success",
 		in: DNSCreateParams{
-			Logger: slogutil.NewDiscardLogger(),
+			Logger: testLogger,
 		},
 		wantErrMsg: "",
 	}, {
 		name: "success_local_tld",
 		in: DNSCreateParams{
-			Logger:      slogutil.NewDiscardLogger(),
+			Logger:      testLogger,
 			LocalDomain: "mynet",
 		},
 		wantErrMsg: "",
 	}, {
 		name: "success_local_domain",
 		in: DNSCreateParams{
-			Logger:      slogutil.NewDiscardLogger(),
+			Logger:      testLogger,
 			LocalDomain: "my.local.net",
 		},
 		wantErrMsg: "",
 	}, {
 		name: "bad_local_domain",
 		in: DNSCreateParams{
-			Logger:      slogutil.NewDiscardLogger(),
+			Logger:      testLogger,
 			LocalDomain: "!!!",
 		},
 		wantErrMsg: `local domain: bad domain name "!!!": ` +

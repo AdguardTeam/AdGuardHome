@@ -9,7 +9,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -62,7 +61,7 @@ func TestHandleDNSRequest_handleDNSRequest(t *testing.T) {
 		},
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
@@ -235,7 +234,7 @@ func TestHandleDNSRequest_filterDNSResponse(t *testing.T) {
 		DHCPServer:  &testDHCP{},
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 

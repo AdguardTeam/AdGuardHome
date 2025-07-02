@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/dnsproxy/proxy"
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
@@ -61,7 +60,7 @@ func TestIpsetCtx_process(t *testing.T) {
 		}
 
 		ictx := &ipsetHandler{
-			logger: slogutil.NewDiscardLogger(),
+			logger: testLogger,
 		}
 		rc := ictx.process(dctx)
 		assert.Equal(t, resultCodeSuccess, rc)
@@ -83,7 +82,7 @@ func TestIpsetCtx_process(t *testing.T) {
 		m := &fakeIpsetMgr{}
 		ictx := &ipsetHandler{
 			ipsetMgr: m,
-			logger:   slogutil.NewDiscardLogger(),
+			logger:   testLogger,
 		}
 
 		rc := ictx.process(dctx)
@@ -108,7 +107,7 @@ func TestIpsetCtx_process(t *testing.T) {
 		m := &fakeIpsetMgr{}
 		ictx := &ipsetHandler{
 			ipsetMgr: m,
-			logger:   slogutil.NewDiscardLogger(),
+			logger:   testLogger,
 		}
 
 		rc := ictx.process(dctx)
@@ -132,7 +131,7 @@ func TestIpsetCtx_SkipIpsetProcessing(t *testing.T) {
 	m := &fakeIpsetMgr{}
 	ictx := &ipsetHandler{
 		ipsetMgr: m,
-		logger:   slogutil.NewDiscardLogger(),
+		logger:   testLogger,
 	}
 
 	testCases := []struct {
