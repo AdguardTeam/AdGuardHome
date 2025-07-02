@@ -123,7 +123,7 @@ func addressesToUpstreams(
 	preferIPv6 bool,
 ) (upstreams []upstream.Upstream, boots []*upstream.UpstreamResolver, err error) {
 	boots, err = aghnet.ParseBootstraps(bootstraps, &upstream.Options{
-		Logger:     logger.With(aghslog.UpstreamType, aghslog.UpstreamTypeBootstrap),
+		Logger:     logger.With(aghslog.KeyUpstreamType, aghslog.UpstreamTypeBootstrap),
 		Timeout:    timeout,
 		PreferIPv6: preferIPv6,
 	})
@@ -141,7 +141,7 @@ func addressesToUpstreams(
 	upstreams = make([]upstream.Upstream, len(upsStrs))
 	for i, upsStr := range upsStrs {
 		upstreams[i], err = upstream.AddressToUpstream(upsStr, &upstream.Options{
-			Logger:     logger.With(aghslog.UpstreamType, aghslog.UpstreamTypeMain),
+			Logger:     logger.With(aghslog.KeyUpstreamType, aghslog.UpstreamTypeMain),
 			Bootstrap:  bootstrap,
 			Timeout:    timeout,
 			PreferIPv6: preferIPv6,

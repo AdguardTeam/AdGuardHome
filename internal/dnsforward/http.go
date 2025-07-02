@@ -657,7 +657,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	req.BootstrapDNS = stringutil.FilterOut(req.BootstrapDNS, aghnet.IsCommentOrEmpty)
 
 	opts := &upstream.Options{
-		Logger:     s.baseLogger.With(aghslog.UpstreamType, aghslog.UpstreamTypeTest),
+		Logger:     s.baseLogger.With(aghslog.KeyUpstreamType, aghslog.UpstreamTypeTest),
 		Timeout:    s.conf.UpstreamTimeout,
 		PreferIPv6: s.conf.BootstrapPreferIPv6,
 	}

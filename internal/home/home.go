@@ -384,7 +384,7 @@ func setupDNSFilteringConf(
 	cacheTime := time.Duration(conf.CacheTime) * time.Minute
 
 	upsOpts := &upstream.Options{
-		Logger:  baseLogger.With(aghslog.UpstreamType, aghslog.UpstreamTypeService),
+		Logger:  baseLogger.With(aghslog.KeyUpstreamType, aghslog.UpstreamTypeService),
 		Timeout: dnsTimeout,
 		Bootstrap: upstream.StaticResolver{
 			// 94.140.14.15.

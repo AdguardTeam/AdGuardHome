@@ -2,13 +2,15 @@
 package aghslog
 
 const (
-	// UpstreamClient is the log attribute for the client name.
-	UpstreamClient = "client_name"
+	// KeyClientName is the log attribute for the client name.
+	KeyClientName = "client_name"
 
-	// UpstreamType is the log attribute for the upstream types.  See the
+	// KeyUpstreamType is the log attribute for the upstream types.  See the
 	// UpstreamType* constants below.
-	UpstreamType = "upstream_type"
+	KeyUpstreamType = "upstream_type"
+)
 
+const (
 	// UpstreamTypeBootstrap is the log attribute value for bootstrap upstreams.
 	UpstreamTypeBootstrap = "bootstrap"
 

@@ -140,7 +140,7 @@ func (m *upstreamManager) customUpstreamConfig(uid UID) (proxyConf *proxy.Custom
 		}
 	}
 
-	cliLogger := m.baseLogger.With(aghslog.UpstreamClient, uid)
+	cliLogger := m.baseLogger.With(aghslog.KeyClientName, uid)
 	proxyConf = newCustomUpstreamConfig(cliConf, m.commonConf, cliLogger)
 	cliConf.proxyConf = proxyConf
 	cliConf.commonConfUpdate = m.confUpdate
@@ -213,7 +213,7 @@ func newCustomUpstreamConfig(
 	upsConf, err := proxy.ParseUpstreamsConfig(
 		upstreams,
 		&upstream.Options{
-			Logger:       cliLogger.With(aghslog.UpstreamType, aghslog.UpstreamTypeCustom),
+			Logger:       cliLogger.With(aghslog.KeyUpstreamType, aghslog.UpstreamTypeCustom),
 			Bootstrap:    conf.Bootstrap,
 			Timeout:      conf.UpstreamTimeout,
 			HTTPVersions: aghnet.UpstreamHTTPVersions(conf.UseHTTP3Upstreams),
