@@ -743,7 +743,7 @@ func (s *Storage) CustomUpstreamConfig(
 		return nil
 	}
 
-	return s.upstreamManager.customUpstreamConfig(c.UID)
+	return s.upstreamManager.customUpstreamConfig(c.UID, c.Name)
 }
 
 // UpdateCommonUpstreamConfig implements the [dnsforward.ClientsContainer]

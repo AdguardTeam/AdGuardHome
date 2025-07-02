@@ -119,7 +119,10 @@ func (m *upstreamManager) updateCustomUpstreamConfig(c *Persistent) {
 }
 
 // customUpstreamConfig returns the custom client upstream configuration.
-func (m *upstreamManager) customUpstreamConfig(uid UID) (proxyConf *proxy.CustomUpstreamConfig) {
+func (m *upstreamManager) customUpstreamConfig(
+	uid UID,
+	clientName string,
+) (proxyConf *proxy.CustomUpstreamConfig) {
 	cliConf, ok := m.uidToCustomConf[uid]
 	if !ok {
 		// TODO(s.chzhen):  Consider panic.
@@ -140,7 +143,7 @@ func (m *upstreamManager) customUpstreamConfig(uid UID) (proxyConf *proxy.Custom
 		}
 	}
 
-	cliLogger := m.baseLogger.With(aghslog.KeyClientName, uid)
+	cliLogger := m.baseLogger.With(aghslog.KeyClientName, clientName)
 	proxyConf = newCustomUpstreamConfig(cliConf, m.commonConf, cliLogger)
 	cliConf.proxyConf = proxyConf
 	cliConf.commonConfUpdate = m.confUpdate
