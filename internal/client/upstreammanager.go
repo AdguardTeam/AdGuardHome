@@ -143,7 +143,10 @@ func (m *upstreamManager) customUpstreamConfig(
 		}
 	}
 
-	cliLogger := m.baseLogger.With(aghslog.KeyClientName, clientName)
+	cliLogger := m.baseLogger.With(
+		slogutil.KeyPrefix, aghslog.PrefixDNSProxy,
+		aghslog.KeyClientName, clientName,
+	)
 	proxyConf = newCustomUpstreamConfig(cliConf, m.commonConf, cliLogger)
 	cliConf.proxyConf = proxyConf
 	cliConf.commonConfUpdate = m.confUpdate

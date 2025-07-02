@@ -19,6 +19,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
 // Service is the AdGuard Home DNS service.  A nil *Service is a valid
@@ -79,7 +80,7 @@ func New(c *Config) (svc *Service, err error) {
 	}
 
 	upstreams, resolvers, err := addressesToUpstreams(
-		svc.logger,
+		svc.logger.With(slogutil.KeyPrefix, aghslog.PrefixDNSProxy),
 		c.UpstreamServers,
 		c.BootstrapServers,
 		c.UpstreamTimeout,
