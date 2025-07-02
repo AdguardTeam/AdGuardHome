@@ -51,6 +51,10 @@ type webConfig struct {
 	// encryption.  It must not be nil.
 	tlsManager *tlsManager
 
+	// auth stores web user information and handles authentication.  It must not
+	// be nil.
+	auth *auth
+
 	clientFS fs.FS
 
 	// BindAddr is the binding address with port for plain HTTP web interface.
@@ -114,6 +118,9 @@ type webAPI struct {
 	// encryption.
 	tlsManager *tlsManager
 
+	// auth stores web user information and handles authentication.
+	auth *auth
+
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
 	httpsServer httpsServer
@@ -131,12 +138,16 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 		logger:     conf.logger,
 		baseLogger: conf.baseLogger,
 		tlsManager: conf.tlsManager,
+		auth:       conf.auth,
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
 
 	// if not configured, redirect / to /install.html, otherwise redirect /install.html to /
-	globalContext.mux.Handle("/", withMiddlewares(clientFS, gziphandler.GzipHandler, optionalAuthHandler, postInstallHandler))
+	globalContext.mux.Handle(
+		"/",
+		withMiddlewares(clientFS, gziphandler.GzipHandler, postInstallHandler),
+	)
 
 	// add handlers for /install paths, we only need them when we're not configured yet
 	if conf.firstRun {
@@ -221,7 +232,7 @@ func (web *webAPI) start(ctx context.Context) {
 		// Create a new instance, because the Web is not usable after Shutdown.
 		web.httpServer = &http.Server{
 			Addr:              web.conf.BindAddr.String(),
-			Handler:           hdlr,
+			Handler:           globalContext.auth.middleware().Wrap(hdlr),
 			ReadTimeout:       web.conf.ReadTimeout,
 			ReadHeaderTimeout: web.conf.ReadHeaderTimeout,
 			WriteTimeout:      web.conf.WriteTimeout,
@@ -261,6 +272,10 @@ func (web *webAPI) close(ctx context.Context) {
 	shutdownSrv(ctx, web.logger, web.httpsServer.server)
 	shutdownSrv3(ctx, web.logger, web.httpsServer.server3)
 	shutdownSrv(ctx, web.logger, web.httpServer)
+
+	if web.auth != nil {
+		web.auth.Close(ctx)
+	}
 
 	web.logger.InfoContext(ctx, "stopped http server")
 }
@@ -303,7 +318,7 @@ func (web *webAPI) tlsServerLoop(ctx context.Context) {
 
 		web.httpsServer.server = &http.Server{
 			Addr:    addr,
-			Handler: hdlr,
+			Handler: globalContext.auth.middleware().Wrap(hdlr),
 			TLSConfig: &tls.Config{
 				Certificates: []tls.Certificate{web.httpsServer.cert},
 				RootCAs:      web.tlsManager.rootCerts,
@@ -344,7 +359,7 @@ func (web *webAPI) mustStartHTTP3(ctx context.Context, address string) {
 			CipherSuites: web.tlsManager.customCipherIDs,
 			MinVersion:   tls.VersionTLS12,
 		},
-		Handler: withMiddlewares(globalContext.mux, limitRequestBody),
+		Handler: globalContext.auth.middleware().Wrap(withMiddlewares(globalContext.mux, limitRequestBody)),
 	}
 
 	web.logger.DebugContext(ctx, "starting http/3 server")

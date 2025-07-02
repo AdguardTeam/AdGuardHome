@@ -42,7 +42,7 @@ const (
 //
 // TODO(s.chzhen):  Remove this after refactoring.
 func onConfigModified() {
-	err := config.write(globalContext.tls)
+	err := config.write(globalContext.tls, globalContext.auth)
 	if err != nil {
 		log.Error("writing config: %s", err)
 	}
