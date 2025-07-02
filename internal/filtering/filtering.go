@@ -826,7 +826,7 @@ func (d *DNSFilter) initFiltering(allowFilters, blockFilters []Filter) (err erro
 	return nil
 }
 
-// hostRules is a helper that converts a slice of host rules into a slice of the
+// hostRulesToRules is a helper that converts a slice of host rules into a slice of the
 // rules.Rule interface values.
 func hostRulesToRules(netRules []*rules.HostRule) (res []rules.Rule) {
 	if netRules == nil {

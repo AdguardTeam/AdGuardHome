@@ -428,7 +428,7 @@ func (iface *dhcpInterfaceV4) handleSelecting(
 	// TODO(e.burkov):  Implement.
 }
 
-// handleSelecting handles messages of type request in INIT-REBOOT state.
+// handleInitReboot handles messages of type request in INIT-REBOOT state.
 func (iface *dhcpInterfaceV4) handleInitReboot(
 	ctx context.Context,
 	rw responseWriter4,
