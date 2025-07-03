@@ -363,6 +363,12 @@ func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		if !mw.needsAuthentication(ctx) {
+			h.ServeHTTP(w, r)
+
+			return
+		}
+
 		path := r.URL.Path
 		u, err := mw.userFromRequest(ctx, r)
 		if err != nil {
@@ -397,6 +403,18 @@ func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 	})
 }
 
+// needsAuthentication returns true if there are stored web users and requests
+// should be authenticated first.
+func (mw *authMiddlewareDefault) needsAuthentication(ctx context.Context) (ok bool) {
+	users, err := mw.users.All(ctx)
+	if err != nil {
+		// Should not happen.
+		panic(err)
+	}
+
+	return len(users) != 0
+}
+
 // userFromRequest tries to retrieve a user based on the request.  r must not be
 // nil.
 func (mw *authMiddlewareDefault) userFromRequest(
@@ -404,16 +422,6 @@ func (mw *authMiddlewareDefault) userFromRequest(
 	r *http.Request,
 ) (u *aghuser.User, err error) {
 	defer func() { err = errors.Annotate(err, "getting user from request: %w") }()
-
-	users, err := mw.users.All(ctx)
-	if err != nil {
-		// Should not happen.
-		panic(err)
-	}
-
-	if len(users) == 0 {
-		return nil, nil
-	}
 
 	cookie, err := r.Cookie(sessionCookieName)
 	if err == nil {
