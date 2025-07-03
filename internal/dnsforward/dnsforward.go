@@ -547,10 +547,7 @@ func (s *Server) prepareUpstreamSettings(boot upstream.Resolver) (err error) {
 	}
 
 	uc, err := newUpstreamConfig(upstreams, defaultDNS, &upstream.Options{
-		Logger: s.baseLogger.With(
-			slogutil.KeyPrefix, aghslog.PrefixDNSProxy,
-			aghslog.KeyUpstreamType, aghslog.UpstreamTypeMain,
-		),
+		Logger:       aghslog.NewForUpstream(s.baseLogger, aghslog.UpstreamTypeMain),
 		Bootstrap:    boot,
 		Timeout:      s.conf.UpstreamTimeout,
 		HTTPVersions: aghnet.UpstreamHTTPVersions(s.conf.UseHTTP3Upstreams),
@@ -617,10 +614,7 @@ func (s *Server) prepareLocalResolvers() (uc *proxy.UpstreamConfig, err error) {
 	}
 
 	opts := &upstream.Options{
-		Logger: s.baseLogger.With(
-			slogutil.KeyPrefix, aghslog.PrefixDNSProxy,
-			aghslog.KeyUpstreamType, aghslog.UpstreamTypeLocal,
-		),
+		Logger:    aghslog.NewForUpstream(s.baseLogger, aghslog.UpstreamTypeLocal),
 		Bootstrap: s.bootstrap,
 		Timeout:   defaultLocalTimeout,
 		// TODO(e.burkov): Should we verify server's certificates?
@@ -653,10 +647,7 @@ func (s *Server) prepareInternalDNS() (err error) {
 	}
 
 	bootOpts := &upstream.Options{
-		Logger: s.baseLogger.With(
-			slogutil.KeyPrefix, aghslog.PrefixDNSProxy,
-			aghslog.KeyUpstreamType, aghslog.UpstreamTypeBootstrap,
-		),
+		Logger:       aghslog.NewForUpstream(s.baseLogger, aghslog.UpstreamTypeBootstrap),
 		Timeout:      DefaultTimeout,
 		HTTPVersions: aghnet.UpstreamHTTPVersions(s.conf.UseHTTP3Upstreams),
 	}
@@ -695,10 +686,7 @@ func (s *Server) setupFallbackDNS() (uc *proxy.UpstreamConfig, err error) {
 	}
 
 	uc, err = proxy.ParseUpstreamsConfig(fallbacks, &upstream.Options{
-		Logger: s.baseLogger.With(
-			slogutil.KeyPrefix, aghslog.PrefixDNSProxy,
-			aghslog.KeyUpstreamType, aghslog.UpstreamTypeFallback,
-		),
+		Logger: aghslog.NewForUpstream(s.baseLogger, aghslog.UpstreamTypeFallback),
 		// TODO(s.chzhen):  Investigate if other options are needed.
 		Timeout:    s.conf.UpstreamTimeout,
 		PreferIPv6: s.conf.BootstrapPreferIPv6,

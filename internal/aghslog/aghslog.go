@@ -1,6 +1,12 @@
 // Package aghslog contains logging constants and helpers.
 package aghslog
 
+import (
+	"log/slog"
+
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+)
+
 // PrefixDNSProxy is the prefix for DNS proxy logs.
 const PrefixDNSProxy = "dnsproxy"
 
@@ -38,3 +44,9 @@ const (
 	// testing.
 	UpstreamTypeTest = "test"
 )
+
+// NewForUpstream returns a new logger with a prefix for logs related to a
+// specific upstream type.
+func NewForUpstream(baseLogger *slog.Logger, typ string) (l *slog.Logger) {
+	return baseLogger.With(slogutil.KeyPrefix, PrefixDNSProxy, KeyUpstreamType, typ)
+}
