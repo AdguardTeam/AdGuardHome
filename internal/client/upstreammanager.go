@@ -57,8 +57,8 @@ type customUpstreamConfig struct {
 
 // upstreamManager stores and updates custom client upstream configurations.
 type upstreamManager struct {
-	// baseLogger is used as the base logger for client upstream configurations.
-	// It must not be nil.
+	// baseLogger is used to create loggers for client upstream configurations.
+	// It should not have a prefix and must not be nil.
 	baseLogger *slog.Logger
 
 	// logger is used for logging the operation of the upstream manager.  It
@@ -145,6 +145,7 @@ func (m *upstreamManager) customUpstreamConfig(
 
 	cliLogger := m.baseLogger.With(
 		slogutil.KeyPrefix, aghslog.PrefixDNSProxy,
+		aghslog.KeyUpstreamType, aghslog.UpstreamTypeCustom,
 		aghslog.KeyClientName, clientName,
 	)
 	proxyConf = newCustomUpstreamConfig(cliConf, m.commonConf, cliLogger)
@@ -219,7 +220,7 @@ func newCustomUpstreamConfig(
 	upsConf, err := proxy.ParseUpstreamsConfig(
 		upstreams,
 		&upstream.Options{
-			Logger:       cliLogger.With(aghslog.KeyUpstreamType, aghslog.UpstreamTypeCustom),
+			Logger:       cliLogger,
 			Bootstrap:    conf.Bootstrap,
 			Timeout:      conf.UpstreamTimeout,
 			HTTPVersions: aghnet.UpstreamHTTPVersions(conf.UseHTTP3Upstreams),

@@ -88,8 +88,8 @@ type HostsContainer interface {
 
 // StorageConfig is the client storage configuration structure.
 type StorageConfig struct {
-	// BaseLogger is used as a base logger for the upstream manager.  It must
-	// not be nil.
+	// BaseLogger is used to create loggers for other entities.  It should not
+	// have a prefix and must not be nil.
 	BaseLogger *slog.Logger
 
 	// Logger is used for logging the operation of the client storage.  It must
