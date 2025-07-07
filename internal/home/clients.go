@@ -165,6 +165,10 @@ type clientObject struct {
 	Tags      []string `yaml:"tags"`
 	Upstreams []string `yaml:"upstreams"`
 
+	BlockingMode filtering.BlockingMode `yaml:"blocking_mode"`
+	BlockingIPv4 netip.Addr             `yaml:"blocking_ipv4"`
+	BlockingIPv6 netip.Addr             `yaml:"blocking_ipv6"`
+
 	// UID is the unique identifier of the persistent client.
 	UID client.UID `yaml:"uid"`
 
@@ -199,6 +203,10 @@ func (o *clientObject) toPersistent(
 		Upstreams: o.Upstreams,
 
 		UID: o.UID,
+
+		BlockingMode: o.BlockingMode,
+		BlockingIPv4: o.BlockingIPv4,
+		BlockingIPv6: o.BlockingIPv6,
 
 		UseOwnSettings:        !o.UseGlobalSettings,
 		FilteringEnabled:      o.FilteringEnabled,
@@ -278,6 +286,10 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 			IDs:       cli.Identifiers(),
 			Tags:      slices.Clone(cli.Tags),
 			Upstreams: slices.Clone(cli.Upstreams),
+
+			BlockingMode: cli.BlockingMode,
+			BlockingIPv4: cli.BlockingIPv4,
+			BlockingIPv6: cli.BlockingIPv6,
 
 			UID: cli.UID,
 

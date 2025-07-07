@@ -45,7 +45,7 @@ func (s *Server) filterDNSRequest(dctx *dnsContext) (res *filtering.Result, err 
 		req.Question[0].Name = dns.Fqdn(res.CanonName)
 	case res.IsFiltered:
 		log.Debug("dnsforward: host %q is filtered, reason: %q", host, res.Reason)
-		pctx.Res = s.genDNSFilterMessage(pctx, res)
+		pctx.Res = s.genDNSFilterMessage(dctx, pctx, res)
 	case res.Reason.In(filtering.Rewritten, filtering.FilteredSafeSearch):
 		pctx.Res = s.getCNAMEWithIPs(req, res.IPList, res.CanonName)
 	case res.Reason.In(filtering.RewrittenRule, filtering.RewrittenAutoHosts):
@@ -130,7 +130,7 @@ func (s *Server) filterDNSResponse(dctx *dnsContext) (err error) {
 		} else if res != nil && res.IsFiltered {
 			dctx.result = res
 			dctx.origResp = pctx.Res
-			pctx.Res = s.genDNSFilterMessage(pctx, res)
+			pctx.Res = s.genDNSFilterMessage(dctx, pctx, res)
 
 			log.Debug("dnsforward: matched %q by response: %q", pctx.Req.Question[0].Name, host)
 
