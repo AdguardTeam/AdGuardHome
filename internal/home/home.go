@@ -357,14 +357,16 @@ func setupDNSFilteringConf(
 	const (
 		dnsTimeout = 3 * time.Second
 
-		sbService                 = "safe browsing"
+		sbService                 = "safe_browsing"
 		defaultSafeBrowsingServer = `https://family.adguard-dns.com/dns-query`
 		sbTXTSuffix               = `sb.dns.adguard.com.`
 
-		pcService             = "parental control"
+		pcService             = "parental_control"
 		defaultParentalServer = `https://family.adguard-dns.com/dns-query`
 		pcTXTSuffix           = `pc.dns.adguard.com.`
 	)
+
+	conf.Logger = baseLogger.With(slogutil.KeyPrefix, "filtering")
 
 	conf.EtcHosts = globalContext.etcHosts
 	// TODO(s.chzhen):  Use empty interface.
@@ -402,11 +404,11 @@ func setupDNSFilteringConf(
 	}
 
 	conf.SafeBrowsingChecker = hashprefix.New(&hashprefix.Config{
-		Upstream:    sbUps,
-		ServiceName: sbService,
-		TXTSuffix:   sbTXTSuffix,
-		CacheTime:   cacheTime,
-		CacheSize:   conf.SafeBrowsingCacheSize,
+		Logger:    baseLogger.With(slogutil.KeyPrefix, sbService),
+		Upstream:  sbUps,
+		TXTSuffix: sbTXTSuffix,
+		CacheTime: cacheTime,
+		CacheSize: conf.SafeBrowsingCacheSize,
 	})
 
 	// Protect against invalid configuration, see #6181.
@@ -415,7 +417,11 @@ func setupDNSFilteringConf(
 	// default.
 	if conf.SafeBrowsingBlockHost == "" {
 		host := defaultSafeBrowsingBlockHost
-		log.Info("%s: warning: empty blocking host; using default: %q", sbService, host)
+		baseLogger.WarnContext(ctx,
+			"empty blocking host; set default",
+			"service", sbService,
+			"host", host,
+		)
 
 		conf.SafeBrowsingBlockHost = host
 	}
@@ -426,11 +432,11 @@ func setupDNSFilteringConf(
 	}
 
 	conf.ParentalControlChecker = hashprefix.New(&hashprefix.Config{
-		Upstream:    parUps,
-		ServiceName: pcService,
-		TXTSuffix:   pcTXTSuffix,
-		CacheTime:   cacheTime,
-		CacheSize:   conf.ParentalCacheSize,
+		Logger:    baseLogger.With(slogutil.KeyPrefix, pcService),
+		Upstream:  parUps,
+		TXTSuffix: pcTXTSuffix,
+		CacheTime: cacheTime,
+		CacheSize: conf.ParentalCacheSize,
 	})
 
 	// Protect against invalid configuration, see #6181.
@@ -439,7 +445,11 @@ func setupDNSFilteringConf(
 	// default.
 	if conf.ParentalBlockHost == "" {
 		host := defaultParentalBlockHost
-		log.Info("%s: warning: empty blocking host; using default: %q", pcService, host)
+		baseLogger.WarnContext(ctx,
+			"empty blocking host; set default",
+			"service", pcService,
+			"host", host,
+		)
 
 		conf.ParentalBlockHost = host
 	}
@@ -614,13 +624,13 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	err = configureOS(config)
 	fatalOnError(err)
 
+	// TODO(s.chzhen):  Use it for the entire initialization process.
+	ctx := context.Background()
+
 	// Clients package uses filtering package's static data
 	// (filtering.BlockedSvcKnown()), so we have to initialize filtering static
 	// data first, but also to avoid relying on automatic Go init() function.
-	filtering.InitModule()
-
-	// TODO(s.chzhen):  Use it for the entire initialization process.
-	ctx := context.Background()
+	filtering.InitModule(ctx, slogLogger)
 
 	err = initContextClients(ctx, slogLogger, sigHdlr)
 	fatalOnError(err)

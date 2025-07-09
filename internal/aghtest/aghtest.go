@@ -3,7 +3,6 @@ package aghtest
 
 import (
 	"crypto/sha256"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
@@ -12,7 +11,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/dnsproxy/proxy"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
@@ -26,33 +24,6 @@ const (
 	// ReqFQDN is the common request FQDN for filtering tests.
 	ReqFQDN = ReqHost + "."
 )
-
-// ReplaceLogWriter moves logger output to w and uses Cleanup method of t to
-// revert changes.
-func ReplaceLogWriter(t testing.TB, w io.Writer) {
-	t.Helper()
-
-	prev := log.Writer()
-	t.Cleanup(func() { log.SetOutput(prev) })
-	log.SetOutput(w)
-}
-
-// ReplaceLogLevel sets logging level to l and uses Cleanup method of t to
-// revert changes.
-func ReplaceLogLevel(t testing.TB, l log.Level) {
-	t.Helper()
-
-	switch l {
-	case log.INFO, log.DEBUG, log.ERROR:
-		// Go on.
-	default:
-		t.Fatalf("wrong l value (must be one of %v, %v, %v)", log.INFO, log.DEBUG, log.ERROR)
-	}
-
-	prev := log.GetLevel()
-	t.Cleanup(func() { log.SetLevel(prev) })
-	log.SetLevel(l)
-}
 
 // HostToIPs is a helper that generates one IPv4 and one IPv6 address from host.
 func HostToIPs(host string) (ipv4, ipv6 netip.Addr) {

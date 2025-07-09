@@ -63,6 +63,9 @@ const (
 // TODO(a.garipov): Use more.
 var testClientAddrPort = netip.MustParseAddrPort("1.2.3.4:12345")
 
+// testLogger is the common logger for tests.
+var testLogger = slogutil.NewDiscardLogger()
+
 // type check
 var _ ClientsContainer = (*clientsContainer)(nil)
 
@@ -129,6 +132,8 @@ func createTestServer(
 ) (s *Server) {
 	t.Helper()
 
+	filterConf.Logger = cmp.Or(filterConf.Logger, testLogger)
+
 	rules := `||nxdomain.example.org
 ||NULL.example.org^
 127.0.0.1	host.example.org
@@ -159,7 +164,7 @@ func createTestServer(
 		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
@@ -410,7 +415,7 @@ func TestServer_timeout(t *testing.T) {
 
 		s, err := NewServer(DNSCreateParams{
 			DNSFilter: createTestDNSFilter(t),
-			Logger:    slogutil.NewDiscardLogger(),
+			Logger:    testLogger,
 		})
 		require.NoError(t, err)
 
@@ -423,7 +428,7 @@ func TestServer_timeout(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
 		s, err := NewServer(DNSCreateParams{
 			DNSFilter: createTestDNSFilter(t),
-			Logger:    slogutil.NewDiscardLogger(),
+			Logger:    testLogger,
 		})
 		require.NoError(t, err)
 
@@ -456,7 +461,7 @@ func TestServer_Prepare_fallbacks(t *testing.T) {
 	}
 
 	s, err := NewServer(DNSCreateParams{
-		Logger: slogutil.NewDiscardLogger(),
+		Logger: testLogger,
 	})
 	require.NoError(t, err)
 
@@ -584,6 +589,7 @@ func TestSafeSearch(t *testing.T) {
 	}
 
 	filterConf := &filtering.Config{
+		Logger:              testLogger,
 		BlockingMode:        filtering.BlockingModeDefault,
 		ProtectionEnabled:   true,
 		SafeSearchConf:      safeSearchConf,
@@ -593,7 +599,7 @@ func TestSafeSearch(t *testing.T) {
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	safeSearch, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
-		Logger:         slogutil.NewDiscardLogger(),
+		Logger:         testLogger,
 		ServicesConfig: safeSearchConf,
 		CacheSize:      filterConf.SafeSearchCacheSize,
 		CacheTTL:       time.Minute * time.Duration(filterConf.CacheTime),
@@ -1055,6 +1061,7 @@ func TestBlockedCustomIP(t *testing.T) {
 	}}
 
 	f, err := filtering.New(&filtering.Config{
+		Logger:               testLogger,
 		ProtectionEnabled:    true,
 		ApplyClientFiltering: applyEmptyClientFiltering,
 		BlockedServices:      emptyFilteringBlockedServices(),
@@ -1073,7 +1080,7 @@ func TestBlockedCustomIP(t *testing.T) {
 		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
@@ -1173,6 +1180,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 	)
 
 	sbChecker := hashprefix.New(&hashprefix.Config{
+		Logger:    testLogger,
 		CacheTime: cacheTime,
 		CacheSize: cacheSize,
 		Upstream:  aghtest.NewBlockUpstream(hostname, true),
@@ -1216,6 +1224,7 @@ func TestBlockedBySafeBrowsing(t *testing.T) {
 
 func TestRewrite(t *testing.T) {
 	c := &filtering.Config{
+		Logger:               testLogger,
 		ApplyClientFiltering: applyEmptyClientFiltering,
 		BlockedServices:      emptyFilteringBlockedServices(),
 		BlockingMode:         filtering.BlockingModeDefault,
@@ -1247,7 +1256,7 @@ func TestRewrite(t *testing.T) {
 		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
@@ -1365,6 +1374,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	const localDomain = "lan"
 
 	flt, err := filtering.New(&filtering.Config{
+		Logger:               testLogger,
 		ApplyClientFiltering: applyEmptyClientFiltering,
 		BlockedServices:      emptyFilteringBlockedServices(),
 		BlockingMode:         filtering.BlockingModeDefault,
@@ -1381,7 +1391,7 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 			},
 		},
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 		LocalDomain: localDomain,
 	})
 	require.NoError(t, err)
@@ -1457,6 +1467,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	})
 
 	flt, err := filtering.New(&filtering.Config{
+		Logger:               testLogger,
 		ApplyClientFiltering: applyEmptyClientFiltering,
 		BlockedServices:      emptyFilteringBlockedServices(),
 		BlockingMode:         filtering.BlockingModeDefault,
@@ -1471,7 +1482,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 		DHCPServer:  dhcp,
 		DNSFilter:   flt,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      slogutil.NewDiscardLogger(),
+		Logger:      testLogger,
 	})
 	require.NoError(t, err)
 
@@ -1527,27 +1538,27 @@ func TestNewServer(t *testing.T) {
 	}{{
 		name: "success",
 		in: DNSCreateParams{
-			Logger: slogutil.NewDiscardLogger(),
+			Logger: testLogger,
 		},
 		wantErrMsg: "",
 	}, {
 		name: "success_local_tld",
 		in: DNSCreateParams{
-			Logger:      slogutil.NewDiscardLogger(),
+			Logger:      testLogger,
 			LocalDomain: "mynet",
 		},
 		wantErrMsg: "",
 	}, {
 		name: "success_local_domain",
 		in: DNSCreateParams{
-			Logger:      slogutil.NewDiscardLogger(),
+			Logger:      testLogger,
 			LocalDomain: "my.local.net",
 		},
 		wantErrMsg: "",
 	}, {
 		name: "bad_local_domain",
 		in: DNSCreateParams{
-			Logger:      slogutil.NewDiscardLogger(),
+			Logger:      testLogger,
 			LocalDomain: "!!!",
 		},
 		wantErrMsg: `local domain: bad domain name "!!!": ` +

@@ -12,7 +12,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
@@ -378,6 +377,7 @@ func createTestDNSFilter(t *testing.T) (f *filtering.DNSFilter) {
 	t.Helper()
 
 	f, err := filtering.New(&filtering.Config{
+		Logger:       testLogger,
 		BlockingMode: filtering.BlockingModeDefault,
 	}, []filtering.Filter{})
 	require.NoError(t, err)
@@ -439,7 +439,7 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 				dnsFilter:         createTestDNSFilter(t),
 				dhcpServer:        dhcp,
 				localDomainSuffix: localDomainSuffix,
-				baseLogger:        slogutil.NewDiscardLogger(),
+				baseLogger:        testLogger,
 			}
 
 			req := &dns.Msg{
@@ -591,7 +591,7 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 			dnsFilter:         createTestDNSFilter(t),
 			dhcpServer:        testDHCP,
 			localDomainSuffix: tc.suffix,
-			baseLogger:        slogutil.NewDiscardLogger(),
+			baseLogger:        testLogger,
 		}
 
 		req := (&dns.Msg{}).SetQuestion(dns.Fqdn(tc.host), tc.qtyp)

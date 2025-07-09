@@ -1,6 +1,7 @@
 package filtering
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
@@ -56,6 +58,7 @@ func serveFiltersLocally(t *testing.T, fltContent []byte) (urlStr string) {
 // count.
 func updateAndAssert(
 	t *testing.T,
+	ctx context.Context,
 	dnsFilter *DNSFilter,
 	f *FilterYAML,
 	wantUpd require.BoolAssertionFunc,
@@ -75,7 +78,7 @@ func updateAndAssert(
 
 	assert.Len(t, dir, 1)
 
-	err = dnsFilter.load(f)
+	err = dnsFilter.load(ctx, f)
 	require.NoError(t, err)
 }
 
@@ -84,6 +87,7 @@ func newDNSFilter(t *testing.T) (d *DNSFilter) {
 	t.Helper()
 
 	dnsFilter, err := New(&Config{
+		Logger:  slogutil.NewDiscardLogger(),
 		DataDir: t.TempDir(),
 		HTTPClient: &http.Client{
 			Timeout: testTimeout,
@@ -95,6 +99,8 @@ func newDNSFilter(t *testing.T) (d *DNSFilter) {
 }
 
 func TestDNSFilter_Update(t *testing.T) {
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
 	const content = `||example.org^$third-party
 	# Inline comment example
 	||example.com^$third-party
@@ -111,11 +117,11 @@ func TestDNSFilter_Update(t *testing.T) {
 	dnsFilter := newDNSFilter(t)
 
 	t.Run("download", func(t *testing.T) {
-		updateAndAssert(t, dnsFilter, f, require.True, 3)
+		updateAndAssert(t, ctx, dnsFilter, f, require.True, 3)
 	})
 
 	t.Run("refresh_idle", func(t *testing.T) {
-		updateAndAssert(t, dnsFilter, f, require.False, 3)
+		updateAndAssert(t, ctx, dnsFilter, f, require.False, 3)
 	})
 
 	t.Run("refresh_actually", func(t *testing.T) {
@@ -125,11 +131,11 @@ func TestDNSFilter_Update(t *testing.T) {
 		f.URL = serveFiltersLocally(t, anotherContent)
 		t.Cleanup(func() { f.URL = oldURL })
 
-		updateAndAssert(t, dnsFilter, f, require.True, 1)
+		updateAndAssert(t, ctx, dnsFilter, f, require.True, 1)
 	})
 
 	t.Run("load_unload", func(t *testing.T) {
-		err := dnsFilter.load(f)
+		err := dnsFilter.load(ctx, f)
 		require.NoError(t, err)
 
 		f.unload()
@@ -137,6 +143,8 @@ func TestDNSFilter_Update(t *testing.T) {
 }
 
 func TestFilterYAML_EnsureName(t *testing.T) {
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
 	dnsFilter := newDNSFilter(t)
 
 	t.Run("title_custom", func(t *testing.T) {
@@ -147,7 +155,7 @@ func TestFilterYAML_EnsureName(t *testing.T) {
 			Name: "user-custom",
 		}
 
-		updateAndAssert(t, dnsFilter, f, require.True, 1)
+		updateAndAssert(t, ctx, dnsFilter, f, require.True, 1)
 		assert.Equal(t, "user-custom", f.Name)
 	})
 
@@ -158,7 +166,7 @@ func TestFilterYAML_EnsureName(t *testing.T) {
 			URL: serveFiltersLocally(t, content),
 		}
 
-		updateAndAssert(t, dnsFilter, f, require.True, 1)
+		updateAndAssert(t, ctx, dnsFilter, f, require.True, 1)
 		assert.Equal(t, "src-title", f.Name)
 	})
 
@@ -169,7 +177,7 @@ func TestFilterYAML_EnsureName(t *testing.T) {
 			URL: serveFiltersLocally(t, content),
 		}
 
-		updateAndAssert(t, dnsFilter, f, require.True, 1)
+		updateAndAssert(t, ctx, dnsFilter, f, require.True, 1)
 		assert.Equal(t, "List 0", f.Name)
 	})
 }

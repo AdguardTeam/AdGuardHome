@@ -431,6 +431,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	globalContext.firstRun = false
 	config.DNS.BindHosts = []netip.Addr{req.DNS.IP}
 	config.DNS.Port = req.DNS.Port
+	config.Filtering.Logger = web.baseLogger.With(slogutil.KeyPrefix, "filtering")
 	config.Filtering.SafeFSPatterns = []string{
 		filepath.Join(globalContext.workDir, userFilterDataDir, "*"),
 	}

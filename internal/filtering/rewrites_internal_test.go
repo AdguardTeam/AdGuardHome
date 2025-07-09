@@ -5,6 +5,7 @@ import (
 	"net/netip"
 	"testing"
 
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -88,7 +89,8 @@ func TestRewrites(t *testing.T) {
 		Answer: addr1v4.String(),
 	}}
 
-	require.NoError(t, d.prepareRewrites())
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	require.NoError(t, d.prepareRewrites(ctx))
 
 	testCases := []struct {
 		name       string
@@ -236,7 +238,8 @@ func TestRewritesLevels(t *testing.T) {
 		Type:   dns.TypeA,
 	}}
 
-	require.NoError(t, d.prepareRewrites())
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	require.NoError(t, d.prepareRewrites(ctx))
 
 	testCases := []struct {
 		name string
@@ -280,7 +283,8 @@ func TestRewritesExceptionCNAME(t *testing.T) {
 		Answer: "*.sub.host.com",
 	}}
 
-	require.NoError(t, d.prepareRewrites())
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	require.NoError(t, d.prepareRewrites(ctx))
 
 	testCases := []struct {
 		name string
@@ -342,7 +346,8 @@ func TestRewritesExceptionIP(t *testing.T) {
 		Type:   dns.TypeA,
 	}}
 
-	require.NoError(t, d.prepareRewrites())
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	require.NoError(t, d.prepareRewrites(ctx))
 
 	testCases := []struct {
 		name       string

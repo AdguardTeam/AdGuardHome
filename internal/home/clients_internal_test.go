@@ -26,7 +26,9 @@ func newClientsContainer(t *testing.T) (c *clientsContainer) {
 		client.EmptyDHCP{},
 		nil,
 		nil,
-		&filtering.Config{},
+		&filtering.Config{
+			Logger: testLogger,
+		},
 		newSignalHandler(nil, nil),
 	)
 
