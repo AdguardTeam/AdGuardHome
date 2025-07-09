@@ -501,7 +501,7 @@
     "setup_dns_privacy_android_1": "O Android 9 suporta o DNS-sobre-TLS de forma nativa. Para configurá-lo, vá para Configurações → Rede e internet → Avançado → DNS privado e digite seu nome de domínio lá.",
     "setup_dns_privacy_android_2": "O <0>AdGuard para Android</0> suporta <1>DNS-sobre-HTTPS</1> e <1>DNS-sobre-TLS</1>.",
     "setup_dns_privacy_android_3": "<0>Intra</0> adiciona o suporte <1>DNS-sobre-HTTPS</1> para o Android.",
-    "setup_dns_privacy_ios_1": "<0>DNSCloak</0> suporta <1>DNS-sobre-HTTPS</1>, mas para configurá-lo para usar seu próprio servidor, você precisará gerar um <2>DNS Stamp</2>.",
+    "setup_dns_privacy_ios_1": "<0>DNSecure</0> suporta <1>DNS-sobre-HTTPS</1> e <1>DNS-sobre-TLS</1>.",
     "setup_dns_privacy_ios_2": "O <0>AdGuard para iOS</0> suporta a configuração do <1>DNS-sobre-HTTPS</1> e <1>DNS-sobre-TLS</1>.",
     "setup_dns_privacy_other_title": "Outras implementações",
     "setup_dns_privacy_other_1": "O próprio AdGuard Home pode ser usado como um cliente DNS seguro em qualquer plataforma.",

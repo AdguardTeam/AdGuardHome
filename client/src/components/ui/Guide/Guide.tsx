@@ -91,7 +91,7 @@ const getDnsPrivacyList = () => [
                 components: [
                     {
                         key: 0,
-                        href: 'https://itunes.apple.com/app/id1452162351',
+                        href: 'https://itunes.apple.com/app/id1533413232',
                     },
 
                     <code key="1">text</code>,

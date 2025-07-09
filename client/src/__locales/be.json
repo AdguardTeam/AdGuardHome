@@ -498,7 +498,7 @@
     "setup_dns_privacy_android_1": "Android 9 натыўна падтрымвае DNS-over-TLS. Для налады, перайдзіце ў Налады → Сеціва і Інтэрнэт → Дадаткова → Персанальны DNS сервер, і ўвядзіце туды ваша даменавае імя.",
     "setup_dns_privacy_android_2": "<0>AdGuard для Android</0> падтрымвае <1>DNS-over-HTTPS</1> і <1>DNS-over-TLS</1>.",
     "setup_dns_privacy_android_3": "<0>Intra</0> дадае падтрымка <1>DNS-over-HTTPS</1> на Android.",
-    "setup_dns_privacy_ios_1": "<0>DNSCloak</0> падтрымвае <1>DNS-over-HTTPS</1>, але для налады яго, вам будзе трэба згенераваць для яго <2>DNS-адбітак</2>.",
+    "setup_dns_privacy_ios_1": "<0>DNSecure</0> падтрымвае <1>DNS-over-HTTPS</1> і <1>DNS-over-TLS</1>.",
     "setup_dns_privacy_ios_2": "<0>AdGuard для iOS</0> падтрымвае <1>DNS-over-HTTPS</1> і <1>DNS-over-TLS</1>.",
     "setup_dns_privacy_other_title": "Іншыя развязкі",
     "setup_dns_privacy_other_1": "AdGuard Home сам можа быць кліентам зашыфраванага DNS на любай платформе.",

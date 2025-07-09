@@ -501,7 +501,7 @@
     "setup_dns_privacy_android_1": "آندروئید 9 بطور پیش فرض از  DNS-over-TLS پشتیبانی می کند. برای پیکربندی آن، بروید به تنظیمات → شبکه & اینترنت → پیشرفته → DNS خصوصی و نام دامنه را آنجا وارد کنید.",
     "setup_dns_privacy_android_2": "<0>AdGuard for Android</0> پشتیبانی از <1>DNS-over-HTTPS</1> و <1>DNS-over-TLS</1>.",
     "setup_dns_privacy_android_3": "<0>Intra</0> قابلیت <1>DNS-over-HTTPS</1> را به آندروئید اضافه می کند.",
-    "setup_dns_privacy_ios_1": "<0>DNSCloak</0> پشتیبانی از <1>DNS-over-HTTPS</1>, اما بمنظور پیکربندی آن برای استفاده بعنوان سرور خود،شما نیاز دارید که <2>DNS Stamp</2> برای آن تولید کنید.",
+    "setup_dns_privacy_ios_1": "<0>DNSecure</0> پشتیبانی از <1>DNS-over-HTTPS</1>  و <1>DNS-over-TLS</1>.",
     "setup_dns_privacy_ios_2": "<0>AdGuard for iOS</0> پشتیبانی از <1>DNS-over-HTTPS</1> و راه اندازی <1>DNS-over-TLS</1> .",
     "setup_dns_privacy_other_title": "سایر راه کارها",
     "setup_dns_privacy_other_1": "AdGuard Home خودش میتواند کلاینت DNS اَمن را در هر سیستم عاملی پیاده کند.",
