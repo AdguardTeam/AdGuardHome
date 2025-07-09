@@ -291,7 +291,7 @@
     "custom_ip": "Свой IP",
     "blocking_ipv4": "Блакаванне IPv4",
     "blocking_ipv6": "Блакаванне IPv6",
-    "blocked_response_ttl": "TTL заблакаванага адказу",
+    "blocked_response_ttl": "Заблакіраваны адказ TTL",
     "blocked_response_ttl_desc": "Паказвае, на працягу колькіх секунд кліенты павінны кэшаваць адфільтраваць адказ",
     "form_enter_blocked_response_ttl": "Увядзіце TTL заблакіраванага адказу (у секундах)",
     "upstream_timeout": "Час чакання для upstream.",

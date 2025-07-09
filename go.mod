@@ -1,6 +1,6 @@
 module github.com/AdguardTeam/AdGuardHome
 
-go 1.24.4
+go 1.24.5
 
 require (
 	github.com/AdguardTeam/dnsproxy v0.76.1
@@ -90,22 +90,22 @@ require (
 	golang.org/x/mod v0.25.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
-	golang.org/x/telemetry v0.0.0-20250624183230-fef9409b2ec8 // indirect
+	golang.org/x/telemetry v0.0.0-20250708141652-5a6bbb13955f // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	golang.org/x/tools v0.34.0 // indirect
 	golang.org/x/vuln v1.1.4 // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
-	google.golang.org/api v0.239.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
+	google.golang.org/api v0.240.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
 	google.golang.org/grpc v1.73.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	honnef.co/go/tools v0.6.1 // indirect
 	mvdan.cc/editorconfig v0.3.0 // indirect
 	mvdan.cc/gofumpt v0.8.0 // indirect
-	mvdan.cc/sh/v3 v3.11.0 // indirect
+	mvdan.cc/sh/v3 v3.12.0 // indirect
 	mvdan.cc/unparam v0.0.0-20250301125049-0df0534333a4 // indirect
 )
 

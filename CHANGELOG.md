@@ -18,6 +18,10 @@ See also the [v0.107.64 GitHub milestone][ms-v0.107.64].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.5][go-1.24.5].
+
 ### Fixed
 
 - TTL override calculation ([#7903]).
@@ -25,6 +29,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#7856]: https://github.com/AdguardTeam/AdGuardHome/issues/7856
 [#7903]: https://github.com/AdguardTeam/AdGuardHome/issues/7903
+
+[go-1.24.5]: https://groups.google.com/g/golang-announce/c/gTNJnDXmn34
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
