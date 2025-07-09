@@ -46,8 +46,18 @@ type profileJSON struct {
 }
 
 // handleGetProfile is the handler for GET /control/profile endpoint.
-func handleGetProfile(w http.ResponseWriter, r *http.Request) {
-	u := globalContext.auth.getCurrentUser(r)
+func (web *webAPI) handleGetProfile(w http.ResponseWriter, r *http.Request) {
+	var name string
+	if !web.auth.isGLiNet {
+		u, ok := webUserFromContext(r.Context())
+		if !ok {
+			w.WriteHeader(http.StatusUnauthorized)
+
+			return
+		}
+
+		name = string(u.Login)
+	}
 
 	var resp profileJSON
 	func() {
@@ -55,7 +65,7 @@ func handleGetProfile(w http.ResponseWriter, r *http.Request) {
 		defer config.RUnlock()
 
 		resp = profileJSON{
-			Name:     u.Name,
+			Name:     name,
 			Language: config.Language,
 			Theme:    config.Theme,
 		}

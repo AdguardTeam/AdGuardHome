@@ -13,7 +13,6 @@ import (
 	"net/http/httptest"
 	"net/netip"
 	"net/textproto"
-	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -166,40 +165,18 @@ func (h *testAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.user, _ = webUserFromContext(r.Context())
 }
 
-func TestAuthMiddlewareDefault_firstRun(t *testing.T) {
-	db := newTestUsersDB()
-	db.onAll = func(_ context.Context) (users []*aghuser.User, err error) {
-		return nil, nil
-	}
-
-	mw := newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
-		logger:   testLogger,
-		sessions: &testSessionStorage{},
-		users:    db,
-	})
-
-	h := &testAuthHandler{}
-	wrapped := mw.Wrap(h)
-
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/", nil)
-	wrapped.ServeHTTP(w, r)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.True(t, h.called)
-}
-
 func TestAuthMiddlewareDefault(t *testing.T) {
 	t.Parallel()
 
 	const (
-		login aghuser.Login = "user_login"
+		loginStr    = "user_login"
+		passwordStr = "user_password"
 
-		passwordRaw = "user_password"
+		login = aghuser.Login(loginStr)
 	)
 
 	passwordHash, err := bcrypt.GenerateFromPassword(
-		[]byte(passwordRaw),
+		[]byte(passwordStr),
 		bcrypt.DefaultCost,
 	)
 	require.NoError(t, err)
@@ -238,22 +215,14 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 	}
 
 	mw := newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
-		logger:   testLogger,
-		sessions: ts,
-		users:    usersDB,
+		logger:      testLogger,
+		rateLimiter: emptyRateLimiter{},
+		sessions:    ts,
+		users:       usersDB,
 	})
 
-	reqCookie := httptest.NewRequest(http.MethodGet, "/", nil)
-	reqCookie.AddCookie(&http.Cookie{Name: sessionCookieName, Value: tokenHex})
-
-	reqInvalidCookie := httptest.NewRequest(http.MethodGet, "/", nil)
-	reqInvalidCookie.AddCookie(&http.Cookie{Name: sessionCookieName, Value: "invalid_cookie"})
-
-	reqBasicAuth := httptest.NewRequest(http.MethodGet, "/", nil)
-	reqBasicAuth.SetBasicAuth(string(login), passwordRaw)
-
-	reqInvalidPassBasicAuth := httptest.NewRequest(http.MethodGet, "/", nil)
-	reqInvalidPassBasicAuth.SetBasicAuth(string(login), "invalid_password")
+	cookie := &http.Cookie{Name: sessionCookieName, Value: tokenHex}
+	invalidCookie := &http.Cookie{Name: sessionCookieName, Value: "123"}
 
 	testCases := []struct {
 		req      *http.Request
@@ -263,28 +232,58 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 	}{{
 		req:      httptest.NewRequest(http.MethodGet, "/", nil),
 		wantUser: nil,
-		name:     "no_auth",
-		wantCode: http.StatusUnauthorized,
+		name:     "no_auth_root",
+		wantCode: http.StatusFound,
 	}, {
-		req:      reqCookie,
+		req:      httptest.NewRequest(http.MethodGet, "/index.html", nil),
+		wantUser: nil,
+		name:     "no_auth",
+		wantCode: http.StatusFound,
+	}, {
+		req:      authRequest("/", invalidCookie, "", ""),
+		wantUser: nil,
+		name:     "invalid_auth",
+		wantCode: http.StatusFound,
+	}, {
+		req:      authRequest("/", cookie, "", ""),
 		wantUser: user,
 		name:     "cookie",
 		wantCode: http.StatusOK,
 	}, {
-		req:      reqBasicAuth,
+		req:      authRequest("/login.html", cookie, "", ""),
+		wantUser: nil,
+		name:     "redirect",
+		wantCode: http.StatusFound,
+	}, {
+		req:      authRequest("/control/profile", cookie, "", ""),
+		wantUser: user,
+		name:     "protected",
+		wantCode: http.StatusOK,
+	}, {
+		req:      authRequest("/control/profile", invalidCookie, "", ""),
+		wantUser: nil,
+		name:     "no_auth_protected",
+		wantCode: http.StatusUnauthorized,
+	}, {
+		req:      httptest.NewRequest(http.MethodGet, "/control/login", nil),
+		wantUser: nil,
+		name:     "public",
+		wantCode: http.StatusOK,
+	}, {
+		req:      authRequest("/", nil, loginStr, passwordStr),
 		wantUser: user,
 		name:     "basic_auth",
 		wantCode: http.StatusOK,
 	}, {
-		req:      reqInvalidCookie,
+		req:      authRequest("/", invalidCookie, "", ""),
 		wantUser: nil,
 		name:     "invalid_cookie",
-		wantCode: http.StatusUnauthorized,
+		wantCode: http.StatusFound,
 	}, {
-		req:      reqInvalidPassBasicAuth,
+		req:      authRequest("/", nil, "invalid", "creds"),
 		wantUser: nil,
 		name:     "invalid_basic_auth",
-		wantCode: http.StatusUnauthorized,
+		wantCode: http.StatusFound,
 	}}
 
 	for _, tc := range testCases {
@@ -303,6 +302,22 @@ func TestAuthMiddlewareDefault(t *testing.T) {
 	}
 }
 
+// authRequest is a test helper function that returns a GET request configured
+// with the provided credentials and path.
+func authRequest(path string, c *http.Cookie, user, pass string) (r *http.Request) {
+	r = httptest.NewRequest(http.MethodGet, path, nil)
+
+	if c != nil {
+		r.AddCookie(c)
+	}
+
+	if user != "" {
+		r.SetBasicAuth(user, pass)
+	}
+
+	return r
+}
+
 func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 	storeGlobals(t)
 
@@ -312,7 +327,7 @@ func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 	globalContext.mux = mux
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, false)
 	require.NoError(t, err)
 
 	globalContext.web = web
@@ -445,12 +460,21 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 		Name:         userName,
 		PasswordHash: string(passwordHash),
 	}}
-	auth := InitAuth(sessionsDB, users, testTTL, nil, nil)
-	t.Cleanup(auth.Close)
-	globalContext.auth = auth
 
-	mux := http.NewServeMux()
-	globalContext.mux = mux
+	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
+		baseLogger:     testLogger,
+		rateLimiter:    emptyRateLimiter{},
+		trustedProxies: nil,
+		dbFilename:     sessionsDB,
+		users:          users,
+		sessionTTL:     testTTL * time.Second,
+		isGLiNet:       false,
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
+
+	globalContext.mux = http.NewServeMux()
 
 	tlsMgr, err := newTLSManager(testutil.ContextWithTimeout(t, testTimeout), &tlsManagerConfig{
 		logger:         testLogger,
@@ -459,10 +483,15 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, tlsMgr, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, tlsMgr, auth, false)
 	require.NoError(t, err)
 
 	globalContext.web = web
+
+	mux := auth.middleware().Wrap(globalContext.mux)
+
+	auth.isGLiNet = true
+	gliNetMw := auth.middleware().Wrap(globalContext.mux)
 
 	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
 
@@ -506,7 +535,7 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.path, func(t *testing.T) {
 			r := httptest.NewRequest(tc.method, tc.path, nil)
-			assertHandlerStatusCode(t, mux, r, http.StatusForbidden)
+			assertHandlerStatusCode(t, mux, r, http.StatusUnauthorized)
 
 			r = httptest.NewRequest(tc.method, tc.path, nil)
 			r.SetBasicAuth(userName, userPassword)
@@ -516,18 +545,15 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 			r.AddCookie(loginCookie)
 			assertHandlerStatusCode(t, mux, r, tc.wantCode)
 
-			GLMode = true
-			t.Cleanup(func() { GLMode = false })
-
 			r.AddCookie(&http.Cookie{Name: glCookieName, Value: "test"})
-			assertHandlerStatusCode(t, mux, r, tc.wantCode)
+			assertHandlerStatusCode(t, gliNetMw, r, tc.wantCode)
 		})
 	}
 }
 
 // generateAuthCookie is a helper function that logs in with the provided
 // credentials and returns the resulting authentication cookie.
-func generateAuthCookie(t *testing.T, mux *http.ServeMux, name, password string) (ac *http.Cookie) {
+func generateAuthCookie(t *testing.T, mux http.Handler, name, password string) (ac *http.Cookie) {
 	t.Helper()
 
 	creds, err := json.Marshal(&loginJSON{Name: name, Password: password})
@@ -541,11 +567,15 @@ func generateAuthCookie(t *testing.T, mux *http.ServeMux, name, password string)
 
 	for _, c := range w.Result().Cookies() {
 		if c.Name == sessionCookieName {
-			return c
+			ac = c
+
+			break
 		}
 	}
 
-	return nil
+	require.NotNil(t, ac)
+
+	return ac
 }
 
 // assertHandlerStatusCode is a helper function that asserts the response status
@@ -578,21 +608,31 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 		Name:         userName,
 		PasswordHash: string(passwordHash),
 	}}
-	auth := InitAuth(sessionsDB, users, testTTL, nil, nil)
-	t.Cleanup(auth.Close)
-	globalContext.auth = auth
 
-	mux := http.NewServeMux()
-	globalContext.mux = mux
+	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
+		baseLogger:     testLogger,
+		rateLimiter:    emptyRateLimiter{},
+		trustedProxies: nil,
+		dbFilename:     sessionsDB,
+		users:          users,
+		sessionTTL:     testTTL * time.Second,
+		isGLiNet:       false,
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
+
+	globalContext.mux = http.NewServeMux()
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, auth, false)
 	require.NoError(t, err)
 
 	globalContext.web = web
 
+	mux := auth.middleware().Wrap(globalContext.mux)
+
 	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
-	require.NotNil(t, loginCookie)
 
 	r := httptest.NewRequest(http.MethodGet, "/control/profile", nil)
 	r.AddCookie(loginCookie)
@@ -604,110 +644,7 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 
 	r = httptest.NewRequest(http.MethodGet, "/control/profile", nil)
 	r.AddCookie(loginCookie)
-	assertHandlerStatusCode(t, mux, r, http.StatusForbidden)
-}
-
-// implements http.ResponseWriter
-type testResponseWriter struct {
-	hdr        http.Header
-	statusCode int
-}
-
-func (w *testResponseWriter) Header() http.Header {
-	return w.hdr
-}
-
-func (w *testResponseWriter) Write([]byte) (int, error) {
-	return 0, nil
-}
-
-func (w *testResponseWriter) WriteHeader(statusCode int) {
-	w.statusCode = statusCode
-}
-
-func TestAuthHTTP(t *testing.T) {
-	dir := t.TempDir()
-	fn := filepath.Join(dir, "sessions.db")
-
-	users := []webUser{
-		{Name: "name", PasswordHash: "$2y$05$..vyzAECIhJPfaQiOK17IukcQnqEgKJHy0iETyYqxn3YXJl8yZuo2"},
-	}
-	globalContext.auth = InitAuth(fn, users, 60, nil, nil)
-
-	handlerCalled := false
-	handler := func(_ http.ResponseWriter, _ *http.Request) {
-		handlerCalled = true
-	}
-	handler2 := optionalAuth(handler)
-	w := testResponseWriter{}
-	w.hdr = make(http.Header)
-	r := http.Request{}
-	r.Header = make(http.Header)
-	r.Method = http.MethodGet
-
-	// get / - we're redirected to login page
-	r.URL = &url.URL{Path: "/"}
-	handlerCalled = false
-	handler2(&w, &r)
-	assert.Equal(t, http.StatusFound, w.statusCode)
-	assert.NotEmpty(t, w.hdr.Get(httphdr.Location))
-	assert.False(t, handlerCalled)
-
-	// go to login page
-	loginURL := w.hdr.Get(httphdr.Location)
-	r.URL = &url.URL{Path: loginURL}
-	handlerCalled = false
-	handler2(&w, &r)
-	assert.True(t, handlerCalled)
-
-	// perform login
-	cookie, err := globalContext.auth.newCookie(loginJSON{Name: "name", Password: "password"}, "")
-	require.NoError(t, err)
-	require.NotNil(t, cookie)
-
-	// get /
-	handler2 = optionalAuth(handler)
-	w.hdr = make(http.Header)
-	r.Header.Set(httphdr.Cookie, cookie.String())
-	r.URL = &url.URL{Path: "/"}
-	handlerCalled = false
-	handler2(&w, &r)
-	assert.True(t, handlerCalled)
-
-	r.Header.Del(httphdr.Cookie)
-
-	// get / with basic auth
-	handler2 = optionalAuth(handler)
-	w.hdr = make(http.Header)
-	r.URL = &url.URL{Path: "/"}
-	r.SetBasicAuth("name", "password")
-	handlerCalled = false
-	handler2(&w, &r)
-	assert.True(t, handlerCalled)
-	r.Header.Del(httphdr.Authorization)
-
-	// get login page with a valid cookie - we're redirected to /
-	handler2 = optionalAuth(handler)
-	w.hdr = make(http.Header)
-	r.Header.Set(httphdr.Cookie, cookie.String())
-	r.URL = &url.URL{Path: loginURL}
-	handlerCalled = false
-	handler2(&w, &r)
-	assert.NotEmpty(t, w.hdr.Get(httphdr.Location))
-	assert.False(t, handlerCalled)
-	r.Header.Del(httphdr.Cookie)
-
-	// get login page with an invalid cookie
-	handler2 = optionalAuth(handler)
-	w.hdr = make(http.Header)
-	r.Header.Set(httphdr.Cookie, "bad")
-	r.URL = &url.URL{Path: loginURL}
-	handlerCalled = false
-	handler2(&w, &r)
-	assert.True(t, handlerCalled)
-	r.Header.Del(httphdr.Cookie)
-
-	globalContext.auth.Close()
+	assertHandlerStatusCode(t, mux, r, http.StatusUnauthorized)
 }
 
 func TestRealIP(t *testing.T) {

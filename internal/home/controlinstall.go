@@ -392,6 +392,8 @@ const PasswordMinRunes = 8
 
 // Apply new configuration, start DNS server, restart Web server
 func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	req, restartHTTP, err := decodeApplyConfigReq(r.Body)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
@@ -440,7 +442,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	u := &webUser{
 		Name: req.Username,
 	}
-	err = globalContext.auth.addUser(u, req.Password)
+	err = web.auth.addUser(ctx, u, req.Password)
 	if err != nil {
 		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)
@@ -453,7 +455,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	// moment we'll allow setting up TLS in the initial configuration or the
 	// configuration itself will use HTTPS protocol, because the underlying
 	// functions potentially restart the HTTPS server.
-	err = startMods(r.Context(), web.baseLogger, web.tlsManager)
+	err = startMods(ctx, web.baseLogger, web.tlsManager)
 	if err != nil {
 		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)
@@ -462,7 +464,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = config.write(web.tlsManager)
+	err = config.write(web.tlsManager, web.auth)
 	if err != nil {
 		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)
@@ -489,11 +491,11 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	// and with its own context, because it waits until all requests are handled
 	// and will be blocked by it's own caller.
 	go func(timeout time.Duration) {
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-		defer slogutil.RecoverAndLog(ctx, web.logger)
+		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), timeout)
+		defer slogutil.RecoverAndLog(shutdownCtx, web.logger)
 		defer cancel()
 
-		shutdownSrv(ctx, web.logger, web.httpServer)
+		shutdownSrv(shutdownCtx, web.logger, web.httpServer)
 	}(shutdownTimeout)
 }
 

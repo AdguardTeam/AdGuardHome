@@ -171,22 +171,19 @@ func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 // registerControlHandlers sets up HTTP handlers for various control endpoints.
 // web must not be nil.
 func registerControlHandlers(web *webAPI) {
-	globalContext.mux.HandleFunc(
-		"/control/version.json",
-		postInstall(optionalAuth(web.handleVersionJSON)),
-	)
+	globalContext.mux.HandleFunc("/control/version.json", postInstall(web.handleVersionJSON))
 	httpRegister(http.MethodPost, "/control/update", web.handleUpdate)
 
 	httpRegister(http.MethodGet, "/control/status", web.handleStatus)
 	httpRegister(http.MethodPost, "/control/i18n/change_language", handleI18nChangeLanguage)
 	httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
-	httpRegister(http.MethodGet, "/control/profile", handleGetProfile)
+	httpRegister(http.MethodGet, "/control/profile", web.handleGetProfile)
 	httpRegister(http.MethodPut, "/control/profile/update", handlePutProfile)
 
 	// No auth is necessary for DoH/DoT configurations
 	globalContext.mux.HandleFunc("/apple/doh.mobileconfig", postInstall(handleMobileConfigDoH))
 	globalContext.mux.HandleFunc("/apple/dot.mobileconfig", postInstall(handleMobileConfigDoT))
-	RegisterAuthHandlers()
+	RegisterAuthHandlers(web)
 }
 
 // httpRegister registers an HTTP handler.
@@ -197,7 +194,10 @@ func httpRegister(method, url string, handler http.HandlerFunc) {
 		return
 	}
 
-	globalContext.mux.Handle(url, postInstallHandler(optionalAuthHandler(gziphandler.GzipHandler(ensureHandler(method, handler)))))
+	globalContext.mux.Handle(
+		url,
+		postInstallHandler(gziphandler.GzipHandler(ensureHandler(method, handler))),
+	)
 }
 
 // ensure returns a wrapped handler that makes sure that the request has the

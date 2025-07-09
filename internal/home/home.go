@@ -48,14 +48,20 @@ type homeContext struct {
 	// Modules
 	// --
 
-	clients    clientsContainer     // per-client-settings module
-	stats      stats.Interface      // statistics module
-	queryLog   querylog.QueryLog    // query log module
-	dnsServer  *dnsforward.Server   // DNS module
-	dhcpServer dhcpd.Interface      // DHCP module
-	auth       *Auth                // HTTP authentication module
-	filters    *filtering.DNSFilter // DNS filtering module
-	web        *webAPI              // Web (HTTP, HTTPS) module
+	clients    clientsContainer   // per-client-settings module
+	stats      stats.Interface    // statistics module
+	queryLog   querylog.QueryLog  // query log module
+	dnsServer  *dnsforward.Server // DNS module
+	dhcpServer dhcpd.Interface    // DHCP module
+
+	// auth stores web user information and handles authentication.
+	//
+	// TODO(s.chzhen):  Remove once it is no longer called from different
+	// modules.  See [onConfigModified].
+	auth *auth
+
+	filters *filtering.DNSFilter // DNS filtering module
+	web     *webAPI              // Web (HTTP, HTTPS) module
 
 	// tls contains the current configuration and state of TLS encryption.
 	//
@@ -531,8 +537,8 @@ func isUpdateEnabled(
 	}
 }
 
-// initWeb initializes the web module.  upd, baseLogger, and tlsMgr must not be
-// nil.
+// initWeb initializes the web module.  upd, baseLogger, tlsMgr, and auth must
+// not be nil.
 func initWeb(
 	ctx context.Context,
 	opts options,
@@ -540,6 +546,7 @@ func initWeb(
 	upd *updater.Updater,
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
+	auth *auth,
 	isCustomUpdURL bool,
 ) (web *webAPI, err error) {
 	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
@@ -563,6 +570,7 @@ func initWeb(
 		logger:     logger,
 		baseLogger: baseLogger,
 		tlsManager: tlsMgr,
+		auth:       auth,
 
 		clientFS: clientFS,
 
@@ -671,7 +679,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 
 	if !globalContext.firstRun {
 		// Save the updated config.
-		err = config.write(nil)
+		err = config.write(nil, nil)
 		fatalOnError(err)
 
 		if config.HTTPConfig.Pprof.Enabled {
@@ -683,13 +691,12 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	err = os.MkdirAll(dataDir, aghos.DefaultPermDir)
 	fatalOnError(errors.Annotate(err, "creating DNS data dir at %s: %w", dataDir))
 
-	GLMode = opts.glinetMode
-
-	// Init auth module.
-	globalContext.auth, err = initUsers()
+	auth, err := initUsers(ctx, slogLogger, opts.glinetMode)
 	fatalOnError(err)
 
-	web, err := initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, isCustomURL)
+	globalContext.auth = auth
+
+	web, err := initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, auth, isCustomURL)
 	fatalOnError(err)
 
 	globalContext.web = web
@@ -805,24 +812,33 @@ func checkPermissions(
 	permcheck.Check(ctx, l, workDir, dataDir, statsDir, querylogDir, confPath)
 }
 
-// initUsers initializes context auth module.  Clears config users field.
-func initUsers() (auth *Auth, err error) {
-	sessFilename := filepath.Join(globalContext.getDataDir(), "sessions.db")
-
-	var rateLimiter *authRateLimiter
+// initUsers initializes authentication module and clears the [config.Users]
+// field.
+func initUsers(
+	ctx context.Context,
+	baseLogger *slog.Logger,
+	isGLiNet bool,
+) (auth *auth, err error) {
+	var rateLimiter loginRaateLimiter
 	if config.AuthAttempts > 0 && config.AuthBlockMin > 0 {
 		blockDur := time.Duration(config.AuthBlockMin) * time.Minute
 		rateLimiter = newAuthRateLimiter(blockDur, config.AuthAttempts)
 	} else {
-		log.Info("authratelimiter is disabled")
+		baseLogger.WarnContext(ctx, "authratelimiter is disabled")
+		rateLimiter = emptyRateLimiter{}
 	}
 
-	trustedProxies := netutil.SliceSubnetSet(netutil.UnembedPrefixes(config.DNS.TrustedProxies))
-
-	sessionTTL := time.Duration(config.HTTPConfig.SessionTTL).Seconds()
-	auth = InitAuth(sessFilename, config.Users, uint32(sessionTTL), rateLimiter, trustedProxies)
-	if auth == nil {
-		return nil, errors.Error("initializing auth module failed")
+	auth, err = newAuth(ctx, &authConfig{
+		baseLogger:     baseLogger,
+		rateLimiter:    rateLimiter,
+		trustedProxies: netutil.SliceSubnetSet(netutil.UnembedPrefixes(config.DNS.TrustedProxies)),
+		dbFilename:     filepath.Join(globalContext.getDataDir(), sessionsDBName),
+		users:          config.Users,
+		sessionTTL:     time.Duration(config.HTTPConfig.SessionTTL),
+		isGLiNet:       isGLiNet,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("initializing auth module: %w", err)
 	}
 
 	config.Users = nil
@@ -934,10 +950,6 @@ func cleanup(ctx context.Context) {
 	if globalContext.web != nil {
 		globalContext.web.close(ctx)
 		globalContext.web = nil
-	}
-	if globalContext.auth != nil {
-		globalContext.auth.Close()
-		globalContext.auth = nil
 	}
 
 	err := stopDNSServer()

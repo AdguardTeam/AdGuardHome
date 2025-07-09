@@ -9,6 +9,38 @@ import (
 // cache.
 const failedAuthTTL = 1 * time.Minute
 
+// loginRaateLimiter is an interface for rate limiting login attempts.
+type loginRaateLimiter interface {
+	// check returns the duration of time left until a user is unblocked.
+	// A non-positive result indicates that the user is not blocked.
+	check(usrID string) (left time.Duration)
+
+	// inc records a failed login attempt for the specified user.
+	inc(usrID string)
+
+	// remove stops tracking and blocking of the specified user.
+	remove(usrID string)
+}
+
+// emptyRateLimiter is the [loginRateLimiter] interface implementation that does
+// nothing.
+type emptyRateLimiter struct{}
+
+// type check
+var _ emptyRateLimiter = emptyRateLimiter{}
+
+// check implements the [loginRateLimiter] interface for emptyRateLimiter.  It
+// always returns zero.
+func (rl emptyRateLimiter) check(_ string) (left time.Duration) {
+	return 0
+}
+
+// inc implements the [loginRateLimiter] interface for emptyRateLimiter.
+func (rl emptyRateLimiter) inc(_ string) {}
+
+// remove implements the [loginRateLimiter] interface for emptyRateLimiter.
+func (rl emptyRateLimiter) remove(_ string) {}
+
 // failedAuth is an entry of authRateLimiter's cache.
 type failedAuth struct {
 	until time.Time
@@ -32,6 +64,9 @@ func newAuthRateLimiter(blockDur time.Duration, maxAttempts uint) (ab *authRateL
 		maxAttempts: maxAttempts,
 	}
 }
+
+// type check
+var _ loginRaateLimiter = (*authRateLimiter)(nil)
 
 // cleanupLocked checks each blocked users removing ones with expired TTL.  For
 // internal use only.
@@ -57,8 +92,7 @@ func (ab *authRateLimiter) checkLocked(usrID string, now time.Time) (left time.D
 	return a.until.Sub(now)
 }
 
-// check returns the time left until unblocking.  The nonpositive result should
-// be interpreted as not blocked attempter.
+// check implements the [loginRateLimiter] interface for *authRateLimiter.
 func (ab *authRateLimiter) check(usrID string) (left time.Duration) {
 	now := time.Now()
 
@@ -91,7 +125,7 @@ func (ab *authRateLimiter) incLocked(usrID string, now time.Time) {
 	}
 }
 
-// inc updates the failed attempt in cache.
+// inc implements the [loginRateLimiter] interface for *authRateLimiter.
 func (ab *authRateLimiter) inc(usrID string) {
 	now := time.Now()
 
@@ -101,7 +135,7 @@ func (ab *authRateLimiter) inc(usrID string) {
 	ab.incLocked(usrID, now)
 }
 
-// remove stops any tracking and any blocking of the user.
+// remove implements the [loginRateLimiter] interface for *authRateLimiter.
 func (ab *authRateLimiter) remove(usrID string) {
 	ab.failedAuthsLock.Lock()
 	defer ab.failedAuthsLock.Unlock()

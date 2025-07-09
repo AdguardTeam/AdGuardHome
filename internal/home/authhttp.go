@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/netip"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -35,40 +36,6 @@ const sessionCookieName = "agh_session"
 type loginJSON struct {
 	Name     string `json:"name"`
 	Password string `json:"password"`
-}
-
-// newCookie creates a new authentication cookie.
-func (a *Auth) newCookie(req loginJSON, addr string) (c *http.Cookie, err error) {
-	rateLimiter := a.rateLimiter
-	u, ok := a.findUser(req.Name, req.Password)
-	if !ok {
-		if rateLimiter != nil {
-			rateLimiter.inc(addr)
-		}
-
-		return nil, errors.Error("invalid username or password")
-	}
-
-	if rateLimiter != nil {
-		rateLimiter.remove(addr)
-	}
-
-	sess := newSessionToken()
-	now := time.Now().UTC()
-
-	a.addSession(sess, &session{
-		userName: u.Name,
-		expire:   uint32(now.Unix()) + a.sessionTTL,
-	})
-
-	return &http.Cookie{
-		Name:     sessionCookieName,
-		Value:    hex.EncodeToString(sess),
-		Path:     "/",
-		Expires:  now.Add(cookieTTL),
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-	}, nil
 }
 
 // realIP extracts the real IP address of the client from an HTTP request using
@@ -130,7 +97,9 @@ func writeErrorWithIP(
 }
 
 // handleLogin is the handler for the POST /control/login HTTP API.
-func handleLogin(w http.ResponseWriter, r *http.Request) {
+func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	req := loginJSON{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -140,8 +109,8 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var remoteIP string
-	// realIP cannot be used here without taking TrustedProxies into account due
-	// to security issues.
+	// The real IP address of the client [realIP] cannot be used here without
+	// taking trusted proxies into account due to security issues:
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
 	if remoteIP, err = netutil.SplitHost(r.RemoteAddr); err != nil {
@@ -157,7 +126,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if rateLimiter := globalContext.auth.rateLimiter; rateLimiter != nil {
+	if rateLimiter := web.auth.rateLimiter; rateLimiter != nil {
 		if left := rateLimiter.check(remoteIP); left > 0 {
 			w.Header().Set(httphdr.RetryAfter, strconv.Itoa(int(left.Seconds())))
 			writeErrorWithIP(
@@ -175,13 +144,18 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	ip, err := realIP(r)
 	if err != nil {
-		log.Error("auth: getting real ip from request with remote ip %s: %s", remoteIP, err)
+		web.logger.ErrorContext(
+			ctx,
+			"getting real ip",
+			"remote_ip", remoteIP,
+			slogutil.KeyError, err,
+		)
 	}
 
-	cookie, err := globalContext.auth.newCookie(req, remoteIP)
+	cookie, err := newCookie(ctx, web.auth, req, remoteIP)
 	if err != nil {
 		logIP := remoteIP
-		if globalContext.auth.trustedProxies.Contains(ip.Unmap()) {
+		if web.auth.trustedProxies.Contains(ip.Unmap()) {
 			logIP = ip.String()
 		}
 
@@ -190,7 +164,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Info("auth: user %q successfully logged in from ip %s", req.Name, ip)
+	web.logger.InfoContext(ctx, "successful login", "user", req.Name, "ip", ip)
 
 	http.SetCookie(w, cookie)
 
@@ -202,8 +176,54 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	aghhttp.OK(w)
 }
 
+// newCookie creates a new authentication cookie.  rateLimiter must not be nil.
+func newCookie(
+	ctx context.Context,
+	auth *auth,
+	req loginJSON,
+	addr string,
+) (c *http.Cookie, err error) {
+	user, err := auth.users.ByLogin(ctx, aghuser.Login(req.Name))
+	if err != nil {
+		// Should not happen.
+		panic(err)
+	}
+
+	rateLimiter := auth.rateLimiter
+	if user == nil {
+		rateLimiter.inc(addr)
+
+		return nil, errInvalidLogin
+	}
+
+	ok := user.Password.Authenticate(ctx, req.Password)
+	if !ok {
+		rateLimiter.inc(addr)
+
+		return nil, errInvalidLogin
+	}
+
+	rateLimiter.remove(addr)
+
+	sess, err := auth.sessions.New(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &http.Cookie{
+		Name:     sessionCookieName,
+		Value:    hex.EncodeToString(sess.Token[:]),
+		Path:     "/",
+		Expires:  time.Now().Add(cookieTTL),
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	}, nil
+}
+
 // handleLogout is the handler for the GET /control/logout HTTP API.
-func handleLogout(w http.ResponseWriter, r *http.Request) {
+func (web *webAPI) handleLogout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	respHdr := w.Header()
 	c, err := r.Cookie(sessionCookieName)
 	if err != nil {
@@ -215,7 +235,19 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	globalContext.auth.removeSession(c.Value)
+	t, err := sessionTokenFromHex(c.Value)
+	if err != nil {
+		web.logger.ErrorContext(ctx, "getting token", slogutil.KeyError, err)
+
+		w.WriteHeader(http.StatusUnauthorized)
+
+		return
+	}
+
+	err = web.auth.sessions.DeleteByToken(ctx, t)
+	if err != nil {
+		web.logger.ErrorContext(ctx, "removing session by token", slogutil.KeyError, err)
+	}
 
 	c = &http.Cookie{
 		Name:    sessionCookieName,
@@ -233,93 +265,12 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 // RegisterAuthHandlers - register handlers
-func RegisterAuthHandlers() {
-	globalContext.mux.Handle("/control/login", postInstallHandler(ensureHandler(http.MethodPost, handleLogin)))
-	httpRegister(http.MethodGet, "/control/logout", handleLogout)
-}
-
-// optionalAuthThird returns true if a user should authenticate first.
-func optionalAuthThird(w http.ResponseWriter, r *http.Request) (mustAuth bool) {
-	pref := fmt.Sprintf("auth: raddr %s", r.RemoteAddr)
-
-	if glProcessCookie(r) {
-		log.Debug("%s: authentication is handled by gl-inet submodule", pref)
-
-		return false
-	}
-
-	// redirect to login page if not authenticated
-	isAuthenticated := false
-	cookie, err := r.Cookie(sessionCookieName)
-	if err != nil {
-		// The only error that is returned from r.Cookie is [http.ErrNoCookie].
-		// Check Basic authentication.
-		user, pass, hasBasic := r.BasicAuth()
-		if hasBasic {
-			_, isAuthenticated = globalContext.auth.findUser(user, pass)
-			if !isAuthenticated {
-				log.Info("%s: invalid basic authorization value", pref)
-			}
-		}
-	} else {
-		res := globalContext.auth.checkSession(cookie.Value)
-		isAuthenticated = res == checkSessionOK
-		if !isAuthenticated {
-			log.Debug("%s: invalid cookie value: %q", pref, cookie)
-		}
-	}
-
-	if isAuthenticated {
-		return false
-	}
-
-	if p := r.URL.Path; p == "/" || p == "/index.html" {
-		if glProcessRedirect(w, r) {
-			log.Debug("%s: redirected to login page by gl-inet submodule", pref)
-		} else {
-			log.Debug("%s: redirected to login page", pref)
-			http.Redirect(w, r, "login.html", http.StatusFound)
-		}
-	} else {
-		log.Debug("%s: responded with forbidden to %s %s", pref, r.Method, p)
-		w.WriteHeader(http.StatusForbidden)
-		_, _ = w.Write([]byte("Forbidden"))
-	}
-
-	return true
-}
-
-// TODO(a.garipov): Use [http.Handler] consistently everywhere throughout the
-// project.
-func optionalAuth(
-	h func(http.ResponseWriter, *http.Request),
-) (wrapped func(http.ResponseWriter, *http.Request)) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		p := r.URL.Path
-		authRequired := globalContext.auth != nil && globalContext.auth.authRequired()
-		if p == "/login.html" {
-			cookie, err := r.Cookie(sessionCookieName)
-			if authRequired && err == nil {
-				// Redirect to the dashboard if already authenticated.
-				res := globalContext.auth.checkSession(cookie.Value)
-				if res == checkSessionOK {
-					http.Redirect(w, r, "", http.StatusFound)
-
-					return
-				}
-
-				log.Debug("auth: raddr %s: invalid cookie value: %q", r.RemoteAddr, cookie)
-			}
-		} else if isPublicResource(p) {
-			// Process as usual, no additional auth requirements.
-		} else if authRequired {
-			if optionalAuthThird(w, r) {
-				return
-			}
-		}
-
-		h(w, r)
-	}
+func RegisterAuthHandlers(web *webAPI) {
+	globalContext.mux.Handle(
+		"/control/login",
+		postInstallHandler(ensureHandler(http.MethodPost, web.handleLogin)),
+	)
+	httpRegister(http.MethodGet, "/control/logout", web.handleLogout)
 }
 
 // isPublicResource returns true if p is a path to a public resource.
@@ -337,22 +288,19 @@ func isPublicResource(p string) (ok bool) {
 		panic(fmt.Errorf("bad login pattern: %w", err))
 	}
 
-	return isAsset || isLogin
-}
+	paths := []string{
+		"/dns-query",
+		"/dns-query/",
+		"/control/login",
+		"/apple/doh.mobileconfig",
+		"/apple/dot.mobileconfig",
+		"/control/install/get_addresses",
+		"/control/install/check_config",
+		"/control/install/configure",
+		"/install.html",
+	}
 
-// authHandler is a helper structure that implements [http.Handler].
-type authHandler struct {
-	handler http.Handler
-}
-
-// ServeHTTP implements the [http.Handler] interface for *authHandler.
-func (a *authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	optionalAuth(a.handler.ServeHTTP)(w, r)
-}
-
-// optionalAuthHandler returns a authentication handler.
-func optionalAuthHandler(handler http.Handler) http.Handler {
-	return &authHandler{handler}
+	return isAsset || isLogin || slices.Contains(paths, p)
 }
 
 const (
@@ -367,6 +315,15 @@ type authMiddlewareDefaultConfig struct {
 	// be nil.
 	logger *slog.Logger
 
+	// rateLimiter manages the rate limiting for login attempts.
+	rateLimiter loginRaateLimiter
+
+	// trustedProxies is a set of subnets considered as trusted.
+	//
+	// TODO(s.chzhen):  Use it not only to pass it to the middleware but also to
+	// log the work of the rate limiter.
+	trustedProxies netutil.SubnetSet
+
 	// sessions contains web user sessions.  It must not be nil.
 	sessions aghuser.SessionStorage
 
@@ -378,18 +335,22 @@ type authMiddlewareDefaultConfig struct {
 // for a web client using an authentication cookie or basic auth credentials and
 // passes it with the context.
 type authMiddlewareDefault struct {
-	logger   *slog.Logger
-	sessions aghuser.SessionStorage
-	users    aghuser.DB
+	logger         *slog.Logger
+	rateLimiter    loginRaateLimiter
+	trustedProxies netutil.SubnetSet
+	sessions       aghuser.SessionStorage
+	users          aghuser.DB
 }
 
 // newAuthMiddlewareDefault returns the new properly initialized
 // *authMiddlewareDefault.
 func newAuthMiddlewareDefault(c *authMiddlewareDefaultConfig) (mw *authMiddlewareDefault) {
 	return &authMiddlewareDefault{
-		logger:   c.logger,
-		sessions: c.sessions,
-		users:    c.users,
+		logger:         c.logger,
+		rateLimiter:    c.rateLimiter,
+		trustedProxies: c.trustedProxies,
+		sessions:       c.sessions,
+		users:          c.users,
 	}
 }
 
@@ -401,49 +362,61 @@ var _ httputil.Middleware = (*authMiddlewareDefault)(nil)
 func (mw *authMiddlewareDefault) Wrap(h http.Handler) (wrapped http.Handler) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		if !mw.needsAuthentication(ctx, r) {
+
+		if !mw.needsAuthentication(ctx) {
 			h.ServeHTTP(w, r)
 
 			return
 		}
 
+		path := r.URL.Path
 		u, err := mw.userFromRequest(ctx, r)
+		if err != nil {
+			mw.logger.ErrorContext(ctx, "retrieving user from request", slogutil.KeyError, err)
+		}
+
 		if u != nil {
+			if path == "/login.html" {
+				http.Redirect(w, r, "/", http.StatusFound)
+
+				return
+			}
+
 			h.ServeHTTP(w, r.WithContext(withWebUser(ctx, u)))
 
 			return
 		}
 
-		if err != nil {
-			mw.logger.ErrorContext(ctx, "retrieving user from request", slogutil.KeyError, err)
+		if isPublicResource(path) {
+			h.ServeHTTP(w, r)
+
+			return
+		}
+
+		if path == "/" || path == "/index.html" {
+			http.Redirect(w, r, "login.html", http.StatusFound)
+
+			return
 		}
 
 		w.WriteHeader(http.StatusUnauthorized)
 	})
 }
 
-// needsAuthentication returns true if the current request requires
-// authentication.
-//
-// TODO(s.chzhen):  Use the request's path.
-func (mw *authMiddlewareDefault) needsAuthentication(
-	ctx context.Context,
-	_ *http.Request,
-) (ok bool) {
+// needsAuthentication returns true if there are stored web users and requests
+// should be authenticated first.
+func (mw *authMiddlewareDefault) needsAuthentication(ctx context.Context) (ok bool) {
 	users, err := mw.users.All(ctx)
 	if err != nil {
 		// Should not happen.
 		panic(err)
 	}
 
-	if len(users) == 0 {
-		return false
-	}
-
-	return true
+	return len(users) != 0
 }
 
-// userFromRequest tries to retrieve a user based on the request.
+// userFromRequest tries to retrieve a user based on the request.  r must not be
+// nil.
 func (mw *authMiddlewareDefault) userFromRequest(
 	ctx context.Context,
 	r *http.Request,
@@ -451,25 +424,24 @@ func (mw *authMiddlewareDefault) userFromRequest(
 	defer func() { err = errors.Annotate(err, "getting user from request: %w") }()
 
 	cookie, err := r.Cookie(sessionCookieName)
-	if err == http.ErrNoCookie {
-		return mw.userFromRequestBasicAuth(ctx, r)
+	if err == nil {
+		return mw.userFromCookie(ctx, cookie.Value)
 	}
 
-	sess, err := hex.DecodeString(cookie.Value)
-	if err != nil {
-		return nil, fmt.Errorf("decoding cookie: %w", err)
-	}
+	return mw.userFromRequestBasicAuth(ctx, r)
+}
 
-	l := aghuser.SessionTokenLength
-
-	// TODO(a.garipov):  Add validate.Len.
-	err = validate.InRange("token length", len(sess), l, l)
+// userFromCookie tries to retrieve a user based on the provided cookie value.
+func (mw *authMiddlewareDefault) userFromCookie(
+	ctx context.Context,
+	val string,
+) (u *aghuser.User, err error) {
+	t, err := sessionTokenFromHex(val)
 	if err != nil {
 		// Don't wrap the error because it's informative enough as is.
 		return nil, err
 	}
 
-	t := aghuser.SessionToken(sess)
 	s, err := mw.sessions.FindByToken(ctx, t)
 	if err != nil {
 		return nil, fmt.Errorf("searching session by token: %w", err)
@@ -487,15 +459,57 @@ func (mw *authMiddlewareDefault) userFromRequest(
 	return u, nil
 }
 
-// userFromRequestBasicAuth searches for a user using Basic Auth credentials.
+// sessionTokenFromHex converts a hexadecimal string into a session token.
+func sessionTokenFromHex(val string) (token aghuser.SessionToken, err error) {
+	sess, err := hex.DecodeString(val)
+	if err != nil {
+		return token, fmt.Errorf("decoding value: %w", err)
+	}
+
+	l := aghuser.SessionTokenLength
+
+	err = validate.Equal("token length", l, len(sess))
+	if err != nil {
+		// Don't wrap the error because it's informative enough as is.
+		return token, err
+	}
+
+	return aghuser.SessionToken(sess), nil
+}
+
+// userFromRequestBasicAuth searches for a user using Basic Auth credentials.  r
+// must not be nil.
 func (mw *authMiddlewareDefault) userFromRequestBasicAuth(
 	ctx context.Context,
 	r *http.Request,
 ) (user *aghuser.User, err error) {
 	login, pass, ok := r.BasicAuth()
 	if !ok {
-		return nil, fmt.Errorf("credentials: %w", errors.ErrNoValue)
+		return nil, nil
 	}
+
+	var remoteIP string
+	// The real IP address of the client [realIP] cannot be used here without
+	// taking trusted proxies into account due to security issues:
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/2799.
+	if remoteIP, err = netutil.SplitHost(r.RemoteAddr); err != nil {
+		return nil, fmt.Errorf("getting remote address: %w", err)
+	}
+
+	rateLimiter := mw.rateLimiter
+	if left := rateLimiter.check(remoteIP); left > 0 {
+		return nil, fmt.Errorf("login attempt blocked for %s", left)
+	}
+
+	rateLimiter.inc(remoteIP)
+	defer func() {
+		if err != nil {
+			return
+		}
+
+		rateLimiter.remove(remoteIP)
+	}()
 
 	user, _ = mw.users.ByLogin(ctx, aghuser.Login(login))
 	if user == nil {
