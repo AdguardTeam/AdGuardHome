@@ -39,6 +39,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// testLogger is a logger used in tests.
+var testLogger = slogutil.NewDiscardLogger()
+
 func TestMain(m *testing.M) {
 	testutil.DiscardLogOutput(m)
 }
@@ -62,9 +65,6 @@ const (
 //
 // TODO(a.garipov): Use more.
 var testClientAddrPort = netip.MustParseAddrPort("1.2.3.4:12345")
-
-// testLogger is the common logger for tests.
-var testLogger = slogutil.NewDiscardLogger()
 
 // type check
 var _ ClientsContainer = (*clientsContainer)(nil)
@@ -532,7 +532,10 @@ func TestDoQServer(t *testing.T) {
 
 	// Create a DNS-over-QUIC upstream.
 	addr := s.dnsProxy.Addr(proxy.ProtoQUIC)
-	opts := &upstream.Options{InsecureSkipVerify: true}
+	opts := &upstream.Options{
+		Logger:             testLogger,
+		InsecureSkipVerify: true,
+	}
 	u, err := upstream.AddressToUpstream(fmt.Sprintf("%s://%s", proxy.ProtoQUIC, addr), opts)
 	require.NoError(t, err)
 

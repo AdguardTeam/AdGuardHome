@@ -25,14 +25,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// testLogger is a logger used in tests.
+var testLogger = slogutil.NewDiscardLogger()
+
 // newTestStorage is a helper function that returns initialized storage.
 func newTestStorage(tb testing.TB, clock timeutil.Clock) (s *client.Storage) {
 	tb.Helper()
 
 	ctx := testutil.ContextWithTimeout(tb, testTimeout)
 	s, err := client.NewStorage(ctx, &client.StorageConfig{
-		Logger: slogutil.NewDiscardLogger(),
-		Clock:  clock,
+		BaseLogger: testLogger,
+		Logger:     testLogger,
+		Clock:      clock,
 	})
 	require.NoError(tb, err)
 
@@ -134,7 +138,8 @@ func TestStorage_Add_hostsfile(t *testing.T) {
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	storage, err := client.NewStorage(ctx, &client.StorageConfig{
-		Logger:                 slogutil.NewDiscardLogger(),
+		BaseLogger:             testLogger,
+		Logger:                 testLogger,
 		DHCP:                   client.EmptyDHCP{},
 		EtcHosts:               h,
 		ARPClientsUpdatePeriod: testTimeout / 10,
@@ -224,7 +229,8 @@ func TestStorage_Add_arp(t *testing.T) {
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	storage, err := client.NewStorage(ctx, &client.StorageConfig{
-		Logger:                 slogutil.NewDiscardLogger(),
+		BaseLogger:             testLogger,
+		Logger:                 testLogger,
 		DHCP:                   client.EmptyDHCP{},
 		ARPDB:                  a,
 		ARPClientsUpdatePeriod: testTimeout / 10,
@@ -301,8 +307,9 @@ func TestStorage_Add_whois(t *testing.T) {
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	storage, err := client.NewStorage(ctx, &client.StorageConfig{
-		Logger: slogutil.NewDiscardLogger(),
-		DHCP:   client.EmptyDHCP{},
+		BaseLogger: testLogger,
+		Logger:     testLogger,
+		DHCP:       client.EmptyDHCP{},
 	})
 	require.NoError(t, err)
 
@@ -417,7 +424,8 @@ func TestClientsDHCP(t *testing.T) {
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	storage, err := client.NewStorage(ctx, &client.StorageConfig{
-		Logger:                 slogutil.NewDiscardLogger(),
+		BaseLogger:             testLogger,
+		Logger:                 testLogger,
 		ARPDB:                  arpDB,
 		DHCP:                   dhcp,
 		EtcHosts:               etcHosts,
@@ -566,8 +574,9 @@ func TestClientsAddExisting(t *testing.T) {
 
 	t.Run("simple", func(t *testing.T) {
 		storage, err := client.NewStorage(ctx, &client.StorageConfig{
-			Logger: slogutil.NewDiscardLogger(),
-			DHCP:   client.EmptyDHCP{},
+			BaseLogger: testLogger,
+			Logger:     testLogger,
+			DHCP:       client.EmptyDHCP{},
 		})
 		require.NoError(t, err)
 
@@ -613,8 +622,9 @@ func TestClientsAddExisting(t *testing.T) {
 		require.NoError(t, err)
 
 		storage, err := client.NewStorage(ctx, &client.StorageConfig{
-			Logger: slogutil.NewDiscardLogger(),
-			DHCP:   dhcpServer,
+			BaseLogger: testLogger,
+			Logger:     testLogger,
+			DHCP:       dhcpServer,
 		})
 		require.NoError(t, err)
 
@@ -653,8 +663,9 @@ func newStorage(tb testing.TB, m []*client.Persistent) (s *client.Storage) {
 
 	ctx := testutil.ContextWithTimeout(tb, testTimeout)
 	s, err := client.NewStorage(ctx, &client.StorageConfig{
-		Logger: slogutil.NewDiscardLogger(),
-		DHCP:   client.EmptyDHCP{},
+		BaseLogger: testLogger,
+		Logger:     testLogger,
+		DHCP:       client.EmptyDHCP{},
 	})
 	require.NoError(tb, err)
 
@@ -1210,9 +1221,10 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	s, err := client.NewStorage(ctx, &client.StorageConfig{
-		Logger: slogutil.NewDiscardLogger(),
-		Clock:  clock,
-		DHCP:   dhcp,
+		BaseLogger: testLogger,
+		Logger:     testLogger,
+		Clock:      clock,
+		DHCP:       dhcp,
 	})
 	require.NoError(t, err)
 

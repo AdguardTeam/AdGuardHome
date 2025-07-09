@@ -12,11 +12,13 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/validate"
@@ -366,7 +368,9 @@ func (req *jsonDNSConfig) checkPrivateRDNS(
 
 	addrs := cmp.Or(req.LocalPTRUpstreams, &[]string{})
 
-	uc, err := newPrivateConfig(*addrs, ownAddrs, sysResolvers, privateNets, &upstream.Options{})
+	uc, err := newPrivateConfig(*addrs, ownAddrs, sysResolvers, privateNets, &upstream.Options{
+		Logger: slogutil.NewDiscardLogger(),
+	})
 	err = errors.WithDeferred(err, uc.Close())
 	if err != nil {
 		return fmt.Errorf("private upstream servers: %w", err)
@@ -382,7 +386,9 @@ func (req *jsonDNSConfig) validateUpstreamDNSServers(
 	privateNets netutil.SubnetSet,
 ) (err error) {
 	var uc *proxy.UpstreamConfig
-	opts := &upstream.Options{}
+	opts := &upstream.Options{
+		Logger: slogutil.NewDiscardLogger(),
+	}
 
 	if req.Upstreams != nil {
 		uc, err = proxy.ParseUpstreamsConfig(*req.Upstreams, opts)
@@ -651,6 +657,7 @@ func (s *Server) handleTestUpstreamDNS(w http.ResponseWriter, r *http.Request) {
 	req.BootstrapDNS = stringutil.FilterOut(req.BootstrapDNS, aghnet.IsCommentOrEmpty)
 
 	opts := &upstream.Options{
+		Logger:     aghslog.NewForUpstream(s.baseLogger, aghslog.UpstreamTypeTest),
 		Timeout:    s.conf.UpstreamTimeout,
 		PreferIPv6: s.conf.BootstrapPreferIPv6,
 	}

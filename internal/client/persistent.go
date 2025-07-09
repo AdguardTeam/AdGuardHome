@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -142,7 +143,9 @@ func (c *Persistent) validate(ctx context.Context, l *slog.Logger, allTags []str
 		return errors.Error("uid required")
 	}
 
-	conf, err := proxy.ParseUpstreamsConfig(c.Upstreams, &upstream.Options{})
+	conf, err := proxy.ParseUpstreamsConfig(c.Upstreams, &upstream.Options{
+		Logger: l.With(aghslog.KeyUpstreamType, aghslog.UpstreamTypeTest),
+	})
 	if err != nil {
 		return fmt.Errorf("invalid upstream servers: %w", err)
 	}
