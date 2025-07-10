@@ -2535,6 +2535,7 @@ var blockedServices = []blockedService{{
 		"||tiktok.com^",
 		"||tiktokcdn-us.com^",
 		"||tiktokcdn.com^",
+		"||tiktokrow-cdn.com^",
 		"||tiktokv.com^",
 		"||ttlivecdn.com.c.bytefcdn-oversea.com^",
 		"||ttlivecdn.com^",

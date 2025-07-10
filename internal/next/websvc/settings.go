@@ -29,12 +29,16 @@ func (svc *Service) handleGetSettingsAll(w http.ResponseWriter, r *http.Request)
 	// TODO(a.garipov): Add all currently supported parameters.
 	aghhttp.WriteJSONResponseOK(w, r, &RespGetV1SettingsAll{
 		DNS: &HTTPAPIDNSSettings{
+			UpstreamMode:        dnsConf.UpstreamMode,
 			Addresses:           dnsConf.Addresses,
 			BootstrapServers:    dnsConf.BootstrapServers,
 			UpstreamServers:     dnsConf.UpstreamServers,
 			DNS64Prefixes:       dnsConf.DNS64Prefixes,
 			UpstreamTimeout:     aghhttp.JSONDuration(dnsConf.UpstreamTimeout),
+			Ratelimit:           dnsConf.Ratelimit,
 			BootstrapPreferIPv6: dnsConf.BootstrapPreferIPv6,
+			CacheSize:           dnsConf.CacheSize,
+			RefuseAny:           dnsConf.RefuseAny,
 			UseDNS64:            dnsConf.UseDNS64,
 		},
 		HTTP: &HTTPAPIHTTPSettings{

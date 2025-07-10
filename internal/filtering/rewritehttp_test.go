@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -159,6 +160,7 @@ func TestDNSFilter_handleRewriteHTTP(t *testing.T) {
 			handlers := make(map[string]http.Handler)
 
 			d, err := filtering.New(&filtering.Config{
+				Logger:         slogutil.NewDiscardLogger(),
 				ConfigModified: onConfModified,
 				HTTPRegister: func(_, url string, handler http.HandlerFunc) {
 					handlers[url] = handler

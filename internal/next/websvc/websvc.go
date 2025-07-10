@@ -3,7 +3,9 @@
 // NOTE: Packages other than cmd must not import this package, as it imports
 // most other packages.
 //
-// TODO(a.garipov): Add tests.
+// TODO(a.garipov):  Add tests.
+//
+// TODO(a.garipov):  Split into subpackages for groups of handlers?
 package websvc
 
 import (
@@ -25,6 +27,8 @@ import (
 )
 
 // ConfigManager is the configuration manager interface.
+//
+// TODO(a.garipov): Add docs.
 type ConfigManager interface {
 	DNS() (svc agh.ServiceWithConfig[*dnssvc.Config])
 	Web() (svc agh.ServiceWithConfig[*Config])

@@ -13,6 +13,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -167,10 +168,14 @@ type EDNSClientSubnet struct {
 	UseCustom bool `yaml:"use_custom"`
 }
 
-// TLSConfig contains the TLS configuration settings for DNS-over-HTTPS (DoH),
-// DNS-over-TLS (DoT), DNS-over-QUIC (DoQ), and Discovery of Designated
-// Resolvers (DDR).
+// TLSConfig contains the TLS configuration settings for DNSCrypt,
+// DNS-over-HTTPS (DoH), DNS-over-TLS (DoT), DNS-over-QUIC (DoQ), and Discovery
+// of Designated Resolvers (DDR).
 type TLSConfig struct {
+	// DNSCryptConf contains the configuration settings for a DNSCrypt server.
+	// It is nil if the DNSCrypt server is disabled.
+	DNSCryptConf *DNSCryptConfig
+
 	// Cert is the TLS certificate used for TLS connections.  It is nil if
 	// encryption is disabled.
 	Cert *tls.Certificate
@@ -197,13 +202,23 @@ type TLSConfig struct {
 	StrictSNICheck bool
 }
 
-// DNSCryptConfig is the DNSCrypt server configuration struct.
+// DNSCryptConfig contains the configuration settings for a DNSCrypt server.
 type DNSCryptConfig struct {
-	ResolverCert   *dnscrypt.Cert
-	ProviderName   string
+	// ResolverCert is the certificate used for DNSCrypt connections.  It is not
+	// nil if there is at least one UDP or TCP address present.
+	ResolverCert *dnscrypt.Cert
+
+	// UDPListenAddrs are the addresses to listen on for DNSCrypt UDP
+	// connections.
 	UDPListenAddrs []*net.UDPAddr
+
+	// TCPListenAddrs are the addresses to listen on for DNSCrypt TCP
+	// connections.
 	TCPListenAddrs []*net.TCPAddr
-	Enabled        bool
+
+	// ProviderName is the name of the DNSCrypt provider.  It is not empty if
+	// there is at least one UDP or TCP address present.
+	ProviderName string
 }
 
 // ServerConfig represents server configuration.
@@ -234,7 +249,6 @@ type ServerConfig struct {
 	TLSConf *TLSConfig
 
 	Config
-	DNSCryptConfig
 	TLSAllowUnencryptedDoH bool
 
 	// UpstreamTimeout is the timeout for querying upstream servers.
@@ -298,7 +312,7 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 	trustedPrefixes := netutil.UnembedPrefixes(srvConf.TrustedProxies)
 
 	conf = &proxy.Config{
-		Logger:                    s.baseLogger.With(slogutil.KeyPrefix, "dnsproxy"),
+		Logger:                    s.baseLogger.With(slogutil.KeyPrefix, aghslog.PrefixDNSProxy),
 		HTTP3:                     srvConf.ServeHTTP3,
 		Ratelimit:                 int(srvConf.Ratelimit),
 		RatelimitSubnetLenIPv4:    srvConf.RatelimitSubnetLenIPv4,
@@ -349,13 +363,6 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 	err = s.preparePlain(conf)
 	if err != nil {
 		return nil, fmt.Errorf("validating plain: %w", err)
-	}
-
-	if c := srvConf.DNSCryptConfig; c.Enabled {
-		conf.DNSCryptUDPListenAddr = c.UDPListenAddrs
-		conf.DNSCryptTCPListenAddr = c.TCPListenAddrs
-		conf.DNSCryptProviderName = c.ProviderName
-		conf.DNSCryptResolverCert = c.ResolverCert
 	}
 
 	conf, err = prepareCacheConfig(conf,
@@ -608,8 +615,23 @@ func (conf *ServerConfig) ourAddrsSet() (m addrPortSet, err error) {
 	}
 }
 
+// prepareDNSCrypt sets up the DNSCrypt configuration for the DNS proxy.
+func (s *Server) prepareDNSCrypt(proxyConf *proxy.Config) {
+	dnsCryptConf := s.conf.TLSConf.DNSCryptConf
+	if dnsCryptConf == nil {
+		return
+	}
+
+	proxyConf.DNSCryptUDPListenAddr = dnsCryptConf.UDPListenAddrs
+	proxyConf.DNSCryptTCPListenAddr = dnsCryptConf.TCPListenAddrs
+	proxyConf.DNSCryptProviderName = dnsCryptConf.ProviderName
+	proxyConf.DNSCryptResolverCert = dnsCryptConf.ResolverCert
+}
+
 // prepareTLS sets up the TLS configuration for the DNS proxy.
-func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
+func (s *Server) prepareTLS(proxyConf *proxy.Config) (err error) {
+	s.prepareDNSCrypt(proxyConf)
+
 	if s.conf.TLSConf.Cert == nil {
 		return
 	}
@@ -618,8 +640,8 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
 		return nil
 	}
 
-	proxyConfig.TLSListenAddr = s.conf.TLSConf.TLSListenAddrs
-	proxyConfig.QUICListenAddr = s.conf.TLSConf.QUICListenAddrs
+	proxyConf.TLSListenAddr = s.conf.TLSConf.TLSListenAddrs
+	proxyConf.QUICListenAddr = s.conf.TLSConf.QUICListenAddrs
 
 	cert, err := x509.ParseCertificate(s.conf.TLSConf.Cert.Certificate[0])
 	if err != nil {
@@ -639,7 +661,7 @@ func (s *Server) prepareTLS(proxyConfig *proxy.Config) (err error) {
 		}
 	}
 
-	proxyConfig.TLSConfig = &tls.Config{
+	proxyConf.TLSConfig = &tls.Config{
 		GetCertificate: s.onGetCertificate,
 		CipherSuites:   s.conf.TLSCiphers,
 		MinVersion:     tls.VersionTLS12,

@@ -10,6 +10,8 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/golibs/cache"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,10 +44,10 @@ func TestChcker_getQuestion(t *testing.T) {
 	hash = sha256.Sum256([]byte("com"))
 	assert.False(t, slices.Contains(hashes, hash))
 
-	c := &Checker{
-		svc:       "SafeBrowsing",
-		txtSuffix: suf,
-	}
+	c := New(&Config{
+		Logger:    slogutil.NewDiscardLogger(),
+		TXTSuffix: suf,
+	})
 
 	q := c.getQuestion(hashes)
 
@@ -95,10 +97,13 @@ func TestHostnameToHashes(t *testing.T) {
 }
 
 func TestChecker_storeInCache(t *testing.T) {
-	c := &Checker{
-		svc:       "SafeBrowsing",
-		cacheTime: cacheTime,
-	}
+	const testTimeout = 1 * time.Second
+
+	c := New(&Config{
+		Logger:    slogutil.NewDiscardLogger(),
+		CacheTime: cacheTime,
+	})
+
 	conf := cache.Config{}
 	c.cache = cache.New(conf)
 
@@ -112,7 +117,7 @@ func TestChecker_storeInCache(t *testing.T) {
 	hashesArray = append(hashesArray, hash4)
 	hash2 := sha256.Sum256([]byte("host.com"))
 	hashesArray = append(hashesArray, hash2)
-	c.storeInCache(hashes, hashesArray)
+	c.storeInCache(testutil.ContextWithTimeout(t, testTimeout), hashes, hashesArray)
 
 	// match "3.sub.host.com" or "host.com" from cache
 	hashes = []hostnameHash{}
@@ -152,10 +157,11 @@ func TestChecker_storeInCache(t *testing.T) {
 	ok = slices.Contains(hashesToRequest, hash)
 	assert.True(t, ok)
 
-	c = &Checker{
-		svc:       "SafeBrowsing",
-		cacheTime: cacheTime,
-	}
+	c = New(&Config{
+		Logger:    slogutil.NewDiscardLogger(),
+		CacheTime: cacheTime,
+	})
+
 	c.cache = cache.New(cache.Config{})
 
 	hashes = []hostnameHash{}
@@ -189,6 +195,7 @@ func TestChecker_Check(t *testing.T) {
 
 	for _, tc := range testCases {
 		c := New(&Config{
+			Logger:    slogutil.NewDiscardLogger(),
 			CacheTime: cacheTime,
 			CacheSize: cacheSize,
 		})

@@ -11,7 +11,6 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
-	"github.com/quic-go/quic-go"
 )
 
 // clientIDFromClientServerName extracts and validates a ClientID.  hostSrvName
@@ -93,11 +92,6 @@ type tlsConn interface {
 	ConnectionState() (cs tls.ConnectionState)
 }
 
-// quicConnection is a narrow interface for quic.Connection to simplify testing.
-type quicConnection interface {
-	ConnectionState() (cs quic.ConnectionState)
-}
-
 // clientServerName returns the TLS server name based on the protocol.  For
 // DNS-over-HTTPS requests, it will return the hostname part of the Host header
 // if there is one.
@@ -116,13 +110,7 @@ func clientServerName(pctx *proxy.DNSContext, proto proxy.Proto) (srvName string
 			from = "host header"
 		}
 	case proxy.ProtoQUIC:
-		qConn := pctx.QUICConnection
-		conn, ok := qConn.(quicConnection)
-		if !ok {
-			return "", fmt.Errorf("pctx conn of proto %s is %T, want quic.Connection", proto, qConn)
-		}
-
-		srvName = conn.ConnectionState().TLS.ServerName
+		srvName = pctx.QUICConnection.ConnectionState().TLS.ServerName
 	case proxy.ProtoTLS:
 		conn := pctx.Conn
 		tc, ok := conn.(tlsConn)
