@@ -288,9 +288,13 @@ func isPublicResource(p string) (ok bool) {
 		panic(fmt.Errorf("bad login pattern: %w", err))
 	}
 
+	// TODO(s.chzhen):  Implement a more strict version.
+	if strings.HasPrefix(p, "/dns-query/") {
+		return true
+	}
+
 	paths := []string{
 		"/dns-query",
-		"/dns-query/",
 		"/control/login",
 		"/apple/doh.mobileconfig",
 		"/apple/dot.mobileconfig",
