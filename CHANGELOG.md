@@ -22,6 +22,14 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.5][go-1.24.5].
 
+### Changed
+
+#### Configuration changes
+
+In this release, the schema version has changed from 29 to 30.
+
+- Added a new boolean field `dns.cache_enabled` to the configuration.  This field explicitly controls whether DNS caching is enabled, replacing the previous implicit logic based on `dns.cache_size`.
+
 ### Fixed
 
 - TTL override calculation ([#7903]).

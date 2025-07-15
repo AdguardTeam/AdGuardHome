@@ -102,6 +102,9 @@ type Config struct {
 
 	// DNS cache settings
 
+	// CacheEnabled defines if the DNS cache should be used.
+	CacheEnabled bool `yaml:"cache_enabled"`
+
 	// CacheSize is the DNS cache size (in bytes).
 	CacheSize uint32 `yaml:"cache_size"`
 
@@ -366,6 +369,7 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 	}
 
 	conf, err = prepareCacheConfig(conf,
+		srvConf.CacheEnabled,
 		srvConf.CacheSize,
 		srvConf.CacheMinTTL,
 		srvConf.CacheMaxTTL,
@@ -382,11 +386,12 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 // there is one.
 func prepareCacheConfig(
 	conf *proxy.Config,
+	isEnabled bool,
 	size uint32,
 	minTTL uint32,
 	maxTTL uint32,
 ) (prepared *proxy.Config, err error) {
-	if size != 0 {
+	if isEnabled {
 		conf.CacheEnabled = true
 		conf.CacheSizeBytes = int(size)
 	}
