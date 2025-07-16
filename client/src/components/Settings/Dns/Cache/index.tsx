@@ -13,7 +13,7 @@ import { RootState } from '../../../../initialState';
 const CacheConfig = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const { cache_size, cache_ttl_max, cache_ttl_min, cache_optimistic } = useSelector(
+    const { cache_enabled, cache_size, cache_ttl_max, cache_ttl_min, cache_optimistic } = useSelector(
         (state: RootState) => state.dnsConfig,
         shallowEqual,
     );
@@ -32,6 +32,7 @@ const CacheConfig = () => {
             <div className="form">
                 <Form
                     initialValues={{
+                        cache_enabled,
                         cache_size: replaceZeroWithEmptyString(cache_size),
                         cache_ttl_max: replaceZeroWithEmptyString(cache_ttl_max),
                         cache_ttl_min: replaceZeroWithEmptyString(cache_ttl_min),

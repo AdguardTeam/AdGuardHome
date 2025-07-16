@@ -322,6 +322,7 @@ export type DnsConfigData = {
     ratelimit_subnet_len_ipv6?: number;
     edns_cs_use_custom?: boolean;
     edns_cs_custom_ip?: string;
+    cache_enabled?: boolean;
     cache_size?: number;
     cache_ttl_max?: number;
     cache_ttl_min?: number;

@@ -27,11 +27,7 @@ func (m Migrator) migrateTo30(diskConf yobj) (err error) {
 		return err
 	}
 
-	if cacheSize > 0 {
-		dnsConf["cache_enabled"] = true
-	} else {
-		dnsConf["cache_enabled"] = false
-	}
+	dnsConf["cache_enabled"] = cacheSize > 0
 
 	return nil
 }

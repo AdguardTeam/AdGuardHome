@@ -93,6 +93,9 @@ type jsonDNSConfig struct {
 	// CacheMaxTTL is custom maximum TTL for cached DNS responses.
 	CacheMaxTTL *uint32 `json:"cache_ttl_max"`
 
+	// CacheEnabled defines if the DNS cache should be used.
+	CacheEnabled *bool `json:"cache_enabled"`
+
 	// CacheOptimistic defines if expired entries should be served.
 	CacheOptimistic *bool `json:"cache_optimistic"`
 
@@ -162,6 +165,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 
 	enableDNSSEC := s.conf.EnableDNSSEC
 	aaaaDisabled := s.conf.AAAADisabled
+	cacheEnabled := s.conf.CacheEnabled
 	cacheSize := s.conf.CacheSize
 	cacheMinTTL := s.conf.CacheMinTTL
 	cacheMaxTTL := s.conf.CacheMaxTTL
@@ -207,6 +211,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 		DNSSECEnabled:            &enableDNSSEC,
 		DisableIPv6:              &aaaaDisabled,
 		BlockedResponseTTL:       &blockedResponseTTL,
+		CacheEnabled:             &cacheEnabled,
 		CacheSize:                &cacheSize,
 		CacheMinTTL:              &cacheMinTTL,
 		CacheMaxTTL:              &cacheMaxTTL,
@@ -305,7 +310,7 @@ func (req *jsonDNSConfig) validate(
 		return err
 	}
 
-	err = req.checkCacheTTL()
+	err = req.checkCacheSettings()
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
@@ -421,9 +426,14 @@ func (req *jsonDNSConfig) validateUpstreamDNSServers(
 	return nil
 }
 
-// checkCacheTTL returns an error if the configuration of the cache TTL is
-// invalid.
-func (req *jsonDNSConfig) checkCacheTTL() (err error) {
+// checkCacheSettings returns an error if the cache configuration is invalid.
+func (req *jsonDNSConfig) checkCacheSettings() (err error) {
+	if req.CacheEnabled != nil && *req.CacheEnabled {
+		if req.CacheSize == nil || *req.CacheSize == 0 {
+			return errors.Error("cache_size must be greater than 0 when cache_enabled is true")
+		}
+	}
+
 	if req.CacheMinTTL == nil && req.CacheMaxTTL == nil {
 		return nil
 	}
@@ -596,6 +606,7 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 		setIfNotNil(&s.conf.FallbackDNS, dc.Fallbacks),
 		setIfNotNil(&s.conf.EDNSClientSubnet.Enabled, dc.EDNSCSEnabled),
 		setIfNotNil(&s.conf.EDNSClientSubnet.UseCustom, dc.EDNSCSUseCustom),
+		setIfNotNil(&s.conf.CacheEnabled, dc.CacheEnabled),
 		setIfNotNil(&s.conf.CacheSize, dc.CacheSize),
 		setIfNotNil(&s.conf.CacheMinTTL, dc.CacheMinTTL),
 		setIfNotNil(&s.conf.CacheMaxTTL, dc.CacheMaxTTL),

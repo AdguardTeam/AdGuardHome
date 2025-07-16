@@ -4,6 +4,10 @@
 
 ## v0.108.0: API changes
 
+## v0.107.64: API changes
+
+- The new field `"cache_enabled"` in `GET /control/dns_info` and `POST /control/dns_config` enables or disables the DNS response cache.
+
 ## v0.107.58: API changes
 
 ### The ability to check rules for query types and/or clients: GET /control/check_host

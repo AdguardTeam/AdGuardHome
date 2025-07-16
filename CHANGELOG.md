@@ -22,6 +22,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.24.5][go-1.24.5].
 
+### Added
+
+- Ability to enable or disable the global DNS response cache from the Web UI.
+
+- A new `"cache_enabled"` field to the HTTP API (`GET /control/dns_info` and `POST /control/dns_config`).  See `openapi/openapi.yaml` for the full description.
+
 ### Changed
 
 #### Configuration changes

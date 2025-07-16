@@ -1559,6 +1559,10 @@
           'type': 'integer'
         'cache_ttl_max':
           'type': 'integer'
+        'cache_enabled':
+          'type': 'boolean'
+          'description': |
+            Enables or disables the DNS response cache.
         'cache_optimistic':
           'type': 'boolean'
         'upstream_mode':
