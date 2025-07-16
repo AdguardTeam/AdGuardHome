@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/metrics"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -327,6 +328,25 @@ func (u *unit) add(e *Entry) {
 	pt := uint64(e.ProcessingTime.Microseconds())
 	u.timeSum += pt
 	u.nTotal++
+
+	// Update Prometheus metrics
+	// Map Result constants to metrics labels
+	var resultLabel string
+	switch e.Result {
+	case RNotFiltered:
+		resultLabel = metrics.ResultNotFiltered
+	case RFiltered:
+		resultLabel = metrics.ResultFiltered
+	case RSafeBrowsing:
+		resultLabel = metrics.ResultSafeBrowsing
+	case RSafeSearch:
+		resultLabel = metrics.ResultSafeSearch
+	case RParental:
+		resultLabel = metrics.ResultParental
+	default:
+		resultLabel = "unknown"
+	}
+	metrics.IncrementDNSQueryByResult(resultLabel)
 
 	for _, s := range e.UpstreamStats {
 		if s.IsCached || s.Error != nil {

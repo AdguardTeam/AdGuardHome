@@ -26,6 +26,7 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/metrics"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 )
 
@@ -147,6 +148,9 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 	metricsRegistry := prometheus.NewRegistry()
 	metricsRegistry.MustRegister(collectors.NewGoCollector())
 	metricsRegistry.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+
+	// Register DNS metrics
+	metrics.RegisterDNSMetrics(metricsRegistry)
 
 	w = &webAPI{
 		conf:            conf,
