@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "jsx": "react",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "allowArbitraryExtensions": true,
+        "resolveJsonModule": true,
+        "allowJs": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": false,
+        "noImplicitAny": false,
+        "skipLibCheck": true,
+        "types": [
+            "node",
+            "react",
+            "react-dom",
+            "user-agent-data-types"
+        ],
+        "paths": {
+            "Twosky": [
+                "../.twosky.json"
+            ],
+            "panel/*": [
+                "./src/*"
+            ]
+        }
+    },
+    "include": ["src", "global.d.ts", "src/types/**/*.d.ts"]
+}
