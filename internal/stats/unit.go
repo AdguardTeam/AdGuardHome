@@ -9,12 +9,13 @@ import (
 	"slices"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/metrics"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"go.etcd.io/bbolt"
+
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/metrics"
 )
 
 const (
@@ -347,6 +348,7 @@ func (u *unit) add(e *Entry) {
 		resultLabel = "unknown"
 	}
 	metrics.IncrementDNSQueryByResult(resultLabel)
+	metrics.ObserveDNSResponseTime(resultLabel, e.ProcessingTime)
 
 	for _, s := range e.UpstreamStats {
 		if s.IsCached || s.Error != nil {
