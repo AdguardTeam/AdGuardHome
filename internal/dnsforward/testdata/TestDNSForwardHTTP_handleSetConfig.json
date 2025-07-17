@@ -529,7 +529,52 @@
       "cache_size": 1024,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
-      "cache_enabled": false,
+      "cache_enabled": true,
+      "cache_optimistic": false,
+      "resolve_clients": false,
+      "use_private_ptr_resolvers": false,
+      "local_ptr_upstreams": [],
+      "edns_cs_use_custom": false,
+      "edns_cs_custom_ip": ""
+    }
+  },
+  "cache_enabled": {
+    "req": {
+      "cache_enabled": true,
+      "cache_size": 1024
+    },
+    "want": {
+      "upstream_dns": [
+        "8.8.8.8:53",
+        "8.8.4.4:53"
+      ],
+      "upstream_dns_file": "",
+      "bootstrap_dns": [
+        "9.9.9.10",
+        "149.112.112.10",
+        "2620:fe::10",
+        "2620:fe::fe:10"
+      ],
+      "fallback_dns": [],
+      "protection_enabled": true,
+      "protection_disabled_until": null,
+      "ratelimit": 0,
+      "ratelimit_subnet_len_ipv4": 24,
+      "ratelimit_subnet_len_ipv6": 56,
+      "ratelimit_whitelist": [],
+      "blocking_mode": "default",
+      "blocking_ipv4": "",
+      "blocking_ipv6": "",
+      "blocked_response_ttl": 10,
+      "upstream_timeout": 10,
+      "edns_cs_enabled": false,
+      "dnssec_enabled": false,
+      "disable_ipv6": false,
+      "upstream_mode": "",
+      "cache_size": 1024,
+      "cache_ttl_min": 0,
+      "cache_ttl_max": 0,
+      "cache_enabled": true,
       "cache_optimistic": false,
       "resolve_clients": false,
       "use_private_ptr_resolvers": false,

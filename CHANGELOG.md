@@ -36,6 +36,21 @@ In this release, the schema version has changed from 29 to 30.
 
 - Added a new boolean field `dns.cache_enabled` to the configuration.  This field explicitly controls whether DNS caching is enabled, replacing the previous implicit logic based on `dns.cache_size`.
 
+    ```yaml
+    # BEFORE:
+    'dns':
+        # …
+        'cache_size': 123456
+
+    # AFTER:
+    'dns':
+        # …
+        'cache_enabled': true
+        'cache_size': 123456
+    ```
+
+    To roll back this change, set the schema_version back to `29`.
+
 ### Fixed
 
 - TTL override calculation ([#7903]).

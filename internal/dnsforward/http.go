@@ -310,7 +310,7 @@ func (req *jsonDNSConfig) validate(
 		return err
 	}
 
-	err = req.checkCacheSettings()
+	err = req.validateCacheSettings()
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
@@ -426,12 +426,12 @@ func (req *jsonDNSConfig) validateUpstreamDNSServers(
 	return nil
 }
 
-// checkCacheSettings returns an error if the cache configuration is invalid.
-func (req *jsonDNSConfig) checkCacheSettings() (err error) {
-	if req.CacheEnabled != nil && *req.CacheEnabled {
-		if req.CacheSize == nil || *req.CacheSize == 0 {
-			return errors.Error("cache_size must be greater than 0 when cache_enabled is true")
-		}
+// validateCacheSettings returns an error if the cache configuration is invalid.
+func (req *jsonDNSConfig) validateCacheSettings() (err error) {
+	err = req.validateCacheSize()
+	if err != nil {
+		// Don't wrap the error because it's informative enough as is.
+		return err
 	}
 
 	if req.CacheMinTTL == nil && req.CacheMaxTTL == nil {
@@ -448,6 +448,23 @@ func (req *jsonDNSConfig) checkCacheSettings() (err error) {
 	}
 
 	return validateCacheTTL(minTTL, maxTTL)
+}
+
+// validateCacheSize returns an error if the cache size configuration is
+// invalid.  It also explicitly sets CacheEnabled to support legacy behavior.
+func (req *jsonDNSConfig) validateCacheSize() (err error) {
+	if req.CacheEnabled != nil && *req.CacheEnabled {
+		if req.CacheSize != nil && *req.CacheSize == 0 {
+			return errors.Error("cache_size must be greater than zero when cache_enabled is true")
+		}
+	}
+
+	if req.CacheEnabled == nil && req.CacheSize != nil {
+		isEnabled := *req.CacheSize > 0
+		req.CacheEnabled = &isEnabled
+	}
+
+	return nil
 }
 
 // checkRatelimitSubnetMaskLen returns an error if the length of the subnet mask

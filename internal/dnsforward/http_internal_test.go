@@ -224,6 +224,9 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		name:    "cache_size",
 		wantSet: "",
 	}, {
+		name:    "cache_enabled",
+		wantSet: "",
+	}, {
 		name:    "upstream_mode_parallel",
 		wantSet: "",
 	}, {
