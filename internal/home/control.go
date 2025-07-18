@@ -9,14 +9,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
-	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/NYTimes/gziphandler"
+
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
+	"github.com/AdguardTeam/AdGuardHome/internal/version"
 )
 
 // appendDNSAddrs is a convenient helper for appending a formatted form of DNS
@@ -184,6 +185,10 @@ func registerControlHandlers(web *webAPI) {
 	globalContext.mux.HandleFunc("/apple/doh.mobileconfig", postInstall(handleMobileConfigDoH))
 	globalContext.mux.HandleFunc("/apple/dot.mobileconfig", postInstall(handleMobileConfigDoT))
 	RegisterAuthHandlers(web)
+
+	// Register metrics endpoint without control prefix, similar to /dns-query
+	// Use empty method to bypass auth/gzip middleware like dns-query does
+	httpRegister("", "/metrics", web.metricsHandler.ServeHTTP)
 }
 
 // httpRegister registers an HTTP handler.

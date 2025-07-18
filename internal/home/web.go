@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -20,9 +19,15 @@ import (
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/NYTimes/gziphandler"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/quic-go/quic-go/http3"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+
+	"github.com/AdguardTeam/AdGuardHome/internal/metrics"
+	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 )
 
 // TODO(a.garipov): Make configurable.
@@ -124,6 +129,12 @@ type webAPI struct {
 	// httpsServer is the server that handles HTTPS traffic.  If it is not nil,
 	// [Web.http3Server] must also not be nil.
 	httpsServer httpsServer
+
+	// metricsRegistry is the Prometheus registry for metrics collection.
+	metricsRegistry *prometheus.Registry
+
+	// metricsHandler is the HTTP handler for serving metrics.
+	metricsHandler http.Handler
 }
 
 // newWebAPI creates a new instance of the web UI and API server.  conf must be
@@ -133,12 +144,22 @@ type webAPI struct {
 func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 	conf.logger.InfoContext(ctx, "initializing")
 
+	// Initialize Prometheus metrics
+	metricsRegistry := prometheus.NewRegistry()
+	metricsRegistry.MustRegister(collectors.NewGoCollector())
+	metricsRegistry.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+
+	// Register DNS metrics
+	metrics.RegisterDNSMetrics(metricsRegistry)
+
 	w = &webAPI{
-		conf:       conf,
-		logger:     conf.logger,
-		baseLogger: conf.baseLogger,
-		tlsManager: conf.tlsManager,
-		auth:       conf.auth,
+		conf:            conf,
+		logger:          conf.logger,
+		baseLogger:      conf.baseLogger,
+		tlsManager:      conf.tlsManager,
+		auth:            conf.auth,
+		metricsRegistry: metricsRegistry,
+		metricsHandler:  promhttp.HandlerFor(metricsRegistry, promhttp.HandlerOpts{}),
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))
