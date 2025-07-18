@@ -13,6 +13,7 @@ const (
 	ResultSafeBrowsing = "safe_browsing"
 	ResultSafeSearch   = "safe_search"
 	ResultParental     = "parental"
+	ResultUnknown      = "unknown"
 )
 
 // DNSQueries tracks DNS queries by their processing result

@@ -345,7 +345,7 @@ func (u *unit) add(e *Entry) {
 	case RParental:
 		resultLabel = metrics.ResultParental
 	default:
-		resultLabel = "unknown"
+		resultLabel = metrics.ResultUnknown
 	}
 	metrics.IncrementDNSQueryByResult(resultLabel)
 	metrics.ObserveDNSResponseTime(resultLabel, e.ProcessingTime)
