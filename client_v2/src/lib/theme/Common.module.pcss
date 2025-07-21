@@ -27,19 +27,6 @@
     }
 }
 
-.inactive {
-    opacity: 0.5;
-}
-
-.block {
-    display: block !important;
-}
-
-.smallIcon {
-    width: 16px;
-    height: 16px;
-}
-
 .scrollable {
     &::-webkit-scrollbar {
         -webkit-appearance: none;
@@ -54,22 +41,36 @@
     }
 }
 
-.textUppercase {
-    text-transform: uppercase;
-}
-
-.textLowercase {
-    text-transform: lowercase;
-}
-
 .breakWord {
     word-break: break-word;
     display: inline-block;
 }
 
-.wrapper {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: var(--white);
+.desktop {
+    display: none;
+
+    @media (min-width: 1024px) {
+        display: block;
+    }
+}
+
+.mobile {
+    display: block;
+
+    @media (min-width: 1024px) {
+        display: none;
+    }
+}
+
+.visuallyHidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    border: 0;
+    padding: 0;
+    white-space: nowrap;
+    clip-path: inset(100%);
+    clip: rect(0 0 0 0);
+    overflow: hidden;
 }
