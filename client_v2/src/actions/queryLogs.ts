@@ -5,7 +5,11 @@ import apiClient from '../api/Api';
 import { normalizeLogs } from '../helpers/helpers';
 import { DEFAULT_LOGS_FILTER, QUERY_LOGS_PAGE_LIMIT } from '../helpers/constants';
 import { addErrorToast, addSuccessToast } from './toasts';
-import { SearchFormValues } from '../components/Logs';
+
+type SearchFormValues = {
+    search: string;
+    response_status: string;
+};
 
 const getLogsWithParams = async (config: any) => {
     const { older_than, filter, ...values } = config;
