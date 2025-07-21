@@ -1,0 +1,171 @@
+.form__group {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.form__group:last-child {
+    margin-bottom: 0;
+}
+
+.form__group--settings:last-child {
+    margin-bottom: 20px;
+}
+
+.form__group--inner {
+    max-width: 300px;
+    margin-top: -10px;
+    margin-left: 40px;
+    font-size: 14px;
+}
+
+.form__group--input {
+    max-width: 300px;
+    margin: 0 1.5rem 10px;
+}
+
+.form__group--checkbox {
+    margin-bottom: 25px;
+}
+
+.form__group--inner .form__group--checkbox {
+    margin-bottom: 12px;
+}
+
+.form__group--inner .form__group--checkbox:last-child {
+    margin-bottom: 0;
+}
+
+.form__inline {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.btn-standard {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.btn-large {
+    min-width: 150px;
+}
+
+.form-control--textarea {
+    min-height: 110px;
+    transition: 0.3s ease-in-out background-color;
+}
+
+.form-control--textarea-small {
+    min-height: 90px;
+}
+
+.form-control--textarea-large {
+    min-height: 240px;
+}
+
+.form__message {
+    margin-top: 4px;
+    font-size: 11px;
+}
+
+.form__message--error {
+    color: #cd201f;
+}
+
+.form__message--left-pad {
+    padding-left: 0.85rem;
+}
+
+.interface__title {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.interface__ip:after {
+    content: ', ';
+}
+
+.interface__ip:last-child:after {
+    content: '';
+}
+
+.form__desc {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--scolor);
+}
+
+.form__desc--top {
+    margin: 0 0 8px;
+}
+
+.form__label {
+    margin-bottom: 8px;
+}
+
+.form__label--bold {
+    font-weight: 700;
+}
+
+.form__label--with-desc {
+    margin-bottom: 0;
+}
+
+.form__label--bot {
+    margin-bottom: 10px;
+}
+
+.form__label--top {
+    margin-top: 10px;
+}
+
+.form__status {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.encryption__list {
+    padding-left: 0;
+}
+
+.encryption__list li {
+    list-style: inside;
+}
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background-color: transparent;
+    overflow: hidden;
+}
+
+.btn-icon--green {
+    color: var(--green);
+}
+
+.btn-icon-sm {
+    width: 23px;
+    height: 23px;
+    min-width: 23px;
+    padding: 5px;
+}
+
+.custom-control-label,
+.custom-control-label:before {
+    transition:
+        0.3s ease-in-out background-color,
+        0.3s ease-in-out color;
+}
+
+.custom-select:disabled {
+    background-color: #f9f9f9;
+}
+
+.custom-select {
+    transition:
+        0.3s ease-in-out background-color,
+        0.3s ease-in-out color;
+}

@@ -1,0 +1,113 @@
+.inputWrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+    background-color: var(--default-page-background);
+    height: 48px;
+    overflow: hidden;
+    font-size: 16px;
+    border: 1px solid var(--default-item-divider);
+    border-radius: 8px;
+
+    &.focused {
+        border-color: var(--pressed-link);
+    }
+
+    &.disabled {
+        background-color: var(--pressed-page-background);
+
+        .input {
+            background-color: var(--pressed-page-background);
+            color: var(--default-description-text);
+            cursor: default;
+
+            &:-webkit-autofill,
+            &:-webkit-autofill:hover,
+            &:-webkit-autofill:focus {
+                box-shadow: 0 0 0 100px var(--pressed-page-background) inset;
+            }
+        }
+    }
+
+    &.small {
+        height: 40px;
+    }
+
+    &.large {
+        height: 56px;
+    }
+
+    &.borderless {
+        border: 0;
+    }
+
+    &.error {
+        border-color: var(--default-error-icon);
+    }
+
+    &.invalid {
+        border: 1px solid var(--default-error-icon);
+
+        &:focus,
+        &:hover,
+        &:active {
+            border: 1px solid var(--default-error-icon);
+        }
+    }
+
+    .input {
+        color: var(--default-main-text);
+        font-size: 16px;
+        line-height: 1.3;
+        max-width: 100%;
+        height: 100%;
+        width: 100%;
+        outline: none;
+        border: 0;
+        padding: 8px 16px;
+        border-radius: 8px;
+        background-color: var(--default-page-background);
+
+        &::placeholder {
+            color: var(--default-placeholder);
+        }
+
+        &:focus,
+        &:hover,
+        &:active {
+            outline: none;
+        }
+
+        &:-webkit-autofill,
+        &:-webkit-autofill:hover,
+        &:-webkit-autofill:focus {
+            box-shadow: 0 0 0 100px var(--default-page-background) inset;
+            -webkit-text-fill-color: var(--default-main-text);
+            caret-color: var(--default-main-text);
+            transition: background-color 5000s ease-in-out 0s;
+        }
+    }
+}
+
+.prefix {
+    padding-left: 8px;
+}
+
+.suffix {
+    padding-right: 8px;
+    cursor: pointer;
+}
+
+.inputLabel {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+    line-height: 24px;
+    color: var(--default-description-text);
+}
+
+.inputError {
+    font-size: 14px;
+    color: var(--default-error-icon);
+    margin-top: 4px;
+}

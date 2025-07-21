@@ -1,0 +1,127 @@
+:root {
+    /* Page background */
+    --default-page-background: var(--gray-0);
+    --hovered-page-background: var(--gray-10);
+    --pressed-page-background: var(--gray-20);
+    --fills-backgrounds-page-background-additional: var(--gray-10);
+    /* Cards background */
+    --default-cards-background: var(--gray-0);
+    /* Popup background */
+    --default-popup-background: var(--gray-0);
+    /* Footer background */
+    --default-footer-background: var(--gray-80);
+    /* Item divider */
+    --default-item-divider: var(--gray-30);
+    /* Main text */
+    --default-main-text: var(--gray-80);
+    --disabled-main-text: var(--gray-50);
+    /* Description text */
+    --default-description-text: var(--gray-70);
+    /* Forms */
+    --default-labels: var(--gray-70);
+    /* Input */
+    --default-input-background: var(--gray-10);
+    --default-active-input-stroke: var(--gray-50);
+    --default-inactive-input-stroke: var(--gray-30);
+    --default-placeholder: var(--gray-50);
+    --default-input-on-card-background: var(--gray-10);
+    --disabled-input-on-card-background: var(--gray-10);
+    /* Dropdown */
+    --default-dropdown-menu-background: var(--gray-0);
+    --hovered-dropdown-menu-background: var(--gray-10);
+    --pressed-dropdown-menu-background: var(--gray-20);
+    /* Main button */
+    --default-main-button: var(--product-primary-50);
+    --hovered-main-button: var(--product-primary-60);
+    --pressed-main-button: var(--product-primary-70);
+    --disabled-main-button: var(--product-primary-30);
+    --default-primary-button-text: var(--gray-0);
+    --disabled-primary-button-text: var(--product-primary-0);
+    --default-primary-button-icon: var(--gray-0);
+    /* Secondary button */
+    --default-secondary-button: var(--gray-0);
+    --hovered-secondary-button: var(--gray-10);
+    --pressed-secondary-button: var(--gray-20);
+    --disabled-secondary-button: var(--gray-0);
+    --default-secondary-button-stroke: var(--gray-80);
+    --disabled-secondary-button-stroke: var(--gray-50);
+    /* Secondary card button */
+    --default-secondary-card-button: var(--gray-0);
+    --hovered-secondary-card-button: var(--gray-10);
+    --pressed-secondary-card-button: var(--gray-20);
+    --disabled-secondary-card-button: var(--gray-0);
+    /* Danger button */
+    --default-danger-button: var(--red-50);
+    --hovered-danger-button: var(--red-60);
+    --pressed-danger-button: var(--red-70);
+    --disabled-danger-button: var(--red-30);
+    /* Link */
+    --default-link: var(--product-primary-50);
+    --hovered-link: var(--product-primary-60);
+    --pressed-link: var(--product-primary-70);
+    --visited-link: var(--product-primary-80);
+    /* Attention link */
+    --default-attention-link: var(--orange-50);
+    --hovered-attention-link: var(--orange-60);
+    --pressed-attention-link: var(--orange-70);
+    --disabled-attention-link: var(--orange-30);
+    /* Error link */
+    --default-error-link: var(--red-50);
+    /* Icons */
+    --default-product-icon: var(--product-primary-50);
+    --default-black-icons: var(--gray-80);
+    --default-gray-icons: var(--gray-60);
+    --disabled-gray-icons: var(--gray-30);
+    --default-error-icon: var(--red-50);
+    --stroke-icons-white-icons-default: var(--gray-0);
+    --stroke-icons-tertiary-icon-disabled: var(--product-tertiary-30);
+    --stroke-icons-secondary-icon-disabled: var(--product-secondary-30);
+    /* Stat */
+    --default-stats-background: var(--gray-20);
+    --default-red-stat: var(--red-50);
+    /* Modal */
+    --modal-iframe-overlay: #ffffff50;
+    --modal-overlay: #00000050;
+    /* Notifications */
+    --default-notifications-attention: var(--orange-10);
+    /* Logo key */
+    --default-logo-key-color: var(--gray-90);
+    /* Loaders */
+    --default-loaders-background: var(--gray-20);
+    --default-loaders-background-dark: var(--gray-70);
+    --default-loaders-primary: var(--product-primary-50);
+    /* Toplines */
+    --default-text-toplines-main: var(--gray-0);
+    --disabled-text-toplines-main: var(--gray-20);
+    --default-fills-toplines-adblocker: var(--gray-100);
+    --default-fills-toplines-vpn: var(--gray-10);
+    /* Breadcrumbs */
+    --default-breadcrumbs: var(--gray-50);
+    /* Promo top line */
+    --fills-toplines-topline-background: var(--gray-100);
+    --text-toplines-topline-title: var(--gray-0);
+    --text-toplines-topline-description: var(--gray-0);
+    --text-toplines-topline-button-text-default: var(--gray-0);
+    --fills-toplines-topline-background-image: none;
+    --fills-toplines-topline-button-default: var(--product-primary-50);
+    --fills-toplines-topline-button-hovered: var(--product-primary-60);
+    --fills-toplines-topline-button-pressed: var(--product-primary-70);
+    --stroke-toplines-button-stroke-default: var(--product-primary-50);
+    --stroke-toplines-button-stroke-hovered: var(--product-primary-60);
+    --stroke-toplines-button-stroke-pressed: var(--product-primary-70);
+    --stroke-toplines-close-icon-default: var(--gray-0);
+    --stroke-toplines-close-icon-hovered: var(--gray-10);
+    --stroke-toplines-close-icon-pressed: var(--gray-20);
+    --fills-backgrounds-recent-activity: var(--product-primary-10);
+    /* Switch */
+    --fills-switch-on-default: var(--product-primary-50);
+    --fills-switch-on-hovered: var(--product-primary-60);
+    --fills-switch-on-disabled: var(--product-primary-30);
+    --fills-switch-off-default: var(--gray-40);
+    --fills-switch-off-hovered: var(--gray-50);
+    --fills-switch-off-disabled: var(--gray-30);
+    --fills-switch-knob: var(--gray-0);
+    --fills-switch-knob-disabled: var(--gray-50);
+    /* Logo */
+    --default-logo-color: var(--gray-100);
+}

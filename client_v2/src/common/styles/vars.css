@@ -1,0 +1,64 @@
+:root {
+    /* CONTAINER */
+
+    --column-width: 76px;
+    --column-gap: 24px;
+    --container-width-12-col: calc((var(--column-width) * 12) + (var(--column-gap) * 11));
+    --container-width-10-col: calc((var(--column-width) * 10) + (var(--column-gap) * 9));
+    --container-width-8-col: calc((var(--column-width) * 8) + (var(--column-gap) * 7));
+    --container-width-6-col: calc((var(--column-width) * 6) + (var(--column-gap) * 5));
+
+    /* FONT WEIGHT */
+
+    --weight-regular: 400;
+    --weight-medium: 500;
+    --weight-semi-bold: 600;
+    --weight-bold: 700;
+
+    /* TITLES LINE HEIGHT */
+
+    --lh-h0-normal: 76px;
+    --lh-h1-normal: 56px;
+    --lh-h2-normal: 48px;
+    --lh-h3-normal: 40px;
+    --lh-h4-normal: 28px;
+    --lh-h5-normal: 24px;
+    --lh-h6-normal: 20px;
+
+    /* TEXTS LINE HEIGHT */
+
+    --lh-t1-normal: 28px;
+    --lh-t2-normal: 24px;
+    --lh-t3-normal: 20px;
+    --lh-t4-normal: 16px;
+
+    --lh-t1-condenced: 24px;
+    --lh-t2-condenced: 20px;
+    --lh-t3-condenced: 16px;
+    --lh-t4-condenced: 16px;
+
+    /* FONT SIZE */
+
+    --fs-title-h0: 64px;
+    --fs-title-h1: 48px;
+    --fs-title-h2: 40px;
+    --fs-title-h3: 32px;
+    --fs-title-h4: 24px;
+    --fs-title-h5: 20px;
+    --fs-title-h6: 18px;
+
+    --fs-text-t1: 18px;
+    --fs-text-t2: 16px;
+    --fs-text-t3: 14px;
+    --fs-text-t4: 12px;
+
+    /* TRANSITION */
+
+    --t3: 0.3s ease;
+    --t2: 0.2s ease;
+
+    /* BOX-SHADOW */
+
+    --main-box-shadow: rgba(166, 166, 166, 0.2);
+    --dropdown-box-shadow: rgba(23, 39, 75, 0.12);
+}

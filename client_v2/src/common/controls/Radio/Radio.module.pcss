@@ -1,0 +1,37 @@
+.wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+.radio {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 8px 0;
+    cursor: pointer;
+}
+
+.input {
+    display: none;
+}
+
+.text {
+    max-width: 250px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.icon {
+    color: var(--default-gray-icons);
+
+    &_active {
+        transition: none;
+        color: var(--default-product-icon);
+    }
+}
+
+.input:disabled + .handler .icon {
+    color: var(--disabled-main-button);
+}

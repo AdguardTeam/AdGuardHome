@@ -1,0 +1,55 @@
+.overlay {
+    background: var(--default-dropdown-menu-background);
+    padding: 0;
+    cursor: pointer;
+    max-width: 327px;
+    z-index: 1504;
+    overflow: hidden;
+}
+
+.selectOverlay {
+    width: 100%;
+    max-width: calc(100% - 48px);
+    -webkit-tap-highlight-color: transparent;
+
+    @media (min-width: 768px) {
+        max-width: 528px;
+    }
+
+    @media (min-width: 1024px) {
+        max-width: 344px;
+    }
+}
+
+.open {
+    display: flex;
+    width: 100%;
+    cursor: default;
+}
+
+.disabled {
+    cursor: default;
+}
+
+.linkArrow {
+    margin-left: -8px;
+}
+
+.widthAuto {
+    min-width: auto !important;
+}
+
+.arrow {
+    transition: transform var(--t2);
+    color: var(--default-gray-icons);
+
+    &.active {
+        transform: rotate(180deg);
+    }
+}
+
+.wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}

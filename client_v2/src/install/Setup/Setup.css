@@ -1,0 +1,145 @@
+/* Disable Auto Zoom in Input - Safari on iPhone https://stackoverflow.com/a/6394497 */
+@media screen and (max-width: 767px) {
+    input,
+    select,
+    textarea {
+        font-size: 1rem;
+    }
+}
+
+.setup {
+    min-height: calc(100vh - 345px);
+    line-height: 1.48;
+}
+
+@media screen and (min-width: 768px) {
+    .setup {
+        padding: 50px 0;
+        min-height: calc(100vh - 141px);
+    }
+}
+
+.setup__container {
+    max-width: 650px;
+    margin: 0 auto;
+    padding: 30px 20px;
+    line-height: 1.6;
+    background-color: var(--card-bgcolor);
+    box-shadow: 0 1px 4px rgba(74, 74, 74, 0.36);
+    border-radius: 3px;
+}
+
+[data-theme='dark'] .setup__container {
+    box-shadow: none;
+    border: 1px solid var(--card-border-color);
+}
+
+@media screen and (min-width: 768px) {
+    .setup__container {
+        width: 650px;
+        padding: 40px 30px;
+    }
+}
+
+.setup__logo {
+    display: block;
+    margin: 0 auto 40px;
+    max-width: 140px;
+}
+
+[data-theme='dark'] .setup__logo {
+    filter: invert(1);
+}
+
+.setup__nav {
+    text-align: center;
+}
+
+.setup__step {
+    margin-bottom: 25px;
+}
+
+.setup__title {
+    margin-bottom: 30px;
+    font-size: 28px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.setup__subtitle {
+    margin-bottom: 10px;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.setup__desc {
+    margin-bottom: 20px;
+    font-size: 15px;
+}
+
+.setup__group {
+    margin-bottom: 35px;
+}
+
+.setup__group:last-child {
+    margin-bottom: 0;
+}
+
+.setup__progress {
+    font-size: 13px;
+    text-align: center;
+}
+
+.setup__progress-wrap {
+    height: 4px;
+    margin: 20px -20px -30px -20px;
+    overflow: hidden;
+    background-color: #eaeaea;
+    border-radius: 0 0 3px 3px;
+}
+
+@media screen and (min-width: 768px) {
+    .setup__progress-wrap {
+        margin: 20px -30px -40px -30px;
+    }
+}
+
+.setup__progress-inner {
+    width: 0;
+    height: 100%;
+    font-size: 1.2rem;
+    line-height: 20px;
+    color: #fff;
+    text-align: center;
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+    transition: width 0.6s ease;
+    background: linear-gradient(45deg, rgba(99, 125, 120, 1) 0%, rgba(88, 177, 101, 1) 100%);
+}
+
+.btn-standard {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.form__message {
+    font-size: 11px;
+}
+
+.form__message--error {
+    color: var(--red);
+}
+
+.setup__button {
+    min-width: 120px;
+    padding-left: 30px;
+    padding-right: 30px;
+}
+
+.setup__error {
+    margin: -5px 0 5px;
+}
+
+.divider--small {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}

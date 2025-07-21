@@ -1,0 +1,60 @@
+/* Disable Auto Zoom in Input - Safari on iPhone https://stackoverflow.com/a/6394497 */
+@media screen and (max-width: 767px) {
+    input,
+    select,
+    textarea {
+        font-size: 1rem;
+    }
+}
+
+.login {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    min-height: 100vh;
+}
+
+[data-theme='dark'] .login__logo {
+    filter: invert(1);
+}
+
+.login__form {
+    margin: auto;
+    padding: 40px 15px 100px;
+    width: 100%;
+    max-width: 24rem;
+}
+
+.login__info {
+    position: relative;
+    text-align: center;
+}
+
+.login__message,
+.login__link {
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0;
+}
+
+@media screen and (min-width: 992px) {
+    .login__message {
+        position: absolute;
+        top: 40px;
+        padding: 0 15px;
+    }
+}
+
+.form__group {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.form__message {
+    font-size: 11px;
+}
+
+.form__message--error {
+    color: var(--red);
+}

@@ -1,0 +1,48 @@
+.sidebarWrapper {
+    display: block;
+    min-width: 240px;
+}
+
+.sidebarContainer {
+    display: none;
+    flex-shrink: 0;
+
+    @media (min-width: 1200px) {
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 0;
+        width: 100%;
+        max-width: 240px;
+        padding: 16px 0;
+        overflow-y: auto;
+        z-index: 1;
+        background-color: var(--fills-backgrounds-page-background-additional);
+    }
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.logo {
+    width: 160px;
+    height: 24px;
+}
+
+.linkWrapper {
+    display: flex;
+    padding: 12px 16px 32px;
+}
+
+.link {
+    text-decoration: none;
+}
+
+.logoCompany {
+    fill: var(--default-logo-color);
+}
+
+.logoProduct {
+    fill: var(--default-description-text);
+}

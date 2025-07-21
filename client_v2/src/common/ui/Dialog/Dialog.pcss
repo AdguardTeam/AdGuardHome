@@ -1,0 +1,225 @@
+.rc-dialog {
+    position: relative;
+    width: auto;
+    margin: 0 auto;
+    max-width: 720px;
+    display: inline-block;
+    text-align: left;
+    vertical-align: middle;
+
+    @media (min-width: 1024px) {
+        width: 720px;
+    }
+}
+
+.rc-dialog-wrap {
+    position: fixed;
+    overflow: auto;
+    top: 65px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 0 8px;
+    z-index: 1050;
+    -webkit-overflow-scrolling: touch;
+    outline: 0;
+    text-align: center;
+
+    @media (min-width: 1024px) {
+        top: 0;
+    }
+
+    &::before {
+        content: '';
+        display: inline-block;
+        width: 0;
+        height: 100%;
+        padding: 0;
+        vertical-align: middle;
+    }
+}
+
+.rc-dialog-title {
+    margin: 0;
+    padding: 0;
+    font-weight: var(--weight-bold);
+    font-size: 18px;
+    line-height: 21px;
+    color: var(--default-main-text);
+
+    @media (min-width: 1024px) {
+        font-size: 24px;
+        line-height: 28px;
+    }
+}
+
+.rc-dialog-section {
+    position: relative;
+    background-color: var(--default-page-background);
+    border: none;
+    border-radius: 16px;
+    background-clip: border-box;
+    padding: 8px 0;
+    color: var(--default-main-text);
+
+    @media (min-width: 1024px) {
+        min-width: 720px;
+        border-radius: 16px;
+        padding: 24px 16px;
+    }
+}
+
+.rc-dialog-close {
+    cursor: pointer;
+    border: 0;
+    background: transparent;
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    padding: 0;
+    transition: 0.3s opacity;
+}
+
+.rc-dialog-close:hover {
+    opacity: 1;
+    filter: alpha(opacity=100);
+    text-decoration: none;
+}
+
+.rc-dialog-header {
+    margin: 0;
+    padding: 16px 48px 16px 16px;
+}
+
+.rc-dialog-footer {
+    border: 0;
+    padding: 10px 20px;
+    text-align: right;
+}
+
+.rc-dialog-zoom-enter,
+.rc-dialog-zoom-appear {
+    opacity: 0;
+    animation-duration: 0.3s;
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.08, 0.82, 0.17, 1);
+    animation-play-state: paused;
+}
+
+.rc-dialog-zoom-leave {
+    animation-duration: 0.3s;
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.6, 0.04, 0.98, 0.34);
+    animation-play-state: paused;
+}
+
+.rc-dialog-zoom-enter.rc-dialog-zoom-enter-active,
+.rc-dialog-zoom-appear.rc-dialog-zoom-appear-active {
+    animation-name: rcDialogZoomIn;
+    animation-play-state: running;
+}
+
+.rc-dialog-zoom-leave.rc-dialog-zoom-leave-active {
+    animation-name: rcDialogZoomOut;
+    animation-play-state: running;
+}
+
+@keyframes rcDialogZoomIn {
+    0% {
+        opacity: 0;
+        transform: scale(0, 0);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1, 1);
+    }
+}
+
+@keyframes rcDialogZoomOut {
+    0% {
+        transform: scale(1, 1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(0, 0);
+    }
+}
+
+.rc-dialog-mask {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    background-color: rgba(19, 19, 19, 0.8);
+    height: 100%;
+    filter: alpha(opacity=50);
+    z-index: 1050;
+}
+
+.rc-dialog-mask-hidden {
+    display: none;
+}
+
+.rc-dialog-fade-enter,
+.rc-dialog-fade-appear {
+    opacity: 0;
+    animation-duration: 0.3s;
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.55, 0, 0.55, 0.2);
+    animation-play-state: paused;
+}
+
+.rc-dialog-fade-leave {
+    animation-duration: 0.3s;
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.55, 0, 0.55, 0.2);
+    animation-play-state: paused;
+}
+
+.rc-dialog-fade-enter.rc-dialog-fade-enter-active,
+.rc-dialog-fade-appear.rc-dialog-fade-appear-active {
+    animation-name: rcDialogFadeIn;
+    animation-play-state: running;
+}
+
+.rc-dialog-fade-leave.rc-dialog-fade-leave-active {
+    animation-name: rcDialogFadeOut;
+    animation-play-state: running;
+}
+
+.rc-dialog-update {
+    top: 16px;
+
+    @media (min-width: 1024px) {
+        top: 0;
+    }
+}
+
+.rc-dialog-hide-close {
+    .rc-dialog-close {
+        display: none;
+    }
+}
+
+@keyframes rcDialogFadeIn {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes rcDialogFadeOut {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}

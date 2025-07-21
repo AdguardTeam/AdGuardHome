@@ -1,0 +1,62 @@
+.ReactTable .rt-th,
+.ReactTable .rt-td {
+    padding: 10px 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-table .ReactTable .rt-td {
+    overflow: visible;
+}
+
+.ReactTable .rt-noData {
+    color: var(--rt-nodata-color);
+    background-color: var(--rt-nodata-bgcolor);
+}
+
+.ReactTable .-loading {
+    color: var(--rt-nodata-color);
+    background-color: var(--rt-nodata-bgcolor);
+}
+
+.ReactTable .-loading .-loading-inner {
+    color: var(--gray300);
+}
+
+.ReactTable .-pagination input,
+.ReactTable .-pagination select {
+    color: var(--rt-nodata-color);
+    background-color: var(--rt-nodata-bgcolor);
+}
+
+[data-theme='dark'] .ReactTable .rt-table::-webkit-scrollbar-track {
+    background-color: var(--card-bgcolor);
+}
+
+[data-theme='dark'] .ReactTable .rt-table::-webkit-scrollbar-thumb {
+    background-color: #888888;
+}
+
+[data-theme='dark'] .ReactTable .-pagination .-btn {
+    filter: invert(1);
+}
+
+[data-theme='dark'] .ReactTable .-pagination .-btn:disabled {
+    opacity: 1;
+}
+
+.rt-tr-group.logs__row--red {
+    background-color: rgba(223, 56, 18, 0.05);
+}
+
+.rt-tr-group.logs__row--green {
+    background-color: rgba(103, 178, 121, 0.1);
+}
+
+.rt-tr-group.logs__row--blue {
+    background-color: #e5effd;
+}
+
+.rt-tr-group.logs__row--yellow {
+    background-color: var(--yellow-pale);
+}

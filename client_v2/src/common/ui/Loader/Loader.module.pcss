@@ -1,0 +1,56 @@
+.loader {
+    transform: translateZ(0);
+    animation: load 2s infinite linear;
+}
+
+@keyframes load {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.overlayWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.overlay {
+    background: var(--default-page-background);
+
+    .loader {
+        width: 56px;
+        height: 56px;
+    }
+}
+
+.chartOverlay,
+.modalOverlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 128px;
+    padding: 8px 16px;
+}
+
+.modalOverlay {
+    min-height: 440px;
+}
+
+.chartLoader,
+.modalLoader {
+    width: 72px;
+    height: 72px;
+    color: var(--default-link);
+
+    @media (min-width: 768px) {
+        width: 96px;
+        height: 96px;
+    }
+}

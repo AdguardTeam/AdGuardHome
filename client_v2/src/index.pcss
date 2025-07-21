@@ -1,0 +1,41 @@
+@import './common/styles/custom-media.pcss';
+@import './common/styles/vars.css';
+@import './common/styles/colors/light.css';
+@import './common/styles/colors/dark.css';
+@import './common/styles/colors/adg.css';
+
+:root {
+    --font-family-monospace: Monaco, Menlo, 'Ubuntu Mono', Consolas, source-code-pro, monospace;
+    --font-family-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif
+}
+
+*, *::after, *::before {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family-system);
+    font-weight: var(--weight-regular);
+    color: var(--default-main-text);
+    line-height: 1.4;
+    background-color: var(--default-page-background);
+    min-width: 320px;
+    width: 100%;
+}
+
+p {
+    margin-top: 0;
+}
+
+button,
+input,
+textarea,
+select {
+    font-family: var(--font-family-system);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+}

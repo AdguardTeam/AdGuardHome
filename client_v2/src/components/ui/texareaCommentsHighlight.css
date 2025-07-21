@@ -1,0 +1,40 @@
+.text-edit-container {
+    position: relative;
+    min-height: 240px;
+    overflow: hidden;
+}
+
+.text-input,
+.text-output {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 16px;
+    background: transparent;
+    white-space: pre-wrap;
+    line-height: 24px;
+    word-wrap: break-word;
+    font-size: var(--font-size-disable-autozoom);
+    margin: 0;
+    overscroll-behavior: none;
+}
+
+.text-input {
+    position: relative;
+    opacity: 1;
+    min-height: 240px;
+}
+
+.text-output {
+    pointer-events: none;
+    z-index: 3;
+    overflow-y: auto;
+    background: transparent;
+    border: 1px solid transparent;
+}
+
+.text-transparent {
+    color: transparent;
+}

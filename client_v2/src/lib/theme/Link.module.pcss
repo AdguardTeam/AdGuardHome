@@ -1,0 +1,42 @@
+.link {
+    cursor: pointer;
+    color: var(--default-link);
+    transition: color var(--t2);
+    text-decoration: underline;
+
+    &:disabled,
+    &.disabled {
+        cursor: not-allowed;
+        color: var(--disabled-link);
+        outline: 0;
+    }
+
+    &:hover,
+    &:focus {
+        color: var(--hovered-link);
+        text-decoration: none;
+    }
+
+    &:active {
+        color: var(--pressed-link);
+    }
+
+    &.danger {
+        color: var(--default-danger-button);
+        text-decoration-line: underline;
+
+        &:hover,
+        &:focus {
+            color: var(--hovered-danger-button);
+            text-decoration: none;
+        }
+
+        &:active {
+            color: var(--pressed-danger-button);
+        }
+    }
+
+    &.no_decoration {
+        text-decoration: none;
+    }
+}

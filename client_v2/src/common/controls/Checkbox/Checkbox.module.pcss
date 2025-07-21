@@ -1,0 +1,55 @@
+.checkbox {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    gap: 8px;
+}
+
+.input {
+    display: none;
+}
+
+.input:disabled + .handler .icon {
+    color: var(--disabled-gray-icons);
+}
+
+.input:disabled + .handler .icon_active {
+    color: var(--disabled-main-button);
+}
+
+.handler {
+    flex-shrink: 0;
+    position: relative;
+    width: 24px;
+    height: 24px;
+
+    &.plus {
+        background-color: transparent;
+        border-color: transparent;
+    }
+}
+
+.label {
+    display: grid;
+    align-items: center;
+    font-size: 14px;
+    font-weight: var(--weight-regular);
+    user-select: none;
+
+    @media (min-width: 1024px) {
+        font-size: 16px;
+    }
+}
+
+.icon {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    transition: color var(--t2);
+    color: var(--default-gray-icons);
+
+    &_active {
+        transition: none;
+        color: var(--default-product-icon);
+    }
+}

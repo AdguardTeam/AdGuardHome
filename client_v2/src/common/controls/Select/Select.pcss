@@ -1,0 +1,336 @@
+.react-select {
+    width: 100%;
+
+    &.react-select-small {
+        width: 68px;
+
+        .select__value-container {
+            padding-right: 0;
+        }
+    }
+
+    &.react-select-medium {
+        width: 200px;
+    }
+
+    &.react-select-big {
+        width: 100%;
+
+        @media (min-width: 768px) {
+            width: 288px;
+        }
+    }
+
+    &.react-select--menu-right {
+        .select__menu {
+            @media (min-width: 1024px) {
+                right: 0;
+            }
+        }
+    }
+
+    &.react-select-responsive {
+        width: 100%;
+
+        @media (min-width: 1024px) {
+            width: 100%;
+        }
+    }
+
+    &.react-select--menu-small {
+        & .select__menu {
+            min-width: 137px;
+        }
+    }
+
+    &.react-select--menu-medium {
+        & .select__menu {
+            min-width: 250px;
+        }
+    }
+
+    &.react-select--menu-big {
+        & .select__menu {
+            min-width: 284px;
+
+            @media (min-width: 1024px) {
+                min-width: 344px;
+            }
+        }
+    }
+
+    &.react-select--borderless {
+        & .select__control {
+            border: 0;
+        }
+    }
+
+    &.react-select--adaptive-height {
+        & .select__control {
+            height: 100%;
+            min-height: 40px;
+        }
+
+        & .select__single-value {
+            width: 100%;
+        }
+    }
+
+    &.react-select--height-small {
+        .select__control {
+            height: 40px;
+            font-size: 16px;
+        }
+    }
+
+    &.react-select--height-medium {
+        .select__control {
+            height: 40px;
+            font-size: 16px;
+
+            @media (min-width: 1024px) {
+                height: 48px;
+            }
+        }
+    }
+
+    &.react-select--height-big {
+        .select__control {
+            height: 56px;
+            font-size: 16px;
+
+            @media (min-width: 1024px) {
+                height: 56px;
+            }
+        }
+    }
+
+    &.react-select--height-big-mobile {
+        .select__control {
+            height: 56px;
+            font-size: 16px;
+
+            @media (min-width: 1024px) {
+                height: 40px;
+            }
+        }
+    }
+
+    &.react-select--currency {
+        width: 108px;
+
+        .select__dropdown-indicator {
+            padding-right: 4px;
+        }
+    }
+
+    &.react-select--dropdown {
+        .select__menu {
+            position: relative;
+            top: 0;
+            margin: 0;
+            box-shadow: none;
+            width: 100%;
+            max-width: 100%;
+            min-width: auto;
+        }
+
+        .select__control {
+            display: none;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        width: 240px;
+    }
+
+    .select__menu {
+        color: var(--default-main-text);
+        padding: 0;
+        margin-top: 4px;
+        overflow: hidden;
+        box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
+        background-color: var(--default-dropdown-menu-background);
+        z-index: 3;
+
+        @media (min-width: 1024px) {
+            left: initial;
+            right: initial;
+            width: 100%;
+        }
+    }
+
+    .select__indicator-container {
+        height: 40px;
+
+        @media (min-width: 1024px) {
+            height: 48px;
+        }
+    }
+
+    .select__dropdown-indicator {
+        &:focus,
+        &:hover {
+            color: var(--default-gray-icons);
+        }
+
+        padding-right: 16px;
+    }
+
+    .select__indicator-separator {
+        display: none;
+    }
+
+    .select__value-container {
+        padding-left: 16px;
+        overflow: hidden;
+        color: var(--default-main-text);
+
+        &--is-multi {
+            flex-wrap: nowrap;
+        }
+    }
+
+    .select__control {
+        height: 40px;
+        border: 1px solid var(--default-item-divider);
+        box-shadow: none;
+        border-radius: 8px;
+        transition: border var(--t2);
+        cursor: pointer;
+        font-size: 16px;
+        background-color: var(--default-page-background);
+
+        &:hover,
+        &:focus {
+            border-color: var(--hovered-main-button);
+        }
+    }
+
+    .select__single-value {
+        max-width: 100%;
+        color: var(--default-main-text);
+    }
+
+    .select__multi-value {
+        margin: 0;
+        background-color: transparent;
+    }
+
+    .select__multi-value__label {
+        padding: 0;
+        font-size: 16px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--default-main-text);
+    }
+
+    .select__multi-value__remove {
+        display: none;
+    }
+
+    .select__clear-indicator {
+        padding: 8px 0;
+
+        @media (min-width: 1024px) {
+            padding: 8px;
+        }
+    }
+
+    .select__indicator {
+        svg {
+            transition: transform var(--t2);
+            color: var(--default-gray-icons);
+        }
+    }
+
+    .select__option {
+        color: var(--default-main-text);
+        transition: all var(--t2);
+        cursor: pointer;
+        padding: 12px 18px;
+
+        &.select__option--is-focused {
+            background-color: var(--hovered-dropdown-menu-background: );
+        }
+
+        &.select__option--is-selected {
+            background-color: var(--pressed-dropdown-menu-background);
+        }
+    }
+
+    .select__menu-list {
+        padding: 0;
+        overflow-x: hidden;
+
+        .select-option-text {
+            font-size: 14px;
+
+            @media (min-width: 1024px) {
+                font-size: 16px;
+            }
+        }
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background-color: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: var(--default-gray-icons);
+            border-radius: 10px;
+        }
+    }
+
+    & .select-option-text {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    & .select-option-text-active {
+        &--left {
+            &:before {
+                left: -52px;
+            }
+        }
+
+        &--near {
+            &:before {
+                left: 15px;
+            }
+        }
+    }
+
+    & .select-custom-option {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    & .select-option-color {
+        display: flex;
+        align-items: center;
+
+        &:after {
+            content: '';
+            position: relative;
+            width: 6px;
+            height: 6px;
+            margin-left: 8px;
+            border-radius: 3px;
+        }
+    }
+
+    & .select-option-list-item {
+        &.select-option-text-active {
+            &:before {
+                display: none;
+            }
+        }
+    }
+}

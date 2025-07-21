@@ -1,0 +1,48 @@
+.ReactModal__Overlay {
+    -webkit-perspective: 600;
+    perspective: 600;
+    opacity: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 104;
+}
+
+.ReactModal__Overlay--after-open {
+    opacity: 1;
+    transition: opacity 150ms ease-out;
+    background-color: var(--modal-overlay-bgcolor) !important;
+}
+
+.ReactModal__Content {
+    -webkit-transform: scale(0.5) rotateX(-30deg);
+    transform: scale(0.5) rotateX(-30deg);
+}
+
+.ReactModal__Content--after-open {
+    -webkit-transform: scale(1) rotateX(0deg);
+    transform: scale(1) rotateX(0deg);
+    transition: all 150ms ease-in;
+}
+
+.ReactModal__Overlay--before-close {
+    opacity: 0;
+}
+
+.ReactModal__Content--before-close {
+    -webkit-transform: scale(0.5) rotateX(30deg);
+    transform: scale(0.5) rotateX(30deg);
+    transition: all 150ms ease-in;
+}
+
+.ReactModal__Content.modal-dialog {
+    border: none;
+    background-color: transparent;
+}
+
+@media (min-width: 576px) {
+    .modal-dialog--clients,
+    .modal-dialog--schedule {
+        max-width: 650px;
+    }
+}

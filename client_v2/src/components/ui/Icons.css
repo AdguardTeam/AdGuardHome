@@ -1,0 +1,48 @@
+.icons {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.icon--24 {
+    --size: 1.5rem;
+
+    width: var(--size);
+    height: var(--size);
+}
+
+.icon--20 {
+    --size: 1.25rem;
+
+    width: var(--size);
+    height: var(--size);
+}
+
+.icon--18 {
+    --size: 1.125rem;
+
+    width: var(--size);
+    height: var(--size);
+}
+
+.icon--15 {
+    --size: 0.95rem;
+
+    width: var(--size);
+    height: var(--size);
+}
+
+.icon--gray {
+    color: var(--gray-a5);
+}
+
+.icon--green {
+    color: var(--green-74);
+}
+
+.icon--disabled {
+    color: var(--gray-d8);
+}
+
+.icon--lightgray {
+    color: var(--gray-8);
+}

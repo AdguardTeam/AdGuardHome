@@ -1,0 +1,38 @@
+.tooltip-container {
+    border: 0;
+    padding: 0.7rem;
+    box-shadow: 1px 1px 6px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .tooltip-container {
+    background-color: var(--ctrl-select-bgcolor);
+    color: var(--mcolor);
+}
+
+.tooltip-custom--narrow {
+    max-width: 14rem;
+}
+
+.tooltip-custom--wide {
+    max-width: 18rem;
+}
+
+.tooltip-custom__trigger {
+    cursor: pointer;
+}
+
+.tooltip-custom__content-title {
+    margin-bottom: 0.1875rem;
+}
+
+.tooltip-custom__content-item {
+    margin-bottom: 0.125rem;
+}
+
+.tooltip-custom__content-item:last-child {
+    margin-bottom: 0;
+}
+
+.tooltip-custom__content-link {
+    color: var(--green-86);
+}
