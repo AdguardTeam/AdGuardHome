@@ -2,8 +2,6 @@ import React from 'react';
 
 import { Trans } from 'react-i18next';
 
-import { Guide } from '../../components/ui/Guide';
-
 import Controls from './Controls';
 
 import AddressList from './AddressList';
@@ -33,8 +31,6 @@ export const Devices = ({ interfaces, dnsConfig }: Props) => (
                     <AddressList interfaces={interfaces} address={dnsConfig.ip} port={dnsConfig.port} isDns />
                 </div>
             </div>
-
-            <Guide />
         </div>
 
         <Controls />

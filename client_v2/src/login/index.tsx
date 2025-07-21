@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 
 import '../index.pcss';
-import '../components/ui/ReactTable.css';
 import configureStore from '../configureStore';
 import reducers from '../reducers/login';
 import '../i18n';

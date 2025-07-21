@@ -8,8 +8,6 @@ import App from './components/App';
 import './i18n';
 import { RootState, initialState } from './initialState';
 
-// TODO remove Tabler
-import './components/ui/Tabler.css';
 import './index.pcss';
 
 const store = configureStore<RootState>(reducers, initialState);

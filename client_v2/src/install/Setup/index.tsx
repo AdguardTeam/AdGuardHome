@@ -7,7 +7,6 @@ import * as actionCreators from '../../actions/install';
 import { getWebAddress } from '../../helpers/helpers';
 import { INSTALL_TOTAL_STEPS, ALL_INTERFACES_IP, DEBOUNCE_TIMEOUT } from '../../helpers/constants';
 
-import Loading from '../../components/ui/Loading';
 import Greeting from './Greeting';
 import { ConfigType, DnsConfig, Settings, WebConfig } from './Settings';
 import { Devices } from './Devices';
@@ -15,12 +14,8 @@ import { Submit } from './Submit';
 import { Progress } from './Progress';
 import { Auth } from './Auth';
 import Toasts from '../../components/Toasts';
-import Footer from '../../components/ui/Footer';
-import Icons from '../../components/ui/Icons';
-import { Logo } from '../../components/ui/svg/logo';
 
 import './Setup.css';
-import '../../components/ui/Tabler.css';
 import { InstallInterface, InstallState } from '../../initialState';
 
 export const Setup = () => {
@@ -101,24 +96,19 @@ export const Setup = () => {
     };
 
     if (processingDefault) {
-        return <Loading />;
+        return null;
     }
 
     return (
         <>
             <div className="setup">
                 <div className="setup__container">
-                    <Logo className="setup__logo" />
                     {renderPage(step, { web, dns, staticIp }, interfaces)}
                     <Progress step={step} />
                 </div>
             </div>
 
-            <Footer />
-
             <Toasts />
-
-            <Icons />
         </>
     );
 };
