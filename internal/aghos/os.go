@@ -5,9 +5,11 @@ package aghos
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path"
@@ -17,7 +19,6 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 )
 
 // Default file, binary, and directory permissions.
@@ -67,8 +68,14 @@ func RunCommand(command string, arguments ...string) (code int, output []byte, e
 }
 
 // PIDByCommand searches for process named command and returns its PID ignoring
-// the PIDs from except.  If no processes found, the error returned.
-func PIDByCommand(command string, except ...int) (pid int, err error) {
+// the PIDs from except.  If no processes found, the error returned.  l must not
+// be nil.
+func PIDByCommand(
+	ctx context.Context,
+	l *slog.Logger,
+	command string,
+	except ...int,
+) (pid int, err error) {
 	// Don't use -C flag here since it's a feature of linux's ps
 	// implementation.  Use POSIX-compatible flags instead.
 	//
@@ -101,7 +108,7 @@ func PIDByCommand(command string, except ...int) (pid int, err error) {
 	case 1:
 		// Go on.
 	default:
-		log.Info("warning: %d %s instances found", instNum, command)
+		l.WarnContext(ctx, "instances found", "num", instNum, "command", command)
 	}
 
 	if code := cmd.ProcessState.ExitCode(); code != 0 {

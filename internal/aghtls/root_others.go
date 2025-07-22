@@ -2,8 +2,12 @@
 
 package aghtls
 
-import "crypto/x509"
+import (
+	"context"
+	"crypto/x509"
+	"log/slog"
+)
 
-func rootCAs() (roots *x509.CertPool) {
+func rootCAs(ctx context.Context, l *slog.Logger) (roots *x509.CertPool) {
 	return nil
 }

@@ -1,14 +1,16 @@
 package aghos
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
+	"log/slog"
 	"path/filepath"
 
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/fsnotify/fsnotify"
 )
@@ -39,6 +41,9 @@ type FSWatcher interface {
 
 // osWatcher tracks the file system provided by the OS.
 type osWatcher struct {
+	// logger is used for logging the operations of the osWatcher.
+	logger *slog.Logger
+
 	// watcher is the actual notifier that is handled by osWatcher.
 	watcher *fsnotify.Watcher
 
@@ -54,8 +59,8 @@ type osWatcher struct {
 const osWatcherPref = "os watcher"
 
 // NewOSWritesWatcher creates FSWatcher that tracks the real file system of the
-// OS and notifies only about writing events.
-func NewOSWritesWatcher() (w FSWatcher, err error) {
+// OS and notifies only about writing events.  l must not be nil.
+func NewOSWritesWatcher(l *slog.Logger) (w FSWatcher, err error) {
 	defer func() { err = errors.Annotate(err, "%s: %w", osWatcherPref) }()
 
 	var watcher *fsnotify.Watcher
@@ -65,6 +70,7 @@ func NewOSWritesWatcher() (w FSWatcher, err error) {
 	}
 
 	return &osWatcher{
+		logger:  l,
 		watcher: watcher,
 		events:  make(chan event, 1),
 		files:   container.NewMapSet[string](),
@@ -76,8 +82,11 @@ var _ FSWatcher = (*osWatcher)(nil)
 
 // Start implements the FSWatcher interface for *osWatcher.
 func (w *osWatcher) Start() (err error) {
-	go w.handleErrors()
-	go w.handleEvents()
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+
+	go w.handleErrors(ctx)
+	go w.handleEvents(ctx)
 
 	return nil
 }
@@ -120,8 +129,8 @@ func (w *osWatcher) Add(name string) (err error) {
 
 // handleEvents notifies about the received file system's event if needed.  It
 // is intended to be used as a goroutine.
-func (w *osWatcher) handleEvents() {
-	defer log.OnPanic(fmt.Sprintf("%s: handling events", osWatcherPref))
+func (w *osWatcher) handleEvents(ctx context.Context) {
+	defer slogutil.RecoverAndLog(ctx, w.logger)
 
 	defer close(w.events)
 
@@ -131,33 +140,37 @@ func (w *osWatcher) handleEvents() {
 			continue
 		}
 
-		// Skip the following events assuming that sometimes the same event
-		// occurs several times.
-		for ok := true; ok; {
-			select {
-			case _, ok = <-ch:
-				// Go on.
-			default:
-				ok = false
-			}
-		}
+		skipDuplicates(ch)
 
 		select {
 		case w.events <- event{}:
 			// Go on.
 		default:
-			log.Debug("%s: events buffer is full", osWatcherPref)
+			w.logger.DebugContext(ctx, "events buffer is full")
+		}
+	}
+}
+
+// skipDuplicates drains the given channel of events, assuming that some events
+// might occur multiple times.
+func skipDuplicates(ch <-chan fsnotify.Event) {
+	for {
+		select {
+		case <-ch:
+			// Go on.
+		default:
+			return
 		}
 	}
 }
 
 // handleErrors handles accompanying errors.  It used to be called in a separate
 // goroutine.
-func (w *osWatcher) handleErrors() {
-	defer log.OnPanic(fmt.Sprintf("%s: handling errors", osWatcherPref))
+func (w *osWatcher) handleErrors(ctx context.Context) {
+	defer slogutil.RecoverAndLog(ctx, w.logger)
 
 	for err := range w.watcher.Errors {
-		log.Error("%s: %s", osWatcherPref, err)
+		w.logger.ErrorContext(ctx, "handling error", slogutil.KeyError, err)
 	}
 }
 

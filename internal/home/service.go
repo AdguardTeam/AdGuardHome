@@ -1,8 +1,10 @@
 package home
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"runtime"
 	"strconv"
@@ -106,7 +108,7 @@ func svcAction(s service.Service, action string) (err error) {
 
 // Send SIGHUP to a process with PID taken from our .pid file.  If it doesn't
 // exist, find our PID using 'ps' command.
-func sendSigReload() {
+func sendSigReload(ctx context.Context, l *slog.Logger) {
 	if runtime.GOOS == "windows" {
 		log.Error("service: not implemented on windows")
 
@@ -117,7 +119,7 @@ func sendSigReload() {
 	var pid int
 	data, err := os.ReadFile(pidFile)
 	if errors.Is(err, os.ErrNotExist) {
-		if pid, err = aghos.PIDByCommand(serviceName, os.Getpid()); err != nil {
+		if pid, err = aghos.PIDByCommand(ctx, l, serviceName, os.Getpid()); err != nil {
 			log.Error("service: finding AdGuardHome process: %s", err)
 
 			return
@@ -201,6 +203,8 @@ func restartService() (err error) {
 //     it is specified when we register a service, and it indicates to the app
 //     that it is being run as a service/daemon.
 func handleServiceControlAction(
+	ctx context.Context,
+	l *slog.Logger,
 	opts options,
 	clientBuildFS fs.FS,
 	signals chan os.Signal,
@@ -216,7 +220,7 @@ func handleServiceControlAction(
 	log.Info("service: control action: %s", action)
 
 	if action == "reload" {
-		sendSigReload()
+		sendSigReload(ctx, l)
 
 		return
 	}

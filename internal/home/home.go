@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -129,7 +130,7 @@ func Main(clientBuildFS fs.FS) {
 	go sigHdlr.handle(ctx)
 
 	if opts.serviceControlAction != "" {
-		handleServiceControlAction(opts, clientBuildFS, signals, done, sigHdlr)
+		handleServiceControlAction(ctx, slog.Default(), opts, clientBuildFS, signals, done, sigHdlr)
 
 		return
 	}
@@ -139,14 +140,14 @@ func Main(clientBuildFS fs.FS) {
 }
 
 // setupContext initializes [globalContext] fields.  It also reads and upgrades
-// config file if necessary.
-func setupContext(opts options) (err error) {
+// config file if necessary.  baseLogger must not be nil.
+func setupContext(baseLogger *slog.Logger, opts options) (err error) {
 	globalContext.firstRun = detectFirstRun()
 
 	globalContext.mux = http.NewServeMux()
 
 	if !opts.noEtcHosts {
-		err = setupHostsContainer()
+		err = setupHostsContainer(baseLogger)
 		if err != nil {
 			// Don't wrap the error, because it's informative enough as is.
 			return err
@@ -230,9 +231,9 @@ func configureOS(conf *configuration) (err error) {
 }
 
 // setupHostsContainer initializes the structures to keep up-to-date the hosts
-// provided by the OS.
-func setupHostsContainer() (err error) {
-	hostsWatcher, err := aghos.NewOSWritesWatcher()
+// provided by the OS.  baseLogger must not be nil.
+func setupHostsContainer(baseLogger *slog.Logger) (err error) {
+	hostsWatcher, err := aghos.NewOSWritesWatcher(baseLogger.With(slogutil.KeyPrefix, "oswatcher"))
 	if err != nil {
 		log.Info("WARNING: initializing filesystem watcher: %s; not watching for changes", err)
 
@@ -628,7 +629,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 		log.Info("AdGuard Home is running as a service")
 	}
 
-	err = setupContext(opts)
+	err = setupContext(slogLogger, opts)
 	fatalOnError(err)
 
 	err = configureOS(config)
@@ -646,6 +647,8 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	fatalOnError(err)
 
 	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
+	aghtls.Init(ctx, tlsMgrLogger)
+
 	tlsMgr, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:         tlsMgrLogger,
 		configModified: onConfigModified,
