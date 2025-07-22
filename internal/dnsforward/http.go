@@ -283,6 +283,7 @@ func (req *jsonDNSConfig) validate(
 	ownAddrs addrPortSet,
 	sysResolvers SystemResolvers,
 	privateNets netutil.SubnetSet,
+	curCacheSize uint32,
 ) (err error) {
 	defer func() { err = errors.Annotate(err, "validating dns config: %w") }()
 
@@ -310,7 +311,7 @@ func (req *jsonDNSConfig) validate(
 		return err
 	}
 
-	err = req.validateCacheSettings()
+	err = req.validateCacheSettings(curCacheSize)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
@@ -427,8 +428,8 @@ func (req *jsonDNSConfig) validateUpstreamDNSServers(
 }
 
 // validateCacheSettings returns an error if the cache configuration is invalid.
-func (req *jsonDNSConfig) validateCacheSettings() (err error) {
-	err = req.validateCacheSize()
+func (req *jsonDNSConfig) validateCacheSettings(curCacheSize uint32) (err error) {
+	err = req.validateCacheSize(curCacheSize)
 	if err != nil {
 		// Don't wrap the error because it's informative enough as is.
 		return err
@@ -452,9 +453,14 @@ func (req *jsonDNSConfig) validateCacheSettings() (err error) {
 
 // validateCacheSize returns an error if the cache size configuration is
 // invalid.  It also explicitly sets CacheEnabled to support legacy behavior.
-func (req *jsonDNSConfig) validateCacheSize() (err error) {
+func (req *jsonDNSConfig) validateCacheSize(curCacheSize uint32) (err error) {
 	if req.CacheEnabled != nil && *req.CacheEnabled {
-		if req.CacheSize != nil && *req.CacheSize == 0 {
+		size := curCacheSize
+		if req.CacheSize != nil {
+			size = *req.CacheSize
+		}
+
+		if size == 0 {
 			return errors.Error("cache_size must be greater than zero when cache_enabled is true")
 		}
 	}
@@ -530,7 +536,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = req.validate(ourAddrs, s.sysResolvers, s.privateNets)
+	err = req.validate(ourAddrs, s.sysResolvers, s.privateNets, s.conf.CacheSize)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 

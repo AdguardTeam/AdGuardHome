@@ -392,8 +392,13 @@ func prepareCacheConfig(
 	maxTTL uint32,
 ) (prepared *proxy.Config, err error) {
 	if isEnabled {
+		cacheSize := int(size)
+		if cacheSize == 0 {
+			return nil, fmt.Errorf("cache_enabled is true, cache_size must be a positive value")
+		}
+
 		conf.CacheEnabled = true
-		conf.CacheSizeBytes = int(size)
+		conf.CacheSizeBytes = cacheSize
 	}
 
 	err = validateCacheTTL(minTTL, maxTTL)
