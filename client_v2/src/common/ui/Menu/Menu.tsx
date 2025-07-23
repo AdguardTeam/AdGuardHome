@@ -24,19 +24,20 @@ export const Menu = ({ headerMenu }: Props) => {
 
     const isActive = (path: string | string[], full = false) => {
         const currentPath = location.pathname;
+        const paths = Array.isArray(path) ? path : [path];
 
-        if (Array.isArray(path)) {
-            return path.some((p) => (full ? p === currentPath : currentPath === p || currentPath.startsWith(p + '/')));
-        }
+        return paths.some((p) => {
+            if (currentPath === p) {
+                return true;
+            }
 
-        if (full) {
-            return path === currentPath;
-        }
+            if (full) {
+                return false;
+            }
 
-        return (
-            currentPath === path ||
-            (currentPath.startsWith(path) && (currentPath[path.length] === '/' || path.endsWith('/')))
-        );
+            const normalizedPath = p.endsWith('/') ? p : p + '/';
+            return currentPath.startsWith(normalizedPath);
+        });
     };
 
     return (
