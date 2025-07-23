@@ -18,7 +18,6 @@ export enum RoutePath {
     CustomRules = 'CustomRules',
     BlockedServices = 'BlockedServices',
     UserRules = 'UserRules',
-    Expo = 'Expo',
 }
 
 export const Paths: Record<RoutePath, string> = {
@@ -36,7 +35,6 @@ export const Paths: Record<RoutePath, string> = {
     CustomRules: pathBuilder('custom_rules'),
     BlockedServices: pathBuilder('blocked_services'),
     UserRules: pathBuilder('user_rules'),
-    Expo: pathBuilder('expo'),
 };
 
 export type LinkParams = Partial<Record<string, string | number>>;

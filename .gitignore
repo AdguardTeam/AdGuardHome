@@ -43,3 +43,6 @@ coverage.txt
 node_modules/
 
 !/build/gitkeep
+
+*storybook.log
+storybook-static

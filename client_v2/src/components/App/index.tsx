@@ -13,7 +13,6 @@ import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
 import { changeLanguage, getDnsStatus, getTimerStatus } from '../../actions';
 
 import { RootState } from '../../initialState';
-import Expo from '../Expo';
 
 import s from './styles.module.pcss';
 
@@ -24,14 +23,6 @@ type RouteConfig = {
 };
 
 const ROUTES: RouteConfig[] = [];
-
-if (process.env.NODE_ENV === 'development') {
-    ROUTES.push({
-        path: '/expo',
-        component: Expo,
-        exact: true,
-    });
-}
 
 const App = () => {
     const dispatch = useDispatch();

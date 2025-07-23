@@ -41,13 +41,10 @@ export const Checkbox = ({
             {plusStyle ? (
                 <Icon
                     icon={checked ? 'checkbox_minus' : 'checkbox_plus'}
-                    className={cn(s.icon, { [s.icon_active]: checked })}
+                    className={cn(s.icon, { [s.active]: checked })}
                 />
             ) : (
-                <Icon
-                    icon={checked ? 'checkbox_checked' : 'checkbox_unchecked'}
-                    className={cn(s.icon, { [s.icon_active]: checked })}
-                />
+                <Icon icon={checked ? 'checkbox_on' : 'checkbox_off'} className={cn(s.icon, { [s.active]: checked })} />
             )}
         </div>
         {children && (

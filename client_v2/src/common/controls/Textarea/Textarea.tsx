@@ -20,10 +20,11 @@ export const Textarea = ({
     className,
     maxLength,
     errorMessage,
+    disabled,
 }: Props) => (
     <div className={s.textareaWrapper}>
         {label && (
-            <label className={s.textareaLabel} htmlFor={id}>
+            <label className={s.label} htmlFor={id}>
                 {label}
             </label>
         )}
@@ -37,7 +38,8 @@ export const Textarea = ({
             onChange={onChange}
             wrap={wrap}
             maxLength={maxLength}
+            disabled={disabled}
         />
-        {errorMessage && <div className={s.error}>{errorMessage}</div>}
+        {errorMessage && <div className={s.errorMessage}>{errorMessage}</div>}
     </div>
 );

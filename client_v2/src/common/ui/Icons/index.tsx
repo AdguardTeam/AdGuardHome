@@ -3,8 +3,8 @@ import React, { memo } from 'react';
 import './Icons.pcss';
 
 export const ICONS = {
-    checkbox_unchecked: 'checkbox_unchecked',
-    checkbox_checked: 'checkbox_checked',
+    checkbox_off: 'checkbox_off',
+    checkbox_on: 'checkbox_on',
     checkbox_plus: 'checkbox_plus',
     checkbox_minus: 'checkbox_minus',
     radio_on: 'radio_on',
@@ -33,7 +33,7 @@ export const ICON_VALUES: IconType[] = Object.values(ICONS);
 
 export const Icons = memo(() => (
     <svg xmlns="http://www.w3.org/2000/svg" className="icons">
-        <symbol id="checkbox_unchecked" viewBox="0 0 24 24" fill="none" fillRule="evenodd" clipRule="evenodd">
+        <symbol id="checkbox_off" viewBox="0 0 24 24" fill="none" fillRule="evenodd" clipRule="evenodd">
             <path
                 d="M21 3H3V21H21V3Z"
                 stroke="currentColor"
@@ -43,7 +43,7 @@ export const Icons = memo(() => (
             />
         </symbol>
 
-        <symbol id="checkbox_checked" viewBox="0 0 24 24" fillRule="evenodd" clipRule="evenodd">
+        <symbol id="checkbox_on" viewBox="0 0 24 24" fillRule="evenodd" clipRule="evenodd">
             <path
                 d="m22 22v-20h-20v20zm-4.4309-12.5115c.2698-.3143.2337-.7878-.0806-1.05759s-.7878-.23371-1.0576.08059l-5.4763 6.3798-3.41909-3.4869c-.29-.2957-.76485-.3004-1.06061-.0104-.29575.29-.30042.7649-.01041 1.0606l4.56351 4.6541z"
                 fill="currentColor"

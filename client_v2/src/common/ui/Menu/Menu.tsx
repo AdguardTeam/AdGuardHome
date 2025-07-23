@@ -120,14 +120,6 @@ export const Menu = ({ headerMenu }: Props) => {
                 </div>
             </nav>
             <div className={s.referenceWrapper}>
-                {process.env.NODE_ENV === 'development' && (
-                    <div className={cn(s.menuLinkWrapper)}>
-                        <Link className={cn(s.menuLink, { [s.activeLink]: isActive(Paths.Expo) })} to={RoutePath.Expo}>
-                            <Icon className={s.linkIcon} icon="faq" />
-                            <span className={theme.common.textOverflow}>Components</span>
-                        </Link>
-                    </div>
-                )}
                 <div className={cn(s.menuLinkWrapper)}>
                     <a target="_blank" rel="noopener noreferrer" className={s.menuLink} href="">
                         <Icon className={s.linkIcon} icon="logout" />

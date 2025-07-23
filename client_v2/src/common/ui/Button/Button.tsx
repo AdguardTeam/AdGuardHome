@@ -2,14 +2,10 @@ import React, { ComponentProps, ReactNode } from 'react';
 import cn from 'clsx';
 
 import s from './Button.module.pcss';
-import { IconType } from '../Icons';
-import { Icon } from '../Icon';
 
 export type ButtonProps = ComponentProps<'button'> & {
     size?: 'small' | 'medium' | 'big';
     variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
-    icon?: IconType;
-    iconClassName?: string;
     children?: ReactNode;
     leftAddon?: ReactNode;
     rightAddon?: ReactNode;

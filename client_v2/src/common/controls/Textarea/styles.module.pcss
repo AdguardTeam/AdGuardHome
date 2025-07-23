@@ -29,6 +29,18 @@
     &.error {
         border-color: var(--default-error-icon);
     }
+
+    &:disabled {
+        background-color: var(--pressed-page-background);
+        color: var(--default-description-text);
+        cursor: default;
+
+        &:-webkit-autofill,
+        &:-webkit-autofill:hover,
+        &:-webkit-autofill:focus {
+            box-shadow: 0 0 0 100px var(--pressed-page-background) inset;
+        }
+    }
 }
 
 .label {
@@ -39,7 +51,7 @@
     color: var(--default-description-text);
 }
 
-.error {
+.errorMessage {
     margin-top: 8px;
     font-size: 14px;
     color: var(--default-error-icon);

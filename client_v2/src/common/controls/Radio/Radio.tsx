@@ -35,7 +35,7 @@ export const Radio = <T extends number | string | boolean = string>({
                 <div className={s.handler}>
                     <Icon
                         icon={value === o.value ? 'radio_on' : 'radio_off'}
-                        className={cn(s.icon, { [s.icon_active]: value === o.value })}
+                        className={cn(s.icon, { [s.active]: value === o.value })}
                     />
                 </div>
                 <div className={s.text}>{o.text}</div>
