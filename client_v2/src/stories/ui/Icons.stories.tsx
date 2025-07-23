@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
-import { ICON_VALUES } from '../../common/ui/Icons';
-import { Icon } from '../../common/ui';
+import { ICON_VALUES } from 'panel/common/ui/Icons';
+import { Icon } from 'panel/common/ui/Icon';
 
 import s from './Icons.module.pcss';
 

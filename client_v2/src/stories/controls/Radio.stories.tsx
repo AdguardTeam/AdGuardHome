@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
-import { Radio } from '../../common/controls';
+import { Radio } from 'panel/common/controls/Radio';
 
 const meta: Meta<typeof Radio> = {
     title: 'Controls/Radio',

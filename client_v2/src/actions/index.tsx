@@ -24,7 +24,7 @@ import {
 } from '../helpers/constants';
 import { areEqualVersions } from '../helpers/version';
 import { getTlsStatus } from './encryption';
-import apiClient from '../api/Api';
+import { apiClient } from '../api/Api';
 import { addErrorToast, addNoticeToast, addSuccessToast } from './toasts';
 import { getFilteringStatus, setRules } from './filtering';
 

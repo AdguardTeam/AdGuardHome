@@ -1,5 +1,5 @@
 import { createAction } from 'redux-actions';
-import apiClient from '../api/Api';
+import { apiClient } from '../api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 
 export const nextStep = createAction('NEXT_STEP');
@@ -49,11 +49,13 @@ export const checkConfig = (values: any) => async (dispatch: any) => {
     dispatch(checkConfigRequest());
     try {
         const check = await apiClient.checkConfig(values);
-        dispatch(checkConfigSuccess({
-            web: { ...values.web, ...check.web },
-            dns: { ...values.dns, ...check.dns },
-            static_ip: check.static_ip,
-        }));
+        dispatch(
+            checkConfigSuccess({
+                web: { ...values.web, ...check.web },
+                dns: { ...values.dns, ...check.dns },
+                static_ip: check.static_ip,
+            }),
+        );
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(checkConfigFailure());

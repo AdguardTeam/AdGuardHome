@@ -1,6 +1,6 @@
 import { createAction } from 'redux-actions';
 import i18next from 'i18next';
-import apiClient from '../api/Api';
+import { apiClient } from '../api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 
 export const toggleRewritesModal = createAction('TOGGLE_REWRITES_MODAL');

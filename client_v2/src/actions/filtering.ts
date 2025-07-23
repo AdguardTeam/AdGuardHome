@@ -1,9 +1,8 @@
 import { createAction } from 'redux-actions';
-import { showLoading, hideLoading } from 'react-redux-loading-bar';
 import i18next from 'i18next';
 
 import { normalizeFilteringStatus, normalizeRulesTextarea } from '../helpers/helpers';
-import apiClient from '../api/Api';
+import { apiClient } from '../api/Api';
 import { addErrorToast, addSuccessToast } from './toasts';
 
 export const toggleFilteringModal = createAction('FILTERING_MODAL_TOGGLE');
@@ -133,7 +132,6 @@ export const refreshFiltersSuccess = createAction('FILTERING_REFRESH_SUCCESS');
 
 export const refreshFilters = (config: any) => async (dispatch: any) => {
     dispatch(refreshFiltersRequest());
-    dispatch(showLoading());
     try {
         const data = await apiClient.refreshFilters(config);
         const { updated } = data;
@@ -146,11 +144,9 @@ export const refreshFilters = (config: any) => async (dispatch: any) => {
         }
 
         dispatch(getFilteringStatus());
-        dispatch(hideLoading());
     } catch (error) {
         dispatch(addErrorToast({ error }));
         dispatch(refreshFiltersFailure());
-        dispatch(hideLoading());
     }
 };
 

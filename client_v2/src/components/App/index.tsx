@@ -3,7 +3,10 @@ import React, { useEffect } from 'react';
 import { HashRouter, Route } from 'react-router-dom';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
-import { Sidebar, Icons, Footer, Header } from 'panel/common/ui';
+import { Sidebar } from 'panel/common/ui/Sidebar';
+import { Icons } from 'panel/common/ui/Icons';
+import { Footer } from 'panel/common/ui/Footer';
+import { Header } from 'panel/common/ui/Header';
 
 import Toasts from '../Toasts';
 import i18n from '../../i18n';

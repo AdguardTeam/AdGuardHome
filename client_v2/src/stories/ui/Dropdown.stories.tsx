@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
-import { Dropdown } from '../../common/ui';
+import { Dropdown } from 'panel/common/ui/Dropdown';
 import theme from 'panel/lib/theme';
 
 const meta: Meta<typeof Dropdown> = {

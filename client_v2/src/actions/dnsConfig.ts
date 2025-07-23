@@ -1,7 +1,7 @@
 import { createAction } from 'redux-actions';
 import i18next from 'i18next';
 
-import apiClient from '../api/Api';
+import { apiClient } from '../api/Api';
 
 import { splitByNewLine } from '../helpers/helpers';
 import { addErrorToast, addSuccessToast } from './toasts';

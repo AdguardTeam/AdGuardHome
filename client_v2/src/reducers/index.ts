@@ -1,5 +1,4 @@
 import { combineReducers } from 'redux';
-import { loadingBarReducer } from 'react-redux-loading-bar';
 
 import toasts from './toasts';
 import encryption from './encryption';
@@ -29,5 +28,4 @@ export default combineReducers({
     services,
     stats,
     dnsConfig,
-    loadingBar: loadingBarReducer,
 });

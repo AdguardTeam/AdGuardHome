@@ -5,7 +5,7 @@ import round from 'lodash/round';
 import axios from 'axios';
 import i18n from 'i18next';
 import ipaddr, { IPv4, IPv6 } from 'ipaddr.js';
-import queryString from 'query-string';
+import queryString from 'qs';
 import React from 'react';
 import { getTrackerData } from './trackers/trackers';
 
@@ -675,9 +675,7 @@ export const formatElapsedMs = (elapsedMs: string, t: (key: string) => string) =
         return elapsedMs;
     }
 
-    const formattedValue = parsedElapsedMs < 1
-        ? parsedElapsedMs.toFixed(2)
-        : Math.floor(parsedElapsedMs).toString();
+    const formattedValue = parsedElapsedMs < 1 ? parsedElapsedMs.toFixed(2) : Math.floor(parsedElapsedMs).toString();
 
     return `${formattedValue} ${t('milliseconds_abbreviation')}`;
 };

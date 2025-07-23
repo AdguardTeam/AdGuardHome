@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import cn from 'classnames';
+import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
-import { Dropdown, Icon } from 'panel/common/ui';
+import { Dropdown } from 'panel/common/ui/Dropdown';
+import { Icon } from 'panel/common/ui/Icon';
 
 import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from '../../../helpers/constants';
 import { LANGUAGES } from '../../../helpers/twosky';
@@ -60,11 +61,13 @@ export const Footer = () => {
 
         if (activeTheme === THEMES.auto) {
             return 'theme_auto';
-        } else if (activeTheme === THEMES.dark) {
-            return 'theme_dark';
-        } else {
-            return 'theme_light';
         }
+
+        if (activeTheme === THEMES.dark) {
+            return 'theme_dark';
+        }
+
+        return 'theme_light';
     };
 
     const changeLanguage = (newLang: LocalesType) => {

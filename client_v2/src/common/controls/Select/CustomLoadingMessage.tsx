@@ -2,7 +2,7 @@ import React from 'react';
 import { components, GroupBase, NoticeProps } from 'react-select';
 import theme from 'panel/lib/theme';
 
-import { Loader } from 'panel/common/ui';
+import { Loader } from 'panel/common/ui/Loader';
 
 export const CustomLoadingMessage = <
     Option,

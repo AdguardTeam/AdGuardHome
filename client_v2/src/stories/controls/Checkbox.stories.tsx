@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
-import { Checkbox } from '../../common/controls';
+import { Checkbox } from 'panel/common/controls/Checkbox';
 
 const meta: Meta<typeof Checkbox> = {
     title: 'Controls/Checkbox',
@@ -127,7 +127,8 @@ export const PlusStyleChecked: Story = {
 export const WithOverflow: Story = {
     render: CheckboxWithState,
     args: {
-        children: 'This is a very long label text that should demonstrate the overflow behavior when the text is too long to fit in the available space',
+        children:
+            'This is a very long label text that should demonstrate the overflow behavior when the text is too long to fit in the available space',
         overflow: true,
         id: 'overflow-checkbox',
     },

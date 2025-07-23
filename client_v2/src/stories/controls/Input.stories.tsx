@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
-import { Input } from '../../common/controls';
-import { Icon } from 'panel/common/ui';
+import { Icon } from 'panel/common/ui/Icon';
+import { Input } from 'panel/common/controls/Input';
 
 const meta: Meta<typeof Input> = {
     title: 'Controls/Input',

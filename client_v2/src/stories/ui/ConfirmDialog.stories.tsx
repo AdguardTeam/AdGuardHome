@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
-import { ConfirmDialog } from '../../common/ui';
-import { Button } from '../../common/ui';
+import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
+import { Button } from 'panel/common/ui/Button';
 
 const meta: Meta<typeof ConfirmDialog> = {
     title: 'UI/ConfirmDialog',

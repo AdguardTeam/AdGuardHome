@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import cn from 'clsx';
-import { Button, ButtonProps, Dialog } from 'panel/common/ui';
+import { Button, ButtonProps } from 'panel/common/ui/Button';
+import { Dialog } from 'panel/common/ui/Dialog';
 import theme from 'panel/lib/theme';
 
 import s from './ConfirmDialog.module.pcss';

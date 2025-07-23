@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
-import { Loader, InlineLoader, Button } from '../../common/ui';
+import { Loader, InlineLoader } from 'panel/common/ui/Loader';
+import { Button } from 'panel/common/ui/Button';
 
 const meta: Meta<typeof Loader> = {
     title: 'UI/Loader',

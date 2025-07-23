@@ -1,6 +1,8 @@
 import React, { MouseEvent, useState } from 'react';
 import cn from 'clsx';
-import { Icon, Link, Menu } from 'panel/common/ui';
+import { Icon } from 'panel/common/ui/Icon';
+import { Link } from 'panel/common/ui/Link';
+import { Menu } from 'panel/common/ui/Menu';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
-import { Select } from '../../common/controls';
+import { Select } from 'panel/common/controls/Select';
 
 const meta: Meta<typeof Select> = {
     title: 'Controls/Select',

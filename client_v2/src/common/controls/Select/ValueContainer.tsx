@@ -1,7 +1,8 @@
 import React from 'react';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
-import { Icon, Loader } from 'panel/common/ui';
+import { Icon } from 'panel/common/ui/Icon';
+import { Loader } from 'panel/common/ui/Loader';
 import { IOption } from 'panel/lib/helpers/utils';
 import theme from 'panel/lib/theme';
 import { ISelectValue } from './Select';

@@ -390,7 +390,6 @@ export type RootState = {
     stats?: StatsData;
     install?: InstallData;
     toasts: { notices: any[] };
-    loadingBar: any;
 };
 
 export type InstallState = {
@@ -615,5 +614,4 @@ export const initialState: RootState = {
         topUpstreamsResponses: [],
     },
     toasts: { notices: [] },
-    loadingBar: {},
 };

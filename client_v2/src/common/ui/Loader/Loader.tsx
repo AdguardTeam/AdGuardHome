@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'clsx';
-import { Icon, IconType } from 'panel/common/ui';
+import { Icon, IconType } from 'panel/common/ui/Icon';
 
 import s from './Loader.module.pcss';
 

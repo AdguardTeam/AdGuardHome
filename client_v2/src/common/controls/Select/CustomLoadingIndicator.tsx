@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader } from 'panel/common/ui';
+import { Loader } from 'panel/common/ui/Loader';
 import theme from 'panel/lib/theme';
 
 export const CustomLoadingIndicator = () => (

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
-import { Textarea } from '../../common/controls';
+import { Textarea } from 'panel/common/controls/Textarea';
 
 const meta: Meta<typeof Textarea> = {
     title: 'Controls/Textarea',

@@ -1,6 +1,6 @@
 import { createAction } from 'redux-actions';
 
-import apiClient from '../api/Api';
+import { apiClient } from '../api/Api';
 import { addErrorToast } from './toasts';
 import { HTML_PAGES } from '../helpers/constants';
 

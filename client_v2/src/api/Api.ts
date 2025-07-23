@@ -8,7 +8,11 @@ import i18n from '../i18n';
 import { LANGUAGES } from '../helpers/twosky';
 
 class Api {
-    baseUrl = BASE_URL;
+    baseUrl: string;
+
+    constructor(baseUrl: string) {
+        this.baseUrl = baseUrl;
+    }
 
     async makeRequest(path: any, method = 'POST', config: any = {}) {
         const url = `${this.baseUrl}/${path}`;
@@ -690,5 +694,4 @@ class Api {
     }
 }
 
-const apiClient = new Api();
-export default apiClient;
+export const apiClient = new Api(BASE_URL);

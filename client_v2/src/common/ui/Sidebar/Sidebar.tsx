@@ -1,9 +1,9 @@
-import React, { useContext, useState } from 'react';
-import { Icon, Link } from 'panel/common/ui';
+import React, { useState } from 'react';
+import { Link } from 'panel/common/ui/Link';
+import { Menu } from 'panel/common/ui/Menu';
 import { RoutePath } from 'panel/components/Routes/Paths';
 
 import s from './styles.module.pcss';
-import { Menu } from '../Menu/Menu';
 import { Logo } from './Logo';
 
 export const Sidebar = () => {

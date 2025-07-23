@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
-import { Switch } from '../../common/controls';
+import { Switch } from 'panel/common/controls/Switch';
 
 const SwitchWrapper = (props: any) => {
     const [checked, setChecked] = useState(props.checked || false);

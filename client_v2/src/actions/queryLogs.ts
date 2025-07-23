@@ -1,6 +1,6 @@
 import { createAction } from 'redux-actions';
 
-import apiClient from '../api/Api';
+import { apiClient } from '../api/Api';
 
 import { normalizeLogs } from '../helpers/helpers';
 import { DEFAULT_LOGS_FILTER, QUERY_LOGS_PAGE_LIMIT } from '../helpers/constants';
