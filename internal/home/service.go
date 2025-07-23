@@ -16,6 +16,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/kardianos/service"
 )
@@ -38,6 +39,7 @@ type program struct {
 	signals       chan os.Signal
 	done          chan struct{}
 	opts          options
+	logger        *slog.Logger
 	sigHdlr       *signalHandler
 }
 
@@ -50,7 +52,7 @@ func (p *program) Start(_ service.Service) (err error) {
 	args := p.opts
 	args.runningAsService = true
 
-	go run(args, p.clientBuildFS, p.done, p.sigHdlr)
+	go run(p.logger, args, p.clientBuildFS, p.done, p.sigHdlr)
 
 	return nil
 }
@@ -107,7 +109,7 @@ func svcAction(s service.Service, action string) (err error) {
 }
 
 // Send SIGHUP to a process with PID taken from our .pid file.  If it doesn't
-// exist, find our PID using 'ps' command.
+// exist, find our PID using 'ps' command.  l must not be nil.
 func sendSigReload(ctx context.Context, l *slog.Logger) {
 	if runtime.GOOS == "windows" {
 		log.Error("service: not implemented on windows")
@@ -119,7 +121,8 @@ func sendSigReload(ctx context.Context, l *slog.Logger) {
 	var pid int
 	data, err := os.ReadFile(pidFile)
 	if errors.Is(err, os.ErrNotExist) {
-		if pid, err = aghos.PIDByCommand(ctx, l, serviceName, os.Getpid()); err != nil {
+		aghosLogger := l.With(slogutil.KeyPrefix, "aghos")
+		if pid, err = aghos.PIDByCommand(ctx, aghosLogger, serviceName, os.Getpid()); err != nil {
 			log.Error("service: finding AdGuardHome process: %s", err)
 
 			return
@@ -250,6 +253,7 @@ func handleServiceControlAction(
 		signals:       signals,
 		done:          done,
 		opts:          runOpts,
+		logger:        l,
 		sigHdlr:       sigHdlr,
 	}, svcConfig)
 	if err != nil {

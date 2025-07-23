@@ -24,23 +24,23 @@ import (
 
 // FSWatcher is a fake [aghos.FSWatcher] implementation for tests.
 type FSWatcher struct {
-	OnStart  func() (err error)
-	OnClose  func() (err error)
-	OnEvents func() (e <-chan struct{})
-	OnAdd    func(name string) (err error)
+	OnStart    func(ctx context.Context) (err error)
+	OnShutdown func(ctx context.Context) (err error)
+	OnEvents   func() (e <-chan struct{})
+	OnAdd      func(name string) (err error)
 }
 
 // type check
 var _ aghos.FSWatcher = (*FSWatcher)(nil)
 
 // Start implements the [aghos.FSWatcher] interface for *FSWatcher.
-func (w *FSWatcher) Start() (err error) {
-	return w.OnStart()
+func (w *FSWatcher) Start(ctx context.Context) (err error) {
+	return w.OnStart(ctx)
 }
 
-// Close implements the [aghos.FSWatcher] interface for *FSWatcher.
-func (w *FSWatcher) Close() (err error) {
-	return w.OnClose()
+// Shutdown implements the [aghos.FSWatcher] interface for *FSWatcher.
+func (w *FSWatcher) Shutdown(ctx context.Context) (err error) {
+	return w.OnShutdown(ctx)
 }
 
 // Events implements the [aghos.FSWatcher] interface for *FSWatcher.

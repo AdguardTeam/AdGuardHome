@@ -1,6 +1,7 @@
 package aghnet
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -102,7 +103,9 @@ func NewHostsContainer(
 func (hc *HostsContainer) Close() (err error) {
 	log.Debug("%s: closing", hostsContainerPrefix)
 
-	err = errors.Annotate(hc.watcher.Close(), "closing fs watcher: %w")
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+	err = errors.Annotate(hc.watcher.Shutdown(ctx), "closing fs watcher: %w")
 
 	// Go on and close the container either way.
 	close(hc.done)

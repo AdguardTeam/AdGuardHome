@@ -3,7 +3,6 @@ package aghos
 import (
 	"context"
 	"fmt"
-	"io"
 	"io/fs"
 	"log/slog"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/service"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -25,11 +25,7 @@ type event = struct{}
 //
 // TODO(e.burkov):  Add tests.
 type FSWatcher interface {
-	// Start starts watching the added files.
-	Start() (err error)
-
-	// Close stops watching the files and closes an update channel.
-	io.Closer
+	service.Interface
 
 	// Events returns the channel to notify about the file system events.
 	Events() (e <-chan event)
@@ -80,19 +76,16 @@ func NewOSWritesWatcher(l *slog.Logger) (w FSWatcher, err error) {
 // type check
 var _ FSWatcher = (*osWatcher)(nil)
 
-// Start implements the FSWatcher interface for *osWatcher.
-func (w *osWatcher) Start() (err error) {
-	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
-
+// Start implements the [FSWatcher] interface for *osWatcher.
+func (w *osWatcher) Start(ctx context.Context) (err error) {
 	go w.handleErrors(ctx)
 	go w.handleEvents(ctx)
 
 	return nil
 }
 
-// Close implements the FSWatcher interface for *osWatcher.
-func (w *osWatcher) Close() (err error) {
+// Shutdown implements the [FSWatcher] interface for *osWatcher.
+func (w *osWatcher) Shutdown(_ context.Context) (err error) {
 	return w.watcher.Close()
 }
 
@@ -183,13 +176,13 @@ var _ FSWatcher = EmptyFSWatcher{}
 
 // Start implements the [FSWatcher] interface for EmptyFSWatcher.  It always
 // returns nil error.
-func (EmptyFSWatcher) Start() (err error) {
+func (EmptyFSWatcher) Start(_ context.Context) (err error) {
 	return nil
 }
 
-// Close implements the [FSWatcher] interface for EmptyFSWatcher.  It always
+// Shutdown implements the [FSWatcher] interface for EmptyFSWatcher.  It always
 // returns nil error.
-func (EmptyFSWatcher) Close() (err error) {
+func (EmptyFSWatcher) Shutdown(_ context.Context) (err error) {
 	return nil
 }
 

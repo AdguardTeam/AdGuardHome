@@ -8,6 +8,6 @@ import (
 	"log/slog"
 )
 
-func rootCAs(ctx context.Context, l *slog.Logger) (roots *x509.CertPool) {
+func rootCAs(_ context.Context, _ *slog.Logger) (roots *x509.CertPool) {
 	return nil
 }

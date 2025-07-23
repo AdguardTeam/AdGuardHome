@@ -19,7 +19,9 @@ const (
 	nl        = "\n"
 )
 
-func fileWalker(_ string) (fw aghos.FileWalker) {
+// newFileWalker returns a new file-walker function that reads patterns from an
+// [io.Reader].
+func newFileWalker() (fw aghos.FileWalker) {
 	return func(r io.Reader) (patterns []string, cont bool, err error) {
 		s := bufio.NewScanner(r)
 		for s.Scan() {
@@ -90,7 +92,7 @@ func TestFileWalker_Walk(t *testing.T) {
 	}}
 
 	for _, tc := range testCases {
-		fw := fileWalker("")
+		fw := newFileWalker()
 
 		t.Run(tc.name, func(t *testing.T) {
 			ok, err := fw.Walk(tc.testFS, tc.initPattern)
@@ -102,7 +104,7 @@ func TestFileWalker_Walk(t *testing.T) {
 
 	t.Run("pattern_malformed", func(t *testing.T) {
 		f := fstest.MapFS{}
-		ok, err := fileWalker("").Walk(f, "[]")
+		ok, err := newFileWalker().Walk(f, "[]")
 		require.Error(t, err)
 
 		assert.False(t, ok)

@@ -37,8 +37,8 @@ func addCertsFromDir(
 	ctx context.Context,
 	l *slog.Logger,
 	pool *x509.CertPool,
-	dir string) (ok bool,
-) {
+	dir string,
+) (ok bool) {
 	dirEnts, err := os.ReadDir(dir)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {

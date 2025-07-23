@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"os"
 	"sync"
-	"sync/atomic"
 	"syscall"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
@@ -16,10 +15,8 @@ import (
 // signalHandler processes incoming signals.  It reloads configurations of
 // stored entities on SIGHUP and performs cleanup on all other signals.
 type signalHandler struct {
-	// logger is used to log the operation of the signal handler.  Initially,
-	// [slog.Default] is used, but it should be swapped later using
-	// [signalHandler.swapLogger].
-	logger *atomic.Pointer[slog.Logger]
+	// logger is used to log the operation of the signal handler.
+	logger *slog.Logger
 
 	// mu protects clientStorage and tlsManager.
 	mu *sync.Mutex
@@ -41,24 +38,16 @@ type signalHandler struct {
 
 // newSignalHandler returns a new properly initialized *signalHandler.
 func newSignalHandler(
+	l *slog.Logger,
 	signals <-chan os.Signal,
 	cleanup func(ctx context.Context),
 ) (h *signalHandler) {
-	h = &signalHandler{
-		logger:  &atomic.Pointer[slog.Logger]{},
+	return &signalHandler{
+		logger:  l,
 		mu:      &sync.Mutex{},
 		signals: signals,
 		cleanup: cleanup,
 	}
-
-	h.logger.Store(slog.Default())
-
-	return h
-}
-
-// swapLogger replaces the stored logger with the given logger.
-func (h *signalHandler) swapLogger(logger *slog.Logger) {
-	h.logger.Swap(logger)
 }
 
 // addClientStorage stores the client storage.
@@ -89,14 +78,14 @@ func (h *signalHandler) handle(ctx context.Context) {
 			return
 		}
 
-		slogutil.PrintRecovered(ctx, h.logger.Load(), v)
+		slogutil.PrintRecovered(ctx, h.logger, v)
 
 		os.Exit(osutil.ExitCodeFailure)
 	}()
 
 	for {
 		sig := <-h.signals
-		h.logger.Load().InfoContext(ctx, "received signal", "signal", sig)
+		h.logger.InfoContext(ctx, "received signal", "signal", sig)
 		switch sig {
 		case syscall.SIGHUP:
 			h.reloadConfig(ctx)

@@ -12,7 +12,7 @@ import (
 )
 
 // testTimeout is a common timeout for tests and contexts.
-const testTimeout time.Duration = 10 * time.Second
+const testTimeout time.Duration = 1 * time.Second
 
 func TestParseCiphers(t *testing.T) {
 	aghtls.Init(testutil.ContextWithTimeout(t, testTimeout), slogutil.NewDiscardLogger())
