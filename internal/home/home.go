@@ -136,13 +136,23 @@ func Main(clientBuildFS fs.FS) {
 	go sigHdlr.handle(ctx)
 
 	if opts.serviceControlAction != "" {
-		handleServiceControlAction(ctx, baseLogger, opts, clientBuildFS, signals, done, sigHdlr)
+		svcLogger := baseLogger.With(slogutil.KeyPrefix, "service")
+		handleServiceControlAction(
+			ctx,
+			baseLogger,
+			svcLogger,
+			opts,
+			clientBuildFS,
+			signals,
+			done,
+			sigHdlr,
+		)
 
 		return
 	}
 
 	// run the protection
-	run(baseLogger, opts, clientBuildFS, done, sigHdlr)
+	run(ctx, baseLogger, opts, clientBuildFS, done, sigHdlr)
 }
 
 // setupContext initializes [globalContext] fields.  It also reads and upgrades
@@ -611,6 +621,7 @@ func fatalOnError(err error) {
 //
 // TODO(e.burkov):  Make opts a pointer.
 func run(
+	ctx context.Context,
 	slogLogger *slog.Logger,
 	opts options,
 	clientBuildFS fs.FS,
@@ -637,8 +648,7 @@ func run(
 		log.Info("AdGuard Home is running as a service")
 	}
 
-	// TODO(s.chzhen):  Use it for the entire initialization process.
-	ctx := context.Background()
+	aghtls.Init(ctx, slogLogger.With(slogutil.KeyPrefix, "aghtls"))
 
 	err = setupContext(ctx, slogLogger, opts)
 	fatalOnError(err)
@@ -655,7 +665,6 @@ func run(
 	fatalOnError(err)
 
 	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
-	aghtls.Init(ctx, tlsMgrLogger)
 
 	tlsMgr, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:         tlsMgrLogger,
@@ -1142,7 +1151,7 @@ func cmdlineUpdate(
 	err = upd.Update(ctx, globalContext.firstRun)
 	fatalOnError(err)
 
-	err = restartService()
+	err = restartService(ctx, l)
 	if err != nil {
 		l.DebugContext(ctx, "restarting service", slogutil.KeyError, err)
 		l.InfoContext(ctx, "AdGuard Home was not installed as a service. "+

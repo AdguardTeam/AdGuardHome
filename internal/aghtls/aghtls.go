@@ -13,7 +13,8 @@ import (
 )
 
 // Init populates the cipherSuites map with the name-to-ID mapping of cipher
-// suites from crypto/tls.  It must be called only once.
+// suites from crypto/tls.  It must be called only once, and it must be called
+// before any function that calls [ParseCiphers].
 //
 // TODO(a.garipov): Propose a similar API to crypto/tls.
 func Init(ctx context.Context, l *slog.Logger) {
