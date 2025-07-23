@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import cn from 'clsx';
 import { Icon, Link, IconType } from 'panel/common/ui';
-import { RoutePath } from 'panel/components/Routes/Paths';
+import { RoutePathKey } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 
 import s from './styles.module.pcss';
@@ -9,7 +9,7 @@ import s from './styles.module.pcss';
 type AccordionItem = {
     label: string;
     path: string;
-    routePath: RoutePath;
+    routePath: RoutePathKey;
 };
 
 type Props = {

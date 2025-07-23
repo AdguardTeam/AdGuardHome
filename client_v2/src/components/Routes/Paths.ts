@@ -3,24 +3,26 @@ import qs from 'qs';
 const BasicPath = '/';
 const pathBuilder = (path: string) => `${BasicPath}${path}`;
 
-export enum RoutePath {
-    Dashboard = 'Dashboard',
-    Logs = 'Logs',
-    Guide = 'Guide',
-    Encryption = 'Encryption',
-    Dhcp = 'Dhcp',
-    Dns = 'Dns',
-    SettingsPage = 'SettingsPage',
-    Clients = 'Clients',
-    DnsBlocklists = 'DnsBlocklists',
-    DnsAllowlists = 'DnsAllowlists',
-    DnsRewrites = 'DnsRewrites',
-    CustomRules = 'CustomRules',
-    BlockedServices = 'BlockedServices',
-    UserRules = 'UserRules',
-}
+export const RoutePath = {
+    Dashboard: 'Dashboard',
+    Logs: 'Logs',
+    Guide: 'Guide',
+    Encryption: 'Encryption',
+    Dhcp: 'Dhcp',
+    Dns: 'Dns',
+    SettingsPage: 'SettingsPage',
+    Clients: 'Clients',
+    DnsBlocklists: 'DnsBlocklists',
+    DnsAllowlists: 'DnsAllowlists',
+    DnsRewrites: 'DnsRewrites',
+    CustomRules: 'CustomRules',
+    BlockedServices: 'BlockedServices',
+    UserRules: 'UserRules',
+} as const;
 
-export const Paths: Record<RoutePath, string> = {
+export type RoutePathKey = keyof typeof RoutePath;
+
+export const Paths: Record<RoutePathKey, string> = {
     Dashboard: pathBuilder(''),
     Logs: pathBuilder('logs'),
     Guide: pathBuilder('guide'),
@@ -40,7 +42,7 @@ export const Paths: Record<RoutePath, string> = {
 export type LinkParams = Partial<Record<string, string | number>>;
 
 export const linkPathBuilder = (
-    route: RoutePath,
+    route: RoutePathKey,
     params?: LinkParams,
     query?: Partial<Record<string, string | number | boolean>>,
 ) => {

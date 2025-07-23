@@ -1,14 +1,14 @@
 import React from 'react';
 import cn from 'clsx';
 import { Icon, Link } from 'panel/common/ui';
-import { RoutePath } from 'panel/components/Routes/Paths';
+import { RoutePathKey } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 
 import s from './styles.module.pcss';
 
 type Props = {
     parentLinks: {
-        path: RoutePath;
+        path: RoutePathKey;
         title: string;
         props?: Partial<Record<string, string | number>>;
     }[];

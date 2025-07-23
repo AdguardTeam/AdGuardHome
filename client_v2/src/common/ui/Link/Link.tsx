@@ -1,11 +1,11 @@
 import React, { MouseEvent, MouseEventHandler, ReactNode } from 'react';
 import { Link as L, LinkProps as LProps } from 'react-router-dom';
 import cn from 'clsx';
-import { LinkParams, linkPathBuilder, RoutePath } from 'panel/components/Routes/Paths';
+import { LinkParams, linkPathBuilder, RoutePathKey } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 
 type Props = {
-    to: RoutePath;
+    to: RoutePathKey;
     props?: LinkParams;
     className?: string;
     type?: LProps['type'];

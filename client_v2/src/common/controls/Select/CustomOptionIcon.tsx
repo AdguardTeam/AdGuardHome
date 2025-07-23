@@ -12,7 +12,7 @@ export const CustomOptionIcon = ({ isSelected, isMulti }: Props) => {
     if (isMulti) {
         return (
             <Icon
-                icon={isSelected ? 'checkbox_checked' : 'checkbox_unchecked'}
+                icon={isSelected ? 'checkbox_on' : 'checkbox_off'}
                 className={cn(theme.select.check, { [theme.select.check_active]: isSelected })}
             />
         );
