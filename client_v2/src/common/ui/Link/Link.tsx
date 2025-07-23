@@ -1,5 +1,5 @@
 import React, { MouseEvent, MouseEventHandler, ReactNode } from 'react';
-import { Link as L, LinkProps as LProps } from 'react-router-dom';
+import { Link as ReactRouterDomLink, LinkProps as LProps } from 'react-router-dom';
 import cn from 'clsx';
 import { LinkParams, linkPathBuilder, RoutePathKey } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
@@ -50,13 +50,13 @@ export const Link = ({ to, children, className, props, type, stop, disabled, onC
     }
 
     return (
-        <L
+        <ReactRouterDomLink
             id={id}
             className={cn(theme.link.link, className)}
             type={type}
             to={linkPathBuilder(to, props, query)}
             onClick={handleClick}>
             {children}
-        </L>
+        </ReactRouterDomLink>
     );
 };
