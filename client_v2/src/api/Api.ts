@@ -634,6 +634,13 @@ class Api {
         return this.makeRequest(path, method, config);
     }
 
+    // Logout
+    LOGOUT_PATH = 'logout';
+
+    getLogoutUrl() {
+        return `${this.baseUrl}/${this.LOGOUT_PATH}`;
+    }
+
     // Profile
     GET_PROFILE = { path: 'profile', method: 'GET' };
 

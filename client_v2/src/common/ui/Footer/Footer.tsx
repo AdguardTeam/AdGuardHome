@@ -9,7 +9,7 @@ import { Icon } from 'panel/common/ui/Icon';
 import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from '../../../helpers/constants';
 import { LANGUAGES } from '../../../helpers/twosky';
 import { setHtmlLangAttr, setUITheme } from '../../../helpers/helpers';
-import { changeTheme } from '../../../actions';
+import { changeTheme, changeLanguage as changeLanguageAction } from '../../../actions';
 import { RootState } from '../../../initialState';
 
 import s from './styles.module.pcss';
@@ -41,6 +41,8 @@ export const Footer = () => {
 
     const currentTheme = useSelector((state: RootState) => (state.dashboard ? state.dashboard.theme : THEMES.auto));
     const profileName = useSelector((state: RootState) => (state.dashboard ? state.dashboard.name : ''));
+    const currentLanguage =
+        useSelector((state: RootState) => (state.dashboard ? state.dashboard.language : '')) || intl.getUILanguage();
     const isLoggedIn = profileName !== '';
     const [currentThemeLocal, setCurrentThemeLocal] = useState(THEMES.auto);
     const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
@@ -70,10 +72,16 @@ export const Footer = () => {
         return 'theme_light';
     };
 
-    const changeLanguage = (newLang: LocalesType) => {
+    const changeLanguage = async (newLang: LocalesType) => {
         intl.changeLanguage(newLang);
         setHtmlLangAttr(newLang);
-        window.location.reload();
+
+        try {
+            await dispatch(changeLanguageAction(newLang));
+            window.location.reload();
+        } catch (error) {
+            console.error('Failed to save language preference:', error);
+        }
     };
 
     const onThemeChange = (value: string) => {
@@ -146,7 +154,7 @@ export const Footer = () => {
                                         type="button"
                                         key={lang}
                                         className={cn(theme.dropdown.item, {
-                                            [theme.dropdown.item_active]: intl.getUILanguage() === lang,
+                                            [theme.dropdown.item_active]: currentLanguage === lang,
                                         })}
                                         onClick={() => changeLanguage(lang as LocalesType)}>
                                         {LANGUAGES[lang]}
@@ -159,7 +167,7 @@ export const Footer = () => {
                         position="bottomRight">
                         <div className={s.dropdownTrigger}>
                             <Icon icon="lang" className={s.icon} />
-                            <span>{LANGUAGES[intl.getUILanguage()]}</span>
+                            <span>{LANGUAGES[currentLanguage] || LANGUAGES[intl.getUILanguage()]}</span>
                         </div>
                     </Dropdown>
                 </div>
