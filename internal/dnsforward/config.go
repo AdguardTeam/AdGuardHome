@@ -25,6 +25,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/AdguardTeam/golibs/validate"
 	"github.com/ameshkov/dnscrypt/v2"
 )
 
@@ -393,8 +394,9 @@ func prepareCacheConfig(
 ) (prepared *proxy.Config, err error) {
 	if isEnabled {
 		cacheSize := int(size)
-		if cacheSize == 0 {
-			return nil, fmt.Errorf("cache_enabled is true, cache_size must be a positive value")
+		err = validate.Positive("cache_size", cacheSize)
+		if err != nil {
+			return nil, fmt.Errorf("cache_enabled is true: %w", err)
 		}
 
 		conf.CacheEnabled = true
