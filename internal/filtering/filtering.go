@@ -766,42 +766,18 @@ func (d *DNSFilter) matchBlockedServicesRules(
 func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
 	lists := make([]filterlist.RuleList, 0, len(filters))
 	for _, f := range filters {
-		switch id := int(f.ID); {
-		case len(f.Data) != 0:
-			lists = append(lists, &filterlist.StringRuleList{
-				ID:             id,
-				RulesText:      string(f.Data),
-				IgnoreCosmetic: true,
-			})
-		case f.FilePath == "":
+		var rl filterlist.RuleList
+		var skip bool
+		rl, skip, err = ruleListFromFilter(f)
+		if skip {
 			continue
-		case runtime.GOOS == "windows":
-			// On Windows we don't pass a file to urlfilter because it's
-			// difficult to update this file while it's being used.
-			var data []byte
-			data, err = os.ReadFile(f.FilePath)
-			if errors.Is(err, fs.ErrNotExist) {
-				continue
-			} else if err != nil {
-				return nil, fmt.Errorf("reading filter content: %w", err)
-			}
-
-			lists = append(lists, &filterlist.StringRuleList{
-				ID:             id,
-				RulesText:      string(data),
-				IgnoreCosmetic: true,
-			})
-		default:
-			var list *filterlist.FileRuleList
-			list, err = filterlist.NewFileRuleList(id, f.FilePath, true)
-			if errors.Is(err, fs.ErrNotExist) {
-				continue
-			} else if err != nil {
-				return nil, fmt.Errorf("creating file rule list with %q: %w", f.FilePath, err)
-			}
-
-			lists = append(lists, list)
 		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		lists = append(lists, rl)
 	}
 
 	rs, err = filterlist.NewRuleStorage(lists)
@@ -810,6 +786,46 @@ func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
 	}
 
 	return rs, nil
+}
+
+// ruleListFromFilter returns a rule list from a Filter.
+func ruleListFromFilter(f Filter) (rl filterlist.RuleList, skip bool, err error) {
+	switch id := int(f.ID); {
+	case len(f.Data) != 0:
+		return &filterlist.StringRuleList{
+			ID:             id,
+			RulesText:      string(f.Data),
+			IgnoreCosmetic: true,
+		}, false, nil
+	case f.FilePath == "":
+		return nil, true, nil
+	case runtime.GOOS == "windows":
+		// On Windows we don't pass a file to urlfilter because it's
+		// difficult to update this file while it's being used.
+		var data []byte
+		data, err = os.ReadFile(f.FilePath)
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, true, nil
+		} else if err != nil {
+			return nil, false, fmt.Errorf("reading filter content: %w", err)
+		}
+
+		return &filterlist.StringRuleList{
+			ID:             id,
+			RulesText:      string(data),
+			IgnoreCosmetic: true,
+		}, false, nil
+	default:
+		var list *filterlist.FileRuleList
+		list, err = filterlist.NewFileRuleList(id, f.FilePath, true)
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, true, nil
+		} else if err != nil {
+			return nil, false, fmt.Errorf("creating file rule list with %q: %w", f.FilePath, err)
+		}
+
+		return list, false, nil
+	}
 }
 
 // Initialize urlfilter objects.
@@ -904,30 +920,35 @@ func (d *DNSFilter) matchHostProcessDNSResult(
 		return makeResult([]rules.Rule{dnsres.NetworkRule}, reason)
 	}
 
-	switch qtype {
-	case dns.TypeA:
-		if dnsres.HostRulesV4 != nil {
-			res = makeResult(hostRulesToRules(dnsres.HostRulesV4), FilteredBlockList)
-			for i, hr := range dnsres.HostRulesV4 {
-				res.Rules[i].IP = hr.IP
-			}
-
-			return res
-		}
-	case dns.TypeAAAA:
-		if dnsres.HostRulesV6 != nil {
-			res = makeResult(hostRulesToRules(dnsres.HostRulesV6), FilteredBlockList)
-			for i, hr := range dnsres.HostRulesV6 {
-				res.Rules[i].IP = hr.IP
-			}
-
-			return res
-		}
-	default:
-		// Go on.
+	if result, ok := resultFromHostRules(qtype, dnsres); ok {
+		return result
 	}
 
 	return hostResultForOtherQType(dnsres)
+}
+
+// resultFromHostRules handles the HostRulesV4/HostRulesV6 case for
+// [matchHostProcessDNSResult].
+func resultFromHostRules(qtype uint16, dnsres *urlfilter.DNSResult) (Result, bool) {
+	if qtype == dns.TypeA && dnsres.HostRulesV4 != nil {
+		res := makeResult(hostRulesToRules(dnsres.HostRulesV4), FilteredBlockList)
+		for i, hr := range dnsres.HostRulesV4 {
+			res.Rules[i].IP = hr.IP
+		}
+
+		return res, true
+	}
+
+	if qtype == dns.TypeAAAA && dnsres.HostRulesV6 != nil {
+		res := makeResult(hostRulesToRules(dnsres.HostRulesV6), FilteredBlockList)
+		for i, hr := range dnsres.HostRulesV6 {
+			res.Rules[i].IP = hr.IP
+		}
+
+		return res, true
+	}
+
+	return Result{}, false
 }
 
 // hostResultForOtherQType returns a result based on the host rules in dnsres,
@@ -1093,9 +1114,10 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 
 	if d.conf.BlockedServices != nil {
 		err = d.conf.BlockedServices.Validate()
-		if err != nil {
-			return nil, fmt.Errorf("filtering: %w", err)
-		}
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("filtering: %w", err)
 	}
 
 	if blockFilters != nil {

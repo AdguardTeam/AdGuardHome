@@ -173,21 +173,12 @@ run_linter gocognit --over='18' \
 	./internal/aghtls/ \
 	;
 
-run_linter gocognit --over='15' \
-	./internal/aghos/ \
-	./internal/filtering/ \
-	;
-
 run_linter gocognit --over='14' \
 	./internal/dhcpd \
 	;
 
 run_linter gocognit --over='13' \
 	./internal/aghnet/ \
-	;
-
-run_linter gocognit --over='12' \
-	./internal/filtering/rewrite/ \
 	;
 
 run_linter gocognit --over='11' \
@@ -205,9 +196,7 @@ run_linter gocognit --over='10' \
 	./internal/configmigrate/ \
 	./internal/dhcpsvc \
 	./internal/dnsforward/ \
-	./internal/filtering/hashprefix/ \
-	./internal/filtering/rulelist/ \
-	./internal/filtering/safesearch/ \
+	./internal/filtering/ \
 	./internal/ipset \
 	./internal/next/ \
 	./internal/rdns/ \

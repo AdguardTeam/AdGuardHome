@@ -102,6 +102,25 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 		return nil
 	}
 
+	resolvedRules, wildcardRewrite := s.resolveCNAMEChain(ctx, dReq, rrules)
+	if wildcardRewrite != nil {
+		return []*rules.DNSRewrite{wildcardRewrite}
+	}
+
+	if resolvedRules == nil {
+		return nil
+	}
+
+	return s.collectDNSRewrites(resolvedRules, dReq.DNSType)
+}
+
+// resolveCNAMEChain follows the CNAME chain for a DNS request, handling loops
+// and special cases.
+func (s *DefaultStorage) resolveCNAMEChain(
+	ctx context.Context,
+	dReq *urlfilter.DNSRequest,
+	rrules []*rules.NetworkRule,
+) (mrules []*rules.NetworkRule, wildcardRewrite *rules.DNSRewrite) {
 	// TODO(a.garipov): Check cnames for cycles on initialization.
 	cnames := container.NewMapSet[string]()
 	host := dReq.Hostname
@@ -115,21 +134,17 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 			// A request for the hostname itself is an exception rule.
 			// TODO(d.kolyshev): Check rewrite of a pattern onto itself.
 
-			return nil
+			return nil, nil
 		}
 
-		if host == rwAns && isWildcard(rule.RuleText) {
-			// An "*.example.com → sub.example.com" rewrite matching in a loop.
-			//
-			// See https://github.com/AdguardTeam/AdGuardHome/issues/4016.
-
-			return []*rules.DNSRewrite{rule.DNSRewrite}
+		if isWildcardLoop(host, rwAns, rule.RuleText) {
+			return nil, rule.DNSRewrite
 		}
 
 		if cnames.Has(rwAns) {
 			s.logger.InfoContext(ctx, "rewrite cname loop", "host", dReq.Hostname, "rewrite", rwAns)
 
-			return nil
+			return nil, nil
 		}
 
 		cnames.Add(rwAns)
@@ -145,7 +160,17 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 		host = rwAns
 	}
 
-	return s.collectDNSRewrites(rrules, dReq.DNSType)
+	return rrules, nil
+}
+
+// isWildcardLoop returns true if the rewrite is a wildcard pattern that loops
+// to itself.
+//
+// An "*.example.com → sub.example.com" rewrite matching in a loop.
+//
+// See https://github.com/AdguardTeam/AdGuardHome/issues/4016.
+func isWildcardLoop(host, rwAns, ruleText string) bool {
+	return host == rwAns && isWildcard(ruleText)
 }
 
 // collectDNSRewrites filters DNSRewrite by question type.
