@@ -175,10 +175,10 @@ func registerControlHandlers(web *webAPI) {
 	httpRegister(http.MethodPost, "/control/update", web.handleUpdate)
 
 	httpRegister(http.MethodGet, "/control/status", web.handleStatus)
-	httpRegister(http.MethodPost, "/control/i18n/change_language", handleI18nChangeLanguage)
+	httpRegister(http.MethodPost, "/control/i18n/change_language", web.handleI18nChangeLanguage)
 	httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
 	httpRegister(http.MethodGet, "/control/profile", web.handleGetProfile)
-	httpRegister(http.MethodPut, "/control/profile/update", handlePutProfile)
+	httpRegister(http.MethodPut, "/control/profile/update", web.handlePutProfile)
 
 	// No auth is necessary for DoH/DoT configurations
 	globalContext.mux.HandleFunc("/apple/doh.mobileconfig", postInstall(handleMobileConfigDoH))

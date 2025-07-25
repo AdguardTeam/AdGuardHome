@@ -75,7 +75,7 @@ func (web *webAPI) handleGetProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePutProfile is the handler for PUT /control/profile/update endpoint.
-func handlePutProfile(w http.ResponseWriter, r *http.Request) {
+func (web *webAPI) handlePutProfile(w http.ResponseWriter, r *http.Request) {
 	if aghhttp.WriteTextPlainDeprecated(w, r) {
 		return
 	}
@@ -107,6 +107,7 @@ func handlePutProfile(w http.ResponseWriter, r *http.Request) {
 		log.Printf("home: theme is set to %s", theme)
 	}()
 
-	onConfigModified()
+	web.confModifier.Apply(r.Context())
+
 	aghhttp.OK(w)
 }

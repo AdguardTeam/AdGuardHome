@@ -40,7 +40,7 @@ const (
 
 // Called by other modules when configuration is changed
 //
-// TODO(s.chzhen):  Remove this after refactoring.
+// TODO(s.chzhen): !! Remove this after refactoring.
 func onConfigModified() {
 	err := config.write(globalContext.tls, globalContext.auth)
 	if err != nil {

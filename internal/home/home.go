@@ -547,6 +547,7 @@ func initWeb(
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
 	auth *auth,
+	confModifier configModifier,
 	isCustomUpdURL bool,
 ) (web *webAPI, err error) {
 	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
@@ -566,11 +567,12 @@ func initWeb(
 	disableUpdate := !isUpdateEnabled(ctx, baseLogger, &opts, isCustomUpdURL)
 
 	webConf := &webConfig{
-		updater:    upd,
-		logger:     logger,
-		baseLogger: baseLogger,
-		tlsManager: tlsMgr,
-		auth:       auth,
+		updater:      upd,
+		logger:       logger,
+		baseLogger:   baseLogger,
+		confModifier: confModifier,
+		tlsManager:   tlsMgr,
+		auth:         auth,
 
 		clientFS: clientFS,
 
@@ -696,7 +698,24 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 
 	globalContext.auth = auth
 
-	web, err := initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, auth, isCustomURL)
+	confModifier := newDefaultConfigModifier(
+		auth,
+		config,
+		slogLogger.With(slogutil.KeyPrefix, "confmod"),
+		tlsMgr,
+	)
+
+	web, err := initWeb(
+		ctx,
+		opts,
+		clientBuildFS,
+		upd,
+		slogLogger,
+		tlsMgr,
+		auth,
+		confModifier,
+		isCustomURL,
+	)
 	fatalOnError(err)
 
 	globalContext.web = web

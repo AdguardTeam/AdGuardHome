@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
 	"net/netip"
 	"os"
 	"path/filepath"
@@ -23,6 +24,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/google/go-cmp/cmp"
@@ -837,4 +839,56 @@ func validateTLSCipherIDs(cipherIDs []string) (err error) {
 	}
 
 	return nil
+}
+
+// configModifier defines a method for updating the global configuration.
+type configModifier interface {
+	Apply(ctx context.Context)
+}
+
+// emptyConfigModifier is an empty [configModifier] implementation that does
+// nothing.
+type emptyConfigModifier struct{}
+
+// Apply implements the [configModifier] interface for emptyConfigModifier.
+func (em emptyConfigModifier) Apply(ctx context.Context) {}
+
+// type check
+var _ configModifier = emptyConfigModifier{}
+
+// defaultConfigModifier is a default [configModifier] implementation.
+type defaultConfigModifier struct {
+	auth   *auth
+	config *configuration
+	logger *slog.Logger
+	tlsMgr *tlsManager
+}
+
+// newDefaultConfigModifier returns the new properly initialized
+// *defaultConfigModifier.
+//
+// TODO(s.chzhen):  Consider using configuration struct.
+func newDefaultConfigModifier(
+	auth *auth,
+	conf *configuration,
+	l *slog.Logger,
+	tlsMgr *tlsManager,
+) (cm *defaultConfigModifier) {
+	return &defaultConfigModifier{
+		auth:   auth,
+		config: conf,
+		logger: l,
+		tlsMgr: tlsMgr,
+	}
+}
+
+// type check
+var _ configModifier = (*defaultConfigModifier)(nil)
+
+// Apply implements the [configModifier] interface for *defaultConfigModifier.
+func (cm *defaultConfigModifier) Apply(ctx context.Context) {
+	err := cm.config.write(cm.tlsMgr, cm.auth)
+	if err != nil {
+		cm.logger.ErrorContext(ctx, "writing config", slogutil.KeyError, err)
+	}
 }
