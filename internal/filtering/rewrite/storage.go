@@ -115,7 +115,8 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 }
 
 // resolveCNAMEChain follows the CNAME chain for a DNS request, handling loops
-// and special cases.
+// and special cases.  dReq must not be nil, and rewriteRules must not contain
+// nil elements.
 func (s *DefaultStorage) resolveCNAMEChain(
 	ctx context.Context,
 	dReq *urlfilter.DNSRequest,
