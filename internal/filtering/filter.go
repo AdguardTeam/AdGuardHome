@@ -159,9 +159,7 @@ func (d *DNSFilter) filterSetProperties(
 		return false, nil
 	}
 
-	shouldRestart, err = d.update(flt)
-
-	return shouldRestart, err
+	return d.update(flt)
 }
 
 // filterExists returns true if a filter with the same url exists in d.  It's
@@ -332,7 +330,8 @@ func (d *DNSFilter) refreshFiltersArray(
 }
 
 // updateFilterList updates each filter in updateFilters and returns the number
-// of failures and the updateFlags slice.
+// of failures and the updateFlags slice aligned with updateFilters indicating
+// whether each filter's data changed.
 func (d *DNSFilter) updateFilterList(
 	ctx context.Context,
 	updateFilters []FilterYAML,
@@ -344,8 +343,6 @@ func (d *DNSFilter) updateFilterList(
 		if err != nil {
 			failNum++
 			d.logger.ErrorContext(ctx, "updating filter", "url", uf.URL, slogutil.KeyError, err)
-
-			continue
 		}
 	}
 
@@ -353,7 +350,8 @@ func (d *DNSFilter) updateFilterList(
 }
 
 // syncUpdatedFilters syncs updated filters back to the original filters slice
-// and returns the updateCount.
+// and returns the updateCount.  filters must not be nil.  updateFlags must
+// align with updateFilters.  d.conf.filtersMu must be locked.
 func (d *DNSFilter) syncUpdatedFilters(
 	ctx context.Context,
 	filters *[]FilterYAML,
@@ -389,6 +387,7 @@ func (d *DNSFilter) syncUpdatedFilters(
 			updateCount++
 		}
 	}
+
 	return updateCount
 }
 

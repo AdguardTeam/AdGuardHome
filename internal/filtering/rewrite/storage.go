@@ -97,12 +97,12 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 
 	ctx := context.TODO()
 
-	rrules := s.rewriteRulesForReq(dReq)
-	if len(rrules) == 0 {
+	rewriteRules := s.rewriteRulesForReq(dReq)
+	if len(rewriteRules) == 0 {
 		return nil
 	}
 
-	resolvedRules, wildcardRewrite := s.resolveCNAMEChain(ctx, dReq, rrules)
+	resolvedRules, wildcardRewrite := s.resolveCNAMEChain(ctx, dReq, rewriteRules)
 	if wildcardRewrite != nil {
 		return []*rules.DNSRewrite{wildcardRewrite}
 	}
@@ -119,13 +119,15 @@ func (s *DefaultStorage) MatchRequest(dReq *urlfilter.DNSRequest) (rws []*rules.
 func (s *DefaultStorage) resolveCNAMEChain(
 	ctx context.Context,
 	dReq *urlfilter.DNSRequest,
-	rrules []*rules.NetworkRule,
-) (mrules []*rules.NetworkRule, wildcardRewrite *rules.DNSRewrite) {
+	rewriteRules []*rules.NetworkRule,
+) (resolvedRules []*rules.NetworkRule, wildcardRewrite *rules.DNSRewrite) {
 	// TODO(a.garipov): Check cnames for cycles on initialization.
 	cnames := container.NewMapSet[string]()
 	host := dReq.Hostname
-	for len(rrules) > 0 && rrules[0].DNSRewrite != nil && rrules[0].DNSRewrite.NewCNAME != "" {
-		rule := rrules[0]
+	for len(rewriteRules) > 0 &&
+		rewriteRules[0].DNSRewrite != nil &&
+		rewriteRules[0].DNSRewrite.NewCNAME != "" {
+		rule := rewriteRules[0]
 		rwAns := rule.DNSRewrite.NewCNAME
 
 		s.logger.DebugContext(ctx, "cname found", "host", host, "cname", rwAns)
@@ -137,39 +139,39 @@ func (s *DefaultStorage) resolveCNAMEChain(
 			return nil, nil
 		}
 
-		if isWildcardLoop(host, rwAns, rule.RuleText) {
+		if isSelfMatchingWildcard(host, rwAns, rule.RuleText) {
 			return nil, rule.DNSRewrite
 		}
 
 		if cnames.Has(rwAns) {
-			s.logger.InfoContext(ctx, "rewrite cname loop", "host", dReq.Hostname, "rewrite", rwAns)
+			s.logger.WarnContext(ctx, "rewrite cname loop", "host", dReq.Hostname, "rewrite", rwAns)
 
 			return nil, nil
 		}
 
 		cnames.Add(rwAns)
 
-		drules := s.rewriteRulesForReq(&urlfilter.DNSRequest{
+		rewriteRulesForReq := s.rewriteRulesForReq(&urlfilter.DNSRequest{
 			Hostname: rwAns,
 			DNSType:  dReq.DNSType,
 		})
-		if drules != nil {
-			rrules = drules
+		if rewriteRulesForReq != nil {
+			rewriteRules = rewriteRulesForReq
 		}
 
 		host = rwAns
 	}
 
-	return rrules, nil
+	return rewriteRules, nil
 }
 
-// isWildcardLoop returns true if the rewrite is a wildcard pattern that loops
-// to itself.
+// isSelfMatchingWildcard returns true when a wildcard rewrite matches its own
+// result.
 //
-// An "*.example.com → sub.example.com" rewrite matching in a loop.
+// For example, an "*.example.com → sub.example.com" rewrite matching in a loop.
 //
 // See https://github.com/AdguardTeam/AdGuardHome/issues/4016.
-func isWildcardLoop(host, rwAns, ruleText string) bool {
+func isSelfMatchingWildcard(host, rwAns, ruleText string) (ok bool) {
 	return host == rwAns && isWildcard(ruleText)
 }
 

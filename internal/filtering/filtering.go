@@ -774,6 +774,7 @@ func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
 		}
 
 		if err != nil {
+			// Don't wrap the error, because it's informative enough as is.
 			return nil, err
 		}
 
@@ -790,16 +791,21 @@ func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
 
 // ruleListFromFilter returns a rule list from a Filter.
 func ruleListFromFilter(f Filter) (rl filterlist.RuleList, skip bool, err error) {
-	switch id := int(f.ID); {
-	case len(f.Data) != 0:
+	id := int(f.ID)
+
+	if len(f.Data) != 0 {
 		return &filterlist.StringRuleList{
 			ID:             id,
 			RulesText:      string(f.Data),
 			IgnoreCosmetic: true,
 		}, false, nil
-	case f.FilePath == "":
+	}
+
+	if f.FilePath == "" {
 		return nil, true, nil
-	case runtime.GOOS == "windows":
+	}
+
+	if runtime.GOOS == "windows" {
 		// On Windows we don't pass a file to urlfilter because it's
 		// difficult to update this file while it's being used.
 		var data []byte
@@ -815,17 +821,17 @@ func ruleListFromFilter(f Filter) (rl filterlist.RuleList, skip bool, err error)
 			RulesText:      string(data),
 			IgnoreCosmetic: true,
 		}, false, nil
-	default:
-		var list *filterlist.FileRuleList
-		list, err = filterlist.NewFileRuleList(id, f.FilePath, true)
-		if errors.Is(err, fs.ErrNotExist) {
-			return nil, true, nil
-		} else if err != nil {
-			return nil, false, fmt.Errorf("creating file rule list with %q: %w", f.FilePath, err)
-		}
-
-		return list, false, nil
 	}
+
+	var list *filterlist.FileRuleList
+	list, err = filterlist.NewFileRuleList(id, f.FilePath, true)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, true, nil
+	} else if err != nil {
+		return nil, false, fmt.Errorf("creating file rule list with %q: %w", f.FilePath, err)
+	}
+
+	return list, false, nil
 }
 
 // Initialize urlfilter objects.
@@ -928,10 +934,10 @@ func (d *DNSFilter) matchHostProcessDNSResult(
 }
 
 // resultFromHostRules handles the HostRulesV4/HostRulesV6 case for
-// [matchHostProcessDNSResult].
-func resultFromHostRules(qtype uint16, dnsres *urlfilter.DNSResult) (Result, bool) {
+// [matchHostProcessDNSResult].  dnsres must not be nil.
+func resultFromHostRules(qtype uint16, dnsres *urlfilter.DNSResult) (res Result, ok bool) {
 	if qtype == dns.TypeA && dnsres.HostRulesV4 != nil {
-		res := makeResult(hostRulesToRules(dnsres.HostRulesV4), FilteredBlockList)
+		res = makeResult(hostRulesToRules(dnsres.HostRulesV4), FilteredBlockList)
 		for i, hr := range dnsres.HostRulesV4 {
 			res.Rules[i].IP = hr.IP
 		}
@@ -940,7 +946,7 @@ func resultFromHostRules(qtype uint16, dnsres *urlfilter.DNSResult) (Result, boo
 	}
 
 	if qtype == dns.TypeAAAA && dnsres.HostRulesV6 != nil {
-		res := makeResult(hostRulesToRules(dnsres.HostRulesV6), FilteredBlockList)
+		res = makeResult(hostRulesToRules(dnsres.HostRulesV6), FilteredBlockList)
 		for i, hr := range dnsres.HostRulesV6 {
 			res.Rules[i].IP = hr.IP
 		}
