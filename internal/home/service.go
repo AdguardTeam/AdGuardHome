@@ -17,6 +17,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
+	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/kardianos/service"
 )
 
@@ -90,7 +91,7 @@ func svcStatus(s service.Service) (status service.Status, err error) {
 	return status, err
 }
 
-// svcAction performs the action on the service.
+// svcAction performs the action on the service.  l must not be nil.
 //
 // On OpenWrt, the service utility may not exist.  We use our service script
 // directly in this case.
@@ -111,7 +112,7 @@ func svcAction(ctx context.Context, l *slog.Logger, s service.Service, action st
 }
 
 // Send SIGHUP to a process with PID taken from our .pid file.  If it doesn't
-// exist, find our PID using 'ps' command.  l must not be nil.
+// exist, find our PID using 'ps' command.  baseLogger and l must not be nil.
 func sendSigReload(ctx context.Context, baseLogger, l *slog.Logger) {
 	if runtime.GOOS == "windows" {
 		l.ErrorContext(ctx, "not implemented on windows")
@@ -165,7 +166,7 @@ func sendSigReload(ctx context.Context, baseLogger, l *slog.Logger) {
 }
 
 // restartService restarts the service.  It returns error if the service is not
-// running.
+// running.  l must not be nil.
 func restartService(ctx context.Context, l *slog.Logger) (err error) {
 	// Call chooseSystem explicitly to introduce OpenBSD support for service
 	// package.  It's a noop for other GOOS values.
@@ -234,7 +235,7 @@ func handleServiceControlAction(
 	pwd, err := os.Getwd()
 	if err != nil {
 		l.ErrorContext(ctx, "getting current directory", slogutil.KeyError, err)
-		os.Exit(1)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	runOpts := opts
@@ -264,13 +265,13 @@ func handleServiceControlAction(
 	}, svcConfig)
 	if err != nil {
 		l.ErrorContext(ctx, "initializing service", slogutil.KeyError, err)
-		os.Exit(1)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	err = handleServiceCommand(ctx, l, s, action, opts)
 	if err != nil {
 		l.ErrorContext(ctx, "handling command", slogutil.KeyError, err)
-		os.Exit(1)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	l.InfoContext(
@@ -328,7 +329,7 @@ func handleServiceStatusCommand(
 	status, errSt := svcStatus(s)
 	if errSt != nil {
 		l.ErrorContext(ctx, "failed to get service status", slogutil.KeyError, errSt)
-		os.Exit(1)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	switch status {
@@ -348,7 +349,7 @@ func handleServiceInstallCommand(ctx context.Context, l *slog.Logger, s service.
 	err := svcAction(ctx, l, s, "install")
 	if err != nil {
 		l.ErrorContext(ctx, "executing install", slogutil.KeyError, err)
-		os.Exit(1)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	if aghos.IsOpenWrt() {
@@ -358,7 +359,7 @@ func handleServiceInstallCommand(ctx context.Context, l *slog.Logger, s service.
 		_, err = runInitdCommand("enable")
 		if err != nil {
 			l.ErrorContext(ctx, "running init enable", slogutil.KeyError, err)
-			os.Exit(1)
+			os.Exit(osutil.ExitCodeFailure)
 		}
 	}
 
@@ -366,7 +367,7 @@ func handleServiceInstallCommand(ctx context.Context, l *slog.Logger, s service.
 	err = svcAction(ctx, l, s, "start")
 	if err != nil {
 		l.ErrorContext(ctx, "starting", slogutil.KeyError, err)
-		os.Exit(1)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 	l.InfoContext(ctx, "started")
 
@@ -388,7 +389,7 @@ func handleServiceUninstallCommand(ctx context.Context, l *slog.Logger, s servic
 		_, err := runInitdCommand("disable")
 		if err != nil {
 			l.ErrorContext(ctx, "running init disable", slogutil.KeyError, err)
-			os.Exit(1)
+			os.Exit(osutil.ExitCodeFailure)
 		}
 	}
 
@@ -398,7 +399,7 @@ func handleServiceUninstallCommand(ctx context.Context, l *slog.Logger, s servic
 
 	if err := svcAction(ctx, l, s, "uninstall"); err != nil {
 		l.ErrorContext(ctx, "executing action uninstall", slogutil.KeyError, err)
-		os.Exit(1)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	if runtime.GOOS == "darwin" {
