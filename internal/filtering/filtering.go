@@ -1078,14 +1078,10 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 		confMu:                 &sync.RWMutex{},
 	}
 
-	for i, p := range c.SafeFSPatterns {
-		// Use Match to validate the patterns here.
-		_, err = filepath.Match(p, "test")
-		if err != nil {
-			return nil, fmt.Errorf("safe_fs_patterns: at index %d: %w", i, err)
-		}
-
-		d.safeFSPatterns = append(d.safeFSPatterns, p)
+	err = d.validateSafeFSPatterns(c.SafeFSPatterns)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return nil, err
 	}
 
 	d.hostCheckers = []hostChecker{{
@@ -1120,10 +1116,9 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 
 	if d.conf.BlockedServices != nil {
 		err = d.conf.BlockedServices.Validate()
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("filtering: %w", err)
+		if err != nil {
+			return nil, fmt.Errorf("filtering: %w", err)
+		}
 	}
 
 	if blockFilters != nil {
@@ -1152,6 +1147,22 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	d.idGen.fix(d.conf.WhitelistFilters)
 
 	return d, nil
+}
+
+// validateSafeFSPatterns validates and stores patterns for local filtering‑rule
+// files.
+func (d *DNSFilter) validateSafeFSPatterns(patterns []string) (err error) {
+	for i, p := range patterns {
+		// Use Match to validate the patterns here.
+		_, err = filepath.Match(p, "test")
+		if err != nil {
+			return fmt.Errorf("safe_fs_patterns: at index %d: %w", i, err)
+		}
+
+		d.safeFSPatterns = append(d.safeFSPatterns, p)
+	}
+
+	return nil
 }
 
 // Start registers web handlers and starts filters updates loop.
