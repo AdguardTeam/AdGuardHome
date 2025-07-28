@@ -245,7 +245,7 @@
     "block_for_this_client_only": "Yalnızca bu istemci için engelle",
     "unblock_for_this_client_only": "Yalnızca bu istemci için engellemeyi kaldır",
     "add_persistent_client": "Kalıcı istemci olarak ekle",
-    "time_table_header": "Saat",
+    "time_table_header": "Süre",
     "date": "Tarih",
     "domain_name_table_header": "Alan adı",
     "domain_or_client": "Alan adı veya istemci",
