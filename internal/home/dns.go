@@ -16,6 +16,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -38,23 +39,14 @@ const (
 	defaultPortTLS   uint16 = 853
 )
 
-// Called by other modules when configuration is changed
-//
-// TODO(s.chzhen): !! Remove this after refactoring.
-func onConfigModified() {
-	err := config.write(globalContext.tls, globalContext.auth)
-	if err != nil {
-		log.Error("writing config: %s", err)
-	}
-}
-
 // initDNS updates all the fields of the [globalContext] needed to initialize
 // the DNS server and initializes it at last.  It also must not be called unless
-// [config] and [globalContext] are initialized.  baseLogger and tlsMgr must not
-// be nil.
+// [config] and [globalContext] are initialized.  baseLogger, tlsMgr and
+// confModfier must not be nil.
 func initDNS(
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
+	confModifier configmodifier.Interface,
 	statsDir string,
 	querylogDir string,
 ) (err error) {
@@ -64,7 +56,7 @@ func initDNS(
 		Logger:            baseLogger.With(slogutil.KeyPrefix, "stats"),
 		Filename:          filepath.Join(statsDir, "stats.db"),
 		Limit:             time.Duration(config.Stats.Interval),
-		ConfigModified:    onConfigModified,
+		ConfigModifier:    confModifier,
 		HTTPRegister:      httpRegister,
 		Enabled:           config.Stats.Enabled,
 		ShouldCountClient: globalContext.clients.shouldCountClient,
@@ -84,7 +76,7 @@ func initDNS(
 	conf := querylog.Config{
 		Logger:            baseLogger.With(slogutil.KeyPrefix, "querylog"),
 		Anonymizer:        anonymizer,
-		ConfigModified:    onConfigModified,
+		ConfigModifier:    confModifier,
 		HTTPRegister:      httpRegister,
 		FindClient:        globalContext.clients.findMultiple,
 		BaseDir:           querylogDir,
@@ -121,6 +113,7 @@ func initDNS(
 		httpRegister,
 		tlsMgr,
 		baseLogger,
+		confModifier,
 	)
 }
 
@@ -139,6 +132,7 @@ func initDNSServer(
 	httpReg aghhttp.RegisterFunc,
 	tlsMgr *tlsManager,
 	l *slog.Logger,
+	confModifier configmodifier.Interface,
 ) (err error) {
 	globalContext.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
 		Logger:      l,
@@ -169,6 +163,7 @@ func initDNSServer(
 		tlsMgr,
 		httpReg,
 		globalContext.clients.storage,
+		confModifier,
 	)
 	if err != nil {
 		return fmt.Errorf("newServerConfig: %w", err)
@@ -245,6 +240,7 @@ func newServerConfig(
 	tlsMgr *tlsManager,
 	httpReg aghhttp.RegisterFunc,
 	clientsContainer dnsforward.ClientsContainer,
+	confModifier configmodifier.Interface,
 ) (newConf *dnsforward.ServerConfig, err error) {
 	hosts := aghalg.CoalesceSlice(dnsConf.BindHosts, []netip.Addr{netutil.IPv4Localhost()})
 
@@ -264,7 +260,7 @@ func newServerConfig(
 		TLSAllowUnencryptedDoH: tlsConf.AllowUnencryptedDoH,
 		UpstreamTimeout:        time.Duration(dnsConf.UpstreamTimeout),
 		TLSv12Roots:            tlsMgr.rootCerts,
-		ConfigModified:         onConfigModified,
+		ConfModifier:           confModifier,
 		HTTPRegister:           httpReg,
 		LocalPTRResolvers:      dnsConf.PrivateRDNSResolvers,
 		UseDNS64:               dnsConf.UseDNS64,

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/require"
@@ -30,6 +31,7 @@ func newClientsContainer(t *testing.T) (c *clientsContainer) {
 			Logger: testLogger,
 		},
 		newSignalHandler(nil, nil),
+		configmodifier.Empty{},
 	)
 
 	require.NoError(t, err)

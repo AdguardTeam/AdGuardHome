@@ -15,6 +15,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -841,22 +842,7 @@ func validateTLSCipherIDs(cipherIDs []string) (err error) {
 	return nil
 }
 
-// configModifier defines a method for updating the global configuration.
-type configModifier interface {
-	Apply(ctx context.Context)
-}
-
-// emptyConfigModifier is an empty [configModifier] implementation that does
-// nothing.
-type emptyConfigModifier struct{}
-
-// Apply implements the [configModifier] interface for emptyConfigModifier.
-func (em emptyConfigModifier) Apply(ctx context.Context) {}
-
-// type check
-var _ configModifier = emptyConfigModifier{}
-
-// defaultConfigModifier is a default [configModifier] implementation.
+// defaultConfigModifier is a default [configmodifier.Interface] implementation.
 type defaultConfigModifier struct {
 	auth   *auth
 	config *configuration
@@ -865,30 +851,36 @@ type defaultConfigModifier struct {
 }
 
 // newDefaultConfigModifier returns the new properly initialized
-// *defaultConfigModifier.
+// *defaultConfigModifier.  All arguments must not be nil.
 //
 // TODO(s.chzhen):  Consider using configuration struct.
 func newDefaultConfigModifier(
-	auth *auth,
 	conf *configuration,
 	l *slog.Logger,
-	tlsMgr *tlsManager,
 ) (cm *defaultConfigModifier) {
 	return &defaultConfigModifier{
-		auth:   auth,
 		config: conf,
 		logger: l,
-		tlsMgr: tlsMgr,
 	}
 }
 
 // type check
-var _ configModifier = (*defaultConfigModifier)(nil)
+var _ configmodifier.Interface = (*defaultConfigModifier)(nil)
 
-// Apply implements the [configModifier] interface for *defaultConfigModifier.
+// Apply implements the [configmodifier.Interface] interface for
+// *defaultConfigModifier.
 func (cm *defaultConfigModifier) Apply(ctx context.Context) {
 	err := cm.config.write(cm.tlsMgr, cm.auth)
 	if err != nil {
 		cm.logger.ErrorContext(ctx, "writing config", slogutil.KeyError, err)
 	}
+}
+
+// TODO(s.chzhen): !! Consider a better approach.
+func (cm *defaultConfigModifier) setAuth(a *auth) {
+	cm.auth = a
+}
+
+func (cm *defaultConfigModifier) setTLSManager(m *tlsManager) {
+	cm.tlsMgr = m
 }

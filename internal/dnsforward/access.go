@@ -260,7 +260,7 @@ func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 		len(list.BlockedHosts),
 	)
 
-	defer s.conf.ConfigModified()
+	defer s.conf.ConfModifier.Apply(r.Context())
 
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()

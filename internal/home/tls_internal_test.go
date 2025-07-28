@@ -22,6 +22,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -66,9 +67,9 @@ func TestValidateCertificates(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         testLogger,
-		configModified: func() {},
-		servePlainDNS:  false,
+		logger:        testLogger,
+		confModifier:  configmodifier.Empty{},
+		servePlainDNS: false,
 	})
 	require.NoError(t, err)
 
@@ -246,8 +247,8 @@ func TestTLSManager_Reload(t *testing.T) {
 	writeCertAndKey(t, certDER, certPath, key, keyPath)
 
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         testLogger,
-		configModified: func() {},
+		logger:       testLogger,
+		confModifier: configmodifier.Empty{},
 		tlsSettings: tlsConfigSettings{
 			Enabled:         true,
 			CertificatePath: certPath,
@@ -257,7 +258,7 @@ func TestTLSManager_Reload(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, emptyConfigModifier{}, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, configmodifier.Empty{}, false)
 	require.NoError(t, err)
 
 	m.setWebAPI(web)
@@ -285,8 +286,8 @@ func TestTLSManager_HandleTLSStatus(t *testing.T) {
 	)
 
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         testLogger,
-		configModified: func() {},
+		logger:       testLogger,
+		confModifier: configmodifier.Empty{},
 		tlsSettings: tlsConfigSettings{
 			Enabled:          true,
 			CertificateChain: string(testCertChainData),
@@ -321,13 +322,13 @@ func TestValidateTLSSettings(t *testing.T) {
 	)
 
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         testLogger,
-		configModified: func() {},
-		servePlainDNS:  false,
+		logger:        testLogger,
+		confModifier:  configmodifier.Empty{},
+		servePlainDNS: false,
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, emptyConfigModifier{}, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, configmodifier.Empty{}, false)
 	require.NoError(t, err)
 
 	m.setWebAPI(web)
@@ -420,8 +421,8 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 	)
 
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         testLogger,
-		configModified: func() {},
+		logger:       testLogger,
+		confModifier: configmodifier.Empty{},
 		tlsSettings: tlsConfigSettings{
 			Enabled:          true,
 			CertificateChain: string(testCertChainData),
@@ -431,7 +432,7 @@ func TestTLSManager_HandleTLSValidate(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, emptyConfigModifier{}, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, configmodifier.Empty{}, false)
 	require.NoError(t, err)
 
 	m.setWebAPI(web)
@@ -511,8 +512,8 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 
 	// Initialize the TLS manager and assert its configuration.
 	m, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         testLogger,
-		configModified: func() {},
+		logger:       testLogger,
+		confModifier: configmodifier.Empty{},
 		tlsSettings: tlsConfigSettings{
 			Enabled:         true,
 			CertificatePath: certPath,
@@ -522,7 +523,7 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, emptyConfigModifier{}, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, configmodifier.Empty{}, false)
 	require.NoError(t, err)
 
 	m.setWebAPI(web)

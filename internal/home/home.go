@@ -23,6 +23,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -280,12 +281,13 @@ func initContextClients(
 	ctx context.Context,
 	logger *slog.Logger,
 	sigHdlr *signalHandler,
+	confModifier configmodifier.Interface,
 ) (err error) {
 	//lint:ignore SA1019 Migration is not over.
 	config.DHCP.WorkDir = globalContext.workDir
 	config.DHCP.DataDir = globalContext.getDataDir()
 	config.DHCP.HTTPRegister = httpRegister
-	config.DHCP.ConfigModified = onConfigModified
+	config.DHCP.ConfModifier = confModifier
 
 	globalContext.dhcpServer, err = dhcpd.Create(config.DHCP)
 	if globalContext.dhcpServer == nil || err != nil {
@@ -310,6 +312,7 @@ func initContextClients(
 		arpDB,
 		config.Filtering,
 		sigHdlr,
+		confModifier,
 	)
 }
 
@@ -360,6 +363,7 @@ func setupDNSFilteringConf(
 	baseLogger *slog.Logger,
 	conf *filtering.Config,
 	tlsMgr *tlsManager,
+	confModifier configmodifier.Interface,
 ) (err error) {
 	const (
 		dnsTimeout = 3 * time.Second
@@ -381,7 +385,7 @@ func setupDNSFilteringConf(
 		conf.EtcHosts = nil
 	}
 
-	conf.ConfigModified = onConfigModified
+	conf.ConfModifier = confModifier
 	conf.HTTPRegister = httpRegister
 	conf.DataDir = globalContext.getDataDir()
 	conf.Filters = slices.Clone(config.Filters)
@@ -547,7 +551,7 @@ func initWeb(
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
 	auth *auth,
-	confModifier configModifier,
+	confModifier configmodifier.Interface,
 	isCustomUpdURL bool,
 ) (web *webAPI, err error) {
 	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
@@ -644,24 +648,30 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	// data first, but also to avoid relying on automatic Go init() function.
 	filtering.InitModule(ctx, slogLogger)
 
-	err = initContextClients(ctx, slogLogger, sigHdlr)
+	confModifier := newDefaultConfigModifier(
+		config,
+		slogLogger.With(slogutil.KeyPrefix, "confmod"),
+	)
+
+	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier)
 	fatalOnError(err)
 
 	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
 	tlsMgr, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         tlsMgrLogger,
-		configModified: onConfigModified,
-		tlsSettings:    config.TLS,
-		servePlainDNS:  config.DNS.ServePlainDNS,
+		logger:        tlsMgrLogger,
+		confModifier:  confModifier,
+		tlsSettings:   config.TLS,
+		servePlainDNS: config.DNS.ServePlainDNS,
 	})
 	if err != nil {
 		tlsMgrLogger.ErrorContext(ctx, "initializing", slogutil.KeyError, err)
-		onConfigModified()
+		confModifier.Apply(ctx)
 	}
 
 	globalContext.tls = tlsMgr
+	confModifier.setTLSManager(tlsMgr)
 
-	err = setupDNSFilteringConf(ctx, slogLogger, config.Filtering, tlsMgr)
+	err = setupDNSFilteringConf(ctx, slogLogger, config.Filtering, tlsMgr, confModifier)
 	fatalOnError(err)
 
 	err = setupOpts(opts)
@@ -697,13 +707,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	fatalOnError(err)
 
 	globalContext.auth = auth
-
-	confModifier := newDefaultConfigModifier(
-		auth,
-		config,
-		slogLogger.With(slogutil.KeyPrefix, "confmod"),
-		tlsMgr,
-	)
+	confModifier.setAuth(auth)
 
 	web, err := initWeb(
 		ctx,
@@ -727,7 +731,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	fatalOnError(err)
 
 	if !globalContext.firstRun {
-		err = initDNS(slogLogger, tlsMgr, statsDir, querylogDir)
+		err = initDNS(slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
 		fatalOnError(err)
 
 		tlsMgr.start(ctx)
@@ -1129,7 +1133,7 @@ func cmdlineUpdate(
 	//
 	// TODO(e.burkov):  We could probably initialize the internal resolver
 	// separately.
-	err := initDNSServer(nil, nil, nil, nil, nil, nil, tlsMgr, l)
+	err := initDNSServer(nil, nil, nil, nil, nil, nil, tlsMgr, l, configmodifier.Empty{})
 	fatalOnError(err)
 
 	l.InfoContext(ctx, "performing update via cli")

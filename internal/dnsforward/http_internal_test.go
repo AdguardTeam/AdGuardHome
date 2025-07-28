@@ -19,6 +19,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/httphdr"
@@ -86,8 +87,8 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 			ClientsContainer:       EmptyClientsContainer{},
 		},
-		ConfigModified: func() {},
-		ServePlainDNS:  true,
+		ConfModifier:  configmodifier.Empty{},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, filterConf, forwardConf)
 	s.sysResolvers = &emptySysResolvers{}
@@ -169,8 +170,8 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 			EDNSClientSubnet:       &EDNSClientSubnet{Enabled: false},
 			ClientsContainer:       EmptyClientsContainer{},
 		},
-		ConfigModified: func() {},
-		ServePlainDNS:  true,
+		ConfModifier:  configmodifier.Empty{},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, filterConf, forwardConf)
 	s.sysResolvers = &emptySysResolvers{}

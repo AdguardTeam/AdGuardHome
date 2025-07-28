@@ -21,6 +21,7 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
@@ -327,7 +328,7 @@ func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 	globalContext.mux = mux
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, emptyConfigModifier{}, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, nil, configmodifier.Empty{}, false)
 	require.NoError(t, err)
 
 	globalContext.web = web
@@ -477,13 +478,13 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	globalContext.mux = http.NewServeMux()
 
 	tlsMgr, err := newTLSManager(testutil.ContextWithTimeout(t, testTimeout), &tlsManagerConfig{
-		logger:         testLogger,
-		configModified: func() {},
+		logger:       testLogger,
+		confModifier: configmodifier.Empty{},
 	})
 	require.NoError(t, err)
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, tlsMgr, auth, emptyConfigModifier{}, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, tlsMgr, auth, configmodifier.Empty{}, false)
 	require.NoError(t, err)
 
 	globalContext.web = web
@@ -625,7 +626,7 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 	globalContext.mux = http.NewServeMux()
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, auth, emptyConfigModifier{}, false)
+	web, err := initWeb(ctx, options{}, nil, nil, testLogger, nil, auth, configmodifier.Empty{}, false)
 	require.NoError(t, err)
 
 	globalContext.web = web

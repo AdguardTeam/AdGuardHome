@@ -1,6 +1,7 @@
 package dnsforward
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/container"
@@ -259,8 +261,9 @@ type ServerConfig struct {
 	// TLSCiphers are the IDs of TLS cipher suites to use.
 	TLSCiphers []uint16
 
-	// Called when the configuration is changed by HTTP request
-	ConfigModified func()
+	// ConfModifier is used to update the global configuration.  It must not be
+	// nil.
+	ConfModifier configmodifier.Interface
 
 	// Register an HTTP handler
 	HTTPRegister aghhttp.RegisterFunc
@@ -772,7 +775,8 @@ func (s *Server) enableProtectionAfterPause() {
 
 	defer s.protectionUpdateInProgress.Store(false)
 
-	defer s.conf.ConfigModified()
+	// TODO(s.chzhen):  Pass context.
+	defer s.conf.ConfModifier.Apply(context.TODO())
 
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()

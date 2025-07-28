@@ -12,6 +12,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -38,6 +39,10 @@ type clientsContainer struct {
 	// clientChecker checks if a client is blocked by the current access
 	// settings.
 	clientChecker BlockedClientChecker
+
+	// confModifier is used to update the global configuration.  It must not be
+	// nil.
+	confModifier configmodifier.Interface
 
 	// lock protects all fields.
 	//
@@ -78,6 +83,7 @@ func (clients *clientsContainer) Init(
 	arpDB arpdb.Interface,
 	filteringConf *filtering.Config,
 	sigHdlr *signalHandler,
+	confModifier configmodifier.Interface,
 ) (err error) {
 	// TODO(s.chzhen):  Refactor it.
 	if clients.storage != nil {
@@ -88,6 +94,7 @@ func (clients *clientsContainer) Init(
 	clients.logger = baseLogger.With(slogutil.KeyPrefix, "client_container")
 	clients.safeSearchCacheSize = filteringConf.SafeSearchCacheSize
 	clients.safeSearchCacheTTL = time.Minute * time.Duration(filteringConf.CacheTime)
+	clients.confModifier = confModifier
 
 	confClients := make([]*client.Persistent, 0, len(objects))
 	for i, o := range objects {

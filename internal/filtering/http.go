@@ -133,7 +133,7 @@ func (d *DNSFilter) handleFilteringAddURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 	d.EnableFilters(true)
 
 	_, err = fmt.Fprintf(w, "OK %d rules\n", filt.RulesCount)
@@ -202,7 +202,7 @@ func (d *DNSFilter) handleFilteringRemoveURL(w http.ResponseWriter, r *http.Requ
 		d.logger.InfoContext(ctx, "deleted filter", "id", deleted.ID)
 	}()
 
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(ctx)
 	d.EnableFilters(true)
 
 	// NOTE: The old files "filter.txt.old" aren't deleted.  It's not really
@@ -264,7 +264,7 @@ func (d *DNSFilter) handleFilteringSetURL(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 	if restart {
 		d.EnableFilters(true)
 	}
@@ -289,7 +289,7 @@ func (d *DNSFilter) handleFilteringSetRules(w http.ResponseWriter, r *http.Reque
 	}
 
 	d.conf.UserRules = req.Rules
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 	d.EnableFilters(true)
 }
 
@@ -403,7 +403,7 @@ func (d *DNSFilter) handleFilteringConfig(w http.ResponseWriter, r *http.Request
 		d.conf.FiltersUpdateIntervalHours = req.Interval
 	}()
 
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 	d.EnableFilters(true)
 }
 
@@ -571,14 +571,14 @@ func protectedBool(mu *sync.RWMutex, ptr *bool) (val bool) {
 // /control/safebrowsing/enable HTTP API.
 func (d *DNSFilter) handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
 	setProtectedBool(d.confMu, &d.conf.SafeBrowsingEnabled, true)
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 }
 
 // handleSafeBrowsingDisable is the handler for the POST
 // /control/safebrowsing/disable HTTP API.
 func (d *DNSFilter) handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
 	setProtectedBool(d.confMu, &d.conf.SafeBrowsingEnabled, false)
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 }
 
 // handleSafeBrowsingStatus is the handler for the GET
@@ -597,14 +597,14 @@ func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Requ
 // HTTP API.
 func (d *DNSFilter) handleParentalEnable(w http.ResponseWriter, r *http.Request) {
 	setProtectedBool(d.confMu, &d.conf.ParentalEnabled, true)
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 }
 
 // handleParentalDisable is the handler for the POST /control/parental/disable
 // HTTP API.
 func (d *DNSFilter) handleParentalDisable(w http.ResponseWriter, r *http.Request) {
 	setProtectedBool(d.confMu, &d.conf.ParentalEnabled, false)
-	d.conf.ConfigModified()
+	d.conf.ConfModifier.Apply(r.Context())
 }
 
 // handleParentalStatus is the handler for the GET /control/parental/status

@@ -24,6 +24,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/c2h5oh/datasize"
@@ -56,9 +57,8 @@ type tlsManager struct {
 	// conf contains the TLS configuration settings.  It must not be nil.
 	conf *tlsConfigSettings
 
-	// configModified is called when the TLS configuration is changed via an
-	// HTTP request.
-	configModified func()
+	// confModifier is used to update the global configuration.
+	confModifier configmodifier.Interface
 
 	// customCipherIDs are the ID of the cipher suites that AdGuard Home must use.
 	customCipherIDs []uint16
@@ -73,9 +73,9 @@ type tlsManagerConfig struct {
 	// be nil.
 	logger *slog.Logger
 
-	// configModified is called when the TLS configuration is changed via an
-	// HTTP request.  It must not be nil.
-	configModified func()
+	// confModifier is used to update the global configuration.  It must not be
+	// nil.
+	confModifier configmodifier.Interface
 
 	// tlsSettings contains the TLS configuration settings.
 	tlsSettings tlsConfigSettings
@@ -91,12 +91,12 @@ type tlsManagerConfig struct {
 // [tlsManager.setWebAPI].
 func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, err error) {
 	m = &tlsManager{
-		logger:         conf.logger,
-		mu:             &sync.Mutex{},
-		configModified: conf.configModified,
-		status:         &tlsConfigStatus{},
-		conf:           &conf.tlsSettings,
-		servePlainDNS:  conf.servePlainDNS,
+		logger:        conf.logger,
+		mu:            &sync.Mutex{},
+		confModifier:  conf.confModifier,
+		status:        &tlsConfigStatus{},
+		conf:          &conf.tlsSettings,
+		servePlainDNS: conf.servePlainDNS,
 	}
 
 	m.rootCerts = aghtls.SystemRootCAs()
@@ -253,6 +253,7 @@ func (m *tlsManager) reconfigureDNSServer() (err error) {
 		m,
 		httpRegister,
 		globalContext.clients.storage,
+		m.confModifier,
 	)
 	if err != nil {
 		return fmt.Errorf("generating forwarding dns server config: %w", err)
@@ -515,7 +516,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	var restartHTTPS bool
 	defer func() {
 		if restartHTTPS {
-			m.configModified()
+			m.confModifier.Apply(ctx)
 		}
 	}()
 

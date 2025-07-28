@@ -2,6 +2,7 @@ package filtering_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -148,7 +150,7 @@ func TestDNSFilter_handleRewriteHTTP(t *testing.T) {
 	}}
 
 	for _, tc := range testCases {
-		onConfModified := func() {
+		onApply := func(_ context.Context) {
 			if !tc.wantConfMod {
 				panic("config modified has been fired")
 			}
@@ -158,10 +160,12 @@ func TestDNSFilter_handleRewriteHTTP(t *testing.T) {
 
 		t.Run(tc.name, func(t *testing.T) {
 			handlers := make(map[string]http.Handler)
+			confModifier := &configmodifier.Mock{}
+			confModifier.OnApply = onApply
 
 			d, err := filtering.New(&filtering.Config{
-				Logger:         slogutil.NewDiscardLogger(),
-				ConfigModified: onConfModified,
+				Logger:       slogutil.NewDiscardLogger(),
+				ConfModifier: confModifier,
 				HTTPRegister: func(_, url string, handler http.HandlerFunc) {
 					handlers[url] = handler
 				},

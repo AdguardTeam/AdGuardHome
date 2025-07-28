@@ -511,7 +511,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	restart := s.setConfig(req)
-	s.conf.ConfigModified()
+	s.conf.ConfModifier.Apply(r.Context())
 
 	if restart {
 		err = s.Reconfigure(nil)
@@ -726,7 +726,7 @@ func (s *Server) handleSetProtection(w http.ResponseWriter, r *http.Request) {
 		s.dnsFilter.SetProtectionStatus(protectionReq.Enabled, disabledUntil)
 	}()
 
-	s.conf.ConfigModified()
+	s.conf.ConfModifier.Apply(r.Context())
 
 	aghhttp.OK(w)
 }

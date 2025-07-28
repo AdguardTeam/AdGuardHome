@@ -335,7 +335,7 @@ func (s *server) handleDHCPSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.setConfFromJSON(conf, srv4, srv6)
-	s.conf.ConfigModified()
+	s.conf.ConfModifier.Apply(r.Context())
 
 	err = s.dbLoad()
 	if err != nil {
@@ -679,7 +679,7 @@ func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.conf = &ServerConfig{
-		ConfigModified: s.conf.ConfigModified,
+		ConfModifier: s.conf.ConfModifier,
 
 		HTTPRegister: s.conf.HTTPRegister,
 
@@ -702,7 +702,7 @@ func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 	}
 	s.srv6, _ = v6Create(v6conf)
 
-	s.conf.ConfigModified()
+	s.conf.ConfModifier.Apply(r.Context())
 }
 
 func (s *server) handleResetLeases(w http.ResponseWriter, r *http.Request) {
