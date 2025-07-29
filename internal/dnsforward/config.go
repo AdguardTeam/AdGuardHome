@@ -12,12 +12,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
-	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/container"
@@ -263,7 +263,7 @@ type ServerConfig struct {
 
 	// ConfModifier is used to update the global configuration.  It must not be
 	// nil.
-	ConfModifier configmodifier.Interface
+	ConfModifier agh.ConfigModifier
 
 	// Register an HTTP handler
 	HTTPRegister aghhttp.RegisterFunc
@@ -462,7 +462,13 @@ func (s *Server) prepareIpsetListSettings() (ipsets []string, err error) {
 	ipsets = stringutil.SplitTrimmed(string(data), "\n")
 	ipsets = slices.DeleteFunc(ipsets, aghnet.IsCommentOrEmpty)
 
-	log.Debug("dns: using %d ipset rules from file %q", len(ipsets), fn)
+	// TODO(s.chzhen):  Pass context.
+	s.logger.DebugContext(
+		context.TODO(),
+		"using ipset rules from file",
+		"num", len(ipsets),
+		"file", fn,
+	)
 
 	return ipsets, nil
 }
@@ -653,14 +659,25 @@ func (s *Server) prepareTLS(proxyConf *proxy.Config) (err error) {
 
 	s.hasIPAddrs = aghtls.CertificateHasIP(cert)
 
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
 	if s.conf.TLSConf.StrictSNICheck {
 		if len(cert.DNSNames) != 0 {
 			s.dnsNames = cert.DNSNames
-			log.Debug("dns: using certificate's SAN as DNS names: %v", cert.DNSNames)
+			s.logger.DebugContext(
+				ctx,
+				"using certificate's SAN as DNS names",
+				"dns_names", cert.DNSNames,
+			)
 			slices.Sort(s.dnsNames)
 		} else {
 			s.dnsNames = []string{cert.Subject.CommonName}
-			log.Debug("dns: using certificate's CN as DNS name: %s", cert.Subject.CommonName)
+			s.logger.DebugContext(
+				ctx,
+				"using certificate's CN as DNS name",
+				"common_name",
+				cert.Subject.CommonName,
+			)
 		}
 	}
 
@@ -709,9 +726,16 @@ func anyNameMatches(dnsNames []string, sni string) (ok bool) {
 // If the server name (from SNI) supplied by client is incorrect - we terminate the ongoing TLS handshake.
 func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	if s.conf.TLSConf.StrictSNICheck && !anyNameMatches(s.dnsNames, ch.ServerName) {
-		log.Info("dns: tls: unknown SNI in Client Hello: %s", ch.ServerName)
+		// TODO(s.chzhen):  Pass context.
+		s.logger.WarnContext(
+			context.TODO(),
+			"unknown SNI in Client Hello",
+			"server_name", ch.ServerName,
+		)
+
 		return nil, fmt.Errorf("invalid SNI")
 	}
+
 	return s.conf.TLSConf.Cert, nil
 }
 
@@ -735,7 +759,8 @@ func (s *Server) preparePlain(proxyConf *proxy.Config) (err error) {
 		return errors.Error("disabling plain dns requires at least one encrypted protocol")
 	}
 
-	log.Info("dnsforward: warning: plain dns is disabled")
+	// TODO(s.chzhen):  Pass context.
+	s.logger.WarnContext(context.TODO(), "plain dns is disabled")
 
 	return nil
 }
@@ -771,7 +796,9 @@ func (s *Server) UpdatedProtectionStatus() (enabled bool, disabledUntil *time.Ti
 // enableProtectionAfterPause sets the protection configuration to enabled
 // values.  It is intended to be used as a goroutine.
 func (s *Server) enableProtectionAfterPause() {
-	defer log.OnPanic("dns: enabling protection after pause")
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+	defer slogutil.RecoverAndLog(ctx, s.logger)
 
 	defer s.protectionUpdateInProgress.Store(false)
 
@@ -783,7 +810,7 @@ func (s *Server) enableProtectionAfterPause() {
 
 	s.dnsFilter.SetProtectionStatus(true, nil)
 
-	log.Info("dns: protection is restarted after pause")
+	s.logger.InfoContext(ctx, "protection is restarted after pause")
 }
 
 // validateCacheTTL returns an error if the configuration of the cache TTL

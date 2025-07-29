@@ -1,13 +1,13 @@
 package dnsforward
 
 import (
+	"context"
 	"fmt"
 	"net/netip"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 )
@@ -31,7 +31,8 @@ func (s *Server) filterDNSRewriteResponse(
 	case dns.TypeSRV:
 		return s.ansFromDNSRewriteSRV(v, rr, req)
 	default:
-		log.Debug("don't know how to handle dns rr type %d, skipping", rr)
+		// TODO(s.chzhen):  Pass context.
+		s.logger.DebugContext(context.TODO(), "unsupported dns rr type, skipping", "res_record", rr)
 
 		return nil, nil
 	}

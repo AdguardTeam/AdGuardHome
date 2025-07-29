@@ -13,10 +13,10 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -58,7 +58,7 @@ type Config struct {
 
 	// ConfigModifier is used to update the global configuration.  It must not
 	// be nil.
-	ConfigModifier configmodifier.Interface
+	ConfigModifier agh.ConfigModifier
 
 	// ShouldCountClient returns client's ignore setting.
 	ShouldCountClient func([]string) bool
@@ -125,7 +125,7 @@ type StatsCtx struct {
 	httpRegister aghhttp.RegisterFunc
 
 	// configModifier is used to update the global configuration.
-	configModifier configmodifier.Interface
+	configModifier agh.ConfigModifier
 
 	// confMu protects ignored, limit, and enabled.
 	confMu *sync.RWMutex

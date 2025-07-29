@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"cmp"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,7 +18,6 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
@@ -184,7 +184,8 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 
 	defPTRUps, err := s.defaultLocalPTRUpstreams()
 	if err != nil {
-		log.Error("dnsforward: %s", err)
+		// TODO(s.chzhen):  Pass context.
+		s.logger.ErrorContext(context.TODO(), "getting local ptr upstreams", slogutil.KeyError, err)
 	}
 
 	return &jsonDNSConfig{

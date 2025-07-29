@@ -11,11 +11,11 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
-	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -842,7 +842,7 @@ func validateTLSCipherIDs(cipherIDs []string) (err error) {
 	return nil
 }
 
-// defaultConfigModifier is a default [configmodifier.Interface] implementation.
+// defaultConfigModifier is a default [agh.ConfigModifier] implementation.
 type defaultConfigModifier struct {
 	auth   *auth
 	config *configuration
@@ -865,9 +865,9 @@ func newDefaultConfigModifier(
 }
 
 // type check
-var _ configmodifier.Interface = (*defaultConfigModifier)(nil)
+var _ agh.ConfigModifier = (*defaultConfigModifier)(nil)
 
-// Apply implements the [configmodifier.Interface] interface for
+// Apply implements the [agh.ConfigModifier] interface for
 // *defaultConfigModifier.
 func (cm *defaultConfigModifier) Apply(ctx context.Context) {
 	err := cm.config.write(cm.tlsMgr, cm.auth)
@@ -876,11 +876,12 @@ func (cm *defaultConfigModifier) Apply(ctx context.Context) {
 	}
 }
 
-// TODO(s.chzhen): !! Consider a better approach.
+// setAuth sets the auth parameters used by Apply.
 func (cm *defaultConfigModifier) setAuth(a *auth) {
 	cm.auth = a
 }
 
+// setTLSManager sets the TLS manager used by Apply.
 func (cm *defaultConfigModifier) setTLSManager(m *tlsManager) {
 	cm.tlsMgr = m
 }

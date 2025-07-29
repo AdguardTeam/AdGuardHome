@@ -10,7 +10,7 @@ import (
 	"net/netip"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -88,7 +88,7 @@ func TestServer_handleDHCPStatus(t *testing.T) {
 		Enabled:      true,
 		Conf4:        *defaultV4ServerConf(),
 		DataDir:      t.TempDir(),
-		ConfModifier: configmodifier.Empty{},
+		ConfModifier: agh.EmptyConfigModifier{},
 	})
 	require.NoError(t, err)
 
@@ -183,7 +183,7 @@ func TestServer_HandleUpdateStaticLease(t *testing.T) {
 		Conf4:        *defaultV4ServerConf(),
 		Conf6:        V6ServerConf{},
 		DataDir:      t.TempDir(),
-		ConfModifier: configmodifier.Empty{},
+		ConfModifier: agh.EmptyConfigModifier{},
 	})
 	require.NoError(t, err)
 
@@ -271,7 +271,7 @@ func TestServer_HandleUpdateStaticLease_validation(t *testing.T) {
 		Conf4:        *defaultV4ServerConf(),
 		Conf6:        V6ServerConf{},
 		DataDir:      t.TempDir(),
-		ConfModifier: configmodifier.Empty{},
+		ConfModifier: agh.EmptyConfigModifier{},
 	})
 	require.NoError(t, err)
 

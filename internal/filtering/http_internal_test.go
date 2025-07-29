@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -105,7 +105,7 @@ func TestDNSFilter_handleFilteringSetURL(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			confModifiedCalled := false
-			confModifier := &configmodifier.Mock{}
+			confModifier := &aghtest.ConfigModifier{}
 			confModifier.OnApply = func(_ context.Context) {
 				confModifiedCalled = true
 			}
@@ -189,7 +189,7 @@ func TestDNSFilter_handleSafeBrowsingStatus(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			handlers := make(map[string]http.Handler)
-			confModifier := &configmodifier.Mock{}
+			confModifier := &aghtest.ConfigModifier{}
 			confModifier.OnApply = func(_ context.Context) {
 				testutil.RequireSend(testutil.PanicT{}, confModCh, struct{}{}, testTimeout)
 			}
@@ -276,7 +276,7 @@ func TestDNSFilter_handleParentalStatus(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			handlers := make(map[string]http.Handler)
-			confModifier := &configmodifier.Mock{}
+			confModifier := &aghtest.ConfigModifier{}
 			confModifier.OnApply = func(_ context.Context) {
 				testutil.RequireSend(testutil.PanicT{}, confModCh, struct{}{}, testTimeout)
 			}

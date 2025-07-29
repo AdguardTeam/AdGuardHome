@@ -15,10 +15,10 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -537,7 +537,7 @@ func startMods(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
-	confModifier configmodifier.Interface,
+	confModifier agh.ConfigModifier,
 ) (err error) {
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
 	if err != nil {

@@ -1,13 +1,13 @@
 package dnsforward
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/miekg/dns"
 )
 
@@ -41,7 +41,13 @@ func (s *Server) HandleBefore(
 		qt := q.Qtype
 		host := aghnet.NormalizeDomain(q.Name)
 		if s.access.isBlockedHost(host, qt) {
-			log.Debug("access: request %s %s is in access blocklist", dns.Type(qt), host)
+			// TODO(s.chzhen):  Pass context.
+			s.logger.DebugContext(
+				context.TODO(),
+				"request is in access blocklist",
+				"dns_type", dns.Type(qt),
+				"host", host,
+			)
 
 			return s.preBlockedResponse(pctx)
 		}

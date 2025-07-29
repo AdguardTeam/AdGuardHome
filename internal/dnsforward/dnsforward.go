@@ -145,6 +145,10 @@ type Server struct {
 	// have a prefix and must not be nil.
 	baseLogger *slog.Logger
 
+	// logger is used to log the operation of the DNS server.  It is created
+	// during initialization in [NewServer].
+	logger *slog.Logger
+
 	// dnsFilter is the DNS filter for filtering client's DNS requests and
 	// responses.
 	dnsFilter *filtering.DNSFilter
@@ -254,6 +258,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 		queryLog:    p.QueryLog,
 		privateNets: p.PrivateNets,
 		baseLogger:  p.Logger,
+		logger:      p.Logger.With(slogutil.KeyPrefix, "dnsforward"),
 		// TODO(e.burkov):  Use some case-insensitive string comparison.
 		localDomainSuffix: strings.ToLower(localDomainSuffix),
 		etcHosts:          etcHosts,
@@ -296,7 +301,8 @@ func (s *Server) Close() {
 	s.dnsProxy = nil
 
 	if err := s.ipset.close(); err != nil {
-		log.Error("dnsforward: closing ipset: %s", err)
+		// TODO(s.chzhen):  Pass context.
+		s.logger.ErrorContext(context.TODO(), "closing ipset", slogutil.KeyError, err)
 	}
 }
 
@@ -799,7 +805,12 @@ func (s *Server) stopLocked() {
 		// TODO(e.burkov):  Use context properly.
 		err := s.dnsProxy.Shutdown(context.Background())
 		if err != nil {
-			log.Error("dnsforward: closing primary resolvers: %s", err)
+			// TODO(s.chzhen):  Pass context.
+			s.logger.ErrorContext(
+				context.TODO(),
+				"closing primary resolvers",
+				slogutil.KeyError, err,
+			)
 		}
 	}
 
@@ -852,8 +863,10 @@ func (s *Server) Reconfigure(conf *ServerConfig) error {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
-	log.Info("dnsforward: starting reconfiguring server")
-	defer log.Info("dnsforward: finished reconfiguring server")
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+	s.logger.InfoContext(ctx, "starting reconfiguring server")
+	defer s.logger.InfoContext(ctx, "finished reconfiguring server")
 
 	s.stopLocked()
 
@@ -864,7 +877,7 @@ func (s *Server) Reconfigure(conf *ServerConfig) error {
 	if s.addrProc != nil {
 		err := s.addrProc.Close()
 		if err != nil {
-			log.Error("dnsforward: closing address processor: %s", err)
+			s.logger.ErrorContext(ctx, "closing address processor", slogutil.KeyError, err)
 		}
 	}
 
@@ -908,16 +921,29 @@ func (s *Server) IsBlockedClient(ip netip.Addr, clientID string) (blocked bool, 
 	allowlistMode := s.access.allowlistMode()
 	blockedByClientID := s.access.isBlockedClientID(clientID)
 
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+
 	// Allow if at least one of the checks allows in allowlist mode, but block
 	// if at least one of the checks blocks in blocklist mode.
 	if allowlistMode && blockedByIP && blockedByClientID {
-		log.Debug("dnsforward: client %v (id %q) is not in access allowlist", ip, clientID)
+		s.logger.DebugContext(
+			ctx,
+			"client is not in access allowlist",
+			"ip", ip,
+			"client_id", clientID,
+		)
 
 		// Return now without substituting the empty rule for the
 		// clientID because the rule can't be empty here.
 		return true, rule
 	} else if !allowlistMode && (blockedByIP || blockedByClientID) {
-		log.Debug("dnsforward: client %v (id %q) is in access blocklist", ip, clientID)
+		s.logger.DebugContext(
+			ctx,
+			"client is in access blocklist",
+			"ip", ip,
+			"client_id", clientID,
+		)
 
 		blocked = true
 	}

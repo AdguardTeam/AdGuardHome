@@ -1,12 +1,13 @@
 package dnsforward
 
 import (
+	"context"
 	"net/netip"
 	"slices"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 )
@@ -129,7 +130,8 @@ func (s *Server) genForBlockingMode(req *dns.Msg, ips []netip.Addr) (resp *dns.M
 	case filtering.BlockingModeREFUSED:
 		return s.makeResponseREFUSED(req)
 	default:
-		log.Error("dnsforward: invalid blocking mode %q", mode)
+		// TODO(s.chzhen):  Pass context.
+		s.logger.ErrorContext(context.TODO(), "invalid blocking mode", "mode", mode)
 
 		return s.replyCompressed(req)
 	}
@@ -150,7 +152,13 @@ func (s *Server) makeResponseCustomIP(
 	default:
 		// Generally shouldn't happen, since the types are checked in
 		// genDNSFilterMessage.
-		log.Error("dnsforward: invalid msg type %s for custom IP blocking mode", dns.Type(qt))
+		//
+		// TODO(s.chzhen):  Pass context.
+		s.logger.ErrorContext(
+			context.TODO(),
+			"invalid message type for custom IP blocking mode",
+			"dns_type", dns.Type(qt),
+		)
 
 		return s.replyCompressed(req)
 	}
@@ -261,7 +269,8 @@ func (s *Server) genResponseWithIPs(req *dns.Msg, ips []netip.Addr) (resp *dns.M
 func (s *Server) genAnswersWithIPv4s(req *dns.Msg, ips []netip.Addr) (ans []dns.RR) {
 	for _, ip := range ips {
 		if !ip.Is4() {
-			log.Info("dnsforward: warning: ip %s is not ipv4 address", ip)
+			// TODO(s.chzhen):  Pass context.
+			s.logger.WarnContext(context.TODO(), "ip is not an ipv4 address", "ip", ip)
 
 			return nil
 		}
@@ -292,8 +301,11 @@ func (s *Server) makeResponseNullIP(req *dns.Msg) (resp *dns.Msg) {
 }
 
 func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSContext) *dns.Msg {
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+
 	if newAddr == "" {
-		log.Info("dnsforward: block host is not specified")
+		s.logger.InfoContext(ctx, "block host not specified")
 
 		return s.NewMsgSERVFAIL(request)
 	}
@@ -316,14 +328,19 @@ func (s *Server) genBlockedHost(request *dns.Msg, newAddr string, d *proxy.DNSCo
 
 	prx := s.proxy()
 	if prx == nil {
-		log.Debug("dnsforward: %s", srvClosedErr)
+		s.logger.DebugContext(ctx, "getting current proxy", slogutil.KeyError, srvClosedErr)
 
 		return s.NewMsgSERVFAIL(request)
 	}
 
 	err = prx.Resolve(newContext)
 	if err != nil {
-		log.Info("dnsforward: looking up replacement host %q: %s", newAddr, err)
+		s.logger.ErrorContext(
+			ctx,
+			"looking up replacement host",
+			"host", newAddr,
+			slogutil.KeyError, err,
+		)
 
 		return s.NewMsgSERVFAIL(request)
 	}

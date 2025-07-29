@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
-	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -42,7 +42,7 @@ type clientsContainer struct {
 
 	// confModifier is used to update the global configuration.  It must not be
 	// nil.
-	confModifier configmodifier.Interface
+	confModifier agh.ConfigModifier
 
 	// lock protects all fields.
 	//
@@ -57,11 +57,6 @@ type clientsContainer struct {
 	// safeSearchCacheTTL is the TTL of the safe search cache to use for
 	// persistent clients.
 	safeSearchCacheTTL time.Duration
-
-	// testing is a flag that disables some features for internal tests.
-	//
-	// TODO(a.garipov): Awful.  Remove.
-	testing bool
 }
 
 // BlockedClientChecker checks if a client is blocked by the current access
@@ -83,7 +78,7 @@ func (clients *clientsContainer) Init(
 	arpDB arpdb.Interface,
 	filteringConf *filtering.Config,
 	sigHdlr *signalHandler,
-	confModifier configmodifier.Interface,
+	confModifier agh.ConfigModifier,
 ) (err error) {
 	// TODO(s.chzhen):  Refactor it.
 	if clients.storage != nil {
@@ -148,10 +143,6 @@ var webHandlersRegistered = false
 
 // Start starts the clients container.
 func (clients *clientsContainer) Start(ctx context.Context) (err error) {
-	if clients.testing {
-		return
-	}
-
 	if !webHandlersRegistered {
 		webHandlersRegistered = true
 		clients.registerWebHandlers()

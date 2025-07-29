@@ -203,6 +203,7 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		st := &testStats{}
 		srv := &Server{
 			baseLogger: testLogger,
+			logger:     testLogger,
 			queryLog:   ql,
 			stats:      st,
 			anonymizer: aghnet.NewIPMut(nil),

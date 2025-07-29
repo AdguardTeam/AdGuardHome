@@ -21,10 +21,10 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
-	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
@@ -566,7 +566,7 @@ func TestServerRace(t *testing.T) {
 			UpstreamMode: UpstreamModeLoadBalance,
 			UpstreamDNS:  []string{"8.8.8.8:53", "8.8.4.4:53"},
 		},
-		ConfModifier:  configmodifier.Empty{},
+		ConfModifier:  agh.EmptyConfigModifier{},
 		ServePlainDNS: true,
 	}
 	s := createTestServer(t, filterConf, forwardConf)

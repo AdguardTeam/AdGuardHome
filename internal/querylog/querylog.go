@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
@@ -50,7 +50,7 @@ type Config struct {
 
 	// ConfigModifier is used to update the global configuration.  It must not
 	// be nil.
-	ConfigModifier configmodifier.Interface
+	ConfigModifier agh.ConfigModifier
 
 	// HTTPRegister registers an HTTP handler.
 	HTTPRegister aghhttp.RegisterFunc

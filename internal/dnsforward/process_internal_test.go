@@ -440,6 +440,7 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 				dhcpServer:        dhcp,
 				localDomainSuffix: localDomainSuffix,
 				baseLogger:        testLogger,
+				logger:            testLogger,
 			}
 
 			req := &dns.Msg{
@@ -592,6 +593,7 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 			dhcpServer:        testDHCP,
 			localDomainSuffix: tc.suffix,
 			baseLogger:        testLogger,
+			logger:            testLogger,
 		}
 
 		req := (&dns.Msg{}).SetQuestion(dns.Fqdn(tc.host), tc.qtyp)

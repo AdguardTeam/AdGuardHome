@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -49,7 +49,7 @@ type webConfig struct {
 	baseLogger *slog.Logger
 
 	// confModifier is used to update the global configuration.
-	confModifier configmodifier.Interface
+	confModifier agh.ConfigModifier
 
 	// tlsManager contains the current configuration and state of TLS
 	// encryption.  It must not be nil.
@@ -109,7 +109,7 @@ type webAPI struct {
 	conf *webConfig
 
 	// confModifier is used to update the global configuration.
-	confModifier configmodifier.Interface
+	confModifier agh.ConfigModifier
 
 	// TODO(a.garipov): Refactor all these servers.
 	httpServer *http.Server

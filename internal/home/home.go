@@ -18,12 +18,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
-	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -281,7 +281,7 @@ func initContextClients(
 	ctx context.Context,
 	logger *slog.Logger,
 	sigHdlr *signalHandler,
-	confModifier configmodifier.Interface,
+	confModifier agh.ConfigModifier,
 ) (err error) {
 	//lint:ignore SA1019 Migration is not over.
 	config.DHCP.WorkDir = globalContext.workDir
@@ -363,7 +363,7 @@ func setupDNSFilteringConf(
 	baseLogger *slog.Logger,
 	conf *filtering.Config,
 	tlsMgr *tlsManager,
-	confModifier configmodifier.Interface,
+	confModifier agh.ConfigModifier,
 ) (err error) {
 	const (
 		dnsTimeout = 3 * time.Second
@@ -551,7 +551,7 @@ func initWeb(
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
 	auth *auth,
-	confModifier configmodifier.Interface,
+	confModifier agh.ConfigModifier,
 	isCustomUpdURL bool,
 ) (web *webAPI, err error) {
 	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
@@ -650,7 +650,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 
 	confModifier := newDefaultConfigModifier(
 		config,
-		slogLogger.With(slogutil.KeyPrefix, "confmod"),
+		slogLogger.With(slogutil.KeyPrefix, "config_modifier"),
 	)
 
 	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier)
@@ -1133,7 +1133,7 @@ func cmdlineUpdate(
 	//
 	// TODO(e.burkov):  We could probably initialize the internal resolver
 	// separately.
-	err := initDNSServer(nil, nil, nil, nil, nil, nil, tlsMgr, l, configmodifier.Empty{})
+	err := initDNSServer(nil, nil, nil, nil, nil, nil, tlsMgr, l, agh.EmptyConfigModifier{})
 	fatalOnError(err)
 
 	l.InfoContext(ctx, "performing update via cli")

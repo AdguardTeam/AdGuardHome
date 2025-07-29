@@ -1,6 +1,7 @@
 package dnsforward
 
 import (
+	"context"
 	"encoding/base64"
 	"net"
 	"strconv"
@@ -177,7 +178,8 @@ func (s *Server) genAnswerSVCB(req *dns.Msg, svcb *rules.DNSSVCB) (ans *dns.SVCB
 	for k, valStr := range svcb.Params {
 		handler, ok := svcbKeyHandlers[k]
 		if !ok {
-			log.Debug("unknown svcb/https key %q, ignoring", k)
+			// TODO(s.chzhen):  Pass context.
+			s.logger.DebugContext(context.TODO(), "unknown svcb/https key, ignoring", "key", k)
 
 			continue
 		}

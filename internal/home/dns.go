@@ -12,11 +12,11 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
-	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -46,7 +46,7 @@ const (
 func initDNS(
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
-	confModifier configmodifier.Interface,
+	confModifier agh.ConfigModifier,
 	statsDir string,
 	querylogDir string,
 ) (err error) {
@@ -132,7 +132,7 @@ func initDNSServer(
 	httpReg aghhttp.RegisterFunc,
 	tlsMgr *tlsManager,
 	l *slog.Logger,
-	confModifier configmodifier.Interface,
+	confModifier agh.ConfigModifier,
 ) (err error) {
 	globalContext.dnsServer, err = dnsforward.NewServer(dnsforward.DNSCreateParams{
 		Logger:      l,
@@ -240,7 +240,7 @@ func newServerConfig(
 	tlsMgr *tlsManager,
 	httpReg aghhttp.RegisterFunc,
 	clientsContainer dnsforward.ClientsContainer,
-	confModifier configmodifier.Interface,
+	confModifier agh.ConfigModifier,
 ) (newConf *dnsforward.ServerConfig, err error) {
 	hosts := aghalg.CoalesceSlice(dnsConf.BindHosts, []netip.Addr{netutil.IPv4Localhost()})
 

@@ -96,28 +96,27 @@ func (d *DNSFilter) handleRewriteDelete(w http.ResponseWriter, r *http.Request) 
 	}
 	arr := []*LegacyRewrite{}
 
-	func() {
-		d.confMu.Lock()
-		defer d.confMu.Unlock()
+	defer d.conf.ConfModifier.Apply(ctx)
 
-		for _, ent := range d.conf.Rewrites {
-			if ent.equal(entDel) {
-				d.logger.DebugContext(
-					ctx,
-					"removed rewrite element",
-					"domain", ent.Domain,
-					"answer", ent.Answer,
-				)
+	d.confMu.Lock()
+	defer d.confMu.Unlock()
 
-				continue
-			}
-
+	for _, ent := range d.conf.Rewrites {
+		if !ent.equal(entDel) {
 			arr = append(arr, ent)
-		}
-		d.conf.Rewrites = arr
-	}()
 
-	d.conf.ConfModifier.Apply(ctx)
+			continue
+		}
+
+		d.logger.DebugContext(
+			ctx,
+			"removed rewrite element",
+			"domain", ent.Domain,
+			"answer", ent.Answer,
+		)
+	}
+
+	d.conf.Rewrites = arr
 }
 
 // rewriteUpdateJSON is a struct for JSON object with rewrite rule update info.

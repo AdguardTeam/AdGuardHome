@@ -1,13 +1,13 @@
 package dnsforward
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"slices"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 )
@@ -44,7 +44,13 @@ func (s *Server) filterDNSRequest(dctx *dnsContext) (res *filtering.Result, err 
 		dctx.origQuestion = q
 		req.Question[0].Name = dns.Fqdn(res.CanonName)
 	case res.IsFiltered:
-		log.Debug("dnsforward: host %q is filtered, reason: %q", host, res.Reason)
+		// TODO(s.chzhen):  Pass context.
+		s.logger.DebugContext(
+			context.TODO(),
+			"host is filtered",
+			"host", host,
+			"reason", res.Reason,
+		)
 		pctx.Res = s.genDNSFilterMessage(pctx, res)
 	case res.Reason.In(filtering.Rewritten, filtering.FilteredSafeSearch):
 		pctx.Res = s.getCNAMEWithIPs(req, res.IPList, res.CanonName)
@@ -96,6 +102,9 @@ func (s *Server) filterDNSResponse(dctx *dnsContext) (err error) {
 		return nil
 	}
 
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+
 	var res *filtering.Result
 	pctx := dctx.proxyCtx
 	for i, a := range pctx.Res.Answer {
@@ -123,7 +132,13 @@ func (s *Server) filterDNSResponse(dctx *dnsContext) (err error) {
 			continue
 		}
 
-		log.Debug("dnsforward: checked %s %s for %s", dns.Type(rrtype), host, a.Header().Name)
+		s.logger.DebugContext(
+			ctx,
+			"checked",
+			"dns_type", dns.Type(rrtype),
+			"host", host,
+			"name", a.Header().Name,
+		)
 
 		if err != nil {
 			return fmt.Errorf("filtering answer at index %d: %w", i, err)
@@ -132,7 +147,12 @@ func (s *Server) filterDNSResponse(dctx *dnsContext) (err error) {
 			dctx.origResp = pctx.Res
 			pctx.Res = s.genDNSFilterMessage(pctx, res)
 
-			log.Debug("dnsforward: matched %q by response: %q", pctx.Req.Question[0].Name, host)
+			s.logger.DebugContext(
+				ctx,
+				"matched by response",
+				"name", pctx.Req.Question[0].Name,
+				"host", host,
+			)
 
 			break
 		}

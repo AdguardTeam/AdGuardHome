@@ -65,6 +65,8 @@ func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
 
 // TODO(d.kolyshev): Deprecated, remove it later.
 func (web *webAPI) handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	if aghhttp.WriteTextPlainDeprecated(w, r) {
 		return
 	}
@@ -89,10 +91,10 @@ func (web *webAPI) handleI18nChangeLanguage(w http.ResponseWriter, r *http.Reque
 		defer config.Unlock()
 
 		config.Language = lang
-		log.Printf("home: language is set to %s", lang)
+		web.logger.InfoContext(ctx, "language is updated", "lang", lang)
 	}()
 
-	web.confModifier.Apply(r.Context())
+	web.confModifier.Apply(ctx)
 
 	aghhttp.OK(w)
 }

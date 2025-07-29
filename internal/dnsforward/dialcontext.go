@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 )
 
@@ -17,7 +16,7 @@ import (
 // addr should be a valid host:port address, where host could be a domain name
 // or an IP address.
 func (s *Server) DialContext(ctx context.Context, network, addr string) (conn net.Conn, err error) {
-	log.Debug("dnsforward: dialing %q for network %q", addr, network)
+	s.logger.DebugContext(ctx, "dialing", "addr", addr, "network", network)
 
 	host, portStr, err := net.SplitHostPort(addr)
 	if err != nil {
@@ -45,7 +44,7 @@ func (s *Server) DialContext(ctx context.Context, network, addr string) (conn ne
 		return nil, fmt.Errorf("no addresses for host %q", host)
 	}
 
-	log.Debug("dnsforward: resolved %q: %v", host, ips)
+	s.logger.DebugContext(ctx, "resolved", "host", host, "ips", ips)
 
 	var dialErrs []error
 	for _, ip := range ips {

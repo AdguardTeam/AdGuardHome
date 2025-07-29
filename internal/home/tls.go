@@ -20,11 +20,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
-	"github.com/AdguardTeam/AdGuardHome/internal/configmodifier"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/c2h5oh/datasize"
@@ -58,7 +58,7 @@ type tlsManager struct {
 	conf *tlsConfigSettings
 
 	// confModifier is used to update the global configuration.
-	confModifier configmodifier.Interface
+	confModifier agh.ConfigModifier
 
 	// customCipherIDs are the ID of the cipher suites that AdGuard Home must use.
 	customCipherIDs []uint16
@@ -75,7 +75,7 @@ type tlsManagerConfig struct {
 
 	// confModifier is used to update the global configuration.  It must not be
 	// nil.
-	confModifier configmodifier.Interface
+	confModifier agh.ConfigModifier
 
 	// tlsSettings contains the TLS configuration settings.
 	tlsSettings tlsConfigSettings

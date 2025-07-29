@@ -10,7 +10,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/miekg/dns"
 )
@@ -150,8 +149,10 @@ const healthcheckFQDN = "healthcheck.adguardhome.test."
 //
 // TODO(e.burkov):  Decompose into less general processors.
 func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
-	log.Debug("dnsforward: started processing initial")
-	defer log.Debug("dnsforward: finished processing initial")
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+	s.logger.DebugContext(ctx, "started processing initial")
+	defer s.logger.DebugContext(ctx, "finished processing initial")
 
 	pctx := dctx.proxyCtx
 	s.processClientIP(pctx.Addr.Addr())
@@ -192,8 +193,10 @@ func (s *Server) processInitial(dctx *dnsContext) (rc resultCode) {
 
 // processClientIP sends the client IP address to s.addrProc, if needed.
 func (s *Server) processClientIP(addr netip.Addr) {
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
 	if !addr.IsValid() {
-		log.Info("dnsforward: warning: bad client addr %q", addr)
+		s.logger.WarnContext(ctx, "bad client address", "addr", addr)
 
 		return
 	}
@@ -203,8 +206,7 @@ func (s *Server) processClientIP(addr netip.Addr) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	// TODO(s.chzhen):  Pass context.
-	s.addrProc.Process(context.TODO(), addr)
+	s.addrProc.Process(ctx, addr)
 }
 
 // processDDRQuery responds to Discovery of Designated Resolvers (DDR) SVCB
@@ -213,8 +215,10 @@ func (s *Server) processClientIP(addr netip.Addr) {
 //
 // See https://www.ietf.org/archive/id/draft-ietf-add-ddr-10.html.
 func (s *Server) processDDRQuery(dctx *dnsContext) (rc resultCode) {
-	log.Debug("dnsforward: started processing ddr")
-	defer log.Debug("dnsforward: finished processing ddr")
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+	s.logger.DebugContext(ctx, "started processing ddr")
+	defer s.logger.DebugContext(ctx, "finished processing ddr")
 
 	if !s.conf.HandleDDR {
 		return resultCodeSuccess
@@ -312,8 +316,10 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 //
 // TODO(a.garipov): Adapt to AAAA as well.
 func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
-	log.Debug("dnsforward: started processing dhcp hosts")
-	defer log.Debug("dnsforward: finished processing dhcp hosts")
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+	s.logger.DebugContext(ctx, "started processing dhcp hosts")
+	defer s.logger.DebugContext(ctx, "finished processing dhcp hosts")
 
 	pctx := dctx.proxyCtx
 	req := pctx.Req
@@ -325,7 +331,12 @@ func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
 	}
 
 	if !pctx.IsPrivateClient {
-		log.Debug("dnsforward: %q requests for dhcp host %q", pctx.Addr, dhcpHost)
+		s.logger.DebugContext(
+			ctx,
+			"requests for dhcp host",
+			"addr", pctx.Addr,
+			"dhcp_host", dhcpHost,
+		)
 		pctx.Res = s.NewMsgNXDOMAIN(req)
 
 		// Do not even put into query log.
@@ -336,12 +347,12 @@ func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
 	if ip == (netip.Addr{}) {
 		// Go on and process them with filters, including dnsrewrite ones, and
 		// possibly route them to a domain-specific upstream.
-		log.Debug("dnsforward: no dhcp record for %q", dhcpHost)
+		s.logger.DebugContext(ctx, "no dhcp record", "dhcp_host", dhcpHost)
 
 		return resultCodeSuccess
 	}
 
-	log.Debug("dnsforward: dhcp record for %q is %s", dhcpHost, ip)
+	s.logger.DebugContext(ctx, "dhcp record for", "dhcp_host", dhcpHost, "ip", ip)
 
 	resp := s.replyCompressed(req)
 	switch q.Qtype {
@@ -373,8 +384,10 @@ func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
 // processDHCPAddrs responds to PTR requests if the target IP is leased by the
 // DHCP server.
 func (s *Server) processDHCPAddrs(dctx *dnsContext) (rc resultCode) {
-	log.Debug("dnsforward: started processing dhcp addrs")
-	defer log.Debug("dnsforward: finished processing dhcp addrs")
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+	s.logger.DebugContext(ctx, "started processing dhcp addrs")
+	defer s.logger.DebugContext(ctx, "finished processing dhcp addrs")
 
 	pctx := dctx.proxyCtx
 	if pctx.Res != nil {
@@ -396,7 +409,7 @@ func (s *Server) processDHCPAddrs(dctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	log.Debug("dnsforward: dhcp client %s is %q", addr, host)
+	s.logger.DebugContext(ctx, "dhcp client", "addr", addr, "host", host)
 
 	resp := s.replyCompressed(req)
 	ptr := &dns.PTR{
@@ -418,8 +431,10 @@ func (s *Server) processDHCPAddrs(dctx *dnsContext) (rc resultCode) {
 
 // Apply filtering logic
 func (s *Server) processFilteringBeforeRequest(dctx *dnsContext) (rc resultCode) {
-	log.Debug("dnsforward: started processing filtering before req")
-	defer log.Debug("dnsforward: finished processing filtering before req")
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+	s.logger.DebugContext(ctx, "started processing filtering before request")
+	defer s.logger.DebugContext(ctx, "finished processing filtering before request")
 
 	if dctx.proxyCtx.RequestedPrivateRDNS != (netip.Prefix{}) {
 		// There is no need to filter request for locally served ARPA hostname
@@ -459,8 +474,10 @@ func ipStringFromAddr(addr net.Addr) (ipStr string) {
 
 // processUpstream passes request to upstream servers and handles the response.
 func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
-	log.Debug("dnsforward: started processing upstream")
-	defer log.Debug("dnsforward: finished processing upstream")
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+	s.logger.DebugContext(ctx, "started processing upstream")
+	defer s.logger.DebugContext(ctx, "finished processing upstream")
 
 	pctx := dctx.proxyCtx
 	req := pctx.Req
@@ -475,7 +492,11 @@ func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
 		// TODO(a.garipov): Route such queries to a custom upstream for the
 		// local domain name if there is one.
 		name := req.Question[0].Name
-		log.Debug("dnsforward: dhcp client hostname %q was not filtered", name[:len(name)-1])
+		s.logger.DebugContext(
+			ctx,
+			"dhcp client hostname was not filtered",
+			"hostname", name[:len(name)-1],
+		)
 		pctx.Res = s.NewMsgNXDOMAIN(req)
 
 		return resultCodeFinish
@@ -579,10 +600,12 @@ func (s *Server) setCustomUpstream(pctx *proxy.DNSContext, clientID string) {
 	cliAddr := pctx.Addr.Addr()
 	upsConf := s.conf.ClientsContainer.CustomUpstreamConfig(clientID, cliAddr)
 	if upsConf != nil {
-		log.Debug(
-			"dnsforward: using custom upstreams for client with ip %s and clientid %q",
-			cliAddr,
-			clientID,
+		// TODO(s.chzhen):  Pass context.
+		s.logger.DebugContext(
+			context.TODO(),
+			"using custom upstreams for client with",
+			"ip", cliAddr,
+			"client_id", clientID,
 		)
 
 		pctx.CustomUpstreamConfig = upsConf
@@ -591,8 +614,10 @@ func (s *Server) setCustomUpstream(pctx *proxy.DNSContext, clientID string) {
 
 // Apply filtering logic after we have received response from upstream servers
 func (s *Server) processFilteringAfterResponse(dctx *dnsContext) (rc resultCode) {
-	log.Debug("dnsforward: started processing filtering after resp")
-	defer log.Debug("dnsforward: finished processing filtering after resp")
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+	s.logger.DebugContext(ctx, "started processing filtering after response")
+	defer s.logger.DebugContext(ctx, "finished processing filtering after response")
 
 	switch res := dctx.result; res.Reason {
 	case filtering.NotFilteredAllowList:
