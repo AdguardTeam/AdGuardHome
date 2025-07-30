@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
@@ -114,13 +115,19 @@ func Main(clientBuildFS fs.FS) {
 	// package flag.
 	opts := loadCmdLineOpts()
 
+	ls := getLogSettings(opts)
+
+	// TODO(a.garipov): Use slog everywhere.
+	baseLogger := newSlogLogger(ls)
+
 	done := make(chan struct{})
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 
 	ctx := context.Background()
-	sigHdlr := newSignalHandler(signals, func(ctx context.Context) {
+	sigHdlrLogger := baseLogger.With(slogutil.KeyPrefix, "signalhdlr")
+	sigHdlr := newSignalHandler(sigHdlrLogger, signals, func(ctx context.Context) {
 		cleanup(ctx)
 		cleanupAlways()
 		close(done)
@@ -129,24 +136,34 @@ func Main(clientBuildFS fs.FS) {
 	go sigHdlr.handle(ctx)
 
 	if opts.serviceControlAction != "" {
-		handleServiceControlAction(opts, clientBuildFS, signals, done, sigHdlr)
+		svcLogger := baseLogger.With(slogutil.KeyPrefix, "service")
+		handleServiceControlAction(
+			ctx,
+			baseLogger,
+			svcLogger,
+			opts,
+			clientBuildFS,
+			signals,
+			done,
+			sigHdlr,
+		)
 
 		return
 	}
 
 	// run the protection
-	run(opts, clientBuildFS, done, sigHdlr)
+	run(ctx, baseLogger, opts, clientBuildFS, done, sigHdlr)
 }
 
 // setupContext initializes [globalContext] fields.  It also reads and upgrades
-// config file if necessary.
-func setupContext(opts options) (err error) {
+// config file if necessary.  baseLogger must not be nil.
+func setupContext(ctx context.Context, baseLogger *slog.Logger, opts options) (err error) {
 	globalContext.firstRun = detectFirstRun()
 
 	globalContext.mux = http.NewServeMux()
 
 	if !opts.noEtcHosts {
-		err = setupHostsContainer()
+		err = setupHostsContainer(ctx, baseLogger)
 		if err != nil {
 			// Don't wrap the error, because it's informative enough as is.
 			return err
@@ -230,9 +247,9 @@ func configureOS(conf *configuration) (err error) {
 }
 
 // setupHostsContainer initializes the structures to keep up-to-date the hosts
-// provided by the OS.
-func setupHostsContainer() (err error) {
-	hostsWatcher, err := aghos.NewOSWritesWatcher()
+// provided by the OS.  baseLogger must not be nil.
+func setupHostsContainer(ctx context.Context, baseLogger *slog.Logger) (err error) {
+	hostsWatcher, err := aghos.NewOSWritesWatcher(baseLogger.With(slogutil.KeyPrefix, "oswatcher"))
 	if err != nil {
 		log.Info("WARNING: initializing filesystem watcher: %s; not watching for changes", err)
 
@@ -246,7 +263,7 @@ func setupHostsContainer() (err error) {
 
 	globalContext.etcHosts, err = aghnet.NewHostsContainer(osutil.RootDirFS(), hostsWatcher, paths...)
 	if err != nil {
-		closeErr := hostsWatcher.Close()
+		closeErr := hostsWatcher.Shutdown(ctx)
 		if errors.Is(err, aghnet.ErrNoHostsPaths) {
 			log.Info("warning: initing hosts container: %s", err)
 
@@ -256,7 +273,7 @@ func setupHostsContainer() (err error) {
 		return errors.Join(fmt.Errorf("initializing hosts container: %w", err), closeErr)
 	}
 
-	return hostsWatcher.Start()
+	return hostsWatcher.Start(ctx)
 }
 
 // setupOpts sets up command-line options.
@@ -603,7 +620,14 @@ func fatalOnError(err error) {
 // run configures and starts AdGuard Home.
 //
 // TODO(e.burkov):  Make opts a pointer.
-func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalHandler) {
+func run(
+	ctx context.Context,
+	slogLogger *slog.Logger,
+	opts options,
+	clientBuildFS fs.FS,
+	done chan struct{},
+	sigHdlr *signalHandler,
+) {
 	// Configure working dir.
 	err := initWorkingDir(opts)
 	fatalOnError(err)
@@ -617,10 +641,6 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	err = configureLogger(ls)
 	fatalOnError(err)
 
-	// TODO(a.garipov): Use slog everywhere.
-	slogLogger := newSlogLogger(ls)
-	sigHdlr.swapLogger(slogLogger)
-
 	// Print the first message after logger is configured.
 	log.Info("%s", version.Full())
 	log.Debug("current working directory is %s", globalContext.workDir)
@@ -628,14 +648,13 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 		log.Info("AdGuard Home is running as a service")
 	}
 
-	err = setupContext(opts)
+	aghtls.Init(ctx, slogLogger.With(slogutil.KeyPrefix, "aghtls"))
+
+	err = setupContext(ctx, slogLogger, opts)
 	fatalOnError(err)
 
 	err = configureOS(config)
 	fatalOnError(err)
-
-	// TODO(s.chzhen):  Use it for the entire initialization process.
-	ctx := context.Background()
 
 	// Clients package uses filtering package's static data
 	// (filtering.BlockedSvcKnown()), so we have to initialize filtering static
@@ -646,6 +665,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	fatalOnError(err)
 
 	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
+
 	tlsMgr, err := newTLSManager(ctx, &tlsManagerConfig{
 		logger:         tlsMgrLogger,
 		configModified: onConfigModified,
@@ -1131,7 +1151,7 @@ func cmdlineUpdate(
 	err = upd.Update(ctx, globalContext.firstRun)
 	fatalOnError(err)
 
-	err = restartService()
+	err = restartService(ctx, l)
 	if err != nil {
 		l.DebugContext(ctx, "restarting service", slogutil.KeyError, err)
 		l.InfoContext(ctx, "AdGuard Home was not installed as a service. "+

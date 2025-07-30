@@ -169,12 +169,7 @@ run_linter gocognit --over='19' \
 	./internal/home/ \
 	;
 
-run_linter gocognit --over='18' \
-	./internal/aghtls/ \
-	;
-
 run_linter gocognit --over='15' \
-	./internal/aghos/ \
 	./internal/filtering/ \
 	;
 
@@ -190,15 +185,13 @@ run_linter gocognit --over='12' \
 	./internal/filtering/rewrite/ \
 	;
 
-run_linter gocognit --over='11' \
-	./internal/updater/ \
-	;
-
 run_linter gocognit --over='10' \
 	./internal/aghalg/ \
 	./internal/aghhttp/ \
+	./internal/aghos/ \
 	./internal/aghrenameio/ \
 	./internal/aghtest/ \
+	./internal/aghtls/ \
 	./internal/aghuser/ \
 	./internal/arpdb/ \
 	./internal/client/ \
@@ -213,6 +206,7 @@ run_linter gocognit --over='10' \
 	./internal/rdns/ \
 	./internal/schedule/ \
 	./internal/stats/ \
+	./internal/updater/ \
 	./internal/version/ \
 	./internal/whois/ \
 	./scripts/ \

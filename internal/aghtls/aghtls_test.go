@@ -3,17 +3,20 @@ package aghtls_test
 import (
 	"crypto/tls"
 	"testing"
+	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMain(m *testing.M) {
-	testutil.DiscardLogOutput(m)
-}
+// testTimeout is a common timeout for tests and contexts.
+const testTimeout time.Duration = 1 * time.Second
 
 func TestParseCiphers(t *testing.T) {
+	aghtls.Init(testutil.ContextWithTimeout(t, testTimeout), slogutil.NewDiscardLogger())
+
 	testCases := []struct {
 		name       string
 		wantErrMsg string

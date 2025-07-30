@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net"
@@ -355,10 +356,10 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 			},
 		},
 		&aghtest.FSWatcher{
-			OnStart:  func() (_ error) { panic("not implemented") },
-			OnEvents: func() (e <-chan struct{}) { return nil },
-			OnAdd:    func(_ string) (err error) { return nil },
-			OnClose:  func() (err error) { return nil },
+			OnStart:    func(_ context.Context) (_ error) { panic("not implemented") },
+			OnEvents:   func() (e <-chan struct{}) { return nil },
+			OnAdd:      func(_ string) (err error) { return nil },
+			OnShutdown: func(_ context.Context) (err error) { return nil },
 		},
 		hostsFileName,
 	)
