@@ -121,9 +121,7 @@ func ipsFromAnswer(ans []dns.RR) (ip4s, ip6s []net.IP) {
 }
 
 // process adds the resolved IP addresses to the domain's ipsets, if any.
-func (h *ipsetHandler) process(dctx *dnsContext) (rc resultCode) {
-	// TODO(s.chzhen):  Use passed context.
-	ctx := context.TODO()
+func (h *ipsetHandler) process(ctx context.Context, dctx *dnsContext) (rc resultCode) {
 	h.logger.DebugContext(ctx, "started processing")
 	defer h.logger.DebugContext(ctx, "finished processing")
 

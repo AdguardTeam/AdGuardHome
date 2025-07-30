@@ -11,6 +11,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -230,7 +231,7 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 				clientID: tc.clientID,
 			}
 
-			code := srv.processQueryLogsAndStats(dctx)
+			code := srv.processQueryLogsAndStats(testutil.ContextWithTimeout(t, testTimeout), dctx)
 			assert.Equal(t, tc.wantCode, code)
 			assert.Equal(t, tc.wantLogProto, ql.lastParams.ClientProto)
 			assert.Equal(t, tc.wantStatClient, st.lastEntry.Client)

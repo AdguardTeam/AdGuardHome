@@ -310,7 +310,7 @@ const (
 )
 
 // newProxyConfig creates and validates configuration for the main proxy.
-func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
+func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err error) {
 	srvConf := s.conf
 	trustedPrefixes := netutil.UnembedPrefixes(srvConf.TrustedProxies)
 
@@ -358,12 +358,12 @@ func (s *Server) newProxyConfig() (conf *proxy.Config, err error) {
 		return nil, fmt.Errorf("bogus_nxdomain: %w", err)
 	}
 
-	err = s.prepareTLS(conf)
+	err = s.prepareTLS(ctx, conf)
 	if err != nil {
 		return nil, fmt.Errorf("validating tls: %w", err)
 	}
 
-	err = s.preparePlain(conf)
+	err = s.preparePlain(ctx, conf)
 	if err != nil {
 		return nil, fmt.Errorf("validating plain: %w", err)
 	}
@@ -447,7 +447,7 @@ func (s *Server) initDefaultSettings() {
 
 // prepareIpsetListSettings reads and prepares the ipset configuration either
 // from a file or from the data in the configuration file.
-func (s *Server) prepareIpsetListSettings() (ipsets []string, err error) {
+func (s *Server) prepareIpsetListSettings(ctx context.Context) (ipsets []string, err error) {
 	fn := s.conf.IpsetListFileName
 	if fn == "" {
 		return s.conf.IpsetList, nil
@@ -462,13 +462,7 @@ func (s *Server) prepareIpsetListSettings() (ipsets []string, err error) {
 	ipsets = stringutil.SplitTrimmed(string(data), "\n")
 	ipsets = slices.DeleteFunc(ipsets, aghnet.IsCommentOrEmpty)
 
-	// TODO(s.chzhen):  Pass context.
-	s.logger.DebugContext(
-		context.TODO(),
-		"using ipset rules from file",
-		"num", len(ipsets),
-		"file", fn,
-	)
+	s.logger.DebugContext(ctx, "using ipset rules from file", "num", len(ipsets), "file", fn)
 
 	return ipsets, nil
 }
@@ -638,7 +632,7 @@ func (s *Server) prepareDNSCrypt(proxyConf *proxy.Config) {
 }
 
 // prepareTLS sets up the TLS configuration for the DNS proxy.
-func (s *Server) prepareTLS(proxyConf *proxy.Config) (err error) {
+func (s *Server) prepareTLS(ctx context.Context, proxyConf *proxy.Config) (err error) {
 	s.prepareDNSCrypt(proxyConf)
 
 	if s.conf.TLSConf.Cert == nil {
@@ -659,8 +653,6 @@ func (s *Server) prepareTLS(proxyConf *proxy.Config) (err error) {
 
 	s.hasIPAddrs = aghtls.CertificateHasIP(cert)
 
-	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
 	if s.conf.TLSConf.StrictSNICheck {
 		if len(cert.DNSNames) != 0 {
 			s.dnsNames = cert.DNSNames
@@ -741,7 +733,7 @@ func (s *Server) onGetCertificate(ch *tls.ClientHelloInfo) (*tls.Certificate, er
 
 // preparePlain prepares the plain-DNS configuration for the DNS proxy.
 // preparePlain assumes that prepareTLS has already been called.
-func (s *Server) preparePlain(proxyConf *proxy.Config) (err error) {
+func (s *Server) preparePlain(ctx context.Context, proxyConf *proxy.Config) (err error) {
 	if s.conf.ServePlainDNS {
 		proxyConf.UDPListenAddr = s.conf.UDPListenAddrs
 		proxyConf.TCPListenAddr = s.conf.TCPListenAddrs
@@ -759,15 +751,16 @@ func (s *Server) preparePlain(proxyConf *proxy.Config) (err error) {
 		return errors.Error("disabling plain dns requires at least one encrypted protocol")
 	}
 
-	// TODO(s.chzhen):  Pass context.
-	s.logger.WarnContext(context.TODO(), "plain dns is disabled")
+	s.logger.WarnContext(ctx, "plain dns is disabled")
 
 	return nil
 }
 
 // UpdatedProtectionStatus updates protection state, if the protection was
 // disabled temporarily.  Returns the updated state of protection.
-func (s *Server) UpdatedProtectionStatus() (enabled bool, disabledUntil *time.Time) {
+func (s *Server) UpdatedProtectionStatus(
+	ctx context.Context,
+) (enabled bool, disabledUntil *time.Time) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
@@ -787,7 +780,7 @@ func (s *Server) UpdatedProtectionStatus() (enabled bool, disabledUntil *time.Ti
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/5661.
 	if s.protectionUpdateInProgress.CompareAndSwap(false, true) {
-		go s.enableProtectionAfterPause()
+		go s.enableProtectionAfterPause(ctx)
 	}
 
 	return true, nil
@@ -795,15 +788,12 @@ func (s *Server) UpdatedProtectionStatus() (enabled bool, disabledUntil *time.Ti
 
 // enableProtectionAfterPause sets the protection configuration to enabled
 // values.  It is intended to be used as a goroutine.
-func (s *Server) enableProtectionAfterPause() {
-	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
+func (s *Server) enableProtectionAfterPause(ctx context.Context) {
 	defer slogutil.RecoverAndLog(ctx, s.logger)
 
 	defer s.protectionUpdateInProgress.Store(false)
 
-	// TODO(s.chzhen):  Pass context.
-	defer s.conf.ConfModifier.Apply(context.TODO())
+	defer s.conf.ConfModifier.Apply(ctx)
 
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()

@@ -138,8 +138,8 @@ const (
 	jsonUpstreamModeFastestAddr jsonUpstreamMode = "fastest_addr"
 )
 
-func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
-	protectionEnabled, protectionDisabledUntil := s.UpdatedProtectionStatus()
+func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
+	protectionEnabled, protectionDisabledUntil := s.UpdatedProtectionStatus(ctx)
 
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
@@ -184,8 +184,7 @@ func (s *Server) getDNSConfig() (c *jsonDNSConfig) {
 
 	defPTRUps, err := s.defaultLocalPTRUpstreams()
 	if err != nil {
-		// TODO(s.chzhen):  Pass context.
-		s.logger.ErrorContext(context.TODO(), "getting local ptr upstreams", slogutil.KeyError, err)
+		s.logger.ErrorContext(ctx, "getting local ptr upstreams", slogutil.KeyError, err)
 	}
 
 	return &jsonDNSConfig{
@@ -241,7 +240,7 @@ func (s *Server) defaultLocalPTRUpstreams() (ups []string, err error) {
 
 // handleGetConfig handles requests to the GET /control/dns_info endpoint.
 func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
-	resp := s.getDNSConfig()
+	resp := s.getDNSConfig(r.Context())
 	aghhttp.WriteJSONResponseOK(w, r, resp)
 }
 
@@ -487,6 +486,8 @@ func checkInclusion(ptr *int, minN, maxN int) (err error) {
 
 // handleSetConfig handles requests to the POST /control/dns_config endpoint.
 func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	req := &jsonDNSConfig{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
@@ -512,10 +513,10 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	restart := s.setConfig(req)
-	s.conf.ConfModifier.Apply(r.Context())
+	s.conf.ConfModifier.Apply(ctx)
 
 	if restart {
-		err = s.Reconfigure(nil)
+		err = s.Reconfigure(ctx, nil)
 		if err != nil {
 			aghhttp.Error(r, w, http.StatusInternalServerError, "%s", err)
 		}

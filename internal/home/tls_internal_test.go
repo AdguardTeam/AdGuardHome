@@ -273,7 +273,9 @@ func TestTLSManager_Reload(t *testing.T) {
 
 	// The [tlsManager.reload] method will start the DNS server and it should be
 	// stopped after the test ends.
-	testutil.CleanupAndRequireSuccess(t, globalContext.dnsServer.Stop)
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+		return globalContext.dnsServer.Stop(testutil.ContextWithTimeout(t, testTimeout))
+	})
 
 	conf = m.config()
 	assertCertSerialNumber(t, conf, snAfter)
@@ -477,15 +479,17 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = globalContext.dnsServer.Prepare(&dnsforward.ServerConfig{
-		TLSConf: &dnsforward.TLSConfig{},
-		Config: dnsforward.Config{
-			UpstreamMode:     dnsforward.UpstreamModeLoadBalance,
-			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{Enabled: false},
-			ClientsContainer: dnsforward.EmptyClientsContainer{},
-		},
-		ServePlainDNS: true,
-	})
+	err = globalContext.dnsServer.Prepare(
+		testutil.ContextWithTimeout(t, testTimeout),
+		&dnsforward.ServerConfig{
+			TLSConf: &dnsforward.TLSConfig{},
+			Config: dnsforward.Config{
+				UpstreamMode:     dnsforward.UpstreamModeLoadBalance,
+				EDNSClientSubnet: &dnsforward.EDNSClientSubnet{Enabled: false},
+				ClientsContainer: dnsforward.EmptyClientsContainer{},
+			},
+			ServePlainDNS: true,
+		})
 	require.NoError(t, err)
 
 	globalContext.clients.storage, err = client.NewStorage(ctx, &client.StorageConfig{
@@ -552,7 +556,9 @@ func TestTLSManager_HandleTLSConfigure(t *testing.T) {
 
 	// The [tlsManager.handleTLSConfigure] method will start the DNS server and
 	// it should be stopped after the test ends.
-	testutil.CleanupAndRequireSuccess(t, globalContext.dnsServer.Stop)
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+		return globalContext.dnsServer.Stop(testutil.ContextWithTimeout(t, testTimeout))
+	})
 
 	res := &tlsConfig{
 		tlsConfigStatus: &tlsConfigStatus{},

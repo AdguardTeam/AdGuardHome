@@ -15,8 +15,8 @@ type ConfigModifier interface {
 // nothing.
 type EmptyConfigModifier struct{}
 
-// Apply implements the [ConfigModifier] for EmptyConfigModifier.
-func (em EmptyConfigModifier) Apply(ctx context.Context) {}
-
 // type check
 var _ ConfigModifier = EmptyConfigModifier{}
+
+// Apply implements the [ConfigModifier] for EmptyConfigModifier.
+func (em EmptyConfigModifier) Apply(ctx context.Context) {}

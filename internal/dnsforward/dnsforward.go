@@ -291,7 +291,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 // its workers finished.  But it would require the upstream.Upstream to have the
 // Close method to prevent from hanging while waiting for unresponsive server to
 // respond.
-func (s *Server) Close() {
+func (s *Server) Close(ctx context.Context) {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
@@ -301,8 +301,7 @@ func (s *Server) Close() {
 	s.dnsProxy = nil
 
 	if err := s.ipset.close(); err != nil {
-		// TODO(s.chzhen):  Pass context.
-		s.logger.ErrorContext(context.TODO(), "closing ipset", slogutil.KeyError, err)
+		s.logger.ErrorContext(ctx, "closing ipset", slogutil.KeyError, err)
 	}
 }
 
@@ -467,18 +466,17 @@ func hostFromPTR(resp *dns.Msg) (host string, ttl time.Duration, err error) {
 }
 
 // Start starts the DNS server.  It must only be called after [Server.Prepare].
-func (s *Server) Start() error {
+func (s *Server) Start(ctx context.Context) error {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
-	return s.startLocked()
+	return s.startLocked(ctx)
 }
 
 // startLocked starts the DNS server without locking.  s.serverLock is expected
 // to be locked.
-func (s *Server) startLocked() error {
-	// TODO(e.burkov):  Use context properly.
-	err := s.dnsProxy.Start(context.Background())
+func (s *Server) startLocked(ctx context.Context) error {
+	err := s.dnsProxy.Start(ctx)
 	if err == nil {
 		s.isRunning = true
 	}
@@ -488,7 +486,7 @@ func (s *Server) startLocked() error {
 
 // Prepare initializes parameters of s using data from conf.  conf must not be
 // nil.
-func (s *Server) Prepare(conf *ServerConfig) (err error) {
+func (s *Server) Prepare(ctx context.Context, conf *ServerConfig) (err error) {
 	s.conf = *conf
 
 	// dnsFilter can be nil during application update.
@@ -502,13 +500,13 @@ func (s *Server) Prepare(conf *ServerConfig) (err error) {
 
 	s.initDefaultSettings()
 
-	err = s.prepareInternalDNS()
+	err = s.prepareInternalDNS(ctx)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
-	proxyConfig, err := s.newProxyConfig()
+	proxyConfig, err := s.newProxyConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("preparing proxy: %w", err)
 	}
@@ -639,8 +637,8 @@ func (s *Server) prepareLocalResolvers() (uc *proxy.UpstreamConfig, err error) {
 // prepareInternalDNS initializes the internal state of s before initializing
 // the primary DNS proxy instance.  It assumes s.serverLock is locked or the
 // Server not running.
-func (s *Server) prepareInternalDNS() (err error) {
-	ipsetList, err := s.prepareIpsetListSettings()
+func (s *Server) prepareInternalDNS(ctx context.Context) (err error) {
+	ipsetList, err := s.prepareIpsetListSettings(ctx)
 	if err != nil {
 		return fmt.Errorf("preparing ipset settings: %w", err)
 	}
@@ -785,32 +783,26 @@ func (s *Server) prepareInternalProxy() (err error) {
 }
 
 // Stop stops the DNS server.
-func (s *Server) Stop() error {
+func (s *Server) Stop(ctx context.Context) error {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
-	s.stopLocked()
+	s.stopLocked(ctx)
 
 	return nil
 }
 
 // stopLocked stops the DNS server without locking.  s.serverLock is expected to
 // be locked.
-func (s *Server) stopLocked() {
+func (s *Server) stopLocked(ctx context.Context) {
 	// TODO(e.burkov, a.garipov):  Return critical errors, not just log them.
 	// This will require filtering all the non-critical errors in
 	// [upstream.Upstream] implementations.
 
 	if s.dnsProxy != nil {
-		// TODO(e.burkov):  Use context properly.
-		err := s.dnsProxy.Shutdown(context.Background())
+		err := s.dnsProxy.Shutdown(ctx)
 		if err != nil {
-			// TODO(s.chzhen):  Pass context.
-			s.logger.ErrorContext(
-				context.TODO(),
-				"closing primary resolvers",
-				slogutil.KeyError, err,
-			)
+			s.logger.ErrorContext(ctx, "closing primary resolvers", slogutil.KeyError, err)
 		}
 	}
 
@@ -859,16 +851,14 @@ func (s *Server) proxy() (p *proxy.Proxy) {
 // Reconfigure applies the new configuration to the DNS server.
 //
 // TODO(a.garipov): This whole piece of API is weird and needs to be remade.
-func (s *Server) Reconfigure(conf *ServerConfig) error {
+func (s *Server) Reconfigure(ctx context.Context, conf *ServerConfig) error {
 	s.serverLock.Lock()
 	defer s.serverLock.Unlock()
 
-	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
 	s.logger.InfoContext(ctx, "starting reconfiguring server")
 	defer s.logger.InfoContext(ctx, "finished reconfiguring server")
 
-	s.stopLocked()
+	s.stopLocked(ctx)
 
 	// It seems that net.Listener.Close() doesn't close file descriptors right away.
 	// We wait for some time and hope that this fd will be closed.
@@ -887,12 +877,12 @@ func (s *Server) Reconfigure(conf *ServerConfig) error {
 
 	// TODO(e.burkov):  It seems an error here brings the server down, which is
 	// not reliable enough.
-	err := s.Prepare(conf)
+	err := s.Prepare(ctx, conf)
 	if err != nil {
 		return fmt.Errorf("could not reconfigure the server: %w", err)
 	}
 
-	err = s.startLocked()
+	err = s.startLocked(ctx)
 	if err != nil {
 		return fmt.Errorf("could not reconfigure the server: %w", err)
 	}

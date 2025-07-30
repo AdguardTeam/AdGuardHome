@@ -105,7 +105,7 @@ func TestServer_ProcessInitial(t *testing.T) {
 				},
 			}
 
-			gotRC := s.processInitial(dctx)
+			gotRC := s.processInitial(testutil.ContextWithTimeout(t, testTimeout), dctx)
 			assert.Equal(t, tc.wantRC, gotRC)
 			assert.Equal(t, testClientAddrPort.Addr(), gotAddr)
 
@@ -208,8 +208,8 @@ func TestServer_ProcessFilteringAfterResponse(t *testing.T) {
 					Addr:  testClientAddrPort,
 				},
 			}
-
-			gotRC := s.processFilteringAfterResponse(dctx)
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			gotRC := s.processFilteringAfterResponse(ctx, dctx)
 			assert.Equal(t, tc.wantRC, gotRC)
 			assert.Equal(t, newResp(dns.RcodeSuccess, tc.req, tc.wantRespAns), dctx.proxyCtx.Res)
 		})
@@ -353,7 +353,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 				},
 			}
 
-			res := s.processDDRQuery(dctx)
+			res := s.processDDRQuery(testutil.ContextWithTimeout(t, testTimeout), dctx)
 			require.Equal(t, tc.wantRes, res)
 
 			if tc.wantRes != resultCodeFinish {
@@ -461,7 +461,7 @@ func TestServer_ProcessDHCPHosts_localRestriction(t *testing.T) {
 				},
 			}
 
-			res := s.processDHCPHosts(dctx)
+			res := s.processDHCPHosts(testutil.ContextWithTimeout(t, testTimeout), dctx)
 
 			pctx := dctx.proxyCtx
 			if !tc.isLocalCli {
@@ -606,7 +606,7 @@ func TestServer_ProcessDHCPHosts(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			res := s.processDHCPHosts(dctx)
+			res := s.processDHCPHosts(testutil.ContextWithTimeout(t, testTimeout), dctx)
 			pctx := dctx.proxyCtx
 			assert.Equal(t, tc.wantRes, res)
 			require.NoError(t, dctx.err)
@@ -814,9 +814,9 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 				ServePlainDNS:     true,
 			},
 		)
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
 		pctx := newPrxCtx()
-
-		rc := s.processUpstream(&dnsContext{proxyCtx: pctx})
+		rc := s.processUpstream(ctx, &dnsContext{proxyCtx: pctx})
 		require.Equal(t, resultCodeSuccess, rc)
 		require.NotEmpty(t, pctx.Res.Answer)
 		ptr := testutil.RequireTypeAssert[*dns.PTR](t, pctx.Res.Answer[0])
@@ -846,7 +846,8 @@ func TestServer_ProcessUpstream_localPTR(t *testing.T) {
 		)
 		pctx := newPrxCtx()
 
-		rc := s.processUpstream(&dnsContext{proxyCtx: pctx})
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		rc := s.processUpstream(ctx, &dnsContext{proxyCtx: pctx})
 		require.Equal(t, resultCodeError, rc)
 		require.Empty(t, pctx.Res.Answer)
 	})

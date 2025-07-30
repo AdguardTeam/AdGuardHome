@@ -731,7 +731,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 	fatalOnError(err)
 
 	if !globalContext.firstRun {
-		err = initDNS(slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
+		err = initDNS(ctx, slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
 		fatalOnError(err)
 
 		tlsMgr.start(ctx)
@@ -739,7 +739,7 @@ func run(opts options, clientBuildFS fs.FS, done chan struct{}, sigHdlr *signalH
 		go func() {
 			startErr := startDNSServer()
 			if startErr != nil {
-				closeDNSServer()
+				closeDNSServer(ctx)
 				fatalOnError(startErr)
 			}
 		}()
@@ -975,7 +975,7 @@ func cleanup(ctx context.Context) {
 		globalContext.web = nil
 	}
 
-	err := stopDNSServer()
+	err := stopDNSServer(ctx)
 	if err != nil {
 		log.Error("stopping dns server: %s", err)
 	}
@@ -1133,7 +1133,7 @@ func cmdlineUpdate(
 	//
 	// TODO(e.burkov):  We could probably initialize the internal resolver
 	// separately.
-	err := initDNSServer(nil, nil, nil, nil, nil, nil, tlsMgr, l, agh.EmptyConfigModifier{})
+	err := initDNSServer(ctx, nil, nil, nil, nil, nil, nil, tlsMgr, l, agh.EmptyConfigModifier{})
 	fatalOnError(err)
 
 	l.InfoContext(ctx, "performing update via cli")

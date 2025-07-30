@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/dnsproxy/proxy"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
@@ -62,7 +63,7 @@ func TestIpsetCtx_process(t *testing.T) {
 		ictx := &ipsetHandler{
 			logger: testLogger,
 		}
-		rc := ictx.process(dctx)
+		rc := ictx.process(testutil.ContextWithTimeout(t, testTimeout), dctx)
 		assert.Equal(t, resultCodeSuccess, rc)
 
 		err := ictx.close()
@@ -85,7 +86,7 @@ func TestIpsetCtx_process(t *testing.T) {
 			logger:   testLogger,
 		}
 
-		rc := ictx.process(dctx)
+		rc := ictx.process(testutil.ContextWithTimeout(t, testTimeout), dctx)
 		assert.Equal(t, resultCodeSuccess, rc)
 		assert.Equal(t, []net.IP{ip4}, m.ip4s)
 		assert.Empty(t, m.ip6s)
@@ -110,7 +111,7 @@ func TestIpsetCtx_process(t *testing.T) {
 			logger:   testLogger,
 		}
 
-		rc := ictx.process(dctx)
+		rc := ictx.process(testutil.ContextWithTimeout(t, testTimeout), dctx)
 		assert.Equal(t, resultCodeSuccess, rc)
 		assert.Empty(t, m.ip4s)
 		assert.Equal(t, []net.IP{ip6}, m.ip6s)

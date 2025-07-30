@@ -544,7 +544,7 @@ func startMods(
 		return err
 	}
 
-	err = initDNS(baseLogger, tlsMgr, confModifier, statsDir, querylogDir)
+	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, statsDir, querylogDir)
 	if err != nil {
 		return err
 	}
@@ -553,7 +553,7 @@ func startMods(
 
 	err = startDNSServer()
 	if err != nil {
-		closeDNSServer()
+		closeDNSServer(ctx)
 
 		return err
 	}

@@ -44,6 +44,7 @@ const (
 // [config] and [globalContext] are initialized.  baseLogger, tlsMgr and
 // confModfier must not be nil.
 func initDNS(
+	ctx context.Context,
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
 	confModifier agh.ConfigModifier,
@@ -105,6 +106,7 @@ func initDNS(
 	}
 
 	return initDNSServer(
+		ctx,
 		globalContext.filters,
 		globalContext.stats,
 		globalContext.queryLog,
@@ -124,6 +126,7 @@ func initDNS(
 //
 // TODO(e.burkov): Use [dnsforward.DNSCreateParams] as a parameter.
 func initDNSServer(
+	ctx context.Context,
 	filters *filtering.DNSFilter,
 	sts stats.Interface,
 	qlog querylog.QueryLog,
@@ -147,7 +150,7 @@ func initDNSServer(
 	})
 	defer func() {
 		if err != nil {
-			closeDNSServer()
+			closeDNSServer(ctx)
 		}
 	}()
 	if err != nil {
@@ -171,12 +174,12 @@ func initDNSServer(
 
 	// Try to prepare the server with disabled private RDNS resolution if it
 	// failed to prepare as is.  See TODO on [dnsforward.PrivateRDNSError].
-	err = globalContext.dnsServer.Prepare(dnsConf)
+	err = globalContext.dnsServer.Prepare(ctx, dnsConf)
 	if privRDNSErr := (&dnsforward.PrivateRDNSError{}); errors.As(err, &privRDNSErr) {
 		log.Info("WARNING: %s; trying to disable private RDNS resolution", err)
 
 		dnsConf.UsePrivateRDNS = false
-		err = globalContext.dnsServer.Prepare(dnsConf)
+		err = globalContext.dnsServer.Prepare(ctx, dnsConf)
 	}
 
 	if err != nil {
@@ -450,7 +453,7 @@ func startDNSServer() error {
 		return fmt.Errorf("starting clients container: %w", err)
 	}
 
-	err = globalContext.dnsServer.Start()
+	err = globalContext.dnsServer.Start(ctx)
 	if err != nil {
 		return fmt.Errorf("starting dns server: %w", err)
 	}
@@ -466,30 +469,30 @@ func startDNSServer() error {
 	return nil
 }
 
-func stopDNSServer() (err error) {
+func stopDNSServer(ctx context.Context) (err error) {
 	if !isRunning() {
 		return nil
 	}
 
-	err = globalContext.dnsServer.Stop()
+	err = globalContext.dnsServer.Stop(ctx)
 	if err != nil {
 		return fmt.Errorf("stopping forwarding dns server: %w", err)
 	}
 
-	err = globalContext.clients.close(context.TODO())
+	err = globalContext.clients.close(ctx)
 	if err != nil {
 		return fmt.Errorf("closing clients container: %w", err)
 	}
 
-	closeDNSServer()
+	closeDNSServer(ctx)
 
 	return nil
 }
 
-func closeDNSServer() {
+func closeDNSServer(ctx context.Context) {
 	// DNS forward module must be closed BEFORE stats or queryLog because it depends on them
 	if globalContext.dnsServer != nil {
-		globalContext.dnsServer.Close()
+		globalContext.dnsServer.Close(ctx)
 		globalContext.dnsServer = nil
 	}
 
@@ -505,8 +508,7 @@ func closeDNSServer() {
 	}
 
 	if globalContext.queryLog != nil {
-		// TODO(s.chzhen):  Pass context.
-		err := globalContext.queryLog.Shutdown(context.TODO())
+		err := globalContext.queryLog.Shutdown(ctx)
 		if err != nil {
 			log.Error("closing query log: %s", err)
 		}

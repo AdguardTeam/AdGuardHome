@@ -14,9 +14,7 @@ import (
 )
 
 // Write Stats data and logs
-func (s *Server) processQueryLogsAndStats(dctx *dnsContext) (rc resultCode) {
-	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
+func (s *Server) processQueryLogsAndStats(ctx context.Context, dctx *dnsContext) (rc resultCode) {
 	s.logger.DebugContext(ctx, "started processing querylog and stats")
 	defer s.logger.DebugContext(ctx, "finished processing querylog and stats")
 

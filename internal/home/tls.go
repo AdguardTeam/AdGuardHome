@@ -232,7 +232,7 @@ func (m *tlsManager) reload(ctx context.Context) {
 
 	m.certLastMod = fi.ModTime().UTC()
 
-	err = m.reconfigureDNSServer()
+	err = m.reconfigureDNSServer(ctx)
 	if err != nil {
 		m.logger.ErrorContext(ctx, "reconfiguring dns server", slogutil.KeyError, err)
 	}
@@ -245,7 +245,7 @@ func (m *tlsManager) reload(ctx context.Context) {
 
 // reconfigureDNSServer updates the DNS server configuration using the stored
 // TLS settings.  m.mu is expected to be locked.
-func (m *tlsManager) reconfigureDNSServer() (err error) {
+func (m *tlsManager) reconfigureDNSServer(ctx context.Context) (err error) {
 	newConf, err := newServerConfig(
 		&config.DNS,
 		config.Clients.Sources,
@@ -259,7 +259,7 @@ func (m *tlsManager) reconfigureDNSServer() (err error) {
 		return fmt.Errorf("generating forwarding dns server config: %w", err)
 	}
 
-	err = globalContext.dnsServer.Reconfigure(newConf)
+	err = globalContext.dnsServer.Reconfigure(ctx, newConf)
 	if err != nil {
 		return fmt.Errorf("starting forwarding dns server: %w", err)
 	}
@@ -558,7 +558,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 		}()
 	}
 
-	err = m.reconfigureDNSServer()
+	err = m.reconfigureDNSServer(ctx)
 	if err != nil {
 		m.logger.ErrorContext(ctx, "reconfiguring dns server", slogutil.KeyError, err)
 
