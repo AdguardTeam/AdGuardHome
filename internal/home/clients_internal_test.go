@@ -28,7 +28,7 @@ func newClientsContainer(t *testing.T) (c *clientsContainer) {
 		&filtering.Config{
 			Logger: testLogger,
 		},
-		newSignalHandler(nil, nil),
+		newSignalHandler(testLogger, nil, nil),
 		agh.EmptyConfigModifier{},
 	)
 

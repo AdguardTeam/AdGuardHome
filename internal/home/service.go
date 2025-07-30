@@ -1,8 +1,10 @@
 package home
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"runtime"
 	"strconv"
@@ -13,8 +15,9 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
-	"github.com/AdguardTeam/golibs/log"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
+	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/kardianos/service"
 )
 
@@ -32,10 +35,14 @@ const (
 // program represents the program that will be launched by as a service or a
 // daemon.
 type program struct {
+	// TODO(s.chzhen):  Remove this.
+	ctx           context.Context
 	clientBuildFS fs.FS
 	signals       chan os.Signal
 	done          chan struct{}
 	opts          options
+	baseLogger    *slog.Logger
+	logger        *slog.Logger
 	sigHdlr       *signalHandler
 }
 
@@ -48,14 +55,14 @@ func (p *program) Start(_ service.Service) (err error) {
 	args := p.opts
 	args.runningAsService = true
 
-	go run(args, p.clientBuildFS, p.done, p.sigHdlr)
+	go run(p.ctx, p.baseLogger, args, p.clientBuildFS, p.done, p.sigHdlr)
 
 	return nil
 }
 
 // Stop implements service.Interface interface for *program.
 func (p *program) Stop(_ service.Service) (err error) {
-	log.Info("service: stopping: waiting for cleanup")
+	p.logger.InfoContext(p.ctx, "stopping: waiting for cleanup")
 
 	aghos.SendShutdownSignal(p.signals)
 
@@ -84,14 +91,14 @@ func svcStatus(s service.Service) (status service.Status, err error) {
 	return status, err
 }
 
-// svcAction performs the action on the service.
+// svcAction performs the action on the service.  l must not be nil.
 //
 // On OpenWrt, the service utility may not exist.  We use our service script
 // directly in this case.
-func svcAction(s service.Service, action string) (err error) {
+func svcAction(ctx context.Context, l *slog.Logger, s service.Service, action string) (err error) {
 	if action == "start" {
 		if err = aghos.PreCheckActionStart(); err != nil {
-			log.Error("starting service: %s", err)
+			l.ErrorContext(ctx, "starting service", slogutil.KeyError, err)
 		}
 	}
 
@@ -105,10 +112,10 @@ func svcAction(s service.Service, action string) (err error) {
 }
 
 // Send SIGHUP to a process with PID taken from our .pid file.  If it doesn't
-// exist, find our PID using 'ps' command.
-func sendSigReload() {
+// exist, find our PID using 'ps' command.  baseLogger and l must not be nil.
+func sendSigReload(ctx context.Context, baseLogger, l *slog.Logger) {
 	if runtime.GOOS == "windows" {
-		log.Error("service: not implemented on windows")
+		l.ErrorContext(ctx, "not implemented on windows")
 
 		return
 	}
@@ -117,25 +124,26 @@ func sendSigReload() {
 	var pid int
 	data, err := os.ReadFile(pidFile)
 	if errors.Is(err, os.ErrNotExist) {
-		if pid, err = aghos.PIDByCommand(serviceName, os.Getpid()); err != nil {
-			log.Error("service: finding AdGuardHome process: %s", err)
+		aghosLogger := baseLogger.With(slogutil.KeyPrefix, "aghos")
+		if pid, err = aghos.PIDByCommand(ctx, aghosLogger, serviceName, os.Getpid()); err != nil {
+			l.ErrorContext(ctx, "finding adguardhome process", slogutil.KeyError, err)
 
 			return
 		}
 	} else if err != nil {
-		log.Error("service: reading pid file %s: %s", pidFile, err)
+		l.ErrorContext(ctx, "reading", "pid_file", pidFile, slogutil.KeyError, err)
 
 		return
 	} else {
 		parts := strings.SplitN(string(data), "\n", 2)
 		if len(parts) == 0 {
-			log.Error("service: parsing pid file %s: bad value", pidFile)
+			l.ErrorContext(ctx, "splitting", "pid_file", pidFile, slogutil.KeyError, "bad value")
 
 			return
 		}
 
 		if pid, err = strconv.Atoi(strings.TrimSpace(parts[0])); err != nil {
-			log.Error("service: parsing pid from file %s: %s", pidFile, err)
+			l.ErrorContext(ctx, "parsing", "pid_file", pidFile, slogutil.KeyError, err)
 
 			return
 		}
@@ -143,23 +151,23 @@ func sendSigReload() {
 
 	var proc *os.Process
 	if proc, err = os.FindProcess(pid); err != nil {
-		log.Error("service: finding process for pid %d: %s", pid, err)
+		l.ErrorContext(ctx, "finding process for", "pid", pid, slogutil.KeyError, err)
 
 		return
 	}
 
 	if err = proc.Signal(syscall.SIGHUP); err != nil {
-		log.Error("service: sending signal HUP to pid %d: %s", pid, err)
+		l.ErrorContext(ctx, "sending sighup to", "pid", pid, slogutil.KeyError, err)
 
 		return
 	}
 
-	log.Debug("service: sent signal to pid %d", pid)
+	l.DebugContext(ctx, "sent sighup to", "pid", pid)
 }
 
 // restartService restarts the service.  It returns error if the service is not
-// running.
-func restartService() (err error) {
+// running.  l must not be nil.
+func restartService(ctx context.Context, l *slog.Logger) (err error) {
 	// Call chooseSystem explicitly to introduce OpenBSD support for service
 	// package.  It's a noop for other GOOS values.
 	chooseSystem()
@@ -182,7 +190,7 @@ func restartService() (err error) {
 		return fmt.Errorf("initializing service: %w", err)
 	}
 
-	if err = svcAction(s, "restart"); err != nil {
+	if err = svcAction(ctx, l, s, "restart"); err != nil {
 		return fmt.Errorf("restarting service: %w", err)
 	}
 
@@ -201,6 +209,9 @@ func restartService() (err error) {
 //     it is specified when we register a service, and it indicates to the app
 //     that it is being run as a service/daemon.
 func handleServiceControlAction(
+	ctx context.Context,
+	baseLogger *slog.Logger,
+	l *slog.Logger,
 	opts options,
 	clientBuildFS fs.FS,
 	signals chan os.Signal,
@@ -212,25 +223,26 @@ func handleServiceControlAction(
 	chooseSystem()
 
 	action := opts.serviceControlAction
-	log.Info("%s", version.Full())
-	log.Info("service: control action: %s", action)
+	l.InfoContext(ctx, version.Full())
+	l.InfoContext(ctx, "control", "action", action)
 
 	if action == "reload" {
-		sendSigReload()
+		sendSigReload(ctx, baseLogger, l)
 
 		return
 	}
 
 	pwd, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("service: getting current directory: %s", err)
+		l.ErrorContext(ctx, "getting current directory", slogutil.KeyError, err)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	runOpts := opts
 	runOpts.serviceControlAction = "run"
 
 	args := optsToArgs(runOpts)
-	log.Debug("service: using args %q", args)
+	l.DebugContext(ctx, "using", "args", args)
 
 	svcConfig := &service.Config{
 		Name:             serviceName,
@@ -242,33 +254,45 @@ func handleServiceControlAction(
 	configureService(svcConfig)
 
 	s, err := service.New(&program{
+		ctx:           ctx,
 		clientBuildFS: clientBuildFS,
 		signals:       signals,
 		done:          done,
 		opts:          runOpts,
+		baseLogger:    l,
+		logger:        l.With(slogutil.KeyPrefix, "service"),
 		sigHdlr:       sigHdlr,
 	}, svcConfig)
 	if err != nil {
-		log.Fatalf("service: initializing service: %s", err)
+		l.ErrorContext(ctx, "initializing service", slogutil.KeyError, err)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
-	err = handleServiceCommand(s, action, opts)
+	err = handleServiceCommand(ctx, l, s, action, opts)
 	if err != nil {
-		log.Fatalf("service: %s", err)
+		l.ErrorContext(ctx, "handling command", slogutil.KeyError, err)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
-	log.Printf(
-		"service: action %s has been done successfully on %s",
-		action,
-		service.ChosenSystem(),
+	l.InfoContext(
+		ctx,
+		"action has been done successfully",
+		"action", action,
+		"system", service.ChosenSystem(),
 	)
 }
 
 // handleServiceCommand handles service command.
-func handleServiceCommand(s service.Service, action string, opts options) (err error) {
+func handleServiceCommand(
+	ctx context.Context,
+	l *slog.Logger,
+	s service.Service,
+	action string,
+	opts options,
+) (err error) {
 	switch action {
 	case "status":
-		handleServiceStatusCommand(s)
+		handleServiceStatusCommand(ctx, l, s)
 	case "run":
 		if err = s.Run(); err != nil {
 			return fmt.Errorf("failed to run service: %w", err)
@@ -280,11 +304,11 @@ func handleServiceCommand(s service.Service, action string, opts options) (err e
 
 		initConfigFilename(opts)
 
-		handleServiceInstallCommand(s)
+		handleServiceInstallCommand(ctx, l, s)
 	case "uninstall":
-		handleServiceUninstallCommand(s)
+		handleServiceUninstallCommand(ctx, l, s)
 	default:
-		if err = svcAction(s, action); err != nil {
+		if err = svcAction(ctx, l, s, action); err != nil {
 			return fmt.Errorf("executing action %q: %w", action, err)
 		}
 	}
@@ -297,29 +321,35 @@ func handleServiceCommand(s service.Service, action string, opts options) (err e
 const statusRestartOnFail = service.StatusStopped + 1
 
 // handleServiceStatusCommand handles service "status" command.
-func handleServiceStatusCommand(s service.Service) {
+func handleServiceStatusCommand(
+	ctx context.Context,
+	l *slog.Logger,
+	s service.Service,
+) {
 	status, errSt := svcStatus(s)
 	if errSt != nil {
-		log.Fatalf("service: failed to get service status: %s", errSt)
+		l.ErrorContext(ctx, "failed to get service status", slogutil.KeyError, errSt)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	switch status {
 	case service.StatusUnknown:
-		log.Printf("service: status is unknown")
+		l.InfoContext(ctx, "status is unknown")
 	case service.StatusStopped:
-		log.Printf("service: stopped")
+		l.InfoContext(ctx, "stopped")
 	case service.StatusRunning:
-		log.Printf("service: running")
+		l.InfoContext(ctx, "running")
 	case statusRestartOnFail:
-		log.Printf("service: restarting after failed start")
+		l.InfoContext(ctx, "restarting after failed start")
 	}
 }
 
 // handleServiceInstallCommand handles service "install" command.
-func handleServiceInstallCommand(s service.Service) {
-	err := svcAction(s, "install")
+func handleServiceInstallCommand(ctx context.Context, l *slog.Logger, s service.Service) {
+	err := svcAction(ctx, l, s, "install")
 	if err != nil {
-		log.Fatalf("service: executing action %q: %s", "install", err)
+		l.ErrorContext(ctx, "executing install", slogutil.KeyError, err)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	if aghos.IsOpenWrt() {
@@ -328,56 +358,60 @@ func handleServiceInstallCommand(s service.Service) {
 		// startup.
 		_, err = runInitdCommand("enable")
 		if err != nil {
-			log.Fatalf("service: running init enable: %s", err)
+			l.ErrorContext(ctx, "running init enable", slogutil.KeyError, err)
+			os.Exit(osutil.ExitCodeFailure)
 		}
 	}
 
 	// Start automatically after install.
-	err = svcAction(s, "start")
+	err = svcAction(ctx, l, s, "start")
 	if err != nil {
-		log.Fatalf("service: starting: %s", err)
+		l.ErrorContext(ctx, "starting", slogutil.KeyError, err)
+		os.Exit(osutil.ExitCodeFailure)
 	}
-	log.Printf("service: started")
+	l.InfoContext(ctx, "started")
 
 	if detectFirstRun() {
-		log.Printf(`Almost ready!
-AdGuard Home is successfully installed and will automatically start on boot.
-There are a few more things that must be configured before you can use it.
-Click on the link below and follow the Installation Wizard steps to finish setup.
-AdGuard Home is now available at the following addresses:`)
+		slogutil.PrintLines(ctx, l, slog.LevelInfo, "", "Almost ready!\n"+
+			"AdGuard Home is successfully installed and will automatically start on boot.\n"+
+			"There are a few more things that must be configured before you can use it.\n"+
+			"Click on the link below and follow the Installation Wizard steps to finish setup.\n"+
+			"AdGuard Home is now available at the following addresses:")
 		printHTTPAddresses(urlutil.SchemeHTTP, nil)
 	}
 }
 
 // handleServiceUninstallCommand handles service "uninstall" command.
-func handleServiceUninstallCommand(s service.Service) {
+func handleServiceUninstallCommand(ctx context.Context, l *slog.Logger, s service.Service) {
 	if aghos.IsOpenWrt() {
 		// On OpenWrt it is important to run disable command first
 		// as it will remove the symlink
 		_, err := runInitdCommand("disable")
 		if err != nil {
-			log.Fatalf("service: running init disable: %s", err)
+			l.ErrorContext(ctx, "running init disable", slogutil.KeyError, err)
+			os.Exit(osutil.ExitCodeFailure)
 		}
 	}
 
-	if err := svcAction(s, "stop"); err != nil {
-		log.Debug("service: executing action %q: %s", "stop", err)
+	if err := svcAction(ctx, l, s, "stop"); err != nil {
+		l.DebugContext(ctx, "executing action stop", slogutil.KeyError, err)
 	}
 
-	if err := svcAction(s, "uninstall"); err != nil {
-		log.Fatalf("service: executing action %q: %s", "uninstall", err)
+	if err := svcAction(ctx, l, s, "uninstall"); err != nil {
+		l.ErrorContext(ctx, "executing action uninstall", slogutil.KeyError, err)
+		os.Exit(osutil.ExitCodeFailure)
 	}
 
 	if runtime.GOOS == "darwin" {
 		// Remove log files on cleanup and log errors.
 		err := os.Remove(launchdStdoutPath)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			log.Info("service: warning: removing stdout file: %s", err)
+			l.WarnContext(ctx, "removing stdout file", slogutil.KeyError, err)
 		}
 
 		err = os.Remove(launchdStderrPath)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			log.Info("service: warning: removing stderr file: %s", err)
+			l.WarnContext(ctx, "removing stderr file", slogutil.KeyError, err)
 		}
 	}
 }
