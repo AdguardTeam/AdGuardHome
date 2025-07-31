@@ -20,7 +20,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
-- Disabled state of Top clients action button.
+- Disabled state of Top clients action button in web UI ([#7923]).
+
+[#7923]: https://github.com/AdguardTeam/AdGuardHome/issues/7923
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
