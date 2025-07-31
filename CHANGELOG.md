@@ -17,6 +17,11 @@ See also the [v0.107.65 GitHub milestone][ms-v0.107.65].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Fixed
+
+- Disabled state of Top clients action button.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
