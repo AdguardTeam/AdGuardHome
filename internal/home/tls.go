@@ -99,7 +99,7 @@ func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, 
 		servePlainDNS:  conf.servePlainDNS,
 	}
 
-	m.rootCerts = aghtls.SystemRootCAs()
+	m.rootCerts = aghtls.SystemRootCAs(ctx, conf.logger)
 
 	if len(conf.tlsSettings.OverrideTLSCiphers) > 0 {
 		m.customCipherIDs, err = aghtls.ParseCiphers(config.TLS.OverrideTLSCiphers)

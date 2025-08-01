@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"cmp"
+	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
@@ -1451,7 +1452,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 	var eventsCalledCounter uint32
 	hc, err := aghnet.NewHostsContainer(testFS, &aghtest.FSWatcher{
-		OnStart: func() (_ error) { panic("not implemented") },
+		OnStart: func(_ context.Context) (_ error) { panic("not implemented") },
 		OnEvents: func() (e <-chan struct{}) {
 			assert.Equal(t, uint32(1), atomic.AddUint32(&eventsCalledCounter, 1))
 
@@ -1462,7 +1463,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 			return nil
 		},
-		OnClose: func() (err error) { panic("not implemented") },
+		OnShutdown: func(_ context.Context) (err error) { panic("not implemented") },
 	}, hostsFilename)
 	require.NoError(t, err)
 	t.Cleanup(func() {
