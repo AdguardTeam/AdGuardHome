@@ -144,21 +144,22 @@ func (d *DNSFilter) filterSetProperties(
 		shouldRestart = true
 	}
 
-	if flt.Enabled {
-		if shouldRestart {
-			// Download the filter contents.
-			shouldRestart, err = d.update(flt)
-		}
-	} else {
+	if !flt.Enabled {
 		// TODO(e.burkov):  The validation of the contents of the new URL is
 		// currently skipped if the rule list is disabled.  This makes it
 		// possible to set a bad rules source, but the validation should still
 		// kick in when the filter is enabled.  Consider changing this behavior
 		// to be stricter.
 		flt.unload()
+
+		return shouldRestart, err
 	}
 
-	return shouldRestart, err
+	if !shouldRestart {
+		return false, nil
+	}
+
+	return d.update(flt)
 }
 
 // filterExists returns true if a filter with the same url exists in d.  It's
@@ -315,19 +316,7 @@ func (d *DNSFilter) refreshFiltersArray(
 		return 0, nil, nil, false
 	}
 
-	failNum := 0
-	for i := range updateFilters {
-		uf := &updateFilters[i]
-		updated, err := d.update(uf)
-		updateFlags = append(updateFlags, updated)
-		if err != nil {
-			failNum++
-			d.logger.ErrorContext(ctx, "updating filter", "url", uf.URL, slogutil.KeyError, err)
-
-			continue
-		}
-	}
-
+	failNum, updateFlags := d.updateFilterList(ctx, updateFilters)
 	if failNum == len(updateFilters) {
 		return 0, nil, nil, true
 	}
@@ -335,6 +324,40 @@ func (d *DNSFilter) refreshFiltersArray(
 	d.conf.filtersMu.Lock()
 	defer d.conf.filtersMu.Unlock()
 
+	updateCount = d.syncUpdatedFilters(ctx, filters, updateFilters, updateFlags)
+
+	return updateCount, updateFilters, updateFlags, false
+}
+
+// updateFilterList updates each filter in updateFilters and returns the number
+// of failures and the updateFlags slice aligned with updateFilters indicating
+// whether each filter's data changed.
+func (d *DNSFilter) updateFilterList(
+	ctx context.Context,
+	updateFilters []FilterYAML,
+) (failNum int, updateFlags []bool) {
+	for i := range updateFilters {
+		uf := &updateFilters[i]
+		updated, err := d.update(uf)
+		updateFlags = append(updateFlags, updated)
+		if err != nil {
+			failNum++
+			d.logger.ErrorContext(ctx, "updating filter", "url", uf.URL, slogutil.KeyError, err)
+		}
+	}
+
+	return failNum, updateFlags
+}
+
+// syncUpdatedFilters syncs updated filters back to the original filters slice
+// and returns the updateCount.  filters must not be nil.  updateFlags must
+// align with updateFilters.  d.conf.filtersMu must be locked.
+func (d *DNSFilter) syncUpdatedFilters(
+	ctx context.Context,
+	filters *[]FilterYAML,
+	updateFilters []FilterYAML,
+	updateFlags []bool,
+) (updateCount int) {
 	for i := range updateFilters {
 		uf := &updateFilters[i]
 		updated := updateFlags[i]
@@ -365,7 +388,7 @@ func (d *DNSFilter) refreshFiltersArray(
 		}
 	}
 
-	return updateCount, updateFilters, updateFlags, false
+	return updateCount
 }
 
 // refreshFiltersIntl checks filters and updates them if necessary.  If force is
@@ -418,21 +441,23 @@ func (d *DNSFilter) refreshFiltersIntl(block, allow, force bool) (int, bool) {
 		return 0, true
 	}
 
-	if updNum != 0 {
-		d.EnableFilters(false)
+	if updNum == 0 {
+		return 0, false
+	}
 
-		for i := range lists {
-			uf := &lists[i]
-			updated := toUpd[i]
-			if !updated {
-				continue
-			}
+	d.EnableFilters(false)
 
-			p := uf.Path(d.conf.DataDir)
-			err := os.Remove(p + ".old")
-			if err != nil {
-				d.logger.ErrorContext(ctx, "removing old filter", "path", p, slogutil.KeyError, err)
-			}
+	for i := range lists {
+		uf := &lists[i]
+		updated := toUpd[i]
+		if !updated {
+			continue
+		}
+
+		p := uf.Path(d.conf.DataDir)
+		err := os.Remove(p + ".old")
+		if err != nil {
+			d.logger.ErrorContext(ctx, "removing old filter", "path", p, slogutil.KeyError, err)
 		}
 	}
 
