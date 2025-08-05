@@ -392,6 +392,7 @@ export const DNS_REQUEST_OPTIONS = {
     PARALLEL: 'parallel',
     FASTEST_ADDR: 'fastest_addr',
     LOAD_BALANCING: 'load_balance',
+    RANDOM: 'random',
 };
 
 export const DHCP_FORM_NAMES = {

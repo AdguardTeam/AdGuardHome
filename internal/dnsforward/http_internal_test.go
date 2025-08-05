@@ -127,6 +127,14 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 			return conf
 		},
 		name: "parallel",
+	}, {
+		conf: func() ServerConfig {
+			conf := defaultConf
+			conf.UpstreamMode = UpstreamModeRandom
+
+			return conf
+		},
+		name: "random",
 	}}
 
 	var data map[string]json.RawMessage
