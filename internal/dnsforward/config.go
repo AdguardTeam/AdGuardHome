@@ -27,6 +27,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/AdguardTeam/golibs/validate"
 	"github.com/ameshkov/dnscrypt/v2"
 )
 
@@ -103,6 +104,9 @@ type Config struct {
 	TrustedProxies []netutil.Prefix `yaml:"trusted_proxies"`
 
 	// DNS cache settings
+
+	// CacheEnabled defines if the DNS cache should be used.
+	CacheEnabled bool `yaml:"cache_enabled"`
 
 	// CacheSize is the DNS cache size (in bytes).
 	CacheSize uint32 `yaml:"cache_size"`
@@ -369,6 +373,7 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 	}
 
 	conf, err = prepareCacheConfig(conf,
+		srvConf.CacheEnabled,
 		srvConf.CacheSize,
 		srvConf.CacheMinTTL,
 		srvConf.CacheMaxTTL,
@@ -385,13 +390,20 @@ func (s *Server) newProxyConfig(ctx context.Context) (conf *proxy.Config, err er
 // there is one.
 func prepareCacheConfig(
 	conf *proxy.Config,
+	isEnabled bool,
 	size uint32,
 	minTTL uint32,
 	maxTTL uint32,
 ) (prepared *proxy.Config, err error) {
-	if size != 0 {
+	if isEnabled {
+		cacheSize := int(size)
+		err = validate.Positive("cache_size", cacheSize)
+		if err != nil {
+			return nil, fmt.Errorf("cache_enabled is true: %w", err)
+		}
+
 		conf.CacheEnabled = true
-		conf.CacheSizeBytes = int(size)
+		conf.CacheSizeBytes = cacheSize
 	}
 
 	err = validateCacheTTL(minTTL, maxTTL)

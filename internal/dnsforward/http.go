@@ -93,6 +93,9 @@ type jsonDNSConfig struct {
 	// CacheMaxTTL is custom maximum TTL for cached DNS responses.
 	CacheMaxTTL *uint32 `json:"cache_ttl_max"`
 
+	// CacheEnabled defines if the DNS cache should be used.
+	CacheEnabled *bool `json:"cache_enabled"`
+
 	// CacheOptimistic defines if expired entries should be served.
 	CacheOptimistic *bool `json:"cache_optimistic"`
 
@@ -162,6 +165,7 @@ func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
 
 	enableDNSSEC := s.conf.EnableDNSSEC
 	aaaaDisabled := s.conf.AAAADisabled
+	cacheEnabled := s.conf.CacheEnabled
 	cacheSize := s.conf.CacheSize
 	cacheMinTTL := s.conf.CacheMinTTL
 	cacheMaxTTL := s.conf.CacheMaxTTL
@@ -207,6 +211,7 @@ func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
 		DNSSECEnabled:            &enableDNSSEC,
 		DisableIPv6:              &aaaaDisabled,
 		BlockedResponseTTL:       &blockedResponseTTL,
+		CacheEnabled:             &cacheEnabled,
 		CacheSize:                &cacheSize,
 		CacheMinTTL:              &cacheMinTTL,
 		CacheMaxTTL:              &cacheMaxTTL,
@@ -278,6 +283,7 @@ func (req *jsonDNSConfig) validate(
 	ownAddrs addrPortSet,
 	sysResolvers SystemResolvers,
 	privateNets netutil.SubnetSet,
+	curCacheSize uint32,
 ) (err error) {
 	defer func() { err = errors.Annotate(err, "validating dns config: %w") }()
 
@@ -305,7 +311,7 @@ func (req *jsonDNSConfig) validate(
 		return err
 	}
 
-	err = req.checkCacheTTL()
+	err = req.validateCacheSettings(curCacheSize)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
@@ -421,9 +427,14 @@ func (req *jsonDNSConfig) validateUpstreamDNSServers(
 	return nil
 }
 
-// checkCacheTTL returns an error if the configuration of the cache TTL is
-// invalid.
-func (req *jsonDNSConfig) checkCacheTTL() (err error) {
+// validateCacheSettings returns an error if the cache configuration is invalid.
+func (req *jsonDNSConfig) validateCacheSettings(curCacheSize uint32) (err error) {
+	err = req.validateCacheSize(curCacheSize)
+	if err != nil {
+		// Don't wrap the error because it's informative enough as is.
+		return err
+	}
+
 	if req.CacheMinTTL == nil && req.CacheMaxTTL == nil {
 		return nil
 	}
@@ -438,6 +449,28 @@ func (req *jsonDNSConfig) checkCacheTTL() (err error) {
 	}
 
 	return validateCacheTTL(minTTL, maxTTL)
+}
+
+// validateCacheSize returns an error if the cache size configuration is
+// invalid.  It also explicitly sets CacheEnabled to support legacy behavior.
+func (req *jsonDNSConfig) validateCacheSize(curCacheSize uint32) (err error) {
+	if req.CacheEnabled != nil && *req.CacheEnabled {
+		size := curCacheSize
+		if req.CacheSize != nil {
+			size = *req.CacheSize
+		}
+
+		if size == 0 {
+			return errors.Error("cache_size must be greater than zero when cache_enabled is true")
+		}
+	}
+
+	if req.CacheEnabled == nil && req.CacheSize != nil {
+		isEnabled := *req.CacheSize > 0
+		req.CacheEnabled = &isEnabled
+	}
+
+	return nil
 }
 
 // checkRatelimitSubnetMaskLen returns an error if the length of the subnet mask
@@ -505,7 +538,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = req.validate(ourAddrs, s.sysResolvers, s.privateNets)
+	err = req.validate(ourAddrs, s.sysResolvers, s.privateNets, s.conf.CacheSize)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
@@ -598,6 +631,7 @@ func (s *Server) setConfigRestartable(dc *jsonDNSConfig) (shouldRestart bool) {
 		setIfNotNil(&s.conf.FallbackDNS, dc.Fallbacks),
 		setIfNotNil(&s.conf.EDNSClientSubnet.Enabled, dc.EDNSCSEnabled),
 		setIfNotNil(&s.conf.EDNSClientSubnet.UseCustom, dc.EDNSCSUseCustom),
+		setIfNotNil(&s.conf.CacheEnabled, dc.CacheEnabled),
 		setIfNotNil(&s.conf.CacheSize, dc.CacheSize),
 		setIfNotNil(&s.conf.CacheMinTTL, dc.CacheMinTTL),
 		setIfNotNil(&s.conf.CacheMaxTTL, dc.CacheMaxTTL),

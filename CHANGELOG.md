@@ -18,6 +18,35 @@ See also the [v0.107.65 GitHub milestone][ms-v0.107.65].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- A separate checkbox in the Web UI to enable or disable the global DNS response cache without losing the configured cache size.
+
+- A new `"cache_enabled"` field to the HTTP API (`GET /control/dns_info` and `POST /control/dns_config`).  See `openapi/openapi.yaml` for the full description.
+
+### Changed
+
+#### Configuration changes
+
+In this release, the schema version has changed from 29 to 30.
+
+- Added a new boolean field `dns.cache_enabled` to the configuration.  This field explicitly controls whether DNS caching is enabled, replacing the previous implicit logic based on `dns.cache_size`.
+
+    ```yaml
+    # BEFORE:
+    'dns':
+        # …
+        'cache_size': 123456
+
+    # AFTER:
+    'dns':
+        # …
+        'cache_enabled': true
+        'cache_size': 123456
+    ```
+
+    To roll back this change, set the schema_version back to `29`.
+
 ### Fixed
 
 - Disabled state of Top clients action button in web UI ([#7923]).

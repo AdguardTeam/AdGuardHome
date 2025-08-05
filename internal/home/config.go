@@ -466,7 +466,8 @@ var config = &configuration{
 			}, {
 				Prefix: netip.MustParsePrefix("::1/128"),
 			}},
-			CacheSize: 4 * 1024 * 1024,
+			CacheEnabled: true,
+			CacheSize:    4 * 1024 * 1024,
 
 			EDNSClientSubnet: &dnsforward.EDNSClientSubnet{
 				CustomIP:  netip.Addr{},
