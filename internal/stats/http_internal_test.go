@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -27,7 +28,7 @@ func TestHandleStatsConfig(t *testing.T) {
 	conf := Config{
 		Logger:            slogutil.NewDiscardLogger(),
 		UnitID:            func() (id uint32) { return 0 },
-		ConfigModified:    func() {},
+		ConfigModifier:    agh.EmptyConfigModifier{},
 		ShouldCountClient: func([]string) bool { return true },
 		Filename:          filepath.Join(t.TempDir(), "stats.db"),
 		Limit:             time.Hour * 24,

@@ -201,6 +201,7 @@ func TestServer_clientIDFromDNSContext(t *testing.T) {
 			srv := &Server{
 				conf:       ServerConfig{TLSConf: tlsConf},
 				baseLogger: testLogger,
+				logger:     testLogger,
 			}
 
 			var (

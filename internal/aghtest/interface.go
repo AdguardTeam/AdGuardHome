@@ -6,8 +6,9 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
-	"github.com/AdguardTeam/AdGuardHome/internal/next/agh"
+	nextagh "github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -53,9 +54,10 @@ func (w *FSWatcher) Add(name string) (err error) {
 	return w.OnAdd(name)
 }
 
-// Package agh
+// Package nextagh
 
-// ServiceWithConfig is a fake [agh.ServiceWithConfig] implementation for tests.
+// ServiceWithConfig is a fake [nextagh.ServiceWithConfig] implementation for
+// tests.
 type ServiceWithConfig[ConfigType any] struct {
 	OnStart    func(ctx context.Context) (err error)
 	OnShutdown func(ctx context.Context) (err error)
@@ -63,21 +65,21 @@ type ServiceWithConfig[ConfigType any] struct {
 }
 
 // type check
-var _ agh.ServiceWithConfig[struct{}] = (*ServiceWithConfig[struct{}])(nil)
+var _ nextagh.ServiceWithConfig[struct{}] = (*ServiceWithConfig[struct{}])(nil)
 
-// Start implements the [agh.ServiceWithConfig] interface for
+// Start implements the [nextagh.ServiceWithConfig] interface for
 // *ServiceWithConfig.
 func (s *ServiceWithConfig[_]) Start(ctx context.Context) (err error) {
 	return s.OnStart(ctx)
 }
 
-// Shutdown implements the [agh.ServiceWithConfig] interface for
+// Shutdown implements the [nextagh.ServiceWithConfig] interface for
 // *ServiceWithConfig.
 func (s *ServiceWithConfig[_]) Shutdown(ctx context.Context) (err error) {
 	return s.OnShutdown(ctx)
 }
 
-// Config implements the [agh.ServiceWithConfig] interface for
+// Config implements the [nextagh.ServiceWithConfig] interface for
 // *ServiceWithConfig.
 func (s *ServiceWithConfig[ConfigType]) Config() (c ConfigType) {
 	return s.OnConfig()
@@ -177,4 +179,17 @@ func (u *UpstreamMock) Exchange(req *dns.Msg) (resp *dns.Msg, err error) {
 // Close implements the [upstream.Upstream] interface for *UpstreamMock.
 func (u *UpstreamMock) Close() (err error) {
 	return u.OnClose()
+}
+
+// ConfigModifier is a fake [agh.ConfigModifier] implementation for tests.
+type ConfigModifier struct {
+	OnApply func(ctx context.Context)
+}
+
+// type check
+var _ agh.ConfigModifier = (*ConfigModifier)(nil)
+
+// Apply implements the [ConfigModifier] interface for *ConfigModifier.
+func (m *ConfigModifier) Apply(ctx context.Context) {
+	m.OnApply(ctx)
 }

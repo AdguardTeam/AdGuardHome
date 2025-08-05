@@ -326,6 +326,8 @@ func clientToJSON(c *client.Persistent) (cj *clientJSON) {
 
 // handleAddClient is the handler for POST /control/clients/add HTTP API.
 func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	cj := clientJSON{}
 	err := json.NewDecoder(r.Body).Decode(&cj)
 	if err != nil {
@@ -334,27 +336,27 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	c, err := clients.jsonToClient(r.Context(), cj, nil)
+	c, err := clients.jsonToClient(ctx, cj, nil)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
-	err = clients.storage.Add(r.Context(), c)
+	err = clients.storage.Add(ctx, c)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
-	if !clients.testing {
-		onConfigModified()
-	}
+	clients.confModifier.Apply(ctx)
 }
 
 // handleDelClient is the handler for POST /control/clients/delete HTTP API.
 func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	cj := clientJSON{}
 	err := json.NewDecoder(r.Body).Decode(&cj)
 	if err != nil {
@@ -369,15 +371,13 @@ func (clients *clientsContainer) handleDelClient(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if !clients.storage.RemoveByName(r.Context(), cj.Name) {
+	if !clients.storage.RemoveByName(ctx, cj.Name) {
 		aghhttp.Error(r, w, http.StatusBadRequest, "Client not found")
 
 		return
 	}
 
-	if !clients.testing {
-		onConfigModified()
-	}
+	clients.confModifier.Apply(ctx)
 }
 
 // updateJSON contains the name and data of the updated persistent client.
@@ -390,6 +390,8 @@ type updateJSON struct {
 //
 // TODO(s.chzhen):  Accept updated parameters instead of whole structure.
 func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	dj := updateJSON{}
 	err := json.NewDecoder(r.Body).Decode(&dj)
 	if err != nil {
@@ -404,23 +406,21 @@ func (clients *clientsContainer) handleUpdateClient(w http.ResponseWriter, r *ht
 		return
 	}
 
-	c, err := clients.jsonToClient(r.Context(), dj.Data, nil)
+	c, err := clients.jsonToClient(ctx, dj.Data, nil)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
-	err = clients.storage.Update(r.Context(), dj.Name, c)
+	err = clients.storage.Update(ctx, dj.Name, c)
 	if err != nil {
 		aghhttp.Error(r, w, http.StatusBadRequest, "%s", err)
 
 		return
 	}
 
-	if !clients.testing {
-		onConfigModified()
-	}
+	clients.confModifier.Apply(ctx)
 }
 
 // handleFindClient is the handler for GET /control/clients/find HTTP API.

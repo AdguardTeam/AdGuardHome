@@ -18,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
@@ -297,12 +298,13 @@ func initContextClients(
 	ctx context.Context,
 	logger *slog.Logger,
 	sigHdlr *signalHandler,
+	confModifier agh.ConfigModifier,
 ) (err error) {
 	//lint:ignore SA1019 Migration is not over.
 	config.DHCP.WorkDir = globalContext.workDir
 	config.DHCP.DataDir = globalContext.getDataDir()
 	config.DHCP.HTTPRegister = httpRegister
-	config.DHCP.ConfigModified = onConfigModified
+	config.DHCP.ConfModifier = confModifier
 
 	globalContext.dhcpServer, err = dhcpd.Create(config.DHCP)
 	if globalContext.dhcpServer == nil || err != nil {
@@ -327,6 +329,7 @@ func initContextClients(
 		arpDB,
 		config.Filtering,
 		sigHdlr,
+		confModifier,
 	)
 }
 
@@ -377,6 +380,7 @@ func setupDNSFilteringConf(
 	baseLogger *slog.Logger,
 	conf *filtering.Config,
 	tlsMgr *tlsManager,
+	confModifier agh.ConfigModifier,
 ) (err error) {
 	const (
 		dnsTimeout = 3 * time.Second
@@ -398,7 +402,7 @@ func setupDNSFilteringConf(
 		conf.EtcHosts = nil
 	}
 
-	conf.ConfigModified = onConfigModified
+	conf.ConfModifier = confModifier
 	conf.HTTPRegister = httpRegister
 	conf.DataDir = globalContext.getDataDir()
 	conf.Filters = slices.Clone(config.Filters)
@@ -564,6 +568,7 @@ func initWeb(
 	baseLogger *slog.Logger,
 	tlsMgr *tlsManager,
 	auth *auth,
+	confModifier agh.ConfigModifier,
 	isCustomUpdURL bool,
 ) (web *webAPI, err error) {
 	logger := baseLogger.With(slogutil.KeyPrefix, "webapi")
@@ -583,11 +588,12 @@ func initWeb(
 	disableUpdate := !isUpdateEnabled(ctx, baseLogger, &opts, isCustomUpdURL)
 
 	webConf := &webConfig{
-		updater:    upd,
-		logger:     logger,
-		baseLogger: baseLogger,
-		tlsManager: tlsMgr,
-		auth:       auth,
+		updater:      upd,
+		logger:       logger,
+		baseLogger:   baseLogger,
+		confModifier: confModifier,
+		tlsManager:   tlsMgr,
+		auth:         auth,
 
 		clientFS: clientFS,
 
@@ -661,25 +667,31 @@ func run(
 	// data first, but also to avoid relying on automatic Go init() function.
 	filtering.InitModule(ctx, slogLogger)
 
-	err = initContextClients(ctx, slogLogger, sigHdlr)
+	confModifier := newDefaultConfigModifier(
+		config,
+		slogLogger.With(slogutil.KeyPrefix, "config_modifier"),
+	)
+
+	err = initContextClients(ctx, slogLogger, sigHdlr, confModifier)
 	fatalOnError(err)
 
 	tlsMgrLogger := slogLogger.With(slogutil.KeyPrefix, "tls_manager")
 
 	tlsMgr, err := newTLSManager(ctx, &tlsManagerConfig{
-		logger:         tlsMgrLogger,
-		configModified: onConfigModified,
-		tlsSettings:    config.TLS,
-		servePlainDNS:  config.DNS.ServePlainDNS,
+		logger:        tlsMgrLogger,
+		confModifier:  confModifier,
+		tlsSettings:   config.TLS,
+		servePlainDNS: config.DNS.ServePlainDNS,
 	})
 	if err != nil {
 		tlsMgrLogger.ErrorContext(ctx, "initializing", slogutil.KeyError, err)
-		onConfigModified()
+		confModifier.Apply(ctx)
 	}
 
 	globalContext.tls = tlsMgr
+	confModifier.setTLSManager(tlsMgr)
 
-	err = setupDNSFilteringConf(ctx, slogLogger, config.Filtering, tlsMgr)
+	err = setupDNSFilteringConf(ctx, slogLogger, config.Filtering, tlsMgr, confModifier)
 	fatalOnError(err)
 
 	err = setupOpts(opts)
@@ -715,8 +727,19 @@ func run(
 	fatalOnError(err)
 
 	globalContext.auth = auth
+	confModifier.setAuth(auth)
 
-	web, err := initWeb(ctx, opts, clientBuildFS, upd, slogLogger, tlsMgr, auth, isCustomURL)
+	web, err := initWeb(
+		ctx,
+		opts,
+		clientBuildFS,
+		upd,
+		slogLogger,
+		tlsMgr,
+		auth,
+		confModifier,
+		isCustomURL,
+	)
 	fatalOnError(err)
 
 	globalContext.web = web
@@ -728,7 +751,7 @@ func run(
 	fatalOnError(err)
 
 	if !globalContext.firstRun {
-		err = initDNS(slogLogger, tlsMgr, statsDir, querylogDir)
+		err = initDNS(ctx, slogLogger, tlsMgr, confModifier, statsDir, querylogDir)
 		fatalOnError(err)
 
 		tlsMgr.start(ctx)
@@ -736,7 +759,7 @@ func run(
 		go func() {
 			startErr := startDNSServer()
 			if startErr != nil {
-				closeDNSServer()
+				closeDNSServer(ctx)
 				fatalOnError(startErr)
 			}
 		}()
@@ -972,7 +995,7 @@ func cleanup(ctx context.Context) {
 		globalContext.web = nil
 	}
 
-	err := stopDNSServer()
+	err := stopDNSServer(ctx)
 	if err != nil {
 		log.Error("stopping dns server: %s", err)
 	}
@@ -1130,7 +1153,7 @@ func cmdlineUpdate(
 	//
 	// TODO(e.burkov):  We could probably initialize the internal resolver
 	// separately.
-	err := initDNSServer(nil, nil, nil, nil, nil, nil, tlsMgr, l)
+	err := initDNSServer(ctx, nil, nil, nil, nil, nil, nil, tlsMgr, l, agh.EmptyConfigModifier{})
 	fatalOnError(err)
 
 	l.InfoContext(ctx, "performing update via cli")

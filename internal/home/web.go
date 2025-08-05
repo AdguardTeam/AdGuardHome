@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -46,6 +47,9 @@ type webConfig struct {
 	// baseLogger is used to create loggers for other entities.  It must not be
 	// nil.
 	baseLogger *slog.Logger
+
+	// confModifier is used to update the global configuration.
+	confModifier agh.ConfigModifier
 
 	// tlsManager contains the current configuration and state of TLS
 	// encryption.  It must not be nil.
@@ -104,6 +108,9 @@ type httpsServer struct {
 type webAPI struct {
 	conf *webConfig
 
+	// confModifier is used to update the global configuration.
+	confModifier agh.ConfigModifier
+
 	// TODO(a.garipov): Refactor all these servers.
 	httpServer *http.Server
 
@@ -134,11 +141,12 @@ func newWebAPI(ctx context.Context, conf *webConfig) (w *webAPI) {
 	conf.logger.InfoContext(ctx, "initializing")
 
 	w = &webAPI{
-		conf:       conf,
-		logger:     conf.logger,
-		baseLogger: conf.baseLogger,
-		tlsManager: conf.tlsManager,
-		auth:       conf.auth,
+		conf:         conf,
+		confModifier: conf.confModifier,
+		logger:       conf.logger,
+		baseLogger:   conf.baseLogger,
+		tlsManager:   conf.tlsManager,
+		auth:         conf.auth,
 	}
 
 	clientFS := http.FileServer(http.FS(conf.clientFS))

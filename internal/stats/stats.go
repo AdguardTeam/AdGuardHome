@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
@@ -55,9 +56,9 @@ type Config struct {
 	// nil, the default function is used, see newUnitID.
 	UnitID UnitIDGenFunc
 
-	// ConfigModified will be called each time the configuration changed via web
-	// interface.
-	ConfigModified func()
+	// ConfigModifier is used to update the global configuration.  It must not
+	// be nil.
+	ConfigModifier agh.ConfigModifier
 
 	// ShouldCountClient returns client's ignore setting.
 	ShouldCountClient func([]string) bool
@@ -123,9 +124,8 @@ type StatsCtx struct {
 	// httpRegister is used to set HTTP handlers.
 	httpRegister aghhttp.RegisterFunc
 
-	// configModified is called whenever the configuration is modified via web
-	// interface.
-	configModified func()
+	// configModifier is used to update the global configuration.
+	configModifier agh.ConfigModifier
 
 	// confMu protects ignored, limit, and enabled.
 	confMu *sync.RWMutex
@@ -165,7 +165,7 @@ func New(conf Config) (s *StatsCtx, err error) {
 		logger:         conf.Logger,
 		currMu:         &sync.RWMutex{},
 		httpRegister:   conf.HTTPRegister,
-		configModified: conf.ConfigModified,
+		configModifier: conf.ConfigModifier,
 		filename:       conf.Filename,
 
 		confMu:            &sync.RWMutex{},

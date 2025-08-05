@@ -115,6 +115,8 @@ type statusResponse struct {
 }
 
 func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	dnsAddrs, err := collectDNSAddresses(web.tlsManager)
 	if err != nil {
 		// Don't add a lot of formatting, since the error is already
@@ -125,14 +127,14 @@ func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		fltConf                 *dnsforward.Config
-		protectionDisabledUntil *time.Time
-		protectionEnabled       bool
+		fltConf           *dnsforward.Config
+		protDisabledUntil *time.Time
+		protEnabled       bool
 	)
 	if globalContext.dnsServer != nil {
 		fltConf = &dnsforward.Config{}
 		globalContext.dnsServer.WriteDiskConfig(fltConf)
-		protectionEnabled, protectionDisabledUntil = globalContext.dnsServer.UpdatedProtectionStatus()
+		protEnabled, protDisabledUntil = globalContext.dnsServer.UpdatedProtectionStatus(ctx)
 	}
 
 	var resp statusResponse
@@ -141,11 +143,11 @@ func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 		defer config.RUnlock()
 
 		var protectionDisabledDuration int64
-		if protectionDisabledUntil != nil {
+		if protDisabledUntil != nil {
 			// Make sure that we don't send negative numbers to the frontend,
 			// since enough time might have passed to make the difference less
 			// than zero.
-			protectionDisabledDuration = max(0, time.Until(*protectionDisabledUntil).Milliseconds())
+			protectionDisabledDuration = max(0, time.Until(*protDisabledUntil).Milliseconds())
 		}
 
 		resp = statusResponse{
@@ -155,7 +157,7 @@ func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 			DNSPort:                    config.DNS.Port,
 			HTTPPort:                   config.HTTPConfig.Address.Port(),
 			ProtectionDisabledDuration: protectionDisabledDuration,
-			ProtectionEnabled:          protectionEnabled,
+			ProtectionEnabled:          protEnabled,
 			IsRunning:                  isRunning(),
 		}
 	}()
@@ -175,10 +177,10 @@ func registerControlHandlers(web *webAPI) {
 	httpRegister(http.MethodPost, "/control/update", web.handleUpdate)
 
 	httpRegister(http.MethodGet, "/control/status", web.handleStatus)
-	httpRegister(http.MethodPost, "/control/i18n/change_language", handleI18nChangeLanguage)
+	httpRegister(http.MethodPost, "/control/i18n/change_language", web.handleI18nChangeLanguage)
 	httpRegister(http.MethodGet, "/control/i18n/current_language", handleI18nCurrentLanguage)
 	httpRegister(http.MethodGet, "/control/profile", web.handleGetProfile)
-	httpRegister(http.MethodPut, "/control/profile/update", handlePutProfile)
+	httpRegister(http.MethodPut, "/control/profile/update", web.handlePutProfile)
 
 	// No auth is necessary for DoH/DoT configurations
 	globalContext.mux.HandleFunc("/apple/doh.mobileconfig", postInstall(handleMobileConfigDoH))
