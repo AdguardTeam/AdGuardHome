@@ -475,7 +475,13 @@ func (clients *clientsContainer) findClient(
 		params.RemoteIP,
 		string(params.ClientID),
 	)
-	cj.Disallowed, cj.DisallowedRule = &disallowed, &rule
+	cj.Disallowed = &disallowed
+
+	if disallowed && rule != "" {
+		// Since "disallowed_rule" is omitted from JSON unless present, it
+		// should only be set when the client is actually blocked.
+		cj.DisallowedRule = &rule
+	}
 
 	return cj
 }
@@ -554,12 +560,19 @@ func (clients *clientsContainer) findRuntime(
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2428.
 	disallowed, rule := clients.clientChecker.IsBlockedClient(ip, string(params.ClientID))
 
+	var disallowedRule *string
+	if disallowed && rule != "" {
+		// Since "disallowed_rule" is omitted from JSON unless present, it
+		// should only be set when the client is actually blocked.
+		disallowedRule = &rule
+	}
+
 	return &clientJSON{
 		Name:           host,
 		IDs:            []string{idStr},
 		WHOIS:          whois,
 		Disallowed:     &disallowed,
-		DisallowedRule: &rule,
+		DisallowedRule: disallowedRule,
 	}
 }
 
