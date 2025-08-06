@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -56,9 +57,8 @@ type tlsManager struct {
 	// conf contains the TLS configuration settings.  It must not be nil.
 	conf *tlsConfigSettings
 
-	// configModified is called when the TLS configuration is changed via an
-	// HTTP request.
-	configModified func()
+	// confModifier is used to update the global configuration.
+	confModifier agh.ConfigModifier
 
 	// customCipherIDs are the ID of the cipher suites that AdGuard Home must use.
 	customCipherIDs []uint16
@@ -73,9 +73,9 @@ type tlsManagerConfig struct {
 	// be nil.
 	logger *slog.Logger
 
-	// configModified is called when the TLS configuration is changed via an
-	// HTTP request.  It must not be nil.
-	configModified func()
+	// confModifier is used to update the global configuration.  It must not be
+	// nil.
+	confModifier agh.ConfigModifier
 
 	// tlsSettings contains the TLS configuration settings.
 	tlsSettings tlsConfigSettings
@@ -91,12 +91,12 @@ type tlsManagerConfig struct {
 // [tlsManager.setWebAPI].
 func newTLSManager(ctx context.Context, conf *tlsManagerConfig) (m *tlsManager, err error) {
 	m = &tlsManager{
-		logger:         conf.logger,
-		mu:             &sync.Mutex{},
-		configModified: conf.configModified,
-		status:         &tlsConfigStatus{},
-		conf:           &conf.tlsSettings,
-		servePlainDNS:  conf.servePlainDNS,
+		logger:        conf.logger,
+		mu:            &sync.Mutex{},
+		confModifier:  conf.confModifier,
+		status:        &tlsConfigStatus{},
+		conf:          &conf.tlsSettings,
+		servePlainDNS: conf.servePlainDNS,
 	}
 
 	m.rootCerts = aghtls.SystemRootCAs(ctx, conf.logger)
@@ -232,7 +232,7 @@ func (m *tlsManager) reload(ctx context.Context) {
 
 	m.certLastMod = fi.ModTime().UTC()
 
-	err = m.reconfigureDNSServer()
+	err = m.reconfigureDNSServer(ctx)
 	if err != nil {
 		m.logger.ErrorContext(ctx, "reconfiguring dns server", slogutil.KeyError, err)
 	}
@@ -245,7 +245,7 @@ func (m *tlsManager) reload(ctx context.Context) {
 
 // reconfigureDNSServer updates the DNS server configuration using the stored
 // TLS settings.  m.mu is expected to be locked.
-func (m *tlsManager) reconfigureDNSServer() (err error) {
+func (m *tlsManager) reconfigureDNSServer(ctx context.Context) (err error) {
 	newConf, err := newServerConfig(
 		&config.DNS,
 		config.Clients.Sources,
@@ -253,12 +253,13 @@ func (m *tlsManager) reconfigureDNSServer() (err error) {
 		m,
 		httpRegister,
 		globalContext.clients.storage,
+		m.confModifier,
 	)
 	if err != nil {
 		return fmt.Errorf("generating forwarding dns server config: %w", err)
 	}
 
-	err = globalContext.dnsServer.Reconfigure(newConf)
+	err = globalContext.dnsServer.Reconfigure(ctx, newConf)
 	if err != nil {
 		return fmt.Errorf("starting forwarding dns server: %w", err)
 	}
@@ -515,7 +516,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 	var restartHTTPS bool
 	defer func() {
 		if restartHTTPS {
-			m.configModified()
+			m.confModifier.Apply(ctx)
 		}
 	}()
 
@@ -557,7 +558,7 @@ func (m *tlsManager) handleTLSConfigure(w http.ResponseWriter, r *http.Request) 
 		}()
 	}
 
-	err = m.reconfigureDNSServer()
+	err = m.reconfigureDNSServer(ctx)
 	if err != nil {
 		m.logger.ErrorContext(ctx, "reconfiguring dns server", slogutil.KeyError, err)
 

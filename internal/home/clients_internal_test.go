@@ -3,6 +3,7 @@ package home
 import (
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -14,9 +15,7 @@ import (
 func newClientsContainer(t *testing.T) (c *clientsContainer) {
 	t.Helper()
 
-	c = &clientsContainer{
-		testing: true,
-	}
+	c = &clientsContainer{}
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	err := c.Init(
@@ -30,6 +29,7 @@ func newClientsContainer(t *testing.T) (c *clientsContainer) {
 			Logger: testLogger,
 		},
 		newSignalHandler(testLogger, nil, nil),
+		agh.EmptyConfigModifier{},
 	)
 
 	require.NoError(t, err)

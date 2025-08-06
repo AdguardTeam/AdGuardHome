@@ -1,13 +1,13 @@
 package dnsforward
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"slices"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 )
@@ -24,7 +24,10 @@ func (s *Server) clientRequestFilteringSettings(dctx *dnsContext) (setts *filter
 
 // filterDNSRequest applies the dnsFilter and sets dctx.proxyCtx.Res if the
 // request was filtered.
-func (s *Server) filterDNSRequest(dctx *dnsContext) (res *filtering.Result, err error) {
+func (s *Server) filterDNSRequest(
+	ctx context.Context,
+	dctx *dnsContext,
+) (res *filtering.Result, err error) {
 	pctx := dctx.proxyCtx
 	req := pctx.Req
 	q := req.Question[0]
@@ -44,12 +47,12 @@ func (s *Server) filterDNSRequest(dctx *dnsContext) (res *filtering.Result, err 
 		dctx.origQuestion = q
 		req.Question[0].Name = dns.Fqdn(res.CanonName)
 	case res.IsFiltered:
-		log.Debug("dnsforward: host %q is filtered, reason: %q", host, res.Reason)
-		pctx.Res = s.genDNSFilterMessage(pctx, res)
+		s.logger.DebugContext(ctx, "host is filtered", "host", host, "reason", res.Reason)
+		pctx.Res = s.genDNSFilterMessage(ctx, pctx, res)
 	case res.Reason.In(filtering.Rewritten, filtering.FilteredSafeSearch):
-		pctx.Res = s.getCNAMEWithIPs(req, res.IPList, res.CanonName)
+		pctx.Res = s.getCNAMEWithIPs(ctx, req, res.IPList, res.CanonName)
 	case res.Reason.In(filtering.RewrittenRule, filtering.RewrittenAutoHosts):
-		if err = s.filterDNSRewrite(req, res, pctx); err != nil {
+		if err = s.filterDNSRewrite(ctx, req, res, pctx); err != nil {
 			return nil, err
 		}
 	}
@@ -90,7 +93,7 @@ func (s *Server) checkHostRules(
 // dctx.proxyCtx.Res.  It sets dctx.result and dctx.origResp if at least one of
 // canonical names, IP addresses, or HTTPS RR hints in it matches the filtering
 // rules, as well as sets dctx.proxyCtx.Res to the filtered response.
-func (s *Server) filterDNSResponse(dctx *dnsContext) (err error) {
+func (s *Server) filterDNSResponse(ctx context.Context, dctx *dnsContext) (err error) {
 	setts := dctx.setts
 	if !setts.FilteringEnabled {
 		return nil
@@ -123,16 +126,27 @@ func (s *Server) filterDNSResponse(dctx *dnsContext) (err error) {
 			continue
 		}
 
-		log.Debug("dnsforward: checked %s %s for %s", dns.Type(rrtype), host, a.Header().Name)
+		s.logger.DebugContext(
+			ctx,
+			"checked",
+			"dns_type", dns.Type(rrtype),
+			"host", host,
+			"name", a.Header().Name,
+		)
 
 		if err != nil {
 			return fmt.Errorf("filtering answer at index %d: %w", i, err)
 		} else if res != nil && res.IsFiltered {
 			dctx.result = res
 			dctx.origResp = pctx.Res
-			pctx.Res = s.genDNSFilterMessage(pctx, res)
+			pctx.Res = s.genDNSFilterMessage(ctx, pctx, res)
 
-			log.Debug("dnsforward: matched %q by response: %q", pctx.Req.Question[0].Name, host)
+			s.logger.DebugContext(
+				ctx,
+				"matched by response",
+				"name", pctx.Req.Question[0].Name,
+				"host", host,
+			)
 
 			break
 		}

@@ -7,6 +7,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
@@ -71,7 +72,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		res := makeRes(dns.RcodeNameError, 0, nil)
 		d := &proxy.DNSContext{}
 
-		err := srv.filterDNSRewrite(req, res, d)
+		err := srv.filterDNSRewrite(testutil.ContextWithTimeout(t, testTimeout), req, res, d)
 		require.NoError(t, err)
 
 		assert.Equal(t, dns.RcodeNameError, d.Res.Rcode)
@@ -82,7 +83,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		res := makeRes(dns.RcodeSuccess, 0, nil)
 		d := &proxy.DNSContext{}
 
-		err := srv.filterDNSRewrite(req, res, d)
+		err := srv.filterDNSRewrite(testutil.ContextWithTimeout(t, testTimeout), req, res, d)
 		require.NoError(t, err)
 
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
@@ -94,7 +95,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		res := makeRes(dns.RcodeSuccess, dns.TypeA, ip4)
 		d := &proxy.DNSContext{}
 
-		err := srv.filterDNSRewrite(req, res, d)
+		err := srv.filterDNSRewrite(testutil.ContextWithTimeout(t, testTimeout), req, res, d)
 		require.NoError(t, err)
 
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
@@ -108,7 +109,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		res := makeRes(dns.RcodeSuccess, dns.TypeAAAA, ip6)
 		d := &proxy.DNSContext{}
 
-		err := srv.filterDNSRewrite(req, res, d)
+		err := srv.filterDNSRewrite(testutil.ContextWithTimeout(t, testTimeout), req, res, d)
 		require.NoError(t, err)
 
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
@@ -122,7 +123,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		res := makeRes(dns.RcodeSuccess, dns.TypePTR, domain)
 		d := &proxy.DNSContext{}
 
-		err := srv.filterDNSRewrite(req, res, d)
+		err := srv.filterDNSRewrite(testutil.ContextWithTimeout(t, testTimeout), req, res, d)
 		require.NoError(t, err)
 
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
@@ -136,7 +137,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		res := makeRes(dns.RcodeSuccess, dns.TypeTXT, domain)
 		d := &proxy.DNSContext{}
 
-		err := srv.filterDNSRewrite(req, res, d)
+		err := srv.filterDNSRewrite(testutil.ContextWithTimeout(t, testTimeout), req, res, d)
 		require.NoError(t, err)
 
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
@@ -150,7 +151,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		res := makeRes(dns.RcodeSuccess, dns.TypeMX, mxVal)
 		d := &proxy.DNSContext{}
 
-		err := srv.filterDNSRewrite(req, res, d)
+		err := srv.filterDNSRewrite(testutil.ContextWithTimeout(t, testTimeout), req, res, d)
 		require.NoError(t, err)
 
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
@@ -168,7 +169,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		res := makeRes(dns.RcodeSuccess, dns.TypeSVCB, svcbVal)
 		d := &proxy.DNSContext{}
 
-		err := srv.filterDNSRewrite(req, res, d)
+		err := srv.filterDNSRewrite(testutil.ContextWithTimeout(t, testTimeout), req, res, d)
 		require.NoError(t, err)
 
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
@@ -198,7 +199,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		res := makeRes(dns.RcodeSuccess, dns.TypeHTTPS, svcbVal)
 		d := &proxy.DNSContext{}
 
-		err := srv.filterDNSRewrite(req, res, d)
+		err := srv.filterDNSRewrite(testutil.ContextWithTimeout(t, testTimeout), req, res, d)
 		require.NoError(t, err)
 
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)
@@ -228,7 +229,7 @@ func TestServer_FilterDNSRewrite(t *testing.T) {
 		res := makeRes(dns.RcodeSuccess, dns.TypeSRV, srvVal)
 		d := &proxy.DNSContext{}
 
-		err := srv.filterDNSRewrite(req, res, d)
+		err := srv.filterDNSRewrite(testutil.ContextWithTimeout(t, testTimeout), req, res, d)
 		require.NoError(t, err)
 
 		assert.Equal(t, dns.RcodeSuccess, d.Res.Rcode)

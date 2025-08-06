@@ -1559,6 +1559,14 @@
           'type': 'integer'
         'cache_ttl_max':
           'type': 'integer'
+        'cache_enabled':
+          'type': 'boolean'
+          'description': |
+            Enables or disables the DNS response cache.
+
+            If `cache_enabled` is `true`, the companion field `cache_size` must
+            be present and greater than 0, or the `dns.cache_size` setting in
+            the configuration file must already be greater than 0.
         'cache_optimistic':
           'type': 'boolean'
         'upstream_mode':

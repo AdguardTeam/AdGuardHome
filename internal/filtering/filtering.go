@@ -19,6 +19,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
@@ -104,8 +105,9 @@ type Config struct {
 	// TODO(e.burkov):  Move it to dnsforward entirely.
 	EtcHosts hostsfile.Storage `yaml:"-"`
 
-	// Called when the configuration is changed by HTTP request
-	ConfigModified func() `yaml:"-"`
+	// ConfModifier is used to update the global configuration.  It must not be
+	// nil.
+	ConfModifier agh.ConfigModifier `yaml:"-"`
 
 	// Register an HTTP handler
 	HTTPRegister aghhttp.RegisterFunc `yaml:"-"`
@@ -766,42 +768,19 @@ func (d *DNSFilter) matchBlockedServicesRules(
 func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
 	lists := make([]filterlist.RuleList, 0, len(filters))
 	for _, f := range filters {
-		switch id := int(f.ID); {
-		case len(f.Data) != 0:
-			lists = append(lists, &filterlist.StringRuleList{
-				ID:             id,
-				RulesText:      string(f.Data),
-				IgnoreCosmetic: true,
-			})
-		case f.FilePath == "":
+		var rl filterlist.RuleList
+		var skip bool
+		rl, skip, err = ruleListFromFilter(f)
+		if skip {
 			continue
-		case runtime.GOOS == "windows":
-			// On Windows we don't pass a file to urlfilter because it's
-			// difficult to update this file while it's being used.
-			var data []byte
-			data, err = os.ReadFile(f.FilePath)
-			if errors.Is(err, fs.ErrNotExist) {
-				continue
-			} else if err != nil {
-				return nil, fmt.Errorf("reading filter content: %w", err)
-			}
-
-			lists = append(lists, &filterlist.StringRuleList{
-				ID:             id,
-				RulesText:      string(data),
-				IgnoreCosmetic: true,
-			})
-		default:
-			var list *filterlist.FileRuleList
-			list, err = filterlist.NewFileRuleList(id, f.FilePath, true)
-			if errors.Is(err, fs.ErrNotExist) {
-				continue
-			} else if err != nil {
-				return nil, fmt.Errorf("creating file rule list with %q: %w", f.FilePath, err)
-			}
-
-			lists = append(lists, list)
 		}
+
+		if err != nil {
+			// Don't wrap the error, because it's informative enough as is.
+			return nil, err
+		}
+
+		lists = append(lists, rl)
 	}
 
 	rs, err = filterlist.NewRuleStorage(lists)
@@ -810,6 +789,51 @@ func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
 	}
 
 	return rs, nil
+}
+
+// ruleListFromFilter returns a rule list from a Filter.
+func ruleListFromFilter(f Filter) (rl filterlist.RuleList, skip bool, err error) {
+	id := int(f.ID)
+
+	if len(f.Data) != 0 {
+		return &filterlist.StringRuleList{
+			ID:             id,
+			RulesText:      string(f.Data),
+			IgnoreCosmetic: true,
+		}, false, nil
+	}
+
+	if f.FilePath == "" {
+		return nil, true, nil
+	}
+
+	if runtime.GOOS == "windows" {
+		// On Windows we don't pass a file to urlfilter because it's
+		// difficult to update this file while it's being used.
+		var data []byte
+		data, err = os.ReadFile(f.FilePath)
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, true, nil
+		} else if err != nil {
+			return nil, false, fmt.Errorf("reading filter content: %w", err)
+		}
+
+		return &filterlist.StringRuleList{
+			ID:             id,
+			RulesText:      string(data),
+			IgnoreCosmetic: true,
+		}, false, nil
+	}
+
+	var list *filterlist.FileRuleList
+	list, err = filterlist.NewFileRuleList(id, f.FilePath, true)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, true, nil
+	} else if err != nil {
+		return nil, false, fmt.Errorf("creating file rule list with %q: %w", f.FilePath, err)
+	}
+
+	return list, false, nil
 }
 
 // Initialize urlfilter objects.
@@ -904,30 +928,35 @@ func (d *DNSFilter) matchHostProcessDNSResult(
 		return makeResult([]rules.Rule{dnsres.NetworkRule}, reason)
 	}
 
-	switch qtype {
-	case dns.TypeA:
-		if dnsres.HostRulesV4 != nil {
-			res = makeResult(hostRulesToRules(dnsres.HostRulesV4), FilteredBlockList)
-			for i, hr := range dnsres.HostRulesV4 {
-				res.Rules[i].IP = hr.IP
-			}
-
-			return res
-		}
-	case dns.TypeAAAA:
-		if dnsres.HostRulesV6 != nil {
-			res = makeResult(hostRulesToRules(dnsres.HostRulesV6), FilteredBlockList)
-			for i, hr := range dnsres.HostRulesV6 {
-				res.Rules[i].IP = hr.IP
-			}
-
-			return res
-		}
-	default:
-		// Go on.
+	if result, ok := resultFromHostRules(qtype, dnsres); ok {
+		return result
 	}
 
 	return hostResultForOtherQType(dnsres)
+}
+
+// resultFromHostRules handles the HostRulesV4/HostRulesV6 case for
+// [matchHostProcessDNSResult].  dnsres must not be nil.
+func resultFromHostRules(qtype uint16, dnsres *urlfilter.DNSResult) (res Result, ok bool) {
+	if qtype == dns.TypeA && dnsres.HostRulesV4 != nil {
+		res = makeResult(hostRulesToRules(dnsres.HostRulesV4), FilteredBlockList)
+		for i, hr := range dnsres.HostRulesV4 {
+			res.Rules[i].IP = hr.IP
+		}
+
+		return res, true
+	}
+
+	if qtype == dns.TypeAAAA && dnsres.HostRulesV6 != nil {
+		res = makeResult(hostRulesToRules(dnsres.HostRulesV6), FilteredBlockList)
+		for i, hr := range dnsres.HostRulesV6 {
+			res.Rules[i].IP = hr.IP
+		}
+
+		return res, true
+	}
+
+	return Result{}, false
 }
 
 // hostResultForOtherQType returns a result based on the host rules in dnsres,
@@ -1051,14 +1080,10 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 		confMu:                 &sync.RWMutex{},
 	}
 
-	for i, p := range c.SafeFSPatterns {
-		// Use Match to validate the patterns here.
-		_, err = filepath.Match(p, "test")
-		if err != nil {
-			return nil, fmt.Errorf("safe_fs_patterns: at index %d: %w", i, err)
-		}
-
-		d.safeFSPatterns = append(d.safeFSPatterns, p)
+	err = d.validateSafeFSPatterns(c.SafeFSPatterns)
+	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
+		return nil, err
 	}
 
 	d.hostCheckers = []hostChecker{{
@@ -1124,6 +1149,22 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	d.idGen.fix(d.conf.WhitelistFilters)
 
 	return d, nil
+}
+
+// validateSafeFSPatterns validates and stores patterns for local filtering‑rule
+// files.
+func (d *DNSFilter) validateSafeFSPatterns(patterns []string) (err error) {
+	for i, p := range patterns {
+		// Use Match to validate the patterns here.
+		_, err = filepath.Match(p, "test")
+		if err != nil {
+			return fmt.Errorf("safe_fs_patterns: at index %d: %w", i, err)
+		}
+
+		d.safeFSPatterns = append(d.safeFSPatterns, p)
+	}
+
+	return nil
 }
 
 // Start registers web handlers and starts filters updates loop.

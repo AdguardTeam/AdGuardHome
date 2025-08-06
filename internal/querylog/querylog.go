@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -47,9 +48,9 @@ type Config struct {
 	// Anonymizer processes the IP addresses to anonymize those if needed.
 	Anonymizer *aghnet.IPMut
 
-	// ConfigModified is called when the configuration is changed, for example
-	// by HTTP requests.
-	ConfigModified func()
+	// ConfigModifier is used to update the global configuration.  It must not
+	// be nil.
+	ConfigModifier agh.ConfigModifier
 
 	// HTTPRegister registers an HTTP handler.
 	HTTPRegister aghhttp.RegisterFunc

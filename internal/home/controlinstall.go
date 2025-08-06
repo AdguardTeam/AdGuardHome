@@ -15,6 +15,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -455,7 +456,7 @@ func (web *webAPI) handleInstallConfigure(w http.ResponseWriter, r *http.Request
 	// moment we'll allow setting up TLS in the initial configuration or the
 	// configuration itself will use HTTPS protocol, because the underlying
 	// functions potentially restart the HTTPS server.
-	err = startMods(ctx, web.baseLogger, web.tlsManager)
+	err = startMods(ctx, web.baseLogger, web.tlsManager, web.confModifier)
 	if err != nil {
 		globalContext.firstRun = true
 		copyInstallSettings(config, curConfig)
@@ -532,13 +533,18 @@ func decodeApplyConfigReq(r io.Reader) (req *applyConfigReq, restartHTTP bool, e
 
 // startMods initializes and starts the DNS server after installation.
 // baseLogger and tlsMgr must not be nil.
-func startMods(ctx context.Context, baseLogger *slog.Logger, tlsMgr *tlsManager) (err error) {
+func startMods(
+	ctx context.Context,
+	baseLogger *slog.Logger,
+	tlsMgr *tlsManager,
+	confModifier agh.ConfigModifier,
+) (err error) {
 	statsDir, querylogDir, err := checkStatsAndQuerylogDirs(&globalContext, config)
 	if err != nil {
 		return err
 	}
 
-	err = initDNS(baseLogger, tlsMgr, statsDir, querylogDir)
+	err = initDNS(ctx, baseLogger, tlsMgr, confModifier, statsDir, querylogDir)
 	if err != nil {
 		return err
 	}
@@ -547,7 +553,7 @@ func startMods(ctx context.Context, baseLogger *slog.Logger, tlsMgr *tlsManager)
 
 	err = startDNSServer()
 	if err != nil {
-		closeDNSServer()
+		closeDNSServer(ctx)
 
 		return err
 	}

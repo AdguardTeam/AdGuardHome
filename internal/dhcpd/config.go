@@ -6,6 +6,7 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
@@ -15,8 +16,9 @@ import (
 // ServerConfig is the configuration for the DHCP server.  The order of YAML
 // fields is important, since the YAML configuration file follows it.
 type ServerConfig struct {
-	// Called when the configuration is changed by HTTP request
-	ConfigModified func() `yaml:"-"`
+	// ConfModifier is used to update the global configuration.  It must not be
+	// nil.
+	ConfModifier agh.ConfigModifier `yaml:"-"`
 
 	// Register an HTTP handler
 	HTTPRegister aghhttp.RegisterFunc `yaml:"-"`

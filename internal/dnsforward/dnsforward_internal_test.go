@@ -22,6 +22,7 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
@@ -106,9 +107,11 @@ func (c *clientsContainer) ClearUpstreamCache() {
 func startDeferStop(t *testing.T, s *Server) {
 	t.Helper()
 
-	err := s.Start()
+	err := s.Start(testutil.ContextWithTimeout(t, testTimeout))
 	require.NoError(t, err)
-	testutil.CleanupAndRequireSuccess(t, s.Stop)
+	testutil.CleanupAndRequireSuccess(t, func() (err error) {
+		return s.Stop(testutil.ContextWithTimeout(t, testTimeout))
+	})
 }
 
 // applyEmptyClientFiltering is a helper function for tests with
@@ -169,7 +172,7 @@ func createTestServer(
 	})
 	require.NoError(t, err)
 
-	err = s.Prepare(&forwardConf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &forwardConf)
 	require.NoError(t, err)
 
 	return s
@@ -244,7 +247,7 @@ func createTestTLS(t *testing.T, tlsConf *TLSConfig) (s *Server, certPem []byte)
 		ServePlainDNS: true,
 	})
 
-	err = s.Prepare(&s.conf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &s.conf)
 	require.NoErrorf(t, err, "failed to prepare server: %s", err)
 
 	return s, certPem
@@ -420,7 +423,7 @@ func TestServer_timeout(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = s.Prepare(srvConf)
+		err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), srvConf)
 		require.NoError(t, err)
 
 		assert.Equal(t, testTimeout, s.conf.UpstreamTimeout)
@@ -439,7 +442,7 @@ func TestServer_timeout(t *testing.T) {
 			Enabled: false,
 		}
 		s.conf.Config.ClientsContainer = EmptyClientsContainer{}
-		err = s.Prepare(&s.conf)
+		err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &s.conf)
 		require.NoError(t, err)
 
 		assert.Equal(t, DefaultTimeout, s.conf.UpstreamTimeout)
@@ -466,7 +469,7 @@ func TestServer_Prepare_fallbacks(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = s.Prepare(srvConf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), srvConf)
 	require.NoError(t, err)
 	require.NotNil(t, s.dnsProxy.Fallbacks)
 
@@ -566,8 +569,8 @@ func TestServerRace(t *testing.T) {
 			UpstreamMode: UpstreamModeLoadBalance,
 			UpstreamDNS:  []string{"8.8.8.8:53", "8.8.4.4:53"},
 		},
-		ConfigModified: func() {},
-		ServePlainDNS:  true,
+		ConfModifier:  agh.EmptyConfigModifier{},
+		ServePlainDNS: true,
 	}
 	s := createTestServer(t, filterConf, forwardConf)
 	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{newGoogleUpstream()}
@@ -1104,7 +1107,7 @@ func TestBlockedCustomIP(t *testing.T) {
 	}
 
 	// Invalid BlockingIPv4.
-	err = s.Prepare(conf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), conf)
 	assert.Error(t, err)
 
 	s.dnsFilter.SetBlockingMode(
@@ -1112,7 +1115,7 @@ func TestBlockedCustomIP(t *testing.T) {
 		netip.AddrFrom4([4]byte{0, 0, 0, 1}),
 		netip.MustParseAddr("::1"))
 
-	err = s.Prepare(conf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), conf)
 	require.NoError(t, err)
 
 	f.SetEnabled(true)
@@ -1264,7 +1267,7 @@ func TestRewrite(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.NoError(t, s.Prepare(&ServerConfig{
+	assert.NoError(t, s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &ServerConfig{
 		UDPListenAddrs: []*net.UDPAddr{{}},
 		TCPListenAddrs: []*net.TCPAddr{{}},
 		TLSConf:        &TLSConfig{},
@@ -1334,7 +1337,7 @@ func TestRewrite(t *testing.T) {
 
 	for _, protect := range []bool{true, false} {
 		val := protect
-		conf := s.getDNSConfig()
+		conf := s.getDNSConfig(testutil.ContextWithTimeout(t, testTimeout))
 		conf.ProtectionEnabled = &val
 		s.setConfig(conf)
 
@@ -1408,12 +1411,12 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	s.conf.Config.ClientsContainer = EmptyClientsContainer{}
 	s.conf.Config.UpstreamMode = UpstreamModeLoadBalance
 
-	err = s.Prepare(&s.conf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &s.conf)
 	require.NoError(t, err)
 
-	err = s.Start()
+	err = s.Start(testutil.ContextWithTimeout(t, testTimeout))
 	require.NoError(t, err)
-	t.Cleanup(s.Close)
+	t.Cleanup(func() { s.Close(testutil.ContextWithTimeout(t, testTimeout)) })
 
 	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
 	req := createTestMessageWithType("34.12.168.192.in-addr.arpa.", dns.TypePTR)
@@ -1498,12 +1501,12 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	s.conf.Config.ClientsContainer = EmptyClientsContainer{}
 	s.conf.Config.UpstreamMode = UpstreamModeLoadBalance
 
-	err = s.Prepare(&s.conf)
+	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &s.conf)
 	require.NoError(t, err)
 
-	err = s.Start()
+	err = s.Start(testutil.ContextWithTimeout(t, testTimeout))
 	require.NoError(t, err)
-	t.Cleanup(s.Close)
+	t.Cleanup(func() { s.Close(testutil.ContextWithTimeout(t, testTimeout)) })
 
 	subTestFunc := func(t *testing.T) {
 		addr := s.dnsProxy.Addr(proxy.ProtoUDP)
@@ -1524,7 +1527,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 	for _, protect := range []bool{true, false} {
 		val := protect
-		conf := s.getDNSConfig()
+		conf := s.getDNSConfig(testutil.ContextWithTimeout(t, testTimeout))
 		conf.ProtectionEnabled = &val
 		s.setConfig(conf)
 

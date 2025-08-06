@@ -32,6 +32,7 @@ const INPUTS_FIELDS = [
 ];
 
 type FormData = {
+    cache_enabled: boolean;
     cache_size: number;
     cache_ttl_min: number;
     cache_ttl_max: number;
@@ -54,10 +55,11 @@ const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
         handleSubmit,
         watch,
         control,
-        formState: { isSubmitting, isDirty },
+        formState: { isSubmitting },
     } = useForm<FormData>({
         mode: 'onBlur',
         defaultValues: {
+            cache_enabled: initialValues?.cache_enabled || false,
             cache_size: initialValues?.cache_size || 0,
             cache_ttl_min: initialValues?.cache_ttl_min || 0,
             cache_ttl_max: initialValues?.cache_ttl_max || 0,
@@ -65,10 +67,13 @@ const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
         },
     });
 
+    const cache_enabled = watch('cache_enabled');
+    const cache_size = watch('cache_size');
     const cache_ttl_min = watch('cache_ttl_min');
     const cache_ttl_max = watch('cache_ttl_max');
 
     const minExceedsMax = cache_ttl_min > 0 && cache_ttl_max > 0 && cache_ttl_min > cache_ttl_max;
+    const cacheSizeZeroWhenEnabled = cache_enabled && cache_size === 0;
 
     const handleClearCache = () => {
         if (window.confirm(t('confirm_dns_cache_clear'))) {
@@ -79,6 +84,24 @@ const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
             <div className="row">
+                <div className="col-12 col-md-7">
+                    <div className="form__group form__group--settings">
+                        <Controller
+                            name="cache_enabled"
+                            control={control}
+                            render={({ field }) => (
+                                <Checkbox
+                                    {...field}
+                                    data-testid="dns_cache_enabled"
+                                    title={t('cache_enabled')}
+                                    subtitle={t('cache_enabled_desc')}
+                                    disabled={processingSetConfig}
+                                />
+                            )}
+                        />
+                    </div>
+                </div>
+
                 {INPUTS_FIELDS.map(({ name, title, description, placeholder }) => (
                     <div className="col-12" key={name}>
                         <div className="col-12 col-md-7 p-0">
@@ -102,6 +125,12 @@ const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                                         setValueAs: (value) => replaceZeroWithEmptyString(value),
                                     })}
                                 />
+
+                                {name === CACHE_CONFIG_FIELDS.cache_size && cacheSizeZeroWhenEnabled && (
+                                    <span className="form__message form__message--error">
+                                        {t('cache_size_validation')}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -133,7 +162,7 @@ const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                 type="submit"
                 data-testid="dns_save"
                 className="btn btn-success btn-standard btn-large"
-                disabled={isSubmitting || !isDirty || processingSetConfig || minExceedsMax}>
+                disabled={isSubmitting || processingSetConfig || minExceedsMax || cacheSizeZeroWhenEnabled}>
                 {t('save_btn')}
             </button>
 
