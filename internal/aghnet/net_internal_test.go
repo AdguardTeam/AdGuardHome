@@ -30,7 +30,7 @@ func substRootDirFS(t testing.TB, fsys fs.FS) {
 // RunCmdFunc is the signature of aghos.RunCommand function.
 type RunCmdFunc func(cmd string, args ...string) (code int, out []byte, err error)
 
-// substShell replaces the the aghos.RunCommand function used throughout the
+// substShell replaces the aghos.RunCommand function used throughout the
 // package with rc for tests ran under t.
 func substShell(t testing.TB, rc RunCmdFunc) {
 	t.Helper()
@@ -70,7 +70,7 @@ func (s mapShell) RunCmd(cmd string, args ...string) (code int, out []byte, err 
 // ifaceAddrsFunc is the signature of net.InterfaceAddrs function.
 type ifaceAddrsFunc func() (ifaces []net.Addr, err error)
 
-// substNetInterfaceAddrs replaces the the net.InterfaceAddrs function used
+// substNetInterfaceAddrs replaces the net.InterfaceAddrs function used
 // throughout the package with f for tests ran under t.
 func substNetInterfaceAddrs(t *testing.T, f ifaceAddrsFunc) {
 	t.Helper()
